@@ -3,6 +3,10 @@
   "tasks": {
     "typecheck": { "dependsOn": ["^typecheck"] },
     "test": { "dependsOn": ["^build"] },
-    "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**"] }
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**"],
+      "env": ["APPLE_TEAM_ID", "APPLE_BUNDLE_ID", "SUPABASE_URL", "SUPABASE_ANON_KEY"]
+    }
   }
 }
