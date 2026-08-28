@@ -278,7 +278,7 @@ git commit -m "chore: Monorepo-Grundgeruest mit pnpm, Turborepo und Domain-Paket
 **Files:**
 - Create: `supabase/migrations/0001_tenancy.sql`
 - Create: `tests/integration/helpers/clients.ts`
-- Create: `.env.local.example`
+- Create: `.env.example`
 - Test: `tests/integration/rls-tenancy.test.ts`
 
 **Interfaces:**
@@ -295,9 +295,11 @@ pnpm exec supabase init
 pnpm exec supabase start
 ```
 
-`supabase start` gibt am Ende `API URL`, `anon key` und `service_role key` aus. Diese Werte in `.env.local` schreiben (nicht committen) und die Vorlage anlegen:
+`supabase start` gibt am Ende `API URL`, `anon key` und `service_role key` aus. Diese Werte in eine Datei namens **`.env`** im Wurzelverzeichnis schreiben (nicht committen — `.env` ist bereits über die `.gitignore` aus Task 1 ausgeschlossen).
 
-`.env.local.example`:
+**Wichtig zum Dateinamen:** `tests/integration/helpers/clients.ts` (Step 2) und später `playwright.config.ts` (Task 4) laden Umgebungsvariablen über `import "dotenv/config"`. Dieser Import sucht standardmäßig eine Datei namens `.env` — **nicht** `.env.local`. Die Datei muss deshalb exakt `.env` heißen, sonst bleiben `SUPABASE_URL` und die beiden Keys für alle root-seitigen Test-Skripte unauffindbar.
+
+Zusätzlich die committete Vorlage anlegen, `.env.example`:
 
 ```text
 SUPABASE_URL=http://127.0.0.1:54321
@@ -889,6 +891,7 @@ git commit -m "feat: Tag-Token mit Hash-Speicherung und RLS auf machine_tags"
 - Create: `apps/web/app/layout.tsx`, `apps/web/app/page.tsx`
 - Create: `apps/web/app/login/page.tsx`, `apps/web/app/login/actions.ts`
 - Create: `apps/web/lib/supabase/server.ts`
+- Create: `apps/web/.env.local.example`
 - Test: `e2e/login.spec.ts`
 
 **Interfaces:**
@@ -1049,7 +1052,9 @@ export default async function HomePage() {
 
 - [ ] **Step 4: Umgebungsvariablen für die Web-App bereitstellen**
 
-`apps/web/.env.local` mit denselben drei Werten wie in Task 2 anlegen (nicht committen). Die Datei ist bereits über `.gitignore` ausgeschlossen.
+`apps/web/.env.local` mit denselben drei Werten wie in Task 2 anlegen (nicht committen). Die Datei ist bereits über `.gitignore` ausgeschlossen. Next.js lädt `.env.local` für `next dev`/`next build` automatisch aus dem Verzeichnis, in dem der Befehl läuft — hier ist das korrekt, im Unterschied zur root-seitigen `.env` aus Task 2.
+
+Daneben `apps/web/.env.local.example` als committete Vorlage anlegen (dieselben drei Schlüsselnamen, ohne echte Werte). Task 5 ergänzt darin später die beiden Apple-Schlüssel.
 
 - [ ] **Step 5: Den fehlschlagenden E2E-Test schreiben**
 
@@ -1273,6 +1278,7 @@ git commit -m "feat: Next.js-App mit E-Mail-OTP-Login und E2E-Test ueber Inbucke
 **Files:**
 - Create: `apps/web/app/api/aasa/route.ts`
 - Create: `apps/web/app/t/[token]/page.tsx`
+- Modify: `apps/web/package.json` (Vitest ergänzen), `apps/web/.env.local`, `apps/web/.env.local.example` (Apple-Schlüssel ergänzen)
 - Test: `apps/web/app/api/aasa/route.test.ts`, `e2e/tag-fallback.spec.ts`
 
 **Interfaces:**
@@ -1283,9 +1289,16 @@ git commit -m "feat: Next.js-App mit E-Mail-OTP-Login und E2E-Test ueber Inbucke
 
 `apps/web/app/api/aasa/route.test.ts`:
 
+**Hinweis zu den Umgebungsvariablen:** `GET()` liest `APPLE_TEAM_ID`/`APPLE_BUNDLE_ID` erst beim Aufruf, nicht beim Modul-Import — deshalb reicht `vi.stubEnv` in `beforeAll`, ohne echte `.env`-Datei einzubinden. Das funktioniert unverändert in CI, wo keine Apple-Secrets hinterlegt sind.
+
 ```ts
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { GET } from "./route";
+
+beforeAll(() => {
+  vi.stubEnv("APPLE_TEAM_ID", "ABCDE12345");
+  vi.stubEnv("APPLE_BUNDLE_ID", "de.fitretro.member");
+});
 
 describe("apple-app-site-association", () => {
   it("liefert Content-Type application/json", async () => {
@@ -1318,7 +1331,7 @@ describe("apple-app-site-association", () => {
 });
 ```
 
-`apps/web` braucht dafür Vitest. In `apps/web/package.json` ergänzen:
+`apps/web` braucht dafür Vitest. In `apps/web/package.json` **ergänzen** (die bestehenden `scripts` und `devDependencies` aus Task 4 bleiben erhalten, hier wird zusammengeführt, nicht ersetzt):
 
 ```json
 "scripts": {
@@ -1370,12 +1383,14 @@ export function GET(): NextResponse {
 }
 ```
 
-In `apps/web/.env.local` und `.env.local.example` ergänzen:
+In `apps/web/.env.local` **und** `apps/web/.env.local.example` (beide aus Task 4) ergänzen:
 
 ```text
 APPLE_TEAM_ID=<TEAM_ID aus den Global Constraints>
 APPLE_BUNDLE_ID=<BUNDLE_ID aus den Global Constraints>
 ```
+
+Diese Werte versorgen ausschließlich den echten `next dev`-Lauf; der Unit-Test oben hängt davon nicht ab (siehe `vi.stubEnv` in Step 1).
 
 - [ ] **Step 4: Test laufen lassen und Erfolg bestätigen**
 
