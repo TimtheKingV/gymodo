@@ -15,11 +15,14 @@ export async function requestOtp(_prev: unknown, formData: FormData) {
   if (!parsed.success) return { error: "Bitte eine gueltige E-Mail eingeben." };
 
   const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.auth.signInWithOtp({
+  // Das Ergebnis wird absichtlich verworfen: Ob die Adresse existiert oder
+  // nicht, darf sich fuer den Client nicht unterscheiden (User-Enumeration).
+  // Ein nicht existierender Nutzer bekommt spaetestens bei verifyOtp einen
+  // Fehler ("Der Code ist ungueltig oder abgelaufen.").
+  await supabase.auth.signInWithOtp({
     email: parsed.data.email,
     options: { shouldCreateUser: false },
   });
-  if (error) return { error: "Code konnte nicht gesendet werden." };
 
   return { sentTo: parsed.data.email };
 }
