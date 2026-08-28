@@ -247,6 +247,13 @@ otp_expiry = 3600
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
+# Magic-Link-Template enthaelt {{ .Token }}, damit der Login per numerischem
+# E-Mail-Code funktioniert (nicht nur per Klick-Link). Siehe e2e/login.spec.ts,
+# das den 6-stelligen Code aus der Mail liest.
+[auth.email.template.magic_link]
+subject = "Dein Anmeldecode"
+content_path = "./supabase/templates/magic_link.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true

@@ -9,3 +9,7 @@ dist/
 xcuserdata/
 *.xcuserstate
 .worktrees/
+test-results/
+playwright-report/
+blob-report/
+*.tsbuildinfo

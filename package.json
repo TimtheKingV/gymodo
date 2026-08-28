@@ -6,12 +6,14 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:integration": "vitest run --config vitest.config.ts",
+    "test:e2e": "playwright test",
     "build": "turbo run build"
   },
   "dependencies": {
     "@fitretro/domain": "workspace:*"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@supabase/supabase-js": "^2.112.4",
     "dotenv": "^17.4.2",
     "supabase": "^2.116.0",
