@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { hashTagToken, isValidTagToken } from "@fitretro/domain";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Web-Fallback fuer Geraete-Tags.
  *
