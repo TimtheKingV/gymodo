@@ -11,6 +11,7 @@
     "build": "tsc --emitDeclarationOnly --outDir dist"
   },
   "devDependencies": {
+    "@types/node": "^26.4.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   }
