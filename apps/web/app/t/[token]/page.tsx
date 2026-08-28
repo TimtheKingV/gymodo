@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { hashTagToken, isValidTagToken } from "@fitretro/domain";
+import { requiredEnv } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +31,8 @@ export default async function TagFallbackPage({
   // Oeffentlicher Endpunkt ohne Nutzersession: bewusst mit erhoehten Rechten,
   // liefert aber ausschliesslich nicht personenbezogene Tagdaten zurueck.
   const client = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    requiredEnv("SUPABASE_URL"),
+    requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
     { auth: { persistSession: false } },
   );
 
