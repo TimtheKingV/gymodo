@@ -93,4 +93,16 @@ describe("resolve_tag_fallback", () => {
       expect(data).toEqual([]);
     }
   });
+
+  it("anonymer Client kann is_studio_staff nicht aufrufen (kein EXECUTE-Grant)", async () => {
+    // Regressionstest fuer Migration 0009: "revoke all ... from public"
+    // allein reicht auf Supabase nicht -- ohne den expliziten Entzug der
+    // ALTER-DEFAULT-PRIVILEGES-Grants an anon/authenticated/service_role
+    // waere is_studio_staff fuer anon faktisch aufrufbar gewesen.
+    const client = anonClient();
+    const { error } = await client.rpc("is_studio_staff", {
+      p_studio_id: "00000000-0000-0000-0000-000000000000",
+    });
+    expect(error).not.toBeNull();
+  });
 });
