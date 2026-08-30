@@ -426,7 +426,7 @@ Unverändert aus Blueprint §6.3: Gewichte als `numeric`, Einheit kanonisch Kilo
 
 ### 7.6 RLS
 
-Jede Tabelle hat `studio_id`, RLS aktiv, `FORCE ROW LEVEL SECURITY`.
+RLS ist auf jeder Tabelle aktiv, mit `FORCE ROW LEVEL SECURITY`. Die meisten Tabellen tragen dafür eine eigene `studio_id`-Spalte; `equipment_setting_definitions`, `equipment_model_exercises` und `instruction_assets` haben keine eigene `studio_id` (siehe Tabellenauflistung in 7.1) und erben ihre Mandantenzugehörigkeit stattdessen über einen Fremdschlüssel-Join auf ihre Elterntabelle — die Policies bilden das per `exists (... join ...)` nach.
 
 - **Studio-Sichtbarkeit:** Zeile sichtbar bei Mitgliedschaft im `studio_id`.
 - **Personenbezogene Tabellen zusätzlich:** `user_id = auth.uid()`, außer Rolle ist `trainer` oder `owner`.
