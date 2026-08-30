@@ -80,7 +80,7 @@ create policy equipment_setting_definitions_select on public.equipment_setting_d
   using (
     exists (
       select 1 from public.equipment_models em
-      where em.id = equipment_model_id
+      where em.id = equipment_setting_definitions.equipment_model_id
         and public.is_studio_member(em.studio_id)
     )
   );
@@ -90,7 +90,7 @@ create policy equipment_setting_definitions_insert on public.equipment_setting_d
   with check (
     exists (
       select 1 from public.equipment_models em
-      where em.id = equipment_model_id
+      where em.id = equipment_setting_definitions.equipment_model_id
         and public.is_studio_staff(em.studio_id)
     )
   );
@@ -100,14 +100,14 @@ create policy equipment_setting_definitions_update on public.equipment_setting_d
   using (
     exists (
       select 1 from public.equipment_models em
-      where em.id = equipment_model_id
+      where em.id = equipment_setting_definitions.equipment_model_id
         and public.is_studio_staff(em.studio_id)
     )
   )
   with check (
     exists (
       select 1 from public.equipment_models em
-      where em.id = equipment_model_id
+      where em.id = equipment_setting_definitions.equipment_model_id
         and public.is_studio_staff(em.studio_id)
     )
   );
@@ -117,7 +117,7 @@ create policy equipment_setting_definitions_delete on public.equipment_setting_d
   using (
     exists (
       select 1 from public.equipment_models em
-      where em.id = equipment_model_id
+      where em.id = equipment_setting_definitions.equipment_model_id
         and public.is_studio_staff(em.studio_id)
     )
   );
