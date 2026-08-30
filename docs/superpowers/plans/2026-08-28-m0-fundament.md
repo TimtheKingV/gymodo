@@ -14,21 +14,21 @@
 
 **Tasks 1–5: abgeschlossen und nach `master` gemerged.** Monorepo, Mandantenschema mit RLS, Tag-Token-System, Next.js-App mit OTP-Login, AASA-Route und Web-Fallback. Vollständiger SDD-Ablauf durchlaufen (Task-Reviews, ein finaler Whole-Branch-Review, eine Fix-Welle) — Details und alle Rulings im Git-Log der gemergten Commits.
 
-**Task 6 (Deployment auf echte Domain): in Arbeit.**
+**Task 6 (Deployment auf echte Domain): funktional abgeschlossen, zwei Punkte bewusst offen.**
 
 | Schritt | Status |
 | --- | --- |
 | GitHub-Repo | ✅ `github.com/TimtheKingV/gymodo`, privat, `master` gepusht |
 | Supabase-Cloud-Projekt | ✅ „Gymodo", Region `eu-central-1`, verlinkt, Migrationen 0001+0002 gepusht |
 | Custom-OTP-E-Mail-Template | ❌ **blockiert** — Free-Tier + Supabase-Standard-Mailer erlaubt keine Custom-Templates. Login sendet aktuell nur einen Klick-Link (Magic Link), keinen 6-stelligen Code, den die UI erwartet. **Bewusst nicht gefixt** (Nutzerentscheidung 30.08.). Löst sich durch Custom-SMTP (z. B. Resend/Postmark) oder Supabase-Pro. Ohne Fix: Login auf der echten Domain funktioniert für echte Nutzer nicht, nur unkritisch, solange nur synthetische/Entwicklerkonten existieren (siehe Spec Abschnitt 9). |
-| Vercel-Projekt | ✅ verbunden mit dem Repo, Root Directory `apps/web` |
-| Vercel-Region | ⚠️ offen — Build lief in `iad1` (USA), muss auf `fra1` (Frankfurt) umgestellt werden (Settings → Functions) |
-| `APPLE_TEAM_ID` / `APPLE_BUNDLE_ID` in Vercel | ❌ **bewusst zurückgestellt** — echte Werte kommen erst, wenn der Nutzer auf dem Mac übernimmt (Apple Developer Zugriff liegt dort). Bis dahin Platzhalterwerte in Vercel (analog zu den lokalen Dev-Stubs: `APPLE_TEAM_ID=ABCDE12345`, `APPLE_BUNDLE_ID=de.fitretro.member`), damit der Build nicht am absichtlichen Build-Time-Guard aus dem finalen Review scheitert (`apps/web/app/api/aasa/route.ts` wirft hart bei fehlenden Werten). **Muss vor jedem produktiven TestFlight-Build durch echte Werte ersetzt werden.** |
-| Domain verbinden | ⏳ noch keine Domain genannt |
-| Smoke-Test (`pnpm smoke:aasa`) | ⏳ wartet auf Domain |
-| CI (Schritt 6, `.github/workflows/ci.yml`) | ⏳ noch nicht begonnen |
+| Vercel-Projekt | ✅ verbunden, Root Directory `apps/web`, live unter `https://gymodo-web.vercel.app` |
+| Vercel-Region | ✅ `fra1` bestätigt (`X-Vercel-Id`-Header geprüft) |
+| `APPLE_TEAM_ID` / `APPLE_BUNDLE_ID` in Vercel | ❌ **bewusst zurückgestellt** — Platzhalterwerte gesetzt (`ABCDE12345` / `de.fitretro.member`), Build läuft damit durch. Echte Werte kommen, sobald der Nutzer auf dem Mac übernimmt (Apple Developer Zugriff liegt dort). **Muss vor jedem produktiven TestFlight-Build durch echte Werte ersetzt werden.** |
+| Domain | ✅ **bewusst kein Kauf jetzt** — vorläufig `gymodo-web.vercel.app` als HTTPS-Domain für Universal Links (funktioniert technisch identisch zu einer eigenen Domain). Eigene Domain kommt, sobald der Nutzer weiter ist. |
+| Smoke-Test (`pnpm smoke:aasa gymodo-web.vercel.app`) | ✅ bestanden, `scripts/smoke-aasa.mjs` nachträglich angelegt (fehlte im ursprünglichen Durchlauf) |
+| CI (`.github/workflows/ci.yml`) | ✅ angelegt und gepusht, Branch-Trigger auf `master` korrigiert (Plan-Vorlage ging von `main` aus). **Nutzer muss noch die Repo-Secrets `LOCAL_ANON_KEY`/`LOCAL_SERVICE_ROLE_KEY` in GitHub eintragen** (Supabase-CLI-Demo-Keys, nicht geheim, aber laut Plan als Secret statt im Code) — ohne die schlägt der Integrationstest-Job fehl. Erster CI-Lauf noch nicht verifiziert. |
 
-**Tasks 7–8:** unverändert, warten auf Mac-Übernahme (native iOS-App, physischer NFC-Test).
+**Tasks 7–8:** unverändert, warten auf Mac-Übernahme (native iOS-App, physischer NFC-Test). Beim Umzug auf den Mac müssen dort ersetzt werden: `APPLE_TEAM_ID`/`APPLE_BUNDLE_ID` in Vercel, und `TagLink.host` in der späteren Swift-Datei auf `gymodo-web.vercel.app` (oder die dann aktuelle Domain).
 
 ## Global Constraints
 
