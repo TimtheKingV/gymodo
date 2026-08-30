@@ -22,7 +22,7 @@ test("ungueltiges Tokenformat zeigt dieselbe neutrale Meldung", async ({
   await expect(page.getByTestId("tag-unknown")).toBeVisible();
 });
 
-test("aktiver Tag ohne Geraet zeigt den Installationshinweis", async ({
+test("aktiver Tag mit zugewiesenem Geraet zeigt den Installationshinweis", async ({
   page,
 }) => {
   const client = admin();
@@ -33,9 +33,28 @@ test("aktiver Tag ohne Geraet zeigt den Installationshinweis", async ({
     .single();
   if (studioError) throw studioError;
 
+  const { data: model, error: modelError } = await client
+    .from("equipment_models")
+    .insert({ studio_id: studio.id, name: "Testgeraet", weight_step_kg: 5 })
+    .select("id")
+    .single();
+  if (modelError) throw modelError;
+
+  const { data: machine, error: machineError } = await client
+    .from("machines")
+    .insert({
+      studio_id: studio.id,
+      equipment_model_id: model.id,
+      label: "Testgeraet 1",
+    })
+    .select("id")
+    .single();
+  if (machineError) throw machineError;
+
   const token = createTagToken();
   const { error: tagError } = await client.from("machine_tags").insert({
     studio_id: studio.id,
+    machine_id: machine.id,
     token_hash: hashTagToken(token),
     status: "active",
   });
@@ -43,6 +62,29 @@ test("aktiver Tag ohne Geraet zeigt den Installationshinweis", async ({
 
   await page.goto(`/t/${token}`);
   await expect(page.getByTestId("install-hint")).toBeVisible();
+});
+
+test("noch nicht zugewiesener Tag zeigt dieselbe neutrale Meldung", async ({
+  page,
+}) => {
+  const client = admin();
+  const { data: studio, error: studioError } = await client
+    .from("studios")
+    .insert({ name: "Unassigned Studio" })
+    .select("id")
+    .single();
+  if (studioError) throw studioError;
+
+  const token = createTagToken();
+  const { error: tagError } = await client.from("machine_tags").insert({
+    studio_id: studio.id,
+    token_hash: hashTagToken(token),
+    status: "unassigned",
+  });
+  if (tagError) throw tagError;
+
+  await page.goto(`/t/${token}`);
+  await expect(page.getByTestId("tag-unknown")).toBeVisible();
 });
 
 test("gesperrter Tag liefert keine Geraetedaten", async ({ page }) => {

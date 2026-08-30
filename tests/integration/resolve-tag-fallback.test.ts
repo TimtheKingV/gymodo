@@ -25,10 +25,33 @@ beforeAll(async () => {
     .single();
   if (studioError) throw studioError;
 
+  const { data: model, error: modelError } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studio.id, name: "Resolve-Fallback Geraet", weight_step_kg: 5 })
+    .select("id")
+    .single();
+  if (modelError) throw modelError;
+
+  const { data: machine, error: machineError } = await admin
+    .from("machines")
+    .insert({
+      studio_id: studio.id,
+      equipment_model_id: model.id,
+      label: "Resolve-Fallback Geraet 1",
+    })
+    .select("id")
+    .single();
+  if (machineError) throw machineError;
+
   activeToken = createTagToken();
   revokedToken = createTagToken();
   const { error: tagError } = await admin.from("machine_tags").insert([
-    { studio_id: studio.id, token_hash: hashTagToken(activeToken), status: "active" },
+    {
+      studio_id: studio.id,
+      machine_id: machine.id,
+      token_hash: hashTagToken(activeToken),
+      status: "active",
+    },
     { studio_id: studio.id, token_hash: hashTagToken(revokedToken), status: "revoked" },
   ]);
   if (tagError) throw tagError;
