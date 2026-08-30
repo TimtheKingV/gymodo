@@ -13,6 +13,7 @@ let memberAEmail: string;
 let memberBEmail: string;
 let staffBEmail: string;
 let linkId: string;
+let linkBId: string;
 
 beforeAll(async () => {
   const admin = serviceClient();
@@ -68,6 +69,37 @@ beforeAll(async () => {
     .single();
   if (linkError) throw linkError;
   linkId = link.id;
+
+  // Vollstaendiges Gegenstueck in Studio B: ohne eine echte Verknuepfung
+  // dort wuerden die Cross-Tenant-Ablehnungen fuer staffB nur beweisen,
+  // dass er nirgends relevant Staff ist -- nicht, dass die Policy das
+  // Studio der Zeile selbst prueft.
+  const { data: modelB, error: modelBError } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioB, name: "Beinstrecker B", weight_step_kg: 5 })
+    .select("id")
+    .single();
+  if (modelBError) throw modelBError;
+
+  const { data: exerciseB, error: exerciseBError } = await admin
+    .from("exercises")
+    .insert({
+      studio_id: studioB,
+      name: "Beinstrecken B",
+      target_reps_min: 8,
+      target_reps_max: 12,
+    })
+    .select("id")
+    .single();
+  if (exerciseBError) throw exerciseBError;
+
+  const { data: linkB, error: linkBError } = await admin
+    .from("equipment_model_exercises")
+    .insert({ equipment_model_id: modelB.id, exercise_id: exerciseB.id })
+    .select("id")
+    .single();
+  if (linkBError) throw linkBError;
+  linkBId = linkB.id;
 });
 
 describe("RLS auf instruction_assets", () => {
@@ -136,6 +168,27 @@ describe("RLS auf instruction_assets", () => {
     expect(found).toEqual([]);
   });
 
+  it("positiv: Staff aus Studio B kann an eigener Verknuepfung ein Video anlegen", async () => {
+    // Belegt, dass die insert-Policy ueberhaupt jemandem Zugriff gewaehrt --
+    // erst dadurch sind die A-Ablehnungen fuer staffB oben aussagekraeftig
+    // und nicht bloss Zufall, weil staffB nirgends Staff waere.
+    const client = await userClient(staffBEmail);
+    const { error } = await client.from("instruction_assets").insert({
+      equipment_model_exercise_id: linkBId,
+      kind: "video",
+      storage_path: "instructions/studio-b-eigenes-video.mp4",
+      duration_s: 20,
+    });
+    expect(error).toBeNull();
+
+    const admin = serviceClient();
+    const { data: found } = await admin
+      .from("instruction_assets")
+      .select("id")
+      .eq("storage_path", "instructions/studio-b-eigenes-video.mp4");
+    expect(found).toHaveLength(1);
+  });
+
   it("positiv: Mitglied aus Studio A sieht das Video", async () => {
     const client = await userClient(memberAEmail);
     const { data, error } = await client
@@ -159,6 +212,7 @@ describe("RLS auf instruction_assets", () => {
     let updateAssetId: string;
     let memberUpdateDenyAssetId: string;
     let crossUpdateDenyAssetId: string;
+    let reassignDenyAssetId: string;
     let deleteAssetId: string;
     let memberDeleteDenyAssetId: string;
     let crossDeleteDenyAssetId: string;
@@ -189,6 +243,12 @@ describe("RLS auf instruction_assets", () => {
           {
             equipment_model_exercise_id: linkId,
             kind: "video",
+            storage_path: "instructions/reassign-verboten.mp4",
+            duration_s: 15,
+          },
+          {
+            equipment_model_exercise_id: linkId,
+            kind: "video",
             storage_path: "instructions/delete-ziel.mp4",
             duration_s: 15,
           },
@@ -210,9 +270,10 @@ describe("RLS auf instruction_assets", () => {
       updateAssetId = data[0]!.id;
       memberUpdateDenyAssetId = data[1]!.id;
       crossUpdateDenyAssetId = data[2]!.id;
-      deleteAssetId = data[3]!.id;
-      memberDeleteDenyAssetId = data[4]!.id;
-      crossDeleteDenyAssetId = data[5]!.id;
+      reassignDenyAssetId = data[3]!.id;
+      deleteAssetId = data[4]!.id;
+      memberDeleteDenyAssetId = data[5]!.id;
+      crossDeleteDenyAssetId = data[6]!.id;
     });
 
     it("positiv: Staff kann ein Einweisungsvideo aktualisieren", async () => {
@@ -273,6 +334,32 @@ describe("RLS auf instruction_assets", () => {
       expect(reloaded?.duration_s).toBe(15);
     });
 
+    it("with check: Staff aus Studio A kann ein Asset nicht auf eine Verknuepfung in Studio B umhaengen", async () => {
+      // Die using-Klausel allein liesse das durch (der Aufrufer ist Staff
+      // in Studio A und die Zeile gehoert derzeit zu Studio A) -- nur die
+      // with-check-Klausel prueft den *neuen* Zielwert und muss hier
+      // greifen.
+      // Anders als ein reiner using-Fehlschlag (der still auf 0 Zeilen
+      // filtert): die Zeile ist fuer staffA sichtbar/eigenstaendig (using
+      // greift), aber der neue Zielwert scheitert an with check -- Postgres
+      // meldet das als expliziten RLS-Fehler, nicht als leeres Ergebnis.
+      const client = await userClient(staffAEmail);
+      const { error } = await client
+        .from("instruction_assets")
+        .update({ equipment_model_exercise_id: linkBId })
+        .eq("id", reassignDenyAssetId)
+        .select("id");
+      expect(error).not.toBeNull();
+
+      const admin = serviceClient();
+      const { data: reloaded } = await admin
+        .from("instruction_assets")
+        .select("equipment_model_exercise_id")
+        .eq("id", reassignDenyAssetId)
+        .single();
+      expect(reloaded?.equipment_model_exercise_id).toBe(linkId);
+    });
+
     it("positiv: Staff kann ein Einweisungsvideo loeschen", async () => {
       const client = await userClient(staffAEmail);
       const { error } = await client
@@ -323,6 +410,90 @@ describe("RLS auf instruction_assets", () => {
         .select("id")
         .eq("id", crossDeleteDenyAssetId);
       expect(remaining).toHaveLength(1);
+    });
+  });
+
+  describe("Formatgrenze duration_s", () => {
+    it("positiv: 45 Sekunden werden akzeptiert (obere Grenze)", async () => {
+      const client = await userClient(staffAEmail);
+      const { error } = await client.from("instruction_assets").insert({
+        equipment_model_exercise_id: linkId,
+        kind: "video",
+        storage_path: "instructions/grenze-45.mp4",
+        duration_s: 45,
+      });
+      expect(error).toBeNull();
+    });
+
+    it("negativ: 46 Sekunden werden abgelehnt", async () => {
+      const client = await userClient(staffAEmail);
+      const { error } = await client.from("instruction_assets").insert({
+        equipment_model_exercise_id: linkId,
+        kind: "video",
+        storage_path: "instructions/grenze-46.mp4",
+        duration_s: 46,
+      });
+      expect(error).not.toBeNull();
+
+      const admin = serviceClient();
+      const { data: found } = await admin
+        .from("instruction_assets")
+        .select("id")
+        .eq("storage_path", "instructions/grenze-46.mp4");
+      expect(found).toEqual([]);
+    });
+
+    it("negativ: 0 Sekunden werden abgelehnt", async () => {
+      const client = await userClient(staffAEmail);
+      const { error } = await client.from("instruction_assets").insert({
+        equipment_model_exercise_id: linkId,
+        kind: "video",
+        storage_path: "instructions/grenze-0.mp4",
+        duration_s: 0,
+      });
+      expect(error).not.toBeNull();
+
+      const admin = serviceClient();
+      const { data: found } = await admin
+        .from("instruction_assets")
+        .select("id")
+        .eq("storage_path", "instructions/grenze-0.mp4");
+      expect(found).toEqual([]);
+    });
+
+    it("negativ: ein negativer Wert wird abgelehnt", async () => {
+      const client = await userClient(staffAEmail);
+      const { error } = await client.from("instruction_assets").insert({
+        equipment_model_exercise_id: linkId,
+        kind: "video",
+        storage_path: "instructions/grenze-negativ.mp4",
+        duration_s: -5,
+      });
+      expect(error).not.toBeNull();
+
+      const admin = serviceClient();
+      const { data: found } = await admin
+        .from("instruction_assets")
+        .select("id")
+        .eq("storage_path", "instructions/grenze-negativ.mp4");
+      expect(found).toEqual([]);
+    });
+
+    it("negativ: fehlendes duration_s wird abgelehnt (not null)", async () => {
+      const client = await userClient(staffAEmail);
+      const { error } = await client.from("instruction_assets").insert({
+        equipment_model_exercise_id: linkId,
+        kind: "video",
+        storage_path: "instructions/grenze-fehlt.mp4",
+      });
+      expect(error).not.toBeNull();
+
+      const admin = serviceClient();
+      const { data: found } = await admin
+        .from("instruction_assets")
+        .select("id")
+        .eq("storage_path", "instructions/grenze-fehlt.mp4");
+      expect(found).toEqual([]);
     });
   });
 });

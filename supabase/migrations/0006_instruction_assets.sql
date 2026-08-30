@@ -3,7 +3,7 @@ create table public.instruction_assets (
   equipment_model_exercise_id  uuid not null references public.equipment_model_exercises (id) on delete cascade,
   kind                         text not null check (kind = 'video'),
   storage_path                 text not null check (length(trim(storage_path)) > 0),
-  duration_s                   integer check (duration_s is null or (duration_s > 0 and duration_s <= 45)),
+  duration_s                   integer not null check (duration_s > 0 and duration_s <= 45),
   created_at                   timestamptz not null default now()
 );
 
