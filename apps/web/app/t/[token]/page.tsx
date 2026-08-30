@@ -28,22 +28,20 @@ export default async function TagFallbackPage({
 
   if (!isValidTagToken(token)) return unknown;
 
-  // Oeffentlicher Endpunkt ohne Nutzersession: bewusst mit erhoehten Rechten,
-  // liefert aber ausschliesslich nicht personenbezogene Tagdaten zurueck.
+  // Oeffentlicher Endpunkt ohne Nutzersession: der anonyme Key berechtigt
+  // zu nichts ausser dem Aufruf von resolve_tag_fallback (SECURITY DEFINER,
+  // liefert ausschliesslich eine machine_tag_id fuer aktive Tags zurueck).
   const client = createClient(
     requiredEnv("SUPABASE_URL"),
-    requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
+    requiredEnv("SUPABASE_ANON_KEY"),
     { auth: { persistSession: false } },
   );
 
-  const { data: tag } = await client
-    .from("machine_tags")
-    .select("id, status")
-    .eq("token_hash", hashTagToken(token))
-    .eq("status", "active")
-    .maybeSingle();
+  const { data } = await client.rpc("resolve_tag_fallback", {
+    p_token_hash: hashTagToken(token),
+  });
 
-  if (!tag) return unknown;
+  if (!data || data.length === 0) return unknown;
 
   return (
     <main>
