@@ -1250,34 +1250,39 @@ create policy machines_select on public.machines
 
 -- Wie equipment_model_exercises: die Policy erzwingt zugleich, dass das
 -- referenzierte Geraetemodell demselben Studio gehoert wie die Instanz.
--- Unqualifizierte Spaltennamen (studio_id, equipment_model_id) beziehen
--- sich hier auf die einzufuegende/zu aendernde machines-Zeile.
+--
+-- WICHTIG: Die Spalten der machines-Zeile MUESSEN hier mit dem Tabellennamen
+-- qualifiziert werden (machines.studio_id, nicht studio_id). Unqualifiziert
+-- loest PostgreSQL den Namen gegen die INNERE Tabelle der Unterabfrage auf --
+-- equipment_models hat ebenfalls eine Spalte studio_id, sodass aus
+-- "em.studio_id = studio_id" ein wirkungsloses "em.studio_id = em.studio_id"
+-- wuerde und die Studio-Pruefung stillschweigend nichts pruefte.
 create policy machines_insert on public.machines
   for insert to authenticated
   with check (
-    public.is_studio_staff(studio_id)
+    public.is_studio_staff(machines.studio_id)
     and exists (
       select 1 from public.equipment_models em
-      where em.id = equipment_model_id
-        and em.studio_id = studio_id
+      where em.id = machines.equipment_model_id
+        and em.studio_id = machines.studio_id
     )
   );
 
 create policy machines_update on public.machines
   for update to authenticated
-  using (public.is_studio_staff(studio_id))
+  using (public.is_studio_staff(machines.studio_id))
   with check (
-    public.is_studio_staff(studio_id)
+    public.is_studio_staff(machines.studio_id)
     and exists (
       select 1 from public.equipment_models em
-      where em.id = equipment_model_id
-        and em.studio_id = studio_id
+      where em.id = machines.equipment_model_id
+        and em.studio_id = machines.studio_id
     )
   );
 
 create policy machines_delete on public.machines
   for delete to authenticated
-  using (public.is_studio_staff(studio_id));
+  using (public.is_studio_staff(machines.studio_id));
 ```
 
 - [ ] **Step 4: Migration anwenden und Tests laufen lassen**
@@ -1316,9 +1321,16 @@ git commit -m "feat: machines mit Studio-Konsistenzpruefung gegen equipment_mode
 `supabase/migrations/0008_machine_tags_fk.sql`:
 
 ```sql
+-- on delete restrict, nicht set null: ein gelöschtes Geraet wuerde sonst bei
+-- revozierten Tags die machine_id stillschweigend auf NULL setzen und damit
+-- die fachliche Historie zerstoeren (welcher Tag hing an welchem Geraet), und
+-- bei aktiven Tags mit einem kryptischen Verstoss gegen die Check-Constraint
+-- unten abbrechen. Restrict macht die Regel explizit: bevor ein Geraet
+-- geloescht werden kann, muessen seine Tags bewusst umgehaengt oder entfernt
+-- werden. Konsistent mit machines.equipment_model_id (ebenfalls restrict).
 alter table public.machine_tags
   add constraint machine_tags_machine_id_fkey
-    foreign key (machine_id) references public.machines (id) on delete set null;
+    foreign key (machine_id) references public.machines (id) on delete restrict;
 
 alter table public.machine_tags
   add constraint machine_tags_active_needs_machine
