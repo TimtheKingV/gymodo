@@ -10,6 +10,43 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-28-fitness-retrofit-m1-design.md`, Abschnitt 7 (Datenmodell) und Abschnitt 6.1 (Umsetzung Ruling — `resolve_tag_fallback`)
 
+---
+
+## Status (Stand: 30. August 2026) — ABGESCHLOSSEN, nach `master` gemerged
+
+Alle 6 Tasks umgesetzt, finaler Whole-Branch-Review plus eine Fix-Welle durchlaufen, 19 Commits nach `master` gemerged und zu GitHub gepusht. Migrationen `0003`–`0011` (statt der geplanten `0003`–`0008` — drei kamen aus dem Abschlussreview dazu). Integrationssuite von 20 auf **113 Tests** gewachsen, dazu 19 Unit- und 6 E2E-Tests, alles grün gegen die lokale Datenbank. Lokal und Cloud sind auf demselben Migrationsstand.
+
+**Zusätzlich zum Plan entstanden:**
+- `0009_function_grants.sql` — das bis dahin verwendete `revoke all ... from public` ist auf Supabase **wirkungslos**: die Plattform gewährt `EXECUTE` auf neue `public`-Funktionen separat per `ALTER DEFAULT PRIVILEGES` an `anon`, `authenticated` und `service_role`. Drei Task-Reviews hatten das fälschlich als verifizierte Sicherheitskontrolle protokolliert. Jetzt korrekt entzogen und gezielt neu vergeben.
+- `0010_machine_tags_machine_id_index.sql` — fehlender Index auf der in Task 6 angelegten FK-Spalte (Spec 7.5 verlangt einen Index auf jeder FK-Spalte).
+- `0011_updated_at_trigger.sql` — `updated_at` wurde auf keiner Tabelle fortgeschrieben und war zusätzlich vom Client frei beschreibbar, also nicht bloß veraltet, sondern unzuverlässig.
+
+### Offene Punkte, die dieser Plan bewusst hinterlässt
+
+Drei Befunde des Abschlussreviews wurden mit Begründung geparkt statt behoben. **Alle drei sind Test- bzw. Kommentardefekte — Schema, Grants, Index, Trigger und Policies sind nachweislich korrekt.** Sie gehören an den Anfang des Folgeplans:
+
+1. **Die `updated_at`-Tests sind immer grün.** `tests/integration/updated-at-trigger.test.ts` vergleicht den JS-String `"2099-01-01T00:00:00.000Z"` mit PostgREST's Rendering `"2099-01-01T00:00:00+00:00"` — nie gleich, also ist `not.toBe(BOGUS)` auch dann erfüllt, wenn der Client-Wert übernommen *würde*. Migration `0011` ließe sich zurücknehmen, ohne dass ein Test rot wird. Fix: geparste Zeitpunkte vergleichen statt Strings.
+2. **Ein `with check`-Test isoliert nicht, was er behauptet.** In `rls-equipment-models.test.ts` scheitert der Umhänge-Versuch schon an der SELECT-Policy auf der neuen Zeile, nicht an `with check`. Der diskriminierende Akteur wäre „Trainer in Studio A, einfaches **Mitglied** in Studio B" — passiert `using`, ist sichtbar, scheitert nur an der Staff-Prüfung im `with check`.
+3. **Ein Kommentar behauptet eine unmögliche Isolation.** `rls-exercises.test.ts` (bei `equipment_model_exercises`) sagt, ohne diesen Test könne man die `with check`-Klausel ersatzlos löschen. Das stimmt für **keine** Tabelle: löscht man `with check`, wendet PostgreSQL die `using`-Klausel auf die neue Zeile an — und beide sind hier textgleich. Der Test hat Wert, nur sein Kommentar ist falsch.
+
+### Weitere Erkenntnisse für den Folgeplan
+
+- **`machine_tags` braucht seine Insert/Update-Policies** — und die müssen dieselbe `exists(… studio check …)` tragen wie `0007_machines.sql`. Ein einspaltiger Fremdschlüssel verhindert **nicht**, dass ein Tag aus Studio B auf ein Gerät in Studio A zeigt (empirisch belegt).
+- **Die Same-Studio-Garantie lebt in RLS, nicht im Schema.** Konsequenz: die API muss für diese Tabellen einen nutzergebundenen Client verwenden, **niemals** den Service-Role-Client — sonst entfallen alle Garantien dieses Branches auf einen Schlag.
+- **Die Tag-Lebensdauer hat sich geändert.** Durch die neue Check-Constraint kann ein Tag nur in derselben Anweisung `active` werden, in der er sein Gerät bekommt. Ein zweistufiges „Tag anlegen, dann zuweisen" schlägt fehl, sofern Schritt 1 nicht `unassigned` verwendet.
+- **Es gibt keinen Löschpfad für ein Gerät, das je einen Tag getragen hat.** `on delete restrict` erzwingt, dass jemand `machine_id` vorher von Hand nullt — also genau der Historienverlust, den `restrict` verhindern sollte. Der vorgesehene Weg ist `machines.status = 'inactive'`. Die UI muss „stilllegen" anbieten, nicht „löschen". Dauerhafte Lösung wäre eine eigene Zuordnungshistorie statt eines nullbaren Zeigers.
+- **`equipment_setting_definitions.kind = 'enum'` ist unbenutzbar** — es gibt keine Spalte für die erlaubten Werte. Vor dem Einstellparameter-Editor ergänzen.
+- **`instruction_assets` braucht `unique (equipment_model_exercise_id, storage_path)`** vor dem Upload-Flow — das ist zugleich die Ursache der einzigen Wiederholungs-Fragilität der Testsuite (konstante Pfade akkumulieren ohne `db reset`).
+- **Das Löschen einer Übung vernichtet alle daran hängenden Einweisungsvideos** (Cascade über die Verknüpfungstabelle). Heute nur Metadaten — sobald der private Bucket existiert, verwaisen echte Dateien ohne Aufräumpfad, und das sind Personendaten des Trainers. Entscheidung nötig: `restrict` oder ein dokumentierter Delete-Hook.
+- **`0009` entzieht `EXECUTE` auch dem `service_role`.** Ein künftiges serverseitiges `serviceClient().rpc()` auf diese drei Funktionen schlägt mit Permission-Fehler fehl.
+- **`set_updated_at()` selbst trägt noch die Default-Grants**, die `0009` gerade entfernt hat — harmlos, aber inkonsistent zur neu etablierten Konvention.
+
+### Betriebshinweis (aus einem Fehler gelernt)
+
+Die Integrationstests legen Studios und Auth-Nutzer an und räumen **nicht** auf. Sie gehören ausschließlich gegen die lokale Instanz. Beide Env-Dateien (`.env` für die Testsuite, `apps/web/.env.local` für `next dev`) zeigen deshalb auf `http://127.0.0.1:54321` und tragen einen entsprechenden Warnhinweis. Die Cloud-Zugangsdaten liegen in Vercel und im Supabase-Dashboard, nicht in diesen Dateien.
+
+---
+
 ## Global Constraints
 
 Diese Werte gelten in jedem Task, zusätzlich zu den in M0 etablierten Regeln (`studio_id` + `ENABLE`/`FORCE ROW LEVEL SECURITY` auf jeder Tabelle, Positiv-/Negativ-/Cross-Tenant-Test je Policy, Migrationen ausschließlich versioniert in `supabase/migrations/`, TypeScript `strict: true` ohne `any`/`@ts-ignore`, ein Commit je abgeschlossenem Schritt-Block).

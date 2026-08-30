@@ -32,6 +32,13 @@
 
 **Tasks 7–8:** unverändert, warten auf Mac-Übernahme (native iOS-App, physischer NFC-Test). Beim Umzug auf den Mac müssen dort ersetzt werden: `APPLE_TEAM_ID`/`APPLE_BUNDLE_ID` in Vercel, und `TagLink.host` in der späteren Swift-Datei auf `gymodo-web.vercel.app` (oder die dann aktuelle Domain).
 
+**Nachtrag (30. August 2026):** Der Folgeplan „Gerätekatalog — Datenmodell" ist inzwischen ebenfalls abgeschlossen und gemerged (siehe `2026-08-30-geraetekatalog-datenmodell.md`). Zwei Dinge daraus betreffen diesen Plan rückwirkend:
+
+- **Der Service-Role-Key im Web-Fallback ist behoben.** Der finale M0-Review hatte ihn als Important markiert und die Nachbesserung in den Folgeplan gerult; `apps/web/app/t/[token]/page.tsx` nutzt jetzt einen anon-Client plus die `SECURITY DEFINER`-Funktion `resolve_tag_fallback`.
+- **`machine_tags.machine_id` hat seinen Fremdschlüssel bekommen**, wie in Task 3 dieses Plans angekündigt — inklusive der Check-Constraint, dass ein aktiver Tag ein Gerät haben muss.
+
+Zusätzlich wurde eine Falle beseitigt, die dieser Plan hinterlassen hatte: Die in Task 6 angelegte `.env` enthielt Cloud-Zugangsdaten, wird aber auch von der Testsuite geladen — Integrationstests aus dem Hauptverzeichnis liefen dadurch gegen das Produktivprojekt und schrieben Testdaten hinein. Beide Env-Dateien zeigen jetzt auf die lokale Instanz und tragen einen Warnhinweis; das Cloud-Projekt wurde zurückgesetzt und neu migriert.
+
 ## Global Constraints
 
 Diese Werte gelten in jedem Task. Sie werden **einmal** festgelegt und danach überall identisch verwendet.
