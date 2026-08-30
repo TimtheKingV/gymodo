@@ -26,7 +26,9 @@
 | `APPLE_TEAM_ID` / `APPLE_BUNDLE_ID` in Vercel | ❌ **bewusst zurückgestellt** — Platzhalterwerte gesetzt (`ABCDE12345` / `de.fitretro.member`), Build läuft damit durch. Echte Werte kommen, sobald der Nutzer auf dem Mac übernimmt (Apple Developer Zugriff liegt dort). **Muss vor jedem produktiven TestFlight-Build durch echte Werte ersetzt werden.** |
 | Domain | ✅ **bewusst kein Kauf jetzt** — vorläufig `gymodo-web.vercel.app` als HTTPS-Domain für Universal Links (funktioniert technisch identisch zu einer eigenen Domain). Eigene Domain kommt, sobald der Nutzer weiter ist. |
 | Smoke-Test (`pnpm smoke:aasa gymodo-web.vercel.app`) | ✅ bestanden, `scripts/smoke-aasa.mjs` nachträglich angelegt (fehlte im ursprünglichen Durchlauf) |
-| CI (`.github/workflows/ci.yml`) | ✅ angelegt und gepusht, Branch-Trigger auf `master` korrigiert (Plan-Vorlage ging von `main` aus). **Nutzer muss noch die Repo-Secrets `LOCAL_ANON_KEY`/`LOCAL_SERVICE_ROLE_KEY` in GitHub eintragen** (Supabase-CLI-Demo-Keys, nicht geheim, aber laut Plan als Secret statt im Code) — ohne die schlägt der Integrationstest-Job fehl. Erster CI-Lauf noch nicht verifiziert. |
+| CI (`.github/workflows/ci.yml`) | ✅ grün. Branch-Trigger auf `master` korrigiert (Plan-Vorlage ging von `main` aus). Repo-Secrets `LOCAL_ANON_KEY`/`LOCAL_SERVICE_ROLE_KEY` gesetzt. Ein Fix nötig: `pnpm/action-setup@v4` verweigerte sich bei gleichzeitiger Versionsangabe im Workflow UND in `package.json`s `packageManager`-Feld — Workflow-Angabe entfernt, `package.json` reicht der Action automatisch. |
+
+**Task 6: vollständig abgeschlossen** (30. August 2026), bis auf die beiden oben bewusst zurückgestellten Punkte (Apple-IDs, OTP-Mail-Template).
 
 **Tasks 7–8:** unverändert, warten auf Mac-Übernahme (native iOS-App, physischer NFC-Test). Beim Umzug auf den Mac müssen dort ersetzt werden: `APPLE_TEAM_ID`/`APPLE_BUNDLE_ID` in Vercel, und `TagLink.host` in der späteren Swift-Datei auf `gymodo-web.vercel.app` (oder die dann aktuelle Domain).
 
