@@ -389,6 +389,7 @@ describe("RLS auf equipment_model_exercises", () => {
     let updateLinkId: string;
     let memberUpdateDenyLinkId: string;
     let crossUpdateDenyLinkId: string;
+    let rehangDenyLinkId: string;
     let deleteLinkId: string;
     let memberDeleteDenyLinkId: string;
     let crossDeleteDenyLinkId: string;
@@ -412,6 +413,12 @@ describe("RLS auf equipment_model_exercises", () => {
             target_reps_min: 8,
             target_reps_max: 12,
           },
+          {
+            studio_id: studioA,
+            name: "Link-Rehang-Verboten",
+            target_reps_min: 8,
+            target_reps_max: 12,
+          },
           { studio_id: studioA, name: "Link-Delete", target_reps_min: 8, target_reps_max: 12 },
           {
             studio_id: studioA,
@@ -432,9 +439,10 @@ describe("RLS auf equipment_model_exercises", () => {
       const exUpdate = exs[1]!.id;
       const exMemberUpdateDeny = exs[2]!.id;
       const exCrossUpdateDeny = exs[3]!.id;
-      const exDelete = exs[4]!.id;
-      const exMemberDeleteDeny = exs[5]!.id;
-      const exCrossDeleteDeny = exs[6]!.id;
+      const exRehangDeny = exs[4]!.id;
+      const exDelete = exs[5]!.id;
+      const exMemberDeleteDeny = exs[6]!.id;
+      const exCrossDeleteDeny = exs[7]!.id;
 
       const { data: links, error: linkErr } = await admin
         .from("equipment_model_exercises")
@@ -443,6 +451,7 @@ describe("RLS auf equipment_model_exercises", () => {
           { equipment_model_id: modelA, exercise_id: exUpdate },
           { equipment_model_id: modelA, exercise_id: exMemberUpdateDeny },
           { equipment_model_id: modelA, exercise_id: exCrossUpdateDeny },
+          { equipment_model_id: modelA, exercise_id: exRehangDeny },
           { equipment_model_id: modelA, exercise_id: exDelete },
           { equipment_model_id: modelA, exercise_id: exMemberDeleteDeny },
           { equipment_model_id: modelA, exercise_id: exCrossDeleteDeny },
@@ -453,9 +462,10 @@ describe("RLS auf equipment_model_exercises", () => {
       updateLinkId = links[1]!.id;
       memberUpdateDenyLinkId = links[2]!.id;
       crossUpdateDenyLinkId = links[3]!.id;
-      deleteLinkId = links[4]!.id;
-      memberDeleteDenyLinkId = links[5]!.id;
-      crossDeleteDenyLinkId = links[6]!.id;
+      rehangDenyLinkId = links[4]!.id;
+      deleteLinkId = links[5]!.id;
+      memberDeleteDenyLinkId = links[6]!.id;
+      crossDeleteDenyLinkId = links[7]!.id;
     });
 
     it("positiv: Mitglied aus Studio A sieht die Verknuepfung", async () => {
@@ -533,6 +543,37 @@ describe("RLS auf equipment_model_exercises", () => {
         .eq("id", crossUpdateDenyLinkId)
         .single();
       expect(reloaded?.sort_order).toBe(0);
+    });
+
+    it("negativ (with check, Same-Studio-Konsistenz isoliert): Trainer in beiden Studios kann eine Verknuepfung nicht auf exerciseB umhaengen", async () => {
+      // Ohne diesen Test koennte man die with-check-Klausel der
+      // equipment_model_exercises_update-Policy ersatzlos loeschen, und alle
+      // bisherigen Update-Tests blieben gruen -- sie aendern nur sort_order,
+      // nie den Elternbezug. staffABEmail ist wie beim Insert-Test oben
+      // Trainer in Studio A UND Studio B: exerciseB ist fuer ihn sichtbar
+      // und is_studio_staff greift in beiden Studios, die using-Klausel
+      // passiert er ebenfalls (die Zeile gehoert zu Studio A). Der
+      // Update-Versuch kann also nur noch am Same-Studio-Join
+      // (e.studio_id = em.studio_id) in with check scheitern.
+      const client = await userClient(staffABEmail);
+
+      const visibility = await client.from("exercises").select("id").eq("id", exerciseB);
+      expect(visibility.data).toHaveLength(1);
+
+      const { error } = await client
+        .from("equipment_model_exercises")
+        .update({ exercise_id: exerciseB })
+        .eq("id", rehangDenyLinkId)
+        .select("id");
+      expect(error).not.toBeNull();
+
+      const admin = serviceClient();
+      const { data: reloaded } = await admin
+        .from("equipment_model_exercises")
+        .select("exercise_id")
+        .eq("id", rehangDenyLinkId)
+        .single();
+      expect(reloaded?.exercise_id).not.toBe(exerciseB);
     });
 
     it("positiv: Staff kann eine Verknuepfung loeschen", async () => {

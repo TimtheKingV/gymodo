@@ -194,6 +194,7 @@ describe("RLS auf equipment_models", () => {
 
 describe("RLS auf equipment_setting_definitions", () => {
   let modelId: string;
+  let modelB: string;
 
   beforeAll(async () => {
     const admin = serviceClient();
@@ -204,6 +205,14 @@ describe("RLS auf equipment_setting_definitions", () => {
       .single();
     if (error) throw error;
     modelId = data.id;
+
+    const { data: modelBData, error: modelBError } = await admin
+      .from("equipment_models")
+      .insert({ studio_id: studioB, name: "Latzug B", weight_step_kg: 2.5 })
+      .select("id")
+      .single();
+    if (modelBError) throw modelBError;
+    modelB = modelBData.id;
   });
 
   it("positiv: Staff kann eine Einstelldefinition anlegen", async () => {
@@ -231,6 +240,29 @@ describe("RLS auf equipment_setting_definitions", () => {
     expect(error).not.toBeNull();
   });
 
+  it("cross-tenant: Staff aus Studio B kann keine Einstelldefinition an einem Studio-A-Geraetemodell anlegen", async () => {
+    // staffBEmail wird an dieser Datei sonst nur gegen equipment_models
+    // verwendet -- die vier esd-Schreibpolicies waren damit nur auf der
+    // Rollen-Dimension (Staff vs. Mitglied) abgesichert, nicht auf der
+    // Mandanten-Dimension.
+    const client = await userClient(staffBEmail);
+    const { error } = await client.from("equipment_setting_definitions").insert({
+      equipment_model_id: modelId,
+      key: "cross_tenant_verboten",
+      label: "Cross-Tenant-Verboten",
+      kind: "number",
+    });
+    expect(error).not.toBeNull();
+
+    const admin = serviceClient();
+    const { data: found } = await admin
+      .from("equipment_setting_definitions")
+      .select("id")
+      .eq("equipment_model_id", modelId)
+      .eq("key", "cross_tenant_verboten");
+    expect(found).toEqual([]);
+  });
+
   it("positiv: Mitglied sieht die Einstelldefinition seines Studios", async () => {
     const client = await userClient(memberAEmail);
     const { data, error } = await client
@@ -252,6 +284,7 @@ describe("RLS auf equipment_setting_definitions", () => {
 
   describe("update/delete", () => {
     let updateDefId: string;
+    let moveDefId: string;
     let deleteDefId: string;
     let deleteDenyDefId: string;
 
@@ -261,6 +294,7 @@ describe("RLS auf equipment_setting_definitions", () => {
         .from("equipment_setting_definitions")
         .insert([
           { equipment_model_id: modelId, key: "update_ziel", label: "Update-Ziel", kind: "number" },
+          { equipment_model_id: modelId, key: "move_ziel", label: "Move-Ziel", kind: "number" },
           { equipment_model_id: modelId, key: "delete_ziel", label: "Delete-Ziel", kind: "number" },
           {
             equipment_model_id: modelId,
@@ -272,8 +306,9 @@ describe("RLS auf equipment_setting_definitions", () => {
         .select("id");
       if (error) throw error;
       updateDefId = data[0]!.id;
-      deleteDefId = data[1]!.id;
-      deleteDenyDefId = data[2]!.id;
+      moveDefId = data[1]!.id;
+      deleteDefId = data[2]!.id;
+      deleteDenyDefId = data[3]!.id;
     });
 
     it("positiv: Staff kann eine Einstelldefinition aktualisieren", async () => {
@@ -286,6 +321,34 @@ describe("RLS auf equipment_setting_definitions", () => {
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBe(updateDefId);
+    });
+
+    it("negativ (with check): Staff kann eine Einstelldefinition nicht auf ein fremdes Geraetemodell umhaengen", async () => {
+      // Die using-Klausel allein liesse das durch (die Zeile gehoert derzeit
+      // zu modelId in Studio A, staffA ist dort Staff) -- erst die
+      // with-check-Klausel prueft den *neuen* equipment_model_id-Wert
+      // (modelB in Studio B, wo staffA kein Staff ist) und muss hier
+      // greifen. Anders als bei equipment_model_exercises gibt es hier
+      // keinen zweiten Elternbezug, gegen den sich ein Same-Studio-Join
+      // isolieren liesse -- staffA (nicht staffAB) ist hier der richtige
+      // Akteur: die using-Klausel passiert er (Zeile ist in Studio A
+      // sichtbar/bearbeitbar), die with-check-Klausel scheitert am neuen
+      // Zielmodell, nicht an der Sichtbarkeit der Ausgangszeile.
+      const client = await userClient(staffAEmail);
+      const { error } = await client
+        .from("equipment_setting_definitions")
+        .update({ equipment_model_id: modelB })
+        .eq("id", moveDefId)
+        .select("id");
+      expect(error).not.toBeNull();
+
+      const admin = serviceClient();
+      const { data: reloaded } = await admin
+        .from("equipment_setting_definitions")
+        .select("equipment_model_id")
+        .eq("id", moveDefId)
+        .single();
+      expect(reloaded?.equipment_model_id).toBe(modelId);
     });
 
     it("negativ: Mitglied kann keine Einstelldefinition aktualisieren", async () => {
