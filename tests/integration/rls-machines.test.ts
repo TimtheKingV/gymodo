@@ -180,6 +180,7 @@ describe("RLS auf machines", () => {
     let crossUpdateDenyMachineId: string;
     let reassignStudioDenyMachineId: string;
     let reassignModelDenyMachineId: string;
+    let reassignModelDenyStaffABMachineId: string;
     let deleteMachineId: string;
     let memberDeleteDenyMachineId: string;
     let crossDeleteDenyMachineId: string;
@@ -210,6 +211,11 @@ describe("RLS auf machines", () => {
             equipment_model_id: modelA,
             label: "Reassign-Modell-Verboten-Ziel",
           },
+          {
+            studio_id: studioA,
+            equipment_model_id: modelA,
+            label: "Reassign-Modell-StaffAB-Verboten-Ziel",
+          },
           { studio_id: studioA, equipment_model_id: modelA, label: "Delete-Ziel" },
           {
             studio_id: studioA,
@@ -229,9 +235,10 @@ describe("RLS auf machines", () => {
       crossUpdateDenyMachineId = data[2]!.id;
       reassignStudioDenyMachineId = data[3]!.id;
       reassignModelDenyMachineId = data[4]!.id;
-      deleteMachineId = data[5]!.id;
-      memberDeleteDenyMachineId = data[6]!.id;
-      crossDeleteDenyMachineId = data[7]!.id;
+      reassignModelDenyStaffABMachineId = data[5]!.id;
+      deleteMachineId = data[6]!.id;
+      memberDeleteDenyMachineId = data[7]!.id;
+      crossDeleteDenyMachineId = data[8]!.id;
     });
 
     it("positiv: Staff kann eine Geraeteinstanz aktualisieren", async () => {
@@ -332,6 +339,39 @@ describe("RLS auf machines", () => {
         .from("machines")
         .select("equipment_model_id")
         .eq("id", reassignModelDenyMachineId)
+        .single();
+      expect(reloaded?.equipment_model_id).toBe(modelA);
+    });
+
+    it("with check (Same-Studio-Konsistenz isoliert): Trainer in beiden Studios kann eine Studio-A-Zeile nicht auf modelB umhaengen", async () => {
+      // Der obige staffA-Test allein ist nicht schluessig: fuer staffA ist
+      // modelB schon durch equipment_models_select unsichtbar, das Update
+      // koennte also auch an dieser Sichtbarkeit statt an der
+      // Studio-Konsistenzpruefung scheitern. staffAB ist Trainer in Studio A
+      // UND B: modelB ist fuer ihn sichtbar und er ist in beiden Studios
+      // Staff, die using-Klausel passiert er ebenfalls (Zeile gehoert zu
+      // Studio A). Der Update-Versuch kann also nur noch an
+      // "em.studio_id = machines.studio_id" in with check scheitern.
+      const client = await userClient(staffABEmail);
+
+      const visibility = await client
+        .from("equipment_models")
+        .select("id")
+        .eq("id", modelB);
+      expect(visibility.data).toHaveLength(1);
+
+      const { error } = await client
+        .from("machines")
+        .update({ equipment_model_id: modelB })
+        .eq("id", reassignModelDenyStaffABMachineId)
+        .select("id");
+      expect(error).not.toBeNull();
+
+      const admin = serviceClient();
+      const { data: reloaded } = await admin
+        .from("machines")
+        .select("equipment_model_id")
+        .eq("id", reassignModelDenyStaffABMachineId)
         .single();
       expect(reloaded?.equipment_model_id).toBe(modelA);
     });
