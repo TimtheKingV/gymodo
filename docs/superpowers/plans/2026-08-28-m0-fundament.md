@@ -10,6 +10,26 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-28-fitness-retrofit-m1-design.md`
 
+## Status (Stand: 30. August 2026)
+
+**Tasks 1–5: abgeschlossen und nach `master` gemerged.** Monorepo, Mandantenschema mit RLS, Tag-Token-System, Next.js-App mit OTP-Login, AASA-Route und Web-Fallback. Vollständiger SDD-Ablauf durchlaufen (Task-Reviews, ein finaler Whole-Branch-Review, eine Fix-Welle) — Details und alle Rulings im Git-Log der gemergten Commits.
+
+**Task 6 (Deployment auf echte Domain): in Arbeit.**
+
+| Schritt | Status |
+| --- | --- |
+| GitHub-Repo | ✅ `github.com/TimtheKingV/gymodo`, privat, `master` gepusht |
+| Supabase-Cloud-Projekt | ✅ „Gymodo", Region `eu-central-1`, verlinkt, Migrationen 0001+0002 gepusht |
+| Custom-OTP-E-Mail-Template | ❌ **blockiert** — Free-Tier + Supabase-Standard-Mailer erlaubt keine Custom-Templates. Login sendet aktuell nur einen Klick-Link (Magic Link), keinen 6-stelligen Code, den die UI erwartet. **Bewusst nicht gefixt** (Nutzerentscheidung 30.08.). Löst sich durch Custom-SMTP (z. B. Resend/Postmark) oder Supabase-Pro. Ohne Fix: Login auf der echten Domain funktioniert für echte Nutzer nicht, nur unkritisch, solange nur synthetische/Entwicklerkonten existieren (siehe Spec Abschnitt 9). |
+| Vercel-Projekt | ✅ verbunden mit dem Repo, Root Directory `apps/web` |
+| Vercel-Region | ⚠️ offen — Build lief in `iad1` (USA), muss auf `fra1` (Frankfurt) umgestellt werden (Settings → Functions) |
+| `APPLE_TEAM_ID` / `APPLE_BUNDLE_ID` in Vercel | ❌ **bewusst zurückgestellt** — echte Werte kommen erst, wenn der Nutzer auf dem Mac übernimmt (Apple Developer Zugriff liegt dort). Bis dahin Platzhalterwerte in Vercel (analog zu den lokalen Dev-Stubs: `APPLE_TEAM_ID=ABCDE12345`, `APPLE_BUNDLE_ID=de.fitretro.member`), damit der Build nicht am absichtlichen Build-Time-Guard aus dem finalen Review scheitert (`apps/web/app/api/aasa/route.ts` wirft hart bei fehlenden Werten). **Muss vor jedem produktiven TestFlight-Build durch echte Werte ersetzt werden.** |
+| Domain verbinden | ⏳ noch keine Domain genannt |
+| Smoke-Test (`pnpm smoke:aasa`) | ⏳ wartet auf Domain |
+| CI (Schritt 6, `.github/workflows/ci.yml`) | ⏳ noch nicht begonnen |
+
+**Tasks 7–8:** unverändert, warten auf Mac-Übernahme (native iOS-App, physischer NFC-Test).
+
 ## Global Constraints
 
 Diese Werte gelten in jedem Task. Sie werden **einmal** festgelegt und danach überall identisch verwendet.
