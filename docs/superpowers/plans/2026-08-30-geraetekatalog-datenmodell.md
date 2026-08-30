@@ -536,7 +536,7 @@ create policy equipment_setting_definitions_select on public.equipment_setting_d
   using (
     exists (
       select 1 from public.equipment_models em
-      where em.id = equipment_model_id
+      where em.id = equipment_setting_definitions.equipment_model_id
         and public.is_studio_member(em.studio_id)
     )
   );
@@ -546,7 +546,7 @@ create policy equipment_setting_definitions_insert on public.equipment_setting_d
   with check (
     exists (
       select 1 from public.equipment_models em
-      where em.id = equipment_model_id
+      where em.id = equipment_setting_definitions.equipment_model_id
         and public.is_studio_staff(em.studio_id)
     )
   );
@@ -556,14 +556,14 @@ create policy equipment_setting_definitions_update on public.equipment_setting_d
   using (
     exists (
       select 1 from public.equipment_models em
-      where em.id = equipment_model_id
+      where em.id = equipment_setting_definitions.equipment_model_id
         and public.is_studio_staff(em.studio_id)
     )
   )
   with check (
     exists (
       select 1 from public.equipment_models em
-      where em.id = equipment_model_id
+      where em.id = equipment_setting_definitions.equipment_model_id
         and public.is_studio_staff(em.studio_id)
     )
   );
@@ -573,7 +573,7 @@ create policy equipment_setting_definitions_delete on public.equipment_setting_d
   using (
     exists (
       select 1 from public.equipment_models em
-      where em.id = equipment_model_id
+      where em.id = equipment_setting_definitions.equipment_model_id
         and public.is_studio_staff(em.studio_id)
     )
   );
@@ -814,8 +814,8 @@ create policy equipment_model_exercises_select on public.equipment_model_exercis
       select 1
       from public.equipment_models em
       join public.exercises e on e.studio_id = em.studio_id
-      where em.id = equipment_model_id
-        and e.id = exercise_id
+      where em.id = equipment_model_exercises.equipment_model_id
+        and e.id = equipment_model_exercises.exercise_id
         and public.is_studio_member(em.studio_id)
     )
   );
@@ -827,8 +827,8 @@ create policy equipment_model_exercises_insert on public.equipment_model_exercis
       select 1
       from public.equipment_models em
       join public.exercises e on e.studio_id = em.studio_id
-      where em.id = equipment_model_id
-        and e.id = exercise_id
+      where em.id = equipment_model_exercises.equipment_model_id
+        and e.id = equipment_model_exercises.exercise_id
         and public.is_studio_staff(em.studio_id)
     )
   );
@@ -840,8 +840,8 @@ create policy equipment_model_exercises_update on public.equipment_model_exercis
       select 1
       from public.equipment_models em
       join public.exercises e on e.studio_id = em.studio_id
-      where em.id = equipment_model_id
-        and e.id = exercise_id
+      where em.id = equipment_model_exercises.equipment_model_id
+        and e.id = equipment_model_exercises.exercise_id
         and public.is_studio_staff(em.studio_id)
     )
   )
@@ -850,8 +850,8 @@ create policy equipment_model_exercises_update on public.equipment_model_exercis
       select 1
       from public.equipment_models em
       join public.exercises e on e.studio_id = em.studio_id
-      where em.id = equipment_model_id
-        and e.id = exercise_id
+      where em.id = equipment_model_exercises.equipment_model_id
+        and e.id = equipment_model_exercises.exercise_id
         and public.is_studio_staff(em.studio_id)
     )
   );
@@ -863,8 +863,8 @@ create policy equipment_model_exercises_delete on public.equipment_model_exercis
       select 1
       from public.equipment_models em
       join public.exercises e on e.studio_id = em.studio_id
-      where em.id = equipment_model_id
-        and e.id = exercise_id
+      where em.id = equipment_model_exercises.equipment_model_id
+        and e.id = equipment_model_exercises.exercise_id
         and public.is_studio_staff(em.studio_id)
     )
   );
@@ -1033,7 +1033,7 @@ create policy instruction_assets_select on public.instruction_assets
       select 1
       from public.equipment_model_exercises eme
       join public.equipment_models em on em.id = eme.equipment_model_id
-      where eme.id = equipment_model_exercise_id
+      where eme.id = instruction_assets.equipment_model_exercise_id
         and public.is_studio_member(em.studio_id)
     )
   );
@@ -1045,7 +1045,7 @@ create policy instruction_assets_insert on public.instruction_assets
       select 1
       from public.equipment_model_exercises eme
       join public.equipment_models em on em.id = eme.equipment_model_id
-      where eme.id = equipment_model_exercise_id
+      where eme.id = instruction_assets.equipment_model_exercise_id
         and public.is_studio_staff(em.studio_id)
     )
   );
@@ -1057,7 +1057,7 @@ create policy instruction_assets_update on public.instruction_assets
       select 1
       from public.equipment_model_exercises eme
       join public.equipment_models em on em.id = eme.equipment_model_id
-      where eme.id = equipment_model_exercise_id
+      where eme.id = instruction_assets.equipment_model_exercise_id
         and public.is_studio_staff(em.studio_id)
     )
   )
@@ -1066,7 +1066,7 @@ create policy instruction_assets_update on public.instruction_assets
       select 1
       from public.equipment_model_exercises eme
       join public.equipment_models em on em.id = eme.equipment_model_id
-      where eme.id = equipment_model_exercise_id
+      where eme.id = instruction_assets.equipment_model_exercise_id
         and public.is_studio_staff(em.studio_id)
     )
   );
@@ -1078,7 +1078,7 @@ create policy instruction_assets_delete on public.instruction_assets
       select 1
       from public.equipment_model_exercises eme
       join public.equipment_models em on em.id = eme.equipment_model_id
-      where eme.id = equipment_model_exercise_id
+      where eme.id = instruction_assets.equipment_model_exercise_id
         and public.is_studio_staff(em.studio_id)
     )
   );
