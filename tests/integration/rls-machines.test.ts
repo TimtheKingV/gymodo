@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
+import { createTagToken, hashTagToken } from "@fitretro/domain";
 import {
   createTestUser,
   serviceClient,
@@ -424,5 +425,58 @@ describe("RLS auf machines", () => {
         .eq("id", crossDeleteDenyMachineId);
       expect(remaining).toHaveLength(1);
     });
+  });
+});
+
+describe("Ruhestandspfad statt Loeschen (0008-Kommentarkorrektur)", () => {
+  // on delete restrict verhindert nur den automatischen Loeschpfad, nicht
+  // den Verlust der Tag-Historie insgesamt (siehe korrigierter Kommentar in
+  // 0008_machine_tags_fk.sql). Der vorgesehene Weg, ein Geraet ausser Betrieb
+  // zu nehmen, ist machines.status = 'inactive' -- dieser Test belegt, dass
+  // Staff das darf und ein daran haengender aktiver Tag dabei unangetastet
+  // bleibt (weder geloescht noch revoziert).
+  it("positiv: Staff kann eine Geraeteinstanz auf inactive setzen, ein aktiver Tag bleibt unveraendert bestehen", async () => {
+    const admin = serviceClient();
+    const { data: machine, error: machineError } = await admin
+      .from("machines")
+      .insert({
+        studio_id: studioA,
+        equipment_model_id: modelA,
+        label: "Ruhestand-Ziel",
+      })
+      .select("id")
+      .single();
+    if (machineError) throw machineError;
+
+    const token = createTagToken();
+    const { data: tag, error: tagError } = await admin
+      .from("machine_tags")
+      .insert({
+        studio_id: studioA,
+        machine_id: machine!.id,
+        token_hash: hashTagToken(token),
+        status: "active",
+      })
+      .select("id")
+      .single();
+    if (tagError) throw tagError;
+
+    const client = await userClient(staffAEmail);
+    const { data, error } = await client
+      .from("machines")
+      .update({ status: "inactive" })
+      .eq("id", machine!.id)
+      .select("status")
+      .single();
+    expect(error).toBeNull();
+    expect(data?.status).toBe("inactive");
+
+    const { data: reloadedTag } = await admin
+      .from("machine_tags")
+      .select("machine_id, status")
+      .eq("id", tag!.id)
+      .single();
+    expect(reloadedTag?.machine_id).toBe(machine!.id);
+    expect(reloadedTag?.status).toBe("active");
   });
 });

@@ -1,10 +1,10 @@
--- on delete restrict, nicht set null: ein gelöschtes Geraet wuerde sonst bei
--- revozierten Tags die machine_id stillschweigend auf NULL setzen und damit
--- die fachliche Historie zerstoeren (welcher Tag hing an welchem Geraet), und
--- bei aktiven Tags mit einem kryptischen Verstoss gegen die Check-Constraint
--- unten abbrechen. Restrict macht die Regel explizit: bevor ein Geraet
--- geloescht werden kann, muessen seine Tags bewusst umgehaengt oder entfernt
--- werden. Konsistent mit machines.equipment_model_id (ebenfalls restrict).
+-- on delete restrict statt set null: set null wuerde beim Loeschen eines
+-- Geraets die machine_id revozierter Tags still auf NULL setzen. restrict
+-- verhindert diesen automatischen Pfad -- es bewahrt die Historie aber NICHT
+-- vollstaendig: wer ein Geraet wirklich loeschen will, muss machine_id vorher
+-- von Hand nullen. Der vorgesehene Weg ist daher nicht Loeschen, sondern
+-- machines.status = 'inactive'. Eine dauerhafte Loesung (eigene
+-- Zuordnungshistorie statt nullbarem Zeiger) ist dem Folgeplan vorbehalten.
 alter table public.machine_tags
   add constraint machine_tags_machine_id_fkey
     foreign key (machine_id) references public.machines (id) on delete restrict;
