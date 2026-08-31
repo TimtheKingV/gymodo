@@ -20,8 +20,40 @@ export {
   confirmInstructionVideo,
   prepareInstructionVideoUpload,
   signMediaUrl,
+  signMediaUrls,
   uploadEquipmentPhoto,
 } from "./media-store.js";
+export { requireStudioStaff } from "./studio.js";
+export {
+  assignTag,
+  attachExerciseToModel,
+  createEquipmentModel,
+  createExercise,
+  createMachine,
+  createSettingDefinition,
+  createTag,
+  deactivateMachine,
+  deleteSettingDefinition,
+  detachExercise,
+  equipmentModelInputSchema,
+  equipmentModelPatchSchema,
+  exerciseInputSchema,
+  getStudioCatalog,
+  reactivateMachine,
+  reorderModelExercises,
+  revokeTag,
+  settingDefinitionInputSchema,
+  updateEquipmentModel,
+} from "./catalog.js";
+export type {
+  CatalogExercise,
+  CatalogMachine,
+  CatalogModel,
+  CatalogSettingDefinition,
+  CatalogTag,
+  EquipmentModelInput,
+  StudioCatalog,
+} from "./catalog.js";
 export { getBootstrap } from "./bootstrap.js";
 export { getProgress, progressOptionsSchema } from "./progress.js";
 export type { ExerciseProgress, Progress, ProgressOptions, ProgressPoint } from "./progress.js";

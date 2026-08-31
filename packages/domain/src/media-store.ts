@@ -11,6 +11,7 @@ import {
   sniffMediaType,
   stripImageMetadata,
 } from "./media.js";
+import { requireStudioStaff } from "./studio.js";
 
 /**
  * Medien anlegen und ausliefern -- immer mit dem nutzergebundenen Client.
@@ -23,33 +24,6 @@ import {
 /** Der Ordner, in dem ein Studio seine Medien hat -- siehe storage_studio_id. */
 function studioFolder(storagePath: string): string {
   return storagePath.split("/")[0] ?? "";
-}
-
-/**
- * Rolle des Aufrufers im Studio. memberships_select_own laesst jeden seine
- * eigene Mitgliedschaft lesen, also kommt die Antwort ohne Service-Role aus.
- *
- * Das ersetzt die Policy nicht -- sie bleibt die Instanz, die entscheidet.
- * Es erspart nur, 25 MiB hochzuladen, bevor die Ablehnung kommt.
- */
-async function requireStudioStaff(
-  client: SupabaseClient,
-  studioId: string,
-  userId: string,
-): Promise<void> {
-  const { data } = await client
-    .from("studio_memberships")
-    .select("role")
-    .eq("studio_id", studioId)
-    .eq("user_id", userId)
-    .maybeSingle<{ role: string }>();
-
-  if (!data || (data.role !== "trainer" && data.role !== "owner")) {
-    throw new DomainError(
-      "unauthorized",
-      "Nur Trainer und Inhaber pflegen den Geraetekatalog.",
-    );
-  }
 }
 
 /** Studio eines Geraetemodells. RLS blendet fremde Modelle aus. */
