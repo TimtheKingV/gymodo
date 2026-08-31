@@ -3,6 +3,12 @@ import { requireUserId } from "./auth.js";
 import { DomainError } from "./errors.js";
 import { hashTagToken, isValidTagToken } from "./tags.js";
 import {
+  MEDIA_URL_TTL_SECONDS,
+  PHOTO_BUCKET,
+  VIDEO_BUCKET,
+} from "./media.js";
+import { signMediaUrl, signMediaUrls } from "./media-store.js";
+import {
   PROGRESSION_ALGO_VERSION,
   suggestNextWeight,
   type BlockInput,
@@ -18,7 +24,11 @@ export type TagContext = {
     id: string;
     name: string;
     manufacturer: string | null;
-    photoPath: string | null;
+    /**
+     * Kurzlebige signierte URL, kein Speicherpfad: der Bucket ist privat,
+     * mit einem Pfad allein koennte der Screen nichts laden.
+     */
+    photoUrl: string | null;
     weightStepKg: number;
     minWeightKg: number;
     maxWeightKg: number | null;
@@ -40,7 +50,8 @@ export type TagContext = {
     description: string | null;
     targetRepsMin: number;
     targetRepsMax: number;
-    instructionVideoPath: string | null;
+    /** Ebenfalls signiert; null, solange kein Video da ist (Spec 6.8). */
+    instructionVideoUrl: string | null;
   }>;
   selectedExerciseId: string | null;
   calibration: {
@@ -164,25 +175,39 @@ export async function getTagContext(
     .eq("equipment_model_id", model.id)
     .order("sort_order", { ascending: true });
 
-  const exercises = (links ?? []).map((link) => {
-    const row = link as unknown as {
-      exercises: {
-        id: string;
-        name: string;
-        description: string | null;
-        target_reps_min: number;
-        target_reps_max: number;
-      };
-      instruction_assets: Array<{ storage_path: string }>;
+  type LinkRow = {
+    exercises: {
+      id: string;
+      name: string;
+      description: string | null;
+      target_reps_min: number;
+      target_reps_max: number;
     };
+    instruction_assets: Array<{ storage_path: string }>;
+  };
+  const linkRows = (links ?? []) as unknown as LinkRow[];
+
+  // Alle Videopfade in einem Aufruf signieren statt je Uebung einzeln --
+  // der Screen soll mit einer Anfrage auskommen (Spec 6.3).
+  const videoPfade = linkRows
+    .map((row) => row.instruction_assets[0]?.storage_path)
+    .filter((pfad): pfad is string => Boolean(pfad));
+  const [videoUrls, photoUrl] = await Promise.all([
+    signMediaUrls(client, VIDEO_BUCKET, videoPfade, MEDIA_URL_TTL_SECONDS),
+    model.photo_path
+      ? signMediaUrl(client, PHOTO_BUCKET, model.photo_path, MEDIA_URL_TTL_SECONDS)
+      : Promise.resolve(null),
+  ]);
+
+  const exercises = linkRows.map((row) => {
+    const pfad = row.instruction_assets[0]?.storage_path;
     return {
       id: row.exercises.id,
       name: row.exercises.name,
       description: row.exercises.description,
       targetRepsMin: row.exercises.target_reps_min,
       targetRepsMax: row.exercises.target_reps_max,
-      // Signierte URLs kommen mit dem Medien-Upload; bis dahin der Pfad.
-      instructionVideoPath: row.instruction_assets[0]?.storage_path ?? null,
+      instructionVideoUrl: (pfad && videoUrls.get(pfad)) || null,
     };
   });
 
@@ -280,7 +305,7 @@ export async function getTagContext(
       id: model.id,
       name: model.name,
       manufacturer: model.manufacturer,
-      photoPath: model.photo_path,
+      photoUrl,
       weightStepKg: Number(model.weight_step_kg),
       minWeightKg: Number(model.min_weight_kg),
       maxWeightKg:

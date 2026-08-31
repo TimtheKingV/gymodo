@@ -116,12 +116,22 @@ enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
 file_size_limit = "50MiB"
 
-# Uncomment to configure local storage buckets
-# [storage.buckets.images]
-# public = false
-# file_size_limit = "50MiB"
-# allowed_mime_types = ["image/png", "image/jpeg"]
-# objects_path = "./images"
+# Beide Buckets sind privat: das Einweisungsvideo zeigt einen Menschen bei der
+# Vorfuehrung -- Personendaten des Trainers (Spec 6.8). Ausgeliefert wird nur
+# ueber kurzlebige signierte URLs.
+#
+# Diese Abschnitte gelten nur lokal. Massgeblich fuer jede Umgebung ist
+# supabase/migrations/0020_media_buckets.sql; die Werte hier muessen dazu
+# passen, sonst verhaelt sich der lokale Stack anders als die Zielumgebung.
+[storage.buckets.equipment-photos]
+public = false
+file_size_limit = "10MiB"
+allowed_mime_types = ["image/jpeg", "image/png"]
+
+[storage.buckets.instruction-videos]
+public = false
+file_size_limit = "50MiB"
+allowed_mime_types = ["video/mp4", "video/quicktime"]
 
 # Allow connections via S3 compatible clients
 [storage.s3_protocol]

@@ -1,5 +1,11 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { createTagToken, getTagContext, hashTagToken } from "@fitretro/domain";
+import {
+  PHOTO_BUCKET,
+  VIDEO_BUCKET,
+  createTagToken,
+  getTagContext,
+  hashTagToken,
+} from "@fitretro/domain";
 import {
   anonClient,
   createTestUser,
@@ -18,9 +24,31 @@ let engId: string;
 let tokenA: string;
 let tokenRevoked: string;
 let tokenForeign: string;
+let fotoPfad: string;
+let videoPfad: string;
 
 function newId(): string {
   return crypto.randomUUID();
+}
+
+function ascii(text: string): number[] {
+  return [...text].map((character) => character.charCodeAt(0));
+}
+
+/** Kleinstes gueltiges JPEG. */
+function jpegBytes(): Uint8Array {
+  return new Uint8Array([
+    0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, ...ascii("JFIF"), 0x00, 0x01, 0x01,
+    0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xd9,
+  ]);
+}
+
+/** Minimaler MP4-Rumpf mit ftyp-Box. */
+function mp4Bytes(): Uint8Array {
+  return new Uint8Array([
+    0x00, 0x00, 0x00, 0x18, ...ascii("ftyp"), ...ascii("isom"), 0x00, 0x00,
+    0x02, 0x00, ...ascii("isomiso2"),
+  ]);
 }
 
 beforeAll(async () => {
@@ -33,6 +61,9 @@ beforeAll(async () => {
   if (studioError) throw studioError;
   studioA = studios[0]!.id;
   studioB = studios[1]!.id;
+  // Erster Pfadabschnitt ist die studio_id -- daran haengt die Policy aus 0020.
+  fotoPfad = `${studioA}/models/${newId()}.jpg`;
+  videoPfad = `${studioA}/exercises/${newId()}.mp4`;
 
   memberAEmail = uniqueEmail("kontext-member-a");
   memberAId = await createTestUser(memberAEmail);
@@ -51,11 +82,29 @@ beforeAll(async () => {
       weight_step_kg: 2.5,
       min_weight_kg: 5,
       max_weight_kg: 100,
-      photo_path: "studio-a/kabelzug.jpg",
+      photo_path: fotoPfad,
     })
     .select("id")
     .single();
   if (modelError) throw modelError;
+
+  // Echte Objekte, keine erfundenen Pfade: eine signierte URL entsteht nur
+  // fuer ein Objekt, das es gibt und das die Policy aus 0020 freigibt.
+  const { error: fotoError } = await admin.storage
+    .from(PHOTO_BUCKET)
+    .upload(fotoPfad, new Blob([jpegBytes()], { type: "image/jpeg" }), {
+      contentType: "image/jpeg",
+      upsert: true,
+    });
+  if (fotoError) throw fotoError;
+
+  const { error: videoError } = await admin.storage
+    .from(VIDEO_BUCKET)
+    .upload(videoPfad, new Blob([mp4Bytes()], { type: "video/mp4" }), {
+      contentType: "video/mp4",
+      upsert: true,
+    });
+  if (videoError) throw videoError;
 
   const { error: settingError } = await admin
     .from("equipment_setting_definitions")
@@ -102,13 +151,24 @@ beforeAll(async () => {
   breitId = exercises[0]!.id;
   engId = exercises[1]!.id;
 
-  const { error: linkError } = await admin
+  const { data: links, error: linkError } = await admin
     .from("equipment_model_exercises")
     .insert([
       { equipment_model_id: model.id, exercise_id: breitId, sort_order: 1 },
       { equipment_model_id: model.id, exercise_id: engId, sort_order: 2 },
-    ]);
+    ])
+    .select("id, exercise_id");
   if (linkError) throw linkError;
+
+  // Nur die erste Uebung bekommt ein Video. Vollstaendigkeit wird nie
+  // erzwungen (Spec 6.8) -- die zweite muss trotzdem nutzbar bleiben.
+  const { error: assetError } = await admin.from("instruction_assets").insert({
+    equipment_model_exercise_id: links.find((l) => l.exercise_id === breitId)!.id,
+    kind: "video",
+    storage_path: videoPfad,
+    duration_s: 25,
+  });
+  if (assetError) throw assetError;
 
   const { data: machines, error: machineError } = await admin
     .from("machines")
@@ -173,6 +233,45 @@ describe("getTagContext", () => {
     expect(context.equipmentModel.weightStepKg).toBe(2.5);
     expect(context.settingDefinitions).toHaveLength(2);
     expect(context.settingDefinitions[0]!.key).toBe("sitz");
+  });
+
+  it("liefert das Foto als signierte URL, nicht als Speicherpfad", async () => {
+    // Der Bucket ist privat: ein Pfad allein nuetzt dem Screen nichts, er
+    // koennte damit nichts laden.
+    const client = await userClient(memberAEmail);
+
+    const context = await getTagContext(client, tokenA);
+
+    expect(context.equipmentModel.photoUrl).toContain(fotoPfad);
+    expect(context.equipmentModel.photoUrl).toContain("token=");
+
+    const antwort = await fetch(context.equipmentModel.photoUrl!);
+    expect(antwort.ok).toBe(true);
+  });
+
+  it("liefert das Einweisungsvideo als signierte URL", async () => {
+    const client = await userClient(memberAEmail);
+
+    const context = await getTagContext(client, tokenA);
+
+    const mitVideo = context.exercises.find((uebung) => uebung.id === breitId);
+    expect(mitVideo?.instructionVideoUrl).toContain(videoPfad);
+
+    const antwort = await fetch(mitVideo!.instructionVideoUrl!);
+    expect(antwort.ok).toBe(true);
+  });
+
+  it("eine Uebung ohne Video bleibt vollstaendig nutzbar", async () => {
+    // Spec 6.8: Vollstaendigkeit wird nie erzwungen. Ein Alles-oder-nichts-
+    // Setup stellt kein Studio fertig.
+    const client = await userClient(memberAEmail);
+
+    const context = await getTagContext(client, tokenA);
+
+    const ohneVideo = context.exercises.find((uebung) => uebung.id === engId);
+    expect(ohneVideo).toBeDefined();
+    expect(ohneVideo?.instructionVideoUrl).toBeNull();
+    expect(ohneVideo?.name).toBe("Latzug eng");
   });
 
   it("liefert die erlaubten Werte einer Auswahl mit -- ohne sie kann der Screen kein Auswahlfeld zeichnen", async () => {

@@ -5,6 +5,23 @@ export {
   suggestNextWeight,
 } from "./progression.js";
 export { DomainError } from "./errors.js";
+export {
+  MAX_PHOTO_BYTES,
+  MAX_VIDEO_BYTES,
+  MAX_VIDEO_SECONDS,
+  PHOTO_BUCKET,
+  VIDEO_BUCKET,
+  readVideoDurationSeconds,
+  sniffMediaType,
+  stripImageMetadata,
+} from "./media.js";
+export type { MediaKind } from "./media.js";
+export {
+  confirmInstructionVideo,
+  prepareInstructionVideoUpload,
+  signMediaUrl,
+  uploadEquipmentPhoto,
+} from "./media-store.js";
 export { getBootstrap } from "./bootstrap.js";
 export { getProgress, progressOptionsSchema } from "./progress.js";
 export type { ExerciseProgress, Progress, ProgressOptions, ProgressPoint } from "./progress.js";
