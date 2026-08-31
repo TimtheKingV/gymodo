@@ -1,0 +1,125 @@
+/*
+ * Tokens aus docs/superpowers/specs/2026-08-30-designsystem.md.
+ *
+ * Das Trainerportal teilt mit der Member-App die Farb- und Typoebene, sonst
+ * nichts: dort 64-pt-Ziffern, einhaendig, im Halbdunkel; hier Formulare,
+ * Tabellen und Upload-Fortschritt an einem Rechner. Deshalb zwei zusaetzliche
+ * Flaechenstufen -- mit surface und surface-raised allein waeren Karte,
+ * Tabellenzeile und Eingabefeld nicht auseinanderzuhalten -- und eine dichte
+ * Typoskala.
+ */
+
+:root {
+  --bg: #0a0b0d;
+  /* Neu: vertiefte Flaeche fuer Eingabefelder. Ein Feld ist eine Mulde in
+     der Karte, keine weitere Karte darauf. */
+  --well: #0f1114;
+  --surface: #14161a;
+  --surface-raised: #1d2026;
+  /* Neu: Zeile unter dem Zeiger. Zwischen surface-raised und line, damit
+     ein Hover nicht wie eine Auswahl aussieht. */
+  --surface-hover: #232730;
+  --line: #2a2e36;
+  --text: #f2f4f7;
+  --text-muted: #9ba3af;
+  --text-faint: #5c636e;
+  --accent: #d4ff3f;
+  --accent-pressed: #a8cc2a;
+  --on-accent: #0a0b0d;
+  --warn: #ffb020;
+  --danger: #ff5a4e;
+
+  /* Abstandsskala der Spec, fuer den Desktop um 20 und 40 ergaenzt. */
+  --s4: 4px;
+  --s8: 8px;
+  --s12: 12px;
+  --s16: 16px;
+  --s20: 20px;
+  --s24: 24px;
+  --s32: 32px;
+  --s40: 40px;
+  --s48: 48px;
+
+  --r-card: 12px;
+  --r-control: 10px;
+  --r-pill: 999px;
+
+  /* Systemschrift, kein Webfont: die erste externe Abhaengigkeit loest laut
+     M1-Spec Abschnitt 9 die Anlage des Privacy Manifests aus, und der
+     Signage-Charakter kommt ohnehin aus Gewicht und Laufweite. */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Alle Ziffern tabellarisch: sonst springt jede Zahlenspalte beim Scrollen. */
+body {
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+figure {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* Fokus muss sichtbar sein -- das Portal ist ein Formularwerkzeug und wird
+   mit der Tastatur bedient. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
