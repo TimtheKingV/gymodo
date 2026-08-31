@@ -419,6 +419,206 @@ describe("RLS auf instruction_assets", () => {
     });
   });
 
+  describe("Loeschkette: ein Einweisungsvideo verschwindet nicht nebenbei", () => {
+    // Bis 0019 kaskadierte das Loeschen einer Uebung ueber
+    // equipment_model_exercises bis auf instruction_assets durch. Wer eine
+    // Uebung aus dem Katalog nahm, loeschte damit stillschweigend die
+    // Videozeile -- die Datei im Bucket blieb als Waise liegen, ohne dass
+    // irgendwo stand, wozu sie gehoert hatte.
+    /** Postgres foreign_key_violation. */
+    const FK_VIOLATION = "23503";
+
+    /** Frische Uebung samt Verknuepfung in Studio A. */
+    async function seedLink(): Promise<{ linkId: string; exerciseId: string }> {
+      const admin = serviceClient();
+
+      const { data: model, error: modelError } = await admin
+        .from("equipment_models")
+        .insert({ studio_id: studioA, name: "Loeschkette-Modell", weight_step_kg: 5 })
+        .select("id")
+        .single();
+      if (modelError) throw modelError;
+
+      const { data: exercise, error: exerciseError } = await admin
+        .from("exercises")
+        .insert({
+          studio_id: studioA,
+          name: "Loeschkette-Uebung",
+          target_reps_min: 8,
+          target_reps_max: 12,
+        })
+        .select("id")
+        .single();
+      if (exerciseError) throw exerciseError;
+
+      const { data: link, error: linkError } = await admin
+        .from("equipment_model_exercises")
+        .insert({ equipment_model_id: model.id, exercise_id: exercise.id })
+        .select("id")
+        .single();
+      if (linkError) throw linkError;
+
+      return { linkId: link.id, exerciseId: exercise.id };
+    }
+
+    it("negativ: eine Verknuepfung mit Einweisungsvideo laesst sich nicht loeschen", async () => {
+      const { linkId: link } = await seedLink();
+      const client = await userClient(staffAEmail);
+
+      const { error: assetError } = await client.from("instruction_assets").insert({
+        equipment_model_exercise_id: link,
+        kind: "video",
+        storage_path: "instructions/loeschkette-verknuepfung.mp4",
+        duration_s: 20,
+      });
+      expect(assetError).toBeNull();
+
+      const { error } = await client
+        .from("equipment_model_exercises")
+        .delete()
+        .eq("id", link);
+      expect(error?.code).toBe(FK_VIOLATION);
+
+      const admin = serviceClient();
+      const { data: stillThere } = await admin
+        .from("equipment_model_exercises")
+        .select("id")
+        .eq("id", link);
+      expect(stillThere).toHaveLength(1);
+    });
+
+    it("negativ: auch die Uebung selbst laesst sich nicht loeschen, solange ein Video haengt", async () => {
+      const { linkId: link, exerciseId } = await seedLink();
+      const client = await userClient(staffAEmail);
+
+      const { error: assetError } = await client.from("instruction_assets").insert({
+        equipment_model_exercise_id: link,
+        kind: "video",
+        storage_path: "instructions/loeschkette-uebung.mp4",
+        duration_s: 20,
+      });
+      expect(assetError).toBeNull();
+
+      const { error } = await client.from("exercises").delete().eq("id", exerciseId);
+      expect(error?.code).toBe(FK_VIOLATION);
+
+      const admin = serviceClient();
+      const { data: stillThere } = await admin
+        .from("exercises")
+        .select("id")
+        .eq("id", exerciseId);
+      expect(stillThere).toHaveLength(1);
+    });
+
+    it("positiv: nach dem Loeschen des Videos geht die Uebung wieder weg", async () => {
+      const { linkId: link, exerciseId } = await seedLink();
+      const client = await userClient(staffAEmail);
+
+      const { data: asset, error: assetError } = await client
+        .from("instruction_assets")
+        .insert({
+          equipment_model_exercise_id: link,
+          kind: "video",
+          storage_path: "instructions/loeschkette-frei.mp4",
+          duration_s: 20,
+        })
+        .select("id")
+        .single();
+      expect(assetError).toBeNull();
+
+      const { error: assetDeleteError } = await client
+        .from("instruction_assets")
+        .delete()
+        .eq("id", asset!.id);
+      expect(assetDeleteError).toBeNull();
+
+      const { error } = await client.from("exercises").delete().eq("id", exerciseId);
+      expect(error).toBeNull();
+
+      const admin = serviceClient();
+      const { data: gone } = await admin
+        .from("exercises")
+        .select("id")
+        .eq("id", exerciseId);
+      expect(gone).toEqual([]);
+    });
+
+    it("positiv: eine Verknuepfung ohne Video laesst sich weiterhin loeschen", async () => {
+      const { linkId: link } = await seedLink();
+      const client = await userClient(staffAEmail);
+
+      const { error } = await client
+        .from("equipment_model_exercises")
+        .delete()
+        .eq("id", link);
+      expect(error).toBeNull();
+
+      const admin = serviceClient();
+      const { data: gone } = await admin
+        .from("equipment_model_exercises")
+        .select("id")
+        .eq("id", link);
+      expect(gone).toEqual([]);
+    });
+  });
+
+  describe("Eindeutigkeit von storage_path je Verknuepfung", () => {
+    // Ohne diese Eindeutigkeit legt ein wiederholter Upload -- der zweite
+    // Anlauf nach einem Abbruch im Studio-WLAN -- eine zweite Zeile auf
+    // dasselbe Objekt an. getTagContext nimmt instruction_assets[0] und
+    // zoege dann willkuerlich eine der beiden.
+    const PFAD = "instructions/wiederholter-upload.mp4";
+    /** Postgres unique_violation. */
+    const UNIQUE_VIOLATION = "23505";
+
+    it("negativ: derselbe Pfad ein zweites Mal an derselben Verknuepfung", async () => {
+      const client = await userClient(staffAEmail);
+
+      const first = await client.from("instruction_assets").insert({
+        equipment_model_exercise_id: linkId,
+        kind: "video",
+        storage_path: PFAD,
+        duration_s: 20,
+      });
+      expect(first.error).toBeNull();
+
+      const second = await client.from("instruction_assets").insert({
+        equipment_model_exercise_id: linkId,
+        kind: "video",
+        storage_path: PFAD,
+        duration_s: 20,
+      });
+      expect(second.error?.code).toBe(UNIQUE_VIOLATION);
+
+      const admin = serviceClient();
+      const { data: found } = await admin
+        .from("instruction_assets")
+        .select("id")
+        .eq("equipment_model_exercise_id", linkId)
+        .eq("storage_path", PFAD);
+      expect(found).toHaveLength(1);
+    });
+
+    it("positiv: derselbe Pfad an einer anderen Verknuepfung bleibt erlaubt", async () => {
+      const client = await userClient(staffBEmail);
+      const { error } = await client.from("instruction_assets").insert({
+        equipment_model_exercise_id: linkBId,
+        kind: "video",
+        storage_path: PFAD,
+        duration_s: 20,
+      });
+      expect(error).toBeNull();
+
+      const admin = serviceClient();
+      const { data: found } = await admin
+        .from("instruction_assets")
+        .select("id")
+        .eq("equipment_model_exercise_id", linkBId)
+        .eq("storage_path", PFAD);
+      expect(found).toHaveLength(1);
+    });
+  });
+
   describe("Formatgrenze duration_s", () => {
     it("positiv: 45 Sekunden werden akzeptiert (obere Grenze)", async () => {
       const client = await userClient(staffAEmail);

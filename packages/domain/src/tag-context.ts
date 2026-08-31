@@ -31,6 +31,8 @@ export type TagContext = {
     maxValue: number | null;
     stepValue: number | null;
     unit: string | null;
+    /** Nur bei kind = 'enum' gesetzt; sonst null (Constraint aus 0017). */
+    allowedValues: string[] | null;
   }>;
   exercises: Array<{
     id: string;
@@ -148,7 +150,9 @@ export async function getTagContext(
 
   const { data: settings } = await client
     .from("equipment_setting_definitions")
-    .select("key, label, kind, min_value, max_value, step_value, unit")
+    .select(
+      "key, label, kind, min_value, max_value, step_value, unit, allowed_values",
+    )
     .eq("equipment_model_id", model.id)
     .order("sort_order", { ascending: true });
 
@@ -291,6 +295,7 @@ export async function getTagContext(
         max_value: number | string | null;
         step_value: number | string | null;
         unit: string | null;
+        allowed_values: string[] | null;
       };
       return {
         key: row.key,
@@ -300,6 +305,7 @@ export async function getTagContext(
         maxValue: row.max_value === null ? null : Number(row.max_value),
         stepValue: row.step_value === null ? null : Number(row.step_value),
         unit: row.unit,
+        allowedValues: row.allowed_values,
       };
     }),
     exercises,

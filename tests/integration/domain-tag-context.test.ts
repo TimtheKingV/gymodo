@@ -70,6 +70,14 @@ beforeAll(async () => {
         step_value: 1,
         sort_order: 1,
       },
+      {
+        equipment_model_id: model.id,
+        key: "griff",
+        label: "Griffstellung",
+        kind: "enum",
+        allowed_values: ["eng", "weit"],
+        sort_order: 2,
+      },
     ]);
   if (settingError) throw settingError;
 
@@ -163,8 +171,21 @@ describe("getTagContext", () => {
     expect(context.machine.label).toBe("12");
     expect(context.equipmentModel.name).toBe("Kabelzug");
     expect(context.equipmentModel.weightStepKg).toBe(2.5);
-    expect(context.settingDefinitions).toHaveLength(1);
+    expect(context.settingDefinitions).toHaveLength(2);
     expect(context.settingDefinitions[0]!.key).toBe("sitz");
+  });
+
+  it("liefert die erlaubten Werte einer Auswahl mit -- ohne sie kann der Screen kein Auswahlfeld zeichnen", async () => {
+    const client = await userClient(memberAEmail);
+
+    const context = await getTagContext(client, tokenA);
+
+    const zahl = context.settingDefinitions.find((s) => s.key === "sitz");
+    expect(zahl?.allowedValues).toBeNull();
+
+    const auswahl = context.settingDefinitions.find((s) => s.key === "griff");
+    expect(auswahl?.kind).toBe("enum");
+    expect(auswahl?.allowedValues).toEqual(["eng", "weit"]);
   });
 
   it("liefert die Uebungen in der vom Studio gepflegten Reihenfolge", async () => {
