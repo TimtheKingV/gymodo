@@ -182,9 +182,15 @@ describe("RLS auf instruction_assets", () => {
     expect(error).toBeNull();
 
     const admin = serviceClient();
+    // Auf die Verknuepfung DIESES Laufs eingegrenzt. Der storage_path allein
+    // reicht nicht: er ist fest verdrahtet, instruction_assets kennt darauf
+    // keine Eindeutigkeit, und jeder Testlauf legt eine weitere Zeile an --
+    // ab dem zweiten Lauf gegen dieselbe Datenbank zaehlte die Abfrage die
+    // Zeilen aller Vorlaeufe mit.
     const { data: found } = await admin
       .from("instruction_assets")
       .select("id")
+      .eq("equipment_model_exercise_id", linkBId)
       .eq("storage_path", "instructions/studio-b-eigenes-video.mp4");
     expect(found).toHaveLength(1);
   });
