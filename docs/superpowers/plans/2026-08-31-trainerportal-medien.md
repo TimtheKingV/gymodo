@@ -1,7 +1,9 @@
 # Trainerportal und Medien-Upload — Implementierungsplan
 
 **Stand:** 31. August 2026
-**Status:** **nicht begonnen.**
+**Status:** **umgesetzt.** Migrationen 0016–0021, Domain-Schicht, Trainerportal
+und Web-Fallback. 342 Integrationstests, 39 Unit-Tests, 8 E2E-Tests, Typecheck
+und Build grün — nachgeprüft gegen eine frisch zurückgesetzte Datenbank.
 **Spec:** `docs/superpowers/specs/2026-08-28-fitness-retrofit-m1-design.md`, Abschnitte 6.8 und 8.2
 **Design:** `docs/superpowers/specs/2026-08-30-designsystem.md` (Tokens; das Trainerportal hat noch keine eigene Gestaltung)
 
@@ -106,6 +108,38 @@ Lösung: Custom-SMTP (Resend, Postmark) oder Supabase Pro. Das ist eine Konto- u
 
 ---
 
+## Was bei der Umsetzung entschieden wurde
+
+Vier Punkte, die der Plan offen ließ und die im Code jetzt festgelegt sind:
+
+- **Löschkette (`instruction_assets`).** Vom Nutzer entschieden: `on delete
+  restrict` statt Kaskade (0019). Wer eine Übung entfernen will, löscht zuerst
+  das Video — dieselbe Haltung wie bei `machines`/`machine_tags` in 0008. Die
+  Garantie liegt im Schema, nicht im Editor.
+- **Gestaltung des Portals.** Vom Nutzer entschieden: dunkel wie die Member-App,
+  aber mit zwei zusätzlichen Flächenstufen und dichter Typoskala; zweispaltig
+  statt geführter Abfolge; Desktop zuerst mit genau einem Pfad, der auf dem
+  Telefon trägt (dem Videoupload). Tragendes Element ist **Erreichbarkeit**, kein
+  Vollständigkeitsgrad — ein Balken auf dem Weg zu 100 % wäre eine Aufforderung,
+  die Spec 6.8 ausdrücklich nicht stellt.
+- **Ein gesperrter Tag wird nicht wieder vergeben.** Er gilt als kompromittiert
+  oder klebt physisch nicht mehr am Gerät.
+- **Anonymer Medienzugriff im Fallback.** Die Buckets bleiben privat, die URLs
+  kurzlebig. Freigegeben ist genau das, worauf gerade ein aktiver Tag an einem
+  Gerät in Betrieb zeigt (`is_media_published`, 0021). Sperrt man den Tag oder
+  legt das Gerät still, ist das Video im selben Moment anonym nicht mehr lesbar.
+  Ein öffentlicher Bucket könnte das nicht zurücknehmen.
+
+Zwei Abweichungen vom Planwortlaut, beide bewusst:
+
+- **`bootstrap` liefert weiterhin Pfade, keine signierten URLs.** Der Plan nennt
+  nur `getTagContext`, und das ist auch richtig: `bootstrap` ist ein Prefetch beim
+  App-Start, und eine 15 Minuten gültige URL gehört nicht in einen Vorrat, der
+  Stunden hält. Die App signiert beim Öffnen des Geräte-Screens.
+- **`tus-js-client` ist als Abhängigkeit dazugekommen.** Fortschritt *und*
+  Wiederaufnahme verlangen das TUS-Protokoll. Es selbst nachzubauen, ohne es in
+  derselben Sitzung im Browser prüfen zu können, wäre das größere Risiko gewesen.
+
 ## Verifikation
 
 1. `pnpm typecheck`, `pnpm test`, `pnpm test:integration` grün.
@@ -114,3 +148,14 @@ Lösung: Custom-SMTP (Resend, Postmark) oder Supabase Pro. Das ist eine Konto- u
 4. Ein Upload über der Formatgrenze wird serverseitig abgewiesen, nicht nur im Browser.
 5. **Ende-zu-Ende von Hand:** ein Studio komplett über die Oberfläche einrichten — Modell, Parameter, Übungen, Video, Geräteinstanz, Tag — und danach `GET /api/v1/tags/{token}/context` aufrufen. Der Kontext muss Foto und Video als signierte URLs liefern.
 6. Ein Gerät ohne Video bleibt vollständig nutzbar. Vollständigkeit wird nie erzwungen (Spec 6.8) — ein Alles-oder-nichts-Setup stellt kein Studio fertig.
+
+**Stand der Verifikation:** 1 bis 4 und 6 sind grün. Punkt 5 ist als E2E-Test
+automatisiert (`e2e/trainerportal.spec.ts`): Anmelden, Modell, Foto, Parameter,
+Übung, Gerät, Tag — und danach `GET /api/v1/tags/{token}/context`, der das Foto
+als signierte URL liefert. **Was dieser Test nicht abdeckt, ist der
+Videoupload selbst:** er läuft per TUS aus dem Browser und ist nur in der
+Domain-Schicht geprüft (`tests/integration/domain-media.test.ts` deckt
+Vorbereiten, Inhaltsprüfung, Abweisung und Wegräumen ab). **Der Weg vom
+Trainerhandy durch mobiles Safari bis in den Bucket ist noch nie an einem echten
+Gerät gelaufen** — das gehört vor den ersten Betreibertermin, zusammen mit
+M0 Task 8.
