@@ -119,9 +119,21 @@ Die 45-Sekunden-Grenze bei Einweisungsvideos existiert, weil nicht transcodiert 
 
 ## 4. Die Datenschutzgrenze
 
-**Das Portal sieht Mitgliedschaft und Anwesenheit, aber keine Trainingsdaten.** Kein Satz, kein Gewicht, kein Verlauf, keine Kalibrierung.
+**Das Portal sieht Mitgliedschaft und Anwesenheit, aber keine Trainingsdaten.** Kein Satz, kein Gewicht, kein Verlauf, keine Kalibrierung — **je Mitglied nichts.**
 
-Die Teilnehmerliste eines Kurstermins ist die eine Stelle, an der individuelle Daten erscheinen — sie ist eine Anwesenheitsliste, sie gehört dem Studio, und für andere Mitglieder ist sie unsichtbar.
+Die Grenze verläuft am Personenbezug, nicht am Datentyp:
+
+| Sichtbar | Nicht sichtbar |
+| --- | --- |
+| Wer im Studio Mitglied ist | Was ein bestimmtes Mitglied trainiert hat |
+| Wer für einen Kurstermin angemeldet ist | Sätze, Gewichte, Verlauf, Kalibrierungen einzelner Personen |
+| Studioweite Summen: Sätze im Zeitraum, aktive Mitglieder, meistgenutzte Geräte, gemeldete Probleme je Gerät | Jede Aufschlüsselung dieser Summen auf eine Person |
+
+Der Betreiber sieht damit, **ob** sein Studio benutzt wird — das war der Zweck des Überblicks — ohne zu sehen, **von wem wie**.
+
+Die Teilnehmerliste eines Kurstermins ist die eine Stelle, an der Namen erscheinen. Sie ist eine Anwesenheitsliste, sie gehört dem Studio, und für andere Mitglieder ist sie unsichtbar.
+
+**Damit ein Trainer die Mitgliederliste überhaupt sehen kann, braucht `studio_memberships` eine Select-Policy für `trainer`/`owner`.** Heute erlaubt `memberships_select_own` ausschließlich die eigene Zeile — der Bereich *Leute* hat nicht einmal einen Lesepfad.
 
 ### Was dafür am Backend zu ändern ist
 
@@ -136,7 +148,11 @@ Heute stimmt das nicht. Vier Policies geben Trainern und Inhabern Leserecht auf 
 
 Alle vier verlieren die Staff-Klausel. Die Grenze liegt danach in der Datenbank und hält auch gegen einen Fehler in der Oberfläche.
 
-**Der Überblick braucht dafür eine `SECURITY DEFINER`-Funktion**, die ausschließlich Summen liefert — aktive Mitglieder, Sätze, gemeldete Probleme je Gerät — und niemals Zeilen. Dieselbe Bauart wie `is_studio_member`: festes `search_path`, Rückgabe ohne Personenbezug.
+**Der Überblick braucht dafür eine `SECURITY DEFINER`-Funktion**, die ausschließlich Summen liefert — aktive Mitglieder, Sätze, meistgenutzte Geräte, gemeldete Probleme je Gerät — und niemals Zeilen. Dieselbe Bauart wie `is_studio_member`: festes `search_path`, Rückgabe ohne Personenbezug.
+
+Diese Funktion ist die einzige Stelle, an der Trainingsdaten für Personal überhaupt noch erreichbar sind. Ihre Signatur ist damit die Datenschutzgrenze in Code-Form — jede spätere Erweiterung um eine Aufschlüsselung ist eine Entscheidung, keine Kleinigkeit.
+
+**Ein Vorbehalt, den der Betreiber kennen sollte:** Bei einem kleinen Studio mit wenigen aktiven Mitgliedern lässt eine Geräterangliste Rückschlüsse zu — wer montags allein da war, hat die 312 Sätze an der Beinpresse gemacht. Summen sind nicht automatisch anonym. Solange nur synthetische Daten im System sind (Spec §9), ist das unkritisch; vor dem ersten echten Mitglied gehört eine Mindestzahl je Kennzahl geprüft.
 
 **Für M3 zurückzunehmen:** Trainerbetreuung braucht den Verlauf. Der Weg dorthin ist eine ausdrückliche Freigabe durch das Mitglied, nicht die pauschale Rolle.
 
@@ -209,7 +225,7 @@ Der Kassensturz, am Code geprüft:
 | Bereich | Stand |
 | --- | --- |
 | **Kurse** | Nichts. Drei Tabellen, RLS mit voller Testmatrix, Platzvergabe unter Nebenläufigkeit, Endpoints, Server Actions. |
-| **Leute** | Nichts, **nicht einmal Lesen.** `memberships_select_own` erlaubt genau die eigene Mitgliedschaft. Ein Trainer kann heute nicht sehen, wer im Studio ist. |
+| **Leute** | Nichts, **nicht einmal Lesen.** `memberships_select_own` erlaubt genau die eigene Mitgliedschaft. Braucht eine Select-Policy für Staff (Mitgliederliste), Insert (Beitritt per Code), Update (hochstufen) und Delete (entfernen) — vier Policies, wo heute eine steht. |
 | **Studio-Einstellungen** | `studios` hat nur `studios_select` und keine Spalte für die Stornofrist. Speichern ist nicht möglich. |
 | **Registrierung, Passwort, Studio-Code** | Auth-Umstellung, Mail-Templates, neue Spalte am Studio, Beitritts-Action. |
 | **Datenschutzgrenze** | Vier Policies zu ändern, eine Aggregatfunktion zu bauen. |
