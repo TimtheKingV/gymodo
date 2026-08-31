@@ -39,6 +39,15 @@
 
 Zusätzlich wurde eine Falle beseitigt, die dieser Plan hinterlassen hatte: Die in Task 6 angelegte `.env` enthielt Cloud-Zugangsdaten, wird aber auch von der Testsuite geladen — Integrationstests aus dem Hauptverzeichnis liefen dadurch gegen das Produktivprojekt und schrieben Testdaten hinein. Beide Env-Dateien zeigen jetzt auf die lokale Instanz und tragen einen Warnhinweis; das Cloud-Projekt wurde zurückgesetzt und neu migriert.
 
+**Nachtrag (31. August 2026):** Datenmodell und API sind seither fertiggestellt — vier weitere Migrationen (Trainingsdaten mit RLS), die deterministische Progressionsregel in `packages/domain` und alle sechs Endpoints aus Spec 6.3. Siehe `2026-08-31-trainerportal-medien.md` fuer den Stand und die naechsten Schritte.
+
+Zwei Punkte aus Task 6 sind **weiterhin offen** und dort festgehalten:
+
+- **OTP-Mailversand** — Supabase Free Tier verschickt den Standard-Magic-Link statt des sechsstelligen Codes. Auf der echten Domain kann sich damit kein echter Nutzer anmelden. Harter Blocker vor dem ersten Betreibertermin, geloest durch Custom-SMTP oder Supabase Pro.
+- **`APPLE_TEAM_ID` / `APPLE_BUNDLE_ID`** stehen in Vercel auf Platzhaltern.
+
+Ebenfalls offen: **Task 8**, der physische Trefferquoten-Test der NFC-Tags. Er entscheidet NFC-first gegen QR-first und braucht den Mac.
+
 ## Global Constraints
 
 Diese Werte gelten in jedem Task. Sie werden **einmal** festgelegt und danach überall identisch verwendet.

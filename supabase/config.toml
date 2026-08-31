@@ -116,12 +116,22 @@ enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
 file_size_limit = "50MiB"
 
-# Uncomment to configure local storage buckets
-# [storage.buckets.images]
-# public = false
-# file_size_limit = "50MiB"
-# allowed_mime_types = ["image/png", "image/jpeg"]
-# objects_path = "./images"
+# Beide Buckets sind privat: das Einweisungsvideo zeigt einen Menschen bei der
+# Vorfuehrung -- Personendaten des Trainers (Spec 6.8). Ausgeliefert wird nur
+# ueber kurzlebige signierte URLs.
+#
+# Diese Abschnitte gelten nur lokal. Massgeblich fuer jede Umgebung ist
+# supabase/migrations/0020_media_buckets.sql; die Werte hier muessen dazu
+# passen, sonst verhaelt sich der lokale Stack anders als die Zielumgebung.
+[storage.buckets.equipment-photos]
+public = false
+file_size_limit = "10MiB"
+allowed_mime_types = ["image/jpeg", "image/png"]
+
+[storage.buckets.instruction-videos]
+public = false
+file_size_limit = "50MiB"
+allowed_mime_types = ["video/mp4", "video/quicktime"]
 
 # Allow connections via S3 compatible clients
 [storage.s3_protocol]
@@ -195,7 +205,15 @@ password_requirements = ""
 
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
-email_sent = 2
+#
+# Angehoben von 2 auf 30. Zwei pro Stunde ist die Voreinstellung fuer die
+# gehostete Umgebung; lokal verbraucht jeder E2E-Lauf mit Anmeldung einen,
+# und ab dem dritten bekommt der Test keine neue Mail mehr, sondern greift
+# stillschweigend den schon verbrauchten Code aus der vorigen. Der
+# Fehlschlag sieht dann aus wie ein Anmeldefehler und ist keiner.
+# Gilt nur fuer den lokalen Stack -- die Zielumgebung setzt ihre eigenen
+# Grenzen.
+email_sent = 30
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.

@@ -1596,6 +1596,27 @@ git commit -m "feat: machine_tags.machine_id bekommt Fremdschluessel und Aktiv-C
 
 ---
 
+## Nachtrag (31. August 2026)
+
+Die in diesem Plan offen gelassenen Punkte sind nach
+`2026-08-31-trainerportal-medien.md` uebernommen und dort mit Begruendung
+festgehalten:
+
+- die fehlenden **Insert-/Update-Policies auf `machine_tags`** (Tags lassen sich
+  bis heute nur direkt in der Datenbank zuweisen),
+- `equipment_setting_definitions.kind = 'enum'` ohne Spalte fuer die erlaubten
+  Werte,
+- die fehlende Eindeutigkeit auf `instruction_assets`,
+- der fehlende Loeschpfad fuer ein Geraet, das je einen Tag getragen hat
+  ("stilllegen" statt "loeschen"),
+- der Medien-Upload mit den Formatgrenzen aus Spec 6.8.
+
+Inzwischen dazugekommen und **nicht** mehr offen: die vier Trainingsdaten-
+Tabellen (0012–0015) mit vollstaendiger Policy-Testmatrix, die
+Progressionsregel und alle sechs Endpoints.
+
+---
+
 ## Nach diesem Plan
 
 Es existieren dann: 8 zusätzliche Migrationen (der Web-Fallback braucht keinen Service-Role-Key mehr; der komplette Gerätekatalog mit rollenbasierter RLS steht; `machine_tags` ist vollständig an `machines` gebunden). Kein neues UI, keine Storage-Buckets, kein Medien-Upload — das ist der nächste Plan („Trainer-Weboberfläche"), der auf diesem Schema aufbaut:

@@ -1,0 +1,486 @@
+/* Zweispaltig: Katalog links, das gewaehlte Objekt rechts. Die Einrichtung
+   eines Studios ist keine einmalige Abfolge -- ein Trainer kommt Wochen
+   spaeter wieder, um ein Video nachzureichen oder einen Tag zu tauschen. */
+
+.shell {
+  display: grid;
+  grid-template-columns: 288px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.rail {
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  padding: var(--s24) 0 var(--s40);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s24);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.studio {
+  padding: 0 var(--s20);
+}
+
+.studioName {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.studioMeta {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: var(--s4);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+.groupLabel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 0 var(--s20) var(--s8);
+}
+
+/* Der Akzent markiert die aktive Zeile als 2-px-Kante, nicht als Flaeche:
+   die eine Akzentflaeche je Screen gehoert der Hauptaktion. */
+.navItem {
+  display: block;
+  padding: var(--s8) var(--s20);
+  border-left: 2px solid transparent;
+  color: var(--text-muted);
+}
+
+.navItem:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.navItemActive {
+  border-left-color: var(--accent);
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+/* block, nicht inline: sonst laufen Name und Zusatz ineinander und in der
+   Rail steht "Latzug2 Geraete". */
+.navItemTitle {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Erreichbarkeit statt Vollstaendigkeitsgrad: ein Geraet ist erreichbar,
+   wenn ein aktiver Tag daran klebt. Alles andere -- Foto, Video, Parameter --
+   wird genannt, aber nie bewertet (Spec 6.8). */
+.navItemMeta {
+  display: block;
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+.content {
+  padding: var(--s32) var(--s40) var(--s48);
+  max-width: 960px;
+}
+
+.pageTitle {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+}
+
+.pageLead {
+  color: var(--text-muted);
+  margin-top: var(--s8);
+  max-width: 62ch;
+}
+
+.section {
+  margin-top: var(--s32);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.sectionHead {
+  padding: var(--s16) var(--s20);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s16);
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sectionNote {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.sectionBody {
+  padding: var(--s20);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s16);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s16);
+  padding: var(--s12) var(--s20);
+  border-bottom: 1px solid var(--line);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowMain {
+  min-width: 0;
+}
+
+.rowTitle {
+  font-weight: 600;
+}
+
+.rowMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Was fehlt, steht in text-faint da -- als Tatsache, nicht als Mangel. */
+.absent {
+  color: var(--text-faint);
+}
+
+/* wrap statt Ueberlauf: die Knoepfe einer Zeile stehen auf einem schmalen
+   Schirm untereinander, statt rechts aus dem Bild zu laufen. */
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: var(--s8);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.empty {
+  padding: var(--s20);
+  color: var(--text-muted);
+}
+
+.emptyTitle {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.emptyNext {
+  margin-top: var(--s4);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s16);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.input,
+.select,
+.textarea {
+  background: var(--well);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  padding: 10px 12px;
+  min-height: 44px;
+  width: 100%;
+}
+
+.textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--text-faint);
+}
+
+.actions {
+  display: flex;
+  gap: var(--s12);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Die eine Akzentflaeche: die Hauptaktion des Abschnitts. */
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: var(--r-control);
+  padding: 0 var(--s20);
+  height: 44px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary:hover {
+  background: var(--accent-pressed);
+}
+
+.primary:disabled {
+  background: var(--surface-raised);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  padding: 0 var(--s16);
+  height: 40px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondary:hover {
+  background: var(--surface-hover);
+}
+
+.secondary:disabled {
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+/* danger nur als Umriss: Sperren und Stilllegen sind gewollte Handlungen
+   des Trainers, keine Systemfehler. */
+.destructive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: var(--r-control);
+  padding: 0 var(--s16);
+  height: 40px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.destructive:hover {
+  background: rgba(255, 90, 78, 0.1);
+}
+
+.error {
+  border: 1px solid var(--danger);
+  background: rgba(255, 90, 78, 0.1);
+  color: var(--text);
+  border-radius: var(--r-control);
+  padding: var(--s12) var(--s16);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.badgeActive {
+  color: var(--text);
+  border-color: var(--text-faint);
+}
+
+.badgeRevoked {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.photo {
+  width: 160px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--r-card);
+  border: 1px solid var(--line);
+  background: var(--well);
+}
+
+.photoEmpty {
+  width: 160px;
+  height: 120px;
+  border-radius: var(--r-card);
+  border: 1px dashed var(--line);
+  background: var(--well);
+  display: grid;
+  place-items: center;
+  color: var(--text-faint);
+  font-size: 12px;
+  text-align: center;
+  padding: var(--s8);
+}
+
+.mediaRow {
+  display: flex;
+  gap: var(--s20);
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.token {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  background: var(--well);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  padding: var(--s12) var(--s16);
+  word-break: break-all;
+}
+
+.progressTrack {
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+
+/* Linearer Balken, kein Spinner: er zeigt Restmenge, nicht Beschaeftigung. */
+.progressBar {
+  height: 100%;
+  background: var(--accent);
+  transition: width 120ms linear;
+}
+
+/* Desktop zuerst. Auf dem Telefon traegt genau ein Pfad: die Uebungsliste
+   mit dem Videoupload -- die Aufnahme entsteht dort (Spec 6.8). */
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Auf dem Telefon wird die Rail zu einem schmalen Band, das seitlich
+     scrollt. Als voller Block haette sie den ganzen ersten Schirm belegt --
+     ausgerechnet auf dem einen Pfad, der hier tragen muss: Uebung oeffnen,
+     Video hochladen. */
+  .rail {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+    padding: var(--s16) 0;
+    gap: var(--s12);
+  }
+
+  .rail .group {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: var(--s8);
+    padding: 0 var(--s16);
+    scrollbar-width: none;
+  }
+
+  .rail .groupLabel {
+    display: none;
+  }
+
+  .rail .navItem {
+    flex: 0 0 auto;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    border-radius: var(--r-pill);
+    background: var(--surface-raised);
+    padding: var(--s8) var(--s16);
+    white-space: nowrap;
+  }
+
+  .rail .navItemActive {
+    border-bottom-color: transparent;
+    background: var(--surface-hover);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+
+  /* Die Erreichbarkeitsangabe faellt im Band weg -- sie gehoert an den
+     Schreibtisch, nicht auf den Weg zum Videoupload. */
+  .rail .navItemMeta {
+    display: none;
+  }
+
+  .content {
+    padding: var(--s20) var(--s16) var(--s40);
+  }
+
+  .row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s12);
+    padding: var(--s16) var(--s16);
+  }
+
+  .rowActions {
+    width: 100%;
+  }
+}

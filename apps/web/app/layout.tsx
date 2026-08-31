@@ -1,3 +1,9 @@
+import "./globals.css";
+
+export const metadata = {
+  title: "gymodo",
+};
+
 export default function RootLayout({
   children,
 }: {

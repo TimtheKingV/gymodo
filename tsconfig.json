@@ -1,8 +1,15 @@
 {
   "extends": "./packages/config/tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node"]
+    "types": ["node"],
+    "jsx": "preserve",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    // Die Integrationstests fahren die API-Route-Handler direkt an -- gegen
+    // echtes Postgres und echte RLS, weil die Autorisierung dort lebt. Dafuer
+    // muss hier derselbe Alias gelten wie in apps/web (und in vitest.config.ts).
+    "baseUrl": ".",
+    "paths": { "@/*": ["./apps/web/*"] }
   },
   "include": ["tests/**/*.ts", "e2e/**/*.ts", "*.config.ts"],
-  "exclude": ["node_modules", "apps", "packages"]
+  "exclude": ["node_modules"]
 }

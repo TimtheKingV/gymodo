@@ -17,6 +17,13 @@ export function serviceClient(): SupabaseClient {
   });
 }
 
+/** Nicht angemeldeter Client -- fuer die Pruefung, dass Auth greift. */
+export function anonClient(): SupabaseClient {
+  return createClient(URL, ANON, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 export const TEST_PASSWORD = "test-passwort-1234";
 
 export async function createTestUser(email: string): Promise<string> {
@@ -40,6 +47,16 @@ export async function userClient(email: string): Promise<SupabaseClient> {
   });
   if (error) throw error;
   return client;
+}
+
+/** Zugriffstoken eines angemeldeten Nutzers -- fuer Bearer-Aufrufe der API. */
+export async function accessTokenFor(email: string): Promise<string> {
+  const client = await userClient(email);
+  const { data, error } = await client.auth.getSession();
+  if (error) throw error;
+  const token = data.session?.access_token;
+  if (!token) throw new Error(`Kein Zugriffstoken fuer ${email}`);
+  return token;
 }
 
 export function uniqueEmail(prefix: string): string {
