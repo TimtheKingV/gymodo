@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from build import (HEAD, FOOT, LABEL, CARD, PRIMARY, SECONDARY, FIELD, schreibe,
+from build import (HEAD, FOOT, LABEL, PRIMARY, SECONDARY, FIELD, schreibe,
                    zurueck)
 
 NOTE = 'font-size: 13px; color: #5c636e; line-height: 1.45;'

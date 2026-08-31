@@ -1,20 +1,9 @@
 # -*- coding: utf-8 -*-
-from build import (HEAD, FOOT, LABEL, CARD, HEADROW, ROW, ROW_LAST, PRIMARY,
-                   SECONDARY, DESTRUCTIVE, FIELD, BADGE, portal, titel, schreibe,
-                   svg, zurueck)
+from build import (HEAD, FOOT, LABEL, CARD, HEADROW, PRIMARY,
+                   SECONDARY, DESTRUCTIVE, FIELD, BADGE, SEC_TITLE, portal, titel,
+                   schreibe, svg, zeile)
 
-SEC_TITLE = '%s color: #9ba3af; margin: 0;' % LABEL
 NOTE = 'font-size: 12px; color: #5c636e;'
-
-
-def zeile(haupt, meta, rechts, letzte=False, meta_faint=False):
-    stil = ROW_LAST if letzte else ROW
-    mc = '#5c636e' if meta_faint else '#9ba3af'
-    return ('<div style="%s"><div style="min-width: 0;">'
-            '<div style="font-weight: 600;">%s</div>'
-            '<div style="font-size: 12px; color: %s; margin-top: 2px;">%s</div></div>'
-            '<div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">%s</div></div>'
-            % (stil, haupt, mc, meta, rechts))
 
 
 # ---------------------------------------------------------------- Leute

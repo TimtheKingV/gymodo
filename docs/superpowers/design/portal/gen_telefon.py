@@ -20,8 +20,7 @@ telefon = HEAD + """
     </div>
     <div style="display: flex; gap: 8px; overflow-x: auto; padding: 0 16px;">
       <span style="%(chip)s">Überblick</span>
-      <span style="%(aktiv)s">Gerätemodelle</span>
-      <span style="%(chip)s">Geräte</span>
+      <span style="%(aktiv)s">Geräte</span>
       <span style="%(chip)s">Tags</span>
       <span style="%(chip)s">Mitglieder</span>
     </div>
@@ -36,7 +35,7 @@ telefon = HEAD + """
       <span style="%(chip)s">Stammdaten</span>
       <span style="%(chip)s">Einstellungen</span>
       <span style="%(aktiv)s">Übungen</span>
-      <span style="%(chip)s">Geräte</span>
+      <span style="%(chip)s">Einzelne Geräte</span>
     </div>
 
     <div style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; margin-top: 20px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
@@ -81,5 +80,5 @@ telefon = HEAD + """
 </div>
 """ % {'chip': CHIP, 'aktiv': CHIP_AKTIV, 'label': LABEL, 'sec': SECONDARY,
        'pri': PRIMARY, 'note': NOTE,
-       'zurueck': zurueck('Gerätemodelle')} + FOOT
+       'zurueck': zurueck('Geräte')} + FOOT
 schreibe('Telefon.dc.html', telefon)

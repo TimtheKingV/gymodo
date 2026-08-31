@@ -58,6 +58,17 @@ FIELD = ('background: #0f1114; border: 1px solid #2a2e36; border-radius: 10px; p
 BADGE = ('display: inline-flex; align-items: center; border: 1px solid #2a2e36; border-radius: 999px; '
          'padding: 2px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; '
          'text-transform: uppercase; color: #9ba3af;')
+SEC_TITLE = '%s color: #9ba3af; margin: 0;' % LABEL
+
+
+def zeile(haupt, meta, rechts, letzte=False, meta_faint=False):
+    stil = ROW_LAST if letzte else ROW
+    mc = '#5c636e' if meta_faint else '#9ba3af'
+    return ('<div style="%s"><div style="min-width: 0;">'
+            '<div style="font-weight: 600;">%s</div>'
+            '<div style="font-size: 12px; color: %s; margin-top: 2px;">%s</div></div>'
+            '<div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">%s</div></div>'
+            % (stil, haupt, mc, meta, rechts))
 
 
 def nav_item(title, meta, active=False):
@@ -86,13 +97,18 @@ def rail(active):
         '<div style="font-size: 17px; font-weight: 800; letter-spacing: -0.02em; '
         'text-transform: uppercase;">Kraftwerk Nord</div>'
         '<div style="font-size: 12px; color: #9ba3af; margin-top: 4px;">Trainerportal</div></div>'
-        + gruppe('Studio', [nav_item('Überblick', None, active == 'ueberblick')])
+        + gruppe('Studio', [
+            nav_item('Überblick', None, active == 'ueberblick'),
+            nav_item('Kurse', '9 diese Woche', active == 'kurse'),
+        ])
         + gruppe('Katalog', [
-            nav_item('Gerätemodelle', '3 Modelle', active == 'modelle'),
             nav_item('Geräte', '16 · 14 erreichbar', active == 'geraete'),
             nav_item('Tags', '2 vorrätig', active == 'tags'),
         ])
-        + gruppe('Leute', [nav_item('Mitglieder', '24 · 2 eingeladen', active == 'leute')])
+        + gruppe('Verwaltung', [
+            nav_item('Leute', '24 Mitglieder · 2 Trainer', active == 'leute'),
+            nav_item('Einstellungen', None, active == 'einstellungen'),
+        ])
         + '<div style="margin-top: auto; padding: 16px 20px 0; border-top: 1px solid #2a2e36; '
           'display: flex; flex-direction: column; gap: 8px;">'
           '<div style="font-size: 12px; color: #9ba3af;">tim@kraftwerk-nord.de</div>'
