@@ -5,6 +5,12 @@ export {
   suggestNextWeight,
 } from "./progression.js";
 export { DomainError } from "./errors.js";
+export { getBootstrap } from "./bootstrap.js";
+export { getProgress, progressOptionsSchema } from "./progress.js";
+export type { ExerciseProgress, Progress, ProgressOptions, ProgressPoint } from "./progress.js";
+export { getSessions } from "./sessions.js";
+export type { SessionBlock, SessionSummary, Sessions } from "./sessions.js";
+export type { Bootstrap } from "./bootstrap.js";
 export { getTagContext } from "./tag-context.js";
 export type { TagContext } from "./tag-context.js";
 export type { DomainErrorCode } from "./errors.js";

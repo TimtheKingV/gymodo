@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { requireUserId } from "./auth.js";
 import { DomainError } from "./errors.js";
 import { hashTagToken, isValidTagToken } from "./tags.js";
 import {
@@ -83,15 +84,6 @@ function toBlocks(rows: SetRow[]): BlockInput[] {
   // Innerhalb eines Tages chronologisch, damit "letzter Satz" stimmt.
   for (const block of byDay.values()) block.sets.reverse();
   return [...byDay.values()];
-}
-
-async function requireUserId(client: SupabaseClient): Promise<string> {
-  const { data } = await client.auth.getUser();
-  const userId = data.user?.id;
-  if (!userId) {
-    throw new DomainError("unauthorized", "Kein angemeldeter Nutzer.");
-  }
-  return userId;
 }
 
 /**

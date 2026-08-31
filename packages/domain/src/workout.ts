@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { requireUserId } from "./auth.js";
 import { DomainError } from "./errors.js";
 
 export const problemReasonSchema = z.enum([
@@ -88,16 +89,6 @@ function toRecordedSet(row: SetRow): RecordedSet {
     problemReason: row.problem_reason,
     performedAt: row.performed_at,
   };
-}
-
-/** Die gepruefte Identitaet des Aufrufers -- nie aus der Nutzlast. */
-async function requireUserId(client: SupabaseClient): Promise<string> {
-  const { data } = await client.auth.getUser();
-  const userId = data.user?.id;
-  if (!userId) {
-    throw new DomainError("unauthorized", "Kein angemeldeter Nutzer.");
-  }
-  return userId;
 }
 
 /**
