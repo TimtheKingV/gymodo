@@ -1,0 +1,64 @@
+{
+  "pages": [
+    { "id": "portal", "name": "Portal" },
+    { "id": "einstieg", "name": "Einstieg" },
+    { "id": "telefon", "name": "Telefon" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "page": "portal", "title": "Überblick", "x": 0, "y": 0, "w": 1440, "h": 1000 },
+    { "file": "Katalog.dc.html", "page": "portal", "title": "Gerätemodelle", "x": 1560, "y": 0, "w": 1440, "h": 900 },
+    { "file": "Leute.dc.html", "page": "portal", "title": "Mitglieder", "x": 3120, "y": 0, "w": 1440, "h": 900 },
+    { "file": "Modell.dc.html", "page": "portal", "title": "Modell — Übungen", "x": 0, "y": 1120, "w": 1440, "h": 1040 },
+    { "file": "Geraete.dc.html", "page": "portal", "title": "Geräte", "x": 1560, "y": 1120, "w": 1440, "h": 820 },
+    { "file": "Tags.dc.html", "page": "portal", "title": "Tags", "x": 3120, "y": 1120, "w": 1440, "h": 940 },
+
+    { "file": "Start.dc.html", "page": "einstieg", "title": "Wurzelseite", "x": 0, "y": 0, "w": 1440, "h": 900 },
+    { "file": "Anmelden.dc.html", "page": "einstieg", "title": "Anmelden — E-Mail", "x": 1560, "y": 0, "w": 1440, "h": 900 },
+    { "file": "AnmeldenCode.dc.html", "page": "einstieg", "title": "Anmelden — Code", "x": 3120, "y": 0, "w": 1440, "h": 900 },
+
+    { "file": "Telefon.dc.html", "page": "telefon", "title": "Videoupload am Telefon", "x": 0, "y": 0, "w": 390, "h": 1240 }
+  ],
+  "annotations": [
+    {
+      "id": "note-rail",
+      "page": "portal",
+      "x": 0,
+      "y": -230,
+      "w": 440,
+      "text": "Die Rail ist jetzt feste Navigation.\n\nHeute listet sie jedes Gerätemodell einzeln. Bei drei Modellen geht das, bei fünfzig ist es unbrauchbar. Objekte leben auf Listenseiten; die Rail zeigt nur die Bereiche — mit Zahlen, die den Blick lenken."
+    },
+    {
+      "id": "note-akzent",
+      "page": "portal",
+      "x": 500,
+      "y": -230,
+      "w": 440,
+      "text": "Eine Akzentfläche je Bildschirm.\n\nHeute hat die Modellseite fünf. Der Modell-Editor bekommt deshalb Reiter: dann ist immer nur ein Formular sichtbar und die Regel des Designsystems hält wörtlich. Auf der Geräteseite gehört der Akzent dem, was ein Gerät erreichbar macht."
+    },
+    {
+      "id": "note-daten",
+      "page": "portal",
+      "x": 1000,
+      "y": -230,
+      "w": 440,
+      "text": "Die Auswertung zählt zusammen, sie schaut nicht hinein.\n\nDas Portal sieht Mitgliedschaften, Nutzungssummen und gemeldete Probleme je Gerät. Es sieht keine Sätze, Gewichte oder Verläufe einzelner Mitglieder — auch der Inhaber nicht."
+    },
+    {
+      "id": "note-einstieg",
+      "page": "einstieg",
+      "x": 0,
+      "y": -210,
+      "w": 520,
+      "text": "Das Web ist Trainerportal plus öffentlicher Fallback — für Mitglieder gibt es hier nichts.\n\nEs gibt keine Selbstregistrierung: der Zugang kommt über die Einladung des Studios. Genau das fehlt heute im Code, und ohne es kann ein Studio kein Mitglied aufnehmen."
+    },
+    {
+      "id": "note-telefon",
+      "page": "telefon",
+      "x": 470,
+      "y": 40,
+      "w": 420,
+      "text": "Der eine Pfad, der auf dem Telefon tragen muss.\n\nDie Aufnahme entsteht auf dem Trainerhandy und geht aus mobilem Safari hoch (Spec 6.8). Alles andere bleibt Schreibtischarbeit — der Katalogeditor wird nicht auf 390 px gequetscht."
+    }
+  ],
+  "launch": { "view": "canvas", "page": "portal" }
+}
