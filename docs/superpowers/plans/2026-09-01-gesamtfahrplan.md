@@ -24,7 +24,7 @@ Es ist bewusst kurz und verweist. Die Wahrheit über einen Bauabschnitt steht im
 
 **Das M1-Fundament trägt; die letzten beiden Tage waren reine Entwurfsarbeit, und die daraus entstandenen Baustellen sind zu null gebaut.**
 
-Belegt: `git diff master designplan -- . ':(exclude)docs'` ist leer. 29 Commits, keine Zeile Code. Auf Platte endet es bei `0021_fallback_inhalte.sql`.
+Als dieses Dokument entstand, war `git diff master designplan -- . ':(exclude)docs'` **leer** — 29 Commits, keine Zeile Code. Inzwischen steht dort der Auth-Config-Umbau vom 1. September (`config.toml`, `.env.example`, `.env.production.example`, `.gitignore`); er war Voraussetzung fuer den Template-Push und hat mit den Baustellen aus Abschnitt 3 nichts zu tun. **Am Anwendungscode aendert sich weiterhin nichts:** auf Platte endet es bei `0021_fallback_inhalte.sql`.
 
 ---
 
