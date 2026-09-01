@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Die acht Bildschirme zeichnen, die den Beitritt per Scan tragen — zwei neu, sechs geändert, auf zwei Canvases.
+**Goal:** Die neun Bildschirme zeichnen, die den Beitritt per Scan tragen — drei neu, sechs geändert, auf zwei Canvases.
 
 **Architecture:** Artboards sind eigenständige `.dc.html`-Dateien ohne gemeinsame Laufzeit. Die sechs Einstiegs-Artboards der Member-App entstehen aus `gen_auth.py` über die Bausteine in `build.py`; die übrigen 26 sind handgeschriebene, formatierte HTML-Dateien und werden gezielt bearbeitet. `canvas.json` legt Position, Titel und Seite fest, `seed.sh` baut daraus die Canvas-Datei und prüft sie.
 
@@ -253,48 +253,41 @@ git commit -m "design: Beitritts- und Wechselzeile auf Home"
 
 ---
 
-### Task 3: Profil — Abschnitt Studios
+### Task 3: Profil verweist auf Studios, Studios wird ein eigener Bildschirm
 
 **Files:**
 - Modify: `docs/superpowers/design/member/Profil.dc.html`
+- Modify: `docs/superpowers/design/member/gen_auth.py` (neuer Abschnitt am Dateiende)
+- Produces: `docs/superpowers/design/member/MemberStudios.dc.html`
 
 **Interfaces:**
-- Consumes: die Klassen `card`, `row`, `sep`, `eyebrow` aus dem `<helmet>`-Block derselben Datei.
-- Produces: nichts, worauf spätere Tasks zugreifen.
+- Consumes: aus `build.py` — `NOTE_FAINT`, `schreibe`, `kopf_zurueck`, `titel`, `tabs`, `ph`, `spacer_top`, `fuellen`. Aus `Profil.dc.html` dessen eigene Klassen `card`, `row`, `sep`, `eyebrow`.
+- Produces: den Dateinamen **`MemberStudios.dc.html`** — Task 5 trägt ihn als drittes neues Artboard in `canvas.json` ein.
 
-**Achtung, gemessene Enge.** Profil trägt schon Konto-Karte, *Beim Training*, *Deine Daten*, Abmelden und Tab-Leiste auf 852 px. Der neue Abschnitt kostet rund 130 px. Step 4 prüft das, Step 5 hat den benannten Ausweichweg.
+**Warum ein eigener Bildschirm.** Ein erster Versuch setzte den Abschnitt direkt auf Profil. Profil trägt dort schon Konto-Karte, *Beim Training*, *Deine Daten*, Abmelden und Tab-Leiste; es bleiben rund 88 px Luft, der Abschnitt kostet rund 184. **Er passt nicht, und der ursprünglich vorgesehene Ausweichweg — einen Absatz kürzen — holt nur rund 40 px.** Selbst bei knappem Passen wäre ein Bildschirm auf 100 % Füllstand die falsche Antwort: Studionamen sind variabel lang, und eine Liste mit einer destruktiven Aktion je Zeile verdient den Platz, den das Repo seinem eigenen Grundsatz nach vergibt — ein Formular je Bildschirm.
 
-- [ ] **Step 1: Den Abschnitt `Studios` direkt nach der Konto-Karte einfügen**
+**Wenn Arbeit aus dem ersten Versuch noch im Baum liegt,** wird sie ersetzt, nicht ergänzt.
 
-Anker ist das Ende des ersten `padding: 20px 20px 0`-Blocks, der auf die Zeile *Passwort ändern* folgt. Direkt davor steht der Abschnitt *Beim Training* mit `<div class="eyebrow">Beim Training</div>`. Der neue Block kommt **davor**:
+- [ ] **Step 1: In `Profil.dc.html` eine Zeile in die Konto-Karte setzen**
+
+Die Konto-Karte enthält heute die Zeile *Passwort ändern* mit Chevron. Direkt darunter, innerhalb derselben `card`, kommt eine zweite Zeile nach demselben Muster — getrennt durch einen `sep`:
 
 ```html
-  <!-- Bei genau einer Mitgliedschaft -- dem Normalfall -- ist das eine ruhige
-       Zeile ohne Auswahl. Der Mehrstudio-Fall kostet genau diesen Abschnitt.
-       Verlassen steht je Zeile, nicht als Sammelaktion: es betrifft immer
-       genau ein Studio, und welches, muss ablesbar sein. -->
-  <div style="flex: none; padding: 20px 20px 0; display: flex; flex-direction: column; gap: 10px">
-    <div class="eyebrow">Studios</div>
-    <div class="card">
-      <div class="row">
-        <span style="width: 7px; height: 7px; border-radius: 50%; background: #D4FF3F; display: inline-block; flex: none"></span>
-        <span style="flex-grow: 1; font-size: 15px; font-weight: 700">Kraftwerk Nord</span>
-        <span style="font-size: 12px; font-weight: 700; color: #FF5A4E; flex: none">Verlassen</span>
-      </div>
       <div class="sep"></div>
-      <div class="row">
-        <span style="width: 7px; height: 7px; border-radius: 50%; background: #2A2E36; display: inline-block; flex: none"></span>
-        <span style="flex-grow: 1; font-size: 15px; font-weight: 700; color: #9BA3AF">Südbad Fitness</span>
-        <span style="font-size: 12px; font-weight: 700; color: #FF5A4E; flex: none">Verlassen</span>
+      <div class="row" style="padding: 11px 16px">
+        <span style="flex-grow: 1; font-size: 15px; font-weight: 700">Studios</span>
+        <span style="font-size: 13px; color: #5C636E">Kraftwerk Nord</span>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
       </div>
-    </div>
-    <div style="font-size: 12px; line-height: 1.5; color: #5C636E">Tippen wechselt. Ein Scan im anderen Studio wechselt von selbst.</div>
-  </div>
 ```
 
-- [ ] **Step 2: Den Studionamen in der Konto-Karte entfernen**
+Das kostet rund 48 px — innerhalb der rund 88 px Luft.
 
-Er steht jetzt eine Karte tiefer, und zwar mit Zustand. Zweimal dieselbe Angabe, einmal ohne Zustand, ist die schlechtere:
+**Ein etwaiger eigener Abschnitt `Studios` auf Profil wird dabei entfernt**, ebenso eine etwaige Kürzung des Absatzes in *Deine Daten*: der Absatz steht wieder vollständig, wie vor dem ersten Versuch.
+
+- [ ] **Step 2: Den Studionamen aus der Konto-Zeile entfernen**
+
+Er steht jetzt in der Zeile darunter, mit Weg zum Detail. Zweimal dieselbe Angabe ist die schlechtere:
 
 ```html
         <div style="font-size: 12px; color: #5C636E">lena.wagner@example.de</div>
@@ -308,40 +301,88 @@ ersetzt
 
 - [ ] **Step 3: Die Fußzeile unverändert lassen**
 
-`gymodo 0.1 · Kraftwerk Nord` am unteren Rand bleibt. Sie nennt das aktive Studio im Zusammenhang mit der Version — das ist eine Herkunftsangabe, keine Zustandsanzeige, und sie doppelt den neuen Abschnitt nicht.
+`gymodo 0.1 · Kraftwerk Nord` am unteren Rand bleibt. Sie nennt das aktive Studio im Zusammenhang mit der Version — eine Herkunftsangabe, keine Zustandsanzeige. Diesen Schritt nur bestätigen, nicht bearbeiten.
 
-- [ ] **Step 4: Überlauf prüfen**
+- [ ] **Step 4: `MemberStudios` als neuen Abschnitt ans Ende von `gen_auth.py` anfügen**
+
+Nach dem Abschnitt `MemberScanner`, als letzter Abschnitt der Datei:
+
+```python
+# ============================================================== MemberStudios
+# Push aus Profil, behaelt also die Tab-Leiste (Designsystem Abschnitt 11,
+# Vorbild: MemberPasswortAendern). Content-Screen: 20 pt Seitenrand.
+#
+# Eigener Bildschirm statt eines Abschnitts auf Profil. Bei genau einer
+# Mitgliedschaft -- dem Normalfall -- ist das eine ruhige Liste mit einer
+# Zeile; der Mehrstudio-Fall kostet keine einzige Zeile auf Profil.
+#
+# "Verlassen" steht je Zeile, nicht als Sammelaktion: es betrifft immer
+# genau ein Studio, und welches, muss ablesbar sein. Keine Akzentflaeche --
+# es gibt hier nichts zu bestaetigen, nur zu waehlen und zu verlassen.
+KARTE = 'border: 1px solid #2A2E36; border-radius: 14px; background: #14161A; overflow: hidden;'
+ZEILE = 'display: flex; align-items: center; gap: 12px; padding: 14px 16px;'
+
+
+def studio_zeile(name, aktiv, letzte=False):
+    punkt = '#D4FF3F' if aktiv else '#2A2E36'
+    farbe = '#F2F4F7' if aktiv else '#9BA3AF'
+    stil = ZEILE if letzte else ZEILE + ' border-bottom: 1px solid #2A2E36;'
+    return ('<div style="%s">'
+            '<span style="width: 7px; height: 7px; border-radius: 50%%; background: %s; '
+            'display: inline-block; flex: none;"></span>'
+            '<span style="flex-grow: 1; font-size: 15px; font-weight: 700; color: %s;">%s</span>'
+            '<span style="font-size: 12px; font-weight: 700; color: #FF5A4E; flex: none;">Verlassen</span>'
+            '</div>' % (stil, punkt, farbe, name))
+
+
+studios = spacer_top() + kopf_zurueck('Profil')
+studios += titel('Studios', top=20, seite=20)
+studios += ('<div style="flex: none; padding: 24px 20px 0;"><div style="%s">%s%s</div></div>'
+            % (KARTE,
+               studio_zeile('Kraftwerk Nord', True),
+               studio_zeile('Südbad Fitness', False, letzte=True)))
+studios += ('<div style="flex: none; padding: 12px 20px 0;"><div style="%s">'
+            'Tippen wechselt. Ein Scan im anderen Studio wechselt von selbst.</div></div>'
+            % NOTE_FAINT)
+studios += ('<div style="flex: none; padding: 26px 20px 0;"><div style="%s">'
+            'Ein Studio, das du verlässt, verliert dich als Mitglied — deine Sätze und '
+            'dein Fortschritt bleiben bei dir.</div></div>' % NOTE_FAINT)
+studios += fuellen()
+studios += tabs('Profil')
+schreibe('MemberStudios.dc.html', ph(studios))
+```
+
+- [ ] **Step 5: Generator laufen lassen**
 
 ```bash
 cd docs/superpowers/design/member
-python -c "import io,re; s=io.open('Profil.dc.html',encoding='utf-8').read(); print('Abmelden:', 'Abmelden' in s); print('Tabs:', s.count('class=\"tabs\"'))"
+python gen_auth.py
 ```
 
-Erwartet: `Abmelden: True`, `Tabs: 1`. Das prüft die Struktur, nicht die Höhe — die Höhe prüft Step 5 am gerenderten Artboard.
+Erwartet: acht Zeilen `geschrieben: …`, darunter `geschrieben: MemberStudios.dc.html`.
 
-- [ ] **Step 5: Am gerenderten Artboard nachsehen, mit benanntem Ausweichweg**
-
-Die Datei im Browser öffnen und nachsehen, ob *Abmelden* und die Tab-Leiste noch sichtbar sind. `.ph` hat `overflow: hidden` — was nicht passt, verschwindet lautlos, es gibt keine Fehlermeldung.
-
-Wenn etwas fehlt: den Absatz in *Deine Daten* auf den ersten Satz kürzen. Aus
-
-```html
-        <div style="font-size: 13px; line-height: 1.55; color: #9BA3AF">gymodo misst nichts. Gespeichert wird nur, was du selbst bestätigst: Einstellwerte, Sätze und ob ein Trainer dabei war. Einweisungsvideos gehören <strong style="color: #F2F4F7">Kraftwerk Nord</strong>.</div>
-```
-
-wird
-
-```html
-        <div style="font-size: 13px; line-height: 1.55; color: #9BA3AF">gymodo misst nichts. Gespeichert wird nur, was du selbst bestätigst — Einstellwerte, Sätze, ob ein Trainer dabei war.</div>
-```
-
-Das spart zwei Zeilen (~42 px). **Der Satz zur Datenschutzgrenze bleibt dabei stehen** — gekürzt wird der Zusatz über die Videorechte, nicht die Aussage, dass nichts gemessen wird.
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Akzentflächen und Struktur prüfen**
 
 ```bash
-git add docs/superpowers/design/member/Profil.dc.html
-git commit -m "design: Profil bekommt den Abschnitt Studios"
+cd docs/superpowers/design/member
+grep -c "background: #D4FF3F" MemberStudios.dc.html Profil.dc.html
+grep -c "Einweisungsvideos gehören" Profil.dc.html
+grep -c ">Studios<" Profil.dc.html
+grep -c "class=\"tabs\"" Profil.dc.html
+grep -c "Abmelden" Profil.dc.html
+```
+
+Erwartet der Reihe nach: `MemberStudios.dc.html:1` — der Statuspunkt des aktiven Studios, keine Aktionsfläche; `Profil.dc.html:1` — unverändert der Bestand; dann `1`, `1`, `1`, `1`.
+
+**Steht bei `Einweisungsvideos gehören` eine `0`, ist die Kürzung aus dem ersten Versuch noch drin** — sie muss zurückgenommen werden, der Absatz gehört vollständig wiederhergestellt.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add docs/superpowers/design/member/Profil.dc.html \
+        docs/superpowers/design/member/gen_auth.py \
+        docs/superpowers/design/member/MemberStudios.dc.html
+git commit -m "design: Studios als eigener Bildschirm, Profil verweist darauf"
 ```
 
 ---
@@ -482,12 +523,12 @@ git commit -m "design: Web-Fallback fuer den Aushang, zweiter Scan benannt"
 - Modify: `docs/superpowers/design/member/canvas.json`
 
 **Interfaces:**
-- Consumes: `MemberScanner.dc.html` aus Task 1, `FallbackAushang.dc.html` aus Task 4. Beide müssen existieren, sonst bricht der Seeder ab.
+- Consumes: `MemberScanner.dc.html` aus Task 1, `MemberStudios.dc.html` aus Task 3, `FallbackAushang.dc.html` aus Task 4. Alle drei müssen existieren, sonst bricht der Seeder ab.
 - Produces: `gymodo-member-app.html`, die Datei, die als Artefakt veröffentlicht wird.
 
-- [ ] **Step 1: Die beiden neuen Artboards eintragen**
+- [ ] **Step 1: Die drei neuen Artboards eintragen**
 
-In `canvas.json`, im Array `artboards`. Der Scanner kommt hinter `MemberPasswortAendern` (Seite `zugang`, nächste freie Spalte `x = 1892`):
+In `canvas.json`, im Array `artboards`. Der Scanner kommt hinter `MemberPasswortAendern` (Seite `zugang`, nächste freie Spalte `x = 1892`), Studios direkt dahinter (`x = 2365`):
 
 ```json
     {
@@ -497,6 +538,15 @@ In `canvas.json`, im Array `artboards`. Der Scanner kommt hinter `MemberPasswort
       "w": 393,
       "h": 852,
       "title": "05 · Code scannen",
+      "page": "zugang"
+    },
+    {
+      "file": "MemberStudios.dc.html",
+      "x": 2365,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "06 · Profil — Studios",
       "page": "zugang"
     },
 ```
@@ -523,9 +573,9 @@ Sie beschreibt heute vier Artboards und nennt 03 als Code-Eingabe. Beides stimmt
       "id": "hdr-zugang",
       "x": 0,
       "y": -280,
-      "w": 2285,
+      "w": 2758,
       "page": "zugang",
-      "text": "ZUGANG · neu\nSelbstregistrierung, Passwort und Studio-Beitritt. 03 ist der wichtigste der fünf: was ein frisch registriertes Mitglied ohne Studio sieht, ohne Tab-Leiste. Der Beitritt läuft jetzt über den Scan — Aushang am Eingang oder Aufkleber am Gerät, beides derselbe Tokenraum unter /t/<token>. Der getippte Studio-Code bleibt als zweiter Weg und gibt dafür die Akzentfläche an den Scan ab. Die Anmeldung selbst (E-Mail + Passwort) und die einmalige Adressbestätigung liegen auf der Seite „App“, Artboards 01/02."
+      "text": "ZUGANG · neu\nSelbstregistrierung, Passwort, Studio-Beitritt und Mitgliedschaften. 03 ist der wichtigste der sechs: was ein frisch registriertes Mitglied ohne Studio sieht, ohne Tab-Leiste. Der Beitritt läuft jetzt über den Scan — Aushang am Eingang oder Aufkleber am Gerät, beides derselbe Tokenraum unter /t/<token>. Der getippte Studio-Code bleibt als zweiter Weg und gibt dafür die Akzentfläche an den Scan ab. 06 ist die Kehrseite: wer mit einem Tap beitritt, geht mit einem Tap. Die Anmeldung selbst (E-Mail + Passwort) und die einmalige Adressbestätigung liegen auf der Seite „App“, Artboards 01/02."
     }
 ```
 
@@ -550,7 +600,7 @@ cd docs/superpowers/design/member
 python -c "import json,io; d=json.load(io.open('canvas.json',encoding='utf-8')); print(len(d['artboards']),'Artboards'); print(len(d['annotations']),'Annotationen')"
 ```
 
-Erwartet: `33 Artboards`, `18 Annotationen` — heute stehen dort 31 und 17.
+Erwartet: `34 Artboards`, `18 Annotationen` — heute stehen dort 31 und 17.
 
 - [ ] **Step 5: Jede eingetragene Datei muss existieren**
 
@@ -575,7 +625,7 @@ Erwartet: `seed-canvas.mjs` schreibt `gymodo-member-app.html`, danach läuft `--
 ```bash
 git add docs/superpowers/design/member/canvas.json \
         docs/superpowers/design/member/gymodo-member-app.html
-git commit -m "design: Member-Canvas auf 28 Artboards, Zugang und Kaltstart annotiert"
+git commit -m "design: Member-Canvas auf 34 Artboards, Zugang und Kaltstart annotiert"
 ```
 
 ---

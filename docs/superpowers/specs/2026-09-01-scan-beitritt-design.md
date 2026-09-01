@@ -131,9 +131,13 @@ Das ist kein Geschmacksurteil. Das Designsystem lässt **genau eine Akzentfläch
 
 Der Sucher, den 03 öffnet: der vorhandene aus *Training → Gerät finden* (App 15) ohne Tab-Leiste, denn Zugang kennt keine. Er wird eigenständig gezeichnet, weil „das gleiche wie 15, nur anders" in einer Spec verlässlich falsch umgesetzt wird.
 
-### Profil (App 24) bekommt einen Abschnitt `Studios`
+### Profil (App 24) verweist, Studios wird ein eigener Bildschirm
 
-Das aktive oben mit Punkt in Akzentfarbe, die übrigen darunter, ein Tap schaltet um. Je Zeile eine destruktive Nebenaktion *Verlassen*, mit Bestätigung. Bei genau einer Mitgliedschaft — dem Normalfall — ist das eine ruhige Zeile ohne Auswahl. **Der Mehrstudio-Fall kostet genau diesen Abschnitt und sonst nichts.**
+Profil bekommt **eine Zeile** in der Konto-Karte: *Studios · Kraftwerk Nord* mit Chevron. Der Bildschirm dahinter (Zugang 06) trägt die Liste: das aktive Studio oben mit Punkt in Akzentfarbe, die übrigen darunter, ein Tap schaltet um. Je Zeile eine destruktive Nebenaktion *Verlassen*.
+
+**Ursprünglich sollte das ein Abschnitt auf Profil werden. Es passt dort nicht.** Profil trägt Konto-Karte, *Beim Training*, *Deine Daten*, Abmelden und Tab-Leiste; es bleiben rund 88 px, der Abschnitt kostet rund 184. Und selbst bei knappem Passen wäre ein Bildschirm auf 100 % Füllstand die falsche Antwort — Studionamen sind variabel lang. Eine Liste mit einer destruktiven Aktion je Zeile bekommt den Platz, den dieses Repo seinem eigenen Grundsatz nach vergibt: ein Formular je Bildschirm.
+
+**Der Mehrstudio-Fall kostet damit genau eine Zeile auf Profil.** Bei genau einer Mitgliedschaft — dem Normalfall — steht dort der Studioname und dahinter eine Liste mit einem Eintrag.
 
 ### Home (22) und Home-leer (23)
 
@@ -165,14 +169,15 @@ Der Studio-Code in *Einstellungen* bleibt, wo er ist. Er ist jetzt der zweite We
 | --- | --- | --- |
 | ~ | Zugang 03 — Noch kein Studio, Scan als Hauptweg | Member |
 | + | Zugang 05 — Scanner | Member |
+| + | Zugang 06 — Profil, Studios | Member |
 | ~ | App 22 / 23 — Home, Beitritts- und Wechselzeile | Member |
-| ~ | App 24 — Profil, Abschnitt Studios | Member |
+| ~ | App 24 — Profil, Zeile *Studios* mit Chevron | Member |
 | ~ | App 25 — Web-Fallback Gerät, Studioname und zweiter Scan | Member |
 | + | App 27 — Web-Fallback Aushang | Member |
 | ~ | Tags — Abschnitt Aushang | Portal |
 | ~ | Einstellungen Studio — Studio-Code als zweiter Weg | Portal |
 
-**Zwei neu, sechs geändert, keines gelöscht.**
+**Drei neu, sechs geändert, keines gelöscht.**
 
 ---
 
