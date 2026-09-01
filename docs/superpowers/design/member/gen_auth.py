@@ -263,3 +263,47 @@ scanner += fuellen()
 scanner += ('<div style="flex: none; padding: 0 28px 20px;"><div style="%s">Code stattdessen eingeben</div></div>'
             % NEBEN)
 schreibe('MemberScanner.dc.html', ph(scanner))
+
+
+# ============================================================== MemberStudios
+# Push aus Profil, behaelt also die Tab-Leiste (Designsystem Abschnitt 11,
+# Vorbild: MemberPasswortAendern). Content-Screen: 20 pt Seitenrand.
+#
+# Eigener Bildschirm statt eines Abschnitts auf Profil. Bei genau einer
+# Mitgliedschaft -- dem Normalfall -- ist das eine ruhige Liste mit einer
+# Zeile; der Mehrstudio-Fall kostet keine einzige Zeile auf Profil.
+#
+# "Verlassen" steht je Zeile, nicht als Sammelaktion: es betrifft immer
+# genau ein Studio, und welches, muss ablesbar sein. Keine Akzentflaeche --
+# es gibt hier nichts zu bestaetigen, nur zu waehlen und zu verlassen.
+KARTE = 'border: 1px solid #2A2E36; border-radius: 14px; background: #14161A; overflow: hidden;'
+ZEILE = 'display: flex; align-items: center; gap: 12px; padding: 14px 16px;'
+
+
+def studio_zeile(name, aktiv, letzte=False):
+    punkt = '#D4FF3F' if aktiv else '#2A2E36'
+    farbe = '#F2F4F7' if aktiv else '#9BA3AF'
+    stil = ZEILE if letzte else ZEILE + ' border-bottom: 1px solid #2A2E36;'
+    return ('<div style="%s">'
+            '<span style="width: 7px; height: 7px; border-radius: 50%%; background: %s; '
+            'display: inline-block; flex: none;"></span>'
+            '<span style="flex-grow: 1; font-size: 15px; font-weight: 700; color: %s;">%s</span>'
+            '<span style="font-size: 12px; font-weight: 700; color: #FF5A4E; flex: none;">Verlassen</span>'
+            '</div>' % (stil, punkt, farbe, name))
+
+
+studios = spacer_top() + kopf_zurueck('Profil')
+studios += titel('Studios', top=20, seite=20)
+studios += ('<div style="flex: none; padding: 24px 20px 0;"><div style="%s">%s%s</div></div>'
+            % (KARTE,
+               studio_zeile('Kraftwerk Nord', True),
+               studio_zeile('Südbad Fitness', False, letzte=True)))
+studios += ('<div style="flex: none; padding: 12px 20px 0;"><div style="%s">'
+            'Tippen wechselt. Ein Scan im anderen Studio wechselt von selbst.</div></div>'
+            % NOTE_FAINT)
+studios += ('<div style="flex: none; padding: 26px 20px 0;"><div style="%s">'
+            'Ein Studio, das du verlässt, verliert dich als Mitglied — deine Sätze und '
+            'dein Fortschritt bleiben bei dir.</div></div>' % NOTE_FAINT)
+studios += fuellen()
+studios += tabs('Profil')
+schreibe('MemberStudios.dc.html', ph(studios))
