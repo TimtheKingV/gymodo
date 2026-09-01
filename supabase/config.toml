@@ -249,7 +249,12 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+# Umgebungsabhaengig, gleicher Grund wie site_url: lokal aus, damit
+# Integrationstests Konten ohne Bestaetigungsumweg anlegen; in der Produktion
+# an, wie es dort heute steht. Ein Push haette die Bestaetigungspflicht sonst
+# stillschweigend abgeschaltet -- und ab Phase 2 (Passwoerter statt OTP) waere
+# das die Tuer, durch die sich jeder mit fremder Adresse registriert.
+enable_confirmations = "env(SUPABASE_AUTH_EMAIL_ENABLE_CONFIRMATIONS)"
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
@@ -336,9 +341,13 @@ auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 max_enrolled_factors = 10
 
 # Control MFA via App Authenticator (TOTP)
+# Auf true, weil das verknuepfte Projekt es aktiv hat und "config push" die
+# gesamte [auth]-Sektion ueberträgt: stuende hier false, haette der Push TOTP
+# in der Produktion stillschweigend abgeschaltet. Niemand nutzt es heute --
+# aber eine Faehigkeit wegzunehmen ist eine Entscheidung, keine Nebenwirkung.
 [auth.mfa.totp]
-enroll_enabled = false
-verify_enabled = false
+enroll_enabled = true
+verify_enabled = true
 
 # Configure MFA via Phone Messaging
 [auth.mfa.phone]
