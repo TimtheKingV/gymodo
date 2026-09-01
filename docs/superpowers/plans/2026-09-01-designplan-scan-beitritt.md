@@ -110,10 +110,14 @@ Nach dem Block `MemberPasswortAendern`, als letzter Abschnitt der Datei:
 
 ```python
 # ============================================================= MemberScanner
-# Der Sucher, den Zugang 03 oeffnet. Es ist derselbe Scanner wie in
-# "Training -> Geraet finden" (App 15), aber ohne Tab-Leiste: die Seite
-# Zugang hat keine. Eigenes Artboard statt eines Verweises -- "wie 15,
-# nur anders" wird beim Bauen verlaesslich falsch gelesen.
+# Der Sucher, den Zugang 03 oeffnet: ein eigener, seitenfoermiger Bildschirm,
+# bewusst ruhiger als der modale Sucher in "Training -> Geraet finden"
+# (App 15). Zugang ist eine lineare Kette, die ein Mitglied einmal
+# durchlaeuft; der Scanner in Training unterbricht dagegen eine laufende
+# Session. Eigenes Artboard statt eines Verweises -- die beiden Screens
+# unterscheiden sich tatsaechlich (Seite statt Modal, keine Scanlinie,
+# eigene Nebenaktion "Code stattdessen eingeben"), nicht nur, weil "wie 15,
+# nur anders" beim Bauen verlaesslich falsch gelesen wird.
 #
 # Keine Akzentflaeche auf diesem Screen. Die vier Sucherecken sind
 # Raender; die einzige Aktion unten ist eine Nebenaktion. Ein Screen
