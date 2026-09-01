@@ -11,16 +11,22 @@ Modell passiert und wie mehrere Uebungen entstehen.
 Die Tags erzeugt das Portal nicht mehr. Sie kommen chargenweise als
 physisches Erzeugnis -- NFC-Chip und aufgedruckter QR auf derselben
 /t/<token>-Adresse -- und werden am Geraet geklebt und gescannt.
+
+Der Bestand, den alle Bildschirme teilen (er muss zu Geraete, Modell, Tags
+und Ueberblick passen): drei Modelle, vier Geraete, davon zwei erreichbar.
+Latzug 12 aktiv, Latzug 13 ohne Tag, Beinpresse 7 aktiv, Beinpresse 8
+stillgelegt mit gesperrtem Tag. Charge 7 hat 100 Tags, drei sind vergeben,
+97 liegen in der Packung. Eingerichtet wird in diesem Gang ein neuer
+Kabelzug mit der Nummer 14.
 """
-from build import (HEAD, FOOT, LABEL, CARD, PRIMARY, SECONDARY, DESTRUCTIVE,
-                   BADGE, NOTE, CHIP, CHIP_AKTIV, PRIMARY_XL, SECONDARY_XL,
-                   DESTRUCTIVE_XL, FIELD_XL, antwort, balken, feld, kopfzeile,
-                   schrittleiste, sheet, sucher, svg, telefon, telefon_voll,
-                   tkarte, schreibe, zurueck)
+from build import (HEAD, FOOT, LABEL, CARD, PRIMARY, SECONDARY, SECONDARY_TEL,
+                   DESTRUCTIVE, BADGE, NOTE, CHIP, CHIP_AKTIV, PRIMARY_XL,
+                   SECONDARY_XL, DESTRUCTIVE_XL, FIELD_XL, antwort, balken,
+                   feld, kopfzeile, schrittleiste, sheet, sucher, svg, telefon,
+                   telefon_voll, tkarte, schreibe, zurueck)
 
 MUTED = 'font-size: 12px; color: #9ba3af;'
 H2 = 'font-size: 16px; font-weight: 600;'
-GRUEN = '#d4ff3f'
 
 
 def abschnitt(titel, zeilen, rechts=''):
@@ -42,6 +48,13 @@ def tzeile(haupt, meta, rechts='', letzte=False, faint=False):
             % (rand, haupt, farbe, meta, r))
 
 
+def schrittmarke(n, titel, von=5):
+    """Die Wegmarke fuer Bildschirme, die keine Leiste tragen koennen --
+    Sucher und Aufnahme laufen randlos ueber die Kamera."""
+    return ('<span style="%s color: #9ba3af;">Schritt %d von %d &middot; %s</span>'
+            % (LABEL, n, von, titel))
+
+
 def stapel(*teile):
     return ''.join(teile)
 
@@ -53,26 +66,30 @@ start = stapel(
     kopfzeile('Einrichten', 'Geh von Gerät zu Gerät. Jedes ist fertig, sobald sein Tag klebt.'),
     tkarte('<div style="display: flex; gap: 20px;">'
            '<div><div style="font-size: 28px; font-weight: 800; letter-spacing: -0.03em; '
-           'line-height: 1;">7</div><div style="%s color: #9ba3af; margin-top: 6px;">Geräte</div></div>'
+           'line-height: 1;">4</div><div style="%s color: #9ba3af; margin-top: 6px;">Geräte</div></div>'
            '<div><div style="font-size: 28px; font-weight: 800; letter-spacing: -0.03em; '
-           'line-height: 1;">4</div><div style="%s color: #9ba3af; margin-top: 6px;">Modelle</div></div>'
+           'line-height: 1;">3</div><div style="%s color: #9ba3af; margin-top: 6px;">Modelle</div></div>'
            '<div><div style="font-size: 28px; font-weight: 800; letter-spacing: -0.03em; '
            'line-height: 1; color: #ffb020;">1</div><div style="%s color: #ffb020; margin-top: 6px;">'
            'ohne Tag</div></div></div>' % (LABEL, LABEL, LABEL)),
     tkarte('<div style="display: flex; align-items: center; gap: 12px;">%s'
-           '<div style="min-width: 0;"><div style="%s">87 Tags vorrätig</div>'
+           '<div style="min-width: 0;"><div style="%s">97 Tags vorrätig</div>'
            '<div style="%s margin-top: 2px;">Charge 7 &middot; geliefert Mi., 12. August 2026 &middot; '
-           '100 Stück</div></div></div>' % (svg('tag', 24, '#5c636e'), H2, NOTE)),
+           '100 Stück, 3 vergeben</div></div></div>' % (svg('tag', 24, '#5c636e'), H2, NOTE)),
     '<a href="#" style="%s">Gerät einrichten</a>' % PRIMARY_XL,
     '<a href="#" style="%s">Tag prüfen</a>' % SECONDARY_XL,
+    abschnitt('Was noch fehlt', [
+        tzeile('Latzug 13', 'Rückwand mitte &middot; kein Tag, für Mitglieder nicht auffindbar',
+               '<a href="#" style="%s">Weiter</a>' % SECONDARY_TEL, letzte=True),
+    ]),
     abschnitt('Zuletzt eingerichtet', [
-        tzeile('Latzug 13', 'Rückwand mitte &middot; vor 4 Minuten'),
-        tzeile('Beinpresse 8', 'Fensterseite &middot; vor 20 Minuten &middot; 1 Übung ohne Video',
+        tzeile('Latzug 12', 'Rückwand links &middot; gestern &middot; erreichbar'),
+        tzeile('Beinpresse 7', 'Fensterseite &middot; gestern &middot; erreichbar',
                letzte=True, faint=True),
     ]),
-    '<p style="%s margin: 0;">Du musst nicht durchhalten. Was heute klebt, funktioniert heute — '
-    'der Rest wartet.</p>' % NOTE)
-schreibe('TelefonStart.dc.html', telefon(900, start))
+    '<p style="%s margin: 0;">Ein Gerät ist fertig, sobald sein Tag klebt. Übungen und Videos '
+    'lassen sich jederzeit nachtragen.</p>' % NOTE)
+schreibe('TelefonStart.dc.html', telefon(1000, start))
 
 
 # ------------------------------------------------------------- 2 Modell
@@ -86,11 +103,11 @@ modell = stapel(
     % (FIELD_XL, svg('search', 18, '#5c636e')),
     abschnitt('Modelle im Studio', [
         tzeile('Latzug', 'Technogym &middot; 2 Geräte &middot; 2 Übungen',
-               '<a href="#" style="%s">Wählen</a>' % SECONDARY),
+               '<a href="#" style="%s">Wählen</a>' % SECONDARY_TEL),
         tzeile('Beinpresse', 'Gym80 &middot; 2 Geräte &middot; 1 Übung',
-               '<a href="#" style="%s">Wählen</a>' % SECONDARY),
+               '<a href="#" style="%s">Wählen</a>' % SECONDARY_TEL),
         tzeile('Brustpresse', 'Ohne Hersteller &middot; noch kein Gerät',
-               '<a href="#" style="%s">Wählen</a>' % SECONDARY, letzte=True, faint=True),
+               '<a href="#" style="%s">Wählen</a>' % SECONDARY_TEL, letzte=True, faint=True),
     ]),
     tkarte('<div style="display: flex; align-items: center; gap: 12px;">%s'
            '<div style="min-width: 0;"><div style="%s">Noch nicht dabei</div>'
@@ -98,7 +115,7 @@ modell = stapel(
            'nebeneinander sind ein Modell und zwei Geräte.</div></div></div>'
            '<a href="#" style="%s">Neues Modell anlegen</a>'
            % (svg('plus', 24, '#5c636e'), H2, NOTE, PRIMARY_XL), gestrichelt=True))
-schreibe('TelefonModell.dc.html', telefon(880, modell))
+schreibe('TelefonModell.dc.html', telefon(900, modell))
 
 
 # --------------------------------------------------------- 3 Modell neu
@@ -138,8 +155,8 @@ ort_chips = ''.join('<span style="%s">%s</span>' % (CHIP, s)
 geraet = stapel(
     schrittleiste(2, 'Gerät'),
     kopfzeile('Dieses Gerät', 'Kabelzug &middot; Technogym', zurueck_zu='Modell'),
-    feld('Nummer', '14', 'Vorgeschlagen ist die nächste freie. Sie steht am Gerät und in der App '
-         'des Mitglieds — nimm die, die schon draufsteht.', gefuellt=True),
+    feld('Nummer', '14', 'Vorgeschlagen ist die nächste nach der höchsten. Sie steht am Gerät und '
+         'in der App des Mitglieds — nimm die, die schon draufsteht.', gefuellt=True),
     '<div style="display: flex; flex-direction: column; gap: 8px;">%s'
     '<div style="display: flex; gap: 8px; overflow-x: auto;">%s</div></div>'
     % (feld('Standort', 'Rückwand rechts', gefuellt=True), ort_chips),
@@ -175,9 +192,8 @@ kleben = stapel(
     kopfzeile('Tag ankleben', 'Kabelzug 14 &middot; Rückwand rechts', zurueck_zu='Gerät'),
     tkarte(skizze + '<div style="%s">In Augenhöhe, wo man im Stehen hinsieht.</div>' % NOTE),
     abschnitt('Worauf es ankommt', [
-        tzeile('Nicht auf Bewegtes', 'Kein Gewichtsblock, kein Hebel, kein Polster', letzte=False),
-        tzeile('Metall braucht die Ferritseite', 'Sonst liest der Chip nicht — der QR schon',
-               letzte=False),
+        tzeile('Nicht auf Bewegtes', 'Kein Gewichtsblock, kein Hebel, kein Polster'),
+        tzeile('Metall braucht die Ferritseite', 'Sonst liest der Chip nicht — der QR schon'),
         tzeile('Sauber und trocken', 'Einmal abwischen hält den Tag jahrelang', letzte=True),
     ]),
     '<a href="#" style="%s">Tag scannen</a>' % PRIMARY_XL,
@@ -187,8 +203,12 @@ schreibe('TelefonKleben.dc.html', telefon(900, kleben))
 
 
 # ----------------------------------------------------------------- 6 Scan
-# Der Sucher. Kein Akzent als Flaeche: die Kamera ist die Handlung.
+# Der Sucher. Kein Akzent als Flaeche: die Kamera ist die Handlung. Statt der
+# Schrittleiste traegt er die Wegmarke als Zeile -- eine Leiste ueber einem
+# randlosen Kamerabild waere Chrome ohne Grund.
 scan = (sucher('Halt den QR auf dem Tag ins Feld. Geh nah ran — der Code ist klein.')
+        + '<div style="position: relative; margin: 0 16px 16px; text-align: center;">%s</div>'
+        % schrittmarke(3, 'Tag')
         + '<div style="position: relative; margin: 0 16px 20px;">'
         + tkarte('<div style="display: flex; align-items: flex-start; gap: 12px;">%s'
                  '<div style="min-width: 0;"><div style="font-weight: 600;">Der Chip zählt hier nicht'
@@ -196,7 +216,7 @@ scan = (sucher('Halt den QR auf dem Tag ins Feld. Geh nah ran — der Code ist k
                  'den Weg des Mitglieds. Ein Browser liest kein NFC, im Portal geht es allein über '
                  'den QR.</div></div></div>' % (svg('alert', 20, '#5c636e'), NOTE))
         + '</div>')
-schreibe('TelefonScan.dc.html', telefon_voll(820, scan))
+schreibe('TelefonScan.dc.html', telefon_voll(860, scan))
 
 
 # ------------------------------------------------------------- 7 Treffer
@@ -226,10 +246,12 @@ schreibe('TelefonScanTreffer.dc.html', telefon(860, treffer))
 # ----------------------------------------------------- 8 Übung auswählen
 # Uebungen gehoeren dem Studio, nicht dem Geraet (equipment_model_exercises).
 # Deshalb steht hier eine Auswahl und kein leeres Namensfeld -- sonst legt
-# jedes Studio "Rudern sitzend" fuenfmal an.
+# jedes Studio "Rudern sitzend" fuenfmal an. Aus demselben Grund traegt
+# "Neue Uebung anlegen" hier keinen Akzent: der Bildschirm soll zum Waehlen
+# einladen, nicht zum Doppeln.
 def uebung_zeile(name, meta, letzte=False, faint=False):
-    return ('<div style="padding: 14px 16px; %s display: flex; align-items: center; gap: 12px;">'
-            '<div style="flex-grow: 1; min-width: 0;">'
+    return ('<div style="padding: 14px 16px; %s display: flex; align-items: center; gap: 12px; '
+            'min-height: 48px;"><div style="flex-grow: 1; min-width: 0;">'
             '<div style="font-size: 16px; font-weight: 600;">%s</div>'
             '<div style="font-size: 12px; color: %s; margin-top: 2px;">%s</div></div>%s</div>'
             % ('' if letzte else 'border-bottom: 1px solid #2a2e36;', name,
@@ -239,7 +261,9 @@ def uebung_zeile(name, meta, letzte=False, faint=False):
 waehlen = sheet(stapel(
     '<div><div style="font-size: 22px; font-weight: 800; letter-spacing: -0.02em; '
     'text-transform: uppercase;">Übung hinzufügen</div>'
-    '<div style="%s margin-top: 4px;">Kabelzug 14</div></div>' % MUTED,
+    '<div style="margin-top: 6px;">%s</div>'
+    '<div style="%s margin-top: 4px;">Kabelzug 14</div></div>'
+    % (schrittmarke(4, 'Übungen'), MUTED),
     '<div style="%s color: #5c636e;">%s Übung suchen …</div>'
     % (FIELD_XL, svg('search', 18, '#5c636e')),
     '<section style="%s">%s</section>' % (CARD, stapel(
@@ -248,19 +272,21 @@ waehlen = sheet(stapel(
         uebung_zeile('Rudern sitzend', 'An 2 Modellen &middot; 10–15 Wiederholungen'),
         uebung_zeile('Trizepsdrücken am Seil', 'Noch an keinem Modell &middot; 10–15 Wiederholungen',
                      letzte=True, faint=True))),
-    '<a href="#" style="%s">Neue Übung anlegen</a>' % PRIMARY_XL,
+    '<a href="#" style="%s">Neue Übung anlegen</a>' % SECONDARY_XL,
     '<div style="display: flex; gap: 10px; align-items: flex-start;">%s'
-    '<div style="%s">Übungen gehören dem Studio, nicht dem Gerät. Dieselbe Übung an zwei Geräten '
-    'behält ihren Namen — das Einweisungsvideo aber hängt am Paar aus Gerät und Übung, jedes Gerät '
-    'zeigt also sein eigenes.</div></div>' % (svg('alert', 16, '#5c636e'), NOTE)), 250)
-schreibe('TelefonUebungWaehlen.dc.html', telefon_voll(960, waehlen))
+    '<div style="%s">Übungen gehören dem Studio, nicht dem Gerät. Dieselbe Übung an zwei Modellen '
+    'behält ihren Namen — das Einweisungsvideo hängt dagegen am Paar aus Modell und Übung, jedes '
+    'Modell zeigt also sein eigenes.</div></div>' % (svg('alert', 16, '#5c636e'), NOTE)), 240)
+schreibe('TelefonUebungWaehlen.dc.html', telefon_voll(1000, waehlen))
 
 
 # --------------------------------------------------------- 9 Übung neu
+# Der Name ist bewusst einer, der in der Auswahlliste NICHT steht -- sonst
+# zeigt der Entwurf genau die Doppelung, vor der er warnt.
 uebung_neu = stapel(
     schrittleiste(4, 'Übungen'),
     kopfzeile('Neue Übung', zurueck_zu='Übung wählen'),
-    feld('Name', 'Latzug · Enger Griff', gefuellt=True),
+    feld('Name', 'Latzug · Neutralgriff', gefuellt=True),
     '<div style="display: flex; gap: 12px;">'
     '<div style="flex: 1;">%s</div><div style="flex: 1;">%s</div></div>'
     % (feld('Wiederholungen ab', '8', gefuellt=True), feld('bis', '12', gefuellt=True)),
@@ -268,13 +294,15 @@ uebung_neu = stapel(
     'aus — sie steht dem Mitglied unter dem Rad.</p>' % NOTE,
     '<a href="#" style="%s">Hinzufügen</a>' % PRIMARY_XL,
     '<p style="%s margin: 0;">Die Übung steht danach dem ganzen Studio zur Verfügung und lässt sich '
-    'an weitere Geräte hängen.</p>' % NOTE)
+    'an weitere Modelle hängen.</p>' % NOTE)
 schreibe('TelefonUebungNeu.dc.html', telefon(820, uebung_neu))
 
 
 # ---------------------------------------------------- 10 Übungsliste
 # Der Nachfolger des alten Telefon-Artboards: dieselbe Liste, aber mit
-# Reihenfolge, mehreren Uebungen und dem Videostand je Zeile.
+# Reihenfolge, vier Uebungen und dem Videostand je Zeile. Der Akzent liegt
+# auf dem Weiterkommen, nicht auf dem Hinzufuegen -- sonst betont der
+# Bildschirm das Sammeln und nicht das Fertigwerden.
 def uebungsposten(nr, name, meta, unten, letzte=False):
     return ('<div style="padding: 14px 16px; %s display: flex; flex-direction: column; gap: 12px;">'
             '<div style="display: flex; align-items: flex-start; gap: 12px;">'
@@ -287,6 +315,15 @@ def uebungsposten(nr, name, meta, unten, letzte=False):
                svg('grip', 20, '#5c636e'), unten))
 
 
+def videostand(label_text, prozent, note_text):
+    return ('<div style="display: flex; flex-direction: column; gap: 8px;">'
+            '<div style="display: flex; align-items: baseline; justify-content: space-between;">'
+            '<span style="%s color: #9ba3af;">%s</span>'
+            '<span style="font-size: 13px; font-weight: 700;">%d %%</span></div>%s'
+            '<span style="%s">%s</span></div>'
+            % (LABEL, label_text, prozent, balken(prozent), NOTE, note_text))
+
+
 uebungen = stapel(
     schrittleiste(4, 'Übungen'),
     kopfzeile('Übungen', 'Kabelzug 14 &middot; Technogym', zurueck_zu='Gerät'),
@@ -294,23 +331,21 @@ uebungen = stapel(
         uebungsposten(1, 'Latzug · Breiter Griff', '8–12 Wiederholungen &middot; Video 28 s',
                       '<a href="#" style="%s">Video ersetzen</a>' % SECONDARY_XL),
         uebungsposten(2, 'Latzug · Enger Griff', '8–12 Wiederholungen',
-                      '<div style="display: flex; flex-direction: column; gap: 8px;">'
-                      '<div style="display: flex; align-items: baseline; justify-content: '
-                      'space-between;"><span style="%s color: #9ba3af;">Video wird übertragen</span>'
-                      '<span style="font-size: 13px; font-weight: 700;">62 %%</span></div>%s'
-                      '<span style="%s">Bricht die Verbindung ab, setzt der nächste Versuch hier '
-                      'fort — er fängt nicht von vorn an.</span></div>'
-                      % (LABEL, balken(62), NOTE)),
-        uebungsposten(3, 'Rudern sitzend', '10–15 Wiederholungen &middot; kein Video',
+                      videostand('Video wird übertragen', 62,
+                                 'Bricht die Verbindung ab, setzt der nächste Versuch hier fort — '
+                                 'er fängt nicht von vorn an.')),
+        uebungsposten(3, 'Rudern sitzend', '10–15 Wiederholungen',
+                      videostand('Video wartet', 0, 'Beginnt, sobald das vorige durch ist.')),
+        uebungsposten(4, 'Latzug · Neutralgriff', '8–12 Wiederholungen &middot; gerade angelegt',
                       '<a href="#" style="%s">Video aufnehmen</a>' % SECONDARY_XL, letzte=True))),
     tkarte('<div style="display: flex; align-items: center; gap: 12px;">%s'
-           '<div style="%s">Übung hinzufügen</div></div>'
+           '<div style="%s">Noch eine Übung</div></div>'
            '<a href="#" style="%s">Aus dem Studio wählen</a>'
-           % (svg('plus', 24, '#5c636e'), H2, PRIMARY_XL), gestrichelt=True),
+           % (svg('plus', 24, '#5c636e'), H2, SECONDARY_XL), gestrichelt=True),
     '<p style="%s margin: 0;">Die Reihenfolge zählt: Übung 1 ist am Gerät die Vorauswahl. Halt den '
     'Griff gedrückt und schieb.</p>' % NOTE,
-    '<a href="#" style="%s">Einrichtung abschließen</a>' % SECONDARY_XL)
-schreibe('TelefonUebungen.dc.html', telefon(1120, uebungen))
+    '<a href="#" style="%s">Einrichtung abschließen</a>' % PRIMARY_XL)
+schreibe('TelefonUebungen.dc.html', telefon(1360, uebungen))
 
 
 # ------------------------------------------------------------- 11 Video
@@ -318,23 +353,25 @@ schreibe('TelefonUebungen.dc.html', telefon(1120, uebungen))
 # hoch (Spec 6.8). Die 45-Sekunden-Grenze steht sichtbar, weil sie an der
 # Datei geprueft wird -- eine zu lange Aufnahme faellt sonst erst am Ende auf.
 video = (
-    '<div style="position: absolute; inset: 0; background: linear-gradient(168deg, #23272f 0%, '
+    '<div style="position: absolute; inset: 0; background: linear-gradient(168deg, #232730 0%, '
     '#14161a 55%, #0a0b0d 100%);"></div>'
     '<div style="position: relative; height: 54px;"></div>'
-    '<div style="position: relative; height: 52px; padding: 0 20px; display: flex; '
-    'align-items: center; justify-content: space-between;">'
-    '<span style="font-size: 17px; font-weight: 800; letter-spacing: -0.01em;">Latzug · Enger Griff'
-    '</span><div style="width: 34px; height: 34px; border-radius: 50%; background: rgba(10,11,13,.6); '
-    'display: flex; align-items: center; justify-content: center;">'
+    '<div style="position: relative; min-height: 52px; padding: 0 20px; display: flex; '
+    'align-items: center; justify-content: space-between; gap: 12px;">'
+    '<div style="min-width: 0;">'
+    '<div style="font-size: 17px; font-weight: 800; letter-spacing: -0.01em;">Kabelzug 14 · Rudern '
+    'sitzend</div><div style="margin-top: 4px;">' + schrittmarke(5, 'Video') + '</div></div>'
+    '<div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(10,11,13,.6); '
+    'display: flex; align-items: center; justify-content: center; flex-shrink: 0;">'
     + svg('close', 19, '#f2f4f7') + '</div></div>'
-    '<div style="position: relative; padding: 12px 20px 0; display: flex; flex-direction: column; '
+    '<div style="position: relative; padding: 16px 20px 0; display: flex; flex-direction: column; '
     'gap: 8px;"><div style="display: flex; align-items: baseline; justify-content: space-between;">'
     '<span style="' + LABEL + ' color: #ff5a4e;">Aufnahme läuft</span>'
     '<span style="font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums;">'
     '0:28 <span style="color: #5c636e;">von 0:45</span></span></div>'
     + balken(62) +
     '</div>'
-    '<div style="position: relative; height: 330px;"></div>'
+    '<div style="position: relative; height: 300px;"></div>'
     '<div style="position: relative; display: flex; align-items: center; justify-content: center; '
     'gap: 28px; padding: 0 20px;">'
     '<span style="' + MUTED + ' width: 72px; text-align: right;">Neu</span>'
@@ -346,7 +383,7 @@ video = (
     '<div style="position: relative; padding: 24px 24px 24px; text-align: center;">'
     '<div style="' + NOTE + '">Höchstens 45 Sekunden. Die Länge wird an der Datei geprüft, nicht '
     'geschätzt — eine zu lange Aufnahme wird abgelehnt, nicht beschnitten.</div></div>')
-schreibe('TelefonVideo.dc.html', telefon_voll(860, video))
+schreibe('TelefonVideo.dc.html', telefon_voll(880, video))
 
 
 # ----------------------------------------------------------- 12 Uploads
@@ -368,9 +405,9 @@ uploads = stapel(
                      '<div style="display: flex; flex-direction: column; gap: 6px;">%s'
                      '<span style="%s">Beginnt, sobald das vorige durch ist</span></div>'
                      % (balken(0), NOTE)),
-        upload_zeile('Beinpresse 8 · Beidbeinig', '15 MB &middot; wartet',
+        upload_zeile('Beinpresse 7 · Beidbeinig', '15 MB &middot; wartet',
                      '<div style="display: flex; flex-direction: column; gap: 6px;">%s'
-                     '<span style="%s">Von vorhin, noch nicht oben</span></div>'
+                     '<span style="%s">Von gestern, noch nicht oben</span></div>'
                      % (balken(0), NOTE), letzte=True),
     ], rechts='<span style="%s">3 offen</span>' % MUTED),
     tkarte('<div style="display: flex; align-items: flex-start; gap: 12px;">%s'
@@ -393,7 +430,8 @@ fertig = stapel(
     % (svg('check', 22, '#d4ff3f'), MUTED),
     abschnitt('Was jetzt gilt', [
         tzeile('Tag verbunden', 'Charge 7 &middot; aktiv seit gerade eben'),
-        tzeile('3 Übungen', 'Latzug breit, Latzug eng, Rudern sitzend'),
+        tzeile('4 Übungen', 'Latzug breit, Latzug eng, Rudern sitzend, Neutralgriff'),
+        tzeile('2 Videos in der Warteschlange', 'Gehen hoch, solange die Seite offen bleibt'),
         tzeile('1 Übung ohne Video', 'Nutzbar, nur ohne Anleitung', letzte=True, faint=True),
     ]),
     tkarte('<div style="display: flex; align-items: center; gap: 12px;">%s'
@@ -403,8 +441,8 @@ fertig = stapel(
            % (svg('qr', 24, '#5c636e'), NOTE, SECONDARY_XL)),
     '<a href="#" style="%s">Nächstes Gerät</a>' % PRIMARY_XL,
     '<a href="#" style="%s">Für heute fertig</a>' % SECONDARY_XL,
-    '<p style="%s margin: 0;">86 Tags noch in der Packung.</p>' % NOTE)
-schreibe('TelefonFertig.dc.html', telefon(900, fertig))
+    '<p style="%s margin: 0;">96 Tags noch in der Packung.</p>' % NOTE)
+schreibe('TelefonFertig.dc.html', telefon(960, fertig))
 
 
 # --------------------------------------------------------- 14 Zustände
@@ -445,8 +483,8 @@ zustaende = stapel(
             'erlauben.',
             symbol=svg('camera', 20, '#ff5a4e'), rand='#ff5a4e'),
     antwort('Kein Netz im Keller',
-            'Gespeichert, wird gesendet. Das Gerät und der Tag liegen lokal und gehen hoch, sobald '
-            'wieder Empfang da ist. Geh ruhig weiter.',
+            'Gespeichert, wird gesendet. Gerät und Tag liegen lokal und gehen hoch, sobald wieder '
+            'Empfang da ist.',
             symbol=svg('offline', 20, '#ff5a4e'), rand='#ff5a4e',
             flaeche='rgba(255,90,78,0.1)'),
     '<span style="%s color: #9ba3af;">Leer</span>' % LABEL,
@@ -465,13 +503,17 @@ schreibe('TelefonZustaende.dc.html', telefon(1780, zustaende))
 # --------------------------------------------------------- 15 Ablaufkarte
 # Der Bildschirm, der vorher fehlte: die Reihenfolge selbst. Ohne ihn muss
 # man sich den Gang aus dreizehn Einzelbildern zusammenreimen.
-def a_schritt(nr, titel, text):
+PUNKT = ('<span style="width: 6px; height: 6px; border-radius: 999px; background: #5c636e; '
+         'display: block;"></span>')
+
+
+def a_schritt(marke, titel, text):
     return ('<div style="display: flex; gap: 12px; align-items: flex-start;">'
             '<span style="width: 26px; height: 26px; border-radius: 999px; border: 1px solid #2a2e36; '
             'color: #9ba3af; font-size: 12px; font-weight: 700; display: inline-flex; '
             'align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;">%s</span>'
             '<div style="min-width: 0;"><div style="font-weight: 600;">%s</div>'
-            '<div style="%s margin-top: 2px;">%s</div></div></div>' % (nr, titel, NOTE, text))
+            '<div style="%s margin-top: 2px;">%s</div></div></div>' % (marke, titel, NOTE, text))
 
 
 def a_spalte(marke, titel, inhalt, rand='#2a2e36'):
@@ -497,11 +539,11 @@ ablauf = HEAD + (
     '<div style="display: grid; grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1.5fr) 56px '
     'minmax(0, 1fr); gap: 0; margin-top: 32px; align-items: stretch;">'
     + a_spalte('Vorher', 'Betreiber',
-               a_schritt('&middot;', 'Charge herstellen',
+               a_schritt(PUNKT, 'Charge herstellen',
                          'Tags mit NFC-Chip und aufgedrucktem QR, beide auf derselben Adresse. '
                          'Das Studio erzeugt keine Tags.')
-               + a_schritt('&middot;', 'Charge zuordnen und schicken',
-                           'Eine Handlung, hundert Tags. Danach sieht das Studio „87 vorrätig".'))
+               + a_schritt(PUNKT, 'Charge zuordnen und schicken',
+                           'Eine Handlung, hundert Tags. Danach sieht das Studio „97 vorrätig".'))
     + pfeil
     + a_spalte('Je Gerät, in der Halle', 'Der Gang',
                a_schritt(1, 'Modell', 'Wählen — oder knapp neu anlegen: Foto, Name, Hersteller, '
@@ -517,11 +559,11 @@ ablauf = HEAD + (
                rand='#d4ff3f')
     + pfeil
     + a_spalte('Danach', 'Schreibtisch',
-               a_schritt('&middot;', 'Einstellparameter', 'Sitz, Lehne, Startwinkel — je Modell, '
-                                                          'nicht je Gerät.')
-               + a_schritt('&middot;', 'Beschreibungen und Fotos', 'Was am Telefon knapp blieb.')
-               + a_schritt('&middot;', 'Fehlende Videos', 'Der Überblick führt Buch darüber, was '
-                                                          'noch offen ist.'))
+               a_schritt(PUNKT, 'Einstellparameter', 'Sitz, Lehne, Startwinkel — je Modell, '
+                                                     'nicht je Gerät.')
+               + a_schritt(PUNKT, 'Beschreibungen und Fotos', 'Was am Telefon knapp blieb.')
+               + a_schritt(PUNKT, 'Fehlende Videos', 'Der Überblick führt Buch darüber, was '
+                                                     'noch offen ist.'))
     + '</div>'
     '<div style="display: grid; grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1.5fr) 56px '
     'minmax(0, 1fr);">'
@@ -542,8 +584,8 @@ ablauf = HEAD + (
     '<div style="border-left: 2px solid #2a2e36; padding-left: 16px;">'
     '<div style="font-weight: 600;">Übungen gehören dem Studio</div>'
     '<div style="' + NOTE + ' margin-top: 4px;">„Rudern sitzend" wird einmal angelegt und an mehrere '
-    'Geräte gehängt. Das Einweisungsvideo hängt dagegen am Paar aus Gerät und Übung — jedes Gerät '
-    'zeigt sein eigenes.</div></div>'
+    'Modelle gehängt. Das Einweisungsvideo hängt dagegen am Paar aus Modell und Übung — zwei '
+    'baugleiche Geräte teilen es sich, zwei verschiedene Modelle nicht.</div></div>'
     '<div style="border-left: 2px solid #2a2e36; padding-left: 16px;">'
     '<div style="font-weight: 600;">Schritt 5 darf ausfallen</div>'
     '<div style="' + NOTE + ' margin-top: 4px;">Ein Gerät ohne Video ist vollständig nutzbar, nur '

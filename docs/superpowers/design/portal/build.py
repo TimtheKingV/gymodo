@@ -103,7 +103,7 @@ def rail(active):
         ])
         + gruppe('Katalog', [
             nav_item('Geräte', '4 · 2 erreichbar', active == 'geraete'),
-            nav_item('Tags', '1 vorrätig', active == 'tags'),
+            nav_item('Tags', '97 vorrätig', active == 'tags'),
         ])
         + gruppe('Verwaltung', [
             nav_item('Leute', '24 Mitglieder · 4 Mitarbeiter', active == 'leute'),
@@ -200,7 +200,8 @@ CHIP_AKTIV = CHIP.replace('color: #9ba3af;', 'color: #f2f4f7;') + ' box-shadow: 
 # Trefferflaechen in der Halle sind groesser als am Schreibtisch: die App
 # wird einhaendig bedient, oft mit feuchten Haenden (Designsystem 1).
 PRIMARY_XL = PRIMARY.replace('height: 44px;', 'height: 56px;') + ' width: 100%;'
-SECONDARY_XL = SECONDARY.replace('height: 40px;', 'height: 48px;') + ' width: 100%;'
+SECONDARY_TEL = SECONDARY.replace('height: 40px;', 'height: 48px;')
+SECONDARY_XL = SECONDARY_TEL + ' width: 100%;'
 DESTRUCTIVE_XL = DESTRUCTIVE.replace('height: 40px;', 'height: 48px;') + ' width: 100%;'
 FIELD_XL = FIELD.replace('min-height: 44px;', 'min-height: 52px;') + ' width: 100%;'
 
@@ -340,12 +341,12 @@ def sucher(hinweis, titel='Tag scannen'):
         'border-radius: 0 0 14px 0;"></div>' % (ecke, ecke, ecke, ecke))
     return (
         '<div style="position: absolute; inset: 0; background: linear-gradient(168deg, '
-        '#23272f 0%%, #14161a 55%%, #0a0b0d 100%%);"></div>'
+        '#232730 0%%, #14161a 55%%, #0a0b0d 100%%);"></div>'
         '<div style="position: relative; height: 54px;"></div>'
         '<div style="position: relative; height: 52px; padding: 0 20px; display: flex; '
         'align-items: center; justify-content: space-between;">'
         '<span style="font-size: 17px; font-weight: 800; letter-spacing: -0.01em;">%s</span>'
-        '<div style="width: 34px; height: 34px; border-radius: 50%%; background: rgba(10,11,13,.6); '
+        '<div style="width: 44px; height: 44px; border-radius: 50%%; background: rgba(10,11,13,.6); '
         'display: flex; align-items: center; justify-content: center;">%s</div></div>'
         '<div style="position: relative; height: 400px; display: flex; align-items: center; '
         'justify-content: center;"><div style="position: relative; width: 236px; height: 236px;">%s'

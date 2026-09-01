@@ -1,54 +1,343 @@
 {
   "pages": [
-    { "id": "portal", "name": "Portal" },
-    { "id": "einstieg", "name": "Einstieg" },
-    { "id": "telefon", "name": "Einrichten am Gerät" }
+    {
+      "id": "portal",
+      "name": "Portal"
+    },
+    {
+      "id": "einstieg",
+      "name": "Einstieg"
+    },
+    {
+      "id": "telefon",
+      "name": "Einrichten am Gerät"
+    }
   ],
   "artboards": [
-    { "file": "Main.dc.html", "page": "portal", "title": "Überblick", "x": 0, "y": 0, "w": 1440, "h": 1320 },
-    { "file": "Geraete.dc.html", "page": "portal", "title": "Geräte", "x": 1560, "y": 0, "w": 1440, "h": 900 },
-    { "file": "Modell.dc.html", "page": "portal", "title": "Modell — Einzelne Geräte", "x": 3120, "y": 0, "w": 1440, "h": 800 },
-    { "file": "Tags.dc.html", "page": "portal", "title": "Tags", "x": 0, "y": 1440, "w": 1440, "h": 1020 },
-    { "file": "LeuteMitglieder.dc.html", "page": "portal", "title": "Leute — Mitglieder", "x": 1560, "y": 1440, "w": 1440, "h": 840 },
-    { "file": "LeuteMitarbeiter.dc.html", "page": "portal", "title": "Leute — Mitarbeiter", "x": 3120, "y": 1440, "w": 1440, "h": 1000 },
-
-    { "file": "EinstellungenStudio.dc.html", "page": "portal", "title": "Einstellungen — Studio", "x": 0, "y": 2620, "w": 1440, "h": 1300 },
-    { "file": "EinstellungenKonto.dc.html", "page": "portal", "title": "Einstellungen — Konto", "x": 1560, "y": 2620, "w": 1440, "h": 1080 },
-    { "file": "Zustaende.dc.html", "page": "portal", "title": "Zustände", "x": 3120, "y": 2620, "w": 1440, "h": 760 },
-
-    { "file": "Kurse.dc.html", "page": "portal", "title": "Kurse — Woche", "x": 0, "y": 4040, "w": 1440, "h": 1780 },
-    { "file": "Kursvorlagen.dc.html", "page": "portal", "title": "Kursvorlagen", "x": 1560, "y": 4040, "w": 1440, "h": 820 },
-    { "file": "Kursvorlage.dc.html", "page": "portal", "title": "Kursvorlage — Stammdaten", "x": 3120, "y": 4040, "w": 1440, "h": 1420 },
-    { "file": "TerminAnlegen.dc.html", "page": "portal", "title": "Termin anlegen", "x": 4680, "y": 4040, "w": 1440, "h": 1680 },
-    { "file": "Termin.dc.html", "page": "portal", "title": "Termin — Teilnehmer", "x": 6240, "y": 4040, "w": 1440, "h": 2020 },
-
-    { "file": "Start.dc.html", "page": "einstieg", "title": "Wurzelseite", "x": 0, "y": 0, "w": 1440, "h": 960 },
-    { "file": "Anmelden.dc.html", "page": "einstieg", "title": "Anmelden", "x": 1560, "y": 0, "w": 1440, "h": 900 },
-    { "file": "PasswortVergessen.dc.html", "page": "einstieg", "title": "Passwort vergessen", "x": 3120, "y": 0, "w": 1440, "h": 900 },
-    { "file": "PasswortNeu.dc.html", "page": "einstieg", "title": "Neues Passwort", "x": 4680, "y": 0, "w": 1440, "h": 900 },
-
-    { "file": "Registrieren.dc.html", "page": "einstieg", "title": "Registrieren", "x": 0, "y": 1080, "w": 1440, "h": 900 },
-    { "file": "Verifizieren.dc.html", "page": "einstieg", "title": "Verifizieren", "x": 1560, "y": 1080, "w": 1440, "h": 900 },
-    { "file": "KeinStudio.dc.html", "page": "einstieg", "title": "Kein Studio", "x": 3120, "y": 1080, "w": 1440, "h": 900 },
-
-    { "file": "Ablauf.dc.html", "page": "telefon", "title": "Der ganze Gang", "x": 0, "y": 0, "w": 1440, "h": 800 },
-
-    { "file": "TelefonStart.dc.html", "page": "telefon", "title": "1 · Einstieg", "x": 0, "y": 960, "w": 390, "h": 900 },
-    { "file": "TelefonModell.dc.html", "page": "telefon", "title": "2 · Modell wählen", "x": 490, "y": 960, "w": 390, "h": 880 },
-    { "file": "TelefonModellNeu.dc.html", "page": "telefon", "title": "3 · Modell anlegen", "x": 980, "y": 960, "w": 390, "h": 1120 },
-    { "file": "TelefonGeraet.dc.html", "page": "telefon", "title": "4 · Gerät", "x": 1470, "y": 960, "w": 390, "h": 760 },
-    { "file": "TelefonKleben.dc.html", "page": "telefon", "title": "5 · Tag ankleben", "x": 1960, "y": 960, "w": 390, "h": 900 },
-    { "file": "TelefonScan.dc.html", "page": "telefon", "title": "6 · Sucher", "x": 2450, "y": 960, "w": 390, "h": 820 },
-    { "file": "TelefonScanTreffer.dc.html", "page": "telefon", "title": "7 · Tag erkannt", "x": 2940, "y": 960, "w": 390, "h": 860 },
-
-    { "file": "TelefonUebungWaehlen.dc.html", "page": "telefon", "title": "8 · Übung wählen", "x": 0, "y": 2240, "w": 390, "h": 960 },
-    { "file": "TelefonUebungNeu.dc.html", "page": "telefon", "title": "9 · Übung anlegen", "x": 490, "y": 2240, "w": 390, "h": 820 },
-    { "file": "TelefonUebungen.dc.html", "page": "telefon", "title": "10 · Übungen am Gerät", "x": 980, "y": 2240, "w": 390, "h": 1120 },
-    { "file": "TelefonVideo.dc.html", "page": "telefon", "title": "11 · Aufnahme", "x": 1470, "y": 2240, "w": 390, "h": 860 },
-    { "file": "TelefonUploads.dc.html", "page": "telefon", "title": "12 · Warteschlange", "x": 1960, "y": 2240, "w": 390, "h": 820 },
-    { "file": "TelefonFertig.dc.html", "page": "telefon", "title": "13 · Fertig", "x": 2450, "y": 2240, "w": 390, "h": 900 },
-
-    { "file": "TelefonZustaende.dc.html", "page": "telefon", "title": "Zustände am Telefon", "x": 2940, "y": 2240, "w": 390, "h": 1780 }
+    {
+      "file": "Main.dc.html",
+      "page": "portal",
+      "title": "Überblick",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1320
+    },
+    {
+      "file": "Geraete.dc.html",
+      "page": "portal",
+      "title": "Geräte",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "Modell.dc.html",
+      "page": "portal",
+      "title": "Modell — Einzelne Geräte",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 800
+    },
+    {
+      "file": "Tags.dc.html",
+      "page": "portal",
+      "title": "Tags",
+      "x": 0,
+      "y": 1440,
+      "w": 1440,
+      "h": 1020
+    },
+    {
+      "file": "LeuteMitglieder.dc.html",
+      "page": "portal",
+      "title": "Leute — Mitglieder",
+      "x": 1560,
+      "y": 1440,
+      "w": 1440,
+      "h": 840
+    },
+    {
+      "file": "LeuteMitarbeiter.dc.html",
+      "page": "portal",
+      "title": "Leute — Mitarbeiter",
+      "x": 3120,
+      "y": 1440,
+      "w": 1440,
+      "h": 1000
+    },
+    {
+      "file": "EinstellungenStudio.dc.html",
+      "page": "portal",
+      "title": "Einstellungen — Studio",
+      "x": 0,
+      "y": 2620,
+      "w": 1440,
+      "h": 1300
+    },
+    {
+      "file": "EinstellungenKonto.dc.html",
+      "page": "portal",
+      "title": "Einstellungen — Konto",
+      "x": 1560,
+      "y": 2620,
+      "w": 1440,
+      "h": 1080
+    },
+    {
+      "file": "Zustaende.dc.html",
+      "page": "portal",
+      "title": "Zustände",
+      "x": 3120,
+      "y": 2620,
+      "w": 1440,
+      "h": 760
+    },
+    {
+      "file": "Kurse.dc.html",
+      "page": "portal",
+      "title": "Kurse — Woche",
+      "x": 0,
+      "y": 4040,
+      "w": 1440,
+      "h": 1780
+    },
+    {
+      "file": "Kursvorlagen.dc.html",
+      "page": "portal",
+      "title": "Kursvorlagen",
+      "x": 1560,
+      "y": 4040,
+      "w": 1440,
+      "h": 820
+    },
+    {
+      "file": "Kursvorlage.dc.html",
+      "page": "portal",
+      "title": "Kursvorlage — Stammdaten",
+      "x": 3120,
+      "y": 4040,
+      "w": 1440,
+      "h": 1420
+    },
+    {
+      "file": "TerminAnlegen.dc.html",
+      "page": "portal",
+      "title": "Termin anlegen",
+      "x": 4680,
+      "y": 4040,
+      "w": 1440,
+      "h": 1680
+    },
+    {
+      "file": "Termin.dc.html",
+      "page": "portal",
+      "title": "Termin — Teilnehmer",
+      "x": 6240,
+      "y": 4040,
+      "w": 1440,
+      "h": 2020
+    },
+    {
+      "file": "Start.dc.html",
+      "page": "einstieg",
+      "title": "Wurzelseite",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 960
+    },
+    {
+      "file": "Anmelden.dc.html",
+      "page": "einstieg",
+      "title": "Anmelden",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "PasswortVergessen.dc.html",
+      "page": "einstieg",
+      "title": "Passwort vergessen",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "PasswortNeu.dc.html",
+      "page": "einstieg",
+      "title": "Neues Passwort",
+      "x": 4680,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "Registrieren.dc.html",
+      "page": "einstieg",
+      "title": "Registrieren",
+      "x": 0,
+      "y": 1080,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "Verifizieren.dc.html",
+      "page": "einstieg",
+      "title": "Verifizieren",
+      "x": 1560,
+      "y": 1080,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "KeinStudio.dc.html",
+      "page": "einstieg",
+      "title": "Kein Studio",
+      "x": 3120,
+      "y": 1080,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "Ablauf.dc.html",
+      "page": "telefon",
+      "title": "Der ganze Gang",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 800
+    },
+    {
+      "file": "TelefonStart.dc.html",
+      "page": "telefon",
+      "title": "Einstieg",
+      "x": 0,
+      "y": 960,
+      "w": 390,
+      "h": 1000
+    },
+    {
+      "file": "TelefonModell.dc.html",
+      "page": "telefon",
+      "title": "Modell wählen",
+      "x": 490,
+      "y": 960,
+      "w": 390,
+      "h": 900
+    },
+    {
+      "file": "TelefonModellNeu.dc.html",
+      "page": "telefon",
+      "title": "Modell anlegen",
+      "x": 980,
+      "y": 960,
+      "w": 390,
+      "h": 1120
+    },
+    {
+      "file": "TelefonGeraet.dc.html",
+      "page": "telefon",
+      "title": "Gerät",
+      "x": 1470,
+      "y": 960,
+      "w": 390,
+      "h": 760
+    },
+    {
+      "file": "TelefonKleben.dc.html",
+      "page": "telefon",
+      "title": "Tag ankleben",
+      "x": 1960,
+      "y": 960,
+      "w": 390,
+      "h": 900
+    },
+    {
+      "file": "TelefonScan.dc.html",
+      "page": "telefon",
+      "title": "Sucher",
+      "x": 2450,
+      "y": 960,
+      "w": 390,
+      "h": 860
+    },
+    {
+      "file": "TelefonScanTreffer.dc.html",
+      "page": "telefon",
+      "title": "Tag erkannt",
+      "x": 2940,
+      "y": 960,
+      "w": 390,
+      "h": 860
+    },
+    {
+      "file": "TelefonUebungWaehlen.dc.html",
+      "page": "telefon",
+      "title": "Übung wählen",
+      "x": 0,
+      "y": 2240,
+      "w": 390,
+      "h": 1000
+    },
+    {
+      "file": "TelefonUebungNeu.dc.html",
+      "page": "telefon",
+      "title": "Übung anlegen",
+      "x": 490,
+      "y": 2240,
+      "w": 390,
+      "h": 820
+    },
+    {
+      "file": "TelefonUebungen.dc.html",
+      "page": "telefon",
+      "title": "Übungen am Gerät",
+      "x": 980,
+      "y": 2240,
+      "w": 390,
+      "h": 1360
+    },
+    {
+      "file": "TelefonVideo.dc.html",
+      "page": "telefon",
+      "title": "Aufnahme",
+      "x": 1470,
+      "y": 2240,
+      "w": 390,
+      "h": 880
+    },
+    {
+      "file": "TelefonUploads.dc.html",
+      "page": "telefon",
+      "title": "Warteschlange",
+      "x": 1960,
+      "y": 2240,
+      "w": 390,
+      "h": 820
+    },
+    {
+      "file": "TelefonFertig.dc.html",
+      "page": "telefon",
+      "title": "Fertig",
+      "x": 2450,
+      "y": 2240,
+      "w": 390,
+      "h": 960
+    },
+    {
+      "file": "TelefonZustaende.dc.html",
+      "page": "telefon",
+      "title": "Zustände am Telefon",
+      "x": 2940,
+      "y": 2240,
+      "w": 390,
+      "h": 1780
+    }
   ],
   "annotations": [
     {
@@ -97,7 +386,7 @@
       "x": 500,
       "y": -320,
       "w": 460,
-      "text": "Das Portal erzeugt keine Tags mehr.\n\nVorher stand hier: Token erzeugen, genau einmal anzeigen, QR drucken, kleben. Das war ein Umweg um ein physisches Erzeugnis herum.\n\nTags werden chargenweise hergestellt — NFC-Chip und aufgedruckter QR auf derselben /t/<token>-Adresse — und der Betreiber ordnet beim Versand eine ganze Charge einem Studio zu. Eine Handlung, hundert Tags. Im Portal steht danach eine Zahl: 87 vorrätig.\n\nDamit entfällt der Druckbogen als PDF, den 2026-09-01-scan-beitritt-design.md §6 noch als „den einzigen echten Neubau im Portal\" führt. Der Aushang kommt aus derselben Kette, als Schild statt als Aufkleber.\n\nDer Hash bleibt, und er war nie das Umständliche: gespeichert wird nur der SHA-256, damit ein Datenbankabzug keine fertige Liste funktionierender Adressen ist."
+      "text": "Das Portal erzeugt keine Tags mehr.\n\nVorher stand hier: Token erzeugen, genau einmal anzeigen, QR drucken, kleben. Das war ein Umweg um ein physisches Erzeugnis herum.\n\nTags werden chargenweise hergestellt — NFC-Chip und aufgedruckter QR auf derselben /t/<token>-Adresse — und der Betreiber ordnet beim Versand eine ganze Charge einem Studio zu. Eine Handlung, hundert Tags. Im Portal steht danach eine Zahl: 97 vorrätig.\n\nDamit entfällt der Druckbogen als PDF, den 2026-09-01-scan-beitritt-design.md §6 noch als „den einzigen echten Neubau im Portal\" führt. Der Aushang kommt aus derselben Kette, als Schild statt als Aufkleber.\n\nDer Hash bleibt, und er war nie das Umständliche: gespeichert wird nur der SHA-256, damit ein Datenbankabzug keine fertige Liste funktionierender Adressen ist."
     },
     {
       "id": "note-uebungen",
@@ -124,5 +413,8 @@
       "text": "Offline gilt im Portal nicht — außer hier.\n\n2026-08-31-trainerportal-struktur-design.md §5 schließt den Zustand fürs Portal aus: „ein Konzept der Halle, nicht des Schreibtischs\".\n\nDieser Weg ist die Halle. Gerätebereiche liegen häufig im Keller, und wer zwanzig Geräte hintereinander einrichtet, verliert unterwegs das Netz. Eine ausdrückliche Ausnahme, nur für diese Seite.\n\nDie Formulierung bleibt die des Designsystems: „gespeichert, wird gesendet\" — nie „fehlgeschlagen\". Der Satz ist lokal sicher, und das muss die Sprache tragen."
     }
   ],
-  "launch": { "view": "canvas", "page": "telefon" }
+  "launch": {
+    "view": "canvas",
+    "page": "telefon"
+  }
 }

@@ -48,7 +48,7 @@ machine_tags   studio_id not null, machine_id nullable, token_hash unique,
 
 Eine Lieferung ist damit schlicht: N Zeilen mit `status = 'unassigned'`. Der Scan setzt `machine_id` und `status = 'active'`. Die Check-Constraint `machine_tags_active_needs_machine` bewacht genau diesen Übergang. **Kein Umbau, keine neue Tabelle.**
 
-Die einzige fehlende Spalte ist die **Charge**. Ohne sie kann das Portal „Lieferung vom 12. August · 100 Tags · 87 vorrätig" nicht zeigen, und ohne diese Zeile weiß ein Trainer nicht, ob die Packung neben ihm zum Studio gehört. Eine Migration, eine nullable Spalte.
+Die einzige fehlende Spalte ist die **Charge**. Ohne sie kann das Portal „Lieferung vom 12. August · 100 Tags · 97 vorrätig" nicht zeigen, und ohne diese Zeile weiß ein Trainer nicht, ob die Packung neben ihm zum Studio gehört. Eine Migration, eine nullable Spalte.
 
 ### Der Hash bleibt, und er war nie das Umständliche
 
@@ -84,7 +84,7 @@ Davor steht die Lieferung, dahinter die Nacharbeit am Schreibtisch: Einstellpara
 
 - Schritt 4 zeigt eine **Auswahl über die vorhandenen Übungen des Studios**, kein leeres Namensfeld. Sonst steht „Rudern sitzend" fünfmal im Katalog, jedes Mal anders geschrieben.
 - Die **Reihenfolge ist keine Kosmetik**: Übung 1 ist am Gerät die Vorauswahl des Mitglieds (Designsystem §8).
-- Das **Einweisungsvideo hängt am Paar** aus Modell und Übung (`instruction_assets.equipment_model_exercise_id`), nicht an der Übung. Dieselbe Übung an zwei Geräten hat zwei Videos. Ein Kabelzug hat ein Foto und zwanzig Videos.
+- Das **Einweisungsvideo hängt am Paar** aus Modell und Übung (`instruction_assets.equipment_model_exercise_id`), nicht an der Übung. Dieselbe Übung an zwei **Modellen** hat zwei Videos; zwei baugleiche Geräte teilen sich eines. Ein Kabelzug hat ein Foto und zwanzig Videos.
 
 ---
 
@@ -96,24 +96,24 @@ Die Canvas-Notiz `note-telefon` sagte bisher: die Aufnahme entsteht auf dem Trai
 
 ### Bildschirmverzeichnis
 
-`+` neu, `~` zu ändern.
+`+` neu, `~` zu ändern. Die Telefonbildschirme tragen keine eigene Nummer — die Zählung steht auf der Schrittleiste („Schritt 3 von 5 · Tag"), und zwei Zählungen nebeneinander wären eine zu viel.
 
 | | Bildschirm | Breite |
 | --- | --- | --- |
 | + | Ablauf — der ganze Gang als Karte | 1440 |
-| + | 1 · Einstieg — Bestand, Vorrat, „Gerät einrichten" | 390 |
-| + | 2 · Modell wählen | 390 |
-| + | 3 · Modell anlegen — knapp | 390 |
-| + | 4 · Gerät — Nummer, Standort | 390 |
-| + | 5 · Tag ankleben — mit Platzierungsskizze | 390 |
-| + | 6 · Sucher | 390 |
-| + | 7 · Tag erkannt — verbinden | 390 |
-| + | 8 · Übung wählen — Sheet über den Studio-Übungen | 390 |
-| + | 9 · Übung anlegen | 390 |
-| ~ | 10 · Übungen am Gerät — Nachfolger des alten Telefon-Artboards | 390 |
-| + | 11 · Aufnahme — 45-Sekunden-Grenze | 390 |
-| + | 12 · Warteschlange — Uploads über mehrere Geräte | 390 |
-| + | 13 · Fertig — Probe-Scan, nächstes Gerät | 390 |
+| + | Einstieg — Bestand, Vorrat, „Gerät einrichten" | 390 |
+| + | Modell wählen | 390 |
+| + | Modell anlegen — knapp | 390 |
+| + | Gerät — Nummer, Standort | 390 |
+| + | Tag ankleben — mit Platzierungsskizze | 390 |
+| + | Sucher | 390 |
+| + | Tag erkannt — verbinden | 390 |
+| + | Übung wählen — Sheet über den Studio-Übungen | 390 |
+| + | Übung anlegen | 390 |
+| ~ | Übungen am Gerät — Nachfolger des alten Telefon-Artboards | 390 |
+| + | Aufnahme — 45-Sekunden-Grenze | 390 |
+| + | Warteschlange — Uploads über mehrere Geräte | 390 |
+| + | Fertig — Probe-Scan, nächstes Gerät | 390 |
 | + | Zustände am Telefon — acht Antwortkarten | 390 |
 | ~ | Tags — Lieferungen statt Anlegen | 1440 |
 | ~ | Modell — „Tag scannen" je Geräteinstanz | 1440 |

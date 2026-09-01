@@ -86,7 +86,7 @@ tags = titel('Tags',
 tags += '<section style="%s margin-top: 32px;">' % CARD
 tags += '<div style="%s"><h2 style="%s">Lieferungen</h2></div>' % (HEADROW, SEC_TITLE)
 tags += zeile('Charge 7',
-              'Mi., 12. August 2026 · 100 Gerätetags · <strong>87 vorrätig</strong>, 12 geklebt, '
+              'Mi., 12. August 2026 · 100 Gerätetags · <strong>97 vorrätig</strong>, 2 aktiv, '
               '1 gesperrt', '')
 tags += zeile('Charge 8',
               'Mi., 12. August 2026 · 5 Aushangschilder · <strong>4 vorrätig</strong>, 1 hängt',
@@ -94,15 +94,15 @@ tags += zeile('Charge 8',
 tags += '</section>'
 tags += ('<p style="color: #5c636e; font-size: 13px; line-height: 1.45; margin: 16px 0 0; '
          'max-width: 62ch;">Der Vorrat steht als Zahl. Ein vorrätiger Tag lässt sich keinem '
-         'Aufkleber in der Packung zuordnen — 87 gleichlautende Zeilen wären keine Auskunft, '
+         'Aufkleber in der Packung zuordnen — 97 gleichlautende Zeilen wären keine Auskunft, '
          'sondern Lärm. Benennbar wird ein Tag erst durch den Scan.</p>')
 
 aktiv = '<span style="%s color: #f2f4f7; border-color: #5c636e;">aktiv</span>' % BADGE
 gesperrt = '<span style="%s color: #ff5a4e; border-color: #ff5a4e;">gesperrt</span>' % BADGE
 
 tags += '<section style="%s margin-top: 24px;">' % CARD
-tags += ('<div style="%s"><h2 style="%s">Geklebte Geräte-Tags</h2>'
-         '<span style="color: #5c636e; font-size: 12px;">12 von 100</span></div>'
+tags += ('<div style="%s"><h2 style="%s">Vergebene Geräte-Tags</h2>'
+         '<span style="color: #5c636e; font-size: 12px;">3 von 100</span></div>'
          % (HEADROW, SEC_TITLE))
 tags += zeile('%s &nbsp; 12 — Latzug' % aktiv, 'Charge 7 · verbunden Mo., 31. August 2026',
               '<a href="#" style="%s">Sperren</a>' % DESTRUCTIVE)
