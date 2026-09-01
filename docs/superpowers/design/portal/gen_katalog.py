@@ -19,13 +19,13 @@ geraete += '<section style="%s margin-top: 32px;">' % CARD
 geraete += ('<div style="%s"><h2 style="%s">Alle Gerätemodelle</h2>'
            '<a href="#" style="%s">Modell anlegen</a></div>' % (HEADROW, SEC_TITLE, PRIMARY))
 geraete += zeile('Latzug',
-                 'Technogym · 2 Geräte, 1 erreichbar · 2 Übungen, 1 mit Video · Foto',
+                 'Technogym · 2 Geräte, 1 erreichbar · 2 Übungen, 1 mit Video · Foto · 2 Parameter',
                  '<a href="#" style="%s">Öffnen</a>' % SECONDARY)
 geraete += zeile('Beinpresse',
-                 'Gym80 · 2 Geräte, 1 erreichbar · 1 Übung, 1 mit Video · Foto',
+                 'Gym80 · 2 Geräte, 1 erreichbar · 1 Übung, 1 mit Video · Foto · 3 Parameter',
                  '<a href="#" style="%s">Öffnen</a>' % SECONDARY)
 geraete += zeile('Brustpresse',
-                 '<span style="color: #5c636e;">Ohne Hersteller · noch kein Gerät · keine Übung · kein Foto</span>',
+                 '<span style="color: #5c636e;">Ohne Hersteller · noch kein Gerät · keine Übung · kein Foto, keine Parameter</span>',
                  '<a href="#" style="%s">Öffnen</a>' % SECONDARY, letzte=True)
 geraete += '</section>'
 schreibe('Geraete.dc.html', portal('geraete', 900, geraete))

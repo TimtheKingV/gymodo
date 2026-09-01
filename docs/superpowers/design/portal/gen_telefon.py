@@ -8,6 +8,12 @@ einziger Bildschirm (die Uebungsliste mit laufendem Upload); aus dem ging
 nicht hervor, wo der Ablauf anfaengt, was bei einem noch nicht angelegten
 Modell passiert und wie mehrere Uebungen entstehen.
 
+Sechs Schritte: Modell, Einstellungen, Geraet, Tag, Uebungen, Video. Foto
+und Einstellparameter haengen am Modell und entstehen beide hier -- vorher
+standen sie in der Ablaufkarte unter "Schreibtisch". Das war falsch herum:
+das Foto ist der Grund, warum ein Mitglied merkt, dass es vor dem falschen
+Geraet steht, und die Rasten zaehlt nur, wer davorsteht.
+
 Die Tags erzeugt das Portal nicht mehr. Sie kommen chargenweise als
 physisches Erzeugnis -- NFC-Chip und aufgedruckter QR auf derselben
 /t/<token>-Adresse -- und werden am Geraet geklebt und gescannt.
@@ -17,7 +23,9 @@ und Ueberblick passen): drei Modelle, vier Geraete, davon zwei erreichbar.
 Latzug 12 aktiv, Latzug 13 ohne Tag, Beinpresse 7 aktiv, Beinpresse 8
 stillgelegt mit gesperrtem Tag. Charge 7 hat 100 Tags, drei sind vergeben,
 97 liegen in der Packung. Eingerichtet wird in diesem Gang ein neuer
-Kabelzug mit der Nummer 14.
+Kabelzug mit der Nummer 14. Latzug traegt zwei Einstellparameter, Beinpresse
+drei (so zeigt sie die Member-App auf GeraetKalibrierung), Brustpresse
+keinen und auch kein Foto -- sie ist das einzige unvollstaendige Modell.
 """
 from build import (HEAD, FOOT, LABEL, CARD, PRIMARY, SECONDARY, SECONDARY_TEL,
                    DESTRUCTIVE, BADGE, NOTE, CHIP, CHIP_AKTIV, PRIMARY_XL,
@@ -48,7 +56,7 @@ def tzeile(haupt, meta, rechts='', letzte=False, faint=False):
             % (rand, haupt, farbe, meta, r))
 
 
-def schrittmarke(n, titel, von=5):
+def schrittmarke(n, titel, von=6):
     """Die Wegmarke fuer Bildschirme, die keine Leiste tragen koennen --
     Sucher und Aufnahme laufen randlos ueber die Kamera."""
     return ('<span style="%s color: #9ba3af;">Schritt %d von %d &middot; %s</span>'
@@ -80,7 +88,9 @@ start = stapel(
     '<a href="#" style="%s">Tag prüfen</a>' % SECONDARY_XL,
     abschnitt('Was noch fehlt', [
         tzeile('Latzug 13', 'Rückwand mitte &middot; kein Tag, für Mitglieder nicht auffindbar',
-               '<a href="#" style="%s">Weiter</a>' % SECONDARY_TEL, letzte=True),
+               '<a href="#" style="%s">Weiter</a>' % SECONDARY_TEL),
+        tzeile('Brustpresse', 'Kein Foto, keine Einstellparameter &middot; Mitglieder sähen nur '
+               'den Namen', '<a href="#" style="%s">Weiter</a>' % SECONDARY_TEL, letzte=True),
     ]),
     abschnitt('Zuletzt eingerichtet', [
         tzeile('Latzug 12', 'Rückwand links &middot; gestern &middot; erreichbar'),
@@ -89,7 +99,7 @@ start = stapel(
     ]),
     '<p style="%s margin: 0;">Ein Gerät ist fertig, sobald sein Tag klebt. Übungen und Videos '
     'lassen sich jederzeit nachtragen.</p>' % NOTE)
-schreibe('TelefonStart.dc.html', telefon(1000, start))
+schreibe('TelefonStart.dc.html', telefon(1100, start))
 
 
 # ------------------------------------------------------------- 2 Modell
@@ -102,11 +112,11 @@ modell = stapel(
     '<div style="%s color: #5c636e;">%s Modell suchen …</div>'
     % (FIELD_XL, svg('search', 18, '#5c636e')),
     abschnitt('Modelle im Studio', [
-        tzeile('Latzug', 'Technogym &middot; 2 Geräte &middot; 2 Übungen',
+        tzeile('Latzug', 'Technogym &middot; 2 Geräte &middot; 2 Übungen &middot; 2 Parameter',
                '<a href="#" style="%s">Wählen</a>' % SECONDARY_TEL),
-        tzeile('Beinpresse', 'Gym80 &middot; 2 Geräte &middot; 1 Übung',
+        tzeile('Beinpresse', 'Gym80 &middot; 2 Geräte &middot; 1 Übung &middot; 3 Parameter',
                '<a href="#" style="%s">Wählen</a>' % SECONDARY_TEL),
-        tzeile('Brustpresse', 'Ohne Hersteller &middot; noch kein Gerät',
+        tzeile('Brustpresse', 'Ohne Hersteller &middot; noch kein Gerät &middot; kein Foto',
                '<a href="#" style="%s">Wählen</a>' % SECONDARY_TEL, letzte=True, faint=True),
     ]),
     tkarte('<div style="display: flex; align-items: center; gap: 12px;">%s'
@@ -119,19 +129,28 @@ schreibe('TelefonModell.dc.html', telefon(900, modell))
 
 
 # --------------------------------------------------------- 3 Modell neu
-# Bewusst knapp: Foto, Name, Hersteller, Schrittweite, Spanne. Die
-# Einstellparameter eines Modells sind Schreibtischarbeit -- sie am Geraet
-# zu erfragen hiesse, den Katalogeditor auf 390 px zu quetschen.
+# Bewusst knapp: Foto, Name, Hersteller, Schrittweite, Spanne. Das Foto ist
+# hier Pflicht und kein Beiwerk -- es ist der Moment, in dem ein Mitglied
+# nach dem Scan erkennt, dass es vor dem richtigen Geraet steht.
+#
+# Die Einstellparameter stehen im naechsten Schritt und nicht in diesem
+# Formular. Das ist kein auf 390 px gequetschter Katalogeditor, sondern eine
+# kurze Liste -- und sie gehoert hierher, weil die Rasten nur kennt, wer
+# davorsteht.
 schritt_chips = ''.join('<span style="%s">%s</span>' % (CHIP_AKTIV if s == '2,5 kg' else CHIP, s)
                         for s in ('1,25 kg', '2,5 kg', '5,0 kg'))
 modell_neu = stapel(
     schrittleiste(1, 'Modell'),
     kopfzeile('Neues Modell', zurueck_zu='Modell wählen'),
-    tkarte('<div style="display: flex; align-items: center; gap: 12px;">%s'
-           '<div style="min-width: 0;"><div style="%s">Foto aufnehmen</div>'
-           '<div style="%s margin-top: 2px;">Das Foto bestätigt dem Mitglied in einer Sekunde, '
-           'dass es am richtigen Gerät steht.</div></div></div>'
-           % (svg('image', 24, '#5c636e'), H2, NOTE), gestrichelt=True),
+    tkarte('<div style="display: flex; align-items: center; gap: 12px;">'
+           '<div style="width: 64px; height: 64px; border-radius: 10px; flex-shrink: 0; '
+           'background: linear-gradient(152deg, #23272f 0%%, #14161a 72%%); display: flex; '
+           'align-items: center; justify-content: center;">%s</div>'
+           '<div style="min-width: 0; flex-grow: 1;"><div style="%s">Foto steht</div>'
+           '<div style="%s margin-top: 2px;">Gerade aufgenommen. Es bestätigt dem Mitglied in '
+           'einer Sekunde, dass es am richtigen Gerät steht.</div></div></div>'
+           '<a href="#" style="%s">Neu aufnehmen</a>'
+           % (svg('image', 26, '#5c636e'), H2, NOTE, SECONDARY_XL)),
     feld('Name', 'Kabelzug', gefuellt=True),
     feld('Hersteller', 'Technogym', gefuellt=True),
     '<div style="display: flex; flex-direction: column; gap: 8px;">'
@@ -143,18 +162,120 @@ modell_neu = stapel(
     '<div style="display: flex; gap: 12px;">'
     '<div style="flex: 1;">%s</div><div style="flex: 1;">%s</div></div>'
     % (feld('Ab', '5,0 kg', gefuellt=True), feld('Bis', '100,0 kg', gefuellt=True)),
-    '<a href="#" style="%s">Weiter zum Gerät</a>' % PRIMARY_XL,
-    '<p style="%s margin: 0;">Einstellparameter, Beschreibung und ein besseres Foto trägst du am '
-    'Schreibtisch nach. Hier steht nur, was das Rad braucht.</p>' % NOTE)
+    '<a href="#" style="%s">Weiter zu den Einstellungen</a>' % PRIMARY_XL,
+    '<p style="%s margin: 0;">Ohne Foto geht es nicht weiter — es ist der einzige Grund, warum '
+    'jemand vor dem falschen Gerät merkt, dass er falsch steht. Beschreibungen trägst du am '
+    'Schreibtisch nach, die Einstellparameter kommen im nächsten Schritt.</p>' % NOTE)
 schreibe('TelefonModellNeu.dc.html', telefon(1120, modell_neu))
 
 
-# ------------------------------------------------------------- 4 Gerät
+# ---------------------------------------------------------------- 4 Foto
+# Dieselbe Bedienzeile wie die Videoaufnahme: ein Ausloeser, links und rechts
+# die beiden Woerter, die danach gelten. Kein Eckenrahmen wie beim Sucher --
+# hier wird nichts erkannt, hier wird ein Geraet abgelichtet.
+#
+# Zwei Wege fuehren hierher, aus "Modell anlegen" und aus der Fotozeile in
+# Schritt 2. Deshalb traegt der Bildschirm keine Wegmarke: eine feste Nummer
+# waere auf einem der beiden Wege falsch.
+foto = (
+    '<div style="position: absolute; inset: 0; background: linear-gradient(168deg, #232730 0%, '
+    '#14161a 55%, #0a0b0d 100%);"></div>'
+    '<div style="position: relative; height: 54px;"></div>'
+    '<div style="position: relative; min-height: 52px; padding: 0 20px; display: flex; '
+    'align-items: center; justify-content: space-between; gap: 12px;">'
+    '<div style="min-width: 0;">'
+    '<div style="font-size: 17px; font-weight: 800; letter-spacing: -0.01em;">Kabelzug</div>'
+    '<div style="' + MUTED + ' margin-top: 4px;">Foto des Modells</div></div>'
+    '<div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(10,11,13,.6); '
+    'display: flex; align-items: center; justify-content: center; flex-shrink: 0;">'
+    + svg('close', 19, '#f2f4f7') + '</div></div>'
+    '<div style="position: relative; padding: 16px 20px 0;">'
+    '<span style="' + LABEL + ' color: #9ba3af;">Das ganze Gerät ins Bild</span></div>'
+    '<div style="position: relative; height: 336px;"></div>'
+    '<div style="position: relative; display: flex; align-items: center; justify-content: center; '
+    'gap: 28px; padding: 0 20px;">'
+    '<span style="' + MUTED + ' width: 72px; text-align: right;">Neu</span>'
+    '<a href="#" style="width: 76px; height: 76px; border-radius: 50%; background: #d4ff3f; '
+    'display: flex; align-items: center; justify-content: center; flex-shrink: 0;">'
+    '<span style="width: 30px; height: 30px; border-radius: 50%; background-color: #0a0b0d; '
+    'display: block;"></span></a>'
+    '<span style="' + MUTED + ' width: 72px;">Übernehmen</span></div>'
+    '<div style="position: relative; padding: 24px; text-align: center;">'
+    '<div style="' + NOTE + '">Ein Foto je Modell, nicht je Gerät — zwei baugleiche Kabelzüge '
+    'zeigen dasselbe Bild. Ohne Netz wartet es in der Warteschlange.</div></div>')
+schreibe('TelefonFoto.dc.html', telefon_voll(880, foto))
+
+
+# -------------------------------------------------------- 5 Einstellungen
+# Der Schritt, der vorher am Schreibtisch stand. Das war falsch herum: die
+# Rasten zaehlt nur, wer davorsteht -- am Schreibtisch werden sie geraten
+# oder gar nicht erfasst, und dann hat das Mitglied auf GeraetKalibrierung
+# nichts einzustellen.
+#
+# Foto und Parameter stehen in einer Karte, weil sie dasselbe teilen: beide
+# haengen am Modell, nicht am Geraet. Der zweite baugleiche Kabelzug laeuft
+# hier mit einem Tap durch; bei einem Altmodell ohne Foto liest die erste
+# Zeile "Foto fehlt" (siehe Zustaende).
+#
+# Der Akzent gehoert dem Weiterkommen, nicht dem Hinzufuegen -- sonst betont
+# der Bildschirm das Sammeln und nicht das Fertigwerden.
+def parameterzeile(name, meta, letzte=False):
+    return tzeile(name, meta, rechts=svg('grip', 20, '#5c636e'), letzte=letzte)
+
+
+einstellungen = stapel(
+    schrittleiste(2, 'Einstellungen'),
+    kopfzeile('Was lässt sich einstellen?', 'Kabelzug &middot; Technogym', zurueck_zu='Modell'),
+    '<p style="%s margin: 0;">Zähl die Rasten einmal ab. Beides gilt für alle Kabelzüge im Studio — '
+    'das Mitglied wählt daraus später seine eigenen Werte.</p>' % NOTE,
+    abschnitt('Am Modell', [
+        tzeile('Foto', 'Steht &middot; gerade aufgenommen',
+               '<a href="#" style="%s">Ersetzen</a>' % SECONDARY_TEL),
+        parameterzeile('Sitzhöhe', 'Zahl &middot; 1 – 8 &middot; Schritt 1'),
+        parameterzeile('Rollenhöhe', 'Zahl &middot; 1 – 12 &middot; Schritt 1'),
+        parameterzeile('Griff', 'Auswahl &middot; A, B, C', letzte=True),
+    ], rechts='<span style="%s">3 Parameter</span>' % MUTED),
+    '<a href="#" style="%s">Parameter hinzufügen</a>' % SECONDARY_XL,
+    '<a href="#" style="%s">Weiter zum Gerät</a>' % PRIMARY_XL,
+    '<p style="%s margin: 0;">Überspringen geht: ein Gerät ohne Einstellparameter ist vollständig '
+    'nutzbar, das Mitglied hat dann nur nichts einzustellen. Nachtragen lässt es sich jederzeit — '
+    'nur nicht mehr mit den Rasten vor Augen.</p>' % NOTE)
+schreibe('TelefonEinstellungen.dc.html', telefon(980, einstellungen))
+
+
+# ------------------------------------------------------- 6 Parameter neu
+# Zwei Arten, mehr kennt das Schema nicht: eine Zahl mit Spanne und
+# Schrittweite (0004) oder eine Auswahl aus mindestens zwei verschiedenen
+# Werten (0017). Gezeigt ist die Zahl, weil sie die Einheit mitbringt.
+art_chips = ''.join('<span style="%s">%s</span>' % (CHIP_AKTIV if s == 'Zahl' else CHIP, s)
+                    for s in ('Zahl', 'Auswahl'))
+parameter_neu = stapel(
+    schrittleiste(2, 'Einstellungen'),
+    kopfzeile('Neuer Parameter', zurueck_zu='Einstellungen'),
+    feld('Beschriftung', 'Startwinkel', 'So steht er später vor dem Mitglied am Gerät.',
+         gefuellt=True),
+    '<div style="display: flex; flex-direction: column; gap: 8px;">'
+    '<span style="%s color: #9ba3af;">Art</span>'
+    '<div style="display: flex; gap: 8px;">%s</div>'
+    '<span style="%s">Eine Auswahl braucht mindestens zwei verschiedene Werte — mit einem einzigen '
+    'ist sie keine Auswahl, sondern ein fester Wert.</span></div>' % (LABEL, art_chips, NOTE),
+    '<div style="display: flex; gap: 12px;">'
+    '<div style="flex: 1;">%s</div><div style="flex: 1;">%s</div><div style="flex: 1;">%s</div>'
+    '</div>' % (feld('Von', '0', gefuellt=True), feld('Bis', '45', gefuellt=True),
+                feld('Schritt', '5', gefuellt=True)),
+    feld('Einheit', '°', 'Leer lassen, wenn die Rasten nur durchgezählt sind.', gefuellt=True),
+    '<a href="#" style="%s">Hinzufügen</a>' % PRIMARY_XL,
+    '<p style="%s margin: 0;">Der Parameter hängt am Modell Kabelzug, nicht an Kabelzug 14. Jedes '
+    'baugleiche Gerät trägt ihn danach mit.</p>' % NOTE)
+schreibe('TelefonParameterNeu.dc.html', telefon(900, parameter_neu))
+
+
+# --------------------------------------------------------------- 7 Gerät
 ort_chips = ''.join('<span style="%s">%s</span>' % (CHIP, s)
                     for s in ('Rückwand links', 'Rückwand mitte', 'Fensterseite'))
 geraet = stapel(
-    schrittleiste(2, 'Gerät'),
-    kopfzeile('Dieses Gerät', 'Kabelzug &middot; Technogym', zurueck_zu='Modell'),
+    schrittleiste(3, 'Gerät'),
+    kopfzeile('Dieses Gerät', 'Kabelzug &middot; Technogym', zurueck_zu='Einstellungen'),
     feld('Nummer', '14', 'Vorgeschlagen ist die nächste nach der höchsten. Sie steht am Gerät und '
          'in der App des Mitglieds — nimm die, die schon draufsteht.', gefuellt=True),
     '<div style="display: flex; flex-direction: column; gap: 8px;">%s'
@@ -166,7 +287,7 @@ geraet = stapel(
 schreibe('TelefonGeraet.dc.html', telefon(760, geraet))
 
 
-# --------------------------------------------------------------- 5 Kleben
+# --------------------------------------------------------------- 8 Kleben
 # Der Schritt, der vorher ganz fehlte: erst kleben, dann scannen. Die Skizze
 # steht hier, weil die Anbringungsposition ueber die Trefferquote entscheidet
 # (M0 Task 8) und ein Satz sie nicht so gut traegt wie ein Bild.
@@ -188,7 +309,7 @@ skizze = (
     'stroke="none" letter-spacing="1.4">HIER</text>'
     '</svg>')
 kleben = stapel(
-    schrittleiste(3, 'Tag'),
+    schrittleiste(4, 'Tag'),
     kopfzeile('Tag ankleben', 'Kabelzug 14 &middot; Rückwand rechts', zurueck_zu='Gerät'),
     tkarte(skizze + '<div style="%s">In Augenhöhe, wo man im Stehen hinsieht.</div>' % NOTE),
     abschnitt('Worauf es ankommt', [
@@ -199,16 +320,16 @@ kleben = stapel(
     '<a href="#" style="%s">Tag scannen</a>' % PRIMARY_XL,
     '<p style="%s margin: 0;">Nimm irgendeinen Tag aus der Packung — welcher es ist, findet der '
     'Scan heraus.</p>' % NOTE)
-schreibe('TelefonKleben.dc.html', telefon(900, kleben))
+schreibe('TelefonKleben.dc.html', telefon(940, kleben))
 
 
-# ----------------------------------------------------------------- 6 Scan
+# ----------------------------------------------------------------- 9 Scan
 # Der Sucher. Kein Akzent als Flaeche: die Kamera ist die Handlung. Statt der
 # Schrittleiste traegt er die Wegmarke als Zeile -- eine Leiste ueber einem
 # randlosen Kamerabild waere Chrome ohne Grund.
 scan = (sucher('Halt den QR auf dem Tag ins Feld. Geh nah ran — der Code ist klein.')
         + '<div style="position: relative; margin: 0 16px 16px; text-align: center;">%s</div>'
-        % schrittmarke(3, 'Tag')
+        % schrittmarke(4, 'Tag')
         + '<div style="position: relative; margin: 0 16px 20px;">'
         + tkarte('<div style="display: flex; align-items: flex-start; gap: 12px;">%s'
                  '<div style="min-width: 0;"><div style="font-weight: 600;">Der Chip zählt hier nicht'
@@ -219,9 +340,9 @@ scan = (sucher('Halt den QR auf dem Tag ins Feld. Geh nah ran — der Code ist k
 schreibe('TelefonScan.dc.html', telefon_voll(860, scan))
 
 
-# ------------------------------------------------------------- 7 Treffer
+# ------------------------------------------------------------ 10 Treffer
 treffer = stapel(
-    schrittleiste(3, 'Tag'),
+    schrittleiste(4, 'Tag'),
     '<div style="display: flex; align-items: center; gap: 12px;">'
     '<div style="width: 44px; height: 44px; border-radius: 50%%; border: 2px solid #d4ff3f; '
     'display: flex; align-items: center; justify-content: center; flex-shrink: 0;">%s</div>'
@@ -243,7 +364,7 @@ treffer = stapel(
 schreibe('TelefonScanTreffer.dc.html', telefon(860, treffer))
 
 
-# ----------------------------------------------------- 8 Übung auswählen
+# ---------------------------------------------------- 11 Übung auswählen
 # Uebungen gehoeren dem Studio, nicht dem Geraet (equipment_model_exercises).
 # Deshalb steht hier eine Auswahl und kein leeres Namensfeld -- sonst legt
 # jedes Studio "Rudern sitzend" fuenfmal an. Aus demselben Grund traegt
@@ -263,7 +384,7 @@ waehlen = sheet(stapel(
     'text-transform: uppercase;">Übung hinzufügen</div>'
     '<div style="margin-top: 6px;">%s</div>'
     '<div style="%s margin-top: 4px;">Kabelzug 14</div></div>'
-    % (schrittmarke(4, 'Übungen'), MUTED),
+    % (schrittmarke(5, 'Übungen'), MUTED),
     '<div style="%s color: #5c636e;">%s Übung suchen …</div>'
     % (FIELD_XL, svg('search', 18, '#5c636e')),
     '<section style="%s">%s</section>' % (CARD, stapel(
@@ -280,11 +401,11 @@ waehlen = sheet(stapel(
 schreibe('TelefonUebungWaehlen.dc.html', telefon_voll(1000, waehlen))
 
 
-# --------------------------------------------------------- 9 Übung neu
+# -------------------------------------------------------- 12 Übung neu
 # Der Name ist bewusst einer, der in der Auswahlliste NICHT steht -- sonst
 # zeigt der Entwurf genau die Doppelung, vor der er warnt.
 uebung_neu = stapel(
-    schrittleiste(4, 'Übungen'),
+    schrittleiste(5, 'Übungen'),
     kopfzeile('Neue Übung', zurueck_zu='Übung wählen'),
     feld('Name', 'Latzug · Neutralgriff', gefuellt=True),
     '<div style="display: flex; gap: 12px;">'
@@ -298,7 +419,7 @@ uebung_neu = stapel(
 schreibe('TelefonUebungNeu.dc.html', telefon(820, uebung_neu))
 
 
-# ---------------------------------------------------- 10 Übungsliste
+# ---------------------------------------------------- 13 Übungsliste
 # Der Nachfolger des alten Telefon-Artboards: dieselbe Liste, aber mit
 # Reihenfolge, vier Uebungen und dem Videostand je Zeile. Der Akzent liegt
 # auf dem Weiterkommen, nicht auf dem Hinzufuegen -- sonst betont der
@@ -325,7 +446,7 @@ def videostand(label_text, prozent, note_text):
 
 
 uebungen = stapel(
-    schrittleiste(4, 'Übungen'),
+    schrittleiste(5, 'Übungen'),
     kopfzeile('Übungen', 'Kabelzug 14 &middot; Technogym', zurueck_zu='Gerät'),
     '<section style="%s">%s</section>' % (CARD, stapel(
         uebungsposten(1, 'Latzug · Breiter Griff', '8–12 Wiederholungen &middot; Video 28 s',
@@ -348,7 +469,7 @@ uebungen = stapel(
 schreibe('TelefonUebungen.dc.html', telefon(1360, uebungen))
 
 
-# ------------------------------------------------------------- 11 Video
+# ------------------------------------------------------------- 14 Video
 # Die Aufnahme entsteht auf dem Trainerhandy und geht aus mobilem Safari
 # hoch (Spec 6.8). Die 45-Sekunden-Grenze steht sichtbar, weil sie an der
 # Datei geprueft wird -- eine zu lange Aufnahme faellt sonst erst am Ende auf.
@@ -360,7 +481,7 @@ video = (
     'align-items: center; justify-content: space-between; gap: 12px;">'
     '<div style="min-width: 0;">'
     '<div style="font-size: 17px; font-weight: 800; letter-spacing: -0.01em;">Kabelzug 14 · Rudern '
-    'sitzend</div><div style="margin-top: 4px;">' + schrittmarke(5, 'Video') + '</div></div>'
+    'sitzend</div><div style="margin-top: 4px;">' + schrittmarke(6, 'Video') + '</div></div>'
     '<div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(10,11,13,.6); '
     'display: flex; align-items: center; justify-content: center; flex-shrink: 0;">'
     + svg('close', 19, '#f2f4f7') + '</div></div>'
@@ -386,7 +507,7 @@ video = (
 schreibe('TelefonVideo.dc.html', telefon_voll(880, video))
 
 
-# ----------------------------------------------------------- 12 Uploads
+# ----------------------------------------------------------- 15 Uploads
 def upload_zeile(titel, meta, unten, letzte=False):
     return ('<div style="padding: 14px 16px; %s display: flex; flex-direction: column; gap: 10px;">'
             '<div><div style="font-weight: 600;">%s</div>'
@@ -395,8 +516,11 @@ def upload_zeile(titel, meta, unten, letzte=False):
 
 
 uploads = stapel(
-    kopfzeile('Videos', 'Läuft weiter, während du weitergehst', zurueck_zu='Einrichten'),
+    kopfzeile('Uploads', 'Läuft weiter, während du weitergehst', zurueck_zu='Einrichten'),
     abschnitt('Warteschlange', [
+        upload_zeile('Kabelzug · Foto des Modells', '2,4 MB &middot; oben',
+                     '<span style="%s">Ging in zwei Sekunden durch. Fotos gehen vor den Videos: '
+                     'sie sind klein, und ohne Foto erkennt niemand das Gerät.</span>' % NOTE),
         upload_zeile('Kabelzug 14 · Enger Griff', '18 MB &middot; wird übertragen',
                      '<div style="display: flex; flex-direction: column; gap: 6px;">%s'
                      '<span style="%s">62 %% &middot; setzt bei Abbruch hier fort</span></div>'
@@ -416,10 +540,10 @@ uploads = stapel(
            'anderen App wechselst. Sie gehen nicht verloren — sie warten, bis du zurückkommst.'
            '</div></div></div>' % (svg('alert', 20, '#ffb020'), NOTE), rand='#ffb020'),
     '<a href="#" style="%s">Weiter einrichten</a>' % SECONDARY_XL)
-schreibe('TelefonUploads.dc.html', telefon(820, uploads))
+schreibe('TelefonUploads.dc.html', telefon(1000, uploads))
 
 
-# ------------------------------------------------------------ 13 Fertig
+# ------------------------------------------------------------ 16 Fertig
 fertig = stapel(
     '<div style="display: flex; align-items: center; gap: 12px;">'
     '<div style="width: 44px; height: 44px; border-radius: 50%%; border: 2px solid #d4ff3f; '
@@ -429,6 +553,8 @@ fertig = stapel(
     '<div style="%s margin-top: 2px;">Für Mitglieder auffindbar</div></div></div>'
     % (svg('check', 22, '#d4ff3f'), MUTED),
     abschnitt('Was jetzt gilt', [
+        tzeile('Foto steht', 'Am Modell Kabelzug &middot; gerade aufgenommen'),
+        tzeile('3 Einstellparameter', 'Sitzhöhe, Rollenhöhe, Griff &middot; ebenfalls am Modell'),
         tzeile('Tag verbunden', 'Charge 7 &middot; aktiv seit gerade eben'),
         tzeile('4 Übungen', 'Latzug breit, Latzug eng, Rudern sitzend, Neutralgriff'),
         tzeile('2 Videos in der Warteschlange', 'Gehen hoch, solange die Seite offen bleibt'),
@@ -442,10 +568,10 @@ fertig = stapel(
     '<a href="#" style="%s">Nächstes Gerät</a>' % PRIMARY_XL,
     '<a href="#" style="%s">Für heute fertig</a>' % SECONDARY_XL,
     '<p style="%s margin: 0;">96 Tags noch in der Packung.</p>' % NOTE)
-schreibe('TelefonFertig.dc.html', telefon(960, fertig))
+schreibe('TelefonFertig.dc.html', telefon(1080, fertig))
 
 
-# --------------------------------------------------------- 14 Zustände
+# --------------------------------------------------------- 17 Zustände
 # Ein Blatt statt sechs fast gleicher Telefone: die Faelle unterscheiden sich
 # in einer Karte, nicht im Bildschirm. Vorbild ist Zustaende.dc.html.
 def zwei(a, b):
@@ -478,13 +604,14 @@ zustaende = stapel(
             '<a href="#" style="%s">Neuen Tag scannen</a>' % DESTRUCTIVE_XL,
             symbol=svg('qr', 20, '#9ba3af')),
     antwort('Die Kamera ist nicht freigegeben',
-            'Ohne Kamera gibt es keinen zweiten Weg — der Chip im Tag hilft im Browser nicht. '
-            'In Safari: „aA" links in der Adresszeile, dann Website-Einstellungen, dann Kamera '
-            'erlauben.',
+            'Ohne Kamera geht beides nicht: kein Foto und kein Scan. Das Foto lässt sich immerhin '
+            'nachtragen — für den Scan gibt es keinen zweiten Weg, der Chip im Tag hilft im '
+            'Browser nicht. In Safari: „aA" links in der Adresszeile, dann '
+            'Website-Einstellungen, dann Kamera erlauben.',
             symbol=svg('camera', 20, '#ff5a4e'), rand='#ff5a4e'),
     antwort('Kein Netz im Keller',
-            'Gespeichert, wird gesendet. Gerät und Tag liegen lokal und gehen hoch, sobald wieder '
-            'Empfang da ist.',
+            'Gespeichert, wird gesendet. Gerät, Tag und Foto liegen lokal und gehen hoch, sobald '
+            'wieder Empfang da ist.',
             symbol=svg('offline', 20, '#ff5a4e'), rand='#ff5a4e',
             flaeche='rgba(255,90,78,0.1)'),
     '<span style="%s color: #9ba3af;">Leer</span>' % LABEL,
@@ -496,11 +623,22 @@ zustaende = stapel(
             'Ohne Übung zeigt das Gerät dem Mitglied nichts zum Trainieren. Nimm eine aus dem '
             'Studio oder leg eine neue an.',
             '<a href="#" style="%s">Übung hinzufügen</a>' % SECONDARY_XL,
-            symbol=svg('plus', 20, '#5c636e')))
-schreibe('TelefonZustaende.dc.html', telefon(1780, zustaende))
+            symbol=svg('plus', 20, '#5c636e')),
+    antwort('Das Modell hat kein Foto',
+            'Brustpresse ist von früher und trägt keines. Nach dem Scan sähe ein Mitglied nur den '
+            'Namen und wüsste nicht, ob es richtig steht. Schritt 2 fragt es deshalb nach — es ist '
+            'der einzige Weg, ein Altmodell im Gang zu vervollständigen.',
+            '<a href="#" style="%s">Foto aufnehmen</a>' % SECONDARY_XL,
+            symbol=svg('image', 20, '#5c636e')),
+    antwort('Noch keine Einstellparameter',
+            'Das Gerät ist trotzdem vollständig nutzbar — das Mitglied hat nur nichts einzustellen. '
+            'Nachtragen geht am Schreibtisch, aber dann ohne die Rasten vor Augen.',
+            '<a href="#" style="%s">Parameter hinzufügen</a>' % SECONDARY_XL,
+            symbol=svg('sliders', 20, '#5c636e')))
+schreibe('TelefonZustaende.dc.html', telefon(2150, zustaende))
 
 
-# --------------------------------------------------------- 15 Ablaufkarte
+# --------------------------------------------------------- 18 Ablaufkarte
 # Der Bildschirm, der vorher fehlte: die Reihenfolge selbst. Ohne ihn muss
 # man sich den Gang aus dreizehn Einzelbildern zusammenreimen.
 PUNKT = ('<span style="width: 6px; height: 6px; border-radius: 999px; background: #5c636e; '
@@ -530,12 +668,13 @@ pfeil = ('<div style="display: flex; align-items: center; justify-content: cente
          % svg('arrow-right', 22, '#5c636e'))
 
 ablauf = HEAD + (
-    '<div style="min-height: 800px; background: #0a0b0d; padding: 40px 48px;">'
+    '<div style="min-height: 880px; background: #0a0b0d; padding: 40px 48px;">'
     '<h1 style="font-size: 26px; font-weight: 800; letter-spacing: -0.025em; text-transform: '
     'uppercase; margin: 0;">Einrichten am Gerät</h1>'
     '<p style="color: #9ba3af; margin: 8px 0 0; max-width: 78ch;">Ein Trainer geht mit dem Telefon '
     'und einer Packung Tags durch die Halle. Alles, was ein Gerät für Mitglieder auffindbar macht, '
-    'passiert dabei vor dem Gerät — der Rest ist Nacharbeit und hat Zeit.</p>'
+    'passiert dabei vor dem Gerät — und alles, was nur davor überhaupt zu erfahren ist: die '
+    'Nummer, der Standort, das Foto und die Rasten. Der Rest ist Nacharbeit und hat Zeit.</p>'
     '<div style="display: grid; grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1.5fr) 56px '
     'minmax(0, 1fr); gap: 0; margin-top: 32px; align-items: stretch;">'
     + a_spalte('Vorher', 'Betreiber',
@@ -547,23 +686,28 @@ ablauf = HEAD + (
     + pfeil
     + a_spalte('Je Gerät, in der Halle', 'Der Gang',
                a_schritt(1, 'Modell', 'Wählen — oder knapp neu anlegen: Foto, Name, Hersteller, '
-                                      'Gewichtsschritt, Spanne.')
-               + a_schritt(2, 'Gerät', 'Nummer und Standort. Die Nummer steht am Gerät und in der '
+                                      'Gewichtsschritt, Spanne. Das Foto ist Pflicht.')
+               + a_schritt(2, 'Einstellungen', 'Sitzhöhe, Winkel, Griff — je Modell, nicht je '
+                                               'Gerät. Überspringbar, aber nur hier zählt jemand '
+                                               'die Rasten ab.')
+               + a_schritt(3, 'Gerät', 'Nummer und Standort. Die Nummer steht am Gerät und in der '
                                        'App des Mitglieds.')
-               + a_schritt(3, 'Tag', 'Ankleben, scannen, verbinden. Ab hier ist das Gerät '
+               + a_schritt(4, 'Tag', 'Ankleben, scannen, verbinden. Ab hier ist das Gerät '
                                      'auffindbar.')
-               + a_schritt(4, 'Übungen', 'Aus dem Studio wählen oder neu anlegen. Reihenfolge '
+               + a_schritt(5, 'Übungen', 'Aus dem Studio wählen oder neu anlegen. Reihenfolge '
                                          'zählt: Übung 1 ist die Vorauswahl.')
-               + a_schritt(5, 'Video', 'Je Übung höchstens 45 Sekunden. Überspringbar — ein Gerät '
+               + a_schritt(6, 'Video', 'Je Übung höchstens 45 Sekunden. Überspringbar — ein Gerät '
                                        'ohne Video ist vollständig nutzbar.'),
                rand='#d4ff3f')
     + pfeil
     + a_spalte('Danach', 'Schreibtisch',
-               a_schritt(PUNKT, 'Einstellparameter', 'Sitz, Lehne, Startwinkel — je Modell, '
-                                                     'nicht je Gerät.')
-               + a_schritt(PUNKT, 'Beschreibungen und Fotos', 'Was am Telefon knapp blieb.')
+               a_schritt(PUNKT, 'Beschreibungen', 'Was am Telefon knapp blieb. Foto und '
+                                                  'Einstellparameter gehören nicht mehr dazu.')
                + a_schritt(PUNKT, 'Fehlende Videos', 'Der Überblick führt Buch darüber, was '
-                                                     'noch offen ist.'))
+                                                     'noch offen ist.')
+               + a_schritt(PUNKT, 'Altbestand', 'Modelle von früher ohne Foto stehen im '
+                                                'Überblick. Nachholen lässt es sich nur im Gang — '
+                                                'Schritt 2 fragt danach.'))
     + '</div>'
     '<div style="display: grid; grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1.5fr) 56px '
     'minmax(0, 1fr);">'
@@ -587,8 +731,10 @@ ablauf = HEAD + (
     'Modelle gehängt. Das Einweisungsvideo hängt dagegen am Paar aus Modell und Übung — zwei '
     'baugleiche Geräte teilen es sich, zwei verschiedene Modelle nicht.</div></div>'
     '<div style="border-left: 2px solid #2a2e36; padding-left: 16px;">'
-    '<div style="font-weight: 600;">Schritt 5 darf ausfallen</div>'
+    '<div style="font-weight: 600;">Zwei Schritte dürfen ausfallen</div>'
     '<div style="' + NOTE + ' margin-top: 4px;">Ein Gerät ohne Video ist vollständig nutzbar, nur '
-    'ohne Anleitung. Der Überblick am Schreibtisch zählt, was fehlt.</div></div>'
+    'ohne Anleitung; eines ohne Einstellparameter ebenso, das Mitglied hat dann nichts '
+    'einzustellen. Das Foto darf nicht ausfallen. Der Überblick am Schreibtisch zählt, was '
+    'fehlt.</div></div>'
     '</div></div>\n') + FOOT
 schreibe('Ablauf.dc.html', ablauf)

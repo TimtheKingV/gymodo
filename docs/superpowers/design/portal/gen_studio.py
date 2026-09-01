@@ -337,8 +337,8 @@ main += ("""
     </div>
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px;">
       <div>
-        <div style="font-weight: 600;">1 Modell ohne Foto</div>
-        <div style="font-size: 12px; color: #5c636e; margin-top: 2px;">Brustpresse</div>
+        <div style="font-weight: 600;">1 Modell unvollständig</div>
+        <div style="font-size: 12px; color: #5c636e; margin-top: 2px;">Brustpresse &middot; kein Foto, keine Einstellparameter</div>
       </div>
       <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #1d2026; border: 1px solid #2a2e36; color: #f2f4f7; font-weight: 600; flex-shrink: 0;">Ansehen</a>
     </div>

@@ -221,6 +221,10 @@ _SVG_PFADE.update({
     'close': '<path d="M6 6l12 12"></path><path d="M18 6L6 18"></path>',
     'grip': ('<path d="M9 6h.01"></path><path d="M15 6h.01"></path><path d="M9 12h.01"></path>'
              '<path d="M15 12h.01"></path><path d="M9 18h.01"></path><path d="M15 18h.01"></path>'),
+    'sliders': ('<path d="M4 7h9"></path><path d="M19 7h1"></path>'
+                '<circle cx="16" cy="7" r="2.2"></circle>'
+                '<path d="M4 17h4"></path><path d="M14 17h6"></path>'
+                '<circle cx="11" cy="17" r="2.2"></circle>'),
     'search': '<circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.6-3.6"></path>',
     'tag': ('<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 12.2V5a2 2 0 0 1 2-2'
             'h7.2a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8z"></path><path d="M7.6 7.6h.01"></path>'),
@@ -272,7 +276,7 @@ def kopfzeile(titel, unterzeile=None, zurueck_zu=None):
     return '<div>%s</div>' % aus
 
 
-def schrittleiste(n, titel, von=5):
+def schrittleiste(n, titel, von=6):
     """Fortschritt des Einrichtungsgangs. Bewusst ohne Akzent: der gehoert
     auf jedem Bildschirm der einen Hauptaktion, nicht der Wegmarke."""
     segmente = ''.join(
