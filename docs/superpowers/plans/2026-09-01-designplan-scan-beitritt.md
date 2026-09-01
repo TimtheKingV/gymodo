@@ -165,7 +165,9 @@ cd docs/superpowers/design/member
 grep -c "background: #D4FF3F" MemberKeinStudio.dc.html MemberScanner.dc.html
 ```
 
-Erwartet: `MemberKeinStudio.dc.html:1` und `MemberScanner.dc.html:0`. Bei `2` in KeinStudio trägt das Feld noch Akzent — dann steht in Step 2 versehentlich `PRIMARY` statt `NEBEN`.
+Erwartet: `MemberKeinStudio.dc.html:2` und `MemberScanner.dc.html:0`.
+
+**Die 2 ist richtig, nicht der Fehler:** `kopf_marke()` trägt den 7 px großen Markenpunkt mit derselben Farbe, dazu kommt die Hauptaktion. Der Scanner nutzt `kopf_zurueck()` und hat keinen Punkt, also 0. Bei `3` in KeinStudio trägt das Code-Feld noch Akzent — dann steht in Step 2 versehentlich `PRIMARY` statt `NEBEN`.
 
 - [ ] **Step 7: Commit**
 
@@ -460,7 +462,9 @@ cd docs/superpowers/design/member
 grep -c "background: #D4FF3F" FallbackAushang.dc.html FallbackGeraet.dc.html
 ```
 
-Erwartet je `2` — die Aktion *App laden* und der 5 px große Punkt der Wortmarke. Der Punkt ist Teil der Marke, keine Aktion; `FallbackGeraet.dc.html` hat dieselbe Zahl schon heute, das ist der abgestimmte Bestand.
+Erwartet: `FallbackAushang.dc.html:2` und `FallbackGeraet.dc.html:3`.
+
+**Die beiden Zahlen unterscheiden sich mit Grund.** Beide tragen den 5 px großen Punkt der Wortmarke und die Aktion *App laden*; `FallbackGeraet` trägt zusätzlich den Play-Kreis des Einweisungsvideos, das der Aushang nicht hat. Punkt und Play-Kreis sind Marke und Bedienelement, keine zweite Hauptaktion — `FallbackGeraet` steht mit 3 schon heute so im abgestimmten Bestand.
 
 - [ ] **Step 5: Commit**
 
@@ -588,7 +592,20 @@ git commit -m "design: Member-Canvas auf 28 Artboards, Zugang und Kaltstart anno
 
 **Der Bestand löst den Kern schon.** `Tags.dc.html` hat bereits eine Karte *„Gerade angelegt — nur jetzt sichtbar"* mit dem Token im Klartext, dem Satz *„Danach ist er nicht mehr abrufbar"* und der Aktion *QR-Code drucken*. Genau das ist der Weg, den auch der Aushang gehen muss — der Klartext-Token existiert genau einmal, ein Druckbogen-Knopf an einer Listenzeile wäre nicht baubar. **Der Aushang-Abschnitt zeigt deshalb keine Codes, sondern nur Anlegedatum und Sperre.**
 
-- [ ] **Step 1: Den Abschnitt `Aushang` vor `Alle Tags` einfügen**
+- [ ] **Step 1: Die Abzeichen vor den Abschnitt ziehen**
+
+`aktiv`, `vorraetig` und `gesperrt` werden heute erst unterhalb definiert, im Abschnitt *Alle Tags*. Der neue Abschnitt steht darüber und braucht ein eigenes. Die drei Zuweisungen und die neue vierte wandern **vor** den Aushang-Abschnitt:
+
+```python
+aktiv = '<span style="%s color: #f2f4f7; border-color: #5c636e;">aktiv</span>' % BADGE
+vorraetig = '<span style="%s">vorrätig</span>' % BADGE
+gesperrt = '<span style="%s color: #ff5a4e; border-color: #ff5a4e;">gesperrt</span>' % BADGE
+aushang_badge = '<span style="%s color: #d4ff3f; border-color: #d4ff3f;">Aushang</span>' % BADGE
+```
+
+Die alten drei Zuweisungen unterhalb werden dabei **entfernt**, nicht gedoppelt — sonst stehen dieselben Namen zweimal in der Datei.
+
+- [ ] **Step 2: Den Abschnitt `Aushang` vor `Alle Tags` einfügen**
 
 In `gen_katalog.py`, zwischen dem Ende der Karte *„Gerade angelegt"* (`tags += '</section>'`) und dem Beginn der Karte *„Alle Tags"*:
 
@@ -611,19 +628,6 @@ tags += zeile('%s &nbsp; Umkleide' % aushang_badge, 'Angelegt Mo., 1. September 
               '<a href="#" style="%s">Sperren</a>' % DESTRUCTIVE, letzte=True)
 tags += '</section>'
 ```
-
-- [ ] **Step 2: Die Abzeichen vor den Abschnitt ziehen**
-
-`aktiv`, `vorraetig` und `gesperrt` werden heute erst unterhalb definiert, im Abschnitt *Alle Tags*. Der neue Abschnitt steht darüber und braucht ein eigenes. Die drei Zuweisungen und die neue vierte wandern **vor** den Aushang-Abschnitt:
-
-```python
-aktiv = '<span style="%s color: #f2f4f7; border-color: #5c636e;">aktiv</span>' % BADGE
-vorraetig = '<span style="%s">vorrätig</span>' % BADGE
-gesperrt = '<span style="%s color: #ff5a4e; border-color: #ff5a4e;">gesperrt</span>' % BADGE
-aushang_badge = '<span style="%s color: #d4ff3f; border-color: #d4ff3f;">Aushang</span>' % BADGE
-```
-
-Die alten drei Zuweisungen unterhalb werden dabei **entfernt**, nicht gedoppelt — sonst stehen dieselben Namen zweimal in der Datei.
 
 - [ ] **Step 3: Die Seitenhöhe anheben**
 
