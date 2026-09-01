@@ -217,6 +217,14 @@
       "title": "26 · Web-Fallback — Code nicht aktiv"
     },
     {
+      "file": "FallbackAushang.dc.html",
+      "x": 1419,
+      "y": 9920,
+      "w": 390,
+      "h": 844,
+      "title": "27 · Web-Fallback — Aushang"
+    },
+    {
       "file": "MemberRegistrieren.dc.html",
       "x": 0,
       "y": 0,
@@ -269,14 +277,6 @@
       "h": 852,
       "title": "06 · Profil — Studios",
       "page": "zugang"
-    },
-    {
-      "file": "FallbackAushang.dc.html",
-      "x": 1419,
-      "y": 9920,
-      "w": 390,
-      "h": 844,
-      "title": "27 · Web-Fallback — Aushang"
     }
   ],
   "annotations": [
@@ -409,14 +409,8 @@
     }
   ],
   "pages": [
-    {
-      "id": "app",
-      "name": "App"
-    },
-    {
-      "id": "zugang",
-      "name": "Zugang"
-    }
+    { "id": "app", "name": "App" },
+    { "id": "zugang", "name": "Zugang" }
   ],
   "launch": {
     "view": "canvas",
