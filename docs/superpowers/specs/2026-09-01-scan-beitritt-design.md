@@ -4,6 +4,7 @@
 **Status:** Entwurf, abgestimmt. Noch keine Umsetzung.
 **Vorgänger:** `2026-08-31-trainerportal-struktur-design.md` (Struktur und Beitritt), `2026-08-30-designsystem.md` (Tokens)
 **Ändert:** Abschnitt 2 der Vorgängerspec — der Studio-Code bleibt, verliert aber den Rang des einzigen Weges
+**Teilweise abgelöst von:** `2026-09-01-einrichtung-am-geraet-design.md` — §3 (Portal-Abschnitt *Aushang*) und §6 (Druckbogen) sind hinfällig; Tags kommen als Lieferung, das Portal erzeugt keine Tokens mehr. **§1, §2, §4 und §5 gelten unverändert**, einschließlich `tag_kind`, `join_studio_by_tag` und dem Selbstaustritt.
 **Canvases:** Member-App `4f6035c6-7612-42ed-9791-cf0794713bdd` · Trainerportal `fa12ef14-ca77-4fcc-a034-886a38914984`
 
 ---
@@ -153,11 +154,17 @@ Ein Aushang-Token zeigt kein Gerät, die Seite muss also etwas anderes zeigen: S
 
 `FallbackInaktiv` (26) bleibt unverändert und deckt weiter unbekannt, gesperrt und nicht zugewiesen mit derselben Antwort ab.
 
-### Portal: `Tags` bekommt einen Abschnitt `Aushang`
+### ~~Portal: `Tags` bekommt einen Abschnitt `Aushang`~~ — überholt
 
-Die aktiven Aushänge mit Anlegedatum, je eine destruktive Nebenaktion *Sperren*, darüber die Aktion *Aushang anlegen* — mit dem Satz darunter, der die Wahrheit sagt: *„Wer einen Aushang scannt, wird Mitglied. Sperren macht jeden gedruckten Bogen ungültig; danach neu anlegen und neu drucken."*
+**Dieser Abschnitt ist von `2026-09-01-einrichtung-am-geraet-design.md` abgelöst.** Er stand hier als Aushang, den das Studio selbst anlegt und ausdruckt. Die neuere Spec entscheidet anders, und besser:
 
-**Der Abschnitt zeigt keine Codes, und das ist keine Zurückhaltung, sondern die Datenlage.** Der Klartext-Token existiert genau einmal — `createTag` gibt ihn zurück, gespeichert wird nur `token_hash`. Ein Druckbogen kann deshalb nur im Augenblick des Anlegens entstehen, und die Tags-Seite hat für genau diesen Fall bereits die Karte *„Gerade angelegt — nur jetzt sichtbar"*. Der Aushang geht denselben Weg. Ein *Druckbogen*-Knopf an einer Listenzeile wäre ein Versprechen, das die Datenbank nicht einlösen kann.
+> **Tags kommen als Lieferung, das Studio erzeugt keine.** Im Portal entsteht kein Token mehr — auch nicht für den Aushang. Der Erzeugen-und-Drucken-Pfad verschwindet aus der Oberfläche und aus dem Code.
+
+Der Aushang wird damit ein **geliefertes Schild**, wie der Gerätetag ein gelieferter Aufkleber ist. Die Tags-Seite zeigt Lieferungen und geklebte Tags — eine Auskunft, kein Formular.
+
+**Was aus diesem Abschnitt überlebt, ist die Sortenunterscheidung selbst:** `kind ∈ machine | studio` aus §1 bleibt gültig und wird von der neueren Spec ausdrücklich übernommen. Nur der Weg, auf dem so eine Zeile entsteht, ist ein anderer geworden — Charge statt Knopfdruck.
+
+Der Satz in *Einstellungen → Studio*, der den Studio-Code zum zweiten Weg erklärt, ist von der Ablösung **nicht** berührt und weiterhin offen.
 
 Der Studio-Code in *Einstellungen* bleibt, wo er ist. Er ist jetzt der zweite Weg statt des einzigen.
 
@@ -174,10 +181,10 @@ Der Studio-Code in *Einstellungen* bleibt, wo er ist. Er ist jetzt der zweite We
 | ~ | App 24 — Profil, Zeile *Studios* mit Chevron | Member |
 | ~ | App 25 — Web-Fallback Gerät, Studioname und zweiter Scan | Member |
 | + | App 27 — Web-Fallback Aushang | Member |
-| ~ | Tags — Abschnitt Aushang | Portal |
-| ~ | Einstellungen Studio — Studio-Code als zweiter Weg | Portal |
+| — | ~~Tags — Abschnitt Aushang~~ | Portal, abgelöst |
+| ~ | Einstellungen Studio — Studio-Code als zweiter Weg | Portal, offen |
 
-**Drei neu, sechs geändert, keines gelöscht.**
+**Drei neu, fünf geändert, keines gelöscht** — dazu ein Portal-Bildschirm, der zur neueren Spec gewandert ist, und ein Satz im Portal, der noch aussteht.
 
 ---
 
@@ -218,8 +225,8 @@ Drei der vier Fälle sind unproblematisch: App da und Mitglied, App da und kein 
 | `tag_kind`, Constraint-Umbau | Neu. Eine Migration. |
 | `join_studio_by_tag` | Neu. `SECURITY DEFINER`, plus Testmatrix: Trainer-Downgrade, Doppelscan, gesperrter Token, fremdes Studio. |
 | `memberships_delete_own_membership` | Neu. Eine Policy. |
-| Aushang-Tag erzeugen und sperren im Portal | Erweiterung. `createTagToken` und die Tags-Seite bestehen. |
-| Druckbogen beim Anlegen, mit QR | **Der einzige echte Neubau im Portal.** Er entsteht im Browser aus dem Token, den die Server Action zurückgibt — nicht später aus der Datenbank, dort steht nur der Hash. |
+| ~~Aushang-Tag erzeugen und sperren im Portal~~ | **Entfällt.** Abgelöst von `2026-09-01-einrichtung-am-geraet-design.md`: Tags kommen als Lieferung, das Portal erzeugt keine Tokens mehr. |
+| ~~Druckbogen beim Anlegen, mit QR~~ | **Entfällt mit demselben Beschluss.** Er stand hier als „der einzige echte Neubau im Portal" — der Aushang ist jetzt ein geliefertes Schild, es gibt nichts zu drucken. |
 | `/t/<token>` mit Aushang-Zweig und Studioname | Erweiterung der bestehenden Seite. |
 | Scanner in Zugang, Pending-Route über die Registrierung, aktives Studio lokal | **Nicht in diesem Repo.** Native App, eigener Plan auf dem Mac. |
 

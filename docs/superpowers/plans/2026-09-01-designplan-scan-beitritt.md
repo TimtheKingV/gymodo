@@ -2,7 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Die neun Bildschirme zeichnen, die den Beitritt per Scan tragen — drei neu, sechs geändert, auf zwei Canvases.
+**Goal:** Die acht Bildschirme der Member-App zeichnen, die den Beitritt per Scan tragen — drei neu, fünf geändert.
+
+*Ursprünglich waren es neun auf zwei Canvases. Der Portal-Teil (Task 6) wurde beim Ausführen gestrichen, weil ihn eine neuere Spec überholt hat — die Begründung steht dort.*
 
 **Architecture:** Artboards sind eigenständige `.dc.html`-Dateien ohne gemeinsame Laufzeit. Die sechs Einstiegs-Artboards der Member-App entstehen aus `gen_auth.py` über die Bausteine in `build.py`; die übrigen 26 sind handgeschriebene, formatierte HTML-Dateien und werden gezielt bearbeitet. `canvas.json` legt Position, Titel und Seite fest, `seed.sh` baut daraus die Canvas-Datei und prüft sie.
 
@@ -630,116 +632,41 @@ git commit -m "design: Member-Canvas auf 34 Artboards, Zugang und Kaltstart anno
 
 ---
 
-### Task 6: Portal — Aushang bei Tags, Studio-Code als zweiter Weg
+### Task 6: Portal — Aushang bei Tags *(gestrichen, überholt)*
 
-**Files:**
-- Modify: `docs/superpowers/design/portal/gen_katalog.py` (Abschnitt `Tags`, endet auf `schreibe('Tags.dc.html', portal('tags', 940, tags))`)
-- Modify: `docs/superpowers/design/portal/gen_verwaltung.py` (Abschnitt `EinstellungenStudio`, endet auf `schreibe('EinstellungenStudio.dc.html', portal('einstellungen', 1300, studio))`)
+**Status:** **Nicht umgesetzt, und das ist die richtige Entscheidung.** Diese Aufgabe wurde beim Ausführen gestoppt, nicht vergessen.
 
-**Interfaces:**
-- Consumes: die Bausteine aus `docs/superpowers/design/portal/build.py`. **Deren Namen vor dem Schreiben aus der Datei ablesen** — sie unterscheiden sich von denen der Member-App, und dieser Plan erfindet sie nicht.
-- Produces: `Tags.dc.html`, `EinstellungenStudio.dc.html`, danach die Portal-Canvas.
+Während dieser Plan lief, entstand parallel `docs/superpowers/specs/2026-09-01-einrichtung-am-geraet-design.md`. Diese Spec sagt in ihrem Kopf ausdrücklich:
 
-**Der Bestand löst den Kern schon.** `Tags.dc.html` hat bereits eine Karte *„Gerade angelegt — nur jetzt sichtbar"* mit dem Token im Klartext, dem Satz *„Danach ist er nicht mehr abrufbar"* und der Aktion *QR-Code drucken*. Genau das ist der Weg, den auch der Aushang gehen muss — der Klartext-Token existiert genau einmal, ein Druckbogen-Knopf an einer Listenzeile wäre nicht baubar. **Der Aushang-Abschnitt zeigt deshalb keine Codes, sondern nur Anlegedatum und Sperre.**
+> **Ändert:** `2026-09-01-scan-beitritt-design.md` §3 und §6 — der Druckbogen entfällt, der Aushang wird ein geliefertes Schild.
 
-- [ ] **Step 1: Die Abzeichen vor den Abschnitt ziehen**
+Sie entscheidet zwei Dinge, die dieser Aufgabe die Grundlage entziehen:
 
-`aktiv`, `vorraetig` und `gesperrt` werden heute erst unterhalb definiert, im Abschnitt *Alle Tags*. Der neue Abschnitt steht darüber und braucht ein eigenes. Die drei Zuweisungen und die neue vierte wandern **vor** den Aushang-Abschnitt:
+1. **Tags kommen als Lieferung, das Studio erzeugt keine.** Chargenweise hergestellt, chargenweise beim Versand einem Studio zugeordnet.
+2. **Im Portal entsteht kein Token mehr — auch nicht für den Aushang.** Der Erzeugen-und-Drucken-Pfad verschwindet aus der Oberfläche und aus dem Code.
 
-```python
-aktiv = '<span style="%s color: #f2f4f7; border-color: #5c636e;">aktiv</span>' % BADGE
-vorraetig = '<span style="%s">vorrätig</span>' % BADGE
-gesperrt = '<span style="%s color: #ff5a4e; border-color: #ff5a4e;">gesperrt</span>' % BADGE
-aushang_badge = '<span style="%s color: #d4ff3f; border-color: #d4ff3f;">Aushang</span>' % BADGE
-```
+Damit ist der Abschnitt, den diese Aufgabe zeichnen sollte, hinfällig, und `gen_katalog.py` trägt den Aushang bereits nach der neueren Entscheidung — als Auskunft über gelieferte Schilder, nicht als Formular zum Anlegen.
 
-Die alten drei Zuweisungen unterhalb werden dabei **entfernt**, nicht gedoppelt — sonst stehen dieselben Namen zweimal in der Datei.
+**Was aus dieser Aufgabe überlebt und was nicht:**
 
-- [ ] **Step 2: Den Abschnitt `Aushang` vor `Alle Tags` einfügen**
+| Ursprünglicher Schritt | Stand |
+| --- | --- |
+| Abzeichen vorziehen, Abschnitt `Aushang` einfügen, Seitenhöhe anheben | **Entfällt.** Ersetzt durch die Tags-Seite aus der neueren Spec (dort Abschnitt 6, „Lieferungen statt Anlegen"). |
+| `EinstellungenStudio` — Studio-Code als zweiter Weg erklären | **Offen.** Die neuere Spec berührt diesen Satz nicht. Er gehört in den Umsetzungsplan, der aus ihr entsteht, nicht in einen gestrichenen Task. |
 
-In `gen_katalog.py`, zwischen dem Ende der Karte *„Gerade angelegt"* (`tags += '</section>'`) und dem Beginn der Karte *„Alle Tags"*:
-
-```python
-# Der Aushang haengt am Eingang, nicht am Geraet. Er zeigt hier bewusst
-# keinen Code: den Klartext-Token gibt es genau einmal, beim Anlegen, in
-# der Karte darueber -- gespeichert ist nur seine Pruefsumme. Ein
-# "Druckbogen"-Knopf an einer Listenzeile waere ein Versprechen, das die
-# Datenbank nicht einloesen kann.
-tags += '<section style="%s margin-top: 24px;">' % CARD
-tags += ('<div style="%s"><h2 style="%s">Aushang</h2>'
-         '<a href="#" style="%s">Aushang anlegen</a></div>' % (HEADROW, SEC_TITLE, SECONDARY))
-tags += ('<div style="padding: 16px 20px; border-bottom: 1px solid #2a2e36;">'
-         '<span style="%s">Wer einen Aushang scannt, wird Mitglied — ohne Code, ohne Theke. '
-         'Sperren macht jeden gedruckten Bogen ungültig; danach neu anlegen und neu drucken.</span></div>'
-         % NOTE)
-tags += zeile('%s &nbsp; Eingang' % aushang_badge, 'Angelegt Mo., 1. September 2026',
-              '<a href="#" style="%s">Sperren</a>' % DESTRUCTIVE)
-tags += zeile('%s &nbsp; Umkleide' % aushang_badge, 'Angelegt Mo., 1. September 2026',
-              '<a href="#" style="%s">Sperren</a>' % DESTRUCTIVE, letzte=True)
-tags += '</section>'
-```
-
-- [ ] **Step 3: Die Seitenhöhe anheben**
-
-Der neue Abschnitt kostet rund 210 px. Aus
-
-```python
-schreibe('Tags.dc.html', portal('tags', 940, tags))
-```
-
-wird
-
-```python
-schreibe('Tags.dc.html', portal('tags', 1150, tags))
-```
-
-**Bleibt der Wert bei 940, wird der Abschnitt unten abgeschnitten** — lautlos, ohne Fehlermeldung. Nach dem Lauf am gerenderten Artboard nachsehen und den Wert nachziehen, falls unten Luft fehlt oder zu viel steht.
-
-- [ ] **Step 4: In `EinstellungenStudio` den Studio-Code zum zweiten Weg erklären**
-
-Der Abschnitt `Studio-Code` bleibt vollständig, es ändert sich nur die Erklärzeile darunter. Aus der bestehenden Zeile über Beitritt und Trainerrechte wird:
-
-> „Mit diesem Code treten Mitglieder eurem Studio bei, wenn sie nicht scannen können. Der übliche Weg ist der Aushang unter *Tags*. Beide machen niemanden zum Trainer."
-
-- [ ] **Step 5: Generatoren laufen lassen**
-
-```bash
-cd docs/superpowers/design/portal
-python gen_katalog.py
-python gen_verwaltung.py
-```
-
-Erwartet: unter den Ausgaben `geschrieben: Tags.dc.html` und `geschrieben: EinstellungenStudio.dc.html`.
-
-- [ ] **Step 6: Portal-Canvas bauen und prüfen**
-
-```bash
-cd docs/superpowers/design/portal
-DESIGN_SKILL=<Pfad zur design-Skill> ./seed.sh
-```
-
-Erwartet: die Portal-Canvas wird geschrieben, `--check` läuft ohne Befund durch. Es kommen **keine** neuen Artboards hinzu — `canvas.json` im Portal bleibt unverändert.
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add docs/superpowers/design/portal/gen_katalog.py \
-        docs/superpowers/design/portal/gen_verwaltung.py \
-        docs/superpowers/design/portal/Tags.dc.html \
-        docs/superpowers/design/portal/EinstellungenStudio.dc.html \
-        docs/superpowers/design/portal/gymodo-trainerportal.html
-git commit -m "design: Aushang bei Tags, Studio-Code als zweiter Weg"
-```
-
-*Der Dateiname der Portal-Canvas steht in `docs/superpowers/design/portal/seed.sh` hinter `--out`. Vor dem Commit dort ablesen, statt ihn zu raten.*
+**Warum das hier stehen bleibt statt gelöscht zu werden.** Ein Plan, aus dem eine Aufgabe spurlos verschwindet, sieht aus wie ein Plan, der sie übersehen hat. Der Unterschied zwischen „nicht gemacht" und „begründet nicht mehr nötig" ist genau das, was ein späterer Leser braucht.
 
 ---
 
-## Veröffentlichen
+## Bauen und Veröffentlichen
 
-Beide Canvas-Dateien werden über das bestehende Artefakt aktualisiert, nicht als neue angelegt — die Adressen sind in der Spec eingetragen und in den bisherigen Plänen verlinkt:
+**Beides liegt beim Betreiber dieses Repos, nicht bei diesem Plan.** `seed.sh` braucht `DESIGN_SKILL` — den Pfad zur `design`-Skill —, und der ist nirgends im Repo hinterlegt; auch der vorige Designplan ließ ihn als `<pfad>` offen. Der Plan endet deshalb bei `canvas.json` und den Artboards. Das sind die Quellen; die gebaute Canvas-Datei ist ihr Erzeugnis.
 
-- Member-App: `4f6035c6-7612-42ed-9791-cf0794713bdd`
-- Trainerportal: `fa12ef14-ca77-4fcc-a034-886a38914984`
+```bash
+cd docs/superpowers/design/member
+DESIGN_SKILL=<Pfad zur design-Skill> ./seed.sh
+```
 
-Vor jedem Republish die veröffentlichte Fassung lesen und die eigene Änderung darauf aufsetzen. Ein Publish ohne vorheriges Lesen wird abgewiesen.
+Danach wird das **bestehende** Artefakt aktualisiert, nicht ein neues angelegt — Member-App: `4f6035c6-7612-42ed-9791-cf0794713bdd`. Vor jedem Republish die veröffentlichte Fassung lesen und die eigene Änderung darauf aufsetzen; ein Publish ohne vorheriges Lesen wird abgewiesen.
+
+Die Trainerportal-Canvas (`fa12ef14-ca77-4fcc-a034-886a38914984`) berührt dieser Plan nach der Streichung von Task 6 nicht mehr.

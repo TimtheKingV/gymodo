@@ -2,7 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ein Scan auf einen aktiven Tag macht das scannende Konto zum Mitglied des zugehörigen Studios — mit Aushang-Tags, Selbstaustritt, Aushang-Verwaltung im Portal und einem Web-Fallback, der den Kaltstart benennt.
+**Goal:** Ein Scan auf einen aktiven Tag macht das scannende Konto zum Mitglied des zugehörigen Studios — mit Aushang-Tags, Selbstaustritt und einem Web-Fallback, der den Kaltstart benennt.
+
+> **Task 5 ist gestrichen.** Die Aushang-Verwaltung im Portal stand ursprünglich mit im Ziel; sie ist von `2026-09-01-einrichtung-am-geraet-design.md` abgelöst worden, weil Tags jetzt als Lieferung kommen und das Portal keine Tokens mehr erzeugt. Zu bauen bleiben **fünf** Aufgaben: drei Migrationen, die Fachschicht und der Web-Fallback.
 
 **Architecture:** Die Beitrittslogik liegt in einer `SECURITY DEFINER`-Funktion, nicht in einer Insert-Policy: ein Nicht-Mitglied darf `machine_tags` nicht lesen, kann also die Zuordnung nicht selbst herstellen. `machine_tags` bekommt eine Spalte `kind`, statt eine zweite Tabelle zu erhalten — Tokenraum, URL und Auflösung bleiben eins. Portal und Web-Fallback sind Next.js App Router; die Fachschicht liegt in `@fitretro/domain` und wird gegen echtes Postgres mit aktiver RLS getestet.
 
@@ -778,7 +780,17 @@ git commit -m "feat(domain): Aushang-Tags anlegen und im Katalog fuehren"
 
 ---
 
-### Task 5: Portal — Aushang anlegen, sperren, drucken
+### Task 5: Portal — Aushang anlegen, sperren, drucken *(gestrichen, überholt)*
+
+> **Status: nicht bauen.** Nach dem Schreiben dieses Plans entstand `docs/superpowers/specs/2026-09-01-einrichtung-am-geraet-design.md`. Sie entscheidet: **Tags kommen als Lieferung, das Studio erzeugt keine** — im Portal entsteht kein Token mehr, auch nicht für den Aushang, und der Erzeugen-und-Drucken-Pfad verschwindet aus Oberfläche und Code. Damit fallen die Server Action `aushangAnlegen`, die Komponente `AushangAnlegen.tsx`, die `qrcode`-Abhängigkeit und der Druckbogen ersatzlos weg.
+>
+> Was an ihre Stelle tritt — Chargen, Lieferungen, die Tags-Seite als Auskunft — steht in jener Spec und bekommt einen eigenen Plan. **Task 4 ist davon mitbetroffen:** `createTag` erzeugt heute Token und Zeile in einem Schritt; künftig entsteht die Zeile bei der Lieferung. Die Erweiterung um `kind` bleibt trotzdem richtig, denn die Sortenunterscheidung übernimmt die neuere Spec ausdrücklich — nur der Aufrufer wird ein anderer.
+>
+> Der ursprüngliche Aufgabentext steht unverändert darunter, damit nachvollziehbar bleibt, was verworfen wurde und warum.
+
+---
+
+#### Ursprünglicher Aufgabentext (nicht mehr gültig)
 
 **Files:**
 - Modify: `apps/web/app/portal/actions.ts` (`tagAnlegen` ab Zeile 293)
