@@ -151,7 +151,9 @@ Ein Aushang-Token zeigt kein Gerät, die Seite muss also etwas anderes zeigen: S
 
 ### Portal: `Tags` bekommt einen Abschnitt `Aushang`
 
-Der aktive Aushang-Tag, eine Nebenaktion *Druckbogen*, eine destruktive *Sperren und neu erzeugen* — mit dem Satz darunter, der die Wahrheit sagt: *„Ein neuer Code macht jeden gedruckten Aushang ungültig. Neu drucken nicht vergessen."*
+Die aktiven Aushänge mit Anlegedatum, je eine destruktive Nebenaktion *Sperren*, darüber die Aktion *Aushang anlegen* — mit dem Satz darunter, der die Wahrheit sagt: *„Wer einen Aushang scannt, wird Mitglied. Sperren macht jeden gedruckten Bogen ungültig; danach neu anlegen und neu drucken."*
+
+**Der Abschnitt zeigt keine Codes, und das ist keine Zurückhaltung, sondern die Datenlage.** Der Klartext-Token existiert genau einmal — `createTag` gibt ihn zurück, gespeichert wird nur `token_hash`. Ein Druckbogen kann deshalb nur im Augenblick des Anlegens entstehen, und die Tags-Seite hat für genau diesen Fall bereits die Karte *„Gerade angelegt — nur jetzt sichtbar"*. Der Aushang geht denselben Weg. Ein *Druckbogen*-Knopf an einer Listenzeile wäre ein Versprechen, das die Datenbank nicht einlösen kann.
 
 Der Studio-Code in *Einstellungen* bleibt, wo er ist. Er ist jetzt der zweite Weg statt des einzigen.
 
@@ -212,7 +214,7 @@ Drei der vier Fälle sind unproblematisch: App da und Mitglied, App da und kein 
 | `join_studio_by_tag` | Neu. `SECURITY DEFINER`, plus Testmatrix: Trainer-Downgrade, Doppelscan, gesperrter Token, fremdes Studio. |
 | `memberships_delete_own_membership` | Neu. Eine Policy. |
 | Aushang-Tag erzeugen und sperren im Portal | Erweiterung. `createTagToken` und die Tags-Seite bestehen. |
-| Druckbogen als PDF | **Der einzige echte Neubau im Portal.** |
+| Druckbogen beim Anlegen, mit QR | **Der einzige echte Neubau im Portal.** Er entsteht im Browser aus dem Token, den die Server Action zurückgibt — nicht später aus der Datenbank, dort steht nur der Hash. |
 | `/t/<token>` mit Aushang-Zweig und Studioname | Erweiterung der bestehenden Seite. |
 | Scanner in Zugang, Pending-Route über die Registrierung, aktives Studio lokal | **Nicht in diesem Repo.** Native App, eigener Plan auf dem Mac. |
 
