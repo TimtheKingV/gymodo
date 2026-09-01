@@ -10,7 +10,9 @@
 
 Beide Runden entstanden am selben Tag, teils parallel. Runde B erklärt im Kopf, sie ändere Runde A in §3 und §6, und Runde A ist darauf nachgezogen. **Dieses Dokument hält fest, was dabei durchgerutscht ist.**
 
-**Nichts davon bricht etwas, das bereits gebaut ist.** Alle Befunde liegen in Specs und im noch nicht ausgeführten Datenbankplan. Die 34 Member-Artboards und die 36 Portal-Artboards sind in sich stimmig, beide `canvas.json` vollständig, kein Artboard doppelt oder verwaist.
+**Nichts davon bricht etwas, das bereits gebaut ist.** Alle Befunde liegen in Specs und im noch nicht ausgeführten Datenbankplan. Die 34 Member-Artboards und die Portal-Artboards sind in sich stimmig, beide `canvas.json` vollständig, kein Artboard doppelt oder verwaist.
+
+**Stand nach der zweiten Runde von „Einrichtung am Gerät" (Foto und Einstellparameter im Gang):** Das Portal zählt jetzt 39 Artboards statt 36 — die Seite *Einrichten am Gerät* hat drei dazubekommen. Die drei großen Befunde unten sind davon unberührt und weiterhin offen.
 
 ---
 
@@ -51,9 +53,9 @@ Korrekt wäre: die vier Spalten behalten und `kind` plus `studio_name` **ergänz
 | **Notiz gegen Bildschirm** | Runde B schrieb die Portal-Notiz `note-einstieg` auf *„das kommt über den Scan eines Aushangs, ersatzweise über den Studio-Code"* — `KeinStudio.dc.html` darunter sagt weiter *„Gib den Code ein"*. Die Notiz hat recht. |
 | **Migrationsnummer** | Der Datenbankplan reserviert `0022`–`0025`. Runde B braucht „eine Migration, eine nullable Spalte" für die Charge, ohne Nummer. Auf Platte endet es bei `0021`. Wer zweitschreibt, nimmt eine belegte Nummer. |
 | **Beispielbestand** | Dasselbe Gerät heißt in der Member-App *Gerät 07 · Technogym Selection · Kraftbereich* und im Portal *Beinpresse 7 · Gym80 · Fensterseite*. |
-| **Rail-Zahl** | Vier Portal-Artboards zeigen noch *„Tags · 1 vorrätig"* statt *97*: `EinstellungenKonto`, `EinstellungenStudio`, `LeuteMitarbeiter`, `LeuteMitglieder`. Der Stimmigkeits-Durchgang `b66febe` hat sie übersprungen. |
+| **Rail-Zahl** | Vier Portal-Artboards zeigen noch *„Tags · 1 vorrätig"* statt *97*: `EinstellungenKonto`, `EinstellungenStudio`, `LeuteMitarbeiter`, `LeuteMitglieder`. Der Stimmigkeits-Durchgang `b66febe` hat sie übersprungen, die zweite Runde ebenfalls — sie liegen in `gen_verwaltung.py` und `gen_einstieg.py`, außerhalb ihres Umfangs. |
 
-**Kleinkram:** Runde As Spec nummeriert Home als 22/23, die Canvas führt 20/21. Sie nennt einmal ein Studio *„Nordstraße"*, das nirgends sonst existiert. Der Datenbankplan verweist auf ein „Task 7", das es nicht gibt. Runde Bs Bildschirmtabelle zählt 15 neu, markiert aber 14 mit `+`.
+**Kleinkram:** Runde As Spec nummeriert Home als 22/23, die Canvas führt 20/21. Sie nennt einmal ein Studio *„Nordstraße"*, das nirgends sonst existiert. Der Datenbankplan verweist auf ein „Task 7", das es nicht gibt. ~~Runde Bs Bildschirmtabelle zählt 15 neu, markiert aber 14 mit `+`.~~ **Erledigt** in der zweiten Runde: die Tabelle zählt jetzt 18 Artboards, davon 17 neu und eines ersetzt.
 
 ---
 
