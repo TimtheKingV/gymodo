@@ -48,7 +48,30 @@ machine_tags   studio_id not null, machine_id nullable, token_hash unique,
 
 Eine Lieferung ist damit schlicht: N Zeilen mit `status = 'unassigned'`. Der Scan setzt `machine_id` und `status = 'active'`. Die Check-Constraint `machine_tags_active_needs_machine` bewacht genau diesen Übergang. **Kein Umbau, keine neue Tabelle.**
 
-Die einzige fehlende Spalte ist die **Charge**. Ohne sie kann das Portal „Lieferung vom 12. August · 100 Tags · 97 vorrätig" nicht zeigen, und ohne diese Zeile weiß ein Trainer nicht, ob die Packung neben ihm zum Studio gehört. Eine Migration, eine nullable Spalte.
+### Ein Aushangschild ist ab Lieferung gültig
+
+Für Gerätetags gilt der Satz oben. Für Aushangschilder gilt er nicht, und das ist kein Sonderfall, sondern die Folge davon, dass sie an keinem Gerät hängen: **Aushangschilder entstehen bei der Chargenzuordnung schon `active`**, Gerätetags weiter als `unassigned`.
+
+Der Ersatz-Constraint aus `2026-09-01-scan-beitritt-design.md` §1 lässt genau das zu — für `kind = 'studio'` verlangt er allein `machine_id is null`, nicht den Umweg über ein Gerät:
+
+```sql
+check (case kind
+         when 'machine' then status <> 'active' or machine_id is not null
+         when 'studio'  then machine_id is null
+       end)
+```
+
+Damit braucht die Aktivierung **keinen zweiten Weg**: keine Portal-Aktion, kein Formular, keinen Fachschicht-Aufruf. Der Satz im nächsten Abschnitt — *„Im Portal gibt es dafür keinen Bildschirm"* — bleibt dadurch wahr, statt eine Lücke zu beschreiben. Ohne diese Festlegung wäre er eine: `createTag` fällt in §6 weg, und ein geliefertes Schild könnte nie aktiv werden, während `join_studio_by_tag` und `resolve_tag_fallback` beide auf `status = 'active'` filtern.
+
+**Alle Schilder einer Lieferung sind gleichwertig.** Welches am Eingang hängt und welche vier in der Schublade liegen, weiß das Portal nicht und muss es nicht wissen — jedes von ihnen macht den Scannenden zum Mitglied. Was das Portal können muss, ist ein einzelnes Schild sperren, wenn es verloren geht.
+
+### Die fehlenden Spalten
+
+Die **Charge** — ohne sie kann das Portal „Lieferung vom 12. August · 100 Tags · 97 vorrätig" nicht zeigen, und ohne diese Zeile weiß ein Trainer nicht, ob die Packung neben ihm zum Studio gehört.
+
+Dazu die **laufende Nummer innerhalb der Charge**, die auf dem Schild aufgedruckt ist. Sie ist der einzige Weg, auf der Tags-Seite ein bestimmtes Aushangschild zu benennen: ein Schild hat kein Gerät, über das es sich identifizieren ließe, und einen Ort kennt niemand — den hat nie jemand eingegeben. Ohne die Nummer hat *Sperren* kein Ziel.
+
+**Eine Migration, zwei nullable Spalten** (`0026`, siehe `2026-09-01-scan-beitritt-datenbank.md`, das `0022`–`0025` belegt).
 
 ### Der Hash bleibt, und er war nie das Umständliche
 
@@ -114,12 +137,12 @@ Die Canvas-Notiz `note-telefon` sagte bisher: die Aufnahme entsteht auf dem Trai
 | + | Aufnahme — 45-Sekunden-Grenze | 390 |
 | + | Warteschlange — Uploads über mehrere Geräte | 390 |
 | + | Fertig — Probe-Scan, nächstes Gerät | 390 |
-| + | Zustände am Telefon — acht Antwortkarten | 390 |
+| + | Zustände am Telefon — neun Antwortkarten | 390 |
 | ~ | Tags — Lieferungen statt Anlegen | 1440 |
 | ~ | Modell — „Tag scannen" je Geräteinstanz | 1440 |
 | ~ | Überblick — „Am Gerät scannen" statt „Tags anlegen" | 1440 |
 
-**Fünfzehn neu, drei geändert, eines ersetzt.**
+**Vierzehn neu, drei geändert, eines ersetzt** — die Zeile „Übungen am Gerät" ist das ersetzte, sie tritt an die Stelle des alten Telefon-Artboards.
 
 ### Die Tags-Seite verliert ihre Akzentfläche
 
@@ -138,11 +161,16 @@ Der Akzent hat zwei Rollen: die eine Hauptaktion, und der aktive Wert. Im Genera
 | **vorrätig** | „Tag erkannt · Charge 7" | Verbinden |
 | **schon vergeben** | „Dieser Tag gehört zu Beinpresse 7." | Gerät ansehen, oder anderen Tag nehmen — **keine Hauptaktion** |
 | **gesperrt** | „Gesperrt bleibt gesperrt." | Anderen Tag aus der Packung |
+| **falsche Sorte: ein Aushangschild** | „Das ist ein Aushangschild." | Anderen Tag aus der Gerätepackung — **kein Verbinden** |
 | **unbekannt / fremdes Studio / Charge nicht zugeordnet** | eine einzige Antwort für alle drei | „Neue Lieferung? Melde dich beim Betreiber." |
 | **Kamera nicht freigegeben** | wo man es erlaubt, konkret | kein Rückfallweg |
 | **kein Netz** | „gespeichert, wird gesendet" | weitergehen |
 
-Die dritte Zeile ist Absicht und nicht Faulheit: dieselbe Regel, die `join_studio_by_tag` im Rumpf trägt (Vorgängerspec §1). **Anders als beim Mitgliedsweg darf hier der nächste Schritt danebenstehen** — der Trainer ist angemeldet, es gibt keinen Ratepfad zu schützen.
+Die vierte Zeile ist neu und schließt eine Lücke, die dieser Weg selbst aufreißt. **Der Trainer kann ein Aushangschild vor dem Scan nicht von einem Geräteaufkleber unterscheiden — das ist Absicht**, §3 sagt: „Benennbar wird ein Tag erst durch den Scan." Der Fehlgriff ist damit kein Versehen am Rand, sondern eingeplant. Vor dem `kind`-Constraint wäre er still durchgelaufen und hätte ein Aushangschild in einen Gerätetag verwandelt; danach wirft er eine Check-Verletzung. Beides ist falsch — richtig ist eine Antwort, die sagt, was in der Hand liegt.
+
+Sie ist eine **Sackgasse mit genau einem Ausgang**. Das Schild ist bereits gültig (§1) und gehört an die Wand; es gibt hier nichts zu verbinden, nichts zu aktivieren, nichts zu reparieren.
+
+Die fünfte Zeile ist Absicht und nicht Faulheit: dieselbe Regel, die `join_studio_by_tag` im Rumpf trägt (Vorgängerspec §1). **Anders als beim Mitgliedsweg darf hier der nächste Schritt danebenstehen** — der Trainer ist angemeldet, es gibt keinen Ratepfad zu schützen.
 
 Der Zustand **Offline** gilt hier, obwohl §5 der Strukturspec ihn fürs Portal ausschließt („ein Konzept der Halle, nicht des Schreibtischs"). Dieser Weg *ist* die Halle. Die Formulierung bleibt die des Designsystems: „gespeichert, wird gesendet" — nie „fehlgeschlagen".
 
@@ -153,7 +181,7 @@ Der Zustand **Offline** gilt hier, obwohl §5 der Strukturspec ihn fürs Portal 
 | Posten | Stand |
 | --- | --- |
 | **Chargen herstellen und ausliefern** | Neu, aber **ausserhalb des Portals**: Tokens mit `createTagToken` erzeugen, die Liste an den Tag-Lieferanten geben, die Hashes chargenweise einspielen, beim Versand die Charge einem Studio zuordnen. Ein Betreiberskript wie beim Studio-Onboarding, kein Bildschirm. |
-| **Chargenspalte** | Eine Migration, eine nullable Spalte auf `machine_tags`. |
+| **Chargenspalte und Schildnummer** | Eine Migration, zwei nullable Spalten auf `machine_tags`: die Charge und die laufende Nummer darin (§1). Nummer **`0026`** — `2026-09-01-scan-beitritt-datenbank.md` belegt `0022`–`0025`. |
 | **Sucher im Portal** | **Der einzige echte Neubau, der bleibt.** Safari kennt `BarcodeDetector` nicht, also `getUserMedia` plus ein Decoder im Browser. |
 | **Tag binden per Scan** | Erweiterung. Die Update-Policy auf `machine_tags` besteht (Plan `2026-08-31-trainerportal-medien`); es fehlt der Weg über den Token-Hash statt über die Tag-ID. |
 | **Modell am Telefon anlegen** | Erweiterung. `equipment_models` und die Server Action bestehen; es fehlt die knappe mobile Form. |

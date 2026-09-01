@@ -133,13 +133,18 @@ studio += ('<div style="padding: 20px; display: flex; flex-direction: column; ga
            '<code style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; '
            'font-size: 18px; letter-spacing: 0.08em; background: #0f1114; border: 1px solid #2a2e36; '
            'border-radius: 10px; padding: 16px; display: block;">KWNORD-7F2X</code>'
-           '<span style="font-size: 12px; color: #5c636e;">Mit diesem Code treten Mitglieder eurem '
-           'Studio bei. Er macht niemanden zum Trainer.</span>'
+           '<span style="font-size: 12px; color: #5c636e;">Der zweite Weg ins Studio, wenn kein '
+           'Aushangschild zur Hand ist: Mitglieder geben den Code in der App ein. Er macht '
+           'niemanden zum Trainer — Mitarbeiter fügt ihr unter Leute hinzu.</span>'
            '<div style="display: flex; gap: 12px;">'
            '<a href="#" style="%s">Kopieren</a>'
            '<a href="#" style="%s">Neuen Code erzeugen</a></div>'
-           '<div style="%s">Ein neuer Code macht den alten sofort ungültig. Aushänge und Verträge '
-           'mit dem alten Code funktionieren dann nicht mehr.</div></div>'
+           # "Aushaenge" hiess hier frueher Papier mit aufgedrucktem Code -- zwei
+           # Bildschirme weiter ist ein Aushang aber ein geliefertes Schild mit
+           # Token. Ein Wort, zwei Erzeugnisse, benachbarte Seiten.
+           '<div style="%s">Ein neuer Code macht den alten sofort ungültig. Ausdrucke und Verträge '
+           'mit dem alten Code funktionieren dann nicht mehr. Aushangschilder tragen keinen '
+           'Code — sie bleiben gültig.</div></div>'
            % (SECONDARY, SECONDARY, WARN))
 studio += '</section>'
 schreibe('EinstellungenStudio.dc.html', portal('einstellungen', 1300, studio))
