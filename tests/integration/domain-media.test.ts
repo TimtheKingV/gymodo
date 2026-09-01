@@ -33,7 +33,7 @@ function jpegSegment(marker: number, payload: number[]): number[] {
 }
 
 /** Ein JPEG mit Exif-Segment -- so kommt es aus dem Trainerhandy. */
-function jpegMitExif(): Uint8Array {
+function jpegMitExif() {
   return new Uint8Array([
     0xff, 0xd8,
     ...jpegSegment(0xe0, [...ascii("JFIF"), 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00]),
@@ -53,7 +53,7 @@ function box(type: string, payload: number[]): number[] {
 }
 
 /** Gueltiges MP4 mit der gewuenschten Laufzeit in der mvhd-Box. */
-function mp4MitDauer(sekunden: number): Uint8Array {
+function mp4MitDauer(sekunden: number) {
   const mvhd = box("mvhd", [
     0x00, 0x00, 0x00, 0x00,
     ...uint32(0), ...uint32(0),
@@ -72,7 +72,11 @@ async function uploadRaw(
   email: string,
   bucket: string,
   path: string,
-  bytes: Uint8Array,
+  // BlobPart statt Uint8Array: die Bytes gehen unveraendert in new Blob(),
+  // und seit TypeScript 5.7 ist Uint8Array generisch ueber seinen Puffer.
+  // Eine blanke Uint8Array-Annotation verbreitert auf Uint8Array<ArrayBufferLike>,
+  // was BlobPart nicht annimmt -- BlobPart benennt genau das, was hier gebraucht wird.
+  bytes: BlobPart,
   contentType: string,
 ): Promise<void> {
   const client = await userClient(email);

@@ -36,7 +36,7 @@ function ascii(text: string): number[] {
 }
 
 /** Kleinstes gueltiges JPEG. */
-function jpegBytes(): Uint8Array {
+function jpegBytes() {
   return new Uint8Array([
     0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, ...ascii("JFIF"), 0x00, 0x01, 0x01,
     0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xd9,
@@ -44,7 +44,7 @@ function jpegBytes(): Uint8Array {
 }
 
 /** Minimaler MP4-Rumpf mit ftyp-Box. */
-function mp4Bytes(): Uint8Array {
+function mp4Bytes() {
   return new Uint8Array([
     0x00, 0x00, 0x00, 0x18, ...ascii("ftyp"), ...ascii("isom"), 0x00, 0x00,
     0x02, 0x00, ...ascii("isomiso2"),
