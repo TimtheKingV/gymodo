@@ -3,6 +3,7 @@
 **Stand:** 1. September 2026
 **Status:** Entwurf, abgestimmt. Noch keine Umsetzung.
 **Vorgänger:** `2026-08-31-trainerportal-struktur-design.md` (Struktur), `2026-09-01-scan-beitritt-design.md` (Tokenraum, Aushang), `2026-08-30-designsystem.md` (Tokens)
+**Nachgezogen am 1. September 2026** durch `2026-09-01-tag-lieferung-design.md` — betroffen sind §1, §4, §5, §6 und §7; die Stellen sind unten einzeln markiert.
 **Ändert:** `2026-09-01-scan-beitritt-design.md` §3 und §6 — der Druckbogen entfällt, der Aushang wird ein geliefertes Schild. Und `2026-08-31-trainerportal-struktur-design.md` §5 bekommt eine benannte Ausnahme.
 **Canvas:** Trainerportal `fa12ef14-ca77-4fcc-a034-886a38914984`, Seite *Einrichten am Gerät*
 
@@ -71,7 +72,7 @@ Die **Charge** — ohne sie kann das Portal „Lieferung vom 12. August · 100 T
 
 Dazu die **laufende Nummer innerhalb der Charge**, die auf dem Schild aufgedruckt ist. Sie ist der einzige Weg, auf der Tags-Seite ein bestimmtes Aushangschild zu benennen: ein Schild hat kein Gerät, über das es sich identifizieren ließe, und einen Ort kennt niemand — den hat nie jemand eingegeben. Ohne die Nummer hat *Sperren* kein Ziel.
 
-**Eine Migration, zwei nullable Spalten** (`0026`, siehe `2026-09-01-scan-beitritt-datenbank.md`, das `0022`–`0025` belegt).
+~~**Eine Migration, zwei nullable Spalten** (`0026`).~~ **Nachgezogen:** daraus sind **drei Migrationen** geworden — `0026` Tokenraum, `0027` Chargen und Halde, `0028` die zwei Tag-Funktionen. Die Halde liegt in `machine_tags` selbst, mit nullbarem `studio_id` und `batch_id`/`batch_index` als `not null`. Vollständig in `2026-09-01-tag-lieferung-design.md` §1 und §2.
 
 ### Der Hash bleibt, und er war nie das Umständliche
 
@@ -84,6 +85,16 @@ Der Druckbogen kam nicht vom Hash. Er kam allein daher, dass das Portal die Toke
 Tags entstehen in Chargen: der Betreiber erzeugt N Tokens mit `createTagToken`, gibt die Liste an den Tag-Lieferanten und spielt die Hashes ein. Beim Versand wird eine **ganze Charge** einem Studio zugeordnet. Der Betreiber muss beim Kommissionieren nichts scannen — die Nummer steht auf der Packung.
 
 Die Sorte kommt ebenfalls aus der Charge: Geräte-Tags sind On-Metal-Aufkleber, Aushänge sind Schilder. Zwei Erzeugnisse, zwei Chargen, `kind ∈ machine | studio` aus `2026-09-01-scan-beitritt-design.md` §1. **Im Portal gibt es dafür keinen Bildschirm.**
+
+> **Nachgezogen — der Satz „beim Versand wird eine ganze Charge einem Studio zugeordnet" gilt nur noch für Schilder.**
+>
+> Er setzt voraus, dass der Betreiber beim Kommissionieren weiß, *welche* Aufkleber in welche Kiste gehen. Aus einem Tausenderpack greift er sie aber unbenannt heraus, und Entscheidung 3 sagt ohnehin: benennbar wird ein Tag erst durch den Scan.
+>
+> **Gerätetags kommen deshalb studiolos** und lernen ihr Studio erst beim Scan vor dem Gerät, über `bind_tag_to_machine`. Die Lieferung ist für sie eine reine Zahl (`tag_shipments`), aus der die Vorratszeile entsteht — kein Token wird dabei angefasst. **Aushangschilder** dagegen werden namentlich zugeordnet, über ihre aufgedruckte Nummer; sie haben keinen Bindeschritt, an dem sie ihr Studio lernen könnten, und ein Schild ohne Studio ist sinnlos.
+>
+> **Der Preis, benannt:** Es gibt keinen Fehllieferungsschutz mehr. Kommt die Gerätepackung für Studio B bei Studio A an, bindet A sie klaglos ein. Für Schilder gilt das nicht.
+>
+> `2026-09-01-tag-lieferung-design.md` §2.
 
 ---
 
@@ -162,7 +173,7 @@ Der Akzent hat zwei Rollen: die eine Hauptaktion, und der aktive Wert. Im Genera
 | **schon vergeben** | „Dieser Tag gehört zu Beinpresse 7." | Gerät ansehen, oder anderen Tag nehmen — **keine Hauptaktion** |
 | **gesperrt** | „Gesperrt bleibt gesperrt." | Anderen Tag aus der Packung |
 | **falsche Sorte: ein Aushangschild** | „Das ist ein Aushangschild." | Anderen Tag aus der Gerätepackung — **kein Verbinden** |
-| **unbekannt / fremdes Studio / Charge nicht zugeordnet** | eine einzige Antwort für alle drei | „Neue Lieferung? Melde dich beim Betreiber." |
+| **unbekannt / fremdes Studio** ~~/ Charge nicht zugeordnet~~ | eine einzige Antwort für beide | „Neue Lieferung? Melde dich beim Betreiber." |
 | **Kamera nicht freigegeben** | wo man es erlaubt, konkret | kein Rückfallweg |
 | **kein Netz** | „gespeichert, wird gesendet" | weitergehen |
 
@@ -172,6 +183,8 @@ Sie ist eine **Sackgasse mit genau einem Ausgang**. Das Schild ist bereits gült
 
 Die fünfte Zeile ist Absicht und nicht Faulheit: dieselbe Regel, die `join_studio_by_tag` im Rumpf trägt (Vorgängerspec §1). **Anders als beim Mitgliedsweg darf hier der nächste Schritt danebenstehen** — der Trainer ist angemeldet, es gibt keinen Ratepfad zu schützen.
 
+> **Nachgezogen:** *„Charge nicht zugeordnet"* ist als Fall entfallen. Seit Gerätetags studiolos geliefert werden, **ist** die nicht zugeordnete Charge der Normalzustand, aus dem gebunden wird — sie ist Zeile 1, nicht Zeile 5. Die beiden übrigen Fälle bleiben, und die Studiozugehörigkeit wird vor Sorte und Status geprüft: ein gesperrter Tag eines fremden Studios antwortet `unbekannt`, nicht *„gesperrt bleibt gesperrt"*, sonst verrät die Antwort seine Existenz. Die vollständige Zuordnung von Zeile zu Antwort steht als `inspect_tag` in `2026-09-01-tag-lieferung-design.md` §3.
+
 Der Zustand **Offline** gilt hier, obwohl §5 der Strukturspec ihn fürs Portal ausschließt („ein Konzept der Halle, nicht des Schreibtischs"). Dieser Weg *ist* die Halle. Die Formulierung bleibt die des Designsystems: „gespeichert, wird gesendet" — nie „fehlgeschlagen".
 
 ---
@@ -180,10 +193,10 @@ Der Zustand **Offline** gilt hier, obwohl §5 der Strukturspec ihn fürs Portal 
 
 | Posten | Stand |
 | --- | --- |
-| **Chargen herstellen und ausliefern** | Neu, aber **ausserhalb des Portals**: Tokens mit `createTagToken` erzeugen, die Liste an den Tag-Lieferanten geben, die Hashes chargenweise einspielen, beim Versand die Charge einem Studio zuordnen. Ein Betreiberskript wie beim Studio-Onboarding, kein Bildschirm. |
-| **Chargenspalte und Schildnummer** | Eine Migration, zwei nullable Spalten auf `machine_tags`: die Charge und die laufende Nummer darin (§1). Nummer **`0026`** — `2026-09-01-scan-beitritt-datenbank.md` belegt `0022`–`0025`. |
-| **Sucher im Portal** | **Der einzige echte Neubau, der bleibt.** Safari kennt `BarcodeDetector` nicht, also `getUserMedia` plus ein Decoder im Browser. |
-| **Tag binden per Scan** | Erweiterung. Die Update-Policy auf `machine_tags` besteht (Plan `2026-08-31-trainerportal-medien`); es fehlt der Weg über den Token-Hash statt über die Tag-ID. |
+| **Chargen herstellen und ausliefern** | Neu, aber **ausserhalb des Portals**. **Nachgezogen und ausentworfen:** `pnpm tags` mit sechs Befehlen über `packages/domain/src/chargen.ts`, `2026-09-01-tag-lieferung-design.md` §4. Die CSV an den Lieferanten trägt Nummer, Sorte, Token und URL und ist **jederzeit wiederholbar** — der Satz „die Hashes einspielen" ist damit hinfällig, gespeichert wird der Klartext. |
+| **Chargenspalte und Schildnummer** | ~~Eine Migration, zwei nullable Spalten.~~ **Nachgezogen:** drei Migrationen `0026`–`0028` plus ein Betreiberskript, vollständig in `2026-09-01-tag-lieferung-design.md`. `2026-09-01-scan-beitritt-datenbank.md` belegt weiterhin `0022`–`0025`. |
+| **Sucher im Portal** | **Der einzige echte Neubau, der bleibt.** Safari kennt `BarcodeDetector` nicht, also `getUserMedia` plus ein Decoder im Browser. Sein Backend — `inspect_tag` und `bind_tag_to_machine` — steht danach vollständig; er baut nur noch die Kamera davor. |
+| **Tag binden per Scan** | ~~Erweiterung, es fehlt der Weg über den Token-Hash.~~ **Nachgezogen: entschieden und eingeplant** als `bind_tag_to_machine(p_token, p_machine_id)` in `0028`. Sie vergibt zugleich das Studio, weil ein gelieferter Gerätetag keines hat — die Update-Policy aus `0016` greift für studiolose Zeilen nicht. |
 | **Modell am Telefon anlegen** | Erweiterung. `equipment_models` und die Server Action bestehen; es fehlt die knappe mobile Form. |
 | **Geräte, Übungen, Videos, Tags** | Vollständig vorhanden. |
 
@@ -197,20 +210,22 @@ Das ist die eigentliche Nachricht dieses Dokuments — der Neubau schrumpft nett
 | --- | --- |
 | **Druckbogen als PDF** | In `2026-09-01-scan-beitritt-design.md` §6 noch „der einzige echte Neubau im Portal" |
 | `TagAnlegen.tsx` samt drei Aufrufstellen | Tag anlegen am Gerät, an der Modellseite, auf der Tags-Seite |
-| `TagZuweisen.tsx` | Das Dropdown „Gerät wählen …" — ersetzt durch den Scan vor dem Gerät |
+| ~~`TagZuweisen.tsx`~~ | **Nachgezogen: bleibt, umgebaut.** Das Dropdown entfällt — es hätte nichts mehr zu listen, weil Haldenzeilen per RLS unsichtbar sind. An seine Stelle tritt ein Feld „Token eintippen" auf `bind_tag_to_machine`: der Sucher ohne Kamera, und damit zugleich dessen Rückfallweg (§7) |
 | `createTag` in `packages/domain/src/catalog.ts` | Erzeugt Token und Zeile in einem Schritt; die Zeile entsteht jetzt bei der Lieferung |
 | Der Bildschirm „Gerade angelegt — nur jetzt sichtbar" | Die einmalige Anzeige des Klartext-Tokens |
 
 `createTagToken`, `hashTagToken` und `isValidTagToken` bleiben unverändert — sie wandern auf die Betreiberseite.
 
-**Der Rückbau gehört nicht in dieselbe Runde wie die Artboards.** Er folgt aus dieser Spec, ist aber ein eigener Plan mit eigener Testmatrix: `createTag` hat Tests, und die Tags-Seite hat einen E2E-Pfad.
+~~**Der Rückbau gehört nicht in dieselbe Runde wie die Artboards.** Er folgt aus dieser Spec, ist aber ein eigener Plan mit eigener Testmatrix.~~
+
+> **Nachgezogen: er ist kein eigener Plan mehr, sondern erzwungen.** Nach `0026` ist `token_hash` eine generierte Spalte und `token` für `authenticated` nicht schreibbar — `createTag` kann danach nicht mehr laufen, egal ob jemand es zurückbaut. Der Rückbau steht deshalb als Aufgabe 3 in `2026-09-01-tag-lieferung-design.md` §5 und §7, unmittelbar hinter der Migration; dazwischen ist das Repo nicht übersetzbar. Die Testmatrix stimmte: zehn Aufrufe in `domain-catalog.test.ts` und der E2E-Pfad in `e2e/trainerportal.spec.ts:119`, der den Token aus der Oberfläche abliest.
 
 ---
 
 ## 7. Offene Punkte
 
 - **Druckmaße des QR.** Modulgröße und Fehlerkorrekturstufe für den Scanabstand am Gerät sind weiter nicht festgelegt — aus der Vorgängerspec übernommen und **hochgestuft**: der QR ist jetzt der einzige Erfassungsweg des Trainers, nicht einer von zweien.
-- **Kamerafreigabe in mobilem Safari** ist der einzige Ausfallpunkt ohne Rückfallweg. Ob das reicht, zeigt der erste echte Einrichtungsgang.
+- ~~**Kamerafreigabe in mobilem Safari** ist der einzige Ausfallpunkt ohne Rückfallweg.~~ **Nachgezogen: entschärft, bevor er entsteht.** Der umgebaute `TagZuweisen` (§6) ist ein Feld zum Eintippen des Tokens auf derselben Funktion — der Rückfallweg wird gebaut, bevor die Kamera überhaupt davorsteht. Offen bleibt nur, ob das Abtippen von 22 Zeichen vor einem Gerät zumutbar ist; das zeigt der erste echte Einrichtungsgang.
 - **Lesbare Chargennummer neben dem QR?** Fürs Inventar praktisch, für den Ablauf unnötig. Kostet Druckfläche auf einem kleinen Aufkleber.
 - **Leerer Vorrat mitten in der Halle.** Der Zustand ist gezeichnet, die Nachbestellung nicht — es gibt keinen Bestellweg im Portal, und ob es einen geben soll, ist eine Betreiberfrage.
 - **Nummernvergabe.** `machines.label` ist heute frei. Der Entwurf schlägt die nächste freie Zahl vor; ob das Portal sie erzwingen soll, wenn am Gerät schon eine andere klebt, ist offen — der Entwurf sagt nein.

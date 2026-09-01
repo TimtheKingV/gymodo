@@ -15,7 +15,7 @@
 ## Global Constraints
 
 - **Migrationen sind fortlaufend nummeriert und werden nie geändert.** Nächste freie Nummer: `0022`. Eine bereits gepushte Migration wird durch eine neue korrigiert, nicht überschrieben.
-- **Dieser Plan belegt `0022`, `0023`, `0024` und `0025`.** Die Chargenspalte aus `2026-09-01-einrichtung-am-geraet-design.md` §5 kommt danach und bekommt `0026` — sie steht in jener Spec ohne Nummer, und wer sie zuerst schreibt, greift sonst in eine hier belegte.
+- **Dieser Plan belegt `0022`, `0023`, `0024` und `0025`.** Was danach kommt, steht in `2026-09-01-tag-lieferung-design.md` und belegt `0026` (Tokenraum), `0027` (Chargen und Halde) und `0028` (die zwei Tag-Funktionen). Aus der einen Chargenspalte, die `2026-09-01-einrichtung-am-geraet-design.md` §5 ohne Nummer vorsah, sind damit drei Migrationen geworden.
 - **Jede `SECURITY DEFINER`-Funktion braucht beide Zeilen** — das ist die Lehre aus `0009`, und sie ist keine Formalie:
   ```sql
   revoke all on function public.<name>(<typen>) from public, anon, authenticated, service_role;
@@ -24,7 +24,7 @@
   `revoke ... from public` allein genügt auf Supabase **nicht**: `ALTER DEFAULT PRIVILEGES` gewährt `EXECUTE` zusätzlich an `anon`, `authenticated` und `service_role`. Ohne den ausdrücklichen Entzug ist die Funktion faktisch für alle drei aufrufbar.
 - **Jede `SECURITY DEFINER`-Funktion setzt `set search_path = public, pg_temp`.**
 - **Unbekannt, gesperrt und nicht zugewiesen antworten identisch** — leeres Ergebnis, nie ein unterscheidbarer Fehler. Differenziert eine Antwort, lassen sich gültige Tokens durch Ausprobieren finden.
-- **Der Klartext-Token existiert genau einmal.** `createTag` gibt ihn zurück, gespeichert wird nur `token_hash`. Er darf nirgends protokolliert werden und ist später **nicht wiederherstellbar** — jede Oberfläche muss damit rechnen, dass es keinen zweiten Blick gibt.
+- **Der Token wird im Klartext gespeichert, ist aber für `authenticated` unsichtbar.** ~~Der Klartext-Token existiert genau einmal.~~ Diese Regel ist von `2026-09-01-tag-lieferung-design.md` §1 abgelöst: `machine_tags.token` trägt den Klartext, `token_hash` wird daraus **generiert** und bleibt lesbar wie bisher, und Spaltenrechte entziehen `authenticated` auf `token` sowohl `select` als auch `update`. Für diesen Plan folgt daraus nur eines: **die Testfixtures schreiben `token: <klartext>` statt `token_hash: hashTagToken(...)`** — sobald `0026` liegt. Wer diesen Plan vorher ausführt, schreibt sie in der alten Form und stellt sie in Aufgabe 1 jenes Plans mit allen übrigen um. Die Funktionen selbst (`join_studio_by_tag`, `resolve_tag_fallback`) bleiben unverändert und suchen weiter über `token_hash`.
 - **Die Rolle beim Beitritt ist immer `member`.** Nie `trainer`, nie `owner`, und niemals als Parameter von außen.
 - **Fehlercodes der Fachschicht** sind ausschließlich `validation_failed`, `unauthorized`, `not_found`, `conflict`, `internal` (`packages/domain/src/errors.ts`). Ein Objekt aus einem fremden Studio liefert `not_found`, nicht `unauthorized`.
 - **Tests laufen gegen echtes Postgres.** `pnpm test:integration` braucht `SUPABASE_URL`, `SUPABASE_ANON_KEY` und den Service-Key in der Umgebung; `fileParallelism` ist aus.
