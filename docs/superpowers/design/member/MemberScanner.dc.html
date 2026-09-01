@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0A0B0D; color: #F2F4F7; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+    a { color: #D4FF3F; text-decoration: none; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .sep { height: 1px; background: #2A2E36; }
+    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
+    .tab.on { color: #D4FF3F; }
+  </style>
+</helmet>
+<div class="ph"><div style="height: 54px; flex: none;"></div><div style="flex: none; height: 44px; padding: 0 20px; display: flex; align-items: center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5-7 7 7 7"/></svg></div><div style="flex: none; padding: 26px 28px 0; display: flex; flex-direction: column; gap: 10px;"><div style="font-size: 32px; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; line-height: 1.02;">Code scannen</div><div style="font-size: 13px; line-height: 1.5; color: #9BA3AF;">Halte die Kamera auf den Aushang oder auf den Aufkleber am Gerät.</div></div>
+  <div style="flex: none; margin: 30px 28px 0; height: 330px; border-radius: 18px;
+              background: #14161A; border: 1px solid #2A2E36; position: relative;
+              display: flex; align-items: center; justify-content: center;">
+    <div style="position: relative; width: 206px; height: 206px;"><div style="position: absolute; width: 44px; height: 44px; top: 0; left: 0; border-top: 3px solid #D4FF3F; border-left: 3px solid #D4FF3F; border-top-left-radius: 15px;"></div><div style="position: absolute; width: 44px; height: 44px; top: 0; right: 0; border-top: 3px solid #D4FF3F; border-right: 3px solid #D4FF3F; border-top-right-radius: 15px;"></div><div style="position: absolute; width: 44px; height: 44px; bottom: 0; left: 0; border-bottom: 3px solid #D4FF3F; border-left: 3px solid #D4FF3F; border-bottom-left-radius: 15px;"></div><div style="position: absolute; width: 44px; height: 44px; bottom: 0; right: 0; border-bottom: 3px solid #D4FF3F; border-right: 3px solid #D4FF3F; border-bottom-right-radius: 15px;"></div></div>
+  </div>
+
+  <div style="flex: none; margin: 18px 28px 0; background: #14161A; border: 1px solid #2A2E36;
+              border-radius: 12px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9BA3AF" stroke-width="2"
+         stroke-linecap="round" style="flex: none; margin-top: 1px;"><path d="M7.5 8.5a5 5 0 0 1 0 7"/><path d="M11.5 5.5a10 10 0 0 1 0 13"/><path d="M15.5 2.5a15 15 0 0 1 0 19"/></svg>
+    <div style="font-size: 13px; line-height: 1.5; color: #9BA3AF;">Klebt ein NFC-Aufkleber am Gerät, genügt es, das Telefon daran zu halten — ohne diesen Bildschirm.</div>
+  </div>
+<div style="flex-grow: 1;"></div><div style="flex: none; padding: 0 28px 20px;"><div style="height: 52px; border-radius: 14px; border: 1px solid #2A2E36; color: #F2F4F7; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center;">Code stattdessen eingeben</div></div></div></x-dc>
+</body>
+</html>
