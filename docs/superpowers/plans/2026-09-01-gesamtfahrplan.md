@@ -7,7 +7,7 @@
 | | Commit | Inhalt |
 | --- | --- | --- |
 | `master` | `7570aad` | letzter Stand mit Code |
-| `designplan` | `bfd7849` | 29 Commits vor `master`, **reine Entwurfsarbeit** |
+| `designplan` | `e00268c` | Entwurfsarbeit plus der umgebungsfaehige Auth-Config-Umbau vom 1. September |
 | `worktree/brave-forest-c9d8` | `a2810c7` | Tag-Lieferung: Spec + Umsetzungsplan, **noch nicht gemerged** |
 
 ---
@@ -74,8 +74,10 @@ Belegt: `git diff master designplan -- . ':(exclude)docs'` ist leer. 29 Commits,
 
 Keiner davon ist Code.
 
-1. **SMTP-Versand.** ✅ **Entschieden am 1. September: Upgrade auf Supabase Pro.** Bis dahin verschickt der Standard-Mailer einen Magic Link statt des sechsstelligen Codes, den die Oberfläche erwartet — auf der echten Domain kann sich damit kein echter Nutzer anmelden. Blockiert(e): Registrierung, Passwort-Reset, Weg B (Beitritt im Web vor der Installation), Nachrück-Benachrichtigung bei Kursen.
-   **Nach dem Upgrade nachzuprüfen, nicht anzunehmen:** ob der eingebaute Mailer in der Praxis reicht oder ob zusätzlich Custom-SMTP (Resend/Postmark) nötig wird — er ist ratenbegrenzt und nicht für den Regelbetrieb gedacht. Erst wenn eine echte Mail mit sechsstelligem Code ankommt, ist dieser Punkt zu.
+1. **SMTP-Versand.** ✅ **Weitgehend geloest am 1. September.** Die Organisation `Gymodo` steht auf Pro (Supabase rechnet **pro Organisation** ab — ein Upgrade in einer der drei anderen Organisationen haette nichts bewirkt), und `supabase config push` hat das OTP-Template ins Projekt gebracht: `auth: updated`, Folge-Diff leer. Betreff *„Dein Anmeldecode"*, `{{ .Token }}` statt `{{ .ConfirmationURL }}`, `otp_length` 6.
+   **Es fehlt der letzte Beweis:** eine echte Mail mit sechsstelligem Code in einem echten Posteingang. Bis dahin bleibt dieser Punkt offen — lokal ist er gegen Mailpit gefuehrt.
+   **Nachtrag, teurer als der Blocker selbst:** `config push` ueberträgt die **gesamte** `[auth]`-Sektion, nicht einzelne Schluessel. `config.toml` trug reine Entwicklungswerte; ein unbesehener Push haette `site_url` der Produktion auf `127.0.0.1` gesetzt, die Bestaetigungspflicht der Mailadresse abgeschaltet und TOTP-MFA deaktiviert. Vier Werte stehen jetzt auf `env()` mit getrennten Dateien (`.env` lokal, `.env.production` fuer den Push). Merke: **`SUPABASE_ENV=production` waehlt `.env.production` nicht aus** — das leistet in Supabases Beispiel dotenvx, nicht die CLI; verlaesslich ist nur eine echte Shell-Variable.
+
 2. **Der Mac.** Die iOS-App existiert nicht als eine Zeile Code. M0 Task 7 (Universal-Link-Validierung) und Task 8 (physischer NFC-Test) warten dort. **Task 8 ist ein Gate:** liest der Tag am echten Gerät nicht zuverlässig, wird das Produkt QR-first statt NFC-first.
 3. **`APPLE_TEAM_ID` / `APPLE_BUNDLE_ID`** stehen in Vercel auf Platzhaltern (`ABCDE12345` / `de.fitretro.member`). Muss vor jedem TestFlight-Build weg.
 
@@ -95,7 +97,8 @@ Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Da
 
 ### Phase 0 — Entscheiden *(läuft)*
 
-- [x] **SMTP:** Supabase Pro, entschieden 1. September
+- [x] **SMTP:** Supabase Pro, entschieden und gebucht 1. September (Organisation `Gymodo`)
+- [x] **Template ins Projekt gepusht**, per leerem Folge-Diff belegt
 - [ ] **Verifizieren**, dass eine echte OTP-Mail mit sechsstelligem Code ankommt
 - [ ] **Mac-Übernahme:** wann — und wird vorher NFC oder QR entschieden
 - [ ] **Kurse:** Teil von M2 oder vertagt (der größte ungeplante Brocken)

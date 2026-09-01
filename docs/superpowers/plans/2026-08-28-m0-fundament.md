@@ -20,7 +20,7 @@
 | --- | --- |
 | GitHub-Repo | ✅ `github.com/TimtheKingV/gymodo`, privat, `master` gepusht |
 | Supabase-Cloud-Projekt | ✅ „Gymodo", Region `eu-central-1`, verlinkt, Migrationen 0001+0002 gepusht |
-| Custom-OTP-E-Mail-Template | ❌ **blockiert** — Free-Tier + Supabase-Standard-Mailer erlaubt keine Custom-Templates. Login sendet aktuell nur einen Klick-Link (Magic Link), keinen 6-stelligen Code, den die UI erwartet. **Bewusst nicht gefixt** (Nutzerentscheidung 30.08.). Löst sich durch Custom-SMTP (z. B. Resend/Postmark) oder Supabase-Pro. Ohne Fix: Login auf der echten Domain funktioniert für echte Nutzer nicht, nur unkritisch, solange nur synthetische/Entwicklerkonten existieren (siehe Spec Abschnitt 9). |
+| Custom-OTP-E-Mail-Template | ✅ **gepusht am 1. September 2026.** Die Organisation `Gymodo` steht auf Pro; `supabase config push` meldet `auth: updated`, ein Lauf danach zeigt einen leeren Diff. Das Projekt traegt jetzt Betreff *„Dein Anmeldecode"* und ein Template mit `{{ .Token }}` statt `{{ .ConfirmationURL }}`, `otp_length` 6 statt 8. **Offen bleibt die Zustellung selbst** — erst wenn eine echte Mail mit sechsstelligem Code ankommt, ist der Punkt zu. Supabases eingebauter Mailer bleibt auch unter Pro gedrosselt; ob zusaetzlich Custom-SMTP (Resend/Postmark) noetig wird, entscheiden die echten Zahlen. |
 | Vercel-Projekt | ✅ verbunden, Root Directory `apps/web`, live unter `https://gymodo-web.vercel.app` |
 | Vercel-Region | ✅ `fra1` bestätigt (`X-Vercel-Id`-Header geprüft) |
 | `APPLE_TEAM_ID` / `APPLE_BUNDLE_ID` in Vercel | ❌ **bewusst zurückgestellt** — Platzhalterwerte gesetzt (`ABCDE12345` / `de.fitretro.member`), Build läuft damit durch. Echte Werte kommen, sobald der Nutzer auf dem Mac übernimmt (Apple Developer Zugriff liegt dort). **Muss vor jedem produktiven TestFlight-Build durch echte Werte ersetzt werden.** |
@@ -43,7 +43,9 @@ Zusätzlich wurde eine Falle beseitigt, die dieser Plan hinterlassen hatte: Die 
 
 Zwei Punkte aus Task 6 sind **weiterhin offen** und dort festgehalten:
 
-- **OTP-Mailversand** — Supabase Free Tier verschickt den Standard-Magic-Link statt des sechsstelligen Codes. Auf der echten Domain kann sich damit kein echter Nutzer anmelden. Harter Blocker vor dem ersten Betreibertermin, geloest durch Custom-SMTP oder Supabase Pro.
+- **OTP-Mailversand** — **weitgehend geloest am 1. September 2026** durch das Pro-Upgrade der Organisation `Gymodo` und `supabase config push`. Das Template steht im Projekt und ist per leerem Folge-Diff belegt. Es fehlt der letzte Beweis: eine echte Mail mit sechsstelligem Code an einen echten Posteingang.
+
+  Dabei kam heraus, dass `config push` die **gesamte** `[auth]`-Sektion ueberträgt. Drei Werte stehen deshalb jetzt auf `env()` (`site_url`, `additional_redirect_urls`, `[auth.email].max_frequency`, dazu `enable_confirmations`), und zwei stille Regressionen wurden abgefangen, bevor sie in die Produktion gingen — abgeschaltete TOTP-MFA und eine abgeschaltete Bestaetigungspflicht der Mailadresse. Siehe `.env.production.example` und die Kommentare in `supabase/config.toml`.
 - **`APPLE_TEAM_ID` / `APPLE_BUNDLE_ID`** stehen in Vercel auf Platzhaltern.
 
 Ebenfalls offen: **Task 8**, der physische Trefferquoten-Test der NFC-Tags. Er entscheidet NFC-first gegen QR-first und braucht den Mac.
