@@ -107,15 +107,17 @@ Das Produktivprojekt wurde am 30. August zurückgesetzt; `auth.users` war damit 
 
 **Wo der Beweis stand:** die Action loggt `console.error("OTP-Versand fehlgeschlagen: …")`. Die Antwort lag seit dem ersten Versuch in den Vercel-Logs. Bei einem stillen Fehlschlag in der Anmeldung ist das die erste Adresse.
 
-### 4c. Die Produktionsdatenbank ist zehn Migrationen zurück
+### 4c. Die Produktionsdatenbank war zehn Migrationen zurück — erledigt
 
-Auf Platte `0001`–`0021`, in der Cloud `0001`–`0011`. Es fehlen `0012`–`0021`: Trainingsdaten, Tag-Schreibpolicies, Medien-Buckets und `0021_fallback_inhalte`.
+Auf Platte `0001`–`0021`, in der Cloud nur `0001`–`0011`. Es fehlten `0012`–`0021`: Trainingsdaten, Tag-Schreibpolicies, Medien-Buckets und `0021_fallback_inhalte`.
 
 Ursache: Das Projekt wurde am 30. August zurückgesetzt und neu migriert — damals endete es bei `0011`. Die vier Migrationen vom 31. August und die sechs aus dem Medien-Plan kamen danach und blieben lokal.
 
-**Das ist latent, nicht sichtbar.** `/t/<token>` antwortet heute mit 200, weil ein unbekannter Token die leere Menge liefert und die Seite korrekt *„unbekannt"* zeigt, ohne je eine Spalte zu lesen. Erst ein **echter** Tag bringt es zum Vorschein: die Cloud trägt noch die `0003`-Fassung von `resolve_tag_fallback` mit einer Rückgabespalte, die Seite erwartet die `0021`-Fassung mit fünf. Ebenso könnte das Portal dort heute kein Foto hochladen — die Buckets aus `0020` existieren nicht.
+**Das war latent, nicht sichtbar.** `/t/<token>` antwortete mit 200, weil ein unbekannter Token die leere Menge liefert und die Seite korrekt *„unbekannt"* zeigt, ohne je eine Spalte zu lesen. Erst ein **echter** Tag hätte es zum Vorschein gebracht: die Cloud trug noch die `0003`-Fassung von `resolve_tag_fallback` mit einer Rückgabespalte, die Seite erwartet die `0021`-Fassung mit fünf. Ebenso hätte das Portal dort kein Foto hochladen können — die Buckets aus `0020` fehlten.
 
-`supabase db push --dry-run` bestätigt genau diese zehn, keine Seeds, keine Rollen. Zerstörend ist nichts: `0019` tauscht einen Fremdschlüssel gegen einen mit anderer Löschregel, `0021` muss die Funktion droppen, weil sich ihr Rückgabetyp ändert.
+**Nachgezogen am 1. September:** alle zehn angewendet, `supabase migration list` meldet Gleichstand über 21 Einträge, und die Produktion antwortet danach unverändert (`/`, `/login`, `/api/aasa`, `/t/<token>` mit 200, `/api/v1/me/bootstrap` mit ungültigem JWT mit 401).
+
+**Die Lehre, die bleibt:** ein Migrationsabgleich gehört in den Smoke-Test. Ein Rückstand dieser Art meldet sich nicht von selbst — er wartet auf den ersten echten Datensatz.
 
 ### Das Ungleichgewicht, das die Reihenfolge bestimmt
 
@@ -136,7 +138,7 @@ Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Da
 - [x] **SMTP:** Supabase Pro, entschieden und gebucht 1. September (Organisation `Gymodo`)
 - [x] **Template ins Projekt gepusht**, per leerem Folge-Diff belegt
 - [x] **Echte OTP-Mail mit sechsstelligem Code angekommen** — Blocker 1 ist zu
-- [ ] **`supabase db push`** — die Produktionsdatenbank ist zehn Migrationen zurück (Abschnitt 4c)
+- [x] **`supabase db push`** — zehn Migrationen nachgezogen, lokal und Cloud stehen auf `0021` (Abschnitt 4c)
 - [ ] **Mac-Übernahme:** wann — und wird vorher NFC oder QR entschieden
 - [ ] **Kurse:** Teil von M2 oder vertagt (der größte ungeplante Brocken)
 

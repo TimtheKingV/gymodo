@@ -14,3 +14,4 @@ playwright-report/
 blob-report/
 *.tsbuildinfo
 .env.production
+.claude/settings.local.json
