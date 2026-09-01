@@ -95,9 +95,11 @@ Die Messung, die es festnagelte — jede Route, die einen Supabase-Client baut, 
 | `/`, `/t/<token>` | **ja** | **500** | 200 |
 | `/api/v1/me/bootstrap` *mit* Header | **ja** | **500** | 401 |
 
-**Die Lehre ist der Smoke-Test.** `pnpm smoke:aasa` stand im M0-Plan als ✅ und prüft ausschliesslich die AASA-Route — ausgerechnet eine der wenigen, die **keinen** Supabase-Client baut. Er meldete grün, während die halbe Anwendung 500 warf. Ein Smoke-Test, der nur die eine Route prüft, die nichts braucht, ist kein Smoke-Test.
+**Die Lehre war der Smoke-Test.** `pnpm smoke:aasa` stand im M0-Plan als ✅ und prüft ausschliesslich die AASA-Route — ausgerechnet eine der wenigen, die **keinen** Supabase-Client baut. Er meldete grün, während die halbe Anwendung 500 warf.
 
-Zweite Falle bei der Messung: Vercel liefert Fehlerseiten aus dem Edge-Cache. Nach dem Fix meldete `curl` weiter 500 (`X-Vercel-Cache: HIT`), obwohl die Seite längst lief. **Immer mit Cache-Umgehung nachmessen.**
+Zweite Falle bei der Messung: Vercel liefert Fehlerseiten aus dem Edge-Cache. Nach dem Fix meldete `curl` weiter 500 (`X-Vercel-Cache: HIT`), obwohl die Seite längst lief.
+
+**Beides ist jetzt Werkzeug statt Anekdote.** `pnpm smoke:web <domain>` prüft beide Routenklassen getrennt und benennt sie — Routen ohne Supabase-Client als Kontrollgruppe, Routen mit Client als eigentliche Probe. Fällt nur die zweite Gruppe aus, druckt er die Diagnose aus, die hier eine Stunde gekostet hat. Jede Anfrage trägt einen Cache-Buster. `pnpm smoke:migrations` vergleicht Platte gegen Projekt.
 
 ### 4b. Warum keine Mail kam, obwohl alles richtig konfiguriert war
 
@@ -117,7 +119,7 @@ Ursache: Das Projekt wurde am 30. August zurückgesetzt und neu migriert — dam
 
 **Nachgezogen am 1. September:** alle zehn angewendet, `supabase migration list` meldet Gleichstand über 21 Einträge, und die Produktion antwortet danach unverändert (`/`, `/login`, `/api/aasa`, `/t/<token>` mit 200, `/api/v1/me/bootstrap` mit ungültigem JWT mit 401).
 
-**Die Lehre, die bleibt:** ein Migrationsabgleich gehört in den Smoke-Test. Ein Rückstand dieser Art meldet sich nicht von selbst — er wartet auf den ersten echten Datensatz.
+**Die Lehre, die bleibt:** ein Rückstand dieser Art meldet sich nicht von selbst — er wartet auf den ersten echten Datensatz. Deshalb fragt ihn jetzt `pnpm smoke:migrations` ab. Er hat bei seinem ersten Lauf prompt die nächste Drift gefunden: `0022`–`0024` liegen seit dem Worktree-Merge auf Platte und sind noch nicht im Projekt.
 
 ### Das Ungleichgewicht, das die Reihenfolge bestimmt
 

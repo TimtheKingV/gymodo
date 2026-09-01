@@ -9,6 +9,8 @@
     "test:e2e": "playwright test",
     "build": "turbo run build",
     "smoke:aasa": "node scripts/smoke-aasa.mjs",
+    "smoke:web": "node scripts/smoke-web.mjs",
+    "smoke:migrations": "node scripts/smoke-migrations.mjs",
     "tags": "tsx scripts/tags.ts"
   },
   "dependencies": {
