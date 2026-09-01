@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding-top: 11px; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; color: #5C636E; }
+    .tab.on { color: #D4FF3F; }
+  </style>
+</helmet>
+
+<div class="ph">
+  <div style="height: 54px; flex: none"></div>
+
+  <div style="flex: none; height: 44px; padding: 0 16px; display: flex; align-items: center; gap: 12px">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5-7 7 7 7"/></svg>
+    <span class="eyebrow">Schritt 1 von 3 · Einweisung</span>
+  </div>
+
+  <div style="flex: none; padding: 6px 20px 0; display: flex; flex-direction: column; gap: 3px">
+    <div style="font-size: 30px; font-weight: 900; letter-spacing: -.025em; text-transform: uppercase; line-height: 1">Beinpresse</div>
+    <div style="font-size: 16px; font-weight: 600; color: #9BA3AF">Beidbeinig</div>
+  </div>
+
+  <!-- Video -->
+  <div style="flex: none; margin: 16px 20px 0; border-radius: 14px; overflow: hidden; background: #1D2026; height: 199px; position: relative; display: flex; align-items: center; justify-content: center">
+    <!-- Platzhalter fuer das Einweisungsvideo des Studios -->
+    <div style="position: absolute; inset: 0; background: linear-gradient(155deg, #23272F 0%, #14161A 68%)"></div>
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 74px; background: linear-gradient(180deg, rgba(10,11,13,0) 0%, rgba(10,11,13,.88) 100%)"></div>
+    <div style="position: relative; width: 66px; height: 66px; border-radius: 50%; background: #D4FF3F; display: flex; align-items: center; justify-content: center">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="#0A0B0D"><path d="M8.5 5.4v13.2L19 12 8.5 5.4Z"/></svg>
+    </div>
+    <div style="position: absolute; left: 14px; bottom: 12px; display: flex; align-items: center; gap: 8px">
+      <span class="num" style="font-size: 13px; font-weight: 700; background: rgba(10,11,13,.7); padding: 4px 8px; border-radius: 6px">0:38</span>
+      <span style="font-size: 12px; font-weight: 600; color: #9BA3AF">Einweisung deines Studios</span>
+    </div>
+  </div>
+
+  <div style="flex: none; padding: 16px 20px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="font-size: 15px; font-weight: 800; letter-spacing: .01em">Worauf du achten musst</div>
+    <div style="font-size: 15px; line-height: 1.5; color: #9BA3AF">Rücken vollständig an der Lehne, Knie in Verlängerung der Füße, nicht ganz durchstrecken. Die Bewegung endet, bevor das Becken abhebt.</div>
+    <div style="display: flex; align-items: center; gap: 9px; padding-top: 2px">
+      <div style="width: 26px; height: 26px; border-radius: 7px; background: #1D2026; display: flex; align-items: center; justify-content: center; flex: none">
+        <span style="font-size: 11px; font-weight: 900; color: #9BA3AF">KN</span>
+      </div>
+      <div style="font-size: 12px; color: #5C636E; line-height: 1.4">Inhalt von <span style="color: #9BA3AF; font-weight: 600">Kraftwerk Nord</span> — keine Empfehlung von gymodo.</div>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1"></div>
+
+  <div style="flex: none; padding: 0 20px 28px; display: flex; flex-direction: column; gap: 10px">
+    <div style="height: 64px; border-radius: 16px; background: #D4FF3F; color: #0A0B0D; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 9px">
+      Einstellungen erfassen
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0A0B0D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 6 6 6-6 6"/></svg>
+    </div>
+    <div style="height: 46px; border-radius: 14px; color: #9BA3AF; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center">Kenne ich schon — direkt zum Satz</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

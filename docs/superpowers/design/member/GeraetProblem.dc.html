@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .reason { background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; padding: 16px 17px; display: flex; align-items: center; gap: 13px; }
+  </style>
+</helmet>
+
+<div class="ph">
+  <!-- abgedunkelter Geraete-Screen dahinter -->
+  <div style="height: 54px; flex: none"></div>
+  <div style="flex: none; height: 44px; padding: 0 16px; display: flex; align-items: center; gap: 12px; opacity: .25">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5-7 7 7 7"/></svg>
+    <span class="eyebrow">Beinpresse · Beidbeinig</span>
+  </div>
+  <div style="flex: none; padding: 18px 20px 0; opacity: .25; display: flex; flex-direction: column; gap: 8px">
+    <div class="eyebrow">Gewicht</div>
+    <div style="display: flex; align-items: baseline; justify-content: center; gap: 7px">
+      <span class="num" style="font-size: 66px; line-height: 1">80,0</span>
+      <span style="font-size: 20px; font-weight: 700; color: #9BA3AF">kg</span>
+    </div>
+  </div>
+  <div style="flex-grow: 1"></div>
+
+  <div style="position: absolute; inset: 0; background: rgba(10,11,13,.72)"></div>
+
+  <!-- Sheet -->
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; background: #1D2026; border-top: 1px solid #2A2E36; border-radius: 22px 22px 0 0; padding: 12px 20px 26px; display: flex; flex-direction: column; gap: 16px">
+    <div style="width: 40px; height: 4px; border-radius: 2px; background: #2A2E36; align-self: center"></div>
+
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#FFB020" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5 2.8 20h18.4L12 4.5Z"/><path d="M12 10v4.2"/><path d="M12 17.3h.01"/></svg>
+        <span style="font-size: 22px; font-weight: 900; letter-spacing: -.02em; text-transform: uppercase">Was ist los?</span>
+      </div>
+      <div style="font-size: 14px; line-height: 1.5; color: #9BA3AF">Wird an diesem Satz vermerkt. Solange etwas gemeldet ist, schlägt gymodo keine Steigerung vor.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div class="reason" style="border: 1.5px solid #FFB020">
+        <div style="width: 24px; height: 24px; border-radius: 50%; background: #FFB020; display: flex; align-items: center; justify-content: center; flex: none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0A0B0D" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+        </div>
+        <span style="font-size: 17px; font-weight: 700">Schmerzen</span>
+      </div>
+      <div class="reason">
+        <div style="width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid #2A2E36; flex: none"></div>
+        <span style="font-size: 17px; font-weight: 600">Gerät passt mir nicht</span>
+      </div>
+      <div class="reason">
+        <div style="width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid #2A2E36; flex: none"></div>
+        <span style="font-size: 17px; font-weight: 600">Zu schwer</span>
+      </div>
+      <div class="reason">
+        <div style="width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid #2A2E36; flex: none"></div>
+        <span style="font-size: 17px; font-weight: 600">Etwas anderes</span>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 11px; align-items: flex-start; padding: 0 2px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2" stroke-linecap="round" style="flex: none; margin-top: 2px"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.2"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/></svg>
+      <div style="font-size: 12px; line-height: 1.5; color: #5C636E">Kein Freitextfeld — mit Absicht. Was du nicht schreiben kannst, muss auch niemand schützen, exportieren oder löschen. Sprich mit deinem Studio, wenn mehr dahintersteckt.</div>
+    </div>
+
+    <div style="height: 60px; border-radius: 16px; background: #D4FF3F; color: #0A0B0D; font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center">Melden und Satz sichern</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .step { width: 52px; height: 52px; border-radius: 12px; background: #1D2026; display: flex; align-items: center; justify-content: center; flex: none; }
+    .row { background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; padding: 10px 12px; display: flex; align-items: center; gap: 12px; }
+  </style>
+</helmet>
+
+<div class="ph">
+  <div style="height: 54px; flex: none"></div>
+
+  <div style="flex: none; height: 44px; padding: 0 16px; display: flex; align-items: center; gap: 12px">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5-7 7 7 7"/></svg>
+    <span class="eyebrow">Schritt 2 von 3 · Deine Einstellung</span>
+  </div>
+
+  <div style="flex: none; padding: 6px 20px 0; display: flex; flex-direction: column; gap: 8px">
+    <div style="font-size: 30px; font-weight: 900; letter-spacing: -.025em; text-transform: uppercase; line-height: 1">Beinpresse</div>
+    <div style="font-size: 15px; line-height: 1.5; color: #9BA3AF">Stell das Gerät jetzt so ein, wie es für dich passt. Beim nächsten Mal steht es hier — du musst nicht nachdenken.</div>
+  </div>
+
+  <div style="flex: none; padding: 22px 20px 0; display: flex; flex-direction: column; gap: 11px">
+
+    <div class="row">
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 15px; font-weight: 700">Sitzposition</div>
+        <div class="num" style="font-size: 11px; font-weight: 700; color: #5C636E">1 – 8 · Schritt 1</div>
+      </div>
+      <div class="step">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg>
+      </div>
+      <div class="num" style="font-size: 30px; width: 52px; text-align: center">4</div>
+      <div class="step">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg>
+      </div>
+    </div>
+
+    <div class="row">
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 15px; font-weight: 700">Rückenlehne</div>
+        <div class="num" style="font-size: 11px; font-weight: 700; color: #5C636E">1 – 5 · Schritt 1</div>
+      </div>
+      <div class="step">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg>
+      </div>
+      <div class="num" style="font-size: 30px; width: 52px; text-align: center">2</div>
+      <div class="step">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg>
+      </div>
+    </div>
+
+    <div class="row">
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 15px; font-weight: 700">Startwinkel</div>
+        <div class="num" style="font-size: 11px; font-weight: 700; color: #5C636E">0 – 45° · Schritt 5</div>
+      </div>
+      <div class="step">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg>
+      </div>
+      <div style="width: 52px; text-align: center; display: flex; align-items: baseline; justify-content: center; gap: 1px"><span class="num" style="font-size: 30px">30</span><span style="font-size: 15px; font-weight: 700; color: #9BA3AF">°</span></div>
+      <div class="step" style="background: #14161A; border: 1px solid #2A2E36">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg>
+      </div>
+    </div>
+    <div style="font-size: 12px; color: #5C636E; padding-left: 2px; margin-top: -3px">Maximum des Geräts erreicht.</div>
+
+  </div>
+
+  <!-- Trainerbegleitung -->
+  <div style="flex: none; margin: 18px 20px 0; background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; padding: 14px 15px; display: flex; align-items: center; gap: 13px">
+    <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+      <div style="font-size: 15px; font-weight: 700">Ein Trainer war dabei</div>
+      <div style="font-size: 12px; color: #5C636E; line-height: 1.4">Wird an der Einstellung vermerkt. Ändern darfst du sie trotzdem jederzeit selbst.</div>
+    </div>
+    <div style="width: 52px; height: 32px; border-radius: 16px; background: #D4FF3F; flex: none; display: flex; align-items: center; justify-content: flex-end; padding: 3px; box-sizing: border-box">
+      <div style="width: 26px; height: 26px; border-radius: 50%; background: #0A0B0D"></div>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1"></div>
+
+  <div style="flex: none; padding: 0 20px 22px; display: flex; flex-direction: column; gap: 12px">
+    <div style="height: 64px; border-radius: 16px; background: #D4FF3F; color: #0A0B0D; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center">Speichern und weiter</div>
+    <div style="font-size: 12px; color: #5C636E; text-align: center; line-height: 1.45">Deine vorherigen Einstellungen bleiben erhalten — jede Änderung legt eine neue Zeile an.</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

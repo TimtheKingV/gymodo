@@ -1,0 +1,141 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    /* Rad ohne Rahmen: die Unterstreichung bleibt die Marke, die Nachbarn ziehen vorbei */
+    .rad { position: relative; height: 244px; overflow: hidden; }
+    .far { height: 34px; display: flex; align-items: center; }
+    .near { height: 38px; display: flex; align-items: center; }
+    .fT { position: absolute; left: 0; right: 0; top: 0; height: 66px; background: linear-gradient(180deg, #0A0B0D 12%, rgba(10,11,13,0) 100%); pointer-events: none; }
+    .fB { position: absolute; left: 0; right: 0; bottom: 0; height: 66px; background: linear-gradient(0deg, #0A0B0D 12%, rgba(10,11,13,0) 100%); pointer-events: none; }
+    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
+    .tab.on { color: #D4FF3F; }
+  </style>
+</helmet>
+
+<div class="ph">
+  <div style="height: 54px; flex: none"></div>
+
+  <div style="flex: none; height: 44px; padding: 0 16px; display: flex; align-items: center; gap: 12px">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5-7 7 7 7"/></svg>
+    <span class="eyebrow">Beinpresse · Beidbeinig</span>
+  </div>
+
+  <!-- Die Einstellung schrumpft auf eine Zeile, damit das Rad Platz hat -->
+  <div style="flex: none; padding: 2px 20px 0; display: flex; align-items: baseline; gap: 10px">
+    <span class="num" style="font-size: 13px; font-weight: 800; color: #5C636E">Sitz 4 · Lehne 2 · 30°</span>
+    <span style="font-size: 12px; font-weight: 700; color: #5C636E; margin-left: auto">ändern</span>
+  </div>
+
+  <div style="flex: none; padding: 18px 20px 0; display: flex; align-items: baseline; justify-content: space-between">
+    <span class="eyebrow" style="color: #D4FF3F">Satz 1</span>
+    <span style="font-size: 12px; font-weight: 700; color: #5C636E">scrollen, dann sichern</span>
+  </div>
+
+  <!-- Beide Räder, ohne Kasten, direkt auf der Fläche -->
+  <div style="flex: none; padding: 4px 20px 0; display: flex; justify-content: space-between; gap: 16px">
+
+    <!-- Gewicht: rastet auf 2,5 kg -->
+    <div class="rad" style="flex-grow: 1">
+      <div style="display: flex; flex-direction: column">
+        <div class="far"><span class="num" style="font-size: 26px; color: #2A2E36">75,0</span></div>
+        <div class="near"><span class="num" style="font-size: 30px; color: #5C636E">77,5</span></div>
+        <div style="height: 100px; display: flex; flex-direction: column; justify-content: center; gap: 7px">
+          <div style="display: flex; align-items: baseline; gap: 7px">
+            <span class="num" style="font-size: 64px; line-height: 1">80,0</span>
+            <span style="font-size: 19px; font-weight: 700; color: #9BA3AF">kg</span>
+          </div>
+          <div style="height: 4px; background: #D4FF3F; border-radius: 2px"></div>
+        </div>
+        <div class="near"><span class="num" style="font-size: 30px; color: #5C636E">82,5</span></div>
+        <div class="far"><span class="num" style="font-size: 26px; color: #2A2E36">85,0</span></div>
+      </div>
+      <div class="fT"></div>
+      <div class="fB"></div>
+    </div>
+
+    <!-- Wiederholungen: rasten auf 1 -->
+    <div class="rad" style="flex: none; min-width: 96px">
+      <div style="display: flex; flex-direction: column; align-items: flex-end">
+        <div class="far"><span class="num" style="font-size: 26px; color: #2A2E36">8</span></div>
+        <div class="near"><span class="num" style="font-size: 30px; color: #5C636E">9</span></div>
+        <div style="height: 100px; display: flex; flex-direction: column; justify-content: center; gap: 7px; align-items: flex-end; align-self: stretch">
+          <div style="display: flex; align-items: baseline; gap: 6px">
+            <span class="num" style="font-size: 50px; line-height: 1">10</span>
+            <span style="font-size: 16px; font-weight: 700; color: #9BA3AF">Wdh.</span>
+          </div>
+          <div style="height: 4px; background: #D4FF3F; border-radius: 2px; align-self: stretch"></div>
+        </div>
+        <div class="near"><span class="num" style="font-size: 30px; color: #5C636E">11</span></div>
+        <div class="far"><span class="num" style="font-size: 26px; color: #2A2E36">12</span></div>
+      </div>
+      <div class="fT"></div>
+      <div class="fB"></div>
+    </div>
+
+  </div>
+
+  <div style="flex: none; padding: 8px 20px 0; display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+    <span class="num" style="font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #5C636E">Schritt 2,5 kg · 5,0 – 150,0</span>
+    <span class="num" style="font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #5C636E">Ziel 8 – 12</span>
+  </div>
+
+  <!-- Reserve, optional -->
+  <div style="flex: none; padding: 20px 20px 0; display: flex; flex-direction: column; gap: 9px">
+    <div style="display: flex; align-items: baseline; gap: 8px">
+      <span class="eyebrow">Reserve</span>
+      <span style="font-size: 11px; font-weight: 600; color: #5C636E">optional</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+      <div class="num" style="height: 44px; border-radius: 22px; border: 1px solid #2A2E36; color: #9BA3AF; font-size: 15px; display: flex; align-items: center; justify-content: center">0</div>
+      <div class="num" style="height: 44px; border-radius: 22px; border: 1px solid #2A2E36; color: #9BA3AF; font-size: 15px; display: flex; align-items: center; justify-content: center">1</div>
+      <div class="num" style="height: 44px; border-radius: 22px; background: #D4FF3F; color: #0A0B0D; font-size: 15px; display: flex; align-items: center; justify-content: center">2</div>
+      <div class="num" style="height: 44px; border-radius: 22px; border: 1px solid #2A2E36; color: #9BA3AF; font-size: 15px; display: flex; align-items: center; justify-content: center">3</div>
+      <div class="num" style="height: 44px; border-radius: 22px; border: 1px solid #2A2E36; color: #9BA3AF; font-size: 15px; display: flex; align-items: center; justify-content: center">4+</div>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1"></div>
+
+  <div style="flex: none; padding: 0 20px 14px">
+    <div style="height: 64px; border-radius: 16px; background: #D4FF3F; color: #0A0B0D; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 9px">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#0A0B0D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+      Satz 1 sichern
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+      Home
+    </div>
+    <div class="tab on">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9v6M7.5 6.5v11M16.5 6.5v11M20 9v6M7.5 12h9"/></svg>
+      Training
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.2" width="17" height="15.3" rx="2.6"/><path d="M8 3v4M16 3v4M3.5 10.2h17"/></svg>
+      Kurse
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.5 3.3-5.8 7.2-5.8s7.2 2.3 7.2 5.8"/></svg>
+      Profil
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

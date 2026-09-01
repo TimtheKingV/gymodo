@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .opt { background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 13px; }
+  </style>
+</helmet>
+
+<div class="ph">
+  <!-- abgedunkelter Geraete-Screen dahinter -->
+  <div style="height: 54px; flex: none"></div>
+  <div style="flex: none; height: 44px; padding: 0 16px; display: flex; align-items: center; gap: 12px; opacity: .22">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5-7 7 7 7"/></svg>
+    <span class="eyebrow">Kabelzug · Latzug breit</span>
+  </div>
+  <div style="flex: none; margin: 10px 20px 0; opacity: .22; background: #14161A; border: 1px solid #2A2E36; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 13px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between">
+      <span class="eyebrow">Pause · 90 s</span>
+      <span class="num" style="font-size: 42px; line-height: 1">00:48</span>
+    </div>
+    <div style="height: 7px; border-radius: 4px; background: #2A2E36; overflow: hidden"><div style="width: 53%; height: 100%; background: #D4FF3F"></div></div>
+  </div>
+  <div style="flex-grow: 1"></div>
+
+  <div style="position: absolute; inset: 0; background: rgba(10,11,13,.74)"></div>
+
+  <!-- Sheet -->
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; background: #1D2026; border-top: 1px solid #2A2E36; border-radius: 22px 22px 0 0; padding: 12px 20px 26px; display: flex; flex-direction: column; gap: 16px">
+    <div style="width: 40px; height: 4px; border-radius: 2px; background: #2A2E36; align-self: center"></div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 22px; font-weight: 900; letter-spacing: -.02em; text-transform: uppercase">Übung wechseln</span>
+      <span style="font-size: 14px; color: #9BA3AF">Kabelzug · Gerät 12</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+
+      <div class="opt" style="border: 1.5px solid #D4FF3F">
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+          <div style="font-size: 17px; font-weight: 800; letter-spacing: -.01em">Latzug · Breiter Griff</div>
+          <div style="display: flex; align-items: center; gap: 7px">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #D4FF3F"></span>
+            <span class="num" style="font-size: 12px; font-weight: 700; color: #D4FF3F">läuft · 2 Sätze · 45,0 kg</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="opt">
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+          <div style="font-size: 17px; font-weight: 700; letter-spacing: -.01em">Latzug · Enger Griff</div>
+          <div class="num" style="font-size: 12px; font-weight: 700; color: #5C636E">Noch nie trainiert · Ziel 8 – 12 Wdh.</div>
+        </div>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+      </div>
+
+      <div class="opt">
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+          <div style="font-size: 17px; font-weight: 700; letter-spacing: -.01em">Rudern sitzend</div>
+          <div class="num" style="font-size: 12px; font-weight: 700; color: #9BA3AF">37,5 kg · zuletzt vor 8 Tagen</div>
+        </div>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+      </div>
+
+      <div class="opt">
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+          <div style="font-size: 17px; font-weight: 700; letter-spacing: -.01em">Trizepsdrücken am Seil</div>
+          <div class="num" style="font-size: 12px; font-weight: 700; color: #5C636E">Noch nie trainiert · Ziel 10 – 15 Wdh.</div>
+        </div>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+      </div>
+
+    </div>
+
+    <div style="display: flex; gap: 11px; align-items: flex-start; padding: 0 2px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2" stroke-linecap="round" style="flex: none; margin-top: 2px"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.6h.01"/></svg>
+      <div style="font-size: 12px; line-height: 1.5; color: #5C636E">Ein Wechsel öffnet einen neuen Block im Training. Deine zwei Sätze Latzug breit bleiben erhalten — du kannst jederzeit zurück.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

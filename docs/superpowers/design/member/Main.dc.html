@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
+    .tab.on { color: #D4FF3F; }
+  </style>
+</helmet>
+
+<div class="ph">
+  <div style="height: 54px; flex: none"></div>
+
+  <!-- Kopfzeile -->
+  <div style="flex: none; height: 44px; padding: 0 16px; display: flex; align-items: center; gap: 12px">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5-7 7 7 7"/></svg>
+    <span class="eyebrow">Gerät 07 · Kraftbereich</span>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 6px; color: #D4FF3F">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7.5 8.5a5 5 0 0 1 0 7"/><path d="M11.5 5.5a10 10 0 0 1 0 13"/><path d="M15.5 2.5a15 15 0 0 1 0 19"/></svg>
+      <span style="font-size: 11px; font-weight: 800; letter-spacing: .06em">ERKANNT</span>
+    </div>
+  </div>
+
+  <!-- Gerät + Übung -->
+  <div style="flex: none; padding: 4px 20px 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px">
+    <div style="display: flex; flex-direction: column; gap: 3px">
+      <div style="font-size: 30px; font-weight: 900; letter-spacing: -.025em; text-transform: uppercase; line-height: 1">Beinpresse</div>
+      <div style="font-size: 16px; font-weight: 600; color: #9BA3AF">Beidbeinig</div>
+    </div>
+    <span style="font-size: 13px; font-weight: 700; color: #D4FF3F; flex: none; padding-bottom: 3px">andere Übung</span>
+  </div>
+
+  <div style="flex: none; padding: 14px 20px 0; display: flex; flex-direction: column; gap: 10px">
+
+    <!-- Deine Einstellung -->
+    <div style="background: #14161A; border: 1px solid #2A2E36; border-radius: 12px; padding: 11px 15px; display: flex; align-items: center; gap: 12px">
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; flex-grow: 1">
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <div class="eyebrow" style="font-size: 10px">Sitz</div>
+          <div class="num" style="font-size: 19px">4</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <div class="eyebrow" style="font-size: 10px">Lehne</div>
+          <div class="num" style="font-size: 19px">2</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <div class="eyebrow" style="font-size: 10px">Startwinkel</div>
+          <div class="num" style="font-size: 19px">30°</div>
+        </div>
+      </div>
+      <div style="font-size: 13px; font-weight: 700; color: #D4FF3F; flex: none">ändern</div>
+    </div>
+
+    <!-- Einweisung: laedt noch (Skelett aus dem Prefetch-Render) -->
+    <div style="background: #14161A; border: 1px solid #2A2E36; border-radius: 12px; padding: 9px 13px; display: flex; align-items: center; gap: 12px">
+      <div style="width: 50px; height: 34px; border-radius: 7px; background: #1D2026; flex: none"></div>
+      <div style="display: flex; flex-direction: column; gap: 6px; flex-grow: 1">
+        <div style="height: 9px; width: 62%; border-radius: 5px; background: #1D2026"></div>
+        <div style="height: 8px; width: 38%; border-radius: 5px; background: #1D2026"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Die beiden Werte: nackt auf der Fläche, ein Tap öffnet das Rad -->
+  <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 20px; gap: 14px">
+
+    <div style="display: flex; align-items: baseline; justify-content: space-between">
+      <span class="eyebrow">Satz 1</span>
+      <span style="font-size: 12px; font-weight: 700; color: #5C636E">antippen und scrollen</span>
+    </div>
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px">
+
+      <div style="display: flex; flex-direction: column; gap: 7px">
+        <div style="display: flex; align-items: baseline; gap: 7px">
+          <span class="num" style="font-size: 64px; line-height: 1">80,0</span>
+          <span style="font-size: 19px; font-weight: 700; color: #9BA3AF">kg</span>
+        </div>
+        <div style="height: 4px; background: #D4FF3F; border-radius: 2px"></div>
+        <div class="num" style="font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #D4FF3F">Vorschlag · +2,5</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 7px; align-items: flex-end">
+        <div style="display: flex; align-items: baseline; gap: 6px">
+          <span class="num" style="font-size: 44px; line-height: 1; color: #F2F4F7">10</span>
+          <span style="font-size: 15px; font-weight: 700; color: #9BA3AF">Wdh.</span>
+        </div>
+        <div style="height: 3px; background: #2A2E36; border-radius: 2px; align-self: stretch"></div>
+        <div class="num" style="font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #5C636E">Ziel 8 – 12</div>
+      </div>
+
+    </div>
+
+    <div class="num" style="font-size: 12px; font-weight: 700; color: #5C636E">Zuletzt 77,5 kg × 11 · vor 7 Tagen</div>
+  </div>
+
+  <!-- Aktionen -->
+  <div style="flex: none; padding: 0 20px 14px; display: flex; flex-direction: column; gap: 10px">
+    <div style="height: 64px; border-radius: 16px; background: #D4FF3F; color: #0A0B0D; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 9px">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#0A0B0D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+      Satz 1 sichern
+    </div>
+    <div style="height: 46px; border-radius: 14px; border: 1px solid #FFB020; color: #FFB020; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFB020" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5 2.8 20h18.4L12 4.5Z"/><path d="M12 10v4.2"/><path d="M12 17.3h.01"/></svg>
+      Problem melden
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+      Home
+    </div>
+    <div class="tab on">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9v6M7.5 6.5v11M16.5 6.5v11M20 9v6M7.5 12h9"/></svg>
+      Training
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.2" width="17" height="15.3" rx="2.6"/><path d="M8 3v4M16 3v4M3.5 10.2h17"/></svg>
+      Kurse
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.5 3.3-5.8 7.2-5.8s7.2 2.3 7.2 5.8"/></svg>
+      Profil
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

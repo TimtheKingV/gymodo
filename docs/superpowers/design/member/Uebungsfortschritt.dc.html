@@ -1,0 +1,163 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .chip { height: 34px; border-radius: 17px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+    .card { background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; overflow: hidden; }
+    .sep { height: 1px; background: #2A2E36; }
+    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
+    .tab.on { color: #D4FF3F; }
+  </style>
+</helmet>
+
+<div class="ph">
+  <div style="height: 54px; flex: none"></div>
+
+  <div style="flex: none; height: 44px; padding: 0 16px; display: flex; align-items: center; gap: 12px">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5-7 7 7 7"/></svg>
+    <span class="eyebrow">Home</span>
+  </div>
+
+  <div style="flex: none; padding: 6px 20px 0; display: flex; flex-direction: column; gap: 3px">
+    <div style="font-size: 28px; font-weight: 900; letter-spacing: -.025em; text-transform: uppercase; line-height: 1.05">Beinpresse</div>
+    <div style="font-size: 16px; font-weight: 600; color: #9BA3AF">Beidbeinig</div>
+  </div>
+
+  <!-- Aktueller Stand -->
+  <div style="flex: none; padding: 20px 20px 0; display: flex; align-items: flex-end; gap: 16px">
+    <div style="display: flex; align-items: baseline; gap: 6px">
+      <span class="num" style="font-size: 52px; line-height: 1">80,0</span>
+      <span style="font-size: 18px; font-weight: 700; color: #9BA3AF">kg</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px; padding-bottom: 6px">
+      <span class="num" style="font-size: 16px; color: #D4FF3F">+15,0 kg</span>
+      <span class="eyebrow" style="font-size: 10px">seit 9. Juli</span>
+    </div>
+  </div>
+
+  <!-- Zeitraum -->
+  <div style="flex: none; padding: 18px 20px 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+    <div class="chip" style="background: #D4FF3F; color: #0A0B0D">3 Monate</div>
+    <div class="chip" style="border: 1px solid #2A2E36; color: #9BA3AF">6 Monate</div>
+    <div class="chip" style="border: 1px solid #2A2E36; color: #9BA3AF">Alles</div>
+  </div>
+
+  <!-- Verlauf -->
+  <div style="flex: none; margin: 18px 20px 0; background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; padding: 14px 0 8px">
+    <svg width="353" height="196" viewBox="0 0 353 196" fill="none" style="display: block">
+      <defs>
+        <linearGradient id="vg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#D4FF3F" stop-opacity=".18"/>
+          <stop offset="1" stop-color="#D4FF3F" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Gitter, zurueckhaltend -->
+      <line x1="34" y1="38"  x2="348" y2="38"  stroke="#2A2E36" stroke-width="1"/>
+      <line x1="34" y1="94"  x2="348" y2="94"  stroke="#2A2E36" stroke-width="1"/>
+      <line x1="34" y1="150" x2="348" y2="150" stroke="#2A2E36" stroke-width="1"/>
+      <text x="28" y="42"  fill="#5C636E" font-size="11" font-weight="700" text-anchor="end" font-family="Archivo, system-ui, sans-serif">80</text>
+      <text x="28" y="98"  fill="#5C636E" font-size="11" font-weight="700" text-anchor="end" font-family="Archivo, system-ui, sans-serif">70</text>
+      <text x="28" y="154" fill="#5C636E" font-size="11" font-weight="700" text-anchor="end" font-family="Archivo, system-ui, sans-serif">60</text>
+
+      <!-- Flaeche -->
+      <path d="M40 122 L82.9 108 L125.7 94 L168.6 94 L211.4 80 L254.3 66 L297.1 52 L340 38 L340 150 L40 150 Z" fill="url(#vg)"/>
+
+      <!-- Linie -->
+      <path d="M40 122 L82.9 108 L125.7 94 L168.6 94 L211.4 80 L254.3 66 L297.1 52 L340 38" stroke="#D4FF3F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+      <!-- Messpunkte, je ein bestaetigter Satz-Tag -->
+      <circle cx="40"    cy="122" r="4" fill="#14161A" stroke="#D4FF3F" stroke-width="2"/>
+      <circle cx="82.9"  cy="108" r="4" fill="#14161A" stroke="#D4FF3F" stroke-width="2"/>
+      <circle cx="125.7" cy="94"  r="4" fill="#14161A" stroke="#D4FF3F" stroke-width="2"/>
+      <circle cx="168.6" cy="94"  r="4" fill="#14161A" stroke="#D4FF3F" stroke-width="2"/>
+      <circle cx="211.4" cy="80"  r="4" fill="#14161A" stroke="#D4FF3F" stroke-width="2"/>
+      <circle cx="254.3" cy="66"  r="4" fill="#14161A" stroke="#D4FF3F" stroke-width="2"/>
+      <circle cx="297.1" cy="52"  r="4" fill="#14161A" stroke="#D4FF3F" stroke-width="2"/>
+
+      <!-- ausgewaehlt: der letzte Wert -->
+      <line x1="340" y1="38" x2="340" y2="150" stroke="#2A2E36" stroke-width="1" stroke-dasharray="3 3"/>
+      <circle cx="340" cy="38" r="6.5" fill="#D4FF3F" stroke="#14161A" stroke-width="2"/>
+
+      <!-- direkte Beschriftung: nur Anfang und Ende -->
+      <text x="40" y="140" fill="#9BA3AF" font-size="12" font-weight="800" text-anchor="start" font-family="Archivo, system-ui, sans-serif">65,0</text>
+      <text x="340" y="26" fill="#F2F4F7" font-size="13" font-weight="800" text-anchor="end" font-family="Archivo, system-ui, sans-serif">80,0 kg</text>
+
+      <!-- Zeitachse -->
+      <text x="40"  y="176" fill="#5C636E" font-size="11" font-weight="700" text-anchor="start"  font-family="Archivo, system-ui, sans-serif">9. Jul</text>
+      <text x="211.4" y="176" fill="#5C636E" font-size="11" font-weight="700" text-anchor="middle" font-family="Archivo, system-ui, sans-serif">6. Aug</text>
+      <text x="340" y="176" fill="#5C636E" font-size="11" font-weight="700" text-anchor="end"    font-family="Archivo, system-ui, sans-serif">27. Aug</text>
+      <text x="34"  y="192" fill="#5C636E" font-size="10" font-weight="600" text-anchor="start"  font-family="Archivo, system-ui, sans-serif">Schwerster bestätigter Satz je Trainingstag · kg</text>
+    </svg>
+  </div>
+
+  <!-- Die Rohwerte, damit die Kurve nachprüfbar bleibt -->
+  <div style="flex: none; padding: 16px 20px 0; display: flex; flex-direction: column; gap: 10px">
+    <div class="eyebrow">Zuletzt</div>
+    <div class="card">
+      <div style="padding: 11px 16px; display: flex; align-items: center; gap: 12px">
+        <span class="num" style="font-size: 12px; font-weight: 700; color: #5C636E; width: 62px">27. Aug</span>
+        <div style="flex-grow: 1; display: flex; align-items: baseline; gap: 4px">
+          <span class="num" style="font-size: 16px">80,0</span><span style="font-size: 11px; font-weight: 700; color: #9BA3AF">kg</span>
+          <span class="num" style="font-size: 16px; margin-left: 5px">× 10</span>
+        </div>
+        <span class="num" style="font-size: 12px; font-weight: 800; color: #D4FF3F">+2,5</span>
+      </div>
+      <div class="sep"></div>
+      <div style="padding: 11px 16px; display: flex; align-items: center; gap: 12px">
+        <span class="num" style="font-size: 12px; font-weight: 700; color: #5C636E; width: 62px">20. Aug</span>
+        <div style="flex-grow: 1; display: flex; align-items: baseline; gap: 4px">
+          <span class="num" style="font-size: 16px">77,5</span><span style="font-size: 11px; font-weight: 700; color: #9BA3AF">kg</span>
+          <span class="num" style="font-size: 16px; margin-left: 5px">× 11</span>
+        </div>
+        <span class="num" style="font-size: 12px; font-weight: 800; color: #D4FF3F">+2,5</span>
+      </div>
+      <div class="sep"></div>
+      <div style="padding: 11px 16px; display: flex; align-items: center; gap: 12px">
+        <span class="num" style="font-size: 12px; font-weight: 700; color: #5C636E; width: 62px">13. Aug</span>
+        <div style="flex-grow: 1; display: flex; align-items: baseline; gap: 4px">
+          <span class="num" style="font-size: 16px">75,0</span><span style="font-size: 11px; font-weight: 700; color: #9BA3AF">kg</span>
+          <span class="num" style="font-size: 16px; margin-left: 5px">× 12</span>
+        </div>
+        <span class="num" style="font-size: 12px; font-weight: 800; color: #D4FF3F">+2,5</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1"></div>
+
+  <div class="tabs">
+    <div class="tab on">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+      Home
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9v6M7.5 6.5v11M16.5 6.5v11M20 9v6M7.5 12h9"/></svg>
+      Training
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.2" width="17" height="15.3" rx="2.6"/><path d="M8 3v4M16 3v4M3.5 10.2h17"/></svg>
+      Kurse
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.5 3.3-5.8 7.2-5.8s7.2 2.3 7.2 5.8"/></svg>
+      Profil
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
