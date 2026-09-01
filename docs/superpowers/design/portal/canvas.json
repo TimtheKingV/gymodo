@@ -5,30 +5,31 @@
     { "id": "telefon", "name": "Telefon" }
   ],
   "artboards": [
-    { "file": "Main.dc.html", "page": "portal", "title": "Überblick", "x": 0, "y": 0, "w": 1440, "h": 1000 },
+    { "file": "Main.dc.html", "page": "portal", "title": "Überblick", "x": 0, "y": 0, "w": 1440, "h": 1320 },
     { "file": "Geraete.dc.html", "page": "portal", "title": "Geräte", "x": 1560, "y": 0, "w": 1440, "h": 900 },
     { "file": "Modell.dc.html", "page": "portal", "title": "Modell — Einzelne Geräte", "x": 3120, "y": 0, "w": 1440, "h": 780 },
-    { "file": "Tags.dc.html", "page": "portal", "title": "Tags", "x": 0, "y": 1120, "w": 1440, "h": 940 },
-    { "file": "LeuteMitglieder.dc.html", "page": "portal", "title": "Leute — Mitglieder", "x": 1560, "y": 1120, "w": 1440, "h": 760 },
-    { "file": "LeuteMitarbeiter.dc.html", "page": "portal", "title": "Leute — Mitarbeiter", "x": 3120, "y": 1120, "w": 1440, "h": 700 },
+    { "file": "Tags.dc.html", "page": "portal", "title": "Tags", "x": 0, "y": 1440, "w": 1440, "h": 940 },
+    { "file": "LeuteMitglieder.dc.html", "page": "portal", "title": "Leute — Mitglieder", "x": 1560, "y": 1440, "w": 1440, "h": 840 },
+    { "file": "LeuteMitarbeiter.dc.html", "page": "portal", "title": "Leute — Mitarbeiter", "x": 3120, "y": 1440, "w": 1440, "h": 900 },
 
-    { "file": "EinstellungenStudio.dc.html", "page": "portal", "title": "Einstellungen — Studio", "x": 0, "y": 2180, "w": 1440, "h": 1180 },
-    { "file": "EinstellungenKonto.dc.html", "page": "portal", "title": "Einstellungen — Konto", "x": 1560, "y": 2180, "w": 1440, "h": 920 },
+    { "file": "EinstellungenStudio.dc.html", "page": "portal", "title": "Einstellungen — Studio", "x": 0, "y": 2500, "w": 1440, "h": 1300 },
+    { "file": "EinstellungenKonto.dc.html", "page": "portal", "title": "Einstellungen — Konto", "x": 1560, "y": 2500, "w": 1440, "h": 1080 },
+    { "file": "Zustaende.dc.html", "page": "portal", "title": "Zustände", "x": 3120, "y": 2500, "w": 1440, "h": 760 },
 
-    { "file": "Kurse.dc.html", "page": "portal", "title": "Kurse — Woche", "x": 0, "y": 3480, "w": 1440, "h": 1780 },
-    { "file": "Kursvorlagen.dc.html", "page": "portal", "title": "Kursvorlagen", "x": 1560, "y": 3480, "w": 1440, "h": 820 },
-    { "file": "Kursvorlage.dc.html", "page": "portal", "title": "Kursvorlage — Stammdaten", "x": 3120, "y": 3480, "w": 1440, "h": 1420 },
-    { "file": "TerminAnlegen.dc.html", "page": "portal", "title": "Termin anlegen", "x": 4680, "y": 3480, "w": 1440, "h": 1680 },
-    { "file": "Termin.dc.html", "page": "portal", "title": "Termin — Teilnehmer", "x": 6240, "y": 3480, "w": 1440, "h": 2020 },
+    { "file": "Kurse.dc.html", "page": "portal", "title": "Kurse — Woche", "x": 0, "y": 3920, "w": 1440, "h": 1780 },
+    { "file": "Kursvorlagen.dc.html", "page": "portal", "title": "Kursvorlagen", "x": 1560, "y": 3920, "w": 1440, "h": 820 },
+    { "file": "Kursvorlage.dc.html", "page": "portal", "title": "Kursvorlage — Stammdaten", "x": 3120, "y": 3920, "w": 1440, "h": 1420 },
+    { "file": "TerminAnlegen.dc.html", "page": "portal", "title": "Termin anlegen", "x": 4680, "y": 3920, "w": 1440, "h": 1680 },
+    { "file": "Termin.dc.html", "page": "portal", "title": "Termin — Teilnehmer", "x": 6240, "y": 3920, "w": 1440, "h": 2020 },
 
-    { "file": "Start.dc.html", "page": "einstieg", "title": "Wurzelseite", "x": 0, "y": 0, "w": 1440, "h": 900 },
+    { "file": "Start.dc.html", "page": "einstieg", "title": "Wurzelseite", "x": 0, "y": 0, "w": 1440, "h": 960 },
     { "file": "Anmelden.dc.html", "page": "einstieg", "title": "Anmelden", "x": 1560, "y": 0, "w": 1440, "h": 900 },
     { "file": "PasswortVergessen.dc.html", "page": "einstieg", "title": "Passwort vergessen", "x": 3120, "y": 0, "w": 1440, "h": 900 },
     { "file": "PasswortNeu.dc.html", "page": "einstieg", "title": "Neues Passwort", "x": 4680, "y": 0, "w": 1440, "h": 900 },
 
-    { "file": "Registrieren.dc.html", "page": "einstieg", "title": "Registrieren", "x": 0, "y": 1020, "w": 1440, "h": 900 },
-    { "file": "Verifizieren.dc.html", "page": "einstieg", "title": "Verifizieren", "x": 1560, "y": 1020, "w": 1440, "h": 900 },
-    { "file": "KeinStudio.dc.html", "page": "einstieg", "title": "Kein Studio", "x": 3120, "y": 1020, "w": 1440, "h": 900 },
+    { "file": "Registrieren.dc.html", "page": "einstieg", "title": "Registrieren", "x": 0, "y": 1080, "w": 1440, "h": 900 },
+    { "file": "Verifizieren.dc.html", "page": "einstieg", "title": "Verifizieren", "x": 1560, "y": 1080, "w": 1440, "h": 900 },
+    { "file": "KeinStudio.dc.html", "page": "einstieg", "title": "Kein Studio", "x": 3120, "y": 1080, "w": 1440, "h": 900 },
 
     { "file": "Telefon.dc.html", "page": "telefon", "title": "Videoupload am Telefon", "x": 0, "y": 0, "w": 390, "h": 1240 }
   ],
@@ -39,7 +40,7 @@
       "x": 0,
       "y": -230,
       "w": 440,
-      "text": "Die Rail ist jetzt feste Navigation.\n\nHeute listet sie jedes Gerätemodell einzeln. Bei drei Modellen geht das, bei fünfzig ist es unbrauchbar. Objekte leben auf Listenseiten; die Rail zeigt nur die Bereiche — mit Zahlen, die den Blick lenken."
+      "text": "Die Rail ist jetzt feste Navigation.\n\nSie listete früher jedes Gerätemodell einzeln — bei fünfzig Geräten unbrauchbar. Objekte leben jetzt auf Listenseiten; die Rail zeigt sechs feste Bereiche, mit Zahlen, die den Blick lenken."
     },
     {
       "id": "note-akzent",
@@ -47,7 +48,7 @@
       "x": 500,
       "y": -230,
       "w": 440,
-      "text": "Eine Akzentfläche je Bildschirm.\n\nHeute hat die Modellseite fünf. Der Modell-Editor bekommt deshalb Reiter: dann ist immer nur ein Formular sichtbar und die Regel des Designsystems hält wörtlich. Auf der Geräteseite gehört der Akzent dem, was ein Gerät erreichbar macht."
+      "text": "Eine Akzentfläche je Bildschirm.\n\nDie Modellseite zeigte früher fünf Akzentflächen gleichzeitig, eine je Formular. Reiter lösen das: immer nur ein Formular sichtbar, die Regel des Designsystems hält jetzt wörtlich. Auf der Geräteseite — der zusammengelegten Liste der Modelle — gehört der Akzent dem Anlegen: Modell anlegen im Kopf der Liste."
     },
     {
       "id": "note-daten",
@@ -55,7 +56,7 @@
       "x": 1000,
       "y": -230,
       "w": 440,
-      "text": "Die Auswertung zählt zusammen, sie schaut nicht hinein.\n\nDas Portal sieht Mitgliedschaften, Nutzungssummen und gemeldete Probleme je Gerät. Es sieht keine Sätze, Gewichte oder Verläufe einzelner Mitglieder — auch der Inhaber nicht."
+      "text": "Die Auswertung zählt zusammen, sie schaut nicht in die Trainingsdaten.\n\nDas Portal sieht Mitgliedschaften und wer zu einem Kurstermin angemeldet ist — beides mit Namen. Es sieht keine Sätze, Gewichte oder Verläufe einzelner Mitglieder, auch nicht des Inhabers: nur studioweite Summen, nie eine Zuordnung auf eine Person."
     },
     {
       "id": "note-einstieg",

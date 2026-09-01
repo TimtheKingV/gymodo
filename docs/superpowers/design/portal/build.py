@@ -99,7 +99,7 @@ def rail(active):
         '<div style="font-size: 12px; color: #9ba3af; margin-top: 4px;">Trainerportal</div></div>'
         + gruppe('Studio', [
             nav_item('Überblick', None, active == 'ueberblick'),
-            nav_item('Kurse', '9 diese Woche', active == 'kurse'),
+            nav_item('Kurse', '5 diese Woche', active == 'kurse'),
         ])
         + gruppe('Katalog', [
             nav_item('Geräte', '16 · 14 erreichbar', active == 'geraete'),

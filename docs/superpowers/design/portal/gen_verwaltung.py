@@ -35,7 +35,7 @@ mitglieder += ('<p style="color: #5c636e; font-size: 13px; line-height: 1.45; ma
                'max-width: 70ch;">Trainingsdaten eines Mitglieds sieht nur das Mitglied selbst. Das '
                'Portal kann eine Mitgliedschaft anlegen und beenden — es kann keine Sätze, Gewichte '
                'oder Verläufe einsehen.</p>')
-schreibe('LeuteMitglieder.dc.html', portal('leute', 760, mitglieder))
+schreibe('LeuteMitglieder.dc.html', portal('leute', 840, mitglieder))
 
 
 # ---------------------------------------------------------------- Mitarbeiter
@@ -75,7 +75,7 @@ mitarbeiter += ('<div style="padding: 20px; display: flex; flex-direction: colum
                 'Studio-Code macht niemanden zum Trainer.</p></div>'
                 % (LABEL, FIELD, svg('chevron-down', 18, '#5c636e'), PRIMARY))
 mitarbeiter += '</section>'
-schreibe('LeuteMitarbeiter.dc.html', portal('leute', 700, mitarbeiter))
+schreibe('LeuteMitarbeiter.dc.html', portal('leute', 900, mitarbeiter))
 
 
 # =============================================================== Einstellungen
@@ -136,7 +136,7 @@ studio += ('<div style="padding: 20px; display: flex; flex-direction: column; ga
            'mit dem alten Code funktionieren dann nicht mehr.</div></div>'
            % (SECONDARY, SECONDARY, WARN))
 studio += '</section>'
-schreibe('EinstellungenStudio.dc.html', portal('einstellungen', 1180, studio))
+schreibe('EinstellungenStudio.dc.html', portal('einstellungen', 1300, studio))
 
 
 # ---------------------------------------------------------------- Konto
@@ -175,4 +175,4 @@ konto += '<section style="%s margin-top: 24px;">' % CARD
 konto += '<div style="%s"><h2 style="%s">Abmelden</h2></div>' % (HEADROW, SEC_TITLE)
 konto += ('<div style="padding: 20px;"><a href="#" style="%s">Abmelden</a></div>' % DESTRUCTIVE)
 konto += '</section>'
-schreibe('EinstellungenKonto.dc.html', portal('einstellungen', 920, konto))
+schreibe('EinstellungenKonto.dc.html', portal('einstellungen', 1080, konto))

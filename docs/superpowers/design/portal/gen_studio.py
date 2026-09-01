@@ -102,7 +102,7 @@ kurse += tag('Mittwoch, 2. September', zeile(
     '18:00 · Kraftzirkel', 'Jana · Raum 1', belegung(16, 16, warteliste=3), letzte=True))
 
 kurse += tag('Donnerstag, 3. September', zeile(
-    '18:00 · Kraftzirkel', 'Jana · Raum 1', belegung(12, 16), letzte=True))
+    '18:00 · Kraftzirkel', 'Jana · Raum 1', belegung(16, 16, warteliste=3), letzte=True))
 
 kurse += tag('Freitag, 4. September', zeile(
     '<span style="text-decoration: line-through; color: #5c636e;">18:00 · Kraftzirkel</span>',
@@ -241,10 +241,10 @@ teilnehmer = (
             '<a href="#" style="%s">Abmelden</a>' % DESTRUCTIVE)
     + zeile('P. Keller', 'Angemeldet Mi., 27. August 2026 · 18:50',
             '<a href="#" style="%s">Abmelden</a>' % DESTRUCTIVE)
-    + zeile('<span style="color: #5c636e;">… 9 weitere</span>', '',
+    + zeile('<span style="color: #5c636e;">… 13 weitere</span>', '',
             '<a href="#" style="%s">Alle anzeigen</a>' % SECONDARY, letzte=True)
 )
-termin += abschnitt('Angemeldet (12 von 16)', teilnehmer)
+termin += abschnitt('Angemeldet (16 von 16)', teilnehmer)
 
 warteliste = (
     zeile('L. Bauer', 'Position 1', '')
@@ -264,3 +264,180 @@ termin += abschnitt('Absagen', (
 ))
 
 schreibe('Termin.dc.html', portal('kurse', 2020, termin))
+
+
+# ================================================================= Überblick
+# Der Einleitungssatz zog frueher eine Grenze, die die Datenbank nicht zieht:
+# "einzelne Mitglieder und ihre Werte sieht das Portal nicht" -- das Portal
+# sieht sehr wohl, wer zu einem Kurstermin angemeldet ist (siehe Termin.dc.html).
+# Was es wirklich nicht zeigt, sind Trainingsdaten: Saetze, Gewichte, Verlaeufe.
+main = titel('Überblick', 'Letzte 30 Tage. Studioweite Summen — welches Mitglied was '
+             'trainiert hat, zeigt das Portal nirgends.')
+
+main += ("""
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 32px;">
+  <div style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; padding: 20px;">
+    <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">14<span style="color: #5c636e; font-size: 20px;"> / 16</span></div>
+    <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin-top: 12px;">Geräte erreichbar</div>
+  </div>
+  <div style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; padding: 20px;">
+    <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">23</div>
+    <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin-top: 12px;">Mitglieder aktiv</div>
+  </div>
+  <div style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; padding: 20px;">
+    <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">1.842</div>
+    <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin-top: 12px;">Sätze erfasst</div>
+  </div>
+  <div style="border: 1px solid #ffb020; border-radius: 12px; background: #14161a; padding: 20px;">
+    <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">7</div>
+    <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #ffb020; margin-top: 12px;">Probleme gemeldet</div>
+  </div>
+</div>
+""")
+
+# "Diese Woche" holt die naechsten drei Kurstermine samt Belegung aus
+# Kurse.dc.html herueber -- dieselben Zahlen, keine neuen erfunden.
+main += abschnitt('Diese Woche', (
+    zeile('Montag, 31. August · 18:00 · Kraftzirkel', 'Jana · Raum 1', belegung(12, 16))
+    + zeile('Montag, 31. August · 19:30 · Rücken fit', 'Tim · Raum 2', belegung(8, 12))
+    + zeile('Mittwoch, 2. September · 18:00 · Kraftzirkel', 'Jana · Raum 1',
+            belegung(16, 16, warteliste=3), letzte=True)
+), aktion='<a href="#" style="%s">Zu den Kursen</a>' % SECONDARY)
+
+main += ("""
+<div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; margin-top: 24px;">
+
+  <section style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; overflow: hidden;">
+    <div style="padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
+      <h2 style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin: 0;">Was noch fehlt</h2>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
+      <div>
+        <div style="font-weight: 600;">2 Geräte ohne Tag</div>
+        <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Für Mitglieder nicht auffindbar</div>
+      </div>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #d4ff3f; color: #0a0b0d; font-weight: 700; flex-shrink: 0;">Tags anlegen</a>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
+      <div>
+        <div style="font-weight: 600;">3 Übungen ohne Einweisungsvideo</div>
+        <div style="font-size: 12px; color: #5c636e; margin-top: 2px;">Nutzbar, nur ohne Anleitung</div>
+      </div>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #1d2026; border: 1px solid #2a2e36; color: #f2f4f7; font-weight: 600; flex-shrink: 0;">Ansehen</a>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px;">
+      <div>
+        <div style="font-weight: 600;">1 Modell ohne Foto</div>
+        <div style="font-size: 12px; color: #5c636e; margin-top: 2px;">Brustpresse</div>
+      </div>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #1d2026; border: 1px solid #2a2e36; color: #f2f4f7; font-weight: 600; flex-shrink: 0;">Ansehen</a>
+    </div>
+  </section>
+
+  <section style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; overflow: hidden;">
+    <div style="padding: 16px 20px; border-bottom: 1px solid #2a2e36; display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
+      <h2 style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin: 0;">Meistgenutzt</h2>
+      <span style="font-size: 12px; color: #5c636e;">Sätze</span>
+    </div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
+      <span style="font-weight: 600;">Beinpresse 7</span><span style="color: #9ba3af;">312</span>
+    </div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
+      <span style="font-weight: 600;">Latzug 12</span><span style="color: #9ba3af;">287</span>
+    </div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
+      <span style="font-weight: 600;">Brustpresse 4</span><span style="color: #9ba3af;">241</span>
+    </div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
+      <span style="font-weight: 600;">Latzug 13</span><span style="color: #9ba3af;">198</span>
+    </div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px;">
+      <span style="color: #5c636e;">Beinpresse 8</span><span style="color: #5c636e;">stillgelegt</span>
+    </div>
+  </section>
+</div>
+
+<section style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; overflow: hidden; margin-top: 24px;">
+  <div style="padding: 16px 20px; border-bottom: 1px solid #2a2e36; display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
+    <h2 style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin: 0;">Gemeldete Probleme</h2>
+    <span style="font-size: 12px; color: #5c636e;">Ohne Namen. Wer gemeldet hat, steht hier nicht.</span>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
+    <div>
+      <div style="font-weight: 600;">Brustpresse 4</div>
+      <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Schmerz</div>
+    </div>
+    <span style="display: inline-flex; align-items: center; border: 1px solid #ffb020; color: #ffb020; border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">2 ×</span>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
+    <div>
+      <div style="font-weight: 600;">Latzug 12</div>
+      <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Zu schwer</div>
+    </div>
+    <span style="display: inline-flex; align-items: center; border: 1px solid #2a2e36; color: #9ba3af; border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">3 ×</span>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px;">
+    <div>
+      <div style="font-weight: 600;">Beinpresse 7</div>
+      <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Gerät passt nicht</div>
+    </div>
+    <span style="display: inline-flex; align-items: center; border: 1px solid #2a2e36; color: #9ba3af; border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">2 ×</span>
+  </div>
+</section>
+
+<p style="color: #5c636e; font-size: 13px; line-height: 1.45; margin: 24px 0 0; max-width: 70ch;">gymodo misst nichts. Alles hier ist gezählt, was Mitglieder selbst bestätigt haben.</p>
+""")
+
+schreibe('Main.dc.html', portal('ueberblick', 1320, main))
+
+
+# ================================================================= Zustaende
+# Ein Blatt, kein Bildschirm: es zeigt die Zustaende, die im Portal wirklich
+# gelten. Offline (Konzept der Trainingshalle, nicht des Portals) und
+# Skelett (Katalogwerte sind sofort da) gelten hier nicht -- Spec Abschnitt 5.
+zustaende = titel('Zustände', 'Drei Zustände plus ein Ladezustand für Medien. Offline und '
+                   'Skelett gelten hier nicht — Offline ist ein Konzept der Trainingshalle, '
+                   'Skelett gilt laut Spezifikation nur für Medien.')
+
+FEHLER = ('border: 1px solid #ff5a4e; border-radius: 12px; background: #14161a;')
+DEAKTIVIERT_BTN = ('display: inline-flex; align-items: center; justify-content: center; '
+                    'height: 40px; padding: 0 16px; border-radius: 10px; background: #1d2026; '
+                    'border: 1px solid #2a2e36; color: #5c636e; font-weight: 600;')
+
+leer_karte = ('<div style="%s margin-top: 32px;">'
+              '<div style="padding: 32px 20px; display: flex; flex-direction: column; gap: 12px; '
+              'align-items: flex-start;">'
+              '<span style="%s color: #5c636e;">Leer</span>'
+              '<div style="font-size: 17px; font-weight: 700;">Noch kein Kurs.</div>'
+              '<div style="color: #9ba3af; font-size: 13px;">Leg eine Vorlage an, dann '
+              'Termine daraus.</div>'
+              '<a href="#" style="%s margin-top: 4px;">Vorlage anlegen</a>'
+              '</div></div>' % (CARD, LABEL, PRIMARY))
+
+fehler_karte = ('<div style="%s margin-top: 32px;">'
+                 '<div style="padding: 20px; display: flex; flex-direction: column; gap: 8px;">'
+                 '<span style="%s color: #ff5a4e;">Fehler</span>'
+                 '<div style="font-weight: 600;">Das Gewicht liegt über dem Gerätemaximum '
+                 'von 100,0 kg.</div></div></div>' % (FEHLER, LABEL))
+
+deaktiviert_karte = ('<div style="%s margin-top: 32px;">'
+                      '<div style="padding: 32px 20px; display: flex; flex-direction: column; gap: 12px;">'
+                      '<span style="%s color: #5c636e;">Deaktiviert</span>'
+                      '<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">'
+                      '<span style="%s">Zuweisen</span>'
+                      '<span style="color: #5c636e; font-size: 13px;">Wähle zuerst ein Gerät.</span>'
+                      '</div></div></div>' % (CARD, LABEL, DEAKTIVIERT_BTN))
+
+zustaende += ('<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">'
+              + leer_karte + fehler_karte + deaktiviert_karte + '</div>')
+
+medien_platzhalter = ('<div style="width: 160px; height: 120px; flex-shrink: 0; border-radius: 10px; '
+                       'background: #1d2026;"></div>')
+zustaende += abschnitt('Medien laden', (
+    '<div style="padding: 20px; display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">'
+    + medien_platzhalter
+    + '<span style="%s max-width: 46ch;">Nur für Fotos und Videos. Katalogwerte sind sofort da '
+      '— ein Skelett darüber wäre eine Lüge über die Architektur.</span></div>' % NOTE
+))
+
+schreibe('Zustaende.dc.html', portal(None, 760, zustaende))

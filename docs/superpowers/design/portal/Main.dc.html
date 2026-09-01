@@ -23,161 +23,108 @@
     a:hover { color: #d4ff3f; }
   </style>
 </helmet>
-
-<div style="display: flex; min-height: 1000px; background: #0a0b0d;">
-
-  <nav style="width: 288px; flex: 0 0 288px; background: #14161a; border-right: 1px solid #2a2e36; padding: 24px 0 24px; display: flex; flex-direction: column; gap: 24px;">
-    <div style="padding: 0 20px;">
-      <div style="font-size: 17px; font-weight: 800; letter-spacing: -0.02em; text-transform: uppercase;">Kraftwerk Nord</div>
-      <div style="font-size: 12px; color: #9ba3af; margin-top: 4px;">Trainerportal</div>
-    </div>
-
-    <div style="display: flex; flex-direction: column; gap: 4px;">
-      <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #5c636e; padding: 0 20px 8px;">Studio</div>
-      <a href="#" style="display: block; padding: 8px 20px; border-left: 2px solid #d4ff3f; background: #1d2026; color: #f2f4f7;">
-        <span style="display: block; font-size: 14px; font-weight: 600;">Überblick</span>
-      </a>
-      <a href="#" style="display: block; padding: 8px 20px; border-left: 2px solid transparent; color: #9ba3af;">
-        <span style="display: block; font-size: 14px; font-weight: 600;">Kurse</span>
-        <span style="display: block; font-size: 12px; color: #5c636e; margin-top: 2px;">9 diese Woche</span>
-      </a>
-    </div>
-
-    <div style="display: flex; flex-direction: column; gap: 4px;">
-      <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #5c636e; padding: 0 20px 8px;">Katalog</div>
-      <a href="#" style="display: block; padding: 8px 20px; border-left: 2px solid transparent; color: #9ba3af;">
-        <span style="display: block; font-size: 14px; font-weight: 600;">Geräte</span>
-        <span style="display: block; font-size: 12px; color: #5c636e; margin-top: 2px;">16 · 14 erreichbar</span>
-      </a>
-      <a href="#" style="display: block; padding: 8px 20px; border-left: 2px solid transparent; color: #9ba3af;">
-        <span style="display: block; font-size: 14px; font-weight: 600;">Tags</span>
-        <span style="display: block; font-size: 12px; color: #5c636e; margin-top: 2px;">2 vorrätig</span>
-      </a>
-    </div>
-
-    <div style="display: flex; flex-direction: column; gap: 4px;">
-      <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #5c636e; padding: 0 20px 8px;">Verwaltung</div>
-      <a href="#" style="display: block; padding: 8px 20px; border-left: 2px solid transparent; color: #9ba3af;">
-        <span style="display: block; font-size: 14px; font-weight: 600;">Leute</span>
-        <span style="display: block; font-size: 12px; color: #5c636e; margin-top: 2px;">24 Mitglieder · 2 Trainer</span>
-      </a>
-      <a href="#" style="display: block; padding: 8px 20px; border-left: 2px solid transparent; color: #9ba3af;">
-        <span style="display: block; font-size: 14px; font-weight: 600;">Einstellungen</span>
-      </a>
-    </div>
-
-    <div style="margin-top: auto; padding: 16px 20px 0; border-top: 1px solid #2a2e36; display: flex; flex-direction: column; gap: 8px;">
-      <div style="font-size: 12px; color: #9ba3af; overflow: hidden; text-overflow: ellipsis;">tim@kraftwerk-nord.de</div>
-      <a href="#" style="font-size: 12px; color: #5c636e;">Abmelden</a>
-    </div>
-  </nav>
-
-  <main style="flex: 1; min-width: 0; padding: 32px 40px 48px; max-width: 1000px;">
-    <h1 style="font-size: 26px; font-weight: 800; letter-spacing: -0.025em; text-transform: uppercase; margin: 0;">Überblick</h1>
-    <p style="color: #9ba3af; margin: 8px 0 0; max-width: 62ch;">Letzte 30 Tage. Was hier steht, ist zusammengezählt — einzelne Mitglieder und ihre Werte sieht das Portal nicht.</p>
-
-    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 32px;">
-      <div style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; padding: 20px;">
-        <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">14<span style="color: #5c636e; font-size: 20px;"> / 16</span></div>
-        <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin-top: 12px;">Geräte erreichbar</div>
-      </div>
-      <div style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; padding: 20px;">
-        <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">23</div>
-        <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin-top: 12px;">Mitglieder aktiv</div>
-      </div>
-      <div style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; padding: 20px;">
-        <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">1.842</div>
-        <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin-top: 12px;">Sätze erfasst</div>
-      </div>
-      <div style="border: 1px solid #ffb020; border-radius: 12px; background: #14161a; padding: 20px;">
-        <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">7</div>
-        <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #ffb020; margin-top: 12px;">Probleme gemeldet</div>
-      </div>
-    </div>
-
-    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; margin-top: 24px;">
-
-      <section style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; overflow: hidden;">
-        <div style="padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
-          <h2 style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin: 0;">Was noch fehlt</h2>
-        </div>
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
-          <div>
-            <div style="font-weight: 600;">2 Geräte ohne Tag</div>
-            <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Für Mitglieder nicht auffindbar</div>
-          </div>
-          <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #d4ff3f; color: #0a0b0d; font-weight: 700; flex-shrink: 0;">Tags anlegen</a>
-        </div>
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
-          <div>
-            <div style="font-weight: 600;">3 Übungen ohne Einweisungsvideo</div>
-            <div style="font-size: 12px; color: #5c636e; margin-top: 2px;">Nutzbar, nur ohne Anleitung</div>
-          </div>
-          <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #1d2026; border: 1px solid #2a2e36; color: #f2f4f7; font-weight: 600; flex-shrink: 0;">Ansehen</a>
-        </div>
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px;">
-          <div>
-            <div style="font-weight: 600;">1 Modell ohne Foto</div>
-            <div style="font-size: 12px; color: #5c636e; margin-top: 2px;">Brustpresse</div>
-          </div>
-          <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #1d2026; border: 1px solid #2a2e36; color: #f2f4f7; font-weight: 600; flex-shrink: 0;">Ansehen</a>
-        </div>
-      </section>
-
-      <section style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; overflow: hidden;">
-        <div style="padding: 16px 20px; border-bottom: 1px solid #2a2e36; display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
-          <h2 style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin: 0;">Meistgenutzt</h2>
-          <span style="font-size: 12px; color: #5c636e;">Sätze</span>
-        </div>
-        <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
-          <span style="font-weight: 600;">Beinpresse 7</span><span style="color: #9ba3af;">312</span>
-        </div>
-        <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
-          <span style="font-weight: 600;">Latzug 12</span><span style="color: #9ba3af;">287</span>
-        </div>
-        <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
-          <span style="font-weight: 600;">Brustpresse 4</span><span style="color: #9ba3af;">241</span>
-        </div>
-        <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
-          <span style="font-weight: 600;">Latzug 13</span><span style="color: #9ba3af;">198</span>
-        </div>
-        <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px;">
-          <span style="color: #5c636e;">Beinpresse 8</span><span style="color: #5c636e;">stillgelegt</span>
-        </div>
-      </section>
-    </div>
-
-    <section style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; overflow: hidden; margin-top: 24px;">
-      <div style="padding: 16px 20px; border-bottom: 1px solid #2a2e36; display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
-        <h2 style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin: 0;">Gemeldete Probleme</h2>
-        <span style="font-size: 12px; color: #5c636e;">Ohne Namen. Wer gemeldet hat, steht hier nicht.</span>
-      </div>
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
-        <div>
-          <div style="font-weight: 600;">Brustpresse 4</div>
-          <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Schmerz</div>
-        </div>
-        <span style="display: inline-flex; align-items: center; border: 1px solid #ffb020; color: #ffb020; border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">2 ×</span>
-      </div>
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
-        <div>
-          <div style="font-weight: 600;">Latzug 12</div>
-          <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Zu schwer</div>
-        </div>
-        <span style="display: inline-flex; align-items: center; border: 1px solid #2a2e36; color: #9ba3af; border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">3 ×</span>
-      </div>
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px;">
-        <div>
-          <div style="font-weight: 600;">Beinpresse 7</div>
-          <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Gerät passt nicht</div>
-        </div>
-        <span style="display: inline-flex; align-items: center; border: 1px solid #2a2e36; color: #9ba3af; border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">2 ×</span>
-      </div>
-    </section>
-
-    <p style="color: #5c636e; font-size: 13px; line-height: 1.45; margin: 24px 0 0; max-width: 70ch;">gymodo misst nichts. Alles hier ist gezählt, was Mitglieder selbst bestätigt haben.</p>
-  </main>
+<div style="display: flex; min-height: 1320px; background: #0a0b0d;"><nav style="width: 288px; flex: 0 0 288px; background: #14161a; border-right: 1px solid #2a2e36; padding: 24px 0 24px; display: flex; flex-direction: column; gap: 24px;"><div style="padding: 0 20px;"><div style="font-size: 17px; font-weight: 800; letter-spacing: -0.02em; text-transform: uppercase;">Kraftwerk Nord</div><div style="font-size: 12px; color: #9ba3af; margin-top: 4px;">Trainerportal</div></div><div style="display: flex; flex-direction: column; gap: 4px;"><div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #5c636e; padding: 0 20px 8px;">Studio</div><a href="#" style="display: block; padding: 8px 20px; border-left: 2px solid #d4ff3f; background: #1d2026; color: #f2f4f7;"><span style="display: block; font-size: 14px; font-weight: 600;">Überblick</span></a><a href="#" style="display: block; padding: 8px 20px; border-left: 2px solid transparent; color: #9ba3af;"><span style="display: block; font-size: 14px; font-weight: 600;">Kurse</span><span style="display: block; font-size: 12px; color: #5c636e; margin-top: 2px;">5 diese Woche</span></a></div><div style="display: flex; flex-direction: column; gap: 4px;"><div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #5c636e; padding: 0 20px 8px;">Katalog</div><a href="#" style="display: block; padding: 8px 20px; border-left: 2px solid transparent; color: #9ba3af;"><span style="display: block; font-size: 14px; font-weight: 600;">Geräte</span><span style="display: block; font-size: 12px; color: #5c636e; margin-top: 2px;">16 · 14 erreichbar</span></a><a href="#" style="display: block; padding: 8px 20px; border-left: 2px solid transparent; color: #9ba3af;"><span style="display: block; font-size: 14px; font-weight: 600;">Tags</span><span style="display: block; font-size: 12px; color: #5c636e; margin-top: 2px;">2 vorrätig</span></a></div><div style="display: flex; flex-direction: column; gap: 4px;"><div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #5c636e; padding: 0 20px 8px;">Verwaltung</div><a href="#" style="display: block; padding: 8px 20px; border-left: 2px solid transparent; color: #9ba3af;"><span style="display: block; font-size: 14px; font-weight: 600;">Leute</span><span style="display: block; font-size: 12px; color: #5c636e; margin-top: 2px;">24 Mitglieder · 2 Trainer</span></a><a href="#" style="display: block; padding: 8px 20px; border-left: 2px solid transparent; color: #9ba3af;"><span style="display: block; font-size: 14px; font-weight: 600;">Einstellungen</span></a></div><div style="margin-top: auto; padding: 16px 20px 0; border-top: 1px solid #2a2e36; display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 12px; color: #9ba3af;">tim@kraftwerk-nord.de</div><a href="#" style="font-size: 12px; color: #5c636e;">Abmelden</a></div></nav><main style="flex: 1; min-width: 0; padding: 32px 40px 48px; max-width: 1000px;"><h1 style="font-size: 26px; font-weight: 800; letter-spacing: -0.025em; text-transform: uppercase; margin: 0;">Überblick</h1><p style="color: #9ba3af; margin: 8px 0 0; max-width: 62ch;">Letzte 30 Tage. Studioweite Summen — welches Mitglied was trainiert hat, zeigt das Portal nirgends.</p>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 32px;">
+  <div style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; padding: 20px;">
+    <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">14<span style="color: #5c636e; font-size: 20px;"> / 16</span></div>
+    <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin-top: 12px;">Geräte erreichbar</div>
+  </div>
+  <div style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; padding: 20px;">
+    <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">23</div>
+    <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin-top: 12px;">Mitglieder aktiv</div>
+  </div>
+  <div style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; padding: 20px;">
+    <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">1.842</div>
+    <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin-top: 12px;">Sätze erfasst</div>
+  </div>
+  <div style="border: 1px solid #ffb020; border-radius: 12px; background: #14161a; padding: 20px;">
+    <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">7</div>
+    <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #ffb020; margin-top: 12px;">Probleme gemeldet</div>
+  </div>
 </div>
+<section style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; overflow: hidden; margin-top: 24px;"><div style="padding: 16px 20px; border-bottom: 1px solid #2a2e36; display: flex; align-items: baseline; justify-content: space-between; gap: 16px;"><h2 style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin: 0;">Diese Woche</h2><a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #1d2026; border: 1px solid #2a2e36; color: #f2f4f7; font-weight: 600; flex-shrink: 0;">Zu den Kursen</a></div><div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px; border-bottom: 1px solid #2a2e36;"><div style="min-width: 0;"><div style="font-weight: 600;">Montag, 31. August · 18:00 · Kraftzirkel</div><div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Jana · Raum 1</div></div><div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;"><div style="text-align: right;"><div style="font-weight: 700;">12 von 16</div></div></div></div><div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px; border-bottom: 1px solid #2a2e36;"><div style="min-width: 0;"><div style="font-weight: 600;">Montag, 31. August · 19:30 · Rücken fit</div><div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Tim · Raum 2</div></div><div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;"><div style="text-align: right;"><div style="font-weight: 700;">8 von 12</div></div></div></div><div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px; "><div style="min-width: 0;"><div style="font-weight: 600;">Mittwoch, 2. September · 18:00 · Kraftzirkel</div><div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Jana · Raum 1</div></div><div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;"><div style="text-align: right;"><div style="font-weight: 700;">16 von 16</div><div style="font-size: 11px; color: #5c636e; margin-top: 2px;">+3 Warteliste</div></div></div></div></section>
+<div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; margin-top: 24px;">
+
+  <section style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; overflow: hidden;">
+    <div style="padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
+      <h2 style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin: 0;">Was noch fehlt</h2>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
+      <div>
+        <div style="font-weight: 600;">2 Geräte ohne Tag</div>
+        <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Für Mitglieder nicht auffindbar</div>
+      </div>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #d4ff3f; color: #0a0b0d; font-weight: 700; flex-shrink: 0;">Tags anlegen</a>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
+      <div>
+        <div style="font-weight: 600;">3 Übungen ohne Einweisungsvideo</div>
+        <div style="font-size: 12px; color: #5c636e; margin-top: 2px;">Nutzbar, nur ohne Anleitung</div>
+      </div>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #1d2026; border: 1px solid #2a2e36; color: #f2f4f7; font-weight: 600; flex-shrink: 0;">Ansehen</a>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px;">
+      <div>
+        <div style="font-weight: 600;">1 Modell ohne Foto</div>
+        <div style="font-size: 12px; color: #5c636e; margin-top: 2px;">Brustpresse</div>
+      </div>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #1d2026; border: 1px solid #2a2e36; color: #f2f4f7; font-weight: 600; flex-shrink: 0;">Ansehen</a>
+    </div>
+  </section>
+
+  <section style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; overflow: hidden;">
+    <div style="padding: 16px 20px; border-bottom: 1px solid #2a2e36; display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
+      <h2 style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin: 0;">Meistgenutzt</h2>
+      <span style="font-size: 12px; color: #5c636e;">Sätze</span>
+    </div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
+      <span style="font-weight: 600;">Beinpresse 7</span><span style="color: #9ba3af;">312</span>
+    </div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
+      <span style="font-weight: 600;">Latzug 12</span><span style="color: #9ba3af;">287</span>
+    </div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
+      <span style="font-weight: 600;">Brustpresse 4</span><span style="color: #9ba3af;">241</span>
+    </div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
+      <span style="font-weight: 600;">Latzug 13</span><span style="color: #9ba3af;">198</span>
+    </div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px;">
+      <span style="color: #5c636e;">Beinpresse 8</span><span style="color: #5c636e;">stillgelegt</span>
+    </div>
+  </section>
+</div>
+
+<section style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; overflow: hidden; margin-top: 24px;">
+  <div style="padding: 16px 20px; border-bottom: 1px solid #2a2e36; display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
+    <h2 style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin: 0;">Gemeldete Probleme</h2>
+    <span style="font-size: 12px; color: #5c636e;">Ohne Namen. Wer gemeldet hat, steht hier nicht.</span>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
+    <div>
+      <div style="font-weight: 600;">Brustpresse 4</div>
+      <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Schmerz</div>
+    </div>
+    <span style="display: inline-flex; align-items: center; border: 1px solid #ffb020; color: #ffb020; border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">2 ×</span>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
+    <div>
+      <div style="font-weight: 600;">Latzug 12</div>
+      <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Zu schwer</div>
+    </div>
+    <span style="display: inline-flex; align-items: center; border: 1px solid #2a2e36; color: #9ba3af; border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">3 ×</span>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px;">
+    <div>
+      <div style="font-weight: 600;">Beinpresse 7</div>
+      <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Gerät passt nicht</div>
+    </div>
+    <span style="display: inline-flex; align-items: center; border: 1px solid #2a2e36; color: #9ba3af; border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">2 ×</span>
+  </div>
+</section>
+
+<p style="color: #5c636e; font-size: 13px; line-height: 1.45; margin: 24px 0 0; max-width: 70ch;">gymodo misst nichts. Alles hier ist gezählt, was Mitglieder selbst bestätigt haben.</p>
+</main></div>
 </x-dc>
 </body>
 </html>

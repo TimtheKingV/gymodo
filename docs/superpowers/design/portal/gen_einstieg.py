@@ -8,7 +8,7 @@ NOTE = 'font-size: 13px; color: #5c636e; line-height: 1.45;'
 # Portal) oder Mitglied (und ist im Web falsch -- die App gibt es nur auf
 # dem iPhone). Beides muss die Seite in einem Blick beantworten.
 start = HEAD + """
-<div style="min-height: 900px; background: #0a0b0d; display: flex; flex-direction: column;">
+<div style="min-height: 960px; background: #0a0b0d; display: flex; flex-direction: column;">
   <header style="padding: 32px 48px; display: flex; align-items: center; justify-content: space-between;">
     <span style="font-size: 20px; font-weight: 800; letter-spacing: -0.03em; text-transform: uppercase;">gymodo</span>
     <a href="#" style="%(sec)s">Anmelden</a>
