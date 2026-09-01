@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .corner { position: absolute; width: 34px; height: 34px; border: 3px solid #D4FF3F; }
+  </style>
+</helmet>
+
+<div class="ph">
+  <!-- Kameravorschau -->
+  <div style="position: absolute; inset: 0; background: linear-gradient(168deg, #23272F 0%, #14161A 55%, #0A0B0D 100%)"></div>
+
+  <div style="position: relative; height: 54px; flex: none"></div>
+
+  <div style="position: relative; flex: none; height: 52px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between">
+    <span style="font-size: 17px; font-weight: 800; letter-spacing: -.01em">Gerät finden</span>
+    <div style="width: 34px; height: 34px; border-radius: 50%; background: rgba(10,11,13,.6); display: flex; align-items: center; justify-content: center">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2.3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </div>
+  </div>
+
+  <!-- QR-Rahmen -->
+  <div style="position: relative; flex-grow: 1; display: flex; align-items: center; justify-content: center">
+    <div style="position: relative; width: 236px; height: 236px">
+      <div class="corner" style="top: 0; left: 0; border-right: none; border-bottom: none; border-radius: 14px 0 0 0"></div>
+      <div class="corner" style="top: 0; right: 0; border-left: none; border-bottom: none; border-radius: 0 14px 0 0"></div>
+      <div class="corner" style="bottom: 0; left: 0; border-right: none; border-top: none; border-radius: 0 0 0 14px"></div>
+      <div class="corner" style="bottom: 0; right: 0; border-left: none; border-top: none; border-radius: 0 0 14px 0"></div>
+      <div style="position: absolute; left: 12px; right: 12px; top: 50%; height: 2px; background: #D4FF3F; opacity: .55"></div>
+    </div>
+  </div>
+
+  <div style="position: relative; flex: none; padding: 0 32px 22px; text-align: center">
+    <div style="font-size: 15px; line-height: 1.5; color: #9BA3AF">QR-Code auf dem Aufkleber ins Feld halten.</div>
+  </div>
+
+  <!-- NFC gleichwertig daneben -->
+  <div style="position: relative; flex: none; margin: 0 20px 24px; background: #14161A; border: 1px solid #2A2E36; border-radius: 16px; padding: 17px 18px; display: flex; align-items: center; gap: 15px">
+    <div style="width: 46px; height: 46px; border-radius: 50%; border: 1px solid #2A2E36; display: flex; align-items: center; justify-content: center; flex: none">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D4FF3F" stroke-width="1.9" stroke-linecap="round"><path d="M7.5 8.5a5 5 0 0 1 0 7"/><path d="M11.5 5.5a10 10 0 0 1 0 13"/><path d="M15.5 2.5a15 15 0 0 1 0 19"/></svg>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+      <div style="font-size: 15px; font-weight: 800">Oder einfach antippen</div>
+      <div style="font-size: 12px; line-height: 1.45; color: #9BA3AF">Halt die Oberkante deines iPhones an den Aufkleber — dafür musst du diesen Bildschirm nicht offen haben.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

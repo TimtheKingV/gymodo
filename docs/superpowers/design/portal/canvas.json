@@ -1,0 +1,79 @@
+{
+  "pages": [
+    { "id": "portal", "name": "Portal" },
+    { "id": "einstieg", "name": "Einstieg" },
+    { "id": "telefon", "name": "Telefon" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "page": "portal", "title": "Überblick", "x": 0, "y": 0, "w": 1440, "h": 1320 },
+    { "file": "Geraete.dc.html", "page": "portal", "title": "Geräte", "x": 1560, "y": 0, "w": 1440, "h": 900 },
+    { "file": "Modell.dc.html", "page": "portal", "title": "Modell — Einzelne Geräte", "x": 3120, "y": 0, "w": 1440, "h": 780 },
+    { "file": "Tags.dc.html", "page": "portal", "title": "Tags", "x": 0, "y": 1440, "w": 1440, "h": 940 },
+    { "file": "LeuteMitglieder.dc.html", "page": "portal", "title": "Leute — Mitglieder", "x": 1560, "y": 1440, "w": 1440, "h": 840 },
+    { "file": "LeuteMitarbeiter.dc.html", "page": "portal", "title": "Leute — Mitarbeiter", "x": 3120, "y": 1440, "w": 1440, "h": 1000 },
+
+    { "file": "EinstellungenStudio.dc.html", "page": "portal", "title": "Einstellungen — Studio", "x": 0, "y": 2500, "w": 1440, "h": 1300 },
+    { "file": "EinstellungenKonto.dc.html", "page": "portal", "title": "Einstellungen — Konto", "x": 1560, "y": 2500, "w": 1440, "h": 1080 },
+    { "file": "Zustaende.dc.html", "page": "portal", "title": "Zustände", "x": 3120, "y": 2500, "w": 1440, "h": 760 },
+
+    { "file": "Kurse.dc.html", "page": "portal", "title": "Kurse — Woche", "x": 0, "y": 3920, "w": 1440, "h": 1780 },
+    { "file": "Kursvorlagen.dc.html", "page": "portal", "title": "Kursvorlagen", "x": 1560, "y": 3920, "w": 1440, "h": 820 },
+    { "file": "Kursvorlage.dc.html", "page": "portal", "title": "Kursvorlage — Stammdaten", "x": 3120, "y": 3920, "w": 1440, "h": 1420 },
+    { "file": "TerminAnlegen.dc.html", "page": "portal", "title": "Termin anlegen", "x": 4680, "y": 3920, "w": 1440, "h": 1680 },
+    { "file": "Termin.dc.html", "page": "portal", "title": "Termin — Teilnehmer", "x": 6240, "y": 3920, "w": 1440, "h": 2020 },
+
+    { "file": "Start.dc.html", "page": "einstieg", "title": "Wurzelseite", "x": 0, "y": 0, "w": 1440, "h": 960 },
+    { "file": "Anmelden.dc.html", "page": "einstieg", "title": "Anmelden", "x": 1560, "y": 0, "w": 1440, "h": 900 },
+    { "file": "PasswortVergessen.dc.html", "page": "einstieg", "title": "Passwort vergessen", "x": 3120, "y": 0, "w": 1440, "h": 900 },
+    { "file": "PasswortNeu.dc.html", "page": "einstieg", "title": "Neues Passwort", "x": 4680, "y": 0, "w": 1440, "h": 900 },
+
+    { "file": "Registrieren.dc.html", "page": "einstieg", "title": "Registrieren", "x": 0, "y": 1080, "w": 1440, "h": 900 },
+    { "file": "Verifizieren.dc.html", "page": "einstieg", "title": "Verifizieren", "x": 1560, "y": 1080, "w": 1440, "h": 900 },
+    { "file": "KeinStudio.dc.html", "page": "einstieg", "title": "Kein Studio", "x": 3120, "y": 1080, "w": 1440, "h": 900 },
+
+    { "file": "Telefon.dc.html", "page": "telefon", "title": "Videoupload am Telefon", "x": 0, "y": 0, "w": 390, "h": 1240 }
+  ],
+  "annotations": [
+    {
+      "id": "note-rail",
+      "page": "portal",
+      "x": 0,
+      "y": -230,
+      "w": 440,
+      "text": "Die Rail ist jetzt feste Navigation.\n\nSie listete früher jedes Gerätemodell einzeln — bei fünfzig Geräten unbrauchbar. Objekte leben jetzt auf Listenseiten; die Rail zeigt sechs feste Bereiche, mit Zahlen, die den Blick lenken."
+    },
+    {
+      "id": "note-akzent",
+      "page": "portal",
+      "x": 500,
+      "y": -230,
+      "w": 440,
+      "text": "Eine Akzentfläche je Bildschirm.\n\nDie Modellseite zeigte früher fünf Akzentflächen gleichzeitig, eine je Formular. Reiter lösen das: immer nur ein Formular sichtbar, die Regel des Designsystems hält jetzt wörtlich. Auf der Geräteseite — der zusammengelegten Liste der Modelle — gehört der Akzent dem Anlegen: Modell anlegen im Kopf der Liste."
+    },
+    {
+      "id": "note-daten",
+      "page": "portal",
+      "x": 1000,
+      "y": -230,
+      "w": 440,
+      "text": "Die Auswertung zählt zusammen, sie schaut nicht in die Trainingsdaten.\n\nDas Portal sieht Mitgliedschaften und wer zu einem Kurstermin angemeldet ist — beides mit Namen. Es zeigt keine Sätze, Gewichte oder Verläufe einzelner Mitglieder, auch nicht des Inhabers: nur studioweite Summen, nie eine Zuordnung auf eine Person.\n\nZielzustand. In Produktion tragen die vier Lese-Richtlinien in supabase/migrations/0012–0015 heute noch die Klausel \"or public.is_studio_staff(...)\" — die Datenbank lässt Studiopersonal also jeden Satz jedes Mitglieds lesen. Kein Bildschirm des Portals holt diese Daten, aber verboten ist es erst, wenn die Klausel fällt. Bis dahin ist das hier eine Absicht, keine Zusicherung."
+    },
+    {
+      "id": "note-einstieg",
+      "page": "einstieg",
+      "x": 0,
+      "y": -210,
+      "w": 520,
+      "text": "Das Web ist Trainerportal plus öffentlicher Fallback — für Mitglieder gibt es hier nichts.\n\nAnmeldung läuft jetzt mit E-Mail und Passwort, mit Selbstregistrierung. Der Code verifiziert danach nur noch die Adresse. Ein frisches Konto gehört noch keinem Studio — das kommt über den Studio-Code, den es an der Theke gibt."
+    },
+    {
+      "id": "note-telefon",
+      "page": "telefon",
+      "x": 470,
+      "y": 40,
+      "w": 420,
+      "text": "Der eine Pfad, der auf dem Telefon tragen muss.\n\nDie Aufnahme entsteht auf dem Trainerhandy und geht aus mobilem Safari hoch (Spec 6.8). Alles andere bleibt Schreibtischarbeit — der Katalogeditor wird nicht auf 390 px gequetscht."
+    }
+  ],
+  "launch": { "view": "canvas", "page": "portal" }
+}

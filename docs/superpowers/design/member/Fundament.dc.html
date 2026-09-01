@@ -1,0 +1,409 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: #9BA3AF; }
+    .sec { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #D4FF3F; }
+    .note { font-size: 13px; line-height: 1.5; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .rule { height: 1px; background: #2A2E36; }
+    .frad { position: relative; height: 196px; overflow: hidden; }
+    .fr { height: 32px; display: flex; align-items: center; }
+    .ffT { position: absolute; left: 0; right: 0; top: 0; height: 54px; background: linear-gradient(180deg, #0A0B0D 12%, rgba(10,11,13,0) 100%); }
+    .ffB { position: absolute; left: 0; right: 0; bottom: 0; height: 54px; background: linear-gradient(0deg, #0A0B0D 12%, rgba(10,11,13,0) 100%); }
+  </style>
+</helmet>
+
+<div style="width: 900px; min-height: 3260px; background: #0A0B0D; color: #F2F4F7; padding: 48px 48px 64px; box-sizing: border-box; display: flex; flex-direction: column; gap: 40px">
+
+  <!-- Kopf -->
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div class="eyebrow">gymodo · Member-App M1</div>
+      <div style="font-size: 52px; font-weight: 900; letter-spacing: -.035em; text-transform: uppercase; line-height: .95">Design-Fundament</div>
+      <div class="note" style="max-width: 520px">Richtung <strong style="color:#F2F4F7">Hallenboden</strong>. Kellerlicht, verschwitzte Hände, ein Blick zwischen zwei Sätzen. Zahlen sind der Held, Farbe ist ein Signal — kein Dekor.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; padding-bottom: 6px">
+      <div class="eyebrow">Stand</div>
+      <div class="num" style="font-size: 20px">30.08.2026</div>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- Farben -->
+  <div style="display: flex; flex-direction: column; gap: 18px">
+    <div class="sec">01 · Farbe</div>
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="height: 76px; border-radius: 12px; background: #0A0B0D; border: 1px solid #2A2E36"></div>
+        <div style="font-size: 13px; font-weight: 700">bg</div>
+        <div class="num" style="font-size: 12px; color: #9BA3AF; font-weight: 600">#0A0B0D</div>
+        <div class="note" style="font-size: 12px">Grundfläche</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="height: 76px; border-radius: 12px; background: #14161A; border: 1px solid #2A2E36"></div>
+        <div style="font-size: 13px; font-weight: 700">surface</div>
+        <div class="num" style="font-size: 12px; color: #9BA3AF; font-weight: 600">#14161A</div>
+        <div class="note" style="font-size: 12px">Karten, Blöcke</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="height: 76px; border-radius: 12px; background: #1D2026; border: 1px solid #2A2E36"></div>
+        <div style="font-size: 13px; font-weight: 700">surface-raised</div>
+        <div class="num" style="font-size: 12px; color: #9BA3AF; font-weight: 600">#1D2026</div>
+        <div class="note" style="font-size: 12px">Sheets, aktive Zeile</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="height: 76px; border-radius: 12px; background: #2A2E36"></div>
+        <div style="font-size: 13px; font-weight: 700">line</div>
+        <div class="num" style="font-size: 12px; color: #9BA3AF; font-weight: 600">#2A2E36</div>
+        <div class="note" style="font-size: 12px">Trennung, Umriss</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="height: 76px; border-radius: 12px; background: #D4FF3F"></div>
+        <div style="font-size: 13px; font-weight: 700">accent · Volt</div>
+        <div class="num" style="font-size: 12px; color: #9BA3AF; font-weight: 600">#D4FF3F</div>
+        <div class="note" style="font-size: 12px">Hauptaktion, Wert</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="height: 76px; border-radius: 12px; background: #F2F4F7"></div>
+        <div style="font-size: 13px; font-weight: 700">text</div>
+        <div class="num" style="font-size: 12px; color: #9BA3AF; font-weight: 600">#F2F4F7</div>
+        <div class="note" style="font-size: 12px">Fließtext</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="height: 76px; border-radius: 12px; background: #9BA3AF"></div>
+        <div style="font-size: 13px; font-weight: 700">text-muted</div>
+        <div class="num" style="font-size: 12px; color: #9BA3AF; font-weight: 600">#9BA3AF</div>
+        <div class="note" style="font-size: 12px">Labels, sekundär</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="height: 76px; border-radius: 12px; background: #FFB020"></div>
+        <div style="font-size: 13px; font-weight: 700">warn</div>
+        <div class="num" style="font-size: 12px; color: #9BA3AF; font-weight: 600">#FFB020</div>
+        <div class="note" style="font-size: 12px">Problemmeldung</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="height: 76px; border-radius: 12px; background: #FF5A4E"></div>
+        <div style="font-size: 13px; font-weight: 700">danger</div>
+        <div class="num" style="font-size: 12px; color: #9BA3AF; font-weight: 600">#FF5A4E</div>
+        <div class="note" style="font-size: 12px">Offline, Fehler</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; justify-content: flex-end">
+        <div style="border: 1px dashed #2A2E36; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 6px">
+          <div class="eyebrow" style="font-size: 10px">Kontrast auf bg</div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px"><span style="color:#D4FF3F">Volt</span><span class="num" style="font-weight:700">17,4 : 1</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px"><span style="color:#F2F4F7">text</span><span class="num" style="font-weight:700">17,9 : 1</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px"><span style="color:#9BA3AF">muted</span><span class="num" style="font-weight:700">7,4 : 1</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="note" style="max-width: 780px">Volt trägt <strong style="color:#F2F4F7">genau eine</strong> Hauptaktion je Screen und markiert den aktiven Wert. Flächig als Dekor eingesetzt verliert er die Signalwirkung, für die er gewählt wurde. Reines Schwarz wird vermieden — es lässt keinen Raum für Ebenen und schmiert beim Scrollen auf OLED.</div>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- Typografie -->
+  <div style="display: flex; flex-direction: column; gap: 18px">
+    <div class="sec">02 · Typografie</div>
+    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 32px; align-items: start">
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; align-items: baseline; gap: 20px">
+          <div style="width: 108px; flex: none" class="eyebrow">Gerät · 30/900</div>
+          <div style="font-size: 30px; font-weight: 900; letter-spacing: -.02em; text-transform: uppercase; line-height: 1.05">Beinpresse</div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 20px">
+          <div style="width: 108px; flex: none" class="eyebrow">Übung · 17/600</div>
+          <div style="font-size: 17px; font-weight: 600; color: #9BA3AF">Beidbeinig</div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 20px">
+          <div style="width: 108px; flex: none" class="eyebrow">Wert · 72/900</div>
+          <div style="display: flex; align-items: baseline; gap: 8px">
+            <div class="num" style="font-size: 72px; line-height: 1; border-bottom: 5px solid #D4FF3F; padding-bottom: 4px">80,0</div>
+            <div style="font-size: 22px; font-weight: 700; color: #9BA3AF">kg</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 20px">
+          <div style="width: 108px; flex: none" class="eyebrow">Body · 17/400</div>
+          <div style="font-size: 17px; line-height: 1.45; max-width: 380px">Stelle den Sitz auf Position 4 und die Lehne auf 2.</div>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 20px">
+          <div style="width: 108px; flex: none" class="eyebrow">Label · 11/800</div>
+          <div class="eyebrow">Letztes Training · vor 3 Tagen</div>
+        </div>
+      </div>
+      <div style="border: 1px solid #2A2E36; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+        <div class="eyebrow">Schrift</div>
+        <div class="note" style="font-size: 13px">Mockup: <strong style="color:#F2F4F7">Archivo</strong>.<br>Implementierung: <strong style="color:#F2F4F7">SF Pro</strong> (System) — Dynamic Type und VoiceOver ohne externe Abhängigkeit. Die Proportionen entsprechen sich; wo Archivo enger läuft, Tracking −2 % auf SF Pro Black.</div>
+        <div class="rule"></div>
+        <div class="eyebrow">Ziffern</div>
+        <div class="note" style="font-size: 13px">Immer tabellarisch (<span class="num" style="font-weight:700; color:#F2F4F7">monospacedDigit</span>). Ohne das springt der Resttimer bei jeder Sekunde.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- Dynamic Type -->
+  <div style="display: flex; flex-direction: column; gap: 18px">
+    <div class="sec">03 · Dynamic Type — die Satzzeile bei zwei Größen</div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px">
+      <div style="background: #14161A; border: 1px solid #2A2E36; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+        <div class="eyebrow">Standard (L)</div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+          <div style="display: flex; align-items: baseline; gap: 6px"><span class="num" style="font-size: 56px; line-height: 1">80,0</span><span style="font-size: 18px; font-weight: 700; color: #9BA3AF">kg</span></div>
+          <div style="display: flex; align-items: baseline; gap: 6px"><span class="num" style="font-size: 56px; line-height: 1">10</span><span style="font-size: 18px; font-weight: 700; color: #9BA3AF">Wdh.</span></div>
+        </div>
+      </div>
+      <div style="background: #14161A; border: 1px solid #2A2E36; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+        <div class="eyebrow">XXL — bricht in zwei Zeilen, kein Abschnitt</div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: baseline; gap: 8px"><span class="num" style="font-size: 68px; line-height: 1">80,0</span><span style="font-size: 24px; font-weight: 700; color: #9BA3AF">kg</span></div>
+          <div style="display: flex; align-items: baseline; gap: 8px"><span class="num" style="font-size: 68px; line-height: 1">10</span><span style="font-size: 24px; font-weight: 700; color: #9BA3AF">Wdh.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="note">Die Wertzeile ist ein vertikaler Stack, der ab XL umbricht statt zu skalieren. Bricht sie bei XXL ins Layout, ist das Layout falsch — nicht die Einstellung des Nutzers.</div>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- Bedienelemente -->
+  <div style="display: flex; flex-direction: column; gap: 18px">
+    <div class="sec">04 · Bedienelemente</div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div class="eyebrow">Hauptaktion · 64 pt</div>
+        <div style="height: 64px; border-radius: 16px; background: #D4FF3F; color: #0A0B0D; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center">Satz sichern</div>
+        <div class="note" style="font-size: 12px">Eine je Screen. 64 pt, weil sie im Stehen und mit nassen Händen getroffen wird.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div class="eyebrow">gedrückt</div>
+        <div style="height: 64px; border-radius: 16px; background: #A8CC2A; color: #0A0B0D; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center; transform: scale(.98)">Satz sichern</div>
+        <div class="note" style="font-size: 12px">Haptik zusätzlich, nie als einzige Rückmeldung.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div class="eyebrow">deaktiviert</div>
+        <div style="height: 64px; border-radius: 16px; background: #1D2026; color: #5C636E; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center">Satz sichern</div>
+        <div class="note" style="font-size: 12px">Nie stumm — daneben steht immer, was fehlt.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div class="eyebrow">Nebenaktion · 46–52 pt</div>
+        <div style="height: 52px; border-radius: 14px; border: 1px solid #2A2E36; color: #F2F4F7; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center">Übung wechseln</div>
+        <div class="note" style="font-size: 12px">Umriss statt Fläche. Kein zweites Volt.</div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 6px">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div class="eyebrow">Wert · antippen öffnet das Rad</div>
+        <div style="display: flex; flex-direction: column; gap: 7px; padding: 6px 0 2px">
+          <div style="display: flex; align-items: baseline; gap: 7px">
+            <span class="num" style="font-size: 52px; line-height: 1">80,0</span>
+            <span style="font-size: 17px; font-weight: 700; color: #9BA3AF">kg</span>
+          </div>
+          <div style="height: 4px; background: #D4FF3F; border-radius: 2px"></div>
+          <div class="num" style="font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #D4FF3F">Vorschlag · +2,5</div>
+        </div>
+        <div class="note" style="font-size: 12px">Kein Kasten, kein Eingabefeld. Die Linie ist Marke und Rastpunkt in einem.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div class="eyebrow">Problem melden (warn, nur Umriss)</div>
+        <div style="height: 52px; border-radius: 14px; border: 1px solid #FFB020; color: #FFB020; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 9px">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#FFB020" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5 2.8 20h18.4L12 4.5Z"/><path d="M12 10v4.2"/><path d="M12 17.3h.01"/></svg>
+          Problem melden
+        </div>
+        <div class="note" style="font-size: 12px">Feedback, kein Fehler — deshalb Umriss statt Fläche.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div class="eyebrow">Resttimer — Balken, kein Spinner</div>
+        <div style="background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><span class="eyebrow">Pause · 90 s</span><span class="num" style="font-size: 20px">01:12</span></div>
+          <div style="height: 6px; border-radius: 3px; background: #2A2E36; overflow: hidden"><div style="width: 80%; height: 100%; background: #D4FF3F"></div></div>
+        </div>
+        <div class="note" style="font-size: 12px">Er zeigt Restdauer, nicht Beschäftigung. Reduce Motion: Balken springt sekundenweise.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- Wertwahl -->
+  <div style="display: flex; flex-direction: column; gap: 18px">
+    <div class="sec">05 · Wertwahl — ein Tap, dann scrollen</div>
+    <div class="note" style="max-width: 780px">Gewicht und Wiederholungen stehen nackt auf der Fläche: große Zahl, darunter eine Linie. <strong style="color:#F2F4F7">Kein Kasten, kein Rahmen, kein Eingabefeld.</strong> Ein Tap auf eine der beiden Zahlen öffnet <strong style="color:#F2F4F7">beide Räder</strong> — danach wird nur noch gescrollt, ohne weiteren Tap und ohne Tastatur.</div>
+    <div class="note" style="max-width: 780px">Der Kniff: <strong style="color:#F2F4F7">die Linie bleibt liegen, die Zahlen ziehen daran vorbei.</strong> Es braucht keinen Auswahlbalken und keine Umrandung — die Unterstreichung, die im Ruhezustand schon den aktiven Wert markiert, ist im offenen Zustand die Rastmarke. Nach oben und unten laufen die Nachbarwerte in die Grundfläche aus.</div>
+    <div class="note" style="max-width: 780px"><strong style="color:#F2F4F7">Die Rastung kommt aus dem Gerät, nicht aus dem Entwurf</strong> — <span class="num" style="font-weight:700">equipment_models.weight_step_kg</span>. Dieselbe Daumenstrecke deckt an einer Beinpresse mit 2,5-kg-Platten eine andere Spanne ab als an einem Beinbeuger mit 5-kg-Platten. Wiederholungen rasten immer auf 1.</div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <span class="eyebrow" style="font-size: 10px">Beinpresse</span>
+          <span class="num" style="font-size: 12px; font-weight: 800; color: #D4FF3F">2,5 kg</span>
+        </div>
+        <div class="frad">
+          <div style="display: flex; flex-direction: column">
+            <div class="fr"><span class="num" style="font-size: 21px; color: #2A2E36">75,0</span></div>
+            <div class="fr"><span class="num" style="font-size: 24px; color: #5C636E">77,5</span></div>
+            <div style="height: 68px; display: flex; flex-direction: column; justify-content: center; gap: 6px">
+              <div style="display: flex; align-items: baseline; gap: 6px"><span class="num" style="font-size: 40px; line-height: 1">80,0</span><span style="font-size: 14px; font-weight: 700; color: #9BA3AF">kg</span></div>
+              <div style="height: 3px; background: #D4FF3F; border-radius: 2px"></div>
+            </div>
+            <div class="fr"><span class="num" style="font-size: 24px; color: #5C636E">82,5</span></div>
+            <div class="fr"><span class="num" style="font-size: 21px; color: #2A2E36">85,0</span></div>
+          </div>
+          <div class="ffT"></div>
+          <div class="ffB"></div>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <span class="eyebrow" style="font-size: 10px">Beinbeuger</span>
+          <span class="num" style="font-size: 12px; font-weight: 800; color: #D4FF3F">5,0 kg</span>
+        </div>
+        <div class="frad">
+          <div style="display: flex; flex-direction: column">
+            <div class="fr"><span class="num" style="font-size: 21px; color: #2A2E36">70,0</span></div>
+            <div class="fr"><span class="num" style="font-size: 24px; color: #5C636E">75,0</span></div>
+            <div style="height: 68px; display: flex; flex-direction: column; justify-content: center; gap: 6px">
+              <div style="display: flex; align-items: baseline; gap: 6px"><span class="num" style="font-size: 40px; line-height: 1">80,0</span><span style="font-size: 14px; font-weight: 700; color: #9BA3AF">kg</span></div>
+              <div style="height: 3px; background: #D4FF3F; border-radius: 2px"></div>
+            </div>
+            <div class="fr"><span class="num" style="font-size: 24px; color: #5C636E">85,0</span></div>
+            <div class="fr"><span class="num" style="font-size: 21px; color: #2A2E36">90,0</span></div>
+          </div>
+          <div class="ffT"></div>
+          <div class="ffB"></div>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <span class="eyebrow" style="font-size: 10px">Wiederholungen</span>
+          <span class="num" style="font-size: 12px; font-weight: 800; color: #D4FF3F">1</span>
+        </div>
+        <div class="frad">
+          <div style="display: flex; flex-direction: column">
+            <div class="fr"><span class="num" style="font-size: 21px; color: #2A2E36">8</span></div>
+            <div class="fr"><span class="num" style="font-size: 24px; color: #5C636E">9</span></div>
+            <div style="height: 68px; display: flex; flex-direction: column; justify-content: center; gap: 6px">
+              <div style="display: flex; align-items: baseline; gap: 6px"><span class="num" style="font-size: 40px; line-height: 1">10</span><span style="font-size: 14px; font-weight: 700; color: #9BA3AF">Wdh.</span></div>
+              <div style="height: 3px; background: #D4FF3F; border-radius: 2px"></div>
+            </div>
+            <div class="fr"><span class="num" style="font-size: 24px; color: #5C636E">11</span></div>
+            <div class="fr"><span class="num" style="font-size: 21px; color: #2A2E36">12</span></div>
+          </div>
+          <div class="ffT"></div>
+          <div class="ffB"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note" style="max-width: 780px">Das Rad ersetzt keinen Wert, es <strong style="color:#F2F4F7">zeigt die Nachbarn</strong>. Wer 80,0 sieht, sieht auch, dass der nächste Schritt 82,5 ist und nicht 81 — die Plattenabstufung des Geräts steht in der Bedienung statt in einer Fußnote, und ein Wert, den das Gerät nicht einstellen kann, wird strukturell unmöglich. Für VoiceOver ist jedes Rad ein Bereichsregler (<span class="num" style="font-weight:700">adjustable</span>): Auf und Ab gehen einen Geräteschritt und sagen den neuen Wert mit Einheit an.</div>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- Zustände -->
+  <div style="display: flex; flex-direction: column; gap: 18px">
+    <div class="sec">06 · Die fünf Zustände</div>
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px">
+      <div style="background: #14161A; border: 1px solid #2A2E36; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 148px">
+        <div class="eyebrow">Skelett</div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="height: 12px; width: 70%; border-radius: 6px; background: #1D2026"></div>
+          <div style="height: 12px; width: 45%; border-radius: 6px; background: #1D2026"></div>
+          <div style="height: 44px; border-radius: 10px; background: #1D2026"></div>
+        </div>
+        <div class="note" style="font-size: 11px; margin-top: auto">Nur für Medien. Werte kommen aus dem Prefetch und sind sofort da.</div>
+      </div>
+      <div style="background: #14161A; border: 1px solid #2A2E36; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 148px">
+        <div class="eyebrow">Leer</div>
+        <div style="font-size: 15px; font-weight: 700; line-height: 1.3">Noch kein Training</div>
+        <div class="note" style="font-size: 12px">Erklärt den nächsten Schritt, statt eine leere Statistik zu zeigen.</div>
+      </div>
+      <div style="background: #14161A; border: 1px solid #FF5A4E44; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 148px">
+        <div class="eyebrow" style="color: #FF5A4E">Offline</div>
+        <div style="font-size: 15px; font-weight: 700; line-height: 1.3; color: #F2F4F7">Satz gespeichert</div>
+        <div class="note" style="font-size: 12px">Wird gesendet, sobald du Empfang hast. Nie „fehlgeschlagen“ — er ist lokal sicher.</div>
+      </div>
+      <div style="background: #14161A; border: 1px solid #FF5A4E; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 148px">
+        <div class="eyebrow" style="color: #FF5A4E">Fehler</div>
+        <div style="font-size: 15px; font-weight: 700; line-height: 1.3">Gewicht liegt über dem Gerätemaximum</div>
+        <div class="note" style="font-size: 12px">Sagt, was falsch ist und was gilt — nie nur „ungültig“.</div>
+      </div>
+      <div style="background: #14161A; border: 1px solid #2A2E36; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 148px">
+        <div class="eyebrow">Deaktiviert</div>
+        <div style="font-size: 15px; font-weight: 700; line-height: 1.3; color: #5C636E">Gerät stillgelegt</div>
+        <div class="note" style="font-size: 12px">Geräte werden stillgelegt, nie gelöscht — ein Tag hing daran.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- Navigation + Produktgrenze -->
+  <div style="display: grid; grid-template-columns: 300px 1fr; gap: 32px; align-items: start">
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <div class="sec">07 · Tab-Leiste</div>
+      <div style="background: #0A0B0D; border: 1px solid #2A2E36; border-radius: 14px; padding: 12px 0 14px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr))">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; color: #5C636E">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+          <span style="font-size: 10px; font-weight: 700">Home</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; color: #D4FF3F">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6M7.5 6.5v11M16.5 6.5v11M20 9v6M7.5 12h9"/></svg>
+          <span style="font-size: 10px; font-weight: 700">Training</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; color: #5C636E">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.2" width="17" height="15.3" rx="2.6"/><path d="M8 3v4M16 3v4M3.5 10.2h17"/></svg>
+          <span style="font-size: 10px; font-weight: 700">Kurse</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; color: #5C636E">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.5 3.3-5.8 7.2-5.8s7.2 2.3 7.2 5.8"/></svg>
+          <span style="font-size: 10px; font-weight: 700">Profil</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; color: #2A2E36">
+          <div style="width: 22px; height: 22px; border: 1.5px dashed #2A2E36; border-radius: 6px"></div>
+          <span style="font-size: 10px; font-weight: 700">Plan</span>
+        </div>
+      </div>
+      <div class="note" style="font-size: 12px">Vier Tabs gebaut. <strong style="color:#F2F4F7">Plan</strong> (M3) ist Platz in der Struktur, nicht in der App — er erscheint erst, wenn er Inhalt hat. Der Geräte-Screen ist kein Tab: er öffnet immer in Training.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <div class="sec">08 · Produktgrenze — sichtbarer Baustein</div>
+      <div style="background: #14161A; border: 1px solid #2A2E36; border-radius: 12px; padding: 18px 20px; display: flex; gap: 14px; align-items: flex-start">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9BA3AF" stroke-width="1.8" stroke-linecap="round" style="flex: none; margin-top: 2px"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.6h.01"/></svg>
+        <div class="note" style="font-size: 13px">gymodo misst nichts. Angezeigt wird ausschließlich, was du selbst bestätigt hast. Einweisungsvideos und Einstellhinweise sind Inhalte deines Studios, keine Trainings- oder Gesundheitsempfehlung von gymodo.</div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 4px">
+        <div style="border: 1px solid #2A2E36; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+          <div class="eyebrow">Abstände</div>
+          <div class="num" style="font-size: 15px; font-weight: 700">4 · 8 · 12 · 16 · 24 · 32 · 48</div>
+        </div>
+        <div style="border: 1px solid #2A2E36; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+          <div class="eyebrow">Radius</div>
+          <div class="num" style="font-size: 15px; font-weight: 700">12 Karte · 16 Aktion · Pille</div>
+        </div>
+        <div style="border: 1px solid #2A2E36; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+          <div class="eyebrow">Trefferfläche</div>
+          <div class="num" style="font-size: 15px; font-weight: 700">≥ 44 pt · Hauptaktion 64</div>
+        </div>
+      </div>
+      <div class="note" style="font-size: 12px">Alles Bedienbare liegt im unteren Drittel — die App wird einhändig bedient, während die andere Hand am Gerät liegt.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

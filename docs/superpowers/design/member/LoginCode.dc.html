@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0A0B0D; color: #F2F4F7; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+    a { color: #D4FF3F; text-decoration: none; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .sep { height: 1px; background: #2A2E36; }
+    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
+    .tab.on { color: #D4FF3F; }
+  </style>
+</helmet>
+<div class="ph"><div style="height: 54px; flex: none;"></div><div style="flex: none; height: 44px; padding: 0 20px; display: flex; align-items: center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5-7 7 7 7"/></svg></div>
+  <div style="flex: none; padding: 26px 28px 0; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 32px; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; line-height: 1.02;">E-Mail bestätigen</div>
+    <div style="font-size: 13px; line-height: 1.5; color: #9BA3AF;">Code gesendet an <span style="color: #F2F4F7; font-weight: 600;">lena.wagner@example.de</span></div>
+  </div>
+<div style="flex: none; padding: 34px 28px 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 9px;"><div class="num" style="height: 66px; border-radius: 13px; background: #14161A; border: 1px solid #2A2E36; display: flex; align-items: center; justify-content: center; font-size: 28px;">4</div><div class="num" style="height: 66px; border-radius: 13px; background: #14161A; border: 1px solid #2A2E36; display: flex; align-items: center; justify-content: center; font-size: 28px;">1</div><div class="num" style="height: 66px; border-radius: 13px; background: #14161A; border: 1px solid #2A2E36; display: flex; align-items: center; justify-content: center; font-size: 28px;">9</div><div class="num" style="height: 66px; border-radius: 13px; background: #14161A; border: 1px solid #2A2E36; display: flex; align-items: center; justify-content: center; font-size: 28px;">7</div><div class="num" style="height: 66px; border-radius: 13px; background: #14161A; border: 1.5px solid #D4FF3F; display: flex; align-items: center; justify-content: center; font-size: 28px;"><span style="width: 2px; height: 28px; background: #D4FF3F;"></span></div><div style="height: 66px; border-radius: 13px; background: #14161A; border: 1px solid #2A2E36; display: flex; align-items: center; justify-content: center; font-size: 28px;"></div></div>
+  <div style="flex: none; padding: 22px 28px 0; display: flex; align-items: center; gap: 8px;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+    <span style="font-size: 13px; color: #5C636E;">Neuen Code anfordern in <span class="num" style="font-weight: 700; color: #9BA3AF;">00:42</span></span>
+  </div>
+<div style="flex-grow: 1;"></div>
+  <div style="flex: none; margin: 0 28px 20px; background: #14161A; border: 1px solid #2A2E36; border-radius: 12px; padding: 15px 16px; display: flex; gap: 12px; align-items: flex-start;">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9BA3AF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.4"/><path d="m3.8 7 8.2 6 8.2-6"/></svg>
+    <div style="font-size: 13px; line-height: 1.5; color: #9BA3AF;">Keine Mail bekommen? Sieh im Spam-Ordner nach. Der Code ist eine Stunde gültig.</div>
+  </div>
+
+  <div style="flex: none; padding: 0 28px 20px;">
+    <div style="height: 64px; border-radius: 16px; background: #1D2026; color: #5C636E; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center;">Bestätigen</div>
+    <div style="font-size: 12px; color: #5C636E; padding-top: 9px; text-align: center;">Noch zwei Ziffern</div>
+  </div>
+</div></x-dc>
+</body>
+</html>

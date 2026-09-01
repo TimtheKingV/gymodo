@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .row { padding: 13px 16px; display: flex; align-items: center; gap: 12px; }
+    .card { background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; overflow: hidden; }
+    .sep { height: 1px; background: #2A2E36; }
+    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
+    .tab.on { color: #D4FF3F; }
+  </style>
+</helmet>
+
+<div class="ph">
+  <div style="height: 54px; flex: none"></div>
+
+  <div style="flex: none; padding: 14px 20px 0; display: flex; align-items: baseline; justify-content: space-between">
+    <div style="font-size: 32px; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; line-height: 1">Hallo Lena</div>
+    <div class="eyebrow">Kraftwerk Nord</div>
+  </div>
+
+  <!-- Kopfzeile -->
+  <div style="flex: none; padding: 20px 20px 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+    <div style="background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; padding: 13px 14px; display: flex; flex-direction: column; gap: 4px">
+      <div class="num" style="font-size: 26px; color: #D4FF3F">2</div>
+      <div class="eyebrow" style="font-size: 10px">diese Woche</div>
+    </div>
+    <div style="background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; padding: 13px 14px; display: flex; flex-direction: column; gap: 4px">
+      <div class="num" style="font-size: 26px">34</div>
+      <div class="eyebrow" style="font-size: 10px">gesamt</div>
+    </div>
+    <div style="background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; padding: 13px 14px; display: flex; flex-direction: column; gap: 4px">
+      <div class="num" style="font-size: 26px">3</div>
+      <div class="eyebrow" style="font-size: 10px">Tage her</div>
+    </div>
+  </div>
+
+  <!-- Letzte Trainings -->
+  <div style="flex: none; padding: 26px 20px 0; display: flex; flex-direction: column; gap: 11px">
+    <div class="eyebrow">Letzte Trainings</div>
+    <div class="card">
+      <div class="row">
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+          <div style="font-size: 15px; font-weight: 700">Donnerstag, 27. August</div>
+          <div class="num" style="font-size: 12px; font-weight: 700; color: #5C636E">47 min · 3 Geräte · 8 Sätze</div>
+        </div>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+      </div>
+      <div class="sep"></div>
+      <div class="row">
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+          <div style="font-size: 15px; font-weight: 700">Dienstag, 25. August</div>
+          <div class="num" style="font-size: 12px; font-weight: 700; color: #5C636E">52 min · 4 Geräte · 11 Sätze</div>
+        </div>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+      </div>
+      <div class="sep"></div>
+      <div class="row">
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+          <div style="display: flex; align-items: center; gap: 8px">
+            <span style="font-size: 15px; font-weight: 700">Samstag, 22. August</span>
+            <span style="font-size: 10px; font-weight: 800; letter-spacing: .08em; color: #5C636E; border: 1px solid #2A2E36; border-radius: 5px; padding: 2px 5px">AUTO BEENDET</span>
+          </div>
+          <div class="num" style="font-size: 12px; font-weight: 700; color: #5C636E">2 Geräte · 5 Sätze</div>
+        </div>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Uebungsfortschritt -->
+  <div style="flex: none; padding: 24px 20px 0; display: flex; flex-direction: column; gap: 11px">
+    <div class="eyebrow">Übungsfortschritt · letzte 3 Monate</div>
+    <div class="card">
+      <div class="row">
+        <div style="flex-grow: 1; font-size: 15px; font-weight: 700">Beinpresse · Beidbeinig</div>
+        <div style="display: flex; align-items: baseline; gap: 5px; flex: none">
+          <span class="num" style="font-size: 17px">80,0</span>
+          <span style="font-size: 11px; font-weight: 700; color: #9BA3AF">kg</span>
+          <span class="num" style="font-size: 12px; font-weight: 800; color: #D4FF3F; margin-left: 5px">+15,0</span>
+        </div>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+      </div>
+      <div class="sep"></div>
+      <div class="row">
+        <div style="flex-grow: 1; font-size: 15px; font-weight: 700">Latzug · Breiter Griff</div>
+        <div style="display: flex; align-items: baseline; gap: 5px; flex: none">
+          <span class="num" style="font-size: 17px">45,0</span>
+          <span style="font-size: 11px; font-weight: 700; color: #9BA3AF">kg</span>
+          <span class="num" style="font-size: 12px; font-weight: 800; color: #D4FF3F; margin-left: 5px">+2,5</span>
+        </div>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+      </div>
+      <div class="sep"></div>
+      <div class="row">
+        <div style="flex-grow: 1; font-size: 15px; font-weight: 700">Beinbeuger · Liegend</div>
+        <div style="display: flex; align-items: baseline; gap: 5px; flex: none">
+          <span class="num" style="font-size: 17px">35,0</span>
+          <span style="font-size: 11px; font-weight: 700; color: #9BA3AF">kg</span>
+          <span class="num" style="font-size: 12px; font-weight: 800; color: #5C636E; margin-left: 5px">±0</span>
+        </div>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1"></div>
+
+  <div class="tabs">
+    <div class="tab on">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+      Home
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9v6M7.5 6.5v11M16.5 6.5v11M20 9v6M7.5 12h9"/></svg>
+      Training
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.2" width="17" height="15.3" rx="2.6"/><path d="M8 3v4M16 3v4M3.5 10.2h17"/></svg>
+      Kurse
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.5 3.3-5.8 7.2-5.8s7.2 2.3 7.2 5.8"/></svg>
+      Profil
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

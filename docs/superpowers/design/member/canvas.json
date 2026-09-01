@@ -1,0 +1,386 @@
+{
+  "artboards": [
+    {
+      "file": "Fundament.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 900,
+      "h": 3300,
+      "title": "00 · Design-Fundament"
+    },
+    {
+      "file": "LoginMail.dc.html",
+      "x": 0,
+      "y": 3760,
+      "w": 393,
+      "h": 852,
+      "title": "01 · Login — E-Mail"
+    },
+    {
+      "file": "LoginCode.dc.html",
+      "x": 473,
+      "y": 3760,
+      "w": 393,
+      "h": 852,
+      "title": "02 · E-Mail bestätigen"
+    },
+    {
+      "file": "GeraetErkannt.dc.html",
+      "x": 0,
+      "y": 4992,
+      "w": 393,
+      "h": 852,
+      "title": "03 · Gerät erkannt — Foto und Übungswahl"
+    },
+    {
+      "file": "Main.dc.html",
+      "x": 473,
+      "y": 4992,
+      "w": 393,
+      "h": 852,
+      "title": "04 · Gerät — Satz"
+    },
+    {
+      "file": "GeraetWertRad.dc.html",
+      "x": 946,
+      "y": 4992,
+      "w": 393,
+      "h": 852,
+      "title": "05 · Gerät — Werte scrollen"
+    },
+    {
+      "file": "GeraetResttimer.dc.html",
+      "x": 1419,
+      "y": 4992,
+      "w": 393,
+      "h": 852,
+      "title": "06 · Gerät — nach dem Satz"
+    },
+    {
+      "file": "GeraetEinweisung.dc.html",
+      "x": 1892,
+      "y": 4992,
+      "w": 393,
+      "h": 852,
+      "title": "07 · Erstkontakt — Einweisung"
+    },
+    {
+      "file": "GeraetKalibrierung.dc.html",
+      "x": 2365,
+      "y": 4992,
+      "w": 393,
+      "h": 852,
+      "title": "08 · Erstkontakt — Kalibrierung"
+    },
+    {
+      "file": "GeraetErsteWerte.dc.html",
+      "x": 2838,
+      "y": 4992,
+      "w": 393,
+      "h": 852,
+      "title": "09 · Erstkontakt — erste Werte"
+    },
+    {
+      "file": "GeraetUebungWechseln.dc.html",
+      "x": 3311,
+      "y": 4992,
+      "w": 393,
+      "h": 852,
+      "title": "10 · Gerät — Übung wechseln"
+    },
+    {
+      "file": "GeraetProblem.dc.html",
+      "x": 3784,
+      "y": 4992,
+      "w": 393,
+      "h": 852,
+      "title": "11 · Gerät — Problemmeldung"
+    },
+    {
+      "file": "GeraetOffline.dc.html",
+      "x": 4257,
+      "y": 4992,
+      "w": 393,
+      "h": 852,
+      "title": "12 · Gerät — ohne Empfang"
+    },
+    {
+      "file": "TrainingLeer.dc.html",
+      "x": 0,
+      "y": 6224,
+      "w": 393,
+      "h": 852,
+      "title": "13 · Training — kein Training aktiv"
+    },
+    {
+      "file": "TrainingLaeuft.dc.html",
+      "x": 473,
+      "y": 6224,
+      "w": 393,
+      "h": 852,
+      "title": "14 · Training — läuft"
+    },
+    {
+      "file": "TrainingScan.dc.html",
+      "x": 946,
+      "y": 6224,
+      "w": 393,
+      "h": 852,
+      "title": "15 · Training — Gerät finden"
+    },
+    {
+      "file": "TrainingAbschluss.dc.html",
+      "x": 1419,
+      "y": 6224,
+      "w": 393,
+      "h": 852,
+      "title": "16 · Training — Abschluss"
+    },
+    {
+      "file": "Kurse.dc.html",
+      "x": 0,
+      "y": 7456,
+      "w": 393,
+      "h": 852,
+      "title": "17 · Kurse — Wochenplan"
+    },
+    {
+      "file": "KursDetail.dc.html",
+      "x": 473,
+      "y": 7456,
+      "w": 393,
+      "h": 852,
+      "title": "18 · Kurs — Detail und Anmeldung"
+    },
+    {
+      "file": "KurseMeine.dc.html",
+      "x": 946,
+      "y": 7456,
+      "w": 393,
+      "h": 852,
+      "title": "19 · Kurse — meine Anmeldungen"
+    },
+    {
+      "file": "HomeLeer.dc.html",
+      "x": 0,
+      "y": 8688,
+      "w": 393,
+      "h": 852,
+      "title": "20 · Home — Erstnutzer"
+    },
+    {
+      "file": "Home.dc.html",
+      "x": 473,
+      "y": 8688,
+      "w": 393,
+      "h": 852,
+      "title": "21 · Home"
+    },
+    {
+      "file": "SessionDetail.dc.html",
+      "x": 946,
+      "y": 8688,
+      "w": 393,
+      "h": 852,
+      "title": "22 · Session-Detail"
+    },
+    {
+      "file": "Uebungsfortschritt.dc.html",
+      "x": 1419,
+      "y": 8688,
+      "w": 393,
+      "h": 852,
+      "title": "23 · Übungsfortschritt"
+    },
+    {
+      "file": "Profil.dc.html",
+      "x": 0,
+      "y": 9920,
+      "w": 393,
+      "h": 852,
+      "title": "24 · Profil"
+    },
+    {
+      "file": "FallbackGeraet.dc.html",
+      "x": 473,
+      "y": 9920,
+      "w": 390,
+      "h": 844,
+      "title": "25 · Web-Fallback — Gerät erkannt"
+    },
+    {
+      "file": "FallbackInaktiv.dc.html",
+      "x": 946,
+      "y": 9920,
+      "w": 390,
+      "h": 844,
+      "title": "26 · Web-Fallback — Code nicht aktiv"
+    },
+    {
+      "file": "MemberRegistrieren.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "01 · Registrieren",
+      "page": "zugang"
+    },
+    {
+      "file": "MemberPasswort.dc.html",
+      "x": 473,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "02 · Passwort — vergessen und zurücksetzen",
+      "page": "zugang"
+    },
+    {
+      "file": "MemberKeinStudio.dc.html",
+      "x": 946,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "03 · Noch kein Studio",
+      "page": "zugang"
+    },
+    {
+      "file": "MemberPasswortAendern.dc.html",
+      "x": 1419,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "04 · Profil — Passwort ändern",
+      "page": "zugang"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "hdr-fundament",
+      "x": 0,
+      "y": -280,
+      "w": 900,
+      "text": "00 — FUNDAMENT\nAlle Werte werden hier einmal festgelegt. Jedes andere Artboard zieht ausschließlich daraus; kein Wert wird zweimal frei erfunden."
+    },
+    {
+      "id": "hdr-einstieg",
+      "x": 0,
+      "y": 3480,
+      "w": 440,
+      "text": "01 — EINSTIEG\nLogin per E-Mail und Passwort. Der Code auf 02 verifiziert danach nur noch einmalig die Adresse, bei der Registrierung — er ist kein Anmeldeweg mehr (Seite „Zugang“). Ein Tag-Tap vor dem Login geht nicht verloren: er wird als Pending-Route gehalten und danach fortgesetzt."
+    },
+    {
+      "id": "note-otp",
+      "x": 473,
+      "y": 3480,
+      "w": 393,
+      "text": "Zielzustand. In Produktion verschickt Supabase (Free Tier) aktuell einen Magic Link statt des sechsstelligen Verifizierungscodes bei der Registrierung. Fix: Custom-SMTP oder Supabase Pro — gehört nicht ins Design."
+    },
+    {
+      "id": "hdr-geraet",
+      "x": 0,
+      "y": 4712,
+      "w": 900,
+      "text": "02 — GERÄT · das Herzstück\nNach dem Tap entscheidet die eigene Historie, wo man landet:\n• Erstkontakt → 03 erkannt → 07 Einweisung → 08 Kalibrierung → 09 erste Werte → 04 Satz\n• genau ein Besuch bisher → 03, die Optionen bleiben sichtbar\n• ab zwei Besuchen, mehrere Übungen genutzt → 03, die zuletzt genutzte oben\n• ab zwei Besuchen, immer dieselbe Übung → direkt auf 04\nDas ändert Spec §5.7: dort wurde die Auswahl schon übersprungen, sobald ein Gerät nur eine Übung hat. Jetzt entscheidet die Gewohnheit des Mitglieds, nicht der Katalog des Studios — und das Foto bestätigt in einer Sekunde, dass man am richtigen Gerät steht."
+    },
+    {
+      "id": "note-rad",
+      "x": 946,
+      "y": 4712,
+      "w": 393,
+      "text": "Ein Tap auf eine der beiden Zahlen öffnet BEIDE Räder — danach wird nur noch gescrollt, ohne weiteren Tap. Kein Kasten, kein Auswahlbalken: die Linie bleibt liegen, die Zahlen ziehen daran vorbei. Die Rastung kommt aus equipment_models.weight_step_kg, nicht aus dem Entwurf."
+    },
+    {
+      "id": "note-modal",
+      "x": 1892,
+      "y": 4712,
+      "w": 866,
+      "text": "Der Erstkontakt (07–09) ist ein modaler Dreischritt ohne Tab-Leiste — man kommt hier nur vorwärts oder ganz raus. Er läuft genau einmal je Gerät und Übung. Variante ohne Video: Schritt 1 funktioniert vollständig, es fehlt nur der Player. Vollständigkeit wird nie erzwungen."
+    },
+    {
+      "id": "note-erstwerte",
+      "x": 2838,
+      "y": 4712,
+      "w": 393,
+      "text": "Beim ersten Mal schlägt gymodo bewusst KEIN Gewicht vor — es hat keine Historie, und ein Vorschlag ohne Daten wäre eine Trainingsempfehlung. Das Rad startet am Gerätminimum, das Mitglied stellt selbst ein. Ab dem zweiten Mal entfällt dieser Schritt: die Werte stehen dann direkt auf 04."
+    },
+    {
+      "id": "note-wechseln",
+      "x": 3311,
+      "y": 4712,
+      "w": 393,
+      "text": "Übung wechseln mitten in der Session — anders als 03, der beim Betreten des Geräts läuft. Wichtig: ein Wechsel öffnet einen neuen Block, die bisherigen Sätze bleiben. Ohne diesen Satz im Text hält man es für einen Verlust."
+    },
+    {
+      "id": "note-art9",
+      "x": 3784,
+      "y": 4712,
+      "w": 393,
+      "text": "Kein Freitextfeld — mit Absicht. Freitext über Schmerzen wären Art.-9-Daten. Ein Feld, das nicht existiert, muss nicht geschützt, exportiert oder gelöscht werden."
+    },
+    {
+      "id": "hdr-training",
+      "x": 0,
+      "y": 5944,
+      "w": 440,
+      "text": "03 — TRAINING\nKein Startknopf: die Session entsteht mit dem ersten gesicherten Satz. Ende explizit — oder träge nach vier Stunden ohne Satz, dann als „auto beendet“ gekennzeichnet."
+    },
+    {
+      "id": "note-qr-pivot",
+      "x": 946,
+      "y": 5944,
+      "w": 393,
+      "text": "Hier entscheidet sich NFC-first vs. QR-first. Beide Wege stehen gleichwertig nebeneinander — fällt der Trefferquoten-Test (M0 Task 8) durch, kostet der Schwenk nur Text, kein Redesign."
+    },
+    {
+      "id": "hdr-kurse",
+      "x": 0,
+      "y": 7176,
+      "w": 900,
+      "text": "04 — KURSE · neu, und ein echter Scope-Zuwachs\nJedes Studio hat Kurse, also bekommt gymodo den vierten Tab. Nur: dafür gibt es noch keine einzige Tabelle und keinen Endpoint. Was fehlt, steht in docs/superpowers/plans/2026-08-30-kurse-datenmodell.md — Kursvorlagen, Termine, Anmeldungen mit Warteliste, Platzvergabe unter Nebenläufigkeit. Bewusst noch nicht gebaut. Diese drei Artboards sind Entwurf, kein Versprechen."
+    },
+    {
+      "id": "hdr-home",
+      "x": 0,
+      "y": 8408,
+      "w": 440,
+      "text": "05 — HOME\nEinstieg ohne laufende Session. Der eigene Fortschritt ist Motivation für das Mitglied und Vorführmaterial für den Betreibertermin — deshalb ist er in M1 dabei."
+    },
+    {
+      "id": "note-achse",
+      "x": 1419,
+      "y": 8408,
+      "w": 393,
+      "text": "Die Achse beginnt nicht bei null: Trainingsgewichte bewegen sich in einem schmalen Band, eine Nullachse macht jeden Fortschritt unsichtbar. Darunter stehen die Rohwerte — die Kurve muss nachprüfbar bleiben, weil die Plattform nichts misst."
+    },
+    {
+      "id": "hdr-profil",
+      "x": 0,
+      "y": 9640,
+      "w": 440,
+      "text": "06 — PROFIL UND WEB-FALLBACK\nDer Fallback ist kein Hinweisschild, sondern ein Funnel: erst der Nutzen (Einweisung, läuft auch auf Android), dann die Installationsaufforderung."
+    },
+    {
+      "id": "note-neutral",
+      "x": 946,
+      "y": 9640,
+      "w": 390,
+      "text": "Unbekannt, ungültig und gesperrt liefern dieselbe Antwort. Das ist eine Sicherheitsanforderung: differenziert die Seite, lassen sich gültige Tokens durch Ausprobieren finden."
+    },
+    {
+      "id": "hdr-zugang",
+      "x": 0,
+      "y": -280,
+      "w": 1812,
+      "page": "zugang",
+      "text": "ZUGANG · neu\nSelbstregistrierung, Passwort und Studio-Beitritt. 03 ist der wichtigste der vier: was ein frisch registriertes Mitglied ohne Studio sieht, ohne Tab-Leiste. Die Anmeldung selbst (E-Mail + Passwort) und die Verifikation (der sechsstellige Code — jetzt eine einmalige Adressbestätigung, kein Anmeldeweg mehr) liegen auf der Seite „App“, Artboards 01/02."
+    }
+  ],
+  "pages": [
+    { "id": "app", "name": "App" },
+    { "id": "zugang", "name": "Zugang" }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "zugang"
+  }
+}

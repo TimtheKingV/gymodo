@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0A0B0D; color: #F2F4F7; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+    a { color: #D4FF3F; text-decoration: none; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .sep { height: 1px; background: #2A2E36; }
+    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
+    .tab.on { color: #D4FF3F; }
+  </style>
+</helmet>
+<div class="ph"><div style="height: 54px; flex: none;"></div><div style="flex: none; height: 44px; padding: 0 20px; display: flex; align-items: center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5-7 7 7 7"/></svg></div><div style="flex: none; padding: 26px 28px 0; display: flex; flex-direction: column; gap: 10px;"><div style="font-size: 32px; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; line-height: 1.02;">Passwort</div><div style="font-size: 13px; line-height: 1.5; color: #9BA3AF;">Fordere einen Link an, oder setze ein neues, wenn du schon einen hast.</div></div><div style="flex: none; padding: 28px 28px 0;"><span class="eyebrow">Vergessen</span></div><div style="flex: none; padding: 0 28px; display: flex; flex-direction: column; gap: 9px; margin-top: 9px;"><span class="eyebrow">E-Mail-Adresse</span><div style="height: 58px; border-radius: 14px; background: #14161A; border: 1px solid #2A2E36; padding: 0 17px; display: flex; align-items: center; gap: 2px; font-size: 18px; font-weight: 600;"><span style="font-size: 18px; font-weight: 600;">lena.wagner@example.de</span></div></div>
+  <div style="flex: none; padding: 14px 28px 0; display: flex; align-items: center; gap: 8px;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4FF3F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.2"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/></svg>
+    <a href="#" style="font-size: 13px;">Link anfordern</a>
+  </div>
+  <div style="flex: none; padding: 6px 28px 0;"><div style="font-size: 12px; line-height: 1.5; color: #5C636E;">Wenn es zu dieser Adresse ein Konto gibt, ist die Mail unterwegs.</div></div>
+<div style="flex: none; margin: 24px 28px 0;" class="sep"></div><div style="flex: none; padding: 22px 28px 0;"><span class="eyebrow">Zurücksetzen</span></div><div style="flex: none; padding: 0 28px; display: flex; flex-direction: column; gap: 9px; margin-top: 9px;"><span class="eyebrow">Neues Passwort</span><div style="height: 58px; border-radius: 14px; background: #14161A; border: 1px solid #2A2E36; padding: 0 17px; display: flex; align-items: center; gap: 2px; font-size: 18px; font-weight: 600;"><span style="font-size: 18px; font-weight: 600; letter-spacing: .28em;">••••••••••</span></div></div><div style="flex: none; padding: 0 28px; display: flex; flex-direction: column; gap: 9px; margin-top: 20px;"><span class="eyebrow">Wiederholen</span><div style="height: 58px; border-radius: 14px; background: #14161A; border: 1px solid #2A2E36; padding: 0 17px; display: flex; align-items: center; gap: 2px; font-size: 18px; font-weight: 600;"><span style="font-size: 18px; font-weight: 600; letter-spacing: .28em;">••••••••••</span></div></div><div style="flex-grow: 1;"></div><div style="flex: none; padding: 0 28px 20px;"><div style="height: 64px; border-radius: 16px; background: #D4FF3F; color: #0A0B0D; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center;">Passwort speichern</div></div></div></x-dc>
+</body>
+</html>

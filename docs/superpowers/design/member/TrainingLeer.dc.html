@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
+    .tab.on { color: #D4FF3F; }
+  </style>
+</helmet>
+
+<div class="ph">
+  <div style="height: 54px; flex: none"></div>
+
+  <div style="flex: none; padding: 14px 20px 0">
+    <div style="font-size: 32px; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; line-height: 1">Training</div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 32px; gap: 26px">
+
+    <!-- NFC-Zeichnung -->
+    <div style="width: 148px; height: 148px; border-radius: 50%; border: 1px solid #2A2E36; display: flex; align-items: center; justify-content: center; position: relative">
+      <div style="position: absolute; width: 108px; height: 108px; border-radius: 50%; border: 1px solid #1D2026"></div>
+      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#D4FF3F" stroke-width="1.6" stroke-linecap="round">
+        <path d="M7.5 8.5a5 5 0 0 1 0 7"/>
+        <path d="M11.5 5.5a10 10 0 0 1 0 13"/>
+        <path d="M15.5 2.5a15 15 0 0 1 0 19"/>
+      </svg>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 11px; text-align: center">
+      <div style="font-size: 25px; font-weight: 900; letter-spacing: -.025em; text-transform: uppercase; line-height: 1.08">Halt dein iPhone<br>an den Aufkleber</div>
+      <div style="font-size: 15px; line-height: 1.5; color: #9BA3AF">Am Gerät klebt ein Aufkleber mit dem gymodo-Zeichen. Dein Training startet von selbst, sobald du den ersten Satz sicherst — es gibt keinen Startknopf.</div>
+    </div>
+
+  </div>
+
+  <div style="flex: none; padding: 0 20px 16px; display: flex; flex-direction: column; gap: 12px">
+    <div style="height: 60px; border-radius: 16px; border: 1px solid #2A2E36; color: #F2F4F7; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><path d="M13.5 13.5h3v3"/><path d="M20.5 20.5h-3v-3"/></svg>
+      QR-Code am Gerät scannen
+    </div>
+    <div style="font-size: 12px; color: #5C636E; text-align: center; line-height: 1.45">Auf jedem Aufkleber ist beides — antippen oder scannen, gleiches Ergebnis.</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+      Home
+    </div>
+    <div class="tab on">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9v6M7.5 6.5v11M16.5 6.5v11M20 9v6M7.5 12h9"/></svg>
+      Training
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.2" width="17" height="15.3" rx="2.6"/><path d="M8 3v4M16 3v4M3.5 10.2h17"/></svg>
+      Kurse
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.5 3.3-5.8 7.2-5.8s7.2 2.3 7.2 5.8"/></svg>
+      Profil
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
