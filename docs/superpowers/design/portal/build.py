@@ -103,7 +103,7 @@ def rail(active):
         ])
         + gruppe('Katalog', [
             nav_item('Geräte', '4 · 2 erreichbar', active == 'geraete'),
-            nav_item('Tags', '1 vorrätig', active == 'tags'),
+            nav_item('Tags', '97 vorrätig', active == 'tags'),
         ])
         + gruppe('Verwaltung', [
             nav_item('Leute', '24 Mitglieder · 4 Mitarbeiter', active == 'leute'),
@@ -174,3 +174,196 @@ def reiter(items, aktiv):
                    % (rand, farbe, name, m))
     return ('<div style="display: flex; gap: 4px; margin-top: 24px; '
             'border-bottom: 1px solid #2a2e36;">%s</div>' % ''.join(aus))
+
+
+# ---------------------------------------------------------------- Telefon
+# Der Einrichtungsgang laeuft auf dem Trainerhandy, 390 px breit. Die
+# Bausteine stehen hier und nicht in gen_telefon.py, weil sie dort dieselbe
+# Rolle spielen wie rail() am Schreibtisch: sie stehen auf jedem Bildschirm
+# gleich, und von Hand waere jede Korrektur dreizehnmal dieselbe Aenderung.
+#
+# Eine Konvention, auf der die Pruefung des Designsystems aufsetzt:
+#   background: #d4ff3f        -- Aktionsflaeche, hoechstens eine je Artboard
+#   background-color: #d4ff3f  -- Akzent als *Wert* (Balken, Punkt, Marke)
+# Beides ist dieselbe Farbe; die Schreibweise trennt die beiden Rollen, die
+# das Designsystem ohnehin trennt, und macht "genau eine Akzentflaeche je
+# Bildschirm" ueberhaupt erst pruefbar.
+
+PHONE_W = 390
+
+NOTE = 'font-size: 12px; color: #5c636e; line-height: 1.4;'
+CHIP = ('display: inline-flex; align-items: center; flex: 0 0 auto; padding: 8px 16px; '
+        'border-radius: 999px; background: #1d2026; color: #9ba3af; font-weight: 600; '
+        'font-size: 13px; white-space: nowrap;')
+CHIP_AKTIV = CHIP.replace('color: #9ba3af;', 'color: #f2f4f7;') + ' box-shadow: inset 0 0 0 1px #d4ff3f;'
+
+# Trefferflaechen in der Halle sind groesser als am Schreibtisch: die App
+# wird einhaendig bedient, oft mit feuchten Haenden (Designsystem 1).
+PRIMARY_XL = PRIMARY.replace('height: 44px;', 'height: 56px;') + ' width: 100%;'
+SECONDARY_TEL = SECONDARY.replace('height: 40px;', 'height: 48px;')
+SECONDARY_XL = SECONDARY_TEL + ' width: 100%;'
+DESTRUCTIVE_XL = DESTRUCTIVE.replace('height: 40px;', 'height: 48px;') + ' width: 100%;'
+FIELD_XL = FIELD.replace('min-height: 44px;', 'min-height: 52px;') + ' width: 100%;'
+
+_SVG_PFADE.update({
+    'qr': ('<rect x="3" y="3" width="7" height="7" rx="1"></rect>'
+           '<rect x="14" y="3" width="7" height="7" rx="1"></rect>'
+           '<rect x="3" y="14" width="7" height="7" rx="1"></rect>'
+           '<path d="M14 14h3v3h-3z"></path><path d="M20.5 14v3"></path>'
+           '<path d="M14 20.5h3"></path><path d="M20.5 20.5h.01"></path>'),
+    'camera': ('<path d="M3 8a2 2 0 0 1 2-2h2l1.4-2h7.2L17 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5'
+               'a2 2 0 0 1-2-2z"></path><circle cx="12" cy="12.5" r="3.5"></circle>'),
+    'video': '<path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2"></rect>',
+    'check': '<path d="M20 6L9 17l-5-5"></path>',
+    'alert': ('<circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5"></path>'
+              '<path d="M12 16.2h.01"></path>'),
+    'plus': '<path d="M12 5v14"></path><path d="M5 12h14"></path>',
+    'close': '<path d="M6 6l12 12"></path><path d="M18 6L6 18"></path>',
+    'grip': ('<path d="M9 6h.01"></path><path d="M15 6h.01"></path><path d="M9 12h.01"></path>'
+             '<path d="M15 12h.01"></path><path d="M9 18h.01"></path><path d="M15 18h.01"></path>'),
+    'search': '<circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.6-3.6"></path>',
+    'tag': ('<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 12.2V5a2 2 0 0 1 2-2'
+            'h7.2a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8z"></path><path d="M7.6 7.6h.01"></path>'),
+    'image': ('<rect x="3" y="4" width="18" height="16" rx="2"></rect>'
+              '<circle cx="8.5" cy="9.5" r="1.5"></circle><path d="M21 15.5l-4.5-4.5-9 9"></path>'),
+    'offline': ('<path d="M2 2l20 20"></path><path d="M5 12.6a11 11 0 0 1 4-2.6"></path>'
+                '<path d="M1.6 8.6a16 16 0 0 1 5-3.2"></path><path d="M17.4 5.4a16 16 0 0 1 5 3.2"></path>'
+                '<path d="M15 10a11 11 0 0 1 4 2.6"></path><path d="M8.8 16.3a6 6 0 0 1 6.4 0"></path>'
+                '<path d="M12 20h.01"></path>'),
+})
+
+_TEL_CHIPS = ('Überblick', 'Kurse', 'Geräte', 'Tags', 'Leute', 'Einstellungen')
+
+
+def telefon(hoehe, inhalt, aktiv='Geräte'):
+    """Rahmen eines Telefon-Artboards: Studiokopf, Chipnavigation, Inhalt."""
+    chips = ''.join('<span style="%s">%s</span>' % (CHIP_AKTIV if n == aktiv else CHIP, n)
+                    for n in _TEL_CHIPS)
+    return (HEAD
+            + '<div style="min-height: %dpx; background: #0a0b0d;">' % hoehe
+            + '<div style="border-bottom: 1px solid #2a2e36; background: #14161a; padding: 16px 0;">'
+              '<div style="padding: 0 16px 12px;"><div style="font-size: 15px; font-weight: 800; '
+              'letter-spacing: -0.02em; text-transform: uppercase;">Kraftwerk Nord</div></div>'
+              '<div style="display: flex; gap: 8px; overflow-x: auto; padding: 0 16px;">'
+            + chips + '</div></div>'
+            + '<div style="padding: 20px 16px 40px; display: flex; flex-direction: column; '
+              'gap: 16px;">' + inhalt + '</div></div>\n'
+            + FOOT)
+
+
+def telefon_voll(hoehe, inhalt):
+    """Rahmen ohne Chipnavigation, fuer Sucher und Sheets, die den ganzen
+    Bildschirm einnehmen."""
+    return (HEAD
+            + '<div style="min-height: %dpx; background: #0a0b0d; position: relative; '
+              'overflow: hidden;">' % hoehe
+            + inhalt + '</div>\n' + FOOT)
+
+
+def kopfzeile(titel, unterzeile=None, zurueck_zu=None):
+    """Titelblock eines Telefonschritts."""
+    aus = ''
+    if zurueck_zu:
+        aus += '<a href="#" style="%s color: #5c636e;">%s</a>' % (LABEL, zurueck(zurueck_zu))
+    aus += ('<h1 style="font-size: 26px; font-weight: 800; letter-spacing: -0.03em; '
+            'text-transform: uppercase; margin: 8px 0 0;">%s</h1>' % titel)
+    if unterzeile:
+        aus += '<p style="color: #9ba3af; font-size: 13px; margin: 6px 0 0;">%s</p>' % unterzeile
+    return '<div>%s</div>' % aus
+
+
+def schrittleiste(n, titel, von=5):
+    """Fortschritt des Einrichtungsgangs. Bewusst ohne Akzent: der gehoert
+    auf jedem Bildschirm der einen Hauptaktion, nicht der Wegmarke."""
+    segmente = ''.join(
+        '<div style="flex: 1; height: 3px; border-radius: 999px; background: %s;"></div>'
+        % ('#f2f4f7' if i < n else '#2a2e36') for i in range(von))
+    return ('<div style="display: flex; flex-direction: column; gap: 8px;">'
+            '<div style="display: flex; gap: 4px;">%s</div>'
+            '<span style="%s color: #9ba3af;">Schritt %d von %d &middot; %s</span></div>'
+            % (segmente, LABEL, n, von, titel))
+
+
+def balken(prozent, hoehe=6):
+    """Fortschrittsbalken. Akzent als Wert, nicht als Aktionsflaeche --
+    daher background-color statt background (Konvention oben)."""
+    return ('<div style="height: %dpx; border-radius: 999px; background: #1d2026; overflow: hidden;">'
+            '<div style="width: %s%%; height: 100%%; background-color: #d4ff3f;"></div></div>'
+            % (hoehe, prozent))
+
+
+def tkarte(inhalt, rand='#2a2e36', flaeche='#14161a', gestrichelt=False):
+    """Karte in Telefonbreite."""
+    stil = 'dashed' if gestrichelt else 'solid'
+    return ('<div style="border: 1px %s %s; border-radius: 12px; background: %s; padding: 16px; '
+            'display: flex; flex-direction: column; gap: 12px;">%s</div>'
+            % (stil, rand, flaeche, inhalt))
+
+
+def antwort(titel, text, aktionen='', rand='#2a2e36', symbol=None, flaeche='#14161a'):
+    """Antwortkarte des Zustandsblatts: was ist, und was jetzt gilt."""
+    kopf = titel
+    if symbol:
+        kopf = ('<span style="display: inline-flex; align-items: center; gap: 8px;">%s%s</span>'
+                % (symbol, titel))
+    unten = ''
+    if aktionen:
+        unten = ('<div style="display: flex; flex-direction: column; gap: 8px;">%s</div>' % aktionen)
+    return ('<div style="border: 1px solid %s; border-radius: 12px; background: %s; padding: 16px; '
+            'display: flex; flex-direction: column; gap: 12px;">'
+            '<div><div style="font-size: 16px; font-weight: 600;">%s</div>'
+            '<div style="%s margin-top: 4px;">%s</div></div>%s</div>'
+            % (rand, flaeche, kopf, NOTE, text, unten))
+
+
+def feld(label, wert, hinweis=None, gefuellt=False):
+    """Formularzeile am Telefon: Beschriftung, Feld, optional ein Hinweis."""
+    farbe = '#f2f4f7' if gefuellt else '#5c636e'
+    h = ('<span style="%s">%s</span>' % (NOTE, hinweis)) if hinweis else ''
+    return ('<div style="display: flex; flex-direction: column; gap: 6px;">'
+            '<span style="%s color: #9ba3af;">%s</span>'
+            '<div style="%s color: %s;">%s</div>%s</div>'
+            % (LABEL, label, FIELD_XL, farbe, wert, h))
+
+
+def sucher(hinweis, titel='Tag scannen'):
+    """Kamerasucher mit Eckenrahmen. Muster aus member/TrainingScan.dc.html;
+    dort eine CSS-Klasse, hier inline -- Artboards teilen zur Laufzeit nichts."""
+    ecke = 'position: absolute; width: 34px; height: 34px; border: 3px solid #d4ff3f;'
+    ecken = (
+        '<div style="%s top: 0; left: 0; border-right: none; border-bottom: none; '
+        'border-radius: 14px 0 0 0;"></div>'
+        '<div style="%s top: 0; right: 0; border-left: none; border-bottom: none; '
+        'border-radius: 0 14px 0 0;"></div>'
+        '<div style="%s bottom: 0; left: 0; border-right: none; border-top: none; '
+        'border-radius: 0 0 0 14px;"></div>'
+        '<div style="%s bottom: 0; right: 0; border-left: none; border-top: none; '
+        'border-radius: 0 0 14px 0;"></div>' % (ecke, ecke, ecke, ecke))
+    return (
+        '<div style="position: absolute; inset: 0; background: linear-gradient(168deg, '
+        '#232730 0%%, #14161a 55%%, #0a0b0d 100%%);"></div>'
+        '<div style="position: relative; height: 54px;"></div>'
+        '<div style="position: relative; height: 52px; padding: 0 20px; display: flex; '
+        'align-items: center; justify-content: space-between;">'
+        '<span style="font-size: 17px; font-weight: 800; letter-spacing: -0.01em;">%s</span>'
+        '<div style="width: 44px; height: 44px; border-radius: 50%%; background: rgba(10,11,13,.6); '
+        'display: flex; align-items: center; justify-content: center;">%s</div></div>'
+        '<div style="position: relative; height: 400px; display: flex; align-items: center; '
+        'justify-content: center;"><div style="position: relative; width: 236px; height: 236px;">%s'
+        '<div style="position: absolute; left: 12px; right: 12px; top: 50%%; height: 2px; '
+        'background-color: #d4ff3f; opacity: .55;"></div></div></div>'
+        '<div style="position: relative; padding: 0 32px 20px; text-align: center;">'
+        '<div style="font-size: 15px; line-height: 1.5; color: #9ba3af;">%s</div></div>'
+        % (titel, svg('close', 19, '#f2f4f7'), ecken, hinweis))
+
+
+def sheet(inhalt, hoehe_dahinter=280):
+    """Bottom-Sheet ueber abgedunkeltem Grund. Muster aus
+    member/GeraetUebungWechseln.dc.html."""
+    return ('<div style="height: %dpx;"></div>'
+            '<div style="position: absolute; inset: 0; background: rgba(10,11,13,.74);"></div>'
+            '<div style="position: absolute; left: 0; right: 0; bottom: 0; background: #1d2026; '
+            'border-top: 1px solid #2a2e36; border-radius: 22px 22px 0 0; padding: 12px 20px 26px; '
+            'display: flex; flex-direction: column; gap: 16px;">'
+            '<div style="width: 40px; height: 4px; border-radius: 2px; background: #2a2e36; '
+            'align-self: center;"></div>%s</div>' % (hoehe_dahinter, inhalt))

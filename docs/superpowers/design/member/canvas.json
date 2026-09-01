@@ -217,6 +217,14 @@
       "title": "26 · Web-Fallback — Code nicht aktiv"
     },
     {
+      "file": "FallbackAushang.dc.html",
+      "x": 1419,
+      "y": 9920,
+      "w": 390,
+      "h": 844,
+      "title": "27 · Web-Fallback — Aushang"
+    },
+    {
       "file": "MemberRegistrieren.dc.html",
       "x": 0,
       "y": 0,
@@ -250,6 +258,24 @@
       "w": 393,
       "h": 852,
       "title": "04 · Profil — Passwort ändern",
+      "page": "zugang"
+    },
+    {
+      "file": "MemberScanner.dc.html",
+      "x": 1892,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "05 · Code scannen",
+      "page": "zugang"
+    },
+    {
+      "file": "MemberStudios.dc.html",
+      "x": 2365,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "06 · Profil — Studios",
       "page": "zugang"
     }
   ],
@@ -370,9 +396,16 @@
       "id": "hdr-zugang",
       "x": 0,
       "y": -280,
-      "w": 1812,
+      "w": 2758,
       "page": "zugang",
-      "text": "ZUGANG · neu\nSelbstregistrierung, Passwort und Studio-Beitritt. 03 ist der wichtigste der vier: was ein frisch registriertes Mitglied ohne Studio sieht, ohne Tab-Leiste. Die Anmeldung selbst (E-Mail + Passwort) und die Verifikation (der sechsstellige Code — jetzt eine einmalige Adressbestätigung, kein Anmeldeweg mehr) liegen auf der Seite „App“, Artboards 01/02."
+      "text": "ZUGANG · neu\nSelbstregistrierung, Passwort, Studio-Beitritt und Mitgliedschaften. 03 ist der wichtigste der sechs: was ein frisch registriertes Mitglied ohne Studio sieht, ohne Tab-Leiste. Der Beitritt läuft jetzt über den Scan — Aushang am Eingang oder Aufkleber am Gerät, beides derselbe Tokenraum unter /t/<token>. Der getippte Studio-Code bleibt als zweiter Weg und gibt dafür die Akzentfläche an den Scan ab. 06 ist die Kehrseite: wer mit einem Tap beitritt, geht mit einem Tap. Die Anmeldung selbst (E-Mail + Passwort) und die einmalige Adressbestätigung liegen auf der Seite „App“, Artboards 01/02."
+    },
+    {
+      "id": "note-kaltstart",
+      "x": 1419,
+      "y": 9640,
+      "w": 390,
+      "text": "Der Fall, der die Kette bricht: App fehlt, iPhone. Der Universal Link landet in Safari, weil keine App ihn beansprucht — und nach der Installation startet die App bei null. Apple leitet nichts nach. Gelöst durch einen zweiten Scan, nicht durch verzögerte Deep Links und nicht durch einen App Clip; die Abwägung steht in der Spec, Abschnitt 5. Deshalb trägt diese Seite den nächsten Schritt als Text, statt ihn erraten zu lassen."
     }
   ],
   "pages": [
