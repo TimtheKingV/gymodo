@@ -141,6 +141,7 @@ def schreibe(name, inhalt):
 # Schrift zurueck -- andere Strichstaerke, andere Hoehe.
 _SVG_PFADE = {
     'arrow-left': '<path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path>',
+    'arrow-right': '<path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path>',
     'arrow-up': '<path d="M12 19V5"></path><path d="M5 12l7-7 7 7"></path>',
     'arrow-down': '<path d="M12 5v14"></path><path d="M19 12l-7 7-7-7"></path>',
     'chevron-down': '<path d="M6 9l6 6 6-6"></path>',

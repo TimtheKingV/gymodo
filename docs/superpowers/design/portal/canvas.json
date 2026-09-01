@@ -15,6 +15,12 @@
     { "file": "EinstellungenStudio.dc.html", "page": "portal", "title": "Einstellungen — Studio", "x": 0, "y": 2180, "w": 1440, "h": 1180 },
     { "file": "EinstellungenKonto.dc.html", "page": "portal", "title": "Einstellungen — Konto", "x": 1560, "y": 2180, "w": 1440, "h": 920 },
 
+    { "file": "Kurse.dc.html", "page": "portal", "title": "Kurse — Woche", "x": 0, "y": 3480, "w": 1440, "h": 1780 },
+    { "file": "Kursvorlagen.dc.html", "page": "portal", "title": "Kursvorlagen", "x": 1560, "y": 3480, "w": 1440, "h": 820 },
+    { "file": "Kursvorlage.dc.html", "page": "portal", "title": "Kursvorlage — Stammdaten", "x": 3120, "y": 3480, "w": 1440, "h": 1420 },
+    { "file": "TerminAnlegen.dc.html", "page": "portal", "title": "Termin anlegen", "x": 4680, "y": 3480, "w": 1440, "h": 1680 },
+    { "file": "Termin.dc.html", "page": "portal", "title": "Termin — Teilnehmer", "x": 6240, "y": 3480, "w": 1440, "h": 2020 },
+
     { "file": "Start.dc.html", "page": "einstieg", "title": "Wurzelseite", "x": 0, "y": 0, "w": 1440, "h": 900 },
     { "file": "Anmelden.dc.html", "page": "einstieg", "title": "Anmelden", "x": 1560, "y": 0, "w": 1440, "h": 900 },
     { "file": "PasswortVergessen.dc.html", "page": "einstieg", "title": "Passwort vergessen", "x": 3120, "y": 0, "w": 1440, "h": 900 },
