@@ -59,53 +59,70 @@ modell += ('<div style="display: flex; align-items: center; justify-content: spa
           % (LABEL, PRIMARY))
 
 modell += ('<p style="color: #5c636e; font-size: 13px; line-height: 1.45; margin: 16px 0 0; '
-          'max-width: 62ch;">Erhöhen legt die fehlenden Geräte an — Nummer und Tag vergibst du danach. '
-          'Verringern gibt es nicht: ein Gerät wird stillgelegt, einzeln, mit Namen.</p>')
+          'max-width: 62ch;">Erhöhen legt die fehlenden Geräte an — Nummer, Standort und Tag '
+          'vergibst du danach am Gerät, mit dem Telefon. Verringern gibt es nicht: ein Gerät wird '
+          'stillgelegt, einzeln, mit Namen.</p>')
 
 modell += '<section style="%s margin-top: 20px;">' % CARD
 modell += '<div style="%s"><h2 style="%s">Geräte</h2></div>' % (HEADROW, SEC_TITLE)
-modell += zeile('13', 'Rückwand mitte · kein aktiver Tag', '', meta_faint=True)
-modell += zeile('12', 'Rückwand links · erreichbar', '', letzte=True)
+modell += zeile('13', 'Rückwand mitte · kein aktiver Tag',
+                '<a href="#" style="%s">Tag scannen</a>' % SECONDARY, meta_faint=True)
+modell += zeile('12', 'Rückwand links · erreichbar',
+                '<a href="#" style="%s">Tag ersetzen</a>' % SECONDARY, letzte=True)
 modell += '</section>'
-schreibe('Modell.dc.html', portal('geraete', 780, modell))
+schreibe('Modell.dc.html', portal('geraete', 800, modell))
 
 
 # ---------------------------------------------------------------- Tags
+# Das Studio erzeugt keine Tags mehr. Sie sind ein physisches Erzeugnis --
+# NFC-Chip und aufgedruckter QR auf derselben /t/<token>-Adresse -- und
+# kommen chargenweise vom Betreiber. Die Seite ist damit eine Auskunft und
+# kein Formular: sie hat bewusst keine Akzentflaeche, weil sie nichts anlegt.
 tags = titel('Tags',
-             'Ein Tag klebt am Gerät und wird getippt. Sein Token steht genau einmal beim Anlegen '
-             'auf dem Bildschirm — gespeichert wird nur dessen Prüfsumme.')
+             'Ein Tag klebt am Gerät und wird gescannt oder angetippt. Das Studio erzeugt keine — '
+             'Tags kommen als Lieferung. Welcher Tag an welchem Gerät hängt, entscheidet der Scan '
+             'am Gerät.')
 
-tags += '<section style="%s margin-top: 32px; border-color: #d4ff3f;">' % CARD
-tags += ('<div style="%s border-color: #2a2e36;"><h2 style="%s">Gerade angelegt — nur jetzt sichtbar</h2></div>'
-         % (HEADROW, SEC_TITLE))
-tags += ('<div style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">'
-         '<code style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; '
-         'font-size: 18px; letter-spacing: 0.08em; background: #0f1114; border: 1px solid #2a2e36; '
-         'border-radius: 10px; padding: 16px; display: block;">kQ7mR2xPvL9nD4tYbA</code>'
-         '<span style="%s">Schreib ihn auf den NFC-Tag oder drucke den QR-Code. Danach ist er nicht '
-         'mehr abrufbar — geht er verloren, legst du einen neuen an und sperrst diesen.</span>'
-         '<div style="display: flex; gap: 12px;">'
-         '<a href="#" style="%s">QR-Code drucken</a>'
-         '<a href="#" style="%s">Kopieren</a>'
-         '<a href="#" style="%s">Fertig</a></div></div>'
-         % (NOTE, PRIMARY, SECONDARY, SECONDARY))
+tags += '<section style="%s margin-top: 32px;">' % CARD
+tags += '<div style="%s"><h2 style="%s">Lieferungen</h2></div>' % (HEADROW, SEC_TITLE)
+tags += zeile('Charge 7',
+              'Mi., 12. August 2026 · 100 Gerätetags · <strong>87 vorrätig</strong>, 12 geklebt, '
+              '1 gesperrt', '')
+tags += zeile('Charge 8',
+              'Mi., 12. August 2026 · 5 Aushangschilder · <strong>4 vorrätig</strong>, 1 hängt',
+              '', letzte=True)
 tags += '</section>'
+tags += ('<p style="color: #5c636e; font-size: 13px; line-height: 1.45; margin: 16px 0 0; '
+         'max-width: 62ch;">Der Vorrat steht als Zahl. Ein vorrätiger Tag lässt sich keinem '
+         'Aufkleber in der Packung zuordnen — 87 gleichlautende Zeilen wären keine Auskunft, '
+         'sondern Lärm. Benennbar wird ein Tag erst durch den Scan.</p>')
+
+aktiv = '<span style="%s color: #f2f4f7; border-color: #5c636e;">aktiv</span>' % BADGE
+gesperrt = '<span style="%s color: #ff5a4e; border-color: #ff5a4e;">gesperrt</span>' % BADGE
 
 tags += '<section style="%s margin-top: 24px;">' % CARD
-tags += ('<div style="%s"><h2 style="%s">Alle Tags</h2>'
-         '<a href="#" style="%s">Tag auf Vorrat</a></div>' % (HEADROW, SEC_TITLE, SECONDARY))
-aktiv = '<span style="%s color: #f2f4f7; border-color: #5c636e;">aktiv</span>' % BADGE
-vorraetig = '<span style="%s">vorrätig</span>' % BADGE
-gesperrt = '<span style="%s color: #ff5a4e; border-color: #ff5a4e;">gesperrt</span>' % BADGE
-tags += zeile('%s &nbsp; 12 — Latzug' % aktiv, 'Angelegt Mo., 31. August 2026',
+tags += ('<div style="%s"><h2 style="%s">Geklebte Geräte-Tags</h2>'
+         '<span style="color: #5c636e; font-size: 12px;">12 von 100</span></div>'
+         % (HEADROW, SEC_TITLE))
+tags += zeile('%s &nbsp; 12 — Latzug' % aktiv, 'Charge 7 · verbunden Mo., 31. August 2026',
               '<a href="#" style="%s">Sperren</a>' % DESTRUCTIVE)
-tags += zeile('%s &nbsp; 7 — Beinpresse' % aktiv, 'Angelegt Mo., 31. August 2026',
+tags += zeile('%s &nbsp; 7 — Beinpresse' % aktiv, 'Charge 7 · verbunden Mo., 31. August 2026',
               '<a href="#" style="%s">Sperren</a>' % DESTRUCTIVE)
-tags += zeile('%s &nbsp; ohne Gerät' % vorraetig, 'Angelegt Mo., 31. August 2026',
-              '<div style="%s width: 200px; justify-content: space-between;">Gerät wählen …</div>'
-              '<a href="#" style="%s">Zuweisen</a>' % (FIELD, SECONDARY))
-tags += zeile('%s &nbsp; ohne Gerät' % gesperrt,
-              'Angelegt Sa., 15. August 2026 · bleibt als Nachweis stehen', '',
+tags += zeile('%s &nbsp; 8 — Beinpresse' % gesperrt,
+              'Charge 7 · gesperrt Sa., 15. August 2026 · bleibt als Nachweis stehen', '',
               letzte=True, meta_faint=True)
 tags += '</section>'
-schreibe('Tags.dc.html', portal('tags', 940, tags))
+tags += ('<p style="color: #5c636e; font-size: 13px; line-height: 1.45; margin: 16px 0 0; '
+         'max-width: 62ch;">Ein Gerät ohne Tag ist für Mitglieder nicht auffindbar. Verbunden wird '
+         'am Gerät, mit dem Telefon — ein zerkratzter Tag wird dort auch ersetzt.</p>')
+
+tags += '<section style="%s margin-top: 24px;">' % CARD
+tags += '<div style="%s"><h2 style="%s">Aushang</h2></div>' % (HEADROW, SEC_TITLE)
+tags += zeile('%s &nbsp; Eingang' % aktiv,
+              'Charge 8 · hängt seit Sa., 15. August 2026 · Beitritt durch Scannen',
+              '<a href="#" style="%s">Sperren</a>' % DESTRUCTIVE, letzte=True)
+tags += '</section>'
+tags += ('<p style="color: #5c636e; font-size: 13px; line-height: 1.45; margin: 16px 0 0; '
+         'max-width: 62ch;">Ein Aushang hängt an keinem Gerät — wer ihn scannt, wird Mitglied. '
+         'Sperren macht genau dieses Schild ungültig; häng eins aus der Lieferung nach.</p>')
+schreibe('Tags.dc.html', portal('tags', 1020, tags))

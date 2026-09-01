@@ -324,9 +324,9 @@ main += ("""
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
       <div>
         <div style="font-weight: 600;">1 Gerät ohne Tag</div>
-        <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Für Mitglieder nicht auffindbar</div>
+        <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Für Mitglieder nicht auffindbar · 87 Tags vorrätig</div>
       </div>
-      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 20px; border-radius: 10px; background: #d4ff3f; color: #0a0b0d; font-weight: 700; flex-shrink: 0;">Tags anlegen</a>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 20px; border-radius: 10px; background: #d4ff3f; color: #0a0b0d; font-weight: 700; flex-shrink: 0;">Am Gerät scannen</a>
     </div>
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
       <div>
