@@ -91,22 +91,24 @@ def tag(datum, zeilen):
 
 
 kurse += tag('Montag, 31. August', (
-    zeile('18:00 · Kraftzirkel', 'Jana · Raum 1', belegung(12, 16))
-    + zeile('19:30 · Rücken fit', 'Tim · Raum 2', belegung(8, 12), letzte=True)
+    zeile('18:00 · Kraftzirkel', 'Marek T. · Kursraum 2', belegung(12, 16))
+    + zeile('19:30 · Rückenfit', 'Sabine K. · Kursraum 1', belegung(8, 12), letzte=True)
 ))
 
 kurse += tag('Dienstag, 1. September', einfache_zeile(
     '<span style="color: #5c636e; font-weight: 400;">Keine Kurse</span>', letzte=True))
 
 kurse += tag('Mittwoch, 2. September', zeile(
-    '18:00 · Kraftzirkel', 'Jana · Raum 1', belegung(16, 16, warteliste=3), letzte=True))
+    '18:00 · Kraftzirkel', 'Marek T. · Kursraum 2', belegung(16, 16, warteliste=3), letzte=True))
 
+# Dieser eine Termin weicht von der Vorlage ab (Standard: Marek T.) --
+# Termin.dc.html zeigt dieselbe Abweichung und muss denselben Namen nennen.
 kurse += tag('Donnerstag, 3. September', zeile(
-    '18:00 · Kraftzirkel', 'Jana · Raum 1', belegung(16, 16, warteliste=3), letzte=True))
+    '18:00 · Kraftzirkel', 'Sabine K. · Kursraum 2', belegung(16, 16, warteliste=3), letzte=True))
 
 kurse += tag('Freitag, 4. September', zeile(
     '<span style="text-decoration: line-through; color: #5c636e;">18:00 · Kraftzirkel</span>',
-    '<span style="text-decoration: line-through;">Jana · Raum 1</span>',
+    '<span style="text-decoration: line-through;">Marek T. · Kursraum 2</span>',
     abgesagt_plakette, letzte=True, meta_faint=True))
 
 kurse += tag('Samstag, 5. September', einfache_zeile(
@@ -132,12 +134,12 @@ kursvorlagen = ('<a href="#" style="%s color: #5c636e;">%s</a>'
 
 kursvorlagen += abschnitt(
     'Alle Vorlagen',
-    zeile('Kraftzirkel', '45 min · 16 Plätze · Standard: Jana · 16 Termine in den nächsten 4 Wochen',
+    zeile('Kraftzirkel', '60 min · 16 Plätze · Standard: Marek T. · 16 Termine in den nächsten 4 Wochen',
           '<a href="#" style="%s">Öffnen</a>' % SECONDARY)
-    + zeile('Rücken fit', '45 min · 12 Plätze · Standard: Tim · 4 Termine in den nächsten 4 Wochen',
+    + zeile('Rückenfit', '45 min · 12 Plätze · Standard: Sabine K. · 4 Termine in den nächsten 4 Wochen',
             '<a href="#" style="%s">Öffnen</a>' % SECONDARY)
     + zeile('Yoga Flow',
-            '<span style="color: #5c636e;">60 min · 10 Plätze · Standard: Jana · keine Termine in den nächsten 4 Wochen</span>',
+            '<span style="color: #5c636e;">60 min · 10 Plätze · Standard: Anna B. · keine Termine in den nächsten 4 Wochen</span>',
             '<a href="#" style="%s">Öffnen</a>' % SECONDARY, letzte=True),
     aktion='<a href="#" style="%s">Vorlage anlegen</a>' % PRIMARY)
 
@@ -146,20 +148,23 @@ schreibe('Kursvorlagen.dc.html', portal('kurse', 820, kursvorlagen))
 
 # =========================================================== Kursvorlage
 # Reiter halten das Formular bei genau einer Akzentflaeche: nur "Stammdaten"
-# ist gebaut, "Termine (14)" bleibt wie bei Modell.dc.html unbestueckter
-# Reiter -- die Zahl stimmt mit der Serie ueberein, die TerminAnlegen.dc.html
-# fuer diese Vorlage anlegt.
+# ist gebaut, "Termine" bleibt wie bei Modell.dc.html unbestueckter Reiter.
+# Die Zahl traegt ihren Zeitraum sichtbar mit -- sie ist dieselbe wie in der
+# Vorlagenliste (Kursvorlagen.dc.html: "16 Termine in den naechsten 4 Wochen").
+# Die 14 auf TerminAnlegen.dc.html ist etwas anderes: die Laenge einer neu
+# angelegten Serie, nicht der Bestand der Vorlage.
 kursvorlage = kopf('Kursvorlagen', 'Kraftzirkel', 'Zirkeltraining aus Kraft- und Ausdauerübungen '
-                    'im Wechsel · 45 min · 16 Plätze · Standard: Jana')
-kursvorlage += reiter([('Stammdaten', None), ('Termine (14)', None)], 'Stammdaten')
+                    'im Wechsel · 60 min · 16 Plätze · Standard: Marek T.')
+kursvorlage += reiter([('Stammdaten', None), ('Termine (16)', 'in den nächsten 4 Wochen')],
+                      'Stammdaten')
 
 kursvorlage += abschnitt('Stammdaten', (
     '<div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">'
     + feld('Name', 'Kraftzirkel')
     + feld('Beschreibung', 'Zirkeltraining aus Kraft- und Ausdauerübungen im Wechsel, für alle '
            'Level geeignet.', hoehe=88)
-    + zwei(feld('Dauer', '45 min'), feld('Plätze', '16'))
-    + feld('Standard-Trainer', 'Jana', auswahl=True)
+    + zwei(feld('Dauer', '60 min'), feld('Plätze', '16'))
+    + feld('Standard-Trainer', 'Marek T.', auswahl=True)
     + '<div><a href="#" style="%s">Änderungen speichern</a></div></div>' % PRIMARY
 ))
 
@@ -189,8 +194,8 @@ anlegen += abschnitt('Termin', (
     '<div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">'
     + feld('Vorlage', 'Kraftzirkel', auswahl=True)
     + zwei(feld('Datum', 'Do., 3. September 2026'), feld('Uhrzeit', '18:00'))
-    + zwei(feld('Dauer', '45 min'), feld('Plätze', '16'))
-    + zwei(feld('Raum', 'Raum 1', auswahl=True), feld('Trainer', 'Jana', auswahl=True))
+    + zwei(feld('Dauer', '60 min'), feld('Plätze', '16'))
+    + zwei(feld('Raum', 'Kursraum 2', auswahl=True), feld('Trainer', 'Marek T.', auswahl=True))
     + '</div>'
 ))
 
@@ -222,26 +227,26 @@ schreibe('TerminAnlegen.dc.html', portal('kurse', 1680, anlegen))
 # auftauchen -- eine Anwesenheitsliste, die dem Studio gehoert, nicht der
 # Mitgliedschaft. Absagen setzt status='abgesagt', loescht nicht: der Termin
 # bleibt fuer angemeldete Mitglieder sichtbar.
-termin = kopf('Kurse', 'Kraftzirkel', 'Do., 3. September 2026 · 18:00–18:45 · Raum 1')
+termin = kopf('Kurse', 'Kraftzirkel', 'Do., 3. September 2026 · 18:00–19:00 · Kursraum 2')
 
 termin += abschnitt('Termin', (
     '<div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">'
-    + zwei(feld('Uhrzeit', '18:00'), feld('Dauer', '45 min'))
-    + zwei(feld('Plätze', '16'), feld('Raum', 'Raum 1', auswahl=True))
+    + zwei(feld('Uhrzeit', '18:00'), feld('Dauer', '60 min'))
+    + zwei(feld('Plätze', '16'), feld('Raum', 'Kursraum 2', auswahl=True))
     + '<div style="display: flex; flex-direction: column; gap: 8px;">'
     + '<span style="%s color: #9ba3af;">Trainer</span>' % LABEL
-    + '<div style="%s justify-content: space-between;">Tim %s</div>' % (FIELD, svg('chevron-down', 18, '#5c636e'))
-    + '<span style="%s">Abweichend von der Vorlage (Standard: Jana).</span>' % NOTE
+    + '<div style="%s justify-content: space-between;">Sabine K. %s</div>' % (FIELD, svg('chevron-down', 18, '#5c636e'))
+    + '<span style="%s">Abweichend von der Vorlage (Standard: Marek T.).</span>' % NOTE
     + '</div>'
     + '<div><a href="#" style="%s">Änderungen speichern</a></div></div>' % PRIMARY
 ))
 
 teilnehmer = (
-    zeile('M. Wolf', 'Angemeldet Mo., 25. August 2026 · 14:32',
+    zeile('M. Wolf', 'Angemeldet Di., 25. August 2026 · 14:32',
           '<a href="#" style="%s">Abmelden</a>' % DESTRUCTIVE)
-    + zeile('S. Roth', 'Angemeldet Di., 26. August 2026 · 09:07',
+    + zeile('S. Roth', 'Angemeldet Mi., 26. August 2026 · 09:07',
             '<a href="#" style="%s">Abmelden</a>' % DESTRUCTIVE)
-    + zeile('P. Keller', 'Angemeldet Mi., 27. August 2026 · 18:50',
+    + zeile('P. Keller', 'Angemeldet Do., 27. August 2026 · 18:50',
             '<a href="#" style="%s">Abmelden</a>' % DESTRUCTIVE)
     + zeile('<span style="color: #5c636e;">… 13 weitere</span>', '',
             '<a href="#" style="%s">Alle anzeigen</a>' % SECONDARY, letzte=True)
@@ -300,12 +305,15 @@ main += ("""
 # "Diese Woche" holt die naechsten drei Kurstermine samt Belegung aus
 # Kurse.dc.html herueber -- dieselben Zahlen, keine neuen erfunden.
 main += abschnitt('Diese Woche', (
-    zeile('Mo., 31. August 2026 · 18:00 · Kraftzirkel', 'Jana · Raum 1', belegung(12, 16))
-    + zeile('Mo., 31. August 2026 · 19:30 · Rücken fit', 'Tim · Raum 2', belegung(8, 12))
-    + zeile('Mi., 2. September 2026 · 18:00 · Kraftzirkel', 'Jana · Raum 1',
+    zeile('Mo., 31. August 2026 · 18:00 · Kraftzirkel', 'Marek T. · Kursraum 2', belegung(12, 16))
+    + zeile('Mo., 31. August 2026 · 19:30 · Rückenfit', 'Sabine K. · Kursraum 1', belegung(8, 12))
+    + zeile('Mi., 2. September 2026 · 18:00 · Kraftzirkel', 'Marek T. · Kursraum 2',
             belegung(16, 16, warteliste=3), letzte=True)
 ), aktion='<a href="#" style="%s">Zu den Kursen</a>' % SECONDARY)
 
+# "Meistgenutzt" zaehlt dieselben Saetze wie die Kachel darueber: dasselbe
+# Fenster, dieselbe Einheit, derselbe Bildschirm. 148 + 109 + 84 = 341 von
+# 412 -- der Rest verteilt sich auf die Geraete, die hier nicht stehen.
 main += ("""
 <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; margin-top: 24px;">
 
@@ -318,7 +326,7 @@ main += ("""
         <div style="font-weight: 600;">1 Gerät ohne Tag</div>
         <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Für Mitglieder nicht auffindbar</div>
       </div>
-      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #d4ff3f; color: #0a0b0d; font-weight: 700; flex-shrink: 0;">Tags anlegen</a>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 20px; border-radius: 10px; background: #d4ff3f; color: #0a0b0d; font-weight: 700; flex-shrink: 0;">Tags anlegen</a>
     </div>
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
       <div>
@@ -342,13 +350,13 @@ main += ("""
       <span style="font-size: 12px; color: #5c636e;">Sätze</span>
     </div>
     <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
-      <span style="font-weight: 600;">Beinpresse 7</span><span style="color: #9ba3af;">312</span>
+      <span style="font-weight: 600;">Beinpresse 7</span><span style="color: #9ba3af;">148</span>
     </div>
     <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
-      <span style="font-weight: 600;">Latzug 12</span><span style="color: #9ba3af;">287</span>
+      <span style="font-weight: 600;">Latzug 12</span><span style="color: #9ba3af;">109</span>
     </div>
     <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
-      <span style="font-weight: 600;">Latzug 13</span><span style="color: #9ba3af;">198</span>
+      <span style="font-weight: 600;">Latzug 13</span><span style="color: #9ba3af;">84</span>
     </div>
     <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px;">
       <span style="color: #5c636e;">Beinpresse 8</span><span style="color: #5c636e;">stillgelegt</span>

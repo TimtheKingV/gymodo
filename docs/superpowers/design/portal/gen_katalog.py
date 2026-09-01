@@ -105,7 +105,7 @@ tags += zeile('%s &nbsp; ohne Gerät' % vorraetig, 'Angelegt Mo., 31. August 202
               '<div style="%s width: 200px; justify-content: space-between;">Gerät wählen …</div>'
               '<a href="#" style="%s">Zuweisen</a>' % (FIELD, SECONDARY))
 tags += zeile('%s &nbsp; ohne Gerät' % gesperrt,
-              'Angelegt Fr., 15. August 2026 · bleibt als Nachweis stehen', '',
+              'Angelegt Sa., 15. August 2026 · bleibt als Nachweis stehen', '',
               letzte=True, meta_faint=True)
 tags += '</section>'
 schreibe('Tags.dc.html', portal('tags', 940, tags))

@@ -99,7 +99,7 @@ login_code += fuellen()
 login_code += ("""
   <div style="flex: none; margin: 0 28px 20px; background: #14161A; border: 1px solid #2A2E36; border-radius: 12px; padding: 15px 16px; display: flex; gap: 12px; align-items: flex-start;">
     %s
-    <div style="font-size: 13px; line-height: 1.5; color: #9BA3AF;">Keine Mail bekommen? Sieh im Spam-Ordner nach. Der Code ist zehn Minuten gültig.</div>
+    <div style="font-size: 13px; line-height: 1.5; color: #9BA3AF;">Keine Mail bekommen? Sieh im Spam-Ordner nach. Der Code ist eine Stunde gültig.</div>
   </div>
 """ % zeile_svg('<rect x="3" y="5.5" width="18" height="13" rx="2.4"/><path d="m3.8 7 8.2 6 8.2-6"/>'))
 login_code += ("""

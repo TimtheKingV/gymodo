@@ -106,7 +106,7 @@ def rail(active):
             nav_item('Tags', '1 vorrätig', active == 'tags'),
         ])
         + gruppe('Verwaltung', [
-            nav_item('Leute', '24 Mitglieder · 2 Mitarbeiter', active == 'leute'),
+            nav_item('Leute', '24 Mitglieder · 4 Mitarbeiter', active == 'leute'),
             nav_item('Einstellungen', None, active == 'einstellungen'),
         ])
         + '<div style="margin-top: auto; padding: 16px 20px 0; border-top: 1px solid #2a2e36; '

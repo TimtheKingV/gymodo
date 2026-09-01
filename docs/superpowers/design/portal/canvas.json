@@ -10,7 +10,7 @@
     { "file": "Modell.dc.html", "page": "portal", "title": "Modell — Einzelne Geräte", "x": 3120, "y": 0, "w": 1440, "h": 780 },
     { "file": "Tags.dc.html", "page": "portal", "title": "Tags", "x": 0, "y": 1440, "w": 1440, "h": 940 },
     { "file": "LeuteMitglieder.dc.html", "page": "portal", "title": "Leute — Mitglieder", "x": 1560, "y": 1440, "w": 1440, "h": 840 },
-    { "file": "LeuteMitarbeiter.dc.html", "page": "portal", "title": "Leute — Mitarbeiter", "x": 3120, "y": 1440, "w": 1440, "h": 900 },
+    { "file": "LeuteMitarbeiter.dc.html", "page": "portal", "title": "Leute — Mitarbeiter", "x": 3120, "y": 1440, "w": 1440, "h": 1000 },
 
     { "file": "EinstellungenStudio.dc.html", "page": "portal", "title": "Einstellungen — Studio", "x": 0, "y": 2500, "w": 1440, "h": 1300 },
     { "file": "EinstellungenKonto.dc.html", "page": "portal", "title": "Einstellungen — Konto", "x": 1560, "y": 2500, "w": 1440, "h": 1080 },
@@ -56,7 +56,7 @@
       "x": 1000,
       "y": -230,
       "w": 440,
-      "text": "Die Auswertung zählt zusammen, sie schaut nicht in die Trainingsdaten.\n\nDas Portal sieht Mitgliedschaften und wer zu einem Kurstermin angemeldet ist — beides mit Namen. Es sieht keine Sätze, Gewichte oder Verläufe einzelner Mitglieder, auch nicht des Inhabers: nur studioweite Summen, nie eine Zuordnung auf eine Person."
+      "text": "Die Auswertung zählt zusammen, sie schaut nicht in die Trainingsdaten.\n\nDas Portal sieht Mitgliedschaften und wer zu einem Kurstermin angemeldet ist — beides mit Namen. Es zeigt keine Sätze, Gewichte oder Verläufe einzelner Mitglieder, auch nicht des Inhabers: nur studioweite Summen, nie eine Zuordnung auf eine Person.\n\nZielzustand. In Produktion tragen die vier Lese-Richtlinien in supabase/migrations/0012–0015 heute noch die Klausel \"or public.is_studio_staff(...)\" — die Datenbank lässt Studiopersonal also jeden Satz jedes Mitglieds lesen. Kein Bildschirm des Portals holt diese Daten, aber verboten ist es erst, wenn die Klausel fällt. Bis dahin ist das hier eine Absicht, keine Zusicherung."
     },
     {
       "id": "note-einstieg",

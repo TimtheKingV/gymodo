@@ -4,7 +4,7 @@ from build import (HEAD, FOOT, LABEL, CARD, HEADROW, PRIMARY,
                    schreibe, svg, zeile, reiter)
 
 NOTE = 'font-size: 12px; color: #5c636e;'
-REITER = [('Mitglieder (24)', None), ('Mitarbeiter (2)', None)]
+REITER = [('Mitglieder (24)', None), ('Mitarbeiter (4)', None)]
 
 
 # ---------------------------------------------------------------- Mitglieder
@@ -21,20 +21,21 @@ mitglieder += '<section style="%s margin-top: 24px;">' % CARD
 mitglieder += ('<div style="%s"><h2 style="%s">Alle Mitglieder</h2>'
                '<a href="#" style="color: #9ba3af; font-size: 13px;">Mitglieder treten über den '
                'Studio-Code bei · Einstellungen</a></div>' % (HEADROW, SEC_TITLE))
-mitglieder += zeile('m.wolf@example.de', 'Seit Mo., 25. August 2026',
+mitglieder += zeile('m.wolf@example.de', 'Seit Di., 25. August 2026',
                     '<a href="#" style="%s">Entfernen</a>' % DESTRUCTIVE)
-mitglieder += zeile('s.roth@example.de', 'Seit Sa., 23. August 2026',
+mitglieder += zeile('s.roth@example.de', 'Seit So., 23. August 2026',
                     '<a href="#" style="%s">Entfernen</a>' % DESTRUCTIVE)
-mitglieder += zeile('p.keller@example.de', 'Seit Do., 21. August 2026',
+mitglieder += zeile('p.keller@example.de', 'Seit Fr., 21. August 2026',
                     '<a href="#" style="%s">Entfernen</a>' % DESTRUCTIVE)
 mitglieder += zeile('<span style="color: #5c636e;">… 21 weitere</span>', '',
                     '<a href="#" style="%s">Alle anzeigen</a>' % SECONDARY, letzte=True)
 mitglieder += '</section>'
 
 mitglieder += ('<p style="color: #5c636e; font-size: 13px; line-height: 1.45; margin: 24px 0 0; '
-               'max-width: 70ch;">Trainingsdaten eines Mitglieds sieht nur das Mitglied selbst. Das '
-               'Portal kann eine Mitgliedschaft anlegen und beenden — es kann keine Sätze, Gewichte '
-               'oder Verläufe einsehen.</p>')
+               'max-width: 70ch;">Zielzustand: Trainingsdaten eines Mitglieds sieht nur das Mitglied '
+               'selbst — das Portal legt eine Mitgliedschaft an und beendet sie, sonst nichts. Heute '
+               'lassen die Richtlinien der Datenbank Mitarbeiter noch an Sätze, Gewichte und Verläufe '
+               'heran; das Portal zeigt sie nirgends, verhindert ist es damit aber nicht.</p>')
 schreibe('LeuteMitglieder.dc.html', portal('leute', 840, mitglieder))
 
 
@@ -45,21 +46,26 @@ schreibe('LeuteMitglieder.dc.html', portal('leute', 840, mitglieder))
 # Zeile nebenbei umschaltet.
 mitarbeiter = titel(
     'Mitarbeiter',
-    'Mitarbeiter pflegen den Katalog und sehen die Mitgliederliste. Wer hier steht, hat Zugriff '
-    'auf alles außer den Trainingsdaten der Mitglieder.')
-mitarbeiter += reiter(REITER, 'Mitarbeiter (2)')
+    'Mitarbeiter pflegen den Katalog und sehen die Mitgliederliste. Zugriff auf alles außer den '
+    'Trainingsdaten der Mitglieder — so ist es gedacht; die Datenbank setzt diese Grenze noch '
+    'nicht durch.')
+mitarbeiter += reiter(REITER, 'Mitarbeiter (4)')
 
 inhaber_plakette = '<span style="%s color: #f2f4f7; border-color: #5c636e;">Inhaber</span>' % BADGE
 trainer_plakette = '<span style="%s color: #f2f4f7; border-color: #5c636e;">Trainer</span>' % BADGE
 
 mitarbeiter += '<section style="%s margin-top: 24px;">' % CARD
 mitarbeiter += '<div style="%s"><h2 style="%s">Alle Mitarbeiter</h2></div>' % (HEADROW, SEC_TITLE)
-mitarbeiter += zeile('%s &nbsp; tim@kraftwerk-nord.de' % inhaber_plakette,
-                     'Seit Mi., 6. August 2026',
+herabstufen = '<a href="#" style="%s">Zum Mitglied herabstufen</a>' % DESTRUCTIVE
+mitarbeiter += zeile('%s &nbsp; Tim' % inhaber_plakette,
+                     'tim@kraftwerk-nord.de · Seit Do., 6. August 2026',
                      '<span style="%s">Das bist du</span>' % NOTE)
-mitarbeiter += zeile('%s &nbsp; jana@kraftwerk-nord.de' % trainer_plakette,
-                     'Seit Do., 14. August 2026',
-                     '<a href="#" style="%s">Zum Mitglied herabstufen</a>' % DESTRUCTIVE,
+mitarbeiter += zeile('%s &nbsp; Marek T.' % trainer_plakette,
+                     'marek@kraftwerk-nord.de · Seit Fr., 14. August 2026', herabstufen)
+mitarbeiter += zeile('%s &nbsp; Sabine K.' % trainer_plakette,
+                     'sabine@kraftwerk-nord.de · Seit Mo., 17. August 2026', herabstufen)
+mitarbeiter += zeile('%s &nbsp; Anna B.' % trainer_plakette,
+                     'anna@kraftwerk-nord.de · Seit Di., 18. August 2026', herabstufen,
                      letzte=True)
 mitarbeiter += '</section>'
 
@@ -75,7 +81,7 @@ mitarbeiter += ('<div style="padding: 20px; display: flex; flex-direction: colum
                 'Studio-Code macht niemanden zum Trainer.</p></div>'
                 % (LABEL, FIELD, svg('chevron-down', 18, '#5c636e'), PRIMARY))
 mitarbeiter += '</section>'
-schreibe('LeuteMitarbeiter.dc.html', portal('leute', 900, mitarbeiter))
+schreibe('LeuteMitarbeiter.dc.html', portal('leute', 1000, mitarbeiter))
 
 
 # =============================================================== Einstellungen
@@ -150,8 +156,8 @@ konto += '<div style="%s"><h2 style="%s">Konto</h2></div>' % (HEADROW, SEC_TITLE
 konto += ('<div style="padding: 20px; display: flex; flex-direction: column; gap: 4px;">'
           '<span style="%s color: #9ba3af;">E-Mail</span>'
           '<div style="color: #9ba3af; font-weight: 600;">tim@kraftwerk-nord.de</div>'
-          '<span style="font-size: 12px; color: #5c636e; margin-top: 2px;">Trainer bei Kraftwerk '
-          'Nord seit Mi., 6. August 2026</span></div>'
+          '<span style="font-size: 12px; color: #5c636e; margin-top: 2px;">Inhaber von Kraftwerk '
+          'Nord seit Do., 6. August 2026</span></div>'
           % LABEL)
 konto += '</section>'
 
