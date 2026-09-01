@@ -243,3 +243,40 @@ test("aktiver Tag zeigt Geraet, Foto und Einweisungsvideo vor dem Installationsh
     expect(sichtbar).not.toContain(verboten);
   }
 });
+
+/**
+ * Ein Aushang traegt denselben Tokenraum wie ein Geraeteaufkleber, zeigt
+ * aber kein Geraet (Migration 0022, 0025). Die Seite verzweigt auf `kind`
+ * und zeigt das Studio statt einer Geraeteseite ohne Geraet.
+ */
+test("ein Aushang-Token zeigt das Studio statt eines Geraets", async ({
+  page,
+}) => {
+  const client = admin();
+
+  const { data: studio, error: studioError } = await client
+    .from("studios")
+    .insert({ name: "Aushang Studio" })
+    .select("id")
+    .single();
+  if (studioError) throw studioError;
+
+  const aushangToken = createTagToken();
+  const { error: tagError } = await client.from("machine_tags").insert({
+    studio_id: studio.id,
+    kind: "studio",
+    token_hash: hashTagToken(aushangToken),
+    status: "active",
+  });
+  if (tagError) throw tagError;
+
+  await page.goto(`/t/${aushangToken}`);
+  await expect(page.getByTestId("tag-aushang")).toBeVisible();
+  await expect(page.getByRole("link", { name: "App laden" })).toBeVisible();
+});
+
+test("ein unbekannter Token bleibt ununterscheidbar", async ({ page }) => {
+  const unbekannterToken = createTagToken();
+  await page.goto(`/t/${unbekannterToken}`);
+  await expect(page.getByTestId("tag-unknown")).toBeVisible();
+});

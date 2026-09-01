@@ -27,11 +27,34 @@ export const dynamic = "force-dynamic";
  * Android, wo es die App nicht gibt.
  */
 type FallbackZeile = {
-  machine_label: string;
-  model_name: string;
+  kind: "machine" | "studio";
+  studio_name: string;
+  // Bei kind "studio" hat der Tag kein Geraet -- diese drei sind dann null
+  // (linker Join in resolve_tag_fallback).
+  machine_label: string | null;
+  model_name: string | null;
   photo_path: string | null;
   exercises: Array<{ name: string; video_path: string | null }>;
 };
+
+function CheckIcon() {
+  return (
+    <svg
+      className={styles.nutzenIcon}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m4.5 12.5 5 5 10-11" />
+    </svg>
+  );
+}
 
 export default async function TagFallbackPage({
   params,
@@ -67,6 +90,64 @@ export default async function TagFallbackPage({
 
   const zeile = (data as FallbackZeile[] | null)?.[0];
   if (!zeile) return unbekannt;
+
+  // Ein Aushang hat kein Geraet -- er zeigt das Studio, nicht eine
+  // Geraeteseite ohne Geraet (Artboard 27, FallbackAushang.dc.html).
+  if (zeile.kind === "studio") {
+    return (
+      <main className={styles.seite} data-testid="tag-aushang">
+        <header>
+          <span className={styles.label}>Aushang</span>
+          <h1 className={styles.geraet}>{zeile.studio_name}</h1>
+          <p className={styles.standort}>Dein Studio arbeitet mit gymodo.</p>
+        </header>
+
+        <section className={styles.nutzen}>
+          <div className={styles.nutzenZeile}>
+            <CheckIcon />
+            <p className={styles.nutzenText}>
+              <strong>Einweisung an jedem Gerät.</strong> Wie es eingestellt
+              wird, als Video, direkt am Gerät.
+            </p>
+          </div>
+          <div className={styles.nutzenZeile}>
+            <CheckIcon />
+            <p className={styles.nutzenText}>
+              <strong>Deine Einstellungen bleiben.</strong> Sitzhöhe, Gewicht
+              und die letzten Sätze — an jedem Gerät.
+            </p>
+          </div>
+          <div className={styles.nutzenZeile}>
+            <CheckIcon />
+            <p className={styles.nutzenText}>
+              <strong>Kurse buchen.</strong> Wochenplan, Anmeldung, Warteliste.
+            </p>
+          </div>
+        </section>
+
+        <section className={styles.installieren}>
+          <p className={styles.schritteTitel}>In zwei Schritten dabei</p>
+          <div className={styles.schritt}>
+            <span className={styles.schrittNummer}>1</span>
+            <span className={styles.schrittText}>
+              App laden und Konto anlegen.
+            </span>
+          </div>
+          <div className={styles.schritt}>
+            <span className={styles.schrittNummer}>2</span>
+            <span className={styles.schrittText}>
+              Diesen Aushang noch einmal scannen — damit gehörst du zu{" "}
+              <strong>{zeile.studio_name}</strong>.
+            </span>
+          </div>
+          <a className={styles.aktion} href="https://apps.apple.com/">
+            App laden
+          </a>
+          <p className={styles.fussnote}>Zurzeit nur für iPhone.</p>
+        </section>
+      </main>
+    );
+  }
 
   const videoPfade = zeile.exercises
     .map((uebung) => uebung.video_path)
@@ -139,6 +220,10 @@ export default async function TagFallbackPage({
         <a className={styles.aktion} href="https://apps.apple.com/">
           App installieren
         </a>
+        <p className={styles.zweiterScan}>
+          Nach dem Laden diesen Code hier noch einmal scannen — dann bist du
+          bei <strong>{zeile.studio_name}</strong> angemeldet.
+        </p>
       </section>
 
       <p className={styles.grenze}>
