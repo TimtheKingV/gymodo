@@ -210,23 +210,23 @@
       "x": 0,
       "y": 0,
       "w": 1440,
-      "h": 800
+      "h": 880
     },
     {
       "file": "TelefonStart.dc.html",
       "page": "telefon",
       "title": "Einstieg",
       "x": 0,
-      "y": 960,
+      "y": 1040,
       "w": 390,
-      "h": 1000
+      "h": 1100
     },
     {
       "file": "TelefonModell.dc.html",
       "page": "telefon",
       "title": "Modell wählen",
       "x": 490,
-      "y": 960,
+      "y": 1040,
       "w": 390,
       "h": 900
     },
@@ -235,16 +235,43 @@
       "page": "telefon",
       "title": "Modell anlegen",
       "x": 980,
-      "y": 960,
+      "y": 1040,
       "w": 390,
       "h": 1120
+    },
+    {
+      "file": "TelefonFoto.dc.html",
+      "page": "telefon",
+      "title": "Foto aufnehmen",
+      "x": 1470,
+      "y": 1040,
+      "w": 390,
+      "h": 880
+    },
+    {
+      "file": "TelefonEinstellungen.dc.html",
+      "page": "telefon",
+      "title": "Einstellungen",
+      "x": 1960,
+      "y": 1040,
+      "w": 390,
+      "h": 980
+    },
+    {
+      "file": "TelefonParameterNeu.dc.html",
+      "page": "telefon",
+      "title": "Parameter anlegen",
+      "x": 2450,
+      "y": 1040,
+      "w": 390,
+      "h": 900
     },
     {
       "file": "TelefonGeraet.dc.html",
       "page": "telefon",
       "title": "Gerät",
-      "x": 1470,
-      "y": 960,
+      "x": 2940,
+      "y": 1040,
       "w": 390,
       "h": 760
     },
@@ -252,17 +279,17 @@
       "file": "TelefonKleben.dc.html",
       "page": "telefon",
       "title": "Tag ankleben",
-      "x": 1960,
-      "y": 960,
+      "x": 0,
+      "y": 2320,
       "w": 390,
-      "h": 900
+      "h": 940
     },
     {
       "file": "TelefonScan.dc.html",
       "page": "telefon",
       "title": "Sucher",
-      "x": 2450,
-      "y": 960,
+      "x": 490,
+      "y": 2320,
       "w": 390,
       "h": 860
     },
@@ -270,8 +297,8 @@
       "file": "TelefonScanTreffer.dc.html",
       "page": "telefon",
       "title": "Tag erkannt",
-      "x": 2940,
-      "y": 960,
+      "x": 980,
+      "y": 2320,
       "w": 390,
       "h": 860
     },
@@ -279,8 +306,8 @@
       "file": "TelefonUebungWaehlen.dc.html",
       "page": "telefon",
       "title": "Übung wählen",
-      "x": 0,
-      "y": 2240,
+      "x": 1470,
+      "y": 2320,
       "w": 390,
       "h": 1000
     },
@@ -288,8 +315,8 @@
       "file": "TelefonUebungNeu.dc.html",
       "page": "telefon",
       "title": "Übung anlegen",
-      "x": 490,
-      "y": 2240,
+      "x": 1960,
+      "y": 2320,
       "w": 390,
       "h": 820
     },
@@ -297,8 +324,8 @@
       "file": "TelefonUebungen.dc.html",
       "page": "telefon",
       "title": "Übungen am Gerät",
-      "x": 980,
-      "y": 2240,
+      "x": 2450,
+      "y": 2320,
       "w": 390,
       "h": 1360
     },
@@ -306,8 +333,8 @@
       "file": "TelefonVideo.dc.html",
       "page": "telefon",
       "title": "Aufnahme",
-      "x": 1470,
-      "y": 2240,
+      "x": 2940,
+      "y": 2320,
       "w": 390,
       "h": 880
     },
@@ -315,28 +342,28 @@
       "file": "TelefonUploads.dc.html",
       "page": "telefon",
       "title": "Warteschlange",
-      "x": 1960,
-      "y": 2240,
+      "x": 0,
+      "y": 3840,
       "w": 390,
-      "h": 820
+      "h": 1000
     },
     {
       "file": "TelefonFertig.dc.html",
       "page": "telefon",
       "title": "Fertig",
-      "x": 2450,
-      "y": 2240,
+      "x": 490,
+      "y": 3840,
       "w": 390,
-      "h": 960
+      "h": 1080
     },
     {
       "file": "TelefonZustaende.dc.html",
       "page": "telefon",
       "title": "Zustände am Telefon",
-      "x": 2940,
-      "y": 2240,
+      "x": 980,
+      "y": 3840,
       "w": 390,
-      "h": 1780
+      "h": 2150
     }
   ],
   "annotations": [
@@ -378,7 +405,7 @@
       "x": 0,
       "y": -320,
       "w": 460,
-      "text": "Diese Seite trug bis hierher genau einen Bildschirm.\n\nDie alte Notiz sagte: die Aufnahme entsteht auf dem Trainerhandy, alles andere bleibt Schreibtischarbeit, der Katalogeditor wird nicht auf 390 px gequetscht. Der zweite Teil war falsch — nicht für den Editor, aber für die Einrichtung.\n\nEin Studio wird nicht am Schreibtisch bestückt. Der Trainer steht vor dem Gerät, hat den Tag in der Hand und weiß erst dort, welche Nummer draufsteht und wo es steht. Deshalb trägt die Seite jetzt den ganzen Gang: Modell, Gerät, Tag, Übungen, Video.\n\nNachgearbeitet wird trotzdem am Schreibtisch — Einstellparameter, Beschreibungen, fehlende Videos. Der Editor bleibt, wo er war."
+      "text": "Diese Seite trug bis hierher genau einen Bildschirm.\n\nDie alte Notiz sagte: die Aufnahme entsteht auf dem Trainerhandy, alles andere bleibt Schreibtischarbeit, der Katalogeditor wird nicht auf 390 px gequetscht. Der zweite Teil war falsch — nicht für den Editor, aber für die Einrichtung.\n\nEin Studio wird nicht am Schreibtisch bestückt. Der Trainer steht vor dem Gerät, hat den Tag in der Hand und weiß erst dort, welche Nummer draufsteht und wo es steht. Deshalb trägt die Seite jetzt den ganzen Gang: Modell, Einstellungen, Gerät, Tag, Übungen, Video.\n\nZwei Posten sind seither aus der Schreibtischspalte hierher gewandert: das Foto, das jetzt Pflicht ist, und die Einstellparameter als eigener Schritt 2. Beides kennt nur, wer davorsteht — das Foto entscheidet, ob ein Mitglied merkt, dass es falsch steht, und die Rasten zählt am Schreibtisch niemand ab.\n\nNachgearbeitet werden nur noch Beschreibungen und fehlende Videos. Der Editor bleibt, wo er war."
     },
     {
       "id": "note-lieferung",
@@ -394,7 +421,7 @@
       "x": 1000,
       "y": -320,
       "w": 460,
-      "text": "Übungen gehören dem Studio, Videos dem Paar.\n\nexercises ist studioweit; equipment_model_exercises hängt eine Übung mit einer Reihenfolge an ein Modell. „Rudern sitzend\" wird also einmal angelegt und an mehrere Geräte gehängt.\n\nDas Einweisungsvideo (instruction_assets) hängt dagegen am Paar aus Modell und Übung — ein Kabelzug hat ein Foto und zwanzig Videos.\n\nDeshalb zeigt Schritt 4 eine Auswahl und kein leeres Namensfeld: sonst steht dieselbe Übung fünfmal im Katalog, jedes Mal anders geschrieben.\n\nDie Reihenfolge ist keine Kosmetik. Übung 1 ist am Gerät die Vorauswahl des Mitglieds."
+      "text": "Übungen gehören dem Studio, Videos dem Paar.\n\nexercises ist studioweit; equipment_model_exercises hängt eine Übung mit einer Reihenfolge an ein Modell. „Rudern sitzend\" wird also einmal angelegt und an mehrere Geräte gehängt.\n\nDas Einweisungsvideo (instruction_assets) hängt dagegen am Paar aus Modell und Übung — ein Kabelzug hat ein Foto und zwanzig Videos.\n\nDeshalb zeigt Schritt 5 eine Auswahl und kein leeres Namensfeld: sonst steht dieselbe Übung fünfmal im Katalog, jedes Mal anders geschrieben.\n\nDie Reihenfolge ist keine Kosmetik. Übung 1 ist am Gerät die Vorauswahl des Mitglieds."
     },
     {
       "id": "note-scanner",
@@ -411,6 +438,14 @@
       "y": -320,
       "w": 460,
       "text": "Offline gilt im Portal nicht — außer hier.\n\n2026-08-31-trainerportal-struktur-design.md §5 schließt den Zustand fürs Portal aus: „ein Konzept der Halle, nicht des Schreibtischs\".\n\nDieser Weg ist die Halle. Gerätebereiche liegen häufig im Keller, und wer zwanzig Geräte hintereinander einrichtet, verliert unterwegs das Netz. Eine ausdrückliche Ausnahme, nur für diese Seite.\n\nDie Formulierung bleibt die des Designsystems: „gespeichert, wird gesendet\" — nie „fehlgeschlagen\". Der Satz ist lokal sicher, und das muss die Sprache tragen."
+    },
+    {
+      "id": "note-modellweit",
+      "page": "telefon",
+      "x": 2500,
+      "y": -320,
+      "w": 460,
+      "text": "Foto und Einstellparameter hängen am Modell, nicht am Gerät.\n\nequipment_models.photo_path und equipment_setting_definitions stehen seit M0 so. Zwei baugleiche Kabelzüge teilen sich beides: der zweite läuft durch Schritt 1 und 2 mit einem Tap durch, weil dort schon alles steht.\n\nDas ist auch der Grund, warum der Gang trotz zweier neuer Posten nicht länger wird, sobald ein Studio erst einmal bestückt ist. Nur das erste Gerät einer Bauart kostet die Aufnahme und das Abzählen der Rasten.\n\nEin Altmodell ohne Foto ist der Ausnahmefall: Schritt 2 fragt es nach, und das ist der einzige Weg, es im Gang nachzuholen. Ohne diese Zeile bliebe Brustpresse für immer ein Name ohne Bild.\n\nKein Backend fehlt dafür: uploadEquipmentPhoto und createSettingDefinition bestehen samt Validierung, es fehlt allein die mobile Form."
     }
   ],
   "launch": {

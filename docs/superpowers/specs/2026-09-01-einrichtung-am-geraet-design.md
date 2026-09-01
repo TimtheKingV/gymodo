@@ -1,10 +1,11 @@
 # Einrichtung am Gerät — Tags als Lieferung, der Gang durch die Halle
 
-**Stand:** 1. September 2026
+**Stand:** 1. September 2026, zweite Runde
 **Status:** Entwurf, abgestimmt. Noch keine Umsetzung.
 **Vorgänger:** `2026-08-31-trainerportal-struktur-design.md` (Struktur), `2026-09-01-scan-beitritt-design.md` (Tokenraum, Aushang), `2026-08-30-designsystem.md` (Tokens)
 **Ändert:** `2026-09-01-scan-beitritt-design.md` §3 und §6 — der Druckbogen entfällt, der Aushang wird ein geliefertes Schild. Und `2026-08-31-trainerportal-struktur-design.md` §5 bekommt eine benannte Ausnahme.
 **Canvas:** Trainerportal `fa12ef14-ca77-4fcc-a034-886a38914984`, Seite *Einrichten am Gerät*
+**Zweite Runde:** Der Gang wird sechsschrittig. Das Foto ist im Gang Pflicht statt Beiwerk, und die Einstellparameter wandern aus der Schreibtischspalte in einen eigenen Schritt 2. Betroffen sind §2, §3, §5, §7 und die Entscheidungen (Nachtrag 9–13).
 
 ---
 
@@ -32,6 +33,16 @@ Acht, alle in dieser Runde getroffen:
 6. **Ein neues Gerätemodell darf am Telefon entstehen — knapp.** Foto, Name, Hersteller, Gewichtsschritt, Spanne. Alles Weitere bleibt Schreibtisch.
 7. **„Offline" gilt im Portal nicht — außer hier.** Ausdrückliche Ausnahme zu §5 der Strukturspec, nur für diese Seite.
 8. **Ein vergebener Tag wird nicht mit einem Tap umgehängt.** Der Scan gibt Auskunft, zu welchem Gerät er gehört — und zwei Nebenaktionen, keine Hauptaktion.
+
+### Nachtrag der zweiten Runde
+
+Fünf weitere, alle aus derselben Frage: was kennt nur, wer vor dem Gerät steht?
+
+9. **Foto und Einstellparameter hängen am Modell, nicht am Gerät.** `equipment_models.photo_path` und `equipment_setting_definitions` stehen seit M0 so. Zwei baugleiche Kabelzüge teilen sich beides — der zweite läuft durch Schritt 1 und 2 mit einem Tap durch.
+10. **Das Foto bleibt im Bildschirm „Modell anlegen", wird dort aber Pflicht.** Kein eigener Schritt und keine zweite Aufnahme. Es ist der Grund, warum ein Mitglied nach dem Scan merkt, dass es vor dem falschen Gerät steht — das ist keine Nacharbeit.
+11. **Die Einstellparameter werden Schritt 2, überspringbar.** Ohne sie ist das Gerät vollständig nutzbar; das Mitglied hat nur nichts zu kalibrieren. Die Rasten zählt aber nur ab, wer davorsteht: am Schreibtisch werden sie geraten oder gar nicht erfasst, und dann ist `GeraetKalibrierung` in der Member-App leer.
+12. **Ein bestehendes Modell ohne Foto wird in Schritt 2 nachgefragt.** Dort steht die Zeile dann als *„Foto fehlt"*. Das ist der einzige Weg, ein Altmodell im Gang zu vervollständigen.
+13. **Der Gang wird sechsschrittig:** Modell · Einstellungen · Gerät · Tag · Übungen · Video.
 
 ---
 
@@ -66,17 +77,27 @@ Die Sorte kommt ebenfalls aus der Charge: Geräte-Tags sind On-Metal-Aufkleber, 
 
 ## 2. Der Ablauf
 
-Fünf Schritte, je Gerät, vor dem Gerät:
+Sechs Schritte, je Gerät, vor dem Gerät:
 
 | | Schritt | Was entsteht | Überspringbar |
 | --- | --- | --- | --- |
-| 1 | **Modell** | Wählen, oder knapp neu: Foto, Name, Hersteller, Gewichtsschritt, Spanne | nein |
-| 2 | **Gerät** | `machines`-Zeile mit Nummer und Standort | nein |
-| 3 | **Tag** | Ankleben, scannen, verbinden — ab hier ist das Gerät auffindbar | nein |
-| 4 | **Übungen** | Aus dem Studio wählen oder neu anlegen, Reihenfolge zählt | ja, aber dann zeigt das Gerät nichts |
-| 5 | **Video** | Je Übung höchstens 45 s, am Paar Modell × Übung | **ja** |
+| 1 | **Modell** | Wählen, oder knapp neu: **Foto (Pflicht)**, Name, Hersteller, Gewichtsschritt, Spanne | nein |
+| 2 | **Einstellungen** | Einstellparameter des Modells — Sitzhöhe 1–8, Rollenhöhe 1–12, Griff A \| B \| C. Trägt das gewählte Modell kein Foto, steht es hier als Zeile | **ja** |
+| 3 | **Gerät** | `machines`-Zeile mit Nummer und Standort | nein |
+| 4 | **Tag** | Ankleben, scannen, verbinden — ab hier ist das Gerät auffindbar | nein |
+| 5 | **Übungen** | Aus dem Studio wählen oder neu anlegen, Reihenfolge zählt | ja, aber dann zeigt das Gerät nichts |
+| 6 | **Video** | Je Übung höchstens 45 s, am Paar Modell × Übung — reine Erklärung | **ja** |
 
-Davor steht die Lieferung, dahinter die Nacharbeit am Schreibtisch: Einstellparameter, Beschreibungen, fehlende Videos. **Die Grenze liegt bei „was macht das Gerät auffindbar".** Alles, was das tut, passiert vor dem Gerät; alles andere hat Zeit.
+Davor steht die Lieferung, dahinter die Nacharbeit am Schreibtisch: Beschreibungen und fehlende Videos.
+
+**Die Grenze lag in der ersten Runde bei „was macht das Gerät auffindbar".** Sie liegt jetzt eine Stelle weiter: **was ist nur vor dem Gerät überhaupt zu erfahren.** Auffindbarkeit ist davon ein Teil, aber nicht alles. Die Nummer steht am Gerät, der Standort auch — und ebenso, wie das Gerät aussieht und wie viele Rasten die Sitzhöhe hat. Nichts davon steht in einem Katalog, aus dem man es am Schreibtisch abschreiben könnte.
+
+Zwei Posten sind damit aus der Schreibtischspalte hierher gewandert:
+
+- **Das Foto** war ein Feld, das nur beim Anlegen eines neuen Modells auftauchte, und die Oberfläche nannte es vorläufig („ein besseres Foto trägst du am Schreibtisch nach"). Wählte der Trainer ein bestehendes Modell ohne Foto, fragte nichts nach. Dabei ist das Foto der einzige Grund, warum jemand nach dem Scan merkt, dass er vor dem falschen von zwei baugleichen Geräten steht.
+- **Die Einstellparameter** kamen im Telefonweg gar nicht vor. Ohne sie zeigt `GeraetKalibrierung` in der Member-App — der Bildschirm, der Sitzposition 1–8 und Startwinkel 0–45° trägt — nichts an.
+
+Schritt 2 bleibt trotzdem überspringbar, das Foto nicht. Der Unterschied: ein Gerät ohne Einstellparameter ist vollständig nutzbar, eines ohne Foto ist verwechselbar.
 
 ### Mehrere Übungen
 
@@ -94,16 +115,21 @@ Davor steht die Lieferung, dahinter die Nacharbeit am Schreibtisch: Einstellpara
 
 Die Canvas-Notiz `note-telefon` sagte bisher: die Aufnahme entsteht auf dem Trainerhandy, *alles andere bleibt Schreibtischarbeit*. Der zweite Teil war falsch — nicht für den Katalogeditor, aber für die Einrichtung. Ein Studio wird nicht am Schreibtisch bestückt. Der Trainer steht vor dem Gerät, hat den Tag in der Hand und weiß erst dort, welche Nummer draufsteht und wo es steht.
 
+Die zweite Runde dreht denselben Satz noch einmal ein Stück weiter. Die Notiz behielt zwei Posten am Schreibtisch, die dort ebenso wenig zu holen sind: das Foto und die Einstellparameter. Der Einwand gegen die Parameter am Telefon war, man müsste dafür den Katalogeditor auf 390 px quetschen — er trifft nicht. Gebraucht wird kein Editor, sondern eine Liste mit drei Zeilen und ein Anlegeformular mit vier Feldern.
+
 ### Bildschirmverzeichnis
 
-`+` neu, `~` zu ändern. Die Telefonbildschirme tragen keine eigene Nummer — die Zählung steht auf der Schrittleiste („Schritt 3 von 5 · Tag"), und zwei Zählungen nebeneinander wären eine zu viel.
+`+` neu, `~` zu ändern. Die Telefonbildschirme tragen keine eigene Nummer — die Zählung steht auf der Schrittleiste („Schritt 4 von 6 · Tag"), und zwei Zählungen nebeneinander wären eine zu viel. Der Bildschirm *Foto aufnehmen* trägt als einziger gar keine Wegmarke: er ist aus Schritt 1 und aus Schritt 2 erreichbar, und eine feste Nummer wäre auf einem der beiden Wege falsch.
 
 | | Bildschirm | Breite |
 | --- | --- | --- |
 | + | Ablauf — der ganze Gang als Karte | 1440 |
 | + | Einstieg — Bestand, Vorrat, „Gerät einrichten" | 390 |
 | + | Modell wählen | 390 |
-| + | Modell anlegen — knapp | 390 |
+| + | Modell anlegen — knapp, Foto ist Pflicht | 390 |
+| + | Foto aufnehmen — randlos, ohne Wegmarke | 390 |
+| + | Einstellungen — Foto und Einstellparameter des Modells | 390 |
+| + | Parameter anlegen — Zahl oder Auswahl | 390 |
 | + | Gerät — Nummer, Standort | 390 |
 | + | Tag ankleben — mit Platzierungsskizze | 390 |
 | + | Sucher | 390 |
@@ -114,12 +140,14 @@ Die Canvas-Notiz `note-telefon` sagte bisher: die Aufnahme entsteht auf dem Trai
 | + | Aufnahme — 45-Sekunden-Grenze | 390 |
 | + | Warteschlange — Uploads über mehrere Geräte | 390 |
 | + | Fertig — Probe-Scan, nächstes Gerät | 390 |
-| + | Zustände am Telefon — acht Antwortkarten | 390 |
+| + | Zustände am Telefon — zehn Antwortkarten | 390 |
 | ~ | Tags — Lieferungen statt Anlegen | 1440 |
 | ~ | Modell — „Tag scannen" je Geräteinstanz | 1440 |
 | ~ | Überblick — „Am Gerät scannen" statt „Tags anlegen" | 1440 |
 
-**Fünfzehn neu, drei geändert, eines ersetzt.**
+**Achtzehn Artboards auf der Seite: siebzehn neu, eines ersetzt** (Übungen am Gerät), **dazu drei geänderte Schreibtischbildschirme.**
+
+Die erste Runde schrieb hier „Fünfzehn neu", markierte in der Tabelle aber vierzehn mit `+` — die fünfzehnte war das ersetzte Artboard. Die Zählung oben ist die berichtigte.
 
 ### Die Tags-Seite verliert ihre Akzentfläche
 
@@ -157,7 +185,11 @@ Der Zustand **Offline** gilt hier, obwohl §5 der Strukturspec ihn fürs Portal 
 | **Sucher im Portal** | **Der einzige echte Neubau, der bleibt.** Safari kennt `BarcodeDetector` nicht, also `getUserMedia` plus ein Decoder im Browser. |
 | **Tag binden per Scan** | Erweiterung. Die Update-Policy auf `machine_tags` besteht (Plan `2026-08-31-trainerportal-medien`); es fehlt der Weg über den Token-Hash statt über die Tag-ID. |
 | **Modell am Telefon anlegen** | Erweiterung. `equipment_models` und die Server Action bestehen; es fehlt die knappe mobile Form. |
+| **Foto am Telefon** | **Vollständig vorhanden.** `uploadEquipmentPhoto` in `packages/domain/src/media-store.ts` schreibt `equipment_models.photo_path`; der Bucket `equipment-photos` steht in `0020_media_buckets.sql` mit 10 MiB und JPEG/PNG. Dass das Foto Pflicht ist, bleibt eine Regel der Oberfläche — die Spalte ist nullable, und das soll sie bleiben: Altmodelle tragen keines. |
+| **Einstellparameter am Telefon** | Erweiterung. `createSettingDefinition`, `deleteSettingDefinition` und `settingDefinitionInputSchema` in `packages/domain/src/catalog.ts` bestehen samt Validierung für `number` und `enum` (dieselben Regeln wie die Constraints aus `0017`), `getStudioCatalog` liest sie mit. Es fehlt allein die mobile Form. |
 | **Geräte, Übungen, Videos, Tags** | Vollständig vorhanden. |
+
+**Die zweite Runde kostet keine Migration.** Beide neuen Posten hängen an Tabellen und Fachfunktionen, die seit M0 stehen.
 
 ---
 
@@ -187,3 +219,6 @@ Das ist die eigentliche Nachricht dieses Dokuments — der Neubau schrumpft nett
 - **Leerer Vorrat mitten in der Halle.** Der Zustand ist gezeichnet, die Nachbestellung nicht — es gibt keinen Bestellweg im Portal, und ob es einen geben soll, ist eine Betreiberfrage.
 - **Nummernvergabe.** `machines.label` ist heute frei. Der Entwurf schlägt die nächste freie Zahl vor; ob das Portal sie erzwingen soll, wenn am Gerät schon eine andere klebt, ist offen — der Entwurf sagt nein.
 - **Trefferquote NFC gegen QR** (M0 Task 8) bleibt offen und ist für diesen Weg gegenstandslos: der Trainer nutzt ohnehin nur den QR. Für den Mitgliedsweg gilt die Vorgängerspec unverändert.
+- **Wie viele Einstellparameter sind am Telefon zumutbar?** Der Entwurf zeigt drei. Bei acht wird Schritt 2 zur Fleißarbeit vor dem Gerät, und der Trainer überspringt ihn — womit die Sache schlechter dastünde als vorher. Ob es eine Obergrenze braucht oder die Praxis das regelt, zeigt der erste echte Gang.
+- **Verdient ein übersprungener Schritt 2 eine eigene Zeile im Überblick?** Der Entwurf sagt ja und führt „1 Modell unvollständig · Brustpresse" — dieselbe Zeile, die schon das fehlende Foto trug. Ob Foto und Parameter dort zusammen oder getrennt stehen sollen, ist offen.
+- **Ein Foto je Modell reicht nicht immer.** Zwei baugleiche Geräte an verschiedenen Wänden zeigen dasselbe Bild, und der Standort steht nur als Text daneben. Ob das reicht, um sie auseinanderzuhalten, weiß erst, wer davorsteht. Ein Foto je Gerät wurde erwogen und verworfen: es kostet eine Spalte auf `machines`, einen Umbau von `getTagContext` und `resolve_tag_fallback` — und hundert Aufnahmen statt zwanzig.
