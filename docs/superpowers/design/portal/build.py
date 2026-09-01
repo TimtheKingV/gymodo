@@ -157,3 +157,19 @@ def svg(name, groesse=16, farbe='currentColor'):
 def zurueck(text):
     return ('<span style="display: inline-flex; align-items: center; gap: 6px;">%s %s</span>'
             % (svg('arrow-left', 14), text))
+
+
+def reiter(items, aktiv):
+    """items: [(name, meta_oder_None), ...]"""
+    aus = []
+    for name, meta in items:
+        an = name == aktiv
+        rand = '#d4ff3f' if an else 'transparent'
+        farbe = '#f2f4f7' if an else '#9ba3af'
+        m = ('<span style="display: block; font-size: 12px; color: #5c636e; '
+             'margin-top: 2px;">%s</span>' % meta) if meta else ''
+        aus.append('<a href="#" style="padding: 12px 16px; border-bottom: 2px solid %s; '
+                   'color: %s;"><span style="display: block; font-weight: 600;">%s</span>%s</a>'
+                   % (rand, farbe, name, m))
+    return ('<div style="display: flex; gap: 4px; margin-top: 24px; '
+            'border-bottom: 1px solid #2a2e36;">%s</div>' % ''.join(aus))

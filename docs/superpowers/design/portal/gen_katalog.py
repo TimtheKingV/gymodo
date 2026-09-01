@@ -1,21 +1,9 @@
 # -*- coding: utf-8 -*-
 from build import (HEAD, FOOT, LABEL, CARD, HEADROW, PRIMARY, SECONDARY,
                    DESTRUCTIVE, FIELD, BADGE, SEC_TITLE, portal, titel,
-                   schreibe, zeile, zurueck)
+                   schreibe, zeile, zurueck, reiter)
 
 NOTE = 'font-size: 12px; color: #5c636e;'
-
-
-def reiter(name, meta, aktiv=False):
-    rand = '2px solid #d4ff3f' if aktiv else '2px solid transparent'
-    farbe = '#f2f4f7' if aktiv else '#9ba3af'
-    meta_html = ''
-    if meta:
-        meta_html = ('<span style="display: block; font-size: 12px; color: #5c636e; '
-                     'margin-top: 2px;">%s</span>' % meta)
-    return ('<a href="#" style="padding: 12px 16px; border-bottom: %s; color: %s;">'
-            '<span style="display: block; font-weight: 600;">%s</span>%s</a>'
-            % (rand, farbe, name, meta_html))
 
 
 # ---------------------------------------------------------------- Geräte
@@ -55,12 +43,12 @@ modell = ('<a href="#" style="%s color: #5c636e;">%s</a>'
           '<p style="color: #9ba3af; margin: 8px 0 0;">Technogym · Schritt 2,5 kg · ab 5,0 kg bis 100,0 kg</p>'
           % (LABEL, zurueck('Geräte')))
 
-modell += '<div style="display: flex; gap: 4px; margin-top: 24px; border-bottom: 1px solid #2a2e36;">'
-modell += reiter('Stammdaten', None)
-modell += reiter('Einstellungen', '2 Parameter')
-modell += reiter('Übungen', '2 · 1 mit Video')
-modell += reiter('Einzelne Geräte', '2 · 1 ohne Tag', aktiv=True)
-modell += '</div>'
+modell += reiter([
+    ('Stammdaten', None),
+    ('Einstellungen', '2 Parameter'),
+    ('Übungen', '2 · 1 mit Video'),
+    ('Einzelne Geräte', '2 · 1 ohne Tag'),
+], 'Einzelne Geräte')
 
 modell += ('<div style="display: flex; align-items: center; justify-content: space-between; '
           'gap: 16px; margin-top: 24px;">'
