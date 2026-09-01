@@ -12,6 +12,9 @@
     { "file": "LeuteMitglieder.dc.html", "page": "portal", "title": "Leute — Mitglieder", "x": 1560, "y": 1120, "w": 1440, "h": 760 },
     { "file": "LeuteMitarbeiter.dc.html", "page": "portal", "title": "Leute — Mitarbeiter", "x": 3120, "y": 1120, "w": 1440, "h": 700 },
 
+    { "file": "EinstellungenStudio.dc.html", "page": "portal", "title": "Einstellungen — Studio", "x": 0, "y": 2180, "w": 1440, "h": 1180 },
+    { "file": "EinstellungenKonto.dc.html", "page": "portal", "title": "Einstellungen — Konto", "x": 1560, "y": 2180, "w": 1440, "h": 920 },
+
     { "file": "Start.dc.html", "page": "einstieg", "title": "Wurzelseite", "x": 0, "y": 0, "w": 1440, "h": 900 },
     { "file": "Anmelden.dc.html", "page": "einstieg", "title": "Anmelden", "x": 1560, "y": 0, "w": 1440, "h": 900 },
     { "file": "PasswortVergessen.dc.html", "page": "einstieg", "title": "Passwort vergessen", "x": 3120, "y": 0, "w": 1440, "h": 900 },

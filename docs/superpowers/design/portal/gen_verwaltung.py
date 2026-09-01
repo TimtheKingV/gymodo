@@ -76,3 +76,103 @@ mitarbeiter += ('<div style="padding: 20px; display: flex; flex-direction: colum
                 % (LABEL, FIELD, svg('chevron-down', 18, '#5c636e'), PRIMARY))
 mitarbeiter += '</section>'
 schreibe('LeuteMitarbeiter.dc.html', portal('leute', 700, mitarbeiter))
+
+
+# =============================================================== Einstellungen
+# Sammelt, was bisher nirgends hinsollte: Studioname und Zeitzone, die
+# Stornofrist, die das Kurse-Feature braucht, der Studio-Code (die
+# Beitrittsfläche des Studios) und das eigene Konto. Zwei Reiter, damit
+# jede Seite bei genau einer Akzentfläche bleibt.
+REITER_EINSTELLUNGEN = [('Studio', None), ('Konto', None)]
+
+WARN = ('border: 1px solid #ffb020; border-radius: 10px; padding: 12px 16px; '
+        'color: #ffb020; font-size: 13px; line-height: 1.45; background: transparent;')
+
+
+# ---------------------------------------------------------------- Studio
+studio = titel(
+    'Einstellungen',
+    'Stammdaten des Studios, die Regel für Kurse und der Code, mit dem Mitglieder beitreten.')
+studio += reiter(REITER_EINSTELLUNGEN, 'Studio')
+
+studio += '<section style="%s margin-top: 24px;">' % CARD
+studio += '<div style="%s"><h2 style="%s">Stammdaten</h2></div>' % (HEADROW, SEC_TITLE)
+studio += ('<div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">'
+           '<div style="display: flex; flex-direction: column; gap: 8px;">'
+           '<span style="%s color: #9ba3af;">Name</span>'
+           '<div style="%s">Kraftwerk Nord</div></div>'
+           '<div style="display: flex; flex-direction: column; gap: 8px;">'
+           '<span style="%s color: #9ba3af;">Zeitzone</span>'
+           '<div style="%s justify-content: space-between;">Europe/Berlin %s</div></div>'
+           '<div><a href="#" style="%s">Änderungen speichern</a></div></div>'
+           % (LABEL, FIELD, LABEL, FIELD, svg('chevron-down', 18, '#5c636e'), PRIMARY))
+studio += '</section>'
+
+studio += '<section style="%s margin-top: 24px;">' % CARD
+studio += '<div style="%s"><h2 style="%s">Kurse</h2></div>' % (HEADROW, SEC_TITLE)
+studio += ('<div style="padding: 20px; display: flex; flex-direction: column; gap: 8px;">'
+           '<span style="%s color: #9ba3af;">Stornofrist</span>'
+           '<div style="display: flex; align-items: center; gap: 12px;">'
+           '<div style="%s width: 84px; justify-content: center;">2</div>'
+           '<span style="color: #9ba3af;">Stunden vor Beginn</span></div>'
+           '<p style="color: #5c636e; font-size: 13px; line-height: 1.45; margin: 8px 0 0; '
+           'max-width: 60ch;">Bis wann sich ein Mitglied abmelden kann. Das ist eure Regel, keine '
+           'Vorgabe von gymodo.</p></div>'
+           % (LABEL, FIELD))
+studio += '</section>'
+
+studio += '<section style="%s margin-top: 24px;">' % CARD
+studio += '<div style="%s"><h2 style="%s">Studio-Code</h2></div>' % (HEADROW, SEC_TITLE)
+studio += ('<div style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">'
+           '<code style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; '
+           'font-size: 18px; letter-spacing: 0.08em; background: #0f1114; border: 1px solid #2a2e36; '
+           'border-radius: 10px; padding: 16px; display: block;">KWNORD-7F2X</code>'
+           '<span style="font-size: 12px; color: #5c636e;">Mit diesem Code treten Mitglieder eurem '
+           'Studio bei. Er macht niemanden zum Trainer.</span>'
+           '<div style="display: flex; gap: 12px;">'
+           '<a href="#" style="%s">Kopieren</a>'
+           '<a href="#" style="%s">Neuen Code erzeugen</a></div>'
+           '<div style="%s">Ein neuer Code macht den alten sofort ungültig. Aushänge und Verträge '
+           'mit dem alten Code funktionieren dann nicht mehr.</div></div>'
+           % (SECONDARY, SECONDARY, WARN))
+studio += '</section>'
+schreibe('EinstellungenStudio.dc.html', portal('einstellungen', 1180, studio))
+
+
+# ---------------------------------------------------------------- Konto
+konto = titel(
+    'Einstellungen',
+    'Deine E-Mail, dein Passwort und die Sitzung, in der du gerade angemeldet bist.')
+konto += reiter(REITER_EINSTELLUNGEN, 'Konto')
+
+konto += '<section style="%s margin-top: 24px;">' % CARD
+konto += '<div style="%s"><h2 style="%s">Konto</h2></div>' % (HEADROW, SEC_TITLE)
+konto += ('<div style="padding: 20px; display: flex; flex-direction: column; gap: 4px;">'
+          '<span style="%s color: #9ba3af;">E-Mail</span>'
+          '<div style="color: #9ba3af; font-weight: 600;">tim@kraftwerk-nord.de</div>'
+          '<span style="font-size: 12px; color: #5c636e; margin-top: 2px;">Trainer bei Kraftwerk '
+          'Nord seit Mi., 6. August 2026</span></div>'
+          % LABEL)
+konto += '</section>'
+
+konto += '<section style="%s margin-top: 24px;">' % CARD
+konto += '<div style="%s"><h2 style="%s">Passwort ändern</h2></div>' % (HEADROW, SEC_TITLE)
+konto += ('<div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">'
+          '<div style="display: flex; flex-direction: column; gap: 8px;">'
+          '<span style="%s color: #9ba3af;">Aktuelles Passwort</span>'
+          '<div style="%s letter-spacing: 0.2em;">••••••••••</div></div>'
+          '<div style="display: flex; flex-direction: column; gap: 8px;">'
+          '<span style="%s color: #9ba3af;">Neues Passwort</span>'
+          '<div style="%s letter-spacing: 0.2em;">••••••••••</div></div>'
+          '<div style="display: flex; flex-direction: column; gap: 8px;">'
+          '<span style="%s color: #9ba3af;">Wiederholen</span>'
+          '<div style="%s letter-spacing: 0.2em;">••••••••••</div></div>'
+          '<div><a href="#" style="%s">Passwort ändern</a></div></div>'
+          % (LABEL, FIELD, LABEL, FIELD, LABEL, FIELD, PRIMARY))
+konto += '</section>'
+
+konto += '<section style="%s margin-top: 24px;">' % CARD
+konto += '<div style="%s"><h2 style="%s">Abmelden</h2></div>' % (HEADROW, SEC_TITLE)
+konto += ('<div style="padding: 20px;"><a href="#" style="%s">Abmelden</a></div>' % DESTRUCTIVE)
+konto += '</section>'
+schreibe('EinstellungenKonto.dc.html', portal('einstellungen', 920, konto))
