@@ -74,12 +74,48 @@ Als dieses Dokument entstand, war `git diff master designplan -- . ':(exclude)do
 
 Keiner davon ist Code.
 
-1. **SMTP-Versand.** ✅ **Weitgehend geloest am 1. September.** Die Organisation `Gymodo` steht auf Pro (Supabase rechnet **pro Organisation** ab — ein Upgrade in einer der drei anderen Organisationen haette nichts bewirkt), und `supabase config push` hat das OTP-Template ins Projekt gebracht: `auth: updated`, Folge-Diff leer. Betreff *„Dein Anmeldecode"*, `{{ .Token }}` statt `{{ .ConfirmationURL }}`, `otp_length` 6.
-   **Es fehlt der letzte Beweis:** eine echte Mail mit sechsstelligem Code in einem echten Posteingang. Bis dahin bleibt dieser Punkt offen — lokal ist er gegen Mailpit gefuehrt.
-   **Nachtrag, teurer als der Blocker selbst:** `config push` ueberträgt die **gesamte** `[auth]`-Sektion, nicht einzelne Schluessel. `config.toml` trug reine Entwicklungswerte; ein unbesehener Push haette `site_url` der Produktion auf `127.0.0.1` gesetzt, die Bestaetigungspflicht der Mailadresse abgeschaltet und TOTP-MFA deaktiviert. Vier Werte stehen jetzt auf `env()` mit getrennten Dateien (`.env` lokal, `.env.production` fuer den Push). Merke: **`SUPABASE_ENV=production` waehlt `.env.production` nicht aus** — das leistet in Supabases Beispiel dotenvx, nicht die CLI; verlaesslich ist nur eine echte Shell-Variable.
+1. **SMTP-Versand.** ✅ **Erledigt am 1. September.** Eine echte Mail mit sechsstelligem Code ist angekommen. Der Weg dorthin ging über drei Stationen, von denen nur die erste vorhergesehen war:
+   - **Pro-Upgrade.** Supabase rechnet **pro Organisation** ab; dieses Konto hat vier. Ein Upgrade in der falschen hätte nichts bewirkt, und die API hätte weiter mit *„free tier project"* geantwortet. Danach `supabase config push` → `auth: updated`, Folge-Diff leer.
+   - **Zwei fehlende Umgebungsvariablen in Vercel** (siehe Abschnitt 4a).
+   - **Kein Konto.** Siehe Abschnitt 4b — die Mail blieb aus, weil es die Adresse nicht gab, nicht weil das Template fehlte.
 
 2. **Der Mac.** Die iOS-App existiert nicht als eine Zeile Code. M0 Task 7 (Universal-Link-Validierung) und Task 8 (physischer NFC-Test) warten dort. **Task 8 ist ein Gate:** liest der Tag am echten Gerät nicht zuverlässig, wird das Produkt QR-first statt NFC-first.
 3. **`APPLE_TEAM_ID` / `APPLE_BUNDLE_ID`** stehen in Vercel auf Platzhaltern (`ABCDE12345` / `de.fitretro.member`). Muss vor jedem TestFlight-Build weg.
+
+### 4a. Was die Produktion am 1. September lahmlegte
+
+`SUPABASE_URL` und `SUPABASE_ANON_KEY` waren in Vercel **nicht gesetzt** — nur die `NEXT_PUBLIC_`-Varianten. Die werden zur Bauzeit ins Bundle eingesetzt, die anderen zur Laufzeit gelesen; `requiredEnv` warf also bei jedem Client-Bau.
+
+Die Messung, die es festnagelte — jede Route, die einen Supabase-Client baut, lieferte 500, jede andere 200:
+
+| Route | Client? | vorher | nachher |
+| --- | --- | --- | --- |
+| `/login`, `/api/aasa`, AASA-Datei | nein | 200 | 200 |
+| `/api/v1/me/bootstrap` *ohne* Header | nein (`bearerClientFrom` gibt vorher `null`) | 401 | 401 |
+| `/`, `/t/<token>` | **ja** | **500** | 200 |
+| `/api/v1/me/bootstrap` *mit* Header | **ja** | **500** | 401 |
+
+**Die Lehre ist der Smoke-Test.** `pnpm smoke:aasa` stand im M0-Plan als ✅ und prüft ausschliesslich die AASA-Route — ausgerechnet eine der wenigen, die **keinen** Supabase-Client baut. Er meldete grün, während die halbe Anwendung 500 warf. Ein Smoke-Test, der nur die eine Route prüft, die nichts braucht, ist kein Smoke-Test.
+
+Zweite Falle bei der Messung: Vercel liefert Fehlerseiten aus dem Edge-Cache. Nach dem Fix meldete `curl` weiter 500 (`X-Vercel-Cache: HIT`), obwohl die Seite längst lief. **Immer mit Cache-Umgehung nachmessen.**
+
+### 4b. Warum keine Mail kam, obwohl alles richtig konfiguriert war
+
+`apps/web/app/login/actions.ts` ruft `signInWithOtp` mit `shouldCreateUser: false`. Existiert die Adresse nicht, antwortet Supabase mit `422 otp_disabled` und verschickt **nichts** — das Portal meldet trotzdem *„Code gesendet"*, absichtlich, gegen User-Enumeration.
+
+Das Produktivprojekt wurde am 30. August zurückgesetzt; `auth.users` war damit leer. Konten entstehen bis Phase 2 **von Hand** im Dashboard (Authentication → Users → Add user, *Auto Confirm User* anhaken — sonst greift das `confirmation`-Template, das nirgends angepasst ist).
+
+**Wo der Beweis stand:** die Action loggt `console.error("OTP-Versand fehlgeschlagen: …")`. Die Antwort lag seit dem ersten Versuch in den Vercel-Logs. Bei einem stillen Fehlschlag in der Anmeldung ist das die erste Adresse.
+
+### 4c. Die Produktionsdatenbank ist zehn Migrationen zurück
+
+Auf Platte `0001`–`0021`, in der Cloud `0001`–`0011`. Es fehlen `0012`–`0021`: Trainingsdaten, Tag-Schreibpolicies, Medien-Buckets und `0021_fallback_inhalte`.
+
+Ursache: Das Projekt wurde am 30. August zurückgesetzt und neu migriert — damals endete es bei `0011`. Die vier Migrationen vom 31. August und die sechs aus dem Medien-Plan kamen danach und blieben lokal.
+
+**Das ist latent, nicht sichtbar.** `/t/<token>` antwortet heute mit 200, weil ein unbekannter Token die leere Menge liefert und die Seite korrekt *„unbekannt"* zeigt, ohne je eine Spalte zu lesen. Erst ein **echter** Tag bringt es zum Vorschein: die Cloud trägt noch die `0003`-Fassung von `resolve_tag_fallback` mit einer Rückgabespalte, die Seite erwartet die `0021`-Fassung mit fünf. Ebenso könnte das Portal dort heute kein Foto hochladen — die Buckets aus `0020` existieren nicht.
+
+`supabase db push --dry-run` bestätigt genau diese zehn, keine Seeds, keine Rollen. Zerstörend ist nichts: `0019` tauscht einen Fremdschlüssel gegen einen mit anderer Löschregel, `0021` muss die Funktion droppen, weil sich ihr Rückgabetyp ändert.
 
 ### Das Ungleichgewicht, das die Reihenfolge bestimmt
 
@@ -99,7 +135,8 @@ Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Da
 
 - [x] **SMTP:** Supabase Pro, entschieden und gebucht 1. September (Organisation `Gymodo`)
 - [x] **Template ins Projekt gepusht**, per leerem Folge-Diff belegt
-- [ ] **Verifizieren**, dass eine echte OTP-Mail mit sechsstelligem Code ankommt
+- [x] **Echte OTP-Mail mit sechsstelligem Code angekommen** — Blocker 1 ist zu
+- [ ] **`supabase db push`** — die Produktionsdatenbank ist zehn Migrationen zurück (Abschnitt 4c)
 - [ ] **Mac-Übernahme:** wann — und wird vorher NFC oder QR entschieden
 - [ ] **Kurse:** Teil von M2 oder vertagt (der größte ungeplante Brocken)
 

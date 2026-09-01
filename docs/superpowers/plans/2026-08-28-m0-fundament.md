@@ -20,7 +20,7 @@
 | --- | --- |
 | GitHub-Repo | ✅ `github.com/TimtheKingV/gymodo`, privat, `master` gepusht |
 | Supabase-Cloud-Projekt | ✅ „Gymodo", Region `eu-central-1`, verlinkt, Migrationen 0001+0002 gepusht |
-| Custom-OTP-E-Mail-Template | ✅ **gepusht am 1. September 2026.** Die Organisation `Gymodo` steht auf Pro; `supabase config push` meldet `auth: updated`, ein Lauf danach zeigt einen leeren Diff. Das Projekt traegt jetzt Betreff *„Dein Anmeldecode"* und ein Template mit `{{ .Token }}` statt `{{ .ConfirmationURL }}`, `otp_length` 6 statt 8. **Offen bleibt die Zustellung selbst** — erst wenn eine echte Mail mit sechsstelligem Code ankommt, ist der Punkt zu. Supabases eingebauter Mailer bleibt auch unter Pro gedrosselt; ob zusaetzlich Custom-SMTP (Resend/Postmark) noetig wird, entscheiden die echten Zahlen. |
+| Custom-OTP-E-Mail-Template | ✅ **erledigt am 1. September 2026.** Organisation `Gymodo` auf Pro (Supabase rechnet pro Organisation ab), `supabase config push` → `auth: updated`, Folge-Diff leer, und eine echte Mail mit sechsstelligem Code ist angekommen. Betreff *„Dein Anmeldecode"*, `{{ .Token }}` statt `{{ .ConfirmationURL }}`, `otp_length` 6. Supabases eingebauter Mailer bleibt gedrosselt; ob spaeter Custom-SMTP noetig wird, entscheiden die echten Zahlen. |
 | Vercel-Projekt | ✅ verbunden, Root Directory `apps/web`, live unter `https://gymodo-web.vercel.app` |
 | Vercel-Region | ✅ `fra1` bestätigt (`X-Vercel-Id`-Header geprüft) |
 | `APPLE_TEAM_ID` / `APPLE_BUNDLE_ID` in Vercel | ❌ **bewusst zurückgestellt** — Platzhalterwerte gesetzt (`ABCDE12345` / `de.fitretro.member`), Build läuft damit durch. Echte Werte kommen, sobald der Nutzer auf dem Mac übernimmt (Apple Developer Zugriff liegt dort). **Muss vor jedem produktiven TestFlight-Build durch echte Werte ersetzt werden.** |
@@ -49,6 +49,13 @@ Zwei Punkte aus Task 6 sind **weiterhin offen** und dort festgehalten:
 - **`APPLE_TEAM_ID` / `APPLE_BUNDLE_ID`** stehen in Vercel auf Platzhaltern.
 
 Ebenfalls offen: **Task 8**, der physische Trefferquoten-Test der NFC-Tags. Er entscheidet NFC-first gegen QR-first und braucht den Mac.
+
+**Nachtrag (1. September 2026) — drei Betriebsbefunde, beim Schliessen von Blocker 1 aufgedeckt:**
+
+- **`SUPABASE_URL` und `SUPABASE_ANON_KEY` fehlten in Vercel.** Nur die `NEXT_PUBLIC_`-Varianten waren gesetzt; die werden zur Bauzeit eingesetzt, die anderen zur Laufzeit gelesen. Jede Route, die einen Supabase-Client baut (`/`, `/t/<token>`, alle `/api/v1`-Routen mit Bearer-Header), lieferte 500 — `requiredEnv` warf. Behoben. **Der Smoke-Test hat das nicht gefangen:** `pnpm smoke:aasa` prueft ausschliesslich die AASA-Route, ausgerechnet eine der wenigen ohne Supabase-Client, und meldete gruen. Er gehoert um `/` erweitert.
+- **Die Cloud-Datenbank steht auf `0011`, lokal auf `0021`.** `0012`–`0021` wurden nach dem Zuruecksetzen vom 30. August nie gepusht — Trainingsdaten, Tag-Schreibpolicies, Medien-Buckets und `0021_fallback_inhalte`. Latent: `/t/<token>` antwortet mit 200, solange kein echter Tag aufloest. Siehe Gesamtfahrplan Abschnitt 4c.
+- **`config push` ueberträgt die gesamte `[auth]`-Sektion.** `config.toml` trug reine Entwicklungswerte; ein unbesehener Push haette `site_url` der Produktion auf `127.0.0.1` gesetzt, die Bestaetigungspflicht der Mailadresse abgeschaltet und TOTP-MFA deaktiviert. Vier Werte stehen jetzt auf `env()`, mit `.env` lokal und `.env.production` fuer den Push. **`SUPABASE_ENV=production` waehlt `.env.production` nicht aus** — das leistet in Supabases Beispiel dotenvx, nicht die CLI; verlaesslich ist nur eine echte Shell-Variable.
+
 
 ## Global Constraints
 
