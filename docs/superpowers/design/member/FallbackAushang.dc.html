@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0A0B0D; color: #F2F4F7; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+    .ph { width: 390px; height: 844px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+  </style>
+</helmet>
+<div class="ph">
+
+  <!-- Browser-Leiste des Nutzers zeichnen wir nicht; die Seite beginnt hier -->
+  <div style="flex: none; height: 52px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2A2E36">
+    <div style="display: flex; align-items: baseline; gap: 3px">
+      <span style="font-size: 18px; font-weight: 800; letter-spacing: -.04em">gymodo</span>
+      <span style="width: 5px; height: 5px; border-radius: 50%; background: #D4FF3F; display: inline-block"></span>
+    </div>
+    <span class="eyebrow" style="font-size: 10px">Kraftwerk Nord</span>
+  </div>
+
+  <!-- Ein Aushang-Token zeigt kein Geraet. Also zeigt die Seite, was es
+       stattdessen gibt -- nicht eine Geraeteseite ohne Geraet. -->
+  <div style="flex: none; padding: 26px 20px 0; display: flex; flex-direction: column; gap: 6px">
+    <span class="eyebrow">Aushang</span>
+    <div style="font-size: 30px; font-weight: 800; letter-spacing: -.03em; text-transform: uppercase; line-height: 1.02">Kraftwerk Nord</div>
+    <div style="font-size: 15px; color: #9BA3AF; font-weight: 500">Dein Studio arbeitet mit gymodo.</div>
+  </div>
+
+  <div style="flex: none; padding: 26px 20px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; gap: 12px; align-items: flex-start">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4FF3F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 2px"><path d="m4.5 12.5 5 5 10-11"/></svg>
+      <div style="font-size: 14px; line-height: 1.5; color: #9BA3AF"><strong style="color: #F2F4F7; font-weight: 700">Einweisung an jedem Gerät.</strong> Wie es eingestellt wird, als Video, direkt am Gerät.</div>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: flex-start">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4FF3F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 2px"><path d="m4.5 12.5 5 5 10-11"/></svg>
+      <div style="font-size: 14px; line-height: 1.5; color: #9BA3AF"><strong style="color: #F2F4F7; font-weight: 700">Deine Einstellungen bleiben.</strong> Sitzhöhe, Gewicht und die letzten Sätze — an jedem Gerät.</div>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: flex-start">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4FF3F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 2px"><path d="m4.5 12.5 5 5 10-11"/></svg>
+      <div style="font-size: 14px; line-height: 1.5; color: #9BA3AF"><strong style="color: #F2F4F7; font-weight: 700">Kurse buchen.</strong> Wochenplan, Anmeldung, Warteliste.</div>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1"></div>
+
+  <!-- Die Aufforderung, und der zweite Scan als benannter naechster Schritt.
+       Ohne diesen Satz muss der Nutzer die zweite Handlung erraten. -->
+  <div style="flex: none; margin: 0 20px 22px; background: #14161A; border: 1px solid #2A2E36; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 13px">
+    <div style="font-size: 17px; font-weight: 800; letter-spacing: -.015em; line-height: 1.25">In zwei Schritten dabei</div>
+    <div style="display: flex; gap: 11px; align-items: baseline">
+      <span class="num" style="font-size: 13px; color: #D4FF3F; flex: none">1</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #9BA3AF">App laden und Konto anlegen.</span>
+    </div>
+    <div style="display: flex; gap: 11px; align-items: baseline">
+      <span class="num" style="font-size: 13px; color: #D4FF3F; flex: none">2</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #9BA3AF">Diesen Aushang noch einmal scannen — damit gehörst du zu <strong style="color: #F2F4F7; font-weight: 700">Kraftwerk Nord</strong>.</span>
+    </div>
+    <div style="height: 54px; border-radius: 14px; background: #D4FF3F; color: #0A0B0D; font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center">App laden</div>
+    <div style="font-size: 11px; line-height: 1.5; color: #5C636E">Zurzeit nur für iPhone.</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
