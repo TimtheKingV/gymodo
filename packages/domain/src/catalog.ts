@@ -628,6 +628,7 @@ export type CatalogModel = {
 export type CatalogTag = {
   id: string;
   status: string;
+  kind: "machine" | "studio";
   machineId: string | null;
   createdAt: string;
 };
@@ -675,7 +676,7 @@ export async function getStudioCatalog(
 
   const { data: tags } = await client
     .from("machine_tags")
-    .select("id, status, machine_id, created_at")
+    .select("id, status, kind, machine_id, created_at")
     .eq("studio_id", studioId)
     .order("created_at", { ascending: false });
 
@@ -787,6 +788,7 @@ export async function getStudioCatalog(
     tags: (tags ?? []).map((tag) => ({
       id: tag.id,
       status: tag.status,
+      kind: tag.kind,
       machineId: tag.machine_id,
       createdAt: tag.created_at,
     })),

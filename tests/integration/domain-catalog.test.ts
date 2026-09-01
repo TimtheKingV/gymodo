@@ -616,3 +616,11 @@ describe("getStudioCatalog", () => {
     await expect(getStudioCatalog(client, studioB)).rejects.toThrow(DomainError);
   });
 });
+
+describe("Tag-Sorte im Katalog", () => {
+  it("liefert die Sorte im Katalog mit", async () => {
+    const client = await userClient(trainerA);
+    const katalog = await getStudioCatalog(client, studioA);
+    expect(katalog.tags.every((tag) => tag.kind === "machine" || tag.kind === "studio")).toBe(true);
+  });
+});
