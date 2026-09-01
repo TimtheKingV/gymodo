@@ -266,7 +266,7 @@ git commit -m "design: Beitritts- und Wechselzeile auf Home"
 - Consumes: aus `build.py` — `NOTE_FAINT`, `schreibe`, `kopf_zurueck`, `titel`, `tabs`, `ph`, `spacer_top`, `fuellen`. Aus `Profil.dc.html` dessen eigene Klassen `card`, `row`, `sep`, `eyebrow`.
 - Produces: den Dateinamen **`MemberStudios.dc.html`** — Task 5 trägt ihn als drittes neues Artboard in `canvas.json` ein.
 
-**Warum ein eigener Bildschirm.** Ein erster Versuch setzte den Abschnitt direkt auf Profil. Profil trägt dort schon Konto-Karte, *Beim Training*, *Deine Daten*, Abmelden und Tab-Leiste; es bleiben rund 88 px Luft, der Abschnitt kostet rund 184. **Er passt nicht, und der ursprünglich vorgesehene Ausweichweg — einen Absatz kürzen — holt nur rund 40 px.** Selbst bei knappem Passen wäre ein Bildschirm auf 100 % Füllstand die falsche Antwort: Studionamen sind variabel lang, und eine Liste mit einer destruktiven Aktion je Zeile verdient den Platz, den das Repo seinem eigenen Grundsatz nach vergibt — ein Formular je Bildschirm.
+**Warum ein eigener Bildschirm.** Ein erster Versuch setzte den Abschnitt direkt auf Profil. Profil trägt dort schon Konto-Karte, *Beim Training*, *Deine Daten*, Abmelden und Tab-Leiste; zwei unabhängige Handrechnungen setzen den Bildschirm vor dieser Änderung auf rund 840–847 von 852 px — also nur rund 5 bis 12 px Luft, nicht die ursprünglich angenommenen 88. Keine der beiden Rechnungen ist ein Render; die größte Unsicherheit ist, ob der Absatz in *Deine Daten* auf drei oder vier Zeilen umbricht, das macht rund ±20 px aus. Der abgebrochene Abschnitt kostete rund 184 px — er hatte damit ohnehin nie eine Chance zu passen, und daran ändert die korrigierte Zahl nichts: **er passt nicht, und der ursprünglich vorgesehene Ausweichweg — einen Absatz kürzen — holt nur rund 40 px.** Selbst bei knappem Passen wäre ein Bildschirm auf 100 % Füllstand die falsche Antwort: Studionamen sind variabel lang, und eine Liste mit einer destruktiven Aktion je Zeile verdient den Platz, den das Repo seinem eigenen Grundsatz nach vergibt — ein Formular je Bildschirm.
 
 **Wenn Arbeit aus dem ersten Versuch noch im Baum liegt,** wird sie ersetzt, nicht ergänzt.
 
@@ -283,9 +283,9 @@ Die Konto-Karte enthält heute die Zeile *Passwort ändern* mit Chevron. Direkt 
       </div>
 ```
 
-Das kostet rund 48 px — innerhalb der rund 88 px Luft.
+Das kostet rund 48 px — mehr, als der Bildschirm an Luft übrig hatte (rund 5 bis 12 px, siehe oben). Deshalb wird der Absatz in *Deine Daten* jetzt doch um rund 40 px gekürzt — der Ausweichweg, den dieser Plan von Anfang an genannt hat. Das ist Arithmetik, kein Render; der Bildschirm gehört vor der Veröffentlichung des Canvas im Browser geprüft.
 
-**Ein etwaiger eigener Abschnitt `Studios` auf Profil wird dabei entfernt**, ebenso eine etwaige Kürzung des Absatzes in *Deine Daten*: der Absatz steht wieder vollständig, wie vor dem ersten Versuch.
+**Ein etwaiger eigener Abschnitt `Studios` auf Profil wird dabei entfernt.** Der Absatz in *Deine Daten* bleibt dabei gekürzt wie eben beschrieben — nicht, wie ursprünglich hier vorgesehen, wieder vollständig.
 
 - [ ] **Step 2: Den Studionamen aus der Konto-Zeile entfernen**
 

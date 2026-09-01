@@ -130,13 +130,13 @@ Das ist kein Geschmacksurteil. Das Designsystem lässt **genau eine Akzentfläch
 
 ### Zugang 05 · Scanner (neu)
 
-Der Sucher, den 03 öffnet: der vorhandene aus *Training → Gerät finden* (App 15) ohne Tab-Leiste, denn Zugang kennt keine. Er wird eigenständig gezeichnet, weil „das gleiche wie 15, nur anders" in einer Spec verlässlich falsch umgesetzt wird.
+Der Sucher, den 03 öffnet, ist ein eigener, seitenförmiger Bildschirm — bewusst ruhiger als der modale Sucher in *Training → Gerät finden* (App 15): Zugang ist eine lineare Kette, die ein Mitglied einmal durchläuft, während der Scanner in Training eine laufende Session unterbricht. Er wird als eigenes Artboard gezeichnet statt als „das gleiche wie 15, nur anders" beschrieben — diese Entscheidung war von Anfang an richtig, und die beiden Bildschirme unterscheiden sich tatsächlich in der Anlage: Seite statt Vollbild-Modal, Zurück-Chevron statt X, keine Scanlinie im Sucher, mit eigener Nebenaktion „Code stattdessen eingeben", die App 15 nicht kennt.
 
 ### Profil (App 24) verweist, Studios wird ein eigener Bildschirm
 
 Profil bekommt **eine Zeile** in der Konto-Karte: *Studios · Kraftwerk Nord* mit Chevron. Der Bildschirm dahinter (Zugang 06) trägt die Liste: das aktive Studio oben mit Punkt in Akzentfarbe, die übrigen darunter, ein Tap schaltet um. Je Zeile eine destruktive Nebenaktion *Verlassen*.
 
-**Ursprünglich sollte das ein Abschnitt auf Profil werden. Es passt dort nicht.** Profil trägt Konto-Karte, *Beim Training*, *Deine Daten*, Abmelden und Tab-Leiste; es bleiben rund 88 px, der Abschnitt kostet rund 184. Und selbst bei knappem Passen wäre ein Bildschirm auf 100 % Füllstand die falsche Antwort — Studionamen sind variabel lang. Eine Liste mit einer destruktiven Aktion je Zeile bekommt den Platz, den dieses Repo seinem eigenen Grundsatz nach vergibt: ein Formular je Bildschirm.
+**Ursprünglich sollte das ein Abschnitt auf Profil werden. Es passt dort nicht.** Profil trägt Konto-Karte, *Beim Training*, *Deine Daten*, Abmelden und Tab-Leiste; zwei unabhängige Handrechnungen setzen den Bildschirm vor der Studios-Zeile auf rund 840–847 von 852 px — nur rund 5 bis 12 px Luft, nicht die zunächst angenommenen 88 (Arithmetik, kein Render; die größte Unsicherheit ist der Zeilenumbruch des Absatzes in *Deine Daten*, rund ±20 px). Der Abschnitt kostete rund 184 px und hatte damit ohnehin nie eine Chance zu passen. Und selbst bei knappem Passen wäre ein Bildschirm auf 100 % Füllstand die falsche Antwort — Studionamen sind variabel lang. Eine Liste mit einer destruktiven Aktion je Zeile bekommt den Platz, den dieses Repo seinem eigenen Grundsatz nach vergibt: ein Formular je Bildschirm.
 
 **Der Mehrstudio-Fall kostet damit genau eine Zeile auf Profil.** Bei genau einer Mitgliedschaft — dem Normalfall — steht dort der Studioname und dahinter eine Liste mit einem Eintrag.
 
