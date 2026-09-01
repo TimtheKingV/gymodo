@@ -23,6 +23,11 @@ begin
   -- Unbekannt, gesperrt und nicht zugewiesen antworten identisch: leer.
   -- Differenzierte Antworten machten die Funktion zum Orakel, mit dem sich
   -- gueltige Tokens durch Ausprobieren finden liessen.
+  --
+  -- Absichtlich kein Filter auf machines.status: der Tag macht zum Mitglied,
+  -- weil die Person physisch im Studio steht, unabhaengig vom Betriebszustand
+  -- eines einzelnen Geraets. resolve_tag_fallback filtert stillgelegte Geraete
+  -- (kein Einweisungsinhalt mehr), aber die Mitgliedschaft haengt nicht daran.
   select t.studio_id, t.machine_id
     into v_studio, v_machine
     from public.machine_tags t
@@ -37,6 +42,12 @@ begin
   -- Studio scannt, darf dabei nicht auf member zurueckfallen. Die Rolle
   -- steht fest im Rumpf und kommt nie von aussen -- ein Scan macht zum
   -- Mitglied, nie zum Trainer.
+  --
+  -- Dieser Insert umgeht RLS ausschliesslich, weil die Funktion SECURITY
+  -- DEFINER ist. studio_memberships hat absichtlich KEINE Insert-Policy
+  -- (force row level security) -- das ist die ganze Absicherung dieses Wegs.
+  -- Eine Insert-Policy spaeter hinzuzufuegen wuerde diesen engen Zugang
+  -- wieder aufreissen.
   insert into public.studio_memberships (studio_id, user_id, role)
   values (v_studio, v_user, 'member')
   on conflict on constraint studio_memberships_studio_id_user_id_key do nothing;

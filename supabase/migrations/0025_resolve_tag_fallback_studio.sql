@@ -45,6 +45,6 @@ as $$
     and (t.kind = 'studio' or (m.id is not null and m.status = 'active'));
 $$;
 
-revoke all on function public.resolve_tag_fallback(text) from public;
+revoke all on function public.resolve_tag_fallback(text) from public, anon, authenticated, service_role;
 grant execute on function public.resolve_tag_fallback(text) to anon;
 grant execute on function public.resolve_tag_fallback(text) to authenticated;

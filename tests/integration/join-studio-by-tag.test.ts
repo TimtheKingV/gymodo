@@ -11,6 +11,7 @@ function anonClient() {
 }
 
 let studioId: string;
+let modelId: string;
 let machineId: string;
 let geraetToken: string;
 let aushangToken: string;
@@ -36,6 +37,7 @@ beforeAll(async () => {
     .select("id")
     .single();
   if (modelError) throw modelError;
+  modelId = model.id;
 
   const { data: machine, error: machineError } = await admin
     .from("machines")
@@ -88,6 +90,33 @@ describe("join_studio_by_tag", () => {
     expect(data[0].studio_id).toBe(studioId);
     expect(data[0].machine_id).toBe(machineId);
     expect(data[0].joined).toBe(true);
+  });
+
+  it("gewaehrt Zugriff auf die Geraete des Studios und entzieht ihn beim Austritt", async () => {
+    const email = uniqueEmail("beitritt-rls-effekt");
+    const userId = await createTestUser(email);
+    const client = await userClient(email);
+
+    const { data: vorher } = await client.from("machines").select("id");
+    expect(vorher).toEqual([]);
+
+    const { error: joinError } = await client.rpc("join_studio_by_tag", {
+      p_token_hash: hashTagToken(geraetToken),
+    });
+    expect(joinError).toBeNull();
+
+    const { data: nachher } = await client.from("machines").select("id");
+    expect(nachher).toHaveLength(1);
+    expect(nachher?.[0]?.id).toBe(machineId);
+
+    const { error: leaveError } = await client
+      .from("studio_memberships")
+      .delete()
+      .eq("user_id", userId);
+    expect(leaveError).toBeNull();
+
+    const { data: nachAustritt } = await client.from("machines").select("id");
+    expect(nachAustritt).toEqual([]);
   });
 
   it("ist beim zweiten Scan wirkungslos und meldet joined = false", async () => {
@@ -173,5 +202,40 @@ describe("join_studio_by_tag", () => {
       p_token_hash: hashTagToken(geraetToken),
     });
     expect(error).not.toBeNull();
+  });
+
+  it("erlaubt den Beitritt auch ueber ein stillgelegtes Geraet -- die Mitgliedschaft haengt nicht am Geraetestatus", async () => {
+    const admin = serviceClient();
+    const { data: stillgelegt, error: machineError } = await admin
+      .from("machines")
+      .insert({
+        studio_id: studioId,
+        equipment_model_id: modelId,
+        label: "stillgelegt-08",
+        status: "inactive",
+      })
+      .select("id")
+      .single();
+    if (machineError) throw machineError;
+
+    const inaktivToken = createTagToken();
+    const { error: tagError } = await admin.from("machine_tags").insert({
+      studio_id: studioId,
+      machine_id: stillgelegt.id,
+      kind: "machine",
+      token_hash: hashTagToken(inaktivToken),
+      status: "active",
+    });
+    if (tagError) throw tagError;
+
+    const email = uniqueEmail("beitritt-stillgelegt");
+    await createTestUser(email);
+    const client = await userClient(email);
+    const { data, error } = await client.rpc("join_studio_by_tag", {
+      p_token_hash: hashTagToken(inaktivToken),
+    });
+    expect(error).toBeNull();
+    expect(data[0].studio_id).toBe(studioId);
+    expect(data[0].joined).toBe(true);
   });
 });

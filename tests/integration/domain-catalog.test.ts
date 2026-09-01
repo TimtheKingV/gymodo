@@ -8,6 +8,7 @@ import {
   createMachine,
   createSettingDefinition,
   createTag,
+  createTagToken,
   deactivateMachine,
   detachExercise,
   getStudioCatalog,
@@ -622,5 +623,22 @@ describe("Tag-Sorte im Katalog", () => {
     const client = await userClient(trainerA);
     const katalog = await getStudioCatalog(client, studioA);
     expect(katalog.tags.every((tag) => tag.kind === "machine" || tag.kind === "studio")).toBe(true);
+  });
+
+  it("fuehrt einen Aushang-Tag mit kind=studio und ohne Geraet", async () => {
+    const admin = serviceClient();
+    const { error } = await admin.from("machine_tags").insert({
+      studio_id: studioA,
+      kind: "studio",
+      status: "active",
+      token_hash: hashTagToken(createTagToken()),
+    });
+    if (error) throw error;
+
+    const client = await userClient(trainerA);
+    const katalog = await getStudioCatalog(client, studioA);
+    const aushang = katalog.tags.find((tag) => tag.kind === "studio");
+    expect(aushang).toBeDefined();
+    expect(aushang?.machineId).toBeNull();
   });
 });

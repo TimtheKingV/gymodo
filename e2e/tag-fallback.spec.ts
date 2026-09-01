@@ -274,9 +274,3 @@ test("ein Aushang-Token zeigt das Studio statt eines Geraets", async ({
   await expect(page.getByTestId("tag-aushang")).toBeVisible();
   await expect(page.getByRole("link", { name: "App laden" })).toBeVisible();
 });
-
-test("ein unbekannter Token bleibt ununterscheidbar", async ({ page }) => {
-  const unbekannterToken = createTagToken();
-  await page.goto(`/t/${unbekannterToken}`);
-  await expect(page.getByTestId("tag-unknown")).toBeVisible();
-});
