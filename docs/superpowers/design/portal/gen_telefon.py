@@ -6,6 +6,7 @@ CHIP = ('display: inline-flex; align-items: center; flex: 0 0 auto; padding: 8px
         'border-radius: 999px; background: #1d2026; color: #9ba3af; font-weight: 600; '
         'font-size: 13px; white-space: nowrap;')
 CHIP_AKTIV = CHIP.replace('color: #9ba3af;', 'color: #f2f4f7;') + ' box-shadow: inset 0 0 0 1px #d4ff3f;'
+KAMERA_BTN = PRIMARY.replace('height: 44px;', 'height: 56px;') + ' width: 100%;'
 
 # Der einzige Pfad, der auf dem Telefon tragen muss: die Aufnahme entsteht
 # auf dem Trainerhandy und wird aus mobilem Safari hochgeladen (Spec 6.8).
@@ -20,9 +21,11 @@ telefon = HEAD + """
     </div>
     <div style="display: flex; gap: 8px; overflow-x: auto; padding: 0 16px;">
       <span style="%(chip)s">Überblick</span>
+      <span style="%(chip)s">Kurse</span>
       <span style="%(aktiv)s">Geräte</span>
       <span style="%(chip)s">Tags</span>
-      <span style="%(chip)s">Mitglieder</span>
+      <span style="%(chip)s">Leute</span>
+      <span style="%(chip)s">Einstellungen</span>
     </div>
   </div>
 
@@ -72,13 +75,13 @@ telefon = HEAD + """
           <div style="%(note)s margin-top: 2px;">Höchstens 45 Sekunden. Die Länge wird an der Datei geprüft, nicht geschätzt.</div>
         </div>
       </div>
-      <a href="#" style="%(pri)s width: 100%%; height: 56px;">Kamera öffnen</a>
+      <a href="#" style="%(kamera)s">Kamera öffnen</a>
     </div>
 
     <p style="%(note)s margin: 24px 0 0;">Ein Gerät ohne Video ist vollständig nutzbar. Du musst das hier nicht fertig machen.</p>
   </div>
 </div>
 """ % {'chip': CHIP, 'aktiv': CHIP_AKTIV, 'label': LABEL, 'sec': SECONDARY,
-       'pri': PRIMARY, 'note': NOTE,
+       'note': NOTE, 'kamera': KAMERA_BTN,
        'zurueck': zurueck('Geräte')} + FOOT
 schreibe('Telefon.dc.html', telefon)

@@ -102,11 +102,11 @@ def rail(active):
             nav_item('Kurse', '5 diese Woche', active == 'kurse'),
         ])
         + gruppe('Katalog', [
-            nav_item('Geräte', '16 · 14 erreichbar', active == 'geraete'),
-            nav_item('Tags', '2 vorrätig', active == 'tags'),
+            nav_item('Geräte', '4 · 2 erreichbar', active == 'geraete'),
+            nav_item('Tags', '1 vorrätig', active == 'tags'),
         ])
         + gruppe('Verwaltung', [
-            nav_item('Leute', '24 Mitglieder · 2 Trainer', active == 'leute'),
+            nav_item('Leute', '24 Mitglieder · 2 Mitarbeiter', active == 'leute'),
             nav_item('Einstellungen', None, active == 'einstellungen'),
         ])
         + '<div style="margin-top: auto; padding: 16px 20px 0; border-top: 1px solid #2a2e36; '

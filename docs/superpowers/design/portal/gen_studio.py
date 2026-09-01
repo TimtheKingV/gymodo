@@ -132,7 +132,7 @@ kursvorlagen = ('<a href="#" style="%s color: #5c636e;">%s</a>'
 
 kursvorlagen += abschnitt(
     'Alle Vorlagen',
-    zeile('Kraftzirkel', '45 min · 16 Plätze · Standard: Jana · 4 Termine in den nächsten 4 Wochen',
+    zeile('Kraftzirkel', '45 min · 16 Plätze · Standard: Jana · 16 Termine in den nächsten 4 Wochen',
           '<a href="#" style="%s">Öffnen</a>' % SECONDARY)
     + zeile('Rücken fit', '45 min · 12 Plätze · Standard: Tim · 4 Termine in den nächsten 4 Wochen',
             '<a href="#" style="%s">Öffnen</a>' % SECONDARY)
@@ -146,10 +146,12 @@ schreibe('Kursvorlagen.dc.html', portal('kurse', 820, kursvorlagen))
 
 # =========================================================== Kursvorlage
 # Reiter halten das Formular bei genau einer Akzentflaeche: nur "Stammdaten"
-# ist gebaut, "Termine (7)" bleibt wie bei Modell.dc.html unbestueckter Reiter.
+# ist gebaut, "Termine (14)" bleibt wie bei Modell.dc.html unbestueckter
+# Reiter -- die Zahl stimmt mit der Serie ueberein, die TerminAnlegen.dc.html
+# fuer diese Vorlage anlegt.
 kursvorlage = kopf('Kursvorlagen', 'Kraftzirkel', 'Zirkeltraining aus Kraft- und Ausdauerübungen '
                     'im Wechsel · 45 min · 16 Plätze · Standard: Jana')
-kursvorlage += reiter([('Stammdaten', None), ('Termine (7)', None)], 'Stammdaten')
+kursvorlage += reiter([('Stammdaten', None), ('Termine (14)', None)], 'Stammdaten')
 
 kursvorlage += abschnitt('Stammdaten', (
     '<div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">'
@@ -277,7 +279,7 @@ main = titel('Überblick', 'Letzte 30 Tage. Studioweite Summen — welches Mitgl
 main += ("""
 <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 32px;">
   <div style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; padding: 20px;">
-    <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">14<span style="color: #5c636e; font-size: 20px;"> / 16</span></div>
+    <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">2<span style="color: #5c636e; font-size: 20px;"> / 4</span></div>
     <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin-top: 12px;">Geräte erreichbar</div>
   </div>
   <div style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; padding: 20px;">
@@ -285,7 +287,7 @@ main += ("""
     <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin-top: 12px;">Mitglieder aktiv</div>
   </div>
   <div style="border: 1px solid #2a2e36; border-radius: 12px; background: #14161a; padding: 20px;">
-    <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">1.842</div>
+    <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">412</div>
     <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9ba3af; margin-top: 12px;">Sätze erfasst</div>
   </div>
   <div style="border: 1px solid #ffb020; border-radius: 12px; background: #14161a; padding: 20px;">
@@ -298,9 +300,9 @@ main += ("""
 # "Diese Woche" holt die naechsten drei Kurstermine samt Belegung aus
 # Kurse.dc.html herueber -- dieselben Zahlen, keine neuen erfunden.
 main += abschnitt('Diese Woche', (
-    zeile('Montag, 31. August · 18:00 · Kraftzirkel', 'Jana · Raum 1', belegung(12, 16))
-    + zeile('Montag, 31. August · 19:30 · Rücken fit', 'Tim · Raum 2', belegung(8, 12))
-    + zeile('Mittwoch, 2. September · 18:00 · Kraftzirkel', 'Jana · Raum 1',
+    zeile('Mo., 31. August 2026 · 18:00 · Kraftzirkel', 'Jana · Raum 1', belegung(12, 16))
+    + zeile('Mo., 31. August 2026 · 19:30 · Rücken fit', 'Tim · Raum 2', belegung(8, 12))
+    + zeile('Mi., 2. September 2026 · 18:00 · Kraftzirkel', 'Jana · Raum 1',
             belegung(16, 16, warteliste=3), letzte=True)
 ), aktion='<a href="#" style="%s">Zu den Kursen</a>' % SECONDARY)
 
@@ -313,14 +315,14 @@ main += ("""
     </div>
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
       <div>
-        <div style="font-weight: 600;">2 Geräte ohne Tag</div>
+        <div style="font-weight: 600;">1 Gerät ohne Tag</div>
         <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Für Mitglieder nicht auffindbar</div>
       </div>
       <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #d4ff3f; color: #0a0b0d; font-weight: 700; flex-shrink: 0;">Tags anlegen</a>
     </div>
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid #2a2e36;">
       <div>
-        <div style="font-weight: 600;">3 Übungen ohne Einweisungsvideo</div>
+        <div style="font-weight: 600;">1 Übung ohne Einweisungsvideo</div>
         <div style="font-size: 12px; color: #5c636e; margin-top: 2px;">Nutzbar, nur ohne Anleitung</div>
       </div>
       <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #1d2026; border: 1px solid #2a2e36; color: #f2f4f7; font-weight: 600; flex-shrink: 0;">Ansehen</a>
@@ -346,9 +348,6 @@ main += ("""
       <span style="font-weight: 600;">Latzug 12</span><span style="color: #9ba3af;">287</span>
     </div>
     <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
-      <span style="font-weight: 600;">Brustpresse 4</span><span style="color: #9ba3af;">241</span>
-    </div>
-    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
       <span style="font-weight: 600;">Latzug 13</span><span style="color: #9ba3af;">198</span>
     </div>
     <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 20px;">
@@ -364,7 +363,7 @@ main += ("""
   </div>
   <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px; border-bottom: 1px solid #2a2e36;">
     <div>
-      <div style="font-weight: 600;">Brustpresse 4</div>
+      <div style="font-weight: 600;">Latzug 13</div>
       <div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">Schmerz</div>
     </div>
     <span style="display: inline-flex; align-items: center; border: 1px solid #ffb020; color: #ffb020; border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">2 ×</span>
@@ -393,11 +392,13 @@ schreibe('Main.dc.html', portal('ueberblick', 1320, main))
 
 # ================================================================= Zustaende
 # Ein Blatt, kein Bildschirm: es zeigt die Zustaende, die im Portal wirklich
-# gelten. Offline (Konzept der Trainingshalle, nicht des Portals) und
-# Skelett (Katalogwerte sind sofort da) gelten hier nicht -- Spec Abschnitt 5.
-zustaende = titel('Zustände', 'Drei Zustände plus ein Ladezustand für Medien. Offline und '
-                   'Skelett gelten hier nicht — Offline ist ein Konzept der Trainingshalle, '
-                   'Skelett gilt laut Spezifikation nur für Medien.')
+# gelten. Offline gilt hier nicht -- das ist ein Konzept der Trainingshalle,
+# nicht des Portals. Skelett gilt sehr wohl, aber nur fuer Medien -- genau
+# das zeigt die Karte "Medien laden"; fuer Katalogwerte waere ein Skelett
+# eine Luege ueber die Architektur (Spec Abschnitt 5).
+zustaende = titel('Zustände', 'Drei Zustände plus ein Ladezustand für Medien. Offline gilt '
+                   'hier nicht — das ist ein Konzept der Trainingshalle. Skelett gilt laut '
+                   'Spezifikation nur für Medien.')
 
 FEHLER = ('border: 1px solid #ff5a4e; border-radius: 12px; background: #14161a;')
 DEAKTIVIERT_BTN = ('display: inline-flex; align-items: center; justify-content: center; '
@@ -415,7 +416,7 @@ leer_karte = ('<div style="%s margin-top: 32px;">'
               '</div></div>' % (CARD, LABEL, PRIMARY))
 
 fehler_karte = ('<div style="%s margin-top: 32px;">'
-                 '<div style="padding: 20px; display: flex; flex-direction: column; gap: 8px;">'
+                 '<div style="padding: 32px 20px; display: flex; flex-direction: column; gap: 8px;">'
                  '<span style="%s color: #ff5a4e;">Fehler</span>'
                  '<div style="font-weight: 600;">Das Gewicht liegt über dem Gerätemaximum '
                  'von 100,0 kg.</div></div></div>' % (FEHLER, LABEL))
