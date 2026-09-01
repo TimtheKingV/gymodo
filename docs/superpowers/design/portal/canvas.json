@@ -12,8 +12,13 @@
     { "file": "Leute.dc.html", "page": "portal", "title": "Mitglieder", "x": 1560, "y": 1120, "w": 1440, "h": 900 },
 
     { "file": "Start.dc.html", "page": "einstieg", "title": "Wurzelseite", "x": 0, "y": 0, "w": 1440, "h": 900 },
-    { "file": "Anmelden.dc.html", "page": "einstieg", "title": "Anmelden — E-Mail", "x": 1560, "y": 0, "w": 1440, "h": 900 },
-    { "file": "AnmeldenCode.dc.html", "page": "einstieg", "title": "Anmelden — Code", "x": 3120, "y": 0, "w": 1440, "h": 900 },
+    { "file": "Anmelden.dc.html", "page": "einstieg", "title": "Anmelden", "x": 1560, "y": 0, "w": 1440, "h": 900 },
+    { "file": "PasswortVergessen.dc.html", "page": "einstieg", "title": "Passwort vergessen", "x": 3120, "y": 0, "w": 1440, "h": 900 },
+    { "file": "PasswortNeu.dc.html", "page": "einstieg", "title": "Neues Passwort", "x": 4680, "y": 0, "w": 1440, "h": 900 },
+
+    { "file": "Registrieren.dc.html", "page": "einstieg", "title": "Registrieren", "x": 0, "y": 1020, "w": 1440, "h": 900 },
+    { "file": "Verifizieren.dc.html", "page": "einstieg", "title": "Verifizieren", "x": 1560, "y": 1020, "w": 1440, "h": 900 },
+    { "file": "KeinStudio.dc.html", "page": "einstieg", "title": "Kein Studio", "x": 3120, "y": 1020, "w": 1440, "h": 900 },
 
     { "file": "Telefon.dc.html", "page": "telefon", "title": "Videoupload am Telefon", "x": 0, "y": 0, "w": 390, "h": 1240 }
   ],
@@ -48,7 +53,7 @@
       "x": 0,
       "y": -210,
       "w": 520,
-      "text": "Das Web ist Trainerportal plus öffentlicher Fallback — für Mitglieder gibt es hier nichts.\n\nEs gibt keine Selbstregistrierung: der Zugang kommt über die Einladung des Studios. Genau das fehlt heute im Code, und ohne es kann ein Studio kein Mitglied aufnehmen."
+      "text": "Das Web ist Trainerportal plus öffentlicher Fallback — für Mitglieder gibt es hier nichts.\n\nAnmeldung läuft jetzt mit E-Mail und Passwort, mit Selbstregistrierung. Der Code verifiziert danach nur noch die Adresse. Ein frisches Konto gehört noch keinem Studio — das kommt über den Studio-Code, den es an der Theke gibt."
     },
     {
       "id": "note-telefon",

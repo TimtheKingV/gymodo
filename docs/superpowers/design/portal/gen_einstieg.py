@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from build import (HEAD, FOOT, LABEL, PRIMARY, SECONDARY, FIELD, schreibe,
-                   zurueck)
+from build import (HEAD, FOOT, LABEL, PRIMARY, SECONDARY, FIELD, schreibe)
 
 NOTE = 'font-size: 13px; color: #5c636e; line-height: 1.45;'
 
@@ -22,6 +21,7 @@ start = HEAD + """
       <div style="display: flex; gap: 16px; align-items: center; margin-top: 40px;">
         <a href="#" style="%(pri)s height: 64px; padding: 0 32px; border-radius: 16px; font-size: 17px;">Als Trainer anmelden</a>
       </div>
+      <a href="#" style="%(note)s color: #9ba3af; display: inline-block; margin-top: 20px;">Konto anlegen</a>
       <p style="%(note)s margin: 48px 0 0; max-width: 52ch;">Du bist Mitglied? gymodo ist eine App fürs iPhone — im Web gibt es nichts für dich zu tun. Frag an der Theke nach der Einladung, oder tippe einfach ein Gerät an.</p>
     </div>
   </div>
@@ -50,42 +50,131 @@ def anmelde_seite(inhalt):
 
 
 # ---------------------------------------------------------------- Anmelden
-# Schritt 1. Kein Passwort, keine Selbstregistrierung: der Zugang kommt
-# ueber das Studio (signInWithOtp laeuft mit shouldCreateUser: false).
+# Schritt 1. E-Mail und Passwort wie ueberall sonst -- der Code verifiziert
+# danach nur noch die Adresse, er ist kein Anmeldeweg mehr.
 anmelden = """
       <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em; text-transform: uppercase; margin: 0;">Anmelden</h1>
-      <p style="color: #9ba3af; margin: 12px 0 0;">Wir schicken dir einen sechsstelligen Code per E-Mail. Ein Passwort brauchst du nicht.</p>
 
       <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 32px;">
         <span style="%(label)s color: #9ba3af;">E-Mail</span>
         <div style="%(field)s min-height: 52px; font-size: 16px;">tim@kraftwerk-nord.de</div>
       </div>
 
-      <a href="#" style="%(pri)s height: 64px; width: 100%%; margin-top: 24px; border-radius: 16px; font-size: 17px;">Code anfordern</a>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 20px;">
+        <span style="%(label)s color: #9ba3af;">Passwort</span>
+        <div style="%(field)s min-height: 52px; font-size: 16px; letter-spacing: 0.2em;">••••••••••</div>
+      </div>
 
-      <p style="%(note)s margin: 32px 0 0;">Noch kein Zugang? Den bekommst du von deinem Studio — es lädt dich ein. Hier kannst du kein Konto anlegen.</p>
+      <a href="#" style="%(pri)s height: 64px; width: 100%%; margin-top: 32px; border-radius: 16px; font-size: 17px;">Anmelden</a>
+
+      <div style="display: flex; justify-content: center; gap: 24px; margin-top: 24px;">
+        <a href="#" style="%(note)s color: #9ba3af;">Passwort vergessen</a>
+        <a href="#" style="%(note)s color: #9ba3af;">Konto anlegen</a>
+      </div>
 """ % {'label': LABEL, 'field': FIELD, 'pri': PRIMARY, 'note': NOTE}
 schreibe('Anmelden.dc.html', anmelde_seite(anmelden))
 
 
-# ---------------------------------------------------------------- Code
-# Schritt 2. Die Zieladresse steht sichtbar da -- sonst weiss niemand, in
-# welchem Postfach er nachsehen soll.
-code = """
-      <a href="#" style="%(label)s color: #5c636e;">%(zurueck)s</a>
-      <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em; text-transform: uppercase; margin: 12px 0 0;">Code eingeben</h1>
-      <p style="color: #9ba3af; margin: 12px 0 0;">Wir haben ihn an <span style="color: #f2f4f7;">tim@kraftwerk-nord.de</span> geschickt. Er gilt eine Stunde.</p>
+# ---------------------------------------------------------------- Registrieren
+# Selbstregistrierung ist neu: jeder legt ein Konto an. Ein Konto ist aber
+# noch kein Zugang -- das Studio kommt erst danach, ueber den Studio-Code.
+registrieren = """
+      <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em; text-transform: uppercase; margin: 0;">Registrieren</h1>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 32px;">
+        <span style="%(label)s color: #9ba3af;">E-Mail</span>
+        <div style="%(field)s min-height: 52px; font-size: 16px;">tim@kraftwerk-nord.de</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 20px;">
+        <span style="%(label)s color: #9ba3af;">Passwort</span>
+        <div style="%(field)s min-height: 52px; font-size: 16px; letter-spacing: 0.2em;">••••••••••</div>
+        <p style="%(note)s margin: 4px 0 0;">Mindestens zehn Zeichen. Länge zählt mehr als Sonderzeichen.</p>
+      </div>
+
+      <a href="#" style="%(pri)s height: 64px; width: 100%%; margin-top: 32px; border-radius: 16px; font-size: 17px;">Konto anlegen</a>
+
+      <p style="%(note)s margin: 24px 0 0;">Ein Konto allein reicht nicht — du brauchst danach den Code deines Studios.</p>
+""" % {'label': LABEL, 'field': FIELD, 'pri': PRIMARY, 'note': NOTE}
+schreibe('Registrieren.dc.html', anmelde_seite(registrieren))
+
+
+# ---------------------------------------------------------------- Verifizieren
+# Der Code aus dem alten Anmeldeweg bleibt als Bildschirm bestehen, wechselt
+# aber den Job: er bestaetigt einmalig eine Adresse, er meldet nicht an.
+verifizieren = """
+      <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em; text-transform: uppercase; margin: 0;">Verifizieren</h1>
+      <p style="color: #9ba3af; margin: 12px 0 0;">Wir haben einen Code an <span style="color: #f2f4f7;">tim@kraftwerk-nord.de</span> geschickt. Er gilt eine Stunde.</p>
 
       <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 32px;">
         <span style="%(label)s color: #9ba3af;">Code aus der E-Mail</span>
         <div style="%(field)s min-height: 64px; font-size: 28px; font-weight: 800; letter-spacing: 0.32em; color: #f2f4f7; justify-content: center;">418 903</div>
       </div>
 
-      <a href="#" style="%(pri)s height: 64px; width: 100%%; margin-top: 24px; border-radius: 16px; font-size: 17px;">Anmelden</a>
+      <a href="#" style="%(pri)s height: 64px; width: 100%%; margin-top: 24px; border-radius: 16px; font-size: 17px;">Bestätigen</a>
 
       <div style="display: flex; justify-content: center; margin-top: 24px;">
         <a href="#" style="%(note)s color: #9ba3af;">Neuen Code anfordern</a>
       </div>
-""" % {'label': LABEL, 'field': FIELD, 'pri': PRIMARY, 'note': NOTE,
-       'zurueck': zurueck('Andere Adresse')}
-schreibe('AnmeldenCode.dc.html', anmelde_seite(code))
+""" % {'label': LABEL, 'field': FIELD, 'pri': PRIMARY, 'note': NOTE}
+schreibe('Verifizieren.dc.html', anmelde_seite(verifizieren))
+
+
+# ---------------------------------------------------------------- PasswortVergessen
+# Der Satz unter dem Feld ist wortwoertlich Pflicht: dieselbe Antwort fuer
+# eine Adresse mit Konto und eine ohne, sonst liesse sich das Studio
+# durchzaehlen.
+passwort_vergessen = """
+      <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em; text-transform: uppercase; margin: 0;">Passwort vergessen</h1>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 32px;">
+        <span style="%(label)s color: #9ba3af;">E-Mail</span>
+        <div style="%(field)s min-height: 52px; font-size: 16px;">tim@kraftwerk-nord.de</div>
+      </div>
+
+      <a href="#" style="%(pri)s height: 64px; width: 100%%; margin-top: 24px; border-radius: 16px; font-size: 17px;">Link anfordern</a>
+
+      <p style="%(note)s margin: 24px 0 0;">Wenn es zu dieser Adresse ein Konto gibt, ist die Mail unterwegs.</p>
+""" % {'label': LABEL, 'field': FIELD, 'pri': PRIMARY, 'note': NOTE}
+schreibe('PasswortVergessen.dc.html', anmelde_seite(passwort_vergessen))
+
+
+# ---------------------------------------------------------------- PasswortNeu
+# Ziel des Links aus PasswortVergessen. Zwei Felder, damit ein Tippfehler
+# nicht erst beim naechsten Anmeldeversuch auffaellt.
+passwort_neu = """
+      <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em; text-transform: uppercase; margin: 0;">Neues Passwort</h1>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 32px;">
+        <span style="%(label)s color: #9ba3af;">Neues Passwort</span>
+        <div style="%(field)s min-height: 52px; font-size: 16px; letter-spacing: 0.2em;">••••••••••</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 20px;">
+        <span style="%(label)s color: #9ba3af;">Wiederholen</span>
+        <div style="%(field)s min-height: 52px; font-size: 16px; letter-spacing: 0.2em;">••••••••••</div>
+      </div>
+
+      <a href="#" style="%(pri)s height: 64px; width: 100%%; margin-top: 32px; border-radius: 16px; font-size: 17px;">Passwort speichern</a>
+""" % {'label': LABEL, 'field': FIELD, 'pri': PRIMARY}
+schreibe('PasswortNeu.dc.html', anmelde_seite(passwort_neu))
+
+
+# ---------------------------------------------------------------- KeinStudio
+# Der Zustand direkt nach der Verifikation: ein Konto existiert, gehoert
+# aber noch keinem Studio. Ohne Code gibt es fuer diese Person nichts zu
+# sehen -- das ist keine Fehlermeldung, sondern schlicht der Ausgangszustand.
+kein_studio = """
+      <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em; text-transform: uppercase; margin: 0;">Noch kein Studio</h1>
+      <p style="color: #9ba3af; margin: 12px 0 0;">gymodo gehört zu einem Studio. Gib den Code ein, den du dort bekommst — an der Theke, im Vertrag oder per Aushang.</p>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 32px;">
+        <span style="%(label)s color: #9ba3af;">Studio-Code</span>
+        <div style="%(field)s min-height: 52px; font-size: 16px; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.08em;">KWNORD-7F2X</div>
+      </div>
+
+      <a href="#" style="%(pri)s height: 64px; width: 100%%; margin-top: 24px; border-radius: 16px; font-size: 17px;">Studio beitreten</a>
+
+      <p style="%(note)s margin: 24px 0 0;">Du hast keinen Code? Frag an der Theke. Ohne Studio gibt es hier nichts zu sehen — das ist keine Sperre, sondern die Wahrheit.</p>
+""" % {'label': LABEL, 'field': FIELD, 'pri': PRIMARY, 'note': NOTE}
+schreibe('KeinStudio.dc.html', anmelde_seite(kein_studio))
