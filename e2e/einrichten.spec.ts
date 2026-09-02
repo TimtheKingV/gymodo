@@ -137,3 +137,47 @@ test("Schritt 2 fragt ein fehlendes Foto nach und nimmt Parameter auf", async ({
     new RegExp(`/einrichten/modell/${modell.id}/geraet$`),
   );
 });
+
+test("Schritt 3 schlaegt die naechste Nummer vor und legt das Geraet an", async ({
+  page,
+}) => {
+  const { admin, studioId } = await studioMitTrainer(page, "einrichten-geraet");
+
+  const { data: modell, error: modellFehler } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (modellFehler) throw modellFehler;
+
+  // Zwei Geraete stehen schon, das hoechste traegt die 13.
+  const { error: geraeteFehler } = await admin.from("machines").insert([
+    {
+      studio_id: studioId,
+      equipment_model_id: modell.id,
+      label: "12",
+      location_note: "Rückwand links",
+    },
+    { studio_id: studioId, equipment_model_id: modell.id, label: "13" },
+  ]);
+  if (geraeteFehler) throw geraeteFehler;
+
+  await page.goto(`/portal/${studioId}/einrichten/modell/${modell.id}/geraet`);
+  await expect(page.getByText("Schritt 3 von 6 · Gerät")).toBeVisible();
+
+  // Vorgeschlagen ist die naechste nach der hoechsten -- 14, nicht die
+  // naechste Luecke.
+  await expect(page.getByLabel("Nummer")).toHaveValue("14");
+
+  // Der bereits vergebene Standort steht als Chip bereit.
+  await page.getByRole("button", { name: "Rückwand links" }).click();
+  await expect(page.getByLabel("Standort")).toHaveValue("Rückwand links");
+
+  await page.getByLabel("Standort").fill("Rückwand rechts");
+  await page.getByRole("button", { name: "Weiter zum Tag" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/einrichten/geraet/[0-9a-f-]+/tag$`));
+
+  // AUFGABE 9 schaltet die Zeile wieder ein -- die Tag-Seite gibt es dann.
+  // await expect(page.getByText("Schritt 4 von 6 · Tag")).toBeVisible();
+});

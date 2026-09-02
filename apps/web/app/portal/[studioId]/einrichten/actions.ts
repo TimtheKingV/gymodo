@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import {
   DomainError,
   createEquipmentModel,
+  createMachine,
   createSettingDefinition,
   deleteSettingDefinition,
   uploadEquipmentPhoto,
@@ -197,4 +198,29 @@ export async function fotoNachreichen(
   }
   revalidatePath(einstellungenPfad(studioId, modelId));
   return { ok: true };
+}
+
+/**
+ * Die Geraeteinstanz. Ab hier hat der Gang ein Ziel fuer den Tag: das Studio
+ * kommt in bind_tag_to_machine aus der Maschine, nicht aus einem Parameter.
+ */
+export async function geraetAnlegen(
+  studioId: string,
+  modelId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<Ergebnis<{ machineId: string }>> {
+  const client = await createServerSupabaseClient();
+  try {
+    const geraet = await createMachine(client, {
+      studioId,
+      equipmentModelId: modelId,
+      label: text(formData, "label"),
+      locationNote: optionalerText(formData, "locationNote"),
+    });
+    revalidatePath(`/portal/${studioId}/einrichten`);
+    return { ok: true, machineId: geraet.id };
+  } catch (fehler) {
+    return fehlerAus(fehler, "Das Geraet liess sich nicht anlegen.");
+  }
 }
