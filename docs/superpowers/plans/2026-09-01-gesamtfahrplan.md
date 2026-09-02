@@ -10,8 +10,9 @@
 | `designplan` | `7c1f18c` | in `master` aufgegangen |
 | `design-geräteeinrichtung` | `13d065b` | in `master` aufgegangen |
 | `worktree/brave-forest-c9d8` | `2b2be9c` | Tag-Lieferung, in `master` aufgegangen |
+| `worktree/calm-forest-3c59` | `3452a84` | Studio-Einstellungen, Datenschutzgrenze, Überblick: `0032`–`0034`, Fachschicht, Reiter Studio/Konto, E2E-Gang — **noch nicht gemerged** |
 
-> **Was sich gegenüber der Erstfassung geändert hat, in einem Satz:** Sie beschrieb einen Stand, an dem die entworfenen Baustellen *zu null* gebaut waren — inzwischen stehen Phase 1 ganz und von Phase 2 die ersten beiden Punkte. Die Abschnitte 1 bis 5 sind entsprechend fortgeschrieben; die Betriebsbefunde aus 4a–4c bleiben als Lehre stehen, auch wo ihr Anlass erledigt ist.
+> **Was sich gegenüber der Erstfassung geändert hat, in einem Satz:** Sie beschrieb einen Stand, an dem die entworfenen Baustellen *zu null* gebaut waren — inzwischen stehen Phase 1 und Phase 2 ganz. Die Abschnitte 1 bis 5 sind entsprechend fortgeschrieben; die Betriebsbefunde aus 4a–4c bleiben als Lehre stehen, auch wo ihr Anlass erledigt ist.
 
 ---
 
@@ -25,7 +26,7 @@ Es ist bewusst kurz und verweist. Die Wahrheit über einen Bauabschnitt steht im
 
 ## 1. Der Stand in einem Satz
 
-**Der Abstand zwischen Entwurf und Code, den die Erstfassung als Quelle aller Lücken benannte, ist für die Tag-Kette und die halbe Phase 2 geschlossen.**
+**Der Abstand zwischen Entwurf und Code, den die Erstfassung als Quelle aller Lücken benannte, ist für die Tag-Kette und ganz Phase 2 geschlossen.**
 
 Die Erstfassung hielt fest: `git diff master designplan -- . ':(exclude)docs'` war **leer** — 29 Commits, keine Zeile Code, auf Platte endete es bei `0021_fallback_inhalte.sql`. Zwei Sessions später liegen **zehn weitere Migrationen** (`0022`–`0031`), die Fachschicht dazu, fünf neue Portalseiten und zehn neue Testdateien. Was in Abschnitt 3 als *„entworfen, aber nicht gebaut"* stand, ist zur Hälfte abgeräumt.
 
@@ -48,9 +49,10 @@ Das Ungleichgewicht aus der Erstfassung bleibt trotzdem bestehen, nur verschoben
 | **Leute** — Beitrittscode, Mitgliederliste mit E-Mail, Rollen hoch- und herabstufen, Entfernen, Kein-Studio-Zustand | ✅ neu |
 | Trainerportal: Geräte, Modelle, Tags, Medien-Upload, Leute | ✅ funktional, **ungestaltet** |
 | Betriebswerkzeug: `pnpm smoke:web`, `pnpm smoke:migrations` | ✅ neu, siehe 4a/4c |
+| **Studio-Einstellungen und Datenschutzgrenze** — Stornofrist, Speicherrecht mit Spaltengrenze, vier Policies ohne Staff-Klausel, `studio_overview` | ✅ neu |
 | Testlage: **37** Integrationsdateien, **5** E2E-Dateien (vorher 27 / 3) | ✅ grün |
 
-**Der Kassensturz aus `2026-08-31-trainerportal-struktur-design.md` §7 ist überholt.** Er nannte den Gerätekatalog als einzigen vollständig tragenden Bereich; das gilt nicht mehr. Die Tag-Kette trägt vom Herstellungslos bis zum Scan vor dem Gerät, und von den vier dort als „am weitesten offen" bezeichneten Punkten sind zwei zu (Leute, Auth).
+**Der Kassensturz aus `2026-08-31-trainerportal-struktur-design.md` §7 ist überholt.** Er nannte den Gerätekatalog als einzigen vollständig tragenden Bereich; das gilt nicht mehr. Die Tag-Kette trägt vom Herstellungslos bis zum Scan vor dem Gerät, und von den vier dort als „am weitesten offen" bezeichneten Punkten sind jetzt alle vier zu (Leute, Auth, Studio-Einstellungen, Datenschutzgrenze).
 
 ---
 
@@ -66,22 +68,21 @@ Das Ungleichgewicht aus der Erstfassung bleibt trotzdem bestehen, nur verschoben
 | ~~**Leute**~~ — Mitglieder und Mitarbeiter | `0030`–`0031` | ❌ ohne Plan gebaut | ✅ **2. September** |
 | **Sucher im Portal** — `getUserMedia` + Decoder | — | ❌ | ❌ |
 | **Einrichtung am Gerät** — 16 `Telefon*`-Artboards, der Gang durch die Halle | — | ❌ Spec steht, Plan fehlt | ❌ |
-| **Studio-Einstellungen, Datenschutzgrenze, Überblick** | — | ❌ | ❌ |
+| ~~**Studio-Einstellungen, Datenschutzgrenze, Überblick**~~ — Stornofrist, Speicherrecht mit Spaltengrenze, vier Policies ohne Staff-Klausel, `studio_overview` | `0032`–`0034` | ✅ `2026-09-02-studio-einstellungen-datenschutzgrenze.md`, 9 Aufgaben | ✅ **2. September** |
 | **Kurse** — drei Tabellen, Platzvergabe unter Nebenläufigkeit | — | ❌ nur Vorabnotiz (84 Zeilen) | ❌ |
 | **Portal-Frontend nach den 39 Artboards** | — | ❌ | ❌ |
 | **iOS Member-App** | — | ❌ | ❌ `apps/` enthält nur `web` |
 
 ### Was von den vier „am weitesten offenen" übrig ist
 
-Die Erstfassung nannte vier. Zwei sind zu:
+Die Erstfassung nannte vier. Alle vier sind zu:
 
 - ~~**Leute:**~~ `memberships_select_own` erlaubte genau die *eigene* Zeile — ein Trainer konnte seine Mitgliederliste nicht einmal lesen. `0031` legt die vier Policies nach (`memberships_select_staff`, `_update_staff`, `_delete_staff`, dazu `list_studio_members` für die E-Mail-Adresse, die außerhalb der `public`-Policies liegt). Die Inhaberzeile ist über alle drei Pfade unerreichbar — die Regel *„niemand entzieht sich die letzte Inhaberrolle"* ist damit von der Policy erzwungen, nicht von einer Zählfunktion.
 - ~~**Auth:**~~ `signInWithPassword` steht, dazu Registrierung, Bestätigung, Passwort vergessen und zurücksetzen. **Neuer Befund dazu:** `auth_leaked_password_protection` ist im Projekt **aus**. Solange nur OTP lief, war die Einstellung gegenstandslos; mit Passwörtern ist sie es nicht mehr. Ein Haken im Dashboard (Authentication → Policies), kein Code — aber er gehört gesetzt, bevor der erste Betreiber sich anmeldet.
+- ~~**Studio-Einstellungen:**~~ `studios` hatte `studios_select` und keine Spalte für die Stornofrist — Speichern war nicht möglich. `0032` legt `cancellation_deadline_hours` an (Vorgabe 2 Stunden, Bereich 0–168) und zieht das Spaltenrecht auf `join_code` aus `authenticated` ab; der Reiter *Studio* unter `/einstellungen` speichert Name, Zeitzone und Frist.
+- ~~**Datenschutzgrenze:**~~ `0033` nimmt vier Policies (`workout_sessions`, `workout_sets`, `member_machine_calibrations`, `progression_suggestions`) die Staff-Klausel — Personal kommt an kein einzelnes Trainingsdatum eines Mitglieds mehr heran. `0034` liefert mit `studio_overview` die einzige verbliebene Stelle, ausschließlich als Summen, ohne Aufschlüsselung je Gerät unterhalb von fünf aktiven Mitgliedern.
 
-Zwei stehen unverändert:
-
-- **Studio-Einstellungen:** `studios` hat `studios_select` und keine Spalte für die Stornofrist. Speichern ist nicht möglich. *(`0030` hat `join_code` und `join_code_active` an die Tabelle gehängt — das war Leute, nicht Einstellungen.)*
-- **Datenschutzgrenze:** vier Policies zu ändern, eine Aggregatfunktion zu bauen. Sie schaltet zugleich den *Überblick* frei.
+`0032`–`0034` sind auf Platte und lokal angewendet; der Cloud-Abgleich (Fahrplan Abschnitt 4d) steht für diese drei noch aus, die Cloud bleibt bis dahin auf `0031`.
 
 ---
 
@@ -152,10 +153,10 @@ Zwei Dinge, die daraus zu merken sind:
 | | Web-Portal | iOS Member-App |
 | --- | --- | --- |
 | Design | 39 Artboards ✅ | 34 Artboards ✅ |
-| Backend | Katalog ✅, Tag-Kette ✅, Auth ✅, Leute ✅ — **zwei** Bereiche offen | vollständig für M1 ✅ |
+| Backend | Katalog ✅, Tag-Kette ✅, Auth ✅, Leute ✅, Studio-Einstellungen ✅, Datenschutzgrenze ✅ — Phase 2 zu | vollständig für M1 ✅ |
 | Frontend-Code | acht Seiten, ungestaltet | **null** |
 
-Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Das Portal hat sein Backend jetzt fast beisammen — offen sind Studio-Einstellungen und die Datenschutzgrenze — und weiterhin keine Gestaltung.
+Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Das Portal hat sein Backend jetzt beisammen — offen ist weiterhin nur die Gestaltung, dazu die neuen Bauabschnitte Einrichtung am Gerät (Phase 3) und Kurse (Phase 4).
 
 ---
 
@@ -192,16 +193,16 @@ Aus den drei geplanten Migrationen der Tag-Lieferung sind vier geworden: `0029_t
 
 **Der Nebengewinn ist eingetreten:** Aufgabe 7 hat `TagZuweisen` zu `TagBinden` auf ein Token-Textfeld umgebaut. Der Rückfallweg für den Sucher steht damit, **bevor** der Sucher gebaut ist — `einrichtung-am-geraet-design.md` §7 hat seinen *„einzigen Ausfallpunkt ohne Rückfallweg"* verloren.
 
-### Phase 2 — Portal-Backend-Lücken *(halb)*
+### Phase 2 — Portal-Backend-Lücken ✅ *abgeschlossen 2. September*
 
-Vier Bauabschnitte waren vorgesehen. Die ersten beiden sind gebaut — **ohne Umsetzungsplan, direkt aus Spec und Artboards.** Das hat funktioniert und ist trotzdem kein Präzedenzfall: beide waren eng umrissen (eine Migration plus eine Seite), was für die verbleibenden zwei nicht gilt.
+Vier Bauabschnitte waren vorgesehen. Die ersten beiden wurden ohne Umsetzungsplan gebaut — direkt aus Spec und Artboards; das hat funktioniert, war aber kein Präzedenzfall: beide waren eng umrissen (eine Migration plus eine Seite). Für die verbleibenden zwei hat sich das bestätigt — sie brauchten einen eigenen Plan, `2026-09-02-studio-einstellungen-datenschutzgrenze.md`, 9 Aufgaben.
 
 1. ~~**Auth**~~ — Passwort, Registrierung, Bestätigung, Zurücksetzen ✅
 2. ~~**Leute**~~ — `0030` Beitrittscode, `0031` vier Policies statt einer ✅
-3. **Studio-Einstellungen** — Spalten am Studio, Stornofrist ❌
-4. **Datenschutzgrenze** — vier Policies + Aggregatfunktion → schaltet *Überblick* frei ❌
+3. ~~**Studio-Einstellungen**~~ — Spalten am Studio, Stornofrist ✅
+4. ~~**Datenschutzgrenze**~~ — vier Policies + Aggregatfunktion → schaltet *Überblick* frei ✅
 
-Punkt 4 hängt an Punkt 3 nicht fachlich, aber beide fassen `studios` an; nacheinander gebaut ersparen sie sich eine Migration, die die andere wieder anfasst.
+Punkt 4 hing an Punkt 3 nicht fachlich, aber beide fassten `studios` an; nacheinander gebaut haben sie sich eine Migration erspart, die die andere wieder angefasst hätte.
 
 ### Phase 3 — Einrichtung am Gerät
 
@@ -223,15 +224,14 @@ M0 Task 7 und 8, danach die 34 Member-Artboards. **Kann ab sofort parallel laufe
 
 ### Was parallel geht und was nicht
 
-Nach Phase 1 zerfällt die Arbeit in drei Stränge, die einander nicht berühren:
+Nach Phase 1 und dem Abschluss von Phase 2 zerfällt die Arbeit in zwei Stränge, die einander nicht berühren:
 
 | Strang | Inhalt | Berührt |
 | --- | --- | --- |
-| **A** | Phase 2, Rest — Studio-Einstellungen, dann Datenschutzgrenze | `studios`, neue Migrationen |
 | **B** | Phase 3 — Einrichtung am Gerät samt Sucher | eigene Telefonseiten |
 | **C** | Phase 6 — iOS | eigenes Repo-Verzeichnis, blockiert nur durch Hardware |
 
-**Nicht parallel:** Phase 5 gegen A und B — alle drei fassen dieselben Portalseiten an. Und Phase 4 (Kurse) sollte warten: sie braucht zuerst eine Entwurfsrunde, und die ist nach der Lehre aus Abschnitt 7 erst dann fällig, wenn der Abstand zwischen Entwurf und Code wieder klein ist.
+**Nicht parallel:** Phase 5 gegen B — beide fassen dieselben Portalseiten an. Und Phase 4 (Kurse) sollte warten: sie braucht zuerst eine Entwurfsrunde, und die ist nach der Lehre aus Abschnitt 7 erst dann fällig, wenn der Abstand zwischen Entwurf und Code wieder klein ist.
 
 ---
 
@@ -249,7 +249,7 @@ Verstreut über fünf Specs, hier einmal an einem Ort. Jede bleibt in ihrem Ursp
 | Chargengröße gegen Lieferungsgröße | tag-lieferung §10 | Beschaffung |
 | `replaced` ist unbenutzt — Weg geben oder streichen | tag-lieferung §10 | nichts |
 | Kein Weg zurück in die Halde | tag-lieferung §10 | nichts |
-| Stornofrist — Wert offen | trainerportal-struktur §8 | Phase 2.3 |
+| Mindestzahl für die Aufschlüsselung im Überblick — auf 5 gesetzt, vor dem ersten echten Mitglied zu prüfen | 0034, Spec §4 | nichts |
 | Nachrück-Benachrichtigung — Push gibt es nicht | trainerportal-struktur §8 | Phase 3 |
 | Kursvideo | trainerportal-struktur §8 | vertagt, nicht verworfen |
 | Studiogründung gibt es bewusst nicht | trainerportal-struktur §8 | den zweiten Betreiber |
