@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import { latestOtpFor } from "./helpers/login";
+import { E2E_PASSWORD, anmelden, latestOtpFor } from "./helpers/login";
 
 /**
  * Lokal steht SUPABASE_AUTH_EMAIL_ENABLE_CONFIRMATIONS auf false
@@ -67,4 +67,34 @@ test("ein Mitglied setzt ein neues Passwort per Code und ist danach angemeldet",
     timeout: 15_000,
   });
   await expect(page.getByTestId("user-email")).toHaveText(email);
+});
+
+test("ein Konto ohne Studio tritt per Code bei", async ({ page }) => {
+  const admin = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } },
+  );
+
+  const email = `e2e-beitritt-${crypto.randomUUID()}@example.test`;
+  const { error: userError } = await admin.auth.admin.createUser({
+    email,
+    password: E2E_PASSWORD,
+    email_confirm: true,
+  });
+  if (userError) throw userError;
+
+  const { data: studio, error: studioError } = await admin
+    .from("studios")
+    .insert({ name: "Beitritts-E2E-Studio" })
+    .select("id, join_code")
+    .single();
+  if (studioError) throw studioError;
+
+  await anmelden(page, email);
+  await expect(page.getByTestId("beitritt-formular")).toBeVisible();
+  await page.getByLabel("Studio-Code").fill(studio.join_code);
+  await page.getByRole("button", { name: "Beitreten" }).click();
+
+  await expect(page.getByTestId("studio-list")).toContainText("Beitritts-E2E-Studio");
 });
