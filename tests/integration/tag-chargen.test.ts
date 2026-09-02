@@ -51,11 +51,35 @@ beforeAll(async () => {
 });
 
 describe("Chargen und Lieferungen", () => {
-  it("haelt tag_batches vor jedem angemeldeten Konto verschlossen", async () => {
-    const client = await userClient(trainerA);
+  it("haelt tag_batches vor einem unverbundenen Studio verschlossen", async () => {
+    const admin = serviceClient();
+    const { data: fremdStudio, error: fremdStudioFehler } = await admin
+      .from("studios")
+      .insert({ name: "Chargen Studio Unverbunden" })
+      .select("id")
+      .single();
+    if (fremdStudioFehler) throw fremdStudioFehler;
+
+    const fremdEmail = uniqueEmail("chargen-unverbunden");
+    const fremdNutzer = await createTestUser(fremdEmail);
+    const { error: mitgliedFehler } = await admin
+      .from("studio_memberships")
+      .insert({ studio_id: fremdStudio.id, user_id: fremdNutzer, role: "trainer" });
+    if (mitgliedFehler) throw mitgliedFehler;
+
+    const client = await userClient(fremdEmail);
     const { data, error } = await client.from("tag_batches").select("id");
     expect(error).toBeNull();
     expect(data).toEqual([]);
+  });
+
+  it("zeigt einem verbundenen Studio die eigene Charge", async () => {
+    const admin = serviceClient();
+    const charge = await chargeFuerTest(admin, "machine");
+    const client = await userClient(trainerA);
+    const { data, error } = await client.from("tag_batches").select("id");
+    expect(error).toBeNull();
+    expect(data?.map((zeile) => zeile.id)).toContain(charge.id);
   });
 
   it("zeigt einem Trainer die Lieferungen seines Studios", async () => {
