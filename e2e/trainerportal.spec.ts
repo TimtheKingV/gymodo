@@ -44,7 +44,7 @@ function jpegMitExif(): Buffer {
  * Inhaber) dieselbe Studio-Zeile doppelt zurueck, und der Redirect fuer
  * "genau ein Studio" bleibt aus.
  */
-test("Trainer in einem Studio mit weiterem Personal landet trotzdem direkt im Katalog", async ({
+test("Trainer in einem Studio mit weiterem Personal landet trotzdem direkt im Überblick", async ({
   page,
 }) => {
   const admin = createClient(

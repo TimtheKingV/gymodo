@@ -64,7 +64,9 @@ test("ein Trainer pflegt die Studio-Einstellungen", async ({ page }) => {
   await page.getByRole("button", { name: "Änderungen speichern" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "168" })).toContainText("168");
 
-  // Der Code erneuert sich, und der alte gilt danach nicht mehr.
+  // Der Code erneuert sich: nach dem Erzeugen steht der alte nicht mehr
+  // auf der Seite. Dass er auch beim Beitritt nicht mehr traegt, prueft
+  // die Fachschicht (tests/integration), nicht dieser Durchgang.
   await page.reload();
   await expect(page.getByText(studio.join_code)).toBeVisible();
   await page.getByRole("button", { name: "Neuen Code erzeugen" }).click();

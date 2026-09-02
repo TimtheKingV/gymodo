@@ -423,8 +423,16 @@ export async function passwortAendern(
   if (neu !== wiederholung) {
     return { ok: false, error: "Die beiden neuen Passwörter sind nicht gleich." };
   }
+  // An dieser Stelle ist noch nichts gegen das Konto geprueft -- ob das
+  // obere Feld wirklich das aktuelle Passwort enthaelt, weiss erst die
+  // Anmeldung weiter unten. Die Meldung sagt deshalb, was gilt, und nicht,
+  // was der Eintrag angeblich ist: wer sich oben vertippt und den Vertipper
+  // unten wiederholt, bekaeme sonst zu hoeren, das sei sein altes Passwort.
   if (neu === aktuell) {
-    return { ok: false, error: "Das ist das alte Passwort." };
+    return {
+      ok: false,
+      error: "Das neue Passwort muss sich von dem oben eingetragenen unterscheiden.",
+    };
   }
 
   const client = await createServerSupabaseClient();
@@ -453,7 +461,7 @@ export async function passwortAendern(
     const { error } = await client.auth.updateUser({ password: neu });
     if (error) {
       console.error("Passwortaenderung fehlgeschlagen:", error.message);
-      return { ok: false, error: "Das Passwort ließ sich nicht ändern." };
+      return { ok: false, error: "Das Passwort liess sich nicht ändern." };
     }
     return { ok: true };
   } catch (fehler) {
