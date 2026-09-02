@@ -21,6 +21,7 @@ import {
   setMembershipRole,
   setStudioJoinCodeActive,
   updateEquipmentModel,
+  updateStudioSettings,
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -378,5 +379,25 @@ export async function beitrittscodeAktivSetzen(
 ): Promise<ActionResult> {
   return fuehreAus(pfad, async (client) => {
     await setStudioJoinCodeActive(client, studioId, active);
+  });
+}
+
+export async function studioSpeichern(
+  studioId: string,
+  pfad: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionResult> {
+  const stunden = zahl(formData, "cancellationDeadlineHours");
+  if (stunden === undefined || Number.isNaN(stunden)) {
+    return { ok: false, error: "Die Stornofrist braucht eine Zahl. 0 heißt: bis zum Beginn." };
+  }
+
+  return fuehreAus(pfad, async (client) => {
+    await updateStudioSettings(client, studioId, {
+      name: text(formData, "name"),
+      timezone: text(formData, "timezone"),
+      cancellationDeadlineHours: stunden,
+    });
   });
 }

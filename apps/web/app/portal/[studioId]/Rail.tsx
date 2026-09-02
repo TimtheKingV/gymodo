@@ -89,6 +89,12 @@ export function Rail({
         <Link href={`${basis}/leute`} className={klasse(pfad === `${basis}/leute`)}>
           <span className={styles.navItemTitle}>Leute</span>
         </Link>
+        <Link
+          href={`${basis}/einstellungen`}
+          className={klasse(pfad.startsWith(`${basis}/einstellungen`))}
+        >
+          <span className={styles.navItemTitle}>Einstellungen</span>
+        </Link>
       </div>
     </nav>
   );
