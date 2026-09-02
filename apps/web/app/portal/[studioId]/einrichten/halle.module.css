@@ -1,0 +1,334 @@
+/* Die Telefonebene der Tokens aus docs/superpowers/specs/2026-08-30-designsystem.md.
+   Getrennt von portal.module.css, weil sie andere Trefferflaechen traegt:
+   die App wird einhaendig bedient, oft mit feuchten Haenden (Designsystem 1).
+   Hauptaktion 56 px, Nebenaktion 48 px, Feld mindestens 52 px.
+
+   Konvention aus Spec 3: `background` fuer die eine Akzentflaeche je
+   Bildschirm, `background-color` fuer Balken und Marken. Dieselbe Farbe,
+   zwei Rollen -- und "genau eine Akzentflaeche" wird damit pruefbar. */
+
+.seite {
+  max-width: 390px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.kopf {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  padding: var(--s16);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s12);
+}
+
+.studio {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.inhalt {
+  padding: var(--s20) var(--s16) var(--s40);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s16);
+  flex-grow: 1;
+}
+
+.titel {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  margin: var(--s8) 0 0;
+}
+
+.unterzeile {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: var(--s4) 0 0;
+}
+
+.zurueck {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.notiz {
+  font-size: 12px;
+  color: var(--text-faint);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.karte {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  padding: var(--s16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s12);
+}
+
+.karteGestrichelt {
+  composes: karte;
+  border-style: dashed;
+}
+
+/* Die Ueberschrift in einer Karte. Eigene Klasse statt eines inline-Stils,
+   weil sie ueber den ganzen Gang ein knappes Dutzend Mal vorkommt. */
+.karteTitel {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.karteWarnung {
+  composes: karte;
+  border-color: var(--warn);
+}
+
+.abschnitt {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.abschnittKopf {
+  padding: 14px var(--s16);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s12);
+}
+
+.zeile {
+  padding: var(--s12) var(--s16);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s12);
+  min-height: 56px;
+}
+
+.zeile:last-child {
+  border-bottom: none;
+}
+
+.zeileHaupt {
+  min-width: 0;
+  font-weight: 600;
+}
+
+.zeileMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.zeileMetaFaint {
+  composes: zeileMeta;
+  color: var(--text-faint);
+}
+
+.feld {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.eingabe,
+.auswahl {
+  background: var(--well);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  min-height: 52px;
+  padding: 0 var(--s12);
+  color: var(--text);
+  width: 100%;
+}
+
+.eingabe:focus,
+.auswahl:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Die eine Akzentflaeche je Bildschirm. */
+.haupt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  width: 100%;
+  border: none;
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+.haupt:disabled {
+  opacity: 0.45;
+}
+
+.neben {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  width: 100%;
+  border-radius: var(--r-control);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.nebenSchmal {
+  composes: neben;
+  width: auto;
+  padding: 0 var(--s16);
+  flex-shrink: 0;
+}
+
+.gefaehrlich {
+  composes: neben;
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.chips {
+  display: flex;
+  gap: var(--s8);
+  overflow-x: auto;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: var(--s8) var(--s16);
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.chipAktiv {
+  composes: chip;
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.marke {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.balkenBahn {
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+
+/* Akzent als Wert, nicht als Aktionsflaeche -- daher background-color. */
+.balken {
+  height: 100%;
+  background-color: var(--accent);
+}
+
+.fehler {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0;
+}
+
+.zahl {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.zahlOffen {
+  composes: zahl;
+  color: var(--warn);
+}
+
+.zahlLabel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.zahlLabelOffen {
+  composes: zahlLabel;
+  color: var(--warn);
+}
+
+.zahlen {
+  display: flex;
+  gap: var(--s20);
+}
+
+.leiste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s8);
+}
+
+.leisteSegmente {
+  display: flex;
+  gap: var(--s4);
+}
+
+/* Bewusst ohne Akzent: der gehoert der Hauptaktion, nicht der Wegmarke. */
+.leisteSegment {
+  flex: 1;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--line);
+}
+
+.leisteSegmentVoll {
+  composes: leisteSegment;
+  background: var(--text);
+}
