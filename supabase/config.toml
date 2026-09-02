@@ -294,6 +294,10 @@ content_path = "./supabase/templates/magic_link.html"
 subject = "Bestaetige dein Konto"
 content_path = "./supabase/templates/confirmation.html"
 
+[auth.email.template.recovery]
+subject = "Setze dein Passwort zurueck"
+content_path = "./supabase/templates/recovery.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true

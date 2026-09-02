@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
+import { latestOtpFor } from "./helpers/login";
 
 /**
  * Lokal steht SUPABASE_AUTH_EMAIL_ENABLE_CONFIRMATIONS auf false
@@ -32,4 +34,37 @@ test("eine zu kurze Passworteingabe bleibt auf der Registrierungsseite", async (
   await page.getByRole("button", { name: "Konto anlegen" }).click();
 
   await expect(page.getByText("mindestens zehn Zeichen")).toBeVisible();
+});
+
+test("ein Mitglied setzt ein neues Passwort per Code und ist danach angemeldet", async ({
+  page,
+}) => {
+  const admin = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } },
+  );
+
+  const email = `e2e-reset-${crypto.randomUUID()}@example.test`;
+  const { error } = await admin.auth.admin.createUser({
+    email,
+    password: "ein-altes-test-passwort",
+    email_confirm: true,
+  });
+  if (error) throw error;
+
+  await page.goto("/passwort-vergessen");
+  await page.getByLabel("E-Mail").fill(email);
+  const angefordert = new Date(Date.now() - 1000);
+  await page.getByRole("button", { name: "Code anfordern" }).click();
+
+  const code = await latestOtpFor(email, angefordert);
+  await page.getByLabel("Code aus der E-Mail").fill(code);
+  await page.getByLabel("Neues Passwort").fill("ein-neues-test-passwort");
+  await page.getByRole("button", { name: "Passwort setzen" }).click();
+
+  await page.waitForURL((url) => !url.pathname.startsWith("/passwort-vergessen"), {
+    timeout: 15_000,
+  });
+  await expect(page.getByTestId("user-email")).toHaveText(email);
 });
