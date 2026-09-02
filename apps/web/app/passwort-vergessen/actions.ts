@@ -7,7 +7,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 const emailSchema = z.object({ email: z.string().email() });
 const zuruecksetzenSchema = z.object({
   email: z.string().email(),
-  token: z.string().regex(/^\d{6}$/),
+  token: z.string().regex(/^\d{6}$/, "Der Code besteht aus sechs Ziffern."),
   password: z.string().min(10, "Das Passwort braucht mindestens zehn Zeichen."),
 });
 

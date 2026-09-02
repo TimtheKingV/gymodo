@@ -6,10 +6,8 @@ import { E2E_PASSWORD, anmelden, latestOtpFor } from "./helpers/login";
  * Lokal steht SUPABASE_AUTH_EMAIL_ENABLE_CONFIRMATIONS auf false
  * (.env.example) -- signUp liefert dort sofort eine Session, und die
  * Codeseite erscheint nie. Dieser Test prueft deshalb den lokalen Pfad; der
- * Codezweig aus registrierungBestaetigen ist derselbe verifyOtp-Aufruf wie
- * im bestehenden Login (type: "email" statt "signup", dort e2e getestet)
- * und bleibt bewusst ungetestet, bis eine Umgebung mit aktiven
- * Bestaetigungen existiert.
+ * Codezweig aus registrierungBestaetigen bleibt dadurch echt ungetestet und
+ * bewusst so, bis eine Umgebung mit aktiven Bestaetigungen existiert.
  */
 test("ein neues Konto registriert sich und landet angemeldet auf der Wurzelseite", async ({
   page,

@@ -36,6 +36,59 @@ function jpegMitExif(): Buffer {
   ]);
 }
 
+/**
+ * memberships_select_staff (0030) laesst Mitarbeiter alle Mitgliedschaften
+ * ihres Studios sehen, nicht nur die eigene -- die Portal-Einstiegsseite
+ * muss ihre Abfrage seither selbst auf den Aufrufer filtern, sonst kommt
+ * fuer einen Trainer in einem Studio mit weiterem Personal (hier: einem
+ * Inhaber) dieselbe Studio-Zeile doppelt zurueck, und der Redirect fuer
+ * "genau ein Studio" bleibt aus.
+ */
+test("Trainer in einem Studio mit weiterem Personal landet trotzdem direkt im Katalog", async ({
+  page,
+}) => {
+  const admin = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } },
+  );
+
+  const trainerEmail = `portal-mehrpersonal-${crypto.randomUUID()}@example.test`;
+  const { data: trainer, error: trainerError } = await admin.auth.admin.createUser({
+    email: trainerEmail,
+    password: E2E_PASSWORD,
+    email_confirm: true,
+  });
+  if (trainerError) throw trainerError;
+
+  const ownerEmail = `portal-mehrpersonal-owner-${crypto.randomUUID()}@example.test`;
+  const { data: owner, error: ownerError } = await admin.auth.admin.createUser({
+    email: ownerEmail,
+    password: E2E_PASSWORD,
+    email_confirm: true,
+  });
+  if (ownerError) throw ownerError;
+
+  const { data: studio, error: studioError } = await admin
+    .from("studios")
+    .insert({ name: "Mehrpersonal E2E Studio" })
+    .select("id")
+    .single();
+  if (studioError) throw studioError;
+
+  const { error: membershipError } = await admin.from("studio_memberships").insert([
+    { studio_id: studio.id, user_id: trainer.user.id, role: "trainer" },
+    { studio_id: studio.id, user_id: owner.user.id, role: "owner" },
+  ]);
+  if (membershipError) throw membershipError;
+
+  await anmelden(page, trainerEmail);
+
+  await page.goto("/portal");
+  await expect(page).toHaveURL(new RegExp(`/portal/${studio.id}$`));
+  await expect(page.getByRole("heading", { name: "Gerätekatalog" })).toBeVisible();
+});
+
 test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }) => {
   const admin = createClient(
     process.env.SUPABASE_URL!,
