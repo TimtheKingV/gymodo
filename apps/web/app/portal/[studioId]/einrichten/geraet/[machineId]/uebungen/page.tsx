@@ -4,6 +4,7 @@ import { listStudioExercises } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { ladeKatalog } from "../../../../catalog";
 import { Schrittleiste } from "../../../Schrittleiste";
+import { VideoAufnehmen } from "../../../Uploads";
 import { UebungSheet, UebungVerschieben } from "./UebungSheet";
 import styles from "../../../halle.module.css";
 
@@ -50,25 +51,43 @@ export default async function UebungenPage({
         <section className={styles.abschnitt}>
           {modell.exercises.map((uebung, index) => (
             <div key={uebung.linkId} className={styles.zeile}>
-              <div style={{ minWidth: 0 }}>
-                <div className={styles.zeileHaupt}>
-                  {index + 1}. {uebung.name}
+              <div style={{ minWidth: 0, width: "100%", display: "grid", gap: 12 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div className={styles.zeileHaupt}>
+                      {index + 1}. {uebung.name}
+                    </div>
+                    <div className={styles.zeileMeta}>
+                      {uebung.targetRepsMin}–{uebung.targetRepsMax}{" "}
+                      Wiederholungen
+                      {uebung.hasVideo
+                        ? ` · Video ${uebung.videoDurationS ?? "?"} s`
+                        : " · ohne Video"}
+                    </div>
+                  </div>
+                  <UebungVerschieben
+                    studioId={studioId}
+                    machineId={machineId}
+                    modelId={modell.id}
+                    linkId={uebung.linkId}
+                    name={uebung.name}
+                    reihenfolge={reihenfolge}
+                  />
                 </div>
-                <div className={styles.zeileMeta}>
-                  {uebung.targetRepsMin}–{uebung.targetRepsMax} Wiederholungen
-                  {uebung.hasVideo
-                    ? ` · Video ${uebung.videoDurationS ?? "?"} s`
-                    : " · ohne Video"}
-                </div>
+                <VideoAufnehmen
+                  modelId={modell.id}
+                  linkId={uebung.linkId}
+                  uebungName={uebung.name}
+                  titel={`${modell.name} ${geraet.label} · ${uebung.name}`}
+                  hatVideo={uebung.hasVideo}
+                />
               </div>
-              <UebungVerschieben
-                studioId={studioId}
-                machineId={machineId}
-                modelId={modell.id}
-                linkId={uebung.linkId}
-                name={uebung.name}
-                reihenfolge={reihenfolge}
-              />
             </div>
           ))}
         </section>
@@ -88,6 +107,11 @@ export default async function UebungenPage({
         modelId={modell.id}
         waehlbar={waehlbar}
       />
+
+      <p className={styles.notiz}>
+        Ein Gerät ohne Video ist vollständig nutzbar, nur ohne Anleitung. Die
+        Uploads laufen weiter, während du zum nächsten Gerät gehst.
+      </p>
 
       <p className={styles.notiz}>
         Die Reihenfolge zählt: Übung 1 ist am Gerät die Vorauswahl. Übungen

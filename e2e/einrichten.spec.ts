@@ -324,3 +324,64 @@ test("Schritt 5 waehlt aus dem Studio, legt neu an und ordnet um", async ({
     new RegExp(`/einrichten/geraet/${geraet.id}/fertig$`),
   );
 });
+
+test("Ein Video wartet in der Warteschlange und ueberlebt den Seitenwechsel", async ({
+  page,
+}) => {
+  const { admin, studioId } = await studioMitTrainer(page, "einrichten-upload");
+
+  const { data: modell, error: modellFehler } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (modellFehler) throw modellFehler;
+
+  const { data: geraet, error: geraetFehler } = await admin
+    .from("machines")
+    .insert({ studio_id: studioId, equipment_model_id: modell.id, label: "14" })
+    .select("id")
+    .single();
+  if (geraetFehler) throw geraetFehler;
+
+  const { data: uebung, error: uebungFehler } = await admin
+    .from("exercises")
+    .insert({
+      studio_id: studioId,
+      name: "Rudern sitzend",
+      target_reps_min: 10,
+      target_reps_max: 15,
+    })
+    .select("id")
+    .single();
+  if (uebungFehler) throw uebungFehler;
+
+  const { error: linkFehler } = await admin
+    .from("equipment_model_exercises")
+    .insert({
+      equipment_model_id: modell.id,
+      exercise_id: uebung.id,
+      sort_order: 1,
+    });
+  if (linkFehler) throw linkFehler;
+
+  await page.goto(`/portal/${studioId}/einrichten/geraet/${geraet.id}/uebungen`);
+
+  await page.getByLabel("Video für Rudern sitzend").setInputFiles({
+    name: "rudern.mp4",
+    mimeType: "video/mp4",
+    buffer: Buffer.alloc(1024, 1),
+  });
+
+  const marke = page.getByRole("link", { name: /Uploads/ });
+  await expect(marke).toBeVisible();
+
+  // Der Seitenwechsel ist der Punkt: die Warteschlange lebt im Layout des
+  // Gangs, nicht in der Uebungsseite. Geklickt, nicht per goto -- eine harte
+  // Navigation wuerde sie loeschen, und dann pruefte der Test das Gegenteil
+  // von dem, was er behauptet.
+  await marke.click();
+  await expect(page).toHaveURL(new RegExp(`/einrichten/uploads$`));
+  await expect(page.getByText("Kabelzug 14 · Rudern sitzend")).toBeVisible();
+  await expect(page.getByText("Lass diesen Bildschirm offen")).toBeVisible();
+});
