@@ -428,27 +428,38 @@ export async function passwortAendern(
   }
 
   const client = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await client.auth.getUser();
-  if (!user?.email) {
-    return { ok: false, error: "Die Sitzung ist abgelaufen. Bitte neu anmelden." };
-  }
 
-  const { error: pruefung } = await client.auth.signInWithPassword({
-    email: user.email,
-    password: aktuell,
-  });
-  if (pruefung) {
-    return { ok: false, error: "Das aktuelle Passwort stimmt nicht." };
-  }
+  // Diese Aktion laeuft nicht durch fuehreAus (kein Pfad zum revalidieren,
+  // keine DomainError im Spiel) -- deshalb braucht sie hier ihr eigenes
+  // Netz: ein Verbindungsabbruch bei getUser, signInWithPassword oder
+  // updateUser soll denselben Hausfallback liefern wie fuehreAus, statt
+  // als rohe Exception aus der Server Action zu fallen.
+  try {
+    const {
+      data: { user },
+    } = await client.auth.getUser();
+    if (!user?.email) {
+      return { ok: false, error: "Die Sitzung ist abgelaufen. Bitte neu anmelden." };
+    }
 
-  const { error } = await client.auth.updateUser({ password: neu });
-  if (error) {
-    console.error("Passwortaenderung fehlgeschlagen:", error.message);
-    return { ok: false, error: "Das Passwort ließ sich nicht ändern." };
+    const { error: pruefung } = await client.auth.signInWithPassword({
+      email: user.email,
+      password: aktuell,
+    });
+    if (pruefung) {
+      return { ok: false, error: "Das aktuelle Passwort stimmt nicht." };
+    }
+
+    const { error } = await client.auth.updateUser({ password: neu });
+    if (error) {
+      console.error("Passwortaenderung fehlgeschlagen:", error.message);
+      return { ok: false, error: "Das Passwort ließ sich nicht ändern." };
+    }
+    return { ok: true };
+  } catch (fehler) {
+    console.error("Passwortaenderung fehlgeschlagen:", fehler);
+    return { ok: false, error: "Das hat nicht geklappt. Bitte noch einmal." };
   }
-  return { ok: true };
 }
 
 export async function abmelden(): Promise<never> {
