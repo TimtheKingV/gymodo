@@ -23,6 +23,11 @@ Aus der Spec, wörtlich übernommen. Jede Aufgabe steht implizit unter diesen S�
 - **Keine Migration.** Spec §5: *„Die zweite Runde kostet keine Migration."* Alles hängt an Tabellen und Funktionen, die seit `0028` stehen. Wer in diesem Plan eine `.sql`-Datei anlegt, hat sich verlaufen.
 - **Das Portal erzeugt keinen Token.** Spec §6. `createTag` ist weg und bleibt weg; `token_hash` ist seit `0026` eine generierte Spalte und für `authenticated` nicht schreibbar.
 - **Das Foto ist Pflicht, die Spalte bleibt nullable.** Spec §5: *„Dass das Foto Pflicht ist, bleibt eine Regel der Oberfläche — die Spalte ist nullable, und das soll sie bleiben: Altmodelle tragen keines."*
+- **Testbilder haben Handygröße, nicht Rumpfgröße.** Bei der Ausführung von Aufgabe 6 kamen zwei Fehler ans Licht, die beide nur deshalb jahrelang unsichtbar blieben, weil jeder Test mit einem 22-Byte-JPEG lief:
+  1. `stripImageMetadata` warf ab ~0,5 MB `RangeError: Maximum call stack size exceeded` — beide Stripper füllten ein `number[]` per `out.push(...bytes.slice(a, b))`. Behoben, mit je einem 3-MB-Test für JPEG und PNG.
+  2. Next schnitt den Rumpf jeder Server Action bei **1 MB** ab (413, *„Body exceeded 1 MB limit"*), bevor die Fachschicht die Bytes sah. Behoben durch `experimental.serverActions.bodySizeLimit: "12mb"` in `next.config.mjs`.
+
+  **Die Lehre gilt für jede weitere Aufgabe:** eine Mediendatei im Test hat die Größe, die sie in der Halle hat. Ein Rumpf prüft den Codepfad, nicht die Grenze.
 - **Schritt 2 (Einstellungen) und Schritt 6 (Video) sind überspringbar, Schritt 1, 3 und 4 nicht.** Spec §2.
 - **Genau eine Akzentfläche je Bildschirm.** Designsystem. Der Akzent (`--accent`, `#d4ff3f`) gehört der einen Hauptaktion. Konvention aus Spec §3, maschinell prüfbar: `background: var(--accent)` für die Aktionsfläche, `background-color: var(--accent)` für Balken und Marken. Sucher und Aufnahme tragen **keine** Akzentfläche im Fluss — dort ist der Auslöser die Handlung.
 - **Trefferflächen in der Halle sind größer als am Schreibtisch.** Designsystem §1, umgesetzt in `build.py`: Hauptaktion 56 px hoch und volle Breite, Nebenaktion 48 px, Eingabefeld mindestens 52 px.

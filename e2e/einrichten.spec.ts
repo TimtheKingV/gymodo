@@ -1,6 +1,30 @@
 import { expect, test } from "@playwright/test";
 import { studioMitTrainer } from "./helpers/studio";
 
+/**
+ * Ein JPEG in der gewuenschten Groesse: SOI, JFIF, SOS, Nutzlast, EOI.
+ *
+ * Bewusst in Handygroesse und nicht als 22-Byte-Rumpf. Genau diese Luecke
+ * hat verdeckt, dass stripImageMetadata an jedem echten Foto zerbrach und
+ * dass eine Server Action standardmaessig bei 1 MB abschneidet.
+ */
+function jpegMitGroesse(bytes: number): Buffer {
+  const kopf = [
+    0xff, 0xd8,
+    0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+    0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00,
+    0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00,
+  ];
+  const datei = Buffer.alloc(bytes, 0x7a);
+  Buffer.from(kopf).copy(datei, 0);
+  datei[bytes - 2] = 0xff;
+  datei[bytes - 1] = 0xd9;
+  return datei;
+}
+
+/** So gross wie ein Foto aus einer Handykamera. */
+const HANDYFOTO = jpegMitGroesse(2 * 1024 * 1024);
+
 test("Der Einstieg zaehlt den Bestand und fuehrt in den Gang", async ({
   page,
 }) => {
@@ -23,4 +47,49 @@ test("Der Einstieg zaehlt den Bestand und fuehrt in den Gang", async ({
   await expect(page).toHaveURL(
     new RegExp(`/portal/${studioId}/einrichten/modell$`),
   );
+});
+
+test("Schritt 1 legt ein Modell mit Pflichtfoto an und geht zu den Einstellungen", async ({
+  page,
+}) => {
+  const { studioId } = await studioMitTrainer(page, "einrichten-modell");
+
+  await page.goto(`/portal/${studioId}/einrichten/modell`);
+  await expect(page.getByText("Noch kein Modell im Studio")).toBeVisible();
+  await page.getByRole("link", { name: "Neues Modell anlegen" }).click();
+
+  await page.getByLabel("Name").fill("Kabelzug");
+  await page.getByLabel("Hersteller").fill("Technogym");
+  // Der Gewichtsschritt ist eine Chipreihe, kein Feld: drei Werte, und die
+  // Schrittweite kommt von den Platten am Geraet, nicht aus dem Kopf.
+  await page.getByRole("button", { name: "5 kg", exact: true }).click();
+  await page.getByLabel("Ab").fill("5");
+  await page.getByLabel("Bis").fill("100");
+
+  // Ohne Foto geht es nicht weiter -- Entscheidung 10.
+  await expect(
+    page.getByRole("button", { name: "Weiter zu den Einstellungen" }),
+  ).toBeDisabled();
+
+  await page.getByLabel("Foto des Modells").setInputFiles({
+    name: "kabelzug.jpg",
+    mimeType: "image/jpeg",
+    buffer: HANDYFOTO,
+  });
+  await expect(
+    page.getByRole("button", { name: "Weiter zu den Einstellungen" }),
+  ).toBeEnabled();
+
+  await page
+    .getByRole("button", { name: "Weiter zu den Einstellungen" })
+    .click();
+
+  await expect(page).toHaveURL(
+    new RegExp(`/portal/${studioId}/einrichten/modell/[0-9a-f-]+/einstellungen$`),
+  );
+
+  // AUFGABE 7 schaltet die beiden Zeilen wieder ein -- die Einstellungsseite
+  // gibt es dann.
+  // await expect(page.getByText("Schritt 2 von 6 · Einstellungen")).toBeVisible();
+  // await expect(page.getByText("Foto · Steht")).toBeVisible();
 });
