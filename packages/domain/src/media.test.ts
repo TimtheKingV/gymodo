@@ -135,6 +135,27 @@ describe("stripImageMetadata bei JPEG", () => {
     expect(sniffMediaType(ausgabe)).toBe("image/jpeg");
     expect([...ausgabe]).toContain(0xe0);
   });
+
+  /**
+   * Die Groesse eines echten Handyfotos, nicht die eines Testrumpfs.
+   *
+   * Bis hierher lief jeder Test dieser Datei mit ein paar Dutzend Bytes --
+   * und deshalb blieb unbemerkt, dass die Bilddaten per Spread in ein
+   * number[] geschoben wurden. Ab etwa einem halben Megabyte sprengt das
+   * den Aufrufstapel, und zwar bei JEDEM Foto aus einer Kamera.
+   */
+  it("vertraegt ein Foto in Handygroesse", () => {
+    const nutzlast = new Array(3 * 1024 * 1024).fill(0x7a);
+    const eingabe = jpeg(SOI, JFIF, EXIF, SOS, nutzlast, EOI);
+
+    const ausgabe = stripImageMetadata(eingabe);
+
+    expect(sniffMediaType(ausgabe)).toBe("image/jpeg");
+    // Das Exif-Segment ist weg, die Bilddaten sind vollstaendig da.
+    expect(ausgabe.byteLength).toBe(eingabe.byteLength - EXIF.length);
+    expect(ausgabe.at(-2)).toBe(0xff);
+    expect(ausgabe.at(-1)).toBe(0xd9);
+  });
 });
 
 describe("stripImageMetadata bei PNG", () => {
@@ -170,6 +191,19 @@ describe("stripImageMetadata bei PNG", () => {
       chunk("IEND"),
     );
     expect([...stripImageMetadata(eingabe)]).toEqual([...eingabe]);
+  });
+
+  /** Dieselbe Groessenfalle wie beim JPEG: ein IDAT ist megabytegross. */
+  it("vertraegt ein PNG in Handygroesse", () => {
+    const ihdr = chunk("IHDR", new Array(13).fill(0));
+    const idat = chunk("IDAT", new Array(3 * 1024 * 1024).fill(0x7a));
+    const iend = chunk("IEND");
+    const eingabe = png(ihdr, chunk("tEXt", ascii("Kamera")), idat, iend);
+
+    const ausgabe = stripImageMetadata(eingabe);
+
+    expect(sniffMediaType(ausgabe)).toBe("image/png");
+    expect(ausgabe.byteLength).toBe(png(ihdr, idat, iend).byteLength);
   });
 });
 
