@@ -29,9 +29,15 @@ export type OverviewProblem = {
 export type StudioOverview = {
   days: number;
   activeMembers: number;
-  sets: number;
-  problemReports: number;
-  /** Ab wie vielen aktiven Mitgliedern es eine Aufschluesselung gibt. */
+  /**
+   * `null` heisst nicht "keine", sondern "verdeckt": unterhalb der
+   * Mindestzahl gaebe die Satzzahl das Trainingspensum weniger Personen
+   * preis. Die Oberflaeche muss das unterscheiden koennen -- eine 0 waere
+   * eine Aussage ueber das Studio, die so nicht stimmt.
+   */
+  sets: number | null;
+  problemReports: number | null;
+  /** Ab wie vielen erfassenden Personen es Trainingszahlen gibt. */
   minMembers: number;
   breakdown: boolean;
   topMachines: OverviewMachine[];
@@ -41,8 +47,8 @@ export type StudioOverview = {
 type RohUebersicht = {
   days: number;
   active_members: number;
-  sets: number;
-  problem_reports: number;
+  sets: number | null;
+  problem_reports: number | null;
   min_members: number;
   breakdown: boolean;
   top_machines: { machine_id: string; label: string; status: string; sets: number }[];

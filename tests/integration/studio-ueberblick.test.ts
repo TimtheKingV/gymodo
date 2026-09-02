@@ -6,16 +6,18 @@ import { createTestUser, serviceClient, uniqueEmail, userClient } from "./helper
  * Abschnitt 4: die einzige Stelle, an der Trainingsdaten fuer Personal
  * ueberhaupt noch erreichbar sind -- ausschliesslich als Summe.
  *
- * Das Studio bekommt sechs aktive Mitglieder, damit die Mindestzahl von
- * fuenf ueberschritten ist. Ein zweites Studio mit nur zwei aktiven
- * Mitgliedern prueft die Gegenrichtung.
+ * Drei Studios: eines mit sechs Erfassenden, damit die Mindestzahl von
+ * fuenf ueberschritten ist. Eines mit zweien fuer die Gegenrichtung. Und
+ * eines, in dem fuenf Leute eine Einheit begonnen, aber nur einer davon
+ * Saetze bestaetigt hat -- dort entscheidet sich, ob die Schwelle an der
+ * richtigen Menge haengt.
  */
 
 type Uebersicht = {
   days: number;
   active_members: number;
-  sets: number;
-  problem_reports: number;
+  sets: number | null;
+  problem_reports: number | null;
   min_members: number;
   breakdown: boolean;
   top_machines: { machine_id: string; label: string; status: string; sets: number }[];
@@ -24,17 +26,26 @@ type Uebersicht = {
 
 let studioId: string;
 let kleinStudioId: string;
+let antippStudioId: string;
 let trainerEmail: string;
 let mitgliedEmail: string;
 let fremdTrainerEmail: string;
 let kleinTrainerEmail: string;
+let antippTrainerEmail: string;
 let beinpresseId: string;
 let latzugId: string;
 
+/**
+ * `anzahlErfassende` trennt, was in der Datenbank zwei verschiedene Mengen
+ * sind: wer eine Einheit begonnen hat (workout_sessions) und wer Saetze
+ * bestaetigt hat (workout_sets). Ohne diese Trennung liesse sich nicht
+ * pruefen, ueber welcher der beiden die Schwelle gebildet wird.
+ */
 async function studioMitDaten(
   admin: ReturnType<typeof serviceClient>,
   name: string,
   anzahlMitglieder: number,
+  anzahlErfassende: number = anzahlMitglieder,
 ): Promise<{ studioId: string; machineIds: string[] }> {
   const { data: studio, error: studioError } = await admin
     .from("studios")
@@ -100,6 +111,10 @@ async function studioMitDaten(
       studio_id: studio.id,
       user_id: userId,
     });
+
+    // Wer ueber `anzahlErfassende` hinausgeht, hat nur angetippt: eine
+    // begonnene Einheit, kein bestaetigter Satz.
+    if (i >= anzahlErfassende) continue;
 
     // Zwei Saetze an der Beinpresse, einer am Latzug -- damit die
     // Rangliste eine Reihenfolge hat. Der Latzugsatz meldet ein Problem.
@@ -167,21 +182,29 @@ beforeAll(async () => {
   const klein = await studioMitDaten(admin, "Kleines Ueberblick-Studio", 2);
   kleinStudioId = klein.studioId;
 
+  // Fuenf begonnene Einheiten, ein Erfassender: genau die Lage, in der die
+  // Schwelle an der falschen Menge haengen wuerde.
+  const antipp = await studioMitDaten(admin, "Antipp Ueberblick-Studio", 5, 1);
+  antippStudioId = antipp.studioId;
+
   trainerEmail = uniqueEmail("ueb-trainer");
   mitgliedEmail = uniqueEmail("ueb-mitglied");
   fremdTrainerEmail = uniqueEmail("ueb-fremd-trainer");
   kleinTrainerEmail = uniqueEmail("ueb-klein-trainer");
+  antippTrainerEmail = uniqueEmail("ueb-antipp-trainer");
 
   const trainerId = await createTestUser(trainerEmail);
   const mitgliedId = await createTestUser(mitgliedEmail);
   const fremdTrainerId = await createTestUser(fremdTrainerEmail);
   const kleinTrainerId = await createTestUser(kleinTrainerEmail);
+  const antippTrainerId = await createTestUser(antippTrainerEmail);
 
   const { error } = await admin.from("studio_memberships").insert([
     { studio_id: studioId, user_id: trainerId, role: "trainer" },
     { studio_id: studioId, user_id: mitgliedId, role: "member" },
     { studio_id: kleinStudioId, user_id: kleinTrainerId, role: "trainer" },
     { studio_id: kleinStudioId, user_id: fremdTrainerId, role: "trainer" },
+    { studio_id: antippStudioId, user_id: antippTrainerId, role: "trainer" },
   ]);
   if (error) throw error;
 });
@@ -210,8 +233,11 @@ describe("studio_overview -- die Summen", () => {
     });
 
     const uebersicht = data as Uebersicht;
+    // Zwei, nicht dreizehn: die Aktiven der anderen beiden Studios sind
+    // nicht mitgezaehlt. Die Satzzahl kann das hier nicht mehr zeigen --
+    // sie ist unter der Schwelle verdeckt; dass sie im grossen Studio 18
+    // ist und nicht die Summe aller drei Studios, beweist dasselbe.
     expect(uebersicht.active_members).toBe(2);
-    expect(uebersicht.sets).toBe(6);
   });
 });
 
@@ -252,7 +278,7 @@ describe("studio_overview -- die Aufschluesselung", () => {
 });
 
 describe("studio_overview -- die Mindestzahl", () => {
-  it("unter fuenf aktiven Mitgliedern gibt es keine Aufschluesselung je Geraet", async () => {
+  it("unter fuenf Erfassenden gibt es weder Aufschluesselung noch Satzzahl", async () => {
     const client = await userClient(kleinTrainerEmail);
     const { data } = await client.rpc("studio_overview", {
       p_studio_id: kleinStudioId,
@@ -260,16 +286,57 @@ describe("studio_overview -- die Mindestzahl", () => {
     });
 
     const uebersicht = data as Uebersicht;
-    // Die Summen bleiben -- sie sagen, OB das Studio benutzt wird.
-    expect(uebersicht.sets).toBe(6);
-    // Die Rangliste faellt weg: bei zwei Aktiven verraet sie, wer was
+    // Die Rangliste faellt weg: bei zwei Erfassenden verraet sie, wer was
     // trainiert hat (Spec Abschnitt 4, Vorbehalt).
     expect(uebersicht.breakdown).toBe(false);
     expect(uebersicht.top_machines).toEqual([]);
     expect(uebersicht.problems).toEqual([]);
+    // Und die Skalare fallen mit weg: sechs Saetze auf zwei Personen sind
+    // kein Studioprofil, sondern zwei Trainingsprotokolle. null, nicht 0
+    // -- verdeckt ist nicht dasselbe wie keins.
+    expect(uebersicht.sets).toBeNull();
+    expect(uebersicht.problem_reports).toBeNull();
+    // Die Kopfzahl bleibt: Abschnitt 4 zaehlt sie zum Sichtbaren, und die
+    // Oberflaeche begruendet mit ihr, warum der Rest fehlt.
+    expect(uebersicht.active_members).toBe(2);
     // Die Schwelle reist mit, damit die Oberflaeche den Leer-Zustand
     // begruenden kann statt bloss leer zu sein.
     expect(uebersicht.min_members).toBe(5);
+  });
+
+  it("fuenf begonnene Einheiten und ein Erfassender oeffnen nichts", async () => {
+    const client = await userClient(antippTrainerEmail);
+    const { data } = await client.rpc("studio_overview", {
+      p_studio_id: antippStudioId,
+      p_days: 30,
+    });
+
+    const uebersicht = data as Uebersicht;
+    // Fuenf haben angetippt, einer hat bestaetigt. Haenge die Schwelle an
+    // den Begonnenen, waere sie erfuellt -- und die Rangliste gehoerte
+    // vollstaendig dieser einen Person. Ein k-anonymer Satz muss ueber die
+    // Zeilen gebildet werden, aus denen die Kennzahl entsteht.
+    expect(uebersicht.active_members).toBe(5);
+    expect(uebersicht.breakdown).toBe(false);
+    expect(uebersicht.top_machines).toEqual([]);
+    expect(uebersicht.problems).toEqual([]);
+    expect(uebersicht.sets).toBeNull();
+    expect(uebersicht.problem_reports).toBeNull();
+  });
+
+  it("ein Ein-Tages-Fenster wird auf sieben Tage aufgezogen", async () => {
+    const client = await userClient(trainerEmail);
+    const { data } = await client.rpc("studio_overview", {
+      p_studio_id: studioId,
+      p_days: 1,
+    });
+
+    // Die Funktion haengt an authenticated, also kann sie jeder Trainer
+    // per RPC mit einem Fenster aufrufen, das die Oberflaeche nie benutzt.
+    // Ein einzelner Tag waere ein Besuchsprotokoll, und die Differenz aus
+    // N und N-1 ebenso.
+    const uebersicht = data as Uebersicht;
+    expect(uebersicht.days).toBe(7);
   });
 });
 

@@ -29,14 +29,17 @@ beforeAll(async () => {
 });
 
 describe("getStudioOverview", () => {
-  it("ein leeres Studio liefert Nullen und keine Aufschluesselung", async () => {
+  it("ein leeres Studio liefert keine Aufschluesselung und verdeckte Zahlen", async () => {
     const client = await userClient(trainerEmail);
     const uebersicht = await getStudioOverview(client, studioId);
 
     expect(uebersicht).not.toBeNull();
     expect(uebersicht!.activeMembers).toBe(0);
-    expect(uebersicht!.sets).toBe(0);
-    expect(uebersicht!.problemReports).toBe(0);
+    // Unter der Mindestzahl kommen die beiden Trainingszahlen als null
+    // zurueck, nicht als 0 -- die Fachschicht reicht das durch, statt es
+    // zu einer Zahl zu glaetten, die es nicht gibt.
+    expect(uebersicht!.sets).toBeNull();
+    expect(uebersicht!.problemReports).toBeNull();
     expect(uebersicht!.breakdown).toBe(false);
     expect(uebersicht!.minMembers).toBe(5);
     expect(uebersicht!.topMachines).toEqual([]);
