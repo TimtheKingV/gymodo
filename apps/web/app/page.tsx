@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { BeitrittsFormular } from "./BeitrittsFormular";
 
 export default async function HomePage() {
   const supabase = await createServerSupabaseClient();
@@ -15,11 +16,15 @@ export default async function HomePage() {
   return (
     <main>
       <p data-testid="user-email">{user.email}</p>
-      <ul data-testid="studio-list">
-        {(studios ?? []).map((studio) => (
-          <li key={studio.id}>{studio.name}</li>
-        ))}
-      </ul>
+      {studios && studios.length > 0 ? (
+        <ul data-testid="studio-list">
+          {studios.map((studio) => (
+            <li key={studio.id}>{studio.name}</li>
+          ))}
+        </ul>
+      ) : (
+        <BeitrittsFormular />
+      )}
     </main>
   );
 }

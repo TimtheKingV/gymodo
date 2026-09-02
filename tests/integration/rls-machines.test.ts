@@ -1,11 +1,11 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { createTagToken, hashTagToken } from "@fitretro/domain";
 import {
   createTestUser,
   serviceClient,
   uniqueEmail,
   userClient,
 } from "./helpers/clients.js";
+import { tagAnlegen } from "../helpers/tags.js";
 
 let studioA: string;
 let studioB: string;
@@ -448,18 +448,11 @@ describe("Ruhestandspfad statt Loeschen (0008-Kommentarkorrektur)", () => {
       .single();
     if (machineError) throw machineError;
 
-    const token = createTagToken();
-    const { data: tag, error: tagError } = await admin
-      .from("machine_tags")
-      .insert({
-        studio_id: studioA,
-        machine_id: machine!.id,
-        token_hash: hashTagToken(token),
-        status: "active",
-      })
-      .select("id")
-      .single();
-    if (tagError) throw tagError;
+    const tag = await tagAnlegen(admin, {
+      studioId: studioA,
+      machineId: machine!.id,
+      status: "active",
+    });
 
     const client = await userClient(staffAEmail);
     const { data, error } = await client

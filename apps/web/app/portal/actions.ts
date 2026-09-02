@@ -3,21 +3,23 @@
 import { revalidatePath } from "next/cache";
 import {
   DomainError,
-  assignTag,
   attachExerciseToModel,
   confirmInstructionVideo,
   createEquipmentModel,
   createExercise,
   createMachine,
   createSettingDefinition,
-  createTag,
   deactivateMachine,
   deleteSettingDefinition,
   detachExercise,
   prepareInstructionVideoUpload,
   reactivateMachine,
+  regenerateStudioJoinCode,
+  removeMembership,
   reorderModelExercises,
   revokeTag,
+  setMembershipRole,
+  setStudioJoinCodeActive,
   updateEquipmentModel,
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
@@ -285,39 +287,41 @@ export async function geraetWiederInBetrieb(
   });
 }
 
-/**
- * Ein Tag entsteht mit einem Token, den es genau einmal zu sehen gibt --
- * gespeichert ist nur sein Hash. Deshalb kommt er hier zurueck und wird
- * nirgends protokolliert (Spec 10.4).
- */
-export async function tagAnlegen(
-  studioId: string,
-  pfad: string,
-  machineId: string | null,
-): Promise<
-  { ok: true; token: string; tagId: string } | { ok: false; error: string }
-> {
-  const client = await createServerSupabaseClient();
-  try {
-    const tag = await createTag(client, { studioId, machineId });
-    revalidatePath(pfad);
-    return { ok: true, token: tag.token, tagId: tag.id };
-  } catch (fehler) {
-    if (fehler instanceof DomainError) return { ok: false, error: fehler.message };
-    console.error("Tag nicht angelegt:", fehler);
-    return { ok: false, error: "Der Tag liess sich nicht anlegen." };
-  }
-}
+const BINDE_TEXT: Record<string, string> = {
+  vergeben: "Dieser Tag hängt schon an einem Gerät.",
+  gesperrt: "Gesperrt bleibt gesperrt.",
+  aushangschild: "Das ist ein Aushangschild — es gehört an die Wand, nicht an ein Gerät.",
+  unbekannt: "Neue Lieferung? Melde dich beim Betreiber.",
+};
 
-export async function tagZuweisen(
+/**
+ * Einen gelieferten Tag an ein Geraet binden. Das Studio kommt aus dem Geraet,
+ * nicht von hier -- die Funktion in 0028 leitet es selbst ab und prueft den
+ * Aufrufer dagegen.
+ */
+export async function tagBinden(
   studioId: string,
   pfad: string,
-  tagId: string,
+  token: string,
   machineId: string,
-): Promise<ActionResult> {
-  return fuehreAus(pfad, async (client) => {
-    await assignTag(client, { tagId, machineId });
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const client = await createServerSupabaseClient();
+  const { data, error } = await client.rpc("bind_tag_to_machine", {
+    p_token: token.trim(),
+    p_machine_id: machineId,
   });
+
+  if (error) {
+    console.error("Tag nicht gebunden:", error);
+    return { ok: false, error: "Der Tag liess sich nicht binden." };
+  }
+
+  const verdict = (data as Array<{ verdict: string }> | null)?.[0]?.verdict ?? "unbekannt";
+  if (verdict === "gebunden") {
+    revalidatePath(pfad);
+    return { ok: true };
+  }
+  return { ok: false, error: BINDE_TEXT[verdict] ?? BINDE_TEXT["unbekannt"]! };
 }
 
 export async function tagSperren(
@@ -327,5 +331,52 @@ export async function tagSperren(
 ): Promise<ActionResult> {
   return fuehreAus(pfad, async (client) => {
     await revokeTag(client, tagId);
+  });
+}
+
+export async function mitgliedRolleAendern(
+  studioId: string,
+  pfad: string,
+  userId: string,
+  role: "member" | "trainer",
+): Promise<ActionResult> {
+  return fuehreAus(pfad, async (client) => {
+    await setMembershipRole(client, studioId, userId, role);
+  });
+}
+
+export async function mitgliedEntfernen(
+  studioId: string,
+  pfad: string,
+  userId: string,
+): Promise<ActionResult> {
+  return fuehreAus(pfad, async (client) => {
+    await removeMembership(client, studioId, userId);
+  });
+}
+
+export async function beitrittscodeErneuern(
+  studioId: string,
+  pfad: string,
+): Promise<{ ok: true; code: string } | { ok: false; error: string }> {
+  const client = await createServerSupabaseClient();
+  try {
+    const code = await regenerateStudioJoinCode(client, studioId);
+    revalidatePath(pfad);
+    return { ok: true, code };
+  } catch (fehler) {
+    if (fehler instanceof DomainError) return { ok: false, error: fehler.message };
+    console.error("Code nicht erneuert:", fehler);
+    return { ok: false, error: "Der Code liess sich nicht erneuern." };
+  }
+}
+
+export async function beitrittscodeAktivSetzen(
+  studioId: string,
+  pfad: string,
+  active: boolean,
+): Promise<ActionResult> {
+  return fuehreAus(pfad, async (client) => {
+    await setStudioJoinCodeActive(client, studioId, active);
   });
 }

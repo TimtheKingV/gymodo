@@ -165,11 +165,20 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://127.0.0.1:3000"
+# ACHTUNG: Diese beiden Werte unterscheiden sich zwischen lokal und Cloud, und
+# "supabase config push" ueberträgt die GESAMTE [auth]-Sektion, nicht einzelne
+# Schluessel. Stuenden hier die 127.0.0.1-Werte fest verdrahtet, wuerde ein Push
+# die Site-URL des Projekts "Gymodo" auf localhost setzen -- jeder Anmeldelink
+# in jeder verschickten Mail liefe dann ins Leere.
+#
+# Deshalb env(): "supabase start" liest .env (lokale Werte). Fuer einen Push
+# gegen die Cloud wird .env.production in die Shell gesourced -- eine echte
+# Shell-Variable hat Vorrang vor .env. Siehe .env.production.example.
+site_url = "env(SUPABASE_AUTH_SITE_URL)"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+additional_redirect_urls = ["env(SUPABASE_AUTH_ADDITIONAL_REDIRECT_URLS)"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -188,7 +197,7 @@ enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
 enable_manual_linking = false
 # Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
-minimum_password_length = 6
+minimum_password_length = 10
 # Passwords that do not meet the following requirements will be rejected as weak. Supported values
 # are: `letters_digits`, `lower_upper_letters_digits`, `lower_upper_letters_digits_symbols`
 password_requirements = ""
@@ -240,11 +249,20 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+# Umgebungsabhaengig, gleicher Grund wie site_url: lokal aus, damit
+# Integrationstests Konten ohne Bestaetigungsumweg anlegen; in der Produktion
+# an, wie es dort heute steht. Ein Push haette die Bestaetigungspflicht sonst
+# stillschweigend abgeschaltet -- und ab Phase 2 (Passwoerter statt OTP) waere
+# das die Tuer, durch die sich jeder mit fremder Adresse registriert.
+enable_confirmations = "env(SUPABASE_AUTH_EMAIL_ENABLE_CONFIRMATIONS)"
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
-max_frequency = "1s"
+# Ebenfalls umgebungsabhaengig, aus demselben Grund wie site_url: lokal muessen
+# Integrationstests in Folge OTPs anfordern koennen (1s), in der Produktion
+# waere das ein Missbrauchsvektor und verbrennt das Mailkontingent (60s, der
+# Cloud-Standard). Werte in .env bzw. .env.production.
+max_frequency = "env(SUPABASE_AUTH_EMAIL_MAX_FREQUENCY)"
 # Number of characters used in the email OTP.
 otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
@@ -271,6 +289,14 @@ otp_expiry = 3600
 [auth.email.template.magic_link]
 subject = "Dein Anmeldecode"
 content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.confirmation]
+subject = "Bestaetige dein Konto"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Setze dein Passwort zurueck"
+content_path = "./supabase/templates/recovery.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
@@ -323,9 +349,13 @@ auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 max_enrolled_factors = 10
 
 # Control MFA via App Authenticator (TOTP)
+# Auf true, weil das verknuepfte Projekt es aktiv hat und "config push" die
+# gesamte [auth]-Sektion ueberträgt: stuende hier false, haette der Push TOTP
+# in der Produktion stillschweigend abgeschaltet. Niemand nutzt es heute --
+# aber eine Faehigkeit wegzunehmen ist eine Entscheidung, keine Nebenwirkung.
 [auth.mfa.totp]
-enroll_enabled = false
-verify_enabled = false
+enroll_enabled = true
+verify_enabled = true
 
 # Configure MFA via Phone Messaging
 [auth.mfa.phone]

@@ -14,9 +14,13 @@ export default async function PortalPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // memberships_select_staff (0031) laesst Mitarbeiter alle Zeilen ihres
+  // Studios sehen, nicht nur die eigene -- ohne den user_id-Filter kaeme
+  // hier fuer jeden Kollegen eine weitere Zeile desselben Studios zurueck.
   const { data: mitgliedschaften } = await supabase
     .from("studio_memberships")
     .select("role, studios (id, name)")
+    .eq("user_id", user.id)
     .in("role", ["trainer", "owner"]);
 
   const studios = (mitgliedschaften ?? [])

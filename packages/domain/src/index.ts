@@ -32,7 +32,6 @@ export {
   createExercise,
   createMachine,
   createSettingDefinition,
-  createTag,
   deactivateMachine,
   deleteSettingDefinition,
   detachExercise,
@@ -51,6 +50,7 @@ export type {
   CatalogMachine,
   CatalogModel,
   CatalogSettingDefinition,
+  CatalogShipment,
   CatalogTag,
   EquipmentModelInput,
   StudioCatalog,
@@ -85,3 +85,12 @@ export type {
   ProgressionSuggestion,
   WorkoutSetInput,
 } from "./progression.js";
+export {
+  joinStudioByCode,
+  listStudioMembers,
+  regenerateStudioJoinCode,
+  removeMembership,
+  setMembershipRole,
+  setStudioJoinCodeActive,
+} from "./people.js";
+export type { StudioMember } from "./people.js";

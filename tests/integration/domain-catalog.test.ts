@@ -7,7 +7,7 @@ import {
   createExercise,
   createMachine,
   createSettingDefinition,
-  createTag,
+  createTagToken,
   deactivateMachine,
   detachExercise,
   getStudioCatalog,
@@ -22,6 +22,8 @@ import {
   uniqueEmail,
   userClient,
 } from "./helpers/clients.js";
+import { tagAnlegen } from "../helpers/tags.js";
+import { chargeAnlegen, lieferungAnlegen } from "@fitretro/domain/chargen";
 
 let studioA: string;
 let studioB: string;
@@ -425,7 +427,7 @@ describe("Geraeteinstanzen", () => {
       equipmentModelId: modelId,
       label: "13",
     });
-    await createTag(client, { studioId: studioA, machineId });
+    await tagAnlegen(serviceClient(), { studioId: studioA, machineId, status: "active" });
 
     await deactivateMachine(client, machineId);
 
@@ -443,7 +445,7 @@ describe("Tags", () => {
   it("liefert den Token genau einmal -- gespeichert wird nur sein Hash", async () => {
     const client = await userClient(trainerA);
 
-    const { id, token } = await createTag(client, { studioId: studioA });
+    const { id, token } = await tagAnlegen(serviceClient(), { studioId: studioA });
 
     const admin = serviceClient();
     const { data } = await admin
@@ -466,7 +468,7 @@ describe("Tags", () => {
       label: "14",
     });
 
-    const { id } = await createTag(client, { studioId: studioA, machineId });
+    const { id } = await tagAnlegen(serviceClient(), { studioId: studioA, machineId, status: "active" });
 
     const admin = serviceClient();
     const { data } = await admin
@@ -486,7 +488,7 @@ describe("Tags", () => {
       equipmentModelId: modelId,
       label: "15",
     });
-    const { id: tagId } = await createTag(client, { studioId: studioA });
+    const { id: tagId } = await tagAnlegen(serviceClient(), { studioId: studioA });
 
     await assignTag(client, { tagId, machineId });
 
@@ -508,7 +510,7 @@ describe("Tags", () => {
       equipmentModelId: modelId,
       label: "16",
     });
-    const { id: tagId } = await createTag(client, { studioId: studioA, machineId });
+    const { id: tagId } = await tagAnlegen(serviceClient(), { studioId: studioA, machineId, status: "active" });
 
     await revokeTag(client, tagId);
 
@@ -520,18 +522,6 @@ describe("Tags", () => {
       .single();
     expect(data?.status).toBe("revoked");
     expect(data?.revoked_at).not.toBeNull();
-  });
-
-  it("negativ: ein einfaches Mitglied legt keinen Tag an", async () => {
-    const client = await userClient(memberA);
-
-    await expect(createTag(client, { studioId: studioA })).rejects.toThrow(DomainError);
-  });
-
-  it("cross-tenant: kein Tag fuer ein fremdes Studio", async () => {
-    const client = await userClient(trainerA);
-
-    await expect(createTag(client, { studioId: studioB })).rejects.toThrow(DomainError);
   });
 });
 
@@ -563,7 +553,7 @@ describe("getStudioCatalog", () => {
       equipmentModelId: modelId,
       label: "17",
     });
-    await createTag(client, { studioId: studioA, machineId });
+    await tagAnlegen(serviceClient(), { studioId: studioA, machineId, status: "active" });
 
     const katalog = await getStudioCatalog(client, studioA);
 
@@ -601,7 +591,7 @@ describe("getStudioCatalog", () => {
 
   it("listet die vorraetigen Tags des Studios -- sie warten auf ein Geraet", async () => {
     const client = await userClient(trainerA);
-    const { id: tagId } = await createTag(client, { studioId: studioA });
+    const { id: tagId } = await tagAnlegen(serviceClient(), { studioId: studioA });
 
     const katalog = await getStudioCatalog(client, studioA);
 
@@ -614,5 +604,84 @@ describe("getStudioCatalog", () => {
     const client = await userClient(trainerA);
 
     await expect(getStudioCatalog(client, studioB)).rejects.toThrow(DomainError);
+  });
+});
+
+describe("Tag-Sorte im Katalog", () => {
+  it("liefert die Sorte im Katalog mit", async () => {
+    const client = await userClient(trainerA);
+    const katalog = await getStudioCatalog(client, studioA);
+    expect(katalog.tags.every((tag) => tag.kind === "machine" || tag.kind === "studio")).toBe(true);
+  });
+
+  it("fuehrt einen Aushang-Tag mit kind=studio und ohne Geraet", async () => {
+    const admin = serviceClient();
+    await tagAnlegen(admin, { studioId: studioA, kind: "studio", status: "active" });
+
+    const client = await userClient(trainerA);
+    const katalog = await getStudioCatalog(client, studioA);
+    const aushang = katalog.tags.find((tag) => tag.kind === "studio");
+    expect(aushang).toBeDefined();
+    expect(aushang?.machineId).toBeNull();
+  });
+});
+
+describe("Lieferungen im Katalog", () => {
+  it("liefert Charge und Nummer je Tag", async () => {
+    const client = await userClient(trainerA);
+    const katalog = await getStudioCatalog(client, studioA);
+    expect(katalog.tags.length).toBeGreaterThan(0);
+    expect(katalog.tags.every((tag) => tag.batchCode !== "")).toBe(true);
+    expect(katalog.tags.every((tag) => tag.batchIndex >= 1)).toBe(true);
+  });
+
+  it("liefert die Lieferungen des Studios mit", async () => {
+    const admin = serviceClient();
+    const code = `katalog-${crypto.randomUUID()}`;
+    await chargeAnlegen(admin, { code, kind: "machine", menge: 100 });
+    await lieferungAnlegen(admin, { chargeCode: code, studioId: studioA, menge: 100 });
+
+    const client = await userClient(trainerA);
+    const katalog = await getStudioCatalog(client, studioA);
+    const lieferung = katalog.shipments.find((zeile) => zeile.batchCode === code);
+    expect(lieferung?.quantity).toBe(100);
+    expect(lieferung?.kind).toBe("machine");
+  });
+
+  it("zeigt die Charge auch ohne eigene Lieferung, wenn ein Tag aus ihr gebunden ist", async () => {
+    const admin = serviceClient();
+    const code = `ohne-lieferung-${crypto.randomUUID()}`;
+    const charge = await chargeAnlegen(admin, { code, kind: "machine", menge: 1 });
+
+    // Kein lieferungAnlegen hier -- absichtlich keine tag_shipments-Zeile fuer
+    // studioA zu dieser Charge. Die Sichtbarkeit soll trotzdem ueber den
+    // gebundenen Tag selbst entstehen (machine_tags-Zweig von 0029), nicht nur
+    // ueber eine Lieferung.
+    const { data: geraetZeile, error: geraetFehler } = await admin
+      .from("machines")
+      .select("id")
+      .eq("studio_id", studioA)
+      .limit(1)
+      .single();
+    if (geraetFehler) throw geraetFehler;
+
+    // chargeAnlegen(menge: 1) hat bereits batch_index 1 studiolos angelegt --
+    // die eigene Zeile braucht die naechste Nummer, sonst schlaegt der
+    // Unique-Constraint (batch_id, batch_index) fehl.
+    const { error: tagFehler } = await admin.from("machine_tags").insert({
+      studio_id: studioA,
+      machine_id: geraetZeile.id,
+      kind: "machine",
+      status: "active",
+      token: createTagToken(),
+      batch_id: charge.id,
+      batch_index: 2,
+    });
+    if (tagFehler) throw tagFehler;
+
+    const client = await userClient(trainerA);
+    const katalog = await getStudioCatalog(client, studioA);
+    const gebundenerTag = katalog.tags.find((tag) => tag.batchCode === code);
+    expect(gebundenerTag).toBeDefined();
   });
 });

@@ -4,7 +4,6 @@ import {
   VIDEO_BUCKET,
   createTagToken,
   getTagContext,
-  hashTagToken,
 } from "@fitretro/domain";
 import {
   anonClient,
@@ -13,6 +12,7 @@ import {
   uniqueEmail,
   userClient,
 } from "./helpers/clients.js";
+import { tagsAnlegen } from "../helpers/tags.js";
 
 let studioA: string;
 let studioB: string;
@@ -36,7 +36,7 @@ function ascii(text: string): number[] {
 }
 
 /** Kleinstes gueltiges JPEG. */
-function jpegBytes(): Uint8Array {
+function jpegBytes() {
   return new Uint8Array([
     0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, ...ascii("JFIF"), 0x00, 0x01, 0x01,
     0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xd9,
@@ -44,7 +44,7 @@ function jpegBytes(): Uint8Array {
 }
 
 /** Minimaler MP4-Rumpf mit ftyp-Box. */
-function mp4Bytes(): Uint8Array {
+function mp4Bytes() {
   return new Uint8Array([
     0x00, 0x00, 0x00, 0x18, ...ascii("ftyp"), ...ascii("isom"), 0x00, 0x00,
     0x02, 0x00, ...ascii("isomiso2"),
@@ -199,26 +199,11 @@ beforeAll(async () => {
   tokenA = createTagToken();
   tokenRevoked = createTagToken();
   tokenForeign = createTagToken();
-  const { error: tagError } = await admin.from("machine_tags").insert([
-    {
-      studio_id: studioA,
-      machine_id: machineA,
-      token_hash: hashTagToken(tokenA),
-      status: "active",
-    },
-    {
-      studio_id: studioA,
-      token_hash: hashTagToken(tokenRevoked),
-      status: "revoked",
-    },
-    {
-      studio_id: studioB,
-      machine_id: foreignMachine.id,
-      token_hash: hashTagToken(tokenForeign),
-      status: "active",
-    },
+  await tagsAnlegen(admin, [
+    { studioId: studioA, machineId: machineA, token: tokenA, status: "active" },
+    { studioId: studioA, token: tokenRevoked, status: "revoked" },
+    { studioId: studioB, machineId: foreignMachine.id, token: tokenForeign, status: "active" },
   ]);
-  if (tagError) throw tagError;
 });
 
 describe("getTagContext", () => {

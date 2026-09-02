@@ -20,7 +20,7 @@
 | --- | --- |
 | GitHub-Repo | ✅ `github.com/TimtheKingV/gymodo`, privat, `master` gepusht |
 | Supabase-Cloud-Projekt | ✅ „Gymodo", Region `eu-central-1`, verlinkt, Migrationen 0001+0002 gepusht |
-| Custom-OTP-E-Mail-Template | ❌ **blockiert** — Free-Tier + Supabase-Standard-Mailer erlaubt keine Custom-Templates. Login sendet aktuell nur einen Klick-Link (Magic Link), keinen 6-stelligen Code, den die UI erwartet. **Bewusst nicht gefixt** (Nutzerentscheidung 30.08.). Löst sich durch Custom-SMTP (z. B. Resend/Postmark) oder Supabase-Pro. Ohne Fix: Login auf der echten Domain funktioniert für echte Nutzer nicht, nur unkritisch, solange nur synthetische/Entwicklerkonten existieren (siehe Spec Abschnitt 9). |
+| Custom-OTP-E-Mail-Template | ✅ **erledigt am 1. September 2026.** Organisation `Gymodo` auf Pro (Supabase rechnet pro Organisation ab), `supabase config push` → `auth: updated`, Folge-Diff leer, und eine echte Mail mit sechsstelligem Code ist angekommen. Betreff *„Dein Anmeldecode"*, `{{ .Token }}` statt `{{ .ConfirmationURL }}`, `otp_length` 6. Supabases eingebauter Mailer bleibt gedrosselt; ob spaeter Custom-SMTP noetig wird, entscheiden die echten Zahlen. |
 | Vercel-Projekt | ✅ verbunden, Root Directory `apps/web`, live unter `https://gymodo-web.vercel.app` |
 | Vercel-Region | ✅ `fra1` bestätigt (`X-Vercel-Id`-Header geprüft) |
 | `APPLE_TEAM_ID` / `APPLE_BUNDLE_ID` in Vercel | ❌ **bewusst zurückgestellt** — Platzhalterwerte gesetzt (`ABCDE12345` / `de.fitretro.member`), Build läuft damit durch. Echte Werte kommen, sobald der Nutzer auf dem Mac übernimmt (Apple Developer Zugriff liegt dort). **Muss vor jedem produktiven TestFlight-Build durch echte Werte ersetzt werden.** |
@@ -43,10 +43,19 @@ Zusätzlich wurde eine Falle beseitigt, die dieser Plan hinterlassen hatte: Die 
 
 Zwei Punkte aus Task 6 sind **weiterhin offen** und dort festgehalten:
 
-- **OTP-Mailversand** — Supabase Free Tier verschickt den Standard-Magic-Link statt des sechsstelligen Codes. Auf der echten Domain kann sich damit kein echter Nutzer anmelden. Harter Blocker vor dem ersten Betreibertermin, geloest durch Custom-SMTP oder Supabase Pro.
+- **OTP-Mailversand** — **weitgehend geloest am 1. September 2026** durch das Pro-Upgrade der Organisation `Gymodo` und `supabase config push`. Das Template steht im Projekt und ist per leerem Folge-Diff belegt. Es fehlt der letzte Beweis: eine echte Mail mit sechsstelligem Code an einen echten Posteingang.
+
+  Dabei kam heraus, dass `config push` die **gesamte** `[auth]`-Sektion ueberträgt. Drei Werte stehen deshalb jetzt auf `env()` (`site_url`, `additional_redirect_urls`, `[auth.email].max_frequency`, dazu `enable_confirmations`), und zwei stille Regressionen wurden abgefangen, bevor sie in die Produktion gingen — abgeschaltete TOTP-MFA und eine abgeschaltete Bestaetigungspflicht der Mailadresse. Siehe `.env.production.example` und die Kommentare in `supabase/config.toml`.
 - **`APPLE_TEAM_ID` / `APPLE_BUNDLE_ID`** stehen in Vercel auf Platzhaltern.
 
 Ebenfalls offen: **Task 8**, der physische Trefferquoten-Test der NFC-Tags. Er entscheidet NFC-first gegen QR-first und braucht den Mac.
+
+**Nachtrag (1. September 2026) — drei Betriebsbefunde, beim Schliessen von Blocker 1 aufgedeckt:**
+
+- **`SUPABASE_URL` und `SUPABASE_ANON_KEY` fehlten in Vercel.** Nur die `NEXT_PUBLIC_`-Varianten waren gesetzt; die werden zur Bauzeit eingesetzt, die anderen zur Laufzeit gelesen. Jede Route, die einen Supabase-Client baut (`/`, `/t/<token>`, alle `/api/v1`-Routen mit Bearer-Header), lieferte 500 — `requiredEnv` warf. Behoben. **Der Smoke-Test hat das nicht gefangen:** `pnpm smoke:aasa` prueft ausschliesslich die AASA-Route, ausgerechnet eine der wenigen ohne Supabase-Client, und meldete gruen. Er gehoert um `/` erweitert.
+- **Die Cloud-Datenbank steht auf `0011`, lokal auf `0021`.** `0012`–`0021` wurden nach dem Zuruecksetzen vom 30. August nie gepusht — Trainingsdaten, Tag-Schreibpolicies, Medien-Buckets und `0021_fallback_inhalte`. Latent: `/t/<token>` antwortet mit 200, solange kein echter Tag aufloest. Siehe Gesamtfahrplan Abschnitt 4c.
+- **`config push` ueberträgt die gesamte `[auth]`-Sektion.** `config.toml` trug reine Entwicklungswerte; ein unbesehener Push haette `site_url` der Produktion auf `127.0.0.1` gesetzt, die Bestaetigungspflicht der Mailadresse abgeschaltet und TOTP-MFA deaktiviert. Vier Werte stehen jetzt auf `env()`, mit `.env` lokal und `.env.production` fuer den Push. **`SUPABASE_ENV=production` waehlt `.env.production` nicht aus** — das leistet in Supabases Beispiel dotenvx, nicht die CLI; verlaesslich ist nur eine echte Shell-Variable.
+
 
 ## Global Constraints
 

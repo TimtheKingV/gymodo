@@ -1,8 +1,7 @@
 import { AktionsKnopf } from "../../Form";
 import { tagSperren } from "../../actions";
 import { ladeKatalog } from "../catalog";
-import { TagAnlegen } from "../TagAnlegen";
-import { TagZuweisen } from "./TagZuweisen";
+import { TagBinden } from "./TagBinden";
 import styles from "../../portal.module.css";
 
 const STATUS_TEXT: Record<string, string> = {
@@ -45,28 +44,56 @@ export default async function TagsPage({
       .map((geraet) => ({ id: geraet.id, label: geraet.label, modell: modell.name })),
   );
 
-  const vorraetig = katalog.tags.filter((tag) => tag.status === "unassigned");
+  const geliefert = katalog.shipments
+    .filter((lieferung) => lieferung.kind === "machine")
+    .reduce((summe, lieferung) => summe + lieferung.quantity, 0);
+  const verbraucht = katalog.tags.filter((tag) => tag.kind === "machine").length;
+  const vorraetig = geliefert - verbraucht;
 
   return (
     <div className={styles.content}>
       <h1 className={styles.pageTitle}>Tags</h1>
       <p className={styles.pageLead}>
-        Ein Tag klebt am Gerät und wird getippt. Sein Token steht genau einmal
-        beim Anlegen auf dem Bildschirm — gespeichert wird nur dessen Prüfsumme.
-        Geht er verloren, legst du einen neuen an und sperrst den alten.
+        Tags kommen als Lieferung und werden nicht hier erzeugt. Welcher Tag an
+        welchem Gerät hängt, entscheidet der Scan am Gerät. Aushangschilder sind
+        ab Lieferung gültig und hängen an keinem Gerät.
       </p>
 
       <section className={styles.section}>
         <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Auf Vorrat anlegen</h2>
+          <h2 className={styles.sectionTitle}>Lieferungen</h2>
           <span className={styles.sectionNote}>
-            {vorraetig.length === 0
-              ? "Kein Tag vorrätig."
-              : `${vorraetig.length} ${vorraetig.length === 1 ? "Tag wartet" : "Tags warten"} auf ein Gerät.`}
+            {katalog.shipments.length === 0 ? "Noch keine Lieferung." : `${vorraetig} vorrätig`}
+          </span>
+        </div>
+        {katalog.shipments.length > 0 ? (
+          <ul className={styles.rows}>
+            {katalog.shipments.map((lieferung) => (
+              <li key={lieferung.id} className={styles.row}>
+                <div className={styles.rowMain}>
+                  <div className={styles.rowTitle}>
+                    Charge {lieferung.batchCode} · {lieferung.quantity}{" "}
+                    {lieferung.kind === "studio" ? "Aushangschilder" : "Tags"}
+                  </div>
+                  <div className={styles.rowMeta}>
+                    Geliefert {datum(lieferung.shippedOn)}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <h2 className={styles.sectionTitle}>Tag verbinden</h2>
+          <span className={styles.sectionNote}>
+            Token vom Aufkleber abtippen, Gerät wählen.
           </span>
         </div>
         <div className={styles.sectionBody}>
-          <TagAnlegen studioId={studioId} pfad={pfad} machineId={null} />
+          <TagBinden studioId={studioId} pfad={pfad} geraete={freieGeraete} />
         </div>
       </section>
 
@@ -79,8 +106,8 @@ export default async function TagsPage({
           <div className={styles.empty}>
             <p className={styles.emptyTitle}>Noch kein Tag.</p>
             <p className={styles.emptyNext}>
-              Ohne Tag findet ein Mitglied kein Gerät. Leg einen an und klebe ihn
-              auf.
+              Ohne Tag findet ein Mitglied kein Gerät. Tags kommen als Lieferung
+              -- sobald eine da ist, verbindest du sie oben mit dem Gerät.
             </p>
           </div>
         ) : (
@@ -101,22 +128,19 @@ export default async function TagsPage({
                       <span className={badgeKlasse}>
                         {STATUS_TEXT[tag.status] ?? tag.status}
                       </span>{" "}
-                      {geraet ? `${geraet.label} — ${geraet.modell}` : "ohne Gerät"}
+                      {tag.kind === "studio"
+                        ? "Aushangschild"
+                        : geraet
+                          ? `${geraet.label} — ${geraet.modell}`
+                          : "ohne Gerät"}
                     </div>
                     <div className={styles.rowMeta}>
-                      Angelegt {datum(tag.createdAt)}
+                      Charge {tag.batchCode} · {tag.batchIndex} · angelegt{" "}
+                      {datum(tag.createdAt)}
                       {tag.status === "revoked" ? " · bleibt als Nachweis stehen" : ""}
                     </div>
                   </div>
                   <div className={styles.rowActions}>
-                    {tag.status === "unassigned" ? (
-                      <TagZuweisen
-                        studioId={studioId}
-                        pfad={pfad}
-                        tagId={tag.id}
-                        geraete={freieGeraete}
-                      />
-                    ) : null}
                     {tag.status !== "revoked" ? (
                       <AktionsKnopf
                         aktion={tagSperren.bind(null, studioId, pfad, tag.id)}

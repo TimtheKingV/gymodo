@@ -1,11 +1,12 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { createTagToken, hashTagToken } from "@fitretro/domain";
+import { createTagToken } from "@fitretro/domain";
 import {
   createTestUser,
   serviceClient,
   uniqueEmail,
   userClient,
 } from "./helpers/clients.js";
+import { tagAnlegen } from "../helpers/tags.js";
 
 // Schreibpfad auf machine_tags -- der offene Punkt 2 aus dem Plan.
 // Bis 0016 hatte die Tabelle nur eine Select-Policy: Tags liessen sich weder
@@ -27,18 +28,8 @@ async function seedTag(
   status: "unassigned" | "active" | "revoked",
 ): Promise<string> {
   const admin = serviceClient();
-  const { data, error } = await admin
-    .from("machine_tags")
-    .insert({
-      studio_id: studioId,
-      machine_id: machineId,
-      token_hash: hashTagToken(createTagToken()),
-      status,
-    })
-    .select("id")
-    .single();
-  if (error) throw error;
-  return data.id;
+  const { id } = await tagAnlegen(admin, { studioId, machineId, status });
+  return id;
 }
 
 beforeAll(async () => {
@@ -88,124 +79,25 @@ beforeAll(async () => {
   machineB = machines.find((m) => m.label === "Geraet B1")!.id;
 });
 
-describe("machine_tags: Insert-Policy", () => {
-  it("positiv: der Trainer legt einen unassigned Tag im eigenen Studio an", async () => {
+// 0016 gab machine_tags eine Insert-Policy, damit ein Studio sich ohne
+// Entwicklerhilfe einrichten liess. Das ist abgeloest: Tag-Zeilen entstehen
+// beim Betreiber, aus der Lieferung. Uebrig bleibt genau eine Aussage.
+describe("machine_tags: kein Schreibpfad mehr", () => {
+  it("negativ: auch der Trainer legt keinen Tag mehr an", async () => {
     const client = await userClient(trainerA);
-    const token = createTagToken();
-    const { error } = await client.from("machine_tags").insert({
-      studio_id: studioA,
-      token_hash: hashTagToken(token),
-      status: "unassigned",
-    });
-    expect(error).toBeNull();
-
-    const admin = serviceClient();
-    const { data } = await admin
+    const { error } = await client
       .from("machine_tags")
-      .select("id, status, machine_id")
-      .eq("token_hash", hashTagToken(token));
-    expect(data).toHaveLength(1);
-    expect(data?.[0]?.status).toBe("unassigned");
-  });
-
-  it("positiv: anlegen und zuweisen in einer Anweisung -- der Check-Constraint aus 0008 laesst nichts anderes zu", async () => {
-    const client = await userClient(trainerA);
-    const token = createTagToken();
-    const { error } = await client.from("machine_tags").insert({
-      studio_id: studioA,
-      machine_id: machineA,
-      token_hash: hashTagToken(token),
-      status: "active",
-    });
-    expect(error).toBeNull();
-
-    const admin = serviceClient();
-    const { data } = await admin
-      .from("machine_tags")
-      .select("machine_id")
-      .eq("token_hash", hashTagToken(token));
-    expect(data?.[0]?.machine_id).toBe(machineA);
-  });
-
-  it("negativ: ein einfaches Mitglied legt keinen Tag an", async () => {
-    const client = await userClient(memberA);
-    const token = createTagToken();
-    const { error } = await client.from("machine_tags").insert({
-      studio_id: studioA,
-      token_hash: hashTagToken(token),
-      status: "unassigned",
-    });
+      .insert({ studio_id: studioA, status: "unassigned", kind: "machine" });
     expect(error).not.toBeNull();
-
-    const admin = serviceClient();
-    const { data } = await admin
-      .from("machine_tags")
-      .select("id")
-      .eq("token_hash", hashTagToken(token));
-    expect(data).toEqual([]);
   });
 
-  it("cross-tenant: der Trainer aus A legt keinen Tag fuer Studio B an", async () => {
-    const client = await userClient(trainerA);
-    const token = createTagToken();
-    const { error } = await client.from("machine_tags").insert({
-      studio_id: studioB,
-      token_hash: hashTagToken(token),
-      status: "unassigned",
-    });
-    expect(error).not.toBeNull();
-
+  it("derselbe Token laesst sich kein zweites Mal vergeben", async () => {
     const admin = serviceClient();
-    const { data } = await admin
-      .from("machine_tags")
-      .select("id")
-      .eq("token_hash", hashTagToken(token));
-    expect(data).toEqual([]);
-  });
-
-  it("cross-tenant: ein Tag im eigenen Studio darf nicht auf ein fremdes Geraet zeigen", async () => {
-    const client = await userClient(trainerA);
     const token = createTagToken();
-    const { error } = await client.from("machine_tags").insert({
-      studio_id: studioA,
-      machine_id: machineB,
-      token_hash: hashTagToken(token),
-      status: "active",
+    await tagAnlegen(admin, { studioId: studioA, token });
+    await expect(tagAnlegen(admin, { studioId: studioA, token })).rejects.toMatchObject({
+      code: "23505",
     });
-    expect(error).not.toBeNull();
-
-    const admin = serviceClient();
-    const { data } = await admin
-      .from("machine_tags")
-      .select("id")
-      .eq("token_hash", hashTagToken(token));
-    expect(data).toEqual([]);
-  });
-
-  it("Nebenlaeufigkeit: derselbe Token laesst sich kein zweites Mal vergeben", async () => {
-    const client = await userClient(trainerA);
-    const token = createTagToken();
-
-    const first = await client.from("machine_tags").insert({
-      studio_id: studioA,
-      token_hash: hashTagToken(token),
-      status: "unassigned",
-    });
-    expect(first.error).toBeNull();
-
-    const second = await client.from("machine_tags").insert({
-      studio_id: studioA,
-      token_hash: hashTagToken(token),
-      status: "unassigned",
-    });
-    expect(second.error).not.toBeNull();
-
-    const admin = serviceClient();
-    const { data } = await admin
-      .from("machine_tags")
-      .select("id")
-      .eq("token_hash", hashTagToken(token));
-    expect(data).toHaveLength(1);
   });
 });
 

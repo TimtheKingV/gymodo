@@ -107,6 +107,71 @@
   background: var(--accent-pressed);
 }
 
+/* Der zweite Scan im Geraetezweig: er steht unter der Aktion, nicht davor --
+   erst installieren, dann noch einmal scannen. */
+.zweiterScan {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.nutzen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s16);
+}
+
+.nutzenZeile {
+  display: flex;
+  gap: var(--s12);
+  align-items: flex-start;
+}
+
+.nutzenIcon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.nutzenText {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.schritteTitel {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+.schritt {
+  display: flex;
+  gap: var(--s12);
+  align-items: baseline;
+}
+
+.schrittNummer {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.schrittText {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.fussnote {
+  color: var(--text-faint);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 /* Produktgrenze im Klartext (Designsystem 10). Sie steht hier, weil die
    Einweisung Studioinhalt ist -- und ein Fallbackbesucher hat noch keine
    andere Stelle gesehen, an der das steht. */

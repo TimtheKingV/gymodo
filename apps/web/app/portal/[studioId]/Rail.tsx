@@ -83,6 +83,13 @@ export function Rail({
           </span>
         </Link>
       </div>
+
+      <div className={styles.group}>
+        <h2 className={styles.groupLabel}>Verwaltung</h2>
+        <Link href={`${basis}/leute`} className={klasse(pfad === `${basis}/leute`)}>
+          <span className={styles.navItemTitle}>Leute</span>
+        </Link>
+      </div>
     </nav>
   );
 }
