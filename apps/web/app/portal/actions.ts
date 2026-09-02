@@ -14,8 +14,12 @@ import {
   detachExercise,
   prepareInstructionVideoUpload,
   reactivateMachine,
+  regenerateStudioJoinCode,
+  removeMembership,
   reorderModelExercises,
   revokeTag,
+  setMembershipRole,
+  setStudioJoinCodeActive,
   updateEquipmentModel,
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
@@ -327,5 +331,52 @@ export async function tagSperren(
 ): Promise<ActionResult> {
   return fuehreAus(pfad, async (client) => {
     await revokeTag(client, tagId);
+  });
+}
+
+export async function mitgliedRolleAendern(
+  studioId: string,
+  pfad: string,
+  userId: string,
+  role: "member" | "trainer",
+): Promise<ActionResult> {
+  return fuehreAus(pfad, async (client) => {
+    await setMembershipRole(client, studioId, userId, role);
+  });
+}
+
+export async function mitgliedEntfernen(
+  studioId: string,
+  pfad: string,
+  userId: string,
+): Promise<ActionResult> {
+  return fuehreAus(pfad, async (client) => {
+    await removeMembership(client, studioId, userId);
+  });
+}
+
+export async function beitrittscodeErneuern(
+  studioId: string,
+  pfad: string,
+): Promise<{ ok: true; code: string } | { ok: false; error: string }> {
+  const client = await createServerSupabaseClient();
+  try {
+    const code = await regenerateStudioJoinCode(client, studioId);
+    revalidatePath(pfad);
+    return { ok: true, code };
+  } catch (fehler) {
+    if (fehler instanceof DomainError) return { ok: false, error: fehler.message };
+    console.error("Code nicht erneuert:", fehler);
+    return { ok: false, error: "Der Code liess sich nicht erneuern." };
+  }
+}
+
+export async function beitrittscodeAktivSetzen(
+  studioId: string,
+  pfad: string,
+  active: boolean,
+): Promise<ActionResult> {
+  return fuehreAus(pfad, async (client) => {
+    await setStudioJoinCodeActive(client, studioId, active);
   });
 }
