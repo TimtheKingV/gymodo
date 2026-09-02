@@ -2867,3 +2867,19 @@ EOF
 
 - **Der Überblick sieht mit Testdaten kahl aus.** Ein Entwicklungsstudio hat selten fünf aktive Mitglieder; *Meistgenutzt* und *Gemeldete Probleme* zeigen dann ihren Leer-Zustand mit Begründung. Das ist die Mindestzahl bei der Arbeit, nicht ein Fehler.
 - **`auth_leaked_password_protection` bleibt aus.** Der Haken im Supabase-Dashboard (Authentication → Policies) steht im Fahrplan als offener Punkt von Phase 0 und gehört nicht in diesen Plan — er ist Konfiguration, kein Code. Aufgabe 4 macht ihn dringender: ab jetzt ändern Betreiber ihr Passwort im Portal.
+
+---
+
+## Nachtrag: was der Abschlussreview geändert hat
+
+Fünf Befunde aus dem Review über den ganzen Zweig. Vier davon sind Fehler dieses Plans, keiner der Umsetzung.
+
+**Die Mindestzahl hing an der falschen Menge.** `studio_overview` zählte für die Schwelle, wer im Zeitraum eine Einheit *begonnen* hatte, verdeckte damit aber Zahlen, die aus den *bestätigten Sätzen* entstehen. Eine Einheit gilt als begonnen, sobald jemand ein Gerät antippt — fünf Antippende und ein Trainierender hätten eine Rangliste geöffnet, die vollständig dieser einen Person gehört. Ein k-anonymer Satz muss über genau die Zeilen gebildet werden, aus denen die Kennzahl entsteht. Die Schwelle hängt jetzt an `count(distinct user_id)` über `workout_sets`; `active_members` behält seine alte Bedeutung und bleibt die gemeldete Kopfzahl.
+
+**Die Schwelle galt nur für die Listen.** Sie verdeckte die Rangliste und die Problemmeldungen je Gerät, ließ aber die vier Skalare stehen — und eine Satzzahl aus einem Studio mit einer einzigen erfassenden Person ist deren Trainingspensum. Unterhalb der Schwelle kommen `sets` und `problem_reports` jetzt als JSON `null` zurück, nicht als Zahl. `active_members` bleibt immer sichtbar: Spec Abschnitt 4 zählt aktive Mitglieder ausdrücklich zum Sichtbaren, es ist ein Kopfzählen und kein Trainingsinhalt, und es ist die Zahl, mit der die Oberfläche begründet, warum der Rest fehlt.
+
+**Der Zeitraum ließ sich auf einen Tag stellen.** Die Funktion ist an `authenticated` vergeben, also kann jeder Trainer sie per RPC mit einem Fenster aufrufen, das die Oberfläche nie benutzt — und weil sich zwei Fenster voneinander abziehen lassen, wäre aus `N` und `N-1` jeder einzelne Tag bis ein Jahr zurück herauslösbar gewesen. `p_days` ist nach unten auf sieben Tage geklemmt.
+
+**Der Überblick zeigte einem neuen Studio vier Nullen.** Spec Abschnitt 5 verbietet genau das: Leer heißt Überschrift plus nächster Schritt, nie eine leere Statistik mit Nullen. Ohne Gerät und ohne begonnene Einheit steht an der Stelle der Kachelreihe jetzt ein Leer-Zustand. Sobald ein Gerät existiert, bleiben die Kacheln — „2 / 4 Geräte erreichbar" ist eine Aussage, keine Reihe von Nullen. Verdeckte Zahlen zeigen einen Strich, keine Null.
+
+**Zwei Seiten hatten keinen Fehlerpfad, und eine hatte eine Sackgasse.** Der Überblick und die Studioeinstellungen ließen Datenbankfehler durchfallen; ohne `error.tsx` wäre daraus die Standardseite von Next geworden — die sagt weder, was falsch ist, noch was gilt. Da die Produktion noch auf `0031` steht, wäre das nicht der seltene Sonderfall, sondern der Normalfall eines zu früh ausgelieferten Web-Builds. Beide fangen jetzt wie `leute/page.tsx` und schreiben die Meldung auf die Seite. Und die Einstellungen zeigten einem einfachen Mitglied ihre Absage ohne den Reiter — der einzige Weg zu *Konto*, wo das eigene Passwort liegt. Der Reiter steht jetzt auch in dieser Antwort, und die Absage nennt den Weg dorthin.
