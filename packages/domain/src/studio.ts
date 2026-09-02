@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { requireUserId } from "./auth.js";
 import { DomainError } from "./errors.js";
 
 /**
@@ -31,5 +33,112 @@ export async function requireStudioStaff(
       "unauthorized",
       "Nur Trainer und Inhaber pflegen den Geraetekatalog.",
     );
+  }
+}
+
+export type StudioSettings = {
+  id: string;
+  name: string;
+  timezone: string;
+  cancellationDeadlineHours: number;
+  joinCode: string;
+  joinCodeActive: boolean;
+};
+
+/**
+ * Die Zeitzone wird gegen die Liste des Laufzeitsystems geprueft, nicht
+ * gegen eine eigene Aufzaehlung: `studios.timezone` ist ein freier Text
+ * (0001), und eine Zeitzone, die Intl nicht kennt, laesst spaeter jede
+ * Kursanzeige auflaufen. Die Pruefung gehoert deshalb vor das Speichern,
+ * nicht vor das Anzeigen.
+ */
+function istBekannteZeitzone(wert: string): boolean {
+  try {
+    new Intl.DateTimeFormat("de-DE", { timeZone: wert });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const einstellungenSchema = z.object({
+  name: z.string().trim().min(1, "Das Studio braucht einen Namen."),
+  timezone: z
+    .string()
+    .trim()
+    .refine(istBekannteZeitzone, "Diese Zeitzone kennt das System nicht."),
+  cancellationDeadlineHours: z
+    .number()
+    .int("Die Stornofrist zaehlt in ganzen Stunden.")
+    .min(0, "Eine negative Frist gibt es nicht. 0 heisst: bis zum Beginn.")
+    .max(168, "Mehr als 168 Stunden -- eine Woche -- ist keine Frist mehr."),
+});
+
+export type StudioSettingsInput = z.infer<typeof einstellungenSchema>;
+
+export async function getStudioSettings(
+  client: SupabaseClient,
+  studioId: string,
+): Promise<StudioSettings> {
+  const userId = await requireUserId(client);
+  await requireStudioStaff(client, studioId, userId);
+
+  const { data, error } = await client
+    .from("studios")
+    .select("id, name, timezone, cancellation_deadline_hours, join_code, join_code_active")
+    .eq("id", studioId)
+    .single<{
+      id: string;
+      name: string;
+      timezone: string;
+      cancellation_deadline_hours: number;
+      join_code: string;
+      join_code_active: boolean;
+    }>();
+
+  if (error) throw new DomainError("internal", error.message);
+  if (!data) throw new DomainError("not_found", "Dieses Studio gibt es nicht.");
+
+  return {
+    id: data.id,
+    name: data.name,
+    timezone: data.timezone,
+    cancellationDeadlineHours: data.cancellation_deadline_hours,
+    joinCode: data.join_code,
+    joinCodeActive: data.join_code_active,
+  };
+}
+
+/**
+ * Der Beitrittscode fehlt hier mit Absicht: er wird ueber
+ * regenerate_studio_join_code und set_studio_join_code_active geaendert,
+ * und seit 0032 hat `authenticated` gar kein Spaltenrecht darauf.
+ */
+export async function updateStudioSettings(
+  client: SupabaseClient,
+  studioId: string,
+  input: StudioSettingsInput,
+): Promise<void> {
+  const userId = await requireUserId(client);
+  await requireStudioStaff(client, studioId, userId);
+
+  const parsed = einstellungenSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new DomainError("validation_failed", parsed.error.issues[0]!.message);
+  }
+
+  const { data, error } = await client
+    .from("studios")
+    .update({
+      name: parsed.data.name,
+      timezone: parsed.data.timezone,
+      cancellation_deadline_hours: parsed.data.cancellationDeadlineHours,
+    })
+    .eq("id", studioId)
+    .select("id");
+
+  if (error) throw new DomainError("internal", error.message);
+  if (!data || data.length === 0) {
+    throw new DomainError("unauthorized", "Nur Trainer und Inhaber aendern die Einstellungen.");
   }
 }
