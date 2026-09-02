@@ -26,20 +26,49 @@ export default async function EinstellungenPage({
       return (
         <main className={styles.content}>
           <h1 className={styles.pageTitle}>Einstellungen</h1>
+          {/* Der Reiter gehoert auch in diese Antwort: er ist der einzige
+              Weg zu /einstellungen/konto, und das Konto geht jeden etwas
+              an. Ohne ihn endete ein einfaches Mitglied hier in einer
+              Sackgasse -- und ein stummer Deaktiviert-Zustand ist nach
+              Spec Abschnitt 5 keiner. */}
+          <Reiter studioId={studioId} />
           <div className={styles.section}>
             <div className={styles.empty}>
               <p className={styles.emptyTitle}>
-                Diese Seite ist Trainern und Inhabern vorbehalten.
+                Die Studiodaten sind Trainern und Inhabern vorbehalten.
               </p>
               <p className={styles.emptyNext}>
-                Frag jemanden mit Trainerrolle, wenn sich etwas ändern soll.
+                Dein eigenes Passwort änderst du unter <em>Konto</em>. Für
+                alles am Studio frag jemanden mit Trainerrolle.
               </p>
             </div>
           </div>
         </main>
       );
     }
-    throw fehler;
+    // Sonst: was falsch ist und was gilt, auf der Seite selbst -- nicht die
+    // Standardseite von Next. Solange 0032 irgendwo nicht eingespielt ist,
+    // ist das der 42703 auf cancellation_deadline_hours und damit kein
+    // seltener Sonderfall.
+    return (
+      <main className={styles.content}>
+        <h1 className={styles.pageTitle}>Einstellungen</h1>
+        <Reiter studioId={studioId} />
+        <div className={styles.section}>
+          <div className={styles.empty}>
+            <p className={styles.error}>
+              {fehler instanceof DomainError
+                ? fehler.message
+                : "Die Einstellungen liessen sich nicht laden."}
+            </p>
+            <p className={styles.emptyNext}>
+              Nichts ist geändert worden. Der Beitrittscode gilt unverändert
+              weiter; unter <em>Konto</em> kommst du trotzdem an dein Passwort.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
