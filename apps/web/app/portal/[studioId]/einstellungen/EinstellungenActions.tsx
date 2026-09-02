@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AktionsKnopf } from "../../Form";
-import { beitrittscodeAktivSetzen, beitrittscodeErneuern } from "../../actions";
+import { AktionsFormular, AktionsKnopf, Feld } from "../../Form";
+import { abmelden, beitrittscodeAktivSetzen, beitrittscodeErneuern, passwortAendern } from "../../actions";
 import styles from "../../portal.module.css";
 
 export function BeitrittscodeKarte({
@@ -76,5 +76,48 @@ export function BeitrittscodeKarte({
         tragen keinen Code — sie bleiben gültig.
       </p>
     </div>
+  );
+}
+
+export function PasswortAendernFormular() {
+  const [fertig, setFertig] = useState(false);
+
+  return (
+    <div className={styles.section}>
+      <div className={styles.sectionHead}>
+        <h2 className={styles.sectionTitle}>Passwort ändern</h2>
+      </div>
+      {fertig ? (
+        <p className={styles.sectionNote}>Das Passwort ist geändert.</p>
+      ) : null}
+      <AktionsFormular
+        action={passwortAendern}
+        submitLabel="Passwort ändern"
+        onErfolg={() => setFertig(true)}
+      >
+        <div className={styles.grid}>
+          <Feld name="aktuell" label="Aktuelles Passwort" type="password" required autoComplete="current-password" />
+          <Feld
+            name="neu"
+            label="Neues Passwort"
+            type="password"
+            required
+            autoComplete="new-password"
+            hint="Mindestens zehn Zeichen. Keine Pflicht zu Sonderzeichen — Länge trägt weiter als Zeichenklassen."
+          />
+          <Feld name="wiederholung" label="Wiederholen" type="password" required autoComplete="new-password" />
+        </div>
+      </AktionsFormular>
+    </div>
+  );
+}
+
+export function AbmeldeKnopf() {
+  return (
+    <form action={abmelden}>
+      <button type="submit" className={styles.secondary}>
+        Abmelden
+      </button>
+    </form>
   );
 }

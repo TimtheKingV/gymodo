@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   DomainError,
   attachExerciseToModel,
@@ -400,4 +401,58 @@ export async function studioSpeichern(
       cancellationDeadlineHours: stunden,
     });
   });
+}
+
+/**
+ * Das aktuelle Passwort wird durch eine zweite Anmeldung geprueft, nicht
+ * durch updateUser allein: Supabase laesst eine Passwortaenderung mit
+ * gueltiger Sitzung ohne Nachweis zu. An einem unbeaufsichtigten Rechner
+ * im Studio waere das ein offenes Scheunentor.
+ */
+export async function passwortAendern(
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionResult> {
+  const aktuell = String(formData.get("aktuell") ?? "");
+  const neu = String(formData.get("neu") ?? "");
+  const wiederholung = String(formData.get("wiederholung") ?? "");
+
+  if (neu.length < 10) {
+    return { ok: false, error: "Das neue Passwort braucht mindestens zehn Zeichen." };
+  }
+  if (neu !== wiederholung) {
+    return { ok: false, error: "Die beiden neuen Passwörter sind nicht gleich." };
+  }
+  if (neu === aktuell) {
+    return { ok: false, error: "Das ist das alte Passwort." };
+  }
+
+  const client = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user?.email) {
+    return { ok: false, error: "Die Sitzung ist abgelaufen. Bitte neu anmelden." };
+  }
+
+  const { error: pruefung } = await client.auth.signInWithPassword({
+    email: user.email,
+    password: aktuell,
+  });
+  if (pruefung) {
+    return { ok: false, error: "Das aktuelle Passwort stimmt nicht." };
+  }
+
+  const { error } = await client.auth.updateUser({ password: neu });
+  if (error) {
+    console.error("Passwortaenderung fehlgeschlagen:", error.message);
+    return { ok: false, error: "Das Passwort ließ sich nicht ändern." };
+  }
+  return { ok: true };
+}
+
+export async function abmelden(): Promise<never> {
+  const client = await createServerSupabaseClient();
+  await client.auth.signOut();
+  redirect("/login");
 }
