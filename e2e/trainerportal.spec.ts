@@ -116,20 +116,14 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await page.getByRole("button", { name: "Gerät anlegen" }).click();
   await expect(page.getByText("kein aktiver Tag")).toBeVisible();
 
-  // 5. Tag -- er kommt aus der Lieferung, nicht aus dem Portal. Aufgabe 7
-  // ersetzt das Seeden hier durch den Weg ueber die Oberflaeche.
-  const { data: geraeteZeile, error: geraeteFehler } = await admin
-    .from("machines")
-    .select("id")
-    .eq("studio_id", studio.id)
-    .single();
-  if (geraeteFehler) throw geraeteFehler;
+  // 5. Tag -- er kommt aus der Lieferung und wird vor dem Geraet verbunden.
+  const { token } = await tagAnlegen(admin, { studioId: null });
 
-  const { token } = await tagAnlegen(admin, {
-    studioId: studio.id,
-    machineId: geraeteZeile.id,
-    status: "active",
-  });
+  await page.goto(`/portal/${studio.id}/tags`);
+  await page.getByLabel("Token vom Tag").fill(token);
+  await page.getByLabel("Gerät auswählen").selectOption({ label: "12 — Latzug" });
+  await page.getByRole("button", { name: "Verbinden" }).click();
+  await expect(page.getByText("aktiv")).toBeVisible();
 
   // Das Geraet ist jetzt erreichbar.
   await page.goto(`/portal/${studio.id}/geraete`);

@@ -1,7 +1,7 @@
 import { AktionsKnopf } from "../../Form";
 import { tagSperren } from "../../actions";
 import { ladeKatalog } from "../catalog";
-import { TagZuweisen } from "./TagZuweisen";
+import { TagBinden } from "./TagBinden";
 import styles from "../../portal.module.css";
 
 const STATUS_TEXT: Record<string, string> = {
@@ -55,6 +55,18 @@ export default async function TagsPage({
 
       <section className={styles.section}>
         <div className={styles.sectionHead}>
+          <h2 className={styles.sectionTitle}>Tag verbinden</h2>
+          <span className={styles.sectionNote}>
+            Token vom Aufkleber abtippen, Gerät wählen.
+          </span>
+        </div>
+        <div className={styles.sectionBody}>
+          <TagBinden studioId={studioId} pfad={pfad} geraete={freieGeraete} />
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
           <h2 className={styles.sectionTitle}>Alle Tags</h2>
         </div>
 
@@ -92,14 +104,6 @@ export default async function TagsPage({
                     </div>
                   </div>
                   <div className={styles.rowActions}>
-                    {tag.status === "unassigned" ? (
-                      <TagZuweisen
-                        studioId={studioId}
-                        pfad={pfad}
-                        tagId={tag.id}
-                        geraete={freieGeraete}
-                      />
-                    ) : null}
                     {tag.status !== "revoked" ? (
                       <AktionsKnopf
                         aktion={tagSperren.bind(null, studioId, pfad, tag.id)}

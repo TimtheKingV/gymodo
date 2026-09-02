@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import {
   DomainError,
-  assignTag,
   attachExerciseToModel,
   confirmInstructionVideo,
   createEquipmentModel,
@@ -284,15 +283,41 @@ export async function geraetWiederInBetrieb(
   });
 }
 
-export async function tagZuweisen(
+const BINDE_TEXT: Record<string, string> = {
+  vergeben: "Dieser Tag hängt schon an einem Gerät.",
+  gesperrt: "Gesperrt bleibt gesperrt.",
+  aushangschild: "Das ist ein Aushangschild — es gehört an die Wand, nicht an ein Gerät.",
+  unbekannt: "Neue Lieferung? Melde dich beim Betreiber.",
+};
+
+/**
+ * Einen gelieferten Tag an ein Geraet binden. Das Studio kommt aus dem Geraet,
+ * nicht von hier -- die Funktion in 0028 leitet es selbst ab und prueft den
+ * Aufrufer dagegen.
+ */
+export async function tagBinden(
   studioId: string,
   pfad: string,
-  tagId: string,
+  token: string,
   machineId: string,
-): Promise<ActionResult> {
-  return fuehreAus(pfad, async (client) => {
-    await assignTag(client, { tagId, machineId });
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const client = await createServerSupabaseClient();
+  const { data, error } = await client.rpc("bind_tag_to_machine", {
+    p_token: token.trim(),
+    p_machine_id: machineId,
   });
+
+  if (error) {
+    console.error("Tag nicht gebunden:", error);
+    return { ok: false, error: "Der Tag liess sich nicht binden." };
+  }
+
+  const verdict = (data as Array<{ verdict: string }> | null)?.[0]?.verdict ?? "unbekannt";
+  if (verdict === "gebunden") {
+    revalidatePath(pfad);
+    return { ok: true };
+  }
+  return { ok: false, error: BINDE_TEXT[verdict] ?? BINDE_TEXT["unbekannt"]! };
 }
 
 export async function tagSperren(

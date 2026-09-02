@@ -1,24 +1,25 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { tagZuweisen } from "../../actions";
+import { tagBinden } from "../../actions";
 import styles from "../../portal.module.css";
 
 /**
- * Einen vorraetigen Tag einem Geraet zuweisen. Erst damit wird er aktiv --
- * der Check-Constraint aus 0008 laesst 'active' ohne Geraet gar nicht zu.
+ * Der Sucher ohne Kamera. Tags kommen als Lieferung und sind vor dem Scan
+ * nicht benennbar -- ein Dropdown haette nichts zu listen, weil eine
+ * Haldenzeile per RLS unsichtbar ist. Bis der Sucher steht, ist dies der Weg;
+ * danach bleibt es der Rueckfallweg fuer eine verweigerte Kamerafreigabe.
  */
-export function TagZuweisen({
+export function TagBinden({
   studioId,
   pfad,
-  tagId,
   geraete,
 }: {
   studioId: string;
   pfad: string;
-  tagId: string;
   geraete: Array<{ id: string; label: string; modell: string }>;
 }) {
+  const [token, setToken] = useState("");
   const [machineId, setMachineId] = useState("");
   const [fehler, setFehler] = useState<string | null>(null);
   const [laeuft, starte] = useTransition();
@@ -26,20 +27,29 @@ export function TagZuweisen({
   if (geraete.length === 0) {
     return (
       <span className={styles.hint}>
-        Kein Gerät in Betrieb, dem er zugewiesen werden könnte.
+        Kein Gerät in Betrieb, an das ein Tag gehören könnte.
       </span>
     );
   }
 
   return (
-    <span className={styles.rowActions}>
+    <div className={styles.field}>
       {fehler ? (
         <span className={styles.error} role="alert">
           {fehler}
         </span>
       ) : null}
+      <label className={styles.label} htmlFor="tag-token">
+        Token vom Tag
+      </label>
+      <input
+        id="tag-token"
+        className={styles.input}
+        value={token}
+        placeholder="22 Zeichen"
+        onChange={(ereignis) => setToken(ereignis.target.value)}
+      />
       <select
-        id={`ziel-${tagId}`}
         className={styles.select}
         value={machineId}
         aria-label="Gerät auswählen"
@@ -55,17 +65,18 @@ export function TagZuweisen({
       <button
         type="button"
         className={styles.secondary}
-        disabled={laeuft || machineId === ""}
+        disabled={laeuft || token.trim() === "" || machineId === ""}
         onClick={() => {
           setFehler(null);
           starte(async () => {
-            const antwort = await tagZuweisen(studioId, pfad, tagId, machineId);
-            if (!antwort.ok) setFehler(antwort.error);
+            const antwort = await tagBinden(studioId, pfad, token, machineId);
+            if (antwort.ok) setToken("");
+            else setFehler(antwort.error);
           });
         }}
       >
-        {laeuft ? "Wird zugewiesen …" : "Zuweisen"}
+        {laeuft ? "Wird verbunden …" : "Verbinden"}
       </button>
-    </span>
+    </div>
   );
 }
