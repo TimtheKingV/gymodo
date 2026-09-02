@@ -6,6 +6,7 @@ import {
   uniqueEmail,
   userClient,
 } from "./helpers/clients.js";
+import { tagAnlegen, tagsAnlegen } from "../helpers/tags.js";
 
 let studioA: string;
 let studioB: string;
@@ -51,21 +52,10 @@ beforeAll(async () => {
 
   tokenA = createTagToken();
   tokenB = createTagToken();
-  const { error: tagError } = await admin.from("machine_tags").insert([
-    {
-      studio_id: studioA,
-      machine_id: machines[0]!.id,
-      token_hash: hashTagToken(tokenA),
-      status: "active",
-    },
-    {
-      studio_id: studioB,
-      machine_id: machines[1]!.id,
-      token_hash: hashTagToken(tokenB),
-      status: "active",
-    },
+  await tagsAnlegen(admin, [
+    { studioId: studioA, machineId: machines[0]!.id, token: tokenA, status: "active" },
+    { studioId: studioB, machineId: machines[1]!.id, token: tokenB, status: "active" },
   ]);
-  if (tagError) throw tagError;
 });
 
 describe("machine_tags", () => {
@@ -81,11 +71,12 @@ describe("machine_tags", () => {
 
   it("erzwingt Eindeutigkeit des Hashes", async () => {
     const admin = serviceClient();
-    const { error } = await admin.from("machine_tags").insert({
-      studio_id: studioA,
-      token_hash: hashTagToken(tokenA),
-      status: "active",
-    });
+    let error: unknown = null;
+    try {
+      await tagAnlegen(admin, { studioId: studioA, token: tokenA, status: "active" });
+    } catch (e) {
+      error = e;
+    }
     expect(error).not.toBeNull();
   });
 
@@ -107,11 +98,12 @@ describe("machine_tags", () => {
 
   it("negativ: Nutzer A kann keinen Tag anlegen", async () => {
     const client = await userClient(emailA);
-    const { error } = await client.from("machine_tags").insert({
-      studio_id: studioA,
-      token_hash: hashTagToken(createTagToken()),
-      status: "active",
-    });
+    let error: unknown = null;
+    try {
+      await tagAnlegen(client, { studioId: studioA, status: "active" });
+    } catch (e) {
+      error = e;
+    }
     expect(error).not.toBeNull();
   });
 });
@@ -150,11 +142,12 @@ describe("machine_tags: active-Constraint und Fremdschluessel", () => {
   it("negativ: ein aktiver Tag ohne machine_id verletzt die Check-Constraint", async () => {
     const admin = serviceClient();
     const token = createTagToken();
-    const { error } = await admin.from("machine_tags").insert({
-      studio_id: studioC,
-      token_hash: hashTagToken(token),
-      status: "active",
-    });
+    let error: unknown = null;
+    try {
+      await tagAnlegen(admin, { studioId: studioC, token, status: "active" });
+    } catch (e) {
+      error = e;
+    }
     expect(error).not.toBeNull();
 
     const { data: found } = await admin
@@ -167,12 +160,7 @@ describe("machine_tags: active-Constraint und Fremdschluessel", () => {
   it("positiv: ein unassigned Tag ohne machine_id ist erlaubt", async () => {
     const admin = serviceClient();
     const token = createTagToken();
-    const { error } = await admin.from("machine_tags").insert({
-      studio_id: studioC,
-      token_hash: hashTagToken(token),
-      status: "unassigned",
-    });
-    expect(error).toBeNull();
+    await tagAnlegen(admin, { studioId: studioC, token, status: "unassigned" });
 
     const { data: found } = await admin
       .from("machine_tags")
@@ -184,12 +172,7 @@ describe("machine_tags: active-Constraint und Fremdschluessel", () => {
   it("positiv: ein revoked Tag ohne machine_id ist erlaubt", async () => {
     const admin = serviceClient();
     const token = createTagToken();
-    const { error } = await admin.from("machine_tags").insert({
-      studio_id: studioC,
-      token_hash: hashTagToken(token),
-      status: "revoked",
-    });
-    expect(error).toBeNull();
+    await tagAnlegen(admin, { studioId: studioC, token, status: "revoked" });
 
     const { data: found } = await admin
       .from("machine_tags")
@@ -201,13 +184,7 @@ describe("machine_tags: active-Constraint und Fremdschluessel", () => {
   it("positiv: ein aktiver Tag mit machine_id ist erlaubt", async () => {
     const admin = serviceClient();
     const token = createTagToken();
-    const { error } = await admin.from("machine_tags").insert({
-      studio_id: studioC,
-      machine_id: machineC,
-      token_hash: hashTagToken(token),
-      status: "active",
-    });
-    expect(error).toBeNull();
+    await tagAnlegen(admin, { studioId: studioC, machineId: machineC, token, status: "active" });
 
     const { data: found } = await admin
       .from("machine_tags")
@@ -234,14 +211,7 @@ describe("machine_tags: active-Constraint und Fremdschluessel", () => {
       .single();
     if (machineError) throw machineError;
 
-    const token = createTagToken();
-    const { error: tagError } = await admin.from("machine_tags").insert({
-      studio_id: studioC,
-      machine_id: machine.id,
-      token_hash: hashTagToken(token),
-      status: "active",
-    });
-    if (tagError) throw tagError;
+    await tagAnlegen(admin, { studioId: studioC, machineId: machine.id, status: "active" });
 
     const { error: deleteError } = await admin
       .from("machines")

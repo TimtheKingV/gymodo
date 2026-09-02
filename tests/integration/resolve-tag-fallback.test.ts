@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { createClient } from "@supabase/supabase-js";
 import { createTagToken, hashTagToken } from "@fitretro/domain";
 import { serviceClient } from "./helpers/clients.js";
+import { tagsAnlegen } from "../helpers/tags.js";
 
 function anonClient() {
   const url = process.env.SUPABASE_URL;
@@ -45,16 +46,10 @@ beforeAll(async () => {
 
   activeToken = createTagToken();
   revokedToken = createTagToken();
-  const { error: tagError } = await admin.from("machine_tags").insert([
-    {
-      studio_id: studio.id,
-      machine_id: machine.id,
-      token_hash: hashTagToken(activeToken),
-      status: "active",
-    },
-    { studio_id: studio.id, token_hash: hashTagToken(revokedToken), status: "revoked" },
+  await tagsAnlegen(admin, [
+    { studioId: studio.id, machineId: machine.id, token: activeToken, status: "active" },
+    { studioId: studio.id, token: revokedToken, status: "revoked" },
   ]);
-  if (tagError) throw tagError;
 });
 
 describe("resolve_tag_fallback", () => {

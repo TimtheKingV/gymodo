@@ -162,19 +162,31 @@ schreibe('PasswortNeu.dc.html', anmelde_seite(passwort_neu))
 
 # ---------------------------------------------------------------- KeinStudio
 # Der Zustand direkt nach der Verifikation: ein Konto existiert, gehoert
-# aber noch keinem Studio. Ohne Code gibt es fuer diese Person nichts zu
+# aber noch keinem Studio. Ohne Studio gibt es fuer diese Person nichts zu
 # sehen -- das ist keine Fehlermeldung, sondern schlicht der Ausgangszustand.
+#
+# Hier stand bis zum 1. September ein Studio-Code-Feld. Es war an dieser
+# Stelle falsch, gleich zweifach: der Code macht Mitglieder, und
+# Einstellungen -> Studio sagt daneben ausdruecklich "Er macht niemanden zum
+# Trainer" -- ein Konto, das ihn hier eingibt, saehe im Portal danach
+# genauso wenig wie vorher. Und note-einstieg sagt im ersten Satz, dass es
+# im Web fuer Mitglieder nichts gibt; ein Beitrittsformular war genau das.
+#
+# Wer im Web ohne Studio landet, ist Personal. Personal kommt ueber
+# Leute -> Mitarbeiter eines bestehenden Studios herein, nicht ueber einen
+# Code. Der Bildschirm hat deshalb keine Hauptaktion mehr, die er einloesen
+# koennte -- die einzige Aktion gilt dem Mitglied, das sich hierher verirrt
+# hat, und sie fuehrt aus dem Web heraus.
 kein_studio = """
       <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em; text-transform: uppercase; margin: 0;">Noch kein Studio</h1>
-      <p style="color: #9ba3af; margin: 12px 0 0;">gymodo gehört zu einem Studio. Gib den Code ein, den du dort bekommst — an der Theke, im Vertrag oder per Aushang.</p>
+      <p style="color: #9ba3af; margin: 12px 0 0;">Dein Konto steht. Ein Studio muss dich noch als Mitarbeiter hinzufügen — danach steht hier das Portal.</p>
 
-      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 32px;">
-        <span style="%(label)s color: #9ba3af;">Studio-Code</span>
-        <div style="%(field)s min-height: 52px; font-size: 16px; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; letter-spacing: 0.08em;">KWNORD-7F2X</div>
+      <p style="%(note)s margin: 20px 0 0;">Wer im Studio schon dabei ist, findet dich über deine E-Mail-Adresse unter <span style="color: #9ba3af;">Leute → Mitarbeiter</span>. Bis dahin gibt es hier nichts zu sehen — das ist keine Sperre, sondern die Wahrheit.</p>
+
+      <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #2a2e36;">
+        <div style="font-weight: 600;">Du wolltest trainieren?</div>
+        <p style="%(note)s margin: 6px 0 0;">Das Portal ist für Studios. Trainieren läuft in der App — dort trittst du deinem Studio bei, indem du den Aushang am Eingang oder den Aufkleber an einem Gerät scannst.</p>
+        <a href="#" style="%(sec)s height: 52px; width: 100%%; margin-top: 16px; border-radius: 14px; font-size: 15px;">App laden</a>
       </div>
-
-      <a href="#" style="%(pri)s height: 64px; width: 100%%; margin-top: 24px; border-radius: 16px; font-size: 17px;">Studio beitreten</a>
-
-      <p style="%(note)s margin: 24px 0 0;">Du hast keinen Code? Frag an der Theke. Ohne Studio gibt es hier nichts zu sehen — das ist keine Sperre, sondern die Wahrheit.</p>
-""" % {'label': LABEL, 'field': FIELD, 'pri': PRIMARY, 'note': NOTE}
+""" % {'note': NOTE, 'sec': SECONDARY}
 schreibe('KeinStudio.dc.html', anmelde_seite(kein_studio))

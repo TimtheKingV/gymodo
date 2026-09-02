@@ -197,8 +197,8 @@ kleben = stapel(
         tzeile('Sauber und trocken', 'Einmal abwischen hält den Tag jahrelang', letzte=True),
     ]),
     '<a href="#" style="%s">Tag scannen</a>' % PRIMARY_XL,
-    '<p style="%s margin: 0;">Nimm irgendeinen Tag aus der Packung — welcher es ist, findet der '
-    'Scan heraus.</p>' % NOTE)
+    '<p style="%s margin: 0;">Nimm irgendeinen Tag aus der Gerätepackung — welcher es ist, findet '
+    'der Scan heraus.</p>' % NOTE)
 schreibe('TelefonKleben.dc.html', telefon(900, kleben))
 
 
@@ -446,7 +446,7 @@ schreibe('TelefonFertig.dc.html', telefon(960, fertig))
 
 
 # --------------------------------------------------------- 14 Zustände
-# Ein Blatt statt sechs fast gleicher Telefone: die Faelle unterscheiden sich
+# Ein Blatt statt neun fast gleicher Telefone: die Faelle unterscheiden sich
 # in einer Karte, nicht im Bildschirm. Vorbild ist Zustaende.dc.html.
 def zwei(a, b):
     return ('<div style="display: flex; flex-direction: column; gap: 8px;">'
@@ -466,6 +466,19 @@ zustaende = stapel(
             'Gesperrt bleibt gesperrt — auch nach einem Neustart, auch nach einem Jahr. Der Eintrag '
             'steht als Nachweis weiter in der Liste. Nimm einen anderen aus der Packung.',
             symbol=svg('alert', 20, '#ff5a4e'), rand='#ff5a4e'),
+    # Der Fehlgriff ist eingeplant, nicht unwahrscheinlich: vor dem Scan sieht
+    # ein Aushangschild aus wie ein Geraetetag, und genau das ist Absicht --
+    # "benennbar wird ein Tag erst durch den Scan". Ohne diese Karte waere der
+    # einzige angebotene Ausgang "Verbinden", also machine_id setzen, was der
+    # kind-Constraint zurueckweist: eine Check-Verletzung ohne Bildschirm.
+    # Eine Sackgasse mit einem Ausgang, weil es hier nichts zu tun gibt --
+    # das Schild ist bereits gueltig und gehoert an die Wand.
+    antwort('Das ist ein Aushangschild',
+            'Kein Gerätetag: dieses Schild gehört an die Wand. Wer es scannt, wird Mitglied bei '
+            'Kraftwerk Nord — dafür ist es ab der Lieferung gültig, du musst nichts freischalten. '
+            'Nimm einen Tag aus der Gerätepackung.',
+            '<a href="#" style="%s">Anderen Tag scannen</a>' % SECONDARY_XL,
+            symbol=svg('tag', 20, '#9ba3af')),
     antwort('Der Tag gehört nicht zu Kraftwerk Nord',
             'Eine Antwort für drei Fälle: unbekannt, fremdes Studio, oder eine Charge, die noch '
             'niemand deinem Studio zugeordnet hat. Neue Lieferung angekommen? Dann fehlt die '
@@ -497,7 +510,7 @@ zustaende = stapel(
             'Studio oder leg eine neue an.',
             '<a href="#" style="%s">Übung hinzufügen</a>' % SECONDARY_XL,
             symbol=svg('plus', 20, '#5c636e')))
-schreibe('TelefonZustaende.dc.html', telefon(1780, zustaende))
+schreibe('TelefonZustaende.dc.html', telefon(2000, zustaende))
 
 
 # --------------------------------------------------------- 15 Ablaufkarte

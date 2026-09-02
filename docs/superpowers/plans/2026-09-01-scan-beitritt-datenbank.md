@@ -15,6 +15,7 @@
 ## Global Constraints
 
 - **Migrationen sind fortlaufend nummeriert und werden nie geändert.** Nächste freie Nummer: `0022`. Eine bereits gepushte Migration wird durch eine neue korrigiert, nicht überschrieben.
+- **Dieser Plan belegt `0022`, `0023`, `0024` und `0025`.** Was danach kommt, steht in `2026-09-01-tag-lieferung-design.md` und belegt `0026` (Tokenraum), `0027` (Chargen und Halde) und `0028` (die zwei Tag-Funktionen). Aus der einen Chargenspalte, die `2026-09-01-einrichtung-am-geraet-design.md` §5 ohne Nummer vorsah, sind damit drei Migrationen geworden.
 - **Jede `SECURITY DEFINER`-Funktion braucht beide Zeilen** — das ist die Lehre aus `0009`, und sie ist keine Formalie:
   ```sql
   revoke all on function public.<name>(<typen>) from public, anon, authenticated, service_role;
@@ -23,7 +24,7 @@
   `revoke ... from public` allein genügt auf Supabase **nicht**: `ALTER DEFAULT PRIVILEGES` gewährt `EXECUTE` zusätzlich an `anon`, `authenticated` und `service_role`. Ohne den ausdrücklichen Entzug ist die Funktion faktisch für alle drei aufrufbar.
 - **Jede `SECURITY DEFINER`-Funktion setzt `set search_path = public, pg_temp`.**
 - **Unbekannt, gesperrt und nicht zugewiesen antworten identisch** — leeres Ergebnis, nie ein unterscheidbarer Fehler. Differenziert eine Antwort, lassen sich gültige Tokens durch Ausprobieren finden.
-- **Der Klartext-Token existiert genau einmal.** `createTag` gibt ihn zurück, gespeichert wird nur `token_hash`. Er darf nirgends protokolliert werden und ist später **nicht wiederherstellbar** — jede Oberfläche muss damit rechnen, dass es keinen zweiten Blick gibt.
+- **Der Token wird im Klartext gespeichert, ist aber für `authenticated` unsichtbar.** ~~Der Klartext-Token existiert genau einmal.~~ Diese Regel ist von `2026-09-01-tag-lieferung-design.md` §1 abgelöst: `machine_tags.token` trägt den Klartext, `token_hash` wird daraus **generiert** und bleibt lesbar wie bisher, und Spaltenrechte entziehen `authenticated` auf `token` sowohl `select` als auch `update`. Für diesen Plan folgt daraus nur eines: **die Testfixtures schreiben `token: <klartext>` statt `token_hash: hashTagToken(...)`** — sobald `0026` liegt. Wer diesen Plan vorher ausführt, schreibt sie in der alten Form und stellt sie in Aufgabe 1 jenes Plans mit allen übrigen um. Die Funktionen selbst (`join_studio_by_tag`, `resolve_tag_fallback`) bleiben unverändert und suchen weiter über `token_hash`.
 - **Die Rolle beim Beitritt ist immer `member`.** Nie `trainer`, nie `owner`, und niemals als Parameter von außen.
 - **Fehlercodes der Fachschicht** sind ausschließlich `validation_failed`, `unauthorized`, `not_found`, `conflict`, `internal` (`packages/domain/src/errors.ts`). Ein Objekt aus einem fremden Studio liefert `not_found`, nicht `unauthorized`.
 - **Tests laufen gegen echtes Postgres.** `pnpm test:integration` braucht `SUPABASE_URL`, `SUPABASE_ANON_KEY` und den Service-Key in der Umgebung; `fileParallelism` ist aus.
@@ -213,7 +214,7 @@ git commit -m "feat(db): Aushang-Tags als zweite Tag-Sorte"
 
 **Interfaces:**
 - Consumes: `machine_tags.kind` aus Task 1, `studio_memberships` und `studio_role` aus `0001`.
-- Produces: `public.join_studio_by_tag(p_token_hash text)`, ausführbar nur für `authenticated`, Rückgabe `table (studio_id uuid, machine_id uuid, joined boolean)`. Task 7 ruft sie auf.
+- Produces: `public.join_studio_by_tag(p_token_hash text)`, ausführbar nur für `authenticated`, Rückgabe `table (studio_id uuid, machine_id uuid, joined boolean)`. Aufgerufen wird sie von der Member-App (Zugang 03 und 05), die dieser Plan nicht baut — in diesem Plan hat sie keinen Aufrufer.
 
 - [ ] **Step 1: Den fehlschlagenden Test schreiben**
 
@@ -617,44 +618,28 @@ git commit -m "feat(db): Mitglieder koennen ihre Mitgliedschaft selbst beenden"
 
 ---
 
-### Task 4: Fachschicht — Aushang anlegen und lesen
+### Task 4: Fachschicht — die Sorte lesen
 
 **Files:**
-- Modify: `packages/domain/src/catalog.ts` (`createTag` ab Zeile 492, `CatalogTag` ab Zeile 628, die Tag-Abfrage in `getStudioCatalog`)
+- Modify: `packages/domain/src/catalog.ts` (`CatalogTag` ab Zeile 628, die Tag-Abfrage in `getStudioCatalog`)
 - Test: `tests/integration/domain-catalog.test.ts` (ergänzen, nicht ersetzen)
 
 **Interfaces:**
 - Consumes: `machine_tags.kind` aus Task 1.
-- Produces:
-  - `createTag(client, { studioId, machineId?, kind? })` mit `kind?: "machine" | "studio"`, Vorgabe `"machine"`
-  - `CatalogTag` um das Feld `kind: "machine" | "studio"` erweitert
+- Produces: `CatalogTag` um das Feld `kind: "machine" | "studio"` erweitert
+
+**Nur noch der Lesepfad.** Diese Aufgabe hieß einmal „Aushang anlegen und lesen". Der Schreibpfad ist entfallen: `2026-09-01-einrichtung-am-geraet-design.md` §6 entfernt `createTag` samt Aufrufern — das Portal erzeugt keine Tags mehr, es bekommt sie geliefert. Der Lesepfad bleibt unverändert nötig, sonst kann die Tags-Seite Gerätetags nicht von Aushangschildern trennen.
+
+> **Woher die Zeilen dann kommen**
+>
+> Aus der Lieferung, nicht aus der Oberfläche. Der Betreiber ordnet eine Charge einem Studio zu und legt dabei ihre Zeilen an: Gerätetags als `kind='machine', status='unassigned'`, Aushangschilder als `kind='studio', status='active'`. Ein Schild ist damit ab Lieferung gültig — der Constraint aus Task 1 erlaubt für `kind='studio'` genau diese Kombination aus `active` und fehlendem Gerät.
+>
+> Das ist Betreiberarbeit: kein Bildschirm, kein Fachschicht-Aufruf, keine Server-Action. Sie gehört in einen eigenen Plan und ist in **keiner** Aufgabe dieses Plans enthalten.
 
 - [ ] **Step 1: Den fehlschlagenden Test an `domain-catalog.test.ts` anhängen**
 
 ```ts
-describe("createTag mit Aushang", () => {
-  it("legt einen Aushang sofort aktiv und ohne Geraet an", async () => {
-    const client = await userClient(trainerEmail);
-    const tag = await createTag(client, { studioId, kind: "studio" });
-
-    const admin = serviceClient();
-    const { data } = await admin
-      .from("machine_tags")
-      .select("kind, status, machine_id")
-      .eq("id", tag.id)
-      .single();
-    expect(data?.kind).toBe("studio");
-    expect(data?.status).toBe("active");
-    expect(data?.machine_id).toBeNull();
-  });
-
-  it("weist einen Aushang mit Geraet ab", async () => {
-    const client = await userClient(trainerEmail);
-    await expect(
-      createTag(client, { studioId, machineId, kind: "studio" }),
-    ).rejects.toMatchObject({ code: "validation_failed" });
-  });
-
+describe("Tag-Sorte im Katalog", () => {
   it("liefert die Sorte im Katalog mit", async () => {
     const client = await userClient(trainerEmail);
     const katalog = await getStudioCatalog(client, studioId);
@@ -663,7 +648,7 @@ describe("createTag mit Aushang", () => {
 });
 ```
 
-*Die Namen `trainerEmail`, `studioId`, `machineId`, `userClient`, `serviceClient`, `createTag`, `getStudioCatalog` stehen in dieser Datei bereits. Vor dem Anhängen die vorhandenen Bezeichner am Dateikopf ablesen und übernehmen — sie können abweichend heißen.*
+*Die Namen `trainerEmail`, `studioId`, `userClient`, `getStudioCatalog` stehen in dieser Datei bereits. Vor dem Anhängen die vorhandenen Bezeichner am Dateikopf ablesen und übernehmen — sie können abweichend heißen.*
 
 - [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
@@ -671,70 +656,13 @@ describe("createTag mit Aushang", () => {
 pnpm test:integration -- domain-catalog
 ```
 
-Erwartet: FAIL — `kind` ist kein bekanntes Feld von `createTag`, TypeScript bricht bereits beim Übersetzen ab.
+Erwartet: FAIL — `kind` ist kein bekanntes Feld von `CatalogTag`, TypeScript bricht bereits beim Übersetzen ab.
 
-- [ ] **Step 3: `createTag` erweitern**
+- [ ] **Step 3: `createTag` erweitern** — ~~gestrichen~~
 
-In `packages/domain/src/catalog.ts` die Signatur und den Rumpf ersetzen. Der Kommentarblock darüber bekommt einen Absatz, weil sich seine Aussage ändert:
+**Dieser Schritt ist entfallen und darf nicht ausgeführt werden.** Er hätte `createTag` um `kind` erweitert und dabei `status: kind === "studio" || input.machineId ? "active" : "unassigned"` verdrahtet. Die Regel dahinter — ein Aushang ist sofort aktiv — gilt inzwischen tatsächlich, aber nicht an dieser Stelle: sie gehört in die Lieferung, nicht in eine Portal-Funktion, die es nach `2026-09-01-einrichtung-am-geraet-design.md` §6 nicht mehr geben wird. Zwei Tests aus dem alten Step 1 sind mit ihm weggefallen; der dritte, der die Sorte im Katalog prüft, steht oben.
 
-```ts
-/**
- * Einen Tag anlegen. Der Klartext-Token wird genau einmal zurueckgegeben --
- * gespeichert ist nur sein Hash, es gibt keinen Weg, ihn spaeter noch einmal
- * zu erfahren. Er darf deshalb nirgends protokolliert werden (Spec 10.4).
- *
- * Mit machineId entsteht ein Geraetetag sofort aktiv: der Check-Constraint
- * aus 0022 laesst 'active' fuer kind='machine' nur zusammen mit einem Geraet
- * zu, ein zweistufiges "erst anlegen, dann aktivieren" waere gar nicht
- * speicherbar.
- *
- * Ein Aushang (kind='studio') entsteht dagegen immer sofort aktiv und immer
- * ohne Geraet -- er haengt am Eingang, nicht an einer Maschine. Ein
- * vorraetiger Aushang ergaebe keinen Sinn: er wird gedruckt, sobald er
- * existiert, und ohne Token gibt es nichts zu drucken.
- */
-export async function createTag(
-  client: SupabaseClient,
-  input: { studioId: string; machineId?: string | null; kind?: "machine" | "studio" },
-): Promise<{ id: string; token: string }> {
-  const userId = await requireUserId(client);
-  await requireStudioStaff(client, input.studioId, userId);
-
-  const kind = input.kind ?? "machine";
-
-  if (kind === "studio" && input.machineId) {
-    throw new DomainError(
-      "validation_failed",
-      "Ein Aushang gehoert zu keinem Geraet.",
-    );
-  }
-
-  if (input.machineId) {
-    const studioDesGeraets = await studioOfMachine(client, input.machineId);
-    if (studioDesGeraets !== input.studioId) {
-      throw new DomainError("not_found", "Dieses Geraet gibt es nicht.");
-    }
-  }
-
-  const token = createTagToken();
-  const { data, error } = await client
-    .from("machine_tags")
-    .insert({
-      studio_id: input.studioId,
-      machine_id: input.machineId ?? null,
-      kind,
-      token_hash: hashTagToken(token),
-      status: kind === "studio" || input.machineId ? "active" : "unassigned",
-    })
-    .select("id")
-    .single<{ id: string }>();
-
-  if (error || !data) {
-    throw new DomainError("internal", error?.message ?? "Tag nicht angelegt.");
-  }
-  return { id: data.id, token };
-}
-```
+Wer `createTag` trotzdem erweitert, baut eine Funktion aus, die im selben Zug zurückgebaut wird — und schreibt die Aktivierungsregel an einen Ort, an dem sie niemand sucht.
 
 - [ ] **Step 4: `CatalogTag` und die Abfrage erweitern**
 
@@ -998,7 +926,9 @@ git commit -m "feat(portal): Aushaenge anlegen, sperren und drucken"
 
 - [ ] **Step 1: Die Funktion erweitern**
 
-`resolve_tag_fallback` gibt heute nur `machine_tag_id` zurück. Der Aushang hat kein Gerät — die Seite muss also schon aus der Auflösung wissen, was sie zeigen soll, und den Studionamen bekommen, ohne dafür `studios` lesen zu dürfen.
+`resolve_tag_fallback` gibt heute **fünf** Spalten zurück: `machine_tag_id, machine_label, model_name, photo_path, exercises` (`supabase/migrations/0021_fallback_inhalte.sql`). Diese vier hinter der ersten sind keine Reserve — `apps/web/app/t/[token]/page.tsx` zeichnet daraus die ganze Geräteseite, und `tests/integration/fallback-inhalt.test.ts` prüft jede einzelne. Der Aushang-Zweig **ergänzt** also, er ersetzt nicht.
+
+Zwei Spalten kommen hinzu: `kind`, damit die Seite die Sorten unterscheiden kann, ohne eine zweite Abfrage, und `studio_name`, damit sie den Studionamen bekommt, ohne `studios` lesen zu dürfen. `studio_name` schließt nebenbei eine offene Lücke im Gerätezweig: `FallbackGeraet.dc.html` zeichnet den Studionamen seit jeher in der Kopfleiste, ohne dass die Seite eine Quelle dafür hatte.
 
 `supabase/migrations/0025_resolve_tag_fallback_studio.sql`:
 
@@ -1006,35 +936,74 @@ git commit -m "feat(portal): Aushaenge anlegen, sperren und drucken"
 -- Der Fallback muss zwei Faelle unterscheiden koennen, ohne dafuer eine
 -- zweite Abfrage und ohne dafuer Leserecht auf studios. Der Studioname ist
 -- Studioinhalt, kein Personenbezug -- er steht ohnehin auf jedem Aushang.
-create or replace function public.resolve_tag_fallback(p_token_hash text)
-returns table (machine_tag_id uuid, kind public.tag_kind, studio_name text)
+--
+-- Die fuenf Spalten aus 0021 bleiben unveraendert stehen. Neu sind nur kind
+-- und studio_name; die Geraeteseite und ihr Integrationstest lesen weiter,
+-- was sie vorher lasen.
+drop function if exists public.resolve_tag_fallback(text);
+
+create function public.resolve_tag_fallback(p_token_hash text)
+returns table (
+  machine_tag_id uuid,
+  kind           public.tag_kind,
+  studio_name    text,
+  machine_label  text,
+  model_name     text,
+  photo_path     text,
+  exercises      jsonb
+)
 language sql
 security definer
 set search_path = public, pg_temp
 stable
 as $$
-  select t.id, t.kind, s.name
+  select
+    t.id, t.kind, s.name, m.label, em.name, em.photo_path,
+    coalesce(
+      (select jsonb_agg(jsonb_build_object('name', e.name, 'video_path', video.storage_path)
+                 order by eme.sort_order, e.name)
+         from public.equipment_model_exercises eme
+         join public.exercises e on e.id = eme.exercise_id
+         left join lateral (
+           select ia.storage_path from public.instruction_assets ia
+           where ia.equipment_model_exercise_id = eme.id
+           order by ia.created_at desc, ia.id desc limit 1
+         ) video on true
+        where eme.equipment_model_id = em.id),
+      '[]'::jsonb)
   from public.machine_tags t
   join public.studios s on s.id = t.studio_id
+  left join public.machines m on m.id = t.machine_id
+  left join public.equipment_models em on em.id = m.equipment_model_id
   where t.token_hash = p_token_hash
-    and t.status = 'active';
+    and t.status = 'active'
+    and (t.kind = 'studio' or (m.id is not null and m.status = 'active'));
 $$;
 
-revoke all on function public.resolve_tag_fallback(text)
-  from public, anon, authenticated, service_role;
+revoke all on function public.resolve_tag_fallback(text) from public;
 grant execute on function public.resolve_tag_fallback(text) to anon;
+grant execute on function public.resolve_tag_fallback(text) to authenticated;
 ```
 
-*`create or replace` scheitert, wenn sich die Rückgabespalten ändern. Schlägt der Lauf mit `cannot change return type of existing function` fehl, ist ein `drop function public.resolve_tag_fallback(text);` **vor** dem `create` nötig — dann steht es in derselben Migration, oberhalb.*
+**Drei Stellen, an denen diese Migration leicht falsch geschrieben wird:**
 
-- [ ] **Step 2: Datenbank zurücksetzen, bestehenden Test laufen lassen**
+1. **`join public.machines` wird zu `left join`.** Ein Aushang hat kein Gerät; mit dem Inner Join aus `0021` liefert er null Zeilen, und die Seite antwortet *„Dieser Code ist nicht aktiv."* — der Aushang-Zweig aus Step 3 wäre unerreichbar.
+2. **`m.status = 'active'` gehört in die `where`-Klausel, nicht in die Join-Bedingung**, und gilt nur für Gerätetags. `0021` filtert es mit der Begründung *„Ein stillgelegtes Geraet zeigt keine Einweisung mehr."*; `tests/integration/fallback-inhalt.test.ts` prüft genau das und erwartet für ein stillgelegtes Gerät eine **leere** Antwort. Stünde der Filter in der Join-Bedingung, käme dort jetzt eine Zeile mit lauter Nullen zurück.
+3. **`t.studio_id` darf nicht in der Auswahlliste stehen.** Derselbe Test verbietet den String `studio_id` in der Antwort (die Fallback-Seite ist öffentlich). `s.name` als `studio_name` ist davon nicht berührt.
+
+*`create or replace` scheitert, wenn sich die Rückgabespalten ändern — deshalb steht das `drop function` oben in derselben Migration.*
+
+- [ ] **Step 2: Datenbank zurücksetzen, bestehende Tests laufen lassen**
 
 ```bash
 pnpm exec supabase db reset
 pnpm test:integration -- resolve-tag-fallback
+pnpm test:integration -- fallback-inhalt
 ```
 
-Erwartet: die drei Tests auf leere und volle Ergebnisse bestehen weiter. Die Prüfung `toHaveLength(1)` bleibt gültig, weil sich die Zeilenzahl nicht ändert, nur die Spaltenzahl.
+Erwartet: alle bestehenden Tests laufen unverändert durch. Nicht weil sich „nur die Spaltenzahl ändert" — sondern weil die vier Spalten, die sie lesen, unangetastet bleiben und die `where`-Klausel für Gerätetags dieselbe Menge liefert wie `0021`. `toHaveLength(1)` gilt weiter; für gesperrte, unbekannte und stillgelegte Fälle kommen weiter null Zeilen.
+
+**Läuft `fallback-inhalt` rot, ist die Migration falsch, nicht der Test.** Er ist die einzige Stelle, die den Gerätezweig gegen genau diesen Umbau absichert.
 
 - [ ] **Step 3: Die Seite auf den Aushang-Zweig erweitern**
 

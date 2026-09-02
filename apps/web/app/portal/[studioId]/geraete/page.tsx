@@ -2,7 +2,6 @@ import Link from "next/link";
 import { AktionsKnopf } from "../../Form";
 import { geraetStilllegen, geraetWiederInBetrieb } from "../../actions";
 import { ladeKatalog } from "../catalog";
-import { TagAnlegen } from "../TagAnlegen";
 import styles from "../../portal.module.css";
 
 /**
@@ -89,15 +88,12 @@ export default async function GeraetePage({
                 </div>
                 <div className={styles.rowActions}>
                   {geraet.status === "active" ? (
-                    <>
-                      <TagAnlegen studioId={studioId} pfad={pfad} machineId={geraet.id} />
-                      <AktionsKnopf
-                        aktion={geraetStilllegen.bind(null, studioId, pfad, geraet.id)}
-                        label="Stilllegen"
-                        bestaetigung="Wirklich stilllegen?"
-                        art="destructive"
-                      />
-                    </>
+                    <AktionsKnopf
+                      aktion={geraetStilllegen.bind(null, studioId, pfad, geraet.id)}
+                      label="Stilllegen"
+                      bestaetigung="Wirklich stilllegen?"
+                      art="destructive"
+                    />
                   ) : (
                     <AktionsKnopf
                       aktion={geraetWiederInBetrieb.bind(null, studioId, pfad, geraet.id)}

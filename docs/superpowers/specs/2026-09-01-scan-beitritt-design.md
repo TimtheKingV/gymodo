@@ -113,7 +113,7 @@ Vier Eingänge, ein Weg: Kamera-App auf den gedruckten QR, NFC im Vorbeigehen, d
 
 **Die Pending-Route ist nicht neu.** Die Canvas-Notiz `hdr-einstieg` hält sie schon fest. Sie muss eines mehr können als heute: **die Registrierung überleben, nicht bloß den Login.** Damit trägt sie den Kaltstart aus Abschnitt 5 vollständig.
 
-**Zwei Zeilen, keine Dialoge.** Beitritt und Studiowechsel passieren ohne Rückfrage — Rückfragen wären genau die Reibung, die dieses Dokument beseitigt. Sichtbar müssen sie trotzdem sein. Nach einem Beitritt einmalig auf Home: *„Du gehörst jetzt zu Nordstraße."* Nach einem Wechsel: *„Nordstraße ist jetzt aktiv."* Ohne die zweite Zeile ist eine plötzlich andere Kursliste ein Fehler und keine Folge.
+**Zwei Zeilen, keine Dialoge.** Beitritt und Studiowechsel passieren ohne Rückfrage — Rückfragen wären genau die Reibung, die dieses Dokument beseitigt. Sichtbar müssen sie trotzdem sein. Nach einem Beitritt einmalig auf Home: *„Du gehörst jetzt zu Kraftwerk Nord."* Nach einem Wechsel: *„Kraftwerk Nord ist jetzt aktiv."* Ohne die zweite Zeile ist eine plötzlich andere Kursliste ein Fehler und keine Folge.
 
 ---
 
@@ -140,7 +140,7 @@ Profil bekommt **eine Zeile** in der Konto-Karte: *Studios · Kraftwerk Nord* mi
 
 **Der Mehrstudio-Fall kostet damit genau eine Zeile auf Profil.** Bei genau einer Mitgliedschaft — dem Normalfall — steht dort der Studioname und dahinter eine Liste mit einem Eintrag.
 
-### Home (22) und Home-leer (23)
+### Home (21) und Home-leer (20)
 
 Die Beitritts- und Wechselzeile: volle Breite unter dem Kopf, Akzentfarbe auf `well`, verschwindet beim nächsten Start.
 
@@ -164,9 +164,9 @@ Der Aushang wird damit ein **geliefertes Schild**, wie der Gerätetag ein gelief
 
 **Was aus diesem Abschnitt überlebt, ist die Sortenunterscheidung selbst:** `kind ∈ machine | studio` aus §1 bleibt gültig und wird von der neueren Spec ausdrücklich übernommen. Nur der Weg, auf dem so eine Zeile entsteht, ist ein anderer geworden — Charge statt Knopfdruck.
 
-Der Satz in *Einstellungen → Studio*, der den Studio-Code zum zweiten Weg erklärt, ist von der Ablösung **nicht** berührt und weiterhin offen.
+Der Studio-Code in *Einstellungen* bleibt, wo er ist. Er ist jetzt der zweite Weg statt des einzigen — **eingegeben wird er in der App**, auf *Zugang 03*, nicht im Web. Das Portal zeigt ihn nur an, damit die Theke ihn weitergeben kann.
 
-Der Studio-Code in *Einstellungen* bleibt, wo er ist. Er ist jetzt der zweite Weg statt des einzigen.
+Der zugehörige Satz auf *Einstellungen → Studio* ist am 1. September nachgezogen worden und damit erledigt; er sagt jetzt, dass der Code der zweite Weg ist und niemanden zum Trainer macht. **`KeinStudio` im Portal hat dabei das Code-Feld verloren** — wer im Web ohne Studio landet, ist Personal und wird von einem bestehenden Studio als Mitarbeiter hinzugefügt. Für Mitglieder gibt es im Web nichts, und ein Beitrittsformular dort widersprach genau dem.
 
 **Mehrere Aushänge je Studio sind erlaubt** — Eingang, Umkleide, Kursraum. Das Schema kann es ohne Zusatz, und ein einzelner erzwungener Aushang wäre eine Regel ohne Grund.
 
@@ -177,14 +177,15 @@ Der Studio-Code in *Einstellungen* bleibt, wo er ist. Er ist jetzt der zweite We
 | ~ | Zugang 03 — Noch kein Studio, Scan als Hauptweg | Member |
 | + | Zugang 05 — Scanner | Member |
 | + | Zugang 06 — Profil, Studios | Member |
-| ~ | App 22 / 23 — Home, Beitritts- und Wechselzeile | Member |
+| ~ | App 20 / 21 — Home-leer und Home, Beitritts- und Wechselzeile | Member |
 | ~ | App 24 — Profil, Zeile *Studios* mit Chevron | Member |
 | ~ | App 25 — Web-Fallback Gerät, Studioname und zweiter Scan | Member |
 | + | App 27 — Web-Fallback Aushang | Member |
 | — | ~~Tags — Abschnitt Aushang~~ | Portal, abgelöst |
-| ~ | Einstellungen Studio — Studio-Code als zweiter Weg | Portal, offen |
+| ~ | Einstellungen Studio — Studio-Code als zweiter Weg | Portal, erledigt |
+| ~ | KeinStudio — Code-Feld raus, der Bildschirm gehört dem Trainer | Portal, erledigt |
 
-**Drei neu, fünf geändert, keines gelöscht** — dazu ein Portal-Bildschirm, der zur neueren Spec gewandert ist, und ein Satz im Portal, der noch aussteht.
+**Drei neu, sechs geändert, keines gelöscht** — dazu ein Portal-Bildschirm, der zur neueren Spec gewandert ist. Es steht nichts mehr aus.
 
 ---
 

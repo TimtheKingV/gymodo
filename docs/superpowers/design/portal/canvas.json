@@ -48,7 +48,7 @@
       "x": 0,
       "y": 1440,
       "w": 1440,
-      "h": 1020
+      "h": 1180
     },
     {
       "file": "LeuteMitglieder.dc.html",
@@ -73,7 +73,7 @@
       "page": "portal",
       "title": "Einstellungen — Studio",
       "x": 0,
-      "y": 2620,
+      "y": 2780,
       "w": 1440,
       "h": 1300
     },
@@ -82,7 +82,7 @@
       "page": "portal",
       "title": "Einstellungen — Konto",
       "x": 1560,
-      "y": 2620,
+      "y": 2780,
       "w": 1440,
       "h": 1080
     },
@@ -91,7 +91,7 @@
       "page": "portal",
       "title": "Zustände",
       "x": 3120,
-      "y": 2620,
+      "y": 2780,
       "w": 1440,
       "h": 760
     },
@@ -100,7 +100,7 @@
       "page": "portal",
       "title": "Kurse — Woche",
       "x": 0,
-      "y": 4040,
+      "y": 4200,
       "w": 1440,
       "h": 1780
     },
@@ -109,7 +109,7 @@
       "page": "portal",
       "title": "Kursvorlagen",
       "x": 1560,
-      "y": 4040,
+      "y": 4200,
       "w": 1440,
       "h": 820
     },
@@ -118,7 +118,7 @@
       "page": "portal",
       "title": "Kursvorlage — Stammdaten",
       "x": 3120,
-      "y": 4040,
+      "y": 4200,
       "w": 1440,
       "h": 1420
     },
@@ -127,7 +127,7 @@
       "page": "portal",
       "title": "Termin anlegen",
       "x": 4680,
-      "y": 4040,
+      "y": 4200,
       "w": 1440,
       "h": 1680
     },
@@ -136,7 +136,7 @@
       "page": "portal",
       "title": "Termin — Teilnehmer",
       "x": 6240,
-      "y": 4040,
+      "y": 4200,
       "w": 1440,
       "h": 2020
     },
@@ -336,7 +336,7 @@
       "x": 2940,
       "y": 2240,
       "w": 390,
-      "h": 1780
+      "h": 2000
     }
   ],
   "annotations": [
@@ -370,7 +370,7 @@
       "x": 0,
       "y": -210,
       "w": 520,
-      "text": "Das Web ist Trainerportal plus öffentlicher Fallback — für Mitglieder gibt es hier nichts.\n\nAnmeldung läuft jetzt mit E-Mail und Passwort, mit Selbstregistrierung. Der Code verifiziert danach nur noch die Adresse. Ein frisches Konto gehört noch keinem Studio — das kommt über den Scan eines Aushangs, ersatzweise über den Studio-Code."
+      "text": "Das Web ist Trainerportal plus öffentlicher Fallback — für Mitglieder gibt es hier nichts.\n\nAnmeldung läuft jetzt mit E-Mail und Passwort, mit Selbstregistrierung. Der Code verifiziert danach nur noch die Adresse.\n\nEin frisches Konto gehört noch keinem Studio. Im Web heißt das: Personal, das ein bestehendes Studio unter Leute → Mitarbeiter hinzufügt. Der Studio-Code steht hier ausdrücklich nicht mehr — er macht Mitglieder, und Mitglieder haben im Web nichts zu tun. Ihr Weg ins Studio (Scan eines Aushangschilds, ersatzweise der Code) läuft in der App und ist auf der Member-Canvas annotiert."
     },
     {
       "id": "note-telefon",

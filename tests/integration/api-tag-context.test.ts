@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { createTagToken, hashTagToken } from "@fitretro/domain";
+import { createTagToken } from "@fitretro/domain";
 import { GET } from "@/app/api/v1/tags/[token]/context/route";
 import {
   accessTokenFor,
@@ -7,6 +7,7 @@ import {
   serviceClient,
   uniqueEmail,
 } from "./helpers/clients.js";
+import { tagsAnlegen } from "../helpers/tags.js";
 
 let activeToken: string;
 let revokedToken: string;
@@ -59,20 +60,10 @@ beforeAll(async () => {
 
   activeToken = createTagToken();
   revokedToken = createTagToken();
-  const { error: tagError } = await admin.from("machine_tags").insert([
-    {
-      studio_id: studio.id,
-      machine_id: machine.id,
-      token_hash: hashTagToken(activeToken),
-      status: "active",
-    },
-    {
-      studio_id: studio.id,
-      token_hash: hashTagToken(revokedToken),
-      status: "revoked",
-    },
+  await tagsAnlegen(admin, [
+    { studioId: studio.id, machineId: machine.id, token: activeToken, status: "active" },
+    { studioId: studio.id, token: revokedToken, status: "revoked" },
   ]);
-  if (tagError) throw tagError;
 
   bearer = await accessTokenFor(email);
 });

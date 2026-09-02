@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { anmelden } from "./helpers/login";
+import { tagAnlegen } from "../tests/helpers/tags";
 
 /**
  * Verifikationspunkt 5 aus dem Plan: ein Studio komplett ueber die
@@ -115,13 +116,14 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await page.getByRole("button", { name: "Gerät anlegen" }).click();
   await expect(page.getByText("kein aktiver Tag")).toBeVisible();
 
-  // 5. Tag -- der Token steht genau einmal da
-  await page.getByRole("button", { name: "Tag anlegen" }).click();
-  await expect(page.getByText("Token — nur jetzt sichtbar")).toBeVisible();
-  const token = (await page.getByTestId("tag-token").innerText()).trim();
-  expect(token).toMatch(/^[A-Za-z0-9_-]{16,}$/);
+  // 5. Tag -- er kommt aus der Lieferung und wird vor dem Geraet verbunden.
+  const { token } = await tagAnlegen(admin, { studioId: null });
 
-  await page.getByRole("button", { name: "Fertig" }).click();
+  await page.goto(`/portal/${studio.id}/tags`);
+  await page.getByLabel("Token vom Tag").fill(token);
+  await page.getByLabel("Gerät auswählen").selectOption({ label: "12 — Latzug" });
+  await page.getByRole("button", { name: "Verbinden" }).click();
+  await expect(page.getByText("aktiv")).toBeVisible();
 
   // Das Geraet ist jetzt erreichbar.
   await page.goto(`/portal/${studio.id}/geraete`);

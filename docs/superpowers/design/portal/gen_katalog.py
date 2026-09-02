@@ -89,13 +89,14 @@ tags += zeile('Charge 7',
               'Mi., 12. August 2026 · 100 Gerätetags · <strong>97 vorrätig</strong>, 2 aktiv, '
               '1 gesperrt', '')
 tags += zeile('Charge 8',
-              'Mi., 12. August 2026 · 5 Aushangschilder · <strong>4 vorrätig</strong>, 1 hängt',
+              'Mi., 12. August 2026 · 5 Aushangschilder · <strong>5 aktiv</strong>',
               '', letzte=True)
 tags += '</section>'
 tags += ('<p style="color: #5c636e; font-size: 13px; line-height: 1.45; margin: 16px 0 0; '
-         'max-width: 62ch;">Der Vorrat steht als Zahl. Ein vorrätiger Tag lässt sich keinem '
-         'Aufkleber in der Packung zuordnen — 97 gleichlautende Zeilen wären keine Auskunft, '
-         'sondern Lärm. Benennbar wird ein Tag erst durch den Scan.</p>')
+         'max-width: 62ch;">Der Gerätetag-Vorrat steht als Zahl. Ein vorrätiger Aufkleber lässt '
+         'sich keinem Stück in der Packung zuordnen — 97 gleichlautende Zeilen wären keine '
+         'Auskunft, sondern Lärm. Benennbar wird ein Gerätetag erst durch den Scan. '
+         'Aushangschilder sind ab Lieferung gültig und stehen deshalb unten einzeln.</p>')
 
 aktiv = '<span style="%s color: #f2f4f7; border-color: #5c636e;">aktiv</span>' % BADGE
 gesperrt = '<span style="%s color: #ff5a4e; border-color: #ff5a4e;">gesperrt</span>' % BADGE
@@ -116,13 +117,30 @@ tags += ('<p style="color: #5c636e; font-size: 13px; line-height: 1.45; margin: 
          'max-width: 62ch;">Ein Gerät ohne Tag ist für Mitglieder nicht auffindbar. Verbunden wird '
          'am Gerät, mit dem Telefon — ein zerkratzter Tag wird dort auch ersetzt.</p>')
 
+# Aushangschilder sind ab Lieferung gueltig -- sie haengen an keinem Geraet,
+# also gibt es keinen Scan, der sie aktivieren koennte, und keinen Bildschirm
+# dafuer. Damit weiss das Portal auch nicht, welches am Eingang haengt und
+# welche in der Schublade liegen: ein Ort wurde nie eingegeben, ein
+# Anbringungsdatum nie erfasst. Benannt wird ein Schild deshalb ueber die
+# aufgedruckte Nummer -- das einzige, was ohne Zutun feststeht.
+#
+# Sie stehen einzeln da und nicht als Zahl, anders als der Geraetetag-Vorrat:
+# ein vorraetiger Aufkleber kann nichts, ein Schild dagegen ist gueltig, und
+# ein gueltiges Schild muss sperrbar sein, wenn es verlorengeht.
 tags += '<section style="%s margin-top: 24px;">' % CARD
-tags += '<div style="%s"><h2 style="%s">Aushang</h2></div>' % (HEADROW, SEC_TITLE)
-tags += zeile('%s &nbsp; Eingang' % aktiv,
-              'Charge 8 · hängt seit Sa., 15. August 2026 · Beitritt durch Scannen',
-              '<a href="#" style="%s">Sperren</a>' % DESTRUCTIVE, letzte=True)
+tags += ('<div style="%s"><h2 style="%s">Aushangschilder</h2>'
+         '<span style="color: #5c636e; font-size: 12px;">5 aus Charge 8</span></div>'
+         % (HEADROW, SEC_TITLE))
+tags += zeile('%s &nbsp; Schild 1' % aktiv, 'Charge 8 · geliefert Mi., 12. August 2026',
+              '<a href="#" style="%s">Sperren</a>' % DESTRUCTIVE)
+tags += zeile('%s &nbsp; Schild 2' % aktiv, 'Charge 8 · geliefert Mi., 12. August 2026',
+              '<a href="#" style="%s">Sperren</a>' % DESTRUCTIVE)
+tags += zeile('<span style="color: #5c636e;">… 3 weitere</span>', '', '',
+              letzte=True, meta_faint=True)
 tags += '</section>'
 tags += ('<p style="color: #5c636e; font-size: 13px; line-height: 1.45; margin: 16px 0 0; '
-         'max-width: 62ch;">Ein Aushang hängt an keinem Gerät — wer ihn scannt, wird Mitglied. '
-         'Sperren macht genau dieses Schild ungültig; häng eins aus der Lieferung nach.</p>')
-schreibe('Tags.dc.html', portal('tags', 1020, tags))
+         'max-width: 62ch;">Ein Aushangschild hängt an keinem Gerät — wer es scannt, wird '
+         'Mitglied. Alle Schilder einer Lieferung sind gleichwertig und ab Lieferung gültig; '
+         'welches ihr aufhängt, ist eure Sache. Sperren macht genau eines ungültig, die '
+         'anderen gelten weiter.</p>')
+schreibe('Tags.dc.html', portal('tags', 1180, tags))

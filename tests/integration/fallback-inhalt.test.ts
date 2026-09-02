@@ -6,6 +6,7 @@ import {
   hashTagToken,
 } from "@fitretro/domain";
 import { anonClient, serviceClient } from "./helpers/clients.js";
+import { tagsAnlegen } from "../helpers/tags.js";
 
 /**
  * Spec 6.4: der Fallback ist keine Sackgasse, sondern sofort nuetzlich --
@@ -135,27 +136,11 @@ beforeAll(async () => {
   stillgelegtToken = createTagToken();
   unbenutzterToken = createTagToken();
 
-  const { error: tagError } = await admin.from("machine_tags").insert([
-    {
-      studio_id: studioId,
-      machine_id: aktiv,
-      token_hash: hashTagToken(aktiverToken),
-      status: "active",
-    },
-    {
-      studio_id: studioId,
-      machine_id: gesperrt,
-      token_hash: hashTagToken(gesperrterToken),
-      status: "revoked",
-    },
-    {
-      studio_id: studioId,
-      machine_id: stillgelegt,
-      token_hash: hashTagToken(stillgelegtToken),
-      status: "active",
-    },
+  await tagsAnlegen(admin, [
+    { studioId, machineId: aktiv, token: aktiverToken, status: "active" },
+    { studioId, machineId: gesperrt, token: gesperrterToken, status: "revoked" },
+    { studioId, machineId: stillgelegt, token: stillgelegtToken, status: "active" },
   ]);
-  if (tagError) throw tagError;
 
   const { error: statusError } = await admin
     .from("machines")

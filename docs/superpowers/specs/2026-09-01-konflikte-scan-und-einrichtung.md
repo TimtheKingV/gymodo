@@ -1,77 +1,89 @@
 # Konflikte zwischen „Beitritt durch Scannen" und „Einrichtung am Gerät"
 
 **Stand:** 1. September 2026
-**Status:** Befund, nicht entschieden. Keine dieser Fragen ist beantwortet.
+**Status:** **Entschieden und abgearbeitet.** Alle Befunde sind in Specs, Plan und Entwürfen nachgezogen.
 **Betrifft:** `2026-09-01-scan-beitritt-design.md` (Runde A) und `2026-09-01-einrichtung-am-geraet-design.md` (Runde B)
 
 ---
 
 ## Warum dieses Dokument existiert
 
-Beide Runden entstanden am selben Tag, teils parallel. Runde B erklärt im Kopf, sie ändere Runde A in §3 und §6, und Runde A ist darauf nachgezogen. **Dieses Dokument hält fest, was dabei durchgerutscht ist.**
+Beide Runden entstanden am selben Tag, teils parallel. Runde B erklärt im Kopf, sie ändere Runde A in §3 und §6, und Runde A ist darauf nachgezogen. **Dieses Dokument hielt fest, was dabei durchgerutscht ist** — und hält jetzt fest, wie es entschieden wurde.
 
-**Nichts davon bricht etwas, das bereits gebaut ist.** Alle Befunde liegen in Specs und im noch nicht ausgeführten Datenbankplan. Die 34 Member-Artboards und die 36 Portal-Artboards sind in sich stimmig, beide `canvas.json` vollständig, kein Artboard doppelt oder verwaist.
-
----
-
-## Drei Befunde, die jemanden das Falsche bauen ließen
-
-### 1. Ein geliefertes Aushangschild kann nie aktiv werden
-
-Runde A kannte genau einen Weg, einen Aushang zu aktivieren: `createTag(kind: 'studio')`, das die Zeile sofort `active` anlegt. **Runde B streicht `createTag` ersatzlos** (§6) und sagt: „Im Portal gibt es dafür keinen Bildschirm" (§1).
-
-Damit bleibt kein Weg übrig. `join_studio_by_tag` und `resolve_tag_fallback` filtern beide auf `status = 'active'` — ein geliefertes Aushangschild ist für beide unsichtbar. Gleichzeitig zeichnet `Tags.dc.html` einen Aushang als *„aktiv · Eingang · Charge 8 · hängt seit …"* mit einer *Sperren*-Aktion: **ein Zustand, den kein Ablauf erreicht, und aus dem nur ein Weg herausführt.**
-
-Zu entscheiden: Wer setzt ein geliefertes Schild auf `active`? Ein Betreiberskript wie bei der Charge, eine Portal-Aktion, oder entsteht es schon aktiv bei der Lieferung?
-
-### 2. Der Sucher hat keine Antwort auf die falsche Tag-Sorte
-
-Runde A führt `kind ∈ machine | studio` ein und verbietet einem `studio`-Tag jede `machine_id`. Runde B entscheidet zugleich (§3): *„Der Vorrat ist eine Zahl, keine Liste … Benennbar wird ein Tag erst durch den Scan"*, und `TelefonKleben.dc.html` sagt dem Trainer: *„Nimm irgendeinen Tag aus der Packung."*
-
-**Der Trainer kann ein Aushangschild vor dem Scan nicht von einem Geräteaufkleber unterscheiden — das ist Absicht.** Scannt er das falsche, ist der einzige angebotene Ausgang *Verbinden*, also `machine_id` setzen. Runde Bs Antworttabelle (§4) nennt sechs Fälle, `TelefonZustaende.dc.html` zeichnet acht Karten. **Keine davon heißt „das ist ein Aushangschild".**
-
-Vor Runde A wäre dieser Fehlscan still durchgelaufen und hätte einen Aushang in einen Gerätetag verwandelt. Nach Migration `0022` wirft er eine Check-Verletzung — ohne gestalteten Bildschirm dahinter. Der Constraint hat recht; es fehlt die siebte Antwort.
-
-### 3. Der Datenbankplan würde den Geräte-Fallback zerstören
-
-`2026-09-01-scan-beitritt-datenbank.md` Task 6 Step 1 behauptet, `resolve_tag_fallback` gebe „heute nur `machine_tag_id`" zurück. **Das stimmt nicht.** `0021_fallback_inhalte.sql` liefert fünf Spalten: `machine_tag_id, machine_label, model_name, photo_path, exercises`.
-
-Das vorgeschlagene `0025` ersetzt sie durch `(machine_tag_id, kind, studio_name)` und wirft damit vier Spalten weg, die `apps/web/app/t/[token]/page.tsx` und `tests/integration/fallback-inhalt.test.ts` benutzen. Step 2s Beruhigung („nur die Spaltenzahl ändert sich") ist doppelt falsch.
-
-Korrekt wäre: die vier Spalten behalten und `kind` plus `studio_name` **ergänzen**, und `join machines` zu einem Left Join machen — sonst liefert ein Aushang null Zeilen und landet auf *„Dieser Code ist nicht aktiv."* Ebenfalls offen: `0021` filtert `m.status = 'active'`, was für einen Tag ohne Gerät keine Bedeutung hat.
+**Nichts davon hat etwas gebrochen, das bereits gebaut war.** Alle Befunde lagen in Specs und im noch nicht ausgeführten Datenbankplan. Die 34 Member-Artboards und die 36 Portal-Artboards waren in sich stimmig, beide `canvas.json` vollständig, kein Artboard doppelt oder verwaist.
 
 ---
 
-## Kleinere Widersprüche
+## Die vier Entscheidungen
 
-| | Befund |
-| --- | --- |
-| **Heimatlos** | Der Satz in *Einstellungen → Studio*, der den Studio-Code zum zweiten Weg erklärt, wurde von Runde A an „den Plan aus Runde B" übergeben. **Runde Bs Spec erwähnt Einstellungen und den Studio-Code nirgends.** Der Punkt gehört niemandem. |
-| **Alter Stand** | `EinstellungenStudio.dc.html` sagt noch *„Mit diesem Code treten Mitglieder eurem Studio bei"* — die abgelöste Regel. Und es nennt Papieraushänge „Aushänge", während in beiden Runden ein *Aushang* ein geliefertes Schild mit Token ist. Ein Wort, zwei Produkte, benachbarte Bildschirme. |
-| **Notiz gegen Bildschirm** | Runde B schrieb die Portal-Notiz `note-einstieg` auf *„das kommt über den Scan eines Aushangs, ersatzweise über den Studio-Code"* — `KeinStudio.dc.html` darunter sagt weiter *„Gib den Code ein"*. Die Notiz hat recht. |
-| **Migrationsnummer** | Der Datenbankplan reserviert `0022`–`0025`. Runde B braucht „eine Migration, eine nullable Spalte" für die Charge, ohne Nummer. Auf Platte endet es bei `0021`. Wer zweitschreibt, nimmt eine belegte Nummer. |
-| **Beispielbestand** | Dasselbe Gerät heißt in der Member-App *Gerät 07 · Technogym Selection · Kraftbereich* und im Portal *Beinpresse 7 · Gym80 · Fensterseite*. |
-| **Rail-Zahl** | Vier Portal-Artboards zeigen noch *„Tags · 1 vorrätig"* statt *97*: `EinstellungenKonto`, `EinstellungenStudio`, `LeuteMitarbeiter`, `LeuteMitglieder`. Der Stimmigkeits-Durchgang `b66febe` hat sie übersprungen. |
+1. **Ein Aushangschild ist ab Lieferung gültig.** Der Betreiber legt beim Zuordnen einer Charge die Zeilen an — Gerätetags als `unassigned`, Aushangschilder als `active`. Das Portal aktiviert nie.
+2. **Die Tags-Seite listet aktive Aushangschilder einzeln, benannt über die aufgedruckte Nummer**, je mit *Sperren*.
+3. **`KeinStudio` im Portal gehört dem Trainer.** Das Studio-Code-Feld ist entfallen; Personal kommt über *Leute → Mitarbeiter* herein.
+4. **Der Member-Beispielbestand zieht auf den Portal-Bestand nach.**
 
-**Kleinkram:** Runde As Spec nummeriert Home als 22/23, die Canvas führt 20/21. Sie nennt einmal ein Studio *„Nordstraße"*, das nirgends sonst existiert. Der Datenbankplan verweist auf ein „Task 7", das es nicht gibt. Runde Bs Bildschirmtabelle zählt 15 neu, markiert aber 14 mit `+`.
+---
+
+## Die drei Befunde und was aus ihnen wurde
+
+### 1. Ein geliefertes Aushangschild konnte nie aktiv werden
+
+Runde A kannte genau einen Weg, einen Aushang zu aktivieren: `createTag(kind: 'studio')`, das die Zeile sofort `active` anlegt. **Runde B streicht `createTag` ersatzlos** (§6) und sagt: „Im Portal gibt es dafür keinen Bildschirm" (§1). Damit blieb kein Weg übrig, während `join_studio_by_tag` und `resolve_tag_fallback` beide auf `status = 'active'` filtern.
+
+**Entschieden:** Es braucht gar keinen. Der Ersatz-Constraint aus Runde A §1 verlangt für `kind = 'studio'` allein `machine_id is null` — ein aktives Schild ohne Gerät ist speicherbar. Die Aktivierung wandert dorthin, wo das Schild entsteht: in die Lieferung.
+
+**Nachgezogen:** Runde B §1 (neuer Abschnitt *„Ein Aushangschild ist ab Lieferung gültig"*), Datenbankplan Task 4 (Kasten *„Woher die Zeilen dann kommen"*, Step 3 gestrichen), `gen_katalog.py`.
+
+### 2. Der Sucher hatte keine Antwort auf die falsche Tag-Sorte
+
+Runde A verbietet einem `studio`-Tag jede `machine_id`. Runde B entscheidet zugleich, dass ein Tag erst durch den Scan benennbar wird — **der Trainer kann ein Aushangschild vor dem Scan nicht von einem Geräteaufkleber unterscheiden, und das ist Absicht.** Scannte er das falsche, war der einzige angebotene Ausgang *Verbinden*, also `machine_id` setzen: vor `0022` ein stiller Schaden, danach eine Check-Verletzung ohne Bildschirm dahinter.
+
+**Entschieden:** Eine siebte Antwort, als Sackgasse mit einem Ausgang. Nichts zu verbinden, nichts freizuschalten — das Schild ist bereits gültig und gehört an die Wand.
+
+**Nachgezogen:** Runde B §4 (siebte Zeile), `TelefonZustaende` (neunte Karte), und `TelefonKleben` sagt jetzt *„aus der Gerätepackung"* statt *„aus der Packung"* — der Fehlgriff soll nicht eingeladen werden, auch wenn er weiter möglich bleibt.
+
+### 3. Der Datenbankplan hätte den Geräte-Fallback zerstört
+
+`2026-09-01-scan-beitritt-datenbank.md` Task 6 Step 1 behauptete, `resolve_tag_fallback` gebe „heute nur `machine_tag_id`" zurück. **Das stimmte nicht.** `0021_fallback_inhalte.sql` liefert fünf Spalten. Das vorgeschlagene `0025` hätte vier davon weggeworfen, die `apps/web/app/t/[token]/page.tsx` und `tests/integration/fallback-inhalt.test.ts` benutzen. Step 2s Beruhigung („nur die Spaltenzahl ändert sich") war doppelt falsch.
+
+**Nachgezogen:** Step 1 trägt jetzt die vollständige Funktion — sieben Spalten, `kind` und `studio_name` **ergänzt**, `left join machines`, und `m.status = 'active'` in der `where`-Klausel, wo es nur für Gerätetags greift. Letzteres ist der Punkt, an dem die Migration am leichtesten falsch geschrieben wird: stünde der Filter in der Join-Bedingung, käme für ein stillgelegtes Gerät eine Zeile aus lauter Nullen zurück statt der leeren Antwort, die der Test verlangt.
+
+**Nebengewinn:** `studio_name` schließt eine Lücke im Gerätezweig. `FallbackGeraet.dc.html` zeichnet den Studionamen seit jeher in der Kopfleiste, ohne dass die Seite eine Quelle dafür hatte.
+
+---
+
+## Die kleineren Widersprüche
+
+| | Befund | Stand |
+| --- | --- | --- |
+| **Heimatlos** | Der Satz in *Einstellungen → Studio*, der den Studio-Code zum zweiten Weg erklärt, wurde von Runde A an „den Plan aus Runde B" übergeben; Runde Bs Spec erwähnt ihn nirgends. | **Erledigt.** Runde A §3 hat ihn zurückgenommen und festgelegt: der Code wird **in der App** eingegeben, das Portal zeigt ihn nur an. |
+| **Alter Stand** | `EinstellungenStudio.dc.html` sagte noch *„Mit diesem Code treten Mitglieder eurem Studio bei"* — die abgelöste Regel. | **Erledigt** in `gen_verwaltung.py`. |
+| **Ein Wort, zwei Produkte** | Dieselbe Datei nannte Papiere mit aufgedrucktem Code „Aushänge", während zwei Bildschirme weiter ein *Aushang* ein geliefertes Schild mit Token ist. | **Erledigt:** jetzt „Ausdrucke und Verträge", plus der Satz, dass Aushangschilder keinen Code tragen und gültig bleiben. |
+| **Notiz gegen Bildschirm** | Runde B schrieb `note-einstieg` auf *„das kommt über den Scan eines Aushangs, ersatzweise über den Studio-Code"* — `KeinStudio.dc.html` darunter sagte weiter *„Gib den Code ein"*. | **Anders gelöst als vermutet.** Nicht die Notiz hatte recht, sondern ihr eigener erster Satz: *„für Mitglieder gibt es hier nichts."* Beide beschrieben den Weg eines Mitglieds auf einer Seite, die keinem Mitglied gehört. Der Bildschirm hat das Code-Feld verloren, die Notiz den Satz. |
+| **Migrationsnummer** | Der Datenbankplan reserviert `0022`–`0025`, Runde B braucht „eine Migration" ohne Nummer. Auf Platte endet es bei `0021`. | **Erledigt:** `0026`, in beiden Dokumenten benannt. Aus einer Spalte sind dabei zwei geworden — die Charge und die aufgedruckte Nummer, ohne die *Sperren* auf der Tags-Seite kein Ziel hat. |
+| **Beispielbestand** | Member und Portal beschrieben zwei verschiedene Studios. | **Erledigt.** Der Konflikt war größer als die eine Zeile: neben Modell (*Technogym Selection* gegen *Gym80*) und Bereich (*Kraftbereich* gegen *Fensterseite*) lief auch die Gerätenummer auseinander — `Gerät 12` war in der App ein Kabelzug, im Portal ist 12 ein Latzug und der Kabelzug die 14. Die Member-Artboards ziehen jetzt auf den Portal-Bestand nach, einschließlich der vierten Übung am Kabelzug. |
+| **Rail-Zahl** | Vier Portal-Artboards zeigten noch *„Tags · 1 vorrätig"* statt *97*. | **Erledigt.** Kein Textfehler: `build.py` stand längst auf 97, aber `gen_verwaltung.py` — der Generator genau dieser vier Seiten — lief beim Stimmigkeits-Durchgang `b66febe` nicht mit. |
+
+**Kleinkram, ebenfalls erledigt:** Runde A nummerierte Home als 22/23, die Canvas führt 20/21 (und Home-leer **vor** Home). Runde A nannte in *einem* Absatz zweimal ein Studio *„Nordstraße"*, das nirgends sonst existiert — jetzt „Kraftwerk Nord". Der Datenbankplan verwies auf ein „Task 7", das es nicht gibt. Runde Bs Bildschirmtabelle zählte 15 neu, markierte aber 14 mit `+`.
 
 ---
 
 ## Der Datenbankplan, Aufgabe für Aufgabe
 
-Er ist noch nicht ausgeführt. Nach Runde B gilt:
+Er ist weiterhin **nicht ausgeführt** — auf Platte endet es bei `0021`. Nach dieser Runde gilt:
 
 | Aufgabe | Stand |
 | --- | --- |
-| **1 · `tag_kind` und Constraint-Umbau** | **Gültig.** Runde B übernimmt `kind` ausdrücklich und braucht es für die Unterscheidung Gerätetags/Aushangschilder. Nur die Migrationsnummer ist zu klären. |
-| **2 · `join_studio_by_tag`** | **Gültig.** Runde B zitiert die Funktion zustimmend. `on conflict do nothing` deckt genau den Fall ab, den *„Probe scannen"* erzeugt. |
-| **3 · Selbstaustritt-Policy** | **Gültig.** Von Runde B unberührt. |
-| **4 · Fachschicht** | **Halb tot.** Step 3 (`createTag` erweitern) ist gestrichen — und schlimmer als vorzeitig: er verdrahtet „ein Aushang ist immer sofort aktiv", während `Tags.dc.html` vier vorrätige Aushänge zeichnet. Die ersten zwei Tests kodieren dieselbe falsche Regel. **Steps 4–6 (`CatalogTag.kind`) bleiben nötig** — ohne sie kann die Tags-Seite die Sorten nicht trennen. |
+| **1 · `tag_kind` und Constraint-Umbau** | **Gültig, und wichtiger als gedacht.** Der Constraint ist nicht nur Schutz, er ist die Grundlage von Entscheidung 1: nur weil er für `kind='studio'` allein `machine_id is null` verlangt, kann ein Schild ohne Gerät aktiv sein. |
+| **2 · `join_studio_by_tag`** | **Gültig.** `on conflict do nothing` deckt genau den Fall ab, den *„Probe scannen"* erzeugt. |
+| **3 · Selbstaustritt-Policy** | **Gültig.** Von beiden Runden unberührt. |
+| **4 · Fachschicht** | **Auf den Lesepfad zurückgeschnitten.** Step 3 ist gestrichen und trägt jetzt die Begründung; die beiden Tests, die „ein Aushang entsteht durch `createTag`" kodierten, sind mit ihm weg. Steps 4–6 (`CatalogTag.kind`) bleiben nötig. |
 | **5 · Portal-Aushang** | **Tot, richtig gestrichen.** |
-| **6 · Web-Fallback** | **Step 1 und 2 sind fehlerhaft** (Befund 3 oben). **Steps 3–6 bleiben gültig**, die Artboards dafür stehen. |
+| **6 · Web-Fallback** | **Steps 1 und 2 sind neu geschrieben** (Befund 3). Steps 3–6 bleiben gültig, die Artboards dafür stehen. |
+
+**Nicht in diesem Plan enthalten:** das Anlegen der Lieferzeilen. Das ist Betreiberarbeit und gehört in einen eigenen Plan.
 
 ---
 
-## Was stimmig ist
+## Was stimmig war und geblieben ist
 
-Der Tokenraum, `join_studio_by_tag`, die Selbstaustritt-Policy, `kind` selbst, beide Canvases mit ihren Zählungen und Dateilisten, und die Übernahme von Runde As §1 durch Runde B. **Der Bruch liegt nicht zwischen den Runden, sondern in der Lücke, die beide für die jeweils andere offen gelassen haben.**
+Der Tokenraum, `join_studio_by_tag`, die Selbstaustritt-Policy, `kind` selbst, beide Canvases mit ihren Zählungen und Dateilisten, und die Übernahme von Runde As §1 durch Runde B. **Der Bruch lag nicht zwischen den Runden, sondern in der Lücke, die beide für die jeweils andere offen gelassen haben** — und Lücken schließt man nicht, indem man beide Seiten noch einmal liest, sondern indem jemand entscheidet, wem sie gehört.
