@@ -44,6 +44,12 @@ export default async function TagsPage({
       .map((geraet) => ({ id: geraet.id, label: geraet.label, modell: modell.name })),
   );
 
+  const geliefert = katalog.shipments
+    .filter((lieferung) => lieferung.kind === "machine")
+    .reduce((summe, lieferung) => summe + lieferung.quantity, 0);
+  const verbraucht = katalog.tags.filter((tag) => tag.kind === "machine").length;
+  const vorraetig = geliefert - verbraucht;
+
   return (
     <div className={styles.content}>
       <h1 className={styles.pageTitle}>Tags</h1>
@@ -52,6 +58,32 @@ export default async function TagsPage({
         welchem Gerät hängt, entscheidet der Scan am Gerät. Aushangschilder sind
         ab Lieferung gültig und hängen an keinem Gerät.
       </p>
+
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <h2 className={styles.sectionTitle}>Lieferungen</h2>
+          <span className={styles.sectionNote}>
+            {geliefert === 0 ? "Noch keine Lieferung." : `${vorraetig} vorrätig`}
+          </span>
+        </div>
+        {katalog.shipments.length > 0 ? (
+          <ul className={styles.rows}>
+            {katalog.shipments.map((lieferung) => (
+              <li key={lieferung.id} className={styles.row}>
+                <div className={styles.rowMain}>
+                  <div className={styles.rowTitle}>
+                    Charge {lieferung.batchCode} · {lieferung.quantity}{" "}
+                    {lieferung.kind === "studio" ? "Aushangschilder" : "Tags"}
+                  </div>
+                  <div className={styles.rowMeta}>
+                    Geliefert {datum(lieferung.shippedOn)}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
 
       <section className={styles.section}>
         <div className={styles.sectionHead}>
@@ -99,7 +131,8 @@ export default async function TagsPage({
                       {geraet ? `${geraet.label} — ${geraet.modell}` : "ohne Gerät"}
                     </div>
                     <div className={styles.rowMeta}>
-                      Angelegt {datum(tag.createdAt)}
+                      Charge {tag.batchCode} · {tag.batchIndex} · angelegt{" "}
+                      {datum(tag.createdAt)}
                       {tag.status === "revoked" ? " · bleibt als Nachweis stehen" : ""}
                     </div>
                   </div>

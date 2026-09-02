@@ -50,6 +50,7 @@ export type {
   CatalogMachine,
   CatalogModel,
   CatalogSettingDefinition,
+  CatalogShipment,
   CatalogTag,
   EquipmentModelInput,
   StudioCatalog,

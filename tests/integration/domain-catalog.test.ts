@@ -22,6 +22,7 @@ import {
   userClient,
 } from "./helpers/clients.js";
 import { tagAnlegen } from "../helpers/tags.js";
+import { chargeAnlegen, lieferungAnlegen } from "@fitretro/domain/chargen";
 
 let studioA: string;
 let studioB: string;
@@ -621,5 +622,28 @@ describe("Tag-Sorte im Katalog", () => {
     const aushang = katalog.tags.find((tag) => tag.kind === "studio");
     expect(aushang).toBeDefined();
     expect(aushang?.machineId).toBeNull();
+  });
+});
+
+describe("Lieferungen im Katalog", () => {
+  it("liefert Charge und Nummer je Tag", async () => {
+    const client = await userClient(trainerA);
+    const katalog = await getStudioCatalog(client, studioA);
+    expect(katalog.tags.length).toBeGreaterThan(0);
+    expect(katalog.tags.every((tag) => typeof tag.batchCode === "string")).toBe(true);
+    expect(katalog.tags.every((tag) => tag.batchIndex >= 1)).toBe(true);
+  });
+
+  it("liefert die Lieferungen des Studios mit", async () => {
+    const admin = serviceClient();
+    const code = `katalog-${crypto.randomUUID()}`;
+    await chargeAnlegen(admin, { code, kind: "machine", menge: 100 });
+    await lieferungAnlegen(admin, { chargeCode: code, studioId: studioA, menge: 100 });
+
+    const client = await userClient(trainerA);
+    const katalog = await getStudioCatalog(client, studioA);
+    const lieferung = katalog.shipments.find((zeile) => zeile.batchCode === code);
+    expect(lieferung?.quantity).toBe(100);
+    expect(lieferung?.kind).toBe("machine");
   });
 });

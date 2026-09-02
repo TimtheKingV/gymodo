@@ -588,7 +588,17 @@ export type CatalogTag = {
   status: string;
   kind: "machine" | "studio";
   machineId: string | null;
+  batchCode: string;
+  batchIndex: number;
   createdAt: string;
+};
+
+export type CatalogShipment = {
+  id: string;
+  batchCode: string;
+  kind: "machine" | "studio";
+  quantity: number;
+  shippedOn: string;
 };
 
 export type StudioCatalog = {
@@ -596,6 +606,7 @@ export type StudioCatalog = {
   studioName: string;
   models: CatalogModel[];
   tags: CatalogTag[];
+  shipments: CatalogShipment[];
 };
 
 /**
@@ -634,9 +645,15 @@ export async function getStudioCatalog(
 
   const { data: tags } = await client
     .from("machine_tags")
-    .select("id, status, kind, machine_id, created_at")
+    .select("id, status, kind, machine_id, batch_index, created_at, tag_batches (code)")
     .eq("studio_id", studioId)
     .order("created_at", { ascending: false });
+
+  const { data: lieferungen } = await client
+    .from("tag_shipments")
+    .select("id, quantity, shipped_on, tag_batches (code, kind)")
+    .eq("studio_id", studioId)
+    .order("shipped_on", { ascending: false });
 
   type ModelRow = {
     id: string;
@@ -681,6 +698,23 @@ export async function getStudioCatalog(
       status: string;
       machine_tags: Array<{ id: string; status: string }>;
     }>;
+  };
+
+  type TagRow = {
+    id: string;
+    status: string;
+    kind: "machine" | "studio";
+    machine_id: string | null;
+    batch_index: number;
+    created_at: string;
+    tag_batches: { code: string } | null;
+  };
+
+  type ShipmentRow = {
+    id: string;
+    quantity: number;
+    shipped_on: string;
+    tag_batches: { code: string; kind: "machine" | "studio" } | null;
   };
 
   const zahl = (wert: number | string | null): number | null =>
@@ -739,16 +773,29 @@ export async function getStudioCatalog(
       })),
   }));
 
+  const shipments: CatalogShipment[] = ((lieferungen ?? []) as unknown as ShipmentRow[]).map(
+    (zeile) => ({
+      id: zeile.id,
+      batchCode: zeile.tag_batches?.code ?? "",
+      kind: zeile.tag_batches?.kind ?? "machine",
+      quantity: zeile.quantity,
+      shippedOn: zeile.shipped_on,
+    }),
+  );
+
   return {
     studioId: studio.id,
     studioName: studio.name,
     models,
-    tags: (tags ?? []).map((tag) => ({
+    tags: ((tags ?? []) as unknown as TagRow[]).map((tag) => ({
       id: tag.id,
       status: tag.status,
       kind: tag.kind,
       machineId: tag.machine_id,
+      batchCode: tag.tag_batches?.code ?? "",
+      batchIndex: tag.batch_index,
       createdAt: tag.created_at,
     })),
+    shipments,
   };
 }
