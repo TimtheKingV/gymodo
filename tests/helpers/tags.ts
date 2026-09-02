@@ -15,6 +15,34 @@ export type TagZeile = {
 
 export type AngelegterTag = { id: string; token: string };
 
+type ChargenEintrag = { id: string; naechsteNummer: number };
+
+const chargen = new Map<TagSorte, ChargenEintrag>();
+
+/**
+ * Eine Charge je Sorte und Testdatei. Sie ist gross genug, dass keine Datei
+ * sie ausschoepft, und die laufende Nummer zaehlt hoch -- (batch_id,
+ * batch_index) ist unique.
+ */
+export async function chargeFuerTest(
+  admin: SupabaseClient,
+  kind: TagSorte,
+): Promise<ChargenEintrag> {
+  const vorhanden = chargen.get(kind);
+  if (vorhanden) return vorhanden;
+
+  const { data, error } = await admin
+    .from("tag_batches")
+    .insert({ code: `test-${kind}-${crypto.randomUUID()}`, kind, quantity: 10_000 })
+    .select("id")
+    .single<{ id: string }>();
+  if (error) throw error;
+
+  const eintrag: ChargenEintrag = { id: data.id, naechsteNummer: 1 };
+  chargen.set(kind, eintrag);
+  return eintrag;
+}
+
 /**
  * Eine machine_tags-Zeile fuer einen Test anlegen -- mit dem Service-Client,
  * also an RLS vorbei.
@@ -37,13 +65,25 @@ export async function tagsAnlegen(
 ): Promise<AngelegterTag[]> {
   const tokens = zeilen.map((zeile) => zeile.token ?? createTagToken());
 
-  const datensaetze = zeilen.map((zeile, index) => ({
-    studio_id: zeile.studioId ?? null,
-    machine_id: zeile.machineId ?? null,
-    kind: zeile.kind ?? "machine",
-    status: zeile.status ?? "unassigned",
-    token: tokens[index]!,
-  }));
+  const nachSorte = new Map<TagSorte, ChargenEintrag>();
+  for (const zeile of zeilen) {
+    const kind = zeile.kind ?? "machine";
+    if (!nachSorte.has(kind)) nachSorte.set(kind, await chargeFuerTest(admin, kind));
+  }
+
+  const datensaetze = zeilen.map((zeile, index) => {
+    const kind = zeile.kind ?? "machine";
+    const charge = nachSorte.get(kind)!;
+    return {
+      studio_id: zeile.studioId ?? null,
+      machine_id: zeile.machineId ?? null,
+      kind,
+      status: zeile.status ?? "unassigned",
+      token: tokens[index]!,
+      batch_id: charge.id,
+      batch_index: charge.naechsteNummer++,
+    };
+  });
 
   const { data, error } = await admin
     .from("machine_tags")
