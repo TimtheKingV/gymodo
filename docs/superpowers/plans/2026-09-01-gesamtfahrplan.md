@@ -1,14 +1,17 @@
 # Gesamtfahrplan — Stand, Lücken und Reihenfolge
 
-**Stand:** 1. September 2026
+**Stand:** 2. September 2026 *(fortgeschrieben; Erstfassung 1. September)*
 **Status:** Bestandsaufnahme. **Kein ausführbarer Task-Plan** — dieses Dokument ordnet die vorhandenen Pläne, es ersetzt keinen.
 **Bezugsstand:**
 
 | | Commit | Inhalt |
 | --- | --- | --- |
-| `master` | `7570aad` | letzter Stand mit Code |
-| `designplan` | `e00268c` | Entwurfsarbeit plus der umgebungsfaehige Auth-Config-Umbau vom 1. September |
-| `worktree/brave-forest-c9d8` | `a2810c7` | Tag-Lieferung: Spec + Umsetzungsplan, **noch nicht gemerged** |
+| `master` | `1ac4c4d` | alles zusammengeführt: beide Entwurfsstränge und der gesamte Code der Sessions vom 1./2. September |
+| `designplan` | `7c1f18c` | in `master` aufgegangen |
+| `design-geräteeinrichtung` | `13d065b` | in `master` aufgegangen |
+| `worktree/brave-forest-c9d8` | `2b2be9c` | Tag-Lieferung, in `master` aufgegangen |
+
+> **Was sich gegenüber der Erstfassung geändert hat, in einem Satz:** Sie beschrieb einen Stand, an dem die entworfenen Baustellen *zu null* gebaut waren — inzwischen stehen Phase 1 ganz und von Phase 2 die ersten beiden Punkte. Die Abschnitte 1 bis 5 sind entsprechend fortgeschrieben; die Betriebsbefunde aus 4a–4c bleiben als Lehre stehen, auch wo ihr Anlass erledigt ist.
 
 ---
 
@@ -22,9 +25,11 @@ Es ist bewusst kurz und verweist. Die Wahrheit über einen Bauabschnitt steht im
 
 ## 1. Der Stand in einem Satz
 
-**Das M1-Fundament trägt; die letzten beiden Tage waren reine Entwurfsarbeit, und die daraus entstandenen Baustellen sind zu null gebaut.**
+**Der Abstand zwischen Entwurf und Code, den die Erstfassung als Quelle aller Lücken benannte, ist für die Tag-Kette und die halbe Phase 2 geschlossen.**
 
-Als dieses Dokument entstand, war `git diff master designplan -- . ':(exclude)docs'` **leer** — 29 Commits, keine Zeile Code. Inzwischen steht dort der Auth-Config-Umbau vom 1. September (`config.toml`, `.env.example`, `.env.production.example`, `.gitignore`); er war Voraussetzung fuer den Template-Push und hat mit den Baustellen aus Abschnitt 3 nichts zu tun. **Am Anwendungscode aendert sich weiterhin nichts:** auf Platte endet es bei `0021_fallback_inhalte.sql`.
+Die Erstfassung hielt fest: `git diff master designplan -- . ':(exclude)docs'` war **leer** — 29 Commits, keine Zeile Code, auf Platte endete es bei `0021_fallback_inhalte.sql`. Zwei Sessions später liegen **zehn weitere Migrationen** (`0022`–`0031`), die Fachschicht dazu, fünf neue Portalseiten und zehn neue Testdateien. Was in Abschnitt 3 als *„entworfen, aber nicht gebaut"* stand, ist zur Hälfte abgeräumt.
+
+Das Ungleichgewicht aus der Erstfassung bleibt trotzdem bestehen, nur verschoben: **das Portal hat jetzt sein Backend fast beisammen und keine Gestaltung; die Member-App hat ihr Backend und keine Zeile Code.**
 
 ---
 
@@ -33,40 +38,50 @@ Als dieses Dokument entstand, war `git diff master designplan -- . ':(exclude)do
 | Bereich | Stand |
 | --- | --- |
 | Monorepo, CI, Vercel (`gymodo-web.vercel.app`), AASA-Route | ✅ |
-| Migrationen `0001`–`0021`, RLS mit Positiv-, Negativ- und Cross-Tenant-Test je Policy | ✅ |
+| Migrationen `0001`–`0031`, RLS mit Positiv-, Negativ- und Cross-Tenant-Test je Policy | ✅ |
 | Gerätekatalog — `equipment_models`, `equipment_setting_definitions`, `exercises`, `instruction_assets`, `machines`, `machine_tags` | ✅ |
 | Trainingsdaten — `workout_sessions`, `workout_sets`, `member_machine_calibrations`, `progression_suggestions` | ✅ |
 | Fachschicht `@fitretro/domain`, inkl. deterministischer Progressionsregel | ✅ |
 | Sechs Endpoints unter `/api/v1` (Spec 6.3) + Web-Fallback `/t/<token>` | ✅ |
-| Trainerportal: Geräte, Modelle, Tags, Medien-Upload | ✅ funktional, **ungestaltet** |
-| Testlage: 27 Integrationsdateien, 3 E2E-Dateien; laut `trainerportal-medien` 342 Integrations-, 39 Unit-, 8 E2E-Tests | ✅ grün |
+| **Tag-Kette** — zweite Tag-Sorte, Beitritt durch Scannen, Selbstaustritt, Klartext-Tokenraum, Chargen/Lieferungen/Halde, `inspect_tag`/`bind_tag_to_machine`, Betreiberwerkzeug `pnpm tags` | ✅ neu |
+| **Auth** — Passwort statt OTP, Registrierung mit Bestätigungsmail, Passwort vergessen und zurücksetzen, eigene Mail-Templates | ✅ neu |
+| **Leute** — Beitrittscode, Mitgliederliste mit E-Mail, Rollen hoch- und herabstufen, Entfernen, Kein-Studio-Zustand | ✅ neu |
+| Trainerportal: Geräte, Modelle, Tags, Medien-Upload, Leute | ✅ funktional, **ungestaltet** |
+| Betriebswerkzeug: `pnpm smoke:web`, `pnpm smoke:migrations` | ✅ neu, siehe 4a/4c |
+| Testlage: **37** Integrationsdateien, **5** E2E-Dateien (vorher 27 / 3) | ✅ grün |
 
-**Der Gerätekatalog ist weiterhin der einzige Bereich, der vollständig trägt** — der Kassensturz aus `2026-08-31-trainerportal-struktur-design.md` §7 gilt unverändert.
+**Der Kassensturz aus `2026-08-31-trainerportal-struktur-design.md` §7 ist überholt.** Er nannte den Gerätekatalog als einzigen vollständig tragenden Bereich; das gilt nicht mehr. Die Tag-Kette trägt vom Herstellungslos bis zum Scan vor dem Gerät, und von den vier dort als „am weitesten offen" bezeichneten Punkten sind zwei zu (Leute, Auth).
 
 ---
 
 ## 3. Was entworfen, aber nicht gebaut ist
 
-70 Artboards (34 Member, 36 Portal) und fünf Specs stehen. Dahinter:
+73 Artboards (34 Member, 39 Portal) und fünf Specs stehen. Dahinter:
 
 | Baustelle | Migrationen | Umsetzungsplan | Gebaut |
 | --- | --- | --- | --- |
-| **Beitritt durch Scannen** — `tag_kind`, `join_studio_by_tag`, Selbstaustritt, Fallback-Erweiterung | `0022`–`0025` | ✅ `2026-09-01-scan-beitritt-datenbank.md`, 5 Aufgaben | ❌ |
-| **Tags als Lieferung** — Klartext-Tokenraum, Chargen/Lieferungen/Halde, `inspect_tag`/`bind_tag_to_machine`, Betreiberwerkzeug | `0026`–`0028` | ✅ `2026-09-01-tag-lieferung.md`, 8 Aufgaben — **im Worktree, nicht gemerged** | ❌ |
+| ~~**Beitritt durch Scannen**~~ — `tag_kind`, `join_studio_by_tag`, Selbstaustritt, Fallback-Erweiterung | `0022`–`0025` | ✅ `2026-09-01-scan-beitritt-datenbank.md`, 5 Aufgaben | ✅ **2. September** |
+| ~~**Tags als Lieferung**~~ — Klartext-Tokenraum, Chargen/Lieferungen/Halde, `inspect_tag`/`bind_tag_to_machine`, Betreiberwerkzeug | `0026`–**`0029`** | ✅ `2026-09-01-tag-lieferung.md`, 8 Aufgaben | ✅ **2. September** |
+| ~~**Auth-Umstellung**~~ — OTP → Passwort, Registrierung, Studio-Beitritt | — | ❌ ohne Plan gebaut | ✅ **2. September** |
+| ~~**Leute**~~ — Mitglieder und Mitarbeiter | `0030`–`0031` | ❌ ohne Plan gebaut | ✅ **2. September** |
 | **Sucher im Portal** — `getUserMedia` + Decoder | — | ❌ | ❌ |
-| **Auth-Umstellung** — OTP → Passwort, Registrierung, Studio-Beitritt | — | ❌ | ❌ |
-| **Leute** — Mitglieder und Mitarbeiter | — | ❌ | ❌ |
+| **Einrichtung am Gerät** — 16 `Telefon*`-Artboards, der Gang durch die Halle | — | ❌ Spec steht, Plan fehlt | ❌ |
 | **Studio-Einstellungen, Datenschutzgrenze, Überblick** | — | ❌ | ❌ |
 | **Kurse** — drei Tabellen, Platzvergabe unter Nebenläufigkeit | — | ❌ nur Vorabnotiz (84 Zeilen) | ❌ |
-| **Portal-Frontend nach den 36 Artboards** | — | ❌ | ❌ |
+| **Portal-Frontend nach den 39 Artboards** | — | ❌ | ❌ |
 | **iOS Member-App** | — | ❌ | ❌ `apps/` enthält nur `web` |
 
-### Die vier, die am weitesten offen stehen
+### Was von den vier „am weitesten offenen" übrig ist
 
-- **Leute:** `memberships_select_own` erlaubt heute genau die *eigene* Zeile. Ein Trainer kann seine Mitgliederliste **nicht einmal lesen.** Es braucht vier Policies, wo eine steht.
-- **Studio-Einstellungen:** `studios` hat `studios_select` und keine Spalte für die Stornofrist. Speichern ist nicht möglich.
+Die Erstfassung nannte vier. Zwei sind zu:
+
+- ~~**Leute:**~~ `memberships_select_own` erlaubte genau die *eigene* Zeile — ein Trainer konnte seine Mitgliederliste nicht einmal lesen. `0031` legt die vier Policies nach (`memberships_select_staff`, `_update_staff`, `_delete_staff`, dazu `list_studio_members` für die E-Mail-Adresse, die außerhalb der `public`-Policies liegt). Die Inhaberzeile ist über alle drei Pfade unerreichbar — die Regel *„niemand entzieht sich die letzte Inhaberrolle"* ist damit von der Policy erzwungen, nicht von einer Zählfunktion.
+- ~~**Auth:**~~ `signInWithPassword` steht, dazu Registrierung, Bestätigung, Passwort vergessen und zurücksetzen. **Neuer Befund dazu:** `auth_leaked_password_protection` ist im Projekt **aus**. Solange nur OTP lief, war die Einstellung gegenstandslos; mit Passwörtern ist sie es nicht mehr. Ein Haken im Dashboard (Authentication → Policies), kein Code — aber er gehört gesetzt, bevor der erste Betreiber sich anmeldet.
+
+Zwei stehen unverändert:
+
+- **Studio-Einstellungen:** `studios` hat `studios_select` und keine Spalte für die Stornofrist. Speichern ist nicht möglich. *(`0030` hat `join_code` und `join_code_active` an die Tabelle gehängt — das war Leute, nicht Einstellungen.)*
 - **Datenschutzgrenze:** vier Policies zu ändern, eine Aggregatfunktion zu bauen. Sie schaltet zugleich den *Überblick* frei.
-- **Auth:** jeder Entwurf zeigt Passwort (`MemberPasswort`, `MemberRegistrieren`, `PasswortVergessen`, `Verifizieren`). Der Code kennt ausschließlich E-Mail-OTP — `signInWithPassword` kommt im Repo nicht vor.
 
 ---
 
@@ -119,17 +134,28 @@ Ursache: Das Projekt wurde am 30. August zurückgesetzt und neu migriert — dam
 
 **Nachgezogen am 1. September:** alle zehn angewendet, `supabase migration list` meldet Gleichstand über 21 Einträge, und die Produktion antwortet danach unverändert (`/`, `/login`, `/api/aasa`, `/t/<token>` mit 200, `/api/v1/me/bootstrap` mit ungültigem JWT mit 401).
 
-**Die Lehre, die bleibt:** ein Rückstand dieser Art meldet sich nicht von selbst — er wartet auf den ersten echten Datensatz. Deshalb fragt ihn jetzt `pnpm smoke:migrations` ab. Er hat bei seinem ersten Lauf prompt die nächste Drift gefunden: `0022`–`0024` liegen seit dem Worktree-Merge auf Platte und sind noch nicht im Projekt.
+**Die Lehre, die bleibt:** ein Rückstand dieser Art meldet sich nicht von selbst — er wartet auf den ersten echten Datensatz. Deshalb fragt ihn jetzt `pnpm smoke:migrations` ab. Er hat bei seinem ersten Lauf prompt die nächste Drift gefunden: `0022`–`0024` lagen seit dem Worktree-Merge auf Platte und noch nicht im Projekt.
+
+### 4d. Die zweite Drift — geschlossen am 2. September, auf einem Umweg
+
+Am 2. September war der Rückstand auf **zehn** angewachsen (`0022`–`0031`, Cloud auf `0021`). Alle zehn sind angewendet; `list_migrations` meldet Gleichstand über 31 Einträge, und eine Gegenprobe am Schema bestätigt neun Funktionen, `tag_batches`/`tag_shipments`, `machine_tags.token` mit generiertem `token_hash`, `studios.join_code` und fünf Policies auf `studio_memberships`.
+
+**Der Umweg ist der eigentliche Befund.** `supabase db push` und `supabase migration list` scheitern auf dieser Maschine mit `LegacyDbConfigLoginRoleNetworkError: TransportError`, während `api.supabase.com` per HTTPS erreichbar ist (401 ohne Token). Die CLI baut eine **direkte Postgres-Verbindung** zum Pooler auf; die HTTPS-Management-API tut das nicht. Ausgehend gesperrter 5432/6543 ist die naheliegende Erklärung. Angewendet wurden die zehn deshalb über den Supabase-MCP-Server, der über die Management-API geht.
+
+Zwei Dinge, die daraus zu merken sind:
+
+- **`pnpm smoke:migrations` ist auf dieser Maschine blind.** Er ruft die CLI auf und bekommt denselben Transportfehler — er meldet dann `exit 2` („lief nicht"), nicht `exit 1` („Drift"), unterscheidet also sauber zwischen *kaputt* und *auseinander*. Das ist die richtige Trennung, aber sie heißt auch: der Abgleich muss von woanders laufen oder über die API gehen.
+- **`apply_migration` über MCP vergibt eigene Zeitstempel-Versionen** (`20260902152032` statt `0026`). Das hätte `supabase migration list` dauerhaft als Drift gemeldet, obwohl das Schema stimmt. Die Einträge wurden anschließend auf `0022`–`0031` normalisiert. Wer den Weg wieder geht, muss das mitmachen.
 
 ### Das Ungleichgewicht, das die Reihenfolge bestimmt
 
 | | Web-Portal | iOS Member-App |
 | --- | --- | --- |
-| Design | 36 Artboards ✅ | 34 Artboards ✅ |
-| Backend | teils — Katalog ✅, vier Bereiche offen | vollständig für M1 ✅ |
-| Frontend-Code | fünf Seiten, ungestaltet | **null** |
+| Design | 39 Artboards ✅ | 34 Artboards ✅ |
+| Backend | Katalog ✅, Tag-Kette ✅, Auth ✅, Leute ✅ — **zwei** Bereiche offen | vollständig für M1 ✅ |
+| Frontend-Code | acht Seiten, ungestaltet | **null** |
 
-Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Das Portal ist umgekehrt: Gerüst da, Backend halb.
+Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Das Portal hat sein Backend jetzt fast beisammen — offen sind Studio-Einstellungen und die Datenschutzgrenze — und weiterhin keine Gestaltung.
 
 ---
 
@@ -140,50 +166,72 @@ Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Da
 - [x] **SMTP:** Supabase Pro, entschieden und gebucht 1. September (Organisation `Gymodo`)
 - [x] **Template ins Projekt gepusht**, per leerem Folge-Diff belegt
 - [x] **Echte OTP-Mail mit sechsstelligem Code angekommen** — Blocker 1 ist zu
-- [x] **`supabase db push`** — zehn Migrationen nachgezogen, lokal und Cloud stehen auf `0021` (Abschnitt 4c)
+- [x] **`supabase db push`** — zehn Migrationen nachgezogen, lokal und Cloud standen auf `0021` (Abschnitt 4c)
+- [x] **Zweite Drift geschlossen** — `0022`–`0031` angewendet, Gleichstand über 31 Einträge (Abschnitt 4d)
+- [ ] **`auth_leaked_password_protection` einschalten** — seit der Passwort-Umstellung fällig, ein Haken im Dashboard
 - [ ] **Mac-Übernahme:** wann — und wird vorher NFC oder QR entschieden
 - [ ] **Kurse:** Teil von M2 oder vertagt (der größte ungeplante Brocken)
 
-### Phase 1 — Die Tag-Kette schließen
+### Phase 1 — Die Tag-Kette schließen ✅ *abgeschlossen 2. September*
 
-Der einzige Strang, in dem Design, Datenbank und Umsetzungsplan bis zum Ende durchgezogen sind. Die Reihenfolge ist nicht wählbar:
+Der einzige Strang, in dem Design, Datenbank und Umsetzungsplan bis zum Ende durchgezogen waren. Die Reihenfolge war nicht wählbar, und sie hat gehalten:
 
 ```
-Worktree a2810c7 nach designplan mergen
+Worktree 2b2be9c gemerged                       ✅
    ↓
-0022–0025   scan-beitritt-datenbank.md          5 Aufgaben
+0022–0025   scan-beitritt-datenbank.md          ✅ 5 Aufgaben
    ↓        (tag_kind + Constraint, join_studio_by_tag,
    ↓         Selbstaustritt, Web-Fallback)
    ↓
-0026–0028   tag-lieferung.md                    8 Aufgaben
+0026–0029   tag-lieferung.md                    ✅ 8 Aufgaben
             Testhelfer → createTag-Rückbau → Klartext →
-            Chargen → Funktionen → pnpm tags → TagZuweisen → Vorrat
+            Chargen → Funktionen → pnpm tags → TagBinden → Vorrat
 ```
 
-`tag-lieferung.md` nennt die Abhängigkeit in seinen Global Constraints selbst: *„Auf Platte muss `0025` liegen, bevor Aufgabe 3 beginnt."*
+Aus den drei geplanten Migrationen der Tag-Lieferung sind vier geworden: `0029_tag_batches_read` kam beim Abschlussreview dazu, weil `tag_batches` ohne Policy zwar ein *unverbundenes* Studio richtig aussperrte, aber auch dem verbundenen die eigene Charge verbarg — die Tags-Seite konnte „Charge 7" nicht anzeigen.
 
-**Nebengewinn, der die Reihenfolge rechtfertigt:** Aufgabe 7 baut `TagZuweisen` auf ein Token-Textfeld um. Damit steht der Rückfallweg für den Sucher, **bevor** der Sucher gebaut wird — und `einrichtung-am-geraet-design.md` §7 verliert seinen *„einzigen Ausfallpunkt ohne Rückfallweg"*.
+**Der Nebengewinn ist eingetreten:** Aufgabe 7 hat `TagZuweisen` zu `TagBinden` auf ein Token-Textfeld umgebaut. Der Rückfallweg für den Sucher steht damit, **bevor** der Sucher gebaut ist — `einrichtung-am-geraet-design.md` §7 hat seinen *„einzigen Ausfallpunkt ohne Rückfallweg"* verloren.
 
-### Phase 2 — Portal-Backend-Lücken
+### Phase 2 — Portal-Backend-Lücken *(halb)*
 
-Vier Bauabschnitte, **je ein eigener Umsetzungsplan, keiner existiert.** Reihenfolge nach Abhängigkeit:
+Vier Bauabschnitte waren vorgesehen. Die ersten beiden sind gebaut — **ohne Umsetzungsplan, direkt aus Spec und Artboards.** Das hat funktioniert und ist trotzdem kein Präzedenzfall: beide waren eng umrissen (eine Migration plus eine Seite), was für die verbleibenden zwei nicht gilt.
 
-1. **Auth** — OTP → Passwort, Registrierung, Studio-Beitritt *(braucht Phase 0)*
-2. **Leute** — vier Policies statt einer
-3. **Studio-Einstellungen** — Spalten am Studio, Stornofrist
-4. **Datenschutzgrenze** — vier Policies + Aggregatfunktion → schaltet *Überblick* frei
+1. ~~**Auth**~~ — Passwort, Registrierung, Bestätigung, Zurücksetzen ✅
+2. ~~**Leute**~~ — `0030` Beitrittscode, `0031` vier Policies statt einer ✅
+3. **Studio-Einstellungen** — Spalten am Studio, Stornofrist ❌
+4. **Datenschutzgrenze** — vier Policies + Aggregatfunktion → schaltet *Überblick* frei ❌
 
-### Phase 3 — Kurse
+Punkt 4 hängt an Punkt 3 nicht fachlich, aber beide fassen `studios` an; nacheinander gebaut ersparen sie sich eine Migration, die die andere wieder anfasst.
 
-Drei Tabellen, Platzvergabe unter Nebenläufigkeit, Endpoints, Server Actions. Heute nur `2026-08-30-kurse-datenmodell.md` als Vorabnotiz.
+### Phase 3 — Einrichtung am Gerät
 
-### Phase 4 — Portal-Frontend
+Die 16 `Telefon*`-Artboards: der Gang durch die Halle, sechs Schritte, Modell → Einstellungen → Gerät → Tag → Übungen → Video. Hier sitzt **der Sucher** — `getUserMedia` und ein Decoder im Browser, weil Safari `BarcodeDetector` nicht kennt. Spec steht (`2026-09-01-einrichtung-am-geraet-design.md`), Umsetzungsplan fehlt.
 
-Die 36 Artboards umsetzen, plus **der Sucher** — `getUserMedia` und ein Decoder im Browser, weil Safari `BarcodeDetector` nicht kennt. Der einzige echte Neubau, der nach Phase 1 übrig bleibt.
+Der größte Brocken mit fertiger Spec, und der einzige echte Neubau, der nach Phase 1 übrig bleibt. Das Risiko ist gedeckt: der Rückfallweg über das Token-Textfeld steht seit `TagBinden`.
 
-### Phase 5 — iOS auf dem Mac
+### Phase 4 — Kurse
 
-M0 Task 7 und 8, danach die 34 Member-Artboards. **Kann ab Phase 1 parallel laufen** — das Backend der Member-App steht.
+Drei Tabellen, Platzvergabe unter Nebenläufigkeit, Endpoints, Server Actions. Heute nur `2026-08-30-kurse-datenmodell.md` als Vorabnotiz — der einzige Bereich ganz ohne Spec.
+
+### Phase 5 — Portal-Frontend
+
+Die 39 Artboards gestalterisch umsetzen. Kommt zuletzt, weil erst dann feststeht, welche Seiten es überhaupt gibt.
+
+### Phase 6 — iOS auf dem Mac
+
+M0 Task 7 und 8, danach die 34 Member-Artboards. **Kann ab sofort parallel laufen** — das Backend der Member-App steht vollständig, und Phase 1 ist zu.
+
+### Was parallel geht und was nicht
+
+Nach Phase 1 zerfällt die Arbeit in drei Stränge, die einander nicht berühren:
+
+| Strang | Inhalt | Berührt |
+| --- | --- | --- |
+| **A** | Phase 2, Rest — Studio-Einstellungen, dann Datenschutzgrenze | `studios`, neue Migrationen |
+| **B** | Phase 3 — Einrichtung am Gerät samt Sucher | eigene Telefonseiten |
+| **C** | Phase 6 — iOS | eigenes Repo-Verzeichnis, blockiert nur durch Hardware |
+
+**Nicht parallel:** Phase 5 gegen A und B — alle drei fassen dieselben Portalseiten an. Und Phase 4 (Kurse) sollte warten: sie braucht zuerst eine Entwurfsrunde, und die ist nach der Lehre aus Abschnitt 7 erst dann fällig, wenn der Abstand zwischen Entwurf und Code wieder klein ist.
 
 ---
 
@@ -217,7 +265,11 @@ Verstreut über fünf Specs, hier einmal an einem Ort. Jede bleibt in ihrem Ursp
 
 > Der Bruch lag nicht zwischen den Runden, sondern in der Lücke, die beide für die jeweils andere offen gelassen haben.
 
-**Der Abstand zwischen Entwurf und Code ist die Quelle dieser Lücken.** Er ist gerade auf 29 Commits gewachsen. Phase 1 schließt ihn für die Tag-Kette; jede weitere Entwurfsrunde vor Phase 1 vergrößert ihn wieder.
+**Der Abstand zwischen Entwurf und Code ist die Quelle dieser Lücken.** Er war auf 29 Commits gewachsen. Phase 1 hat ihn für die Tag-Kette geschlossen, Phase 2 zur Hälfte für das Portal-Backend.
+
+**Was die Erstfassung nicht vorhersah:** dass Auth und Leute *ohne* Umsetzungsplan gebaut werden würden — direkt aus Spec und Artboards. Es ist gutgegangen, und der Grund ist nicht Glück: beide Abschnitte waren eng umrissen (eine Migration, eine Seite, ein E2E-Gang) und hatten fertige Artboards, an denen sich jede Entscheidung ablesen ließ. Für Phase 3 gilt das nicht — sechzehn Bildschirme, ein Sucher und ein Gang, der über mehrere Sitzungen trägt. Dort ist der Plan keine Formalie.
+
+**Und ein zweiter Abstand ist dazugekommen:** der zwischen Platte und Cloud. Er hat sich am 1. September auf zehn Migrationen aufgebaut und am 2. September gleich noch einmal (Abschnitt 4c und 4d). Beide Male hat nichts ihn gemeldet, weil nichts ihn melden konnte — bis `pnpm smoke:migrations` entstand. Dass der jetzt auf dieser Maschine selbst am Netz scheitert, ist die nächste offene Kante.
 
 ---
 

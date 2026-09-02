@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-01-tag-lieferung-design.md`
 
+> **Status: gebaut und ausgeliefert (2. September 2026).** Alle acht Aufgaben stehen im Code, die Haken darunter sind gesetzt. Nachtrag zur Nummerierung: aus den drei geplanten Migrationen sind vier geworden — `0029_tag_batches_read` kam beim Abschlussreview dazu, weil `tag_batches` ohne Policy für ein *verbundenes* Studio zu grob war und die Tags-Seite die Charge nicht anzeigen konnte. `0026`–`0029` liegen auf Platte **und** im Produktivprojekt (nachgezogen am 2. September).
+
 ## Global Constraints
 
 - **Voraussetzung: `2026-09-01-scan-beitritt-datenbank.md` ist vollständig ausgeführt.** Dieser Plan braucht den Enum `public.tag_kind`, die Spalte `machine_tags.kind` und den Constraint `machine_tags_machine_kind` aus dessen `0022`, dazu `CatalogTag.kind` aus dessen Task 4. Auf Platte muss `0025` liegen, bevor Aufgabe 3 beginnt.
@@ -74,7 +76,7 @@ Das Repo ist nach **jedem** Commit übersetzbar und grün. Das erzwingt diese Fo
 
 **Warum diese Aufgabe zuerst kommt.** Zwölf Dateien fügen heute `machine_tags`-Zeilen direkt ein und schreiben dabei `token_hash: hashTagToken(token)`. Ab `0026` heißt das `token`, ab `0027` kommen `batch_id` und `batch_index` als `not null` dazu. Wer die Migration zuerst schreibt, fasst zwölf Dateien zweimal an. Wer den Helfer zuerst einzieht, fasst sie einmal an und ändert danach eine.
 
-- [ ] **Step 1: Den Helfer anlegen**
+- [x] **Step 1: Den Helfer anlegen**
 
 `tests/helpers/tags.ts`:
 
@@ -139,7 +141,7 @@ export async function tagsAnlegen(
 }
 ```
 
-- [ ] **Step 2: Den Helfer gegen eine bestehende Datei ausprobieren**
+- [x] **Step 2: Den Helfer gegen eine bestehende Datei ausprobieren**
 
 In `tests/integration/rls-machine-tags.test.ts` den Import ergänzen und den ersten Einfügeblock ersetzen. Aus dem heutigen Block (ab Zeile 52):
 
@@ -174,7 +176,7 @@ import { tagAnlegen, tagsAnlegen } from "../helpers/tags.js";
 
 `createTagToken` bleibt importiert, solange die Datei ihn noch selbst aufruft; `hashTagToken` fällt aus dem Import, sobald kein Aufruf mehr übrig ist. **Ein übrig gebliebener Import ist kein Übersetzungsfehler** — die `tsconfig` hat weder `noUnusedLocals` noch einen Linter dahinter. Er fällt erst in Aufgabe 3 auf, wenn `hashTagToken` nicht mehr zu den Spalten passt. Lies die Importzeile also, statt dich auf `pnpm typecheck` zu verlassen.
 
-- [ ] **Step 3: Diese eine Datei laufen lassen**
+- [x] **Step 3: Diese eine Datei laufen lassen**
 
 ```bash
 pnpm test:integration -- rls-machine-tags
@@ -182,7 +184,7 @@ pnpm test:integration -- rls-machine-tags
 
 Erwartet: PASS, unverändert wie vorher.
 
-- [ ] **Step 4: Die restlichen Integrationsdateien umstellen**
+- [x] **Step 4: Die restlichen Integrationsdateien umstellen**
 
 Jede Einfügestelle nach demselben Muster — auch die übrigen sieben in `rls-machine-tags.test.ts`, von der Step 2 nur die erste erledigt hat. Die Stellen, Datei für Datei (Zeilennummern sind Anhaltspunkte, keine Zusicherung — sie verschieben sich, sobald du die erste ersetzt hast):
 
@@ -204,7 +206,7 @@ Jede Einfügestelle nach demselben Muster — auch die übrigen sieben in `rls-m
 
 `domain-catalog.test.ts` legt seine Tags über `createTag` an, nicht über ein direktes Insert. Diese Datei wird hier **nicht** angefasst — sie kommt in Aufgabe 2 dran.
 
-- [ ] **Step 5: `e2e/tag-fallback.spec.ts` umstellen**
+- [x] **Step 5: `e2e/tag-fallback.spec.ts` umstellen**
 
 Vier Einfügestellen (~77, 100, 121, 218). Der Import:
 
@@ -239,7 +241,7 @@ wird:
 
 `hashTagToken` fällt danach aus dem Import am Dateikopf; `createTagToken` bleibt, weil zwei Tests ihn für einen absichtlich unbekannten Token brauchen.
 
-- [ ] **Step 6: Alles laufen lassen**
+- [x] **Step 6: Alles laufen lassen**
 
 ```bash
 pnpm typecheck
@@ -249,7 +251,7 @@ pnpm test:e2e
 
 Erwartet: alles PASS, keine Verhaltensänderung. Diese Aufgabe ist ein reiner Umbau — schlägt etwas fehl, liegt es an einer falsch übertragenen Zeile, nicht an einer neuen Regel.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add tests/helpers/tags.ts tests/integration e2e
@@ -273,7 +275,7 @@ git commit -m "test: Tag-Fixtures hinter einem Helfer buendeln"
 
 **Was das kostet, offen gesagt:** Zwischen diesem Commit und Aufgabe 6 hat das Portal keinen Weg, einen Tag *anzulegen*. Das ist der Zielzustand (Einrichtungs-Spec, Entscheidung 2), nur früher als der Ersatz. Tags **binden** geht weiter — `TagZuweisen` bleibt bis Aufgabe 7 stehen.
 
-- [ ] **Step 1: Die Tests umschreiben, die `createTag` benutzen**
+- [x] **Step 1: Die Tests umschreiben, die `createTag` benutzen**
 
 In `tests/integration/domain-catalog.test.ts` stehen zehn Aufrufe. Jeder wird zu einem Helferaufruf mit dem Service-Client. Aus:
 
@@ -309,7 +311,7 @@ Am Dateikopf `createTag` aus dem Import entfernen und `tagAnlegen` ergänzen:
 import { tagAnlegen } from "../helpers/tags.js";
 ```
 
-- [ ] **Step 2: Tests laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Tests laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 pnpm test:integration -- domain-catalog
@@ -317,7 +319,7 @@ pnpm test:integration -- domain-catalog
 
 Erwartet: PASS. Die Tests laufen bereits ohne `createTag`, die Funktion existiert nur noch unbenutzt.
 
-- [ ] **Step 3: `createTag` löschen**
+- [x] **Step 3: `createTag` löschen**
 
 In `packages/domain/src/catalog.ts` den kompletten Block entfernen — den Dokumentationskommentar *„Einen Tag anlegen. Der Klartext-Token wird genau einmal zurueckgegeben …"* und die Funktion `createTag` darunter (bis einschließlich `return { id: data.id, token };` und der schließenden Klammer).
 
@@ -331,13 +333,13 @@ ein ersatzloser Wegfall der Zeile — **beide** Namen werden in `catalog.ts` dan
 
 In `packages/domain/src/index.ts` die Zeile `  createTag,` aus dem `export { ... } from "./catalog.js"`-Block entfernen.
 
-- [ ] **Step 4: Die Server Action löschen**
+- [x] **Step 4: Die Server Action löschen**
 
 In `apps/web/app/portal/actions.ts` den Kommentarblock *„Ein Tag entsteht mit einem Token, den es genau einmal zu sehen gibt …"* und die gesamte Funktion `tagAnlegen` entfernen. Aus dem Import am Dateikopf `createTag,` streichen.
 
 `tagZuweisen` und `tagSperren` bleiben unverändert stehen.
 
-- [ ] **Step 5: Die Oberfläche zurückbauen**
+- [x] **Step 5: Die Oberfläche zurückbauen**
 
 `apps/web/app/portal/[studioId]/TagAnlegen.tsx` löschen.
 
@@ -357,7 +359,7 @@ Der Absatz unter der Überschrift auf der Tags-Seite beschreibt eine Welt, die e
       </p>
 ```
 
-- [ ] **Step 6: Den E2E-Gang umschreiben**
+- [x] **Step 6: Den E2E-Gang umschreiben**
 
 In `e2e/trainerportal.spec.ts` ersetzt Schritt 5 das Anlegen über die Oberfläche durch eine geseedete Zeile. Aus (~Zeile 118–124):
 
@@ -398,7 +400,7 @@ import { tagAnlegen } from "../tests/helpers/tags";
 
 Der Rest des Tests — der Aufruf gegen `/api/v1/tags/<token>/context` ohne und mit Bearer — bleibt wörtlich stehen. Er ist der eigentliche Beweis des Tests und von diesem Umbau unberührt.
 
-- [ ] **Step 7: Alles laufen lassen**
+- [x] **Step 7: Alles laufen lassen**
 
 ```bash
 pnpm typecheck
@@ -408,7 +410,7 @@ pnpm test:e2e
 
 Erwartet: alles PASS. `typecheck` deckt eine vergessene Aufrufstelle von `TagAnlegen` oder `createTag` zuverlässig auf.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A
@@ -427,7 +429,7 @@ git commit -m "refactor: createTag und den Erzeugen-Pfad im Portal zurueckbauen"
 - Consumes: `machine_tags` mit `kind` aus `0022`, `machine_tags_insert` aus `0016`.
 - Produces: `machine_tags.token` (Klartext, `not null`, unique, für `authenticated` weder les- noch schreibbar) und `machine_tags.token_hash` als generierte Spalte. Aufgabe 4 baut darauf auf, Aufgabe 5 sucht über `token`.
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 `tests/integration/tag-klartext.test.ts`:
 
@@ -522,7 +524,7 @@ describe("machine_tags.token", () => {
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 pnpm test:integration -- tag-klartext
@@ -530,7 +532,7 @@ pnpm test:integration -- tag-klartext
 
 Erwartet: FAIL — `column machine_tags.token does not exist`.
 
-- [ ] **Step 3: Die Migration schreiben**
+- [x] **Step 3: Die Migration schreiben**
 
 `supabase/migrations/0026_tag_klartext.sql`:
 
@@ -601,7 +603,7 @@ grant update (machine_id, status, revoked_at)
 drop policy machine_tags_insert on public.machine_tags;
 ```
 
-- [ ] **Step 4: Den Helfer auf den Klartext umstellen**
+- [x] **Step 4: Den Helfer auf den Klartext umstellen**
 
 In `tests/helpers/tags.ts` — **nur** der Datensatzaufbau ändert sich:
 
@@ -623,7 +625,7 @@ import { createTagToken } from "@fitretro/domain";
 
 `hashTagToken` wird hier nicht mehr gebraucht. Es bleibt im Paket und in `tag-klartext.test.ts`.
 
-- [ ] **Step 5: Den Insert-Policy-Block in `rls-machine-tags-write.test.ts` umschreiben**
+- [x] **Step 5: Den Insert-Policy-Block in `rls-machine-tags-write.test.ts` umschreiben**
 
 Diese Datei prüft ab Zeile 91 einen ganzen `describe`-Block *„machine_tags: Insert-Policy"* mit sechs Tests. Drei davon lassen einen Trainer **erfolgreich** einfügen — nach dieser Migration kann das niemand mehr, sie laufen rot. Die drei negativen prüfen, dass bestimmte Trainer *nicht* einfügen dürfen; sie sind gegenstandslos geworden, weil es überhaupt niemand mehr darf.
 
@@ -657,7 +659,7 @@ Der zweite Test hält die Aussage des alten *„Nebenlaeufigkeit"*-Tests fest �
 
 **Die Blöcke *„Update-Policy"* und *„kein Loeschpfad"* bleiben unverändert.** Sie arbeiten auf Zeilen, die `seedTag` mit `studio_id` anlegt; `is_studio_staff` greift dort weiter, und `update` auf `machine_id`, `status` und `revoked_at` ist dem Trainer weiterhin gewährt.
 
-- [ ] **Step 6: Datenbank zurücksetzen und alles laufen lassen**
+- [x] **Step 6: Datenbank zurücksetzen und alles laufen lassen**
 
 ```bash
 pnpm exec supabase db reset
@@ -678,7 +680,7 @@ node -e "console.log(require('node:crypto').createHash('sha256').update('abcdefg
 
 Beide müssen `f69f9b70d1c9a5442258ca76f8b0a7a45fcb4e31c36141b6357ec591328b0624` liefern.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add supabase/migrations/0026_tag_klartext.sql tests/integration/tag-klartext.test.ts tests/integration/rls-machine-tags-write.test.ts tests/helpers/tags.ts
@@ -698,7 +700,7 @@ git commit -m "feat(db): Tag-Token im Klartext, token_hash generiert, Spaltenrec
 - Consumes: `public.tag_kind` aus `0022`, `machine_tags.token` aus `0026`, `public.is_studio_staff` aus `0001`.
 - Produces: `public.tag_batches`, `public.tag_shipments`, `machine_tags.batch_id`, `machine_tags.batch_index`, nullbares `machine_tags.studio_id`, Constraint `machine_tags_halde`. Aufgabe 5 und 6 bauen darauf auf. Aus `tests/helpers/tags.ts` zusätzlich `chargeFuerTest(admin, kind)`.
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 `tests/integration/tag-chargen.test.ts`:
 
@@ -848,7 +850,7 @@ describe("Die Halde", () => {
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 pnpm test:integration -- tag-chargen
@@ -856,7 +858,7 @@ pnpm test:integration -- tag-chargen
 
 Erwartet: FAIL — `relation "public.tag_batches" does not exist`.
 
-- [ ] **Step 3: Die Migration schreiben**
+- [x] **Step 3: Die Migration schreiben**
 
 `supabase/migrations/0027_tag_chargen.sql`:
 
@@ -966,7 +968,7 @@ grant select (id, studio_id, machine_id, token_hash, status, kind,
   on public.machine_tags to authenticated;
 ```
 
-- [ ] **Step 4: Den Helfer um die Charge erweitern**
+- [x] **Step 4: Den Helfer um die Charge erweitern**
 
 `tests/helpers/tags.ts` bekommt oben eine Chargenverwaltung und reicht `batch_id`/`batch_index` durch:
 
@@ -1026,7 +1028,7 @@ und in `tagsAnlegen` vor dem Aufbau der Datensätze:
 
 **Achtung auf die Vorgabe `studioId`:** `zeile.studioId ?? null` macht ein *fehlendes* Feld zu `null` — und `null` heißt ab jetzt „Halde". Alle Aufrufer aus Aufgabe 1 und 2 geben `studioId` ausdrücklich an; die neuen Tests in dieser Aufgabe lassen es bewusst weg. Das ist gewollt, aber es ist die Stelle, an der ein stiller Fehler entstünde, wenn ein Aufrufer es vergisst — dann prüft der Test die Halde statt des Studios.
 
-- [ ] **Step 5: Zurücksetzen und alles laufen lassen**
+- [x] **Step 5: Zurücksetzen und alles laufen lassen**
 
 ```bash
 pnpm exec supabase db reset
@@ -1037,7 +1039,7 @@ pnpm test:e2e
 
 Erwartet: alles PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/0027_tag_chargen.sql tests/integration/tag-chargen.test.ts tests/helpers/tags.ts
@@ -1060,7 +1062,7 @@ git commit -m "feat(db): Chargen, Lieferungen und die Halde"
 
 **Eine Festlegung, die die Spec offen lässt.** Die Antworttabelle in `2026-09-01-einrichtung-am-geraet-design.md` §4 sagt nichts über ein **gesperrtes Aushangschild des eigenen Studios** — sie kennt für Schilder nur `aushangschild` (aktiv, eigenes Studio) und `unbekannt`. Dieser Plan legt fest: **`gesperrt`.** Der Trainer hält ein Schild in der Hand, das nicht mehr gilt; *„Gesperrt bleibt gesperrt"* sagt ihm, was er wissen muss, *„melde dich beim Betreiber"* schickt ihn telefonieren.
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 `tests/integration/tag-binden.test.ts`:
 
@@ -1291,7 +1293,7 @@ describe("bind_tag_to_machine", () => {
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 pnpm test:integration -- tag-binden
@@ -1299,7 +1301,7 @@ pnpm test:integration -- tag-binden
 
 Erwartet: FAIL — `Could not find the function public.inspect_tag`.
 
-- [ ] **Step 3: Die Migration schreiben**
+- [x] **Step 3: Die Migration schreiben**
 
 `supabase/migrations/0028_tag_binden.sql`:
 
@@ -1471,7 +1473,7 @@ revoke all on function public.bind_tag_to_machine(text, uuid)
 grant execute on function public.bind_tag_to_machine(text, uuid) to authenticated;
 ```
 
-- [ ] **Step 4: Zurücksetzen und Test laufen lassen**
+- [x] **Step 4: Zurücksetzen und Test laufen lassen**
 
 ```bash
 pnpm exec supabase db reset
@@ -1482,7 +1484,7 @@ Erwartet: PASS, alle vierzehn Fälle.
 
 **Wenn „bindet keinen Tag an ein fremdes Geraet" fehlschlägt und `gebunden` liefert**, steht die Studioprüfung an der falschen Stelle: `is_studio_staff` muss gegen das Studio der *Maschine* laufen, nicht gegen das des Tags.
 
-- [ ] **Step 5: Den ganzen Bestand laufen lassen**
+- [x] **Step 5: Den ganzen Bestand laufen lassen**
 
 ```bash
 pnpm typecheck
@@ -1492,7 +1494,7 @@ pnpm test:e2e
 
 Erwartet: alles PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/0028_tag_binden.sql tests/integration/tag-binden.test.ts
@@ -1522,7 +1524,7 @@ git commit -m "feat(db): inspect_tag und bind_tag_to_machine"
 
 **Warum nicht über `index.ts` exportiert.** Diese Funktionen ergeben nur mit einem Service-Client Sinn. Über den Unterpfad `@fitretro/domain/chargen` bleiben sie aus der Importfläche der Web-App heraus — dieselbe Bauart, die `media.ts` in der `exports`-Karte schon hat.
 
-- [ ] **Step 1: Den fehlschlagenden Test an `tag-chargen.test.ts` anhängen**
+- [x] **Step 1: Den fehlschlagenden Test an `tag-chargen.test.ts` anhängen**
 
 ```ts
 import {
@@ -1695,7 +1697,7 @@ describe("chargen.ts", () => {
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 pnpm test:integration -- tag-chargen
@@ -1703,7 +1705,7 @@ pnpm test:integration -- tag-chargen
 
 Erwartet: FAIL beim Übersetzen — `Cannot find module '@fitretro/domain/chargen'`.
 
-- [ ] **Step 3: Den Unterpfad in der Paketkarte eintragen**
+- [x] **Step 3: Den Unterpfad in der Paketkarte eintragen**
 
 `packages/domain/package.json`:
 
@@ -1715,7 +1717,7 @@ Erwartet: FAIL beim Übersetzen — `Cannot find module '@fitretro/domain/charge
   }
 ```
 
-- [ ] **Step 4: `chargen.ts` schreiben**
+- [x] **Step 4: `chargen.ts` schreiben**
 
 `packages/domain/src/chargen.ts`:
 
@@ -2085,7 +2087,7 @@ export async function studioAufloesen(
 }
 ```
 
-- [ ] **Step 5: Tests laufen lassen**
+- [x] **Step 5: Tests laufen lassen**
 
 ```bash
 pnpm test:integration -- tag-chargen
@@ -2095,7 +2097,7 @@ Erwartet: PASS.
 
 **Wenn „liefert alle Zeilen einer Charge ueber die PostgREST-Grenze hinaus" nur 1000 Zeilen findet**, fehlt das `.range()` — nicht die Blockgröße vergrößern, sondern blättern. `max_rows` ist eine Servergrenze und lässt sich vom Client nicht überschreiben.
 
-- [ ] **Step 6: Die CLI-Schale schreiben**
+- [x] **Step 6: Die CLI-Schale schreiben**
 
 `scripts/tags.ts`:
 
@@ -2322,7 +2324,7 @@ main().catch((fehler: unknown) => {
 });
 ```
 
-- [ ] **Step 7: `tsx` und das Skript eintragen**
+- [x] **Step 7: `tsx` und das Skript eintragen**
 
 ```bash
 pnpm add -Dw tsx
@@ -2334,7 +2336,7 @@ In `package.json` (Wurzel) bei `scripts` ergänzen:
     "tags": "tsx scripts/tags.ts",
 ```
 
-- [ ] **Step 8: Die Schale von Hand ausprobieren**
+- [x] **Step 8: Die Schale von Hand ausprobieren**
 
 ```bash
 pnpm tags charge:anlegen --code probe-01 --sorte machine --menge 5
@@ -2345,7 +2347,7 @@ pnpm tags charge:verschrotten --code probe-01
 
 Erwartet: die CSV hat sechs Zeilen (Kopf plus fünf), die `url`-Spalte endet auf denselben Token wie die `token`-Spalte, und **kein Token steht in der Terminalausgabe**.
 
-- [ ] **Step 9: Alles laufen lassen**
+- [x] **Step 9: Alles laufen lassen**
 
 ```bash
 pnpm typecheck
@@ -2354,7 +2356,7 @@ pnpm test:integration
 
 Erwartet: PASS.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add packages/domain/src/chargen.ts packages/domain/package.json scripts/tags.ts package.json pnpm-lock.yaml tests/integration/tag-chargen.test.ts
@@ -2376,7 +2378,7 @@ git commit -m "feat(chargen): Betreiberwerkzeug fuer Chargen, Lieferungen und Be
 
 **Warum das nicht ersatzlos entfällt.** `TagZuweisen` ist heute der einzige Weg im Portal, einen Tag an ein Gerät zu binden, und sein Mittel — ein Dropdown über die Tags des Studios — hat nichts mehr zu listen: Haldenzeilen sind per RLS unsichtbar. Ein Feld zum Eintippen des Tokens ist derselbe Weg ohne Kamera. Der Sucher setzt später die Kamera davor, statt bei null anzufangen, und `2026-09-01-einrichtung-am-geraet-design.md` §7 verliert seinen Punkt *„einziger Ausfallpunkt ohne Rückfallweg"*.
 
-- [ ] **Step 1: Die Server Action ersetzen**
+- [x] **Step 1: Die Server Action ersetzen**
 
 In `apps/web/app/portal/actions.ts` `tagZuweisen` löschen und dafür einsetzen:
 
@@ -2419,7 +2421,7 @@ export async function tagBinden(
 }
 ```
 
-- [ ] **Step 2: Die Komponente schreiben**
+- [x] **Step 2: Die Komponente schreiben**
 
 `apps/web/app/portal/[studioId]/tags/TagBinden.tsx`:
 
@@ -2510,7 +2512,7 @@ export function TagBinden({
 
 *Die Klassen `field`, `label`, `input`, `select`, `secondary`, `error` und `hint` stehen alle in `apps/web/app/portal/portal.module.css` — der Import `styles from "../../portal.module.css"` zeigt aus `tags/` zwei Ebenen hoch auf genau diese Datei, wie schon in `TagZuweisen.tsx`.*
 
-- [ ] **Step 3: Die Tags-Seite umstellen**
+- [x] **Step 3: Die Tags-Seite umstellen**
 
 In `apps/web/app/portal/[studioId]/tags/page.tsx`:
 
@@ -2534,7 +2536,7 @@ In `apps/web/app/portal/[studioId]/tags/page.tsx`:
 
 `TagZuweisen.tsx` löschen.
 
-- [ ] **Step 4: Den E2E-Gang wieder auf die Oberfläche drehen**
+- [x] **Step 4: Den E2E-Gang wieder auf die Oberfläche drehen**
 
 In `e2e/trainerportal.spec.ts` den in Aufgabe 2 eingesetzten Block ersetzen. Statt einen fertig gebundenen Tag zu seeden, entsteht jetzt eine Haldenzeile, die über die Oberfläche gebunden wird:
 
@@ -2549,7 +2551,7 @@ In `e2e/trainerportal.spec.ts` den in Aufgabe 2 eingesetzten Block ersetzen. Sta
   await expect(page.getByText("aktiv")).toBeVisible();
 ```
 
-- [ ] **Step 5: Alles laufen lassen**
+- [x] **Step 5: Alles laufen lassen**
 
 ```bash
 pnpm typecheck
@@ -2559,7 +2561,7 @@ pnpm test:e2e
 
 Erwartet: alles PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A
@@ -2580,7 +2582,7 @@ git commit -m "feat(portal): Tag ueber den Token binden statt ueber ein Dropdown
 
 **Was die Seite danach zeigt.** `Tags.dc.html` zeichnet *„Lieferung vom 12. August · 100 Tags · 97 vorrätig"* und je Tag *„Charge 7"* bereits. Diese Aufgabe gibt beidem seine Quelle.
 
-- [ ] **Step 1: Den fehlschlagenden Test an `domain-catalog.test.ts` anhängen**
+- [x] **Step 1: Den fehlschlagenden Test an `domain-catalog.test.ts` anhängen**
 
 ```ts
 describe("Lieferungen im Katalog", () => {
@@ -2615,7 +2617,7 @@ import { chargeAnlegen, lieferungAnlegen } from "@fitretro/domain/chargen";
 
 *Die Namen `trainerEmail`, `studioA`, `userClient`, `serviceClient` und `getStudioCatalog` stehen in dieser Datei bereits — vor dem Anhängen die vorhandenen Bezeichner am Dateikopf ablesen und übernehmen, sie können abweichend heißen.*
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 pnpm test:integration -- domain-catalog
@@ -2623,7 +2625,7 @@ pnpm test:integration -- domain-catalog
 
 Erwartet: FAIL beim Übersetzen — `batchCode` ist kein bekanntes Feld von `CatalogTag`, `shipments` keines von `StudioCatalog`.
 
-- [ ] **Step 3: Die Typen und die Abfrage erweitern**
+- [x] **Step 3: Die Typen und die Abfrage erweitern**
 
 In `packages/domain/src/catalog.ts`:
 
@@ -2704,7 +2706,7 @@ In `packages/domain/src/index.ts` den Typexport ergänzen:
 
 im bestehenden `export type { ... } from "./catalog.js"`-Block.
 
-- [ ] **Step 4: Tests und Typprüfung laufen lassen**
+- [x] **Step 4: Tests und Typprüfung laufen lassen**
 
 ```bash
 pnpm typecheck
@@ -2713,7 +2715,7 @@ pnpm test:integration -- domain-catalog
 
 Erwartet: beides PASS. `typecheck` deckt auf, wenn `shipments` im Rückgabeobjekt vergessen wurde.
 
-- [ ] **Step 5: Die Seite die Zahlen zeigen lassen**
+- [x] **Step 5: Die Seite die Zahlen zeigen lassen**
 
 In `apps/web/app/portal/[studioId]/tags/page.tsx` oberhalb der Rückgabe die Rechnung aus der Spec:
 
@@ -2767,7 +2769,7 @@ In der Tag-Liste die Chargenangabe an die Meta-Zeile hängen:
 
 *`datum()` steht in dieser Datei bereits und nimmt einen ISO-String. `shippedOn` ist ein `date`, PostgREST liefert ihn als `JJJJ-MM-TT` — `new Date("2026-08-12")` ist gültig.*
 
-- [ ] **Step 6: Alles laufen lassen**
+- [x] **Step 6: Alles laufen lassen**
 
 ```bash
 pnpm typecheck
@@ -2777,7 +2779,7 @@ pnpm test:e2e
 
 Erwartet: alles PASS.
 
-- [ ] **Step 7: Von Hand nachsehen**
+- [x] **Step 7: Von Hand nachsehen**
 
 ```bash
 pnpm tags charge:anlegen --code sicht-01 --sorte machine --menge 100
@@ -2787,7 +2789,7 @@ pnpm tags bestand --studio "<derselbe Name>"
 
 Danach `/portal/<studioId>/tags` im Browser öffnen: die Lieferzeile muss dieselbe Zahl zeigen wie `pnpm tags bestand`. Das ist die Gegenprobe, für die `bestand` gebaut ist.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A

@@ -6,6 +6,8 @@
 
 > **Task 5 ist gestrichen.** Die Aushang-Verwaltung im Portal stand ursprünglich mit im Ziel; sie ist von `2026-09-01-einrichtung-am-geraet-design.md` abgelöst worden, weil Tags jetzt als Lieferung kommen und das Portal keine Tokens mehr erzeugt. Zu bauen bleiben **fünf** Aufgaben: drei Migrationen, die Fachschicht und der Web-Fallback.
 
+> **Status: gebaut und ausgeliefert (2. September 2026).** Alle fünf verbleibenden Aufgaben stehen im Code; die Haken darunter sind gesetzt. Die gestrichene Task 5 bleibt ungehakt — sie wurde nie gebaut, und ein Haken dort behauptete das Gegenteil. `0022`–`0025` liegen auf Platte **und** im Produktivprojekt (nachgezogen am 2. September, zusammen mit `0026`–`0031`).
+
 **Architecture:** Die Beitrittslogik liegt in einer `SECURITY DEFINER`-Funktion, nicht in einer Insert-Policy: ein Nicht-Mitglied darf `machine_tags` nicht lesen, kann also die Zuordnung nicht selbst herstellen. `machine_tags` bekommt eine Spalte `kind`, statt eine zweite Tabelle zu erhalten — Tokenraum, URL und Auflösung bleiben eins. Portal und Web-Fallback sind Next.js App Router; die Fachschicht liegt in `@fitretro/domain` und wird gegen echtes Postgres mit aktiver RLS getestet.
 
 **Tech Stack:** PostgreSQL über Supabase (SQL-Migrationen in `supabase/migrations/`), TypeScript, Next.js App Router, Vitest für Integrationstests gegen eine laufende Datenbank, Playwright für E2E.
@@ -42,7 +44,7 @@
 - Consumes: `public.machine_tags` und `public.tag_status` aus `0002`, den Check-Constraint `machine_tags_active_needs_machine` aus `0008`.
 - Produces: den Enum-Typ `public.tag_kind` mit den Werten `'machine'` und `'studio'`, die Spalte `machine_tags.kind` (`not null default 'machine'`) und den Constraint `machine_tags_machine_kind`. Task 2 und Task 4 bauen darauf auf.
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 `tests/integration/machine-tags-kind.test.ts`:
 
@@ -141,7 +143,7 @@ describe("machine_tags.kind", () => {
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 pnpm test:integration -- machine-tags-kind
@@ -149,7 +151,7 @@ pnpm test:integration -- machine-tags-kind
 
 Erwartet: FAIL. Der zweite und der dritte Test scheitern, weil die Spalte `kind` nicht existiert.
 
-- [ ] **Step 3: Die Migration schreiben**
+- [x] **Step 3: Die Migration schreiben**
 
 `supabase/migrations/0022_studio_tags.sql`:
 
@@ -180,7 +182,7 @@ alter table public.machine_tags
            end);
 ```
 
-- [ ] **Step 4: Datenbank zurücksetzen und Test laufen lassen**
+- [x] **Step 4: Datenbank zurücksetzen und Test laufen lassen**
 
 ```bash
 pnpm exec supabase db reset
@@ -189,7 +191,7 @@ pnpm test:integration -- machine-tags-kind
 
 Erwartet: PASS, vier Tests.
 
-- [ ] **Step 5: Die bestehende Tag-Testsuite muss unberührt durchlaufen**
+- [x] **Step 5: Die bestehende Tag-Testsuite muss unberührt durchlaufen**
 
 ```bash
 pnpm test:integration -- rls-machine-tags resolve-tag-fallback domain-catalog
@@ -197,7 +199,7 @@ pnpm test:integration -- rls-machine-tags resolve-tag-fallback domain-catalog
 
 Erwartet: PASS. Schlägt hier etwas fehl, hat der Constraint-Umbau einen bestehenden Pfad verletzt — das ist der eigentliche Zweck dieses Schritts.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/0022_studio_tags.sql tests/integration/machine-tags-kind.test.ts
@@ -216,7 +218,7 @@ git commit -m "feat(db): Aushang-Tags als zweite Tag-Sorte"
 - Consumes: `machine_tags.kind` aus Task 1, `studio_memberships` und `studio_role` aus `0001`.
 - Produces: `public.join_studio_by_tag(p_token_hash text)`, ausführbar nur für `authenticated`, Rückgabe `table (studio_id uuid, machine_id uuid, joined boolean)`. Aufgerufen wird sie von der Member-App (Zugang 03 und 05), die dieser Plan nicht baut — in diesem Plan hat sie keinen Aufrufer.
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 `tests/integration/join-studio-by-tag.test.ts`:
 
@@ -399,7 +401,7 @@ describe("join_studio_by_tag", () => {
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 pnpm test:integration -- join-studio-by-tag
@@ -407,7 +409,7 @@ pnpm test:integration -- join-studio-by-tag
 
 Erwartet: FAIL, `function public.join_studio_by_tag(text) does not exist` in allen Tests außer dem letzten.
 
-- [ ] **Step 3: Die Migration schreiben**
+- [x] **Step 3: Die Migration schreiben**
 
 `supabase/migrations/0023_join_studio_by_tag.sql`:
 
@@ -467,7 +469,7 @@ revoke all on function public.join_studio_by_tag(text)
 grant execute on function public.join_studio_by_tag(text) to authenticated;
 ```
 
-- [ ] **Step 4: Datenbank zurücksetzen und Test laufen lassen**
+- [x] **Step 4: Datenbank zurücksetzen und Test laufen lassen**
 
 ```bash
 pnpm exec supabase db reset
@@ -476,7 +478,7 @@ pnpm test:integration -- join-studio-by-tag
 
 Erwartet: PASS, sieben Tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations/0023_join_studio_by_tag.sql tests/integration/join-studio-by-tag.test.ts
@@ -495,7 +497,7 @@ git commit -m "feat(db): Beitritt durch Scannen als SECURITY DEFINER-Funktion"
 - Consumes: `studio_memberships` und `memberships_select_own` aus `0001`.
 - Produces: die Policy `memberships_delete_own_membership`. Keine spätere Aufgabe baut darauf auf; sie ist die Kehrseite von Task 2.
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 `tests/integration/rls-membership-self-leave.test.ts`:
 
@@ -575,7 +577,7 @@ describe("Selbstaustritt", () => {
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 pnpm test:integration -- rls-membership-self-leave
@@ -583,7 +585,7 @@ pnpm test:integration -- rls-membership-self-leave
 
 Erwartet: FAIL im dritten Test — ohne Delete-Policy verweigert RLS auch dem Eigentümer, die Zeile bleibt stehen. Die ersten beiden Tests bestehen schon jetzt und sind der Beweis, dass die Migration nichts aufreißt.
 
-- [ ] **Step 3: Die Migration schreiben**
+- [x] **Step 3: Die Migration schreiben**
 
 `supabase/migrations/0024_membership_self_leave.sql`:
 
@@ -600,7 +602,7 @@ create policy memberships_delete_own_membership on public.studio_memberships
   using (user_id = auth.uid() and role = 'member');
 ```
 
-- [ ] **Step 4: Datenbank zurücksetzen und Test laufen lassen**
+- [x] **Step 4: Datenbank zurücksetzen und Test laufen lassen**
 
 ```bash
 pnpm exec supabase db reset
@@ -609,7 +611,7 @@ pnpm test:integration -- rls-membership-self-leave rls-tenancy
 
 Erwartet: PASS in beiden Dateien.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations/0024_membership_self_leave.sql tests/integration/rls-membership-self-leave.test.ts
@@ -636,7 +638,7 @@ git commit -m "feat(db): Mitglieder koennen ihre Mitgliedschaft selbst beenden"
 >
 > Das ist Betreiberarbeit: kein Bildschirm, kein Fachschicht-Aufruf, keine Server-Action. Sie gehört in einen eigenen Plan und ist in **keiner** Aufgabe dieses Plans enthalten.
 
-- [ ] **Step 1: Den fehlschlagenden Test an `domain-catalog.test.ts` anhängen**
+- [x] **Step 1: Den fehlschlagenden Test an `domain-catalog.test.ts` anhängen**
 
 ```ts
 describe("Tag-Sorte im Katalog", () => {
@@ -650,7 +652,7 @@ describe("Tag-Sorte im Katalog", () => {
 
 *Die Namen `trainerEmail`, `studioId`, `userClient`, `getStudioCatalog` stehen in dieser Datei bereits. Vor dem Anhängen die vorhandenen Bezeichner am Dateikopf ablesen und übernehmen — sie können abweichend heißen.*
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 pnpm test:integration -- domain-catalog
@@ -664,7 +666,7 @@ Erwartet: FAIL — `kind` ist kein bekanntes Feld von `CatalogTag`, TypeScript b
 
 Wer `createTag` trotzdem erweitert, baut eine Funktion aus, die im selben Zug zurückgebaut wird — und schreibt die Aktivierungsregel an einen Ort, an dem sie niemand sucht.
 
-- [ ] **Step 4: `CatalogTag` und die Abfrage erweitern**
+- [x] **Step 4: `CatalogTag` und die Abfrage erweitern**
 
 Der Typ:
 
@@ -690,7 +692,7 @@ Die Abfrage in `getStudioCatalog`:
 
 Und in der Zuordnung, die aus den Zeilen `CatalogTag`-Objekte baut, `kind: zeile.kind` ergänzen. **Die Stelle in derselben Funktion suchen, wo `machineId: ...` gesetzt wird**, und dort danebenstellen — der Zeilentyp weiter unten in der Datei braucht `kind` ebenfalls.
 
-- [ ] **Step 5: Tests und Typprüfung laufen lassen**
+- [x] **Step 5: Tests und Typprüfung laufen lassen**
 
 ```bash
 pnpm typecheck
@@ -699,7 +701,7 @@ pnpm test:integration -- domain-catalog
 
 Erwartet: beides PASS. `typecheck` deckt auf, wenn die Zuordnung in Step 4 vergessen wurde.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/domain/src/catalog.ts tests/integration/domain-catalog.test.ts
@@ -924,7 +926,7 @@ git commit -m "feat(portal): Aushaenge anlegen, sperren und drucken"
 - Consumes: `machine_tags.kind` aus Task 1.
 - Produces: `resolve_tag_fallback` liefert zusätzlich `kind` und `studio_name`; die Seite verzweigt darauf.
 
-- [ ] **Step 1: Die Funktion erweitern**
+- [x] **Step 1: Die Funktion erweitern**
 
 `resolve_tag_fallback` gibt heute **fünf** Spalten zurück: `machine_tag_id, machine_label, model_name, photo_path, exercises` (`supabase/migrations/0021_fallback_inhalte.sql`). Diese vier hinter der ersten sind keine Reserve — `apps/web/app/t/[token]/page.tsx` zeichnet daraus die ganze Geräteseite, und `tests/integration/fallback-inhalt.test.ts` prüft jede einzelne. Der Aushang-Zweig **ergänzt** also, er ersetzt nicht.
 
@@ -993,7 +995,7 @@ grant execute on function public.resolve_tag_fallback(text) to authenticated;
 
 *`create or replace` scheitert, wenn sich die Rückgabespalten ändern — deshalb steht das `drop function` oben in derselben Migration.*
 
-- [ ] **Step 2: Datenbank zurücksetzen, bestehende Tests laufen lassen**
+- [x] **Step 2: Datenbank zurücksetzen, bestehende Tests laufen lassen**
 
 ```bash
 pnpm exec supabase db reset
@@ -1005,7 +1007,7 @@ Erwartet: alle bestehenden Tests laufen unverändert durch. Nicht weil sich „n
 
 **Läuft `fallback-inhalt` rot, ist die Migration falsch, nicht der Test.** Er ist die einzige Stelle, die den Gerätezweig gegen genau diesen Umbau absichert.
 
-- [ ] **Step 3: Die Seite auf den Aushang-Zweig erweitern**
+- [x] **Step 3: Die Seite auf den Aushang-Zweig erweitern**
 
 In `apps/web/app/t/[token]/page.tsx`: nach dem Auflösen auf `kind` verzweigen.
 
@@ -1016,7 +1018,7 @@ In `apps/web/app/t/[token]/page.tsx`: nach dem Auflösen auf `kind` verzweigen.
 
 Die Gestaltung folgt Artboard 27 aus `docs/superpowers/design/member/FallbackAushang.dc.html`, gebaut im Designplan `2026-09-01-designplan-scan-beitritt.md`.
 
-- [ ] **Step 4: E2E-Fall ergänzen**
+- [x] **Step 4: E2E-Fall ergänzen**
 
 An `e2e/tag-fallback.spec.ts` anhängen, nach dem Muster der bestehenden Fälle in dieser Datei:
 
@@ -1035,7 +1037,7 @@ test("ein unbekannter Token bleibt ununterscheidbar", async ({ page }) => {
 
 *Das `data-testid="tag-unknown"` gibt es schon. `data-testid="tag-aushang"` kommt in Step 3 auf den Wurzelknoten des Aushang-Zweigs. Wie `aushangToken` im Test entsteht, aus dem `beforeAll` der Datei ablesen und demselben Muster folgen.*
 
-- [ ] **Step 5: Tests laufen lassen**
+- [x] **Step 5: Tests laufen lassen**
 
 ```bash
 pnpm typecheck
@@ -1044,7 +1046,7 @@ pnpm test:e2e -- tag-fallback
 
 Erwartet: PASS, einschließlich der bestehenden Fälle.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/0025_resolve_tag_fallback_studio.sql \
