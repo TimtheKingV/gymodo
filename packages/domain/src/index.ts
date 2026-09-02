@@ -85,3 +85,12 @@ export type {
   ProgressionSuggestion,
   WorkoutSetInput,
 } from "./progression.js";
+export {
+  joinStudioByCode,
+  listStudioMembers,
+  regenerateStudioJoinCode,
+  removeMembership,
+  setMembershipRole,
+  setStudioJoinCodeActive,
+} from "./people.js";
+export type { StudioMember } from "./people.js";
