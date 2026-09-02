@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { tagPruefen, tagVerbinden } from "../../../actions";
+import { tagErsetzen, tagPruefen, tagVerbinden } from "../../../actions";
 import { antwortAuf, type Befund } from "../../../befund";
 import styles from "../../../halle.module.css";
 
@@ -76,7 +76,12 @@ export function TagSchritt({
             onClick={() => {
               setFehler(null);
               starte(async () => {
-                const ergebnis = await tagVerbinden(studioId, machineId, token);
+                // Ersetzen bindet zuerst und sperrt danach den alten --
+                // umgekehrt stuende das Geraet nach einem Abbruch ohne Tag da.
+                const ergebnis =
+                  antwort.hauptaktion === "ersetzen"
+                    ? await tagErsetzen(studioId, machineId, token)
+                    : await tagVerbinden(studioId, machineId, token);
                 if (!ergebnis.ok) {
                   setFehler(ergebnis.error);
                   return;

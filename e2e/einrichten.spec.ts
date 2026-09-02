@@ -457,3 +457,56 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
     page.getByRole("link", { name: "Tag ersetzen" }).first(),
   ).toBeVisible();
 });
+
+test("Ein zerkratzter Tag wird ersetzt, und der alte wird dabei ungueltig", async ({
+  page,
+}) => {
+  const { admin, studioId } = await studioMitTrainer(page, "einrichten-ersatz");
+
+  const { data: modell, error: modellFehler } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (modellFehler) throw modellFehler;
+
+  const { data: geraet, error: geraetFehler } = await admin
+    .from("machines")
+    .insert({ studio_id: studioId, equipment_model_id: modell.id, label: "12" })
+    .select("id")
+    .single();
+  if (geraetFehler) throw geraetFehler;
+
+  const alt = await tagAnlegen(admin, {
+    studioId,
+    machineId: geraet.id,
+    status: "active",
+  });
+  const neu = await tagAnlegen(admin, { studioId: null });
+
+  await page.goto(`/portal/${studioId}/einrichten/geraet/${geraet.id}/tag`);
+  await page.getByLabel("Token vom Tag").fill(neu.token);
+  await page.getByRole("button", { name: "Tag prüfen" }).click();
+
+  // Derselbe freie Tag -- aber die Hauptaktion heisst jetzt Ersetzen.
+  await expect(page.getByText("wird dabei ungültig")).toBeVisible();
+  await page.getByRole("button", { name: "Ersetzen" }).click();
+  await expect(page).toHaveURL(
+    new RegExp(`/einrichten/geraet/${geraet.id}/uebungen$`),
+  );
+
+  const { data: tags, error: tagFehler } = await admin
+    .from("machine_tags")
+    .select("token, status, machine_id")
+    .in("token", [alt.token, neu.token]);
+  if (tagFehler) throw tagFehler;
+
+  const alterTag = tags.find((tag) => tag.token === alt.token)!;
+  const neuerTag = tags.find((tag) => tag.token === neu.token)!;
+
+  expect(neuerTag.status).toBe("active");
+  expect(neuerTag.machine_id).toBe(geraet.id);
+  expect(alterTag.status).toBe("revoked");
+  // Sperren, nicht loeschen: machine_id bleibt als Nachweis stehen.
+  expect(alterTag.machine_id).toBe(geraet.id);
+});

@@ -9,7 +9,9 @@ import {
   createMachine,
   createSettingDefinition,
   deleteSettingDefinition,
+  getStudioCatalog,
   reorderModelExercises,
+  revokeTag,
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -406,4 +408,55 @@ export async function uebungVerschieben(
   }
   revalidatePath(uebungenPfad(studioId, machineId));
   return { ok: true };
+}
+
+/**
+ * Einen zerkratzten Tag ersetzen: den neuen binden, die uebrigen aktiven
+ * desselben Geraets sperren.
+ *
+ * Zwei Schritte, kein einer. bind_tag_to_machine sperrt nichts, und eine
+ * Migration schliesst der Bauabschnitt aus. Der schlechteste Ausgang eines
+ * Abbruchs dazwischen ist "beide Tags aktiv" -- also genau der Zustand, der
+ * ohne diese Funktion immer eintraete. Kein Datenverlust, und ein zweiter
+ * Anlauf raeumt auf.
+ *
+ * Zuerst binden, dann sperren, nie umgekehrt: waere die Reihenfolge
+ * getauscht, stuende das Geraet nach einem Abbruch ganz ohne Tag da und
+ * waere fuer Mitglieder verschwunden.
+ */
+export async function tagErsetzen(
+  studioId: string,
+  machineId: string,
+  token: string,
+): Promise<Ergebnis<{ tagId: string; gesperrt: number }>> {
+  const gebunden = await tagVerbinden(studioId, machineId, token);
+  if (!gebunden.ok) return gebunden;
+
+  const client = await createServerSupabaseClient();
+  let gesperrt = 0;
+  try {
+    const katalog = await getStudioCatalog(client, studioId);
+    const alte = katalog.tags.filter(
+      (tag) =>
+        tag.machineId === machineId &&
+        tag.status === "active" &&
+        tag.id !== gebunden.tagId,
+    );
+    for (const tag of alte) {
+      await revokeTag(client, tag.id);
+      gesperrt += 1;
+    }
+  } catch (fehler) {
+    // Der neue Tag klebt und funktioniert. Dass der alte noch offen ist,
+    // faellt beim naechsten Scan auf -- und dann steht dieselbe Aktion da.
+    console.error("Alter Tag nicht gesperrt:", fehler);
+    return {
+      ok: false,
+      error:
+        "Der neue Tag ist verbunden, der alte ließ sich nicht sperren. Scann den neuen noch einmal.",
+    };
+  }
+
+  revalidatePath(`/portal/${studioId}/einrichten`);
+  return { ok: true, tagId: gebunden.tagId, gesperrt };
 }
