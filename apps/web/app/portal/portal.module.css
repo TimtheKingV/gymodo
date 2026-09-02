@@ -490,20 +490,20 @@
    eigene Routen und keine Umschalter im selben Dokument. */
 .tabs {
   display: flex;
-  gap: 0.25rem;
-  border-bottom: 1px solid var(--linie, #e4e4e7);
-  margin-bottom: 1.5rem;
+  gap: var(--s4);
+  border-bottom: 1px solid var(--line);
+  margin-top: var(--s24);
 }
 
 .tab {
-  padding: 0.6rem 1rem;
+  padding: var(--s8) var(--s16);
   border-bottom: 2px solid transparent;
-  color: var(--text-leise, #71717a);
+  color: var(--text-muted);
   text-decoration: none;
   font-weight: 500;
 }
 
 .tabActive {
-  border-bottom-color: var(--akzent, #18181b);
-  color: var(--text, #18181b);
+  border-bottom-color: var(--accent);
+  color: var(--text);
 }
