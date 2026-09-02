@@ -4,49 +4,21 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-const emailSchema = z.object({ email: z.string().email() });
-const otpSchema = z.object({
+const anmeldenSchema = z.object({
   email: z.string().email(),
-  token: z.string().regex(/^\d{6}$/),
+  password: z.string().min(1),
 });
 
-export async function requestOtp(_prev: unknown, formData: FormData) {
-  const parsed = emailSchema.safeParse({ email: formData.get("email") });
-  if (!parsed.success) return { error: "Bitte eine gueltige E-Mail eingeben." };
-
-  const supabase = await createServerSupabaseClient();
-  // Die Antwort an den Client wird absichtlich in beiden Faellen gleich
-  // gehalten: Ob die Adresse existiert oder nicht, darf sich fuer den
-  // Client nicht unterscheiden (User-Enumeration). Ein nicht existierender
-  // Nutzer bekommt spaetestens bei verifyOtp einen Fehler ("Der Code ist
-  // ungueltig oder abgelaufen."). Serverseitig wird ein echter Sendefehler
-  // (Rate-Limit, SMTP-Ausfall) aber geloggt, damit er fuer den Betreiber
-  // sichtbar bleibt - niemals die E-Mail-Adresse oder einen Token/Code.
-  const { error } = await supabase.auth.signInWithOtp({
-    email: parsed.data.email,
-    options: { shouldCreateUser: false },
-  });
-  if (error) {
-    console.error("OTP-Versand fehlgeschlagen:", error.message);
-  }
-
-  return { sentTo: parsed.data.email };
-}
-
-export async function verifyOtp(_prev: unknown, formData: FormData) {
-  const parsed = otpSchema.safeParse({
+export async function anmelden(_prev: unknown, formData: FormData) {
+  const parsed = anmeldenSchema.safeParse({
     email: formData.get("email"),
-    token: formData.get("token"),
+    password: formData.get("password"),
   });
-  if (!parsed.success) return { error: "Der Code besteht aus sechs Ziffern." };
+  if (!parsed.success) return { error: "Bitte E-Mail und Passwort eingeben." };
 
   const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.auth.verifyOtp({
-    email: parsed.data.email,
-    token: parsed.data.token,
-    type: "email",
-  });
-  if (error) return { error: "Der Code ist ungueltig oder abgelaufen." };
+  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  if (error) return { error: "E-Mail oder Passwort ist falsch." };
 
   redirect("/");
 }

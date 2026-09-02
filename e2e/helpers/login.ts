@@ -3,17 +3,21 @@ import type { Page } from "@playwright/test";
 const INBUCKET = "http://127.0.0.1:54324";
 
 /**
- * Das lokale Supabase-Setup betreibt unter Port 54324 Mailpit (der
- * Containername heisst weiterhin "inbucket"). Mailpit hat eine eigene API:
- * Suche per Empfaengeradresse, Detailabruf per Message-ID.
+ * Test-Passwort fuer per Service-Role angelegte Konten -- dieselbe Rolle wie
+ * TEST_PASSWORD in tests/integration/helpers/clients.ts, hier eigenstaendig,
+ * weil e2e- und Integrationstests getrennte Laufzeiten sind.
  */
+export const E2E_PASSWORD = "e2e-test-passwort-1234";
+
 /**
- * `nichtVor` verwirft Mails, die vor der Anforderung eintrafen.
+ * Das lokale Supabase-Setup betreibt unter Port 54324 mittlerweile Mailpit
+ * statt des klassischen Inbucket (der Containername/die Env-Variable heissen
+ * weiterhin "inbucket"). Mailpit hat eine eigene API: Suche per Empfaenger-
+ * adresse und Detailabruf per Message-ID statt Mailbox-Ordnern.
  *
- * Ohne diese Schranke nimmt die Funktion die erste Mail, die sie findet --
- * bei einer wiederverwendeten Adresse also den schon verbrauchten Code der
- * vorigen Anmeldung. Der Fehlschlag sieht dann aus wie "Code ungueltig" und
- * ist in Wahrheit ein Wettlauf.
+ * `nichtVor` verwirft Mails, die vor der Anforderung eintrafen -- sonst
+ * nimmt die Funktion bei einer wiederverwendeten Adresse den schon
+ * verbrauchten Code der vorigen Anmeldung.
  */
 export async function latestOtpFor(
   email: string,
@@ -38,27 +42,21 @@ export async function latestOtpFor(
     }
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
-  throw new Error(`Kein OTP fuer ${email} in Inbucket/Mailpit gefunden`);
+  throw new Error(`Kein Code fuer ${email} in Inbucket/Mailpit gefunden`);
 }
 
+/** Meldet ein per Service-Role mit E2E_PASSWORD angelegtes Konto an. */
 export async function anmelden(page: Page, email: string): Promise<void> {
   await page.goto("/login");
   await page.getByLabel("E-Mail").fill(email);
-
-  // Eine Sekunde Vorlauf, weil Mailpit auf Sekunden genau stempelt.
-  const angefordert = new Date(Date.now() - 1000);
-  await page.getByRole("button", { name: "Code anfordern" }).click();
-
-  const otp = await latestOtpFor(email, angefordert);
-  await page.getByLabel("Code aus der E-Mail").fill(otp);
+  await page.getByLabel("Passwort").fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "Anmelden" }).click();
 
-  // verifyOtp setzt die Sitzungscookies und leitet auf "/" um. Wer vorher
-  // weiternavigiert, ist noch nicht angemeldet und landet wieder am Login.
+  // signInWithPassword setzt die Sitzungscookies und leitet auf "/" um. Wer
+  // vorher weiternavigiert, ist noch nicht angemeldet und landet wieder am
+  // Login.
   await page.waitForURL((url) => !url.pathname.startsWith("/login"), {
     timeout: 15_000,
   });
-  // Die Umleitung laeuft noch, wenn sich die URL schon geaendert hat. Wer
-  // jetzt navigiert, bricht sie ab (ERR_ABORTED).
   await page.waitForLoadState("networkidle");
 }

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import { anmelden } from "./helpers/login";
+import { E2E_PASSWORD, anmelden } from "./helpers/login";
 import { tagAnlegen } from "../tests/helpers/tags";
 
 /**
@@ -46,6 +46,7 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   const email = `portal-${crypto.randomUUID()}@example.test`;
   const { data: user, error: userError } = await admin.auth.admin.createUser({
     email,
+    password: E2E_PASSWORD,
     email_confirm: true,
   });
   if (userError) throw userError;

@@ -1,72 +1,63 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import { E2E_PASSWORD } from "./helpers/login";
 
-const INBUCKET = "http://127.0.0.1:54324";
-
-// Das lokale Supabase-Setup betreibt unter Port 54324 mittlerweile Mailpit
-// statt des klassischen Inbucket (der Containername/die Env-Variable heissen
-// weiterhin "inbucket"). Mailpit hat eine eigene API: Suche per Empfaenger-
-// adresse und Detailabruf per Message-ID statt Mailbox-Ordnern.
-async function latestOtpFor(email: string): Promise<string> {
-  for (let attempt = 0; attempt < 20; attempt++) {
-    const list = await fetch(
-      `${INBUCKET}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`,
-    );
-    const result = (await list.json()) as {
-      messages: Array<{ ID: string }>;
-    };
-    const newest = result.messages.at(0);
-    if (newest) {
-      const detail = await fetch(`${INBUCKET}/api/v1/message/${newest.ID}`);
-      const body = (await detail.json()) as { Text: string };
-      const match = body.Text.match(/\b(\d{6})\b/);
-      if (match) return match[1]!;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-  throw new Error(`Kein OTP fuer ${email} in Inbucket/Mailpit gefunden`);
-}
-
-test("Mitglied meldet sich per E-Mail-Code an und sieht sein Studio", async ({
-  page,
-}) => {
-  const admin = createClient(
+function admin() {
+  return createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { persistSession: false } },
   );
+}
 
+test("Mitglied meldet sich mit E-Mail und Passwort an und sieht sein Studio", async ({
+  page,
+}) => {
+  const client = admin();
   const email = `e2e-${crypto.randomUUID()}@example.test`;
-  const { data: user, error: userError } = await admin.auth.admin.createUser({
+  const { data: user, error: userError } = await client.auth.admin.createUser({
     email,
+    password: E2E_PASSWORD,
     email_confirm: true,
   });
   if (userError) throw userError;
 
-  const { data: studio, error: studioError } = await admin
+  const { data: studio, error: studioError } = await client
     .from("studios")
     .insert({ name: "E2E Studio" })
     .select("id")
     .single();
   if (studioError) throw studioError;
 
-  const { error: membershipError } = await admin
+  const { error: membershipError } = await client
     .from("studio_memberships")
-    .insert({
-      studio_id: studio.id,
-      user_id: user.user.id,
-      role: "member",
-    });
+    .insert({ studio_id: studio.id, user_id: user.user.id, role: "member" });
   if (membershipError) throw membershipError;
 
   await page.goto("/login");
   await page.getByLabel("E-Mail").fill(email);
-  await page.getByRole("button", { name: "Code anfordern" }).click();
-
-  const otp = await latestOtpFor(email);
-  await page.getByLabel("Code aus der E-Mail").fill(otp);
+  await page.getByLabel("Passwort").fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "Anmelden" }).click();
 
   await expect(page.getByTestId("user-email")).toHaveText(email);
   await expect(page.getByTestId("studio-list")).toContainText("E2E Studio");
+});
+
+test("ein falsches Passwort bleibt auf der Login-Seite mit einer Fehlermeldung", async ({
+  page,
+}) => {
+  const email = `e2e-falsch-${crypto.randomUUID()}@example.test`;
+  const { error } = await admin().auth.admin.createUser({
+    email,
+    password: E2E_PASSWORD,
+    email_confirm: true,
+  });
+  if (error) throw error;
+
+  await page.goto("/login");
+  await page.getByLabel("E-Mail").fill(email);
+  await page.getByLabel("Passwort").fill("falsches-passwort");
+  await page.getByRole("button", { name: "Anmelden" }).click();
+
+  await expect(page.getByText("E-Mail oder Passwort ist falsch.")).toBeVisible();
 });
