@@ -95,3 +95,9 @@ export {
   setStudioJoinCodeActive,
 } from "./people.js";
 export type { StudioMember } from "./people.js";
+export { getStudioOverview } from "./overview.js";
+export type {
+  OverviewMachine,
+  OverviewProblem,
+  StudioOverview,
+} from "./overview.js";
