@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import {
   DomainError,
   createEquipmentModel,
+  createSettingDefinition,
+  deleteSettingDefinition,
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -109,4 +111,90 @@ export async function modellAnlegen(
 
   revalidatePath(`/portal/${studioId}/einrichten`);
   return { ok: true, modelId };
+}
+
+/** Der Pfad, den Schritt 2 revalidiert. Drei Actions teilen ihn. */
+function einstellungenPfad(studioId: string, modelId: string): string {
+  return `/portal/${studioId}/einrichten/modell/${modelId}/einstellungen`;
+}
+
+/**
+ * Ein Einstellparameter am Modell. Zwei Arten, mehr kennt das Schema nicht:
+ * eine Zahl mit Spanne und Schrittweite (0004) oder eine Auswahl aus
+ * mindestens zwei verschiedenen Werten (0017). settingDefinitionInputSchema
+ * traegt dieselben Regeln wie die Constraints, nur frueher.
+ */
+export async function parameterAnlegen(
+  studioId: string,
+  modelId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionErgebnis> {
+  const client = await createServerSupabaseClient();
+  const kind = text(formData, "kind") === "enum" ? "enum" : "number";
+  try {
+    await createSettingDefinition(client, {
+      equipmentModelId: modelId,
+      key: text(formData, "key"),
+      label: text(formData, "label"),
+      kind,
+      minValue: kind === "number" ? (zahl(formData, "minValue") ?? null) : null,
+      maxValue: kind === "number" ? (zahl(formData, "maxValue") ?? null) : null,
+      stepValue: kind === "number" ? (zahl(formData, "stepValue") ?? null) : null,
+      unit: optionalerText(formData, "unit"),
+      allowedValues:
+        kind === "enum"
+          ? text(formData, "allowedValues")
+              .split("\n")
+              .map((zeile) => zeile.trim())
+              .filter((zeile) => zeile.length > 0)
+          : null,
+    });
+  } catch (fehler) {
+    return fehlerAus(fehler, "Der Parameter liess sich nicht anlegen.");
+  }
+  revalidatePath(einstellungenPfad(studioId, modelId));
+  return { ok: true };
+}
+
+export async function parameterLoeschen(
+  studioId: string,
+  modelId: string,
+  settingId: string,
+): Promise<ActionErgebnis> {
+  const client = await createServerSupabaseClient();
+  try {
+    await deleteSettingDefinition(client, settingId);
+  } catch (fehler) {
+    return fehlerAus(fehler, "Der Parameter liess sich nicht loeschen.");
+  }
+  revalidatePath(einstellungenPfad(studioId, modelId));
+  return { ok: true };
+}
+
+/**
+ * Das Foto eines Altmodells nachreichen. Der einzige Weg dafuer im Gang
+ * (Entscheidung 12) -- am Schreibtisch stuende man ohne das Geraet davor.
+ */
+export async function fotoNachreichen(
+  studioId: string,
+  modelId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionErgebnis> {
+  const client = await createServerSupabaseClient();
+  const datei = formData.get("photo");
+  if (!(datei instanceof File) || datei.size === 0) {
+    return { ok: false, error: "Es ist keine Datei ausgewaehlt." };
+  }
+  try {
+    await uploadEquipmentPhoto(client, {
+      equipmentModelId: modelId,
+      bytes: new Uint8Array(await datei.arrayBuffer()),
+    });
+  } catch (fehler) {
+    return fehlerAus(fehler, "Das Foto liess sich nicht speichern.");
+  }
+  revalidatePath(einstellungenPfad(studioId, modelId));
+  return { ok: true };
 }

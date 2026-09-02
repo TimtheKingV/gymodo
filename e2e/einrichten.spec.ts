@@ -88,8 +88,52 @@ test("Schritt 1 legt ein Modell mit Pflichtfoto an und geht zu den Einstellungen
     new RegExp(`/portal/${studioId}/einrichten/modell/[0-9a-f-]+/einstellungen$`),
   );
 
-  // AUFGABE 7 schaltet die beiden Zeilen wieder ein -- die Einstellungsseite
-  // gibt es dann.
-  // await expect(page.getByText("Schritt 2 von 6 · Einstellungen")).toBeVisible();
-  // await expect(page.getByText("Foto · Steht")).toBeVisible();
+  await expect(page.getByText("Schritt 2 von 6 · Einstellungen")).toBeVisible();
+  await expect(page.getByText("Foto · Steht")).toBeVisible();
+});
+
+test("Schritt 2 fragt ein fehlendes Foto nach und nimmt Parameter auf", async ({
+  page,
+}) => {
+  const { admin, studioId } = await studioMitTrainer(page, "einrichten-einst");
+
+  // Ein Altmodell ohne Foto -- genau der Fall aus Entscheidung 12.
+  const { data: modell, error } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Brustpresse", weight_step_kg: 5 })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  await page.goto(
+    `/portal/${studioId}/einrichten/modell/${modell.id}/einstellungen`,
+  );
+  await expect(page.getByText("Schritt 2 von 6 · Einstellungen")).toBeVisible();
+  await expect(page.getByText("Foto · Fehlt")).toBeVisible();
+  await expect(page.getByText("Noch keine Einstellparameter")).toBeVisible();
+
+  await page.getByRole("button", { name: "Parameter hinzufügen" }).click();
+  await page.getByLabel("Beschriftung").fill("Sitzhöhe");
+  await page.getByLabel("Schlüssel").fill("sitz");
+  await page.getByLabel("Von").fill("1");
+  await page.getByLabel("Bis").fill("8");
+  await page.getByLabel("Schritt", { exact: true }).fill("1");
+  await page.getByRole("button", { name: "Hinzufügen" }).click();
+
+  await expect(page.getByText("Sitzhöhe")).toBeVisible();
+  await expect(page.getByText("Zahl · 1 – 8 · Schritt 1")).toBeVisible();
+
+  // Das Foto laesst sich hier nachreichen -- der einzige Weg fuer ein
+  // Altmodell.
+  await page.getByLabel("Foto nachreichen").setInputFiles({
+    name: "brustpresse.jpg",
+    mimeType: "image/jpeg",
+    buffer: HANDYFOTO,
+  });
+  await expect(page.getByText("Foto · Steht")).toBeVisible();
+
+  await page.getByRole("link", { name: "Weiter zum Gerät" }).click();
+  await expect(page).toHaveURL(
+    new RegExp(`/einrichten/modell/${modell.id}/geraet$`),
+  );
 });
