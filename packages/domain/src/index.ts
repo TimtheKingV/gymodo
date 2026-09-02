@@ -6,6 +6,7 @@ export {
   isValidTagToken,
   parseTagScan,
 } from "./tag-scan.js";
+export { naechsteGeraeteNummer } from "./nummern.js";
 export {
   PROGRESSION_ALGO_VERSION,
   suggestNextWeight,
