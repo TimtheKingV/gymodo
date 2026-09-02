@@ -761,24 +761,26 @@ An `apps/web/app/portal/portal.module.css` anhängen:
    eigene Routen und keine Umschalter im selben Dokument. */
 .tabs {
   display: flex;
-  gap: 0.25rem;
-  border-bottom: 1px solid var(--linie, #e4e4e7);
-  margin-bottom: 1.5rem;
+  gap: var(--s4);
+  border-bottom: 1px solid var(--line);
+  margin-top: var(--s24);
 }
 
 .tab {
-  padding: 0.6rem 1rem;
+  padding: var(--s8) var(--s16);
   border-bottom: 2px solid transparent;
-  color: var(--text-leise, #71717a);
+  color: var(--text-muted);
   text-decoration: none;
   font-weight: 500;
 }
 
 .tabActive {
-  border-bottom-color: var(--akzent, #18181b);
-  color: var(--text, #18181b);
+  border-bottom-color: var(--accent);
+  color: var(--text);
 }
 ```
+
+> **Die Tokens dieses Projekts** heißen `--line`, `--text`, `--text-muted`, `--text-faint`, `--accent`, `--surface`, `--surface-raised`, dazu die Abstände `--s4` bis `--s48` und die Radien `--r-card` / `--r-control` (`apps/web/app/globals.css`). Das Portal ist **dunkel** (`--bg: #0a0b0d`, `--accent: #d4ff3f`). Der Hausbrauch in `portal.module.css` schreibt `var(--token)` **ohne** Rückfallwert und ohne `rem`.
 
 - [ ] **Schritt 2: Die Server Action schreiben**
 
@@ -2348,28 +2350,32 @@ An `apps/web/app/portal/portal.module.css` anhängen:
    ist. */
 .kacheln {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s12);
+  margin-top: var(--s32);
 }
 
 .kachel {
-  padding: 1rem 1.25rem;
-  border: 1px solid var(--linie, #e4e4e7);
-  border-radius: 0.5rem;
+  padding: var(--s20) var(--s24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
 }
 
 .kachelZahl {
-  font-size: 2rem;
+  font-size: 32px;
   font-weight: 600;
   line-height: 1.1;
+  color: var(--text);
 }
 
 .kachelLabel {
-  color: var(--text-leise, #71717a);
-  font-size: 0.875rem;
+  margin-top: var(--s4);
+  color: var(--text-muted);
 }
 ```
+
+> **Achtung, hier ist im Plan schon einmal ein Fehler passiert:** Die Tokens dieses Projekts heißen `--line`, `--text`, `--text-muted`, `--text-faint`, `--accent`, `--surface`, `--surface-raised`, dazu die Abstände `--s4` bis `--s48` und die Radien `--r-card` / `--r-control` (`apps/web/app/globals.css`). Das Portal ist **dunkel** (`--bg: #0a0b0d`, `--accent: #d4ff3f`). Der Hausbrauch in `portal.module.css` schreibt `var(--token)` **ohne** Rückfallwert und ohne `rem`. Erfundene Namen fallen nicht auf — sie greifen still auf den Rückfallwert zurück und ergeben ein helles Element auf dunklem Grund.
 
 - [ ] **Schritt 3: Die Überblicksseite schreiben**
 
