@@ -1,16 +1,25 @@
 import Link from "next/link";
-import { AktionsFormular, Feld } from "../Form";
-import { modellAnlegen } from "../actions";
+import { getStudioOverview } from "@fitretro/domain";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { erreichbarkeit, ladeKatalog } from "./catalog";
 import styles from "../portal.module.css";
 
-export default async function StudioPage({
+const problemLabel: Record<string, string> = {
+  schmerz: "Schmerz",
+  geraet_passt_nicht: "Gerät passt nicht",
+  zu_schwer: "Zu schwer",
+  sonstiges: "Sonstiges",
+};
+
+export default async function UeberblickPage({
   params,
 }: {
   params: Promise<{ studioId: string }>;
 }) {
   const { studioId } = await params;
   const katalog = await ladeKatalog(studioId);
+  const client = await createServerSupabaseClient();
+  const uebersicht = await getStudioOverview(client, studioId, 30);
 
   const geraeteGesamt = katalog.models.reduce(
     (summe, modell) => summe + erreichbarkeit(modell).geraete,
@@ -20,107 +29,203 @@ export default async function StudioPage({
     (summe, modell) => summe + erreichbarkeit(modell).erreichbar,
     0,
   );
+  const ohneTag = geraeteGesamt - erreichbarGesamt;
+  const uebungenOhneVideo = katalog.models.reduce(
+    (summe, modell) => summe + modell.exercises.filter((u) => !u.hasVideo).length,
+    0,
+  );
+  const vorrat = katalog.tags.filter((tag) => tag.status === "unassigned").length;
+
+  // Ein einfaches Mitglied bekommt aus studio_overview null. Es hat auf
+  // dieser Seite nichts verloren -- aber es soll einen Satz sehen, keinen
+  // Absturz.
+  if (!uebersicht) {
+    return (
+      <main className={styles.content}>
+        <h1 className={styles.pageTitle}>Überblick</h1>
+        <div className={styles.section}>
+          <div className={styles.empty}>
+            <p className={styles.emptyTitle}>
+              Der Überblick ist Trainern und Inhabern vorbehalten.
+            </p>
+            <p className={styles.emptyNext}>
+              Deine eigenen Trainingsdaten siehst du in der App, nicht hier.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <div className={styles.content}>
-      <h1 className={styles.pageTitle}>Gerätekatalog</h1>
+    <main className={styles.content}>
+      <h1 className={styles.pageTitle}>Überblick</h1>
       <p className={styles.pageLead}>
-        {geraeteGesamt === 0
-          ? "Lege ein Gerätemodell an, dann eine Geräteinstanz, dann klebst du einen Tag darauf. Foto, Einstellparameter und Einweisungsvideo kannst du jederzeit nachreichen — ein Gerät funktioniert auch ohne sie."
-          : `${erreichbarGesamt} von ${geraeteGesamt} Geräten sind für Mitglieder erreichbar. Erreichbar heißt: ein aktiver Tag klebt darauf.`}
+        Letzte {uebersicht.days} Tage. Studioweite Summen — welches Mitglied was
+        trainiert hat, zeigt das Portal nirgends.
       </p>
+
+      <div className={styles.kacheln}>
+        <div className={styles.kachel}>
+          <div className={styles.kachelZahl}>
+            {erreichbarGesamt} / {geraeteGesamt}
+          </div>
+          <div className={styles.kachelLabel}>Geräte erreichbar</div>
+        </div>
+        <div className={styles.kachel}>
+          <div className={styles.kachelZahl}>{uebersicht.activeMembers}</div>
+          <div className={styles.kachelLabel}>Mitglieder aktiv</div>
+        </div>
+        <div className={styles.kachel}>
+          <div className={styles.kachelZahl}>{uebersicht.sets}</div>
+          <div className={styles.kachelLabel}>Sätze erfasst</div>
+        </div>
+        <div className={styles.kachel}>
+          <div className={styles.kachelZahl}>{uebersicht.problemReports}</div>
+          <div className={styles.kachelLabel}>Probleme gemeldet</div>
+        </div>
+      </div>
 
       <section className={styles.section}>
         <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Gerätemodelle</h2>
-          <span className={styles.sectionNote}>
-            Ein Modell beschreibt den Gerätetyp. Die einzelnen Geräte im Raum
-            sind Instanzen davon.
-          </span>
+          <h2 className={styles.sectionTitle}>Was noch fehlt</h2>
         </div>
-
-        {katalog.models.length === 0 ? (
-          <div className={styles.empty}>
-            <p className={styles.emptyTitle}>Noch kein Gerätemodell.</p>
-            <p className={styles.emptyNext}>
-              Fang mit dem Gerät an, das am häufigsten benutzt wird.
-            </p>
-          </div>
+        {ohneTag === 0 && uebungenOhneVideo === 0 && geraeteGesamt > 0 ? (
+          <p className={styles.sectionNote}>
+            Nichts. Jedes Gerät in Betrieb ist erreichbar, jede Übung hat ein
+            Einweisungsvideo.
+          </p>
         ) : (
           <ul className={styles.rows}>
-            {katalog.models.map((modell) => {
-              const stand = erreichbarkeit(modell);
-              const mitVideo = modell.exercises.filter((u) => u.hasVideo).length;
-              return (
-                <li key={modell.id} className={styles.row}>
-                  <div className={styles.rowMain}>
-                    <div className={styles.rowTitle}>{modell.name}</div>
-                    <div className={styles.rowMeta}>
-                      {modell.manufacturer ? `${modell.manufacturer} · ` : ""}
-                      {stand.geraete === 0 ? (
-                        <span className={styles.absent}>noch kein Gerät</span>
-                      ) : (
-                        `${stand.erreichbar} von ${stand.geraete} erreichbar`
-                      )}
-                      {" · "}
-                      {modell.exercises.length === 0 ? (
-                        <span className={styles.absent}>keine Übung</span>
-                      ) : (
-                        `${modell.exercises.length} ${modell.exercises.length === 1 ? "Übung" : "Übungen"}, ${mitVideo} mit Video`
-                      )}
-                    </div>
+            {geraeteGesamt === 0 ? (
+              <li className={styles.row}>
+                <div className={styles.rowMain}>
+                  <div className={styles.rowTitle}>Noch kein Gerät angelegt</div>
+                  <div className={styles.rowMeta}>
+                    Fang mit dem Gerät an, das am häufigsten benutzt wird.
                   </div>
-                  <div className={styles.rowActions}>
-                    <Link
-                      className={styles.secondary}
-                      href={`/portal/${studioId}/modelle/${modell.id}`}
-                    >
-                      Bearbeiten
-                    </Link>
+                </div>
+                <div className={styles.rowActions}>
+                  <Link className={styles.secondary} href={`/portal/${studioId}/modelle`}>
+                    Modell anlegen
+                  </Link>
+                </div>
+              </li>
+            ) : null}
+            {ohneTag > 0 ? (
+              <li className={styles.row}>
+                <div className={styles.rowMain}>
+                  <div className={styles.rowTitle}>
+                    {ohneTag === 1 ? "1 Gerät ohne Tag" : `${ohneTag} Geräte ohne Tag`}
                   </div>
-                </li>
-              );
-            })}
+                  <div className={styles.rowMeta}>
+                    Für Mitglieder nicht auffindbar ·{" "}
+                    {vorrat === 0 ? (
+                      <span className={styles.absent}>kein Tag vorrätig</span>
+                    ) : (
+                      `${vorrat} vorrätig`
+                    )}
+                  </div>
+                </div>
+                <div className={styles.rowActions}>
+                  <Link className={styles.secondary} href={`/portal/${studioId}/tags`}>
+                    Tag verbinden
+                  </Link>
+                </div>
+              </li>
+            ) : null}
+            {uebungenOhneVideo > 0 ? (
+              <li className={styles.row}>
+                <div className={styles.rowMain}>
+                  <div className={styles.rowTitle}>
+                    {uebungenOhneVideo === 1
+                      ? "1 Übung ohne Einweisungsvideo"
+                      : `${uebungenOhneVideo} Übungen ohne Einweisungsvideo`}
+                  </div>
+                  <div className={styles.rowMeta}>Nutzbar, nur ohne Anleitung</div>
+                </div>
+                <div className={styles.rowActions}>
+                  <Link className={styles.secondary} href={`/portal/${studioId}/modelle`}>
+                    Ansehen
+                  </Link>
+                </div>
+              </li>
+            ) : null}
           </ul>
         )}
       </section>
 
-      <section className={styles.section} id="modell-anlegen">
+      <section className={styles.section}>
         <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Modell anlegen</h2>
+          <h2 className={styles.sectionTitle}>Meistgenutzt</h2>
         </div>
-        <AktionsFormular
-          action={modellAnlegen.bind(null, studioId)}
-          submitLabel="Modell anlegen"
-        >
-          <div className={styles.grid}>
-            <Feld name="name" label="Name" required placeholder="Latzug" />
-            <Feld name="manufacturer" label="Hersteller" placeholder="Technogym" />
-            <Feld
-              name="weightStepKg"
-              label="Gewichtsschritt"
-              required
-              inputMode="decimal"
-              placeholder="2,5"
-              hint="In Kilogramm. So viel liegt zwischen zwei Steckplätzen."
-            />
-            <Feld
-              name="minWeightKg"
-              label="Minimum"
-              inputMode="decimal"
-              placeholder="5"
-              hint="Leer lassen für 0."
-            />
-            <Feld
-              name="maxWeightKg"
-              label="Maximum"
-              inputMode="decimal"
-              placeholder="100"
-              hint="Leer lassen, wenn kein Anschlag bekannt ist."
-            />
+        {!uebersicht.breakdown ? (
+          <div className={styles.empty}>
+            <p className={styles.emptyTitle}>Noch keine Rangliste.</p>
+            <p className={styles.emptyNext}>
+              Sie erscheint ab {uebersicht.minMembers} aktiven Mitgliedern im
+              Zeitraum. Bei weniger ließe sich aus ihr ablesen, wer was
+              trainiert hat — und das zeigt das Portal nicht.
+            </p>
           </div>
-        </AktionsFormular>
+        ) : (
+          <ul className={styles.rows}>
+            {uebersicht.topMachines.map((geraet) => (
+              <li key={geraet.machineId} className={styles.row}>
+                <div className={styles.rowMain}>
+                  <div className={styles.rowTitle}>
+                    {geraet.label}{" "}
+                    {geraet.status === "inactive" ? (
+                      <span className={styles.badge}>stillgelegt</span>
+                    ) : null}
+                  </div>
+                </div>
+                <div className={styles.rowMeta}>
+                  {geraet.sets} {geraet.sets === 1 ? "Satz" : "Sätze"}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
-    </div>
+
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <h2 className={styles.sectionTitle}>Gemeldete Probleme</h2>
+          <span className={styles.sectionNote}>
+            Ohne Namen. Wer gemeldet hat, steht hier nicht.
+          </span>
+        </div>
+        {!uebersicht.breakdown || uebersicht.problems.length === 0 ? (
+          <div className={styles.empty}>
+            <p className={styles.emptyTitle}>Keine Meldung im Zeitraum.</p>
+          </div>
+        ) : (
+          <ul className={styles.rows}>
+            {uebersicht.problems.map((meldung) => (
+              <li
+                key={`${meldung.machineId}-${meldung.reason ?? "ohne"}`}
+                className={styles.row}
+              >
+                <div className={styles.rowMain}>
+                  <div className={styles.rowTitle}>{meldung.label}</div>
+                  <div className={styles.rowMeta}>
+                    {meldung.reason
+                      ? (problemLabel[meldung.reason] ?? meldung.reason)
+                      : "ohne Angabe"}
+                  </div>
+                </div>
+                <div className={styles.rowMeta}>{meldung.count} ×</div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <p className={styles.hint}>
+        gymodo misst nichts. Alles hier ist gezählt, was Mitglieder selbst
+        bestätigt haben.
+      </p>
+    </main>
   );
 }

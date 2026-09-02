@@ -507,3 +507,33 @@
   border-bottom-color: var(--accent);
   color: var(--text);
 }
+
+/* Kennzahlen des Ueberblicks. Vier Kacheln nebeneinander, auf schmalen
+   Fenstern zwei. Bewusst ohne Balken und ohne Ziel: der Ueberblick sagt,
+   OB das Studio benutzt wird, nicht wie weit es von irgendwas entfernt
+   ist. */
+.kacheln {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s12);
+  margin-top: var(--s32);
+}
+
+.kachel {
+  padding: var(--s20) var(--s24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.kachelZahl {
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.kachelLabel {
+  margin-top: var(--s4);
+  color: var(--text-muted);
+}
