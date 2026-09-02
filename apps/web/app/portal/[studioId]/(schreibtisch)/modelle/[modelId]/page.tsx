@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MAX_PHOTO_BYTES } from "@fitretro/domain";
 import { AktionsFormular, AktionsKnopf, Feld } from "../../../../Form";
@@ -314,6 +315,17 @@ export default async function ModellPage({
                   </div>
                 </div>
                 <div className={styles.rowActions}>
+                  {/* Der Weg in die Halle. Welcher Tag an welchem Geraet
+                      haengt, entscheidet der Scan vor dem Geraet -- nicht
+                      ein Dropdown am Schreibtisch (Entscheidung 3). */}
+                  {geraet.status === "active" ? (
+                    <Link
+                      href={`/portal/${studioId}/einrichten/geraet/${geraet.id}/tag`}
+                      className={styles.secondary}
+                    >
+                      {geraet.activeTagCount > 0 ? "Tag ersetzen" : "Tag scannen"}
+                    </Link>
+                  ) : null}
                   {geraet.status === "active" ? (
                     <AktionsKnopf
                       aktion={geraetStilllegen.bind(null, studioId, pfad, geraet.id)}

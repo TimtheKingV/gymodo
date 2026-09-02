@@ -385,3 +385,75 @@ test("Ein Video wartet in der Warteschlange und ueberlebt den Seitenwechsel", as
   await expect(page.getByText("Kabelzug 14 · Rudern sitzend")).toBeVisible();
   await expect(page.getByText("Lass diesen Bildschirm offen")).toBeVisible();
 });
+
+test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar", async ({
+  page,
+}) => {
+  const { admin, studioId } = await studioMitTrainer(page, "einrichten-gang");
+  const tag = await tagAnlegen(admin, { studioId: null });
+
+  await page.goto(`/portal/${studioId}/einrichten`);
+  await page.getByRole("link", { name: "Gerät einrichten" }).click();
+
+  // 1 Modell, Foto Pflicht
+  await page.getByRole("link", { name: "Neues Modell anlegen" }).click();
+  await page.getByLabel("Name").fill("Kabelzug");
+  await page.getByLabel("Hersteller").fill("Technogym");
+  await page.getByLabel("Ab").fill("5");
+  await page.getByLabel("Bis").fill("100");
+  await page.getByLabel("Foto des Modells").setInputFiles({
+    name: "kabelzug.jpg",
+    mimeType: "image/jpeg",
+    buffer: HANDYFOTO,
+  });
+  await page
+    .getByRole("button", { name: "Weiter zu den Einstellungen" })
+    .click();
+
+  // 2 Einstellungen
+  await expect(page.getByText("Foto · Steht")).toBeVisible();
+  await page.getByRole("button", { name: "Parameter hinzufügen" }).click();
+  await page.getByLabel("Beschriftung").fill("Sitzhöhe");
+  await page.getByLabel("Schlüssel").fill("sitz");
+  await page.getByLabel("Von").fill("1");
+  await page.getByLabel("Bis").fill("8");
+  await page.getByRole("button", { name: "Hinzufügen" }).click();
+  await expect(page.getByText("Sitzhöhe")).toBeVisible();
+  await page.getByRole("link", { name: "Weiter zum Gerät" }).click();
+
+  // 3 Gerät
+  await expect(page.getByLabel("Nummer")).toHaveValue("1");
+  await page.getByLabel("Nummer").fill("14");
+  await page.getByLabel("Standort").fill("Rückwand rechts");
+  await page.getByRole("button", { name: "Weiter zum Tag" }).click();
+
+  // 4 Tag -- der Sucher fehlt noch (Aufgabe 9b), also ueber das Token-Feld.
+  await page.getByLabel("Token vom Tag").fill(tag.token);
+  await page.getByRole("button", { name: "Tag prüfen" }).click();
+  await expect(page.getByText("Tag erkannt")).toBeVisible();
+  await page.getByRole("button", { name: "Verbinden" }).click();
+
+  // 5 Übungen
+  await page.getByRole("button", { name: "Neue Übung anlegen" }).click();
+  await page.getByLabel("Name").fill("Rudern sitzend");
+  await page.getByLabel("Wiederholungen ab").fill("10");
+  await page.getByLabel("bis", { exact: true }).fill("15");
+  await page.getByRole("button", { name: "Hinzufügen" }).click();
+  await expect(page.getByText("1. Rudern sitzend")).toBeVisible();
+  await page.getByRole("link", { name: "Einrichtung abschließen" }).click();
+
+  // 6 Fertig -- Schritt 6 ist uebersprungen, und das ist erlaubt.
+  await expect(page.getByText("Kabelzug 14 steht")).toBeVisible();
+  await expect(page.getByText("Für Mitglieder auffindbar")).toBeVisible();
+  await expect(page.getByText("Tag verbunden")).toBeVisible();
+  await expect(page.getByText("1 Übung ohne Video")).toBeVisible();
+
+  // Der Schreibtisch weiss es auch -- und fuehrt zurueck in den Gang.
+  await page.goto(`/portal/${studioId}/geraete`);
+  await expect(page.getByText("Das Gerät in Betrieb ist erreichbar.")).toBeVisible();
+
+  await page.getByRole("link", { name: "Kabelzug" }).first().click();
+  await expect(
+    page.getByRole("link", { name: "Tag ersetzen" }).first(),
+  ).toBeVisible();
+});
