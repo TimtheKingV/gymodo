@@ -3,10 +3,13 @@
 import { revalidatePath } from "next/cache";
 import {
   DomainError,
+  attachExerciseToModel,
   createEquipmentModel,
+  createExercise,
   createMachine,
   createSettingDefinition,
   deleteSettingDefinition,
+  reorderModelExercises,
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -321,4 +324,86 @@ export async function tagVerbinden(
     ok: false,
     error: "Dieser Tag ist inzwischen nicht mehr frei. Prüf ihn noch einmal.",
   };
+}
+
+function uebungenPfad(studioId: string, machineId: string): string {
+  return `/portal/${studioId}/einrichten/geraet/${machineId}/uebungen`;
+}
+
+/**
+ * Eine bestehende Studio-Uebung ans Modell haengen. Ans Ende, damit die
+ * gepflegte Reihenfolge nicht durcheinandergeraet -- attachExerciseToModel
+ * besorgt das selbst.
+ */
+export async function uebungHinzufuegen(
+  studioId: string,
+  machineId: string,
+  modelId: string,
+  exerciseId: string,
+): Promise<ActionErgebnis> {
+  const client = await createServerSupabaseClient();
+  try {
+    await attachExerciseToModel(client, {
+      equipmentModelId: modelId,
+      exerciseId,
+    });
+  } catch (fehler) {
+    return fehlerAus(fehler, "Die Uebung liess sich nicht hinzufuegen.");
+  }
+  revalidatePath(uebungenPfad(studioId, machineId));
+  return { ok: true };
+}
+
+/**
+ * Anlegen und zuordnen in einem Schritt: eine Uebung, die an keinem Geraet
+ * haengt, taucht nirgends auf und waere ein stiller Fehlschlag.
+ */
+export async function uebungAnlegen(
+  studioId: string,
+  machineId: string,
+  modelId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionErgebnis> {
+  const client = await createServerSupabaseClient();
+  try {
+    const uebung = await createExercise(client, {
+      studioId,
+      name: text(formData, "name"),
+      description: null,
+      targetRepsMin: zahl(formData, "targetRepsMin") ?? Number.NaN,
+      targetRepsMax: zahl(formData, "targetRepsMax") ?? Number.NaN,
+    });
+    await attachExerciseToModel(client, {
+      equipmentModelId: modelId,
+      exerciseId: uebung.id,
+    });
+  } catch (fehler) {
+    return fehlerAus(fehler, "Die Uebung liess sich nicht anlegen.");
+  }
+  revalidatePath(uebungenPfad(studioId, machineId));
+  return { ok: true };
+}
+
+/**
+ * Die Reihenfolge ist keine Kosmetik: Uebung 1 ist am Geraet die Vorauswahl
+ * des Mitglieds (Designsystem 8).
+ */
+export async function uebungVerschieben(
+  studioId: string,
+  machineId: string,
+  modelId: string,
+  linkIds: string[],
+): Promise<ActionErgebnis> {
+  const client = await createServerSupabaseClient();
+  try {
+    await reorderModelExercises(client, {
+      equipmentModelId: modelId,
+      orderedLinkIds: linkIds,
+    });
+  } catch (fehler) {
+    return fehlerAus(fehler, "Die Reihenfolge liess sich nicht speichern.");
+  }
+  revalidatePath(uebungenPfad(studioId, machineId));
+  return { ok: true };
 }

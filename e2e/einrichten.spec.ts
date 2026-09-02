@@ -261,3 +261,66 @@ test("Schritt 4 beantwortet den Tag und verbindet ihn mit dem Geraet", async ({
     new RegExp(`/einrichten/geraet/${geraet.id}/uebungen$`),
   );
 });
+
+test("Schritt 5 waehlt aus dem Studio, legt neu an und ordnet um", async ({
+  page,
+}) => {
+  const { admin, studioId } = await studioMitTrainer(page, "einrichten-ueb");
+
+  const { data: modell, error: modellFehler } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (modellFehler) throw modellFehler;
+
+  const { data: geraet, error: geraetFehler } = await admin
+    .from("machines")
+    .insert({
+      studio_id: studioId,
+      equipment_model_id: modell.id,
+      label: "14",
+    })
+    .select("id")
+    .single();
+  if (geraetFehler) throw geraetFehler;
+
+  // Eine Uebung, die dem Studio schon gehoert und an keinem Modell haengt.
+  const { error: uebungFehler } = await admin.from("exercises").insert({
+    studio_id: studioId,
+    name: "Rudern sitzend",
+    target_reps_min: 10,
+    target_reps_max: 15,
+  });
+  if (uebungFehler) throw uebungFehler;
+
+  await page.goto(`/portal/${studioId}/einrichten/geraet/${geraet.id}/uebungen`);
+  await expect(page.getByText("Schritt 5 von 6 · Übungen")).toBeVisible();
+  await expect(page.getByText("Noch keine Übung")).toBeVisible();
+
+  // Waehlen statt tippen -- sonst steht dieselbe Uebung mehrfach im Katalog.
+  await page.getByRole("button", { name: "Aus dem Studio wählen" }).click();
+  await expect(page.getByText("Noch an keinem Modell")).toBeVisible();
+  await page.getByRole("button", { name: "Rudern sitzend hinzufügen" }).click();
+  await expect(page.getByText("1. Rudern sitzend")).toBeVisible();
+
+  // Eine neue Uebung entsteht und haengt sofort am Modell.
+  await page.getByRole("button", { name: "Neue Übung anlegen" }).click();
+  await page.getByLabel("Name").fill("Latzug · Neutralgriff");
+  await page.getByLabel("Wiederholungen ab").fill("8");
+  await page.getByLabel("bis", { exact: true }).fill("12");
+  await page.getByRole("button", { name: "Hinzufügen" }).click();
+  await expect(page.getByText("2. Latzug · Neutralgriff")).toBeVisible();
+
+  // Die Reihenfolge ist keine Kosmetik: Uebung 1 ist am Geraet die Vorauswahl.
+  await page
+    .getByRole("button", { name: "Latzug · Neutralgriff nach oben" })
+    .click();
+  await expect(page.getByText("1. Latzug · Neutralgriff")).toBeVisible();
+  await expect(page.getByText("2. Rudern sitzend")).toBeVisible();
+
+  await page.getByRole("link", { name: "Einrichtung abschließen" }).click();
+  await expect(page).toHaveURL(
+    new RegExp(`/einrichten/geraet/${geraet.id}/fertig$`),
+  );
+});
