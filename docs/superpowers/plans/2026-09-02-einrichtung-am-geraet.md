@@ -3086,7 +3086,18 @@ git commit -m "feat(web): Schritt 3 -- Geraet mit vorgeschlagener Nummer und Sta
 
 ---
 
-## Aufgabe 9: Schritt 4 — Der Tag, mit dem Sucher
+## Aufgabe 9: Schritt 4 — Der Tag
+
+> **Aufgeteilt am 2. September, auf Ansage.** Die Kamera wird später gebaut.
+>
+> - **9a — der Tag-Schritt ohne Kamera.** Kleben, Token eintippen, Befund, Verbinden. Enthält die beiden Actions `tagPruefen` und `tagVerbinden` und die ganze Antworttabelle. **Gebaut.**
+> - **9b — der Sucher.** `getUserMedia` plus `jsQR`, davorgeschaltet. **Offen.**
+>
+> Die Teilung kostet nichts, weil die Spec sie schon vorsieht. §7: *„Der umgebaute `TagZuweisen` ist ein Feld zum Eintippen des Tokens auf derselben Funktion — der Rückfallweg wird gebaut, bevor die Kamera überhaupt davorsteht."* Der Decoder liefert am Ende nur eine Zeichenkette an `parseTagScan` (Aufgabe 1) und von dort an `tagPruefen` — genau den Weg, den das Feld schon geht.
+>
+> **Was 9b noch braucht:** `pnpm --filter @fitretro/web add jsqr`, die Datei `Sucher.tsx`, ein Umschalten der Hauptaktion auf der Klebe-Ansicht von *„Tag prüfen"* auf *„Tag scannen"* — und die Handprüfung am echten Telefon (unten, ehemals Schritt 8). Solange 9b fehlt, ist das Token-Feld die Hauptaktion und nicht der Rückfallweg.
+
+
 
 Der einzige echte Neubau. Drei Bildschirme in einer Seite: `TelefonKleben` (die Platzierungsskizze), `TelefonScan` (der Sucher), `TelefonScanTreffer` (die Antwort). Sie teilen einen Zustand, der nicht in die URL gehört — was gerade in der Hand liegt —, also ist das eine Client-Komponente mit drei Ansichten.
 
@@ -5523,7 +5534,8 @@ Der Bauabschnitt ist fertig, wenn alles davon zutrifft:
   > **Bekannter Wackler, nicht aus diesem Bauabschnitt:** `rls-workout-sessions.test.ts > positiv: ein Mitglied beendet seine eigene Session` fällt sporadisch mit `workout_sessions_completed_after_start` (23514). Der Test setzt `completed_at` aus der **Node-Uhr**, während `started_at` per `now()` aus der **Datenbank** kommt; driftet die Containeruhr um Millisekunden nach vorn, liegt das Ende vor dem Anfang. Gemessen am 2. September: zwei von drei Läufen grün, auf unverändertem Stand. Er gehört repariert (das Ende serverseitig setzen), aber nicht in diesem Plan — hier zählt nur, dass er **kein** Neuschaden ist.
 - [ ] `pnpm test:e2e` — 6 Dateien grün (5 Bestand plus `einrichten`)
 - [ ] `pnpm build` — kein `node:crypto` im Client-Bundle
-- [ ] **Der Sucher ist von Hand an einem echten Telefon gelaufen** (Aufgabe 9, Schritt 8) — der einzige Punkt, den kein Test abnimmt
+- [ ] **Aufgabe 9b — der Sucher — ist gebaut** (`jsqr`, `Sucher.tsx`, Hauptaktion auf der Klebe-Ansicht von „Tag prüfen" auf „Tag scannen" umgestellt). **Offen; am 2. September auf Ansage vertagt.** Ohne ihn trägt der Gang, aber der Trainer tippt 22 Zeichen ab, statt zu scannen.
+- [ ] **Der Sucher ist von Hand an einem echten Telefon gelaufen** — der einzige Punkt, den kein Test abnimmt. Hängt an 9b.
 - [ ] `supabase/migrations/` ist unverändert — 31 Dateien, keine neue
 
 Danach `docs/superpowers/plans/2026-09-01-gesamtfahrplan.md` nachziehen, wie es dessen Abschnitt 8 verlangt: die Zeile *„Sucher im Portal"* und *„Einrichtung am Gerät"* in Abschnitt 3 auf ✅, den Bezugsstand in der Kopftabelle, und Phase 3 in Abschnitt 5 als abgeschlossen.

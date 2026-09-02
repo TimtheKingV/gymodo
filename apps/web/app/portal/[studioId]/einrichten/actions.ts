@@ -10,6 +10,7 @@ import {
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { Befund } from "./befund";
 
 /**
  * Die Server Actions des Gangs.
@@ -223,4 +224,101 @@ export async function geraetAnlegen(
   } catch (fehler) {
     return fehlerAus(fehler, "Das Geraet liess sich nicht anlegen.");
   }
+}
+
+/**
+ * Was der Sucher gelesen hat, gegen inspect_tag (0028) gehalten.
+ *
+ * Die Antworttabelle steht in befund.ts; hier wird nur uebersetzt. Die
+ * Studiozugehoerigkeit prueft die Funktion selbst und zuerst -- ein
+ * gesperrter Tag eines fremden Studios heisst unbekannt, nicht gesperrt,
+ * sonst verriete die Antwort seine Existenz.
+ */
+export async function tagPruefen(
+  studioId: string,
+  token: string,
+): Promise<Ergebnis<{ befund: Befund }>> {
+  const client = await createServerSupabaseClient();
+  const { data, error } = await client.rpc("inspect_tag", {
+    p_token: token.trim(),
+    p_studio_id: studioId,
+  });
+
+  if (error) {
+    console.error("Tag nicht geprueft:", error);
+    return { ok: false, error: "Der Tag liess sich nicht prüfen." };
+  }
+
+  const zeile = (
+    data as Array<{
+      verdict: string;
+      batch_code: string | null;
+      batch_index: number | null;
+      machine_id: string | null;
+      machine_label: string | null;
+    }> | null
+  )?.[0];
+
+  switch (zeile?.verdict) {
+    case "frei":
+      return {
+        ok: true,
+        befund: {
+          verdikt: "frei",
+          batchCode: zeile.batch_code ?? "?",
+          batchIndex: zeile.batch_index ?? 0,
+        },
+      };
+    case "vergeben":
+      return {
+        ok: true,
+        befund: {
+          verdikt: "vergeben",
+          machineId: zeile.machine_id!,
+          machineLabel: zeile.machine_label ?? "einem anderen Gerät",
+        },
+      };
+    case "gesperrt":
+      return { ok: true, befund: { verdikt: "gesperrt" } };
+    case "aushangschild":
+      return { ok: true, befund: { verdikt: "aushangschild" } };
+    default:
+      return { ok: true, befund: { verdikt: "unbekannt" } };
+  }
+}
+
+/**
+ * Den gelieferten Tag an das Geraet binden. Das Studio kommt aus der
+ * Maschine, nicht von hier -- bind_tag_to_machine leitet es selbst ab und
+ * prueft den Aufrufer dagegen (0028).
+ */
+export async function tagVerbinden(
+  studioId: string,
+  machineId: string,
+  token: string,
+): Promise<Ergebnis<{ tagId: string }>> {
+  const client = await createServerSupabaseClient();
+  const { data, error } = await client.rpc("bind_tag_to_machine", {
+    p_token: token.trim(),
+    p_machine_id: machineId,
+  });
+
+  if (error) {
+    console.error("Tag nicht gebunden:", error);
+    return { ok: false, error: "Der Tag liess sich nicht binden." };
+  }
+
+  const zeile = (data as Array<{ verdict: string; tag_id: string | null }> | null)?.[0];
+  if (zeile?.verdict === "gebunden" && zeile.tag_id) {
+    revalidatePath(`/portal/${studioId}/einrichten`);
+    return { ok: true, tagId: zeile.tag_id };
+  }
+
+  // Zwischen Pruefen und Verbinden kann ein zweiter Trainer denselben Tag
+  // gebunden haben. Die Antwort kommt dann aus derselben Tabelle wie oben --
+  // der Aufrufer prueft einfach neu.
+  return {
+    ok: false,
+    error: "Dieser Tag ist inzwischen nicht mehr frei. Prüf ihn noch einmal.",
+  };
 }

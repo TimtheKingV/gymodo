@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { studioMitTrainer } from "./helpers/studio";
+import { tagAnlegen } from "../tests/helpers/tags";
 
 /**
  * Ein JPEG in der gewuenschten Groesse: SOI, JFIF, SOS, Nutzlast, EOI.
@@ -178,6 +179,85 @@ test("Schritt 3 schlaegt die naechste Nummer vor und legt das Geraet an", async 
 
   await expect(page).toHaveURL(new RegExp(`/einrichten/geraet/[0-9a-f-]+/tag$`));
 
-  // AUFGABE 9 schaltet die Zeile wieder ein -- die Tag-Seite gibt es dann.
-  // await expect(page.getByText("Schritt 4 von 6 · Tag")).toBeVisible();
+  await expect(page.getByText("Schritt 4 von 6 · Tag")).toBeVisible();
+});
+
+test("Schritt 4 beantwortet den Tag und verbindet ihn mit dem Geraet", async ({
+  page,
+}) => {
+  const { admin, studioId } = await studioMitTrainer(page, "einrichten-tag");
+
+  const { data: modell, error: modellFehler } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (modellFehler) throw modellFehler;
+
+  const { data: geraet, error: geraetFehler } = await admin
+    .from("machines")
+    .insert({
+      studio_id: studioId,
+      equipment_model_id: modell.id,
+      label: "14",
+      location_note: "Rückwand rechts",
+    })
+    .select("id")
+    .single();
+  if (geraetFehler) throw geraetFehler;
+
+  await page.goto(`/portal/${studioId}/einrichten/geraet/${geraet.id}/tag`);
+  await expect(page.getByText("Schritt 4 von 6 · Tag")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tag ankleben" })).toBeVisible();
+  await expect(page.getByText("Metall braucht die Ferritseite")).toBeVisible();
+
+  // Ein Aushangschild ist vor dem Scan nicht von einem Geraeteaufkleber zu
+  // unterscheiden -- das ist Absicht, und deshalb muss die Antwort sagen,
+  // was in der Hand liegt (Spec 4, vierte Zeile).
+  const schild = await tagAnlegen(admin, {
+    studioId,
+    kind: "studio",
+    status: "active",
+  });
+  await page.getByLabel("Token vom Tag").fill(schild.token);
+  await page.getByRole("button", { name: "Tag prüfen" }).click();
+  await expect(page.getByText("Das ist ein Aushangschild")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Verbinden" })).toHaveCount(0);
+  // Die Antwort ist eine Sackgasse mit genau einem Ausgang -- und der fuehrt
+  // zurueck, nicht weiter.
+  await page.getByRole("button", { name: "Anderen Tag nehmen" }).click();
+
+  // Ein vergebener Tag nennt sein Geraet und bietet nichts an.
+  const { data: anderes, error: anderesFehler } = await admin
+    .from("machines")
+    .insert({
+      studio_id: studioId,
+      equipment_model_id: modell.id,
+      label: "Beinpresse 7",
+    })
+    .select("id")
+    .single();
+  if (anderesFehler) throw anderesFehler;
+  const vergeben = await tagAnlegen(admin, {
+    studioId,
+    machineId: anderes.id,
+    status: "active",
+  });
+  await page.getByLabel("Token vom Tag").fill(vergeben.token);
+  await page.getByRole("button", { name: "Tag prüfen" }).click();
+  await expect(page.getByText("Dieser Tag gehört zu Beinpresse 7.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Verbinden" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Anderen Tag nehmen" }).click();
+
+  // Ein frischer Tag aus der Lieferung ist studiolos und lernt sein Studio
+  // erst hier (0028).
+  const frisch = await tagAnlegen(admin, { studioId: null });
+  await page.getByLabel("Token vom Tag").fill(frisch.token);
+  await page.getByRole("button", { name: "Tag prüfen" }).click();
+  await expect(page.getByText("Tag erkannt")).toBeVisible();
+  await page.getByRole("button", { name: "Verbinden" }).click();
+
+  await expect(page).toHaveURL(
+    new RegExp(`/einrichten/geraet/${geraet.id}/uebungen$`),
+  );
 });
