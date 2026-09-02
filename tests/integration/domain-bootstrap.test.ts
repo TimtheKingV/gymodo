@@ -7,6 +7,7 @@ import {
   uniqueEmail,
   userClient,
 } from "./helpers/clients.js";
+import { tagsAnlegen } from "../helpers/tags.js";
 
 let studioA: string;
 let memberAEmail: string;
@@ -109,21 +110,10 @@ beforeAll(async () => {
   foreignMachine = machines[1]!.id;
 
   tokenA = createTagToken();
-  const { error: tagError } = await admin.from("machine_tags").insert([
-    {
-      studio_id: studioA,
-      machine_id: machineA,
-      token_hash: hashTagToken(tokenA),
-      status: "active",
-    },
-    {
-      studio_id: studioB,
-      machine_id: foreignMachine,
-      token_hash: hashTagToken(createTagToken()),
-      status: "active",
-    },
+  await tagsAnlegen(admin, [
+    { studioId: studioA, machineId: machineA, token: tokenA, status: "active" },
+    { studioId: studioB, machineId: foreignMachine, status: "active" },
   ]);
-  if (tagError) throw tagError;
 
   // Zwei Kalibrierungen derselben Kombination -- die neuere muss gewinnen.
   const { error: calibrationError } = await admin

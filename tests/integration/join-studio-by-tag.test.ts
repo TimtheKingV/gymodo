@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { createClient } from "@supabase/supabase-js";
 import { createTagToken, hashTagToken } from "@fitretro/domain";
 import { serviceClient, createTestUser, userClient, uniqueEmail } from "./helpers/clients.js";
+import { tagAnlegen, tagsAnlegen } from "../helpers/tags.js";
 
 function anonClient() {
   const url = process.env.SUPABASE_URL;
@@ -50,23 +51,11 @@ beforeAll(async () => {
   geraetToken = createTagToken();
   aushangToken = createTagToken();
   gesperrtToken = createTagToken();
-  const { error: tagError } = await admin.from("machine_tags").insert([
-    {
-      studio_id: studioId,
-      machine_id: machineId,
-      kind: "machine",
-      token_hash: hashTagToken(geraetToken),
-      status: "active",
-    },
-    {
-      studio_id: studioId,
-      kind: "studio",
-      token_hash: hashTagToken(aushangToken),
-      status: "active",
-    },
-    { studio_id: studioId, kind: "machine", token_hash: hashTagToken(gesperrtToken), status: "revoked" },
+  await tagsAnlegen(admin, [
+    { studioId, machineId, kind: "machine", token: geraetToken, status: "active" },
+    { studioId, kind: "studio", token: aushangToken, status: "active" },
+    { studioId, kind: "machine", token: gesperrtToken, status: "revoked" },
   ]);
-  if (tagError) throw tagError;
 
   fremdEmail = uniqueEmail("beitritt-fremd");
   await createTestUser(fremdEmail);
@@ -219,14 +208,13 @@ describe("join_studio_by_tag", () => {
     if (machineError) throw machineError;
 
     const inaktivToken = createTagToken();
-    const { error: tagError } = await admin.from("machine_tags").insert({
-      studio_id: studioId,
-      machine_id: stillgelegt.id,
+    await tagAnlegen(admin, {
+      studioId,
+      machineId: stillgelegt.id,
       kind: "machine",
-      token_hash: hashTagToken(inaktivToken),
+      token: inaktivToken,
       status: "active",
     });
-    if (tagError) throw tagError;
 
     const email = uniqueEmail("beitritt-stillgelegt");
     await createTestUser(email);

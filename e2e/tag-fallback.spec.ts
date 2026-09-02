@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import { createTagToken, hashTagToken } from "@fitretro/domain";
+import { createTagToken } from "@fitretro/domain";
+import { tagAnlegen } from "../tests/helpers/tags";
 
 function admin() {
   return createClient(
@@ -70,14 +71,11 @@ test("aktiver Tag mit zugewiesenem Geraet zeigt den Installationshinweis", async
     .single();
   if (machineError) throw machineError;
 
-  const token = createTagToken();
-  const { error: tagError } = await client.from("machine_tags").insert({
-    studio_id: studio.id,
-    machine_id: machine.id,
-    token_hash: hashTagToken(token),
+  const { token } = await tagAnlegen(client, {
+    studioId: studio.id,
+    machineId: machine.id,
     status: "active",
   });
-  if (tagError) throw tagError;
 
   await page.goto(`/t/${token}`);
   await expect(page.getByTestId("install-hint")).toBeVisible();
@@ -94,13 +92,10 @@ test("noch nicht zugewiesener Tag zeigt dieselbe neutrale Meldung", async ({
     .single();
   if (studioError) throw studioError;
 
-  const token = createTagToken();
-  const { error: tagError } = await client.from("machine_tags").insert({
-    studio_id: studio.id,
-    token_hash: hashTagToken(token),
+  const { token } = await tagAnlegen(client, {
+    studioId: studio.id,
     status: "unassigned",
   });
-  if (tagError) throw tagError;
 
   await page.goto(`/t/${token}`);
   await expect(page.getByTestId("tag-unknown")).toBeVisible();
@@ -115,13 +110,10 @@ test("gesperrter Tag liefert keine Geraetedaten", async ({ page }) => {
     .single();
   if (studioError) throw studioError;
 
-  const token = createTagToken();
-  const { error: tagError } = await client.from("machine_tags").insert({
-    studio_id: studio.id,
-    token_hash: hashTagToken(token),
+  const { token } = await tagAnlegen(client, {
+    studioId: studio.id,
     status: "revoked",
   });
-  if (tagError) throw tagError;
 
   await page.goto(`/t/${token}`);
   await expect(page.getByTestId("tag-unknown")).toBeVisible();
@@ -211,14 +203,11 @@ test("aktiver Tag zeigt Geraet, Foto und Einweisungsvideo vor dem Installationsh
     if (error) throw error;
   }
 
-  const token = createTagToken();
-  const { error: tagError } = await client.from("machine_tags").insert({
-    studio_id: studio.id,
-    machine_id: machine.id,
-    token_hash: hashTagToken(token),
+  const { token } = await tagAnlegen(client, {
+    studioId: studio.id,
+    machineId: machine.id,
     status: "active",
   });
-  if (tagError) throw tagError;
 
   await page.goto(`/t/${token}`);
 
@@ -261,14 +250,11 @@ test("ein Aushang-Token zeigt das Studio statt eines Geraets", async ({
     .single();
   if (studioError) throw studioError;
 
-  const aushangToken = createTagToken();
-  const { error: tagError } = await client.from("machine_tags").insert({
-    studio_id: studio.id,
+  const { token: aushangToken } = await tagAnlegen(client, {
+    studioId: studio.id,
     kind: "studio",
-    token_hash: hashTagToken(aushangToken),
     status: "active",
   });
-  if (tagError) throw tagError;
 
   await page.goto(`/t/${aushangToken}`);
   await expect(page.getByTestId("tag-aushang")).toBeVisible();

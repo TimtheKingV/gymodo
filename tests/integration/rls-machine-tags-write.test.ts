@@ -6,6 +6,7 @@ import {
   uniqueEmail,
   userClient,
 } from "./helpers/clients.js";
+import { tagAnlegen } from "../helpers/tags.js";
 
 // Schreibpfad auf machine_tags -- der offene Punkt 2 aus dem Plan.
 // Bis 0016 hatte die Tabelle nur eine Select-Policy: Tags liessen sich weder
@@ -27,18 +28,8 @@ async function seedTag(
   status: "unassigned" | "active" | "revoked",
 ): Promise<string> {
   const admin = serviceClient();
-  const { data, error } = await admin
-    .from("machine_tags")
-    .insert({
-      studio_id: studioId,
-      machine_id: machineId,
-      token_hash: hashTagToken(createTagToken()),
-      status,
-    })
-    .select("id")
-    .single();
-  if (error) throw error;
-  return data.id;
+  const { id } = await tagAnlegen(admin, { studioId, machineId, status });
+  return id;
 }
 
 beforeAll(async () => {
@@ -91,13 +82,10 @@ beforeAll(async () => {
 describe("machine_tags: Insert-Policy", () => {
   it("positiv: der Trainer legt einen unassigned Tag im eigenen Studio an", async () => {
     const client = await userClient(trainerA);
-    const token = createTagToken();
-    const { error } = await client.from("machine_tags").insert({
-      studio_id: studioA,
-      token_hash: hashTagToken(token),
+    const { token } = await tagAnlegen(client, {
+      studioId: studioA,
       status: "unassigned",
     });
-    expect(error).toBeNull();
 
     const admin = serviceClient();
     const { data } = await admin
@@ -110,14 +98,11 @@ describe("machine_tags: Insert-Policy", () => {
 
   it("positiv: anlegen und zuweisen in einer Anweisung -- der Check-Constraint aus 0008 laesst nichts anderes zu", async () => {
     const client = await userClient(trainerA);
-    const token = createTagToken();
-    const { error } = await client.from("machine_tags").insert({
-      studio_id: studioA,
-      machine_id: machineA,
-      token_hash: hashTagToken(token),
+    const { token } = await tagAnlegen(client, {
+      studioId: studioA,
+      machineId: machineA,
       status: "active",
     });
-    expect(error).toBeNull();
 
     const admin = serviceClient();
     const { data } = await admin
@@ -130,11 +115,12 @@ describe("machine_tags: Insert-Policy", () => {
   it("negativ: ein einfaches Mitglied legt keinen Tag an", async () => {
     const client = await userClient(memberA);
     const token = createTagToken();
-    const { error } = await client.from("machine_tags").insert({
-      studio_id: studioA,
-      token_hash: hashTagToken(token),
-      status: "unassigned",
-    });
+    let error: unknown = null;
+    try {
+      await tagAnlegen(client, { studioId: studioA, token, status: "unassigned" });
+    } catch (e) {
+      error = e;
+    }
     expect(error).not.toBeNull();
 
     const admin = serviceClient();
@@ -148,11 +134,12 @@ describe("machine_tags: Insert-Policy", () => {
   it("cross-tenant: der Trainer aus A legt keinen Tag fuer Studio B an", async () => {
     const client = await userClient(trainerA);
     const token = createTagToken();
-    const { error } = await client.from("machine_tags").insert({
-      studio_id: studioB,
-      token_hash: hashTagToken(token),
-      status: "unassigned",
-    });
+    let error: unknown = null;
+    try {
+      await tagAnlegen(client, { studioId: studioB, token, status: "unassigned" });
+    } catch (e) {
+      error = e;
+    }
     expect(error).not.toBeNull();
 
     const admin = serviceClient();
@@ -166,12 +153,12 @@ describe("machine_tags: Insert-Policy", () => {
   it("cross-tenant: ein Tag im eigenen Studio darf nicht auf ein fremdes Geraet zeigen", async () => {
     const client = await userClient(trainerA);
     const token = createTagToken();
-    const { error } = await client.from("machine_tags").insert({
-      studio_id: studioA,
-      machine_id: machineB,
-      token_hash: hashTagToken(token),
-      status: "active",
-    });
+    let error: unknown = null;
+    try {
+      await tagAnlegen(client, { studioId: studioA, machineId: machineB, token, status: "active" });
+    } catch (e) {
+      error = e;
+    }
     expect(error).not.toBeNull();
 
     const admin = serviceClient();
@@ -186,19 +173,15 @@ describe("machine_tags: Insert-Policy", () => {
     const client = await userClient(trainerA);
     const token = createTagToken();
 
-    const first = await client.from("machine_tags").insert({
-      studio_id: studioA,
-      token_hash: hashTagToken(token),
-      status: "unassigned",
-    });
-    expect(first.error).toBeNull();
+    await tagAnlegen(client, { studioId: studioA, token, status: "unassigned" });
 
-    const second = await client.from("machine_tags").insert({
-      studio_id: studioA,
-      token_hash: hashTagToken(token),
-      status: "unassigned",
-    });
-    expect(second.error).not.toBeNull();
+    let secondError: unknown = null;
+    try {
+      await tagAnlegen(client, { studioId: studioA, token, status: "unassigned" });
+    } catch (e) {
+      secondError = e;
+    }
+    expect(secondError).not.toBeNull();
 
     const admin = serviceClient();
     const { data } = await admin
