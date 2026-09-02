@@ -20,6 +20,7 @@ export async function requireStudioStaff(
   client: SupabaseClient,
   studioId: string,
   userId: string,
+  meldung = "Nur Trainer und Inhaber pflegen den Geraetekatalog.",
 ): Promise<void> {
   const { data } = await client
     .from("studio_memberships")
@@ -29,10 +30,7 @@ export async function requireStudioStaff(
     .maybeSingle<{ role: string }>();
 
   if (!data || (data.role !== "trainer" && data.role !== "owner")) {
-    throw new DomainError(
-      "unauthorized",
-      "Nur Trainer und Inhaber pflegen den Geraetekatalog.",
-    );
+    throw new DomainError("unauthorized", meldung);
   }
 }
 
@@ -76,18 +74,26 @@ const einstellungenSchema = z.object({
 
 export type StudioSettingsInput = z.infer<typeof einstellungenSchema>;
 
+/**
+ * Eigene Meldung statt der Geraetekatalog-Standardmeldung von
+ * requireStudioStaff: wer die Einstellungen nicht sehen oder aendern darf,
+ * soll das auch fuer Einstellungen erfahren, nicht fuer den Katalog
+ * (Spec Abschnitt 5 -- eine Absage sagt, was gilt).
+ */
+const einstellungenAbsage = "Nur Trainer und Inhaber sehen und aendern die Studio-Einstellungen.";
+
 export async function getStudioSettings(
   client: SupabaseClient,
   studioId: string,
 ): Promise<StudioSettings> {
   const userId = await requireUserId(client);
-  await requireStudioStaff(client, studioId, userId);
+  await requireStudioStaff(client, studioId, userId, einstellungenAbsage);
 
   const { data, error } = await client
     .from("studios")
     .select("id, name, timezone, cancellation_deadline_hours, join_code, join_code_active")
     .eq("id", studioId)
-    .single<{
+    .maybeSingle<{
       id: string;
       name: string;
       timezone: string;
@@ -120,7 +126,7 @@ export async function updateStudioSettings(
   input: StudioSettingsInput,
 ): Promise<void> {
   const userId = await requireUserId(client);
-  await requireStudioStaff(client, studioId, userId);
+  await requireStudioStaff(client, studioId, userId, einstellungenAbsage);
 
   const parsed = einstellungenSchema.safeParse(input);
   if (!parsed.success) {

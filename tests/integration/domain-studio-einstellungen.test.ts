@@ -45,6 +45,20 @@ describe("getStudioSettings", () => {
     const client = await userClient(mitgliedEmail);
     await expect(getStudioSettings(client, studioId)).rejects.toThrow(DomainError);
   });
+
+  it("die Absage nennt die Einstellungen, nicht den Geraetekatalog", async () => {
+    const client = await userClient(mitgliedEmail);
+    const erwarteteMeldung = "Nur Trainer und Inhaber sehen und aendern die Studio-Einstellungen.";
+
+    await expect(getStudioSettings(client, studioId)).rejects.toThrow(erwarteteMeldung);
+    await expect(
+      updateStudioSettings(client, studioId, {
+        name: "Sollte nicht ankommen",
+        timezone: "Europe/Berlin",
+        cancellationDeadlineHours: 2,
+      }),
+    ).rejects.toThrow(erwarteteMeldung);
+  });
 });
 
 describe("updateStudioSettings", () => {
