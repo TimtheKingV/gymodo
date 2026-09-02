@@ -18,6 +18,16 @@ begin
 end;
 $$;
 
+-- Ein duenner Wrapper um random(), Postgres' pro Backend deterministischen
+-- PRNG -- ueber PostgREST direkt aufrufbar liesse sich dessen Ausgabe
+-- wiederholt abtasten. service_role bleibt bewusst aussen vor: der
+-- DEFAULT unten wertet mit den Rechten der einfuegenden Rolle aus, und
+-- Studios entstehen ausschliesslich per Service-Role (Onboarding ist
+-- admin-only, siehe Plan). SECURITY DEFINER-Funktionen wie
+-- regenerate_studio_join_code laufen ohnehin als Funktionsbesitzer, nicht
+-- als Aufrufer, und sind von diesem Revoke unberuehrt.
+revoke all on function public.generate_join_code() from public, anon, authenticated;
+
 -- Ein volatiler Default wird bei ADD COLUMN je Zeile neu ausgewertet, auch
 -- fuer bereits bestehende Studios -- jedes bekommt also einen eigenen Code,
 -- nicht denselben. Bei 33^8 moeglichen Codes ist eine Kollision unter den
