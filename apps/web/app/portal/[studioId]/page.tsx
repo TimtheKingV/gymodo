@@ -168,6 +168,15 @@ export default async function UeberblickPage({
               trainiert hat — und das zeigt das Portal nicht.
             </p>
           </div>
+        ) : uebersicht.topMachines.length === 0 ? (
+          <div className={styles.empty}>
+            <p className={styles.emptyTitle}>Noch kein Satz erfasst.</p>
+            <p className={styles.emptyNext}>
+              Aktive Mitglieder gibt es — eine Einheit gilt als begonnen, sobald
+              jemand ein Gerät antippt. Gezählt wird hier erst, was am Gerät
+              bestätigt wurde.
+            </p>
+          </div>
         ) : (
           <ul className={styles.rows}>
             {uebersicht.topMachines.map((geraet) => (
