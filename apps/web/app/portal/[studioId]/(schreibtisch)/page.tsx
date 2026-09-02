@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { AktionsFormular, Feld } from "../Form";
-import { modellAnlegen } from "../actions";
-import { erreichbarkeit, ladeKatalog } from "./catalog";
-import styles from "../portal.module.css";
+import { AktionsFormular, Feld } from "../../Form";
+import { modellAnlegen } from "../../actions";
+import { erreichbarkeit, ladeKatalog } from "../catalog";
+import styles from "../../portal.module.css";
 
 export default async function StudioPage({
   params,

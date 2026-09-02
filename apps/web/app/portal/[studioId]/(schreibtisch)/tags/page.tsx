@@ -1,8 +1,8 @@
-import { AktionsKnopf } from "../../Form";
-import { tagSperren } from "../../actions";
-import { ladeKatalog } from "../catalog";
+import { AktionsKnopf } from "../../../Form";
+import { tagSperren } from "../../../actions";
+import { ladeKatalog } from "../../catalog";
 import { TagBinden } from "./TagBinden";
-import styles from "../../portal.module.css";
+import styles from "../../../portal.module.css";
 
 const STATUS_TEXT: Record<string, string> = {
   unassigned: "vorrätig",

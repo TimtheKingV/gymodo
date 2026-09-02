@@ -1,6 +1,6 @@
-import { Rail } from "./Rail";
-import { erreichbarkeit, ladeKatalog } from "./catalog";
-import styles from "../portal.module.css";
+import { Rail } from "../Rail";
+import { erreichbarkeit, ladeKatalog } from "../catalog";
+import styles from "../../portal.module.css";
 
 export default async function StudioLayout({
   children,

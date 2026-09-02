@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { MAX_PHOTO_BYTES } from "@fitretro/domain";
-import { AktionsFormular, AktionsKnopf, Feld } from "../../../Form";
-import { ParameterFormular } from "../../../ParameterFormular";
-import { VideoUpload } from "../../../VideoUpload";
+import { AktionsFormular, AktionsKnopf, Feld } from "../../../../Form";
+import { ParameterFormular } from "../../../../ParameterFormular";
+import { VideoUpload } from "../../../../VideoUpload";
 import {
   fotoHochladen,
   geraetAnlegen,
@@ -14,9 +14,9 @@ import {
   uebungAnlegen,
   uebungLoesen,
   uebungVerschieben,
-} from "../../../actions";
-import { ladeKatalog } from "../../catalog";
-import styles from "../../../portal.module.css";
+} from "../../../../actions";
+import { ladeKatalog } from "../../../catalog";
+import styles from "../../../../portal.module.css";
 
 /** 80,0 statt 80 -- sonst liest sich ein Wechsel auf 82,5 wie ein Formatfehler. */
 function kg(wert: number): string {

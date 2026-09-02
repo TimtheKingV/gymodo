@@ -1,6 +1,6 @@
 import { DomainError, listStudioMembers } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import styles from "../../portal.module.css";
+import styles from "../../../portal.module.css";
 import { BeitrittscodeKarte, MitgliedZeile } from "./LeuteActions";
 
 export default async function LeutePage({

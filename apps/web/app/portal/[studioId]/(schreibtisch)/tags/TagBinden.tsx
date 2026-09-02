@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { tagBinden } from "../../actions";
-import styles from "../../portal.module.css";
+import { tagBinden } from "../../../actions";
+import styles from "../../../portal.module.css";
 
 /**
  * Der Sucher ohne Kamera. Tags kommen als Lieferung und sind vor dem Scan

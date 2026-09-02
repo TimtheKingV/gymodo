@@ -951,6 +951,14 @@ Die Aliasimporte (`@/lib/supabase/server`) und die Paketimporte (`@fitretro/doma
 
 - [ ] **Schritt 3: Prüfen, dass der Schreibtisch unverändert steht**
 
+**Zuerst die alten generierten Typen wegräumen:**
+
+```bash
+rm -rf apps/web/.next/types
+```
+
+`next typegen` legt die Routentypen neu an, **löscht aber die alten nicht**. Ohne diesen Schritt meldet der Typecheck `TS2307: Cannot find module '../../../app/portal/[studioId]/tags/page.js'` für jede verschobene Seite — ein Fehler in generiertem Code, der auf eine Datei zeigt, die es nicht mehr gibt. Das sieht nach einem kaputten Umbau aus und ist nur Müll von vorher.
+
 Ausführen: `pnpm typecheck`
 
 Erwartet: keine Fehler. Ein übersehener relativer Import fällt hier auf, nicht erst im Browser.

@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { AktionsKnopf } from "../../Form";
-import { geraetStilllegen, geraetWiederInBetrieb } from "../../actions";
-import { ladeKatalog } from "../catalog";
-import styles from "../../portal.module.css";
+import { AktionsKnopf } from "../../../Form";
+import { geraetStilllegen, geraetWiederInBetrieb } from "../../../actions";
+import { ladeKatalog } from "../../catalog";
+import styles from "../../../portal.module.css";
 
 /**
  * Alle Geraete quer ueber die Modelle -- die Ansicht fuer den Rundgang

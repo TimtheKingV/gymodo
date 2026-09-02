@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import type { StudioMember } from "@fitretro/domain";
-import { AktionsKnopf } from "../../Form";
+import { AktionsKnopf } from "../../../Form";
 import {
   beitrittscodeAktivSetzen,
   beitrittscodeErneuern,
   mitgliedEntfernen,
   mitgliedRolleAendern,
-} from "../../actions";
-import styles from "../../portal.module.css";
+} from "../../../actions";
+import styles from "../../../portal.module.css";
 
 export function BeitrittscodeKarte({
   studioId,
