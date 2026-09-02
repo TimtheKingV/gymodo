@@ -7,6 +7,7 @@ import {
   createExercise,
   createMachine,
   createSettingDefinition,
+  createTagToken,
   deactivateMachine,
   detachExercise,
   getStudioCatalog,
@@ -630,7 +631,7 @@ describe("Lieferungen im Katalog", () => {
     const client = await userClient(trainerA);
     const katalog = await getStudioCatalog(client, studioA);
     expect(katalog.tags.length).toBeGreaterThan(0);
-    expect(katalog.tags.every((tag) => typeof tag.batchCode === "string")).toBe(true);
+    expect(katalog.tags.every((tag) => tag.batchCode !== "")).toBe(true);
     expect(katalog.tags.every((tag) => tag.batchIndex >= 1)).toBe(true);
   });
 
@@ -645,5 +646,42 @@ describe("Lieferungen im Katalog", () => {
     const lieferung = katalog.shipments.find((zeile) => zeile.batchCode === code);
     expect(lieferung?.quantity).toBe(100);
     expect(lieferung?.kind).toBe("machine");
+  });
+
+  it("zeigt die Charge auch ohne eigene Lieferung, wenn ein Tag aus ihr gebunden ist", async () => {
+    const admin = serviceClient();
+    const code = `ohne-lieferung-${crypto.randomUUID()}`;
+    const charge = await chargeAnlegen(admin, { code, kind: "machine", menge: 1 });
+
+    // Kein lieferungAnlegen hier -- absichtlich keine tag_shipments-Zeile fuer
+    // studioA zu dieser Charge. Die Sichtbarkeit soll trotzdem ueber den
+    // gebundenen Tag selbst entstehen (machine_tags-Zweig von 0029), nicht nur
+    // ueber eine Lieferung.
+    const { data: geraetZeile, error: geraetFehler } = await admin
+      .from("machines")
+      .select("id")
+      .eq("studio_id", studioA)
+      .limit(1)
+      .single();
+    if (geraetFehler) throw geraetFehler;
+
+    // chargeAnlegen(menge: 1) hat bereits batch_index 1 studiolos angelegt --
+    // die eigene Zeile braucht die naechste Nummer, sonst schlaegt der
+    // Unique-Constraint (batch_id, batch_index) fehl.
+    const { error: tagFehler } = await admin.from("machine_tags").insert({
+      studio_id: studioA,
+      machine_id: geraetZeile.id,
+      kind: "machine",
+      status: "active",
+      token: createTagToken(),
+      batch_id: charge.id,
+      batch_index: 2,
+    });
+    if (tagFehler) throw tagFehler;
+
+    const client = await userClient(trainerA);
+    const katalog = await getStudioCatalog(client, studioA);
+    const gebundenerTag = katalog.tags.find((tag) => tag.batchCode === code);
+    expect(gebundenerTag).toBeDefined();
   });
 });

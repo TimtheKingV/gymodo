@@ -4,7 +4,7 @@
 **Status:** Entwurf, abgestimmt. Noch keine Umsetzung.
 **Vorgänger:** `2026-09-01-einrichtung-am-geraet-design.md` (Tags als Lieferung, der Gang durch die Halle), `2026-09-01-scan-beitritt-design.md` (Tokenraum, `kind`, Aushang), `2026-09-01-konflikte-scan-und-einrichtung.md` (die vier Entscheidungen)
 **Ändert:** `2026-09-01-einrichtung-am-geraet-design.md` §1, §4, §5 und §6. Und die Global Constraints von `2026-09-01-scan-beitritt-datenbank.md` — der Satz *„Der Klartext-Token existiert genau einmal"* fällt.
-**Belegt:** Migrationen `0026`, `0027`, `0028`. Der Datenbankplan behält `0022`–`0025` unangetastet.
+**Belegt:** Migrationen `0026`, `0027`, `0028`, `0029`. Der Datenbankplan behält `0022`–`0025` unangetastet. `0029` kam erst waehrend der Umsetzung dazu (siehe Abschnitt 2, `0027_tag_chargen.sql` -- Nachgezogen, Migration `0029`) und ist kein Bruch dieser Zaehlung.
 **Canvas:** keine Änderung. `Tags.dc.html` trägt *Lieferungen*, *Charge 8 · geliefert*, *vorrätig* und die einzeln gelisteten Schilder bereits.
 
 ---
@@ -125,7 +125,11 @@ alter table public.tag_batches enable row level security;
 alter table public.tag_batches force  row level security;
 -- Bewusst KEINE Policy: nur service_role (rolbypassrls) erreicht diese Tabelle.
 -- Eine Charge ist ein Betreibergegenstand; kein Studio hat ein Wort dazu.
+```
 
+**Nachgezogen, Migration `0029`:** Task 8 (Betreiber-Fachschicht/Tags-Seite) brauchte `code`/`kind` der eigenen Charge lesbar fuer ein Studio, das nachweislich eine Lieferung oder einen eigenen Tag aus ihr hat -- reine "keine Policy" liess das nicht zu, auch fuer das verbundene Studio nicht. `0029` fuegt eine einzige, eng zugeschnittene SELECT-Policy hinzu: sichtbar nur ueber einen bestehenden Eintrag in `tag_shipments` oder `machine_tags`, die beide bereits `is_studio_staff`-gebunden sind. Ein unverbundenes Studio sieht weiterhin nichts -- genau das, was dieser Absatz beschreibt, gilt fuer den unverbundenen Fall unveraendert.
+
+```sql
 create table public.tag_shipments (
   id         uuid primary key default gen_random_uuid(),
   batch_id   uuid not null references public.tag_batches (id) on delete restrict,
@@ -233,7 +237,7 @@ Ein studioloser Tag ist per RLS unsichtbar. Der Sucher des Trainers sähe bei *�
 
 Rückgabe: `verdict text`, `batch_code text`, `batch_index integer`, `machine_id uuid`, `machine_label text`.
 
-Ist der Aufrufer nicht `is_studio_staff(p_studio_id)`, lautet die Antwort `unbekannt` — nicht `unauthorized`. Ungültiges Tokenformat ebenfalls, ohne Abfrage.
+Ist der Aufrufer nicht `is_studio_staff(p_studio_id)`, lautet die Antwort `unbekannt` — nicht `unauthorized`, ohne die Tag-Zeile ueberhaupt anzusehen. Ein ungueltiges Tokenformat landet auf demselben `unbekannt`, aber ueber denselben Pfad wie ein unbekannter Token -- die Funktion unterscheidet das Format nicht vorab, sondern findet schlicht keine Zeile. Eine Abfrage mehr als eine vorab verworfene Anfrage, gleiche Antwort.
 
 | Zeile in `machine_tags` | verdict | Antwort in §4 |
 | --- | --- | --- |
@@ -248,7 +252,7 @@ Ist der Aufrufer nicht `is_studio_staff(p_studio_id)`, lautet die Antwort `unbek
 
 Die letzte Zeile trägt den Rest: **über ein fremdes Studio wird nie etwas verraten, auch nicht die Sorte.** Ein studioloses Schild in Trainerhand ist ein Versandfehler, und *„melde dich beim Betreiber"* ist dafür die richtige Antwort — es wäre ohnehin nicht gültig.
 
-`batch_code` wird nur bei `frei` und `vergeben` gefüllt, `machine_id`/`machine_label` nur bei `vergeben`. *„Tag erkannt · Charge 7"* bleibt damit wörtlich baubar: die Zeile kennt ihre **Herstell**charge über `batch_id`, unabhängig davon, an wen geliefert wurde.
+`batch_code`/`batch_index` werden bei jedem Verdikt gefuellt, das die Zeile bereits gefunden hat -- `frei`, `vergeben`, `gesperrt` und `aushangschild` gleichermassen; nur `unbekannt` liefert beides `null`, weil dort per Definition keine Zeile (oder keine zugaengliche) vorliegt. `machine_id`/`machine_label` bleiben `vergeben` vorbehalten. *„Tag erkannt · Charge 7"* bleibt damit wörtlich baubar: die Zeile kennt ihre **Herstell**charge über `batch_id`, unabhängig davon, an wen geliefert wurde.
 
 ### `bind_tag_to_machine(p_token text, p_machine_id uuid)`
 
@@ -413,7 +417,7 @@ Damit sich am Ende nicht wieder drei Dokumente widersprechen — die Lehre aus `
 | §6 | Der Rückbau ist **nicht** mehr ein eigener Plan: `0026` erzwingt ihn. `TagZuweisen.tsx` entfällt nicht, sondern wird zum Rückfallweg. |
 | §7 | Der Punkt *„Kamerafreigabe … einziger Ausfallpunkt ohne Rückfallweg"* ist entschärft. Bleibt offen: Druckmaße des QR, lesbare Chargennummer, leerer Vorrat, Nummernvergabe. |
 
-**`2026-09-01-scan-beitritt-datenbank.md`** — Global Constraints: der Absatz *„Der Klartext-Token existiert genau einmal"* fällt ersatzlos. An seine Stelle tritt: *der Token steht im Klartext in `machine_tags.token`, ist für `authenticated` weder les- noch schreibbar, und `token_hash` ist eine generierte Spalte.* Der Satz über die belegten Nummern wird auf `0026`–`0028` erweitert.
+**`2026-09-01-scan-beitritt-datenbank.md`** — Global Constraints: der Absatz *„Der Klartext-Token existiert genau einmal"* fällt ersatzlos. An seine Stelle tritt: *der Token steht im Klartext in `machine_tags.token`, ist für `authenticated` weder les- noch schreibbar, und `token_hash` ist eine generierte Spalte.* Der Satz über die belegten Nummern wird auf `0026`–`0029` erweitert.
 
 **`2026-09-01-scan-beitritt-design.md`** — unverändert. `join_studio_by_tag`, der Tokenraum als Begriff und der Ersatz-Constraint aus §1 tragen dieses Modell unangetastet.
 

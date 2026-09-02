@@ -63,7 +63,7 @@ export default async function TagsPage({
         <div className={styles.sectionHead}>
           <h2 className={styles.sectionTitle}>Lieferungen</h2>
           <span className={styles.sectionNote}>
-            {geliefert === 0 ? "Noch keine Lieferung." : `${vorraetig} vorrätig`}
+            {katalog.shipments.length === 0 ? "Noch keine Lieferung." : `${vorraetig} vorrätig`}
           </span>
         </div>
         {katalog.shipments.length > 0 ? (
@@ -106,8 +106,8 @@ export default async function TagsPage({
           <div className={styles.empty}>
             <p className={styles.emptyTitle}>Noch kein Tag.</p>
             <p className={styles.emptyNext}>
-              Ohne Tag findet ein Mitglied kein Gerät. Leg einen an und klebe ihn
-              auf.
+              Ohne Tag findet ein Mitglied kein Gerät. Tags kommen als Lieferung
+              -- sobald eine da ist, verbindest du sie oben mit dem Gerät.
             </p>
           </div>
         ) : (
@@ -128,7 +128,11 @@ export default async function TagsPage({
                       <span className={badgeKlasse}>
                         {STATUS_TEXT[tag.status] ?? tag.status}
                       </span>{" "}
-                      {geraet ? `${geraet.label} — ${geraet.modell}` : "ohne Gerät"}
+                      {tag.kind === "studio"
+                        ? "Aushangschild"
+                        : geraet
+                          ? `${geraet.label} — ${geraet.modell}`
+                          : "ohne Gerät"}
                     </div>
                     <div className={styles.rowMeta}>
                       Charge {tag.batchCode} · {tag.batchIndex} · angelegt{" "}
