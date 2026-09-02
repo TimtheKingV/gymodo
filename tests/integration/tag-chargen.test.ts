@@ -6,6 +6,14 @@ import {
   userClient,
 } from "./helpers/clients.js";
 import { chargeFuerTest, tagAnlegen } from "../helpers/tags.js";
+import {
+  bestand,
+  chargeAnlegen,
+  chargeVerschrotten,
+  chargeZeilen,
+  lieferungAnlegen,
+  studioAufloesen,
+} from "@fitretro/domain/chargen";
 
 let studioA: string;
 let studioB: string;
@@ -139,5 +147,165 @@ describe("Die Halde", () => {
     const admin = serviceClient();
     const { id } = await tagAnlegen(admin, { studioId: null, status: "revoked" });
     expect(id).toBeTruthy();
+  });
+});
+
+describe("chargen.ts", () => {
+  it("legt eine Charge samt studioloser Zeilen an", async () => {
+    const admin = serviceClient();
+    const code = `anlegen-${crypto.randomUUID()}`;
+    const charge = await chargeAnlegen(admin, { code, kind: "machine", menge: 12 });
+    expect(charge.quantity).toBe(12);
+
+    const { data } = await admin
+      .from("machine_tags")
+      .select("batch_index, studio_id, status, kind")
+      .eq("batch_id", charge.id)
+      .order("batch_index", { ascending: true });
+    expect(data).toHaveLength(12);
+    expect(data?.[0]?.batch_index).toBe(1);
+    expect(data?.[11]?.batch_index).toBe(12);
+    expect(data?.every((zeile) => zeile.studio_id === null)).toBe(true);
+    expect(data?.every((zeile) => zeile.status === "unassigned")).toBe(true);
+  });
+
+  it("lehnt eine zweite Charge mit demselben Code ab", async () => {
+    const admin = serviceClient();
+    const code = `doppelt-${crypto.randomUUID()}`;
+    await chargeAnlegen(admin, { code, kind: "machine", menge: 1 });
+    await expect(
+      chargeAnlegen(admin, { code, kind: "machine", menge: 1 }),
+    ).rejects.toMatchObject({ code: "conflict" });
+  });
+
+  it("liefert alle Zeilen einer Charge ueber die PostgREST-Grenze hinaus", async () => {
+    const admin = serviceClient();
+    const code = `blaettern-${crypto.randomUUID()}`;
+    await chargeAnlegen(admin, { code, kind: "machine", menge: 1200 });
+
+    const { zeilen } = await chargeZeilen(admin, code);
+    expect(zeilen).toHaveLength(1200);
+    expect(zeilen[0]?.nummer).toBe(1);
+    expect(zeilen[1199]?.nummer).toBe(1200);
+    expect(new Set(zeilen.map((zeile) => zeile.token)).size).toBe(1200);
+    expect(zeilen[0]?.token).toMatch(/^[A-Za-z0-9_-]{22}$/);
+  });
+
+  it("schreibt fuer Geraetetags nur eine Lieferzeile und fasst keinen Token an", async () => {
+    const admin = serviceClient();
+    const code = `liefern-machine-${crypto.randomUUID()}`;
+    const charge = await chargeAnlegen(admin, { code, kind: "machine", menge: 10 });
+
+    const lieferung = await lieferungAnlegen(admin, {
+      chargeCode: code,
+      studioId: studioA,
+      menge: 4,
+    });
+    expect(lieferung.menge).toBe(4);
+
+    const { data } = await admin
+      .from("machine_tags")
+      .select("studio_id")
+      .eq("batch_id", charge.id);
+    expect(data?.every((zeile) => zeile.studio_id === null)).toBe(true);
+  });
+
+  it("aktiviert bei Aushangschildern genau die genannten Nummern", async () => {
+    const admin = serviceClient();
+    const code = `liefern-studio-${crypto.randomUUID()}`;
+    const charge = await chargeAnlegen(admin, { code, kind: "studio", menge: 10 });
+
+    const lieferung = await lieferungAnlegen(admin, {
+      chargeCode: code,
+      studioId: studioA,
+      nummern: [3, 4, 5],
+    });
+    expect(lieferung.menge).toBe(3);
+
+    const { data } = await admin
+      .from("machine_tags")
+      .select("batch_index, studio_id, status")
+      .eq("batch_id", charge.id)
+      .order("batch_index", { ascending: true });
+
+    const aktiv = data?.filter((zeile) => zeile.status === "active") ?? [];
+    expect(aktiv.map((zeile) => zeile.batch_index)).toEqual([3, 4, 5]);
+    expect(aktiv.every((zeile) => zeile.studio_id === studioA)).toBe(true);
+  });
+
+  it("lehnt Menge bei Schildern und Nummern bei Geraetetags ab", async () => {
+    const admin = serviceClient();
+    const schilder = `falsch-studio-${crypto.randomUUID()}`;
+    const geraete = `falsch-machine-${crypto.randomUUID()}`;
+    await chargeAnlegen(admin, { code: schilder, kind: "studio", menge: 5 });
+    await chargeAnlegen(admin, { code: geraete, kind: "machine", menge: 5 });
+
+    await expect(
+      lieferungAnlegen(admin, { chargeCode: schilder, studioId: studioA, menge: 2 }),
+    ).rejects.toMatchObject({ code: "validation_failed" });
+
+    await expect(
+      lieferungAnlegen(admin, { chargeCode: geraete, studioId: studioA, nummern: [1] }),
+    ).rejects.toMatchObject({ code: "validation_failed" });
+  });
+
+  it("laesst nicht mehr ausliefern als die Charge gross ist", async () => {
+    const admin = serviceClient();
+    const code = `zuviel-${crypto.randomUUID()}`;
+    await chargeAnlegen(admin, { code, kind: "machine", menge: 10 });
+    await lieferungAnlegen(admin, { chargeCode: code, studioId: studioA, menge: 8 });
+    await expect(
+      lieferungAnlegen(admin, { chargeCode: code, studioId: studioB, menge: 3 }),
+    ).rejects.toMatchObject({ code: "conflict" });
+  });
+
+  it("liefert aus einer verschrotteten Charge nichts mehr", async () => {
+    const admin = serviceClient();
+    const code = `schrott-${crypto.randomUUID()}`;
+    await chargeAnlegen(admin, { code, kind: "machine", menge: 5 });
+    await chargeVerschrotten(admin, code);
+    await expect(
+      lieferungAnlegen(admin, { chargeCode: code, studioId: studioA, menge: 1 }),
+    ).rejects.toMatchObject({ code: "conflict" });
+  });
+
+  it("rechnet den Bestand aus Lieferung minus gebundenen Tags", async () => {
+    const admin = serviceClient();
+
+    const { data: studio, error: studioFehler } = await admin
+      .from("studios")
+      .insert({ name: `Bestand ${crypto.randomUUID()}` })
+      .select("id")
+      .single();
+    if (studioFehler) throw studioFehler;
+
+    const code = `bestand-${crypto.randomUUID()}`;
+    await chargeAnlegen(admin, { code, kind: "machine", menge: 100 });
+    await lieferungAnlegen(admin, { chargeCode: code, studioId: studio.id, menge: 100 });
+
+    const vorher = await bestand(admin, studio.id);
+    expect(vorher).toEqual({ geliefert: 100, verbraucht: 0, vorraetig: 100 });
+
+    await tagAnlegen(admin, { studioId: studio.id, kind: "machine", status: "unassigned" });
+    const nachher = await bestand(admin, studio.id);
+    expect(nachher.verbraucht).toBe(1);
+    expect(nachher.vorraetig).toBe(99);
+  });
+
+  it("loest ein Studio ueber seinen Namen auf", async () => {
+    const admin = serviceClient();
+    const name = `Aufloesbar ${crypto.randomUUID()}`;
+    const { data: studio, error } = await admin
+      .from("studios")
+      .insert({ name })
+      .select("id")
+      .single();
+    if (error) throw error;
+
+    expect(await studioAufloesen(admin, name)).toBe(studio.id);
+    expect(await studioAufloesen(admin, studio.id)).toBe(studio.id);
+    await expect(studioAufloesen(admin, "Gibt es nicht")).rejects.toMatchObject({
+      code: "not_found",
+    });
   });
 });
