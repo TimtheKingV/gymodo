@@ -50,7 +50,7 @@ Das Ungleichgewicht aus der Erstfassung bleibt trotzdem bestehen, nur verschoben
 | Trainerportal: Geräte, Modelle, Tags, Medien-Upload, Leute | ✅ funktional, **ungestaltet** |
 | Betriebswerkzeug: `pnpm smoke:web`, `pnpm smoke:migrations` | ✅ neu, siehe 4a/4c |
 | **Studio-Einstellungen und Datenschutzgrenze** — Stornofrist, Speicherrecht mit Spaltengrenze, vier Policies ohne Staff-Klausel, `studio_overview` | ✅ neu |
-| Testlage: **37** Integrationsdateien, **5** E2E-Dateien (vorher 27 / 3) | ✅ grün |
+| Testlage: **40** Integrationsdateien, **6** E2E-Dateien (vor diesem Zweig 36 / 5) | ✅ grün |
 
 **Der Kassensturz aus `2026-08-31-trainerportal-struktur-design.md` §7 ist überholt.** Er nannte den Gerätekatalog als einzigen vollständig tragenden Bereich; das gilt nicht mehr. Die Tag-Kette trägt vom Herstellungslos bis zum Scan vor dem Gerät, und von den vier dort als „am weitesten offen" bezeichneten Punkten sind jetzt alle vier zu (Leute, Auth, Studio-Einstellungen, Datenschutzgrenze).
 

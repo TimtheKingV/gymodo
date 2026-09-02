@@ -82,7 +82,31 @@ test("ein Trainer pflegt die Studio-Einstellungen", async ({ page }) => {
   await page.getByRole("button", { name: "Passwort ändern" }).click();
   await expect(page.getByText("Das Passwort ist geändert.")).toBeVisible();
 
-  // Und das alte trägt nicht mehr.
+  // Die Erfolgsmeldung allein beweist nichts -- sie stuende auch bei einem
+  // reinen Anzeigefehler da. Ein frischer anon-Client prueft beide
+  // Richtungen: das alte Passwort muss abgewiesen werden, das neue muss
+  // tragen. Nur beide Haelften zusammen beweisen die Aenderung -- die eine
+  // allein liesse auch ein kaputtes oder ein unveraendertes Konto zu.
+  const anon = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } },
+  );
+
+  // Das alte Passwort traegt nicht mehr ...
+  const { error: altFehler } = await anon.auth.signInWithPassword({
+    email,
+    password: E2E_PASSWORD,
+  });
+  expect(altFehler).not.toBeNull();
+
+  // ... und das neue traegt.
+  const { error: neuFehler } = await anon.auth.signInWithPassword({
+    email,
+    password: neuesPasswort,
+  });
+  expect(neuFehler).toBeNull();
+
   await page.getByRole("button", { name: "Abmelden" }).click();
   await expect(page).toHaveURL(/\/login/);
 });
