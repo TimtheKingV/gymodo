@@ -46,6 +46,7 @@ export {
   equipmentModelPatchSchema,
   exerciseInputSchema,
   getStudioCatalog,
+  listStudioExercises,
   reactivateMachine,
   reorderModelExercises,
   revokeTag,
@@ -61,6 +62,7 @@ export type {
   CatalogTag,
   EquipmentModelInput,
   StudioCatalog,
+  StudioExercise,
 } from "./catalog.js";
 export { getBootstrap } from "./bootstrap.js";
 export { getProgress, progressOptionsSchema } from "./progress.js";

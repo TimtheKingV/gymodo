@@ -597,7 +597,7 @@ describe("listStudioExercises", () => {
 
 - [ ] **Schritt 2: Test laufen lassen und den Fehlschlag sehen**
 
-Ausführen: `pnpm test:integration -- domain-exercises`
+Ausführen: `npx vitest run --config vitest.config.ts tests/integration/domain-exercises.test.ts`
 
 Erwartet: FAIL — `listStudioExercises is not a function`
 
@@ -662,7 +662,7 @@ In `packages/domain/src/index.ts` bei den `./catalog.js`-Exporten `listStudioExe
 
 - [ ] **Schritt 5: Tests laufen lassen**
 
-Ausführen: `pnpm test:integration -- domain-exercises`
+Ausführen: `npx vitest run --config vitest.config.ts tests/integration/domain-exercises.test.ts`
 
 Erwartet: PASS, 4 Tests.
 
@@ -5504,6 +5504,8 @@ Der Bauabschnitt ist fertig, wenn alles davon zutrifft:
 - [ ] `pnpm typecheck` — keine Fehler
 - [ ] `pnpm test` — Unit-Tests in `packages/domain` und `apps/web` grün
 - [ ] `pnpm test:integration` — 37 Dateien grün (36 Bestand plus `domain-exercises`)
+
+  > **Bekannter Wackler, nicht aus diesem Bauabschnitt:** `rls-workout-sessions.test.ts > positiv: ein Mitglied beendet seine eigene Session` fällt sporadisch mit `workout_sessions_completed_after_start` (23514). Der Test setzt `completed_at` aus der **Node-Uhr**, während `started_at` per `now()` aus der **Datenbank** kommt; driftet die Containeruhr um Millisekunden nach vorn, liegt das Ende vor dem Anfang. Gemessen am 2. September: zwei von drei Läufen grün, auf unverändertem Stand. Er gehört repariert (das Ende serverseitig setzen), aber nicht in diesem Plan — hier zählt nur, dass er **kein** Neuschaden ist.
 - [ ] `pnpm test:e2e` — 6 Dateien grün (5 Bestand plus `einrichten`)
 - [ ] `pnpm build` — kein `node:crypto` im Client-Bundle
 - [ ] **Der Sucher ist von Hand an einem echten Telefon gelaufen** (Aufgabe 9, Schritt 8) — der einzige Punkt, den kein Test abnimmt
