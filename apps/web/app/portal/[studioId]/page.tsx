@@ -196,7 +196,16 @@ export default async function UeberblickPage({
             Ohne Namen. Wer gemeldet hat, steht hier nicht.
           </span>
         </div>
-        {!uebersicht.breakdown || uebersicht.problems.length === 0 ? (
+        {!uebersicht.breakdown ? (
+          <div className={styles.empty}>
+            <p className={styles.emptyTitle}>Noch keine Aufschlüsselung.</p>
+            <p className={styles.emptyNext}>
+              Sie erscheint ab {uebersicht.minMembers} aktiven Mitgliedern im
+              Zeitraum. Die Kachel oben zählt alle Meldungen; welches Gerät
+              betroffen ist, bleibt bis dahin verdeckt.
+            </p>
+          </div>
+        ) : uebersicht.problems.length === 0 ? (
           <div className={styles.empty}>
             <p className={styles.emptyTitle}>Keine Meldung im Zeitraum.</p>
           </div>
