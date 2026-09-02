@@ -10,7 +10,6 @@ import {
   createExercise,
   createMachine,
   createSettingDefinition,
-  createTag,
   deactivateMachine,
   deleteSettingDefinition,
   detachExercise,
@@ -283,30 +282,6 @@ export async function geraetWiederInBetrieb(
   return fuehreAus(pfad, async (client) => {
     await reactivateMachine(client, machineId);
   });
-}
-
-/**
- * Ein Tag entsteht mit einem Token, den es genau einmal zu sehen gibt --
- * gespeichert ist nur sein Hash. Deshalb kommt er hier zurueck und wird
- * nirgends protokolliert (Spec 10.4).
- */
-export async function tagAnlegen(
-  studioId: string,
-  pfad: string,
-  machineId: string | null,
-): Promise<
-  { ok: true; token: string; tagId: string } | { ok: false; error: string }
-> {
-  const client = await createServerSupabaseClient();
-  try {
-    const tag = await createTag(client, { studioId, machineId });
-    revalidatePath(pfad);
-    return { ok: true, token: tag.token, tagId: tag.id };
-  } catch (fehler) {
-    if (fehler instanceof DomainError) return { ok: false, error: fehler.message };
-    console.error("Tag nicht angelegt:", fehler);
-    return { ok: false, error: "Der Tag liess sich nicht anlegen." };
-  }
 }
 
 export async function tagZuweisen(

@@ -7,7 +7,6 @@ import {
   createExercise,
   createMachine,
   createSettingDefinition,
-  createTag,
   createTagToken,
   deactivateMachine,
   detachExercise,
@@ -23,6 +22,7 @@ import {
   uniqueEmail,
   userClient,
 } from "./helpers/clients.js";
+import { tagAnlegen } from "../helpers/tags.js";
 
 let studioA: string;
 let studioB: string;
@@ -426,7 +426,7 @@ describe("Geraeteinstanzen", () => {
       equipmentModelId: modelId,
       label: "13",
     });
-    await createTag(client, { studioId: studioA, machineId });
+    await tagAnlegen(serviceClient(), { studioId: studioA, machineId, status: "active" });
 
     await deactivateMachine(client, machineId);
 
@@ -444,7 +444,7 @@ describe("Tags", () => {
   it("liefert den Token genau einmal -- gespeichert wird nur sein Hash", async () => {
     const client = await userClient(trainerA);
 
-    const { id, token } = await createTag(client, { studioId: studioA });
+    const { id, token } = await tagAnlegen(serviceClient(), { studioId: studioA });
 
     const admin = serviceClient();
     const { data } = await admin
@@ -467,7 +467,7 @@ describe("Tags", () => {
       label: "14",
     });
 
-    const { id } = await createTag(client, { studioId: studioA, machineId });
+    const { id } = await tagAnlegen(serviceClient(), { studioId: studioA, machineId, status: "active" });
 
     const admin = serviceClient();
     const { data } = await admin
@@ -487,7 +487,7 @@ describe("Tags", () => {
       equipmentModelId: modelId,
       label: "15",
     });
-    const { id: tagId } = await createTag(client, { studioId: studioA });
+    const { id: tagId } = await tagAnlegen(serviceClient(), { studioId: studioA });
 
     await assignTag(client, { tagId, machineId });
 
@@ -509,7 +509,7 @@ describe("Tags", () => {
       equipmentModelId: modelId,
       label: "16",
     });
-    const { id: tagId } = await createTag(client, { studioId: studioA, machineId });
+    const { id: tagId } = await tagAnlegen(serviceClient(), { studioId: studioA, machineId, status: "active" });
 
     await revokeTag(client, tagId);
 
@@ -521,18 +521,6 @@ describe("Tags", () => {
       .single();
     expect(data?.status).toBe("revoked");
     expect(data?.revoked_at).not.toBeNull();
-  });
-
-  it("negativ: ein einfaches Mitglied legt keinen Tag an", async () => {
-    const client = await userClient(memberA);
-
-    await expect(createTag(client, { studioId: studioA })).rejects.toThrow(DomainError);
-  });
-
-  it("cross-tenant: kein Tag fuer ein fremdes Studio", async () => {
-    const client = await userClient(trainerA);
-
-    await expect(createTag(client, { studioId: studioB })).rejects.toThrow(DomainError);
   });
 });
 
@@ -564,7 +552,7 @@ describe("getStudioCatalog", () => {
       equipmentModelId: modelId,
       label: "17",
     });
-    await createTag(client, { studioId: studioA, machineId });
+    await tagAnlegen(serviceClient(), { studioId: studioA, machineId, status: "active" });
 
     const katalog = await getStudioCatalog(client, studioA);
 
@@ -602,7 +590,7 @@ describe("getStudioCatalog", () => {
 
   it("listet die vorraetigen Tags des Studios -- sie warten auf ein Geraet", async () => {
     const client = await userClient(trainerA);
-    const { id: tagId } = await createTag(client, { studioId: studioA });
+    const { id: tagId } = await tagAnlegen(serviceClient(), { studioId: studioA });
 
     const katalog = await getStudioCatalog(client, studioA);
 

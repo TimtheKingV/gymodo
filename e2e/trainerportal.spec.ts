@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { anmelden } from "./helpers/login";
+import { tagAnlegen } from "../tests/helpers/tags";
 
 /**
  * Verifikationspunkt 5 aus dem Plan: ein Studio komplett ueber die
@@ -115,13 +116,20 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await page.getByRole("button", { name: "Gerät anlegen" }).click();
   await expect(page.getByText("kein aktiver Tag")).toBeVisible();
 
-  // 5. Tag -- der Token steht genau einmal da
-  await page.getByRole("button", { name: "Tag anlegen" }).click();
-  await expect(page.getByText("Token — nur jetzt sichtbar")).toBeVisible();
-  const token = (await page.getByTestId("tag-token").innerText()).trim();
-  expect(token).toMatch(/^[A-Za-z0-9_-]{16,}$/);
+  // 5. Tag -- er kommt aus der Lieferung, nicht aus dem Portal. Aufgabe 7
+  // ersetzt das Seeden hier durch den Weg ueber die Oberflaeche.
+  const { data: geraeteZeile, error: geraeteFehler } = await admin
+    .from("machines")
+    .select("id")
+    .eq("studio_id", studio.id)
+    .single();
+  if (geraeteFehler) throw geraeteFehler;
 
-  await page.getByRole("button", { name: "Fertig" }).click();
+  const { token } = await tagAnlegen(admin, {
+    studioId: studio.id,
+    machineId: geraeteZeile.id,
+    status: "active",
+  });
 
   // Das Geraet ist jetzt erreichbar.
   await page.goto(`/portal/${studio.id}/geraete`);

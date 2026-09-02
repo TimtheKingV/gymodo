@@ -3,7 +3,6 @@ import { z } from "zod";
 import { requireUserId } from "./auth.js";
 import { DomainError } from "./errors.js";
 import { requireStudioStaff } from "./studio.js";
-import { createTagToken, hashTagToken } from "./tags.js";
 
 /**
  * Der Geraetekatalog aus Sicht des Trainerportals -- Spec 8.2.
@@ -478,47 +477,6 @@ async function setMachineStatus(
     .update({ status })
     .eq("id", machineId);
   if (error) throw new DomainError("internal", error.message);
-}
-
-/**
- * Einen Tag anlegen. Der Klartext-Token wird genau einmal zurueckgegeben --
- * gespeichert ist nur sein Hash, es gibt keinen Weg, ihn spaeter noch einmal
- * zu erfahren. Er darf deshalb nirgends protokolliert werden (Spec 10.4).
- *
- * Mit machineId entsteht der Tag sofort aktiv: der Check-Constraint aus 0008
- * laesst 'active' nur zusammen mit einem Geraet zu, ein zweistufiges "erst
- * anlegen, dann aktivieren" waere gar nicht speicherbar.
- */
-export async function createTag(
-  client: SupabaseClient,
-  input: { studioId: string; machineId?: string | null },
-): Promise<{ id: string; token: string }> {
-  const userId = await requireUserId(client);
-  await requireStudioStaff(client, input.studioId, userId);
-
-  if (input.machineId) {
-    const studioDesGeraets = await studioOfMachine(client, input.machineId);
-    if (studioDesGeraets !== input.studioId) {
-      throw new DomainError("not_found", "Dieses Geraet gibt es nicht.");
-    }
-  }
-
-  const token = createTagToken();
-  const { data, error } = await client
-    .from("machine_tags")
-    .insert({
-      studio_id: input.studioId,
-      machine_id: input.machineId ?? null,
-      token_hash: hashTagToken(token),
-      status: input.machineId ? "active" : "unassigned",
-    })
-    .select("id")
-    .single<{ id: string }>();
-
-  if (error || !data) {
-    throw new DomainError("internal", error?.message ?? "Tag nicht angelegt.");
-  }
-  return { id: data.id, token };
 }
 
 export async function assignTag(

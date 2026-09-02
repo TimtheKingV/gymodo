@@ -16,7 +16,6 @@ import {
   uebungVerschieben,
 } from "../../../actions";
 import { ladeKatalog } from "../../catalog";
-import { TagAnlegen } from "../../TagAnlegen";
 import styles from "../../../portal.module.css";
 
 /** 80,0 statt 80 -- sonst liest sich ein Wechsel auf 82,5 wie ein Formatfehler. */
@@ -315,7 +314,6 @@ export default async function ModellPage({
                   </div>
                 </div>
                 <div className={styles.rowActions}>
-                  <TagAnlegen studioId={studioId} pfad={pfad} machineId={geraet.id} />
                   {geraet.status === "active" ? (
                     <AktionsKnopf
                       aktion={geraetStilllegen.bind(null, studioId, pfad, geraet.id)}

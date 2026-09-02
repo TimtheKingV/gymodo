@@ -32,7 +32,6 @@ export {
   createExercise,
   createMachine,
   createSettingDefinition,
-  createTag,
   deactivateMachine,
   deleteSettingDefinition,
   detachExercise,
