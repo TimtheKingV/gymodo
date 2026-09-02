@@ -127,7 +127,7 @@ describe("RLS auf workout_sessions", () => {
     expect(data).toEqual([]);
   });
 
-  it("positiv: ein Trainer sieht die Sessions seiner Studiomitglieder", async () => {
+  it("Datenschutzgrenze: ein Trainer sieht die Sessions seiner Studiomitglieder nicht", async () => {
     const admin = serviceClient();
     const sessionId = newId();
     const { error: seedError } = await admin.from("workout_sessions").insert({
@@ -138,12 +138,16 @@ describe("RLS auf workout_sessions", () => {
     if (seedError) throw seedError;
 
     const client = await userClient(trainerAEmail);
-    const { data } = await client
+    const { data, error } = await client
       .from("workout_sessions")
       .select("id")
       .eq("id", sessionId);
 
-    expect(data).toHaveLength(1);
+    // Spec Abschnitt 4: das Portal sieht Mitgliedschaft und Anwesenheit,
+    // aber keine Trainingsdaten -- je Mitglied nichts. Die Grenze zieht
+    // die Datenbank, nicht die Oberflaeche.
+    expect(error).toBeNull();
+    expect(data).toEqual([]);
   });
 
   it("positiv: ein Mitglied beendet seine eigene Session", async () => {

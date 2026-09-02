@@ -224,7 +224,7 @@ describe("RLS auf workout_sets", () => {
     expect(data).toEqual([]);
   });
 
-  it("positiv: ein Trainer sieht die Saetze seiner Studiomitglieder", async () => {
+  it("Datenschutzgrenze: ein Trainer sieht die Saetze seiner Studiomitglieder nicht", async () => {
     const admin = serviceClient();
     const setId = newId();
     const { error: seedError } = await admin.from("workout_sets").insert({
@@ -241,12 +241,15 @@ describe("RLS auf workout_sets", () => {
     if (seedError) throw seedError;
 
     const client = await userClient(trainerAEmail);
-    const { data } = await client
+    const { data, error } = await client
       .from("workout_sets")
       .select("id")
       .eq("id", setId);
 
-    expect(data).toHaveLength(1);
+    // Gewicht und Wiederholungen sind das Kernstueck dessen, was Spec
+    // Abschnitt 4 hinter die Grenze stellt.
+    expect(error).toBeNull();
+    expect(data).toEqual([]);
   });
 
   it("Idempotenz: derselbe Satz zweimal geschickt ergibt genau eine Zeile", async () => {
