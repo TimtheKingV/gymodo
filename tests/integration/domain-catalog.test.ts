@@ -7,7 +7,6 @@ import {
   createExercise,
   createMachine,
   createSettingDefinition,
-  createTagToken,
   deactivateMachine,
   detachExercise,
   getStudioCatalog,
@@ -615,13 +614,7 @@ describe("Tag-Sorte im Katalog", () => {
 
   it("fuehrt einen Aushang-Tag mit kind=studio und ohne Geraet", async () => {
     const admin = serviceClient();
-    const { error } = await admin.from("machine_tags").insert({
-      studio_id: studioA,
-      kind: "studio",
-      status: "active",
-      token_hash: hashTagToken(createTagToken()),
-    });
-    if (error) throw error;
+    await tagAnlegen(admin, { studioId: studioA, kind: "studio", status: "active" });
 
     const client = await userClient(trainerA);
     const katalog = await getStudioCatalog(client, studioA);

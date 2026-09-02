@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createTagToken, hashTagToken } from "@fitretro/domain";
+import { createTagToken } from "@fitretro/domain";
 
 export type TagSorte = "machine" | "studio";
 export type TagStatus = "unassigned" | "active" | "revoked" | "replaced";
@@ -42,7 +42,7 @@ export async function tagsAnlegen(
     machine_id: zeile.machineId ?? null,
     kind: zeile.kind ?? "machine",
     status: zeile.status ?? "unassigned",
-    token_hash: hashTagToken(tokens[index]!),
+    token: tokens[index]!,
   }));
 
   const { data, error } = await admin
