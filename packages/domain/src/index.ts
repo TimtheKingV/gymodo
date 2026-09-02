@@ -1,5 +1,11 @@
 export const DOMAIN_PACKAGE_NAME = "@fitretro/domain";
-export { createTagToken, hashTagToken, isValidTagToken } from "./tags.js";
+export { createTagToken, hashTagToken } from "./tags.js";
+export {
+  TAG_TOKEN_LENGTH,
+  TAG_TOKEN_PATTERN,
+  isValidTagToken,
+  parseTagScan,
+} from "./tag-scan.js";
 export {
   PROGRESSION_ALGO_VERSION,
   suggestNextWeight,
