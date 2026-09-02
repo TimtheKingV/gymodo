@@ -10,7 +10,7 @@ import { requireStudioStaff } from "./studio.js";
  *
  * Der Beitritt per Code laeuft wie der Scan (join_studio_by_tag, 0023) ueber
  * eine SECURITY DEFINER-Funktion, nicht ueber eine Insert-Policy. Rollen-
- * wechsel und Entfernen laufen ueber gewoehnliche Policies (0030) -- der
+ * wechsel und Entfernen laufen ueber gewoehnliche Policies (0031) -- der
  * nutzergebundene Client reicht, RLS haelt die Inhaberzeile unerreichbar.
  */
 
@@ -103,7 +103,7 @@ const roleSchema = z.enum(["member", "trainer"]);
 
 /**
  * Nur die beiden Rollen unterhalb des Inhabers: memberships_update_staff
- * (0030) laesst eine Inhaberzeile ohnehin nicht zu. Diese Zod-Pruefung
+ * (0031) laesst eine Inhaberzeile ohnehin nicht zu. Diese Zod-Pruefung
  * sorgt nur fuer eine verstaendliche Meldung statt eines rohen Fehlers,
  * traefe hier je "owner" ein.
  */

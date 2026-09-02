@@ -37,7 +37,7 @@ function jpegMitExif(): Buffer {
 }
 
 /**
- * memberships_select_staff (0030) laesst Mitarbeiter alle Mitgliedschaften
+ * memberships_select_staff (0031) laesst Mitarbeiter alle Mitgliedschaften
  * ihres Studios sehen, nicht nur die eigene -- die Portal-Einstiegsseite
  * muss ihre Abfrage seither selbst auf den Aufrufer filtern, sonst kommt
  * fuer einen Trainer in einem Studio mit weiterem Personal (hier: einem
