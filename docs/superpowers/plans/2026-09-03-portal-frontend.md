@@ -884,7 +884,7 @@ test("Die Bedienelemente der Tags-Seite sind gross genug zum Treffen", async ({ 
 });
 ```
 
-**Die 40 im letzten Test ist kein Tippfehler**, sondern Befund 16: die Global Constraints sagen im selben Satz „≥ 44 px" und „Nebenaktion 40 px", und die Artboards zeichnen 40. Solange das nicht entschieden ist, prüft der Test gegen das, was Artboard und Code übereinstimmend sagen.
+**Die 40 im letzten Test ist kein Tippfehler**, sondern Befund 16, entschieden am 3. September: am Schreibtisch gelten 40 px für Nebenaktion und zerstörende Aktion, 44 px für Hauptaktion und Eingabefeld. Die „≥ 44 px" des Designsystems sind für die Halle hergeleitet — einhändig, im Halbdunkel. Am Schreibtisch liegt eine Maus. Die Tags-Seite trägt keine Hauptaktion, also ist 40 hier der richtige Prüfwert.
 
 - [ ] **Schritt 2: Laufen lassen**
 
@@ -921,7 +921,7 @@ Erwartet: **PASS**, alle fünf.
 pnpm typecheck && pnpm test && pnpm test:integration && pnpm test:e2e
 ```
 
-Erwartet: 90 Unit, **460 von 461** Integration, 34 E2E.
+Erwartet: **91** Unit, **460 von 461** Integration, **35** E2E — 31 aus den Aufgaben 1 bis 4 plus die vier neuen dieser Aufgabe. Die Zahlen sind Richtwerte; bindend ist, dass kein zuvor grüner Test rot wird und die vier neuen grün sind.
 
 - [ ] **Schritt 7: Commit**
 
