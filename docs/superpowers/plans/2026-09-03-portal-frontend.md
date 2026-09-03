@@ -273,7 +273,7 @@ export async function studioMitMitglied(
 }
 ```
 
-Dazu `studioMitTrainer` auf einen gemeinsamen Rumpf umstellen — `studioMitRolle(page, praefix, rolle)` mit dem bisherigen Inhalt und `role: rolle` beim Einfügen der Mitgliedschaft; `studioMitTrainer` ruft ihn mit `"trainer"`. **Signatur und Rückgabe von `studioMitTrainer` bleiben unverändert**, sonst brechen acht bestehende Testdateien.
+Dazu `studioMitTrainer` auf einen gemeinsamen Rumpf umstellen — `studioMitRolle(page, praefix, rolle)` mit dem bisherigen Inhalt und `role: rolle` beim Einfügen der Mitgliedschaft; `studioMitTrainer` ruft ihn mit `"trainer"`. **Signatur und Rückgabe von `studioMitTrainer` bleiben unverändert**, sonst brechen `e2e/einrichten.spec.ts` und `e2e/onboarding.spec.ts` — die beiden Dateien, die die Fixture heute importieren.
 
 - [ ] **Schritt 3: Den fehlschlagenden Test schreiben**
 
@@ -464,7 +464,9 @@ export type ZustandArt = "leer" | "fehler" | "keinRecht" | "deaktiviert";
  *
  * Designsystem Abschnitt 5 und trainerportal-struktur-design.md Abschnitt 5
  * geben die Regeln vor; sie stehen hier, weil ein Baustein sie tragen kann
- * und acht Kopien nicht:
+ * und vier Kopien nicht -- so viele Kein-Recht-Bloecke standen vorher
+ * wortgleich im Code (portal/page.tsx, (schreibtisch)/page.tsx, leute,
+ * einstellungen):
  *
  *   leer          Ueberschrift plus naechster Schritt. NIE eine leere
  *                 Statistik mit Nullen -- vier Kacheln, die viermal 0
@@ -893,7 +895,7 @@ git commit -m "feat(web): Tags gestaltet -- die Referenzseite, und sie traegt nu
 
 Sechs Bildschirme, heute mit **null** Gestaltung: rohe `<form>`, `<label>`, `<input>`, kein Stylesheet. Der Teil des Portals, der am weitesten von seinem Entwurf entfernt ist — und der einzige, den Phase 4 nie anfasst.
 
-**Eine Regel bindet diesen ganzen Abschnitt:** die zugänglichen Namen bleiben, wie sie sind. `e2e/helpers/login.ts` füllt `getByLabel("E-Mail")` und `getByLabel("Passwort")` und klickt `getByRole("button", { name: "Anmelden" })`; acht Testdateien hängen daran. Ein umbenanntes Label ist keine Gestaltungsänderung, sondern ein Suitenbruch.
+**Eine Regel bindet diesen ganzen Abschnitt:** die zugänglichen Namen bleiben, wie sie sind. `e2e/helpers/login.ts` füllt `getByLabel("E-Mail")` und `getByLabel("Passwort")` und klickt `getByRole("button", { name: "Anmelden" })`; **sechs Testdateien** hängen daran — `auth`, `einstellungen`, `leute`, `login`, `onboarding`, `trainerportal`. Ein umbenanntes Label ist keine Gestaltungsänderung, sondern ein Suitenbruch.
 
 ---
 
@@ -942,7 +944,7 @@ test("Die Anmeldeseite traegt eine Landmarke, eine Akzentflaeche und lesbare Nam
   const flaechen = await akzentflaechen(page);
   expect(flaechen, `Akzentflaechen: ${flaechen.join(", ")}`).toHaveLength(1);
 
-  // Die Namen, an denen acht Testdateien haengen. Sie sind ab hier
+  // Die Namen, an denen sechs Testdateien haengen. Sie sind ab hier
   // Schnittstelle, nicht Beschriftung.
   await expect(page.getByLabel("E-Mail")).toBeVisible();
   await expect(page.getByLabel("Passwort")).toBeVisible();
