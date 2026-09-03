@@ -44,10 +44,24 @@ jobs:
       # NEXT_PUBLIC_* werden hier ins Bundle eingesetzt, nicht zur Laufzeit
       # gelesen. Sie muessen deshalb schon beim Bau stimmen, sonst spricht der
       # Browser im E2E-Lauf gegen eine Platzhalteradresse.
+      #
+      # Die AASA-Route ist "force-static" und scheitert hart, wenn die Apple-IDs
+      # fehlen -- sonst froere "undefined.undefined" in eine Datei ein, an der
+      # Apple lautlos scheitert. Lokal stehen die Werte in apps/web/.env.local
+      # (gitignoriert), deshalb faellt es nur hier auf.
+      #
+      # Hier stehen Attrappen, keine Kopie von .env.local.example: dessen
+      # Platzhalter tragen Leerzeichen und spitze Klammern und wuerden den
+      # Waechter zwar passieren, aber genau den Muell erzeugen, vor dem er
+      # schuetzt. Formgerechte Attrappen sind ehrlicher -- die CI baut kein
+      # Artefakt, das jemand ausliefert. Die echten Werte fehlen weiterhin
+      # auch in Vercel; siehe Gesamtfahrplan, Blocker 3.
       - run: pnpm build
         env:
           NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.LOCAL_ANON_KEY }}
+          APPLE_TEAM_ID: ABCDE12345
+          APPLE_BUNDLE_ID: de.fitretro.member
 
       - run: pnpm exec playwright install --with-deps chromium
 
