@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireUserId } from "./auth.js";
 import { DomainError } from "./errors.js";
+import { serienTermine } from "./serie.js";
 import { requireStudioStaff } from "./studio.js";
 
 /**
@@ -215,4 +216,399 @@ export async function updateCourseTemplate(
   if (!data || data.length === 0) {
     throw new DomainError("not_found", "Diese Kursvorlage gibt es nicht.");
   }
+}
+
+// ---------------------------------------------------------------------
+// Termine
+// ---------------------------------------------------------------------
+
+const terminSchema = z.object({
+  templateId: z.string().uuid("Ein Termin gehoert zu einer Vorlage."),
+  startsAt: z.string().datetime({ offset: true }),
+  durationMin: z
+    .number()
+    .int("Die Dauer zaehlt in ganzen Minuten.")
+    .min(5, "Kuerzer als fuenf Minuten ist kein Kurs.")
+    .max(480, "Laenger als acht Stunden ist kein Kurs."),
+  capacity: z
+    .number()
+    .int("Plaetze zaehlen in ganzen Zahlen.")
+    .min(1, "Ein Kurs ohne Platz ist keiner.")
+    .max(500, "Mehr als 500 Plaetze ist kein Kursraum."),
+  room: z.string().trim().nullable(),
+  instructorUserId: z.string().uuid().nullable(),
+  instructorName: z.string().trim().nullable(),
+});
+
+export type CourseSessionInput = z.infer<typeof terminSchema>;
+
+/**
+ * Legt einen Termin an -- oder eine ausgeschriebene woechentliche Serie
+ * bis einschliesslich `wiederholungBis`.
+ *
+ * Serientermine sind echte Zeilen, keine Regel (Spec Abschnitt 9). Der
+ * Preis dafuer wird hier bezahlt: ein Insert mit n Zeilen. Der Gewinn ist,
+ * dass danach jeder Termin einzeln aenderbar und absagbar ist, ohne dass
+ * jemals eine Regel aufgeloest werden muss.
+ *
+ * Gerechnet wird in der Zeitzone des Studios (serie.ts), nicht auf dem
+ * Zeitstrahl: 18:00 bleibt 18:00, auch ueber die Zeitumstellung.
+ */
+export async function createCourseSessions(
+  client: SupabaseClient,
+  studioId: string,
+  eingabe: CourseSessionInput,
+  wiederholungBis: string | null,
+): Promise<string[]> {
+  const userId = await requireUserId(client);
+  await requireStudioStaff(client, studioId, userId, absage);
+
+  const geprueft = terminSchema.safeParse(eingabe);
+  if (!geprueft.success) {
+    throw new DomainError("validation_failed", geprueft.error.issues[0]!.message);
+  }
+  await pruefeTrainerZuordnung(client, studioId, geprueft.data.instructorUserId);
+
+  const { data: studio, error: studioFehler } = await client
+    .from("studios")
+    .select("timezone")
+    .eq("id", studioId)
+    .maybeSingle<{ timezone: string }>();
+  if (studioFehler) throw new DomainError("internal", studioFehler.message);
+  if (!studio) throw new DomainError("not_found", "Dieses Studio gibt es nicht.");
+
+  const start = new Date(geprueft.data.startsAt);
+  const zeitpunkte =
+    wiederholungBis === null
+      ? [start]
+      : serienTermine(start, new Date(wiederholungBis), studio.timezone);
+
+  const { data, error } = await client
+    .from("course_sessions")
+    .insert(
+      zeitpunkte.map((zeitpunkt) => ({
+        studio_id: studioId,
+        course_template_id: geprueft.data.templateId,
+        starts_at: zeitpunkt.toISOString(),
+        duration_min: geprueft.data.durationMin,
+        capacity: geprueft.data.capacity,
+        room: geprueft.data.room,
+        instructor_user_id: geprueft.data.instructorUserId,
+        instructor_name: geprueft.data.instructorName,
+      })),
+    )
+    .select("id")
+    .returns<{ id: string }[]>();
+
+  if (error) throw new DomainError("internal", error.message);
+  return (data ?? []).map((z) => z.id);
+}
+
+export async function updateCourseSession(
+  client: SupabaseClient,
+  studioId: string,
+  sessionId: string,
+  eingabe: Omit<CourseSessionInput, "templateId">,
+): Promise<void> {
+  const userId = await requireUserId(client);
+  await requireStudioStaff(client, studioId, userId, absage);
+
+  const geprueft = terminSchema.omit({ templateId: true }).safeParse(eingabe);
+  if (!geprueft.success) {
+    throw new DomainError("validation_failed", geprueft.error.issues[0]!.message);
+  }
+  await pruefeTrainerZuordnung(client, studioId, geprueft.data.instructorUserId);
+
+  const { data, error } = await client
+    .from("course_sessions")
+    .update({
+      starts_at: geprueft.data.startsAt,
+      duration_min: geprueft.data.durationMin,
+      capacity: geprueft.data.capacity,
+      room: geprueft.data.room,
+      instructor_user_id: geprueft.data.instructorUserId,
+      instructor_name: geprueft.data.instructorName,
+    })
+    .eq("studio_id", studioId)
+    .eq("id", sessionId)
+    .select("id");
+
+  if (error) throw new DomainError("internal", error.message);
+  if (!data || data.length === 0) {
+    throw new DomainError("not_found", "Diesen Termin gibt es nicht.");
+  }
+}
+
+/**
+ * Absage statt Loeschen: die Zeile bleibt stehen, damit angemeldete
+ * Mitglieder sehen, was passiert ist. Die Buchungen bleiben ebenfalls
+ * stehen -- sie nachtraeglich zu stornieren waere ein stilles Update auf
+ * fremder Historie.
+ */
+export async function cancelCourseSession(
+  client: SupabaseClient,
+  studioId: string,
+  sessionId: string,
+): Promise<void> {
+  const userId = await requireUserId(client);
+  await requireStudioStaff(client, studioId, userId, absage);
+
+  const { data, error } = await client
+    .from("course_sessions")
+    .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
+    .eq("studio_id", studioId)
+    .eq("id", sessionId)
+    .select("id");
+
+  if (error) throw new DomainError("internal", error.message);
+  if (!data || data.length === 0) {
+    throw new DomainError("not_found", "Diesen Termin gibt es nicht.");
+  }
+}
+
+// ---------------------------------------------------------------------
+// Der Wochenplan
+// ---------------------------------------------------------------------
+
+export type CourseWeekSession = {
+  sessionId: string;
+  templateId: string;
+  name: string;
+  description: string | null;
+  startsAt: string;
+  localDay: string;
+  durationMin: number;
+  capacity: number;
+  room: string | null;
+  instructorName: string | null;
+  status: "planned" | "cancelled";
+  bookedCount: number;
+  waitlistCount: number;
+  freeSeats: number;
+  ownStatus: "booked" | "waitlisted" | null;
+  ownBookingId: string | null;
+  ownWaitlistPosition: number | null;
+};
+
+export type CourseWeek = {
+  from: string;
+  to: string;
+  timezone: string;
+  sessions: CourseWeekSession[];
+};
+
+type WochenAntwort = {
+  from: string;
+  to: string;
+  timezone: string;
+  sessions: {
+    session_id: string;
+    template_id: string;
+    name: string;
+    description: string | null;
+    starts_at: string;
+    local_day: string;
+    duration_min: number;
+    capacity: number;
+    room: string | null;
+    instructor_name: string | null;
+    status: "planned" | "cancelled";
+    booked_count: number;
+    waitlist_count: number;
+    free_seats: number;
+    own_status: "booked" | "waitlisted" | null;
+    own_booking_id: string | null;
+    own_waitlist_position: number | null;
+  }[];
+};
+
+export async function listCourseWeek(
+  client: SupabaseClient,
+  studioId: string,
+  from: string,
+  to: string,
+): Promise<CourseWeek> {
+  await requireUserId(client);
+
+  const { data, error } = await client.rpc("course_week", {
+    p_studio_id: studioId,
+    p_from: from,
+    p_to: to,
+  });
+
+  if (error) throw new DomainError("internal", error.message);
+  // null heisst "nicht erlaubt oder gibt es nicht" (Spec Abschnitt 5).
+  // Beides wird zu not_found, damit die Antwort nicht verraet, welche
+  // Studios es gibt.
+  if (!data) throw new DomainError("not_found", "Diesen Kursplan gibt es nicht.");
+
+  const antwort = data as WochenAntwort;
+  return {
+    from: antwort.from,
+    to: antwort.to,
+    timezone: antwort.timezone,
+    sessions: antwort.sessions.map((s) => ({
+      sessionId: s.session_id,
+      templateId: s.template_id,
+      name: s.name,
+      description: s.description,
+      startsAt: s.starts_at,
+      localDay: s.local_day,
+      durationMin: s.duration_min,
+      capacity: s.capacity,
+      room: s.room,
+      instructorName: s.instructor_name,
+      status: s.status,
+      bookedCount: s.booked_count,
+      waitlistCount: s.waitlist_count,
+      freeSeats: s.free_seats,
+      ownStatus: s.own_status,
+      ownBookingId: s.own_booking_id,
+      ownWaitlistPosition: s.own_waitlist_position,
+    })),
+  };
+}
+
+// ---------------------------------------------------------------------
+// Teilnehmer
+// ---------------------------------------------------------------------
+
+export type CourseParticipant = {
+  userId: string;
+  email: string;
+  status: "booked" | "waitlisted";
+  bookedAt: string;
+  promotedAt: string | null;
+  waitlistPosition: number | null;
+};
+
+export async function listCourseParticipants(
+  client: SupabaseClient,
+  sessionId: string,
+): Promise<CourseParticipant[]> {
+  await requireUserId(client);
+
+  const { data, error } = await client.rpc("list_course_participants", {
+    p_session_id: sessionId,
+  });
+
+  if (error) throw new DomainError("internal", error.message);
+
+  type Zeile = {
+    user_id: string;
+    email: string;
+    status: "booked" | "waitlisted";
+    booked_at: string;
+    promoted_at: string | null;
+    waitlist_position: number | null;
+  };
+
+  return ((data ?? []) as Zeile[]).map((z) => ({
+    userId: z.user_id,
+    email: z.email,
+    status: z.status,
+    bookedAt: z.booked_at,
+    promotedAt: z.promoted_at,
+    waitlistPosition: z.waitlist_position,
+  }));
+}
+
+// ---------------------------------------------------------------------
+// Buchen und Stornieren
+// ---------------------------------------------------------------------
+
+export type BookOutcome = {
+  result: "booked" | "waitlisted";
+  created: boolean;
+  bookingId: string;
+  waitlistPosition: number | null;
+  freeSeats: number;
+};
+
+/**
+ * Die duenne Huelle um book_course_session (0036).
+ *
+ * Hier wird die Regel aus Spec Abschnitt 5 in DomainError uebersetzt:
+ * null bedeutet "nicht erlaubt oder gibt es nicht" und wird not_found --
+ * beides antwortet gleich, damit die Meldung nicht verraet, welche
+ * Termine es gibt. Ein Ergebnis mit einem anderen Grund als dem Zustand
+ * ist ein erwarteter Ausgang und wird conflict mit einem Satz, den ein
+ * Mensch lesen kann.
+ */
+export async function bookCourseSession(
+  client: SupabaseClient,
+  sessionId: string,
+  bookingId: string,
+): Promise<BookOutcome> {
+  await requireUserId(client);
+
+  const { data, error } = await client.rpc("book_course_session", {
+    p_session_id: sessionId,
+    p_booking_id: bookingId,
+  });
+
+  if (error) throw new DomainError("internal", error.message);
+  if (!data) throw new DomainError("not_found", "Diesen Kurstermin gibt es nicht.");
+
+  const antwort = data as {
+    result: string;
+    created: boolean;
+    booking_id: string;
+    waitlist_position: number | null;
+    free_seats: number;
+  };
+
+  if (antwort.result === "session_cancelled") {
+    throw new DomainError("conflict", "Dieser Termin fällt aus.");
+  }
+  if (antwort.result === "past") {
+    throw new DomainError("conflict", "Dieser Kurs hat schon begonnen.");
+  }
+
+  return {
+    result: antwort.result as "booked" | "waitlisted",
+    created: antwort.created,
+    bookingId: antwort.booking_id,
+    waitlistPosition: antwort.waitlist_position,
+    freeSeats: antwort.free_seats,
+  };
+}
+
+export type CancelOutcome = { promotedUserId: string | null };
+
+export async function cancelCourseBooking(
+  client: SupabaseClient,
+  sessionId: string,
+  userId?: string,
+): Promise<CancelOutcome> {
+  await requireUserId(client);
+
+  const { data, error } = await client.rpc("cancel_course_booking", {
+    p_session_id: sessionId,
+    p_user_id: userId ?? null,
+  });
+
+  if (error) throw new DomainError("internal", error.message);
+  if (!data) throw new DomainError("not_found", "Diesen Kurstermin gibt es nicht.");
+
+  const antwort = data as {
+    result: string;
+    deadline_hours?: number;
+    promoted_user_id?: string | null;
+  };
+
+  if (antwort.result === "not_booked") {
+    throw new DomainError("conflict", "Für diesen Termin bist du nicht angemeldet.");
+  }
+  if (antwort.result === "deadline") {
+    const stunden = antwort.deadline_hours ?? 0;
+    throw new DomainError(
+      "conflict",
+      stunden === 0
+        ? "Der Kurs hat begonnen — Abmelden ist nicht mehr möglich."
+        : `Abmelden ist bis ${stunden} Stunden vor Beginn möglich. Diese Frist ist vorbei.`,
+    );
+  }
+
+  return { promotedUserId: antwort.promoted_user_id ?? null };
 }

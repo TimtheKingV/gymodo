@@ -1,9 +1,15 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import {
   DomainError,
+  bookCourseSession,
+  cancelCourseBooking,
+  cancelCourseSession,
+  createCourseSessions,
   createCourseTemplate,
   getCourseTemplate,
+  listCourseParticipants,
   listCourseTemplates,
+  listCourseWeek,
   updateCourseTemplate,
 } from "@fitretro/domain";
 import { createTestUser, serviceClient, uniqueEmail, userClient } from "./helpers/clients.js";
@@ -161,6 +167,270 @@ describe("Kursvorlagen", () => {
     const client = await userClient(trainerEmail);
     await expect(
       getCourseTemplate(client, studioId, crypto.randomUUID()),
+    ).rejects.toMatchObject({ code: "not_found" });
+  });
+});
+
+describe("Termine und die Serie", () => {
+  it("legt die Serie aus dem Artboard an -- 14 Termine, alle mit den Werten der Vorlage", async () => {
+    const client = await userClient(trainerEmail);
+    const vorlageId = await createCourseTemplate(client, studioId, {
+      name: "Serienkurs",
+      description: null,
+      defaultDurationMin: 60,
+      defaultCapacity: 16,
+      defaultInstructorUserId: null,
+      defaultInstructorName: "Marek T.",
+    });
+
+    const ids = await createCourseSessions(
+      client,
+      studioId,
+      {
+        templateId: vorlageId,
+        startsAt: "2026-09-03T16:00:00Z",
+        durationMin: 60,
+        capacity: 16,
+        room: "Kursraum 2",
+        instructorUserId: null,
+        instructorName: "Marek T.",
+      },
+      "2026-12-03T16:00:00Z",
+    );
+    expect(ids).toHaveLength(14);
+
+    const woche = await listCourseWeek(
+      client,
+      studioId,
+      "2026-09-01T00:00:00Z",
+      "2026-09-08T00:00:00Z",
+    );
+    const angelegt = woche.sessions.find((s) => s.sessionId === ids[0]);
+    expect(angelegt!.capacity).toBe(16);
+    expect(angelegt!.room).toBe("Kursraum 2");
+    expect(angelegt!.instructorName).toBe("Marek T.");
+    expect(angelegt!.status).toBe("planned");
+  });
+
+  it("eine spaetere Aenderung an der Vorlage laesst bestehende Termine unberuehrt", async () => {
+    const client = await userClient(trainerEmail);
+    const vorlageId = await createCourseTemplate(client, studioId, {
+      name: "Unberuehrt",
+      description: null,
+      defaultDurationMin: 60,
+      defaultCapacity: 16,
+      defaultInstructorUserId: null,
+      defaultInstructorName: null,
+    });
+    const [terminId] = await createCourseSessions(
+      client,
+      studioId,
+      {
+        templateId: vorlageId,
+        startsAt: "2026-09-17T16:00:00Z",
+        durationMin: 60,
+        capacity: 16,
+        room: null,
+        instructorUserId: null,
+        instructorName: null,
+      },
+      null,
+    );
+
+    await updateCourseTemplate(client, studioId, vorlageId, {
+      name: "Unberuehrt",
+      description: null,
+      defaultDurationMin: 30,
+      defaultCapacity: 4,
+      defaultInstructorUserId: null,
+      defaultInstructorName: null,
+    });
+
+    const woche = await listCourseWeek(
+      client,
+      studioId,
+      "2026-09-15T00:00:00Z",
+      "2026-09-22T00:00:00Z",
+    );
+    const termin = woche.sessions.find((s) => s.sessionId === terminId);
+    expect(termin!.capacity).toBe(16);
+    expect(termin!.durationMin).toBe(60);
+  });
+
+  it("ein Mitglied legt keinen Termin an", async () => {
+    const client = await userClient(mitgliedEmail);
+    const trainer = await userClient(trainerEmail);
+    const vorlageId = await createCourseTemplate(trainer, studioId, {
+      name: "Gesperrt",
+      description: null,
+      defaultDurationMin: 60,
+      defaultCapacity: 8,
+      defaultInstructorUserId: null,
+      defaultInstructorName: null,
+    });
+    await expect(
+      createCourseSessions(
+        client,
+        studioId,
+        {
+          templateId: vorlageId,
+          startsAt: "2026-09-24T16:00:00Z",
+          durationMin: 60,
+          capacity: 8,
+          room: null,
+          instructorUserId: null,
+          instructorName: null,
+        },
+        null,
+      ),
+    ).rejects.toMatchObject({ code: "unauthorized" });
+  });
+
+  it("absagen setzt Status und Zeitpunkt gemeinsam", async () => {
+    const client = await userClient(trainerEmail);
+    const vorlageId = await createCourseTemplate(client, studioId, {
+      name: "Faellt aus",
+      description: null,
+      defaultDurationMin: 60,
+      defaultCapacity: 8,
+      defaultInstructorUserId: null,
+      defaultInstructorName: null,
+    });
+    const [terminId] = await createCourseSessions(
+      client,
+      studioId,
+      {
+        templateId: vorlageId,
+        startsAt: "2026-10-01T16:00:00Z",
+        durationMin: 60,
+        capacity: 8,
+        room: null,
+        instructorUserId: null,
+        instructorName: null,
+      },
+      null,
+    );
+
+    await cancelCourseSession(client, studioId, terminId!);
+
+    const woche = await listCourseWeek(
+      client,
+      studioId,
+      "2026-09-29T00:00:00Z",
+      "2026-10-06T00:00:00Z",
+    );
+    expect(woche.sessions.find((s) => s.sessionId === terminId)!.status).toBe("cancelled");
+  });
+});
+
+describe("Buchen und Stornieren durch die Fachschicht", () => {
+  it("anmelden, nachsehen, abmelden", async () => {
+    const trainer = await userClient(trainerEmail);
+    const vorlageId = await createCourseTemplate(trainer, studioId, {
+      name: "Buchbar",
+      description: null,
+      defaultDurationMin: 60,
+      defaultCapacity: 1,
+      defaultInstructorUserId: null,
+      defaultInstructorName: null,
+    });
+    const inDreiTagen = new Date(Date.now() + 3 * 86_400_000).toISOString();
+    const [terminId] = await createCourseSessions(
+      trainer,
+      studioId,
+      {
+        templateId: vorlageId,
+        startsAt: inDreiTagen,
+        durationMin: 60,
+        capacity: 1,
+        room: null,
+        instructorUserId: null,
+        instructorName: null,
+      },
+      null,
+    );
+
+    const mitglied = await userClient(mitgliedEmail);
+    const gebucht = await bookCourseSession(mitglied, terminId!, crypto.randomUUID());
+    expect(gebucht.result).toBe("booked");
+    expect(gebucht.created).toBe(true);
+    expect(gebucht.freeSeats).toBe(0);
+
+    const teilnehmer = await listCourseParticipants(trainer, terminId!);
+    expect(teilnehmer).toHaveLength(1);
+    expect(teilnehmer[0]!.email).toBe(mitgliedEmail);
+
+    const storniert = await cancelCourseBooking(mitglied, terminId!);
+    expect(storniert.promotedUserId).toBeNull();
+  });
+
+  it("nach der Frist kommt ein deutscher Satz, kein Datenbankfehler", async () => {
+    const trainer = await userClient(trainerEmail);
+    const vorlageId = await createCourseTemplate(trainer, studioId, {
+      name: "Knapp",
+      description: null,
+      defaultDurationMin: 60,
+      defaultCapacity: 5,
+      defaultInstructorUserId: null,
+      defaultInstructorName: null,
+    });
+    const inEinerStunde = new Date(Date.now() + 3_600_000).toISOString();
+    const [terminId] = await createCourseSessions(
+      trainer,
+      studioId,
+      {
+        templateId: vorlageId,
+        startsAt: inEinerStunde,
+        durationMin: 60,
+        capacity: 5,
+        room: null,
+        instructorUserId: null,
+        instructorName: null,
+      },
+      null,
+    );
+
+    const mitglied = await userClient(mitgliedEmail);
+    await bookCourseSession(mitglied, terminId!, crypto.randomUUID());
+
+    await expect(cancelCourseBooking(mitglied, terminId!)).rejects.toMatchObject({
+      code: "conflict",
+    });
+    await expect(cancelCourseBooking(mitglied, terminId!)).rejects.toThrow(/2 Stunden/);
+  });
+
+  it("ein Termin aus einem fremden Studio liefert not_found, nicht forbidden", async () => {
+    const admin = serviceClient();
+    const { data: fremdStudio } = await admin
+      .from("studios")
+      .insert({ name: "Fremdes Buchstudio" })
+      .select("id")
+      .single();
+    const { data: fremdVorlage } = await admin
+      .from("course_templates")
+      .insert({
+        studio_id: fremdStudio!.id,
+        name: "Fremd",
+        default_duration_min: 60,
+        default_capacity: 5,
+      })
+      .select("id")
+      .single();
+    const { data: fremdTermin } = await admin
+      .from("course_sessions")
+      .insert({
+        studio_id: fremdStudio!.id,
+        course_template_id: fremdVorlage!.id,
+        starts_at: new Date(Date.now() + 86_400_000).toISOString(),
+        duration_min: 60,
+        capacity: 5,
+      })
+      .select("id")
+      .single();
+
+    const mitglied = await userClient(mitgliedEmail);
+    await expect(
+      bookCourseSession(mitglied, fremdTermin!.id, crypto.randomUUID()),
     ).rejects.toMatchObject({ code: "not_found" });
   });
 });
