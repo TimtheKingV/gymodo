@@ -35,3 +35,38 @@ jobs:
           SUPABASE_URL: http://127.0.0.1:54321
           SUPABASE_ANON_KEY: ${{ secrets.LOCAL_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.LOCAL_SERVICE_ROLE_KEY }}
+
+      # Der Bau ist der einzige Schritt, der ein node:crypto im Client-Bundle
+      # findet -- typecheck sieht es nicht. Die Fachschicht liefert TS-Quellen
+      # aus, und das Barrel zieht ueber tags.ts das Modul mit; genau deshalb
+      # gibt es @fitretro/domain/media und /tag-scan als Unterpfade.
+      #
+      # NEXT_PUBLIC_* werden hier ins Bundle eingesetzt, nicht zur Laufzeit
+      # gelesen. Sie muessen deshalb schon beim Bau stimmen, sonst spricht der
+      # Browser im E2E-Lauf gegen eine Platzhalteradresse.
+      - run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.LOCAL_ANON_KEY }}
+
+      - run: pnpm exec playwright install --with-deps chromium
+
+      # Laeuft gegen den Bau von oben, nicht gegen den Dev-Server -- siehe die
+      # Begruendung in playwright.config.ts. Chromium genuegt: geprueft wird
+      # die Anwendung, nicht die Browservielfalt.
+      - run: pnpm test:e2e
+        env:
+          SUPABASE_URL: http://127.0.0.1:54321
+          SUPABASE_ANON_KEY: ${{ secrets.LOCAL_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.LOCAL_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.LOCAL_ANON_KEY }}
+
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-bericht
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
