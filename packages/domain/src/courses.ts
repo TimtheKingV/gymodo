@@ -183,20 +183,29 @@ export async function createCourseTemplate(
   return data.id;
 }
 
+/**
+ * `default_instructor_user_id` bleibt hier aussen vor. Die Spalte ist eine
+ * Zuordnung, kein Text -- und kein Bildschirm dieser Phase kann sie
+ * ausdruecken: die Vorlagenseite zeigt nur `defaultInstructorName`, keine
+ * ID, in keinem Feld. Sie trotzdem aus der Eingabe zu schreiben hiesse,
+ * dass jedes Speichern eine Zuordnung loescht, die jemand anders gesetzt
+ * hat, ohne dass irgendwo ein Formular das verlangt hat. Das Setzen wird
+ * Aufgabe des Bildschirms, der spaeter eine Trainerauswahl anbietet -- und
+ * der entscheidet dann auch, was "nichts ausgewaehlt" bedeutet.
+ */
 export async function updateCourseTemplate(
   client: SupabaseClient,
   studioId: string,
   templateId: string,
-  eingabe: CourseTemplateInput,
+  eingabe: Omit<CourseTemplateInput, "defaultInstructorUserId">,
 ): Promise<void> {
   const userId = await requireUserId(client);
   await requireStudioStaff(client, studioId, userId, absage);
 
-  const geprueft = vorlageSchema.safeParse(eingabe);
+  const geprueft = vorlageSchema.omit({ defaultInstructorUserId: true }).safeParse(eingabe);
   if (!geprueft.success) {
     throw new DomainError("validation_failed", geprueft.error.issues[0]!.message);
   }
-  await pruefeTrainerZuordnung(client, studioId, geprueft.data.defaultInstructorUserId);
 
   const { data, error } = await client
     .from("course_templates")
@@ -205,7 +214,6 @@ export async function updateCourseTemplate(
       description: geprueft.data.description,
       default_duration_min: geprueft.data.defaultDurationMin,
       default_capacity: geprueft.data.defaultCapacity,
-      default_instructor_user_id: geprueft.data.defaultInstructorUserId,
       default_instructor_name: geprueft.data.defaultInstructorName,
     })
     .eq("studio_id", studioId)
@@ -319,20 +327,31 @@ export async function createCourseSessions(
   return (data ?? []).map((z) => z.id);
 }
 
+/**
+ * `instructor_user_id` bleibt hier aussen vor. Die Spalte ist die
+ * Zuordnung, kein Text -- und kein Bildschirm dieser Phase kann sie
+ * ausdruecken: `course_week`, der einzige Lesepfad des Termin-Bildschirms,
+ * liefert nicht einmal `instructor_user_id` zurueck, nur den Anzeigenamen.
+ * Sie trotzdem aus der Eingabe zu schreiben hiesse, dass jedes Speichern
+ * eine Zuordnung loescht, die jemand anders gesetzt hat. Das Setzen wird
+ * Aufgabe des Bildschirms, der spaeter eine Trainerauswahl anbietet -- und
+ * der entscheidet dann auch, was "nichts ausgewaehlt" bedeutet.
+ */
 export async function updateCourseSession(
   client: SupabaseClient,
   studioId: string,
   sessionId: string,
-  eingabe: Omit<CourseSessionInput, "templateId">,
+  eingabe: Omit<CourseSessionInput, "templateId" | "instructorUserId">,
 ): Promise<void> {
   const userId = await requireUserId(client);
   await requireStudioStaff(client, studioId, userId, absage);
 
-  const geprueft = terminSchema.omit({ templateId: true }).safeParse(eingabe);
+  const geprueft = terminSchema
+    .omit({ templateId: true, instructorUserId: true })
+    .safeParse(eingabe);
   if (!geprueft.success) {
     throw new DomainError("validation_failed", geprueft.error.issues[0]!.message);
   }
-  await pruefeTrainerZuordnung(client, studioId, geprueft.data.instructorUserId);
 
   const { data, error } = await client
     .from("course_sessions")
@@ -341,7 +360,6 @@ export async function updateCourseSession(
       duration_min: geprueft.data.durationMin,
       capacity: geprueft.data.capacity,
       room: geprueft.data.room,
-      instructor_user_id: geprueft.data.instructorUserId,
       instructor_name: geprueft.data.instructorName,
     })
     .eq("studio_id", studioId)

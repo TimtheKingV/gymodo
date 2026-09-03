@@ -79,7 +79,6 @@ export async function vorlageSpeichernAction(
       description: optionalerText(formular, "beschreibung"),
       defaultDurationMin: zahl(formular, "dauer"),
       defaultCapacity: zahl(formular, "plaetze"),
-      defaultInstructorUserId: optionalerText(formular, "trainerId"),
       defaultInstructorName: optionalerText(formular, "trainerName"),
     });
   } catch (fehler) {
@@ -130,7 +129,6 @@ export async function terminSpeichernAction(
       durationMin: zahl(formular, "dauer"),
       capacity: zahl(formular, "plaetze"),
       room: optionalerText(formular, "raum"),
-      instructorUserId: optionalerText(formular, "trainerId"),
       instructorName: optionalerText(formular, "trainerName"),
     });
   } catch (fehler) {

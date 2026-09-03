@@ -10,6 +10,7 @@ import {
   listCourseParticipants,
   listCourseTemplates,
   listCourseWeek,
+  updateCourseSession,
   updateCourseTemplate,
 } from "@fitretro/domain";
 import { createTestUser, serviceClient, uniqueEmail, userClient } from "./helpers/clients.js";
@@ -155,7 +156,6 @@ describe("Kursvorlagen", () => {
       description: "Ruhig, mit langen Haltephasen.",
       defaultDurationMin: 75,
       defaultCapacity: 12,
-      defaultInstructorUserId: null,
       defaultInstructorName: "Anna B.",
     });
     const vorlage = await getCourseTemplate(client, studioId, id);
@@ -168,6 +168,44 @@ describe("Kursvorlagen", () => {
     await expect(
       getCourseTemplate(client, studioId, crypto.randomUUID()),
     ).rejects.toMatchObject({ code: "not_found" });
+  });
+
+  it("aendern laesst eine gesetzte Standard-Trainer-Zuordnung unangetastet", async () => {
+    // Kein Formular dieser Phase kann default_instructor_user_id setzen
+    // (kurse-actions.ts liest kein trainerId-Feld beim Speichern) --
+    // deshalb setzt hier die Serviceschicht die Zuordnung, so wie es
+    // spaeter eine Trainerauswahl taete.
+    const admin = serviceClient();
+    const client = await userClient(trainerEmail);
+    const id = await createCourseTemplate(client, studioId, {
+      name: "Mit Zuordnung",
+      description: null,
+      defaultDurationMin: 60,
+      defaultCapacity: 10,
+      defaultInstructorUserId: null,
+      defaultInstructorName: "Anna B.",
+    });
+    const { error: setzFehler } = await admin
+      .from("course_templates")
+      .update({ default_instructor_user_id: trainerId })
+      .eq("id", id);
+    if (setzFehler) throw setzFehler;
+
+    await updateCourseTemplate(client, studioId, id, {
+      name: "Mit Zuordnung",
+      description: "Andere Felder aendern sich, die Zuordnung nicht.",
+      defaultDurationMin: 75,
+      defaultCapacity: 12,
+      defaultInstructorName: "Anna B.",
+    });
+
+    const { data: zeile, error: leseFehler } = await admin
+      .from("course_templates")
+      .select("default_instructor_user_id")
+      .eq("id", id)
+      .single();
+    if (leseFehler) throw leseFehler;
+    expect(zeile.default_instructor_user_id).toBe(trainerId);
   });
 });
 
@@ -242,7 +280,6 @@ describe("Termine und die Serie", () => {
       description: null,
       defaultDurationMin: 30,
       defaultCapacity: 4,
-      defaultInstructorUserId: null,
       defaultInstructorName: null,
     });
 
@@ -284,6 +321,58 @@ describe("Termine und die Serie", () => {
         null,
       ),
     ).rejects.toMatchObject({ code: "unauthorized" });
+  });
+
+  it("aendern laesst eine gesetzte Trainer-Zuordnung des Termins unangetastet", async () => {
+    // Kein Formular dieser Phase kann instructor_user_id setzen
+    // (kurse-actions.ts liest kein trainerId-Feld beim Speichern) --
+    // deshalb setzt hier die Serviceschicht die Zuordnung, so wie es
+    // spaeter eine Trainerauswahl taete.
+    const admin = serviceClient();
+    const client = await userClient(trainerEmail);
+    const vorlageId = await createCourseTemplate(client, studioId, {
+      name: "Mit Trainer",
+      description: null,
+      defaultDurationMin: 60,
+      defaultCapacity: 8,
+      defaultInstructorUserId: null,
+      defaultInstructorName: null,
+    });
+    const [terminId] = await createCourseSessions(
+      client,
+      studioId,
+      {
+        templateId: vorlageId,
+        startsAt: "2026-10-08T16:00:00Z",
+        durationMin: 60,
+        capacity: 8,
+        room: null,
+        instructorUserId: null,
+        instructorName: null,
+      },
+      null,
+    );
+    const { error: setzFehler } = await admin
+      .from("course_sessions")
+      .update({ instructor_user_id: trainerId })
+      .eq("id", terminId!);
+    if (setzFehler) throw setzFehler;
+
+    await updateCourseSession(client, studioId, terminId!, {
+      startsAt: "2026-10-08T17:00:00Z",
+      durationMin: 90,
+      capacity: 10,
+      room: "Kursraum 3",
+      instructorName: "Marek T.",
+    });
+
+    const { data: zeile, error: leseFehler } = await admin
+      .from("course_sessions")
+      .select("instructor_user_id")
+      .eq("id", terminId!)
+      .single();
+    if (leseFehler) throw leseFehler;
+    expect(zeile.instructor_user_id).toBe(trainerId);
   });
 
   it("absagen setzt Status und Zeitpunkt gemeinsam", async () => {
