@@ -1,7 +1,40 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MAX_SERIENTERMINE, ortszeitTeile, serienTermine } from "@fitretro/domain/serie";
+import {
+  MAX_SERIENTERMINE,
+  ortszeitTeile,
+  ortszeitZuInstant,
+  serienTermine,
+  type Ortszeit,
+} from "@fitretro/domain/serie";
+
+/**
+ * Ein datetime-local-Feld liefert eine nackte Wandzeit ohne Zone
+ * ("2026-11-05T18:00"). new Date() deutet die in der Zone des BROWSERS
+ * -- serienTermine liest daraus aber die Wandzeit des STUDIOS. Sitzt der
+ * Trainer in einer anderen Zone als sein Studio, entstuende ein anderer
+ * Termin als der getippte. Deshalb wird das Feld hier zerlegt und
+ * ausdruecklich als Ortszeit des Studios gedeutet.
+ */
+function alsOrtszeit(wert: string, stunde: number, minute: number): Ortszeit | null {
+  const treffer = /^(\d{4})-(\d{2})-(\d{2})$/.exec(wert);
+  if (!treffer) return null;
+  return {
+    jahr: Number(treffer[1]),
+    monat: Number(treffer[2]),
+    tag: Number(treffer[3]),
+    stunde,
+    minute,
+  };
+}
+
+function feldZuInstant(wert: string, zeitzone: string): Date | null {
+  const treffer = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/.exec(wert);
+  if (!treffer) return null;
+  const teile = alsOrtszeit(treffer[1]!, Number(treffer[2]), Number(treffer[3]));
+  return teile === null ? null : ortszeitZuInstant(teile, zeitzone);
+}
 
 /**
  * Zeigt, welche Termine entstehen -- BEVOR sie entstehen.
@@ -20,12 +53,15 @@ export function SerienVorschau({ zeitzone }: { zeitzone: string }) {
 
   const termine = useMemo(() => {
     if (start === "") return [];
-    const startZeit = new Date(start);
-    if (Number.isNaN(startZeit.getTime())) return [];
+    const startZeit = feldZuInstant(start, zeitzone);
+    if (startZeit === null) return [];
     if (bis === "") return [startZeit];
-    const bisZeit = new Date(`${bis}T12:00:00`);
-    if (Number.isNaN(bisZeit.getTime())) return [startZeit];
-    return serienTermine(startZeit, bisZeit, zeitzone);
+    // Mittag in der Zone des Studios: serienTermine vergleicht auf den
+    // Ortstag, und die Mittagslage haelt genug Abstand zu beiden
+    // Tagesgrenzen.
+    const bisTeile = alsOrtszeit(bis, 12, 0);
+    if (bisTeile === null) return [startZeit];
+    return serienTermine(startZeit, ortszeitZuInstant(bisTeile, zeitzone), zeitzone);
   }, [start, bis, zeitzone]);
 
   return (
