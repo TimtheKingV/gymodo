@@ -45,7 +45,16 @@ Die Vorabnotiz zählt fünf Fachlogik-Risiken auf. **Eines davon ist seit dem 2.
 
 Ebenfalls vorhanden und unverändert benutzt: `is_studio_member` und `is_studio_staff` als Träger der RLS, `studios.timezone` für die Anzeige, `set_updated_at` als Trigger.
 
-**Was nicht steht und diesen Entwurf geprägt hat: es gibt nirgends einen Namen.** `list_studio_members` (`0031`) liefert `auth.users.email`, sonst nichts. Es gibt keine Profiltabelle. „Marek T." auf `Kurse.dc.html` und „M. Wolf" auf `Termin.dc.html` haben heute keine Daten hinter sich — genau die Sorte Scheck, deren Buchführung §Warum der Portalspec eingeführt hat. Abschnitt 4 löst das ein.
+**Was nicht steht und diesen Entwurf geprägt hat: es gibt keinen lesbaren Namen.**
+
+`profiles.display_name` existiert seit `0001` — die Spalte ist da, nullable. Aber sie ist unbrauchbar für diesen Zweck, und zwar doppelt:
+
+- **Niemand darf sie lesen außer dem Eigentümer.** `0001` legt genau zwei Policies auf `profiles`: `profiles_select_own` und `profiles_update_own`, beide `id = auth.uid()`. Ein Trainer kann den Anzeigenamen seines Mitglieds nicht sehen. Genau daran ist schon `0031` vorbeigegangen — sein Kopfkommentar hält fest, dass `profiles` nur die eigene Zeile freigibt, weshalb `list_studio_members` über `auth.users` gehen musste.
+- **Niemand füllt sie.** Kein Formular, keine Server Action, keine Fachschichtfunktion schreibt `display_name`. Der Bezeichner kommt im ganzen Repository außerhalb der Migration nur in zwei Integrationstests vor, die ihn als Beispieldatum setzen.
+
+Die Spalte über einen neuen Lesepfad zu öffnen wäre also erst der halbe Weg; dazu käme die Oberfläche, die sie füllt, und die Frage, wer den Namen eines anderen ändern darf. Das ist ein Profilsystem, und es steht in keiner Spec.
+
+„Marek T." auf `Kurse.dc.html` und „M. Wolf" auf `Termin.dc.html` haben damit heute keine Daten hinter sich — genau die Sorte Scheck, deren Buchführung §Warum der Portalspec eingeführt hat. Abschnitt 4 löst das ein, ohne das Profilsystem zu eröffnen.
 
 ---
 
@@ -233,7 +242,9 @@ Die Rahmenbedingung des Projekts lautet „deutsche Oberflächentexte, deutsche 
 
 ## 4. Der Trainername
 
-Es gibt keine Profiltabelle und kein Namensfeld. Beide Felder werden angelegt, und ihre Aufgaben sind getrennt:
+Es gibt ein Namensfeld — `profiles.display_name` —, aber es ist für andere unlesbar und wird von nichts gefüllt (Abschnitt 1). Dieser Entwurf rührt es **nicht** an: es zu öffnen hieße, eine Policy und ein Profilsystem mitzubauen, und beides gehört nicht in einen Bauabschnitt über Platzvergabe.
+
+Stattdessen zwei Felder am Kurs selbst, mit getrennten Aufgaben:
 
 | Feld | Aufgabe | Wer sieht es |
 | --- | --- | --- |
@@ -463,6 +474,7 @@ DELETE /api/v1/course-sessions/{id}/booking   → cancel_course_booking
 - **Benachrichtigung beim Nachrücken.** Vertagt, nicht verworfen — `promoted_at` hält den Zeitpunkt bereit. Fällig, sobald iOS steht (dann Push) oder ein eigener Mailweg entsteht. Bis dahin gilt der Text aus Abschnitt 8.
 - **Kursfoto.** Spalte da, Weg offen. Braucht die Bucket-Entscheidung aus Abschnitt 7.
 - **Kursvideo.** Unverändert vertagt (§8 der Portalspec).
+- **`profiles.display_name` bleibt tot.** Die Spalte steht seit `0001`, ist nur vom Eigentümer lesbar und wird von keiner Zeile Produktivcode geschrieben. Dieser Bauabschnitt weckt sie nicht auf und legt mit `instructor_name` bewusst einen zweiten, engeren Namensweg daneben. Sobald ein echtes Profil entsteht — spätestens, wenn die Teilnehmerliste Namen statt Adressen zeigen soll —, ist zu entscheiden, ob `instructor_name` darin aufgeht oder als freier Text daneben bestehen bleibt (für den externen Kursleiter ohne Konto spricht das Zweite).
 - **Ob Kursteilnahmen im Trainingsverlauf auftauchen.** Die Vorabnotiz hält getrennt für die ehrlichere Variante: die Plattform weiß nicht, ob jemand da war, sie kennt nur die Anmeldung. Dieser Entwurf ändert daran nichts und baut keine Verbindung.
 - **`instructor_user_id` zeigt nicht erzwungen auf Personal des Studios.** Von der Fachschicht geprüft, von der Datenbank nicht. Begründung in Abschnitt 4.
 - **Wiederholungsregeln über „wöchentlich bis" hinaus** — jeden zweiten Dienstag, monatlich, Ausnahmen. `TerminAnlegen.dc.html` zeigt nur „Wöchentlich". Kommt, wenn ein Studio es braucht; die materialisierten Termine machen jede spätere Regel zu einer reinen Eingabehilfe statt zu einer Datenmodelländerung.
