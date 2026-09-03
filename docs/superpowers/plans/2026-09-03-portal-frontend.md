@@ -44,6 +44,7 @@ Aus Spec und Global Constraints, wörtlich. Jede Aufgabe steht implizit unter di
 - **Aussehen testet kein Test.** Keine Farbwerte, keine Pixelpositionen, keine Schriftgrößen in Zusicherungen. Geprüft werden Struktur, Zustände, Rollen, Maße und Zählungen.
 - **Die Suiten bleiben auf ihrem Stand:** 85 Unit, **460 von 461** Integration, 30 E2E im warmen Lauf. Wird einer rot, ist das eine Verhaltensänderung — dann wird entschieden, welche Seite recht hat, nicht der Test angepasst.
 - **Vor jedem lokalen E2E-Lauf: was lauscht auf Port 3000?** `reuseExistingServer` ist lokal `true`. Ein hängengebliebener Server bringt Code von vor der Änderung mit. Das hat am 3. September zwei Fehlsuchen gekostet.
+- **`pnpm test:e2e -- <datei>` filtert nicht.** pnpm reicht das `--` nicht an Playwright durch; der Befehl läuft die **ganze** Suite. Zum Filtern: `pnpm exec playwright test <datei>`, für Unit-Tests `pnpm --filter @fitretro/web exec vitest run <muster>`. In Aufgabe 1 gemessen: der vermeintlich gefilterte Lauf zog 31 Tests über 4,6 Minuten mit und brachte zwei fremde Kaltstart-Flakes mit, die dann erst auseinanderzuhalten waren. Ein gefilterter Lauf derselben Datei kostet Sekunden.
 
 ### Zwei Messwerte, die vor der ersten Zeile Code aufgenommen wurden
 
@@ -200,7 +201,7 @@ export async function hauptlandmarken(page: Page): Promise<number> {
 /**
  * Elemente mit Akzent als FLAECHE. Raender zaehlen nicht: die aktive
  * Rail-Zeile ist eine 2-px-Kante, der Fokusring ein outline, die
- * Sucherecken sind Winkel. Fläche ist Flaeche.
+ * Sucherecken sind Winkel. Flaeche ist Flaeche.
  *
  * Gibt Beschreibungen zurueck, keine Zahl -- bei "erwartet 1, waren 2"
  * will man wissen, welche zwei.
@@ -222,11 +223,13 @@ export async function akzentflaechen(page: Page): Promise<string[]> {
 /**
  * Sichtbare Bedienelemente, die niedriger sind als verlangt.
  *
- * Die Mindesthoehe ist ein Parameter, kein fester Wert: die Global
- * Constraints des Designplans sagen im selben Satz "Trefferflaechen >= 44 px"
- * und "Nebenaktion 40 px", und die Artboards zeichnen 40. Der Widerspruch
- * ist Befund 16 im Plan; bis er entschieden ist, sagt der Aufrufer, was er
- * meint.
+ * Die Mindesthoehe ist ein Parameter, kein fester Wert. Die Global
+ * Constraints sagten im selben Satz "Trefferflaechen >= 44 px" und
+ * "Nebenaktion 40 px"; entschieden ist: am Schreibtisch gelten 40 px fuer
+ * Nebenaktion und zerstoerende Aktion, 44 px fuer Hauptaktion und
+ * Eingabefeld. Die Halle unter einrichten/ hat eigene, groessere Masse
+ * (Hauptaktion 56, Nebenaktion 48, Feld 52) und wird gegen die geprueft --
+ * deshalb ein Parameter und keine Konstante.
  *
  * Textlinks im Fliesstext sind ausgenommen -- ein Link mitten in einem Satz
  * kann keine 44 px hoch sein, ohne die Zeile aufzureissen.
@@ -303,7 +306,7 @@ test("Jede Schreibtischseite hat genau eine Hauptlandmarke", async ({ page }) =>
 - [ ] **Schritt 4: Laufen lassen und den echten Fehler sehen**
 
 ```
-pnpm test:e2e -- bausteine.spec.ts
+pnpm exec playwright test bausteine.spec.ts
 ```
 
 Erwartet: **FAIL**, `expected 1, received 2`, auf dem ersten Pfad. Ist er grün, hat jemand die Aufgabe vorweggenommen — dann nachsehen, nicht weitergehen.
@@ -442,7 +445,7 @@ describe("Zustand", () => {
 - [ ] **Schritt 2: Laufen lassen**
 
 ```
-pnpm --filter @fitretro/web test -- Zustand
+pnpm --filter @fitretro/web exec vitest run Zustand
 ```
 
 Erwartet: **FAIL** — `Cannot find module './Zustand'`.
@@ -513,7 +516,7 @@ Dazu `bausteine.module.css` mit `.zustand`, `.leer`, `.fehler`, `.keinRecht`, `.
 - [ ] **Schritt 4: Laufen lassen**
 
 ```
-pnpm --filter @fitretro/web test -- Zustand
+pnpm --filter @fitretro/web exec vitest run Zustand
 ```
 
 Erwartet: **PASS**, 5 Tests.
@@ -708,7 +711,7 @@ Danach darf davon genau eine Zeile übrig sein, die unter `(schreibtisch)` liegt
 - [ ] **Schritt 2: Laufen lassen — Aufgabe 1 muss grün werden**
 
 ```
-pnpm test:e2e -- bausteine.spec.ts
+pnpm exec playwright test bausteine.spec.ts
 ```
 
 Erwartet: **PASS**. War der Lauf davor rot und ist jetzt grün, ist der Fehler geheilt und nicht wegdefiniert.
@@ -843,7 +846,7 @@ test("Die Bedienelemente der Tags-Seite sind gross genug zum Treffen", async ({ 
 - [ ] **Schritt 2: Laufen lassen**
 
 ```
-pnpm test:e2e -- bausteine.spec.ts
+pnpm exec playwright test bausteine.spec.ts
 ```
 
 Erwartet: **FAIL** auf mindestens dem Kein-Recht- und dem Leer-Test. Der Akzenttest kann zufällig grün sein — die heutige Seite hat keine Hauptaktion. Das ist kein Beweis, sondern Zufall, und deshalb steht er trotzdem hier.
@@ -860,7 +863,7 @@ Erwartet: **FAIL** auf mindestens dem Kein-Recht- und dem Leer-Test. Der Akzentt
 - [ ] **Schritt 4: Laufen lassen**
 
 ```
-pnpm test:e2e -- bausteine.spec.ts
+pnpm exec playwright test bausteine.spec.ts
 ```
 
 Erwartet: **PASS**, alle fünf.
@@ -975,7 +978,7 @@ test("Ein falsches Passwort meldet sich als Warnung, nicht als stiller Text", as
 - [ ] **Schritt 2: Laufen lassen**
 
 ```
-pnpm test:e2e -- einstieg.spec.ts
+pnpm exec playwright test einstieg.spec.ts
 ```
 
 Erwartet: **FAIL** — heute gibt es weder `<main>` noch eine Akzentfläche noch Links mit diesen Namen (die heutige Seite schreibt „Registrieren" und „Passwort vergessen?" mit Fragezeichen).
@@ -1038,7 +1041,7 @@ export function Einstieg({
 - [ ] **Schritt 5: Laufen lassen**
 
 ```
-pnpm test:e2e -- einstieg.spec.ts
+pnpm exec playwright test einstieg.spec.ts
 ```
 
 Erwartet: **PASS**, drei Tests.
@@ -1113,7 +1116,7 @@ test("Ein zu kurzes Passwort sagt, was gilt -- nicht nur, dass etwas falsch ist"
 - [ ] **Schritt 2: Laufen lassen**
 
 ```
-pnpm test:e2e -- einstieg.spec.ts
+pnpm exec playwright test einstieg.spec.ts
 ```
 
 Erwartet: **FAIL** auf beiden.
@@ -1131,7 +1134,7 @@ Fehlermeldungen beider Schritte bekommen `role="alert"`.
 - [ ] **Schritt 4: Laufen lassen und Commit**
 
 ```
-pnpm test:e2e -- einstieg.spec.ts
+pnpm exec playwright test einstieg.spec.ts
 ```
 
 Erwartet: **PASS**, fünf Tests. Danach Sichtprüfung gegen beide Artboards.
@@ -1622,7 +1625,7 @@ test("Ein Mitglied bekommt eine Rail ohne Zahlen statt einer kaputten Seite", as
 - [ ] **Schritt 2: Laufen lassen**
 
 ```
-pnpm test:e2e -- rail.spec.ts
+pnpm exec playwright test rail.spec.ts
 ```
 
 Erwartet: **FAIL** auf allen vier.
@@ -1693,7 +1696,7 @@ Die Fußzeile ist ein `<form action={abmelden}>` mit einem Textknopf, darüber d
 - [ ] **Schritt 5: Laufen lassen**
 
 ```
-pnpm test:e2e -- rail.spec.ts einrichten.spec.ts onboarding.spec.ts
+pnpm exec playwright test rail.spec.ts einrichten.spec.ts onboarding.spec.ts
 ```
 
 Erwartet: **PASS**. `einrichten.spec.ts:528` prüft, dass jede Schreibtischseite die Rail trägt — dieser Test ist ab jetzt der Wächter über die Zusammenlegung.
@@ -2284,7 +2287,7 @@ Der Reiter *Mitglieder* listet Rolle `member`, der Reiter *Mitarbeiter* die Roll
 - [ ] **Schritt 3: `leute.spec.ts` prüfen, Sichtprüfung, Commit**
 
 ```
-pnpm test:e2e -- leute.spec.ts schreibtisch.spec.ts
+pnpm exec playwright test leute.spec.ts schreibtisch.spec.ts
 ```
 
 ```bash
