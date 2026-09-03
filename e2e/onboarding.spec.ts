@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { latestOtpFor } from "./helpers/login";
 import { studioMitTrainer } from "./helpers/studio";
 
 /**
@@ -19,4 +20,27 @@ test("Ein Trainer landet nach der Anmeldung im Portal, ohne die Adresse zu kenne
 
   // Die nackte M0-Seite darf ein angemeldeter Trainer nie zu sehen bekommen.
   await expect(page.getByTestId("user-email")).toHaveCount(0);
+});
+
+/**
+ * Der zweite Weg auf dieselbe Seite. Aufgabe 2 heilt ihn mit, und genau
+ * deshalb steht er hier: eine mitgeheilte Strecke, die niemand nachmisst,
+ * ist eine Behauptung.
+ */
+test("Nach dem Passwortwechsel steht ein Trainer im Portal, nicht im Schwarzen", async ({
+  page,
+}) => {
+  const { email, studioId } = await studioMitTrainer(page, "onboarding-reset");
+
+  const angefordert = new Date();
+  await page.goto("/passwort-vergessen");
+  await page.getByLabel("E-Mail").fill(email);
+  await page.getByRole("button", { name: "Code anfordern" }).click();
+
+  const code = await latestOtpFor(email, angefordert);
+  await page.getByLabel("Code aus der E-Mail").fill(code);
+  await page.getByLabel("Neues Passwort").fill("neues-passwort-1234");
+  await page.getByRole("button", { name: "Passwort setzen" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/portal/${studioId}$`));
 });
