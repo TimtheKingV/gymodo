@@ -83,7 +83,7 @@ Die Erstfassung nannte vier. Alle vier sind zu:
 - ~~**Studio-Einstellungen:**~~ `studios` hatte `studios_select` und keine Spalte für die Stornofrist — Speichern war nicht möglich. `0032` legt `cancellation_deadline_hours` an (Vorgabe 2 Stunden, Bereich 0–168) und zieht das Spaltenrecht auf `join_code` aus `authenticated` ab; der Reiter *Studio* unter `/einstellungen` speichert Name, Zeitzone und Frist.
 - ~~**Datenschutzgrenze:**~~ `0033` nimmt vier Policies (`workout_sessions`, `workout_sets`, `member_machine_calibrations`, `progression_suggestions`) die Staff-Klausel — Personal kommt an kein einzelnes Trainingsdatum eines Mitglieds mehr heran. `0034` liefert mit `studio_overview` die einzige verbliebene Stelle, ausschließlich als Summen, ohne Aufschlüsselung je Gerät unterhalb von fünf aktiven Mitgliedern.
 
-`0032`–`0034` sind auf Platte und lokal angewendet; der Cloud-Abgleich (Fahrplan Abschnitt 4d) steht für diese drei noch aus, die Cloud bleibt bis dahin auf `0031`.
+`0032`–`0034` stehen auf Platte, lokal **und in der Cloud** — nachgezogen am 3. September, Abschnitt 4f.
 
 ---
 
@@ -172,6 +172,30 @@ Am 3. September meldete die Integrationssuite auf dem Phase-3-Zweig vier Fehlsch
 
 Geschlossen am 3. September: Worktree nach `master`, `master` in den Phase-3-Zweig, danach `supabase db reset`. Verzeichnis und Platte stehen seither beide auf **34**.
 
+### 4f. Cloud-Abgleich am 3. September — und einmal ohne Überraschung
+
+Nach der Zusammenführung standen Platte auf **34**, Cloud auf **31**. Der Rückstand war exakt `0032`–`0034` und sonst nichts: die Nummerierung der ersten 31 war noch die normalisierte aus §4d, es gab keine zweite Drift darunter.
+
+Alle drei über den MCP-Server angewendet (die CLI kommt von dieser Maschine weiterhin nicht an die Postgres-Strecke). Die Warnung aus §4d hat sich wortgetreu bestätigt: `apply_migration` vergab `20260903080038`, `20260903080055`, `20260903080119`. Anschließend auf `0032`–`0034` normalisiert.
+
+**Gegengeprüft wurde am Schema, nicht am Verzeichnis** — der Eintrag dort hat sich in §4e als unzuverlässiger Zeuge erwiesen:
+
+| Prüfung | Ergebnis |
+| --- | --- |
+| Migrationen | 34 |
+| `studios.cancellation_deadline_hours` | vorhanden |
+| Policy `studios_update_staff` | vorhanden |
+| `authenticated` darf an `studios` ändern | `cancellation_deadline_hours, name, timezone` — `join_code` außen vor |
+| Funktion `studio_overview` | vorhanden |
+| `workout_sessions_select` | `is_studio_member(...) and user_id = auth.uid()` |
+| **Policies mit `is_studio_staff`-Klausel auf den vier Trainingstabellen** | **0** |
+
+Der Sicherheitsbefund vor und nach der Anwendung ist bis auf einen Eintrag gleich: `studio_overview` ist jetzt zusätzlich als `SECURITY DEFINER` für Angemeldete aufrufbar — genau der Entwurf, sie prüft `is_studio_staff` im Rumpf selbst. Keine Fehlerstufe, nichts verschlechtert.
+
+**Reihenfolge, die hier zählte:** Datenbank vor Deploy. Alle drei sind mit der laufenden Vercel-Fassung verträglich (eine Spalte mit Vorgabewert, weggenommene Rechte, eine neue Funktion), aber der neue Überblick auf der Portal-Wurzel ruft `studio_overview` auf — umgekehrt hätte die Seite zwischen Deploy und Migration in einen Fehler gelaufen.
+
+**Nebenbefund, nicht dringend:** vier Funktionen tragen keinen gesetzten `search_path` — `set_updated_at`, `is_valid_setting_choices`, `storage_studio_id`, `generate_join_code`. Das Projekt setzt ihn sonst überall (`set search_path = public, pg_temp`); diese vier sind mit der eigenen Gewohnheit uneins. Eine Migration, wenn ohnehin eine ansteht.
+
 ### Das Ungleichgewicht, das die Reihenfolge bestimmt
 
 | | Web-Portal | iOS Member-App |
@@ -193,6 +217,7 @@ Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Da
 - [x] **Echte OTP-Mail mit sechsstelligem Code angekommen** — Blocker 1 ist zu
 - [x] **`supabase db push`** — zehn Migrationen nachgezogen, lokal und Cloud standen auf `0021` (Abschnitt 4c)
 - [x] **Zweite Drift geschlossen** — `0022`–`0031` angewendet, Gleichstand über 31 Einträge (Abschnitt 4d)
+- [x] **Dritte Drift geschlossen** — `0032`–`0034` lagen nur in der lokalen Datenbank und auf einem unvermergten Worktree; zusammengeführt und in die Cloud nachgezogen, Gleichstand über 34 Einträge (Abschnitte 4e und 4f)
 - [ ] **`auth_leaked_password_protection` einschalten** — seit der Passwort-Umstellung fällig, ein Haken im Dashboard
 - [ ] **Mac-Übernahme:** wann — und wird vorher NFC oder QR entschieden
 - [ ] **Kurse:** Teil von M2 oder vertagt (der größte ungeplante Brocken)
