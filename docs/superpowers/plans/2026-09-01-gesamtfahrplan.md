@@ -69,8 +69,8 @@ Das Ungleichgewicht aus der Erstfassung hat sich verschoben, aber nicht aufgelö
 | ~~**Tags als Lieferung**~~ — Klartext-Tokenraum, Chargen/Lieferungen/Halde, `inspect_tag`/`bind_tag_to_machine`, Betreiberwerkzeug | `0026`–**`0029`** | ✅ `2026-09-01-tag-lieferung.md`, 8 Aufgaben | ✅ **2. September** |
 | ~~**Auth-Umstellung**~~ — OTP → Passwort, Registrierung, Studio-Beitritt | — | ❌ ohne Plan gebaut | ✅ **2. September** |
 | ~~**Leute**~~ — Mitglieder und Mitarbeiter | `0030`–`0031` | ❌ ohne Plan gebaut | ✅ **2. September** |
-| **Sucher im Portal** — `getUserMedia` + Decoder | — | ✅ als Aufgabe 9b im Plan | ❌ **offen, auf Ansage vertagt** |
-| ~~**Einrichtung am Gerät**~~ — 16 `Telefon*`-Artboards, der Gang durch die Halle | keine | ✅ `2026-09-02-einrichtung-am-geraet.md`, 13 Aufgaben | ✅ **3. September**, ohne 9b |
+| ~~**Sucher im Portal**~~ — `getUserMedia` + `jsQR` | — | ✅ als Aufgabe 9b im Plan | ✅ **3. September**; die Handprüfung am Telefon steht aus |
+| ~~**Einrichtung am Gerät**~~ — 16 `Telefon*`-Artboards, der Gang durch die Halle | keine | ✅ `2026-09-02-einrichtung-am-geraet.md`, 13 Aufgaben | ✅ **3. September**, vollständig |
 | ~~**Studio-Einstellungen, Datenschutzgrenze, Überblick**~~ — Stornofrist, Speicherrecht mit Spaltengrenze, vier Policies ohne Staff-Klausel, `studio_overview` | `0032`–`0034` | ✅ `2026-09-02-studio-einstellungen-datenschutzgrenze.md`, 9 Aufgaben | ✅ **2. September** |
 | **Kurse** — drei Tabellen, Platzvergabe unter Nebenläufigkeit | — | ❌ nur Vorabnotiz (84 Zeilen) | ❌ |
 | **Portal-Frontend nach den 39 Artboards** | — | ❌ | ❌ |
@@ -268,11 +268,13 @@ Vier Bauabschnitte waren vorgesehen. Die ersten beiden wurden ohne Umsetzungspla
 
 Punkt 4 hing an Punkt 3 nicht fachlich, aber beide fassten `studios` an; nacheinander gebaut haben sie sich eine Migration erspart, die die andere wieder angefasst hätte.
 
-### Phase 3 — Einrichtung am Gerät ✅ *abgeschlossen 3. September, bis auf den Sucher*
+### Phase 3 — Einrichtung am Gerät ✅ *abgeschlossen 3. September*
 
 Die 16 `Telefon*`-Artboards: der Gang durch die Halle, sechs Schritte, Modell → Einstellungen → Gerät → Tag → Übungen → Video. Dreizehn Aufgaben, **ohne eine einzige Migration** — die Spec hatte es versprochen, und es hat gehalten.
 
-**Offen bleibt allein 9b, der Sucher.** Das Token-Feld trägt den Schritt bis dahin; die Spec hatte den Rückfallweg ohnehin als eigenständig entworfen, und alles hinter ihm — `inspect_tag`, `bind_tag_to_machine`, die Antworttabelle — ist derselbe Code, dem der Decoder später nur vorgeschaltet wird.
+**Der Sucher (9b) kam am selben Tag nach** und hat die Teilung im Nachhinein gerechtfertigt: er brauchte `jsqr`, eine dritte Ansicht und eine verschobene Hauptaktion — sonst nichts. Alles hinter ihm stand schon, weil die Spec den Rückfallweg als eigenständig entworfen hatte.
+
+**Was bleibt, ist eine Handprüfung.** `getUserMedia` verlangt einen sicheren Kontext, eine LAN-Adresse zählt nicht — es braucht also ein Telefon über HTTPS, einen gedruckten QR und zehn Minuten. Der einzige Punkt des Bauabschnitts, den kein Test abnimmt.
 
 **Zwei Fehler, die der Bauabschnitt nebenbei freigelegt hat**, beide seit dem Medienplan im Schreibtischpfad und beide unsichtbar, weil jeder Test mit einem 22-Byte-JPEG lief:
 
@@ -303,7 +305,6 @@ Mit dem Abschluss von Phase 3 ist die Aufteilung in Stränge weitgehend hinfäll
 
 Alles Übrige hängt an derselben Oberfläche und läuft deshalb nacheinander:
 
-- **9b, der Sucher** sitzt mitten in Schritt 4 des Gangs. Klein, aber er braucht ein echtes Telefon über HTTPS — `getUserMedia` verlangt einen sicheren Kontext, eine LAN-Adresse zählt nicht.
 - **Phase 5** gestaltet die Portalseiten, die Phase 2 und 3 gerade funktional gemacht haben. Erst jetzt steht fest, welche es überhaupt gibt.
 - **Phase 4 (Kurse)** braucht zuerst eine Entwurfsrunde. Nach der Lehre aus Abschnitt 7 ist die erst fällig, wenn der Abstand zwischen Entwurf und Code klein ist — das ist er heute, also ist sie fällig.
 
@@ -330,7 +331,7 @@ Verstreut über sieben Specs und drei Umsetzungspläne, hier einmal an einem Ort
 | Nummernvergabe — soll das Portal `machines.label` erzwingen | einrichtung §7 | nichts, Entwurf sagt nein |
 | Leerer Vorrat mitten in der Halle — kein Bestellweg | einrichtung §7, tag-lieferung §8 | nichts |
 | Videoupload vom Trainerhandy ist nie an einem echten Gerät gelaufen | trainerportal-medien, Verifikation | den ersten Betreibertermin |
-| **Der Sucher ist nie an einem echten Telefon gelaufen** — 9b ist nicht gebaut, und die Handprüfung braucht HTTPS | einrichtung-am-geraet §5, Plan Aufgabe 9b | den Gang in der Halle: bis dahin werden 22 Zeichen abgetippt |
+| **Der Sucher ist nie an einem echten Telefon gelaufen** — gebaut, aber die Handprüfung braucht HTTPS und einen gedruckten QR | einrichtung-am-geraet §5, Plan Aufgabe 9b | nichts im Code; den Beweis, dass er in der Halle trifft |
 | **Probe-Scan auf der Fertig-Seite** — er bräuchte den Klartext-Token, den `0026` dem Portal entzieht. Aufzulösen mit einer `security definer`-Funktion je Gerät oder einer Fallback-Seite über die Geräte-ID | einrichtung-am-geraet, Plan Aufgabe 12 | dem Trainer den Blick auf das, was ein Mitglied sieht |
 | **Vier Funktionen ohne gesetzten `search_path`** — `set_updated_at`, `is_valid_setting_choices`, `storage_studio_id`, `generate_join_code`; das Projekt setzt ihn sonst überall | Sicherheitsbefund 3. September, Abschnitt 4f | nichts, aber uneins mit der eigenen Gewohnheit |
 | **`rls-workout-sessions` ist sporadisch rot** — der Test setzt `completed_at` aus der Node-Uhr gegen `started_at` aus der Datenbank | Bestand, vor allen drei Phasen | nichts, aber es verrauscht jede Abnahme |

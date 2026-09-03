@@ -547,3 +547,53 @@ test("Jede Schreibtischseite traegt die Rail, der Gang traegt sie nicht", async 
   await page.goto(`/portal/${studioId}/einrichten`);
   await expect(rail).toHaveCount(0);
 });
+
+/**
+ * Der Sucher selbst laesst sich hier nicht pruefen -- ohne Kamera gibt es
+ * nichts zu dekodieren, und die Dekodierstrecke deckt parseTagScan ab
+ * (Aufgabe 1). Pruefbar und wichtig ist das Verhalten daneben: wird die
+ * Kamera verweigert, muss der Schritt weitergehen statt in einer Sackgasse
+ * zu enden. Genau das war laut Spec 7 der "einzige Ausfallpunkt ohne
+ * Rueckfallweg", bevor das Token-Feld entstand.
+ */
+test("Verweigerte Kamera ist keine Sackgasse -- das Token-Feld traegt weiter", async ({
+  page,
+}) => {
+  const { admin, studioId } = await studioMitTrainer(page, "einrichten-kamera");
+
+  const { data: modell, error: modellFehler } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (modellFehler) throw modellFehler;
+
+  const { data: geraet, error: geraetFehler } = await admin
+    .from("machines")
+    .insert({ studio_id: studioId, equipment_model_id: modell.id, label: "14" })
+    .select("id")
+    .single();
+  if (geraetFehler) throw geraetFehler;
+
+  const frisch = await tagAnlegen(admin, { studioId: null });
+
+  await page.goto(`/portal/${studioId}/einrichten/geraet/${geraet.id}/tag`);
+
+  // Scannen ist der Regelfall und traegt deshalb die eine Akzentflaeche.
+  await page.getByRole("button", { name: "Tag scannen" }).click();
+
+  // Ohne erteilte Freigabe wirft getUserMedia -- der Sucher sagt, was zu tun
+  // ist, statt leer zu bleiben.
+  await expect(
+    page.getByText(/Kamera (ist nicht freigegeben|lässt sich hier nicht)/),
+  ).toBeVisible();
+
+  // Und der Weg geht weiter: dasselbe Feld, dieselbe Pruefung.
+  await page.getByLabel("Token vom Tag").fill(frisch.token);
+  await page.getByRole("button", { name: "Tag prüfen" }).click();
+  await expect(page.getByText("Tag erkannt")).toBeVisible();
+  await page.getByRole("button", { name: "Verbinden" }).click();
+  await expect(page).toHaveURL(
+    new RegExp(`/einrichten/geraet/${geraet.id}/uebungen$`),
+  );
+});

@@ -4,20 +4,21 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { tagErsetzen, tagPruefen, tagVerbinden } from "../../../actions";
 import { antwortAuf, type Befund } from "../../../befund";
+import { Sucher } from "./Sucher";
 import styles from "../../../halle.module.css";
 
-type Ansicht = "kleben" | "befund";
+type Ansicht = "kleben" | "scannen" | "befund";
 
 /**
- * Zwei Ansichten, ein Zustand: was gerade in der Hand liegt. Das gehoert
+ * Drei Ansichten, ein Zustand: was gerade in der Hand liegt. Das gehoert
  * nicht in die URL -- ein Neuladen soll hier zurueck ans Kleben fuehren,
  * nicht auf eine Antwort zu einem Tag, den niemand mehr haelt.
  *
- * AUFGABE 9b: der Sucher fehlt noch. Er schaltet sich zwischen "kleben" und
- * "befund" -- getUserMedia, jsQR, und der gelesene Text durch parseTagScan
- * in dasselbe pruefe() wie das Feld unten. Bis dahin ist das Token-Feld die
- * Hauptaktion; danach wird es der Rueckfallweg fuer eine verweigerte
- * Kamerafreigabe (Spec 7).
+ * Der Sucher sitzt zwischen "kleben" und "befund". Was er liest, geht durch
+ * parseTagScan in dasselbe pruefe() wie das Token-Feld darunter -- er ist
+ * die Kamera davor, kein zweiter Weg. Genau deshalb ist das Feld ein
+ * vollwertiger Rueckfallweg fuer eine verweigerte Kamerafreigabe (Spec 7)
+ * und keine Notloesung.
  */
 export function TagSchritt({
   studioId,
@@ -119,44 +120,61 @@ export function TagSchritt({
 
   return (
     <>
-      <div className={styles.karte}>
-        <Skizze />
-        <p className={styles.notiz}>
-          In Augenhöhe, wo man im Stehen hinsieht.
-        </p>
-      </div>
+      {ansicht === "kleben" ? (
+        <>
+          <div className={styles.karte}>
+            <Skizze />
+            <p className={styles.notiz}>
+              In Augenhöhe, wo man im Stehen hinsieht.
+            </p>
+          </div>
 
-      <section className={styles.abschnitt}>
-        <div className={styles.abschnittKopf}>
-          <h2 className={styles.label}>Worauf es ankommt</h2>
-        </div>
-        <div className={styles.zeile}>
-          <div>
-            <div className={styles.zeileHaupt}>Nicht auf Bewegtes</div>
-            <div className={styles.zeileMeta}>
-              Kein Gewichtsblock, kein Hebel, kein Polster
+          <section className={styles.abschnitt}>
+            <div className={styles.abschnittKopf}>
+              <h2 className={styles.label}>Worauf es ankommt</h2>
             </div>
-          </div>
-        </div>
-        <div className={styles.zeile}>
-          <div>
-            <div className={styles.zeileHaupt}>
-              Metall braucht die Ferritseite
+            <div className={styles.zeile}>
+              <div>
+                <div className={styles.zeileHaupt}>Nicht auf Bewegtes</div>
+                <div className={styles.zeileMeta}>
+                  Kein Gewichtsblock, kein Hebel, kein Polster
+                </div>
+              </div>
             </div>
-            <div className={styles.zeileMeta}>
-              Sonst liest der Chip nicht — der QR schon
+            <div className={styles.zeile}>
+              <div>
+                <div className={styles.zeileHaupt}>
+                  Metall braucht die Ferritseite
+                </div>
+                <div className={styles.zeileMeta}>
+                  Sonst liest der Chip nicht — der QR schon
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        <div className={styles.zeile}>
-          <div>
-            <div className={styles.zeileHaupt}>Sauber und trocken</div>
-            <div className={styles.zeileMeta}>
-              Einmal abwischen hält den Tag jahrelang
+            <div className={styles.zeile}>
+              <div>
+                <div className={styles.zeileHaupt}>Sauber und trocken</div>
+                <div className={styles.zeileMeta}>
+                  Einmal abwischen hält den Tag jahrelang
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
+
+          {/* Die eine Akzentflaeche dieses Bildschirms. Das Token-Feld
+              darunter fuehrt zum selben Ergebnis, tritt aber zurueck --
+              gescannt wird der Regelfall, getippt der Ausnahmefall. */}
+          <button
+            type="button"
+            className={styles.haupt}
+            onClick={() => setAnsicht("scannen")}
+          >
+            Tag scannen
+          </button>
+        </>
+      ) : (
+        <Sucher onToken={pruefe} />
+      )}
 
       <div className={styles.feld}>
         <label className={styles.label} htmlFor="tag-token">
@@ -183,12 +201,22 @@ export function TagSchritt({
 
       <button
         type="button"
-        className={styles.haupt}
+        className={styles.neben}
         disabled={laeuft || token.trim() === ""}
         onClick={() => pruefe(token)}
       >
         {laeuft ? "Wird geprüft …" : "Tag prüfen"}
       </button>
+
+      {ansicht === "scannen" ? (
+        <button
+          type="button"
+          className={styles.neben}
+          onClick={() => setAnsicht("kleben")}
+        >
+          Zurück zum Ankleben
+        </button>
+      ) : null}
     </>
   );
 }

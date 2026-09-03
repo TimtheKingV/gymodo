@@ -24,7 +24,9 @@ export default async function TagPage({
         <h1 className={styles.titel}>Tag ankleben</h1>
         <p className={styles.unterzeile}>
           {treffer.geraet.label} · {treffer.modell.name}
-          {treffer.geraet.locationNote ? ` · ${treffer.geraet.locationNote}` : ""}
+          {treffer.geraet.locationNote
+            ? ` · ${treffer.geraet.locationNote}`
+            : ""}
         </p>
       </div>
 
