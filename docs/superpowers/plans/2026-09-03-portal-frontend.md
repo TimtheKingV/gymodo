@@ -665,8 +665,8 @@ Hier wird Aufgabe 1 grün. Zwei Dinge zugleich, weil sie dieselben Dateien anfas
 
 **Dateien:**
 - Ändern: `apps/web/app/portal/[studioId]/(schreibtisch)/layout.tsx`
-- Ändern: alle Seiten unter `(schreibtisch)/` — `<main className={styles.content}>` wird `<>`
-- Ändern: `apps/web/app/portal/page.tsx` — behält sein `<main>`, es liegt außerhalb der Gruppe
+- Ändern: **alle zwölf Stellen** unter `(schreibtisch)/`, die `styles.content` tragen — nicht nur die mit `<main>`
+- **Nicht ändern:** `apps/web/app/portal/page.tsx` — behält sein `<main className={styles.content}>`, es liegt außerhalb der Route-Gruppe und hat kein Layout, das es für es tut
 - Anlegen: `(schreibtisch)/loading.tsx`, `(schreibtisch)/error.tsx`, `(schreibtisch)/not-found.tsx`
 - Anlegen: `apps/web/app/not-found.tsx`
 
@@ -682,7 +682,28 @@ In `(schreibtisch)/layout.tsx`:
 <main className={styles.content}>{children}</main>
 ```
 
-Und in jeder Seite darunter das eigene `<main className={styles.content}>` durch ein Fragment ersetzen. Betroffen sind `(schreibtisch)/page.tsx` (zwei Stellen), `leute/page.tsx` (zwei), `einstellungen/page.tsx` (drei), `einstellungen/konto/page.tsx` (eine). `geraete/page.tsx` hat schon ein `<div>` — auch das fällt weg.
+Und darunter fällt **jede** Hülle mit `styles.content` weg — auch die, die `<div>` statt `<main>` sind. Das sind zwölf Stellen in neun Dateien:
+
+| Datei | Stellen | Element heute |
+| --- | --- | --- |
+| `(schreibtisch)/page.tsx` | 2 | `<main>` |
+| `(schreibtisch)/leute/page.tsx` | 2 | `<main>` |
+| `(schreibtisch)/einstellungen/page.tsx` | 3 | `<main>` |
+| `(schreibtisch)/einstellungen/konto/page.tsx` | 1 | `<main>` |
+| `(schreibtisch)/geraete/page.tsx` | 1 | `<div>` |
+| `(schreibtisch)/tags/page.tsx` | 1 | `<div>` |
+| `(schreibtisch)/modelle/page.tsx` | 1 | `<div>` |
+| `(schreibtisch)/modelle/[modelId]/page.tsx` | 1 | `<div>` |
+
+**Die vier `<div>`-Stellen sind der eigentliche Fallstrick.** Sie tragen keine Landmarke und fallen deshalb im Landmarkentest nicht auf — aber sie tragen `styles.content`, also `padding: 32px 40px 48px`. Bleiben sie stehen, während das Layout dieselbe Klasse bekommt, verschachtelt sich der Innenabstand in sich selbst: doppelter Rand auf vier Seiten, den **kein Test fängt**. Nur die Sichtprüfung.
+
+Zum Nachzählen:
+
+```bash
+grep -rn "styles.content" apps/web/app --include=*.tsx
+```
+
+Danach darf davon genau eine Zeile übrig sein, die unter `(schreibtisch)` liegt — die im Layout. `portal/page.tsx` behält seine; sie liegt außerhalb der Gruppe.
 
 - [ ] **Schritt 2: Laufen lassen — Aufgabe 1 muss grün werden**
 
