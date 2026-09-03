@@ -1255,7 +1255,9 @@ test("Zwei verschiedene neue Passwoerter werden abgelehnt, bevor eines gesetzt w
 });
 ```
 
-`adminClient` und `E2E_PASSWORD` kommen aus `./helpers/login`; `latestOtpFor` ebenfalls. Existiert `adminClient` dort noch nicht, wird die vorhandene Erzeugung aus `e2e/auth.spec.ts` dorthin gezogen — sie steht heute in drei Dateien.
+`E2E_PASSWORD` und `latestOtpFor` kommen aus `./helpers/login`. **`adminClient` gibt es dort noch nicht** — die Erzeugung des Service-Role-Clients steht heute wörtlich gleich in **sieben** Dateien: `helpers/studio.ts`, `auth`, `einstellungen`, `leute`, `login`, `tag-fallback`, `trainerportal`.
+
+Zieh sie nach `helpers/login.ts` als `adminClient()` und lass die sieben Stellen sie von dort beziehen. **Das ist der Umbau mit dem größten Bruchrisiko in dieser Aufgabe** — sieben Dateien, von denen sechs mit dem Passwortpfad nichts zu tun haben. Wenn dir das zu viel für diese Aufgabe ist: leg `adminClient()` in `helpers/login.ts` an, benutz sie in deinen neuen Tests, und **lass die sieben Bestandsstellen unangetastet**. Dann ist der Umbau ein eigener Befund statt eines Nebenwegs, auf dem die Suite bricht.
 
 - [ ] **Schritt 2: Laufen lassen**
 
@@ -1293,7 +1295,7 @@ await page.getByLabel("Wiederholen").fill("neues-passwort-1234");
 pnpm test:e2e
 ```
 
-Erwartet: **40 grün**. Sichtprüfung gegen beide Artboards.
+Erwartet: **43 grün** — 36 aus Abschnitt 0, 3 aus Aufgabe 6, 2 aus Aufgabe 7, 2 aus dieser. Richtwert; bindend ist, dass kein zuvor grüner Test rot wird. Danach Sichtprüfung gegen beide Artboards.
 
 ```bash
 git add apps/web/app/passwort-vergessen e2e
