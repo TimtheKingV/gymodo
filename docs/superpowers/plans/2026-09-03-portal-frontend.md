@@ -936,7 +936,7 @@ git commit -m "feat(web): Tags gestaltet -- die Referenzseite, und sie traegt nu
 
 Sechs Bildschirme, heute mit **null** Gestaltung: rohe `<form>`, `<label>`, `<input>`, kein Stylesheet. Der Teil des Portals, der am weitesten von seinem Entwurf entfernt ist — und der einzige, den Phase 4 nie anfasst.
 
-**Eine Regel bindet diesen ganzen Abschnitt:** die zugänglichen Namen bleiben, wie sie sind. `e2e/helpers/login.ts` füllt `getByLabel("E-Mail")` und `getByLabel("Passwort")` und klickt `getByRole("button", { name: "Anmelden" })`; **sechs Testdateien** hängen daran — `auth`, `einstellungen`, `leute`, `login`, `onboarding`, `trainerportal`. Ein umbenanntes Label ist keine Gestaltungsänderung, sondern ein Suitenbruch.
+**Eine Regel bindet diesen ganzen Abschnitt:** die zugänglichen Namen bleiben, wie sie sind. `e2e/helpers/login.ts` füllt `getByLabel("E-Mail")` und `getByLabel("Passwort")` und klickt `getByRole("button", { name: "Anmelden" })`. **Acht Testdateien hängen daran** — sechs importieren `helpers/login` direkt (`auth`, `einstellungen`, `leute`, `login`, `onboarding`, `trainerportal`), zwei weitere über `helpers/studio`, das `anmelden()` aufruft (`einrichten`, `bausteine`). Ein umbenanntes Label ist keine Gestaltungsänderung, sondern ein Suitenbruch — und zwar in acht Dateien gleichzeitig, von denen sechs mit dem Einstieg nichts zu tun haben.
 
 ---
 
@@ -985,7 +985,7 @@ test("Die Anmeldeseite traegt eine Landmarke, eine Akzentflaeche und lesbare Nam
   const flaechen = await akzentflaechen(page);
   expect(flaechen, `Akzentflaechen: ${flaechen.join(", ")}`).toHaveLength(1);
 
-  // Die Namen, an denen sechs Testdateien haengen. Sie sind ab hier
+  // Die Namen, an denen acht Testdateien haengen. Sie sind ab hier
   // Schnittstelle, nicht Beschriftung.
   await expect(page.getByLabel("E-Mail")).toBeVisible();
   await expect(page.getByLabel("Passwort")).toBeVisible();
@@ -1095,7 +1095,9 @@ Erwartet: **PASS**, drei Tests.
 pnpm test:e2e
 ```
 
-Erwartet: 30 + 3 + 5 = **38 grün**. Wird `login.spec.ts` oder eine Datei mit `anmelden()` rot, ist ein zugänglicher Name gewandert — dann zurück zum Wortlaut, nicht den Test anpassen.
+Erwartet: **38 grün** — 30 aus dem Bestand, 1 aus Aufgabe 1, 4 aus Aufgabe 5, 3 aus dieser. Richtwert; bindend ist, dass kein zuvor grüner Test rot wird.
+
+**Wird `login.spec.ts` oder eine der acht Dateien mit `anmelden()` rot, ist ein zugänglicher Name gewandert** — dann zurück zum Wortlaut, nicht den Test anpassen. Das ist der wahrscheinlichste Weg, wie diese Aufgabe die Suite bricht, und er sieht beim ersten Hinsehen wie ein Fehler in einer ganz anderen Datei aus.
 
 - [ ] **Schritt 7: Sichtprüfung und Commit**
 
