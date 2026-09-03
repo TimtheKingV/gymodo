@@ -24,7 +24,7 @@ export default async function StudioLayout({
         }))}
         offeneTags={katalog.tags.filter((tag) => tag.status === "unassigned").length}
       />
-      <main>{children}</main>
+      <main className={styles.content}>{children}</main>
     </div>
   );
 }

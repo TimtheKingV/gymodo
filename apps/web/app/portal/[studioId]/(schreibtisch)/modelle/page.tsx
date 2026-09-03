@@ -22,7 +22,7 @@ export default async function ModellePage({
   );
 
   return (
-    <div className={styles.content}>
+    <>
       <h1 className={styles.pageTitle}>Gerätekatalog</h1>
       <p className={styles.pageLead}>
         {geraeteGesamt === 0
@@ -121,6 +121,6 @@ export default async function ModellePage({
           </div>
         </AktionsFormular>
       </section>
-    </div>
+    </>
   );
 }

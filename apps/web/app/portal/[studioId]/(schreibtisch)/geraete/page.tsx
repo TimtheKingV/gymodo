@@ -50,7 +50,7 @@ export default async function GeraetePage({
   }
 
   return (
-    <div className={styles.content}>
+    <>
       <h1 className={styles.pageTitle}>Geräte</h1>
       <p className={styles.pageLead}>{lead()}</p>
 
@@ -106,6 +106,6 @@ export default async function GeraetePage({
           </ul>
         </section>
       ) : null}
-    </div>
+    </>
   );
 }

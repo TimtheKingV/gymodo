@@ -24,7 +24,7 @@ export default async function EinstellungenPage({
     // darunter den echten Beitrittscode.
     if (fehler instanceof DomainError && fehler.code === "unauthorized") {
       return (
-        <main className={styles.content}>
+        <>
           <h1 className={styles.pageTitle}>Einstellungen</h1>
           {/* Der Reiter gehoert auch in diese Antwort: er ist der einzige
               Weg zu /einstellungen/konto, und das Konto geht jeden etwas
@@ -43,7 +43,7 @@ export default async function EinstellungenPage({
               </p>
             </div>
           </div>
-        </main>
+        </>
       );
     }
     // Sonst: was falsch ist und was gilt, auf der Seite selbst -- nicht die
@@ -51,7 +51,7 @@ export default async function EinstellungenPage({
     // ist das der 42703 auf cancellation_deadline_hours und damit kein
     // seltener Sonderfall.
     return (
-      <main className={styles.content}>
+      <>
         <h1 className={styles.pageTitle}>Einstellungen</h1>
         <Reiter studioId={studioId} />
         <div className={styles.section}>
@@ -67,12 +67,12 @@ export default async function EinstellungenPage({
             </p>
           </div>
         </div>
-      </main>
+      </>
     );
   }
 
   return (
-    <main className={styles.content}>
+    <>
       <h1 className={styles.pageTitle}>Einstellungen</h1>
       <p className={styles.pageLead}>
         Stammdaten des Studios, die Regel für Kurse und der Code, mit dem
@@ -121,6 +121,6 @@ export default async function EinstellungenPage({
         code={einstellungen.joinCode}
         active={einstellungen.joinCodeActive}
       />
-    </main>
+    </>
   );
 }

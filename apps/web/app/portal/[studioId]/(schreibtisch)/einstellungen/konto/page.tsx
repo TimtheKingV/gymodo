@@ -41,7 +41,7 @@ export default async function KontoPage({
     .maybeSingle<{ name: string }>();
 
   return (
-    <main className={styles.content}>
+    <>
       <h1 className={styles.pageTitle}>Einstellungen</h1>
       <p className={styles.pageLead}>
         Deine E-Mail, dein Passwort und die Sitzung, in der du gerade
@@ -74,6 +74,6 @@ export default async function KontoPage({
         </div>
         <AbmeldeKnopf />
       </section>
-    </main>
+    </>
   );
 }

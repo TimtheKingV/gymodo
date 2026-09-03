@@ -51,7 +51,7 @@ export default async function TagsPage({
   const vorraetig = geliefert - verbraucht;
 
   return (
-    <div className={styles.content}>
+    <>
       <h1 className={styles.pageTitle}>Tags</h1>
       <p className={styles.pageLead}>
         Tags kommen als Lieferung und werden nicht hier erzeugt. Welcher Tag an
@@ -156,6 +156,6 @@ export default async function TagsPage({
           </ul>
         )}
       </section>
-    </div>
+    </>
   );
 }

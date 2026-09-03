@@ -60,7 +60,7 @@ export default async function UeberblickPage({
   // hier und nur ohne fehler.
   if (!fehler && !uebersicht) {
     return (
-      <main className={styles.content}>
+      <>
         <h1 className={styles.pageTitle}>Überblick</h1>
         <div className={styles.section}>
           <div className={styles.empty}>
@@ -72,12 +72,12 @@ export default async function UeberblickPage({
             </p>
           </div>
         </div>
-      </main>
+      </>
     );
   }
 
   return (
-    <main className={styles.content}>
+    <>
       <h1 className={styles.pageTitle}>Überblick</h1>
       {uebersicht ? (
         <p className={styles.pageLead}>
@@ -304,6 +304,6 @@ export default async function UeberblickPage({
         gymodo misst nichts. Alles hier ist gezählt, was Mitglieder selbst
         bestätigt haben.
       </p>
-    </main>
+    </>
   );
 }

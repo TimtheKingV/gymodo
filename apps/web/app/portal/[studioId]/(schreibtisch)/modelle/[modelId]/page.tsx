@@ -38,7 +38,7 @@ export default async function ModellPage({
   const fotoUrl = modell.photoPath ? katalog.photoUrls[modell.photoPath] : undefined;
 
   return (
-    <div className={styles.content}>
+    <>
       <h1 className={styles.pageTitle}>{modell.name}</h1>
       <p className={styles.pageLead}>
         {modell.manufacturer ?? "Ohne Herstellerangabe"} · Schritt{" "}
@@ -366,6 +366,6 @@ export default async function ModellPage({
           </div>
         </AktionsFormular>
       </section>
-    </div>
+    </>
   );
 }

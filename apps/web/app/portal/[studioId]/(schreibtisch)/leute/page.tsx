@@ -25,7 +25,7 @@ export default async function LeutePage({
     // weiter, statt klarzustellen, dass die Seite Trainern vorbehalten ist.
     if (e instanceof DomainError && e.code === "unauthorized") {
       return (
-        <main className={styles.content}>
+        <>
           <h1 className={styles.pageTitle}>Leute</h1>
           <div className={styles.section}>
             <div className={styles.empty}>
@@ -34,14 +34,14 @@ export default async function LeutePage({
               </p>
             </div>
           </div>
-        </main>
+        </>
       );
     }
     fehler = e instanceof DomainError ? e.message : "Die Liste liess sich nicht laden.";
   }
 
   return (
-    <main className={styles.content}>
+    <>
       <h1 className={styles.pageTitle}>Leute</h1>
 
       <p className={styles.sectionNote}>
@@ -70,6 +70,6 @@ export default async function LeutePage({
           </ul>
         )}
       </div>
-    </main>
+    </>
   );
 }
