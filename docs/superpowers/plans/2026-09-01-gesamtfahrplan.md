@@ -194,6 +194,19 @@ Der Sicherheitsbefund vor und nach der Anwendung ist bis auf einen Eintrag gleic
 
 **Reihenfolge, die hier zählte:** Datenbank vor Deploy. Alle drei sind mit der laufenden Vercel-Fassung verträglich (eine Spalte mit Vorgabewert, weggenommene Rechte, eine neue Funktion), aber der neue Überblick auf der Portal-Wurzel ruft `studio_overview` auf — umgekehrt hätte die Seite zwischen Deploy und Migration in einen Fehler gelaufen.
 
+**Ausgeliefert am 3. September, direkt danach.** 47 Commits nach `origin/master`, Vercel baut ueber die GitHub-Integration. `pnpm smoke:web gymodo-web.vercel.app` bestanden — beide Routenklassen, also auch die mit Supabase-Client, die am 1. September die 500er warfen.
+
+Dass der **neue** Stand liegt und nicht der alte weiterlaeuft, ist eigens belegt: die drei Routen, die es vorher nicht gab, antworten unangemeldet mit 307 (Weiterleitung zum Login), eine erfundene Route mit 404.
+
+| Route | |
+| --- | --- |
+| `/portal/<id>/einrichten` | 307 |
+| `/portal/<id>/einstellungen` | 307 |
+| `/portal/<id>/modelle` | 307 |
+| `/portal/<id>/gibtesnicht` | 404 — die Kontrolle |
+
+**Was damit nicht belegt ist:** dass der Ueberblick in der Produktion tatsaechlich rendert. Dafuer braeuchte es ein angemeldetes Konto, und Konten entstehen dort bis auf Weiteres von Hand (Abschnitt 4b). Die Funktion `studio_overview` ist vorhanden und der Weg lokal durch 26 E2E-Tests gedeckt — der erste echte Blick darauf ist der erste Betreibertermin.
+
 **Nebenbefund, nicht dringend:** vier Funktionen tragen keinen gesetzten `search_path` — `set_updated_at`, `is_valid_setting_choices`, `storage_studio_id`, `generate_join_code`. Das Projekt setzt ihn sonst überall (`set search_path = public, pg_temp`); diese vier sind mit der eigenen Gewohnheit uneins. Eine Migration, wenn ohnehin eine ansteht.
 
 ### Das Ungleichgewicht, das die Reihenfolge bestimmt
