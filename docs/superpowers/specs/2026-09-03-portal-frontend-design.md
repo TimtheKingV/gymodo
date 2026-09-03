@@ -159,7 +159,7 @@ Randfälle zählen nicht mit: die aktive Rail-Zeile ist eine 2-px-Kante, der Fok
 
 ## 5. Befunde
 
-Achtzehn Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans. Keine wird still aufgelöst.
+Neunzehn Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, eine beim Bauen. Keine wird still aufgelöst.
 
 ### Fehler im Code, hier zu heilen
 
@@ -196,7 +196,11 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 
     **Entschieden am 3. September: 40 px gilt am Schreibtisch weiter.** Die Regel lautet damit genauer: **Hauptaktion 44 px, Nebenaktion und zerstörende Aktion 40 px, Eingabefeld 44 px.** Die „≥ 44 px" der Member-App bleibt dort, wo sie hergeleitet ist — in der Halle. Der Prüfhelfer nimmt 40 als Mindesthöhe für Bedienelemente des Portals; die Zahl bleibt ein Parameter, damit die Hallenseiten unter `einrichten/` mit ihrem eigenen, größeren Wert geprüft werden können (`halle.module.css`: Hauptaktion 56, Nebenaktion 48, Feld 52).
 17. **Der Satz unter dem Registrierungsformular stimmt für das Web nicht.** `Registrieren.dc.html` sagt *„Ein Konto allein reicht nicht — du brauchst danach den Code deines Studios."* Der Code macht Mitglieder; im Web wird man Mitarbeiter, und Mitarbeiter fügt ein Studio unter *Leute → Mitarbeiter* hinzu. Die Canvas-Notiz `note-einstieg` sagt das selbst — der Artboard-Text ist ihr gegenüber älter.
-18. **Der Fußsatz von `LeuteMitglieder.dc.html` ist seit `0033` überholt.** Er sagt, die Richtlinien der Datenbank ließen Mitarbeiter noch an Sätze, Gewichte und Verläufe heran. Seit dem 2. September haben die vier Policies die Staff-Klausel verloren. Der Satz beschreibt einen Vorbehalt, den es nicht mehr gibt, und macht die Zusicherung dadurch schwächer als die Wirklichkeit.
+18. **`portal.module.css` `.error` trägt die Regel des falschen Zustands.** Die Klasse setzt `background: rgba(255, 90, 78, 0.1)` — eine 10-prozentige `danger`-Fläche. Designsystem §5 ordnet die aber **Offline** zu, nicht *Fehler*; *Fehler* ist dort „`danger`-Umriss, **voller Kontrast**". Und Offline gilt im Portal ausdrücklich nicht (Struktur-Spec §5). Das Artboard `Zustaende.dc.html` bestätigt es: die Fehler-Karte steht auf `#14161a`, und in der ganzen Datei kommt kein `rgba` vor.
+
+    Zwei von drei Quellen sind sich also einig, und die dritte ist der laufende Code. Der neue Baustein folgt Spec und Artboard: `danger`-Rand auf `surface`, keine Tönung. `.error` bleibt vorerst, wie es ist — es wird von `Form.tsx` und mehreren Seiten benutzt und löst sich auf, wenn diese Seiten in den Aufgaben 5 und 14–20 auf den Baustein wechseln. **Bis dahin zeigt das Portal zwei verschiedene Fehlerflächen.**
+
+19. **Der Fußsatz von `LeuteMitglieder.dc.html` ist seit `0033` überholt.** Er sagt, die Richtlinien der Datenbank ließen Mitarbeiter noch an Sätze, Gewichte und Verläufe heran. Seit dem 2. September haben die vier Policies die Staff-Klausel verloren. Der Satz beschreibt einen Vorbehalt, den es nicht mehr gibt, und macht die Zusicherung dadurch schwächer als die Wirklichkeit.
 
 ---
 

@@ -376,9 +376,17 @@ export default defineConfig({
     // Zustand.test.tsx nie, und der Lauf waere trotzdem gruen.
     include: ["**/*.test.ts", "**/*.test.tsx"],
     exclude: ["node_modules", ".next"],
+    // @testing-library/react raeumt den DOM nur automatisch zwischen Tests
+    // auf, wenn es ein globales afterEach vorfindet. Ohne globals bleibt
+    // der Zustand eines Tests stehen, und der naechste sieht ihn mit --
+    // "leer ist KEINE Warnung" faende dann den role="alert" des
+    // vorherigen fehler-Tests.
+    globals: true,
   },
 });
 ```
+
+**`globals: true` ist nicht optional.** Ohne die Zeile schlägt der dritte der fünf Tests fehl, und zwar aus einem Grund, der wie ein Fehler im Baustein aussieht statt wie einer in der Konfiguration: `@testing-library/react` prüft beim Laden `typeof afterEach === "function"` und registriert sein Auto-Cleanup nur dann. Fehlt es, bleibt das gerenderte DOM des vorigen Tests stehen — und `queryByRole("alert")` findet die Warnung des Fehler-Tests im Leer-Test wieder.
 
 **Kein globales `environment: "jsdom"`.** Die zwölf bestehenden Tests dieses Pakets laufen unter Node — `api/aasa/route.test.ts` prüft einen Route-Handler, und ein DOM darunter ist bestenfalls nutzlos. Die Umgebung steht deshalb je Datei im Kopf, als erste Zeile von `Zustand.test.tsx`:
 
@@ -473,7 +481,9 @@ export type ZustandArt = "leer" | "fehler" | "keinRecht" | "deaktiviert";
  *                 zeigen, sagen ueber ein neues Studio nichts.
  *   fehler        Sagt, was falsch ist UND was gilt ("Das Gewicht liegt
  *                 ueber dem Geraetemaximum von 100,0 kg"), nie nur
- *                 "ungueltig". danger als Umriss, 10 % als Flaeche.
+ *                 "ungueltig". danger-Umriss bei vollem Kontrast -- KEINE
+ *                 getoente Flaeche: die 10-%-Flaeche gehoert zu Offline,
+ *                 und Offline gilt im Portal nicht.
  *   deaktiviert   NIE stumm -- daneben steht, was fehlt.
  *   keinRecht     Ein einfaches Mitglied sieht einen Satz, keinen Absturz.
  *                 Kein neuer Zustand, sondern die benannte Fassung von
@@ -513,7 +523,11 @@ export function Zustand({
 }
 ```
 
-Dazu `bausteine.module.css` mit `.zustand`, `.leer`, `.fehler`, `.keinRecht`, `.deaktiviert`, `.zustandTitel`, `.zustandSchritt`, `.zustandAktion`. **Werte aus `Zustaende.dc.html`**, dem Artboard für genau diesen Bildschirm: `fehler` bekommt `border: 1px solid var(--danger)` und `background: rgba(255, 90, 78, 0.1)`, die übrigen `border: 1px solid var(--line)` auf `var(--surface)`. Alle Farben als `var(--…)`.
+Dazu `bausteine.module.css` mit `.zustand`, `.leer`, `.fehler`, `.keinRecht`, `.deaktiviert`, `.zustandTitel`, `.zustandSchritt`, `.zustandAktion`. **Werte aus `Zustaende.dc.html`**, dem Artboard für genau diesen Bildschirm: `fehler` bekommt `border: 1px solid var(--danger)` auf `var(--surface)`, die übrigen `border: 1px solid var(--line)` auf `var(--surface)`. Alle Farben als `var(--…)`.
+
+**Keine getönte Fehlerfläche.** Es liegt nahe, `rgba(255, 90, 78, 0.1)` zu nehmen — `portal.module.css` `.error` macht es heute so. Es ist trotzdem falsch: Designsystem §5 ordnet die 10-Prozent-Fläche **Offline** zu, nicht *Fehler*; *Fehler* ist dort „`danger`-Umriss, **voller Kontrast**". Und Offline gilt im Portal ausdrücklich nicht (Struktur-Spec §5). Das Artboard bestätigt es: die Fehler-Karte steht auf `#14161a`, und in der ganzen Datei kommt kein `rgba` vor. Wer die Tönung übernimmt, importiert die Regel eines Zustands, den es hier nicht gibt. `.error` in `portal.module.css` bleibt vorerst, wie es ist — Befund 18 der Spec.
+
+**`deaktiviert` liegt in einer Zeile, nicht untereinander.** Das `<span>Deaktiviert</span>` in 11 px Versalien auf dem Artboard ist die Bildunterschrift des Musterblatts — sie steht auf allen drei Karten und gehört nicht zum Baustein. Der Zustand selbst ist eine deaktivierte Pille (`surface-raised`, `line`-Rand, `text-faint`, 40 px, Radius 10) und **daneben** der Text, der sagt, was fehlt. Für `art="deaktiviert"` rendert der Baustein deshalb `titel` als diese Pille und `naechsterSchritt` in derselben Zeile, `gap: var(--s12)`, `flex-wrap: wrap`. Die Schnittstelle bleibt unverändert.
 
 - [ ] **Schritt 4: Laufen lassen**
 
