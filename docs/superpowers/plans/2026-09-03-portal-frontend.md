@@ -34,7 +34,8 @@ Aus Spec und Global Constraints, wörtlich. Jede Aufgabe steht implizit unter di
 
 - **Keine Migration.** Alle Zahlen kommen aus `getStudioCatalog` und `listStudioMembers`, `abmelden` steht in `portal/actions.ts:473`. Wer in diesem Plan eine `.sql`-Datei anlegt, hat sich verlaufen. Die Nummern bleiben bei `0034`; Session 1 hält `0035ff`.
 - **Farben.** `bg #0a0b0d` · `well #0f1114` · `surface #14161a` · `surface-raised #1d2026` · `surface-hover #232730` · `line #2a2e36` · `text #f2f4f7` · `text-muted #9ba3af` · `text-faint #5c636e` · `accent #d4ff3f` · `accent-pressed #a8cc2a` · `on-accent #0a0b0d` · `warn #ffb020` · `danger #ff5a4e`. **Immer als `var(--…)`, nie als Literal** — die Tokens stehen in `globals.css`.
-- **Maße.** Abstände 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48. Radius 12 (Karte), 10 (Bedienelement), 999 (Pille). Rail 288 px. Inhalt `padding: 32px 40px 48px`, `max-width: 1000px`. Trefferflächen ≥ 44 px; Hauptaktion 44 px hoch, Nebenaktion 40 px. **Seitenrand 28 px auf Einstiegsseiten.**
+- **Maße.** Abstände 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48. Radius 12 (Karte), 10 (Bedienelement), 999 (Pille). Rail 288 px. Inhalt `padding: 32px 40px 48px`, `max-width: 1000px`. **Seitenrand 28 px auf Einstiegsseiten.**
+- **Trefferflächen am Schreibtisch: Hauptaktion 44 px, Nebenaktion und zerstörende Aktion 40 px, Eingabefeld 44 px.** Das ist die Auflösung von Befund 16, entschieden am 3. September: die Global Constraints sagten im selben Satz „≥ 44 px" und „Nebenaktion 40 px". Code und Artboards sind sich bei 40 einig; die 44 stammt aus Designsystem §4 und ist dort für die Halle hergeleitet — einhändig, im Halbdunkel. Am Schreibtisch liegt eine Maus. **Die Hallenseiten unter `einrichten/` behalten ihre größeren Werte** (`halle.module.css`: Hauptaktion 56, Nebenaktion 48, Feld 52) und werden gegen die geprüft.
 - **Genau eine Akzentfläche je Bildschirm.** Der Akzent gehört der einen Hauptaktion. Nebenaktionen sind `surface-raised` mit `line`-Rand, zerstörende Aktionen ein `danger`-Umriss ohne Fläche, `warn` erscheint ausschließlich als Umriss. **Ausnahme: die Tags-Seite trägt null** — sie legt nichts an, sie gibt Auskunft (Canvas-Notiz `note-akzent`).
 - **Schrift.** Systemschrift über `--font`, **kein Webfont.** Die Artboards rendern Archivo, weil die Canvas es tut; der Code nimmt `-apple-system, BlinkMacSystemFont, "Segoe UI", …` wie in `globals.css`. Das ist keine Abweichung, sondern Designsystem §3: die erste externe Abhängigkeit löst das Privacy Manifest aus. Alle Ziffern tabellarisch (steht in `globals.css` auf `body`).
 - **Texte.** Durchgehend Deutsch mit Umlauten, Du-Form, keine Ausrufezeichen, kein Motivationston. Dezimalkomma, Gewichte immer mit einer Nachkommastelle (`80,0 kg`). Datum ausgeschrieben (`Mo., 31. August 2026`). **Kein Freitext zu Schmerzen, Verletzungen oder Gesundheit — nirgends.**
@@ -2513,7 +2514,7 @@ Zeile für `phase5-portal-frontend` mit dem Merge-Commit und dem Inhalt: *„Bau
 
 - *„Das Beitrittsformular im Web wartet auf die iOS-App"* — Befund 9, mit dem Auslöser statt eines Datums.
 - *„`Verifizieren` zeichnet einen Weg, den es nicht gibt"* — Befund 6, „Neuen Code anfordern".
-- *„Die Global Constraints widersprechen sich bei den Trefferflächen"* — Befund 16, falls beim Abschluss noch offen.
+Befund 16 gehört **nicht** in die offenen Punkte — er ist am 3. September entschieden. Stattdessen wird die Maßzeile in `2026-08-31-designplan-trainerportal.md`, Abschnitt *Global Constraints*, korrigiert: statt *„Trefferflächen ≥ 44 px; Hauptaktion 44 px hoch, Nebenaktion 40 px"* steht dort künftig *„Hauptaktion und Eingabefeld 44 px, Nebenaktion und zerstörende Aktion 40 px. Die ≥ 44 px des Designsystems gelten für die Halle, nicht für den Schreibtisch."*
 
 - [ ] **Schritt 4: Commit**
 
@@ -2559,7 +2560,7 @@ Damit sich nachrechnen lässt, dass keiner unterwegs verlorengeht:
 | 13 | kaltes `.next` kostet zwei E2E | Globale Rahmenbedingungen |
 | 14 | zweiter Abmelden-Ausgang | Aufgabe 12 — Absicht, beide Artboards zeigen ihn |
 | 15 | `/portal` hat kein Artboard | Aufgabe 9 — nach Bausteinen statt nach Vorlage |
-| 16 | Trefferflächen 44 gegen 40 | **offen** — Aufgabe 1 macht den Wert zum Parameter |
+| 16 | Trefferflächen 44 gegen 40 | **entschieden**: 40 am Schreibtisch, 44 für die Hauptaktion. Aufgabe 1 hält den Wert als Parameter, damit die Halle ihren eigenen behält |
 | 17 | Registrierungssatz stimmt fürs Web nicht | Aufgabe 7 |
 | 18 | Fußsatz von `LeuteMitglieder` seit `0033` überholt | Aufgabe 19 |
 
@@ -2567,6 +2568,6 @@ Damit sich nachrechnen lässt, dass keiner unterwegs verlorengeht:
 
 Sie stehen hier, damit sie beim Nachtragen in die Spec nicht verlorengehen:
 
-- **Befund 16 — die Global Constraints widersprechen sich bei den Trefferflächen.** Ein Satz sagt *„Trefferflächen ≥ 44 px; Hauptaktion 44 px hoch, **Nebenaktion 40 px**"*. Beides zugleich geht nicht. `portal.module.css` setzt `.secondary` und `.destructive` auf `height: 40px`, und die Artboards zeichnen 40. Bis das entschieden ist, prüfen die Tests gegen 40 — der Wert ist ein Parameter von `zuKleineBedienelemente`, kein fester Wert im Helfer. **Zu entscheiden, bevor Aufgabe 23 abnimmt.**
+- **Befund 16 — die Global Constraints widersprachen sich bei den Trefferflächen.** Ein Satz sagte *„Trefferflächen ≥ 44 px; Hauptaktion 44 px hoch, **Nebenaktion 40 px**"*. **Entschieden am 3. September: 40 px gilt am Schreibtisch weiter**, 44 px für die Hauptaktion und Eingabefelder. Die Tests prüfen gegen 40; der Wert bleibt Parameter von `zuKleineBedienelemente`, damit die Hallenseiten mit ihrem eigenen, größeren Maß geprüft werden können.
 - **Befund 17 — der Satz unter dem Registrierungsformular stimmt für das Web nicht.** `Registrieren.dc.html` sagt *„du brauchst danach den Code deines Studios"*; im Web wird man aber Mitarbeiter, nicht Mitglied. Ersetzt in Aufgabe 7.
 - **Befund 18 — der Fußsatz von `LeuteMitglieder.dc.html` ist seit `0033` überholt.** Er sagt, die Datenbank lasse Mitarbeiter noch an Trainingsdaten heran. Seit dem 2. September haben die vier Policies die Staff-Klausel verloren. Ersetzt in Aufgabe 19.

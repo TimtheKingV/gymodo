@@ -192,7 +192,9 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 
 ### Drei, die beim Schreiben des Umsetzungsplans dazukamen
 
-16. **Die Global Constraints widersprechen sich bei den Trefferflächen.** Ein Satz sagt *„Trefferflächen ≥ 44 px; Hauptaktion 44 px hoch, **Nebenaktion 40 px**"*. Beides zugleich geht nicht. `portal.module.css` setzt `.secondary` und `.destructive` auf `height: 40px`, und die Artboards zeichnen 40 — Code und Entwurf sind sich also einig, nur der Satz nicht. Die Herkunft ist erkennbar: die 44 stammt aus Designsystem §4, und die gilt für die Member-App, wo einhändig im Halbdunkel bedient wird. Am Schreibtisch liegt eine Maus. **Zu entscheiden.** Bis dahin ist die Mindesthöhe ein Parameter des Prüfhelfers, kein fester Wert.
+16. **Die Global Constraints widersprechen sich bei den Trefferflächen.** Ein Satz sagt *„Trefferflächen ≥ 44 px; Hauptaktion 44 px hoch, **Nebenaktion 40 px**"*. Beides zugleich geht nicht. `portal.module.css` setzt `.secondary` und `.destructive` auf `height: 40px`, und die Artboards zeichnen 40 — Code und Entwurf sind sich also einig, nur der Satz nicht. Die Herkunft ist erkennbar: die 44 stammt aus Designsystem §4, und die gilt für die Member-App, wo einhändig im Halbdunkel bedient wird. Am Schreibtisch liegt eine Maus.
+
+    **Entschieden am 3. September: 40 px gilt am Schreibtisch weiter.** Die Regel lautet damit genauer: **Hauptaktion 44 px, Nebenaktion und zerstörende Aktion 40 px, Eingabefeld 44 px.** Die „≥ 44 px" der Member-App bleibt dort, wo sie hergeleitet ist — in der Halle. Der Prüfhelfer nimmt 40 als Mindesthöhe für Bedienelemente des Portals; die Zahl bleibt ein Parameter, damit die Hallenseiten unter `einrichten/` mit ihrem eigenen, größeren Wert geprüft werden können (`halle.module.css`: Hauptaktion 56, Nebenaktion 48, Feld 52).
 17. **Der Satz unter dem Registrierungsformular stimmt für das Web nicht.** `Registrieren.dc.html` sagt *„Ein Konto allein reicht nicht — du brauchst danach den Code deines Studios."* Der Code macht Mitglieder; im Web wird man Mitarbeiter, und Mitarbeiter fügt ein Studio unter *Leute → Mitarbeiter* hinzu. Die Canvas-Notiz `note-einstieg` sagt das selbst — der Artboard-Text ist ihr gegenüber älter.
 18. **Der Fußsatz von `LeuteMitglieder.dc.html` ist seit `0033` überholt.** Er sagt, die Richtlinien der Datenbank ließen Mitarbeiter noch an Sätze, Gewichte und Verläufe heran. Seit dem 2. September haben die vier Policies die Staff-Klausel verloren. Der Satz beschreibt einen Vorbehalt, den es nicht mehr gibt, und macht die Zusicherung dadurch schwächer als die Wirklichkeit.
 
@@ -221,7 +223,7 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 - **„Neuen Code anfordern" auf `Verifizieren`** (Befund 6). Entweder der Weg wird gebaut — das Backend trägt ihn — oder der Link fällt und der Befund bleibt stehen. Eine Registrierung ohne zweiten Code ist eine Falle derselben Art wie ein Passwortlogin ohne Zurücksetzen.
 - **Wann das Beitrittsformular aus dem Web verschwindet** (Befund 9). Auslöser ist die iOS-App, nicht ein Datum.
 - **Die Uhrendrift im Container** (Befund 12). Verrauscht jede Abnahme, gehört aber nicht Phase 5. Der Plan nennt sie, damit sie beim nächsten grünen Anspruch nicht als neu gilt.
-- **Trefferfläche 44 oder 40** (Befund 16). Der einzige offene Punkt, der eine Zeile Code kostet, aber jeden Bildschirm betrifft: entweder wachsen alle Nebenaktionen des Portals auf 44 px — gegen die Artboards —, oder der Satz in den Global Constraints wird auf das eingeschränkt, was er meint. **Zu entscheiden, bevor der Bauabschnitt abgenommen wird.**
+- ~~**Trefferfläche 44 oder 40**~~ (Befund 16) — **entschieden am 3. September:** 40 px am Schreibtisch, 44 px für die Hauptaktion. Die Begründung steht beim Befund.
 
 ---
 
