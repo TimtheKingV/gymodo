@@ -639,7 +639,10 @@ export type CatalogTag = {
   machineId: string | null;
   batchCode: string;
   batchIndex: number;
+  /** Anlagedatum der Zeile bei der Chargenherstellung -- kein Bindedatum. */
   createdAt: string;
+  /** Gesetzt von revokeTag(); null, solange der Tag nicht gesperrt ist. */
+  revokedAt: string | null;
 };
 
 export type CatalogShipment = {
@@ -653,6 +656,8 @@ export type CatalogShipment = {
 export type StudioCatalog = {
   studioId: string;
   studioName: string;
+  /** studios.timezone (Designsystem 10: Zeitangaben in der Studio-Zeitzone). */
+  studioTimezone: string;
   models: CatalogModel[];
   tags: CatalogTag[];
   shipments: CatalogShipment[];
@@ -673,9 +678,9 @@ export async function getStudioCatalog(
 
   const { data: studio } = await client
     .from("studios")
-    .select("id, name")
+    .select("id, name, timezone")
     .eq("id", studioId)
-    .maybeSingle<{ id: string; name: string }>();
+    .maybeSingle<{ id: string; name: string; timezone: string }>();
   if (!studio) {
     throw new DomainError("not_found", "Dieses Studio gibt es nicht.");
   }
@@ -694,7 +699,9 @@ export async function getStudioCatalog(
 
   const { data: tags } = await client
     .from("machine_tags")
-    .select("id, status, kind, machine_id, batch_index, created_at, tag_batches (code)")
+    .select(
+      "id, status, kind, machine_id, batch_index, created_at, revoked_at, tag_batches (code)",
+    )
     .eq("studio_id", studioId)
     .order("created_at", { ascending: false });
 
@@ -756,6 +763,7 @@ export async function getStudioCatalog(
     machine_id: string | null;
     batch_index: number;
     created_at: string;
+    revoked_at: string | null;
     tag_batches: { code: string } | null;
   };
 
@@ -835,6 +843,7 @@ export async function getStudioCatalog(
   return {
     studioId: studio.id,
     studioName: studio.name,
+    studioTimezone: studio.timezone,
     models,
     tags: ((tags ?? []) as unknown as TagRow[]).map((tag) => ({
       id: tag.id,
@@ -844,6 +853,7 @@ export async function getStudioCatalog(
       batchCode: tag.tag_batches?.code ?? "",
       batchIndex: tag.batch_index,
       createdAt: tag.created_at,
+      revokedAt: tag.revoked_at,
     })),
     shipments,
   };

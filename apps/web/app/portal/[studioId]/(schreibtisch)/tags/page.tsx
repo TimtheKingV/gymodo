@@ -11,6 +11,7 @@ import { tagSperren } from "../../../actions";
 import { ladeKatalog } from "../../catalog";
 import { Seite } from "../../../bausteine/Seite";
 import { Abschnitt } from "../../../bausteine/Abschnitt";
+import { Erlaeuterung } from "../../../bausteine/Erlaeuterung";
 import { Zeile, Zeilen } from "../../../bausteine/Zeile";
 import { Zustand } from "../../../bausteine/Zustand";
 import { TagBinden } from "./TagBinden";
@@ -24,12 +25,14 @@ const STATUS_TEXT: Record<string, string> = {
 
 const UNAUTORISIERT = "Diese Seite ist Trainern und Inhabern vorbehalten.";
 
-function datum(iso: string): string {
+/** Designsystem 10: Zeitangaben in der Studio-Zeitzone, nicht der des Servers. */
+function datum(iso: string, timeZone: string): string {
   return new Date(iso).toLocaleDateString("de-DE", {
     weekday: "short",
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone,
   });
 }
 
@@ -145,10 +148,9 @@ export default async function TagsPage({
   const geraeteTags = katalog.tags.filter((tag) => tag.kind === "machine");
   const geraeteTagsVergeben = geraeteTags.length;
 
-  // Charge -> Versanddatum dieser Lieferung. Genauer als tag.createdAt (das
-  // Anlagedatum der Zeile bei der Chargenherstellung, nicht das
-  // Versanddatum) -- unter der Annahme, dass je Charge hoechstens eine
-  // Lieferung an dieses Studio ging. Geprueft ist diese Annahme nicht.
+  // Charge -> Versanddatum dieser Lieferung, fuer die Aushangschilder-Zeilen
+  // unten. Unter der Annahme, dass je Charge hoechstens eine Lieferung an
+  // dieses Studio ging -- geprueft ist diese Annahme nicht.
   const versandDatumNachCharge = new Map(
     katalog.shipments.map((lieferung) => [lieferung.batchCode, lieferung.shippedOn]),
   );
@@ -182,7 +184,7 @@ export default async function TagsPage({
                 titel={`Charge ${lieferung.batchCode}`}
                 meta={
                   <>
-                    {datum(lieferung.shippedOn)} · {lieferung.quantity}{" "}
+                    {datum(lieferung.shippedOn, katalog.studioTimezone)} · {lieferung.quantity}{" "}
                     {lieferung.kind === "studio" ? "Aushangschilder" : "Gerätetags"} ·{" "}
                     {chargenZusammenfassung(lieferung, katalog.tags)}
                   </>
@@ -192,13 +194,13 @@ export default async function TagsPage({
           </Zeilen>
         )}
       </Abschnitt>
-      <p className={styles.erlaeuterung}>
+      <Erlaeuterung>
         Der Gerätetag-Vorrat steht als Zahl. Ein vorrätiger Aufkleber lässt
         sich keinem Stück in der Packung zuordnen — 97 gleichlautende Zeilen
         wären keine Auskunft, sondern Lärm. Benennbar wird ein Gerätetag erst
         durch den Scan. Aushangschilder sind ab Lieferung gültig und stehen
         deshalb unten einzeln.
-      </p>
+      </Erlaeuterung>
 
       {/*
         Nicht Teil des Artboards Tags.dc.html (dort stehen nur Lieferungen,
@@ -218,12 +220,13 @@ export default async function TagsPage({
         notiz={`${geraeteTagsVergeben} von ${geraeteTagsGeliefert}`}
       >
         {/*
-          "verbunden"/"gesperrt" + Datum verwenden tag.createdAt -- das
-          Anlagedatum der Zeile bei der Chargenherstellung. getStudioCatalog
-          liefert kein eigenes Bindedatum und keinen eigenen
-          Sperrzeitpunkt (revoked_at existiert laut catalog.ts revokeTag in
-          der Datenbank, wird aber nicht mit ausgeliefert); ob beide Werte in
-          der Praxis nah am tatsaechlichen Zeitpunkt liegen, ist ungeprueft.
+          "geliefert", nicht "verbunden" wie im Artboard: machine_tags kennt
+          laut 0002_machine_tags.sql nur created_at und revoked_at, kein
+          Bindedatum -- "verbunden {Datum}" waere eine Behauptung, die die
+          Datenbank nicht stuetzt. created_at ist der Zeitpunkt der
+          Chargenanlage, also das Lieferdatum; "gesperrt {Datum}" verwendet
+          jetzt tatsaechlich revoked_at. Derselbe Wortlaut wie unten bei den
+          Aushangschildern.
         */}
         {geraeteTags.length === 0 ? (
           <Zustand
@@ -246,8 +249,8 @@ export default async function TagsPage({
                   }
                   meta={
                     tag.status === "revoked"
-                      ? `Charge ${tag.batchCode} · gesperrt ${datum(tag.createdAt)} · bleibt als Nachweis stehen`
-                      : `Charge ${tag.batchCode} · verbunden ${datum(tag.createdAt)}`
+                      ? `Charge ${tag.batchCode} · gesperrt ${datum(tag.revokedAt ?? tag.createdAt, katalog.studioTimezone)} · bleibt als Nachweis stehen`
+                      : `Charge ${tag.batchCode} · geliefert ${datum(tag.createdAt, katalog.studioTimezone)}`
                   }
                   aktionen={
                     tag.status !== "revoked" ? (
@@ -265,11 +268,11 @@ export default async function TagsPage({
           </Zeilen>
         )}
       </Abschnitt>
-      <p className={styles.erlaeuterung}>
+      <Erlaeuterung>
         Ein Gerät ohne Tag ist für Mitglieder nicht auffindbar. Verbunden wird
         am Gerät, mit dem Telefon — ein zerkratzter Tag wird dort auch
         ersetzt.
-      </p>
+      </Erlaeuterung>
 
       <Abschnitt titel="Aushangschilder" notiz={aushangschilderNotiz}>
         {aushangschilder.length === 0 ? (
@@ -290,8 +293,8 @@ export default async function TagsPage({
                 }
                 meta={
                   tag.status === "revoked"
-                    ? `Charge ${tag.batchCode} · gesperrt ${datum(tag.createdAt)} · bleibt als Nachweis stehen`
-                    : `Charge ${tag.batchCode} · geliefert ${datum(versandDatumNachCharge.get(tag.batchCode) ?? tag.createdAt)}`
+                    ? `Charge ${tag.batchCode} · gesperrt ${datum(tag.revokedAt ?? tag.createdAt, katalog.studioTimezone)} · bleibt als Nachweis stehen`
+                    : `Charge ${tag.batchCode} · geliefert ${datum(versandDatumNachCharge.get(tag.batchCode) ?? tag.createdAt, katalog.studioTimezone)}`
                 }
                 aktionen={
                   tag.status !== "revoked" ? (
@@ -308,12 +311,12 @@ export default async function TagsPage({
           </Zeilen>
         )}
       </Abschnitt>
-      <p className={styles.erlaeuterung}>
+      <Erlaeuterung>
         Ein Aushangschild hängt an keinem Gerät — wer es scannt, wird
         Mitglied. Alle Schilder einer Lieferung sind gleichwertig und ab
         Lieferung gültig; welches ihr aufhängt, ist eure Sache. Sperren macht
         genau eines ungültig, die anderen gelten weiter.
-      </p>
+      </Erlaeuterung>
     </Seite>
   );
 }

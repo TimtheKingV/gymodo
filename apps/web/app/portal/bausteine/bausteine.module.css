@@ -215,6 +215,17 @@
   font-size: 12px;
 }
 
+/* Erlaeuterung: erklaerender Fliesstext unter einem Abschnitt -- Inhalt,
+   nicht Dekoration (Tags.dc.html). Werte aus dem Artboard: 13px, 1.45,
+   62ch. */
+.erlaeuterung {
+  color: var(--text-faint);
+  font-size: 13px;
+  line-height: 1.45;
+  margin-top: var(--s16);
+  max-width: 62ch;
+}
+
 /* Kachel: Kennzahl gross, Beschriftung darunter. Werte wie .kacheln /
    .kachel / .kachelZahl / .kachelLabel. */
 .kacheln {
