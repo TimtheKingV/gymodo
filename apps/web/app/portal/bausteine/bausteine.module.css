@@ -1,0 +1,48 @@
+/* Werte aus docs/superpowers/design/portal/Zustaende.dc.html, dem Artboard
+   fuer diesen Bildschirm. Card-Masse und Farben stammen von dort, nicht neu
+   erfunden. */
+
+.zustand {
+  border-radius: var(--r-card);
+  padding: var(--s32) var(--s20);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s12);
+}
+
+/* leer, keinRecht und deaktiviert sehen gleich aus: keiner von ihnen ist ein
+   Fehler, also traegt keiner die danger-Farbe. */
+.leer,
+.keinRecht,
+.deaktiviert {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+/* danger als Umriss, 10 % als Flaeche -- kein Alpha-Token dafuer vorhanden,
+   deshalb rgba() wie schon in portal.module.css (.error). */
+.fehler {
+  border: 1px solid var(--danger);
+  background: rgba(255, 90, 78, 0.1);
+}
+
+.zustandTitel {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+/* fehler traegt seine Erklaerung schon im Satz ("... liegt ueber dem
+   Geraetemaximum von 100,0 kg") -- keine eigene Ueberschrift noetig. */
+.fehler .zustandTitel {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.zustandSchritt {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.zustandAktion {
+  margin-top: var(--s4);
+}
