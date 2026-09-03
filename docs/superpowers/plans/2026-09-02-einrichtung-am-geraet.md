@@ -23,6 +23,11 @@ Aus der Spec, wörtlich übernommen. Jede Aufgabe steht implizit unter diesen S�
 - **Keine Migration.** Spec §5: *„Die zweite Runde kostet keine Migration."* Alles hängt an Tabellen und Funktionen, die seit `0028` stehen. Wer in diesem Plan eine `.sql`-Datei anlegt, hat sich verlaufen.
 - **Das Portal erzeugt keinen Token.** Spec §6. `createTag` ist weg und bleibt weg; `token_hash` ist seit `0026` eine generierte Spalte und für `authenticated` nicht schreibbar.
 - **Das Foto ist Pflicht, die Spalte bleibt nullable.** Spec §5: *„Dass das Foto Pflicht ist, bleibt eine Regel der Oberfläche — die Spalte ist nullable, und das soll sie bleiben: Altmodelle tragen keines."*
+- **Testbilder haben Handygröße, nicht Rumpfgröße.** Bei der Ausführung von Aufgabe 6 kamen zwei Fehler ans Licht, die beide nur deshalb jahrelang unsichtbar blieben, weil jeder Test mit einem 22-Byte-JPEG lief:
+  1. `stripImageMetadata` warf ab ~0,5 MB `RangeError: Maximum call stack size exceeded` — beide Stripper füllten ein `number[]` per `out.push(...bytes.slice(a, b))`. Behoben, mit je einem 3-MB-Test für JPEG und PNG.
+  2. Next schnitt den Rumpf jeder Server Action bei **1 MB** ab (413, *„Body exceeded 1 MB limit"*), bevor die Fachschicht die Bytes sah. Behoben durch `experimental.serverActions.bodySizeLimit: "12mb"` in `next.config.mjs`.
+
+  **Die Lehre gilt für jede weitere Aufgabe:** eine Mediendatei im Test hat die Größe, die sie in der Halle hat. Ein Rumpf prüft den Codepfad, nicht die Grenze.
 - **Schritt 2 (Einstellungen) und Schritt 6 (Video) sind überspringbar, Schritt 1, 3 und 4 nicht.** Spec §2.
 - **Genau eine Akzentfläche je Bildschirm.** Designsystem. Der Akzent (`--accent`, `#d4ff3f`) gehört der einen Hauptaktion. Konvention aus Spec §3, maschinell prüfbar: `background: var(--accent)` für die Aktionsfläche, `background-color: var(--accent)` für Balken und Marken. Sucher und Aufnahme tragen **keine** Akzentfläche im Fluss — dort ist der Auslöser die Handlung.
 - **Trefferflächen in der Halle sind größer als am Schreibtisch.** Designsystem §1, umgesetzt in `build.py`: Hauptaktion 56 px hoch und volle Breite, Nebenaktion 48 px, Eingabefeld mindestens 52 px.
@@ -597,7 +602,7 @@ describe("listStudioExercises", () => {
 
 - [ ] **Schritt 2: Test laufen lassen und den Fehlschlag sehen**
 
-Ausführen: `pnpm test:integration -- domain-exercises`
+Ausführen: `npx vitest run --config vitest.config.ts tests/integration/domain-exercises.test.ts`
 
 Erwartet: FAIL — `listStudioExercises is not a function`
 
@@ -662,7 +667,7 @@ In `packages/domain/src/index.ts` bei den `./catalog.js`-Exporten `listStudioExe
 
 - [ ] **Schritt 5: Tests laufen lassen**
 
-Ausführen: `pnpm test:integration -- domain-exercises`
+Ausführen: `npx vitest run --config vitest.config.ts tests/integration/domain-exercises.test.ts`
 
 Erwartet: PASS, 4 Tests.
 
@@ -951,11 +956,19 @@ Die Aliasimporte (`@/lib/supabase/server`) und die Paketimporte (`@fitretro/doma
 
 - [ ] **Schritt 3: Prüfen, dass der Schreibtisch unverändert steht**
 
+**Zuerst die alten generierten Typen wegräumen:**
+
+```bash
+rm -rf apps/web/.next/types
+```
+
+`next typegen` legt die Routentypen neu an, **löscht aber die alten nicht**. Ohne diesen Schritt meldet der Typecheck `TS2307: Cannot find module '../../../app/portal/[studioId]/tags/page.js'` für jede verschobene Seite — ein Fehler in generiertem Code, der auf eine Datei zeigt, die es nicht mehr gibt. Das sieht nach einem kaputten Umbau aus und ist nur Müll von vorher.
+
 Ausführen: `pnpm typecheck`
 
 Erwartet: keine Fehler. Ein übersehener relativer Import fällt hier auf, nicht erst im Browser.
 
-Ausführen: `pnpm test:e2e -- trainerportal leute auth`
+Ausführen: `npx playwright test trainerportal leute auth`
 
 Erwartet: PASS. Die URLs sind dieselben geblieben — eine Route-Gruppe zählt im Pfad nicht mit. Wäre das falsch, schlüge hier jeder Test mit 404 fehl.
 
@@ -1635,9 +1648,11 @@ test("Der Einstieg zaehlt den Bestand und fuehrt in den Gang", async ({
 
 - [ ] **Schritt 11: Test laufen lassen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
-Erwartet: Der erste Teil PASS bis zum Klick, dann FAIL mit 404 auf `/einrichten/modell` — die Seite kommt in Aufgabe 6. Die letzte Zusicherung auskommentieren, den Rest grün sehen, und sie in Aufgabe 6 wieder einschalten.
+Erwartet: **PASS, vollständig** — auch die letzte Zeile, obwohl `/einrichten/modell` erst in Aufgabe 6 entsteht. `toHaveURL` prüft die Adresse, nicht ob dort etwas rendert: die Client-Navigation setzt die URL und zeigt danach die 404-Seite. Die Zusicherung sagt also „der Knopf zeigt auf den richtigen Pfad", nicht „die Seite gibt es" — und genau das soll sie hier auch sagen. Den Inhalt der Modellseite prüft Aufgabe 6.
+
+> Der Befehl ist `npx playwright test <muster>`, nicht `pnpm test:e2e -- <muster>`: `pnpm run` reicht das Argument nicht an Playwright durch, und es liefe die ganze Suite.
 
 - [ ] **Schritt 12: Committen**
 
@@ -1740,7 +1755,7 @@ function jpegOhneExif(): Buffer {
 
 - [ ] **Schritt 2: Test laufen lassen und den Fehlschlag sehen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: FAIL — 404 auf `/einrichten/modell`.
 
@@ -2147,7 +2162,7 @@ function Feld({
 
 - [ ] **Schritt 6: Test laufen lassen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: der Modell-Test PASS bis zur Zusicherung auf `Schritt 2 von 6`, dort FAIL mit 404 — die Einstellungsseite kommt in Aufgabe 7. Die letzten beiden Zusicherungen auskommentieren, den Rest grün sehen.
 
@@ -2243,7 +2258,7 @@ test("Schritt 2 fragt ein fehlendes Foto nach und nimmt Parameter auf", async ({
 
 - [ ] **Schritt 2: Test laufen lassen und den Fehlschlag sehen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: FAIL — 404 auf der Einstellungsseite.
 
@@ -2761,7 +2776,7 @@ function Feld({
 
 - [ ] **Schritt 6: Test laufen lassen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: der Einstellungs-Test PASS bis zum letzten Klick, dort FAIL mit 404 — die Geräteseite kommt in Aufgabe 8. Die letzten beiden Zeilen auskommentieren, den Rest grün sehen. Die auskommentierten Zusicherungen aus Aufgabe 6 wieder einschalten — sie greifen jetzt.
 
@@ -2845,7 +2860,7 @@ test("Schritt 3 schlaegt die naechste Nummer vor und legt das Geraet an", async 
 
 - [ ] **Schritt 2: Test laufen lassen und den Fehlschlag sehen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: FAIL — 404 auf der Geräteseite.
 
@@ -3058,7 +3073,7 @@ export function GeraetFormular({
 
 - [ ] **Schritt 5: Test laufen lassen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: der Geräte-Test PASS bis zur letzten Zusicherung, dort FAIL — die Tag-Seite kommt in Aufgabe 9. Die letzte Zeile auskommentieren; die auskommentierten Zeilen aus Aufgabe 7 wieder einschalten.
 
@@ -3071,7 +3086,18 @@ git commit -m "feat(web): Schritt 3 -- Geraet mit vorgeschlagener Nummer und Sta
 
 ---
 
-## Aufgabe 9: Schritt 4 — Der Tag, mit dem Sucher
+## Aufgabe 9: Schritt 4 — Der Tag
+
+> **Aufgeteilt am 2. September, auf Ansage.** Die Kamera wird später gebaut.
+>
+> - **9a — der Tag-Schritt ohne Kamera.** Kleben, Token eintippen, Befund, Verbinden. Enthält die beiden Actions `tagPruefen` und `tagVerbinden` und die ganze Antworttabelle. **Gebaut.**
+> - **9b — der Sucher.** `getUserMedia` plus `jsQR`, davorgeschaltet. **Offen.**
+>
+> Die Teilung kostet nichts, weil die Spec sie schon vorsieht. §7: *„Der umgebaute `TagZuweisen` ist ein Feld zum Eintippen des Tokens auf derselben Funktion — der Rückfallweg wird gebaut, bevor die Kamera überhaupt davorsteht."* Der Decoder liefert am Ende nur eine Zeichenkette an `parseTagScan` (Aufgabe 1) und von dort an `tagPruefen` — genau den Weg, den das Feld schon geht.
+>
+> **Was 9b noch braucht:** `pnpm --filter @fitretro/web add jsqr`, die Datei `Sucher.tsx`, ein Umschalten der Hauptaktion auf der Klebe-Ansicht von *„Tag prüfen"* auf *„Tag scannen"* — und die Handprüfung am echten Telefon (unten, ehemals Schritt 8). Solange 9b fehlt, ist das Token-Feld die Hauptaktion und nicht der Rückfallweg.
+
+
 
 Der einzige echte Neubau. Drei Bildschirme in einer Seite: `TelefonKleben` (die Platzierungsskizze), `TelefonScan` (der Sucher), `TelefonScanTreffer` (die Antwort). Sie teilen einen Zustand, der nicht in die URL gehört — was gerade in der Hand liegt —, also ist das eine Client-Komponente mit drei Ansichten.
 
@@ -3189,7 +3215,7 @@ test("Schritt 4 beantwortet den Tag und verbindet ihn mit dem Geraet", async ({
 
 - [ ] **Schritt 2: Test laufen lassen und den Fehlschlag sehen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: FAIL — 404 auf der Tag-Seite.
 
@@ -3744,7 +3770,7 @@ function Skizze() {
 
 - [ ] **Schritt 7: Test laufen lassen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: der Tag-Test PASS bis zur letzten Zusicherung, dort FAIL — die Übungsseite kommt in Aufgabe 10. Die letzte Zeile auskommentieren; die auskommentierte Zeile aus Aufgabe 8 wieder einschalten.
 
@@ -3876,7 +3902,7 @@ test("Schritt 5 waehlt aus dem Studio, legt neu an und ordnet um", async ({
 
 - [ ] **Schritt 2: Test laufen lassen und den Fehlschlag sehen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: FAIL — 404 auf der Übungsseite.
 
@@ -4385,7 +4411,7 @@ function Feld({
 
 - [ ] **Schritt 6: Test laufen lassen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: der Übungs-Test PASS bis zur letzten Zusicherung, dort FAIL — die Fertig-Seite kommt in Aufgabe 12. Die letzte Zeile auskommentieren; die auskommentierte Zeile aus Aufgabe 9 wieder einschalten.
 
@@ -4515,7 +4541,7 @@ test("Ein Video wartet in der Warteschlange und ueberlebt den Seitenwechsel", as
 
 - [ ] **Schritt 2: Test laufen lassen und den Fehlschlag sehen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: FAIL — kein Feld „Video für Rudern sitzend".
 
@@ -4991,7 +5017,7 @@ Ebenso den Schlusssatz der Seite um die Überspringbarkeit ergänzen:
 
 - [ ] **Schritt 7: Test laufen lassen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: PASS für den Upload-Test.
 
@@ -5108,7 +5134,7 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
 
 - [ ] **Schritt 2: Test laufen lassen und den Fehlschlag sehen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: FAIL — 404 auf der Fertig-Seite.
 
@@ -5292,7 +5318,7 @@ Ausführen: `pnpm typecheck && pnpm test && pnpm test:integration`
 
 Erwartet: PASS.
 
-Ausführen: `pnpm test:e2e -- einrichten trainerportal`
+Ausführen: `npx playwright test einrichten trainerportal`
 
 Erwartet: PASS, alle Tests beider Dateien — auch die in den Aufgaben 6 bis 10 wieder eingeschalteten Zusicherungen. `trainerportal.spec.ts` läuft über die geänderte Modellseite und beweist, dass der neue Link dort nichts verschoben hat.
 
@@ -5388,7 +5414,7 @@ test("Ein zerkratzter Tag wird ersetzt, und der alte wird dabei ungueltig", asyn
 
 - [ ] **Schritt 2: Test laufen lassen und den Fehlschlag sehen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: FAIL — der alte Tag steht noch auf `active`.
 
@@ -5474,7 +5500,7 @@ In `TagSchritt.tsx` den Import um `tagErsetzen` erweitern und im `onClick` der H
 
 - [ ] **Schritt 5: Tests laufen lassen**
 
-Ausführen: `pnpm test:e2e -- einrichten`
+Ausführen: `npx playwright test einrichten`
 
 Erwartet: PASS, alle Tests der Datei.
 
@@ -5504,9 +5530,17 @@ Der Bauabschnitt ist fertig, wenn alles davon zutrifft:
 - [ ] `pnpm typecheck` — keine Fehler
 - [ ] `pnpm test` — Unit-Tests in `packages/domain` und `apps/web` grün
 - [ ] `pnpm test:integration` — 37 Dateien grün (36 Bestand plus `domain-exercises`)
+
+  > **Berichtigt am 3. September.** Hier stand, die lokale Datenbank weiche von den Migrationen ab, mit dem Unterton eines Defekts. Die Messungen stimmten, die Schlussfolgerung nicht: die Datenbank war nicht kaputt, sondern **voraus**. `0032`–`0034` lagen angewendet vor, aber nur auf dem noch nicht gemergten `worktree/calm-forest-3c59`. Die vier roten RLS-Tests prüften den Vertrag vor der Datenschutzgrenze, die `0033` längst abgeschafft hatte.
+  >
+  > Nach der Zusammenführung am 3. September läuft die Suite vollständig grün: **41 Dateien, 461 Tests.** Die ganze Geschichte steht in `2026-09-01-gesamtfahrplan.md` §4e.
+  >
+  > Der zweite Punkt von damals bleibt: `rls-workout-sessions > positiv: ein Mitglied beendet seine eigene Session` setzt `completed_at` aus der **Node-Uhr**, während `started_at` per `now()` aus der **Datenbank** kommt, und fällt bei Uhrendrift sporadisch. Reparatur wäre, das Ende serverseitig zu setzen.
+
 - [ ] `pnpm test:e2e` — 6 Dateien grün (5 Bestand plus `einrichten`)
 - [ ] `pnpm build` — kein `node:crypto` im Client-Bundle
-- [ ] **Der Sucher ist von Hand an einem echten Telefon gelaufen** (Aufgabe 9, Schritt 8) — der einzige Punkt, den kein Test abnimmt
+- [ ] **Aufgabe 9b — der Sucher — ist gebaut** (`jsqr`, `Sucher.tsx`, Hauptaktion auf der Klebe-Ansicht von „Tag prüfen" auf „Tag scannen" umgestellt). **Offen; am 2. September auf Ansage vertagt.** Ohne ihn trägt der Gang, aber der Trainer tippt 22 Zeichen ab, statt zu scannen.
+- [ ] **Der Sucher ist von Hand an einem echten Telefon gelaufen** — der einzige Punkt, den kein Test abnimmt. Hängt an 9b.
 - [ ] `supabase/migrations/` ist unverändert — 31 Dateien, keine neue
 
 Danach `docs/superpowers/plans/2026-09-01-gesamtfahrplan.md` nachziehen, wie es dessen Abschnitt 8 verlangt: die Zeile *„Sucher im Portal"* und *„Einrichtung am Gerät"* in Abschnitt 3 auf ✅, den Bezugsstand in der Kopftabelle, und Phase 3 in Abschnitt 5 als abgeschlossen.

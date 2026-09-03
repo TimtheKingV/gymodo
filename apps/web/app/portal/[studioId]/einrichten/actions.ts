@@ -1,0 +1,462 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import {
+  DomainError,
+  attachExerciseToModel,
+  createEquipmentModel,
+  createExercise,
+  createMachine,
+  createSettingDefinition,
+  deleteSettingDefinition,
+  getStudioCatalog,
+  reorderModelExercises,
+  revokeTag,
+  uploadEquipmentPhoto,
+} from "@fitretro/domain";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { Befund } from "./befund";
+
+/**
+ * Die Server Actions des Gangs.
+ *
+ * Getrennt von portal/actions.ts, weil sie IDs zurueckgeben statt nur ok:
+ * der naechste Schritt braucht die frische ID im Pfad. Der Zustand des Gangs
+ * steht in der URL, nicht in einem Client-State -- ein Neuladen mitten in
+ * der Halle verliert damit nichts.
+ */
+
+/** Fuer eine Aktion, die etwas zurueckgibt -- eine ID fuer den naechsten Schritt. */
+export type Ergebnis<T> = ({ ok: true } & T) | { ok: false; error: string };
+
+/** Fuer eine Aktion, die nur gelingt oder nicht. */
+export type ActionErgebnis = { ok: true } | { ok: false; error: string };
+
+/** Ein Ergebnisformat fuer alle Formulare: entweder es klappt, oder ein Satz. */
+function fehlerAus(
+  fehler: unknown,
+  ersatz: string,
+): { ok: false; error: string } {
+  if (fehler instanceof DomainError) return { ok: false, error: fehler.message };
+  // Ein unerwarteter Fehler wird geloggt, aber nie im Wortlaut angezeigt:
+  // seine Meldung kann Spaltennamen oder IDs fremder Zeilen enthalten.
+  console.error("Einrichtungsschritt fehlgeschlagen:", fehler);
+  return { ok: false, error: ersatz };
+}
+
+function text(formData: FormData, name: string): string {
+  return String(formData.get(name) ?? "").trim();
+}
+
+function optionalerText(formData: FormData, name: string): string | null {
+  const wert = text(formData, name);
+  return wert.length > 0 ? wert : null;
+}
+
+/** Deutsche Eingabe: 2,5 ist dasselbe wie 2.5. */
+function zahl(formData: FormData, name: string): number | undefined {
+  const roh = text(formData, name).replace(",", ".");
+  if (roh.length === 0) return undefined;
+  const wert = Number(roh);
+  return Number.isFinite(wert) ? wert : Number.NaN;
+}
+
+/**
+ * Modell und Foto in einem Aufruf. Das Foto ist Pflicht (Entscheidung 10),
+ * aber die Spalte bleibt nullable -- Altmodelle tragen keines.
+ *
+ * Reihenfolge erzwungen: uploadEquipmentPhoto braucht eine Modell-ID, also
+ * entsteht erst die Zeile. Schlaegt der Upload danach fehl, bleibt ein
+ * Modell ohne Foto stehen. Das ist kein verlorener Zustand, sondern genau
+ * der Fall, den Schritt 2 als "Foto fehlt" nachfragt (Entscheidung 12).
+ */
+export async function modellAnlegen(
+  studioId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<Ergebnis<{ modelId: string }>> {
+  const client = await createServerSupabaseClient();
+
+  const datei = formData.get("photo");
+  if (!(datei instanceof File) || datei.size === 0) {
+    return {
+      ok: false,
+      error:
+        "Ohne Foto geht es nicht weiter — es ist der einzige Grund, warum jemand vor dem falschen Gerät merkt, dass er falsch steht.",
+    };
+  }
+
+  let modelId: string;
+  try {
+    const modell = await createEquipmentModel(client, {
+      studioId,
+      name: text(formData, "name"),
+      manufacturer: optionalerText(formData, "manufacturer"),
+      weightStepKg: zahl(formData, "weightStepKg") ?? Number.NaN,
+      minWeightKg: zahl(formData, "minWeightKg") ?? 0,
+      maxWeightKg: zahl(formData, "maxWeightKg") ?? null,
+    });
+    modelId = modell.id;
+  } catch (fehler) {
+    return fehlerAus(fehler, "Das Modell liess sich nicht anlegen.");
+  }
+
+  try {
+    // Das Foto laeuft bewusst durch den Server: nur hier lassen sich die
+    // Aufnahmedaten entfernen, bevor die Datei im Bucket landet.
+    await uploadEquipmentPhoto(client, {
+      equipmentModelId: modelId,
+      bytes: new Uint8Array(await datei.arrayBuffer()),
+    });
+  } catch (fehler) {
+    const antwort = fehlerAus(fehler, "Das Foto liess sich nicht speichern.");
+    // Das Modell steht trotzdem -- der Gang geht weiter, Schritt 2 fragt das
+    // Foto nach. Ein Rollback waere hier der schlechtere Zustand.
+    revalidatePath(`/portal/${studioId}/einrichten`);
+    return antwort;
+  }
+
+  revalidatePath(`/portal/${studioId}/einrichten`);
+  return { ok: true, modelId };
+}
+
+/** Der Pfad, den Schritt 2 revalidiert. Drei Actions teilen ihn. */
+function einstellungenPfad(studioId: string, modelId: string): string {
+  return `/portal/${studioId}/einrichten/modell/${modelId}/einstellungen`;
+}
+
+/**
+ * Ein Einstellparameter am Modell. Zwei Arten, mehr kennt das Schema nicht:
+ * eine Zahl mit Spanne und Schrittweite (0004) oder eine Auswahl aus
+ * mindestens zwei verschiedenen Werten (0017). settingDefinitionInputSchema
+ * traegt dieselben Regeln wie die Constraints, nur frueher.
+ */
+export async function parameterAnlegen(
+  studioId: string,
+  modelId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionErgebnis> {
+  const client = await createServerSupabaseClient();
+  const kind = text(formData, "kind") === "enum" ? "enum" : "number";
+  try {
+    await createSettingDefinition(client, {
+      equipmentModelId: modelId,
+      key: text(formData, "key"),
+      label: text(formData, "label"),
+      kind,
+      minValue: kind === "number" ? (zahl(formData, "minValue") ?? null) : null,
+      maxValue: kind === "number" ? (zahl(formData, "maxValue") ?? null) : null,
+      stepValue: kind === "number" ? (zahl(formData, "stepValue") ?? null) : null,
+      unit: optionalerText(formData, "unit"),
+      allowedValues:
+        kind === "enum"
+          ? text(formData, "allowedValues")
+              .split("\n")
+              .map((zeile) => zeile.trim())
+              .filter((zeile) => zeile.length > 0)
+          : null,
+    });
+  } catch (fehler) {
+    return fehlerAus(fehler, "Der Parameter liess sich nicht anlegen.");
+  }
+  revalidatePath(einstellungenPfad(studioId, modelId));
+  return { ok: true };
+}
+
+export async function parameterLoeschen(
+  studioId: string,
+  modelId: string,
+  settingId: string,
+): Promise<ActionErgebnis> {
+  const client = await createServerSupabaseClient();
+  try {
+    await deleteSettingDefinition(client, settingId);
+  } catch (fehler) {
+    return fehlerAus(fehler, "Der Parameter liess sich nicht loeschen.");
+  }
+  revalidatePath(einstellungenPfad(studioId, modelId));
+  return { ok: true };
+}
+
+/**
+ * Das Foto eines Altmodells nachreichen. Der einzige Weg dafuer im Gang
+ * (Entscheidung 12) -- am Schreibtisch stuende man ohne das Geraet davor.
+ */
+export async function fotoNachreichen(
+  studioId: string,
+  modelId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionErgebnis> {
+  const client = await createServerSupabaseClient();
+  const datei = formData.get("photo");
+  if (!(datei instanceof File) || datei.size === 0) {
+    return { ok: false, error: "Es ist keine Datei ausgewaehlt." };
+  }
+  try {
+    await uploadEquipmentPhoto(client, {
+      equipmentModelId: modelId,
+      bytes: new Uint8Array(await datei.arrayBuffer()),
+    });
+  } catch (fehler) {
+    return fehlerAus(fehler, "Das Foto liess sich nicht speichern.");
+  }
+  revalidatePath(einstellungenPfad(studioId, modelId));
+  return { ok: true };
+}
+
+/**
+ * Die Geraeteinstanz. Ab hier hat der Gang ein Ziel fuer den Tag: das Studio
+ * kommt in bind_tag_to_machine aus der Maschine, nicht aus einem Parameter.
+ */
+export async function geraetAnlegen(
+  studioId: string,
+  modelId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<Ergebnis<{ machineId: string }>> {
+  const client = await createServerSupabaseClient();
+  try {
+    const geraet = await createMachine(client, {
+      studioId,
+      equipmentModelId: modelId,
+      label: text(formData, "label"),
+      locationNote: optionalerText(formData, "locationNote"),
+    });
+    revalidatePath(`/portal/${studioId}/einrichten`);
+    return { ok: true, machineId: geraet.id };
+  } catch (fehler) {
+    return fehlerAus(fehler, "Das Geraet liess sich nicht anlegen.");
+  }
+}
+
+/**
+ * Was der Sucher gelesen hat, gegen inspect_tag (0028) gehalten.
+ *
+ * Die Antworttabelle steht in befund.ts; hier wird nur uebersetzt. Die
+ * Studiozugehoerigkeit prueft die Funktion selbst und zuerst -- ein
+ * gesperrter Tag eines fremden Studios heisst unbekannt, nicht gesperrt,
+ * sonst verriete die Antwort seine Existenz.
+ */
+export async function tagPruefen(
+  studioId: string,
+  token: string,
+): Promise<Ergebnis<{ befund: Befund }>> {
+  const client = await createServerSupabaseClient();
+  const { data, error } = await client.rpc("inspect_tag", {
+    p_token: token.trim(),
+    p_studio_id: studioId,
+  });
+
+  if (error) {
+    console.error("Tag nicht geprueft:", error);
+    return { ok: false, error: "Der Tag liess sich nicht prüfen." };
+  }
+
+  const zeile = (
+    data as Array<{
+      verdict: string;
+      batch_code: string | null;
+      batch_index: number | null;
+      machine_id: string | null;
+      machine_label: string | null;
+    }> | null
+  )?.[0];
+
+  switch (zeile?.verdict) {
+    case "frei":
+      return {
+        ok: true,
+        befund: {
+          verdikt: "frei",
+          batchCode: zeile.batch_code ?? "?",
+          batchIndex: zeile.batch_index ?? 0,
+        },
+      };
+    case "vergeben":
+      return {
+        ok: true,
+        befund: {
+          verdikt: "vergeben",
+          machineId: zeile.machine_id!,
+          machineLabel: zeile.machine_label ?? "einem anderen Gerät",
+        },
+      };
+    case "gesperrt":
+      return { ok: true, befund: { verdikt: "gesperrt" } };
+    case "aushangschild":
+      return { ok: true, befund: { verdikt: "aushangschild" } };
+    default:
+      return { ok: true, befund: { verdikt: "unbekannt" } };
+  }
+}
+
+/**
+ * Den gelieferten Tag an das Geraet binden. Das Studio kommt aus der
+ * Maschine, nicht von hier -- bind_tag_to_machine leitet es selbst ab und
+ * prueft den Aufrufer dagegen (0028).
+ */
+export async function tagVerbinden(
+  studioId: string,
+  machineId: string,
+  token: string,
+): Promise<Ergebnis<{ tagId: string }>> {
+  const client = await createServerSupabaseClient();
+  const { data, error } = await client.rpc("bind_tag_to_machine", {
+    p_token: token.trim(),
+    p_machine_id: machineId,
+  });
+
+  if (error) {
+    console.error("Tag nicht gebunden:", error);
+    return { ok: false, error: "Der Tag liess sich nicht binden." };
+  }
+
+  const zeile = (data as Array<{ verdict: string; tag_id: string | null }> | null)?.[0];
+  if (zeile?.verdict === "gebunden" && zeile.tag_id) {
+    revalidatePath(`/portal/${studioId}/einrichten`);
+    return { ok: true, tagId: zeile.tag_id };
+  }
+
+  // Zwischen Pruefen und Verbinden kann ein zweiter Trainer denselben Tag
+  // gebunden haben. Die Antwort kommt dann aus derselben Tabelle wie oben --
+  // der Aufrufer prueft einfach neu.
+  return {
+    ok: false,
+    error: "Dieser Tag ist inzwischen nicht mehr frei. Prüf ihn noch einmal.",
+  };
+}
+
+function uebungenPfad(studioId: string, machineId: string): string {
+  return `/portal/${studioId}/einrichten/geraet/${machineId}/uebungen`;
+}
+
+/**
+ * Eine bestehende Studio-Uebung ans Modell haengen. Ans Ende, damit die
+ * gepflegte Reihenfolge nicht durcheinandergeraet -- attachExerciseToModel
+ * besorgt das selbst.
+ */
+export async function uebungHinzufuegen(
+  studioId: string,
+  machineId: string,
+  modelId: string,
+  exerciseId: string,
+): Promise<ActionErgebnis> {
+  const client = await createServerSupabaseClient();
+  try {
+    await attachExerciseToModel(client, {
+      equipmentModelId: modelId,
+      exerciseId,
+    });
+  } catch (fehler) {
+    return fehlerAus(fehler, "Die Uebung liess sich nicht hinzufuegen.");
+  }
+  revalidatePath(uebungenPfad(studioId, machineId));
+  return { ok: true };
+}
+
+/**
+ * Anlegen und zuordnen in einem Schritt: eine Uebung, die an keinem Geraet
+ * haengt, taucht nirgends auf und waere ein stiller Fehlschlag.
+ */
+export async function uebungAnlegen(
+  studioId: string,
+  machineId: string,
+  modelId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionErgebnis> {
+  const client = await createServerSupabaseClient();
+  try {
+    const uebung = await createExercise(client, {
+      studioId,
+      name: text(formData, "name"),
+      description: null,
+      targetRepsMin: zahl(formData, "targetRepsMin") ?? Number.NaN,
+      targetRepsMax: zahl(formData, "targetRepsMax") ?? Number.NaN,
+    });
+    await attachExerciseToModel(client, {
+      equipmentModelId: modelId,
+      exerciseId: uebung.id,
+    });
+  } catch (fehler) {
+    return fehlerAus(fehler, "Die Uebung liess sich nicht anlegen.");
+  }
+  revalidatePath(uebungenPfad(studioId, machineId));
+  return { ok: true };
+}
+
+/**
+ * Die Reihenfolge ist keine Kosmetik: Uebung 1 ist am Geraet die Vorauswahl
+ * des Mitglieds (Designsystem 8).
+ */
+export async function uebungVerschieben(
+  studioId: string,
+  machineId: string,
+  modelId: string,
+  linkIds: string[],
+): Promise<ActionErgebnis> {
+  const client = await createServerSupabaseClient();
+  try {
+    await reorderModelExercises(client, {
+      equipmentModelId: modelId,
+      orderedLinkIds: linkIds,
+    });
+  } catch (fehler) {
+    return fehlerAus(fehler, "Die Reihenfolge liess sich nicht speichern.");
+  }
+  revalidatePath(uebungenPfad(studioId, machineId));
+  return { ok: true };
+}
+
+/**
+ * Einen zerkratzten Tag ersetzen: den neuen binden, die uebrigen aktiven
+ * desselben Geraets sperren.
+ *
+ * Zwei Schritte, kein einer. bind_tag_to_machine sperrt nichts, und eine
+ * Migration schliesst der Bauabschnitt aus. Der schlechteste Ausgang eines
+ * Abbruchs dazwischen ist "beide Tags aktiv" -- also genau der Zustand, der
+ * ohne diese Funktion immer eintraete. Kein Datenverlust, und ein zweiter
+ * Anlauf raeumt auf.
+ *
+ * Zuerst binden, dann sperren, nie umgekehrt: waere die Reihenfolge
+ * getauscht, stuende das Geraet nach einem Abbruch ganz ohne Tag da und
+ * waere fuer Mitglieder verschwunden.
+ */
+export async function tagErsetzen(
+  studioId: string,
+  machineId: string,
+  token: string,
+): Promise<Ergebnis<{ tagId: string; gesperrt: number }>> {
+  const gebunden = await tagVerbinden(studioId, machineId, token);
+  if (!gebunden.ok) return gebunden;
+
+  const client = await createServerSupabaseClient();
+  let gesperrt = 0;
+  try {
+    const katalog = await getStudioCatalog(client, studioId);
+    const alte = katalog.tags.filter(
+      (tag) =>
+        tag.machineId === machineId &&
+        tag.status === "active" &&
+        tag.id !== gebunden.tagId,
+    );
+    for (const tag of alte) {
+      await revokeTag(client, tag.id);
+      gesperrt += 1;
+    }
+  } catch (fehler) {
+    // Der neue Tag klebt und funktioniert. Dass der alte noch offen ist,
+    // faellt beim naechsten Scan auf -- und dann steht dieselbe Aktion da.
+    console.error("Alter Tag nicht gesperrt:", fehler);
+    return {
+      ok: false,
+      error:
+        "Der neue Tag ist verbunden, der alte ließ sich nicht sperren. Scann den neuen noch einmal.",
+    };
+  }
+
+  revalidatePath(`/portal/${studioId}/einrichten`);
+  return { ok: true, tagId: gebunden.tagId, gesperrt };
+}

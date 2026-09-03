@@ -174,8 +174,27 @@ function isMetadataMarker(marker: number): boolean {
   return (marker >= 0xe1 && marker <= 0xef) || marker === 0xfe;
 }
 
+/**
+ * Stuecke aneinanderhaengen, ohne sie je einzeln anzufassen.
+ *
+ * Der naheliegende Weg -- out.push(...bytes.slice(a, b)) -- reicht jedes
+ * Byte als eigenes Argument weiter und sprengt ab etwa einem halben
+ * Megabyte den Aufrufstapel. Das traf jedes Foto aus einer Kamera und blieb
+ * unbemerkt, solange die Tests mit ein paar Dutzend Bytes liefen.
+ */
+function verbinde(stuecke: Uint8Array[]): Uint8Array<ArrayBuffer> {
+  const laenge = stuecke.reduce((summe, stueck) => summe + stueck.byteLength, 0);
+  const ergebnis = new Uint8Array(laenge);
+  let versatz = 0;
+  for (const stueck of stuecke) {
+    ergebnis.set(stueck, versatz);
+    versatz += stueck.byteLength;
+  }
+  return ergebnis;
+}
+
 function stripJpegMetadata(bytes: Uint8Array): Uint8Array<ArrayBuffer> {
-  const out: number[] = [0xff, 0xd8];
+  const out: Uint8Array[] = [new Uint8Array([0xff, 0xd8])];
   let index = 2;
 
   while (index < bytes.length) {
@@ -194,16 +213,16 @@ function stripJpegMetadata(bytes: Uint8Array): Uint8Array<ArrayBuffer> {
     // zerlegt, sondern unveraendert uebernommen -- alles andere hiesse, das
     // Bild neu zu codieren, und genau das soll nicht passieren.
     if (marker === 0xda) {
-      out.push(0xff, marker, ...bytes.slice(index));
-      return new Uint8Array(out);
+      out.push(new Uint8Array([0xff, marker]), bytes.slice(index));
+      return verbinde(out);
     }
     if (marker === 0xd9) {
-      out.push(0xff, marker);
-      return new Uint8Array(out);
+      out.push(new Uint8Array([0xff, marker]));
+      return verbinde(out);
     }
     // Markierungen ohne Laengenfeld.
     if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
-      out.push(0xff, marker);
+      out.push(new Uint8Array([0xff, marker]));
       continue;
     }
 
@@ -219,19 +238,19 @@ function stripJpegMetadata(bytes: Uint8Array): Uint8Array<ArrayBuffer> {
     }
 
     if (!isMetadataMarker(marker)) {
-      out.push(0xff, marker, ...bytes.slice(index, end));
+      out.push(new Uint8Array([0xff, marker]), bytes.slice(index, end));
     }
     index = end;
   }
 
-  return new Uint8Array(out);
+  return verbinde(out);
 }
 
 /** PNG-Chunks, die Aufnahmedaten tragen. */
 const PNG_METADATA_CHUNKS = new Set(["eXIf", "tEXt", "zTXt", "iTXt", "tIME"]);
 
 function stripPngMetadata(bytes: Uint8Array): Uint8Array<ArrayBuffer> {
-  const out: number[] = [...PNG_SIGNATURE];
+  const out: Uint8Array[] = [new Uint8Array(PNG_SIGNATURE)];
   let index = PNG_SIGNATURE.length;
 
   while (index + 8 <= bytes.length) {
@@ -249,13 +268,13 @@ function stripPngMetadata(bytes: Uint8Array): Uint8Array<ArrayBuffer> {
     // Chunks werden byteweise uebernommen, deshalb bleibt ihre Pruefsumme
     // gueltig -- es wird nichts neu berechnet, nur weggelassen.
     if (!PNG_METADATA_CHUNKS.has(type)) {
-      out.push(...bytes.slice(index, end));
+      out.push(bytes.slice(index, end));
     }
     index = end;
     if (type === "IEND") break;
   }
 
-  return new Uint8Array(out);
+  return verbinde(out);
 }
 
 /**

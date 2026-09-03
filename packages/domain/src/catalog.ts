@@ -389,6 +389,55 @@ export async function detachExercise(
   if (error) throw new DomainError("internal", error.message);
 }
 
+export type StudioExercise = {
+  id: string;
+  name: string;
+  description: string | null;
+  targetRepsMin: number;
+  targetRepsMax: number;
+  /** An wie vielen Modellen sie haengt. Null ist ein gueltiger Zustand. */
+  modelCount: number;
+};
+
+/**
+ * Alle Uebungen eines Studios -- auch die, die an keinem Modell haengen.
+ *
+ * getStudioCatalog liefert Uebungen nur je Modell; eine freie Uebung kaeme
+ * dort nicht vor. Das Auswahl-Sheet im Gang braucht aber gerade sie: sonst
+ * legt jedes Studio "Rudern sitzend" fuenfmal an, jedes Mal anders
+ * geschrieben (Spec 2).
+ *
+ * Kein requireStudioStaff: die Policy auf exercises entscheidet. Ein fremdes
+ * Studio liefert die leere Menge, keinen Fehler -- der Aufrufer soll nicht
+ * erfahren, ob es das Studio gibt.
+ */
+export async function listStudioExercises(
+  client: SupabaseClient,
+  studioId: string,
+): Promise<StudioExercise[]> {
+  await requireUserId(client);
+
+  const { data, error } = await client
+    .from("exercises")
+    .select(
+      "id, name, description, target_reps_min, target_reps_max, equipment_model_exercises (id)",
+    )
+    .eq("studio_id", studioId)
+    .order("name", { ascending: true });
+
+  if (error) throw new DomainError("internal", error.message);
+
+  return (data ?? []).map((zeile) => ({
+    id: zeile.id as string,
+    name: zeile.name as string,
+    description: (zeile.description as string | null) ?? null,
+    targetRepsMin: zeile.target_reps_min as number,
+    targetRepsMax: zeile.target_reps_max as number,
+    modelCount:
+      (zeile.equipment_model_exercises as unknown[] | null)?.length ?? 0,
+  }));
+}
+
 export async function createMachine(
   client: SupabaseClient,
   input: {
