@@ -168,12 +168,20 @@ describe("Der Wettlauf um den letzten Platz", () => {
   });
 
   it("eine gleichzeitige Stornierung und drei Anmeldungen auf einen frei werdenden Platz: genau einer gewinnt", async () => {
-    // Dieser Test prueft eine Invariante -- er kann nie spuriously
-    // fehlschlagen, nur zu Unrecht bestehen. Er kann also nicht beweisen,
-    // dass die Sperre in cancel_course_booking wirkt, sondern nur, dass
-    // ohne sie ein Fehler MOEGLICH ist -- das ist genau das, was die
-    // Gegenprobe in Schritt-2-des-Fix-Reports zeigt, indem sie die
-    // Sperre entfernt und beobachtet, ob dieser Test dann rot wird.
+    // Ehrlich zu dem, was dieser Test kann und nicht kann: er prueft eine
+    // Invariante, die schon aus der ATOMIZITAET von cancel_course_booking
+    // folgt -- Stornieren und Nachruecken laufen in derselben Transaktion,
+    // committen also zusammen. Kein Aufrufer sieht je den Zwischenzustand
+    // "Platz frei, noch niemand nachgerueckt", weil dieser Zwischenzustand
+    // nie fuer andere sichtbar wird. Die Zeilensperre in
+    // cancel_course_booking traegt zu DIESER Invariante nichts bei --
+    // dieser Test faengt ihr Fehlen deshalb NICHT (siehe die Gegenprobe im
+    // Fix-Report, Runde 1: 0 von 5 Laeufen rot ohne die Sperre). Was der
+    // Test wirklich bewacht: eine kuenftige Aenderung, die das Nachruecken
+    // aus der Stornotransaktion heraustrennen wuerde -- dann waere genau
+    // dieser Zwischenzustand ploetzlich sichtbar, und dieser Test wuerde
+    // es zeigen. Die Sperre gegen zwei gleichzeitige Stornierungen prueft
+    // der naechste Test.
     const terminId = await terminAnlegen({ capacity: 1, startsAt: inStunden(72) });
     const [clientA, clientB, clientC, clientD, clientE] = await mitglieder(5, "cancel-wettlauf");
 
@@ -213,6 +221,73 @@ describe("Der Wettlauf um den letzten Platz", () => {
       .select("status")
       .eq("course_session_id", terminId);
     expect(zeilen!.filter((z) => z.status === "booked")).toHaveLength(1);
+  });
+
+  it("vier gleichzeitige Stornierungen auf vier Wartende: alle vier rutschen nach, niemand doppelt", async () => {
+    // DAS ist der Fall, den die Sperre in cancel_course_booking bewacht:
+    // nicht Stornieren gegen Anmelden (siehe voriger Test), sondern
+    // Stornieren gegen Stornieren. Ohne Sperre laufen zwei gleichzeitige
+    // Stornierungen unabhaengig voneinander: jede storniert ihre eigene
+    // Buchung, zaehlt unabhaengig und waehlt unabhaengig "die/den
+    // erste(n) Wartende(n)" -- keine sieht die Nachrueckentscheidung der
+    // anderen, weil beide vor jedem Commit laufen. Beide Unterabfragen
+    // loesen auf dieselbe Person auf; die zweite Zuweisung blockiert kurz
+    // an der Zeilensperre der ersten und schreibt danach dieselbe Zeile
+    // erneut. Ergebnis: eine Person rutscht zweimal nach (harmlos fuer
+    // sie), eine andere Wartende bleibt stehen, obwohl ein Platz frei
+    // wurde -- Unterbelegung und ein verlorener Platz, nicht ein
+    // doppelt vergebener. Vier statt zwei gleichzeitige Stornierungen,
+    // um das schmale Zeitfenster zu vergroessern.
+    const terminId = await terminAnlegen({ capacity: 4, startsAt: inStunden(72) });
+    const alle = await mitglieder(8, "vierfach-storno");
+    const gebucht = alle.slice(0, 4);
+    const wartend = alle.slice(4, 8);
+
+    for (const client of gebucht) {
+      const { data } = await client!.rpc("book_course_session", {
+        p_session_id: terminId,
+        p_booking_id: crypto.randomUUID(),
+      });
+      expect(data.result).toBe("booked");
+    }
+
+    // Sequentiell, damit booked_at -- und damit die Wartelistenreihenfolge
+    // -- eindeutig ist.
+    for (const client of wartend) {
+      const { data } = await client!.rpc("book_course_session", {
+        p_session_id: terminId,
+        p_booking_id: crypto.randomUUID(),
+      });
+      expect(data.result).toBe("waitlisted");
+    }
+
+    const admin = serviceClient();
+    const { data: vorher } = await admin
+      .from("course_bookings")
+      .select("user_id")
+      .eq("course_session_id", terminId)
+      .eq("status", "waitlisted");
+    const wartendeUserIds = new Set(vorher!.map((z) => z.user_id));
+    expect(wartendeUserIds.size).toBe(4);
+
+    await Promise.all(
+      gebucht.map((client) =>
+        client!.rpc("cancel_course_booking", { p_session_id: terminId }),
+      ),
+    );
+
+    const { data: zeilen } = await admin
+      .from("course_bookings")
+      .select("status, user_id")
+      .eq("course_session_id", terminId);
+
+    const gebuchteZeilen = zeilen!.filter((z) => z.status === "booked");
+    expect(gebuchteZeilen).toHaveLength(4);
+    expect(zeilen!.filter((z) => z.status === "waitlisted")).toHaveLength(0);
+    // Vier VERSCHIEDENE Personen sind nachgerueckt -- nicht eine einzige
+    // viermal, waehrend eine andere stehen bleibt. Das ist der Punkt, an
+    // dem die fehlende Sperre beisst.
+    expect(new Set(gebuchteZeilen.map((z) => z.user_id))).toEqual(wartendeUserIds);
   });
 });
 

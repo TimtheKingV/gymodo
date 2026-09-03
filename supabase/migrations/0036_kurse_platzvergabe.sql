@@ -17,10 +17,32 @@
 -- Netz im kritischen Abschnitt.
 --
 -- Dass Stornieren dieselbe Sperre nimmt, ist der Teil, den man beim
--- ersten Entwurf uebersieht: sonst koennen eine Stornierung und eine
--- Anmeldung gleichzeitig zu dem Schluss kommen, es sei ein Platz frei --
--- und der Platz wird zweimal vergeben, einmal an die Anmeldung und
--- einmal an die nachrueckende Person.
+-- ersten Entwurf uebersieht -- aber NICHT aus dem Grund, den der erste
+-- Entwurf dieses Kommentars hier nannte. Eine Stornierung und eine
+-- Anmeldung koennen NICHT gleichzeitig zu dem Schluss kommen, es sei ein
+-- Platz frei: Stornieren und Nachruecken laufen in cancel_course_booking
+-- in DERSELBEN Transaktion, committen also zusammen. Der Zwischenzustand
+-- "Platz frei, noch niemand nachgerueckt" wird nie fuer eine andere
+-- Transaktion sichtbar -- eine gleichzeitige Anmeldung sieht entweder den
+-- Zustand davor (Platz noch belegt) oder den vollstaendigen Zustand
+-- danach (Platz frei UND bereits neu vergeben), und beides ist korrekt.
+--
+-- Die Sperre schuetzt gegen etwas anderes: ZWEI GLEICHZEITIGE
+-- STORNIERUNGEN auf demselben Termin. Ohne sie storniert jede ihre
+-- eigene Buchung unabhaengig, zaehlt unabhaengig und waehlt unabhaengig
+-- "die erste Wartende" -- keine sieht die Nachrueckentscheidung der
+-- anderen, weil beide vor jedem Commit laufen. Beide Unterabfragen loesen
+-- auf dieselbe Person auf; die zweite Zuweisung blockiert kurz an der
+-- Zeilensperre der ersten und schreibt danach dieselbe Zeile erneut.
+-- Die Folge ist deshalb kein doppelt vergebener Platz, sondern eine
+-- Unterbelegung: eine Person rutscht zweimal nach, eine andere Wartende
+-- bleibt stehen, obwohl ein Platz frei wurde -- kleiner als zunaechst
+-- gedacht, aber real, und fuer die zurueckbleibende Person nicht nichts.
+--
+-- Gefunden wurde das durch die Gegenprobe, nicht durch Lesen des Codes:
+-- der erste Entwurf dieses Kommentars nannte den falschen Anlass, und der
+-- Test, der aus diesem Anlass gebaut wurde, blieb auch ohne die Sperre
+-- gruen.
 --
 -- Die Regel fuer beide Rueckgaben (Spec Abschnitt 5):
 --   nicht erlaubt oder gibt es nicht → null
