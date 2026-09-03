@@ -164,6 +164,16 @@ describe("course_templates", () => {
     expect(nichts).toEqual([]);
   });
 
+  it("ein fremder Trainer aendert die Vorlage nicht -- Cross-Tenant", async () => {
+    const client = await userClient(fremdTrainerEmail);
+    const { data } = await client
+      .from("course_templates")
+      .update({ default_capacity: 99 })
+      .eq("id", vorlageId)
+      .select("id");
+    expect(data).toEqual([]);
+  });
+
   it("kein Loeschpfad -- auch nicht fuer den Trainer", async () => {
     const client = await userClient(trainerEmail);
     const { data } = await client.from("course_templates").delete().eq("id", vorlageId).select("id");
@@ -207,6 +217,18 @@ describe("course_sessions", () => {
     expect(erlaubt).toBeNull();
   });
 
+  it("ein Trainer legt keinen Termin in ein fremdes Studio -- Cross-Tenant", async () => {
+    const client = await userClient(trainerEmail);
+    const { error } = await client.from("course_sessions").insert({
+      studio_id: fremdStudioId,
+      course_template_id: vorlageId,
+      starts_at: inTagen(11),
+      duration_min: 60,
+      capacity: 16,
+    });
+    expect(error).not.toBeNull();
+  });
+
   it("ein Trainer sagt ab; der Zeitpunkt gehoert zum Status", async () => {
     const trainer = await userClient(trainerEmail);
     const { data: termin } = await trainer
@@ -233,6 +255,26 @@ describe("course_sessions", () => {
       .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
       .eq("id", termin!.id);
     expect(ganz).toBeNull();
+  });
+
+  it("ein Mitglied aendert keinen Termin", async () => {
+    const client = await userClient(mitgliedEmail);
+    const { data } = await client
+      .from("course_sessions")
+      .update({ room: "Heimlich umgebucht" })
+      .eq("id", terminId)
+      .select("id");
+    expect(data).toEqual([]);
+  });
+
+  it("ein fremder Trainer aendert keinen Termin -- Cross-Tenant", async () => {
+    const client = await userClient(fremdTrainerEmail);
+    const { data } = await client
+      .from("course_sessions")
+      .update({ room: "Fremdzugriff" })
+      .eq("id", terminId)
+      .select("id");
+    expect(data).toEqual([]);
   });
 
   it("kein Loeschpfad -- Absage statt Loeschen", async () => {
