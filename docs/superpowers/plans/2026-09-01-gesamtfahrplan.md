@@ -1,19 +1,19 @@
 # Gesamtfahrplan — Stand, Lücken und Reihenfolge
 
-**Stand:** 2. September 2026 *(fortgeschrieben; Erstfassung 1. September)*
+**Stand:** 3. September 2026 *(fortgeschrieben; Erstfassung 1. September)*
 **Status:** Bestandsaufnahme. **Kein ausführbarer Task-Plan** — dieses Dokument ordnet die vorhandenen Pläne, es ersetzt keinen.
 **Bezugsstand:**
 
 | | Commit | Inhalt |
 | --- | --- | --- |
-| `master` | `1ac4c4d` | alles zusammengeführt: beide Entwurfsstränge und der gesamte Code der Sessions vom 1./2. September |
+| `master` | `2f81861` | alles zusammengeführt und **ausgeliefert**: Phase 1, 2 und 3, `0001`–`0034` |
 | `designplan` | `7c1f18c` | in `master` aufgegangen |
 | `design-geräteeinrichtung` | `13d065b` | in `master` aufgegangen |
 | `worktree/brave-forest-c9d8` | `2b2be9c` | Tag-Lieferung, in `master` aufgegangen |
 | `worktree/calm-forest-3c59` | `05be485` | Studio-Einstellungen, Datenschutzgrenze, Überblick: `0032`–`0034`, Fachschicht, Reiter Studio/Konto, E2E-Gang — **in `master` aufgegangen am 3. September** |
-| `phase3-einrichtung-am-geraet` | — | Der Gang durch die Halle, Route-Gruppe `(schreibtisch)`, `parseTagScan`/`naechsteGeraeteNummer`/`listStudioExercises`, Fix an `stripImageMetadata` und `bodySizeLimit`. Trägt `master` bereits in sich; **der Sucher (9b) fehlt** |
+| `phase3-einrichtung-am-geraet` | `a4e4057` | Der Gang durch die Halle, Route-Gruppe `(schreibtisch)`, drei Fachschichtfunktionen, Fix an `stripImageMetadata` und `bodySizeLimit` — in `master` aufgegangen am 3. September; **der Sucher (9b) fehlt** |
 
-> **Was sich gegenüber der Erstfassung geändert hat, in einem Satz:** Sie beschrieb einen Stand, an dem die entworfenen Baustellen *zu null* gebaut waren — inzwischen stehen Phase 1 und Phase 2 ganz. Die Abschnitte 1 bis 5 sind entsprechend fortgeschrieben; die Betriebsbefunde aus 4a–4c bleiben als Lehre stehen, auch wo ihr Anlass erledigt ist.
+> **Was sich gegenüber der Erstfassung geändert hat, in einem Satz:** Sie beschrieb einen Stand, an dem die entworfenen Baustellen *zu null* gebaut waren — inzwischen stehen Phase 1, 2 und 3. Die Abschnitte 1 bis 5 sind entsprechend fortgeschrieben; die Betriebsbefunde aus 4a–4f bleiben als Lehre stehen, auch wo ihr Anlass erledigt ist.
 
 ---
 
@@ -27,11 +27,11 @@ Es ist bewusst kurz und verweist. Die Wahrheit über einen Bauabschnitt steht im
 
 ## 1. Der Stand in einem Satz
 
-**Der Abstand zwischen Entwurf und Code, den die Erstfassung als Quelle aller Lücken benannte, ist für die Tag-Kette und ganz Phase 2 geschlossen.**
+**Der Abstand zwischen Entwurf und Code, den die Erstfassung als Quelle aller Lücken benannte, ist geschlossen.** Phase 1, 2 und 3 stehen, und zwar gleichlautend an allen vier Orten: auf Platte, in der lokalen Datenbank, in der Cloud und in der Auslieferung.
 
-Die Erstfassung hielt fest: `git diff master designplan -- . ':(exclude)docs'` war **leer** — 29 Commits, keine Zeile Code, auf Platte endete es bei `0021_fallback_inhalte.sql`. Zwei Sessions später liegen **zehn weitere Migrationen** (`0022`–`0031`), die Fachschicht dazu, fünf neue Portalseiten und zehn neue Testdateien. Was in Abschnitt 3 als *„entworfen, aber nicht gebaut"* stand, ist zur Hälfte abgeräumt.
+Die Erstfassung hielt fest: `git diff master designplan -- . ':(exclude)docs'` war **leer** — 29 Commits, keine Zeile Code, auf Platte endete es bei `0021_fallback_inhalte.sql`. Drei Sessions später liegen **dreizehn weitere Migrationen** (`0022`–`0034`), die Fachschicht dazu, der ganze Gang durch die Halle, Einstellungen und Überblick — und 41 Integrationsdateien statt 27.
 
-Das Ungleichgewicht aus der Erstfassung bleibt trotzdem bestehen, nur verschoben: **das Portal hat jetzt sein Backend fast beisammen und keine Gestaltung; die Member-App hat ihr Backend und keine Zeile Code.**
+Das Ungleichgewicht aus der Erstfassung hat sich verschoben, aber nicht aufgelöst: **das Portal ist funktional vollständig und ungestaltet; die Member-App hat ihr Backend und keine Zeile Code.**
 
 ---
 
@@ -40,7 +40,7 @@ Das Ungleichgewicht aus der Erstfassung bleibt trotzdem bestehen, nur verschoben
 | Bereich | Stand |
 | --- | --- |
 | Monorepo, CI, Vercel (`gymodo-web.vercel.app`), AASA-Route | ✅ |
-| Migrationen `0001`–`0031`, RLS mit Positiv-, Negativ- und Cross-Tenant-Test je Policy | ✅ |
+| Migrationen `0001`–`0034`, RLS mit Positiv-, Negativ- und Cross-Tenant-Test je Policy | ✅ |
 | Gerätekatalog — `equipment_models`, `equipment_setting_definitions`, `exercises`, `instruction_assets`, `machines`, `machine_tags` | ✅ |
 | Trainingsdaten — `workout_sessions`, `workout_sets`, `member_machine_calibrations`, `progression_suggestions` | ✅ |
 | Fachschicht `@fitretro/domain`, inkl. deterministischer Progressionsregel | ✅ |
@@ -51,7 +51,9 @@ Das Ungleichgewicht aus der Erstfassung bleibt trotzdem bestehen, nur verschoben
 | Trainerportal: Geräte, Modelle, Tags, Medien-Upload, Leute | ✅ funktional, **ungestaltet** |
 | Betriebswerkzeug: `pnpm smoke:web`, `pnpm smoke:migrations` | ✅ neu, siehe 4a/4c |
 | **Studio-Einstellungen und Datenschutzgrenze** — Stornofrist, Speicherrecht mit Spaltengrenze, vier Policies ohne Staff-Klausel, `studio_overview` | ✅ neu |
-| Testlage: **40** Integrationsdateien, **6** E2E-Dateien (vor diesem Zweig 36 / 5) | ✅ grün |
+| **Einrichtung am Gerät** — der sechsschrittige Gang auf 390 px, Route-Gruppe `(schreibtisch)`, Upload-Warteschlange über Geräte hinweg, Tag ersetzen | ✅ neu, **ohne den Sucher** |
+| Testlage: **41** Integrationsdateien (461 Tests), **7** E2E-Dateien (26 Tests), 85 Unit-Tests | ✅ grün |
+| Produktion — `0001`–`0034` angewendet, `master` ausgeliefert, `smoke:web` bestanden | ✅ **3. September**, siehe 4f |
 
 **Der Kassensturz aus `2026-08-31-trainerportal-struktur-design.md` §7 ist überholt.** Er nannte den Gerätekatalog als einzigen vollständig tragenden Bereich; das gilt nicht mehr. Die Tag-Kette trägt vom Herstellungslos bis zum Scan vor dem Gerät, und von den vier dort als „am weitesten offen" bezeichneten Punkten sind jetzt alle vier zu (Leute, Auth, Studio-Einstellungen, Datenschutzgrenze).
 
@@ -59,7 +61,7 @@ Das Ungleichgewicht aus der Erstfassung bleibt trotzdem bestehen, nur verschoben
 
 ## 3. Was entworfen, aber nicht gebaut ist
 
-73 Artboards (34 Member, 39 Portal) und fünf Specs stehen. Dahinter:
+73 Artboards (34 Member, 39 Portal) und sieben Specs stehen. Dahinter:
 
 | Baustelle | Migrationen | Umsetzungsplan | Gebaut |
 | --- | --- | --- | --- |
@@ -79,7 +81,7 @@ Das Ungleichgewicht aus der Erstfassung bleibt trotzdem bestehen, nur verschoben
 Die Erstfassung nannte vier. Alle vier sind zu:
 
 - ~~**Leute:**~~ `memberships_select_own` erlaubte genau die *eigene* Zeile — ein Trainer konnte seine Mitgliederliste nicht einmal lesen. `0031` legt die vier Policies nach (`memberships_select_staff`, `_update_staff`, `_delete_staff`, dazu `list_studio_members` für die E-Mail-Adresse, die außerhalb der `public`-Policies liegt). Die Inhaberzeile ist über alle drei Pfade unerreichbar — die Regel *„niemand entzieht sich die letzte Inhaberrolle"* ist damit von der Policy erzwungen, nicht von einer Zählfunktion.
-- ~~**Auth:**~~ `signInWithPassword` steht, dazu Registrierung, Bestätigung, Passwort vergessen und zurücksetzen. **Neuer Befund dazu:** `auth_leaked_password_protection` ist im Projekt **aus**. Solange nur OTP lief, war die Einstellung gegenstandslos; mit Passwörtern ist sie es nicht mehr. Ein Haken im Dashboard (Authentication → Policies), kein Code — aber er gehört gesetzt, bevor der erste Betreiber sich anmeldet.
+- ~~**Auth:**~~ `signInWithPassword` steht, dazu Registrierung, Bestätigung, Passwort vergessen und zurücksetzen. `auth_leaked_password_protection` war zunächst aus — solange nur OTP lief, war die Einstellung gegenstandslos, mit Passwörtern nicht mehr. **Am 2. September eingeschaltet.**
 - ~~**Studio-Einstellungen:**~~ `studios` hatte `studios_select` und keine Spalte für die Stornofrist — Speichern war nicht möglich. `0032` legt `cancellation_deadline_hours` an (Vorgabe 2 Stunden, Bereich 0–168) und zieht das Spaltenrecht auf `join_code` aus `authenticated` ab; der Reiter *Studio* unter `/einstellungen` speichert Name, Zeitzone und Frist.
 - ~~**Datenschutzgrenze:**~~ `0033` nimmt vier Policies (`workout_sessions`, `workout_sets`, `member_machine_calibrations`, `progression_suggestions`) die Staff-Klausel — Personal kommt an kein einzelnes Trainingsdatum eines Mitglieds mehr heran. `0034` liefert mit `studio_overview` die einzige verbliebene Stelle, ausschließlich als Summen, ohne Aufschlüsselung je Gerät unterhalb von fünf aktiven Mitgliedern.
 
@@ -231,7 +233,7 @@ Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Da
 - [x] **`supabase db push`** — zehn Migrationen nachgezogen, lokal und Cloud standen auf `0021` (Abschnitt 4c)
 - [x] **Zweite Drift geschlossen** — `0022`–`0031` angewendet, Gleichstand über 31 Einträge (Abschnitt 4d)
 - [x] **Dritte Drift geschlossen** — `0032`–`0034` lagen nur in der lokalen Datenbank und auf einem unvermergten Worktree; zusammengeführt und in die Cloud nachgezogen, Gleichstand über 34 Einträge (Abschnitte 4e und 4f)
-- [ ] **`auth_leaked_password_protection` einschalten** — seit der Passwort-Umstellung fällig, ein Haken im Dashboard
+- [x] **`auth_leaked_password_protection` eingeschaltet** — am 2. September, seit der Passwort-Umstellung fällig
 - [ ] **Mac-Übernahme:** wann — und wird vorher NFC oder QR entschieden
 - [ ] **Kurse:** Teil von M2 oder vertagt (der größte ungeplante Brocken)
 
@@ -289,24 +291,27 @@ Die 39 Artboards gestalterisch umsetzen. Kommt zuletzt, weil erst dann feststeht
 
 ### Phase 6 — iOS auf dem Mac
 
-M0 Task 7 und 8, danach die 34 Member-Artboards. **Kann ab sofort parallel laufen** — das Backend der Member-App steht vollständig, und Phase 1 ist zu.
+M0 Task 7 und 8, danach die 34 Member-Artboards. **Der einzige Strang, der jetzt noch wirklich parallel laufen kann** — das Backend der Member-App steht vollständig, und alles, was das Portal betrifft, fasst dieselben Seiten an.
 
 ### Was parallel geht und was nicht
 
-Nach Phase 1 und dem Abschluss von Phase 2 zerfällt die Arbeit in zwei Stränge, die einander nicht berühren:
+Mit dem Abschluss von Phase 3 ist die Aufteilung in Stränge weitgehend hinfällig — es bleibt einer:
 
 | Strang | Inhalt | Berührt |
 | --- | --- | --- |
-| **B** | Phase 3 — Einrichtung am Gerät samt Sucher | eigene Telefonseiten |
-| **C** | Phase 6 — iOS | eigenes Repo-Verzeichnis, blockiert nur durch Hardware |
+| **C** | Phase 6 — iOS | eigenes Repo-Verzeichnis, blockiert nur durch Hardware (Blocker 2 und 3) |
 
-**Nicht parallel:** Phase 5 gegen B — beide fassen dieselben Portalseiten an. Und Phase 4 (Kurse) sollte warten: sie braucht zuerst eine Entwurfsrunde, und die ist nach der Lehre aus Abschnitt 7 erst dann fällig, wenn der Abstand zwischen Entwurf und Code wieder klein ist.
+Alles Übrige hängt an derselben Oberfläche und läuft deshalb nacheinander:
+
+- **9b, der Sucher** sitzt mitten in Schritt 4 des Gangs. Klein, aber er braucht ein echtes Telefon über HTTPS — `getUserMedia` verlangt einen sicheren Kontext, eine LAN-Adresse zählt nicht.
+- **Phase 5** gestaltet die Portalseiten, die Phase 2 und 3 gerade funktional gemacht haben. Erst jetzt steht fest, welche es überhaupt gibt.
+- **Phase 4 (Kurse)** braucht zuerst eine Entwurfsrunde. Nach der Lehre aus Abschnitt 7 ist die erst fällig, wenn der Abstand zwischen Entwurf und Code klein ist — das ist er heute, also ist sie fällig.
 
 ---
 
 ## 6. Offene Entscheidungen, gesammelt
 
-Verstreut über fünf Specs, hier einmal an einem Ort. Jede bleibt in ihrem Ursprungsdokument gültig; das hier ist der Index.
+Verstreut über sieben Specs und drei Umsetzungspläne, hier einmal an einem Ort. Jede bleibt in ihrem Ursprungsdokument gültig; das hier ist der Index.
 
 | Punkt | Wo | Blockiert |
 | --- | --- | --- |
@@ -319,12 +324,16 @@ Verstreut über fünf Specs, hier einmal an einem Ort. Jede bleibt in ihrem Ursp
 | `replaced` ist unbenutzt — Weg geben oder streichen | tag-lieferung §10 | nichts |
 | Kein Weg zurück in die Halde | tag-lieferung §10 | nichts |
 | Mindestzahl für die Aufschlüsselung im Überblick — auf 5 gesetzt, vor dem ersten echten Mitglied zu prüfen | 0034, Spec §4 | nichts |
-| Nachrück-Benachrichtigung — Push gibt es nicht | trainerportal-struktur §8 | Phase 3 |
+| Nachrück-Benachrichtigung — Push gibt es nicht | trainerportal-struktur §8 | Phase 4 (Kurse) |
 | Kursvideo | trainerportal-struktur §8 | vertagt, nicht verworfen |
 | Studiogründung gibt es bewusst nicht | trainerportal-struktur §8 | den zweiten Betreiber |
 | Nummernvergabe — soll das Portal `machines.label` erzwingen | einrichtung §7 | nichts, Entwurf sagt nein |
 | Leerer Vorrat mitten in der Halle — kein Bestellweg | einrichtung §7, tag-lieferung §8 | nichts |
 | Videoupload vom Trainerhandy ist nie an einem echten Gerät gelaufen | trainerportal-medien, Verifikation | den ersten Betreibertermin |
+| **Der Sucher ist nie an einem echten Telefon gelaufen** — 9b ist nicht gebaut, und die Handprüfung braucht HTTPS | einrichtung-am-geraet §5, Plan Aufgabe 9b | den Gang in der Halle: bis dahin werden 22 Zeichen abgetippt |
+| **Probe-Scan auf der Fertig-Seite** — er bräuchte den Klartext-Token, den `0026` dem Portal entzieht. Aufzulösen mit einer `security definer`-Funktion je Gerät oder einer Fallback-Seite über die Geräte-ID | einrichtung-am-geraet, Plan Aufgabe 12 | dem Trainer den Blick auf das, was ein Mitglied sieht |
+| **Vier Funktionen ohne gesetzten `search_path`** — `set_updated_at`, `is_valid_setting_choices`, `storage_studio_id`, `generate_join_code`; das Projekt setzt ihn sonst überall | Sicherheitsbefund 3. September, Abschnitt 4f | nichts, aber uneins mit der eigenen Gewohnheit |
+| **`rls-workout-sessions` ist sporadisch rot** — der Test setzt `completed_at` aus der Node-Uhr gegen `started_at` aus der Datenbank | Bestand, vor allen drei Phasen | nichts, aber es verrauscht jede Abnahme |
 
 ---
 
@@ -334,11 +343,17 @@ Verstreut über fünf Specs, hier einmal an einem Ort. Jede bleibt in ihrem Ursp
 
 > Der Bruch lag nicht zwischen den Runden, sondern in der Lücke, die beide für die jeweils andere offen gelassen haben.
 
-**Der Abstand zwischen Entwurf und Code ist die Quelle dieser Lücken.** Er war auf 29 Commits gewachsen. Phase 1 hat ihn für die Tag-Kette geschlossen, Phase 2 zur Hälfte für das Portal-Backend.
+**Der Abstand zwischen Entwurf und Code ist die Quelle dieser Lücken.** Er war auf 29 Commits gewachsen. Phase 1 hat ihn für die Tag-Kette geschlossen, Phase 2 für das Portal-Backend, Phase 3 für den Gang durch die Halle. Heute ist er null — und das ist der Moment, in dem die nächste Entwurfsrunde fällig wird, nicht später.
 
-**Was die Erstfassung nicht vorhersah:** dass Auth und Leute *ohne* Umsetzungsplan gebaut werden würden — direkt aus Spec und Artboards. Es ist gutgegangen, und der Grund ist nicht Glück: beide Abschnitte waren eng umrissen (eine Migration, eine Seite, ein E2E-Gang) und hatten fertige Artboards, an denen sich jede Entscheidung ablesen ließ. Für Phase 3 gilt das nicht — sechzehn Bildschirme, ein Sucher und ein Gang, der über mehrere Sitzungen trägt. Dort ist der Plan keine Formalie.
+**Was die Erstfassung nicht vorhersah:** dass Auth und Leute *ohne* Umsetzungsplan gebaut werden würden — direkt aus Spec und Artboards. Es ist gutgegangen, und der Grund ist nicht Glück: beide Abschnitte waren eng umrissen (eine Migration, eine Seite, ein E2E-Gang) und hatten fertige Artboards, an denen sich jede Entscheidung ablesen ließ.
 
-**Und ein zweiter Abstand ist dazugekommen:** der zwischen Platte und Cloud. Er hat sich am 1. September auf zehn Migrationen aufgebaut und am 2. September gleich noch einmal (Abschnitt 4c und 4d). Beide Male hat nichts ihn gemeldet, weil nichts ihn melden konnte — bis `pnpm smoke:migrations` entstand. Dass der jetzt auf dieser Maschine selbst am Netz scheitert, ist die nächste offene Kante.
+**Für Phase 3 galt das nicht, und die Vorhersage hat sich bestätigt.** Sechzehn Bildschirme, dreizehn Aufgaben, und der Plan hat unterwegs vier Dinge gefangen, die ohne ihn erst am Betreibertermin aufgefallen wären: der Absturz von `stripImageMetadata` an jedem echten Foto, die 1-MB-Grenze der Server Actions, der Probe-Scan, der an den Spaltenrechten aus `0026` scheitert, und die Frage, ob das Ersetzen eines Tags den alten sperrt. Drei davon standen im Plan, bevor eine Zeile Code entstand.
+
+**Und ein zweiter Abstand ist dazugekommen:** der zwischen Platte und Datenbank. Dreimal in drei Tagen — 4c, 4d, 4e — und beim dritten Mal in die andere Richtung.
+
+Das ist die eigentliche Lehre dieses Dokuments, und sie hat gedreht. Aus 4c und 4d ließ sich der Reflex ableiten *„die Datenbank ist hinten, zieh sie nach"*. In 4e war sie **vorn**: drei Migrationen waren angewendet, standen aber nur auf einem unvermergten Worktree. Derselbe Reflex hätte sie gelöscht. Vor jedem `supabase db reset` gehört deshalb die Frage: **ist die Datenbank hinten oder vorn?** — und die beantwortet ein Blick in `supabase_migrations.schema_migrations`, nicht das Gefühl.
+
+Zwei Werkzeuge dazu, beide mit ihrer Grenze: `pnpm smoke:migrations` scheitert auf dieser Maschine am Netz und meldet dann sauber `exit 2` statt `exit 1` — *kaputt* ist nicht *auseinander*. Und die mitgeschriebenen Anweisungen im Migrationsverzeichnis haben die drei verschollenen Migrationen überhaupt erst rekonstruierbar gemacht, tragen aber im Fall `0034` eine ältere Fassung als die laufende Funktion. Rettungsleine ja, Zeuge nein.
 
 ---
 
