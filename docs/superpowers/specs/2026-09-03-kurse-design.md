@@ -115,9 +115,23 @@ Dieselbe Begründung steht wörtlich in `0030`:
 
 ### Stornieren nimmt dieselbe Sperre
 
-Das ist der Teil, den man beim ersten Entwurf übersieht. Wenn Anmelden sperrt, Stornieren aber nicht, dann können eine Stornierung und eine Anmeldung gleichzeitig zu dem Schluss kommen, es sei ein Platz frei — und der Platz wird zweimal vergeben, einmal an die Anmeldung und einmal an die nachrückende Person von der Warteliste.
+Das ist der Teil, den man beim ersten Entwurf übersieht — und die erste Fassung dieses Abschnitts hat ihn falsch begründet. Der Fehler ist beim Bauen aufgefallen, an der Gegenprobe, und die Berichtigung steht hier, weil eine falsche Begründung an der tragenden Stelle schlimmer ist als keine.
 
-`cancel_course_booking` fasst deshalb als Erstes dieselbe Zeile in `course_sessions` mit `for update` an, bevor es irgendetwas liest. **Stornieren und Nachrücken passieren im selben gesperrten Abschnitt.**
+**Was hier ursprünglich stand:** eine Stornierung und eine Anmeldung könnten gleichzeitig zu dem Schluss kommen, es sei ein Platz frei, und der Platz werde zweimal vergeben.
+
+**Das kann nicht passieren, und der Grund steht im Entwurf selbst.** Stornieren und Nachrücken liegen in *derselben* Transaktion. Der Zustand „Platz frei, noch niemand nachgerückt" wird deshalb nie festgeschrieben — er existiert nur innerhalb der offenen Transaktion, und kein anderer sieht ihn. Ein gleichzeitiger Bucher sieht entweder den Stand davor (Platz belegt, er landet auf der Warteliste) oder den vollständigen Stand danach (Platz schon nachbesetzt, oder wirklich frei). Beides ist richtig.
+
+**Gebraucht wird die Sperre trotzdem — gegen zwei gleichzeitige Stornierungen.**
+
+Ohne sie laufen zwei Stornierungen auf demselben Termin vollständig nebeneinander. Jede storniert ihre eigene Buchung, jede zählt, und jede sucht „die erste Wartende". Keine sieht das Nachrücken der anderen, also **wählen beide dieselbe Person.** Die zweite blockiert an deren Zeilensperre und schreibt danach dieselbe Person ein zweites Mal auf `booked` — der Verweis in ihrer Unterabfrage steht da schon fest.
+
+Das Ergebnis bei zwei Stornierungen und zwei Wartenden: **eine rückt nach, die zweite bleibt liegen, obwohl ein Platz frei ist.**
+
+Der Fehler ist damit Unterbelegung und ein verlorener Platz, nicht Doppelvergabe. Weniger schlimm, als die erste Fassung behauptet hat — aber echt, und für die Person, die zu Unrecht weiter wartet, nicht folgenlos.
+
+`cancel_course_booking` fasst deshalb als Erstes dieselbe Zeile in `course_sessions` mit `for update` an, bevor es irgendetwas liest. Die zweite Stornierung wartet damit auf die vollständige erste und sieht deren Nachrücken, bevor sie ihre eigene Wahl trifft. **Stornieren und Nachrücken passieren im selben gesperrten Abschnitt.**
+
+**Und daraus folgt, wie der Test aussehen muss.** Ein Test, der eine Stornierung gegen eine Anmeldung laufen lässt, kann diese Sperre nicht prüfen — er wird auch ohne sie grün, weil die Atomarität das Ergebnis ohnehin trägt. Geprüft wird mit *mehreren gleichzeitigen Stornierungen* auf einem Termin mit ebenso vielen Wartenden: danach müssen ebenso viele **verschiedene** Personen nachgerückt sein. Genau das hat die Gegenprobe belegt.
 
 ---
 
@@ -457,7 +471,8 @@ DELETE /api/v1/course-sessions/{id}/booking   → cancel_course_booking
 | --- | --- |
 | **RLS-Matrix** | je Policy positiv, negativ, cross-tenant — `course_templates` (select/insert/update), `course_sessions` (select/insert/update), `course_bookings` (select) |
 | **Die Abwesenheit** | ein Mitglied kann nicht direkt in `course_bookings` schreiben, ändern oder löschen |
-| **Nebenläufigkeit** | mehrere gleichzeitige `book_course_session` auf den letzten Platz → genau eine `booked`, die übrigen `waitlisted` mit lückenloser Reihenfolge |
+| **Nebenläufigkeit, Anmelden** | mehrere gleichzeitige `book_course_session` auf den letzten Platz → genau eine `booked`, die übrigen `waitlisted` mit lückenloser Reihenfolge |
+| **Nebenläufigkeit, Stornieren** | *n* gleichzeitige `cancel_course_booking` bei *n* Wartenden → *n* **verschiedene** Personen nachgerückt. Das ist der Test, der die Sperre im Stornieren prüft; siehe §2 |
 | **Idempotenz** | derselbe `PUT` zweimal → eine Buchung; andere `p_booking_id`, gleicher Nutzer → dieselbe Buchung |
 | **Frist** | Mitglied nach Frist abgewiesen, vor Frist durchgelassen; Warteliste ohne Frist; Personal ohne Frist |
 | **Nachrücken** | die erste Wartende rückt nach und bekommt `promoted_at`; nicht in einen abgesagten, nicht in einen vergangenen Termin |
@@ -465,7 +480,9 @@ DELETE /api/v1/course-sessions/{id}/booking   → cancel_course_booking
 | **Serie** | *n* Termine mit den Werten der Vorlage; eine spätere Änderung der Vorlage lässt sie unberührt |
 | **E2E** | ein Gang durch das Portal: Vorlage anlegen, Serie anlegen, Termin öffnen, absagen |
 
-**Der Nebenläufigkeitstest läuft über echte parallele Verbindungen**, nicht über nacheinander abgesetzte Aufrufe. Nacheinander abgesetzt prüft er nichts — er bestätigt dann nur, dass Zählen und Schreiben in Reihe funktioniert, und das war nie die Frage. Er ist der einzige Test dieses Bauabschnitts, der bei falscher Bauweise trotzdem grün wird, und deshalb steht seine Bauart hier und nicht nur im Plan.
+**Die Nebenläufigkeitstests laufen über echte parallele Verbindungen**, nicht über nacheinander abgesetzte Aufrufe. Nacheinander abgesetzt prüfen sie nichts — sie bestätigen dann nur, dass Zählen und Schreiben in Reihe funktioniert, und das war nie die Frage. Es sind die einzigen Tests dieses Bauabschnitts, die bei falscher Bauweise trotzdem grün werden, und deshalb steht ihre Bauart hier und nicht nur im Plan.
+
+**Und deshalb gehört zu jedem von beiden eine Gegenprobe:** die Sperre wird vorübergehend entfernt, der Test läuft, und er muss rot werden. Ein Nebenläufigkeitstest, den niemand je hat scheitern sehen, ist eine Behauptung. Beim Anmelden hat die Gegenprobe beim ersten Anlauf gegriffen — ohne `for update` bekamen drei von zehn gleichzeitigen Anmeldungen einen Platz. Beim Stornieren hat sie den ersten Testentwurf widerlegt und damit den Fehler in §2 aufgedeckt; das ist der Ertrag, den ein Schritt bringt, der keinen bleibenden Code schreibt.
 
 ---
 
