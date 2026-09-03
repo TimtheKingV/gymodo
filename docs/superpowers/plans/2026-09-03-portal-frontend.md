@@ -650,7 +650,9 @@ import styles from "./bausteine.module.css";
  * Navigationen tragen (Rail und Reiter), und "Navigation" zweimal ist
  * keine Auskunft.
  *
- * `zusatz` traegt den Zustand in der Beschriftung ("2 · 1 mit Video").
+ * `zusatz` traegt den Zustand in der Beschriftung ("2 · 1 mit Video") --
+ * als eigene Zeile unter dem Label, 12 px in text-faint mit 2 px Abstand.
+ * Dasselbe Muster wie .rowMeta und .navItemMeta.
  */
 export function Reiter({
   name,
@@ -668,7 +670,10 @@ export function Reiter({
           className={eintrag.aktiv ? `${styles.reiterEintrag} ${styles.reiterAktiv}` : styles.reiterEintrag}
           aria-current={eintrag.aktiv ? "page" : undefined}
         >
-          {eintrag.label}
+          {/* Beschriftung und Zustand als Bloecke uebereinander, nicht
+              nebeneinander -- so zeichnet es Modell.dc.html, und so macht
+              es Rail.tsx mit .navItemTitle/.navItemMeta schon. */}
+          <span className={styles.reiterLabel}>{eintrag.label}</span>
           {eintrag.zusatz ? <span className={styles.reiterZusatz}>{eintrag.zusatz}</span> : null}
         </Link>
       ))}
@@ -723,7 +728,7 @@ In `(schreibtisch)/layout.tsx`:
 <main className={styles.content}>{children}</main>
 ```
 
-Und darunter fällt **jede** Hülle mit `styles.content` weg — auch die, die `<div>` statt `<main>` sind. Das sind zwölf Stellen in neun Dateien:
+Und darunter fällt **jede** Hülle mit `styles.content` weg — auch die, die `<div>` statt `<main>` sind. Das sind zwölf Stellen in acht Dateien:
 
 | Datei | Stellen | Element heute |
 | --- | --- | --- |
