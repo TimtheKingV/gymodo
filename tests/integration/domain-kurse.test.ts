@@ -321,6 +321,35 @@ describe("Termine und die Serie", () => {
     );
     expect(woche.sessions.find((s) => s.sessionId === terminId)!.status).toBe("cancelled");
   });
+
+  it("ein unbrauchbares Wiederholungsende wird abgewiesen, statt tief in der Rechnung abzustuerzen", async () => {
+    const client = await userClient(trainerEmail);
+    const vorlageId = await createCourseTemplate(client, studioId, {
+      name: "Kaputtes Ende",
+      description: null,
+      defaultDurationMin: 60,
+      defaultCapacity: 8,
+      defaultInstructorUserId: null,
+      defaultInstructorName: null,
+    });
+
+    await expect(
+      createCourseSessions(
+        client,
+        studioId,
+        {
+          templateId: vorlageId,
+          startsAt: "2026-11-05T17:00:00.000Z",
+          durationMin: 60,
+          capacity: 8,
+          room: null,
+          instructorUserId: null,
+          instructorName: null,
+        },
+        "kein Datum",
+      ),
+    ).rejects.toMatchObject({ code: "validation_failed" });
+  });
 });
 
 describe("Buchen und Stornieren durch die Fachschicht", () => {

@@ -243,6 +243,17 @@ const terminSchema = z.object({
 export type CourseSessionInput = z.infer<typeof terminSchema>;
 
 /**
+ * Auch das Ende der Serie ist eine Systemgrenze. Ohne diese Pruefung
+ * ginge ein unbrauchbarer Wert bis in serienTermine durch und
+ * Intl.DateTimeFormat wuerfe dort einen rohen RangeError -- ein
+ * Absturz statt eines Satzes, den ein Mensch lesen kann.
+ */
+const wiederholungSchema = z
+  .string()
+  .datetime({ offset: true, message: "Das Ende der Wiederholung ist kein gültiger Zeitpunkt." })
+  .nullable();
+
+/**
  * Legt einen Termin an -- oder eine ausgeschriebene woechentliche Serie
  * bis einschliesslich `wiederholungBis`.
  *
@@ -267,6 +278,10 @@ export async function createCourseSessions(
   if (!geprueft.success) {
     throw new DomainError("validation_failed", geprueft.error.issues[0]!.message);
   }
+  const wiederholungGeprueft = wiederholungSchema.safeParse(wiederholungBis);
+  if (!wiederholungGeprueft.success) {
+    throw new DomainError("validation_failed", wiederholungGeprueft.error.issues[0]!.message);
+  }
   await pruefeTrainerZuordnung(client, studioId, geprueft.data.instructorUserId);
 
   const { data: studio, error: studioFehler } = await client
@@ -279,9 +294,9 @@ export async function createCourseSessions(
 
   const start = new Date(geprueft.data.startsAt);
   const zeitpunkte =
-    wiederholungBis === null
+    wiederholungGeprueft.data === null
       ? [start]
-      : serienTermine(start, new Date(wiederholungBis), studio.timezone);
+      : serienTermine(start, new Date(wiederholungGeprueft.data), studio.timezone);
 
   const { data, error } = await client
     .from("course_sessions")
