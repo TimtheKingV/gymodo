@@ -3090,12 +3090,16 @@ git commit -m "feat(web): Schritt 3 -- Geraet mit vorgeschlagener Nummer und Sta
 
 > **Aufgeteilt am 2. September, auf Ansage.** Die Kamera wird später gebaut.
 >
-> - **9a — der Tag-Schritt ohne Kamera.** Kleben, Token eintippen, Befund, Verbinden. Enthält die beiden Actions `tagPruefen` und `tagVerbinden` und die ganze Antworttabelle. **Gebaut.**
-> - **9b — der Sucher.** `getUserMedia` plus `jsQR`, davorgeschaltet. **Offen.**
+> - **9a — der Tag-Schritt ohne Kamera.** Kleben, Token eintippen, Befund, Verbinden. Enthält die beiden Actions `tagPruefen` und `tagVerbinden` und die ganze Antworttabelle. **Gebaut am 2. September.**
+> - **9b — der Sucher.** `getUserMedia` plus `jsQR`, davorgeschaltet. **Gebaut am 3. September.** Die Handprüfung am echten Telefon steht noch aus — sie ist der einzige Punkt des ganzen Plans, den kein Test abnimmt.
 >
 > Die Teilung kostet nichts, weil die Spec sie schon vorsieht. §7: *„Der umgebaute `TagZuweisen` ist ein Feld zum Eintippen des Tokens auf derselben Funktion — der Rückfallweg wird gebaut, bevor die Kamera überhaupt davorsteht."* Der Decoder liefert am Ende nur eine Zeichenkette an `parseTagScan` (Aufgabe 1) und von dort an `tagPruefen` — genau den Weg, den das Feld schon geht.
 >
-> **Was 9b noch braucht:** `pnpm --filter @fitretro/web add jsqr`, die Datei `Sucher.tsx`, ein Umschalten der Hauptaktion auf der Klebe-Ansicht von *„Tag prüfen"* auf *„Tag scannen"* — und die Handprüfung am echten Telefon (unten, ehemals Schritt 8). Solange 9b fehlt, ist das Token-Feld die Hauptaktion und nicht der Rückfallweg.
+> **Was 9b gebracht hat:** `jsqr@1.4.0` (reines JavaScript, eigene Typen, kein WASM), `Sucher.tsx` mit `getUserMedia` und einer `requestAnimationFrame`-Schleife, eine dritte Ansicht `scannen` in `TagSchritt`, und die Hauptaktion der Klebe-Ansicht heißt jetzt *„Tag scannen"* — das Token-Feld ist damit vom Regelfall zum Rückfallweg geworden, wie die Spec es vorsah.
+>
+> Die Tag-Route wächst dadurch von 3,3 auf **50,9 kB**; der Decoder liegt nur auf dieser einen Seite.
+>
+> **Was der E2E-Test prüft und was nicht:** dekodieren lässt sich ohne Kamera nichts, und die Zeichenkettenstrecke deckt `parseTagScan` ab (Aufgabe 1). Geprüft wird das Verhalten daneben — die verweigerte Kamera. Sie war laut Spec §7 der *„einzige Ausfallpunkt ohne Rückfallweg"*, und der Test führt den Gang von dort aus zu Ende: Feld, Prüfung, Verbinden.
 
 
 

@@ -51,6 +51,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.45.0
         version: 2.112.4
+      jsqr:
+        specifier: ^1.4.0
+        version: 1.4.0
       next:
         specifier: ^15.0.0
         version: 15.5.24(@playwright/test@1.62.1)(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -1021,6 +1024,9 @@ packages:
   js-base64@3.9.3:
     resolution: {integrity: sha512-uwYQp+VJ38FVvtim6qNbit6e9uT6dwWQ4Y1+H9TxhW5hcHjpHwoxlR0nMpqUmIFOmu4VqMxwdJA88gIVuZJQ/g==}
 
+  jsqr@1.4.0:
+    resolution: {integrity: sha512-dxLob7q65Xg2DvstYkRpkYtmKm2sPJ9oFhrhmudT1dZvNFFTlroai3AWSpLey/w5vMcLBXRgOJsbXpdN9HzU/A==}
+
   lodash._baseiteratee@4.7.0:
     resolution: {integrity: sha512-nqB9M+wITz0BX/Q2xg6fQ8mLkyfF7MU7eE+MNBNjTHFKeKaZAPEzEg+E8LWxKWf1DQVflNEn9N49yAuqKh2mWQ==}
 
@@ -1949,6 +1955,8 @@ snapshots:
   jose@6.2.10: {}
 
   js-base64@3.9.3: {}
+
+  jsqr@1.4.0: {}
 
   lodash._baseiteratee@4.7.0:
     dependencies:
