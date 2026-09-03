@@ -14,7 +14,7 @@ export default function NichtGefunden() {
     <Zustand
       art="leer"
       titel="Diese Seite gibt es nicht."
-      naechsterSchritt="Vielleicht wurde das Gerät stillgelegt oder das Studio gewechselt."
+      naechsterSchritt="Nutze die Navigation links, um zum Katalog zurück zu gehen."
     />
   );
 }

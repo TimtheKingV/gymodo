@@ -157,7 +157,10 @@ export default async function TagsPage({
   // "ohne Geraet"-Zeile, genau das, was der Vorrats-Absatz zwei Abschnitte
   // weiter unten als Laerm begruendet ("97 gleichlautende Zeilen waeren
   // keine Auskunft"). Der Abschnittsname sagt es selbst: VERGEBENE
-  // Geraete-Tags.
+  // Geraete-Tags. "replaced" wird heute nicht gesetzt (Gesamtfahrplan
+  // fuehrt ihn als unbenutzt, "Weg geben oder streichen") und faellt hier
+  // denselben Filter zum Opfer -- sollte ein Tag-Austausch-Workflow ihn je
+  // setzen, verschwuende der Tag kommentarlos aus dieser Liste.
   const geraeteTags = katalog.tags.filter(
     (tag) => tag.kind === "machine" && (tag.status === "active" || tag.status === "revoked"),
   );
@@ -215,7 +218,7 @@ export default async function TagsPage({
             <Zustand
               art="leer"
               titel="Keine Lieferung erfasst."
-              naechsterSchritt="Tags bestehen bereits -- der Lieferungseintrag dazu fehlt."
+              naechsterSchritt="Tags bestehen bereits — der Lieferungseintrag dazu fehlt."
             />
           )
         ) : (

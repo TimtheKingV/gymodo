@@ -3,16 +3,13 @@ import styles from "./bausteine.module.css";
 /**
  * Titel, Vorspann, Rumpf.
  *
- * Rendert bewusst KEIN <main>. Bis Aufgabe 4 rendert das Layout
- * <main>{children}</main> und vier Seiten darin noch ein eigenes --
- * (schreibtisch)/page.tsx, leute, einstellungen und einstellungen/konto
- * tragen damit zwei verschachtelte Hauptbereiche. Vier weitere haben an
- * derselben Stelle ein <div>, das denselben Innenabstand mitbringt und
- * ihn nach Aufgabe 4 verdoppeln wuerde.
- *
- * Die Landmarke gehoert dem Layout, weil es genau eine gibt und es genau
- * ein Layout gibt. Ein Baustein, der sie nicht mitbringt, macht beide
- * Fehler unmoeglich statt sie zu reparieren.
+ * Rendert bewusst KEIN <main>. Die Landmarke gehoert dem Layout, weil es
+ * genau eine gibt und es genau ein Layout gibt. Ein Baustein, der sie nicht
+ * mitbringt, macht beide Fehler unmoeglich statt sie zu reparieren. Vor
+ * Aufgabe 4 hatten vier Seiten darin ein eigenes <main>, das zwei
+ * verschachtelte Hauptbereiche erzeugte; heute traegt allein das Layout die
+ * Landmarke, und alle zwölf styles.content-Hüllen unter (schreibtisch)/
+ * sind weg.
  */
 export function Seite({
   titel,
