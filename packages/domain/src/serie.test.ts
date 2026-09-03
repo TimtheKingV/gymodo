@@ -40,6 +40,22 @@ describe("ortszeitZuInstant", () => {
       });
     }
   });
+
+  it("eine Wandzeit dicht vor der Umstellung braucht den zweiten Durchgang", () => {
+    // 25.10.2026, 01:30 Ortszeit Berlin: die Umstellung faellt an
+    // diesem Tag auf 03:00 MESZ -> 02:00 MEZ, also 01:00Z. 01:30 liegt
+    // davor und ist damit noch MESZ (UTC+2).
+    //
+    // Ein einziger Durchgang misst den Versatz am naiven Versuch
+    // 2026-10-25T01:30:00Z -- der liest sich in Berlin schon als 02:30
+    // MEZ, also +1h -- und laege mit 00:30Z eine Stunde daneben. Genau
+    // hier trennt sich Einpass von Zweipass.
+    const instant = ortszeitZuInstant(
+      { jahr: 2026, monat: 10, tag: 25, stunde: 1, minute: 30 },
+      BERLIN,
+    );
+    expect(instant.toISOString()).toBe("2026-10-24T23:30:00.000Z");
+  });
 });
 
 describe("serienTermine", () => {
@@ -103,6 +119,17 @@ describe("serienTermine", () => {
     for (const termin of termine) {
       expect(ortszeitTeile(termin, BERLIN).stunde).toBe(18);
     }
+
+    // Verankert an festen Zeitpunkten, nicht nur an der eigenen
+    // Rueckrechnung: 25.03. 18:00 ist MEZ, 01.04. 18:00 ist MESZ.
+    expect(termine[0]!.toISOString()).toBe("2027-03-25T17:00:00.000Z");
+    expect(termine[1]!.toISOString()).toBe("2027-04-01T16:00:00.000Z");
+
+    // Und im Fruehjahr verschwindet eine Stunde, statt dazuzukommen.
+    const abstaende = termine
+      .slice(1)
+      .map((t, i) => (t.getTime() - termine[i]!.getTime()) / 3_600_000);
+    expect(abstaende.filter((h) => h === 167)).toHaveLength(1);
   });
 
   it("ein Enddatum vor dem Start ergibt trotzdem den Starttermin", () => {
