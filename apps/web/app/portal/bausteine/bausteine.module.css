@@ -73,3 +73,162 @@
 .zustandAktion {
   margin-top: var(--s4);
 }
+
+/* Ab hier: die fuenf Bausteine der Anordnung (Seite, Abschnitt, Zeile,
+   Reiter, Kachel). Werte aus portal.module.css uebernommen -- dort ist die
+   Wertevorlage, hier nur die deutschen Klassennamen fuer die
+   allgemeinen Bausteine. */
+
+/* Seite: Titel und Vorspann. Werte wie .pageTitle / .pageLead. */
+.titel {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+}
+
+.vorspann {
+  color: var(--text-muted);
+  margin-top: var(--s8);
+  max-width: 62ch;
+}
+
+/* Abschnitt: gerahmte Karte mit Kopf und Rumpf. Werte wie .section /
+   .sectionHead / .sectionTitle / .sectionNote / .sectionBody. */
+.abschnitt {
+  margin-top: var(--s32);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.abschnittKopf {
+  padding: var(--s16) var(--s20);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s16);
+}
+
+.abschnittTitel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.abschnittNotiz {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.abschnittRumpf {
+  padding: var(--s20);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s16);
+}
+
+/* Zeile: <ul>/<li> statt <div>/<div> -- eine Liste von Geraeten ist eine
+   Liste, und ein Screenreader sagt dann "Liste mit 4 Eintraegen". Werte
+   wie .rows / .row / .rowMain / .rowTitle / .rowMeta / .rowActions. */
+.zeilen {
+  display: flex;
+  flex-direction: column;
+}
+
+.zeile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s16);
+  padding: var(--s12) var(--s20);
+  border-bottom: 1px solid var(--line);
+}
+
+.zeile:last-child {
+  border-bottom: none;
+}
+
+.zeileHaupt {
+  min-width: 0;
+}
+
+.zeileTitel {
+  font-weight: 600;
+}
+
+.zeileMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.zeileAktionen {
+  display: flex;
+  align-items: center;
+  gap: var(--s8);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* Reiter: Links auf eigene Routen, kein Umschalter im selben Dokument --
+   Begruendung in Reiter.tsx. Werte wie .tabs / .tab / .tabActive. */
+.reiter {
+  display: flex;
+  gap: var(--s4);
+  border-bottom: 1px solid var(--line);
+  margin-top: var(--s24);
+}
+
+.reiterEintrag {
+  padding: var(--s8) var(--s16);
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.reiterAktiv {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+/* zusatz steht in derselben Zeile wie das Label, nicht darunter -- er
+   traegt einen Zaehlstand ("2 · 1 mit Video"), keine eigene Zeile wert. */
+.reiterZusatz {
+  margin-left: var(--s8);
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+/* Kachel: Kennzahl gross, Beschriftung darunter. Werte wie .kacheln /
+   .kachel / .kachelZahl / .kachelLabel. */
+.kacheln {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s12);
+  margin-top: var(--s32);
+}
+
+.kachel {
+  padding: var(--s20) var(--s24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.kachelZahl {
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.kachelLabel {
+  margin-top: var(--s4);
+  color: var(--text-muted);
+}
