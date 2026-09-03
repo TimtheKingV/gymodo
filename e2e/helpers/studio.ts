@@ -10,12 +10,14 @@ export type Halle = {
 };
 
 /**
- * Ein Studio mit angemeldetem Trainer -- der Ausgangspunkt jedes Tests im
- * Gang. Ohne ihn baut jede Datei dieselben vierzig Zeilen noch einmal.
+ * Gemeinsamer Rumpf fuer die Rollen-Fixtures. `studioMitTrainer` und
+ * `studioMitMitglied` unterscheiden sich nur in der Rolle, die sie in
+ * `studio_memberships` eintragen -- keine zweite Kopie der vierzig Zeilen.
  */
-export async function studioMitTrainer(
+async function studioMitRolle(
   page: Page,
   praefix: string,
+  rolle: "trainer" | "member",
 ): Promise<Halle> {
   const admin = createClient(
     process.env.SUPABASE_URL!,
@@ -41,10 +43,33 @@ export async function studioMitTrainer(
     .insert({
       studio_id: studio.id,
       user_id: nutzer.user.id,
-      role: "trainer",
+      role: rolle,
     });
   if (mitgliedFehler) throw mitgliedFehler;
 
   await anmelden(page, email);
   return { admin, studioId: studio.id, email, userId: nutzer.user.id };
+}
+
+/**
+ * Ein Studio mit angemeldetem Trainer -- der Ausgangspunkt jedes Tests im
+ * Gang. Ohne ihn baut jede Datei dieselben vierzig Zeilen noch einmal.
+ */
+export async function studioMitTrainer(
+  page: Page,
+  praefix: string,
+): Promise<Halle> {
+  return await studioMitRolle(page, praefix, "trainer");
+}
+
+/**
+ * Ein Studio, in dem das angemeldete Konto einfaches Mitglied ist. Der
+ * Kein-Recht-Fall: die Rail steht, die Trainerseiten sagen einen Satz statt
+ * abzustuerzen.
+ */
+export async function studioMitMitglied(
+  page: Page,
+  praefix: string,
+): Promise<Halle> {
+  return await studioMitRolle(page, praefix, "member");
 }

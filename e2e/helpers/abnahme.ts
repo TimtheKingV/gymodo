@@ -1,0 +1,75 @@
+import type { Page } from "@playwright/test";
+
+/**
+ * Die drei Abnahmen, die keine Meinung brauchen. Aussehen testet kein Test
+ * -- aber ob es genau eine Hauptlandmarke gibt, wie viele Akzentflaechen
+ * auf dem Schirm stehen und ob man die Knoepfe trifft, ist zaehlbar.
+ */
+
+/** #d4ff3f, so wie getComputedStyle es zurueckgibt. */
+export const AKZENT = "rgb(212, 255, 63)";
+
+/**
+ * Genau eine erwartet. Zwei bedeuten verschachtelte <main> -- ein
+ * Screenreader zaehlt dann zwei Hauptbereiche und sagt bei "zum Hauptteil
+ * springen" nicht, welcher gemeint ist.
+ */
+export async function hauptlandmarken(page: Page): Promise<number> {
+  return await page.getByRole("main").count();
+}
+
+/**
+ * Elemente mit Akzent als FLAECHE. Raender zaehlen nicht: die aktive
+ * Rail-Zeile ist eine 2-px-Kante, der Fokusring ein outline, die
+ * Sucherecken sind Winkel. Flaeche ist Flaeche.
+ *
+ * Gibt Beschreibungen zurueck, keine Zahl -- bei "erwartet 1, waren 2"
+ * will man wissen, welche zwei.
+ */
+export async function akzentflaechen(page: Page): Promise<string[]> {
+  return await page.evaluate((akzent) => {
+    const treffer: string[] = [];
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>("*"))) {
+      if (getComputedStyle(el).backgroundColor !== akzent) continue;
+      const kasten = el.getBoundingClientRect();
+      if (kasten.width === 0 || kasten.height === 0) continue;
+      const text = (el.textContent ?? "").trim().slice(0, 40);
+      treffer.push(`${el.tagName.toLowerCase()}${text ? ` "${text}"` : ""}`);
+    }
+    return treffer;
+  }, AKZENT);
+}
+
+/**
+ * Sichtbare Bedienelemente, die niedriger sind als verlangt.
+ *
+ * Die Mindesthoehe ist ein Parameter, kein fester Wert. Die Global
+ * Constraints sagten im selben Satz "Trefferflaechen >= 44 px" und
+ * "Nebenaktion 40 px"; entschieden ist: am Schreibtisch gelten 40 px fuer
+ * Nebenaktion und zerstoerende Aktion, 44 px fuer Hauptaktion und
+ * Eingabefeld. Die Halle unter einrichten/ hat eigene, groessere Masse
+ * (Hauptaktion 56, Nebenaktion 48, Feld 52) und wird gegen die geprueft --
+ * deshalb ein Parameter und keine Konstante.
+ *
+ * Textlinks im Fliesstext sind ausgenommen -- ein Link mitten in einem Satz
+ * kann keine 44 px hoch sein, ohne die Zeile aufzureissen.
+ */
+export async function zuKleineBedienelemente(
+  page: Page,
+  mindestHoehe: number,
+): Promise<string[]> {
+  const auswahl = 'button, [role="button"], input:not([type="hidden"]), select, textarea';
+  const elemente = await page.locator(auswahl).all();
+  const zuKlein: string[] = [];
+
+  for (const element of elemente) {
+    if (!(await element.isVisible())) continue;
+    const kasten = await element.boundingBox();
+    if (!kasten) continue;
+    if (kasten.height + 0.5 < mindestHoehe) {
+      const text = ((await element.textContent()) ?? "").trim().slice(0, 40);
+      zuKlein.push(`${text || "(ohne Text)"} — ${Math.round(kasten.height)} px`);
+    }
+  }
+  return zuKlein;
+}
