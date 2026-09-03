@@ -243,7 +243,7 @@ Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Da
 
 - [x] **SMTP:** Supabase Pro, entschieden und gebucht 1. September (Organisation `Gymodo`)
 - [x] **`magic_link`-Vorlage ins Projekt gepusht** (1. September), per leerem Folge-Diff belegt
-- [ ] **`recovery`- und `confirmation`-Vorlage nachziehen** — sie kamen erst mit `6a1fffb` am 2. September dazu und stehen seither nur auf Platte; bis dahin verschickt die Produktion Supabases Standardmail mit Link statt Code (Abschnitt 4g)
+- [x] **`recovery`- und `confirmation`-Vorlage gepusht** (3. September), per leerem Folge-Diff belegt — der Push ersetzte in beiden Supabases englische Standardmail mit `{{ .ConfirmationURL }}` durch die eigene mit `{{ .Token }}`. Nebenwirkung, die der Plan nicht vorhergesehen hatte: dieselbe `[auth]`-Sektion hob `minimum_password_length` von 6 auf 10 — der Wert steht so in `config.toml`, die Cloud stand noch auf der Voreinstellung.
 - [x] **Echte OTP-Mail mit sechsstelligem Code angekommen** — Blocker 1 ist zu
 - [x] **`supabase db push`** — zehn Migrationen nachgezogen, lokal und Cloud standen auf `0021` (Abschnitt 4c)
 - [x] **Zweite Drift geschlossen** — `0022`–`0031` angewendet, Gleichstand über 31 Einträge (Abschnitt 4d)
