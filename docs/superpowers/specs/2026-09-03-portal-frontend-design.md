@@ -185,7 +185,13 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 
 ### Werkzeug und Bestand
 
-12. **`rls-workout-sessions` ist auf dieser Maschine verlässlich rot, nicht sporadisch.** Fahrplan Abschnitt 6 führt ihn als sporadisch. Die Ursache ist gemessen: die Uhr im Datenbankcontainer läuft der Node-Uhr **0,6 bis 1,1 Sekunden voraus**. `started_at` kommt aus der Datenbank, `completed_at` aus `new Date()` — bei diesem Vorsprung verletzt der Update den Check `completed_at >= started_at` immer. Bestand, nicht Phase 5.
+12. **Die Uhrendrift trifft eine ganze Testklasse, nicht einen Test.** Fahrplan Abschnitt 6 führt `rls-workout-sessions` als „sporadisch rot". Beides ist zu eng.
+
+    Gemessen am 3. September, drei Messungen in Folge: die Uhr im Datenbankcontainer läuft der Node-Uhr **0,86 bis 0,88 Sekunden voraus** — konstant, nicht schwankend. Betroffen ist jeder Test, der einen Zeitstempel aus der Datenbank (`started_at default now()`) gegen einen aus Node (`new Date()`) setzt und dabei den Check `workout_sessions_completed_after_start` auslöst. Ob er fällt, hängt allein davon ab, ob sein Rundlauf kürzer als 0,87 s ist — also von der Maschinenlast.
+
+    Beobachtet wurden bisher **drei** Tests in zwei Dateien: `rls-workout-sessions` (der bekannte) und zwei in `domain-complete-session`. Alle drei scheitern am **selben** Constraint. Die Zahl schwankt zwischen Läufen zwischen 458 und 460 von 461.
+
+    **Folge für die Abnahme:** „460 von 461" ist kein brauchbares Tor. Bindend ist stattdessen: **jeder rote Integrationstest scheitert an `workout_sessions_completed_after_start`.** Scheitert einer an etwas anderem, ist es ein Regress. Bestand, nicht Phase 5 — dieser Bauabschnitt fasst `workout_sessions` nirgends an.
 13. **Der erste E2E-Lauf in einem frischen Worktree kostet zwei Tests** an kaltem `.next`, genau wie der Kommentar in `playwright.config.ts` beschreibt. Er zählt nicht.
 14. **Die Rail-Fußzeile bringt einen zweiten Abmelden-Ausgang** neben dem unter *Einstellungen → Konto*. Beide Artboards zeigen beide — Absicht, kein Versehen.
 15. **`/portal` hat kein Artboard.** Die Studiowahl bei mehreren Studios ist ungezeichnet; im Normalfall — genau ein Studio — leitet die Route weiter und wird nie gesehen. Sie wird nach Bausteinen gestaltet, nicht nach Vorlage. Ihr Leer-Zustand dagegen ist gezeichnet: das ist die obere Hälfte von `KeinStudio.dc.html`.

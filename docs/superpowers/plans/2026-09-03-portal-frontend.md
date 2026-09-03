@@ -48,7 +48,9 @@ Aus Spec und Global Constraints, wörtlich. Jede Aufgabe steht implizit unter di
 
 ### Zwei Messwerte, die vor der ersten Zeile Code aufgenommen wurden
 
-- **`rls-workout-sessions › positiv: ein Mitglied beendet seine eigene Session` ist rot, und zwar verlässlich.** Der Fahrplan führt ihn als sporadisch; auf dieser Maschine ist er es nicht. Ursache gemessen: die Uhr im Datenbankcontainer läuft der Node-Uhr **0,6 bis 1,1 s voraus**, `started_at` kommt aus der Datenbank und `completed_at` aus `new Date()`. Bestand, nicht Phase 5. **Die Zielzahl für Integration ist deshalb 460 von 461, nicht 461.**
+- **Die Uhrendrift macht die Integrationszahl unbrauchbar als Tor.** Die Uhr im Datenbankcontainer läuft der Node-Uhr **0,86 bis 0,88 s voraus** — konstant, dreimal gemessen. Jeder Test, der `started_at` aus der Datenbank gegen `completed_at` aus `new Date()` setzt, fällt, wenn sein Rundlauf kürzer ist. Beobachtet: drei Tests in zwei Dateien (`rls-workout-sessions`, `domain-complete-session`), alle am selben Constraint `workout_sessions_completed_after_start`. Die Zahl schwankt zwischen Läufen von 458 bis 460 von 461.
+
+  **Bindend ist deshalb nicht die Zahl, sondern die Ursache: jeder rote Integrationstest scheitert an `workout_sessions_completed_after_start`.** Scheitert einer an etwas anderem, ist es ein Regress. Bestand, nicht Phase 5 — dieser Bauabschnitt fasst `workout_sessions` nirgends an.
 - **Der erste E2E-Lauf in einem frischen Worktree kostet zwei Tests** an kaltem `.next` — genau der Fall, den `playwright.config.ts` im Kommentar beschreibt. Er zählt nicht. Gemessen: erst 28/30, warm 30/30.
 
 ---
