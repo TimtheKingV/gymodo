@@ -13,7 +13,7 @@
 | | Commit | Commits über `master` | Zustand |
 | --- | --- | --- | --- |
 | `master` | `a52254a` | — | nur Dokumente über dem gemeinsamen Punkt |
-| `worktree/calm-forest-3c59` | `15dc5eb` | **24** | Arbeitsverzeichnis sauber |
+| `worktree/calm-forest-3c59` | `05be485` | **24** | Arbeitsverzeichnis sauber |
 | `phase3-einrichtung-am-geraet` | `a4e4057` | **15** | Arbeitsverzeichnis sauber |
 
 Beide zweigen von `7580758` ab. `master` trägt darüber nur den Phase-3-Umsetzungsplan (`a52254a`, reine Dokumentation).
@@ -33,9 +33,12 @@ Er ist der Grund, warum diese Zusammenführung überhaupt aufgefallen ist.
 | Migrationen in `supabase_migrations.schema_migrations` | **34** |
 | Migrationsdateien auf `master` | **31** |
 | `0032`, `0033` — Datei gegen Datenbank | identisch (auf dem Worktree-Branch) |
-| `0034` — Datei gegen Datenbank | **weichen ab**: Datei 8354 B, Datenbank 5482 B |
+| `0034` — Datei gegen **Verzeichniseintrag** | **weichen ab**: Datei 8354 B, Eintrag 5482 B |
+| `0034` — Datei gegen **lebende Funktion** | **identisch** (4180 Zeichen Rumpf, samt der Korrektur aus `0918448`) |
 
-`0918448 fix(db): die Mindestzahl haengt an den Erfassenden` hat `0034` nach dem Anwenden überarbeitet. **Die laufende Datenbank trägt also die alte Fassung von `studio_overview`** — und `studio-ueberblick.test.ts` prüft die neue. Ohne Schritt 5 unten schlägt sie fehl.
+**Berichtigt am 3. September, nachdem Schritt 1.3 die Annahme widerlegt hat.** Der Verdacht war, die Datenbank trage die alte Fassung von `studio_overview`, weil `0918448 fix(db): die Mindestzahl haengt an den Erfassenden` die Migration nach dem Anwenden überarbeitet hat. Der Testlauf im Worktree war jedoch **vollständig grün (40 Dateien, 457 Tests)**, und die Gegenprobe an `pg_proc` zeigt: die Funktion ist auf dem Stand der Datei.
+
+Veraltet ist allein die in `supabase_migrations.schema_migrations` **mitgeschriebene Anweisungsliste** — jemand hat die Funktion neu eingespielt, ohne dass der Eintrag nachgezogen wurde. Funktional folgenlos (`create or replace`), aber es heißt: **der Verzeichniseintrag ist kein verlässlicher Zeuge dafür, was in der Datenbank steht.** Das war der eigentliche Grund, warum die verschollenen Migrationen überhaupt rekonstruierbar waren — und zugleich der Grund, dem Text dort nicht blind zu glauben.
 
 > **Kein `supabase db reset`, bevor der Worktree gemerged ist.** Solange `0032`–`0034` nur in der Datenbank stehen und nicht auf `master`, löscht ein Reset sie unwiederbringlich. Nach dem Merge ist er der sauberste Weg.
 
@@ -90,7 +93,7 @@ Er gilt als fertig, aber er ist seit seinem letzten Lauf nicht gegen den heutige
 ```bash
 cd C:/Users/bttm/.herdr/worktrees/Fitness-App/worktree-calm-forest-3c59
 git status --short          # muss leer sein
-git log --oneline -1        # 15dc5eb erwartet
+git log --oneline -1        # 05be485 erwartet
 ```
 
 - [ ] **1.2** Typecheck und Unit-Tests
@@ -107,9 +110,9 @@ Erwartet: grün.
 pnpm test:integration
 ```
 
-Erwartet: **`studio-ueberblick.test.ts` und `domain-studio-ueberblick.test.ts` können fehlschlagen** — die Datenbank trägt die alte `0034`. Alles andere grün, insbesondere die vier RLS-Tests zur Datenschutzgrenze.
+Erwartet: **vollständig grün.** Gemessen am 3. September: **40 Dateien, 457 Tests**, kein Fehlschlag — auch die vier RLS-Tests zur Datenschutzgrenze und die beiden Überblick-Dateien.
 
-Schlägt etwas anderes fehl, hier anhalten und klären. Nicht weitermergen.
+Schlägt etwas fehl, hier anhalten und klären. Nicht weitermergen.
 
 - [ ] **1.4** Zurück ins Hauptverzeichnis
 
@@ -245,7 +248,9 @@ git commit -m "fix(web): Einstellungen und Modellliste in die Route-Gruppe (schr
 
 ---
 
-## Schritt 5: Die Datenbank auf den Stand der Platte bringen
+## Schritt 5: Verzeichniseintrag und Platte in Übereinstimmung bringen
+
+**Kein Reparaturschritt.** Nach der Berichtigung oben steht fest: das Schema ist in Ordnung, die Tests laufen. Es geht allein darum, dass der Verzeichniseintrag zu `0034` wieder das enthält, was in der Datei steht — damit der nächste, der ihn liest, nicht dieselbe falsche Fährte aufnimmt wie dieser Plan.
 
 Jetzt — und keinen Schritt früher — ist ein Reset ungefährlich: alle 34 Migrationen liegen als Dateien vor.
 
