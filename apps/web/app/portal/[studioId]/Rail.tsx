@@ -47,6 +47,13 @@ export function Rail({
       </div>
 
       <div className={styles.group}>
+        <h2 className={styles.groupLabel}>Studio</h2>
+        <Link href={basis} className={klasse(pfad === basis)}>
+          <span className={styles.navItemTitle}>Überblick</span>
+        </Link>
+      </div>
+
+      <div className={styles.group}>
         <h2 className={styles.groupLabel}>Gerätemodelle</h2>
         {models.length === 0 ? (
           <p className={`${styles.navItem} ${styles.absent}`}>Noch keines angelegt</p>
@@ -66,7 +73,7 @@ export function Rail({
             </Link>
           ))
         )}
-        <Link href={basis} className={klasse(pfad === basis)}>
+        <Link href={`${basis}/modelle`} className={klasse(pfad === `${basis}/modelle`)}>
           <span className={styles.navItemTitle}>Modell anlegen</span>
         </Link>
       </div>
@@ -88,6 +95,12 @@ export function Rail({
         <h2 className={styles.groupLabel}>Verwaltung</h2>
         <Link href={`${basis}/leute`} className={klasse(pfad === `${basis}/leute`)}>
           <span className={styles.navItemTitle}>Leute</span>
+        </Link>
+        <Link
+          href={`${basis}/einstellungen`}
+          className={klasse(pfad.startsWith(`${basis}/einstellungen`))}
+        >
+          <span className={styles.navItemTitle}>Einstellungen</span>
         </Link>
       </div>
     </nav>

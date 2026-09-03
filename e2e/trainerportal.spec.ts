@@ -44,7 +44,7 @@ function jpegMitExif(): Buffer {
  * Inhaber) dieselbe Studio-Zeile doppelt zurueck, und der Redirect fuer
  * "genau ein Studio" bleibt aus.
  */
-test("Trainer in einem Studio mit weiterem Personal landet trotzdem direkt im Katalog", async ({
+test("Trainer in einem Studio mit weiterem Personal landet trotzdem direkt im Überblick", async ({
   page,
 }) => {
   const admin = createClient(
@@ -86,7 +86,7 @@ test("Trainer in einem Studio mit weiterem Personal landet trotzdem direkt im Ka
 
   await page.goto("/portal");
   await expect(page).toHaveURL(new RegExp(`/portal/${studio.id}$`));
-  await expect(page.getByRole("heading", { name: "Gerätekatalog" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Überblick" })).toBeVisible();
 });
 
 test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }) => {
@@ -120,9 +120,13 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
 
   await anmelden(page, email);
 
-  // Wer in genau einem Studio Trainer ist, landet direkt im Katalog.
+  // Wer in genau einem Studio Trainer ist, landet direkt im Ueberblick.
   await page.goto("/portal");
   await expect(page).toHaveURL(new RegExp(`/portal/${studio.id}$`));
+  await expect(page.getByRole("heading", { name: "Überblick" })).toBeVisible();
+
+  // Der Katalog liegt seit dem Ueberblick unter /modelle.
+  await page.goto(`/portal/${studio.id}/modelle`);
   await expect(page.getByRole("heading", { name: "Gerätekatalog" })).toBeVisible();
 
   // 1. Geraetemodell

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   DomainError,
   attachExerciseToModel,
@@ -21,6 +22,7 @@ import {
   setMembershipRole,
   setStudioJoinCodeActive,
   updateEquipmentModel,
+  updateStudioSettings,
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -379,4 +381,97 @@ export async function beitrittscodeAktivSetzen(
   return fuehreAus(pfad, async (client) => {
     await setStudioJoinCodeActive(client, studioId, active);
   });
+}
+
+export async function studioSpeichern(
+  studioId: string,
+  pfad: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionResult> {
+  const stunden = zahl(formData, "cancellationDeadlineHours");
+  if (stunden === undefined || Number.isNaN(stunden)) {
+    return { ok: false, error: "Die Stornofrist braucht eine Zahl. 0 heißt: bis zum Beginn." };
+  }
+
+  return fuehreAus(pfad, async (client) => {
+    await updateStudioSettings(client, studioId, {
+      name: text(formData, "name"),
+      timezone: text(formData, "timezone"),
+      cancellationDeadlineHours: stunden,
+    });
+  });
+}
+
+/**
+ * Das aktuelle Passwort wird durch eine zweite Anmeldung geprueft, nicht
+ * durch updateUser allein: Supabase laesst eine Passwortaenderung mit
+ * gueltiger Sitzung ohne Nachweis zu. An einem unbeaufsichtigten Rechner
+ * im Studio waere das ein offenes Scheunentor.
+ */
+export async function passwortAendern(
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionResult> {
+  const aktuell = String(formData.get("aktuell") ?? "");
+  const neu = String(formData.get("neu") ?? "");
+  const wiederholung = String(formData.get("wiederholung") ?? "");
+
+  if (neu.length < 10) {
+    return { ok: false, error: "Das neue Passwort braucht mindestens zehn Zeichen." };
+  }
+  if (neu !== wiederholung) {
+    return { ok: false, error: "Die beiden neuen Passwörter sind nicht gleich." };
+  }
+  // An dieser Stelle ist noch nichts gegen das Konto geprueft -- ob das
+  // obere Feld wirklich das aktuelle Passwort enthaelt, weiss erst die
+  // Anmeldung weiter unten. Die Meldung sagt deshalb, was gilt, und nicht,
+  // was der Eintrag angeblich ist: wer sich oben vertippt und den Vertipper
+  // unten wiederholt, bekaeme sonst zu hoeren, das sei sein altes Passwort.
+  if (neu === aktuell) {
+    return {
+      ok: false,
+      error: "Das neue Passwort muss sich von dem oben eingetragenen unterscheiden.",
+    };
+  }
+
+  const client = await createServerSupabaseClient();
+
+  // Diese Aktion laeuft nicht durch fuehreAus (kein Pfad zum revalidieren,
+  // keine DomainError im Spiel) -- deshalb braucht sie hier ihr eigenes
+  // Netz: ein Verbindungsabbruch bei getUser, signInWithPassword oder
+  // updateUser soll denselben Hausfallback liefern wie fuehreAus, statt
+  // als rohe Exception aus der Server Action zu fallen.
+  try {
+    const {
+      data: { user },
+    } = await client.auth.getUser();
+    if (!user?.email) {
+      return { ok: false, error: "Die Sitzung ist abgelaufen. Bitte neu anmelden." };
+    }
+
+    const { error: pruefung } = await client.auth.signInWithPassword({
+      email: user.email,
+      password: aktuell,
+    });
+    if (pruefung) {
+      return { ok: false, error: "Das aktuelle Passwort stimmt nicht." };
+    }
+
+    const { error } = await client.auth.updateUser({ password: neu });
+    if (error) {
+      console.error("Passwortaenderung fehlgeschlagen:", error.message);
+      return { ok: false, error: "Das Passwort liess sich nicht ändern." };
+    }
+    return { ok: true };
+  } catch (fehler) {
+    console.error("Passwortaenderung fehlgeschlagen:", fehler);
+    return { ok: false, error: "Das hat nicht geklappt. Bitte noch einmal." };
+  }
+}
+
+export async function abmelden(): Promise<never> {
+  const client = await createServerSupabaseClient();
+  await client.auth.signOut();
+  redirect("/login");
 }

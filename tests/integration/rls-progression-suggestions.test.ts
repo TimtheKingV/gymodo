@@ -189,7 +189,7 @@ describe("RLS auf progression_suggestions", () => {
     expect(data).toEqual([]);
   });
 
-  it("positiv: ein Trainer sieht die Vorschlaege seiner Studiomitglieder", async () => {
+  it("Datenschutzgrenze: ein Trainer sieht die Vorschlaege seiner Studiomitglieder nicht", async () => {
     const admin = serviceClient();
     const { data: seeded, error: seedError } = await admin
       .from("progression_suggestions")
@@ -199,12 +199,13 @@ describe("RLS auf progression_suggestions", () => {
     if (seedError) throw seedError;
 
     const client = await userClient(trainerAEmail);
-    const { data } = await client
+    const { data, error } = await client
       .from("progression_suggestions")
       .select("id")
       .eq("id", seeded!.id);
 
-    expect(data).toHaveLength(1);
+    expect(error).toBeNull();
+    expect(data).toEqual([]);
   });
 
   it("positiv: ohne Verlauf wird ein Vorschlag ohne Gewicht festgehalten", async () => {

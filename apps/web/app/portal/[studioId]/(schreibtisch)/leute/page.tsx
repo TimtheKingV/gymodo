@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { DomainError, listStudioMembers } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import styles from "../../../portal.module.css";
-import { BeitrittscodeKarte, MitgliedZeile } from "./LeuteActions";
+import { MitgliedZeile } from "./LeuteActions";
 
 export default async function LeutePage({
   params,
@@ -20,8 +21,8 @@ export default async function LeutePage({
     // requireStudioStaff (in listStudioMembers) meldet ein einfaches
     // Mitglied mit "unauthorized" -- der Layout prueft nur Mitgliedschaft,
     // nicht Rolle, also muss diese Seite sich selbst sperren. Ohne diesen
-    // fruehen Return wuerde unten trotzdem der echte Beitrittscode geladen
-    // und angezeigt.
+    // fruehen Return liefe die Seite als "Liste liess sich nicht laden"
+    // weiter, statt klarzustellen, dass die Seite Trainern vorbehalten ist.
     if (e instanceof DomainError && e.code === "unauthorized") {
       return (
         <main className={styles.content}>
@@ -39,24 +40,14 @@ export default async function LeutePage({
     fehler = e instanceof DomainError ? e.message : "Die Liste liess sich nicht laden.";
   }
 
-  const { data: studio } = await client
-    .from("studios")
-    .select("join_code, join_code_active")
-    .eq("id", studioId)
-    .single<{ join_code: string; join_code_active: boolean }>();
-
   return (
     <main className={styles.content}>
       <h1 className={styles.pageTitle}>Leute</h1>
 
-      {studio ? (
-        <BeitrittscodeKarte
-          studioId={studioId}
-          pfad={pfad}
-          code={studio.join_code}
-          active={studio.join_code_active}
-        />
-      ) : null}
+      <p className={styles.sectionNote}>
+        Mitglieder treten über den Studio-Code bei —{" "}
+        <Link href={`/portal/${studioId}/einstellungen`}>Einstellungen</Link>
+      </p>
 
       <div className={styles.section}>
         <div className={styles.sectionHead}>
