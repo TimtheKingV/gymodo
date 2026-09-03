@@ -115,6 +115,8 @@ export async function listCourseTemplates(
   client: SupabaseClient,
   studioId: string,
 ): Promise<CourseTemplate[]> {
+  await requireUserId(client);
+
   const { data, error } = await client
     .from("course_templates")
     .select(VORLAGE_SPALTEN)
@@ -131,6 +133,8 @@ export async function getCourseTemplate(
   studioId: string,
   templateId: string,
 ): Promise<CourseTemplate> {
+  await requireUserId(client);
+
   const { data, error } = await client
     .from("course_templates")
     .select(VORLAGE_SPALTEN)
