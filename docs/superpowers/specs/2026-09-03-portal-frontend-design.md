@@ -23,7 +23,7 @@ Genau diese drei Fragen beantwortet dieses Dokument. Es zeichnet nichts nach —
 Vier, alle in dieser Runde getroffen:
 
 1. **Das Beitrittsformular bleibt im Web**, gestaltet, auf `/` für angemeldete Nicht-Mitarbeiter ohne Studio. Die Canvas-Notiz `note-einstieg` will es streichen — aber der Weg, der es ersetzen soll, ist die iOS-App, und die ist Phase 6. Ein Weg wird nicht gestrichen, bevor sein Nachfolger existiert.
-2. **Geräte und Modelle werden ein Bereich.** `/geraete` wird die Modellliste, `/modelle` leitet dorthin. Die flache Geräteliste entfällt; *Stilllegen* und *Wieder in Betrieb* ziehen in den Reiter *Einzelne Geräte*, wo die Spec sie hinstellt.
+2. **Geräte und Modelle werden ein Bereich.** `/geraete` wird die Modellliste, `/modelle` leitet dorthin. Die flache Geräteliste entfällt — und sie kostet dabei nichts: *Stilllegen* und *Wieder in Betrieb* stehen bereits im Modell-Detail, Abschnitt *Geräte im Raum*. Die flache Liste war eine zweite Kopie derselben beiden Aktionen.
 3. **„Lädt" heißt Titel sofort, Rumpf still.** Ein `loading.tsx` je Bereich rendert Titel und Vorspann — die stehen in der Route, nicht in der Datenbank — und darunter bleibt es leer. Keine Skelettzeilen: ihre Anzahl wäre geraten und damit eine Aussage über Daten, die noch niemand kennt.
 4. **Gemeinsame Bausteine als Komponenten**, nicht als weitere Klassen in einem Stylesheet. Die Regeln dieses Entwurfs sind Text; Text braucht einen Ort.
 
@@ -159,7 +159,7 @@ Randfälle zählen nicht mit: die aktive Rail-Zeile ist eine 2-px-Kante, der Fok
 
 ## 5. Befunde
 
-Fünfzehn Abweichungen zwischen Entwurf und laufender Oberfläche, gefunden beim Lesen. Keine wird still aufgelöst.
+Achtzehn Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans. Keine wird still aufgelöst.
 
 ### Fehler im Code, hier zu heilen
 
@@ -174,8 +174,8 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 4. **`PasswortVergessen` zeichnet „Link anfordern".** Der Code schickt einen sechsstelligen Code. Der Code gewinnt, der Knopf heißt „Code anfordern".
 5. **`PasswortNeu` fehlt das Codefeld.** Das Artboard zeigt *Neues Passwort* und *Wiederholen*; ohne den Code aus der Mail funktioniert der laufende Weg nicht. Umgekehrt hat der Code heute kein *Wiederholen* — das kommt vom Artboard dazu und ist eine Verbesserung, kein Fehler.
 6. **`Verifizieren` zeichnet „Neuen Code anfordern".** Diesen Weg gibt es im Code nicht.
-7. **Für *Stilllegen* zeichnet kein Artboard einen Ort**, obwohl Struktur-Spec §1 ihn verlangt („ein Gerät wird stillgelegt, einzeln, mit Namen"). Zieht nach Entscheidung 2 in den Reiter *Einzelne Geräte*.
-8. **Die flache Geräteliste hat kein Artboard.** Entfällt nach Entscheidung 2.
+7. **Für *Stilllegen* zeichnet kein Artboard einen Ort.** `Modell.dc.html` zeigt unter *Einzelne Geräte* nur *Tag scannen* und *Tag ersetzen*, obwohl Struktur-Spec §1 das Stilllegen verlangt („ein Gerät wird stillgelegt, einzeln, mit Namen"). Im Code steht es bereits an der richtigen Stelle — Modell-Detail, Abschnitt *Geräte im Raum*. Der Entwurf ist unvollständig, nicht der Code; das Artboard wird beim Bauen um die Aktion ergänzt.
+8. **Die flache Geräteliste hat kein Artboard.** Entfällt nach Entscheidung 2, und sie kostet nichts: ihre beiden Aktionen sind Kopien dessen, was im Modell-Detail schon steht.
 9. **Die Wurzelseite behält das Beitrittsformular** gegen `note-einstieg`. Nach Entscheidung 1 — mit dem Auftrag, es zu streichen, sobald die iOS-App den Beitritt trägt.
 
 ### Regeln, die kollidieren
@@ -189,6 +189,12 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 13. **Der erste E2E-Lauf in einem frischen Worktree kostet zwei Tests** an kaltem `.next`, genau wie der Kommentar in `playwright.config.ts` beschreibt. Er zählt nicht.
 14. **Die Rail-Fußzeile bringt einen zweiten Abmelden-Ausgang** neben dem unter *Einstellungen → Konto*. Beide Artboards zeigen beide — Absicht, kein Versehen.
 15. **`/portal` hat kein Artboard.** Die Studiowahl bei mehreren Studios ist ungezeichnet; im Normalfall — genau ein Studio — leitet die Route weiter und wird nie gesehen. Sie wird nach Bausteinen gestaltet, nicht nach Vorlage. Ihr Leer-Zustand dagegen ist gezeichnet: das ist die obere Hälfte von `KeinStudio.dc.html`.
+
+### Drei, die beim Schreiben des Umsetzungsplans dazukamen
+
+16. **Die Global Constraints widersprechen sich bei den Trefferflächen.** Ein Satz sagt *„Trefferflächen ≥ 44 px; Hauptaktion 44 px hoch, **Nebenaktion 40 px**"*. Beides zugleich geht nicht. `portal.module.css` setzt `.secondary` und `.destructive` auf `height: 40px`, und die Artboards zeichnen 40 — Code und Entwurf sind sich also einig, nur der Satz nicht. Die Herkunft ist erkennbar: die 44 stammt aus Designsystem §4, und die gilt für die Member-App, wo einhändig im Halbdunkel bedient wird. Am Schreibtisch liegt eine Maus. **Zu entscheiden.** Bis dahin ist die Mindesthöhe ein Parameter des Prüfhelfers, kein fester Wert.
+17. **Der Satz unter dem Registrierungsformular stimmt für das Web nicht.** `Registrieren.dc.html` sagt *„Ein Konto allein reicht nicht — du brauchst danach den Code deines Studios."* Der Code macht Mitglieder; im Web wird man Mitarbeiter, und Mitarbeiter fügt ein Studio unter *Leute → Mitarbeiter* hinzu. Die Canvas-Notiz `note-einstieg` sagt das selbst — der Artboard-Text ist ihr gegenüber älter.
+18. **Der Fußsatz von `LeuteMitglieder.dc.html` ist seit `0033` überholt.** Er sagt, die Richtlinien der Datenbank ließen Mitarbeiter noch an Sätze, Gewichte und Verläufe heran. Seit dem 2. September haben die vier Policies die Staff-Klausel verloren. Der Satz beschreibt einen Vorbehalt, den es nicht mehr gibt, und macht die Zusicherung dadurch schwächer als die Wirklichkeit.
 
 ---
 
@@ -215,3 +221,10 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 - **„Neuen Code anfordern" auf `Verifizieren`** (Befund 6). Entweder der Weg wird gebaut — das Backend trägt ihn — oder der Link fällt und der Befund bleibt stehen. Eine Registrierung ohne zweiten Code ist eine Falle derselben Art wie ein Passwortlogin ohne Zurücksetzen.
 - **Wann das Beitrittsformular aus dem Web verschwindet** (Befund 9). Auslöser ist die iOS-App, nicht ein Datum.
 - **Die Uhrendrift im Container** (Befund 12). Verrauscht jede Abnahme, gehört aber nicht Phase 5. Der Plan nennt sie, damit sie beim nächsten grünen Anspruch nicht als neu gilt.
+- **Trefferfläche 44 oder 40** (Befund 16). Der einzige offene Punkt, der eine Zeile Code kostet, aber jeden Bildschirm betrifft: entweder wachsen alle Nebenaktionen des Portals auf 44 px — gegen die Artboards —, oder der Satz in den Global Constraints wird auf das eingeschränkt, was er meint. **Zu entscheiden, bevor der Bauabschnitt abgenommen wird.**
+
+---
+
+## 9. Der Umsetzungsplan
+
+`../plans/2026-09-03-portal-frontend.md` — 23 Aufgaben in acht Bauabschnitten. Er trägt die Zuordnung, welcher Befund in welcher Aufgabe landet.
