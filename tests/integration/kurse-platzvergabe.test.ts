@@ -166,6 +166,54 @@ describe("Der Wettlauf um den letzten Platz", () => {
     expect(ergebnisse.filter((e) => e.result === "booked")).toHaveLength(5);
     expect(ergebnisse.filter((e) => e.result === "waitlisted")).toHaveLength(15);
   });
+
+  it("eine gleichzeitige Stornierung und drei Anmeldungen auf einen frei werdenden Platz: genau einer gewinnt", async () => {
+    // Dieser Test prueft eine Invariante -- er kann nie spuriously
+    // fehlschlagen, nur zu Unrecht bestehen. Er kann also nicht beweisen,
+    // dass die Sperre in cancel_course_booking wirkt, sondern nur, dass
+    // ohne sie ein Fehler MOEGLICH ist -- das ist genau das, was die
+    // Gegenprobe in Schritt-2-des-Fix-Reports zeigt, indem sie die
+    // Sperre entfernt und beobachtet, ob dieser Test dann rot wird.
+    const terminId = await terminAnlegen({ capacity: 1, startsAt: inStunden(72) });
+    const [clientA, clientB, clientC, clientD, clientE] = await mitglieder(5, "cancel-wettlauf");
+
+    const antwortA = await clientA!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+    const antwortB = await clientB!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+    expect(antwortA.data.result).toBe("booked");
+    expect(antwortB.data.result).toBe("waitlisted");
+
+    // A storniert, waehrend C, D und E gleichzeitig um den frei werdenden
+    // Platz mitbieten -- mehrere Anbieter statt einem, weil das Fenster,
+    // das die fehlende Sperre oeffnet, schmal ist.
+    await Promise.all([
+      clientA!.rpc("cancel_course_booking", { p_session_id: terminId }),
+      clientC!.rpc("book_course_session", {
+        p_session_id: terminId,
+        p_booking_id: crypto.randomUUID(),
+      }),
+      clientD!.rpc("book_course_session", {
+        p_session_id: terminId,
+        p_booking_id: crypto.randomUUID(),
+      }),
+      clientE!.rpc("book_course_session", {
+        p_session_id: terminId,
+        p_booking_id: crypto.randomUUID(),
+      }),
+    ]);
+
+    const admin = serviceClient();
+    const { data: zeilen } = await admin
+      .from("course_bookings")
+      .select("status")
+      .eq("course_session_id", terminId);
+    expect(zeilen!.filter((z) => z.status === "booked")).toHaveLength(1);
+  });
 });
 
 describe("Idempotenz", () => {
@@ -391,6 +439,53 @@ describe("Stornieren und Nachruecken", () => {
 
     const { data } = await client!.rpc("cancel_course_booking", { p_session_id: terminId });
     expect(data.result).toBe("not_booked");
+  });
+
+  it("nach einer nachtraeglich verkleinerten Kapazitaet rueckt niemand in einen ueberbuchten Termin nach", async () => {
+    const terminId = await terminAnlegen({ capacity: 5, startsAt: inStunden(72) });
+    const [a, b, c, d, e, wartend] = await mitglieder(6, "ueberbucht");
+
+    for (const client of [a, b, c, d, e]) {
+      const { data } = await client!.rpc("book_course_session", {
+        p_session_id: terminId,
+        p_booking_id: crypto.randomUUID(),
+      });
+      expect(data.result).toBe("booked");
+    }
+    const warteAntwort = await wartend!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+    expect(warteAntwort.data.result).toBe("waitlisted");
+
+    // 0035 erlaubt das Verkleinern der Kapazitaet unter den Bestand --
+    // fuenf Buchungen, jetzt nur noch drei Plaetze.
+    const admin = serviceClient();
+    await admin.from("course_sessions").update({ capacity: 3 }).eq("id", terminId);
+
+    const { data: storno } = await a!.rpc("cancel_course_booking", { p_session_id: terminId });
+    expect(storno.result).toBe("cancelled");
+    // Vier bestaetigte Plaetze auf drei Kapazitaet -- immer noch
+    // ueberbucht. Nachruecken wuerde die Ueberbuchung nur festschreiben.
+    expect(storno.promoted_booking_id).toBeNull();
+
+    const { data: nachAbmeldung } = await admin
+      .from("course_bookings")
+      .select("status")
+      .eq("id", warteAntwort.data.booking_id)
+      .single();
+    expect(nachAbmeldung!.status).toBe("waitlisted");
+
+    // free_seats darf bei Ueberbuchung nicht negativ werden -- der
+    // greatest(…, 0)-Boden aus der Migration, hier erstmals geprueft.
+    // Ein wiederholter Aufruf (Idempotenz) liefert die Zahl, ohne den
+    // Bestand zu veraendern.
+    const wiederholung = await b!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+    expect(wiederholung.data.created).toBe(false);
+    expect(wiederholung.data.free_seats).toBe(0);
   });
 });
 

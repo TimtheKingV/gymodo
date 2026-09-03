@@ -226,9 +226,22 @@ begin
   -- abgesagten und nicht in einen vergangenen Termin: jemanden in einen
   -- Kurs zu befoerdern, der ausfaellt, waere eine Zusage, die das Studio
   -- schon zurueckgenommen hat.
+  --
+  -- Und nicht, wenn kein Platz frei ist: eine nachtraeglich verkleinerte
+  -- Kapazitaet (0035 erlaubt das; siehe greatest(…, 0) oben) kann einen
+  -- Termin ueber sein eigenes Limit bringen -- zehn Buchungen, Kapazitaet
+  -- auf fuenf gesenkt. Storniert dort jemand, ist die Zeile eben von
+  -- oben stornierten Buchung bereits weg; die Zaehlung danach spiegelt
+  -- den frei gewordenen Platz. Wuerde trotzdem nachgerueckt, bliebe der
+  -- Termin fuer immer ueberbucht: jede weitere Stornierung wuerde die
+  -- Ueberbuchung nur erneut auffuellen, statt sie abzubauen.
   if v_buchung.status = 'booked'
      and v_session.status = 'planned'
-     and v_session.starts_at > now() then
+     and v_session.starts_at > now()
+     and (select count(*)
+            from public.course_bookings
+           where course_session_id = p_session_id
+             and status = 'booked') < v_session.capacity then
     update public.course_bookings
        set status = 'booked', promoted_at = clock_timestamp()
      where id = (
