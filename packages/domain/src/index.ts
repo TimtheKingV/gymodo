@@ -24,7 +24,8 @@ export {
   signMediaUrls,
   uploadEquipmentPhoto,
 } from "./media-store.js";
-export { requireStudioStaff } from "./studio.js";
+export { getStudioSettings, requireStudioStaff, updateStudioSettings } from "./studio.js";
+export type { StudioSettings, StudioSettingsInput } from "./studio.js";
 export {
   assignTag,
   attachExerciseToModel,
@@ -94,3 +95,9 @@ export {
   setStudioJoinCodeActive,
 } from "./people.js";
 export type { StudioMember } from "./people.js";
+export { getStudioOverview } from "./overview.js";
+export type {
+  OverviewMachine,
+  OverviewProblem,
+  StudioOverview,
+} from "./overview.js";

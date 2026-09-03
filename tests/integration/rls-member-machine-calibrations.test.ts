@@ -187,7 +187,7 @@ describe("RLS auf member_machine_calibrations", () => {
     expect(data).toEqual([]);
   });
 
-  it("positiv: ein Trainer sieht die Einstellwerte seiner Studiomitglieder", async () => {
+  it("Datenschutzgrenze: ein Trainer sieht die Einstellwerte seiner Studiomitglieder nicht", async () => {
     const admin = serviceClient();
     const { data: seeded, error: seedError } = await admin
       .from("member_machine_calibrations")
@@ -197,12 +197,15 @@ describe("RLS auf member_machine_calibrations", () => {
     if (seedError) throw seedError;
 
     const client = await userClient(trainerAEmail);
-    const { data } = await client
+    const { data, error } = await client
       .from("member_machine_calibrations")
       .select("id")
       .eq("id", seeded!.id);
 
-    expect(data).toHaveLength(1);
+    // Auch die trainerbegleitete Erfassung bleibt danach unsichtbar: wer
+    // dabei war, steht in recorded_by, das Leserecht folgt daraus nicht.
+    expect(error).toBeNull();
+    expect(data).toEqual([]);
   });
 
   it("positiv: eine Aenderung legt eine neue Zeile an, statt die alte zu ersetzen", async () => {
