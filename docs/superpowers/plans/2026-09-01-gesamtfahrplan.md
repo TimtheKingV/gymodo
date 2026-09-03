@@ -69,7 +69,7 @@ Das Ungleichgewicht aus der Erstfassung hat sich verschoben, aber nicht aufgelö
 | ~~**Tags als Lieferung**~~ — Klartext-Tokenraum, Chargen/Lieferungen/Halde, `inspect_tag`/`bind_tag_to_machine`, Betreiberwerkzeug | `0026`–**`0029`** | ✅ `2026-09-01-tag-lieferung.md`, 8 Aufgaben | ✅ **2. September** |
 | ~~**Auth-Umstellung**~~ — OTP → Passwort, Registrierung, Studio-Beitritt | — | ❌ ohne Plan gebaut | ✅ **2. September** |
 | ~~**Leute**~~ — Mitglieder und Mitarbeiter | `0030`–`0031` | ❌ ohne Plan gebaut | ✅ **2. September** |
-| ~~**Sucher im Portal**~~ — `getUserMedia` + `jsQR` | — | ✅ als Aufgabe 9b im Plan | ✅ **3. September**; die Handprüfung am Telefon steht aus |
+| ~~**Sucher im Portal**~~ — `getUserMedia` + `jsQR` | — | ✅ als Aufgabe 9b im Plan | ✅ **3. September**, Handprüfung bestanden — gedruckte Codes bis herunter auf 15 mm |
 | ~~**Einrichtung am Gerät**~~ — 16 `Telefon*`-Artboards, der Gang durch die Halle | keine | ✅ `2026-09-02-einrichtung-am-geraet.md`, 13 Aufgaben | ✅ **3. September**, vollständig |
 | ~~**Studio-Einstellungen, Datenschutzgrenze, Überblick**~~ — Stornofrist, Speicherrecht mit Spaltengrenze, vier Policies ohne Staff-Klausel, `studio_overview` | `0032`–`0034` | ✅ `2026-09-02-studio-einstellungen-datenschutzgrenze.md`, 9 Aufgaben | ✅ **2. September** |
 | **Kurse** — drei Tabellen, Platzvergabe unter Nebenläufigkeit | — | ❌ nur Vorabnotiz (84 Zeilen) | ❌ |
@@ -331,7 +331,6 @@ Verstreut über sieben Specs und drei Umsetzungspläne, hier einmal an einem Ort
 
 | Punkt | Wo | Blockiert |
 | --- | --- | --- |
-| Druckmaße des QR — Modulgröße, Fehlerkorrektur | einrichtung §7, scan-beitritt §7 | die erste Tag-Bestellung |
 | NFC-Tags programmieren — vorprogrammiert bestellen oder Werkzeug bauen | scan-beitritt §7 | den NFC-Teil, nicht den QR-Teil |
 | Trefferquote NFC gegen QR | M0 Task 8 | Gate, siehe Blocker 2 |
 | Ratenbegrenzung auf `join_studio_by_tag` | scan-beitritt §7 | nichts, aber vor dem ersten echten Studio fällig |
@@ -346,7 +345,6 @@ Verstreut über sieben Specs und drei Umsetzungspläne, hier einmal an einem Ort
 | Nummernvergabe — soll das Portal `machines.label` erzwingen | einrichtung §7 | nichts, Entwurf sagt nein |
 | Leerer Vorrat mitten in der Halle — kein Bestellweg | einrichtung §7, tag-lieferung §8 | nichts |
 | Videoupload vom Trainerhandy ist nie an einem echten Gerät gelaufen | trainerportal-medien, Verifikation | den ersten Betreibertermin |
-| **Der Sucher ist nie an einem echten Telefon gelaufen** — gebaut, aber die Handprüfung braucht HTTPS und einen gedruckten QR | einrichtung-am-geraet §5, Plan Aufgabe 9b | nichts im Code; den Beweis, dass er in der Halle trifft |
 | **Probe-Scan auf der Fertig-Seite** — er bräuchte den Klartext-Token, den `0026` dem Portal entzieht. Aufzulösen mit einer `security definer`-Funktion je Gerät oder einer Fallback-Seite über die Geräte-ID | einrichtung-am-geraet, Plan Aufgabe 12 | dem Trainer den Blick auf das, was ein Mitglied sieht |
 | **Vier Funktionen ohne gesetzten `search_path`** — `set_updated_at`, `is_valid_setting_choices`, `storage_studio_id`, `generate_join_code`; das Projekt setzt ihn sonst überall | Sicherheitsbefund 3. September, Abschnitt 4f | nichts, aber uneins mit der eigenen Gewohnheit |
 | **`rls-workout-sessions` ist sporadisch rot** — der Test setzt `completed_at` aus der Node-Uhr gegen `started_at` aus der Datenbank | Bestand, vor allen drei Phasen | nichts, aber es verrauscht jede Abnahme |

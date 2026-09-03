@@ -236,7 +236,7 @@ Drei der vier Fälle sind unproblematisch: App da und Mitglied, App da und kein 
 ## 7. Offene Punkte
 
 - **NFC-Tags programmieren.** Das Portal kann keine NFC-Tags beschreiben, ein Browser auch nicht zuverlässig. Offen, ob vorprogrammierte Tags bestellt werden oder ein kleines Werkzeug entsteht. **Blockiert den NFC-Teil, nicht den QR-Teil** — QR trägt den Ablauf allein.
-- **Druckmaße des QR.** Modulgröße und Fehlerkorrekturstufe für den Scanabstand am Gerät und am Aushang sind nicht festgelegt.
+- ~~**Druckmaße des QR.** Modulgröße und Fehlerkorrekturstufe für den Scanabstand am Gerät und am Aushang sind nicht festgelegt.~~ **Nachgezogen am 3. September, aber nur zur Hälfte.** Am **Gerät** ist die Frage beantwortet: 15 mm bei Fehlerkorrektur M genügen auf Armlänge; Messung und Empfehlung in `2026-09-01-einrichtung-am-geraet-design.md` §7. Für den **Aushang** gilt das Ergebnis ausdrücklich nicht — er wird aus mehreren Metern gescannt, und diese Spec hat den Abstand nie gemessen.
 - **Trefferquote NFC gegen QR** bleibt offen (M0 Task 8, Canvas-Notiz `note-qr-pivot`). Diese Spec setzt beide gleichrangig; ein Ergebnis kostet Text, kein Redesign.
 - **Ratenbegrenzung** auf `join_studio_by_tag` ist nicht festgelegt. Sie schützt nicht vor dem fotografierten Aushang, sondern vor massenhaftem Beitritt über viele Konten.
 - **Weg B hängt am SMTP-Versand**, unverändert der Blocker aus der Vorgängerspec.

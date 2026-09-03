@@ -3091,7 +3091,7 @@ git commit -m "feat(web): Schritt 3 -- Geraet mit vorgeschlagener Nummer und Sta
 > **Aufgeteilt am 2. September, auf Ansage.** Die Kamera wird später gebaut.
 >
 > - **9a — der Tag-Schritt ohne Kamera.** Kleben, Token eintippen, Befund, Verbinden. Enthält die beiden Actions `tagPruefen` und `tagVerbinden` und die ganze Antworttabelle. **Gebaut am 2. September.**
-> - **9b — der Sucher.** `getUserMedia` plus `jsQR`, davorgeschaltet. **Gebaut am 3. September.** Die Handprüfung am echten Telefon steht noch aus — sie ist der einzige Punkt des ganzen Plans, den kein Test abnimmt.
+> - **9b — der Sucher.** `getUserMedia` plus `jsQR`, davorgeschaltet. **Gebaut und am 3. September von Hand abgenommen** — gegen gedruckte Codes bis herunter auf 15 mm Kantenlänge. Er war der einzige Punkt des ganzen Plans, den kein Test abnimmt.
 >
 > Die Teilung kostet nichts, weil die Spec sie schon vorsieht. §7: *„Der umgebaute `TagZuweisen` ist ein Feld zum Eintippen des Tokens auf derselben Funktion — der Rückfallweg wird gebaut, bevor die Kamera überhaupt davorsteht."* Der Decoder liefert am Ende nur eine Zeichenkette an `parseTagScan` (Aufgabe 1) und von dort an `tagPruefen` — genau den Weg, den das Feld schon geht.
 >
@@ -5544,7 +5544,7 @@ Der Bauabschnitt ist fertig, wenn alles davon zutrifft:
 - [ ] `pnpm test:e2e` — 6 Dateien grün (5 Bestand plus `einrichten`)
 - [ ] `pnpm build` — kein `node:crypto` im Client-Bundle
 - [ ] **Aufgabe 9b — der Sucher — ist gebaut** (`jsqr`, `Sucher.tsx`, Hauptaktion auf der Klebe-Ansicht von „Tag prüfen" auf „Tag scannen" umgestellt). **Offen; am 2. September auf Ansage vertagt.** Ohne ihn trägt der Gang, aber der Trainer tippt 22 Zeichen ab, statt zu scannen.
-- [ ] **Der Sucher ist von Hand an einem echten Telefon gelaufen** — der einzige Punkt, den kein Test abnimmt. Hängt an 9b.
+- [x] **Der Sucher ist von Hand gelaufen** (3. September) — gegen gedruckte Codes in vier Größen; auch die kleinste mit 15 mm wurde erkannt. Der einzige Punkt, den kein Test abnimmt, ist damit abgenommen.
 - [ ] `supabase/migrations/` ist unverändert — 31 Dateien, keine neue
 
 Danach `docs/superpowers/plans/2026-09-01-gesamtfahrplan.md` nachziehen, wie es dessen Abschnitt 8 verlangt: die Zeile *„Sucher im Portal"* und *„Einrichtung am Gerät"* in Abschnitt 3 auf ✅, den Bezugsstand in der Kopftabelle, und Phase 3 in Abschnitt 5 als abgeschlossen.
@@ -5557,7 +5557,7 @@ Die offenen Punkte aus Spec §7, die er **nicht** entscheidet — sie bleiben do
 
 | Punkt | Warum er offen bleibt |
 | --- | --- |
-| **Druckmaße des QR** (Modulgröße, Fehlerkorrekturstufe) | Der QR ist jetzt der einzige Erfassungsweg des Trainers. Welche Modulgröße auf Armlänge liest, zeigt ein Druck, kein Code. **Blockiert die erste Tag-Bestellung.** |
+| ~~**Druckmaße des QR**~~ (Modulgröße, Fehlerkorrekturstufe) | **Beantwortet am 3. September, wie vorhergesagt durch einen Druck und nicht durch Code.** Vier Größen von 15 bis 30 mm; schon 15 mm trifft. Die Tag-Bestellung ist nicht mehr blockiert. |
 | **Ist das Abtippen von 22 Zeichen zumutbar?** | Der Rückfallweg steht (Aufgabe 9), aber ob ihn jemand benutzt, zeigt der erste Gang. |
 | **Wie viele Einstellparameter sind am Telefon zumutbar?** | Der Entwurf zeigt drei. Bei acht wird Schritt 2 zur Fleißarbeit, und der Trainer überspringt ihn — womit die Sache schlechter dastünde als vorher. |
 | **Verdient ein übersprungener Schritt 2 eine eigene Zeile im Überblick?** | Der Einstieg führt Foto und Parameter heute zusammen in „Was noch fehlt". Ob sie dort getrennt gehören, ist eine Frage an den Überblick — und den gibt es noch nicht. |

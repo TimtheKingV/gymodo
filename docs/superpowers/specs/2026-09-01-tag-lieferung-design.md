@@ -415,7 +415,7 @@ Damit sich am Ende nicht wieder drei Dokumente widersprechen — die Lehre aus `
 | §4 Zeile 5 | *„Charge nicht zugeordnet"* entfällt als Fall — eine studiolose Charge **ist** der Normalzustand, aus dem gebunden wird. Die Zeile behält ihre beiden anderen Fälle. |
 | §5 | Zeile *„Chargenspalte und Schildnummer"* wird ersetzt; Zeile *„Tag binden per Scan"* zeigt auf `bind_tag_to_machine` und ist damit gebaut, nicht mehr offen. |
 | §6 | Der Rückbau ist **nicht** mehr ein eigener Plan: `0026` erzwingt ihn. `TagZuweisen.tsx` entfällt nicht, sondern wird zum Rückfallweg. |
-| §7 | Der Punkt *„Kamerafreigabe … einziger Ausfallpunkt ohne Rückfallweg"* ist entschärft. Bleibt offen: Druckmaße des QR, lesbare Chargennummer, leerer Vorrat, Nummernvergabe. |
+| §7 | Der Punkt *„Kamerafreigabe … einziger Ausfallpunkt ohne Rückfallweg"* ist entschärft, und die Druckmaße sind seit dem 3. September gemessen — 15 mm genügen am Gerät, der Aushang bleibt ungeprüft. Bleibt offen: lesbare Chargennummer, leerer Vorrat, Nummernvergabe. |
 
 **`2026-09-01-scan-beitritt-datenbank.md`** — Global Constraints: der Absatz *„Der Klartext-Token existiert genau einmal"* fällt ersatzlos. An seine Stelle tritt: *der Token steht im Klartext in `machine_tags.token`, ist für `authenticated` weder les- noch schreibbar, und `token_hash` ist eine generierte Spalte.* Der Satz über die belegten Nummern wird auf `0026`–`0029` erweitert.
 
