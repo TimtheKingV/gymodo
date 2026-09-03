@@ -45,7 +45,7 @@ function zahl(formular: FormData, feld: string): number {
 
 export async function vorlageAnlegenAction(
   studioId: string,
-  _vorher: ActionResult | null,
+  _vorher: unknown,
   formular: FormData,
 ): Promise<ActionResult> {
   let neueId: string;
@@ -69,7 +69,7 @@ export async function vorlageAnlegenAction(
 export async function vorlageSpeichernAction(
   studioId: string,
   templateId: string,
-  _vorher: ActionResult | null,
+  _vorher: unknown,
   formular: FormData,
 ): Promise<ActionResult> {
   try {
@@ -91,7 +91,7 @@ export async function vorlageSpeichernAction(
 
 export async function terminAnlegenAction(
   studioId: string,
-  _vorher: ActionResult | null,
+  _vorher: unknown,
   formular: FormData,
 ): Promise<ActionResult> {
   try {
@@ -120,7 +120,7 @@ export async function terminAnlegenAction(
 export async function terminSpeichernAction(
   studioId: string,
   sessionId: string,
-  _vorher: ActionResult | null,
+  _vorher: unknown,
   formular: FormData,
 ): Promise<ActionResult> {
   try {
