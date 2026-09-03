@@ -18,6 +18,17 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
+      # supabase/config.toml loest site_url, additional_redirect_urls und zwei
+      # Mail-Einstellungen ueber env() auf -- damit ein Push gegen die Cloud
+      # nicht die Site-URL des Projekts auf localhost setzt. "supabase start"
+      # liest diese Werte aus .env, und .env ist gitignoriert. Ohne die Kopie
+      # bricht der Start mit "failed to read config: CliConfigParseError" ab.
+      #
+      # Bewusst .env.example und keine Wiederholung der Werte im Workflow:
+      # sonst driften zwei Listen auseinander. Die echten Schluessel fuer die
+      # Integrationstests kommen weiter aus den Secrets unten -- eine echte
+      # Shell-Variable hat Vorrang vor .env.
+      - run: cp .env.example .env
       - run: pnpm exec supabase start
       - run: pnpm test:integration
         env:
