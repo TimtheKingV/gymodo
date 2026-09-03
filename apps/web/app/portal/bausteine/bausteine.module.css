@@ -197,10 +197,20 @@
   color: var(--text);
 }
 
-/* zusatz steht in derselben Zeile wie das Label, nicht darunter -- er
-   traegt einen Zaehlstand ("2 · 1 mit Video"), keine eigene Zeile wert. */
+/* block, wie .navItemTitle in Rail.tsx: der Zaehlstand braucht eine eigene
+   Zeile darunter (naechste Regel), also muss das Label selbst schon ein
+   Block sein, sonst laufen beide ineinander. */
+.reiterLabel {
+  display: block;
+}
+
+/* Der Zustand steht unter der Beschriftung, nicht daneben: so zeichnet es
+   Modell.dc.html, und so machen es .rowMeta und .navItemMeta schon --
+   Titel und Zaehlstand sind zwei Informationsebenen (Name, dann Anzahl),
+   keine eine Zeile. */
 .reiterZusatz {
-  margin-left: var(--s8);
+  display: block;
+  margin-top: 2px;
   color: var(--text-faint);
   font-size: 12px;
 }

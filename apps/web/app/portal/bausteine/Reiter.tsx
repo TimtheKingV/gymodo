@@ -11,7 +11,10 @@ import styles from "./bausteine.module.css";
  * Navigationen tragen (Rail und Reiter), und "Navigation" zweimal ist
  * keine Auskunft.
  *
- * `zusatz` traegt den Zustand in der Beschriftung ("2 · 1 mit Video").
+ * `zusatz` traegt den Zustand in der Beschriftung ("2 · 1 mit Video"), als
+ * Block unter dem Label -- Geschwister, wie in Rail.tsx `.navItemTitle`
+ * und `.navItemMeta` schon nebeneinanderstehen, nicht als Text in einer
+ * Zeile mit dem Label.
  *
  * Server-Komponente: `aktiv` kommt als Eigenschaft von aussen, weil die
  * Seite ihre eigene Route schon kennt. Die alte Fassung unter
@@ -34,7 +37,7 @@ export function Reiter({
           className={eintrag.aktiv ? `${styles.reiterEintrag} ${styles.reiterAktiv}` : styles.reiterEintrag}
           aria-current={eintrag.aktiv ? "page" : undefined}
         >
-          {eintrag.label}
+          <span className={styles.reiterLabel}>{eintrag.label}</span>
           {eintrag.zusatz ? <span className={styles.reiterZusatz}>{eintrag.zusatz}</span> : null}
         </Link>
       ))}
