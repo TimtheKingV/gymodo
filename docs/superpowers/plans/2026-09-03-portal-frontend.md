@@ -513,10 +513,27 @@ export function Zustand({
       className={`${styles.zustand} ${styles[art]}`}
       role={art === "fehler" ? "alert" : undefined}
     >
-      <p className={styles.zustandTitel}>{titel}</p>
-      {naechsterSchritt ? (
-        <p className={styles.zustandSchritt}>{naechsterSchritt}</p>
-      ) : null}
+      {/* deaktiviert hat eine eigene Gestalt: die abgeblendete Pille und
+          der Grund liegen NEBENeinander, so wie im Artboard. Bei den
+          uebrigen drei steht der Titel als Absatz ueber dem naechsten
+          Schritt. */}
+      {art === "deaktiviert" ? (
+        <div className={styles.zustandDeaktiviert}>
+          <button type="button" className={styles.zustandPille} disabled>
+            {titel}
+          </button>
+          {naechsterSchritt ? (
+            <span className={styles.zustandSchritt}>{naechsterSchritt}</span>
+          ) : null}
+        </div>
+      ) : (
+        <>
+          <p className={styles.zustandTitel}>{titel}</p>
+          {naechsterSchritt ? (
+            <p className={styles.zustandSchritt}>{naechsterSchritt}</p>
+          ) : null}
+        </>
+      )}
       {aktion ? <div className={styles.zustandAktion}>{aktion}</div> : null}
     </div>
   );
@@ -558,7 +575,7 @@ git commit -m "feat(web): der Zustand-Baustein -- vier Spielarten, die Regeln an
 
 Die fünf Bausteine, die die Anordnung tragen. Sie haben keine Regel im Kopf außer einer — und die ist die wichtigste:
 
-**`Seite` rendert kein `<main>`.** Das Layout tut es, genau einmal. Ein Baustein, der die Landmarke nicht mitbringt, macht den Fehler aus Aufgabe 1 strukturell unmöglich, statt ihn achtmal zu reparieren.
+**`Seite` rendert kein `<main>`.** Das Layout tut es, genau einmal. Ein Baustein, der die Landmarke nicht mitbringt, macht den Fehler aus Aufgabe 1 strukturell unmöglich, statt ihn an zwölf Stellen zu reparieren.
 
 **Dateien:**
 - Anlegen: `apps/web/app/portal/bausteine/Seite.tsx`, `Abschnitt.tsx`, `Zeile.tsx`, `Reiter.tsx`, `Kachel.tsx`
@@ -587,11 +604,16 @@ import styles from "./bausteine.module.css";
 /**
  * Titel, Vorspann, Rumpf.
  *
- * Rendert bewusst KEIN <main>. Bis zu dieser Aufgabe rendert das Layout
- * <main>{children}</main> UND jede Seite darin noch ein eigenes -- jede
- * Schreibtischseite trug damit zwei verschachtelte Hauptbereiche. Die
- * Landmarke gehoert dem Layout, weil es genau eine gibt und es genau ein
- * Layout gibt.
+ * Rendert bewusst KEIN <main>. Bis Aufgabe 4 rendert das Layout
+ * <main>{children}</main> und vier Seiten darin noch ein eigenes --
+ * (schreibtisch)/page.tsx, leute, einstellungen und einstellungen/konto
+ * tragen damit zwei verschachtelte Hauptbereiche. Vier weitere haben an
+ * derselben Stelle ein <div>, das denselben Innenabstand mitbringt und
+ * ihn nach Aufgabe 4 verdoppeln wuerde.
+ *
+ * Die Landmarke gehoert dem Layout, weil es genau eine gibt und es genau
+ * ein Layout gibt. Ein Baustein, der sie nicht mitbringt, macht beide
+ * Fehler unmoeglich statt sie zu reparieren.
  */
 export function Seite({
   titel,
