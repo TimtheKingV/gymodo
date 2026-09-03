@@ -1,24 +1,18 @@
-/* Anmelden.dc.html: Wortmarke oben, darunter eine auf max-width 420px
-   zentrierte Karte. Die Wortmarke steht im Artboard in einem eigenen Kopf
-   ausserhalb der Karte -- Einstieg.tsx traegt sie stattdessen in der Karte,
-   ueber dem Titel, weil die Komponente keinen zweiten Rahmen um <main>
-   herum bauen soll (Schnittstelle: genau ein <main>). Das ist eine
-   Abweichung von der Artboard-Struktur, keine vom Artboard-Bild: Reihenfolge
-   und Abstaende der Karte selbst folgen dem Artboard. */
+/* Anmelden.dc.html: ein Kopf mit der Wortmarke oben links, darunter eine
+   auf max-width 420px zentrierte Karte. Fix-Runde 1: die Marke stand zuerst
+   in der Karte -- das Artboard traegt sie in einem eigenen Kopf ausserhalb
+   der Karte, und Einstieg.tsx bildet das jetzt so nach (.kopf als
+   Geschwister von .seite, beide Kinder von .bildschirm). */
 
-.seite {
+.bildschirm {
   min-height: 100dvh;
   background: var(--bg);
   display: flex;
-  justify-content: center;
-  padding: 64px 20px 96px;
+  flex-direction: column;
 }
 
-.karte {
-  width: 100%;
-  max-width: 420px;
-  padding: 28px;
-  height: fit-content;
+.kopf {
+  padding: var(--s32) var(--s48);
 }
 
 .marke {
@@ -30,6 +24,20 @@
   color: var(--text);
 }
 
+.seite {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 20px 96px;
+}
+
+.karte {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  height: fit-content;
+}
+
 /* Screentitel nach docs/superpowers/specs/2026-08-30-designsystem.md
    Abschnitt 3: 32 pt / Black, Versalien, Tracking -3 %. */
 .titel {
@@ -37,7 +45,7 @@
   font-weight: 800;
   letter-spacing: -0.03em;
   text-transform: uppercase;
-  margin: var(--s32) 0 0;
+  margin: 0;
 }
 
 .vorspann {
@@ -52,6 +60,16 @@
   flex-direction: column;
   gap: var(--s20);
   margin-top: var(--s32);
+}
+
+/* Der Einstieg hat eigene Masse, keine Schreibtisch-Masse: 28 px Seitenrand
+   statt 40, und hier 52 px Feldhoehe statt 44 -- dieselbe Trennung, aus der
+   halle.module.css in Phase 3 mit 56/48/52 entstand. Feld aus Form.tsx
+   bleibt bei 44 px (portal.module.css, fuer den Schreibtisch richtig);
+   diese Regel ueberschreibt nur innerhalb des Einstiegs, ueber den
+   Nachfahren-Selektor, ohne Feld selbst anzufassen. */
+.felder input {
+  min-height: 52px;
 }
 
 /* Danger als Umriss bei vollem Kontrast, keine getoente Flaeche -- dieselbe

@@ -53,12 +53,23 @@ export async function akzentflaechen(page: Page): Promise<string[]> {
  *
  * Textlinks im Fliesstext sind ausgenommen -- ein Link mitten in einem Satz
  * kann keine 44 px hoch sein, ohne die Zeile aufzureissen.
+ *
+ * #next-logo ist ebenso ausgenommen: Nexts eigener Dev-Tools-Knopf unten
+ * links, nicht Teil der Anwendung. Er existiert nur unter `next dev`, nicht
+ * im Produktionsbau, den die CI prueft. Er ist zudem ein Timing-Fall, kein
+ * fester Befund: derselbe Knopf steht ebenso auf /portal/<id>/tags, aber
+ * der dortige Bestandstest in bausteine.spec.ts trifft ihn nicht -- vermutlich,
+ * weil der Knopf erst mit einer Verzoegerung nach `load` mountet und dieser
+ * Test die Pruefung schneller erreicht, als der Knopf braucht. Ohne den
+ * Ausschluss haengt das Ergebnis vom Zufall dieses Wettlaufs ab, nicht vom
+ * Seiteninhalt.
  */
 export async function zuKleineBedienelemente(
   page: Page,
   mindestHoehe: number,
 ): Promise<string[]> {
-  const auswahl = 'button, [role="button"], input:not([type="hidden"]), select, textarea';
+  const auswahl =
+    'button:not(#next-logo), [role="button"], input:not([type="hidden"]), select, textarea';
   const elemente = await page.locator(auswahl).all();
   const zuKlein: string[] = [];
 

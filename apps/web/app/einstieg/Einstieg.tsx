@@ -12,6 +12,12 @@ import styles from "./einstieg.module.css";
  *
  * Rendert das <main> selbst -- anders als die Bausteine des Schreibtischs,
  * denn hier gibt es kein Layout, das es tut.
+ *
+ * Fix-Runde 1: die Wortmarke stand zuerst in der Karte, ueber dem Titel --
+ * das Artboard traegt sie in einem eigenen Kopf ausserhalb der zentrierten
+ * Karte, oben links am Seitenrand. <header> ist deshalb Geschwister von
+ * <main>, nicht sein Kind: "genau ein <main>" bleibt so erhalten, und die
+ * Marke sitzt wie im Artboard.
  */
 export function Einstieg({
   titel,
@@ -25,14 +31,18 @@ export function Einstieg({
   fuss?: React.ReactNode;
 }) {
   return (
-    <main className={styles.seite}>
-      <div className={styles.karte}>
+    <div className={styles.bildschirm}>
+      <header className={styles.kopf}>
         <span className={styles.marke}>gymodo</span>
-        <h1 className={styles.titel}>{titel}</h1>
-        {vorspann ? <p className={styles.vorspann}>{vorspann}</p> : null}
-        {children}
-        {fuss ? <div className={styles.fuss}>{fuss}</div> : null}
-      </div>
-    </main>
+      </header>
+      <main className={styles.seite}>
+        <div className={styles.karte}>
+          <h1 className={styles.titel}>{titel}</h1>
+          {vorspann ? <p className={styles.vorspann}>{vorspann}</p> : null}
+          {children}
+          {fuss ? <div className={styles.fuss}>{fuss}</div> : null}
+        </div>
+      </main>
+    </div>
   );
 }
