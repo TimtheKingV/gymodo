@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { akzentflaechen, hauptlandmarken, zuKleineBedienelemente } from "./helpers/abnahme";
 import { studioMitMitglied, studioMitTrainer } from "./helpers/studio";
+import { tagsAnlegen } from "../tests/helpers/tags";
 
 /**
  * Die Landmarke ist die einzige der drei Abnahmen, die heute schon rot ist.
@@ -66,4 +67,49 @@ test("Die Bedienelemente der Tags-Seite sind gross genug zum Treffen", async ({ 
 
   const zuKlein = await zuKleineBedienelemente(page, 40);
   expect(zuKlein, `zu kleine Bedienelemente: ${zuKlein.join(", ")}`).toHaveLength(0);
+});
+
+/**
+ * Fix-Runde 2, Befund 1: ein vorraetiger (unassigned) Tag ist keinem Geraet
+ * zugeordnet -- der Vorrats-Absatz zwei Abschnitte weiter unten begruendet
+ * woertlich, warum er trotzdem nicht als eigene Zeile auftaucht. Vor dem Fix
+ * stand er als "ohne Geraet"-Zeile mit dem unuebersetzten Abzeichen
+ * "UNASSIGNED" unter "Vergebene Geraete-Tags".
+ */
+test("Vergebene Geraete-Tags zeigt nur vergebene Tags, keine vorraetigen", async ({ page }) => {
+  const { studioId, admin } = await studioMitTrainer(page, "abnahme-tags-vorrat");
+
+  const { data: modell, error: modellFehler } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Testmodell", weight_step_kg: 2.5 })
+    .select("id")
+    .single<{ id: string }>();
+  if (modellFehler) throw modellFehler;
+
+  const { data: geraet, error: geraetFehler } = await admin
+    .from("machines")
+    .insert({ studio_id: studioId, equipment_model_id: modell.id, label: "1" })
+    .select("id")
+    .single<{ id: string }>();
+  if (geraetFehler) throw geraetFehler;
+
+  // Ein vergebener Tag, dazu drei vorraetige -- die Lage aus dem
+  // Sichtpruefungs-Seed, die Befund 1 aufgedeckt hat.
+  await tagsAnlegen(admin, [
+    { studioId, machineId: geraet.id, kind: "machine", status: "active" },
+    ...Array.from({ length: 3 }, () => ({
+      studioId,
+      kind: "machine" as const,
+      status: "unassigned" as const,
+    })),
+  ]);
+
+  await page.goto(`/portal/${studioId}/tags`);
+
+  // getByText allein traf auch die <option> im "Gerät auswählen"-Select der
+  // TagBinden-Sektion -- die Zeile ist ein <li> (Zeile-Baustein), also darauf
+  // eingrenzen.
+  await expect(page.getByRole("listitem").filter({ hasText: "1 — Testmodell" })).toBeVisible();
+  await expect(page.getByText("ohne Gerät")).toHaveCount(0);
+  await expect(page.getByText("UNASSIGNED")).toHaveCount(0);
 });

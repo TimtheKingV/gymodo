@@ -21,6 +21,12 @@ const STATUS_TEXT: Record<string, string> = {
   active: "aktiv",
   revoked: "gesperrt",
   replaced: "ersetzt",
+  // Kommt in "Vergebene Geraete-Tags" nach dem Filter unten nicht mehr vor,
+  // aber Statusabzeichen wird auch fuer Aushangschilder verwendet, und dort
+  // ist kein Filter auf status vorgesehen -- ohne diesen Eintrag traete
+  // "unassigned" roh und unuebersetzt aus, sobald irgendwo ein Aushangschild
+  // mit diesem Status existiert.
+  unassigned: "vorrätig",
 };
 
 const UNAUTORISIERT = "Diese Seite ist Trainern und Inhabern vorbehalten.";
@@ -145,8 +151,28 @@ export default async function TagsPage({
   const geraeteTagsGeliefert = katalog.shipments
     .filter((lieferung) => lieferung.kind === "machine")
     .reduce((summe, lieferung) => summe + lieferung.quantity, 0);
-  const geraeteTags = katalog.tags.filter((tag) => tag.kind === "machine");
+
+  // Nur vergebene Tags (aktiv oder gesperrt) -- ein vorraetiger (unassigned)
+  // Tag ist keinem Geraet zugeordnet und stuende hier als eigene
+  // "ohne Geraet"-Zeile, genau das, was der Vorrats-Absatz zwei Abschnitte
+  // weiter unten als Laerm begruendet ("97 gleichlautende Zeilen waeren
+  // keine Auskunft"). Der Abschnittsname sagt es selbst: VERGEBENE
+  // Geraete-Tags.
+  const geraeteTags = katalog.tags.filter(
+    (tag) => tag.kind === "machine" && (tag.status === "active" || tag.status === "revoked"),
+  );
   const geraeteTagsVergeben = geraeteTags.length;
+
+  // Ohne Lieferungs-Datensatz waere der Nenner 0, und "3 von 0" ist kein
+  // Verhaeltnis, sondern ein sichtbarer Rechenfehler. bind_tag_to_machine
+  // (0028_tag_binden.sql) setzt studio_id beim Binden unabhaengig davon, ob
+  // fuer die Charge je eine Lieferung erfasst wurde -- der Fall ist also
+  // erreichbar, nicht nur ein Testartefakt. Ohne bekannten Nenner zeigt die
+  // Notiz nur die Zahl, kein falsches "von".
+  const geraeteTagsNotiz =
+    geraeteTagsGeliefert > 0
+      ? `${geraeteTagsVergeben} von ${geraeteTagsGeliefert}`
+      : `${geraeteTagsVergeben}`;
 
   // Charge -> Versanddatum dieser Lieferung, fuer die Aushangschilder-Zeilen
   // unten. Unter der Annahme, dass je Charge hoechstens eine Lieferung an
@@ -154,6 +180,14 @@ export default async function TagsPage({
   const versandDatumNachCharge = new Map(
     katalog.shipments.map((lieferung) => [lieferung.batchCode, lieferung.shippedOn]),
   );
+
+  // "Noch keine Lieferung" waere falsch, wenn unten trotzdem Tags oder
+  // Aushangschilder stehen -- erreichbar aus demselben Grund wie oben bei
+  // geraeteTagsNotiz: Binden und Aktivieren setzen keinen tag_shipments-
+  // Datensatz voraus. Nur wenn wirklich nichts existiert, gilt der
+  // urspruengliche Satz.
+  const keineLieferungUndKeineTags =
+    katalog.shipments.length === 0 && katalog.tags.length === 0;
 
   const aushangschilder = katalog.tags.filter((tag) => tag.kind === "studio");
   const aushangschilderChargen = new Set(aushangschilder.map((tag) => tag.batchCode));
@@ -171,11 +205,19 @@ export default async function TagsPage({
     >
       <Abschnitt titel="Lieferungen">
         {katalog.shipments.length === 0 ? (
-          <Zustand
-            art="leer"
-            titel="Noch keine Lieferung."
-            naechsterSchritt="Ohne Tag findet ein Mitglied kein Gerät."
-          />
+          keineLieferungUndKeineTags ? (
+            <Zustand
+              art="leer"
+              titel="Noch keine Lieferung."
+              naechsterSchritt="Ohne Tag findet ein Mitglied kein Gerät."
+            />
+          ) : (
+            <Zustand
+              art="leer"
+              titel="Keine Lieferung erfasst."
+              naechsterSchritt="Tags bestehen bereits -- der Lieferungseintrag dazu fehlt."
+            />
+          )
         ) : (
           <Zeilen>
             {katalog.shipments.map((lieferung) => (
@@ -215,18 +257,25 @@ export default async function TagsPage({
         <TagBinden studioId={studioId} pfad={pfad} geraete={freieGeraete} />
       </Abschnitt>
 
-      <Abschnitt
-        titel="Vergebene Geräte-Tags"
-        notiz={`${geraeteTagsVergeben} von ${geraeteTagsGeliefert}`}
-      >
+      <Abschnitt titel="Vergebene Geräte-Tags" notiz={geraeteTagsNotiz}>
         {/*
           "geliefert", nicht "verbunden" wie im Artboard: machine_tags kennt
           laut 0002_machine_tags.sql nur created_at und revoked_at, kein
           Bindedatum -- "verbunden {Datum}" waere eine Behauptung, die die
           Datenbank nicht stuetzt. created_at ist der Zeitpunkt der
-          Chargenanlage, also das Lieferdatum; "gesperrt {Datum}" verwendet
-          jetzt tatsaechlich revoked_at. Derselbe Wortlaut wie unten bei den
-          Aushangschildern.
+          Chargenanlage, also das Lieferdatum.
+
+          "gesperrt {Datum}" verwendet revoked_at, mit createdAt als
+          Rueckfall: revokeTag() setzt status und revoked_at gemeinsam, aber
+          kein Datenbank-Constraint erzwingt das, und 0026_tag_klartext.sql:52
+          gewaehrt jedem Staff-Client update(machine_id, status, revoked_at)
+          -- ein Aufruf ausserhalb von revokeTag() kann status ohne
+          revoked_at setzen. Mehrere Testhelfer tun genau das:
+          rls-machine-tags.test.ts:175, tag-chargen.test.ts:172,
+          join-studio-by-tag.test.ts:57. Der Rueckfall ist deshalb kein
+          toter Code, sondern ungetestet.
+
+          Derselbe Wortlaut wie unten bei den Aushangschildern.
         */}
         {geraeteTags.length === 0 ? (
           <Zustand
