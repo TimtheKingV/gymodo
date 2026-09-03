@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCourseTemplate, listCourseWeek } from "@fitretro/domain";
+import { DomainError, getCourseTemplate, listCourseWeek } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { AktionsFormular, Feld } from "../../../../../Form";
 import { vorlageSpeichernAction } from "../../../../kurse-actions";
@@ -13,8 +13,40 @@ export default async function KursvorlagePage({
 }) {
   const { studioId, templateId } = await params;
   const client = await createServerSupabaseClient();
-  const vorlage = await getCourseTemplate(client, studioId, templateId);
   const basis = `/portal/${studioId}/kurse`;
+
+  let vorlage: Awaited<ReturnType<typeof getCourseTemplate>>;
+  try {
+    vorlage = await getCourseTemplate(client, studioId, templateId);
+  } catch (fehler) {
+    // Eine geloeschte Vorlage und die eines fremden Studios antworten
+    // gleich (courses.ts) -- die Seite darf beide auch gleich
+    // beantworten, aber sie muss sagen, was gilt: es gibt einen Weg
+    // zurueck. Ohne diesen Zweig liefe ein veraltetes Lesezeichen in
+    // Nexts Standardfehlerseite; eine error.tsx gibt es in dieser
+    // Anwendung nirgends.
+    return (
+      <main className={styles.content}>
+        <p>
+          <Link href={`${basis}/vorlagen`}>← Kursvorlagen</Link>
+        </p>
+        <h1 className={styles.pageTitle}>Kursvorlage</h1>
+        <div className={styles.section}>
+          <div className={styles.empty}>
+            <p className={styles.error}>
+              {fehler instanceof DomainError
+                ? fehler.message
+                : "Diese Kursvorlage liess sich nicht laden."}
+            </p>
+            <p className={styles.emptyNext}>
+              Vielleicht wurde sie entfernt. Unter <em>Kursvorlagen</em> stehen alle,
+              die es noch gibt.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   // Die Termine der naechsten vier Wochen, wie im Artboard.
   const jetzt = new Date();
