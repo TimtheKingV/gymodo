@@ -52,7 +52,7 @@ Das Ungleichgewicht aus der Erstfassung hat sich verschoben, aber nicht aufgelö
 | Betriebswerkzeug: `pnpm smoke:web`, `pnpm smoke:migrations` | ✅ neu, siehe 4a/4c |
 | **Studio-Einstellungen und Datenschutzgrenze** — Stornofrist, Speicherrecht mit Spaltengrenze, vier Policies ohne Staff-Klausel, `studio_overview` | ✅ neu |
 | **Einrichtung am Gerät** — der sechsschrittige Gang auf 390 px, Route-Gruppe `(schreibtisch)`, Upload-Warteschlange über Geräte hinweg, Tag ersetzen | ✅ neu, **ohne den Sucher** |
-| Testlage: **41** Integrationsdateien (461 Tests), **7** E2E-Dateien (26 Tests), 85 Unit-Tests | ✅ grün |
+| Testlage: **41** Integrationsdateien (461 Tests), **8** E2E-Dateien (30 Tests), 85 Unit-Tests | ✅ grün |
 | Produktion — `0001`–`0034` angewendet, `master` ausgeliefert, `smoke:web` bestanden | ✅ **3. September**, siehe 4f |
 
 **Der Kassensturz aus `2026-08-31-trainerportal-struktur-design.md` §7 ist überholt.** Er nannte den Gerätekatalog als einzigen vollständig tragenden Bereich; das gilt nicht mehr. Die Tag-Kette trägt vom Herstellungslos bis zum Scan vor dem Gerät, und von den vier dort als „am weitesten offen" bezeichneten Punkten sind jetzt alle vier zu (Leute, Auth, Studio-Einstellungen, Datenschutzgrenze).
@@ -350,7 +350,7 @@ Verstreut über sieben Specs und drei Umsetzungspläne, hier einmal an einem Ort
 | **Probe-Scan auf der Fertig-Seite** — er bräuchte den Klartext-Token, den `0026` dem Portal entzieht. Aufzulösen mit einer `security definer`-Funktion je Gerät oder einer Fallback-Seite über die Geräte-ID | einrichtung-am-geraet, Plan Aufgabe 12 | dem Trainer den Blick auf das, was ein Mitglied sieht |
 | **Vier Funktionen ohne gesetzten `search_path`** — `set_updated_at`, `is_valid_setting_choices`, `storage_studio_id`, `generate_join_code`; das Projekt setzt ihn sonst überall | Sicherheitsbefund 3. September, Abschnitt 4f | nichts, aber uneins mit der eigenen Gewohnheit |
 | **`rls-workout-sessions` ist sporadisch rot** — der Test setzt `completed_at` aus der Node-Uhr gegen `started_at` aus der Datenbank | Bestand, vor allen drei Phasen | nichts, aber es verrauscht jede Abnahme |
-| **Die Wurzelseite `/` ist ungestaltet** — seit dem 3. September sieht Personal sie nicht mehr, Mitglieder ohne Studio schon. Sie trägt das Beitrittsformular und stammt aus M0 | Phase 5 | nichts, aber es ist die erste Seite, die ein Mitglied im Web sieht |
+| **Die Wurzelseite `/` ist ungestaltet** — seit dem 3. September sieht Personal sie nicht mehr, alle übrigen Angemeldeten schon. Sie trägt das Beitrittsformular und stammt aus M0 | Phase 5 | nichts, aber es ist die erste Seite, die ein Mitglied im Web sieht |
 | **Ein verwaister Dev-Server auf Port 3000 verfälscht lokale E2E-Läufe still** — `playwright.config.ts` setzt lokal `reuseExistingServer: true`, Playwright verwendet also einen hängengebliebenen Server wieder, samt Code von vor der Änderung. Am 3. September lief ein Test deshalb zweimal rot, dessen Code korrekt war | Werkzeug | nichts, aber es kostet jedes Mal eine Fehlersuche am falschen Ort |
 
 ---

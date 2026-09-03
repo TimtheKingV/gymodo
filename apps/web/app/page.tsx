@@ -19,12 +19,17 @@ export default async function HomePage() {
   // Der Filter auf user_id ist noetig, seit memberships_select_staff (0031)
   // Mitarbeitern alle Zeilen ihres Studios zeigt -- ohne ihn zaehlte jeder
   // Kollege als eigene Mitgliedschaft. Dieselbe Falle wie in portal/page.tsx.
-  const { data: personal } = await supabase
+  const { data: personal, error: personalFehler } = await supabase
     .from("studio_memberships")
     .select("role")
     .eq("user_id", user.id)
     .in("role", ["trainer", "owner"])
     .limit(1);
+  // Ohne dieses Log ist ein Fehlschlag hier von der urspruenglichen
+  // Sackgasse nicht zu unterscheiden: personal bleibt null, die
+  // Weiterleitung unterbleibt, und Personal landet still wieder auf dieser
+  // Seite. Die Vercel-Logs sind dann die erste Adresse (Gesamtfahrplan 4b).
+  if (personalFehler) console.error("Rollenpruefung auf / fehlgeschlagen:", personalFehler);
   if (personal && personal.length > 0) redirect("/portal");
 
   const { data: studios } = await supabase.from("studios").select("id, name");
