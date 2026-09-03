@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 import { Zustand } from "./Zustand";
+
+// @testing-library/react raeumt den DOM nur automatisch auf, wenn es beim
+// Laden ein globales afterEach vorfindet -- dieses Paket importiert seine
+// Testfunktionen aber explizit. Ohne diese Zeile bleibt das Markup des
+// vorigen Tests stehen, und "leer ist KEINE Warnung" findet den
+// role="alert" des Fehler-Tests wieder.
+afterEach(cleanup);
 
 describe("Zustand", () => {
   it("leer nennt den naechsten Schritt", () => {
@@ -33,6 +40,15 @@ describe("Zustand", () => {
       <Zustand art="deaktiviert" titel="Zuweisen" naechsterSchritt="Wähle zuerst ein Gerät." />,
     );
     expect(screen.getByText("Wähle zuerst ein Gerät.")).toBeDefined();
+  });
+
+  it("deaktiviert stellt Pille und Grund als Geschwister in einer Zeile dar, nicht als Ueberschrift darueber", () => {
+    render(
+      <Zustand art="deaktiviert" titel="Zuweisen" naechsterSchritt="Wähle zuerst ein Gerät." />,
+    );
+    const pille = screen.getByRole("button", { name: "Zuweisen" });
+    const grund = screen.getByText("Wähle zuerst ein Gerät.");
+    expect(pille.parentElement).toBe(grund.parentElement);
   });
 
   it("keinRecht sagt, wem die Seite gehoert, statt nur zu sperren", () => {

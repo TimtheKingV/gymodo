@@ -13,12 +13,5 @@ export default defineConfig({
     // Zustand.test.tsx nie, und der Lauf waere trotzdem gruen.
     include: ["**/*.test.ts", "**/*.test.tsx"],
     exclude: ["node_modules", ".next"],
-    // @testing-library/react raeumt den DOM nur automatisch zwischen Tests
-    // auf, wenn es ein globales afterEach vorfindet (dist/index.js prueft
-    // "typeof afterEach === 'function'"). Ohne globals bleibt der Zustand
-    // eines Tests im DOM stehen, und der naechste Test sieht ihn mit --
-    // Zustand.test.tsx faende ohne diese Zeile in "leer ist KEINE Warnung"
-    // den role="alert" des vorherigen fehler-Tests.
-    globals: true,
   },
 });

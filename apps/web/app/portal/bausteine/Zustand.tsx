@@ -16,7 +16,9 @@ export type ZustandArt = "leer" | "fehler" | "keinRecht" | "deaktiviert";
  *                 zeigen, sagen ueber ein neues Studio nichts.
  *   fehler        Sagt, was falsch ist UND was gilt ("Das Gewicht liegt
  *                 ueber dem Geraetemaximum von 100,0 kg"), nie nur
- *                 "ungueltig". danger als Umriss, 10 % als Flaeche.
+ *                 "ungueltig". danger-Umriss bei vollem Kontrast -- KEINE
+ *                 getoente Flaeche: die 10-%-Flaeche gehoert zu Offline,
+ *                 und Offline gilt im Portal nicht.
  *   deaktiviert   NIE stumm -- daneben steht, was fehlt.
  *   keinRecht     Ein einfaches Mitglied sieht einen Satz, keinen Absturz.
  *                 Kein neuer Zustand, sondern die benannte Fassung von
@@ -46,10 +48,26 @@ export function Zustand({
       className={`${styles.zustand} ${styles[art]}`}
       role={art === "fehler" ? "alert" : undefined}
     >
-      <p className={styles.zustandTitel}>{titel}</p>
-      {naechsterSchritt ? (
-        <p className={styles.zustandSchritt}>{naechsterSchritt}</p>
-      ) : null}
+      {art === "deaktiviert" ? (
+        // "Zuweisen" ist hier keine Ueberschrift, sondern eine deaktivierte
+        // Pille -- der Grund steht daneben in derselben Zeile, nicht darunter
+        // (Artboard).
+        <div className={styles.zustandDeaktiviert}>
+          <button type="button" className={styles.zustandPille} disabled>
+            {titel}
+          </button>
+          {naechsterSchritt ? (
+            <span className={styles.zustandSchritt}>{naechsterSchritt}</span>
+          ) : null}
+        </div>
+      ) : (
+        <>
+          <p className={styles.zustandTitel}>{titel}</p>
+          {naechsterSchritt ? (
+            <p className={styles.zustandSchritt}>{naechsterSchritt}</p>
+          ) : null}
+        </>
+      )}
       {aktion ? <div className={styles.zustandAktion}>{aktion}</div> : null}
     </div>
   );

@@ -19,11 +19,13 @@
   background: var(--surface);
 }
 
-/* danger als Umriss, 10 % als Flaeche -- kein Alpha-Token dafuer vorhanden,
-   deshalb rgba() wie schon in portal.module.css (.error). */
+/* danger-Umriss bei vollem Kontrast -- KEINE getoente Flaeche. Die
+   10-%-Flaeche (rgba(255, 90, 78, 0.1)) gehoert laut Designsystem 5 zu
+   Offline, und Offline gilt im Portal nicht (trainerportal-struktur-design.md
+   5). */
 .fehler {
   border: 1px solid var(--danger);
-  background: rgba(255, 90, 78, 0.1);
+  background: var(--surface);
 }
 
 .zustandTitel {
@@ -41,6 +43,31 @@
 .zustandSchritt {
   color: var(--text-muted);
   font-size: 13px;
+}
+
+/* deaktiviert: Pille und Grund als Geschwister in einer Zeile (Artboard),
+   nicht als Ueberschrift ueber dem Grund. */
+.zustandDeaktiviert {
+  display: flex;
+  align-items: center;
+  gap: var(--s12);
+  flex-wrap: wrap;
+}
+
+/* Werte wie .secondary:disabled in portal.module.css -- dieselbe
+   deaktivierte Pille, hier nur als eigener Titel statt als Formularknopf. */
+.zustandPille {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 var(--s16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-raised);
+  color: var(--text-faint);
+  font-weight: 600;
+  cursor: not-allowed;
 }
 
 .zustandAktion {
