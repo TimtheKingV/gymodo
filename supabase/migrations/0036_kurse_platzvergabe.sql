@@ -286,7 +286,7 @@ end;
 $$;
 
 comment on function public.cancel_course_booking(uuid, uuid) is
-  'Meldet den Aufrufer ab -- oder, mit p_user_id und Staff-Rolle, jemand anderen. Nimmt dieselbe Zeilensperre wie book_course_session; Stornieren und Nachruecken passieren im selben gesperrten Abschnitt, sonst koennten eine Stornierung und eine Anmeldung gleichzeitig zu dem Schluss kommen, es sei ein Platz frei. Die Stornofrist aus studios.cancellation_deadline_hours (0032) trifft nur das Mitglied selbst, nur einen bestaetigten Platz und nur einen Termin, der stattfindet. Wer nicht Mitglied ist oder ein fremdes Mitglied abmelden will, bekommt null.';
+  'Meldet den Aufrufer ab -- oder, mit p_user_id und Staff-Rolle, jemand anderen. Nimmt dieselbe Zeilensperre wie book_course_session; Stornieren und Nachruecken passieren im selben gesperrten Abschnitt gegen ZWEI GLEICHZEITIGE Stornierungen -- ohne die Sperre waehlen beide unabhaengig dieselbe wartende Person, eine wird doppelt nachgerueckt, eine andere bleibt trotz freiem Platz stehen (nicht gegen Stornierung-gegen-Anmeldung: das committet atomar und kann nicht kollidieren). Die Stornofrist aus studios.cancellation_deadline_hours (0032) trifft nur das Mitglied selbst, nur einen bestaetigten Platz und nur einen Termin, der stattfindet. Wer nicht Mitglied ist oder ein fremdes Mitglied abmelden will, bekommt null.';
 
 revoke all on function public.cancel_course_booking(uuid, uuid)
   from public, anon, authenticated, service_role;
