@@ -211,6 +211,20 @@ Dass der **neue** Stand liegt und nicht der alte weiterlaeuft, ist eigens belegt
 
 **Nebenbefund, nicht dringend:** vier Funktionen tragen keinen gesetzten `search_path` — `set_updated_at`, `is_valid_setting_choices`, `storage_studio_id`, `generate_join_code`. Das Projekt setzt ihn sonst überall (`set search_path = public, pg_temp`); diese vier sind mit der eigenen Gewohnheit uneins. Eine Migration, wenn ohnehin eine ansteht.
 
+### 4g. Die vierte Drift — diesmal die Auth-Konfiguration
+
+Am 3. September, beim **ersten menschlichen Anmeldeversuch in der Produktion**: die Mail zum Zurücksetzen des Passworts enthielt einen Link, die Oberfläche verlangt einen sechsstelligen Code.
+
+Auf Platte setzen alle drei Vorlagen (`confirmation`, `magic_link`, `recovery`) auf `{{ .Token }}`. Ein Link ist Supabases Standardvorlage — die Cloud trug die eigenen also nicht. `config.toml` bekam `recovery` und `confirmation` erst mit `6a1fffb` am 2. September; der letzte `config push` liegt davor, am 1. September.
+
+**Es ist dieselbe Drift wie 4c bis 4f, zum vierten Mal — und zum ersten Mal nicht im Schema, sondern in der Auth-Konfiguration.** Die Lehre aus 4e gilt unverändert: erst fragen, welche Seite hinten ist. Hier war es die Cloud.
+
+**Was den Fehler verdeckt hat:** der Link führt auf `site_url` und trägt sein Token im URL-Fragment. Ein Fragment erreicht den Server nie, `/` ist eine Server-Komponente — sie sah keine Sitzung und schrieb *„Nicht angemeldet."* Der Nutzer sieht damit einen Anmeldefehler, wo eine falsche Vorlage liegt.
+
+**Und warum es niemand vorher sah:** kein Test ging den Weg, den ein Mensch geht. Die E2E-Dateien melden sich an und springen dann per `page.goto` auf ihr Ziel. `e2e/onboarding.spec.ts` schließt diese Lücke — er navigiert nach dem Login nicht mehr, sondern misst, wo man landet.
+
+**Ein zweiter Befund aus derselben Runde, unabhängig vom Onboarding:** auf Port 3000 hing ein Dev-Server aus einem früheren Lauf. Lokal gilt `reuseExistingServer: true` — Playwright verwendet einen solchen Server wieder, mitsamt Code von *vor* der Änderung. Ein neuer Test schlug dadurch zweimal fehl, obwohl sein Code stimmte; gegen den Produktionsbau lief dieselbe Suite zweimal mit 29 von 29 durch. Wer lokal einem roten Test nachgeht, prüft deshalb zuerst, was auf Port 3000 lauscht.
+
 ### Das Ungleichgewicht, das die Reihenfolge bestimmt
 
 | | Web-Portal | iOS Member-App |
@@ -228,7 +242,8 @@ Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Da
 ### Phase 0 — Entscheiden *(läuft)*
 
 - [x] **SMTP:** Supabase Pro, entschieden und gebucht 1. September (Organisation `Gymodo`)
-- [x] **Template ins Projekt gepusht**, per leerem Folge-Diff belegt
+- [x] **`magic_link`-Vorlage ins Projekt gepusht** (1. September), per leerem Folge-Diff belegt
+- [ ] **`recovery`- und `confirmation`-Vorlage nachziehen** — sie kamen erst mit `6a1fffb` am 2. September dazu und stehen seither nur auf Platte; bis dahin verschickt die Produktion Supabases Standardmail mit Link statt Code (Abschnitt 4g)
 - [x] **Echte OTP-Mail mit sechsstelligem Code angekommen** — Blocker 1 ist zu
 - [x] **`supabase db push`** — zehn Migrationen nachgezogen, lokal und Cloud standen auf `0021` (Abschnitt 4c)
 - [x] **Zweite Drift geschlossen** — `0022`–`0031` angewendet, Gleichstand über 31 Einträge (Abschnitt 4d)
@@ -335,6 +350,8 @@ Verstreut über sieben Specs und drei Umsetzungspläne, hier einmal an einem Ort
 | **Probe-Scan auf der Fertig-Seite** — er bräuchte den Klartext-Token, den `0026` dem Portal entzieht. Aufzulösen mit einer `security definer`-Funktion je Gerät oder einer Fallback-Seite über die Geräte-ID | einrichtung-am-geraet, Plan Aufgabe 12 | dem Trainer den Blick auf das, was ein Mitglied sieht |
 | **Vier Funktionen ohne gesetzten `search_path`** — `set_updated_at`, `is_valid_setting_choices`, `storage_studio_id`, `generate_join_code`; das Projekt setzt ihn sonst überall | Sicherheitsbefund 3. September, Abschnitt 4f | nichts, aber uneins mit der eigenen Gewohnheit |
 | **`rls-workout-sessions` ist sporadisch rot** — der Test setzt `completed_at` aus der Node-Uhr gegen `started_at` aus der Datenbank | Bestand, vor allen drei Phasen | nichts, aber es verrauscht jede Abnahme |
+| **Die Wurzelseite `/` ist ungestaltet** — seit dem 3. September sieht Personal sie nicht mehr, Mitglieder ohne Studio schon. Sie trägt das Beitrittsformular und stammt aus M0 | Phase 5 | nichts, aber es ist die erste Seite, die ein Mitglied im Web sieht |
+| **Ein verwaister Dev-Server auf Port 3000 verfälscht lokale E2E-Läufe still** — `playwright.config.ts` setzt lokal `reuseExistingServer: true`, Playwright verwendet also einen hängengebliebenen Server wieder, samt Code von vor der Änderung. Am 3. September lief ein Test deshalb zweimal rot, dessen Code korrekt war | Werkzeug | nichts, aber es kostet jedes Mal eine Fehlersuche am falschen Ort |
 
 ---
 
