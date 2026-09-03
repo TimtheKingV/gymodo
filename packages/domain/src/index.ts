@@ -110,3 +110,10 @@ export type {
   OverviewProblem,
   StudioOverview,
 } from "./overview.js";
+export {
+  createCourseTemplate,
+  getCourseTemplate,
+  listCourseTemplates,
+  updateCourseTemplate,
+} from "./courses.js";
+export type { CourseTemplate, CourseTemplateInput } from "./courses.js";
