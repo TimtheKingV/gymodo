@@ -25,6 +25,15 @@ const nextConfig = {
   // Cross-Origin-Anfrage -- und macht daraus in einer kuenftigen
   // Hauptversion einen Fehler.
   allowedDevOrigins: ["127.0.0.1"],
+  // Der Dev-Server rendert unten links einen echten <button
+  // aria-label="Open Next.js Dev Tools">, den zuKleineBedienelemente() als
+  // Bedienelement zaehlt (32 px, unter jeder Mindesthoehe). Er existiert
+  // nur unter `next dev`, nicht im Produktionsbau, den die CI prueft --
+  // gemessen an /login und an /portal/<id>/tags: gegen `pnpm build && pnpm
+  // start` erscheint er auf keiner der beiden Seiten. Ohne diesen Eintrag
+  // haengt ein zuKleineBedienelemente-Test lokal davon ab, ob der Knopf vor
+  // der Pruefung schon gemountet hat -- nicht vom Seiteninhalt.
+  devIndicators: false,
   webpack(config) {
     // transpilePackages allein reicht nicht: Webpack sucht bei einem
     // expliziten ".js"-Specifier nur die Datei "tags.js" woertlich und

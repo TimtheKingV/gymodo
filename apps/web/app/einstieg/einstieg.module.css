@@ -1,0 +1,118 @@
+/* Anmelden.dc.html: Wortmarke oben, darunter eine auf max-width 420px
+   zentrierte Karte. Die Wortmarke steht im Artboard in einem eigenen Kopf
+   ausserhalb der Karte -- Einstieg.tsx traegt sie stattdessen in der Karte,
+   ueber dem Titel, weil die Komponente keinen zweiten Rahmen um <main>
+   herum bauen soll (Schnittstelle: genau ein <main>). Das ist eine
+   Abweichung von der Artboard-Struktur, keine vom Artboard-Bild: Reihenfolge
+   und Abstaende der Karte selbst folgen dem Artboard. */
+
+.seite {
+  min-height: 100dvh;
+  background: var(--bg);
+  display: flex;
+  justify-content: center;
+  padding: 64px 20px 96px;
+}
+
+.karte {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  height: fit-content;
+}
+
+.marke {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+/* Screentitel nach docs/superpowers/specs/2026-08-30-designsystem.md
+   Abschnitt 3: 32 pt / Black, Versalien, Tracking -3 %. */
+.titel {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  margin: var(--s32) 0 0;
+}
+
+.vorspann {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+  margin: var(--s12) 0 0;
+}
+
+.felder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s20);
+  margin-top: var(--s32);
+}
+
+/* Danger als Umriss bei vollem Kontrast, keine getoente Flaeche -- dieselbe
+   Regel wie bei .fehler in bausteine.module.css (Zustand.tsx). */
+.fehlermeldung {
+  border: 1px solid var(--danger);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--r-card);
+  padding: var(--s12) var(--s16);
+  margin-top: var(--s20);
+  font-size: 14px;
+}
+
+/* Die eine Akzentflaeche der Seite: der Anmeldeknopf (Artboard). */
+.knopf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 64px;
+  margin-top: var(--s32);
+  border: none;
+  border-radius: 16px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.knopf:hover {
+  background: var(--accent-pressed);
+}
+
+.knopf:disabled {
+  background: var(--surface-raised);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+/* Zwei Textlinks, keine Nebenaktionen -- deshalb ausserhalb der
+   zuKleineBedienelemente-Pruefung (die zaehlt button/input/select/textarea,
+   keine <a>) und ohne eigene Trefferflaechen-Vorgabe. */
+.links {
+  display: flex;
+  justify-content: center;
+  gap: var(--s24);
+  margin-top: var(--s24);
+}
+
+.links a {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.links a:hover {
+  color: var(--text);
+}
+
+.fuss {
+  margin-top: var(--s24);
+}
