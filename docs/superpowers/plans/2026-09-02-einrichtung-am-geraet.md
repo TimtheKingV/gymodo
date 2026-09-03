@@ -5531,24 +5531,12 @@ Der Bauabschnitt ist fertig, wenn alles davon zutrifft:
 - [ ] `pnpm test` — Unit-Tests in `packages/domain` und `apps/web` grün
 - [ ] `pnpm test:integration` — 37 Dateien grün (36 Bestand plus `domain-exercises`)
 
-  > **Zwei bekannte Fehlschläge, beide NICHT aus diesem Bauabschnitt.** Beide reproduzieren auf `master` mit identischem Ergebnis; geprüft am 2. September durch Auschecken und erneuten Lauf.
+  > **Berichtigt am 3. September.** Hier stand, die lokale Datenbank weiche von den Migrationen ab, mit dem Unterton eines Defekts. Die Messungen stimmten, die Schlussfolgerung nicht: die Datenbank war nicht kaputt, sondern **voraus**. `0032`–`0034` lagen angewendet vor, aber nur auf dem noch nicht gemergten `worktree/calm-forest-3c59`. Die vier roten RLS-Tests prüften den Vertrag vor der Datenschutzgrenze, die `0033` längst abgeschafft hatte.
   >
-  > **(a) Uhrendrift.** `rls-workout-sessions > positiv: ein Mitglied beendet seine eigene Session` fällt sporadisch mit `workout_sessions_completed_after_start` (23514). Der Test setzt `completed_at` aus der **Node-Uhr**, während `started_at` per `now()` aus der **Datenbank** kommt; driftet die Containeruhr nach vorn, liegt das Ende vor dem Anfang. Gemessen: zwei von drei Läufen grün auf unverändertem Stand. Reparatur wäre, das Ende serverseitig zu setzen.
+  > Nach der Zusammenführung am 3. September läuft die Suite vollständig grün: **41 Dateien, 461 Tests.** Die ganze Geschichte steht in `2026-09-01-gesamtfahrplan.md` §4e.
   >
-  > **(b) Die lokale Datenbank weicht von den Migrationen auf Platte ab.** Drei Tests scheitern gleichartig — `rls-workout-sessions`, `rls-workout-sets` und `rls-progression-suggestions`, jeweils *„ein Trainer sieht die … seiner Studiomitglieder"*: die Abfrage liefert `[]` statt einer Zeile.
-  >
-  > Nachgemessen, außerhalb der Tests, mit einem frisch angelegten Studio und Trainer:
-  >
-  > | Prüfung | Ergebnis |
-  > | --- | --- |
-  > | `is_studio_member(studio)` | `true` |
-  > | `is_studio_staff(studio)` | `true` |
-  > | Trainer sieht sein Studio | ja |
-  > | Trainer sieht die Session seines Mitglieds | **`[]`** |
-  >
-  > `0012_workout_sessions.sql` verlangt `is_studio_member(...) and (eigene Zeile or is_studio_staff(...))`. Mit beiden Funktionen auf `true` **muss** die Policy greifen. Sie tut es nicht — also trägt die laufende Datenbank eine andere Fassung als die Datei auf Platte. Keine spätere Migration fasst `workout_sessions_select` an.
-  >
-  > **Das ist dieselbe Drift wie in `2026-09-01-gesamtfahrplan.md` §4c und §4d, nur lokal statt in der Cloud.** Naheliegende Behandlung ist ein `supabase db reset` — der wirft allerdings die lokalen Daten weg und ist deshalb eine Entscheidung des Betreibers, kein Nebenbei-Fix. **Bis dahin sind Integrationsergebnisse zu diesen drei Tabellen nicht aussagekräftig.**
+  > Der zweite Punkt von damals bleibt: `rls-workout-sessions > positiv: ein Mitglied beendet seine eigene Session` setzt `completed_at` aus der **Node-Uhr**, während `started_at` per `now()` aus der **Datenbank** kommt, und fällt bei Uhrendrift sporadisch. Reparatur wäre, das Ende serverseitig zu setzen.
+
 - [ ] `pnpm test:e2e` — 6 Dateien grün (5 Bestand plus `einrichten`)
 - [ ] `pnpm build` — kein `node:crypto` im Client-Bundle
 - [ ] **Aufgabe 9b — der Sucher — ist gebaut** (`jsqr`, `Sucher.tsx`, Hauptaktion auf der Klebe-Ansicht von „Tag prüfen" auf „Tag scannen" umgestellt). **Offen; am 2. September auf Ansage vertagt.** Ohne ihn trägt der Gang, aber der Trainer tippt 22 Zeichen ab, statt zu scannen.

@@ -85,8 +85,15 @@ test("Schritt 1 legt ein Modell mit Pflichtfoto an und geht zu den Einstellungen
     .getByRole("button", { name: "Weiter zu den Einstellungen" })
     .click();
 
+  // Grosszuegig: hier gehen 2 MB durch eine Server Action, werden von den
+  // Aufnahmedaten befreit und in den Bucket geschrieben. Auf dem Dev-Server
+  // mit sechs parallelen Workern dauert das gemessen laenger als die 20 s
+  // Standardfrist. Das Foto kleiner zu machen waere der falsche Ausweg --
+  // seine Groesse ist genau die Regression, die den Absturz in
+  // stripImageMetadata und die 1-MB-Grenze der Server Action aufgedeckt hat.
   await expect(page).toHaveURL(
     new RegExp(`/portal/${studioId}/einrichten/modell/[0-9a-f-]+/einstellungen$`),
+    { timeout: 60_000 },
   );
 
   await expect(page.getByText("Schritt 2 von 6 · Einstellungen")).toBeVisible();
@@ -410,8 +417,8 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
     .getByRole("button", { name: "Weiter zu den Einstellungen" })
     .click();
 
-  // 2 Einstellungen
-  await expect(page.getByText("Foto · Steht")).toBeVisible();
+  // 2 Einstellungen -- dieselbe 2-MB-Strecke wie oben, dieselbe Frist.
+  await expect(page.getByText("Foto · Steht")).toBeVisible({ timeout: 60_000 });
   await page.getByRole("button", { name: "Parameter hinzufügen" }).click();
   await page.getByLabel("Beschriftung").fill("Sitzhöhe");
   await page.getByLabel("Schlüssel").fill("sitz");
@@ -509,4 +516,34 @@ test("Ein zerkratzter Tag wird ersetzt, und der alte wird dabei ungueltig", asyn
   expect(alterTag.status).toBe("revoked");
   // Sperren, nicht loeschen: machine_id bleibt als Nachweis stehen.
   expect(alterTag.machine_id).toBe(geraet.id);
+});
+
+/**
+ * Die Kehrseite des Einstiegstests, und die Regression, die dieser Zweig
+ * ueberhaupt erst moeglich gemacht hat: die Route-Gruppe (schreibtisch)
+ * traegt die Rail. Eine neue Seite, die versehentlich daneben angelegt wird,
+ * saehe funktionierend aus und haette doch keine Navigation -- genau das war
+ * beim Zusammenfuehren mit Phase 2.3/2.4 der Fall, und Git meldet es nicht.
+ */
+test("Jede Schreibtischseite traegt die Rail, der Gang traegt sie nicht", async ({
+  page,
+}) => {
+  const { studioId } = await studioMitTrainer(page, "einrichten-rail");
+  const rail = page.getByRole("navigation", { name: "Katalog" });
+
+  for (const pfad of [
+    "",
+    "/modelle",
+    "/geraete",
+    "/tags",
+    "/leute",
+    "/einstellungen",
+    "/einstellungen/konto",
+  ]) {
+    await page.goto(`/portal/${studioId}${pfad}`);
+    await expect(rail, `Rail fehlt auf /portal/<id>${pfad}`).toBeVisible();
+  }
+
+  await page.goto(`/portal/${studioId}/einrichten`);
+  await expect(rail).toHaveCount(0);
 });

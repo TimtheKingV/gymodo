@@ -10,7 +10,8 @@
 | `designplan` | `7c1f18c` | in `master` aufgegangen |
 | `design-geräteeinrichtung` | `13d065b` | in `master` aufgegangen |
 | `worktree/brave-forest-c9d8` | `2b2be9c` | Tag-Lieferung, in `master` aufgegangen |
-| `worktree/calm-forest-3c59` | `3452a84` | Studio-Einstellungen, Datenschutzgrenze, Überblick: `0032`–`0034`, Fachschicht, Reiter Studio/Konto, E2E-Gang — **noch nicht gemerged** |
+| `worktree/calm-forest-3c59` | `05be485` | Studio-Einstellungen, Datenschutzgrenze, Überblick: `0032`–`0034`, Fachschicht, Reiter Studio/Konto, E2E-Gang — **in `master` aufgegangen am 3. September** |
+| `phase3-einrichtung-am-geraet` | — | Der Gang durch die Halle, Route-Gruppe `(schreibtisch)`, `parseTagScan`/`naechsteGeraeteNummer`/`listStudioExercises`, Fix an `stripImageMetadata` und `bodySizeLimit`. Trägt `master` bereits in sich; **der Sucher (9b) fehlt** |
 
 > **Was sich gegenüber der Erstfassung geändert hat, in einem Satz:** Sie beschrieb einen Stand, an dem die entworfenen Baustellen *zu null* gebaut waren — inzwischen stehen Phase 1 und Phase 2 ganz. Die Abschnitte 1 bis 5 sind entsprechend fortgeschrieben; die Betriebsbefunde aus 4a–4c bleiben als Lehre stehen, auch wo ihr Anlass erledigt ist.
 
@@ -66,8 +67,8 @@ Das Ungleichgewicht aus der Erstfassung bleibt trotzdem bestehen, nur verschoben
 | ~~**Tags als Lieferung**~~ — Klartext-Tokenraum, Chargen/Lieferungen/Halde, `inspect_tag`/`bind_tag_to_machine`, Betreiberwerkzeug | `0026`–**`0029`** | ✅ `2026-09-01-tag-lieferung.md`, 8 Aufgaben | ✅ **2. September** |
 | ~~**Auth-Umstellung**~~ — OTP → Passwort, Registrierung, Studio-Beitritt | — | ❌ ohne Plan gebaut | ✅ **2. September** |
 | ~~**Leute**~~ — Mitglieder und Mitarbeiter | `0030`–`0031` | ❌ ohne Plan gebaut | ✅ **2. September** |
-| **Sucher im Portal** — `getUserMedia` + Decoder | — | ❌ | ❌ |
-| **Einrichtung am Gerät** — 16 `Telefon*`-Artboards, der Gang durch die Halle | — | ❌ Spec steht, Plan fehlt | ❌ |
+| **Sucher im Portal** — `getUserMedia` + Decoder | — | ✅ als Aufgabe 9b im Plan | ❌ **offen, auf Ansage vertagt** |
+| ~~**Einrichtung am Gerät**~~ — 16 `Telefon*`-Artboards, der Gang durch die Halle | keine | ✅ `2026-09-02-einrichtung-am-geraet.md`, 13 Aufgaben | ✅ **3. September**, ohne 9b |
 | ~~**Studio-Einstellungen, Datenschutzgrenze, Überblick**~~ — Stornofrist, Speicherrecht mit Spaltengrenze, vier Policies ohne Staff-Klausel, `studio_overview` | `0032`–`0034` | ✅ `2026-09-02-studio-einstellungen-datenschutzgrenze.md`, 9 Aufgaben | ✅ **2. September** |
 | **Kurse** — drei Tabellen, Platzvergabe unter Nebenläufigkeit | — | ❌ nur Vorabnotiz (84 Zeilen) | ❌ |
 | **Portal-Frontend nach den 39 Artboards** | — | ❌ | ❌ |
@@ -148,6 +149,29 @@ Zwei Dinge, die daraus zu merken sind:
 - **`pnpm smoke:migrations` ist auf dieser Maschine blind.** Er ruft die CLI auf und bekommt denselben Transportfehler — er meldet dann `exit 2` („lief nicht"), nicht `exit 1` („Drift"), unterscheidet also sauber zwischen *kaputt* und *auseinander*. Das ist die richtige Trennung, aber sie heißt auch: der Abgleich muss von woanders laufen oder über die API gehen.
 - **`apply_migration` über MCP vergibt eigene Zeitstempel-Versionen** (`20260902152032` statt `0026`). Das hätte `supabase migration list` dauerhaft als Drift gemeldet, obwohl das Schema stimmt. Die Einträge wurden anschließend auf `0022`–`0031` normalisiert. Wer den Weg wieder geht, muss das mitmachen.
 
+### 4e. Die dritte Drift — und diesmal war die Platte hinten
+
+Am 3. September meldete die Integrationssuite auf dem Phase-3-Zweig vier Fehlschläge, alle nach demselben Muster: *„ein Trainer sieht die … seiner Studiomitglieder"* lieferte die leere Menge. Der erste Verdacht — ein Defekt in der Datenbank — war falsch, und die Messung, die ihn widerlegt hat, ist die Merkwürdigkeit dieses Falls:
+
+| Prüfung, mit frischem Studio und Trainer | Ergebnis |
+| --- | --- |
+| `is_studio_member(studio)` | `true` |
+| `is_studio_staff(studio)` | `true` |
+| Trainer sieht sein Studio | ja |
+| Trainer sieht die Session seines Mitglieds | **leer** |
+
+`0012` verlangt `is_studio_member and (eigene Zeile or is_studio_staff)`. Mit beiden Funktionen auf `true` **musste** die Policy greifen. Sie tat es nicht — also stand in der Datenbank eine andere Fassung als in der Datei.
+
+**Der Grund war kein Rückstand, sondern ein Vorsprung.** Die Datenbank führte **34** Migrationen, das Repository **31**: `0032`–`0034` waren angewendet, lagen aber nur auf dem noch nicht gemergten `worktree/calm-forest-3c59`. Die vier Tests prüften den Vertrag *vor* der Datenschutzgrenze; `0033` hatte ihn längst abgeschafft.
+
+**Was daraus zu merken ist, und es ist nicht die Lehre aus 4c und 4d:**
+
+- **Dort fehlten Migrationen in der Cloud, hier fehlten sie im Repository.** Der Reflex aus den ersten beiden Fällen — „die Datenbank nachziehen" — wäre hier zerstörerisch gewesen: ein `supabase db reset` hätte drei Migrationen und den ganzen Bauabschnitt dahinter gelöscht, weil sie in keiner Datei standen. Vor jedem Reset gehört die Frage: *ist die Datenbank hinten oder vorn?*
+- **Rekonstruierbar waren sie nur, weil Supabase die Anweisungen mitschreibt.** `supabase_migrations.schema_migrations.statements` enthielt alle drei im Wortlaut. Das ist die Rettungsleine — aber kein verlässlicher Zeuge: der Eintrag zu `0034` trug eine ältere Fassung als die laufende Funktion, weil sie später ohne Nachtrag neu eingespielt worden war.
+- **Ein paralleler Worktree ist eine Drift-Quelle wie eine Cloud.** Beide Zweige teilten sich dieselbe lokale Datenbank; der eine wendete an, der andere sah die Dateien nicht. Solange zwei Zweige eine Datenbank teilen, ist der Migrationsstand kein Merkmal des Zweigs mehr.
+
+Geschlossen am 3. September: Worktree nach `master`, `master` in den Phase-3-Zweig, danach `supabase db reset`. Verzeichnis und Platte stehen seither beide auf **34**.
+
 ### Das Ungleichgewicht, das die Reihenfolge bestimmt
 
 | | Web-Portal | iOS Member-App |
@@ -204,11 +228,18 @@ Vier Bauabschnitte waren vorgesehen. Die ersten beiden wurden ohne Umsetzungspla
 
 Punkt 4 hing an Punkt 3 nicht fachlich, aber beide fassten `studios` an; nacheinander gebaut haben sie sich eine Migration erspart, die die andere wieder angefasst hätte.
 
-### Phase 3 — Einrichtung am Gerät
+### Phase 3 — Einrichtung am Gerät ✅ *abgeschlossen 3. September, bis auf den Sucher*
 
-Die 16 `Telefon*`-Artboards: der Gang durch die Halle, sechs Schritte, Modell → Einstellungen → Gerät → Tag → Übungen → Video. Hier sitzt **der Sucher** — `getUserMedia` und ein Decoder im Browser, weil Safari `BarcodeDetector` nicht kennt. Spec steht (`2026-09-01-einrichtung-am-geraet-design.md`), Umsetzungsplan fehlt.
+Die 16 `Telefon*`-Artboards: der Gang durch die Halle, sechs Schritte, Modell → Einstellungen → Gerät → Tag → Übungen → Video. Dreizehn Aufgaben, **ohne eine einzige Migration** — die Spec hatte es versprochen, und es hat gehalten.
 
-Der größte Brocken mit fertiger Spec, und der einzige echte Neubau, der nach Phase 1 übrig bleibt. Das Risiko ist gedeckt: der Rückfallweg über das Token-Textfeld steht seit `TagBinden`.
+**Offen bleibt allein 9b, der Sucher.** Das Token-Feld trägt den Schritt bis dahin; die Spec hatte den Rückfallweg ohnehin als eigenständig entworfen, und alles hinter ihm — `inspect_tag`, `bind_tag_to_machine`, die Antworttabelle — ist derselbe Code, dem der Decoder später nur vorgeschaltet wird.
+
+**Zwei Fehler, die der Bauabschnitt nebenbei freigelegt hat**, beide seit dem Medienplan im Schreibtischpfad und beide unsichtbar, weil jeder Test mit einem 22-Byte-JPEG lief:
+
+- `stripImageMetadata` warf ab einem halben Megabyte `RangeError: Maximum call stack size exceeded` — beide Stripper füllten ein `number[]` per Spread. Jedes Foto aus einer Kamera zerbrach daran.
+- Next schnitt den Rumpf jeder Server Action bei 1 MB ab, mit 413, bevor die Fachschicht die Bytes sah.
+
+Die Lehre steht als Rahmenbedingung im Umsetzungsplan: **eine Mediendatei im Test hat die Größe, die sie in der Halle hat.**
 
 ### Phase 4 — Kurse
 
