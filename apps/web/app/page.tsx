@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { BeitrittsFormular } from "./BeitrittsFormular";
+import { Einstieg } from "./einstieg/Einstieg";
+import einstiegStyles from "./einstieg/einstieg.module.css";
 import styles from "./einstieg/landeseite.module.css";
 
 export default async function HomePage() {
@@ -61,9 +63,10 @@ export default async function HomePage() {
     );
   }
 
-  // Wer den Katalog pflegt, gehoert ins Portal -- diese Seite ist die
-  // M0-Rauchprobe und traegt keinen Weg weiter. Bis zum 3. September landete
-  // hier jeder Onboarding-Weg und endete: Adresse, Studioname, schwarz.
+  // Wer den Katalog pflegt, gehoert ins Portal. Wer keine Mitarbeiterrolle
+  // hat, bleibt hier -- das ist der Mitgliedsbildschirm (KeinStudio.dc.html,
+  // untere Haelfte): entweder das Beitrittsformular oder, sobald ein Studio
+  // steht, dessen Liste.
   //
   // Der Filter auf user_id ist noetig, seit memberships_select_staff (0031)
   // Mitarbeitern alle Zeilen ihres Studios zeigt -- ohne ihn zaehlte jeder
@@ -84,17 +87,32 @@ export default async function HomePage() {
   const { data: studios } = await supabase.from("studios").select("id, name");
 
   return (
-    <main>
-      <p data-testid="user-email">{user.email}</p>
+    <Einstieg
+      titel="Noch kein Studio"
+      vorspann="Du wolltest trainieren? Das Portal ist für Studios. Trainieren läuft in der App — dort trittst du deinem Studio bei, indem du den Aushang am Eingang oder den Aufkleber an einem Gerät scannst."
+    >
+      <p data-testid="user-email" className={einstiegStyles.hinweis}>
+        {user.email}
+      </p>
       {studios && studios.length > 0 ? (
-        <ul data-testid="studio-list">
+        <ul data-testid="studio-list" className={einstiegStyles.felder}>
           {studios.map((studio) => (
             <li key={studio.id}>{studio.name}</li>
           ))}
         </ul>
       ) : (
+        /*
+         * Der Studio-Code steht hier gegen die Canvas-Notiz note-einstieg, die ihn
+         * aus dem Web streichen will. Der Grund ist kein Widerspruch, sondern eine
+         * Reihenfolge: den Beitritt soll die iOS-App tragen (Scan des Aushangs
+         * oder des Aufklebers), und die ist Phase 6 -- apps/ enthaelt nur web.
+         * Faellt das Formular vorher, gibt es im ganzen Produkt keinen
+         * Beitrittsweg mehr.
+         *
+         * Auslöser fuer den Rueckbau ist die App, kein Datum.
+         */
         <BeitrittsFormular />
       )}
-    </main>
+    </Einstieg>
   );
 }
