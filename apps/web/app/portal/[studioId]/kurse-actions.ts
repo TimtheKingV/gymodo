@@ -16,11 +16,9 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 /**
  * Die Server Actions der Kursseiten.
  *
- * Getrennt von portal/actions.ts, weil zwei davon mehr zurueckgeben als
- * ok: das Anlegen einer Serie die Zahl der entstandenen Termine, das
- * Entfernen eines Teilnehmers den Grund einer Absage. Das Rueckgabeformat
- * der bestehenden Datei dafuer aufzuweichen hiesse, zwanzig Aufrufstellen
- * anzufassen.
+ * Getrennt von portal/actions.ts, weil die bestehende Datei bereits vier
+ * Bereiche und zwanzig Importe traegt -- ein fuenfter Bereich gehoert in
+ * eine eigene Datei, statt jene weiter wachsen zu lassen.
  */
 
 import type { ActionResult } from "../actions";
@@ -56,7 +54,13 @@ export async function vorlageAnlegenAction(
       description: optionalerText(formular, "beschreibung"),
       defaultDurationMin: zahl(formular, "dauer"),
       defaultCapacity: zahl(formular, "plaetze"),
-      defaultInstructorUserId: optionalerText(formular, "trainerId"),
+      // Kein Formular dieser Phase rendert ein trainerId-Feld -- ein
+      // Lesen hier waere derselbe Fehler, der auf den Update-Pfaden
+      // schon in 32d83e9 geschlossen wurde: ein Feld lesen, das niemand
+      // setzt, heisst die Spalte bei jedem Aufruf auf NULL schreiben.
+      // Das Setzen ist Aufgabe der Trainerauswahl, die die Spec als
+      // offenen Punkt fuehrt.
+      defaultInstructorUserId: null,
       defaultInstructorName: optionalerText(formular, "trainerName"),
     });
   } catch (fehler) {
@@ -104,7 +108,9 @@ export async function terminAnlegenAction(
         durationMin: zahl(formular, "dauer"),
         capacity: zahl(formular, "plaetze"),
         room: optionalerText(formular, "raum"),
-        instructorUserId: optionalerText(formular, "trainerId"),
+        // Kein Formular dieser Phase rendert ein trainerId-Feld -- siehe
+        // Kommentar in vorlageAnlegenAction.
+        instructorUserId: null,
         instructorName: optionalerText(formular, "trainerName"),
       },
       optionalerText(formular, "wiederholungBis"),
@@ -134,7 +140,10 @@ export async function terminSpeichernAction(
   } catch (fehler) {
     return alsErgebnis(fehler);
   }
+  // Wie terminAbsagenAction: Kapazitaet, Beginn und Belegung stehen auch
+  // auf der Wochenuebersicht, nicht nur auf dieser Seite.
   revalidatePath(`/portal/${studioId}/kurse/termin/${sessionId}`);
+  revalidatePath(`/portal/${studioId}/kurse`);
   return { ok: true };
 }
 
@@ -164,6 +173,9 @@ export async function teilnehmerEntfernenAction(
   } catch (fehler) {
     return alsErgebnis(fehler);
   }
+  // Der entfernte Teilnehmer aendert den gebuchten Zaehler, den auch die
+  // Wochenuebersicht zeigt.
   revalidatePath(`/portal/${studioId}/kurse/termin/${sessionId}`);
+  revalidatePath(`/portal/${studioId}/kurse`);
   return { ok: true };
 }

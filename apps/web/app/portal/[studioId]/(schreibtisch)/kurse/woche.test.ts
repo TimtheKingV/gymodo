@@ -23,6 +23,24 @@ describe("wochenFenster", () => {
     expect(fenster.naechste).toBe("2026-09-07");
   });
 
+  it("ein Anker, der kein Datum ist, faellt auf die aktuelle Woche zurueck, statt abzustuerzen", () => {
+    // ?woche=abc erreicht wochenFenster AUSSERHALB des try/catch von
+    // page.tsx -- ein RangeError hier landet auf Nexts Standard-
+    // Fehlerseite, und diese Anwendung hat kein error.tsx (Finding 6 des
+    // Gesamtreviews). Ein verunstaltetes Lesezeichen soll diese Woche
+    // zeigen, keinen Fehler.
+    expect(() => wochenFenster("abc", BERLIN)).not.toThrow();
+    const fenster = wochenFenster("abc", BERLIN);
+    const erwartet = wochenFenster(undefined, BERLIN);
+    expect(fenster.von).toBe(erwartet.von);
+    expect(fenster.bis).toBe(erwartet.bis);
+  });
+
+  it("ein Anker mit falscher Form (kein YYYY-MM-DD) faellt ebenfalls zurueck", () => {
+    expect(() => wochenFenster("03.09.2026", BERLIN)).not.toThrow();
+    expect(() => wochenFenster("2026-9-3", BERLIN)).not.toThrow();
+  });
+
   it("die Woche MIT der Zeitumstellung ist 169 Stunden lang und trotzdem sieben Tage", () => {
     // Die Umstellung liegt 2026 auf dem 25. Oktober, einem Sonntag --
     // also im letzten Tag der Woche vom 19. bis 25. Oktober.
