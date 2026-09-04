@@ -27,6 +27,12 @@ test("Die Rail zeigt sechs feste Bereiche in drei Gruppen, nicht jedes Modell", 
   // Die Modelle stehen NICHT mehr in der Rail.
   await expect(rail.getByRole("link", { name: /Latzug/ })).toHaveCount(0);
   await expect(rail.getByRole("link", { name: /Modell anlegen/ })).toHaveCount(0);
+
+  // Gegenprobe zum Kein-Recht-Test unten: ein Trainer DARF die Zahl sehen,
+  // und die Rail zeigt sie auch tatsaechlich. Ohne diese Probe waere auch
+  // eine Rail gruen, die die Zusatzzeile nie rendert -- dann pruefte der
+  // Kein-Recht-Test nur, dass etwas fehlt, das es nirgends gibt.
+  await expect(rail.getByText(/Mitglieder/)).toBeVisible();
 });
 
 test("Kurse steht in der Rail und bleibt auf seinen Unterrouten markiert", async ({ page }) => {
@@ -68,4 +74,13 @@ test("Ein Mitglied bekommt eine Rail ohne Zahlen statt einer kaputten Seite", as
   await expect(page.getByRole("navigation", { name: "Katalog" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Leute/ })).toBeVisible();
   expect(await hauptlandmarken(page)).toBe(1);
+
+  // Die eigentliche Unterscheidung: null heisst "darf ich nicht wissen",
+  // nicht "keine". Ein Fehler, der "unauthorized" abfaengt, dabei aber
+  // mitglieder/mitarbeiter auf 0 statt null setzt, liesse hier "0
+  // Mitglieder ..." stehen -- eine falsche Aussage ueber das Studio, die
+  // ein Mitglied nicht sehen darf. Die Leute-Zeile traegt deshalb gar
+  // keine Zusatzzeile, nicht einmal eine Null.
+  const rail = page.getByRole("navigation", { name: "Katalog" });
+  await expect(rail.getByText(/Mitglieder/)).toHaveCount(0);
 });
