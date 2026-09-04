@@ -109,6 +109,9 @@ test("ein Trainer pflegt die Studio-Einstellungen", async ({ page }) => {
   });
   expect(neuFehler).toBeNull();
 
-  await page.getByRole("button", { name: "Abmelden" }).click();
+  // Zwei "Abmelden" seit Aufgabe 12: der Rail-Fusszeile (jede Seite) und
+  // die eigene Sektion der Kontoseite (EinstellungenKonto.dc.html zeigt
+  // beide). Scope auf "main", damit der Test die Kontoseite trifft.
+  await page.getByRole("main").getByRole("button", { name: "Abmelden" }).click();
   await expect(page).toHaveURL(/\/login/);
 });

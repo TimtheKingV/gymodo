@@ -5,6 +5,7 @@ import {
   PHOTO_BUCKET,
   MEDIA_URL_TTL_SECONDS,
   getStudioCatalog,
+  listStudioMembers,
   signMediaUrls,
   type StudioCatalog,
 } from "@fitretro/domain";
@@ -60,3 +61,55 @@ export function erreichbarkeit(modell: StudioCatalog["models"][number]): {
     erreichbar: aktive.filter((geraet) => geraet.activeTagCount > 0).length,
   };
 }
+
+export type RailZahlen = {
+  geraete: number;
+  erreichbar: number;
+  vorrat: number;
+  /** null heisst "darf ich nicht wissen", nicht "keine". */
+  mitglieder: number | null;
+  mitarbeiter: number | null;
+};
+
+/**
+ * Die Zahlen der Rail an einer Stelle -- sie stehen auf jeder Seite und
+ * duerfen deshalb nirgends eine Seite kosten.
+ *
+ * mitglieder/mitarbeiter sind `null`, wenn das Konto sie nicht sehen darf:
+ * listStudioMembers wirft fuer ein einfaches Mitglied "unauthorized". Das
+ * ist kein Fehler, sondern die Datenschutzgrenze -- und ohne dieses
+ * Abfangen faellt die Navigation JEDER Seite gleichzeitig aus, nicht nur
+ * die Zahl.
+ *
+ * `null` heisst "darf ich nicht wissen", nicht "keine". Die Rail zeigt
+ * dann keine Zeile statt einer 0.
+ */
+export const railZahlen = cache(async (studioId: string): Promise<RailZahlen> => {
+  const katalog = await ladeKatalog(studioId);
+  const client = await createServerSupabaseClient();
+
+  const summe = katalog.models.reduce(
+    (stand, modell) => {
+      const { geraete, erreichbar } = erreichbarkeit(modell);
+      return { geraete: stand.geraete + geraete, erreichbar: stand.erreichbar + erreichbar };
+    },
+    { geraete: 0, erreichbar: 0 },
+  );
+
+  let mitglieder: number | null = null;
+  let mitarbeiter: number | null = null;
+  try {
+    const leute = await listStudioMembers(client, studioId);
+    mitglieder = leute.filter((person) => person.role === "member").length;
+    mitarbeiter = leute.length - mitglieder;
+  } catch (fehler) {
+    if (!(fehler instanceof DomainError && fehler.code === "unauthorized")) throw fehler;
+  }
+
+  return {
+    ...summe,
+    vorrat: katalog.tags.filter((tag) => tag.status === "unassigned").length,
+    mitglieder,
+    mitarbeiter,
+  };
+});

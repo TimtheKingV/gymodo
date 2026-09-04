@@ -137,7 +137,10 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await page.getByLabel("Maximum").fill("100");
   await page.getByRole("button", { name: "Modell anlegen" }).click();
 
-  await expect(page.getByRole("link", { name: /Latzug/ }).first()).toBeVisible();
+  // "Latzug" stand hier nur je als Rail-Link -- Aufgabe 12 hat die Rail von
+  // Modell-Eintraegen befreit. Der Modellname steht in der Liste jetzt als
+  // Text, nicht als Link; "Bearbeiten" bleibt der einzige Link der Zeile.
+  await expect(page.getByText("Latzug")).toBeVisible();
   await page.getByRole("link", { name: "Bearbeiten" }).first().click();
   await expect(page.getByRole("heading", { name: "Latzug" })).toBeVisible();
 
