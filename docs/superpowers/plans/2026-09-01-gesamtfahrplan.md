@@ -1,6 +1,6 @@
 # Gesamtfahrplan — Stand, Lücken und Reihenfolge
 
-**Stand:** 3. September 2026 *(fortgeschrieben; Erstfassung 1. September)*
+**Stand:** 4. September 2026 *(fortgeschrieben; Erstfassung 1. September)*
 **Status:** Bestandsaufnahme. **Kein ausführbarer Task-Plan** — dieses Dokument ordnet die vorhandenen Pläne, es ersetzt keinen.
 **Bezugsstand:**
 
@@ -11,6 +11,7 @@
 | `design-geräteeinrichtung` | `13d065b` | in `master` aufgegangen |
 | `worktree/brave-forest-c9d8` | `2b2be9c` | Tag-Lieferung, in `master` aufgegangen |
 | `worktree/calm-forest-3c59` | `05be485` | Studio-Einstellungen, Datenschutzgrenze, Überblick: `0032`–`0034`, Fachschicht, Reiter Studio/Konto, E2E-Gang — **in `master` aufgegangen am 3. September** |
+| `phase4-kurse` | `d594193` | Kurse vollstaendig: `0035`–`0038`, Fachschicht, vier Portalseiten, drei Endpoints — **noch nicht in `master`** |
 | `phase3-einrichtung-am-geraet` | `a4e4057` | Der Gang durch die Halle, Route-Gruppe `(schreibtisch)`, drei Fachschichtfunktionen, Fix an `stripImageMetadata` und `bodySizeLimit` — in `master` aufgegangen am 3. September; **der Sucher (9b) fehlt** |
 
 > **Was sich gegenüber der Erstfassung geändert hat, in einem Satz:** Sie beschrieb einen Stand, an dem die entworfenen Baustellen *zu null* gebaut waren — inzwischen stehen Phase 1, 2 und 3. Die Abschnitte 1 bis 5 sind entsprechend fortgeschrieben; die Betriebsbefunde aus 4a–4f bleiben als Lehre stehen, auch wo ihr Anlass erledigt ist.
@@ -49,10 +50,11 @@ Das Ungleichgewicht aus der Erstfassung hat sich verschoben, aber nicht aufgelö
 | **Auth** — Passwort statt OTP, Registrierung mit Bestätigungsmail, Passwort vergessen und zurücksetzen, eigene Mail-Templates | ✅ neu |
 | **Leute** — Beitrittscode, Mitgliederliste mit E-Mail, Rollen hoch- und herabstufen, Entfernen, Kein-Studio-Zustand | ✅ neu |
 | Trainerportal: Geräte, Modelle, Tags, Medien-Upload, Leute | ✅ funktional, **ungestaltet** |
+| **Kurse** — drei Tabellen, Platzvergabe unter einer Zeilensperre, Warteliste mit Nachrücken, vier Portalseiten, drei Member-Endpoints | ✅ neu, **ungestaltet**, siehe 4h |
 | Betriebswerkzeug: `pnpm smoke:web`, `pnpm smoke:migrations` | ✅ neu, siehe 4a/4c |
 | **Studio-Einstellungen und Datenschutzgrenze** — Stornofrist, Speicherrecht mit Spaltengrenze, vier Policies ohne Staff-Klausel, `studio_overview` | ✅ neu |
 | **Einrichtung am Gerät** — der sechsschrittige Gang auf 390 px, Route-Gruppe `(schreibtisch)`, Upload-Warteschlange über Geräte hinweg, Tag ersetzen | ✅ neu, **ohne den Sucher** |
-| Testlage: **41** Integrationsdateien (461 Tests), **8** E2E-Dateien (30 Tests), 85 Unit-Tests | ✅ grün |
+| Testlage: **46** Integrationsdateien (558 Tests), **9** E2E-Dateien (32 Tests), 106 Unit-Tests | ✅ grün bis auf den Bestandsfehler in Abschnitt 6 |
 | Produktion — `0001`–`0034` angewendet, `master` ausgeliefert, `smoke:web` bestanden | ✅ **3. September**, siehe 4f |
 
 **Der Kassensturz aus `2026-08-31-trainerportal-struktur-design.md` §7 ist überholt.** Er nannte den Gerätekatalog als einzigen vollständig tragenden Bereich; das gilt nicht mehr. Die Tag-Kette trägt vom Herstellungslos bis zum Scan vor dem Gerät, und von den vier dort als „am weitesten offen" bezeichneten Punkten sind jetzt alle vier zu (Leute, Auth, Studio-Einstellungen, Datenschutzgrenze).
@@ -72,7 +74,7 @@ Das Ungleichgewicht aus der Erstfassung hat sich verschoben, aber nicht aufgelö
 | ~~**Sucher im Portal**~~ — `getUserMedia` + `jsQR` | — | ✅ als Aufgabe 9b im Plan | ✅ **3. September**, Handprüfung bestanden — gedruckte Codes bis herunter auf 15 mm |
 | ~~**Einrichtung am Gerät**~~ — 16 `Telefon*`-Artboards, der Gang durch die Halle | keine | ✅ `2026-09-02-einrichtung-am-geraet.md`, 13 Aufgaben | ✅ **3. September**, vollständig |
 | ~~**Studio-Einstellungen, Datenschutzgrenze, Überblick**~~ — Stornofrist, Speicherrecht mit Spaltengrenze, vier Policies ohne Staff-Klausel, `studio_overview` | `0032`–`0034` | ✅ `2026-09-02-studio-einstellungen-datenschutzgrenze.md`, 9 Aufgaben | ✅ **2. September** |
-| **Kurse** — drei Tabellen, Platzvergabe unter Nebenläufigkeit | — | ❌ nur Vorabnotiz (84 Zeilen) | ❌ |
+| ~~**Kurse**~~ — drei Tabellen, Platzvergabe unter einer Zeilensperre, Warteliste, fünf Bildschirme | `0035`–**`0038`** | ✅ `2026-09-03-kurse-design.md` + `2026-09-03-kurse.md`, 12 Aufgaben | ✅ **4. September**, Zweig `phase4-kurse` |
 | **Portal-Frontend nach den 39 Artboards** | — | ❌ | ❌ |
 | **iOS Member-App** | — | ❌ | ❌ `apps/` enthält nur `web` |
 
@@ -225,6 +227,22 @@ Auf Platte setzen alle drei Vorlagen (`confirmation`, `magic_link`, `recovery`) 
 
 **Ein zweiter Befund aus derselben Runde, unabhängig vom Onboarding:** auf Port 3000 hing ein Dev-Server aus einem früheren Lauf. Lokal gilt `reuseExistingServer: true` — Playwright verwendet einen solchen Server wieder, mitsamt Code von *vor* der Änderung. Ein neuer Test schlug dadurch zweimal fehl, obwohl sein Code stimmte; gegen den Produktionsbau lief dieselbe Suite zweimal mit 29 von 29 durch. Wer lokal einem roten Test nachgeht, prüft deshalb zuerst, was auf Port 3000 lauscht.
 
+### 4h. Was Phase 4 über das Prüfen gelehrt hat
+
+Die vier vorigen Abschnitte handeln von Drift zwischen Platte und Datenbank. Dieser handelt von etwas anderem: **von Tests, die grün sind und nichts beweisen.**
+
+Der Bauabschnitt Kurse hatte eine Eigenschaft, die es im Produkt sonst nirgends gibt — einen echten Wettlauf. Der Plan sah dafür einen Schritt vor, der keinen bleibenden Code schreibt: die Sperre absichtlich entfernen, den Nebenläufigkeitstest laufen lassen und ihn **rot sehen**. Er wurde zweimal ausgeführt, mit zwei sehr verschiedenen Ergebnissen.
+
+**Beim Anmelden bestätigte er die Erwartung.** Ohne `for update` bekamen drei von zehn gleichzeitigen Anmeldungen denselben Platz. Der Test misst also, was er behauptet.
+
+**Beim Stornieren widerlegte er die Spec.** Fünf Läufe blieben grün. Der Grund stand im Entwurf selbst, ohne dass ihn jemand gesehen hatte: Stornieren und Nachrücken liegen in *derselben* Transaktion, der Zustand „Platz frei, noch niemand nachgerückt" wird nie festgeschrieben, und die dort behauptete Doppelvergabe kann gar nicht eintreten. Die Sperre wird trotzdem gebraucht — gegen zwei gleichzeitige *Stornierungen*, die sonst dieselbe erste Wartende wählen, sodass eine zweite Person sitzenbleibt, obwohl ein Platz frei ist. §2 der Spec, der Migrationskommentar und der Funktionskommentar trugen alle drei die falsche Begründung; alle drei sind berichtigt.
+
+**Die Lehre ist nicht „Gegenproben sind gut".** Sie ist enger: ein Nebenläufigkeitstest ist der einzige Testtyp, der bei falscher Bauweise *zuverlässig* grün wird — weil zwei Aufrufe, die sich zufällig nicht überschneiden, kein Gegenbeispiel liefern. Wer ihn nicht einmal hat scheitern sehen, hat eine Behauptung, keinen Test. Dasselbe traf im selben Bauabschnitt auf einen zweiten Fall zu: ein Kommentar erklärte, warum eine Zeitzonenumrechnung zwei Durchgänge braucht, und keiner der elf Tests hätte gemerkt, wenn man den zweiten löscht.
+
+**Und das Abschlussreview fand, was zwölf Einzelprüfungen nicht finden konnten.** Jede Aufgabe war für sich geprüft und in Ordnung. Erst über den ganzen Zweig hinweg fiel auf, dass `capacity` über die Update-Policy **direkt** schreibbar ist — an beiden gesperrten Funktionen vorbei —, während nachgerückt nur beim Stornieren wurde. Eine Erhöhung von 10 auf 20 mit fünf Wartenden beförderte niemanden, nie; der Wochenplan meldete danach gleichzeitig freie Plätze und eine Warteliste. Kein Verschränkungsfehler, den eine Gegenprobe hätte finden können, sondern ein zweiter Schreibweg auf die Größe, die die Sperre schützt.
+
+**Zahlenmäßig:** zwölf Aufgaben, dreizehn Fix-Runden, und die Befunde gingen fast ausnahmslos auf den *Plan* zurück, nicht auf die Umsetzung — eine unvollständige Policy-Matrix, nicht kompilierbare SQL, eine fehlende Authentifizierungsprüfung, eine ungeprüfte Systemgrenze, ein falsches Export-Muster. Die Implementer haben achtmal von sich aus gemeldet, dass der Brief nicht zum Code passt, statt still abzuweichen; einmal korrigierten sie eine Rechenaufgabe zur US-Sommerzeit, die im Auftrag falsch stand.
+
 ### Das Ungleichgewicht, das die Reihenfolge bestimmt
 
 | | Web-Portal | iOS Member-App |
@@ -250,7 +268,7 @@ Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Da
 - [x] **Dritte Drift geschlossen** — `0032`–`0034` lagen nur in der lokalen Datenbank und auf einem unvermergten Worktree; zusammengeführt und in die Cloud nachgezogen, Gleichstand über 34 Einträge (Abschnitte 4e und 4f)
 - [x] **`auth_leaked_password_protection` eingeschaltet** — am 2. September, seit der Passwort-Umstellung fällig
 - [ ] **Mac-Übernahme:** wann — und wird vorher NFC oder QR entschieden
-- [ ] **Kurse:** Teil von M2 oder vertagt (der größte ungeplante Brocken)
+- [x] **Kurse:** entschieden und gebaut — Phase 4, 4. September. Die Frage war *ob*; die Antwort ist ein eigener Bauabschnitt mit Spec, Plan und zwölf Aufgaben.
 
 ### Phase 1 — Die Tag-Kette schließen ✅ *abgeschlossen 2. September*
 
@@ -298,9 +316,22 @@ Die 16 `Telefon*`-Artboards: der Gang durch die Halle, sechs Schritte, Modell �
 
 Die Lehre steht als Rahmenbedingung im Umsetzungsplan: **eine Mediendatei im Test hat die Größe, die sie in der Halle hat.**
 
-### Phase 4 — Kurse
+### Phase 4 — Kurse ✅ *abgeschlossen 4. September*
 
-Drei Tabellen, Platzvergabe unter Nebenläufigkeit, Endpoints, Server Actions. Heute nur `2026-08-30-kurse-datenmodell.md` als Vorabnotiz — der einzige Bereich ganz ohne Spec.
+Der einzige Bereich, der ganz ohne Spec begann: acht Artboards und eine 84-zeilige Vorabnotiz. Daraus wurden `2026-09-03-kurse-design.md`, ein Plan mit zwölf Aufgaben und vier Migrationen.
+
+**Der Bauabschnitt drehte sich um eine einzige Eigenschaft:** ein Kursplatz gehört niemandem, bis ihn jemand nimmt, und zwei Leute können gleichzeitig danach greifen. Das ist die einzige Stelle im Produkt mit einem echten Wettlauf. Beide Funktionen nehmen dieselbe Zeilensperre; `course_bookings` bekommt **keine** Insert-Policy, und erst das macht die Sperre zur Zusicherung statt zur Zierde.
+
+**Was den Bauabschnitt getragen hat, war nicht der Test, sondern die Gegenprobe.** Zweimal wurde eine Sperre absichtlich entfernt, um den Test rot zu sehen:
+
+- Beim **Anmelden** bestätigte sie die Erwartung: ohne `for update` gewannen drei von zehn gleichzeitigen Anmeldungen denselben Platz.
+- Beim **Stornieren** widerlegte sie die Spec. Fünf Läufe blieben grün — die dort behauptete Doppelvergabe kann gar nicht eintreten, weil Stornieren und Nachrücken in **derselben** Transaktion liegen. Die Sperre wird trotzdem gebraucht, nur gegen etwas anderes: zwei gleichzeitige Stornierungen wählen sonst dieselbe erste Wartende, und eine zweite Person bleibt sitzen, obwohl ein Platz frei ist. §2 der Spec ist entsprechend berichtigt.
+
+**Und das Abschlussreview fand, was keine der zwölf Einzelprüfungen sehen konnte:** eine *Erhöhung* der Kapazität strandete die Warteliste dauerhaft. `capacity` ist über die Update-Policy direkt schreibbar — außerhalb beider gesperrter Funktionen —, während nachgerückt nur beim Stornieren wurde. Kein Verschränkungsfehler, sondern ein **zweiter Schreibweg auf genau die Größe, die die Sperre schützt.** `0038` schließt ihn mit `promote_course_waitlist`.
+
+Sechs weitere Befunde aus derselben Runde: ein Mitglied erfuhr beim Stornieren, wer seinen Platz bekommen hat; fremde Vorlagen-Kennungen ließen Inhalte über die Mandantengrenze; unvalidierte Parameter reichten rohe Postgres-Meldungen durch; `?woche=abc` stürzte ab; eine wiederverwendete Buchungskennung ergab einen 500er; und wer *innerhalb* der Stornofrist nachrückte, saß auf einem Platz, den er nicht mehr abgeben konnte.
+
+**Nicht gebaut, jeweils mit Begründung in der Spec:** Foto-Upload (Spalte da, Bucket-Entscheidung offen), Benachrichtigung beim Nachrücken (`promoted_at` da, Push gibt es nicht), Trainerauswahl (`instructor_user_id` bleibt `null`), Gestaltung (Phase 5), iOS.
 
 ### Phase 5 — Portal-Frontend
 
@@ -321,7 +352,7 @@ Mit dem Abschluss von Phase 3 ist die Aufteilung in Stränge weitgehend hinfäll
 Alles Übrige hängt an derselben Oberfläche und läuft deshalb nacheinander:
 
 - **Phase 5** gestaltet die Portalseiten, die Phase 2 und 3 gerade funktional gemacht haben. Erst jetzt steht fest, welche es überhaupt gibt.
-- **Phase 4 (Kurse)** braucht zuerst eine Entwurfsrunde. Nach der Lehre aus Abschnitt 7 ist die erst fällig, wenn der Abstand zwischen Entwurf und Code klein ist — das ist er heute, also ist sie fällig.
+- ~~**Phase 4 (Kurse)**~~ ist gebaut. Die Vorhersage hat gehalten: die Entwurfsrunde war fällig, weil der Abstand zwischen Entwurf und Code null war — und sie hat sich gelohnt, weil §2 der entstandenen Spec beim Bauen widerlegt und berichtigt wurde. Ein Bauabschnitt ohne Spec hätte denselben Fehler gemacht und ihn nicht bemerkt (Abschnitt 4h).
 
 ---
 
@@ -339,15 +370,21 @@ Verstreut über sieben Specs und drei Umsetzungspläne, hier einmal an einem Ort
 | `replaced` ist unbenutzt — Weg geben oder streichen | tag-lieferung §10 | nichts |
 | Kein Weg zurück in die Halde | tag-lieferung §10 | nichts |
 | Mindestzahl für die Aufschlüsselung im Überblick — auf 5 gesetzt, vor dem ersten echten Mitglied zu prüfen | 0034, Spec §4 | nichts |
-| Nachrück-Benachrichtigung — Push gibt es nicht | trainerportal-struktur §8 | Phase 4 (Kurse) |
 | Kursvideo | trainerportal-struktur §8 | vertagt, nicht verworfen |
 | Studiogründung gibt es bewusst nicht | trainerportal-struktur §8 | den zweiten Betreiber |
 | Nummernvergabe — soll das Portal `machines.label` erzwingen | einrichtung §7 | nichts, Entwurf sagt nein |
 | Leerer Vorrat mitten in der Halle — kein Bestellweg | einrichtung §7, tag-lieferung §8 | nichts |
 | Videoupload vom Trainerhandy ist nie an einem echten Gerät gelaufen | trainerportal-medien, Verifikation | den ersten Betreibertermin |
 | **Probe-Scan auf der Fertig-Seite** — er bräuchte den Klartext-Token, den `0026` dem Portal entzieht. Aufzulösen mit einer `security definer`-Funktion je Gerät oder einer Fallback-Seite über die Geräte-ID | einrichtung-am-geraet, Plan Aufgabe 12 | dem Trainer den Blick auf das, was ein Mitglied sieht |
+| **Kursfoto** — `photo_path` steht, der Upload-Weg nicht. `0020` richtet zwei private Buckets mit eigenem Pfadschema ein; ein drittes bräuchte vier Storage-Policies mit voller Testmatrix | kurse-design §7 | nichts, die Oberfläche zeigt den Zustand ohne Knopf |
+| **Benachrichtigung beim Nachrücken** — entschieden, nicht gebaut. Der Satz auf Artboard 20 sagt jetzt, wo man es sieht, statt eine Nachricht zu versprechen; `promoted_at` liegt bereit. Fällig, sobald iOS steht (dann Push) oder ein eigener Mailweg entsteht | kurse-design §8 | nichts |
+| **Trainerauswahl** — `instructor_user_id` bleibt `null`, und die Update-Pfade fassen die Spalte bewusst nicht mehr an. Wer die Auswahl baut, erbt zwei Fragen: was „nichts ausgewählt“ bedeutet, und dass `course_week` die Kennung gar nicht zurückgibt — das ist eine Migration, keine Oberflächenarbeit | kurse-design §11 | nichts |
+| **`capacity` bleibt auf Datenbankebene außerhalb des Nachrück-Pfads schreibbar** — `updateCourseSession` ruft `promote_course_waitlist`, aber `course_sessions_update_staff` erlaubt weiterhin ein direktes `PATCH` über PostgREST. Der bauartsichere Weg wäre ein Trigger `after update of capacity`; er feuert dann allerdings auch für Service-Role und jeden künftigen Schreibweg, und das ist eine Entwurfsentscheidung | Abschlussreview Phase 4 | nichts heute, aber jeder neue Schreibweg öffnet es wieder |
+| **Update und Nachrücken sind nicht atomar** — zwischen beiden Anweisungen zeigt ein Termin kurz freie Plätze *und* eine Warteliste, und ein frischer Bucher kann die Schlange überholen. Überbuchung ist ausgeschlossen (beide zählen unter derselben Sperre); scheitert das Nachrücken, bleibt die Warteliste bis zum nächsten Speichern stehen | Abschlussreview Phase 4 | nichts, es heilt beim nächsten Speichern |
+| **Ratenbegrenzung auf `book_course_session`** — dieselbe offene Frage wie bei `join_studio_by_tag`. Ein Skript, das im Sekundentakt an- und abmeldet, erzeugt sonst beliebig viele Wartelistenbewegungen | kurse-design §11 | nichts, aber vor dem ersten echten Studio fällig |
+| **Die E2E-Suite ist auf dieser Maschine nicht vollständig lauffähig** — der Dev-Server läuft in `ERR_MEMORY_ALLOCATION_FAILED`, sobald mehrere Worktrees gleichzeitig Server halten. `playwright.config.ts` liest seit Phase 4 `E2E_PORT` (Vorgabe 3000), damit zwei Sitzungen sich nicht denselben Port teilen; das Speicherproblem bleibt | Phase 4, Verifikation | die vollständige E2E-Abnahme |
 | **Vier Funktionen ohne gesetzten `search_path`** — `set_updated_at`, `is_valid_setting_choices`, `storage_studio_id`, `generate_join_code`; das Projekt setzt ihn sonst überall | Sicherheitsbefund 3. September, Abschnitt 4f | nichts, aber uneins mit der eigenen Gewohnheit |
-| **`rls-workout-sessions` ist sporadisch rot** — der Test setzt `completed_at` aus der Node-Uhr gegen `started_at` aus der Datenbank | Bestand, vor allen drei Phasen | nichts, aber es verrauscht jede Abnahme |
+| **Der Uhren-Wettlauf ist sporadisch rot, und er betrifft drei Dateien** — `rls-workout-sessions`, `domain-complete-session`, `api-workout-sets`, alle an `workout_sessions_completed_after_start`: der Test setzt `completed_at` aus der Node-Uhr gegen `started_at` aus der Datenbank. Am 3. September war es eine Datei und ein Fehlschlag bei 461 Tests; am 4. September vier Fehlschläge bei 558 — dieselbe Wurzel, mehr Last. **Und er fällt auch isoliert gelegentlich aus**, nicht nur unter Parallellast; die frühere Notiz „besteht allein“ war zu freundlich | Bestand, vor allen vier Phasen | nichts, aber es verrauscht jede Abnahme, und es kostet bei jedem Bauabschnitt eine Untersuchung, ob es diesmal doch etwas Neues ist |
 | **Die Wurzelseite `/` ist ungestaltet** — seit dem 3. September sieht Personal sie nicht mehr, alle übrigen Angemeldeten schon. Sie trägt das Beitrittsformular und stammt aus M0 | Phase 5 | nichts, aber es ist die erste Seite, die ein Mitglied im Web sieht |
 | **Ein verwaister Dev-Server auf Port 3000 verfälscht lokale E2E-Läufe still** — `playwright.config.ts` setzt lokal `reuseExistingServer: true`, Playwright verwendet also einen hängengebliebenen Server wieder, samt Code von vor der Änderung. Am 3. September lief ein Test deshalb zweimal rot, dessen Code korrekt war | Werkzeug | nichts, aber es kostet jedes Mal eine Fehlersuche am falschen Ort |
 
