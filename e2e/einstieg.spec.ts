@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { akzentflaechen, hauptlandmarken, zuKleineBedienelemente } from "./helpers/abnahme";
-import { E2E_PASSWORD, adminClient, latestOtpFor } from "./helpers/login";
+import { E2E_PASSWORD, adminClient, anmelden, latestOtpFor } from "./helpers/login";
 
 /**
  * Der Einstieg wird ohne Konto geprueft -- das ist sein Normalfall. Kein
@@ -111,4 +111,76 @@ test("Zwei verschiedene neue Passwoerter werden abgelehnt, bevor eines gesetzt w
   await expect(meldung).toBeVisible();
   await expect(meldung).toContainText(/stimmen nicht überein/);
   await expect(page).toHaveURL(/\/passwort-vergessen$/);
+});
+
+/*
+ * /portal ist zwei Bildschirme auf einer Route, nicht zwei Zustaende
+ * derselben Seite (Aufgabe-9-Brief): "kein Studio" bekommt die Einstieg-
+ * Huelle, die Studiowahl die Portal-Bausteine. Beide Faelle brauchen daher
+ * ein angemeldetes Konto -- anders als der Rest dieser Datei, die den
+ * Einstieg bewusst ohne Konto prueft.
+ */
+
+test("Ein Konto ohne Studio erfaehrt, was fehlt und wer es beheben kann", async ({ page }) => {
+  const admin = adminClient();
+  const email = `e2e-ohne-studio-${crypto.randomUUID()}@example.test`;
+  const { error } = await admin.auth.admin.createUser({
+    email,
+    password: E2E_PASSWORD,
+    email_confirm: true,
+  });
+  if (error) throw error;
+
+  await anmelden(page, email);
+  await page.goto("/portal");
+
+  await expect(page.getByRole("heading", { name: "Noch kein Studio" })).toBeVisible();
+  await expect(page.getByText(/als Mitarbeiter hinzufügen/)).toBeVisible();
+  // Der Weg heraus wird benannt, nicht verschwiegen.
+  await expect(page.getByText(/Leute/)).toBeVisible();
+  expect(await hauptlandmarken(page)).toBe(1);
+});
+
+test("Ein Konto in mehreren Studios waehlt aus einer Liste, nicht aus einer Vorlage", async ({
+  page,
+}) => {
+  const admin = adminClient();
+  const email = `e2e-mehrere-studios-${crypto.randomUUID()}@example.test`;
+  const { data: nutzer, error: nutzerError } = await admin.auth.admin.createUser({
+    email,
+    password: E2E_PASSWORD,
+    email_confirm: true,
+  });
+  if (nutzerError) throw nutzerError;
+
+  const { data: studioEins, error: studioEinsError } = await admin
+    .from("studios")
+    .insert({ name: `E2E Studio Eins ${crypto.randomUUID()}` })
+    .select("id")
+    .single();
+  if (studioEinsError) throw studioEinsError;
+
+  const { data: studioZwei, error: studioZweiError } = await admin
+    .from("studios")
+    .insert({ name: `E2E Studio Zwei ${crypto.randomUUID()}` })
+    .select("id")
+    .single();
+  if (studioZweiError) throw studioZweiError;
+
+  const { error: mitgliedschaftenError } = await admin.from("studio_memberships").insert([
+    { studio_id: studioEins.id, user_id: nutzer.user.id, role: "trainer" },
+    { studio_id: studioZwei.id, user_id: nutzer.user.id, role: "trainer" },
+  ]);
+  if (mitgliedschaftenError) throw mitgliedschaftenError;
+
+  await anmelden(page, email);
+  await page.goto("/portal");
+
+  await expect(page).toHaveURL(/\/portal$/);
+  await expect(page.getByRole("heading", { name: "Studio wählen" })).toBeVisible();
+  expect(await hauptlandmarken(page)).toBe(1);
+
+  // Zwei Zeilen, eine je Studio -- keine Weiterleitung, weil keins der
+  // beiden Studios allein steht.
+  await expect(page.getByRole("link", { name: "Öffnen" })).toHaveCount(2);
 });
