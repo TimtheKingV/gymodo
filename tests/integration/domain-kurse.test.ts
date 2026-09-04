@@ -24,6 +24,7 @@ let studioId: string;
 let trainerEmail: string;
 let mitgliedEmail: string;
 let trainerId: string;
+let mitgliedId: string;
 
 beforeAll(async () => {
   const admin = serviceClient();
@@ -39,7 +40,7 @@ beforeAll(async () => {
   trainerEmail = uniqueEmail("fk-trainer");
   mitgliedEmail = uniqueEmail("fk-mitglied");
   trainerId = await createTestUser(trainerEmail);
-  const mitgliedId = await createTestUser(mitgliedEmail);
+  mitgliedId = await createTestUser(mitgliedEmail);
 
   const { error: mFehler } = await admin.from("studio_memberships").insert([
     { studio_id: studioId, user_id: trainerId, role: "trainer" },
@@ -121,6 +122,53 @@ describe("Kursvorlagen", () => {
         defaultDurationMin: 60,
         defaultCapacity: 16,
         defaultInstructorUserId: fremdId,
+        defaultInstructorName: "Wer auch immer",
+      }),
+    ).rejects.toMatchObject({ code: "validation_failed" });
+  });
+
+  it("ein Mitglied DIESES Studios ohne Personal-Rolle wird als Standard-Trainer abgewiesen", async () => {
+    // Anders als der vorige Test: die Zeile fuer (studioId, userId)
+    // EXISTIERT hier -- role ist bloss "member", nicht "trainer" oder
+    // "owner". pruefeTrainerZuordnung ist die einzige Stelle des Systems,
+    // die diese Regel prueft (0035 kann es nicht); ein ungeprüfter Zweig
+    // waere eine unbewachte Regel.
+    const client = await userClient(trainerEmail);
+    await expect(
+      createCourseTemplate(client, studioId, {
+        name: "Mitglied als Trainer",
+        description: null,
+        defaultDurationMin: 60,
+        defaultCapacity: 16,
+        defaultInstructorUserId: mitgliedId,
+        defaultInstructorName: "Wer auch immer",
+      }),
+    ).rejects.toMatchObject({ code: "validation_failed" });
+  });
+
+  it("Personal eines ANDEREN Studios wird als Standard-Trainer abgewiesen", async () => {
+    // Die Zeile fuer (studioId, userId) FEHLT hier -- die Person ist
+    // Trainer, aber anderswo. Der dritte und letzte Zweig von
+    // pruefeTrainerZuordnung.
+    const admin = serviceClient();
+    const { data: anderesStudio } = await admin
+      .from("studios")
+      .insert({ name: "Anderes Fachschicht-Studio" })
+      .select("id")
+      .single();
+    const anderswoTrainerId = await createTestUser(uniqueEmail("fk-anderswo-trainer"));
+    await admin
+      .from("studio_memberships")
+      .insert({ studio_id: anderesStudio!.id, user_id: anderswoTrainerId, role: "trainer" });
+
+    const client = await userClient(trainerEmail);
+    await expect(
+      createCourseTemplate(client, studioId, {
+        name: "Trainer von woanders",
+        description: null,
+        defaultDurationMin: 60,
+        defaultCapacity: 16,
+        defaultInstructorUserId: anderswoTrainerId,
         defaultInstructorName: "Wer auch immer",
       }),
     ).rejects.toMatchObject({ code: "validation_failed" });
@@ -321,6 +369,49 @@ describe("Termine und die Serie", () => {
         null,
       ),
     ).rejects.toMatchObject({ code: "unauthorized" });
+  });
+
+  it("ein Termin darf nicht auf eine Vorlage eines FREMDEN Studios zeigen", async () => {
+    // RLS prueft nur studio_id des Termins; die Foreign Key auf
+    // course_templates prueft bloss, dass die Zeile EXISTIERT, nicht in
+    // welchem Studio. Ohne diese Pruefung koennte Personal von Studio A
+    // einen Termin anlegen, der auf eine Vorlage von Studio B zeigt --
+    // und course_week gibt deren name/description an jedes Mitglied von
+    // A weiter.
+    const admin = serviceClient();
+    const { data: fremdStudio } = await admin
+      .from("studios")
+      .insert({ name: "Fremdes Vorlagenstudio" })
+      .select("id")
+      .single();
+    const { data: fremdVorlage } = await admin
+      .from("course_templates")
+      .insert({
+        studio_id: fremdStudio!.id,
+        name: "Geheime Vorlage von B",
+        default_duration_min: 60,
+        default_capacity: 8,
+      })
+      .select("id")
+      .single();
+
+    const trainer = await userClient(trainerEmail);
+    await expect(
+      createCourseSessions(
+        trainer,
+        studioId,
+        {
+          templateId: fremdVorlage!.id,
+          startsAt: "2026-09-24T16:00:00Z",
+          durationMin: 60,
+          capacity: 8,
+          room: null,
+          instructorUserId: null,
+          instructorName: null,
+        },
+        null,
+      ),
+    ).rejects.toMatchObject({ code: "not_found" });
   });
 
   it("aendern laesst eine gesetzte Trainer-Zuordnung des Termins unangetastet", async () => {

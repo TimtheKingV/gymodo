@@ -292,6 +292,18 @@ export async function createCourseSessions(
   }
   await pruefeTrainerZuordnung(client, studioId, geprueft.data.instructorUserId);
 
+  // RLS prueft nur, dass DIESER Termin zu studioId gehoert -- die Foreign
+  // Key auf course_templates prueft bloss, dass die Vorlage EXISTIERT, in
+  // welchem Studio auch immer, und Fremdschluessel-Pruefungen laufen an
+  // RLS vorbei. Ohne diesen Aufruf koennte Personal von Studio A einen
+  // Termin anlegen, der auf eine bekannte Vorlagen-UUID von Studio B
+  // zeigt -- und course_week gibt deren name/description an jedes
+  // Mitglied von A weiter. getCourseTemplate praeft die studio_id schon
+  // und wirft not_found, wenn sie nicht passt -- dieselbe Bauform wie
+  // pruefeTrainerZuordnung: die Fachschicht erzwingt, was eine
+  // check-Constraint nicht kann.
+  await getCourseTemplate(client, studioId, geprueft.data.templateId);
+
   const { data: studio, error: studioFehler } = await client
     .from("studios")
     .select("timezone")
@@ -370,6 +382,17 @@ export async function updateCourseSession(
   if (!data || data.length === 0) {
     throw new DomainError("not_found", "Diesen Termin gibt es nicht.");
   }
+
+  // capacity ist gerade eben moeglicherweise gestiegen -- ausserhalb der
+  // beiden gesperrten Buchungsfunktionen, die sonst die einzigen sind,
+  // die je nachruecken lassen. Ohne diesen Aufruf bliebe eine wartende
+  // Liste bei einer erhoehten Kapazitaet fuer immer stehen (0038,
+  // Finding 3). Unbedingter Aufruf: er ist ein No-op, wenn es nichts
+  // nachzuruecken gibt.
+  const { error: promoteFehler } = await client.rpc("promote_course_waitlist", {
+    p_session_id: sessionId,
+  });
+  if (promoteFehler) throw new DomainError("internal", promoteFehler.message);
 }
 
 /**
@@ -597,6 +620,17 @@ export async function bookCourseSession(
   if (antwort.result === "past") {
     throw new DomainError("conflict", "Dieser Kurs hat schon begonnen.");
   }
+  if (antwort.result === "booking_id_reused") {
+    // p_booking_id gehoert schon zu einer anderen Zeile -- oft der
+    // eigenen, laengst stornierten (0038, Finding 4). Idempotenz gilt
+    // nur fuer die EIGENE offene Buchung; alles andere braucht eine
+    // frische Kennung, sonst liefe der Insert in der Datenbank in eine
+    // Primary-Key-Verletzung.
+    throw new DomainError(
+      "conflict",
+      "Diese Buchungskennung wurde schon verwendet. Bitte mit einer neuen Kennung erneut versuchen.",
+    );
+  }
 
   return {
     result: antwort.result as "booked" | "waitlisted",
@@ -607,7 +641,16 @@ export async function bookCourseSession(
   };
 }
 
-export type CancelOutcome = { promotedUserId: string | null };
+/**
+ * promotedUserId ist nur fuer Personal gesetzt -- course_bookings_select
+ * (0035) verbietet einem Mitglied, die Buchungszeile einer anderen Person
+ * zu sehen, und cancel_course_booking (0038) haelt sich seit Finding 1 des
+ * Gesamtreviews daran: ein Mitglied erfaehrt nur promoted, nie die
+ * Identitaet. Nichts in diesem Repository liest promotedUserId heute --
+ * das Feld bleibt aus demselben Grund stehen, aus dem promoted_at in 0035
+ * angelegt wurde: eine kuenftige Anzeige braucht es nicht neu zu holen.
+ */
+export type CancelOutcome = { promotedUserId: string | null; promoted: boolean };
 
 export async function cancelCourseBooking(
   client: SupabaseClient,
@@ -627,6 +670,7 @@ export async function cancelCourseBooking(
   const antwort = data as {
     result: string;
     deadline_hours?: number;
+    promoted: boolean;
     promoted_user_id?: string | null;
   };
 
@@ -643,5 +687,8 @@ export async function cancelCourseBooking(
     );
   }
 
-  return { promotedUserId: antwort.promoted_user_id ?? null };
+  return {
+    promotedUserId: antwort.promoted_user_id ?? null,
+    promoted: antwort.promoted,
+  };
 }

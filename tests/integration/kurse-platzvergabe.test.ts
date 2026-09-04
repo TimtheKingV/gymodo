@@ -336,6 +336,62 @@ describe("Idempotenz", () => {
     expect(zweite.data.booking_id).toBe(erste.data.booking_id);
     expect(zweite.data.created).toBe(false);
   });
+
+  it("dieselbe Buchungskennung nach dem Stornieren erneut zu verwenden, crasht nicht -- es kommt booking_id_reused", async () => {
+    // Der Teilindex course_bookings_one_per_member (0035) schliesst
+    // stornierte Zeilen aus dem "schon angemeldet"-Check aus -- die
+    // Primary Key auf id haelt die Kennung trotzdem noch. Ein Client,
+    // der p_booking_id je Termin cached (genau das verspricht die
+    // Spalte in 0035), erzeugt nach Stornieren-und-neu-Buchen also
+    // wieder DIESELBE Kennung. Ohne die Pruefung liefe der Insert in
+    // 23505; mit ihr kommt ein Ergebniswert, kein Datenbankfehler.
+    const terminId = await terminAnlegen({ capacity: 5, startsAt: inStunden(72) });
+    const [client] = await mitglieder(1, "reuse");
+    const buchungId = crypto.randomUUID();
+
+    const erste = await client!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: buchungId,
+    });
+    expect(erste.data.result).toBe("booked");
+
+    await client!.rpc("cancel_course_booking", { p_session_id: terminId });
+
+    const zweite = await client!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: buchungId,
+    });
+    expect(zweite.error).toBeNull();
+    expect(zweite.data.result).toBe("booking_id_reused");
+    expect(zweite.data.created).toBe(false);
+
+    const admin = serviceClient();
+    const { data: zeilen } = await admin
+      .from("course_bookings")
+      .select("status")
+      .eq("course_session_id", terminId);
+    expect(zeilen).toHaveLength(1);
+    expect(zeilen![0]!.status).toBe("cancelled");
+  });
+
+  it("dieselbe Buchungskennung eines ANDEREN Nutzers liefert ebenfalls booking_id_reused", async () => {
+    const terminId = await terminAnlegen({ capacity: 5, startsAt: inStunden(72) });
+    const [erster, zweiter] = await mitglieder(2, "reuse-fremd");
+    const buchungId = crypto.randomUUID();
+
+    const ersteAntwort = await erster!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: buchungId,
+    });
+    expect(ersteAntwort.data.result).toBe("booked");
+
+    const zweiteAntwort = await zweiter!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: buchungId,
+    });
+    expect(zweiteAntwort.data.result).toBe("booking_id_reused");
+    expect(zweiteAntwort.data.created).toBe(false);
+  });
 });
 
 describe("Wann gar nicht erst gebucht wird", () => {
@@ -424,7 +480,12 @@ describe("Stornieren und Nachruecken", () => {
       p_session_id: terminId,
     });
     expect(storno.result).toBe("cancelled");
-    expect(storno.promoted_booking_id).toBe(zweite.data.booking_id);
+    // Der Aufrufer ist ein einfaches Mitglied: es erfaehrt NUR, dass
+    // jemand nachgerueckt ist, nie wer (0038, Finding 1). Die Felder mit
+    // der Identitaet fehlen ganz, statt auf null zu stehen.
+    expect(storno.promoted).toBe(true);
+    expect(storno.promoted_booking_id).toBeUndefined();
+    expect(storno.promoted_user_id).toBeUndefined();
 
     const admin = serviceClient();
     const { data: nachgerueckt } = await admin
@@ -442,6 +503,42 @@ describe("Stornieren und Nachruecken", () => {
       p_booking_id: crypto.randomUUID(),
     });
     expect(nachher.waitlist_position).toBe(1);
+  });
+
+  it("Personal erfaehrt, WER nachgerueckt ist -- ein Mitglied nur, DASS jemand nachgerueckt ist", async () => {
+    // Die Gegenprobe zum vorigen Test: derselbe Vorgang, aber Personal
+    // entfernt das Mitglied statt dass es sich selbst abmeldet. Personal
+    // verwaltet den eigenen Kurs und ist von course_bookings_select
+    // (0035) nicht betroffen -- es darf die Identitaet sehen.
+    const terminId = await terminAnlegen({ capacity: 1, startsAt: inStunden(72) });
+    const [gebuchtR, wartendR] = await mitglieder(2, "staff-sieht");
+
+    const gebucht = await gebuchtR!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+    const wartend = await wartendR!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+    expect(gebucht.data.result).toBe("booked");
+    expect(wartend.data.result).toBe("waitlisted");
+
+    const admin = serviceClient();
+    const { data: buchung } = await admin
+      .from("course_bookings")
+      .select("user_id")
+      .eq("id", gebucht.data.booking_id)
+      .single();
+
+    const trainer = await userClient(trainerEmail);
+    const { data: storno } = await trainer.rpc("cancel_course_booking", {
+      p_session_id: terminId,
+      p_user_id: buchung!.user_id,
+    });
+    expect(storno.result).toBe("cancelled");
+    expect(storno.promoted).toBe(true);
+    expect(storno.promoted_booking_id).toBe(wartend.data.booking_id);
   });
 
   it("storniert jemand von der Warteliste, rueckt niemand nach", async () => {
@@ -465,7 +562,7 @@ describe("Stornieren und Nachruecken", () => {
       p_session_id: terminId,
     });
     expect(storno.result).toBe("cancelled");
-    expect(storno.promoted_booking_id).toBeNull();
+    expect(storno.promoted).toBe(false);
 
     const admin = serviceClient();
     const { data: unveraendert } = await admin
@@ -498,7 +595,7 @@ describe("Stornieren und Nachruecken", () => {
     const { data: storno } = await ersteR!.rpc("cancel_course_booking", {
       p_session_id: terminId,
     });
-    expect(storno.promoted_booking_id).toBeNull();
+    expect(storno.promoted).toBe(false);
 
     const { data: bleibt } = await admin
       .from("course_bookings")
@@ -542,7 +639,7 @@ describe("Stornieren und Nachruecken", () => {
     expect(storno.result).toBe("cancelled");
     // Vier bestaetigte Plaetze auf drei Kapazitaet -- immer noch
     // ueberbucht. Nachruecken wuerde die Ueberbuchung nur festschreiben.
-    expect(storno.promoted_booking_id).toBeNull();
+    expect(storno.promoted).toBe(false);
 
     const { data: nachAbmeldung } = await admin
       .from("course_bookings")
@@ -607,6 +704,57 @@ describe("Die Stornofrist", () => {
 
     const { data } = await zweiteR!.rpc("cancel_course_booking", { p_session_id: terminId });
     expect(data.result).toBe("cancelled");
+  });
+
+  it("wer waehrend der Frist nachgerueckt ist, kann trotzdem abmelden -- die Frist gilt nur fuer einen freiwillig angenommenen Platz", async () => {
+    // Ohne diese Ausnahme saesse die nachgerueckte Person in einer
+    // Anmeldung fest, die sie nie angenommen hat: das Nachruecken
+    // erfolgte ungefragt, innerhalb der Frist, weil die Frist bis zum
+    // Beginn laeuft und das Nachruecken keine Uhr kennt.
+    const terminId = await terminAnlegen({ capacity: 1, startsAt: inStunden(1) });
+    const [ersteR, zweiteR] = await mitglieder(2, "frist-promoted");
+
+    const erste = await ersteR!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+    const zweite = await zweiteR!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+    expect(erste.data.result).toBe("booked");
+    expect(zweite.data.result).toBe("waitlisted");
+
+    // Personal entfernt die Erste -- das ist erlaubt trotz Frist (siehe
+    // naechster Test) -- und die Zweite rueckt dabei nach, INNERHALB der
+    // Frist (der Termin beginnt in einer Stunde, die Frist sind zwei).
+    const trainer = await userClient(trainerEmail);
+    const admin = serviceClient();
+    const { data: buchungErste } = await admin
+      .from("course_bookings")
+      .select("user_id")
+      .eq("id", erste.data.booking_id)
+      .single();
+    const entfernung = await trainer.rpc("cancel_course_booking", {
+      p_session_id: terminId,
+      p_user_id: buchungErste!.user_id,
+    });
+    expect(entfernung.data.promoted).toBe(true);
+
+    const { data: nachgerueckt } = await admin
+      .from("course_bookings")
+      .select("promoted_at")
+      .eq("id", zweite.data.booking_id)
+      .single();
+    expect(nachgerueckt!.promoted_at).not.toBeNull();
+
+    // Die Zweite ist jetzt "booked", promoted, und der Termin beginnt in
+    // einer Stunde -- innerhalb der zweistuendigen Frist. Ohne die
+    // Ausnahme fuer promoted_at kaeme hier 'deadline'.
+    const { data: eigeneAbmeldung } = await zweiteR!.rpc("cancel_course_booking", {
+      p_session_id: terminId,
+    });
+    expect(eigeneAbmeldung.result).toBe("cancelled");
   });
 
   it("Personal entfernt jemanden auch nach der Frist", async () => {
@@ -698,5 +846,108 @@ describe("Die Stornofrist", () => {
       .eq("course_session_id", terminId);
     expect(data).toHaveLength(2);
     expect(data!.filter((z) => z.status === "cancelled")).toHaveLength(1);
+  });
+});
+
+describe("promote_course_waitlist", () => {
+  // capacity ist ueber course_sessions_update_staff (0035) direkt von
+  // Personal schreibbar -- ein zweiter Schreibweg auf genau die Zahl,
+  // die book_course_session und cancel_course_booking sperren. Ohne
+  // diese Funktion promoviert eine Kapazitaetserhoehung niemanden: das
+  // Nachruecken sitzt ausschliesslich in cancel_course_booking.
+  it("eine Kapazitaetserhoehung durch Personal rueckt Wartende in Reihenfolge nach", async () => {
+    const terminId = await terminAnlegen({ capacity: 1, startsAt: inStunden(72) });
+    const [ersteR, zweiteR, dritteR, vierteR] = await mitglieder(4, "kapazitaet-erhoehen");
+
+    const erste = await ersteR!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+    const zweite = await zweiteR!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+    const dritte = await dritteR!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+    await vierteR!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+    expect(erste.data.result).toBe("booked");
+    expect(zweite.data.result).toBe("waitlisted");
+    expect(dritte.data.result).toBe("waitlisted");
+
+    const admin = serviceClient();
+    await admin.from("course_sessions").update({ capacity: 3 }).eq("id", terminId);
+
+    const trainer = await userClient(trainerEmail);
+    const { data: anzahl, error } = await trainer.rpc("promote_course_waitlist", {
+      p_session_id: terminId,
+    });
+    expect(error).toBeNull();
+    expect(anzahl).toBe(2);
+
+    const { data: zeilen } = await admin
+      .from("course_bookings")
+      .select("id, status, promoted_at")
+      .eq("course_session_id", terminId);
+    const gebucht = new Set(
+      zeilen!.filter((z) => z.status === "booked").map((z) => z.id),
+    );
+    // Die ersten beiden Wartenden nach (booked_at, id) -- nicht die
+    // vierte -- sind aufgerueckt.
+    expect(gebucht).toEqual(
+      new Set([erste.data.booking_id, zweite.data.booking_id, dritte.data.booking_id]),
+    );
+    const nachgerueckt = zeilen!.filter(
+      (z) => z.id === zweite.data.booking_id || z.id === dritte.data.booking_id,
+    );
+    expect(nachgerueckt.every((z) => z.promoted_at !== null)).toBe(true);
+  });
+
+  it("ohne wartende Belegung ist es folgenlos", async () => {
+    const terminId = await terminAnlegen({ capacity: 5, startsAt: inStunden(72) });
+    const trainer = await userClient(trainerEmail);
+    const { data: anzahl } = await trainer.rpc("promote_course_waitlist", {
+      p_session_id: terminId,
+    });
+    expect(anzahl).toBe(0);
+  });
+
+  it("ein Mitglied ohne Personal-Rolle bekommt 0, kein Fehler", async () => {
+    const terminId = await terminAnlegen({ capacity: 1, startsAt: inStunden(72) });
+    const [client] = await mitglieder(1, "kein-personal");
+    const { data: anzahl, error } = await client!.rpc("promote_course_waitlist", {
+      p_session_id: terminId,
+    });
+    expect(error).toBeNull();
+    expect(anzahl).toBe(0);
+  });
+
+  it("in einen abgesagten Termin wird nicht nachgerueckt", async () => {
+    const terminId = await terminAnlegen({ capacity: 1, startsAt: inStunden(72) });
+    const [ersteR, zweiteR] = await mitglieder(2, "kapazitaet-abgesagt");
+    await ersteR!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+    await zweiteR!.rpc("book_course_session", {
+      p_session_id: terminId,
+      p_booking_id: crypto.randomUUID(),
+    });
+
+    const admin = serviceClient();
+    await admin
+      .from("course_sessions")
+      .update({ status: "cancelled", cancelled_at: new Date().toISOString(), capacity: 5 })
+      .eq("id", terminId);
+
+    const trainer = await userClient(trainerEmail);
+    const { data: anzahl } = await trainer.rpc("promote_course_waitlist", {
+      p_session_id: terminId,
+    });
+    expect(anzahl).toBe(0);
   });
 });
