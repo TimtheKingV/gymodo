@@ -206,7 +206,19 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 
     Zwei von drei Quellen sind sich also einig, und die dritte ist der laufende Code. Der neue Baustein folgt Spec und Artboard: `danger`-Rand auf `surface`, keine Tönung. `.error` bleibt vorerst, wie es ist — es wird von `Form.tsx` und mehreren Seiten benutzt und löst sich auf, wenn diese Seiten in den Aufgaben 5 und 14–20 auf den Baustein wechseln. **Bis dahin zeigt das Portal zwei verschiedene Fehlerflächen.**
 
-19. **Der Fußsatz von `LeuteMitglieder.dc.html` ist seit `0033` überholt.** Er sagt, die Richtlinien der Datenbank ließen Mitarbeiter noch an Sätze, Gewichte und Verläufe heran. Seit dem 2. September haben die vier Policies die Staff-Klausel verloren. Der Satz beschreibt einen Vorbehalt, den es nicht mehr gibt, und macht die Zusicherung dadurch schwächer als die Wirklichkeit.
+19. **Die Produktgrenze steht in einem Kontrast, den das Designsystem für sie verbietet.** Designsystem §2: *„`text-faint` ist damit nur für Text ≥ 15 pt oder nicht-tragende Information zulässig — **nie für etwas, das gelesen werden muss**."* Designsystem §10 erklärt genau diesen Satz für verbindlich und sichtbar. Gemessen an drei Stellen, alle in `text-faint` (3,6 : 1):
+
+    | Ort | Wie |
+    | --- | --- |
+    | `Start.dc.html`, Fußzeile | `13px`, `#5c636e` |
+    | `(schreibtisch)/page.tsx:304` über `.hint` | `12px`, `var(--text-faint)` |
+    | `t/[token]/page.tsx:230` über `.grenze` | `13px`, `var(--text-faint)` |
+
+    **Hier greift die übliche Schlichtungsregel nicht.** Sonst gewinnt bei Streit zwischen Entwurf und laufender Oberfläche der Code — aber hier weichen Artboard **und** Code gemeinsam ab, es gibt kein Korrektiv. Damit ist das Designsystem die einzige normative Quelle, die den Fall regelt, und es ist eindeutig. Es geht dabei um den Satz, der sagt, dass gymodo nichts misst und keine Gesundheitsempfehlung gibt.
+
+    **Kleinster Eingriff:** Token-Tausch `--text-faint` → `--text-muted` (7,4 : 1), Größe und Layout unverändert, eine Zeile je Datei. **Nicht einzeln reparieren** — eine von drei Stellen zu heilen erzeugt Inkonsistenz, ohne den systemischen Fehler zu lösen. Stattdessen ein Baustein `Produktgrenze`, der Wortlaut und Kontrast an einer Stelle trägt: Wiederholung **plus** Regel, das Kriterium aus Abschnitt 1. Fällig in Aufgabe 14 (Überblick); `/t/<token>` zieht Aufgabe 21 nach.
+
+20. **Der Fußsatz von `LeuteMitglieder.dc.html` ist seit `0033` überholt.** Er sagt, die Richtlinien der Datenbank ließen Mitarbeiter noch an Sätze, Gewichte und Verläufe heran. Seit dem 2. September haben die vier Policies die Staff-Klausel verloren. Der Satz beschreibt einen Vorbehalt, den es nicht mehr gibt, und macht die Zusicherung dadurch schwächer als die Wirklichkeit.
 
 ---
 

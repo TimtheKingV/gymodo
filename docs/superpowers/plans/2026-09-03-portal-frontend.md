@@ -1909,6 +1909,10 @@ Die dichteste Seite des Portals und die einzige mit Kennzahlen. Sie ist funktion
 
 **Der Abschnitt *Diese Woche* aus dem Artboard wird nicht gebaut.** Er zeigt Kurstermine, und Kurse gibt es in Phase 5 nicht. Er kommt in Aufgabe 22 dazu.
 
+**Diese Aufgabe löst zusätzlich Befund 19 auf: der Baustein `Produktgrenze`.** Der Satz „gymodo misst nichts …" steht an drei Stellen und überall in `text-faint` — einem Kontrast, den Designsystem §2 für Pflichttext ausdrücklich verbietet. Leg `apps/web/app/portal/bausteine/Produktgrenze.tsx` an: er trägt den Wortlaut **und** den Kontrast an einer Stelle, in `text-muted`. Der Überblick benutzt ihn hier, die Wurzelseite zieht nach, `/t/<token>` bleibt Aufgabe 21 (dort gilt die Member-Ebene, nicht `bausteine.module.css`).
+
+Der Wortlaut ist je Ort verschieden — der Überblick sagt „Alles hier ist gezählt, was Mitglieder selbst bestätigt haben", die Landeseite die lange Fassung aus `Start.dc.html`. Der Baustein nimmt den Text deshalb als `children` und trägt nur Kontrast und Abstand. **Er erfindet keinen gemeinsamen Wortlaut**, den kein Artboard zeigt.
+
 **Dateien:**
 - Ändern: `apps/web/app/portal/[studioId]/(schreibtisch)/page.tsx`
 - Anlegen: `e2e/schreibtisch.spec.ts`
