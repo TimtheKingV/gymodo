@@ -1,0 +1,155 @@
+/* Start.dc.html: die Wurzelseite ohne Sitzung. Anders als die sechs
+   Einstiegsbildschirme keine zentrierte Karte, sondern ein Kopf, eine auf
+   der Zeilenhoehe zentrierte Spalte und ein Fuss -- das Artboard ist die
+   einzige Seite des Portalsatzes mit einer Satzzeile ueber drei Zeilen, und
+   dafuer gibt es kein Bauteil. Ein Baustein entsteht aus Wiederholung plus
+   Regel; diese Zeile gibt es genau einmal, deshalb ein eigenes kleines
+   Stylesheet statt eines Eintrags in bausteine.module.css. */
+
+.bildschirm {
+  min-height: 100dvh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.kopf {
+  padding: var(--s32) var(--s48);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.marke {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+/* Der Kopf-Knopf des Artboards: Umriss auf angehobener Flaeche, keine
+   Akzentflaeche -- "Als Trainer anmelden" weiter unten ist die einzige. */
+.anmeldenKopf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 var(--s16);
+  border-radius: var(--r-control);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.anmeldenKopf:hover {
+  background: var(--surface-hover);
+}
+
+/* Einzige Hauptlandmarke der Seite -- Kopf und Fuss stehen als Geschwister
+   daneben, aus demselben Grund wie <header> in Einstieg.tsx: "genau ein
+   main" bleibt erhalten. */
+.inhalt {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--s48);
+}
+
+.spalte {
+  max-width: 720px;
+}
+
+/* Aus dem Artboard uebernommen, nicht aus der Typoskala des Designsystems:
+   92 pt gibt es dort nicht (Screentitel bleibt bei 32 pt) -- die Landeseite
+   ist weder Einstieg noch Schreibtisch, sondern eine eigene Landung mit
+   eigenem, groesserem Satz. Drei erzwungene Zeilenumbrueche im Markup
+   (<br />) statt Fliesstext: das Artboard setzt die Zeile bewusst so, nicht
+   als Ergebnis von Umbruch bei 720 px Breite. */
+.titel {
+  font-size: 92px;
+  line-height: 0.94;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.vorspann {
+  color: var(--text-muted);
+  font-size: 17px;
+  line-height: 1.5;
+  margin: var(--s32) 0 0;
+  max-width: 52ch;
+}
+
+.aktionen {
+  display: flex;
+  gap: var(--s16);
+  align-items: center;
+  margin-top: var(--s40);
+}
+
+/* Die eine Akzentflaeche der Seite (Artboard, effektive Werte nach dessen
+   Ueberschreibung): Hauptaktions-Masse 64 px/16 px Radius -- dieselben wie
+   im Einstieg (einstieg.module.css .knopf), nicht die 44 px des
+   Schreibtischs. Der Kopf-Knopf oben nutzt dagegen die Schreibtisch-
+   Nebenaktion (40 px/10 px) -- die Landeseite mischt beide Massstaebe, wie
+   das Artboard es zeigt, statt einen davon abzuleiten. */
+.knopf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+  padding: 0 var(--s32);
+  border-radius: 16px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.knopf:hover {
+  background: var(--accent-pressed);
+}
+
+/* "Konto anlegen": Nebenaktion als Textlink neben der Akzentflaeche, keine
+   zweite Flaeche -- zwei Flaechen wuerden beide behaupten, DER Weg zu sein. */
+.nebenaktion {
+  display: inline-block;
+  margin-top: var(--s20);
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.nebenaktion:hover {
+  color: var(--text);
+}
+
+.mitgliedshinweis {
+  font-size: 13px;
+  color: var(--text-faint);
+  line-height: 1.45;
+  margin: var(--s48) 0 0;
+  max-width: 52ch;
+}
+
+/* Die Produktgrenze (Designsystem Abschnitt 10, Pflichttext). Farbe und
+   Groesse wie im Artboard uebernommen (text-faint, 13 px) -- Abschnitt 2
+   der Designsystem-Spec erlaubt text-faint sonst nur ab 15 pt oder fuer
+   nicht-tragende Information, "nie fuer etwas, das gelesen werden muss".
+   Die Produktgrenze ist Pflichttext, also eigentlich genau der Fall, den
+   die Regel ausschliesst -- das Artboard setzt sie trotzdem so, und diese
+   Datei uebernimmt es woertlich statt eigenmaechtig aufzuhellen. Im
+   Aufgabe-10-Bericht vermerkt. */
+.fuss {
+  padding: var(--s32) var(--s48);
+  border-top: 1px solid var(--line);
+  color: var(--text-faint);
+  font-size: 13px;
+  line-height: 1.45;
+  max-width: 80ch;
+}
