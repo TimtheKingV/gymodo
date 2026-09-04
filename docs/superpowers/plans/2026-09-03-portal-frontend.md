@@ -128,7 +128,7 @@ Aus Spec und Global Constraints, wörtlich. Jede Aufgabe steht implizit unter di
 
 Damit ein Prüfer die Lücken nicht für Versehen hält:
 
-- **Kein Kurse-Eintrag in der Rail**, bis Aufgabe 22 läuft. Designsystem §11: *„Ein leerer Tab ist ein Versprechen ohne Gegenwert."* Die Regel steht dort für den Plan-Tab der Member-App und gilt hier wörtlich. Ein Eintrag auf eine 404 ist schlechter als kein Eintrag; ein deaktivierter wäre ein Versprechen mit Datum, das niemand gegeben hat.
+- ~~**Kein Kurse-Eintrag in der Rail**, bis Aufgabe 22 läuft.~~ **Am 4. September überholt.** Phase 4 ist gemergt, die Kurse-Routen stehen, und Phase 4 hat den Eintrag selbst gesetzt. Designsystem §11 („Ein leerer Tab ist ein Versprechen ohne Gegenwert") greift nicht mehr — das Versprechen ist eingelöst. Aufgabe 22 wird damit zu **Fassung A**: die fünf Kurse-Bildschirme werden gestaltet, statt dass der Plan aufschreibt, was offen bleibt.
 - **Kein Neubau der 16 `Telefon*`-Bildschirme.** Sie sind in Phase 3 gebaut und gestaltet. Aufgabe 21 gleicht ab und schreibt Befunde.
 - **Kein Neubau von `/t/<token>`.** Trägt seit dem Medienplan `fallback.module.css` nach Member-Maßen. Ebenfalls nur Abgleich.
 - **Kein visueller Regressionstest.** Kein Screenshot-Vergleich in der Suite. Ein Pixelvergleich wird bei jeder Verschiebung um zwei Punkte rot und wird dann weggeklickt statt gelesen; die Sichtprüfung bleibt Handarbeit gegen das Artboard (Fertig-Kriterium 6).
@@ -1593,7 +1593,9 @@ VERWALTUNG    Leute            Einstellungen
 
 Darunter, abgesetzt durch eine `line`-Kante: die E-Mail-Adresse und *Abmelden*.
 
-**Kein Kurse-Eintrag.** Designsystem §11: *„Ein leerer Tab ist ein Versprechen ohne Gegenwert."* Er kommt in Aufgabe 22 dazu, mit seiner Route.
+**Der Kurse-Eintrag bleibt — er steht schon da.** Ursprünglich sah dieser Plan vor, ihn auszulassen, bis Aufgabe 22 die Seiten baut (Designsystem §11: *„Ein leerer Tab ist ein Versprechen ohne Gegenwert."*). **Am 4. September überholt:** Phase 4 ist in `master` gemergt, die Kurse-Routen existieren, und Phase 4 hat den Eintrag selbst in die Gruppe *Studio* gesetzt. Die Regel greift nicht mehr, weil das Versprechen eingelöst ist.
+
+Übernimm ihn unverändert in die neue Rail, samt seiner Erkennung des aktiven Zustands über `pfad.startsWith(`${basis}/kurse`)` — die Kurse haben Unterrouten (`/kurse/vorlagen`, `/kurse/termin/…`), ein Gleichheitsvergleich würde die Zeile dort nicht markieren. Der Zusatz *„5 diese Woche"* aus dem Artboard braucht eine Zahl aus der Fachschicht; **bau ihn nicht auf Verdacht** — sieh nach, ob Phase 4 sie liefert, und melde es, wenn nicht.
 
 **Die Rail braucht einen Kein-Recht-Fall.** Ihre Zahl *„24 Mitglieder · 4 Mitarbeiter"* kommt aus `listStudioMembers`, und das wirft für ein einfaches Mitglied `unauthorized`. Ohne Abfangen zerbricht die gemeinsame Navigation an der Rolle — auf jeder Seite gleichzeitig.
 
@@ -1652,16 +1654,24 @@ test("Die Rail zeigt sechs feste Bereiche in drei Gruppen, nicht jedes Modell", 
   await expect(rail.getByRole("link", { name: /Modell anlegen/ })).toHaveCount(0);
 });
 
-test("Kurse fehlt in der Rail, solange es die Seite nicht gibt", async ({ page }) => {
+test("Kurse steht in der Rail und bleibt auf seinen Unterrouten markiert", async ({ page }) => {
   const { studioId } = await studioMitTrainer(page, "rail-kurse");
-  await page.goto(`/portal/${studioId}`);
+  const rail = page.getByRole("navigation", { name: "Katalog" });
 
-  // Designsystem 11: ein leerer Tab ist ein Versprechen ohne Gegenwert.
-  // Faellt dieser Test in Aufgabe 22, ist das richtig so -- dann wird er
-  // dort umgedreht.
-  await expect(
-    page.getByRole("navigation", { name: "Katalog" }).getByRole("link", { name: "Kurse" }),
-  ).toHaveCount(0);
+  await page.goto(`/portal/${studioId}/kurse`);
+  await expect(rail.getByRole("link", { name: /Kurse/ })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+
+  // Die Kurse haben Unterrouten. Ein Gleichheitsvergleich auf den Pfad
+  // wuerde die Zeile hier nicht mehr markieren -- der Trainer saehe nicht,
+  // wo er ist.
+  await page.goto(`/portal/${studioId}/kurse/vorlagen`);
+  await expect(rail.getByRole("link", { name: /Kurse/ })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
 });
 
 test("Die Rail traegt die Abmeldung und die eigene Adresse", async ({ page }) => {
