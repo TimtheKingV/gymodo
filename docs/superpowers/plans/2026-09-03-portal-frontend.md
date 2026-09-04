@@ -1924,7 +1924,17 @@ Die dichteste Seite des Portals und die einzige mit Kennzahlen. Sie ist funktion
 
 **Artboard:** `Main.dc.html`.
 
-**Der Abschnitt *Diese Woche* aus dem Artboard wird nicht gebaut.** Er zeigt Kurstermine, und Kurse gibt es in Phase 5 nicht. Er kommt in Aufgabe 22 dazu.
+**Der Abschnitt *Diese Woche* wird gebaut.** Ursprünglich war er auf Aufgabe 22 vertagt, weil es Kurse in Phase 5 nicht gab. **Am 4. September überholt:** Phase 4 ist gemergt, und alles Nötige steht bereit —
+
+- `listCourseWeek(client, studioId, from, to)` in `packages/domain/src/courses.ts`
+- `wochenFenster(anker, zeitzone)` in `(schreibtisch)/kurse/woche.ts` — berechnet das Fenster in Ortszeit
+- `studioTimezone` im Katalog, seit Aufgabe 5
+
+Der Überblick wird als Ganzes gestaltet; ihn ohne diesen Abschnitt zu bauen hieße, später zurückzukommen und die ganze Seite noch einmal abzunehmen.
+
+`Main.dc.html` zeigt drei Zeilen der Form `Mo., 31. August 2026 · 18:00 · Kraftzirkel` mit `Marek T. · Kursraum 2` und `12 von 16`, dazu bei ausgebuchten Terminen `+3 Warteliste` und einen Weg *Zu den Kursen*. **Übernimm den Wortlaut von dort und die Datumsform aus den Rahmenbedingungen** — ausgeschrieben, in der Studio-Zeitzone.
+
+**Ein Satz darf nicht auf den Bildschirm:** die Nachrück-Benachrichtigung von der Warteliste. Designsystem §11 und Struktur-Spec §8 sind darin einig — *„Benachrichtigungen existieren nicht, und bis sie existieren darf der Satz nicht in die App."* Eine Warteliste **anzuzeigen** ist erlaubt; eine Benachrichtigung zu **versprechen** nicht.
 
 **Diese Aufgabe löst zusätzlich Befund 19 auf: der Baustein `Produktgrenze`.** Der Satz „gymodo misst nichts …" steht an drei Stellen und überall in `text-faint` — einem Kontrast, den Designsystem §2 für Pflichttext ausdrücklich verbietet. Leg `apps/web/app/portal/bausteine/Produktgrenze.tsx` an: er trägt den Wortlaut **und** den Kontrast an einer Stelle, in `text-muted`. Der Überblick benutzt ihn hier, die Wurzelseite zieht nach, `/t/<token>` bleibt Aufgabe 21 (dort gilt die Member-Ebene, nicht `bausteine.module.css`).
 
