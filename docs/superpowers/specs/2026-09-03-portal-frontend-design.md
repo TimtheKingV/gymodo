@@ -175,7 +175,11 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 5. **`PasswortNeu` fehlt das Codefeld.** Das Artboard zeigt *Neues Passwort* und *Wiederholen*; ohne den Code aus der Mail funktioniert der laufende Weg nicht. Umgekehrt hat der Code heute kein *Wiederholen* — das kommt vom Artboard dazu und ist eine Verbesserung, kein Fehler.
 6. **`Verifizieren` zeichnet „Neuen Code anfordern".** Diesen Weg gibt es im Code nicht.
 7. **Für *Stilllegen* zeichnet kein Artboard einen Ort.** `Modell.dc.html` zeigt unter *Einzelne Geräte* nur *Tag scannen* und *Tag ersetzen*, obwohl Struktur-Spec §1 das Stilllegen verlangt („ein Gerät wird stillgelegt, einzeln, mit Namen"). Im Code steht es bereits an der richtigen Stelle — Modell-Detail, Abschnitt *Geräte im Raum*. Der Entwurf ist unvollständig, nicht der Code; das Artboard wird beim Bauen um die Aktion ergänzt.
-8. **Die flache Geräteliste hat kein Artboard.** Entfällt nach Entscheidung 2, und sie kostet nichts: ihre beiden Aktionen sind Kopien dessen, was im Modell-Detail schon steht.
+8. **Die flache Geräteliste hat kein Artboard.** Entfällt nach Entscheidung 2.
+
+    **Korrektur vom 5. September — sie kostet doch etwas, und beim Bauen ist es aufgefallen.** Die ursprüngliche Fassung dieses Befunds sagte, die Löschung sei kostenlos, weil ihre beiden Aktionen — *Stilllegen* und *Wieder in Betrieb* — im Modell-Detail schon stehen. Das stimmt und wurde vor dem Löschen geprüft. Die Liste bot aber **zwei** Dinge, nicht eines: zusätzlich eine **modellübergreifende, nach Erreichbarkeit sortierte** Ansicht — der Rundgang durch den Raum, mit den Geräten ohne Tag zuoberst.
+
+    Die gibt es jetzt nirgends: im Modell-Detail ist die Geräteliste unsortiert und an ein Modell gebunden. **Der Verlust ist gewollt und gedeckt** — Struktur-Spec §1, Entscheidung 5 verschiebt die Navigation ausdrücklich von Objekten auf Listenseiten, und der Überblick beantwortet die Frage „was fehlt noch" über seine Zeile *„N Geräte ohne Tag"*. Aber er ist ein Kompromiss, keine Nulloperation, und wurde als solcher zuerst falsch dargestellt.
 9. **Die Wurzelseite behält das Beitrittsformular** gegen `note-einstieg`. Nach Entscheidung 1 — mit dem Auftrag, es zu streichen, sobald die iOS-App den Beitritt trägt.
 
 ### Regeln, die kollidieren
