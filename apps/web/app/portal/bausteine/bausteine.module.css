@@ -253,3 +253,15 @@
   margin-top: var(--s4);
   color: var(--text-muted);
 }
+
+/* Produktgrenze: Befund 19 -- derselbe Satz stand an drei Stellen in
+   text-faint, einem Kontrast, den Designsystem 2 fuer Pflichttext
+   ausdruecklich verbietet ("gymodo misst nichts ..." ist Inhalt, keine
+   Fussnote). text-muted statt text-faint, sonst wie der bisherige .hint. */
+.produktgrenze {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin-top: var(--s24);
+  max-width: 70ch;
+}
