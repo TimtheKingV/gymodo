@@ -134,3 +134,19 @@
 .fuss {
   margin-top: var(--s24);
 }
+
+/* Der gedaempfte Satz unter dem Registrieren-Knopf (Registrieren.dc.html):
+   13 px, kein eigener Abstand -- .fuss liefert die 24 px margin-top. */
+.hinweis {
+  font-size: 13px;
+  color: var(--text-faint);
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* Die eingesetzte Adresse im Verifizieren-Vorspann, voller Kontrast statt
+   gedaempft -- Verifizieren.dc.html hebt sie im sonst gedaempften Satz mit
+   #f2f4f7 hervor. */
+.adresse {
+  color: var(--text);
+}

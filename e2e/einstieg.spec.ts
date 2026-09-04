@@ -46,3 +46,29 @@ test("Ein falsches Passwort meldet sich als Warnung, nicht als stiller Text", as
   await expect(page.getByRole("alert")).toBeVisible();
   await expect(page).toHaveURL(/\/login$/);
 });
+
+test("Registrieren nennt die Passwortregel, bevor sie jemand verletzt", async ({ page }) => {
+  await page.goto("/registrieren");
+
+  expect(await hauptlandmarken(page)).toBe(1);
+  expect(await akzentflaechen(page)).toHaveLength(1);
+
+  // Zehn Zeichen sind seit dem 3. September der Mindestwert -- der Push der
+  // Mailvorlagen hob minimum_password_length von 6 auf 10. Wer das erst
+  // nach dem Absenden erfaehrt, tippt zweimal.
+  await expect(page.getByText(/Mindestens zehn Zeichen/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Konto anlegen" })).toBeVisible();
+});
+
+test("Ein zu kurzes Passwort sagt, was gilt -- nicht nur, dass etwas falsch ist", async ({
+  page,
+}) => {
+  await page.goto("/registrieren");
+  await page.getByLabel("E-Mail").fill(`kurz-${crypto.randomUUID()}@example.test`);
+  await page.getByLabel("Passwort").fill("kurz");
+  await page.getByRole("button", { name: "Konto anlegen" }).click();
+
+  const meldung = page.getByRole("alert");
+  await expect(meldung).toBeVisible();
+  await expect(meldung).toContainText(/zehn|10/);
+});
