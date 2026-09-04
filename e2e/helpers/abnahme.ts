@@ -84,3 +84,22 @@ export async function zuKleineBedienelemente(
   }
   return zuKlein;
 }
+
+/**
+ * Die eine echte Fehlermeldung einer Seite.
+ *
+ * getByRole("alert") allein ist in einer Next-Anwendung IMMER mehrdeutig:
+ * Next legt einen leeren Route-Announcer mit role="alert" und der id
+ * __next-route-announcer__ ins Dokument, damit Screenreader den
+ * Seitenwechsel mitbekommen. Playwrights strict mode bricht dann ab, sobald
+ * eine echte Meldung dazukommt -- also genau im Fehlerfall, den der Test
+ * pruefen will.
+ *
+ * Der Befund stand seit Phase 2 als Kommentar in einstellungen.spec.ts und
+ * ist trotzdem zweimal neu gestolpert worden. Deshalb steht er jetzt hier,
+ * als Helfer statt als Kommentar: der Announcer ist der einzige role=alert
+ * ohne Text, und ein Ausschluss ueber seine id trifft ihn genau.
+ */
+export function fehlermeldung(page: Page) {
+  return page.getByRole("alert").and(page.locator(":not(#__next-route-announcer__)"));
+}

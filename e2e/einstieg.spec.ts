@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { akzentflaechen, hauptlandmarken, zuKleineBedienelemente } from "./helpers/abnahme";
+import {
+  akzentflaechen,
+  fehlermeldung,
+  hauptlandmarken,
+  zuKleineBedienelemente,
+} from "./helpers/abnahme";
 import { E2E_PASSWORD, adminClient, anmelden, latestOtpFor } from "./helpers/login";
 
 /**
@@ -44,7 +49,7 @@ test("Ein falsches Passwort meldet sich als Warnung, nicht als stiller Text", as
   await page.getByLabel("Passwort").fill("falsch-falsch-falsch");
   await page.getByRole("button", { name: "Anmelden" }).click();
 
-  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(fehlermeldung(page)).toBeVisible();
   await expect(page).toHaveURL(/\/login$/);
 });
 
@@ -69,7 +74,7 @@ test("Ein zu kurzes Passwort sagt, was gilt -- nicht nur, dass etwas falsch ist"
   await page.getByLabel("Passwort").fill("kurz");
   await page.getByRole("button", { name: "Konto anlegen" }).click();
 
-  const meldung = page.getByRole("alert");
+  const meldung = fehlermeldung(page);
   await expect(meldung).toBeVisible();
   await expect(meldung).toContainText(/zehn|10/);
 });
@@ -107,7 +112,7 @@ test("Zwei verschiedene neue Passwoerter werden abgelehnt, bevor eines gesetzt w
   await page.getByLabel("Wiederholen").fill("passwort-zwei-1234");
   await page.getByRole("button", { name: "Passwort setzen" }).click();
 
-  const meldung = page.getByRole("alert");
+  const meldung = fehlermeldung(page);
   await expect(meldung).toBeVisible();
   await expect(meldung).toContainText(/stimmen nicht überein/);
   await expect(page).toHaveURL(/\/passwort-vergessen$/);

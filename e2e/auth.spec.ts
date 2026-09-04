@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import { fehlermeldung } from "./helpers/abnahme";
 import { E2E_PASSWORD, anmelden, latestOtpFor } from "./helpers/login";
 
 /**
@@ -37,7 +38,7 @@ test("eine zu kurze Passworteingabe bleibt auf der Registrierungsseite", async (
   // alten Text-Selektor, Playwrights strict mode bricht dann mit zwei
   // Treffern ab. Ueber die Rolle bleibt eindeutig, welcher der beiden
   // gemeint ist: die Fehlermeldung traegt role="alert", der Hinweis nicht.
-  await expect(page.getByRole("alert")).toContainText("mindestens zehn Zeichen");
+  await expect(fehlermeldung(page)).toContainText("mindestens zehn Zeichen");
 });
 
 test("ein Mitglied setzt ein neues Passwort per Code und ist danach angemeldet", async ({
