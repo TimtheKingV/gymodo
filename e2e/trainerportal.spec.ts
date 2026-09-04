@@ -125,9 +125,11 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await expect(page).toHaveURL(new RegExp(`/portal/${studio.id}$`));
   await expect(page.getByRole("heading", { name: "Überblick" })).toBeVisible();
 
-  // Der Katalog liegt seit dem Ueberblick unter /modelle.
+  // Der Katalog liegt seit dem Ueberblick unter /modelle -- seit Aufgabe 13
+  // ist das eine Weiterleitung auf /geraete, den zusammengelegten Bereich
+  // aus Geraeten und Modellen (Struktur-Spec, Entscheidung 5).
   await page.goto(`/portal/${studio.id}/modelle`);
-  await expect(page.getByRole("heading", { name: "Gerätekatalog" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Geräte", exact: true })).toBeVisible();
 
   // 1. Geraetemodell
   await page.getByLabel("Name").fill("Latzug");
@@ -186,12 +188,15 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await page.getByRole("button", { name: "Verbinden" }).click();
   await expect(page.getByText("aktiv")).toBeVisible();
 
-  // Das Geraet ist jetzt erreichbar.
+  // Das Geraet ist jetzt erreichbar -- diese Auskunft steht seit Aufgabe 13
+  // nicht mehr auf einer flachen Geraeteliste unter /geraete (die Seite
+  // zeigt jetzt die Modelle), sondern im Modell-Detail unter "Geraete im
+  // Raum". Ein Klick mehr als vorher, keine verlorene Information.
   await page.goto(`/portal/${studio.id}/geraete`);
-  await expect(page.getByText("Das Gerät in Betrieb ist erreichbar.")).toBeVisible();
+  await page.getByRole("link", { name: "Bearbeiten" }).first().click();
   await expect(
     page.getByRole("listitem").filter({ hasText: "Rückwand links" }),
-  ).toContainText("erreichbar");
+  ).toContainText("aktiver Tag");
 
   // Ohne Bearer-Token bleibt der Kontext verschlossen. Der Tag allein reicht
   // nie -- er ist eine Ortsangabe, kein Ausweis (Spec 10.4).

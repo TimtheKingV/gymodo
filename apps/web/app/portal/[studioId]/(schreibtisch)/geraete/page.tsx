@@ -1,13 +1,22 @@
 import Link from "next/link";
-import { AktionsKnopf } from "../../../Form";
-import { geraetStilllegen, geraetWiederInBetrieb } from "../../../actions";
-import { ladeKatalog } from "../../catalog";
+import { AktionsFormular, Feld } from "../../../Form";
+import { modellAnlegen } from "../../../actions";
+import { erreichbarkeit, ladeKatalog } from "../../catalog";
+import { Seite } from "../../../bausteine/Seite";
+import { Abschnitt } from "../../../bausteine/Abschnitt";
+import { Zeile, Zeilen } from "../../../bausteine/Zeile";
+import { Zustand } from "../../../bausteine/Zustand";
 import styles from "../../../portal.module.css";
 
 /**
- * Alle Geraete quer ueber die Modelle -- die Ansicht fuer den Rundgang
- * durch den Raum. Sortiert nach Erreichbarkeit: was noch keinen aktiven
- * Tag hat, steht oben, weil es fuer Mitglieder schlicht nicht existiert.
+ * Geraete und Modelle sind ein Bereich (Struktur-Spec, Entscheidung 5) --
+ * diese Seite ist seine Startseite und zeigt die Modelle, gestaltet nach
+ * Geraete.dc.html. Die vormals flache Geraeteliste (jedes Geraet quer ueber
+ * alle Modelle) ist entfallen: ihre beiden Aktionen, Stilllegen und Wieder
+ * in Betrieb, standen schon vorher zusaetzlich im Modell-Detail unter
+ * "Geraete im Raum" (modelle/[modelId]/page.tsx, Abschnitt 4) -- geprueft
+ * vor dem Loeschen, nicht nur behauptet. Die flache Liste war eine zweite
+ * Kopie derselben Aktionen an einem Ort, den kein Artboard zeichnet.
  */
 export default async function GeraetePage({
   params,
@@ -16,96 +25,130 @@ export default async function GeraetePage({
 }) {
   const { studioId } = await params;
   const katalog = await ladeKatalog(studioId);
-  const pfad = `/portal/${studioId}/geraete`;
-
-  const geraete = katalog.models
-    .flatMap((modell) =>
-      modell.machines.map((geraet) => ({ ...geraet, modell })),
-    )
-    .sort((a, b) => {
-      const rang = (eintrag: typeof a) =>
-        eintrag.status === "inactive" ? 2 : eintrag.activeTagCount > 0 ? 1 : 0;
-      const unterschied = rang(a) - rang(b);
-      if (unterschied !== 0) return unterschied;
-      return a.label.localeCompare(b.label, "de", { numeric: true });
-    });
-
-  const inBetrieb = geraete.filter((geraet) => geraet.status === "active").length;
-  const ohneTag = geraete.filter(
-    (geraet) => geraet.status === "active" && geraet.activeTagCount === 0,
-  ).length;
-
-  function lead(): string {
-    if (geraete.length === 0) {
-      return "Noch kein Gerät angelegt. Geräte entstehen im jeweiligen Gerätemodell.";
-    }
-    if (ohneTag === 0) {
-      return inBetrieb === 1
-        ? "Das Gerät in Betrieb ist erreichbar."
-        : `Alle ${inBetrieb} Geräte in Betrieb sind erreichbar.`;
-    }
-    return ohneTag === 1
-      ? "Ein Gerät hat noch keinen aktiven Tag und ist damit für Mitglieder nicht auffindbar."
-      : `${ohneTag} Geräte haben noch keinen aktiven Tag und sind damit für Mitglieder nicht auffindbar.`;
-  }
 
   return (
-    <>
-      <h1 className={styles.pageTitle}>Geräte</h1>
-      <p className={styles.pageLead}>{lead()}</p>
+    <Seite
+      titel="Geräte"
+      vorspann="Ein Modell beschreibt den Gerätetyp. Die einzelnen Geräte im Raum sind Instanzen davon — zwei Kabelzüge nebeneinander sind ein Modell und zwei Geräte."
+    >
+      <Abschnitt titel="Alle Gerätemodelle">
+        {katalog.models.length === 0 ? (
+          <Zustand
+            art="leer"
+            titel="Noch kein Gerätemodell."
+            naechsterSchritt="Fang mit dem Gerät an, das am häufigsten benutzt wird."
+          />
+        ) : (
+          <Zeilen>
+            {katalog.models.map((modell) => {
+              const stand = erreichbarkeit(modell);
+              const mitVideo = modell.exercises.filter((uebung) => uebung.hasVideo).length;
+              const fotoDa = Boolean(modell.photoPath);
+              const parameterAnzahl = modell.settingDefinitions.length;
 
-      {geraete.length > 0 ? (
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Alle Geräte</h2>
-            <span className={styles.sectionNote}>Ohne Tag zuerst.</span>
-          </div>
-          <ul className={styles.rows}>
-            {geraete.map((geraet) => (
-              <li key={geraet.id} className={styles.row}>
-                <div className={styles.rowMain}>
-                  <div className={styles.rowTitle}>
-                    {geraet.label}{" "}
-                    {geraet.status === "inactive" ? (
-                      <span className={styles.badge}>stillgelegt</span>
-                    ) : null}
-                  </div>
-                  <div className={styles.rowMeta}>
-                    <Link href={`/portal/${studioId}/modelle/${geraet.modell.id}`}>
-                      {geraet.modell.name}
+              return (
+                <Zeile
+                  key={modell.id}
+                  titel={modell.name}
+                  meta={
+                    <>
+                      {modell.manufacturer ? (
+                        modell.manufacturer
+                      ) : (
+                        <span className={styles.absent}>Ohne Hersteller</span>
+                      )}
+                      {" · "}
+                      {stand.geraete === 0 ? (
+                        <span className={styles.absent}>noch kein Gerät</span>
+                      ) : (
+                        `${stand.geraete} ${stand.geraete === 1 ? "Gerät" : "Geräte"}, ${stand.erreichbar} erreichbar`
+                      )}
+                      {" · "}
+                      {modell.exercises.length === 0 ? (
+                        <span className={styles.absent}>keine Übung</span>
+                      ) : (
+                        `${modell.exercises.length} ${modell.exercises.length === 1 ? "Übung" : "Übungen"}, ${mitVideo} mit Video`
+                      )}
+                      {" · "}
+                      {!fotoDa && parameterAnzahl === 0 ? (
+                        <span className={styles.absent}>kein Foto, keine Parameter</span>
+                      ) : (
+                        <>
+                          {fotoDa ? "Foto" : <span className={styles.absent}>kein Foto</span>}
+                          {" · "}
+                          {parameterAnzahl > 0 ? (
+                            `${parameterAnzahl} Parameter`
+                          ) : (
+                            <span className={styles.absent}>keine Parameter</span>
+                          )}
+                        </>
+                      )}
+                    </>
+                  }
+                  aktionen={
+                    // "Bearbeiten" bleibt der sichtbare Text (Aufgabe 12) --
+                    // aria-label ergaenzt den Modellnamen fuer den
+                    // Accessibility-Baum, denn eine Liste mit lauter
+                    // gleichlautenden "Bearbeiten"-Links sagt einem
+                    // Screenreader nicht, welche Zeile gemeint ist.
+                    <Link
+                      className={styles.secondary}
+                      href={`/portal/${studioId}/modelle/${modell.id}`}
+                      aria-label={`${modell.name} bearbeiten`}
+                    >
+                      Bearbeiten
                     </Link>
-                    {" · "}
-                    {geraet.locationNote ?? (
-                      <span className={styles.absent}>ohne Standortangabe</span>
-                    )}
-                    {" · "}
-                    {geraet.activeTagCount > 0 ? (
-                      "erreichbar"
-                    ) : (
-                      <span className={styles.absent}>kein aktiver Tag</span>
-                    )}
-                  </div>
-                </div>
-                <div className={styles.rowActions}>
-                  {geraet.status === "active" ? (
-                    <AktionsKnopf
-                      aktion={geraetStilllegen.bind(null, studioId, pfad, geraet.id)}
-                      label="Stilllegen"
-                      bestaetigung="Wirklich stilllegen?"
-                      art="destructive"
-                    />
-                  ) : (
-                    <AktionsKnopf
-                      aktion={geraetWiederInBetrieb.bind(null, studioId, pfad, geraet.id)}
-                      label="Wieder in Betrieb"
-                    />
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-    </>
+                  }
+                />
+              );
+            })}
+          </Zeilen>
+        )}
+      </Abschnitt>
+
+      {/*
+        Bewusst kein Abschnitt-Baustein: AktionsFormular bringt sein eigenes
+        styles.sectionBody-Polster mit, das zusammen mit Abschnitts eigenem
+        Polster (abschnittRumpf) doppelt aufgetragen wuerde. Modell-Detail,
+        Einstellungen und die Kurs-Formulare tragen ihre Eingabeformulare aus
+        demselben Grund ebenfalls roh (styles.section), nicht im Baustein.
+      */}
+      <section className={styles.section} id="modell-anlegen">
+        <div className={styles.sectionHead}>
+          <h2 className={styles.sectionTitle}>Modell anlegen</h2>
+        </div>
+        <AktionsFormular
+          action={modellAnlegen.bind(null, studioId)}
+          submitLabel="Modell anlegen"
+        >
+          <div className={styles.grid}>
+            <Feld name="name" label="Name" required placeholder="Latzug" />
+            <Feld name="manufacturer" label="Hersteller" placeholder="Technogym" />
+            <Feld
+              name="weightStepKg"
+              label="Gewichtsschritt"
+              required
+              inputMode="decimal"
+              placeholder="2,5"
+              hint="In Kilogramm. So viel liegt zwischen zwei Steckplätzen."
+            />
+            <Feld
+              name="minWeightKg"
+              label="Minimum"
+              inputMode="decimal"
+              placeholder="5"
+              hint="Leer lassen für 0."
+            />
+            <Feld
+              name="maxWeightKg"
+              label="Maximum"
+              inputMode="decimal"
+              placeholder="100"
+              hint="Leer lassen, wenn kein Anschlag bekannt ist."
+            />
+          </div>
+        </AktionsFormular>
+      </section>
+    </Seite>
   );
 }

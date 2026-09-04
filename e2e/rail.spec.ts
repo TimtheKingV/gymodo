@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { hauptlandmarken } from "./helpers/abnahme";
+import { akzentflaechen, hauptlandmarken } from "./helpers/abnahme";
 import { studioMitMitglied, studioMitTrainer } from "./helpers/studio";
 
 test("Die Rail zeigt sechs feste Bereiche in drei Gruppen, nicht jedes Modell", async ({
@@ -83,4 +83,46 @@ test("Ein Mitglied bekommt eine Rail ohne Zahlen statt einer kaputten Seite", as
   // keine Zusatzzeile, nicht einmal eine Null.
   const rail = page.getByRole("navigation", { name: "Katalog" });
   await expect(rail.getByText(/Mitglieder/)).toHaveCount(0);
+});
+
+test("Geräte ist der Bereich, und seine Startseite listet die Modelle", async ({ page }) => {
+  const { studioId, admin } = await studioMitTrainer(page, "geraete-bereich");
+  // weight_step_kg ist in equipment_models NOT NULL ohne Default (0004) --
+  // ohne den Wert bricht der Insert an der Datenbank, nicht am Test (wie
+  // im ersten Testfall dieser Datei schon dokumentiert).
+  const { error } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Latzug", manufacturer: "Technogym", weight_step_kg: 5 });
+  if (error) throw error;
+
+  await page.goto(`/portal/${studioId}`);
+  await page.getByRole("navigation", { name: "Katalog" }).getByRole("link", { name: /Geräte/ }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/portal/${studioId}/geraete$`));
+  // exact: true -- ohne das trifft der Substring-Vergleich auch die
+  // Abschnittsueberschrift "Alle Geraetemodelle" (enthaelt "Geraete").
+  await expect(page.getByRole("heading", { name: "Geräte", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Latzug/ })).toBeVisible();
+});
+
+test("Der alte Weg /modelle fuehrt auf denselben Ort, statt ins Leere", async ({ page }) => {
+  const { studioId } = await studioMitTrainer(page, "geraete-alt");
+  await page.goto(`/portal/${studioId}/modelle`);
+  await expect(page).toHaveURL(new RegExp(`/portal/${studioId}/geraete$`));
+});
+
+test("Ein Studio ohne Modell sagt, womit man anfaengt", async ({ page }) => {
+  const { studioId } = await studioMitTrainer(page, "geraete-leer");
+  await page.goto(`/portal/${studioId}/geraete`);
+
+  await expect(page.getByText(/Noch kein Gerätemodell/)).toBeVisible();
+  await expect(page.locator("[role=alert]")).toHaveCount(0);
+});
+
+test("Die Geräteseite traegt genau eine Akzentflaeche: das Anlegen", async ({ page }) => {
+  const { studioId } = await studioMitTrainer(page, "geraete-akzent");
+  await page.goto(`/portal/${studioId}/geraete`);
+
+  const flaechen = await akzentflaechen(page);
+  expect(flaechen, `Akzentflaechen: ${flaechen.join(", ")}`).toHaveLength(1);
 });
