@@ -1899,7 +1899,9 @@ export default async function ModelleWeiterleitung({
 pnpm typecheck && pnpm test && pnpm test:integration && pnpm test:e2e
 ```
 
-Erwartet: 90 Unit, 460 von 461 Integration, **52 E2E**.
+Erwartet: **112 Unit** (85 Domain + 27 Web — Phase 4 hat die Zahl seit dem Rebase gehoben). Für Integration und E2E gilt keine Zielzahl mehr, sondern die Ursache: **jeder rote Integrationstest scheitert an `workout_sessions_completed_after_start`** (Uhrendrift im Container), und **kein zuvor grüner E2E-Test wird rot**.
+
+**Lauf die E2E-Suite nicht als Ganzes** — die Maschine schießt sie beim Start wegen Speichermangels ab. Dateiweise mit `--workers=1`, und nur die betroffenen: `trainerportal.spec.ts`, `einrichten.spec.ts`, `rail.spec.ts`, `bausteine.spec.ts`.
 
 - [ ] **Schritt 6: Sichtprüfung und Commit**
 
