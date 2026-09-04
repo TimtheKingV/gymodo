@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { akzentflaechen, hauptlandmarken, zuKleineBedienelemente } from "./helpers/abnahme";
+import { E2E_PASSWORD, adminClient, latestOtpFor } from "./helpers/login";
 
 /**
  * Der Einstieg wird ohne Konto geprueft -- das ist sein Normalfall. Kein
@@ -71,4 +72,43 @@ test("Ein zu kurzes Passwort sagt, was gilt -- nicht nur, dass etwas falsch ist"
   const meldung = page.getByRole("alert");
   await expect(meldung).toBeVisible();
   await expect(meldung).toContainText(/zehn|10/);
+});
+
+test("Passwort vergessen fordert einen Code an, keinen Link", async ({ page }) => {
+  await page.goto("/passwort-vergessen");
+
+  expect(await hauptlandmarken(page)).toBe(1);
+  await expect(page.getByRole("button", { name: "Code anfordern" })).toBeVisible();
+
+  // Der Satz aus dem Artboard: er sagt bewusst nicht, ob es das Konto gibt.
+  await expect(page.getByText(/ist die Mail unterwegs/)).toBeVisible();
+});
+
+test("Zwei verschiedene neue Passwoerter werden abgelehnt, bevor eines gesetzt wird", async ({
+  page,
+}) => {
+  const admin = adminClient();
+  const email = `e2e-wiederholen-${crypto.randomUUID()}@example.test`;
+  const { error } = await admin.auth.admin.createUser({
+    email,
+    password: E2E_PASSWORD,
+    email_confirm: true,
+  });
+  if (error) throw error;
+
+  const angefordert = new Date();
+  await page.goto("/passwort-vergessen");
+  await page.getByLabel("E-Mail").fill(email);
+  await page.getByRole("button", { name: "Code anfordern" }).click();
+
+  const code = await latestOtpFor(email, angefordert);
+  await page.getByLabel("Code aus der E-Mail").fill(code);
+  await page.getByLabel("Neues Passwort").fill("passwort-eins-1234");
+  await page.getByLabel("Wiederholen").fill("passwort-zwei-1234");
+  await page.getByRole("button", { name: "Passwort setzen" }).click();
+
+  const meldung = page.getByRole("alert");
+  await expect(meldung).toBeVisible();
+  await expect(meldung).toContainText(/stimmen nicht überein/);
+  await expect(page).toHaveURL(/\/passwort-vergessen$/);
 });

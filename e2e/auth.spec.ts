@@ -65,6 +65,13 @@ test("ein Mitglied setzt ein neues Passwort per Code und ist danach angemeldet",
   const code = await latestOtpFor(email, angefordert);
   await page.getByLabel("Code aus der E-Mail").fill(code);
   await page.getByLabel("Neues Passwort").fill("ein-neues-test-passwort");
+  // Seit Aufgabe 8 hat der zweite Schritt ein drittes Feld (Befund 5,
+  // PasswortNeu.dc.html) -- ohne diese Zeile bliebe das Formular durch die
+  // required-Pruefung des Browsers auf der Seite stehen, und der folgende
+  // waitForURL liefe in den Timeout. Nicht im Aufgabe-8-Brief gelistet,
+  // aber derselbe Weg wie in onboarding.spec.ts: der Weg hat ein Feld mehr,
+  // und der Test geht den Weg.
+  await page.getByLabel("Wiederholen").fill("ein-neues-test-passwort");
   await page.getByRole("button", { name: "Passwort setzen" }).click();
 
   await page.waitForURL((url) => !url.pathname.startsWith("/passwort-vergessen"), {

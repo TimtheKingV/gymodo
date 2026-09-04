@@ -40,6 +40,7 @@ test("Nach dem Passwortwechsel steht ein Trainer im Portal, nicht im Schwarzen",
   const code = await latestOtpFor(email, angefordert);
   await page.getByLabel("Code aus der E-Mail").fill(code);
   await page.getByLabel("Neues Passwort").fill("neues-passwort-1234");
+  await page.getByLabel("Wiederholen").fill("neues-passwort-1234");
   await page.getByRole("button", { name: "Passwort setzen" }).click();
 
   await expect(page).toHaveURL(new RegExp(`/portal/${studioId}$`));
