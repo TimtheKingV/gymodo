@@ -31,7 +31,13 @@ test("eine zu kurze Passworteingabe bleibt auf der Registrierungsseite", async (
   await page.getByLabel("Passwort").fill("kurz");
   await page.getByRole("button", { name: "Konto anlegen" }).click();
 
-  await expect(page.getByText("mindestens zehn Zeichen")).toBeVisible();
+  // getByText matcht als Teilstring -- seit Aufgabe 7 steht der Passwort-
+  // Hinweis ("Mindestens zehn Zeichen...") dauerhaft auf der Seite, dazu
+  // die Fehlermeldung ("...mindestens zehn Zeichen."). Beide erfuellen den
+  // alten Text-Selektor, Playwrights strict mode bricht dann mit zwei
+  // Treffern ab. Ueber die Rolle bleibt eindeutig, welcher der beiden
+  // gemeint ist: die Fehlermeldung traegt role="alert", der Hinweis nicht.
+  await expect(page.getByRole("alert")).toContainText("mindestens zehn Zeichen");
 });
 
 test("ein Mitglied setzt ein neues Passwort per Code und ist danach angemeldet", async ({

@@ -72,6 +72,22 @@
   min-height: 52px;
 }
 
+/* Das Codefeld aus Verifizieren.dc.html: grosse, zentrierte, gesperrte
+   Ziffern statt Fliesstext -- der einzige sichtbare Unterschied zum
+   Registrieren-Schritt, sonst saehen beide Schirme gleich aus. Werte aus
+   dem Artboard uebernommen (28 px, Gewicht 800, Laufweite 0.32em, 64 px
+   Feldhoehe), ueber den Namen statt ueber Feld selbst -- dieselbe Technik
+   wie .felder input oben: Feld bleibt bei 44 px, diese Regel ueberschreibt
+   nur hier. font-variant-numeric: tabular-nums kommt schon aus globals.css. */
+.felder input[name="token"] {
+  min-height: 64px;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.32em;
+  color: var(--text);
+  text-align: center;
+}
+
 /* Danger als Umriss bei vollem Kontrast, keine getoente Flaeche -- dieselbe
    Regel wie bei .fehler in bausteine.module.css (Zustand.tsx). */
 .fehlermeldung {
@@ -144,9 +160,11 @@
   margin: 0;
 }
 
-/* Die eingesetzte Adresse im Verifizieren-Vorspann, voller Kontrast statt
-   gedaempft -- Verifizieren.dc.html hebt sie im sonst gedaempften Satz mit
-   #f2f4f7 hervor. */
-.adresse {
+/* Voller Kontrast statt gedaempft, innerhalb eines sonst gedaempften
+   Satzes -- Verifizieren.dc.html hebt die eingesetzte Adresse im Vorspann
+   so hervor (#f2f4f7 statt #9ba3af). Nach Wirkung benannt, nicht nach
+   diesem einen Inhalt: kuenftige Bildschirme duerfen sie fuer andere
+   hervorgehobene Werte wiederverwenden. */
+.betont {
   color: var(--text);
 }

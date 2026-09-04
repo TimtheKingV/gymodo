@@ -34,7 +34,7 @@ export default function RegistrierenPage() {
         titel="Verifizieren"
         vorspann={
           <>
-            Wir haben einen Code an <span className={styles.adresse}>{adresse}</span> geschickt.
+            Wir haben einen Code an <span className={styles.betont}>{adresse}</span> geschickt.
             Er gilt eine Stunde.
           </>
         }
@@ -92,6 +92,9 @@ export default function RegistrierenPage() {
         <button type="submit" className={styles.knopf}>
           Konto anlegen
         </button>
+        <div className={styles.links}>
+          <a href="/login">Schon ein Konto? Anmelden</a>
+        </div>
       </form>
     </Einstieg>
   );
