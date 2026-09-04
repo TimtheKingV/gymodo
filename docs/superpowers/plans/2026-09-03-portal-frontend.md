@@ -1526,7 +1526,10 @@ test("Ein falscher Studio-Code meldet sich als Warnung", async ({ page }) => {
   await page.getByLabel("Studio-Code").fill("GIBTESNICHT");
   await page.getByRole("button", { name: "Beitreten" }).click();
 
-  await expect(page.getByRole("alert")).toBeVisible();
+  // fehlermeldung() statt getByRole("alert"): Next legt einen leeren
+  // Route-Announcer mit role="alert" ins Dokument, der Selektor ist damit
+  // immer mehrdeutig -- und bricht genau im Fehlerfall ab.
+  await expect(fehlermeldung(page)).toBeVisible();
 });
 ```
 
