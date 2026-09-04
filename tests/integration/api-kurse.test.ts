@@ -158,6 +158,18 @@ describe("PUT und DELETE /api/v1/course-sessions/{id}/booking", () => {
     expect(antwort.status).toBe(422);
   });
 
+  it("eine bookingId, die keine UUID ist, liefert 422 -- nicht die rohe Postgres-Meldung", async () => {
+    const antwort = await buchungSetzen(
+      anfrage(`/api/v1/course-sessions/${terminId}/booking`, mitgliedToken, {
+        bookingId: "abc",
+      }),
+      { params: Promise.resolve({ sessionId: terminId }) },
+    );
+    expect(antwort.status).toBe(422);
+    const daten = await antwort.json();
+    expect(daten.error.message).not.toMatch(/invalid input syntax/i);
+  });
+
   it("ein fremder Termin antwortet 404, nicht 403", async () => {
     const antwort = await buchungSetzen(
       anfrage(`/api/v1/course-sessions/x/booking`, mitgliedToken, {

@@ -48,6 +48,14 @@ export async function PUT(request: Request, kontext: Kontext): Promise<Response>
       "bookingId fehlt. Die Kennung erzeugt der Client, damit derselbe Aufruf zweimal denselben Platz ergibt.",
     );
   }
+  // Dieselbe Luecke wie bei sessionId oben: bookingId geht ungeprueft an
+  // book_course_session (p_booking_id uuid) durch. Ein "abc" kaeme dort
+  // als "invalid input syntax for type uuid" zurueck -- derselbe Fehler,
+  // den diese ganze Fixrunde schliessen sollte, an einem Feld vorbei.
+  const bookingIdGeprueft = sessionIdSchema.safeParse(rumpf.bookingId);
+  if (!bookingIdGeprueft.success) {
+    return errorResponse("validation_failed", "bookingId ist keine gültige UUID.");
+  }
 
   try {
     const ergebnis = await bookCourseSession(client, sessionId, rumpf.bookingId);

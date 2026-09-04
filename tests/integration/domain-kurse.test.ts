@@ -642,4 +642,69 @@ describe("Buchen und Stornieren durch die Fachschicht", () => {
       bookCourseSession(mitglied, fremdTermin!.id, crypto.randomUUID()),
     ).rejects.toMatchObject({ code: "not_found" });
   });
+
+  it("updateCourseSession laesst eine erhoehte Kapazitaet tatsaechlich nachruecken -- ueber den echten Produktpfad", async () => {
+    // Anders als die direkten promote_course_waitlist-Tests in
+    // kurse-platzvergabe.test.ts: hier ruft ein TRAINER die
+    // Domain-Funktion updateCourseSession, nicht die RPC direkt und
+    // nicht ueber den Service-Client. Das ist der Pfad, den Finding 3
+    // eigentlich schuetzen soll -- ein Test, der die RPC selbst aufruft,
+    // beweist nur, dass die Funktion funktioniert, nicht dass das Produkt
+    // sie benutzt.
+    const trainer = await userClient(trainerEmail);
+    const vorlageId = await createCourseTemplate(trainer, studioId, {
+      name: "Kapazitaet erhoehen",
+      description: null,
+      defaultDurationMin: 60,
+      defaultCapacity: 1,
+      defaultInstructorUserId: null,
+      defaultInstructorName: null,
+    });
+    const inDreiTagen = new Date(Date.now() + 3 * 86_400_000).toISOString();
+    const [terminId] = await createCourseSessions(
+      trainer,
+      studioId,
+      {
+        templateId: vorlageId,
+        startsAt: inDreiTagen,
+        durationMin: 60,
+        capacity: 1,
+        room: null,
+        instructorUserId: null,
+        instructorName: null,
+      },
+      null,
+    );
+
+    const mitglied = await userClient(mitgliedEmail);
+    const zweitesMitgliedEmail = uniqueEmail("fk-zweites-mitglied");
+    const zweitesMitgliedId = await createTestUser(zweitesMitgliedEmail);
+    await serviceClient()
+      .from("studio_memberships")
+      .insert({ studio_id: studioId, user_id: zweitesMitgliedId, role: "member" });
+    const zweitesMitglied = await userClient(zweitesMitgliedEmail);
+
+    const erste = await bookCourseSession(mitglied, terminId!, crypto.randomUUID());
+    const zweite = await bookCourseSession(zweitesMitglied, terminId!, crypto.randomUUID());
+    expect(erste.result).toBe("booked");
+    expect(zweite.result).toBe("waitlisted");
+
+    await updateCourseSession(trainer, studioId, terminId!, {
+      startsAt: inDreiTagen,
+      durationMin: 60,
+      capacity: 2,
+      room: null,
+      instructorName: null,
+    });
+
+    const admin = serviceClient();
+    const { data: nachgerueckt, error } = await admin
+      .from("course_bookings")
+      .select("status, promoted_at")
+      .eq("id", zweite.bookingId)
+      .single();
+    if (error) throw error;
+    expect(nachgerueckt!.status).toBe("booked");
+    expect(nachgerueckt!.promoted_at).not.toBeNull();
+  });
 });
