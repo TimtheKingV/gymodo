@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { bookCourseSession, cancelCourseBooking } from "@fitretro/domain";
 import { errorResponse, fromDomainError } from "@/lib/api/respond";
 import { bearerClientFrom } from "@/lib/supabase/bearer";
@@ -5,6 +6,17 @@ import { bearerClientFrom } from "@/lib/supabase/bearer";
 export const dynamic = "force-dynamic";
 
 type Kontext = { params: Promise<{ sessionId: string }> };
+
+/**
+ * sessionId geht ungeprueft an die RPCs durch, sobald sie den Router
+ * verlaesst -- ein "x" wie im vorigen Test kaeme dort als
+ * "invalid input syntax for type uuid" zurueck. Bislang wurde das
+ * spuerbar durch bookCourseSession/cancelCourseBooking als
+ * DomainError("internal", …) durchgereicht und von respond.ts
+ * woertlich weitergegeben (Finding 2 des Gesamtreviews). Hier, an der
+ * Systemgrenze, statt in respond.ts -- das bleibt unangetastet.
+ */
+const sessionIdSchema = z.string().uuid("Die Terminkennung ist keine gültige UUID.");
 
 /**
  * Anmelden. PUT mit clientseitig erzeugter UUID -- derselbe Aufruf
@@ -18,6 +30,10 @@ export async function PUT(request: Request, kontext: Kontext): Promise<Response>
   }
 
   const { sessionId } = await kontext.params;
+  const geprueft = sessionIdSchema.safeParse(sessionId);
+  if (!geprueft.success) {
+    return errorResponse("validation_failed", geprueft.error.issues[0]!.message);
+  }
 
   let rumpf: { bookingId?: unknown };
   try {
@@ -55,6 +71,10 @@ export async function DELETE(request: Request, kontext: Kontext): Promise<Respon
   }
 
   const { sessionId } = await kontext.params;
+  const geprueft = sessionIdSchema.safeParse(sessionId);
+  if (!geprueft.success) {
+    return errorResponse("validation_failed", geprueft.error.issues[0]!.message);
+  }
 
   try {
     const ergebnis = await cancelCourseBooking(client, sessionId);

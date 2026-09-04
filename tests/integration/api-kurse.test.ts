@@ -90,6 +90,30 @@ describe("GET /api/v1/me/courses", () => {
     const antwort = await courses(anfrage("/api/v1/me/courses", mitgliedToken));
     expect(antwort.status).toBe(422);
   });
+
+  it("ein studio-Parameter, der keine UUID ist, liefert 422 -- nicht die rohe Postgres-Meldung", async () => {
+    const antwort = await courses(anfrage("/api/v1/me/courses?studio=abc", mitgliedToken));
+    expect(antwort.status).toBe(422);
+    const daten = await antwort.json();
+    // Die rohe Meldung nennt "uuid" und den Wert "abc" -- genau das darf
+    // nicht durchgereicht werden (Finding 2 des Gesamtreviews).
+    expect(daten.error.message).not.toMatch(/invalid input syntax/i);
+  });
+
+  it("ein unbrauchbares from liefert 422", async () => {
+    const antwort = await courses(
+      anfrage(`/api/v1/me/courses?studio=${studioId}&from=kein-datum`, mitgliedToken),
+    );
+    expect(antwort.status).toBe(422);
+  });
+
+  it("ein unbrauchbares to liefert 422", async () => {
+    const von = new Date().toISOString();
+    const antwort = await courses(
+      anfrage(`/api/v1/me/courses?studio=${studioId}&from=${von}&to=kein-datum`, mitgliedToken),
+    );
+    expect(antwort.status).toBe(422);
+  });
 });
 
 describe("PUT und DELETE /api/v1/course-sessions/{id}/booking", () => {
@@ -142,6 +166,18 @@ describe("PUT und DELETE /api/v1/course-sessions/{id}/booking", () => {
       { params: Promise.resolve({ sessionId: crypto.randomUUID() }) },
     );
     expect(antwort.status).toBe(404);
+  });
+
+  it("eine sessionId, die keine UUID ist, liefert 422 -- nicht die rohe Postgres-Meldung", async () => {
+    const antwort = await buchungSetzen(
+      anfrage(`/api/v1/course-sessions/abc/booking`, mitgliedToken, {
+        bookingId: crypto.randomUUID(),
+      }),
+      { params: Promise.resolve({ sessionId: "abc" }) },
+    );
+    expect(antwort.status).toBe(422);
+    const daten = await antwort.json();
+    expect(daten.error.message).not.toMatch(/invalid input syntax/i);
   });
 
   it("ohne Anmeldung 401", async () => {
