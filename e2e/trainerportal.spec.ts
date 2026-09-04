@@ -192,11 +192,17 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   // nicht mehr auf einer flachen Geraeteliste unter /geraete (die Seite
   // zeigt jetzt die Modelle), sondern im Modell-Detail unter "Geraete im
   // Raum". Ein Klick mehr als vorher, keine verlorene Information.
+  //
+  // "1 aktiver Tag", nicht nur "aktiver Tag": der Negativfall im
+  // Modell-Detail heisst "kein aktiver Tag" (Zeile 180 oben) und enthaelt
+  // "aktiver Tag" als Teilstring -- toContainText("aktiver Tag") waere
+  // grün geblieben, selbst wenn das Verbinden oben gar nichts bewirkt
+  // haette. Der genaue Wortlaut mit Zahl schliesst den Negativfall aus.
   await page.goto(`/portal/${studio.id}/geraete`);
   await page.getByRole("link", { name: "Bearbeiten" }).first().click();
   await expect(
     page.getByRole("listitem").filter({ hasText: "Rückwand links" }),
-  ).toContainText("aktiver Tag");
+  ).toContainText("1 aktiver Tag");
 
   // Ohne Bearer-Token bleibt der Kontext verschlossen. Der Tag allein reicht
   // nie -- er ist eine Ortsangabe, kein Ausweis (Spec 10.4).
