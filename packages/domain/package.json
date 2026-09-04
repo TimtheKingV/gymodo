@@ -23,6 +23,7 @@
     ".": "./src/index.ts",
     "./media": "./src/media.ts",
     "./chargen": "./src/chargen.ts",
-    "./tag-scan": "./src/tag-scan.ts"
+    "./tag-scan": "./src/tag-scan.ts",
+    "./serie": "./src/serie.ts"
   }
 }

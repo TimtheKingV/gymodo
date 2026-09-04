@@ -110,3 +110,34 @@ export type {
   OverviewProblem,
   StudioOverview,
 } from "./overview.js";
+export {
+  bookCourseSession,
+  cancelCourseBooking,
+  cancelCourseSession,
+  createCourseSessions,
+  createCourseTemplate,
+  getCourseTemplate,
+  listCourseParticipants,
+  listCourseTemplates,
+  listCourseWeek,
+  updateCourseSession,
+  updateCourseTemplate,
+} from "./courses.js";
+export type {
+  BookOutcome,
+  CancelOutcome,
+  CourseParticipant,
+  CourseSessionInput,
+  CourseTemplate,
+  CourseTemplateInput,
+  CourseWeek,
+  CourseWeekSession,
+} from "./courses.js";
+export {
+  MAX_SERIENTERMINE,
+  ortszeitTeile,
+  ortszeitZuInstant,
+  serienTermine,
+  zonenVersatzMs,
+} from "./serie.js";
+export type { Ortszeit } from "./serie.js";
