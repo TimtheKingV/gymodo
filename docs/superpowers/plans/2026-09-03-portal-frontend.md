@@ -1481,7 +1481,9 @@ Das Formular **bleibt**, gestaltet. Der Weg, der es ersetzen soll, ist die iOS-A
 
 **Schnittstellen:**
 - Nutzt: `Einstieg` aus Aufgabe 6, `beitreten` aus `app/actions.ts` (unverändert)
-- **Bleibt unverändert:** `data-testid="beitritt-formular"`, `data-testid="studio-list"`, `data-testid="user-email"`, das Label *Studio-Code* und der Knopf *Beitreten*. Vier Tests in drei Dateien hängen daran (`auth.spec.ts`, `login.spec.ts`, `leute.spec.ts`, `onboarding.spec.ts`). Eine Gestaltungsänderung, die sie bricht, ist keine.
+- **Bleibt unverändert:** `data-testid="beitritt-formular"`, `data-testid="studio-list"`, `data-testid="user-email"`, das Label *Studio-Code* und der Knopf *Beitreten*. **Sechs Tests in vier Dateien** hängen daran, nachgezählt: `auth.spec.ts` (Zeilen 25, 80, 106–110 — drei Tests), `login.spec.ts` (42–43), `leute.spec.ts` (50–52), `onboarding.spec.ts` (22, prüft die **Abwesenheit** von `user-email`). Eine Gestaltungsänderung, die sie bricht, ist keine.
+
+`leute.spec.ts` ist der heikelste: er benutzt das Beitrittsformular nicht, um es zu prüfen, sondern um sich ein Mitglied zu bauen, das der Trainer danach hochstuft. Bricht das Formular, fällt ein Test über die **Rechteverwaltung** aus, und dort sucht niemand nach einer Änderung an der Wurzelseite.
 
 - [ ] **Schritt 1: Die fehlschlagenden Tests schreiben**
 
@@ -1555,7 +1557,7 @@ Der angemeldete Nicht-Mitarbeiter-Zweig von `page.tsx` bekommt `Einstieg titel="
 pnpm test:e2e
 ```
 
-Erwartet: **44 grün**. Besonders auf `auth.spec.ts`, `login.spec.ts` und `leute.spec.ts` achten — sie gehen alle drei über diese Seite.
+Bindend ist nicht eine Gesamtzahl, sondern: kein zuvor grüner Test wird rot. Besonders auf `auth.spec.ts`, `login.spec.ts`, `leute.spec.ts` und `onboarding.spec.ts` achten — alle vier gehen über diese Seite.
 
 - [ ] **Schritt 4: Sichtprüfung und Commit**
 
