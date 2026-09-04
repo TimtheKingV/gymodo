@@ -39,9 +39,11 @@ test("Sie sagt einem Mitglied, dass es im Web nichts zu tun hat", async ({ page 
 /**
  * Der angemeldete Nicht-Mitarbeiter-Zweig: ein Konto ohne jede
  * Mitarbeiterrolle landet nicht im Portal, sondern hier -- entweder mit dem
- * Beitrittsformular (noch kein Studio) oder mit der Studioliste (Aufgabe 11
- * unten). Beide Zustaende tragen denselben Satz aus KeinStudio.dc.html,
- * untere Haelfte.
+ * Beitrittsformular (noch kein Studio) oder mit der Studioliste. Beide
+ * Zustaende teilen den Kernsatz aus KeinStudio.dc.html, untere Haelfte ("Das
+ * Portal ist fuer Studios, trainiert wird in der App") -- Titel und
+ * Beitrittsaufforderung unterscheiden sich, weil nur der erste Zustand sie
+ * noch braucht (Fix-Runde 1, Aufgabe 11).
  */
 test("Ein Mitglied ohne Studio bekommt den Beitrittsweg und die Wahrheit dazu", async ({
   page,
@@ -63,6 +65,48 @@ test("Ein Mitglied ohne Studio bekommt den Beitrittsweg und die Wahrheit dazu", 
 
   // Der Satz aus dem Artboard: das Web ist nicht der Ort zum Trainieren.
   await expect(page.getByText(/Trainieren läuft in der App/)).toBeVisible();
+});
+
+/**
+ * Fix-Runde 1: bisher ungetestet. login.spec.ts meldet ein Konto mit
+ * Studio an und prueft die Liste -- aber nie, was ueber ihr steht. Genau
+ * dort stand bis eben "Noch kein Studio", waehrend die Liste darunter das
+ * Gegenteil zeigte.
+ */
+test("Ein Mitglied mit Studio sieht seine Studioliste, nicht die Aufforderung beizutreten", async ({
+  page,
+}) => {
+  const admin = adminClient();
+  const email = `e2e-wurzel-hatstudio-${crypto.randomUUID()}@example.test`;
+  const { data: nutzer, error: nutzerError } = await admin.auth.admin.createUser({
+    email,
+    password: E2E_PASSWORD,
+    email_confirm: true,
+  });
+  if (nutzerError) throw nutzerError;
+
+  const studioName = `Wurzel-Mitglied-E2E-Studio-${crypto.randomUUID()}`;
+  const { data: studio, error: studioError } = await admin
+    .from("studios")
+    .insert({ name: studioName })
+    .select("id")
+    .single();
+  if (studioError) throw studioError;
+
+  const { error: mitgliedschaftError } = await admin
+    .from("studio_memberships")
+    .insert({ studio_id: studio.id, user_id: nutzer.user.id, role: "member" });
+  if (mitgliedschaftError) throw mitgliedschaftError;
+
+  await anmelden(page, email);
+
+  await expect(page.getByTestId("studio-list")).toContainText(studioName);
+
+  // Die eigentliche Unwahrheit waere hier: eine Liste zeigen und im selben
+  // Atemzug behaupten, es gaebe noch keine.
+  await expect(page.getByRole("heading", { name: "Noch kein Studio" })).toHaveCount(0);
+  await expect(page.getByTestId("beitritt-formular")).toHaveCount(0);
+  await expect(page.getByText(/Aufkleber an einem Gerät scannst/)).toHaveCount(0);
 });
 
 test("Ein falscher Studio-Code meldet sich als Warnung", async ({ page }) => {

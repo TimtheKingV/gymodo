@@ -85,18 +85,27 @@ export default async function HomePage() {
   if (personal && personal.length > 0) redirect("/portal");
 
   const { data: studios } = await supabase.from("studios").select("id, name");
+  const hatStudio = Boolean(studios && studios.length > 0);
+
+  // Fix-Runde 1 (Aufgabe 11): Titel und Vorspann muessen in beiden
+  // Zweigen wahr sein. "Noch kein Studio" stimmt nur, solange die Liste
+  // leer ist -- darueber stand er vorher auch dann, wenn sie es nicht war.
+  // KeinStudio.dc.html zeichnet nur den leeren Fall; der Kernsatz ("Das
+  // Portal ist fuer Studios, trainiert wird in der App") gilt fuer beide,
+  // nur der Beitrittsteil setzt voraus, dass noch kein Studio dabeisteht.
+  const titel = hatStudio ? "Deine Studios" : "Noch kein Studio";
+  const vorspann = hatStudio
+    ? "Das Portal ist für Studios. Trainieren läuft in der App."
+    : "Du wolltest trainieren? Das Portal ist für Studios. Trainieren läuft in der App — dort trittst du deinem Studio bei, indem du den Aushang am Eingang oder den Aufkleber an einem Gerät scannst.";
 
   return (
-    <Einstieg
-      titel="Noch kein Studio"
-      vorspann="Du wolltest trainieren? Das Portal ist für Studios. Trainieren läuft in der App — dort trittst du deinem Studio bei, indem du den Aushang am Eingang oder den Aufkleber an einem Gerät scannst."
-    >
+    <Einstieg titel={titel} vorspann={vorspann}>
       <p data-testid="user-email" className={einstiegStyles.hinweis}>
         {user.email}
       </p>
-      {studios && studios.length > 0 ? (
+      {hatStudio ? (
         <ul data-testid="studio-list" className={einstiegStyles.felder}>
-          {studios.map((studio) => (
+          {studios!.map((studio) => (
             <li key={studio.id}>{studio.name}</li>
           ))}
         </ul>
