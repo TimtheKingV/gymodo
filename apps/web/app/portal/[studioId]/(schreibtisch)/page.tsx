@@ -268,14 +268,7 @@ export default async function UeberblickPage({
       </Abschnitt>
 
       {uebersicht ? (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
-            gap: "var(--s24)",
-            marginTop: "var(--s24)",
-          }}
-        >
+        <div className={styles.spalten}>
           {wasNochFehlt}
 
           <Abschnitt titel="Meistgenutzt">

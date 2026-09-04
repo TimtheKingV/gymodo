@@ -578,3 +578,18 @@
   margin-top: var(--s4);
   color: var(--text-muted);
 }
+
+/* Zwei Abschnitte nebeneinander wie in Main.dc.html ("Was noch fehlt" /
+   "Meistgenutzt") -- dasselbe Muster wie .grid oben und .kacheln
+   darueber: auto-fit statt einer festen Spaltenzahl (statt des
+   Artboard-Werts "1.15fr 1fr"), damit ein schmales Fenster ohne eigene
+   Media-Query eine Spalte bekommt. Fix-Runde 1, Befund 3: vorher ein
+   Inline-style in (schreibtisch)/page.tsx -- eine wiederkehrende
+   Anordnung gehoert als Klasse hierher, nicht als punktueller Wert wie
+   der fontSize-Override am "Zu den Kursen"-Knopf. */
+.spalten {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: var(--s24);
+  margin-top: var(--s24);
+}
