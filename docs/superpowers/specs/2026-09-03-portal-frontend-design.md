@@ -200,6 +200,23 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 14. **Die Rail-Fußzeile bringt einen zweiten Abmelden-Ausgang** neben dem unter *Einstellungen → Konto*. Beide Artboards zeigen beide — Absicht, kein Versehen.
 15. **`/portal` hat kein Artboard.** Die Studiowahl bei mehreren Studios ist ungezeichnet; im Normalfall — genau ein Studio — leitet die Route weiter und wird nie gesehen. Sie wird nach Bausteinen gestaltet, nicht nach Vorlage. Ihr Leer-Zustand dagegen ist gezeichnet: das ist die obere Hälfte von `KeinStudio.dc.html`.
 
+20. **Der Gerätekatalog ist für Mitglieder auf Datenbankebene sichtbar — die Seite ist die einzige Sperre.** Am 5. September beim Bauen von Aufgabe 15 aufgefallen, nachdem ich in Plan und Brief das Gegenteil behauptet hatte.
+
+    Ich schrieb, `getStudioCatalog` liefere einem Mitglied „schlicht weniger Zeilen", RLS filtere also still. **Das stimmt nicht.** Nachgesehen in den Migrationen:
+
+    ```sql
+    -- 0004_equipment_models.sql:41 und 0007_machines.sql:20
+    using (public.is_studio_member(studio_id));
+    ```
+
+    `is_studio_member`, nicht `is_studio_staff`. Ein Mitglied bekommt **dieselben** Katalogzeilen wie ein Trainer.
+
+    Die Sperre auf `/geraete` bleibt richtig — Überblick, Leute und Einstellungen sperren sich alle selbst, obwohl RLS weiter zulässt. Aber die Lage ist umgekehrt zu dem, was ich behauptet hatte: **nicht die Datenbank schützt und die Seite ergänzt, sondern die Seite schützt allein.** Wer das falsch im Kopf hat, verlässt sich beim nächsten Bildschirm auf einen Schutz, den es nicht gibt.
+
+    Das ist kein Fehler dieser Phase — der Katalog *soll* für Mitglieder lesbar sein, die Member-App braucht ihn. Es ist ein Fehler in meiner Beschreibung gewesen.
+
+21. **Die Kein-Recht-Weiche auf `/geraete` hängt an einer Abfrage über *Leute*.** `railZahlen().mitglieder === null` bedeutet wörtlich *„`listStudioMembers` hat `unauthorized` geworfen"* — nicht *„darf den Katalog nicht sehen"*. Beides fällt heute zusammen, weil beide an derselben Rolle hängen; das ist Zufall der aktuellen Rollenmatrix, kein erzwungener Zusammenhang. Käme eine feinere Rolle dazu („nur Geräte, nicht Leute"), bräche die Weiche **lautlos** in die falsche Richtung — kein Typfehler, kein roter Test. Im Code als bewusste Zwischenlösung markiert; aufzulösen, sobald sich die Rollen auffächern.
+
 ### Drei, die beim Schreiben des Umsetzungsplans dazukamen
 
 16. **Die Global Constraints widersprechen sich bei den Trefferflächen.** Ein Satz sagt *„Trefferflächen ≥ 44 px; Hauptaktion 44 px hoch, **Nebenaktion 40 px**"*. Beides zugleich geht nicht. `portal.module.css` setzt `.secondary` und `.destructive` auf `height: 40px`, und die Artboards zeichnen 40 — Code und Entwurf sind sich also einig, nur der Satz nicht. Die Herkunft ist erkennbar: die 44 stammt aus Designsystem §4, und die gilt für die Member-App, wo einhändig im Halbdunkel bedient wird. Am Schreibtisch liegt eine Maus.
