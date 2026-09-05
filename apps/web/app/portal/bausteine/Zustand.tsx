@@ -7,9 +7,7 @@ export type ZustandArt = "leer" | "fehler" | "keinRecht" | "deaktiviert";
  *
  * Designsystem Abschnitt 5 und trainerportal-struktur-design.md Abschnitt 5
  * geben die Regeln vor; sie stehen hier, weil ein Baustein sie tragen kann
- * und vier Kopien nicht -- so viele Kein-Recht-Bloecke standen vorher
- * wortgleich im Code (portal/page.tsx, (schreibtisch)/page.tsx, leute,
- * einstellungen):
+ * und mehrere Kopien nicht:
  *
  *   leer          Ueberschrift plus naechster Schritt. NIE eine leere
  *                 Statistik mit Nullen -- vier Kacheln, die viermal 0
@@ -21,8 +19,12 @@ export type ZustandArt = "leer" | "fehler" | "keinRecht" | "deaktiviert";
  *                 und Offline gilt im Portal nicht.
  *   deaktiviert   NIE stumm -- daneben steht, was fehlt.
  *   keinRecht     Ein einfaches Mitglied sieht einen Satz, keinen Absturz.
- *                 Kein neuer Zustand, sondern die benannte Fassung von
- *                 etwas, das vorher vier Mal ad hoc im Code stand.
+ *                 Traegt bisher zwei Stellen: (schreibtisch)/page.tsx
+ *                 (Überblick) und geraete/page.tsx. leute/page.tsx und
+ *                 einstellungen/page.tsx sperren Mitglieder ebenso, aber
+ *                 noch mit ihrer eigenen, ad-hoc geschriebenen Markup von
+ *                 vor diesem Baustein -- die Migration dieser beiden
+ *                 steht noch aus, ist nicht Teil dieser Datei.
  *
  * "Offline" gilt im Portal nicht -- ein Konzept der Halle, nicht des
  * Schreibtischs. "Skelett" gilt nur fuer Medien und ist deshalb kein

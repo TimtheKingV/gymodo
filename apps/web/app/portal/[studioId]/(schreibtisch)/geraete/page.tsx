@@ -26,20 +26,30 @@ export default async function GeraetePage({
   const { studioId } = await params;
   const [katalog, zahlen] = await Promise.all([ladeKatalog(studioId), railZahlen(studioId)]);
 
-  // getStudioCatalog wirft fuer ein einfaches Mitglied kein "unauthorized"
-  // -- RLS gibt ihm schlicht weniger (oder gar keine) Zeilen zurueck, die
-  // Modellliste sieht dann bloss leer statt gesperrt aus. Die Rolle steht
-  // trotzdem schon fest: railZahlen() hat sie ueber listStudioMembers
-  // bereits geprueft und traegt sie als mitglieder === null, wenn das Konto
-  // sie nicht sehen darf (siehe RailZahlen in catalog.ts). Dieselbe Frage
-  // wird hier nicht zweimal gestellt, nur wiederverwendet.
+  // Der Gerätekatalog ist auf Datenbankebene fuer Mitglieder sichtbar:
+  // equipment_models_select und die Machines-Police in 0004/0007 pruefen
+  // is_studio_member, nicht is_studio_staff -- ein Mitglied bekommt
+  // dieselben Zeilen wie ein Trainer. Diese Seite ist damit die EINZIGE
+  // Sperre; RLS faengt hier nichts ab.
+  //
+  // Die Rolle steht trotzdem fest, nur aus einer anderen Ecke: railZahlen()
+  // hat sie bereits ueber listStudioMembers geprueft (das wirft
+  // "unauthorized" fuer ein Mitglied, im Unterschied zu getStudioCatalog)
+  // und traegt sie als mitglieder === null, wenn das Konto sie nicht sehen
+  // darf (RailZahlen in catalog.ts). Das ist eine bewusste Zwischenloesung,
+  // keine geklaerte Frage: mitglieder === null heisst woertlich "darf die
+  // Mitgliederliste nicht sehen", nicht "darf die Geräteliste nicht sehen"
+  // -- es traegt nur, solange beide Seiten an derselben Rolle (Mitglied vs.
+  // Trainer/Inhaber) haengen. Faechert sich die Rolle je feiner auf (etwa
+  // "darf Geraete, aber nicht Leute sehen"), bricht diese Weiche lautlos in
+  // die falsche Richtung -- ohne Typfehler und ohne roten Test. Dann
+  // braucht es ein eigenes, direktes Signal statt dieser Kopplung.
   if (zahlen.mitglieder === null) {
     return (
       <Seite titel="Geräte">
         <Zustand
           art="keinRecht"
           titel="Die Geräteliste ist Trainern und Inhabern vorbehalten."
-          naechsterSchritt="Welche Geräte frei sind, siehst du in der App, nicht hier."
         />
       </Seite>
     );
