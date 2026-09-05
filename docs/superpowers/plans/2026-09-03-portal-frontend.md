@@ -2251,12 +2251,19 @@ Der vierte Reiter, aus Abschnitt 4 der heutigen Seite. Hier steht die Zählung, 
 
 **Das Artboard ist hier unvollständig — Befund 7.** Es zeichnet je Gerät nur *Tag scannen* und *Tag ersetzen*, aber die Spec verlangt das Stilllegen, und im Code steht es bereits. **Der Code gewinnt:** die Zeile trägt beide Aktionen. Das Artboard wird nachgezogen, nicht der Code beschnitten.
 
+**Das Zahlenfeld *Anzahl im Studio* wird nicht gebaut — Befund 25.** Das Artboard zeichnet ein Feld mit der Stückzahl und einen Knopf *Geräte anlegen*, der die fehlenden Geräte in einem Zug erzeugt. Der Code hat stattdessen ein Formular je Gerät mit *Bezeichnung* und *Standort*, und er gewinnt: `machines.label` ist `not null` mit `check (length(trim(label)) > 0)` (0007). Ein Massenanlegen ohne Nummer bräuchte ein Nummernschema in der Datenbank — also eine Migration, und Phase 5 macht keine. Das Artboard beschreibt hier eine **Bedienung**, keine Gestaltung; es gehört in eine spätere Phase.
+
+**Die Zustandszeile folgt dem Artboard, nicht dem Code — Befund 26.** Heute steht dort `Rückwand links · 1 aktiver Tag`, im Artboard `Rückwand links · erreichbar`. Das Artboard gewinnt aus zwei Gründen: *erreichbar* ist das Wort, das die Modellliste auf `/geraete` bereits benutzt (`erreichbarkeit()` in `catalog.ts`, gerendert als *„1 Gerät, 1 erreichbar"*) — zwei Wörter für dieselbe Größe auf zwei Bildschirmen sind eine Lesefalle. Und *„1 aktiver Tag"* / *„kein aktiver Tag"* unterscheiden sich für einen Textvergleich nicht: `toContainText("aktiver Tag")` trifft beides, dieselbe stumpfe Zusicherung, die in dieser Phase schon einmal aufgetreten ist.
+
+**Die neun toten Revalidierungspfade werden hier geheilt — Befund 27.** Seit Aufgabe 16 ist `/portal/<id>/modelle/<modelId>` nur noch eine Weiterleitung; neun Aktionen in `portal/actions.ts` revalidieren sie weiter (Zeilen 101, 118, 138, 165, 176, 198, 208, 246, 260). Richtig ist `/portal/<id>/geraete/<modelId>` **als Layout**, denn die vier Reiter sind vier Routen unter einem gemeinsamen Layout und der Standardtyp `page` träfe nur die Stammdaten. Kleinster Eingriff: ein Parameter an `fuehreAus` (Zeile 42) mit Standardwert `"page"`, damit die übrigen Aufrufer unverändert bleiben. Ein dritter Test beweist es an der **Reiterzahl**, nicht an der Liste — die Liste wäre auch ohne Layout-Revalidierung grün.
+
 **Dateien:**
 - Anlegen: `(schreibtisch)/geraete/[modelId]/instanzen/page.tsx`
+- Ändern: `apps/web/app/portal/actions.ts` — nur die Revalidierungspfade
 - Ändern: `e2e/schreibtisch.spec.ts`
 
 **Schnittstellen:**
-- Nutzt: `layout.tsx` aus Aufgabe 16; `geraetAnlegen`, `geraetStilllegen`, `geraetWiederInBetrieb` aus `portal/actions.ts` (unverändert)
+- Nutzt: `layout.tsx` aus Aufgabe 16; `geraetAnlegen`, `geraetStilllegen`, `geraetWiederInBetrieb` aus `portal/actions.ts` — in ihrer **Wirkung** unverändert, nur der Revalidierungspfad ändert sich
 - Liefert: nichts für spätere Aufgaben
 
 - [ ] **Schritt 1: Die fehlschlagenden Tests schreiben**

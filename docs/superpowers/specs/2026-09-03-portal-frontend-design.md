@@ -159,7 +159,7 @@ Randfälle zählen nicht mit: die aktive Rail-Zeile ist eine 2-px-Kante, der Fok
 
 ## 5. Befunde
 
-Vierundzwanzig Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, sechs beim Bauen und beim Vorabgleich der noch offenen Aufgaben. Keine wird still aufgelöst.
+Siebenundzwanzig Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, sechs beim Bauen und beim Vorabgleich der noch offenen Aufgaben. Keine wird still aufgelöst.
 
 ### Fehler im Code, hier zu heilen
 
@@ -248,6 +248,12 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 23. **Die Bestätigung beim Rollenwechsel trägt die Regel nicht, die sie tragen soll.** `LeuteActions.tsx:45` fragt `„Wirklich?"`. Struktur-Spec §2 verlangt für die Mitarbeiterliste ausdrücklich eine *bestätigte Handlung beim Hochstufen* — und das Artboard hat den Satz schon: *„Hochstufen gibt Zugriff auf den ganzen Katalog. Der Studio-Code macht niemanden zum Trainer."* Eine Bestätigung, die nur „Wirklich?" sagt, ist ein Klick mehr ohne eine Information mehr. **Fällig in Aufgabe 19.**
 
 24. **ASCII im sichtbaren deutschen Text, zweimal gefunden.** `LeuteActions.tsx:44` zeigt *„Zu Mitglied zurueckstufen"*; in Aufgabe 16 stand *„unveraendert"* im Hinweis unter dem Fotofeld (behoben in `8d8d976`). Beide Male war die Regel *ASCII nur in Kommentaren* eingehalten worden, wo sie leicht fällt, und übersehen, wo der Text angezeigt wird. Der Rest von `LeuteActions.tsx` ist davon frei — es ist ein einzelnes Wort, nicht ein Muster der Datei. **Fällig in Aufgabe 19.**
+
+25. **Das Zahlenfeld *Anzahl im Studio* beschreibt eine Bedienung, die es nicht gibt.** `Modell.dc.html` zeichnet eine Stückzahl und einen Knopf *Geräte anlegen*: *„Erhöhen legt die fehlenden Geräte an — Nummer, Standort und Tag vergibst du danach am Gerät, mit dem Telefon."* Der Code legt je Gerät einzeln an, mit *Bezeichnung* und *Standort*. **Der Code gewinnt, und nicht aus Bequemlichkeit:** `machines.label` ist `not null` mit `check (length(trim(label)) > 0)` (0007). Ein Massenanlegen ohne Nummer bräuchte ein Nummernschema in der Datenbank — eine Migration, und Phase 5 macht keine. Der zweite Satz des Artboards (*„Verringern gibt es nicht: ein Gerät wird stillgelegt, einzeln, mit Namen."*) gilt dagegen unverändert und steht so im Code. **Vertagt**, kein Gestaltungs-, sondern ein Verhaltensentwurf.
+
+26. **Zwei Wörter für dieselbe Größe.** Der Modell-Reiter *Einzelne Geräte* schreibt heute `Rückwand links · 1 aktiver Tag`, die Modellliste auf `/geraete` schreibt für dieselbe Sache *„1 Gerät, 1 erreichbar"* (`erreichbarkeit()` in `catalog.ts`). Das Artboard hat *erreichbar* an beiden Stellen. Hinzu kommt ein Testproblem: *„1 aktiver Tag"* und *„kein aktiver Tag"* sind für `toContainText("aktiver Tag")* nicht unterscheidbar — genau die stumpfe Zusicherung, die in dieser Phase schon einmal aufgetreten ist. **Fällig in Aufgabe 18.**
+
+27. **Neun Revalidierungspfade zeigen seit Aufgabe 16 auf eine Weiterleitung.** `portal/actions.ts` revalidiert in neun Aktionen `/portal/<id>/modelle/<modelId>` (Zeilen 101, 118, 138, 165, 176, 198, 208, 246, 260). Diese Route ist seit Aufgabe 16 nur noch ein `redirect`. Dass die Bildschirme trotzdem frisch aussehen, liegt daran, dass Next die angezeigte Route ohnehin auffrischt — nicht an dieser Zeile. Richtig ist `/portal/<id>/geraete/<modelId>` **als Layout**: die vier Reiter sind vier Routen unter einem gemeinsamen Layout, und der Standardtyp `page` träfe nur die Stammdaten. **Fällig in Aufgabe 18**, mit einem Test, der an der Reiterzahl im Layout misst, nicht an der Liste.
 
 ---
 
