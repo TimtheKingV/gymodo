@@ -2194,7 +2194,7 @@ Zwei Reiter, aus den Abschnitten 2 und 3 der heutigen Seite.
 - Ändern: `e2e/schreibtisch.spec.ts`
 
 **Schnittstellen:**
-- Nutzt: `layout.tsx` aus Aufgabe 16; `parameterAnlegen`, `parameterLoeschen`, `uebungAnhaengen`, `uebungLoesen`, `uebungUmordnen`, `videoHochladen` aus `portal/actions.ts` (unverändert)
+- Nutzt: `layout.tsx` aus Aufgabe 16; `parameterAnlegen`, `parameterLoeschen`, `uebungAnlegen`, `uebungLoesen`, `uebungVerschieben`, `videoUploadVorbereiten`, `videoBestaetigen` aus `portal/actions.ts` (unverändert) — die Namen sind am 5. September gegen `actions.ts` geprüft; der Brief zu Aufgabe 16 hatte hier `modellSpeichern` erfunden
 - Liefert: nichts für spätere Aufgaben
 
 - [ ] **Schritt 1: Die fehlschlagenden Tests schreiben**
@@ -2202,9 +2202,12 @@ Zwei Reiter, aus den Abschnitten 2 und 3 der heutigen Seite.
 ```ts
 test("Ohne Einstellparameter sagt der Reiter, wofuer sie da sind", async ({ page }) => {
   const { studioId, admin } = await studioMitTrainer(page, "modell-param-leer");
+  // weight_step_kg ist in equipment_models NOT NULL ohne Default (0004).
+  // Fehlt es, scheitert schon der Insert -- dieser Fehler ist in Phase 5
+  // dreimal aufgetreten, bevor er hier stand.
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug" })
+    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
     .select("id")
     .single();
   if (error) throw error;
@@ -2217,7 +2220,7 @@ test("Ohne Uebung nennt der Reiter den naechsten Schritt", async ({ page }) => {
   const { studioId, admin } = await studioMitTrainer(page, "modell-uebung-leer");
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug" })
+    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
     .select("id")
     .single();
   if (error) throw error;
@@ -2265,7 +2268,7 @@ test("Der Reiter Einzelne Geräte traegt das Stilllegen, auch wenn das Artboard 
   const { studioId, admin } = await studioMitTrainer(page, "modell-instanzen");
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug" })
+    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
     .select("id")
     .single();
   if (error) throw error;
@@ -2284,7 +2287,7 @@ test("Ein stillgelegtes Geraet bleibt sichtbar und benannt", async ({ page }) =>
   const { studioId, admin } = await studioMitTrainer(page, "modell-stillgelegt");
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug" })
+    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
     .select("id")
     .single();
   if (error) throw error;
