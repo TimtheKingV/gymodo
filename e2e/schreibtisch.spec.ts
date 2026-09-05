@@ -233,9 +233,12 @@ test("Das Modell zeigt vier Reiter, und jeder traegt seinen Zustand", async ({ p
  * Der eigentliche Punkt dieses Abschnitts: auf der alten, einteiligen
  * Modellseite war dieser Test fuenffach rot (fuenf Formulare, fuenf
  * Akzentflaechen auf einem Bildschirm). Er laeuft schon jetzt ueber alle
- * vier Reiter-Pfade, obwohl drei davon erst in Aufgabe 17 und 18 entstehen
- * -- bis dahin scheitert er dort am 404 (0 Akzentflaechen), was die Zusage
- * "hoechstens eine" ebenso erfuellt.
+ * vier Reiter-Pfade. Bis Aufgabe 18 lieferten drei davon einen 404, und
+ * die Zusicherung lautete deshalb "hoechstens eine" -- null Flaechen
+ * erfuellen das ebenso. Seit Aufgabe 18 existieren alle vier Reiter, und
+ * die Zusicherung ist die, die der Name verspricht: GENAU eine. Sonst
+ * bliebe der Test gruen, wenn die Akzentklasse eines Reiters ganz
+ * verschwaende.
  */
 test("Jeder Modellreiter traegt genau eine Akzentflaeche -- ein Formular je Bildschirm", async ({
   page,
@@ -254,7 +257,7 @@ test("Jeder Modellreiter traegt genau eine Akzentflaeche -- ein Formular je Bild
     expect(
       flaechen.length,
       `Reiter "${reiter || "Stammdaten"}" traegt ${flaechen.length}: ${flaechen.join(", ")}`,
-    ).toBeLessThanOrEqual(1);
+    ).toBe(1);
   }
 });
 
@@ -368,4 +371,113 @@ test("Umordnen aendert die Vorauswahl am Geraet, nicht nur die Anzeige", async (
   // Und nicht nur in der Anzeige: neu geladen steht dieselbe Reihenfolge da.
   await page.reload();
   await expect(page.getByRole("listitem").nth(0)).toContainText("1. Latzug breit");
+});
+
+/**
+ * Aufgabe 18: der Reiter Einzelne Geraete. Das Artboard zeichnet je Geraet
+ * nur "Tag scannen"/"Tag ersetzen" -- das Stilllegen fehlt dort (Befund 7).
+ * Die Spec verlangt es, und der Code hatte es schon auf der frueheren,
+ * einteiligen Modellseite. Nachgezogen wird das Artboard, nicht der Code.
+ */
+test("Der Reiter Einzelne Geräte traegt das Stilllegen, auch wenn das Artboard es vergisst", async ({
+  page,
+}) => {
+  const { studioId, admin } = await studioMitTrainer(page, "modell-instanzen");
+  // weight_step_kg ist in equipment_models NOT NULL ohne Default (0004).
+  const { data: modell, error } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (error) throw error;
+  const { error: geraetFehler } = await admin
+    .from("machines")
+    .insert({ studio_id: studioId, equipment_model_id: modell.id, label: "12" });
+  if (geraetFehler) throw geraetFehler;
+
+  await page.goto(`/portal/${studioId}/geraete/${modell.id}/instanzen`);
+
+  await expect(page.getByRole("button", { name: "Stilllegen" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Tag scannen" })).toBeVisible();
+});
+
+/**
+ * Der Praefix heisst "modell-ausser-betrieb" und nicht "modell-stillgelegt":
+ * studioMitTrainer baut daraus Studioname UND E-Mail, und beide stehen in
+ * der Rail. getByText("stillgelegt") traf damit drei Elemente statt einem
+ * und scheiterte am strict mode -- nicht am Bildschirm.
+ *
+ * Aus demselben Grund laufen beide Zusicherungen ueber die Zeile: die
+ * E-Mail traegt eine UUID, in der "13" jederzeit vorkommen kann.
+ */
+test("Ein stillgelegtes Geraet bleibt sichtbar und benannt", async ({ page }) => {
+  const { studioId, admin } = await studioMitTrainer(page, "modell-ausser-betrieb");
+  const { data: modell, error } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (error) throw error;
+  const { error: geraetFehler } = await admin.from("machines").insert({
+    studio_id: studioId,
+    equipment_model_id: modell.id,
+    label: "13",
+    status: "inactive",
+  });
+  if (geraetFehler) throw geraetFehler;
+
+  await page.goto(`/portal/${studioId}/geraete/${modell.id}/instanzen`);
+
+  // Geraete werden stillgelegt, nie geloescht (Designsystem 10). Ein
+  // verschwundenes Geraet naehme die Zuordnungshistorie mit.
+  const zeile = page.getByRole("listitem").filter({ hasText: "13" });
+  await expect(zeile).toBeVisible();
+  await expect(zeile).toContainText("stillgelegt");
+  await expect(zeile.getByRole("button", { name: "Wieder in Betrieb" })).toBeVisible();
+  // Und kein Weg in die Halle: an ein stillgelegtes Geraet wird kein Tag
+  // geklebt.
+  await expect(zeile.getByRole("link", { name: /Tag/ })).toHaveCount(0);
+});
+
+/**
+ * Nach dem Anlegen stimmen beide -- die Liste auf dem Reiter und die
+ * Zaehlung in der Reiterleiste, die eine Ebene hoeher im LAYOUT steht --
+ * ohne page.reload().
+ *
+ * Was dieser Test NICHT beweist, obwohl der Auftrag zu Aufgabe 18 es
+ * annahm: dass die Aktion den richtigen Pfad revalidiert. Gemessen am 5.
+ * September, dreimal am laufenden Dev-Server:
+ *
+ *   revalidatePath("/portal/<id>/modelle/<modelId>")  -> gruen (toter Pfad)
+ *   revalidatePath("/voellig-woanders")               -> gruen
+ *   gar kein revalidatePath                           -> ROT, schon an der Liste
+ *
+ * Next frischt nach einer Server Action den gesamten angezeigten Baum auf,
+ * sobald die Aktion ueberhaupt irgendeine Revalidierung meldet -- welchen
+ * Pfad sie nennt, ist von aussen nicht messbar. Fuer den Pfad selbst gibt
+ * es hier keinen Zeugen; er ist Lesbarkeit, kein Verhalten. Der Test bleibt
+ * trotzdem stehen, weil er die Frische von Liste UND Reiterzahl sichert --
+ * nur eben nicht den Pfad.
+ */
+test("Ein neu angelegtes Geraet erscheint ohne Neuladen im Reiter", async ({ page }) => {
+  const { studioId, admin } = await studioMitTrainer(page, "modell-anlegen-frisch");
+  const { data: modell, error } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  await page.goto(`/portal/${studioId}/geraete/${modell.id}/instanzen`);
+
+  await page.getByLabel("Bezeichnung").fill("12");
+  await page.getByRole("button", { name: "Gerät anlegen" }).click();
+
+  // OHNE page.reload().
+  await expect(page.getByRole("listitem").filter({ hasText: "12" })).toBeVisible();
+
+  const reiter = page.getByRole("navigation", { name: "Modell" });
+  await expect(reiter.getByRole("link", { name: /Einzelne Geräte/ })).toContainText(
+    "1 · 1 ohne Tag",
+  );
 });
