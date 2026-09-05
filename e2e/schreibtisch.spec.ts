@@ -274,3 +274,98 @@ test("Der alte Modellpfad fuehrt auf den neuen", async ({ page }) => {
   await page.goto(`/portal/${studioId}/modelle/${modell.id}`);
   await expect(page).toHaveURL(new RegExp(`/portal/${studioId}/geraete/${modell.id}$`));
 });
+
+/**
+ * Aufgabe 17: die Reiter Einstellungen und Uebungen. Beide Leerzustaende
+ * sagen, wofuer der Reiter da ist -- eine leere Liste ohne Satz waere
+ * nach Designsystem 5 kein Zustand, sondern ein Loch.
+ */
+test("Ohne Einstellparameter sagt der Reiter, wofuer sie da sind", async ({ page }) => {
+  const { studioId, admin } = await studioMitTrainer(page, "modell-param-leer");
+  // weight_step_kg ist in equipment_models NOT NULL ohne Default (0004).
+  // Fehlt es, scheitert schon der Insert.
+  const { data: modell, error } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  await page.goto(`/portal/${studioId}/geraete/${modell.id}/einstellungen`);
+  await expect(page.getByText(/Noch keine Einstellparameter/)).toBeVisible();
+});
+
+test("Ohne Uebung nennt der Reiter den naechsten Schritt", async ({ page }) => {
+  const { studioId, admin } = await studioMitTrainer(page, "modell-uebung-leer");
+  const { data: modell, error } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  await page.goto(`/portal/${studioId}/geraete/${modell.id}/uebungen`);
+  await expect(page.getByText(/Noch keine Übung/)).toBeVisible();
+});
+
+/**
+ * Canvas-Notiz `note-uebungen`: "Übung 1 ist am Gerät die Vorauswahl des
+ * Mitglieds." Die Reihenfolge ist damit das einzige auf diesen beiden
+ * Reitern, das fachlich etwas bedeutet -- und stand bis hier in keinem
+ * E2E-Test.
+ *
+ * Die Nummer ist Teil der Zusicherung. Nur die Reihenfolge der Zeilen zu
+ * pruefen genuegt nicht: eine Liste, die zwar umsortiert, aber weiter "1."
+ * an die alte Uebung schreibt, bliebe gruen.
+ */
+test("Umordnen aendert die Vorauswahl am Geraet, nicht nur die Anzeige", async ({ page }) => {
+  const { studioId, admin } = await studioMitTrainer(page, "modell-umordnen");
+  const { data: modell, error } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  // Zwei Uebungen und ihre Verknuepfung -- dasselbe Muster wie in
+  // e2e/trainerportal.spec.ts: `exercises` traegt Name und Wiederholungen,
+  // `equipment_model_exercises` die Reihenfolge am Modell.
+  for (const [reihenfolge, name] of [
+    [1, "Rudern"],
+    [2, "Latzug breit"],
+  ] as const) {
+    const { data: uebung, error: uebungFehler } = await admin
+      .from("exercises")
+      .insert({
+        studio_id: studioId,
+        name,
+        target_reps_min: 8,
+        target_reps_max: 12,
+      })
+      .select("id")
+      .single();
+    if (uebungFehler) throw uebungFehler;
+
+    const { error: linkFehler } = await admin.from("equipment_model_exercises").insert({
+      equipment_model_id: modell.id,
+      exercise_id: uebung.id,
+      sort_order: reihenfolge,
+    });
+    if (linkFehler) throw linkFehler;
+  }
+
+  await page.goto(`/portal/${studioId}/geraete/${modell.id}/uebungen`);
+
+  const zeilen = page.getByRole("listitem");
+  await expect(zeilen.nth(0)).toContainText("1. Rudern");
+  await expect(zeilen.nth(1)).toContainText("2. Latzug breit");
+
+  await zeilen.nth(1).getByRole("button", { name: "Hoch" }).click();
+
+  await expect(zeilen.nth(0)).toContainText("1. Latzug breit");
+  await expect(zeilen.nth(1)).toContainText("2. Rudern");
+
+  // Und nicht nur in der Anzeige: neu geladen steht dieselbe Reihenfolge da.
+  await page.reload();
+  await expect(page.getByRole("listitem").nth(0)).toContainText("1. Latzug breit");
+});
