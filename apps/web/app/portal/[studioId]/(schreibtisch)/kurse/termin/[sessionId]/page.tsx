@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { listCourseParticipants, listCourseWeek } from "@fitretro/domain";
+import { getCourseTemplate, listCourseParticipants, listCourseWeek } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { AktionsFormular, AktionsKnopf, Feld } from "../../../../../Form";
 import {
@@ -8,17 +8,69 @@ import {
   terminAbsagenAction,
   terminSpeichernAction,
 } from "../../../../kurse-actions";
+import { Abschnitt } from "../../../../../bausteine/Abschnitt";
+import { Erlaeuterung } from "../../../../../bausteine/Erlaeuterung";
+import { Zeile, Zeilen } from "../../../../../bausteine/Zeile";
+import { Zustand } from "../../../../../bausteine/Zustand";
 import styles from "../../../../../portal.module.css";
+import { kuerzen } from "../../../leute/leute";
 import { uhrzeit } from "../../woche";
+import { langesDatum, tagUndZeit } from "../zeit";
+import { TerminZeit } from "./TerminZeit";
+
+/**
+ * Ein einzelner Kurstermin (Termin.dc.html).
+ *
+ * Kein eigenes <main> mehr (Befund 41) -- die Landmarke traegt
+ * (schreibtisch)/layout.tsx. Kein Seite-Baustein, weil ueber dem Titel ein
+ * Rueckweg steht (wie im layout.tsx der Kursvorlage).
+ *
+ * Eine Akzentflaeche: "Änderungen speichern". "Abmelden", "Von der Liste
+ * nehmen" und "Termin absagen" sind zerstoerend -- das Artboard zeichnet
+ * sie mit danger-Umriss auf 40 px --, "Alle anzeigen" ist sekundaer.
+ *
+ * KEINE Namen. Das Artboard zeigt "M. Wolf" und "L. Bauer";
+ * list_course_participants (0037) liefert user_id, E-Mail, Status,
+ * Zeitpunkte und Wartelistenposition -- keinen Namen, genau wie
+ * StudioMember (Befund 40). Ein Namensfeld waere eine Migration. Hier
+ * steht die Adresse.
+ *
+ * Und nirgends steht, jemand werde benachrichtigt: Benachrichtigungen
+ * existieren nicht (Designsystem 11, Struktur-Spec 8), promoted_at liegt
+ * bereit, der Rest ist offen. Der Erste der Warteliste rueckt beim
+ * Abmelden automatisch nach (0038) -- erfahren tut er es im Portal
+ * niemand, und die Oberflaeche verspricht deshalb auch nichts.
+ */
+
+/**
+ * Der Suchparameter, der die Kuerzung aufklappt -- MIT Namen (Befund 39).
+ *
+ * Aufgabe 19 hat das Muster als "?alle=1" gebaut, und auf dem Reiter
+ * "Mitglieder" trug das: dort gibt es genau eine kuerzbare Liste. Dieser
+ * Bildschirm hat zwei, "Angemeldet" und "Warteliste", und ein namenloser
+ * Parameter klappte beide zugleich auf. Der Wert benennt seine Liste.
+ *
+ * Die Warteliste selbst kuerzt nicht: das Artboard kuerzt sie nicht, drei
+ * Positionen sind keine Liste, die ueberlaeuft, und was dort verborgen
+ * wuerde, sind genau die hinteren Plaetze -- die Auskunft, wegen der man
+ * die Liste ueberhaupt aufschlaegt. Der Name des Parameters steht
+ * trotzdem schon da, damit die zweite Liste, wenn sie ihn je braucht,
+ * ihren eigenen bekommt statt diesen mitzubenutzen.
+ */
+const ALLE_ANGEMELDET = "angemeldet";
 
 export default async function TerminPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ studioId: string; sessionId: string }>;
+  searchParams: Promise<{ alle?: string }>;
 }) {
   const { studioId, sessionId } = await params;
+  const { alle } = await searchParams;
   const client = await createServerSupabaseClient();
   const basis = `/portal/${studioId}/kurse`;
+  const pfad = `${basis}/termin/${sessionId}`;
 
   // course_week ist der einzige Lesepfad, der die Belegung als Zahl
   // liefert -- deshalb auch hier, mit einem engen Fenster um den Termin.
@@ -44,137 +96,184 @@ export default async function TerminPage({
   const teilnehmer = await listCourseParticipants(client, sessionId);
   const gebucht = teilnehmer.filter((t) => t.status === "booked");
   const wartend = teilnehmer.filter((t) => t.status === "waitlisted");
+  const { sichtbar, weitere } = kuerzen(gebucht, alle === ALLE_ANGEMELDET);
 
-  const zeitpunkt = (iso: string) =>
-    new Date(iso).toLocaleString("de-DE", { timeZone: plan.timezone });
+  // "Abweichend von der Vorlage (Standard: Marek T.)." -- der Satz steht
+  // nur da, wenn er stimmt, und dafuer muss die Vorlage gelesen werden.
+  // Sie kann fehlen (geloescht, oder aus einem fremden Studio); dann gibt
+  // es keinen Standard, gegen den etwas abweichen koennte.
+  let vorlagenTrainer: string | null = null;
+  try {
+    vorlagenTrainer = (await getCourseTemplate(client, studioId, termin.templateId))
+      .defaultInstructorName;
+  } catch {
+    vorlagenTrainer = null;
+  }
+  const trainerWeichtAb =
+    vorlagenTrainer !== null && termin.instructorName !== vorlagenTrainer;
+
+  const beginn = new Date(termin.startsAt);
+  const ende = new Date(beginn.getTime() + termin.durationMin * 60_000);
+  const kopfzeile = [
+    `${langesDatum(beginn, plan.timezone)} · ${uhrzeit(termin.startsAt, plan.timezone)}–${uhrzeit(ende.toISOString(), plan.timezone)}`,
+    termin.room,
+    termin.status === "cancelled" ? "abgesagt" : null,
+  ]
+    .filter((teil): teil is string => teil !== null)
+    .join(" · ");
 
   return (
-    <main className={styles.content}>
+    <>
       <p>
-        <Link href={basis}>← Kurse</Link>
+        <Link href={basis} className={styles.rueckweg}>
+          ← Kurse
+        </Link>
       </p>
       <h1 className={styles.pageTitle}>{termin.name}</h1>
-      <p>
-        {termin.localDay} · {uhrzeit(termin.startsAt, plan.timezone)}
-        {termin.room === null ? "" : ` · ${termin.room}`}
-        {termin.status === "cancelled" ? " · abgesagt" : ""}
-      </p>
+      <p className={styles.pageLead}>{kopfzeile}</p>
 
+      {/*
+        Bewusst kein Abschnitt-Baustein: AktionsFormular bringt sein eigenes
+        styles.sectionBody-Polster mit, das zusammen mit abschnittRumpf
+        doppelt aufgetragen wuerde -- dieselbe Begruendung wie in
+        geraete/page.tsx und im Stammdaten-Reiter der Kursvorlage.
+      */}
       <section className={styles.section}>
-        <h2>Termin</h2>
+        <div className={styles.sectionHead}>
+          <h2 className={styles.sectionTitle}>Termin</h2>
+        </div>
         <AktionsFormular
           action={terminSpeichernAction.bind(null, studioId, sessionId)}
           submitLabel="Änderungen speichern"
         >
-          <Feld
-            name="startsAt"
-            label="Beginn"
-            defaultValue={termin.startsAt}
-            hint="ISO 8601 mit Zonenangabe, etwa 2026-11-05T17:00:00.000Z. Ein Datumsfeld bekommt dieser Bildschirm in Phase 5."
-            required
-          />
-          <Feld
-            name="dauer"
-            label="Dauer in Minuten"
-            type="number"
-            defaultValue={String(termin.durationMin)}
-            required
-          />
-          <Feld
-            name="plaetze"
-            label="Plätze"
-            type="number"
-            defaultValue={String(termin.capacity)}
-            required
-          />
-          <Feld name="raum" label="Raum" defaultValue={termin.room ?? ""} />
+          <TerminZeit startsAt={termin.startsAt} zeitzone={plan.timezone} />
+          <div className={styles.grid}>
+            <Feld
+              name="dauer"
+              label="Dauer in Minuten"
+              type="number"
+              defaultValue={String(termin.durationMin)}
+              required
+            />
+            <Feld
+              name="plaetze"
+              label="Plätze"
+              type="number"
+              defaultValue={String(termin.capacity)}
+              required
+            />
+            <Feld name="raum" label="Raum" defaultValue={termin.room ?? ""} />
+          </div>
           <Feld
             name="trainerName"
             label="Trainer (Anzeigename)"
             defaultValue={termin.instructorName ?? ""}
           />
+          {trainerWeichtAb ? (
+            <p className={styles.sectionNote}>
+              Abweichend von der Vorlage (Standard: {vorlagenTrainer}).
+            </p>
+          ) : null}
         </AktionsFormular>
       </section>
 
-      <section className={styles.section}>
-        <h2>
-          Angemeldet ({gebucht.length} von {termin.capacity})
-        </h2>
+      <Abschnitt titel={`Angemeldet (${gebucht.length} von ${termin.capacity})`}>
         {gebucht.length === 0 ? (
-          <p className={styles.absent}>Noch niemand angemeldet.</p>
-        ) : (
-          <ul>
-            {gebucht.map((person) => (
-              <li key={person.userId}>
-                <span>{person.email}</span>
-                <span className={styles.navItemMeta}>
-                  {person.promotedAt === null
-                    ? `Angemeldet ${zeitpunkt(person.bookedAt)}`
-                    : `Nachgerückt ${zeitpunkt(person.promotedAt)}`}
-                </span>
-                <AktionsKnopf
-                  aktion={teilnehmerEntfernenAction.bind(
-                    null,
-                    studioId,
-                    sessionId,
-                    person.userId,
-                  )}
-                  label="Abmelden"
-                  bestaetigung="Wirklich abmelden?"
-                  laufendLabel="Wird abgemeldet …"
-                  art="destructive"
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className={styles.section}>
-        <h2>Warteliste ({wartend.length})</h2>
-        {wartend.length === 0 ? (
-          <p className={styles.absent}>Niemand wartet.</p>
-        ) : (
-          <ul>
-            {wartend.map((person) => (
-              <li key={person.userId}>
-                <span>{person.email}</span>
-                <span className={styles.navItemMeta}>
-                  Position {person.waitlistPosition}
-                </span>
-                <AktionsKnopf
-                  aktion={teilnehmerEntfernenAction.bind(
-                    null,
-                    studioId,
-                    sessionId,
-                    person.userId,
-                  )}
-                  label="Von der Liste nehmen"
-                  bestaetigung="Wirklich von der Liste nehmen?"
-                  laufendLabel="Wird entfernt …"
-                  art="destructive"
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-        <p className={styles.emptyNext}>
-          Diese Liste ist eine Anwesenheitsliste. Andere Mitglieder sehen sie nicht.
-        </p>
-      </section>
-
-      <section className={styles.section}>
-        <h2>Absagen</h2>
-        {termin.status === "cancelled" ? (
-          <p className={styles.absent}>
-            Dieser Termin ist abgesagt. Angemeldete Mitglieder sehen, dass er ausfällt.
-          </p>
+          <Zustand
+            art="leer"
+            titel="Noch niemand angemeldet."
+            naechsterSchritt="Wer sich anmeldet, steht hier — mit dem Zeitpunkt der Anmeldung."
+          />
         ) : (
           <>
-            <p>
-              Der Termin bleibt sichtbar und wird als abgesagt gekennzeichnet.
-              Angemeldete Mitglieder sehen, dass er ausfällt.
-            </p>
+            <Zeilen>
+              {sichtbar.map((person) => (
+                <Zeile
+                  key={person.userId}
+                  titel={person.email}
+                  meta={
+                    person.promotedAt === null
+                      ? `Angemeldet ${tagUndZeit(new Date(person.bookedAt), plan.timezone)}`
+                      : `Nachgerückt ${tagUndZeit(new Date(person.promotedAt), plan.timezone)}`
+                  }
+                  aktionen={
+                    <AktionsKnopf
+                      aktion={teilnehmerEntfernenAction.bind(
+                        null,
+                        studioId,
+                        sessionId,
+                        person.userId,
+                      )}
+                      label="Abmelden"
+                      bestaetigung="Wirklich abmelden?"
+                      laufendLabel="Wird abgemeldet …"
+                      art="destructive"
+                    />
+                  }
+                />
+              ))}
+            </Zeilen>
+            {weitere > 0 ? (
+              // Serverseitig gekuerzt, serverseitig aufgeklappt: ein
+              // gewoehnlicher Link, kein Zustand im Browser (Aufgabe 19).
+              <div className={styles.rowActions}>
+                <span className={styles.absent}>… {weitere} weitere</span>
+                <Link href={`${pfad}?alle=${ALLE_ANGEMELDET}`} className={styles.secondary}>
+                  Alle anzeigen
+                </Link>
+              </div>
+            ) : null}
+          </>
+        )}
+      </Abschnitt>
+
+      <Abschnitt titel={`Warteliste (${wartend.length})`}>
+        {wartend.length === 0 ? (
+          <Zustand
+            art="leer"
+            titel="Niemand wartet."
+            naechsterSchritt="Ist der Termin voll, stehen weitere Anmeldungen hier — in der Reihenfolge, in der sie eingegangen sind."
+          />
+        ) : (
+          <Zeilen>
+            {wartend.map((person) => (
+              <Zeile
+                key={person.userId}
+                titel={person.email}
+                meta={`Position ${person.waitlistPosition}`}
+                aktionen={
+                  <AktionsKnopf
+                    aktion={teilnehmerEntfernenAction.bind(
+                      null,
+                      studioId,
+                      sessionId,
+                      person.userId,
+                    )}
+                    label="Von der Liste nehmen"
+                    bestaetigung="Wirklich von der Liste nehmen?"
+                    laufendLabel="Wird entfernt …"
+                    art="destructive"
+                  />
+                }
+              />
+            ))}
+          </Zeilen>
+        )}
+      </Abschnitt>
+
+      <Erlaeuterung>
+        Diese Liste ist eine Anwesenheitsliste. Andere Mitglieder sehen sie nicht.
+      </Erlaeuterung>
+
+      <Abschnitt titel="Absagen">
+        {termin.status === "cancelled" ? (
+          <Zustand
+            art="leer"
+            titel="Dieser Termin ist abgesagt."
+            naechsterSchritt="Angemeldete Mitglieder sehen, dass er ausfällt."
+          />
+        ) : (
+          <div className={styles.rowActions}>
             <AktionsKnopf
               aktion={terminAbsagenAction.bind(null, studioId, sessionId)}
               label="Termin absagen"
@@ -182,9 +281,13 @@ export default async function TerminPage({
               laufendLabel="Wird abgesagt …"
               art="destructive"
             />
-          </>
+            <span className={styles.sectionNote}>
+              Der Termin bleibt sichtbar und wird als abgesagt gekennzeichnet.
+              Angemeldete Mitglieder sehen, dass er ausfällt.
+            </span>
+          </div>
         )}
-      </section>
-    </main>
+      </Abschnitt>
+    </>
   );
 }

@@ -682,3 +682,29 @@
   text-decoration: line-through;
   color: var(--text-muted);
 }
+
+/* "Termin anlegen" (TerminAnlegen.dc.html) ist der einzige Bildschirm des
+   Portals, dessen EIN Formular ueber MEHRERE Karten laeuft: "Termin" und
+   "Wiederholen" stehen als zwei Abschnitte untereinander, dazwischen die
+   Serienvorschau, und der Absendeknopf ganz unten gehoert zu allen dreien.
+   Sonst liegt es umgekehrt -- das Formular steckt IN einer Karte, und
+   AktionsFormular traegt sein <form> deshalb mit .sectionBody: 20 px
+   Polster und 16 px Abstand.
+
+   Hier ruecke dieses Polster die Karten 20 px weiter ein als jede andere
+   Karte des Portals. Also auf 0, und der Abstand kommt aus dem gap statt
+   aus den Aussenraendern der Kinder -- sonst laege der 32-px-Rand von
+   .section zusaetzlich obendrauf.
+
+   Als Nachfahrenregel und nicht als zweite Klasse an <form>: die Klasse
+   dort steht in Form.tsx, und Form.tsx bleibt in Aufgabe 22b
+   unangetastet. */
+.seitenformular > form {
+  padding: 0;
+  gap: var(--s24);
+}
+
+.seitenformular > form > section,
+.seitenformular > form > p {
+  margin-top: 0;
+}
