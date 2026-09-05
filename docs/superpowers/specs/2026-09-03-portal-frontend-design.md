@@ -159,7 +159,7 @@ Randfälle zählen nicht mit: die aktive Rail-Zeile ist eine 2-px-Kante, der Fok
 
 ## 5. Befunde
 
-Siebenundzwanzig Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, sechs beim Bauen und beim Vorabgleich der noch offenen Aufgaben. Keine wird still aufgelöst.
+Neunundzwanzig Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, sechs beim Bauen und beim Vorabgleich der noch offenen Aufgaben. Keine wird still aufgelöst.
 
 ### Fehler im Code, hier zu heilen
 
@@ -254,6 +254,10 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 26. **Zwei Wörter für dieselbe Größe.** Der Modell-Reiter *Einzelne Geräte* schreibt heute `Rückwand links · 1 aktiver Tag`, die Modellliste auf `/geraete` schreibt für dieselbe Sache *„1 Gerät, 1 erreichbar"* (`erreichbarkeit()` in `catalog.ts`). Das Artboard hat *erreichbar* an beiden Stellen. Hinzu kommt ein Testproblem: *„1 aktiver Tag"* und *„kein aktiver Tag"* sind für `toContainText("aktiver Tag")* nicht unterscheidbar — genau die stumpfe Zusicherung, die in dieser Phase schon einmal aufgetreten ist. **Fällig in Aufgabe 18.**
 
 27. **Neun Revalidierungspfade zeigen seit Aufgabe 16 auf eine Weiterleitung.** `portal/actions.ts` revalidiert in neun Aktionen `/portal/<id>/modelle/<modelId>` (Zeilen 101, 118, 138, 165, 176, 198, 208, 246, 260). Diese Route ist seit Aufgabe 16 nur noch ein `redirect`. Dass die Bildschirme trotzdem frisch aussehen, liegt daran, dass Next die angezeigte Route ohnehin auffrischt — nicht an dieser Zeile. Richtig ist `/portal/<id>/geraete/<modelId>` **als Layout**: die vier Reiter sind vier Routen unter einem gemeinsamen Layout, und der Standardtyp `page` träfe nur die Stammdaten. **Fällig in Aufgabe 18**, mit einem Test, der an der Reiterzahl im Layout misst, nicht an der Liste.
+
+28. **Zwei Aktionsdateien mit identischen Exportnamen und teils anderen Signaturen.** `apps/web/app/portal/actions.ts` (Schreibtisch) und `apps/web/app/portal/[studioId]/einrichten/actions.ts` (Halle) exportieren beide `parameterAnlegen`, `parameterLoeschen`, `uebungAnlegen`, `uebungVerschieben` — getrennt implementiert, und `uebungVerschieben` nimmt in der Halle eine andere Parameterliste (`studioId, machineId, modelId, reihenfolge`). Gefunden vom Implementierer der Aufgabe 17, nachdem **mein** Brief behauptet hatte, `einrichten.spec.ts` sei ein Netz für die Schreibtisch-Aktionen. Ist es nicht: kein Testlauf deckt heute beide Fassungen, und ein Import aus der falschen Datei ist ein Tippfehler ohne Typfehler. **Vertagt** — eine Zusammenlegung ist ein Umbau der Aktionsschicht, keine Gestaltungsfrage, und Phase 5 fasst die Aktionen nicht an.
+
+29. **`.sectionNote` trägt denselben verbotenen Kontrast wie die Produktgrenze.** Die Klasse setzt `font-size: 12px` mit `color: var(--text-faint)` (`portal.module.css:193`) und trägt die erklärenden Sätze unter den Abschnittsüberschriften — *„Was ein Mitglied am Gerät einstellt und sich merken soll."*, *„Die Reihenfolge bestimmt, was am Gerät zuerst vorgeschlagen wird."* Das sind tragende Sätze, keine Nebeninformation; Designsystem §2 verbietet `text-faint` dafür (siehe Befund 19). Der Implementierer der Aufgabe 17 ist der Falle ausgewichen, indem er für die neuen Reiter `.pageLead` (`--text-muted`) genommen hat — die **Klasse** bleibt aber unrepariert und wird beim nächsten Bildschirm wieder gegriffen. **Fällig in Aufgabe 21**, zusammen mit den beiden restlichen Orten aus Befund 19.
 
 ---
 
