@@ -187,6 +187,14 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 10. **Kein Kurse-Eintrag in der Rail** bis Abschnitt 7, nach Designsystem §11.
 11. **`.progressBar` ist eine Akzentfläche.** Auf der Upload-Seite stehen damit zwei — Fortschrittsbalken und Hauptaktion. Entweder bekommt die Regel eine benannte Ausnahme, oder der Balken verliert den Akzent. Zu entscheiden in Abschnitt 6, nicht nebenbei.
 
+    **Entschieden am 5. September (Aufgabe 21): der Balken behält den Akzent, und die Regel bekommt ihre Grenze gesagt.** Drei Gründe, in dieser Reihenfolge:
+
+    1. **Der Entwurf sagt es selbst.** `TelefonVideo.dc.html` zeichnet den Balken in `#d4ff3f` — und `TelefonUploads.dc.html` zeigt **drei** solche Balken gleichzeitig, die Warteschlange. Das ist kein Versehen an einer Stelle, sondern eine bewusste, wiederholte Setzung. Artboard und Code sind sich einig; es gibt hier keinen Streit zu schlichten.
+    2. **Die Regel nennt ihren eigenen Zweck, und er trifft nicht zu.** Designsystem §5.1: *„Der Akzent markiert die eine Hauptaktion und den aktiven Wert. […] der Nutzer verliert die Fähigkeit, im Halbdunkel in einer Sekunde zu erkennen, wo er hinfassen muss."* Ein Fortschrittsbalken ist nichts, wohin man fasst. Er konkurriert nicht mit der Hauptaktion um den Griff, sondern sagt, dass gerade etwas läuft.
+    3. **Der Widerspruch ist ohnehin nur einen Moment lang sichtbar.** Der Balken rendert nur während eines laufenden Uploads; im Ruhezustand steht er nicht im Dokument. Die maschinelle Abnahme (`akzentflaechen()` in `e2e/helpers/abnahme.ts`) sieht ihn deshalb nie — nicht weil sie ihn übersieht, sondern weil es ihn dann nicht gibt.
+
+    **Die Regel liest sich ab jetzt so:** genau eine Akzent*fläche* je Bildschirm unter den **bedienbaren** Flächen. Ränder zählten schon vorher nicht (aktive Rail-Zeile, Fokusring, Sucherecken); Fortschritt zählt ebenso wenig. Kein Codewechsel, kein Testwechsel — nur eine benannte Ausnahme statt einer stillen.
+
 ### Werkzeug und Bestand
 
 12. **Die Uhrendrift trifft eine ganze Testklasse, nicht einen Test.** Fahrplan Abschnitt 6 führt `rls-workout-sessions` als „sporadisch rot". Beides ist zu eng.
