@@ -2414,7 +2414,13 @@ Die beiden Reiter gibt es schon als Routen; sie bekommen ihre Form und den gemei
 - Liefert: nichts für spätere Aufgaben
 - **Achtung:** `bausteine/Reiter.tsx` braucht `aria-label="Einstellungen"` an dieser Stelle, sonst bricht, was heute darauf zugreift.
 
-**Der Reiter *Studio* trägt drei Formulare** — Stammdaten, Stornofrist, Studio-Code. Das ist mehr als eines und damit ein Verstoß gegen „ein Formular je Bildschirm". Das Artboard zeichnet es trotzdem so, und der Grund trägt: die drei sind keine Alternativen, sondern drei Einstellungen desselben Studios, und ein vierter Reiter für die Stornofrist wäre Bürokratie. **Die Akzentfläche bekommt nur *Änderungen speichern*;** *Neuen Code erzeugen* ist eine Nebenaktion, *Kopieren* ebenfalls. Damit hält die Akzentregel, auch wenn die Formularregel hier nachgibt.
+**Korrektur vom 5. September: es ist EIN Formular, nicht drei.** Die ursprüngliche Fassung dieser Aufgabe sagte, der Reiter *Studio* trage drei Formulare — Stammdaten, Stornofrist, Studio-Code — und verstoße damit gegen „ein Formular je Bildschirm". Am Code nachgesehen stimmt das nicht: `einstellungen/page.tsx:88` hat **ein** `AktionsFormular` mit Name, Zeitzone **und** Stornofrist unter einem einzigen *Änderungen speichern*. Der Studio-Code daneben ist kein Formular, sondern eine Karte mit zwei Knöpfen (`BeitrittscodeKarte`). Das Artboard zeichnet es genauso: unter *Kurse · Stornofrist* steht **kein** eigener Absendeknopf. Die Regel hält also, und es gibt nichts zu rechtfertigen.
+
+**Die Akzentfläche bekommt nur *Änderungen speichern*;** *Neuen Code erzeugen*, *Kopieren* und *Code sperren* sind Nebenaktionen.
+
+**Der Reiter ist bereits nah am Artboard** — Wortlaut, Reihenfolge und Aktionen stimmen weitgehend. Was fehlt, ist der Fußsatz unter dem Studio-Code (*„Ein neuer Code macht den alten sofort ungültig …"*), und was zu heilen ist, ist `.sectionNote` (Befund 29). Diese Aufgabe ist kleiner, als der Plan sie zunächst beschrieb.
+
+**Zwei Stellen, an denen das Artboard unvollständig ist:** *Code sperren / entsperren* steht im Code und in keinem Artboard — wie beim Stilllegen (Befund 7) gewinnt der Code. Und die Rollenzeile auf *Konto* (*„Inhaber von Kraftwerk Nord seit Do., 6. August 2026"*) steht im Artboard und im Code; sie bleibt.
 
 - [ ] **Schritt 1: Die fehlschlagenden Tests schreiben**
 
