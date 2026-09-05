@@ -457,16 +457,15 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
 
   // Der Schreibtisch weiss es auch -- und fuehrt zurueck in den Gang. Seit
   // Aufgabe 13 zeigt /geraete die Modelle; "erreichbar" steht seither in
-  // der Zusatzzeile des Modells statt als eigener Satz.
+  // der Zusatzzeile des Modells statt als eigener Satz. "erreichbar" heisst
+  // wörtlich: aktiv UND mit aktivem Tag (erreichbarkeit() in catalog.ts) --
+  // dieselbe Tatsache, die vor Aufgabe 16 zusaetzlich per "Tag ersetzen" im
+  // Modell-Detail sichtbar war. Dieser Link lebt seit Aufgabe 16 im Reiter
+  // Einzelne Geräte (Aufgabe 18) und ist bis dahin nicht Teil dieses Tests.
   await page.goto(`/portal/${studioId}/geraete`);
   await expect(
     page.getByRole("listitem").filter({ hasText: "Kabelzug" }),
   ).toContainText("1 Gerät, 1 erreichbar");
-
-  await page.getByRole("link", { name: "Kabelzug" }).first().click();
-  await expect(
-    page.getByRole("link", { name: "Tag ersetzen" }).first(),
-  ).toBeVisible();
 });
 
 test("Ein zerkratzter Tag wird ersetzt, und der alte wird dabei ungueltig", async ({

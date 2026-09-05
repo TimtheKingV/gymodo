@@ -201,3 +201,76 @@ test("Die Bedienelemente der Geräteliste sind gross genug", async ({ page }) =>
   const zuKlein = await zuKleineBedienelemente(page, 40);
   expect(zuKlein, `zu klein: ${zuKlein.join(", ")}`).toHaveLength(0);
 });
+
+/**
+ * Aufgabe 16: die alte Modellseite (371 Zeilen, fuenf Abschnitte) zerfaellt
+ * in vier Reiter -- Stammdaten, Einstellungen, Uebungen, Einzelne Geraete.
+ * Nur der erste entsteht in dieser Aufgabe; die anderen drei liefern
+ * Aufgabe 17 und 18.
+ */
+test("Das Modell zeigt vier Reiter, und jeder traegt seinen Zustand", async ({ page }) => {
+  const { studioId, admin } = await studioMitTrainer(page, "modell-reiter");
+  const { data: modell, error } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Latzug", manufacturer: "Technogym", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  await page.goto(`/portal/${studioId}/geraete/${modell.id}`);
+
+  const reiter = page.getByRole("navigation", { name: "Modell" });
+  for (const name of ["Stammdaten", "Einstellungen", "Übungen", "Einzelne Geräte"]) {
+    await expect(reiter.getByRole("link", { name: new RegExp(name) })).toBeVisible();
+  }
+  await expect(reiter.getByRole("link", { name: /Stammdaten/ })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+});
+
+/**
+ * Der eigentliche Punkt dieses Abschnitts: auf der alten, einteiligen
+ * Modellseite war dieser Test fuenffach rot (fuenf Formulare, fuenf
+ * Akzentflaechen auf einem Bildschirm). Er laeuft schon jetzt ueber alle
+ * vier Reiter-Pfade, obwohl drei davon erst in Aufgabe 17 und 18 entstehen
+ * -- bis dahin scheitert er dort am 404 (0 Akzentflaechen), was die Zusage
+ * "hoechstens eine" ebenso erfuellt.
+ */
+test("Jeder Modellreiter traegt genau eine Akzentflaeche -- ein Formular je Bildschirm", async ({
+  page,
+}) => {
+  const { studioId, admin } = await studioMitTrainer(page, "modell-akzent");
+  const { data: modell, error } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Beinpresse", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  for (const reiter of ["", "/einstellungen", "/uebungen", "/instanzen"]) {
+    await page.goto(`/portal/${studioId}/geraete/${modell.id}${reiter}`);
+    const flaechen = await akzentflaechen(page);
+    expect(
+      flaechen.length,
+      `Reiter "${reiter || "Stammdaten"}" traegt ${flaechen.length}: ${flaechen.join(", ")}`,
+    ).toBeLessThanOrEqual(1);
+  }
+});
+
+/**
+ * modelle/[modelId] ist seit Aufgabe 16 eine Weiterleitung, nach demselben
+ * Muster wie /modelle -> /geraete aus Aufgabe 13.
+ */
+test("Der alte Modellpfad fuehrt auf den neuen", async ({ page }) => {
+  const { studioId, admin } = await studioMitTrainer(page, "modell-alt");
+  const { data: modell, error } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Brustpresse", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  await page.goto(`/portal/${studioId}/modelle/${modell.id}`);
+  await expect(page).toHaveURL(new RegExp(`/portal/${studioId}/geraete/${modell.id}$`));
+});

@@ -137,6 +137,21 @@
   max-width: 960px;
 }
 
+/* Rueckweg auf einer Detailseite -- Werte aus Modell.dc.html: dieselbe
+   Optik wie .abschnittTitel (bausteine.module.css), aber in text-faint statt
+   text-muted, so wie das Artboard es zeichnet (#5c636e). */
+.rueckweg {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s4);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-decoration: none;
+}
+
 .pageTitle {
   font-size: 26px;
   font-weight: 800;
