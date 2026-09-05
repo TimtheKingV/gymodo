@@ -47,8 +47,14 @@ export default async function ModellInstanzenPage({
   const modell = katalog.models.find((eintrag) => eintrag.id === modelId);
   if (!modell) notFound();
 
-  // Derselbe Pfad, den die Aktionen dieses Reiters revalidieren -- als
-  // Layout, weil die Zaehlung in der Reiterleiste eine Ebene darueber steht.
+  // Der Pfad, den geraetStilllegen und geraetWiederInBetrieb revalidieren.
+  // Er zeigt auf die Stammdaten-Route, nicht auf /instanzen, und die beiden
+  // rufen fuehreAus ohne dritten Parameter auf -- also als "page", nicht als
+  // "layout" wie geraetAnlegen. Das ist folgenlos: gemessen frischt Next den
+  // ganzen angezeigten Baum auf, sobald eine Aktion ueberhaupt eine
+  // Revalidierung meldet (alle Routen hier sind ueber Cookies dynamisch).
+  // Einheitlich ist es trotzdem nicht, und der Kommentar sagt es lieber,
+  // als eine Ordnung zu behaupten, die im Code nicht steht.
   const pfad = `/portal/${studioId}/geraete/${modelId}`;
 
   return (
