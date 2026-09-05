@@ -625,3 +625,60 @@
   gap: var(--s24);
   margin-top: var(--s24);
 }
+
+/* Der Kursplan (Kurse.dc.html). Die Wochenwahl links, die Hauptaktion
+   rechts, beides in einer Zeile unter dem Titel -- wrap statt Ueberlauf,
+   wie schon bei .rowActions: auf einem schmalen Schirm rutscht "Termin
+   anlegen" unter die Wochenwahl, statt rechts aus dem Bild zu laufen. */
+.wochenleiste {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s16);
+  margin-top: var(--s20);
+  flex-wrap: wrap;
+}
+
+.wochenwahl {
+  display: flex;
+  align-items: center;
+  gap: var(--s12);
+  flex-wrap: wrap;
+}
+
+.wochenTitel {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Die Belegung am rechten Rand einer Terminzeile: Zahl gross, Warteliste
+   klein darunter -- zwei Informationsebenen wie .rowTitle und .rowMeta,
+   nicht eine Zeile. */
+.belegung {
+  text-align: right;
+}
+
+.belegungZahl {
+  font-weight: 700;
+}
+
+/* text-muted, nicht das text-faint des Artboards: "+3 Warteliste" ist die
+   Auskunft, dass drei Leute anstehen -- Inhalt, kein Schmuck, und
+   Designsystem 2 verbietet dafuer 3,6 : 1 (derselbe Schnitt wie bei
+   .sectionNote, Befund 29). */
+.belegungZusatz {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Ein abgesagter Termin verschwindet nicht, er wird durchgestrichen
+   (0035: "ein verschwundener Termin sieht aus wie ein Fehler in der
+   App"). Die Tatsache selbst traegt das Abzeichen daneben in --danger;
+   der Durchstrich ist die Wiederholung fuer das Auge, nicht der einzige
+   Traeger. Deshalb text-muted statt des text-faint im Artboard: der Titel
+   ist ein Link und bleibt anklickbar. */
+.abgesagt {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
