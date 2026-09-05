@@ -38,10 +38,22 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
-/** Genau ein Ergebnisformat fuer alle Formulare: entweder ok oder ein Satz. */
+/**
+ * Genau ein Ergebnisformat fuer alle Formulare: entweder ok oder ein Satz.
+ *
+ * `art` reicht den zweiten Parameter von revalidatePath durch. "page" trifft
+ * nur die Seite selbst; die vier Modellreiter unter /geraete/<modelId> teilen
+ * sich aber ein Layout, und die Zaehlung in der Reiterleiste ("2 · 1 ohne
+ * Tag") steht genau dort. Wer an den Geraeten, Uebungen oder Parametern
+ * eines Modells etwas aendert, aendert diese Zahl -- also "layout".
+ *
+ * Der Standardwert bleibt "page", damit die acht Aufrufer, die keine
+ * Reiterleiste ueber sich haben, unveraendert bleiben.
+ */
 async function fuehreAus(
   pfad: string,
   arbeit: (client: Awaited<ReturnType<typeof createServerSupabaseClient>>) => Promise<void>,
+  art: "page" | "layout" = "page",
 ): Promise<ActionResult> {
   const client = await createServerSupabaseClient();
   try {
@@ -53,7 +65,7 @@ async function fuehreAus(
     console.error("Portal-Aktion fehlgeschlagen:", fehler);
     return { ok: false, error: "Das hat nicht geklappt. Bitte noch einmal." };
   }
-  revalidatePath(pfad);
+  revalidatePath(pfad, art);
   return { ok: true };
 }
 
@@ -98,7 +110,7 @@ export async function modellAendern(
   _prev: unknown,
   formData: FormData,
 ): Promise<ActionResult> {
-  return fuehreAus(`/portal/${studioId}/modelle/${modelId}`, async (client) => {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
     await updateEquipmentModel(client, modelId, {
       name: text(formData, "name"),
       manufacturer: optionalerText(formData, "manufacturer"),
@@ -106,7 +118,7 @@ export async function modellAendern(
       minWeightKg: zahl(formData, "minWeightKg"),
       maxWeightKg: zahl(formData, "maxWeightKg") ?? null,
     });
-  });
+  }, "layout");
 }
 
 export async function fotoHochladen(
@@ -115,7 +127,7 @@ export async function fotoHochladen(
   _prev: unknown,
   formData: FormData,
 ): Promise<ActionResult> {
-  return fuehreAus(`/portal/${studioId}/modelle/${modelId}`, async (client) => {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
     const datei = formData.get("photo");
     if (!(datei instanceof File) || datei.size === 0) {
       throw new DomainError("validation_failed", "Es ist keine Datei ausgewaehlt.");
@@ -126,7 +138,7 @@ export async function fotoHochladen(
       equipmentModelId: modelId,
       bytes: new Uint8Array(await datei.arrayBuffer()),
     });
-  });
+  }, "layout");
 }
 
 export async function parameterAnlegen(
@@ -135,7 +147,7 @@ export async function parameterAnlegen(
   _prev: unknown,
   formData: FormData,
 ): Promise<ActionResult> {
-  return fuehreAus(`/portal/${studioId}/modelle/${modelId}`, async (client) => {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
     const kind = text(formData, "kind") === "enum" ? "enum" : "number";
     await createSettingDefinition(client, {
       equipmentModelId: modelId,
@@ -154,7 +166,7 @@ export async function parameterAnlegen(
               .filter((zeile) => zeile.length > 0)
           : null,
     });
-  });
+  }, "layout");
 }
 
 export async function parameterLoeschen(
@@ -162,9 +174,9 @@ export async function parameterLoeschen(
   modelId: string,
   settingId: string,
 ): Promise<ActionResult> {
-  return fuehreAus(`/portal/${studioId}/modelle/${modelId}`, async (client) => {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
     await deleteSettingDefinition(client, settingId);
-  });
+  }, "layout");
 }
 
 export async function uebungAnlegen(
@@ -173,7 +185,7 @@ export async function uebungAnlegen(
   _prev: unknown,
   formData: FormData,
 ): Promise<ActionResult> {
-  return fuehreAus(`/portal/${studioId}/modelle/${modelId}`, async (client) => {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
     const uebung = await createExercise(client, {
       studioId,
       name: text(formData, "name"),
@@ -187,7 +199,7 @@ export async function uebungAnlegen(
       equipmentModelId: modelId,
       exerciseId: uebung.id,
     });
-  });
+  }, "layout");
 }
 
 export async function uebungLoesen(
@@ -195,9 +207,9 @@ export async function uebungLoesen(
   modelId: string,
   linkId: string,
 ): Promise<ActionResult> {
-  return fuehreAus(`/portal/${studioId}/modelle/${modelId}`, async (client) => {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
     await detachExercise(client, linkId);
-  });
+  }, "layout");
 }
 
 export async function uebungVerschieben(
@@ -205,12 +217,12 @@ export async function uebungVerschieben(
   modelId: string,
   linkIds: string[],
 ): Promise<ActionResult> {
-  return fuehreAus(`/portal/${studioId}/modelle/${modelId}`, async (client) => {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
     await reorderModelExercises(client, {
       equipmentModelId: modelId,
       orderedLinkIds: linkIds,
     });
-  });
+  }, "layout");
 }
 
 /**
@@ -243,12 +255,12 @@ export async function videoBestaetigen(
   linkId: string,
   storagePath: string,
 ): Promise<ActionResult> {
-  return fuehreAus(`/portal/${studioId}/modelle/${modelId}`, async (client) => {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
     await confirmInstructionVideo(client, {
       equipmentModelExerciseId: linkId,
       storagePath,
     });
-  });
+  }, "layout");
 }
 
 export async function geraetAnlegen(
@@ -257,14 +269,14 @@ export async function geraetAnlegen(
   _prev: unknown,
   formData: FormData,
 ): Promise<ActionResult> {
-  return fuehreAus(`/portal/${studioId}/modelle/${modelId}`, async (client) => {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
     await createMachine(client, {
       studioId,
       equipmentModelId: modelId,
       label: text(formData, "label"),
       locationNote: optionalerText(formData, "locationNote"),
     });
-  });
+  }, "layout");
 }
 
 export async function geraetStilllegen(
