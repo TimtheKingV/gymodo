@@ -81,10 +81,15 @@ export function Rail({
 
       <div className={styles.group}>
         <h2 className={styles.groupLabel}>Verwaltung</h2>
+        {/* startsWith, nicht Gleichheit: Leute traegt seit Aufgabe 19 zwei
+            Reiter auf zwei Routen (/leute und /leute/mitarbeiter). Mit
+            Gleichheit verloere die Rail auf dem zweiten Reiter ihre
+            Markierung -- so wie Kurse und Einstellungen es aus demselben
+            Grund schon halten. */}
         <Link
           href={`${basis}/leute`}
-          className={klasse(pfad === `${basis}/leute`)}
-          aria-current={pfad === `${basis}/leute` ? "page" : undefined}
+          className={klasse(pfad.startsWith(`${basis}/leute`))}
+          aria-current={pfad.startsWith(`${basis}/leute`) ? "page" : undefined}
         >
           <span className={styles.navItemTitle}>Leute</span>
           {zahlen.mitglieder === null || zahlen.mitarbeiter === null ? null : (

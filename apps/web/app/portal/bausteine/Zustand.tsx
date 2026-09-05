@@ -19,12 +19,14 @@ export type ZustandArt = "leer" | "fehler" | "keinRecht" | "deaktiviert";
  *                 und Offline gilt im Portal nicht.
  *   deaktiviert   NIE stumm -- daneben steht, was fehlt.
  *   keinRecht     Ein einfaches Mitglied sieht einen Satz, keinen Absturz.
- *                 Traegt bisher zwei Stellen: (schreibtisch)/page.tsx
- *                 (Überblick) und geraete/page.tsx. leute/page.tsx und
- *                 einstellungen/page.tsx sperren Mitglieder ebenso, aber
- *                 noch mit ihrer eigenen, ad-hoc geschriebenen Markup von
- *                 vor diesem Baustein -- die Migration dieser beiden
- *                 steht noch aus, ist nicht Teil dieser Datei.
+ *                 Traegt vier Stellen: (schreibtisch)/page.tsx
+ *                 (Überblick), geraete/page.tsx und seit Aufgabe 19 beide
+ *                 Leute-Reiter (leute/page.tsx und
+ *                 leute/mitarbeiter/page.tsx). Offen bleibt
+ *                 einstellungen/page.tsx -- die sperrt Mitglieder ebenso,
+ *                 aber noch mit ihrer eigenen, ad-hoc geschriebenen
+ *                 Markup von vor diesem Baustein; diese Migration steht
+ *                 noch aus, ist nicht Teil dieser Datei.
  *
  * "Offline" gilt im Portal nicht -- ein Konzept der Halle, nicht des
  * Schreibtischs. "Skelett" gilt nur fuer Medien und ist deshalb kein

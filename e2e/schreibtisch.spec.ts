@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { ortszeitZuInstant } from "@fitretro/domain";
 import { akzentflaechen, hauptlandmarken, zuKleineBedienelemente } from "./helpers/abnahme";
+import { E2E_PASSWORD } from "./helpers/login";
 import { studioMitMitglied, studioMitTrainer } from "./helpers/studio";
 
 /**
@@ -480,4 +481,134 @@ test("Ein neu angelegtes Geraet erscheint ohne Neuladen im Reiter", async ({ pag
   await expect(reiter.getByRole("link", { name: /Einzelne Geräte/ })).toContainText(
     "1 · 1 ohne Tag",
   );
+});
+
+/**
+ * Aufgabe 19: Leute zerfaellt in zwei Reiter auf zwei Routen -- Mitglieder
+ * und Mitarbeiter. Die Mitarbeiterliste ist die Rechteverwaltung
+ * (Struktur-Spec Abschnitt 2) und traegt deshalb die drei Zusicherungen,
+ * die dort Sorgfalt heissen: getrennte Listen, keine Selbstherabstufung,
+ * eine Bestaetigung, die etwas sagt.
+ */
+test("Leute hat zwei Reiter, und beide nennen ihre Zahl", async ({ page }) => {
+  const { studioId } = await studioMitTrainer(page, "leute-reiter");
+  await page.goto(`/portal/${studioId}/leute`);
+
+  const reiter = page.getByRole("navigation", { name: "Leute" });
+  await expect(reiter.getByRole("link", { name: /Mitglieder/ })).toBeVisible();
+  await expect(reiter.getByRole("link", { name: /Mitarbeiter/ })).toBeVisible();
+});
+
+/**
+ * Befund 22, das eigentliche Loch: LeuteActions bot "Zu Mitglied
+ * zurueckstufen" auf jeder Nicht-Inhaber-Zeile an, auch auf der eigenen.
+ * Ein Trainer konnte sich damit selbst das ganze Portal nehmen -- der
+ * Inhaber ist durch setMembershipRole und die Richtlinie doppelt
+ * geschuetzt, die eigene Trainerzeile durch nichts.
+ */
+test("Die eigene Zeile traegt keinen Knopf, der die eigene Rolle nimmt", async ({ page }) => {
+  const { studioId, email } = await studioMitTrainer(page, "leute-selbst");
+  await page.goto(`/portal/${studioId}/leute/mitarbeiter`);
+
+  const eigene = page.locator("li", { hasText: email });
+  await expect(eigene).toBeVisible();
+  await expect(eigene.getByText("Das bist du")).toBeVisible();
+  await expect(eigene.getByRole("button", { name: /herabstufen/i })).toHaveCount(0);
+});
+
+test("Hochstufen sagt vorher, was es bedeutet", async ({ page }) => {
+  const { studioId } = await studioMitTrainer(page, "leute-hochstufen");
+  await page.goto(`/portal/${studioId}/leute/mitarbeiter`);
+
+  // Wortlaut aus LeuteMitarbeiter.dc.html. Beide Saetze stehen dort in
+  // EINEM Textknoten -- zwei Zusicherungen auf dasselbe Element. Das ist
+  // Absicht: der zweite Satz ist der, der am ehesten wegredigiert wird.
+  await expect(
+    page.getByText(/Hochstufen gibt Zugriff auf den ganzen Katalog/),
+  ).toBeVisible();
+  await expect(page.getByText(/Der Studio-Code macht niemanden zum Trainer/)).toBeVisible();
+});
+
+/**
+ * Der eigentliche Zweck dieser Aufgabe -- und das, was die drei Tests
+ * darueber nicht pruefen: dass die beiden Listen wirklich getrennt sind.
+ *
+ * toHaveCount(0) auf der jeweils fremden E-Mail, nicht nur toBeVisible()
+ * auf der richtigen: eine Seite, die weiter beide Rollen in einer Liste
+ * zeigt, waere sonst gruen.
+ *
+ * Beide Zusicherungen laufen ueber den jeweiligen Abschnitt, nicht ueber
+ * die Seite: die eigene E-Mail steht im Fuss der Rail (styles.railEmail)
+ * und ein seitenweites toHaveCount(0) auf die Trainer-Adresse waere schon
+ * daran rot. Und auf dem Reiter Mitarbeiter stehen die Mitglieder ein
+ * zweites Mal -- im Abschnitt "Mitglied hochstufen", der genau dafuer da
+ * ist. Die Zusicherung lautet deshalb: nicht in "Alle Mitarbeiter".
+ */
+test("Ein Mitglied steht im Mitglieder-Reiter und nicht bei den Mitarbeitern", async ({
+  page,
+}) => {
+  const { studioId, admin, email: trainerEmail } = await studioMitTrainer(page, "leute-trennung");
+
+  const mitgliedEmail = `leute-trennung-mitglied-${crypto.randomUUID()}@example.test`;
+  const { data: mitgliedNutzer, error: nutzerFehler } = await admin.auth.admin.createUser({
+    email: mitgliedEmail,
+    password: E2E_PASSWORD,
+    email_confirm: true,
+  });
+  if (nutzerFehler) throw nutzerFehler;
+
+  const { error: mitgliedFehler } = await admin.from("studio_memberships").insert({
+    studio_id: studioId,
+    user_id: mitgliedNutzer.user.id,
+    role: "member",
+  });
+  if (mitgliedFehler) throw mitgliedFehler;
+
+  await page.goto(`/portal/${studioId}/leute`);
+  const mitglieder = page.locator("section").filter({ hasText: "Alle Mitglieder" });
+  await expect(mitglieder.getByRole("listitem").filter({ hasText: mitgliedEmail })).toHaveCount(1);
+  await expect(mitglieder.getByRole("listitem").filter({ hasText: trainerEmail })).toHaveCount(0);
+
+  await page.goto(`/portal/${studioId}/leute/mitarbeiter`);
+  const mitarbeiter = page.locator("section").filter({ hasText: "Alle Mitarbeiter" });
+  await expect(mitarbeiter.getByRole("listitem").filter({ hasText: trainerEmail })).toHaveCount(1);
+  await expect(mitarbeiter.getByRole("listitem").filter({ hasText: mitgliedEmail })).toHaveCount(0);
+});
+
+/**
+ * Die Kehrseite der Entscheidung in LeuteActions.tsx (HochstufenZeile):
+ * beide Leute-Reiter tragen NULL Akzentflaechen.
+ *
+ * Auf Mitglieder ist das unstrittig -- der Reiter legt nichts an. Auf
+ * Mitarbeiter ist es eine Abweichung vom Artboard: das zeichnet "Zum
+ * Trainer machen" in Akzentfarbe, aber nur EIN Mitglied. Bei zwoelf sind
+ * es zwoelf Flaechen, und "genau eine Akzentflaeche je Bildschirm" ist mit
+ * einer wiederholten Zeilenaktion nicht zu haben. Der Praezedenzfall ist
+ * die Tags-Seite aus Aufgabe 5.
+ *
+ * Das Studio traegt hier bewusst mehrere Mitglieder: bei null Mitgliedern
+ * stuende der Abschnitt "Mitglied hochstufen" leer da, und der Test waere
+ * gruen, ohne je einen Knopf gesehen zu haben.
+ */
+test("Beide Leute-Reiter tragen keine Akzentflaeche", async ({ page }) => {
+  const { studioId, admin } = await studioMitTrainer(page, "leute-akzent");
+
+  for (let i = 0; i < 3; i += 1) {
+    const { data: nutzer, error } = await admin.auth.admin.createUser({
+      email: `leute-akzent-m${i}-${crypto.randomUUID()}@example.test`,
+      password: E2E_PASSWORD,
+      email_confirm: true,
+    });
+    if (error) throw error;
+    const { error: mFehler } = await admin
+      .from("studio_memberships")
+      .insert({ studio_id: studioId, user_id: nutzer.user.id, role: "member" });
+    if (mFehler) throw mFehler;
+  }
+
+  for (const reiter of ["/leute", "/leute/mitarbeiter"]) {
+    await page.goto(`/portal/${studioId}${reiter}`);
+    const flaechen = await akzentflaechen(page);
+    expect(flaechen.length, `${reiter} traegt ${flaechen.length}: ${flaechen.join(", ")}`).toBe(0);
+  }
 });

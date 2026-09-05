@@ -217,9 +217,16 @@
 
 /* Erlaeuterung: erklaerender Fliesstext unter einem Abschnitt -- Inhalt,
    nicht Dekoration (Tags.dc.html). Werte aus dem Artboard: 13px, 1.45,
-   62ch. */
+   62ch.
+
+   text-muted, nicht das text-faint des Artboards (Aufgabe 19): dieser
+   Baustein traegt seit den Leute-Reitern die Datenschutzgrenze und den
+   Satz, der das Hochstufen erklaert -- Pflichttext, und Designsystem 2
+   verbietet dafuer 3,6 : 1 (Befund 19 und 29, derselbe Schnitt wie in
+   Produktgrenze.tsx). Der Baustein heisst "Erlaeuterung", weil er
+   erklaert; was erklaert, muss lesbar sein. */
 .erlaeuterung {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: 13px;
   line-height: 1.45;
   margin-top: var(--s16);
