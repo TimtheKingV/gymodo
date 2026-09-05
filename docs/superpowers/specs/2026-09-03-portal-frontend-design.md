@@ -239,7 +239,16 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 
     **Kleinster Eingriff:** Token-Tausch `--text-faint` → `--text-muted` (7,4 : 1), Größe und Layout unverändert, eine Zeile je Datei. **Nicht einzeln reparieren** — eine von drei Stellen zu heilen erzeugt Inkonsistenz, ohne den systemischen Fehler zu lösen. Stattdessen ein Baustein `Produktgrenze`, der Wortlaut und Kontrast an einer Stelle trägt: Wiederholung **plus** Regel, das Kriterium aus Abschnitt 1. Fällig in Aufgabe 14 (Überblick); `/t/<token>` zieht Aufgabe 21 nach.
 
-20. **Der Fußsatz von `LeuteMitglieder.dc.html` ist seit `0033` überholt.** Er sagt, die Richtlinien der Datenbank ließen Mitarbeiter noch an Sätze, Gewichte und Verläufe heran. Seit dem 2. September haben die vier Policies die Staff-Klausel verloren. Der Satz beschreibt einen Vorbehalt, den es nicht mehr gibt, und macht die Zusicherung dadurch schwächer als die Wirklichkeit.
+20. **Der Vorbehalt zur Datenschutzgrenze ist seit `0033` überholt — an zwei Stellen, nicht einer.** Beide Artboards tragen ihn:
+
+    | Ort | Wortlaut |
+    | --- | --- |
+    | `LeuteMitglieder.dc.html`, Fußzeile | *„Heute lassen die Richtlinien der Datenbank Mitarbeiter noch an Sätze, Gewichte und Verläufe heran; das Portal zeigt sie nirgends, verhindert ist es damit aber nicht."* |
+    | `LeuteMitarbeiter.dc.html`, Untertitel | *„Zugriff auf alles außer den Trainingsdaten der Mitglieder — so ist es gedacht; die Datenbank setzt diese Grenze noch nicht durch."* |
+
+    `0033_datenschutzgrenze.sql` nimmt vier Policies (aus `0012` bis `0015`) die Klausel `or public.is_studio_staff(...)`; seither gilt `user_id = auth.uid()`. Der Vorbehalt beschreibt etwas, das es nicht mehr gibt, und macht die Zusicherung **schwächer als die Wirklichkeit**. Ersatz für beide: *„Trainingsdaten eines Mitglieds sieht nur das Mitglied selbst. Das Portal legt eine Mitgliedschaft an und beendet sie, sonst nichts."*
+
+    **Nicht absoluter formulieren als das.** `0034` legt `studio_overview` an, die Personal weiterhin **Summen** über das Studio herausgibt — der Überblick lebt davon. Je *Person* sieht Personal nichts; *„das Portal zeigt keine Trainingsdaten"* wäre falsch. **Fällig in Aufgabe 19.**
 
 21. *(steht weiter oben, bei den Befunden aus dem Bauen)*
 
