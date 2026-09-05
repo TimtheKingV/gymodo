@@ -241,11 +241,14 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 
 19. **Die Produktgrenze steht in einem Kontrast, den das Designsystem für sie verbietet.** Designsystem §2: *„`text-faint` ist damit nur für Text ≥ 15 pt oder nicht-tragende Information zulässig — **nie für etwas, das gelesen werden muss**."* Designsystem §10 erklärt genau diesen Satz für verbindlich und sichtbar. Gemessen an drei Stellen, alle in `text-faint` (3,6 : 1):
 
-    | Ort | Wie |
-    | --- | --- |
-    | `Start.dc.html`, Fußzeile | `13px`, `#5c636e` |
-    | `(schreibtisch)/page.tsx:304` über `.hint` | `12px`, `var(--text-faint)` |
-    | `t/[token]/page.tsx:230` über `.grenze` | `13px`, `var(--text-faint)` |
+    | Ort | Wie | Stand |
+    | --- | --- | --- |
+    | `Start.dc.html`, Fußzeile | `13px`, `#5c636e` | Artboard, bleibt |
+    | `(schreibtisch)/page.tsx` über `.hint` | `12px`, `var(--text-faint)` | ✅ behoben in Aufgabe 14 (Baustein `Produktgrenze`) |
+    | `t/[token]/page.tsx` über `.grenze` | `13px`, `var(--text-faint)` | offen — `fallback.module.css:178` |
+    | `app/page.tsx` (Landeseite) über `.fuss` | `13px`, `var(--text-faint)` | offen — `landeseite.module.css:151` |
+
+    **Nachtrag vom 5. September: es waren nie drei Orte, es sind vier.** Die Landeseite kam in Aufgabe 10 dazu und trägt die Produktgrenze ebenfalls in `text-faint`. Der Implementierer hat das damals **nicht übersehen**, sondern bewusst so gebaut und in einem sieben Zeilen langen Kommentar begründet: das Artboard setze es so, und er übernehme es wörtlich, statt eigenmächtig aufzuhellen. Das war die richtige Haltung an der falschen Stelle — die Schlichtungsregel greift hier ja gerade nicht, weil Artboard und Code gemeinsam abweichen. **Beide offenen Orte fällig in Aufgabe 21.**
 
     **Hier greift die übliche Schlichtungsregel nicht.** Sonst gewinnt bei Streit zwischen Entwurf und laufender Oberfläche der Code — aber hier weichen Artboard **und** Code gemeinsam ab, es gibt kein Korrektiv. Damit ist das Designsystem die einzige normative Quelle, die den Fall regelt, und es ist eindeutig. Es geht dabei um den Satz, der sagt, dass gymodo nichts misst und keine Gesundheitsempfehlung gibt.
 
