@@ -159,7 +159,7 @@ Randfälle zählen nicht mit: die aktive Rail-Zeile ist eine 2-px-Kante, der Fok
 
 ## 5. Befunde
 
-Neunundzwanzig Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, sechs beim Bauen und beim Vorabgleich der noch offenen Aufgaben. Keine wird still aufgelöst.
+Vierunddreißig Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, sechs beim Bauen und beim Vorabgleich der noch offenen Aufgaben. Keine wird still aufgelöst.
 
 ### Fehler im Code, hier zu heilen
 
@@ -283,6 +283,26 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 28. **Zwei Aktionsdateien mit identischen Exportnamen und teils anderen Signaturen.** `apps/web/app/portal/actions.ts` (Schreibtisch) und `apps/web/app/portal/[studioId]/einrichten/actions.ts` (Halle) exportieren beide `parameterAnlegen`, `parameterLoeschen`, `uebungAnlegen`, `uebungVerschieben` — getrennt implementiert, und `uebungVerschieben` nimmt in der Halle eine andere Parameterliste (`studioId, machineId, modelId, reihenfolge`). Gefunden vom Implementierer der Aufgabe 17, nachdem **mein** Brief behauptet hatte, `einrichten.spec.ts` sei ein Netz für die Schreibtisch-Aktionen. Ist es nicht: kein Testlauf deckt heute beide Fassungen, und ein Import aus der falschen Datei ist ein Tippfehler ohne Typfehler. **Vertagt** — eine Zusammenlegung ist ein Umbau der Aktionsschicht, keine Gestaltungsfrage, und Phase 5 fasst die Aktionen nicht an.
 
 29. **`.sectionNote` trägt denselben verbotenen Kontrast wie die Produktgrenze.** Die Klasse setzt `font-size: 12px` mit `color: var(--text-faint)` (`portal.module.css:193`) und trägt die erklärenden Sätze unter den Abschnittsüberschriften — *„Was ein Mitglied am Gerät einstellt und sich merken soll."*, *„Die Reihenfolge bestimmt, was am Gerät zuerst vorgeschlagen wird."* Das sind tragende Sätze, keine Nebeninformation; Designsystem §2 verbietet `text-faint` dafür (siehe Befund 19). Der Implementierer der Aufgabe 17 ist der Falle ausgewichen, indem er für die neuen Reiter `.pageLead` (`--text-muted`) genommen hat — die **Klasse** bleibt aber unrepariert und wird beim nächsten Bildschirm wieder gegriffen. **Fällig in Aufgabe 21**, zusammen mit den beiden restlichen Orten aus Befund 19.
+
+### Aus dem Abgleich der Halle und des Fallbacks (Aufgabe 21)
+
+Verfahren: aus jedem der 16 `Telefon*`-Artboards und den drei `Fallback*`-Artboards die Textknoten ab 35 Zeichen gezogen und gegen den gesamten `apps/web/app`-Baum gesucht. Der Großteil der Treffer war Beispieldatenmaterial (*„Technogym · 2 Geräte · 2 Übungen"*, *„Charge 7 · geliefert Mi., 12. August 2026"*) oder Umformulierung — beides kein Befund. Übrig bleiben fünf.
+
+**Die 16 Telefon-Bildschirme werden nicht angefasst.** Sie sind in Phase 3 gebaut und gestaltet; 30 bis 32 sind aufgeschrieben, nicht behoben.
+
+30. **`TelefonUebungNeu` erklärt die Reichweite einer Übung, der Code nicht.** Fehlender Satz: *„Die Übung steht danach dem ganzen Studio zur Verfügung und lässt sich an weitere Modelle hängen."* Das ist keine Verzierung: `createExercise` nimmt eine `studioId`, `attachExerciseToModel` hängt sie danach an ein Modell — die Übung gehört dem Studio, nicht dem Gerät, an dem sie entstand. Wer das nicht weiß, legt sie ein zweites Mal an. **Aufgeschrieben, nicht behoben.**
+
+31. **`TelefonUebungen` verspricht die Wiederaufnahme des Uploads, und der Code hält sie — sagt es aber nicht.** Fehlender Satz: *„Bricht die Verbindung ab, setzt der nächste Versuch hier fort — er fängt nicht von vorn an."* `VideoUpload.tsx:89` ruft `resumeFromPreviousUpload`, die Zusage stimmt also. In einer Halle mit schlechtem Empfang ist das genau der Satz, der einen Trainer nicht abbrechen lässt. **Aufgeschrieben, nicht behoben.**
+
+32. **`TelefonUploads` beschreibt eine Warteschlange, die es so nicht gibt.** Der Satz *„Fotos gehen vor den Videos: sie sind klein, und ohne Foto erkennt niemand das Gerät"* setzt eine gemeinsame Schlange voraus. Die gibt es nicht: `Uploads.tsx` führt eine reine Videoschlange (`Auftrag` trägt `modelId`, `linkId`, bestätigt über `videoBestaetigen`), Fotos laufen über die Server-Aktion `fotoHochladen` und stehen nie darin. Der Effekt stimmt zufällig — ein Foto ist synchron und klein und damit faktisch zuerst durch — aber der Mechanismus, den der Satz erklärt, existiert nicht. **Hier ist der Entwurf falsch, nicht der Code.** Aufgeschrieben, nicht behoben.
+
+*Nicht neu:* `TelefonFertig` zeichnet den Probe-Scan (*„Zeigt dir, was ein Mitglied sieht, wenn es hier ankommt."*), und der fehlt im Code. Das steht bereits als offener Punkt im Gesamtfahrplan Abschnitt 6 — er bräuchte den Klartext-Token, den `0026` dem Portal entzieht.
+
+**`/t/<token>` gehört anders als die Telefon-Bildschirme zum Auftrag dieser Phase** (der Auftrag nennt die Fallback-Seite ausdrücklich unter dem, was zu gestalten ist). Beide folgenden Befunde sind Halbsätze, und in beiden Fällen fehlt die Hälfte, die trägt.
+
+33. **`FallbackInaktiv`: der Satz sagt, wohin man sich wendet, aber nicht wozu.** Code (`t/[token]/page.tsx:71`): *„Bitte wende dich an dein Studio."* Artboard: *„Wende dich an dein Studio — dort kann der Aufkleber neu vergeben werden."* Der zweite Halbsatz sagt, dass das Problem lösbar ist und wie. Ohne ihn liest sich die Seite wie eine Sackgasse.
+
+34. **`FallbackGeraet`: der Android-Nutzer erfährt nicht, dass er nichts verpasst.** Code (Zeile 146): *„Zurzeit nur für iPhone."* Artboard: *„Zurzeit nur für iPhone. Die Einweisung oben funktioniert auf jedem Gerät und ohne App."* Der zweite Satz ist der wichtigere: die Seite ist genau für den Fall gebaut, dass jemand ohne App vor dem Gerät steht — der Kommentar im Kopf der Datei sagt es selbst (*„Der Nutzen kommt vor der Installationsaufforderung — auch auf Android, wo es die App nicht gibt"*). Der Code hält sich an diese Absicht in der Anordnung und widerspricht ihr im Wortlaut.
 
 ---
 
