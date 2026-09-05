@@ -159,7 +159,7 @@ Randfälle zählen nicht mit: die aktive Rail-Zeile ist eine 2-px-Kante, der Fok
 
 ## 5. Befunde
 
-Vierzig Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, sechs beim Bauen und beim Vorabgleich der noch offenen Aufgaben. Keine wird still aufgelöst.
+Einundvierzig Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, sechs beim Bauen und beim Vorabgleich der noch offenen Aufgaben. Keine wird still aufgelöst.
 
 ### Fehler im Code, hier zu heilen
 
@@ -329,6 +329,14 @@ Verfahren: aus jedem der 16 `Telefon*`-Artboards und den drei `Fallback*`-Artboa
 39. **`?alle=1` trägt keinen Namen je Liste.** Die Kürzung im Reiter *Mitglieder* klappt über einen Suchparameter auf — richtig serverseitig, ohne Client-Rand. Der Parameter benennt aber nicht, **welche** Liste er meint. Solange ein Reiter höchstens eine kürzbare Liste hat, trägt das; der Reiter *Mitarbeiter* hat schon zwei Abschnitte, und sobald einer davon ebenfalls kürzt, klappen beide zugleich auf. **Vertagt**, mit der Notiz: der nächste, der eine zweite Kürzung anlegt, benennt den Parameter.
 
 40. **`StudioMember` hat kein Namensfeld.** `LeuteMitarbeiter.dc.html` zeichnet Anzeigenamen über den E-Mail-Adressen (*„Inhaber · Tim"*, *„Trainer · Marek T."*). `packages/domain/src/people.ts:25` trägt `userId`, `email`, `role`, `joinedAt` — keinen Namen. Die Liste zeigt deshalb E-Mail-Adressen, die im Testbetrieb UUIDs enthalten und im Studiobetrieb immerhin lesbar sind. Ein Namensfeld ist eine Migration. **Vertagt.**
+
+### Aus der Strukturaufnahme der Kurse-Bildschirme (Vorbereitung Aufgabe 22)
+
+41. **Die fünf Kurse-Routen tragen alle eine zweite `<main>`-Landmarke — Befund 1, an der einen Stelle, die ihn nicht mitbekommen hat.** Aufgabe 4 hat `<main>` aus den Schreibtischseiten entfernt und in `(schreibtisch)/layout.tsx` gezogen. Die Kurse-Seiten entstanden zur selben Zeit auf `phase4-kurse`, gegen das **alte** Layout, und kamen mit dem Merge herein: **acht `<main className={styles.content}>` in fünf Dateien**, jede davon im `<main>` des Layouts.
+
+    Zwei Folgen, und die zweite ist die sichtbare: ein Screenreader zählt zwei Hauptbereiche und kann bei *„zum Hauptteil springen"* nicht sagen, welcher gemeint ist — und `.content` trägt `padding: var(--s32) var(--s40) var(--s48)`, das damit **doppelt** liegt. Der Kursplan steht heute um 40 px weiter innen als jede andere Seite des Portals.
+
+    Kein Test schlägt an, weil `hauptlandmarken()` (`e2e/helpers/abnahme.ts`) auf keiner Kurse-Route läuft. **Fällig in Aufgabe 22**, zusammen mit einem Test je Route.
 
 ---
 
