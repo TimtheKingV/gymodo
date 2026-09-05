@@ -159,7 +159,7 @@ Randfälle zählen nicht mit: die aktive Rail-Zeile ist eine 2-px-Kante, der Fok
 
 ## 5. Befunde
 
-Vierunddreißig Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, sechs beim Bauen und beim Vorabgleich der noch offenen Aufgaben. Keine wird still aufgelöst.
+Vierzig Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, sechs beim Bauen und beim Vorabgleich der noch offenen Aufgaben. Keine wird still aufgelöst.
 
 ### Fehler im Code, hier zu heilen
 
@@ -303,6 +303,29 @@ Verfahren: aus jedem der 16 `Telefon*`-Artboards und den drei `Fallback*`-Artboa
 33. **`FallbackInaktiv`: der Satz sagt, wohin man sich wendet, aber nicht wozu.** Code (`t/[token]/page.tsx:71`): *„Bitte wende dich an dein Studio."* Artboard: *„Wende dich an dein Studio — dort kann der Aufkleber neu vergeben werden."* Der zweite Halbsatz sagt, dass das Problem lösbar ist und wie. Ohne ihn liest sich die Seite wie eine Sackgasse.
 
 34. **`FallbackGeraet`: der Android-Nutzer erfährt nicht, dass er nichts verpasst.** Code (Zeile 146): *„Zurzeit nur für iPhone."* Artboard: *„Zurzeit nur für iPhone. Die Einweisung oben funktioniert auf jedem Gerät und ohne App."* Der zweite Satz ist der wichtigere: die Seite ist genau für den Fall gebaut, dass jemand ohne App vor dem Gerät steht — der Kommentar im Kopf der Datei sagt es selbst (*„Der Nutzen kommt vor der Installationsaufforderung — auch auf Android, wo es die App nicht gibt"*). Der Code hält sich an diese Absicht in der Anordnung und widerspricht ihr im Wortlaut.
+
+### Aus dem Bau der Rechteverwaltung (Aufgabe 19)
+
+35. **Der Riegel gegen die Selbstherabstufung fehlt in der Richtlinie, nicht nur in der Oberfläche — und die Schwesterrichtlinie hat ihn.** Befund 22 ist in Aufgabe 19 **verdeckt**, nicht behoben: die eigene Zeile trägt jetzt *Das bist du* statt eines Knopfes. Ein direkter Aufruf kommt weiterhin durch. Die Ursache liegt in `0031`:
+
+    | Richtlinie | Bedingung |
+    | --- | --- |
+    | `memberships_delete_staff` | `is_studio_staff(...)` **und** `role <> 'owner'` **und** `user_id <> auth.uid()` |
+    | `memberships_update_staff` | `is_studio_staff(...)` **und** `role <> 'owner'` — die dritte Klausel fehlt |
+
+    Ein Trainer kann sich also nicht selbst *entfernen*, aber sehr wohl selbst *herabstufen*. Dass die beiden Richtlinien direkt untereinander stehen und sich in genau dieser einen Zeile unterscheiden, spricht für ein Versehen, nicht für eine Absicht. In `e2e/leute.spec.ts` steht seit `65eb8b5` ein Test, der es über den anon-Client nachweist; er wird rot, sobald der Riegel kommt.
+
+    **Der Riegel ist eine Migration, und Phase 5 baut keine.** Die Nummern laufen nach `0038` (Phase 4) bei `0039`. Das ist der Befund, nicht die stille Nebenbaustelle.
+
+36. **`.sectionNote` hat einen Zwilling.** `bausteine.module.css:123` setzt für `.abschnittNotiz` dieselben `12px` in `--text-faint` wie `portal.module.css:193` für `.sectionNote` — derselbe verbotene Kontrast aus Befund 29, an einer zweiten Stelle. Wer die eine heilt und die andere übersieht, hat die Falle nur verschoben. **Fällig in Aufgabe 21, zusammen mit Befund 19 und 29.**
+
+37. **Kein Link in dieser Anwendung ist als Link erkennbar.** `globals.css:97` setzt `a { color: inherit; text-decoration: none; }`, und in der ganzen Anwendung kommt `underline` **kein einziges Mal** vor. Für Rail, Reiter und Knopf-Links ist das richtig — sie tragen eigene Klassen und sehen aus wie Bedienelemente. Für einen Link **im Fließtext** bleibt dagegen null Unterschied zum Text daneben: weder Farbe noch Unterstreichung. Betroffen sind **16 Stellen**, davon **15 in den Kurse-Routen** (die ungestaltete Phase-4-Fläche, fällig in Aufgabe 22) und eine im Reiter *Mitglieder* (*„Mitglieder treten über den Studio-Code bei — Einstellungen"*, fällig in Aufgabe 21).
+
+38. **`AktionsKnopf` hält seinen Bestätigungszustand je Knopf.** Auf einer Zeile mit zwei Aktionen — etwa *Tag scannen* und *Stilllegen* im Reiter *Einzelne Geräte* — können beide gleichzeitig in der zweiten Stufe stehen und warten. Wer die falsche trifft, hat sie nicht versehentlich ausgelöst, aber der Bildschirm zeigt zwei offene Rückfragen nebeneinander, und keine sagt, welche zu welcher Zeile gehört. **Vertagt** — der Eingriff wäre ein gemeinsamer Zustand über die Zeile, und das ist ein Umbau von `Form.tsx`, nicht Gestaltung.
+
+39. **`?alle=1` trägt keinen Namen je Liste.** Die Kürzung im Reiter *Mitglieder* klappt über einen Suchparameter auf — richtig serverseitig, ohne Client-Rand. Der Parameter benennt aber nicht, **welche** Liste er meint. Solange ein Reiter höchstens eine kürzbare Liste hat, trägt das; der Reiter *Mitarbeiter* hat schon zwei Abschnitte, und sobald einer davon ebenfalls kürzt, klappen beide zugleich auf. **Vertagt**, mit der Notiz: der nächste, der eine zweite Kürzung anlegt, benennt den Parameter.
+
+40. **`StudioMember` hat kein Namensfeld.** `LeuteMitarbeiter.dc.html` zeichnet Anzeigenamen über den E-Mail-Adressen (*„Inhaber · Tim"*, *„Trainer · Marek T."*). `packages/domain/src/people.ts:25` trägt `userId`, `email`, `role`, `joinedAt` — keinen Namen. Die Liste zeigt deshalb E-Mail-Adressen, die im Testbetrieb UUIDs enthalten und im Studiobetrieb immerhin lesbar sind. Ein Namensfeld ist eine Migration. **Vertagt.**
 
 ---
 
