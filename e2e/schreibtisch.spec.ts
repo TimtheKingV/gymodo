@@ -185,3 +185,19 @@ test("Ein Kurstermin dieser Woche erscheint mit Datum und Uhrzeit in der Studio-
   ).toBeVisible();
   await expect(page.getByText(/Marek T\. · Kursraum 2/)).toBeVisible();
 });
+
+test("Ein Mitglied sieht die Geräteliste nicht", async ({ page }) => {
+  const { studioId } = await studioMitMitglied(page, "geraete-recht");
+  await page.goto(`/portal/${studioId}/geraete`);
+
+  await expect(page.getByRole("heading", { name: "Geräte" })).toBeVisible();
+  await expect(page.getByText(/Trainern und Inhabern vorbehalten/)).toBeVisible();
+});
+
+test("Die Bedienelemente der Geräteliste sind gross genug", async ({ page }) => {
+  const { studioId } = await studioMitTrainer(page, "geraete-treffer");
+  await page.goto(`/portal/${studioId}/geraete`);
+
+  const zuKlein = await zuKleineBedienelemente(page, 40);
+  expect(zuKlein, `zu klein: ${zuKlein.join(", ")}`).toHaveLength(0);
+});

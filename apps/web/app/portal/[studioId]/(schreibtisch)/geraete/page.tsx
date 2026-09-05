@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AktionsFormular, Feld } from "../../../Form";
 import { modellAnlegen } from "../../../actions";
-import { erreichbarkeit, ladeKatalog } from "../../catalog";
+import { erreichbarkeit, ladeKatalog, railZahlen } from "../../catalog";
 import { Seite } from "../../../bausteine/Seite";
 import { Abschnitt } from "../../../bausteine/Abschnitt";
 import { Zeile, Zeilen } from "../../../bausteine/Zeile";
@@ -24,7 +24,26 @@ export default async function GeraetePage({
   params: Promise<{ studioId: string }>;
 }) {
   const { studioId } = await params;
-  const katalog = await ladeKatalog(studioId);
+  const [katalog, zahlen] = await Promise.all([ladeKatalog(studioId), railZahlen(studioId)]);
+
+  // getStudioCatalog wirft fuer ein einfaches Mitglied kein "unauthorized"
+  // -- RLS gibt ihm schlicht weniger (oder gar keine) Zeilen zurueck, die
+  // Modellliste sieht dann bloss leer statt gesperrt aus. Die Rolle steht
+  // trotzdem schon fest: railZahlen() hat sie ueber listStudioMembers
+  // bereits geprueft und traegt sie als mitglieder === null, wenn das Konto
+  // sie nicht sehen darf (siehe RailZahlen in catalog.ts). Dieselbe Frage
+  // wird hier nicht zweimal gestellt, nur wiederverwendet.
+  if (zahlen.mitglieder === null) {
+    return (
+      <Seite titel="Geräte">
+        <Zustand
+          art="keinRecht"
+          titel="Die Geräteliste ist Trainern und Inhabern vorbehalten."
+          naechsterSchritt="Welche Geräte frei sind, siehst du in der App, nicht hier."
+        />
+      </Seite>
+    );
+  }
 
   return (
     <Seite
