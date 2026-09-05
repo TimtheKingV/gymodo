@@ -21,6 +21,40 @@ function heutigesOrtsdatum(zeitzone: string): { jahr: number; monat: number; tag
   return { jahr: wert("year"), monat: wert("month"), tag: wert("day") };
 }
 
+/** Der Wochentag eines Ortsdatums, 0 = Sonntag -- wie wochentag() in
+ * (schreibtisch)/kurse/woche.ts, hier dupliziert (Anwendungscode, kein
+ * Testhelfer). */
+function ortsWochentag(jahr: number, monat: number, tag: number): number {
+  return new Date(Date.UTC(jahr, monat - 1, tag)).getUTCDay();
+}
+
+/**
+ * Der Montag der laufenden Kalenderwoche, in derselben Zeitzone gerechnet
+ * wie wochenFenster() -- unabhaengig davon, an welchem Wochentag dieser
+ * Test laeuft.
+ */
+function montagDieserWoche(zeitzone: string): { jahr: number; monat: number; tag: number } {
+  const heute = heutigesOrtsdatum(zeitzone);
+  const versatz = (ortsWochentag(heute.jahr, heute.monat, heute.tag) + 6) % 7;
+  const montag = new Date(Date.UTC(heute.jahr, heute.monat - 1, heute.tag - versatz));
+  return { jahr: montag.getUTCFullYear(), monat: montag.getUTCMonth() + 1, tag: montag.getUTCDate() };
+}
+
+/**
+ * Mittwoch derselben Woche -- sicher in der Mitte des Fensters, egal an
+ * welchem Wochentag der Test laeuft (anders als "heute", das an einem
+ * Sonntag kurz vor 23:30 am Fensterrand gelegen haette).
+ */
+function mittwochDieserWoche(zeitzone: string): { jahr: number; monat: number; tag: number } {
+  const montag = montagDieserWoche(zeitzone);
+  const mittwoch = new Date(Date.UTC(montag.jahr, montag.monat - 1, montag.tag + 2));
+  return {
+    jahr: mittwoch.getUTCFullYear(),
+    monat: mittwoch.getUTCMonth() + 1,
+    tag: mittwoch.getUTCDate(),
+  };
+}
+
 test("Ein frisches Studio zeigt keine vier Nullen, sondern einen Anfang", async ({ page }) => {
   const { studioId } = await studioMitTrainer(page, "ueberblick-leer");
   await page.goto(`/portal/${studioId}`);
@@ -38,20 +72,22 @@ test("Der Ueberblick nennt die Produktgrenze und die Datenschutzgrenze", async (
 });
 
 /**
- * Befund 19 (Fix-Runde 1): der Satz war zwar sichtbar, stand aber in
- * text-faint (3,6 : 1) -- ein Kontrast, den Designsystem 2 fuer
- * Pflichttext verbietet. "Sichtbar" allein sichert das nicht zu; erst
- * der Farbvergleich tut es. --text-faint ist #5c636e, im Browser
- * rgb(92, 99, 110) (siehe AKZENT in helpers/abnahme.ts fuer denselben
- * Vergleichsweg mit --accent).
+ * Befund 19 (Fix-Runde 1), geschaerft in Fix-Runde 2: der Satz war zwar
+ * sichtbar, stand aber in text-faint (3,6 : 1) -- ein Kontrast, den
+ * Designsystem 2 fuer Pflichttext verbietet. "Sichtbar" allein sichert
+ * das nicht zu; erst der Farbvergleich tut es. Geprueft wird auf
+ * Gleichheit mit dem ERWARTETEN Wert (--text-muted, #9ba3af, im Browser
+ * rgb(155, 163, 175)), nicht nur auf Ungleichheit mit dem verbotenen
+ * --text-faint (rgb(92, 99, 110)) -- sonst bliebe ein anderer, ebenso zu
+ * blasser Ton unentdeckt.
  */
-test("Die Produktgrenze steht nicht im verbotenen Kontrast", async ({ page }) => {
+test("Die Produktgrenze steht in text-muted", async ({ page }) => {
   const { studioId } = await studioMitTrainer(page, "ueberblick-kontrast");
   await page.goto(`/portal/${studioId}`);
 
   const satz = page.getByText(/gymodo misst nichts/);
   const farbe = await satz.evaluate((el) => getComputedStyle(el).color);
-  expect(farbe).not.toBe("rgb(92, 99, 110)");
+  expect(farbe).toBe("rgb(155, 163, 175)");
 });
 
 test("Ein Mitglied sieht den Ueberblick nicht, aber auch keinen Absturz", async ({ page }) => {
@@ -72,13 +108,27 @@ test("Der Ueberblick traegt hoechstens eine Akzentflaeche", async ({ page }) => 
 });
 
 /**
- * Die eine Zusicherung, die am meisten wert ist (Fix-Runde 1, Befund 1):
- * Fachschichtabfrage (listCourseWeek), Fensterberechnung (wochenFenster)
- * und Zeitzonenformatierung greifen hier gemeinsam ineinander. Die
- * Studio-Zeitzone ist bewusst weder Europe/Berlin (der Default) noch UTC
- * (die Zeitzone der Datenbank) -- ein Fehler, der Ortszeit mit
- * Serverzeit verwechselt, faellt sonst nur an einer Testmaschine auf,
- * deren lokale Zeitzone zufaellig uebereinstimmt.
+ * Die eine Zusicherung, die am meisten wert ist (Fix-Runde 1, Befund 1),
+ * geschaerft in Fix-Runde 2: Fachschichtabfrage (listCourseWeek),
+ * Fensterberechnung (wochenFenster) und Zeitzonenformatierung greifen
+ * hier gemeinsam ineinander. Die Studio-Zeitzone ist bewusst weder
+ * Europe/Berlin (der Default) noch UTC (die Zeitzone der Datenbank) --
+ * ein Fehler, der Ortszeit mit Serverzeit verwechselt, faellt sonst nur
+ * an einer Testmaschine auf, deren lokale Zeitzone zufaellig
+ * uebereinstimmt.
+ *
+ * Der Termin liegt bewusst um 23:30 Ortszeit, nicht um 10 Uhr: America/
+ * New_York ist im September UTC-4, und 23:30 Ortszeit faellt damit auf
+ * 03:30 UTC des naechsten Tages -- Kalendertag UND Wochentag
+ * unterscheiden sich zwischen den Zonen. Eine Implementierung, die das
+ * Datum still gegen UTC statt gegen die Studio-Zeitzone formatiert,
+ * zeigte hier den falschen Wochentag und das falsche Datum; bei einem
+ * Termin um 10 Uhr waere der Kalendertag in beiden Zonen derselbe
+ * gewesen, und der Fehler waere unentdeckt geblieben.
+ *
+ * Mittwoch dieser Woche, nicht "heute": 23:30 an einem Sonntag laege am
+ * Fensterrand (Fix-Runde 2, Befund 2). Mittwoch ist an jedem
+ * Wochentag, an dem dieser Test laeuft, sicher innerhalb der Woche.
  */
 test("Ein Kurstermin dieser Woche erscheint mit Datum und Uhrzeit in der Studio-Zeitzone", async ({
   page,
@@ -104,11 +154,8 @@ test("Ein Kurstermin dieser Woche erscheint mit Datum und Uhrzeit in der Studio-
     .single();
   if (vorlageFehler) throw vorlageFehler;
 
-  // "Heute, 10 Uhr Ortszeit" liegt an jedem Wochentag im Montag-Sonntag-
-  // Fenster der laufenden Kalenderwoche -- unabhaengig davon, an welchem
-  // Wochentag dieser Test laeuft.
-  const { jahr, monat, tag } = heutigesOrtsdatum(zeitzone);
-  const beginn = ortszeitZuInstant({ jahr, monat, tag, stunde: 10, minute: 0 }, zeitzone);
+  const { jahr, monat, tag } = mittwochDieserWoche(zeitzone);
+  const beginn = ortszeitZuInstant({ jahr, monat, tag, stunde: 23, minute: 30 }, zeitzone);
 
   const { error: terminFehler } = await admin.from("course_sessions").insert({
     studio_id: studioId,
@@ -134,7 +181,7 @@ test("Ein Kurstermin dieser Woche erscheint mit Datum und Uhrzeit in der Studio-
     timeZone: zeitzone,
   });
   await expect(
-    page.getByText(`${datumOrtszeit} · 10:00 · Kraftzirkel`),
+    page.getByText(`${datumOrtszeit} · 23:30 · Kraftzirkel`),
   ).toBeVisible();
   await expect(page.getByText(/Marek T\. · Kursraum 2/)).toBeVisible();
 });
