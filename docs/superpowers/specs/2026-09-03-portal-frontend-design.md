@@ -159,7 +159,7 @@ Randfälle zählen nicht mit: die aktive Rail-Zeile ist eine 2-px-Kante, der Fok
 
 ## 5. Befunde
 
-Einundvierzig Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, sechs beim Bauen und beim Vorabgleich der noch offenen Aufgaben. Keine wird still aufgelöst.
+Zweiundvierzig Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, sechs beim Bauen und beim Vorabgleich der noch offenen Aufgaben. Keine wird still aufgelöst.
 
 ### Fehler im Code, hier zu heilen
 
@@ -337,6 +337,10 @@ Verfahren: aus jedem der 16 `Telefon*`-Artboards und den drei `Fallback*`-Artboa
     Zwei Folgen, und die zweite ist die sichtbare: ein Screenreader zählt zwei Hauptbereiche und kann bei *„zum Hauptteil springen"* nicht sagen, welcher gemeint ist — und `.content` trägt `padding: var(--s32) var(--s40) var(--s48)`, das damit **doppelt** liegt. Der Kursplan steht heute um 40 px weiter innen als jede andere Seite des Portals.
 
     Kein Test schlägt an, weil `hauptlandmarken()` (`e2e/helpers/abnahme.ts`) auf keiner Kurse-Route läuft. **Fällig in Aufgabe 22**, zusammen mit einem Test je Route.
+
+42. **`.hint` ist der dritte Zwilling.** Nach `.sectionNote` (Befund 29) und `.abschnittNotiz` (Befund 36) setzt auch `portal.module.css:291` `12px` in `--text-faint` — und trägt damit unter anderem die Passwortregel (*„Mindestens zehn Zeichen …"*) und die Bedeutung der Stornofrist. Beides ist Pflichttext, den jemand lesen muss, und damit genau der Fall, den Designsystem §2 für `text-faint` ausschließt. In Aufgabe 20 **bewusst stehengelassen**, weil der Brief den Umfang auf die beiden benannten Klassen begrenzt hatte und ein stiller dritter Griff dieselbe Sorte Überraschung wäre wie die halbe Heilung bei Befund 18. **Fällig in Aufgabe 21.**
+
+    Nicht zu verwechseln mit der `.hint`-Zeile aus Befund 19: die betraf die Produktgrenze im Überblick und ist über den Baustein `Produktgrenze` erledigt. Die **Klasse** blieb dabei, wie sie war.
 
 ---
 
