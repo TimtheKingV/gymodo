@@ -159,7 +159,7 @@ Randfälle zählen nicht mit: die aktive Rail-Zeile ist eine 2-px-Kante, der Fok
 
 ## 5. Befunde
 
-Neunzehn Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, eine beim Bauen. Keine wird still aufgelöst.
+Vierundzwanzig Abweichungen zwischen Entwurf und laufender Oberfläche — fünfzehn beim Lesen gefunden, drei beim Schreiben des Umsetzungsplans, sechs beim Bauen und beim Vorabgleich der noch offenen Aufgaben. Keine wird still aufgelöst.
 
 ### Fehler im Code, hier zu heilen
 
@@ -240,6 +240,14 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
     **Kleinster Eingriff:** Token-Tausch `--text-faint` → `--text-muted` (7,4 : 1), Größe und Layout unverändert, eine Zeile je Datei. **Nicht einzeln reparieren** — eine von drei Stellen zu heilen erzeugt Inkonsistenz, ohne den systemischen Fehler zu lösen. Stattdessen ein Baustein `Produktgrenze`, der Wortlaut und Kontrast an einer Stelle trägt: Wiederholung **plus** Regel, das Kriterium aus Abschnitt 1. Fällig in Aufgabe 14 (Überblick); `/t/<token>` zieht Aufgabe 21 nach.
 
 20. **Der Fußsatz von `LeuteMitglieder.dc.html` ist seit `0033` überholt.** Er sagt, die Richtlinien der Datenbank ließen Mitarbeiter noch an Sätze, Gewichte und Verläufe heran. Seit dem 2. September haben die vier Policies die Staff-Klausel verloren. Der Satz beschreibt einen Vorbehalt, den es nicht mehr gibt, und macht die Zusicherung dadurch schwächer als die Wirklichkeit.
+
+21. *(steht weiter oben, bei den Befunden aus dem Bauen)*
+
+22. **Ein Trainer kann sich selbst zum Mitglied zurückstufen — und verliert damit das ganze Portal.** `LeuteActions.tsx:44` bietet den Knopf auf jeder Nicht-Inhaber-Zeile an, auch auf der eigenen. Der Inhaber ist doppelt geschützt: `setMembershipRole` nimmt `owner` als Zielrolle gar nicht an, und die Zeile des Inhabers ist von der Richtlinie ausgenommen (`„Diese Mitgliedschaft gibt es nicht, oder sie gehoert dem Inhaber."`). Für die eigene Trainerzeile gibt es keinen solchen Schutz — weder im Web noch in der Domäne. Das Artboard `LeuteMitarbeiter.dc.html` löst es an der Oberfläche: die eigene Zeile trägt *Das bist du* statt eines Knopfes. **Fällig in Aufgabe 19.** Die Seite kennt den eigenen Nutzer heute nicht; sie holt ihn über `client.auth.getUser()` wie `konto/page.tsx:23`. Keine Domain-Änderung, keine Migration.
+
+23. **Die Bestätigung beim Rollenwechsel trägt die Regel nicht, die sie tragen soll.** `LeuteActions.tsx:45` fragt `„Wirklich?"`. Struktur-Spec §2 verlangt für die Mitarbeiterliste ausdrücklich eine *bestätigte Handlung beim Hochstufen* — und das Artboard hat den Satz schon: *„Hochstufen gibt Zugriff auf den ganzen Katalog. Der Studio-Code macht niemanden zum Trainer."* Eine Bestätigung, die nur „Wirklich?" sagt, ist ein Klick mehr ohne eine Information mehr. **Fällig in Aufgabe 19.**
+
+24. **ASCII im sichtbaren deutschen Text, zweimal gefunden.** `LeuteActions.tsx:44` zeigt *„Zu Mitglied zurueckstufen"*; in Aufgabe 16 stand *„unveraendert"* im Hinweis unter dem Fotofeld (behoben in `8d8d976`). Beide Male war die Regel *ASCII nur in Kommentaren* eingehalten worden, wo sie leicht fällt, und übersehen, wo der Text angezeigt wird. Der Rest von `LeuteActions.tsx` ist davon frei — es ist ein einzelnes Wort, nicht ein Muster der Datei. **Fällig in Aufgabe 19.**
 
 ---
 
