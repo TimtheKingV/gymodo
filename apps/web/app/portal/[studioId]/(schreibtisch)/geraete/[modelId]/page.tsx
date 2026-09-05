@@ -106,7 +106,7 @@ export default async function ModellStammdatenPage({
               />
               <span id="photo-hint" className={styles.hint}>
                 JPEG oder PNG, höchstens {MAX_PHOTO_BYTES / 1024 / 1024} MiB. Ein iPhone wandelt
-                HEIC beim Hochladen selbst um. Leer lassen, um das Foto unveraendert zu lassen.
+                HEIC beim Hochladen selbst um. Leer lassen, um das Foto unverändert zu lassen.
               </span>
             </div>
           </div>

@@ -226,11 +226,21 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await page.getByRole("button", { name: "Verbinden" }).click();
   await expect(page.getByText("aktiv")).toBeVisible();
 
-  // Das Geraet ist jetzt erreichbar. Die Anzeige "Geräte im Raum" mit "1
-  // aktiver Tag" lebt seit Aufgabe 16 im Reiter Einzelne Geräte (Aufgabe
-  // 18) -- bis der steht, beweist der Geraete-Screen-Kontext unten dasselbe:
-  // ohne aktiven Tag gaebe es dort kein Gerät und keinen Treffer.
-  //
+  // Das Geraet ist jetzt erreichbar. Die Zeile "Geräte im Raum -- 1 aktiver
+  // Tag" lebt seit Aufgabe 16 im Reiter Einzelne Geräte (Aufgabe 18) und
+  // steht bis dahin nirgends. Der Geraete-Screen-Kontext weiter unten
+  // ersetzt sie NICHT: getTagContext fragt machine_tags direkt ueber den
+  // Token-Hash ab (packages/domain/src/tag-context.ts), waehrend die
+  // gestrichene Zusicherung die Aggregation des Portals prueft
+  // (activeTagCount aus getStudioCatalog, gebuendelt in erreichbarkeit()).
+  // Zwei Codepfade, zwei Fehlerquellen. Ersetzt wird sie deshalb wie in
+  // einrichten.spec.ts durch die Aggregatanzeige auf /geraete -- dieselbe
+  // Groesse, dieselbe Rechnung, nur an der Stelle, wo sie heute steht.
+  await page.goto(`/portal/${studio.id}/geraete`);
+  await expect(
+    page.getByRole("listitem").filter({ hasText: "Latzug" }),
+  ).toContainText("1 Gerät, 1 erreichbar");
+
   // Ohne Bearer-Token bleibt der Kontext verschlossen. Der Tag allein reicht
   // nie -- er ist eine Ortsangabe, kein Ausweis (Spec 10.4).
   const ohneAusweis = await page.request.get(`/api/v1/tags/${token}/context`);
