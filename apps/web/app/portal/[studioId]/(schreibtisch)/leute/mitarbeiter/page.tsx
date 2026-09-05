@@ -1,13 +1,11 @@
-import Link from "next/link";
 import { Abschnitt } from "../../../../bausteine/Abschnitt";
 import { Erlaeuterung } from "../../../../bausteine/Erlaeuterung";
 import { Reiter } from "../../../../bausteine/Reiter";
 import { Seite } from "../../../../bausteine/Seite";
 import { Zeilen } from "../../../../bausteine/Zeile";
 import { Zustand } from "../../../../bausteine/Zustand";
-import { HochstufenZeile, MitarbeiterZeile } from "../LeuteActions";
-import { kuerzen, ladeLeute, leuteReiter, seit } from "../leute";
-import styles from "../../../../portal.module.css";
+import { MitarbeiterZeile, MitgliedHochstufen } from "../LeuteActions";
+import { ladeLeute, leuteReiter, seit } from "../leute";
 
 /**
  * Reiter "Mitarbeiter" (Aufgabe 19, LeuteMitarbeiter.dc.html) -- nach
@@ -33,13 +31,10 @@ import styles from "../../../../portal.module.css";
  */
 export default async function LeuteMitarbeiterPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ studioId: string }>;
-  searchParams: Promise<{ alle?: string }>;
 }) {
   const { studioId } = await params;
-  const { alle } = await searchParams;
   const daten = await ladeLeute(studioId);
 
   // Der Revalidierungspfad zeigt auf DIESEN Reiter, nicht auf
@@ -54,8 +49,6 @@ export default async function LeuteMitarbeiterPage({
       </Seite>
     );
   }
-
-  const { sichtbar, weitere } = kuerzen(daten.mitglieder, alle === "1");
 
   return (
     <Seite
@@ -100,27 +93,11 @@ export default async function LeuteMitarbeiterPage({
             naechsterSchritt="Mitglieder treten über den Studio-Code bei."
           />
         ) : (
-          <>
-            <Zeilen>
-              {sichtbar.map((person) => (
-                <HochstufenZeile
-                  key={person.userId}
-                  studioId={studioId}
-                  pfad={pfad}
-                  person={person}
-                  seit={seit(person.joinedAt, daten.zeitzone)}
-                />
-              ))}
-            </Zeilen>
-            {weitere > 0 ? (
-              <div className={styles.rowActions}>
-                <span className={styles.absent}>… {weitere} weitere</span>
-                <Link href={`${pfad}?alle=1`} className={styles.secondary}>
-                  Alle anzeigen
-                </Link>
-              </div>
-            ) : null}
-          </>
+          // Keine Kuerzung und kein ?alle=1 auf diesem Reiter: ein
+          // Auswahlfeld haelt auch 24 Mitglieder, ohne den Bildschirm zu
+          // fluten. Die Kuerzung bleibt dort, wo sie etwas kuerzt -- auf
+          // dem Reiter Mitglieder, der die Liste selbst zeigt.
+          <MitgliedHochstufen studioId={studioId} pfad={pfad} mitglieder={daten.mitglieder} />
         )}
       </Abschnitt>
 

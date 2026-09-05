@@ -76,11 +76,16 @@ test("ein Trainer sieht ein neu beigetretenes Mitglied in Leute und stuft es hoc
   // Reiter Mitarbeiter: dort wird hochgestuft -- und zwar erst, nachdem
   // der Knopf gesagt hat, was das bedeutet (Befund 23; vorher stand dort
   // "Wirklich?", ein Klick mehr ohne eine Information mehr).
+  //
+  // Hochgestuft wird ueber ein Auswahlfeld und EINEN Knopf, nicht ueber
+  // einen Knopf je Zeile (LeuteMitarbeiter.dc.html; dasselbe Muster wie
+  // tags/TagBinden.tsx). selectOption ist trotzdem ausgeschrieben, obwohl
+  // die einzige Person schon vorausgewaehlt ist: sonst pruefte der Test
+  // nicht, dass das Feld die richtige Person ueberhaupt anbietet.
   await page.goto(`/portal/${studio.id}/leute/mitarbeiter`);
-  const hochstufen = page.locator("li", { hasText: mitgliedEmail });
-  await expect(hochstufen).toBeVisible();
-  await hochstufen.getByRole("button", { name: "Zum Trainer machen" }).click();
-  await hochstufen
+  await page.getByLabel("Mitglied").selectOption({ label: mitgliedEmail });
+  await page.getByRole("button", { name: "Zum Trainer machen" }).click();
+  await page
     .getByRole("button", { name: "Hochstufen gibt Zugriff auf den ganzen Katalog." })
     .click();
 

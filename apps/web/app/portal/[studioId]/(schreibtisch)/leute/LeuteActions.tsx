@@ -1,5 +1,6 @@
 "use client";
 
+import { useId, useState, useTransition } from "react";
 import type { StudioMember } from "@fitretro/domain";
 import { AktionsKnopf } from "../../../Form";
 import { mitgliedEntfernen, mitgliedRolleAendern } from "../../../actions";
@@ -121,47 +122,95 @@ export function MitarbeiterZeile({
 }
 
 /**
- * Eine Zeile des Abschnitts "Mitglied hochstufen".
+ * Der Abschnitt "Mitglied hochstufen": ein Auswahlfeld, ein Knopf.
  *
- * Nebenaktion, KEINE Akzentflaeche -- das ist die eine Stelle, an der
- * diese Seite dem Artboard bewusst nicht folgt.
- * LeuteMitarbeiter.dc.html zeichnet "Zum Trainer machen" in Akzentfarbe
- * und ist damit in sich stimmig: es zeichnet genau EIN Mitglied. Real
- * sind es 24. Gemessen am 5. September, Studio mit zwoelf Mitgliedern und
- * der Kuerzung bei acht: acht Akzentflaechen auf einem Bildschirm -- die
- * Regel "genau eine Akzentflaeche je Bildschirm" (Struktur-Spec
- * Abschnitt 1, gemessen von akzentflaechen() in e2e/helpers/abnahme.ts)
- * ist mit einer wiederholten Zeilenaktion nicht zu haben.
+ * So zeichnet es LeuteMitarbeiter.dc.html -- EIN Feld mit Chevron auf
+ * 44 px (Feldhoehe, nicht die 40 px einer Zeilenaktion) und EIN Knopf in
+ * Akzentfarbe, nicht ein Knopf je Mitglied. Das Muster steht im Repo
+ * schon: tags/TagBinden.tsx, Label, Auswahl, Knopf.
  *
- * Aufgeloest wird das zugunsten der Regel, nicht der Zeichnung: dieser
- * Reiter traegt null Akzentflaechen, wie die Tags-Seite aus Aufgabe 5 --
- * der Praezedenzfall, den auch der Auftrag zu dieser Aufgabe nennt. Er
- * legt nichts an; er verwaltet Rechte. Die beiden Rollenaktionen
- * unterscheiden sich trotzdem sichtbar: Hochstufen ist eine Nebenaktion,
- * Herabstufen eine zerstoerende.
+ * Damit traegt dieser Reiter genau eine Akzentflaeche, gleich wie viele
+ * Mitglieder das Studio hat -- die Regel aus Struktur-Spec Abschnitt 1
+ * und die Zeichnung sagen dasselbe. Eine wiederholte Zeilenaktion haette
+ * beides gegeneinandergestellt: bei zwoelf Mitgliedern gemessene acht
+ * Akzentflaechen auf einem Bildschirm.
+ *
+ * Das Feld steht auf dem ersten Mitglied statt auf einem leeren
+ * Platzhalter: ein deaktivierter Knopf traegt .primary:disabled und
+ * damit KEINE Akzentflaeche mehr -- der Reiter haette seine eine Flaeche
+ * genau so lange nicht, wie noch niemand ausgewaehlt hat. Vor dem
+ * Versehen schuetzt die zweistufige Bestaetigung, nicht ein leeres Feld.
  */
-export function HochstufenZeile({
+export function MitgliedHochstufen({
   studioId,
   pfad,
-  person,
-  seit,
+  mitglieder,
 }: {
   studioId: string;
   pfad: string;
-  person: StudioMember;
-  seit: string;
+  mitglieder: StudioMember[];
 }) {
+  const feldId = useId();
+  const [gewaehlt, setGewaehlt] = useState(mitglieder[0]?.userId ?? "");
+  const [bestaetigt, setBestaetigt] = useState(false);
+  const [fehler, setFehler] = useState<string | null>(null);
+  const [laeuft, starte] = useTransition();
+
   return (
-    <Zeile
-      titel={person.email}
-      meta={seit}
-      aktionen={
-        <AktionsKnopf
-          label="Zum Trainer machen"
-          bestaetigung={HOCHSTUFEN_BESTAETIGUNG}
-          aktion={() => mitgliedRolleAendern(studioId, pfad, person.userId, "trainer")}
-        />
-      }
-    />
+    <>
+      {fehler ? (
+        <span className={styles.error} role="alert">
+          {fehler}
+        </span>
+      ) : null}
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor={feldId}>
+          Mitglied
+        </label>
+        <select
+          id={feldId}
+          className={styles.select}
+          value={gewaehlt}
+          onChange={(ereignis) => {
+            setGewaehlt(ereignis.target.value);
+            // Eine neue Auswahl nimmt die Bestaetigung zurueck: sonst
+            // stuende der zweite Klick fuer eine andere Person als der
+            // erste.
+            setBestaetigt(false);
+          }}
+        >
+          {mitglieder.map((person) => (
+            <option key={person.userId} value={person.userId}>
+              {person.email}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className={styles.actions}>
+        <button
+          type="button"
+          className={styles.primary}
+          disabled={laeuft}
+          onClick={() => {
+            if (!bestaetigt) {
+              setBestaetigt(true);
+              return;
+            }
+            setFehler(null);
+            starte(async () => {
+              const antwort = await mitgliedRolleAendern(studioId, pfad, gewaehlt, "trainer");
+              setBestaetigt(false);
+              if (!antwort.ok) setFehler(antwort.error);
+            });
+          }}
+        >
+          {laeuft
+            ? "Wird gespeichert …"
+            : bestaetigt
+              ? HOCHSTUFEN_BESTAETIGUNG
+              : "Zum Trainer machen"}
+        </button>
+      </div>
+    </>
   );
 }

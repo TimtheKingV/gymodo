@@ -576,21 +576,27 @@ test("Ein Mitglied steht im Mitglieder-Reiter und nicht bei den Mitarbeitern", a
 });
 
 /**
- * Die Kehrseite der Entscheidung in LeuteActions.tsx (HochstufenZeile):
- * beide Leute-Reiter tragen NULL Akzentflaechen.
+ * Ein Formular je Bildschirm heisst genau eine Akzentflaeche -- und die
+ * beiden Leute-Reiter haben unterschiedlich viele davon, aus einem Grund:
  *
- * Auf Mitglieder ist das unstrittig -- der Reiter legt nichts an. Auf
- * Mitarbeiter ist es eine Abweichung vom Artboard: das zeichnet "Zum
- * Trainer machen" in Akzentfarbe, aber nur EIN Mitglied. Bei zwoelf sind
- * es zwoelf Flaechen, und "genau eine Akzentflaeche je Bildschirm" ist mit
- * einer wiederholten Zeilenaktion nicht zu haben. Der Praezedenzfall ist
- * die Tags-Seite aus Aufgabe 5.
+ *   Mitglieder    NULL. Der Reiter legt nichts an; er listet und
+ *                 entfernt. Der Praezedenzfall ist die Tags-Seite aus
+ *                 Aufgabe 5, die aus demselben Grund keine traegt.
+ *   Mitarbeiter   EINE. "Zum Trainer machen" ist die Hauptaktion, und
+ *                 sie steht genau einmal da: ein Auswahlfeld ueber alle
+ *                 Mitglieder, ein Knopf (LeuteMitarbeiter.dc.html).
  *
- * Das Studio traegt hier bewusst mehrere Mitglieder: bei null Mitgliedern
- * stuende der Abschnitt "Mitglied hochstufen" leer da, und der Test waere
- * gruen, ohne je einen Knopf gesehen zu haben.
+ * Eine wiederholte Zeilenaktion -- ein Akzentknopf je Mitglied -- waere
+ * hier der Fehler, den dieser Test faengt: gemessen an einem Studio mit
+ * zwoelf Mitgliedern waren es acht Flaechen auf einem Bildschirm.
+ *
+ * Das Studio traegt deshalb mehrere Mitglieder: bei null Mitgliedern
+ * stuende der Abschnitt "Mitglied hochstufen" leer da, es gaebe keinen
+ * Knopf, und der Test waere gruen, ohne je eine Flaeche gesehen zu haben.
  */
-test("Beide Leute-Reiter tragen keine Akzentflaeche", async ({ page }) => {
+test("Der Reiter Mitglieder traegt keine Akzentflaeche, Mitarbeiter genau eine", async ({
+  page,
+}) => {
   const { studioId, admin } = await studioMitTrainer(page, "leute-akzent");
 
   for (let i = 0; i < 3; i += 1) {
@@ -606,9 +612,15 @@ test("Beide Leute-Reiter tragen keine Akzentflaeche", async ({ page }) => {
     if (mFehler) throw mFehler;
   }
 
-  for (const reiter of ["/leute", "/leute/mitarbeiter"]) {
+  for (const [reiter, erwartet] of [
+    ["/leute", 0],
+    ["/leute/mitarbeiter", 1],
+  ] as const) {
     await page.goto(`/portal/${studioId}${reiter}`);
     const flaechen = await akzentflaechen(page);
-    expect(flaechen.length, `${reiter} traegt ${flaechen.length}: ${flaechen.join(", ")}`).toBe(0);
+    expect(
+      flaechen.length,
+      `${reiter} traegt ${flaechen.length} statt ${erwartet}: ${flaechen.join(", ")}`,
+    ).toBe(erwartet);
   }
 });
