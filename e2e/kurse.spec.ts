@@ -32,6 +32,37 @@ import { studioMitTrainer } from "./helpers/studio";
  * der Testfall mit einem React-kontrollierten Feld dieses Typs spricht.
  */
 async function setzeNativenWert(feld: Locator, wert: string): Promise<void> {
+  // Erst warten, bis React am Feld haengt -- dann setzen.
+  //
+  // Der native Setter plus ein input-Ereignis ist der uebliche Weg, ein von
+  // React kontrolliertes Feld zu fuellen. Er trifft aber ins Leere, solange
+  // die Komponente nicht hydriert ist: der Wert steht dann zwar im DOM, es
+  // hoert nur niemand zu, und die Vorschau bleibt leer.
+  //
+  // Im Einzellauf faellt das nie auf, weil die Seite schneller hydriert, als
+  // der Test sie erreicht. Im vollen Dateilauf ist die Maschine langsam
+  // genug, dass der Test gewinnt -- am 5. September reproduzierbar rot
+  // ("Dieser eine Termin wird angelegt." nicht gefunden), isoliert gruen.
+  // Ein Test, der von der Tagesform der Maschine abhaengt, ist schlimmer als
+  // keiner.
+  //
+  // Die React-Eigenschaften am DOM-Knoten sind der einzige oeffentlich
+  // sichtbare Zeitpunkt, ab dem das Ereignis ankommt.
+  await feld.evaluate(
+    (el) =>
+      new Promise<void>((fertig) => {
+        const hydriert = () =>
+          Object.keys(el).some((schluessel) => schluessel.startsWith("__react"));
+        if (hydriert()) return fertig();
+        const uhr = setInterval(() => {
+          if (hydriert()) {
+            clearInterval(uhr);
+            fertig();
+          }
+        }, 20);
+      }),
+  );
+
   await feld.evaluate((el: HTMLInputElement, wert: string) => {
     const setter = Object.getOwnPropertyDescriptor(
       window.HTMLInputElement.prototype,
