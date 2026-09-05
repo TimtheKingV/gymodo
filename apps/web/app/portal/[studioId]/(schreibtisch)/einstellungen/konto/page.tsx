@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { Reiter } from "../../../../bausteine/Reiter";
 import styles from "../../../../portal.module.css";
-import { Reiter } from "../Reiter";
 import { AbmeldeKnopf, PasswortAendernFormular } from "../EinstellungenActions";
 
 const rollenLabel: Record<string, string> = {
@@ -40,6 +40,8 @@ export default async function KontoPage({
     .eq("id", studioId)
     .maybeSingle<{ name: string }>();
 
+  const basis = `/portal/${studioId}/einstellungen`;
+
   return (
     <>
       <h1 className={styles.pageTitle}>Einstellungen</h1>
@@ -48,22 +50,44 @@ export default async function KontoPage({
         angemeldet bist.
       </p>
 
-      <Reiter studioId={studioId} />
+      {/* `aktiv` steht hier fest: diese Route ist der Konto-Reiter. Kein
+          usePathname, kein Client-Rand -- die Seite weiss von sich, welche
+          sie ist. */}
+      <Reiter
+        name="Einstellungen"
+        eintraege={[
+          { href: basis, label: "Studio", aktiv: false },
+          { href: `${basis}/konto`, label: "Konto", aktiv: true },
+        ]}
+      />
 
       <section className={styles.section}>
         <div className={styles.sectionHead}>
           <h2 className={styles.sectionTitle}>Konto</h2>
         </div>
-        <p className={styles.rowTitle}>{user.email}</p>
-        {mitgliedschaft && studio ? (
-          <p className={styles.rowMeta}>
-            {rollenLabel[mitgliedschaft.role] ?? mitgliedschaft.role} von {studio.name}{" "}
-            seit{" "}
-            {new Intl.DateTimeFormat("de-DE", { dateStyle: "full" }).format(
-              new Date(mitgliedschaft.created_at),
-            )}
-          </p>
-        ) : null}
+        <div className={styles.sectionBody}>
+          <div className={styles.field}>
+            <span className={styles.label}>E-Mail</span>
+            <p className={styles.rowTitle}>{user.email}</p>
+            {mitgliedschaft && studio ? (
+              <p className={styles.rowMeta}>
+                {rollenLabel[mitgliedschaft.role] ?? mitgliedschaft.role} von{" "}
+                {studio.name} seit{" "}
+                {/* Wochentag abgekuerzt ("Do., 6. August 2026"), wie
+                    EinstellungenKonto.dc.html es zeichnet: der Wochentag
+                    ordnet das Datum ein, das ausgeschriebene
+                    "Donnerstag" schiebt dafuer die Zeile ueber die
+                    Kartenbreite. */}
+                {new Intl.DateTimeFormat("de-DE", {
+                  weekday: "short",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                }).format(new Date(mitgliedschaft.created_at))}
+              </p>
+            ) : null}
+          </div>
+        </div>
       </section>
 
       <PasswortAendernFormular />
@@ -72,7 +96,9 @@ export default async function KontoPage({
         <div className={styles.sectionHead}>
           <h2 className={styles.sectionTitle}>Abmelden</h2>
         </div>
-        <AbmeldeKnopf />
+        <div className={styles.sectionBody}>
+          <AbmeldeKnopf />
+        </div>
       </section>
     </>
   );

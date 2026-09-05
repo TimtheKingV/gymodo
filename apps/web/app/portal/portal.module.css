@@ -190,9 +190,14 @@
   color: var(--text-muted);
 }
 
+/* text-muted, nicht text-faint (Befund 29). Die Klasse traegt die
+   erklaerenden Saetze unter einer Abschnittsueberschrift -- Pflichttext,
+   und Designsystem 2 verbietet dafuer die 3,6 : 1 von text-faint. Groesse
+   und Layout bleiben; nur der Ton geht auf 7,4 : 1. Der Zwilling
+   .abschnittNotiz in bausteine.module.css ist im selben Griff geheilt. */
 .sectionNote {
   font-size: 12px;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .sectionBody {
@@ -286,6 +291,27 @@
 .hint {
   font-size: 12px;
   color: var(--text-faint);
+}
+
+/* Ein Feld, das eine Zahl von 0 bis 168 aufnimmt, in Spaltenbreite zu
+   zeichnen verspricht Platz fuer etwas, was dort nie steht. 84 px und die
+   Einheit daneben statt darunter -- so zeichnet es
+   EinstellungenStudio.dc.html, und "6 Stunden vor Beginn" liest sich als
+   ein Satz, nicht als Feld plus Fussnote. */
+.inlineFeld {
+  display: flex;
+  align-items: center;
+  gap: var(--s12);
+}
+
+.schmalesFeld {
+  flex: 0 0 84px;
+  width: 84px;
+  text-align: center;
+}
+
+.einheit {
+  color: var(--text-muted);
 }
 
 .input,
@@ -383,6 +409,20 @@
 
 .destructive:hover {
   background: rgba(255, 90, 78, 0.1);
+}
+
+/* Warnung: was eine Handlung kostet, bevor sie geschieht -- und im
+   selben Kasten, was sie NICHT kostet. Umriss in --warn bei vollem
+   Kontrast, keine getoente Flaeche (EinstellungenStudio.dc.html). Sie ist
+   keine Akzentflaeche: nichts daran ist bedienbar. */
+.warning {
+  border: 1px solid var(--warn);
+  background: transparent;
+  color: var(--warn);
+  border-radius: var(--r-control);
+  padding: var(--s12) var(--s16);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .error {
@@ -539,29 +579,6 @@
   .rowActions {
     width: 100%;
   }
-}
-
-/* Reiter innerhalb einer Seite. Ein Reiter je Bildschirm bedeutet ein
-   Formular je Bildschirm (Spec Abschnitt 1) -- deshalb sind das Links auf
-   eigene Routen und keine Umschalter im selben Dokument. */
-.tabs {
-  display: flex;
-  gap: var(--s4);
-  border-bottom: 1px solid var(--line);
-  margin-top: var(--s24);
-}
-
-.tab {
-  padding: var(--s8) var(--s16);
-  border-bottom: 2px solid transparent;
-  color: var(--text-muted);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.tabActive {
-  border-bottom-color: var(--accent);
-  color: var(--text);
 }
 
 /* Kennzahlen des Ueberblicks. Vier Kacheln nebeneinander, auf schmalen

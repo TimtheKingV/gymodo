@@ -1,10 +1,20 @@
 import { DomainError, getStudioSettings } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { AktionsFormular, Feld } from "../../../Form";
-import { studioSpeichern } from "../../../actions";
+import { Reiter } from "../../../bausteine/Reiter";
 import styles from "../../../portal.module.css";
-import { Reiter } from "./Reiter";
-import { BeitrittscodeKarte } from "./EinstellungenActions";
+import { BeitrittscodeKarte, StudioFormular } from "./EinstellungenActions";
+
+/**
+ * Die beiden Reiter sind zwei Routen und zwei Server-Komponenten. Welche
+ * gerade offen ist, weiss jede von sich selbst -- `aktiv` ist deshalb eine
+ * Konstante und kein usePathname im Browser.
+ */
+function reiterEintraege(basis: string) {
+  return [
+    { href: basis, label: "Studio", aktiv: true },
+    { href: `${basis}/konto`, label: "Konto", aktiv: false },
+  ];
+}
 
 export default async function EinstellungenPage({
   params,
@@ -31,7 +41,7 @@ export default async function EinstellungenPage({
               an. Ohne ihn endete ein einfaches Mitglied hier in einer
               Sackgasse -- und ein stummer Deaktiviert-Zustand ist nach
               Spec Abschnitt 5 keiner. */}
-          <Reiter studioId={studioId} />
+          <Reiter name="Einstellungen" eintraege={reiterEintraege(pfad)} />
           <div className={styles.section}>
             <div className={styles.empty}>
               <p className={styles.emptyTitle}>
@@ -53,7 +63,7 @@ export default async function EinstellungenPage({
     return (
       <>
         <h1 className={styles.pageTitle}>Einstellungen</h1>
-        <Reiter studioId={studioId} />
+        <Reiter name="Einstellungen" eintraege={reiterEintraege(pfad)} />
         <div className={styles.section}>
           <div className={styles.empty}>
             <p className={styles.error}>
@@ -71,6 +81,16 @@ export default async function EinstellungenPage({
     );
   }
 
+  // Die Auswahl kommt aus derselben Quelle, gegen die die Fachschicht beim
+  // Speichern prueft (Intl) -- eine zweite, eigene Liste liefe irgendwann
+  // auseinander. Der gespeicherte Wert steht auch dann drin, wenn diese
+  // Node-Fassung ihn nicht mehr kennt: sonst zeigte die Auswahl stumm eine
+  // andere Zeitzone an, als das Studio hat.
+  const zeitzonen = Intl.supportedValuesOf("timeZone");
+  const auswahl = zeitzonen.includes(einstellungen.timezone)
+    ? zeitzonen
+    : [einstellungen.timezone, ...zeitzonen];
+
   return (
     <>
       <h1 className={styles.pageTitle}>Einstellungen</h1>
@@ -79,41 +99,16 @@ export default async function EinstellungenPage({
         Mitglieder beitreten.
       </p>
 
-      <Reiter studioId={studioId} />
+      <Reiter name="Einstellungen" eintraege={reiterEintraege(pfad)} />
 
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Stammdaten</h2>
-        </div>
-        <AktionsFormular
-          action={studioSpeichern.bind(null, studioId, pfad)}
-          submitLabel="Änderungen speichern"
-        >
-          <div className={styles.grid}>
-            <Feld
-              name="name"
-              label="Name"
-              required
-              defaultValue={einstellungen.name}
-            />
-            <Feld
-              name="timezone"
-              label="Zeitzone"
-              required
-              defaultValue={einstellungen.timezone}
-              hint="Zum Beispiel Europe/Berlin. Sie bestimmt, wann ein Kurstermin beginnt."
-            />
-            <Feld
-              name="cancellationDeadlineHours"
-              label="Stornofrist"
-              required
-              inputMode="numeric"
-              defaultValue={String(einstellungen.cancellationDeadlineHours)}
-              hint="Stunden vor Beginn. Bis wann sich ein Mitglied abmelden kann. Das ist eure Regel, keine Vorgabe von gymodo. 0 heißt: bis zum Beginn."
-            />
-          </div>
-        </AktionsFormular>
-      </section>
+      <StudioFormular
+        studioId={studioId}
+        pfad={pfad}
+        name={einstellungen.name}
+        zeitzone={einstellungen.timezone}
+        zeitzonen={auswahl}
+        stornofristStunden={einstellungen.cancellationDeadlineHours}
+      />
 
       <BeitrittscodeKarte
         studioId={studioId}

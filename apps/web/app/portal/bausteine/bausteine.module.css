@@ -120,9 +120,14 @@
   color: var(--text-muted);
 }
 
+/* text-muted, nicht text-faint (Befund 36) -- derselbe Schnitt wie bei
+   .sectionNote in portal.module.css. Die Notiz eines Abschnitts sagt, was
+   die Karte zeigt und was nicht ("Ohne Namen. Wer gemeldet hat, steht
+   hier nicht."); das muss gelesen werden, und 3,6 : 1 verbietet
+   Designsystem 2 dafuer. */
 .abschnittNotiz {
   font-size: 12px;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .abschnittRumpf {
