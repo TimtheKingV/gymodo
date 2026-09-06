@@ -433,9 +433,9 @@
    getoente danger-Flaeche dem Zustand OFFLINE zu; FEHLER ist dort
    "danger-Umriss, voller Kontrast", und Offline gilt im Portal nicht
    (Struktur-Spec 5).
-   Zustaende.dc.html zeichnet die Fehlerkarte auf #14161a und kennt in der
-   ganzen Datei kein rgba: die Fehlerkarte steht dort auf #14161a, also
-   auf --surface. Genau so machen es die beiden Geschwister schon --
+   Zustaende.dc.html zeichnet die Fehlerkarte auf #14161a -- also auf
+   --surface -- und kennt in der ganzen Datei kein rgba. Genau so machen
+   es die beiden Geschwister schon --
    .fehler in bausteine.module.css (Zustand-Baustein) und .fehlermeldung
    in einstieg.module.css. -- .destructive:hover benutzt dasselbe rgba
    und bleibt: ein Zeigezustand ist kein Statusfeld. */
