@@ -166,8 +166,12 @@
   color: var(--text-muted);
 }
 
+/* Auf dem Geraetebildschirm steht hier der Satz, der dem Android-Nutzer
+   sagt, dass er nichts verpasst -- tragender Text, kein Kleingedrucktes.
+   Die 11px zeichnet FallbackGeraet.dc.html; der Kontrast folgt der Regel
+   aus Designsystem 2, nicht dem Artboard. */
 .fussnote {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: 11px;
   line-height: 1.5;
 }
@@ -176,7 +180,10 @@
    Einweisung Studioinhalt ist -- und ein Fallbackbesucher hat noch keine
    andere Stelle gesehen, an der das steht. */
 .grenze {
-  color: var(--text-faint);
+  /* Designsystem 10 verlangt die Produktgrenze verbindlich UND sichtbar;
+     Designsystem 2 verbietet text-faint fuer Text, der gelesen werden
+     muss. Beide Regeln zeigen hier in dieselbe Richtung. */
+  color: var(--text-muted);
   font-size: 13px;
   line-height: 1.45;
 }

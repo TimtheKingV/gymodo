@@ -128,3 +128,22 @@ test("Ein falscher Studio-Code meldet sich als Warnung", async ({ page }) => {
   // immer mehrdeutig -- und bricht genau im Fehlerfall ab.
   await expect(fehlermeldung(page)).toBeVisible();
 });
+
+/**
+ * Befund 19, dritte und letzte Stelle. Der Ueberblick ist in Aufgabe 14
+ * ueber den Baustein Produktgrenze geheilt, /t/<token> in Aufgabe 21 --
+ * die Landeseite trug den Satz weiter in text-faint (3,6 : 1).
+ *
+ * Start.dc.html zeichnet die Fusszeile in #5c636e, und darin weicht der
+ * Code bewusst ab: Designsystem 2 verbietet text-faint fuer Text, der
+ * gelesen werden muss, und Designsystem 10 erklaert genau die
+ * Produktgrenze fuer verbindlich UND sichtbar. Wo beide Regeln sich
+ * widersprechen, gilt die benannte vor der gezeichneten.
+ */
+test("Die Produktgrenze der Landeseite steht in text-muted", async ({ page }) => {
+  await page.goto("/");
+
+  const satz = page.getByText(/gymodo misst nichts/);
+  const farbe = await satz.evaluate((el) => getComputedStyle(el).color);
+  expect(farbe).toBe("rgb(155, 163, 175)");
+});

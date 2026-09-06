@@ -23,6 +23,19 @@ export async function hauptlandmarken(page: Page): Promise<number> {
  * Rail-Zeile ist eine 2-px-Kante, der Fokusring ein outline, die
  * Sucherecken sind Winkel. Flaeche ist Flaeche.
  *
+ * Fortschritt zaehlt ebenso wenig (Befund 11, entschieden am 5.
+ * September). Der Uploadbalken traegt den Akzent und behaelt ihn:
+ * TelefonVideo.dc.html zeichnet ihn so, TelefonUploads.dc.html zeigt
+ * gleich drei davon, und Designsystem 5.1 nennt den Zweck der Regel
+ * selbst -- der Akzent sagt, "wo der Nutzer hinfassen muss". Ein Balken
+ * ist nichts, wohin man fasst. Die Regel lautet daher: genau eine
+ * Akzentflaeche je Bildschirm unter den BEDIENBAREN Flaechen.
+ *
+ * Diese Funktion sieht den Balken ohnehin nie -- er steht nur waehrend
+ * eines laufenden Uploads im Dokument. Nicht, weil sie ihn uebersieht,
+ * sondern weil es ihn dann nicht gibt. Die Ausnahme steht hier trotzdem:
+ * eine benannte Ausnahme ist besser als eine stille.
+ *
  * Gibt Beschreibungen zurueck, keine Zahl -- bei "erwartet 1, waren 2"
  * will man wissen, welche zwei.
  */

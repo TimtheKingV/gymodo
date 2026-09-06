@@ -67,6 +67,20 @@ test("ein Trainer pflegt die Studio-Einstellungen", async ({ page }) => {
   await page.getByRole("button", { name: "Änderungen speichern" }).click();
   await expect(fehlermeldung(page)).toContainText("168");
 
+  // Befund 18: .error trug eine 10-prozentige danger-Flaeche und haengt an
+  // acht Stellen, darunter beide Fehlerpfade in Form.tsx -- also an jeder
+  // Formularfehlermeldung des Portals. Designsystem 5 ordnet die getoente
+  // Flaeche dem Zustand OFFLINE zu; FEHLER ist dort danger-Umriss bei
+  // vollem Kontrast, und Zustaende.dc.html zeichnet die Fehlerkarte auf
+  // #14161a. Bis Aufgabe 21 zeigte das Portal deshalb zwei verschiedene
+  // Fehlerflaechen: den Zustand-Baustein richtig, das Formularfeld nicht.
+  const form = await fehlermeldung(page).evaluate((el) => {
+    const stil = getComputedStyle(el);
+    return { rahmen: stil.borderTopColor, flaeche: stil.backgroundColor };
+  });
+  expect(form.rahmen).toBe("rgb(255, 90, 78)");
+  expect(form.flaeche).toBe("rgb(20, 22, 26)");
+
   // Der Code erneuert sich: nach dem Erzeugen steht der alte nicht mehr
   // auf der Seite. Dass er auch beim Beitritt nicht mehr traegt, prueft
   // die Fachschicht (tests/integration), nicht dieser Durchgang.
@@ -198,4 +212,35 @@ test("Der Satz zum Studio-Code steht in text-muted, nicht in text-faint", async 
   const satz = page.getByText(/Der zweite Weg ins Studio/);
   const farbe = await satz.evaluate((el) => getComputedStyle(el).color);
   expect(farbe).toBe("rgb(155, 163, 175)");
+});
+
+/**
+ * Die Reiter sind Nebenaktionen und werden mit dem Finger getroffen wie
+ * jeder Knopf. Alle Artboards zeichnen sie mit 12px 16px Innenabstand;
+ * der Code stand auf 8px 16px, und damit blieb der Reiter unter dem
+ * Schreibtischmass von 40 px fuer eine Nebenaktion.
+ *
+ * zuKleineBedienelemente() findet das nicht: der Selektor kennt button,
+ * role=button, input, select und textarea -- ein Reiter ist ein <a>.
+ * Textlinks im Fliesstext sind dort bewusst ausgenommen, weil sie keine
+ * 44 px hoch sein koennen, ohne die Zeile aufzureissen. Ein Reiter ist
+ * aber kein Textlink, sondern ein Bedienelement in eigener Zeile.
+ */
+test("Die Reiter sind hoch genug, um sie zu treffen", async ({ page }) => {
+  const { studioId } = await studioMitTrainer(page, "einst-reiter");
+  await page.goto(`/portal/${studioId}/einstellungen`);
+
+  const reiter = page.locator('nav[aria-label="Einstellungen"] a');
+  await expect(reiter.first()).toBeVisible();
+
+  const zuKlein: string[] = [];
+  for (const eintrag of await reiter.all()) {
+    const kasten = await eintrag.boundingBox();
+    if (!kasten) continue;
+    if (kasten.height + 0.5 < 40) {
+      const text = ((await eintrag.textContent()) ?? "").trim();
+      zuKlein.push(`${text} — ${Math.round(kasten.height)} px`);
+    }
+  }
+  expect(zuKlein, `zu flache Reiter: ${zuKlein.join(", ")}`).toHaveLength(0);
 });

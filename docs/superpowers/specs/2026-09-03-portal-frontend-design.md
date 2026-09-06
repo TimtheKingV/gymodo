@@ -305,7 +305,15 @@ Verfahren: aus jedem der 16 `Telefon*`-Artboards und den drei `Fallback*`-Artboa
 
 33. **`FallbackInaktiv`: der Satz sagt, wohin man sich wendet, aber nicht wozu.** Code (`t/[token]/page.tsx:71`): *„Bitte wende dich an dein Studio."* Artboard: *„Wende dich an dein Studio — dort kann der Aufkleber neu vergeben werden."* Der zweite Halbsatz sagt, dass das Problem lösbar ist und wie. Ohne ihn liest sich die Seite wie eine Sackgasse.
 
-34. **`FallbackGeraet`: der Android-Nutzer erfährt nicht, dass er nichts verpasst.** Code (Zeile 146): *„Zurzeit nur für iPhone."* Artboard: *„Zurzeit nur für iPhone. Die Einweisung oben funktioniert auf jedem Gerät und ohne App."* Der zweite Satz ist der wichtigere: die Seite ist genau für den Fall gebaut, dass jemand ohne App vor dem Gerät steht — der Kommentar im Kopf der Datei sagt es selbst (*„Der Nutzen kommt vor der Installationsaufforderung — auch auf Android, wo es die App nicht gibt"*). Der Code hält sich an diese Absicht in der Anordnung und widerspricht ihr im Wortlaut.
+34. **`FallbackGeraet`: der Android-Nutzer erfährt nicht, dass er nichts verpasst.** Artboard: *„Zurzeit nur für iPhone. Die Einweisung oben funktioniert auf jedem Gerät und ohne App.“* Der Satz ist der wichtigere von beiden: die Seite ist genau für den Fall gebaut, dass jemand ohne App vor dem Gerät steht — der Kommentar im Kopf der Datei sagt es selbst (*„Der Nutzen kommt vor der Installationsaufforderung — auch auf Android, wo es die App nicht gibt“*). Der Code hält sich an diese Absicht in der Anordnung und widerspricht ihr im Wortlaut.
+
+    **Korrektur vom 6. September (Aufgabe 21): der Ortsverweis war falsch, und damit auch der Eingriff.** Der Befund nannte Zeile 146 als die halbierte Stelle. Zeile 146 steht aber im **Aushang**-Zweig, und `FallbackAushang.dc.html` zeichnet dort genau *„Zurzeit nur für iPhone.“* — ohne Zusatz, und aus gutem Grund: über einem Aushang steht keine Einweisung, auf die sich *„oben“* beziehen könnte. **Dort ist der Code richtig und bleibt unverändert.**
+
+    Der Satz gehört in den **Geräte**-Zweig, unter `.zweiterScan` — dieselbe Stelle, an der `FallbackGeraet.dc.html` ihn zeichnet. Und dort fehlt er nicht zur Hälfte, sondern **ganz**: der Gerätebildschirm trägt überhaupt keine Fußnote. Aus einem halben Satz wird damit ein neuer Absatz.
+
+    Derselbe Fehler wie bei Ruling 29, nur spiegelverkehrt: dort wurde *fehlt* behauptet, wo etwas in falscher Form vorhanden war; hier wurde *halbiert* behauptet, wo an der genannten Stelle nichts fehlt und an einer ungenannten alles. Beide Male hätte ein Blick ins **Markup** des Artboards statt in seinen Fließtext es gezeigt — die Lektion aus Ruling 27, hier zum zweiten Mal fällig.
+
+    **Folge für den Kontrast:** `.fussnote` steht auf `11px` in `--text-faint`. Für *„Zurzeit nur für iPhone.“* allein ließe sich das noch als nicht-tragende Nebeninformation lesen; den neuen Satz — den dieser Befund selbst *„den wichtigeren“* nennt — in den verbotenen Kontrast zu setzen, wäre absurd. `.fussnote` wandert deshalb mit auf `--text-muted`, als vierte Stelle zu Befund 19. Die Größe bleibt bei `11px`: so zeichnet es das Artboard, und die Größe ist hier nicht der Streitpunkt.
 
 ### Aus dem Bau der Rechteverwaltung (Aufgabe 19)
 

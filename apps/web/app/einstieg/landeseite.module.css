@@ -148,7 +148,12 @@
 .fuss {
   padding: var(--s32) var(--s48);
   border-top: 1px solid var(--line);
-  color: var(--text-faint);
+  /* Start.dc.html zeichnet die Fusszeile in #5c636e. Hier weicht der Code
+     bewusst ab: Designsystem 10 erklaert die Produktgrenze fuer
+     verbindlich und sichtbar, Designsystem 2 verbietet text-faint fuer
+     Text, der gelesen werden muss. Die benannte Regel geht der
+     gezeichneten vor. */
+  color: var(--text-muted);
   font-size: 13px;
   line-height: 1.45;
   max-width: 80ch;

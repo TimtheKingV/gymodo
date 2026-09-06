@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { E2E_PASSWORD, anmelden } from "./helpers/login";
+import { studioMitTrainer } from "./helpers/studio";
 
 function admin() {
   return createClient(
@@ -156,4 +157,34 @@ test("die Domaene laesst eine Selbstherabstufung weiterhin zu", async () => {
   expect(error).toBeNull();
   expect(data, "Die Domaene haelt die Selbstherabstufung inzwischen auf — Bericht nachziehen.")
     .toHaveLength(1);
+});
+
+/**
+ * Befund 37. globals.css:97 nimmt jedem <a> Farbe und Unterstreichung, und
+ * "underline" kommt in der ganzen Anwendung sonst kein einziges Mal vor.
+ * Fuer Rail, Reiter und Knopf-Links ist das richtig -- die tragen eigene
+ * Klassen und sehen aus wie Bedienelemente. Ein Link MITTEN IM SATZ hat
+ * ohne sie null Unterschied zum Text daneben: gleiche Farbe, gleiche
+ * Schrift, keine Linie. Er ist dann nur noch durch Draufzeigen zu finden.
+ *
+ * Der Akzent scheidet als Mittel aus -- er markiert die eine Hauptaktion
+ * (Designsystem 5.1), und ein Hinweissatz ist keine. Bleibt die
+ * Unterstreichung, und die ist ohnehin die Antwort, die nicht auf Farbe
+ * allein baut.
+ *
+ * Nach den Aufgaben 22a und 22b ist dies die letzte der urspruenglich
+ * sechzehn Stellen: die fuenfzehn in den Kurse-Routen sind dort zu
+ * Reitern und Zeilen-Links geworden, die ihre eigene Klasse tragen.
+ */
+test("Ein Link im Fliesstext ist als Link zu erkennen", async ({ page }) => {
+  const { studioId } = await studioMitTrainer(page, "leute-link");
+  await page.goto(`/portal/${studioId}/leute`);
+
+  // In der Rail steht ebenfalls ein Link "Einstellungen" -- gemeint ist
+  // der im Satz unter der Liste, also der innerhalb der Hauptlandmarke.
+  const link = page.getByRole("main").getByRole("link", { name: "Einstellungen" });
+  await expect(link).toBeVisible();
+
+  const strich = await link.evaluate((el) => getComputedStyle(el).textDecorationLine);
+  expect(strich).toBe("underline");
 });

@@ -288,9 +288,13 @@
   color: var(--text-muted);
 }
 
+/* Der Feldhinweis haengt per aria-describedby am Eingabefeld und nennt
+   Regeln, die gelten -- Passwortlaenge, Bedeutung der Stornofrist.
+   Pflichttext also, und Designsystem 2 schliesst text-faint (3,6 : 1)
+   dafuer aus. Dritter Zwilling nach .sectionNote und .abschnittNotiz. */
 .hint {
   font-size: 12px;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 /* Ein Feld, das eine Zahl von 0 bis 168 aufnimmt, in Spaltenbreite zu
@@ -425,9 +429,18 @@
   line-height: 1.45;
 }
 
+/* Umriss ohne Flaeche. Designsystem 5 ordnet die getoente danger-Flaeche
+   dem Zustand OFFLINE zu; FEHLER ist dort "danger-Umriss, voller
+   Kontrast", und Offline gilt im Portal nicht (Struktur-Spec 5).
+   Zustaende.dc.html zeichnet die Fehlerkarte auf #14161a und kennt in der
+   ganzen Datei kein rgba: die Fehlerkarte steht dort auf #14161a, also
+   auf --surface. Genau so machen es die beiden Geschwister schon --
+   .fehler in bausteine.module.css (Zustand-Baustein) und .fehlermeldung
+   in einstieg.module.css. -- .destructive:hover benutzt dasselbe rgba
+   und bleibt: ein Zeigezustand ist kein Statusfeld. */
 .error {
   border: 1px solid var(--danger);
-  background: rgba(255, 90, 78, 0.1);
+  background: var(--surface);
   color: var(--text);
   border-radius: var(--r-control);
   padding: var(--s12) var(--s16);

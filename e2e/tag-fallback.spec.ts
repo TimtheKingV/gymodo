@@ -231,6 +231,40 @@ test("aktiver Tag zeigt Geraet, Foto und Einweisungsvideo vor dem Installationsh
   for (const verboten of ["kg", "Satz", "Wiederholung"]) {
     expect(sichtbar).not.toContain(verboten);
   }
+
+  // Befund 34: FallbackGeraet.dc.html setzt unter den zweiten Scan einen
+  // zweiten Satz -- und der ist der wichtigere. Diese Seite ist genau
+  // dafuer gebaut, dass jemand OHNE App vor dem Geraet steht; der
+  // Dateikopf sagt es selbst ("Der Nutzen kommt vor der
+  // Installationsaufforderung -- auch auf Android, wo es die App nicht
+  // gibt"). Ohne ihn liest ein Android-Nutzer die Seite als Absage,
+  // obwohl er alles Wesentliche gerade gesehen hat.
+  await expect(
+    page.getByText("Die Einweisung oben funktioniert auf jedem Gerät und ohne App"),
+  ).toBeVisible();
+
+  // Befund 19, zweite Stelle: die Produktgrenze stand in text-faint
+  // (3,6 : 1). Designsystem 10 verlangt sie verbindlich UND sichtbar.
+  const grenze = page.getByText(/gymodo misst nichts/);
+  expect(await grenze.evaluate((el) => getComputedStyle(el).color)).toBe(
+    "rgb(155, 163, 175)",
+  );
+});
+
+/**
+ * Befund 33. Der Code sagte "Bitte wende dich an dein Studio." und liess
+ * offen, wozu. FallbackInaktiv.dc.html nennt den Grund mit:
+ * "dort kann der Aufkleber neu vergeben werden". Der Halbsatz ist der
+ * Unterschied zwischen einer Sackgasse und einem loesbaren Problem --
+ * jemand steht vor einem Geraet und weiss sonst nicht, ob es an ihm liegt.
+ */
+test("der inaktive Code sagt nicht nur wohin, sondern auch wozu", async ({ page }) => {
+  await page.goto(`/t/${createTagToken()}`);
+
+  await expect(page.getByTestId("tag-unknown")).toBeVisible();
+  await expect(
+    page.getByText("Wende dich an dein Studio — dort kann der Aufkleber neu vergeben werden"),
+  ).toBeVisible();
 });
 
 /**

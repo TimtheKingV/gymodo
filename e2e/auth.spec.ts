@@ -110,3 +110,50 @@ test("ein Konto ohne Studio tritt per Code bei", async ({ page }) => {
 
   await expect(page.getByTestId("studio-list")).toContainText("Beitritts-E2E-Studio");
 });
+
+/**
+ * Befunde 42 und 18, beide auf einer Seite: /registrieren traegt den
+ * Feldhinweis (.hint) und die Fehlermeldung (.error) aus Form.tsx.
+ *
+ * .hint stand in text-faint (3,6 : 1) und nennt die Passwortregel --
+ * Pflichttext, den jemand lesen MUSS, und damit genau der Fall, den
+ * Designsystem 2 fuer text-faint ausschliesst.
+ *
+ * Die Fehlermeldung dieser Seite ist NICHT .error: /registrieren ist keine
+ * Portalseite und nimmt .fehlermeldung aus einstieg.module.css. Sie steht
+ * hier trotzdem, und zwar als Bezugspunkt -- danger-Umriss auf --surface,
+ * keine Toenung, so wie Zustaende.dc.html die Fehlerkarte zeichnet. Das
+ * ist die Form, an die sich .error in Aufgabe 21 angleicht (Befund 18);
+ * der Gegentest dazu steht in einstellungen.spec.ts, wo .error wirklich
+ * rendert.
+ *
+ * Geprueft wird je auf GLEICHHEIT mit dem erwarteten Wert, nicht auf
+ * Ungleichheit mit dem verbotenen: sonst kaeme jeder andere zu blasse Ton
+ * und jede andere Toenung durch.
+ */
+test("Feldhinweis und Fehlermeldung halten den Kontrast der Regel", async ({ page }) => {
+  await page.goto("/registrieren");
+
+  const hinweis = page.getByText("Länge zählt mehr als Sonderzeichen");
+  await expect(hinweis).toBeVisible();
+  // --text-muted, #9ba3af
+  expect(await hinweis.evaluate((el) => getComputedStyle(el).color)).toBe(
+    "rgb(155, 163, 175)",
+  );
+
+  await page.getByLabel("E-Mail").fill(`e2e-kontrast-${crypto.randomUUID()}@example.test`);
+  await page.getByLabel("Passwort").fill("kurz");
+  await page.getByRole("button", { name: "Konto anlegen" }).click();
+
+  const meldung = fehlermeldung(page);
+  await expect(meldung).toContainText("mindestens zehn Zeichen");
+  const form = await meldung.evaluate((el) => {
+    const stil = getComputedStyle(el);
+    return { rahmen: stil.borderTopColor, flaeche: stil.backgroundColor };
+  });
+  // --danger (#ff5a4e) als Umriss, --surface (#14161a) als Grund. Keine
+  // getoente Flaeche: die gehoert laut Designsystem 5 zu OFFLINE, und
+  // Offline gilt im Portal ausdruecklich nicht (Struktur-Spec 5).
+  expect(form.rahmen).toBe("rgb(255, 90, 78)");
+  expect(form.flaeche).toBe("rgb(20, 22, 26)");
+});

@@ -189,8 +189,11 @@
   margin-top: var(--s24);
 }
 
+/* 12px 16px, so zeichnen es alle Artboards mit Reiterleiste. Der Wert
+   traegt mehr als das Aussehen: mit 8px blieb der Reiter unter 40 px und
+   damit unter dem Schreibtischmass fuer eine Nebenaktion. */
 .reiterEintrag {
-  padding: var(--s8) var(--s16);
+  padding: var(--s12) var(--s16);
   border-bottom: 2px solid transparent;
   color: var(--text-muted);
   text-decoration: none;
@@ -230,6 +233,17 @@
    verbietet dafuer 3,6 : 1 (Befund 19 und 29, derselbe Schnitt wie in
    Produktgrenze.tsx). Der Baustein heisst "Erlaeuterung", weil er
    erklaert; was erklaert, muss lesbar sein. */
+/* globals.css:97 nimmt jedem <a> Farbe und Unterstreichung. Fuer Rail,
+   Reiter und Knopf-Links ist das richtig -- die tragen eigene Klassen und
+   sehen aus wie Bedienelemente. Ein Link mitten im Satz haette ohne sie
+   null Unterschied zum Text daneben. Der Akzent scheidet als Mittel aus
+   (er markiert die eine Hauptaktion), also traegt die Unterstreichung den
+   Unterschied -- und die baut nicht auf Farbe allein. */
+.erlaeuterung a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .erlaeuterung {
   color: var(--text-muted);
   font-size: 13px;
