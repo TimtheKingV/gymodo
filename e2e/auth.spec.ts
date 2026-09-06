@@ -112,8 +112,12 @@ test("ein Konto ohne Studio tritt per Code bei", async ({ page }) => {
 });
 
 /**
- * Befunde 42 und 18, beide auf einer Seite: /registrieren traegt den
- * Feldhinweis (.hint) und die Fehlermeldung (.error) aus Form.tsx.
+ * Befund 42, plus ein Bezugspunkt fuer Befund 18.
+ *
+ * /registrieren holt sich `Feld` aus portal/Form.tsx und traegt damit
+ * .hint -- die Klasse, die diese Aufgabe aendert. Die Fehlermeldung der
+ * Seite kommt dagegen aus einstieg.module.css (.fehlermeldung), nicht aus
+ * .error; /registrieren ist keine Portalseite.
  *
  * .hint stand in text-faint (3,6 : 1) und nennt die Passwortregel --
  * Pflichttext, den jemand lesen MUSS, und damit genau der Fall, den

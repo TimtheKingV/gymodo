@@ -235,7 +235,9 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
 
     **Nachtrag vom 5. September: nur die Hälfte war behoben.** Der neue `Zustand`-Baustein wurde von Anfang an ohne die Fläche gebaut, und damit galt der Befund als erledigt. Er war es nicht — `portal.module.css:389` trägt sie weiter, und `.error` hängt an **acht** Stellen, darunter `Form.tsx` (Zeile 36 und 85), also an **jeder Formularfehlermeldung des Portals**. Der `Zustand`-Baustein deckt die Zustandsflächen ab, nicht die Fehlermeldung unter einem Feld.
 
-    **Die Halle macht es bereits richtig:** `halle.module.css:275` setzt für `.fehler` nur `color: var(--danger)`, keine Fläche. Derselbe Fehlerzustand, zwei Behandlungen, und das Designsystem nennt die der Halle als die richtige. **Fällig in Aufgabe 21** — eine Zeile, danach die acht Stellen sichtprüfen. `.destructive:hover` benutzt dasselbe `rgba` und **bleibt**: ein Interaktionszustand ist kein Statusfeld.
+    **Die Halle macht es bereits richtig:** `halle.module.css:275` setzt für `.fehler` nur `color: var(--danger)`, keine Fläche. Derselbe Fehlerzustand, zwei Behandlungen, und das Designsystem nennt die der Halle als die richtige. **Fällig in Aufgabe 21** — eine Zeile, danach die Stellen sichtprüfen. `.destructive:hover` benutzt dasselbe `rgba` und **bleibt**: ein Interaktionszustand ist kein Statusfeld.
+
+    **✅ Behoben in Aufgabe 21** (`a23926d`). Zwei Korrekturen dabei: es sind **sieben** Aufrufer, nicht acht (`Form.tsx` 36 und 85, `VideoUpload.tsx:171`, `EinstellungenActions.tsx:88`, `einstellungen/page.tsx:69`, `LeuteActions.tsx:162`, `TagBinden.tsx:38`) — die Acht war ungezählt. Und *keine Tönung* heißt nicht *keine Fläche*: der erste Eingriff strich die Zeile und erzeugte `transparent`. Richtig ist `background: var(--surface)`, wie `Zustaende.dc.html` die Fehlerkarte auf `#14161a` zeichnet und wie die beiden Geschwister `.fehler` und `.fehlermeldung` es längst tun. Der Test in `einstellungen.spec.ts` hat es gefangen.
 
     Zwei von drei Quellen sind sich also einig, und die dritte ist der laufende Code. Der neue Baustein folgt Spec und Artboard: `danger`-Rand auf `surface`, keine Tönung. `.error` bleibt vorerst, wie es ist — es wird von `Form.tsx` und mehreren Seiten benutzt und löst sich auf, wenn diese Seiten in den Aufgaben 5 und 14–20 auf den Baustein wechseln. **Bis dahin zeigt das Portal zwei verschiedene Fehlerflächen.**
 
@@ -245,8 +247,8 @@ Nach der Regel der Global Constraints. Alle vier betreffen den Einstieg — den 
     | --- | --- | --- |
     | `Start.dc.html`, Fußzeile | `13px`, `#5c636e` | Artboard, bleibt |
     | `(schreibtisch)/page.tsx` über `.hint` | `12px`, `var(--text-faint)` | ✅ behoben in Aufgabe 14 (Baustein `Produktgrenze`) |
-    | `t/[token]/page.tsx` über `.grenze` | `13px`, `var(--text-faint)` | offen — `fallback.module.css:178` |
-    | `app/page.tsx` (Landeseite) über `.fuss` | `13px`, `var(--text-faint)` | offen — `landeseite.module.css:151` |
+    | `t/[token]/page.tsx` über `.grenze` | `13px`, `var(--text-faint)` | ✅ behoben in Aufgabe 21 (`a23926d`) |
+    | `app/page.tsx` (Landeseite) über `.fuss` | `13px`, `var(--text-faint)` | ✅ behoben in Aufgabe 21 (`a23926d`) |
 
     **Nachtrag vom 5. September: es waren nie drei Orte, es sind vier.** Die Landeseite kam in Aufgabe 10 dazu und trägt die Produktgrenze ebenfalls in `text-faint`. Der Implementierer hat das damals **nicht übersehen**, sondern bewusst so gebaut und in einem sieben Zeilen langen Kommentar begründet: das Artboard setze es so, und er übernehme es wörtlich, statt eigenmächtig aufzuhellen. Das war die richtige Haltung an der falschen Stelle — die Schlichtungsregel greift hier ja gerade nicht, weil Artboard und Code gemeinsam abweichen. **Beide offenen Orte fällig in Aufgabe 21.**
 
@@ -305,6 +307,8 @@ Verfahren: aus jedem der 16 `Telefon*`-Artboards und den drei `Fallback*`-Artboa
 
 33. **`FallbackInaktiv`: der Satz sagt, wohin man sich wendet, aber nicht wozu.** Code (`t/[token]/page.tsx:71`): *„Bitte wende dich an dein Studio."* Artboard: *„Wende dich an dein Studio — dort kann der Aufkleber neu vergeben werden."* Der zweite Halbsatz sagt, dass das Problem lösbar ist und wie. Ohne ihn liest sich die Seite wie eine Sackgasse.
 
+    **✅ Behoben in Aufgabe 21** (`a23926d`), Wortlaut zeichengenau nach `FallbackInaktiv.dc.html`.
+
 34. **`FallbackGeraet`: der Android-Nutzer erfährt nicht, dass er nichts verpasst.** Artboard: *„Zurzeit nur für iPhone. Die Einweisung oben funktioniert auf jedem Gerät und ohne App.“* Der Satz ist der wichtigere von beiden: die Seite ist genau für den Fall gebaut, dass jemand ohne App vor dem Gerät steht — der Kommentar im Kopf der Datei sagt es selbst (*„Der Nutzen kommt vor der Installationsaufforderung — auch auf Android, wo es die App nicht gibt“*). Der Code hält sich an diese Absicht in der Anordnung und widerspricht ihr im Wortlaut.
 
     **Korrektur vom 6. September (Aufgabe 21): der Ortsverweis war falsch, und damit auch der Eingriff.** Der Befund nannte Zeile 146 als die halbierte Stelle. Zeile 146 steht aber im **Aushang**-Zweig, und `FallbackAushang.dc.html` zeichnet dort genau *„Zurzeit nur für iPhone.“* — ohne Zusatz, und aus gutem Grund: über einem Aushang steht keine Einweisung, auf die sich *„oben“* beziehen könnte. **Dort ist der Code richtig und bleibt unverändert.**
@@ -332,6 +336,8 @@ Verfahren: aus jedem der 16 `Telefon*`-Artboards und den drei `Fallback*`-Artboa
 
 37. **Kein Link in dieser Anwendung ist als Link erkennbar.** `globals.css:97` setzt `a { color: inherit; text-decoration: none; }`, und in der ganzen Anwendung kommt `underline` **kein einziges Mal** vor. Für Rail, Reiter und Knopf-Links ist das richtig — sie tragen eigene Klassen und sehen aus wie Bedienelemente. Für einen Link **im Fließtext** bleibt dagegen null Unterschied zum Text daneben: weder Farbe noch Unterstreichung. Betroffen sind **16 Stellen**, davon **15 in den Kurse-Routen** (die ungestaltete Phase-4-Fläche, fällig in Aufgabe 22) und eine im Reiter *Mitglieder* (*„Mitglieder treten über den Studio-Code bei — Einstellungen"*, fällig in Aufgabe 21).
 
+    **✅ Behoben.** Die fünfzehn sind in 22a und 22b zu Reitern und Zeilen-Links geworden, die ihre eigene Klasse tragen; die sechzehnte hat in Aufgabe 21 (`a23926d`) eine Unterstreichung bekommen — `.erlaeuterung a` in `bausteine.module.css`. Der Akzent schied als Mittel aus: er markiert die eine Hauptaktion, und ein Hinweissatz ist keine. Die Unterstreichung baut zudem nicht auf Farbe allein.
+
 38. **`AktionsKnopf` hält seinen Bestätigungszustand je Knopf.** Auf einer Zeile mit zwei Aktionen — etwa *Tag scannen* und *Stilllegen* im Reiter *Einzelne Geräte* — können beide gleichzeitig in der zweiten Stufe stehen und warten. Wer die falsche trifft, hat sie nicht versehentlich ausgelöst, aber der Bildschirm zeigt zwei offene Rückfragen nebeneinander, und keine sagt, welche zu welcher Zeile gehört. **Vertagt** — der Eingriff wäre ein gemeinsamer Zustand über die Zeile, und das ist ein Umbau von `Form.tsx`, nicht Gestaltung.
 
 39. **`?alle=1` trägt keinen Namen je Liste.** Die Kürzung im Reiter *Mitglieder* klappt über einen Suchparameter auf — richtig serverseitig, ohne Client-Rand. Der Parameter benennt aber nicht, **welche** Liste er meint. Solange ein Reiter höchstens eine kürzbare Liste hat, trägt das; der Reiter *Mitarbeiter* hat schon zwei Abschnitte, und sobald einer davon ebenfalls kürzt, klappen beide zugleich auf. **Vertagt**, mit der Notiz: der nächste, der eine zweite Kürzung anlegt, benennt den Parameter.
@@ -348,7 +354,37 @@ Verfahren: aus jedem der 16 `Telefon*`-Artboards und den drei `Fallback*`-Artboa
 
 42. **`.hint` ist der dritte Zwilling.** Nach `.sectionNote` (Befund 29) und `.abschnittNotiz` (Befund 36) setzt auch `portal.module.css:291` `12px` in `--text-faint` — und trägt damit unter anderem die Passwortregel (*„Mindestens zehn Zeichen …"*) und die Bedeutung der Stornofrist. Beides ist Pflichttext, den jemand lesen muss, und damit genau der Fall, den Designsystem §2 für `text-faint` ausschließt. In Aufgabe 20 **bewusst stehengelassen**, weil der Brief den Umfang auf die beiden benannten Klassen begrenzt hatte und ein stiller dritter Griff dieselbe Sorte Überraschung wäre wie die halbe Heilung bei Befund 18. **Fällig in Aufgabe 21.**
 
+    **✅ Behoben in Aufgabe 21** (`a23926d`). `.hint` hängt an acht Stellen und per `aria-describedby` am Eingabefeld — der Hinweis ist damit auch das, was ein Screenreader zum Feld vorliest.
+
     Nicht zu verwechseln mit der `.hint`-Zeile aus Befund 19: die betraf die Produktgrenze im Überblick und ist über den Baustein `Produktgrenze` erledigt. Die **Klasse** blieb dabei, wie sie war.
+
+### Aus dem Abgleich selbst (Aufgabe 21, 6. September)
+
+43. **Die Installationskarte auf dem Gerätebildschirm weicht in vier von fünf Zeilen vom Artboard ab — aufgeschrieben, nicht behoben.** `FallbackGeraet.dc.html` zeichnet eine Karte mit Überschrift und Fließtext; der Code trägt einen einzelnen Satz.
+
+    | | Artboard | Code (`t/[token]/page.tsx`) |
+    | --- | --- | --- |
+    | Überschrift | *„Deine Einstellungen jedes Mal wiederfinden"* (17 px, 800) | — |
+    | Fließtext | *„Die App merkt sich Sitzhöhe, Gewicht und deine letzten Sätze — an jedem Gerät im Studio."* | *„Installiere die App, um deine Einstellungen und deinen Verlauf zu speichern."* |
+    | Hauptaktion | *App laden* | *App installieren* |
+    | Zweiter Scan | gleich | gleich |
+
+    **Warum das nicht in dieser Aufgabe behoben wird, obwohl die Halbsätze aus Befund 33 und 34 es wurden:** jene beiden waren **aufgeschriebene Befunde**, die diese Aufgabe abzuarbeiten hatte. Dies hier ist ein **Fund während des Abgleichs**, und für solche sagt der Plan ausdrücklich: *„Abweichungen als Zeile notieren — nicht beheben."*
+
+    Dazu ein sachlicher Grund: nur die Hauptaktion zu ändern, wäre genau die halbe Heilung, die Befund 18 und 42 dieser Phase schon gekostet haben. *App laden* neben einem Satz, der *„Installiere die App"* sagt, ist schlechter als beides konsistent falsch. Die ganze Karte ist eine Textentscheidung auf einer öffentlichen, nicht angemeldeten Seite — sie gehört in einen Bauabschnitt mit eigener Abnahme, nicht in einen Nebenzug.
+
+    Der Artboard-Fließtext streift zudem die Datenschutzgrenze (*„deine letzten Sätze"*): `tag-fallback.spec.ts` verbietet auf dieser Seite die sichtbaren Zeichenfolgen `kg`, `Satz` und `Wiederholung`. *„Sätze"* geht am Verbot vorbei, weil `ä ≠ a` — aber wer die Karte nachzieht, muss diesen Test mitlesen, sonst fällt er über eine Zusicherung, die älter ist als der Entwurf.
+
+44. **`.mitgliedshinweis` und `.ohneVideo` sind die vierte und fünfte Stelle zu Befund 19 — und die vierte stand vierzehn Zeilen über der dritten.** Beide `13px` in `--text-faint`:
+
+    | Klasse | Was sie trägt | Warum das gelesen werden muss |
+    | --- | --- | --- |
+    | `landeseite.module.css` `.mitgliedshinweis` | *„Du bist Mitglied? … im Web gibt es nichts für dich zu tun."* | Es ist die **ganze** Antwort für ein Mitglied, das hier landet. Wer sie nicht liest, sucht weiter |
+    | `fallback.module.css` `.ohneVideo` | *„Für diese Übung gibt es kein Video."* | Erklärt eine Abwesenheit — ohne sie sucht jemand nach etwas, das es nicht gibt |
+
+    Der erste Durchgang der Aufgabe hat `.fuss` geheilt und `.mitgliedshinweis` in derselben Datei stehengelassen; der Code-Review hat es gefangen. Das ist dieselbe halbe Heilung, vor der Befund 42 warnt — diesmal nicht über Dateigrenzen hinweg, sondern **innerhalb einer Datei**, was es schlechter macht, nicht besser. Beide sind jetzt `--text-muted`; `.mitgliedshinweis` hat in `wurzel.spec.ts` eine Farbzusicherung bekommen.
+
+    **Die Zählung ist damit endgültig:** Produktgrenze an drei Orten (Überblick, `/t/<token>`, Landeseite), plus `.fussnote`, `.mitgliedshinweis` und `.ohneVideo` als eigene Sätze mit derselben Begründung. Was `--text-faint` behält, ist in jedem Fall benannt: `.reiterZusatz` und `.navItemMeta` — Zählstände, die man streift, nicht liest.
 
 ---
 

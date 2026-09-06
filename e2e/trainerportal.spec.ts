@@ -172,42 +172,37 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await page.getByRole("button", { name: "Änderungen speichern" }).click();
   await expect(page.getByRole("img", { name: "Foto von Latzug" })).toBeVisible();
 
-  // 2. Einstellparameter, 3. Uebung, 4. Geraeteinstanz -- ihre Reiter
-  // (Einstellungen, Uebungen, Einzelne Geraete) entstehen erst in Aufgabe
-  // 17 und 18. Bis dahin legt dieser Test sie direkt in der Datenbank an,
-  // damit der Weg ueber Tag-Bindung und Geraete-Screen-Kontext weiter
-  // geprueft ist; sobald die Reiter stehen, gehoert das wieder ueber die
-  // Oberflaeche geprueft.
-  const { error: parameterFehler } = await admin
-    .from("equipment_setting_definitions")
-    .insert({
-      equipment_model_id: modelId,
-      key: "sitz",
-      label: "Sitzposition",
-      kind: "number",
-      min_value: 1,
-      max_value: 8,
-    });
-  if (parameterFehler) throw parameterFehler;
+  // 2. Einstellparameter und 3. Uebung -- ueber ihre Reiter, nicht ueber
+  // die Datenbank. Bis Aufgabe 17 und 18 gab es die Reiter nicht, und
+  // dieser Test hat beides direkt eingefuegt, mit der Notiz "sobald die
+  // Reiter stehen, gehoert das wieder ueber die Oberflaeche geprueft".
+  // Sie stehen seit 5c87922 und 48d6b6b.
+  //
+  // Der Unterschied ist nicht kosmetisch: die beiden ANLEGE-Formulare
+  // waren bis hier von keinem E2E-Test beruehrt. schreibtisch.spec.ts
+  // prueft die Leerzustaende beider Reiter und das Umordnen -- und legt
+  // dafuer selbst per Datenbank an. Der Weg, den ein Trainer wirklich
+  // geht, lief also nirgends durch.
+  await page.goto(`/portal/${studio.id}/geraete/${modelId}/einstellungen`);
+  await page.getByLabel("Schlüssel").fill("sitz");
+  await page.getByLabel("Beschriftung").fill("Sitzposition");
+  await page.getByLabel("Art").selectOption("number");
+  await page.getByLabel("Minimum").fill("1");
+  await page.getByLabel("Maximum").fill("8");
+  await page.getByRole("button", { name: "Parameter anlegen" }).click();
+  await expect(page.getByText("Sitzposition")).toBeVisible();
 
-  const { data: uebung, error: uebungFehler } = await admin
-    .from("exercises")
-    .insert({
-      studio_id: studio.id,
-      name: "Latzug breit",
-      target_reps_min: 8,
-      target_reps_max: 12,
-    })
-    .select("id")
-    .single();
-  if (uebungFehler) throw uebungFehler;
+  await page.goto(`/portal/${studio.id}/geraete/${modelId}/uebungen`);
+  await page.getByLabel("Name").fill("Latzug breit");
+  await page.getByLabel("Wiederholungen ab").fill("8");
+  await page.getByLabel("bis").fill("12");
+  await page.getByRole("button", { name: "Übung anlegen" }).click();
+  await expect(page.getByText("Latzug breit")).toBeVisible();
 
-  const { error: linkFehler } = await admin.from("equipment_model_exercises").insert({
-    equipment_model_id: modelId,
-    exercise_id: uebung.id,
-    sort_order: 1,
-  });
-  if (linkFehler) throw linkFehler;
+  // 4. Geraeteinstanz -- weiter ueber die Datenbank. Ihr Reiter legt
+  // Geraete an, aber der Weg dorthin ist der Gang durch die Halle
+  // (einrichten/), und den prueft einrichten.spec.ts in voller Laenge.
+  // Hier waere er eine zweite Kopie, keine zweite Zusicherung.
 
   const { error: geraetFehler } = await admin.from("machines").insert({
     studio_id: studio.id,

@@ -33,7 +33,16 @@ test("Die Landeseite nennt die Produktgrenze, ohne dass man danach sucht", async
 
 test("Sie sagt einem Mitglied, dass es im Web nichts zu tun hat", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText(/im Web gibt es nichts für dich zu tun/)).toBeVisible();
+  const satz = page.getByText(/im Web gibt es nichts für dich zu tun/);
+  await expect(satz).toBeVisible();
+
+  // Und lesbar. Dieser Absatz ist die ganze Antwort fuer ein Mitglied,
+  // das hier landet -- wer ihn nicht liest, sucht weiter. Derselbe Fall
+  // wie bei der Produktgrenze darunter (Befund 19), nur vierzehn Zeilen
+  // hoeher in derselben Datei; beim ersten Durchgang uebersehen.
+  expect(await satz.evaluate((el) => getComputedStyle(el).color)).toBe(
+    "rgb(155, 163, 175)",
+  );
 });
 
 /**
@@ -130,9 +139,11 @@ test("Ein falscher Studio-Code meldet sich als Warnung", async ({ page }) => {
 });
 
 /**
- * Befund 19, dritte und letzte Stelle. Der Ueberblick ist in Aufgabe 14
- * ueber den Baustein Produktgrenze geheilt, /t/<token> in Aufgabe 21 --
- * die Landeseite trug den Satz weiter in text-faint (3,6 : 1).
+ * Befund 19, dritter Ort der Produktgrenze. Der Ueberblick ist in
+ * Aufgabe 14 ueber den Baustein Produktgrenze geheilt, /t/<token> in
+ * Aufgabe 21 -- die Landeseite trug den Satz weiter in text-faint
+ * (3,6 : 1). Nicht der letzte Fall der Regel: .fussnote, .ohneVideo und
+ * .mitgliedshinweis folgen derselben Begruendung (Befund 44).
  *
  * Start.dc.html zeichnet die Fusszeile in #5c636e, und darin weicht der
  * Code bewusst ab: Designsystem 2 verbietet text-faint fuer Text, der

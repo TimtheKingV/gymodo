@@ -429,9 +429,10 @@
   line-height: 1.45;
 }
 
-/* Umriss ohne Flaeche. Designsystem 5 ordnet die getoente danger-Flaeche
-   dem Zustand OFFLINE zu; FEHLER ist dort "danger-Umriss, voller
-   Kontrast", und Offline gilt im Portal nicht (Struktur-Spec 5).
+/* Danger-Umriss auf --surface, keine Toenung. Designsystem 5 ordnet die
+   getoente danger-Flaeche dem Zustand OFFLINE zu; FEHLER ist dort
+   "danger-Umriss, voller Kontrast", und Offline gilt im Portal nicht
+   (Struktur-Spec 5).
    Zustaende.dc.html zeichnet die Fehlerkarte auf #14161a und kennt in der
    ganzen Datei kein rgba: die Fehlerkarte steht dort auf #14161a, also
    auf --surface. Genau so machen es die beiden Geschwister schon --

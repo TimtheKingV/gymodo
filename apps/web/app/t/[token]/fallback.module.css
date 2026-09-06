@@ -72,8 +72,11 @@
   display: block;
 }
 
+/* Erklaert eine Abwesenheit und muss gelesen werden -- sonst sucht
+   jemand nach einem Video, das es nicht gibt. Gleiche Begruendung wie bei
+   .fussnote. */
 .ohneVideo {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -166,10 +169,12 @@
   color: var(--text-muted);
 }
 
-/* Auf dem Geraetebildschirm steht hier der Satz, der dem Android-Nutzer
-   sagt, dass er nichts verpasst -- tragender Text, kein Kleingedrucktes.
-   Die 11px zeichnet FallbackGeraet.dc.html; der Kontrast folgt der Regel
-   aus Designsystem 2, nicht dem Artboard. */
+/* Zwei Aufrufer. Auf dem Aushang steht hier nur "Zurzeit nur fuer
+   iPhone."; auf dem Geraetebildschirm kommt der Satz dazu, der dem
+   Android-Nutzer sagt, dass er nichts verpasst -- tragender Text, kein
+   Kleingedrucktes. Der zweite Fall bestimmt den Kontrast, weil die Klasse
+   beide traegt: 11px wie in FallbackGeraet.dc.html gezeichnet, die Farbe
+   nach der Regel aus Designsystem 2 statt nach dem Artboard. */
 .fussnote {
   color: var(--text-muted);
   font-size: 11px;

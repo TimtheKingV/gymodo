@@ -79,6 +79,13 @@ test("aktiver Tag mit zugewiesenem Geraet zeigt den Installationshinweis", async
 
   await page.goto(`/t/${token}`);
   await expect(page.getByTestId("install-hint")).toBeVisible();
+
+  // Dieses Geraet hat keine Uebung -- am Anfang jeder Einrichtung der
+  // Normalfall, und der Einweisungsteil fehlt dann. Der Satz "Die
+  // Einweisung oben funktioniert auf jedem Geraet" darf hier nicht
+  // stehen: er zeigt auf etwas, das es auf dieser Seite nicht gibt.
+  await expect(page.getByText("Zurzeit nur für iPhone.")).toBeVisible();
+  await expect(page.getByText("Die Einweisung oben")).toHaveCount(0);
 });
 
 test("noch nicht zugewiesener Tag zeigt dieselbe neutrale Meldung", async ({

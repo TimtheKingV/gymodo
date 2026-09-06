@@ -68,7 +68,7 @@ test("ein Trainer pflegt die Studio-Einstellungen", async ({ page }) => {
   await expect(fehlermeldung(page)).toContainText("168");
 
   // Befund 18: .error trug eine 10-prozentige danger-Flaeche und haengt an
-  // acht Stellen, darunter beide Fehlerpfade in Form.tsx -- also an jeder
+  // sieben Stellen, darunter beide Fehlerpfade in Form.tsx -- also an jeder
   // Formularfehlermeldung des Portals. Designsystem 5 ordnet die getoente
   // Flaeche dem Zustand OFFLINE zu; FEHLER ist dort danger-Umriss bei
   // vollem Kontrast, und Zustaende.dc.html zeichnet die Fehlerkarte auf
