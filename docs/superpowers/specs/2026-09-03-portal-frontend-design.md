@@ -360,6 +360,34 @@ Verfahren: aus jedem der 16 `Telefon*`-Artboards und den drei `Fallback*`-Artboa
 
 ### Aus dem Abgleich selbst (Aufgabe 21, 6. September)
 
+45. **Zwoelf der siebzehn `Telefon*`-Artboards zeichnen eine Chipnavigation, die es im Code nicht gibt — und Phase 3 hat sie ausdruecklich dieser Phase versprochen.** `TelefonStart.dc.html` und elf weitere setzen ueber den Inhalt einen Kopf mit Studioname und einer seitlich scrollenden Pillenreihe (*Überblick, Kurse, Geräte, Tags, Leute, Einstellungen*), die aktive Pille markiert durch `box-shadow: inset 0 0 0 1px #d4ff3f` — ein Ring, keine Fläche, die Akzentregel bleibt also unberührt. Ohne die Reihe kommen genau die vier Vollbildschirme aus: `TelefonFoto`, `TelefonScan`, `TelefonUebungWaehlen`, `TelefonVideo`.
+
+    Der Code hat es gewusst und aufgeschrieben. `einrichten/layout.tsx` sagt im Dateikopf: *„Der Gang durch die Halle hat keine Rail … Die Chipnavigation der Artboards gehört zur Telefonfassung des ganzen Portals und **kommt mit Phase 5** — hier steht nur der Weg zurück an den Schreibtisch."*
+
+    **Phase 5 hat das Versprechen halb eingelöst.** Die Telefonfassung des Schreibtischs steht: `portal.module.css` legt unter `@media (max-width: 900px)` die Rail flach, macht aus den Gruppen eine seitlich scrollende Reihe und blendet die Gruppenbeschriftungen aus. Die **Halle** hat sie nicht bekommen — sie liegt ausserhalb von `(schreibtisch)` und damit ausserhalb dieser Schale.
+
+    **Das ist eine Entscheidung, kein Fehler, und sie wird hier nicht getroffen.** Beide Lesarten sind vertretbar:
+
+    - *Der Code hat recht.* Der Gang durch die Halle ist einhändig, neben einem Gerät, und seine ganze Prämisse lautet: ein Gerät ist fertig, sobald sein Tag klebt. Sechs Fluchtwege mitten im Gang laden dazu ein, ihn halb zu verlassen. Die Navigation dort ist die Schrittleiste, nicht die Rail.
+    - *Das Artboard hat recht.* Wer in der Halle steht, muss vielleicht kurz zu *Tags* oder *Leute*, und der Umweg über *Schreibtisch* ist einer zu viel.
+
+    **Empfehlung:** so lassen und die Zeile im Layout-Kommentar berichtigen — sie verspricht etwas für eine Phase, die vorbei ist. Wer die Chips in der Halle will, entscheidet zuerst, was mit der Schrittleiste geschieht; zwei Navigationen übereinander auf 390 px sind schlechter als eine.
+
+    **Wie dieser Befund entstanden ist, und was daran fehlt:** durch Vergleich von **Artboard-Markup gegen Quelltext**, nicht durch Bilder. Der Bildvergleich, den Schritt 1 dieser Aufgabe verlangt, liess sich auf dieser Maschine **nicht durchführen** — siehe Befund 46. Von den vierzehn geplanten Aufnahmen ist eine brauchbar geworden (`/einrichten`, leerer Bestand); sie zeigt Kopf, Kennzahlenband, Zustandskarte, Hauptaktion und Fussnote an ihren Plätzen, und eben keine Chipreihe.
+
+46. **Der Dev-Server bricht auf dieser Maschine mitten im Lauf zusammen, und die Seite zeigt danach eine Fehlerkarte statt des Bildschirms.** Beim Aufnahmelauf für Befund 45 lieferte Next nach wenigen übersetzten Routen:
+
+    ```
+    Failed to generate static paths for /portal/[studioId]:
+    [Error: Jest worker encountered 2 child process exceptions, exceeding retry limit] { type: 'WorkerError' }
+    ```
+
+    Die Route antwortet danach weiter mit `200`, rendert aber die Entwickler-Fehlerkarte. **Eine Bildabnahme, die das nicht bemerkt, hält eine Absturzmeldung für einen Bildschirm** — genau das ist hier zweimal passiert, bis der Vergleich mit einer gültigen Aufnahme es zeigte.
+
+    Drei Anläufe, jedes Mal nach vier bis sechs Aufnahmen abgebrochen; zwischendurch hat das Betriebssystem Dev-Server und Testlauf wegen Speichermangels beendet (freier Speicher unter 700 MB von 15 GB, siebzehn Node-Prozesse). Das ist derselbe Blocker, den Fahrplan Abschnitt 6 als *„die E2E-Suite ist auf dieser Maschine nicht vollständig lauffähig"* führt — hier mit einer neuen, schaerferen Auspraegung: **er fälscht nicht nur Testläufe, er fälscht Screenshots**, und ein Screenshot beschwert sich nicht.
+
+    Es ist ein reines Entwicklungsproblem: `generateStaticParams` läuft nur unter `next dev` über diesen Worker-Pool, und die CI prüft gegen `next start`. **Betroffen ist die Abnahme, nicht das Erzeugnis.** Wer den Bildvergleich nachholt, tut es gegen einen Produktionsbau — `pnpm --filter @fitretro/web build && start` — und prüft jede Aufnahme darauf, dass sie kein `Runtime Error` zeigt.
+
 43. **Die Installationskarte auf dem Gerätebildschirm weicht in vier von fünf Zeilen vom Artboard ab — aufgeschrieben, nicht behoben.** `FallbackGeraet.dc.html` zeichnet eine Karte mit Überschrift und Fließtext; der Code trägt einen einzelnen Satz.
 
     | | Artboard | Code (`t/[token]/page.tsx`) |
