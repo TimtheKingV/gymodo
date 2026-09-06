@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { akzentflaechen, hauptlandmarken } from "./helpers/abnahme";
+import { akzentflaechen, fehlermeldung, hauptlandmarken } from "./helpers/abnahme";
 import { studioMitMitglied, studioMitTrainer } from "./helpers/studio";
 
 test("Die Rail zeigt sechs feste Bereiche in drei Gruppen, nicht jedes Modell", async ({
@@ -116,7 +116,13 @@ test("Ein Studio ohne Modell sagt, womit man anfaengt", async ({ page }) => {
   await page.goto(`/portal/${studioId}/geraete`);
 
   await expect(page.getByText(/Noch kein Gerätemodell/)).toBeVisible();
-  await expect(page.locator("[role=alert]")).toHaveCount(0);
+  // fehlermeldung() statt [role=alert]: Next legt einen leeren
+  // Route-Announcer mit role="alert" ins Dokument, und er entsteht erst,
+  // wenn der Client uebernimmt. Wer roh zaehlt, misst deshalb die
+  // Tagesform der Maschine -- isoliert ist die Pruefung schneller da als
+  // der Announcer und zaehlt 0, im vollen Lauf ist sie langsamer und
+  // zaehlt 1. Am 6. September genau so aufgetreten.
+  await expect(fehlermeldung(page)).toHaveCount(0);
 });
 
 test("Die Geräteseite traegt genau eine Akzentflaeche: das Anlegen", async ({ page }) => {

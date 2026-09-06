@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { akzentflaechen, hauptlandmarken, zuKleineBedienelemente } from "./helpers/abnahme";
+import {
+  akzentflaechen,
+  fehlermeldung,
+  hauptlandmarken,
+  zuKleineBedienelemente,
+} from "./helpers/abnahme";
 import { studioMitMitglied, studioMitTrainer } from "./helpers/studio";
 import { tagsAnlegen } from "../tests/helpers/tags";
 
@@ -50,7 +55,13 @@ test("Ein Studio ohne Tags sagt, was zu tun ist, statt eine leere Liste zu zeige
   await page.goto(`/portal/${studioId}/tags`);
 
   await expect(page.getByText("Noch keine Lieferung")).toBeVisible();
-  await expect(page.locator("[role=alert]")).toHaveCount(0);
+  // fehlermeldung() statt [role=alert]: Next legt einen leeren
+  // Route-Announcer mit role="alert" ins Dokument, und er entsteht erst,
+  // wenn der Client uebernimmt. Wer roh zaehlt, misst deshalb die
+  // Tagesform der Maschine -- isoliert ist die Pruefung schneller da als
+  // der Announcer und zaehlt 0, im vollen Lauf ist sie langsamer und
+  // zaehlt 1. Am 6. September genau so aufgetreten.
+  await expect(fehlermeldung(page)).toHaveCount(0);
 });
 
 test("Ein Mitglied sieht auf der Tags-Seite einen Satz, keinen Absturz", async ({ page }) => {
