@@ -1,20 +1,21 @@
 # Gesamtfahrplan — Stand, Lücken und Reihenfolge
 
-**Stand:** 4. September 2026 *(fortgeschrieben; Erstfassung 1. September)*
+**Stand:** 6. September 2026 *(fortgeschrieben; Erstfassung 1. September)*
 **Status:** Bestandsaufnahme. **Kein ausführbarer Task-Plan** — dieses Dokument ordnet die vorhandenen Pläne, es ersetzt keinen.
 **Bezugsstand:**
 
 | | Commit | Inhalt |
 | --- | --- | --- |
-| `master` | `2f81861` | alles zusammengeführt und **ausgeliefert**: Phase 1, 2 und 3, `0001`–`0034` |
+| `master` | `f0c8fb4` | alles zusammengeführt: Phase 1 bis 4, `0001`–`0038`. Ausgeliefert ist der Stand vom 3. September (`0001`–`0034`) |
 | `designplan` | `7c1f18c` | in `master` aufgegangen |
 | `design-geräteeinrichtung` | `13d065b` | in `master` aufgegangen |
 | `worktree/brave-forest-c9d8` | `2b2be9c` | Tag-Lieferung, in `master` aufgegangen |
 | `worktree/calm-forest-3c59` | `05be485` | Studio-Einstellungen, Datenschutzgrenze, Überblick: `0032`–`0034`, Fachschicht, Reiter Studio/Konto, E2E-Gang — **in `master` aufgegangen am 3. September** |
-| `phase4-kurse` | `d594193` | Kurse vollstaendig: `0035`–`0038`, Fachschicht, vier Portalseiten, drei Endpoints — **noch nicht in `master`** |
-| `phase3-einrichtung-am-geraet` | `a4e4057` | Der Gang durch die Halle, Route-Gruppe `(schreibtisch)`, drei Fachschichtfunktionen, Fix an `stripImageMetadata` und `bodySizeLimit` — in `master` aufgegangen am 3. September; **der Sucher (9b) fehlt** |
+| `phase4-kurse` | `d594193` | Kurse vollstaendig: `0035`–`0038`, Fachschicht, vier Portalseiten, drei Endpoints — **in `master` aufgegangen am 4. September** (`e0db982`) |
+| `phase5-portal-frontend` | `a23926d` | Portal-Frontend nach den 39 Artboards: Bausteine, Schreibtisch, Einstieg, Wurzelseite, Fallback; keine Migration — **noch nicht in `master`** |
+| `phase3-einrichtung-am-geraet` | `a4e4057` | Der Gang durch die Halle, Route-Gruppe `(schreibtisch)`, drei Fachschichtfunktionen, Fix an `stripImageMetadata` und `bodySizeLimit` — in `master` aufgegangen am 3. September; der Sucher (9b) kam am selben Tag nach (Abschnitt 3) |
 
-> **Was sich gegenüber der Erstfassung geändert hat, in einem Satz:** Sie beschrieb einen Stand, an dem die entworfenen Baustellen *zu null* gebaut waren — inzwischen stehen Phase 1, 2 und 3. Die Abschnitte 1 bis 5 sind entsprechend fortgeschrieben; die Betriebsbefunde aus 4a–4f bleiben als Lehre stehen, auch wo ihr Anlass erledigt ist.
+> **Was sich gegenüber der Erstfassung geändert hat, in einem Satz:** Sie beschrieb einen Stand, an dem die entworfenen Baustellen *zu null* gebaut waren — inzwischen stehen Phase 1 bis 5. Die Abschnitte 1 bis 5 sind entsprechend fortgeschrieben; die Betriebsbefunde aus 4a–4f bleiben als Lehre stehen, auch wo ihr Anlass erledigt ist.
 
 ---
 
@@ -32,7 +33,7 @@ Es ist bewusst kurz und verweist. Die Wahrheit über einen Bauabschnitt steht im
 
 Die Erstfassung hielt fest: `git diff master designplan -- . ':(exclude)docs'` war **leer** — 29 Commits, keine Zeile Code, auf Platte endete es bei `0021_fallback_inhalte.sql`. Drei Sessions später liegen **dreizehn weitere Migrationen** (`0022`–`0034`), die Fachschicht dazu, der ganze Gang durch die Halle, Einstellungen und Überblick — und 41 Integrationsdateien statt 27.
 
-Das Ungleichgewicht aus der Erstfassung hat sich verschoben, aber nicht aufgelöst: **das Portal ist funktional vollständig und ungestaltet; die Member-App hat ihr Backend und keine Zeile Code.**
+Das Ungleichgewicht aus der Erstfassung ist damit auf eine Seite zusammengeschmolzen: **das Portal ist funktional vollständig und gestaltet; die Member-App hat ihr Backend und keine Zeile Code.**
 
 ---
 
@@ -49,12 +50,13 @@ Das Ungleichgewicht aus der Erstfassung hat sich verschoben, aber nicht aufgelö
 | **Tag-Kette** — zweite Tag-Sorte, Beitritt durch Scannen, Selbstaustritt, Klartext-Tokenraum, Chargen/Lieferungen/Halde, `inspect_tag`/`bind_tag_to_machine`, Betreiberwerkzeug `pnpm tags` | ✅ neu |
 | **Auth** — Passwort statt OTP, Registrierung mit Bestätigungsmail, Passwort vergessen und zurücksetzen, eigene Mail-Templates | ✅ neu |
 | **Leute** — Beitrittscode, Mitgliederliste mit E-Mail, Rollen hoch- und herabstufen, Entfernen, Kein-Studio-Zustand | ✅ neu |
-| Trainerportal: Geräte, Modelle, Tags, Medien-Upload, Leute | ✅ funktional, **ungestaltet** |
-| **Kurse** — drei Tabellen, Platzvergabe unter einer Zeilensperre, Warteliste mit Nachrücken, vier Portalseiten, drei Member-Endpoints | ✅ neu, **ungestaltet**, siehe 4h |
+| Trainerportal: Geräte, Modelle, Tags, Medien-Upload, Leute | ✅ funktional **und gestaltet** |
+| **Kurse** — drei Tabellen, Platzvergabe unter einer Zeilensperre, Warteliste mit Nachrücken, vier Portalseiten, drei Member-Endpoints | ✅ neu **und gestaltet**, siehe 4h |
 | Betriebswerkzeug: `pnpm smoke:web`, `pnpm smoke:migrations` | ✅ neu, siehe 4a/4c |
 | **Studio-Einstellungen und Datenschutzgrenze** — Stornofrist, Speicherrecht mit Spaltengrenze, vier Policies ohne Staff-Klausel, `studio_overview` | ✅ neu |
-| **Einrichtung am Gerät** — der sechsschrittige Gang auf 390 px, Route-Gruppe `(schreibtisch)`, Upload-Warteschlange über Geräte hinweg, Tag ersetzen | ✅ neu, **ohne den Sucher** |
-| Testlage: **46** Integrationsdateien (558 Tests), **9** E2E-Dateien (32 Tests), 106 Unit-Tests | ✅ grün bis auf den Bestandsfehler in Abschnitt 6 |
+| **Einrichtung am Gerät** — der sechsschrittige Gang auf 390 px, Route-Gruppe `(schreibtisch)`, Upload-Warteschlange über Geräte hinweg, Tag ersetzen | ✅ neu, mit dem Sucher |
+| **Portal-Frontend** — 39 Artboards, Bausteine (`Seite`, `Zustand`, `Reiter`, `Abschnitt`, `Erlaeuterung`, `Produktgrenze`), Rail-Zustände, drei Maßtiere für Trefferflächen, Kontrast nach Designsystem §2 | ✅ neu, 23 Aufgaben, **ohne Migration** |
+| Testlage: **46** Integrationsdateien (558 Tests), **14** E2E-Dateien (102 Tests), 106 Unit-Tests | ✅ grün bis auf den Bestandsfehler in Abschnitt 6 |
 | Produktion — `0001`–`0034` angewendet, `master` ausgeliefert, `smoke:web` bestanden | ✅ **3. September**, siehe 4f |
 
 **Der Kassensturz aus `2026-08-31-trainerportal-struktur-design.md` §7 ist überholt.** Er nannte den Gerätekatalog als einzigen vollständig tragenden Bereich; das gilt nicht mehr. Die Tag-Kette trägt vom Herstellungslos bis zum Scan vor dem Gerät, und von den vier dort als „am weitesten offen" bezeichneten Punkten sind jetzt alle vier zu (Leute, Auth, Studio-Einstellungen, Datenschutzgrenze).
@@ -74,8 +76,8 @@ Das Ungleichgewicht aus der Erstfassung hat sich verschoben, aber nicht aufgelö
 | ~~**Sucher im Portal**~~ — `getUserMedia` + `jsQR` | — | ✅ als Aufgabe 9b im Plan | ✅ **3. September**, Handprüfung bestanden — gedruckte Codes bis herunter auf 15 mm |
 | ~~**Einrichtung am Gerät**~~ — 16 `Telefon*`-Artboards, der Gang durch die Halle | keine | ✅ `2026-09-02-einrichtung-am-geraet.md`, 13 Aufgaben | ✅ **3. September**, vollständig |
 | ~~**Studio-Einstellungen, Datenschutzgrenze, Überblick**~~ — Stornofrist, Speicherrecht mit Spaltengrenze, vier Policies ohne Staff-Klausel, `studio_overview` | `0032`–`0034` | ✅ `2026-09-02-studio-einstellungen-datenschutzgrenze.md`, 9 Aufgaben | ✅ **2. September** |
-| ~~**Kurse**~~ — drei Tabellen, Platzvergabe unter einer Zeilensperre, Warteliste, fünf Bildschirme | `0035`–**`0038`** | ✅ `2026-09-03-kurse-design.md` + `2026-09-03-kurse.md`, 12 Aufgaben | ✅ **4. September**, Zweig `phase4-kurse` |
-| **Portal-Frontend nach den 39 Artboards** | — | ❌ | ❌ |
+| ~~**Kurse**~~ — drei Tabellen, Platzvergabe unter einer Zeilensperre, Warteliste, fünf Bildschirme | `0035`–**`0038`** | ✅ `2026-09-03-kurse-design.md` + `2026-09-03-kurse.md`, 12 Aufgaben | ✅ **4. September**, in `master` |
+| ~~**Portal-Frontend nach den 39 Artboards**~~ — Bausteine, Schreibtisch, Einstieg, Wurzelseite, Fallback; Rail-Zustände, Trefferflächen, Kontrast | keine | ✅ `2026-09-03-portal-frontend-design.md` + `2026-09-03-portal-frontend.md`, 23 Aufgaben | ✅ **6. September**, Zweig `phase5-portal-frontend` |
 | **iOS Member-App** | — | ❌ | ❌ `apps/` enthält nur `web` |
 
 ### Was von den vier „am weitesten offenen" übrig ist
@@ -371,6 +373,7 @@ Verstreut über sieben Specs und drei Umsetzungspläne, hier einmal an einem Ort
 | Kein Weg zurück in die Halde | tag-lieferung §10 | nichts |
 | Mindestzahl für die Aufschlüsselung im Überblick — auf 5 gesetzt, vor dem ersten echten Mitglied zu prüfen | 0034, Spec §4 | nichts |
 | Kursvideo | trainerportal-struktur §8 | vertagt, nicht verworfen |
+| **Selbstherabstufung ist in der Richtlinie offen, nicht nur in der Oberfläche** — `memberships_update_staff` (`0031`) fehlt die Klausel `user_id <> auth.uid()`, die die Schwesterrichtlinie `memberships_delete_staff` direkt darüber hat. Ein Trainer kann sich damit selbst herabstufen und verliert das ganze Portal; Phase 5 hat den Knopf entfernt, der direkte Aufruf kommt weiter durch. `e2e/leute.spec.ts` weist es über den anon-Client nach und wird rot, sobald der Riegel kommt. **Der Riegel ist eine Migration, und Phase 5 baut keine** — nächste freie Nummer ist `0039` | Phase 5, Befund 35 | nichts heute; der Weg über die Oberfläche ist zu |
 | Studiogründung gibt es bewusst nicht | trainerportal-struktur §8 | den zweiten Betreiber |
 | Nummernvergabe — soll das Portal `machines.label` erzwingen | einrichtung §7 | nichts, Entwurf sagt nein |
 | Leerer Vorrat mitten in der Halle — kein Bestellweg | einrichtung §7, tag-lieferung §8 | nichts |
@@ -385,7 +388,6 @@ Verstreut über sieben Specs und drei Umsetzungspläne, hier einmal an einem Ort
 | **Die E2E-Suite ist auf dieser Maschine nicht vollständig lauffähig** — der Dev-Server läuft in `ERR_MEMORY_ALLOCATION_FAILED`, sobald mehrere Worktrees gleichzeitig Server halten. `playwright.config.ts` liest seit Phase 4 `E2E_PORT` (Vorgabe 3000), damit zwei Sitzungen sich nicht denselben Port teilen; das Speicherproblem bleibt | Phase 4, Verifikation | die vollständige E2E-Abnahme |
 | **Vier Funktionen ohne gesetzten `search_path`** — `set_updated_at`, `is_valid_setting_choices`, `storage_studio_id`, `generate_join_code`; das Projekt setzt ihn sonst überall | Sicherheitsbefund 3. September, Abschnitt 4f | nichts, aber uneins mit der eigenen Gewohnheit |
 | **Der Uhren-Wettlauf ist sporadisch rot, und er betrifft drei Dateien** — `rls-workout-sessions`, `domain-complete-session`, `api-workout-sets`, alle an `workout_sessions_completed_after_start`: der Test setzt `completed_at` aus der Node-Uhr gegen `started_at` aus der Datenbank. Am 3. September war es eine Datei und ein Fehlschlag bei 461 Tests; am 4. September vier Fehlschläge bei 558 — dieselbe Wurzel, mehr Last. **Und er fällt auch isoliert gelegentlich aus**, nicht nur unter Parallellast; die frühere Notiz „besteht allein“ war zu freundlich **Am 4. September gemessen statt vermutet:** die Uhr des Node-Prozesses lief rund eine halbe Sekunde **hinter** der des Postgres-Containers (`Date`-Header gegen `Date.now()`, Roundtrip 87 ms). Damit ist die Ursache benannt: der Test setzt `completed_at` aus der Node-Uhr gegen ein `started_at`, das die Datenbank mit ihrer eigenen Uhr geschrieben hat — liegt Node zurück, verletzt jede Zeile die Constraint. Das erklaert auch, warum dieselbe Datei morgens isoliert gruen war und abends nicht: die Drift schwankt. **Der Fix ist damit klar und klein** — `completed_at` von der Datenbank setzen lassen (`now()` statt einer Zeit aus dem Client), oder die Constraint um eine kleine Toleranz erweitern. Bis dahin bleibt es Rauschen | Bestand, vor allen vier Phasen; Ursache am 4. September gemessen | nichts, aber es verrauscht jede Abnahme, und es kostet bei jedem Bauabschnitt eine Untersuchung, ob es diesmal doch etwas Neues ist |
-| **Die Wurzelseite `/` ist ungestaltet** — seit dem 3. September sieht Personal sie nicht mehr, alle übrigen Angemeldeten schon. Sie trägt das Beitrittsformular und stammt aus M0 | Phase 5 | nichts, aber es ist die erste Seite, die ein Mitglied im Web sieht |
 | **Ein verwaister Dev-Server auf Port 3000 verfälscht lokale E2E-Läufe still** — `playwright.config.ts` setzt lokal `reuseExistingServer: true`, Playwright verwendet also einen hängengebliebenen Server wieder, samt Code von vor der Änderung. Am 3. September lief ein Test deshalb zweimal rot, dessen Code korrekt war | Werkzeug | nichts, aber es kostet jedes Mal eine Fehlersuche am falschen Ort |
 
 ---
