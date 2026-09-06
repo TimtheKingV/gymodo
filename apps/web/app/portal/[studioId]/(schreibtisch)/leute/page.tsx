@@ -88,6 +88,16 @@ export default async function LeutePage({
             {weitere > 0 ? (
               // Serverseitig gekuerzt, serverseitig aufgeklappt: ein
               // gewoehnlicher Link auf ?alle=1, kein Zustand im Browser.
+              //
+              // Hier bleibt es ein <Link>. Das Termindetail traegt
+              // denselben Kuerzungs-Link und musste am 6. September auf
+              // ein <a> wechseln, weil Nexts Client-Router ihn im
+              // Produktionsbau ins Leere laufen liess -- gemessen und
+              // nachgestellt. Diese Stelle ist gegen denselben Bau
+              // geprueft und geht durch; der Unterschied ist die Route,
+              // nicht das Muster (dort ein dynamisches Blattsegment,
+              // hier nicht). Wer das aendert, prueft es gegen
+              // `next start`, nicht gegen `next dev`.
               <div className={styles.rowActions}>
                 <span className={styles.absent}>… {weitere} weitere</span>
                 <Link href={`${pfad}?alle=1`} className={styles.secondary}>

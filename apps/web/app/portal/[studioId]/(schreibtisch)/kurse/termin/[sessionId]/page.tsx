@@ -216,11 +216,30 @@ export default async function TerminPage({
             {weitere > 0 ? (
               // Serverseitig gekuerzt, serverseitig aufgeklappt: ein
               // gewoehnlicher Link, kein Zustand im Browser (Aufgabe 19).
+              //
+              // Und ein <a>, kein <Link>: der Zielort unterscheidet sich
+              // vom aktuellen NUR in der Suchanfrage, und genau dafuer tut
+              // Nexts Client-Router im Produktionsbau nichts. Gemessen am
+              // 6. September gegen `next start` -- der Router holt die
+              // RSC-Nutzlast (200, text/x-component, 14 kB) und aendert die
+              // Adresse trotzdem nicht, weder sofort noch nach drei
+              // Sekunden; prefetch={false} aendert daran nichts. Im
+              // Dev-Server geht derselbe Klick durch, und deshalb ist es
+              // keinem Test aufgefallen: lokal laeuft E2E gegen `next dev`,
+              // die CI gegen den Bau.
+              //
+              // Und es braucht den vollen Dateilauf: allein laeuft der Test
+              // gruen, in Folge der uebrigen kurse-Tests rot. Dieselbe
+              // Kehrseite wie bei Ruling 28 und dem Serientest -- dateiweises
+              // Testen versteckt, was erst unter Last aufgeht.
+              //
+              // Ein volles Dokument zu laden ist hier ohnehin richtig: die
+              // Seite traegt keinen Browserzustand, der verlorenginge.
               <div className={styles.rowActions}>
                 <span className={styles.absent}>… {weitere} weitere</span>
-                <Link href={`${pfad}?alle=${ALLE_ANGEMELDET}`} className={styles.secondary}>
+                <a href={`${pfad}?alle=${ALLE_ANGEMELDET}`} className={styles.secondary}>
                   Alle anzeigen
-                </Link>
+                </a>
               </div>
             ) : null}
           </>

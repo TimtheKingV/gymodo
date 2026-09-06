@@ -188,3 +188,73 @@ test("Ein Link im Fliesstext ist als Link zu erkennen", async ({ page }) => {
   const strich = await link.evaluate((el) => getComputedStyle(el).textDecorationLine);
   expect(strich).toBe("underline");
 });
+
+/**
+ * Der Kuerzungs-Link der Mitgliederliste -- die Stelle, die Aufgabe 19
+ * gebaut und niemand je geklickt hat.
+ *
+ * Am 6. September gefunden: derselbe Kuerzungs-Link auf dem Termindetail
+ * tat im PRODUKTIONSBAU nichts -- Nexts Client-Router holte die
+ * RSC-Nutzlast und liess die Adresse stehen. Diese Stelle wurde daraufhin
+ * gegen denselben Bau geprueft und geht durch; der Unterschied ist die
+ * Route, nicht das Muster. Sie bleibt deshalb ein <Link>.
+ *
+ * Der Test steht trotzdem, und zwar KLICKEND: ein page.goto auf "?alle=1"
+ * waere gruen geblieben, waehrend der Knopf fuer jeden Nutzer tot ist --
+ * genau so ist der Fehler auf dem Termindetail sechs Aufgaben lang
+ * unbemerkt geblieben.
+ *
+ * KUERZUNG_AB steht bei 8 (leute/leute.ts), deshalb neun Mitglieder.
+ */
+test("Alle anzeigen klappt die Mitgliederliste auf -- geklickt, nicht angesteuert", async ({
+  page,
+}) => {
+  const client = admin();
+
+  const trainerEmail = `e2e-kuerzung-${crypto.randomUUID()}@example.test`;
+  const { data: trainer, error: trainerFehler } = await client.auth.admin.createUser({
+    email: trainerEmail,
+    password: E2E_PASSWORD,
+    email_confirm: true,
+  });
+  if (trainerFehler) throw trainerFehler;
+
+  const { data: studio, error: studioFehler } = await client
+    .from("studios")
+    .insert({ name: "Kuerzung-E2E-Studio" })
+    .select("id")
+    .single();
+  if (studioFehler) throw studioFehler;
+
+  const { error: rolleFehler } = await client.from("studio_memberships").insert({
+    studio_id: studio!.id,
+    user_id: trainer!.user.id,
+    role: "trainer",
+  });
+  if (rolleFehler) throw rolleFehler;
+
+  for (let i = 0; i < 9; i++) {
+    const { data: gast, error: gastFehler } = await client.auth.admin.createUser({
+      email: `e2e-kuerzung-gast-${i}-${crypto.randomUUID()}@example.test`,
+      email_confirm: true,
+    });
+    if (gastFehler) throw gastFehler;
+    const { error: mitgliedFehler } = await client.from("studio_memberships").insert({
+      studio_id: studio!.id,
+      user_id: gast!.user.id,
+      role: "member",
+    });
+    if (mitgliedFehler) throw mitgliedFehler;
+  }
+
+  await anmelden(page, trainerEmail);
+  await page.goto(`/portal/${studio!.id}/leute`);
+
+  const liste = page.locator("section").filter({ hasText: "Mitglieder" }).first();
+  await expect(liste.getByText("… 1 weitere")).toBeVisible();
+
+  await page.getByRole("link", { name: "Alle anzeigen" }).click();
+
+  await expect(page).toHaveURL(/\?alle=1$/);
+  await expect(page.getByText("… 1 weitere")).toHaveCount(0);
+});

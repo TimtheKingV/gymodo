@@ -414,6 +414,23 @@ Verfahren: aus jedem der 16 `Telefon*`-Artboards und den drei `Fallback*`-Artboa
 
     **Die Zählung ist damit endgültig:** Produktgrenze an drei Orten (Überblick, `/t/<token>`, Landeseite), plus `.fussnote`, `.mitgliedshinweis` und `.ohneVideo` als eigene Sätze mit derselben Begründung. Was `--text-faint` behält, ist in jedem Fall benannt: `.reiterZusatz` und `.navItemMeta` — Zählstände, die man streift, nicht liest.
 
+47. **„Alle anzeigen" auf dem Termindetail tat im Produktionsbau nichts — und drei Prüfungen sind daran vorbeigelaufen.** Der Knöpf ist ein `<Link>` auf dieselbe Route mit einer anderen Suchanfrage (`?alle=angemeldet`). Gegen `next start` ändert ein Klick die Adresse **nicht**, weder sofort noch nach drei Sekunden. Der Server ist unschuldig: die RSC-Anfrage geht raus und kommt mit `200`, `text/x-component` und 14 kB Nutzlast zurück; direkt angesteuert rendert dieselbe Adresse die aufgeklappte Liste. Es ist der Client-Router, der die Nutzlast entgegennimmt und die Adresse stehen lässt. `prefetch={false}` ändert nichts — gemessen, nicht vermutet.
+
+    **Drei Netze, drei Löcher, und jedes einzelne ist lehrreich:**
+
+    | Netz | Warum es nicht griff |
+    | --- | --- |
+    | Der Test aus Aufgabe 22b | Er ist richtig geschrieben — er **klickt** und prüft die Adresse. Er lief nur nie gegen einen Bau: lokal fährt E2E gegen `next dev`, und dort geht derselbe Klick durch |
+    | Der volle Dateilauf | Allein läuft der Test **grün**, in Folge der übrigen `kurse`-Tests **rot**. Zum dritten Mal in dieser Phase dieselbe Kehrseite — nach Ruling 28 und dem Serientest |
+    | Die Sichtabnahme | Hätte den toten Knopf gesehen — aber sie läuft ebenfalls gegen den Dev-Server (Befund 46) |
+
+    **Behoben durch ein `<a>` statt `<Link>`**, und das ist keine Notlösung, sondern das, was der Code an dieser Stelle ohnehin sagt: *„Serverseitig gekürzt, serverseitig aufgeklappt: ein gewöhnlicher Link, kein Zustand im Browser."* Die Seite trägt keinen Browserzustand, der bei einem vollen Dokumentwechsel verlorenginge.
+
+    **Die zweite Fundstelle desselben Musters bleibt ein `<Link>`.** Der Kürzungs-Link der Mitgliederliste (`leute/page.tsx`, `?alle=1`, Aufgabe 19) ist gegen denselben Bau geprüft und geht durch — der Unterschied ist die Route, nicht das Muster: das Termindetail hat ein dynamisches Blattsegment (`termin/[sessionId]`), die Mitgliederliste nicht. **Wer hier vereinheitlicht, misst zuerst.** Diese Stelle hatte bis heute keinen Test, der den Link klickt; sie hat jetzt einen, und zwar einen klickenden — ein `page.goto` auf `?alle=1` wäre grün geblieben, während der Knopf für jeden Nutzer tot gewesen wäre.
+
+    **Die Lehre für die Abnahme ist größer als der Befund:** dieser Bauabschnitt hat E2E bis zuletzt gegen `next dev` gefahren, weil `playwright.config.ts` es lokal so vorsieht. Der Bau ist nicht nur näher an der CI, er ist auf dieser Maschine auch **schneller und stabiler** — die volle Suite läuft gegen `next start` in 3,5 Minuten durch, während sie gegen `next dev` 17 Minuten braucht und der Server unter Speichermangel Worker verliert (Befund 46). Ein Lauf gegen den Bau gehört vor jede Zusammenführung.
+
+
 ---
 
 ## 6. Was der Entwurf schon beantwortet
