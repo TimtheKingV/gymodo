@@ -11,6 +11,14 @@
     {
       "id": "telefon",
       "name": "Einrichten am Gerät"
+    },
+    {
+      "id": "mobilnav",
+      "name": "Hamburger-Menu"
+    },
+    {
+      "id": "bausteine",
+      "name": "Bausteine"
     }
   ],
   "artboards": [
@@ -364,6 +372,42 @@
       "y": 3840,
       "w": 390,
       "h": 2150
+    },
+    {
+      "file": "SchreibtischMobil.dc.html",
+      "page": "mobilnav",
+      "title": "Schreibtisch, Menu zu",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1180
+    },
+    {
+      "file": "SchreibtischMobilMenu.dc.html",
+      "page": "mobilnav",
+      "title": "Schreibtisch, Menu offen",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1180
+    },
+    {
+      "file": "HalleMobilMenu.dc.html",
+      "page": "mobilnav",
+      "title": "Halle, Menu offen",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 900
+    },
+    {
+      "file": "Formulare.dc.html",
+      "page": "bausteine",
+      "title": "Formulare & Schrittleiste",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1500
     }
   ],
   "annotations": [
@@ -446,10 +490,34 @@
       "y": -320,
       "w": 460,
       "text": "Foto und Einstellparameter hängen am Modell, nicht am Gerät.\n\nequipment_models.photo_path und equipment_setting_definitions stehen seit M0 so. Zwei baugleiche Kabelzüge teilen sich beides: der zweite läuft durch Schritt 1 und 2 mit einem Tap durch, weil dort schon alles steht.\n\nDas ist auch der Grund, warum der Gang trotz zweier neuer Posten nicht länger wird, sobald ein Studio erst einmal bestückt ist. Nur das erste Gerät einer Bauart kostet die Aufnahme und das Abzählen der Rasten.\n\nEin Altmodell ohne Foto ist der Ausnahmefall: Schritt 2 fragt es nach, und das ist der einzige Weg, es im Gang nachzuholen. Ohne diese Zeile bliebe Brustpresse für immer ein Name ohne Bild.\n\nKein Backend fehlt dafür: uploadEquipmentPhoto und createSettingDefinition bestehen samt Validierung, es fehlt allein die mobile Form."
+    },
+    {
+      "id": "note-menu",
+      "page": "mobilnav",
+      "x": 0,
+      "y": -340,
+      "w": 480,
+      "text": "Befund 45 anders geschlossen, als die Notiz vorschlug.\n\nDie Notiz empfahl: die Chipnavigation der Telefon-Artboards so lassen, wie sie ist -- am Schreibtisch als seitlich scrollende Pillenreihe, in der Halle gar nicht, weil zwei Navigationen uebereinander auf 390 px schlechter sind als eine.\n\nDieser Wunsch kam von aussen: ein echtes Menu statt der Pillenreihe, ueberall gleich. Es loest denselben Widerspruch anders -- eine Schublade (drawer(), build.py) statt einer zweiten Leiste, auf beiden Seiten dieselbe. telefon() zeichnet sie jetzt fuer alle zwoelf betroffenen Bildschirme; SchreibtischMobil ist der Bildschirm, den es als Artboard bisher gar nicht gab, weil die mobile Rail nur aus einer CSS-Media-Query hervorging.\n\nDen geschlossenen Zustand der Halle zeigt TelefonModell.dc.html auf der Seite \"Einrichten am Gerät\" -- derselbe Bildschirm, kein zweiter hier."
+    },
+    {
+      "id": "note-fertig-abzweig",
+      "page": "mobilnav",
+      "x": 500,
+      "y": -340,
+      "w": 480,
+      "text": "Ein zweiter Fund, kein Nav-Thema: TelefonFertig.dc.html (Seite \"Einrichten am Gerät\") bekommt einen Kurzweg.\n\n\"Nächstes Gerät\" führte bisher immer zurück zu Schritt 1, auch fuer eine ganze Charge desselben Modells -- Modell und Einstellungen liefen dann bei jedem weiteren Kabelzug noch einmal mit, nur mit einem Tap durch (siehe note-modellweit). Bei zehn gleichen Geraeten hintereinander sind das zwei Bildschirme und zwei Taps zu viel, jedes Mal.\n\n\"Noch einen Kabelzug einrichten\" springt jetzt direkt zu Schritt 3. Wer ein anderes Modell will, nimmt weiterhin den langen Weg -- er heisst jetzt \"Anderes Modell einrichten\", statt so zu klingen, als waere er der einzige."
+    },
+    {
+      "id": "note-bausteine",
+      "page": "bausteine",
+      "x": 0,
+      "y": -320,
+      "w": 480,
+      "text": "Ein Blatt statt drei Konventionen.\n\nportal.module.css, einstieg.module.css und halle.module.css zeichnen Textfeld, Auswahl, Knopf und Fehlermeldung heute mit drei verschiedenen Klassennamen -- derselbe Fehler wie die Zwillinge in den fruehen Befunden (.sectionNote, .abschnittNotiz, .hint), nur ueber drei Dateien statt zwei Klassen verteilt.\n\nDieses Blatt zeichnet nicht neu, was die anderen 39 Artboards schon zeigen: es zieht die eine Fassung heraus, an der sich die Konsolidierung misst, wenn halle.module.css und einstieg.module.css auf Form.tsx und bausteine/ umgestellt werden.\n\nDie Schrittleiste steht zweimal, mit verschiedener Schrittzahl: der Beleg, dass sie ein Baustein mit einer Zahl als Prop sein sollte, keine Konstante -- SCHRITTE = 6 steht heute fest in Schrittleiste.tsx."
     }
   ],
   "launch": {
     "view": "canvas",
-    "page": "telefon"
+    "page": "mobilnav"
   }
 }

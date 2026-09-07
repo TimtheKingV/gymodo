@@ -544,6 +544,15 @@ schreibe('TelefonUploads.dc.html', telefon(1000, uploads))
 
 
 # ------------------------------------------------------------ 16 Fertig
+# Ein Zusatz gegenueber der vorigen Fassung: "Naechstes Geraet" fuehrte
+# immer zurueck zu Schritt 1, auch fuer den haeufigsten Fall -- eine ganze
+# Charge desselben Modells. Modell und Einstellungen liefen dann bei jedem
+# weiteren Kabelzug noch einmal mit, nur mit einem Tap durch (Kommentar in
+# gen_telefon.py Schritt 5), aber eben doch zweimal Bildschirm und Tap zu
+# viel bei zehn gleichen Geraeten hintereinander. Der Kurzweg springt
+# direkt zu Schritt 3: Modell und Einstellungen sind fuer dasselbe Modell
+# schon gesetzt, es fehlen nur Nummer, Standort, Tag und Uebungen. Wer ein
+# anderes Modell will, nimmt weiterhin den langen Weg -- er heisst jetzt so.
 fertig = stapel(
     '<div style="display: flex; align-items: center; gap: 12px;">'
     '<div style="width: 44px; height: 44px; border-radius: 50%%; border: 2px solid #d4ff3f; '
@@ -565,7 +574,10 @@ fertig = stapel(
            '<div style="%s margin-top: 2px;">Zeigt dir, was ein Mitglied sieht, wenn es hier '
            'ankommt.</div></div></div><a href="#" style="%s">Probe scannen</a>'
            % (svg('qr', 24, '#5c636e'), NOTE, SECONDARY_XL)),
-    '<a href="#" style="%s">Nächstes Gerät</a>' % PRIMARY_XL,
+    '<a href="#" style="%s">Noch einen Kabelzug einrichten</a>' % PRIMARY_XL,
+    '<p style="%s margin: 4px 0 0;">Springt zu Schritt 3 -- Modell und Einstellungen stehen '
+    'schon, wie bei diesem hier.</p>' % NOTE,
+    '<a href="#" style="%s">Anderes Modell einrichten</a>' % SECONDARY_XL,
     '<a href="#" style="%s">Für heute fertig</a>' % SECONDARY_XL,
     '<p style="%s margin: 0;">96 Tags noch in der Packung.</p>' % NOTE)
 schreibe('TelefonFertig.dc.html', telefon(1080, fertig))
