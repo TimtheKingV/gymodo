@@ -40,6 +40,7 @@
 		762BAF4D2EA117D55549EDED /* JoinResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F9AF02FA591F55A7D09403B /* JoinResult.swift */; };
 		7BCC2D8C16596135BDBA83F6 /* MemberScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF64707489726E5301D4DABA /* MemberScannerView.swift */; };
 		7FB375254AEA40DEEE4AE229 /* CodeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761B6ACA4FD549615771E3C6 /* CodeEntry.swift */; };
+		80BDCB40CB6953255B669BB5 /* GeraetErkanntView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A055AE066E95BA635068E45 /* GeraetErkanntView.swift */; };
 		824071B2AEF074DCEB6CEF53 /* Zahlformat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00B25E595924E3D70A9F8C8F /* Zahlformat.swift */; };
 		8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B577EC22237E86AA0F3755B7 /* AppConfig.swift */; };
 		8B75427616870118E08E4936 /* NetzwerkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 398AB48ADA8A1BB8EDB1C086 /* NetzwerkMonitor.swift */; };
@@ -141,6 +142,7 @@
 		44C759C755CAAFA0F5ED7616 /* CatalogLoadState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogLoadState.swift; sourceTree = "<group>"; };
 		45AE341D5234D5BED46BA218 /* RastRad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RastRad.swift; sourceTree = "<group>"; };
 		45FB518781BA996FB7400814 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		4A055AE066E95BA635068E45 /* GeraetErkanntView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetErkanntView.swift; sourceTree = "<group>"; };
 		4C040CEC32DA51B93411E58C /* WorkoutSessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionStoreTests.swift; sourceTree = "<group>"; };
 		4FE347CE02DFBA2ACD65350E /* GeraetModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetModel.swift; sourceTree = "<group>"; };
 		57043EA2F2DFD5D046567083 /* Resttimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Resttimer.swift; sourceTree = "<group>"; };
@@ -255,6 +257,7 @@
 		3C464E869CE4E7B44B00F6AF /* Geraet */ = {
 			isa = PBXGroup;
 			children = (
+				4A055AE066E95BA635068E45 /* GeraetErkanntView.swift */,
 				4FE347CE02DFBA2ACD65350E /* GeraetModel.swift */,
 				5D630F19BC18D3B2A94AD265 /* ResttimerBalken.swift */,
 			);
@@ -557,6 +560,7 @@
 				CFADE9B7B1518A3F6DF0E7E7 /* ExerciseProgress.swift in Sources */,
 				EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */,
 				207B8D6F6D17D7C2F5BA2FA5 /* GeraetEinstieg.swift in Sources */,
+				80BDCB40CB6953255B669BB5 /* GeraetErkanntView.swift in Sources */,
 				356B55A3EC5DF1C40CF07351 /* GeraetLoading.swift in Sources */,
 				48FFCA86209C664A9A0E6964 /* GeraetModel.swift in Sources */,
 				750CEBE3A0D07E711D31D94F /* InlineBanner.swift in Sources */,

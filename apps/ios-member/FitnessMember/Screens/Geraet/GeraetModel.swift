@@ -213,6 +213,12 @@ final class GeraetModel {
         return "Zuletzt \(Zahlformat.gewichtMitEinheit(letzter.weightKg)) × \(letzter.reps)"
     }
 
+    func letztesGewicht(fuer uebungId: String) -> Double? {
+        bootstrap.lastSets.first {
+            $0.machineId == maschine.id && $0.exerciseId == uebungId
+        }?.weightKg
+    }
+
     var istErstkontakt: Bool {
         GeraetEinstiegRechner.istErstkontakt(
             hatKalibrierung: GeraetEinstiegRechner.hatKalibrierung(
