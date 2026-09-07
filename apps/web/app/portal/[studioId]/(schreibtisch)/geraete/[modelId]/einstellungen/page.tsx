@@ -73,7 +73,10 @@ export default async function ModellEinstellungenPage({
           </ul>
         )}
 
-        <ParameterFormular action={parameterAnlegen.bind(null, studioId, modelId)} />
+        <ParameterFormular
+          action={parameterAnlegen.bind(null, studioId, modelId)}
+          modell={modell}
+        />
       </section>
     </>
   );

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { radWaehlen } from "./helpers/rad";
 import { studioMitTrainer } from "./helpers/studio";
 import { tagAnlegen } from "../tests/helpers/tags";
 
@@ -123,9 +124,11 @@ test("Schritt 2 fragt ein fehlendes Foto nach und nimmt Parameter auf", async ({
   await page.getByRole("button", { name: "Parameter hinzufügen" }).click();
   await page.getByLabel("Beschriftung").fill("Sitzhöhe");
   await page.getByLabel("Schlüssel").fill("sitz");
-  await page.getByLabel("Von").fill("1");
-  await page.getByLabel("Bis").fill("8");
-  await page.getByLabel("Schritt", { exact: true }).fill("1");
+  // "Eigener Parameter" ist die Vorbelegung -- das Rad steht schon da,
+  // nur Von/Bis weichen vom Standard ab (Schritt bleibt 1).
+  await radWaehlen(page, "Von", "1");
+  await radWaehlen(page, "Bis", "8");
+  await radWaehlen(page, "Schritt", "1");
   await page.getByRole("button", { name: "Hinzufügen" }).click();
 
   await expect(page.getByText("Sitzhöhe")).toBeVisible();
@@ -422,8 +425,8 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
   await page.getByRole("button", { name: "Parameter hinzufügen" }).click();
   await page.getByLabel("Beschriftung").fill("Sitzhöhe");
   await page.getByLabel("Schlüssel").fill("sitz");
-  await page.getByLabel("Von").fill("1");
-  await page.getByLabel("Bis").fill("8");
+  await radWaehlen(page, "Von", "1");
+  await radWaehlen(page, "Bis", "8");
   await page.getByRole("button", { name: "Hinzufügen" }).click();
   await expect(page.getByText("Sitzhöhe")).toBeVisible();
   await page.getByRole("link", { name: "Weiter zum Gerät" }).click();

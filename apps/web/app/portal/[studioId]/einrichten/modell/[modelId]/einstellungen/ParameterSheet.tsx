@@ -6,6 +6,15 @@ import {
   parameterAnlegen,
   parameterLoeschen,
 } from "../../../actions";
+import { Rad, VorgabenListe } from "../../../../../bausteine/ParameterRad";
+import {
+  eigeneEinheitWerte,
+  eigeneMinMaxWerte,
+  eigeneSchrittWerte,
+  parameterVorgaben,
+  type GewichtsModell,
+  type ParameterVorgabeId,
+} from "../../../../../bausteine/parameterVorgaben";
 import styles from "../../../halle.module.css";
 
 /**
@@ -13,18 +22,33 @@ import styles from "../../../halle.module.css";
  * einen Bereich, eine Griffstellung eine Liste. Beides gleichzeitig zu
  * zeigen hiesse, den Trainer raten zu lassen, welche Haelfte gilt.
  *
+ * Bei "Zahl mit Bereich" waehlt der Trainer zuerst eine Vorgabe
+ * (Wiederholungen/Gewicht/Winkel) oder "Eigener Parameter" -- eine Vorgabe
+ * setzt Minimum/Maximum/Schritt/Einheit fest, "Eigener Parameter" zeigt
+ * stattdessen ein Rad dafuer (gross=true, 44 px statt 40 px -- einhaendig
+ * bedient, Designsystem 1). Trainer-Wunsch: "so muss man weniger tippen auf
+ * der Tastatur und gibt mehr direkt ein", bestaetigt als echtes Scroll-Rad.
+ *
  * Kein Akzent: der gehoert auf diesem Bildschirm dem "Weiter zum Geraet".
  */
 export function ParameterSheet({
   studioId,
   modelId,
+  modell,
 }: {
   studioId: string;
   modelId: string;
+  modell: GewichtsModell;
 }) {
   const [offen, setOffen] = useState(false);
   const [kind, setKind] = useState<"number" | "enum">("number");
+  const [vorgabeId, setVorgabeId] = useState<ParameterVorgabeId>("eigen");
   const werteId = useId();
+
+  const vorgaben = parameterVorgaben(modell);
+  // parameterVorgaben() liefert immer "eigen" -- vorgabeId zeigt garantiert
+  // auf einen der vier Eintraege.
+  const gewaehlt = vorgaben.find((eintrag) => eintrag.id === vorgabeId)!;
 
   const [ergebnis, formAction, laeuft] = useActionState(
     async (_prev: unknown, formData: FormData) => {
@@ -90,38 +114,30 @@ export function ParameterSheet({
 
       {kind === "number" ? (
         <>
-          <div style={{ display: "flex", gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <Feld
-                name="minValue"
-                label="Von"
-                inputMode="decimal"
-                placeholder="1"
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <Feld
-                name="maxValue"
-                label="Bis"
-                inputMode="decimal"
-                placeholder="8"
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <Feld
-                name="stepValue"
-                label="Schritt"
-                inputMode="decimal"
-                placeholder="1"
-              />
-            </div>
-          </div>
-          <Feld
-            name="unit"
-            label="Einheit"
-            placeholder="°"
-            hinweis="Leer lassen, wenn die Rasten nur durchgezählt sind."
+          <VorgabenListe
+            vorgaben={vorgaben}
+            gewaehlt={vorgabeId}
+            onWahl={setVorgabeId}
+            gross
           />
+          {gewaehlt.bereich ? (
+            <>
+              <input type="hidden" name="minValue" value={gewaehlt.bereich.minValue} />
+              <input type="hidden" name="maxValue" value={gewaehlt.bereich.maxValue} />
+              <input type="hidden" name="stepValue" value={gewaehlt.bereich.stepValue} />
+              <input type="hidden" name="unit" value={gewaehlt.bereich.unit} />
+            </>
+          ) : (
+            <Rad
+              gross
+              spalten={[
+                { name: "minValue", label: "Von", werte: eigeneMinMaxWerte(), start: "0" },
+                { name: "maxValue", label: "Bis", werte: eigeneMinMaxWerte(), start: "10" },
+                { name: "stepValue", label: "Schritt", werte: eigeneSchrittWerte(), start: "1" },
+                { name: "unit", label: "Einheit", werte: eigeneEinheitWerte(), start: "" },
+              ]}
+            />
+          )}
         </>
       ) : (
         <div className={styles.feld}>

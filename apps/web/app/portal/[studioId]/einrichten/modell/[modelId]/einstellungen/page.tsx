@@ -102,7 +102,7 @@ export default async function EinstellungenPage({
           ) : null}
         </section>
 
-        <ParameterSheet studioId={studioId} modelId={modelId} />
+        <ParameterSheet studioId={studioId} modelId={modelId} modell={modell} />
 
         <Link
           href={`${basis}/modell/${modelId}/geraet`}

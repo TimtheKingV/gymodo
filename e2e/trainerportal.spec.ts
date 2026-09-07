@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { E2E_PASSWORD, anmelden } from "./helpers/login";
+import { radWaehlen } from "./helpers/rad";
 import { tagAnlegen } from "../tests/helpers/tags";
 
 /**
@@ -187,8 +188,8 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await page.getByLabel("Schlüssel").fill("sitz");
   await page.getByLabel("Beschriftung").fill("Sitzposition");
   await page.getByLabel("Art").selectOption("number");
-  await page.getByLabel("Minimum").fill("1");
-  await page.getByLabel("Maximum").fill("8");
+  await radWaehlen(page, "Minimum", "1");
+  await radWaehlen(page, "Maximum", "8");
   await page.getByRole("button", { name: "Parameter anlegen" }).click();
   await expect(page.getByText("Sitzposition")).toBeVisible();
 
