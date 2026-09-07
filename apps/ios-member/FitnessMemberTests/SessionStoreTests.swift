@@ -67,7 +67,11 @@ actor FakeAuthBackend: AuthBackend {
 
 private let testSession = Session(accessToken: "tok", userId: "u1", email: "lena@example.de", expiresAt: .distantFuture)
 
+/// @MainActor, weil SessionStore seit Aufgabe 12 selbst @MainActor ist (siehe
+/// Kommentar dort) -- die Suite laeuft deshalb auf demselben Actor wie die
+/// getestete Klasse, sonst braeuchte jeder store.session-Zugriff ein await.
 @Suite("SessionStore")
+@MainActor
 struct SessionStoreTests {
     @Test("signIn setzt die Session bei Erfolg")
     func signInSucceeds() async {

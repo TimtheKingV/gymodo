@@ -1,6 +1,11 @@
 import Foundation
 import Observation
 
+/// @MainActor, weil SessionStore ueber @Environment direkt in SwiftUI-Views
+/// (ab Aufgabe 12) gelesen wird -- ohne diese Isolation flaggt Swift 6 beim
+/// Aufruf von z. B. signIn(...) aus einem View heraus einen "sending"-Fehler,
+/// weil die Klasse selbst nicht Sendable ist.
+@MainActor
 @Observable
 final class SessionStore {
     private(set) var session: Session?
