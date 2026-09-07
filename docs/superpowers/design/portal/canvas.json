@@ -50,6 +50,24 @@
       "h": 800
     },
     {
+      "file": "ModellEinstellungen.dc.html",
+      "page": "portal",
+      "title": "Modell — Einstellungen",
+      "x": 4680,
+      "y": 0,
+      "w": 1440,
+      "h": 1420
+    },
+    {
+      "file": "ModellUebungen.dc.html",
+      "page": "portal",
+      "title": "Modell — Übungen",
+      "x": 6240,
+      "y": 0,
+      "w": 1440,
+      "h": 1200
+    },
+    {
       "file": "Tags.dc.html",
       "page": "portal",
       "title": "Tags",
@@ -269,10 +287,10 @@
       "file": "TelefonParameterNeu.dc.html",
       "page": "telefon",
       "title": "Parameter anlegen",
-      "x": 2450,
-      "y": 1040,
+      "x": 0,
+      "y": 6150,
       "w": 390,
-      "h": 900
+      "h": 1300
     },
     {
       "file": "TelefonGeraet.dc.html",
@@ -436,6 +454,14 @@
       "text": "Die Auswertung zählt zusammen, sie schaut nicht in die Trainingsdaten.\n\nDas Portal sieht Mitgliedschaften und wer zu einem Kurstermin angemeldet ist — beides mit Namen. Es zeigt keine Sätze, Gewichte oder Verläufe einzelner Mitglieder, auch nicht des Inhabers: nur studioweite Summen, nie eine Zuordnung auf eine Person.\n\nZielzustand. In Produktion tragen die vier Lese-Richtlinien in supabase/migrations/0012–0015 heute noch die Klausel \"or public.is_studio_staff(...)\" — die Datenbank lässt Studiopersonal also jeden Satz jedes Mitglieds lesen. Kein Bildschirm des Portals holt diese Daten, aber verboten ist es erst, wenn die Klausel fällt. Bis dahin ist das hier eine Absicht, keine Zusicherung."
     },
     {
+      "id": "note-modellreiter",
+      "page": "portal",
+      "x": 1500,
+      "y": -230,
+      "w": 440,
+      "text": "Zwei Reiter, die nie ein eigenes Artboard hatten.\n\nModell.dc.html zeigte bisher nur den Reiter \"Einzelne Geräte\". \"Einstellungen\" und \"Übungen\" liefen im Code über dieselben Bausteine (Abschnitt/Zeile/Feld) mit, aber ohne dass je jemand gezeichnet hätte, wie sie zusammen aussehen -- ModellEinstellungen.dc.html und ModellUebungen.dc.html holen das nach.\n\nKopf und Reiterleiste sind identisch zu Modell.dc.html (modell_kopf() in gen_katalog.py, einmal statt dreimal hingeschrieben). Bei Übungen steht das Video-Upload-Feld aus VideoUpload.tsx zweimal: einmal mit vorhandenem Video (\"Video ersetzen\"), einmal ohne (\"Einweisungsvideo\") -- beide Zustände, die die Komponente kennt.\n\nNachtrag: \"Parameter anlegen\" bekam eine Scrollliste mit Vorgaben vor dem eigentlichen Formular -- Wiederholungen (1–30, Schritt 1, Standard 10), Gewicht (Bereich aus den Modell-Stammdaten: niedrigste Einstellung und Schritt stehen dort schon, nur die obere Grenze 150 kg ist fest) und Winkel (0–90°, Schritt 5°) füllen Schlüssel/Art/Bereich/Einheit automatisch, nur die Beschriftung bleibt offen. \"Eigener Parameter\" bleibt der Fluchtweg für alles andere. Im Artboard als gewählt gezeigt, weil er den dritten Nachtrag zeigt: Minimum, Maximum, Schritt und Einheit stehen jetzt auf einem Scroll-Rad (rad()/rad_spalte(), neu in gen_katalog.py) statt in Zahlenfeldern oder Chipreihen -- vier Spalten unter einer gemeinsamen Auswahlleiste, wie ein iOS-Picker, am Beispiel Sitzhöhe (1 bis 8, Schritt 1). Schlüssel, Beschriftung und Art bleiben Text/Auswahl: ein Name lässt sich nicht sinnvoll rollen, eine Zahl aus einer kleinen bekannten Menge schon. Randzeilen bleiben leer, wo eine Liste ausläuft (Schritt beginnt bei 1, Einheit bei \"keine\") -- so wie bei einem echten Rad."
+    },
+    {
       "id": "note-einstieg",
       "page": "einstieg",
       "x": 0,
@@ -492,6 +518,14 @@
       "text": "Foto und Einstellparameter hängen am Modell, nicht am Gerät.\n\nequipment_models.photo_path und equipment_setting_definitions stehen seit M0 so. Zwei baugleiche Kabelzüge teilen sich beides: der zweite läuft durch Schritt 1 und 2 mit einem Tap durch, weil dort schon alles steht.\n\nDas ist auch der Grund, warum der Gang trotz zweier neuer Posten nicht länger wird, sobald ein Studio erst einmal bestückt ist. Nur das erste Gerät einer Bauart kostet die Aufnahme und das Abzählen der Rasten.\n\nEin Altmodell ohne Foto ist der Ausnahmefall: Schritt 2 fragt es nach, und das ist der einzige Weg, es im Gang nachzuholen. Ohne diese Zeile bliebe Brustpresse für immer ein Name ohne Bild.\n\nKein Backend fehlt dafür: uploadEquipmentPhoto und createSettingDefinition bestehen samt Validierung, es fehlt allein die mobile Form."
     },
     {
+      "id": "note-vorgabe-telefon",
+      "page": "telefon",
+      "x": 3000,
+      "y": -320,
+      "w": 460,
+      "text": "Dieselbe Vorgaben-Liste wie am Schreibtisch -- und derselbe dritte Nachtrag.\n\nTelefonParameterNeu.dc.html zeigte bisher immer denselben Weg: Art per Chip waehlen, dann Von/Bis/Schritt/Einheit von Hand eintragen. Jetzt steht davor die Vorgaben-Liste aus ModellEinstellungen.dc.html (Wiederholungen, Gewicht, Winkel, Eigener Parameter), und \"Eigener Parameter\" -- hier gewaehlt gezeigt -- ersetzt die vier Eingabefelder durch ein Scroll-Rad (rad()/rad_spalte()): vier Spalten unter einer gemeinsamen Auswahlleiste, wie ein iOS-Picker. Von, Bis, Schritt und Einheit sind damit Werte zum Rollen, nicht zum Eintippen -- eine Zwischenstufe (Chipreihen) stand hier kurz und ist wieder raus, weil \"scrollen\" woertlich ein Rad meinte, keine Reihe.\n\nBeispiel Sitzhoehe (1 bis 8, Schritt 1) statt des fruehreren Startwinkels -- dasselbe Beispiel wie am Schreibtisch, aus derselben Vorgaben-Liste heraus gewaehlt."
+    },
+    {
       "id": "note-menu",
       "page": "mobilnav",
       "x": 0,
@@ -518,6 +552,6 @@
   ],
   "launch": {
     "view": "canvas",
-    "page": "mobilnav"
+    "page": "portal"
   }
 }

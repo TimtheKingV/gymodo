@@ -244,30 +244,93 @@ schreibe('TelefonEinstellungen.dc.html', telefon(980, einstellungen))
 
 
 # ------------------------------------------------------- 6 Parameter neu
-# Zwei Arten, mehr kennt das Schema nicht: eine Zahl mit Spanne und
-# Schrittweite (0004) oder eine Auswahl aus mindestens zwei verschiedenen
-# Werten (0017). Gezeigt ist die Zahl, weil sie die Einheit mitbringt.
-art_chips = ''.join('<span style="%s">%s</span>' % (CHIP_AKTIV if s == 'Zahl' else CHIP, s)
-                    for s in ('Zahl', 'Auswahl'))
+# Vorgaben vor dem freien Formular -- dieselbe Idee wie am Schreibtisch
+# (ModellEinstellungen.dc.html/gen_katalog.py): Wiederholungen, Gewicht und
+# Winkel setzen Art, Bereich und Einheit schon, nur die Beschriftung bleibt
+# offen. "Eigener Parameter" bleibt der Fluchtweg -- Art, Bereich und
+# Einheit frei eintragen, wie diese Seite es bisher immer zeigte.
+def vorgabe_zeile(name, meta, aktiv=False, letzte=False):
+    rand = '' if letzte else 'border-bottom: 1px solid #2a2e36;'
+    ring = ' box-shadow: inset 0 0 0 1px #d4ff3f;' if aktiv else ''
+    haken = svg('check', 20, '#d4ff3f') if aktiv else ''
+    return (
+        '<button type="button" style="width: 100%%; text-align: left; background: none; border: none; '
+        'display: flex; align-items: center; justify-content: space-between; gap: 12px; '
+        'padding: 14px 16px; min-height: 52px; %s color: #f2f4f7; cursor: pointer;%s">'
+        '<div style="min-width: 0;"><div style="font-weight: 600;">%s</div>'
+        '<div style="font-size: 12px; color: #9ba3af; margin-top: 2px;">%s</div></div>'
+        '<span style="flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; '
+        'justify-content: center;">%s</span></button>'
+        % (rand, ring, name, meta, haken))
+
+
+# Von/Bis/Schritt/Einheit als ein Scroll-Rad statt getippter Zahlen -- vier
+# Spalten unter einer gemeinsamen Auswahlleiste, wie ein iOS-Picker (Aufgabe
+# fuer Aufgabe dasselbe Bauteil wie ModellEinstellungen.dc.html/
+# gen_katalog.py, hier noch einmal statt importiert, siehe Konvention oben
+# bei vorgabe_zeile()). Ersetzt die vier Eingabefelder (Von, Bis, Schritt,
+# Einheit), die hier vorher standen.
+_RAD_ZEILENHOEHE = 44
+_RAD_KOPFHOEHE = 32
+
+
+def _rad_zeile(text, gewaehlt):
+    return (
+        '<div style="height: %dpx; display: flex; align-items: center; justify-content: center; '
+        'font-size: %s; font-weight: %s; color: %s;">%s</div>'
+        % (_RAD_ZEILENHOEHE, '20px' if gewaehlt else '14px', '800' if gewaehlt else '500',
+           '#f2f4f7' if gewaehlt else '#5c636e', text))
+
+
+def rad_spalte(label, werte, letzte=False):
+    """werte: genau 5 Eintraege (Text, gewaehlt); der dritte ist die Mitte."""
+    rand = '' if letzte else 'border-right: 1px solid #2a2e36;'
+    zeilen = ''.join(_rad_zeile(text, gewaehlt) for text, gewaehlt in werte)
+    return (
+        '<div style="flex: 1; min-width: 0; %s"><div style="height: %dpx; display: flex; '
+        'align-items: flex-end; justify-content: center; padding-bottom: 4px; %s color: #9ba3af; '
+        'text-align: center;">%s</div>%s</div>'
+        % (rand, _RAD_KOPFHOEHE, LABEL, label, zeilen))
+
+
+def rad(spalten):
+    """spalten: Liste von (label, werte). Eine Auswahlleiste (zwei Linien)
+    liegt ueber allen Spalten auf Hoehe der mittleren Zeile."""
+    hoehe = _RAD_KOPFHOEHE + _RAD_ZEILENHOEHE * 5
+    leiste_oben = _RAD_KOPFHOEHE + _RAD_ZEILENHOEHE * 2
+    return (
+        '<div style="border: 1px solid #2a2e36; border-radius: 12px; background: #0f1114; '
+        'position: relative; height: %dpx;">'
+        '<div style="display: flex; height: 100%%;">%s</div>'
+        '<div style="position: absolute; left: 0; right: 0; top: %dpx; height: %dpx; '
+        'border-top: 1px solid #2a2e36; border-bottom: 1px solid #2a2e36; pointer-events: none;">'
+        '</div></div>'
+        % (hoehe, ''.join(rad_spalte(label, werte, letzte=(i == len(spalten) - 1))
+                          for i, (label, werte) in enumerate(spalten)),
+           leiste_oben, _RAD_ZEILENHOEHE))
+
+
 parameter_neu = stapel(
     schrittleiste(2, 'Einstellungen'),
     kopfzeile('Neuer Parameter', zurueck_zu='Einstellungen'),
-    feld('Beschriftung', 'Startwinkel', 'So steht er später vor dem Mitglied am Gerät.',
-         gefuellt=True),
-    '<div style="display: flex; flex-direction: column; gap: 8px;">'
-    '<span style="%s color: #9ba3af;">Art</span>'
-    '<div style="display: flex; gap: 8px;">%s</div>'
-    '<span style="%s">Eine Auswahl braucht mindestens zwei verschiedene Werte — mit einem einzigen '
-    'ist sie keine Auswahl, sondern ein fester Wert.</span></div>' % (LABEL, art_chips, NOTE),
-    '<div style="display: flex; gap: 12px;">'
-    '<div style="flex: 1;">%s</div><div style="flex: 1;">%s</div><div style="flex: 1;">%s</div>'
-    '</div>' % (feld('Von', '0', gefuellt=True), feld('Bis', '45', gefuellt=True),
-                feld('Schritt', '5', gefuellt=True)),
-    feld('Einheit', '°', 'Leer lassen, wenn die Rasten nur durchgezählt sind.', gefuellt=True),
+    abschnitt('Vorgabe', [
+        vorgabe_zeile('Wiederholungen', 'Zahl · 1 – 30 · Schritt 1 · Standard 10'),
+        vorgabe_zeile('Gewicht', 'Zahl · 5,0 – 150,0 kg · Schritt 2,5 kg'),
+        vorgabe_zeile('Winkel', 'Zahl · 0 – 90° · Schritt 5°'),
+        vorgabe_zeile('Eigener Parameter', 'Art, Bereich und Einheit frei eintragen', aktiv=True,
+                      letzte=True),
+    ]),
+    feld('Beschriftung', 'Sitzhöhe', gefuellt=True),
+    rad([
+        ('Von', [('', False), ('0', False), ('1', True), ('2', False), ('3', False)]),
+        ('Bis', [('6', False), ('7', False), ('8', True), ('9', False), ('10', False)]),
+        ('Schritt', [('', False), ('', False), ('1', True), ('2', False), ('5', False)]),
+        ('Einheit', [('', False), ('keine', False), ('Stufe', True), ('kg', False), ('°', False)]),
+    ]),
     '<a href="#" style="%s">Hinzufügen</a>' % PRIMARY_XL,
     '<p style="%s margin: 0;">Der Parameter hängt am Modell Kabelzug, nicht an Kabelzug 14. Jedes '
     'baugleiche Gerät trägt ihn danach mit.</p>' % NOTE)
-schreibe('TelefonParameterNeu.dc.html', telefon(900, parameter_neu))
+schreibe('TelefonParameterNeu.dc.html', telefon(1300, parameter_neu))
 
 
 # --------------------------------------------------------------- 7 Gerät
