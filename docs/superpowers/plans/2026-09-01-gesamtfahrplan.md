@@ -6,13 +6,13 @@
 
 | | Commit | Inhalt |
 | --- | --- | --- |
-| `master` | `f0c8fb4` | alles zusammengeführt: Phase 1 bis 4, `0001`–`0038`. Ausgeliefert ist der Stand vom 3. September (`0001`–`0034`) |
+| `master` | `ac0270b` | alles zusammengeführt: Phase 1 bis 5, `0001`–`0038`. Ausgeliefert ist der Stand vom 3. September (`0001`–`0034`) — **Phase 4 und 5 sind noch nicht ausgeliefert** |
 | `designplan` | `7c1f18c` | in `master` aufgegangen |
 | `design-geräteeinrichtung` | `13d065b` | in `master` aufgegangen |
 | `worktree/brave-forest-c9d8` | `2b2be9c` | Tag-Lieferung, in `master` aufgegangen |
 | `worktree/calm-forest-3c59` | `05be485` | Studio-Einstellungen, Datenschutzgrenze, Überblick: `0032`–`0034`, Fachschicht, Reiter Studio/Konto, E2E-Gang — **in `master` aufgegangen am 3. September** |
 | `phase4-kurse` | `d594193` | Kurse vollstaendig: `0035`–`0038`, Fachschicht, vier Portalseiten, drei Endpoints — **in `master` aufgegangen am 4. September** (`e0db982`) |
-| `phase5-portal-frontend` | `a23926d` | Portal-Frontend nach den 39 Artboards: Bausteine, Schreibtisch, Einstieg, Wurzelseite, Fallback; keine Migration — **noch nicht in `master`** |
+| `phase5-portal-frontend` | `ea39b32` | Portal-Frontend nach den 39 Artboards: Bausteine, Schreibtisch, Einstieg, Wurzelseite, Fallback; keine Migration — **in `master` aufgegangen am 7. September** (`ac0270b`) |
 | `phase3-einrichtung-am-geraet` | `a4e4057` | Der Gang durch die Halle, Route-Gruppe `(schreibtisch)`, drei Fachschichtfunktionen, Fix an `stripImageMetadata` und `bodySizeLimit` — in `master` aufgegangen am 3. September; der Sucher (9b) kam am selben Tag nach (Abschnitt 3) |
 
 > **Was sich gegenüber der Erstfassung geändert hat, in einem Satz:** Sie beschrieb einen Stand, an dem die entworfenen Baustellen *zu null* gebaut waren — inzwischen stehen Phase 1 bis 5. Die Abschnitte 1 bis 5 sind entsprechend fortgeschrieben; die Betriebsbefunde aus 4a–4f bleiben als Lehre stehen, auch wo ihr Anlass erledigt ist.
@@ -77,7 +77,7 @@ Das Ungleichgewicht aus der Erstfassung ist damit auf eine Seite zusammengeschmo
 | ~~**Einrichtung am Gerät**~~ — 16 `Telefon*`-Artboards, der Gang durch die Halle | keine | ✅ `2026-09-02-einrichtung-am-geraet.md`, 13 Aufgaben | ✅ **3. September**, vollständig |
 | ~~**Studio-Einstellungen, Datenschutzgrenze, Überblick**~~ — Stornofrist, Speicherrecht mit Spaltengrenze, vier Policies ohne Staff-Klausel, `studio_overview` | `0032`–`0034` | ✅ `2026-09-02-studio-einstellungen-datenschutzgrenze.md`, 9 Aufgaben | ✅ **2. September** |
 | ~~**Kurse**~~ — drei Tabellen, Platzvergabe unter einer Zeilensperre, Warteliste, fünf Bildschirme | `0035`–**`0038`** | ✅ `2026-09-03-kurse-design.md` + `2026-09-03-kurse.md`, 12 Aufgaben | ✅ **4. September**, in `master` |
-| ~~**Portal-Frontend nach den 39 Artboards**~~ — Bausteine, Schreibtisch, Einstieg, Wurzelseite, Fallback; Rail-Zustände, Trefferflächen, Kontrast | keine | ✅ `2026-09-03-portal-frontend-design.md` + `2026-09-03-portal-frontend.md`, 23 Aufgaben | ✅ **6. September**, Zweig `phase5-portal-frontend` |
+| ~~**Portal-Frontend nach den 39 Artboards**~~ — Bausteine, Schreibtisch, Einstieg, Wurzelseite, Fallback; Rail-Zustände, Trefferflächen, Kontrast | keine | ✅ `2026-09-03-portal-frontend-design.md` + `2026-09-03-portal-frontend.md`, 23 Aufgaben | ✅ **6. September**, in `master` |
 | **iOS Member-App** | — | ❌ | ❌ `apps/` enthält nur `web` |
 
 ### Was von den vier „am weitesten offenen" übrig ist
