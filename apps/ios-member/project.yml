@@ -39,6 +39,8 @@ targets:
     dependencies:
       - package: Supabase
         product: Auth
+      - package: Supabase
+        product: Supabase
     entitlements:
       path: FitnessMember/FitnessMember.entitlements
       properties:
