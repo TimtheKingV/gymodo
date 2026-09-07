@@ -43,6 +43,20 @@ actor APIClient {
         try await postNoBody("workout-sessions/\(sessionId.uuidString)/complete")
     }
 
+    // MARK: - Beitritts-/Austritts-Endpoints (Aufgabe 17, ausserhalb M1-Spec SS6.3)
+
+    func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult {
+        try await send("studios/join-by-code", method: "POST", body: JoinByCodeRequest(code: code))
+    }
+
+    func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult {
+        try await send("studios/join-by-tag", method: "POST", body: JoinByTagRequest(tagToken: token))
+    }
+
+    func leaveStudioMembership(studioId: String) async throws(APIError) {
+        try await executeNoContent(path: "studios/\(studioId)/membership", method: "DELETE")
+    }
+
     // MARK: - Hilfsmethoden
 
     private func get<T: Decodable>(_ path: String, as type: T.Type = T.self) async throws(APIError) -> T {
@@ -85,6 +99,30 @@ actor APIClient {
             do { return try decoder.decode(T.self, from: data) }
             catch { throw APIError.decodingFailed }
         }
+
+        if let envelope = try? decoder.decode(ErrorEnvelope.self, from: data) {
+            throw APIError.map(code: envelope.error.code, message: envelope.error.message)
+        }
+        throw APIError.server(message: "Unerwarteter Fehler.")
+    }
+
+    private func executeNoContent(path: String, method: String) async throws(APIError) {
+        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        request.httpMethod = method
+        if let token = await tokenProvider() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw APIError.offline
+        }
+
+        guard let http = response as? HTTPURLResponse else { throw APIError.server(message: "Unerwartete Antwort.") }
+        if (200..<300).contains(http.statusCode) { return }
 
         if let envelope = try? decoder.decode(ErrorEnvelope.self, from: data) {
             throw APIError.map(code: envelope.error.code, message: envelope.error.message)

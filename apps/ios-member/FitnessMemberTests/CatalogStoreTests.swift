@@ -7,11 +7,17 @@ actor FakeBootstrapLoader: BootstrapLoading {
     var bootstrapResult: Result = .failure(.offline)
     var putSetResult: Result2 = .failure(.offline)
     private(set) var putSetCalls: [(sessionId: UUID, setId: UUID)] = []
+    var joinResult: Result3 = .failure(.offline)
+    var leaveResult: Result4 = .failure(.offline)
 
     enum Result2 { case success(RecordedSet), failure(APIError) }
+    enum Result3 { case success(JoinResult), failure(APIError) }
+    enum Result4 { case success, failure(APIError) }
 
     func setBootstrapResult(_ value: Result) { bootstrapResult = value }
     func setPutSetResult(_ value: Result2) { putSetResult = value }
+    func setJoinResult(_ value: Result3) { joinResult = value }
+    func setLeaveResult(_ value: Result4) { leaveResult = value }
 
     func bootstrap() async throws(APIError) -> BootstrapResponse {
         switch bootstrapResult {
@@ -24,6 +30,27 @@ actor FakeBootstrapLoader: BootstrapLoading {
         putSetCalls.append((sessionId, setId))
         switch putSetResult {
         case .success(let recorded): return recorded
+        case .failure(let error): throw error
+        }
+    }
+
+    func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult {
+        switch joinResult {
+        case .success(let result): return result
+        case .failure(let error): throw error
+        }
+    }
+
+    func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult {
+        switch joinResult {
+        case .success(let result): return result
+        case .failure(let error): throw error
+        }
+    }
+
+    func leaveStudioMembership(studioId: String) async throws(APIError) {
+        switch leaveResult {
+        case .success: return
         case .failure(let error): throw error
         }
     }
@@ -105,5 +132,34 @@ struct CatalogStoreTests {
         store.enqueue(write)
         await store.flushPending()
         #expect(store.pendingWrites == [write])
+    }
+
+    @Test("joinStudio(byCode:) laedt danach den Katalog neu")
+    func joinByCodeReloads() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setJoinResult(.success(JoinResult(studioId: "s1", machineId: nil, joined: true)))
+        await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s1", name: "Kraftwerk Nord", timezone: "Europe/Berlin")])))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        try? await store.joinStudio(byCode: "ABCD1234")
+        #expect(store.loadState == .loaded(hasStudio: true))
+    }
+
+    @Test("leaveStudio wirft weiter, wenn keine Mitgliedschaft besteht")
+    func leaveStudioPropagatesError() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setLeaveResult(.failure(.notFound(message: "Keine Mitgliedschaft zum Entfernen gefunden.")))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        await #expect(throws: APIError.notFound(message: "Keine Mitgliedschaft zum Entfernen gefunden.")) {
+            try await store.leaveStudio("s1")
+        }
+    }
+
+    @Test("setActiveStudio setzt und uebersteht ein neues CatalogStore-Objekt (UserDefaults)")
+    func setActiveStudioPersists() {
+        let defaults = UserDefaults(suiteName: "catalog-store-tests-\(UUID().uuidString)")!
+        let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: tempDirectory()), defaults: defaults)
+        store.setActiveStudio("s1")
+        let secondStore = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: tempDirectory()), defaults: defaults)
+        #expect(secondStore.activeStudioId == "s1")
     }
 }
