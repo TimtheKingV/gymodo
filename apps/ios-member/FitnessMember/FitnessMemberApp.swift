@@ -2,16 +2,31 @@ import SwiftUI
 
 @main
 struct FitnessMemberApp: App {
-    @State private var token: String?
+    @State private var sessionStore: SessionStore
+    @State private var catalogStore: CatalogStore
+    @State private var pendingTagStore = PendingTagStore()
+
+    init() {
+        let session = SessionStore(backend: SupabaseAuthBackend())
+        let apiClient = APIClient(baseURL: AppConfig.apiBaseURL) { await session.session?.accessToken }
+        _sessionStore = State(initialValue: session)
+        _catalogStore = State(initialValue: CatalogStore(loader: apiClient, pendingWriteStore: PendingWriteStore()))
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView(token: token)
+            RootView()
+                .environment(sessionStore)
+                .environment(catalogStore)
+                .environment(pendingTagStore)
+                .task {
+                    await sessionStore.restoreSession()
+                }
                 .onOpenURL { url in
-                    // Ungueltige Links werden still verworfen; der Screen
-                    // bleibt im leeren Zustand.
-                    if let parsed = TagLink.token(from: url) {
-                        token = parsed
+                    // Ungueltige Links werden still verworfen (M0-Verhalten
+                    // aus Task 7 unveraendert uebernommen).
+                    if let token = TagLink.token(from: url) {
+                        pendingTagStore.capture(token)
                     }
                 }
         }
