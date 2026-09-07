@@ -34,7 +34,6 @@
 		C01062BE7395A2DAD05A3EE4 /* AuthLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D6E6743BDCF6E58E971D0CE /* AuthLogicTests.swift */; };
 		C0D21B900231DB8BC9A5323E /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E48EE365B2AEEBD3FCBC2E /* DesignSystem.swift */; };
 		C646BDD9DDB5825D52BF9AFA /* LabeledField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D512A8A7F6C5D60CF41B25 /* LabeledField.swift */; };
-		C73E66D8E05ADA6677268097 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 3E17D5E4CAC671DCA4ED0BE8 /* Supabase */; };
 		CFADE9B7B1518A3F6DF0E7E7 /* ExerciseProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E2DF311877D3BA39FFA5D5 /* ExerciseProgress.swift */; };
 		D0068DB5B484876E3D0083E7 /* EmailValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D79138C4B32315198E734356 /* EmailValidator.swift */; };
 		D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78C8636341914B90296B220 /* AppConfigTests.swift */; };
@@ -105,7 +104,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				3B26567CF080FB300019E7A8 /* Auth in Frameworks */,
-				C73E66D8E05ADA6677268097 /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -267,7 +265,6 @@
 			name = FitnessMember;
 			packageProductDependencies = (
 				B1DA3D9245AAF15DFFD8CA8F /* Auth */,
-				3E17D5E4CAC671DCA4ED0BE8 /* Supabase */,
 			);
 			productName = FitnessMember;
 			productReference = 5F603D042C4DE6ADD6D6A2CC /* FitnessMember.app */;
@@ -639,11 +636,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		3E17D5E4CAC671DCA4ED0BE8 /* Supabase */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E2596F1D42D1BD4F08459270 /* XCRemoteSwiftPackageReference "supabase-swift" */;
-			productName = Supabase;
-		};
 		B1DA3D9245AAF15DFFD8CA8F /* Auth */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E2596F1D42D1BD4F08459270 /* XCRemoteSwiftPackageReference "supabase-swift" */;
