@@ -1331,7 +1331,7 @@ Die Session entsteht implizit beim ersten gesicherten Satz (M1-Spec §5.6), es g
 - Consumes: `SetWrite`, `ProblemReason` (Sub-Projekt 1, `DTOs/WorkoutSet.swift`).
 - Produces: `struct LokalerSatz`, `struct LokalerBlock`, `struct LokaleSession` — von Aufgabe 10, 11, 14, 15 konsumiert.
 - Produces: `@MainActor @Observable final class WorkoutSessionStore` mit
-  `var aktiveSession: LokaleSession?` (gefiltert),
+  `func aktiveSession(jetzt: Date = Date()) -> LokaleSession?`,
   `func naechsterSetIndex(machineId: String, exerciseId: String, jetzt: Date) -> Int`,
   `func satzSichern(machineId: String, exerciseId: String, weightKg: Double, reps: Int, rir: Double?, problemFlag: Bool, problemReason: ProblemReason?, jetzt: Date) -> (sessionId: UUID, setId: UUID, body: SetWrite)`,
   `func beenden() -> UUID?` — von Aufgabe 11, 13, 15 konsumiert.
@@ -1358,14 +1358,14 @@ struct WorkoutSessionStoreTests {
 
     @Test func derErsteSatzLegtDieSessionAn() {
         let (sut, _) = store()
-        #expect(sut.aktiveSession == nil)
+        #expect(sut.aktiveSession() == nil)
 
         let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1",
                                           weightKg: 80, reps: 10, rir: nil,
                                           problemFlag: false, problemReason: nil,
                                           jetzt: start)
 
-        #expect(sut.aktiveSession?.id == geschrieben.sessionId)
+        #expect(sut.aktiveSession()?.id == geschrieben.sessionId)
         #expect(geschrieben.body.setIndex == 1)
     }
 
@@ -1383,7 +1383,7 @@ struct WorkoutSessionStoreTests {
 
         // Zweiter Satz IM BLOCK, nicht dritter Satz der Session.
         #expect(dritter.body.setIndex == 2)
-        #expect(sut.aktiveSession?.bloecke.count == 2)
+        #expect(sut.aktiveSession()?.bloecke.count == 2)
     }
 
     @Test func dieselbeSessionInnerhalbVonVierStunden() {
@@ -1430,7 +1430,7 @@ struct WorkoutSessionStoreTests {
 
         let zweiterLauf = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
 
-        #expect(zweiterLauf.aktiveSession?.id == geschrieben.sessionId)
+        #expect(zweiterLauf.aktiveSession()?.id == geschrieben.sessionId)
         #expect(zweiterLauf.naechsterSetIndex(machineId: "m1", exerciseId: "e1",
                                               jetzt: start.addingTimeInterval(60)) == 2)
     }
@@ -1441,7 +1441,7 @@ struct WorkoutSessionStoreTests {
                                           rir: nil, problemFlag: false, problemReason: nil, jetzt: start)
 
         #expect(sut.beenden() == geschrieben.sessionId)
-        #expect(sut.aktiveSession == nil)
+        #expect(sut.aktiveSession() == nil)
         #expect(sut.beenden() == nil)
     }
 
@@ -1576,9 +1576,11 @@ final class WorkoutSessionStore {
 
     /// Die Session, sofern sie noch laeuft. Ohne Argument gegen die aktuelle
     /// Uhr -- fuer Views; mit Argument fuer Tests.
-    var aktiveSession: LokaleSession? { aktiveSession(jetzt: Date()) }
-
-    func aktiveSession(jetzt: Date) -> LokaleSession? {
+    ///
+    /// Bewusst EINE Methode mit Vorgabewert statt Eigenschaft plus Methode:
+    /// derselbe Name in beiden Formen waere in Swift eine ungueltige
+    /// Neudeklaration.
+    func aktiveSession(jetzt: Date = Date()) -> LokaleSession? {
         guard let session = gespeicherteSession else { return nil }
         let letzte = session.letzterSatzAm ?? session.startedAt
         return jetzt.timeIntervalSince(letzte) > Self.sessionPause ? nil : session
@@ -2329,9 +2331,12 @@ An `apps/ios-member/FitnessMemberTests/APIClientTests.swift` innerhalb des beste
 ```swift
     @Test("schickt die Kalibrierung als POST auf me/calibrations")
     func postsCalibration() async throws {
-        nonisolated(unsafe) var gesehen: URLRequest?
+        // Kein `nonisolated(unsafe) var` -- das gilt nur fuer globale und
+        // statische Eigenschaften, nicht fuer lokale Variablen.
+        final class Aufzeichnung: @unchecked Sendable { var request: URLRequest? }
+        let gesehen = Aufzeichnung()
         StubURLProtocol.handler = { request in
-            gesehen = request
+            gesehen.request = request
             let json = #"""
             {"id":"c1","machineId":"m1","exerciseId":"e1",
              "settingValues":{"sitz":4},"schemaVersion":1,
@@ -2348,8 +2353,8 @@ An `apps/ios-member/FitnessMemberTests/APIClientTests.swift` innerhalb des beste
         )
 
         #expect(angelegt.id == "c1")
-        #expect(gesehen?.httpMethod == "POST")
-        #expect(gesehen?.url?.path.hasSuffix("/me/calibrations") == true)
+        #expect(gesehen.request?.httpMethod == "POST")
+        #expect(gesehen.request?.url?.path.hasSuffix("/me/calibrations") == true)
     }
 
     @Test("reicht die Serverbegruendung einer abgelehnten Kalibrierung durch")
@@ -2486,7 +2491,7 @@ Die VoiceOver-Live-Region wird auf 15 s gedrosselt (§12). Ohne diese Trennung e
 
 **Interfaces:**
 - Consumes: `DesignSystem` (Aufgabe 3).
-- Produces: `struct Resttimer: Codable, Equatable { static let dauer: TimeInterval; static let verlaengerung: TimeInterval; let endetAm: Date; init(start: Date); func restsekunden(jetzt: Date) -> Int; func anteil(jetzt: Date) -> Double; func laeuft(jetzt: Date) -> Bool; func verlaengert() -> Resttimer; var gesprochen: (Date) -> String }` — von Aufgabe 10 und 12 konsumiert.
+- Produces: `struct Resttimer: Codable, Equatable { static let dauer: TimeInterval; static let verlaengerung: TimeInterval; let endetAm: Date; init(start: Date); func restsekunden(jetzt: Date) -> Int; func anteil(jetzt: Date) -> Double; func laeuft(jetzt: Date) -> Bool; func verlaengert() -> Resttimer; func gesprochen(_ jetzt: Date = Date()) -> String }` — von Aufgabe 10 und 12 konsumiert.
 - Produces: `struct ResttimerBalken: View` mit `timer: Resttimer` und `beiVerlaengern: () -> Void` — von Aufgabe 12 konsumiert.
 
 - [ ] **Step 1: Den Test schreiben**
@@ -4811,7 +4816,7 @@ struct TrainingRootView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
                     kopf
-                    if let session = sessions.aktiveSession, !session.bloecke.isEmpty {
+                    if let session = sessions.aktiveSession(), !session.bloecke.isEmpty {
                         ForEach(session.bloecke) { block in
                             Button { oeffne(block) } label: { blockZeile(block) }
                                 .buttonStyle(PressButtonStyle())
@@ -4826,7 +4831,7 @@ struct TrainingRootView: View {
                         InlineBanner(tone: .danger, message: scanFehler)
                     }
                     PrimaryButton(title: "Gerät scannen") { scannerOffen = true }
-                    if sessions.aktiveSession != nil {
+                    if sessions.aktiveSession() != nil {
                         SecondaryButton(title: "Training beenden") { await beenden() }
                     }
                 }
@@ -4852,7 +4857,7 @@ struct TrainingRootView: View {
     // MARK: - Kopf und Zeilen
 
     private var kopf: some View {
-        Text(sessions.aktiveSession == nil ? "TRAINING" : "TRAINING LÄUFT")
+        Text(sessions.aktiveSession() == nil ? "TRAINING" : "TRAINING LÄUFT")
             .font(DesignSystem.Typography.screentitel)
             .tracking(-1)
             .foregroundStyle(DesignSystem.Color.text)
