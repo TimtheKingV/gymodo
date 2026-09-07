@@ -1,0 +1,105 @@
+import Foundation
+import Testing
+@testable import FitnessMember
+
+actor FakeBootstrapLoader: BootstrapLoading {
+    enum Result { case success(BootstrapResponse), failure(APIError) }
+    var bootstrapResult: Result = .failure(.offline)
+    var putSetResult: Result2 = .failure(.offline)
+    private(set) var putSetCalls: [(sessionId: UUID, setId: UUID)] = []
+
+    enum Result2 { case success(RecordedSet), failure(APIError) }
+
+    func setBootstrapResult(_ value: Result) { bootstrapResult = value }
+    func setPutSetResult(_ value: Result2) { putSetResult = value }
+
+    func bootstrap() async throws(APIError) -> BootstrapResponse {
+        switch bootstrapResult {
+        case .success(let response): return response
+        case .failure(let error): throw error
+        }
+    }
+
+    func putSet(sessionId: UUID, setId: UUID, _ body: SetWrite) async throws(APIError) -> RecordedSet {
+        putSetCalls.append((sessionId, setId))
+        switch putSetResult {
+        case .success(let recorded): return recorded
+        case .failure(let error): throw error
+        }
+    }
+}
+
+private func emptyBootstrap(studios: [BootstrapResponse.Studio] = []) -> BootstrapResponse {
+    BootstrapResponse(studios: studios, machines: [], calibrations: [], lastSets: [])
+}
+
+private func tempDirectory() -> URL {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent("catalog-tests-\(UUID().uuidString)")
+    try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    return directory
+}
+
+@Suite("CatalogStore")
+struct CatalogStoreTests {
+    @Test("load() ohne Studios ergibt loaded(hasStudio: false)")
+    func loadWithoutStudio() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setBootstrapResult(.success(emptyBootstrap()))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        await store.load()
+        #expect(store.loadState == .loaded(hasStudio: false))
+    }
+
+    @Test("load() mit einem Studio ergibt loaded(hasStudio: true)")
+    func loadWithStudio() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s1", name: "Kraftwerk Nord", timezone: "Europe/Berlin")])))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        await store.load()
+        #expect(store.loadState == .loaded(hasStudio: true))
+    }
+
+    @Test("ein Netzwerkfehler ergibt .failed")
+    func loadFailure() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setBootstrapResult(.failure(.offline))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        await store.load()
+        #expect(store.loadState == .failed)
+    }
+
+    @Test("enqueue speichert sofort auf Platte")
+    func enqueuePersists() {
+        let directory = tempDirectory()
+        let writeStore = PendingWriteStore(directory: directory)
+        let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: writeStore)
+        let write = PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil))
+        store.enqueue(write)
+        #expect(PendingWriteStore(directory: directory).loadAll() == [write])
+    }
+
+    @Test("flushPending entfernt erfolgreich gesendete Eintraege")
+    func flushRemovesSucceeded() async {
+        let directory = tempDirectory()
+        let loader = FakeBootstrapLoader()
+        let recorded = RecordedSet(id: "r1", studioId: "s1", userId: "u1", sessionId: UUID().uuidString, machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil, problemFlag: false, problemReason: nil, performedAt: "2026-09-01T10:00:00Z")
+        await loader.setPutSetResult(.success(recorded))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: directory))
+        let write = PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil))
+        store.enqueue(write)
+        await store.flushPending()
+        #expect(store.pendingWrites.isEmpty)
+    }
+
+    @Test("flushPending behaelt Eintraege, die weiterhin fehlschlagen")
+    func flushKeepsFailed() async {
+        let directory = tempDirectory()
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.offline))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: directory))
+        let write = PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil))
+        store.enqueue(write)
+        await store.flushPending()
+        #expect(store.pendingWrites == [write])
+    }
+}
