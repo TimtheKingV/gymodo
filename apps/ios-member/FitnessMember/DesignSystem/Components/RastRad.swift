@@ -19,6 +19,12 @@ enum UnterstrichStil {
 /// ausgeloesten Geste der App das groesste vermeidbare Risiko.
 struct RastRad: View {
     let werte: [Double]
+    /// Muss ein Element aus `werte` sein. Ein Servervorschlag oder ein alter
+    /// gespeicherter Wert (z. B. von vor einem Geraete-Schrittwechsel) kann
+    /// daneben liegen -- dafuer gibt es `Rastwerte.naechster(zu:in:)`, das
+    /// auf den naechsten erreichbaren Wert rundet. Ohne diese Invariante hat
+    /// weder `amAnschlag` je einen Treffer, noch findet `scrollPosition`
+    /// eine passende Zeile.
     @Binding var auswahl: Double
     let offen: Bool
     let unterstrich: UnterstrichStil
@@ -121,13 +127,38 @@ struct RastRad: View {
                 startPoint: .top, endPoint: .bottom
             )
         )
-        .onAppear { scrollPosition = auswahl }
+        .onAppear {
+            // Verteidigung der Invariante auf `auswahl` (siehe deren
+            // Dokumentation): ein unsauberer Startwert wird auf den
+            // naechsten erreichbaren Wert gerundet statt eine Zeile ohne
+            // sichtbare Auswahl zu zeigen -- in einem dunklen Kraftraum,
+            // einhaendig, ist eine leise Korrektur besser als ein leeres
+            // Rad.
+            if !werte.contains(auswahl) {
+                auswahl = Rastwerte.naechster(zu: auswahl, in: werte)
+            } else {
+                scrollPosition = auswahl
+            }
+        }
         .onChange(of: scrollPosition) { _, neu in
             guard let neu, neu != auswahl else { return }
             auswahl = neu
         }
         .onChange(of: auswahl) { _, neu in
             if scrollPosition != neu { scrollPosition = neu }
+            // Der Anschlag-Stoss ist fuer den Scroll-Daumen die EINZIGE
+            // Rueckmeldung am Rand -- die sichtbare Haelfte lebt in
+            // WertZeile (Aufgabe 12). Er soll beim Ankommen am Rand
+            // klopfen, nicht waehrend die Auswahl dort ruht: `onChange`
+            // feuert nur bei einer tatsaechlichen Wertaenderung, also genau
+            // beim Uebergang, egal ob er vom Scrollen, vom Rotor oder von
+            // der Verteidigung oben kommt. `schiebe(um:)` knockt separat,
+            // wenn ein Schritt am Rand ins Leere liefe (`auswahl` aendert
+            // sich dabei nicht) -- die beiden Pfade ueberschneiden sich
+            // nie, also kein doppeltes Klopfen fuer dieselbe Geste.
+            if neu == werte.first || neu == werte.last {
+                anschlagStoss += 1
+            }
         }
     }
 

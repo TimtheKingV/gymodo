@@ -23,7 +23,10 @@ enum Rastwerte {
         let obergrenze = max ?? (min + Double(maxRastenOhneObergrenze) * schritt)
         guard obergrenze > min else { return [min] }
 
-        let rasten = Int(((obergrenze - min) / schritt).rounded(.down))
+        // Epsilon vor dem Abrunden: (0,3 - 0) / 0,1 wird in Gleitkomma zu
+        // 2.9999999999999996 statt 3 -- ohne Toleranz wuerde das Rad einen
+        // Wert verschlucken, den das Geraet tatsaechlich kann.
+        let rasten = Int(((obergrenze - min) / schritt + 1e-9).rounded(.down))
         return (0...rasten).map { min + Double($0) * schritt }
     }
 

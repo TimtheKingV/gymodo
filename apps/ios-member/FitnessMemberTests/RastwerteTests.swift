@@ -16,9 +16,23 @@ struct RastwerteTests {
     }
 
     @Test func schliesstDasMaximumEinAuchWennEsNichtAufDerRasterFaellt() {
-        let werte = Rastwerte.gewichte(min: 5, max: 11, schritt: 2.5)
+        // Quotient (12-5)/2.5 = 2,8 -- absichtlich ueber ,5, damit ein
+        // versehentliches `.rounded()` statt `.rounded(.down)` hier auf 3
+        // aufrunden und 12,5 liefern wuerde, statt bei 10 zu bleiben. Mit
+        // max: 11 (Quotient 2,4) waere das nicht unterscheidbar gewesen.
+        let werte = Rastwerte.gewichte(min: 5, max: 12, schritt: 2.5)
         #expect(werte.last == 10.0)
-        #expect(werte.allSatisfy { $0 <= 11 })
+        #expect(werte.allSatisfy { $0 <= 12 })
+    }
+
+    @Test func rastetKorrektTrotzGleitkommaUngenauigkeitAnDerGrenze() {
+        // (0,3 - 0) / 0,1 wird in Gleitkomma zu 2.9999999999999996 statt 3.
+        // Ohne Toleranz vor dem Abrunden wuerde 0,3 -- ein Wert, den das
+        // Geraet tatsaechlich kann -- aus der Liste fallen (auf 0,2). Der
+        // Vergleich toleriert die uebliche Gleitkomma-Odyssee von "3 * 0,1"
+        // selbst statt sie mit `==` gegen das Literal zu verwechseln.
+        let werte = Rastwerte.gewichte(min: 0, max: 0.3, schritt: 0.1)
+        #expect(abs(werte.last! - 0.3) < 1e-9)
     }
 
     @Test func ohneObergrenzeEndetDasRadNachZweihundertRasten() {
