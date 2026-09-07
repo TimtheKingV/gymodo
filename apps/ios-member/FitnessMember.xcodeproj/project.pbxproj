@@ -13,6 +13,9 @@
 		4F9AF0046553808E8C5030BD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3845D9E0CE58A2749D16DF /* ContentView.swift */; };
 		8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B577EC22237E86AA0F3755B7 /* AppConfig.swift */; };
 		9E4947346E28638E0FA99C6A /* TagLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* ColorHexTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A3 /* ColorHexTests.swift */; };
+		C2D3E4F5A6B7C8D9E0F1A2B3 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3E4F5A6B7C8D9E0F1A2B3C4 /* Color+Hex.swift */; };
+		D0E1F2A3B4C5D6E7F8A9B0C1 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F2A3B4C5D6E7F8A9B0C1D2 /* DesignSystem.swift */; };
 		D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78C8636341914B90296B220 /* AppConfigTests.swift */; };
 		EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */; };
 /* End PBXBuildFile section */
@@ -35,9 +38,12 @@
 		5F603D042C4DE6ADD6D6A2CC /* FitnessMember.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FitnessMember.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D54275FD3C78205F883D9A0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		943C19386AFE9634615213ED /* Info-Additions.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info-Additions.plist"; sourceTree = "<group>"; };
+		B2C3D4E5F6A7B8C9D0E1F2A3 /* ColorHexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHexTests.swift; sourceTree = "<group>"; };
 		B577EC22237E86AA0F3755B7 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLinkTests.swift; sourceTree = "<group>"; };
+		D3E4F5A6B7C8D9E0F1A2B3C4 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		D78C8636341914B90296B220 /* AppConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigTests.swift; sourceTree = "<group>"; };
+		E1F2A3B4C5D6E7F8A9B0C1D2 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		EAEDFB14623AE11C1FD67B11 /* FitnessMember.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FitnessMember.entitlements; sourceTree = "<group>"; };
 		F3F970AC02F39C7E9D8ABCBF /* TagLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLink.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -59,6 +65,7 @@
 			children = (
 				B577EC22237E86AA0F3755B7 /* AppConfig.swift */,
 				1E3845D9E0CE58A2749D16DF /* ContentView.swift */,
+				2E4F5A6B7C8D9E0F1A2B3C4D /* DesignSystem */,
 				EAEDFB14623AE11C1FD67B11 /* FitnessMember.entitlements */,
 				39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */,
 				943C19386AFE9634615213ED /* Info-Additions.plist */,
@@ -78,10 +85,20 @@
 			);
 			sourceTree = "<group>";
 		};
+		2E4F5A6B7C8D9E0F1A2B3C4D /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				D3E4F5A6B7C8D9E0F1A2B3C4 /* Color+Hex.swift */,
+				E1F2A3B4C5D6E7F8A9B0C1D2 /* DesignSystem.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
 		5D15656A46C8A3FB04179564 /* FitnessMemberTests */ = {
 			isa = PBXGroup;
 			children = (
 				D78C8636341914B90296B220 /* AppConfigTests.swift */,
+				B2C3D4E5F6A7B8C9D0E1F2A3 /* ColorHexTests.swift */,
 				C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */,
 			);
 			path = FitnessMemberTests;
@@ -205,7 +222,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */,
+				C2D3E4F5A6B7C8D9E0F1A2B3 /* Color+Hex.swift in Sources */,
 				4F9AF0046553808E8C5030BD /* ContentView.swift in Sources */,
+				D0E1F2A3B4C5D6E7F8A9B0C1 /* DesignSystem.swift in Sources */,
 				EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */,
 				4D6EC5DA1233E3B74ADD20B9 /* TagLink.swift in Sources */,
 			);
@@ -216,6 +235,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* ColorHexTests.swift in Sources */,
 				9E4947346E28638E0FA99C6A /* TagLinkTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
