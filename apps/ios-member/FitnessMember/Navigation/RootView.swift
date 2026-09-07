@@ -37,9 +37,12 @@ struct RootView: View {
             if sessionStore.session != nil {
                 hatteSession = true
                 // Nicht nur .idle: auch nach .failed muss ein neuer Anlauf
-                // moeglich sein. .loading bleibt ausgenommen, damit ein
-                // laufender Ladevorgang nicht doppelt startet.
-                if catalogStore.loadState != .loading {
+                // moeglich sein. Aber auch nicht mehr als das: ein
+                // Passwortwechsel liefert eine neue Session (neuer
+                // Access-Token) fuer denselben Nutzer und wuerde sonst bei
+                // bereits geladenem Katalog (.loaded) einen unnoetigen
+                // Neuladevorgang ausloesen.
+                if catalogStore.loadState == .idle || catalogStore.loadState == .failed {
                     await catalogStore.load()
                 }
             } else if hatteSession {
