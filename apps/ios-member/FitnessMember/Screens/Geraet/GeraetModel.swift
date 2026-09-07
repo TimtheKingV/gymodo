@@ -82,8 +82,16 @@ final class GeraetModel {
         // gespeicherte Wiederholungszahl kann ausserhalb 1...40 liegen --
         // RastRad verlangt, dass die Auswahl ein Element der Werteliste ist.
         gewicht = Rastwerte.naechster(zu: gewicht, in: gewichtsWerte)
-        wiederholungen = min(max(wiederholungen, Rastwerte.wiederholungen.first ?? 1),
-                              Rastwerte.wiederholungen.last ?? 40)
+        wiederholungen = GeraetModel.geklemmt(wiederholungen)
+    }
+
+    /// Klemmt auf Rastwerte.wiederholungen (1...40) -- RastRad verlangt, dass
+    /// die Auswahl ein Element der Werteliste ist. Braucht init (gespeicherte
+    /// Werte koennen ausserhalb liegen) und uebungWechseln (dieselbe Regel
+    /// beim Wechsel der Uebung).
+    private static func geklemmt(_ wiederholungen: Int) -> Int {
+        min(max(wiederholungen, Rastwerte.wiederholungen.first ?? 1),
+            Rastwerte.wiederholungen.last ?? 40)
     }
 
     // MARK: - Abgeleitetes
@@ -141,8 +149,19 @@ final class GeraetModel {
         kontext?.settingDefinitions ?? maschine.equipmentModel.settingDefinitions
     }
 
+    /// tag-context.ts berechnet calibration und suggestion serverseitig fuer
+    /// genau eine Uebung (selectedExerciseId). Nach einem Uebungswechsel
+    /// gehoert der geladene Kontext noch zur vorherigen Uebung -- ohne diese
+    /// Klammer zeigte der Screen A's Sitzposition unter B's Namen, und das
+    /// Mitglied stellte das Geraet danach physisch falsch ein.
+    private var kontextPasstZurUebung: Bool {
+        kontext?.selectedExerciseId == uebungId
+    }
+
     private var kalibrierungswerte: JSONValue? {
-        if let kontext, let kalibrierung = kontext.calibration { return kalibrierung.settingValues }
+        if kontextPasstZurUebung, let kalibrierung = kontext?.calibration {
+            return kalibrierung.settingValues
+        }
         return bootstrap.calibrations.first {
             $0.machineId == maschine.id && $0.exerciseId == uebungId
         }?.settingValues
@@ -175,7 +194,10 @@ final class GeraetModel {
     /// "Vorschlag · +2,5" -- eine Rechnung, keine Empfehlung
     /// (designsystem.md SS10). Fehlt offline und beim Erstkontakt.
     var vorschlagText: String? {
-        guard let vorschlag = kontext?.suggestion.resultWeightKg,
+        // Derselbe Uebungs-Vorbehalt wie kalibrierungswerte: der Vorschlag
+        // gilt fuer selectedExerciseId, nicht fuer die aktuell gewaehlte.
+        guard kontextPasstZurUebung,
+              let vorschlag = kontext?.suggestion.resultWeightKg,
               let vorher = kontext?.suggestion.inputs.currentWeightKg
         else { return nil }
         let delta = vorschlag - vorher
@@ -231,7 +253,7 @@ final class GeraetModel {
         }
         gewicht = Rastwerte.naechster(
             zu: letzter?.weightKg ?? modell.min, in: gewichtsWerte)
-        wiederholungen = letzter?.reps ?? aktiveUebung?.targetRepsMin ?? 10
+        wiederholungen = GeraetModel.geklemmt(letzter?.reps ?? aktiveUebung?.targetRepsMin ?? 10)
         reserve = letzter?.rir
         radOffen = false
     }
