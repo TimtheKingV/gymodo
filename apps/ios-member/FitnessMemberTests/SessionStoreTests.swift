@@ -123,8 +123,10 @@ struct SessionStoreTests {
     @Test("changePassword meldet aktuelles Passwort falsch als eigenen Fehler")
     func changePasswordWrongCurrent() async {
         let backend = FakeAuthBackend()
-        await backend.setBehavior(.fail(FakeAuthBackend.TestError.invalidCredentials))
+        await backend.setBehavior(.succeed(testSession))
         let store = SessionStore(backend: backend)
+        try? await store.signIn(email: "lena@example.de", password: "geheim1234")
+        await backend.setBehavior(.fail(FakeAuthBackend.TestError.invalidCredentials))
         await #expect(throws: AuthError.invalidCredentials) {
             try await store.changePassword(currentPassword: "falsch", newPassword: "neuesPasswort1")
         }

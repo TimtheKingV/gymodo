@@ -59,7 +59,7 @@ final class SessionStore {
     /// Bestaetigung des alten Passworts, MemberPasswortAendernView braucht
     /// aber genau diesen Fehlerfall (spec SS8).
     func changePassword(currentPassword: String, newPassword: String) async throws(AuthError) {
-        let email = session?.email ?? ""
+        guard let email = session?.email else { throw AuthError.unknown }
         do {
             _ = try await backend.signIn(email: email, password: currentPassword)
             try await backend.updatePassword(newPassword)
