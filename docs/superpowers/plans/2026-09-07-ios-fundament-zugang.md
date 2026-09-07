@@ -2391,7 +2391,7 @@ git commit -m "feat(ios): CatalogStore mit Bootstrap-Cache und Warteschlangen-Ab
 
 **Interfaces:**
 - Consumes: `Session` (Aufgabe 7), `CatalogLoadState` (Aufgabe 10)
-- Produces: `enum RootDestination: Equatable { case authFlow, loadingCatalog, noStudio, main }`, `enum RootDestinationLogic { static func destination(session:catalogState:) -> RootDestination }`, `@Observable final class PendingTagStore { var token: String? { get }; func capture(_:); func consume() -> String? }`, `enum AuthRoute: Hashable { case code(email: String), register, password }` — von den Zugang-Screens (Aufgabe 12–16, über `NavigationLink(value:)`) und von Aufgabe 22 (`RootView`/`AuthFlow`/`MainTabView`) konsumiert.
+- Produces: `enum RootDestination: Equatable { case authFlow, loadingCatalog, noStudio, main }`, `enum RootDestinationLogic { static func destination(session:catalogState:) -> RootDestination }`, `@Observable final class PendingTagStore { var token: String? { get }; func capture(_:); func consume() -> String? }`, `enum AuthRoute: Hashable { case register, password }` — von den Zugang-Screens (Aufgabe 12–16, über `NavigationLink(value:)`) und von Aufgabe 22 (`RootView`/`AuthFlow`/`MainTabView`) konsumiert.
 
 - [ ] **Schritt 1: Test für die reine Zustandslogik schreiben — vier Kombinationen**
 
@@ -2509,7 +2509,6 @@ final class PendingTagStore {
 import Foundation
 
 enum AuthRoute: Hashable {
-    case code(email: String)
     case register
     case password
 }
@@ -2647,7 +2646,7 @@ git commit -m "feat(ios): LoginMailView"
 
 **Interfaces:**
 - Consumes: `SessionStore` (Aufgabe 8), `CodeEntry`, `AuthCopy` (Aufgabe 6), `PrimaryButton`, `DesignSystem` (Aufgaben 2–3)
-- Produces: `struct CodeDigitsView: View` (Binding<CodeEntry>) — auch von Aufgabe 15 (`MemberPasswortView`) konsumiert. `struct LoginCodeView: View` (init(email: String)) — von Aufgabe 22 (`AuthFlow`) über `AuthRoute.code(email:)` konsumiert.
+- Produces: `struct CodeDigitsView: View` (Binding<CodeEntry>) — auch von Aufgabe 15 (`MemberPasswortView`) konsumiert. `struct LoginCodeView: View` (init(email: String)) — von Aufgabe 14 (`MemberRegistrierenView`) direkt über `.navigationDestination(isPresented:)` konsumiert (programmatischer Übergang nach einem asynchronen `signUp()`-Ergebnis, kein `NavigationLink(value:)` — dafür bräuchte es einen Nutzer-Tap. `AuthRoute` hat deshalb keinen `.code`-Fall, siehe Ruling im Ledger).
 
 - [ ] **Schritt 1: `CodeDigitsView.swift` schreiben — sechs Kästchen plus unsichtbares Eingabefeld**
 
@@ -4213,7 +4212,6 @@ struct AuthFlow: View {
             LoginMailView()
                 .navigationDestination(for: AuthRoute.self) { route in
                     switch route {
-                    case .code(let email): LoginCodeView(email: email)
                     case .register: MemberRegistrierenView()
                     case .password: MemberPasswortView()
                     }
