@@ -6,7 +6,7 @@
 
 | | Commit | Inhalt |
 | --- | --- | --- |
-| `master` | `ac0270b` | alles zusammengeführt: Phase 1 bis 5, `0001`–`0038`. Ausgeliefert ist der Stand vom 3. September (`0001`–`0034`) — **Phase 4 und 5 sind noch nicht ausgeliefert** |
+| `master` | `ac0270b` | alles zusammengeführt **und ausgeliefert**: Phase 1 bis 5, `0001`–`0038` — Vercel am 7. September, die Cloud-Datenbank am selben Tag nachgezogen |
 | `designplan` | `7c1f18c` | in `master` aufgegangen |
 | `design-geräteeinrichtung` | `13d065b` | in `master` aufgegangen |
 | `worktree/brave-forest-c9d8` | `2b2be9c` | Tag-Lieferung, in `master` aufgegangen |
@@ -57,7 +57,7 @@ Das Ungleichgewicht aus der Erstfassung ist damit auf eine Seite zusammengeschmo
 | **Einrichtung am Gerät** — der sechsschrittige Gang auf 390 px, Route-Gruppe `(schreibtisch)`, Upload-Warteschlange über Geräte hinweg, Tag ersetzen | ✅ neu, mit dem Sucher |
 | **Portal-Frontend** — 39 Artboards, Bausteine (`Seite`, `Zustand`, `Reiter`, `Abschnitt`, `Erlaeuterung`, `Produktgrenze`), Rail-Zustände, drei Maßtiere für Trefferflächen, Kontrast nach Designsystem §2 | ✅ neu, 23 Aufgaben, **ohne Migration** |
 | Testlage: **46** Integrationsdateien (558 Tests), **14** E2E-Dateien (103 Tests), **112** Unit-Tests (85 Fachschicht, 27 Web) | ✅ E2E vollständig grün gegen den Produktionsbau, zweimal; Integration 554 von 558, die vier roten sind der Uhren-Wettlauf aus Abschnitt 6 |
-| Produktion — `0001`–`0034` angewendet, `master` ausgeliefert, `smoke:web` bestanden | ✅ **3. September**, siehe 4f |
+| Produktion — `0001`–`0038` angewendet, `master` ausgeliefert, `smoke:web` bestanden | ✅ **7. September**; die vier Kurse-Migrationen `0035`–`0038` lagen drei Tage hinter dem Code, siehe 4i |
 
 **Der Kassensturz aus `2026-08-31-trainerportal-struktur-design.md` §7 ist überholt.** Er nannte den Gerätekatalog als einzigen vollständig tragenden Bereich; das gilt nicht mehr. Die Tag-Kette trägt vom Herstellungslos bis zum Scan vor dem Gerät, und von den vier dort als „am weitesten offen" bezeichneten Punkten sind jetzt alle vier zu (Leute, Auth, Studio-Einstellungen, Datenschutzgrenze).
 
@@ -254,6 +254,34 @@ Der Bauabschnitt Kurse hatte eine Eigenschaft, die es im Produkt sonst nirgends 
 | Frontend-Code | acht Seiten, ungestaltet | **null** |
 
 Die Member-App ist backendseitig fertig und scheitert nur an Blocker 2 und 3. Das Portal hat sein Backend jetzt beisammen — offen ist weiterhin nur die Gestaltung, dazu die neuen Bauabschnitte Einrichtung am Gerät (Phase 3) und Kurse (Phase 4).
+
+---
+
+### 4i. Die fünfte Drift — und die erste, die niemanden überrascht hat
+
+Am 7. September gingen Push und Vercel-Auslieferung von Phase 5 durch. Die Cloud-Datenbank stand danach auf `0034`, der ausgelieferte Code erwartete `0038`: die vier Kurse-Migrationen aus Phase 4 waren am 4. September gemergt und nie gepusht worden.
+
+**Der Unterschied zu 4c, 4d, 4e und 4g: dieser Rückstand war aufgeschrieben.** Er stand in der Kopftabelle dieses Dokuments und wurde abgearbeitet, statt beim nächsten echten Datensatz aufzuschlagen. Das ist der Zweck der Zeile, und sie hat ihn zum ersten Mal erfüllt.
+
+**Trotzdem zuerst gemessen, nicht geglaubt.** Abschnitt 7 verlangt vor jedem Eingriff die Frage *ist die Datenbank hinten oder vorn?* — und in 4e war sie **vorn**, wo der Reflex sie hinten vermutet hätte. `supabase migration list` sagte: `0001`–`0034` angewendet, `0035`–`0038` nur lokal, nichts in der Cloud ohne Gegenstück auf Platte. Hinten also, und `db push` damit die richtige Richtung.
+
+**Zweite Vorprüfung, am Inhalt statt an den Nummern:** alle vier Dateien sind rein additiv — zwei Enums, drei neue Tabellen, Indizes, RLS, Policies, Funktionen. **Keine einzige zerstörende Anweisung**, und ausserhalb von `course_*` wird nichts angefasst; die Fremdschlüssel zeigen nur auf `studios` und `auth.users`. Danach `--dry-run` (genau die vier, keine Seeds, keine Rollen), dann der Push, dann **zweimal** gegengeprüft: `migration list` meldet 38 zu 38 ohne Rest auf beiden Seiten, `pnpm smoke:migrations` beendet mit `exit 0`.
+
+**Der eigentliche Fund des Tages kam danach.** `pnpm smoke:web` meldete die gesunde Auslieferung als **kaputt**:
+
+```
+FEHL mit Client   200  /
+  - /: Rumpf enthaelt "Nicht angemeldet" nicht
+
+Nur Routen MIT Supabase-Client fallen aus. Das ist das Muster einer
+fehlenden Umgebungsvariable: pruefe SUPABASE_URL und SUPABASE_ANON_KEY ...
+```
+
+Beides falsch. Die Route antwortete mit `200`, nicht mit `500`; die übrigen Client-Routen waren sauber; und *„Nicht angemeldet"* ist der Satz, den die Wurzelseite bis Phase 5 als einzigen kannte — **Phase 5 hat ihn ersetzt.** Die Produktion zeigte korrekt die neue Landeseite.
+
+Das ist die teuerste Sorte Prüfung: eine, die nicht nur falsch alarmiert, sondern die Fehlsuche gleich mit **einer selbstbewussten falschen Ursache** in die verkehrte Richtung schickt. Wer dem Text gefolgt wäre, hätte an Vercels Umgebungsvariablen gedreht — an einer Auslieferung, der nichts fehlte.
+
+Die Zusicherung steht jetzt auf *„Als Trainer anmelden"*, und die ist der bessere Zeuge: der Text existiert nur im Zweig **ohne** Sitzung, beweist also zugleich, dass der Client gebaut und die Sitzungsfrage wirklich gestellt wurde. **Die Lehre für jede künftige Gestaltungsphase:** ein Smoke-Test, der auf sichtbaren Text zusichert, ist an genau den Satz gebunden, den eine Gestaltung als erstes umschreibt. Er gehört auf die Liste der Dateien, die eine Textaenderung mitzieht.
 
 ---
 

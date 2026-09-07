@@ -66,7 +66,19 @@ const proben = [
     pfad: "/",
     status: 200,
     // 200 allein genuegt nicht: die Seite muss auch gerendert haben.
-    enthaelt: "Nicht angemeldet",
+    //
+    // Bis Phase 5 stand hier "Nicht angemeldet" -- der einzige Satz, den
+    // die Wurzelseite kannte. Phase 5 hat sie gestaltet, und der Satz ist
+    // weg; am 7. September hat dieser Test deshalb eine gesunde
+    // Auslieferung als kaputt gemeldet und dazu die falsche Ursache
+    // angeboten (fehlende Umgebungsvariable), obwohl /  mit 200 antwortete
+    // und die uebrigen Client-Routen sauber waren.
+    //
+    // "Als Trainer anmelden" ist der Ersatz und ein besserer Zeuge: die
+    // Wurzelseite verzweigt auf auth.getUser(), und dieser Text steht nur
+    // im Zweig OHNE Sitzung. Er beweist damit beides -- der Client wurde
+    // gebaut, und der Server hat die Sitzungsfrage wirklich gestellt.
+    enthaelt: "Als Trainer anmelden",
   },
   {
     name: "/t/<unbekannter Token>",
