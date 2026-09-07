@@ -16,23 +16,6 @@
   flex-direction: column;
 }
 
-.kopf {
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
-  padding: var(--s16);
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s12);
-}
-
-.studio {
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-}
-
 .inhalt {
   padding: var(--s20) var(--s16) var(--s40);
   display: flex;
@@ -63,17 +46,22 @@
   color: var(--text-faint);
 }
 
+/* Wortgleich mit .label in portal.module.css -- komponiert statt erneut
+   deklariert, damit die beiden nicht auseinanderlaufen (dasselbe
+   "Zwillings"-Muster, das .sectionNote/.abschnittNotiz/.hint dort schon
+   einmal auseinanderlaufen liess). */
 .label {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  composes: label from "../../portal.module.css";
 }
 
+/* text-muted, nicht text-faint: .notiz traegt Pflichttext (Foto-Pflicht,
+   Rasten-Anleitung, was ein uebersprungener Schritt kostet) -- derselbe
+   Kontrast-Fund wie bei .hint/.sectionNote in portal.module.css
+   ("Befund 29"), hier bislang nicht mitkorrigiert. 3,6 : 1 verbietet
+   Designsystem 2 fuer Text, den jemand lesen muss. */
 .notiz {
   font-size: 12px;
-  color: var(--text-faint);
+  color: var(--text-muted);
   line-height: 1.4;
   margin: 0;
 }
@@ -105,11 +93,13 @@
   border-color: var(--warn);
 }
 
+/* Wortgleich mit .abschnitt in bausteine.module.css -- komponiert statt
+   erneut deklariert. .abschnittKopf und .zeile bleiben eigene Klassen: sie
+   sind auf 390 px enger gepolstert als ihre Namensvettern (14/16 px statt
+   16/20 px, zeile zusaetzlich mit fester Mindesthoehe fuer die groessere
+   Trefferflaeche) -- Absicht, kein Zwilling. */
 .abschnitt {
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  overflow: hidden;
+  composes: abschnitt from "../../bausteine/bausteine.module.css";
 }
 
 .abschnittKopf {
@@ -140,10 +130,10 @@
   font-weight: 600;
 }
 
+/* Wortgleich mit .zeileMeta in bausteine.module.css -- komponiert statt
+   erneut deklariert. */
 .zeileMeta {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 2px;
+  composes: zeileMeta from "../../bausteine/bausteine.module.css";
 }
 
 .zeileMetaFaint {
@@ -307,30 +297,6 @@
 .zahlen {
   display: flex;
   gap: var(--s20);
-}
-
-.leiste {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s8);
-}
-
-.leisteSegmente {
-  display: flex;
-  gap: var(--s4);
-}
-
-/* Bewusst ohne Akzent: der gehoert der Hauptaktion, nicht der Wegmarke. */
-.leisteSegment {
-  flex: 1;
-  height: 3px;
-  border-radius: var(--r-pill);
-  background: var(--line);
-}
-
-.leisteSegmentVoll {
-  composes: leisteSegment;
-  background: var(--text);
 }
 
 /* Der Sucher. Der Eckenrahmen ist die Zielhilfe aus TelefonScan -- er sagt

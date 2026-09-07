@@ -1,23 +1,23 @@
-import Link from "next/link";
-import { ladeKatalog } from "../catalog";
+import { ladeKatalog, railZahlen } from "../catalog";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { MobileNav } from "../MobileNav";
 import { UploadsMarke, UploadsProvider } from "./Uploads";
 import styles from "./halle.module.css";
 
 /**
- * Der Gang durch die Halle hat keine Rail: er laeuft auf 390 px, einhaendig,
- * neben einem Geraet. Hier steht nur der Weg zurueck an den Schreibtisch.
+ * Der Gang durch die Halle hat keine feste Rail: er laeuft auf 390 px,
+ * einhaendig, neben einem Geraet -- die Schrittleiste bleibt die sichtbare
+ * Navigation des Gangs selbst.
  *
- * Die frühere Fassung dieses Kommentars sagte, die Chipnavigation der
- * Artboards "kommt mit Phase 5". Sie ist gekommen -- aber fuer den
- * SCHREIBTISCH: portal.module.css legt unter @media (max-width: 900px) die
- * Rail flach und macht aus ihren Gruppen eine seitlich scrollende Reihe.
- * Die Halle liegt ausserhalb dieser Schale und hat sie deshalb nicht.
- *
- * Ob sie sie bekommen soll, ist offen und steht als Befund 45 in
- * docs/superpowers/specs/2026-09-03-portal-frontend-design.md. Kurz: zwoelf
- * Artboards zeichnen sie, aber der Gang ist einhaendig und hat mit der
- * Schrittleiste bereits eine Navigation. Zwei uebereinander auf 390 px sind
- * schlechter als eine.
+ * Das Hamburger-Menu (MobileNav, geteilt mit dem Schreibtisch) haengt eine
+ * Ebene darunter: fuer den seltenen Fall, dass jemand mitten im Gang zu
+ * Tags oder Leute muss. Das schliesst Befund 45
+ * (docs/superpowers/specs/2026-09-03-portal-frontend-design.md) anders, als
+ * die fruehere Fassung dieses Kommentars vorschlug -- nicht durch eine
+ * zweite sichtbare Leiste ueber der Schrittleiste, sondern durch dieselbe
+ * Schublade wie am Schreibtisch, die erst auf Tap erscheint. Dafuer laedt
+ * dieses Layout jetzt zusaetzlich railZahlen() und die Nutzer-E-Mail, wie
+ * (schreibtisch)/layout.tsx es schon tut.
  */
 export default async function HalleLayout({
   children,
@@ -27,20 +27,27 @@ export default async function HalleLayout({
   params: Promise<{ studioId: string }>;
 }) {
   const { studioId } = await params;
-  const katalog = await ladeKatalog(studioId);
+  const [katalog, zahlen] = await Promise.all([
+    ladeKatalog(studioId),
+    railZahlen(studioId),
+  ]);
+
+  const client = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await client.auth.getUser();
 
   return (
     <UploadsProvider studioId={studioId}>
       <div className={styles.seite}>
-        <header className={styles.kopf}>
-          <span className={styles.studio}>{katalog.studioName}</span>
-          <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <UploadsMarke studioId={studioId} />
-            <Link href={`/portal/${studioId}`} className={styles.zurueck}>
-              Schreibtisch
-            </Link>
-          </span>
-        </header>
+        <MobileNav
+          studioId={studioId}
+          studioName={katalog.studioName}
+          email={user?.email ?? ""}
+          zahlen={zahlen}
+          extra={<UploadsMarke studioId={studioId} />}
+          nurMobil={false}
+        />
         <main className={styles.inhalt}>{children}</main>
       </div>
     </UploadsProvider>

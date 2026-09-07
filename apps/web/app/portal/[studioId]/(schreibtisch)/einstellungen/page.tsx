@@ -1,6 +1,7 @@
 import { DomainError, getStudioSettings } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Reiter } from "../../../bausteine/Reiter";
+import { Seite } from "../../../bausteine/Seite";
 import styles from "../../../portal.module.css";
 import { BeitrittscodeKarte, StudioFormular } from "./EinstellungenActions";
 
@@ -34,8 +35,7 @@ export default async function EinstellungenPage({
     // darunter den echten Beitrittscode.
     if (fehler instanceof DomainError && fehler.code === "unauthorized") {
       return (
-        <>
-          <h1 className={styles.pageTitle}>Einstellungen</h1>
+        <Seite titel="Einstellungen">
           {/* Der Reiter gehoert auch in diese Antwort: er ist der einzige
               Weg zu /einstellungen/konto, und das Konto geht jeden etwas
               an. Ohne ihn endete ein einfaches Mitglied hier in einer
@@ -48,12 +48,12 @@ export default async function EinstellungenPage({
                 Die Studiodaten sind Trainern und Inhabern vorbehalten.
               </p>
               <p className={styles.emptyNext}>
-                Dein eigenes Passwort änderst du unter <em>Konto</em>. Für
-                alles am Studio frag jemanden mit Trainerrolle.
+                Dein eigenes Passwort änderst du unter <em>Konto</em>. Für alles
+                am Studio frag jemanden mit Trainerrolle.
               </p>
             </div>
           </div>
-        </>
+        </Seite>
       );
     }
     // Sonst: was falsch ist und was gilt, auf der Seite selbst -- nicht die
@@ -61,8 +61,7 @@ export default async function EinstellungenPage({
     // ist das der 42703 auf cancellation_deadline_hours und damit kein
     // seltener Sonderfall.
     return (
-      <>
-        <h1 className={styles.pageTitle}>Einstellungen</h1>
+      <Seite titel="Einstellungen">
         <Reiter name="Einstellungen" eintraege={reiterEintraege(pfad)} />
         <div className={styles.section}>
           <div className={styles.empty}>
@@ -77,7 +76,7 @@ export default async function EinstellungenPage({
             </p>
           </div>
         </div>
-      </>
+      </Seite>
     );
   }
 
@@ -92,13 +91,10 @@ export default async function EinstellungenPage({
     : [einstellungen.timezone, ...zeitzonen];
 
   return (
-    <>
-      <h1 className={styles.pageTitle}>Einstellungen</h1>
-      <p className={styles.pageLead}>
-        Stammdaten des Studios, die Regel für Kurse und der Code, mit dem
-        Mitglieder beitreten.
-      </p>
-
+    <Seite
+      titel="Einstellungen"
+      vorspann="Stammdaten des Studios, die Regel für Kurse und der Code, mit dem Mitglieder beitreten."
+    >
       <Reiter name="Einstellungen" eintraege={reiterEintraege(pfad)} />
 
       <StudioFormular
@@ -116,6 +112,6 @@ export default async function EinstellungenPage({
         code={einstellungen.joinCode}
         active={einstellungen.joinCodeActive}
       />
-    </>
+    </Seite>
   );
 }

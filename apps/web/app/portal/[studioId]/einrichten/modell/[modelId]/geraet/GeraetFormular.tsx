@@ -3,7 +3,9 @@
 import { useActionState, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { geraetAnlegen } from "../../../actions";
+import { Feld } from "../../../../../Form";
 import styles from "../../../halle.module.css";
+import portalStyles from "../../../../../portal.module.css";
 
 /**
  * Nummer und Standort -- beides steht nur am Geraet. Die Nummer ist ein
@@ -22,7 +24,6 @@ export function GeraetFormular({
 }) {
   const router = useRouter();
   const [ort, setOrt] = useState("");
-  const nummerId = useId();
   const ortId = useId();
 
   const [ergebnis, formAction, laeuft] = useActionState(
@@ -40,22 +41,14 @@ export function GeraetFormular({
 
   return (
     <form action={formAction} style={{ display: "grid", gap: 16 }}>
-      <div className={styles.feld}>
-        <label className={styles.label} htmlFor={nummerId}>
-          Nummer
-        </label>
-        <input
-          id={nummerId}
-          name="label"
-          required
-          defaultValue={vorschlag}
-          className={styles.eingabe}
-        />
-        <span className={styles.notiz}>
-          Vorgeschlagen ist die nächste nach der höchsten. Sie steht am Gerät
-          und in der App des Mitglieds — nimm die, die schon draufsteht.
-        </span>
-      </div>
+      <Feld
+        gross
+        name="label"
+        label="Nummer"
+        required
+        defaultValue={vorschlag}
+        hint="Vorgeschlagen ist die nächste nach der höchsten. Sie steht am Gerät und in der App des Mitglieds — nimm die, die schon draufsteht."
+      />
 
       <div className={styles.feld}>
         <label className={styles.label} htmlFor={ortId}>
@@ -66,7 +59,7 @@ export function GeraetFormular({
           name="locationNote"
           value={ort}
           placeholder="Rückwand rechts"
-          className={styles.eingabe}
+          className={portalStyles.inputGross}
           onChange={(ereignis) => setOrt(ereignis.target.value)}
         />
         {standorte.length > 0 ? (
@@ -91,7 +84,11 @@ export function GeraetFormular({
         </p>
       ) : null}
 
-      <button type="submit" className={styles.haupt} disabled={laeuft}>
+      <button
+        type="submit"
+        className={portalStyles.primaryGross}
+        disabled={laeuft}
+      >
         {laeuft ? "Wird angelegt …" : "Weiter zum Tag"}
       </button>
     </form>

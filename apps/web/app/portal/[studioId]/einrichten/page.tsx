@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ladeKatalog } from "../catalog";
+import { Seite } from "../../bausteine/Seite";
 import styles from "./halle.module.css";
 
 /**
@@ -35,7 +36,9 @@ export default async function EinrichtenPage({
   const geliefert = katalog.shipments
     .filter((lieferung) => lieferung.kind === "machine")
     .reduce((summe, lieferung) => summe + lieferung.quantity, 0);
-  const verbraucht = katalog.tags.filter((tag) => tag.kind === "machine").length;
+  const verbraucht = katalog.tags.filter(
+    (tag) => tag.kind === "machine",
+  ).length;
   const vorraetig = geliefert - verbraucht;
 
   function mangel(modell: (typeof katalog.models)[number]): string {
@@ -49,14 +52,10 @@ export default async function EinrichtenPage({
   }
 
   return (
-    <>
-      <div>
-        <h1 className={styles.titel}>Einrichten</h1>
-        <p className={styles.unterzeile}>
-          Geh von Gerät zu Gerät. Jedes ist fertig, sobald sein Tag klebt.
-        </p>
-      </div>
-
+    <Seite
+      titel="Einrichten"
+      vorspann="Geh von Gerät zu Gerät. Jedes ist fertig, sobald sein Tag klebt."
+    >
       <div className={styles.karte}>
         <div className={styles.zahlen}>
           <div>
@@ -68,7 +67,9 @@ export default async function EinrichtenPage({
             <div className={styles.zahlLabel}>Modelle</div>
           </div>
           <div>
-            <div className={ohneTag.length > 0 ? styles.zahlOffen : styles.zahl}>
+            <div
+              className={ohneTag.length > 0 ? styles.zahlOffen : styles.zahl}
+            >
               {ohneTag.length}
             </div>
             <div
@@ -140,7 +141,7 @@ export default async function EinrichtenPage({
         Ein Gerät ist fertig, sobald sein Tag klebt. Übungen und Videos lassen
         sich jederzeit nachtragen.
       </p>
-    </>
+    </Seite>
   );
 }
 

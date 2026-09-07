@@ -84,20 +84,17 @@ def nav_item(title, meta, active=False):
             % (border, bg, color, title, meta_html))
 
 
-def rail(active):
+def _navgruppen(active):
+    """Die drei Gruppen der Navigation -- geteilt zwischen der Rail (fest
+    im Schreibtisch) und der Schublade (Hamburger-Menu, ueberall sonst).
+    Beide zeigen dieselben sechs Bereiche; nur die Huelle unterscheidet
+    sich (siehe rail() und drawer())."""
     gruppe = lambda name, items: (
         '<div style="display: flex; flex-direction: column; gap: 4px;">'
         '<div style="%s color: #5c636e; padding: 0 20px 8px;">%s</div>%s</div>'
         % (LABEL, name, ''.join(items)))
     return (
-        '<nav style="width: 288px; flex: 0 0 288px; background: #14161a; '
-        'border-right: 1px solid #2a2e36; padding: 24px 0 24px; display: flex; '
-        'flex-direction: column; gap: 24px;">'
-        '<div style="padding: 0 20px;">'
-        '<div style="font-size: 17px; font-weight: 800; letter-spacing: -0.02em; '
-        'text-transform: uppercase;">Kraftwerk Nord</div>'
-        '<div style="font-size: 12px; color: #9ba3af; margin-top: 4px;">Trainerportal</div></div>'
-        + gruppe('Studio', [
+        gruppe('Studio', [
             nav_item('Überblick', None, active == 'ueberblick'),
             nav_item('Kurse', '5 diese Woche', active == 'kurse'),
         ])
@@ -108,12 +105,53 @@ def rail(active):
         + gruppe('Verwaltung', [
             nav_item('Leute', '24 Mitglieder · 4 Mitarbeiter', active == 'leute'),
             nav_item('Einstellungen', None, active == 'einstellungen'),
-        ])
-        + '<div style="margin-top: auto; padding: 16px 20px 0; border-top: 1px solid #2a2e36; '
-          'display: flex; flex-direction: column; gap: 8px;">'
-          '<div style="font-size: 12px; color: #9ba3af;">tim@kraftwerk-nord.de</div>'
-          '<a href="#" style="font-size: 12px; color: #5c636e;">Abmelden</a></div>'
-        '</nav>')
+        ]))
+
+
+def _navfuss():
+    return (
+        '<div style="margin-top: auto; padding: 16px 20px 0; border-top: 1px solid #2a2e36; '
+        'display: flex; flex-direction: column; gap: 8px;">'
+        '<div style="font-size: 12px; color: #9ba3af;">tim@kraftwerk-nord.de</div>'
+        '<a href="#" style="font-size: 12px; color: #5c636e;">Abmelden</a></div>')
+
+
+def rail(active):
+    return (
+        '<nav style="width: 288px; flex: 0 0 288px; background: #14161a; '
+        'border-right: 1px solid #2a2e36; padding: 24px 0 24px; display: flex; '
+        'flex-direction: column; gap: 24px;">'
+        '<div style="padding: 0 20px;">'
+        '<div style="font-size: 17px; font-weight: 800; letter-spacing: -0.02em; '
+        'text-transform: uppercase;">Kraftwerk Nord</div>'
+        '<div style="font-size: 12px; color: #9ba3af; margin-top: 4px;">Trainerportal</div></div>'
+        + _navgruppen(active) + _navfuss()
+        + '</nav>')
+
+
+def drawer(active=None):
+    """Die Schublade des Hamburger-Menus -- dieselben sechs Bereiche wie die
+    Rail, als Overlay statt als feste Spalte (Befund 45: eine Navigation
+    statt zwei uebereinander auf 390 px). Absicht bleibt sichtbar, wenn ein
+    Artboard sie offen zeichnet: der abgedunkelte Rest ist der Tap-Ausgang,
+    das Kreuz oben rechts der zweite."""
+    return (
+        '<div style="position: absolute; inset: 0; background: rgba(10,11,13,.66); z-index: 10;">'
+        '</div>'
+        '<nav style="position: absolute; inset: 0 auto 0 0; width: 296px; background: #14161a; '
+        'border-right: 1px solid #2a2e36; padding: 20px 0 24px; display: flex; '
+        'flex-direction: column; gap: 24px; z-index: 11; box-shadow: 8px 0 24px rgba(0,0,0,.35);">'
+        '<div style="padding: 0 20px; display: flex; align-items: flex-start; '
+        'justify-content: space-between; gap: 12px;">'
+        '<div><div style="font-size: 17px; font-weight: 800; letter-spacing: -0.02em; '
+        'text-transform: uppercase;">Kraftwerk Nord</div>'
+        '<div style="font-size: 12px; color: #9ba3af; margin-top: 4px;">Trainerportal</div></div>'
+        '<button style="width: 44px; height: 44px; margin: -10px -12px 0 0; flex-shrink: 0; '
+        'display: flex; align-items: center; justify-content: center; background: none; '
+        'border: none; border-radius: 10px; color: #9ba3af; padding: 0;">%s</button></div>'
+        % svg('close', 20, 'currentColor')
+        + _navgruppen(active) + _navfuss()
+        + '</nav>')
 
 
 def portal(active, hoehe, inhalt):
@@ -226,6 +264,7 @@ _SVG_PFADE.update({
                 '<path d="M4 17h4"></path><path d="M14 17h6"></path>'
                 '<circle cx="11" cy="17" r="2.2"></circle>'),
     'search': '<circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.6-3.6"></path>',
+    'menu': '<path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h16"></path>',
     'tag': ('<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 12.2V5a2 2 0 0 1 2-2'
             'h7.2a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8z"></path><path d="M7.6 7.6h.01"></path>'),
     'image': ('<rect x="3" y="4" width="18" height="16" rx="2"></rect>'
@@ -236,20 +275,32 @@ _SVG_PFADE.update({
                 '<path d="M12 20h.01"></path>'),
 })
 
-_TEL_CHIPS = ('Überblick', 'Kurse', 'Geräte', 'Tags', 'Leute', 'Einstellungen')
+def mobilkopf():
+    """Kopfleiste des Gangs -- ein Hamburger statt der Chipnavigation.
+
+    Trug bis zu dieser Runde Studioname plus eine seitlich scrollende
+    Pillenreihe (Ueberblick, Kurse, Geraete, Tags, Leute, Einstellungen):
+    das Versprechen aus Phase 3, das Befund 45 nur fuer den Schreibtisch
+    eingeloest fand. Hier bekaeme der Gang zwei Navigationen uebereinander
+    auf 390 px -- die Schrittleiste und die Pillenreihe. Ein Menu loest
+    beides zugleich: dieselbe Schublade (drawer()) wie am Schreibtisch,
+    nichts Zweites im Ruhezustand."""
+    return (
+        '<div style="border-bottom: 1px solid #2a2e36; background: #14161a; padding: 12px 16px; '
+        'display: flex; align-items: center; gap: 12px;">'
+        '<button style="width: 44px; height: 44px; flex-shrink: 0; display: flex; '
+        'align-items: center; justify-content: center; background: none; border: none; '
+        'border-radius: 10px; color: #f2f4f7; padding: 0;">%s</button>'
+        '<div style="font-size: 15px; font-weight: 800; letter-spacing: -0.02em; '
+        'text-transform: uppercase;">Kraftwerk Nord</div></div>'
+        % svg('menu', 22, 'currentColor'))
 
 
-def telefon(hoehe, inhalt, aktiv='Geräte'):
-    """Rahmen eines Telefon-Artboards: Studiokopf, Chipnavigation, Inhalt."""
-    chips = ''.join('<span style="%s">%s</span>' % (CHIP_AKTIV if n == aktiv else CHIP, n)
-                    for n in _TEL_CHIPS)
+def telefon(hoehe, inhalt):
+    """Rahmen eines Telefon-Artboards: Studiokopf mit Menu, Inhalt."""
     return (HEAD
             + '<div style="min-height: %dpx; background: #0a0b0d;">' % hoehe
-            + '<div style="border-bottom: 1px solid #2a2e36; background: #14161a; padding: 16px 0;">'
-              '<div style="padding: 0 16px 12px;"><div style="font-size: 15px; font-weight: 800; '
-              'letter-spacing: -0.02em; text-transform: uppercase;">Kraftwerk Nord</div></div>'
-              '<div style="display: flex; gap: 8px; overflow-x: auto; padding: 0 16px;">'
-            + chips + '</div></div>'
+            + mobilkopf()
             + '<div style="padding: 20px 16px 40px; display: flex; flex-direction: column; '
               'gap: 16px;">' + inhalt + '</div></div>\n'
             + FOOT)

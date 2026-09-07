@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { Schrittleiste } from "../../Schrittleiste";
+import { Schrittleiste } from "../../../../bausteine/Schrittleiste";
+import { Seite } from "../../../../bausteine/Seite";
 import { ModellNeuFormular } from "./ModellNeuFormular";
 import styles from "../../halle.module.css";
 
@@ -13,24 +13,22 @@ export default async function ModellNeuPage({
   return (
     <>
       <Schrittleiste nummer={1} titel="Modell" />
-      <div>
-        <Link
-          href={`/portal/${studioId}/einrichten/modell`}
-          className={styles.zurueck}
-        >
-          ← Modell wählen
-        </Link>
-        <h1 className={styles.titel}>Neues Modell</h1>
-      </div>
+      <Seite
+        titel="Neues Modell"
+        rueckweg={{
+          href: `/portal/${studioId}/einrichten/modell`,
+          label: "Modell wählen",
+        }}
+      >
+        <ModellNeuFormular studioId={studioId} />
 
-      <ModellNeuFormular studioId={studioId} />
-
-      <p className={styles.notiz}>
-        Ohne Foto geht es nicht weiter — es ist der einzige Grund, warum jemand
-        vor dem falschen Gerät merkt, dass er falsch steht. Beschreibungen
-        trägst du am Schreibtisch nach, die Einstellparameter kommen im
-        nächsten Schritt.
-      </p>
+        <p className={styles.notiz}>
+          Ohne Foto geht es nicht weiter — es ist der einzige Grund, warum
+          jemand vor dem falschen Gerät merkt, dass er falsch steht.
+          Beschreibungen trägst du am Schreibtisch nach, die Einstellparameter
+          kommen im nächsten Schritt.
+        </p>
+      </Seite>
     </>
   );
 }

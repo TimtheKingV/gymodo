@@ -280,6 +280,39 @@
   color: var(--text-muted);
 }
 
+/* Schrittleiste: Fortschritt eines mehrstufigen Ablaufs (Schrittleiste.tsx).
+   Werte aus einrichten/halle.module.css uebernommen -- dort bislang der
+   einzige mehrstufige Ablauf des Portals. */
+.leiste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s8);
+}
+
+.leisteSegmente {
+  display: flex;
+  gap: var(--s4);
+}
+
+/* Bewusst ohne Akzent: der gehoert der Hauptaktion, nicht der Wegmarke. */
+.leisteSegment {
+  flex: 1;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--line);
+}
+
+.leisteSegmentVoll {
+  composes: leisteSegment;
+  background: var(--text);
+}
+
+/* Kein eigener Baustein: dieselbe Beschriftung wie ueberall sonst
+   (.label in portal.module.css / halle.module.css). */
+.label {
+  composes: label from "../portal.module.css";
+}
+
 /* Produktgrenze: Befund 19 -- derselbe Satz stand an drei Stellen in
    text-faint, einem Kontrast, den Designsystem 2 fuer Pflichttext
    ausdruecklich verbietet ("gymodo misst nichts ..." ist Inhalt, keine

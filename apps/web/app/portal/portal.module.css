@@ -17,8 +17,111 @@
   gap: var(--s24);
   position: sticky;
   top: 0;
-  height: 100vh;
+  min-height: 100vh;
+}
+
+/* Hamburger-Menu: Kopfleiste plus die Schublade selbst, immer im DOM aber
+   nur mit [open] gerendert -- ein natives <dialog>-Element traegt
+   Escape-zum-Schliessen und ::backdrop ohne eigenes Overlay-Geruest.
+
+   Die Kopfleiste selbst ist hier IMMER sichtbar: die Halle (einrichten/)
+   hat keine eigene Desktop-Ansicht und braucht sie unabhaengig von der
+   Fensterbreite. Nur am Schreibtisch (Rail.tsx) soll sie der festen Rail
+   weichen -- dafuer traegt der Aufrufer zusaetzlich .mobileTopbarNurMobil
+   (siehe Media-Query unten). */
+.mobileTopbar {
+  display: flex;
+  align-items: center;
+  gap: var(--s12);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  padding: var(--s12) var(--s16);
+}
+
+/* Zusaetzlich zu .mobileTopbar, nur am Schreibtisch (Rail.tsx): dort
+   uebernimmt die feste Rail ab 900 px. */
+@media (min-width: 900px) {
+  .mobileTopbarNurMobil {
+    display: none;
+  }
+}
+
+.hamburgerKnopf {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: var(--r-control);
+  color: var(--text);
+  padding: 0;
+  cursor: pointer;
+}
+
+.mobileStudioName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.drawer {
+  border: none;
+  margin: 0;
+  padding: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  background: transparent;
+}
+
+.drawer::backdrop {
+  background: rgba(10, 11, 13, 0.66);
+}
+
+.drawerPanel {
+  width: 296px;
+  max-width: 84vw;
+  height: 100%;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  padding: var(--s20) 0 var(--s24);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s24);
   overflow-y: auto;
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.35);
+}
+
+.drawerKopf {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 var(--s12) 0 0;
+}
+
+.drawerSchliessen {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: var(--r-control);
+  color: var(--text-muted);
+  padding: 0;
+  cursor: pointer;
 }
 
 .studio {
@@ -415,6 +518,34 @@
   background: rgba(255, 90, 78, 0.1);
 }
 
+/* "Gross"-Varianten fuer den Einrichten-Gang: einhaendig bedient, oft mit
+   feuchten Haenden (Designsystem 1), deshalb groessere Trefferflaechen als
+   am Schreibtisch. composes statt eigener Werte -- Farbe, Radius und Rand
+   kommen vom Original, nur Hoehe/Breite weichen ab. Ersetzen die eigenen
+   .eingabe/.haupt/.neben/.gefaehrlich aus halle.module.css. */
+.inputGross {
+  composes: input;
+  min-height: 52px;
+}
+
+.primaryGross {
+  composes: primary;
+  height: 56px;
+  width: 100%;
+}
+
+.secondaryGross {
+  composes: secondary;
+  height: 48px;
+  width: 100%;
+}
+
+.destructiveGross {
+  composes: destructive;
+  height: 48px;
+  width: 100%;
+}
+
 /* Warnung: was eine Handlung kostet, bevor sie geschieht -- und im
    selben Kasten, was sie NICHT kostet. Umriss in --warn bei vollem
    Kontrast, keine getoente Flaeche (EinstellungenStudio.dc.html). Sie ist
@@ -525,57 +656,17 @@
   transition: width 120ms linear;
 }
 
-/* Desktop zuerst. Auf dem Telefon traegt genau ein Pfad: die Uebungsliste
-   mit dem Videoupload -- die Aufnahme entsteht dort (Spec 6.8). */
+/* Desktop zuerst. Unter 900 px weicht die feste Rail dem Hamburger-Menu
+   (Kopfleiste + Schublade, siehe .mobileTopbar/.drawer* oben) -- vorher
+   flachte hier eine Media-Query dieselbe Rail zu einer seitlich scrollenden
+   Pillenreihe; das Muster ist mit dem Menu weg, in Schreibtisch und Halle
+   gleichermassen (Befund 45). */
 @media (max-width: 900px) {
   .shell {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* Auf dem Telefon wird die Rail zu einem schmalen Band, das seitlich
-     scrollt. Als voller Block haette sie den ganzen ersten Schirm belegt --
-     ausgerechnet auf dem einen Pfad, der hier tragen muss: Uebung oeffnen,
-     Video hochladen. */
   .rail {
-    position: static;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--line);
-    padding: var(--s16) 0;
-    gap: var(--s12);
-  }
-
-  .rail .group {
-    flex-direction: row;
-    overflow-x: auto;
-    gap: var(--s8);
-    padding: 0 var(--s16);
-    scrollbar-width: none;
-  }
-
-  .rail .groupLabel {
-    display: none;
-  }
-
-  .rail .navItem {
-    flex: 0 0 auto;
-    border-left: none;
-    border-bottom: 2px solid transparent;
-    border-radius: var(--r-pill);
-    background: var(--surface-raised);
-    padding: var(--s8) var(--s16);
-    white-space: nowrap;
-  }
-
-  .rail .navItemActive {
-    border-bottom-color: transparent;
-    background: var(--surface-hover);
-    box-shadow: inset 0 0 0 1px var(--accent);
-  }
-
-  /* Die Erreichbarkeitsangabe faellt im Band weg -- sie gehoert an den
-     Schreibtisch, nicht auf den Weg zum Videoupload. */
-  .rail .navItemMeta {
     display: none;
   }
 

@@ -14,11 +14,17 @@ export function AktionsFormular({
   submitLabel,
   children,
   onErfolg,
+  gross,
 }: {
   action: (prev: unknown, formData: FormData) => Promise<ActionResult>;
   submitLabel: string;
   children: React.ReactNode;
   onErfolg?: () => void;
+  /** Groessere Trefferflaechen (56 px statt 44 px, volle Breite) fuer
+      einhaendige Bedienung -- der Einrichten-Gang, nicht der Schreibtisch
+      (Designsystem 1). Ersetzt die eigenen .haupt/.neben/.gefaehrlich aus
+      halle.module.css. */
+  gross?: boolean;
 }) {
   const [ergebnis, formAction] = useActionState(
     async (prev: ActionResult | null, formData: FormData) => {
@@ -38,16 +44,20 @@ export function AktionsFormular({
         </p>
       ) : null}
       <div className={styles.actions}>
-        <Absenden label={submitLabel} />
+        <Absenden label={submitLabel} gross={gross ?? false} />
       </div>
     </form>
   );
 }
 
-function Absenden({ label }: { label: string }) {
+function Absenden({ label, gross }: { label: string; gross?: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className={styles.primary} disabled={pending}>
+    <button
+      type="submit"
+      className={gross ? styles.primaryGross : styles.primary}
+      disabled={pending}
+    >
       {pending ? "Wird gespeichert …" : label}
     </button>
   );
@@ -64,12 +74,14 @@ export function AktionsKnopf({
   laufendLabel,
   art = "secondary",
   bestaetigung,
+  gross,
 }: {
   aktion: () => Promise<ActionResult>;
   label: string;
   laufendLabel?: string;
   art?: "secondary" | "destructive";
   bestaetigung?: string;
+  gross?: boolean;
 }) {
   const [fehler, setFehler] = useState<string | null>(null);
   const [laeuft, starte] = useTransition();
@@ -88,7 +100,15 @@ export function AktionsKnopf({
       ) : null}
       <button
         type="button"
-        className={art === "destructive" ? styles.destructive : styles.secondary}
+        className={
+          art === "destructive"
+            ? gross
+              ? styles.destructiveGross
+              : styles.destructive
+            : gross
+              ? styles.secondaryGross
+              : styles.secondary
+        }
         disabled={laeuft}
         onClick={() => {
           if (brauchtBestaetigung) {
@@ -103,7 +123,11 @@ export function AktionsKnopf({
           });
         }}
       >
-        {laeuft ? (laufendLabel ?? "…") : brauchtBestaetigung ? label : (bestaetigung ?? label)}
+        {laeuft
+          ? (laufendLabel ?? "…")
+          : brauchtBestaetigung
+            ? label
+            : (bestaetigung ?? label)}
       </button>
     </span>
   );
@@ -122,11 +146,15 @@ export function Feld({
   name,
   label,
   hint,
+  gross,
   ...rest
 }: {
   name: string;
   label: string;
   hint?: string;
+  /** 52 px statt 44 px -- der Einrichten-Gang, einhaendig bedient
+      (Designsystem 1). Ersetzt die eigene .eingabe aus halle.module.css. */
+  gross?: boolean;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
   const id = useId();
   const hintId = hint ? `${id}-hint` : undefined;
@@ -138,7 +166,7 @@ export function Feld({
       <input
         id={id}
         name={name}
-        className={styles.input}
+        className={gross ? styles.inputGross : styles.input}
         aria-describedby={hintId}
         {...rest}
       />

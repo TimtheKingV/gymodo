@@ -151,11 +151,16 @@
   margin-top: var(--s24);
 }
 
-/* Der gedaempfte Satz unter dem Registrieren-Knopf (Registrieren.dc.html):
-   13 px, kein eigener Abstand -- .fuss liefert die 24 px margin-top. */
+/* Der Satz unter dem Registrieren-Knopf (Registrieren.dc.html): 13 px, kein
+   eigener Abstand -- .fuss liefert die 24 px margin-top.
+
+   text-muted, nicht das text-faint des Artboards: derselbe Kontrast-Fund
+   wie bei .hint/.sectionNote in portal.module.css ("Befund 29"), hier
+   bislang nicht mitkorrigiert -- der Satz erklaert, was ein Konto noch
+   fehlt (Pflichttext), 3,6 : 1 verbietet Designsystem 2 dafuer. */
 .hinweis {
   font-size: 13px;
-  color: var(--text-faint);
+  color: var(--text-muted);
   line-height: 1.45;
   margin: 0;
 }
