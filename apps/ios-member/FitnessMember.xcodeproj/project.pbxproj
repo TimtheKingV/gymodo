@@ -19,6 +19,7 @@
 		2867121C23926588568A4707 /* LoginMailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 218ADC42D32AAB9758D0AB91 /* LoginMailView.swift */; };
 		2CBC0FE2189073DA214F4138 /* AuthFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20071A27526D769989C545B0 /* AuthFlow.swift */; };
 		309307436B8EE156A6673AA2 /* PrimaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F5420FC0962C00F11FFCD65 /* PrimaryButton.swift */; };
+		356B55A3EC5DF1C40CF07351 /* GeraetLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B800AB907E579F778EA2656 /* GeraetLoading.swift */; };
 		38240F3DF60D68312F9CBCE4 /* AuthCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DC3378D45751B2BE6267611 /* AuthCopy.swift */; };
 		39876DCABA0D4C90A172BF11 /* CatalogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E651ABDF81EA57E18D7363D /* CatalogStore.swift */; };
 		3B26567CF080FB300019E7A8 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = B1DA3D9245AAF15DFFD8CA8F /* Auth */; };
@@ -44,6 +45,7 @@
 		8FC7A533B3262AA6723ED9C1 /* Rastwerte.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE7999237F8B3E7635E236AE /* Rastwerte.swift */; };
 		95794FEE5EC5FFA101C74C3D /* MemberPasswortAendernView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 213A5216BA472EAE4240C049 /* MemberPasswortAendernView.swift */; };
 		9B358A72607B4F450BF64E0C /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A358100432569849D383D8E8 /* APIError.swift */; };
+		9DE8EE325C831E9049A8BABE /* CalibrationWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 718C690CC2C544C9C8550447 /* CalibrationWrite.swift */; };
 		9E4947346E28638E0FA99C6A /* TagLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */; };
 		A536169303BCBE5ED5385A9A /* CatalogStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8CC4AA1ADA4ED3E6D39207 /* CatalogStoreTests.swift */; };
 		A67217C418DEF1C2DC617DB9 /* SupabaseAuthBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = F86C22F308C4A9EB76B53C19 /* SupabaseAuthBackend.swift */; };
@@ -106,6 +108,7 @@
 		19832BC95D12C1DCBEFF10E9 /* SessionSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSummary.swift; sourceTree = "<group>"; };
 		1987FE7CD53A2E411EAD2595 /* MemberPasswortZuruecksetzenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortZuruecksetzenView.swift; sourceTree = "<group>"; };
 		1B227508179FE62A4DAA06A0 /* Chip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chip.swift; sourceTree = "<group>"; };
+		1B800AB907E579F778EA2656 /* GeraetLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetLoading.swift; sourceTree = "<group>"; };
 		1E651ABDF81EA57E18D7363D /* CatalogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogStore.swift; sourceTree = "<group>"; };
 		20071A27526D769989C545B0 /* AuthFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFlow.swift; sourceTree = "<group>"; };
 		213A5216BA472EAE4240C049 /* MemberPasswortAendernView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortAendernView.swift; sourceTree = "<group>"; };
@@ -141,6 +144,7 @@
 		62AE7186437136E3B2723D3A /* MemberRegistrierenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberRegistrierenView.swift; sourceTree = "<group>"; };
 		6D6E6743BDCF6E58E971D0CE /* AuthLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthLogicTests.swift; sourceTree = "<group>"; };
 		7115CDC39F17B5DF97E47CD8 /* QRScannerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerController.swift; sourceTree = "<group>"; };
+		718C690CC2C544C9C8550447 /* CalibrationWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationWrite.swift; sourceTree = "<group>"; };
 		761B6ACA4FD549615771E3C6 /* CodeEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeEntry.swift; sourceTree = "<group>"; };
 		7D79A89B3E91A0F18C9E8DBC /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
 		87DEDAB723DC8FE55CB2FFA1 /* LokaleSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LokaleSession.swift; sourceTree = "<group>"; };
@@ -280,6 +284,7 @@
 			isa = PBXGroup;
 			children = (
 				33EBC4692A4BFF21FC0FCA28 /* BootstrapResponse.swift */,
+				718C690CC2C544C9C8550447 /* CalibrationWrite.swift */,
 				D922539BB579EDDA0F7747CD /* ErrorEnvelope.swift */,
 				22E2DF311877D3BA39FFA5D5 /* ExerciseProgress.swift */,
 				5F9AF02FA591F55A7D09403B /* JoinResult.swift */,
@@ -340,6 +345,7 @@
 			isa = PBXGroup;
 			children = (
 				9356660F927DE0AEC1C66C5D /* GeraetEinstieg.swift */,
+				1B800AB907E579F778EA2656 /* GeraetLoading.swift */,
 				87DEDAB723DC8FE55CB2FFA1 /* LokaleSession.swift */,
 				4406BEBC7051D319700F05E9 /* MachineResolver.swift */,
 				EE7999237F8B3E7635E236AE /* Rastwerte.swift */,
@@ -514,6 +520,7 @@
 				2CBC0FE2189073DA214F4138 /* AuthFlow.swift in Sources */,
 				8EA2070784B9E8D6E440FCDB /* AuthRoute.swift in Sources */,
 				4E515B6705D782738E6250A1 /* BootstrapResponse.swift in Sources */,
+				9DE8EE325C831E9049A8BABE /* CalibrationWrite.swift in Sources */,
 				B588B97987FD269D81E3CCED /* Card.swift in Sources */,
 				206D113D8EEB2FF4D9BF05EB /* CatalogLoadState.swift in Sources */,
 				39876DCABA0D4C90A172BF11 /* CatalogStore.swift in Sources */,
@@ -527,6 +534,7 @@
 				CFADE9B7B1518A3F6DF0E7E7 /* ExerciseProgress.swift in Sources */,
 				EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */,
 				207B8D6F6D17D7C2F5BA2FA5 /* GeraetEinstieg.swift in Sources */,
+				356B55A3EC5DF1C40CF07351 /* GeraetLoading.swift in Sources */,
 				750CEBE3A0D07E711D31D94F /* InlineBanner.swift in Sources */,
 				B8218DBF6B9B3168086F00E6 /* JSONValue.swift in Sources */,
 				762BAF4D2EA117D55549EDED /* JoinResult.swift in Sources */,

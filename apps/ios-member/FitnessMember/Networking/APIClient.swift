@@ -43,6 +43,12 @@ actor APIClient {
         try await postNoBody("workout-sessions/\(sessionId.uuidString)/complete")
     }
 
+    // MARK: - Kalibrierung (Sub-Projekt 2, ausserhalb M1-Spec SS6.3)
+
+    func recordCalibration(_ body: CalibrationWrite) async throws(APIError) -> RecordedCalibration {
+        try await send("me/calibrations", method: "POST", body: body)
+    }
+
     // MARK: - Beitritts-/Austritts-Endpoints (Aufgabe 17, ausserhalb M1-Spec SS6.3)
 
     func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult {
