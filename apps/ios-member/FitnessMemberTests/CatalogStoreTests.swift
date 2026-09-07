@@ -39,7 +39,11 @@ private func tempDirectory() -> URL {
     return directory
 }
 
+/// @MainActor, weil CatalogStore seit dieser Aufgabe selbst @MainActor ist
+/// (siehe Kommentar dort) -- die Suite laeuft deshalb auf demselben Actor wie
+/// die getestete Klasse, sonst braeuchte jeder store-Zugriff ein await.
 @Suite("CatalogStore")
+@MainActor
 struct CatalogStoreTests {
     @Test("load() ohne Studios ergibt loaded(hasStudio: false)")
     func loadWithoutStudio() async {

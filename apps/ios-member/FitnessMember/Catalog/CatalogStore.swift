@@ -13,6 +13,11 @@ protocol BootstrapLoading: Sendable {
 
 extension APIClient: BootstrapLoading {}
 
+/// @MainActor, weil CatalogStore -- wie SessionStore seit Aufgabe 12 -- ueber
+/// @Environment direkt in SwiftUI-Views gelesen wird (ab Aufgabe 19); ohne
+/// diese Isolation flaggt Swift 6 beim Aufruf von z. B. load() aus einem View
+/// heraus einen "sending"-Fehler, weil die Klasse selbst nicht Sendable ist.
+@MainActor
 @Observable
 final class CatalogStore {
     private(set) var bootstrap: BootstrapResponse?
