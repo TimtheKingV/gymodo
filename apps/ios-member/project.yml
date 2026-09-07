@@ -1,0 +1,50 @@
+name: FitnessMember
+options:
+  bundleIdPrefix: de.gymtaro
+  deploymentTarget:
+    iOS: "17.0"
+
+targets:
+  FitnessMember:
+    type: application
+    platform: iOS
+    sources:
+      - FitnessMember
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.gymtaro.member
+        PRODUCT_NAME: FitnessMember
+        SWIFT_VERSION: "6.0"
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        TARGETED_DEVICE_FAMILY: "1"
+    entitlements:
+      path: FitnessMember/FitnessMember.entitlements
+      properties:
+        com.apple.developer.associated-domains:
+          - applinks:gymodo-web.vercel.app
+
+  FitnessMemberTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - FitnessMemberTests
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: true
+    dependencies:
+      - target: FitnessMember
+
+schemes:
+  FitnessMember:
+    build:
+      targets:
+        FitnessMember: all
+        FitnessMemberTests: [test]
+    test:
+      targets:
+        - FitnessMemberTests
+    run:
+      config: Debug
