@@ -15,10 +15,11 @@ enum GeraetEinstieg: Equatable {
 /// antwortet.
 enum GeraetEinstiegRechner {
     static func einstieg(visitCount: Int, genutzteUebungen: Int) -> GeraetEinstieg {
-        // Ab dem dritten Besuch an einem Geraet, an dem immer dieselbe
-        // Uebung lief, wird der Zwischenschritt uebersprungen. Wer erst
-        // einmal hier war, sieht weiterhin, was es sonst noch gaebe.
-        visitCount >= 2 && genutzteUebungen <= 1 ? .direktZumSatz : .erkannt
+        // Zeile 4 der Tabelle verlangt genau eine genutzte Uebung. Jeder
+        // andere Wert faellt zurueck auf die Liste: ein Screen mit Optionen
+        // ist immer nutzbar, ein Sprung zum Satz ohne bekannte Uebung waere
+        // ein Tap, der stumm ins Leere laeuft.
+        visitCount >= 2 && genutzteUebungen == 1 ? .direktZumSatz : .erkannt
     }
 
     /// Erstkontakt gilt je (Geraet, Uebung) -- der Dreischritt laeuft genau

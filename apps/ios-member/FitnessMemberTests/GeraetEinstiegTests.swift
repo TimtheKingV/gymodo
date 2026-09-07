@@ -45,10 +45,17 @@ struct GeraetEinstiegTests {
         #expect(GeraetEinstiegRechner.einstieg(visitCount: 9, genutzteUebungen: 1) == .direktZumSatz)
     }
 
+    @Test func ohneBekannteUebungFaelltEsSicherAufDieListeZurueck() {
+        // Ohne genau eine genutzte Uebung fehlt die Zielgroesse fuer den
+        // Direktsprung -- die Liste ist der sichere Fallback, kein stummer Tap.
+        #expect(GeraetEinstiegRechner.einstieg(visitCount: 2, genutzteUebungen: 0) == .erkannt)
+    }
+
     @Test func erstkontaktBrauchtWederKalibrierungNochSatz() {
         #expect(GeraetEinstiegRechner.istErstkontakt(hatKalibrierung: false, hatLetztenSatz: false))
         #expect(!GeraetEinstiegRechner.istErstkontakt(hatKalibrierung: true, hatLetztenSatz: false))
         #expect(!GeraetEinstiegRechner.istErstkontakt(hatKalibrierung: false, hatLetztenSatz: true))
+        #expect(!GeraetEinstiegRechner.istErstkontakt(hatKalibrierung: true, hatLetztenSatz: true))
     }
 
     @Test func alteSaetzeAusserhalbDesScanFenstersLoesenKeinenDreischrittAus() {
