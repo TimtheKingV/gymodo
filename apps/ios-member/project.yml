@@ -4,6 +4,15 @@ options:
   deploymentTarget:
     iOS: "17.0"
 
+configFiles:
+  Debug: Config.xcconfig
+  Release: Config.xcconfig
+
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: 2.0.0
+
 targets:
   FitnessMember:
     type: application
@@ -20,6 +29,16 @@ targets:
         GENERATE_INFOPLIST_FILE: true
         INFOPLIST_KEY_UILaunchScreen_Generation: true
         TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_KEY_NSCameraUsageDescription: "gymodo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen."
+        # INFOPLIST_KEY_<Key> deckt bei GENERATE_INFOPLIST_FILE nur Apples
+        # bekannte Info.plist-Schluessel ab (z.B. NSCameraUsageDescription).
+        # Fuer eigene Schluessel (SUPABASE_URL etc.) wird laut Apple-Doku eine
+        # separate Info.plist-Datei per INFOPLIST_FILE in die generierte
+        # Info.plist eingemischt (siehe FitnessMember/Info-Additions.plist).
+        INFOPLIST_FILE: FitnessMember/Info-Additions.plist
+    dependencies:
+      - package: Supabase
+        product: Auth
     entitlements:
       path: FitnessMember/FitnessMember.entitlements
       properties:

@@ -18,3 +18,5 @@ blob-report/
 
 # Arbeitsplatz der Subagent-Ausfuehrung (Ledger, Briefs, Review-Pakete).
 .superpowers/
+
+apps/ios-member/Config.xcconfig

@@ -7,9 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1B9CF10D96ED6BE26D2D7742 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8D54275FD3C78205F883D9A0 /* PrivacyInfo.xcprivacy */; };
+		3B26567CF080FB300019E7A8 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = B1DA3D9245AAF15DFFD8CA8F /* Auth */; };
 		4D6EC5DA1233E3B74ADD20B9 /* TagLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F970AC02F39C7E9D8ABCBF /* TagLink.swift */; };
 		4F9AF0046553808E8C5030BD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3845D9E0CE58A2749D16DF /* ContentView.swift */; };
+		8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B577EC22237E86AA0F3755B7 /* AppConfig.swift */; };
 		9E4947346E28638E0FA99C6A /* TagLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */; };
+		D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78C8636341914B90296B220 /* AppConfigTests.swift */; };
 		EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */; };
 /* End PBXBuildFile section */
 
@@ -24,22 +28,41 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		04D2DE954DD4A21DF9C0C586 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		1E3845D9E0CE58A2749D16DF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitnessMemberApp.swift; sourceTree = "<group>"; };
 		3B16A62990D2DCAE39041199 /* FitnessMemberTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FitnessMemberTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F603D042C4DE6ADD6D6A2CC /* FitnessMember.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FitnessMember.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D54275FD3C78205F883D9A0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		943C19386AFE9634615213ED /* Info-Additions.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info-Additions.plist"; sourceTree = "<group>"; };
+		B577EC22237E86AA0F3755B7 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLinkTests.swift; sourceTree = "<group>"; };
+		D78C8636341914B90296B220 /* AppConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigTests.swift; sourceTree = "<group>"; };
 		EAEDFB14623AE11C1FD67B11 /* FitnessMember.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FitnessMember.entitlements; sourceTree = "<group>"; };
 		F3F970AC02F39C7E9D8ABCBF /* TagLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLink.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		979A6BA57914340C5F1C8030 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3B26567CF080FB300019E7A8 /* Auth in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		1DB65EF52280A0A517AC2743 /* FitnessMember */ = {
 			isa = PBXGroup;
 			children = (
+				B577EC22237E86AA0F3755B7 /* AppConfig.swift */,
 				1E3845D9E0CE58A2749D16DF /* ContentView.swift */,
 				EAEDFB14623AE11C1FD67B11 /* FitnessMember.entitlements */,
 				39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */,
+				943C19386AFE9634615213ED /* Info-Additions.plist */,
+				8D54275FD3C78205F883D9A0 /* PrivacyInfo.xcprivacy */,
 				F3F970AC02F39C7E9D8ABCBF /* TagLink.swift */,
 			);
 			path = FitnessMember;
@@ -50,6 +73,7 @@
 			children = (
 				1DB65EF52280A0A517AC2743 /* FitnessMember */,
 				5D15656A46C8A3FB04179564 /* FitnessMemberTests */,
+				FF747D7359045865244B6B44 /* ios-member */,
 				6ACF2B4F288088F952BEE1EA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -57,6 +81,7 @@
 		5D15656A46C8A3FB04179564 /* FitnessMemberTests */ = {
 			isa = PBXGroup;
 			children = (
+				D78C8636341914B90296B220 /* AppConfigTests.swift */,
 				C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */,
 			);
 			path = FitnessMemberTests;
@@ -69,6 +94,15 @@
 				3B16A62990D2DCAE39041199 /* FitnessMemberTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		FF747D7359045865244B6B44 /* ios-member */ = {
+			isa = PBXGroup;
+			children = (
+				04D2DE954DD4A21DF9C0C586 /* Config.xcconfig */,
+			);
+			name = "ios-member";
+			path = .;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -97,6 +131,8 @@
 			buildConfigurationList = BB9BCDEC5F8236F277F2DB9C /* Build configuration list for PBXNativeTarget "FitnessMember" */;
 			buildPhases = (
 				593FDBDB1AA2D195AD2390B8 /* Sources */,
+				302D1A1B285BA6468CE42B68 /* Resources */,
+				979A6BA57914340C5F1C8030 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -104,6 +140,7 @@
 			);
 			name = FitnessMember;
 			packageProductDependencies = (
+				B1DA3D9245AAF15DFFD8CA8F /* Auth */,
 			);
 			productName = FitnessMember;
 			productReference = 5F603D042C4DE6ADD6D6A2CC /* FitnessMember.app */;
@@ -137,6 +174,9 @@
 			);
 			mainGroup = 357291D6F6BF9120FA400FC6;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E2596F1D42D1BD4F08459270 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6ACF2B4F288088F952BEE1EA /* Products */;
 			projectDirPath = "";
@@ -148,11 +188,23 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		302D1A1B285BA6468CE42B68 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1B9CF10D96ED6BE26D2D7742 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		593FDBDB1AA2D195AD2390B8 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */,
 				4F9AF0046553808E8C5030BD /* ContentView.swift in Sources */,
 				EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */,
 				4D6EC5DA1233E3B74ADD20B9 /* TagLink.swift in Sources */,
@@ -163,6 +215,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */,
 				9E4947346E28638E0FA99C6A /* TagLinkTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -187,6 +240,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = ZJP24W38LQ;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "FitnessMember/Info-Additions.plist";
+				INFOPLIST_KEY_NSCameraUsageDescription = "gymodo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -222,6 +277,7 @@
 		};
 		432CE56F316EB3FFFD445B88 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 04D2DE954DD4A21DF9C0C586 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -292,6 +348,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = ZJP24W38LQ;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "FitnessMember/Info-Additions.plist";
+				INFOPLIST_KEY_NSCameraUsageDescription = "gymodo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -307,6 +365,7 @@
 		};
 		D47C74CD28F28E33C13B72B3 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 04D2DE954DD4A21DF9C0C586 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -412,6 +471,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E2596F1D42D1BD4F08459270 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B1DA3D9245AAF15DFFD8CA8F /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2596F1D42D1BD4F08459270 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 54C11DA5C006FC9D730A1CC2 /* Project object */;
 }
