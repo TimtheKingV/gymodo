@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { use } from "react";
 import { useUploads, type Auftrag } from "../Uploads";
+import { Seite } from "../../../bausteine/Seite";
 import styles from "../halle.module.css";
 
 const STAND_TEXT: Record<Auftrag["stand"], string> = {
@@ -22,17 +23,11 @@ export default function UploadsPage({
   const { auftraege, offen } = useUploads();
 
   return (
-    <>
-      <div>
-        <Link href={`/portal/${studioId}/einrichten`} className={styles.zurueck}>
-          ← Einrichten
-        </Link>
-        <h1 className={styles.titel}>Uploads</h1>
-        <p className={styles.unterzeile}>
-          Läuft weiter, während du weitergehst.
-        </p>
-      </div>
-
+    <Seite
+      titel="Uploads"
+      vorspann="Läuft weiter, während du weitergehst."
+      rueckweg={{ href: `/portal/${studioId}/einrichten`, label: "Einrichten" }}
+    >
       {auftraege.length === 0 ? (
         <p className={styles.notiz}>Nichts in der Warteschlange.</p>
       ) : (
@@ -94,6 +89,6 @@ export default function UploadsPage({
       <Link href={`/portal/${studioId}/einrichten`} className={styles.neben}>
         Weiter einrichten
       </Link>
-    </>
+    </Seite>
   );
 }

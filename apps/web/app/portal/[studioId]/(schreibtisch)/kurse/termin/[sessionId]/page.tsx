@@ -1,6 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCourseTemplate, listCourseParticipants, listCourseWeek } from "@fitretro/domain";
+import {
+  getCourseTemplate,
+  listCourseParticipants,
+  listCourseWeek,
+} from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { AktionsFormular, AktionsKnopf, Feld } from "../../../../../Form";
 import {
@@ -10,6 +13,7 @@ import {
 } from "../../../../kurse-actions";
 import { Abschnitt } from "../../../../../bausteine/Abschnitt";
 import { Erlaeuterung } from "../../../../../bausteine/Erlaeuterung";
+import { Seite } from "../../../../../bausteine/Seite";
 import { Zeile, Zeilen } from "../../../../../bausteine/Zeile";
 import { Zustand } from "../../../../../bausteine/Zustand";
 import styles from "../../../../../portal.module.css";
@@ -22,8 +26,8 @@ import { TerminZeit } from "./TerminZeit";
  * Ein einzelner Kurstermin (Termin.dc.html).
  *
  * Kein eigenes <main> mehr (Befund 41) -- die Landmarke traegt
- * (schreibtisch)/layout.tsx. Kein Seite-Baustein, weil ueber dem Titel ein
- * Rueckweg steht (wie im layout.tsx der Kursvorlage).
+ * (schreibtisch)/layout.tsx. Seite.tsx traegt den Rueckweg ueber dem Titel
+ * jetzt selbst (rueckweg-Prop).
  *
  * Eine Akzentflaeche: "Änderungen speichern". "Abmelden", "Von der Liste
  * nehmen" und "Termin absagen" sind zerstoerend -- das Artboard zeichnet
@@ -104,8 +108,9 @@ export default async function TerminPage({
   // es keinen Standard, gegen den etwas abweichen koennte.
   let vorlagenTrainer: string | null = null;
   try {
-    vorlagenTrainer = (await getCourseTemplate(client, studioId, termin.templateId))
-      .defaultInstructorName;
+    vorlagenTrainer = (
+      await getCourseTemplate(client, studioId, termin.templateId)
+    ).defaultInstructorName;
   } catch {
     vorlagenTrainer = null;
   }
@@ -123,15 +128,11 @@ export default async function TerminPage({
     .join(" · ");
 
   return (
-    <>
-      <p>
-        <Link href={basis} className={styles.rueckweg}>
-          ← Kurse
-        </Link>
-      </p>
-      <h1 className={styles.pageTitle}>{termin.name}</h1>
-      <p className={styles.pageLead}>{kopfzeile}</p>
-
+    <Seite
+      titel={termin.name}
+      vorspann={kopfzeile}
+      rueckweg={{ href: basis, label: "Kurse" }}
+    >
       {/*
         Bewusst kein Abschnitt-Baustein: AktionsFormular bringt sein eigenes
         styles.sectionBody-Polster mit, das zusammen mit abschnittRumpf
@@ -177,7 +178,9 @@ export default async function TerminPage({
         </AktionsFormular>
       </section>
 
-      <Abschnitt titel={`Angemeldet (${gebucht.length} von ${termin.capacity})`}>
+      <Abschnitt
+        titel={`Angemeldet (${gebucht.length} von ${termin.capacity})`}
+      >
         {gebucht.length === 0 ? (
           <Zustand
             art="leer"
@@ -237,7 +240,10 @@ export default async function TerminPage({
               // Seite traegt keinen Browserzustand, der verlorenginge.
               <div className={styles.rowActions}>
                 <span className={styles.absent}>… {weitere} weitere</span>
-                <a href={`${pfad}?alle=${ALLE_ANGEMELDET}`} className={styles.secondary}>
+                <a
+                  href={`${pfad}?alle=${ALLE_ANGEMELDET}`}
+                  className={styles.secondary}
+                >
                   Alle anzeigen
                 </a>
               </div>
@@ -281,7 +287,8 @@ export default async function TerminPage({
       </Abschnitt>
 
       <Erlaeuterung>
-        Diese Liste ist eine Anwesenheitsliste. Andere Mitglieder sehen sie nicht.
+        Diese Liste ist eine Anwesenheitsliste. Andere Mitglieder sehen sie
+        nicht.
       </Erlaeuterung>
 
       <Abschnitt titel="Absagen">
@@ -307,6 +314,6 @@ export default async function TerminPage({
           </div>
         )}
       </Abschnitt>
-    </>
+    </Seite>
   );
 }

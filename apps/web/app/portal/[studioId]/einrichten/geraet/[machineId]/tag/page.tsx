@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { ladeKatalog } from "../../../../catalog";
-import { Schrittleiste } from "../../../Schrittleiste";
+import { Schrittleiste } from "../../../../../bausteine/Schrittleiste";
+import { Seite } from "../../../../../bausteine/Seite";
 import { TagSchritt } from "./TagSchritt";
-import styles from "../../../halle.module.css";
 
 export default async function TagPage({
   params,
@@ -20,22 +20,19 @@ export default async function TagPage({
   return (
     <>
       <Schrittleiste nummer={4} titel="Tag" />
-      <div>
-        <h1 className={styles.titel}>Tag ankleben</h1>
-        <p className={styles.unterzeile}>
-          {treffer.geraet.label} · {treffer.modell.name}
-          {treffer.geraet.locationNote
-            ? ` · ${treffer.geraet.locationNote}`
-            : ""}
-        </p>
-      </div>
-
-      <TagSchritt
-        studioId={studioId}
-        machineId={machineId}
-        geraetLabel={treffer.geraet.label}
-        geraetHatTag={treffer.geraet.activeTagCount > 0}
-      />
+      <Seite
+        titel="Tag ankleben"
+        vorspann={`${treffer.geraet.label} · ${treffer.modell.name}${
+          treffer.geraet.locationNote ? ` · ${treffer.geraet.locationNote}` : ""
+        }`}
+      >
+        <TagSchritt
+          studioId={studioId}
+          machineId={machineId}
+          geraetLabel={treffer.geraet.label}
+          geraetHatTag={treffer.geraet.activeTagCount > 0}
+        />
+      </Seite>
     </>
   );
 }

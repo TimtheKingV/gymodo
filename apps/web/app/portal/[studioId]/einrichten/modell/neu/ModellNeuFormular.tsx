@@ -4,7 +4,9 @@ import { useActionState, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MAX_PHOTO_BYTES } from "@fitretro/domain/media";
 import { modellAnlegen } from "../../actions";
+import { Feld } from "../../../../Form";
 import styles from "../../halle.module.css";
+import portalStyles from "../../../../portal.module.css";
 
 const SCHRITTE = ["1,25", "2,5", "5"];
 
@@ -49,7 +51,7 @@ export function ModellNeuFormular({ studioId }: { studioId: string }) {
           type="file"
           accept="image/jpeg,image/png"
           capture="environment"
-          className={styles.eingabe}
+          className={portalStyles.inputGross}
           onChange={(ereignis) => {
             const datei = ereignis.target.files?.[0];
             if (!datei) {
@@ -79,8 +81,13 @@ export function ModellNeuFormular({ studioId }: { studioId: string }) {
         ) : null}
       </div>
 
-      <Feld name="name" label="Name" required placeholder="Kabelzug" />
-      <Feld name="manufacturer" label="Hersteller" placeholder="Technogym" />
+      <Feld gross name="name" label="Name" required placeholder="Kabelzug" />
+      <Feld
+        gross
+        name="manufacturer"
+        label="Hersteller"
+        placeholder="Technogym"
+      />
 
       <div className={styles.feld}>
         <span className={styles.label}>Gewichtsschritt</span>
@@ -107,10 +114,17 @@ export function ModellNeuFormular({ studioId }: { studioId: string }) {
 
       <div style={{ display: "flex", gap: 12 }}>
         <div style={{ flex: 1 }}>
-          <Feld name="minWeightKg" label="Ab" inputMode="decimal" placeholder="5" />
+          <Feld
+            gross
+            name="minWeightKg"
+            label="Ab"
+            inputMode="decimal"
+            placeholder="5"
+          />
         </div>
         <div style={{ flex: 1 }}>
           <Feld
+            gross
             name="maxWeightKg"
             label="Bis"
             inputMode="decimal"
@@ -125,28 +139,13 @@ export function ModellNeuFormular({ studioId }: { studioId: string }) {
         </p>
       ) : null}
 
-      <button type="submit" className={styles.haupt} disabled={!hatFoto || laeuft}>
+      <button
+        type="submit"
+        className={portalStyles.primaryGross}
+        disabled={!hatFoto || laeuft}
+      >
         {laeuft ? "Wird angelegt …" : "Weiter zu den Einstellungen"}
       </button>
     </form>
-  );
-}
-
-function Feld({
-  name,
-  label,
-  ...rest
-}: {
-  name: string;
-  label: string;
-} & React.InputHTMLAttributes<HTMLInputElement>) {
-  const id = useId();
-  return (
-    <div className={styles.feld}>
-      <label className={styles.label} htmlFor={id}>
-        {label}
-      </label>
-      <input id={id} name={name} className={styles.eingabe} {...rest} />
-    </div>
   );
 }

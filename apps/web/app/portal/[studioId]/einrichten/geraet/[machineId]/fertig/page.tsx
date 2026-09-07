@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ladeKatalog } from "../../../../catalog";
+import { Seite } from "../../../../../bausteine/Seite";
 import styles from "../../../halle.module.css";
 
 /**
@@ -31,7 +32,9 @@ export default async function FertigPage({
   const aktiverTag = katalog.tags.find(
     (tag) => tag.machineId === machineId && tag.status === "active",
   );
-  const ohneVideo = modell.exercises.filter((uebung) => !uebung.hasVideo).length;
+  const ohneVideo = modell.exercises.filter(
+    (uebung) => !uebung.hasVideo,
+  ).length;
 
   const geliefert = katalog.shipments
     .filter((lieferung) => lieferung.kind === "machine")
@@ -85,18 +88,14 @@ export default async function FertigPage({
   }
 
   return (
-    <>
-      <div>
-        <h1 className={styles.titel}>
-          {modell.name} {geraet.label} {aktiverTag ? "steht" : "wartet noch"}
-        </h1>
-        <p className={styles.unterzeile}>
-          {aktiverTag
-            ? "Für Mitglieder auffindbar"
-            : "Ohne Tag für Mitglieder nicht auffindbar"}
-        </p>
-      </div>
-
+    <Seite
+      titel={`${modell.name} ${geraet.label} ${aktiverTag ? "steht" : "wartet noch"}`}
+      vorspann={
+        aktiverTag
+          ? "Für Mitglieder auffindbar"
+          : "Ohne Tag für Mitglieder nicht auffindbar"
+      }
+    >
       <section className={styles.abschnitt}>
         <div className={styles.abschnittKopf}>
           <h2 className={styles.label}>Was jetzt gilt</h2>
@@ -106,7 +105,9 @@ export default async function FertigPage({
             <div style={{ minWidth: 0 }}>
               <div className={styles.zeileHaupt}>{zeile.haupt}</div>
               <div
-                className={zeile.faint ? styles.zeileMetaFaint : styles.zeileMeta}
+                className={
+                  zeile.faint ? styles.zeileMetaFaint : styles.zeileMeta
+                }
               >
                 {zeile.meta}
               </div>
@@ -116,13 +117,29 @@ export default async function FertigPage({
       </section>
 
       {aktiverTag ? null : (
-        <Link href={`${basis}/geraet/${machineId}/tag`} className={styles.neben}>
+        <Link
+          href={`${basis}/geraet/${machineId}/tag`}
+          className={styles.neben}
+        >
           Tag nachholen
         </Link>
       )}
 
-      <Link href={`${basis}/modell`} className={styles.haupt}>
-        Nächstes Gerät
+      {/* Der haeufigste Fall ist eine ganze Charge desselben Modells: ohne
+          diesen Knopf fuehrte "Naechstes Geraet" immer zurueck zu Schritt 1,
+          und Modell + Einstellungen liefen bei jedem weiteren Kabelzug noch
+          einmal mit -- nur mit einem Tap durch (siehe Kommentar in
+          modell/[modelId]/einstellungen/page.tsx), aber bei zehn gleichen
+          Geraeten hintereinander zwei Bildschirme und zwei Taps zu viel,
+          jedes Mal. Der Kurzweg springt direkt zu Schritt 3. */}
+      <Link
+        href={`${basis}/modell/${modell.id}/geraet`}
+        className={styles.haupt}
+      >
+        Weiteres Gerät „{modell.name}" einrichten
+      </Link>
+      <Link href={`${basis}/modell`} className={styles.neben}>
+        Anderes Modell einrichten
       </Link>
       <Link href={basis} className={styles.neben}>
         Für heute fertig
@@ -133,6 +150,6 @@ export default async function FertigPage({
           ? `${vorraetig} ${vorraetig === 1 ? "Tag" : "Tags"} noch in der Packung.`
           : "Kein Tag mehr vorrätig. Die eingerichteten Geräte funktionieren weiter; die übrigen warten auf die nächste Lieferung."}
       </p>
-    </>
+    </Seite>
   );
 }

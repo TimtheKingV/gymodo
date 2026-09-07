@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { CatalogSettingDefinition } from "@fitretro/domain";
 import { ladeKatalog } from "../../../../catalog";
-import { Schrittleiste } from "../../../Schrittleiste";
+import { Schrittleiste } from "../../../../../bausteine/Schrittleiste";
+import { Seite } from "../../../../../bausteine/Seite";
 import {
   FotoNachreichen,
   ParameterLoeschen,
@@ -33,89 +34,89 @@ export default async function EinstellungenPage({
   return (
     <>
       <Schrittleiste nummer={2} titel="Einstellungen" />
-      <div>
-        <Link href={`${basis}/modell`} className={styles.zurueck}>
-          ← Modell
-        </Link>
-        <h1 className={styles.titel}>Was lässt sich einstellen?</h1>
-        <p className={styles.unterzeile}>
-          {modell.name}
-          {modell.manufacturer ? ` · ${modell.manufacturer}` : ""}
+      <Seite
+        titel="Was lässt sich einstellen?"
+        vorspann={`${modell.name}${modell.manufacturer ? ` · ${modell.manufacturer}` : ""}`}
+        rueckweg={{ href: `${basis}/modell`, label: "Modell" }}
+      >
+        <p className={styles.notiz}>
+          Zähl die Rasten einmal ab. Beides gilt für alle {modell.name} im
+          Studio — das Mitglied wählt daraus später seine eigenen Werte.
         </p>
-      </div>
 
-      <p className={styles.notiz}>
-        Zähl die Rasten einmal ab. Beides gilt für alle {modell.name} im Studio
-        — das Mitglied wählt daraus später seine eigenen Werte.
-      </p>
-
-      <section className={styles.abschnitt}>
-        <div className={styles.abschnittKopf}>
-          <h2 className={styles.label}>Am Modell</h2>
-          <span className={styles.zeileMeta}>
-            {modell.settingDefinitions.length} Parameter
-          </span>
-        </div>
-
-        <div className={styles.zeile}>
-          <div style={{ minWidth: 0 }}>
-            <div className={styles.zeileHaupt}>
-              Foto · {modell.photoPath === null ? "Fehlt" : "Steht"}
-            </div>
-            <div
-              className={
-                modell.photoPath === null
-                  ? styles.zeileMetaFaint
-                  : styles.zeileMeta
-              }
-            >
-              {modell.photoPath === null
-                ? "Nach dem Scan sähe ein Mitglied nur den Namen und wüsste nicht, ob es richtig steht."
-                : "Bestätigt dem Mitglied in einer Sekunde, dass es am richtigen Gerät steht."}
-            </div>
+        <section className={styles.abschnitt}>
+          <div className={styles.abschnittKopf}>
+            <h2 className={styles.label}>Am Modell</h2>
+            <span className={styles.zeileMeta}>
+              {modell.settingDefinitions.length} Parameter
+            </span>
           </div>
-          <FotoNachreichen
-            studioId={studioId}
-            modelId={modelId}
-            hatFoto={modell.photoPath !== null}
-          />
-        </div>
 
-        {modell.settingDefinitions.map((parameter) => (
-          <div key={parameter.id} className={styles.zeile}>
+          <div className={styles.zeile}>
             <div style={{ minWidth: 0 }}>
-              <div className={styles.zeileHaupt}>{parameter.label}</div>
-              <div className={styles.zeileMeta}>{parameterMeta(parameter)}</div>
+              <div className={styles.zeileHaupt}>
+                Foto · {modell.photoPath === null ? "Fehlt" : "Steht"}
+              </div>
+              <div
+                className={
+                  modell.photoPath === null
+                    ? styles.zeileMetaFaint
+                    : styles.zeileMeta
+                }
+              >
+                {modell.photoPath === null
+                  ? "Nach dem Scan sähe ein Mitglied nur den Namen und wüsste nicht, ob es richtig steht."
+                  : "Bestätigt dem Mitglied in einer Sekunde, dass es am richtigen Gerät steht."}
+              </div>
             </div>
-            <ParameterLoeschen
+            <FotoNachreichen
               studioId={studioId}
               modelId={modelId}
-              settingId={parameter.id}
+              hatFoto={modell.photoPath !== null}
             />
           </div>
-        ))}
 
-        {modell.settingDefinitions.length === 0 ? (
-          <div className={styles.zeile}>
-            <div className={styles.zeileMetaFaint}>
-              Noch keine Einstellparameter. Das Gerät ist trotzdem vollständig
-              nutzbar — das Mitglied hat nur nichts einzustellen.
+          {modell.settingDefinitions.map((parameter) => (
+            <div key={parameter.id} className={styles.zeile}>
+              <div style={{ minWidth: 0 }}>
+                <div className={styles.zeileHaupt}>{parameter.label}</div>
+                <div className={styles.zeileMeta}>
+                  {parameterMeta(parameter)}
+                </div>
+              </div>
+              <ParameterLoeschen
+                studioId={studioId}
+                modelId={modelId}
+                settingId={parameter.id}
+              />
             </div>
-          </div>
-        ) : null}
-      </section>
+          ))}
 
-      <ParameterSheet studioId={studioId} modelId={modelId} />
+          {modell.settingDefinitions.length === 0 ? (
+            <div className={styles.zeile}>
+              <div className={styles.zeileMetaFaint}>
+                Noch keine Einstellparameter. Das Gerät ist trotzdem vollständig
+                nutzbar — das Mitglied hat nur nichts einzustellen.
+              </div>
+            </div>
+          ) : null}
+        </section>
 
-      <Link href={`${basis}/modell/${modelId}/geraet`} className={styles.haupt}>
-        Weiter zum Gerät
-      </Link>
+        <ParameterSheet studioId={studioId} modelId={modelId} />
 
-      <p className={styles.notiz}>
-        Überspringen geht: ein Gerät ohne Einstellparameter ist vollständig
-        nutzbar. Nachtragen lässt es sich jederzeit — nur nicht mehr mit den
-        Rasten vor Augen.
-      </p>
+        <Link
+          href={`${basis}/modell/${modelId}/geraet`}
+          className={styles.haupt}
+        >
+          Weiter zum Gerät
+        </Link>
+
+        <p className={styles.notiz}>
+          Überspringen geht: ein Gerät ohne Einstellparameter ist vollständig
+          nutzbar. Nachtragen lässt es sich jederzeit — nur nicht mehr mit den
+          Rasten vor Augen.
+        </p>
+      </Seite>
     </>
   );
 }

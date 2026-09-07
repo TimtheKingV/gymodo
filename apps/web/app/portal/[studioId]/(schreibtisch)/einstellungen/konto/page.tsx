@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Reiter } from "../../../../bausteine/Reiter";
+import { Seite } from "../../../../bausteine/Seite";
 import styles from "../../../../portal.module.css";
 import { AbmeldeKnopf, PasswortAendernFormular } from "../EinstellungenActions";
 
@@ -43,13 +44,10 @@ export default async function KontoPage({
   const basis = `/portal/${studioId}/einstellungen`;
 
   return (
-    <>
-      <h1 className={styles.pageTitle}>Einstellungen</h1>
-      <p className={styles.pageLead}>
-        Deine E-Mail, dein Passwort und die Sitzung, in der du gerade
-        angemeldet bist.
-      </p>
-
+    <Seite
+      titel="Einstellungen"
+      vorspann="Deine E-Mail, dein Passwort und die Sitzung, in der du gerade angemeldet bist."
+    >
       {/* `aktiv` steht hier fest: diese Route ist der Konto-Reiter. Kein
           usePathname, kein Client-Rand -- die Seite weiss von sich, welche
           sie ist. */}
@@ -100,6 +98,6 @@ export default async function KontoPage({
           <AbmeldeKnopf />
         </div>
       </section>
-    </>
+    </Seite>
   );
 }

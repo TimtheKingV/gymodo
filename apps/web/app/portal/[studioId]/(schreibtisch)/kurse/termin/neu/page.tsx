@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listCourseTemplates } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { terminAnlegenAction } from "../../../../kurse-actions";
+import { Seite } from "../../../../../bausteine/Seite";
 import { Zustand } from "../../../../../bausteine/Zustand";
 import styles from "../../../../../portal.module.css";
 import { TerminAnlegenFormular } from "./SerienVorschau";
@@ -15,9 +16,9 @@ import { TerminAnlegenFormular } from "./SerienVorschau";
  * vor Aufgabe 4 und brachte ihre eigene mit -- zwei Hauptbereiche je
  * Route, und die .content-Polsterung lag doppelt.
  *
- * Kein Seite-Baustein: der Bildschirm traegt ueber dem Titel einen
- * Rueckweg, und den kennt Seite.tsx nicht (dieselbe Stelle wie im
- * layout.tsx der Kursvorlage).
+ * Seite.tsx traegt jetzt einen optionalen Rueckweg (rueckweg-Prop) -- der
+ * Grund, warum dieser Bildschirm bisher keinen Seite-Baustein nutzte, ist
+ * damit weg.
  *
  * Das Formular selbst steht in SerienVorschau.tsx -- der Absendeknopf
  * traegt die Zahl der Serie, und die entsteht im Browser. Begruendung
@@ -43,23 +44,11 @@ export default async function TerminAnlegenPage({
     .maybeSingle<{ timezone: string }>();
   const zeitzone = studio?.timezone ?? "Europe/Berlin";
 
-  const kopf = (
-    <>
-      <p>
-        <Link href={basis} className={styles.rueckweg}>
-          ← Kurse
-        </Link>
-      </p>
-      <h1 className={styles.pageTitle}>Termin anlegen</h1>
-    </>
-  );
-
   // Ohne Vorlage gibt es nichts anzulegen -- und ein leeres Auswahlfeld
   // waere ein stummer Deaktiviert-Zustand (Portalspec Abschnitt 5).
   if (vorlagen.length === 0) {
     return (
-      <>
-        {kopf}
+      <Seite titel="Termin anlegen" rueckweg={{ href: basis, label: "Kurse" }}>
         <Zustand
           art="leer"
           titel="Es gibt noch keine Kursvorlage."
@@ -70,24 +59,26 @@ export default async function TerminAnlegenPage({
             </Link>
           }
         />
-      </>
+      </Seite>
     );
   }
 
   const standard = vorlagen.find((v) => v.id === vorgewaehlt) ?? vorlagen[0]!;
 
   return (
-    <>
-      {kopf}
+    <Seite titel="Termin anlegen" rueckweg={{ href: basis, label: "Kurse" }}>
       <TerminAnlegenFormular
         aktion={terminAnlegenAction.bind(null, studioId)}
         zeitzone={zeitzone}
-        vorlagen={vorlagen.map((vorlage) => ({ id: vorlage.id, name: vorlage.name }))}
+        vorlagen={vorlagen.map((vorlage) => ({
+          id: vorlage.id,
+          name: vorlage.name,
+        }))}
         vorgewaehlt={standard.id}
         dauer={standard.defaultDurationMin}
         plaetze={standard.defaultCapacity}
         trainerName={standard.defaultInstructorName ?? ""}
       />
-    </>
+    </Seite>
   );
 }
