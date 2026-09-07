@@ -20,6 +20,7 @@ struct SecondaryButton: View {
             RoundedRectangle(cornerRadius: DesignSystem.Radius.neben)
                 .stroke(DesignSystem.Color.line, lineWidth: 1)
         )
+        .buttonStyle(PressButtonStyle())
     }
 }
 

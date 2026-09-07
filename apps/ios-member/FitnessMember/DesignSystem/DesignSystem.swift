@@ -41,5 +41,27 @@ enum DesignSystem {
         static let wertHeld = Font.system(size: 64, weight: .black).monospacedDigit()
         static let label = Font.system(size: 11, weight: .heavy)
         static let body = Font.system(size: 16, weight: .regular)
+
+        /// designsystem.md SS3: 30-34pt Black, Versalien, Tracking -2,5 %.
+        static let geraetename = Font.system(size: 32, weight: .black)
+        /// Zweite Titelrolle, in SessionDetail/Uebungsfortschritt belegt
+        /// (Design-Challenge SS3.4 -- dort als nachzutragen vermerkt).
+        static let detailScreentitel = Font.system(size: 28, weight: .black)
+        static let uebungsname = Font.system(size: 17, weight: .semibold)
+        static let wertSekundaer = Font.system(size: 19, weight: .black).monospacedDigit()
+        static let fliesstext = Font.system(size: 15, weight: .regular)
+        /// Nachbarn im Rad, designsystem.md SS7: 30pt und 26pt.
+        static let radNah = Font.system(size: 30, weight: .black).monospacedDigit()
+        static let radFern = Font.system(size: 26, weight: .black).monospacedDigit()
+    }
+
+    /// Die vier Momente, die wir selbst fahren. Momentum, Deceleration,
+    /// Rubber-Banding und Unterbrechbarkeit kommen vom System-Scroller und
+    /// stehen deshalb bewusst nicht hier (Spec Abschnitt 6).
+    enum Motion {
+        static let oeffnen = Animation.spring(response: 0.34, dampingFraction: 0.86)
+        static let pause = Animation.spring(response: 0.4, dampingFraction: 0.9)
+        static let press = Animation.spring(response: 0.22, dampingFraction: 0.9)
+        static let pressSkalierung: CGFloat = 0.97
     }
 }
