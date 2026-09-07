@@ -54,6 +54,7 @@
 		D6412EE84EF83B2BB46E6912 /* LoginCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDEF31B56AE35C7453FC34B9 /* LoginCodeView.swift */; };
 		D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78C8636341914B90296B220 /* AppConfigTests.swift */; };
 		DCC5E98028ED224D32C6FAA5 /* CodeDigitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */; };
+		E1A0397EDF4B789D5970BE5A /* MemberKeinStudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C037A2436D3DBF861C6456FD /* MemberKeinStudioView.swift */; };
 		E2ECF1FE835571FFD6617303 /* SecondaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */; };
 		E7A45EB36FF558A4EFDA9A14 /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A36C578F3E7767ABE5EE6B6 /* AuthError.swift */; };
 		EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */; };
@@ -120,6 +121,7 @@
 		ACA345A636C594A2D95A59FD /* WorkoutSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSet.swift; sourceTree = "<group>"; };
 		B577EC22237E86AA0F3755B7 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		BC66ACF7FB394ECB319166C3 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		C037A2436D3DBF861C6456FD /* MemberKeinStudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberKeinStudioView.swift; sourceTree = "<group>"; };
 		C4DDD9F8FCC3E699F6E4F79C /* AuthBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthBackend.swift; sourceTree = "<group>"; };
 		C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryButton.swift; sourceTree = "<group>"; };
 		C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLinkTests.swift; sourceTree = "<group>"; };
@@ -301,6 +303,7 @@
 			children = (
 				DDEF31B56AE35C7453FC34B9 /* LoginCodeView.swift */,
 				218ADC42D32AAB9758D0AB91 /* LoginMailView.swift */,
+				C037A2436D3DBF861C6456FD /* MemberKeinStudioView.swift */,
 				213A5216BA472EAE4240C049 /* MemberPasswortAendernView.swift */,
 				E4C1D2382AF3657C5135CBE2 /* MemberPasswortView.swift */,
 				62AE7186437136E3B2723D3A /* MemberRegistrierenView.swift */,
@@ -453,6 +456,7 @@
 				C646BDD9DDB5825D52BF9AFA /* LabeledField.swift in Sources */,
 				D6412EE84EF83B2BB46E6912 /* LoginCodeView.swift in Sources */,
 				2867121C23926588568A4707 /* LoginMailView.swift in Sources */,
+				E1A0397EDF4B789D5970BE5A /* MemberKeinStudioView.swift in Sources */,
 				95794FEE5EC5FFA101C74C3D /* MemberPasswortAendernView.swift in Sources */,
 				0CC21610F7CED89559C379C4 /* MemberPasswortView.swift in Sources */,
 				C54BE200B15088F10CE1DBE0 /* MemberRegistrierenView.swift in Sources */,
