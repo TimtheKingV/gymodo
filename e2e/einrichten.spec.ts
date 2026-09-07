@@ -455,14 +455,17 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
   await expect(page.getByText("Tag verbunden")).toBeVisible();
   await expect(page.getByText("1 Übung ohne Video")).toBeVisible();
 
-  // Der Schreibtisch weiss es auch -- und fuehrt zurueck in den Gang.
+  // Der Schreibtisch weiss es auch -- und fuehrt zurueck in den Gang. Seit
+  // Aufgabe 13 zeigt /geraete die Modelle; "erreichbar" steht seither in
+  // der Zusatzzeile des Modells statt als eigener Satz. "erreichbar" heisst
+  // wörtlich: aktiv UND mit aktivem Tag (erreichbarkeit() in catalog.ts) --
+  // dieselbe Tatsache, die vor Aufgabe 16 zusaetzlich per "Tag ersetzen" im
+  // Modell-Detail sichtbar war. Dieser Link lebt seit Aufgabe 16 im Reiter
+  // Einzelne Geräte (Aufgabe 18) und ist bis dahin nicht Teil dieses Tests.
   await page.goto(`/portal/${studioId}/geraete`);
-  await expect(page.getByText("Das Gerät in Betrieb ist erreichbar.")).toBeVisible();
-
-  await page.getByRole("link", { name: "Kabelzug" }).first().click();
   await expect(
-    page.getByRole("link", { name: "Tag ersetzen" }).first(),
-  ).toBeVisible();
+    page.getByRole("listitem").filter({ hasText: "Kabelzug" }),
+  ).toContainText("1 Gerät, 1 erreichbar");
 });
 
 test("Ein zerkratzter Tag wird ersetzt, und der alte wird dabei ungueltig", async ({
@@ -531,21 +534,29 @@ test("Jede Schreibtischseite traegt die Rail, der Gang traegt sie nicht", async 
   const { studioId } = await studioMitTrainer(page, "einrichten-rail");
   const rail = page.getByRole("navigation", { name: "Katalog" });
 
+  // Der Gang zuerst, dann der Schreibtisch: /modelle steht in der Liste
+  // unten bewusst an letzter Stelle, ohne dass ihr ein weiteres goto folgt.
+  // Seit Aufgabe 13 leitet /modelle serverseitig auf /geraete weiter, und
+  // ein goto, das UNMITTELBAR auf eine solche Weiterleitung folgt, bricht
+  // bei diesem Playwright/Chromium in dieser Umgebung reproduzierbar mit
+  // net::ERR_ABORTED ab -- unabhaengig vom Ziel des naechsten goto und
+  // nachweislich kein Fehler der Seite selbst (per Snapshot geprueft: der
+  // Inhalt steht danach korrekt).
+  await page.goto(`/portal/${studioId}/einrichten`);
+  await expect(rail).toHaveCount(0);
+
   for (const pfad of [
     "",
-    "/modelle",
     "/geraete",
     "/tags",
     "/leute",
     "/einstellungen",
     "/einstellungen/konto",
+    "/modelle",
   ]) {
     await page.goto(`/portal/${studioId}${pfad}`);
     await expect(rail, `Rail fehlt auf /portal/<id>${pfad}`).toBeVisible();
   }
-
-  await page.goto(`/portal/${studioId}/einrichten`);
-  await expect(rail).toHaveCount(0);
 });
 
 /**

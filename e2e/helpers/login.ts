@@ -1,6 +1,23 @@
 import type { Page } from "@playwright/test";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const INBUCKET = "http://127.0.0.1:54324";
+
+/**
+ * Der Service-Role-Client fuer per Admin-API angelegte Testkonten. Stand
+ * vor dieser Aufgabe wortgleich in sieben Dateien (helpers/studio.ts,
+ * auth-, einstellungen-, leute-, login-, tag-fallback-, trainerportal.spec.ts).
+ * Aufgabe 8 zieht ihn hierher fuer ihre eigenen neuen Tests -- die sieben
+ * Bestandsstellen bleiben bewusst unangetastet (siehe Aufgabe-8-Bericht):
+ * sechs von ihnen haben mit dem Passwortpfad nichts zu tun, und sie dort
+ * anzufassen waere das groesste Bruchrisiko dieser Aufgabe fuer den
+ * kleinsten Nutzen. Der Umbau auf diese Funktion ist ein eigener Befund.
+ */
+export function adminClient(): SupabaseClient {
+  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: { persistSession: false },
+  });
+}
 
 /**
  * Test-Passwort fuer per Service-Role angelegte Konten -- dieselbe Rolle wie

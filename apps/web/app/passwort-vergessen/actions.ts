@@ -34,6 +34,14 @@ export async function passwortZuruecksetzen(_prev: unknown, formData: FormData) 
   });
   if (!parsed.success) return { error: parsed.error.issues[0]!.message };
 
+  // Die Gleichheitspruefung steht vor dem Supabase-Aufruf: ein Tippfehler in
+  // der Wiederholung soll nicht den Code verbrauchen. Ein verbrauchter Code
+  // bedeutet eine neue Mail, und der Nutzer weiss nicht, warum.
+  const wiederholung = String(formData.get("password2") ?? "");
+  if (parsed.data.password !== wiederholung) {
+    return { error: "Die beiden Passwörter stimmen nicht überein." };
+  }
+
   const supabase = await createServerSupabaseClient();
   const { error: verifyError } = await supabase.auth.verifyOtp({
     email: parsed.data.email,

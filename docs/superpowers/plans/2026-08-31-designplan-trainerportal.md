@@ -18,7 +18,7 @@ Alle Werte wörtlich aus `apps/web/app/globals.css`, `apps/web/app/portal/portal
 
 **Schrift.** Archivo über Google Fonts, Fallback `-apple-system, "Segoe UI", Roboto, Arial, sans-serif`. Archivo steht als Ersatz für SF Pro, das es auf Windows nicht gibt. Alle Ziffern tabellarisch (`font-variant-numeric: tabular-nums`).
 
-**Maße.** Abstände 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48. Radius 12 (Karte), 10 (Bedienelement), 999 (Pille). Rail 288 px. Inhalt `padding: 32px 40px 48px`, `max-width: 1000px`. Trefferflächen ≥ 44 px; Hauptaktion 44 px hoch, Nebenaktion 40 px.
+**Maße.** Abstände 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48. Radius 12 (Karte), 10 (Bedienelement), 999 (Pille). Rail 288 px. Inhalt `padding: 32px 40px 48px`, `max-width: 1000px`. Hauptaktion und Eingabefeld 44 px, Nebenaktion und zerstörende Aktion 40 px. Die ≥ 44 px des Designsystems gelten für die Halle, nicht für den Schreibtisch (Befund 16, entschieden am 3. September).
 
 **Genau eine Akzentfläche je Artboard.** Der Akzent gehört der einen Hauptaktion. Nebenaktionen sind `surface-raised` mit `line`-Rand, zerstörende Aktionen sind ein `danger`-Umriss ohne Fläche. `warn` erscheint ausschließlich als Umriss.
 

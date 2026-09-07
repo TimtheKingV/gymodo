@@ -1,0 +1,293 @@
+/* Werte aus docs/superpowers/design/portal/Zustaende.dc.html, dem Artboard
+   fuer diesen Bildschirm. Card-Masse und Farben stammen von dort, nicht neu
+   erfunden. */
+
+.zustand {
+  border-radius: var(--r-card);
+  padding: var(--s32) var(--s20);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s12);
+}
+
+/* leer, keinRecht und deaktiviert sehen gleich aus: keiner von ihnen ist ein
+   Fehler, also traegt keiner die danger-Farbe. */
+.leer,
+.keinRecht,
+.deaktiviert {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+/* danger-Umriss bei vollem Kontrast -- KEINE getoente Flaeche. Die
+   10-%-Flaeche (rgba(255, 90, 78, 0.1)) gehoert laut Designsystem 5 zu
+   Offline, und Offline gilt im Portal nicht (trainerportal-struktur-design.md
+   5). */
+.fehler {
+  border: 1px solid var(--danger);
+  background: var(--surface);
+}
+
+.zustandTitel {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+/* fehler traegt seine Erklaerung schon im Satz ("... liegt ueber dem
+   Geraetemaximum von 100,0 kg") -- keine eigene Ueberschrift noetig. */
+.fehler .zustandTitel {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.zustandSchritt {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* deaktiviert: Pille und Grund als Geschwister in einer Zeile (Artboard),
+   nicht als Ueberschrift ueber dem Grund. */
+.zustandDeaktiviert {
+  display: flex;
+  align-items: center;
+  gap: var(--s12);
+  flex-wrap: wrap;
+}
+
+/* Werte wie .secondary:disabled in portal.module.css -- dieselbe
+   deaktivierte Pille, hier nur als eigener Titel statt als Formularknopf. */
+.zustandPille {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 var(--s16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-raised);
+  color: var(--text-faint);
+  font-weight: 600;
+  cursor: not-allowed;
+}
+
+.zustandAktion {
+  margin-top: var(--s4);
+}
+
+/* Ab hier: die fuenf Bausteine der Anordnung (Seite, Abschnitt, Zeile,
+   Reiter, Kachel). Werte aus portal.module.css uebernommen -- dort ist die
+   Wertevorlage, hier nur die deutschen Klassennamen fuer die
+   allgemeinen Bausteine. */
+
+/* Seite: Titel und Vorspann. Werte wie .pageTitle / .pageLead. */
+.titel {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+}
+
+.vorspann {
+  color: var(--text-muted);
+  margin-top: var(--s8);
+  max-width: 62ch;
+}
+
+/* Abschnitt: gerahmte Karte mit Kopf und Rumpf. Werte wie .section /
+   .sectionHead / .sectionTitle / .sectionNote / .sectionBody. */
+.abschnitt {
+  margin-top: var(--s32);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.abschnittKopf {
+  padding: var(--s16) var(--s20);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s16);
+}
+
+.abschnittTitel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* text-muted, nicht text-faint (Befund 36) -- derselbe Schnitt wie bei
+   .sectionNote in portal.module.css. Die Notiz eines Abschnitts sagt, was
+   die Karte zeigt und was nicht ("Ohne Namen. Wer gemeldet hat, steht
+   hier nicht."); das muss gelesen werden, und 3,6 : 1 verbietet
+   Designsystem 2 dafuer. */
+.abschnittNotiz {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.abschnittRumpf {
+  padding: var(--s20);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s16);
+}
+
+/* Zeile: <ul>/<li> statt <div>/<div> -- eine Liste von Geraeten ist eine
+   Liste, und ein Screenreader sagt dann "Liste mit 4 Eintraegen". Werte
+   wie .rows / .row / .rowMain / .rowTitle / .rowMeta / .rowActions. */
+.zeilen {
+  display: flex;
+  flex-direction: column;
+}
+
+.zeile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s16);
+  padding: var(--s12) var(--s20);
+  border-bottom: 1px solid var(--line);
+}
+
+.zeile:last-child {
+  border-bottom: none;
+}
+
+.zeileHaupt {
+  min-width: 0;
+}
+
+.zeileTitel {
+  font-weight: 600;
+}
+
+.zeileMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.zeileAktionen {
+  display: flex;
+  align-items: center;
+  gap: var(--s8);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* Reiter: Links auf eigene Routen, kein Umschalter im selben Dokument --
+   Begruendung in Reiter.tsx. Werte wie .tabs / .tab / .tabActive. */
+.reiter {
+  display: flex;
+  gap: var(--s4);
+  border-bottom: 1px solid var(--line);
+  margin-top: var(--s24);
+}
+
+/* 12px 16px, so zeichnen es alle Artboards mit Reiterleiste. Der Wert
+   traegt mehr als das Aussehen: mit 8px blieb der Reiter unter 40 px und
+   damit unter dem Schreibtischmass fuer eine Nebenaktion. */
+.reiterEintrag {
+  padding: var(--s12) var(--s16);
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.reiterAktiv {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+/* block, wie .navItemTitle in Rail.tsx: der Zaehlstand braucht eine eigene
+   Zeile darunter (naechste Regel), also muss das Label selbst schon ein
+   Block sein, sonst laufen beide ineinander. */
+.reiterLabel {
+  display: block;
+}
+
+/* Der Zustand steht unter der Beschriftung, nicht daneben: so zeichnet es
+   Modell.dc.html, und so machen es .rowMeta und .navItemMeta schon --
+   Titel und Zaehlstand sind zwei Informationsebenen (Name, dann Anzahl),
+   keine eine Zeile. */
+.reiterZusatz {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+/* Erlaeuterung: erklaerender Fliesstext unter einem Abschnitt -- Inhalt,
+   nicht Dekoration (Tags.dc.html). Werte aus dem Artboard: 13px, 1.45,
+   62ch.
+
+   text-muted, nicht das text-faint des Artboards (Aufgabe 19): dieser
+   Baustein traegt seit den Leute-Reitern die Datenschutzgrenze und den
+   Satz, der das Hochstufen erklaert -- Pflichttext, und Designsystem 2
+   verbietet dafuer 3,6 : 1 (Befund 19 und 29, derselbe Schnitt wie in
+   Produktgrenze.tsx). Der Baustein heisst "Erlaeuterung", weil er
+   erklaert; was erklaert, muss lesbar sein. */
+/* globals.css:97 nimmt jedem <a> Farbe und Unterstreichung. Fuer Rail,
+   Reiter und Knopf-Links ist das richtig -- die tragen eigene Klassen und
+   sehen aus wie Bedienelemente. Ein Link mitten im Satz haette ohne sie
+   null Unterschied zum Text daneben. Der Akzent scheidet als Mittel aus
+   (er markiert die eine Hauptaktion), also traegt die Unterstreichung den
+   Unterschied -- und die baut nicht auf Farbe allein. */
+.erlaeuterung a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.erlaeuterung {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin-top: var(--s16);
+  max-width: 62ch;
+}
+
+/* Kachel: Kennzahl gross, Beschriftung darunter. Werte wie .kacheln /
+   .kachel / .kachelZahl / .kachelLabel. */
+.kacheln {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s12);
+  margin-top: var(--s32);
+}
+
+.kachel {
+  padding: var(--s20) var(--s24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.kachelZahl {
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.kachelLabel {
+  margin-top: var(--s4);
+  color: var(--text-muted);
+}
+
+/* Produktgrenze: Befund 19 -- derselbe Satz stand an drei Stellen in
+   text-faint, einem Kontrast, den Designsystem 2 fuer Pflichttext
+   ausdruecklich verbietet ("gymodo misst nichts ..." ist Inhalt, keine
+   Fussnote). text-muted statt text-faint, sonst wie der bisherige .hint. */
+.produktgrenze {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin-top: var(--s24);
+  max-width: 70ch;
+}

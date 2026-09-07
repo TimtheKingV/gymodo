@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
+import { Feld } from "./portal/Form";
+import styles from "./einstieg/einstieg.module.css";
 import { beitreten } from "./actions";
 
 export function BeitrittsFormular() {
@@ -8,11 +10,17 @@ export function BeitrittsFormular() {
 
   return (
     <form action={formAction} data-testid="beitritt-formular">
-      <p>Du bist noch in keinem Studio Mitglied.</p>
-      <label htmlFor="code">Studio-Code</label>
-      <input id="code" name="code" required autoCapitalize="characters" />
-      <button type="submit">Beitreten</button>
-      {state && !state.ok && <p>{state.error}</p>}
+      <div className={styles.felder}>
+        <Feld name="code" label="Studio-Code" required autoCapitalize="characters" />
+      </div>
+      {state && !state.ok ? (
+        <p className={styles.fehlermeldung} role="alert">
+          {state.error}
+        </p>
+      ) : null}
+      <button type="submit" className={styles.knopf}>
+        Beitreten
+      </button>
     </form>
   );
 }

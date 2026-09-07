@@ -1,0 +1,170 @@
+/* Anmelden.dc.html: ein Kopf mit der Wortmarke oben links, darunter eine
+   auf max-width 420px zentrierte Karte. Fix-Runde 1: die Marke stand zuerst
+   in der Karte -- das Artboard traegt sie in einem eigenen Kopf ausserhalb
+   der Karte, und Einstieg.tsx bildet das jetzt so nach (.kopf als
+   Geschwister von .seite, beide Kinder von .bildschirm). */
+
+.bildschirm {
+  min-height: 100dvh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.kopf {
+  padding: var(--s32) var(--s48);
+}
+
+.marke {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.seite {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 20px 96px;
+}
+
+.karte {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  height: fit-content;
+}
+
+/* Screentitel nach docs/superpowers/specs/2026-08-30-designsystem.md
+   Abschnitt 3: 32 pt / Black, Versalien, Tracking -3 %. */
+.titel {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.vorspann {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+  margin: var(--s12) 0 0;
+}
+
+.felder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s20);
+  margin-top: var(--s32);
+}
+
+/* Der Einstieg hat eigene Masse, keine Schreibtisch-Masse: 28 px Seitenrand
+   statt 40, und hier 52 px Feldhoehe statt 44 -- dieselbe Trennung, aus der
+   halle.module.css in Phase 3 mit 56/48/52 entstand. Feld aus Form.tsx
+   bleibt bei 44 px (portal.module.css, fuer den Schreibtisch richtig);
+   diese Regel ueberschreibt nur innerhalb des Einstiegs, ueber den
+   Nachfahren-Selektor, ohne Feld selbst anzufassen. */
+.felder input {
+  min-height: 52px;
+}
+
+/* Das Codefeld aus Verifizieren.dc.html: grosse, zentrierte, gesperrte
+   Ziffern statt Fliesstext -- der einzige sichtbare Unterschied zum
+   Registrieren-Schritt, sonst saehen beide Schirme gleich aus. Werte aus
+   dem Artboard uebernommen (28 px, Gewicht 800, Laufweite 0.32em, 64 px
+   Feldhoehe), ueber den Namen statt ueber Feld selbst -- dieselbe Technik
+   wie .felder input oben: Feld bleibt bei 44 px, diese Regel ueberschreibt
+   nur hier. font-variant-numeric: tabular-nums kommt schon aus globals.css. */
+.felder input[name="token"] {
+  min-height: 64px;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.32em;
+  color: var(--text);
+  text-align: center;
+}
+
+/* Danger als Umriss bei vollem Kontrast, keine getoente Flaeche -- dieselbe
+   Regel wie bei .fehler in bausteine.module.css (Zustand.tsx). */
+.fehlermeldung {
+  border: 1px solid var(--danger);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--r-card);
+  padding: var(--s12) var(--s16);
+  margin-top: var(--s20);
+  font-size: 14px;
+}
+
+/* Die eine Akzentflaeche der Seite: der Anmeldeknopf (Artboard). */
+.knopf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 64px;
+  margin-top: var(--s32);
+  border: none;
+  border-radius: 16px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.knopf:hover {
+  background: var(--accent-pressed);
+}
+
+.knopf:disabled {
+  background: var(--surface-raised);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+/* Zwei Textlinks, keine Nebenaktionen -- deshalb ausserhalb der
+   zuKleineBedienelemente-Pruefung (die zaehlt button/input/select/textarea,
+   keine <a>) und ohne eigene Trefferflaechen-Vorgabe. */
+.links {
+  display: flex;
+  justify-content: center;
+  gap: var(--s24);
+  margin-top: var(--s24);
+}
+
+.links a {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.links a:hover {
+  color: var(--text);
+}
+
+.fuss {
+  margin-top: var(--s24);
+}
+
+/* Der gedaempfte Satz unter dem Registrieren-Knopf (Registrieren.dc.html):
+   13 px, kein eigener Abstand -- .fuss liefert die 24 px margin-top. */
+.hinweis {
+  font-size: 13px;
+  color: var(--text-faint);
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* Voller Kontrast statt gedaempft, innerhalb eines sonst gedaempften
+   Satzes -- Verifizieren.dc.html hebt die eingesetzte Adresse im Vorspann
+   so hervor (#f2f4f7 statt #9ba3af). Nach Wirkung benannt, nicht nach
+   diesem einen Inhalt: kuenftige Bildschirme duerfen sie fuer andere
+   hervorgehobene Werte wiederverwenden. */
+.betont {
+  color: var(--text);
+}

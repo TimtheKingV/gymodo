@@ -58,9 +58,9 @@ export function wochenFenster(anker: string | undefined, zeitzone: string): Woch
   // page.tsx -- datumTeile("abc") liefert NaN fuer alle drei Felder,
   // wochentag baut daraus ein Invalid Date, und sowohl
   // Intl.DateTimeFormat.formatToParts als auch toISOString werfen dann
-  // einen rohen RangeError. Diese Anwendung hat kein error.tsx, also
-  // laendet das auf Nexts Standard-Fehlerseite. Ein verunstaltetes
-  // Lesezeichen soll diese Woche zeigen, keinen Fehler.
+  // einen rohen RangeError. Seit Aufgabe 4 faengt error.tsx der
+  // Schreibtisch-Gruppe das ab -- aber ein verunstaltetes Lesezeichen
+  // soll diese Woche zeigen, nicht die Fehlerseite.
   const gueltigerAnker = anker !== undefined && ANKER_FORM.test(anker) ? anker : undefined;
   const heute = gueltigerAnker ?? ortszeitAlsDatum(new Date(), zeitzone);
   const { jahr, monat, tag } = datumTeile(heute);

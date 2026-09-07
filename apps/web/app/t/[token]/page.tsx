@@ -68,7 +68,10 @@ export default async function TagFallbackPage({
       <h1 className={styles.neutralTitel} data-testid="tag-unknown">
         Dieser Code ist nicht aktiv.
       </h1>
-      <p className={styles.neutralText}>Bitte wende dich an dein Studio.</p>
+      <p className={styles.neutralText}>
+        Wende dich an dein Studio — dort kann der Aufkleber neu vergeben
+        werden.
+      </p>
     </main>
   );
 
@@ -223,6 +226,22 @@ export default async function TagFallbackPage({
         <p className={styles.zweiterScan}>
           Nach dem Laden diesen Code hier noch einmal scannen — dann bist du
           bei <strong>{zeile.studio_name}</strong> angemeldet.
+        </p>
+        {/* Der zweite Satz ist der wichtigere: diese Seite ist fuer den
+            Fall gebaut, dass jemand OHNE App vor dem Geraet steht. Ohne
+            ihn liest ein Android-Nutzer sie als Absage, obwohl er alles
+            Wesentliche gerade gesehen hat.
+
+            Er zeigt aber auf etwas, das nicht immer da ist: der
+            Einweisungsteil haengt an exercises.length > 0. Ein Geraet ohne
+            hinterlegte Uebung -- am Anfang jeder Einrichtung der
+            Normalfall -- traegt sonst einen Satz ueber eine Einweisung,
+            die es auf dieser Seite nicht gibt. Das Artboard zeichnet immer
+            ein Video und deckt den leeren Fall nicht ab. */}
+        <p className={styles.fussnote}>
+          {zeile.exercises.length > 0
+            ? "Zurzeit nur für iPhone. Die Einweisung oben funktioniert auf jedem Gerät und ohne App."
+            : "Zurzeit nur für iPhone."}
         </p>
       </section>
 

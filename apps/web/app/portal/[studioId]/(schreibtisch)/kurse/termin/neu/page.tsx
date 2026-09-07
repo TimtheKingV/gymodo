@@ -1,11 +1,28 @@
 import Link from "next/link";
 import { listCourseTemplates } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { AktionsFormular, Feld } from "../../../../../Form";
 import { terminAnlegenAction } from "../../../../kurse-actions";
+import { Zustand } from "../../../../../bausteine/Zustand";
 import styles from "../../../../../portal.module.css";
-import { SerienVorschau } from "./SerienVorschau";
+import { TerminAnlegenFormular } from "./SerienVorschau";
 
+/**
+ * "Termin anlegen" (TerminAnlegen.dc.html).
+ *
+ * Kein eigenes <main> mehr, in KEINEM der beiden Zweige (Befund 41): die
+ * Landmarke traegt (schreibtisch)/layout.tsx fuer alle Kinder. Diese
+ * Datei entstand in Phase 4 auf einem eigenen Zweig gegen den Stand von
+ * vor Aufgabe 4 und brachte ihre eigene mit -- zwei Hauptbereiche je
+ * Route, und die .content-Polsterung lag doppelt.
+ *
+ * Kein Seite-Baustein: der Bildschirm traegt ueber dem Titel einen
+ * Rueckweg, und den kennt Seite.tsx nicht (dieselbe Stelle wie im
+ * layout.tsx der Kursvorlage).
+ *
+ * Das Formular selbst steht in SerienVorschau.tsx -- der Absendeknopf
+ * traegt die Zahl der Serie, und die entsteht im Browser. Begruendung
+ * dort.
+ */
 export default async function TerminAnlegenPage({
   params,
   searchParams,
@@ -26,73 +43,51 @@ export default async function TerminAnlegenPage({
     .maybeSingle<{ timezone: string }>();
   const zeitzone = studio?.timezone ?? "Europe/Berlin";
 
+  const kopf = (
+    <>
+      <p>
+        <Link href={basis} className={styles.rueckweg}>
+          ← Kurse
+        </Link>
+      </p>
+      <h1 className={styles.pageTitle}>Termin anlegen</h1>
+    </>
+  );
+
   // Ohne Vorlage gibt es nichts anzulegen -- und ein leeres Auswahlfeld
   // waere ein stummer Deaktiviert-Zustand (Portalspec Abschnitt 5).
   if (vorlagen.length === 0) {
     return (
-      <main className={styles.content}>
-        <p>
-          <Link href={basis}>← Kurse</Link>
-        </p>
-        <h1 className={styles.pageTitle}>Termin anlegen</h1>
-        <div className={styles.empty}>
-          <p className={styles.emptyTitle}>Es gibt noch keine Kursvorlage.</p>
-          <p className={styles.emptyNext}>
-            Ein Termin entsteht aus einer Vorlage.{" "}
-            <Link href={`${basis}/vorlagen`}>Leg zuerst eine an.</Link>
-          </p>
-        </div>
-      </main>
+      <>
+        {kopf}
+        <Zustand
+          art="leer"
+          titel="Es gibt noch keine Kursvorlage."
+          naechsterSchritt="Ein Termin entsteht aus einer Vorlage."
+          aktion={
+            <Link className={styles.secondary} href={`${basis}/vorlagen`}>
+              Vorlage anlegen
+            </Link>
+          }
+        />
+      </>
     );
   }
 
   const standard = vorlagen.find((v) => v.id === vorgewaehlt) ?? vorlagen[0]!;
 
   return (
-    <main className={styles.content}>
-      <p>
-        <Link href={basis}>← Kurse</Link>
-      </p>
-      <h1 className={styles.pageTitle}>Termin anlegen</h1>
-
-      <AktionsFormular
-        action={terminAnlegenAction.bind(null, studioId)}
-        submitLabel="Termine anlegen"
-      >
-        <label>
-          Vorlage
-          <select name="vorlageId" defaultValue={standard.id} required>
-            {vorlagen.map((vorlage) => (
-              <option key={vorlage.id} value={vorlage.id}>
-                {vorlage.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <SerienVorschau zeitzone={zeitzone} />
-
-        <Feld
-          name="dauer"
-          label="Dauer in Minuten"
-          type="number"
-          defaultValue={String(standard.defaultDurationMin)}
-          required
-        />
-        <Feld
-          name="plaetze"
-          label="Plätze"
-          type="number"
-          defaultValue={String(standard.defaultCapacity)}
-          required
-        />
-        <Feld name="raum" label="Raum" />
-        <Feld
-          name="trainerName"
-          label="Trainer (Anzeigename)"
-          defaultValue={standard.defaultInstructorName ?? ""}
-        />
-      </AktionsFormular>
-    </main>
+    <>
+      {kopf}
+      <TerminAnlegenFormular
+        aktion={terminAnlegenAction.bind(null, studioId)}
+        zeitzone={zeitzone}
+        vorlagen={vorlagen.map((vorlage) => ({ id: vorlage.id, name: vorlage.name }))}
+        vorgewaehlt={standard.id}
+        dauer={standard.defaultDurationMin}
+        plaetze={standard.defaultCapacity}
+        trainerName={standard.defaultInstructorName ?? ""}
+      />
+    </>
   );
 }

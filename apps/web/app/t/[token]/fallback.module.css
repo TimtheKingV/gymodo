@@ -72,8 +72,11 @@
   display: block;
 }
 
+/* Erklaert eine Abwesenheit und muss gelesen werden -- sonst sucht
+   jemand nach einem Video, das es nicht gibt. Gleiche Begruendung wie bei
+   .fussnote. */
 .ohneVideo {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -166,8 +169,14 @@
   color: var(--text-muted);
 }
 
+/* Zwei Aufrufer. Auf dem Aushang steht hier nur "Zurzeit nur fuer
+   iPhone."; auf dem Geraetebildschirm kommt der Satz dazu, der dem
+   Android-Nutzer sagt, dass er nichts verpasst -- tragender Text, kein
+   Kleingedrucktes. Der zweite Fall bestimmt den Kontrast, weil die Klasse
+   beide traegt: 11px wie in FallbackGeraet.dc.html gezeichnet, die Farbe
+   nach der Regel aus Designsystem 2 statt nach dem Artboard. */
 .fussnote {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: 11px;
   line-height: 1.5;
 }
@@ -176,7 +185,10 @@
    Einweisung Studioinhalt ist -- und ein Fallbackbesucher hat noch keine
    andere Stelle gesehen, an der das steht. */
 .grenze {
-  color: var(--text-faint);
+  /* Designsystem 10 verlangt die Produktgrenze verbindlich UND sichtbar;
+     Designsystem 2 verbietet text-faint fuer Text, der gelesen werden
+     muss. Beide Regeln zeigen hier in dieselbe Richtung. */
+  color: var(--text-muted);
   font-size: 13px;
   line-height: 1.45;
 }

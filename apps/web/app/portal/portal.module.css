@@ -91,9 +91,65 @@
   margin-top: 2px;
 }
 
+/* Abgesetzt durch die line-Kante von den Gruppen darueber, unten
+   angeheftet durch margin-top: auto -- die Fusszeile bleibt am
+   Rail-Ende, gleich wie viele Gruppen darueber stehen. */
+.railFooter {
+  margin-top: auto;
+  padding: var(--s16) var(--s20) 0;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s8);
+}
+
+.railEmail {
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow-wrap: break-word;
+}
+
+/* Textknopf, keine Flaeche: Abmelden ist eine Nebenaktion der Rail, nicht
+   die Hauptaktion des Inhalts -- die eine Akzentflaeche gehoert dieser.
+   min-height 40 px haelt die Nebenaktions-Trefferflaeche ein (siehe
+   .secondary) -- ein reiner Textlink waere hier nur 18 px hoch getroffen
+   worden, das deckt e2e/bausteine.spec.ts auf. */
+.railAbmelden {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-faint);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.railAbmelden:hover {
+  color: var(--text);
+}
+
 .content {
   padding: var(--s32) var(--s40) var(--s48);
   max-width: 960px;
+}
+
+/* Rueckweg auf einer Detailseite -- Werte aus Modell.dc.html: dieselbe
+   Optik wie .abschnittTitel (bausteine.module.css), aber in text-faint statt
+   text-muted, so wie das Artboard es zeichnet (#5c636e). */
+.rueckweg {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s4);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-decoration: none;
 }
 
 .pageTitle {
@@ -134,9 +190,14 @@
   color: var(--text-muted);
 }
 
+/* text-muted, nicht text-faint (Befund 29). Die Klasse traegt die
+   erklaerenden Saetze unter einer Abschnittsueberschrift -- Pflichttext,
+   und Designsystem 2 verbietet dafuer die 3,6 : 1 von text-faint. Groesse
+   und Layout bleiben; nur der Ton geht auf 7,4 : 1. Der Zwilling
+   .abschnittNotiz in bausteine.module.css ist im selben Griff geheilt. */
 .sectionNote {
   font-size: 12px;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .sectionBody {
@@ -227,9 +288,34 @@
   color: var(--text-muted);
 }
 
+/* Der Feldhinweis haengt per aria-describedby am Eingabefeld und nennt
+   Regeln, die gelten -- Passwortlaenge, Bedeutung der Stornofrist.
+   Pflichttext also, und Designsystem 2 schliesst text-faint (3,6 : 1)
+   dafuer aus. Dritter Zwilling nach .sectionNote und .abschnittNotiz. */
 .hint {
   font-size: 12px;
-  color: var(--text-faint);
+  color: var(--text-muted);
+}
+
+/* Ein Feld, das eine Zahl von 0 bis 168 aufnimmt, in Spaltenbreite zu
+   zeichnen verspricht Platz fuer etwas, was dort nie steht. 84 px und die
+   Einheit daneben statt darunter -- so zeichnet es
+   EinstellungenStudio.dc.html, und "6 Stunden vor Beginn" liest sich als
+   ein Satz, nicht als Feld plus Fussnote. */
+.inlineFeld {
+  display: flex;
+  align-items: center;
+  gap: var(--s12);
+}
+
+.schmalesFeld {
+  flex: 0 0 84px;
+  width: 84px;
+  text-align: center;
+}
+
+.einheit {
+  color: var(--text-muted);
 }
 
 .input,
@@ -329,9 +415,33 @@
   background: rgba(255, 90, 78, 0.1);
 }
 
+/* Warnung: was eine Handlung kostet, bevor sie geschieht -- und im
+   selben Kasten, was sie NICHT kostet. Umriss in --warn bei vollem
+   Kontrast, keine getoente Flaeche (EinstellungenStudio.dc.html). Sie ist
+   keine Akzentflaeche: nichts daran ist bedienbar. */
+.warning {
+  border: 1px solid var(--warn);
+  background: transparent;
+  color: var(--warn);
+  border-radius: var(--r-control);
+  padding: var(--s12) var(--s16);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* Danger-Umriss auf --surface, keine Toenung. Designsystem 5 ordnet die
+   getoente danger-Flaeche dem Zustand OFFLINE zu; FEHLER ist dort
+   "danger-Umriss, voller Kontrast", und Offline gilt im Portal nicht
+   (Struktur-Spec 5).
+   Zustaende.dc.html zeichnet die Fehlerkarte auf #14161a -- also auf
+   --surface -- und kennt in der ganzen Datei kein rgba. Genau so machen
+   es die beiden Geschwister schon --
+   .fehler in bausteine.module.css (Zustand-Baustein) und .fehlermeldung
+   in einstieg.module.css. -- .destructive:hover benutzt dasselbe rgba
+   und bleibt: ein Zeigezustand ist kein Statusfeld. */
 .error {
   border: 1px solid var(--danger);
-  background: rgba(255, 90, 78, 0.1);
+  background: var(--surface);
   color: var(--text);
   border-radius: var(--r-control);
   padding: var(--s12) var(--s16);
@@ -485,29 +595,6 @@
   }
 }
 
-/* Reiter innerhalb einer Seite. Ein Reiter je Bildschirm bedeutet ein
-   Formular je Bildschirm (Spec Abschnitt 1) -- deshalb sind das Links auf
-   eigene Routen und keine Umschalter im selben Dokument. */
-.tabs {
-  display: flex;
-  gap: var(--s4);
-  border-bottom: 1px solid var(--line);
-  margin-top: var(--s24);
-}
-
-.tab {
-  padding: var(--s8) var(--s16);
-  border-bottom: 2px solid transparent;
-  color: var(--text-muted);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.tabActive {
-  border-bottom-color: var(--accent);
-  color: var(--text);
-}
-
 /* Kennzahlen des Ueberblicks. Vier Kacheln nebeneinander, auf schmalen
    Fenstern zwei. Bewusst ohne Balken und ohne Ziel: der Ueberblick sagt,
    OB das Studio benutzt wird, nicht wie weit es von irgendwas entfernt
@@ -536,4 +623,102 @@
 .kachelLabel {
   margin-top: var(--s4);
   color: var(--text-muted);
+}
+
+/* Zwei Abschnitte nebeneinander wie in Main.dc.html ("Was noch fehlt" /
+   "Meistgenutzt") -- dasselbe Muster wie .grid oben und .kacheln
+   darueber: auto-fit statt einer festen Spaltenzahl (statt des
+   Artboard-Werts "1.15fr 1fr"), damit ein schmales Fenster ohne eigene
+   Media-Query eine Spalte bekommt. Fix-Runde 1, Befund 3: vorher ein
+   Inline-style in (schreibtisch)/page.tsx -- eine wiederkehrende
+   Anordnung gehoert als Klasse hierher, nicht als punktueller Wert wie
+   der fontSize-Override am "Zu den Kursen"-Knopf. */
+.spalten {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: var(--s24);
+  margin-top: var(--s24);
+}
+
+/* Der Kursplan (Kurse.dc.html). Die Wochenwahl links, die Hauptaktion
+   rechts, beides in einer Zeile unter dem Titel -- wrap statt Ueberlauf,
+   wie schon bei .rowActions: auf einem schmalen Schirm rutscht "Termin
+   anlegen" unter die Wochenwahl, statt rechts aus dem Bild zu laufen. */
+.wochenleiste {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s16);
+  margin-top: var(--s20);
+  flex-wrap: wrap;
+}
+
+.wochenwahl {
+  display: flex;
+  align-items: center;
+  gap: var(--s12);
+  flex-wrap: wrap;
+}
+
+.wochenTitel {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Die Belegung am rechten Rand einer Terminzeile: Zahl gross, Warteliste
+   klein darunter -- zwei Informationsebenen wie .rowTitle und .rowMeta,
+   nicht eine Zeile. */
+.belegung {
+  text-align: right;
+}
+
+.belegungZahl {
+  font-weight: 700;
+}
+
+/* text-muted, nicht das text-faint des Artboards: "+3 Warteliste" ist die
+   Auskunft, dass drei Leute anstehen -- Inhalt, kein Schmuck, und
+   Designsystem 2 verbietet dafuer 3,6 : 1 (derselbe Schnitt wie bei
+   .sectionNote, Befund 29). */
+.belegungZusatz {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Ein abgesagter Termin verschwindet nicht, er wird durchgestrichen
+   (0035: "ein verschwundener Termin sieht aus wie ein Fehler in der
+   App"). Die Tatsache selbst traegt das Abzeichen daneben in --danger;
+   der Durchstrich ist die Wiederholung fuer das Auge, nicht der einzige
+   Traeger. Deshalb text-muted statt des text-faint im Artboard: der Titel
+   ist ein Link und bleibt anklickbar. */
+.abgesagt {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* "Termin anlegen" (TerminAnlegen.dc.html) ist der einzige Bildschirm des
+   Portals, dessen EIN Formular ueber MEHRERE Karten laeuft: "Termin" und
+   "Wiederholen" stehen als zwei Abschnitte untereinander, dazwischen die
+   Serienvorschau, und der Absendeknopf ganz unten gehoert zu allen dreien.
+   Sonst liegt es umgekehrt -- das Formular steckt IN einer Karte, und
+   AktionsFormular traegt sein <form> deshalb mit .sectionBody: 20 px
+   Polster und 16 px Abstand.
+
+   Hier ruecke dieses Polster die Karten 20 px weiter ein als jede andere
+   Karte des Portals. Also auf 0, und der Abstand kommt aus dem gap statt
+   aus den Aussenraendern der Kinder -- sonst laege der 32-px-Rand von
+   .section zusaetzlich obendrauf.
+
+   Als Nachfahrenregel und nicht als zweite Klasse an <form>: die Klasse
+   dort steht in Form.tsx, und Form.tsx bleibt in Aufgabe 22b
+   unangetastet. */
+.seitenformular > form {
+  padding: 0;
+  gap: var(--s24);
+}
+
+.seitenformular > form > section,
+.seitenformular > form > p {
+  margin-top: 0;
 }

@@ -2,36 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { abmelden } from "../actions";
+import type { RailZahlen } from "./catalog";
 import styles from "../portal.module.css";
 
-type ModelEintrag = {
-  id: string;
-  name: string;
-  geraete: number;
-  erreichbar: number;
-};
-
 /**
- * Die Rail nennt je Modell, wie viele seiner Geraete fuer Mitglieder
- * erreichbar sind -- erreichbar heisst: ein aktiver Tag klebt daran.
- *
- * Bewusst kein Vollstaendigkeitsgrad und keine Fortschrittsanzeige. Foto,
- * Video und Einstellparameter machen ein Geraet besser, aber ein Geraet ohne
- * sie ist vollstaendig nutzbar (Spec 6.8). Ein Balken, der auf 100 % zeigt,
- * waere eine Aufforderung, die das Produkt nicht stellt. Der aktive Tag ist
- * die einzige Bedingung, ohne die ein Mitglied das Geraet nicht findet --
- * und deshalb die einzige Zahl, die hier steht.
+ * Die feste Navigation des Portals -- sechs Bereiche in drei Gruppen, nicht
+ * mehr je ein Eintrag pro Geraetemodell (Struktur-Spec Abschnitt 1: bei
+ * fuenfzig Geraeten waere die alte Liste unbrauchbar geworden). Objekte
+ * leben jetzt auf ihren Listenseiten (/modelle, /geraete, /tags); die Rail
+ * zeigt nur noch Zahlen, die den Blick lenken.
  */
 export function Rail({
   studioId,
   studioName,
-  models,
-  offeneTags,
+  email,
+  zahlen,
 }: {
   studioId: string;
   studioName: string;
-  models: ModelEintrag[];
-  offeneTags: number;
+  email: string;
+  zahlen: RailZahlen;
 }) {
   const pfad = usePathname();
   const basis = `/portal/${studioId}`;
@@ -48,63 +39,81 @@ export function Rail({
 
       <div className={styles.group}>
         <h2 className={styles.groupLabel}>Studio</h2>
-        <Link href={basis} className={klasse(pfad === basis)}>
+        <Link
+          href={basis}
+          className={klasse(pfad === basis)}
+          aria-current={pfad === basis ? "page" : undefined}
+        >
           <span className={styles.navItemTitle}>Überblick</span>
         </Link>
-        <Link href={`${basis}/kurse`} className={klasse(pfad.startsWith(`${basis}/kurse`))}>
+        <Link
+          href={`${basis}/kurse`}
+          className={klasse(pfad.startsWith(`${basis}/kurse`))}
+          aria-current={pfad.startsWith(`${basis}/kurse`) ? "page" : undefined}
+        >
           <span className={styles.navItemTitle}>Kurse</span>
         </Link>
       </div>
 
       <div className={styles.group}>
-        <h2 className={styles.groupLabel}>Gerätemodelle</h2>
-        {models.length === 0 ? (
-          <p className={`${styles.navItem} ${styles.absent}`}>Noch keines angelegt</p>
-        ) : (
-          models.map((modell) => (
-            <Link
-              key={modell.id}
-              href={`${basis}/modelle/${modell.id}`}
-              className={klasse(pfad === `${basis}/modelle/${modell.id}`)}
-            >
-              <span className={styles.navItemTitle}>{modell.name}</span>
-              <span className={styles.navItemMeta}>
-                {modell.geraete === 0
-                  ? "Noch kein Gerät"
-                  : `${modell.geraete} ${modell.geraete === 1 ? "Gerät" : "Geräte"} · ${modell.erreichbar} erreichbar`}
-              </span>
-            </Link>
-          ))
-        )}
-        <Link href={`${basis}/modelle`} className={klasse(pfad === `${basis}/modelle`)}>
-          <span className={styles.navItemTitle}>Modell anlegen</span>
-        </Link>
-      </div>
-
-      <div className={styles.group}>
-        <h2 className={styles.groupLabel}>Übersicht</h2>
-        <Link href={`${basis}/geraete`} className={klasse(pfad === `${basis}/geraete`)}>
+        <h2 className={styles.groupLabel}>Katalog</h2>
+        <Link
+          href={`${basis}/geraete`}
+          className={klasse(pfad === `${basis}/geraete`)}
+          aria-current={pfad === `${basis}/geraete` ? "page" : undefined}
+        >
           <span className={styles.navItemTitle}>Geräte</span>
+          <span className={styles.navItemMeta}>
+            {zahlen.geraete === 0 ? "Noch kein Gerät" : `${zahlen.geraete} · ${zahlen.erreichbar} erreichbar`}
+          </span>
         </Link>
-        <Link href={`${basis}/tags`} className={klasse(pfad === `${basis}/tags`)}>
+        <Link
+          href={`${basis}/tags`}
+          className={klasse(pfad === `${basis}/tags`)}
+          aria-current={pfad === `${basis}/tags` ? "page" : undefined}
+        >
           <span className={styles.navItemTitle}>Tags</span>
           <span className={styles.navItemMeta}>
-            {offeneTags === 0 ? "Keine vorrätig" : `${offeneTags} vorrätig`}
+            {zahlen.vorrat === 0 ? "Keine vorrätig" : `${zahlen.vorrat} vorrätig`}
           </span>
         </Link>
       </div>
 
       <div className={styles.group}>
         <h2 className={styles.groupLabel}>Verwaltung</h2>
-        <Link href={`${basis}/leute`} className={klasse(pfad === `${basis}/leute`)}>
+        {/* startsWith, nicht Gleichheit: Leute traegt seit Aufgabe 19 zwei
+            Reiter auf zwei Routen (/leute und /leute/mitarbeiter). Mit
+            Gleichheit verloere die Rail auf dem zweiten Reiter ihre
+            Markierung -- so wie Kurse und Einstellungen es aus demselben
+            Grund schon halten. */}
+        <Link
+          href={`${basis}/leute`}
+          className={klasse(pfad.startsWith(`${basis}/leute`))}
+          aria-current={pfad.startsWith(`${basis}/leute`) ? "page" : undefined}
+        >
           <span className={styles.navItemTitle}>Leute</span>
+          {zahlen.mitglieder === null || zahlen.mitarbeiter === null ? null : (
+            <span className={styles.navItemMeta}>
+              {zahlen.mitglieder} Mitglieder · {zahlen.mitarbeiter} Mitarbeiter
+            </span>
+          )}
         </Link>
         <Link
           href={`${basis}/einstellungen`}
           className={klasse(pfad.startsWith(`${basis}/einstellungen`))}
+          aria-current={pfad.startsWith(`${basis}/einstellungen`) ? "page" : undefined}
         >
           <span className={styles.navItemTitle}>Einstellungen</span>
         </Link>
+      </div>
+
+      <div className={styles.railFooter}>
+        <div className={styles.railEmail}>{email}</div>
+        <form action={abmelden}>
+          <button type="submit" className={styles.railAbmelden}>
+            Abmelden
+          </button>
+        </form>
       </div>
     </nav>
   );

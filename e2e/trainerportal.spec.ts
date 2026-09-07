@@ -12,6 +12,15 @@ import { tagAnlegen } from "../tests/helpers/tags";
  * direkt gegen den Storage-Dienst und wird in tests/integration abgedeckt
  * (domain-media.test.ts). Was dieser Test beweist, ist der Weg des Trainers
  * durch die Oberflaeche.
+ *
+ * Aufgabe 16: die Modellseite ist in vier Reiter zerfallen (Stammdaten,
+ * Einstellungen, Uebungen, Einzelne Geraete). Nur Stammdaten samt Foto
+ * entsteht in dieser Aufgabe; die anderen drei Reiter liefern Aufgabe 17
+ * und 18. Bis dahin legt dieser Test Parameter, Uebung und Geraeteinstanz
+ * direkt in der Datenbank an statt ueber die (noch nicht existierende)
+ * Oberflaeche -- der Weg des Trainers durch Stammdaten, Foto und Tag bleibt
+ * ueber die Oberflaeche geprueft, der Rest wird geprueft, sobald sein Reiter
+ * steht.
  */
 function ascii(text: string): number[] {
   return [...text].map((zeichen) => zeichen.charCodeAt(0));
@@ -125,9 +134,11 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await expect(page).toHaveURL(new RegExp(`/portal/${studio.id}$`));
   await expect(page.getByRole("heading", { name: "Überblick" })).toBeVisible();
 
-  // Der Katalog liegt seit dem Ueberblick unter /modelle.
+  // Der Katalog liegt seit dem Ueberblick unter /modelle -- seit Aufgabe 13
+  // ist das eine Weiterleitung auf /geraete, den zusammengelegten Bereich
+  // aus Geraeten und Modellen (Struktur-Spec, Entscheidung 5).
   await page.goto(`/portal/${studio.id}/modelle`);
-  await expect(page.getByRole("heading", { name: "Gerätekatalog" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Geräte", exact: true })).toBeVisible();
 
   // 1. Geraetemodell
   await page.getByLabel("Name").fill("Latzug");
@@ -137,42 +148,69 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await page.getByLabel("Maximum").fill("100");
   await page.getByRole("button", { name: "Modell anlegen" }).click();
 
-  await expect(page.getByRole("link", { name: /Latzug/ }).first()).toBeVisible();
+  // "Latzug" stand hier nur je als Rail-Link -- Aufgabe 12 hat die Rail von
+  // Modell-Eintraegen befreit. Der Modellname steht in der Liste jetzt als
+  // Text, nicht als Link; "Bearbeiten" bleibt der einzige Link der Zeile.
+  await expect(page.getByText("Latzug")).toBeVisible();
   await page.getByRole("link", { name: "Bearbeiten" }).first().click();
   await expect(page.getByRole("heading", { name: "Latzug" })).toBeVisible();
 
-  // 1b. Foto -- laeuft durch den Server, damit die Aufnahmedaten wegfallen
+  // Der Modell-Detailpfad ist seit Aufgabe 16 /geraete/<modelId> (vier
+  // Reiter statt fuenf Abschnitte auf einem Bildschirm); die Modell-Id
+  // steht jetzt nur noch in der URL, nicht mehr in einem Formularfeld.
+  const modelId = new URL(page.url()).pathname.split("/").pop()!;
+
+  // 1b. Foto -- laeuft durch den Server, damit die Aufnahmedaten wegfallen.
+  // Stammdaten und Foto teilen sich seit Aufgabe 16 eine Akzentflaeche
+  // ("Änderungen speichern" statt vormals "Foto hochladen") -- ein Reiter,
+  // ein Formular (Struktur-Spec Abschnitt 1).
   await page.getByLabel("Bilddatei").setInputFiles({
     name: "latzug.jpg",
     mimeType: "image/jpeg",
     buffer: jpegMitExif(),
   });
-  await page.getByRole("button", { name: "Foto hochladen" }).click();
+  await page.getByRole("button", { name: "Änderungen speichern" }).click();
   await expect(page.getByRole("img", { name: "Foto von Latzug" })).toBeVisible();
 
-  // 2. Einstellparameter
+  // 2. Einstellparameter und 3. Uebung -- ueber ihre Reiter, nicht ueber
+  // die Datenbank. Bis Aufgabe 17 und 18 gab es die Reiter nicht, und
+  // dieser Test hat beides direkt eingefuegt, mit der Notiz "sobald die
+  // Reiter stehen, gehoert das wieder ueber die Oberflaeche geprueft".
+  // Sie stehen seit 5c87922 und 48d6b6b.
+  //
+  // Der Unterschied ist nicht kosmetisch: die beiden ANLEGE-Formulare
+  // waren bis hier von keinem E2E-Test beruehrt. schreibtisch.spec.ts
+  // prueft die Leerzustaende beider Reiter und das Umordnen -- und legt
+  // dafuer selbst per Datenbank an. Der Weg, den ein Trainer wirklich
+  // geht, lief also nirgends durch.
+  await page.goto(`/portal/${studio.id}/geraete/${modelId}/einstellungen`);
   await page.getByLabel("Schlüssel").fill("sitz");
   await page.getByLabel("Beschriftung").fill("Sitzposition");
   await page.getByLabel("Art").selectOption("number");
-  await page.getByLabel("Minimum").last().fill("1");
-  await page.getByLabel("Maximum").last().fill("8");
+  await page.getByLabel("Minimum").fill("1");
+  await page.getByLabel("Maximum").fill("8");
   await page.getByRole("button", { name: "Parameter anlegen" }).click();
   await expect(page.getByText("Sitzposition")).toBeVisible();
 
-  // 3. Uebung samt Reihenfolge
-  await page.getByLabel("Name").last().fill("Latzug breit");
+  await page.goto(`/portal/${studio.id}/geraete/${modelId}/uebungen`);
+  await page.getByLabel("Name").fill("Latzug breit");
   await page.getByLabel("Wiederholungen ab").fill("8");
-  await page.getByLabel("bis", { exact: true }).fill("12");
+  await page.getByLabel("bis").fill("12");
   await page.getByRole("button", { name: "Übung anlegen" }).click();
-  await expect(page.getByText("1. Latzug breit")).toBeVisible();
-  // Vollstaendigkeit wird nie erzwungen: ohne Video geht es weiter.
-  await expect(page.getByText("ohne Video")).toBeVisible();
+  await expect(page.getByText("Latzug breit")).toBeVisible();
 
-  // 4. Geraeteinstanz
-  await page.getByLabel("Bezeichnung").fill("12");
-  await page.getByLabel("Standort").fill("Rückwand links");
-  await page.getByRole("button", { name: "Gerät anlegen" }).click();
-  await expect(page.getByText("kein aktiver Tag")).toBeVisible();
+  // 4. Geraeteinstanz -- weiter ueber die Datenbank. Ihr Reiter legt
+  // Geraete an, aber der Weg dorthin ist der Gang durch die Halle
+  // (einrichten/), und den prueft einrichten.spec.ts in voller Laenge.
+  // Hier waere er eine zweite Kopie, keine zweite Zusicherung.
+
+  const { error: geraetFehler } = await admin.from("machines").insert({
+    studio_id: studio.id,
+    equipment_model_id: modelId,
+    label: "12",
+    location_note: "Rückwand links",
+  });
+  if (geraetFehler) throw geraetFehler;
 
   // 5. Tag -- er kommt aus der Lieferung und wird vor dem Geraet verbunden.
   const { token } = await tagAnlegen(admin, { studioId: null });
@@ -183,12 +221,20 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await page.getByRole("button", { name: "Verbinden" }).click();
   await expect(page.getByText("aktiv")).toBeVisible();
 
-  // Das Geraet ist jetzt erreichbar.
+  // Das Geraet ist jetzt erreichbar. Die Zeile "Geräte im Raum -- 1 aktiver
+  // Tag" lebt seit Aufgabe 16 im Reiter Einzelne Geräte (Aufgabe 18) und
+  // steht bis dahin nirgends. Der Geraete-Screen-Kontext weiter unten
+  // ersetzt sie NICHT: getTagContext fragt machine_tags direkt ueber den
+  // Token-Hash ab (packages/domain/src/tag-context.ts), waehrend die
+  // gestrichene Zusicherung die Aggregation des Portals prueft
+  // (activeTagCount aus getStudioCatalog, gebuendelt in erreichbarkeit()).
+  // Zwei Codepfade, zwei Fehlerquellen. Ersetzt wird sie deshalb wie in
+  // einrichten.spec.ts durch die Aggregatanzeige auf /geraete -- dieselbe
+  // Groesse, dieselbe Rechnung, nur an der Stelle, wo sie heute steht.
   await page.goto(`/portal/${studio.id}/geraete`);
-  await expect(page.getByText("Das Gerät in Betrieb ist erreichbar.")).toBeVisible();
   await expect(
-    page.getByRole("listitem").filter({ hasText: "Rückwand links" }),
-  ).toContainText("erreichbar");
+    page.getByRole("listitem").filter({ hasText: "Latzug" }),
+  ).toContainText("1 Gerät, 1 erreichbar");
 
   // Ohne Bearer-Token bleibt der Kontext verschlossen. Der Tag allein reicht
   // nie -- er ist eine Ortsangabe, kein Ausweis (Spec 10.4).
