@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireUserId } from "./auth.js";
 import { DomainError } from "./errors.js";
 import { requireStudioStaff } from "./studio.js";
+import { hashTagToken, isValidTagToken } from "./tags.js";
 
 /**
  * Leute -- Mitglieder und Mitarbeiter eines Studios, Spec
@@ -68,6 +69,50 @@ export async function joinStudioByCode(
     throw new DomainError("not_found", "Dieser Code ist ungueltig.");
   }
   return { studioId: zeile.studio_id, joined: zeile.joined };
+}
+
+/**
+ * Gegenstueck zu joinStudioByCode fuer den Scan-Weg. Der rohe Token wird nur
+ * gehasht verwendet, nie protokolliert (Spec 10.4) -- derselbe Umgang wie in
+ * tag-context.ts.
+ */
+export async function joinStudioByTag(
+  client: SupabaseClient,
+  token: string,
+): Promise<{ studioId: string; machineId: string | null; joined: boolean }> {
+  if (!isValidTagToken(token)) {
+    throw new DomainError("validation_failed", "Der Token hat ein ungueltiges Format.");
+  }
+  const { data, error } = await client.rpc("join_studio_by_tag", {
+    p_token_hash: hashTagToken(token),
+  });
+  if (error) throw new DomainError("internal", error.message);
+  const row = (data ?? [])[0] as
+    | { studio_id: string; machine_id: string | null; joined: boolean }
+    | undefined;
+  if (!row) {
+    throw new DomainError("not_found", "Dieser Tag ist ungueltig.");
+  }
+  return { studioId: row.studio_id, machineId: row.machine_id, joined: row.joined };
+}
+
+/**
+ * Selbstaustritt (0024_membership_self_leave.sql) -- eine reine DELETE-Policy
+ * auf role = 'member', kein RPC. Der explizite user_id-Filter hier ist
+ * Verteidigung in der Tiefe, die Policy erzwingt es ohnehin.
+ */
+export async function leaveStudio(client: SupabaseClient, studioId: string): Promise<void> {
+  const userId = await requireUserId(client);
+  const { error, count } = await client
+    .from("studio_memberships")
+    .delete({ count: "exact" })
+    .eq("studio_id", studioId)
+    .eq("user_id", userId)
+    .eq("role", "member");
+  if (error) throw new DomainError("internal", error.message);
+  if (!count) {
+    throw new DomainError("not_found", "Keine Mitgliedschaft zum Entfernen gefunden.");
+  }
 }
 
 export async function regenerateStudioJoinCode(

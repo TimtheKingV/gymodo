@@ -1,0 +1,11 @@
+// Kopieren nach Config.xcconfig (gitignored) und SUPABASE_ANON_KEY aus dem
+// Supabase-Dashboard eintragen: Project Settings -> API -> anon/public key.
+// Dieselbe Trennung wie apps/web/.env.local.example -- keine Schluessel im Repo.
+//
+// Hinweis: In .xcconfig-Dateien leitet "//" einen Kommentar ein, auch mitten
+// im Wert -- ohne das leere Makro "$()" zwischen den beiden Schraegstrichen
+// wuerde "https://..." zu "https:" abgeschnitten. Nach der Makro-Expansion
+// steht wieder die normale URL im Info.plist.
+SUPABASE_URL = https:/$()/hverawzrwjgztolxuose.supabase.co
+SUPABASE_ANON_KEY = <anon key aus dem Supabase-Dashboard>
+API_BASE_URL = https:/$()/gymodo-web.vercel.app/api/v1

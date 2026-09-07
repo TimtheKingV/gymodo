@@ -97,6 +97,8 @@ export type {
 } from "./progression.js";
 export {
   joinStudioByCode,
+  joinStudioByTag,
+  leaveStudio,
   listStudioMembers,
   regenerateStudioJoinCode,
   removeMembership,
