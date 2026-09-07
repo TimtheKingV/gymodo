@@ -46,7 +46,9 @@
 		C646BDD9DDB5825D52BF9AFA /* LabeledField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D512A8A7F6C5D60CF41B25 /* LabeledField.swift */; };
 		CFADE9B7B1518A3F6DF0E7E7 /* ExerciseProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E2DF311877D3BA39FFA5D5 /* ExerciseProgress.swift */; };
 		D0068DB5B484876E3D0083E7 /* EmailValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D79138C4B32315198E734356 /* EmailValidator.swift */; };
+		D6412EE84EF83B2BB46E6912 /* LoginCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDEF31B56AE35C7453FC34B9 /* LoginCodeView.swift */; };
 		D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78C8636341914B90296B220 /* AppConfigTests.swift */; };
+		DCC5E98028ED224D32C6FAA5 /* CodeDigitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */; };
 		E2ECF1FE835571FFD6617303 /* SecondaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */; };
 		E7A45EB36FF558A4EFDA9A14 /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A36C578F3E7767ABE5EE6B6 /* AuthError.swift */; };
 		EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */; };
@@ -79,6 +81,7 @@
 		1E651ABDF81EA57E18D7363D /* CatalogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogStore.swift; sourceTree = "<group>"; };
 		218ADC42D32AAB9758D0AB91 /* LoginMailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginMailView.swift; sourceTree = "<group>"; };
 		22E2DF311877D3BA39FFA5D5 /* ExerciseProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseProgress.swift; sourceTree = "<group>"; };
+		25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeDigitsView.swift; sourceTree = "<group>"; };
 		26B414241FEB56BDD45194AA /* PendingTagStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingTagStore.swift; sourceTree = "<group>"; };
 		2DC3378D45751B2BE6267611 /* AuthCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthCopy.swift; sourceTree = "<group>"; };
 		2F5420FC0962C00F11FFCD65 /* PrimaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimaryButton.swift; sourceTree = "<group>"; };
@@ -118,6 +121,7 @@
 		D79138C4B32315198E734356 /* EmailValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailValidator.swift; sourceTree = "<group>"; };
 		D922539BB579EDDA0F7747CD /* ErrorEnvelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorEnvelope.swift; sourceTree = "<group>"; };
 		DB8CC4AA1ADA4ED3E6D39207 /* CatalogStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogStoreTests.swift; sourceTree = "<group>"; };
+		DDEF31B56AE35C7453FC34B9 /* LoginCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginCodeView.swift; sourceTree = "<group>"; };
 		E07C7F4A13CB277BC11B8D77 /* PendingWriteStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingWriteStoreTests.swift; sourceTree = "<group>"; };
 		E82F1E9C17FC9A2A3742B15D /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
 		EAEDFB14623AE11C1FD67B11 /* FitnessMember.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FitnessMember.entitlements; sourceTree = "<group>"; };
@@ -205,6 +209,7 @@
 			children = (
 				36E18F6CFDF1DABC8AD02A99 /* Card.swift */,
 				1B227508179FE62A4DAA06A0 /* Chip.swift */,
+				25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */,
 				13D8C4AC64870FF3423C494F /* InlineBanner.swift */,
 				58D512A8A7F6C5D60CF41B25 /* LabeledField.swift */,
 				2F5420FC0962C00F11FFCD65 /* PrimaryButton.swift */,
@@ -281,6 +286,7 @@
 		9CB2765C25DB11B14DE97D94 /* Zugang */ = {
 			isa = PBXGroup;
 			children = (
+				DDEF31B56AE35C7453FC34B9 /* LoginCodeView.swift */,
 				218ADC42D32AAB9758D0AB91 /* LoginMailView.swift */,
 			);
 			path = Zugang;
@@ -414,6 +420,7 @@
 				206D113D8EEB2FF4D9BF05EB /* CatalogLoadState.swift in Sources */,
 				39876DCABA0D4C90A172BF11 /* CatalogStore.swift in Sources */,
 				F9DAC3407A000DEDA7092660 /* Chip.swift in Sources */,
+				DCC5E98028ED224D32C6FAA5 /* CodeDigitsView.swift in Sources */,
 				7FB375254AEA40DEEE4AE229 /* CodeEntry.swift in Sources */,
 				50892766C4CFC62D0B93452B /* Color+Hex.swift in Sources */,
 				4F9AF0046553808E8C5030BD /* ContentView.swift in Sources */,
@@ -425,6 +432,7 @@
 				750CEBE3A0D07E711D31D94F /* InlineBanner.swift in Sources */,
 				B8218DBF6B9B3168086F00E6 /* JSONValue.swift in Sources */,
 				C646BDD9DDB5825D52BF9AFA /* LabeledField.swift in Sources */,
+				D6412EE84EF83B2BB46E6912 /* LoginCodeView.swift in Sources */,
 				2867121C23926588568A4707 /* LoginMailView.swift in Sources */,
 				B68C2AD5B96D1812B2F124A0 /* PasswordPolicy.swift in Sources */,
 				F8A612A78D2961610EE47839 /* PendingSetWrite.swift in Sources */,
