@@ -58,10 +58,12 @@ struct MemberPasswortView: View {
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
                     }
-                    LabeledField(label: "Code") {
+                    VStack(alignment: .leading, spacing: 9) {
+                        Text("Code".uppercased())
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(DesignSystem.Color.textMuted)
                         CodeDigitsView(entry: $code)
                     }
-                    .frame(height: nil)
                     LabeledField(label: "Neues Passwort") {
                         SecureField("••••••••••", text: $newPassword)
                     }
