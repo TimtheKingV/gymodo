@@ -13,7 +13,7 @@ import { tagsAnlegen } from "../helpers/tags.js";
 
 let studioId: string;
 let joinCode: string;
-let machineTagToken: string;
+let studioTagToken: string;
 let memberBearer: string;
 
 function jsonRequest(url: string, body: unknown, auth?: string): Request {
@@ -39,8 +39,14 @@ beforeAll(async () => {
   studioId = studio.id;
   joinCode = studio.join_code;
 
-  machineTagToken = createTagToken();
-  await tagsAnlegen(admin, [{ studioId, token: machineTagToken, status: "active" }]);
+  // Ein Aushang-Tag (kind: "studio") braucht keine machine_id -- anders als ein
+  // Geraete-Tag, dessen Check-Constraint (0022_studio_tags.sql,
+  // machine_tags_machine_kind) fuer status = 'active' eine gesetzte machine_id
+  // verlangt. Ein Aushang am Eingang ist ein regulaerer join_studio_by_tag-Fall
+  // (siehe join-studio-by-tag.test.ts, "liefert beim Aushang ein Studio ohne
+  // Geraet") und spart hier das Anlegen einer machines-Zeile nur fuer die Fixture.
+  studioTagToken = createTagToken();
+  await tagsAnlegen(admin, [{ studioId, kind: "studio", token: studioTagToken, status: "active" }]);
 
   const email = uniqueEmail("beitrittapi-member");
   await createTestUser(email);
@@ -68,15 +74,16 @@ describe("POST /api/v1/studios/join-by-code", () => {
 });
 
 describe("POST /api/v1/studios/join-by-tag", () => {
-  it("tritt einem Studio ueber einen Geraete-Tag bei", async () => {
+  it("tritt einem Studio ueber einen Aushang-Tag bei", async () => {
     const email = uniqueEmail("beitrittapi-tag-member");
     await createTestUser(email);
     const bearer = await accessTokenFor(email);
 
-    const response = await joinByTag(jsonRequest("http://localhost/api/v1/studios/join-by-tag", { tagToken: machineTagToken }, bearer));
+    const response = await joinByTag(jsonRequest("http://localhost/api/v1/studios/join-by-tag", { tagToken: studioTagToken }, bearer));
     expect(response.status).toBe(200);
-    const payload = (await response.json()) as { studioId: string; joined: boolean };
+    const payload = (await response.json()) as { studioId: string; machineId: string | null; joined: boolean };
     expect(payload.studioId).toBe(studioId);
+    expect(payload.machineId).toBeNull();
     expect(payload.joined).toBe(true);
   });
 
