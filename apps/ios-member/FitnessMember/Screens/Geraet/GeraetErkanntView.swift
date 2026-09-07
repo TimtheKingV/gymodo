@@ -103,8 +103,16 @@ struct GeraetErkanntView: View {
 
     /// Ab zwei Besuchen steht die zuletzt genutzte Uebung oben
     /// (designsystem.md SS8).
+    ///
+    /// sorted(by:) verlangt Irreflexivitaet: fuer gleiche Elemente muss der
+    /// Vergleich false liefern. "a == Ziel" verletzt das (ein Treffer mit
+    /// sich selbst verglichen liefert true) -- funktioniert nur zufaellig,
+    /// weil es genau einen Treffer gibt und sortieren stabil ist. Diese
+    /// Form ist fuer jede Eingabe eine gueltige schwache Ordnung.
     private var sortierteUebungen: [GeraetUebung] {
-        modell.uebungen.sorted { links, _ in links.id == modell.uebungId }
+        modell.uebungen.sorted { a, b in
+            a.id == modell.uebungId && b.id != modell.uebungId
+        }
     }
 
     private func zeile(_ uebung: GeraetUebung) -> some View {
@@ -135,15 +143,31 @@ struct GeraetErkanntView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
 
+    /// Drei Zustaende, nicht zwei: die aktive Zeile mit Historie traegt das
+    /// Wort "zuletzt", jede andere Zeile mit Historie nicht -- sonst stuende
+    /// "zuletzt" auf zwei Zeilen gleichzeitig und waere bedeutungslos. Das
+    /// Alter ("vor 8 Tagen") sagt, wie verlaesslich die Zahl noch ist,
+    /// bevor man die Scheiben auflegt.
     private func untertitel(_ uebung: GeraetUebung) -> String {
-        if let letzter = letzterSatz(uebung.id) {
-            return "zuletzt · \(Zahlformat.gewichtMitEinheit(letzter))"
+        guard let letztesGewicht = modell.letztesGewicht(fuer: uebung.id) else {
+            return "Noch nie · Ziel \(uebung.targetRepsMin) – \(uebung.targetRepsMax) Wdh."
         }
-        return "Noch nie · Ziel \(uebung.targetRepsMin) – \(uebung.targetRepsMax) Wdh."
+        let gewichtText = Zahlformat.gewichtMitEinheit(letztesGewicht)
+        let alter = altersangabe(fuer: uebung.id)
+        if uebung.id == modell.uebungId {
+            return ["zuletzt · \(gewichtText)", alter].compactMap { $0 }.joined(separator: " ")
+        }
+        return [gewichtText, alter].compactMap { $0 }.joined(separator: " · ")
     }
 
-    private func letzterSatz(_ uebungId: String) -> Double? {
-        modell.letztesGewicht(fuer: uebungId)
+    /// "heute" statt "vor 0 Tagen" -- Letzteres liest sich wie ein
+    /// Rechenfehler. Ohne Historie oder mit einem Datum, das sich nicht
+    /// parsen laesst, faellt die Alterangabe ganz weg statt eine falsche
+    /// Zahl zu zeigen.
+    private func altersangabe(fuer uebungId: String) -> String? {
+        guard let tage = modell.letzteNutzungInTagen(fuer: uebungId) else { return nil }
+        if tage <= 0 { return "heute" }
+        return tage == 1 ? "vor 1 Tag" : "vor \(tage) Tagen"
     }
 
     private var hinweis: some View {

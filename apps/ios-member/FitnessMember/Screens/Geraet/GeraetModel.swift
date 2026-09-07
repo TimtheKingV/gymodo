@@ -219,6 +219,17 @@ final class GeraetModel {
         }?.weightKg
     }
 
+    /// Ganze Tage seit dem letzten Satz -- "vor 8 Tagen" in der
+    /// Uebungsliste sagt dem Mitglied, wie alt die Zahl ist, bevor es die
+    /// Scheiben auflegt. nil ohne Historie oder wenn performedAt sich nicht
+    /// parsen laesst; die Zeile zeigt dann nur das Gewicht.
+    func letzteNutzungInTagen(fuer uebungId: String) -> Int? {
+        guard let letzter = bootstrap.lastSets.first(where: {
+            $0.machineId == maschine.id && $0.exerciseId == uebungId
+        }), let datum = ISO8601DateFormatter().date(from: letzter.performedAt) else { return nil }
+        return Calendar.current.dateComponents([.day], from: datum, to: Date()).day
+    }
+
     var istErstkontakt: Bool {
         GeraetEinstiegRechner.istErstkontakt(
             hatKalibrierung: GeraetEinstiegRechner.hatKalibrierung(
