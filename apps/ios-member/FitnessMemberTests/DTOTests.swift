@@ -33,8 +33,8 @@ struct DTOTests {
           "studios": [{"id":"s1","name":"Kraftwerk Nord","timezone":"Europe/Berlin"}],
           "machines": [{
             "id":"m1","studioId":"s1","label":"07","locationNote":null,"status":"active",
-            "tokenHashes":["abc"],
-            "equipmentModel":{"id":"e1","name":"Beinpresse","manufacturer":null,"photoPath":null,"weightStepKg":2.5,"minWeightKg":10,"maxWeightKg":200},
+            "tokenHashes":["abc"],"visitCount":0,
+            "equipmentModel":{"id":"e1","name":"Beinpresse","manufacturer":null,"photoPath":null,"weightStepKg":2.5,"minWeightKg":10,"maxWeightKg":200,"settingDefinitions":[]},
             "exercises":[{"id":"ex1","name":"Beidbeinig","targetRepsMin":8,"targetRepsMax":12}]
           }],
           "calibrations": [{"machineId":"m1","exerciseId":"ex1","settingValues":{"sitz":3},"schemaVersion":1,"createdAt":"2026-09-01T10:00:00Z"}],
@@ -45,6 +45,38 @@ struct DTOTests {
         #expect(response.studios.count == 1)
         #expect(response.machines[0].equipmentModel.weightStepKg == 2.5)
         #expect(response.calibrations[0].settingValues == .object(["sitz": .number(3)]))
+    }
+
+    @Test func bootstrapDecodiertVisitCount() throws {
+        let json = """
+        {
+          "studios": [],
+          "machines": [{
+            "id": "m1", "studioId": "s1", "label": "Gerät 7",
+            "locationNote": null, "status": "active",
+            "tokenHashes": ["abc"], "visitCount": 3,
+            "equipmentModel": {
+              "id": "em1", "name": "Beinpresse", "manufacturer": null,
+              "photoPath": null, "weightStepKg": 2.5,
+              "minWeightKg": 5.0, "maxWeightKg": 150.0,
+              "settingDefinitions": [{
+                "key": "sitz", "label": "Sitzposition", "kind": "number",
+                "minValue": 1, "maxValue": 8, "stepValue": 1,
+                "unit": null, "allowedValues": null
+              }]
+            },
+            "exercises": []
+          }],
+          "calibrations": [],
+          "lastSets": []
+        }
+        """.data(using: .utf8)!
+
+        let bootstrap = try JSONDecoder().decode(BootstrapResponse.self, from: json)
+
+        #expect(bootstrap.machines[0].visitCount == 3)
+        // Ohne die Beschriftung zeigt der Offline-Zustand "sitz 4" statt "Sitz 4".
+        #expect(bootstrap.machines[0].equipmentModel.settingDefinitions.first?.label == "Sitzposition")
     }
 
     @Test("dekodiert einen TagContextResponse mit leerer Historie")
