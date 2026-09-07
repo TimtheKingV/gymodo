@@ -87,6 +87,16 @@ export type {
   RecordSetInput,
   RecordedSet,
 } from "./workout.js";
+export {
+  recordCalibration,
+  recordCalibrationInputSchema,
+  pruefeEinstellwerte,
+} from "./calibration.js";
+export type {
+  RecordCalibrationInput,
+  RecordedCalibration,
+  EinstellDefinition,
+} from "./calibration.js";
 export type {
   BlockInput,
   ProgressionInput,
