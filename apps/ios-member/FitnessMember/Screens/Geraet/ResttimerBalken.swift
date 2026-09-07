@@ -11,6 +11,17 @@ struct ResttimerBalken: View {
     let beiVerlaengern: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Der gedrosselte Ansagetext (SS12). Ein eigener Task-Takt statt einer
+    /// zweiten TimelineView, damit der Sekundentakt der sichtbaren Anzeige
+    /// unangetastet bleibt -- kein verschachtelter Renderer, dessen
+    /// Ueberleben ueber den 15-Sekunden-Rebuild hinweg unspezifiziert waere.
+    @State private var ansage: String
+
+    init(timer: Resttimer, beiVerlaengern: @escaping () -> Void) {
+        self.timer = timer
+        self.beiVerlaengern = beiVerlaengern
+        _ansage = State(initialValue: timer.gesprochen())
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
@@ -28,7 +39,6 @@ struct ResttimerBalken: View {
             }
 
             balken
-                .frame(height: 4)
 
             HStack {
                 Text("Läuft weiter, auch wenn du wegsiehst.")
@@ -54,30 +64,43 @@ struct ResttimerBalken: View {
         .accessibilityElement(children: .contain)
     }
 
-    /// Zwei Takte statt einem: der sichtbare Fortschritt laeuft sekuendlich,
-    /// die VoiceOver-Ansage auf einem eigenen 15-Sekunden-Takt (SS12) --
-    /// eine 1:1-Kopplung an die sekuendliche Anzeige waere unbenutzbar.
-    /// Der Balken traegt sonst keinen Accessibility-Inhalt und ist damit
-    /// ein echtes, erreichbares Element fuer die Ansage -- kein 1x1-Trick.
+    /// Zwei Takte statt einem: der sichtbare Fortschritt laeuft sekuendlich
+    /// ueber diese eine, ungeschachtelte TimelineView; die VoiceOver-Ansage
+    /// haengt an keiner zweiten TimelineView, sondern an einem Task-Takt
+    /// unten -- die beiden Cadences beeinflussen sich dadurch strukturell
+    /// nicht. Der Balken traegt sonst keinen Accessibility-Inhalt und ist
+    /// damit ein echtes, erreichbares Element fuer die Ansage.
     private var balken: some View {
-        TimelineView(.periodic(from: .now, by: 15)) { langsam in
-            TimelineView(.periodic(from: .now, by: 1)) { schnell in
-                GeometryReader { rahmen in
-                    ZStack(alignment: .leading) {
-                        Rectangle().fill(DesignSystem.Color.line)
-                        Rectangle()
-                            .fill(DesignSystem.Color.accent)
-                            .frame(width: rahmen.size.width * timer.anteil(jetzt: schnell.date))
-                            .animation(reduceMotion ? nil : .linear(duration: 1),
-                                       value: timer.anteil(jetzt: schnell.date))
-                    }
+        TimelineView(.periodic(from: .now, by: 1)) { zeit in
+            GeometryReader { rahmen in
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(DesignSystem.Color.line)
+                    Rectangle()
+                        .fill(DesignSystem.Color.accent)
+                        .frame(width: rahmen.size.width * timer.anteil(jetzt: zeit.date))
+                        .animation(reduceMotion ? nil : .linear(duration: 1),
+                                   value: timer.anteil(jetzt: zeit.date))
                 }
-                .clipShape(Capsule())
             }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Pause")
-            .accessibilityValue(timer.gesprochen(langsam.date))
-            .accessibilityAddTraits(.updatesFrequently)
+            .clipShape(Capsule())
+        }
+        .frame(height: 4)
+        .accessibilityElement(children: .ignore)
+        // designsystem.md SS12: der ganze Satz ist das Label, nicht Label
+        // plus Value -- eine Value-Kopplung neben "gesprochen" (das selbst
+        // schon mit "Pause" beginnt) wuerde die Ansage verdoppeln.
+        .accessibilityLabel(ansage)
+        .accessibilityAddTraits(.updatesFrequently)
+        // Auf 15 s gedrosselt (SS12): eine 1:1-Kopplung an die sekuendliche
+        // Anzeige waere fuer VoiceOver unbenutzbar. Neu ab dem jeweiligen
+        // Endzeitpunkt gekeyed, damit "+30 s" (das einen neuen Resttimer
+        // erzeugt) die Ansage neu startet statt den alten Countdown fortzufuehren.
+        .task(id: timer.endetAm) {
+            while !Task.isCancelled {
+                ansage = timer.gesprochen()
+                guard timer.laeuft() else { break }
+                try? await Task.sleep(for: .seconds(15))
+            }
         }
     }
 
