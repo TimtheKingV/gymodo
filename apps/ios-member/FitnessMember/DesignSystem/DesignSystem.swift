@@ -50,9 +50,6 @@ enum DesignSystem {
         static let uebungsname = Font.system(size: 17, weight: .semibold)
         static let wertSekundaer = Font.system(size: 19, weight: .black).monospacedDigit()
         static let fliesstext = Font.system(size: 15, weight: .regular)
-        /// Nachbarn im Rad, designsystem.md SS7: 30pt und 26pt.
-        static let radNah = Font.system(size: 30, weight: .black).monospacedDigit()
-        static let radFern = Font.system(size: 26, weight: .black).monospacedDigit()
     }
 
     /// Die vier Momente, die wir selbst fahren. Momentum, Deceleration,
