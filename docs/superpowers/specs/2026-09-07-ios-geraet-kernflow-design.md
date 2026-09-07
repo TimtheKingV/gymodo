@@ -29,7 +29,7 @@ Zwei Zusagen aus der SP1-Spec sind ebenfalls nicht gebaut und fallen hierher, we
 
 **Enthalten:**
 
-- Server: `bootstrap` um `machines[].visitCount` erweitern (Abschnitt 4.1); neuer Endpoint `POST /api/v1/me/calibrations` (Abschnitt 4.2)
+- Server: `bootstrap` um `machines[].visitCount` (Abschnitt 4.1) und `machines[].equipmentModel.settingDefinitions` (Abschnitt 4.1b) erweitern; neuer Endpoint `POST /api/v1/me/calibrations` (Abschnitt 4.2)
 - iOS: `WorkoutSessionStore` (laufende Einheit, auf Platte persistiert), `NetzwerkMonitor`, `MachineResolver` (lokale Token-Auflösung), Einstiegsentscheidung als reine Funktion
 - iOS: `RastRad` als wiederverwendbare Komponente, Press-Feedback als `ButtonStyle` im `DesignSystem`
 - Die zehn Gerät-Artboards, umgesetzt als sechs Views (Abschnitt 7)
@@ -60,7 +60,7 @@ Die Wurzel bleibt bewusst schmucklos: Scan-Button, Blockliste der laufenden Sess
 
 ## 4. Server-Anteil
 
-Zwei Änderungen. Beide sind klein, aber ohne sie ist der Flow nicht baubar.
+Drei Änderungen. Alle klein, aber ohne sie ist der Flow nicht baubar.
 
 ### 4.1 `bootstrap` → `machines[].visitCount`
 
@@ -71,6 +71,18 @@ Sie muss aus `bootstrap` kommen, nicht aus `tagContext`: M1 §8.1 Schritt 3 verl
 `getBootstrap` liest bereits bis zu `SET_SCAN_LIMIT` (2000) Zeilen aus `workout_sets` und verwirft alles außer dem jeweils neuesten je (Gerät, Übung). Es genügt, `session_id` in dieses bestehende `select` aufzunehmen und im selben Durchlauf die unterschiedlichen Sessions je `machine_id` zu zählen. **Keine zusätzliche Abfrage.**
 
 `visitCount` wird über das gelesene Fenster voll gezählt; die Entscheidung wertet davon nur 0 / 1 / ≥ 2 aus. Das Scan-Limit ist damit unkritisch. Der Randfall „sehr alte Sätze fallen aus dem 2000er-Fenster, `visitCount` liest fälschlich 0" wird abgefangen, weil Erstkontakt zusätzlich das Fehlen einer Kalibrierung verlangt (Abschnitt 7.2) — Kalibrierungen werden ungedeckelt gelesen.
+
+### 4.1b `bootstrap` liefert die Einstellparameter mit
+
+*Nachgetragen am 7. September, beim Ausschreiben der Screens im Umsetzungsplan gefunden.*
+
+Der Offline-Zustand zeigt die eigenen Einstellwerte **mit Beschriftung** („Sitz 4 · Lehne 2 · Startwinkel 30°", `GeraetOffline.dc.html`). Die Werte stehen als `settingValues` im Prefetch — die Beschriftungen aber nur in `equipment_setting_definitions`, und die liest `getBootstrap` gar nicht. Offline stünde dort der rohe Schlüssel („sitz 4").
+
+`machines[].equipmentModel` bekommt deshalb `settingDefinitions`. Das kostet **eine** zusätzliche Abfrage — anders als §4.1, das ohne auskommt. Vertretbar: die Definitionen sind Studioinhalt, klein, je Modell geteilt, und RLS beschränkt sie ohnehin auf die Studios des Mitglieds.
+
+Swiftseitig ist das bewusst **derselbe Typ** wie in `tagContext` (`TagContextResponse.SettingDefinition`), damit `GeraetModel` online und offline dieselbe Liste verarbeitet statt zwei Formen zu kennen.
+
+Die Alternative — offline den rohen Schlüssel zeigen — wurde verworfen: „sitz 4" ist kein Text, den ein Mitglied im Halbdunkel lesen soll, und §5 verlangt, dass ein Zustand erklärt statt nur anzeigt.
 
 ### 4.2 `POST /api/v1/me/calibrations`
 
@@ -306,7 +318,7 @@ Der Token wird nie gespeichert und nie protokolliert (M1 §10.4/§10.6). Der `Pe
 
 ### 8.4 Kein Medien-Cache
 
-`bootstrap` liefert nur `photoPath`, keine signierte URL. **Offline gibt es deshalb kein Gerätefoto**, auch nicht beim zweiten Besuch; gezeigt wird der Platzhalter aus `GeraetOffline`.
+`bootstrap` liefert für das Foto nur `photoPath`, keine signierte URL. **Offline gibt es deshalb kein Gerätefoto**, auch nicht beim zweiten Besuch; gezeigt wird der Platzhalter aus `GeraetOffline`.
 
 Ein Medien-Cache wäre ein eigenes Thema mit Ablauf-, Speicher- und Invalidierungsfragen und wird hier bewusst nicht gebaut. Der Nutzen des Fotos — „stehe ich am richtigen Gerät?" — ist im Offline-Fall ohnehin schwächer, weil das Mitglied das Gerät gerade selbst getappt hat.
 
@@ -375,9 +387,9 @@ Die Logik liegt bewusst in reinen Funktionen, damit sie ohne View prüfbar ist.
 ## 11. Selbstprüfung
 
 - Keine Platzhalter oder offenen Punkte im Dokument.
-- Kein Widerspruch zu `designsystem.md`. Die drei Abweichungen von der M1-Spec sind einzeln benannt und begründet: die Übungsauswahl (Abschnitt 7.2), der siebte Endpoint (Abschnitt 4.2), der `bootstrap`-Zusatz (Abschnitt 4.1).
+- Kein Widerspruch zu `designsystem.md`. Die Abweichungen von der M1-Spec sind einzeln benannt und begründet: die Übungsauswahl (Abschnitt 7.2), der siebte Endpoint (Abschnitt 4.2), die beiden `bootstrap`-Zusätze (Abschnitte 4.1 und 4.1b).
 - Die beiden für diese Gruppe offenen Punkte der Klärliste sind entschieden: Akzentregel in Abschnitt 9, Bewegungswerte in Abschnitt 6.
-- Scope ist eng genug für einen Umsetzungsplan: zwei Server-Änderungen, ein neuer Store, eine Komponente, sechs Views, eine minimale Training-Wurzel.
+- Scope ist eng genug für einen Umsetzungsplan: drei Server-Änderungen, ein neuer Store, eine Komponente, sechs Views, eine minimale Training-Wurzel.
 - Zwei Nachbesserungen aus Sub-Projekt 1 (Press-Feedback, `NWPathMonitor`) sind eingeplant statt stillschweigend übernommen.
 
 ---
