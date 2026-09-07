@@ -168,7 +168,11 @@ Session, kein Studio  → MemberKeinStudio
 Session + Studio      → MainTabView (TabView, 4 Tabs, je eigener NavigationStack)
 ```
 
-`AuthFlow` pusht `LoginCode`, `MemberRegistrieren` und `MemberPasswort` (Anfordern-Schritt) von `LoginMail` aus. Der Zurücksetzen-Schritt von `MemberPasswort` wird **nicht** über Navigation erreicht: Der Recovery-Link liefert supabase-swift eine eigene Session-Art, `RootView` erkennt das beim Start und zeigt `MemberPasswort` direkt im Zurücksetzen-Zustand — ein von außen ausgelöster Screen-Modus, kein Navigationsziel.
+`AuthFlow` pusht `LoginCode`, `MemberRegistrieren` und `MemberPasswort` von `LoginMail` aus.
+
+**Korrektur gegenüber der ursprünglichen Annahme in diesem Dokument:** Passwort-Reset läuft **nicht** über einen Deep-Link mit eigener Recovery-Session, sondern über einen 6-stelligen Code — exakt wie die Registrierungsbestätigung. Beleg: `apps/web/app/passwort-vergessen/actions.ts` ruft nach dem Anfordern `supabase.auth.verifyOtp({ email, token, type: "recovery" })` mit einem sechsstelligen Code, danach `updateUser({ password })`. Kein Deep-Link, keine externe Session. `MemberPasswort` ist damit ein einziger Screen mit zwei immer gleichzeitig sichtbaren Abschnitten (so auch im Artboard: "Vergessen" oben, Trennlinie, "Zurücksetzen" unten) — kein Navigationsziel, keine von außen ausgelöste Zustandserkennung nötig.
+
+Zwei Korrekturen am Artboard-Text selbst, beide durch den tatsächlichen Server-Code belegt statt Geschmacksfragen: (1) Das Artboard sagt "Link anfordern" / "Fordere einen Link an" — das ist ein dokumentierter Altlast-Fehler (`gesamtfahrplan.md` Abschnitt 4g: die Mailvorlage wurde von Link auf Code umgestellt, der Bildschirmtext nie nachgezogen). Swift zeigt stattdessen "Code anfordern" / "Fordere einen Code an, oder setze ein neues Passwort, wenn du schon einen hast." (2) Der "Zurücksetzen"-Abschnitt des Artboards zeigt nur "Neues Passwort" und "Wiederholen" — das Codefeld fehlt, obwohl `verifyOtp` es zwingend braucht. Swift ergänzt ein sechsstelliges Codefeld (dieselbe Eingabe-Logik wie `LoginCode`, als eigene wiederverwendbare Komponente) zwischen der "Zurücksetzen"-Überschrift und "Neues Passwort".
 
 `MainTabView` bekommt bereits alle vier Tabs aus `designsystem.md` §11 (Home · Training · Kurse · Profil — die M1-Spec nennt noch drei, weil ihre Fassung vor dem Bau von Kurse lag). Home, Training und Kurse sind in diesem Sub-Projekt reine Platzhalter-Views (`Text("Kommt mit Sub-Projekt N")`), bis die jeweiligen Folge-Specs sie füllen.
 
@@ -185,7 +189,7 @@ Der Profil-Tab bekommt eine **minimale** Wurzelansicht — Name, „Passwort än
 | `LoginMail` | E-Mail + Passwort, „Anmelden" | Fehlerfall (falsches Passwort **oder** unbekanntes/gesperrtes Konto) zeigt denselben neutralen Text — eine gemeinsame Konstante (§9), von `MemberRegistrieren` mitbenutzt |
 | `LoginCode` | 6-stelliger Bestätigungscode nach Registrierung, Resend-Timer | Auto-Submit bei der sechsten Ziffer |
 | `MemberRegistrieren` | E-Mail + Passwort, Live-Validierung der Mindestlänge (10 Zeichen, `config.toml`) | „bereits registriert" nutzt dieselbe neutrale Konstante wie `LoginMail` |
-| `MemberPasswort` | Zwei Zustände eines Screens: Anfordern (E-Mail) / Zurücksetzen (neues Passwort) | Pflichtsatz „Wenn es zu dieser Adresse ein Konto gibt, ist die Mail unterwegs" |
+| `MemberPasswort` | Ein Screen, zwei immer sichtbare Abschnitte: Anfordern (E-Mail) / Zurücksetzen (Code + neues Passwort) | Pflichtsatz „Wenn es zu dieser Adresse ein Konto gibt, ist die Mail unterwegs"; Zurücksetzen läuft über `verifyOtp(type: .recovery)` mit sechsstelligem Code, dann `updateUser(password:)` — siehe Korrektur in §7 |
 | `MemberPasswortAendern` | Aktuelles + neues Passwort, vom Profil-Tab gepusht | Eigener Fehlerzustand „aktuelles Passwort falsch" |
 | `MemberKeinStudio` | Beitritt per Scan (öffnet `MemberScanner`) oder manuelle Code-Eingabe | Wurzelzustand direkt nach Login ohne Studio |
 | `MemberScanner` | Kamera-Sheet für QR | `.sheet`, nicht Push (entschieden in der Design-Challenge-Review); eigener Anfasser, obere Ecken gerundet, zusätzlich zur Wisch-Geste ein explizites 44pt-Schließen-Ziel |
