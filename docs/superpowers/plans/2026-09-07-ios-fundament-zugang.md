@@ -191,7 +191,7 @@ struct AppConfigTests {
 - [ ] **Schritt 9: Bauen und Testen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test 2>&1 | tail -40
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test 2>&1 | tail -40
 ```
 
 Erwartet: `TEST SUCCEEDED`, inklusive der beiden neuen und der sieben bestehenden `TagLinkTests`.
@@ -250,7 +250,7 @@ private extension Int {
 - [ ] **Schritt 2: Test ausführen, Fehlschlag bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/ColorHexTests 2>&1 | tail -20
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/ColorHexTests 2>&1 | tail -20
 ```
 
 Erwartet: FAIL — `Color(hex:)` und `rgbaComponents` existieren noch nicht.
@@ -283,7 +283,7 @@ extension Color {
 - [ ] **Schritt 4: Test ausführen, Erfolg bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/ColorHexTests 2>&1 | tail -20
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/ColorHexTests 2>&1 | tail -20
 ```
 
 Erwartet: PASS.
@@ -341,7 +341,7 @@ enum DesignSystem {
 - [ ] **Schritt 6: Bauen und alle Tests laufen lassen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test 2>&1 | tail -40
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test 2>&1 | tail -40
 ```
 
 Erwartet: `TEST SUCCEEDED`.
@@ -628,7 +628,7 @@ Jede der sechs `#Preview`s im Canvas öffnen (⌥⌘Return), gegen `designsystem
 - [ ] **Schritt 8: Bauen (kompiliert, keine Testpflicht für reine Views)**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" build 2>&1 | tail -30
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" build 2>&1 | tail -30
 ```
 
 Erwartet: `BUILD SUCCEEDED`.
@@ -694,7 +694,7 @@ struct JSONValueTests {
 - [ ] **Schritt 2: Test ausführen, Fehlschlag bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/JSONValueTests 2>&1 | tail -20
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/JSONValueTests 2>&1 | tail -20
 ```
 
 Erwartet: FAIL — `JSONValue` existiert noch nicht.
@@ -743,7 +743,7 @@ indirect enum JSONValue: Codable, Equatable {
 - [ ] **Schritt 4: Test ausführen, Erfolg bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/JSONValueTests 2>&1 | tail -20
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/JSONValueTests 2>&1 | tail -20
 ```
 
 Erwartet: PASS.
@@ -1118,7 +1118,7 @@ struct DTOTests {
 - [ ] **Schritt 11: Alle Tests ausführen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test 2>&1 | tail -50
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test 2>&1 | tail -50
 ```
 
 Erwartet: `TEST SUCCEEDED`, alle `DTOTests` und `JSONValueTests` grün.
@@ -1284,7 +1284,7 @@ struct APIClientTests {
 - [ ] **Schritt 3: Tests ausführen, Fehlschlag bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/APIClientTests 2>&1 | tail -30
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/APIClientTests 2>&1 | tail -30
 ```
 
 Erwartet: FAIL — `APIClient` existiert noch nicht.
@@ -1393,7 +1393,7 @@ actor APIClient {
 - [ ] **Schritt 5: Tests ausführen, Erfolg bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/APIClientTests 2>&1 | tail -30
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/APIClientTests 2>&1 | tail -30
 ```
 
 Erwartet: PASS für alle fünf Tests, inklusive `.offline`-Mapping (URLSession-Timeout gegen `127.0.0.1:1` schlägt als `URLError` fehl, `execute` fängt das als `.offline`).
@@ -1401,7 +1401,7 @@ Erwartet: PASS für alle fünf Tests, inklusive `.offline`-Mapping (URLSession-T
 - [ ] **Schritt 6: Alle bisherigen Tests zusammen laufen lassen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test 2>&1 | tail -50
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test 2>&1 | tail -50
 ```
 
 Erwartet: `TEST SUCCEEDED`.
@@ -1488,7 +1488,7 @@ struct CodeEntryTests {
 - [ ] **Schritt 2: Tests ausführen, Fehlschlag bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/EmailValidatorTests -only-testing:FitnessMemberTests/PasswordPolicyTests -only-testing:FitnessMemberTests/CodeEntryTests 2>&1 | tail -30
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/EmailValidatorTests -only-testing:FitnessMemberTests/PasswordPolicyTests -only-testing:FitnessMemberTests/CodeEntryTests 2>&1 | tail -30
 ```
 
 Erwartet: FAIL — keiner der vier Typen existiert.
@@ -1568,7 +1568,7 @@ enum AuthCopy {
 - [ ] **Schritt 7: Tests ausführen, Erfolg bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test 2>&1 | tail -50
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test 2>&1 | tail -50
 ```
 
 Erwartet: `TEST SUCCEEDED`.
@@ -1709,7 +1709,7 @@ enum AuthBackendError: Error {
 - [ ] **Schritt 4: Bauen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" build 2>&1 | tail -60
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" build 2>&1 | tail -60
 ```
 
 Erwartet: `BUILD SUCCEEDED`. Schlägt der Build an einer `client.auth.*`-Zeile fehl: in Xcode `client.auth.` tippen, die Codevervollständigung zeigt die tatsächliche Methode dieser Paketversion — Name/Label/Rückgabetyp in genau dieser Zeile anpassen, keine andere Datei betroffen (siehe Hinweis oben).
@@ -1892,7 +1892,7 @@ private extension FakeAuthBackend {
 - [ ] **Schritt 2: Tests ausführen, Fehlschlag bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/SessionStoreTests 2>&1 | tail -30
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/SessionStoreTests 2>&1 | tail -30
 ```
 
 Erwartet: FAIL — `SessionStore`, `AuthError` existieren noch nicht.
@@ -1995,7 +1995,7 @@ final class SessionStore {
 - [ ] **Schritt 5: Tests ausführen, Erfolg bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/SessionStoreTests 2>&1 | tail -30
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/SessionStoreTests 2>&1 | tail -30
 ```
 
 Erwartet: PASS für alle sechs Tests.
@@ -2003,7 +2003,7 @@ Erwartet: PASS für alle sechs Tests.
 - [ ] **Schritt 6: Alle Tests zusammen laufen lassen und committen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test 2>&1 | tail -50
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test 2>&1 | tail -50
 git add FitnessMember/Auth/AuthError.swift FitnessMember/Auth/SessionStore.swift FitnessMemberTests/SessionStoreTests.swift
 git commit -m "feat(ios): SessionStore mit FakeAuthBackend-Testabdeckung"
 ```
@@ -2078,7 +2078,7 @@ struct PendingWriteStoreTests {
 - [ ] **Schritt 2: Tests ausführen, Fehlschlag bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/PendingWriteStoreTests 2>&1 | tail -30
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/PendingWriteStoreTests 2>&1 | tail -30
 ```
 
 Erwartet: FAIL — `PendingSetWrite`, `PendingWriteStore` existieren noch nicht.
@@ -2129,7 +2129,7 @@ final class PendingWriteStore {
 - [ ] **Schritt 5: Tests ausführen, Erfolg bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/PendingWriteStoreTests 2>&1 | tail -30
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/PendingWriteStoreTests 2>&1 | tail -30
 ```
 
 Erwartet: PASS für alle drei Tests.
@@ -2276,7 +2276,7 @@ struct CatalogStoreTests {
 - [ ] **Schritt 2: Tests ausführen, Fehlschlag bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/CatalogStoreTests 2>&1 | tail -40
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/CatalogStoreTests 2>&1 | tail -40
 ```
 
 Erwartet: FAIL — `CatalogLoadState`, `CatalogStore` existieren noch nicht.
@@ -2364,7 +2364,7 @@ In `CatalogStoreTests.swift` die `protocol BootstrapLoading` und `extension APIC
 - [ ] **Schritt 6: Tests ausführen, Erfolg bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/CatalogStoreTests 2>&1 | tail -40
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/CatalogStoreTests 2>&1 | tail -40
 ```
 
 Erwartet: PASS für alle sechs Tests.
@@ -2372,7 +2372,7 @@ Erwartet: PASS für alle sechs Tests.
 - [ ] **Schritt 7: Alle Tests zusammen laufen lassen und committen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test 2>&1 | tail -50
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test 2>&1 | tail -50
 git add FitnessMember/Catalog/CatalogLoadState.swift FitnessMember/Catalog/CatalogStore.swift FitnessMemberTests/CatalogStoreTests.swift
 git commit -m "feat(ios): CatalogStore mit Bootstrap-Cache und Warteschlangen-Abarbeitung"
 ```
@@ -2436,7 +2436,7 @@ struct RootDestinationLogicTests {
 - [ ] **Schritt 2: Test ausführen, Fehlschlag bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/RootDestinationLogicTests 2>&1 | tail -30
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/RootDestinationLogicTests 2>&1 | tail -30
 ```
 
 Erwartet: FAIL — `RootDestination`, `RootDestinationLogic` existieren noch nicht.
@@ -2472,7 +2472,7 @@ enum RootDestinationLogic {
 - [ ] **Schritt 4: Test ausführen, Erfolg bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/RootDestinationLogicTests 2>&1 | tail -30
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/RootDestinationLogicTests 2>&1 | tail -30
 ```
 
 Erwartet: PASS für alle fünf Tests.
@@ -2518,7 +2518,7 @@ enum AuthRoute: Hashable {
 - [ ] **Schritt 7: Bauen und alle bisherigen Tests laufen lassen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test 2>&1 | tail -50
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test 2>&1 | tail -50
 ```
 
 Erwartet: `TEST SUCCEEDED` — `AuthRoute`/`PendingTagStore` haben keine Abhängigkeit auf noch fehlende Screens, das Ziel kompiliert vollständig.
@@ -2625,7 +2625,7 @@ struct LoginMailView: View {
 - [ ] **Schritt 2: Bauen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" build 2>&1 | tail -40
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" build 2>&1 | tail -40
 ```
 
 Erwartet: `BUILD SUCCEEDED` — `LoginMailView` referenziert `LoginCodeView`/`MemberRegistrierenView`/`MemberPasswortView` nur indirekt über `AuthRoute`-Werte, nicht als Typ, deshalb kein Compile-Fehler trotz noch fehlender Screens.
@@ -2795,7 +2795,7 @@ struct LoginCodeView: View {
 - [ ] **Schritt 3: Bauen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" build 2>&1 | tail -40
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" build 2>&1 | tail -40
 ```
 
 Erwartet: `BUILD SUCCEEDED`.
@@ -2908,7 +2908,7 @@ Die neutrale Fehlermeldung (`AuthCopy.unbekanntOderFalsch`) deckt hier auch den 
 - [ ] **Schritt 2: Bauen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" build 2>&1 | tail -40
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" build 2>&1 | tail -40
 ```
 
 Erwartet: `BUILD SUCCEEDED` — `LoginCodeView` existiert bereits aus Aufgabe 13.
@@ -3049,7 +3049,7 @@ struct MemberPasswortView: View {
 - [ ] **Schritt 2: Bauen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" build 2>&1 | tail -40
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" build 2>&1 | tail -40
 ```
 
 Erwartet: `BUILD SUCCEEDED`.
@@ -3148,7 +3148,7 @@ struct MemberPasswortAendernView: View {
 - [ ] **Schritt 2: Bauen und committen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" build 2>&1 | tail -40
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" build 2>&1 | tail -40
 git add FitnessMember/Screens/Zugang/MemberPasswortAendernView.swift
 git commit -m "feat(ios): MemberPasswortAendernView"
 ```
@@ -3581,7 +3581,7 @@ Neue Tests am Ende der `CatalogStoreTests`-Suite ergänzen:
 - [ ] **Schritt 3: Tests ausführen, Fehlschlag bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/CatalogStoreTests 2>&1 | tail -40
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/CatalogStoreTests 2>&1 | tail -40
 ```
 
 Erwartet: FAIL — `BootstrapLoading` fehlen die drei neuen Methoden, `CatalogStore` fehlen `activeStudioId`/`setActiveStudio`/`joinStudio`/`leaveStudio`.
@@ -3730,7 +3730,7 @@ final class CatalogStore {
 - [ ] **Schritt 6: Tests ausführen, Erfolg bestätigen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test -only-testing:FitnessMemberTests/CatalogStoreTests 2>&1 | tail -50
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test -only-testing:FitnessMemberTests/CatalogStoreTests 2>&1 | tail -50
 ```
 
 Erwartet: PASS für alle neun Tests (sechs aus Aufgabe 10, drei neue).
@@ -3738,7 +3738,7 @@ Erwartet: PASS für alle neun Tests (sechs aus Aufgabe 10, drei neue).
 - [ ] **Schritt 7: Alle Tests zusammen laufen lassen und committen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test 2>&1 | tail -50
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test 2>&1 | tail -50
 git add FitnessMember/Networking/DTOs/JoinResult.swift FitnessMember/Networking/APIClient.swift FitnessMember/Catalog/CatalogStore.swift FitnessMemberTests/CatalogStoreTests.swift
 git commit -m "feat(ios): Beitritts-/Austritts-Methoden in APIClient und CatalogStore"
 ```
@@ -3844,7 +3844,7 @@ struct MemberKeinStudioView: View {
 - [ ] **Schritt 2: Bauen (erst nach Aufgabe 20)**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" build 2>&1 | tail -40
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" build 2>&1 | tail -40
 ```
 
 Erwartet: `BUILD SUCCEEDED`.
@@ -4001,7 +4001,7 @@ struct MemberScannerView: View {
 - [ ] **Schritt 3: Bauen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" build 2>&1 | tail -40
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" build 2>&1 | tail -40
 ```
 
 Erwartet: `BUILD SUCCEEDED`.
@@ -4113,7 +4113,7 @@ struct MemberStudiosView: View {
 - [ ] **Schritt 2: Bauen und committen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" build 2>&1 | tail -40
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" build 2>&1 | tail -40
 git add FitnessMember/Screens/Profil/MemberStudiosView.swift
 git commit -m "feat(ios): MemberStudiosView mit nativem Verlassen-Dialog"
 ```
@@ -4289,7 +4289,7 @@ struct RootView: View {
 - [ ] **Schritt 6: Bauen**
 
 ```bash
-cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test 2>&1 | tail -60
+cd apps/ios-member && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test 2>&1 | tail -60
 ```
 
 Erwartet: `TEST SUCCEEDED` — jetzt zum ersten Mal das komplette Ziel inklusive aller Screens, alle bisherigen Tests weiterhin grün.
@@ -4364,7 +4364,7 @@ cd apps/ios-member && git rm FitnessMember/ContentView.swift
 - [ ] **Schritt 4: Projekt neu generieren (falls `project.yml` seit Aufgabe 1 nicht erneut lief) und bauen**
 
 ```bash
-cd apps/ios-member && xcodegen generate && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" test 2>&1 | tail -80
+cd apps/ios-member && xcodegen generate && xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" test 2>&1 | tail -80
 ```
 
 Erwartet: `TEST SUCCEEDED`, alle Tests aus den Aufgaben 1–22 grün, inklusive der sieben ursprünglichen `TagLinkTests`.
@@ -4372,10 +4372,10 @@ Erwartet: `TEST SUCCEEDED`, alle Tests aus den Aufgaben 1–22 grün, inklusive 
 - [ ] **Schritt 5: Im Simulator starten und den vollständigen Flow einmal durchspielen**
 
 ```bash
-cd apps/ios-member && xcrun simctl boot "iPhone 15" 2>/dev/null; open -a Simulator
-xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 15" -derivedDataPath .build build 2>&1 | tail -20
-xcrun simctl install "iPhone 15" .build/Build/Products/Debug-iphonesimulator/FitnessMember.app
-xcrun simctl launch "iPhone 15" de.gymtaro.member
+cd apps/ios-member && xcrun simctl boot "iPhone 17 Pro" 2>/dev/null; open -a Simulator
+xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" -derivedDataPath .build build 2>&1 | tail -20
+xcrun simctl install "iPhone 17 Pro" .build/Build/Products/Debug-iphonesimulator/FitnessMember.app
+xcrun simctl launch "iPhone 17 Pro" de.gymtaro.member
 ```
 
 Manuell durchspielen und je gegen das passende Artboard unter `docs/superpowers/design/member/` abgleichen:
