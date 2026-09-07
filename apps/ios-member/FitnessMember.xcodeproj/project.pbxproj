@@ -28,6 +28,7 @@
 		A67217C418DEF1C2DC617DB9 /* SupabaseAuthBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = F86C22F308C4A9EB76B53C19 /* SupabaseAuthBackend.swift */; };
 		A70571D779E8721B0D8FC96D /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4D467E447232623659C42C7 /* Session.swift */; };
 		A82CD4C097FBBD45ACE7BB6E /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D79A89B3E91A0F18C9E8DBC /* APIClientTests.swift */; };
+		B3410F91BF63957604BF8340 /* SessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */; };
 		B588B97987FD269D81E3CCED /* Card.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36E18F6CFDF1DABC8AD02A99 /* Card.swift */; };
 		B68C2AD5B96D1812B2F124A0 /* PasswordPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F85DB74C44633BFB4BAAB94 /* PasswordPolicy.swift */; };
 		B8218DBF6B9B3168086F00E6 /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82F1E9C17FC9A2A3742B15D /* JSONValue.swift */; };
@@ -38,10 +39,12 @@
 		D0068DB5B484876E3D0083E7 /* EmailValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D79138C4B32315198E734356 /* EmailValidator.swift */; };
 		D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78C8636341914B90296B220 /* AppConfigTests.swift */; };
 		E2ECF1FE835571FFD6617303 /* SecondaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */; };
+		E7A45EB36FF558A4EFDA9A14 /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A36C578F3E7767ABE5EE6B6 /* AuthError.swift */; };
 		EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */; };
 		F7EE8A3131BCD293674276A2 /* WorkoutSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACA345A636C594A2D95A59FD /* WorkoutSet.swift */; };
 		F9DAC3407A000DEDA7092660 /* Chip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B227508179FE62A4DAA06A0 /* Chip.swift */; };
 		FA390275F72119D9F7870B0E /* AuthBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4DDD9F8FCC3E699F6E4F79C /* AuthBackend.swift */; };
+		FA5C4C53322F44C0895B0C2D /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35907B519ACE98A2A3F021C5 /* SessionStore.swift */; };
 		FAFEECC2A710C4BF9D601BD2 /* TagContextResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0756570D91BAD9173DC82B /* TagContextResponse.swift */; };
 /* End PBXBuildFile section */
 
@@ -67,11 +70,13 @@
 		2F85DB74C44633BFB4BAAB94 /* PasswordPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordPolicy.swift; sourceTree = "<group>"; };
 		33E48EE365B2AEEBD3FCBC2E /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		33EBC4692A4BFF21FC0FCA28 /* BootstrapResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootstrapResponse.swift; sourceTree = "<group>"; };
+		35907B519ACE98A2A3F021C5 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		36E18F6CFDF1DABC8AD02A99 /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
 		39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitnessMemberApp.swift; sourceTree = "<group>"; };
 		3B16A62990D2DCAE39041199 /* FitnessMemberTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FitnessMemberTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		45FB518781BA996FB7400814 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		58D512A8A7F6C5D60CF41B25 /* LabeledField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabeledField.swift; sourceTree = "<group>"; };
+		5A36C578F3E7767ABE5EE6B6 /* AuthError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthError.swift; sourceTree = "<group>"; };
 		5F603D042C4DE6ADD6D6A2CC /* FitnessMember.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FitnessMember.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6D6E6743BDCF6E58E971D0CE /* AuthLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthLogicTests.swift; sourceTree = "<group>"; };
 		761B6ACA4FD549615771E3C6 /* CodeEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeEntry.swift; sourceTree = "<group>"; };
@@ -88,6 +93,7 @@
 		C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryButton.swift; sourceTree = "<group>"; };
 		C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLinkTests.swift; sourceTree = "<group>"; };
 		CF7B9170FFCF2B3FBDF4A2F0 /* ColorHexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHexTests.swift; sourceTree = "<group>"; };
+		CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStoreTests.swift; sourceTree = "<group>"; };
 		D78C8636341914B90296B220 /* AppConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigTests.swift; sourceTree = "<group>"; };
 		D79138C4B32315198E734356 /* EmailValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailValidator.swift; sourceTree = "<group>"; };
 		D922539BB579EDDA0F7747CD /* ErrorEnvelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorEnvelope.swift; sourceTree = "<group>"; };
@@ -192,6 +198,7 @@
 				6D6E6743BDCF6E58E971D0CE /* AuthLogicTests.swift */,
 				CF7B9170FFCF2B3FBDF4A2F0 /* ColorHexTests.swift */,
 				FD55A1626F478A9D5D1A0861 /* DTOTests.swift */,
+				CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */,
 				C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */,
 			);
 			path = FitnessMemberTests;
@@ -202,10 +209,12 @@
 			children = (
 				C4DDD9F8FCC3E699F6E4F79C /* AuthBackend.swift */,
 				2DC3378D45751B2BE6267611 /* AuthCopy.swift */,
+				5A36C578F3E7767ABE5EE6B6 /* AuthError.swift */,
 				761B6ACA4FD549615771E3C6 /* CodeEntry.swift */,
 				D79138C4B32315198E734356 /* EmailValidator.swift */,
 				2F85DB74C44633BFB4BAAB94 /* PasswordPolicy.swift */,
 				A4D467E447232623659C42C7 /* Session.swift */,
+				35907B519ACE98A2A3F021C5 /* SessionStore.swift */,
 				F86C22F308C4A9EB76B53C19 /* SupabaseAuthBackend.swift */,
 			);
 			path = Auth;
@@ -333,6 +342,7 @@
 				8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */,
 				FA390275F72119D9F7870B0E /* AuthBackend.swift in Sources */,
 				38240F3DF60D68312F9CBCE4 /* AuthCopy.swift in Sources */,
+				E7A45EB36FF558A4EFDA9A14 /* AuthError.swift in Sources */,
 				4E515B6705D782738E6250A1 /* BootstrapResponse.swift in Sources */,
 				B588B97987FD269D81E3CCED /* Card.swift in Sources */,
 				F9DAC3407A000DEDA7092660 /* Chip.swift in Sources */,
@@ -351,6 +361,7 @@
 				309307436B8EE156A6673AA2 /* PrimaryButton.swift in Sources */,
 				E2ECF1FE835571FFD6617303 /* SecondaryButton.swift in Sources */,
 				A70571D779E8721B0D8FC96D /* Session.swift in Sources */,
+				FA5C4C53322F44C0895B0C2D /* SessionStore.swift in Sources */,
 				4AEFC85D03F8ED25B641E430 /* SessionSummary.swift in Sources */,
 				A67217C418DEF1C2DC617DB9 /* SupabaseAuthBackend.swift in Sources */,
 				FAFEECC2A710C4BF9D601BD2 /* TagContextResponse.swift in Sources */,
@@ -368,6 +379,7 @@
 				C01062BE7395A2DAD05A3EE4 /* AuthLogicTests.swift in Sources */,
 				4FF2547C2EF53854366AC3A1 /* ColorHexTests.swift in Sources */,
 				1938BBAFBE0B05D0BB9E7471 /* DTOTests.swift in Sources */,
+				B3410F91BF63957604BF8340 /* SessionStoreTests.swift in Sources */,
 				9E4947346E28638E0FA99C6A /* TagLinkTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
