@@ -32,18 +32,29 @@ final class CatalogStore {
     /// nicht wiederholt, verschwinden aber auch nicht stillschweigend --
     /// der Geraete-Screen zeigt sie an (designsystem.md SS5: Fehler sagen,
     /// was falsch ist und was gilt).
-    private(set) var verworfeneWrites: [PendingSetWrite] = []
+    ///
+    /// Persistiert wie pendingWrites: flushPending() kann waehrend eines
+    /// Hintergrund-Reconnects laufen, und wenn die App vor dem naechsten
+    /// Screen-Aufruf beendet wird, waere ein rein speicherresidenter Eintrag
+    /// so verloren wie der Schreibvorgang, den er dokumentieren soll.
+    private(set) var verworfeneWrites: [PendingSetWrite]
 
     private let loader: any BootstrapLoading
     private let pendingWriteStore: PendingWriteStore
+    private let verworfeneWriteStore: PendingWriteStore
     private let defaults: UserDefaults
     private static let activeStudioDefaultsKey = "activeStudioId"
 
     init(loader: any BootstrapLoading, pendingWriteStore: PendingWriteStore, defaults: UserDefaults = .standard) {
         self.loader = loader
         self.pendingWriteStore = pendingWriteStore
+        // Gleiches Verzeichnis wie pendingWriteStore, eigene Datei -- die
+        // beiden Listen haben unterschiedliche Lebenszyklen (siehe
+        // PendingWriteStore-Kommentar).
+        self.verworfeneWriteStore = PendingWriteStore(directory: pendingWriteStore.directory, filename: "verworfene-writes.json")
         self.defaults = defaults
         pendingWrites = pendingWriteStore.loadAll()
+        verworfeneWrites = verworfeneWriteStore.loadAll()
         activeStudioId = defaults.string(forKey: Self.activeStudioDefaultsKey)
     }
 
@@ -83,6 +94,7 @@ final class CatalogStore {
         pendingWrites = []
         pendingWriteStore.save([])
         verworfeneWrites = []
+        verworfeneWriteStore.save([])
     }
 
     func enqueue(_ write: PendingSetWrite) {
@@ -97,7 +109,12 @@ final class CatalogStore {
                 _ = try await loader.putSet(sessionId: write.sessionId, setId: write.setId, write.body)
             } catch {
                 if error.istDauerhaft {
+                    // Sofort sichern, nicht erst am Schleifenende: flushPending()
+                    // laeuft oft auf einen Hintergrund-Reconnect hin, und ein Kill
+                    // der App mittendrin darf den Eintrag nicht mitnehmen -- er ist
+                    // ja gerade schon aus pendingWrites/pendingWriteStore raus.
                     verworfeneWrites.append(write)
+                    verworfeneWriteStore.save(verworfeneWrites)
                 } else {
                     verbleibend.append(write)
                 }
@@ -110,6 +127,7 @@ final class CatalogStore {
     /// Nach dem Anzeigen quittiert der Screen die abgelehnten Vorgaenge.
     func verworfeneQuittieren() {
         verworfeneWrites = []
+        verworfeneWriteStore.save([])
     }
 
     /// Wechseln ist reiner Client-Zustand -- "Tippen wechselt" (MemberStudios.dc.html)
