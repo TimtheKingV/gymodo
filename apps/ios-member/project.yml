@@ -16,6 +16,7 @@ targets:
         PRODUCT_NAME: FitnessMember
         SWIFT_VERSION: "6.0"
         CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ZJP24W38LQ
         GENERATE_INFOPLIST_FILE: true
         INFOPLIST_KEY_UILaunchScreen_Generation: true
         TARGETED_DEVICE_FAMILY: "1"
@@ -34,6 +35,8 @@ targets:
       base:
         SWIFT_VERSION: "6.0"
         GENERATE_INFOPLIST_FILE: true
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ZJP24W38LQ
     dependencies:
       - target: FitnessMember
 
