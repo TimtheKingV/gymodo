@@ -48,11 +48,34 @@ final class CatalogStore {
             bootstrap = response
             loadState = .loaded(hasStudio: !response.studios.isEmpty)
             if activeStudioId == nil || !response.studios.contains(where: { $0.id == activeStudioId }) {
-                activeStudioId = response.studios.first?.id
+                // Die Reparatur muss auch persistiert werden, sonst taucht der
+                // veraltete Wert beim naechsten Start wieder aus UserDefaults auf.
+                if let ersatz = response.studios.first?.id {
+                    setActiveStudio(ersatz)
+                } else {
+                    activeStudioId = nil
+                    defaults.removeObject(forKey: Self.activeStudioDefaultsKey)
+                }
             }
         } catch {
             loadState = .failed
         }
+    }
+
+    /// Nach dem Abmelden muss der gesamte Katalogzustand fallen: sonst sieht
+    /// das naechste Konto auf demselben Geraet noch die Studios des vorigen,
+    /// weil der Ladezustand nie wieder auf .idle zurueckfaellt.
+    ///
+    /// Die offenen Schreibvorgaenge werden bewusst mitgeloescht -- sie tragen
+    /// Session- und Set-IDs, die zum abgemeldeten Konto gehoeren und nach einem
+    /// Kontowechsel serverseitig ohnehin abgelehnt wuerden.
+    func reset() {
+        bootstrap = nil
+        loadState = .idle
+        activeStudioId = nil
+        defaults.removeObject(forKey: Self.activeStudioDefaultsKey)
+        pendingWrites = []
+        pendingWriteStore.save([])
     }
 
     func enqueue(_ write: PendingSetWrite) {

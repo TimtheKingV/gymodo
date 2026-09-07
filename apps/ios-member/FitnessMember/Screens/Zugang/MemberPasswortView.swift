@@ -4,7 +4,6 @@ struct MemberPasswortView: View {
     @Environment(SessionStore.self) private var sessionStore
 
     @State private var requestEmail = ""
-    @State private var requestSent = false
     @State private var resetEmail = ""
     @State private var code = CodeEntry()
     @State private var newPassword = ""
@@ -87,7 +86,6 @@ struct MemberPasswortView: View {
 
     private func requestReset() async {
         await sessionStore.requestPasswordReset(email: requestEmail)
-        requestSent = true
         if resetEmail.isEmpty { resetEmail = requestEmail }
     }
 

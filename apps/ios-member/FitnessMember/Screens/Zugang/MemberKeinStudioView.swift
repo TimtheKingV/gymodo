@@ -67,7 +67,13 @@ struct MemberKeinStudioView: View {
         }
     }
 
-    private func joinByTag(_ token: String) async {
+    /// Der QR-Code traegt den vollstaendigen Universal Link
+    /// (https://<host>/t/<token>), der Endpoint erwartet aber den blanken
+    /// 22-Zeichen-Token -- ohne Extraktion antwortet der Server mit 422.
+    /// Faellt der Scan doch mal als reiner Token an, geht er unveraendert
+    /// durch; der Server lehnt Unsinn ohnehin mit derselben Meldung ab.
+    private func joinByTag(_ scanned: String) async {
+        let token = URL(string: scanned).flatMap(TagLink.token(from:)) ?? scanned
         errorMessage = nil
         isJoining = true
         defer { isJoining = false }

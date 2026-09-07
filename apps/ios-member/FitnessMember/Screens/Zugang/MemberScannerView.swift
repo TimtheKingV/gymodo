@@ -3,7 +3,6 @@ import SwiftUI
 struct MemberScannerView: View {
     let onScanned: (String) -> Void
     @Environment(\.dismiss) private var dismiss
-    @State private var showManualEntry = false
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -35,8 +34,9 @@ struct MemberScannerView: View {
 
                 Spacer()
 
+                // Schliessen genuegt: das Eingabefeld fuer den Studio-Code
+                // liegt direkt darunter in MemberKeinStudioView.
                 Button("Code stattdessen eingeben") {
-                    showManualEntry = true
                     dismiss()
                 }
                 .font(.system(size: 13, weight: .semibold))

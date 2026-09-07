@@ -162,4 +162,55 @@ struct CatalogStoreTests {
         let secondStore = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: tempDirectory()), defaults: defaults)
         #expect(secondStore.activeStudioId == "s1")
     }
+
+    @Test("load() persistiert ein repariertes activeStudioId")
+    func loadPersistsRepairedActiveStudio() async {
+        let defaults = UserDefaults(suiteName: "catalog-store-tests-\(UUID().uuidString)")!
+        let directory = tempDirectory()
+        let loader = FakeBootstrapLoader()
+        await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s2", name: "Kraftwerk Sued", timezone: "Europe/Berlin")])))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: directory), defaults: defaults)
+        store.setActiveStudio("veraltet")
+        await store.load()
+        #expect(store.activeStudioId == "s2")
+
+        let secondStore = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: directory), defaults: defaults)
+        #expect(secondStore.activeStudioId == "s2")
+    }
+
+    @Test("reset() raeumt Katalog, Ladezustand, aktives Studio und offene Schreibvorgaenge")
+    func resetClearsEverything() async {
+        let defaults = UserDefaults(suiteName: "catalog-store-tests-\(UUID().uuidString)")!
+        let directory = tempDirectory()
+        let loader = FakeBootstrapLoader()
+        await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s1", name: "Kraftwerk Nord", timezone: "Europe/Berlin")])))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: directory), defaults: defaults)
+        await store.load()
+        store.enqueue(PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil)))
+
+        store.reset()
+
+        #expect(store.bootstrap == nil)
+        #expect(store.loadState == .idle)
+        #expect(store.activeStudioId == nil)
+        #expect(store.pendingWrites.isEmpty)
+        #expect(defaults.string(forKey: "activeStudioId") == nil)
+        // Auch auf Platte, sonst holt der naechste Start alles zurueck.
+        #expect(PendingWriteStore(directory: directory).loadAll().isEmpty)
+        let secondStore = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: directory), defaults: defaults)
+        #expect(secondStore.activeStudioId == nil)
+    }
+
+    @Test("nach .failed fuehrt ein erneutes load() wieder zu .loaded")
+    func failedStateCanBeRetried() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setBootstrapResult(.failure(.offline))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        await store.load()
+        #expect(store.loadState == .failed)
+
+        await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s1", name: "Kraftwerk Nord", timezone: "Europe/Berlin")])))
+        await store.load()
+        #expect(store.loadState == .loaded(hasStudio: true))
+    }
 }

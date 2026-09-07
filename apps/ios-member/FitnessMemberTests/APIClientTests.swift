@@ -32,7 +32,11 @@ func stubbedClient(tokenProvider: @escaping @Sendable () async -> String? = { "t
     return APIClient(baseURL: URL(string: "https://example.test/api/v1")!, session: session, tokenProvider: tokenProvider)
 }
 
-@Suite("APIClient")
+/// .serialized ist Pflicht: alle Tests hier schreiben denselben statischen
+/// StubURLProtocol.handler, und Swift Testing laeuft sonst parallel -- ein
+/// echtes Rennen, das mapsOffline mit seinem fatalError-Handler zum Absturz
+/// eskalieren wuerde.
+@Suite("APIClient", .serialized)
 struct APIClientTests {
     @Test("dekodiert eine erfolgreiche bootstrap-Antwort")
     func decodesBootstrap() async throws {

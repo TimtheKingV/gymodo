@@ -20,8 +20,6 @@ struct MemberStudiosView: View {
                     Text(studio.name)
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(studio.id == catalogStore.activeStudioId ? DesignSystem.Color.text : DesignSystem.Color.textMuted)
-                        .contentShape(Rectangle())
-                        .onTapGesture { catalogStore.setActiveStudio(studio.id) }
 
                     Spacer()
 
@@ -30,6 +28,11 @@ struct MemberStudiosView: View {
                         .foregroundStyle(DesignSystem.Color.danger)
                         .frame(minWidth: 44, minHeight: 44)
                 }
+                // Trefferflaeche ist die ganze Zeile, nicht nur der ~18pt hohe
+                // Text -- >= 44pt gilt in dieser App durchgaengig.
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+                .onTapGesture { catalogStore.setActiveStudio(studio.id) }
                 .listRowBackground(DesignSystem.Color.surface)
             }
         }

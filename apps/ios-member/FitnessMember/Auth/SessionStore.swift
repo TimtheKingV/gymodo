@@ -19,6 +19,14 @@ final class SessionStore {
         session = await backend.currentSession()
     }
 
+    /// Fuer den tokenProvider des APIClient: fragt immer das Backend, nie die
+    /// zwischengespeicherte `session`-Property. Letztere wird nur beim Start
+    /// und bei expliziten Anmeldungen geschrieben und waere nach einem
+    /// automatischen Token-Refresh im Keychain-Backend veraltet.
+    func currentAccessToken() async -> String? {
+        await backend.currentSession()?.accessToken
+    }
+
     func signIn(email: String, password: String) async throws(AuthError) {
         do { session = try await backend.signIn(email: email, password: password) }
         catch { throw AuthError.map(error) }
@@ -66,7 +74,9 @@ final class SessionStore {
     func changePassword(currentPassword: String, newPassword: String) async throws(AuthError) {
         guard let email = session?.email else { throw AuthError.unknown }
         do {
-            _ = try await backend.signIn(email: email, password: currentPassword)
+            // Die erneute Anmeldung liefert eine frische Session -- die alte
+            // wuerde sonst weiterhin als aktuell gelten.
+            session = try await backend.signIn(email: email, password: currentPassword)
             try await backend.updatePassword(newPassword)
         } catch { throw AuthError.map(error) }
     }

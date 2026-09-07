@@ -8,7 +8,7 @@ struct FitnessMemberApp: App {
 
     init() {
         let session = SessionStore(backend: SupabaseAuthBackend())
-        let apiClient = APIClient(baseURL: AppConfig.apiBaseURL) { await session.session?.accessToken }
+        let apiClient = APIClient(baseURL: AppConfig.apiBaseURL) { await session.currentAccessToken() }
         _sessionStore = State(initialValue: session)
         _catalogStore = State(initialValue: CatalogStore(loader: apiClient, pendingWriteStore: PendingWriteStore()))
     }
