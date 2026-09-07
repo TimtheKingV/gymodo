@@ -12,6 +12,19 @@ enum APIError: Error, Equatable {
     case server(message: String)
     case decodingFailed
 
+    /// Ob ein Wiederholen aussichtslos ist.
+    ///
+    /// Die Schreib-Warteschlange behielt bisher bei jedem Fehler. Ein
+    /// stillgelegtes Geraet oder eine entfernte Uebung kommt nie zurueck --
+    /// der Eintrag wuerde sonst bei jedem Netzwechsel neu versucht, fuer
+    /// immer.
+    var istDauerhaft: Bool {
+        switch self {
+        case .offline, .server: false
+        case .unauthorized, .validation, .notFound, .conflict, .decodingFailed: true
+        }
+    }
+
     static func map(code: String, message: String) -> APIError {
         switch code {
         case "unauthorized": .unauthorized(message: message)

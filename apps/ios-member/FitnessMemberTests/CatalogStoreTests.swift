@@ -214,3 +214,70 @@ struct CatalogStoreTests {
         #expect(store.loadState == .loaded(hasStudio: true))
     }
 }
+
+struct APIErrorDauerhaftTests {
+    @Test func offlineUndServerfehlerSindVoruebergehend() {
+        #expect(APIError.offline.istDauerhaft == false)
+        #expect(APIError.server(message: "x").istDauerhaft == false)
+    }
+
+    @Test func validierungUndNichtGefundenSindDauerhaft() {
+        // Ein Geraet, das stillgelegt wurde, kommt nie zurueck -- der
+        // Schreibvorgang darf nicht ewig wiederholt werden.
+        #expect(APIError.validation(message: "x").istDauerhaft)
+        #expect(APIError.notFound(message: "x").istDauerhaft)
+        #expect(APIError.unauthorized(message: "x").istDauerhaft)
+        #expect(APIError.conflict(message: "x").istDauerhaft)
+        #expect(APIError.decodingFailed.istDauerhaft)
+    }
+}
+
+/// @MainActor auf Typebene (nicht nur pro Methode): store(loader:) und
+/// beispielWrite rufen CatalogStore.init auf, und CatalogStore ist selbst
+/// @MainActor -- ohne diese Isolation compiliert der Aufruf aus einem
+/// nicht-isolierten Helper heraus nicht.
+@MainActor
+struct FlushPendingTests {
+    private func store(loader: FakeBootstrapLoader) -> CatalogStore {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        return CatalogStore(
+            loader: loader,
+            pendingWriteStore: PendingWriteStore(directory: verzeichnis),
+            defaults: UserDefaults(suiteName: UUID().uuidString)!
+        )
+    }
+
+    private var beispielWrite: PendingSetWrite {
+        PendingSetWrite(
+            sessionId: UUID(),
+            setId: UUID(),
+            body: SetWrite(machineId: "m1", exerciseId: "e1", setIndex: 1,
+                           weightKg: 80, reps: 10)
+        )
+    }
+
+    @Test func behaeltDenEintragBeiVoruebergehendemFehler() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.offline))
+        let catalog = store(loader: loader)
+        catalog.enqueue(beispielWrite)
+
+        await catalog.flushPending()
+
+        #expect(catalog.pendingWrites.count == 1)
+        #expect(catalog.verworfeneWrites.isEmpty)
+    }
+
+    @Test func verwirftDenEintragBeiDauerhaftemFehler() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.notFound(message: "Geraet nicht gefunden.")))
+        let catalog = store(loader: loader)
+        catalog.enqueue(beispielWrite)
+
+        await catalog.flushPending()
+
+        #expect(catalog.pendingWrites.isEmpty)
+        #expect(catalog.verworfeneWrites.count == 1)
+    }
+}

@@ -36,6 +36,7 @@
 		7FB375254AEA40DEEE4AE229 /* CodeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761B6ACA4FD549615771E3C6 /* CodeEntry.swift */; };
 		824071B2AEF074DCEB6CEF53 /* Zahlformat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00B25E595924E3D70A9F8C8F /* Zahlformat.swift */; };
 		8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B577EC22237E86AA0F3755B7 /* AppConfig.swift */; };
+		8B75427616870118E08E4936 /* NetzwerkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 398AB48ADA8A1BB8EDB1C086 /* NetzwerkMonitor.swift */; };
 		8EA2070784B9E8D6E440FCDB /* AuthRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = A971E16E06A36BD3EA3B0ED4 /* AuthRoute.swift */; };
 		8F24875EC54A33CC1C089F64 /* ErrorEnvelope.swift in Sources */ = {isa = PBXBuildFile; fileRef = D922539BB579EDDA0F7747CD /* ErrorEnvelope.swift */; };
 		95794FEE5EC5FFA101C74C3D /* MemberPasswortAendernView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 213A5216BA472EAE4240C049 /* MemberPasswortAendernView.swift */; };
@@ -111,6 +112,7 @@
 		33EBC4692A4BFF21FC0FCA28 /* BootstrapResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootstrapResponse.swift; sourceTree = "<group>"; };
 		35907B519ACE98A2A3F021C5 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		36E18F6CFDF1DABC8AD02A99 /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
+		398AB48ADA8A1BB8EDB1C086 /* NetzwerkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetzwerkMonitor.swift; sourceTree = "<group>"; };
 		39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitnessMemberApp.swift; sourceTree = "<group>"; };
 		3B16A62990D2DCAE39041199 /* FitnessMemberTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FitnessMemberTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C3D6DF5C1CF76DEAC63015E /* MemberStudiosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberStudiosView.swift; sourceTree = "<group>"; };
@@ -199,6 +201,7 @@
 				BC66ACF7FB394ECB319166C3 /* APIClient.swift */,
 				A358100432569849D383D8E8 /* APIError.swift */,
 				E82F1E9C17FC9A2A3742B15D /* JSONValue.swift */,
+				398AB48ADA8A1BB8EDB1C086 /* NetzwerkMonitor.swift */,
 				5991BF73BA4A3CFBC57907D9 /* DTOs */,
 			);
 			path = Networking;
@@ -499,6 +502,7 @@
 				C54BE200B15088F10CE1DBE0 /* MemberRegistrierenView.swift in Sources */,
 				7BCC2D8C16596135BDBA83F6 /* MemberScannerView.swift in Sources */,
 				B43F29AF4430526E932E3952 /* MemberStudiosView.swift in Sources */,
+				8B75427616870118E08E4936 /* NetzwerkMonitor.swift in Sources */,
 				B68C2AD5B96D1812B2F124A0 /* PasswordPolicy.swift in Sources */,
 				F8A612A78D2961610EE47839 /* PendingSetWrite.swift in Sources */,
 				55D7F293518DDA5C5B44A849 /* PendingTagStore.swift in Sources */,

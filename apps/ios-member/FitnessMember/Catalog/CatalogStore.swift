@@ -28,6 +28,12 @@ final class CatalogStore {
     private(set) var pendingWrites: [PendingSetWrite]
     private(set) var activeStudioId: String?
 
+    /// Schreibvorgaenge, die der Server dauerhaft abgelehnt hat. Sie werden
+    /// nicht wiederholt, verschwinden aber auch nicht stillschweigend --
+    /// der Geraete-Screen zeigt sie an (designsystem.md SS5: Fehler sagen,
+    /// was falsch ist und was gilt).
+    private(set) var verworfeneWrites: [PendingSetWrite] = []
+
     private let loader: any BootstrapLoading
     private let pendingWriteStore: PendingWriteStore
     private let defaults: UserDefaults
@@ -76,6 +82,7 @@ final class CatalogStore {
         defaults.removeObject(forKey: Self.activeStudioDefaultsKey)
         pendingWrites = []
         pendingWriteStore.save([])
+        verworfeneWrites = []
     }
 
     func enqueue(_ write: PendingSetWrite) {
@@ -84,16 +91,25 @@ final class CatalogStore {
     }
 
     func flushPending() async {
-        var remaining: [PendingSetWrite] = []
+        var verbleibend: [PendingSetWrite] = []
         for write in pendingWrites {
             do {
                 _ = try await loader.putSet(sessionId: write.sessionId, setId: write.setId, write.body)
             } catch {
-                remaining.append(write)
+                if error.istDauerhaft {
+                    verworfeneWrites.append(write)
+                } else {
+                    verbleibend.append(write)
+                }
             }
         }
-        pendingWrites = remaining
-        pendingWriteStore.save(remaining)
+        pendingWrites = verbleibend
+        pendingWriteStore.save(verbleibend)
+    }
+
+    /// Nach dem Anzeigen quittiert der Screen die abgelehnten Vorgaenge.
+    func verworfeneQuittieren() {
+        verworfeneWrites = []
     }
 
     /// Wechseln ist reiner Client-Zustand -- "Tippen wechselt" (MemberStudios.dc.html)
