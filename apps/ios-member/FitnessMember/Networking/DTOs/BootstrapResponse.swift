@@ -1,6 +1,14 @@
 import Foundation
 
-struct BootstrapResponse: Decodable, Equatable {
+/// Sendable ist hier EXPLIZIT noetig, nicht nur Dokumentation: EquipmentModel
+/// haelt settingDefinitions als TagContextResponse.SettingDefinition -- ein
+/// verschachtelter Typ aus einer anderen Datei. Ohne die explizite
+/// Deklaration verpasst die implizite Sendable-Herleitung diese
+/// datei-uebergreifende Referenz bei einem sauberen Build (nicht bei einem
+/// inkrementellen, der die Diagnose aus dem Cache ueberspringt), und
+/// APIClient.bootstrap() (actor-isoliert, BootstrapLoading: Sendable)
+/// verweigert dann die Rueckgabe.
+struct BootstrapResponse: Decodable, Equatable, Sendable {
     struct Studio: Decodable, Equatable, Identifiable {
         let id: String
         let name: String
