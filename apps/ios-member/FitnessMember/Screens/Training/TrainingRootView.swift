@@ -62,8 +62,22 @@ struct TrainingRootView: View {
             }
             // Ein ueber Universal Link erfasster Token wird hier verbraucht --
             // Sub-Projekt 1 hat ihn nur fuer das Banner auf LoginMail genutzt.
+            // Deckt den Kalteinstieg ab: der Token liegt beim ersten Aufbau
+            // dieser View schon vor.
             .task {
                 if let token = pendingTag.consume() { oeffneToken(token) }
+            }
+            // Deckt die beiden anderen Faelle ab: ein Tag-Tap, waehrend die
+            // App schon auf einem anderen Tab laeuft, UND -- der haeufigere
+            // Fall -- waehrend das Mitglied schon auf Training ist, egal wie
+            // tief in pfad verschachtelt. onChange feuert bei jeder Aenderung
+            // von pendingTag.token, solange diese View im Baum haengt --
+            // anders als .task/.onAppear haengt das nicht daran, ob der
+            // Training-Tab gerade ausgewaehlt ist, und die Wurzel bleibt
+            // gemountet, waehrend Ziele darueber gepusht werden.
+            .onChange(of: pendingTag.token) { _, neu in
+                guard neu != nil, let token = pendingTag.consume() else { return }
+                oeffneToken(token)
             }
             // Verlaesst die Wurzel die Buehne (z.B. Kontowechsel reisst die
             // gesamte Umgebung neu auf), soll ein noch laufender Retry nicht
@@ -181,6 +195,13 @@ struct TrainingRootView: View {
     }
 
     private func navigiere(zu maschine: BootstrapResponse.Machine, token: String, in bootstrap: BootstrapResponse) {
+        // Ein neu gescannter Tag ERSETZT einen offenen Geraete-Screen, statt
+        // sich davor zu stapeln -- M1-Spec SS5.1 will "ein Ort fuer alles,
+        // was am Geraet passiert", keinen Turm aus Screens fuer nacheinander
+        // gescannte Geraete. Der legitime Zweifach-Push GeraetErkannt ->
+        // GeraetView bleibt unberuehrt: er haengt in ziel(_:) an derselben,
+        // gerade erst geleerten Wurzel und wird hier nicht ausgeloest.
+        pfad.removeAll()
         let genutzte = GeraetEinstiegRechner.genutzteUebungen(machineId: maschine.id, in: bootstrap)
         switch GeraetEinstiegRechner.einstieg(visitCount: maschine.visitCount,
                                               genutzteUebungen: genutzte) {

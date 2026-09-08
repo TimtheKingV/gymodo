@@ -187,6 +187,31 @@ struct GeraetModelTests {
         #expect(sut.kalibrierungOffen == true)
     }
 
+    @Test func erstkontaktLaeuftGenauEinmalJeGeraetUndUebung() {
+        // "Der Dreischritt laeuft genau einmal je Geraet und Uebung" --
+        // istErstkontakt liest aus dem unveraenderlichen bootstrap und
+        // aendert sich danach nie von selbst; erstkontaktAbschliessen() ist
+        // die einzige Stelle, die das nach einem abgeschlossenen Dreischritt
+        // korrigiert (Task 16, Step 3 der Aufgabe).
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        #expect(sut.istErstkontakt == true)
+
+        sut.erstkontaktAbschliessen()
+
+        #expect(sut.istErstkontakt == false)
+
+        // Der Fluchtweg (ErstkontaktFlow.beiAbbruch, in GeraetScreen auf
+        // beiZurueckZumTraining verdrahtet) ruft erstkontaktAbschliessen()
+        // NIE auf -- sonst zeigte istErstkontakt beim naechsten Scan
+        // faelschlich "erledigt", obwohl das Mitglied den Dreischritt nie zu
+        // Ende gebracht hat. Ein frisches Modell im selben Ausgangszustand,
+        // ohne den Aufruf, steht dafuer: istErstkontakt bleibt wahr.
+        let abgebrochen = modell(maschine: GeraetTestdaten.maschine,
+                                 bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        #expect(abgebrochen.istErstkontakt == true)
+    }
+
     @Test func kalibrierungSichernZeigtEinenEigenenTextOffline() async {
         let loader = FakeGeraetLoader()
         await loader.setCalibration(.failure(.offline))
