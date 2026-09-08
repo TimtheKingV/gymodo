@@ -72,7 +72,7 @@ actor APIClient {
     private func send<Body: Encodable, T: Decodable>(_ path: String, method: String, body: Body) async throws(APIError) -> T {
         let bodyData: Data
         do { bodyData = try encoder.encode(body) }
-        catch { throw APIError.decodingFailed }
+        catch { throw APIError.encodingFailed }
         return try await execute(path: path, method: method, bodyData: bodyData)
     }
 

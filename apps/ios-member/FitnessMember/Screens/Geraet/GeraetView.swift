@@ -25,11 +25,21 @@ struct GeraetView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopfzeile
-                OfflineLeiste(istOnline: netz.istOnline)
-                WarteschlangeKarte(offen: katalog.pendingWrites.count,
-                                   geradeGesendet: geradeGesendet)
-                AbgelehnteKarte(anzahl: katalog.verworfeneWrites.count,
-                                beiQuittieren: katalog.verworfeneQuittieren)
+                // Sichtbarkeit hier entschieden, nicht in den Komponenten
+                // selbst -- derselbe Aufbau wie beim ResttimerBalken unten,
+                // damit kein VStack einen leer rendernden Kindzustand
+                // umschliesst (Review-Fund Task 15).
+                if !netz.istOnline {
+                    OfflineLeiste(istOnline: netz.istOnline)
+                }
+                if !katalog.pendingWrites.isEmpty || geradeGesendet {
+                    WarteschlangeKarte(offen: katalog.pendingWrites.count,
+                                       geradeGesendet: geradeGesendet)
+                }
+                if !katalog.verworfeneWrites.isEmpty {
+                    AbgelehnteKarte(anzahl: katalog.verworfeneWrites.count,
+                                    beiQuittieren: katalog.verworfeneQuittieren)
+                }
                 geraetUndUebung
                 if let pause = modell.pause, pause.laeuft() {
                     ResttimerBalken(timer: pause, beiVerlaengern: modell.pauseVerlaengern)

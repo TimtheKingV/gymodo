@@ -233,6 +233,15 @@ struct APIErrorDauerhaftTests {
         #expect(APIError.server(message: "x").istDauerhaft == false)
     }
 
+    // putSet ist ein PUT und damit idempotent: eine 2xx-Antwort, die sich
+    // nur nicht parsen liess, bedeutet, dass der Server den Schreibvorgang
+    // bereits angenommen hat. Ein Wiederholen ist sicher -- als dauerhaft
+    // klassifiziert wuerde ein bereits gespeicherter Satz faelschlich als
+    // "nicht gespeichert" gemeldet.
+    @Test func antwortNichtLesbarIstVoruebergehend() {
+        #expect(APIError.decodingFailed.istDauerhaft == false)
+    }
+
     @Test func validierungUndNichtGefundenSindDauerhaft() {
         // Ein Geraet, das stillgelegt wurde, kommt nie zurueck -- der
         // Schreibvorgang darf nicht ewig wiederholt werden.
@@ -240,7 +249,9 @@ struct APIErrorDauerhaftTests {
         #expect(APIError.notFound(message: "x").istDauerhaft)
         #expect(APIError.unauthorized(message: "x").istDauerhaft)
         #expect(APIError.conflict(message: "x").istDauerhaft)
-        #expect(APIError.decodingFailed.istDauerhaft)
+        // Anders als .decodingFailed: hier hat die Anfrage das Geraet nie
+        // verlassen, ein Wiederholen codiert denselben Body wieder nicht.
+        #expect(APIError.encodingFailed.istDauerhaft)
     }
 }
 

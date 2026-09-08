@@ -347,6 +347,7 @@ final class GeraetModel {
             case .offline: "Ohne Empfang lässt sich die Einstellung nicht speichern. Deine Sätze gehen trotzdem raus."
             case .validation(let text), .server(let text), .notFound(let text),
                  .conflict(let text), .unauthorized(let text): text
+            case .encodingFailed: "Die Einstellung ließ sich nicht senden. Deine Sätze gehen trotzdem raus."
             case .decodingFailed: "Unerwartete Antwort vom Server."
             }
             return false
