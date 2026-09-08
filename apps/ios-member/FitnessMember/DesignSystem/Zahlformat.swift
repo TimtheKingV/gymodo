@@ -20,8 +20,21 @@ enum Zahlformat {
         return formatter
     }()
 
+    private static let uhrzeitFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = gebietsschema
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
+
     static func gewicht(_ kg: Double) -> String {
         gewichtFormatter.string(from: NSNumber(value: kg)) ?? "0,0"
+    }
+
+    /// "18:04" -- die Studio-Zeitzone spielt hier keine Rolle, weil die
+    /// Einheit auf diesem Geraet lief.
+    static func uhrzeit(_ zeitpunkt: Date) -> String {
+        uhrzeitFormatter.string(from: zeitpunkt)
     }
 
     static func gewichtMitEinheit(_ kg: Double) -> String {

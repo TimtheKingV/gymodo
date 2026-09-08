@@ -7,4 +7,8 @@ import Foundation
 enum GeraetRoute: Hashable {
     case erkannt(machineId: String, token: String?)
     case geraet(machineId: String, exerciseId: String, token: String?)
+    /// Der Abschluss-Screen (Aufgabe 6) braucht die Zahlen der beendeten
+    /// Einheit -- sessionId dient nur der Nachverfolgung, die Anzeige
+    /// selbst kommt vollstaendig aus zusammenfassung.
+    case abschluss(sessionId: UUID, zusammenfassung: Trainingszusammenfassung)
 }

@@ -2,7 +2,12 @@ import Foundation
 
 /// Eine Zeile unter "Beim naechsten Mal" -- ohne den Vorschlag, der vom
 /// Server kommt.
-struct Blockzeile: Equatable, Identifiable {
+///
+/// Hashable, weil GeraetRoute (der Pfad des Training-Tabs) Hashable sein
+/// muss und den Abschluss-Fall mit einer Trainingszusammenfassung im Gepaeck
+/// traegt. Beide Typen bestehen nur aus Hashable-Bestandteilen -- eine
+/// Konformanzzeile ohne Umbau.
+struct Blockzeile: Equatable, Hashable, Identifiable {
     var id: String { "\(machineId):\(exerciseId)" }
     let machineId: String
     let exerciseId: String
@@ -20,7 +25,7 @@ struct Blockzeile: Equatable, Identifiable {
 /// Schreib-Warteschlange liegen. Ein serverseitig gerechneter Abschluss
 /// zeigte nach einem Offline-Training zu wenig -- ausgerechnet dort, wo
 /// das Mitglied am ehesten nachsieht, ob alles angekommen ist.
-struct Trainingszusammenfassung: Equatable {
+struct Trainingszusammenfassung: Equatable, Hashable {
     let von: Date
     let bis: Date
     let dauerMinuten: Int

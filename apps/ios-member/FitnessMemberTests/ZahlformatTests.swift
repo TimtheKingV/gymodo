@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import FitnessMember
 
@@ -24,5 +25,19 @@ struct ZahlformatTests {
         #expect(Zahlformat.gewichtGesprochen(80) == "80,0 Kilogramm")
         #expect(Zahlformat.wiederholungenGesprochen(1) == "1 Wiederholung")
         #expect(Zahlformat.wiederholungenGesprochen(10) == "10 Wiederholungen")
+    }
+
+    @Test func uhrzeitFormatiertStundeUndMinuteZweistellig() {
+        // uhrzeit() setzt bewusst keine Zeitzone -- die Einheit lief auf
+        // diesem Geraet, in dessen lokaler Zeit. Der Test rechnet deshalb
+        // ueber die Geraete-Zeitzone (.current), nicht ueber eine fest
+        // verdrahtete, sonst waere er selbst zeitzonenabhaengig brüchig.
+        var kalender = Calendar(identifier: .gregorian)
+        kalender.timeZone = .current
+        var komponenten = DateComponents()
+        komponenten.year = 2026; komponenten.month = 9; komponenten.day = 8
+        komponenten.hour = 18; komponenten.minute = 4
+        let zeitpunkt = kalender.date(from: komponenten)!
+        #expect(Zahlformat.uhrzeit(zeitpunkt) == "18:04")
     }
 }
