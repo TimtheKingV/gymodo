@@ -10,6 +10,7 @@ export { naechsteGeraeteNummer } from "./nummern.js";
 export {
   PROGRESSION_ALGO_VERSION,
   suggestNextWeight,
+  toBlocks,
 } from "./progression.js";
 export { DomainError } from "./errors.js";
 export {
@@ -103,8 +104,11 @@ export type {
   ProgressionInputsRecord,
   ProgressionReasonCode,
   ProgressionSuggestion,
+  SatzZeile,
   WorkoutSetInput,
 } from "./progression.js";
+export { vorschlaegeFuerAbschluss, blockPaare, zuVorschlag } from "./abschluss.js";
+export type { Blockvorschlag } from "./abschluss.js";
 export {
   joinStudioByCode,
   joinStudioByTag,

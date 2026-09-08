@@ -31,6 +31,41 @@ export type BlockInput = {
   sets: WorkoutSetInput[];
 };
 
+/** Die Satzzeile, so wie beide Aufrufer sie aus der Datenbank lesen. */
+export type SatzZeile = {
+  performed_at: string;
+  weight_kg: number | string;
+  reps: number;
+  rir: number | string | null;
+  problem_flag: boolean;
+};
+
+/**
+ * Saetze zu Bloecken je Trainingstag. Liegt hier statt beim Aufrufer, weil
+ * seit dem Abschluss-Screen zwei Stellen dieselbe Gruppierung brauchen --
+ * und weil sie den Typ baut, der hier wohnt.
+ */
+export function toBlocks(rows: SatzZeile[]): BlockInput[] {
+  const byDay = new Map<string, BlockInput>();
+  for (const row of rows) {
+    const day = row.performed_at.slice(0, 10);
+    let block = byDay.get(day);
+    if (!block) {
+      block = { performedOn: day, sets: [] };
+      byDay.set(day, block);
+    }
+    block.sets.push({
+      weightKg: Number(row.weight_kg),
+      reps: row.reps,
+      rir: row.rir === null ? null : Number(row.rir),
+      problemFlag: row.problem_flag,
+    });
+  }
+  // Innerhalb eines Tages chronologisch, damit "letzter Satz" stimmt.
+  for (const block of byDay.values()) block.sets.reverse();
+  return [...byDay.values()];
+}
+
 export type ProgressionInput = {
   targetRepsMin: number;
   targetRepsMax: number;

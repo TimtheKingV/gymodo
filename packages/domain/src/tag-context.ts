@@ -11,6 +11,7 @@ import { signMediaUrl, signMediaUrls } from "./media-store.js";
 import {
   PROGRESSION_ALGO_VERSION,
   suggestNextWeight,
+  toBlocks,
   type BlockInput,
   type ProgressionSuggestion,
 } from "./progression.js";
@@ -76,28 +77,6 @@ type SetRow = {
   problem_flag: boolean;
   performed_at: string;
 };
-
-/** Saetze zu Bloecken je Trainingstag gruppieren, neuester zuerst. */
-function toBlocks(rows: SetRow[]): BlockInput[] {
-  const byDay = new Map<string, BlockInput>();
-  for (const row of rows) {
-    const day = row.performed_at.slice(0, 10);
-    let block = byDay.get(day);
-    if (!block) {
-      block = { performedOn: day, sets: [] };
-      byDay.set(day, block);
-    }
-    block.sets.push({
-      weightKg: Number(row.weight_kg),
-      reps: row.reps,
-      rir: row.rir === null ? null : Number(row.rir),
-      problemFlag: row.problem_flag,
-    });
-  }
-  // Innerhalb eines Tages chronologisch, damit "letzter Satz" stimmt.
-  for (const block of byDay.values()) block.sets.reverse();
-  return [...byDay.values()];
-}
 
 /**
  * Alles, was der Geraete-Screen nach einem Tap braucht -- in einer Anfrage.

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireUserId } from "./auth.js";
 import { DomainError } from "./errors.js";
+import { vorschlaegeFuerAbschluss, type Blockvorschlag } from "./abschluss.js";
 
 export const problemReasonSchema = z.enum([
   "schmerz",
@@ -184,6 +185,12 @@ export type CompletedSession = {
   startedAt: string;
   completedAt: string;
   completedReason: "manual" | "auto";
+  /**
+   * Was beim naechsten Mal an jedem Geraet dieser Einheit ansteht. Kommt
+   * mit dem Abschluss statt aus einem eigenen Endpoint, weil der Screen
+   * genau das rendert (M1-Spec SS6.3, screenorientiert).
+   */
+  vorschlaege: Blockvorschlag[];
 };
 
 type SessionRow = {
@@ -229,6 +236,11 @@ export async function completeSession(
       startedAt: existing.started_at,
       completedAt: existing.completed_at,
       completedReason: existing.completed_reason,
+      vorschlaege: await vorschlaegeFuerAbschluss(
+        client,
+        parsed.data.sessionId,
+        userId,
+      ),
     };
   }
 
@@ -253,5 +265,10 @@ export async function completeSession(
     startedAt: row.started_at,
     completedAt: row.completed_at,
     completedReason: row.completed_reason,
+    vorschlaege: await vorschlaegeFuerAbschluss(
+      client,
+      parsed.data.sessionId,
+      userId,
+    ),
   };
 }
