@@ -123,6 +123,21 @@ struct AbgelaufeneSessionTests {
         #expect(sut.abgelaufeneSession(jetzt: spaeter) == nil)
     }
 
+    @Test func eineSpaetereEinheitBekommtIhrenEigenenHinweis() {
+        let sut = store()
+        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
+                            rir: nil, problemFlag: false, problemReason: nil, jetzt: start)
+        sut.ausgelaufeneQuittieren()
+
+        // Ohne "Training beenden" zu druecken: der naechste Satz legt eine
+        // neue Einheit an, weit genug hinter der ersten, dass sie eigenstaendig ist.
+        let zweiterStart = start.addingTimeInterval(5 * 3600)
+        _ = sut.satzSichern(machineId: "m2", exerciseId: "e2", weightKg: 45, reps: 10,
+                            rir: nil, problemFlag: false, problemReason: nil, jetzt: zweiterStart)
+
+        #expect(sut.abgelaufeneSession(jetzt: zweiterStart.addingTimeInterval(4 * 3600 + 1)) != nil)
+    }
+
     @Test func einManuellBeendetesTrainingGiltNichtAlsAusgelaufen() {
         let sut = store()
         _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,

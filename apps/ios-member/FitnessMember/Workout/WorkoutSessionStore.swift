@@ -17,10 +17,6 @@ final class WorkoutSessionStore {
     private var gespeicherteSession: LokaleSession?
     private let fileStore: SessionFileStore
 
-    /// Ob der Satz auf dem leeren Tab schon gezeigt wurde. Er steht einmal,
-    /// nicht bei jedem Oeffnen.
-    private var ausgelaufeneQuittiert = false
-
     init(fileStore: SessionFileStore = SessionFileStore()) {
         self.fileStore = fileStore
         gespeicherteSession = fileStore.load()
@@ -44,15 +40,23 @@ final class WorkoutSessionStore {
     /// Zugriff saehe das Mitglied am naechsten Tag einen leeren Tab und
     /// wuesste nicht, ob sein Training angekommen ist.
     func abgelaufeneSession(jetzt: Date = Date()) -> LokaleSession? {
-        guard !ausgelaufeneQuittiert,
-              gespeicherteSession != nil,
-              aktiveSession(jetzt: jetzt) == nil
+        guard let session = gespeicherteSession, aktiveSession(jetzt: jetzt) == nil
         else { return nil }
-        return gespeicherteSession
+        return session
     }
 
+    /// Raeumt die abgelaufene Einheit weg, damit der Satz auf dem leeren Tab
+    /// einmal steht, nicht bei jedem Oeffnen.
+    ///
+    /// Kein separates Merker-Bool: das wuerde store-global gelten und damit
+    /// jede SPAETERE abgelaufene Einheit stumm halten, sobald einmal
+    /// quittiert wurde -- und einen Neustart nicht ueberleben. Die
+    /// Sessiondatei traegt nur die oertliche Sicht auf die laufende Einheit;
+    /// noch nicht gesendete Schreibvorgaenge liegen in PendingWriteStore.
+    /// Loeschen ist hier folgenlos fuer sie.
     func ausgelaufeneQuittieren() {
-        ausgelaufeneQuittiert = true
+        gespeicherteSession = nil
+        fileStore.save(nil)
     }
 
     func naechsterSetIndex(machineId: String, exerciseId: String, jetzt: Date = Date()) -> Int {
@@ -111,7 +115,6 @@ final class WorkoutSessionStore {
     func beenden() -> UUID? {
         let id = gespeicherteSession?.id
         gespeicherteSession = nil
-        ausgelaufeneQuittiert = false
         fileStore.save(nil)
         return id
     }
