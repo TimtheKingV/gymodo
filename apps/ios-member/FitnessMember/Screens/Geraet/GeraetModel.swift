@@ -41,6 +41,10 @@ final class GeraetModel {
     var wiederholungen: Int
     var reserve: Double?
     var radOffen = false
+    /// Die Kalibrierung ist auch ausserhalb des Dreischritts erreichbar
+    /// ("aendern" auf Main) -- genau der Fall, der den eigenen Endpoint
+    /// noetig macht.
+    var kalibrierungOffen = false
 
     private let token: String?
     private let bootstrap: BootstrapResponse
@@ -293,4 +297,6 @@ final class GeraetModel {
 
     func pauseVerlaengern() { pause = pause?.verlaengert() }
     func pauseBeenden() { pause = nil }
+
+    func kalibrierungOeffnen() { kalibrierungOffen = true }
 }

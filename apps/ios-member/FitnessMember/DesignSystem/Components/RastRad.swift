@@ -37,6 +37,14 @@ struct RastRad: View {
     let anschlagText: String?
     /// Formatiert die Zahl auf der Zeile.
     let text: (Double) -> String
+    /// Schriftgroesse der gewaehlten Zeile. Default 64pt trifft
+    /// `DesignSystem.Typography.wertHeld` (Gewicht, der Held der
+    /// Satz-Wertzeile). Die Wiederholungen sind der zweite Wert und
+    /// bekommen 44pt (Main.dc.html; die Design-Challenge hat die
+    /// gegenteilige 50px-Abweichung in GeraetWertRad.dc.html gefunden und
+    /// auf 44 korrigiert). Additiv mit Default, damit das Gewichtsrad aus
+    /// Aufgabe 7 unangetastet bleibt.
+    var basisGroesse: CGFloat = 64
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .body) private var zeilenhoehe: CGFloat = 44
@@ -97,7 +105,7 @@ struct RastRad: View {
                     // Zeile selbst, und nur Skalierung/Deckkraft wandern mit
                     // der Scrollphase.
                     Text(text(wert))
-                        .font(DesignSystem.Typography.wertHeld)
+                        .font(.system(size: basisGroesse, weight: .black).monospacedDigit())
                         .foregroundStyle(DesignSystem.Color.text)
                         .frame(height: zeilenhoehe)
                         .frame(maxWidth: .infinity)
@@ -181,10 +189,13 @@ struct RastRad: View {
     // vermutet). Was `VisualEffect` anbietet, reicht aber, um dieselben
     // Zieltypografien zu treffen, ohne sie zu erfinden:
     //
-    // Groesse -- exakt per Skalierung: jede Zeile rendert mit der 64pt-Basis
-    // (`wertHeld`); ein 64pt-Glyph bei 30/64 = 0,469 skaliert sieht aus wie
-    // 30pt, bei 26/64 = 0,406 wie 26pt. Das trifft die in SS7 verlangten
-    // Groessen exakt, nicht ungefaehr.
+    // Groesse -- exakt per Skalierung: jede Zeile rendert mit `basisGroesse`
+    // (64pt fuers Gewicht, 44pt fuer die Wiederholungen); ein Glyph bei
+    // 30/64 = 0,469 skaliert sieht aus wie 30pt der 64pt-Basis bzw. 20,6pt
+    // der 44pt-Basis, bei 26/64 = 0,406 wie 26pt bzw. 17,9pt. Die Faktoren
+    // 30/64 und 26/64 bleiben deshalb Verhaeltnisse, nicht absolute Groessen
+    // -- bei der 44pt-Basis waeren absolute 30pt-Nachbarn fast so gross wie
+    // die Auswahl, und die von SS7 verlangte Staffelung ginge verloren.
     //
     // Farbe -- naeherungsweise per Deckkraft ueber bekanntem Grund: das Rad
     // liegt immer auf `DesignSystem.Color.bg` (#0A0B0D), die Zeile selbst

@@ -23,6 +23,7 @@
 		38240F3DF60D68312F9CBCE4 /* AuthCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DC3378D45751B2BE6267611 /* AuthCopy.swift */; };
 		39876DCABA0D4C90A172BF11 /* CatalogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E651ABDF81EA57E18D7363D /* CatalogStore.swift */; };
 		3B26567CF080FB300019E7A8 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = B1DA3D9245AAF15DFFD8CA8F /* Auth */; };
+		4196455285CC682E9475A449 /* WertZeile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8B00715694B1D3131EDABCE /* WertZeile.swift */; };
 		44EA0E9CBF440F567DCD049C /* ResttimerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707F099CE279C3111DDD2149 /* ResttimerTests.swift */; };
 		48FFCA86209C664A9A0E6964 /* GeraetModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FE347CE02DFBA2ACD65350E /* GeraetModel.swift */; };
 		49188A7C28036BA6E75E3C6E /* GeraetEinstiegTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61EBAF697D264131A8B819C9 /* GeraetEinstiegTests.swift */; };
@@ -76,6 +77,7 @@
 		CFADE9B7B1518A3F6DF0E7E7 /* ExerciseProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E2DF311877D3BA39FFA5D5 /* ExerciseProgress.swift */; };
 		D0068DB5B484876E3D0083E7 /* EmailValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D79138C4B32315198E734356 /* EmailValidator.swift */; };
 		D6412EE84EF83B2BB46E6912 /* LoginCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDEF31B56AE35C7453FC34B9 /* LoginCodeView.swift */; };
+		D76C207642BEE6F3A8CD20B1 /* GeraetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EACD17EBDD11DD861E371D3 /* GeraetView.swift */; };
 		D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78C8636341914B90296B220 /* AppConfigTests.swift */; };
 		DB3955D030762B13093FA54C /* GeraetModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */; };
 		DCC5E98028ED224D32C6FAA5 /* CodeDigitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */; };
@@ -116,6 +118,7 @@
 		1B227508179FE62A4DAA06A0 /* Chip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chip.swift; sourceTree = "<group>"; };
 		1B800AB907E579F778EA2656 /* GeraetLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetLoading.swift; sourceTree = "<group>"; };
 		1E651ABDF81EA57E18D7363D /* CatalogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogStore.swift; sourceTree = "<group>"; };
+		1EACD17EBDD11DD861E371D3 /* GeraetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetView.swift; sourceTree = "<group>"; };
 		20071A27526D769989C545B0 /* AuthFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFlow.swift; sourceTree = "<group>"; };
 		213A5216BA472EAE4240C049 /* MemberPasswortAendernView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortAendernView.swift; sourceTree = "<group>"; };
 		218ADC42D32AAB9758D0AB91 /* LoginMailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginMailView.swift; sourceTree = "<group>"; };
@@ -169,6 +172,7 @@
 		A40546FF017FE78E2A6823CE /* ZahlformatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZahlformatTests.swift; sourceTree = "<group>"; };
 		A4D467E447232623659C42C7 /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		A5CA620D337B41A12B5D8A33 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		A8B00715694B1D3131EDABCE /* WertZeile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WertZeile.swift; sourceTree = "<group>"; };
 		A971E16E06A36BD3EA3B0ED4 /* AuthRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthRoute.swift; sourceTree = "<group>"; };
 		ACA345A636C594A2D95A59FD /* WorkoutSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSet.swift; sourceTree = "<group>"; };
 		B577EC22237E86AA0F3755B7 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
@@ -259,7 +263,9 @@
 			children = (
 				4A055AE066E95BA635068E45 /* GeraetErkanntView.swift */,
 				4FE347CE02DFBA2ACD65350E /* GeraetModel.swift */,
+				1EACD17EBDD11DD861E371D3 /* GeraetView.swift */,
 				5D630F19BC18D3B2A94AD265 /* ResttimerBalken.swift */,
+				A8B00715694B1D3131EDABCE /* WertZeile.swift */,
 			);
 			path = Geraet;
 			sourceTree = "<group>";
@@ -563,6 +569,7 @@
 				80BDCB40CB6953255B669BB5 /* GeraetErkanntView.swift in Sources */,
 				356B55A3EC5DF1C40CF07351 /* GeraetLoading.swift in Sources */,
 				48FFCA86209C664A9A0E6964 /* GeraetModel.swift in Sources */,
+				D76C207642BEE6F3A8CD20B1 /* GeraetView.swift in Sources */,
 				750CEBE3A0D07E711D31D94F /* InlineBanner.swift in Sources */,
 				B8218DBF6B9B3168086F00E6 /* JSONValue.swift in Sources */,
 				762BAF4D2EA117D55549EDED /* JoinResult.swift in Sources */,
@@ -603,6 +610,7 @@
 				A67217C418DEF1C2DC617DB9 /* SupabaseAuthBackend.swift in Sources */,
 				FAFEECC2A710C4BF9D601BD2 /* TagContextResponse.swift in Sources */,
 				4D6EC5DA1233E3B74ADD20B9 /* TagLink.swift in Sources */,
+				4196455285CC682E9475A449 /* WertZeile.swift in Sources */,
 				B6342F2803AFA48AEEC73B7C /* WorkoutSessionStore.swift in Sources */,
 				F7EE8A3131BCD293674276A2 /* WorkoutSet.swift in Sources */,
 				824071B2AEF074DCEB6CEF53 /* Zahlformat.swift in Sources */,
