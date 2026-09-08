@@ -2,90 +2,8 @@
    (docs/superpowers/design/portal/, /design-Runde "Vorgaben-Rad") --
    Kopfhoehe 32 px, Zeile 40 px am Schreibtisch / 44 px in der Halle
    (Designsystem 1: groessere Trefferflaeche fuer einhaendige Bedienung).
-   Die Hoehen selbst kommen als Inline-Stil aus ParameterRad.tsx, weil sie
+   Die Hoehen selbst kommen als Inline-Stil aus EinstellungRad.tsx, weil sie
    von der Zeilenzahl abhaengen -- hier stehen nur Farbe, Rand und Schrift. */
-
-.kasten {
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  overflow: hidden;
-}
-
-.kastenKopf {
-  padding: var(--s12) var(--s16);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--line);
-}
-
-.kastenListe {
-  max-height: 260px;
-  overflow-y: auto;
-}
-
-.zeile {
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s12);
-  padding: var(--s12) var(--s16);
-  border-bottom: 1px solid var(--line);
-  color: var(--text);
-  cursor: pointer;
-  font: inherit;
-}
-
-.zeile:last-child {
-  border-bottom: none;
-}
-
-/* Groessere Trefferflaeche fuer die Halle (Designsystem 1) -- Farbe und
-   Rand kommen von .zeile, nur Polsterung und Mindesthoehe weichen ab. */
-.zeileGross {
-  composes: zeile;
-  padding: 14px var(--s16);
-  min-height: 52px;
-}
-
-/* Ring statt Flaeche: eine ausgewaehlte Vorgabe ist kein zweiter Akzentbereich
-   (Designsystem "eine Akzentflaeche je Bildschirm"), derselbe Schnitt wie
-   .chipAktiv in halle.module.css. */
-.zeileAktiv {
-  composes: zeile;
-  box-shadow: inset 0 0 0 1px var(--accent);
-}
-
-.zeileAktivGross {
-  composes: zeileGross;
-  box-shadow: inset 0 0 0 1px var(--accent);
-}
-
-.zeileName {
-  font-weight: 600;
-}
-
-.zeileMeta {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.zeileHaken {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
 /* Das Rad selbst: Spalten nebeneinander, eine gemeinsame Markierungsbahn
    ueber der Mitte. */
@@ -145,11 +63,18 @@
   color: var(--text-faint);
 }
 
+/* Der ausgewaehlte Wert traegt den Akzent als Textfarbe, nicht als
+   Flaeche ("Akzent als Wert, nicht als Aktionsflaeche" -- derselbe
+   Schnitt wie .balken/.zahlOffen in halle.module.css), dazu eine
+   Unterstreichung: Trainer-Wunsch, "die Zahl die ausgewaehlt ist in
+   unserem gruen anzeigen und unterstrichen". */
 .spalteZeileAktiv {
   composes: spalteZeile;
   font-size: 20px;
   font-weight: 800;
-  color: var(--text);
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* Die Markierungsbahn: zeigt die Mitte, nimmt aber keine Klicks/Taps weg --
@@ -161,4 +86,14 @@
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
   pointer-events: none;
+}
+
+/* NameFeld: das Rad haengt unter dem Textfeld, ein "Fertig" schliesst es
+   wieder -- ein Klick waehlt, er muss nicht gleichzeitig irgendwo
+   daneben treffen. */
+.vorschlagRad {
+  margin-top: var(--s8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s8);
 }

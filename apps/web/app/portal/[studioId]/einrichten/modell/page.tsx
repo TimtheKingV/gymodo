@@ -22,7 +22,7 @@ export default async function ModellWaehlenPage({
       modell.manufacturer ?? "Ohne Hersteller",
       `${modell.machines.length} ${modell.machines.length === 1 ? "Gerät" : "Geräte"}`,
       `${modell.exercises.length} ${modell.exercises.length === 1 ? "Übung" : "Übungen"}`,
-      `${modell.settingDefinitions.length} Parameter`,
+      `${modell.settingDefinitions.length} Einstellungen`,
     ];
     if (modell.photoPath === null) teile.push("kein Foto");
     return teile.join(" · ");

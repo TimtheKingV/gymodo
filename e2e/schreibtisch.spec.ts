@@ -284,7 +284,7 @@ test("Der alte Modellpfad fuehrt auf den neuen", async ({ page }) => {
  * sagen, wofuer der Reiter da ist -- eine leere Liste ohne Satz waere
  * nach Designsystem 5 kein Zustand, sondern ein Loch.
  */
-test("Ohne Einstellparameter sagt der Reiter, wofuer sie da sind", async ({ page }) => {
+test("Ohne Einstellungen sagt der Reiter, wofuer sie da sind", async ({ page }) => {
   const { studioId, admin } = await studioMitTrainer(page, "modell-param-leer");
   // weight_step_kg ist in equipment_models NOT NULL ohne Default (0004).
   // Fehlt es, scheitert schon der Insert.
@@ -296,7 +296,7 @@ test("Ohne Einstellparameter sagt der Reiter, wofuer sie da sind", async ({ page
   if (error) throw error;
 
   await page.goto(`/portal/${studioId}/geraete/${modell.id}/einstellungen`);
-  await expect(page.getByText(/Noch keine Einstellparameter/)).toBeVisible();
+  await expect(page.getByText(/Noch keine Einstellungen/)).toBeVisible();
 });
 
 test("Ohne Uebung nennt der Reiter den naechsten Schritt", async ({ page }) => {

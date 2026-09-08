@@ -52,11 +52,11 @@ export default async function FertigPage({
         },
     modell.settingDefinitions.length > 0
       ? {
-          haupt: `${modell.settingDefinitions.length} Einstellparameter`,
+          haupt: `${modell.settingDefinitions.length} Einstellungen`,
           meta: `${modell.settingDefinitions.map((p) => p.label).join(", ")} · ebenfalls am Modell`,
         }
       : {
-          haupt: "Keine Einstellparameter",
+          haupt: "Keine Einstellungen",
           meta: "Nutzbar, das Mitglied hat nur nichts einzustellen",
           faint: true,
         },

@@ -3,6 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import { MAX_SERIENTERMINE, ortszeitZuInstant, serienTermine } from "@fitretro/domain/serie";
 import { AktionsFormular, Feld } from "../../../../../Form";
+import { Auswahl } from "../../../../../bausteine/Auswahl";
 import { Erlaeuterung } from "../../../../../bausteine/Erlaeuterung";
 import { Zeile, Zeilen } from "../../../../../bausteine/Zeile";
 import styles from "../../../../../portal.module.css";
@@ -59,6 +60,7 @@ export function TerminAnlegenFormular({
   trainerName: string;
 }) {
   const vorlageId = useId();
+  const [vorlage, setVorlage] = useState(vorgewaehlt);
   const [datum, setDatum] = useState("");
   const [uhrzeit, setUhrzeit] = useState("");
   const [bis, setBis] = useState("");
@@ -97,19 +99,16 @@ export function TerminAnlegenFormular({
               <label className={styles.label} htmlFor={vorlageId}>
                 Vorlage
               </label>
-              <select
+              <Auswahl
                 id={vorlageId}
                 name="vorlageId"
-                className={styles.select}
-                defaultValue={vorgewaehlt}
-                required
-              >
-                {vorlagen.map((vorlage) => (
-                  <option key={vorlage.id} value={vorlage.id}>
-                    {vorlage.name}
-                  </option>
-                ))}
-              </select>
+                value={vorlage}
+                onChange={setVorlage}
+                optionen={vorlagen.map((eintrag) => ({
+                  wert: eintrag.id,
+                  anzeige: eintrag.name,
+                }))}
+              />
             </div>
 
             <div className={styles.grid}>

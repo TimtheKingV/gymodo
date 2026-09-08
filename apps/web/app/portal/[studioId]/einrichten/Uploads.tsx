@@ -9,13 +9,14 @@ import {
   useRef,
   useState,
 } from "react";
-import * as tus from "tus-js-client";
 // Der Unterpfad statt des Barrels: index.ts zieht ueber tags.ts das
 // node:crypto-Modul mit, und das laesst sich nicht in einen Browserbundle
 // packen. media.ts haengt nur an errors.ts und ist frei davon.
-import { MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS } from "@fitretro/domain/media";
-import { createBrowserSupabaseClient, storageUrl } from "@/lib/supabase/browser";
-import { videoBestaetigen, videoUploadVorbereiten } from "../../actions";
+import { MAX_VIDEO_SECONDS } from "@fitretro/domain/media";
+import { videoBestaetigen } from "../../actions";
+import { DateiKnopf } from "../../bausteine/DateiKnopf";
+import { MedienVorschau } from "../../bausteine/MedienVorschau";
+import { ladeVideoHoch } from "../../bausteine/videoUpload";
 import styles from "./halle.module.css";
 
 export type Auftrag = {
@@ -119,72 +120,19 @@ export function UploadsProvider({
     async function sende(auftrag: Auftrag) {
       setze(auftrag.id, { stand: "laeuft", anteil: 0 });
 
-      if (auftrag.datei.size > MAX_VIDEO_BYTES) {
-        setze(auftrag.id, {
-          stand: "fehler",
-          fehler: `Die Datei ist ${(auftrag.datei.size / 1024 / 1024).toFixed(0)} MiB groß. Mehr als ${MAX_VIDEO_BYTES / 1024 / 1024} MiB nimmt der Upload nicht an.`,
-        });
-        return;
-      }
-
-      const ziel = await videoUploadVorbereiten(
-        auftrag.linkId,
-        auftrag.datei.size,
-      );
-      if (!ziel.ok) {
-        setze(auftrag.id, { stand: "fehler", fehler: ziel.error });
-        return;
-      }
-
-      const supabase = createBrowserSupabaseClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        setze(auftrag.id, {
-          stand: "fehler",
-          fehler: "Die Anmeldung ist abgelaufen. Bitte neu anmelden.",
-        });
-        return;
-      }
-
-      try {
-        await new Promise<void>((fertig, gescheitert) => {
-          const upload = new tus.Upload(auftrag.datei, {
-            endpoint: storageUrl(),
-            headers: { authorization: `Bearer ${session.access_token}` },
-            // Der Storage-Dienst verlangt genau diese Blockgroesse.
-            chunkSize: 6 * 1024 * 1024,
-            uploadDataDuringCreation: true,
-            removeFingerprintOnSuccess: true,
-            metadata: {
-              bucketName: ziel.bucket,
-              objectName: ziel.storagePath,
-              contentType: auftrag.datei.type || "video/mp4",
-            },
-            onProgress: (gesendet, gesamt) => {
-              setze(auftrag.id, { anteil: gesamt > 0 ? gesendet / gesamt : 0 });
-            },
-            onError: (ursache) => gescheitert(ursache),
-            onSuccess: () => fertig(),
-          });
-          // Ein abgebrochener Upload derselben Datei wird fortgesetzt statt
-          // neu begonnen -- genau dafuer ist TUS da.
-          upload.findPreviousUploads().then((frueher) => {
-            if (frueher.length > 0) upload.resumeFromPreviousUpload(frueher[0]!);
-            upload.start();
-          });
-        });
-      } catch (ursache) {
-        setze(auftrag.id, {
-          // Nie "fehlgeschlagen": der Gang ist die Halle, und dort heisst es
-          // "gespeichert, wird gesendet" (Spec 4).
-          stand: "fehler",
-          fehler:
-            ursache instanceof Error
-              ? `Unterbrochen: ${ursache.message}. Wähle dieselbe Datei noch einmal, sie setzt fort.`
-              : "Unterbrochen. Wähle dieselbe Datei noch einmal, sie setzt fort.",
-        });
+      const ergebnis = await ladeVideoHoch({
+        linkId: auftrag.linkId,
+        datei: auftrag.datei,
+        onFortschritt: (anteil) => setze(auftrag.id, { anteil }),
+        // Nie "fehlgeschlagen": der Gang ist die Halle, und dort heisst es
+        // "gespeichert, wird gesendet" (Spec 4).
+        meldungAbbruch: (ursache) =>
+          ursache instanceof Error
+            ? `Unterbrochen: ${ursache.message}. Wähle dieselbe Datei noch einmal, sie setzt fort.`
+            : "Unterbrochen. Wähle dieselbe Datei noch einmal, sie setzt fort.",
+      });
+      if (!ergebnis.ok) {
+        setze(auftrag.id, { stand: "fehler", fehler: ergebnis.error });
         return;
       }
 
@@ -195,7 +143,7 @@ export function UploadsProvider({
         studioRef.current,
         auftrag.modelId,
         auftrag.linkId,
-        ziel.storagePath,
+        ergebnis.storagePath,
       );
       setze(
         auftrag.id,
@@ -239,27 +187,37 @@ export function VideoAufnehmen({
   hatVideo: boolean;
 }) {
   const { einreihen } = useUploads();
-  const eingabe = useRef<HTMLInputElement>(null);
+  const [objektUrl, setObjektUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (objektUrl) URL.revokeObjectURL(objektUrl);
+    };
+  }, [objektUrl]);
 
   return (
     <div className={styles.feld}>
-      <label className={styles.label} htmlFor={`video-${linkId}`}>
+      <span className={styles.label}>
         {hatVideo ? `Video ersetzen für ${uebungName}` : `Video für ${uebungName}`}
-      </label>
-      <input
-        ref={eingabe}
-        id={`video-${linkId}`}
-        type="file"
-        accept="video/mp4,video/quicktime"
-        capture="environment"
-        className={styles.eingabe}
-        onChange={(ereignis) => {
-          const datei = ereignis.target.files?.[0];
-          if (!datei) return;
-          einreihen({ titel, modelId, linkId, datei });
-          if (eingabe.current) eingabe.current.value = "";
-        }}
-      />
+      </span>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <MedienVorschau url={objektUrl} art="video" leerText="Kein Video" mini />
+        <DateiKnopf
+          label={hatVideo ? "Ersetzen" : "Aufnehmen"}
+          ariaLabel={hatVideo ? `Video ersetzen für ${uebungName}` : `Video für ${uebungName}`}
+          accept="video/mp4,video/quicktime"
+          capture="environment"
+          gross
+          onDatei={(datei) => {
+            if (!datei) return;
+            setObjektUrl((bisherige) => {
+              if (bisherige) URL.revokeObjectURL(bisherige);
+              return URL.createObjectURL(datei);
+            });
+            einreihen({ titel, modelId, linkId, datei });
+          }}
+        />
+      </div>
       <span className={styles.notiz}>
         Höchstens {MAX_VIDEO_SECONDS} Sekunden. Die Länge wird an der Datei
         geprüft, nicht geschätzt — eine zu lange Aufnahme wird abgelehnt, nicht

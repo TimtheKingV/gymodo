@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
-import { AktionsFormular, AktionsKnopf, Feld } from "../../../../../Form";
+import { AktionsKnopf } from "../../../../../Form";
 import { VideoUpload } from "../../../../../VideoUpload";
 import { uebungAnlegen, uebungLoesen, uebungVerschieben } from "../../../../../actions";
 import { ladeKatalog } from "../../../../catalog";
+import { UebungFormular } from "./UebungFormular";
 import styles from "../../../../../portal.module.css";
 
 /**
@@ -41,7 +42,8 @@ export default async function ModellUebungenPage({
   return (
     <>
       <p className={styles.pageLead}>
-        Die Reihenfolge bestimmt, was am Gerät zuerst vorgeschlagen wird.
+        Die Reihenfolge bestimmt, was am Gerät zuerst vorgeschlagen wird —
+        "Hoch" schiebt eine Übung nach vorn, "Runter" nach hinten.
       </p>
 
       <section className={styles.section}>
@@ -108,28 +110,11 @@ export default async function ModellUebungenPage({
           </ul>
         )}
 
-        <AktionsFormular
+        <UebungFormular
+          studioId={studioId}
+          modelId={modelId}
           action={uebungAnlegen.bind(null, studioId, modelId)}
-          submitLabel="Übung anlegen"
-        >
-          <div className={styles.grid}>
-            <Feld name="name" label="Name" required placeholder="Latzug breit" />
-            <Feld
-              name="targetRepsMin"
-              label="Wiederholungen ab"
-              required
-              inputMode="numeric"
-              placeholder="8"
-            />
-            <Feld
-              name="targetRepsMax"
-              label="bis"
-              required
-              inputMode="numeric"
-              placeholder="12"
-            />
-          </div>
-        </AktionsFormular>
+        />
       </section>
     </>
   );

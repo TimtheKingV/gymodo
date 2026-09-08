@@ -126,7 +126,7 @@ function einstellungenPfad(studioId: string, modelId: string): string {
 }
 
 /**
- * Ein Einstellparameter am Modell. Zwei Arten, mehr kennt das Schema nicht:
+ * Eine Einstellung am Modell. Zwei Arten, mehr kennt das Schema nicht:
  * eine Zahl mit Spanne und Schrittweite (0004) oder eine Auswahl aus
  * mindestens zwei verschiedenen Werten (0017). settingDefinitionInputSchema
  * traegt dieselben Regeln wie die Constraints, nur frueher.
@@ -158,7 +158,7 @@ export async function parameterAnlegen(
           : null,
     });
   } catch (fehler) {
-    return fehlerAus(fehler, "Der Parameter liess sich nicht anlegen.");
+    return fehlerAus(fehler, "Die Einstellung liess sich nicht anlegen.");
   }
   revalidatePath(einstellungenPfad(studioId, modelId));
   return { ok: true };
@@ -173,7 +173,7 @@ export async function parameterLoeschen(
   try {
     await deleteSettingDefinition(client, settingId);
   } catch (fehler) {
-    return fehlerAus(fehler, "Der Parameter liess sich nicht loeschen.");
+    return fehlerAus(fehler, "Die Einstellung liess sich nicht loeschen.");
   }
   revalidatePath(einstellungenPfad(studioId, modelId));
   return { ok: true };
@@ -359,6 +359,10 @@ export async function uebungHinzufuegen(
 /**
  * Anlegen und zuordnen in einem Schritt: eine Uebung, die an keinem Geraet
  * haengt, taucht nirgends auf und waere ein stiller Fehlschlag.
+ *
+ * Gibt die `linkId` der Verknuepfung zurueck (attachExerciseToModel liefert
+ * sie ohnehin) -- das Anlegeformular haengt daran direkt ein mitgewaehltes
+ * Video, ohne einen zweiten, spaeteren Schritt zu brauchen.
  */
 export async function uebungAnlegen(
   studioId: string,
@@ -366,8 +370,9 @@ export async function uebungAnlegen(
   modelId: string,
   _prev: unknown,
   formData: FormData,
-): Promise<ActionErgebnis> {
+): Promise<Ergebnis<{ linkId: string }>> {
   const client = await createServerSupabaseClient();
+  let linkId: string;
   try {
     const uebung = await createExercise(client, {
       studioId,
@@ -376,15 +381,16 @@ export async function uebungAnlegen(
       targetRepsMin: zahl(formData, "targetRepsMin") ?? Number.NaN,
       targetRepsMax: zahl(formData, "targetRepsMax") ?? Number.NaN,
     });
-    await attachExerciseToModel(client, {
+    const link = await attachExerciseToModel(client, {
       equipmentModelId: modelId,
       exerciseId: uebung.id,
     });
+    linkId = link.id;
   } catch (fehler) {
     return fehlerAus(fehler, "Die Uebung liess sich nicht anlegen.");
   }
   revalidatePath(uebungenPfad(studioId, machineId));
-  return { ok: true };
+  return { ok: true, linkId };
 }
 
 /**

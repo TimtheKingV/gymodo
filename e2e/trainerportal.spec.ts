@@ -1,12 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import { auswaehlen } from "./helpers/auswahl";
 import { E2E_PASSWORD, anmelden } from "./helpers/login";
 import { radWaehlen } from "./helpers/rad";
 import { tagAnlegen } from "../tests/helpers/tags";
 
 /**
  * Verifikationspunkt 5 aus dem Plan: ein Studio komplett ueber die
- * Oberflaeche einrichten -- Modell, Parameter, Uebung, Geraet, Tag -- und
+ * Oberflaeche einrichten -- Modell, Einstellung, Uebung, Geraet, Tag -- und
  * danach pruefen, dass der Geraete-Screen den Kontext bekommt.
  *
  * Das Einweisungsvideo bleibt hier aussen vor: sein Upload laeuft per TUS
@@ -144,9 +145,9 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   // 1. Geraetemodell
   await page.getByLabel("Name").fill("Latzug");
   await page.getByLabel("Hersteller").fill("Technogym");
-  await page.getByLabel("Gewichtsschritt").fill("2,5");
-  await page.getByLabel("Minimum").fill("5");
-  await page.getByLabel("Maximum").fill("100");
+  await radWaehlen(page, "Schritt", "2,5");
+  await radWaehlen(page, "Minimum", "5");
+  await radWaehlen(page, "Maximum", "100");
   await page.getByRole("button", { name: "Modell anlegen" }).click();
 
   // "Latzug" stand hier nur je als Rail-Link -- Aufgabe 12 hat die Rail von
@@ -173,7 +174,7 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await page.getByRole("button", { name: "Änderungen speichern" }).click();
   await expect(page.getByRole("img", { name: "Foto von Latzug" })).toBeVisible();
 
-  // 2. Einstellparameter und 3. Uebung -- ueber ihre Reiter, nicht ueber
+  // 2. Einstellungen und 3. Uebung -- ueber ihre Reiter, nicht ueber
   // die Datenbank. Bis Aufgabe 17 und 18 gab es die Reiter nicht, und
   // dieser Test hat beides direkt eingefuegt, mit der Notiz "sobald die
   // Reiter stehen, gehoert das wieder ueber die Oberflaeche geprueft".
@@ -185,18 +186,17 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   // dafuer selbst per Datenbank an. Der Weg, den ein Trainer wirklich
   // geht, lief also nirgends durch.
   await page.goto(`/portal/${studio.id}/geraete/${modelId}/einstellungen`);
-  await page.getByLabel("Schlüssel").fill("sitz");
   await page.getByLabel("Beschriftung").fill("Sitzposition");
-  await page.getByLabel("Art").selectOption("number");
+  await auswaehlen(page, page.getByRole("button", { name: "Art" }), "Zahl mit Bereich");
   await radWaehlen(page, "Minimum", "1");
   await radWaehlen(page, "Maximum", "8");
-  await page.getByRole("button", { name: "Parameter anlegen" }).click();
+  await page.getByRole("button", { name: "Einstellung anlegen" }).click();
   await expect(page.getByText("Sitzposition")).toBeVisible();
 
   await page.goto(`/portal/${studio.id}/geraete/${modelId}/uebungen`);
   await page.getByLabel("Name").fill("Latzug breit");
-  await page.getByLabel("Wiederholungen ab").fill("8");
-  await page.getByLabel("bis").fill("12");
+  await radWaehlen(page, "Wiederholungen ab", "8");
+  await radWaehlen(page, "bis", "12");
   await page.getByRole("button", { name: "Übung anlegen" }).click();
   await expect(page.getByText("Latzug breit")).toBeVisible();
 
@@ -218,7 +218,7 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
 
   await page.goto(`/portal/${studio.id}/tags`);
   await page.getByLabel("Token vom Tag").fill(token);
-  await page.getByLabel("Gerät auswählen").selectOption({ label: "12 — Latzug" });
+  await auswaehlen(page, page.getByLabel("Gerät auswählen"), "12 — Latzug");
   await page.getByRole("button", { name: "Verbinden" }).click();
   await expect(page.getByText("aktiv")).toBeVisible();
 
@@ -273,7 +273,10 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   };
   expect(inhalt.machine.label).toBe("12");
   expect(inhalt.equipmentModel.name).toBe("Latzug");
-  expect(inhalt.settingDefinitions.map((s) => s.key)).toContain("sitz");
+  // Der Schluessel kommt seit dem Wegfall des eigenen Schluesselfelds aus
+  // schluesselAus("Sitzposition") -- ein Slug der Beschriftung, kein
+  // getipptes Kuerzel mehr.
+  expect(inhalt.settingDefinitions.map((s) => s.key)).toContain("sitzposition");
   expect(inhalt.exercises.map((u) => u.name)).toContain("Latzug breit");
   expect(inhalt.equipmentModel.photoUrl).toContain("token=");
   // Ein Geraet ohne Video bleibt vollstaendig nutzbar (Spec 6.8).

@@ -109,6 +109,7 @@ export default async function UebungenPage({
           studioId={studioId}
           machineId={machineId}
           modelId={modell.id}
+          titelPraefix={`${modell.name} ${geraet.label}`}
           waehlbar={waehlbar}
         />
 
@@ -118,7 +119,8 @@ export default async function UebungenPage({
         </p>
 
         <p className={styles.notiz}>
-          Die Reihenfolge zählt: Übung 1 ist am Gerät die Vorauswahl. Übungen
+          Die Reihenfolge zählt: Übung 1 ist am Gerät die Vorauswahl — die
+          Pfeile ↑/↓ schieben eine Übung nach vorn oder hinten. Übungen
           gehören dem Studio, nicht dem Gerät — dieselbe Übung an zwei Modellen
           behält ihren Namen. Das Einweisungsvideo hängt dagegen am Paar aus
           Modell und Übung.
