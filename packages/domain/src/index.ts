@@ -127,6 +127,7 @@ export type {
   StudioOverview,
 } from "./overview.js";
 export {
+  abmeldenBis,
   bookCourseSession,
   cancelCourseBooking,
   cancelCourseSession,

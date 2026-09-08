@@ -450,8 +450,22 @@ export type CourseWeek = {
   from: string;
   to: string;
   timezone: string;
+  /**
+   * Aus studios.cancellation_deadline_hours (0032) -- je Studio
+   * verschieden. Ohne sie koennte kein Screen die Frist nennen, ohne zu
+   * raten; der Client erfuehre sie sonst erst aus der Fehlermeldung nach
+   * einem gescheiterten Versuch.
+   */
+  cancellationDeadlineHours: number;
   sessions: CourseWeekSession[];
 };
+
+/** Der spaeteste Zeitpunkt, zu dem eine Abmeldung noch durchgeht. */
+export function abmeldenBis(startsAt: string, fristStunden: number): string {
+  return new Date(
+    Date.parse(startsAt) - fristStunden * 60 * 60 * 1000,
+  ).toISOString();
+}
 
 type WochenAntwort = {
   from: string;
@@ -498,11 +512,25 @@ export async function listCourseWeek(
   // Studios es gibt.
   if (!data) throw new DomainError("not_found", "Diesen Kursplan gibt es nicht.");
 
+  // Eigene Abfrage statt einer Aenderung an course_week: die Frist ist eine
+  // Studio-Eigenschaft, keine Termin-Eigenschaft, und RLS auf studios
+  // beschraenkt sie ohnehin auf die Studios des Mitglieds (0001).
+  const { data: studio } = await client
+    .from("studios")
+    .select("cancellation_deadline_hours")
+    .eq("id", studioId)
+    .maybeSingle<{ cancellation_deadline_hours: number }>();
+
   const antwort = data as WochenAntwort;
   return {
     from: antwort.from,
     to: antwort.to,
     timezone: antwort.timezone,
+    // Eine fehlende Frist darf nicht so aussehen, als gaebe es Spielraum.
+    // Null heisst "bis zum Beginn" und ist die vorsichtige Annahme; die
+    // Zeile ist ohnehin unerreichbar, weil der RPC vorher not_found wirft,
+    // wenn das Studio nicht zugaenglich ist.
+    cancellationDeadlineHours: studio?.cancellation_deadline_hours ?? 0,
     sessions: antwort.sessions.map((s) => ({
       sessionId: s.session_id,
       templateId: s.template_id,
