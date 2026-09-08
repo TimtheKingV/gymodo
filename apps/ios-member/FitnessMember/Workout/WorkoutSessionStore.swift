@@ -14,8 +14,12 @@ final class WorkoutSessionStore {
     /// Server laengst als abgeschlossen liest.
     static let sessionPause: TimeInterval = 4 * 60 * 60
 
-    private(set) var gespeicherteSession: LokaleSession?
+    private var gespeicherteSession: LokaleSession?
     private let fileStore: SessionFileStore
+
+    /// Ob der Satz auf dem leeren Tab schon gezeigt wurde. Er steht einmal,
+    /// nicht bei jedem Oeffnen.
+    private var ausgelaufeneQuittiert = false
 
     init(fileStore: SessionFileStore = SessionFileStore()) {
         self.fileStore = fileStore
@@ -32,6 +36,23 @@ final class WorkoutSessionStore {
         guard let session = gespeicherteSession else { return nil }
         let letzte = session.letzterSatzAm ?? session.startedAt
         return jetzt.timeIntervalSince(letzte) > Self.sessionPause ? nil : session
+    }
+
+    /// Die gespeicherte Einheit, sofern sie NICHT mehr laeuft.
+    ///
+    /// Vergessenes Beenden ist laut M1-Spec SS5.2 der Regelfall. Ohne diesen
+    /// Zugriff saehe das Mitglied am naechsten Tag einen leeren Tab und
+    /// wuesste nicht, ob sein Training angekommen ist.
+    func abgelaufeneSession(jetzt: Date = Date()) -> LokaleSession? {
+        guard !ausgelaufeneQuittiert,
+              gespeicherteSession != nil,
+              aktiveSession(jetzt: jetzt) == nil
+        else { return nil }
+        return gespeicherteSession
+    }
+
+    func ausgelaufeneQuittieren() {
+        ausgelaufeneQuittiert = true
     }
 
     func naechsterSetIndex(machineId: String, exerciseId: String, jetzt: Date = Date()) -> Int {
@@ -90,6 +111,7 @@ final class WorkoutSessionStore {
     func beenden() -> UUID? {
         let id = gespeicherteSession?.id
         gespeicherteSession = nil
+        ausgelaufeneQuittiert = false
         fileStore.save(nil)
         return id
     }

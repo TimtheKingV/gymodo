@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0075B0E3CF0E786F9D22AFFF /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC66ACF7FB394ECB319166C3 /* APIClient.swift */; };
 		05C4AB096D32DA3E6C4E62D7 /* PressButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CEB043A2F6633F4B756357E /* PressButtonStyle.swift */; };
+		0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */; };
 		0C79D05D0F5B192800FDB707 /* MemberPasswortZuruecksetzenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1987FE7CD53A2E411EAD2595 /* MemberPasswortZuruecksetzenView.swift */; };
 		0CC21610F7CED89559C379C4 /* MemberPasswortView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4C1D2382AF3657C5135CBE2 /* MemberPasswortView.swift */; };
 		0D0B75F5C030106C7CB21F85 /* ScannerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55093183C1B476C12C44B469 /* ScannerSheet.swift */; };
@@ -43,6 +44,7 @@
 		55D7F293518DDA5C5B44A849 /* PendingTagStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B414241FEB56BDD45194AA /* PendingTagStore.swift */; };
 		5B7C293A4A3C2C42F2969ADE /* PendingWriteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F89B657647B40C20CCA5FE4 /* PendingWriteStore.swift */; };
 		5CC058FDF3D698829231E5DE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33AEE94B0EDB5593285596C /* RootView.swift */; };
+		600E5516A47D964636050F36 /* TrainingszusammenfassungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA53E0FF9AB052ED88E68C7 /* TrainingszusammenfassungTests.swift */; };
 		6D53A3B77BA1BA710E5457DD /* ErstkontaktFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CFAD7B15E65FF7B1029BCD3 /* ErstkontaktFlow.swift */; };
 		74330F94DB89B468FB230AB0 /* RootDestinationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0753010E9ACC09DF6D948170 /* RootDestinationTests.swift */; };
 		750CEBE3A0D07E711D31D94F /* InlineBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D8C4AC64870FF3423C494F /* InlineBanner.swift */; };
@@ -181,11 +183,13 @@
 		7650558ABB456D6EDF5735C7 /* KalibrierungSchritt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KalibrierungSchritt.swift; sourceTree = "<group>"; };
 		7D79A89B3E91A0F18C9E8DBC /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
 		87DEDAB723DC8FE55CB2FFA1 /* LokaleSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LokaleSession.swift; sourceTree = "<group>"; };
+		8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trainingszusammenfassung.swift; sourceTree = "<group>"; };
 		8A0756570D91BAD9173DC82B /* TagContextResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagContextResponse.swift; sourceTree = "<group>"; };
 		8D54275FD3C78205F883D9A0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		927CF0E8A6C3CD19C832E6FD /* ProblemSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProblemSheet.swift; sourceTree = "<group>"; };
 		9356660F927DE0AEC1C66C5D /* GeraetEinstieg.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetEinstieg.swift; sourceTree = "<group>"; };
 		943C19386AFE9634615213ED /* Info-Additions.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info-Additions.plist"; sourceTree = "<group>"; };
+		9BA53E0FF9AB052ED88E68C7 /* TrainingszusammenfassungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingszusammenfassungTests.swift; sourceTree = "<group>"; };
 		9CEB043A2F6633F4B756357E /* PressButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressButtonStyle.swift; sourceTree = "<group>"; };
 		A358100432569849D383D8E8 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
 		A3F9CF634AF01C1637F99D3B /* ErsteWerteSchritt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErsteWerteSchritt.swift; sourceTree = "<group>"; };
@@ -369,6 +373,7 @@
 				0753010E9ACC09DF6D948170 /* RootDestinationTests.swift */,
 				CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */,
 				C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */,
+				9BA53E0FF9AB052ED88E68C7 /* TrainingszusammenfassungTests.swift */,
 				4C040CEC32DA51B93411E58C /* WorkoutSessionStoreTests.swift */,
 				A40546FF017FE78E2A6823CE /* ZahlformatTests.swift */,
 			);
@@ -410,6 +415,7 @@
 				EE7999237F8B3E7635E236AE /* Rastwerte.swift */,
 				57043EA2F2DFD5D046567083 /* Resttimer.swift */,
 				F059477D28A854A97A90AD70 /* SessionFileStore.swift */,
+				8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */,
 				35466DCA1BAC23049D7DCB30 /* WorkoutSessionStore.swift */,
 			);
 			path = Workout;
@@ -657,6 +663,7 @@
 				FAFEECC2A710C4BF9D601BD2 /* TagContextResponse.swift in Sources */,
 				4D6EC5DA1233E3B74ADD20B9 /* TagLink.swift in Sources */,
 				42F254CA382E78A97F1AC840 /* TrainingRootView.swift in Sources */,
+				0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */,
 				EC0E21421C05D51C3F32E51D /* UebungWechselnSheet.swift in Sources */,
 				4196455285CC682E9475A449 /* WertZeile.swift in Sources */,
 				B6342F2803AFA48AEEC73B7C /* WorkoutSessionStore.swift in Sources */,
@@ -683,6 +690,7 @@
 				74330F94DB89B468FB230AB0 /* RootDestinationTests.swift in Sources */,
 				B3410F91BF63957604BF8340 /* SessionStoreTests.swift in Sources */,
 				9E4947346E28638E0FA99C6A /* TagLinkTests.swift in Sources */,
+				600E5516A47D964636050F36 /* TrainingszusammenfassungTests.swift in Sources */,
 				E9F322710ED44F9FC30002B2 /* WorkoutSessionStoreTests.swift in Sources */,
 				ADF2407DE862FD940232AAE5 /* ZahlformatTests.swift in Sources */,
 			);
