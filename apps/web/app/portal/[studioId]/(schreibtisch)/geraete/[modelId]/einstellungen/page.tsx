@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { AktionsKnopf } from "../../../../../Form";
-import { ParameterFormular } from "../../../../../ParameterFormular";
+import { EinstellungFormular } from "../../../../../EinstellungFormular";
 import { parameterAnlegen, parameterLoeschen } from "../../../../../actions";
 import { ladeKatalog } from "../../../../catalog";
 import styles from "../../../../../portal.module.css";
@@ -8,8 +8,8 @@ import styles from "../../../../../portal.module.css";
 /**
  * Reiter "Einstellungen" -- Abschnitt 2 der frueheren, einteiligen
  * Modellseite (371 Zeilen). Kein eigenes <h1> und kein <main>: beides
- * traegt das Layout darueber. Auch keine <h2>Einstellparameter</h2> mehr
- * -- der Reiter heisst schon so, und eine Ueberschrift, die den Reiternamen
+ * traegt das Layout darueber. Auch keine <h2>Einstellungen</h2> mehr --
+ * der Reiter heisst schon so, und eine Ueberschrift, die den Reiternamen
  * wiederholt, sagt nichts Zweites.
  *
  * Der erklaerende Satz bleibt und rueckt unter die Reiterleiste. Er steht
@@ -18,7 +18,7 @@ import styles from "../../../../../portal.module.css";
  * sagt, wofuer dieser Reiter da ist -- Pflichttext also, und
  * Designsystem 2 verbietet dafuer 3,6 : 1 (Befund 19).
  *
- * Genau eine Akzentflaeche: "Parameter anlegen" im ParameterFormular.
+ * Genau eine Akzentflaeche: "Einstellung anlegen" im EinstellungFormular.
  * Loeschen ist zerstoerend (.destructive), nicht Akzent.
  */
 export default async function ModellEinstellungenPage({
@@ -42,7 +42,7 @@ export default async function ModellEinstellungenPage({
           <div className={styles.empty}>
             {/* Der Wortlaut folgt der Halle und TelefonZustaende.dc.html:
                 Plural. Der Schreibtisch war hier der Ausreisser. */}
-            <p className={styles.emptyTitle}>Noch keine Einstellparameter.</p>
+            <p className={styles.emptyTitle}>Noch keine Einstellungen.</p>
             <p className={styles.emptyNext}>
               Trag ein, was am Gerät verstellt wird — Sitz, Lehne, Startwinkel.
             </p>
@@ -54,7 +54,6 @@ export default async function ModellEinstellungenPage({
                 <div className={styles.rowMain}>
                   <div className={styles.rowTitle}>{parameter.label}</div>
                   <div className={styles.rowMeta}>
-                    <code>{parameter.key}</code> ·{" "}
                     {parameter.kind === "enum"
                       ? (parameter.allowedValues ?? []).join(" · ")
                       : `${parameter.minValue ?? "?"} bis ${parameter.maxValue ?? "?"}${
@@ -73,7 +72,7 @@ export default async function ModellEinstellungenPage({
           </ul>
         )}
 
-        <ParameterFormular action={parameterAnlegen.bind(null, studioId, modelId)} />
+        <EinstellungFormular action={parameterAnlegen.bind(null, studioId, modelId)} />
       </section>
     </>
   );

@@ -3,6 +3,7 @@
 import { useActionState, useId, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { AktionsFormular, AktionsKnopf, Feld } from "../../../Form";
+import { Auswahl } from "../../../bausteine/Auswahl";
 import type { ActionResult } from "../../../actions";
 import {
   abmelden,
@@ -46,6 +47,7 @@ export function StudioFormular({
     null,
   );
   const zeitzoneId = useId();
+  const [gewaehlteZeitzone, setGewaehlteZeitzone] = useState(zeitzone);
   const fristId = useId();
   const fristHinweisId = `${fristId}-hinweis`;
 
@@ -67,19 +69,13 @@ export function StudioFormular({
                 Tippfehler mit Warnung, sondern eine Kursanzeige, die
                 spaeter auflaeuft. Was nur eine feste Menge Werte annehmen
                 kann, waehlt man. */}
-            <select
+            <Auswahl
               id={zeitzoneId}
               name="timezone"
-              className={styles.select}
-              defaultValue={zeitzone}
-              required
-            >
-              {zeitzonen.map((zone) => (
-                <option key={zone} value={zone}>
-                  {zone}
-                </option>
-              ))}
-            </select>
+              value={gewaehlteZeitzone}
+              onChange={setGewaehlteZeitzone}
+              optionen={zeitzonen.map((zone) => ({ wert: zone, anzeige: zone }))}
+            />
             <span className={styles.hint}>
               Sie bestimmt, wann ein Kurstermin beginnt.
             </span>

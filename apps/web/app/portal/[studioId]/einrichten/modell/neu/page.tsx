@@ -25,7 +25,7 @@ export default async function ModellNeuPage({
         <p className={styles.notiz}>
           Ohne Foto geht es nicht weiter — es ist der einzige Grund, warum
           jemand vor dem falschen Gerät merkt, dass er falsch steht.
-          Beschreibungen trägst du am Schreibtisch nach, die Einstellparameter
+          Beschreibungen trägst du am Schreibtisch nach, die Einstellungen
           kommen im nächsten Schritt.
         </p>
       </Seite>

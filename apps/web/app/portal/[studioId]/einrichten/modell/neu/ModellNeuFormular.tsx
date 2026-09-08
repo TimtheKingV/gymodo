@@ -1,18 +1,22 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
+import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MAX_PHOTO_BYTES } from "@fitretro/domain/media";
 import { modellAnlegen } from "../../actions";
 import { Feld } from "../../../../Form";
+import { FotoFeld } from "../../../../bausteine/FotoFeld";
+import { ModellGewichtRad } from "../../../../bausteine/ModellGewichtRad";
 import styles from "../../halle.module.css";
 import portalStyles from "../../../../portal.module.css";
-
-const SCHRITTE = ["1,25", "2,5", "5"];
 
 /**
  * Bewusst knapp: Foto, Name, Hersteller, Schrittweite, Spanne. Alles Weitere
  * bleibt Schreibtisch (Entscheidung 6).
+ *
+ * Schrittweite/Minimum/Maximum kommen als Rad (ModellGewichtRad, gross) --
+ * ersetzt die vormalige Chip-Reihe fuer die Schrittweite und die getippten
+ * Ab/Bis-Felder, gleicher Stil wie bei den Einstellungen.
  *
  * Das Foto kommt ueber capture aus der Systemkamera und nicht aus einem
  * eigenen Sucher: dieselbe Bedienung, vom Betriebssystem gestellt, und
@@ -23,8 +27,6 @@ export function ModellNeuFormular({ studioId }: { studioId: string }) {
   const router = useRouter();
   const [hatFoto, setHatFoto] = useState(false);
   const [dateiFehler, setDateiFehler] = useState<string | null>(null);
-  const [schritt, setSchritt] = useState("2,5");
-  const fotoId = useId();
 
   const [ergebnis, formAction, laeuft] = useActionState(
     async (_prev: unknown, formData: FormData) => {
@@ -41,45 +43,34 @@ export function ModellNeuFormular({ studioId }: { studioId: string }) {
 
   return (
     <form action={formAction} style={{ display: "grid", gap: 16 }}>
-      <div className={styles.feld}>
-        <label className={styles.label} htmlFor={fotoId}>
-          Foto des Modells
-        </label>
-        <input
-          id={fotoId}
-          name="photo"
-          type="file"
-          accept="image/jpeg,image/png"
-          capture="environment"
-          className={portalStyles.inputGross}
-          onChange={(ereignis) => {
-            const datei = ereignis.target.files?.[0];
-            if (!datei) {
-              setHatFoto(false);
-              setDateiFehler(null);
-              return;
-            }
-            if (datei.size > MAX_PHOTO_BYTES) {
-              setHatFoto(false);
-              setDateiFehler(
-                `Das Foto ist ${(datei.size / 1024 / 1024).toFixed(0)} MiB groß. Mehr als ${MAX_PHOTO_BYTES / 1024 / 1024} MiB nimmt der Upload nicht an.`,
-              );
-              return;
-            }
+      <FotoFeld
+        name="photo"
+        gross
+        ausloeserText="Foto des Modells auswählen"
+        ariaLabel="Foto des Modells"
+        hinweis="Das ganze Gerät ins Bild. Ein Foto je Modell, nicht je Gerät — zwei baugleiche Kabelzüge zeigen dasselbe Bild."
+        onDatei={(datei) => {
+          if (!datei) {
+            setHatFoto(false);
             setDateiFehler(null);
-            setHatFoto(true);
-          }}
-        />
-        <span className={styles.notiz}>
-          Das ganze Gerät ins Bild. Ein Foto je Modell, nicht je Gerät — zwei
-          baugleiche Kabelzüge zeigen dasselbe Bild.
-        </span>
-        {dateiFehler ? (
-          <p className={styles.fehler} role="alert">
-            {dateiFehler}
-          </p>
-        ) : null}
-      </div>
+            return;
+          }
+          if (datei.size > MAX_PHOTO_BYTES) {
+            setHatFoto(false);
+            setDateiFehler(
+              `Das Foto ist ${(datei.size / 1024 / 1024).toFixed(0)} MiB groß. Mehr als ${MAX_PHOTO_BYTES / 1024 / 1024} MiB nimmt der Upload nicht an.`,
+            );
+            return;
+          }
+          setDateiFehler(null);
+          setHatFoto(true);
+        }}
+      />
+      {dateiFehler ? (
+        <p className={styles.fehler} role="alert">
+          {dateiFehler}
+        </p>
+      ) : null}
 
       <Feld gross name="name" label="Name" required placeholder="Kabelzug" />
       <Feld
@@ -89,49 +80,12 @@ export function ModellNeuFormular({ studioId }: { studioId: string }) {
         placeholder="Technogym"
       />
 
-      <div className={styles.feld}>
-        <span className={styles.label}>Gewichtsschritt</span>
-        <div className={styles.chips}>
-          {SCHRITTE.map((wert) => (
-            <button
-              key={wert}
-              type="button"
-              className={wert === schritt ? styles.chipAktiv : styles.chip}
-              aria-pressed={wert === schritt}
-              onClick={() => setSchritt(wert)}
-            >
-              {wert} kg
-            </button>
-          ))}
-        </div>
-        <input type="hidden" name="weightStepKg" value={schritt} />
-        <span className={styles.notiz}>
-          Die Schrittweite kommt von den Platten am Gerät. Sie rastet später das
-          Rad des Mitglieds — ein Wert, den das Gerät nicht kann, wird damit
-          unmöglich.
-        </span>
-      </div>
-
-      <div style={{ display: "flex", gap: 12 }}>
-        <div style={{ flex: 1 }}>
-          <Feld
-            gross
-            name="minWeightKg"
-            label="Ab"
-            inputMode="decimal"
-            placeholder="5"
-          />
-        </div>
-        <div style={{ flex: 1 }}>
-          <Feld
-            gross
-            name="maxWeightKg"
-            label="Bis"
-            inputMode="decimal"
-            placeholder="100"
-          />
-        </div>
-      </div>
+      <ModellGewichtRad gross />
+      <p className={styles.notiz}>
+        Die Schrittweite kommt von den Platten am Gerät. Sie rastet später das
+        Rad des Mitglieds — ein Wert, den das Gerät nicht kann, wird damit
+        unmöglich.
+      </p>
 
       {ergebnis && !ergebnis.ok ? (
         <p className={styles.fehler} role="alert">

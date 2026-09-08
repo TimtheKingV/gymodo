@@ -5,16 +5,17 @@ import { ladeKatalog } from "../../../../catalog";
 import { Schrittleiste } from "../../../../../bausteine/Schrittleiste";
 import { Seite } from "../../../../../bausteine/Seite";
 import {
+  EinstellungLoeschen,
+  EinstellungSheet,
   FotoNachreichen,
-  ParameterLoeschen,
-  ParameterSheet,
-} from "./ParameterSheet";
+} from "./EinstellungSheet";
 import styles from "../../../halle.module.css";
 
 /**
- * Schritt 2. Foto und Parameter stehen in einer Karte, weil sie dasselbe
- * teilen: beide haengen am Modell, nicht am Geraet (Entscheidung 9). Der
- * zweite baugleiche Kabelzug laeuft hier mit einem Tap durch.
+ * Schritt 2. Foto und Einstellungen stehen in einer Karte, weil sie
+ * dasselbe teilen: beide haengen am Modell, nicht am Geraet
+ * (Entscheidung 9). Der zweite baugleiche Kabelzug laeuft hier mit einem
+ * Tap durch.
  *
  * Der Akzent gehoert dem Weiterkommen, nicht dem Hinzufuegen -- sonst betont
  * der Bildschirm das Sammeln und nicht das Fertigwerden.
@@ -48,7 +49,7 @@ export default async function EinstellungenPage({
           <div className={styles.abschnittKopf}>
             <h2 className={styles.label}>Am Modell</h2>
             <span className={styles.zeileMeta}>
-              {modell.settingDefinitions.length} Parameter
+              {modell.settingDefinitions.length} Einstellungen
             </span>
           </div>
 
@@ -73,6 +74,7 @@ export default async function EinstellungenPage({
               studioId={studioId}
               modelId={modelId}
               hatFoto={modell.photoPath !== null}
+              fotoUrl={modell.photoPath ? katalog.photoUrls[modell.photoPath] : undefined}
             />
           </div>
 
@@ -84,7 +86,7 @@ export default async function EinstellungenPage({
                   {parameterMeta(parameter)}
                 </div>
               </div>
-              <ParameterLoeschen
+              <EinstellungLoeschen
                 studioId={studioId}
                 modelId={modelId}
                 settingId={parameter.id}
@@ -95,14 +97,14 @@ export default async function EinstellungenPage({
           {modell.settingDefinitions.length === 0 ? (
             <div className={styles.zeile}>
               <div className={styles.zeileMetaFaint}>
-                Noch keine Einstellparameter. Das Gerät ist trotzdem vollständig
+                Noch keine Einstellungen. Das Gerät ist trotzdem vollständig
                 nutzbar — das Mitglied hat nur nichts einzustellen.
               </div>
             </div>
           ) : null}
         </section>
 
-        <ParameterSheet studioId={studioId} modelId={modelId} />
+        <EinstellungSheet studioId={studioId} modelId={modelId} />
 
         <Link
           href={`${basis}/modell/${modelId}/geraet`}
@@ -112,7 +114,7 @@ export default async function EinstellungenPage({
         </Link>
 
         <p className={styles.notiz}>
-          Überspringen geht: ein Gerät ohne Einstellparameter ist vollständig
+          Überspringen geht: ein Gerät ohne Einstellungen ist vollständig
           nutzbar. Nachtragen lässt es sich jederzeit — nur nicht mehr mit den
           Rasten vor Augen.
         </p>
@@ -122,9 +124,10 @@ export default async function EinstellungenPage({
 }
 
 /**
- * Was ein Parameter dem Trainer sagt. Ausserhalb der Komponente, weil er
- * ueber nichts schliesst -- und weil `typeof modell` in einer Typposition
- * den deklarierten Typ nimmt, nicht den durch notFound() verengten.
+ * Was eine Einstellung dem Trainer sagt. Ausserhalb der Komponente, weil
+ * sie ueber nichts schliesst -- und weil `typeof modell` in einer
+ * Typposition den deklarierten Typ nimmt, nicht den durch notFound()
+ * verengten.
  */
 function parameterMeta(parameter: CatalogSettingDefinition): string {
   if (parameter.kind === "enum") {

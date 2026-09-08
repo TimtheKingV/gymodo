@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { AktionsFormular, Feld } from "../../../Form";
 import { modellAnlegen } from "../../../actions";
 import { erreichbarkeit, ladeKatalog, railZahlen } from "../../catalog";
 import { Seite } from "../../../bausteine/Seite";
 import { Abschnitt } from "../../../bausteine/Abschnitt";
 import { Zeile, Zeilen } from "../../../bausteine/Zeile";
 import { Zustand } from "../../../bausteine/Zustand";
+import { ModellAnlegenFormular } from "./ModellAnlegenFormular";
 import styles from "../../../portal.module.css";
 
 /**
@@ -73,7 +73,7 @@ export default async function GeraetePage({
               const stand = erreichbarkeit(modell);
               const mitVideo = modell.exercises.filter((uebung) => uebung.hasVideo).length;
               const fotoDa = Boolean(modell.photoPath);
-              const parameterAnzahl = modell.settingDefinitions.length;
+              const einstellungenAnzahl = modell.settingDefinitions.length;
 
               return (
                 <Zeile
@@ -99,16 +99,16 @@ export default async function GeraetePage({
                         `${modell.exercises.length} ${modell.exercises.length === 1 ? "Übung" : "Übungen"}, ${mitVideo} mit Video`
                       )}
                       {" · "}
-                      {!fotoDa && parameterAnzahl === 0 ? (
-                        <span className={styles.absent}>kein Foto, keine Parameter</span>
+                      {!fotoDa && einstellungenAnzahl === 0 ? (
+                        <span className={styles.absent}>kein Foto, keine Einstellungen</span>
                       ) : (
                         <>
                           {fotoDa ? "Foto" : <span className={styles.absent}>kein Foto</span>}
                           {" · "}
-                          {parameterAnzahl > 0 ? (
-                            `${parameterAnzahl} Parameter`
+                          {einstellungenAnzahl > 0 ? (
+                            `${einstellungenAnzahl} Einstellungen`
                           ) : (
-                            <span className={styles.absent}>keine Parameter</span>
+                            <span className={styles.absent}>keine Einstellungen</span>
                           )}
                         </>
                       )}
@@ -146,37 +146,7 @@ export default async function GeraetePage({
         <div className={styles.sectionHead}>
           <h2 className={styles.sectionTitle}>Modell anlegen</h2>
         </div>
-        <AktionsFormular
-          action={modellAnlegen.bind(null, studioId)}
-          submitLabel="Modell anlegen"
-        >
-          <div className={styles.grid}>
-            <Feld name="name" label="Name" required placeholder="Latzug" />
-            <Feld name="manufacturer" label="Hersteller" placeholder="Technogym" />
-            <Feld
-              name="weightStepKg"
-              label="Gewichtsschritt"
-              required
-              inputMode="decimal"
-              placeholder="2,5"
-              hint="In Kilogramm. So viel liegt zwischen zwei Steckplätzen."
-            />
-            <Feld
-              name="minWeightKg"
-              label="Minimum"
-              inputMode="decimal"
-              placeholder="5"
-              hint="Leer lassen für 0."
-            />
-            <Feld
-              name="maxWeightKg"
-              label="Maximum"
-              inputMode="decimal"
-              placeholder="100"
-              hint="Leer lassen, wenn kein Anschlag bekannt ist."
-            />
-          </div>
-        </AktionsFormular>
+        <ModellAnlegenFormular action={modellAnlegen.bind(null, studioId)} />
       </section>
     </Seite>
   );

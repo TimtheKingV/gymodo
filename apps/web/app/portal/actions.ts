@@ -38,18 +38,31 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
+/** Wie ActionResult, aber mit Zusatzdaten bei Erfolg -- z. B. die id einer
+    gerade angelegten Zeile, die der Aufrufer sofort weiterbraucht. */
+export type Ergebnis<T> = ({ ok: true } & T) | { ok: false; error: string };
+
 /**
  * Genau ein Ergebnisformat fuer alle Formulare: entweder ok oder ein Satz.
  *
  * `art` reicht den zweiten Parameter von revalidatePath durch. "page" trifft
  * nur die Seite selbst; die vier Modellreiter unter /geraete/<modelId> teilen
  * sich aber ein Layout, und die Zaehlung in der Reiterleiste ("2 · 1 ohne
- * Tag") steht genau dort. Wer an den Geraeten, Uebungen oder Parametern
+ * Tag") steht genau dort. Wer an den Geraeten, Uebungen oder Einstellungen
  * eines Modells etwas aendert, aendert diese Zahl -- also "layout".
  *
  * Der Standardwert bleibt "page", damit die acht Aufrufer, die keine
  * Reiterleiste ueber sich haben, unveraendert bleiben.
  */
+/** Ein DomainError zeigt seinen Satz direkt; alles andere wird geloggt, aber
+    nie im Wortlaut angezeigt -- seine Meldung kann Spaltennamen oder IDs
+    fremder Zeilen enthalten. */
+function fehlerAus(fehler: unknown): { ok: false; error: string } {
+  if (fehler instanceof DomainError) return { ok: false, error: fehler.message };
+  console.error("Portal-Aktion fehlgeschlagen:", fehler);
+  return { ok: false, error: "Das hat nicht geklappt. Bitte noch einmal." };
+}
+
 async function fuehreAus(
   pfad: string,
   arbeit: (client: Awaited<ReturnType<typeof createServerSupabaseClient>>) => Promise<void>,
@@ -59,11 +72,7 @@ async function fuehreAus(
   try {
     await arbeit(client);
   } catch (fehler) {
-    if (fehler instanceof DomainError) return { ok: false, error: fehler.message };
-    // Ein unerwarteter Fehler wird geloggt, aber nie im Wortlaut angezeigt:
-    // seine Meldung kann Spaltennamen oder IDs fremder Zeilen enthalten.
-    console.error("Portal-Aktion fehlgeschlagen:", fehler);
-    return { ok: false, error: "Das hat nicht geklappt. Bitte noch einmal." };
+    return fehlerAus(fehler);
   }
   revalidatePath(pfad, art);
   return { ok: true };
@@ -179,13 +188,21 @@ export async function parameterLoeschen(
   }, "layout");
 }
 
+/**
+ * Gibt die `linkId` der Verknuepfung zurueck (attachExerciseToModel liefert
+ * sie ohnehin) -- das Anlegeformular haengt daran direkt ein mitgewaehltes
+ * Video, ohne einen zweiten, spaeteren Schritt zu brauchen. Deshalb von Hand
+ * statt ueber fuehreAus, das nur ein blankes ActionResult liefert.
+ */
 export async function uebungAnlegen(
   studioId: string,
   modelId: string,
   _prev: unknown,
   formData: FormData,
-): Promise<ActionResult> {
-  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
+): Promise<Ergebnis<{ linkId: string }>> {
+  const client = await createServerSupabaseClient();
+  let linkId: string;
+  try {
     const uebung = await createExercise(client, {
       studioId,
       name: text(formData, "name"),
@@ -195,11 +212,16 @@ export async function uebungAnlegen(
     });
     // Anlegen und zuordnen in einem Schritt: eine Uebung, die an keinem
     // Geraet haengt, taucht nirgends auf und waere ein stiller Fehlschlag.
-    await attachExerciseToModel(client, {
+    const link = await attachExerciseToModel(client, {
       equipmentModelId: modelId,
       exerciseId: uebung.id,
     });
-  }, "layout");
+    linkId = link.id;
+  } catch (fehler) {
+    return fehlerAus(fehler);
+  }
+  revalidatePath(`/portal/${studioId}/geraete/${modelId}`, "layout");
+  return { ok: true, linkId };
 }
 
 export async function uebungLoesen(

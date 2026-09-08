@@ -185,7 +185,7 @@
 }
 
 /* Erreichbarkeit statt Vollstaendigkeitsgrad: ein Geraet ist erreichbar,
-   wenn ein aktiver Tag daran klebt. Alles andere -- Foto, Video, Parameter --
+   wenn ein aktiver Tag daran klebt. Alles andere -- Foto, Video, Einstellungen --
    wird genannt, aber nie bewertet (Spec 6.8). */
 .navItemMeta {
   display: block;

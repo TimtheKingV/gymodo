@@ -1,0 +1,25 @@
+/* Vorschau fuer Foto-/Video-Upload -- composes von .photo/.photoEmpty
+   (portal.module.css), damit die Standardgroesse an einer Stelle lebt.
+   .vorschauMini/.vorschauMiniLeer sind eine bewusst kleinere Groesse fuer
+   beengte Stellen (eine Uebungszeile, das Anlege-Formular), kein Zwilling. */
+
+.vorschau {
+  composes: photo from "../portal.module.css";
+}
+
+.vorschauLeer {
+  composes: photoEmpty from "../portal.module.css";
+}
+
+.vorschauMini {
+  composes: vorschau;
+  width: 96px;
+  height: 72px;
+}
+
+.vorschauMiniLeer {
+  composes: vorschauLeer;
+  width: 96px;
+  height: 72px;
+  font-size: 11px;
+}

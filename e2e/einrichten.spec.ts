@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { radWaehlen } from "./helpers/rad";
 import { studioMitTrainer } from "./helpers/studio";
 import { tagAnlegen } from "../tests/helpers/tags";
 
@@ -61,11 +62,9 @@ test("Schritt 1 legt ein Modell mit Pflichtfoto an und geht zu den Einstellungen
 
   await page.getByLabel("Name").fill("Kabelzug");
   await page.getByLabel("Hersteller").fill("Technogym");
-  // Der Gewichtsschritt ist eine Chipreihe, kein Feld: drei Werte, und die
-  // Schrittweite kommt von den Platten am Geraet, nicht aus dem Kopf.
-  await page.getByRole("button", { name: "5 kg", exact: true }).click();
-  await page.getByLabel("Ab").fill("5");
-  await page.getByLabel("Bis").fill("100");
+  await radWaehlen(page, "Minimum", "5");
+  await radWaehlen(page, "Maximum", "100");
+  await radWaehlen(page, "Schritt", "5");
 
   // Ohne Foto geht es nicht weiter -- Entscheidung 10.
   await expect(
@@ -118,14 +117,15 @@ test("Schritt 2 fragt ein fehlendes Foto nach und nimmt Parameter auf", async ({
   );
   await expect(page.getByText("Schritt 2 von 6 · Einstellungen")).toBeVisible();
   await expect(page.getByText("Foto · Fehlt")).toBeVisible();
-  await expect(page.getByText("Noch keine Einstellparameter")).toBeVisible();
+  await expect(page.getByText("Noch keine Einstellungen")).toBeVisible();
 
-  await page.getByRole("button", { name: "Parameter hinzufügen" }).click();
+  await page.getByRole("button", { name: "Einstellung hinzufügen" }).click();
   await page.getByLabel("Beschriftung").fill("Sitzhöhe");
-  await page.getByLabel("Schlüssel").fill("sitz");
-  await page.getByLabel("Von").fill("1");
-  await page.getByLabel("Bis").fill("8");
-  await page.getByLabel("Schritt", { exact: true }).fill("1");
+  // Der Bereich steht immer als Rad da -- nur Von/Bis weichen vom Standard
+  // ab (Schritt bleibt 1).
+  await radWaehlen(page, "Von", "1");
+  await radWaehlen(page, "Bis", "8");
+  await radWaehlen(page, "Schritt", "1");
   await page.getByRole("button", { name: "Hinzufügen" }).click();
 
   await expect(page.getByText("Sitzhöhe")).toBeVisible();
@@ -314,8 +314,8 @@ test("Schritt 5 waehlt aus dem Studio, legt neu an und ordnet um", async ({
   // Eine neue Uebung entsteht und haengt sofort am Modell.
   await page.getByRole("button", { name: "Neue Übung anlegen" }).click();
   await page.getByLabel("Name").fill("Latzug · Neutralgriff");
-  await page.getByLabel("Wiederholungen ab").fill("8");
-  await page.getByLabel("bis", { exact: true }).fill("12");
+  await radWaehlen(page, "Wiederholungen ab", "8");
+  await radWaehlen(page, "bis", "12");
   await page.getByRole("button", { name: "Hinzufügen" }).click();
   await expect(page.getByText("2. Latzug · Neutralgriff")).toBeVisible();
 
@@ -406,8 +406,8 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
   await page.getByRole("link", { name: "Neues Modell anlegen" }).click();
   await page.getByLabel("Name").fill("Kabelzug");
   await page.getByLabel("Hersteller").fill("Technogym");
-  await page.getByLabel("Ab").fill("5");
-  await page.getByLabel("Bis").fill("100");
+  await radWaehlen(page, "Minimum", "5");
+  await radWaehlen(page, "Maximum", "100");
   await page.getByLabel("Foto des Modells").setInputFiles({
     name: "kabelzug.jpg",
     mimeType: "image/jpeg",
@@ -419,11 +419,10 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
 
   // 2 Einstellungen -- dieselbe 2-MB-Strecke wie oben, dieselbe Frist.
   await expect(page.getByText("Foto · Steht")).toBeVisible({ timeout: 60_000 });
-  await page.getByRole("button", { name: "Parameter hinzufügen" }).click();
+  await page.getByRole("button", { name: "Einstellung hinzufügen" }).click();
   await page.getByLabel("Beschriftung").fill("Sitzhöhe");
-  await page.getByLabel("Schlüssel").fill("sitz");
-  await page.getByLabel("Von").fill("1");
-  await page.getByLabel("Bis").fill("8");
+  await radWaehlen(page, "Von", "1");
+  await radWaehlen(page, "Bis", "8");
   await page.getByRole("button", { name: "Hinzufügen" }).click();
   await expect(page.getByText("Sitzhöhe")).toBeVisible();
   await page.getByRole("link", { name: "Weiter zum Gerät" }).click();
@@ -443,8 +442,8 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
   // 5 Übungen
   await page.getByRole("button", { name: "Neue Übung anlegen" }).click();
   await page.getByLabel("Name").fill("Rudern sitzend");
-  await page.getByLabel("Wiederholungen ab").fill("10");
-  await page.getByLabel("bis", { exact: true }).fill("15");
+  await radWaehlen(page, "Wiederholungen ab", "10");
+  await radWaehlen(page, "bis", "15");
   await page.getByRole("button", { name: "Hinzufügen" }).click();
   await expect(page.getByText("1. Rudern sitzend")).toBeVisible();
   await page.getByRole("link", { name: "Einrichtung abschließen" }).click();
