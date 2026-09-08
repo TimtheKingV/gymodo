@@ -28,6 +28,7 @@
 		3B26567CF080FB300019E7A8 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = B1DA3D9245AAF15DFFD8CA8F /* Auth */; };
 		3FEB8C480E33977A36B75C37 /* EinweisungSchritt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A3BA42E747095E74D6BF83A /* EinweisungSchritt.swift */; };
 		4196455285CC682E9475A449 /* WertZeile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8B00715694B1D3131EDABCE /* WertZeile.swift */; };
+		42F254CA382E78A97F1AC840 /* TrainingRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F3F334438C1FBD98C386D0 /* TrainingRootView.swift */; };
 		44EA0E9CBF440F567DCD049C /* ResttimerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707F099CE279C3111DDD2149 /* ResttimerTests.swift */; };
 		48FFCA86209C664A9A0E6964 /* GeraetModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FE347CE02DFBA2ACD65350E /* GeraetModel.swift */; };
 		49188A7C28036BA6E75E3C6E /* GeraetEinstiegTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61EBAF697D264131A8B819C9 /* GeraetEinstiegTests.swift */; };
@@ -55,6 +56,7 @@
 		8F24875EC54A33CC1C089F64 /* ErrorEnvelope.swift in Sources */ = {isa = PBXBuildFile; fileRef = D922539BB579EDDA0F7747CD /* ErrorEnvelope.swift */; };
 		8FC7A533B3262AA6723ED9C1 /* Rastwerte.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE7999237F8B3E7635E236AE /* Rastwerte.swift */; };
 		911D1BCB5F196DFB0C649764 /* ResttimerBalken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D630F19BC18D3B2A94AD265 /* ResttimerBalken.swift */; };
+		9145F7245C5D69AA90AD9B7A /* GeraetRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF6476398D0D632AA4C97E66 /* GeraetRoute.swift */; };
 		95794FEE5EC5FFA101C74C3D /* MemberPasswortAendernView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 213A5216BA472EAE4240C049 /* MemberPasswortAendernView.swift */; };
 		9B358A72607B4F450BF64E0C /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A358100432569849D383D8E8 /* APIError.swift */; };
 		9DE8EE325C831E9049A8BABE /* CalibrationWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 718C690CC2C544C9C8550447 /* CalibrationWrite.swift */; };
@@ -151,6 +153,7 @@
 		3A3BA42E747095E74D6BF83A /* EinweisungSchritt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EinweisungSchritt.swift; sourceTree = "<group>"; };
 		3B16A62990D2DCAE39041199 /* FitnessMemberTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FitnessMemberTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C3D6DF5C1CF76DEAC63015E /* MemberStudiosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberStudiosView.swift; sourceTree = "<group>"; };
+		42F3F334438C1FBD98C386D0 /* TrainingRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingRootView.swift; sourceTree = "<group>"; };
 		4406BEBC7051D319700F05E9 /* MachineResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MachineResolver.swift; sourceTree = "<group>"; };
 		44C759C755CAAFA0F5ED7616 /* CatalogLoadState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogLoadState.swift; sourceTree = "<group>"; };
 		45AE341D5234D5BED46BA218 /* RastRad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RastRad.swift; sourceTree = "<group>"; };
@@ -214,6 +217,7 @@
 		E82F1E9C17FC9A2A3742B15D /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
 		EAEDFB14623AE11C1FD67B11 /* FitnessMember.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FitnessMember.entitlements; sourceTree = "<group>"; };
 		EE7999237F8B3E7635E236AE /* Rastwerte.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rastwerte.swift; sourceTree = "<group>"; };
+		EF6476398D0D632AA4C97E66 /* GeraetRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetRoute.swift; sourceTree = "<group>"; };
 		F059477D28A854A97A90AD70 /* SessionFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionFileStore.swift; sourceTree = "<group>"; };
 		F3F970AC02F39C7E9D8ABCBF /* TagLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLink.swift; sourceTree = "<group>"; };
 		F86C22F308C4A9EB76B53C19 /* SupabaseAuthBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthBackend.swift; sourceTree = "<group>"; };
@@ -410,11 +414,20 @@
 			path = Workout;
 			sourceTree = "<group>";
 		};
+		94CD88D23F67E7B5EE12ED7D /* Training */ = {
+			isa = PBXGroup;
+			children = (
+				42F3F334438C1FBD98C386D0 /* TrainingRootView.swift */,
+			);
+			path = Training;
+			sourceTree = "<group>";
+		};
 		95D686C8B6F41D167021CB91 /* Navigation */ = {
 			isa = PBXGroup;
 			children = (
 				20071A27526D769989C545B0 /* AuthFlow.swift */,
 				A971E16E06A36BD3EA3B0ED4 /* AuthRoute.swift */,
+				EF6476398D0D632AA4C97E66 /* GeraetRoute.swift */,
 				A5CA620D337B41A12B5D8A33 /* MainTabView.swift */,
 				26B414241FEB56BDD45194AA /* PendingTagStore.swift */,
 				27C292EFD7E692D12EAD9B3A /* PlaceholderView.swift */,
@@ -454,6 +467,7 @@
 			children = (
 				3C464E869CE4E7B44B00F6AF /* Geraet */,
 				AFFC176C8796B43E6ECF858E /* Profil */,
+				94CD88D23F67E7B5EE12ED7D /* Training */,
 				9CB2765C25DB11B14DE97D94 /* Zugang */,
 			);
 			path = Screens;
@@ -596,6 +610,7 @@
 				80BDCB40CB6953255B669BB5 /* GeraetErkanntView.swift in Sources */,
 				356B55A3EC5DF1C40CF07351 /* GeraetLoading.swift in Sources */,
 				48FFCA86209C664A9A0E6964 /* GeraetModel.swift in Sources */,
+				9145F7245C5D69AA90AD9B7A /* GeraetRoute.swift in Sources */,
 				D76C207642BEE6F3A8CD20B1 /* GeraetView.swift in Sources */,
 				750CEBE3A0D07E711D31D94F /* InlineBanner.swift in Sources */,
 				B8218DBF6B9B3168086F00E6 /* JSONValue.swift in Sources */,
@@ -641,6 +656,7 @@
 				A67217C418DEF1C2DC617DB9 /* SupabaseAuthBackend.swift in Sources */,
 				FAFEECC2A710C4BF9D601BD2 /* TagContextResponse.swift in Sources */,
 				4D6EC5DA1233E3B74ADD20B9 /* TagLink.swift in Sources */,
+				42F254CA382E78A97F1AC840 /* TrainingRootView.swift in Sources */,
 				EC0E21421C05D51C3F32E51D /* UebungWechselnSheet.swift in Sources */,
 				4196455285CC682E9475A449 /* WertZeile.swift in Sources */,
 				B6342F2803AFA48AEEC73B7C /* WorkoutSessionStore.swift in Sources */,

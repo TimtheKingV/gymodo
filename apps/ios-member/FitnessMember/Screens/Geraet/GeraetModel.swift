@@ -244,8 +244,14 @@ final class GeraetModel {
         return Calendar.current.dateComponents([.day], from: datum, to: Date()).day
     }
 
+    /// Der Dreischritt laeuft genau einmal je Geraet und Uebung -- nach
+    /// seinem Abschluss darf er in dieser Sitzung nicht erneut aufgehen.
+    private var erstkontaktErledigt = false
+
+    func erstkontaktAbschliessen() { erstkontaktErledigt = true }
+
     var istErstkontakt: Bool {
-        GeraetEinstiegRechner.istErstkontakt(
+        !erstkontaktErledigt && GeraetEinstiegRechner.istErstkontakt(
             hatKalibrierung: GeraetEinstiegRechner.hatKalibrierung(
                 machineId: maschine.id, exerciseId: uebungId, in: bootstrap),
             hatLetztenSatz: GeraetEinstiegRechner.hatLetztenSatz(

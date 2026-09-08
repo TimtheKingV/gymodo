@@ -4,23 +4,34 @@ import SwiftUI
 struct FitnessMemberApp: App {
     @State private var sessionStore: SessionStore
     @State private var catalogStore: CatalogStore
+    @State private var workoutStore = WorkoutSessionStore()
+    @State private var netzwerkMonitor = NetzwerkMonitor()
     @State private var pendingTagStore = PendingTagStore()
+    private let apiClient: APIClient
 
     init() {
         let session = SessionStore(backend: SupabaseAuthBackend())
-        let apiClient = APIClient(baseURL: AppConfig.apiBaseURL) { await session.currentAccessToken() }
+        let client = APIClient(baseURL: AppConfig.apiBaseURL) { await session.currentAccessToken() }
         _sessionStore = State(initialValue: session)
-        _catalogStore = State(initialValue: CatalogStore(loader: apiClient, pendingWriteStore: PendingWriteStore()))
+        _catalogStore = State(initialValue: CatalogStore(loader: client, pendingWriteStore: PendingWriteStore()))
+        apiClient = client
     }
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            RootView(apiClient: apiClient)
                 .environment(sessionStore)
                 .environment(catalogStore)
+                .environment(workoutStore)
+                .environment(netzwerkMonitor)
                 .environment(pendingTagStore)
                 .task {
                     await sessionStore.restoreSession()
+                    // Der bisher fehlende Ausloeser der Schreib-Warteschlange.
+                    netzwerkMonitor.start {
+                        Task { await catalogStore.flushPending() }
+                    }
+                    await catalogStore.flushPending()
                 }
                 .onOpenURL { url in
                     // Ungueltige Links werden still verworfen (M0-Verhalten

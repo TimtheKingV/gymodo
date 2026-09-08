@@ -236,3 +236,61 @@ struct GeraetView: View {
             .lineSpacing(3)
     }
 }
+
+/// Bindet Sheets und den Dreischritt an GeraetView. Getrennt, damit
+/// GeraetView selbst nur den Screen beschreibt und in der Preview ohne
+/// Umgebung lauffaehig bleibt.
+struct GeraetScreen: View {
+    @State var modell: GeraetModel
+    let beiZurueckZumTraining: () -> Void
+
+    @State private var uebungWechselnOffen = false
+    @State private var problemOffen = false
+
+    var body: some View {
+        GeraetView(
+            modell: modell,
+            beiUebungWechseln: { uebungWechselnOffen = true },
+            beiProblem: { problemOffen = true },
+            beiZurueckZumTraining: beiZurueckZumTraining
+        )
+        .sheet(isPresented: $uebungWechselnOffen) {
+            UebungWechselnSheet(modell: modell) { modell.uebungWechseln(zu: $0) }
+        }
+        .sheet(isPresented: $problemOffen) {
+            ProblemSheet(modell: modell) {}
+        }
+        // Der Dreischritt: fullScreenCover verdeckt die Tab-Leiste.
+        .fullScreenCover(isPresented: Binding(
+            get: { modell.istErstkontakt || modell.kalibrierungOffen },
+            set: { if !$0 { modell.kalibrierungOffen = false } }
+        )) {
+            if modell.kalibrierungOffen && !modell.istErstkontakt {
+                // "aendern" ausserhalb des Dreischritts: ein eigenstaendiger
+                // Screen ohne vorherigen Schritt, deshalb schliessen sowohl
+                // der Zurueck-Chevron als auch "Speichern und weiter" das
+                // Cover -- KalibrierungSchritt verlangt beiZurueck immer,
+                // auch wenn es hier kein "davor" gibt, zu dem er fuehren
+                // koennte.
+                KalibrierungSchritt(
+                    modell: modell, titel: "Deine Einstellung",
+                    beiZurueck: { modell.kalibrierungOffen = false }
+                ) {
+                    modell.kalibrierungOffen = false
+                }
+            } else {
+                // beiAbbruch teilt sich bewusst beiZurueckZumTraining: ein
+                // fullScreenCover kennt kein Swipe-to-dismiss, und ein
+                // Ausstieg aus dem Dreischritt soll denselben Weg zurueck
+                // nehmen wie ein regulaeres "Zurueck zum Training" -- die
+                // GeraetScreen-Instanz (und mit ihr das Modell) verschwindet
+                // dabei ganz, statt dass hier zusaetzlich am Cover gedreht
+                // werden muesste. erstkontaktAbschliessen() faellt bewusst
+                // weg: ein Abbruch ist kein Abschluss, sonst zeigte
+                // istErstkontakt beim naechsten Mal faelschlich "erledigt".
+                ErstkontaktFlow(modell: modell, beiAbschluss: { modell.erstkontaktAbschliessen() },
+                                beiAbbruch: beiZurueckZumTraining)
+            }
+        }
+    }
+}
