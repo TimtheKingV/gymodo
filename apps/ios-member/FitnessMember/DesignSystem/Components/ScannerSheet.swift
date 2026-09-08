@@ -13,12 +13,17 @@ import SwiftUI
 /// Fehlerzustand hier wuerde genau die Unterscheidung wieder einfuehren,
 /// die der Server bewusst vermeidet.
 struct ScannerSheet: View {
+    /// Der zweite Weg, gleichwertig danebengestellt (SS11) -- nie eine
+    /// kleinere zweite Wahl. Ein Knopf beim Beitritt (Code manuell
+    /// eingeben), eine Karte mit Icon bei "Geraet finden" (NFC).
+    enum Nebenweg {
+        case knopf(titel: String, aktion: () -> Void)
+        case karte(titel: String, text: String)
+    }
+
     let titel: String
     let hinweis: String
-    /// Der zweite Weg, gleichwertig danebengestellt (SS11). Bei "Geraet
-    /// finden" der NFC-Satz, beim Beitritt die manuelle Code-Eingabe.
-    let nebenweg: String?
-    var nebenwegAktion: (() -> Void)? = nil
+    let nebenweg: Nebenweg?
     let beiCode: (String) -> Void
 
     @State private var erkannt = false
@@ -32,6 +37,8 @@ struct ScannerSheet: View {
 
             VStack(spacing: 0) {
                 kopf
+                Spacer()
+                rahmen
                 Spacer()
                 if erkannt { bestaetigung } else { fuss }
             }
@@ -73,31 +80,93 @@ struct ScannerSheet: View {
         }
     }
 
+    /// Der Sucher-Rahmen: sagt dem Mitglied, wohin der Aufkleber gehoert --
+    /// tragend, nicht Zierde (Nachtrag zur Design-Challenge). Werte aus
+    /// TrainingScan.dc.html Zeilen 34-42, fuer beide Scan-Wege gleich.
+    ///
+    /// Reine Dekoration im Bedienungssinn: keine Trefferflaeche, fuer
+    /// VoiceOver ausgeblendet, damit er sich nicht zwischen Titel und
+    /// Hinweis schiebt. Die Suchlinie bleibt statisch -- das Artboard zeigt
+    /// sie so, und statisch gibt es nichts, was Reduce Motion wegnehmen
+    /// muesste.
+    private var rahmen: some View {
+        ZStack {
+            winkel(grad: 0).frame(width: 236, height: 236, alignment: .topLeading)
+            winkel(grad: 90).frame(width: 236, height: 236, alignment: .topTrailing)
+            winkel(grad: 180).frame(width: 236, height: 236, alignment: .bottomTrailing)
+            winkel(grad: 270).frame(width: 236, height: 236, alignment: .bottomLeading)
+
+            Rectangle()
+                .fill(DesignSystem.Color.accent.opacity(0.55))
+                .frame(height: 2)
+                .padding(.horizontal, 12)
+        }
+        .frame(width: 236, height: 236)
+        .accessibilityHidden(true)
+    }
+
+    /// Eine Ecke des Sucher-Rahmens, oben links konstruiert; die anderen
+    /// drei sind dieselbe Form, im Uhrzeigersinn gedreht.
+    private func winkel(grad: Double) -> some View {
+        EckenWinkel()
+            .stroke(DesignSystem.Color.accent, lineWidth: 3)
+            .frame(width: 34, height: 34)
+            .rotationEffect(.degrees(grad))
+    }
+
     @ViewBuilder
     private var fuss: some View {
-        if let nebenweg {
-            VStack(spacing: DesignSystem.Spacing.s8) {
-                if let nebenwegAktion {
-                    Button(nebenweg) {
-                        dismiss()
-                        nebenwegAktion()
-                    }
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Color.text)
-                    .frame(minHeight: 44)
-                    .buttonStyle(PressButtonStyle())
-                } else {
-                    // Kein Knopf, sondern ein Hinweis: NFC braucht diesen
-                    // Bildschirm gar nicht, es gibt also nichts zu tippen.
-                    Text(nebenweg)
-                        .font(.system(size: 13))
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, DesignSystem.Spacing.s24)
-                }
+        switch nebenweg {
+        case .knopf(let text, let aktion):
+            Button(text) {
+                dismiss()
+                aktion()
             }
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(DesignSystem.Color.text)
+            .frame(minHeight: 44)
+            .buttonStyle(PressButtonStyle())
             .padding(.bottom, DesignSystem.Spacing.s24)
+
+        case .karte(let titel, let text):
+            nfcKarte(titel: titel, text: text)
+                .padding(.horizontal, 20)
+                .padding(.bottom, DesignSystem.Spacing.s24)
+
+        case nil:
+            EmptyView()
         }
+    }
+
+    /// Die NFC-Karte bei "Geraet finden": gleichwertig neben dem QR-Scan,
+    /// keine kleinere zweite Wahl. Werte aus TrainingScan.dc.html
+    /// Zeilen 50-58.
+    private func nfcKarte(titel: String, text: String) -> some View {
+        HStack(spacing: DesignSystem.Spacing.s16) {
+            ZStack {
+                Circle().stroke(DesignSystem.Color.line, lineWidth: 1)
+                Image(systemName: "wave.3.right")
+                    .font(.system(size: 20))
+                    .foregroundStyle(DesignSystem.Color.accent)
+            }
+            .frame(width: 46, height: 46)
+
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                Text(titel)
+                    .font(.system(size: 15, weight: .heavy))
+                    .foregroundStyle(DesignSystem.Color.text)
+                Text(text)
+                    .font(.system(size: 12))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+            }
+        }
+        .padding(DesignSystem.Spacing.s16)
+        .background(DesignSystem.Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt)
+                .stroke(DesignSystem.Color.line, lineWidth: 1)
+        )
     }
 
     /// Sichtbare Bestaetigung, nicht nur haptische (SS6). Die
@@ -123,5 +192,22 @@ struct ScannerSheet: View {
         guard !erkannt else { return }
         erkannt = true
         beiCode(code)
+    }
+}
+
+/// Eine Ecke des Sucher-Rahmens: 34 pt Kantenlaenge, Aussenecke mit
+/// DesignSystem.Radius.neben (14 pt) gerundet -- ueber addArc(tangent1End:
+/// tangent2End:radius:) konstruiert, damit keine Vorzeichenfehler bei den
+/// Bogenwinkeln entstehen koennen.
+private struct EckenWinkel: Shape {
+    func path(in rect: CGRect) -> Path {
+        var pfad = Path()
+        let untenLinks = CGPoint(x: rect.minX, y: rect.maxY)
+        let obenLinks = CGPoint(x: rect.minX, y: rect.minY)
+        let obenRechts = CGPoint(x: rect.maxX, y: rect.minY)
+        pfad.move(to: untenLinks)
+        pfad.addArc(tangent1End: obenLinks, tangent2End: obenRechts, radius: DesignSystem.Radius.neben)
+        pfad.addLine(to: obenRechts)
+        return pfad
     }
 }

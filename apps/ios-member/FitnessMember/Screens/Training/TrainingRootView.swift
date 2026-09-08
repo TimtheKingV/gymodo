@@ -58,7 +58,10 @@ struct TrainingRootView: View {
                 ScannerSheet(
                     titel: "Gerät finden",
                     hinweis: "QR-Code auf dem Aufkleber ins Feld halten.",
-                    nebenweg: "Oder einfach antippen: Halt die Oberkante deines iPhones an den Aufkleber — dafür musst du diesen Bildschirm nicht offen haben.",
+                    nebenweg: .karte(
+                        titel: "Oder einfach antippen",
+                        text: "Halt die Oberkante deines iPhones an den Aufkleber — dafür musst du diesen Bildschirm nicht offen haben."
+                    ),
                     beiCode: { code in
                         scannerOffen = false
                         // Die Gym-QR-Codes tragen den vollstaendigen Universal

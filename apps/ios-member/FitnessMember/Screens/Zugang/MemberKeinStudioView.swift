@@ -52,8 +52,10 @@ struct MemberKeinStudioView: View {
             ScannerSheet(
                 titel: "Code scannen",
                 hinweis: "QR-Code am Studioeingang ins Feld halten.",
-                nebenweg: "Code stattdessen eingeben",
-                nebenwegAktion: { /* das Eingabefeld liegt direkt darunter */ },
+                nebenweg: .knopf(
+                    titel: "Code stattdessen eingeben",
+                    aktion: { /* das Eingabefeld liegt direkt darunter */ }
+                ),
                 beiCode: { scanned in
                     showScanner = false
                     Task { await joinByTag(scanned) }
