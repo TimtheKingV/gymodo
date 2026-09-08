@@ -43,6 +43,12 @@ actor APIClient {
         try await postNoBody("workout-sessions/\(sessionId.uuidString)/complete")
     }
 
+    // MARK: - Kalibrierung (Sub-Projekt 2, ausserhalb M1-Spec SS6.3)
+
+    func recordCalibration(_ body: CalibrationWrite) async throws(APIError) -> RecordedCalibration {
+        try await send("me/calibrations", method: "POST", body: body)
+    }
+
     // MARK: - Beitritts-/Austritts-Endpoints (Aufgabe 17, ausserhalb M1-Spec SS6.3)
 
     func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult {
@@ -66,7 +72,7 @@ actor APIClient {
     private func send<Body: Encodable, T: Decodable>(_ path: String, method: String, body: Body) async throws(APIError) -> T {
         let bodyData: Data
         do { bodyData = try encoder.encode(body) }
-        catch { throw APIError.decodingFailed }
+        catch { throw APIError.encodingFailed }
         return try await execute(path: path, method: method, bodyData: bodyData)
     }
 

@@ -178,7 +178,7 @@ struct CatalogStoreTests {
         #expect(secondStore.activeStudioId == "s2")
     }
 
-    @Test("reset() raeumt Katalog, Ladezustand, aktives Studio und offene Schreibvorgaenge")
+    @Test("reset() raeumt Katalog, Ladezustand, aktives Studio, offene und verworfene Schreibvorgaenge")
     func resetClearsEverything() async {
         let defaults = UserDefaults(suiteName: "catalog-store-tests-\(UUID().uuidString)")!
         let directory = tempDirectory()
@@ -186,7 +186,16 @@ struct CatalogStoreTests {
         await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s1", name: "Kraftwerk Nord", timezone: "Europe/Berlin")])))
         let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: directory), defaults: defaults)
         await store.load()
+
+        // Ein dauerhaft abgelehnter Schreibvorgang, damit reset() auch
+        // verworfeneWrites raeumen muss -- sonst erbt das naechste Konto auf
+        // demselben Geraet die abgelehnten Vorgaenge des vorigen.
+        await loader.setPutSetResult(.failure(.notFound(message: "Geraet nicht gefunden.")))
         store.enqueue(PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil)))
+        await store.flushPending()
+        #expect(store.verworfeneWrites.count == 1)
+
+        store.enqueue(PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m2", exerciseId: "ex2", setIndex: 1, weightKg: 60, reps: 8, rir: nil)))
 
         store.reset()
 
@@ -194,11 +203,14 @@ struct CatalogStoreTests {
         #expect(store.loadState == .idle)
         #expect(store.activeStudioId == nil)
         #expect(store.pendingWrites.isEmpty)
+        #expect(store.verworfeneWrites.isEmpty)
         #expect(defaults.string(forKey: "activeStudioId") == nil)
         // Auch auf Platte, sonst holt der naechste Start alles zurueck.
         #expect(PendingWriteStore(directory: directory).loadAll().isEmpty)
+        #expect(PendingWriteStore(directory: directory, filename: "verworfene-writes.json").loadAll().isEmpty)
         let secondStore = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: directory), defaults: defaults)
         #expect(secondStore.activeStudioId == nil)
+        #expect(secondStore.verworfeneWrites.isEmpty)
     }
 
     @Test("nach .failed fuehrt ein erneutes load() wieder zu .loaded")
@@ -213,4 +225,184 @@ struct CatalogStoreTests {
         await store.load()
         #expect(store.loadState == .loaded(hasStudio: true))
     }
+}
+
+struct APIErrorDauerhaftTests {
+    @Test func offlineUndServerfehlerSindVoruebergehend() {
+        #expect(APIError.offline.istDauerhaft == false)
+        #expect(APIError.server(message: "x").istDauerhaft == false)
+    }
+
+    // putSet ist ein PUT und damit idempotent: eine 2xx-Antwort, die sich
+    // nur nicht parsen liess, bedeutet, dass der Server den Schreibvorgang
+    // bereits angenommen hat. Ein Wiederholen ist sicher -- als dauerhaft
+    // klassifiziert wuerde ein bereits gespeicherter Satz faelschlich als
+    // "nicht gespeichert" gemeldet.
+    @Test func antwortNichtLesbarIstVoruebergehend() {
+        #expect(APIError.decodingFailed.istDauerhaft == false)
+    }
+
+    @Test func validierungUndNichtGefundenSindDauerhaft() {
+        // Ein Geraet, das stillgelegt wurde, kommt nie zurueck -- der
+        // Schreibvorgang darf nicht ewig wiederholt werden.
+        #expect(APIError.validation(message: "x").istDauerhaft)
+        #expect(APIError.notFound(message: "x").istDauerhaft)
+        #expect(APIError.unauthorized(message: "x").istDauerhaft)
+        #expect(APIError.conflict(message: "x").istDauerhaft)
+        // Anders als .decodingFailed: hier hat die Anfrage das Geraet nie
+        // verlassen, ein Wiederholen codiert denselben Body wieder nicht.
+        #expect(APIError.encodingFailed.istDauerhaft)
+    }
+}
+
+/// @MainActor auf Typebene (nicht nur pro Methode): store(loader:) und
+/// beispielWrite rufen CatalogStore.init auf, und CatalogStore ist selbst
+/// @MainActor -- ohne diese Isolation compiliert der Aufruf aus einem
+/// nicht-isolierten Helper heraus nicht.
+@MainActor
+struct FlushPendingTests {
+    private func neuesVerzeichnis() -> URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    }
+
+    /// `directory` ist explizit waehlbar (statt immer neu), damit Tests einen
+    /// Neustart simulieren koennen: zwei CatalogStore-Instanzen ueber
+    /// demselben Verzeichnis, ohne gemeinsame In-Memory-Referenz.
+    ///
+    /// `any BootstrapLoading` statt `FakeBootstrapLoader`, damit ein Test
+    /// einen eigenen, schmaleren Loader einsetzen kann (siehe
+    /// ZweiterAufrufPrueftPlatteLoader unten).
+    private func store(loader: any BootstrapLoading, directory: URL? = nil) -> CatalogStore {
+        CatalogStore(
+            loader: loader,
+            pendingWriteStore: PendingWriteStore(directory: directory ?? neuesVerzeichnis()),
+            defaults: UserDefaults(suiteName: UUID().uuidString)!
+        )
+    }
+
+    private var beispielWrite: PendingSetWrite {
+        PendingSetWrite(
+            sessionId: UUID(),
+            setId: UUID(),
+            body: SetWrite(machineId: "m1", exerciseId: "e1", setIndex: 1,
+                           weightKg: 80, reps: 10)
+        )
+    }
+
+    @Test func behaeltDenEintragBeiVoruebergehendemFehler() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.offline))
+        let catalog = store(loader: loader)
+        catalog.enqueue(beispielWrite)
+
+        await catalog.flushPending()
+
+        #expect(catalog.pendingWrites.count == 1)
+        #expect(catalog.verworfeneWrites.isEmpty)
+    }
+
+    @Test func verwirftDenEintragBeiDauerhaftemFehler() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.notFound(message: "Geraet nicht gefunden.")))
+        let catalog = store(loader: loader)
+        catalog.enqueue(beispielWrite)
+
+        await catalog.flushPending()
+
+        #expect(catalog.pendingWrites.isEmpty)
+        #expect(catalog.verworfeneWrites.count == 1)
+    }
+
+    // Die SP1-Zusage lautete "verschwindet nicht stillschweigend" -- ein rein
+    // speicherresidentes verworfeneWrites wuerde genau das tun, wenn die App
+    // zwischen einem Hintergrund-Reconnect und dem naechsten Screen-Aufruf
+    // beendet wird. Deshalb muss der Eintrag einen Neustart ueberstehen, wie
+    // pendingWrites es schon tut (PendingWriteStoreTests.survivesRestart).
+    @Test func verworfenerEintragUeberstehtEinenNeustart() async {
+        let verzeichnis = neuesVerzeichnis()
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.notFound(message: "Geraet nicht gefunden.")))
+        let ersterProzess = store(loader: loader, directory: verzeichnis)
+        ersterProzess.enqueue(beispielWrite)
+        await ersterProzess.flushPending()
+        #expect(ersterProzess.verworfeneWrites.count == 1)
+
+        // "Neustart": eine neue Instanz auf demselben Verzeichnis, keine
+        // gemeinsame In-Memory-Referenz mit ersterProzess.
+        let zweiterProzess = store(loader: FakeBootstrapLoader(), directory: verzeichnis)
+        #expect(zweiterProzess.verworfeneWrites == ersterProzess.verworfeneWrites)
+    }
+
+    @Test func verworfeneQuittierenLeertSpeicherUndPlatte() async {
+        let verzeichnis = neuesVerzeichnis()
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.notFound(message: "Geraet nicht gefunden.")))
+        let catalog = store(loader: loader, directory: verzeichnis)
+        catalog.enqueue(beispielWrite)
+        await catalog.flushPending()
+        #expect(catalog.verworfeneWrites.count == 1)
+
+        catalog.verworfeneQuittieren()
+        #expect(catalog.verworfeneWrites.isEmpty)
+
+        // Auch auf Platte, sonst taucht der quittierte Eintrag beim naechsten
+        // Start wieder auf.
+        let neuerProzess = store(loader: FakeBootstrapLoader(), directory: verzeichnis)
+        #expect(neuerProzess.verworfeneWrites.isEmpty)
+    }
+
+    // Der urspruengliche Kommentar in flushPending behauptete, ein verworfener
+    // Eintrag sei "schon aus pendingWrites/pendingWriteStore raus", sobald er
+    // zu verworfeneWrites hinzugefuegt wird -- pendingWriteStore.save(...)
+    // lief aber erst NACH der Schleife. Ein Kill zwischen zwei Eintraegen
+    // liess den ersten dadurch auf der Platte in BEIDEN Dateien stehen: beim
+    // naechsten Start wird er erneut versucht, faellt erneut dauerhaft durch
+    // und landet ein zweites Mal in verworfeneWrites. Dieser Test prueft den
+    // Zwischenstand waehrend des Laufs, nicht erst danach -- genau die Luecke,
+    // die ein Kill mittendrin ausnutzen wuerde.
+    @Test func entferntEinenDauerhaftAbgelehntenEintragSofortAusDemPendingWriteStore() async {
+        let verzeichnis = neuesVerzeichnis()
+        let erste = beispielWrite
+        let zweite = PendingSetWrite(
+            sessionId: UUID(), setId: UUID(),
+            body: SetWrite(machineId: "m2", exerciseId: "e2", setIndex: 1, weightKg: 40, reps: 8)
+        )
+        let loader = ZweiterAufrufPrueftPlatteLoader(verzeichnis: verzeichnis, ersterSetId: erste.setId)
+        let catalog = store(loader: loader, directory: verzeichnis)
+        catalog.enqueue(erste)
+        catalog.enqueue(zweite)
+
+        await catalog.flushPending()
+
+        #expect(await loader.zweiterAufrufSahDenEntferntenEintrag == true)
+        #expect(catalog.verworfeneWrites.count == 2)
+    }
+}
+
+/// Prueft beim ZWEITEN putSet-Aufruf, ob der erste Eintrag zu diesem
+/// Zeitpunkt schon aus dem PendingWriteStore auf der Platte verschwunden ist
+/// -- also bevor flushPending() insgesamt zurueckkehrt.
+private actor ZweiterAufrufPrueftPlatteLoader: BootstrapLoading {
+    let verzeichnis: URL
+    let ersterSetId: UUID
+    private(set) var zweiterAufrufSahDenEntferntenEintrag: Bool?
+
+    init(verzeichnis: URL, ersterSetId: UUID) {
+        self.verzeichnis = verzeichnis
+        self.ersterSetId = ersterSetId
+    }
+
+    func bootstrap() async throws(APIError) -> BootstrapResponse { throw .offline }
+
+    func putSet(sessionId: UUID, setId: UUID, _ body: SetWrite) async throws(APIError) -> RecordedSet {
+        if setId != ersterSetId {
+            let aufDerPlatte = PendingWriteStore(directory: verzeichnis).loadAll()
+            zweiterAufrufSahDenEntferntenEintrag = !aufDerPlatte.contains { $0.setId == ersterSetId }
+        }
+        throw APIError.notFound(message: "Geraet nicht gefunden.")
+    }
+
+    func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
+    func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
+    func leaveStudioMembership(studioId: String) async throws(APIError) { throw .offline }
 }

@@ -24,10 +24,9 @@ struct PrimaryButton: View {
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 64)
+                .foregroundStyle(isEnabled ? DesignSystem.Color.onAccent : DesignSystem.Color.textFaint)
             }
-            .background(isEnabled ? DesignSystem.Color.accent : DesignSystem.Color.surfaceRaised)
-            .foregroundStyle(isEnabled ? DesignSystem.Color.onAccent : DesignSystem.Color.textFaint)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt))
+            .buttonStyle(HauptaktionButtonStyle(isEnabled: isEnabled))
             .disabled(!isEnabled || isLoading)
 
             if !isEnabled, let disabledHint {

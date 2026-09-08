@@ -46,3 +46,26 @@ struct TagLinkTests {
         #expect(TagLink.token(from: url) == nil)
     }
 }
+
+/// Der QR-Pfad liefert den vollen Link, NFC liefert bereits eine URL --
+/// token(fromScan:) ist der eine Ort, der beides auf denselben blanken
+/// Token bringt (Review-Fund: die QR-Seite hashte bislang den ganzen Link
+/// und traf nie einen tokenHash).
+@Suite("TagLink.token(fromScan:)")
+struct TagLinkTokenFromScanTests {
+    @Test("extrahiert den Token aus einem vollstaendigen Link")
+    func extractsFromFullLink() {
+        let link = "https://\(TagLink.host)/t/abcdefghij0123456789AB"
+        #expect(TagLink.token(fromScan: link) == "abcdefghij0123456789AB")
+    }
+
+    @Test("laesst einen blanken Token unveraendert durch")
+    func passesThroughBareToken() {
+        #expect(TagLink.token(fromScan: "abcdefghij0123456789AB") == "abcdefghij0123456789AB")
+    }
+
+    @Test("gibt bei weder Link noch Token die Eingabe unveraendert zurueck")
+    func passesThroughGarbage() {
+        #expect(TagLink.token(fromScan: "wirklich-unsinn") == "wirklich-unsinn")
+    }
+}

@@ -1,6 +1,14 @@
 import Foundation
 
-struct BootstrapResponse: Decodable, Equatable {
+/// Sendable ist hier EXPLIZIT noetig, nicht nur Dokumentation: EquipmentModel
+/// haelt settingDefinitions als TagContextResponse.SettingDefinition -- ein
+/// verschachtelter Typ aus einer anderen Datei. Ohne die explizite
+/// Deklaration verpasst die implizite Sendable-Herleitung diese
+/// datei-uebergreifende Referenz bei einem sauberen Build (nicht bei einem
+/// inkrementellen, der die Diagnose aus dem Cache ueberspringt), und
+/// APIClient.bootstrap() (actor-isoliert, BootstrapLoading: Sendable)
+/// verweigert dann die Rueckgabe.
+struct BootstrapResponse: Decodable, Equatable, Sendable {
     struct Studio: Decodable, Equatable, Identifiable {
         let id: String
         let name: String
@@ -15,6 +23,12 @@ struct BootstrapResponse: Decodable, Equatable {
         let weightStepKg: Double
         let minWeightKg: Double
         let maxWeightKg: Double?
+        /// Derselbe Typ wie in TagContextResponse -- GeraetModel verarbeitet
+        /// online und offline dieselbe Liste, statt zwei Formen zu kennen.
+        ///
+        /// Ohne diese Beschriftungen zeigt der Offline-Zustand den rohen
+        /// Schluessel ("sitz 4") statt "Sitz 4".
+        let settingDefinitions: [TagContextResponse.SettingDefinition]
     }
 
     struct Exercise: Decodable, Equatable, Identifiable {
@@ -31,6 +45,10 @@ struct BootstrapResponse: Decodable, Equatable {
         let locationNote: String?
         let status: String
         let tokenHashes: [String]
+        /// Unterschiedliche Sessions mit mindestens einem Satz an diesem
+        /// Geraet. Traegt die Einstiegsentscheidung aus designsystem.md SS8
+        /// und muss deshalb auch offline aus dem Prefetch verfuegbar sein.
+        let visitCount: Int
         let equipmentModel: EquipmentModel
         let exercises: [Exercise]
     }

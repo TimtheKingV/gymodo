@@ -19,6 +19,12 @@ export type Bootstrap = {
     locationNote: string | null;
     status: string;
     tokenHashes: string[];
+    /**
+     * Unterschiedliche Sessions mit mindestens einem Satz an diesem Geraet.
+     * Der Einstieg (designsystem.md SS8) wertet davon nur 0 / 1 / >= 2 aus,
+     * deshalb ist die Deckelung durch SET_SCAN_LIMIT unkritisch.
+     */
+    visitCount: number;
     equipmentModel: {
       id: string;
       name: string;
@@ -27,6 +33,21 @@ export type Bootstrap = {
       weightStepKg: number;
       minWeightKg: number;
       maxWeightKg: number | null;
+      /**
+       * Beschriftungen der Einstellparameter. Ohne sie zeigt der
+       * Offline-Zustand den rohen Schluessel ("sitz 4") statt "Sitz 4" --
+       * GeraetOffline.dc.html verlangt die Beschriftung.
+       */
+      settingDefinitions: Array<{
+        key: string;
+        label: string;
+        kind: string;
+        minValue: number | null;
+        maxValue: number | null;
+        stepValue: number | null;
+        unit: string | null;
+        allowedValues: string[] | null;
+      }>;
     };
     exercises: Array<{
       id: string;
@@ -54,6 +75,27 @@ export type Bootstrap = {
 
 function key(machineId: string, exerciseId: string): string {
   return `${machineId}:${exerciseId}`;
+}
+
+/**
+ * Besuche je Geraet: unterschiedliche Sessions mit mindestens einem Satz.
+ *
+ * Ausgelagert, weil `designsystem.md` SS8 daraus den Einstieg ableitet
+ * (Erstkontakt / erkannt / direkt zum Satz) und diese Regel testbar sein
+ * muss, ohne eine Datenbank zu stellen.
+ */
+export function zaehleBesucheJeGeraet(
+  rows: Array<{ machine_id: string; session_id: string }>,
+): Map<string, number> {
+  const sessionsJeGeraet = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const menge = sessionsJeGeraet.get(row.machine_id) ?? new Set<string>();
+    menge.add(row.session_id);
+    sessionsJeGeraet.set(row.machine_id, menge);
+  }
+  return new Map(
+    [...sessionsJeGeraet].map(([machineId, menge]) => [machineId, menge.size]),
+  );
 }
 
 /**
@@ -103,10 +145,17 @@ export async function getBootstrap(
 
   const { data: setRows } = await client
     .from("workout_sets")
-    .select("machine_id, exercise_id, weight_kg, reps, rir, performed_at")
+    .select("machine_id, exercise_id, session_id, weight_kg, reps, rir, performed_at")
     .eq("user_id", userId)
     .order("performed_at", { ascending: false })
     .limit(SET_SCAN_LIMIT);
+
+  const { data: settingRows } = await client
+    .from("equipment_setting_definitions")
+    .select(
+      "equipment_model_id, key, label, kind, min_value, max_value, step_value, unit, allowed_values",
+    )
+    .order("sort_order", { ascending: true });
 
   const hashesByMachine = new Map<string, string[]>();
   for (const row of (tagRows ?? []) as Array<{
@@ -142,43 +191,6 @@ export async function getBootstrap(
     exercisesByModel.set(row.equipment_model_id, list);
   }
 
-  const machines = ((machineRows ?? []) as unknown as Array<{
-    id: string;
-    studio_id: string;
-    label: string;
-    location_note: string | null;
-    status: string;
-    equipment_models: {
-      id: string;
-      name: string;
-      manufacturer: string | null;
-      photo_path: string | null;
-      weight_step_kg: number | string;
-      min_weight_kg: number | string;
-      max_weight_kg: number | string | null;
-    };
-  }>).map((row) => ({
-    id: row.id,
-    studioId: row.studio_id,
-    label: row.label,
-    locationNote: row.location_note,
-    status: row.status,
-    tokenHashes: hashesByMachine.get(row.id) ?? [],
-    equipmentModel: {
-      id: row.equipment_models.id,
-      name: row.equipment_models.name,
-      manufacturer: row.equipment_models.manufacturer,
-      photoPath: row.equipment_models.photo_path,
-      weightStepKg: Number(row.equipment_models.weight_step_kg),
-      minWeightKg: Number(row.equipment_models.min_weight_kg),
-      maxWeightKg:
-        row.equipment_models.max_weight_kg === null
-          ? null
-          : Number(row.equipment_models.max_weight_kg),
-    },
-    exercises: exercisesByModel.get(row.equipment_models.id) ?? [],
-  }));
-
   // Absteigend sortiert gelesen -- der erste Treffer je Kombination ist der
   // neueste, alle weiteren sind Historie und gehoeren nicht in den Prefetch.
   const seenCalibration = new Set<string>();
@@ -207,6 +219,7 @@ export async function getBootstrap(
   for (const row of (setRows ?? []) as Array<{
     machine_id: string;
     exercise_id: string;
+    session_id: string;
     weight_kg: number | string;
     reps: number;
     rir: number | string | null;
@@ -224,6 +237,78 @@ export async function getBootstrap(
       performedAt: row.performed_at,
     });
   }
+
+  const besucheJeGeraet = zaehleBesucheJeGeraet(
+    (setRows ?? []) as Array<{ machine_id: string; session_id: string }>,
+  );
+
+  const einstellungenJeModell = new Map<
+    string,
+    Bootstrap["machines"][number]["equipmentModel"]["settingDefinitions"]
+  >();
+  for (const row of (settingRows ?? []) as Array<{
+    equipment_model_id: string;
+    key: string;
+    label: string;
+    kind: string;
+    min_value: number | string | null;
+    max_value: number | string | null;
+    step_value: number | string | null;
+    unit: string | null;
+    allowed_values: string[] | null;
+  }>) {
+    const liste = einstellungenJeModell.get(row.equipment_model_id) ?? [];
+    liste.push({
+      key: row.key,
+      label: row.label,
+      kind: row.kind,
+      minValue: row.min_value === null ? null : Number(row.min_value),
+      maxValue: row.max_value === null ? null : Number(row.max_value),
+      stepValue: row.step_value === null ? null : Number(row.step_value),
+      unit: row.unit,
+      allowedValues: row.allowed_values,
+    });
+    einstellungenJeModell.set(row.equipment_model_id, liste);
+  }
+
+  const machines = ((machineRows ?? []) as unknown as Array<{
+    id: string;
+    studio_id: string;
+    label: string;
+    location_note: string | null;
+    status: string;
+    equipment_models: {
+      id: string;
+      name: string;
+      manufacturer: string | null;
+      photo_path: string | null;
+      weight_step_kg: number | string;
+      min_weight_kg: number | string;
+      max_weight_kg: number | string | null;
+    };
+  }>).map((row) => ({
+    id: row.id,
+    studioId: row.studio_id,
+    label: row.label,
+    locationNote: row.location_note,
+    status: row.status,
+    tokenHashes: hashesByMachine.get(row.id) ?? [],
+    visitCount: besucheJeGeraet.get(row.id) ?? 0,
+    equipmentModel: {
+      id: row.equipment_models.id,
+      name: row.equipment_models.name,
+      manufacturer: row.equipment_models.manufacturer,
+      photoPath: row.equipment_models.photo_path,
+      weightStepKg: Number(row.equipment_models.weight_step_kg),
+      minWeightKg: Number(row.equipment_models.min_weight_kg),
+      maxWeightKg:
+        row.equipment_models.max_weight_kg === null
+          ? null
+          : Number(row.equipment_models.max_weight_kg),
+      settingDefinitions: einstellungenJeModell.get(row.equipment_models.id) ?? [],
+    },
+    exercises: exercisesByModel.get(row.equipment_models.id) ?? [],
+  }));
 
   return {
     studios: (studioRows ?? []) as Bootstrap["studios"],

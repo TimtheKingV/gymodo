@@ -28,16 +28,33 @@ final class CatalogStore {
     private(set) var pendingWrites: [PendingSetWrite]
     private(set) var activeStudioId: String?
 
+    /// Schreibvorgaenge, die der Server dauerhaft abgelehnt hat. Sie werden
+    /// nicht wiederholt, verschwinden aber auch nicht stillschweigend --
+    /// der Geraete-Screen zeigt sie an (designsystem.md SS5: Fehler sagen,
+    /// was falsch ist und was gilt).
+    ///
+    /// Persistiert wie pendingWrites: flushPending() kann waehrend eines
+    /// Hintergrund-Reconnects laufen, und wenn die App vor dem naechsten
+    /// Screen-Aufruf beendet wird, waere ein rein speicherresidenter Eintrag
+    /// so verloren wie der Schreibvorgang, den er dokumentieren soll.
+    private(set) var verworfeneWrites: [PendingSetWrite]
+
     private let loader: any BootstrapLoading
     private let pendingWriteStore: PendingWriteStore
+    private let verworfeneWriteStore: PendingWriteStore
     private let defaults: UserDefaults
     private static let activeStudioDefaultsKey = "activeStudioId"
 
     init(loader: any BootstrapLoading, pendingWriteStore: PendingWriteStore, defaults: UserDefaults = .standard) {
         self.loader = loader
         self.pendingWriteStore = pendingWriteStore
+        // Gleiches Verzeichnis wie pendingWriteStore, eigene Datei -- die
+        // beiden Listen haben unterschiedliche Lebenszyklen (siehe
+        // PendingWriteStore-Kommentar).
+        self.verworfeneWriteStore = PendingWriteStore(directory: pendingWriteStore.directory, filename: "verworfene-writes.json")
         self.defaults = defaults
         pendingWrites = pendingWriteStore.loadAll()
+        verworfeneWrites = verworfeneWriteStore.loadAll()
         activeStudioId = defaults.string(forKey: Self.activeStudioDefaultsKey)
     }
 
@@ -76,6 +93,8 @@ final class CatalogStore {
         defaults.removeObject(forKey: Self.activeStudioDefaultsKey)
         pendingWrites = []
         pendingWriteStore.save([])
+        verworfeneWrites = []
+        verworfeneWriteStore.save([])
     }
 
     func enqueue(_ write: PendingSetWrite) {
@@ -84,16 +103,39 @@ final class CatalogStore {
     }
 
     func flushPending() async {
-        var remaining: [PendingSetWrite] = []
         for write in pendingWrites {
             do {
                 _ = try await loader.putSet(sessionId: write.sessionId, setId: write.setId, write.body)
+                entferneAusPendingWrites(write)
             } catch {
-                remaining.append(write)
+                if error.istDauerhaft {
+                    // Beide Listen sofort sichern, nicht erst am Schleifenende:
+                    // flushPending() laeuft oft auf einen Hintergrund-Reconnect
+                    // hin, und ein Kill der App mittendrin darf den Eintrag
+                    // weder verlieren noch doppelt verworfen wiederfinden --
+                    // beides braucht die Platte auf demselben Stand wie den
+                    // Speicher, bevor die Schleife weiterlaeuft.
+                    verworfeneWrites.append(write)
+                    verworfeneWriteStore.save(verworfeneWrites)
+                    entferneAusPendingWrites(write)
+                }
+                // Voruebergehende Fehler: der Eintrag bleibt fuer den
+                // naechsten Versuch in pendingWrites/pendingWriteStore stehen.
             }
         }
-        pendingWrites = remaining
-        pendingWriteStore.save(remaining)
+    }
+
+    /// Nimmt einen einzelnen Eintrag aus pendingWrites -- Speicher und Platte
+    /// zusammen, damit die beiden nie auseinanderlaufen (siehe flushPending).
+    private func entferneAusPendingWrites(_ write: PendingSetWrite) {
+        pendingWrites.removeAll { $0.id == write.id }
+        pendingWriteStore.save(pendingWrites)
+    }
+
+    /// Nach dem Anzeigen quittiert der Screen die abgelehnten Vorgaenge.
+    func verworfeneQuittieren() {
+        verworfeneWrites = []
+        verworfeneWriteStore.save([])
     }
 
     /// Wechseln ist reiner Client-Zustand -- "Tippen wechselt" (MemberStudios.dc.html)

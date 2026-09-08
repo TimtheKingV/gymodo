@@ -3,6 +3,9 @@ import SwiftUI
 struct RootView: View {
     @Environment(SessionStore.self) private var sessionStore
     @Environment(CatalogStore.self) private var catalogStore
+    @Environment(WorkoutSessionStore.self) private var workoutStore
+
+    let apiClient: APIClient
 
     /// Merkt sich, ob ueberhaupt schon eine Session da war. Ohne dieses Flag
     /// wuerde der erste Lauf von .task(id:) beim Start -- da ist die Session
@@ -26,7 +29,7 @@ struct RootView: View {
                 NavigationStack { MemberKeinStudioView() }
                     .tint(DesignSystem.Color.accent)
             case .main:
-                MainTabView()
+                MainTabView(apiClient: apiClient)
             }
         }
         // RootView haelt beide Stores bereits und reagiert ohnehin auf
@@ -48,6 +51,9 @@ struct RootView: View {
             } else if hatteSession {
                 hatteSession = false
                 catalogStore.reset()
+                // Die laufende Einheit faellt beim Abmelden -- ihre
+                // Kennungen gehoeren zum abgemeldeten Konto.
+                workoutStore.reset()
             }
         }
     }

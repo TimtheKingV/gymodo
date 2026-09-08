@@ -105,4 +105,51 @@ struct APIClientTests {
             try await client.bootstrap()
         }
     }
+
+    @Test("schickt die Kalibrierung als POST auf me/calibrations")
+    func postsCalibration() async throws {
+        // Kein `nonisolated(unsafe) var` -- das gilt nur fuer globale und
+        // statische Eigenschaften, nicht fuer lokale Variablen.
+        final class Aufzeichnung: @unchecked Sendable { var request: URLRequest? }
+        let gesehen = Aufzeichnung()
+        StubURLProtocol.handler = { request in
+            gesehen.request = request
+            let json = #"""
+            {"id":"c1","machineId":"m1","exerciseId":"e1",
+             "settingValues":{"sitz":4},"schemaVersion":1,
+             "source":"self","createdAt":"2026-09-07T10:00:00Z"}
+            """#
+            return (201, Data(json.utf8))
+        }
+        let client = stubbedClient()
+
+        let angelegt = try await client.recordCalibration(
+            CalibrationWrite(machineId: "m1", exerciseId: "e1",
+                             settingValues: ["sitz": .number(4)],
+                             schemaVersion: 1, source: "self")
+        )
+
+        #expect(angelegt.id == "c1")
+        #expect(gesehen.request?.httpMethod == "POST")
+        #expect(gesehen.request?.url?.path.hasSuffix("/me/calibrations") == true)
+    }
+
+    @Test("reicht die Serverbegruendung einer abgelehnten Kalibrierung durch")
+    func mapsCalibrationValidation() async throws {
+        StubURLProtocol.handler = { _ in
+            let json = #"{"error":{"code":"validation_failed","message":"Sitzposition liegt ueber dem Maximum 8."}}"#
+            return (422, Data(json.utf8))
+        }
+        let client = stubbedClient()
+
+        // designsystem.md SS5: der Fehler sagt, was gilt -- nicht nur, dass
+        // etwas ungueltig ist. Der Text kommt deshalb vom Server.
+        await #expect(throws: APIError.validation(message: "Sitzposition liegt ueber dem Maximum 8.")) {
+            try await client.recordCalibration(
+                CalibrationWrite(machineId: "m1", exerciseId: "e1",
+                                 settingValues: ["sitz": .number(9)],
+                                 schemaVersion: 1, source: "self")
+            )
+        }
+    }
 }
