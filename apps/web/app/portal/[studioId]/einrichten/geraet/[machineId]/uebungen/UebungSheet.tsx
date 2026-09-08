@@ -7,6 +7,10 @@ import {
   uebungHinzufuegen,
   uebungVerschieben,
 } from "../../../actions";
+import { useUploads } from "../../../Uploads";
+import { DateiKnopf } from "../../../../../bausteine/DateiKnopf";
+import { MedienVorschau } from "../../../../../bausteine/MedienVorschau";
+import { UebungRepsRad } from "../../../../../bausteine/UebungRepsRad";
 import styles from "../../../halle.module.css";
 
 type Ansicht = "zu" | "waehlen" | "neu";
@@ -20,16 +24,31 @@ export function UebungSheet({
   studioId,
   machineId,
   modelId,
+  titelPraefix,
   waehlbar,
 }: {
   studioId: string;
   machineId: string;
   modelId: string;
+  /** Fuer die Warteschlange, wenn gleich ein Video mitgewaehlt wird --
+      dieselbe Form wie bei VideoAufnehmen in page.tsx. */
+  titelPraefix: string;
   waehlbar: StudioExercise[];
 }) {
   const [ansicht, setAnsicht] = useState<Ansicht>("zu");
   const [fehler, setFehler] = useState<string | null>(null);
   const [laeuft, starte] = useTransition();
+  const { einreihen } = useUploads();
+  const [datei, setDatei] = useState<File | null>(null);
+  const [objektUrl, setObjektUrl] = useState<string | null>(null);
+
+  function aufDatei(neu: File | null) {
+    setDatei(neu);
+    setObjektUrl((bisherige) => {
+      if (bisherige) URL.revokeObjectURL(bisherige);
+      return neu ? URL.createObjectURL(neu) : null;
+    });
+  }
 
   const [ergebnis, formAction, legtAn] = useActionState(
     async (_prev: unknown, formData: FormData) => {
@@ -40,7 +59,21 @@ export function UebungSheet({
         null,
         formData,
       );
-      if (antwort.ok) setAnsicht("zu");
+      if (!antwort.ok) return antwort;
+      // Die Datei geht in dieselbe Hintergrund-Warteschlange wie ein
+      // nachtraeglich an einer Zeile gewaehltes Video -- der Trainer geht
+      // sofort weiter, ohne den Upload abzuwarten (Spec 6.8).
+      if (datei) {
+        const name = String(formData.get("name") ?? "").trim();
+        einreihen({
+          titel: `${titelPraefix} · ${name}`,
+          modelId,
+          linkId: antwort.linkId,
+          datei,
+        });
+      }
+      setAnsicht("zu");
+      aufDatei(null);
       return antwort;
     },
     null,
@@ -78,30 +111,29 @@ export function UebungSheet({
           required
           placeholder="Latzug · Neutralgriff"
         />
-        <div style={{ display: "flex", gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <Feld
-              name="targetRepsMin"
-              label="Wiederholungen ab"
-              inputMode="numeric"
-              required
-              placeholder="8"
-            />
-          </div>
-          <div style={{ flex: 1 }}>
-            <Feld
-              name="targetRepsMax"
-              label="bis"
-              inputMode="numeric"
-              required
-              placeholder="12"
-            />
-          </div>
-        </div>
+        <UebungRepsRad gross />
         <p className={styles.notiz}>
           Die Spanne ist ein Ziel, kein Vorschlag. gymodo rechnet daraus nichts
           aus — sie steht dem Mitglied unter dem Rad.
         </p>
+
+        <div className={styles.feld}>
+          <span className={styles.label}>Einweisungsvideo</span>
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <MedienVorschau url={objektUrl} art="video" leerText="Kein Video" mini />
+            <DateiKnopf
+              label="Video auswählen"
+              accept="video/mp4,video/quicktime"
+              capture="environment"
+              gross
+              onDatei={aufDatei}
+            />
+          </div>
+          <span className={styles.notiz}>
+            Optional — lässt sich auch später an der Zeile nachtragen.
+          </span>
+        </div>
+
         {ergebnis && !ergebnis.ok ? (
           <p className={styles.fehler} role="alert">
             {ergebnis.error}
@@ -113,7 +145,10 @@ export function UebungSheet({
         <button
           type="button"
           className={styles.neben}
-          onClick={() => setAnsicht("zu")}
+          onClick={() => {
+            aufDatei(null);
+            setAnsicht("zu");
+          }}
         >
           Abbrechen
         </button>

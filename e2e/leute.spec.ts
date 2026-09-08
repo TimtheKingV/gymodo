@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import { auswaehlen } from "./helpers/auswahl";
 import { E2E_PASSWORD, anmelden } from "./helpers/login";
 import { studioMitTrainer } from "./helpers/studio";
 
@@ -80,11 +81,11 @@ test("ein Trainer sieht ein neu beigetretenes Mitglied in Leute und stuft es hoc
   //
   // Hochgestuft wird ueber ein Auswahlfeld und EINEN Knopf, nicht ueber
   // einen Knopf je Zeile (LeuteMitarbeiter.dc.html; dasselbe Muster wie
-  // tags/TagBinden.tsx). selectOption ist trotzdem ausgeschrieben, obwohl
+  // tags/TagBinden.tsx). Die Auswahl ist trotzdem ausgeschrieben, obwohl
   // die einzige Person schon vorausgewaehlt ist: sonst pruefte der Test
   // nicht, dass das Feld die richtige Person ueberhaupt anbietet.
   await page.goto(`/portal/${studio.id}/leute/mitarbeiter`);
-  await page.getByLabel("Mitglied").selectOption({ label: mitgliedEmail });
+  await auswaehlen(page, page.getByRole("button", { name: "Mitglied" }), mitgliedEmail);
   await page.getByRole("button", { name: "Zum Trainer machen" }).click();
   await page
     .getByRole("button", { name: "Hochstufen gibt Zugriff auf den ganzen Katalog." })

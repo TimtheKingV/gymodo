@@ -50,7 +50,7 @@ export default async function ModellLayout({
       <ModellReiter
         studioId={studioId}
         modelId={modelId}
-        einstellungenZusatz={`${modell.settingDefinitions.length} Parameter`}
+        einstellungenZusatz={`${modell.settingDefinitions.length} Einstellungen`}
         uebungenZusatz={`${modell.exercises.length} · ${mitVideo} mit Video`}
         instanzenZusatz={`${modell.machines.length} · ${ohneTag} ohne Tag`}
       />

@@ -43,12 +43,12 @@ export default async function EinrichtenPage({
 
   function mangel(modell: (typeof katalog.models)[number]): string {
     if (modell.photoPath === null && modell.settingDefinitions.length === 0) {
-      return "Kein Foto, keine Einstellparameter · Mitglieder sähen nur den Namen";
+      return "Kein Foto, keine Einstellungen · Mitglieder sähen nur den Namen";
     }
     if (modell.photoPath === null) {
       return "Kein Foto · nach dem Scan nicht von einem baugleichen Gerät zu unterscheiden";
     }
-    return "Keine Einstellparameter · das Mitglied hat nichts einzustellen";
+    return "Keine Einstellungen · das Mitglied hat nichts einzustellen";
   }
 
   return (

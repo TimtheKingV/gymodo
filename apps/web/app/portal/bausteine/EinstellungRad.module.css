@@ -1,0 +1,99 @@
+/* Werte aus ModellEinstellungen.dc.html und TelefonParameterNeu.dc.html
+   (docs/superpowers/design/portal/, /design-Runde "Vorgaben-Rad") --
+   Kopfhoehe 32 px, Zeile 40 px am Schreibtisch / 44 px in der Halle
+   (Designsystem 1: groessere Trefferflaeche fuer einhaendige Bedienung).
+   Die Hoehen selbst kommen als Inline-Stil aus EinstellungRad.tsx, weil sie
+   von der Zeilenzahl abhaengen -- hier stehen nur Farbe, Rand und Schrift. */
+
+/* Das Rad selbst: Spalten nebeneinander, eine gemeinsame Markierungsbahn
+   ueber der Mitte. */
+.rad {
+  position: relative;
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--well);
+}
+
+.spalte {
+  flex: 1;
+  min-width: 0;
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+
+.spalte:last-child {
+  border-right: none;
+}
+
+.spalteKopf {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Kein Scrollbalken -- das Rad zeigt seine Grenzen ueber den leeren
+   Randzeilen, nicht ueber eine Leiste. */
+.spalteRad {
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.spalteRad::-webkit-scrollbar {
+  display: none;
+}
+
+.spalteZeile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  scroll-snap-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-faint);
+}
+
+/* Der ausgewaehlte Wert traegt den Akzent als Textfarbe, nicht als
+   Flaeche ("Akzent als Wert, nicht als Aktionsflaeche" -- derselbe
+   Schnitt wie .balken/.zahlOffen in halle.module.css), dazu eine
+   Unterstreichung: Trainer-Wunsch, "die Zahl die ausgewaehlt ist in
+   unserem gruen anzeigen und unterstrichen". */
+.spalteZeileAktiv {
+  composes: spalteZeile;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Die Markierungsbahn: zeigt die Mitte, nimmt aber keine Klicks/Taps weg --
+   das Scrollen selbst waehlt den Wert. */
+.band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  pointer-events: none;
+}
+
+/* NameFeld: das Rad haengt unter dem Textfeld, ein "Fertig" schliesst es
+   wieder -- ein Klick waehlt, er muss nicht gleichzeitig irgendwo
+   daneben treffen. */
+.vorschlagRad {
+  margin-top: var(--s8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s8);
+}

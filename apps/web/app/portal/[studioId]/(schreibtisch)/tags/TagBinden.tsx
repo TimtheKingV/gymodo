@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { tagBinden } from "../../../actions";
+import { Auswahl } from "../../../bausteine/Auswahl";
 import styles from "../../../portal.module.css";
 
 /**
@@ -49,19 +50,16 @@ export function TagBinden({
         placeholder="22 Zeichen"
         onChange={(ereignis) => setToken(ereignis.target.value)}
       />
-      <select
-        className={styles.select}
+      <Auswahl
         value={machineId}
-        aria-label="Gerät auswählen"
-        onChange={(ereignis) => setMachineId(ereignis.target.value)}
-      >
-        <option value="">Gerät wählen …</option>
-        {geraete.map((geraet) => (
-          <option key={geraet.id} value={geraet.id}>
-            {geraet.label} — {geraet.modell}
-          </option>
-        ))}
-      </select>
+        onChange={setMachineId}
+        ariaLabel="Gerät auswählen"
+        platzhalter="Gerät wählen …"
+        optionen={geraete.map((geraet) => ({
+          wert: geraet.id,
+          anzeige: `${geraet.label} — ${geraet.modell}`,
+        }))}
+      />
       <button
         type="button"
         className={styles.secondary}

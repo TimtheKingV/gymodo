@@ -4,6 +4,7 @@ import { useId, useState, useTransition } from "react";
 import type { StudioMember } from "@fitretro/domain";
 import { AktionsKnopf } from "../../../Form";
 import { mitgliedEntfernen, mitgliedRolleAendern } from "../../../actions";
+import { Auswahl } from "../../../bausteine/Auswahl";
 import { Zeile } from "../../../bausteine/Zeile";
 import styles from "../../../portal.module.css";
 
@@ -167,24 +168,21 @@ export function MitgliedHochstufen({
         <label className={styles.label} htmlFor={feldId}>
           Mitglied
         </label>
-        <select
+        <Auswahl
           id={feldId}
-          className={styles.select}
           value={gewaehlt}
-          onChange={(ereignis) => {
-            setGewaehlt(ereignis.target.value);
+          onChange={(wert) => {
+            setGewaehlt(wert);
             // Eine neue Auswahl nimmt die Bestaetigung zurueck: sonst
             // stuende der zweite Klick fuer eine andere Person als der
             // erste.
             setBestaetigt(false);
           }}
-        >
-          {mitglieder.map((person) => (
-            <option key={person.userId} value={person.userId}>
-              {person.email}
-            </option>
-          ))}
-        </select>
+          optionen={mitglieder.map((person) => ({
+            wert: person.userId,
+            anzeige: person.email,
+          }))}
+        />
       </div>
       <div className={styles.actions}>
         <button
