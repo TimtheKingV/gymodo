@@ -12,6 +12,7 @@ struct TrainingRootView: View {
     @Environment(CatalogStore.self) private var katalog
     @Environment(WorkoutSessionStore.self) private var sessions
     @Environment(PendingTagStore.self) private var pendingTag
+    @Environment(\.scenePhase) private var scenePhase
 
     let apiClient: APIClient
 
@@ -25,6 +26,15 @@ struct TrainingRootView: View {
     /// GESTARTETE, und ein alter Fehltreffer koennte so ueber einem
     /// zwischenzeitlich erfolgreichen Scan landen.
     @State private var neuladeVersuch: Task<Void, Never>?
+    /// Reiner Ausloeser, wird selbst nirgends gelesen: eine @State-Aenderung
+    /// erzwingt IMMER einen body-Neuaufbau der eigenen View, unabhaengig
+    /// davon, ob der Wert irgendwo verwendet wird -- anders als bei
+    /// @Environment, wo SwiftUI nur invalidiert, was tatsaechlich gelesen
+    /// wurde. Siehe .onChange(of: scenePhase) unten (M2): kehrt das
+    /// Mitglied aus dem Hintergrund zurueck, soll sessions.aktiveSession()
+    /// sofort neu ausgewertet werden, nicht erst bei der naechsten
+    /// 60-Sekunden-Kadenz der TimelineView.
+    @State private var neuAuswerten = false
     /// Einmal beim Erscheinen aus sessions.abgelaufeneSession() gelesen, BEVOR
     /// ausgelaufeneQuittieren() die Einheit raeumt. ausgelaufeneQuittieren()
     /// loescht seit einer Fehlerbehebung Speicher und Datei, statt nur ein
@@ -32,24 +42,34 @@ struct TrainingRootView: View {
     /// gerendert und im selben Atemzug quittiert, verschwaende er, bevor das
     /// Mitglied ihn liest. Deshalb: einmal in diesen Zustand lesen, den Satz
     /// aus DIESEM Zustand zeigen, danach quittieren. Er bleibt so stehen,
-    /// bis die Wurzel verlassen wird.
+    /// bis die Wurzel verlassen wird -- ODER bis er selbst nicht mehr gilt:
+    /// beenden() setzt ihn beim manuellen Beenden zurueck, der onChange
+    /// unten zusaetzlich beim Uebergang in einen neuen laufenden Zustand.
+    /// Der Satz gehoert zu GENAU EINER abgelaufenen Einheit, nicht zur View.
     @State private var zeigeAusgelaufenHinweis = false
 
     var body: some View {
         NavigationStack(path: $pfad) {
             ScrollView {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                    if let session = sessions.aktiveSession() {
-                        laufendInhalt(session)
-                    } else {
-                        leerInhalt
+                // Die Kadenz von 60 s zwingt body dazu, sessions.aktiveSession()
+                // periodisch neu auszuwerten. @Observable zeichnet sonst nur bei
+                // einer Aenderung von gespeicherteSession neu -- beim Ablauf der
+                // Vier-Stunden-Frist aendert sich dort nichts, und ohne diese
+                // TimelineView bliebe der Screen auf "laufend" stehen, obwohl die
+                // Einheit laengst ausgelaufen ist (M2). Die sekundengenaue Uhr im
+                // laufenden Zustand hat ihre EIGENE, innere TimelineView weiter
+                // unten -- diese hier betrifft nur die Umschaltung.
+                TimelineView(.periodic(from: .now, by: 60)) { _ in
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
+                        if let session = sessions.aktiveSession() {
+                            laufendInhalt(session)
+                        } else {
+                            leerInhalt
+                        }
                     }
-                    if let scanFehler {
-                        InlineBanner(tone: .danger, message: scanFehler)
-                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, DesignSystem.Spacing.s24)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, DesignSystem.Spacing.s24)
             }
             .background(DesignSystem.Color.bg)
             .navigationDestination(for: GeraetRoute.self, destination: ziel)
@@ -78,12 +98,11 @@ struct TrainingRootView: View {
             .task {
                 if sessions.abgelaufeneSession() != nil {
                     zeigeAusgelaufenHinweis = true
-                    // Erst gelesen (Zeile darueber), jetzt erst quittiert --
-                    // und nur, wenn es ueberhaupt etwas zu quittieren gab.
-                    // ausgelaufeneQuittieren() loescht unbedingt, ohne selbst
-                    // zu pruefen, ob gerade eine aktive Einheit laeuft; ein
-                    // Aufruf ins Leere waere zwar in der Sache folgenlos, ein
-                    // unbedachter Aufruf HIER waere es nicht das Risiko wert.
+                    // Erst gelesen (Zeile darueber), jetzt erst quittiert.
+                    // Der if-Zweig hier ist zusaetzlich zum Guard in
+                    // ausgelaufeneQuittieren() selbst (Store) -- doppelt
+                    // abgesichert statt einfach, weil ein falsch-positiver
+                    // Aufruf das Training des Mitglieds loeschen wuerde.
                     sessions.ausgelaufeneQuittieren()
                 }
                 if let token = pendingTag.consume() { oeffneToken(token) }
@@ -99,6 +118,22 @@ struct TrainingRootView: View {
             .onChange(of: pendingTag.token) { _, neu in
                 guard neu != nil, let token = pendingTag.consume() else { return }
                 oeffneToken(token)
+            }
+            // Zweiter Ausloeser fuer die Neuauswertung von
+            // sessions.aktiveSession() (siehe TimelineView oben): kehrt das
+            // Mitglied aus dem Hintergrund zurueck, soll das sofort gelten,
+            // nicht erst bei der naechsten 60-Sekunden-Kadenz. Es gibt sonst
+            // keinen scenePhase-Beobachter im Projekt.
+            .onChange(of: scenePhase) { _, neu in
+                guard neu == .active else { return }
+                neuAuswerten.toggle()
+            }
+            // Der Satz zur ausgelaufenen Einheit gehoert zu GENAU EINER
+            // abgelaufenen Einheit (M1): sobald wieder eine laufende Einheit
+            // entsteht -- egal ob durch einen neuen Satz oder weil beenden()
+            // ihn schon zurueckgesetzt hat --, gilt er nicht mehr.
+            .onChange(of: sessions.aktiveSession() != nil) { _, laeuft in
+                if laeuft { zeigeAusgelaufenHinweis = false }
             }
             // Verlaesst die Wurzel die Buehne (z.B. Kontowechsel reisst die
             // gesamte Umgebung neu auf), soll ein noch laufender Retry nicht
@@ -136,6 +171,12 @@ struct TrainingRootView: View {
 
         if zeigeAusgelaufenHinweis {
             InlineBanner(tone: .muted, message: "Dein letztes Training wurde automatisch beendet.")
+        }
+
+        // Direkt ueber der Aktionsgruppe, nicht dahinter (M3): ein Fehler
+        // muss im Sichtfeld stehen, nicht unter der Falz.
+        if let scanFehler {
+            InlineBanner(tone: .danger, message: scanFehler)
         }
 
         VStack(spacing: DesignSystem.Spacing.s12) {
@@ -212,6 +253,15 @@ struct TrainingRootView: View {
             zirkelHinweis
         }
 
+        // Direkt ueber der Aktionsgruppe, nicht dahinter (M3): stand vor dem
+        // Umbau zwischen Blockliste und Hauptknopf, ist beim Ausbau der
+        // Fussgruppe versehentlich ganz nach unten gewandert. Ab etwa fuenf
+        // Bloecken waere das unter der Falz -- ein Scanfehler mitten im
+        // Training muss im Sichtfeld stehen.
+        if let scanFehler {
+            InlineBanner(tone: .danger, message: scanFehler)
+        }
+
         VStack(spacing: DesignSystem.Spacing.s8) {
             PrimaryButton(title: "Nächstes Gerät") { scannerOffen = true }
             VStack(spacing: DesignSystem.Spacing.s4) {
@@ -228,12 +278,15 @@ struct TrainingRootView: View {
     }
 
     private func laufendKopf(_ session: LokaleSession) -> some View {
-        HStack(alignment: .bottom) {
+        let geraeteAnzahl = Set(session.bloecke.map(\.machineId)).count
+        let saetzeAnzahl = session.bloecke.flatMap(\.saetze).count
+        return HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                 HStack(spacing: DesignSystem.Spacing.s8) {
                     Circle()
                         .fill(DesignSystem.Color.textMuted)
                         .frame(width: 8, height: 8)
+                        .accessibilityHidden(true)
                     // Abweichung vom Artboard: dort accent fuer Punkt und
                     // Label. Die eine Akzentflaeche dieses Screens ist
                     // "Naechstes Geraet" (designsystem.md SS2, siehe Bericht).
@@ -242,10 +295,20 @@ struct TrainingRootView: View {
                         .tracking(1.5)
                         .foregroundStyle(DesignSystem.Color.textMuted)
                 }
+                // Gegen session.startedAt gerechnet, nicht gegen einen
+                // mitgezaehlten Wert: ein gespeicherter Zeitpunkt ueberlebt
+                // Hintergrund und Sperrbildschirm, ein Zaehler nicht --
+                // dasselbe Muster wie der Resttimer aus Sub-Projekt 2.
                 TimelineView(.periodic(from: .now, by: 1)) { zeit in
-                    Text(verstrichen(seit: session.startedAt, bis: zeit.date))
+                    // Ohne .accessibilityLabel liest VoiceOver "23:41" mit
+                    // hoher Wahrscheinlichkeit als Uhrzeit -- direkt ueber
+                    // dem echten "seit 18:04" darunter. verstrichenGesprochen
+                    // macht daraus "23 Minuten trainiert" (designsystem.md
+                    // SS12, wie Zahlformat.gewichtGesprochen).
+                    Text(Zahlformat.verstrichen(seit: session.startedAt, bis: zeit.date))
                         .font(.system(size: 40, weight: .black).monospacedDigit())
                         .foregroundStyle(DesignSystem.Color.text)
+                        .accessibilityLabel(Zahlformat.verstrichenGesprochen(seit: session.startedAt, bis: zeit.date))
                 }
                 // M1-Spec SS5.6: es gibt keinen Startknopf. Ohne diesen Satz
                 // wuesste niemand, warum ploetzlich ein Training laeuft.
@@ -255,13 +318,21 @@ struct TrainingRootView: View {
             }
             Spacer()
             HStack(spacing: DesignSystem.Spacing.s16) {
-                statistik(wert: Set(session.bloecke.map(\.machineId)).count, label: "GERÄTE")
-                statistik(wert: session.bloecke.flatMap(\.saetze).count, label: "SÄTZE")
+                statistik(wert: geraeteAnzahl, label: "GERÄTE",
+                          gesprochen: geraeteAnzahl == 1 ? "1 Gerät" : "\(geraeteAnzahl) Geräte")
+                statistik(wert: saetzeAnzahl, label: "SÄTZE",
+                          gesprochen: saetzeAnzahl == 1 ? "1 Satz" : "\(saetzeAnzahl) Sätze")
             }
         }
+        // Fasst Kopf und Statistik zu EINEM gesprochenen Satz zusammen statt
+        // vier Bruchstuecken (m4) -- unbedenklich hier, weil kein
+        // Bedienelement in diesem Kopfbereich steckt, das dabei verschwinden
+        // koennte (anders als in Sub-Projekt 2, wo .combine einen Knopf
+        // verschluckt hat).
+        .accessibilityElement(children: .combine)
     }
 
-    private func statistik(wert: Int, label: String) -> some View {
+    private func statistik(wert: Int, label: String, gesprochen: String) -> some View {
         VStack(alignment: .trailing, spacing: DesignSystem.Spacing.s4) {
             Text("\(wert)")
                 .font(.system(size: 21, weight: .black).monospacedDigit())
@@ -271,28 +342,24 @@ struct TrainingRootView: View {
                 .tracking(1)
                 .foregroundStyle(DesignSystem.Color.textMuted)
         }
-    }
-
-    /// "23:41" -- Minuten:Sekunden, tabellarisch, nach oben unbegrenzt (eine
-    /// Einheit laeuft bis zu vier Stunden, WorkoutSessionStore.sessionPause).
-    /// Gegen session.startedAt gerechnet, nicht gegen einen mitgezaehlten
-    /// Wert: ein gespeicherter Zeitpunkt ueberlebt Hintergrund und
-    /// Sperrbildschirm, ein Zaehler nicht -- dasselbe Muster wie der
-    /// Resttimer aus Sub-Projekt 2.
-    private func verstrichen(seit start: Date, bis jetzt: Date) -> String {
-        let sekunden = max(0, Int(jetzt.timeIntervalSince(start)))
-        return String(format: "%02d:%02d", sekunden / 60, sekunden % 60)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(gesprochen)
     }
 
     private var zirkelHinweis: some View {
         HStack(alignment: .top, spacing: DesignSystem.Spacing.s8) {
             Image(systemName: "info.circle")
                 .font(.system(size: 14))
+            // Abweichung vom Artboard: dort text-faint bei 12pt. Dieselbe
+            // Begruendung wie beim Gleichwertigkeitssatz oben: dieser Satz
+            // ist die einzige Stelle in der App, die den Zirkelweg aus
+            // M1-Spec SS5.3 erklaert -- tragende Information, und die faellt
+            // unter 15pt nicht unter textFaint (designsystem.md SS2).
             Text("Zweiter Durchgang? Tipp auf den Block statt neu zu scannen — du landest direkt beim nächsten Satz mit deinem Gewicht.")
                 .font(.system(size: 12))
                 .lineSpacing(3)
         }
-        .foregroundStyle(DesignSystem.Color.textFaint)
+        .foregroundStyle(DesignSystem.Color.textMuted)
         .padding(.top, DesignSystem.Spacing.s4)
     }
 
@@ -364,6 +431,7 @@ struct TrainingRootView: View {
             // completeSession-Aufruf ist Aufgabe 6 (Sub-Projekt 3). Der Fall
             // muss hier bereits existieren, damit der Pfad-Push aus
             // beenden() ein Ziel findet.
+            #warning("Aufgabe 6: TrainingAbschlussScreen ersetzt diesen Platzhalter und sendet completeSession")
             Text("Trainingsabschluss – \(zusammenfassung.satzAnzahl) Sätze")
                 .foregroundStyle(DesignSystem.Color.text)
         }
@@ -449,7 +517,25 @@ struct TrainingRootView: View {
     private func beenden() {
         guard let session = sessions.aktiveSession(),
               let zusammenfassung = Trainingszusammenfassung(session)
-        else { return }
+        else {
+            // Der Knopf sah bedienbar aus -- "laufend" stand auf dem
+            // Bildschirm --, aber die Einheit ist zwischen dem letzten
+            // Neuzeichnen und diesem Tap verschwunden, meist weil die
+            // Vier-Stunden-Grenze waehrend einer laengeren Pause im
+            // Vordergrund ablief (M2). "Nie stumm": das Mitglied muss
+            // erfahren, was jetzt gilt, nicht nur, dass der Tap wirkungslos
+            // war. sessions.beenden() raeumt unbedingt auf -- anders als
+            // ausgelaufeneQuittieren() auch dann, wenn die Einheit technisch
+            // noch als aktiv gilt, aber ohne Saetze keine Zusammenfassung
+            // hergibt.
+            zeigeAusgelaufenHinweis = true
+            sessions.beenden()
+            return
+        }
+        // Der Satz zur ausgelaufenen Einheit gehoert zu GENAU EINER
+        // abgelaufenen Einheit (M1): mit dem manuellen Beenden hier gilt er
+        // nicht mehr.
+        zeigeAusgelaufenHinweis = false
         // Erst festhalten, dann beenden -- andersherum sind die Zahlen weg,
         // bevor der Screen sie zeigt.
         sessions.beenden()

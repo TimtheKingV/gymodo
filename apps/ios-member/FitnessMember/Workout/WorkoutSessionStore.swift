@@ -54,7 +54,16 @@ final class WorkoutSessionStore {
     /// Sessiondatei traegt nur die oertliche Sicht auf die laufende Einheit;
     /// noch nicht gesendete Schreibvorgaenge liegen in PendingWriteStore.
     /// Loeschen ist hier folgenlos fuer sie.
+    ///
+    /// Selbstschutz: quittiert wird nur, was WIRKLICH ausgelaufen ist. Der
+    /// Name verspricht Selektivitaet -- ohne den Guard wuerde jeder Aufruf
+    /// zur falschen Zeit bedingungslos die laufende Einheit des Mitglieds
+    /// loeschen, Speicher und Datei. Der Schaden waere maximal unsymmetrisch:
+    /// falsch-negativ ist ein Satz zu viel auf dem leeren Tab, falsch-positiv
+    /// ist das Training des Mitglieds weg. Der Guard gehoert deshalb hier
+    /// hin, nicht nur in die Disziplin der Aufrufer.
     func ausgelaufeneQuittieren() {
+        guard abgelaufeneSession() != nil else { return }
         gespeicherteSession = nil
         fileStore.save(nil)
     }
