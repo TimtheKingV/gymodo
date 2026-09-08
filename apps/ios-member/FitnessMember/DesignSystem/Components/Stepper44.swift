@@ -11,38 +11,61 @@ struct Stepper44: View {
     private var schritt: Double { definition.stepValue ?? 1 }
     private var untergrenze: Double { definition.minValue ?? 0 }
     private var obergrenze: Double { definition.maxValue ?? 99 }
+    private var minusAktiv: Bool { wert > untergrenze }
+    private var plusAktiv: Bool { wert < obergrenze }
 
     var body: some View {
-        HStack(spacing: DesignSystem.Spacing.s16) {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                Text(definition.label)
-                    .font(DesignSystem.Typography.uebungsname)
+        // Mirror von PrimaryButton.disabledHint: Zeile plus optionaler
+        // Hinweis darunter, statt eines dritten Musters fuer "deaktiviert
+        // ist nie stumm" (designsystem.md SS5).
+        VStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.s16) {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                    Text(definition.label)
+                        .font(DesignSystem.Typography.uebungsname)
+                        .foregroundStyle(DesignSystem.Color.text)
+                    Text(bereichstext)
+                        .font(.system(size: 12))
+                        .foregroundStyle(DesignSystem.Color.textFaint)
+                }
+                Spacer()
+                taste("minus", aktiv: minusAktiv) { wert = max(untergrenze, wert - schritt) }
+                Text(anzeige)
+                    .font(DesignSystem.Typography.wertSekundaer)
                     .foregroundStyle(DesignSystem.Color.text)
-                Text(bereichstext)
+                    .frame(minWidth: 48)
+                taste("plus", aktiv: plusAktiv) { wert = min(obergrenze, wert + schritt) }
+            }
+            .padding(DesignSystem.Spacing.s16)
+            .background(DesignSystem.Color.surface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(definition.label)
+            .accessibilityValue(grenzhinweis.map { "\(anzeige), \($0)" } ?? anzeige)
+            .accessibilityAdjustableAction { richtung in
+                switch richtung {
+                case .increment: wert = min(obergrenze, wert + schritt)
+                case .decrement: wert = max(untergrenze, wert - schritt)
+                @unknown default: break
+                }
+            }
+
+            if let grenzhinweis {
+                Text(grenzhinweis)
                     .font(.system(size: 12))
                     .foregroundStyle(DesignSystem.Color.textFaint)
-            }
-            Spacer()
-            taste("minus", aktiv: wert > untergrenze) { wert = max(untergrenze, wert - schritt) }
-            Text(anzeige)
-                .font(DesignSystem.Typography.wertSekundaer)
-                .foregroundStyle(DesignSystem.Color.text)
-                .frame(minWidth: 48)
-            taste("plus", aktiv: wert < obergrenze) { wert = min(obergrenze, wert + schritt) }
-        }
-        .padding(DesignSystem.Spacing.s16)
-        .background(DesignSystem.Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(definition.label)
-        .accessibilityValue(anzeige)
-        .accessibilityAdjustableAction { richtung in
-            switch richtung {
-            case .increment: wert = min(obergrenze, wert + schritt)
-            case .decrement: wert = max(untergrenze, wert - schritt)
-            @unknown default: break
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+    }
+
+    /// Wortlaut deckungsgleich mit GeraetModel.anschlagText fuers Gewichtsrad
+    /// -- dieselbe Grenze verdient denselben Satz, gleich welches Steuerelement
+    /// sie meldet.
+    private var grenzhinweis: String? {
+        if !minusAktiv { "Minimum erreicht" }
+        else if !plusAktiv { "Maximum des Geräts erreicht" }
+        else { nil }
     }
 
     private var anzeige: String {

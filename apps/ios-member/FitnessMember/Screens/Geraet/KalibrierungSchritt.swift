@@ -6,15 +6,16 @@ import SwiftUI
 struct KalibrierungSchritt: View {
     @Bindable var modell: GeraetModel
     let titel: String
+    /// Ein Schritt zurueck, nicht "abbrechen" -- eine Einstellung nach dem
+    /// Blick auf Schritt 3 zu korrigieren ist ein echtes Beduerfnis, kein
+    /// hypothetisches (Review Aufgabe 13, Fund 3).
+    let beiZurueck: () -> Void
     let beiFertig: () -> Void
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                Text(titel.uppercased())
-                    .font(DesignSystem.Typography.label)
-                    .tracking(1.5)
-                    .foregroundStyle(DesignSystem.Color.textFaint)
+                kopf
 
                 Text(modell.maschine.equipmentModel.name.uppercased())
                     .font(DesignSystem.Typography.geraetename)
@@ -70,5 +71,23 @@ struct KalibrierungSchritt: View {
         // das startete das Rad immer am Minimum statt an der bisherigen
         // Kalibrierung, weil `entwurfEinstellung` sonst nie befuellt wird.
         .onAppear { modell.kalibrierungVorbereiten() }
+    }
+
+    private var kopf: some View {
+        HStack(spacing: DesignSystem.Spacing.s12) {
+            Button(action: beiZurueck) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(PressButtonStyle())
+            .accessibilityLabel("Zurück")
+
+            Text(titel.uppercased())
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textFaint)
+        }
     }
 }

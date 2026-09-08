@@ -8,15 +8,15 @@ import SwiftUI
 /// (designsystem.md SS8). Das Rad startet am Geraetminimum.
 struct ErsteWerteSchritt: View {
     @Bindable var modell: GeraetModel
+    /// Ein Schritt zurueck zur Kalibrierung -- keine Sackgasse (Review
+    /// Aufgabe 13, Fund 3).
+    let beiZurueck: () -> Void
     let beiSichern: () -> Void
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                Text("SCHRITT 3 VON 3 · ERSTE WERTE")
-                    .font(DesignSystem.Typography.label)
-                    .tracking(1.5)
-                    .foregroundStyle(DesignSystem.Color.textFaint)
+                kopf
 
                 Text(modell.maschine.equipmentModel.name.uppercased())
                     .font(DesignSystem.Typography.geraetename)
@@ -45,5 +45,23 @@ struct ErsteWerteSchritt: View {
         }
         .background(DesignSystem.Color.bg)
         .onAppear { modell.radOffen = true }
+    }
+
+    private var kopf: some View {
+        HStack(spacing: DesignSystem.Spacing.s12) {
+            Button(action: beiZurueck) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(PressButtonStyle())
+            .accessibilityLabel("Zurück")
+
+            Text("SCHRITT 3 VON 3 · ERSTE WERTE")
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textFaint)
+        }
     }
 }

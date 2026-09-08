@@ -11,15 +11,17 @@ import SwiftUI
 /// fehlt: ein Geraet ohne Video ist nutzbar (M1-Spec SS8.2).
 struct EinweisungSchritt: View {
     let modell: GeraetModel
+    /// Verlaesst den ganzen Dreischritt (Kreuz oben links). Darf NIE
+    /// erstkontaktAbschliessen() oder eine Kalibrierung ausloesen -- ohne
+    /// gespeicherten Satz bleibt istErstkontakt true, und der Dreischritt
+    /// erscheint beim naechsten Mal zu Recht wieder.
+    let beiAbbruch: () -> Void
     let beiWeiter: () -> Void
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                Text("SCHRITT 1 VON 3 · EINWEISUNG")
-                    .font(DesignSystem.Typography.label)
-                    .tracking(1.5)
-                    .foregroundStyle(DesignSystem.Color.textFaint)
+                kopf
 
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                     Text(modell.maschine.equipmentModel.name.uppercased())
@@ -65,9 +67,37 @@ struct EinweisungSchritt: View {
         .background(DesignSystem.Color.bg)
     }
 
+    /// Alle drei Artboards zeigen ein Chevron/Kreuz vor dem Eyebrow-Text in
+    /// derselben Zeile (GeraetEinweisung.dc.html Kopfzeile) -- ein
+    /// fullScreenCover kennt kein Swipe-to-dismiss, ohne diese Zeile waere
+    /// der Dreischritt eine Falle.
+    private var kopf: some View {
+        HStack(spacing: DesignSystem.Spacing.s12) {
+            Button(action: beiAbbruch) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(PressButtonStyle())
+            .accessibilityLabel("Schließen")
+
+            Text("SCHRITT 1 VON 3 · EINWEISUNG")
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textFaint)
+        }
+    }
+
     /// Die Variante ohne Video ist kein Fehlerzustand -- ein Geraet ohne
     /// Video ist nutzbar. Nur das Skelett ist hier erlaubt (SS5: Skelette
-    /// ausschliesslich fuer Medien).
+    /// ausschliesslich fuer Medien), und nur solange der Kontext noch laedt
+    /// -- ist er da, ist "kein Video" ein feststehendes Faktum, kein
+    /// Ladezustand mehr.
+    ///
+    /// M1-Spec SS7.3: "Fehlt ein Einweisungsvideo ... ist das kein
+    /// Fehlerzustand: der Schritt zeigt Foto und Einstellhinweise ohne
+    /// Player." Dasselbe AsyncImage/photoUrl-Muster wie GeraetErkanntView.
     @ViewBuilder
     private var medien: some View {
         if let video = modell.aktiveUebung?.videoURL {
@@ -84,9 +114,29 @@ struct EinweisungSchritt: View {
                         .foregroundStyle(DesignSystem.Color.textFaint)
                 )
         } else {
-            Text("Für diese Übung hat dein Studio kein Video hinterlegt.")
-                .font(.system(size: 13))
-                .foregroundStyle(DesignSystem.Color.textFaint)
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
+                geraetefoto
+                Text("Für diese Übung hat dein Studio kein Video hinterlegt.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(DesignSystem.Color.textFaint)
+            }
         }
+    }
+
+    private var geraetefoto: some View {
+        AsyncImage(url: modell.kontext?.equipmentModel.photoUrl.flatMap(URL.init(string:))) { bild in
+            bild.resizable().aspectRatio(contentMode: .fill)
+        } placeholder: {
+            ZStack {
+                DesignSystem.Color.surfaceRaised
+                Image(systemName: "photo")
+                    .font(.system(size: 28))
+                    .foregroundStyle(DesignSystem.Color.textFaint)
+            }
+        }
+        .frame(height: 200)
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .accessibilityHidden(true)
     }
 }
