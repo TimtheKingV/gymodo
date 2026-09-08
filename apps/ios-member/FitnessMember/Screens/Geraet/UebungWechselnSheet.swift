@@ -63,6 +63,17 @@ struct UebungWechselnSheet: View {
         .padding(DesignSystem.Spacing.s16)
         .frame(minHeight: 44)
         .background(laeuft ? DesignSystem.Color.surfaceRaised : DesignSystem.Color.surface)
+        .overlay(alignment: .leading) {
+            // Die eine Akzentflaeche des Screens -- markiert den aktiven Wert
+            // (designsystem.md SS2), nicht nur "laeuft" im Text. Dasselbe
+            // Mittel wie in GeraetErkanntView, damit dieselbe Bedeutung nicht
+            // zweimal anders aussieht. Das Artboard setzt den Akzent hier
+            // dreifach (Rahmen, Punkt, Textfarbe) -- dokumentierte Abweichung
+            // Spec Abschnitt 9: genau eine Akzentflaeche, nicht drei.
+            if laeuft {
+                Rectangle().fill(DesignSystem.Color.accent).frame(width: 3)
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityElement(children: .combine)
     }
