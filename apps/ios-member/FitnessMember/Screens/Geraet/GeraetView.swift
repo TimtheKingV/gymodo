@@ -10,11 +10,26 @@ struct GeraetView: View {
     let beiZurueckZumTraining: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(NetzwerkMonitor.self) private var netz
+    @Environment(CatalogStore.self) private var katalog
+    @State private var geradeGesendet = false
+    // Zaehlt jede Runde "Warteschlange leergelaufen" hoch. .task(id:) bindet
+    // den Zwei-Sekunden-Timer daran statt an einen freilaufenden Task: laeuft
+    // die Schlange waehrend der zwei Sekunden erneut leer, bricht SwiftUI den
+    // alten Timer beim id-Wechsel selbst ab, statt dass zwei Timer um die
+    // Anzeige konkurrieren -- und verlaesst die Ansicht die Buehne, endet der
+    // Timer mit ihr statt auf einen verschwundenen Zustand zu schreiben.
+    @State private var gesendetRunde = 0
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopfzeile
+                OfflineLeiste(istOnline: netz.istOnline)
+                WarteschlangeKarte(offen: katalog.pendingWrites.count,
+                                   geradeGesendet: geradeGesendet)
+                AbgelehnteKarte(anzahl: katalog.verworfeneWrites.count,
+                                beiQuittieren: katalog.verworfeneQuittieren)
                 geraetUndUebung
                 if let pause = modell.pause, pause.laeuft() {
                     ResttimerBalken(timer: pause, beiVerlaengern: modell.pauseVerlaengern)
@@ -33,6 +48,27 @@ struct GeraetView: View {
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
         .task { await modell.kontextLaden() }
+        // Der Reconnect-Moment: laeuft die Schlange leer, steht zwei
+        // Sekunden "Gesendet". Der eigentliche Timer sitzt im .task(id:)
+        // unten -- hier wird nur die naechste Runde ausgeloest.
+        .onChange(of: katalog.pendingWrites.count) { alt, neu in
+            guard alt > 0, neu == 0 else { return }
+            geradeGesendet = true
+            gesendetRunde += 1
+        }
+        // An gesendetRunde gebunden statt an einen freilaufenden Task: ein
+        // erneutes Leerlaufen waehrend der zwei Sekunden (Nachschub kommt
+        // rein und geht sofort wieder raus) hebt die Runde an, SwiftUI
+        // bricht den alten Timer ab und die neuen zwei Sekunden zaehlen ab
+        // dem zweiten Ereignis -- ohne dieses Bindung wuerde der erste Timer
+        // "Gesendet" abschalten, waehrend die zweite Runde noch laufen soll.
+        // Verlaesst die View die Buehne, cancelt SwiftUI den Task automatisch.
+        .task(id: gesendetRunde) {
+            guard gesendetRunde > 0 else { return }
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            geradeGesendet = false
+        }
     }
 
     private var kopfzeile: some View {
