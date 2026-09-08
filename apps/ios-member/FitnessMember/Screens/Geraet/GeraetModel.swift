@@ -45,6 +45,13 @@ final class GeraetModel {
     /// ("aendern" auf Main) -- genau der Fall, der den eigenen Endpoint
     /// noetig macht.
     var kalibrierungOffen = false
+    /// Entwurf der Kalibrierung-Steppers, bevor gespeichert wird.
+    /// `kalibrierungVorbereiten()` befuellt ihn.
+    var entwurfEinstellung: [String: Double] = [:]
+    var trainerDabei = false
+    /// Kommt woertlich vom Server -- er kennt die Grenzen des Geraetemodells
+    /// und formuliert, was gilt (designsystem.md SS5).
+    private(set) var kalibrierungFehler: String?
 
     private let token: String?
     private let bootstrap: BootstrapResponse
@@ -152,6 +159,9 @@ final class GeraetModel {
     private var definitionen: [TagContextResponse.SettingDefinition] {
         kontext?.settingDefinitions ?? maschine.equipmentModel.settingDefinitions
     }
+
+    /// Fuer KalibrierungSchritt -- dieselben Definitionen, oeffentlich.
+    var einstellDefinitionen: [TagContextResponse.SettingDefinition] { definitionen }
 
     /// tag-context.ts berechnet calibration und suggestion serverseitig fuer
     /// genau eine Uebung (selectedExerciseId). Nach einem Uebungswechsel
@@ -299,4 +309,47 @@ final class GeraetModel {
     func pauseBeenden() { pause = nil }
 
     func kalibrierungOeffnen() { kalibrierungOffen = true }
+
+    /// Fuellt den Entwurf mit den bisherigen Werten, sonst mit dem Minimum.
+    func kalibrierungVorbereiten() {
+        var entwurf: [String: Double] = [:]
+        let bisherige: [String: JSONValue]
+        if case .object(let werte)? = kalibrierungswerte { bisherige = werte } else { bisherige = [:] }
+        for definition in definitionen {
+            if case .number(let zahl)? = bisherige[definition.key] {
+                entwurf[definition.key] = zahl
+            } else {
+                entwurf[definition.key] = definition.minValue ?? 0
+            }
+        }
+        entwurfEinstellung = entwurf
+        kalibrierungFehler = nil
+    }
+
+    /// Gibt zurueck, ob gespeichert wurde. Die Fehlermeldung kommt vom
+    /// Server -- er kennt die Grenzen und formuliert, was gilt
+    /// (designsystem.md SS5).
+    func kalibrierungSichern() async -> Bool {
+        kalibrierungFehler = nil
+        let werte = entwurfEinstellung.mapValues { JSONValue.number($0) }
+        do {
+            _ = try await loader.recordCalibration(
+                CalibrationWrite(
+                    machineId: maschine.id, exerciseId: uebungId,
+                    settingValues: werte, schemaVersion: 1,
+                    source: trainerDabei ? "trainer_assisted" : "self"
+                )
+            )
+            kalibrierungOffen = false
+            return true
+        } catch {
+            kalibrierungFehler = switch error {
+            case .offline: "Ohne Empfang lässt sich die Einstellung nicht speichern. Deine Sätze gehen trotzdem raus."
+            case .validation(let text), .server(let text), .notFound(let text),
+                 .conflict(let text), .unauthorized(let text): text
+            case .decodingFailed: "Unerwartete Antwort vom Server."
+            }
+            return false
+        }
+    }
 }

@@ -10,6 +10,7 @@ struct GeraetModelTests {
         maschine: BootstrapResponse.Machine,
         bootstrap: BootstrapResponse,
         sessions: WorkoutSessionStore? = nil,
+        loader: FakeGeraetLoader = FakeGeraetLoader(),
         enqueue: @escaping (PendingSetWrite) -> Void = { _ in }
     ) -> GeraetModel {
         let verzeichnis = FileManager.default.temporaryDirectory
@@ -19,7 +20,7 @@ struct GeraetModelTests {
             uebungId: maschine.exercises.first?.id ?? "e1",
             token: nil,
             bootstrap: bootstrap,
-            loader: FakeGeraetLoader(),
+            loader: loader,
             sessions: sessions ?? WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis)),
             enqueue: enqueue
         )
@@ -123,6 +124,81 @@ struct GeraetModelTests {
         #expect(sut.vorschlagText == nil)
         #expect(sut.einstellwerte.first?.anzeige == "6")
     }
+
+    @Test func kalibrierungVorbereitenLiestDurchDenselbenUebungsgateWieKalibrierungswerte() {
+        // Dieselbe Klammer wie kalibrierungswerte: der Entwurf muss aus der
+        // Kalibrierung der AKTUELLEN Uebung entstehen, nicht aus e1, auch
+        // wenn der geladene Kontext (falls vorhanden) noch zu e1 gehoert.
+        let bootstrap = GeraetTestdaten.bootstrap(
+            lastSets: [], mitKalibrierung: true,
+            kalibrierungExerciseId: "e2", kalibrierungSitzWert: 6
+        )
+        let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen, bootstrap: bootstrap)
+        sut.uebungWechseln(zu: "e2")
+
+        sut.kalibrierungVorbereiten()
+
+        #expect(sut.entwurfEinstellung["sitz"] == 6)
+        #expect(sut.kalibrierungFehler == nil)
+    }
+
+    @Test func kalibrierungVorbereitenFaelltOhneVorherigeWerteAufsMinimum() {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+
+        sut.kalibrierungVorbereiten()
+
+        #expect(sut.entwurfEinstellung["sitz"] == 1)
+    }
+
+    @Test func kalibrierungSichernSpeichertUndSchliesst() async {
+        let loader = FakeGeraetLoader()
+        await loader.setCalibration(.success(RecordedCalibration(
+            id: "c1", machineId: "m1", exerciseId: "e1",
+            settingValues: .number(4), schemaVersion: 1, source: "self",
+            createdAt: "2026-09-01T10:00:00Z"
+        )))
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []), loader: loader)
+        sut.kalibrierungOeffnen()
+        sut.entwurfEinstellung = ["sitz": 4]
+
+        let ergebnis = await sut.kalibrierungSichern()
+
+        #expect(ergebnis == true)
+        #expect(sut.kalibrierungFehler == nil)
+        #expect(sut.kalibrierungOffen == false)
+    }
+
+    @Test func kalibrierungSichernZeigtDenServertextWoertlichUndSchliesstNicht() async {
+        // Der Text kommt vom Server -- nur er kennt die Grenzen des
+        // Geraetemodells. Er wird hier NICHT umformuliert.
+        let loader = FakeGeraetLoader()
+        await loader.setCalibration(.failure(.validation(message: "Sitz darf höchstens 8 sein.")))
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []), loader: loader)
+        sut.kalibrierungOeffnen()
+        sut.entwurfEinstellung = ["sitz": 99]
+
+        let ergebnis = await sut.kalibrierungSichern()
+
+        #expect(ergebnis == false)
+        #expect(sut.kalibrierungFehler == "Sitz darf höchstens 8 sein.")
+        #expect(sut.kalibrierungOffen == true)
+    }
+
+    @Test func kalibrierungSichernZeigtEinenEigenenTextOffline() async {
+        let loader = FakeGeraetLoader()
+        await loader.setCalibration(.failure(.offline))
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []), loader: loader)
+        sut.entwurfEinstellung = ["sitz": 4]
+
+        let ergebnis = await sut.kalibrierungSichern()
+
+        #expect(ergebnis == false)
+        #expect(sut.kalibrierungFehler?.contains("Ohne Empfang") == true)
+    }
 }
 
 /// Faengt ein, was eine GeraetModel-Instanz einreiht -- damit ein
@@ -137,8 +213,10 @@ private final class Erfassungswarteschlange {
 
 actor FakeGeraetLoader: GeraetLoading {
     var kontextResult: Result<TagContextResponse, APIError> = .failure(.offline)
+    var calibrationResult: Result<RecordedCalibration, APIError> = .failure(.offline)
 
     func setKontext(_ value: Result<TagContextResponse, APIError>) { kontextResult = value }
+    func setCalibration(_ value: Result<RecordedCalibration, APIError>) { calibrationResult = value }
 
     func tagContext(token: String) async throws(APIError) -> TagContextResponse {
         switch kontextResult {
@@ -148,7 +226,10 @@ actor FakeGeraetLoader: GeraetLoading {
     }
 
     func recordCalibration(_ body: CalibrationWrite) async throws(APIError) -> RecordedCalibration {
-        throw APIError.offline
+        switch calibrationResult {
+        case .success(let value): return value
+        case .failure(let error): throw error
+        }
     }
 
     func completeSession(sessionId: UUID) async throws(APIError) -> CompletedSession {
