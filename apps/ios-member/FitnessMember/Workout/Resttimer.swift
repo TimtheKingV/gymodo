@@ -11,15 +11,24 @@ struct Resttimer: Codable, Equatable {
     static let dauer: TimeInterval = 90
     static let verlaengerung: TimeInterval = 30
 
+    let start: Date
     let endetAm: Date
 
     init(start: Date = Date()) {
+        self.start = start
         endetAm = start.addingTimeInterval(Self.dauer)
     }
 
-    private init(endetAm: Date) {
+    private init(start: Date, endetAm: Date) {
+        self.start = start
         self.endetAm = endetAm
     }
+
+    /// Die tatsaechliche Spanne DIESER Pause -- waechst mit jeder
+    /// Verlaengerung, anders als die feste Self.dauer. anteil() und der
+    /// Kopftext im Balken rechnen dagegen, sonst friert der Balken nach
+    /// "+30 s" bei 100 % ein, waehrend die Ziffern weiter runterzaehlen.
+    var gesamtdauer: TimeInterval { endetAm.timeIntervalSince(start) }
 
     func restsekunden(jetzt: Date = Date()) -> Int {
         max(0, Int(endetAm.timeIntervalSince(jetzt).rounded(.up)))
@@ -31,11 +40,12 @@ struct Resttimer: Codable, Equatable {
 
     /// 1,0 zu Beginn, 0,0 am Ende -- der Balken zeigt Restdauer.
     func anteil(jetzt: Date = Date()) -> Double {
-        min(1, max(0, Double(restsekunden(jetzt: jetzt)) / Self.dauer))
+        guard gesamtdauer > 0 else { return 0 }
+        return min(1, max(0, Double(restsekunden(jetzt: jetzt)) / gesamtdauer))
     }
 
     func verlaengert() -> Resttimer {
-        Resttimer(endetAm: endetAm.addingTimeInterval(Self.verlaengerung))
+        Resttimer(start: start, endetAm: endetAm.addingTimeInterval(Self.verlaengerung))
     }
 
     /// Die Live-Region-Ansage aus designsystem.md SS12.

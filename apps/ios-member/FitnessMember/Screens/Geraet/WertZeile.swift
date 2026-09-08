@@ -28,7 +28,7 @@ struct WertZeile: View {
         .onTapGesture {
             guard !modell.radOffen else { return }
             withAnimation(reduceMotion ? nil : DesignSystem.Motion.oeffnen) {
-                modell.radOffen = true
+                modell.radOeffnen()
             }
         }
     }
@@ -73,8 +73,7 @@ struct WertZeile: View {
     /// als einzige Rueckmeldung).
     private var kontextzeileGewicht: some View {
         let amAnschlag = modell.anschlagText != nil
-            && (modell.gewicht == modell.gewichtsWerte.first
-                || modell.gewicht == modell.gewichtsWerte.last)
+            && Rastwerte.amAnschlag(modell.gewicht, in: modell.gewichtsWerte)
         let text = amAnschlag
             ? (modell.anschlagText ?? "")
             : (modell.radOffen ? modell.kontextzeileGewicht : (modell.vorschlagText ?? modell.kontextzeileGewicht))

@@ -26,7 +26,7 @@ struct ResttimerBalken: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             HStack(alignment: .firstTextBaseline) {
-                Text("PAUSE · \(Int(Resttimer.dauer)) S")
+                Text("PAUSE · \(Int(timer.gesamtdauer)) S")
                     .font(DesignSystem.Typography.label)
                     .tracking(1.5)
                     .foregroundStyle(DesignSystem.Color.textMuted)

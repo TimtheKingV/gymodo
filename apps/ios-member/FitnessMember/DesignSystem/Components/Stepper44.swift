@@ -61,10 +61,10 @@ struct Stepper44: View {
 
     /// Wortlaut deckungsgleich mit GeraetModel.anschlagText fuers Gewichtsrad
     /// -- dieselbe Grenze verdient denselben Satz, gleich welches Steuerelement
-    /// sie meldet.
+    /// sie meldet (Rastwerte.maximumErreicht ist die eine Quelle dafuer).
     private var grenzhinweis: String? {
         if !minusAktiv { "Minimum erreicht" }
-        else if !plusAktiv { "Maximum des Geräts erreicht" }
+        else if !plusAktiv { Rastwerte.maximumErreicht }
         else { nil }
     }
 

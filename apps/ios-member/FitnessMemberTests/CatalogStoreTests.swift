@@ -268,7 +268,11 @@ struct FlushPendingTests {
     /// `directory` ist explizit waehlbar (statt immer neu), damit Tests einen
     /// Neustart simulieren koennen: zwei CatalogStore-Instanzen ueber
     /// demselben Verzeichnis, ohne gemeinsame In-Memory-Referenz.
-    private func store(loader: FakeBootstrapLoader, directory: URL? = nil) -> CatalogStore {
+    ///
+    /// `any BootstrapLoading` statt `FakeBootstrapLoader`, damit ein Test
+    /// einen eigenen, schmaleren Loader einsetzen kann (siehe
+    /// ZweiterAufrufPrueftPlatteLoader unten).
+    private func store(loader: any BootstrapLoading, directory: URL? = nil) -> CatalogStore {
         CatalogStore(
             loader: loader,
             pendingWriteStore: PendingWriteStore(directory: directory ?? neuesVerzeichnis()),
@@ -346,4 +350,59 @@ struct FlushPendingTests {
         let neuerProzess = store(loader: FakeBootstrapLoader(), directory: verzeichnis)
         #expect(neuerProzess.verworfeneWrites.isEmpty)
     }
+
+    // Der urspruengliche Kommentar in flushPending behauptete, ein verworfener
+    // Eintrag sei "schon aus pendingWrites/pendingWriteStore raus", sobald er
+    // zu verworfeneWrites hinzugefuegt wird -- pendingWriteStore.save(...)
+    // lief aber erst NACH der Schleife. Ein Kill zwischen zwei Eintraegen
+    // liess den ersten dadurch auf der Platte in BEIDEN Dateien stehen: beim
+    // naechsten Start wird er erneut versucht, faellt erneut dauerhaft durch
+    // und landet ein zweites Mal in verworfeneWrites. Dieser Test prueft den
+    // Zwischenstand waehrend des Laufs, nicht erst danach -- genau die Luecke,
+    // die ein Kill mittendrin ausnutzen wuerde.
+    @Test func entferntEinenDauerhaftAbgelehntenEintragSofortAusDemPendingWriteStore() async {
+        let verzeichnis = neuesVerzeichnis()
+        let erste = beispielWrite
+        let zweite = PendingSetWrite(
+            sessionId: UUID(), setId: UUID(),
+            body: SetWrite(machineId: "m2", exerciseId: "e2", setIndex: 1, weightKg: 40, reps: 8)
+        )
+        let loader = ZweiterAufrufPrueftPlatteLoader(verzeichnis: verzeichnis, ersterSetId: erste.setId)
+        let catalog = store(loader: loader, directory: verzeichnis)
+        catalog.enqueue(erste)
+        catalog.enqueue(zweite)
+
+        await catalog.flushPending()
+
+        #expect(await loader.zweiterAufrufSahDenEntferntenEintrag == true)
+        #expect(catalog.verworfeneWrites.count == 2)
+    }
+}
+
+/// Prueft beim ZWEITEN putSet-Aufruf, ob der erste Eintrag zu diesem
+/// Zeitpunkt schon aus dem PendingWriteStore auf der Platte verschwunden ist
+/// -- also bevor flushPending() insgesamt zurueckkehrt.
+private actor ZweiterAufrufPrueftPlatteLoader: BootstrapLoading {
+    let verzeichnis: URL
+    let ersterSetId: UUID
+    private(set) var zweiterAufrufSahDenEntferntenEintrag: Bool?
+
+    init(verzeichnis: URL, ersterSetId: UUID) {
+        self.verzeichnis = verzeichnis
+        self.ersterSetId = ersterSetId
+    }
+
+    func bootstrap() async throws(APIError) -> BootstrapResponse { throw .offline }
+
+    func putSet(sessionId: UUID, setId: UUID, _ body: SetWrite) async throws(APIError) -> RecordedSet {
+        if setId != ersterSetId {
+            let aufDerPlatte = PendingWriteStore(directory: verzeichnis).loadAll()
+            zweiterAufrufSahDenEntferntenEintrag = !aufDerPlatte.contains { $0.setId == ersterSetId }
+        }
+        throw APIError.notFound(message: "Geraet nicht gefunden.")
+    }
+
+    func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
+    func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
+    func leaveStudioMembership(studioId: String) async throws(APIError) { throw .offline }
 }

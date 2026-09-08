@@ -41,6 +41,12 @@ final class GeraetModel {
     var wiederholungen: Int
     var reserve: Double?
     var radOffen = false
+    /// Sobald das Mitglied das Rad geoeffnet hat, gehoert `gewicht` ihm --
+    /// ein spaeter eintreffender tagContext (die Anfrage lief seit .task auf
+    /// GeraetView, kann in einem Keller zehn Sekunden brauchen) darf den
+    /// Wert dann nicht mehr unter dem Daumen ersetzen. Der einzige Ort mit
+    /// zwei Schreibern auf denselben Zustand im ganzen Branch.
+    private var gewichtVomNutzer = false
     /// Die Kalibrierung ist auch ausserhalb des Dreischritts erreichbar
     /// ("aendern" auf Main) -- genau der Fall, der den eigenen Endpoint
     /// noetig macht.
@@ -141,7 +147,7 @@ final class GeraetModel {
 
     /// Nur wo es einen dokumentierten Anschlag gibt.
     var anschlagText: String? {
-        modell.max == nil ? nil : "Maximum des Geräts erreicht"
+        modell.max == nil ? nil : Rastwerte.maximumErreicht
     }
 
     var kontextzeileGewicht: String {
@@ -244,19 +250,33 @@ final class GeraetModel {
         return Calendar.current.dateComponents([.day], from: datum, to: Date()).day
     }
 
-    /// Der Dreischritt laeuft genau einmal je Geraet und Uebung -- nach
-    /// seinem Abschluss darf er in dieser Sitzung nicht erneut aufgehen.
-    private var erstkontaktErledigt = false
+    /// Der Dreischritt laeuft genau einmal je Geraet UND Uebung -- deshalb
+    /// je Uebungs-Id vermerkt, nicht als ein einzelnes Bool fuer die ganze
+    /// Modellinstanz. Ein Bool wuerde nach dem Abschluss fuer Uebung A auch
+    /// den Dreischritt fuer eine ganz andere, nie benutzte Uebung B
+    /// unterdruecken -- uebungWechseln(zu:) muesste es sonst zuruecksetzen,
+    /// haette dabei aber keine Ahnung, ob B ihn schon hinter sich hat.
+    private var erledigt: Set<String> = []
 
-    func erstkontaktAbschliessen() { erstkontaktErledigt = true }
+    func erstkontaktAbschliessen() { erledigt.insert(uebungId) }
 
+    /// `bootstrap` ist eine Momentaufnahme vom letzten Prefetch -- weder
+    /// eine Kalibrierung noch ein frisch gesicherter Satz schreiben sie neu.
+    /// `sessions.naechsterSetIndex(...) == 1` ist deshalb die tragende
+    /// Bedingung: sie liest live aus der lokalen Session und weiss damit
+    /// auch von einem Satz, den `bootstrap` noch nicht kennt -- etwa nach
+    /// einem abgeschlossenen Dreischritt und drei Saetzen an diesem Geraet,
+    /// wenn das Mitglied ueber die Blockliste zurueckkommt und ein neues
+    /// GeraetModel entsteht.
     var istErstkontakt: Bool {
-        !erstkontaktErledigt && GeraetEinstiegRechner.istErstkontakt(
-            hatKalibrierung: GeraetEinstiegRechner.hatKalibrierung(
-                machineId: maschine.id, exerciseId: uebungId, in: bootstrap),
-            hatLetztenSatz: GeraetEinstiegRechner.hatLetztenSatz(
-                machineId: maschine.id, exerciseId: uebungId, in: bootstrap)
-        )
+        !erledigt.contains(uebungId)
+            && sessions.naechsterSetIndex(machineId: maschine.id, exerciseId: uebungId) == 1
+            && GeraetEinstiegRechner.istErstkontakt(
+                hatKalibrierung: GeraetEinstiegRechner.hatKalibrierung(
+                    machineId: maschine.id, exerciseId: uebungId, in: bootstrap),
+                hatLetztenSatz: GeraetEinstiegRechner.hatLetztenSatz(
+                    machineId: maschine.id, exerciseId: uebungId, in: bootstrap)
+            )
     }
 
     /// Pflichtort laut designsystem.md SS10.
@@ -278,9 +298,19 @@ final class GeraetModel {
 
     func kontextUebernehmen(_ geladen: TagContextResponse) {
         kontext = geladen
-        if let vorschlag = geladen.suggestion.resultWeightKg {
+        // Unangetastet uebernehmen; hat das Mitglied das Rad schon
+        // geoeffnet, gehoert ihm der Wert -- ein spaeter Vorschlag darf ihn
+        // nicht mehr unter dem Daumen ersetzen.
+        if !gewichtVomNutzer, let vorschlag = geladen.suggestion.resultWeightKg {
             gewicht = Rastwerte.naechster(zu: vorschlag, in: gewichtsWerte)
         }
+    }
+
+    /// Einziger Ort, an dem das Rad geoeffnet wird -- markiert `gewicht`
+    /// zugleich als vom Mitglied uebernommen (siehe gewichtVomNutzer).
+    func radOeffnen() {
+        radOffen = true
+        gewichtVomNutzer = true
     }
 
     func uebungWechseln(zu neue: String) {
@@ -293,6 +323,9 @@ final class GeraetModel {
         wiederholungen = GeraetModel.geklemmt(letzter?.reps ?? aktiveUebung?.targetRepsMin ?? 10)
         reserve = letzter?.rir
         radOffen = false
+        // Neue Uebung, neuer Wert -- ein spaeter fuer diese Uebung
+        // eintreffender Vorschlag darf wieder greifen.
+        gewichtVomNutzer = false
     }
 
     func satzSichern(problemFlag: Bool, problemReason: ProblemReason?) async {

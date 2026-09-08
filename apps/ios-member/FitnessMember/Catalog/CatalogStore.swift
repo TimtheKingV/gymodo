@@ -103,25 +103,33 @@ final class CatalogStore {
     }
 
     func flushPending() async {
-        var verbleibend: [PendingSetWrite] = []
         for write in pendingWrites {
             do {
                 _ = try await loader.putSet(sessionId: write.sessionId, setId: write.setId, write.body)
+                entferneAusPendingWrites(write)
             } catch {
                 if error.istDauerhaft {
-                    // Sofort sichern, nicht erst am Schleifenende: flushPending()
-                    // laeuft oft auf einen Hintergrund-Reconnect hin, und ein Kill
-                    // der App mittendrin darf den Eintrag nicht mitnehmen -- er ist
-                    // ja gerade schon aus pendingWrites/pendingWriteStore raus.
+                    // Beide Listen sofort sichern, nicht erst am Schleifenende:
+                    // flushPending() laeuft oft auf einen Hintergrund-Reconnect
+                    // hin, und ein Kill der App mittendrin darf den Eintrag
+                    // weder verlieren noch doppelt verworfen wiederfinden --
+                    // beides braucht die Platte auf demselben Stand wie den
+                    // Speicher, bevor die Schleife weiterlaeuft.
                     verworfeneWrites.append(write)
                     verworfeneWriteStore.save(verworfeneWrites)
-                } else {
-                    verbleibend.append(write)
+                    entferneAusPendingWrites(write)
                 }
+                // Voruebergehende Fehler: der Eintrag bleibt fuer den
+                // naechsten Versuch in pendingWrites/pendingWriteStore stehen.
             }
         }
-        pendingWrites = verbleibend
-        pendingWriteStore.save(verbleibend)
+    }
+
+    /// Nimmt einen einzelnen Eintrag aus pendingWrites -- Speicher und Platte
+    /// zusammen, damit die beiden nie auseinanderlaufen (siehe flushPending).
+    private func entferneAusPendingWrites(_ write: PendingSetWrite) {
+        pendingWrites.removeAll { $0.id == write.id }
+        pendingWriteStore.save(pendingWrites)
     }
 
     /// Nach dem Anzeigen quittiert der Screen die abgelehnten Vorgaenge.

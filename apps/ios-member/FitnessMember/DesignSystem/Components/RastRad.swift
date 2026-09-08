@@ -53,7 +53,7 @@ struct RastRad: View {
 
     private var amAnschlag: Bool {
         guard anschlagText != nil else { return false }
-        return auswahl == werte.first || auswahl == werte.last
+        return Rastwerte.amAnschlag(auswahl, in: werte)
     }
 
     /// Fuenf Zeilen: der gewaehlte Wert plus zwei Nachbarn je Richtung.
@@ -111,7 +111,7 @@ struct RastRad: View {
                         .frame(maxWidth: .infinity)
                         .scrollTransition(.interactive, axis: .vertical) { inhalt, phase in
                             inhalt
-                                .scaleEffect(skalierung(fuer: phase.value))
+                                .scaleEffect(Self.skalierung(fuer: phase.value))
                                 .opacity(deckkraft(fuer: phase.value))
                         }
                 }
@@ -207,7 +207,12 @@ struct RastRad: View {
     // stuende das Rad je auf `surface` statt `bg`, muessten sie neu
     // gerechnet werden.
 
-    private func skalierung(fuer phase: Double) -> CGFloat {
+    // static/nonisolated, weil scrollTransition's Effekt-Closure nonisolated
+    // laeuft (sie bekommt ein VisualEffect, kein View) -- beide Funktionen
+    // duerfen deshalb nicht implizit @MainActor sein. skalierung liest
+    // keinen Instanzzustand, deckkraft nur `offen` (ein `let`), beide sind
+    // also verlustfrei aus dem Actor loesbar.
+    private nonisolated static func skalierung(fuer phase: Double) -> CGFloat {
         switch abs(phase) {
         case ..<0.25: 1.0
         case ..<0.75: 30.0 / 64.0
@@ -215,7 +220,7 @@ struct RastRad: View {
         }
     }
 
-    private func deckkraft(fuer phase: Double) -> Double {
+    private nonisolated func deckkraft(fuer phase: Double) -> Double {
         switch abs(phase) {
         case ..<0.25: 1.0
         case ..<0.75: offen ? 0.38 : 0

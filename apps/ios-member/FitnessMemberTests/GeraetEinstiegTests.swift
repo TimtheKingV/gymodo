@@ -70,6 +70,26 @@ struct GeraetEinstiegTests {
         #expect(GeraetEinstiegRechner.genutzteUebungen(machineId: "m1", in: bootstrap) == 2)
         #expect(GeraetEinstiegRechner.genutzteUebungen(machineId: "m3", in: bootstrap) == 0)
     }
+
+    @Test func letzteUebungLiestDenJuengstenSatzUnabhaengigVonDerReihenfolge() {
+        // EIN Ort statt zweier Ableitungen in TrainingRootView -- beide
+        // funktionierten vorher nur, weil der Server absteigend sortiert.
+        // Hier absichtlich AUFsteigend eingereicht, damit ein sortReihenfolge-
+        // Fund erneut auffiele.
+        let bootstrap = BootstrapResponse(
+            studios: [], machines: [maschine(id: "m1", tokenHashes: [])], calibrations: [],
+            lastSets: [
+                BootstrapResponse.LastSet(machineId: "m1", exerciseId: "e1", weightKg: 40, reps: 10,
+                                          rir: nil, performedAt: "2026-08-01T10:00:00Z"),
+                BootstrapResponse.LastSet(machineId: "m1", exerciseId: "e2", weightKg: 40, reps: 10,
+                                          rir: nil, performedAt: "2026-09-01T10:00:00Z"),
+                BootstrapResponse.LastSet(machineId: "m2", exerciseId: "e3", weightKg: 40, reps: 10,
+                                          rir: nil, performedAt: "2026-09-05T10:00:00Z"),
+            ]
+        )
+        #expect(GeraetEinstiegRechner.letzteUebung(machineId: "m1", in: bootstrap) == "e2")
+        #expect(GeraetEinstiegRechner.letzteUebung(machineId: "m3", in: bootstrap) == nil)
+    }
 }
 
 // MARK: - Testdaten

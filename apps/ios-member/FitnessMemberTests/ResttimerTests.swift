@@ -36,6 +36,25 @@ struct ResttimerTests {
         #expect(timer.restsekunden(jetzt: start) == 120)
     }
 
+    @Test func anteilFriertNachVerlaengernNichtBei100ProzentEin() {
+        // Vorher: anteil() teilte durch die feste Self.dauer (90) --
+        // gleich zu Beginn verlaengert (120 Restsekunden bei 90 Sekunden
+        // Gesamtdauer) blieb der Balken 30 Sekunden lang bei 1.0 stehen,
+        // waehrend die Ziffern schon runterzaehlten.
+        let timer = Resttimer(start: start).verlaengert()
+        #expect(timer.gesamtdauer == 120)
+        #expect(timer.anteil(jetzt: start) == 1.0)
+
+        // Nach 15 von 120 Sekunden: 105/120, nicht min(1, 105/90).
+        let danach = start.addingTimeInterval(15)
+        #expect(abs(timer.anteil(jetzt: danach) - 105.0 / 120.0) < 0.001)
+    }
+
+    @Test func gesamtdauerOhneVerlaengerungIstDieFesteDauer() {
+        let timer = Resttimer(start: start)
+        #expect(timer.gesamtdauer == Resttimer.dauer)
+    }
+
     @Test func dieAnsageNenntMinutenUndSekunden() {
         // designsystem.md SS12: "Pause, noch 1 Minute 12 Sekunden"
         let timer = Resttimer(start: start)

@@ -57,7 +57,10 @@ struct TrainingRootView: View {
             .sheet(isPresented: $scannerOffen) {
                 MemberScannerView { code in
                     scannerOffen = false
-                    oeffneToken(code)
+                    // Die Gym-QR-Codes tragen den vollstaendigen Universal
+                    // Link, nicht den blanken Token -- oeffneToken hasht und
+                    // vergleicht gegen tokenHashes, die nur den Token kennen.
+                    oeffneToken(TagLink.token(fromScan: code))
                 }
             }
             // Ein ueber Universal Link erfasster Token wird hier verbraucht --
@@ -130,7 +133,7 @@ struct TrainingRootView: View {
         switch route {
         case .erkannt(let machineId, let token):
             if let modell = modell(machineId: machineId, exerciseId: nil, token: token) {
-                GeraetErkanntView(modell: modell) { uebungId in
+                GeraetErkanntScreen(modell: modell) { uebungId in
                     pfad.append(.geraet(machineId: machineId, exerciseId: uebungId, token: token))
                 }
             }
@@ -147,9 +150,7 @@ struct TrainingRootView: View {
         else { return nil }
         // Vorauswahl: zuletzt genutzte Uebung, sonst die erste aus der vom
         // Studio gepflegten Reihenfolge (M1-Spec SS5.7).
-        let zuletzt = bootstrap.lastSets
-            .filter { $0.machineId == machineId }
-            .max { $0.performedAt < $1.performedAt }?.exerciseId
+        let zuletzt = GeraetEinstiegRechner.letzteUebung(machineId: machineId, in: bootstrap)
         let gewaehlt = exerciseId ?? zuletzt ?? maschine.exercises.first?.id
         guard let gewaehlt else { return nil }
         return GeraetModel(
@@ -208,7 +209,7 @@ struct TrainingRootView: View {
         case .erkannt:
             pfad.append(.erkannt(machineId: maschine.id, token: token))
         case .direktZumSatz:
-            let uebung = bootstrap.lastSets.first { $0.machineId == maschine.id }?.exerciseId
+            let uebung = GeraetEinstiegRechner.letzteUebung(machineId: maschine.id, in: bootstrap)
                 ?? maschine.exercises.first?.id
             guard let uebung else { return }
             pfad.append(.geraet(machineId: maschine.id, exerciseId: uebung, token: token))

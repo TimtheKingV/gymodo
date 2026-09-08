@@ -55,6 +55,34 @@ struct GeraetModelTests {
         #expect(sut.vorschlagText == "Vorschlag · +2,5")
     }
 
+    @Test func kontextUebernehmenUebernimmtDenVorschlagOhneBerührungDesRades() {
+        // Unangetastet: kontextLaden() kann jederzeit nach dem initialen
+        // Rendern eintreffen -- ohne eigene Eingabe des Mitglieds soll der
+        // Vorschlag ganz normal greifen (Review-Fund I2, "unberuehrt").
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)])
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrap)
+
+        sut.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 80.0))
+
+        #expect(sut.gewicht == 80.0)
+    }
+
+    @Test func kontextUebernehmenLaesstEinBereitsGeoeffnetesRadInRuhe() {
+        // Ein spaet eintreffender tagContext darf den Wert nicht mehr unter
+        // dem Daumen ersetzen, sobald das Mitglied das Rad geoeffnet hat
+        // (Review-Fund I2). radOeffnen() ist der einzige Weg dahin.
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)])
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrap)
+        sut.radOeffnen()
+
+        sut.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 80.0))
+
+        #expect(sut.gewicht == 77.5)
+        // Der Vorschlag selbst bleibt sichtbar -- nur die Uebernahme in
+        // gewicht unterbleibt.
+        #expect(sut.vorschlagText == "Vorschlag · +2,5")
+    }
+
     @Test func meldetDenAnschlagNurWennEsEinenGibt() {
         let sut = modell(maschine: GeraetTestdaten.maschine,
                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
@@ -189,9 +217,8 @@ struct GeraetModelTests {
 
     @Test func erstkontaktLaeuftGenauEinmalJeGeraetUndUebung() {
         // "Der Dreischritt laeuft genau einmal je Geraet und Uebung" --
-        // istErstkontakt liest aus dem unveraenderlichen bootstrap und
-        // aendert sich danach nie von selbst; erstkontaktAbschliessen() ist
-        // die einzige Stelle, die das nach einem abgeschlossenen Dreischritt
+        // erstkontaktAbschliessen() ist die einzige Stelle, die istErstkontakt
+        // fuer die AKTUELLE Uebung nach einem abgeschlossenen Dreischritt
         // korrigiert (Task 16, Step 3 der Aufgabe).
         let sut = modell(maschine: GeraetTestdaten.maschine,
                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
@@ -210,6 +237,52 @@ struct GeraetModelTests {
         let abgebrochen = modell(maschine: GeraetTestdaten.maschine,
                                  bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
         #expect(abgebrochen.istErstkontakt == true)
+    }
+
+    @Test func istErstkontaktBleibtNachRueckkehrZumGeraetFalschTrotzStalemBootstrap() {
+        // Der Zirkelfall aus M1-Spec SS5.3 (Schlusswellen-Fund C2, Faelle 1):
+        // Dreischritt an Maschine 7 abgeschlossen, Saetze gemacht, zu einem
+        // anderen Geraet gewechselt und ueber die Blockliste zurueck --
+        // TrainingRootView.modell(...) baut dabei ein FRISCHES GeraetModel.
+        // bootstrap bleibt dabei die alte Momentaufnahme ohne Kalibrierung
+        // und ohne lastSet; nur die lokale Session weiss vom Satz.
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [])
+
+        let erstesModell = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrap, sessions: sessions)
+        #expect(erstesModell.istErstkontakt == true)
+        erstesModell.erstkontaktAbschliessen()
+        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 40, reps: 10,
+                                  rir: nil, problemFlag: false, problemReason: nil)
+
+        // Ein neuer Push: dieselbe sessions-Instanz, aber ein komplett neues
+        // GeraetModel -- erledigt der ersten Instanz ist damit weg, nur
+        // sessions kennt noch den Satz.
+        let zweitesModell = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrap, sessions: sessions)
+        #expect(zweitesModell.istErstkontakt == false)
+    }
+
+    @Test func istErstkontaktGiltFuerEineNieBenutzteUebungAuchNachDemWechsel() {
+        // Faelle 2 desselben Funds: uebungWechseln(zu:) darf den Dreischritt
+        // einer noch nie benutzten Uebung nicht ueberspringen, nur weil eine
+        // ANDERE Uebung am selben Geraet ihn schon hinter sich hat.
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [])
+        let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen, bootstrap: bootstrap, sessions: sessions)
+        #expect(sut.istErstkontakt == true)
+
+        sut.erstkontaktAbschliessen()
+        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 40, reps: 10,
+                                  rir: nil, problemFlag: false, problemReason: nil)
+        #expect(sut.istErstkontakt == false)
+
+        sut.uebungWechseln(zu: "e2")
+
+        #expect(sut.istErstkontakt == true)
     }
 
     @Test func kalibrierungSichernZeigtEinenEigenenTextOffline() async {

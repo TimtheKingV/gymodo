@@ -44,7 +44,7 @@ struct ErsteWerteSchritt: View {
             .padding(.vertical, DesignSystem.Spacing.s32)
         }
         .background(DesignSystem.Color.bg)
-        .onAppear { modell.radOffen = true }
+        .onAppear { modell.radOeffnen() }
     }
 
     private var kopf: some View {

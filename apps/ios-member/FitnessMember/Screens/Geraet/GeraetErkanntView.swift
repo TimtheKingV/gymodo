@@ -177,3 +177,26 @@ struct GeraetErkanntView: View {
             .lineSpacing(3)
     }
 }
+
+/// Bindet das Laden von tagContext an GeraetErkanntView -- getrennt, damit
+/// die View selbst nur den Screen beschreibt (wie GeraetScreen/GeraetView
+/// es fuer den Geraete-Screen schon vormachen).
+///
+/// `@State var modell` ist der eigentliche Punkt: TrainingRootView.ziel(_:)
+/// ruft `modell(machineId:exerciseId:token:)` bei JEDER Body-Auswertung neu
+/// auf und erzeugt dabei ein frisches GeraetModel. Ohne dieses @State wuerde
+/// jede Neuzeichnung ein Modell verwerfen, dessen kontextLaden() gerade erst
+/// geladen hat -- SwiftUI uebernimmt den init-Parameter fuer @State nur beim
+/// allerersten Aufbau derselben View-Identitaet, jede weitere ignoriert ihn.
+struct GeraetErkanntScreen: View {
+    @State var modell: GeraetModel
+    let beiAuswahl: (String) -> Void
+
+    var body: some View {
+        GeraetErkanntView(modell: modell, beiAuswahl: beiAuswahl)
+            // Online zeigt das Geraetefoto den eigentlichen Nutzen bei zwei
+            // baugleichen Stationen (designsystem.md SS8) -- der Offline-
+            // Platzhalter in GeraetErkanntView bleibt unveraendert.
+            .task { await modell.kontextLaden() }
+    }
+}

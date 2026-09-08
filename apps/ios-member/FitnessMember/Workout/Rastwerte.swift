@@ -37,4 +37,17 @@ enum Rastwerte {
         guard let erster = werte.first else { return wert }
         return werte.min { abs($0 - wert) < abs($1 - wert) } ?? erster
     }
+
+    /// EIN Ort fuer "die Auswahl klebt am Rand der Rastenliste" -- vorher
+    /// eigenstaendig sowohl in RastRad als auch in WertZeile nachgebaut
+    /// (Review-Fund Schlusswelle: zwei Kopien sind die Invariante, die als
+    /// naechstes auseinanderlaeuft).
+    static func amAnschlag(_ wert: Double, in werte: [Double]) -> Bool {
+        wert == werte.first || wert == werte.last
+    }
+
+    /// Wortlaut, den Gewichtsrad (GeraetModel.anschlagText) und die
+    /// Kalibrierung (Stepper44.grenzhinweis) teilen -- dieselbe Grenze
+    /// verdient denselben Satz, gleich welches Steuerelement sie meldet.
+    static let maximumErreicht = "Maximum des Geräts erreicht"
 }

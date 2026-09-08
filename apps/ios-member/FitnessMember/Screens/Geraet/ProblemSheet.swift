@@ -84,7 +84,7 @@ struct ProblemSheet: View {
             // die Meldung als Fehlverhalten lesen.
             Circle()
                 .strokeBorder(gewaehlt ? DesignSystem.Color.warn : DesignSystem.Color.line,
-                              lineWidth: gewaehlt ? 6 : 1.5)
+                              lineWidth: gewaehlt ? 2.5 : 1.5)
                 .frame(width: 22, height: 22)
             Text(beschriftung(ursache))
                 .font(DesignSystem.Typography.uebungsname)

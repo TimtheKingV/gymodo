@@ -32,6 +32,17 @@ enum GeraetEinstiegRechner {
         Set(bootstrap.lastSets.filter { $0.machineId == machineId }.map(\.exerciseId)).count
     }
 
+    /// Die zuletzt genutzte Uebung an einem Geraet -- EIN Ort statt zweier
+    /// Ableitungen in TrainingRootView (Review-Fund Schlusswelle), die beide
+    /// nur funktionierten, weil der Server lastSets absteigend sortiert.
+    /// `.max(by: performedAt)` liest das nicht voraus, sondern rechnet es
+    /// selbst aus -- robust, falls die Server-Sortierung sich je aendert.
+    static func letzteUebung(machineId: String, in bootstrap: BootstrapResponse) -> String? {
+        bootstrap.lastSets
+            .filter { $0.machineId == machineId }
+            .max { $0.performedAt < $1.performedAt }?.exerciseId
+    }
+
     static func hatKalibrierung(machineId: String, exerciseId: String, in bootstrap: BootstrapResponse) -> Bool {
         bootstrap.calibrations.contains { $0.machineId == machineId && $0.exerciseId == exerciseId }
     }
