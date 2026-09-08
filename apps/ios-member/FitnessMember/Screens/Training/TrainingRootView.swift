@@ -55,13 +55,18 @@ struct TrainingRootView: View {
             .background(DesignSystem.Color.bg)
             .navigationDestination(for: GeraetRoute.self, destination: ziel)
             .sheet(isPresented: $scannerOffen) {
-                MemberScannerView { code in
-                    scannerOffen = false
-                    // Die Gym-QR-Codes tragen den vollstaendigen Universal
-                    // Link, nicht den blanken Token -- oeffneToken hasht und
-                    // vergleicht gegen tokenHashes, die nur den Token kennen.
-                    oeffneToken(TagLink.token(fromScan: code))
-                }
+                ScannerSheet(
+                    titel: "Gerät finden",
+                    hinweis: "QR-Code auf dem Aufkleber ins Feld halten.",
+                    nebenweg: "Oder einfach antippen: Halt die Oberkante deines iPhones an den Aufkleber — dafür musst du diesen Bildschirm nicht offen haben.",
+                    beiCode: { code in
+                        scannerOffen = false
+                        // Die Gym-QR-Codes tragen den vollstaendigen Universal
+                        // Link, nicht den blanken Token -- oeffneToken hasht und
+                        // vergleicht gegen tokenHashes, die nur den Token kennen.
+                        oeffneToken(TagLink.token(fromScan: code))
+                    }
+                )
             }
             // Ein ueber Universal Link erfasster Token wird hier verbraucht --
             // Sub-Projekt 1 hat ihn nur fuer das Banner auf LoginMail genutzt.

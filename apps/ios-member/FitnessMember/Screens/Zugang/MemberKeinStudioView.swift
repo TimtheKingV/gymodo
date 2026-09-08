@@ -49,10 +49,16 @@ struct MemberKeinStudioView: View {
         }
         .background(DesignSystem.Color.bg)
         .sheet(isPresented: $showScanner) {
-            MemberScannerView { scanned in
-                showScanner = false
-                Task { await joinByTag(scanned) }
-            }
+            ScannerSheet(
+                titel: "Code scannen",
+                hinweis: "QR-Code am Studioeingang ins Feld halten.",
+                nebenweg: "Code stattdessen eingeben",
+                nebenwegAktion: { /* das Eingabefeld liegt direkt darunter */ },
+                beiCode: { scanned in
+                    showScanner = false
+                    Task { await joinByTag(scanned) }
+                }
+            )
         }
     }
 
