@@ -81,6 +81,31 @@ struct KurseMeineEinteilung {
     }
 }
 
+/// Der Zustand des "Abmelden"-Knopfs EINER Zeile -- eine reine Ableitung
+/// aus der Menge gerade laufender Abmeldeversuche und den Fehlermeldungen
+/// je sessionId, getestet in `KurseMeineAbmeldeZustandTests` ohne UI.
+///
+/// Review-Fund M2: ein einzelner `stornierendId`-Wert kann immer nur EINE
+/// Zeile als "laeuft" fuehren. Beginnt eine zweite Zeile ihre Abmeldung,
+/// waehrend die erste noch unterwegs ist, wuerde die erste wieder als
+/// "bereit" erscheinen -- obwohl ihre Anfrage noch offen ist -- und liesse
+/// sich ein zweites Mal antippen, mit einer zweiten, nebenlaeufigen
+/// Anfrage fuer denselben Termin. Diese Ableitung nimmt stattdessen eine
+/// `Set<String>` laufender sessionIds entgegen: jede Zeile fragt nur nach
+/// ihrer EIGENEN sessionId und bleibt unabhaengig von jeder anderen
+/// gesperrt, waehrend ihr eigener Versuch laeuft.
+enum KurseMeineAbmeldeZustand: Equatable {
+    case bereit
+    case laeuft
+    case fehlgeschlagen(String)
+
+    static func fuer(sessionId: String, laufende: Set<String>, fehlermeldungen: [String: String]) -> KurseMeineAbmeldeZustand {
+        if laufende.contains(sessionId) { return .laeuft }
+        if let fehler = fehlermeldungen[sessionId] { return .fehlgeschlagen(fehler) }
+        return .bereit
+    }
+}
+
 /// "Meine Kurse" (`KurseMeine.dc.html`) -- die eigenen Anmeldungen, gelesen
 /// AUSSCHLIESSLICH aus `KurseStore.eigene`, nie aus `KurseStore.woche`.
 /// Das ist der Kern dieses Screens: `eigene` liegt auf Platte
@@ -131,21 +156,37 @@ struct KurseMeineEinteilung {
 /// dem KursDetailView keinen eigenen Zurueck-Chevron zeichnet. Der
 /// naechste Schritt steht als Text; der Weg dorthin kommt kostenlos aus
 /// der Navigation, die Aufgabe 12 um diesen Screen baut.
+///
+/// **Review-Fund M1: "noch nie geladen" ist nicht "keine Anmeldungen".**
+/// Ohne Cache (`kurse.eigene == nil`) UND ohne einen Ladeversuch, der das
+/// tatsaechlich bestaetigt hat, weiss dieser Screen schlicht nichts --
+/// gerade eine Erstinstallation ohne Netz waere sonst der Fall, in dem er
+/// faelschlich "Du bist für keinen Kurs angemeldet." behauptet, obwohl nie
+/// ein Abruf gelungen ist. `kurse.ladeZustand` unterscheidet die Faelle:
+/// `.geladen` bestaetigt eine echte Leere (KurseStore.laden setzt `eigene`
+/// bei einem erfolgreichen Abruf ohne eigene Termine ausdruecklich auf
+/// `nil`, nie stumm); `.bereit`/`.laedt` heisst "noch unterwegs, noch
+/// nichts bekannt"; `.fehlgeschlagen(.offline)` heisst "kein Empfang,
+/// nichts bekannt" -- ausdruecklich NICHT "fehlgeschlagen" formuliert
+/// (designsystem.md SS5); jeder andere `.fehlgeschlagen`-Fall zeigt den
+/// Servertext. Siehe `ungeladenerZustand` unten.
 struct KurseMeineView: View {
     let beiAuswahl: (String) -> Void
 
     @Environment(KurseStore.self) private var kurse
 
-    /// Die sessionId, deren Abmelden-Versuch gerade laeuft -- verhindert
-    /// nur einen zweiten Tap auf DIESELBE Zeile, waehrend deren eigener
-    /// Versuch noch unterwegs ist (der Knopf zeigt statt Text einen
+    /// Die sessionIds, deren Abmelden-Versuch gerade laeuft -- eine Menge,
+    /// nicht ein einzelner Wert (Review-Fund M2): mehrere Zeilen koennen
+    /// gleichzeitig unterwegs sein, jede bleibt nur fuer ihre EIGENE
+    /// sessionId gesperrt (der Knopf zeigt waehrenddessen statt Text einen
     /// ProgressView, also nie ein stummer deaktivierter Zustand). Andere
     /// Zeilen bleiben unabhaengig bedienbar -- KurseStore.stornieren traegt
     /// seine eigene Generation-Absicherung gegen ueberholte Antworten.
-    @State private var stornierendId: String?
+    @State private var stornierendeIds: Set<String> = []
     /// Servertext je fehlgeschlagenem Abmelden-Versuch, keyed nach
     /// sessionId -- mehrere Zeilen koennen unabhaengig voneinander
-    /// scheitern.
+    /// scheitern, und der Fehler bleibt an der Zeile sichtbar, zu der er
+    /// gehoert.
     @State private var fehlermeldungen: [String: String] = [:]
 
     var body: some View {
@@ -206,7 +247,7 @@ struct KurseMeineView: View {
         return "Ohne Empfang. Stand: \(formatter.string(from: stand))."
     }
 
-    // MARK: - Inhalt: leer oder die drei Abschnitte
+    // MARK: - Inhalt: bestaetigt leer, ungeladen, oder die drei Abschnitte
 
     @ViewBuilder
     private func inhalt(jetzt: Date) -> some View {
@@ -215,16 +256,146 @@ struct KurseMeineView: View {
                 aus: eigene.termine, jetzt: jetzt, zeitzone: eigene.timezone)
             if einteilung.istLeer {
                 // Alle vorhandenen Datensaetze sind .abgesagt/.vorbei --
-                // fachlich hat das Mitglied dann ebenfalls keine offene
-                // Anmeldung mehr, auch wenn KurseFileStore noch Zeilen
-                // haelt.
-                leerZustand
+                // ein echter Cache hat das bestaetigt, fachlich hat das
+                // Mitglied dann ebenfalls keine offene Anmeldung mehr.
+                bestaetigtLeererZustand
             } else {
                 abschnitte(einteilung, eigene: eigene, jetzt: jetzt)
             }
         } else {
-            leerZustand
+            // Kein Cache -- ob "keine Anmeldungen" gilt, ist damit noch
+            // NICHT entschieden (Review-Fund M1). Siehe dort.
+            ungeladenerZustand
         }
+    }
+
+    /// Ein Ladeversuch hat tatsaechlich bestaetigt: keine eigenen
+    /// Anmeldungen. Ueberschrift plus naechster Schritt, keine leere
+    /// Statistik (dieselbe Form wie KurseWochenView.leerZustand).
+    private var bestaetigtLeererZustand: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+            Text("Du bist für keinen Kurs angemeldet.")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(DesignSystem.Color.text)
+            Text("Geh zurück zum Wochenplan, um dich für einen Kurs anzumelden.")
+                .font(.system(size: 13))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(DesignSystem.Spacing.s16)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Kein Cache, und kein Ladeversuch hat bislang irgendetwas bestaetigt
+    /// -- Review-Fund M1. `kurse.ladeZustand` traegt genug, um ehrlich zu
+    /// sagen, was gilt: `.geladen` bestaetigt eine echte Leere (siehe
+    /// unten), `.bereit`/`.laedt` heisst "noch unterwegs", und
+    /// `.fehlgeschlagen` unterscheidet Empfangslosigkeit von einem
+    /// tatsaechlichen Serverfehler.
+    @ViewBuilder
+    private var ungeladenerZustand: some View {
+        switch kurse.ladeZustand {
+        case .geladen:
+            // Ein erfolgreicher Abruf OHNE eigene Termine setzt
+            // `kurse.eigene` ausdruecklich auf `nil` (KurseStore.laden) --
+            // das ist eine bestaetigte Leere, keine offene Frage.
+            bestaetigtLeererZustand
+        case .fehlgeschlagen(let fehler) where fehler == .offline:
+            ohneEmpfangUnbekannterZustand
+        case .fehlgeschlagen(let fehler):
+            fehlerUnbekannterZustand(fehler)
+        case .bereit:
+            nochNichtGeladenerZustand
+        case .laedt:
+            ladeSkelett
+        }
+    }
+
+    /// Kein Cache, ohne Empfang -- der Screen weiss nichts, und das sagt
+    /// er auch so: nicht "fehlgeschlagen" (designsystem.md SS5), sondern
+    /// "kein Empfang" plus der naechste Schritt. Dieselbe Kartenform wie
+    /// KurseWochenView.offlineKarte/KursDetailView.offlineKarte -- Halt es
+    /// genauso.
+    private var ohneEmpfangUnbekannterZustand: some View {
+        HStack(spacing: DesignSystem.Spacing.s8) {
+            Image(systemName: "wifi.slash")
+                .font(.system(size: 15, weight: .semibold))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Kein Empfang")
+                    .font(.system(size: 15, weight: .semibold))
+                Text("Deine Anmeldungen sind noch nicht bekannt. Verbinde dich mit dem Internet und öffne den Wochenplan, damit sie geladen werden.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .lineSpacing(3)
+            }
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(DesignSystem.Color.danger)
+        .padding(DesignSystem.Spacing.s12)
+        .background(DesignSystem.Color.danger.opacity(0.1))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(DesignSystem.Color.danger, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Kein Cache, ein Serverfehler statt Empfangs -- Servertext woertlich
+    /// plus was trotzdem gilt (designsystem.md SS5), wie
+    /// KursDetailView.fehlerKarte.
+    private func fehlerUnbekannterZustand(_ fehler: APIError) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
+            Text(servertext(fuer: fehler))
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(DesignSystem.Color.danger)
+            Text("Deine Anmeldungen sind noch nicht bekannt.")
+                .font(.system(size: 13))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .lineSpacing(3)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(DesignSystem.Spacing.s16)
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(DesignSystem.Color.danger, lineWidth: 1)
+        )
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Kein Cache, noch kein Ladeversuch dieser Sitzung (`.bereit`) --
+    /// etwa wenn noch kein aktives Studio gewaehlt ist und der Wochenplan
+    /// deshalb noch nie geladen hat. Weder "keine Anmeldungen" noch ein
+    /// Ladebalken (es laedt ja gerade nichts) -- nur die ehrliche Aussage
+    /// plus naechster Schritt.
+    private var nochNichtGeladenerZustand: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+            Text("Deine Anmeldungen sind noch nicht geladen.")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(DesignSystem.Color.text)
+            Text("Öffne den Wochenplan, damit sie geladen werden.")
+                .font(.system(size: 13))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(DesignSystem.Spacing.s16)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Ein Ladeversuch laeuft gerade (`.laedt`) -- reine Flaechen ohne
+    /// Text/Zahl, wie KurseWochenView.skelett: ein Ladezustand ist nie
+    /// stumm (VoiceOver-Label statt Stille).
+    private var ladeSkelett: some View {
+        VStack(spacing: DesignSystem.Spacing.s12) {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .fill(DesignSystem.Color.surfaceRaised)
+                .frame(height: 76)
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .fill(DesignSystem.Color.surfaceRaised)
+                .frame(height: 76)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Deine Anmeldungen werden geladen")
     }
 
     private func abschnitte(_ einteilung: KurseMeineEinteilung, eigene: GespeicherteBuchungen, jetzt: Date) -> some View {
@@ -263,22 +434,6 @@ struct KurseMeineView: View {
                 content()
             }
         }
-    }
-
-    /// Ueberschrift plus naechster Schritt, keine leere Statistik
-    /// (dieselbe Form wie KurseWochenView.leerZustand).
-    private var leerZustand: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-            Text("Du bist für keinen Kurs angemeldet.")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(DesignSystem.Color.text)
-            Text("Geh zurück zum Wochenplan, um dich für einen Kurs anzumelden.")
-                .font(.system(size: 13))
-                .foregroundStyle(DesignSystem.Color.textMuted)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(DesignSystem.Spacing.s16)
-        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Datumsblock (Wochentag kurz + Tag), gemeinsam fuer alle drei Karten
@@ -388,7 +543,10 @@ struct KurseMeineView: View {
             }
             .padding(DesignSystem.Spacing.s12)
 
-            if let fehler = fehlermeldungen[zeile.termin.sessionId] {
+            // Der Fehler haengt an DIESER sessionId -- eine Zeile zeigt nur
+            // ihren eigenen Fehler, nie den einer anderen (Review-Fund M2:
+            // "muss erkennbar sein, zu welcher Zeile er gehoert").
+            if case .fehlgeschlagen(let fehler) = abmeldeZustand(zeile.termin.sessionId) {
                 InlineBanner(tone: .danger, message: fehler)
                     .padding(.horizontal, DesignSystem.Spacing.s12)
                     .padding(.bottom, DesignSystem.Spacing.s12)
@@ -413,17 +571,27 @@ struct KurseMeineView: View {
         return KursZeit.uhrzeit(deadline, zeitzone: zeitzone)
     }
 
+    /// Der Abmelde-Zustand DIESER Zeile -- reine Ableitung
+    /// (`KurseMeineAbmeldeZustand.fuer`) aus der Menge laufender Versuche
+    /// und den Fehlermeldungen, damit Knopf und Fehlerbanner derselben
+    /// Zeile konsistent bleiben.
+    private func abmeldeZustand(_ sessionId: String) -> KurseMeineAbmeldeZustand {
+        KurseMeineAbmeldeZustand.fuer(sessionId: sessionId, laufende: stornierendeIds, fehlermeldungen: fehlermeldungen)
+    }
+
     /// "Abmelden" als Nebenaktion (Aufgabenbrief) -- ruft
     /// `KurseStore.stornieren` direkt aus der Zeile heraus auf, ohne den
     /// Umweg ueber KursDetailView. Zeigt waehrend des eigenen Versuchs
-    /// einen ProgressView statt Text (nie ein stummer deaktivierter
-    /// Zustand).
+    /// einen ProgressView statt Text -- nie ein stummer deaktivierter
+    /// Zustand (Review-Fund M2), und nur DIESE Zeile ist gesperrt, jede
+    /// andere bleibt unabhaengig bedienbar.
     private func abmeldenKnopf(_ sessionId: String) -> some View {
-        Button {
+        let laeuft = abmeldeZustand(sessionId) == .laeuft
+        return Button {
             Task { await abmelden(sessionId: sessionId) }
         } label: {
             Group {
-                if stornierendId == sessionId {
+                if laeuft {
                     ProgressView().tint(DesignSystem.Color.danger)
                 } else {
                     Text("Abmelden")
@@ -434,14 +602,17 @@ struct KurseMeineView: View {
             .frame(minWidth: 44, minHeight: 44)
         }
         .buttonStyle(PressButtonStyle())
-        .disabled(stornierendId == sessionId)
+        .disabled(laeuft)
+        .accessibilityLabel(laeuft ? "Abmelden, wird bearbeitet" : "Abmelden")
     }
 
     /// Verhindert nur einen zweiten Tap auf DIESELBE Zeile, waehrend ihr
-    /// eigener Versuch laeuft -- siehe stornierendId-Kommentar oben.
+    /// eigener Versuch laeuft -- `stornierendeIds` ist eine Menge
+    /// (Review-Fund M2), jede andere Zeile bleibt unabhaengig unterwegs
+    /// bedienbar.
     private func abmelden(sessionId: String) async {
-        guard stornierendId != sessionId else { return }
-        stornierendId = sessionId
+        guard !stornierendeIds.contains(sessionId) else { return }
+        stornierendeIds.insert(sessionId)
         fehlermeldungen[sessionId] = nil
         do {
             try await kurse.stornieren(sessionId: sessionId)
@@ -452,7 +623,7 @@ struct KurseMeineView: View {
             // hier).
             fehlermeldungen[sessionId] = servertext(fuer: error)
         }
-        stornierendId = nil
+        stornierendeIds.remove(sessionId)
     }
 
     // MARK: - "Auf der Warteliste"

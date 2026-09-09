@@ -104,3 +104,48 @@ struct KurseMeineEinteilungTests {
         #expect(einteilung.istLeer)
     }
 }
+
+/// `KurseMeineAbmeldeZustand.fuer` -- Review-Fund M2: mehrere Zeilen
+/// koennen gleichzeitig ihre Abmeldung versuchen, und jede muss ihren
+/// EIGENEN Zustand tragen, unabhaengig von den anderen.
+struct KurseMeineAbmeldeZustandTests {
+    @Test func ohneLaufendenVersuchUndOhneFehlerIstBereit() {
+        let zustand = KurseMeineAbmeldeZustand.fuer(sessionId: "a", laufende: [], fehlermeldungen: [:])
+        #expect(zustand == .bereit)
+    }
+
+    /// Zwei Zeilen gleichzeitig in Arbeit -- jede erscheint fuer ihre
+    /// eigene sessionId als "laeuft", eine dritte, unbeteiligte Zeile
+    /// bleibt "bereit".
+    @Test func zweiGleichzeitigLaufendeVersucheStimmenJeFuerSich() {
+        let laufende: Set<String> = ["a", "b"]
+
+        #expect(KurseMeineAbmeldeZustand.fuer(sessionId: "a", laufende: laufende, fehlermeldungen: [:]) == .laeuft)
+        #expect(KurseMeineAbmeldeZustand.fuer(sessionId: "b", laufende: laufende, fehlermeldungen: [:]) == .laeuft)
+        #expect(KurseMeineAbmeldeZustand.fuer(sessionId: "c", laufende: laufende, fehlermeldungen: [:]) == .bereit)
+    }
+
+    /// Ein Fehler gehoert zu GENAU seiner sessionId -- eine andere Zeile
+    /// mit einem eigenen Fehler bleibt davon unberuehrt.
+    @Test func fehlerGehoertZuSeinerEigenenZeile() {
+        let fehlermeldungen = ["a": "Der Platz ist bereits vergeben.", "b": "Keine Verbindung."]
+
+        #expect(
+            KurseMeineAbmeldeZustand.fuer(sessionId: "a", laufende: [], fehlermeldungen: fehlermeldungen)
+                == .fehlgeschlagen("Der Platz ist bereits vergeben."))
+        #expect(
+            KurseMeineAbmeldeZustand.fuer(sessionId: "b", laufende: [], fehlermeldungen: fehlermeldungen)
+                == .fehlgeschlagen("Keine Verbindung."))
+        #expect(KurseMeineAbmeldeZustand.fuer(sessionId: "c", laufende: [], fehlermeldungen: fehlermeldungen) == .bereit)
+    }
+
+    /// Laeuft ein NEUER Versuch fuer eine Zeile, deren voriger Versuch
+    /// fehlgeschlagen war, gewinnt "laeuft" -- der alte Fehler wird beim
+    /// Neustart des Versuchs geloescht (KurseMeineView.abmelden), diese
+    /// Ableitung selbst priorisiert `laufende` ohnehin zuerst.
+    @Test func laufenderVersuchGewinntGegenEinenAltenFehlerDerselbenZeile() {
+        let zustand = KurseMeineAbmeldeZustand.fuer(
+            sessionId: "a", laufende: ["a"], fehlermeldungen: ["a": "Keine Verbindung."])
+        #expect(zustand == .laeuft)
+    }
+}
