@@ -27,7 +27,42 @@ struct TrainingAbschlussView: View {
     @Environment(CatalogStore.self) private var katalog
 
     @State private var vorschlaege: [Blockvorschlag]?
-    @State private var vorschlagFehlt = false
+    @State private var ausfall: Vorschlagsausfall?
+
+    /// Warum kein Vorschlag da ist -- getrennt nach Ursache, wie im
+    /// Ladepfad der drei Kurse-Screens.
+    ///
+    /// Vorher stand hier ein blosses `vorschlagFehlt: Bool`, und der
+    /// einzige Satz sprach von Empfang. Seit die Serverhaelfte ihre
+    /// Abfragefehler nicht mehr verschluckt (m13), kommen sie als 500
+    /// hier an -- und der Screen behauptete bei vollem Empfang
+    /// "Vorschläge brauchen Empfang". Das ist woertlich M3, auf dem
+    /// Screen, den JEDES beendete Training sieht.
+    ///
+    /// Der Ton bleibt in beiden Faellen derselbe und stimmt weiterhin:
+    /// die Saetze sind lokal gesichert und gehen ueber die
+    /// Schreib-Warteschlange raus. Nur die Ursache wird nicht mehr
+    /// erfunden.
+    private enum Vorschlagsausfall: Equatable {
+        case ohneEmpfang
+        case serverfehler(String)
+
+        var satz: String {
+            switch self {
+            case .ohneEmpfang:
+                "Vorschläge brauchen Empfang. Deine Sätze sind gespeichert und gehen raus, sobald du wieder Netz hast."
+            case .serverfehler(let text):
+                "\(text) Deine Sätze sind gespeichert — nur der Blick nach vorn fehlt."
+            }
+        }
+
+        var symbol: String {
+            switch self {
+            case .ohneEmpfang: "wifi.slash"
+            case .serverfehler: "exclamationmark.triangle"
+            }
+        }
+    }
 
     var body: some View {
         ScrollView {
@@ -52,12 +87,18 @@ struct TrainingAbschlussView: View {
                 .background(DesignSystem.Color.bg)
         }
         .task {
-            do {
+            // `do throws(APIError)`, damit `error` im catch getippt ist:
+            // ohne die Annotation faellt Swift hier auf `any Error`
+            // zurueck, und die Fallunterscheidung unten waere nicht
+            // moeglich.
+            do throws(APIError) {
                 vorschlaege = try await apiClient.completeSession(sessionId: sessionId).vorschlaege
             } catch {
                 // Kein Fehlerzustand: die Zahlen stehen bereits, nur der
-                // Blick nach vorn fehlt. vorschlagsHinweis sagt genau das.
-                vorschlagFehlt = true
+                // Blick nach vorn fehlt. Welcher Satz das sagt, haengt am
+                // tatsaechlichen Fehler -- `error` ist hier bereits als
+                // APIError getippt (typed throws von completeSession).
+                ausfall = error == .offline ? .ohneEmpfang : .serverfehler(error.servertext)
             }
         }
     }
@@ -145,13 +186,10 @@ struct TrainingAbschlussView: View {
                     }
                 }
                 produktgrenzeHinweis
-            } else if vorschlagFehlt {
-                InlineBanner(
-                    tone: .muted,
-                    message: "Vorschläge brauchen Empfang. Deine Sätze sind gespeichert und gehen raus, sobald du wieder Netz hast."
-                )
+            } else if let ausfall {
+                InlineBanner(tone: .muted, message: ausfall.satz, icon: ausfall.symbol)
             }
-            // Solange vorschlaege == nil && !vorschlagFehlt: nichts -- kein
+            // Solange vorschlaege == nil && ausfall == nil: nichts -- kein
             // Skelett ueber einer Zahl (designsystem.md SS5).
         }
     }

@@ -45,6 +45,40 @@ enum APIError: Error, Equatable {
         }
     }
 
+    /// Der Satz, den ein Screen zeigt -- der Servertext WOERTLICH, wo es
+    /// einen gibt.
+    ///
+    /// Eine Stelle statt vier: `KurseWochenView`, `KursDetailView`,
+    /// `KurseMeineView` und `TrainingAbschlussView` hatten dieselbe
+    /// Verzweigung je einmal kopiert. Vier Kopien heisst frueher oder
+    /// spaeter vier Formulierungen fuer denselben Fall -- genau der
+    /// Befund, der in dieser Welle dreimal aufgeschlagen ist.
+    ///
+    /// `.offline` gehoert hier NICHT her und muss von jedem Aufrufer
+    /// vorher abgefangen werden: ohne Empfang gibt es keinen Servertext,
+    /// und der ehrliche Satz haengt daran, was der Screen gerade tut
+    /// ("gespeichert, wird gesendet" beim Schreiben, "Stand: ..." beim
+    /// Lesen, "wir wissen nicht, ob es ankam" beim Buchen). Der Zweig
+    /// unten existiert nur, weil `switch` vollstaendig sein muss -- er
+    /// ist absichtlich der karge Notnagel, nicht die Antwort. Wer ihn zu
+    /// sehen bekommt, hat eine Fallunterscheidung vergessen.
+    /// `.encodingFailed`/`.decodingFailed` sind rein clientseitige Faelle
+    /// ohne Servertext; hier ein knapper, ehrlicher Ersatz statt eines
+    /// erfundenen Server-Zitats.
+    var servertext: String {
+        switch self {
+        case .offline:
+            "Keine Verbindung."
+        case .unauthorized(let message), .validation(let message),
+             .notFound(let message), .conflict(let message), .server(let message):
+            message
+        case .encodingFailed:
+            "Die Anfrage konnte nicht gesendet werden."
+        case .decodingFailed:
+            "Die Antwort deines Studios ließ sich nicht lesen."
+        }
+    }
+
     static func map(code: String, message: String) -> APIError {
         switch code {
         case "unauthorized": .unauthorized(message: message)
