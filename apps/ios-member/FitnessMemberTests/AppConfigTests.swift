@@ -16,10 +16,15 @@ struct AppConfigTests {
         #expect(AppConfig.apiBaseURL.scheme == "https")
     }
 
-    @Test("eine leere Datenschutz-URL ergibt keine Zeile")
+    @Test("eine gesetzte Datenschutz-URL ist HTTPS, eine leere ergibt keine Zeile")
     func datenschutzURLIstOptional() {
-        // Kein fatalError, egal ob der Schluessel gesetzt ist: der Wert
-        // ist optional, und genau darauf verlaesst sich ProfilRootView.
-        _ = AppConfig.datenschutzURL
+        // Kein fatalError in beiden Faellen -- das ist die eigentliche Absicherung.
+        // Mit leerem Schluessel (aktuelle Config.xcconfig) ist nichts zu pruefen;
+        // sobald einmal eine URL hinterlegt ist, muss sie wie die drei Pflichtwerte
+        // HTTPS sein. So haengt der Test nicht an einer konkreten lokalen
+        // Config.xcconfig.
+        if let url = AppConfig.datenschutzURL {
+            #expect(url.scheme == "https")
+        }
     }
 }

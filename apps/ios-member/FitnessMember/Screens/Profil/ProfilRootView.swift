@@ -39,7 +39,16 @@ struct ProfilRootView: View {
                     await katalog.load()
                     return nil
                 } catch {
-                    // Der Servertext woertlich -- er sagt, was gilt
+                    // .offline zuerst abfangen: APIError.servertext dokumentiert
+                    // seinen eigenen .offline-Zweig als blossen Notnagel fuer die
+                    // Vollstaendigkeit, nicht als durchdachten Text. Hier ist
+                    // nichts fuer spaeter vorgemerkt -- der Name blieb schlicht
+                    // unveraendert, und genau das sagt der Satz (designsystem.md SS5:
+                    // was falsch ist und was gilt).
+                    guard error != .offline else {
+                        return "Keine Verbindung. Der Name wurde nicht geändert."
+                    }
+                    // Sonst der Servertext woertlich -- er sagt, was gilt
                     // (designsystem.md SS5).
                     return error.servertext
                 }
@@ -58,11 +67,16 @@ struct ProfilRootView: View {
             Button { nameOffen = true } label: {
                 HStack(spacing: DesignSystem.Spacing.s12) {
                     if let initialen = HomeZeilen.initialen(name) {
+                        // Kein Akzentfuellung hier: die drei Schalter unten markieren
+                        // bereits den aktiven Wert (SS2, "wo es keine Hauptaktion gibt,
+                        // markiert der Akzent den aktiven Wert") -- eine zweite,
+                        // dekorative Akzentflaeche wuerde mit ihnen konkurrieren.
+                        // Artboard-Farben statt dessen.
                         Text(initialen)
                             .font(DesignSystem.Typography.label)
-                            .foregroundStyle(DesignSystem.Color.onAccent)
+                            .foregroundStyle(DesignSystem.Color.textMuted)
                             .frame(width: 44, height: 44)
-                            .background(DesignSystem.Color.accent)
+                            .background(DesignSystem.Color.surfaceRaised)
                             .clipShape(Circle())
                     }
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
