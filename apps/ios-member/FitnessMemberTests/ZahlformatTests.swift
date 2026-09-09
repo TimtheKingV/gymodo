@@ -70,4 +70,15 @@ struct ZahlformatTests {
         #expect(Zahlformat.verstrichenGesprochen(seit: start, bis: start.addingTimeInterval(3600 + 60)) == "1 Stunde 1 Minute trainiert")
         #expect(Zahlformat.verstrichenGesprochen(seit: start, bis: start.addingTimeInterval(80 * 60)) == "1 Stunde 20 Minuten trainiert")
     }
+
+    @Test("das Verlaufsdatum nennt Wochentag und Monat, aber kein Jahr")
+    func wochentagDatum() {
+        // 27. August 2026 war ein Donnerstag.
+        let zeitpunkt = ISO8601DateFormatter().date(from: "2026-08-27T10:00:00Z")!
+        let text = Zahlformat.wochentagDatum(zeitpunkt)
+
+        #expect(text.contains("Donnerstag"))
+        #expect(text.contains("August"))
+        #expect(!text.contains("2026"))
+    }
 }

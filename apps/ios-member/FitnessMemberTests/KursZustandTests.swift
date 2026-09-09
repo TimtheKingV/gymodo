@@ -107,7 +107,7 @@ struct AbmeldefristTests {
     }
 }
 
-struct KursZeitpunktTests {
+struct ZeitpunktTests {
     // startsAt kommt aus einer Postgres timestamptz (course_week), nicht
     // aus einem clientseitig erzeugten String -- anders als performedAt
     // in Sub-Projekt 2 muss das Parsen deshalb Sekundenbruchteile
@@ -115,18 +115,18 @@ struct KursZeitpunktTests {
     // die Minute).
 
     @Test func parstOhneSekundenbruchteile() throws {
-        #expect(KursZeitpunkt.parse("2026-09-08T18:00:00Z") != nil)
+        #expect(Zeitpunkt.parse("2026-09-08T18:00:00Z") != nil)
     }
 
     @Test func parstMitSekundenbruchteilenGenauSoGenau() throws {
-        let ohne = try #require(KursZeitpunkt.parse("2026-09-08T18:00:00Z"))
-        let mit = try #require(KursZeitpunkt.parse("2026-09-08T18:00:00.500Z"))
+        let ohne = try #require(Zeitpunkt.parse("2026-09-08T18:00:00Z"))
+        let mit = try #require(Zeitpunkt.parse("2026-09-08T18:00:00.500Z"))
 
         #expect(mit.timeIntervalSince(ohne) == 0.5)
     }
 
     @Test func liefertNilBeiUnlesbaremText() {
-        #expect(KursZeitpunkt.parse("kein Datum") == nil)
+        #expect(Zeitpunkt.parse("kein Datum") == nil)
     }
 }
 

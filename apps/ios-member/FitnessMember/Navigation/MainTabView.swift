@@ -19,7 +19,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $ausgewaehlterTab) {
-            NavigationStack { PlaceholderView(title: "Home") }
+            HomeRootView()
                 .tabItem { Label("Home", systemImage: "house") }
                 .tag(0)
 

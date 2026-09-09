@@ -42,7 +42,7 @@ struct KurseMeineZeile: Identifiable, Equatable {
 ///    `.angemeldet` -> "Angemeldet", `.warteliste` -> "Auf der
 ///    Warteliste".
 ///
-/// Ein unlesbarer Beginn (`KursZeitpunkt.parse` liefert `nil`) faellt ganz
+/// Ein unlesbarer Beginn (`Zeitpunkt.parse` liefert `nil`) faellt ganz
 /// weg: ohne lesbaren Beginn liesse sich weder der Zustand (vorbei?) noch
 /// die Wochenzugehoerigkeit bestimmen, und ein erratener Abschnitt waere
 /// schlimmer als ein fehlender Eintrag.
@@ -56,8 +56,8 @@ struct KurseMeineEinteilung {
     static func bilden(aus termine: [GespeicherterTermin], jetzt: Date, zeitzone: String) -> KurseMeineEinteilung {
         let heutigerMontag = KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zeitzone)
         let sortiert = termine.sorted {
-            (KursZeitpunkt.parse($0.startsAt) ?? .distantPast)
-                < (KursZeitpunkt.parse($1.startsAt) ?? .distantPast)
+            (Zeitpunkt.parse($0.startsAt) ?? .distantPast)
+                < (Zeitpunkt.parse($1.startsAt) ?? .distantPast)
         }
 
         var angemeldet: [KurseMeineZeile] = []
@@ -67,7 +67,7 @@ struct KurseMeineEinteilung {
         for termin in sortiert {
             let zustand = KursDetailOfflineZustand.zustand(fuer: termin, jetzt: jetzt)
             guard zustand == .angemeldet || zustand == .warteliste else { continue }
-            guard let beginn = KursZeitpunkt.parse(termin.startsAt) else { continue }
+            guard let beginn = Zeitpunkt.parse(termin.startsAt) else { continue }
 
             let zeile = KurseMeineZeile(termin: termin, beginn: beginn)
             if KurseWochenBerechnung.montag(enthaelt: beginn, zeitzone: zeitzone) != heutigerMontag {

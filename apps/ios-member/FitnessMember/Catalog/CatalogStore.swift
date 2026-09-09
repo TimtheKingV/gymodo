@@ -28,6 +28,24 @@ final class CatalogStore {
     private(set) var pendingWrites: [PendingSetWrite]
     private(set) var activeStudioId: String?
 
+    /// Was auf Home ueber allem steht, nachdem ein Scan ein Studio
+    /// hinzugefuegt oder gewechselt hat (Home.dc.html).
+    ///
+    /// Nur im Speicher: die Zeile ist die einmalige Folge eines Scans und
+    /// soll beim naechsten Start weg sein -- deshalb eine Zeile und keine
+    /// Karte mit Schliessen-Kreuz.
+    struct Studiohinweis: Equatable {
+        let studioName: String
+        /// true = neu beigetreten, false = stillschweigend gewechselt.
+        let beigetreten: Bool
+    }
+
+    /// Kein Wegraeum-Aufruf: der Hinweis lebt nur im Speicher und ist
+    /// beim naechsten Start ohnehin weg. Ihn beim Tabwechsel zu loeschen
+    /// hiesse, dass ihn verpasst, wer nach dem Scan zuerst ins Training
+    /// schaut.
+    private(set) var studiohinweis: Studiohinweis?
+
     /// Schreibvorgaenge, die der Server dauerhaft abgelehnt hat. Sie werden
     /// nicht wiederholt, verschwinden aber auch nicht stillschweigend --
     /// der Geraete-Screen zeigt sie an (designsystem.md SS5: Fehler sagen,
@@ -95,6 +113,9 @@ final class CatalogStore {
         pendingWriteStore.save([])
         verworfeneWrites = []
         verworfeneWriteStore.save([])
+        // Sonst saehe das naechste Konto in derselben laufenden App noch
+        // den Scan-Hinweis des vorigen Kontos -- derselbe Grund wie oben.
+        studiohinweis = nil
     }
 
     func enqueue(_ write: PendingSetWrite) {
@@ -141,18 +162,31 @@ final class CatalogStore {
     /// Wechseln ist reiner Client-Zustand -- "Tippen wechselt" (MemberStudios.dc.html)
     /// beschreibt keine Server-Aktion, sondern welches Studio lokal angezeigt wird.
     func setActiveStudio(_ id: String) {
+        let wechsel = activeStudioId != nil && activeStudioId != id
         activeStudioId = id
         defaults.set(id, forKey: Self.activeStudioDefaultsKey)
+
+        if wechsel, let name = bootstrap?.studios.first(where: { $0.id == id })?.name {
+            studiohinweis = Studiohinweis(studioName: name, beigetreten: false)
+        }
     }
 
     func joinStudio(byCode code: String) async throws(APIError) {
-        _ = try await loader.joinStudioByCode(code)
+        let ergebnis = try await loader.joinStudioByCode(code)
         await load()
+        merkeHinweis(fuer: ergebnis)
     }
 
     func joinStudio(byTag token: String) async throws(APIError) {
-        _ = try await loader.joinStudioByTag(token)
+        let ergebnis = try await loader.joinStudioByTag(token)
         await load()
+        merkeHinweis(fuer: ergebnis)
+    }
+
+    private func merkeHinweis(fuer ergebnis: JoinResult) {
+        guard let name = bootstrap?.studios.first(where: { $0.id == ergebnis.studioId })?.name
+        else { return }
+        studiohinweis = Studiohinweis(studioName: name, beigetreten: ergebnis.joined)
     }
 
     func leaveStudio(_ studioId: String) async throws(APIError) {

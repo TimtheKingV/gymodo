@@ -376,8 +376,8 @@ struct KurseWochenView: View {
         return (kurse.woche?.sessions ?? [])
             .filter { $0.localDay == gewaehlt }
             .sorted {
-                (KursZeitpunkt.parse($0.startsAt) ?? .distantPast)
-                    < (KursZeitpunkt.parse($1.startsAt) ?? .distantPast)
+                (Zeitpunkt.parse($0.startsAt) ?? .distantPast)
+                    < (Zeitpunkt.parse($1.startsAt) ?? .distantPast)
             }
     }
 
@@ -569,7 +569,7 @@ struct KurseWochenView: View {
         // ist hier garantiert nicht nil -- diese Zeile wird ausschliesslich
         // aus termineDesTages gebaut, das nur bei geladenem Plan existiert.
         let zeitzone = kurse.woche?.timezone ?? zeitzoneFuerAnfrage
-        let beginn = KursZeitpunkt.parse(termin.startsAt)
+        let beginn = Zeitpunkt.parse(termin.startsAt)
         let istVorbei = zustand == .vorbei
 
         return Button {
