@@ -46,7 +46,10 @@ export async function setDisplayName(
     .from("profiles")
     .upsert({ id: userId, display_name: displayName }, { onConflict: "id" });
 
-  if (error) throw new DomainError("internal", error.message);
+  // Woertlich durchgereicht verriete das die Tabelle "profiles" (siehe
+  // respond.ts) -- z. B. genau dann, wenn Migration 0039 auf dem Server
+  // noch fehlt und die RLS-Policy den Insert ablehnt.
+  if (error) throw new DomainError("internal", "Der Name konnte nicht gespeichert werden.");
 
   return { displayName };
 }
