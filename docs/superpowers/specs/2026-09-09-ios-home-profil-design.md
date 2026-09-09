@@ -78,6 +78,8 @@ Je Übung neu: `machineLabel: string` — das Label des Geräts aus dem **jüngs
 
 Gruppiert wird weiterhin nach Übung allein. Hat ein Studio zwei baugleiche Beinpressen, bleibt die Kurve durchgehend: **die Steigerung gehört der Übung, nicht dem Gerätegehäuse.** Der Preis ist ein Label, das wechseln kann, wenn jemand das Gerät wechselt — sichtbar wird das nur als anderer Gerätename über derselben Kurve.
 
+**Bekannte Ungenauigkeit, bewusst nicht behoben:** `getProgress` gruppiert die Tage über `performed_at.slice(0, 10)` — also nach UTC-Tag, nicht nach dem Tag der Studio-Zeitzone. Wer um 01:00 MESZ trainiert, dessen Satz zählt zum Vortag. Der Fall ist selten (Studios schließen), die Korrektur bräuchte auch hier den Zeitzonen-Parameter, und sie verschöbe historische Punkte einer Kurve rückwirkend. Festgehalten, damit es niemand für einen Zufallsfund hält.
+
 `exercises` hängt am Studio, nicht am Gerätemodell (`0005_exercises.sql`); der Name allein („Beidbeinig") trägt keine Bedeutung. Deshalb ist das Label kein Schmuck, sondern die halbe Beschriftung.
 
 ### 3.4 Der Name: eine Insert-Policy statt eines Auth-Triggers
