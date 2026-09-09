@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { DomainError } from "./errors.js";
 import {
   PROGRESSION_ALGO_VERSION,
   suggestNextWeight,
@@ -162,12 +163,13 @@ async function bloeckeDerSession(
   paare: Array<{ machineId: string; exerciseId: string }>;
   studioId: string | null;
 }> {
-  const { data: sessionSaetze } = await client
+  const { data: sessionSaetze, error } = await client
     .from("workout_sets")
     .select("machine_id, exercise_id, studio_id")
     .eq("session_id", sessionId)
     .eq("user_id", userId)
     .order("performed_at", { ascending: true });
+  if (error) throw new DomainError("internal", error.message);
 
   const zeilen = (sessionSaetze ?? []) as Array<{
     machine_id: string;
@@ -199,7 +201,7 @@ export async function gespeicherteVorschlaege(
   const machineIds = [...new Set(paare.map((p) => p.machineId))];
   const exerciseIds = [...new Set(paare.map((p) => p.exerciseId))];
 
-  const { data: zeilen } = await client
+  const { data: zeilen, error } = await client
     .from("progression_suggestions")
     .select(
       "machine_id, exercise_id, created_at, algo_version, result_weight_kg, reason_code, inputs",
@@ -209,6 +211,7 @@ export async function gespeicherteVorschlaege(
     .in("exercise_id", exerciseIds)
     .order("created_at", { ascending: false })
     .limit(paare.length * 8);
+  if (error) throw new DomainError("internal", error.message);
 
   return ausGespeichertenZeilen(
     paare,
@@ -231,6 +234,14 @@ export async function gespeicherteVorschlaege(
  * SCHREIBT. Gehoert deshalb ausschliesslich in den Zweig, der die Session
  * tatsaechlich abschliesst; ein wiederholter Abschluss liest ueber
  * gespeicherteVorschlaege zurueck, statt neu zu rechnen.
+ *
+ * Jede Abfrage prueft ihr `error` und wirft. Ein `?? []` auf einem
+ * Transportfehler waere hier keine Vorsicht, sondern eine Aussage ueber
+ * das Mitglied, die niemand geprueft hat -- und eine davon wuerde
+ * festgeschrieben (siehe die Historie unten). Faellt der Abschluss
+ * deshalb aus, bleibt die Session trotzdem beendet: der Screen zeigt
+ * seine Zahlen (die sind lokal) und sagt, dass der Blick nach vorn
+ * fehlt.
  */
 export async function vorschlaegeFuerAbschluss(
   client: SupabaseClient,
@@ -243,17 +254,19 @@ export async function vorschlaegeFuerAbschluss(
   const machineIds = [...new Set(paare.map((p) => p.machineId))];
   const exerciseIds = [...new Set(paare.map((p) => p.exerciseId))];
 
-  const { data: uebungen } = await client
+  const { data: uebungen, error: uebungenFehler } = await client
     .from("exercises")
     .select("id, target_reps_min, target_reps_max")
     .in("id", exerciseIds);
+  if (uebungenFehler) throw new DomainError("internal", uebungenFehler.message);
 
-  const { data: geraete } = await client
+  const { data: geraete, error: geraeteFehler } = await client
     .from("machines")
     .select(
       "id, equipment_models (weight_step_kg, min_weight_kg, max_weight_kg)",
     )
     .in("id", machineIds);
+  if (geraeteFehler) throw new DomainError("internal", geraeteFehler.message);
 
   // Die Historie aller betroffenen Geraete in einer Abfrage. Groesseres
   // Fenster als in tag-context (dort HISTORY_DAYS * 6 = 36 Zeilen fuer EIN
@@ -261,7 +274,7 @@ export async function vorschlaegeFuerAbschluss(
   // gemeinsame Abfrage, und ein Block muss auch dann noch genug Zeilen
   // abbekommen, wenn ein anderer Block an derselben Maschine haengt.
   // Deshalb 60 Zeilen je Block statt 36.
-  const { data: historie } = await client
+  const { data: historie, error: historieFehler } = await client
     .from("workout_sets")
     .select(
       "machine_id, exercise_id, performed_at, weight_kg, reps, rir, problem_flag",
@@ -270,6 +283,16 @@ export async function vorschlaegeFuerAbschluss(
     .in("machine_id", machineIds)
     .order("performed_at", { ascending: false })
     .limit(paare.length * 60);
+  // Die folgenschwerste der fuenf Pruefungen. Ohne sie faellt ein
+  // Transportfehler per `?? []` auf eine LEERE Historie zurueck,
+  // suggestNextWeight liefert `kein_verlauf`, und der insert unten
+  // schreibt das als Nachweiszeile fest: in der Ablage, die laut
+  // M1-Spec SS8.4 dokumentiert, WARUM ein Vorschlag so ausfiel, staende
+  // dann "keine Historie" fuer ein Mitglied, das Historie hat. Eine
+  // dauerhaft unwahre Zeile in einer Tabelle, die nie aktualisiert wird
+  // (Migration 0015: kein Update, kein Delete). Lieber gar kein
+  // Vorschlag als ein falsch begruendeter.
+  if (historieFehler) throw new DomainError("internal", historieFehler.message);
 
   const uebungNach = new Map(
     (uebungen ?? []).map((u) => {
