@@ -36,6 +36,13 @@ final class GeraetModel {
     private(set) var uebungId: String
     private(set) var kontext: TagContextResponse?
     private(set) var pause: Resttimer?
+    /// Steigt genau einmal je erfolgreich gesichertem Satz -- unabhaengig
+    /// von uebungId und Block. satzNummer ist dafuer ungeeignet: es ist
+    /// die naechste Satznummer DER GERADE ANGEZEIGTEN Uebung und springt
+    /// deshalb auch bei uebungWechseln(zu:) allein, ohne dass ein Satz
+    /// gesichert wurde (Review-Fund Task 9: Haptik feuerte beim Wechsel
+    /// auf eine Uebung mit mehr bereits gesicherten Saetzen).
+    private(set) var gesicherteSaetze = 0
 
     var gewicht: Double
     var wiederholungen: Int
@@ -342,6 +349,11 @@ final class GeraetModel {
                                 body: geschrieben.body))
         radOffen = false
         pause = Resttimer(dauer: TimeInterval(Einstellungen.resttimerSekunden()))
+        // sessions.satzSichern() oben ist der einzige Fehlschlagpfad, und
+        // der wirft nicht -- lokal wird immer geschrieben, auch offline
+        // (Spec Abschnitt 8.2). Der Zaehler steigt deshalb hier, nicht
+        // hinter einem Erfolgs-Guard, den es nicht gibt.
+        gesicherteSaetze += 1
     }
 
     func pauseVerlaengern() { pause = pause?.verlaengert() }

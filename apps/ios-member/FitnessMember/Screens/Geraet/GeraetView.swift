@@ -186,11 +186,15 @@ struct GeraetView: View {
         // Am umschliessenden VStack, nicht am PrimaryButton selbst: der
         // Knopf verschwindet je nach Zustand aus der Hierarchie, der
         // Modifier soll trotzdem am Leben bleiben.
-        .sensoryFeedback(trigger: modell.satzNummer) { alt, neu in
+        //
+        // Trigger ist gesicherteSaetze, nicht satzNummer: satzNummer ist
+        // die naechste Satznummer der GERADE ANGEZEIGTEN Uebung und
+        // springt schon beim blossen Wechsel auf eine Uebung mit mehr
+        // bereits gesicherten Saetzen (Review-Fund Task 9) -- das Geraet
+        // vibrierte dann bei einer Navigation, nicht bei einem Satz.
+        .sensoryFeedback(trigger: modell.gesicherteSaetze) { alt, neu in
             // Haptik nie als einzige Rueckmeldung (designsystem.md SS6):
-            // die sichtbare Bestaetigung bleibt daneben bestehen. Nur
-            // beim Steigen, nicht beim Zuruecksetzen auf einen neuen
-            // Block.
+            // die sichtbare Bestaetigung bleibt daneben bestehen.
             vibrationBeimSichern && neu > alt ? .impact(weight: .medium) : nil
         }
     }
