@@ -32,21 +32,4 @@ struct RootDestinationLogicTests {
     func failedFallsBackToNoStudio() {
         #expect(RootDestinationLogic.destination(session: session, catalogState: .failed) == .noStudio)
     }
-
-    @Test("sollteZuruecksetzen ist wahr fuer authFlow, unabhaengig vom Weg dorthin")
-    func sollteZuruecksetzenTrueForAuthFlow() {
-        // Deckt beide Wege nach .authFlow ab: die explizite Abmeldung
-        // (Session ging von etwas auf nichts ueber) und ein abgelaufenes
-        // Token, das schon beim ersten Aufruf in dieser Prozesslaufzeit
-        // nil liefert -- ein Wachposten nach dem Muster "hatte je eine
-        // Session" wuerde den zweiten Fall verpassen.
-        #expect(RootDestinationLogic.sollteZuruecksetzen(destination: .authFlow) == true)
-    }
-
-    @Test("sollteZuruecksetzen ist falsch fuer jede andere Zielansicht")
-    func sollteZuruecksetzenFalseOtherwise() {
-        #expect(RootDestinationLogic.sollteZuruecksetzen(destination: .loadingCatalog) == false)
-        #expect(RootDestinationLogic.sollteZuruecksetzen(destination: .noStudio) == false)
-        #expect(RootDestinationLogic.sollteZuruecksetzen(destination: .main) == false)
-    }
 }

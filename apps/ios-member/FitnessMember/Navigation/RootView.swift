@@ -9,6 +9,12 @@ struct RootView: View {
 
     let apiClient: APIClient
 
+    /// Merkt sich, ob ueberhaupt schon eine Session da war. Ohne dieses Flag
+    /// wuerde der erste Lauf von .task(id:) beim Start -- da ist die Session
+    /// noch nil, restoreSession() laeuft parallel -- den persistierten
+    /// Katalogzustand faelschlich als "Abmeldung" verwerfen.
+    @State private var hatteSession = false
+
     var body: some View {
         let destination = RootDestinationLogic.destination(session: sessionStore.session, catalogState: catalogStore.loadState)
 
@@ -34,6 +40,7 @@ struct RootView: View {
         // bekaeme.
         .task(id: sessionStore.session) {
             if sessionStore.session != nil {
+                hatteSession = true
                 // Nicht nur .idle: auch nach .failed muss ein neuer Anlauf
                 // moeglich sein. Aber auch nicht mehr als das: ein
                 // Passwortwechsel liefert eine neue Session (neuer
@@ -43,7 +50,8 @@ struct RootView: View {
                 if catalogStore.loadState == .idle || catalogStore.loadState == .failed {
                     await catalogStore.load()
                 }
-            } else if RootDestinationLogic.sollteZuruecksetzen(destination: destination) {
+            } else if hatteSession {
+                hatteSession = false
                 catalogStore.reset()
                 // Die laufende Einheit faellt beim Abmelden -- ihre
                 // Kennungen gehoeren zum abgemeldeten Konto.
