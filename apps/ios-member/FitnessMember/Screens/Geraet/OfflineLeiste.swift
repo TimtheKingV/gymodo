@@ -23,11 +23,17 @@ struct OfflineLeiste: View {
         .foregroundStyle(DesignSystem.Color.danger)
         .padding(DesignSystem.Spacing.s12)
         .background(DesignSystem.Color.danger.opacity(0.1))
+        // clipShape VOR overlay: umgekehrt schneidet die Maske die
+        // aeussere Haelfte der 1pt-Kontur weg und laesst eine halbe
+        // uebrig (Vorlage: InlineBanner). Diese Leiste ist die Vorlage
+        // fuer die Offline-Karten der Kurse-Screens -- stuende die
+        // Reihenfolge hier falsch, kaeme der Fehler mit der naechsten
+        // Kopie zurueck.
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(DesignSystem.Color.danger, lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityElement(children: .combine)
     }
 }
