@@ -7,6 +7,15 @@ struct MemberKeinStudioView: View {
     @State private var showScanner = false
     @State private var errorMessage: String?
     @State private var isJoining = false
+    /// Der Nebenweg des Scanner-Sheets ("Code stattdessen eingeben") hat
+    /// bisher nur das Sheet geschlossen und sonst nichts getan -- der
+    /// gleichwertige zweite Weg (designsystem.md SS11) fuehrte also
+    /// nirgendwohin. Der Knopf merkt sich jetzt den Wunsch, und
+    /// `onDismiss` setzt den Fokus, wenn das Sheet TATSAECHLICH weg ist:
+    /// waehrend der Schliessanimation nimmt das Feld darunter noch keinen
+    /// Fokus an.
+    @State private var codeEingabeGewuenscht = false
+    @FocusState private var codeFokus: Bool
 
     var body: some View {
         ScrollView {
@@ -25,6 +34,7 @@ struct MemberKeinStudioView: View {
                     TextField("ABCD1234", text: $manualCode)
                         .textInputAutocapitalization(.characters)
                         .autocorrectionDisabled()
+                        .focused($codeFokus)
                 }
                 Text("Den Code bekommst du an der Theke.")
                     .font(.system(size: 12))
@@ -48,13 +58,17 @@ struct MemberKeinStudioView: View {
             .padding(28)
         }
         .background(DesignSystem.Color.bg)
-        .sheet(isPresented: $showScanner) {
+        .sheet(isPresented: $showScanner, onDismiss: {
+            guard codeEingabeGewuenscht else { return }
+            codeEingabeGewuenscht = false
+            codeFokus = true
+        }) {
             ScannerSheet(
                 titel: "Code scannen",
                 hinweis: "QR-Code am Studioeingang ins Feld halten.",
                 nebenweg: .knopf(
                     titel: "Code stattdessen eingeben",
-                    aktion: { /* das Eingabefeld liegt direkt darunter */ }
+                    aktion: { codeEingabeGewuenscht = true }
                 ),
                 beiCode: { scanned in
                     showScanner = false
