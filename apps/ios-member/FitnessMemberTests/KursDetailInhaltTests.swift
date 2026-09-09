@@ -6,23 +6,27 @@ import Testing
 /// 5.3) -- Zustand zu Hauptaktion und Fusstext, wortwoertlich.
 struct KursDetailInhaltTests {
     @Test func abgesagtHatKeineHauptaktion() {
-        #expect(KursDetailInhalt.hauptaktion(fuer: .abgesagt) == nil)
+        #expect(KursDetailInhalt.hauptaktion(fuer: .abgesagt, abmeldefristVerstrichen: false) == nil)
         #expect(
-            KursDetailInhalt.fusstext(fuer: .abgesagt, abmeldenBisUhrzeit: nil, wartelistenplatz: nil)
+            KursDetailInhalt.fusstext(
+                fuer: .abgesagt, abmeldenBisUhrzeit: nil, abmeldefristVerstrichen: false, wartelistenplatz: nil)
                 == "Dein Studio hat diesen Termin abgesagt.")
     }
 
     @Test func vorbeiHatKeineHauptaktion() {
-        #expect(KursDetailInhalt.hauptaktion(fuer: .vorbei) == nil)
+        #expect(KursDetailInhalt.hauptaktion(fuer: .vorbei, abmeldefristVerstrichen: false) == nil)
         #expect(
-            KursDetailInhalt.fusstext(fuer: .vorbei, abmeldenBisUhrzeit: nil, wartelistenplatz: nil)
+            KursDetailInhalt.fusstext(
+                fuer: .vorbei, abmeldenBisUhrzeit: nil, abmeldefristVerstrichen: false, wartelistenplatz: nil)
                 == "Dieser Termin ist vorbei.")
     }
 
     @Test func angemeldetBietetAbmelden() {
-        #expect(KursDetailInhalt.hauptaktion(fuer: .angemeldet) == .abmelden)
+        #expect(KursDetailInhalt.hauptaktion(fuer: .angemeldet, abmeldefristVerstrichen: false) == .abmelden)
         #expect(
-            KursDetailInhalt.fusstext(fuer: .angemeldet, abmeldenBisUhrzeit: "16:00", wartelistenplatz: nil)
+            KursDetailInhalt.fusstext(
+                fuer: .angemeldet, abmeldenBisUhrzeit: "16:00", abmeldefristVerstrichen: false,
+                wartelistenplatz: nil)
                 == "Abmelden ist bis 16:00 möglich.")
     }
 
@@ -30,13 +34,34 @@ struct KursDetailInhaltTests {
     /// Uhrzeit waere schlimmer als keine (Aufgabenbrief).
     @Test func angemeldetOhneLesbareFristZeigtKeineZeile() {
         #expect(
-            KursDetailInhalt.fusstext(fuer: .angemeldet, abmeldenBisUhrzeit: nil, wartelistenplatz: nil) == nil)
+            KursDetailInhalt.fusstext(
+                fuer: .angemeldet, abmeldenBisUhrzeit: nil, abmeldefristVerstrichen: false, wartelistenplatz: nil)
+                == nil)
     }
 
-    @Test func wartelisteBietetVerlassen() {
-        #expect(KursDetailInhalt.hauptaktion(fuer: .warteliste) == .wartelisteVerlassen)
+    /// Review-Fund: nach Fristablauf verschwindet "Abmelden" ganz -- kein
+    /// deaktivierter Knopf, der Wirkung vortaeuscht --, und der Fusstext
+    /// sagt, was gilt (der Platz bleibt reserviert), statt weiter eine
+    /// Uhrzeit zu nennen, die der Server nicht mehr einloest.
+    @Test func angemeldetNachVerstrichenerFristVerliertDenKnopf() {
+        #expect(KursDetailInhalt.hauptaktion(fuer: .angemeldet, abmeldefristVerstrichen: true) == nil)
         #expect(
-            KursDetailInhalt.fusstext(fuer: .warteliste, abmeldenBisUhrzeit: nil, wartelistenplatz: 3)
+            KursDetailInhalt.fusstext(
+                fuer: .angemeldet, abmeldenBisUhrzeit: "16:00", abmeldefristVerstrichen: true,
+                wartelistenplatz: nil)
+                == "Die Abmeldefrist ist verstrichen. Dein Platz bleibt reserviert.")
+    }
+
+    /// `.warteliste` bleibt von der Abmeldefrist unberuehrt --
+    /// `cancel_course_booking` (0038_kurse_nachlese.sql) prueft sie
+    /// ausdruecklich nur fuer einen gebuchten (nicht gewartelisteten)
+    /// Platz.
+    @Test func wartelisteBietetVerlassenUnabhaengigVonDerFrist() {
+        #expect(KursDetailInhalt.hauptaktion(fuer: .warteliste, abmeldefristVerstrichen: false) == .wartelisteVerlassen)
+        #expect(KursDetailInhalt.hauptaktion(fuer: .warteliste, abmeldefristVerstrichen: true) == .wartelisteVerlassen)
+        #expect(
+            KursDetailInhalt.fusstext(
+                fuer: .warteliste, abmeldenBisUhrzeit: nil, abmeldefristVerstrichen: true, wartelistenplatz: 3)
                 == "Du stehst auf Platz 3.")
     }
 
@@ -45,20 +70,24 @@ struct KursDetailInhaltTests {
     /// Position zu zeigen.
     @Test func wartelisteOhneBekanntePositionZeigtKeineZeile() {
         #expect(
-            KursDetailInhalt.fusstext(fuer: .warteliste, abmeldenBisUhrzeit: nil, wartelistenplatz: nil) == nil)
+            KursDetailInhalt.fusstext(
+                fuer: .warteliste, abmeldenBisUhrzeit: nil, abmeldefristVerstrichen: false, wartelistenplatz: nil)
+                == nil)
     }
 
     @Test func freiBietetAnmelden() {
-        #expect(KursDetailInhalt.hauptaktion(fuer: .frei) == .anmelden)
+        #expect(KursDetailInhalt.hauptaktion(fuer: .frei, abmeldefristVerstrichen: false) == .anmelden)
         #expect(
-            KursDetailInhalt.fusstext(fuer: .frei, abmeldenBisUhrzeit: "16:00", wartelistenplatz: nil)
+            KursDetailInhalt.fusstext(
+                fuer: .frei, abmeldenBisUhrzeit: "16:00", abmeldefristVerstrichen: false, wartelistenplatz: nil)
                 == "Abmelden ist bis 16:00 möglich.")
     }
 
     @Test func voll() {
-        #expect(KursDetailInhalt.hauptaktion(fuer: .voll) == .aufWarteliste)
+        #expect(KursDetailInhalt.hauptaktion(fuer: .voll, abmeldefristVerstrichen: false) == .aufWarteliste)
         #expect(
-            KursDetailInhalt.fusstext(fuer: .voll, abmeldenBisUhrzeit: nil, wartelistenplatz: nil)
+            KursDetailInhalt.fusstext(
+                fuer: .voll, abmeldenBisUhrzeit: nil, abmeldefristVerstrichen: false, wartelistenplatz: nil)
                 == "Alle Plätze sind vergeben.")
     }
 
@@ -70,6 +99,45 @@ struct KursDetailInhaltTests {
     @Test func abmeldenUndWartelisteVerlassenRufenStornieren() {
         #expect(!KursDetailHauptaktion.abmelden.istBuchen)
         #expect(!KursDetailHauptaktion.wartelisteVerlassen.istBuchen)
+    }
+}
+
+/// `KursDetailInhalt.abmeldefristVerstrichen(startsAt:fristStunden:jetzt:)`
+/// -- derselbe Termin, feste Zeitpunkte vor/nach der Frist und der
+/// Grenzfall auf die Sekunde. Kein `Date()`.
+struct KursDetailAbmeldefristVerstrichenTests {
+    /// 2026-09-04T18:00:00Z -- Kursbeginn. Zwei Stunden Frist ergeben
+    /// 2026-09-04T16:00:00Z als spaetesten Abmeldezeitpunkt.
+    private let beginn = "2026-09-04T18:00:00Z"
+    private let fristStunden = 2
+
+    @Test func vorDerFristNichtVerstrichen() {
+        let jetzt = ISO8601DateFormatter().date(from: "2026-09-04T15:59:59Z")!
+        #expect(
+            !KursDetailInhalt.abmeldefristVerstrichen(startsAt: beginn, fristStunden: fristStunden, jetzt: jetzt))
+    }
+
+    /// Grenzfall: exakt auf die Sekunde gilt die Frist bereits als
+    /// verstrichen (>=), derselbe Vergleich wie beim Kursbeginn selbst.
+    @Test func genauAmGrenzzeitpunktVerstrichen() {
+        let jetzt = ISO8601DateFormatter().date(from: "2026-09-04T16:00:00Z")!
+        #expect(
+            KursDetailInhalt.abmeldefristVerstrichen(startsAt: beginn, fristStunden: fristStunden, jetzt: jetzt))
+    }
+
+    @Test func nachDerFristVerstrichen() {
+        let jetzt = ISO8601DateFormatter().date(from: "2026-09-04T16:00:01Z")!
+        #expect(
+            KursDetailInhalt.abmeldefristVerstrichen(startsAt: beginn, fristStunden: fristStunden, jetzt: jetzt))
+    }
+
+    /// Ein unlesbarer Beginn liefert `false`, nicht `true` -- sonst
+    /// verschwaende "Abmelden" wegen eines Datenfehlers statt nur die
+    /// Uhrzeit-Zeile.
+    @Test func unlesbarerBeginnGiltAlsNichtVerstrichen() {
+        #expect(
+            !KursDetailInhalt.abmeldefristVerstrichen(
+                startsAt: "keine-gueltige-zeit", fristStunden: fristStunden, jetzt: Date(timeIntervalSince1970: 0)))
     }
 }
 

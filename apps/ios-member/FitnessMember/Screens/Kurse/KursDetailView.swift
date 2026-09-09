@@ -40,11 +40,24 @@ enum KursDetailHauptaktion: Equatable {
 /// fehlende Zeile (Aufgabenbrief) -- liefert die aufrufende Stelle `nil`
 /// (unlesbarer Beginn bzw. keine bekannte Position, z. B. ohne Netz),
 /// entfaellt die jeweilige Fusszeile ersatzlos.
+///
+/// `abmeldefristVerstrichen` ist **kein siebter Zustand** -- die Spec
+/// kennt sechs, und `KursZustand` bleibt unveraendert. Es ist eine zweite,
+/// orthogonale Ableitung, die nur `.angemeldet` betrifft: sobald die Frist
+/// verstrichen ist, verschwindet "Abmelden" (kein deaktivierter Knopf, der
+/// Wirkung vortaeuscht -- dieselbe Regel wie bei `.abgesagt`/`.vorbei`),
+/// und der Fusstext sagt, was gilt. `.warteliste` bleibt davon
+/// unberuehrt: `cancel_course_booking` (0038_kurse_nachlese.sql) prueft
+/// die Frist ausdruecklich nur fuer `v_buchung.status = 'booked'` -- ein
+/// Wartelistenplatz laesst sich jederzeit bis Kursbeginn verlassen, ohne
+/// Frist. Review-Fund (Aufgabe 10, Nachtrag).
 enum KursDetailInhalt {
-    static func hauptaktion(fuer zustand: KursZustand) -> KursDetailHauptaktion? {
+    static func hauptaktion(
+        fuer zustand: KursZustand, abmeldefristVerstrichen: Bool
+    ) -> KursDetailHauptaktion? {
         switch zustand {
         case .abgesagt, .vorbei: nil
-        case .angemeldet: .abmelden
+        case .angemeldet: abmeldefristVerstrichen ? nil : .abmelden
         case .warteliste: .wartelisteVerlassen
         case .frei: .anmelden
         case .voll: .aufWarteliste
@@ -54,22 +67,51 @@ enum KursDetailInhalt {
     /// Wortlaut exakt aus dem Aufgabenbrief (Spec Abschnitt 5.3), Ziffer
     /// fuer Ziffer. `.angemeldet` und `.frei` teilen sich denselben Satz --
     /// bei `.frei` ist das die Frist, "damit sie vor der Zusage bekannt
-    /// ist" (Aufgabenbrief), nicht ein eigener Wortlaut.
+    /// ist" (Aufgabenbrief), nicht ein eigener Wortlaut. Der Satz nach
+    /// verstrichener Frist ist eigener Wortlaut (Review-Fund): sagt, was
+    /// nicht mehr geht (kein "Abmelden" mehr da) und was gilt (der Platz
+    /// bleibt reserviert) -- SS5.
     static func fusstext(
-        fuer zustand: KursZustand, abmeldenBisUhrzeit: String?, wartelistenplatz: Int?
+        fuer zustand: KursZustand, abmeldenBisUhrzeit: String?,
+        abmeldefristVerstrichen: Bool, wartelistenplatz: Int?
     ) -> String? {
         switch zustand {
         case .abgesagt:
             "Dein Studio hat diesen Termin abgesagt."
         case .vorbei:
             "Dieser Termin ist vorbei."
-        case .angemeldet, .frei:
+        case .angemeldet:
+            if abmeldefristVerstrichen {
+                "Die Abmeldefrist ist verstrichen. Dein Platz bleibt reserviert."
+            } else {
+                abmeldenBisUhrzeit.map { "Abmelden ist bis \($0) möglich." }
+            }
+        case .frei:
             abmeldenBisUhrzeit.map { "Abmelden ist bis \($0) möglich." }
         case .warteliste:
             wartelistenplatz.map { "Du stehst auf Platz \($0)." }
         case .voll:
             "Alle Plätze sind vergeben."
         }
+    }
+
+    /// Ob die Abmeldefrist zum Zeitpunkt `jetzt` bereits verstrichen ist --
+    /// derselbe Zeitpunkt wie `KursZustandRechner.abmeldenBis`, hier als
+    /// Vergleich statt als Anzeige. `>=`, derselbe Grenzfall wie beim
+    /// Kursbeginn selbst (`KursZustandRechner.zustand`): auf die Sekunde
+    /// genau gilt die Frist bereits als verstrichen, nicht erst eine
+    /// Sekunde danach.
+    ///
+    /// Ein unlesbarer Beginn liefert `false`, nicht `true`: nicht
+    /// nachweisbar verstrichen ist etwas anderes als nachweisbar nicht
+    /// verstrichen, und `false` ist hier die sicherere Seite -- sonst
+    /// verschwaende der einzige Abmelden-Weg wegen eines Datenfehlers,
+    /// statt nur die Uhrzeit-Zeile wegzulassen (wie beim unlesbaren Beginn
+    /// oben, Aufgabenbrief).
+    static func abmeldefristVerstrichen(startsAt: String, fristStunden: Int, jetzt: Date) -> Bool {
+        guard let deadline = KursZustandRechner.abmeldenBis(startsAt: startsAt, fristStunden: fristStunden)
+        else { return false }
+        return jetzt >= deadline
     }
 }
 
@@ -137,6 +179,42 @@ enum KursDetailOfflineZustand {
 ///   gebauten `KursZeit.datumAusgeschrieben` (Kurzform "ccc, d. MMMM").
 ///   Diese Datei folgt der Spec und der bestehenden Funktion, nicht dem
 ///   Artboard-Beispiel -- siehe Bericht.
+/// - Der obere Banner "Ohne Empfang. Stand: ..." (nur im Offline-Zweig)
+///   traegt Ton `.muted`, nicht `.danger`: die gezeigten Daten sind
+///   ehrlich, nur aelter -- kein Fehlschlag (Aufgabenbrief, Hinweis 1).
+///   `.danger` bleibt fuer einen tatsaechlich fehlgeschlagenen
+///   Buchungs-/Stornierungsversuch reserviert (`fehlermeldung` unten). Die
+///   Stand-Zeitangabe kommt aus `GespeicherteBuchungen.stand`: ohne sie
+///   waere der Cache eine stille Behauptung (dieselbe Begruendung wie bei
+///   `KurseFileStore`).
+///
+/// **Die Uhr laeuft mit, waehrend der Screen offen bleibt (Review-Fund,
+/// Aufgabe 10 Nachtrag):** `body` ist in eine `TimelineView(.periodic(from:
+/// .now, by: 60))` gefasst, nach dem Muster aus `TrainingRootView`
+/// (Aufgabe 5) -- `@Observable` meldet den Ablauf einer Frist nicht von
+/// selbst, weil sich dabei keine beobachtete Eigenschaft aendert. Die
+/// Umschaltung haengt an der Stelle, die der Tick wirklich erreicht: der
+/// gesamte Inhalt (`quelle(jetzt:)`, `TerminAnsicht.jetzt`,
+/// `aktionsBereich`) wird MIT `context.date` neu berechnet, nicht mit
+/// einem beim ersten Aufbau eingefrorenen `Date()`. Betrifft zwei
+/// Ableitungen gleichermassen: den Kursbeginn selbst (`.vorbei`) und die
+/// Abmeldefrist (`abmeldefristVerstrichen`) -- beide vergleichen einen
+/// gespeicherten Zeitpunkt gegen "jetzt" und waeren sonst gleichermassen
+/// stehengeblieben.
+///
+/// **Bekannte Luecke, nicht in dieser Aufgabe behebbar:** Der Server
+/// nimmt eine BUCHUNG aus, die durch automatisches Nachruecken von der
+/// Warteliste entstand (`promoted_at is null`-Bedingung in
+/// `cancel_course_booking`, 0038_kurse_nachlese.sql) -- eine nachgerueckte
+/// Person kann jederzeit bis Kursbeginn abmelden, ohne Frist, weil sie den
+/// Platz nie freiwillig angenommen hat. `CourseWeekSession`/
+/// `GespeicherterTermin` tragen kein Feld dafuer; der Client kann eine
+/// nachgerueckte von einer urspruenglich gebuchten Person nicht
+/// unterscheiden. Diese Datei berechnet `abmeldefristVerstrichen` deshalb
+/// so, als gaelte die Frist immer -- fuer eine nachgerueckte Person
+/// verschwindet "Abmelden" hier moeglicherweise, obwohl der Server es noch
+/// zuliesse. Das zu schliessen braucht ein neues API-Feld, ausserhalb des
+/// Umfangs dieser Aufgabe -- siehe Bericht.
 struct KursDetailView: View {
     let sessionId: String
 
@@ -147,7 +225,19 @@ struct KursDetailView: View {
     @State private var fehlermeldung: String?
 
     var body: some View {
-        switch quelle {
+        // 60-Sekunden-Kadenz statt einer einmalig beim Aufbau gelesenen
+        // Date() -- sonst blieben sowohl der Kursbeginn-Uebergang
+        // (.vorbei) als auch die Abmeldefrist auf dem Stand des ersten
+        // Renderns stehen, bis irgendein unabhaengiger Grund den Screen
+        // neu zeichnet (siehe Datei-Kopfkommentar).
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            screenInhalt(jetzt: context.date)
+        }
+    }
+
+    @ViewBuilder
+    private func screenInhalt(jetzt: Date) -> some View {
+        switch quelle(jetzt: jetzt) {
         case .online(let ansicht):
             inhalt(ansicht, ohneEmpfang: false)
         case .offline(let ansicht):
@@ -172,6 +262,12 @@ struct KursDetailView: View {
         let zustand: KursZustand
         let zeitzone: String
         let fristStunden: Int
+        /// Derselbe Zeitpunkt, mit dem `zustand` berechnet wurde -- aus
+        /// dem 60-Sekunden-Tick der `TimelineView` in `body`, nicht aus
+        /// einem frisch erzeugten `Date()` (siehe Datei-Kopfkommentar).
+        /// `aktionsBereich` braucht ihn zusaetzlich fuer den Vergleich
+        /// gegen die Abmeldefrist.
+        let jetzt: Date
         /// `nil` ohne Netz -- `GespeicherterTermin` traegt keine
         /// Belegungszahlen (Aufgabenbrief, Hinweis 3).
         let belegung: (belegt: Int, kapazitaet: Int)?
@@ -189,17 +285,17 @@ struct KursDetailView: View {
         case keineDaten
     }
 
-    private var quelle: Quelle {
+    private func quelle(jetzt: Date) -> Quelle {
         if let woche = kurse.woche, let termin = woche.sessions.first(where: { $0.sessionId == sessionId }) {
-            return .online(ansicht(aus: termin, in: woche))
+            return .online(ansicht(aus: termin, in: woche, jetzt: jetzt))
         }
         if let eigene = kurse.eigene, let termin = eigene.termine.first(where: { $0.sessionId == sessionId }) {
-            return .offline(ansicht(aus: termin, in: eigene))
+            return .offline(ansicht(aus: termin, in: eigene, jetzt: jetzt))
         }
         return .keineDaten
     }
 
-    private func ansicht(aus termin: CourseWeekSession, in woche: CourseWeek) -> TerminAnsicht {
+    private func ansicht(aus termin: CourseWeekSession, in woche: CourseWeek, jetzt: Date) -> TerminAnsicht {
         TerminAnsicht(
             name: termin.name,
             description: termin.description,
@@ -207,14 +303,15 @@ struct KursDetailView: View {
             durationMin: termin.durationMin,
             room: termin.room,
             instructorName: termin.instructorName,
-            zustand: KursZustandRechner.zustand(fuer: termin, jetzt: Date()),
+            zustand: KursZustandRechner.zustand(fuer: termin, jetzt: jetzt),
             zeitzone: woche.timezone,
             fristStunden: woche.cancellationDeadlineHours,
+            jetzt: jetzt,
             belegung: (belegt: termin.bookedCount, kapazitaet: termin.capacity),
             wartelistenplatz: termin.ownWaitlistPosition)
     }
 
-    private func ansicht(aus termin: GespeicherterTermin, in eigene: GespeicherteBuchungen) -> TerminAnsicht {
+    private func ansicht(aus termin: GespeicherterTermin, in eigene: GespeicherteBuchungen, jetzt: Date) -> TerminAnsicht {
         TerminAnsicht(
             name: termin.name,
             description: termin.description,
@@ -222,9 +319,10 @@ struct KursDetailView: View {
             durationMin: termin.durationMin,
             room: termin.room,
             instructorName: termin.instructorName,
-            zustand: KursDetailOfflineZustand.zustand(fuer: termin, jetzt: Date()),
+            zustand: KursDetailOfflineZustand.zustand(fuer: termin, jetzt: jetzt),
             zeitzone: eigene.timezone,
             fristStunden: eigene.cancellationDeadlineHours,
+            jetzt: jetzt,
             belegung: nil,
             wartelistenplatz: nil)
     }
@@ -400,10 +498,14 @@ struct KursDetailView: View {
     /// muesste -- statt eines Knopfs steht der Fusstext allein, und der
     /// ist nie stumm (er sagt ausdruecklich, warum nichts zu tun ist).
     private func aktionsBereich(_ ansicht: TerminAnsicht) -> some View {
-        let hauptaktion = KursDetailInhalt.hauptaktion(fuer: ansicht.zustand)
+        let verstrichen = KursDetailInhalt.abmeldefristVerstrichen(
+            startsAt: ansicht.startsAt, fristStunden: ansicht.fristStunden, jetzt: ansicht.jetzt)
+        let hauptaktion = KursDetailInhalt.hauptaktion(
+            fuer: ansicht.zustand, abmeldefristVerstrichen: verstrichen)
         let fusstext = KursDetailInhalt.fusstext(
             fuer: ansicht.zustand,
             abmeldenBisUhrzeit: abmeldenBisUhrzeit(ansicht),
+            abmeldefristVerstrichen: verstrichen,
             wartelistenplatz: ansicht.wartelistenplatz)
 
         return VStack(spacing: DesignSystem.Spacing.s8) {
