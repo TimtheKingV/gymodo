@@ -4,6 +4,7 @@ struct RootView: View {
     @Environment(SessionStore.self) private var sessionStore
     @Environment(CatalogStore.self) private var catalogStore
     @Environment(WorkoutSessionStore.self) private var workoutStore
+    @Environment(KurseStore.self) private var kurseStore
 
     let apiClient: APIClient
 
@@ -54,6 +55,10 @@ struct RootView: View {
                 // Die laufende Einheit faellt beim Abmelden -- ihre
                 // Kennungen gehoeren zum abgemeldeten Konto.
                 workoutStore.reset()
+                // Dieselbe Begruendung: die Kursbuchungen des vorigen
+                // Kontos duerfen dem naechsten weder im Speicher noch auf
+                // der Platte erscheinen.
+                kurseStore.reset()
             }
         }
     }

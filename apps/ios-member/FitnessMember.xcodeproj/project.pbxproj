@@ -14,6 +14,7 @@
 		0C79D05D0F5B192800FDB707 /* MemberPasswortZuruecksetzenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1987FE7CD53A2E411EAD2595 /* MemberPasswortZuruecksetzenView.swift */; };
 		0CC21610F7CED89559C379C4 /* MemberPasswortView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4C1D2382AF3657C5135CBE2 /* MemberPasswortView.swift */; };
 		0D0B75F5C030106C7CB21F85 /* ScannerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55093183C1B476C12C44B469 /* ScannerSheet.swift */; };
+		11BA7A3A80B08733F442CDFE /* KursRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */; };
 		13225DB0A049D674C72CE73D /* CourseWeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AC1E765B0B287F9AC69A3B8 /* CourseWeek.swift */; };
 		155027C74E92A6C6F5F641B8 /* ErsteWerteSchritt.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3F9CF634AF01C1637F99D3B /* ErsteWerteSchritt.swift */; };
 		187B66242C280ADBE3234946 /* PlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27C292EFD7E692D12EAD9B3A /* PlaceholderView.swift */; };
@@ -253,6 +254,7 @@
 		F0D97A63F51670FD637DCAFE /* KurseWochenBerechnungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseWochenBerechnungTests.swift; sourceTree = "<group>"; };
 		F3F970AC02F39C7E9D8ABCBF /* TagLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLink.swift; sourceTree = "<group>"; };
 		F86C22F308C4A9EB76B53C19 /* SupabaseAuthBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthBackend.swift; sourceTree = "<group>"; };
+		FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursRoute.swift; sourceTree = "<group>"; };
 		FD55A1626F478A9D5D1A0861 /* DTOTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DTOTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -472,6 +474,7 @@
 				20071A27526D769989C545B0 /* AuthFlow.swift */,
 				A971E16E06A36BD3EA3B0ED4 /* AuthRoute.swift */,
 				EF6476398D0D632AA4C97E66 /* GeraetRoute.swift */,
+				FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */,
 				A5CA620D337B41A12B5D8A33 /* MainTabView.swift */,
 				26B414241FEB56BDD45194AA /* PendingTagStore.swift */,
 				27C292EFD7E692D12EAD9B3A /* PlaceholderView.swift */,
@@ -682,6 +685,7 @@
 				762BAF4D2EA117D55549EDED /* JoinResult.swift in Sources */,
 				2D961BA7EA388A8E6895AD01 /* KalibrierungSchritt.swift in Sources */,
 				C2DE29ED55762D2C1E529802 /* KursDetailView.swift in Sources */,
+				11BA7A3A80B08733F442CDFE /* KursRoute.swift in Sources */,
 				FF660231717EEF021CAE16EF /* KursZustand.swift in Sources */,
 				F07AE5A3A14A74A3532C4A3A /* KurseFileStore.swift in Sources */,
 				2FEBDB6333A7BD86DDCC05CE /* KurseMeineView.swift in Sources */,

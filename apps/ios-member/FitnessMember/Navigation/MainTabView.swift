@@ -12,6 +12,11 @@ struct MainTabView: View {
     /// (M1-Spec SS8.1 Schritt 3) waere gebrochen.
     @State private var ausgewaehlterTab = 0
 
+    /// Der typisierte Pfad des Kurse-Tabs, wie `pfad` in TrainingRootView
+    /// fuer GeraetRoute -- KursDetail und KurseMeine sind Pushes und
+    /// behalten die Tab-Leiste, statt eigene Tabs zu sein.
+    @State private var kursePfad: [KursRoute] = []
+
     var body: some View {
         TabView(selection: $ausgewaehlterTab) {
             NavigationStack { PlaceholderView(title: "Home") }
@@ -22,9 +27,22 @@ struct MainTabView: View {
                 .tabItem { Label("Training", systemImage: "figure.strengthtraining.traditional") }
                 .tag(1)
 
-            NavigationStack { PlaceholderView(title: "Kurse") }
-                .tabItem { Label("Kurse", systemImage: "calendar") }
-                .tag(2)
+            NavigationStack(path: $kursePfad) {
+                KurseWochenView(
+                    beiAuswahl: { termin in kursePfad.append(.detail(sessionId: termin.id)) },
+                    beiMeineKurse: { kursePfad.append(.meine) }
+                )
+                .navigationDestination(for: KursRoute.self) { route in
+                    switch route {
+                    case .detail(let sessionId):
+                        KursDetailView(sessionId: sessionId)
+                    case .meine:
+                        KurseMeineView(beiAuswahl: { sessionId in kursePfad.append(.detail(sessionId: sessionId)) })
+                    }
+                }
+            }
+            .tabItem { Label("Kurse", systemImage: "calendar") }
+            .tag(2)
 
             NavigationStack { ProfilRootView() }
                 .tabItem { Label("Profil", systemImage: "person.crop.circle") }
