@@ -207,8 +207,29 @@ final class KurseStore {
     /// zweites Mal. Und der Platz, den jemand auf der Warteliste dadurch
     /// bekommen hat, ist da, ob der Screen es zugibt oder nicht. Deshalb
     /// wird NUR dieser eine Fall wie ein Erfolg behandelt: es wird neu
-    /// geladen. Nicht "aufraeumen" -- das ist Absicht.
+    /// geladen.
+    ///
+    /// Was hier sehr wohl aufgeraeumt wird, ist die Buchungskennung: eine
+    /// Stornierung beendet die Buchung, zu der die Kennung gehoert, und
+    /// eine spaetere Anmeldung ist fachlich eine NEUE Buchung. Bliebe die
+    /// alte Kennung stehen, schickte die naechste Anmeldung dieselbe UUID,
+    /// und der Server antwortete dauerhaft mit `booking_id_reused` -- der
+    /// Kurs waere bis zum Neustart der App unbuchbar. Der Weg dorthin ist
+    /// kurz: geht die Antwort auf ein Buchen verloren (Zeitueberschreitung,
+    /// APIClient bildet sie auf .offline ab), verlaesst buchen(...) die
+    /// Methode, bevor es die Kennung als verbraucht markiert -- gewollt,
+    /// damit ein Wiederholer dieselbe Kennung schickt. Ueberlebt sie dann
+    /// aber auch noch ein Stornieren, ist sie verbraucht, ohne dass es
+    /// jemand weiss.
+    ///
+    /// Vor dem Netzaufruf, nicht danach: schlaegt cancelCourse fehl, ist
+    /// die Buchung entweder noch da (dann erzeugt das naechste Buchen
+    /// zwar eine frische Kennung, aber der Server antwortet ohnehin
+    /// "schon gebucht") oder doch storniert (dann ist genau das richtig).
+    /// Eine verworfene Kennung kostet nichts; eine verbrauchte, die
+    /// stehen bleibt, kostet den Kurs.
     func stornieren(sessionId: String) async throws(APIError) {
+        buchungskennungen[sessionId] = nil
         do {
             _ = try await loader.cancelCourse(sessionId: sessionId)
         } catch APIError.decodingFailed {

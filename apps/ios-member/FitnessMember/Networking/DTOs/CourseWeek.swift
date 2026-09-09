@@ -61,7 +61,13 @@ struct BookOutcome: Decodable, Equatable {
 
 /// Antwort von DELETE course-sessions/{sessionId}/booking (courses.ts
 /// CancelOutcome).
+///
+/// Die Antwort traegt ausserdem `promotedUserId` -- die Kennung des
+/// Mitglieds, das durch diese Stornierung von der Warteliste nachgerueckt
+/// ist. Sie steht hier bewusst NICHT: was der Client nicht braucht, soll
+/// er nicht halten. Kein Screen liest sie, und ein unbenanntes Feld
+/// dekodiert Codable ohnehin nicht -- damit liegt die Kennung eines
+/// anderen Mitglieds nicht einmal voruebergehend im Speicher dieser App.
 struct CancelOutcome: Decodable, Equatable {
-    let promotedUserId: String?
     let promoted: Bool
 }

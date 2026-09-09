@@ -19,7 +19,7 @@ actor FakeKurseLoader: KurseLoading {
     /// rund um das Neuladen, nicht den Fehlerfall des Buchens selbst.
     private var buchenResultat: BuchenResultat = .success(
         BookOutcome(result: "booked", created: true, bookingId: UUID().uuidString, waitlistPosition: nil, freeSeats: 5))
-    private var stornierenResultat: StornierenResultat = .success(CancelOutcome(promotedUserId: nil, promoted: false))
+    private var stornierenResultat: StornierenResultat = .success(CancelOutcome(promoted: false))
 
     func setWoche(_ resultat: WocheResultat) { wocheResultat = resultat }
     func setBuchen(_ resultat: BuchenResultat) { buchenResultat = resultat }
@@ -63,7 +63,14 @@ actor FakeKurseLoader: KurseLoading {
         }
     }
 
+    /// Jede Kennung, die tatsaechlich rausging -- in der Reihenfolge der
+    /// Aufrufe. Der Server kennt eine verbrauchte Kennung dauerhaft
+    /// (booking_id_reused, 0038_kurse_nachlese.sql), der Test muss die
+    /// Wiederverwendung also am Aufruf pruefen, nicht am Ergebnis.
+    private(set) var gesendeteKennungen: [UUID] = []
+
     func bookCourse(sessionId: String, bookingId: UUID) async throws(APIError) -> BookOutcome {
+        gesendeteKennungen.append(bookingId)
         switch buchenResultat {
         case .success(let outcome): return outcome
         case .failure(let error): throw error
@@ -304,5 +311,62 @@ struct KurseStoreTests {
 
         // Wie nach einem echten Erfolg wurde neu geladen.
         #expect(sut.ladeZaehler == 2)
+    }
+
+    // Der Weg, auf dem die Buchungskennung kippt (Schlussdurchsicht M4):
+    // eine Buchungsantwort geht verloren, das Mitglied storniert spaeter
+    // und meldet sich erneut an. Bliebe die Kennung stehen, schickte die
+    // erneute Anmeldung dieselbe UUID, der Server antwortete dauerhaft
+    // booking_id_reused, und das Mitglied laese "Bitte mit einer neuen
+    // Kennung erneut versuchen" -- eine Anweisung, die es nicht befolgen
+    // kann.
+    @Test func nachEinemStornierenBekommtDieNaechsteAnmeldungEineFrischeKennung() async {
+        let (sut, _) = store()
+        await lade(sut, mit: KursTestdaten.woche(ownStatus: [nil]))
+        guard let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("sut.loader ist kein FakeKurseLoader")
+            return
+        }
+
+        // 1. Anmelden -- die Antwort geht unterwegs verloren. APIClient
+        //    bildet jeden Transportfehler auf .offline ab; die Buchung
+        //    kann beim Server trotzdem angekommen sein.
+        await loader.setBuchen(.failure(.offline))
+        try? await sut.buchen(sessionId: "k0")
+
+        // 2. Abmelden. Das gelingt.
+        await loader.setStornieren(.success(CancelOutcome(promoted: false)))
+        try? await sut.stornieren(sessionId: "k0")
+
+        // 3. Erneut anmelden -- fachlich eine NEUE Buchung.
+        await loader.setBuchen(.success(
+            BookOutcome(result: "booked", created: true, bookingId: UUID().uuidString,
+                        waitlistPosition: nil, freeSeats: 5)))
+        try? await sut.buchen(sessionId: "k0")
+
+        let kennungen = await loader.gesendeteKennungen
+        #expect(kennungen.count == 2)
+        #expect(kennungen.first != kennungen.last,
+                "Die erneute Anmeldung schickt dieselbe, verbrauchte Kennung")
+    }
+
+    @Test func einWiederholungsversuchOhneStornierenBehaeltDieKennung() async {
+        // Die Gegenprobe: OHNE Stornierung ist die Wiederverwendung
+        // ausdruecklich gewollt -- sie ist die Zusicherung, dass ein
+        // Wiederholer keine zweite Anmeldung erzeugt.
+        let (sut, _) = store()
+        await lade(sut, mit: KursTestdaten.woche(ownStatus: [nil]))
+        guard let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("sut.loader ist kein FakeKurseLoader")
+            return
+        }
+
+        await loader.setBuchen(.failure(.offline))
+        try? await sut.buchen(sessionId: "k0")
+        try? await sut.buchen(sessionId: "k0")
+
+        let kennungen = await loader.gesendeteKennungen
+        #expect(kennungen.count == 2)
+        #expect(kennungen.first == kennungen.last)
     }
 }
