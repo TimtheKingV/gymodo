@@ -201,14 +201,10 @@ struct KurseMeineView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 titel
-                switch herkunft {
-                case .frisch:
-                    EmptyView()
-                case .ohneEmpfang:
-                    InlineBanner(tone: .muted, message: standHinweis(ohneEmpfang: true), icon: "wifi.slash")
-                case .letzterAbruf:
-                    InlineBanner(tone: .muted, message: standHinweis(ohneEmpfang: false),
-                                 icon: "clock.arrow.circlepath")
+                let herkunft = herkunft(jetzt: jetzt)
+                if kurse.eigene != nil,
+                   let hinweis = herkunft.satz(stand: kurse.eigene?.stand) {
+                    InlineBanner(tone: .muted, message: hinweis, icon: herkunft.symbol)
                 }
                 inhalt(jetzt: jetzt)
             }
@@ -231,44 +227,20 @@ struct KurseMeineView: View {
     /// `KurseMeineView` laedt selbst nichts nach -- `kurse.ladeZustand`
     /// spiegelt den letzten Ladeversuch, ausgeloest vom Wochenplan.
     ///
-    /// Drei Faelle, nicht zwei. Vorher stand der Hinweis ausschliesslich
-    /// bei `.offline`; ein Serverfehler war damit `false`, und die Karten
-    /// aus dem Cache standen OHNE jede Altersangabe da, als waeren sie
-    /// frisch. Begruendet war das mit "der Wochenplan meldet den
-    /// Serverfehler bereits an seiner eigenen Stelle" -- das Mitglied ist
-    /// in diesem Moment aber nicht auf dem Wochenplan. Dieselbe
-    /// Verzweigung wie in KursDetailView.herkunft und
-    /// KurseWochenView.inhalt: drei Screens, eine Antwort auf dieselbe
-    /// Bedingung.
-    private enum Herkunft {
-        case frisch
-        case ohneEmpfang
-        case letzterAbruf
-    }
-
-    private var herkunft: Herkunft {
-        // Ohne Cache gibt es nichts zu datieren -- dann traegt
-        // ungeladenerZustand die ganze Aussage, und ein Banner darueber
-        // saegte dieselbe Sache ein zweites Mal.
-        guard kurse.eigene != nil else { return .frisch }
-        guard case .fehlgeschlagen(let fehler) = kurse.ladeZustand else { return .frisch }
-        return fehler == .offline ? .ohneEmpfang : .letzterAbruf
-    }
-
-    /// "Ohne Empfang" statt "fehlgeschlagen" (designsystem.md SS5) -- mit
-    /// Stand, sonst waere der Cache eine stille Behauptung. Beim
-    /// Serverfehler faellt die Empfangsbehauptung weg: sie waere falsch
-    /// und schickte das Mitglied WLAN suchen. Wortgleich mit
-    /// KursDetailView.standHinweis(ohneEmpfang:), ueber Zahlformat.stand
-    /// aus derselben Quelle formatiert.
-    private func standHinweis(ohneEmpfang: Bool) -> String {
-        let anfang = ohneEmpfang ? "Ohne Empfang." : "Diese Angaben stammen vom letzten Abruf."
-        guard let stand = kurse.eigene?.stand else {
-            return ohneEmpfang
-                ? "Ohne Empfang. Diese Angaben stammen vom letzten Abruf."
-                : anfang
-        }
-        return "\(anfang) Stand: \(Zahlformat.stand(stand))."
+    /// Dieselbe Ableitung wie in den beiden anderen Kurse-Screens (siehe
+    /// KurseHerkunft). Vorher stand der Hinweis hier ausschliesslich bei
+    /// `.offline`; ein Serverfehler ergab gar keinen, und die Karten aus
+    /// dem Cache standen OHNE jede Altersangabe da, als waeren sie frisch.
+    /// Begruendet war das mit "der Wochenplan meldet den Serverfehler
+    /// bereits an seiner eigenen Stelle" -- das Mitglied ist in diesem
+    /// Moment aber nicht auf dem Wochenplan.
+    ///
+    /// Der "Plaetze weg"-Zusatz entfaellt hier: dieser Screen zeigt
+    /// ohnehin nirgends eine Belegungszahl (GespeicherterTermin traegt
+    /// keine), es faellt also nichts weg, was zu erklaeren waere.
+    private func herkunft(jetzt: Date) -> KurseHerkunft {
+        KurseHerkunft.bilden(
+            ladeZustand: kurse.ladeZustand, wocheStand: kurse.wocheStand, jetzt: jetzt)
     }
 
     // MARK: - Inhalt: bestaetigt leer, ungeladen, oder die drei Abschnitte
@@ -375,7 +347,7 @@ struct KurseMeineView: View {
     /// KursDetailView.fehlerKarte.
     private func fehlerUnbekannterZustand(_ fehler: APIError) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-            Text(servertext(fuer: fehler))
+            Text(fehler.servertext)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(DesignSystem.Color.danger)
             Text("Deine Anmeldungen sind noch nicht bekannt.")
@@ -789,11 +761,8 @@ struct KurseMeineView: View {
         .accessibilityHint("Öffnet die Kursdetails")
     }
 
-    // MARK: - Servertext
+    // MARK: - Fehlertext des Aktionspfads
 
-    /// Wie KurseWochenView.servertext(fuer:)/KursDetailView.servertext(fuer:)
-    /// -- dieselbe Formulierung fuer denselben APIError-Fall, hier fuer
-    /// einen fehlgeschlagenen Abmelden-Versuch aus der Zeile heraus.
     /// `.offline` gehoert im Aktionspfad nicht in dieselbe Funktion wie
     /// die Servertexte -- genauso, wie es im Ladepfad herausgezogen ist.
     /// "Keine Verbindung." sagt, was nicht stimmt, aber nicht, was gilt
@@ -803,21 +772,8 @@ struct KurseMeineView: View {
     /// Screen, dessen ganzer Zweck es ist, den eigenen Platz ohne Empfang
     /// zu kennen, ist das der wichtigste Satz ueberhaupt.
     private func abmeldeFehler(_ fehler: APIError) -> String {
-        guard fehler == .offline else { return servertext(fuer: fehler) }
+        guard fehler == .offline else { return fehler.servertext }
         return "Kein Empfang. Ob deine Abmeldung angekommen ist, wissen wir gerade nicht — dein Platz kann noch besetzt sein. Versuch es noch einmal, sobald du Empfang hast."
     }
 
-    private func servertext(fuer fehler: APIError) -> String {
-        switch fehler {
-        case .offline:
-            "Keine Verbindung."
-        case .unauthorized(let message), .validation(let message),
-             .notFound(let message), .conflict(let message), .server(let message):
-            message
-        case .encodingFailed:
-            "Die Anfrage konnte nicht gesendet werden."
-        case .decodingFailed:
-            "Die Antwort deines Studios ließ sich nicht lesen."
-        }
-    }
 }

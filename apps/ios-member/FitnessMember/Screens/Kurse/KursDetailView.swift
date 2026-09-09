@@ -239,7 +239,7 @@ struct KursDetailView: View {
     private func screenInhalt(jetzt: Date) -> some View {
         switch quelle(jetzt: jetzt) {
         case .online(let ansicht), .offline(let ansicht):
-            inhalt(ansicht)
+            inhalt(ansicht, herkunft: herkunft(jetzt: jetzt))
         case .keineDaten:
             keineDatenInhalt
         }
@@ -247,33 +247,24 @@ struct KursDetailView: View {
 
     // MARK: - Wie alt die Angaben sind
 
-    /// Woran der Hinweis oben haengt.
+    /// Dieselbe Ableitung wie in KurseWochenView und KurseMeineView --
+    /// eine Loesung fuer dieselbe Sache, siehe KurseHerkunft.
     ///
-    /// Am LADEZUSTAND, nicht an der Quelle. Vorher entschied allein, ob
-    /// `kurse.woche` existiert: gab es sie nicht, stand "Ohne Empfang" da
-    /// -- auch nach einem 500er, auf einem Geraet mit vollem Empfang, und
-    /// auch waehrend des allerersten Ladens. KurseStore.laden setzt
-    /// `woche = nil` in JEDEM Fehlerzweig, die Quelle traegt die
-    /// Unterscheidung also gar nicht. `KurseLadeZustand.fehlgeschlagen`
-    /// traegt den APIError und damit sehr wohl.
-    ///
-    /// Drei Screens duerfen auf dieselbe Bedingung nicht drei Antworten
-    /// geben: dieselbe Verzweigung steht in KurseWochenView.inhalt und
-    /// KurseMeineView.herkunft.
-    private enum Herkunft {
-        /// Kein gescheiterter Ladeversuch -- kein Hinweis. Deckt auch das
-        /// erste Laden ab: waehrend `.laedt` ist nichts fehlgeschlagen.
-        case frisch
-        case ohneEmpfang
-        /// Ein Serverfehler. Die Angaben sind alt, aber "kein Empfang"
-        /// waere eine falsche Aussage ueber das Geraet -- und sie schickte
-        /// das Mitglied WLAN suchen statt es erneut versuchen zu lassen.
-        case letzterAbruf
+    /// Dieser Screen laedt nicht selbst; er lebt von dem, was der
+    /// Wochenplan geholt hat. Genau deshalb braucht er die Regel: "12 von
+    /// 16" stand hier ohne jede Altersangabe, auch Stunden nach dem
+    /// letzten Abruf, und direkt darunter loest das Mitglied eine Buchung
+    /// aus.
+    private func herkunft(jetzt: Date) -> KurseHerkunft {
+        KurseHerkunft.bilden(
+            ladeZustand: kurse.ladeZustand, wocheStand: kurse.wocheStand, jetzt: jetzt)
     }
 
-    private var herkunft: Herkunft {
-        guard case .fehlgeschlagen(let fehler) = kurse.ladeZustand else { return .frisch }
-        return fehler == .offline ? .ohneEmpfang : .letzterAbruf
+    /// Der Zeitpunkt, den der Hinweis nennt: was dieser Screen gerade
+    /// zeigt. Kommt der Termin aus `woche`, ist es deren Abrufzeitpunkt;
+    /// faellt er auf den Cache zurueck, dessen Stand.
+    private var angezeigterStand: Date? {
+        kurse.woche != nil ? kurse.wocheStand : kurse.eigene?.stand
     }
 
     // MARK: - Datenquelle: online (voll) oder offline (schmal)
@@ -358,20 +349,16 @@ struct KursDetailView: View {
 
     // MARK: - Inhalt bei vorhandenen Daten
 
-    private func inhalt(_ ansicht: TerminAnsicht) -> some View {
+    private func inhalt(_ ansicht: TerminAnsicht, herkunft: KurseHerkunft) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                switch herkunft {
-                case .frisch:
-                    EmptyView()
-                case .ohneEmpfang:
-                    InlineBanner(tone: .muted, message: standHinweis(ohneEmpfang: true), icon: "wifi.slash")
-                case .letzterAbruf:
-                    InlineBanner(tone: .muted, message: standHinweis(ohneEmpfang: false),
-                                 icon: "clock.arrow.circlepath")
+                if let hinweis = herkunft.satz(
+                    stand: angezeigterStand,
+                    zusatz: ansicht.belegung == nil ? nil : "Die freien Plätze lassen wir deshalb weg.") {
+                    InlineBanner(tone: .muted, message: hinweis, icon: herkunft.symbol)
                 }
                 kopf(ansicht)
-                eckdaten(ansicht)
+                eckdaten(ansicht, herkunft: herkunft)
                 beschreibung(ansicht)
             }
             .padding(.horizontal, 20)
@@ -386,23 +373,6 @@ struct KursDetailView: View {
                 .padding(.bottom, DesignSystem.Spacing.s16)
                 .background(DesignSystem.Color.bg)
         }
-    }
-
-    /// "Ohne Empfang" statt "fehlgeschlagen" (Aufgabenbrief, Hinweis 1) --
-    /// mit Stand, sonst waere der Cache eine stille Behauptung (dieselbe
-    /// Begruendung wie `KurseFileStore`/`GespeicherteBuchungen.stand`).
-    ///
-    /// Beim Serverfehler faellt die Empfangsbehauptung weg und der Satz
-    /// sagt nur, was er belegen kann: dass die Angaben vom letzten Abruf
-    /// stammen und wann der war.
-    private func standHinweis(ohneEmpfang: Bool) -> String {
-        let anfang = ohneEmpfang ? "Ohne Empfang." : "Diese Angaben stammen vom letzten Abruf."
-        guard let stand = kurse.eigene?.stand else {
-            return ohneEmpfang
-                ? "Ohne Empfang. Diese Angaben stammen vom letzten Abruf."
-                : anfang
-        }
-        return "\(anfang) Stand: \(Zahlformat.stand(stand))."
     }
 
     // MARK: - Kopf: Datum + Kursname
@@ -428,9 +398,9 @@ struct KursDetailView: View {
 
     // MARK: - Eckdaten: Beginn, Trainer, Ort, Plaetze
 
-    private func eckdaten(_ ansicht: TerminAnsicht) -> some View {
+    private func eckdaten(_ ansicht: TerminAnsicht, herkunft: KurseHerkunft) -> some View {
         let zeitraum = zeitraumText(ansicht)
-        let platz = platzText(ansicht)
+        let platz = platzText(ansicht, herkunft: herkunft)
         return VStack(spacing: 0) {
             eckdatenZeile(icon: "clock", label: "Beginn", wert: zeitraum)
             if let trainer = ansicht.instructorName {
@@ -493,8 +463,13 @@ struct KursDetailView: View {
     /// `.angemeldet`, `.warteliste` -- nie bei `.vorbei`/`.abgesagt` (keine
     /// Information mehr fuer einen nicht mehr buch-/stornierbaren Termin)
     /// und nie ohne Netz (`belegung == nil`, Aufgabenbrief Hinweis 3).
-    private func platzText(_ ansicht: TerminAnsicht) -> String? {
-        guard let belegung = ansicht.belegung else { return nil }
+    ///
+    /// Und nie, wenn der Abruf zu lange her ist oder gescheitert ist
+    /// (`herkunft.zeigtBelegung`, Spec 5.2): eine Zahl von vorhin ist
+    /// keine Zahl mehr. Die Zeile faellt dann ganz weg -- der Banner oben
+    /// sagt, dass sie deshalb fehlt.
+    private func platzText(_ ansicht: TerminAnsicht, herkunft: KurseHerkunft) -> String? {
+        guard herkunft.zeigtBelegung, let belegung = ansicht.belegung else { return nil }
         switch ansicht.zustand {
         case .frei, .voll, .angemeldet, .warteliste:
             return "\(belegung.belegt) von \(belegung.kapazitaet)"
@@ -592,10 +567,20 @@ struct KursDetailView: View {
 
     /// Buchen und Stornieren behandeln `.decodingFailed` bereits selbst
     /// als Erfolg (KurseStore-Kommentar) -- hier gibt es dazu nichts zu
-    /// tun. Bei jedem anderen Fehler bleibt dieselbe, clientseitig erzeugte
-    /// Buchungskennung im Store stehen (`KurseStore.buchungskennungen`);
-    /// ein erneuter Tap auf denselben Knopf loest keine zweite Buchung
-    /// aus, sondern denselben Wiederholungsversuch.
+    /// tun.
+    ///
+    /// Beim BUCHEN gilt weiterhin: schlaegt es fehl, bleibt dieselbe,
+    /// clientseitig erzeugte Buchungskennung im Store stehen
+    /// (`KurseStore.buchungskennungen`); ein erneuter Tap auf denselben
+    /// Knopf loest keine zweite Buchung aus, sondern denselben
+    /// Wiederholungsversuch. Genau das sagt der Offline-Satz unten zu.
+    ///
+    /// Beim STORNIEREN gilt es seit M4 ausdruecklich NICHT mehr:
+    /// `stornieren(...)` raeumt die Kennung auf, bevor es den Aufruf
+    /// abschickt. Eine Stornierung beendet die Buchung, zu der die Kennung
+    /// gehoert -- eine spaetere Anmeldung ist fachlich eine neue und
+    /// bekommt deshalb eine frische. Bliebe die alte stehen, antwortete
+    /// der Server dauerhaft mit `booking_id_reused`.
     private func ausfuehren(_ hauptaktion: KursDetailHauptaktion) async {
         aktionLaeuft = true
         fehlermeldung = nil
@@ -626,7 +611,7 @@ struct KursDetailView: View {
     /// (KurseStore.buchungskennungen): ein Wiederholer schickt dieselbe
     /// Kennung, der Server erkennt sie und legt nichts zweites an.
     private func aktionsfehler(_ fehler: APIError, istBuchen: Bool) -> String {
-        guard fehler == .offline else { return servertext(fuer: fehler) }
+        guard fehler == .offline else { return fehler.servertext }
         return istBuchen
             ? "Kein Empfang. Ob deine Anmeldung angekommen ist, wissen wir gerade nicht. Versuch es noch einmal, sobald du Empfang hast — eine zweite Anmeldung entsteht dabei nicht."
             : "Kein Empfang. Ob deine Abmeldung angekommen ist, wissen wir gerade nicht — dein Platz kann noch besetzt sein. Versuch es noch einmal, sobald du Empfang hast."
@@ -642,7 +627,7 @@ struct KursDetailView: View {
                     if fehler == .offline {
                         offlineKarte
                     } else {
-                        fehlerKarte(servertext(fuer: fehler))
+                        fehlerKarte(fehler.servertext)
                     }
                 } else {
                     skelett
@@ -717,21 +702,4 @@ struct KursDetailView: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// Servertext woertlich, wie `KurseWochenView.servertext(fuer:)` --
-    /// dieselbe Formulierung fuer denselben `APIError`-Fall, ob beim
-    /// Laden oder nach einem Buchen-/Stornieren-Versuch. `.offline` ist
-    /// hier ausdruecklich NICHT "fehlgeschlagen".
-    private func servertext(fuer fehler: APIError) -> String {
-        switch fehler {
-        case .offline:
-            "Keine Verbindung."
-        case .unauthorized(let message), .validation(let message),
-             .notFound(let message), .conflict(let message), .server(let message):
-            message
-        case .encodingFailed:
-            "Die Anfrage konnte nicht gesendet werden."
-        case .decodingFailed:
-            "Die Antwort deines Studios ließ sich nicht lesen."
-        }
-    }
 }

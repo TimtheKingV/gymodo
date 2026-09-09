@@ -29,6 +29,7 @@
 		2D961BA7EA388A8E6895AD01 /* KalibrierungSchritt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7650558ABB456D6EDF5735C7 /* KalibrierungSchritt.swift */; };
 		2FEBDB6333A7BD86DDCC05CE /* KurseMeineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28105FF62DB1E7DEEFC97076 /* KurseMeineView.swift */; };
 		309307436B8EE156A6673AA2 /* PrimaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F5420FC0962C00F11FFCD65 /* PrimaryButton.swift */; };
+		34BB24849CEDAC72879940FF /* KurseHerkunft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316F6201B7E6E5D63EAEAE84 /* KurseHerkunft.swift */; };
 		356B55A3EC5DF1C40CF07351 /* GeraetLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B800AB907E579F778EA2656 /* GeraetLoading.swift */; };
 		38240F3DF60D68312F9CBCE4 /* AuthCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DC3378D45751B2BE6267611 /* AuthCopy.swift */; };
 		39876DCABA0D4C90A172BF11 /* CatalogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E651ABDF81EA57E18D7363D /* CatalogStore.swift */; };
@@ -101,6 +102,7 @@
 		D6412EE84EF83B2BB46E6912 /* LoginCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDEF31B56AE35C7453FC34B9 /* LoginCodeView.swift */; };
 		D76C207642BEE6F3A8CD20B1 /* GeraetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EACD17EBDD11DD861E371D3 /* GeraetView.swift */; };
 		D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78C8636341914B90296B220 /* AppConfigTests.swift */; };
+		D85F1EF7AA87F03089F8F73D /* KurseHerkunftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10A0239BC8D0EA913F1574D8 /* KurseHerkunftTests.swift */; };
 		DB3955D030762B13093FA54C /* GeraetModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */; };
 		DCC5E98028ED224D32C6FAA5 /* CodeDigitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */; };
 		E1A0397EDF4B789D5970BE5A /* MemberKeinStudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C037A2436D3DBF861C6456FD /* MemberKeinStudioView.swift */; };
@@ -143,6 +145,7 @@
 		05BD4A4984000E15E1DDB8A2 /* KurseStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseStoreTests.swift; sourceTree = "<group>"; };
 		0753010E9ACC09DF6D948170 /* RootDestinationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootDestinationTests.swift; sourceTree = "<group>"; };
 		0DE16B16CA9E4D25698A02C0 /* KurseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseStore.swift; sourceTree = "<group>"; };
+		10A0239BC8D0EA913F1574D8 /* KurseHerkunftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseHerkunftTests.swift; sourceTree = "<group>"; };
 		13D8C4AC64870FF3423C494F /* InlineBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineBanner.swift; sourceTree = "<group>"; };
 		186F9A8308C2902F45F6E10E /* KursZustand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursZustand.swift; sourceTree = "<group>"; };
 		19832BC95D12C1DCBEFF10E9 /* SessionSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSummary.swift; sourceTree = "<group>"; };
@@ -166,6 +169,7 @@
 		2F5420FC0962C00F11FFCD65 /* PrimaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimaryButton.swift; sourceTree = "<group>"; };
 		2F85DB74C44633BFB4BAAB94 /* PasswordPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordPolicy.swift; sourceTree = "<group>"; };
 		2F89B657647B40C20CCA5FE4 /* PendingWriteStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingWriteStore.swift; sourceTree = "<group>"; };
+		316F6201B7E6E5D63EAEAE84 /* KurseHerkunft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseHerkunft.swift; sourceTree = "<group>"; };
 		33E48EE365B2AEEBD3FCBC2E /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		33EBC4692A4BFF21FC0FCA28 /* BootstrapResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootstrapResponse.swift; sourceTree = "<group>"; };
 		35466DCA1BAC23049D7DCB30 /* WorkoutSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionStore.swift; sourceTree = "<group>"; };
@@ -400,6 +404,7 @@
 				61EBAF697D264131A8B819C9 /* GeraetEinstiegTests.swift */,
 				28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */,
 				02610C837B8435320AACE71B /* KursDetailInhaltTests.swift */,
+				10A0239BC8D0EA913F1574D8 /* KurseHerkunftTests.swift */,
 				4CA9131802B15B415EE3362E /* KurseMeineEinteilungTests.swift */,
 				05BD4A4984000E15E1DDB8A2 /* KurseStoreTests.swift */,
 				F0D97A63F51670FD637DCAFE /* KurseWochenBerechnungTests.swift */,
@@ -512,6 +517,7 @@
 			isa = PBXGroup;
 			children = (
 				962343020926813A08DE01CA /* KurseFileStore.swift */,
+				316F6201B7E6E5D63EAEAE84 /* KurseHerkunft.swift */,
 				0DE16B16CA9E4D25698A02C0 /* KurseStore.swift */,
 				186F9A8308C2902F45F6E10E /* KursZustand.swift */,
 			);
@@ -688,6 +694,7 @@
 				11BA7A3A80B08733F442CDFE /* KursRoute.swift in Sources */,
 				FF660231717EEF021CAE16EF /* KursZustand.swift in Sources */,
 				F07AE5A3A14A74A3532C4A3A /* KurseFileStore.swift in Sources */,
+				34BB24849CEDAC72879940FF /* KurseHerkunft.swift in Sources */,
 				2FEBDB6333A7BD86DDCC05CE /* KurseMeineView.swift in Sources */,
 				1A5F792F17B6BDB868EFADF0 /* KurseStore.swift in Sources */,
 				CE20B943DBE9C21746B7C572 /* KurseWochenView.swift in Sources */,
@@ -756,6 +763,7 @@
 				DB3955D030762B13093FA54C /* GeraetModelTests.swift in Sources */,
 				E5D5C299EF2C249F20BEA4B9 /* KursDetailInhaltTests.swift in Sources */,
 				8E100E38496E1212C0FF9042 /* KursZustandTests.swift in Sources */,
+				D85F1EF7AA87F03089F8F73D /* KurseHerkunftTests.swift in Sources */,
 				FD45B7AE6C6405B0C6799772 /* KurseMeineEinteilungTests.swift in Sources */,
 				51D68A6279BB1613A8A0C045 /* KurseStoreTests.swift in Sources */,
 				B854BF7F3EC5F92A64658311 /* KurseWochenBerechnungTests.swift in Sources */,

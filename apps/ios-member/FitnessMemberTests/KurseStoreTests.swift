@@ -320,6 +320,29 @@ struct KurseStoreTests {
     // booking_id_reused, und das Mitglied laese "Bitte mit einer neuen
     // Kennung erneut versuchen" -- eine Anweisung, die es nicht befolgen
     // kann.
+    /// Seit der Schlusswelle wirft ein Fehlversuch den Plan nicht mehr
+    /// weg: Name, Uhrzeit und Raum eines Termins aendern sich nicht, nur
+    /// die Belegung -- und die blendet der Screen ueber KurseHerkunft
+    /// aus. Frueher wich der ganze Wochenplan der Offline-Karte.
+    @Test func einFehlversuchLaesstDenGeladenenPlanStehen() async {
+        let (sut, _) = store()
+        await lade(sut, mit: KursTestdaten.woche(ownStatus: ["booked", nil]))
+        guard let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("sut.loader ist kein FakeKurseLoader")
+            return
+        }
+        let standVorher = sut.wocheStand
+
+        await loader.setWoche(.failure(.offline))
+        await sut.laden(studioId: "s1", von: Date(), bis: Date())
+
+        #expect(sut.woche != nil)
+        #expect(sut.ladeZustand == .fehlgeschlagen(.offline))
+        // Der Stand bleibt der des letzten ERFOLGREICHEN Abrufs -- er ist
+        // die Altersangabe zu genau diesen Daten.
+        #expect(sut.wocheStand == standVorher)
+    }
+
     @Test func nachEinemStornierenBekommtDieNaechsteAnmeldungEineFrischeKennung() async {
         let (sut, _) = store()
         await lade(sut, mit: KursTestdaten.woche(ownStatus: [nil]))

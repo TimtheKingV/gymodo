@@ -139,13 +139,6 @@ struct KurseWochenView: View {
     /// wenn die Mitternacht waehrend einer offenen App-Sitzung vergeht.
     @State private var gewaehlterTagId: String?
 
-    /// Ab wann eine Belegungszahl nicht mehr als frisch durchgeht. Spec 5.2
-    /// nennt den Grund: „12 von 16" veraltet binnen Minuten. Fuenf Minuten
-    /// ist die Grenze, ab der der Screen es sagt statt es zu verschweigen
-    /// -- nicht die Grenze, ab der die Zahl falsch WIRD (das weiss niemand),
-    /// sondern die, ab der sie ohne Datum eine Behauptung waere.
-    private static let frischeGrenze: TimeInterval = 5 * 60
-
     /// 60-Sekunden-Kadenz statt einer einmalig beim Aufbau gelesenen
     /// Date() -- dasselbe Muster wie in KursDetailView und KurseMeineView,
     /// und aus demselben Grund: @Observable loest kein Neuzeichnen aus,
@@ -165,10 +158,14 @@ struct KurseWochenView: View {
                 kopf
                 wochenstreifen(jetzt: jetzt)
                 heuteUndMeineKurse(jetzt: jetzt)
-                if let hinweis = standHinweis(jetzt: jetzt) {
-                    InlineBanner(tone: .muted, message: hinweis, icon: "clock.arrow.circlepath")
+                let herkunft = herkunft(jetzt: jetzt)
+                if kurse.woche != nil,
+                   let hinweis = herkunft.satz(
+                       stand: kurse.wocheStand,
+                       zusatz: "Die freien Plätze lassen wir deshalb weg. Zum Aktualisieren nach unten ziehen.") {
+                    InlineBanner(tone: .muted, message: hinweis, icon: herkunft.symbol)
                 }
-                inhalt(jetzt: jetzt)
+                inhalt(jetzt: jetzt, herkunft: herkunft)
                 fussnote
             }
             .padding(.horizontal, 20)
@@ -213,15 +210,12 @@ struct KurseWochenView: View {
         await kurse.laden(studioId: studioId, von: von, bis: bis)
     }
 
-    /// Sagt, wie alt die Zahlen sind, sobald sie nicht mehr frisch sind --
-    /// und was dagegen hilft. Solange sie frisch sind, steht hier nichts:
-    /// ein Datum ueber einer gerade geholten Zahl waere Rauschen.
-    /// Dieselbe "Stand: ..."-Formulierung wie in KursDetailView und
-    /// KurseMeineView, ueber Zahlformat.stand aus einer Quelle.
-    private func standHinweis(jetzt: Date) -> String? {
-        guard kurse.woche != nil, let stand = kurse.wocheStand else { return nil }
-        guard jetzt.timeIntervalSince(stand) >= Self.frischeGrenze else { return nil }
-        return "Diese Angaben stammen vom letzten Abruf. Stand: \(Zahlformat.stand(stand)). Zum Aktualisieren nach unten ziehen."
+    /// Die eine Ableitung, die alle drei Kurse-Screens teilen -- sie
+    /// entscheidet zugleich, ob eine Belegungszahl noch etwas aussagt
+    /// (siehe KurseHerkunft).
+    private func herkunft(jetzt: Date) -> KurseHerkunft {
+        KurseHerkunft.bilden(
+            ladeZustand: kurse.ladeZustand, wocheStand: kurse.wocheStand, jetzt: jetzt)
     }
 
     // MARK: - Kopf
@@ -334,37 +328,46 @@ struct KurseWochenView: View {
 
     // MARK: - Inhalt: Skelett, Leer, Offline, Fehler, Liste
 
-    /// Reihenfolge ist Bedeutung: ein fehlgeschlagenes Laden gewinnt immer
-    /// gegen `woche == nil` (sonst zeigte ein gescheitertes Nachladen
-    /// wieder das Skelett statt Offline/Fehler), und `woche == nil` ohne
-    /// Fehler ist immer das ERSTE Laden (nach einem Erfolg bleibt `woche`
-    /// beim naechsten Fehlversuch zwar nil, aber der Fehlerzweig greift
-    /// dann schon vorher).
+    /// Reihenfolge ist Bedeutung, und sie hat sich mit der Schlusswelle
+    /// umgedreht: **ein vorhandener Plan gewinnt gegen jeden Fehler.**
     ///
-    /// Offline vs. Serverfehler kommt jetzt aus dem Fehler selbst
-    /// (`APIError.offline`), nicht mehr aus `netz.istOnline`: der
+    /// Frueher stand der Fehlerzweig zuerst, weil `KurseStore.laden` bei
+    /// jedem Fehlversuch `woche = nil` setzte -- es gab also gar nichts
+    /// mehr zu zeigen. Seit der Plan im Speicher stehen bleibt, waere das
+    /// Verschenken von Namen, Uhrzeiten und Raeumen eine Ueberreaktion:
+    /// die aendern sich nicht. Was sich aendert, ist die Belegung, und die
+    /// blendet `herkunft.zeigtBelegung` aus. Der Banner darueber sagt, wie
+    /// alt der Plan ist und dass die Plaetze deshalb fehlen.
+    ///
+    /// Die Karten bleiben fuer den Fall, dass es wirklich nichts zu zeigen
+    /// gibt -- Kaltstart ohne Empfang, Fehler beim allerersten Laden.
+    ///
+    /// Offline vs. Serverfehler kommt aus dem Fehler selbst
+    /// (`APIError.offline`), nicht aus `netz.istOnline`: der
     /// Netzwerkmonitor kann in der Sekunde zwischen einem Timeout und der
     /// naechsten Reachability-Meldung kurz "online" zeigen, waehrend die
     /// Anfrage selbst laengst mit .offline gescheitert ist -- der
     /// tatsaechlich gefangene Fehler ist die verlässlichere Quelle.
     @ViewBuilder
-    private func inhalt(jetzt: Date) -> some View {
-        if case .fehlgeschlagen(let fehler) = kurse.ladeZustand {
+    private func inhalt(jetzt: Date, herkunft: KurseHerkunft) -> some View {
+        if kurse.woche != nil {
+            if termineDesTages(jetzt: jetzt).isEmpty {
+                leerZustand
+            } else {
+                VStack(spacing: DesignSystem.Spacing.s12) {
+                    ForEach(termineDesTages(jetzt: jetzt)) { termin in
+                        terminZeile(termin, jetzt: jetzt, herkunft: herkunft)
+                    }
+                }
+            }
+        } else if case .fehlgeschlagen(let fehler) = kurse.ladeZustand {
             if fehler == .offline {
                 offlineKarte
             } else {
-                fehlerKarte(servertext(fuer: fehler))
+                fehlerKarte(fehler.servertext)
             }
-        } else if kurse.woche == nil {
-            skelett
-        } else if termineDesTages(jetzt: jetzt).isEmpty {
-            leerZustand
         } else {
-            VStack(spacing: DesignSystem.Spacing.s12) {
-                ForEach(termineDesTages(jetzt: jetzt)) { termin in
-                    terminZeile(termin, jetzt: jetzt)
-                }
-            }
+            skelett
         }
     }
 
@@ -466,7 +469,7 @@ struct KurseWochenView: View {
         .buttonStyle(PressButtonStyle())
     }
 
-    /// Zeigt den Servertext woertlich (`text`, aus `servertext(fuer:)`) --
+    /// Zeigt den Servertext woertlich (`text`, aus `APIError.servertext`) --
     /// jetzt moeglich, weil KurseStore.laden(...) den gefangenen APIError
     /// seit dem Review zu Aufgabe 9 durchreicht statt ihn zu verwerfen
     /// (`KurseLadeZustand.fehlgeschlagen(APIError)`). Der zweite Satz sagt,
@@ -501,19 +504,6 @@ struct KurseWochenView: View {
     /// clientseitige Faelle ohne Servertext (siehe APIError-Kommentare);
     /// hier ein knapper, ehrlicher Ersatzsatz statt eines erfundenen
     /// Server-Zitats.
-    private func servertext(fuer fehler: APIError) -> String {
-        switch fehler {
-        case .offline:
-            "Keine Verbindung."
-        case .unauthorized(let message), .validation(let message),
-             .notFound(let message), .conflict(let message), .server(let message):
-            message
-        case .encodingFailed:
-            "Die Anfrage konnte nicht gesendet werden."
-        case .decodingFailed:
-            "Die Antwort deines Studios ließ sich nicht lesen."
-        }
-    }
 
     // MARK: - Terminzeile
 
@@ -570,7 +560,9 @@ struct KurseWochenView: View {
     /// Zurueckgenommen wird jetzt ueber die Flaeche und ueber den Wechsel
     /// des Kursnamens von `text` nach `textMuted`; jede Schrift der Zeile
     /// bleibt dabei ueber der Schwelle.
-    private func terminZeile(_ termin: CourseWeekSession, jetzt: Date) -> some View {
+    private func terminZeile(
+        _ termin: CourseWeekSession, jetzt: Date, herkunft: KurseHerkunft
+    ) -> some View {
         let zustand = KursZustandRechner.zustand(fuer: termin, jetzt: jetzt)
         // woche.timezone, NICHT Zahlformat.uhrzeit: ein Kurstermin gehoert
         // dem Studio, nicht dem Geraet (KursZeit-Kommentar). `kurse.woche`
@@ -606,10 +598,15 @@ struct KurseWochenView: View {
                             .font(.system(size: 12))
                             .foregroundStyle(DesignSystem.Color.textMuted)
                     }
-                    if zeigtBelegung(zustand) {
+                    if zeigtBelegung(zustand), herkunft.zeigtBelegung {
                         // Die Zahl statt eines Balkens (Abweichung 1 oben):
                         // "12 von 16" sagt dasselbe wie ein Fuellstand, ohne
                         // Knappheit als Fehlverhalten einzufaerben.
+                        //
+                        // herkunft.zeigtBelegung ist die zweite Bedingung:
+                        // eine Zahl von vorhin ist keine Zahl mehr (Spec
+                        // 5.2). Der Banner oben sagt, dass sie deshalb
+                        // fehlt -- sie verschwindet nicht wortlos.
                         Text("\(termin.bookedCount) von \(termin.capacity)")
                             .font(.system(size: 11, weight: .bold).monospacedDigit())
                             .foregroundStyle(DesignSystem.Color.textMuted)

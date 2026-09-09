@@ -128,9 +128,10 @@ final class KurseStore {
     /// Laedt den Wochenplan eines Studios fuer das gegebene Fenster.
     ///
     /// Bei Erfolg werden die eigenen Buchungen aus der Antwort gebildet
-    /// und persistiert. Bei Fehler bleibt `eigene` UNANGETASTET -- der
-    /// zuletzt gespeicherte Stand ist genau das, was den Screen dann
-    /// traegt, waehrend `woche` (die fremden Belegungszahlen) nil bleibt.
+    /// und persistiert. Bei Fehler bleiben `eigene` UND `woche`
+    /// unangetastet -- der zuletzt geladene Stand traegt den Screen
+    /// weiter, und `ladeZustand`/`wocheStand` sagen ihm, wie alt er ist
+    /// (KurseHerkunft). Die Belegungszahlen blendet der Screen dann aus.
     func laden(studioId: String, von: Date, bis: Date) async {
         generation += 1
         let eigeneGeneration = generation
@@ -161,8 +162,22 @@ final class KurseStore {
             ladeZustand = .geladen
         } catch {
             guard eigeneGeneration == generation else { return }
-            woche = nil
-            wocheStand = nil
+            // `woche` BLEIBT stehen. Frueher wurde sie hier genullt, und
+            // der Wochenplan wich beim ersten Fehlversuch komplett der
+            // Offline-Karte -- auch dann, wenn er einen vollstaendigen
+            // Plan im Speicher hatte. Weggeworfen wurde damit auch, was
+            // weiter stimmt: Name, Uhrzeit und Raum eines Termins aendern
+            // sich nicht. Was nicht mehr stimmt, ist die Belegung, und die
+            // blendet der Screen ueber KurseHerkunft.zeigtBelegung aus.
+            //
+            // Die Cache-Grenze bleibt davon unberuehrt: `woche` lag immer
+            // schon fuer die Dauer der Sitzung im Speicher, auf die Platte
+            // kommt weiterhin ausschliesslich GespeicherterTermin.
+            //
+            // `wocheStand` bleibt ebenfalls stehen -- er ist jetzt die
+            // Altersangabe zu genau diesen Daten, nicht mehr bloss eine
+            // Frischemarke.
+            //
             // `error` ist hier bereits als APIError getippt (typed throws
             // von loader.courseWeek) -- durchreichen statt verwerfen, sonst
             // kann der View Offline nicht mehr von einem Serverfehler
