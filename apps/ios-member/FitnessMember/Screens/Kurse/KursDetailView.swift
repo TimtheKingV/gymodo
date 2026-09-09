@@ -238,13 +238,42 @@ struct KursDetailView: View {
     @ViewBuilder
     private func screenInhalt(jetzt: Date) -> some View {
         switch quelle(jetzt: jetzt) {
-        case .online(let ansicht):
-            inhalt(ansicht, ohneEmpfang: false)
-        case .offline(let ansicht):
-            inhalt(ansicht, ohneEmpfang: true)
+        case .online(let ansicht), .offline(let ansicht):
+            inhalt(ansicht)
         case .keineDaten:
             keineDatenInhalt
         }
+    }
+
+    // MARK: - Wie alt die Angaben sind
+
+    /// Woran der Hinweis oben haengt.
+    ///
+    /// Am LADEZUSTAND, nicht an der Quelle. Vorher entschied allein, ob
+    /// `kurse.woche` existiert: gab es sie nicht, stand "Ohne Empfang" da
+    /// -- auch nach einem 500er, auf einem Geraet mit vollem Empfang, und
+    /// auch waehrend des allerersten Ladens. KurseStore.laden setzt
+    /// `woche = nil` in JEDEM Fehlerzweig, die Quelle traegt die
+    /// Unterscheidung also gar nicht. `KurseLadeZustand.fehlgeschlagen`
+    /// traegt den APIError und damit sehr wohl.
+    ///
+    /// Drei Screens duerfen auf dieselbe Bedingung nicht drei Antworten
+    /// geben: dieselbe Verzweigung steht in KurseWochenView.inhalt und
+    /// KurseMeineView.herkunft.
+    private enum Herkunft {
+        /// Kein gescheiterter Ladeversuch -- kein Hinweis. Deckt auch das
+        /// erste Laden ab: waehrend `.laedt` ist nichts fehlgeschlagen.
+        case frisch
+        case ohneEmpfang
+        /// Ein Serverfehler. Die Angaben sind alt, aber "kein Empfang"
+        /// waere eine falsche Aussage ueber das Geraet -- und sie schickte
+        /// das Mitglied WLAN suchen statt es erneut versuchen zu lassen.
+        case letzterAbruf
+    }
+
+    private var herkunft: Herkunft {
+        guard case .fehlgeschlagen(let fehler) = kurse.ladeZustand else { return .frisch }
+        return fehler == .offline ? .ohneEmpfang : .letzterAbruf
     }
 
     // MARK: - Datenquelle: online (voll) oder offline (schmal)
@@ -329,11 +358,17 @@ struct KursDetailView: View {
 
     // MARK: - Inhalt bei vorhandenen Daten
 
-    private func inhalt(_ ansicht: TerminAnsicht, ohneEmpfang: Bool) -> some View {
+    private func inhalt(_ ansicht: TerminAnsicht) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                if ohneEmpfang {
-                    InlineBanner(tone: .muted, message: offlineHinweis, icon: "wifi.slash")
+                switch herkunft {
+                case .frisch:
+                    EmptyView()
+                case .ohneEmpfang:
+                    InlineBanner(tone: .muted, message: standHinweis(ohneEmpfang: true), icon: "wifi.slash")
+                case .letzterAbruf:
+                    InlineBanner(tone: .muted, message: standHinweis(ohneEmpfang: false),
+                                 icon: "clock.arrow.circlepath")
                 }
                 kopf(ansicht)
                 eckdaten(ansicht)
@@ -356,15 +391,18 @@ struct KursDetailView: View {
     /// "Ohne Empfang" statt "fehlgeschlagen" (Aufgabenbrief, Hinweis 1) --
     /// mit Stand, sonst waere der Cache eine stille Behauptung (dieselbe
     /// Begruendung wie `KurseFileStore`/`GespeicherteBuchungen.stand`).
-    private var offlineHinweis: String {
+    ///
+    /// Beim Serverfehler faellt die Empfangsbehauptung weg und der Satz
+    /// sagt nur, was er belegen kann: dass die Angaben vom letzten Abruf
+    /// stammen und wann der war.
+    private func standHinweis(ohneEmpfang: Bool) -> String {
+        let anfang = ohneEmpfang ? "Ohne Empfang." : "Diese Angaben stammen vom letzten Abruf."
         guard let stand = kurse.eigene?.stand else {
-            return "Ohne Empfang. Diese Angaben stammen vom letzten Abruf."
+            return ohneEmpfang
+                ? "Ohne Empfang. Diese Angaben stammen vom letzten Abruf."
+                : anfang
         }
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "de_DE")
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return "Ohne Empfang. Stand: \(formatter.string(from: stand))."
+        return "\(anfang) Stand: \(Zahlformat.stand(stand))."
     }
 
     // MARK: - Kopf: Datum + Kursname
@@ -409,11 +447,13 @@ struct KursDetailView: View {
             }
         }
         .background(DesignSystem.Color.surface)
+        // clipShape VOR overlay: umgekehrt schneidet die Maske die
+        // aeussere Haelfte der 1pt-Kontur weg (Vorlage: InlineBanner).
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.neben))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.neben)
                 .stroke(DesignSystem.Color.line, lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.neben))
     }
 
     private var trenner: some View {
@@ -509,10 +549,17 @@ struct KursDetailView: View {
             wartelistenplatz: ansicht.wartelistenplatz)
 
         return VStack(spacing: DesignSystem.Spacing.s8) {
-            if let fehlermeldung {
+            // `hauptaktion != nil` als Bedingung: ohne Knopf ist der
+            // Banner gegenstandslos. Laeuft die Abmeldefrist zwischen
+            // einem gescheiterten Versuch und dem naechsten Tick ab, stand
+            // sonst gleichzeitig der rote Banner und der Fusstext da, der
+            // dasselbe schon sagt -- und es gab keinen Knopf mehr, mit dem
+            // sich der Banner haette loeschen lassen.
+            if let fehlermeldung, hauptaktion != nil {
                 // Servertext woertlich -- nur der Server weiss, ob der
                 // Platz gerade vergeben wurde oder die Frist vorbei ist
-                // (Aufgabenbrief).
+                // (Aufgabenbrief). Ausnahme: `.offline`, siehe
+                // aktionsfehler(_:istBuchen:).
                 InlineBanner(tone: .danger, message: fehlermeldung)
             }
             if let hauptaktion {
@@ -559,9 +606,30 @@ struct KursDetailView: View {
                 try await kurse.stornieren(sessionId: sessionId)
             }
         } catch {
-            fehlermeldung = servertext(fuer: error)
+            fehlermeldung = aktionsfehler(error, istBuchen: hauptaktion.istBuchen)
         }
         aktionLaeuft = false
+    }
+
+    /// Der Aktionspfad braucht fuer `.offline` eine eigene Formulierung,
+    /// genau wie der Ladepfad sie hat -- und aus einem staerkeren Grund:
+    /// hier weiss der Client NICHT, was gilt. `APIClient.execute` bildet
+    /// jeden Transportfehler auf `.offline` ab, also auch die
+    /// Zeitueberschreitung, bei der die Buchung beim Server laengst
+    /// angelegt ist und nur die Antwort verloren ging. "Keine Verbindung."
+    /// allein sagt dann, was nicht stimmt, aber nicht, was gilt (SS5) --
+    /// und "fehlgeschlagen" waere eine Behauptung, die niemand pruefen
+    /// konnte.
+    ///
+    /// Der Satz ueber die zweite Anmeldung ist die Zusicherung, die die
+    /// clientseitig erzeugte Buchungskennung ueberhaupt erst gibt
+    /// (KurseStore.buchungskennungen): ein Wiederholer schickt dieselbe
+    /// Kennung, der Server erkennt sie und legt nichts zweites an.
+    private func aktionsfehler(_ fehler: APIError, istBuchen: Bool) -> String {
+        guard fehler == .offline else { return servertext(fuer: fehler) }
+        return istBuchen
+            ? "Kein Empfang. Ob deine Anmeldung angekommen ist, wissen wir gerade nicht. Versuch es noch einmal, sobald du Empfang hast — eine zweite Anmeldung entsteht dabei nicht."
+            : "Kein Empfang. Ob deine Abmeldung angekommen ist, wissen wir gerade nicht — dein Platz kann noch besetzt sein. Versuch es noch einmal, sobald du Empfang hast."
     }
 
     // MARK: - Kein Termin gefunden: laedt noch, oder das Laden ist gescheitert
@@ -608,7 +676,7 @@ struct KursDetailView: View {
         HStack(spacing: DesignSystem.Spacing.s8) {
             Image(systemName: "wifi.slash")
                 .font(.system(size: 15, weight: .semibold))
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                 Text("Kein Empfang")
                     .font(.system(size: 15, weight: .semibold))
                 Text("Dieser Kurs braucht Empfang, um geladen zu werden.")
@@ -621,11 +689,12 @@ struct KursDetailView: View {
         .foregroundStyle(DesignSystem.Color.danger)
         .padding(DesignSystem.Spacing.s12)
         .background(DesignSystem.Color.danger.opacity(0.1))
+        // clipShape VOR overlay, siehe eckdaten.
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(DesignSystem.Color.danger, lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityElement(children: .combine)
     }
 

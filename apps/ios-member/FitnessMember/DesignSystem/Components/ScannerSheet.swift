@@ -118,13 +118,23 @@ struct ScannerSheet: View {
     private var fuss: some View {
         switch nebenweg {
         case .knopf(let text, let aktion):
-            Button(text) {
+            // .frame(minHeight: 44) INNERHALB des Labels: aussen
+            // zentriert der Button bloss seinen Inhalt in einem 44pt
+            // hohen Kasten, waehrend die Trefferflaeche die Glyphenhoehe
+            // der Schrift behaelt. Dieser Knopf ist der gleichwertig
+            // danebengestellte zweite Weg (SS11) -- er darf nicht stumm
+            // danebengreifen lassen.
+            Button {
                 dismiss()
                 aktion()
+            } label: {
+                Text(text)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .padding(.horizontal, DesignSystem.Spacing.s16)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
             }
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(DesignSystem.Color.text)
-            .frame(minHeight: 44)
             .buttonStyle(PressButtonStyle())
             .padding(.bottom, DesignSystem.Spacing.s24)
 
@@ -167,6 +177,10 @@ struct ScannerSheet: View {
             RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt)
                 .stroke(DesignSystem.Color.line, lineWidth: 1)
         )
+        // Ohne das liest VoiceOver Symbol, Titel und Text als drei
+        // zusammenhanglose Fetzen. Die Karte enthaelt keinen Knopf, das
+        // Zusammenfassen nimmt also nichts Bedienbares weg.
+        .accessibilityElement(children: .combine)
     }
 
     /// Sichtbare Bestaetigung, nicht nur haptische (SS6). Die

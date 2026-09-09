@@ -103,11 +103,14 @@ struct TrainingAbschlussView: View {
         .padding(DesignSystem.Spacing.s12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignSystem.Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.neben))
+        // clipShape VOR overlay: umgekehrt schneidet die Maske die
+        // aeussere Haelfte der Kontur weg und laesst eine halbe uebrig
+        // (Vorlage: InlineBanner).
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.neben)
                 .stroke(DesignSystem.Color.line, lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.neben))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(gesprochen)
     }
@@ -157,8 +160,12 @@ struct TrainingAbschlussView: View {
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.text)
                 HStack(spacing: DesignSystem.Spacing.s8) {
-                    Text("\(zeile.block.satzAnzahl) \(zeile.block.satzAnzahl == 1 ? "Satz" : "Sätze")"
-                         + (zeile.block.gewichtKg.map { " · \(Zahlformat.gewichtMitEinheit($0))" } ?? ""))
+                    // Reihenfolge wie im Artboard: erst das Gewicht,
+                    // dann die Satzzahl ("80,0 kg · 3 Sätze"). Fehlt das
+                    // Gewicht (uneinheitliche Saetze), bleibt die
+                    // Satzzahl allein stehen.
+                    Text((zeile.block.gewichtKg.map { "\(Zahlformat.gewichtMitEinheit($0)) · " } ?? "")
+                         + "\(zeile.block.satzAnzahl) \(zeile.block.satzAnzahl == 1 ? "Satz" : "Sätze")")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                     if gemeldet {
@@ -182,12 +189,15 @@ struct TrainingAbschlussView: View {
         .padding(DesignSystem.Spacing.s16)
         .frame(minHeight: 44)
         .background(DesignSystem.Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        // clipShape VOR overlay: umgekehrt schneidet die Maske die
+        // aeussere Haelfte der Kontur weg und laesst eine halbe uebrig
+        // (Vorlage: InlineBanner).
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(gemeldet ? DesignSystem.Color.warn : DesignSystem.Color.line,
                         lineWidth: gemeldet ? 1.5 : 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityElement(children: .combine)
     }
 

@@ -201,7 +201,7 @@ struct KurseWochenView: View {
     private func standHinweis(jetzt: Date) -> String? {
         guard kurse.woche != nil, let stand = kurse.wocheStand else { return nil }
         guard jetzt.timeIntervalSince(stand) >= Self.frischeGrenze else { return nil }
-        return "Diese Plätze stammen vom letzten Abruf. Stand: \(Zahlformat.stand(stand)). Zum Aktualisieren nach unten ziehen."
+        return "Diese Angaben stammen vom letzten Abruf. Stand: \(Zahlformat.stand(stand)). Zum Aktualisieren nach unten ziehen."
     }
 
     // MARK: - Kopf

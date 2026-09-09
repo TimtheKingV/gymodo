@@ -199,8 +199,14 @@ struct KurseMeineView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 titel
-                if zeigtOfflineHinweis {
-                    InlineBanner(tone: .muted, message: offlineHinweis, icon: "wifi.slash")
+                switch herkunft {
+                case .frisch:
+                    EmptyView()
+                case .ohneEmpfang:
+                    InlineBanner(tone: .muted, message: standHinweis(ohneEmpfang: true), icon: "wifi.slash")
+                case .letzterAbruf:
+                    InlineBanner(tone: .muted, message: standHinweis(ohneEmpfang: false),
+                                 icon: "clock.arrow.circlepath")
                 }
                 inhalt(jetzt: jetzt)
             }
@@ -221,30 +227,46 @@ struct KurseMeineView: View {
     // MARK: - Ohne Empfang: derselbe Inhalt, plus Stand
 
     /// `KurseMeineView` laedt selbst nichts nach -- `kurse.ladeZustand`
-    /// spiegelt den letzten Ladeversuch, ausgeloest vom Wochenplan. Ein
-    /// `.offline`-Fehlschlag dort heisst: was unten steht, ist der
-    /// gespeicherte Stand, kein frischer Abruf. Ein Serverfehler
-    /// (`.fehlgeschlagen` mit anderem Fall) betrifft diesen Screen nicht
-    /// gesondert -- der zeigt ohnehin immer den Cache, online wie offline,
-    /// und der Wochenplan meldet den Serverfehler bereits an seiner
-    /// eigenen Stelle.
-    private var zeigtOfflineHinweis: Bool {
-        if case .fehlgeschlagen(let fehler) = kurse.ladeZustand, fehler == .offline { return true }
-        return false
+    /// spiegelt den letzten Ladeversuch, ausgeloest vom Wochenplan.
+    ///
+    /// Drei Faelle, nicht zwei. Vorher stand der Hinweis ausschliesslich
+    /// bei `.offline`; ein Serverfehler war damit `false`, und die Karten
+    /// aus dem Cache standen OHNE jede Altersangabe da, als waeren sie
+    /// frisch. Begruendet war das mit "der Wochenplan meldet den
+    /// Serverfehler bereits an seiner eigenen Stelle" -- das Mitglied ist
+    /// in diesem Moment aber nicht auf dem Wochenplan. Dieselbe
+    /// Verzweigung wie in KursDetailView.herkunft und
+    /// KurseWochenView.inhalt: drei Screens, eine Antwort auf dieselbe
+    /// Bedingung.
+    private enum Herkunft {
+        case frisch
+        case ohneEmpfang
+        case letzterAbruf
+    }
+
+    private var herkunft: Herkunft {
+        // Ohne Cache gibt es nichts zu datieren -- dann traegt
+        // ungeladenerZustand die ganze Aussage, und ein Banner darueber
+        // saegte dieselbe Sache ein zweites Mal.
+        guard kurse.eigene != nil else { return .frisch }
+        guard case .fehlgeschlagen(let fehler) = kurse.ladeZustand else { return .frisch }
+        return fehler == .offline ? .ohneEmpfang : .letzterAbruf
     }
 
     /// "Ohne Empfang" statt "fehlgeschlagen" (designsystem.md SS5) -- mit
-    /// Stand, sonst waere der Cache eine stille Behauptung (dieselbe
-    /// Begruendung wie KursDetailView.offlineHinweis).
-    private var offlineHinweis: String {
+    /// Stand, sonst waere der Cache eine stille Behauptung. Beim
+    /// Serverfehler faellt die Empfangsbehauptung weg: sie waere falsch
+    /// und schickte das Mitglied WLAN suchen. Wortgleich mit
+    /// KursDetailView.standHinweis(ohneEmpfang:), ueber Zahlformat.stand
+    /// aus derselben Quelle formatiert.
+    private func standHinweis(ohneEmpfang: Bool) -> String {
+        let anfang = ohneEmpfang ? "Ohne Empfang." : "Diese Angaben stammen vom letzten Abruf."
         guard let stand = kurse.eigene?.stand else {
-            return "Ohne Empfang. Diese Angaben stammen vom letzten Abruf."
+            return ohneEmpfang
+                ? "Ohne Empfang. Diese Angaben stammen vom letzten Abruf."
+                : anfang
         }
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "de_DE")
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return "Ohne Empfang. Stand: \(formatter.string(from: stand))."
+        return "\(anfang) Stand: \(Zahlformat.stand(stand))."
     }
 
     // MARK: - Inhalt: bestaetigt leer, ungeladen, oder die drei Abschnitte
@@ -320,7 +342,7 @@ struct KurseMeineView: View {
         HStack(spacing: DesignSystem.Spacing.s8) {
             Image(systemName: "wifi.slash")
                 .font(.system(size: 15, weight: .semibold))
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                 Text("Kein Empfang")
                     .font(.system(size: 15, weight: .semibold))
                 Text("Deine Anmeldungen sind noch nicht bekannt. Verbinde dich mit dem Internet und öffne den Wochenplan, damit sie geladen werden.")
@@ -333,11 +355,16 @@ struct KurseMeineView: View {
         .foregroundStyle(DesignSystem.Color.danger)
         .padding(DesignSystem.Spacing.s12)
         .background(DesignSystem.Color.danger.opacity(0.1))
+        // clipShape VOR overlay: umgekehrt schneidet die Maske die
+        // aeussere Haelfte der 1pt-Kontur weg. Vorlage ist InlineBanner,
+        // das es als einziges schon richtig hatte -- hier und in
+        // KurseWochenView/KursDetailView/ProblemSheet/TrainingRootView/
+        // TrainingAbschlussView jetzt einheitlich.
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(DesignSystem.Color.danger, lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityElement(children: .combine)
     }
 
@@ -439,7 +466,7 @@ struct KurseMeineView: View {
     // MARK: - Datumsblock (Wochentag kurz + Tag), gemeinsam fuer alle drei Karten
 
     private func datumsblock(kuerzel: String, tag: Int, farbe: Color) -> some View {
-        VStack(spacing: 1) {
+        VStack(spacing: DesignSystem.Spacing.s4) {
             Text(kuerzel)
                 .font(DesignSystem.Typography.label)
                 .foregroundStyle(farbe)
@@ -448,7 +475,7 @@ struct KurseMeineView: View {
                 .foregroundStyle(DesignSystem.Color.text)
         }
         .frame(width: 46)
-        .padding(.vertical, 7)
+        .padding(.vertical, DesignSystem.Spacing.s8)
         .background(DesignSystem.Color.surfaceRaised)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
@@ -509,7 +536,7 @@ struct KurseMeineView: View {
                         if let trainer = zeile.termin.instructorName {
                             Text(trainer)
                                 .font(.system(size: 12))
-                                .foregroundStyle(DesignSystem.Color.textFaint)
+                                .foregroundStyle(DesignSystem.Color.textMuted)
                         }
                     }
                     Spacer(minLength: 0)
@@ -546,18 +573,26 @@ struct KurseMeineView: View {
             // Der Fehler haengt an DIESER sessionId -- eine Zeile zeigt nur
             // ihren eigenen Fehler, nie den einer anderen (Review-Fund M2:
             // "muss erkennbar sein, zu welcher Zeile er gehoert").
-            if case .fehlgeschlagen(let fehler) = abmeldeZustand(zeile.termin.sessionId) {
+            //
+            // `!verstrichen` als zweite Bedingung: mit der Frist
+            // verschwindet der Abmelden-Knopf, und mit ihm der einzige
+            // Weg, den Banner wieder loszuwerden (er wird erst beim
+            // naechsten Versuch geloescht). Sonst stuenden auf derselben
+            // Karte gleichzeitig "Der Platz ist inzwischen vergeben." und
+            // der Fusstext "Die Abmeldefrist ist verstrichen. Dein Platz
+            // bleibt reserviert." -- gegenstandslos und widerspruechlich.
+            if !verstrichen, case .fehlgeschlagen(let fehler) = abmeldeZustand(zeile.termin.sessionId) {
                 InlineBanner(tone: .danger, message: fehler)
                     .padding(.horizontal, DesignSystem.Spacing.s12)
                     .padding(.bottom, DesignSystem.Spacing.s12)
             }
         }
         .background(DesignSystem.Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(DesignSystem.Color.accent, lineWidth: 1.5)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
 
     /// `KursZustandRechner.abmeldenBis` mit der Frist DIESES Studios
@@ -620,8 +655,8 @@ struct KurseMeineView: View {
             // Servertext woertlich -- nur der Server weiss, ob der Platz
             // schon anderweitig vergeben wurde oder die Frist gerade eben
             // verstrichen ist (Aufgabenbrief Task 10, sinngemaess auch
-            // hier).
-            fehlermeldungen[sessionId] = servertext(fuer: error)
+            // hier). Ausnahme: `.offline`, siehe abmeldeFehler(_:).
+            fehlermeldungen[sessionId] = abmeldeFehler(error)
         }
         stornierendeIds.remove(sessionId)
     }
@@ -653,7 +688,7 @@ struct KurseMeineView: View {
                         if let trainer = zeile.termin.instructorName {
                             Text(trainer)
                                 .font(.system(size: 12))
-                                .foregroundStyle(DesignSystem.Color.textFaint)
+                                .foregroundStyle(DesignSystem.Color.textMuted)
                         }
                     }
                     Spacer(minLength: 0)
@@ -690,11 +725,11 @@ struct KurseMeineView: View {
             .padding(DesignSystem.Spacing.s12)
         }
         .background(DesignSystem.Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(DesignSystem.Color.warn.opacity(0.33), lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
 
     // MARK: - "Nächste Woche" -- reiner Vorschau-Eintrag, keine Aktion
@@ -706,7 +741,11 @@ struct KurseMeineView: View {
             beiAuswahl(zeile.termin.sessionId)
         } label: {
             HStack(alignment: .center, spacing: DesignSystem.Spacing.s12) {
-                datumsblock(kuerzel: block.kuerzel, tag: block.tag, farbe: DesignSystem.Color.textFaint)
+                // textMuted, nicht textFaint: das Kuerzel steht bei 11pt
+                // (Typography.label) und ist tragend -- textFaint ist erst
+                // ab 15pt oder fuer nicht tragenden Text zugelassen
+                // (designsystem.md SS2).
+                datumsblock(kuerzel: block.kuerzel, tag: block.tag, farbe: DesignSystem.Color.textMuted)
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                     Text(zeile.termin.name)
                         .font(.system(size: 16, weight: .bold))
@@ -717,7 +756,7 @@ struct KurseMeineView: View {
                     if let trainer = zeile.termin.instructorName {
                         Text(trainer)
                             .font(.system(size: 12))
-                            .foregroundStyle(DesignSystem.Color.textFaint)
+                            .foregroundStyle(DesignSystem.Color.textMuted)
                     }
                 }
                 Spacer(minLength: 0)
@@ -730,11 +769,11 @@ struct KurseMeineView: View {
         }
         .buttonStyle(PressButtonStyle())
         .background(DesignSystem.Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(DesignSystem.Color.line, lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityElement(children: .combine)
         .accessibilityHint("Öffnet die Kursdetails")
     }
@@ -744,6 +783,19 @@ struct KurseMeineView: View {
     /// Wie KurseWochenView.servertext(fuer:)/KursDetailView.servertext(fuer:)
     /// -- dieselbe Formulierung fuer denselben APIError-Fall, hier fuer
     /// einen fehlgeschlagenen Abmelden-Versuch aus der Zeile heraus.
+    /// `.offline` gehoert im Aktionspfad nicht in dieselbe Funktion wie
+    /// die Servertexte -- genauso, wie es im Ladepfad herausgezogen ist.
+    /// "Keine Verbindung." sagt, was nicht stimmt, aber nicht, was gilt
+    /// (SS5), und ausgerechnet hier weiss der Client es nicht: jeder
+    /// Transportfehler wird zu `.offline`, auch die Zeitueberschreitung,
+    /// bei der die Abmeldung beim Server laengst durch ist. Auf dem
+    /// Screen, dessen ganzer Zweck es ist, den eigenen Platz ohne Empfang
+    /// zu kennen, ist das der wichtigste Satz ueberhaupt.
+    private func abmeldeFehler(_ fehler: APIError) -> String {
+        guard fehler == .offline else { return servertext(fuer: fehler) }
+        return "Kein Empfang. Ob deine Abmeldung angekommen ist, wissen wir gerade nicht — dein Platz kann noch besetzt sein. Versuch es noch einmal, sobald du Empfang hast."
+    }
+
     private func servertext(fuer fehler: APIError) -> String {
         switch fehler {
         case .offline:

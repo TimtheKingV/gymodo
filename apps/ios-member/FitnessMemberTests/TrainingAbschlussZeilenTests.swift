@@ -94,4 +94,56 @@ struct TrainingAbschlussZeilenTests {
 
         #expect(zeilen.map(\.block.machineId) == ["m1", "m2", "m3"])
     }
+
+    /// Zwei Uebungen an DERSELBEN Maschine -- die Zuordnung darf nicht
+    /// ueber machineId allein gehen. Genau diese Fehlerklasse hat in
+    /// Sub-Projekt 2 einen Screen die Werte einer Uebung unter dem Namen
+    /// einer anderen zeigen lassen; ein Vorschlag am falschen Block ist
+    /// eine Zahl, die das Mitglied auflegt.
+    @Test func zweiUebungenAnDerselbenMaschineBekommenJedeIhrenEigenenVorschlag() {
+        let bloecke = [
+            block("m1", "e1", gewicht: 80),
+            block("m1", "e2", gewicht: 40),
+        ]
+        // Der Vorschlag der ZWEITEN Uebung steht zuerst: `first(where:)`
+        // wuerde bei einem Vergleich allein ueber machineId hier den
+        // falschen greifen -- und zwar fuer beide Zeilen denselben.
+        let vorschlaege = [
+            vorschlag("m1", "e2", delta: -2.5, reasonCode: "korridor_unten_verfehlt"),
+            vorschlag("m1", "e1", delta: 2.5, reasonCode: "korridor_oben_erreicht"),
+        ]
+
+        let zeilen = AbschlussZeile.zeilen(bloecke: bloecke, vorschlaege: vorschlaege)
+
+        #expect(zeilen.count == 2)
+        #expect(zeilen[0].block.exerciseId == "e1")
+        #expect(zeilen[0].anzeige == .delta(2.5))
+        #expect(zeilen[1].block.exerciseId == "e2")
+        #expect(zeilen[1].anzeige == .delta(-2.5))
+    }
+
+    /// Die Gegenprobe: dieselbe UEBUNG an zwei Maschinen. Auch hier
+    /// entscheidet das Paar, nicht eine Haelfte davon.
+    @Test func dieselbeUebungAnZweiMaschinenBleibtAuseinandergehalten() {
+        let bloecke = [block("m1", "e1"), block("m2", "e1")]
+        let vorschlaege = [
+            vorschlag("m2", "e1", reasonCode: "im_korridor"),
+            vorschlag("m1", "e1", delta: 2.5, reasonCode: "korridor_oben_erreicht"),
+        ]
+
+        let zeilen = AbschlussZeile.zeilen(bloecke: bloecke, vorschlaege: vorschlaege)
+
+        #expect(zeilen[0].anzeige == .delta(2.5))
+        #expect(zeilen[1].anzeige == .halten)
+    }
+
+    /// Und: zwei Bloecke an derselben Maschine haben verschiedene ids --
+    /// sonst zeichnete ForEach in "Beim naechsten Mal" nur einen von
+    /// beiden oder verwechselte sie beim Neuzeichnen.
+    @Test func zweiBloeckeAnDerselbenMaschineHabenVerschiedeneIds() {
+        let zeilen = AbschlussZeile.zeilen(
+            bloecke: [block("m1", "e1"), block("m1", "e2")], vorschlaege: [])
+
+        #expect(zeilen[0].id != zeilen[1].id)
+    }
 }

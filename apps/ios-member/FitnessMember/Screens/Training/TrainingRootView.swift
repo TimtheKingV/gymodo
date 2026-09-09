@@ -43,9 +43,10 @@ struct TrainingRootView: View {
     /// abgelaufeneSession() gerendert und im selben Atemzug quittiert,
     /// verschwaende er, bevor das Mitglied ihn liest.
     ///
-    /// Die drei Stellen: das .task(id: context.date) in der TimelineView
-    /// unten (Kalteinstieg UND der selbsttaetige Ablauf waehrend die App
-    /// offen bleibt -- M2b), und die beiden Zweige von beenden() (manuelles
+    /// Die drei Stellen: das .task(id: UmschaltTick(...)) in der
+    /// TimelineView unten (Kalteinstieg UND der selbsttaetige Ablauf
+    /// waehrend die App offen bleibt -- M2b), und die beiden Zweige von
+    /// beenden() (manuelles
     /// Beenden setzt false, der Fehlerfall dort setzt true). Er bleibt
     /// stehen, bis die Wurzel verlassen wird -- ODER bis er selbst nicht
     /// mehr gilt: beenden() setzt ihn beim manuellen Beenden zurueck, der
@@ -100,9 +101,13 @@ struct TrainingRootView: View {
                     // gespeicherteSession geloescht, jeder weitere Tick
                     // liefert deshalb von selbst nichts mehr -- ohne
                     // eigenes Merker-Flag genau einmal. Deckt zugleich den
-                    // Kalteinstieg ab (erster Tick kommt sofort, nicht
-                    // erst nach 60 s), das gesonderte .task unten braucht
-                    // die Pruefung deshalb nicht mehr.
+                    // Kalteinstieg ab -- aber ueber das ERSCHEINEN, nicht
+                    // ueber einen Tick: .task(id:) laeuft, sobald die View
+                    // im Baum auftaucht, und danach bei jeder Aenderung
+                    // der ID. Wer die ID spaeter gegen etwas tauscht, das
+                    // nicht am Erscheinen haengt, verliert damit den
+                    // Kalteinstieg -- und das gesonderte .task unten
+                    // braucht die Pruefung deswegen nicht.
                     .task(id: UmschaltTick(datum: context.date, wach: neuAuswerten)) {
                         guard sessions.abgelaufeneSession() != nil else { return }
                         zeigeAusgelaufenHinweis = true
@@ -133,9 +138,10 @@ struct TrainingRootView: View {
             // Sub-Projekt 1 hat ihn nur fuer das Banner auf LoginMail genutzt.
             // Deckt den Kalteinstieg ab: der Token liegt beim ersten Aufbau
             // dieser View schon vor. Die ggf. abgelaufene Einheit liest und
-            // quittiert das .task(id: context.date) in der TimelineView oben
-            // -- dessen erster Tick kommt genauso beim Kalteinstieg, deshalb
-            // reicht EIN Ort fuer diese Pruefung.
+            // quittiert das .task(id: UmschaltTick(...)) in der TimelineView
+            // oben -- das laeuft beim ERSCHEINEN der View, nicht erst beim
+            // ersten Tick, und deckt den Kalteinstieg damit genauso ab.
+            // Deshalb reicht EIN Ort fuer diese Pruefung.
             .task {
                 if let token = pendingTag.consume() { oeffneToken(token) }
             }
@@ -433,12 +439,15 @@ struct TrainingRootView: View {
         .padding(DesignSystem.Spacing.s16)
         .frame(minHeight: 44)
         .background(DesignSystem.Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        // clipShape VOR overlay: umgekehrt schneidet die Maske die
+        // aeussere Haelfte der Kontur weg und laesst eine halbe uebrig
+        // (Vorlage: InlineBanner).
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(gemeldet ? DesignSystem.Color.warn : DesignSystem.Color.line,
                         lineWidth: gemeldet ? 1.5 : 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityElement(children: .combine)
         .accessibilityHint("Öffnet das Gerät")
     }
