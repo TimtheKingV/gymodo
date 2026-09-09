@@ -5,9 +5,14 @@ es beweist nichts über das, was auf dem Bildschirm passiert, und nichts über
 den Server gegen echtes Postgres. Diese Datei liegt bewusst im Repository und
 nicht im Arbeitsverzeichnis, damit sie das Löschen des Worktrees überlebt.
 
-Stand: 313 iOS-Tests in 46 Suiten, 130 Domänentests, `pnpm typecheck` sauber,
+Stand: 319 iOS-Tests in 46 Suiten, 130 Domänentests, `pnpm typecheck` sauber,
 genau die vier vorbestehenden Warnungen aus Sub-Projekt 1
-(`QRScannerController.swift` ×3, `SupabaseAuthBackend.swift` ×1).
+(`QRScannerController.swift` ×3, `SupabaseAuthBackend.swift` ×1). Der
+Fix-Durchgang zum Ende von Sub-Projekt 4 hat sechs Befunde der
+Branch-Review behoben (Home-Nachladen, der gemerkte Vorname bei sofortiger
+Session, der Store-Reset bei abgelaufener Session, die durchgereichte
+Postgres-Meldung in `profil.ts`, zwei zeitzonenabhängige Testerwartungen)
+und dabei sechs Tests ergänzt (313 → 319).
 
 Auf dieser Maschine ist Docker nicht installiert. Die lokale
 Supabase-Instanz lief deshalb nie, Migration `0039_profiles_insert_own.sql`
@@ -28,6 +33,12 @@ das als erster Punkt vor den vierzehn manuellen Schritten.
    `domain-progress.test.ts` sowie die komplette `api-profil.test.ts`. Erst
    danach ist die Serverhälfte dieses Sub-Projekts gegen echtes Postgres
    geprüft, nicht nur gelesen.
+
+   Daraus folgt die Reihenfolge des Rollouts: **zuerst Migration 0039,
+   danach das Web-Deploy, erst danach der iOS-Build.** `BootstrapResponse.member`
+   ist nicht optional — ein Client, der einen Server ohne dieses Feld
+   erreicht, scheitert am Dekodieren der gesamten Bootstrap-Antwort und
+   kommt nie über den Ladezustand hinaus.
 
 ## Die vierzehn Schritte
 
@@ -107,10 +118,12 @@ das als erster Punkt vor den vierzehn manuellen Schritten.
   auf einem Gerät kann das zu leicht springenden Achsenbreiten beim
   Fensterwechsel führen.
 
-- **`SessionStore.signOut()` löscht den gemerkten Vornamen nicht.** Heute
-  nachweislich folgenlos, weil ihn nur der Registrierungsablauf liest — ein
-  abgemeldetes und neu registriertes Konto überschreibt ihn ohnehin. Wird
-  erst relevant, sollte der Wert je an anderer Stelle gelesen werden.
+- ~~**`SessionStore.signOut()` löscht den gemerkten Vornamen nicht.**~~
+  Behoben im Fix-Durchgang zum Ende von Sub-Projekt 4: `signOut()` löscht
+  `vorgemerkterName` jetzt, und derselbe Durchgang hat den zweiten,
+  schwereren Fund behoben, der diesen hier erst sichtbar machte — bei
+  sofortiger Session (Supabase ohne Bestätigungspflicht) schrieb niemand
+  den Namen je, siehe `SessionStore.vorgemerktenNamenSchreiben(mit:)`.
 
 - **Der Profil-Footer liest `CFBundleShortVersionString` direkt aus dem
   Bundle statt über `AppConfig`** (`ProfilRootView.swift`). Die drei
@@ -118,10 +131,10 @@ das als erster Punkt vor den vierzehn manuellen Schritten.
   die Versionsnummer nicht — inkonsequent, aber ohne Fehlerfall, weil der
   Schlüssel von iOS selbst garantiert gefüllt ist.
 
-- **`profil.ts` reicht die rohe Postgres-Fehlermeldung in
-  `DomainError("internal", error.message)` durch**, wovor der Kommentar in
-  `respond.ts` ausdrücklich warnt („eine durchgereichte Datenbankmeldung
-  verrät Tabellennamen, Spalten und manchmal fremde Werte"). Risiko hier
-  gering, weil unter RLS in diesem Pfad nur `id` und `display_name`
-  beschreibbar sind — trotzdem dieselbe Regel verletzt, die anderswo im
-  Projekt gilt.
+- ~~**`profil.ts` reicht die rohe Postgres-Fehlermeldung in
+  `DomainError("internal", error.message)` durch**~~ Behoben im
+  Fix-Durchgang zum Ende von Sub-Projekt 4: die Meldung ist jetzt ein
+  fester deutscher Satz. Genau dieser Fund wurde konkret, weil die
+  wahrscheinlichste Meldung auf diesem Pfad vor Migration 0039 lautet
+  „new row violates row-level security policy for table \"profiles\"" —
+  siehe die Rollout-Reihenfolge in Punkt 0 oben.
