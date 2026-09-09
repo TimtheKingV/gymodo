@@ -107,7 +107,22 @@ struct UebungsfortschrittView: View {
             }
         }
         .chartYScale(domain: Fortschrittsfenster.achsenbereich(punkte))
-        .chartXAxis { AxisMarks { AxisGridLine().foregroundStyle(DesignSystem.Color.line) } }
+        // Achsenbeschriftung in text-faint (SS13) -- eine andere Regel als
+        // die direkte Beschriftung an den Datenpunkten oben: beide stehen
+        // nebeneinander. Kurzform "9. Jul", keine Wochentage -- die
+        // ausgeschriebene Form gehoert der Rohwerteliste unter dem
+        // Diagramm. Keine feste Anzahl von Marken erzwungen: Swift Charts
+        // waehlt sie passend zur Spannweite, ein fester Wert wuerde sie
+        // bei einem kurzen oder langen Zeitraum falsch platzieren.
+        .chartXAxis {
+            AxisMarks {
+                AxisGridLine().foregroundStyle(DesignSystem.Color.line)
+                AxisValueLabel(
+                    format: .dateTime.day().month(.abbreviated).locale(Locale(identifier: "de_DE"))
+                )
+                .foregroundStyle(DesignSystem.Color.textFaint)
+            }
+        }
         .chartYAxis {
             AxisMarks { value in
                 AxisGridLine().foregroundStyle(DesignSystem.Color.line)
