@@ -53,6 +53,15 @@ final class KurseStore {
     private(set) var ladeZustand: KurseLadeZustand = .bereit
     private(set) var eigene: GespeicherteBuchungen?
 
+    /// Wann `woche` tatsaechlich vom Server kam. Die Gegenstelle zu
+    /// `GespeicherteBuchungen.stand`, nur fuer den Speicher: `woche`
+    /// enthaelt Belegungszahlen, und die veralten binnen Minuten (Spec
+    /// 5.2). Ohne diesen Zeitpunkt koennte der Wochenplan nicht sagen, wie
+    /// alt seine Zahlen sind -- er zeigte eine Zahl von vorhin, als waere
+    /// sie aktuell, und genau das verbietet die Spec. Bewusst NICHT auf
+    /// Platte: die Zahl selbst kommt dort ohnehin nie hin.
+    private(set) var wocheStand: Date?
+
     /// Wie oft laden(...) tatsaechlich gelaufen ist -- existiert nur fuer
     /// KurseStoreTests.einErfolgreichesBuchenLaedtNeu, das beweisen muss,
     /// dass buchen(...) nach einem Erfolg selbst neu laedt. Keine
@@ -138,6 +147,7 @@ final class KurseStore {
             // ueberschreiben.
             guard eigeneGeneration == generation else { return }
             woche = neueWoche
+            wocheStand = Date()
             // Nur die schmale, eigene Sicht darf auf Platte -- niemals die
             // volle CourseWeekSession mit den Belegungszahlen fremder
             // Termine (siehe GespeicherterTermin).
@@ -152,6 +162,7 @@ final class KurseStore {
         } catch {
             guard eigeneGeneration == generation else { return }
             woche = nil
+            wocheStand = nil
             // `error` ist hier bereits als APIError getippt (typed throws
             // von loader.courseWeek) -- durchreichen statt verwerfen, sonst
             // kann der View Offline nicht mehr von einem Serverfehler
@@ -250,6 +261,7 @@ final class KurseStore {
         // aktuelle und laden(...) verwirft sie selbst (siehe dort).
         generation += 1
         woche = nil
+        wocheStand = nil
         ladeZustand = .bereit
         eigene = nil
         buchungskennungen = [:]

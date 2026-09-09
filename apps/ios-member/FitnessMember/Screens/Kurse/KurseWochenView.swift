@@ -112,6 +112,8 @@ struct KurseWochenView: View {
 
     @Environment(KurseStore.self) private var kurse
     @Environment(CatalogStore.self) private var katalog
+    @Environment(NetzwerkMonitor.self) private var netz
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// nil, solange niemand einen Tag angetippt hat -- dann gilt der
@@ -121,13 +123,36 @@ struct KurseWochenView: View {
     /// wenn die Mitternacht waehrend einer offenen App-Sitzung vergeht.
     @State private var gewaehlterTagId: String?
 
+    /// Ab wann eine Belegungszahl nicht mehr als frisch durchgeht. Spec 5.2
+    /// nennt den Grund: „12 von 16" veraltet binnen Minuten. Fuenf Minuten
+    /// ist die Grenze, ab der der Screen es sagt statt es zu verschweigen
+    /// -- nicht die Grenze, ab der die Zahl falsch WIRD (das weiss niemand),
+    /// sondern die, ab der sie ohne Datum eine Behauptung waere.
+    private static let frischeGrenze: TimeInterval = 5 * 60
+
+    /// 60-Sekunden-Kadenz statt einer einmalig beim Aufbau gelesenen
+    /// Date() -- dasselbe Muster wie in KursDetailView und KurseMeineView,
+    /// und aus demselben Grund: @Observable loest kein Neuzeichnen aus,
+    /// wenn bloss Zeit vergeht. Ohne den Tick bliebe ein begonnener Kurs
+    /// als buchbar samt Belegungszahl stehen (und widerspraeche dem
+    /// Kursdetail, das die Uhr hat), und ueber Mitternacht markierte der
+    /// Wochenstreifen weiter gestern als "heute".
     var body: some View {
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            screenInhalt(jetzt: context.date)
+        }
+    }
+
+    private func screenInhalt(jetzt: Date) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopf
-                wochenstreifen
-                heuteUndMeineKurse
-                inhalt
+                wochenstreifen(jetzt: jetzt)
+                heuteUndMeineKurse(jetzt: jetzt)
+                if let hinweis = standHinweis(jetzt: jetzt) {
+                    InlineBanner(tone: .muted, message: hinweis, icon: "clock.arrow.circlepath")
+                }
+                inhalt(jetzt: jetzt)
                 fussnote
             }
             .padding(.horizontal, 20)
@@ -136,13 +161,47 @@ struct KurseWochenView: View {
             .animation(reduceMotion ? nil : DesignSystem.Motion.oeffnen, value: gewaehlterTagId)
         }
         .background(DesignSystem.Color.bg)
-        .task(id: katalog.activeStudioId) {
-            guard let studioId = katalog.activeStudioId else { return }
-            let jetzt = Date()
-            let von = KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zeitzoneFuerAnfrage)
-            let bis = KurseWochenBerechnung.naechsterMontag(enthaelt: jetzt, zeitzone: zeitzoneFuerAnfrage)
-            await kurse.laden(studioId: studioId, von: von, bis: bis)
+        // Ziehen zum Aktualisieren: der Weg, den das Mitglied ohne
+        // Anleitung findet, und der einzige, der auch dann noch da ist,
+        // wenn der Plan steht und bloss alt ist.
+        .refreshable { await neuLaden() }
+        .task(id: katalog.activeStudioId) { await neuLaden() }
+        // Ein Reconnect-Ausloeser. Ohne ihn blieb "Kein Empfang" stehen,
+        // bis das Mitglied den Tab verliess und zurueckkam -- und der
+        // Screen sagte auch nicht, dass es das tun soll.
+        .onChange(of: netz.istOnline) { _, istOnline in
+            guard istOnline else { return }
+            Task { await neuLaden() }
         }
+        // Rueckkehr aus dem Hintergrund. .task(id:) laeuft dabei nicht
+        // erneut; ohne diesen Ausloeser stuende die Belegungszahl von vor
+        // zwei Stunden unveraendert da.
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task { await neuLaden() }
+        }
+    }
+
+    /// Der eine Ladeweg des Screens -- alle vier Ausloeser (erster Aufbau,
+    /// Ziehen, Reconnect, Rueckkehr aus dem Hintergrund) gehen hier durch,
+    /// damit das Anfragefenster nicht an vier Stellen berechnet wird.
+    private func neuLaden() async {
+        guard let studioId = katalog.activeStudioId else { return }
+        let jetzt = Date()
+        let von = KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zeitzoneFuerAnfrage)
+        let bis = KurseWochenBerechnung.naechsterMontag(enthaelt: jetzt, zeitzone: zeitzoneFuerAnfrage)
+        await kurse.laden(studioId: studioId, von: von, bis: bis)
+    }
+
+    /// Sagt, wie alt die Zahlen sind, sobald sie nicht mehr frisch sind --
+    /// und was dagegen hilft. Solange sie frisch sind, steht hier nichts:
+    /// ein Datum ueber einer gerade geholten Zahl waere Rauschen.
+    /// Dieselbe "Stand: ..."-Formulierung wie in KursDetailView und
+    /// KurseMeineView, ueber Zahlformat.stand aus einer Quelle.
+    private func standHinweis(jetzt: Date) -> String? {
+        guard kurse.woche != nil, let stand = kurse.wocheStand else { return nil }
+        guard jetzt.timeIntervalSince(stand) >= Self.frischeGrenze else { return nil }
+        return "Diese Plätze stammen vom letzten Abruf. Stand: \(Zahlformat.stand(stand)). Zum Aktualisieren nach unten ziehen."
     }
 
     // MARK: - Kopf
@@ -178,26 +237,26 @@ struct KurseWochenView: View {
 
     // MARK: - Wochenstreifen -- die eine Akzentflaeche des Screens
 
-    private var wochentage: [KurseWochentag] {
-        KurseWochenBerechnung.wochentage(enthaelt: Date(), zeitzone: zeitzoneFuerAnfrage)
+    private func wochentage(jetzt: Date) -> [KurseWochentag] {
+        KurseWochenBerechnung.wochentage(enthaelt: jetzt, zeitzone: zeitzoneFuerAnfrage)
     }
 
-    private var heutigerTagId: String {
-        wochentage.first { $0.istHeute }?.id ?? ""
+    private func heutigerTagId(jetzt: Date) -> String {
+        wochentage(jetzt: jetzt).first { $0.istHeute }?.id ?? ""
     }
 
-    private var gewaehlterTag: String {
-        gewaehlterTagId ?? heutigerTagId
+    private func gewaehlterTag(jetzt: Date) -> String {
+        gewaehlterTagId ?? heutigerTagId(jetzt: jetzt)
     }
 
-    private var wochenstreifen: some View {
+    private func wochenstreifen(jetzt: Date) -> some View {
         HStack(spacing: DesignSystem.Spacing.s4) {
-            ForEach(wochentage) { tag in
-                let ausgewaehlt = tag.id == gewaehlterTag
+            ForEach(wochentage(jetzt: jetzt)) { tag in
+                let ausgewaehlt = tag.id == gewaehlterTag(jetzt: jetzt)
                 Button {
                     gewaehlterTagId = tag.id
                 } label: {
-                    VStack(spacing: 5) {
+                    VStack(spacing: DesignSystem.Spacing.s4) {
                         Text(tag.kuerzel.uppercased())
                             .font(.system(size: 10, weight: .heavy))
                             .tracking(1)
@@ -220,25 +279,36 @@ struct KurseWochenView: View {
 
     // MARK: - "Heute · Donnerstag" und "Meine Kurse"
 
-    private var tagesueberschrift: String {
-        guard let tag = wochentage.first(where: { $0.id == gewaehlterTag }) else { return "" }
+    private func tagesueberschrift(jetzt: Date) -> String {
+        let gewaehlt = gewaehlterTag(jetzt: jetzt)
+        guard let tag = wochentage(jetzt: jetzt).first(where: { $0.id == gewaehlt }) else { return "" }
         return tag.istHeute ? "Heute · \(tag.wochentagVoll)" : tag.wochentagVoll
     }
 
-    private var heuteUndMeineKurse: some View {
+    private func heuteUndMeineKurse(jetzt: Date) -> some View {
         HStack {
-            Text(tagesueberschrift.uppercased())
+            Text(tagesueberschrift(jetzt: jetzt).uppercased())
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
             Spacer()
             // Kein Akzent -- die eine Akzentflaeche des Screens ist der
             // gewaehlte Tag (siehe Abweichung 2 oben), nicht dieser Link.
-            Button("Meine Kurse", action: beiMeineKurse)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .frame(minHeight: 44)
-                .buttonStyle(PressButtonStyle())
+            //
+            // .frame(minHeight: 44) steht INNERHALB des Labels, nicht
+            // aussen: aussen zentriert der Button bloss seinen Inhalt in
+            // einem 44pt hohen Kasten, waehrend die Trefferflaeche die
+            // Glyphenhoehe der 13pt-Schrift behaelt (~17pt). Und dieser
+            // Knopf ist der einzige Weg zu "Meine Kurse" -- es gibt weder
+            // Tab noch Deep Link.
+            Button(action: beiMeineKurse) {
+                Text("Meine Kurse")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(PressButtonStyle())
         }
     }
 
@@ -258,7 +328,7 @@ struct KurseWochenView: View {
     /// Anfrage selbst laengst mit .offline gescheitert ist -- der
     /// tatsaechlich gefangene Fehler ist die verlässlichere Quelle.
     @ViewBuilder
-    private var inhalt: some View {
+    private func inhalt(jetzt: Date) -> some View {
         if case .fehlgeschlagen(let fehler) = kurse.ladeZustand {
             if fehler == .offline {
                 offlineKarte
@@ -267,20 +337,21 @@ struct KurseWochenView: View {
             }
         } else if kurse.woche == nil {
             skelett
-        } else if termineDesTages.isEmpty {
+        } else if termineDesTages(jetzt: jetzt).isEmpty {
             leerZustand
         } else {
             VStack(spacing: DesignSystem.Spacing.s12) {
-                ForEach(termineDesTages) { termin in
-                    terminZeile(termin)
+                ForEach(termineDesTages(jetzt: jetzt)) { termin in
+                    terminZeile(termin, jetzt: jetzt)
                 }
             }
         }
     }
 
-    private var termineDesTages: [CourseWeekSession] {
-        (kurse.woche?.sessions ?? [])
-            .filter { $0.localDay == gewaehlterTag }
+    private func termineDesTages(jetzt: Date) -> [CourseWeekSession] {
+        let gewaehlt = gewaehlterTag(jetzt: jetzt)
+        return (kurse.woche?.sessions ?? [])
+            .filter { $0.localDay == gewaehlt }
             .sorted {
                 (KursZeitpunkt.parse($0.startsAt) ?? .distantPast)
                     < (KursZeitpunkt.parse($1.startsAt) ?? .distantPast)
@@ -324,28 +395,55 @@ struct KurseWochenView: View {
     /// erreichbar (der Link oben ist reiner Client-Zustand, kein
     /// Netzzugriff), das sagt der zweite Satz ausdruecklich.
     private var offlineKarte: some View {
-        HStack(spacing: DesignSystem.Spacing.s8) {
-            Image(systemName: "wifi.slash")
-                .font(.system(size: 15, weight: .semibold))
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Kein Empfang")
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            HStack(spacing: DesignSystem.Spacing.s8) {
+                Image(systemName: "wifi.slash")
                     .font(.system(size: 15, weight: .semibold))
-                Text("Der Wochenplan braucht Empfang. „Meine Kurse“ bleibt verfügbar.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                    .lineSpacing(3)
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                    Text("Kein Empfang")
+                        .font(.system(size: 15, weight: .semibold))
+                    Text("Der Wochenplan braucht Empfang. „Meine Kurse“ bleibt verfügbar.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .lineSpacing(3)
+                }
+                Spacer(minLength: 0)
             }
-            Spacer(minLength: 0)
+            .accessibilityElement(children: .combine)
+            wiederholenKnopf
         }
         .foregroundStyle(DesignSystem.Color.danger)
         .padding(DesignSystem.Spacing.s12)
+        // clipShape VOR overlay: umgekehrt schnitte die Maske die aeussere
+        // Haelfte der 1pt-Kontur weg und liesse eine halbe uebrig
+        // (dieselbe Reihenfolge wie in InlineBanner).
         .background(DesignSystem.Color.danger.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(DesignSystem.Color.danger, lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .accessibilityElement(children: .combine)
+    }
+
+    /// Der Weg zurueck aus beiden Fehlerkarten. Ohne ihn blieb "Kein
+    /// Empfang" stehen, bis das Mitglied von selbst darauf kam, den Tab zu
+    /// wechseln -- und der Screen sagte nicht, dass das hilft.
+    /// Rueckmeldung braucht der Knopf keine eigene: ein Versuch setzt
+    /// `ladeZustand` auf `.laedt`, womit die Karte dem beschrifteten
+    /// Skelett weicht ("Kurse werden geladen").
+    private var wiederholenKnopf: some View {
+        Button {
+            Task { await neuLaden() }
+        } label: {
+            Text("Erneut versuchen")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(DesignSystem.Color.text)
+                .padding(.horizontal, DesignSystem.Spacing.s16)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+                .overlay(Capsule().stroke(DesignSystem.Color.line, lineWidth: 1))
+        }
+        .buttonStyle(PressButtonStyle())
     }
 
     /// Zeigt den Servertext woertlich (`text`, aus `servertext(fuer:)`) --
@@ -355,14 +453,18 @@ struct KurseWochenView: View {
     /// was trotzdem gilt (designsystem.md SS5: Fehler sagen, was falsch
     /// ist UND was gilt).
     private func fehlerKarte(_ text: String) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-            Text(text)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(DesignSystem.Color.danger)
-            Text("Deine eigenen Kurse bleiben über „Meine Kurse“ sichtbar.")
-                .font(.system(size: 13))
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .lineSpacing(3)
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
+                Text(text)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.danger)
+                Text("Deine eigenen Kurse bleiben über „Meine Kurse“ sichtbar.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .lineSpacing(3)
+            }
+            .accessibilityElement(children: .combine)
+            wiederholenKnopf
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(DesignSystem.Spacing.s16)
@@ -370,7 +472,6 @@ struct KurseWochenView: View {
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(DesignSystem.Color.danger, lineWidth: 1)
         )
-        .accessibilityElement(children: .combine)
     }
 
     /// Der Servertext woertlich fuer alles, was tatsaechlich vom Server
@@ -410,9 +511,16 @@ struct KurseWochenView: View {
     /// Text und Farbe des Statuschips -- ausschliesslich als Umriss
     /// gezeichnet (siehe terminZeile), nie als Flaeche. `nil` bei frei/voll:
     /// kein Chip (Aufgabenbrief-Tabelle).
+    ///
+    /// "VORBEI" stand hier in `textFaint` bei 10pt und bekam von der Zeile
+    /// zusaetzlich `.opacity(0.5)` -- ueber `bg` komponiert rund 1,7 : 1.
+    /// `textFaint` ist laut designsystem.md SS2 nur ab 15pt oder fuer
+    /// nicht tragenden Text zugelassen, und "VORBEI" ist die tragende
+    /// Aussage der Zeile. Jetzt `textMuted`; die Abblendung der Zeile
+    /// betrifft den Chip nicht mehr (siehe terminZeile).
     private func chipInhalt(_ zustand: KursZustand) -> (text: String, farbe: Color)? {
         switch zustand {
-        case .vorbei: ("VORBEI", DesignSystem.Color.textFaint)
+        case .vorbei: ("VORBEI", DesignSystem.Color.textMuted)
         case .angemeldet: ("ANGEMELDET", DesignSystem.Color.textMuted)
         case .warteliste: ("WARTELISTE", DesignSystem.Color.textMuted)
         case .abgesagt: ("ABGESAGT", DesignSystem.Color.warn)
@@ -428,8 +536,22 @@ struct KurseWochenView: View {
     /// Jede Zeile ist antippbar und traegt denselben Chevron (Abweichung 4
     /// oben) -- unabhaengig vom Zustand, damit keine der vier Zeilen wie
     /// tote Information wirkt.
-    private func terminZeile(_ termin: CourseWeekSession) -> some View {
-        let zustand = KursZustandRechner.zustand(fuer: termin, jetzt: Date())
+    ///
+    /// `jetzt` kommt aus dem 60-Sekunden-Tick der TimelineView in `body`,
+    /// nicht aus einem frisch erzeugten Date(): sonst blieb ein bereits
+    /// begonnener Kurs als buchbar samt Belegungszahl stehen, bis
+    /// irgendein unabhaengiger Grund den Screen neu zeichnete.
+    ///
+    /// Eine vergangene Zeile ist zurueckgenommen, aber lesbar: die
+    /// Abblendung liegt auf der FLAECHE (surface), nicht auf der ganzen
+    /// Karte. `.opacity(0.5)` ueber allem traf zuvor auch "VORBEI" (10pt)
+    /// und die Dauer (11pt), die ohnehin in textFaint standen -- rund
+    /// 1,7 : 1, weit unter jeder Schwelle, in einem Keller gelesen.
+    /// Zurueckgenommen wird jetzt ueber die Flaeche und ueber den Wechsel
+    /// des Kursnamens von `text` nach `textMuted`; jede Schrift der Zeile
+    /// bleibt dabei ueber der Schwelle.
+    private func terminZeile(_ termin: CourseWeekSession, jetzt: Date) -> some View {
+        let zustand = KursZustandRechner.zustand(fuer: termin, jetzt: jetzt)
         // woche.timezone, NICHT Zahlformat.uhrzeit: ein Kurstermin gehoert
         // dem Studio, nicht dem Geraet (KursZeit-Kommentar). `kurse.woche`
         // ist hier garantiert nicht nil -- diese Zeile wird ausschliesslich
@@ -442,20 +564,23 @@ struct KurseWochenView: View {
             beiAuswahl(termin)
         } label: {
             HStack(alignment: .top, spacing: DesignSystem.Spacing.s12) {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                     Text(beginn.map { KursZeit.uhrzeit($0, zeitzone: zeitzone) } ?? "--:--")
                         .font(.system(size: 17, weight: .black).monospacedDigit())
-                        .foregroundStyle(istVorbei ? DesignSystem.Color.textFaint : DesignSystem.Color.text)
+                        .foregroundStyle(istVorbei ? DesignSystem.Color.textMuted : DesignSystem.Color.text)
+                    // textMuted statt textFaint: die Dauer ist tragend und
+                    // steht bei 11pt, also unter den 15pt, ab denen
+                    // textFaint zulaessig waere (designsystem.md SS2).
                     Text("\(termin.durationMin) min")
                         .font(.system(size: 11, weight: .bold).monospacedDigit())
-                        .foregroundStyle(DesignSystem.Color.textFaint)
+                        .foregroundStyle(DesignSystem.Color.textMuted)
                 }
                 .frame(width: 54, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                     Text(termin.name)
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(DesignSystem.Color.text)
+                        .foregroundStyle(istVorbei ? DesignSystem.Color.textMuted : DesignSystem.Color.text)
                     if let zeile = trainerUndRaum(termin) {
                         Text(zeile)
                             .font(.system(size: 12))
@@ -480,9 +605,11 @@ struct KurseWochenView: View {
                             .tracking(0.7)
                             .foregroundStyle(chip.farbe)
                             .padding(.horizontal, DesignSystem.Spacing.s8)
-                            .padding(.vertical, 3)
+                            .padding(.vertical, DesignSystem.Spacing.s4)
                             .overlay(Capsule().stroke(chip.farbe, lineWidth: 1))
                     }
+                    // Der Chevron ist reine Affordanz, kein tragender Text
+                    // -- textFaint ist dafuer ausdruecklich zugelassen.
                     Image(systemName: "chevron.right")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(DesignSystem.Color.textFaint)
@@ -491,9 +618,10 @@ struct KurseWochenView: View {
             .padding(DesignSystem.Spacing.s16)
             .frame(minHeight: 44)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(DesignSystem.Color.surface)
+            // Die Abblendung liegt auf der Flaeche, nicht auf der Zeile:
+            // sonst traefe sie die Schrift mit (siehe Kommentar oben).
+            .background(DesignSystem.Color.surface.opacity(istVorbei ? 0.5 : 1))
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-            .opacity(istVorbei ? 0.5 : 1)
         }
         .buttonStyle(PressButtonStyle())
         .accessibilityElement(children: .combine)

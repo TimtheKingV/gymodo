@@ -31,6 +31,18 @@ enum Zahlformat {
         return formatter
     }()
 
+    /// Fuer den "Stand: ..."-Satz: geraetelokal und in de_DE, weil er
+    /// sagt, wann DIESES Geraet die Zahlen zuletzt geholt hat -- ein
+    /// Abrufzeitpunkt gehoert dem Geraet, anders als ein Kurstermin, der
+    /// dem Studio gehoert (KursZeit).
+    private static let standFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = gebietsschema
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
     static func gewicht(_ kg: Double) -> String {
         gewichtFormatter.string(from: NSNumber(value: kg)) ?? "0,0"
     }
@@ -39,6 +51,14 @@ enum Zahlformat {
     /// Einheit auf diesem Geraet lief.
     static func uhrzeit(_ zeitpunkt: Date) -> String {
         uhrzeitFormatter.string(from: zeitpunkt)
+    }
+
+    /// "8. Sept. 2026, 17:12" -- der Zeitpunkt eines Abrufs, wie ihn alle
+    /// drei Kurse-Screens im "Stand: ..."-Satz zeigen. Eine Stelle statt
+    /// drei Formatierern: derselbe Zustand darf nicht je nach Screen
+    /// anders aussehen.
+    static func stand(_ zeitpunkt: Date) -> String {
+        standFormatter.string(from: zeitpunkt)
     }
 
     static func gewichtMitEinheit(_ kg: Double) -> String {
