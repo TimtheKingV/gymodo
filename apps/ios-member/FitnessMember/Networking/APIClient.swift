@@ -84,8 +84,17 @@ actor APIClient {
         return try await execute(url: url, method: "GET", bodyData: nil)
     }
 
-    func bookCourse(sessionId: String) async throws(APIError) -> BookOutcome {
-        try await sendNoBody("course-sessions/\(sessionId)/booking", method: "PUT")
+    // bookingId kommt vom Aufrufer, nicht von hier: sie ist die
+    // clientseitig erzeugte Kennung, die denselben Aufruf zweimal
+    // denselben Platz ergeben laesst (Spec 6.3, Routen-Kommentar). Wuerde
+    // diese Methode selbst eine UUID erzeugen, waere jeder
+    // Wiederholungsversuch nach einem Netzabbruch eine NEUE Buchung --
+    // genau die Doppelbuchung, die die Kennung verhindern soll. Aufgabe 8
+    // haelt sie deshalb im Store und reicht sie hier nur durch.
+    func bookCourse(sessionId: String, bookingId: UUID) async throws(APIError) -> BookOutcome {
+        try await send(
+            "course-sessions/\(sessionId)/booking", method: "PUT",
+            body: BookingWrite(bookingId: bookingId.uuidString))
     }
 
     func cancelCourse(sessionId: String) async throws(APIError) -> CancelOutcome {

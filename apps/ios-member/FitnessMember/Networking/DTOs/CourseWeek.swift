@@ -40,6 +40,14 @@ struct CourseWeek: Codable, Equatable {
     let sessions: [CourseWeekSession]
 }
 
+/// Anfrage-Rumpf fuer PUT course-sessions/{sessionId}/booking. Die Route
+/// (apps/web/app/api/v1/course-sessions/[sessionId]/booking/route.ts)
+/// verlangt bookingId zwingend im Rumpf und antwortet sonst mit
+/// 422 validation_failed -- der Server erzeugt sie nicht selbst.
+struct BookingWrite: Encodable {
+    let bookingId: String
+}
+
 /// Antwort von PUT course-sessions/{sessionId}/booking (courses.ts
 /// BookOutcome).
 struct BookOutcome: Decodable, Equatable {

@@ -59,6 +59,27 @@ struct KursZustandTests {
         // Beginn ist vorbei: anmelden geht nicht mehr, abmelden auch nicht.
         #expect(KursZustandRechner.zustand(fuer: termin(startVersatzStunden: -0.5), jetzt: jetzt) == .vorbei)
     }
+
+    @Test func beginnGenauJetztGiltSchonAlsVorbei() {
+        // Der Grenzfall auf die Sekunde: <= schlaegt <, nicht umgekehrt.
+        #expect(KursZustandRechner.zustand(fuer: termin(startVersatzStunden: 0), jetzt: jetzt) == .vorbei)
+    }
+
+    // Die beiden Ueberschneidungen, die vorher nur durch die
+    // Auswertungsreihenfolge im Code bewiesen waren, nicht durch einen
+    // eigenen Testfall.
+
+    @Test func vergangenerKursAufDerWartelisteGiltAlsVorbei() {
+        let vorbeiUndWarteliste = termin(startVersatzStunden: -2, freeSeats: 0, ownStatus: "waitlisted")
+
+        #expect(KursZustandRechner.zustand(fuer: vorbeiUndWarteliste, jetzt: jetzt) == .vorbei)
+    }
+
+    @Test func vollerKursMitEigenerBuchungGiltAlsAngemeldet() {
+        let vollUndAngemeldet = termin(freeSeats: 0, ownStatus: "booked")
+
+        #expect(KursZustandRechner.zustand(fuer: vollUndAngemeldet, jetzt: jetzt) == .angemeldet)
+    }
 }
 
 struct AbmeldefristTests {
@@ -83,6 +104,51 @@ struct AbmeldefristTests {
     @Test func einUnlesbarerBeginnLiefertKeineGrenze() {
         // Lieber keine Uhrzeit als eine erfundene.
         #expect(KursZustandRechner.abmeldenBis(startsAt: "kein Datum", fristStunden: 2) == nil)
+    }
+}
+
+struct KursZeitpunktTests {
+    // startsAt kommt aus einer Postgres timestamptz (course_week), nicht
+    // aus einem clientseitig erzeugten String -- anders als performedAt
+    // in Sub-Projekt 2 muss das Parsen deshalb Sekundenbruchteile
+    // vertragen, auch wenn sie im Regelfall fehlen (Kurse beginnen auf
+    // die Minute).
+
+    @Test func parstOhneSekundenbruchteile() throws {
+        #expect(KursZeitpunkt.parse("2026-09-08T18:00:00Z") != nil)
+    }
+
+    @Test func parstMitSekundenbruchteilenGenauSoGenau() throws {
+        let ohne = try #require(KursZeitpunkt.parse("2026-09-08T18:00:00Z"))
+        let mit = try #require(KursZeitpunkt.parse("2026-09-08T18:00:00.500Z"))
+
+        #expect(mit.timeIntervalSince(ohne) == 0.5)
+    }
+
+    @Test func liefertNilBeiUnlesbaremText() {
+        #expect(KursZeitpunkt.parse("kein Datum") == nil)
+    }
+}
+
+struct KursZeitTests {
+    // Fester Zeitpunkt und feste Zeitzone -- sonst ist der Test auf dem
+    // Geraet des Entwicklers gruen und anderswo rot (Sommerzeit).
+    private let zeitpunkt = ISO8601DateFormatter().date(from: "2026-08-27T10:00:00Z")!
+
+    @Test func uhrzeitInDerStudioZeitzone() {
+        #expect(KursZeit.uhrzeit(zeitpunkt, zeitzone: "Europe/Berlin") == "12:00")
+    }
+
+    @Test func uhrzeitFolgtDerUebergebenenZeitzoneNichtDemGeraet() {
+        // Beweist, dass die Zeitzone tatsaechlich ein Parameter ist und
+        // nicht z.B. .current durchschlaegt.
+        #expect(KursZeit.uhrzeit(zeitpunkt, zeitzone: "UTC") == "10:00")
+    }
+
+    @Test func datumAusgeschriebenOhneJahrOhnePunktBeimWochentag() {
+        // designsystem.md SS10: "Mi, 27. August" -- Wochentag stand-alone
+        // ohne Punkt, kein Jahr.
+        #expect(KursZeit.datumAusgeschrieben(zeitpunkt, zeitzone: "Europe/Berlin") == "Do, 27. August")
     }
 }
 
