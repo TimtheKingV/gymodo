@@ -98,7 +98,8 @@ struct HomeZeilenTests {
     }
 
     @Test func detailUntertitelZeigtZeitraumUndDauerFuerEineManuellBeendeteEinheit() {
-        #expect(HomeZeilen.detailUntertitel(einheit()) == "18:04 – 18:51 · 47 min · 3 Geräte · 8 Sätze")
+        let session = einheit()
+        #expect(HomeZeilen.detailUntertitel(session) == "\(zeitraum(session)) · 47 min · 3 Geräte · 8 Sätze")
     }
 
     @Test func detailUntertitelLaesstZeitraumUndDauerFuerEineSelbsttaetigBeendeteEinheitWeg() {
@@ -107,9 +108,21 @@ struct HomeZeilenTests {
 
     @Test func detailUntertitelUnterscheidetEinzahlUndMehrzahlBeiGeraetenUndSaetzen() {
         let eins = einheit(machineCount: 1, setCount: 1)
-        #expect(HomeZeilen.detailUntertitel(eins) == "18:04 – 18:51 · 47 min · 1 Gerät · 1 Satz")
+        #expect(HomeZeilen.detailUntertitel(eins) == "\(zeitraum(eins)) · 47 min · 1 Gerät · 1 Satz")
 
         let mehrere = einheit(machineCount: 2, setCount: 2)
-        #expect(HomeZeilen.detailUntertitel(mehrere) == "18:04 – 18:51 · 47 min · 2 Geräte · 2 Sätze")
+        #expect(HomeZeilen.detailUntertitel(mehrere) == "\(zeitraum(mehrere)) · 47 min · 2 Geräte · 2 Sätze")
+    }
+
+    /// Baut dieselbe "18:04 – 18:51"-Angabe wie HomeZeilen.detailUntertitel
+    /// aus denselben Zeitpunkten, statt sie als Text vorherzusagen:
+    /// Zahlformat.uhrzeit folgt TimeZone.current (richtig -- die Zeit
+    /// gehoert dem Geraet, siehe Zahlformat-Kommentar), ein woertlich
+    /// erwarteter String waere deshalb nur in der Zeitzone des
+    /// Testrechners gruen (vgl. Kommentar in KurseWochenBerechnungTests).
+    private func zeitraum(_ session: SessionSummary) -> String {
+        let start = Zeitpunkt.parse(session.startedAt)!
+        let ende = Zeitpunkt.parse(session.completedAt!)!
+        return "\(Zahlformat.uhrzeit(start)) – \(Zahlformat.uhrzeit(ende))"
     }
 }
