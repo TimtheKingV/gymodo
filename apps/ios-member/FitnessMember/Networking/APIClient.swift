@@ -27,8 +27,20 @@ actor APIClient {
         try await get("tags/\(token)/context")
     }
 
-    func sessions() async throws(APIError) -> [SessionSummary] {
-        try await get("me/sessions", as: SessionsResponse.self).sessions
+    /// Liefert die volle Antwort statt nur der Liste: die Kopfzeile von
+    /// Home braucht `summary`, und ein zweiter Abruf dafuer waere
+    /// derselbe Abruf.
+    ///
+    /// `studio` ist optional -- ohne aktives Studio faellt serverseitig
+    /// nur die Wochenzahl weg (siehe me/sessions/route.ts).
+    func sessions(studio: String?) async throws(APIError) -> SessionsResponse {
+        guard let studio else { return try await get("me/sessions", as: SessionsResponse.self) }
+
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("me/sessions"), resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "studio", value: studio)]
+        guard let url = components.url else { throw APIError.encodingFailed }
+        return try await execute(url: url, method: "GET", bodyData: nil)
     }
 
     func progress() async throws(APIError) -> [ExerciseProgress] {

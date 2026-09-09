@@ -121,10 +121,20 @@ struct DTOTests {
     @Test("dekodiert eine SessionsResponse mit einem Block")
     func decodesSessions() throws {
         let json = """
-        {"sessions":[{"id":"sess1","startedAt":"2026-09-01T10:00:00Z","completedAt":null,"completedReason":null,"machineCount":1,"setCount":1,"blocks":[{"machineId":"m1","machineLabel":"07","exerciseId":"ex1","exerciseName":"Beidbeinig","sets":[{"setIndex":1,"weightKg":80,"reps":10,"rir":null,"problemFlag":false,"problemReason":null,"performedAt":"2026-09-01T10:05:00Z"}]}]}]}
+        {"sessions":[{"id":"sess1","startedAt":"2026-09-01T10:00:00Z","completedAt":null,"completedReason":null,"machineCount":1,"setCount":1,"blocks":[{"machineId":"m1","machineLabel":"07","exerciseId":"ex1","exerciseName":"Beidbeinig","sets":[{"setIndex":1,"weightKg":80,"reps":10,"rir":null,"problemFlag":false,"problemReason":null,"performedAt":"2026-09-01T10:05:00Z"}]}]}],"summary":{"totalCount":34,"thisWeekCount":2,"lastSessionAt":"2026-09-01T10:00:00Z"}}
         """
         let response = try JSONDecoder().decode(SessionsResponse.self, from: Data(json.utf8))
         #expect(response.sessions[0].blocks[0].sets[0].weightKg == 80)
+        #expect(response.summary.totalCount == 34)
+    }
+
+    @Test("eine Kopfzeile ohne aktives Studio traegt keine Wochenzahl")
+    func decodesSummaryOhneWoche() throws {
+        let json = #"{"sessions":[],"summary":{"totalCount":0,"thisWeekCount":null,"lastSessionAt":null}}"#
+        let response = try JSONDecoder().decode(SessionsResponse.self, from: Data(json.utf8))
+
+        #expect(response.summary.thisWeekCount == nil)
+        #expect(response.summary.lastSessionAt == nil)
     }
 
     @Test func completedSessionDecodiertVorschlaege() throws {

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
+import { ortszeitTeile } from "./serie.js";
 import type { ProblemReason } from "./workout.js";
 
 /**
@@ -13,6 +14,36 @@ const IDLE_HOURS_UNTIL_AUTO_COMPLETE = 4;
 
 /** Wie viele Einheiten der Verlauf zurueckreicht. */
 const SESSION_LIMIT = 50;
+
+/** Die Tagesnummer dieses Augenblicks in dieser Zeitzone. */
+function tagNummer(zeitpunkt: Date, zeitzone: string): number {
+  const teile = ortszeitTeile(zeitpunkt, zeitzone);
+  return Math.floor(Date.UTC(teile.jahr, teile.monat - 1, teile.tag) / 86_400_000);
+}
+
+/**
+ * Wie viele Einheiten in die laufende Woche fallen -- Woche ab Montag,
+ * Grenze in der Zeitzone des Studios.
+ *
+ * Die Zeitzone ist kein Beiwerk: 00:30 MESZ am Montag ist Sonntag 22:30
+ * UTC. Ohne sie faellt eine Einheit von Montagnacht in die vorige Woche,
+ * und das Mitglied saehe eine andere Woche als sein Studio.
+ *
+ * Die Deckelung der Liste auf SESSION_LIMIT ist hier unkritisch: eine
+ * Woche mit mehr als 50 Einheiten gibt es nicht.
+ */
+export function zaehleDieseWoche(
+  startsAt: string[],
+  jetzt: Date,
+  zeitzone: string,
+): number {
+  const heute = tagNummer(jetzt, zeitzone);
+  // getUTCDay auf der reinen Tagesnummer: 0 = Sonntag.
+  const wochentag = new Date(heute * 86_400_000).getUTCDay();
+  const montag = heute - ((wochentag + 6) % 7);
+
+  return startsAt.filter((iso) => tagNummer(new Date(iso), zeitzone) >= montag).length;
+}
 
 export type SessionBlock = {
   machineId: string;
@@ -40,7 +71,17 @@ export type SessionSummary = {
   blocks: SessionBlock[];
 };
 
-export type Sessions = { sessions: SessionSummary[] };
+export type SessionsSummary = {
+  /** Alle Einheiten, nicht nur die gelieferten (SESSION_LIMIT). */
+  totalCount: number;
+  /** `null`, wenn kein Studio genannt wurde -- ohne Zeitzone keine Woche. */
+  thisWeekCount: number | null;
+  lastSessionAt: string | null;
+};
+
+export type Sessions = { sessions: SessionSummary[]; summary: SessionsSummary };
+
+export type SessionsOptions = { studioId?: string };
 
 type SessionRow = {
   id: string;
@@ -73,8 +114,21 @@ type SetRow = {
  * des Blocks (Spec 7.1). Ein zweiter Durchgang am selben Geraet trifft
  * deshalb denselben Block statt einen neuen anzulegen.
  */
-export async function getSessions(client: SupabaseClient): Promise<Sessions> {
+export async function getSessions(
+  client: SupabaseClient,
+  optionen: SessionsOptions = {},
+): Promise<Sessions> {
   const userId = await requireUserId(client);
+
+  // Die Gesamtzahl kommt aus einem COUNT, nicht aus der Laenge der Liste:
+  // die ist auf SESSION_LIMIT gedeckelt, und "34 gesamt" waere ab der 51.
+  // Einheit still falsch -- fuer genau die treuesten Mitglieder.
+  const { count } = await client
+    .from("workout_sessions")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  const zeitzone = await zeitzoneDesStudios(client, optionen.studioId);
 
   const { data: sessionRows } = await client
     .from("workout_sessions")
@@ -84,7 +138,18 @@ export async function getSessions(client: SupabaseClient): Promise<Sessions> {
     .limit(SESSION_LIMIT);
 
   const sessions = (sessionRows ?? []) as SessionRow[];
-  if (sessions.length === 0) return { sessions: [] };
+  const summary: SessionsSummary = {
+    totalCount: count ?? 0,
+    thisWeekCount: zeitzone
+      ? zaehleDieseWoche(sessions.map((session) => session.started_at), new Date(), zeitzone)
+      : null,
+    // Die Liste kommt absteigend -- die erste Zeile ist die juengste. Eine
+    // noch laufende Einheit zaehlt mit: wer gerade trainiert, hat heute
+    // trainiert.
+    lastSessionAt: sessions[0]?.started_at ?? null,
+  };
+
+  if (sessions.length === 0) return { sessions: [], summary };
 
   const { data: setRows } = await client
     .from("workout_sets")
@@ -178,5 +243,30 @@ export async function getSessions(client: SupabaseClient): Promise<Sessions> {
       .eq("id", entry.id);
   }
 
-  return { sessions: summaries };
+  return { sessions: summaries, summary };
+}
+
+/**
+ * Die Zeitzone des Studios, aus dessen Sicht die Woche gezaehlt wird.
+ *
+ * `null` statt einer Vorgabe: eine erfundene Zeitzone ergaebe eine Zahl,
+ * die aussieht wie eine Auskunft. Ohne Studio faellt die Wochenzahl weg,
+ * und der Screen zeigt sie nicht an.
+ *
+ * RLS entscheidet mit: wer nicht Mitglied ist, sieht die Zeile nicht und
+ * bekommt damit ebenfalls `null`.
+ */
+async function zeitzoneDesStudios(
+  client: SupabaseClient,
+  studioId: string | undefined,
+): Promise<string | null> {
+  if (!studioId) return null;
+
+  const { data } = await client
+    .from("studios")
+    .select("timezone")
+    .eq("id", studioId)
+    .maybeSingle();
+
+  return (data as { timezone: string } | null)?.timezone ?? null;
 }
