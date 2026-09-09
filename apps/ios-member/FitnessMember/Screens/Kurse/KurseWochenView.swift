@@ -1,0 +1,484 @@
+import SwiftUI
+
+/// Ein Tag im Wochenstreifen -- reine Ableitung aus einem Zeitpunkt und
+/// einer Zeitzone, ohne jede Abhaengigkeit von Environment oder Store. `id`
+/// steht bewusst im selben Format wie `CourseWeekSession.localDay`
+/// ("yyyy-MM-dd"), damit ein Tag im Streifen ohne weitere Umrechnung gegen
+/// die Termine des Wochenplans abgeglichen werden kann -- der Server
+/// berechnet `localDay` bereits in der Studio-Zeitzone, ein zweiter,
+/// eigener Zeitzonen-Abgleich beim Gruppieren waere doppelte, angreifbare
+/// Arbeit.
+struct KurseWochentag: Identifiable, Equatable {
+    let id: String
+    /// "Mo", "Di", ... -- wie designsystem.md SS10 (KursZeit-Kommentar):
+    /// "ccc" (stand-alone), nicht "EEE", liefert das ohne Punkt.
+    let kuerzel: String
+    /// "Montag", "Dienstag", ... fuer die Tagesueberschrift und VoiceOver.
+    let wochentagVoll: String
+    let tagesnummer: Int
+    let istHeute: Bool
+}
+
+/// Die Berechnung des Wochenstreifens -- eine reine Funktion, getestet in
+/// KurseWochenBerechnungTests, absichtlich ohne `Date()`- oder
+/// `TimeZone.current`-Vorgabewert: `jetzt` und `zeitzone` kommen immer vom
+/// Aufrufer, damit ein Test einen festen Zeitpunkt vorgeben kann.
+enum KurseWochenBerechnung {
+    private static func kalender(zeitzone: String) -> Calendar {
+        var kalender = Calendar(identifier: .gregorian)
+        kalender.timeZone = TimeZone(identifier: zeitzone) ?? TimeZone(identifier: "UTC")!
+        kalender.locale = Locale(identifier: "de_DE")
+        return kalender
+    }
+
+    /// Der Montag (Tagesbeginn) der Woche, die `jetzt` in `zeitzone`
+    /// enthaelt. Nicht ueber `Calendar.firstWeekday` geloest, das je nach
+    /// Systemregion Sonntag sein kann -- die Woche startet hier immer am
+    /// Montag, unabhaengig vom Geraet.
+    static func montag(enthaelt jetzt: Date, zeitzone: String) -> Date {
+        let kalender = kalender(zeitzone: zeitzone)
+        let heute = kalender.startOfDay(for: jetzt)
+        // component(.weekday) liefert 1 = Sonntag ... 7 = Samstag, immer in
+        // dieser Zaehlung, unabhaengig vom Kalender-Identifier.
+        let wochentagIndex = kalender.component(.weekday, from: heute)
+        let versatz = wochentagIndex == 1 ? -6 : -(wochentagIndex - 2)
+        return kalender.date(byAdding: .day, value: versatz, to: heute) ?? heute
+    }
+
+    /// Der Montag der FOLGENDEN Woche -- die exklusive Obergrenze fuer
+    /// KurseStore.laden(von:bis:), damit auch der Sonntag bis Mitternacht
+    /// vollstaendig im Fenster liegt.
+    static func naechsterMontag(enthaelt jetzt: Date, zeitzone: String) -> Date {
+        let kalender = kalender(zeitzone: zeitzone)
+        let montag = montag(enthaelt: jetzt, zeitzone: zeitzone)
+        return kalender.date(byAdding: .day, value: 7, to: montag) ?? montag
+    }
+
+    /// Die sieben Kalendertage Montag bis Sonntag, die `jetzt` enthaelt.
+    static func wochentage(enthaelt jetzt: Date, zeitzone: String) -> [KurseWochentag] {
+        let kalender = kalender(zeitzone: zeitzone)
+        let heute = kalender.startOfDay(for: jetzt)
+        let montag = montag(enthaelt: jetzt, zeitzone: zeitzone)
+
+        let idFormatter = DateFormatter()
+        // en_US_POSIX fuer ein rein numerisches, festes Muster -- dieselbe
+        // Begruendung wie bei KursZeit.uhrzeit.
+        idFormatter.locale = Locale(identifier: "en_US_POSIX")
+        idFormatter.timeZone = kalender.timeZone
+        idFormatter.dateFormat = "yyyy-MM-dd"
+
+        let kuerzelFormatter = DateFormatter()
+        kuerzelFormatter.locale = Locale(identifier: "de_DE")
+        kuerzelFormatter.timeZone = kalender.timeZone
+        kuerzelFormatter.dateFormat = "ccc"
+
+        let vollFormatter = DateFormatter()
+        vollFormatter.locale = Locale(identifier: "de_DE")
+        vollFormatter.timeZone = kalender.timeZone
+        vollFormatter.dateFormat = "EEEE"
+
+        return (0..<7).map { versatz in
+            let tag = kalender.date(byAdding: .day, value: versatz, to: montag) ?? montag
+            return KurseWochentag(
+                id: idFormatter.string(from: tag),
+                kuerzel: kuerzelFormatter.string(from: tag),
+                wochentagVoll: vollFormatter.string(from: tag),
+                tagesnummer: kalender.component(.day, from: tag),
+                istHeute: kalender.isDate(tag, inSameDayAs: heute))
+        }
+    }
+}
+
+/// Der Wochenplan der Kurse (Kurse.dc.html) -- Kopf mit Studioname,
+/// Wochenstreifen, die Termine des gewaehlten Tages, Fussnote.
+///
+/// Vier Abweichungen vom Artboard (Spec Abschnitt 6), alle bewusst:
+/// 1. Der warngelb gefuellte Wartelisten-Balken entfaellt ganz -- `warn`
+///    ist nur als Kontur erlaubt, nie als Flaeche, und die Zahl "20 von 20"
+///    sagt dasselbe wie der Balken, ohne Knappheit einzufaerben.
+/// 2. Das Artboard traegt den Akzent vierfach (gewaehlter Tag, ein
+///    Belegungsbalken, der ANGEMELDET-Chip, die "Meine Kurse"-Textfarbe).
+///    Hier bleibt genau eine Akzentflaeche: der gewaehlte Tag im
+///    Wochenstreifen. Kein Screen ohne Hauptaktion bleibt ohne Akzent, aber
+///    er markiert dann den aktiven Wert und nichts sonst -- derselbe
+///    Gedanke wie beim Uebungswechsel (UebungWechselnSheet).
+/// 3. Chip-Radius ist eine Pille (999pt), nicht die 6px des Artboards.
+/// 4. Alle vier Terminzeilen tragen denselben Chevron. Im Artboard traegt
+///    nur eine von vieren eine Tap-Affordance, was den Rest wie tote
+///    Information aussehen laesst.
+struct KurseWochenView: View {
+    let beiAuswahl: (CourseWeekSession) -> Void
+    let beiMeineKurse: () -> Void
+
+    @Environment(KurseStore.self) private var kurse
+    @Environment(CatalogStore.self) private var katalog
+    @Environment(NetzwerkMonitor.self) private var netz
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// nil, solange niemand einen Tag angetippt hat -- dann gilt der
+    /// heutige Tag. Kein gespeicherter Default in init: der haengt von
+    /// Umgebung (Studio-Zeitzone) ab, die im Initializer noch nicht lesbar
+    /// ist, und eine rein abgeleitete Ableitung bleibt auch dann richtig,
+    /// wenn die Mitternacht waehrend einer offenen App-Sitzung vergeht.
+    @State private var gewaehlterTagId: String?
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
+                kopf
+                wochenstreifen
+                heuteUndMeineKurse
+                inhalt
+                fussnote
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, DesignSystem.Spacing.s24)
+            .padding(.bottom, DesignSystem.Spacing.s32)
+            .animation(reduceMotion ? nil : DesignSystem.Motion.oeffnen, value: gewaehlterTagId)
+        }
+        .background(DesignSystem.Color.bg)
+        .task(id: katalog.activeStudioId) {
+            guard let studioId = katalog.activeStudioId else { return }
+            let jetzt = Date()
+            let von = KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zeitzoneFuerAnfrage)
+            let bis = KurseWochenBerechnung.naechsterMontag(enthaelt: jetzt, zeitzone: zeitzoneFuerAnfrage)
+            await kurse.laden(studioId: studioId, von: von, bis: bis)
+        }
+    }
+
+    // MARK: - Kopf
+
+    private var kopf: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text("KURSE")
+                .font(DesignSystem.Typography.screentitel)
+                .tracking(-0.8)
+                .foregroundStyle(DesignSystem.Color.text)
+            Spacer()
+            Text(studioName.uppercased())
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+        }
+    }
+
+    private var studioName: String {
+        katalog.bootstrap?.studios.first { $0.id == katalog.activeStudioId }?.name ?? ""
+    }
+
+    /// Die Zeitzone fuer den Wochenstreifen und das Anfragefenster, BEVOR
+    /// der Wochenplan zum ersten Mal geladen ist -- `woche.timezone` gibt
+    /// es dann noch nicht. Sobald der Plan da ist, zaehlt fuer Uhrzeiten
+    /// ausschliesslich `woche.timezone` (siehe terminZeile); dieser Wert
+    /// hier dient nur der Woche-Berechnung selbst und dem Ladefenster.
+    private var zeitzoneFuerAnfrage: String {
+        kurse.woche?.timezone
+            ?? katalog.bootstrap?.studios.first { $0.id == katalog.activeStudioId }?.timezone
+            ?? "UTC"
+    }
+
+    // MARK: - Wochenstreifen -- die eine Akzentflaeche des Screens
+
+    private var wochentage: [KurseWochentag] {
+        KurseWochenBerechnung.wochentage(enthaelt: Date(), zeitzone: zeitzoneFuerAnfrage)
+    }
+
+    private var heutigerTagId: String {
+        wochentage.first { $0.istHeute }?.id ?? ""
+    }
+
+    private var gewaehlterTag: String {
+        gewaehlterTagId ?? heutigerTagId
+    }
+
+    private var wochenstreifen: some View {
+        HStack(spacing: DesignSystem.Spacing.s4) {
+            ForEach(wochentage) { tag in
+                let ausgewaehlt = tag.id == gewaehlterTag
+                Button {
+                    gewaehlterTagId = tag.id
+                } label: {
+                    VStack(spacing: 5) {
+                        Text(tag.kuerzel.uppercased())
+                            .font(.system(size: 10, weight: .heavy))
+                            .tracking(1)
+                        Text("\(tag.tagesnummer)")
+                            .font(.system(size: 16, weight: .black).monospacedDigit())
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    // Die einzige Akzentflaeche des Screens: nur der
+                    // gewaehlte Tag traegt sie, kein anderes Element.
+                    .background(ausgewaehlt ? DesignSystem.Color.accent : Color.clear)
+                    .foregroundStyle(ausgewaehlt ? DesignSystem.Color.onAccent : DesignSystem.Color.textMuted)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+                }
+                .buttonStyle(PressButtonStyle())
+                .accessibilityLabel("\(tag.wochentagVoll), \(tag.tagesnummer).\(tag.istHeute ? " Heute." : "")")
+                .accessibilityAddTraits(ausgewaehlt ? .isSelected : [])
+            }
+        }
+    }
+
+    // MARK: - "Heute · Donnerstag" und "Meine Kurse"
+
+    private var tagesueberschrift: String {
+        guard let tag = wochentage.first(where: { $0.id == gewaehlterTag }) else { return "" }
+        return tag.istHeute ? "Heute · \(tag.wochentagVoll)" : tag.wochentagVoll
+    }
+
+    private var heuteUndMeineKurse: some View {
+        HStack {
+            Text(tagesueberschrift.uppercased())
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+            Spacer()
+            // Kein Akzent -- die eine Akzentflaeche des Screens ist der
+            // gewaehlte Tag (siehe Abweichung 2 oben), nicht dieser Link.
+            Button("Meine Kurse", action: beiMeineKurse)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .frame(minHeight: 44)
+                .buttonStyle(PressButtonStyle())
+        }
+    }
+
+    // MARK: - Inhalt: Skelett, Leer, Offline, Fehler, Liste
+
+    /// Reihenfolge ist Bedeutung: ein fehlgeschlagenes Laden gewinnt immer
+    /// gegen `woche == nil` (sonst zeigte ein gescheitertes Nachladen
+    /// wieder das Skelett statt Offline/Fehler), und `woche == nil` ohne
+    /// Fehler ist immer das ERSTE Laden (nach einem Erfolg bleibt `woche`
+    /// beim naechsten Fehlversuch zwar nil, aber der Fehlerzweig greift
+    /// dann schon vorher).
+    @ViewBuilder
+    private var inhalt: some View {
+        if kurse.ladeZustand == .fehlgeschlagen {
+            if netz.istOnline {
+                fehlerKarte
+            } else {
+                offlineKarte
+            }
+        } else if kurse.woche == nil {
+            skelett
+        } else if termineDesTages.isEmpty {
+            leerZustand
+        } else {
+            VStack(spacing: DesignSystem.Spacing.s12) {
+                ForEach(termineDesTages) { termin in
+                    terminZeile(termin)
+                }
+            }
+        }
+    }
+
+    private var termineDesTages: [CourseWeekSession] {
+        (kurse.woche?.sessions ?? [])
+            .filter { $0.localDay == gewaehlterTag }
+            .sorted {
+                (KursZeitpunkt.parse($0.startsAt) ?? .distantPast)
+                    < (KursZeitpunkt.parse($1.startsAt) ?? .distantPast)
+            }
+    }
+
+    /// Nur beim ERSTEN Laden, nur ueber der Terminliste -- niemals ueber
+    /// einer Zahl (designsystem.md SS5). Reine Flaechen ohne jeden Text,
+    /// keine Platzhalterzahl, die spaeter falsch aussehen koennte.
+    private var skelett: some View {
+        VStack(spacing: DesignSystem.Spacing.s12) {
+            ForEach(0..<3, id: \.self) { _ in
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                    .fill(DesignSystem.Color.surfaceRaised)
+                    .frame(height: 76)
+            }
+        }
+        // Ein Ladezustand darf nie stumm sein (designsystem.md SS5) -- ohne
+        // dieses Label liest VoiceOver drei leere Flaechen ohne Erklaerung.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Kurse werden geladen")
+    }
+
+    /// Ueberschrift plus naechster Schritt, keine leere Statistik.
+    private var leerZustand: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+            Text("Für diesen Tag hat dein Studio keinen Kurs eingetragen.")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(DesignSystem.Color.text)
+            Text("Wähle einen anderen Tag oben in der Woche.")
+                .font(.system(size: 13))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(DesignSystem.Spacing.s16)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// danger-Umriss auf 10% danger-Flaeche, wie OfflineLeiste (GeraetView)
+    /// -- derselbe Ton fuer denselben Zustand. "Meine Kurse" bleibt
+    /// erreichbar (der Link oben ist reiner Client-Zustand, kein
+    /// Netzzugriff), das sagt der zweite Satz ausdruecklich.
+    private var offlineKarte: some View {
+        HStack(spacing: DesignSystem.Spacing.s8) {
+            Image(systemName: "wifi.slash")
+                .font(.system(size: 15, weight: .semibold))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Kein Empfang")
+                    .font(.system(size: 15, weight: .semibold))
+                Text("Der Wochenplan braucht Empfang. „Meine Kurse“ bleibt verfügbar.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .lineSpacing(3)
+            }
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(DesignSystem.Color.danger)
+        .padding(DesignSystem.Spacing.s12)
+        .background(DesignSystem.Color.danger.opacity(0.1))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(DesignSystem.Color.danger, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .accessibilityElement(children: .combine)
+    }
+
+    /// KurseStore.laden(...) verwirft den eigentlichen APIError im
+    /// catch-Zweig vollstaendig (siehe KurseStore.swift) -- `ladeZustand`
+    /// kennt nur "fehlgeschlagen", keinen Servertext. Diese Karte kann den
+    /// Servertext deshalb NICHT woertlich zeigen, wie es der Aufgabenbrief
+    /// verlangt; siehe Bericht.
+    private var fehlerKarte: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
+            Text("Der Wochenplan lässt sich gerade nicht laden.")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(DesignSystem.Color.danger)
+            Text("Deine eigenen Kurse bleiben über „Meine Kurse“ sichtbar. Versuch es gleich noch einmal.")
+                .font(.system(size: 13))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .lineSpacing(3)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(DesignSystem.Spacing.s16)
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(DesignSystem.Color.danger, lineWidth: 1)
+        )
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - Terminzeile
+
+    /// Ob die Belegungszahl bei diesem Zustand gezeigt wird. `vorbei` und
+    /// `abgesagt` lassen sie weg (wie im Artboard die Vorbei-Zeile ohne
+    /// Balken/Zahl) -- eine Platzzahl ist fuer einen Termin, den man weder
+    /// buchen noch stornieren kann, keine Information mehr, nur Rauschen.
+    private func zeigtBelegung(_ zustand: KursZustand) -> Bool {
+        switch zustand {
+        case .frei, .voll, .angemeldet, .warteliste: true
+        case .vorbei, .abgesagt: false
+        }
+    }
+
+    /// Text und Farbe des Statuschips -- ausschliesslich als Umriss
+    /// gezeichnet (siehe terminZeile), nie als Flaeche. `nil` bei frei/voll:
+    /// kein Chip (Aufgabenbrief-Tabelle).
+    private func chipInhalt(_ zustand: KursZustand) -> (text: String, farbe: Color)? {
+        switch zustand {
+        case .vorbei: ("VORBEI", DesignSystem.Color.textFaint)
+        case .angemeldet: ("ANGEMELDET", DesignSystem.Color.textMuted)
+        case .warteliste: ("WARTELISTE", DesignSystem.Color.textMuted)
+        case .abgesagt: ("ABGESAGT", DesignSystem.Color.warn)
+        case .frei, .voll: nil
+        }
+    }
+
+    private func trainerUndRaum(_ termin: CourseWeekSession) -> String? {
+        let teile = [termin.instructorName, termin.room].compactMap { $0 }
+        return teile.isEmpty ? nil : teile.joined(separator: " · ")
+    }
+
+    /// Jede Zeile ist antippbar und traegt denselben Chevron (Abweichung 4
+    /// oben) -- unabhaengig vom Zustand, damit keine der vier Zeilen wie
+    /// tote Information wirkt.
+    private func terminZeile(_ termin: CourseWeekSession) -> some View {
+        let zustand = KursZustandRechner.zustand(fuer: termin, jetzt: Date())
+        // woche.timezone, NICHT Zahlformat.uhrzeit: ein Kurstermin gehoert
+        // dem Studio, nicht dem Geraet (KursZeit-Kommentar). `kurse.woche`
+        // ist hier garantiert nicht nil -- diese Zeile wird ausschliesslich
+        // aus termineDesTages gebaut, das nur bei geladenem Plan existiert.
+        let zeitzone = kurse.woche?.timezone ?? zeitzoneFuerAnfrage
+        let beginn = KursZeitpunkt.parse(termin.startsAt)
+        let istVorbei = zustand == .vorbei
+
+        return Button {
+            beiAuswahl(termin)
+        } label: {
+            HStack(alignment: .top, spacing: DesignSystem.Spacing.s12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(beginn.map { KursZeit.uhrzeit($0, zeitzone: zeitzone) } ?? "--:--")
+                        .font(.system(size: 17, weight: .black).monospacedDigit())
+                        .foregroundStyle(istVorbei ? DesignSystem.Color.textFaint : DesignSystem.Color.text)
+                    Text("\(termin.durationMin) min")
+                        .font(.system(size: 11, weight: .bold).monospacedDigit())
+                        .foregroundStyle(DesignSystem.Color.textFaint)
+                }
+                .frame(width: 54, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                    Text(termin.name)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(DesignSystem.Color.text)
+                    if let zeile = trainerUndRaum(termin) {
+                        Text(zeile)
+                            .font(.system(size: 12))
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                    }
+                    if zeigtBelegung(zustand) {
+                        // Die Zahl statt eines Balkens (Abweichung 1 oben):
+                        // "12 von 16" sagt dasselbe wie ein Fuellstand, ohne
+                        // Knappheit als Fehlverhalten einzufaerben.
+                        Text("\(termin.bookedCount) von \(termin.capacity)")
+                            .font(.system(size: 11, weight: .bold).monospacedDigit())
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                    }
+                }
+
+                Spacer(minLength: 0)
+
+                HStack(spacing: DesignSystem.Spacing.s8) {
+                    if let chip = chipInhalt(zustand) {
+                        Text(chip.text)
+                            .font(.system(size: 10, weight: .heavy))
+                            .tracking(0.7)
+                            .foregroundStyle(chip.farbe)
+                            .padding(.horizontal, DesignSystem.Spacing.s8)
+                            .padding(.vertical, 3)
+                            .overlay(Capsule().stroke(chip.farbe, lineWidth: 1))
+                    }
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Color.textFaint)
+                }
+            }
+            .padding(DesignSystem.Spacing.s16)
+            .frame(minHeight: 44)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(DesignSystem.Color.surface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+            .opacity(istVorbei ? 0.5 : 1)
+        }
+        .buttonStyle(PressButtonStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Öffnet die Kursdetails")
+    }
+
+    // MARK: - Fussnote
+
+    private var fussnote: some View {
+        Text("Kursplan und Plätze verwaltet dein Studio.")
+            .font(.system(size: 12))
+            .foregroundStyle(DesignSystem.Color.textFaint)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .multilineTextAlignment(.center)
+    }
+}
