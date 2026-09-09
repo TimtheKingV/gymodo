@@ -128,6 +128,18 @@ struct DTOTests {
         #expect(response.summary.totalCount == 34)
     }
 
+    @Test("dekodiert eine ProgressResponse mit Geraetelabel")
+    func decodesProgress() throws {
+        let json = """
+        {"exercises":[{"exerciseId":"u1","exerciseName":"Beidbeinig","machineLabel":"Beinpresse","firstWeightKg":65,"currentWeightKg":80,"changeKg":15,"points":[{"performedOn":"2026-07-09","topWeightKg":65,"reps":12},{"performedOn":"2026-08-27","topWeightKg":80,"reps":10}]}]}
+        """
+        let response = try JSONDecoder().decode(ProgressResponse.self, from: Data(json.utf8))
+
+        #expect(response.exercises[0].machineLabel == "Beinpresse")
+        #expect(response.exercises[0].changeKg == 15)
+        #expect(response.exercises[0].points.count == 2)
+    }
+
     @Test("eine Kopfzeile ohne aktives Studio traegt keine Wochenzahl")
     func decodesSummaryOhneWoche() throws {
         let json = #"{"sessions":[],"summary":{"totalCount":0,"thisWeekCount":null,"lastSessionAt":null}}"#

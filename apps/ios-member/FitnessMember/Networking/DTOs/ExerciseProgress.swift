@@ -10,12 +10,14 @@ struct ExerciseProgress: Decodable, Equatable, Identifiable {
     }
     let id: String
     let exerciseName: String
+    let machineLabel: String
     let firstWeightKg: Double
     let currentWeightKg: Double
     let changeKg: Double
     let points: [Point]
 
     private enum CodingKeys: String, CodingKey {
-        case id = "exerciseId", exerciseName, firstWeightKg, currentWeightKg, changeKg, points
+        case id = "exerciseId", exerciseName, machineLabel, firstWeightKg, currentWeightKg,
+             changeKg, points
     }
 }
