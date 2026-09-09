@@ -9,6 +9,17 @@ enum AppConfig {
     static let supabaseURL = url(for: "SUPABASE_URL")
     static let supabaseAnonKey = string(for: "SUPABASE_ANON_KEY")
 
+    /// Optional, anders als die drei Pflichtwerte: solange hier nichts
+    /// steht, zeigt das Profil die Datenschutzzeile nicht an. Ein
+    /// Bedienelement ohne Ziel ist schlechter als keines -- dieselbe
+    /// Regel wie beim in Sub-Projekt 3 gestrichenen Link.
+    static let datenschutzURL: URL? = {
+        guard let wert = Bundle.main.object(forInfoDictionaryKey: "DATENSCHUTZ_URL") as? String,
+              !wert.isEmpty
+        else { return nil }
+        return URL(string: wert)
+    }()
+
     static func string(for key: String) -> String {
         guard let value = Bundle.main.object(forInfoDictionaryKey: key) as? String,
               !value.isEmpty
