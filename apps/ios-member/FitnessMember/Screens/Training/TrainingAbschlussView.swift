@@ -66,7 +66,14 @@ struct TrainingAbschlussView: View {
 
     private var kopf: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-            Text("HEUTE · \(Zahlformat.uhrzeit(zusammenfassung.von)) – \(Zahlformat.uhrzeit(zusammenfassung.bis))")
+            // Nicht mehr fest "HEUTE": eine Einheit, die um 23:40
+            // beginnt und um 00:20 endet, bekaeme sonst eine falsche
+            // Aussage ueber das eigene Training (siehe
+            // Trainingszeitraum).
+            Text(Trainingszeitraum.kopfzeile(
+                von: zusammenfassung.von, bis: zusammenfassung.bis,
+                jetzt: Date(), kalender: Calendar.current,
+                uhrzeit: Zahlformat.uhrzeit))
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
@@ -181,10 +188,16 @@ struct TrainingAbschlussView: View {
             // Abweichung vom Artboard: dort accent (#D4FF3F) fuer das
             // Delta. Die eine Akzentflaeche dieses Screens ist "Fertig"
             // (designsystem.md SS2, Aufgabenbrief "Global Constraints").
+            // Sehende bekommen den Rahmen aus der Ueberschrift "BEIM
+            // NÄCHSTEN MAL" und dem Produktgrenze-Satz darunter; fuer
+            // VoiceOver blieb eine nackte Zahl. "Vorschlaege sind eine
+            // Rechnung, keine Empfehlung" ist bindend -- das Wort gehoert
+            // also auch in die gesprochene Fassung (designsystem.md SS10).
             Text(zeile.anzeige.text)
                 .font(.system(size: 19, weight: .black).monospacedDigit())
                 .foregroundStyle(farbe(zeile.anzeige, gemeldet: gemeldet))
                 .multilineTextAlignment(.trailing)
+                .accessibilityLabel(zeile.anzeige.gesprochen)
         }
         .padding(DesignSystem.Spacing.s16)
         .frame(minHeight: 44)
@@ -279,6 +292,24 @@ enum VorschlagsAnzeige: Equatable {
             self = .halten
         default:
             self = .keiner
+        }
+    }
+
+    /// Was VoiceOver liest. "+2,5 kg" allein spraeche sich als nackte
+    /// Zahl ohne Rahmen -- designsystem.md SS10 gibt "Vorschlag +2,5 kg"
+    /// vor, und das Wort traegt die Produktgrenze (eine Rechnung, keine
+    /// Empfehlung). Eine EINZIGE Zeichenkette, sonst liest VoiceOver
+    /// "plus, zwei, Komma, fuenf, k, g" als Einzelteile (SS12, dieselbe
+    /// Begruendung wie bei Zahlformat.gewichtGesprochen).
+    var gesprochen: String {
+        switch self {
+        case .delta(let kg):
+            let richtung = kg >= 0 ? "plus" : "minus"
+            return "Vorschlag \(richtung) \(Zahlformat.gewichtGesprochen(abs(kg)))"
+        case .halten:
+            return "Vorschlag: Gewicht halten"
+        case .keiner:
+            return "Kein Vorschlag"
         }
     }
 

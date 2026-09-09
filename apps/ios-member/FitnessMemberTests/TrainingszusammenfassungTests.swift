@@ -147,3 +147,114 @@ struct AbgelaufeneSessionTests {
         #expect(sut.abgelaufeneSession(jetzt: start.addingTimeInterval(5 * 3600)) == nil)
     }
 }
+
+/// `Trainingszeitraum.kopfzeile` -- die Kopfzeile von TrainingAbschluss.
+/// Rein deterministisch: fester Kalender (Europe/Berlin, de_DE), fester
+/// `jetzt`, und die Uhrzeit kommt als Stub herein, damit der Test nicht
+/// von der Geraetezeitzone abhaengt.
+struct TrainingszeitraumTests {
+    private var kalender: Calendar {
+        var kalender = Calendar(identifier: .gregorian)
+        kalender.timeZone = TimeZone(identifier: "Europe/Berlin")!
+        kalender.locale = Locale(identifier: "de_DE")
+        return kalender
+    }
+
+    private func datum(_ jahr: Int, _ monat: Int, _ tag: Int, _ stunde: Int, _ minute: Int) -> Date {
+        var komponenten = DateComponents()
+        komponenten.year = jahr
+        komponenten.month = monat
+        komponenten.day = tag
+        komponenten.hour = stunde
+        komponenten.minute = minute
+        return kalender.date(from: komponenten)!
+    }
+
+    /// Der Stub steht fuer Zahlformat.uhrzeit -- hier fest in der
+    /// Testzeitzone, damit das Ergebnis nicht vom Simulator abhaengt.
+    private func uhrzeit(_ zeitpunkt: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = kalender.timeZone
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: zeitpunkt)
+    }
+
+    private func kopfzeile(von: Date, bis: Date, jetzt: Date) -> String {
+        Trainingszeitraum.kopfzeile(von: von, bis: bis, jetzt: jetzt,
+                                    kalender: kalender, uhrzeit: uhrzeit)
+    }
+
+    @Test func einTrainingVonHeuteHeisstHeute() {
+        let zeile = kopfzeile(
+            von: datum(2026, 9, 9, 18, 4), bis: datum(2026, 9, 9, 19, 10),
+            jetzt: datum(2026, 9, 9, 19, 12))
+
+        #expect(zeile == "HEUTE · 18:04 – 19:10")
+    }
+
+    /// Der Fall aus der Durchsicht: 23:40 bis 00:20. "HEUTE · 23:40 –
+    /// 00:20" behauptete eine Einheit von 41 Minuten am selben Tag.
+    @Test func einTrainingUeberMitternachtNenntBeideTage() {
+        let zeile = kopfzeile(
+            von: datum(2026, 9, 8, 23, 40), bis: datum(2026, 9, 9, 0, 20),
+            jetzt: datum(2026, 9, 9, 0, 21))
+
+        #expect(zeile == "GESTERN · 23:40 – HEUTE 00:20")
+    }
+
+    /// Der Abschluss-Screen kann offen stehen bleiben: liest das Mitglied
+    /// ihn am naechsten Tag, darf dort nicht "HEUTE" stehen.
+    @Test func einTrainingVonGesternHeisstGestern() {
+        let zeile = kopfzeile(
+            von: datum(2026, 9, 8, 18, 4), bis: datum(2026, 9, 8, 19, 10),
+            jetzt: datum(2026, 9, 9, 8, 0))
+
+        #expect(zeile == "GESTERN · 18:04 – 19:10")
+    }
+
+    @Test func einAeltererTerminNenntSeinDatum() {
+        let zeile = kopfzeile(
+            von: datum(2026, 9, 5, 18, 4), bis: datum(2026, 9, 5, 19, 10),
+            jetzt: datum(2026, 9, 9, 8, 0))
+
+        #expect(zeile.hasPrefix("5. SEP"))
+        #expect(zeile.hasSuffix("· 18:04 – 19:10"))
+    }
+
+    @Test func ueberMitternachtVorGesternNenntBeideDaten() {
+        let zeile = kopfzeile(
+            von: datum(2026, 9, 5, 23, 40), bis: datum(2026, 9, 6, 0, 20),
+            jetzt: datum(2026, 9, 9, 8, 0))
+
+        #expect(zeile.hasPrefix("5. SEP"))
+        #expect(zeile.contains("23:40 – 6. SEP"))
+        #expect(zeile.hasSuffix("00:20"))
+    }
+
+    @Test func tagesbezeichnungUeberEinenMonatswechsel() {
+        // 1. Oktober, jetzt ist der 1. Oktober -- "HEUTE" muss auch dann
+        // gelten, wenn der Vortag in einem anderen Monat liegt.
+        #expect(Trainingszeitraum.tagesbezeichnung(
+            datum(2026, 10, 1, 7, 0), jetzt: datum(2026, 10, 1, 20, 0), kalender: kalender) == "HEUTE")
+        #expect(Trainingszeitraum.tagesbezeichnung(
+            datum(2026, 9, 30, 23, 0), jetzt: datum(2026, 10, 1, 1, 0), kalender: kalender) == "GESTERN")
+    }
+}
+
+/// `VorschlagsAnzeige.gesprochen` -- fuer VoiceOver blieb bisher eine
+/// nackte Zahl ohne den Rahmen, den Sehende aus der Ueberschrift bekommen.
+struct VorschlagsAnzeigeGesprochenTests {
+    @Test func einPositivesDeltaNenntDasWortVorschlag() {
+        #expect(VorschlagsAnzeige.delta(2.5).gesprochen == "Vorschlag plus 2,5 Kilogramm")
+    }
+
+    @Test func einNegativesDeltaSprichtMinusStattEinesMinuszeichens() {
+        #expect(VorschlagsAnzeige.delta(-2.5).gesprochen == "Vorschlag minus 2,5 Kilogramm")
+    }
+
+    @Test func haltenUndKeinerTragenDenRahmenEbenfalls() {
+        #expect(VorschlagsAnzeige.halten.gesprochen == "Vorschlag: Gewicht halten")
+        #expect(VorschlagsAnzeige.keiner.gesprochen == "Kein Vorschlag")
+    }
+}
