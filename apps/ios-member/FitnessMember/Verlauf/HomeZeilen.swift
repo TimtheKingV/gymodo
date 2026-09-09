@@ -48,11 +48,36 @@ enum HomeZeilen {
     /// Einheit (siehe dauerText) faellt das erste Glied einfach weg,
     /// statt eine erfundene Dauer zu zeigen.
     static func zeilenText(_ einheit: SessionSummary) -> String {
-        let geraete = "\(einheit.machineCount) \(einheit.machineCount == 1 ? "Gerät" : "Geräte")"
-        let saetze = "\(einheit.setCount) \(einheit.setCount == 1 ? "Satz" : "Sätze")"
+        let geraete = zahlWortMitPlural(einheit.machineCount, singular: "Gerät", plural: "Geräte")
+        let saetze = zahlWortMitPlural(einheit.setCount, singular: "Satz", plural: "Sätze")
         return [dauerText(einheit), geraete, saetze]
             .compactMap { $0 }
             .joined(separator: " · ")
+    }
+
+    /// "18:04 – 18:51 · 47 min · 3 Geräte · 8 Sätze" -- die Zeile unter dem Datum
+    /// im Session-Detail. Bei einer selbsttaetig beendeten Einheit entfallen
+    /// Zeitraum und Dauer: ihr Ende liegt beim letzten Satz, nicht beim Ende
+    /// des Trainings.
+    static func detailUntertitel(_ einheit: SessionSummary) -> String {
+        var teile: [String] = []
+
+        if einheit.completedReason != "auto",
+           let start = Zeitpunkt.parse(einheit.startedAt),
+           let endeIso = einheit.completedAt,
+           let ende = Zeitpunkt.parse(endeIso) {
+            teile.append("\(Zahlformat.uhrzeit(start)) – \(Zahlformat.uhrzeit(ende))")
+        }
+        if let dauer = dauerText(einheit) { teile.append(dauer) }
+        teile.append(zahlWortMitPlural(einheit.machineCount, singular: "Gerät", plural: "Geräte"))
+        teile.append(zahlWortMitPlural(einheit.setCount, singular: "Satz", plural: "Sätze"))
+
+        return teile.joined(separator: " · ")
+    }
+
+    /// Helper fuer Singular/Plural bei Zaehler > 1.
+    private static func zahlWortMitPlural(_ zahl: Int, singular: String, plural: String) -> String {
+        "\(zahl) \(zahl == 1 ? singular : plural)"
     }
 
     /// "+15,0" / "±0" -- eine Rechnung, keine Empfehlung (designsystem.md SS10).

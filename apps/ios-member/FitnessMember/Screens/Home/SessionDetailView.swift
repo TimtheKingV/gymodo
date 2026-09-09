@@ -32,7 +32,7 @@ struct SessionDetailView: View {
             } else {
                 // Der Verlauf wurde zwischenzeitlich geleert (Abmelden,
                 // Kontowechsel). Kein Fehler, kein leerer Screen ohne Wort.
-                Text("Diese Einheit steht nicht mehr im Verlauf.")
+                Text("Diese Einheit steht nicht mehr im Verlauf. Auf Home steht, was gerade geladen ist.")
                     .font(DesignSystem.Typography.fliesstext)
                     .foregroundStyle(DesignSystem.Color.textMuted)
                     .padding(.horizontal, 20)
@@ -50,30 +50,11 @@ struct SessionDetailView: View {
                 .font(DesignSystem.Typography.detailScreentitel)
                 .foregroundStyle(DesignSystem.Color.text)
 
-            Text(untertitel(einheit))
+            Text(HomeZeilen.detailUntertitel(einheit))
                 .font(DesignSystem.Typography.fliesstext)
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .monospacedDigit()
         }
-    }
-
-    /// "18:04 – 18:51 · 47 min · 3 Geräte · 8 Sätze". Bei einer
-    /// selbsttaetig beendeten Einheit entfallen Zeitraum und Dauer: ihr
-    /// Ende liegt beim letzten Satz, nicht beim Ende des Trainings.
-    private func untertitel(_ einheit: SessionSummary) -> String {
-        var teile: [String] = []
-
-        if einheit.completedReason != "auto",
-           let start = Zeitpunkt.parse(einheit.startedAt),
-           let endeIso = einheit.completedAt,
-           let ende = Zeitpunkt.parse(endeIso) {
-            teile.append("\(Zahlformat.uhrzeit(start)) – \(Zahlformat.uhrzeit(ende))")
-        }
-        if let dauer = HomeZeilen.dauerText(einheit) { teile.append(dauer) }
-        teile.append("\(einheit.machineCount) \(einheit.machineCount == 1 ? "Gerät" : "Geräte")")
-        teile.append("\(einheit.setCount) \(einheit.setCount == 1 ? "Satz" : "Sätze")")
-
-        return teile.joined(separator: " · ")
     }
 
     private func blockKarte(_ block: SessionSummary.Block) -> some View {
@@ -98,7 +79,15 @@ struct SessionDetailView: View {
     }
 
     private func satzZeile(_ satz: SessionSummary.Block.Set) -> some View {
-        HStack(spacing: DesignSystem.Spacing.s12) {
+        var label = "Satz \(satz.setIndex), \(Zahlformat.gewichtGesprochen(satz.weightKg)), \(Zahlformat.wiederholungenGesprochen(satz.reps))"
+        if let rir = satz.rir {
+            label.append(", RIR \(Int(rir))")
+        }
+        if satz.problemFlag {
+            label.append(", Problem gemeldet")
+        }
+
+        return HStack(spacing: DesignSystem.Spacing.s12) {
             Text("\(satz.setIndex)")
                 .font(DesignSystem.Typography.label)
                 .foregroundStyle(DesignSystem.Color.textFaint)
@@ -127,13 +116,11 @@ struct SessionDetailView: View {
             if satz.problemFlag {
                 Image(systemName: "exclamationmark.triangle")
                     .foregroundStyle(DesignSystem.Color.warn)
-                    .accessibilityLabel("Problem gemeldet")
             }
 
             Spacer()
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            "Satz \(satz.setIndex), \(Zahlformat.gewichtGesprochen(satz.weightKg)), \(Zahlformat.wiederholungenGesprochen(satz.reps))")
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
     }
 }

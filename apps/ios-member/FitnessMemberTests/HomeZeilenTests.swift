@@ -96,4 +96,20 @@ struct HomeZeilenTests {
         #expect(HomeZeilen.tageHerLabel(0) == "Tage her")
         #expect(HomeZeilen.tageHerLabel(2) == "Tage her")
     }
+
+    @Test func detailUntertitelZeigtZeitraumUndDauerFuerEineManuellBeendeteEinheit() {
+        #expect(HomeZeilen.detailUntertitel(einheit()) == "18:04 – 18:51 · 47 min · 3 Geräte · 8 Sätze")
+    }
+
+    @Test func detailUntertitelLaesstZeitraumUndDauerFuerEineSelbsttaetigBeendeteEinheitWeg() {
+        #expect(HomeZeilen.detailUntertitel(einheit(completedReason: "auto")) == "3 Geräte · 8 Sätze")
+    }
+
+    @Test func detailUntertitelUnterscheidetEinzahlUndMehrzahlBeiGeraetenUndSaetzen() {
+        let eins = einheit(machineCount: 1, setCount: 1)
+        #expect(HomeZeilen.detailUntertitel(eins) == "18:04 – 18:51 · 47 min · 1 Gerät · 1 Satz")
+
+        let mehrere = einheit(machineCount: 2, setCount: 2)
+        #expect(HomeZeilen.detailUntertitel(mehrere) == "18:04 – 18:51 · 47 min · 2 Geräte · 2 Sätze")
+    }
 }
