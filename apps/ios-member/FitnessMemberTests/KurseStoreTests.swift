@@ -217,6 +217,49 @@ struct KurseStoreTests {
         // Nach dem Abmelden gehoeren die Buchungen dem vorigen Konto.
         #expect(sut.eigene == nil)
         #expect(KurseFileStore(directory: verzeichnis).load()?.termine.isEmpty ?? true)
+        // Seit ein Fehlversuch den Plan stehen laesst, ist reset() der
+        // einzige Ort, der ihn UND seine Altersangabe raeumt -- sonst
+        // saehe das naechste Konto den Plan des vorigen.
+        #expect(sut.woche == nil)
+        #expect(sut.wocheStand == nil)
+        #expect(sut.ladeZustand == .bereit)
+    }
+
+    /// Ein Wochenplan gehoert zu genau EINEM Studio. Scheitert der Abruf
+    /// nach einem Wechsel, stuende sonst der Plan des vorigen Studios
+    /// unter dem Namen des neuen: falsche Zeitzone, falsche Zuschreibung
+    /// -- und "Anmelden" buchte im alten Studio.
+    @Test func einStudiowechselWirftDenPlanDesVorigenStudiosWeg() async {
+        let (sut, _) = store()
+        await lade(sut, mit: KursTestdaten.woche(ownStatus: ["booked", nil]))
+        guard let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("sut.loader ist kein FakeKurseLoader")
+            return
+        }
+        #expect(sut.woche != nil)
+
+        await loader.setWoche(.failure(.offline))
+        await sut.laden(studioId: "s2", von: Date(), bis: Date())
+
+        #expect(sut.woche == nil)
+        #expect(sut.wocheStand == nil)
+        #expect(sut.ladeZustand == .fehlgeschlagen(.offline))
+    }
+
+    /// Die Gegenprobe zum Wechsel: DASSELBE Studio laesst den Plan stehen
+    /// -- das ist der Fall, den "veraltet, aber nicht falsch" abdeckt.
+    @Test func einFehlversuchImSELBENStudioLaesstDenPlanStehen() async {
+        let (sut, _) = store()
+        await lade(sut, mit: KursTestdaten.woche(ownStatus: ["booked"]))
+        guard let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("sut.loader ist kein FakeKurseLoader")
+            return
+        }
+
+        await loader.setWoche(.failure(.offline))
+        await sut.laden(studioId: "s1", von: Date(), bis: Date())
+
+        #expect(sut.woche != nil)
     }
 
     // Die Grenze auf Feldebene: ein Test gegen die getippte Struktur

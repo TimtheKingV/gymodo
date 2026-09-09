@@ -133,6 +133,23 @@ final class KurseStore {
     /// weiter, und `ladeZustand`/`wocheStand` sagen ihm, wie alt er ist
     /// (KurseHerkunft). Die Belegungszahlen blendet der Screen dann aus.
     func laden(studioId: String, von: Date, bis: Date) async {
+        // Ein Wochenplan gehoert zu genau EINEM Studio. Wechselt es, ist
+        // der alte Plan nicht "veraltet", sondern FALSCH -- falsche
+        // Zeitzone, falsche Zuschreibung, und "Anmelden" buchte im alten
+        // Studio. Das ist ein anderer Fall als "von vorhin", und
+        // KurseHerkunft kann ihn nicht abfangen: sie datiert Daten, sie
+        // erkennt keine vertauschten.
+        //
+        // Deshalb hier, vor dem Abruf, und an genau EINER Stelle -- der
+        // Store ist der einzige Ort, der die vorige Studiokennung kennt.
+        // Scheitert der neue Abruf, steht der Screen ohne Plan da (Karte
+        // "Kein Empfang") statt mit dem des vorigen Studios. Auch das
+        // `.laedt`-Fenster ist damit sauber: sonst stuenden dort die
+        // Zahlen von Studio A unter dem Namen von Studio B.
+        if let letzteAbfrage, letzteAbfrage.studioId != studioId {
+            woche = nil
+            wocheStand = nil
+        }
         generation += 1
         let eigeneGeneration = generation
         ladeZaehler += 1
