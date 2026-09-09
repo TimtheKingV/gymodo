@@ -341,7 +341,7 @@ final class GeraetModel {
                                 setId: geschrieben.setId,
                                 body: geschrieben.body))
         radOffen = false
-        pause = Resttimer()
+        pause = Resttimer(dauer: TimeInterval(Einstellungen.resttimerSekunden()))
     }
 
     func pauseVerlaengern() { pause = pause?.verlaengert() }

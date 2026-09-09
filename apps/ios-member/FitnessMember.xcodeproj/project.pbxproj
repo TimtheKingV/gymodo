@@ -10,6 +10,7 @@
 		0075B0E3CF0E786F9D22AFFF /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC66ACF7FB394ECB319166C3 /* APIClient.swift */; };
 		05C4AB096D32DA3E6C4E62D7 /* PressButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CEB043A2F6633F4B756357E /* PressButtonStyle.swift */; };
 		0A66C707066A8C209342D669 /* TrainingAbschlussZeilenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05572CBE819B0984F2CACC32 /* TrainingAbschlussZeilenTests.swift */; };
+		0B8F8186023C8395BE77A351 /* EinstellungenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */; };
 		0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */; };
 		0C79D05D0F5B192800FDB707 /* MemberPasswortZuruecksetzenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1987FE7CD53A2E411EAD2595 /* MemberPasswortZuruecksetzenView.swift */; };
 		0CC21610F7CED89559C379C4 /* MemberPasswortView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4C1D2382AF3657C5135CBE2 /* MemberPasswortView.swift */; };
@@ -65,6 +66,7 @@
 		7B323A589D9B8BE99A031994 /* HomeZeilen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9465205BEFD3A3A8588D48D2 /* HomeZeilen.swift */; };
 		7BE807F55A982F870100ABEA /* VerlaufFileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7F2549F14DFAAA175305BC5 /* VerlaufFileStore.swift */; };
 		7BFFB3F7F67F86F6F6B72F59 /* HomeRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA2A6BDB5767BEB528FEE947 /* HomeRootView.swift */; };
+		7CC1C37F84B1C73C92267048 /* Einstellungen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C4E8B114BF9C48A1CD5DED0 /* Einstellungen.swift */; };
 		7FB375254AEA40DEEE4AE229 /* CodeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761B6ACA4FD549615771E3C6 /* CodeEntry.swift */; };
 		80BDCB40CB6953255B669BB5 /* GeraetErkanntView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A055AE066E95BA635068E45 /* GeraetErkanntView.swift */; };
 		824071B2AEF074DCEB6CEF53 /* Zahlformat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00B25E595924E3D70A9F8C8F /* Zahlformat.swift */; };
@@ -207,6 +209,7 @@
 		45FB518781BA996FB7400814 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		4A055AE066E95BA635068E45 /* GeraetErkanntView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetErkanntView.swift; sourceTree = "<group>"; };
 		4C040CEC32DA51B93411E58C /* WorkoutSessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionStoreTests.swift; sourceTree = "<group>"; };
+		4C4E8B114BF9C48A1CD5DED0 /* Einstellungen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Einstellungen.swift; sourceTree = "<group>"; };
 		4CA9131802B15B415EE3362E /* KurseMeineEinteilungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseMeineEinteilungTests.swift; sourceTree = "<group>"; };
 		4FE347CE02DFBA2ACD65350E /* GeraetModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetModel.swift; sourceTree = "<group>"; };
 		55093183C1B476C12C44B469 /* ScannerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerSheet.swift; sourceTree = "<group>"; };
@@ -276,6 +279,7 @@
 		E07C7F4A13CB277BC11B8D77 /* PendingWriteStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingWriteStoreTests.swift; sourceTree = "<group>"; };
 		E0DEE6D2287369CE3EBBECBC /* ProfilRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilRootView.swift; sourceTree = "<group>"; };
 		E4C1D2382AF3657C5135CBE2 /* MemberPasswortView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortView.swift; sourceTree = "<group>"; };
+		E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EinstellungenTests.swift; sourceTree = "<group>"; };
 		E54956E5E29B287C6E6F7AB3 /* KurseWochenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseWochenView.swift; sourceTree = "<group>"; };
 		E82F1E9C17FC9A2A3742B15D /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
 		EAEDFB14623AE11C1FD67B11 /* FitnessMember.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FitnessMember.entitlements; sourceTree = "<group>"; };
@@ -308,6 +312,7 @@
 			isa = PBXGroup;
 			children = (
 				B577EC22237E86AA0F3755B7 /* AppConfig.swift */,
+				4C4E8B114BF9C48A1CD5DED0 /* Einstellungen.swift */,
 				EAEDFB14623AE11C1FD67B11 /* FitnessMember.entitlements */,
 				39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */,
 				3E67B77D484B574613C4314E /* Herkunftssatz.swift */,
@@ -446,6 +451,7 @@
 				DB8CC4AA1ADA4ED3E6D39207 /* CatalogStoreTests.swift */,
 				CF7B9170FFCF2B3FBDF4A2F0 /* ColorHexTests.swift */,
 				FD55A1626F478A9D5D1A0861 /* DTOTests.swift */,
+				E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */,
 				1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */,
 				61EBAF697D264131A8B819C9 /* GeraetEinstiegTests.swift */,
 				28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */,
@@ -734,6 +740,7 @@
 				50892766C4CFC62D0B93452B /* Color+Hex.swift in Sources */,
 				13225DB0A049D674C72CE73D /* CourseWeek.swift in Sources */,
 				C0D21B900231DB8BC9A5323E /* DesignSystem.swift in Sources */,
+				7CC1C37F84B1C73C92267048 /* Einstellungen.swift in Sources */,
 				3FEB8C480E33977A36B75C37 /* EinweisungSchritt.swift in Sources */,
 				D0068DB5B484876E3D0083E7 /* EmailValidator.swift in Sources */,
 				8F24875EC54A33CC1C089F64 /* ErrorEnvelope.swift in Sources */,
@@ -831,6 +838,7 @@
 				A536169303BCBE5ED5385A9A /* CatalogStoreTests.swift in Sources */,
 				4FF2547C2EF53854366AC3A1 /* ColorHexTests.swift in Sources */,
 				1938BBAFBE0B05D0BB9E7471 /* DTOTests.swift in Sources */,
+				0B8F8186023C8395BE77A351 /* EinstellungenTests.swift in Sources */,
 				67CB5A92D5A22F772F336E2F /* FortschrittsfensterTests.swift in Sources */,
 				49188A7C28036BA6E75E3C6E /* GeraetEinstiegTests.swift in Sources */,
 				DB3955D030762B13093FA54C /* GeraetModelTests.swift in Sources */,

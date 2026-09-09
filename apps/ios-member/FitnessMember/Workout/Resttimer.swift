@@ -6,17 +6,18 @@ import Foundation
 /// auch wenn du wegsiehst" (GeraetResttimer.dc.html) haelt ueber
 /// Hintergrund und Sperrbildschirm nur so.
 struct Resttimer: Codable, Equatable {
-    /// Feste Groesse: die Pausendauer ist kein Feld im Datenmodell und in
-    /// M1 keine Einstellung.
+    /// Die Vorgabe. Seit Sub-Projekt 4 im Profil einstellbar
+    /// (Einstellungen.resttimerSekunden) -- der Wert hier gilt, solange
+    /// niemand etwas anderes gewaehlt hat.
     static let dauer: TimeInterval = 90
     static let verlaengerung: TimeInterval = 30
 
     let start: Date
     let endetAm: Date
 
-    init(start: Date = Date()) {
+    init(start: Date = Date(), dauer: TimeInterval = Resttimer.dauer) {
         self.start = start
-        endetAm = start.addingTimeInterval(Self.dauer)
+        endetAm = start.addingTimeInterval(dauer)
     }
 
     private init(start: Date, endetAm: Date) {

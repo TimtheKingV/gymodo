@@ -183,16 +183,28 @@ struct GeraetView: View {
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .buttonStyle(PressButtonStyle())
         }
+        // Am umschliessenden VStack, nicht am PrimaryButton selbst: der
+        // Knopf verschwindet je nach Zustand aus der Hierarchie, der
+        // Modifier soll trotzdem am Leben bleiben.
+        .sensoryFeedback(trigger: modell.satzNummer) { alt, neu in
+            // Haptik nie als einzige Rueckmeldung (designsystem.md SS6):
+            // die sichtbare Bestaetigung bleibt daneben bestehen. Nur
+            // beim Steigen, nicht beim Zuruecksetzen auf einen neuen
+            // Block.
+            vibrationBeimSichern && neu > alt ? .impact(weight: .medium) : nil
+        }
     }
 
     private var hauptaktion: String {
         "Satz \(modell.satzNummer) sichern"
     }
 
-    /// RIR, laut SS9 optional und ueber das Profil abschaltbar. Der Schalter
-    /// selbst gehoert zu Sub-Projekt 4; hier steht schon die Ablage, damit
-    /// SP4 nur noch den Schalter anhaengen muss.
-    @AppStorage("rirSichtbar") private var rirSichtbar = true
+    /// RIR, laut SS9 optional und ueber das Profil abschaltbar.
+    @AppStorage(Einstellungen.rirSichtbarKey) private var rirSichtbar = true
+    /// Haptik beim Sichern, ueber das Profil abschaltbar (SS6: Haptik nie
+    /// als einzige Rueckmeldung -- die sichtbare Bestaetigung bleibt in
+    /// jedem Fall bestehen).
+    @AppStorage(Einstellungen.vibrationBeimSichernKey) private var vibrationBeimSichern = true
 
     @ViewBuilder
     private var reserveZeile: some View {
