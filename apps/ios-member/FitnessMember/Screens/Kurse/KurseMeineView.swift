@@ -500,8 +500,12 @@ struct KurseMeineView: View {
         let verstrichen = KursDetailInhalt.abmeldefristVerstrichen(
             startsAt: zeile.termin.startsAt, fristStunden: eigene.cancellationDeadlineHours, jetzt: jetzt)
         let uhrzeit = abmeldenBisUhrzeit(zeile.termin, fristStunden: eigene.cancellationDeadlineHours, zeitzone: eigene.timezone)
+        // belegungGilt: true ohne Bedeutung -- `.angemeldet` haengt an
+        // ownStatus, nicht an freeSeats, und dieser Screen zeigt ohnehin
+        // nirgends eine Belegungszahl.
         let fusstext = KursDetailInhalt.fusstext(
-            fuer: .angemeldet, abmeldenBisUhrzeit: uhrzeit, abmeldefristVerstrichen: verstrichen, wartelistenplatz: nil)
+            fuer: .angemeldet, abmeldenBisUhrzeit: uhrzeit, abmeldefristVerstrichen: verstrichen,
+            wartelistenplatz: nil, belegungGilt: true)
 
         return VStack(spacing: 0) {
             Button {

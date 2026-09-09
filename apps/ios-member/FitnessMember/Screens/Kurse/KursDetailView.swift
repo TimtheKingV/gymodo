@@ -52,15 +52,24 @@ enum KursDetailHauptaktion: Equatable {
 /// Wartelistenplatz laesst sich jederzeit bis Kursbeginn verlassen, ohne
 /// Frist. Review-Fund (Aufgabe 10, Nachtrag).
 enum KursDetailInhalt {
+    /// `belegungGilt` ist `KurseHerkunft.zeigtBelegung`: ob die Zahlen,
+    /// aus denen `.frei` und `.voll` stammen, gerade noch etwas aussagen.
+    ///
+    /// Beide leiten sich allein aus `freeSeats` ab. Ohne frische Belegung
+    /// sind sie deshalb NICHT unterscheidbar -- und dann ist "Auf die
+    /// Warteliste" eine Behauptung ueber einen Fuellstand von vorhin.
+    /// `.anmelden` ist in beiden Faellen richtig: dieselbe Route legt
+    /// Buchung oder Wartelistenplatz an, der Server entscheidet
+    /// (`BookOutcome.result`). Der Fusstext sagt genau das dazu.
     static func hauptaktion(
-        fuer zustand: KursZustand, abmeldefristVerstrichen: Bool
+        fuer zustand: KursZustand, abmeldefristVerstrichen: Bool, belegungGilt: Bool
     ) -> KursDetailHauptaktion? {
         switch zustand {
         case .abgesagt, .vorbei: nil
         case .angemeldet: abmeldefristVerstrichen ? nil : .abmelden
         case .warteliste: .wartelisteVerlassen
         case .frei: .anmelden
-        case .voll: .aufWarteliste
+        case .voll: belegungGilt ? .aufWarteliste : .anmelden
         }
     }
 
@@ -71,27 +80,44 @@ enum KursDetailInhalt {
     /// verstrichener Frist ist eigener Wortlaut (Review-Fund): sagt, was
     /// nicht mehr geht (kein "Abmelden" mehr da) und was gilt (der Platz
     /// bleibt reserviert) -- SS5.
+    ///
+    /// Drei Saetze haengen an `belegungGilt` bzw. an einer frischen
+    /// Wartelistenposition, weil sie sonst eine Zahl von vorhin
+    /// weitererzaehlen:
+    /// - "Alle Plätze sind vergeben." kommt aus `freeSeats`.
+    /// - "Du stehst auf Platz 3." aendert sich OHNE Zutun des Mitglieds:
+    ///   jemand davor storniert, es rueckt nach. Deshalb steht die
+    ///   Position nicht auf der Platte (KurseFileStore), deshalb verbietet
+    ///   der Rohtext-Test ihren Schluessel -- und deshalb darf sie auch
+    ///   aus einem alten `woche` nicht durchrutschen. Schlimmster Ausgang:
+    ///   das Mitglied ist laengst nachgerueckt, liest "Platz 3" und
+    ///   verlaesst die Warteliste.
+    /// - Ohne bekannte Position gilt, was ohne Netz gilt: "Du stehst auf
+    ///   der Warteliste." -- ohne Nummer, aber nicht stumm.
     static func fusstext(
         fuer zustand: KursZustand, abmeldenBisUhrzeit: String?,
-        abmeldefristVerstrichen: Bool, wartelistenplatz: Int?
+        abmeldefristVerstrichen: Bool, wartelistenplatz: Int?, belegungGilt: Bool
     ) -> String? {
+        let frist = abmeldenBisUhrzeit.map { "Abmelden ist bis \($0) möglich." }
         switch zustand {
         case .abgesagt:
-            "Dein Studio hat diesen Termin abgesagt."
+            return "Dein Studio hat diesen Termin abgesagt."
         case .vorbei:
-            "Dieser Termin ist vorbei."
+            return "Dieser Termin ist vorbei."
         case .angemeldet:
             if abmeldefristVerstrichen {
-                "Die Abmeldefrist ist verstrichen. Dein Platz bleibt reserviert."
-            } else {
-                abmeldenBisUhrzeit.map { "Abmelden ist bis \($0) möglich." }
+                return "Die Abmeldefrist ist verstrichen. Dein Platz bleibt reserviert."
             }
-        case .frei:
-            abmeldenBisUhrzeit.map { "Abmelden ist bis \($0) möglich." }
+            return frist
         case .warteliste:
-            wartelistenplatz.map { "Du stehst auf Platz \($0)." }
-        case .voll:
-            "Alle Plätze sind vergeben."
+            return wartelistenplatz.map { "Du stehst auf Platz \($0)." }
+                ?? "Du stehst auf der Warteliste."
+        case .frei, .voll:
+            guard belegungGilt else {
+                let unsicher = "Wie viele Plätze frei sind, wissen wir gerade nicht — bei einem vollen Kurs kommst du auf die Warteliste."
+                return frist.map { "\(unsicher) \($0)" } ?? unsicher
+            }
+            return zustand == .voll ? "Alle Plätze sind vergeben." : frist
         }
     }
 
@@ -367,7 +393,7 @@ struct KursDetailView: View {
         }
         .background(DesignSystem.Color.bg)
         .safeAreaInset(edge: .bottom) {
-            aktionsBereich(ansicht)
+            aktionsBereich(ansicht, herkunft: herkunft)
                 .padding(.horizontal, 20)
                 .padding(.top, DesignSystem.Spacing.s12)
                 .padding(.bottom, DesignSystem.Spacing.s16)
@@ -512,16 +538,20 @@ struct KursDetailView: View {
     /// Hauptaktion hat keinen aktiven Wert, den der Akzent markieren
     /// muesste -- statt eines Knopfs steht der Fusstext allein, und der
     /// ist nie stumm (er sagt ausdruecklich, warum nichts zu tun ist).
-    private func aktionsBereich(_ ansicht: TerminAnsicht) -> some View {
+    private func aktionsBereich(_ ansicht: TerminAnsicht, herkunft: KurseHerkunft) -> some View {
         let verstrichen = KursDetailInhalt.abmeldefristVerstrichen(
             startsAt: ansicht.startsAt, fristStunden: ansicht.fristStunden, jetzt: ansicht.jetzt)
         let hauptaktion = KursDetailInhalt.hauptaktion(
-            fuer: ansicht.zustand, abmeldefristVerstrichen: verstrichen)
+            fuer: ansicht.zustand, abmeldefristVerstrichen: verstrichen,
+            belegungGilt: herkunft.zeigtBelegung)
         let fusstext = KursDetailInhalt.fusstext(
             fuer: ansicht.zustand,
             abmeldenBisUhrzeit: abmeldenBisUhrzeit(ansicht),
             abmeldefristVerstrichen: verstrichen,
-            wartelistenplatz: ansicht.wartelistenplatz)
+            // Dieselbe Frische wie die Belegungszahl: eine
+            // Wartelistenposition aendert sich ohne Zutun des Mitglieds.
+            wartelistenplatz: herkunft.zeigtBelegung ? ansicht.wartelistenplatz : nil,
+            belegungGilt: herkunft.zeigtBelegung)
 
         return VStack(spacing: DesignSystem.Spacing.s8) {
             // `hauptaktion != nil` als Bedingung: ohne Knopf ist der
