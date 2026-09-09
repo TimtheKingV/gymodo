@@ -57,7 +57,8 @@ actor FakeBootstrapLoader: BootstrapLoading {
 }
 
 private func emptyBootstrap(studios: [BootstrapResponse.Studio] = []) -> BootstrapResponse {
-    BootstrapResponse(studios: studios, machines: [], calibrations: [], lastSets: [])
+    BootstrapResponse(
+        member: .init(displayName: nil), studios: studios, machines: [], calibrations: [], lastSets: [])
 }
 
 private func tempDirectory() -> URL {

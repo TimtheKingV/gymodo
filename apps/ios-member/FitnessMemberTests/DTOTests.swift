@@ -30,6 +30,7 @@ struct DTOTests {
     func decodesBootstrap() throws {
         let json = """
         {
+          "member": {"displayName": null},
           "studios": [{"id":"s1","name":"Kraftwerk Nord","timezone":"Europe/Berlin"}],
           "machines": [{
             "id":"m1","studioId":"s1","label":"07","locationNote":null,"status":"active",
@@ -50,6 +51,7 @@ struct DTOTests {
     @Test func bootstrapDecodiertVisitCount() throws {
         let json = """
         {
+          "member": {"displayName": null},
           "studios": [],
           "machines": [{
             "id": "m1", "studioId": "s1", "label": "Gerät 7",
@@ -77,6 +79,14 @@ struct DTOTests {
         #expect(bootstrap.machines[0].visitCount == 3)
         // Ohne die Beschriftung zeigt der Offline-Zustand "sitz 4" statt "Sitz 4".
         #expect(bootstrap.machines[0].equipmentModel.settingDefinitions.first?.label == "Sitzposition")
+    }
+
+    @Test("dekodiert ein Bootstrap ohne gesetzten Namen")
+    func decodesMemberOhneNamen() throws {
+        let json = #"{"member":{"displayName":null},"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#
+        let response = try JSONDecoder().decode(BootstrapResponse.self, from: Data(json.utf8))
+
+        #expect(response.member.displayName == nil)
     }
 
     @Test("dekodiert einen TagContextResponse mit leerer Historie")

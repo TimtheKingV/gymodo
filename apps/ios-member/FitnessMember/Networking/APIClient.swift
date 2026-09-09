@@ -113,6 +113,14 @@ actor APIClient {
         try await sendNoBody("course-sessions/\(sessionId)/booking", method: "DELETE")
     }
 
+    // MARK: - Profil (Sub-Projekt 4, ausserhalb M1-Spec SS6.3)
+
+    /// Der einzige Schreibweg des Namens -- Registrierung wie spaeteres
+    /// Aendern. Die Antwort traegt den geputzten Namen zurueck.
+    func setDisplayName(_ name: String) async throws(APIError) -> ProfilAntwort {
+        try await send("me/profile", method: "PUT", body: AnzeigenameWrite(displayName: name))
+    }
+
     // MARK: - Hilfsmethoden
 
     private func get<T: Decodable>(_ path: String, as type: T.Type = T.self) async throws(APIError) -> T {
