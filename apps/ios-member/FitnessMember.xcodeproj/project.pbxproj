@@ -57,6 +57,7 @@
 		5B7C293A4A3C2C42F2969ADE /* PendingWriteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F89B657647B40C20CCA5FE4 /* PendingWriteStore.swift */; };
 		5CC058FDF3D698829231E5DE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33AEE94B0EDB5593285596C /* RootView.swift */; };
 		600E5516A47D964636050F36 /* TrainingszusammenfassungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA53E0FF9AB052ED88E68C7 /* TrainingszusammenfassungTests.swift */; };
+		67CB5A92D5A22F772F336E2F /* FortschrittsfensterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */; };
 		6D53A3B77BA1BA710E5457DD /* ErstkontaktFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CFAD7B15E65FF7B1029BCD3 /* ErstkontaktFlow.swift */; };
 		74330F94DB89B468FB230AB0 /* RootDestinationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0753010E9ACC09DF6D948170 /* RootDestinationTests.swift */; };
 		750CEBE3A0D07E711D31D94F /* InlineBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D8C4AC64870FF3423C494F /* InlineBanner.swift */; };
@@ -96,6 +97,7 @@
 		B854BF7F3EC5F92A64658311 /* KurseWochenBerechnungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0D97A63F51670FD637DCAFE /* KurseWochenBerechnungTests.swift */; };
 		B90035F502BFCB437C290355 /* TrainingAbschlussView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5EDFCF55AFA4CDCD53104DC /* TrainingAbschlussView.swift */; };
 		BB4049269A55E59A041A3AC8 /* VerlaufHerkunftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F433CFBFAAF0BB5791D28FC9 /* VerlaufHerkunftTests.swift */; };
+		BCCED66A72ECB12C420D30B9 /* Fortschrittsfenster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 941088E8ADF755FB4FCC5B33 /* Fortschrittsfenster.swift */; };
 		C01062BE7395A2DAD05A3EE4 /* AuthLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D6E6743BDCF6E58E971D0CE /* AuthLogicTests.swift */; };
 		C0D21B900231DB8BC9A5323E /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E48EE365B2AEEBD3FCBC2E /* DesignSystem.swift */; };
 		C27905224D4AC66F7D6DC784 /* LokaleSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DEDAB723DC8FE55CB2FFA1 /* LokaleSession.swift */; };
@@ -163,6 +165,7 @@
 		186F9A8308C2902F45F6E10E /* KursZustand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursZustand.swift; sourceTree = "<group>"; };
 		19832BC95D12C1DCBEFF10E9 /* SessionSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSummary.swift; sourceTree = "<group>"; };
 		1987FE7CD53A2E411EAD2595 /* MemberPasswortZuruecksetzenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortZuruecksetzenView.swift; sourceTree = "<group>"; };
+		1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FortschrittsfensterTests.swift; sourceTree = "<group>"; };
 		1B227508179FE62A4DAA06A0 /* Chip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chip.swift; sourceTree = "<group>"; };
 		1B800AB907E579F778EA2656 /* GeraetLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetLoading.swift; sourceTree = "<group>"; };
 		1B992AC22F100D1FF9BE1737 /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
@@ -233,6 +236,7 @@
 		8F549FAB0B22E1E37C716899 /* VerlaufStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerlaufStore.swift; sourceTree = "<group>"; };
 		927CF0E8A6C3CD19C832E6FD /* ProblemSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProblemSheet.swift; sourceTree = "<group>"; };
 		9356660F927DE0AEC1C66C5D /* GeraetEinstieg.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetEinstieg.swift; sourceTree = "<group>"; };
+		941088E8ADF755FB4FCC5B33 /* Fortschrittsfenster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fortschrittsfenster.swift; sourceTree = "<group>"; };
 		943C19386AFE9634615213ED /* Info-Additions.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info-Additions.plist"; sourceTree = "<group>"; };
 		9465205BEFD3A3A8588D48D2 /* HomeZeilen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeZeilen.swift; sourceTree = "<group>"; };
 		962343020926813A08DE01CA /* KurseFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseFileStore.swift; sourceTree = "<group>"; };
@@ -379,6 +383,7 @@
 		3EC6E8F2F1E551011A08F76C /* Verlauf */ = {
 			isa = PBXGroup;
 			children = (
+				941088E8ADF755FB4FCC5B33 /* Fortschrittsfenster.swift */,
 				9465205BEFD3A3A8588D48D2 /* HomeZeilen.swift */,
 				A7F2549F14DFAAA175305BC5 /* VerlaufFileStore.swift */,
 				FAF53764E89CC9198F52E049 /* VerlaufHerkunft.swift */,
@@ -441,6 +446,7 @@
 				DB8CC4AA1ADA4ED3E6D39207 /* CatalogStoreTests.swift */,
 				CF7B9170FFCF2B3FBDF4A2F0 /* ColorHexTests.swift */,
 				FD55A1626F478A9D5D1A0861 /* DTOTests.swift */,
+				1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */,
 				61EBAF697D264131A8B819C9 /* GeraetEinstiegTests.swift */,
 				28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */,
 				EC41D34D6C45ECA67DC8B7D5 /* HomeZeilenTests.swift */,
@@ -735,6 +741,7 @@
 				6D53A3B77BA1BA710E5457DD /* ErstkontaktFlow.swift in Sources */,
 				CFADE9B7B1518A3F6DF0E7E7 /* ExerciseProgress.swift in Sources */,
 				EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */,
+				BCCED66A72ECB12C420D30B9 /* Fortschrittsfenster.swift in Sources */,
 				207B8D6F6D17D7C2F5BA2FA5 /* GeraetEinstieg.swift in Sources */,
 				80BDCB40CB6953255B669BB5 /* GeraetErkanntView.swift in Sources */,
 				356B55A3EC5DF1C40CF07351 /* GeraetLoading.swift in Sources */,
@@ -824,6 +831,7 @@
 				A536169303BCBE5ED5385A9A /* CatalogStoreTests.swift in Sources */,
 				4FF2547C2EF53854366AC3A1 /* ColorHexTests.swift in Sources */,
 				1938BBAFBE0B05D0BB9E7471 /* DTOTests.swift in Sources */,
+				67CB5A92D5A22F772F336E2F /* FortschrittsfensterTests.swift in Sources */,
 				49188A7C28036BA6E75E3C6E /* GeraetEinstiegTests.swift in Sources */,
 				DB3955D030762B13093FA54C /* GeraetModelTests.swift in Sources */,
 				223F8FDD1BA1AFE59AF71D8C /* HomeZeilenTests.swift in Sources */,
