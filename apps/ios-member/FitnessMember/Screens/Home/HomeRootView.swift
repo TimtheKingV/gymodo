@@ -7,6 +7,8 @@ import SwiftUI
 struct HomeRootView: View {
     @Environment(VerlaufStore.self) private var verlauf
     @Environment(CatalogStore.self) private var katalog
+    @Environment(NetzwerkMonitor.self) private var netz
+    @Environment(\.scenePhase) private var scenePhase
     /// Reicht einen gescannten Geraete-Code an den Training-Tab weiter --
     /// derselbe Weg wie ein Universal Link (siehe MainTabView,
     /// TrainingRootView). Kein eigener Geraete-Oeffnen-Pfad hier: "Erstes
@@ -42,7 +44,7 @@ struct HomeRootView: View {
             }
             .background(DesignSystem.Color.bg)
             .scrollContentBackground(.hidden)
-            .refreshable { await verlauf.laden(studioId: katalog.activeStudioId) }
+            .refreshable { await neuLaden() }
             .navigationDestination(for: HomeRoute.self) { route in
                 switch route {
                 case .sessionDetail(let id):
@@ -66,11 +68,34 @@ struct HomeRootView: View {
                 )
             }
         }
-        .task { await verlauf.laden(studioId: katalog.activeStudioId) }
+        .task(id: katalog.activeStudioId) { await neuLaden() }
+        // Ein Reconnect-Ausloeser. Ohne ihn blieb "Kein Empfang" (bzw. die
+        // veraltete Kennzahl) stehen, bis das Mitglied den Tab verliess
+        // und zurueckkam.
+        .onChange(of: netz.istOnline) { _, istOnline in
+            guard istOnline else { return }
+            Task { await neuLaden() }
+        }
+        // Rueckkehr aus dem Hintergrund. .task(id:) laeuft dabei nicht
+        // erneut -- TabView haelt Home am Leben, auch waehrend ein
+        // Workout im Training-Tab beendet wird oder das Studio wechselt,
+        // und ohne diesen Ausloeser stuenden Sessions, "diese Woche" und
+        // die Fortschrittszeilen unveraendert da.
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task { await neuLaden() }
+        }
     }
 }
 
 private extension HomeRootView {
+    /// Der eine Ladeweg des Screens -- alle vier Ausloeser (erster Aufbau,
+    /// Ziehen, Reconnect, Rueckkehr aus dem Hintergrund) gehen hier durch,
+    /// damit `studioId` nicht an vier Stellen gelesen wird.
+    func neuLaden() async {
+        await verlauf.laden(studioId: katalog.activeStudioId)
+    }
+
     @ViewBuilder var kopf: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
             if let vorname = HomeZeilen.vorname(katalog.bootstrap?.member.displayName) {
