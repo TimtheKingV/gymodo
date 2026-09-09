@@ -157,6 +157,40 @@ struct KurseStoreTests {
         #expect(zweiterLauf.eigene?.termine.count == 1)  // aber meine Kurse
     }
 
+    // Review-Fund zu Aufgabe 9: laden(...) hat den gefangenen APIError
+    // verworfen und nur einen bedeutungslosen ".fehlgeschlagen"-Marker
+    // gesetzt -- der View konnte dann Offline nicht mehr von einem
+    // Serverfehler unterscheiden. Die beiden folgenden Tests beweisen, dass
+    // der TATSAECHLICHE Fehler jetzt ankommt, nicht nur seine Existenz.
+    @Test func einServerfehlerWirdMitSeinemTextDurchgereicht() async {
+        let (sut, _) = store()
+        guard let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("sut.loader ist kein FakeKurseLoader")
+            return
+        }
+        await loader.setWoche(.failure(.validation(message: "Zeitraum ungueltig")))
+
+        await sut.laden(studioId: "s1", von: Date(), bis: Date())
+
+        #expect(sut.ladeZustand == .fehlgeschlagen(.validation(message: "Zeitraum ungueltig")))
+    }
+
+    @Test func offlineBleibtVonEinemServerfehlerUnterscheidbar() async {
+        let (sut, _) = store()
+        guard let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("sut.loader ist kein FakeKurseLoader")
+            return
+        }
+        await loader.setWoche(.failure(.offline))
+
+        await sut.laden(studioId: "s1", von: Date(), bis: Date())
+
+        #expect(sut.ladeZustand == .fehlgeschlagen(.offline))
+        // Und ausdruecklich NICHT gleich einem Serverfehler -- das ist der
+        // eigentliche Zweck der Nutzlast.
+        #expect(sut.ladeZustand != .fehlgeschlagen(.server(message: "irrelevant")))
+    }
+
     @Test func einErfolgreichesBuchenLaedtNeu() async {
         // Sonst zeigte der Screen nach dem Anmelden weiter "Anmelden".
         let (sut, _) = store()

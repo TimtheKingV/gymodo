@@ -21,12 +21,21 @@ extension APIClient: KurseLoading {}
 
 /// Ladezustand des Wochenplans -- eigener Typ statt CatalogLoadState
 /// wiederzuverwenden: dessen `loaded(hasStudio:)` traegt eine Nutzlast, die
-/// hier keinen Sinn ergibt, und der Kurse-Bildschirm braucht keine.
+/// hier keinen Sinn ergibt, der Kurse-Bildschirm braucht eine andere.
 enum KurseLadeZustand: Equatable {
     case bereit
     case laedt
     case geladen
-    case fehlgeschlagen
+    /// Traegt den tatsaechlichen `APIError`, nicht nur einen Marker: die
+    /// Screens (ab Aufgabe 9) muessen `.offline` von einem Serverfehler
+    /// unterscheiden koennen. "Offline" darf projektweit nie als
+    /// "fehlgeschlagen" erscheinen (designsystem.md SS5 -- ein eigener,
+    /// ehrlicher Satz statt eines Fehlschlags), waehrend ein Serverfehler
+    /// (.validation, .server, ...) seinen Text woertlich zeigen soll. Mit
+    /// einem blossen Marker war beides im View nicht mehr auseinanderzuhalten
+    /// -- der urspruengliche `catch`-Zweig unten hat den gefangenen Fehler
+    /// verworfen, statt ihn durchzureichen (Review-Fund Aufgabe 9).
+    case fehlgeschlagen(APIError)
 }
 
 /// Haelt den Wochenplan, fuehrt Buchung und Stornierung aus -- und
@@ -143,7 +152,11 @@ final class KurseStore {
         } catch {
             guard eigeneGeneration == generation else { return }
             woche = nil
-            ladeZustand = .fehlgeschlagen
+            // `error` ist hier bereits als APIError getippt (typed throws
+            // von loader.courseWeek) -- durchreichen statt verwerfen, sonst
+            // kann der View Offline nicht mehr von einem Serverfehler
+            // unterscheiden (siehe KurseLadeZustand.fehlgeschlagen).
+            ladeZustand = .fehlgeschlagen(error)
         }
     }
 

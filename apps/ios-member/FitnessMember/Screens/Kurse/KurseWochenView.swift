@@ -112,7 +112,6 @@ struct KurseWochenView: View {
 
     @Environment(KurseStore.self) private var kurse
     @Environment(CatalogStore.self) private var katalog
-    @Environment(NetzwerkMonitor.self) private var netz
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// nil, solange niemand einen Tag angetippt hat -- dann gilt der
@@ -251,13 +250,20 @@ struct KurseWochenView: View {
     /// Fehler ist immer das ERSTE Laden (nach einem Erfolg bleibt `woche`
     /// beim naechsten Fehlversuch zwar nil, aber der Fehlerzweig greift
     /// dann schon vorher).
+    ///
+    /// Offline vs. Serverfehler kommt jetzt aus dem Fehler selbst
+    /// (`APIError.offline`), nicht mehr aus `netz.istOnline`: der
+    /// Netzwerkmonitor kann in der Sekunde zwischen einem Timeout und der
+    /// naechsten Reachability-Meldung kurz "online" zeigen, waehrend die
+    /// Anfrage selbst laengst mit .offline gescheitert ist -- der
+    /// tatsaechlich gefangene Fehler ist die verlässlichere Quelle.
     @ViewBuilder
     private var inhalt: some View {
-        if kurse.ladeZustand == .fehlgeschlagen {
-            if netz.istOnline {
-                fehlerKarte
-            } else {
+        if case .fehlgeschlagen(let fehler) = kurse.ladeZustand {
+            if fehler == .offline {
                 offlineKarte
+            } else {
+                fehlerKarte(servertext(fuer: fehler))
             }
         } else if kurse.woche == nil {
             skelett
@@ -342,17 +348,18 @@ struct KurseWochenView: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// KurseStore.laden(...) verwirft den eigentlichen APIError im
-    /// catch-Zweig vollstaendig (siehe KurseStore.swift) -- `ladeZustand`
-    /// kennt nur "fehlgeschlagen", keinen Servertext. Diese Karte kann den
-    /// Servertext deshalb NICHT woertlich zeigen, wie es der Aufgabenbrief
-    /// verlangt; siehe Bericht.
-    private var fehlerKarte: some View {
+    /// Zeigt den Servertext woertlich (`text`, aus `servertext(fuer:)`) --
+    /// jetzt moeglich, weil KurseStore.laden(...) den gefangenen APIError
+    /// seit dem Review zu Aufgabe 9 durchreicht statt ihn zu verwerfen
+    /// (`KurseLadeZustand.fehlgeschlagen(APIError)`). Der zweite Satz sagt,
+    /// was trotzdem gilt (designsystem.md SS5: Fehler sagen, was falsch
+    /// ist UND was gilt).
+    private func fehlerKarte(_ text: String) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-            Text("Der Wochenplan lässt sich gerade nicht laden.")
+            Text(text)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(DesignSystem.Color.danger)
-            Text("Deine eigenen Kurse bleiben über „Meine Kurse“ sichtbar. Versuch es gleich noch einmal.")
+            Text("Deine eigenen Kurse bleiben über „Meine Kurse“ sichtbar.")
                 .font(.system(size: 13))
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .lineSpacing(3)
@@ -364,6 +371,27 @@ struct KurseWochenView: View {
                 .stroke(DesignSystem.Color.danger, lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
+    }
+
+    /// Der Servertext woertlich fuer alles, was tatsaechlich vom Server
+    /// kommt (SS5). `.offline` gehoert hier nicht her -- das bekommt in
+    /// `inhalt` seine eigene, ehrliche Formulierung (`offlineKarte`), nie
+    /// "fehlgeschlagen". `.encodingFailed`/`.decodingFailed` sind rein
+    /// clientseitige Faelle ohne Servertext (siehe APIError-Kommentare);
+    /// hier ein knapper, ehrlicher Ersatzsatz statt eines erfundenen
+    /// Server-Zitats.
+    private func servertext(fuer fehler: APIError) -> String {
+        switch fehler {
+        case .offline:
+            "Keine Verbindung."
+        case .unauthorized(let message), .validation(let message),
+             .notFound(let message), .conflict(let message), .server(let message):
+            message
+        case .encodingFailed:
+            "Die Anfrage konnte nicht gesendet werden."
+        case .decodingFailed:
+            "Die Antwort deines Studios ließ sich nicht lesen."
+        }
     }
 
     // MARK: - Terminzeile
