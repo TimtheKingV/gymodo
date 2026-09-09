@@ -35,17 +35,23 @@ struct TrainingRootView: View {
     /// sofort neu ausgewertet werden, nicht erst bei der naechsten
     /// 60-Sekunden-Kadenz der TimelineView.
     @State private var neuAuswerten = false
-    /// Einmal beim Erscheinen aus sessions.abgelaufeneSession() gelesen, BEVOR
-    /// ausgelaufeneQuittieren() die Einheit raeumt. ausgelaufeneQuittieren()
-    /// loescht seit einer Fehlerbehebung Speicher und Datei, statt nur ein
-    /// Bool zu setzen -- wuerde der Satz reaktiv aus abgelaufeneSession()
-    /// gerendert und im selben Atemzug quittiert, verschwaende er, bevor das
-    /// Mitglied ihn liest. Deshalb: einmal in diesen Zustand lesen, den Satz
-    /// aus DIESEM Zustand zeigen, danach quittieren. Er bleibt so stehen,
-    /// bis die Wurzel verlassen wird -- ODER bis er selbst nicht mehr gilt:
-    /// beenden() setzt ihn beim manuellen Beenden zurueck, der onChange
-    /// unten zusaetzlich beim Uebergang in einen neuen laufenden Zustand.
-    /// Der Satz gehoert zu GENAU EINER abgelaufenen Einheit, nicht zur View.
+    /// Aus sessions.abgelaufeneSession() gelesen, BEVOR ausgelaufeneQuittieren()
+    /// die Einheit raeumt -- an drei Stellen, aber mit derselben Regel: erst
+    /// lesen, den Satz aus DIESEM Zustand zeigen, danach quittieren.
+    /// ausgelaufeneQuittieren() loescht seit einer Fehlerbehebung Speicher
+    /// und Datei, statt nur ein Bool zu setzen -- wuerde der Satz reaktiv aus
+    /// abgelaufeneSession() gerendert und im selben Atemzug quittiert,
+    /// verschwaende er, bevor das Mitglied ihn liest.
+    ///
+    /// Die drei Stellen: das .task(id: context.date) in der TimelineView
+    /// unten (Kalteinstieg UND der selbsttaetige Ablauf waehrend die App
+    /// offen bleibt -- M2b), und die beiden Zweige von beenden() (manuelles
+    /// Beenden setzt false, der Fehlerfall dort setzt true). Er bleibt
+    /// stehen, bis die Wurzel verlassen wird -- ODER bis er selbst nicht
+    /// mehr gilt: beenden() setzt ihn beim manuellen Beenden zurueck, der
+    /// onChange unten zusaetzlich beim Uebergang in einen neuen laufenden
+    /// Zustand. Der Satz gehoert zu GENAU EINER abgelaufenen Einheit, nicht
+    /// zur View.
     @State private var zeigeAusgelaufenHinweis = false
 
     var body: some View {
@@ -59,7 +65,7 @@ struct TrainingRootView: View {
                 // Einheit laengst ausgelaufen ist (M2). Die sekundengenaue Uhr im
                 // laufenden Zustand hat ihre EIGENE, innere TimelineView weiter
                 // unten -- diese hier betrifft nur die Umschaltung.
-                TimelineView(.periodic(from: .now, by: 60)) { _ in
+                TimelineView(.periodic(from: .now, by: 60)) { context in
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                         if let session = sessions.aktiveSession() {
                             laufendInhalt(session)
@@ -69,6 +75,39 @@ struct TrainingRootView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, DesignSystem.Spacing.s24)
+                    // Der Umschalttick selbst wertet nur SEINEN Inhalt neu
+                    // aus, nicht den aeusseren body -- und aus einem
+                    // ViewBuilder heraus darf ohnehin kein Zustand
+                    // geschrieben werden. .task(id:) ist der Ort, der den
+                    // Tick wirklich erreicht und schreiben darf. Die ID
+                    // kombiniert context.date (den 60-Sekunden-Tick) UND
+                    // neuAuswerten (den scenePhase-Ausloeser): faellt
+                    // context.date bei einem vom scenePhase-Wechsel
+                    // erzwungenen Neuaufbau zufaellig mit dem letzten
+                    // Tick-Wert zusammen, macht neuAuswerten die ID trotzdem
+                    // neu -- ohne diese Kombination koennte die Erklaerung
+                    // bis zu 60 s hinter der bereits umgeschalteten Anzeige
+                    // zurueckbleiben.
+                    //
+                    // abgelaufeneSession() liefert NUR etwas, wenn die
+                    // gespeicherte Einheit noch existiert UND
+                    // aktiveSession() wegen Zeitablauf nil ist -- das
+                    // unterscheidet den selbsttaetigen Ablauf sauber von
+                    // einem manuellen "Training beenden": beenden() nullt
+                    // gespeicherteSession bereits VOR dem naechsten Tick,
+                    // abgelaufeneSession() liefert dann nichts mehr (sonst
+                    // waere M1 wieder da). Nach dem ersten Treffer ist
+                    // gespeicherteSession geloescht, jeder weitere Tick
+                    // liefert deshalb von selbst nichts mehr -- ohne
+                    // eigenes Merker-Flag genau einmal. Deckt zugleich den
+                    // Kalteinstieg ab (erster Tick kommt sofort, nicht
+                    // erst nach 60 s), das gesonderte .task unten braucht
+                    // die Pruefung deshalb nicht mehr.
+                    .task(id: UmschaltTick(datum: context.date, wach: neuAuswerten)) {
+                        guard sessions.abgelaufeneSession() != nil else { return }
+                        zeigeAusgelaufenHinweis = true
+                        sessions.ausgelaufeneQuittieren()
+                    }
                 }
             }
             .background(DesignSystem.Color.bg)
@@ -93,18 +132,11 @@ struct TrainingRootView: View {
             // Ein ueber Universal Link erfasster Token wird hier verbraucht --
             // Sub-Projekt 1 hat ihn nur fuer das Banner auf LoginMail genutzt.
             // Deckt den Kalteinstieg ab: der Token liegt beim ersten Aufbau
-            // dieser View schon vor. Derselbe einmalige Moment liest auch die
-            // ggf. abgelaufene Einheit (siehe zeigeAusgelaufenHinweis oben).
+            // dieser View schon vor. Die ggf. abgelaufene Einheit liest und
+            // quittiert das .task(id: context.date) in der TimelineView oben
+            // -- dessen erster Tick kommt genauso beim Kalteinstieg, deshalb
+            // reicht EIN Ort fuer diese Pruefung.
             .task {
-                if sessions.abgelaufeneSession() != nil {
-                    zeigeAusgelaufenHinweis = true
-                    // Erst gelesen (Zeile darueber), jetzt erst quittiert.
-                    // Der if-Zweig hier ist zusaetzlich zum Guard in
-                    // ausgelaufeneQuittieren() selbst (Store) -- doppelt
-                    // abgesichert statt einfach, weil ein falsch-positiver
-                    // Aufruf das Training des Mitglieds loeschen wuerde.
-                    sessions.ausgelaufeneQuittieren()
-                }
                 if let token = pendingTag.consume() { oeffneToken(token) }
             }
             // Deckt die beiden anderen Faelle ab: ein Tag-Tap, waehrend die
@@ -541,4 +573,13 @@ struct TrainingRootView: View {
         sessions.beenden()
         pfad.append(.abschluss(sessionId: session.id, zusammenfassung: zusammenfassung))
     }
+}
+
+/// Die ID fuer .task(id:) an der Umschalt-TimelineView (siehe body oben):
+/// aendert sich sowohl bei jedem 60-Sekunden-Tick als auch bei jedem
+/// scenePhase-Ausloeser, damit die Erklaerung zur ausgelaufenen Einheit
+/// beide Wege erreicht, nicht nur den Tick.
+private struct UmschaltTick: Equatable {
+    let datum: Date
+    let wach: Bool
 }

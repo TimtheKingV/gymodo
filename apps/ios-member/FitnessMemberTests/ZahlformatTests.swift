@@ -52,6 +52,11 @@ struct ZahlformatTests {
         // ab einer Stunde muss die Lesart auf "1:20:14" kippen.
         let start = Date(timeIntervalSince1970: 0)
         #expect(Zahlformat.verstrichen(seit: start, bis: start.addingTimeInterval(80 * 60 + 14)) == "1:20:14")
+        // Die Stundengrenze selbst, auf die Sekunde genau: 3599 s ist noch
+        // "MM:SS", 3600 s kippt bereits um -- ohne diese beiden Behauptungen
+        // koennte der Testname die Grenze versprechen, ohne sie zu pruefen.
+        #expect(Zahlformat.verstrichen(seit: start, bis: start.addingTimeInterval(3599)) == "59:59")
+        #expect(Zahlformat.verstrichen(seit: start, bis: start.addingTimeInterval(3600)) == "1:00:00")
         // Der Grenzfall: eine Einheit darf bis zu vier Stunden laufen
         // (WorkoutSessionStore.sessionPause).
         #expect(Zahlformat.verstrichen(seit: start, bis: start.addingTimeInterval(4 * 3600 - 1)) == "3:59:59")
