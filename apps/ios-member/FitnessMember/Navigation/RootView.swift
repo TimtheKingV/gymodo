@@ -21,7 +21,7 @@ struct RootView: View {
         Group {
             switch destination {
             case .authFlow:
-                AuthFlow()
+                AuthFlow(apiClient: apiClient)
             case .loadingCatalog:
                 ProgressView()
                     .tint(DesignSystem.Color.accent)

@@ -124,6 +124,22 @@ struct SessionStoreTests {
         #expect(store.session == testSession)
     }
 
+    @Test("nameVormerken merkt sich einen Namen bis er verbraucht wird")
+    func nameVormerkenRemembersName() async {
+        let store = SessionStore(backend: FakeAuthBackend())
+        store.nameVormerken("Lena")
+        #expect(store.vorgemerkterName == "Lena")
+        store.nameVerbraucht()
+        #expect(store.vorgemerkterName == nil)
+    }
+
+    @Test("nameVormerken merkt sich reinen Leerraum nicht")
+    func nameVormerkenIgnoresWhitespaceOnly() async {
+        let store = SessionStore(backend: FakeAuthBackend())
+        store.nameVormerken("   ")
+        #expect(store.vorgemerkterName == nil)
+    }
+
     @Test("changePassword meldet aktuelles Passwort falsch als eigenen Fehler")
     func changePasswordWrongCurrent() async {
         let backend = FakeAuthBackend()

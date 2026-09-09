@@ -11,6 +11,12 @@ final class SessionStore {
     private(set) var session: Session?
     private let backend: AuthBackend
 
+    /// Der bei der Registrierung genannte Vorname, bis eine Sitzung
+    /// besteht. Nur im Speicher: er ueberlebt den Code-Schritt, aber
+    /// keinen App-Neustart -- laeuft die Registrierung ins Leere, ist
+    /// nichts Halbes gespeichert.
+    private(set) var vorgemerkterName: String?
+
     init(backend: AuthBackend) {
         self.backend = backend
     }
@@ -44,6 +50,13 @@ final class SessionStore {
             return false
         } catch { throw AuthError.map(error) }
     }
+
+    func nameVormerken(_ name: String) {
+        let geputzt = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        vorgemerkterName = geputzt.isEmpty ? nil : geputzt
+    }
+
+    func nameVerbraucht() { vorgemerkterName = nil }
 
     func verifySignupCode(email: String, code: String) async throws(AuthError) {
         do { session = try await backend.verifySignupCode(email: email, code: code) }
