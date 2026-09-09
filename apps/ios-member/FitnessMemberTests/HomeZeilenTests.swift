@@ -7,11 +7,13 @@ struct HomeZeilenTests {
         id: String = "s1",
         startedAt: String = "2026-09-08T16:04:00Z",
         completedAt: String? = "2026-09-08T16:51:00Z",
-        completedReason: String? = "manual"
+        completedReason: String? = "manual",
+        machineCount: Int = 3,
+        setCount: Int = 8
     ) -> SessionSummary {
         SessionSummary(
             id: id, startedAt: startedAt, completedAt: completedAt,
-            completedReason: completedReason, machineCount: 3, setCount: 8, blocks: [])
+            completedReason: completedReason, machineCount: machineCount, setCount: setCount, blocks: [])
     }
 
     /// Was heute noch laeuft, ist kein Verlauf -- die laufende Einheit
@@ -68,5 +70,30 @@ struct HomeZeilenTests {
         #expect(HomeZeilen.initialen("Lena Wagner") == "LW")
         #expect(HomeZeilen.initialen("Lena") == "L")
         #expect(HomeZeilen.initialen("Lena Marie Wagner") == "LM")
+    }
+
+    @Test func zeilenTextUnterscheidetEinzahlUndMehrzahlBeiGeraetenUndSaetzen() {
+        #expect(HomeZeilen.zeilenText(einheit(machineCount: 1, setCount: 1)) == "47 min · 1 Gerät · 1 Satz")
+        #expect(HomeZeilen.zeilenText(einheit(machineCount: 2, setCount: 2)) == "47 min · 2 Geräte · 2 Sätze")
+    }
+
+    /// Die selbsttaetig beendete Einheit hat keine Dauer (dauerText liefert
+    /// nil) -- die Zeile faellt dann auf Geraete und Saetze zurueck, statt
+    /// eine leere erste Angabe vor dem ersten Trennpunkt zu zeigen.
+    @Test func zeilenTextLaesstDieDauerOhneGueltigeWeg() {
+        #expect(HomeZeilen.zeilenText(einheit()) == "47 min · 3 Geräte · 8 Sätze")
+        #expect(HomeZeilen.zeilenText(einheit(completedReason: "auto")) == "3 Geräte · 8 Sätze")
+    }
+
+    @Test func veraenderungZeigtVorzeichenUndPlusMinusNullBeiKeinerAenderung() {
+        #expect(HomeZeilen.veraenderung(15) == "+15,0")
+        #expect(HomeZeilen.veraenderung(-2.5) == "-2,5")
+        #expect(HomeZeilen.veraenderung(0) == "±0")
+    }
+
+    @Test func tageHerLabelIstNurBeiGenauEinemTagEinzahl() {
+        #expect(HomeZeilen.tageHerLabel(1) == "Tag her")
+        #expect(HomeZeilen.tageHerLabel(0) == "Tage her")
+        #expect(HomeZeilen.tageHerLabel(2) == "Tage her")
     }
 }

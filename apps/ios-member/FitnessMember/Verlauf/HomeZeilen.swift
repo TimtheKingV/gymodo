@@ -36,6 +36,31 @@ enum HomeZeilen {
         ).day
     }
 
+    /// "Tag her" fuer genau einen Tag, sonst "Tage her" -- auch fuer 0
+    /// ("heute" ist noch nicht so weit her wie "1 Tag", aber "0 Tage her"
+    /// ist trotzdem Mehrzahl).
+    static func tageHerLabel(_ tage: Int) -> String {
+        tage == 1 ? "Tag her" : "Tage her"
+    }
+
+    /// "47 min · 3 Geräte · 8 Sätze" -- die Zeile unter dem Datum in
+    /// "Letzte Trainings". Ohne Dauer bei einer selbsttaetig beendeten
+    /// Einheit (siehe dauerText) faellt das erste Glied einfach weg,
+    /// statt eine erfundene Dauer zu zeigen.
+    static func zeilenText(_ einheit: SessionSummary) -> String {
+        let geraete = "\(einheit.machineCount) \(einheit.machineCount == 1 ? "Gerät" : "Geräte")"
+        let saetze = "\(einheit.setCount) \(einheit.setCount == 1 ? "Satz" : "Sätze")"
+        return [dauerText(einheit), geraete, saetze]
+            .compactMap { $0 }
+            .joined(separator: " · ")
+    }
+
+    /// "+15,0" / "±0" -- eine Rechnung, keine Empfehlung (designsystem.md SS10).
+    static func veraenderung(_ kg: Double) -> String {
+        guard kg != 0 else { return "±0" }
+        return (kg > 0 ? "+" : "-") + Zahlformat.gewicht(abs(kg))
+    }
+
     /// Der erste Namensteil -- "Hallo Lena", nicht "Hallo Lena Wagner".
     static func vorname(_ displayName: String?) -> String? {
         geputzt(displayName)?.split(separator: " ").first.map(String.init)

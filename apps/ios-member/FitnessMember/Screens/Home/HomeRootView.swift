@@ -125,7 +125,7 @@ private extension HomeRootView {
             }
             if let tage = HomeZeilen.tageHer(
                 verlauf.summary?.lastSessionAt, jetzt: Date(), kalender: .current) {
-                kennzahl("\(tage)", tage == 1 ? "Tag her" : "Tage her")
+                kennzahl("\(tage)", HomeZeilen.tageHerLabel(tage))
             }
         }
     }
@@ -178,7 +178,7 @@ private extension HomeRootView {
                             RoundedRectangle(cornerRadius: DesignSystem.Radius.pille)
                                 .stroke(DesignSystem.Color.warn, lineWidth: 1))
                 }
-                Text(zeilenText(einheit))
+                Text(HomeZeilen.zeilenText(einheit))
                     .font(DesignSystem.Typography.fliesstext)
                     .foregroundStyle(DesignSystem.Color.textMuted)
                     .monospacedDigit()
@@ -188,14 +188,6 @@ private extension HomeRootView {
         .padding(DesignSystem.Spacing.s16)
         .background(DesignSystem.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-    }
-
-    func zeilenText(_ einheit: SessionSummary) -> String {
-        let geraete = "\(einheit.machineCount) \(einheit.machineCount == 1 ? "Gerät" : "Geräte")"
-        let saetze = "\(einheit.setCount) \(einheit.setCount == 1 ? "Satz" : "Sätze")"
-        return [HomeZeilen.dauerText(einheit), geraete, saetze]
-            .compactMap { $0 }
-            .joined(separator: " · ")
     }
 
     var fortschritt: some View {
@@ -225,7 +217,7 @@ private extension HomeRootView {
             Text(Zahlformat.gewichtMitEinheit(uebung.currentWeightKg))
                 .font(DesignSystem.Typography.wertSekundaer)
                 .foregroundStyle(DesignSystem.Color.text)
-            Text(veraenderung(uebung.changeKg))
+            Text(HomeZeilen.veraenderung(uebung.changeKg))
                 .font(DesignSystem.Typography.fliesstext)
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .monospacedDigit()
@@ -236,12 +228,6 @@ private extension HomeRootView {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
             "\(uebung.machineLabel), \(uebung.exerciseName), \(Zahlformat.gewichtGesprochen(uebung.currentWeightKg))")
-    }
-
-    /// "+15,0" / "±0" -- eine Rechnung, keine Empfehlung (designsystem.md SS10).
-    func veraenderung(_ kg: Double) -> String {
-        guard kg != 0 else { return "±0" }
-        return (kg > 0 ? "+" : "-") + Zahlformat.gewicht(abs(kg))
     }
 
     var leer: some View {
@@ -270,6 +256,7 @@ private extension HomeRootView {
             Text("\(nummer)")
                 .font(DesignSystem.Typography.label)
                 .foregroundStyle(DesignSystem.Color.textMuted)
+                .monospacedDigit()
                 .frame(width: 20)
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                 Text(titel)
