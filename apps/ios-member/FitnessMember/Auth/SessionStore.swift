@@ -58,6 +58,24 @@ final class SessionStore {
 
     func nameVerbraucht() { vorgemerkterName = nil }
 
+    /// Der eine Konsument von `vorgemerkterName` -- beide Ausstiege aus der
+    /// Registrierung rufen das hier auf: der direkte (signUp liefert sofort
+    /// eine Session, Bestaetigungspflicht aus) genauso wie der ueber
+    /// LoginCodeView (Bestaetigung per Code). Vorher schrieb nur Letzterer,
+    /// weshalb der Name bei sofortiger Session kommentarlos verschwand.
+    ///
+    /// Der Name ist Zierde, kein Trageteil: schlaegt `schreiben` fehl (kein
+    /// Netz im Keller), geht es ohne ihn weiter, und das Profil bietet
+    /// denselben Weg noch einmal an. Deshalb `try?`, kein
+    /// Wiederholungsmechanismus und keine Warteschlange -- die ist fuer
+    /// Saetze da -- und `vorgemerkterName` faellt in jedem Fall weg, damit
+    /// kein spaeterer Aufruf denselben Namen ein zweites Mal schreibt.
+    func vorgemerktenNamenSchreiben(mit schreiben: (String) async throws -> Void) async {
+        guard let name = vorgemerkterName else { return }
+        try? await schreiben(name)
+        vorgemerkterName = nil
+    }
+
     func verifySignupCode(email: String, code: String) async throws(AuthError) {
         do { session = try await backend.verifySignupCode(email: email, code: code) }
         catch { throw AuthError.map(error) }
@@ -97,5 +115,9 @@ final class SessionStore {
     func signOut() async {
         try? await backend.signOut()
         session = nil
+        // Sonst ueberlebte ein vorgemerkter Name aus einer abgebrochenen
+        // Registrierung die Abmeldung und wuerde beim naechsten Konto auf
+        // demselben Geraet fuer jemand anderen geschrieben.
+        vorgemerkterName = nil
     }
 }

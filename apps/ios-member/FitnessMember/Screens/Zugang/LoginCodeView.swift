@@ -79,14 +79,8 @@ struct LoginCodeView: View {
         defer { isSubmitting = false }
         do {
             try await sessionStore.verifySignupCode(email: email, code: code.digits)
-            // Der Name ist Zierde, kein Trageteil: schlaegt der Schreibvorgang
-            // fehl (kein Netz im Keller), geht es ohne ihn weiter, und das
-            // Profil bietet denselben Weg noch einmal an. Deshalb kein
-            // Wiederholungsmechanismus und keine Warteschlange -- die ist fuer
-            // Saetze da.
-            if let name = sessionStore.vorgemerkterName {
-                _ = try? await apiClient.setDisplayName(name)
-                sessionStore.nameVerbraucht()
+            await sessionStore.vorgemerktenNamenSchreiben { name in
+                _ = try await apiClient.setDisplayName(name)
             }
         } catch {
             errorMessage = AuthCopy.codeUngueltig

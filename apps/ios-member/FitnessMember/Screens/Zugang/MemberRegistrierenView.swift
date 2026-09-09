@@ -73,7 +73,15 @@ struct MemberRegistrierenView: View {
         sessionStore.nameVormerken(vorname)
         do {
             let gotImmediateSession = try await sessionStore.signUp(email: email, password: password)
-            if !gotImmediateSession {
+            if gotImmediateSession {
+                // Ohne Bestaetigungspflicht (Supabase mit abgeschalteter
+                // E-Mail-Bestaetigung) landet das Mitglied direkt hier --
+                // LoginCodeView, der einzige bisherige Konsument des
+                // vorgemerkten Namens, wird auf diesem Weg nie erreicht.
+                await sessionStore.vorgemerktenNamenSchreiben { name in
+                    _ = try await apiClient.setDisplayName(name)
+                }
+            } else {
                 didRequireConfirmation = true
             }
         } catch {
