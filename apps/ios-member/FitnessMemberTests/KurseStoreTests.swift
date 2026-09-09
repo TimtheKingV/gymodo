@@ -247,4 +247,28 @@ struct KurseStoreTests {
         // Wie nach einem echten Erfolg wurde neu geladen.
         #expect(sut.ladeZaehler == 2)
     }
+
+    @Test func decodingFehlgeschlagenBeimStornierenGiltAlsErfolg() async {
+        // Dieselbe Begruendung wie beim Buchen: .decodingFailed wird
+        // ausschliesslich im 2xx-Zweig geworfen (APIClient.execute) -- die
+        // Stornierung ist beim Server angekommen, nur die Antwort war
+        // unlesbar. Das dem Mitglied als Fehlschlag zu melden hiesse, es
+        // glaubt weiter angemeldet zu sein.
+        let (sut, _) = store()
+        await lade(sut, mit: KursTestdaten.woche(ownStatus: ["booked"]))
+        guard let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("sut.loader ist kein FakeKurseLoader")
+            return
+        }
+        await loader.setStornieren(.failure(.decodingFailed))
+
+        do {
+            try await sut.stornieren(sessionId: "k0")
+        } catch {
+            Issue.record("stornieren(...) hat trotz .decodingFailed geworfen: \(error)")
+        }
+
+        // Wie nach einem echten Erfolg wurde neu geladen.
+        #expect(sut.ladeZaehler == 2)
+    }
 }

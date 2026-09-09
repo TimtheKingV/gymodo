@@ -184,8 +184,25 @@ final class KurseStore {
 
     /// Storniert einen Termin und laedt danach neu -- aus demselben Grund
     /// wie buchen(...). Faengt den Fehler ebenfalls nicht.
+    ///
+    /// Dieselbe EINE Ausnahme wie bei buchen(...), mit derselben
+    /// Begruendung: `.decodingFailed` wird ausschliesslich im 2xx-Zweig
+    /// geworfen (APIClient.execute) -- die Stornierung ist beim Server
+    /// also angekommen, nur die Antwort liess sich nicht lesen. Das dem
+    /// Mitglied als Fehlschlag zu melden hiesse, es glaubt weiter
+    /// angemeldet zu sein -- es erscheint nicht, oder storniert ein
+    /// zweites Mal. Und der Platz, den jemand auf der Warteliste dadurch
+    /// bekommen hat, ist da, ob der Screen es zugibt oder nicht. Deshalb
+    /// wird NUR dieser eine Fall wie ein Erfolg behandelt: es wird neu
+    /// geladen. Nicht "aufraeumen" -- das ist Absicht.
     func stornieren(sessionId: String) async throws(APIError) {
-        _ = try await loader.cancelCourse(sessionId: sessionId)
+        do {
+            _ = try await loader.cancelCourse(sessionId: sessionId)
+        } catch APIError.decodingFailed {
+            // Angekommen, nur unlesbar -- siehe Kommentar oben. Alle
+            // anderen Fehler fliegen aus dem catch-Zweig unveraendert
+            // weiter, weil sie hier nicht behandelt werden.
+        }
         if let letzteAbfrage {
             await laden(studioId: letzteAbfrage.studioId, von: letzteAbfrage.von, bis: letzteAbfrage.bis)
         }
