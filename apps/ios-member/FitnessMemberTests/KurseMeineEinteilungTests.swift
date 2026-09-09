@@ -32,7 +32,7 @@ struct KurseMeineEinteilungTests {
 
         #expect(einteilung.angemeldet.map(\.termin.sessionId) == ["k1"])
         #expect(einteilung.warteliste.isEmpty)
-        #expect(einteilung.naechsteWoche.isEmpty)
+        #expect(einteilung.spaeter.isEmpty)
     }
 
     @Test func wartelisteInDieserWocheLandetUnterWarteliste() {
@@ -41,27 +41,27 @@ struct KurseMeineEinteilungTests {
 
         #expect(einteilung.warteliste.map(\.termin.sessionId) == ["k1"])
         #expect(einteilung.angemeldet.isEmpty)
-        #expect(einteilung.naechsteWoche.isEmpty)
+        #expect(einteilung.spaeter.isEmpty)
     }
 
-    /// Ein gebuchter Termin in der Folgewoche landet unter "Nächste Woche"
+    /// Ein gebuchter Termin in der Folgewoche landet unter "Später"
     /// -- nicht unter "Angemeldet", obwohl der eigene Status derselbe ist.
-    @Test func angemeldetInDerFolgewocheLandetUnterNaechsteWoche() {
+    @Test func angemeldetInDerFolgewocheLandetUnterSpaeter() {
         let t = termin(startsAt: "2026-09-15T09:00:00Z", ownStatus: "booked")
         let einteilung = KurseMeineEinteilung.bilden(aus: [t], jetzt: jetzt, zeitzone: zeitzone)
 
-        #expect(einteilung.naechsteWoche.map(\.termin.sessionId) == ["k1"])
+        #expect(einteilung.spaeter.map(\.termin.sessionId) == ["k1"])
         #expect(einteilung.angemeldet.isEmpty)
         #expect(einteilung.warteliste.isEmpty)
     }
 
     /// Dieselbe Regel gilt fuer die Warteliste: die Wochenzugehoerigkeit
     /// schlaegt den eigenen Status.
-    @Test func wartelisteInDerFolgewocheLandetEbenfallsUnterNaechsteWoche() {
+    @Test func wartelisteInDerFolgewocheLandetEbenfallsUnterSpaeter() {
         let t = termin(startsAt: "2026-09-16T09:00:00Z", ownStatus: "waitlisted")
         let einteilung = KurseMeineEinteilung.bilden(aus: [t], jetzt: jetzt, zeitzone: zeitzone)
 
-        #expect(einteilung.naechsteWoche.map(\.termin.sessionId) == ["k1"])
+        #expect(einteilung.spaeter.map(\.termin.sessionId) == ["k1"])
         #expect(einteilung.warteliste.isEmpty)
     }
 
@@ -97,6 +97,20 @@ struct KurseMeineEinteilungTests {
         let einteilung = KurseMeineEinteilung.bilden(aus: [spaeter, frueher], jetzt: jetzt, zeitzone: zeitzone)
 
         #expect(einteilung.angemeldet.map(\.termin.sessionId) == ["frueher", "spaeter"])
+    }
+
+    /// Seit das Ladefenster bis "jetzt plus 14 Tage" reicht (Spec 5.1),
+    /// kommen auch Termine der UEBERnaechsten Woche im Cache an. Sie
+    /// gehoeren in denselben Abschnitt -- deshalb heisst er "Später" und
+    /// nicht mehr "Nächste Woche".
+    @Test func einTerminInDerUebernaechstenWocheLandetEbenfallsUnterSpaeter() {
+        // Donnerstag der uebernaechsten Woche, noch innerhalb von
+        // jetzt + 14 Tagen (jetzt ist Do 2026-09-10).
+        let t = termin(startsAt: "2026-09-22T09:00:00Z", ownStatus: "booked")
+        let einteilung = KurseMeineEinteilung.bilden(aus: [t], jetzt: jetzt, zeitzone: zeitzone)
+
+        #expect(einteilung.spaeter.map(\.termin.sessionId) == ["k1"])
+        #expect(einteilung.angemeldet.isEmpty)
     }
 
     @Test func leereEingabeErgibtEineLeereEinteilung() {

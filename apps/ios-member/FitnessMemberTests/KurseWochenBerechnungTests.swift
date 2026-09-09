@@ -36,12 +36,45 @@ struct KurseWochenBerechnungTests {
         #expect(montag == datum(2026, 9, 7, stunde: 0))
     }
 
-    @Test func naechsterMontagIstGenauSiebenTageSpaeter() {
+    /// Das Ladefenster reicht seit Spec 5.1 vierzehn Tage ab `jetzt`,
+    /// nicht nur bis zum naechsten Montag -- EIN Fenster fuer Wochenplan
+    /// und "Meine Kurse".
+    @Test func dasFensterReichtVierzehnTageAbJetzt() {
         let donnerstag = datum(2026, 9, 10)
-        let montag = KurseWochenBerechnung.montag(enthaelt: donnerstag, zeitzone: zeitzone)
-        let naechster = KurseWochenBerechnung.naechsterMontag(enthaelt: donnerstag, zeitzone: zeitzone)
-        #expect(naechster == datum(2026, 9, 14, stunde: 0))
-        #expect(naechster.timeIntervalSince(montag) == 7 * 86400)
+        #expect(KurseWochenBerechnung.fensterEnde(ab: donnerstag, zeitzone: zeitzone)
+                == datum(2026, 9, 24))
+    }
+
+    /// Das Fenster zaehlt KALENDERtage, keine festen Sekunden -- sonst
+    /// verschoebe eine Zeitumstellung darin die Grenze um eine Stunde und
+    /// zoege einen Termin herein oder liesse einen heraus.
+    @Test func dasFensterZaehltKalendertageUeberEineZeitumstellung() {
+        // Freitag, 27.03.2026, 12:00 -- noch Winterzeit. Vierzehn
+        // Kalendertage spaeter ist Freitag, 10.04.2026, 12:00, da ist
+        // Sommerzeit: dieselbe Uhrzeit, absolut eine Stunde weniger.
+        let vorDerUmstellung = datum(2026, 3, 27, stunde: 12)
+        let ende = KurseWochenBerechnung.fensterEnde(ab: vorDerUmstellung, zeitzone: zeitzone)
+        #expect(ende == datum(2026, 4, 10, stunde: 12))
+        #expect(ende.timeIntervalSince(vorDerUmstellung) == 14 * 86400 - 3600)
+
+        // Im Herbst umgekehrt: Freitag, 23.10.2026 -> Freitag, 06.11.2026,
+        // eine Stunde mehr.
+        let vorDerRueckstellung = datum(2026, 10, 23, stunde: 12)
+        let endeHerbst = KurseWochenBerechnung.fensterEnde(ab: vorDerRueckstellung, zeitzone: zeitzone)
+        #expect(endeHerbst == datum(2026, 11, 6, stunde: 12))
+        #expect(endeHerbst.timeIntervalSince(vorDerRueckstellung) == 14 * 86400 + 3600)
+    }
+
+    /// Die aktuelle Woche liegt IMMER vollstaendig im Fenster -- auch am
+    /// Montag frueh, wo der Sonntag am weitesten entfernt ist.
+    @Test func dieAktuelleWocheLiegtImmerGanzImFenster() {
+        for (tag, stunde) in [(7, 0), (10, 12), (13, 23)] {
+            let jetzt = datum(2026, 9, tag, stunde: stunde)
+            let montag = KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zeitzone)
+            let ende = KurseWochenBerechnung.fensterEnde(ab: jetzt, zeitzone: zeitzone)
+            // Der Sonntag endet mit dem Montag der Folgewoche.
+            #expect(ende > montag.addingTimeInterval(7 * 86400))
+        }
     }
 
     @Test func wochentageSindSiebenTageMitGenauEinemHeute() {
@@ -97,8 +130,8 @@ struct KurseWochenBerechnungTests {
         ])
         #expect(tage.first(where: \.istHeute)?.id == "2026-09-30")
         #expect(tage[3].tagesnummer == 1)
-        #expect(KurseWochenBerechnung.naechsterMontag(enthaelt: mittwoch, zeitzone: zeitzone)
-                == datum(2026, 10, 5, stunde: 0))
+        #expect(KurseWochenBerechnung.fensterEnde(ab: mittwoch, zeitzone: zeitzone)
+                == datum(2026, 10, 14))
     }
 
     @Test func eineWocheUeberDenJahreswechsel() {
@@ -114,8 +147,9 @@ struct KurseWochenBerechnungTests {
         #expect(tage.first(where: \.istHeute)?.id == "2026-12-31")
         #expect(KurseWochenBerechnung.montag(enthaelt: silvester, zeitzone: zeitzone)
                 == datum(2026, 12, 28, stunde: 0))
-        #expect(KurseWochenBerechnung.naechsterMontag(enthaelt: silvester, zeitzone: zeitzone)
-                == datum(2027, 1, 4, stunde: 0))
+        // Das Fenster laeuft ueber den Jahreswechsel hinweg weiter.
+        #expect(KurseWochenBerechnung.fensterEnde(ab: silvester, zeitzone: zeitzone)
+                == datum(2027, 1, 14))
     }
 
     @Test func derSonntagDerZeitumstellungImFruehjahrBleibtDerSiebteTag() {
@@ -130,15 +164,14 @@ struct KurseWochenBerechnungTests {
         ])
         #expect(tage.last?.istHeute == true)
 
-        // Das Anfragefenster ist eine KALENDERwoche, keine 604800 Sekunden:
-        // durch die verlorene Stunde sind es hier eine Stunde weniger. Mit
-        // fester Sekundenrechnung faenge das Fenster am Sonntag um 01:00 an
-        // zu enden, und die Kurse des Sonntagabends fielen heraus.
+        // Der Wochenanfang ist ein KALENDERtag, keine feste Sekundenzahl:
+        // durch die verlorene Stunde liegen zwischen diesem Montag und dem
+        // naechsten nur 7 * 86400 - 3600 Sekunden. Wer den Wochenanfang
+        // durch Sekundenrechnung ersetzt, verschiebt den Sonntagabend aus
+        // dem Fenster.
         let montag = KurseWochenBerechnung.montag(enthaelt: sonntag, zeitzone: zeitzone)
-        let naechster = KurseWochenBerechnung.naechsterMontag(enthaelt: sonntag, zeitzone: zeitzone)
         #expect(montag == datum(2026, 3, 23, stunde: 0))
-        #expect(naechster == datum(2026, 3, 30, stunde: 0))
-        #expect(naechster.timeIntervalSince(montag) == 7 * 86400 - 3600)
+        #expect(datum(2026, 3, 30, stunde: 0).timeIntervalSince(montag) == 7 * 86400 - 3600)
     }
 
     @Test func derSonntagDerZeitumstellungImHerbstBleibtDerSiebteTag() {
@@ -154,8 +187,8 @@ struct KurseWochenBerechnungTests {
         #expect(tage.last?.istHeute == true)
 
         let montag = KurseWochenBerechnung.montag(enthaelt: sonntag, zeitzone: zeitzone)
-        let naechster = KurseWochenBerechnung.naechsterMontag(enthaelt: sonntag, zeitzone: zeitzone)
-        #expect(naechster.timeIntervalSince(montag) == 7 * 86400 + 3600)
+        #expect(montag == datum(2026, 10, 19, stunde: 0))
+        #expect(datum(2026, 10, 26, stunde: 0).timeIntervalSince(montag) == 7 * 86400 + 3600)
     }
 
     @Test func derTagWechseltUmMitternacht() {

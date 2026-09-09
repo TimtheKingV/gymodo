@@ -45,13 +45,29 @@ enum KurseWochenBerechnung {
         return kalender.date(byAdding: .day, value: versatz, to: heute) ?? heute
     }
 
-    /// Der Montag der FOLGENDEN Woche -- die exklusive Obergrenze fuer
-    /// KurseStore.laden(von:bis:), damit auch der Sonntag bis Mitternacht
-    /// vollstaendig im Fenster liegt.
-    static func naechsterMontag(enthaelt jetzt: Date, zeitzone: String) -> Date {
+    /// Die exklusive Obergrenze fuer `KurseStore.laden(von:bis:)`:
+    /// `jetzt` plus 14 Tage (Spec 5.1 -- "dieselbe Abfrage mit groesserem
+    /// Fenster (jetzt bis +14 Tage)").
+    ///
+    /// EIN Fenster fuer beide Screens, nicht zwei. `KurseStore.laden(...)`
+    /// ueberschreibt `eigene` bei jedem Aufruf mit genau dem, was im
+    /// aktuellen Fenster liegt -- gaebe es ein zweites, kleineres Fenster
+    /// irgendwo, beschnitten sich die beiden Screens gegenseitig den
+    /// Cache. Der Wochenstreifen filtert ohnehin je Tag ueber `localDay`
+    /// und zeigt ueberzaehlige Tage nie an; "Meine Kurse" bekommt damit
+    /// seine kommenden Anmeldungen, ohne dass irgendwo ein eigener
+    /// Endpoint oder ein zweiter Ladeweg entsteht.
+    ///
+    /// Ueber den Kalender addiert, nicht ueber 14 * 86400 Sekunden: eine
+    /// Zeitumstellung im Fenster verschoebe die Grenze sonst um eine
+    /// Stunde.
+    ///
+    /// Die aktuelle Woche liegt immer vollstaendig darin: ihr Sonntag
+    /// endet spaetestens sieben Tage nach `jetzt`.
+    static func fensterEnde(ab jetzt: Date, zeitzone: String) -> Date {
         let kalender = kalender(zeitzone: zeitzone)
-        let montag = montag(enthaelt: jetzt, zeitzone: zeitzone)
-        return kalender.date(byAdding: .day, value: 7, to: montag) ?? montag
+        return kalender.date(byAdding: .day, value: 14, to: jetzt)
+            ?? jetzt.addingTimeInterval(14 * 86400)
     }
 
     /// Die sieben Kalendertage Montag bis Sonntag, die `jetzt` enthaelt.
@@ -189,7 +205,11 @@ struct KurseWochenView: View {
         guard let studioId = katalog.activeStudioId else { return }
         let jetzt = Date()
         let von = KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zeitzoneFuerAnfrage)
-        let bis = KurseWochenBerechnung.naechsterMontag(enthaelt: jetzt, zeitzone: zeitzoneFuerAnfrage)
+        // Bis "jetzt plus 14 Tage", nicht bis zum naechsten Montag: das
+        // eine Fenster fuer beide Screens (Spec 5.1, siehe fensterEnde).
+        // Dieser Screen zeigt davon weiterhin nur den gewaehlten Tag --
+        // termineDesTages filtert ueber localDay.
+        let bis = KurseWochenBerechnung.fensterEnde(ab: jetzt, zeitzone: zeitzoneFuerAnfrage)
         await kurse.laden(studioId: studioId, von: von, bis: bis)
     }
 

@@ -30,12 +30,14 @@ struct KurseMeineZeile: Identifiable, Equatable {
 ///    zeigen ihn weiterhin, solange er dort auffindbar ist.
 /// 2. Von den verbleibenden (`.angemeldet`/`.warteliste`) landet ein
 ///    Termin, dessen Kalenderwoche (Montag, Studio-Zeitzone) NICHT die
-///    Kalenderwoche von `jetzt` ist, unter "Nächste Woche" -- unabhaengig
+///    Kalenderwoche von `jetzt` ist, unter "Später" -- unabhaengig
 ///    vom eigenen Status. Das Artboard zeigt dort einen einzelnen,
 ///    aktionslosen Vorschau-Eintrag ohne Frist- oder Wartelisten-
 ///    Fusszeile; die Aufteilung nach Woche statt nach Status bildet genau
 ///    das nach. (Diese Regel steht nicht woertlich im Aufgabenbrief --
-///    siehe Bericht.)
+///    siehe Bericht.) Der Abschnitt hiess bis zur Schlusswelle "Nächste
+///    Woche"; seit das Ladefenster bis "jetzt plus 14 Tage" reicht, kann
+///    er auch Termine der uebernaechsten Woche enthalten.
 /// 3. Innerhalb der aktuellen Kalenderwoche entscheidet der eigene Status:
 ///    `.angemeldet` -> "Angemeldet", `.warteliste` -> "Auf der
 ///    Warteliste".
@@ -47,9 +49,9 @@ struct KurseMeineZeile: Identifiable, Equatable {
 struct KurseMeineEinteilung {
     let angemeldet: [KurseMeineZeile]
     let warteliste: [KurseMeineZeile]
-    let naechsteWoche: [KurseMeineZeile]
+    let spaeter: [KurseMeineZeile]
 
-    var istLeer: Bool { angemeldet.isEmpty && warteliste.isEmpty && naechsteWoche.isEmpty }
+    var istLeer: Bool { angemeldet.isEmpty && warteliste.isEmpty && spaeter.isEmpty }
 
     static func bilden(aus termine: [GespeicherterTermin], jetzt: Date, zeitzone: String) -> KurseMeineEinteilung {
         let heutigerMontag = KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zeitzone)
@@ -60,7 +62,7 @@ struct KurseMeineEinteilung {
 
         var angemeldet: [KurseMeineZeile] = []
         var warteliste: [KurseMeineZeile] = []
-        var naechsteWoche: [KurseMeineZeile] = []
+        var spaeter: [KurseMeineZeile] = []
 
         for termin in sortiert {
             let zustand = KursDetailOfflineZustand.zustand(fuer: termin, jetzt: jetzt)
@@ -69,7 +71,7 @@ struct KurseMeineEinteilung {
 
             let zeile = KurseMeineZeile(termin: termin, beginn: beginn)
             if KurseWochenBerechnung.montag(enthaelt: beginn, zeitzone: zeitzone) != heutigerMontag {
-                naechsteWoche.append(zeile)
+                spaeter.append(zeile)
             } else if zustand == .angemeldet {
                 angemeldet.append(zeile)
             } else {
@@ -77,7 +79,7 @@ struct KurseMeineEinteilung {
             }
         }
 
-        return KurseMeineEinteilung(angemeldet: angemeldet, warteliste: warteliste, naechsteWoche: naechsteWoche)
+        return KurseMeineEinteilung(angemeldet: angemeldet, warteliste: warteliste, spaeter: spaeter)
     }
 }
 
@@ -441,10 +443,19 @@ struct KurseMeineView: View {
                     }
                 }
             }
-            if !einteilung.naechsteWoche.isEmpty {
-                abschnitt("Nächste Woche") {
-                    ForEach(einteilung.naechsteWoche) { zeile in
-                        naechsteWocheKarte(zeile, zeitzone: eigene.timezone)
+            if !einteilung.spaeter.isEmpty {
+                // "Später", nicht "Nächste Woche": das Ladefenster
+                // reicht seit Spec 5.1 bis "jetzt plus 14 Tage" und damit
+                // je nach Wochentag bis zu sechs Tage in die
+                // UEBERnaechste Woche hinein. Eine Anmeldung von dort
+                // unter "Nächste Woche" zu fuehren waere eine Aussage
+                // ueber ein Datum, die die Daten nicht hergeben -- auf dem
+                // Screen, dessen ganzer Zweck es ist, die eigenen
+                // Anmeldungen richtig wiederzugeben. Der Datumsblock jeder
+                // Zeile nennt den Tag ohnehin.
+                abschnitt("Später") {
+                    ForEach(einteilung.spaeter) { zeile in
+                        spaeterKarte(zeile, zeitzone: eigene.timezone)
                     }
                 }
             }
@@ -732,9 +743,9 @@ struct KurseMeineView: View {
         )
     }
 
-    // MARK: - "Nächste Woche" -- reiner Vorschau-Eintrag, keine Aktion
+    // MARK: - "Später" -- reiner Vorschau-Eintrag, keine Aktion
 
-    private func naechsteWocheKarte(_ zeile: KurseMeineZeile, zeitzone: String) -> some View {
+    private func spaeterKarte(_ zeile: KurseMeineZeile, zeitzone: String) -> some View {
         let block = datumsblockWerte(zeile.beginn, zeitzone: zeitzone)
 
         return Button {
