@@ -21,7 +21,7 @@ struct UebungsfortschrittView: View {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                     kopf(uebung)
                     umschalter
-                    diagramm(punkte)
+                    diagramm(punkte, uebung: uebung)
                     rohwerte(punkte)
                 }
                 .padding(.horizontal, 20)
@@ -78,7 +78,7 @@ struct UebungsfortschrittView: View {
         }
     }
 
-    private func diagramm(_ punkte: [ExerciseProgress.Point]) -> some View {
+    private func diagramm(_ punkte: [ExerciseProgress.Point], uebung: ExerciseProgress) -> some View {
         Chart(punkte, id: \.performedOn) { punkt in
             LineMark(
                 x: .value("Datum", Zeitpunkt.parse("\(punkt.performedOn)T12:00:00Z") ?? Date()),
@@ -131,7 +131,11 @@ struct UebungsfortschrittView: View {
             }
         }
         .frame(height: 200)
-        .accessibilityLabel("Gewichtsverlauf")
+        // Geraet UND Uebung im Label (designsystem.md SS12, woertlich
+        // "Gewichtsverlauf Beinpresse, Beidbeinig") -- sonst kann
+        // VoiceOver auf einem Screen mit mehreren Uebungen nicht sagen,
+        // auf welcher Kurve es steht.
+        .accessibilityLabel("Gewichtsverlauf \(uebung.machineLabel), \(uebung.exerciseName)")
     }
 
     /// Die Plattform misst nichts -- die Kurve ist eine Zusammenfassung

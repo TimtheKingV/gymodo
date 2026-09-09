@@ -43,6 +43,12 @@ enum Fortschrittsfenster: CaseIterable, Identifiable {
     /// Nullachse machte jeden Fortschritt unsichtbar. Stattdessen ein
     /// Rand von einem Zehntel der Spanne -- mindestens 2,5 kg, damit auch
     /// ein einzelner Punkt eine Achse bekommt.
+    ///
+    /// Der Rand folgt der Spanne, aber der untere Rand bleibt positiv:
+    /// bei einem schmalen Gewicht (Isolationsuebungen, Kabelzug bei
+    /// 2,5-5 kg sind Alltagsdaten, kein Sonderfall) zoege der feste
+    /// 2,5-kg-Mindestrand die Achse sonst genau auf oder unter null --
+    /// exakt das verbietet SS13 ohne Ausnahme.
     static func achsenbereich(_ punkte: [ExerciseProgress.Point]) -> ClosedRange<Double> {
         let gewichte = punkte.map(\.topWeightKg)
         guard let kleinstes = gewichte.min(), let groesstes = gewichte.max() else {
@@ -50,6 +56,7 @@ enum Fortschrittsfenster: CaseIterable, Identifiable {
         }
 
         let rand = max((groesstes - kleinstes) / 10, 2.5)
-        return (kleinstes - rand) ... (groesstes + rand)
+        let unten = max(kleinstes - rand, kleinstes / 2)
+        return unten ... (groesstes + rand)
     }
 }

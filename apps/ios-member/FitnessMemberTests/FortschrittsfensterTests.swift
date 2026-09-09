@@ -54,4 +54,21 @@ struct FortschrittsfensterTests {
 
         #expect(bereich.lowerBound < bereich.upperBound)
     }
+
+    /// Leichte Gewichte (Isolationsuebungen, Kabelzug) sind Alltagsdaten,
+    /// kein Sonderfall -- der feste 2,5-kg-Mindestrand darf die Achse
+    /// hier nicht auf oder unter null druecken (SS13, ohne Ausnahme).
+    @Test func leichteGewichteBleibenUeberNull() {
+        let bereich = Fortschrittsfenster.achsenbereich([punkt("2026-08-20", 2.5), punkt("2026-08-27", 5.0)])
+
+        #expect(bereich.lowerBound > 0)
+        #expect(bereich.upperBound > 5.0)
+    }
+
+    @Test func einEinzelnerLeichterPunktBleibtUeberNull() {
+        let bereich = Fortschrittsfenster.achsenbereich([punkt("2026-08-27", 2.5)])
+
+        #expect(bereich.lowerBound > 0)
+        #expect(bereich.upperBound > 2.5)
+    }
 }
