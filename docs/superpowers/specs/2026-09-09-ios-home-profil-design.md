@@ -46,11 +46,13 @@ Mit diesem Sub-Projekt ist die Screenliste aus M1 §5.1 vollständig: Login · H
 
 Vier Änderungen, alle in Dateien, die Sub-Projekt 3 nicht angefasst hat.
 
-### 3.1 Zwei Module ohne Tests — und sie tragen dieses Sub-Projekt
+### 3.1 Wo die Tests dieser beiden Module liegen
 
-`sessions.ts` und `progress.ts` sind die **einzigen beiden Domänenmodule ohne Testdatei**. Aus ihnen kommt alles, was die drei Verlaufs-Screens anzeigen: die Ableitung der Blöcke aus Sätzen, die Vier-Stunden-Regel für vergessene Einheiten, „schwerster bestätigter Satz je Trainingstag".
+`sessions.ts` und `progress.ts` haben keine Unit-Testdatei in `packages/domain` — geprüft sind sie trotzdem, und zwar gründlicher: `tests/integration/domain-sessions.test.ts` und `domain-progress.test.ts` fahren sie mit 16 Tests gegen echtes Postgres samt RLS. Abgedeckt sind Blockableitung und Zirkeldurchgang, die Vier-Stunden-Regel einschließlich ihres trägen Schreibvorgangs, Geräte- und Satzzahl, „schwerster bestätigter Satz je Trainingstag", Zeitraumgrenze und Fremddaten.
 
-**Die Tests kommen zuerst, vor jeder Erweiterung.** Sonst prüft der erste Testlauf die neuen Felder und nicht das, worauf sie aufsetzen.
+**Daraus folgt für dieses Sub-Projekt:** die neuen Felder werden dort erweitert, wo ihre Nachbarn schon geprüft sind — in den Integrationstests. Eine zweite, mit Attrappen nachgebaute Ebene daneben wäre Doppelarbeit, die dieselbe Regel ein zweites Mal formuliert.
+
+**Unit-Tests bekommt nur, was wirklich rein ist:** die Wochenzählung mit ihrer Zeitzonengrenze und die Prüfung des Anzeigenamens. Beides ist Rechnung ohne Datenbank, und beides gehört damit neben `serie.ts`, wo dieselbe Zeitzonenmechanik schon so getestet wird.
 
 ### 3.2 `GET /me/sessions` bekommt eine Kopfzeile
 
@@ -211,16 +213,17 @@ Der Produktgrenze-Satz darüber („gymodo misst nichts. Gespeichert wird nur, w
 
 ## 7. Tests
 
-**Zuerst, vor jeder Erweiterung** (Abschnitt 3.1):
+**Unit (`packages/domain`), weil rein:**
 
-- `getSessions`: Blöcke aus Sätzen gruppiert nach (Gerät, Übung); zweiter Durchgang trifft denselben Block; Blockreihenfolge nach erstem Satz; Vier-Stunden-Regel setzt `completedAt` auf den letzten Satz und `completedReason` auf `auto`; eine laufende Einheit bleibt offen; `machineCount` zählt Geräte, nicht Sätze
-- `getProgress`: schwerster Satz je (Übung, Tag); `changeKg` von erstem zu letztem Punkt; `since` schneidet ab; leere Historie ergibt leere Liste
+- `zaehleDieseWoche`: Wochenbeginn am Montag; 00:30 Ortszeit am Montag zählt zur neuen Woche, dieselbe Zeitangabe in UTC nicht; Sonntag gehört noch zur ablaufenden Woche
+- `pruefeAnzeigename`: leer, zu lang, mit Zeilenumbruch, fehlender Rumpf
 
-**Danach zu den Erweiterungen:**
+**Integration (`tests/integration`), neben den bestehenden Fällen:**
 
-- `summary`: `totalCount` über der Liste von 50; `thisWeekCount` an der Wochengrenze in der Studio-Zeitzone, `null` ohne Parameter; `lastSessionAt` bei leerer Historie `null`
+- `summary`: `totalCount` zählt auch, was jenseits der gelieferten 50 liegt; `thisWeekCount` ist `null` ohne Studio und eine Zahl mit; `lastSessionAt` ist `null` ohne Historie
 - `machineLabel` kommt vom jüngsten Satz, auch wenn ältere Sätze ein anderes Gerät tragen
-- `PUT /me/profile`: legt an, ändert, weist fremde `id` ab; `bootstrap` liest `null` für ein Mitglied ohne Zeile
+- `PUT /me/profile`: legt an, ändert, weist Leeres ab; die Insert-Policy lässt keine fremde `id` durch
+- `bootstrap` liefert `member.displayName` als `null` für ein Mitglied ohne Zeile und den Namen danach
 
 **iOS, reine Ableitungen ohne UI:** `VerlaufHerkunft`; die Zeitraumfilter des Diagramms; die Auswahl der Kurvenbeschriftung (Anfang/Ende); das Weglassen der Dauer bei `auto`; das Ausblenden der laufenden Einheit; die Initialen aus einem gesetzten Namen (und ihr Ausbleiben ohne).
 
@@ -233,7 +236,7 @@ Der Produktgrenze-Satz darüber („gymodo misst nichts. Gespeichert wird nur, w
 - Kein Bedienelement ohne Ziel: die Datenschutzzeile erscheint nur mit URL, der Vibrationsschalter erst mit der Haptik dahinter.
 - Keine Zahl ohne Deckung: `totalCount` vom Server, `thisWeekCount` nur mit Zeitzone, keine Dauer bei selbsttätigem Abschluss, keine Initialen ohne Namen.
 - Keine zweite Antwort auf eine bestehende Frage: die Wochengrenze rechnet nur der Server, der Satzbau der Herkunft steht an einer Stelle, der Scanner bleibt eine Komponente.
-- Zwei ungetestete Module, auf denen dieses Sub-Projekt aufsetzt, werden getestet, bevor sie erweitert werden.
+- Neue Prüfungen liegen dort, wo die Regel schon geprüft wird — Integrationstests für alles, was die Datenbank berührt, Unit-Tests nur für reine Rechnung.
 - Der einzige noch fehlende Wert ist die Datenschutz-URL; sie blockiert nichts.
 
 ---
