@@ -1,24 +1,5 @@
 import Foundation
 
-/// Parst startsAt -- eine Postgres-`timestamptz` (course_sessions.starts_at,
-/// via course_week ungefiltert nach JSON durchgereicht), nicht ein
-/// clientseitig erzeugtes Datum wie `performedAt` in Sub-Projekt 2.
-/// `ISO8601DateFormatter()` parst standardmaessig KEINE Sekundenbruchteile;
-/// Postgres liefert sie nur, wenn die Mikrosekunden ungleich null sind --
-/// im Regelfall (Kurse beginnen auf die Minute) also nicht, aber
-/// garantiert ist das nicht. Scheitert das Parsen still, wuerde
-/// `zustand(fuer:jetzt:)` die Vorbei-Pruefung einfach uebergehen und ein
-/// laengst gelaufener Kurs erschiene als buchbar -- deshalb EINE Stelle
-/// statt drei einzeln angelegter Formatierer.
-enum KursZeitpunkt {
-    static func parse(_ iso: String) -> Date? {
-        let mitBruchteilen = ISO8601DateFormatter()
-        mitBruchteilen.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let datum = mitBruchteilen.date(from: iso) { return datum }
-        return ISO8601DateFormatter().date(from: iso)
-    }
-}
-
 /// Die sechs Zustaende eines Kurstermins aus Sicht des eigenen Mitglieds
 /// (Spec Abschnitt 5.3) -- eine reine Funktion, weil alle drei
 /// Kurse-Screens dieselbe Auswertung brauchen und keiner sie noch einmal
@@ -42,7 +23,7 @@ enum KursZustandRechner {
     static func zustand(fuer termin: CourseWeekSession, jetzt: Date) -> KursZustand {
         if termin.status == "cancelled" { return .abgesagt }
 
-        if let beginn = KursZeitpunkt.parse(termin.startsAt), beginn <= jetzt {
+        if let beginn = Zeitpunkt.parse(termin.startsAt), beginn <= jetzt {
             return .vorbei
         }
 
@@ -63,7 +44,7 @@ enum KursZustandRechner {
     /// `nil` bei unlesbarem Beginn: eine erfundene Uhrzeit waere schlimmer
     /// als gar keine.
     static func abmeldenBis(startsAt: String, fristStunden: Int) -> Date? {
-        guard let beginn = KursZeitpunkt.parse(startsAt) else { return nil }
+        guard let beginn = Zeitpunkt.parse(startsAt) else { return nil }
         return beginn.addingTimeInterval(-Double(fristStunden) * 3600)
     }
 
@@ -73,8 +54,8 @@ enum KursZustandRechner {
         woche.sessions
             .filter { $0.ownStatus != nil }
             .sorted {
-                (KursZeitpunkt.parse($0.startsAt) ?? .distantPast)
-                    < (KursZeitpunkt.parse($1.startsAt) ?? .distantPast)
+                (Zeitpunkt.parse($0.startsAt) ?? .distantPast)
+                    < (Zeitpunkt.parse($1.startsAt) ?? .distantPast)
             }
     }
 }

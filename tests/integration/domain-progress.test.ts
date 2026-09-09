@@ -13,6 +13,7 @@ let memberAEmail: string;
 let memberAId: string;
 let memberA2Id: string;
 let machineA: string;
+let machineB: string;
 let breitId: string;
 let ungenutztId: string;
 
@@ -61,6 +62,15 @@ beforeAll(async () => {
     .single();
   if (machineError) throw machineError;
   machineA = machine.id;
+
+  // Baugleiches zweites Geraet -- gleiches Modell, eigenes Gehaeuse.
+  const { data: machine2, error: machine2Error } = await admin
+    .from("machines")
+    .insert({ studio_id: studioA, equipment_model_id: model.id, label: "12" })
+    .select("id")
+    .single();
+  if (machine2Error) throw machine2Error;
+  machineB = machine2.id;
 
   const { data: exercises, error: exerciseError } = await admin
     .from("exercises")
@@ -206,6 +216,62 @@ describe("getProgress", () => {
       "2026-08-20",
       "2026-08-27",
     ]);
+  });
+
+  // Das Label kommt vom JUENGSTEN Satz: wer an zwei baugleichen Geraeten
+  // trainiert, hat trotzdem eine durchgehende Kurve -- die Steigerung
+  // gehoert der Uebung, nicht dem Geraetegehaeuse.
+  it("beschriftet eine Uebung mit dem Geraet des juengsten Satzes", async () => {
+    const admin = serviceClient();
+    const sessionId = newId();
+    const { error: sessionError } = await admin.from("workout_sessions").insert({
+      id: sessionId,
+      studio_id: studioA,
+      user_id: memberAId,
+      started_at: at("2026-09-03"),
+      completed_at: at("2026-09-03", 19),
+      completed_reason: "manual",
+    });
+    if (sessionError) throw sessionError;
+
+    const wechselBase = {
+      studio_id: studioA,
+      session_id: sessionId,
+      user_id: memberAId,
+      exercise_id: breitId,
+      reps: 10,
+      rir: null,
+      problem_flag: false,
+      problem_reason: null,
+    };
+    const { error: setError } = await admin.from("workout_sets").insert([
+      {
+        ...wechselBase,
+        id: newId(),
+        machine_id: machineA,
+        set_index: 1,
+        weight_kg: 82.5,
+        performed_at: at("2026-09-03", 18),
+      },
+      // Zwei Stunden spaeter, am baugleichen zweiten Geraet.
+      {
+        ...wechselBase,
+        id: newId(),
+        machine_id: machineB,
+        set_index: 2,
+        weight_kg: 85,
+        performed_at: at("2026-09-03", 19),
+      },
+    ]);
+    if (setError) throw setError;
+
+    const client = await userClient(memberAEmail);
+    const { exercises } = await getProgress(client);
+    const entry = exercises.find((item) => item.exerciseId === breitId);
+
+    expect(entry?.machineLabel).toBe("12");
+    // Ein Geraetewechsel spaltet die Kurve nicht.
+    expect(entry!.points.length).toBeGreaterThanOrEqual(2);
   });
 
   it("weist einen nicht angemeldeten Aufruf zurueck", async () => {

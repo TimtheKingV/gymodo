@@ -330,3 +330,102 @@ describe("getSessions", () => {
     });
   });
 });
+
+describe("getSessions -- summary", () => {
+  it("zaehlt auch, was jenseits der gelieferten 50 liegt", async () => {
+    const email = uniqueEmail("summary-viel");
+    const userId = await createTestUser(email);
+    const admin = serviceClient();
+
+    const { error: membershipError } = await admin
+      .from("studio_memberships")
+      .insert({ studio_id: studioA, user_id: userId, role: "member" });
+    if (membershipError) throw membershipError;
+
+    // 51 Einheiten in einem Insert -- SESSION_LIMIT liefert 50 davon aus.
+    const { error } = await admin.from("workout_sessions").insert(
+      Array.from({ length: 51 }, (_, index) => ({
+        id: newId(),
+        studio_id: studioA,
+        user_id: userId,
+        started_at: isoAgo(100 + index),
+        completed_at: isoAgo(99.5 + index),
+        completed_reason: "manual" as const,
+      })),
+    );
+    if (error) throw error;
+
+    const client = await userClient(email);
+    const { sessions, summary } = await getSessions(client);
+
+    expect(sessions).toHaveLength(50);
+    expect(summary.totalCount).toBe(51);
+  });
+
+  it("laesst die Wochenzahl ohne Studio weg", async () => {
+    const client = await userClient(memberAEmail);
+    const { summary } = await getSessions(client);
+
+    expect(summary.thisWeekCount).toBeNull();
+    // Die Gesamtzahl bleibt: der Verlauf gehoert dem Mitglied, nicht dem
+    // Studio -- wer sein letztes Studio verlaesst, behaelt ihn.
+    expect(summary.totalCount).toBeGreaterThan(0);
+  });
+
+  it("zaehlt mit Studio die laufende Woche", async () => {
+    const email = uniqueEmail("summary-woche");
+    const userId = await createTestUser(email);
+    const admin = serviceClient();
+
+    const { error: membershipError } = await admin
+      .from("studio_memberships")
+      .insert({ studio_id: studioA, user_id: userId, role: "member" });
+    if (membershipError) throw membershipError;
+
+    // Eine Einheit von vor einer Stunde und eine von vor 30 Tagen: die
+    // erste liegt immer in der laufenden Woche, die zweite nie.
+    const { error } = await admin.from("workout_sessions").insert([
+      {
+        id: newId(),
+        studio_id: studioA,
+        user_id: userId,
+        started_at: isoAgo(1),
+        completed_at: isoAgo(0.5),
+        completed_reason: "manual" as const,
+      },
+      {
+        id: newId(),
+        studio_id: studioA,
+        user_id: userId,
+        started_at: isoAgo(24 * 30),
+        completed_at: isoAgo(24 * 30 - 1),
+        completed_reason: "manual" as const,
+      },
+    ]);
+    if (error) throw error;
+
+    const client = await userClient(email);
+    const { summary } = await getSessions(client, { studioId: studioA });
+
+    expect(summary.thisWeekCount).toBe(1);
+    expect(summary.totalCount).toBe(2);
+    expect(summary.lastSessionAt).not.toBeNull();
+  });
+
+  it("liefert ohne Historie eine leere Kopfzeile", async () => {
+    const email = uniqueEmail("summary-leer");
+    const userId = await createTestUser(email);
+    const { error } = await serviceClient()
+      .from("studio_memberships")
+      .insert({ studio_id: studioA, user_id: userId, role: "member" });
+    if (error) throw error;
+
+    const client = await userClient(email);
+    const { sessions, summary } = await getSessions(client, { studioId: studioA });
+
+    expect(sessions).toEqual([]);
+    expect(summary.totalCount).toBe(0);
+    expect(summary.thisWeekCount).toBe(0);
+    expect(summary.lastSessionAt).toBeNull();
+  });
+});

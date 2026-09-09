@@ -19,7 +19,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $ausgewaehlterTab) {
-            NavigationStack { PlaceholderView(title: "Home") }
+            HomeRootView()
                 .tabItem { Label("Home", systemImage: "house") }
                 .tag(0)
 
@@ -44,7 +44,7 @@ struct MainTabView: View {
             .tabItem { Label("Kurse", systemImage: "calendar") }
             .tag(2)
 
-            NavigationStack { ProfilRootView() }
+            NavigationStack { ProfilRootView(apiClient: apiClient) }
                 .tabItem { Label("Profil", systemImage: "person.crop.circle") }
                 .tag(3)
         }

@@ -11,6 +11,12 @@ final class SessionStore {
     private(set) var session: Session?
     private let backend: AuthBackend
 
+    /// Der bei der Registrierung genannte Vorname, bis eine Sitzung
+    /// besteht. Nur im Speicher: er ueberlebt den Code-Schritt, aber
+    /// keinen App-Neustart -- laeuft die Registrierung ins Leere, ist
+    /// nichts Halbes gespeichert.
+    private(set) var vorgemerkterName: String?
+
     init(backend: AuthBackend) {
         self.backend = backend
     }
@@ -43,6 +49,31 @@ final class SessionStore {
             }
             return false
         } catch { throw AuthError.map(error) }
+    }
+
+    func nameVormerken(_ name: String) {
+        let geputzt = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        vorgemerkterName = geputzt.isEmpty ? nil : geputzt
+    }
+
+    func nameVerbraucht() { vorgemerkterName = nil }
+
+    /// Der eine Konsument von `vorgemerkterName` -- beide Ausstiege aus der
+    /// Registrierung rufen das hier auf: der direkte (signUp liefert sofort
+    /// eine Session, Bestaetigungspflicht aus) genauso wie der ueber
+    /// LoginCodeView (Bestaetigung per Code). Vorher schrieb nur Letzterer,
+    /// weshalb der Name bei sofortiger Session kommentarlos verschwand.
+    ///
+    /// Der Name ist Zierde, kein Trageteil: schlaegt `schreiben` fehl (kein
+    /// Netz im Keller), geht es ohne ihn weiter, und das Profil bietet
+    /// denselben Weg noch einmal an. Deshalb `try?`, kein
+    /// Wiederholungsmechanismus und keine Warteschlange -- die ist fuer
+    /// Saetze da -- und `vorgemerkterName` faellt in jedem Fall weg, damit
+    /// kein spaeterer Aufruf denselben Namen ein zweites Mal schreibt.
+    func vorgemerktenNamenSchreiben(mit schreiben: (String) async throws -> Void) async {
+        guard let name = vorgemerkterName else { return }
+        try? await schreiben(name)
+        vorgemerkterName = nil
     }
 
     func verifySignupCode(email: String, code: String) async throws(AuthError) {
@@ -84,5 +115,9 @@ final class SessionStore {
     func signOut() async {
         try? await backend.signOut()
         session = nil
+        // Sonst ueberlebte ein vorgemerkter Name aus einer abgebrochenen
+        // Registrierung die Abmeldung und wuerde beim naechsten Konto auf
+        // demselben Geraet fuer jemand anderen geschrieben.
+        vorgemerkterName = nil
     }
 }

@@ -41,7 +41,7 @@ struct APIClientTests {
     @Test("dekodiert eine erfolgreiche bootstrap-Antwort")
     func decodesBootstrap() async throws {
         StubURLProtocol.handler = { _ in
-            let json = #"{"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#
+            let json = #"{"member":{"displayName":null},"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#
             return (200, Data(json.utf8))
         }
         let client = stubbedClient()
@@ -78,7 +78,7 @@ struct APIClientTests {
         var capturedAuthHeader: String?
         StubURLProtocol.handler = { request in
             capturedAuthHeader = request.value(forHTTPHeaderField: "Authorization")
-            return (200, Data(#"{"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#.utf8))
+            return (200, Data(#"{"member":{"displayName":null},"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#.utf8))
         }
         let client = stubbedClient(tokenProvider: { "abc123" })
         _ = try await client.bootstrap()

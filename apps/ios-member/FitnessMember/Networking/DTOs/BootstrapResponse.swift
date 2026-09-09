@@ -9,6 +9,10 @@ import Foundation
 /// APIClient.bootstrap() (actor-isoliert, BootstrapLoading: Sendable)
 /// verweigert dann die Rueckgabe.
 struct BootstrapResponse: Decodable, Equatable, Sendable {
+    struct Member: Decodable, Equatable, Sendable {
+        let displayName: String?
+    }
+
     struct Studio: Decodable, Equatable, Identifiable {
         let id: String
         let name: String
@@ -70,8 +74,13 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         let performedAt: String
     }
 
+    let member: Member
     let studios: [Studio]
     let machines: [Machine]
     let calibrations: [Calibration]
     let lastSets: [LastSet]
 }
+
+struct AnzeigenameWrite: Encodable { let displayName: String }
+
+struct ProfilAntwort: Decodable, Equatable { let displayName: String }

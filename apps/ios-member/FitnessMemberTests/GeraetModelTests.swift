@@ -130,6 +130,42 @@ struct GeraetModelTests {
         #expect(erfasser.geschriebene.first?.body.reps == sut.wiederholungen)
     }
 
+    @Test func gesicherteSaetzeSteigtNurBeimSichernNichtBeimUebungswechsel() async {
+        // Review-Fund Task 9: satzNummer ist die Satznummer der GERADE
+        // ANGEZEIGTEN Uebung. Hat die Zielübung schon mehr gesicherte
+        // Saetze als die aktuelle, springt satzNummer beim blossen
+        // uebungWechseln(zu:) nach oben, ohne dass ein Satz gesichert
+        // wurde -- ein an satzNummer haengender Haptik-Trigger feuerte
+        // dann bei einer Navigation. gesicherteSaetze darf das nicht.
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        // e2 hat schon zwei gesicherte Saetze -- mehr, als e1 unten nach
+        // dem einen gesicherten Satz haben wird.
+        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e2", weightKg: 40, reps: 10,
+                                  rir: nil, problemFlag: false, problemReason: nil)
+        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e2", weightKg: 40, reps: 10,
+                                  rir: nil, problemFlag: false, problemReason: nil)
+        let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         sessions: sessions)
+        #expect(sut.gesicherteSaetze == 0)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.gesicherteSaetze == 1)
+        #expect(sut.satzNummer == 2)
+
+        sut.uebungWechseln(zu: "e2")
+        // satzNummer springt (e2 hatte schon zwei Saetze) -- das ist der
+        // Fehler, den der alte Trigger nicht kannte. gesicherteSaetze
+        // bleibt unberuehrt.
+        #expect(sut.satzNummer == 3)
+        #expect(sut.gesicherteSaetze == 1)
+
+        sut.uebungWechseln(zu: "e1")
+        #expect(sut.gesicherteSaetze == 1)
+    }
+
     @Test func verwirftKalibrierungUndVorschlagDerVorherigenUebungBeimWechsel() {
         // tag-context.ts berechnet calibration und suggestion serverseitig
         // fuer genau eine Uebung (selectedExerciseId). Nach einem Wechsel
@@ -387,7 +423,7 @@ enum GeraetTestdaten {
             ? #"{"machineId":"m1","exerciseId":"\#(kalibrierungExerciseId)","settingValues":{"sitz":\#(kalibrierungSitzWert)},"schemaVersion":1,"createdAt":"2026-09-01T10:00:00Z"}"#
             : ""
         return dekodiere("""
-        {"studios":[],"machines":[],"calibrations":[\(kalibrierungen)],"lastSets":[\(saetze)]}
+        {"member":{"displayName":null},"studios":[],"machines":[],"calibrations":[\(kalibrierungen)],"lastSets":[\(saetze)]}
         """)
     }
 

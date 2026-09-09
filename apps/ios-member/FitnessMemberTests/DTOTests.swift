@@ -30,6 +30,7 @@ struct DTOTests {
     func decodesBootstrap() throws {
         let json = """
         {
+          "member": {"displayName": null},
           "studios": [{"id":"s1","name":"Kraftwerk Nord","timezone":"Europe/Berlin"}],
           "machines": [{
             "id":"m1","studioId":"s1","label":"07","locationNote":null,"status":"active",
@@ -50,6 +51,7 @@ struct DTOTests {
     @Test func bootstrapDecodiertVisitCount() throws {
         let json = """
         {
+          "member": {"displayName": null},
           "studios": [],
           "machines": [{
             "id": "m1", "studioId": "s1", "label": "Gerät 7",
@@ -77,6 +79,14 @@ struct DTOTests {
         #expect(bootstrap.machines[0].visitCount == 3)
         // Ohne die Beschriftung zeigt der Offline-Zustand "sitz 4" statt "Sitz 4".
         #expect(bootstrap.machines[0].equipmentModel.settingDefinitions.first?.label == "Sitzposition")
+    }
+
+    @Test("dekodiert ein Bootstrap ohne gesetzten Namen")
+    func decodesMemberOhneNamen() throws {
+        let json = #"{"member":{"displayName":null},"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#
+        let response = try JSONDecoder().decode(BootstrapResponse.self, from: Data(json.utf8))
+
+        #expect(response.member.displayName == nil)
     }
 
     @Test("dekodiert einen TagContextResponse mit leerer Historie")
@@ -121,10 +131,32 @@ struct DTOTests {
     @Test("dekodiert eine SessionsResponse mit einem Block")
     func decodesSessions() throws {
         let json = """
-        {"sessions":[{"id":"sess1","startedAt":"2026-09-01T10:00:00Z","completedAt":null,"completedReason":null,"machineCount":1,"setCount":1,"blocks":[{"machineId":"m1","machineLabel":"07","exerciseId":"ex1","exerciseName":"Beidbeinig","sets":[{"setIndex":1,"weightKg":80,"reps":10,"rir":null,"problemFlag":false,"problemReason":null,"performedAt":"2026-09-01T10:05:00Z"}]}]}]}
+        {"sessions":[{"id":"sess1","startedAt":"2026-09-01T10:00:00Z","completedAt":null,"completedReason":null,"machineCount":1,"setCount":1,"blocks":[{"machineId":"m1","machineLabel":"07","exerciseId":"ex1","exerciseName":"Beidbeinig","sets":[{"setIndex":1,"weightKg":80,"reps":10,"rir":null,"problemFlag":false,"problemReason":null,"performedAt":"2026-09-01T10:05:00Z"}]}]}],"summary":{"totalCount":34,"thisWeekCount":2,"lastSessionAt":"2026-09-01T10:00:00Z"}}
         """
         let response = try JSONDecoder().decode(SessionsResponse.self, from: Data(json.utf8))
         #expect(response.sessions[0].blocks[0].sets[0].weightKg == 80)
+        #expect(response.summary.totalCount == 34)
+    }
+
+    @Test("dekodiert eine ProgressResponse mit Geraetelabel")
+    func decodesProgress() throws {
+        let json = """
+        {"exercises":[{"exerciseId":"u1","exerciseName":"Beidbeinig","machineLabel":"Beinpresse","firstWeightKg":65,"currentWeightKg":80,"changeKg":15,"points":[{"performedOn":"2026-07-09","topWeightKg":65,"reps":12},{"performedOn":"2026-08-27","topWeightKg":80,"reps":10}]}]}
+        """
+        let response = try JSONDecoder().decode(ProgressResponse.self, from: Data(json.utf8))
+
+        #expect(response.exercises[0].machineLabel == "Beinpresse")
+        #expect(response.exercises[0].changeKg == 15)
+        #expect(response.exercises[0].points.count == 2)
+    }
+
+    @Test("eine Kopfzeile ohne aktives Studio traegt keine Wochenzahl")
+    func decodesSummaryOhneWoche() throws {
+        let json = #"{"sessions":[],"summary":{"totalCount":0,"thisWeekCount":null,"lastSessionAt":null}}"#
+        let response = try JSONDecoder().decode(SessionsResponse.self, from: Data(json.utf8))
+
+        #expect(response.summary.thisWeekCount == nil)
+        #expect(response.summary.lastSessionAt == nil)
     }
 
     @Test func completedSessionDecodiertVorschlaege() throws {

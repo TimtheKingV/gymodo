@@ -28,6 +28,12 @@ export type ProgressPoint = {
 export type ExerciseProgress = {
   exerciseId: string;
   exerciseName: string;
+  /**
+   * Das Geraet des juengsten Satzes. Die Uebung allein ("Beidbeinig")
+   * traegt keine Bedeutung -- exercises haengt am Studio, nicht am
+   * Geraetemodell (0005_exercises.sql).
+   */
+  machineLabel: string;
   firstWeightKg: number;
   currentWeightKg: number;
   changeKg: number;
@@ -42,6 +48,7 @@ type SetRow = {
   reps: number;
   performed_at: string;
   exercises: { name: string };
+  machines: { label: string };
 };
 
 /**
@@ -66,7 +73,9 @@ export async function getProgress(
 
   let query = client
     .from("workout_sets")
-    .select("exercise_id, weight_kg, reps, performed_at, exercises (name)")
+    .select(
+      "exercise_id, weight_kg, reps, performed_at, exercises (name), machines (label)",
+    )
     .eq("user_id", userId)
     .order("performed_at", { ascending: true })
     .limit(SET_SCAN_LIMIT);
@@ -80,13 +89,16 @@ export async function getProgress(
   // Je (Uebung, Tag) den schwersten Satz behalten.
   const byExercise = new Map<
     string,
-    { name: string; days: Map<string, ProgressPoint> }
+    { name: string; machineLabel: string; days: Map<string, ProgressPoint> }
   >();
   for (const row of (setRows ?? []) as unknown as SetRow[]) {
     const entry = byExercise.get(row.exercise_id) ?? {
       name: row.exercises.name,
+      machineLabel: row.machines.label,
       days: new Map<string, ProgressPoint>(),
     };
+    // Aufsteigend sortiert -- die letzte Zeile ist die juengste.
+    entry.machineLabel = row.machines.label;
     byExercise.set(row.exercise_id, entry);
 
     const day = row.performed_at.slice(0, 10);
@@ -112,6 +124,7 @@ export async function getProgress(
     exercises.push({
       exerciseId,
       exerciseName: entry.name,
+      machineLabel: entry.machineLabel,
       firstWeightKg: first.topWeightKg,
       currentWeightKg: last.topWeightKg,
       changeKg: last.topWeightKg - first.topWeightKg,

@@ -11,6 +11,13 @@ import { requireUserId } from "./auth.js";
 const SET_SCAN_LIMIT = 2000;
 
 export type Bootstrap = {
+  /**
+   * Der Lesepfad des eigenen Namens. `null`, solange keiner gesetzt ist
+   * -- Home gruesst dann nicht, und das Profil zeigt nur die
+   * Mailadresse. Aus der Mailadresse Initialen abzuleiten waere geraten,
+   * und geraten sieht so lange richtig aus, bis es jemanden trifft.
+   */
+  member: { displayName: string | null };
   studios: Array<{ id: string; name: string; timezone: string }>;
   machines: Array<{
     id: string;
@@ -156,6 +163,12 @@ export async function getBootstrap(
       "equipment_model_id, key, label, kind, min_value, max_value, step_value, unit, allowed_values",
     )
     .order("sort_order", { ascending: true });
+
+  const { data: profilRow } = await client
+    .from("profiles")
+    .select("display_name")
+    .eq("id", userId)
+    .maybeSingle();
 
   const hashesByMachine = new Map<string, string[]>();
   for (const row of (tagRows ?? []) as Array<{
@@ -311,6 +324,9 @@ export async function getBootstrap(
   }));
 
   return {
+    member: {
+      displayName: (profilRow as { display_name: string | null } | null)?.display_name ?? null,
+    },
     studios: (studioRows ?? []) as Bootstrap["studios"],
     machines,
     calibrations,

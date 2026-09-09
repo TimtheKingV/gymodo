@@ -77,6 +77,7 @@ struct GeraetEinstiegTests {
         // Hier absichtlich AUFsteigend eingereicht, damit ein sortReihenfolge-
         // Fund erneut auffiele.
         let bootstrap = BootstrapResponse(
+            member: .init(displayName: nil),
             studios: [], machines: [maschine(id: "m1", tokenHashes: [])], calibrations: [],
             lastSets: [
                 BootstrapResponse.LastSet(machineId: "m1", exerciseId: "e1", weightKg: 40, reps: 10,
@@ -96,6 +97,7 @@ struct GeraetEinstiegTests {
 
 private func bootstrapMitTokenHash(_ hash: String) -> BootstrapResponse {
     BootstrapResponse(
+        member: .init(displayName: nil),
         studios: [],
         machines: [maschine(id: "m1", tokenHashes: [hash])],
         calibrations: [],
@@ -105,6 +107,7 @@ private func bootstrapMitTokenHash(_ hash: String) -> BootstrapResponse {
 
 private func bootstrapMitLetztenSaetzen(_ paare: [(String, String)]) -> BootstrapResponse {
     BootstrapResponse(
+        member: .init(displayName: nil),
         studios: [],
         machines: [maschine(id: "m1", tokenHashes: [])],
         calibrations: [],

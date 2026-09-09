@@ -124,6 +124,64 @@ struct SessionStoreTests {
         #expect(store.session == testSession)
     }
 
+    @Test("nameVormerken merkt sich einen Namen bis er verbraucht wird")
+    func nameVormerkenRemembersName() async {
+        let store = SessionStore(backend: FakeAuthBackend())
+        store.nameVormerken("Lena")
+        #expect(store.vorgemerkterName == "Lena")
+        store.nameVerbraucht()
+        #expect(store.vorgemerkterName == nil)
+    }
+
+    @Test("nameVormerken merkt sich reinen Leerraum nicht")
+    func nameVormerkenIgnoresWhitespaceOnly() async {
+        let store = SessionStore(backend: FakeAuthBackend())
+        store.nameVormerken("   ")
+        #expect(store.vorgemerkterName == nil)
+    }
+
+    @Test("signOut vergisst einen noch nicht geschriebenen Namen")
+    func signOutClearsVorgemerktenNamen() async {
+        let backend = FakeAuthBackend()
+        await backend.setBehavior(.succeed(testSession))
+        let store = SessionStore(backend: backend)
+        try? await store.signIn(email: "lena@example.de", password: "geheim1234")
+        store.nameVormerken("Lena")
+        await store.signOut()
+        // Sonst schriebe das naechste Konto auf demselben Geraet Lenas
+        // Namen.
+        #expect(store.vorgemerkterName == nil)
+    }
+
+    @Test("vorgemerktenNamenSchreiben schreibt den Namen und vergisst ihn danach")
+    func vorgemerktenNamenSchreibenWritesAndForgets() async {
+        let store = SessionStore(backend: FakeAuthBackend())
+        store.nameVormerken("Lena")
+        var geschrieben: String?
+        await store.vorgemerktenNamenSchreiben { name in geschrieben = name }
+        #expect(geschrieben == "Lena")
+        #expect(store.vorgemerkterName == nil)
+    }
+
+    @Test("vorgemerktenNamenSchreiben vergisst den Namen auch, wenn der Schreibvorgang fehlschlaegt")
+    func vorgemerktenNamenSchreibenForgetsOnFailure() async {
+        let store = SessionStore(backend: FakeAuthBackend())
+        store.nameVormerken("Lena")
+        await store.vorgemerktenNamenSchreiben { _ in throw FakeAuthBackend.TestError.notConfigured }
+        // Der Name ist Zierde, kein Trageteil: ein Fehler bleibt unsichtbar,
+        // und das Profil bietet denselben Weg noch einmal an -- kein
+        // Wiederholungsmechanismus, keine Warteschlange.
+        #expect(store.vorgemerkterName == nil)
+    }
+
+    @Test("vorgemerktenNamenSchreiben tut nichts ohne vorgemerkten Namen")
+    func vorgemerktenNamenSchreibenNoOpWithoutName() async {
+        let store = SessionStore(backend: FakeAuthBackend())
+        var aufgerufen = false
+        await store.vorgemerktenNamenSchreiben { _ in aufgerufen = true }
+        #expect(aufgerufen == false)
+    }
+
     @Test("changePassword meldet aktuelles Passwort falsch als eigenen Fehler")
     func changePasswordWrongCurrent() async {
         let backend = FakeAuthBackend()

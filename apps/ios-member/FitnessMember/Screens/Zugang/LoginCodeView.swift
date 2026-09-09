@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LoginCodeView: View {
     let email: String
+    let apiClient: APIClient
 
     @Environment(SessionStore.self) private var sessionStore
     @State private var code = CodeEntry()
@@ -78,6 +79,9 @@ struct LoginCodeView: View {
         defer { isSubmitting = false }
         do {
             try await sessionStore.verifySignupCode(email: email, code: code.digits)
+            await sessionStore.vorgemerktenNamenSchreiben { name in
+                _ = try await apiClient.setDisplayName(name)
+            }
         } catch {
             errorMessage = AuthCopy.codeUngueltig
         }

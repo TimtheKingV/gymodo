@@ -76,11 +76,7 @@ enum KurseHerkunft: Equatable {
     /// Ziehen zum Aktualisieren gibt.
     func satz(stand: Date?, zusatz: String? = nil) -> String? {
         guard self != .frisch else { return nil }
-        let anfang = self == .ohneEmpfang
-            ? "Ohne Empfang."
-            : "Diese Angaben stammen vom letzten Abruf."
-        let datum = stand.map { " Stand: \(Zahlformat.stand($0))." } ?? ""
-        let rest = zusatz.map { " \($0)" } ?? ""
-        return anfang + datum + rest
+        return Herkunftssatz.bilden(
+            ohneEmpfang: self == .ohneEmpfang, stand: stand, zusatz: zusatz)
     }
 }

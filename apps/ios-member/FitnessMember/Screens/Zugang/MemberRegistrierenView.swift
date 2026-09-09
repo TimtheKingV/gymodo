@@ -2,6 +2,8 @@ import SwiftUI
 
 struct MemberRegistrierenView: View {
     @Environment(SessionStore.self) private var sessionStore
+    let apiClient: APIClient
+    @State private var vorname = ""
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage: String?
@@ -16,6 +18,10 @@ struct MemberRegistrierenView: View {
                     Text("Für dein Studio brauchst du ein Konto.").foregroundStyle(DesignSystem.Color.textMuted)
                 }
 
+                LabeledField(label: "Vorname") {
+                    TextField("Dein Vorname", text: $vorname)
+                        .textContentType(.givenName)
+                }
                 LabeledField(label: "E-Mail-Adresse") {
                     TextField("name@beispiel.de", text: $email)
                         .keyboardType(.emailAddress)
@@ -56,7 +62,7 @@ struct MemberRegistrierenView: View {
             .background(DesignSystem.Color.bg)
         }
         .navigationDestination(isPresented: $didRequireConfirmation) {
-            LoginCodeView(email: email)
+            LoginCodeView(email: email, apiClient: apiClient)
         }
     }
 
@@ -64,9 +70,18 @@ struct MemberRegistrierenView: View {
         errorMessage = nil
         isSubmitting = true
         defer { isSubmitting = false }
+        sessionStore.nameVormerken(vorname)
         do {
             let gotImmediateSession = try await sessionStore.signUp(email: email, password: password)
-            if !gotImmediateSession {
+            if gotImmediateSession {
+                // Ohne Bestaetigungspflicht (Supabase mit abgeschalteter
+                // E-Mail-Bestaetigung) landet das Mitglied direkt hier --
+                // LoginCodeView, der einzige bisherige Konsument des
+                // vorgemerkten Namens, wird auf diesem Weg nie erreicht.
+                await sessionStore.vorgemerktenNamenSchreiben { name in
+                    _ = try await apiClient.setDisplayName(name)
+                }
+            } else {
                 didRequireConfirmation = true
             }
         } catch {

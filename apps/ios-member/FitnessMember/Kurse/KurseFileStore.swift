@@ -32,7 +32,7 @@ struct GespeicherterTermin: Codable, Equatable, Identifiable {
     let name: String
     let description: String?
     /// ISO 8601, UTC -- wie CourseWeekSession.startsAt, ueber
-    /// KursZeitpunkt.parse zu lesen.
+    /// Zeitpunkt.parse zu lesen.
     let startsAt: String
     let localDay: String
     let durationMin: Int

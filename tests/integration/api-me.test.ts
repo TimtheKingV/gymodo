@@ -158,6 +158,29 @@ describe("GET /api/v1/me/sessions", () => {
 
     expect(response.status).toBe(401);
   });
+
+  it("weist ein studio zurueck, das keine UUID ist", async () => {
+    const response = await sessionsGET(
+      request("http://localhost/api/v1/me/sessions?studio=abc", bearer),
+    );
+
+    expect(response.status).toBe(422);
+    const payload = (await response.json()) as { error: { code: string } };
+    expect(payload.error.code).toBe("validation_failed");
+  });
+
+  it("liefert die Kopfzeile mit", async () => {
+    const response = await sessionsGET(
+      request("http://localhost/api/v1/me/sessions", bearer),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as {
+      summary: { totalCount: number; thisWeekCount: number | null };
+    };
+    expect(payload.summary.totalCount).toBeGreaterThan(0);
+    expect(payload.summary.thisWeekCount).toBeNull();
+  });
 });
 
 describe("GET /api/v1/me/progress", () => {

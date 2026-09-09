@@ -6,6 +6,7 @@ struct FitnessMemberApp: App {
     @State private var catalogStore: CatalogStore
     @State private var workoutStore = WorkoutSessionStore()
     @State private var kurseStore: KurseStore
+    @State private var verlaufStore: VerlaufStore
     @State private var netzwerkMonitor = NetzwerkMonitor()
     @State private var pendingTagStore = PendingTagStore()
     private let apiClient: APIClient
@@ -16,6 +17,7 @@ struct FitnessMemberApp: App {
         _sessionStore = State(initialValue: session)
         _catalogStore = State(initialValue: CatalogStore(loader: client, pendingWriteStore: PendingWriteStore()))
         _kurseStore = State(initialValue: KurseStore(loader: client, fileStore: KurseFileStore()))
+        _verlaufStore = State(initialValue: VerlaufStore(loader: client, fileStore: VerlaufFileStore()))
         apiClient = client
     }
 
@@ -26,6 +28,7 @@ struct FitnessMemberApp: App {
                 .environment(catalogStore)
                 .environment(workoutStore)
                 .environment(kurseStore)
+                .environment(verlaufStore)
                 .environment(netzwerkMonitor)
                 .environment(pendingTagStore)
                 .task {

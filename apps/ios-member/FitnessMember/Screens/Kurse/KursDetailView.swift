@@ -154,7 +154,7 @@ enum KursDetailInhalt {
 enum KursDetailOfflineZustand {
     static func zustand(fuer termin: GespeicherterTermin, jetzt: Date) -> KursZustand {
         if termin.status == "cancelled" { return .abgesagt }
-        if let beginn = KursZeitpunkt.parse(termin.startsAt), beginn <= jetzt { return .vorbei }
+        if let beginn = Zeitpunkt.parse(termin.startsAt), beginn <= jetzt { return .vorbei }
         return termin.ownStatus == "waitlisted" ? .warteliste : .angemeldet
     }
 }
@@ -409,7 +409,7 @@ struct KursDetailView: View {
             // Kurstermin gehoert der Studio-Zeitzone (Aufgabenbrief,
             // Hinweis 5). Unlesbarer Beginn: die Zeile entfaellt, statt ein
             // erfundenes Datum zu zeigen.
-            if let beginn = KursZeitpunkt.parse(ansicht.startsAt) {
+            if let beginn = Zeitpunkt.parse(ansicht.startsAt) {
                 Text(KursZeit.datumAusgeschrieben(beginn, zeitzone: ansicht.zeitzone))
                     .font(DesignSystem.Typography.label)
                     .tracking(1.5)
@@ -480,7 +480,7 @@ struct KursDetailView: View {
     }
 
     private func zeitraumText(_ ansicht: TerminAnsicht) -> String {
-        guard let beginn = KursZeitpunkt.parse(ansicht.startsAt) else { return "–" }
+        guard let beginn = Zeitpunkt.parse(ansicht.startsAt) else { return "–" }
         let ende = beginn.addingTimeInterval(Double(ansicht.durationMin) * 60)
         return "\(KursZeit.uhrzeit(beginn, zeitzone: ansicht.zeitzone)) – \(KursZeit.uhrzeit(ende, zeitzone: ansicht.zeitzone))"
     }

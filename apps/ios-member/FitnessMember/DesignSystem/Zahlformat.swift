@@ -65,6 +65,25 @@ enum Zahlformat {
         "\(gewicht(kg)) kg"
     }
 
+    /// "Donnerstag, 27. August" -- die Zeile ueber einer Einheit im
+    /// Verlauf. Ohne Jahr: der Verlauf reicht 50 Einheiten zurueck, und
+    /// eine Jahreszahl an jeder Zeile waere Rauschen.
+    static func wochentagDatum(_ zeitpunkt: Date) -> String {
+        let formatierer = DateFormatter()
+        formatierer.locale = gebietsschema
+        formatierer.setLocalizedDateFormatFromTemplate("EEEEddMMMM")
+        return formatierer.string(from: zeitpunkt)
+    }
+
+    /// "Do, 27. August" -- dieselbe Angabe als Titel des Session-Details,
+    /// wo daneben noch der Zeitraum steht.
+    static func kurzerWochentagDatum(_ zeitpunkt: Date) -> String {
+        let formatierer = DateFormatter()
+        formatierer.locale = gebietsschema
+        formatierer.setLocalizedDateFormatFromTemplate("EEEddMMMM")
+        return formatierer.string(from: zeitpunkt)
+    }
+
     /// Eine einzige Zeichenkette -- sonst liest VoiceOver "achtzig, Komma,
     /// null, k, g" als vier Elemente (designsystem.md SS12).
     static func gewichtGesprochen(_ kg: Double) -> String {
