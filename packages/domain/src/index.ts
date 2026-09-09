@@ -108,6 +108,7 @@ export type {
   WorkoutSetInput,
 } from "./progression.js";
 export {
+  ABSCHLUSS_ZEITFENSTER_MS,
   vorschlaegeFuerAbschluss,
   gespeicherteVorschlaege,
   ausGespeichertenZeilen,

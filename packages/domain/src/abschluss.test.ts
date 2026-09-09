@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  ABSCHLUSS_ZEITFENSTER_MS,
   ausGespeichertenZeilen,
   blockPaare,
   zuVorschlag,
@@ -154,7 +155,8 @@ describe("ausGespeichertenZeilen", () => {
     const vorschlaege = ausGespeichertenZeilen(
       [paare[0]!],
       [
-        zeile({ created_at: "2026-09-08T19:30:00.000Z", result_weight_kg: 85 }),
+        // Innerhalb des Fensters, aber spaeter -- ein Geraetescan.
+        zeile({ created_at: "2026-09-08T18:04:00.000Z", result_weight_kg: 85 }),
         zeile({ created_at: "2026-09-08T18:00:01.000Z", result_weight_kg: 82.5 }),
       ],
       abschlussZeit,
@@ -163,17 +165,50 @@ describe("ausGespeichertenZeilen", () => {
     expect(vorschlaege[0]!.resultWeightKg).toBe(82.5);
   });
 
-  it("faellt auf die neueste Zeile zurueck, wenn ab dem Abschluss keine steht", () => {
+  it("nimmt eine Zeile knapp VOR dem Abschluss -- der Uhrendifferenz-Fall", () => {
+    // completed_at kommt aus der Node-Uhr, created_at aus der Datenbank.
+    // Laeuft die Node-Uhr eine Sekunde vor, liegt die Zeile des Abschlusses
+    // rechnerisch davor -- sie gehoert trotzdem dazu.
+    const vorschlaege = ausGespeichertenZeilen(
+      [paare[0]!],
+      [zeile({ created_at: "2026-09-08T17:59:59.000Z", result_weight_kg: 82.5 })],
+      abschlussZeit,
+    );
+
+    expect(vorschlaege[0]!.resultWeightKg).toBe(82.5);
+  });
+
+  it("ordnet KEINE Zeile aus einer anderen Einheit zu", () => {
+    // Der Punkt der Zeitschranke: eine Zeile vom Vortag gehoert zu einer
+    // anderen Einheit. Ein fehlender Vorschlag ist eine Luecke, ein
+    // fremder eine Falschaussage.
     const vorschlaege = ausGespeichertenZeilen(
       [paare[0]!],
       [
-        zeile({ created_at: "2026-09-01T10:00:00.000Z", result_weight_kg: 75 }),
-        zeile({ created_at: "2026-09-07T10:00:00.000Z", result_weight_kg: 80 }),
+        zeile({ created_at: "2026-09-07T10:00:00.000Z", result_weight_kg: 75 }),
+        zeile({ created_at: "2026-09-08T20:00:00.000Z", result_weight_kg: 90 }),
       ],
       abschlussZeit,
     );
 
-    expect(vorschlaege[0]!.resultWeightKg).toBe(80);
+    expect(vorschlaege).toEqual([]);
+  });
+
+  it("zieht die Grenze bei ABSCHLUSS_ZEITFENSTER_MS", () => {
+    const gerade = ausGespeichertenZeilen(
+      [paare[0]!],
+      [zeile({ created_at: "2026-09-08T18:04:59.000Z", result_weight_kg: 82.5 })],
+      abschlussZeit,
+    );
+    const knappDarueber = ausGespeichertenZeilen(
+      [paare[0]!],
+      [zeile({ created_at: "2026-09-08T18:05:01.000Z", result_weight_kg: 82.5 })],
+      abschlussZeit,
+    );
+
+    expect(ABSCHLUSS_ZEITFENSTER_MS).toBe(5 * 60 * 1000);
+    expect(gerade).toHaveLength(1);
+    expect(knappDarueber).toEqual([]);
   });
 
   it("laesst einen Block weg, zu dem nichts festgehalten wurde", () => {

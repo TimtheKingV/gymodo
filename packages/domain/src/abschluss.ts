@@ -83,22 +83,42 @@ export type GespeicherteVorschlagZeile = {
 };
 
 /**
+ * Wie weit `created_at` von `completed_at` abweichen darf, damit eine Zeile
+ * noch als "von diesem Abschluss geschrieben" gilt.
+ *
+ * Der Abschluss schreibt seine Zeilen im selben Request, unmittelbar nach
+ * dem Setzen von completed_at -- der Abstand ist im Normalfall
+ * Millisekunden. Das Fenster muss trotzdem in BEIDE Richtungen reichen,
+ * weil die beiden Zeitpunkte aus verschiedenen Uhren kommen: completed_at
+ * aus der Node-Uhr (`new Date()`), created_at aus der Datenbank (`now()`).
+ * Fuenf Minuten sind grosszuegig gegen jede realistische Uhrendifferenz
+ * und immer noch weit weniger, als zwischen zwei Trainingseinheiten
+ * desselben Mitglieds liegt.
+ */
+export const ABSCHLUSS_ZEITFENSTER_MS = 5 * 60 * 1000;
+
+/**
  * Baut die Vorschlaege eines bereits abgeschlossenen Trainings aus den
  * festgehaltenen Zeilen -- ohne zu rechnen und ohne zu schreiben.
  *
- * Welche Zeile zu welchem Block gehoert, entscheidet der Zeitpunkt: der
- * Abschluss schreibt seine Zeilen unmittelbar nach dem Setzen von
- * completed_at, also ist die AELTESTE Zeile eines Blocks ab completedAt
- * genau die, die dieser Abschluss ausgeliefert hat. Spaetere Zeilen
- * desselben Blocks stammen von einem Geraetescan (tag-context) und gehoeren
- * nicht zu diesem Abschluss.
+ * Die Regel, und nur sie: eine Zeile gehoert zu diesem Abschluss, wenn sie
+ * zum selben Block gehoert UND ihr `created_at` hoechstens
+ * ABSCHLUSS_ZEITFENSTER_MS von `completedAt` entfernt liegt. Innerhalb des
+ * Fensters gewinnt die aelteste Zeile ab `completedAt` -- der Abschluss
+ * schreibt unmittelbar danach, spaetere Zeilen desselben Blocks stammen
+ * von einem Geraetescan (tag-context schreibt in dieselbe Tabelle). Liegt
+ * im Fenster nichts ab `completedAt`, gewinnt die juengste davor; das ist
+ * der Uhrendifferenz-Fall.
  *
- * Findet sich in diesem Fenster nichts, faellt es auf die neueste Zeile des
- * Blocks zurueck. Das deckt zwei Faelle: Sessions, die vor dieser Aenderung
- * abgeschlossen wurden, und eine Uhrendifferenz zwischen Anwendung
- * (completed_at kommt aus der Node-Uhr) und Datenbank (created_at aus now()).
- * Gibt es ueberhaupt keine Zeile, faellt der Block weg -- was nicht
- * festgehalten wurde, wird nicht behauptet.
+ * AUSSERHALB des Fensters wird NICHTS zugeordnet, und der Block faellt
+ * weg. Ein frueherer Rueckfall auf "die neueste Zeile ueberhaupt" konnte
+ * eine Zeile aus einer ANDEREN Einheit heranziehen -- der Screen zeigte
+ * dann einen Vorschlag, den es fuer dieses Training nie gab. Ein fehlender
+ * Vorschlag ist eine Luecke; ein fremder ist eine Falschaussage.
+ *
+ * `progression_suggestions` hat keine session_id; ohne die ist der
+ * Zeitpunkt der einzige Beleg, den die Ablage hergibt. Die Schranke sagt
+ * jetzt genau, wie weit dieser Beleg traegt.
  */
 export function ausGespeichertenZeilen(
   paare: Array<{ machineId: string; exerciseId: string }>,
@@ -106,8 +126,12 @@ export function ausGespeichertenZeilen(
   completedAt: string,
 ): Blockvorschlag[] {
   const grenze = Date.parse(completedAt);
+  const fensterVon = grenze - ABSCHLUSS_ZEITFENSTER_MS;
+  const fensterBis = grenze + ABSCHLUSS_ZEITFENSTER_MS;
   const nachBlock = new Map<string, GespeicherteVorschlagZeile[]>();
   for (const zeile of zeilen) {
+    const wann = Date.parse(zeile.created_at);
+    if (!(wann >= fensterVon && wann <= fensterBis)) continue;
     const schluessel = `${zeile.machine_id}:${zeile.exercise_id}`;
     const liste = nachBlock.get(schluessel) ?? [];
     liste.push(zeile);
@@ -122,6 +146,9 @@ export function ausGespeichertenZeilen(
     const sortiert = [...liste].sort(
       (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
     );
+    // Aelteste Zeile ab completedAt; sonst -- nur bei Uhrendifferenz --
+    // die juengste davor. Beide liegen bereits im Fenster, die Liste
+    // enthaelt nichts anderes mehr.
     const zeile =
       sortiert.find((k) => Date.parse(k.created_at) >= grenze) ??
       sortiert[sortiert.length - 1]!;
@@ -201,6 +228,15 @@ export async function gespeicherteVorschlaege(
   const machineIds = [...new Set(paare.map((p) => p.machineId))];
   const exerciseIds = [...new Set(paare.map((p) => p.exerciseId))];
 
+  // Dieselbe Zeitschranke wie in ausGespeichertenZeilen, schon in der
+  // Abfrage: ohne sie koennte `limit` die gemeinte Zeile aus dem Ergebnis
+  // draengen, sobald ein Block viele juengere Vorschlaege hat (jeder
+  // Geraetescan schreibt einen). Das Fenster ist zehn Minuten breit --
+  // mehr als eine Handvoll Zeilen je Block passt da nicht hinein.
+  const grenze = Date.parse(completedAt);
+  const fensterVon = new Date(grenze - ABSCHLUSS_ZEITFENSTER_MS).toISOString();
+  const fensterBis = new Date(grenze + ABSCHLUSS_ZEITFENSTER_MS).toISOString();
+
   const { data: zeilen, error } = await client
     .from("progression_suggestions")
     .select(
@@ -209,7 +245,9 @@ export async function gespeicherteVorschlaege(
     .eq("user_id", userId)
     .in("machine_id", machineIds)
     .in("exercise_id", exerciseIds)
-    .order("created_at", { ascending: false })
+    .gte("created_at", fensterVon)
+    .lte("created_at", fensterBis)
+    .order("created_at", { ascending: true })
     .limit(paare.length * 8);
   if (error) throw new DomainError("internal", error.message);
 
@@ -235,7 +273,7 @@ export async function gespeicherteVorschlaege(
  * tatsaechlich abschliesst; ein wiederholter Abschluss liest ueber
  * gespeicherteVorschlaege zurueck, statt neu zu rechnen.
  *
- * Jede Abfrage prueft ihr `error` und wirft. Ein `?? []` auf einem
+ * Jede Abfrage UND der Insert pruefen ihr `error` und werfen. Ein `?? []` auf einem
  * Transportfehler waere hier keine Vorsicht, sondern eine Aussage ueber
  * das Mitglied, die niemand geprueft hat -- und eine davon wuerde
  * festgeschrieben (siehe die Historie unten). Faellt der Abschluss
@@ -371,7 +409,15 @@ export async function vorschlaegeFuerAbschluss(
   }
 
   if (zeilenFuerInsert.length > 0) {
-    await client.from("progression_suggestions").insert(zeilenFuerInsert);
+    // Auch der Insert prueft sein error -- ein stiller Fehlschlag hiesse,
+    // dass der Screen Vorschlaege zeigt, die nirgends festgehalten sind.
+    // Der naechste Aufruf faende im Zeitfenster dann nichts und liesse die
+    // Bloecke weg: dieselbe Zahl waere einmal da und einmal nicht, ohne
+    // dass irgendwo stuende, warum.
+    const { error: insertFehler } = await client
+      .from("progression_suggestions")
+      .insert(zeilenFuerInsert);
+    if (insertFehler) throw new DomainError("internal", insertFehler.message);
   }
 
   return vorschlaege;
