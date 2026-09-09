@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0075B0E3CF0E786F9D22AFFF /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC66ACF7FB394ECB319166C3 /* APIClient.swift */; };
 		05C4AB096D32DA3E6C4E62D7 /* PressButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CEB043A2F6633F4B756357E /* PressButtonStyle.swift */; };
+		0A66C707066A8C209342D669 /* TrainingAbschlussZeilenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05572CBE819B0984F2CACC32 /* TrainingAbschlussZeilenTests.swift */; };
 		0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */; };
 		0C79D05D0F5B192800FDB707 /* MemberPasswortZuruecksetzenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1987FE7CD53A2E411EAD2595 /* MemberPasswortZuruecksetzenView.swift */; };
 		0CC21610F7CED89559C379C4 /* MemberPasswortView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4C1D2382AF3657C5135CBE2 /* MemberPasswortView.swift */; };
@@ -77,6 +78,7 @@
 		B6342F2803AFA48AEEC73B7C /* WorkoutSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35466DCA1BAC23049D7DCB30 /* WorkoutSessionStore.swift */; };
 		B68C2AD5B96D1812B2F124A0 /* PasswordPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F85DB74C44633BFB4BAAB94 /* PasswordPolicy.swift */; };
 		B8218DBF6B9B3168086F00E6 /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82F1E9C17FC9A2A3742B15D /* JSONValue.swift */; };
+		B90035F502BFCB437C290355 /* TrainingAbschlussView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5EDFCF55AFA4CDCD53104DC /* TrainingAbschlussView.swift */; };
 		C01062BE7395A2DAD05A3EE4 /* AuthLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D6E6743BDCF6E58E971D0CE /* AuthLogicTests.swift */; };
 		C0D21B900231DB8BC9A5323E /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E48EE365B2AEEBD3FCBC2E /* DesignSystem.swift */; };
 		C27905224D4AC66F7D6DC784 /* LokaleSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DEDAB723DC8FE55CB2FFA1 /* LokaleSession.swift */; };
@@ -123,6 +125,7 @@
 /* Begin PBXFileReference section */
 		00B25E595924E3D70A9F8C8F /* Zahlformat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zahlformat.swift; sourceTree = "<group>"; };
 		04D2DE954DD4A21DF9C0C586 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		05572CBE819B0984F2CACC32 /* TrainingAbschlussZeilenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAbschlussZeilenTests.swift; sourceTree = "<group>"; };
 		0753010E9ACC09DF6D948170 /* RootDestinationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootDestinationTests.swift; sourceTree = "<group>"; };
 		13D8C4AC64870FF3423C494F /* InlineBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineBanner.swift; sourceTree = "<group>"; };
 		19832BC95D12C1DCBEFF10E9 /* SessionSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSummary.swift; sourceTree = "<group>"; };
@@ -210,6 +213,7 @@
 		D33AEE94B0EDB5593285596C /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		D382CA0B325C07B61F776A1D /* PendingSetWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingSetWrite.swift; sourceTree = "<group>"; };
 		D50BD9B08F5E126815EAACAC /* RootDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootDestination.swift; sourceTree = "<group>"; };
+		D5EDFCF55AFA4CDCD53104DC /* TrainingAbschlussView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAbschlussView.swift; sourceTree = "<group>"; };
 		D78C8636341914B90296B220 /* AppConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigTests.swift; sourceTree = "<group>"; };
 		D79138C4B32315198E734356 /* EmailValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailValidator.swift; sourceTree = "<group>"; };
 		D922539BB579EDDA0F7747CD /* ErrorEnvelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorEnvelope.swift; sourceTree = "<group>"; };
@@ -373,6 +377,7 @@
 				0753010E9ACC09DF6D948170 /* RootDestinationTests.swift */,
 				CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */,
 				C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */,
+				05572CBE819B0984F2CACC32 /* TrainingAbschlussZeilenTests.swift */,
 				9BA53E0FF9AB052ED88E68C7 /* TrainingszusammenfassungTests.swift */,
 				4C040CEC32DA51B93411E58C /* WorkoutSessionStoreTests.swift */,
 				A40546FF017FE78E2A6823CE /* ZahlformatTests.swift */,
@@ -424,6 +429,7 @@
 		94CD88D23F67E7B5EE12ED7D /* Training */ = {
 			isa = PBXGroup;
 			children = (
+				D5EDFCF55AFA4CDCD53104DC /* TrainingAbschlussView.swift */,
 				42F3F334438C1FBD98C386D0 /* TrainingRootView.swift */,
 			);
 			path = Training;
@@ -662,6 +668,7 @@
 				A67217C418DEF1C2DC617DB9 /* SupabaseAuthBackend.swift in Sources */,
 				FAFEECC2A710C4BF9D601BD2 /* TagContextResponse.swift in Sources */,
 				4D6EC5DA1233E3B74ADD20B9 /* TagLink.swift in Sources */,
+				B90035F502BFCB437C290355 /* TrainingAbschlussView.swift in Sources */,
 				42F254CA382E78A97F1AC840 /* TrainingRootView.swift in Sources */,
 				0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */,
 				EC0E21421C05D51C3F32E51D /* UebungWechselnSheet.swift in Sources */,
@@ -690,6 +697,7 @@
 				74330F94DB89B468FB230AB0 /* RootDestinationTests.swift in Sources */,
 				B3410F91BF63957604BF8340 /* SessionStoreTests.swift in Sources */,
 				9E4947346E28638E0FA99C6A /* TagLinkTests.swift in Sources */,
+				0A66C707066A8C209342D669 /* TrainingAbschlussZeilenTests.swift in Sources */,
 				600E5516A47D964636050F36 /* TrainingszusammenfassungTests.swift in Sources */,
 				E9F322710ED44F9FC30002B2 /* WorkoutSessionStoreTests.swift in Sources */,
 				ADF2407DE862FD940232AAE5 /* ZahlformatTests.swift in Sources */,

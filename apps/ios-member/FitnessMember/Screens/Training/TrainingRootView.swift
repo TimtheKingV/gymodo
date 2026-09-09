@@ -458,14 +458,20 @@ struct TrainingRootView: View {
             if let modell = modell(machineId: machineId, exerciseId: exerciseId, token: token) {
                 GeraetScreen(modell: modell) { pfad.removeAll() }
             }
-        case .abschluss(sessionId: _, zusammenfassung: let zusammenfassung):
-            // Platzhalter: der eigentliche TrainingAbschlussScreen samt
-            // completeSession-Aufruf ist Aufgabe 6 (Sub-Projekt 3). Der Fall
-            // muss hier bereits existieren, damit der Pfad-Push aus
-            // beenden() ein Ziel findet.
-            #warning("Aufgabe 6: TrainingAbschlussScreen ersetzt diesen Platzhalter und sendet completeSession")
-            Text("Trainingsabschluss – \(zusammenfassung.satzAnzahl) Sätze")
-                .foregroundStyle(DesignSystem.Color.text)
+        case .abschluss(let sessionId, let zusammenfassung):
+            // "Fertig" nimmt den Pfad zur Wurzel zurueck (Aufgabenbrief):
+            // pfad.removeAll() statt eines einzelnen pop, weil ein Zirkel-
+            // Tap (oeffne(_:)) zwischen "Training beenden" und diesem Push
+            // theoretisch keinen weiteren Eintrag hinterlaesst, aber ein
+            // einzelnes removeLast waere trotzdem die falsche Annahme --
+            // "Fertig" fuehrt IMMER zur Wurzel, nie nur einen Schritt
+            // zurueck.
+            TrainingAbschlussView(
+                sessionId: sessionId,
+                zusammenfassung: zusammenfassung,
+                apiClient: apiClient,
+                beiFertig: { pfad.removeAll() }
+            )
         }
     }
 
