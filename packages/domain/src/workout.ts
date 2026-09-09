@@ -2,7 +2,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireUserId } from "./auth.js";
 import { DomainError } from "./errors.js";
-import { vorschlaegeFuerAbschluss, type Blockvorschlag } from "./abschluss.js";
+import {
+  gespeicherteVorschlaege,
+  vorschlaegeFuerAbschluss,
+  type Blockvorschlag,
+} from "./abschluss.js";
 
 export const problemReasonSchema = z.enum([
   "schmerz",
@@ -231,15 +235,21 @@ export async function completeSession(
   }
 
   if (existing.completed_at && existing.completed_reason) {
+    // Nur LESEN. Der Frueheinstieg ist genau dafuer da, nichts noch einmal
+    // zu tun -- die Vorschlaege kommen aus dem, was der erste Abschluss
+    // festgehalten hat. Sie hier neu zu rechnen hiesse, ein zweites Mal
+    // nach progression_suggestions zu schreiben; die Tabelle hat keinen
+    // eindeutigen Index, jeder Wiederholer erzeugte also Dubletten.
     return {
       id: existing.id,
       startedAt: existing.started_at,
       completedAt: existing.completed_at,
       completedReason: existing.completed_reason,
-      vorschlaege: await vorschlaegeFuerAbschluss(
+      vorschlaege: await gespeicherteVorschlaege(
         client,
         parsed.data.sessionId,
         userId,
+        existing.completed_at,
       ),
     };
   }

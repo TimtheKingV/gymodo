@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { blockPaare, zuVorschlag } from "./abschluss.js";
+import {
+  ausGespeichertenZeilen,
+  blockPaare,
+  zuVorschlag,
+  type GespeicherteVorschlagZeile,
+} from "./abschluss.js";
 
 describe("blockPaare", () => {
   it("fasst Saetze zu Paaren aus Geraet und Uebung zusammen", () => {
@@ -101,5 +106,113 @@ describe("zuVorschlag", () => {
     };
 
     expect(zuVorschlag(runter).deltaKg).toBe(-2.5);
+  });
+});
+
+describe("ausGespeichertenZeilen", () => {
+  const abschlussZeit = "2026-09-08T18:00:00.000Z";
+  const paare = [
+    { machineId: "m1", exerciseId: "e1" },
+    { machineId: "m1", exerciseId: "e2" },
+  ];
+
+  function zeile(
+    ueber: Partial<GespeicherteVorschlagZeile> = {},
+  ): GespeicherteVorschlagZeile {
+    return {
+      machine_id: "m1",
+      exercise_id: "e1",
+      created_at: "2026-09-08T18:00:01.000Z",
+      algo_version: "v1",
+      result_weight_kg: 82.5,
+      reason_code: "korridor_oben_erreicht",
+      inputs: { currentWeightKg: 80 },
+      ...ueber,
+    };
+  }
+
+  it("rechnet das Delta aus der festgehaltenen Eingabe zurueck", () => {
+    const vorschlaege = ausGespeichertenZeilen(
+      [paare[0]!],
+      [zeile()],
+      abschlussZeit,
+    );
+
+    expect(vorschlaege).toEqual([
+      {
+        machineId: "m1",
+        exerciseId: "e1",
+        resultWeightKg: 82.5,
+        deltaKg: 2.5,
+        reasonCode: "korridor_oben_erreicht",
+        algoVersion: "v1",
+      },
+    ]);
+  });
+
+  it("nimmt die aelteste Zeile ab dem Abschluss, nicht eine spaetere vom Geraetescan", () => {
+    const vorschlaege = ausGespeichertenZeilen(
+      [paare[0]!],
+      [
+        zeile({ created_at: "2026-09-08T19:30:00.000Z", result_weight_kg: 85 }),
+        zeile({ created_at: "2026-09-08T18:00:01.000Z", result_weight_kg: 82.5 }),
+      ],
+      abschlussZeit,
+    );
+
+    expect(vorschlaege[0]!.resultWeightKg).toBe(82.5);
+  });
+
+  it("faellt auf die neueste Zeile zurueck, wenn ab dem Abschluss keine steht", () => {
+    const vorschlaege = ausGespeichertenZeilen(
+      [paare[0]!],
+      [
+        zeile({ created_at: "2026-09-01T10:00:00.000Z", result_weight_kg: 75 }),
+        zeile({ created_at: "2026-09-07T10:00:00.000Z", result_weight_kg: 80 }),
+      ],
+      abschlussZeit,
+    );
+
+    expect(vorschlaege[0]!.resultWeightKg).toBe(80);
+  });
+
+  it("laesst einen Block weg, zu dem nichts festgehalten wurde", () => {
+    expect(ausGespeichertenZeilen(paare, [zeile()], abschlussZeit)).toHaveLength(
+      1,
+    );
+  });
+
+  it("haelt zwei Uebungen an derselben Maschine auseinander", () => {
+    const vorschlaege = ausGespeichertenZeilen(
+      paare,
+      [
+        zeile({ exercise_id: "e2", result_weight_kg: 40 }),
+        zeile({ exercise_id: "e1", result_weight_kg: 82.5 }),
+      ],
+      abschlussZeit,
+    );
+
+    expect(vorschlaege.map((v) => v.resultWeightKg)).toEqual([82.5, 40]);
+  });
+
+  it("liefert kein Delta ohne bisheriges Gewicht", () => {
+    const vorschlaege = ausGespeichertenZeilen(
+      [paare[0]!],
+      [zeile({ result_weight_kg: null, inputs: { currentWeightKg: null } })],
+      abschlussZeit,
+    );
+
+    expect(vorschlaege[0]!.deltaKg).toBeNull();
+    expect(vorschlaege[0]!.resultWeightKg).toBeNull();
+  });
+
+  it("nimmt numerische Werte auch als Text entgegen", () => {
+    const vorschlaege = ausGespeichertenZeilen(
+      [paare[0]!],
+      [zeile({ result_weight_kg: "82.50", inputs: { currentWeightKg: "80.00" } })],
+      abschlussZeit,
+    );
+
+    expect(vorschlaege[0]!.deltaKg).toBe(2.5);
   });
 });

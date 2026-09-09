@@ -107,8 +107,17 @@ export type {
   SatzZeile,
   WorkoutSetInput,
 } from "./progression.js";
-export { vorschlaegeFuerAbschluss, blockPaare, zuVorschlag } from "./abschluss.js";
-export type { Blockvorschlag } from "./abschluss.js";
+export {
+  vorschlaegeFuerAbschluss,
+  gespeicherteVorschlaege,
+  ausGespeichertenZeilen,
+  blockPaare,
+  zuVorschlag,
+} from "./abschluss.js";
+export type {
+  Blockvorschlag,
+  GespeicherteVorschlagZeile,
+} from "./abschluss.js";
 export {
   joinStudioByCode,
   joinStudioByTag,

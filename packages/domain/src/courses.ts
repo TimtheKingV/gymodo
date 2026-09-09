@@ -515,11 +515,17 @@ export async function listCourseWeek(
   // Eigene Abfrage statt einer Aenderung an course_week: die Frist ist eine
   // Studio-Eigenschaft, keine Termin-Eigenschaft, und RLS auf studios
   // beschraenkt sie ohnehin auf die Studios des Mitglieds (0001).
-  const { data: studio } = await client
+  //
+  // Der Fehler wird behandelt wie beim RPC drei Zeilen darueber: ein
+  // Transportfehler darf hier nicht still zu "0 Stunden Frist" werden --
+  // das saehe fuer das Mitglied aus wie "abmelden geht bis zum Beginn"
+  // und waere eine Aussage ueber die Studioregel, die niemand geprueft hat.
+  const { data: studio, error: studioFehler } = await client
     .from("studios")
     .select("cancellation_deadline_hours")
     .eq("id", studioId)
     .maybeSingle<{ cancellation_deadline_hours: number }>();
+  if (studioFehler) throw new DomainError("internal", studioFehler.message);
 
   const antwort = data as WochenAntwort;
   return {

@@ -70,22 +70,98 @@ export function zuVorschlag(eingabe: {
   };
 }
 
+/** Eine Zeile aus progression_suggestions, so wie sie zurueckgelesen wird. */
+export type GespeicherteVorschlagZeile = {
+  machine_id: string;
+  exercise_id: string;
+  created_at: string;
+  algo_version: string;
+  result_weight_kg: number | string | null;
+  reason_code: string;
+  inputs: { currentWeightKg?: number | string | null } | null;
+};
+
 /**
- * Vorschlaege fuer alle Bloecke einer beendeten Session.
+ * Baut die Vorschlaege eines bereits abgeschlossenen Trainings aus den
+ * festgehaltenen Zeilen -- ohne zu rechnen und ohne zu schreiben.
  *
- * Fuenf Abfragen, unabhaengig von der Blockzahl -- Saetze der Session,
- * Uebungen, Geraetemodelle, Historie ueber alle betroffenen Geraete, und
- * ein Sammel-Insert. Ein Aufruf je Block waere N+1 auf einem Pfad, den
- * jedes beendete Training nimmt.
+ * Welche Zeile zu welchem Block gehoert, entscheidet der Zeitpunkt: der
+ * Abschluss schreibt seine Zeilen unmittelbar nach dem Setzen von
+ * completed_at, also ist die AELTESTE Zeile eines Blocks ab completedAt
+ * genau die, die dieser Abschluss ausgeliefert hat. Spaetere Zeilen
+ * desselben Blocks stammen von einem Geraetescan (tag-context) und gehoeren
+ * nicht zu diesem Abschluss.
  *
- * Wird in derselben Anfrage festgehalten wie berechnet (M1-Spec SS8.4):
- * Nachvollziehbarkeit ohne Queue, genau wie beim Geraetevorschlag.
+ * Findet sich in diesem Fenster nichts, faellt es auf die neueste Zeile des
+ * Blocks zurueck. Das deckt zwei Faelle: Sessions, die vor dieser Aenderung
+ * abgeschlossen wurden, und eine Uhrendifferenz zwischen Anwendung
+ * (completed_at kommt aus der Node-Uhr) und Datenbank (created_at aus now()).
+ * Gibt es ueberhaupt keine Zeile, faellt der Block weg -- was nicht
+ * festgehalten wurde, wird nicht behauptet.
  */
-export async function vorschlaegeFuerAbschluss(
+export function ausGespeichertenZeilen(
+  paare: Array<{ machineId: string; exerciseId: string }>,
+  zeilen: GespeicherteVorschlagZeile[],
+  completedAt: string,
+): Blockvorschlag[] {
+  const grenze = Date.parse(completedAt);
+  const nachBlock = new Map<string, GespeicherteVorschlagZeile[]>();
+  for (const zeile of zeilen) {
+    const schluessel = `${zeile.machine_id}:${zeile.exercise_id}`;
+    const liste = nachBlock.get(schluessel) ?? [];
+    liste.push(zeile);
+    nachBlock.set(schluessel, liste);
+  }
+
+  const vorschlaege: Blockvorschlag[] = [];
+  for (const paar of paare) {
+    const liste = nachBlock.get(`${paar.machineId}:${paar.exerciseId}`);
+    if (!liste || liste.length === 0) continue;
+
+    const sortiert = [...liste].sort(
+      (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
+    );
+    const zeile =
+      sortiert.find((k) => Date.parse(k.created_at) >= grenze) ??
+      sortiert[sortiert.length - 1]!;
+
+    const ergebnis =
+      zeile.result_weight_kg === null || zeile.result_weight_kg === undefined
+        ? null
+        : Number(zeile.result_weight_kg);
+    const bisherRoh = zeile.inputs?.currentWeightKg;
+    const bisher =
+      bisherRoh === null || bisherRoh === undefined ? null : Number(bisherRoh);
+    const deltaKg =
+      ergebnis === null || bisher === null
+        ? null
+        : Number((ergebnis - bisher).toFixed(2));
+
+    vorschlaege.push({
+      machineId: paar.machineId,
+      exerciseId: paar.exerciseId,
+      resultWeightKg: ergebnis,
+      deltaKg,
+      reasonCode: zeile.reason_code as ProgressionReasonCode,
+      algoVersion: zeile.algo_version,
+    });
+  }
+  return vorschlaege;
+}
+
+/**
+ * Die Bloecke einer Session, in der Reihenfolge ihres ersten Auftretens,
+ * samt Studio -- die eine Abfrage, die beide Wege (rechnen und zuruecklesen)
+ * gleichermassen brauchen.
+ */
+async function bloeckeDerSession(
   client: SupabaseClient,
   sessionId: string,
   userId: string,
-): Promise<Blockvorschlag[]> {
+): Promise<{
+  paare: Array<{ machineId: string; exerciseId: string }>;
+  studioId: string | null;
+}> {
   const { data: sessionSaetze } = await client
     .from("workout_sets")
     .select("machine_id, exercise_id, studio_id")
@@ -99,9 +175,71 @@ export async function vorschlaegeFuerAbschluss(
     studio_id: string;
   }>;
   const paare = blockPaare(zeilen);
+  return { paare, studioId: zeilen[0]?.studio_id ?? null };
+}
+
+/**
+ * Die Vorschlaege einer SCHON abgeschlossenen Session -- nur lesend.
+ *
+ * Der idempotente Frueheinstieg von completeSession ist genau dafuer da,
+ * nichts noch einmal zu tun. Neu zu rechnen hiesse, ein zweites Mal nach
+ * progression_suggestions zu schreiben, und die Tabelle hat keinen
+ * eindeutigen Index -- jeder Wiederholer erzeugte Dubletten in genau der
+ * Ablage, die die Nachvollziehbarkeit tragen soll (M1-Spec SS8.4).
+ */
+export async function gespeicherteVorschlaege(
+  client: SupabaseClient,
+  sessionId: string,
+  userId: string,
+  completedAt: string,
+): Promise<Blockvorschlag[]> {
+  const { paare } = await bloeckeDerSession(client, sessionId, userId);
   if (paare.length === 0) return [];
 
-  const studioId = zeilen[0]!.studio_id;
+  const machineIds = [...new Set(paare.map((p) => p.machineId))];
+  const exerciseIds = [...new Set(paare.map((p) => p.exerciseId))];
+
+  const { data: zeilen } = await client
+    .from("progression_suggestions")
+    .select(
+      "machine_id, exercise_id, created_at, algo_version, result_weight_kg, reason_code, inputs",
+    )
+    .eq("user_id", userId)
+    .in("machine_id", machineIds)
+    .in("exercise_id", exerciseIds)
+    .order("created_at", { ascending: false })
+    .limit(paare.length * 8);
+
+  return ausGespeichertenZeilen(
+    paare,
+    (zeilen ?? []) as GespeicherteVorschlagZeile[],
+    completedAt,
+  );
+}
+
+/**
+ * Vorschlaege fuer alle Bloecke einer beendeten Session.
+ *
+ * Fuenf Abfragen, unabhaengig von der Blockzahl -- Saetze der Session,
+ * Uebungen, Geraetemodelle, Historie ueber alle betroffenen Geraete, und
+ * ein Sammel-Insert. Ein Aufruf je Block waere N+1 auf einem Pfad, den
+ * jedes beendete Training nimmt.
+ *
+ * Wird in derselben Anfrage festgehalten wie berechnet (M1-Spec SS8.4):
+ * Nachvollziehbarkeit ohne Queue, genau wie beim Geraetevorschlag.
+ *
+ * SCHREIBT. Gehoert deshalb ausschliesslich in den Zweig, der die Session
+ * tatsaechlich abschliesst; ein wiederholter Abschluss liest ueber
+ * gespeicherteVorschlaege zurueck, statt neu zu rechnen.
+ */
+export async function vorschlaegeFuerAbschluss(
+  client: SupabaseClient,
+  sessionId: string,
+  userId: string,
+): Promise<Blockvorschlag[]> {
+  const { paare, studioId } = await bloeckeDerSession(client, sessionId, userId);
+  if (paare.length === 0 || studioId === null) return [];
+
   const machineIds = [...new Set(paare.map((p) => p.machineId))];
   const exerciseIds = [...new Set(paare.map((p) => p.exerciseId))];
 
@@ -117,9 +255,12 @@ export async function vorschlaegeFuerAbschluss(
     )
     .in("id", machineIds);
 
-  // Die Historie aller betroffenen Geraete in einer Abfrage. Dieselbe
-  // Fenstergroesse wie in tag-context: mehr als sechs Saetze je Tag ueber
-  // den Betrachtungszeitraum traegt der Algorithmus ohnehin nicht.
+  // Die Historie aller betroffenen Geraete in einer Abfrage. Groesseres
+  // Fenster als in tag-context (dort HISTORY_DAYS * 6 = 36 Zeilen fuer EIN
+  // Geraet): hier teilen sich alle Uebungen an derselben Maschine eine
+  // gemeinsame Abfrage, und ein Block muss auch dann noch genug Zeilen
+  // abbekommen, wenn ein anderer Block an derselben Maschine haengt.
+  // Deshalb 60 Zeilen je Block statt 36.
   const { data: historie } = await client
     .from("workout_sets")
     .select(
