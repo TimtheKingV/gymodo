@@ -138,3 +138,39 @@ das als erster Punkt vor den vierzehn manuellen Schritten.
   wahrscheinlichste Meldung auf diesem Pfad vor Migration 0039 lautet
   „new row violates row-level security policy for table \"profiles\"" —
   siehe die Rollout-Reihenfolge in Punkt 0 oben.
+
+- **Eine Session, die abläuft statt abgemeldet zu werden, hinterlässt die
+  plattenseitige Caches des vorherigen Kontos.** Konto A speichert Sessions,
+  Gewichte und RIR-Werte in `KurseStore`, `WorkoutSessionStore` und
+  `VerlaufStore` ab. Die App wird hart beendet, das Token läuft ab. Beim
+  nächsten Start lädt `SessionStore.restoreSession()` im Hintergrund, während
+  die Initialisierer der drei Store auf ihre gecachten Werte von der Platte
+  zugreifen — und geben sie aus. Wenn `restoreSession()` `nil` liefert, ist
+  Konto A immer noch sichtbar, bis der eigene Ladezustand des neuen Kontos
+  eintrifft. Dies ist kein neues Loch: `KurseStore` und `WorkoutSessionStore`
+  haben diese Form seit ihren Sub-Projekten, dieses hat sie nur vergrößert,
+  weil der `VerlaufStore` jetzt volle Block- und Satzdetails trägt.
+
+  Die Reparatur in Commit `4cd6a1b` versuchte, ein
+  `RootDestinationLogic.sollteZuruecksetzen(destination:)` einzuführen, das
+  bei jedem `.authFlow` zurückgesetzt würde. Beim Review zeigte sich: die
+  Prüfung ist am einzigen Aufrufort tautologisch wahr. Der Zweig wird nur
+  erreicht, wenn die Session `nil` ist, und `RootDestinationLogic.destination`
+  gibt exakt dann `.authFlow` zurück. Die alte `hatteSession`-Wächterin wurde
+  nicht ersetzt, sie wurde gelöscht, zusammen mit ihrem Kommentar, der genau
+  diesen Fall beschrieb. Folge: Im ersten Durchlauf von `.task(id:)` beim Start,
+  während `restoreSession()` noch läuft, wird der Zustand wie bei einer
+  Abmeldung gelöscht. Bei jedem gewöhnlichen kalten Start eines angemeldeten
+  Kontos: die laufende Einheit wird von der Platte gelöscht, die Offline-
+  Schreibschlange wird vor ihrer Leerung aufgelöst, die aktive
+  Studioauswahl wird entfernt, und sowohl die `Kurse`- als auch die
+  `Verlauf`-Cache werden gelöscht.
+
+  **Die Reparatur muss auf ein Signal gated werden, das "`restoreSession()` wurde
+  versucht und gab `nil` zurück"** ist, nicht nur auf „Session ist `nil`". Die
+  Formen dafür: ein Flag, das `SessionStore.restoreSession()` am Ende setzt,
+  zusammengeklappt in die Entscheidung; oder: `FitnessMemberApp` triggert die
+  Löschung einmalig, wenn `restoreSession()` `nil` liefert. Ein Test dafür muss
+  beide Eingaben modellieren — die Session selbst und ob die Restaurierung
+  abgeschlossen ist. Ein Test über die Destination allein kann die Regression
+  nicht fangen.
