@@ -111,7 +111,14 @@ private extension HomeRootView {
             // "diese Woche" faellt ohne aktives Studio weg -- ohne
             // Zeitzone gibt es keine Woche, auf die sie sich bezoege.
             if let woche = verlauf.summary?.thisWeekCount {
-                kennzahl("\(woche)", "diese Woche")
+                // Die eine Akzentflaeche des gefuellten Zustands (SS2):
+                // keine Hauptaktion beansprucht sie hier, und "diese
+                // Woche" ist die einzige Zahl auf dem Screen, die sich
+                // ohne eigenes Zutun aendert -- der aktive Wert. Die
+                // Artboard-Faerbung der Fortschritts-Deltas bleibt
+                // deshalb aus: eine Liste akzentuierter Zeilen waere
+                // beliebig viele Akzentflaechen, nicht eine.
+                kennzahl("\(woche)", "diese Woche", akzentuiert: true)
             }
             if let gesamt = verlauf.summary?.totalCount {
                 kennzahl("\(gesamt)", "gesamt")
@@ -123,19 +130,11 @@ private extension HomeRootView {
         }
     }
 
-    /// Abweichung vom Artboard: dort accent fuer "diese Woche" UND fuer
-    /// jede positive Uebungsfortschritt-Veraenderung -- zwei verschiedene
-    /// Akzentrollen auf einem Screen. designsystem.md SS2 laesst genau
-    /// eine zu; der gefuellte Zustand hat keine Hauptaktion, die den
-    /// Platz beansprucht, aber auch keinen einzelnen unstrittigen
-    /// "aktiven Wert" unter den beiden Kandidaten. Bis das im Design
-    /// entschieden ist, bleibt hier -- wie beim Fortschritt unten --
-    /// text statt accent (siehe Bericht).
-    func kennzahl(_ wert: String, _ label: String) -> some View {
+    func kennzahl(_ wert: String, _ label: String, akzentuiert: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
             Text(wert)
                 .font(DesignSystem.Typography.wertSekundaer)
-                .foregroundStyle(DesignSystem.Color.text)
+                .foregroundStyle(akzentuiert ? DesignSystem.Color.accent : DesignSystem.Color.text)
             Text(label)
                 .font(DesignSystem.Typography.label)
                 .foregroundStyle(DesignSystem.Color.textMuted)
