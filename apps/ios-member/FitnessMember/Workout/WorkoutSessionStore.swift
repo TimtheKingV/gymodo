@@ -14,7 +14,7 @@ final class WorkoutSessionStore {
     /// Server laengst als abgeschlossen liest.
     static let sessionPause: TimeInterval = 4 * 60 * 60
 
-    private(set) var gespeicherteSession: LokaleSession?
+    private var gespeicherteSession: LokaleSession?
     private let fileStore: SessionFileStore
 
     init(fileStore: SessionFileStore = SessionFileStore()) {
@@ -32,6 +32,40 @@ final class WorkoutSessionStore {
         guard let session = gespeicherteSession else { return nil }
         let letzte = session.letzterSatzAm ?? session.startedAt
         return jetzt.timeIntervalSince(letzte) > Self.sessionPause ? nil : session
+    }
+
+    /// Die gespeicherte Einheit, sofern sie NICHT mehr laeuft.
+    ///
+    /// Vergessenes Beenden ist laut M1-Spec SS5.2 der Regelfall. Ohne diesen
+    /// Zugriff saehe das Mitglied am naechsten Tag einen leeren Tab und
+    /// wuesste nicht, ob sein Training angekommen ist.
+    func abgelaufeneSession(jetzt: Date = Date()) -> LokaleSession? {
+        guard let session = gespeicherteSession, aktiveSession(jetzt: jetzt) == nil
+        else { return nil }
+        return session
+    }
+
+    /// Raeumt die abgelaufene Einheit weg, damit der Satz auf dem leeren Tab
+    /// einmal steht, nicht bei jedem Oeffnen.
+    ///
+    /// Kein separates Merker-Bool: das wuerde store-global gelten und damit
+    /// jede SPAETERE abgelaufene Einheit stumm halten, sobald einmal
+    /// quittiert wurde -- und einen Neustart nicht ueberleben. Die
+    /// Sessiondatei traegt nur die oertliche Sicht auf die laufende Einheit;
+    /// noch nicht gesendete Schreibvorgaenge liegen in PendingWriteStore.
+    /// Loeschen ist hier folgenlos fuer sie.
+    ///
+    /// Selbstschutz: quittiert wird nur, was WIRKLICH ausgelaufen ist. Der
+    /// Name verspricht Selektivitaet -- ohne den Guard wuerde jeder Aufruf
+    /// zur falschen Zeit bedingungslos die laufende Einheit des Mitglieds
+    /// loeschen, Speicher und Datei. Der Schaden waere maximal unsymmetrisch:
+    /// falsch-negativ ist ein Satz zu viel auf dem leeren Tab, falsch-positiv
+    /// ist das Training des Mitglieds weg. Der Guard gehoert deshalb hier
+    /// hin, nicht nur in die Disziplin der Aufrufer.
+    func ausgelaufeneQuittieren() {
+        guard abgelaufeneSession() != nil else { return }
+        gespeicherteSession = nil
+        fileStore.save(nil)
     }
 
     func naechsterSetIndex(machineId: String, exerciseId: String, jetzt: Date = Date()) -> Int {

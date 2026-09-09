@@ -1,0 +1,149 @@
+import Foundation
+import Testing
+@testable import FitnessMember
+
+/// Reine Ableitung, ohne Netz oder View: Blockzeile (lokal, sofort da) +
+/// Blockvorschlag (vom Server, kommt spaeter) -> AbschlussZeile.
+struct TrainingAbschlussZeilenTests {
+    private func block(_ machineId: String = "m1", _ exerciseId: String = "e1",
+                       gewicht: Double? = 80, saetze: Int = 3, gemeldet: Bool = false) -> Blockzeile {
+        Blockzeile(machineId: machineId, exerciseId: exerciseId,
+                   gewichtKg: gewicht, satzAnzahl: saetze, problemGemeldet: gemeldet)
+    }
+
+    private func vorschlag(_ machineId: String = "m1", _ exerciseId: String = "e1",
+                           delta: Double? = nil, reasonCode: String) -> Blockvorschlag {
+        Blockvorschlag(machineId: machineId, exerciseId: exerciseId,
+                       resultWeightKg: nil, deltaKg: delta, reasonCode: reasonCode, algoVersion: "v1")
+    }
+
+    @Test func korridorObenErreichtZeigtDasPositiveDelta() {
+        let anzeige = VorschlagsAnzeige(reasonCode: "korridor_oben_erreicht", deltaKg: 2.5)
+        #expect(anzeige == .delta(2.5))
+        #expect(anzeige.text == "+2,5 kg")
+    }
+
+    @Test func korridorUntenVerfehltZeigtDasNegativeDeltaMitMinuszeichen() {
+        let anzeige = VorschlagsAnzeige(reasonCode: "korridor_unten_verfehlt", deltaKg: -2.5)
+        #expect(anzeige == .delta(-2.5))
+        #expect(anzeige.text == "-2,5 kg")
+    }
+
+    @Test func imKorridorHeisstGewichtHalten() {
+        let anzeige = VorschlagsAnzeige(reasonCode: "im_korridor", deltaKg: nil)
+        #expect(anzeige == .halten)
+        #expect(anzeige.text == "Gewicht halten")
+    }
+
+    @Test func problemGemeldetHeisstKeinVorschlag() {
+        let anzeige = VorschlagsAnzeige(reasonCode: "problem_gemeldet", deltaKg: nil)
+        #expect(anzeige == .keiner)
+        #expect(anzeige.text == "Kein Vorschlag")
+    }
+
+    // Die uebrigen drei reasonCodes zeigt das Artboard nicht -- sie fallen
+    // alle auf "Kein Vorschlag", weil sieben Formulierungen fuer dieselbe
+    // Aussage niemandem helfen (Aufgabenbrief).
+    @Test(arguments: ["kein_verlauf", "daten_uneindeutig", "geraetegrenze_erreicht", "irgendwas_unbekanntes"])
+    func unbekannteOderNichtVorgeseheneReasonCodesFallenAufKeinVorschlag(reasonCode: String) {
+        #expect(VorschlagsAnzeige(reasonCode: reasonCode, deltaKg: nil) == .keiner)
+    }
+
+    @Test func einKorridorCodeOhneDeltaFaelltEbenfallsAufKeinVorschlag() {
+        // Defensiv: sollte der Server einen Korridor-Code ohne deltaKg
+        // schicken, zeigt der Screen lieber "Kein Vorschlag" als nichts
+        // oder eine falsche Zahl.
+        #expect(VorschlagsAnzeige(reasonCode: "korridor_oben_erreicht", deltaKg: nil) == .keiner)
+    }
+
+    @Test func einFehlenderVorschlagZeigtKeinVorschlagStattZuVerschwinden() {
+        let zeilen = AbschlussZeile.zeilen(bloecke: [block()], vorschlaege: [])
+
+        #expect(zeilen.count == 1)
+        #expect(zeilen[0].anzeige == .keiner)
+    }
+
+    @Test func jederBlockBekommtSeinenEigenenVorschlagUeberMachineUndExercise() {
+        let bloecke = [
+            block("m1", "e1"),
+            block("m2", "e2"),
+        ]
+        let vorschlaege = [
+            vorschlag("m2", "e2", reasonCode: "im_korridor"),
+            vorschlag("m1", "e1", delta: 2.5, reasonCode: "korridor_oben_erreicht"),
+        ]
+
+        let zeilen = AbschlussZeile.zeilen(bloecke: bloecke, vorschlaege: vorschlaege)
+
+        #expect(zeilen.count == 2)
+        #expect(zeilen[0].block.machineId == "m1")
+        #expect(zeilen[0].anzeige == .delta(2.5))
+        #expect(zeilen[1].block.machineId == "m2")
+        #expect(zeilen[1].anzeige == .halten)
+    }
+
+    @Test func dieReihenfolgeFolgtDenLokalenBloeckenNichtDerServerantwort() {
+        let bloecke = [block("m1", "e1"), block("m2", "e2"), block("m3", "e3")]
+        // Server liefert absichtlich in anderer Reihenfolge.
+        let vorschlaege = [
+            vorschlag("m3", "e3", reasonCode: "im_korridor"),
+            vorschlag("m1", "e1", reasonCode: "im_korridor"),
+        ]
+
+        let zeilen = AbschlussZeile.zeilen(bloecke: bloecke, vorschlaege: vorschlaege)
+
+        #expect(zeilen.map(\.block.machineId) == ["m1", "m2", "m3"])
+    }
+
+    /// Zwei Uebungen an DERSELBEN Maschine -- die Zuordnung darf nicht
+    /// ueber machineId allein gehen. Genau diese Fehlerklasse hat in
+    /// Sub-Projekt 2 einen Screen die Werte einer Uebung unter dem Namen
+    /// einer anderen zeigen lassen; ein Vorschlag am falschen Block ist
+    /// eine Zahl, die das Mitglied auflegt.
+    @Test func zweiUebungenAnDerselbenMaschineBekommenJedeIhrenEigenenVorschlag() {
+        let bloecke = [
+            block("m1", "e1", gewicht: 80),
+            block("m1", "e2", gewicht: 40),
+        ]
+        // Der Vorschlag der ZWEITEN Uebung steht zuerst: `first(where:)`
+        // wuerde bei einem Vergleich allein ueber machineId hier den
+        // falschen greifen -- und zwar fuer beide Zeilen denselben.
+        let vorschlaege = [
+            vorschlag("m1", "e2", delta: -2.5, reasonCode: "korridor_unten_verfehlt"),
+            vorschlag("m1", "e1", delta: 2.5, reasonCode: "korridor_oben_erreicht"),
+        ]
+
+        let zeilen = AbschlussZeile.zeilen(bloecke: bloecke, vorschlaege: vorschlaege)
+
+        #expect(zeilen.count == 2)
+        #expect(zeilen[0].block.exerciseId == "e1")
+        #expect(zeilen[0].anzeige == .delta(2.5))
+        #expect(zeilen[1].block.exerciseId == "e2")
+        #expect(zeilen[1].anzeige == .delta(-2.5))
+    }
+
+    /// Die Gegenprobe: dieselbe UEBUNG an zwei Maschinen. Auch hier
+    /// entscheidet das Paar, nicht eine Haelfte davon.
+    @Test func dieselbeUebungAnZweiMaschinenBleibtAuseinandergehalten() {
+        let bloecke = [block("m1", "e1"), block("m2", "e1")]
+        let vorschlaege = [
+            vorschlag("m2", "e1", reasonCode: "im_korridor"),
+            vorschlag("m1", "e1", delta: 2.5, reasonCode: "korridor_oben_erreicht"),
+        ]
+
+        let zeilen = AbschlussZeile.zeilen(bloecke: bloecke, vorschlaege: vorschlaege)
+
+        #expect(zeilen[0].anzeige == .delta(2.5))
+        #expect(zeilen[1].anzeige == .halten)
+    }
+
+    /// Und: zwei Bloecke an derselben Maschine haben verschiedene ids --
+    /// sonst zeichnete ForEach in "Beim naechsten Mal" nur einen von
+    /// beiden oder verwechselte sie beim Neuzeichnen.
+    @Test func zweiBloeckeAnDerselbenMaschineHabenVerschiedeneIds() {
+        let zeilen = AbschlussZeile.zeilen(
+            bloecke: [block("m1", "e1"), block("m1", "e2")], vorschlaege: [])
+
+        #expect(zeilen[0].id != zeilen[1].id)
+    }
+}

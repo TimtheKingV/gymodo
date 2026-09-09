@@ -94,11 +94,14 @@ struct ProblemSheet: View {
         .padding(DesignSystem.Spacing.s16)
         .frame(minHeight: 44)
         .background(DesignSystem.Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        // clipShape VOR overlay: umgekehrt schneidet die Maske die
+        // aeussere Haelfte der Kontur weg und laesst eine halbe uebrig
+        // (Vorlage: InlineBanner).
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(gewaehlt ? DesignSystem.Color.warn : Color.clear, lineWidth: 1.5)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(gewaehlt ? [.isButton, .isSelected] : .isButton)
     }

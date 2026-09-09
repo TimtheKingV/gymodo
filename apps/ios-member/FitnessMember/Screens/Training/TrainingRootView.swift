@@ -1,16 +1,18 @@
 import SwiftUI
 
-/// Bewusst schmucklos: Scan-Button, Blockliste, "Training beenden".
+/// Leer und laufend sind kein zweiter Screen, sondern zwei Zustaende
+/// derselben Wurzel (TrainingLeer.dc.html / TrainingLaeuft.dc.html).
 ///
-/// Der Artboard-Ausbau nach TrainingLeer / TrainingLaeuft / TrainingAbschluss
-/// gehoert zu Sub-Projekt 3. Diese Wurzel kommt hier mit, weil der Kernflow
-/// sonst nicht schliessbar waere: POST .../complete haette keinen Ausloeser,
-/// "Zurueck zum Training" liefe ins Leere, und der Zirkelfall aus M1-Spec
-/// SS5.3 waere nicht baubar.
+/// Sub-Projekt 2 hatte diese Wurzel als Rumpf gebaut, damit der Kernflow
+/// schliessbar war: POST .../complete brauchte einen Ausloeser,
+/// "Zurueck zum Training" haette sonst ins Leere gefuehrt, und der
+/// Zirkelfall aus M1-Spec SS5.3 waere nicht baubar gewesen. Hier bekommt sie
+/// ihre Gestalt.
 struct TrainingRootView: View {
     @Environment(CatalogStore.self) private var katalog
     @Environment(WorkoutSessionStore.self) private var sessions
     @Environment(PendingTagStore.self) private var pendingTag
+    @Environment(\.scenePhase) private var scenePhase
 
     let apiClient: APIClient
 
@@ -24,49 +26,122 @@ struct TrainingRootView: View {
     /// GESTARTETE, und ein alter Fehltreffer koennte so ueber einem
     /// zwischenzeitlich erfolgreichen Scan landen.
     @State private var neuladeVersuch: Task<Void, Never>?
+    /// Reiner Ausloeser, wird selbst nirgends gelesen: eine @State-Aenderung
+    /// erzwingt IMMER einen body-Neuaufbau der eigenen View, unabhaengig
+    /// davon, ob der Wert irgendwo verwendet wird -- anders als bei
+    /// @Environment, wo SwiftUI nur invalidiert, was tatsaechlich gelesen
+    /// wurde. Siehe .onChange(of: scenePhase) unten (M2): kehrt das
+    /// Mitglied aus dem Hintergrund zurueck, soll sessions.aktiveSession()
+    /// sofort neu ausgewertet werden, nicht erst bei der naechsten
+    /// 60-Sekunden-Kadenz der TimelineView.
+    @State private var neuAuswerten = false
+    /// Aus sessions.abgelaufeneSession() gelesen, BEVOR ausgelaufeneQuittieren()
+    /// die Einheit raeumt -- an drei Stellen, aber mit derselben Regel: erst
+    /// lesen, den Satz aus DIESEM Zustand zeigen, danach quittieren.
+    /// ausgelaufeneQuittieren() loescht seit einer Fehlerbehebung Speicher
+    /// und Datei, statt nur ein Bool zu setzen -- wuerde der Satz reaktiv aus
+    /// abgelaufeneSession() gerendert und im selben Atemzug quittiert,
+    /// verschwaende er, bevor das Mitglied ihn liest.
+    ///
+    /// Die drei Stellen: das .task(id: UmschaltTick(...)) in der
+    /// TimelineView unten (Kalteinstieg UND der selbsttaetige Ablauf
+    /// waehrend die App offen bleibt -- M2b), und die beiden Zweige von
+    /// beenden() (manuelles
+    /// Beenden setzt false, der Fehlerfall dort setzt true). Er bleibt
+    /// stehen, bis die Wurzel verlassen wird -- ODER bis er selbst nicht
+    /// mehr gilt: beenden() setzt ihn beim manuellen Beenden zurueck, der
+    /// onChange unten zusaetzlich beim Uebergang in einen neuen laufenden
+    /// Zustand. Der Satz gehoert zu GENAU EINER abgelaufenen Einheit, nicht
+    /// zur View.
+    @State private var zeigeAusgelaufenHinweis = false
 
     var body: some View {
         NavigationStack(path: $pfad) {
             ScrollView {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
-                    kopf
-                    if let session = sessions.aktiveSession(), !session.bloecke.isEmpty {
-                        ForEach(session.bloecke) { block in
-                            Button { oeffne(block) } label: { blockZeile(block) }
-                                .buttonStyle(PressButtonStyle())
+                // Die Kadenz von 60 s zwingt body dazu, sessions.aktiveSession()
+                // periodisch neu auszuwerten. @Observable zeichnet sonst nur bei
+                // einer Aenderung von gespeicherteSession neu -- beim Ablauf der
+                // Vier-Stunden-Frist aendert sich dort nichts, und ohne diese
+                // TimelineView bliebe der Screen auf "laufend" stehen, obwohl die
+                // Einheit laengst ausgelaufen ist (M2). Die sekundengenaue Uhr im
+                // laufenden Zustand hat ihre EIGENE, innere TimelineView weiter
+                // unten -- diese hier betrifft nur die Umschaltung.
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
+                        if let session = sessions.aktiveSession() {
+                            laufendInhalt(session)
+                        } else {
+                            leerInhalt
                         }
-                    } else {
-                        Text("Tippe ein Gerät an oder scanne den Code — dein Training beginnt von allein.")
-                            .font(DesignSystem.Typography.fliesstext)
-                            .foregroundStyle(DesignSystem.Color.textMuted)
-                            .lineSpacing(4)
                     }
-                    if let scanFehler {
-                        InlineBanner(tone: .danger, message: scanFehler)
-                    }
-                    PrimaryButton(title: "Gerät scannen") { scannerOffen = true }
-                    if sessions.aktiveSession() != nil {
-                        SecondaryButton(title: "Training beenden") { await beenden() }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, DesignSystem.Spacing.s24)
+                    // Der Umschalttick selbst wertet nur SEINEN Inhalt neu
+                    // aus, nicht den aeusseren body -- und aus einem
+                    // ViewBuilder heraus darf ohnehin kein Zustand
+                    // geschrieben werden. .task(id:) ist der Ort, der den
+                    // Tick wirklich erreicht und schreiben darf. Die ID
+                    // kombiniert context.date (den 60-Sekunden-Tick) UND
+                    // neuAuswerten (den scenePhase-Ausloeser): faellt
+                    // context.date bei einem vom scenePhase-Wechsel
+                    // erzwungenen Neuaufbau zufaellig mit dem letzten
+                    // Tick-Wert zusammen, macht neuAuswerten die ID trotzdem
+                    // neu -- ohne diese Kombination koennte die Erklaerung
+                    // bis zu 60 s hinter der bereits umgeschalteten Anzeige
+                    // zurueckbleiben.
+                    //
+                    // abgelaufeneSession() liefert NUR etwas, wenn die
+                    // gespeicherte Einheit noch existiert UND
+                    // aktiveSession() wegen Zeitablauf nil ist -- das
+                    // unterscheidet den selbsttaetigen Ablauf sauber von
+                    // einem manuellen "Training beenden": beenden() nullt
+                    // gespeicherteSession bereits VOR dem naechsten Tick,
+                    // abgelaufeneSession() liefert dann nichts mehr (sonst
+                    // waere M1 wieder da). Nach dem ersten Treffer ist
+                    // gespeicherteSession geloescht, jeder weitere Tick
+                    // liefert deshalb von selbst nichts mehr -- ohne
+                    // eigenes Merker-Flag genau einmal. Deckt zugleich den
+                    // Kalteinstieg ab -- aber ueber das ERSCHEINEN, nicht
+                    // ueber einen Tick: .task(id:) laeuft, sobald die View
+                    // im Baum auftaucht, und danach bei jeder Aenderung
+                    // der ID. Wer die ID spaeter gegen etwas tauscht, das
+                    // nicht am Erscheinen haengt, verliert damit den
+                    // Kalteinstieg -- und das gesonderte .task unten
+                    // braucht die Pruefung deswegen nicht.
+                    .task(id: UmschaltTick(datum: context.date, wach: neuAuswerten)) {
+                        guard sessions.abgelaufeneSession() != nil else { return }
+                        zeigeAusgelaufenHinweis = true
+                        sessions.ausgelaufeneQuittieren()
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, DesignSystem.Spacing.s24)
             }
             .background(DesignSystem.Color.bg)
             .navigationDestination(for: GeraetRoute.self, destination: ziel)
             .sheet(isPresented: $scannerOffen) {
-                MemberScannerView { code in
-                    scannerOffen = false
-                    // Die Gym-QR-Codes tragen den vollstaendigen Universal
-                    // Link, nicht den blanken Token -- oeffneToken hasht und
-                    // vergleicht gegen tokenHashes, die nur den Token kennen.
-                    oeffneToken(TagLink.token(fromScan: code))
-                }
+                ScannerSheet(
+                    titel: "Gerät finden",
+                    hinweis: "QR-Code auf dem Aufkleber ins Feld halten.",
+                    nebenweg: .karte(
+                        titel: "Oder einfach antippen",
+                        text: "Halt die Oberkante deines iPhones an den Aufkleber — dafür musst du diesen Bildschirm nicht offen haben."
+                    ),
+                    beiCode: { code in
+                        scannerOffen = false
+                        // Die Gym-QR-Codes tragen den vollstaendigen Universal
+                        // Link, nicht den blanken Token -- oeffneToken hasht und
+                        // vergleicht gegen tokenHashes, die nur den Token kennen.
+                        oeffneToken(TagLink.token(fromScan: code))
+                    }
+                )
             }
             // Ein ueber Universal Link erfasster Token wird hier verbraucht --
             // Sub-Projekt 1 hat ihn nur fuer das Banner auf LoginMail genutzt.
             // Deckt den Kalteinstieg ab: der Token liegt beim ersten Aufbau
-            // dieser View schon vor.
+            // dieser View schon vor. Die ggf. abgelaufene Einheit liest und
+            // quittiert das .task(id: UmschaltTick(...)) in der TimelineView
+            // oben -- das laeuft beim ERSCHEINEN der View, nicht erst beim
+            // ersten Tick, und deckt den Kalteinstieg damit genauso ab.
+            // Deshalb reicht EIN Ort fuer diese Pruefung.
             .task {
                 if let token = pendingTag.consume() { oeffneToken(token) }
             }
@@ -82,6 +157,22 @@ struct TrainingRootView: View {
                 guard neu != nil, let token = pendingTag.consume() else { return }
                 oeffneToken(token)
             }
+            // Zweiter Ausloeser fuer die Neuauswertung von
+            // sessions.aktiveSession() (siehe TimelineView oben): kehrt das
+            // Mitglied aus dem Hintergrund zurueck, soll das sofort gelten,
+            // nicht erst bei der naechsten 60-Sekunden-Kadenz. Es gibt sonst
+            // keinen scenePhase-Beobachter im Projekt.
+            .onChange(of: scenePhase) { _, neu in
+                guard neu == .active else { return }
+                neuAuswerten.toggle()
+            }
+            // Der Satz zur ausgelaufenen Einheit gehoert zu GENAU EINER
+            // abgelaufenen Einheit (M1): sobald wieder eine laufende Einheit
+            // entsteht -- egal ob durch einen neuen Satz oder weil beenden()
+            // ihn schon zurueckgesetzt hat --, gilt er nicht mehr.
+            .onChange(of: sessions.aktiveSession() != nil) { _, laeuft in
+                if laeuft { zeigeAusgelaufenHinweis = false }
+            }
             // Verlaesst die Wurzel die Buehne (z.B. Kontowechsel reisst die
             // gesamte Umgebung neu auf), soll ein noch laufender Retry nicht
             // in einen verschwundenen Zustand hinein schreiben.
@@ -89,29 +180,256 @@ struct TrainingRootView: View {
         }
     }
 
-    // MARK: - Kopf und Zeilen
+    // MARK: - Leerer Zustand (TrainingLeer.dc.html)
 
-    private var kopf: some View {
-        Text(sessions.aktiveSession() == nil ? "TRAINING" : "TRAINING LÄUFT")
+    @ViewBuilder
+    private var leerInhalt: some View {
+        Text("TRAINING")
             .font(DesignSystem.Typography.screentitel)
             .tracking(-1)
             .foregroundStyle(DesignSystem.Color.text)
+
+        VStack(spacing: DesignSystem.Spacing.s24) {
+            nfcZeichnung
+            VStack(spacing: DesignSystem.Spacing.s12) {
+                Text("HALT DEIN IPHONE\nAN DEN AUFKLEBER")
+                    .font(.system(size: 25, weight: .black))
+                    .tracking(-0.6)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(DesignSystem.Color.text)
+                Text("Am Gerät klebt ein Aufkleber mit dem gymodo-Zeichen. Dein Training startet von selbst, sobald du den ersten Satz sicherst — es gibt keinen Startknopf.")
+                    .font(DesignSystem.Typography.fliesstext)
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, DesignSystem.Spacing.s24)
+
+        if zeigeAusgelaufenHinweis {
+            InlineBanner(tone: .muted, message: "Dein letztes Training wurde automatisch beendet.")
+        }
+
+        // Direkt ueber der Aktionsgruppe, nicht dahinter (M3): ein Fehler
+        // muss im Sichtfeld stehen, nicht unter der Falz.
+        if let scanFehler {
+            InlineBanner(tone: .danger, message: scanFehler)
+        }
+
+        VStack(spacing: DesignSystem.Spacing.s12) {
+            qrReihe
+            // Abweichung vom Artboard: dort text-faint bei 12pt. Der Satz
+            // traegt die Gleichwertigkeit von Scan und Antippen, die die
+            // Optik allein nicht zeigt (SS11) -- das ist tragende
+            // Information, und die faellt unter 15pt nicht unter textFaint
+            // (designsystem.md SS2).
+            Text("Auf jedem Aufkleber ist beides — antippen oder scannen, gleiches Ergebnis.")
+                .font(.system(size: 12))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+        }
+        .frame(maxWidth: .infinity)
     }
+
+    /// Die NFC-Zeichnung als SF-Symbol-Komposition statt Bild-Asset -- das
+    /// Projekt hat keine und soll keine bekommen, solange ein Symbol reicht.
+    /// Rein dekorativ: die Bedeutung steht in der Ueberschrift und dem Satz
+    /// daneben.
+    private var nfcZeichnung: some View {
+        ZStack {
+            Circle()
+                .stroke(DesignSystem.Color.line, lineWidth: 1)
+                .frame(width: 148, height: 148)
+            Circle()
+                .stroke(DesignSystem.Color.surfaceRaised, lineWidth: 1)
+                .frame(width: 108, height: 108)
+            Image(systemName: "wave.3.right")
+                .font(.system(size: 40, weight: .regular))
+                .foregroundStyle(DesignSystem.Color.accent)
+        }
+        .frame(width: 148, height: 148)
+        .accessibilityHidden(true)
+    }
+
+    /// Der QR-Weg, kleiner zweiter Weg neben der NFC-Zeichnung -- Kontur,
+    /// keine Akzentflaeche. Die Hauptaktion des leeren Zustands ist der
+    /// NFC-Tipp gegen den Aufkleber, kein Knopf auf dem Bildschirm; die
+    /// einzige Akzentflaeche hier ist die NFC-Zeichnung selbst
+    /// (designsystem.md SS2, siehe Bericht).
+    private var qrReihe: some View {
+        Button { scannerOffen = true } label: {
+            HStack(spacing: DesignSystem.Spacing.s12) {
+                Image(systemName: "qrcode")
+                    .font(.system(size: 19, weight: .semibold))
+                Text("QR-Code am Gerät scannen")
+                    .font(.system(size: 17, weight: .bold))
+            }
+            .foregroundStyle(DesignSystem.Color.text)
+            .frame(maxWidth: .infinity)
+            .frame(height: 60)
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt)
+                .stroke(DesignSystem.Color.line, lineWidth: 1)
+        )
+        .buttonStyle(PressButtonStyle())
+    }
+
+    // MARK: - Laufender Zustand (TrainingLaeuft.dc.html)
+
+    @ViewBuilder
+    private func laufendInhalt(_ session: LokaleSession) -> some View {
+        laufendKopf(session)
+
+        VStack(spacing: DesignSystem.Spacing.s12) {
+            ForEach(session.bloecke) { block in
+                Button { oeffne(block) } label: { blockZeile(block) }
+                    .buttonStyle(PressButtonStyle())
+            }
+            zirkelHinweis
+        }
+
+        // Direkt ueber der Aktionsgruppe, nicht dahinter (M3): stand vor dem
+        // Umbau zwischen Blockliste und Hauptknopf, ist beim Ausbau der
+        // Fussgruppe versehentlich ganz nach unten gewandert. Ab etwa fuenf
+        // Bloecken waere das unter der Falz -- ein Scanfehler mitten im
+        // Training muss im Sichtfeld stehen.
+        if let scanFehler {
+            InlineBanner(tone: .danger, message: scanFehler)
+        }
+
+        VStack(spacing: DesignSystem.Spacing.s8) {
+            PrimaryButton(title: "Nächstes Gerät") { scannerOffen = true }
+            VStack(spacing: DesignSystem.Spacing.s4) {
+                SecondaryButton(title: "Training beenden") { beenden() }
+                // Zulaessig in textFaint (anders als der Gleichwertigkeitssatz
+                // oben): der Satz erklaert nur eine Alternative, er traegt
+                // selbst nichts (designsystem.md SS2).
+                Text("Ohne neuen Satz endet das Training nach vier Stunden von selbst.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(DesignSystem.Color.textFaint)
+                    .multilineTextAlignment(.center)
+            }
+        }
+    }
+
+    private func laufendKopf(_ session: LokaleSession) -> some View {
+        let geraeteAnzahl = Set(session.bloecke.map(\.machineId)).count
+        let saetzeAnzahl = session.bloecke.flatMap(\.saetze).count
+        return HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                HStack(spacing: DesignSystem.Spacing.s8) {
+                    Circle()
+                        .fill(DesignSystem.Color.textMuted)
+                        .frame(width: 8, height: 8)
+                        .accessibilityHidden(true)
+                    // Abweichung vom Artboard: dort accent fuer Punkt und
+                    // Label. Die eine Akzentflaeche dieses Screens ist
+                    // "Naechstes Geraet" (designsystem.md SS2, siehe Bericht).
+                    Text("TRAINING LÄUFT")
+                        .font(DesignSystem.Typography.label)
+                        .tracking(1.5)
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                }
+                // Gegen session.startedAt gerechnet, nicht gegen einen
+                // mitgezaehlten Wert: ein gespeicherter Zeitpunkt ueberlebt
+                // Hintergrund und Sperrbildschirm, ein Zaehler nicht --
+                // dasselbe Muster wie der Resttimer aus Sub-Projekt 2.
+                TimelineView(.periodic(from: .now, by: 1)) { zeit in
+                    // Ohne .accessibilityLabel liest VoiceOver "23:41" mit
+                    // hoher Wahrscheinlichkeit als Uhrzeit -- direkt ueber
+                    // dem echten "seit 18:04" darunter. verstrichenGesprochen
+                    // macht daraus "23 Minuten trainiert" (designsystem.md
+                    // SS12, wie Zahlformat.gewichtGesprochen).
+                    Text(Zahlformat.verstrichen(seit: session.startedAt, bis: zeit.date))
+                        .font(.system(size: 40, weight: .black).monospacedDigit())
+                        .foregroundStyle(DesignSystem.Color.text)
+                        .accessibilityLabel(Zahlformat.verstrichenGesprochen(seit: session.startedAt, bis: zeit.date))
+                }
+                // M1-Spec SS5.6: es gibt keinen Startknopf. Ohne diesen Satz
+                // wuesste niemand, warum ploetzlich ein Training laeuft.
+                Text("seit \(Zahlformat.uhrzeit(session.startedAt))")
+                    .font(.system(size: 13))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+            }
+            Spacer()
+            HStack(spacing: DesignSystem.Spacing.s16) {
+                statistik(wert: geraeteAnzahl, label: "GERÄTE",
+                          gesprochen: geraeteAnzahl == 1 ? "1 Gerät" : "\(geraeteAnzahl) Geräte")
+                statistik(wert: saetzeAnzahl, label: "SÄTZE",
+                          gesprochen: saetzeAnzahl == 1 ? "1 Satz" : "\(saetzeAnzahl) Sätze")
+            }
+        }
+        // Fasst Kopf und Statistik zu EINEM gesprochenen Satz zusammen statt
+        // vier Bruchstuecken (m4) -- unbedenklich hier, weil kein
+        // Bedienelement in diesem Kopfbereich steckt, das dabei verschwinden
+        // koennte (anders als in Sub-Projekt 2, wo .combine einen Knopf
+        // verschluckt hat).
+        .accessibilityElement(children: .combine)
+    }
+
+    private func statistik(wert: Int, label: String, gesprochen: String) -> some View {
+        VStack(alignment: .trailing, spacing: DesignSystem.Spacing.s4) {
+            Text("\(wert)")
+                .font(.system(size: 21, weight: .black).monospacedDigit())
+                .foregroundStyle(DesignSystem.Color.text)
+            Text(label)
+                .font(DesignSystem.Typography.label)
+                .tracking(1)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(gesprochen)
+    }
+
+    private var zirkelHinweis: some View {
+        HStack(alignment: .top, spacing: DesignSystem.Spacing.s8) {
+            Image(systemName: "info.circle")
+                .font(.system(size: 14))
+            // Abweichung vom Artboard: dort text-faint bei 12pt. Dieselbe
+            // Begruendung wie beim Gleichwertigkeitssatz oben: dieser Satz
+            // ist die einzige Stelle in der App, die den Zirkelweg aus
+            // M1-Spec SS5.3 erklaert -- tragende Information, und die faellt
+            // unter 15pt nicht unter textFaint (designsystem.md SS2).
+            Text("Zweiter Durchgang? Tipp auf den Block statt neu zu scannen — du landest direkt beim nächsten Satz mit deinem Gewicht.")
+                .font(.system(size: 12))
+                .lineSpacing(3)
+        }
+        .foregroundStyle(DesignSystem.Color.textMuted)
+        .padding(.top, DesignSystem.Spacing.s4)
+    }
+
+    // MARK: - Kopf und Zeilen
 
     private func blockZeile(_ block: LokalerBlock) -> some View {
         let maschine = katalog.bootstrap?.machines.first { $0.id == block.machineId }
         let uebung = maschine?.exercises.first { $0.id == block.exerciseId }
         let letztes = block.saetze.last
+        let gemeldet = block.saetze.contains(where: \.problemFlag)
         return HStack {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                 Text([maschine?.equipmentModel.name, uebung?.name]
                     .compactMap { $0 }.joined(separator: " · "))
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.text)
-                Text("\(block.saetze.count) \(block.saetze.count == 1 ? "Satz" : "Sätze")"
-                     + (letztes.map { " · \(Zahlformat.gewichtMitEinheit($0.weightKg))" } ?? ""))
-                    .font(.system(size: 13))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
+                HStack(spacing: DesignSystem.Spacing.s8) {
+                    Text("\(block.saetze.count) \(block.saetze.count == 1 ? "Satz" : "Sätze")"
+                         + (letztes.map { " · \(Zahlformat.gewichtMitEinheit($0.weightKg))" } ?? ""))
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                    if gemeldet {
+                        // Umriss, nie Flaeche -- warn markiert eine
+                        // Rueckmeldung des Mitglieds, keinen Systemfehler
+                        // (designsystem.md SS2). Hier nur als Textfarbe/Icon,
+                        // nicht als gefuellte Form -- die Kartenkontur unten
+                        // traegt den eigentlichen Umriss.
+                        Label("gemeldet", systemImage: "exclamationmark.triangle")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(DesignSystem.Color.warn)
+                    }
+                }
             }
             Spacer()
             Image(systemName: "chevron.right")
@@ -122,6 +440,14 @@ struct TrainingRootView: View {
         .frame(minHeight: 44)
         .background(DesignSystem.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        // clipShape VOR overlay: umgekehrt schneidet die Maske die
+        // aeussere Haelfte der Kontur weg und laesst eine halbe uebrig
+        // (Vorlage: InlineBanner).
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(gemeldet ? DesignSystem.Color.warn : DesignSystem.Color.line,
+                        lineWidth: gemeldet ? 1.5 : 1)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityHint("Öffnet das Gerät")
     }
@@ -141,6 +467,20 @@ struct TrainingRootView: View {
             if let modell = modell(machineId: machineId, exerciseId: exerciseId, token: token) {
                 GeraetScreen(modell: modell) { pfad.removeAll() }
             }
+        case .abschluss(let sessionId, let zusammenfassung):
+            // "Fertig" nimmt den Pfad zur Wurzel zurueck (Aufgabenbrief):
+            // pfad.removeAll() statt eines einzelnen pop, weil ein Zirkel-
+            // Tap (oeffne(_:)) zwischen "Training beenden" und diesem Push
+            // theoretisch keinen weiteren Eintrag hinterlaesst, aber ein
+            // einzelnes removeLast waere trotzdem die falsche Annahme --
+            // "Fertig" fuehrt IMMER zur Wurzel, nie nur einen Schritt
+            // zurueck.
+            TrainingAbschlussView(
+                sessionId: sessionId,
+                zusammenfassung: zusammenfassung,
+                apiClient: apiClient,
+                beiFertig: { pfad.removeAll() }
+            )
         }
     }
 
@@ -221,8 +561,40 @@ struct TrainingRootView: View {
         pfad.append(.geraet(machineId: block.machineId, exerciseId: block.exerciseId, token: nil))
     }
 
-    private func beenden() async {
-        guard let id = sessions.beenden() else { return }
-        _ = try? await apiClient.completeSession(sessionId: id)
+    private func beenden() {
+        guard let session = sessions.aktiveSession(),
+              let zusammenfassung = Trainingszusammenfassung(session)
+        else {
+            // Der Knopf sah bedienbar aus -- "laufend" stand auf dem
+            // Bildschirm --, aber die Einheit ist zwischen dem letzten
+            // Neuzeichnen und diesem Tap verschwunden, meist weil die
+            // Vier-Stunden-Grenze waehrend einer laengeren Pause im
+            // Vordergrund ablief (M2). "Nie stumm": das Mitglied muss
+            // erfahren, was jetzt gilt, nicht nur, dass der Tap wirkungslos
+            // war. sessions.beenden() raeumt unbedingt auf -- anders als
+            // ausgelaufeneQuittieren() auch dann, wenn die Einheit technisch
+            // noch als aktiv gilt, aber ohne Saetze keine Zusammenfassung
+            // hergibt.
+            zeigeAusgelaufenHinweis = true
+            sessions.beenden()
+            return
+        }
+        // Der Satz zur ausgelaufenen Einheit gehoert zu GENAU EINER
+        // abgelaufenen Einheit (M1): mit dem manuellen Beenden hier gilt er
+        // nicht mehr.
+        zeigeAusgelaufenHinweis = false
+        // Erst festhalten, dann beenden -- andersherum sind die Zahlen weg,
+        // bevor der Screen sie zeigt.
+        sessions.beenden()
+        pfad.append(.abschluss(sessionId: session.id, zusammenfassung: zusammenfassung))
     }
+}
+
+/// Die ID fuer .task(id:) an der Umschalt-TimelineView (siehe body oben):
+/// aendert sich sowohl bei jedem 60-Sekunden-Tick als auch bei jedem
+/// scenePhase-Ausloeser, damit die Erklaerung zur ausgelaufenen Einheit
+/// beide Wege erreicht, nicht nur den Tick.
+private struct UmschaltTick: Equatable {
+    let datum: Date
+    let wach: Bool
 }

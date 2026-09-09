@@ -39,9 +39,22 @@ struct RecordedSet: Decodable, Equatable {
     let performedAt: String
 }
 
+/// Was beim naechsten Mal an einem Geraet dieser Einheit ansteht.
+/// deltaKg ist die Zahl, die der Screen zeigt ("+2,5"); ist sie nil,
+/// sagt reasonCode warum es keinen Vorschlag gibt.
+struct Blockvorschlag: Decodable, Equatable {
+    let machineId: String
+    let exerciseId: String
+    let resultWeightKg: Double?
+    let deltaKg: Double?
+    let reasonCode: String
+    let algoVersion: String
+}
+
 struct CompletedSession: Decodable, Equatable {
     let id: String
     let startedAt: String
     let completedAt: String
     let completedReason: String // "manual" | "auto"
+    let vorschlaege: [Blockvorschlag]
 }

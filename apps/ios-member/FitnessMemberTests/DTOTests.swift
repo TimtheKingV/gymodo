@@ -126,4 +126,29 @@ struct DTOTests {
         let response = try JSONDecoder().decode(SessionsResponse.self, from: Data(json.utf8))
         #expect(response.sessions[0].blocks[0].sets[0].weightKg == 80)
     }
+
+    @Test func completedSessionDecodiertVorschlaege() throws {
+        let json = """
+        {
+          "id": "s1", "startedAt": "2026-09-08T18:04:00Z",
+          "completedAt": "2026-09-08T18:51:00Z", "completedReason": "manual",
+          "vorschlaege": [
+            { "machineId": "m1", "exerciseId": "e1", "resultWeightKg": 82.5,
+              "deltaKg": 2.5, "reasonCode": "korridor_oben_erreicht",
+              "algoVersion": "v1" },
+            { "machineId": "m2", "exerciseId": "e2", "resultWeightKg": null,
+              "deltaKg": null, "reasonCode": "problem_gemeldet",
+              "algoVersion": "v1" }
+          ]
+        }
+        """.data(using: .utf8)!
+
+        let beendet = try JSONDecoder().decode(CompletedSession.self, from: json)
+
+        #expect(beendet.vorschlaege.count == 2)
+        #expect(beendet.vorschlaege[0].deltaKg == 2.5)
+        // Kein Vorschlag heisst: beide Zahlen fehlen, der Grund bleibt.
+        #expect(beendet.vorschlaege[1].deltaKg == nil)
+        #expect(beendet.vorschlaege[1].reasonCode == "problem_gemeldet")
+    }
 }

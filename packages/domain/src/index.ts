@@ -10,6 +10,7 @@ export { naechsteGeraeteNummer } from "./nummern.js";
 export {
   PROGRESSION_ALGO_VERSION,
   suggestNextWeight,
+  toBlocks,
 } from "./progression.js";
 export { DomainError } from "./errors.js";
 export {
@@ -103,8 +104,21 @@ export type {
   ProgressionInputsRecord,
   ProgressionReasonCode,
   ProgressionSuggestion,
+  SatzZeile,
   WorkoutSetInput,
 } from "./progression.js";
+export {
+  ABSCHLUSS_ZEITFENSTER_MS,
+  vorschlaegeFuerAbschluss,
+  gespeicherteVorschlaege,
+  ausGespeichertenZeilen,
+  blockPaare,
+  zuVorschlag,
+} from "./abschluss.js";
+export type {
+  Blockvorschlag,
+  GespeicherteVorschlagZeile,
+} from "./abschluss.js";
 export {
   joinStudioByCode,
   joinStudioByTag,
@@ -123,6 +137,7 @@ export type {
   StudioOverview,
 } from "./overview.js";
 export {
+  abmeldenBis,
   bookCourseSession,
   cancelCourseBooking,
   cancelCourseSession,

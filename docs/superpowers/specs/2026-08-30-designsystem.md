@@ -179,7 +179,7 @@ Vier Tabs: **Home · Training · Kurse · Profil**. Der Geräte-Screen ist kein 
 
 **Plan** (M3) ist in der Struktur reserviert, erscheint aber **nicht** in der Tab-Leiste, solange er keinen Inhalt hat. Ein leerer Tab ist ein Versprechen ohne Gegenwert; in der Canvas steht er nur auf dem Fundament-Artboard als Platzhalter.
 
-**Kurse ist gestaltet, aber nicht gebaut.** Es gibt dafür weder Tabelle noch Endpoint — siehe `docs/superpowers/plans/2026-08-30-kurse-datenmodell.md`. Die Artboards sind Entwurf, kein Versprechen. Das gilt besonders für den Satz auf „Meine Kurse", der beim Nachrücken von der Warteliste eine Nachricht ankündigt: Benachrichtigungen existieren nicht, und bis sie existieren darf der Satz nicht in die App.
+**Kurse ist seit Phase 4 gebaut** (Migrationen `0035`–`0038`, `packages/domain/src/courses.ts`, die beiden Endpoints `/api/v1/me/courses` und `/api/v1/course-sessions/[sessionId]/booking`) — dieser Absatz behauptete bis zur Richtigstellung am 2026-09-08 fälschlich das Gegenteil. Die Artboards bleiben trotzdem Entwurf, kein Versprechen: nicht jede gestaltete Zeile hat schon einen Screen. Das gilt besonders für den Satz auf „Meine Kurse", der beim Nachrücken von der Warteliste eine Nachricht ankündigt: Benachrichtigungen existieren nicht, und bis sie existieren darf der Satz nicht in die App.
 
 **Scan-Zugang** ist ein Button im Training-Tab, kein Element der Tab-Leiste. NFC und QR stehen im Scan-Sheet gleichwertig nebeneinander — fällt der Trefferquoten-Test aus M0 Task 8 durch, kostet der Schwenk auf QR-first nur Text.
 

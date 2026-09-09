@@ -63,6 +63,44 @@ actor APIClient {
         try await executeNoContent(path: "studios/\(studioId)/membership", method: "DELETE")
     }
 
+    // MARK: - Kurse (Sub-Projekt 3, ausserhalb M1-Spec SS6.3)
+
+    func courseWeek(studio: String, from: String, to: String) async throws(APIError) -> CourseWeek {
+        // baseURL.appendingPathComponent(path) -- der Weg, den get(_:)
+        // unten fuer alle bisherigen Endpoints nimmt -- prozentkodiert "?"
+        // und "&" wie jedes andere Pfadzeichen: ein Pfad mit
+        // Abfrageparametern kaeme so nie beim Server an, sondern als ein
+        // einziges, sinnloses Pfadsegment. Deshalb hier ueber
+        // URLComponents, mit denselben Bausteinen (baseURL,
+        // appendingPathComponent fuer den festen Teil).
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("me/courses"), resolvingAgainstBaseURL: false)!
+        components.queryItems = [
+            URLQueryItem(name: "studio", value: studio),
+            URLQueryItem(name: "from", value: from),
+            URLQueryItem(name: "to", value: to),
+        ]
+        guard let url = components.url else { throw APIError.encodingFailed }
+        return try await execute(url: url, method: "GET", bodyData: nil)
+    }
+
+    // bookingId kommt vom Aufrufer, nicht von hier: sie ist die
+    // clientseitig erzeugte Kennung, die denselben Aufruf zweimal
+    // denselben Platz ergeben laesst (Spec 6.3, Routen-Kommentar). Wuerde
+    // diese Methode selbst eine UUID erzeugen, waere jeder
+    // Wiederholungsversuch nach einem Netzabbruch eine NEUE Buchung --
+    // genau die Doppelbuchung, die die Kennung verhindern soll. Aufgabe 8
+    // haelt sie deshalb im Store und reicht sie hier nur durch.
+    func bookCourse(sessionId: String, bookingId: UUID) async throws(APIError) -> BookOutcome {
+        try await send(
+            "course-sessions/\(sessionId)/booking", method: "PUT",
+            body: BookingWrite(bookingId: bookingId.uuidString))
+    }
+
+    func cancelCourse(sessionId: String) async throws(APIError) -> CancelOutcome {
+        try await sendNoBody("course-sessions/\(sessionId)/booking", method: "DELETE")
+    }
+
     // MARK: - Hilfsmethoden
 
     private func get<T: Decodable>(_ path: String, as type: T.Type = T.self) async throws(APIError) -> T {
@@ -77,11 +115,24 @@ actor APIClient {
     }
 
     private func postNoBody<T: Decodable>(_ path: String) async throws(APIError) -> T {
-        try await execute(path: path, method: "POST", bodyData: nil)
+        try await sendNoBody(path, method: "POST")
+    }
+
+    /// Schwesterliche Hilfsmethode zu postNoBody statt dessen
+    /// Verallgemeinerung: postNoBody(_:) bleibt fuer completeSession
+    /// unveraendert aufrufbar (keine bestehende Aufrufstelle aendert
+    /// sich), und postNoBody delegiert jetzt hierher statt die Anfrage
+    /// selbst zu bauen -- kein doppelter Code, kleinster Eingriff.
+    private func sendNoBody<T: Decodable>(_ path: String, method: String) async throws(APIError) -> T {
+        try await execute(path: path, method: method, bodyData: nil)
     }
 
     private func execute<T: Decodable>(path: String, method: String, bodyData: Data?) async throws(APIError) -> T {
-        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        try await execute(url: baseURL.appendingPathComponent(path), method: method, bodyData: bodyData)
+    }
+
+    private func execute<T: Decodable>(url: URL, method: String, bodyData: Data?) async throws(APIError) -> T {
+        var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if let token = await tokenProvider() {

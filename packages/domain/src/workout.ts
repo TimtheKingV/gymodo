@@ -2,6 +2,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireUserId } from "./auth.js";
 import { DomainError } from "./errors.js";
+import {
+  gespeicherteVorschlaege,
+  vorschlaegeFuerAbschluss,
+  type Blockvorschlag,
+} from "./abschluss.js";
 
 export const problemReasonSchema = z.enum([
   "schmerz",
@@ -184,6 +189,12 @@ export type CompletedSession = {
   startedAt: string;
   completedAt: string;
   completedReason: "manual" | "auto";
+  /**
+   * Was beim naechsten Mal an jedem Geraet dieser Einheit ansteht. Kommt
+   * mit dem Abschluss statt aus einem eigenen Endpoint, weil der Screen
+   * genau das rendert (M1-Spec SS6.3, screenorientiert).
+   */
+  vorschlaege: Blockvorschlag[];
 };
 
 type SessionRow = {
@@ -224,11 +235,22 @@ export async function completeSession(
   }
 
   if (existing.completed_at && existing.completed_reason) {
+    // Nur LESEN. Der Frueheinstieg ist genau dafuer da, nichts noch einmal
+    // zu tun -- die Vorschlaege kommen aus dem, was der erste Abschluss
+    // festgehalten hat. Sie hier neu zu rechnen hiesse, ein zweites Mal
+    // nach progression_suggestions zu schreiben; die Tabelle hat keinen
+    // eindeutigen Index, jeder Wiederholer erzeugte also Dubletten.
     return {
       id: existing.id,
       startedAt: existing.started_at,
       completedAt: existing.completed_at,
       completedReason: existing.completed_reason,
+      vorschlaege: await gespeicherteVorschlaege(
+        client,
+        parsed.data.sessionId,
+        userId,
+        existing.completed_at,
+      ),
     };
   }
 
@@ -253,5 +275,10 @@ export async function completeSession(
     startedAt: row.started_at,
     completedAt: row.completed_at,
     completedReason: row.completed_reason,
+    vorschlaege: await vorschlaegeFuerAbschluss(
+      client,
+      parsed.data.sessionId,
+      userId,
+    ),
   };
 }
