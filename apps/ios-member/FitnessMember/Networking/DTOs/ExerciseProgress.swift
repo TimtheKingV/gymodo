@@ -1,9 +1,11 @@
 import Foundation
 
-struct ProgressResponse: Decodable, Equatable { let exercises: [ExerciseProgress] }
+struct ProgressResponse: Codable, Equatable { let exercises: [ExerciseProgress] }
 
-struct ExerciseProgress: Decodable, Equatable, Identifiable {
-    struct Point: Decodable, Equatable {
+/// Codable statt nur Decodable (Aufgabe 5): VerlaufFileStore schreibt
+/// diesen Typ als Teil von GespeicherterVerlauf auf Platte.
+struct ExerciseProgress: Codable, Equatable, Identifiable {
+    struct Point: Codable, Equatable {
         let performedOn: String
         let topWeightKg: Double
         let reps: Int

@@ -5,6 +5,7 @@ struct RootView: View {
     @Environment(CatalogStore.self) private var catalogStore
     @Environment(WorkoutSessionStore.self) private var workoutStore
     @Environment(KurseStore.self) private var kurseStore
+    @Environment(VerlaufStore.self) private var verlaufStore
 
     let apiClient: APIClient
 
@@ -59,6 +60,10 @@ struct RootView: View {
                 // Kontos duerfen dem naechsten weder im Speicher noch auf
                 // der Platte erscheinen.
                 kurseStore.reset()
+                // Und derselbe Grund ein drittes Mal: der Trainingsverlauf
+                // des vorigen Kontos darf dem naechsten weder im Speicher
+                // noch auf der Platte erscheinen.
+                verlaufStore.reset()
             }
         }
     }
