@@ -1,12 +1,68 @@
 import Foundation
 
-/// Was von einem Wochenplan ueberhaupt auf Platte darf: die eigenen
-/// Termine, nicht der ganze `CourseWeek` mit den Belegungszahlen fremder
-/// Termine. Eine Belegungszahl von vorhin ohne Netz als aktuell zu
-/// zeigen waere dieselbe Unwahrheit, die beim Satz-Status vermieden wird
-/// -- "6 von 20 frei", man faehrt hin, der Kurs ist voll. Die eigene
-/// Anmeldung dagegen aendert sich nicht von selbst.
+/// Was von einem eigenen Termin ueberhaupt auf Platte darf -- eine eigene,
+/// schmale Struktur statt der vollen `CourseWeekSession`.
 ///
+/// Bewusst NICHT dabei, mit Begruendung:
+/// - `bookedCount`, `waitlistCount`, `freeSeats`, `capacity`: Belegungszahlen
+///   sind genau die Unwahrheit, die diese Aufgabe verhindern soll -- "6 von
+///   20 frei" ohne Netz, fuer den eigenen gebuchten Kurs, waere dieselbe
+///   Luege wie ein veralteter Satz-Status. Eine zweite Pruefung in
+///   `KurseFileStore.save(_:)` (leere Liste -> keine Datei) faengt nur den
+///   Fall "keine eigene Buchung" ab, nicht dieses Feld -- die Schranke muss
+///   deshalb im TYP selbst sitzen, nicht nur an einer Aufrufstelle: was
+///   nicht gespeichert werden darf, hat hier gar kein Feld, in das es
+///   hineingeraten koennte.
+/// - `templateId`: reiner Server-interner Verweis, keine Aufrufstelle
+///   braucht ihn.
+/// - `ownWaitlistPosition`: aendert sich ohne eigenes Zutun -- storniert
+///   jemand vor mir auf der Warteliste, ruecke ich nach oder werde
+///   uebernommen, und der Server macht das von sich aus. "Warteliste,
+///   Platz 3" ohne Netz waere ebenso unwahr wie eine Belegungszahl; ohne
+///   Netz gilt nur "du stehst auf der Warteliste" (ownStatus), die Position
+///   kommt ausschliesslich aus einem frischen Abruf.
+///
+/// Dabei: `status`, weil ein abgesagter Kurs, fuer den ich angemeldet war,
+/// auch ohne Netz als abgesagt erscheinen muss (KursZustandRechner:
+/// abgesagt schlaegt jeden eigenen Status).
+struct GespeicherterTermin: Codable, Equatable, Identifiable {
+    var id: String { sessionId }
+
+    let sessionId: String
+    let name: String
+    let description: String?
+    /// ISO 8601, UTC -- wie CourseWeekSession.startsAt, ueber
+    /// KursZeitpunkt.parse zu lesen.
+    let startsAt: String
+    let localDay: String
+    let durationMin: Int
+    let room: String?
+    let instructorName: String?
+    /// "planned" | "cancelled".
+    let status: String
+    /// "booked" | "waitlisted" -- optional getippt wie in CourseWeekSession
+    /// (dort auch nil-faehig), obwohl `KurseStore` hier ausschliesslich
+    /// Termine mit einem eigenen Status ablegt.
+    let ownStatus: String?
+    let ownBookingId: String?
+
+    /// Der einzige Weg, wie diese Struktur entsteht: aus einem Termin mit
+    /// eigenem Status, alles Fremde bleibt beim Erzeugen aussen vor.
+    init(_ termin: CourseWeekSession) {
+        sessionId = termin.sessionId
+        name = termin.name
+        description = termin.description
+        startsAt = termin.startsAt
+        localDay = termin.localDay
+        durationMin = termin.durationMin
+        room = termin.room
+        instructorName = termin.instructorName
+        status = termin.status
+        ownStatus = termin.ownStatus
+        ownBookingId = termin.ownBookingId
+    }
+}
+
 /// `stand` wird mitgeschrieben, weil "Meine Kurse" ohne Netz sagen muss,
 /// WANN dieser Stand war -- ohne Zeitangabe waere der Cache eine stille
 /// Behauptung. `cancellationDeadlineHours` und `timezone` kommen mit, weil
@@ -15,7 +71,7 @@ import Foundation
 /// sonst keine Quelle mehr dafuer.
 struct GespeicherteBuchungen: Codable {
     let stand: Date
-    let termine: [CourseWeekSession]
+    let termine: [GespeicherterTermin]
     let cancellationDeadlineHours: Int
     let timezone: String
 }

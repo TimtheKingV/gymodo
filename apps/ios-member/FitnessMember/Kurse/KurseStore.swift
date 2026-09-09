@@ -50,13 +50,20 @@ final class KurseStore {
     /// Fachlogik greift hierauf zu.
     private(set) var ladeZaehler = 0
 
-    /// Absichtlich nicht `private`: KurseStoreTests programmiert nach der
-    /// Store-Konstruktion das Ergebnis des jeweils naechsten
-    /// courseWeek(...)-Aufrufs auf dem Fake (etwa fuer den
+    /// Absichtlich nicht `private` in DEBUG-Bauten: KurseStoreTests
+    /// programmiert nach der Store-Konstruktion das Ergebnis des jeweils
+    /// naechsten courseWeek(...)-Aufrufs auf dem Fake (etwa fuer den
     /// Offline-Testfall) -- laden(...) selbst nimmt keinen CourseWeek als
     /// Parameter entgegen, es gibt also keinen anderen Weg, ihn von aussen
-    /// zu erreichen.
+    /// zu erreichen. `loader` ist ein `let` ohne produktiven Aufrufer
+    /// ausserhalb der Tests -- die Einschraenkung auf DEBUG haelt das im
+    /// Release-Build trotzdem `private` und macht die Absicht im Code
+    /// sichtbar, statt sie nur im Kommentar zu behaupten.
+    #if DEBUG
     let loader: any KurseLoading
+    #else
+    private let loader: any KurseLoading
+    #endif
     private let fileStore: KurseFileStore
 
     /// Die clientseitig erzeugte Buchungskennung je Termin (sessionId).
@@ -86,6 +93,14 @@ final class KurseStore {
     /// wurde; dann bleibt ein Nachladen einfach aus.
     private var letzteAbfrage: (studioId: String, von: Date, bis: Date)?
 
+    /// Steigt bei jedem laden(...)-Aufruf und bei reset(). Eine Antwort,
+    /// die zurueckkommt, nachdem die Generation schon weitergezogen ist --
+    /// weil ein juengerer laden(...)-Aufruf lief (zweimal kurz
+    /// hintereinander "Aktualisieren") oder reset() das Konto gewechselt
+    /// hat --, ist ueberholt und wird verworfen, statt einen frischeren
+    /// oder kontofremden Zustand zu ueberschreiben.
+    private var generation = 0
+
     init(loader: any KurseLoading, fileStore: KurseFileStore) {
         self.loader = loader
         self.fileStore = fileStore
@@ -99,6 +114,8 @@ final class KurseStore {
     /// zuletzt gespeicherte Stand ist genau das, was den Screen dann
     /// traegt, waehrend `woche` (die fremden Belegungszahlen) nil bleibt.
     func laden(studioId: String, von: Date, bis: Date) async {
+        generation += 1
+        let eigeneGeneration = generation
         ladeZaehler += 1
         ladeZustand = .laedt
         letzteAbfrage = (studioId, von, bis)
@@ -106,8 +123,16 @@ final class KurseStore {
         do {
             let neueWoche = try await loader.courseWeek(
                 studio: studioId, from: formatter.string(from: von), to: formatter.string(from: bis))
+            // Ueberholt, waehrend die Anfrage unterwegs war -- ein
+            // juengerer Aufruf oder ein reset() ist inzwischen dran.
+            // Diese Antwort darf den aktuelleren Zustand nicht mehr
+            // ueberschreiben.
+            guard eigeneGeneration == generation else { return }
             woche = neueWoche
-            let meineTermine = KursZustandRechner.meineKurse(aus: neueWoche)
+            // Nur die schmale, eigene Sicht darf auf Platte -- niemals die
+            // volle CourseWeekSession mit den Belegungszahlen fremder
+            // Termine (siehe GespeicherterTermin).
+            let meineTermine = KursZustandRechner.meineKurse(aus: neueWoche).map(GespeicherterTermin.init)
             let neu = GespeicherteBuchungen(
                 stand: Date(), termine: meineTermine,
                 cancellationDeadlineHours: neueWoche.cancellationDeadlineHours,
@@ -116,6 +141,7 @@ final class KurseStore {
             fileStore.save(eigene)
             ladeZustand = .geladen
         } catch {
+            guard eigeneGeneration == generation else { return }
             woche = nil
             ladeZustand = .fehlgeschlagen
         }
@@ -131,10 +157,25 @@ final class KurseStore {
     /// ab -- die Zeile darunter, die die Kennung als verbraucht markiert,
     /// laeuft dann nicht, und genau das ist gewollt: ein Wiederholungsversuch
     /// soll dieselbe Kennung wiederverwenden.
+    ///
+    /// EINE Ausnahme: `.decodingFailed`. APIClient wirft ihn ausschliesslich
+    /// im 2xx-Zweig (APIClient.execute) -- der Server hat die Buchung also
+    /// bereits angelegt, nur die Antwort liess sich nicht lesen. Das dem
+    /// Mitglied als Fehlschlag zu melden waere der schlimmere der beiden
+    /// Faelle aus APIError (eine gelungene Buchung als gescheitert
+    /// auszugeben), deshalb wird NUR dieser eine Fall wie ein Erfolg
+    /// behandelt: die Kennung gilt als verbraucht, es wird neu geladen.
+    /// Nicht "aufraeumen" -- das ist Absicht, keine vergessene Fehlerpruefung.
     func buchen(sessionId: String) async throws(APIError) {
         let kennung = buchungskennungen[sessionId] ?? UUID()
         buchungskennungen[sessionId] = kennung
-        _ = try await loader.bookCourse(sessionId: sessionId, bookingId: kennung)
+        do {
+            _ = try await loader.bookCourse(sessionId: sessionId, bookingId: kennung)
+        } catch APIError.decodingFailed {
+            // Angekommen, nur unlesbar -- siehe Kommentar oben. Alle
+            // anderen Fehler fliegen aus dem catch-Zweig unveraendert
+            // weiter, weil sie hier nicht behandelt werden.
+        }
         buchungskennungen[sessionId] = nil
         if let letzteAbfrage {
             await laden(studioId: letzteAbfrage.studioId, von: letzteAbfrage.von, bis: letzteAbfrage.bis)
@@ -153,6 +194,10 @@ final class KurseStore {
     /// Nach dem Abmelden gehoeren die Buchungen dem vorigen Konto -- weder
     /// im Speicher noch auf der Platte darf davon etwas stehen bleiben.
     func reset() {
+        // Verwirft eine noch laufende Anfrage des VORIGEN Kontos: kommt
+        // sie jetzt noch zurueck, ist ihre Generation nicht mehr die
+        // aktuelle und laden(...) verwirft sie selbst (siehe dort).
+        generation += 1
         woche = nil
         ladeZustand = .bereit
         eigene = nil

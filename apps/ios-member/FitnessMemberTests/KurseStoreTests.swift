@@ -25,7 +25,38 @@ actor FakeKurseLoader: KurseLoading {
     func setBuchen(_ resultat: BuchenResultat) { buchenResultat = resultat }
     func setStornieren(_ resultat: StornierenResultat) { stornierenResultat = resultat }
 
+    /// Fuer den Beweis, dass eine ueberholende Antwort nicht gewinnt:
+    /// haelt genau den naechsten courseWeek(...)-Aufruf an, bis
+    /// freigeben() gerufen wird -- ein einmaliger Schalter, nicht jeder
+    /// folgende Aufruf haengt.
+    private var haeltDenNaechstenAufruf = false
+    private var wartendeAntwort: CheckedContinuation<Void, Never>?
+    private var angekommenSignal: CheckedContinuation<Void, Never>?
+
+    func haltenBisFreigabe() { haeltDenNaechstenAufruf = true }
+
+    /// Wartet, bis der gehaltene Aufruf tatsaechlich an der Haltestelle
+    /// angekommen ist -- sonst waere die Reihenfolge im Test selbst nicht
+    /// garantiert, sondern nur ein Zufallstreffer.
+    func wartenBisAngekommen() async {
+        if wartendeAntwort != nil { return }
+        await withCheckedContinuation { continuation in angekommenSignal = continuation }
+    }
+
+    func freigeben() {
+        wartendeAntwort?.resume()
+        wartendeAntwort = nil
+    }
+
     func courseWeek(studio: String, from: String, to: String) async throws(APIError) -> CourseWeek {
+        if haeltDenNaechstenAufruf {
+            haeltDenNaechstenAufruf = false
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                wartendeAntwort = continuation
+                angekommenSignal?.resume()
+                angekommenSignal = nil
+            }
+        }
         switch wocheResultat {
         case .success(let woche): return woche
         case .failure(let error): throw error
@@ -145,5 +176,75 @@ struct KurseStoreTests {
         // Nach dem Abmelden gehoeren die Buchungen dem vorigen Konto.
         #expect(sut.eigene == nil)
         #expect(KurseFileStore(directory: verzeichnis).load()?.termine.isEmpty ?? true)
+    }
+
+    // Die Grenze auf Feldebene: ein Test gegen die getippte Struktur
+    // wuerde ein spaeter wiederhinzugefuegtes Feld nicht bemerken, ein
+    // Test gegen die tatsaechlich geschriebenen Schluessel schon.
+    @Test func speichertKeineBelegungszahlenAlsFelderAufPlatte() async {
+        let (sut, verzeichnis) = store()
+        await lade(sut, mit: KursTestdaten.woche(ownStatus: ["booked"]))
+
+        let daten = try? Data(contentsOf: verzeichnis.appendingPathComponent("eigene-kurse.json"))
+        let rohtext = daten.map { String(decoding: $0, as: UTF8.self) } ?? ""
+
+        for verbotenerSchluessel in ["bookedCount", "waitlistCount", "freeSeats", "ownWaitlistPosition"] {
+            #expect(!rohtext.contains(verbotenerSchluessel), "\(verbotenerSchluessel) darf nicht auf Platte stehen")
+        }
+    }
+
+    @Test func eineUeberholendeAntwortGewinntNicht() async {
+        // Bedienbild: zweimal kurz hintereinander "Aktualisieren" tippen.
+        // Die AELTERE Anfrage haengt (Netzwechsel, Zeitueberschreitung)
+        // und kommt NACH der juengeren zurueck -- sie darf den
+        // frischeren Zustand nicht ueberschreiben.
+        let (sut, _) = store()
+        guard let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("sut.loader ist kein FakeKurseLoader")
+            return
+        }
+
+        await loader.setWoche(.success(KursTestdaten.woche(ownStatus: ["booked"])))
+        await loader.haltenBisFreigabe()
+        let ersterAufruf = Task {
+            await sut.laden(studioId: "s1", von: Date(timeIntervalSince1970: 0), bis: Date(timeIntervalSince1970: 0))
+        }
+        await loader.wartenBisAngekommen()
+
+        // Der zweite, juengere Aufruf laeuft vollstaendig durch, WAEHREND
+        // der erste noch haengt.
+        await loader.setWoche(.success(KursTestdaten.woche(ownStatus: [nil])))
+        await sut.laden(studioId: "s1", von: Date(timeIntervalSince1970: 100), bis: Date(timeIntervalSince1970: 100))
+
+        // Erst jetzt darf die AELTERE Antwort zurueckkommen.
+        await loader.freigeben()
+        await ersterAufruf.value
+
+        // Die juengere Antwort (keine eigene Buchung) muss stehen bleiben.
+        #expect(sut.eigene == nil)
+    }
+
+    @Test func decodingFehlgeschlagenBeimBuchenGiltAlsErfolg() async {
+        // .decodingFailed wird ausschliesslich im 2xx-Zweig geworfen
+        // (APIClient.execute) -- der Server hat die Buchung also
+        // angenommen, nur die Antwort war unlesbar. Das dem Mitglied als
+        // Fehlschlag zu melden waere der schlimmere der beiden Faelle aus
+        // APIError.
+        let (sut, _) = store()
+        await lade(sut, mit: KursTestdaten.woche(ownStatus: [nil]))
+        guard let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("sut.loader ist kein FakeKurseLoader")
+            return
+        }
+        await loader.setBuchen(.failure(.decodingFailed))
+
+        do {
+            try await sut.buchen(sessionId: "k0")
+        } catch {
+            Issue.record("buchen(...) hat trotz .decodingFailed geworfen: \(error)")
+        }
+
+        // Wie nach einem echten Erfolg wurde neu geladen.
+        #expect(sut.ladeZaehler == 2)
     }
 }
