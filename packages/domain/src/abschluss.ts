@@ -118,7 +118,19 @@ export const ABSCHLUSS_ZEITFENSTER_MS = 5 * 60 * 1000;
  *
  * `progression_suggestions` hat keine session_id; ohne die ist der
  * Zeitpunkt der einzige Beleg, den die Ablage hergibt. Die Schranke sagt
- * jetzt genau, wie weit dieser Beleg traegt.
+ * genau, wie weit dieser Beleg traegt.
+ *
+ * NICHT GEDECKT, ausdruecklich: eine SELBSTTAETIG beendete Einheit.
+ * `listSessions` setzt dort completed_at auf den letzten Satz (Stunden
+ * zurueck) und completed_reason auf "auto", schreibt aber keine
+ * Vorschlagszeile -- es gibt also gar keine, die im Fenster liegen
+ * koennte, und ein spaeterer POST /complete liefert fuer diese Einheit
+ * keine Vorschlaege. Das ist Absicht: nachtraeglich zu rechnen und zu
+ * schreiben hiesse, eine Nachweiszeile mit dem Datum von heute fuer einen
+ * Abschluss von gestern anzulegen -- und zwei schnell aufeinander folgende
+ * Aufrufe (der Client ruft aus einem `.task` ohne id) faenden beide ein
+ * leeres Fenster und schrieben beide. Genau die Dublette, gegen die der
+ * Frueheinstieg da ist.
  */
 export function ausGespeichertenZeilen(
   paare: Array<{ machineId: string; exerciseId: string }>,
