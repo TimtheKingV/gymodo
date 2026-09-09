@@ -262,6 +262,84 @@ struct KurseStoreTests {
         #expect(sut.woche != nil)
     }
 
+    /// Der Weg, um den es geht: unter Studio A gebucht, Studio gewechselt,
+    /// ohne Netz geladen. "Meine Kurse" darf nichts von A zeigen -- das
+    /// Mitglied fuehre sonst an den falschen Ort. Anders als beim
+    /// Wochenplan haengt das an der mitgespeicherten Kennung, nicht an
+    /// letzteAbfrage.
+    @Test func einStudiowechselWirftAuchDieEigenenBuchungenWeg() async {
+        let (sut, verzeichnis) = store()
+        await lade(sut, mit: KursTestdaten.woche(ownStatus: ["booked"]))
+        guard let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("sut.loader ist kein FakeKurseLoader")
+            return
+        }
+        #expect(sut.eigene?.termine.isEmpty == false)
+
+        await loader.setWoche(.failure(.offline))
+        await sut.laden(studioId: "s2", von: Date(), bis: Date())
+
+        #expect(sut.eigene == nil)
+        // Auch von der Platte -- sonst kaeme der falsche Stand beim
+        // naechsten Start zurueck.
+        #expect(KurseFileStore(directory: verzeichnis).load() == nil)
+    }
+
+    /// Und derselbe Weg ueber einen KALTSTART: die Datei kommt von der
+    /// Platte, `letzteAbfrage` ist leer. Genau der Fall, den eine reine
+    /// Speicherpruefung nicht erkennen koennte.
+    @Test func nachEinemNeustartMitAnderemStudioBleibtNichtsVomVorigen() async {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let ersterLauf = KurseStore(loader: FakeKurseLoader(),
+                                    fileStore: KurseFileStore(directory: verzeichnis))
+        await lade(ersterLauf, mit: KursTestdaten.woche(ownStatus: ["booked"]))
+
+        let loader = FakeKurseLoader()
+        await loader.setWoche(.failure(.offline))
+        let zweiterLauf = KurseStore(loader: loader,
+                                     fileStore: KurseFileStore(directory: verzeichnis))
+        // Von der Platte ist der Stand zunaechst da ...
+        #expect(zweiterLauf.eigene?.termine.count == 1)
+
+        // ... und faellt beim ersten Laden fuer ein anderes Studio weg.
+        await zweiterLauf.laden(studioId: "s2", von: Date(), bis: Date())
+
+        #expect(zweiterLauf.eigene == nil)
+    }
+
+    /// Die Gegenprobe: DASSELBE Studio behaelt seinen Cache, auch wenn
+    /// der Abruf scheitert. Das ist der Fall, fuer den der Cache da ist.
+    @Test func einFehlversuchImSELBENStudioLaesstDieEigenenBuchungenStehen() async {
+        let (sut, _) = store()
+        await lade(sut, mit: KursTestdaten.woche(ownStatus: ["booked"]))
+        guard let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("sut.loader ist kein FakeKurseLoader")
+            return
+        }
+
+        await loader.setWoche(.failure(.offline))
+        await sut.laden(studioId: "s1", von: Date(), bis: Date())
+
+        #expect(sut.eigene?.termine.count == 1)
+    }
+
+    /// Ein Bestand aus der Zeit vor `studioId` laesst sich nicht mehr
+    /// decodieren und gilt als leerer Cache -- kein Absturz, kein stiller
+    /// Weiterbetrieb mit Buchungen ohne Zuordnung.
+    @Test func eineDateiOhneStudiokennungGiltAlsLeererCache() {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        try? FileManager.default.createDirectory(at: verzeichnis, withIntermediateDirectories: true)
+        // Das alte Format, woertlich: alles ausser studioId.
+        let alt = """
+        {"stand":0,"termine":[],"cancellationDeadlineHours":2,"timezone":"Europe/Berlin"}
+        """
+        try? Data(alt.utf8).write(to: verzeichnis.appendingPathComponent("eigene-kurse.json"))
+
+        #expect(KurseFileStore(directory: verzeichnis).load() == nil)
+    }
+
     // Die Grenze auf Feldebene: ein Test gegen die getippte Struktur
     // wuerde ein spaeter wiederhinzugefuegtes Feld nicht bemerken, ein
     // Test gegen die tatsaechlich geschriebenen Schluessel schon.
@@ -275,6 +353,12 @@ struct KurseStoreTests {
         for verbotenerSchluessel in ["bookedCount", "waitlistCount", "freeSeats", "ownWaitlistPosition"] {
             #expect(!rohtext.contains(verbotenerSchluessel), "\(verbotenerSchluessel) darf nicht auf Platte stehen")
         }
+        // Die Gegenrichtung: `studioId` MUSS dastehen. Ohne sie liesse
+        // sich nach einem Studiowechsel nicht mehr erkennen, wem dieser
+        // Stand gehoert -- und dieser Test ist die einzige Stelle, die die
+        // tatsaechlich geschriebenen Schluessel prueft.
+        #expect(rohtext.contains("\"studioId\":\"s1\""),
+                "studioId muss mit auf die Platte, sonst gehoert der Cache keinem Studio")
     }
 
     @Test func eineUeberholendeAntwortGewinntNicht() async {

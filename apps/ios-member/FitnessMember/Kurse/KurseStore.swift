@@ -150,6 +150,21 @@ final class KurseStore {
             woche = nil
             wocheStand = nil
         }
+        // Und dasselbe fuer die eigenen Buchungen -- nur haengt das nicht
+        // an `letzteAbfrage`, sondern an der mitgespeicherten Kennung:
+        // `letzteAbfrage` lebt nur so lange wie die App, `eigene` kommt
+        // beim Kaltstart von der Platte. Ohne diese Pruefung zeigte
+        // "Meine Kurse" nach einem Wechsel ohne Netz die Anmeldungen des
+        // vorigen Studios -- und das Mitglied fuehre an den falschen Ort.
+        //
+        // Die Datei geht gleich mit weg. Sie gehoert einem Studio, das
+        // hier nicht mehr gilt; sie fuer eine spaetere Rueckkehr
+        // aufzuheben hiesse, zwei Staende zu fuehren, von denen der Screen
+        // immer nur einen zeigen kann.
+        if let vorhandene = eigene, vorhandene.studioId != studioId {
+            eigene = nil
+            fileStore.save(nil)
+        }
         generation += 1
         let eigeneGeneration = generation
         ladeZaehler += 1
@@ -171,7 +186,7 @@ final class KurseStore {
             // Termine (siehe GespeicherterTermin).
             let meineTermine = KursZustandRechner.meineKurse(aus: neueWoche).map(GespeicherterTermin.init)
             let neu = GespeicherteBuchungen(
-                stand: Date(), termine: meineTermine,
+                stand: Date(), studioId: studioId, termine: meineTermine,
                 cancellationDeadlineHours: neueWoche.cancellationDeadlineHours,
                 timezone: neueWoche.timezone)
             eigene = meineTermine.isEmpty ? nil : neu

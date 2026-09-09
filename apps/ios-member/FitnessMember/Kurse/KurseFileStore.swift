@@ -69,8 +69,23 @@ struct GespeicherterTermin: Codable, Equatable, Identifiable {
 /// die Abmeldefrist-Anzeige (KursZustandRechner.abmeldenBis, KursZeit) sie
 /// braucht und beide je Studio verschieden sind -- ohne Netz gaebe es
 /// sonst keine Quelle mehr dafuer.
+///
+/// `studioId` sagt, WESSEN Buchungen das sind. Ohne sie zeigte "Meine
+/// Kurse" nach einem Studiowechsel ohne Netz die Anmeldungen des vorigen
+/// Studios -- das Mitglied koennte an den falschen Ort fahren. Das ist
+/// nicht einmal "veraltet", sondern schlicht das falsche Studio, und
+/// `stand` kann es nicht abfangen: ein Datum sagt, wie ALT etwas ist,
+/// nicht, WOZU es gehoert.
+///
+/// Auf die Platte, nicht nur in den Speicher: `KurseStore.letzteAbfrage`
+/// lebt nur so lange wie die App. Ein Kaltstart mit inzwischen
+/// gewechseltem Studio erkennt den Wechsel sonst nicht -- und genau dort
+/// steht der Cache allein da. Datenschutzlich kommt nichts Neues dazu:
+/// `UserDefaults` traegt `activeStudioId` ohnehin schon (SP1).
 struct GespeicherteBuchungen: Codable {
     let stand: Date
+    /// Zu welchem Studio diese Buchungen gehoeren.
+    let studioId: String
     let termine: [GespeicherterTermin]
     let cancellationDeadlineHours: Int
     let timezone: String
@@ -95,6 +110,20 @@ final class KurseFileStore {
         fileURL = directory.appendingPathComponent("eigene-kurse.json")
     }
 
+    /// Ein Bestand aus der Zeit VOR `studioId` scheitert am Decoder und
+    /// ergibt `nil` -- das Feld ist bewusst nicht optional.
+    ///
+    /// Wegwerfen ist hier die richtige Entscheidung: der naechste Abruf
+    /// fuellt den Cache in Sekunden wieder, und bis dahin sagt "Meine
+    /// Kurse" ehrlich, dass die Anmeldungen noch nicht bekannt sind. Die
+    /// Datei blind zu behalten hiesse dagegen, Buchungen ohne Zuordnung zu
+    /// zeigen -- genau der Fehler, gegen den das Feld eingefuehrt wurde,
+    /// nur ohne jede Moeglichkeit, ihn zu erkennen. Ein optionales Feld
+    /// mit "nil passt zu jedem Studio" waere dasselbe in Grau.
+    ///
+    /// Es braucht dafuer keinen eigenen Zweig: `try?` faengt den
+    /// Decodierfehler schon. Ein verderbtes File war hier immer ein leerer
+    /// Cache, nie ein Absturzgrund.
     func load() -> GespeicherteBuchungen? {
         guard let data = try? Data(contentsOf: fileURL) else { return nil }
         return try? JSONDecoder().decode(GespeicherteBuchungen.self, from: data)
