@@ -50,10 +50,18 @@ struct MemberKeinStudioView: View {
 
                 Spacer()
 
-                Button("Abmelden") { Task { await sessionStore.signOut() } }
-                    .font(.system(size: 13))
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                // .frame(minHeight: 44) INNERHALB des Labels, sonst
+                // bleibt die Trefferflaeche die Glyphenhoehe der Schrift
+                // (SS4). textMuted statt textFaint: 13pt liegt unter den
+                // 15pt, ab denen textFaint zulaessig waere, und "Abmelden"
+                // ist tragend (SS2).
+                Button { Task { await sessionStore.signOut() } } label: {
+                    Text("Abmelden")
+                        .font(.system(size: 13))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
             }
             .padding(28)
         }

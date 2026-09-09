@@ -17,6 +17,12 @@ struct CodeDigitsView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 66)
                         .background(DesignSystem.Color.surface)
+                        // clipShape VOR overlay: umgekehrt schneidet die
+                        // Maske die aeussere Haelfte der Kontur weg -- hier
+                        // besonders sichtbar, weil das aktive Kaestchen
+                        // eine 1,5pt-Akzentkontur traegt und damit nur noch
+                        // eine halbe uebrig bliebe (Vorlage: InlineBanner).
+                        .clipShape(RoundedRectangle(cornerRadius: 13))
                         .overlay(
                             RoundedRectangle(cornerRadius: 13)
                                 .stroke(
@@ -24,7 +30,6 @@ struct CodeDigitsView: View {
                                     lineWidth: index == characters.count ? 1.5 : 1
                                 )
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 13))
                 }
             }
             TextField("", text: Binding(
