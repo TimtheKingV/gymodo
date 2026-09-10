@@ -5,6 +5,7 @@ import {
   getTagContext,
 } from "@fitretro/domain";
 import {
+  anonClient,
   createTestUser,
   serviceClient,
   uniqueEmail,
@@ -165,6 +166,12 @@ describe("getMachineContext", () => {
     await expect(
       getMachineContext(client, crypto.randomUUID()),
     ).rejects.toMatchObject({ code: "not_found" });
+  });
+
+  it("weist einen nicht angemeldeten Aufruf zurueck", async () => {
+    await expect(getMachineContext(anonClient(), machineA)).rejects.toMatchObject({
+      code: "unauthorized",
+    });
   });
 
   it("haelt den Vorschlag in progression_suggestions fest", async () => {
