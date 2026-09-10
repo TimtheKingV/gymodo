@@ -13,9 +13,19 @@ struct GeraeteAuswahlView: View {
     @State private var suchtext = ""
     /// Nur fuer diesen Screen, nicht `katalog.activeStudioId`: sonst
     /// wechselte eine Suche stillschweigend das aktive Studio, und das
-    /// Mitglied faende danach auf Home ein anderes vor.
+    /// Mitglied faende danach auf Home ein anderes vor. Bleibt nil, bis das
+    /// Mitglied ueber "Auch in ... suchen" ausdruecklich wechselt --
+    /// `aktivesStudioId` unten liefert bis dahin katalog.activeStudioId.
     @State private var studioId: String?
     @FocusState private var feldAktiv: Bool
+
+    /// Abgeleitet statt in `.task` nachtraeglich befuellt: `.task` laeuft
+    /// erst NACH dem ersten body-Durchlauf, und der Screen zeigte fuer
+    /// diesen einen Frame faelschlich den leeren Zustand ("kein Geraet
+    /// eingetragen"), bevor katalog.activeStudioId ankam.
+    private var aktivesStudioId: String? {
+        studioId ?? katalog.activeStudioId
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,7 +35,6 @@ struct GeraeteAuswahlView: View {
         }
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
-        .task { if studioId == nil { studioId = katalog.activeStudioId } }
     }
 
     // MARK: - Kopf
@@ -48,13 +57,13 @@ struct GeraeteAuswahlView: View {
 
     private var untertitel: String {
         let anzahl = maschinenImStudio.count
-        let name = katalog.bootstrap?.studios.first { $0.id == studioId }?.name
+        let name = katalog.bootstrap?.studios.first { $0.id == aktivesStudioId }?.name
         guard let name else { return "Alle \(anzahl) Geräte — auch die ohne Aufkleber." }
         return "Alle \(anzahl) Geräte in \(name) — auch die ohne Aufkleber."
     }
 
     private var maschinenImStudio: [BootstrapResponse.Machine] {
-        katalog.bootstrap?.machines.filter { $0.studioId == studioId } ?? []
+        katalog.bootstrap?.machines.filter { $0.studioId == aktivesStudioId } ?? []
     }
 
     // MARK: - Suchfeld
@@ -106,7 +115,7 @@ struct GeraeteAuswahlView: View {
         guard let bootstrap = katalog.bootstrap else {
             return GeraeteAuswahl.Gruppen(zuletzt: [], alle: [])
         }
-        return GeraeteAuswahl.gruppen(bootstrap: bootstrap, studioId: studioId, suchtext: suchtext)
+        return GeraeteAuswahl.gruppen(bootstrap: bootstrap, studioId: aktivesStudioId, suchtext: suchtext)
     }
 
     @ViewBuilder
@@ -270,7 +279,7 @@ struct GeraeteAuswahlView: View {
     /// Grund. Als Dauerfilter ueber der Liste waere es Laerm.
     @ViewBuilder
     private var anderesStudio: some View {
-        if let anderes = katalog.bootstrap?.studios.first(where: { $0.id != studioId }) {
+        if let anderes = katalog.bootstrap?.studios.first(where: { $0.id != aktivesStudioId }) {
             Button { studioId = anderes.id } label: {
                 Text("Auch in \(anderes.name) suchen")
                     .font(.system(size: 14, weight: .bold))
