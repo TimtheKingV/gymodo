@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .blatt { width: 900px; background: #0A0B0D; color: #F2F4F7; padding: 40px; display: flex; flex-direction: column; gap: 40px; box-sizing: border-box; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    h2 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.02em; }
+    .abschnitt { display: flex; flex-direction: column; gap: 16px; }
+    .text { font-size: 14px; line-height: 1.55; color: #9BA3AF; max-width: 700px; }
+    .text strong { color: #F2F4F7; font-weight: 700; }
+    .karte { background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; padding: 20px; }
+    .probenreihe { display: flex; gap: 20px; flex-wrap: wrap; }
+    .probe { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 128px; }
+    .probe .titel { font-size: 12px; font-weight: 800; color: #F2F4F7; text-align: center; }
+    .probe .erklaerung { font-size: 11px; line-height: 1.45; color: #5C636E; text-align: center; }
+    .tagbox { width: 46px; height: 44px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+    .kuerzel { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: #5C636E; }
+    .tagnr { font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.03em; color: #5C636E; }
+    .tagbox.trainiert { background: #1D2026; }
+    .tagbox.trainiert .kuerzel { color: #9BA3AF; }
+    .tagbox.heute { box-shadow: inset 0 0 0 1.5px #2A2E36; }
+    .tagbox.heute .kuerzel, .tagbox.heute .tagnr { color: #9BA3AF; }
+    .flamme-reihe { display: flex; align-items: center; gap: 4px; }
+    .flamme-zahl { font-size: 27px; line-height: 1; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.04em; color: #D4FF3F; }
+    .flamme-label { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #D4FF3F; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th { text-align: left; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #5C636E; padding: 0 0 10px; }
+    td { padding: 11px 16px 11px 0; border-top: 1px solid #2A2E36; color: #9BA3AF; line-height: 1.45; vertical-align: top; }
+    td.stark { color: #F2F4F7; font-weight: 700; white-space: nowrap; }
+    ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 12px; }
+    li { font-size: 14px; line-height: 1.55; color: #9BA3AF; }
+    li strong { color: #F2F4F7; font-weight: 700; }
+  </style>
+</helmet>
+
+<div class="blatt">
+
+  <div class="abschnitt">
+    <div class="eyebrow">Bausteine</div>
+    <h2>Die Tagesbox</h2>
+    <div class="text">44 pt hoch, Radius 12, Gitter mit 4 pt Abstand — <strong>dieselbe Box wie im Kurs-Wochenplan</strong> (KurseWochenView, <code>tagesboxen</code>). Was sich unterscheidet, ist nur die Füllung: dort markiert der Akzent den <em>gewählten</em> Tag, hier gibt es nichts zu wählen.</div>
+    <div class="karte">
+      <div class="probenreihe">
+        <div class="probe">
+          <div class="tagbox trainiert"><span class="kuerzel">MO</span><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round"><path d="M4 9v6M7.5 6.5v11M16.5 6.5v11M20 9v6M7.5 12h9"/></svg></div>
+          <div class="titel">Trainiert</div>
+          <div class="erklaerung">surface-raised, Hantel in text. Ersetzt die Tagesnummer.</div>
+        </div>
+        <div class="probe">
+          <div class="tagbox heute"><span class="kuerzel">MI</span><span class="tagnr">10</span></div>
+          <div class="titel">Heute</div>
+          <div class="erklaerung">1,5 pt line-Kontur, Schrift text-muted.</div>
+        </div>
+        <div class="probe">
+          <div class="tagbox trainiert heute"><span class="kuerzel">MI</span><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round"><path d="M4 9v6M7.5 6.5v11M16.5 6.5v11M20 9v6M7.5 12h9"/></svg></div>
+          <div class="titel">Heute, trainiert</div>
+          <div class="erklaerung">Beides zugleich, Füllung und Kontur.</div>
+        </div>
+        <div class="probe">
+          <div class="tagbox"><span class="kuerzel">DO</span><span class="tagnr">11</span></div>
+          <div class="titel">Leer</div>
+          <div class="erklaerung">Keine Füllung, text-faint. Vergangen und künftig sehen gleich aus.</div>
+        </div>
+      </div>
+    </div>
+    <div class="text">Der letzte Punkt ist eine Festlegung, keine Auslassung: ein noch nicht eingetroffener Freitag hat nichts Eigenes zu sagen. Ihn dunkler zu zeichnen als den vergangenen Donnerstag hieße, ihn als Versäumnis zu lesen, das er nicht ist.</div>
+  </div>
+
+  <div class="abschnitt">
+    <h2>Die Flamme</h2>
+    <div class="karte">
+      <div class="probenreihe">
+        <div class="probe">
+          <div class="flamme-reihe"><svg width="21" height="25" viewBox="0 0 21 25" fill="#D4FF3F"><path d="M11.2.4c.9 4-.7 6.1-2.9 8.3C5.6 11.2 3.4 13.8 3.4 17.3a7.6 7.6 0 0 0 15.2.2c0-2.9-1.1-5.1-2.7-6.9-.3 1.8-1.3 2.9-2.5 3.2 1.2-4.3-.1-9.1-2.2-13.4Z"/></svg><span class="flamme-zahl">6</span></div>
+          <div class="titel">Serie läuft</div>
+          <div class="erklaerung">Akzent. Sechs Wochen in Folge mit mindestens einer Einheit.</div>
+        </div>
+        <div class="probe">
+          <div class="flamme-reihe"><svg width="21" height="25" viewBox="0 0 21 25" fill="#5C636E"><path d="M11.2.4c.9 4-.7 6.1-2.9 8.3C5.6 11.2 3.4 13.8 3.4 17.3a7.6 7.6 0 0 0 15.2.2c0-2.9-1.1-5.1-2.7-6.9-.3 1.8-1.3 2.9-2.5 3.2 1.2-4.3-.1-9.1-2.2-13.4Z"/></svg><span class="flamme-zahl" style="color: #9BA3AF">0</span></div>
+          <div class="titel">Keine Serie</div>
+          <div class="erklaerung">Gedeckt. Weder diese noch die vorige Woche trägt eine Einheit — und derselbe Anblick, wenn noch nie trainiert wurde.</div>
+        </div>
+      </div>
+    </div>
+    <div class="text">Zwei Zustände, nicht drei. Eine laufende Woche, die noch leer ist, ist <strong>kein eigener Zustand</strong>: die Serie steht dann auf dem Wert der Vorwoche, in Akzent, und die erste Einheit dieser Woche lässt die Zahl um eins steigen. Eine Flamme, die montagmorgens erblasst, zeigte ein Versäumnis an, das noch keins ist.</div>
+    <div class="text">Die Null bleibt stehen, statt zu verschwinden: „wie lange schon“ hat auch dann eine Antwort, und die Farbe sagt, dass gerade nichts läuft. Strava färbt die Flamme orange — hier bleibt sie im Akzent, denn <strong>eine zweite Signalfarbe würde die erste entwerten</strong>, und <code>warn</code> ist in diesem System der Problemmeldung vorbehalten.</div>
+  </div>
+
+    <h2>Warum die Hantel-Tage keinen Akzent tragen</h2>
+    <div class="text">designsystem.md § 2, Regel 1: <strong>genau eine Akzentfläche je Screen.</strong> Drei akzentgrüne Tagesboxen wären drei — und im schummrigen Gerätebereich verlöre der Akzent genau die Signalwirkung, für die er gewählt wurde. Die Flamme ist der aktive Wert dieses Screens und erbt den Akzent von der Kennzahl „diese Woche“, die sie ersetzt. Die Tage tragen ihre Aussage über <strong>Form und Füllung</strong>: Hantel statt Zahl, surface-raised statt nichts. Das ist derselbe Weg, den Strava geht — dort sind die Aktivitätstage weiß, nicht orange.</div>
+  </div>
+
+  <div class="abschnitt">
+    <h2>Was der Streifen ersetzt</h2>
+    <div class="karte">
+      <table>
+        <tr><th style="width: 190px">Bisher</th><th>Steht künftig</th></tr>
+        <tr><td class="stark">diese Woche · 2</td><td>Als zwei Hanteln im Streifen. Die Zahl war die Antwort, der Streifen ist die Antwort plus die Frage „an welchen Tagen“.</td></tr>
+        <tr><td class="stark">Tage her · 3</td><td>Am letzten Hantel-Tag ablesbar, solange er in dieser Woche liegt. Liegt er davor, trägt ihn die Fußzeile: „zuletzt vor 3 Tagen“.</td></tr>
+        <tr><td class="stark">gesamt · 34</td><td>In der Fußzeile: „34 Einheiten gesamt“. Eine Zahl, die sich einmal pro Training um eins ändert, braucht keinen eigenen Block.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="abschnitt">
+    <h2>Die Serienregel</h2>
+    <div class="text">Eine Woche zählt, wenn in ihr <strong>mindestens eine abgeschlossene Einheit</strong> liegt. Die Serie ist die Zahl der ununterbrochenen Wochen bis einschließlich der laufenden. Die laufende Woche zählt mit, sobald ihre erste Einheit steht — bis dahin steht die Serie auf dem Wert der Vorwoche und die Flamme ruht.</div>
+    <div class="text">Drei Festlegungen, die daraus folgen und im Code stehen müssen, nicht im Entwurf:</div>
+    <ol>
+      <li><strong>Die Woche beginnt am Montag</strong>, in der Studio-Zeitzone — nicht über <code>Calendar.firstWeekday</code>, das je nach Systemregion Sonntag ist. <code>KurseWochenBerechnung.montag(enthaelt:zeitzone:)</code> macht das bereits genau so; der Streifen sollte dieselbe Funktion benutzen und keine zweite Wochenrechnung bekommen.</li>
+      <li><strong>Gezählt wird nach <code>started_at</code></strong>, ohne Rücksicht auf den Abschluss — dieselbe Regel, nach der <code>thisWeekCount</code> und <code>lastSessionAt</code> schon rechnen: wer gerade trainiert, hat heute trainiert. Eine strengere Lesart an dieser einen Stelle hieße, dass die Flamme einer Woche widerspricht, die die Kopfzeile bereits als belegt zählt.</li>
+      <li><strong>Die Serie kommt vom Server, nicht aus <code>verlauf.sessions</code>.</strong> Die Liste im Client reicht nur wenige Wochen zurück; eine daraus gerechnete Serie wäre bei „12 Wochen“ eine Untergrenze, die sich als Wahrheit ausgibt. Entweder <code>summary</code> trägt die Zahl, oder der Streifen zeigt sie nicht.</li>
+    </ol>
+  </div>
+
+  <div class="abschnitt">
+    <h2>Offene Punkte</h2>
+    <ol>
+      <li><strong>VoiceOver</strong> liest den Streifen als EIN Element: „Serie: 6 Wochen. Diese Woche Montag und Dienstag trainiert.“ Sieben einzeln vorgelesene Tagesboxen wären auf einem reinen Anzeigestreifen nur Weg. Umgesetzt.</li>
+      <li><strong>Breite.</strong> Neben der Flamme bleiben je Tagesbox rund 37 pt statt der 46 pt im Kursplan. Blatt 06 stellt die Fassung daneben, bei der die Flamme in die Überschriftzeile rückt und der Streifen die volle Breite bekommt.</li>
+      <li><strong>Antippbar?</strong> Bewusst nicht: ein Tag im Streifen führt nirgendwo hin, was „Letzte Trainings“ darunter nicht schon zeigt. Sollte er später zur Einheit springen, braucht jede Box 44 pt Breite — und damit die Fassung aus Blatt 06.</li>
+    </ol>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

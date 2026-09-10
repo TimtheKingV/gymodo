@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 300px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .serie { display: flex; align-items: center; gap: 12px; }
+    .flamme { flex: none; width: 56px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .flamme-reihe { display: flex; align-items: center; gap: 4px; }
+    .flamme-zahl { font-size: 27px; line-height: 1; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.04em; color: #D4FF3F; }
+    .flamme-label { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #D4FF3F; }
+    .flamme.ruht .flamme-zahl { color: #9BA3AF; }
+    .flamme.ruht .flamme-label { color: #5C636E; }
+    .woche { flex-grow: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+    .tagbox { height: 44px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+    .kuerzel { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: #5C636E; }
+    .tagnr { font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.03em; color: #5C636E; }
+    .tagbox.trainiert { background: #1D2026; }
+    .tagbox.trainiert .kuerzel { color: #9BA3AF; }
+    .tagbox.heute { box-shadow: inset 0 0 0 1.5px #2A2E36; }
+    .tagbox.heute .kuerzel, .tagbox.heute .tagnr { color: #9BA3AF; }
+    .serie-fuss { font-size: 12px; font-weight: 600; color: #5C636E; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div class="ph">
+  <div style="height: 54px; flex: none"></div>
+
+  <div style="flex: none; padding: 14px 20px 0; display: flex; align-items: baseline; justify-content: space-between">
+    <div style="font-size: 32px; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; line-height: 1">Hallo Lena</div>
+    <div class="eyebrow">Kraftwerk Nord</div>
+  </div>
+
+  <!-- Diese Woche noch keine Einheit. Die Serie steht -- Flamme gruen, Zahl unveraendert. Die erste Einheit dieser Woche macht daraus eine 7. -->
+  <div style="flex: none; padding: 24px 20px 0; display: flex; flex-direction: column; gap: 12px">
+    <div class="eyebrow">Deine Serie</div>
+    <div class="serie">
+      <div class="flamme">
+        <div class="flamme-reihe">
+          <svg width="21" height="25" viewBox="0 0 21 25" fill="#D4FF3F" style="flex: none"><path d="M11.2.4c.9 4-.7 6.1-2.9 8.3C5.6 11.2 3.4 13.8 3.4 17.3a7.6 7.6 0 0 0 15.2.2c0-2.9-1.1-5.1-2.7-6.9-.3 1.8-1.3 2.9-2.5 3.2 1.2-4.3-.1-9.1-2.2-13.4Z"/></svg>
+          <span class="flamme-zahl">6</span>
+        </div>
+        <span class="flamme-label">Wochen</span>
+      </div>
+      <div class="woche">
+        <div class="tagbox">
+          <span class="kuerzel">MO</span>
+          <span class="tagnr">8</span>
+        </div>
+        <div class="tagbox">
+          <span class="kuerzel">DI</span>
+          <span class="tagnr">9</span>
+        </div>
+        <div class="tagbox heute">
+          <span class="kuerzel">MI</span>
+          <span class="tagnr">10</span>
+        </div>
+        <div class="tagbox">
+          <span class="kuerzel">DO</span>
+          <span class="tagnr">11</span>
+        </div>
+        <div class="tagbox">
+          <span class="kuerzel">FR</span>
+          <span class="tagnr">12</span>
+        </div>
+        <div class="tagbox">
+          <span class="kuerzel">SA</span>
+          <span class="tagnr">13</span>
+        </div>
+        <div class="tagbox">
+          <span class="kuerzel">SO</span>
+          <span class="tagnr">14</span>
+        </div>
+      </div>
+    </div>
+    <div class="serie-fuss">Noch keine Einheit diese Woche · 34 gesamt</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

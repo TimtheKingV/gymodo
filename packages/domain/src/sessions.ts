@@ -14,6 +14,8 @@ const IDLE_HOURS_UNTIL_AUTO_COMPLETE = 4;
 
 /** Wie viele Einheiten der Verlauf zurueckreicht. */
 const SESSION_LIMIT = 50;
+/** Siehe `startsFuerDieSerie` -- nur fuer den Zweitabruf der Serie. */
+const STREAK_SESSION_LIMIT = 2000;
 
 /** Die Tagesnummer dieses Augenblicks in dieser Zeitzone. */
 function tagNummer(zeitpunkt: Date, zeitzone: string): number {
@@ -43,6 +45,87 @@ export function zaehleDieseWoche(
   const montag = heute - ((wochentag + 6) % 7);
 
   return startsAt.filter((iso) => tagNummer(new Date(iso), zeitzone) >= montag).length;
+}
+
+/**
+ * Der Stand der Serie am Kopf des Home-Tabs -- die Flamme und der
+ * Wochenstreifen darunter.
+ *
+ * Alles in ORTSDATEN ("yyyy-MM-dd", Zeitzone des Studios), nicht in
+ * Zeitpunkten: der Client zeichnet daraus sieben Tagesboxen, und er soll
+ * die Wochengrenze nicht ein zweites Mal selbst rechnen muessen. Dieselbe
+ * Begruendung wie bei `CourseWeekSession.localDay` im Kursplan.
+ */
+export type Serienstand = {
+  /**
+   * Wochen in Folge mit mindestens einer Einheit. Die laufende Woche
+   * zaehlt mit, sobald ihre erste Einheit steht -- bis dahin steht hier
+   * der Wert der Vorwoche. `0` heisst: auch die Vorwoche blieb leer.
+   */
+  weeks: number;
+  /** Der Montag der laufenden Woche. */
+  weekStart: string;
+  today: string;
+  /** Die Tage der laufenden Woche mit mindestens einer Einheit, aufsteigend. */
+  trainedDays: string[];
+};
+
+/** Der Montag der Woche, in die eine Tagesnummer faellt. */
+function montagDerWoche(tag: number): number {
+  // getUTCDay auf der reinen Tagesnummer: 0 = Sonntag.
+  return tag - ((new Date(tag * 86_400_000).getUTCDay() + 6) % 7);
+}
+
+function alsOrtsdatum(tag: number): string {
+  return new Date(tag * 86_400_000).toISOString().slice(0, 10);
+}
+
+/**
+ * Serie und Trainingstage der laufenden Woche.
+ *
+ * Gezaehlt wird nach `started_at`, ohne Ruecksicht auf den Abschluss --
+ * dieselbe Regel wie bei `zaehleDieseWoche` und `lastSessionAt`: wer
+ * gerade trainiert, hat heute trainiert. Eine zweite, strengere Lesart an
+ * dieser einen Stelle hiesse, dass die Flamme einer Woche widerspricht,
+ * die `thisWeekCount` bereits als belegt zaehlt.
+ *
+ * Die laufende Woche zaehlt nur mit, wenn sie ihre erste Einheit hat.
+ * Ohne diese Unterscheidung faellt die Serie jeden Montagmorgen um eins
+ * -- fuer ein paar Stunden oder Tage, bis das naechste Training sie
+ * zurueckholt. Eine Zahl, die sinkt, ohne dass jemand etwas versaeumt
+ * hat, ist keine Serie, sondern ein Zaehlfehler mit Anlauf.
+ */
+export function serienstand(startsAt: string[], jetzt: Date, zeitzone: string): Serienstand {
+  const heute = tagNummer(jetzt, zeitzone);
+  const montag = montagDerWoche(heute);
+
+  const belegteWochen = new Set<number>();
+  const tageDieserWoche = new Set<string>();
+
+  for (const iso of startsAt) {
+    const tag = tagNummer(new Date(iso), zeitzone);
+    // Eine kuenftig datierte Einheit gibt es nicht -- eine falsch
+    // gestellte Uhr schon. Sie darf die Serie nicht verlaengern.
+    if (tag > heute) continue;
+
+    const versatz = (montag - montagDerWoche(tag)) / 7;
+    belegteWochen.add(versatz);
+    if (versatz === 0) tageDieserWoche.add(alsOrtsdatum(tag));
+  }
+
+  let weeks = 0;
+  let lauf = belegteWochen.has(0) ? 0 : 1;
+  while (belegteWochen.has(lauf)) {
+    weeks += 1;
+    lauf += 1;
+  }
+
+  return {
+    weeks,
+    weekStart: alsOrtsdatum(montag),
+    today: alsOrtsdatum(heute),
+    trainedDays: [...tageDieserWoche].sort(),
+  };
 }
 
 export type SessionBlock = {
@@ -77,6 +160,8 @@ export type SessionsSummary = {
   /** `null`, wenn kein Studio genannt wurde -- ohne Zeitzone keine Woche. */
   thisWeekCount: number | null;
   lastSessionAt: string | null;
+  /** `null` aus demselben Grund wie `thisWeekCount`: keine Zeitzone, keine Woche. */
+  streak: Serienstand | null;
 };
 
 export type Sessions = { sessions: SessionSummary[]; summary: SessionsSummary };
@@ -104,6 +189,39 @@ type SetRow = {
   machines: { label: string };
   exercises: { name: string };
 };
+
+/**
+ * Die Zeitpunkte, auf denen die Serie rechnet.
+ *
+ * Meistens ist das die ohnehin geladene Liste: wer weniger als
+ * SESSION_LIMIT Einheiten hat, dessen ganze Geschichte steht schon da,
+ * und ein zweiter Abruf waere reine Last. Erst wenn die Liste am Deckel
+ * anschlaegt, reicht sie nicht mehr -- 50 Einheiten decken bei drei je
+ * Woche keine vier Monate ab, und eine dort endende Serie waere eine
+ * Untergrenze, die sich als Zahl ausgibt.
+ *
+ * Der Nachschlag holt nur den Zeitstempel, keine Saetze und keine
+ * Bloecke. Auch er hat einen Deckel: wer 2000 Einheiten in Folge
+ * getrainiert hat, bekommt seine Serie ab dort untertrieben -- das sind
+ * bei drei Einheiten je Woche knapp dreizehn Jahre, und die Alternative
+ * waere ein unbegrenzter Abruf bei jedem Oeffnen des Home-Tabs.
+ */
+async function startsFuerDieSerie(
+  client: SupabaseClient,
+  userId: string,
+  geladene: SessionRow[],
+): Promise<string[]> {
+  if (geladene.length < SESSION_LIMIT) return geladene.map((session) => session.started_at);
+
+  const { data } = await client
+    .from("workout_sessions")
+    .select("started_at")
+    .eq("user_id", userId)
+    .order("started_at", { ascending: false })
+    .limit(STREAK_SESSION_LIMIT);
+
+  return ((data ?? []) as Array<{ started_at: string }>).map((zeile) => zeile.started_at);
+}
 
 /**
  * Der Trainingsverlauf fuer den Home-Tab, einschliesslich der Bloecke und
@@ -142,6 +260,9 @@ export async function getSessions(
     totalCount: count ?? 0,
     thisWeekCount: zeitzone
       ? zaehleDieseWoche(sessions.map((session) => session.started_at), new Date(), zeitzone)
+      : null,
+    streak: zeitzone
+      ? serienstand(await startsFuerDieSerie(client, userId, sessions), new Date(), zeitzone)
       : null,
     // Die Liste kommt absteigend -- die erste Zeile ist die juengste. Eine
     // noch laufende Einheit zaehlt mit: wer gerade trainiert, hat heute

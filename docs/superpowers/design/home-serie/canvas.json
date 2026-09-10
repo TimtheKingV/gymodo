@@ -1,0 +1,86 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "01 · Home mit Serie"
+    },
+    {
+      "file": "ErsteWoche.dc.html",
+      "x": 473,
+      "y": 0,
+      "w": 393,
+      "h": 300,
+      "title": "02 · Erste Woche"
+    },
+    {
+      "file": "OffeneWoche.dc.html",
+      "x": 946,
+      "y": 0,
+      "w": 393,
+      "h": 300,
+      "title": "03 · Diese Woche noch nichts"
+    },
+    {
+      "file": "Gerissen.dc.html",
+      "x": 1419,
+      "y": 0,
+      "w": 393,
+      "h": 300,
+      "title": "04 · Serie unterbrochen"
+    },
+    {
+      "file": "OhneVerlauf.dc.html",
+      "x": 1892,
+      "y": 0,
+      "w": 393,
+      "h": 420,
+      "title": "05 · Kein Verlauf"
+    },
+    {
+      "file": "Breit.dc.html",
+      "x": 2365,
+      "y": 0,
+      "w": 393,
+      "h": 300,
+      "title": "06 · Alternative: Flamme oben, Streifen breit"
+    },
+    {
+      "file": "Bausteine.dc.html",
+      "x": 0,
+      "y": 980,
+      "w": 900,
+      "h": 2200,
+      "title": "07 · Bausteine & Entscheidungen"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -330,
+      "w": 866,
+      "text": "Wochenstreifen mit Serie am Kopf des Home-Tabs — an der Stelle, an der bisher nur „Hallo Lena / Kraftwerk Nord“ stand. Umgesetzt und getestet.\n\nDrei Festlegungen:\n\n• Die Kennzahlen-Zeile („diese Woche / gesamt / Tage her“) entfällt. Sie sagte dasselbe schlechter: „diese Woche“ liest man an den Hanteln ab, „Tage her“ am letzten Hantel-Tag, „gesamt“ steht in der Fußzeile. Blatt 07 hat die Zuordnung Zeile für Zeile.\n\n• Die Tagesbox ist 1:1 die des Kurs-Wochenplans — 44 pt, Radius 12, Kürzel über der Zahl. Neu ist nur, dass an einem Trainingstag die Hantel an die Stelle der Zahl tritt.\n\n• Die Flamme trägt den Akzent, die Hantel-Tage nicht. designsystem.md § 2 lässt genau eine Akzentfläche je Screen zu; Strava macht es genauso, dort sind die Aktivitätstage weiß und nur die Flamme orange."
+    },
+    {
+      "id": "zustaende",
+      "x": 946,
+      "y": -330,
+      "w": 1339,
+      "text": "Die Flamme kennt zwei Zustände, nicht vier:\n\n02 Erste Woche — Label in der Einzahl, damit „1 Wochen“ gar nicht entstehen kann.\n03 Woche offen — die Serie steht, diese Woche ist leer. Die Flamme bleibt GRÜN und zeigt weiter die Zahl der Wochen, in denen wirklich trainiert wurde; die erste Einheit dieser Woche macht daraus eine 7. Eine Flamme, die montagmorgens erblasst, zeigte ein Versäumnis an, das noch keins ist.\n04 Unterbrochen — graue Flamme, Null. Weder diese noch die vorige Woche trägt eine Einheit.\n05 Kein Verlauf — derselbe Anblick wie 04. Der Screen hat damit in jedem Zustand dieselbe Silhouette; der Leerzustand darunter erklärt weiter den ersten Schritt."
+    },
+    {
+      "id": "offen",
+      "x": 2365,
+      "y": -330,
+      "w": 393,
+      "text": "Blatt 06 ist die Gegenprobe zur Anordnung: neben der Flamme bleiben je Tagesbox 37 pt, in der breiten Fassung 46 pt — genau die des Kursplans.\n\nDeine Vorgabe war „links die Flamme“, gebaut ist 01. Wenn dir 06 besser gefällt, ist das im View eine Zeile."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

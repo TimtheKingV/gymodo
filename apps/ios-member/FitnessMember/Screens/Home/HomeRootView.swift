@@ -3,7 +3,14 @@ import SwiftUI
 /// Home.dc.html und HomeLeer.dc.html -- ein Screen, zwei Zustaende.
 ///
 /// Der Leerzustand erklaert den naechsten Schritt, statt eine Statistik
-/// mit Nullen zu zeigen (designsystem.md SS5).
+/// mit Nullen zu zeigen (designsystem.md SS5). Die eine Null, die hier
+/// trotzdem steht, ist die der Serie: sie ist bewusst gesetzt. "Wie
+/// lange schon" hat auch ohne Verlauf eine Antwort, und der Streifen
+/// haelt damit in jedem Zustand dieselbe Silhouette -- was der Screen
+/// beim ersten Training gewinnt, ist die Farbe, nicht ein neuer Block.
+/// Die frueheren Kennzahlen ("diese Woche / gesamt / Tage her") sind
+/// dafuer weggefallen: der Streifen und seine Fussnote tragen sie
+/// vollstaendig (siehe HomeSerieView).
 struct HomeRootView: View {
     @Environment(VerlaufStore.self) private var verlauf
     @Environment(CatalogStore.self) private var katalog
@@ -30,11 +37,21 @@ struct HomeRootView: View {
                     kopf
                     if let hinweis = katalog.studiohinweis { hinweisZeile(hinweis) }
                     if let satz = verlauf.satzUeberDemInhalt { standZeile(satz) }
+                    // Ueber beiden Zweigen: der Streifen zeigt auch ohne
+                    // Verlauf die gedeckte Flamme mit einer Null. Er ist
+                    // damit die eine Stelle, an der der Screen in jedem
+                    // Zustand dieselbe Silhouette hat.
+                    if let serie = verlauf.summary?.streak {
+                        HomeSerieView(
+                            stand: serie,
+                            gesamt: verlauf.summary?.totalCount ?? 0,
+                            lastSessionAt: verlauf.summary?.lastSessionAt,
+                            jetzt: Date())
+                    }
 
                     if HomeZeilen.abgeschlossene(verlauf.sessions).isEmpty {
                         leer
                     } else {
-                        kennzahlen
                         letzteTrainings
                         fortschritt
                     }
@@ -129,43 +146,6 @@ private extension HomeRootView {
         }
         .font(DesignSystem.Typography.fliesstext)
         .foregroundStyle(DesignSystem.Color.textMuted)
-    }
-
-    var kennzahlen: some View {
-        HStack(spacing: DesignSystem.Spacing.s24) {
-            // "diese Woche" faellt ohne aktives Studio weg -- ohne
-            // Zeitzone gibt es keine Woche, auf die sie sich bezoege.
-            if let woche = verlauf.summary?.thisWeekCount {
-                // Die eine Akzentflaeche des gefuellten Zustands (SS2):
-                // keine Hauptaktion beansprucht sie hier, und "diese
-                // Woche" ist die einzige Zahl auf dem Screen, die sich
-                // ohne eigenes Zutun aendert -- der aktive Wert. Die
-                // Artboard-Faerbung der Fortschritts-Deltas bleibt
-                // deshalb aus: eine Liste akzentuierter Zeilen waere
-                // beliebig viele Akzentflaechen, nicht eine.
-                kennzahl("\(woche)", "diese Woche", akzentuiert: true)
-            }
-            if let gesamt = verlauf.summary?.totalCount {
-                kennzahl("\(gesamt)", "gesamt")
-            }
-            if let tage = HomeZeilen.tageHer(
-                verlauf.summary?.lastSessionAt, jetzt: Date(), kalender: .current) {
-                kennzahl("\(tage)", HomeZeilen.tageHerLabel(tage))
-            }
-        }
-    }
-
-    func kennzahl(_ wert: String, _ label: String, akzentuiert: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-            Text(wert)
-                .font(DesignSystem.Typography.wertSekundaer)
-                .foregroundStyle(akzentuiert ? DesignSystem.Color.accent : DesignSystem.Color.text)
-            Text(label)
-                .font(DesignSystem.Typography.label)
-                .foregroundStyle(DesignSystem.Color.textMuted)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(wert) \(label)")
     }
 
     var letzteTrainings: some View {

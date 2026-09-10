@@ -6,7 +6,7 @@ import Testing
 /// Attrappe unten ist ein verschachtelter Typ und kaeme an eine
 /// Eigenschaft der aeusseren Struktur nicht heran.
 private let leereKopfzeile = SessionsSummary(
-    totalCount: 0, thisWeekCount: nil, lastSessionAt: nil)
+    totalCount: 0, thisWeekCount: nil, lastSessionAt: nil, streak: nil)
 
 @MainActor
 struct VerlaufStoreTests {
@@ -47,7 +47,8 @@ struct VerlaufStoreTests {
         let loader = FakeLoader()
         loader.antwort = SessionsResponse(
             sessions: [einheit()],
-            summary: SessionsSummary(totalCount: 34, thisWeekCount: 2, lastSessionAt: nil))
+            summary: SessionsSummary(
+                totalCount: 34, thisWeekCount: 2, lastSessionAt: nil, streak: nil))
         let verlauf = store(loader)
 
         await verlauf.laden(studioId: "st1")
