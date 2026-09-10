@@ -349,8 +349,8 @@ actor FakeGeraetLoader: GeraetLoading {
     var kontextResult: Result<TagContextResponse, APIError> = .failure(.offline)
     var calibrationResult: Result<RecordedCalibration, APIError> = .failure(.offline)
 
-    /// NEU -- wer gerufen wurde. Seit ein Geraet auch ohne Token erreichbar
-    /// ist, ist die Wegwahl selbst pruefenswert, nicht nur das Ergebnis.
+    /// Wer gerufen wurde. Seit ein Geraet auch ohne Token erreichbar ist,
+    /// ist die Wegwahl selbst pruefenswert, nicht nur das Ergebnis.
     private(set) var tagAufrufe: [String] = []
     private(set) var machineAufrufe: [String] = []
 
@@ -358,14 +358,14 @@ actor FakeGeraetLoader: GeraetLoading {
     func setCalibration(_ value: Result<RecordedCalibration, APIError>) { calibrationResult = value }
 
     func tagContext(token: String) async throws(APIError) -> TagContextResponse {
-        tagAufrufe.append(token)   // NEU
+        tagAufrufe.append(token)
         switch kontextResult {
         case .success(let value): return value
         case .failure(let error): throw error
         }
     }
 
-    /// NEU. Liefert dasselbe wie tagContext: der Server liefert auf beiden
+    /// Liefert dasselbe wie tagContext: der Server liefert auf beiden
     /// Wegen dieselbe Form, und geprueft wird hier der Weg, nicht der Inhalt.
     func machineContext(machineId: String) async throws(APIError) -> TagContextResponse {
         machineAufrufe.append(machineId)
