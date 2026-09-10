@@ -142,7 +142,7 @@ struct GeraeteAuswahlTests {
     /// Geraet weiter, statt zu wissen, dass es gesperrt ist.
     @Test func gesperrteGeraeteStehenAmEnde() {
         let daten = bootstrap(maschinen: [
-            maschineJSON(id: "m1", name: "Aaa", label: "1", ort: nil, status: "maintenance"),
+            maschineJSON(id: "m1", name: "Aaa", label: "1", ort: nil, status: "inactive"),
             maschineJSON(id: "m2", name: "Zzz", label: "2", ort: nil),
         ])
 
@@ -229,7 +229,7 @@ struct GeraeteAuswahlTests {
     @Test func gesperrteGeraeteStehenAuchBeiTrefferAmEnde() {
         let daten = bootstrap(
             maschinen: [
-                maschineJSON(id: "m1", name: "Aaa", label: "1", ort: nil, status: "maintenance", besuche: 2),
+                maschineJSON(id: "m1", name: "Aaa", label: "1", ort: nil, status: "inactive", besuche: 2),
                 maschineJSON(id: "m2", name: "Aab", label: "2", ort: nil),
             ],
             saetze: [(machine: "m1", uebung: "u1", kg: 40, wann: "2026-09-07T10:00:00Z")])
