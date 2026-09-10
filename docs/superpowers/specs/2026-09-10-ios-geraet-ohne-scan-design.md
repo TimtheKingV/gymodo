@@ -94,6 +94,8 @@ Die Antwort darauf ist `not_found` — dieselbe neutrale Antwort wie bei einem u
 
 Ein Integrationstest über ein Gerät aus einem fremden Studio hält diese Grenze fest. Er ist der eigentliche Sicherheitsbeweis dieses Sub-Projekts: der Token war ein öffentlicher Locator, den jeder scannen kann, der davorsteht; eine `machineId` ist erratbar.
 
+Im Prinzip könnte ein Scan damit zwei Fälle unterscheiden, die vorher denselben Text trugen: „Token unbekannt" gegen „Token gültig, aber das Gerät dahinter gehört nicht zu meinem Studio" — je nachdem, ob `getTagContext` bei der Tag-Auflösung oder erst bei `getMachineContext` scheitert. Erreichbar ist das nicht: `supabase/migrations/0028_tag_binden.sql:119` verweigert das Binden eines Tags, dessen `studio_id` von der `studio_id` des Geräts abweicht, ein solcher Tag kann also gar nicht erst entstehen. Das ist eine Schemagarantie, keine Eigenschaft dieses Codes — hier nur deshalb festgehalten, weil sie sonst nirgends aufgeschrieben ist.
+
 ### 3.4 Route
 
 `apps/web/app/api/v1/machines/[machineId]/context/route.ts`, gebaut wie `tags/[token]/context/route.ts`: `bearerClientFrom`, `unauthorized` ohne Client, `fromDomainError` im Catch, `cache-control: private, no-store`.
@@ -103,6 +105,10 @@ Der Pfadschnitt spiegelt den bestehenden bewusst — `machines/{id}/context` neb
 ### 3.5 Was sich dadurch am Verhalten ändert
 
 Jede Auswahl aus der Liste schreibt eine Zeile nach `progression_suggestions`, nicht mehr nur jeder Scan. Das ist gewollt — der Vorschlag wird berechnet, also gehört er protokolliert (M1 §8.4) — aber es verändert die Zusammensetzung dieser Tabelle und ist beim Lesen von Auswertungen zu wissen.
+
+Die Liste ist nicht der einzige token-lose Einstieg. `TrainingRootView.oeffne(_ block:)` — der Zirkelfall aus M1-Spec §5.3 — pusht seit jeher mit `token: nil`, und `GeraetView` stößt `kontextLaden()` in ihrem `.task` an. Mit dem Wegfall des `guard let token`-Wächters (Abschnitt 4) bekommt also auch der Zirkel-Tap dieselbe Behandlung wie die Listenauswahl: einen `machineContext`-Abruf, eine geschriebene `progression_suggestions`-Zeile, und ein Gewichtsrad, das der Server-Vorschlag befüllen darf, solange das Mitglied es nicht selbst geöffnet hat (`gewichtVomNutzer`, `GeraetModel.kontextUebernehmen`).
+
+Das ist eine Folge des entfernten Wächters, kein separat entworfenes Verhalten — die Analyse in diesem Abschnitt betraf ursprünglich nur die Liste. Die Entscheidung fällt hier bewusst nachträglich, nicht zufällig: dasselbe Gerät mit derselben Übung soll sich gleich verhalten, gleichgültig auf welchem Weg das Mitglied dort ankommt, und der Scan-Weg tut das schon immer. Der Zirkel-Tap bleibt deshalb wie er ist — kein zweiter Wächter, der ihn vom Listenweg unterscheidet.
 
 ## 4. Der iOS-Datenweg
 
