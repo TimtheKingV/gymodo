@@ -155,6 +155,7 @@
 		FADF14B2B619137687F2E1FD /* VerlaufHerkunft.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF53764E89CC9198F52E049 /* VerlaufHerkunft.swift */; };
 		FAFEECC2A710C4BF9D601BD2 /* TagContextResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0756570D91BAD9173DC82B /* TagContextResponse.swift */; };
 		FD45B7AE6C6405B0C6799772 /* KurseMeineEinteilungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA9131802B15B415EE3362E /* KurseMeineEinteilungTests.swift */; };
+		FDA54C34231DE3E958EF06D9 /* GeraetKontextLadenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C98822FA4FAF85142CC27A3F /* GeraetKontextLadenTests.swift */; };
 		FF660231717EEF021CAE16EF /* KursZustand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186F9A8308C2902F45F6E10E /* KursZustand.swift */; };
 /* End PBXBuildFile section */
 
@@ -287,6 +288,7 @@
 		C4DDD9F8FCC3E699F6E4F79C /* AuthBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthBackend.swift; sourceTree = "<group>"; };
 		C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryButton.swift; sourceTree = "<group>"; };
 		C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLinkTests.swift; sourceTree = "<group>"; };
+		C98822FA4FAF85142CC27A3F /* GeraetKontextLadenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetKontextLadenTests.swift; sourceTree = "<group>"; };
 		C9BB75027970B636BE5BC23C /* NameSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameSheet.swift; sourceTree = "<group>"; };
 		CB59D56AD33C31AE1F0089FF /* TagProtokoll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagProtokoll.swift; sourceTree = "<group>"; };
 		CF7B9170FFCF2B3FBDF4A2F0 /* ColorHexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHexTests.swift; sourceTree = "<group>"; };
@@ -485,6 +487,7 @@
 				E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */,
 				1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */,
 				61EBAF697D264131A8B819C9 /* GeraetEinstiegTests.swift */,
+				C98822FA4FAF85142CC27A3F /* GeraetKontextLadenTests.swift */,
 				28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */,
 				EC41D34D6C45ECA67DC8B7D5 /* HomeZeilenTests.swift */,
 				02610C837B8435320AACE71B /* KursDetailInhaltTests.swift */,
@@ -893,6 +896,7 @@
 				0B8F8186023C8395BE77A351 /* EinstellungenTests.swift in Sources */,
 				67CB5A92D5A22F772F336E2F /* FortschrittsfensterTests.swift in Sources */,
 				49188A7C28036BA6E75E3C6E /* GeraetEinstiegTests.swift in Sources */,
+				FDA54C34231DE3E958EF06D9 /* GeraetKontextLadenTests.swift in Sources */,
 				DB3955D030762B13093FA54C /* GeraetModelTests.swift in Sources */,
 				223F8FDD1BA1AFE59AF71D8C /* HomeZeilenTests.swift in Sources */,
 				E5D5C299EF2C249F20BEA4B9 /* KursDetailInhaltTests.swift in Sources */,

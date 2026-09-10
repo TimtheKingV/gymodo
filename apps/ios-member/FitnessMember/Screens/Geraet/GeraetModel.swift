@@ -295,11 +295,24 @@ final class GeraetModel {
 
     // MARK: - Aktionen
 
+    /// Laedt, was der Prefetch nicht hat: Foto, Einweisungsvideo und den
+    /// Gewichtsvorschlag.
+    ///
+    /// Hier stand bis zur Geraeteauswahl ohne Scan ein
+    /// `guard let token else { return }`. Damit blieb ein aus der Liste
+    /// gewaehltes Geraet dauerhaft ohne diese drei Dinge -- und ohne Foto
+    /// fehlt genau das, was die Auswahl ohne ein Wort bestaetigt.
+    ///
+    /// Ein Fehlschlag ist weiterhin kein Fehlerzustand: der Screen steht
+    /// bereits aus dem Prefetch.
     func kontextLaden() async {
-        guard let token else { return }
-        // Ein Fehlschlag ist kein Fehlerzustand: der Screen steht bereits
-        // aus dem Prefetch. Es fehlen nur Video, Foto und Vorschlag.
-        guard let geladen = try? await loader.tagContext(token: token) else { return }
+        let geladen: TagContextResponse? =
+            if let token {
+                try? await loader.tagContext(token: token)
+            } else {
+                try? await loader.machineContext(machineId: maschine.id)
+            }
+        guard let geladen else { return }
         kontextUebernehmen(geladen)
     }
 

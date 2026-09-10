@@ -27,6 +27,15 @@ actor APIClient {
         try await get("tags/\(token)/context")
     }
 
+    /// Derselbe Kontext ohne Tag -- fuer ein Geraet aus der Liste.
+    ///
+    /// Liefert dasselbe DTO, weil der Server dieselbe Form liefert. Ein
+    /// zweiter Typ mit identischen Feldern waere eine Wahrheit an zwei
+    /// Orten.
+    func machineContext(machineId: String) async throws(APIError) -> TagContextResponse {
+        try await get("machines/\(machineId)/context")
+    }
+
     /// Liefert die volle Antwort statt nur der Liste: die Kopfzeile von
     /// Home braucht `summary`, und ein zweiter Abruf dafuer waere
     /// derselbe Abruf.
