@@ -1,0 +1,165 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .bl { width: 900px; background: #0A0B0D; color: #F2F4F7; padding: 48px; display: flex; flex-direction: column; gap: 44px; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #5C636E; }
+    h2 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.02em; }
+    p { margin: 0; font-size: 14px; line-height: 1.6; color: #9BA3AF; }
+    .abschnitt { display: flex; flex-direction: column; gap: 16px; }
+    .karte { background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; padding: 20px 22px; display: flex; flex-direction: column; gap: 8px; }
+    .karte h3 { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: -.01em; color: #F2F4F7; }
+    .zwei { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; color: #D4FF3F; }
+    .zeile { background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; padding: 13px 15px; display: flex; align-items: center; gap: 12px; min-height: 64px; width: 353px; }
+    .mitte { flex-grow: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0 }
+    .masse { display: flex; flex-direction: column; gap: 10px; }
+    .mz { display: flex; gap: 12px; align-items: baseline; }
+    .mk { width: 96px; flex: none; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #5C636E; }
+    .mv { font-size: 13.5px; line-height: 1.5; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 700; letter-spacing: -.02em; }
+    ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 12px; }
+    li { font-size: 14px; line-height: 1.6; color: #9BA3AF; }
+    li b { color: #F2F4F7; font-weight: 700; }
+    .trenner { height: 1px; background: #2A2E36; }
+  </style>
+</helmet>
+
+<div class="bl">
+
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <div class="eyebrow">Gerät ohne Scan · Blatt 09</div>
+    <div style="font-size: 38px; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; line-height: 1">Bausteine &amp; Entscheidungen</div>
+    <p style="max-width: 640px">Alles auf diesem Blatt ist aus dem vorhandenen Prefetch gerechnet — <span class="code">BootstrapResponse.machines</span> trägt Name, Nummer, Platz, Status, Übungen und Besuchszähler für jedes Gerät jedes Studios, dem du angehörst. Die Liste braucht kein Netz und keinen neuen Endpoint. Bis auf einen Punkt, Abschnitt 5.</p>
+  </div>
+
+  <div class="trenner"></div>
+
+  <!-- 1 -->
+  <div class="abschnitt">
+    <h2>1 · Die Zeile</h2>
+    <div style="display: flex; gap: 32px; align-items: flex-start">
+      <div style="display: flex; flex-direction: column; gap: 10px; flex: none">
+        <div class="zeile">
+          <div class="mitte">
+            <div style="font-size: 16px; font-weight: 700; letter-spacing: -.01em">Latzug</div>
+            <div style="font-size: 12px; color: #5C636E">Gerät 14 · Rückwand rechts</div>
+            <div style="display: flex; align-items: center; gap: 7px">
+              <span style="width: 5px; height: 5px; border-radius: 50%; background: #D4FF3F"></span>
+              <span class="num" style="font-size: 12px; color: #D4FF3F">vor 3 Tagen · 45,0 kg</span>
+            </div>
+          </div>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+        </div>
+        <div style="font-size: 12px; color: #5C636E; line-height: 1.45">Dieselbe Zeile ohne dritte Zeile ist 64 pt hoch — so sieht jedes Gerät aus, an dem du noch nie warst.</div>
+      </div>
+
+      <div class="masse" style="flex-grow: 1; padding-top: 4px">
+        <div class="mz"><div class="mk">Name</div><div class="mv">16 pt / 700, <span class="code">equipmentModel.name</span> — das Wort, das am Gerät steht.</div></div>
+        <div class="mz"><div class="mk">Zweite Zeile</div><div class="mv">12 pt, text-faint, <span class="code">label · locationNote</span> — dieselbe Fügung wie die Kopfzeile auf dem Geräte-Screen.</div></div>
+        <div class="mz"><div class="mk">Dritte Zeile</div><div class="mv">12 pt / 700, Akzent, mit 5-pt-Punkt: nur bei Geräten mit <span class="code">visitCount &gt; 0</span>, aus <span class="code">lastSets</span>.</div></div>
+        <div class="mz"><div class="mk">Maße</div><div class="mv">min. 64 pt hoch (44 pt ist die Untergrenze) — zwei Textzeilen; mit der Zuletzt-Zeile werden 84 pt daraus, Radius 14, Kontur <span class="code">line</span>, Fläche <span class="code">surface</span> — die Karte aus dem Designsystem, nicht die Kursliste.</div></div>
+        <div class="mz"><div class="mk">Akzent</div><div class="mv">Nur als Text, nie als Fläche. Die eine Akzentfläche des Screens bleibt frei — auf 02 gibt es keine.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="trenner"></div>
+
+  <!-- 2 -->
+  <div class="abschnitt">
+    <h2>2 · Was gesucht und wie sortiert wird</h2>
+    <div class="zwei">
+      <div class="karte">
+        <h3>Vier Felder, ein Teilstring</h3>
+        <p>Gerätename, Gerätenummer (<span class="code">label</span>), Platzangabe (<span class="code">locationNote</span>) und die Übungen am Gerät. Ohne Groß-/Kleinschreibung und ohne Diakritika.</p>
+        <p>Kein Fuzzy-Match: bei 26 Geräten trägt Teilstring, und Fuzzy liefert Treffer, die niemand erklären kann. Trifft die Suche über eine Übung statt über den Namen, sagt die Zeile das (Blatt 03).</p>
+      </div>
+      <div class="karte">
+        <h3>Zwei Gruppen</h3>
+        <p><b style="color:#F2F4F7">Zuletzt bei dir</b> — Geräte mit <span class="code">visitCount &gt; 0</span>, nach jüngstem <span class="code">performedAt</span>, höchstens drei. Mehr, und die Gruppe verdrängt die Liste, die sie abkürzen soll.</p>
+        <p><b style="color:#F2F4F7">Alle Geräte · A–Z</b> — nach Gerätenamen. Nur das aktive Studio; das zweite Studio hängt an der Zeile auf Blatt 04.</p>
+        <p>Was oben steht, steht unten nicht noch einmal: auf Blatt 02 fehlt die Beinpresse zwischen Beinbeuger und Beinstrecker, weil sie in der oberen Gruppe liegt. In der Suche gilt das nicht — dort gibt es nur eine Trefferliste.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="trenner"></div>
+
+  <!-- 3 -->
+  <div class="abschnitt">
+    <h2>3 · Vier Sonderfälle</h2>
+    <div class="zwei">
+      <div class="karte">
+        <h3>Gerät ohne aktiven Tag</h3>
+        <p><span class="code">tokenHashes.isEmpty</span> — die Marke <b style="color:#F2F4F7">NICHT SCANNBAR</b> in der Zeile. Genau der Fall aus dem Auftrag: fehlender Aufkleber, aber auch ein deaktivierter. Der Bootstrap liest <span class="code">machine_tags</span> mit <span class="code">status = "active"</span>, ein abgeschalteter Aufkleber klebt also weiter am Gerät — deshalb sagt die Marke, was die App weiß (Scannen führt hier zu nichts), und nicht, was am Gerät klebt.</p>
+      </div>
+      <div class="karte">
+        <h3>Gesperrtes Gerät</h3>
+        <p><span class="code">status != "active"</span> — sichtbar, gedimmt, nicht antippbar, Marke in warn. Auszublenden hieße, das Mitglied sucht am Gerät weiter, statt zu wissen, dass es gesperrt ist.</p>
+      </div>
+      <div class="karte">
+        <h3>Zwei Studios</h3>
+        <p>Die Liste zeigt <span class="code">activeStudioId</span>. Findet die Suche dort nichts, ist das zweite Studio der wahrscheinlichste Grund — deshalb steht der Wechsel im leeren Zustand und nicht als Dauerfilter über der Liste.</p>
+      </div>
+      <div class="karte">
+        <h3>Offline</h3>
+        <p>Ändert nichts: Liste und Suche rechnen auf dem Prefetch. Es fehlen dieselben drei Dinge wie unten — und die fehlen ohne Scan ohnehin.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="trenner"></div>
+
+  <!-- 4 -->
+  <div class="abschnitt">
+    <h2>4 · Ausgewählt ist nicht erkannt</h2>
+    <p style="max-width: 700px">Nach einem Scan weiß die App, dass das Telefon am Gerät war. Nach einer Auswahl weiß sie nur, was jemand angetippt hat. Blatt 05 sagt das in zwei Zeichen: Listensymbol statt NFC-Wellen und das Wort <b style="color:#F2F4F7">AUSGEWÄHLT</b> statt ERKANNT. Keines behauptet eine Messung — die Produktgrenze aus §10 des Designsystems gilt hier zweimal. Sobald das Gerätefoto da ist (Abschnitt 5), übernimmt es die Bestätigung ganz ohne Worte.</p>
+  </div>
+
+  <div class="trenner"></div>
+
+  <!-- 5 -->
+  <div class="abschnitt">
+    <h2>5 · Der eine Punkt, der Serverarbeit braucht</h2>
+    <p style="max-width: 700px"><span class="code">GeraetRoute.erkannt(machineId:token:)</span> nimmt den Token schon heute als optional — die Navigation trägt die Auswahl aus der Liste also ohne Umbau. Aber <span class="code">GeraetModel.kontextLaden()</span> steigt bei <span class="code">token == nil</span> in der ersten Zeile aus, und <span class="code">tagContext</span> ist der einzige Weg zu drei Dingen:</p>
+    <div class="zwei">
+      <div class="karte">
+        <h3>Was ohne Token fehlt</h3>
+        <p>Das <b style="color:#F2F4F7">Gerätefoto</b> — <span class="code">tagContext</span> liefert eine signierte <span class="code">photoUrl</span>, der Prefetch nur den ungezeichneten <span class="code">photoPath</span>.<br>Das <b style="color:#F2F4F7">Einweisungsvideo</b>.<br>Der <b style="color:#F2F4F7">Gewichtsvorschlag</b>.</p>
+        <p>Unbetroffen: die Übungen fallen auf <span class="code">maschine.exercises</span> zurück, Rastwerte und Einstellhinweise auf <span class="code">maschine.equipmentModel</span> — beides steht im Prefetch.</p>
+      </div>
+      <div class="karte">
+        <h3>Zwei Wege</h3>
+        <p><b style="color:#F2F4F7">a)</b> <span class="code">tag-context</span> bekommt einen Zwilling über <span class="code">machineId</span>, der dasselbe liefert, sobald das Mitglied im Studio Mitglied ist. Schließt die Lücke ganz.</p>
+        <p><b style="color:#F2F4F7">b)</b> Nur <span class="code">photoPath</span> im Bootstrap signieren. Billiger — und trifft den Teil, der die Auswahl bestätigt: das Foto ist auf Blatt 05 das Einzige, was das Prüfen am Gerät wirklich abnehmen würde.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="trenner"></div>
+
+  <!-- 6 -->
+  <div class="abschnitt">
+    <h2>6 · Drei offene Fragen</h2>
+    <ol>
+      <li><b>Nach Bereich gruppieren statt A–Z?</b> In der Halle stehst du irgendwo, nicht im Alphabet. Das setzt voraus, dass Studios <span class="code">locationNote</span> pflegen — heute optional und Freitext. Blatt 02 zeigt A–Z, weil das immer trägt; Bereichsgruppen wären der bessere Zustand, sobald das Portal die Angabe verlangt.</li>
+      <li><b>Zählt eine Auswahl als Besuch?</b> <span class="code">visitCount</span> entscheidet über den Direkteinstieg (<span class="code">GeraetEinstiegRechner.einstieg</span>). Zählt die Liste mit, springt die App beim zweiten Mal an der Übungsauswahl vorbei — auf Grundlage eines Taps, den niemand geprüft hat. Vorschlag: mitzählen erst, wenn ein Satz gesichert wurde.</li>
+      <li><b>Bleibt der dritte Knopf immer stehen?</b> Verbaut ist Variante A: drei gleichwertige Knöpfe. In einem Studio, in dem jedes Gerät einen aktiven Tag hat, steht der dritte dauerhaft für einen Fall, der nie eintritt. Die App könnte die Geräte mit leeren <span class="code">tokenHashes</span> zählen und den Knopf zur leisen Zeile aus Variante B zusammenfalten — ab welchem Anteil? Blatt 06–08.</li>
+    </ol>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

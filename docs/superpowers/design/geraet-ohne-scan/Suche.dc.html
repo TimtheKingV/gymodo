@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .feld { height: 52px; border-radius: 14px; background: #14161A; border: 1.5px solid #D4FF3F; display: flex; align-items: center; gap: 10px; padding: 0 14px; }
+    .zeile { background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; padding: 13px 15px; display: flex; align-items: center; gap: 12px; min-height: 64px; }
+    .mitte { flex-grow: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0 }
+    .name { font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+    .ort { font-size: 12px; color: #5C636E; }
+    .tr { color: #D4FF3F; }
+    .chip { font-size: 10px; font-weight: 800; letter-spacing: .06em; border-radius: 999px; padding: 3px 8px; white-space: nowrap; flex: none; }
+    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
+    .tab.on { color: #D4FF3F; }
+  </style>
+</helmet>
+
+<div class="ph">
+  <div style="height: 54px; flex: none"></div>
+
+  <div style="flex: none; height: 44px; padding: 0 20px; display: flex; align-items: center">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5-7 7 7 7"/></svg>
+  </div>
+
+  <div style="flex: none; padding: 14px 20px 0; display: flex; flex-direction: column; gap: 8px">
+    <div style="font-size: 32px; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; line-height: 1.02">Gerät wählen</div>
+    <div style="font-size: 13px; line-height: 1.5; color: #9BA3AF">Alle 26 Geräte in Gym Ost — auch die ohne Aufkleber.</div>
+  </div>
+
+  <div style="flex: none; padding: 16px 20px 0">
+    <div class="feld">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#D4FF3F" stroke-width="2" stroke-linecap="round" style="flex: none"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+      <span style="font-size: 16px; color: #F2F4F7; font-weight: 600">bein</span>
+      <span style="width: 2px; height: 22px; background: #D4FF3F; border-radius: 1px"></span>
+      <div style="margin-left: auto; width: 22px; height: 22px; border-radius: 50%; background: #2A2E36; display: flex; align-items: center; justify-content: center; flex: none">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9BA3AF" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; overflow: hidden; padding: 18px 20px 0; display: flex; flex-direction: column; gap: 8px">
+
+    <div class="eyebrow" style="padding-bottom: 2px">4 Treffer</div>
+
+    <div class="zeile">
+      <div class="mitte">
+        <div class="name"><span class="tr">Bein</span>presse</div>
+        <div class="ort">Gerät 03 · Fensterreihe</div>
+        <div style="display: flex; align-items: center; gap: 7px">
+          <span style="width: 5px; height: 5px; border-radius: 50%; background: #D4FF3F"></span>
+          <span style="font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; color: #D4FF3F">vor 3 Tagen · 90,0 kg</span>
+        </div>
+      </div>
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+    </div>
+
+    <div class="zeile">
+      <div class="mitte">
+        <div class="name"><span class="tr">Bein</span>beuger</div>
+        <div class="ort">Gerät 05 · Fensterreihe</div>
+      </div>
+      <span class="chip" style="color: #5C636E; border: 1px solid #2A2E36">NICHT SCANNBAR</span>
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+    </div>
+
+    <div class="zeile">
+      <div class="mitte">
+        <div class="name"><span class="tr">Bein</span>strecker</div>
+        <div class="ort">Gerät 04 · Fensterreihe</div>
+      </div>
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+    </div>
+
+    <!-- Treffer NICHT im Gerätenamen, sondern in einer Übung des Geräts.
+         Die Zeile sagt, warum sie hier steht — sonst wirkt sie wie ein
+         Fehler in der Suche. -->
+    <div class="zeile">
+      <div class="mitte">
+        <div class="name">Bauchtrainer</div>
+        <div class="ort">Gerät 21 · Freifläche</div>
+        <div class="ort" style="color: #9BA3AF">Übung · <span class="tr">Bein</span>heben hängend</div>
+      </div>
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m9.5 5 7 7-7 7"/></svg>
+    </div>
+
+    <div style="font-size: 12px; color: #5C636E; line-height: 1.45; padding: 8px 2px 0">Gesucht wird in Gerätename, Gerätenummer, Platzangabe und den Übungen am Gerät.</div>
+
+  </div>
+
+  <div class="tabs">
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+      Home
+    </div>
+    <div class="tab on">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9v6M7.5 6.5v11M16.5 6.5v11M20 9v6M7.5 12h9"/></svg>
+      Training
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.2" width="17" height="15.3" rx="2.6"/><path d="M8 3v4M16 3v4M3.5 10.2h17"/></svg>
+      Kurse
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.5 3.3-5.8 7.2-5.8s7.2 2.3 7.2 5.8"/></svg>
+      Profil
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
