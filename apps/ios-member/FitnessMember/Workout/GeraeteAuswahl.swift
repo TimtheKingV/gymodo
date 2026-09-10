@@ -48,6 +48,9 @@ enum GeraeteAuswahl {
     /// Mehr, und die Gruppe verdraengt die Liste, die sie abkuerzen soll.
     private static let deckel = 3
 
+    /// `studioId: nil` liefert bewusst leere Gruppen -- keine Maschine hat
+    /// eine leere studioId, der Filter unten greift dann also nie. Das ist
+    /// der Ruhezustand, bevor der Bootstrap geladen ist, kein Bug.
     static func gruppen(
         bootstrap: BootstrapResponse,
         studioId: String?,
@@ -58,6 +61,14 @@ enum GeraeteAuswahl {
         let gesucht = normalisiert(suchtext)
 
         guard !gesucht.isEmpty else {
+            // Spec 5.1 nennt nur "visitCount > 0". Die zweite Bedingung ist
+            // im echten Datenbestand wirkungslos -- bootstrap.ts leitet
+            // visitCount und lastSets aus denselben Zeilen ab
+            // (bootstrap.ts:153-158) -- AUSSER wenn ein performedAt sich
+            // nicht parsen laesst: dann fehlt der Eintrag in letzteSaetze,
+            // obwohl visitCount > 0 gilt. Genau das bewahrt die
+            // Force-Unwraps in der naechsten Zeile davor abzustuerzen --
+            // ohne diese Bedingung nicht "vereinfachen".
             let benutzt = maschinen
                 .filter { $0.visitCount > 0 && letzteSaetze[$0.id] != nil }
                 .sorted { letzteSaetze[$0.id]!.performedAt > letzteSaetze[$1.id]!.performedAt }
@@ -144,15 +155,9 @@ enum GeraeteAuswahl {
     /// Serversortierung von `lastSets` zu verlassen -- dieselbe Vorsicht
     /// wie in `GeraetEinstiegRechner.letzteUebung`.
     private static func juengsteSaetze(in bootstrap: BootstrapResponse) -> [String: Zuletzt] {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let fOhne = ISO8601DateFormatter()
-        fOhne.formatOptions = [.withInternetDateTime]
-
         var juengste: [String: Zuletzt] = [:]
         for satz in bootstrap.lastSets {
-            guard let datum = f.date(from: satz.performedAt) ?? fOhne.date(from: satz.performedAt)
-            else { continue }
+            guard let datum = Zeitpunkt.parse(satz.performedAt) else { continue }
             if let vorhanden = juengste[satz.machineId], vorhanden.performedAt >= datum { continue }
             juengste[satz.machineId] = Zuletzt(performedAt: datum, gewichtKg: satz.weightKg)
         }
