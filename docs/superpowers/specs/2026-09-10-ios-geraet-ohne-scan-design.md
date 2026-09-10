@@ -116,7 +116,7 @@ func machineContext(machineId: String) async throws(APIError) -> TagContextRespo
 
 Dasselbe DTO, weil der Server dieselbe Form liefert. Ein zweiter Typ mit identischen Feldern wäre eine Wahrheit an zwei Orten.
 
-`BootstrapLoading` wächst um dieselbe Methode — das Protokoll ist die Fassade, über die Tests einen Fake einsetzen.
+`GeraetLoading` wächst um dieselbe Methode — nicht `BootstrapLoading`. `GeraetModel` lädt über die schmale Fassade `GeraetLoading` (`Workout/GeraetLoading.swift`), und die ist zugleich der Ort, über den Tests einen Fake einsetzen.
 
 `GeraetModel.kontextLaden()` verliert seinen Wächter:
 
@@ -261,7 +261,7 @@ Es gibt fast keine Fehler: Liste und Suche rechnen auf dem Prefetch, ohne Netz, 
 **Swift**
 
 - `GeraeteAuswahlTests.swift` (neu) hält die Regeln fest, die sonst niemand nachlesen kann: Entdopplung zwischen den Gruppen, Deckel bei drei, Sortierung nach jüngstem Satz, Gesperrte ans Ende, Suchreihenfolge aus 5.2, `trefferUebung` nur bei reinem Übungstreffer, Diakritika und Großschreibung, Geräte fremder Studios fehlen, leerer Suchtext ergibt zwei Gruppen und ein gesetzter eine.
-- `GeraetModelTests`: der neue Zweig von `kontextLaden()` über einen Fake auf `BootstrapLoading` — mit Token wird `tagContext` gerufen, ohne Token `machineContext`.
+- `GeraetModelTests`: der neue Zweig von `kontextLaden()` über einen Fake auf `GeraetLoading` — mit Token wird `tagContext` gerufen, ohne Token `machineContext`.
 
 ## 9. Offene Punkte
 
