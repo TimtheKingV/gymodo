@@ -221,12 +221,37 @@ struct GeraeteAuswahlTests {
         #expect(gruppen.alle.map(\.name) == ["Beinpresse", "Beinbeuger", "Bauchtrainer"])
     }
 
+    /// Gesperrt zaehlt auch bei einem Treffer mehr als jede andere Regel.
+    /// "Aaa" traefe zweimal (Name UND Historie) und wuerde ohne die
+    /// Sperr-Prioritaet vor "Aab" stehen -- die Sperr-Prioritaet in
+    /// `trefferReihenfolge` ist eine eigene, von `alphabetischGesperrteAnsEnde`
+    /// unabhaengige Zeile, die kein anderer Test durchlaeuft.
+    @Test func gesperrteGeraeteStehenAuchBeiTrefferAmEnde() {
+        let daten = bootstrap(
+            maschinen: [
+                maschineJSON(id: "m1", name: "Aaa", label: "1", ort: nil, status: "maintenance", besuche: 2),
+                maschineJSON(id: "m2", name: "Aab", label: "2", ort: nil),
+            ],
+            saetze: [(machine: "m1", uebung: "u1", kg: 40, wann: "2026-09-07T10:00:00Z")])
+
+        let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, studioId: "s1", suchtext: "aa")
+
+        #expect(gruppen.alle.map(\.name) == ["Aab", "Aaa"])
+        #expect(gruppen.alle.last?.gesperrt == true)
+    }
+
     /// Die Uebungszeile erklaert, warum ein Geraet in der Trefferliste
     /// steht, dessen Name nichts mit der Eingabe zu tun hat. Bei einem
-    /// Geraetetreffer erklaert sie nichts und darf deshalb fehlen.
+    /// Geraetetreffer erklaert sie nichts und darf deshalb fehlen -- auch
+    /// wenn das Geraet selbst noch eine passende Uebung im Programm hat.
+    /// Die Beinpresse hier traefe auf BEIDEN Wegen ("bein" im Namen UND in
+    /// "Beinstrecken"); nur so zeigt der Test, dass der Geraetetreffer den
+    /// Uebungstreffer unterdrueckt, statt bloss zu bestaetigen, dass keine
+    /// ihrer Uebungen zufaellig passt.
     @Test func dieUebungszeileStehtNurBeimReinenUebungstreffer() {
         let daten = bootstrap(maschinen: [
-            maschineJSON(id: "m1", name: "Beinpresse", label: "3", ort: nil),
+            maschineJSON(id: "m1", name: "Beinpresse", label: "3", ort: nil,
+                         uebungen: [("u2", "Beinstrecken")]),
             maschineJSON(id: "m2", name: "Bauchtrainer", label: "21", ort: nil,
                          uebungen: [("u9", "Beinheben hängend")]),
         ])
