@@ -30,6 +30,7 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: true
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_NSCameraUsageDescription: "gymodo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen."
+        INFOPLIST_KEY_NFCReaderUsageDescription: "gymodo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen."
         # INFOPLIST_KEY_<Key> deckt bei GENERATE_INFOPLIST_FILE nur Apples
         # bekannte Info.plist-Schluessel ab (z.B. NSCameraUsageDescription).
         # Fuer eigene Schluessel (SUPABASE_URL etc.) wird laut Apple-Doku eine
@@ -44,6 +45,13 @@ targets:
       properties:
         com.apple.developer.associated-domains:
           - applinks:gymodo-web.vercel.app
+        # Der aktive Scan per Core NFC (NFCTagLeser). Das
+        # Hintergrund-Tag-Reading von iOS braucht dieses Entitlement NICHT --
+        # es haengt allein an den Associated Domains darueber. Beides steht
+        # hier also nebeneinander, weil es zwei getrennte Wege zum selben
+        # Aufkleber sind.
+        com.apple.developer.nfc.readersession.formats:
+          - NDEF
 
   FitnessMemberTests:
     type: bundle.unit-test

@@ -40,10 +40,17 @@ struct FitnessMemberApp: App {
                     await catalogStore.flushPending()
                 }
                 .onOpenURL { url in
-                    // Ungueltige Links werden still verworfen (M0-Verhalten
-                    // aus Task 7 unveraendert uebernommen).
+                    // Nicht mehr still verwerfen (so war es bis M1): das
+                    // Entitlement laesst nur /t/* in die App, jede URL hier
+                    // IST ein Tag-Link. Wird sie abgelehnt, gehoert das dem
+                    // Mitglied gesagt -- sonst startet die App wortlos auf
+                    // dem Home-Tab und der Aufkleber wirkt kaputt.
+                    TagProtokoll.log.info("Link empfangen: \(url.absoluteString, privacy: .public)")
                     if let token = TagLink.token(from: url) {
                         pendingTagStore.capture(token)
+                    } else {
+                        TagProtokoll.log.error("Link abgelehnt: kein gueltiger Tag-Link")
+                        pendingTagStore.captureUngueltig()
                     }
                 }
         }

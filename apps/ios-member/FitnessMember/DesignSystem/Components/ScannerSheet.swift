@@ -18,7 +18,11 @@ struct ScannerSheet: View {
     /// eingeben), eine Karte mit Icon bei "Geraet finden" (NFC).
     enum Nebenweg {
         case knopf(titel: String, aktion: () -> Void)
-        case karte(titel: String, text: String)
+        /// Die NFC-Karte. Bis M1 war sie reine Beschriftung -- sie verwies
+        /// aufs Systembanner von iOS, das man erst antippen muss. Jetzt
+        /// startet sie den Scan selbst und liefert ihr Ergebnis durch
+        /// dieselbe Annahme wie die Kamera.
+        case nfc(titel: String, text: String)
     }
 
     let titel: String
@@ -27,6 +31,7 @@ struct ScannerSheet: View {
     let beiCode: (String) -> Void
 
     @State private var erkannt = false
+    @State private var nfcLeser = NFCTagLeser()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -138,8 +143,8 @@ struct ScannerSheet: View {
             .buttonStyle(PressButtonStyle())
             .padding(.bottom, DesignSystem.Spacing.s24)
 
-        case .karte(let titel, let text):
-            nfcKarte(titel: titel, text: text)
+        case .nfc(let titel, let text):
+            nfcWeg(titel: titel, text: text)
                 .padding(.horizontal, 20)
                 .padding(.bottom, DesignSystem.Spacing.s24)
 
@@ -148,9 +153,26 @@ struct ScannerSheet: View {
         }
     }
 
-    /// Die NFC-Karte bei "Geraet finden": gleichwertig neben dem QR-Scan,
-    /// keine kleinere zweite Wahl. Werte aus TrainingScan.dc.html
-    /// Zeilen 50-58.
+    /// Die NFC-Karte, jetzt tippbar: sie startet den aktiven Scan. Wo es
+    /// keinen gibt (iPad, aelteres iPhone, Simulator), bleibt sie die reine
+    /// Beschriftung, die sie vorher ueberall war -- der passive Weg ueber
+    /// das Systembanner funktioniert dort weiterhin.
+    @ViewBuilder
+    private func nfcWeg(titel: String, text: String) -> some View {
+        if NFCTagLeser.verfuegbar {
+            Button {
+                nfcLeser.starten { roh in codeEmpfangen(roh) }
+            } label: {
+                nfcKarte(titel: titel, text: nfcLeser.fehler ?? text)
+                    .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt))
+            }
+            .buttonStyle(PressButtonStyle())
+        } else {
+            nfcKarte(titel: titel, text: text)
+        }
+    }
+
+    /// Die Karte selbst. Werte aus TrainingScan.dc.html Zeilen 50-58.
     private func nfcKarte(titel: String, text: String) -> some View {
         HStack(spacing: DesignSystem.Spacing.s16) {
             ZStack {

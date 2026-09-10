@@ -57,9 +57,9 @@ struct HomeRootView: View {
                 ScannerSheet(
                     titel: "Erstes Gerät",
                     hinweis: "Halte dein iPhone an den Aufkleber am Gerät.",
-                    nebenweg: .karte(
-                        titel: "Oder einfach antippen",
-                        text: "Halt die Oberkante deines iPhones an den Aufkleber — dafür musst du diesen Bildschirm nicht offen haben."
+                    nebenweg: .nfc(
+                        titel: "Oder NFC-Tag scannen",
+                        text: "Halt die Oberkante deines iPhones an den Aufkleber."
                     ),
                     beiCode: { code in
                         scannerOffen = false

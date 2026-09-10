@@ -49,13 +49,21 @@ struct MainTabView: View {
                 .tag(3)
         }
         .tint(DesignSystem.Color.accent)
-        // Der Kalteinstieg: der Token liegt schon vor dem ersten Aufbau
-        // dieser View vor (onOpenURL laeuft vor dem Bootstrap-Ladevorgang).
-        .onAppear { if pendingTag.token != nil { ausgewaehlterTab = 1 } }
-        // Der warme Fall: die App laeuft schon auf einem anderen Tab, und
-        // ein weiterer Universal Link kommt herein.
-        .onChange(of: pendingTag.token) { _, neu in
-            if neu != nil { ausgewaehlterTab = 1 }
+        // EIN Ausloeser fuer beide Faelle: .task(id:) laeuft beim ERSCHEINEN
+        // (Kalteinstieg -- der Eingang liegt schon vor dem ersten Aufbau
+        // dieser View vor, onOpenURL kommt vor dem Bootstrap-Ladevorgang)
+        // UND bei jeder spaeteren Aenderung (die App laeuft schon auf einem
+        // anderen Tab, ein weiterer Tag kommt herein).
+        //
+        // Vorher standen dafuer .onAppear und .onChange nebeneinander. Das
+        // .onAppear war die schwache Stelle: eine TabView-Auswahl im eigenen
+        // onAppear zu setzen faellt in SwiftUI gelegentlich unter den Tisch,
+        // weil die TabView zu dem Zeitpunkt noch eingehaengt wird. .task
+        // laeuft eine Runde spaeter, wenn sie steht.
+        .task(id: pendingTag.eingang) {
+            guard pendingTag.istOffen else { return }
+            TagProtokoll.log.info("Tab-Wechsel auf Training wegen offenem Tag-Eingang")
+            ausgewaehlterTab = 1
         }
     }
 }

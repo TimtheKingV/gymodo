@@ -19,6 +19,10 @@ struct TrainingRootView: View {
     @State private var pfad: [GeraetRoute] = []
     @State private var scannerOffen = false
     @State private var scanFehler: String?
+    /// Der aktive NFC-Scan. Liegt hier und nicht in ScanWege, weil sein
+    /// Ergebnis in dieselbe Aufloesung muendet wie der QR-Scan -- und weil
+    /// eine laufende Sitzung einen zweiten Tap ueberstehen muss.
+    @State private var nfcLeser = NFCTagLeser()
     /// Der laufende Neulade-und-Retry-Versuch aus oeffneToken(_:), falls
     /// gerade einer offen ist. Ohne dieses Handle wuerden zwei schnelle
     /// Scans zwei nebenlaeufige Tasks erzeugen, die beide spaeter scanFehler
@@ -121,9 +125,9 @@ struct TrainingRootView: View {
                 ScannerSheet(
                     titel: "Gerät finden",
                     hinweis: "QR-Code auf dem Aufkleber ins Feld halten.",
-                    nebenweg: .karte(
-                        titel: "Oder einfach antippen",
-                        text: "Halt die Oberkante deines iPhones an den Aufkleber — dafür musst du diesen Bildschirm nicht offen haben."
+                    nebenweg: .nfc(
+                        titel: "Oder NFC-Tag scannen",
+                        text: "Halt die Oberkante deines iPhones an den Aufkleber."
                     ),
                     beiCode: { code in
                         scannerOffen = false
@@ -143,7 +147,7 @@ struct TrainingRootView: View {
             // ersten Tick, und deckt den Kalteinstieg damit genauso ab.
             // Deshalb reicht EIN Ort fuer diese Pruefung.
             .task {
-                if let token = pendingTag.consume() { oeffneToken(token) }
+                if let eingang = pendingTag.consume() { verarbeite(eingang) }
             }
             // Deckt die beiden anderen Faelle ab: ein Tag-Tap, waehrend die
             // App schon auf einem anderen Tab laeuft, UND -- der haeufigere
@@ -153,9 +157,9 @@ struct TrainingRootView: View {
             // anders als .task/.onAppear haengt das nicht daran, ob der
             // Training-Tab gerade ausgewaehlt ist, und die Wurzel bleibt
             // gemountet, waehrend Ziele darueber gepusht werden.
-            .onChange(of: pendingTag.token) { _, neu in
-                guard neu != nil, let token = pendingTag.consume() else { return }
-                oeffneToken(token)
+            .onChange(of: pendingTag.eingang) { _, neu in
+                guard neu != nil, let eingang = pendingTag.consume() else { return }
+                verarbeite(eingang)
             }
             // Zweiter Ausloeser fuer die Neuauswertung von
             // sessions.aktiveSession() (siehe TimelineView oben): kehrt das
@@ -173,6 +177,13 @@ struct TrainingRootView: View {
             .onChange(of: sessions.aktiveSession() != nil) { _, laeuft in
                 if laeuft { zeigeAusgelaufenHinweis = false }
             }
+            // Ein gescheiterter NFC-Scan landet im selben Banner wie ein
+            // gescheiterter QR-Scan. Der Leser haelt seinen Fehler getrennt,
+            // weil er auch aus dem Scanner-Sheet heraus benutzt wird -- hier
+            // wird er in den einen Ort ueberfuehrt, den der Screen anzeigt.
+            .onChange(of: nfcLeser.fehler) { _, neu in
+                if let neu { scanFehler = neu }
+            }
             // Verlaesst die Wurzel die Buehne (z.B. Kontowechsel reisst die
             // gesamte Umgebung neu auf), soll ein noch laufender Retry nicht
             // in einen verschwundenen Zustand hinein schreiben.
@@ -189,23 +200,19 @@ struct TrainingRootView: View {
             .tracking(-1)
             .foregroundStyle(DesignSystem.Color.text)
 
-        VStack(spacing: DesignSystem.Spacing.s24) {
-            nfcZeichnung
-            VStack(spacing: DesignSystem.Spacing.s12) {
-                Text("HALT DEIN IPHONE\nAN DEN AUFKLEBER")
-                    .font(.system(size: 25, weight: .black))
-                    .tracking(-0.6)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(DesignSystem.Color.text)
-                Text("Am Gerät klebt ein Aufkleber mit dem gymodo-Zeichen. Dein Training startet von selbst, sobald du den ersten Satz sicherst — es gibt keinen Startknopf.")
-                    .font(DesignSystem.Typography.fliesstext)
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, DesignSystem.Spacing.s24)
+        // Abweichung vom Artboard TrainingLeer.dc.html: dort tragen eine
+        // grosse NFC-Zeichnung und die Ueberschrift "HALT DEIN IPHONE AN DEN
+        // AUFKLEBER" den leeren Zustand. Beides ist raus, seit es einen
+        // echten NFC-Knopf gibt: die Zeichnung war die Anleitung fuer einen
+        // Weg, den man nicht antippen konnte, und eine Anleitung neben dem
+        // Knopf, den sie beschreibt, ist nur noch Laerm.
+        Text("Am Gerät klebt ein Aufkleber mit dem gymodo-Zeichen. Dein Training startet von selbst, sobald du den ersten Satz sicherst — es gibt keinen Startknopf.")
+            .font(DesignSystem.Typography.fliesstext)
+            .foregroundStyle(DesignSystem.Color.textMuted)
+            .multilineTextAlignment(.center)
+            .lineSpacing(4)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, DesignSystem.Spacing.s24)
 
         if zeigeAusgelaufenHinweis {
             InlineBanner(tone: .muted, message: "Dein letztes Training wurde automatisch beendet.")
@@ -218,13 +225,15 @@ struct TrainingRootView: View {
         }
 
         VStack(spacing: DesignSystem.Spacing.s12) {
-            qrReihe
+            scanWege
             // Abweichung vom Artboard: dort text-faint bei 12pt. Der Satz
             // traegt die Gleichwertigkeit von Scan und Antippen, die die
             // Optik allein nicht zeigt (SS11) -- das ist tragende
             // Information, und die faellt unter 15pt nicht unter textFaint
-            // (designsystem.md SS2).
-            Text("Auf jedem Aufkleber ist beides — antippen oder scannen, gleiches Ergebnis.")
+            // (designsystem.md SS2). Der zweite Halbsatz uebernimmt, was
+            // vorher die geloeschte Ueberschrift trug: der Aufkleber
+            // funktioniert auch, wenn die App gar nicht offen ist.
+            Text("Auf jedem Aufkleber ist beides — antippen oder scannen, gleiches Ergebnis. Antippen geht auch, ohne dass die App offen ist.")
                 .font(.system(size: 12))
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .multilineTextAlignment(.center)
@@ -233,48 +242,28 @@ struct TrainingRootView: View {
         .frame(maxWidth: .infinity)
     }
 
-    /// Die NFC-Zeichnung als SF-Symbol-Komposition statt Bild-Asset -- das
-    /// Projekt hat keine und soll keine bekommen, solange ein Symbol reicht.
-    /// Rein dekorativ: die Bedeutung steht in der Ueberschrift und dem Satz
-    /// daneben.
-    private var nfcZeichnung: some View {
-        ZStack {
-            Circle()
-                .stroke(DesignSystem.Color.line, lineWidth: 1)
-                .frame(width: 148, height: 148)
-            Circle()
-                .stroke(DesignSystem.Color.surfaceRaised, lineWidth: 1)
-                .frame(width: 108, height: 108)
-            Image(systemName: "wave.3.right")
-                .font(.system(size: 40, weight: .regular))
-                .foregroundStyle(DesignSystem.Color.accent)
-        }
-        .frame(width: 148, height: 148)
-        .accessibilityHidden(true)
+    /// Die zwei Wege, in beiden Zustaenden dieselben -- Kontur, keiner
+    /// Akzentflaeche. Der leere Zustand hatte bis M1 gar keine Hauptaktion
+    /// auf dem Bildschirm (die Anweisung lautete "halt dein iPhone an den
+    /// Aufkleber"), der laufende hatte "Naechstes Geraet" als Akzent. Jetzt
+    /// steht an beiden Stellen dasselbe Paar, und die eine Akzentflaeche pro
+    /// Screen bleibt frei (designsystem.md SS2).
+    private var scanWege: some View {
+        ScanWege(
+            beiQR: { scannerOffen = true },
+            beiNFC: { nfcStarten() }
+        )
     }
 
-    /// Der QR-Weg, kleiner zweiter Weg neben der NFC-Zeichnung -- Kontur,
-    /// keine Akzentflaeche. Die Hauptaktion des leeren Zustands ist der
-    /// NFC-Tipp gegen den Aufkleber, kein Knopf auf dem Bildschirm; die
-    /// einzige Akzentflaeche hier ist die NFC-Zeichnung selbst
-    /// (designsystem.md SS2, siehe Bericht).
-    private var qrReihe: some View {
-        Button { scannerOffen = true } label: {
-            HStack(spacing: DesignSystem.Spacing.s12) {
-                Image(systemName: "qrcode")
-                    .font(.system(size: 19, weight: .semibold))
-                Text("QR-Code am Gerät scannen")
-                    .font(.system(size: 17, weight: .bold))
-            }
-            .foregroundStyle(DesignSystem.Color.text)
-            .frame(maxWidth: .infinity)
-            .frame(height: 60)
+    /// Der aktive NFC-Scan aus der App heraus. Sein Ergebnis geht durch
+    /// dasselbe TagLink.token(fromScan:) wie ein QR-Code -- es gibt
+    /// weiterhin nur EINEN Ort fuer diese Extraktion.
+    private func nfcStarten() {
+        scanFehler = nil
+        nfcLeser.fehlerQuittieren()
+        nfcLeser.starten { roh in
+            oeffneToken(TagLink.token(fromScan: roh))
         }
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt)
-                .stroke(DesignSystem.Color.line, lineWidth: 1)
-        )
-        .buttonStyle(PressButtonStyle())
     }
 
     // MARK: - Laufender Zustand (TrainingLaeuft.dc.html)
@@ -300,8 +289,19 @@ struct TrainingRootView: View {
             InlineBanner(tone: .danger, message: scanFehler)
         }
 
-        VStack(spacing: DesignSystem.Spacing.s8) {
-            PrimaryButton(title: "Nächstes Gerät") { scannerOffen = true }
+        VStack(spacing: DesignSystem.Spacing.s12) {
+            // Die Beschriftung, die vorher auf dem einen Knopf stand. Sie
+            // wird gebraucht: zwei gleich aussehende Scan-Knoepfe sagen fuer
+            // sich genommen nicht, WOZU man hier scannt.
+            Text("NÄCHSTES GERÄT")
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            scanWege
+            // Abgesetzt, damit "Training beenden" nicht als dritter,
+            // gleichrangiger Knopf in der Reihe steht -- es beendet etwas,
+            // die beiden darueber setzen es fort.
             VStack(spacing: DesignSystem.Spacing.s4) {
                 SecondaryButton(title: "Training beenden") { beenden() }
                 // Zulaessig in textFaint (anders als der Gleichwertigkeitssatz
@@ -312,6 +312,7 @@ struct TrainingRootView: View {
                     .foregroundStyle(DesignSystem.Color.textFaint)
                     .multilineTextAlignment(.center)
             }
+            .padding(.top, DesignSystem.Spacing.s8)
         }
     }
 
@@ -500,6 +501,23 @@ struct TrainingRootView: View {
         )
     }
 
+    /// Was aus PendingTagStore herauskommt, an einer Stelle beantwortet.
+    ///
+    /// Der ungueltige Fall ist neu: bis M1 verwarf FitnessMemberApp so eine
+    /// URL still, und die App startete wortlos auf dem Home-Tab -- von
+    /// aussen ununterscheidbar davon, dass der Link nie ankam. Er bekommt
+    /// dieselbe neutrale Antwort wie ein unbekannter Tag (M1-Spec SS10.4).
+    private func verarbeite(_ eingang: PendingTagStore.Eingang) {
+        switch eingang {
+        case .token(let token):
+            oeffneToken(token)
+        case .ungueltig:
+            TagProtokoll.log.error("Eingang ungueltig -- neutrale Meldung auf Training")
+            neuladeVersuch?.cancel()
+            scanFehler = "Dieser Code ist nicht aktiv. Frag im Studio nach."
+        }
+    }
+
     /// Der Kalteinstieg: Token lokal hashen, Geraet im Prefetch finden,
     /// sofort rendern (M1-Spec SS8.1 Schritt 3).
     ///
@@ -510,11 +528,18 @@ struct TrainingRootView: View {
     private func oeffneToken(_ token: String) {
         scanFehler = nil
         neuladeVersuch?.cancel()
-        guard let bootstrap = katalog.bootstrap else { return }
-        guard let maschine = MachineResolver.maschine(fuerToken: token, in: bootstrap) else {
-            // Ein Geraet, das nach dem letzten Prefetch dazukam. Einmal neu
-            // laden, dann erneut versuchen -- sonst dieselbe neutrale
-            // Antwort wie serverseitig fuer unbekannt/gesperrt.
+        TagProtokoll.log.info("Token wird aufgeloest")
+        // Kein frueher `guard let bootstrap ... else { return }` mehr: der
+        // Token ist an dieser Stelle schon aus dem PendingTagStore
+        // verbraucht, ein stilles return haette ihn endgueltig verloren --
+        // genau dann, wenn der Katalog beim Kalteinstieg noch nicht im
+        // Speicher ist. Fehlt der Prefetch, geht der Aufruf stattdessen in
+        // denselben Neulade-und-Retry-Pfad wie ein Geraet, das erst nach
+        // dem letzten Prefetch dazukam.
+        guard let bootstrap = katalog.bootstrap,
+              let maschine = MachineResolver.maschine(fuerToken: token, in: bootstrap) else {
+            // Einmal neu laden, dann erneut versuchen -- sonst dieselbe
+            // neutrale Antwort wie serverseitig fuer unbekannt/gesperrt.
             neuladeVersuch = Task {
                 await katalog.load()
                 // Ein Abbruch bedeutet: ein neuerer Scan oder das
@@ -525,6 +550,7 @@ struct TrainingRootView: View {
                 guard !Task.isCancelled else { return }
                 guard let frisch = katalog.bootstrap,
                       let maschine = MachineResolver.maschine(fuerToken: token, in: frisch) else {
+                    TagProtokoll.log.error("Token auch nach Neuladen keinem Geraet zugeordnet")
                     scanFehler = "Dieser Code ist nicht aktiv. Frag im Studio nach."
                     return
                 }
@@ -543,6 +569,7 @@ struct TrainingRootView: View {
         // GeraetView bleibt unberuehrt: er haengt in ziel(_:) an derselben,
         // gerade erst geleerten Wurzel und wird hier nicht ausgeloest.
         pfad.removeAll()
+        TagProtokoll.log.info("Geraet aufgeloest, Navigation folgt")
         let genutzte = GeraetEinstiegRechner.genutzteUebungen(machineId: maschine.id, in: bootstrap)
         switch GeraetEinstiegRechner.einstieg(visitCount: maschine.visitCount,
                                               genutzteUebungen: genutzte) {

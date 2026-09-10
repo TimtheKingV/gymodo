@@ -36,6 +36,8 @@
 		34BB24849CEDAC72879940FF /* KurseHerkunft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316F6201B7E6E5D63EAEAE84 /* KurseHerkunft.swift */; };
 		356B55A3EC5DF1C40CF07351 /* GeraetLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B800AB907E579F778EA2656 /* GeraetLoading.swift */; };
 		38240F3DF60D68312F9CBCE4 /* AuthCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DC3378D45751B2BE6267611 /* AuthCopy.swift */; };
+		382451921E71AB26611C0BA0 /* PendingTagStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083F4ABC58427C5FDB7D835 /* PendingTagStoreTests.swift */; };
+		3860154F0E5C17CE14445DCF /* ScanWege.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C465BC565F5CCD8965C8F8 /* ScanWege.swift */; };
 		39876DCABA0D4C90A172BF11 /* CatalogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E651ABDF81EA57E18D7363D /* CatalogStore.swift */; };
 		3B26567CF080FB300019E7A8 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = B1DA3D9245AAF15DFFD8CA8F /* Auth */; };
 		3FEB8C480E33977A36B75C37 /* EinweisungSchritt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A3BA42E747095E74D6BF83A /* EinweisungSchritt.swift */; };
@@ -59,6 +61,7 @@
 		5CC058FDF3D698829231E5DE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33AEE94B0EDB5593285596C /* RootView.swift */; };
 		600E5516A47D964636050F36 /* TrainingszusammenfassungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA53E0FF9AB052ED88E68C7 /* TrainingszusammenfassungTests.swift */; };
 		67CB5A92D5A22F772F336E2F /* FortschrittsfensterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */; };
+		6812F175D0293265578050F9 /* NFCTagLeser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33916355F38A81716A43C018 /* NFCTagLeser.swift */; };
 		6D53A3B77BA1BA710E5457DD /* ErstkontaktFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CFAD7B15E65FF7B1029BCD3 /* ErstkontaktFlow.swift */; };
 		74330F94DB89B468FB230AB0 /* RootDestinationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0753010E9ACC09DF6D948170 /* RootDestinationTests.swift */; };
 		750CEBE3A0D07E711D31D94F /* InlineBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D8C4AC64870FF3423C494F /* InlineBanner.swift */; };
@@ -79,6 +82,7 @@
 		911D1BCB5F196DFB0C649764 /* ResttimerBalken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D630F19BC18D3B2A94AD265 /* ResttimerBalken.swift */; };
 		9145F7245C5D69AA90AD9B7A /* GeraetRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF6476398D0D632AA4C97E66 /* GeraetRoute.swift */; };
 		95794FEE5EC5FFA101C74C3D /* MemberPasswortAendernView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 213A5216BA472EAE4240C049 /* MemberPasswortAendernView.swift */; };
+		9793B3801AD0CD565B3DF666 /* TagProtokoll.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB59D56AD33C31AE1F0089FF /* TagProtokoll.swift */; };
 		9B358A72607B4F450BF64E0C /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A358100432569849D383D8E8 /* APIError.swift */; };
 		9DE8EE325C831E9049A8BABE /* CalibrationWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 718C690CC2C544C9C8550447 /* CalibrationWrite.swift */; };
 		9E4947346E28638E0FA99C6A /* TagLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */; };
@@ -190,7 +194,9 @@
 		2F5420FC0962C00F11FFCD65 /* PrimaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimaryButton.swift; sourceTree = "<group>"; };
 		2F85DB74C44633BFB4BAAB94 /* PasswordPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordPolicy.swift; sourceTree = "<group>"; };
 		2F89B657647B40C20CCA5FE4 /* PendingWriteStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingWriteStore.swift; sourceTree = "<group>"; };
+		3083F4ABC58427C5FDB7D835 /* PendingTagStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingTagStoreTests.swift; sourceTree = "<group>"; };
 		316F6201B7E6E5D63EAEAE84 /* KurseHerkunft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseHerkunft.swift; sourceTree = "<group>"; };
+		33916355F38A81716A43C018 /* NFCTagLeser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NFCTagLeser.swift; sourceTree = "<group>"; };
 		33E48EE365B2AEEBD3FCBC2E /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		33EBC4692A4BFF21FC0FCA28 /* BootstrapResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootstrapResponse.swift; sourceTree = "<group>"; };
 		35466DCA1BAC23049D7DCB30 /* WorkoutSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionStore.swift; sourceTree = "<group>"; };
@@ -253,6 +259,7 @@
 		A40546FF017FE78E2A6823CE /* ZahlformatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZahlformatTests.swift; sourceTree = "<group>"; };
 		A4D467E447232623659C42C7 /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		A5CA620D337B41A12B5D8A33 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		A7C465BC565F5CCD8965C8F8 /* ScanWege.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanWege.swift; sourceTree = "<group>"; };
 		A7F2549F14DFAAA175305BC5 /* VerlaufFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerlaufFileStore.swift; sourceTree = "<group>"; };
 		A8B00715694B1D3131EDABCE /* WertZeile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WertZeile.swift; sourceTree = "<group>"; };
 		A971E16E06A36BD3EA3B0ED4 /* AuthRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthRoute.swift; sourceTree = "<group>"; };
@@ -266,6 +273,7 @@
 		C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryButton.swift; sourceTree = "<group>"; };
 		C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLinkTests.swift; sourceTree = "<group>"; };
 		C9BB75027970B636BE5BC23C /* NameSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameSheet.swift; sourceTree = "<group>"; };
+		CB59D56AD33C31AE1F0089FF /* TagProtokoll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagProtokoll.swift; sourceTree = "<group>"; };
 		CF7B9170FFCF2B3FBDF4A2F0 /* ColorHexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHexTests.swift; sourceTree = "<group>"; };
 		CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStoreTests.swift; sourceTree = "<group>"; };
 		D33AEE94B0EDB5593285596C /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -321,6 +329,7 @@
 				943C19386AFE9634615213ED /* Info-Additions.plist */,
 				8D54275FD3C78205F883D9A0 /* PrivacyInfo.xcprivacy */,
 				F3F970AC02F39C7E9D8ABCBF /* TagLink.swift */,
+				CB59D56AD33C31AE1F0089FF /* TagProtokoll.swift */,
 				252C3FD021F6C5CB033A8E7D /* Zeitpunkt.swift */,
 				69238F42946841D9633CE265 /* Auth */,
 				3FC355A317C8C2CD39C6F424 /* Catalog */,
@@ -422,6 +431,7 @@
 				2F5420FC0962C00F11FFCD65 /* PrimaryButton.swift */,
 				45AE341D5234D5BED46BA218 /* RastRad.swift */,
 				55093183C1B476C12C44B469 /* ScannerSheet.swift */,
+				A7C465BC565F5CCD8965C8F8 /* ScanWege.swift */,
 				C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */,
 				5C18F50D5DFB2CBD6785AADA /* Stepper44.swift */,
 			);
@@ -464,6 +474,7 @@
 				05BD4A4984000E15E1DDB8A2 /* KurseStoreTests.swift */,
 				F0D97A63F51670FD637DCAFE /* KurseWochenBerechnungTests.swift */,
 				A2D588E7E4F6611509CF03B1 /* KursZustandTests.swift */,
+				3083F4ABC58427C5FDB7D835 /* PendingTagStoreTests.swift */,
 				E07C7F4A13CB277BC11B8D77 /* PendingWriteStoreTests.swift */,
 				26B1A62413AE0C5835F9E9CA /* RastwerteTests.swift */,
 				707F099CE279C3111DDD2149 /* ResttimerTests.swift */,
@@ -567,6 +578,7 @@
 				E4C1D2382AF3657C5135CBE2 /* MemberPasswortView.swift */,
 				1987FE7CD53A2E411EAD2595 /* MemberPasswortZuruecksetzenView.swift */,
 				62AE7186437136E3B2723D3A /* MemberRegistrierenView.swift */,
+				33916355F38A81716A43C018 /* NFCTagLeser.swift */,
 				7115CDC39F17B5DF97E47CD8 /* QRScannerController.swift */,
 			);
 			path = Zugang;
@@ -786,6 +798,7 @@
 				0C79D05D0F5B192800FDB707 /* MemberPasswortZuruecksetzenView.swift in Sources */,
 				C54BE200B15088F10CE1DBE0 /* MemberRegistrierenView.swift in Sources */,
 				B43F29AF4430526E932E3952 /* MemberStudiosView.swift in Sources */,
+				6812F175D0293265578050F9 /* NFCTagLeser.swift in Sources */,
 				DD0314F21EDB7E6B9B2F514E /* NameSheet.swift in Sources */,
 				8B75427616870118E08E4936 /* NetzwerkMonitor.swift in Sources */,
 				A4F50DFBB0D7894E7A7E8FC9 /* OfflineLeiste.swift in Sources */,
@@ -805,6 +818,7 @@
 				911D1BCB5F196DFB0C649764 /* ResttimerBalken.swift in Sources */,
 				C3F6024100768028FCAD45AF /* RootDestination.swift in Sources */,
 				5CC058FDF3D698829231E5DE /* RootView.swift in Sources */,
+				3860154F0E5C17CE14445DCF /* ScanWege.swift in Sources */,
 				0D0B75F5C030106C7CB21F85 /* ScannerSheet.swift in Sources */,
 				E2ECF1FE835571FFD6617303 /* SecondaryButton.swift in Sources */,
 				A70571D779E8721B0D8FC96D /* Session.swift in Sources */,
@@ -816,6 +830,7 @@
 				A67217C418DEF1C2DC617DB9 /* SupabaseAuthBackend.swift in Sources */,
 				FAFEECC2A710C4BF9D601BD2 /* TagContextResponse.swift in Sources */,
 				4D6EC5DA1233E3B74ADD20B9 /* TagLink.swift in Sources */,
+				9793B3801AD0CD565B3DF666 /* TagProtokoll.swift in Sources */,
 				B90035F502BFCB437C290355 /* TrainingAbschlussView.swift in Sources */,
 				42F254CA382E78A97F1AC840 /* TrainingRootView.swift in Sources */,
 				0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */,
@@ -853,6 +868,7 @@
 				FD45B7AE6C6405B0C6799772 /* KurseMeineEinteilungTests.swift in Sources */,
 				51D68A6279BB1613A8A0C045 /* KurseStoreTests.swift in Sources */,
 				B854BF7F3EC5F92A64658311 /* KurseWochenBerechnungTests.swift in Sources */,
+				382451921E71AB26611C0BA0 /* PendingTagStoreTests.swift in Sources */,
 				F1E9DFA75153BCFFEF5FDD62 /* PendingWriteStoreTests.swift in Sources */,
 				AD152D48FC554F180FA72F58 /* RastwerteTests.swift in Sources */,
 				44EA0E9CBF440F567DCD049C /* ResttimerTests.swift in Sources */,
@@ -889,6 +905,7 @@
 				DEVELOPMENT_TEAM = ZJP24W38LQ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "FitnessMember/Info-Additions.plist";
+				INFOPLIST_KEY_NFCReaderUsageDescription = "gymodo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "gymodo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -997,6 +1014,7 @@
 				DEVELOPMENT_TEAM = ZJP24W38LQ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "FitnessMember/Info-Additions.plist";
+				INFOPLIST_KEY_NFCReaderUsageDescription = "gymodo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "gymodo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
