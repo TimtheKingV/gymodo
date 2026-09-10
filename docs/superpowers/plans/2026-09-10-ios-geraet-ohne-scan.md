@@ -237,7 +237,7 @@ describe("getMachineContext", () => {
 - [ ] **Step 2: Test laufen lassen und Fehlschlag bestätigen**
 
 ```bash
-pnpm test:integration -- domain-machine-context
+pnpm test:integration domain-machine-context
 ```
 
 Erwartet: FAIL — `getMachineContext` ist kein Export von `@fitretro/domain`.
@@ -627,7 +627,7 @@ export type { MachineContext } from "./machine-context.js";
 - [ ] **Step 6: Neuen Test laufen lassen**
 
 ```bash
-pnpm test:integration -- domain-machine-context
+pnpm test:integration domain-machine-context
 ```
 
 Erwartet: PASS, alle fünf Fälle.
@@ -635,7 +635,7 @@ Erwartet: PASS, alle fünf Fälle.
 - [ ] **Step 7: Beweisen, dass der Scan-Weg unberührt ist**
 
 ```bash
-pnpm test:integration -- domain-tag-context
+pnpm test:integration domain-tag-context
 git diff --stat tests/integration/domain-tag-context.test.ts
 ```
 
@@ -1339,6 +1339,9 @@ enum GeraeteAuswahl {
     /// Mehr, und die Gruppe verdraengt die Liste, die sie abkuerzen soll.
     private static let deckel = 3
 
+    /// `studioId: nil` liefert bewusst leere Gruppen -- keine Maschine hat
+    /// eine leere studioId, der Filter unten greift dann also nie. Das ist
+    /// der Ruhezustand, bevor der Bootstrap geladen ist, kein Bug.
     static func gruppen(
         bootstrap: BootstrapResponse,
         studioId: String?,
