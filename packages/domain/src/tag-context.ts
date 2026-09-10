@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { requireUserId } from "./auth.js";
 import { DomainError } from "./errors.js";
 import { hashTagToken, isValidTagToken } from "./tags.js";
-import { getMachineContext, type MachineContext } from "./machine-context.js";
+import { resolveMachineContext, type MachineContext } from "./machine-context.js";
 
 /**
  * Ein Tag-Kontext ist ein Geraetekontext -- der Tag sagt nur, welches
@@ -18,6 +19,11 @@ export type TagContext = MachineContext;
  * Liste gewaehlt werden kann und dann kein Token existiert.
  *
  * Der Token wird nur gehasht verwendet und nie protokolliert (Spec 10.4).
+ *
+ * userId wird hier aufgeloest, noch vor dem Tag-Lookup -- genau wie im
+ * fruehen Rumpf. So bekommt ein nicht angemeldeter Aufruf "unauthorized"
+ * statt "not_found", und resolveMachineContext muss requireUserId (ein
+ * Netzwerksprung zum Auth-Service) nicht ein zweites Mal ausfuehren.
  */
 export async function getTagContext(
   client: SupabaseClient,
@@ -26,6 +32,7 @@ export async function getTagContext(
   if (!isValidTagToken(token)) {
     throw new DomainError("validation_failed", "Ungueltiges Tokenformat.");
   }
+  const userId = await requireUserId(client);
 
   // RLS blendet Tags fremder Studios aus. Unbekannt, ungueltig und gesperrt
   // liefern deshalb dieselbe Antwort -- sonst liessen sich gueltige Tokens
@@ -40,5 +47,5 @@ export async function getTagContext(
     throw new DomainError("not_found", "Dieser Code ist nicht aktiv.");
   }
 
-  return getMachineContext(client, tag.machine_id);
+  return resolveMachineContext(client, userId, tag.machine_id);
 }

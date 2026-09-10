@@ -100,7 +100,23 @@ export async function getMachineContext(
   machineId: string,
 ): Promise<MachineContext> {
   const userId = await requireUserId(client);
+  return resolveMachineContext(client, userId, machineId);
+}
 
+/**
+ * Der Rumpf, sobald die Anmeldung schon steht.
+ *
+ * requireUserId ist kein lokales Token-Decodieren, sondern ein
+ * Netzwerksprung zum Auth-Service (siehe auth.ts) -- auf dem heissesten Pfad
+ * im Produkt (jeder Geraete-Scan) darf er nicht doppelt laufen. getTagContext
+ * loest den userId deshalb selbst auf, bevor der Tag-Lookup ueberhaupt
+ * beginnt, und reicht ihn hier herein statt getMachineContext aufzurufen.
+ */
+export async function resolveMachineContext(
+  client: SupabaseClient,
+  userId: string,
+  machineId: string,
+): Promise<MachineContext> {
   const { data: machine } = await client
     .from("machines")
     .select(
