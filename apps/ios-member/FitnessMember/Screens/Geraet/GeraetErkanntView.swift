@@ -36,7 +36,7 @@ struct GeraetErkanntView: View {
             Spacer()
             // Abweichung vom Artboard: dort accent. Die eine Akzentflaeche
             // des Screens ist die aktive Uebungszeile (designsystem.md SS2).
-            Label("ERKANNT", systemImage: "wave.3.right")
+            Label(modell.einstiegsart.beschriftung, systemImage: modell.einstiegsart.symbol)
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)

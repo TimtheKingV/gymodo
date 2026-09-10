@@ -72,6 +72,37 @@ final class GeraetModel {
     private let sessions: WorkoutSessionStore
     private let enqueue: (PendingSetWrite) -> Void
 
+    /// Wie das Mitglied an diesem Geraet gelandet ist.
+    ///
+    /// Nach einem Scan war das Telefon am Geraet. Nach einer Auswahl aus
+    /// der Liste hat jemand etwas angetippt -- die App weiss nicht, wo er
+    /// steht. Das Wort auf dem Screen darf den Unterschied nicht
+    /// verwischen (designsystem.md SS10).
+    enum Einstiegsart: Equatable {
+        case erkannt
+        case ausgewaehlt
+
+        init(token: String?) {
+            self = token == nil ? .ausgewaehlt : .erkannt
+        }
+
+        var beschriftung: String {
+            switch self {
+            case .erkannt: "ERKANNT"
+            case .ausgewaehlt: "AUSGEWÄHLT"
+            }
+        }
+
+        var symbol: String {
+            switch self {
+            case .erkannt: "wave.3.right"
+            case .ausgewaehlt: "list.bullet"
+            }
+        }
+    }
+
+    var einstiegsart: Einstiegsart { Einstiegsart(token: token) }
+
     init(
         maschine: BootstrapResponse.Machine,
         uebungId: String,

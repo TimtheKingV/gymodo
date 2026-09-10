@@ -251,7 +251,16 @@ struct TrainingRootView: View {
     private var scanWege: some View {
         ScanWege(
             beiQR: { scannerOffen = true },
-            beiNFC: { nfcStarten() }
+            beiNFC: { nfcStarten() },
+            // Ohne geladenen Prefetch gaebe es nichts zu waehlen. Ohne ein
+            // aktives Studio (activeStudioId == nil, etwa direkt nach dem
+            // Onboarding oder bei Mitgliedschaft in null Studios) liefert
+            // GeraeteAuswahl.gruppen(studioId: nil) still leere Gruppen --
+            // der Knopf fuehrte dann auf einen Screen, der aussieht, als
+            // waere er kaputt.
+            beiListe: (katalog.bootstrap == nil || katalog.activeStudioId == nil)
+                ? nil
+                : { pfad.append(.auswahl) }
         )
     }
 
@@ -458,6 +467,10 @@ struct TrainingRootView: View {
     @ViewBuilder
     private func ziel(_ route: GeraetRoute) -> some View {
         switch route {
+        case .auswahl:
+            GeraeteAuswahlView { machineId in
+                pfad.append(.erkannt(machineId: machineId, token: nil))
+            }
         case .erkannt(let machineId, let token):
             if let modell = modell(machineId: machineId, exerciseId: nil, token: token) {
                 GeraetErkanntScreen(modell: modell) { uebungId in
