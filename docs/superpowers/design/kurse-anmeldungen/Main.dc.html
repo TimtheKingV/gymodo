@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .abschnitt { display: flex; flex-direction: column; gap: 12px; }
+    .woche { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+    .tag { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .tagbox { width: 100%; height: 44px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #9BA3AF; }
+    .tagbox.on { background: #D4FF3F; color: #0A0B0D; }
+    .kuerzel { font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+    .tagnr { font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+    .punkt { width: 5px; height: 5px; border-radius: 50%; }
+    .belegung { display: flex; align-items: center; gap: 8px; padding-top: 2px; }
+    .balken { display: flex; gap: 2px; width: 132px; height: 7px; flex: none; }
+    .balken > span { flex: 1 1 0; min-width: 0; border-radius: 1.5px; background: #2A2E36; }
+    .balken > span.belegt { background: #D4FF3F; }
+    .liste { display: flex; flex-direction: column; gap: 12px; }
+    .zeile { background: #14161A; border-radius: 12px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
+    .zeile.on { box-shadow: inset 0 0 0 1.5px #D4FF3F; }
+    .zeile.warte { box-shadow: inset 0 0 0 1px #FFB02055; }
+    .zeit { width: 54px; flex: none; display: flex; flex-direction: column; gap: 4px; }
+    .mitte { flex-grow: 1; display: flex; flex-direction: column; gap: 4px; }
+    .name { font-size: 16px; font-weight: 700; }
+    .neben { font-size: 12px; color: #9BA3AF; }
+    .zahl { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; color: #9BA3AF; }
+    .chip { font-size: 10px; font-weight: 800; letter-spacing: .7px; border-radius: 999px; padding: 4px 8px; white-space: nowrap; }
+    .chevron { flex: none; margin-top: 2px; }
+    .karte { background: #14161A; border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 0 1.5px #D4FF3F; }
+    .karte.warte { box-shadow: inset 0 0 0 1px #FFB02055; }
+    .trenner { height: 1px; background: #2A2E36; }
+    .fuss { padding: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .fusstext { font-size: 12px; color: #9BA3AF; line-height: 1.4; }
+    .abmelden { flex: none; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #FF5A4E; }
+    .datum { width: 46px; flex: none; padding: 8px 0; background: #1D2026; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .datum-k { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; }
+    .datum-n { font-size: 19px; font-weight: 900; font-variant-numeric: tabular-nums; }
+    .haken { width: 26px; height: 26px; flex: none; border-radius: 50%; background: #D4FF3F; display: flex; align-items: center; justify-content: center; }
+    .platz { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; }
+    .scroll { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; gap: 24px; padding: 24px 20px 0; }
+    .kopf { display: flex; align-items: baseline; justify-content: space-between; }
+    .titel { font-size: 32px; font-weight: 900; letter-spacing: -0.8px; line-height: 1; }
+    .fussnote { font-size: 12px; color: #5C636E; text-align: center; }
+    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
+    .tab.on { color: #D4FF3F; }
+  </style>
+</helmet>
+
+<div class="ph">
+  <div style="height: 54px; flex: none"></div>
+
+  <div class="scroll">
+
+    <div class="kopf">
+      <div class="titel">KURSE</div>
+      <div class="eyebrow">Kraftwerk Nord</div>
+    </div>
+
+    <div class="abschnitt">
+      <div class="eyebrow">Deine Kurse</div>
+      <div class="karte ">
+        <div style="padding: 16px; display: flex; gap: 12px; align-items: flex-start">
+          <div class="datum"><span class="datum-k" style="color: #D4FF3F">DO</span><span class="datum-n">27</span></div>
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 18px; font-weight: 800; letter-spacing: -.015em">Kraftzirkel</span>
+            <span style="font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: #9BA3AF">18:00 – 19:00 · Kursraum 2</span>
+            <span class="neben">Marek T.</span>
+          </div>
+          <div class="haken" style="width: 26px; height: 26px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0A0B0D" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+        </div>
+        <div class="trenner"></div>
+        <div class="fuss">
+          <span class="fusstext">Abmelden bis 16:00 möglich</span>
+          <span class="abmelden">Abmelden</span>
+        </div>
+      </div>
+      <div class="karte warte">
+        <div style="padding: 16px; display: flex; gap: 12px; align-items: flex-start">
+          <div class="datum"><span class="datum-k" style="color: #FFB020">DO</span><span class="datum-n">27</span></div>
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 18px; font-weight: 800; letter-spacing: -.015em">Spinning</span>
+            <span style="font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: #9BA3AF">19:15 – 20:15 · Cycling-Raum</span>
+            
+          </div>
+          <div class="platz"><span class="num" style="font-size: 20px; color: #FFB020">3</span><span style="font-size: 9px; font-weight: 800; letter-spacing: 1px; color: #FFB020">PLATZ</span></div>
+        </div>
+        <div class="trenner"></div>
+        <div class="fuss">
+          <span class="fusstext">Abmelden jederzeit möglich</span>
+          <span class="abmelden">Abmelden</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="abschnitt">
+      <div class="eyebrow">Alle Kurse</div>
+    <div class="woche">
+      <div class="tag"><div class="tagbox"><span class="kuerzel">MO</span><span class="tagnr">24</span></div><div class="punkt" style="background: #5C636E"></div></div>
+      <div class="tag"><div class="tagbox"><span class="kuerzel">DI</span><span class="tagnr">25</span></div><div class="punkt" style="background: #5C636E"></div></div>
+      <div class="tag"><div class="tagbox"><span class="kuerzel">MI</span><span class="tagnr">26</span></div><div class="punkt" style="background: #5C636E"></div></div>
+      <div class="tag"><div class="tagbox on"><span class="kuerzel">DO</span><span class="tagnr">27</span></div><div class="punkt" style="background: #D4FF3F"></div></div>
+      <div class="tag"><div class="tagbox"><span class="kuerzel">FR</span><span class="tagnr">28</span></div><div class="punkt" style="background: #5C636E"></div></div>
+      <div class="tag"><div class="tagbox"><span class="kuerzel">SA</span><span class="tagnr">29</span></div><div class="punkt"></div></div>
+      <div class="tag"><div class="tagbox"><span class="kuerzel">SO</span><span class="tagnr">30</span></div><div class="punkt" style="background: #5C636E"></div></div>
+    </div>
+    </div>
+
+    <div class="abschnitt">
+      <div class="eyebrow">Heute · Do, 27. November</div>
+      <div class="liste">
+        <div class="zeile" style="background: #14161A80">
+          <div class="zeit"><span class="num" style="font-size: 17px; color: #9BA3AF">09:00</span><span class="zahl">45 min</span></div>
+          <div class="mitte"><span class="name" style="color: #9BA3AF">Rückenfit</span><span class="neben">Sabine K. · Kursraum 1</span></div>
+          <div style="flex: none; display: flex; gap: 8px; align-items: center"><span class="chip" style="color: #9BA3AF; border: 1px solid #9BA3AF">VORBEI</span><svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 5 7 7-7 7"/></svg></div>
+        </div>
+        <div class="zeile on">
+          <div class="zeit"><span class="num" style="font-size: 17px">18:00</span><span class="zahl">60 min</span></div>
+          <div class="mitte"><span class="name" style="font-weight: 800">Kraftzirkel</span><span class="neben">Marek T. · Kursraum 2</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span></div><span class="zahl">12 von 16</span></div></div>
+          <div class="haken" style="width: 26px; height: 26px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0A0B0D" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+        </div>
+        <div class="zeile warte">
+          <div class="zeit"><span class="num" style="font-size: 17px">19:15</span><span class="zahl">60 min</span></div>
+          <div class="mitte"><span class="name" style="font-weight: 800">Spinning</span><span class="neben">Anna B. · Cycling-Raum</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span></div><span class="zahl">20 von 20</span></div></div>
+          <div class="platz"><span class="num" style="font-size: 20px; color: #FFB020">3</span><span style="font-size: 9px; font-weight: 800; letter-spacing: 1px; color: #FFB020">PLATZ</span></div>
+        </div>
+        <div class="zeile">
+          <div class="zeit"><span class="num" style="font-size: 17px">20:00</span><span class="zahl">45 min</span></div>
+          <div class="mitte"><span class="name">Beweglichkeit</span><span class="neben">Sabine K. · Kursraum 1</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="zahl">6 von 20</span></div></div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 5 7 7-7 7"/></svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tabs">
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+      Home
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9v6M7.5 6.5v11M16.5 6.5v11M20 9v6M7.5 12h9"/></svg>
+      Training
+    </div>
+    <div class="tab on">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.2" width="17" height="15.3" rx="2.6"/><path d="M8 3v4M16 3v4M3.5 10.2h17"/></svg>
+      Kurse
+    </div>
+    <div class="tab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.5 3.3-5.8 7.2-5.8s7.2 2.3 7.2 5.8"/></svg>
+      Profil
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

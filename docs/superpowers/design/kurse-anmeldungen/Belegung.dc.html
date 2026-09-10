@@ -1,0 +1,207 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .abschnitt { display: flex; flex-direction: column; gap: 12px; }
+    .woche { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+    .tag { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .tagbox { width: 100%; height: 44px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #9BA3AF; }
+    .tagbox.on { background: #D4FF3F; color: #0A0B0D; }
+    .kuerzel { font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+    .tagnr { font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+    .punkt { width: 5px; height: 5px; border-radius: 50%; }
+    .belegung { display: flex; align-items: center; gap: 8px; padding-top: 2px; }
+    .balken { display: flex; gap: 2px; width: 132px; height: 7px; flex: none; }
+    .balken > span { flex: 1 1 0; min-width: 0; border-radius: 1.5px; background: #2A2E36; }
+    .balken > span.belegt { background: #D4FF3F; }
+    .liste { display: flex; flex-direction: column; gap: 12px; }
+    .zeile { background: #14161A; border-radius: 12px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
+    .zeile.on { box-shadow: inset 0 0 0 1.5px #D4FF3F; }
+    .zeile.warte { box-shadow: inset 0 0 0 1px #FFB02055; }
+    .zeit { width: 54px; flex: none; display: flex; flex-direction: column; gap: 4px; }
+    .mitte { flex-grow: 1; display: flex; flex-direction: column; gap: 4px; }
+    .name { font-size: 16px; font-weight: 700; }
+    .neben { font-size: 12px; color: #9BA3AF; }
+    .zahl { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; color: #9BA3AF; }
+    .chip { font-size: 10px; font-weight: 800; letter-spacing: .7px; border-radius: 999px; padding: 4px 8px; white-space: nowrap; }
+    .chevron { flex: none; margin-top: 2px; }
+    .karte { background: #14161A; border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 0 1.5px #D4FF3F; }
+    .karte.warte { box-shadow: inset 0 0 0 1px #FFB02055; }
+    .trenner { height: 1px; background: #2A2E36; }
+    .fuss { padding: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .fusstext { font-size: 12px; color: #9BA3AF; line-height: 1.4; }
+    .abmelden { flex: none; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #FF5A4E; }
+    .datum { width: 46px; flex: none; padding: 8px 0; background: #1D2026; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .datum-k { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; }
+    .datum-n { font-size: 19px; font-weight: 900; font-variant-numeric: tabular-nums; }
+    .haken { width: 26px; height: 26px; flex: none; border-radius: 50%; background: #D4FF3F; display: flex; align-items: center; justify-content: center; }
+    .platz { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .blatt { width: 900px; background: #0A0B0D; color: #F2F4F7; padding: 48px 56px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 40px; }
+    .h1 { font-size: 40px; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; line-height: 1; }
+    .h2 { font-size: 22px; font-weight: 900; letter-spacing: -.02em; text-transform: uppercase; }
+    .regel { height: 1px; background: #2A2E36; }
+    .cap { font-size: 13px; color: #9BA3AF; line-height: 1.55; }
+    .cap b { color: #F2F4F7; font-weight: 700; }
+    .mono { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; color: #5C636E; }
+    code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; color: #D4FF3F; }
+    .zeile, .karte, .eck { width: 353px; box-sizing: border-box; }
+    .tagbox { width: 44px; }
+    .probe { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 122px; }
+    .spalte { display: flex; flex-direction: column; gap: 10px; }
+    .notiz { border: 1px solid #2A2E36; border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; }
+    .notiz p { margin: 0; font-size: 13px; line-height: 1.55; color: #9BA3AF; }
+    .notiz b { color: #F2F4F7; font-weight: 700; }
+    .reihe { display: flex; align-items: center; gap: 16px; }
+    .reihe .lab { width: 150px; flex: none; font-size: 13px; color: #9BA3AF; }
+    .eck { background: #14161A; border-radius: 14px; border: 1px solid #2A2E36; overflow: hidden; }
+    .eckzeile { padding: 12px; min-height: 44px; display: flex; align-items: center; gap: 12px; }
+    .ecklabel { font-size: 15px; font-weight: 600; color: #9BA3AF; }
+    .eckwert { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; color: #F2F4F7; }
+  </style>
+</helmet>
+
+<div class="blatt">
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <div class="eyebrow">Kurse · Wochenplan mit Anmeldungen</div>
+    <div class="h1">Belegung</div>
+    <div class="cap" style="max-width: 640px">Statt „12 von 16“ ein Segment je Platz. Kein Füllstand, sondern abzählbare Plätze — wer hinsieht, sieht sofort, ob noch zwei oder noch zehn frei sind, ohne zu lesen.</div>
+  </div>
+
+  <div class="regel"></div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div class="h2">1 · Anatomie</div>
+    <div class="cap" style="max-width: 640px">132&#8239;pt breit, 7&#8239;pt hoch, Segmentradius 1,5&#8239;pt. Leerer Platz <code>line · 2A2E36</code>, belegter Platz <code>accent · D4FF3F</code>. Die Segmente teilen sich die Breite (<code>flex: 1</code>), nicht der Abstand — die Leiste ist bei jeder Kapazität gleich breit.</div>
+  <div class="reihe"><span class="lab" style="width: 150px">8 Plätze</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span></div><span class="zahl">5 von 8</span></div><span class="mono">Abstand 2 pt</span></div>
+  <div class="reihe"><span class="lab" style="width: 150px">11 Plätze</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="zahl">5 von 11</span></div><span class="mono">Abstand 2 pt</span></div>
+  <div class="reihe"><span class="lab" style="width: 150px">16 Plätze</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span></div><span class="zahl">12 von 16</span></div><span class="mono">Abstand 2 pt</span></div>
+  <div class="reihe"><span class="lab" style="width: 150px">20 Plätze</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="zahl">6 von 20</span></div><span class="mono">Abstand 2 pt</span></div>
+  <div class="reihe"><span class="lab" style="width: 150px">30 Plätze</span><div class="belegung"><div class="balken" style="width: 132px; gap: 1px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="zahl">24 von 30</span></div><span class="mono">Abstand 1 pt</span></div>
+  <div class="reihe"><span class="lab" style="width: 150px">40 Plätze</span><div class="belegung"><div class="balken" style="width: 132px; gap: 1px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="zahl">31 von 40</span></div><span class="mono">Grenze der Lesbarkeit</span></div>
+    <div class="cap" style="max-width: 640px">Ab 25 Plätzen fällt der Abstand von 2 auf 1&#8239;pt, sonst wird der Spalt breiter als das Segment. Jenseits von etwa 40 Plätzen trägt die Leiste nichts mehr — dann bleibt nur die Zahl. <b>Frag im Studio nach der größten Kursgröße</b>, bevor das festgeschrieben wird.</div>
+  </div>
+
+  <div class="regel"></div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div class="h2">2 · In der Kursdetailseite</div>
+    <div class="cap" style="max-width: 640px">Die Detailseite hat die Zahl schon: <code>platzText</code> füllt die Eckdaten-Zeile „Plätze“ mit „12 von 16“. Die Leiste tritt links neben die Zahl, in derselben Zeile — kein neuer Block, keine zweite Aussage.</div>
+    <div style="display: flex; gap: 24px; flex-wrap: wrap">
+      <div class="spalte">
+        <div class="eyebrow" style="color: #5C636E">Vorher</div>
+        <div class="eck">
+          <div class="eckzeile"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex: none; width: 20px"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span class="ecklabel">Beginn</span><span style="flex-grow: 1"></span><span class="eckwert">18:00 – 19:00</span></div>
+          <div class="trenner"></div>
+          <div class="eckzeile"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex: none; width: 20px"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c0-2.8 2.5-4.6 5.5-4.6s5.5 1.8 5.5 4.6"/><path d="M16 5.6a3 3 0 0 1 0 5.8"/><path d="M17.5 14.8c1.9.5 3.2 1.9 3.2 4.2"/></svg><span class="ecklabel">Plätze</span><span style="flex-grow: 1"></span><span class="eckwert">12 von 16</span></div>
+        </div>
+      </div>
+      <div class="spalte">
+        <div class="eyebrow" style="color: #D4FF3F">Nachher</div>
+        <div class="eck">
+          <div class="eckzeile"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex: none; width: 20px"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span class="ecklabel">Beginn</span><span style="flex-grow: 1"></span><span class="eckwert">18:00 – 19:00</span></div>
+          <div class="trenner"></div>
+          <div class="eckzeile"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex: none; width: 20px"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c0-2.8 2.5-4.6 5.5-4.6s5.5 1.8 5.5 4.6"/><path d="M16 5.6a3 3 0 0 1 0 5.8"/><path d="M17.5 14.8c1.9.5 3.2 1.9 3.2 4.2"/></svg><span class="ecklabel">Plätze</span><span style="flex-grow: 1"></span><div class="balken" style="width: 96px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span></div><span class="eckwert">12 von 16</span></div>
+        </div>
+        <div class="cap" style="width: 353px">Leiste hier 96&#8239;pt statt 132 — die Zeile trägt links schon Symbol und Label.</div>
+      </div>
+    </div>
+    <div class="notiz" style="max-width: 720px">
+      <p><b>Die Bedingungen bleiben, wie sie sind.</b> <code>platzText</code> gibt schon heute <code>nil</code> zurück bei <i>vorbei</i> und <i>abgesagt</i>, ohne Netz und wenn der Abruf zu alt ist (<code>herkunft.zeigtBelegung</code>). Fällt die Zahl weg, fällt die Leiste mit — eine Leiste von vorhin ist so falsch wie eine Zahl von vorhin.</p>
+    </div>
+  </div>
+
+  <div class="regel"></div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div class="h2">3 · Im Tagesplan</div>
+    <div style="display: flex; gap: 24px; flex-wrap: wrap">
+      <div class="spalte">
+        <div class="eyebrow" style="color: #5C636E">Frei</div>
+        <div class="zeile">
+          <div class="zeit"><span class="num" style="font-size: 17px">20:00</span><span class="zahl">45 min</span></div>
+          <div class="mitte"><span class="name">Beweglichkeit</span><span class="neben">Sabine K. · Kursraum 1</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="zahl">6 von 20</span></div></div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 5 7 7-7 7"/></svg>
+        </div>
+        <div class="eyebrow" style="color: #D4FF3F; padding-top: 6px">Angemeldet</div>
+        <div class="zeile on">
+          <div class="zeit"><span class="num" style="font-size: 17px">18:00</span><span class="zahl">60 min</span></div>
+          <div class="mitte"><span class="name" style="font-weight: 800">Kraftzirkel</span><span class="neben">Marek T. · Kursraum 2</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span></div><span class="zahl">12 von 16</span></div></div>
+          <div class="haken" style="width: 26px; height: 26px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0A0B0D" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+        </div>
+      </div>
+      <div class="spalte">
+        <div class="eyebrow" style="color: #FFB020">Warteliste</div>
+        <div class="zeile warte">
+          <div class="zeit"><span class="num" style="font-size: 17px">19:15</span><span class="zahl">60 min</span></div>
+          <div class="mitte"><span class="name" style="font-weight: 800">Spinning</span><span class="neben">Anna B. · Cycling-Raum</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span></div><span class="zahl">20 von 20</span></div></div>
+          <div class="platz"><span class="num" style="font-size: 20px; color: #FFB020">3</span><span style="font-size: 9px; font-weight: 800; letter-spacing: 1px; color: #FFB020">PLATZ</span></div>
+        </div>
+        <div class="eyebrow" style="color: #5C636E; padding-top: 6px">Vorbei · keine Leiste</div>
+        <div class="zeile" style="background: #14161A80">
+          <div class="zeit"><span class="num" style="font-size: 17px; color: #9BA3AF">09:00</span><span class="zahl">45 min</span></div>
+          <div class="mitte"><span class="name" style="color: #9BA3AF">Rückenfit</span><span class="neben">Sabine K. · Kursraum 1</span></div>
+          <div style="flex: none; display: flex; gap: 8px; align-items: center"><span class="chip" style="color: #9BA3AF; border: 1px solid #9BA3AF">VORBEI</span><svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 5 7 7-7 7"/></svg></div>
+        </div>
+      </div>
+    </div>
+    <div class="cap" style="max-width: 640px">Die Zahl bleibt neben der Leiste. Sie ist exakt, sie ist das, was VoiceOver vorliest, und sie hält die Aussage, wenn die Leiste bei großen Kursen nichts mehr hergibt. <code>zeigtBelegung</code> bleibt unverändert: bei <i>vorbei</i> und <i>abgesagt</i> weder Leiste noch Zahl.</div>
+  </div>
+
+  <div class="regel"></div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div class="h2">4 · Zwei Fragen dazu</div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px">
+
+      <div class="spalte">
+        <div class="notiz">
+          <p><b>Voll ist ganz grün.</b> Belegte Plätze grün heißt: je voller der Kurs, desto grüner die Zeile. Ausgerechnet der Kurs, in den du nicht mehr reinkommst, leuchtet am stärksten.</p>
+          <p>Umgekehrt gelesen wäre es <b>freie</b> Plätze grün: viel Grün = viel Platz, kein Grün = voll. Dieselbe Grafik, gegenläufige Bedeutung.</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px 0 0">
+            <div class="reihe"><span class="lab" style="width: 118px">belegt = grün</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="zahl">6 von 20</span></div></div>
+            <div class="reihe"><span class="lab" style="width: 118px">belegt = grün</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span></div><span class="zahl">20 von 20</span></div></div>
+          <div class="regel" style="margin: 6px 0"></div>
+            <div class="reihe"><span class="lab" style="width: 118px">frei = grün</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span></span><span></span><span></span><span></span><span></span><span></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span></div><span class="zahl">6 von 20</span></div></div>
+            <div class="reihe"><span class="lab" style="width: 118px">frei = grün</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="zahl">20 von 20</span></div></div>
+        </div>
+      </div>
+
+      <div class="spalte">
+        <div class="notiz">
+          <p><b>Drei Grüntöne in einer Zeile.</b> Auf der angemeldeten Zeile trägt Grün zwei Bedeutungen gleichzeitig: Kontur und Haken heißen „das ist deiner“, die Leiste heißt „belegter Platz“.</p>
+          <p>Möglicher Ausweg: in der angemeldeten Zeile bleibt die Leiste gedeckt — Grün heißt dort nur noch „deins“.</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px 0 0">
+          <div class="eyebrow" style="color: #5C636E">Wie entworfen</div>
+        <div class="zeile on">
+          <div class="zeit"><span class="num" style="font-size: 17px">18:00</span><span class="zahl">60 min</span></div>
+          <div class="mitte"><span class="name" style="font-weight: 800">Kraftzirkel</span><span class="neben">Marek T. · Kursraum 2</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span></div><span class="zahl">12 von 16</span></div></div>
+          <div class="haken" style="width: 26px; height: 26px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0A0B0D" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+        </div>
+          <div class="eyebrow" style="color: #5C636E; padding-top: 6px">Leiste gedeckt</div>
+        <div class="zeile on">
+          <div class="zeit"><span class="num" style="font-size: 17px">18:00</span><span class="zahl">60 min</span></div>
+          <div class="mitte"><span class="name" style="font-weight: 800">Kraftzirkel</span><span class="neben">Marek T. · Kursraum 2</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt" style="background: #9BA3AF"></span><span class="belegt" style="background: #9BA3AF"></span><span class="belegt" style="background: #9BA3AF"></span><span class="belegt" style="background: #9BA3AF"></span><span class="belegt" style="background: #9BA3AF"></span><span class="belegt" style="background: #9BA3AF"></span><span class="belegt" style="background: #9BA3AF"></span><span class="belegt" style="background: #9BA3AF"></span><span class="belegt" style="background: #9BA3AF"></span><span class="belegt" style="background: #9BA3AF"></span><span class="belegt" style="background: #9BA3AF"></span><span class="belegt" style="background: #9BA3AF"></span><span></span><span></span><span></span><span></span></div><span class="zahl">12 von 16</span></div></div>
+          <div class="haken" style="width: 26px; height: 26px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0A0B0D" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+        </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

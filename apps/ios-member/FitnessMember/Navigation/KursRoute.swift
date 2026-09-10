@@ -2,10 +2,14 @@ import Foundation
 
 /// Der typisierte Pfad des Kurse-Tabs.
 ///
-/// `KursDetailView` und `KurseMeineView` sind keine Tabs -- sie werden als
-/// Push INNERHALB von Kurse geoeffnet und behalten die Tab-Leiste
-/// (designsystem.md SS11), genau wie `GeraetRoute` es fuer den
-/// Training-Tab tut.
+/// Seit die eigenen Anmeldungen als Band auf dem Wochenplan stehen
+/// (`KurseBandView`), gibt es nur noch ein Ziel. `.meine` ist damit
+/// weggefallen -- und mit ihm der Textknopf oben rechts, der der einzige
+/// Weg dorthin war.
+///
+/// Ein `enum` mit einem Fall statt eines nackten `String`-Pfads: der
+/// naechste Push (etwa eine Kursbeschreibung) soll wieder typisiert
+/// danebenstehen koennen, ohne dass der Pfad umgebaut werden muss.
 ///
 /// `KursDetailView(sessionId:)` hat bewusst keinen eigenen Zurueck-Knopf --
 /// die Signatur gibt keinen Rueckweg her, und der Screen verlaesst sich
@@ -13,5 +17,4 @@ import Foundation
 /// nicht als Push in einem solchen Stack geoeffnet, sitzt das Mitglied fest.
 enum KursRoute: Hashable {
     case detail(sessionId: String)
-    case meine
 }

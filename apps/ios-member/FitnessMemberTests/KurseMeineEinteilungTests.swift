@@ -163,3 +163,62 @@ struct KurseMeineAbmeldeZustandTests {
         #expect(zustand == .laeuft)
     }
 }
+
+/// Das Band auf dem Kurse-Screen zeigt die eigenen Anmeldungen als EINE
+/// Liste -- die drei Abschnitte von "Meine Kurse" gibt es dort nicht mehr.
+struct KurseMeineEinteilungAlleZeilenTests {
+    private let zeitzone = "Europe/Berlin"
+    /// Donnerstag, 2026-09-10, 12:00 Uhr Europe/Berlin -- dieselbe
+    /// Referenzwoche wie oben.
+    private let jetzt = ISO8601DateFormatter().date(from: "2026-09-10T10:00:00Z")!
+
+    private func termin(
+        id: String, startVersatzStunden: Double, ownStatus: String = "booked"
+    ) -> GespeicherterTermin {
+        GespeicherterTermin(
+            CourseWeekSession(
+                sessionId: id, templateId: "t1", name: "Kurs \(id)", description: nil,
+                startsAt: ISO8601DateFormatter().string(
+                    from: jetzt.addingTimeInterval(startVersatzStunden * 3600)),
+                localDay: "2026-09-10", durationMin: 60, capacity: 16,
+                room: nil, instructorName: nil, status: "planned",
+                bookedCount: 12, waitlistCount: 0, freeSeats: 4,
+                ownStatus: ownStatus, ownBookingId: "b-\(id)", ownWaitlistPosition: nil))
+    }
+
+    /// Zeitlich aufsteigend ueber alle drei Abschnitte hinweg -- im Band
+    /// steht der naechste Kurs oben, ganz gleich ob er ein bestaetigter
+    /// Platz, eine Warteliste oder ein Termin naechster Woche ist.
+    @Test func alleZeilenStehenZeitlichAufsteigend() {
+        let einteilung = KurseMeineEinteilung.bilden(
+            aus: [
+                termin(id: "spaeter", startVersatzStunden: 24 * 9),
+                termin(id: "warteliste", startVersatzStunden: 5, ownStatus: "waitlisted"),
+                termin(id: "angemeldet", startVersatzStunden: 2),
+            ],
+            jetzt: jetzt, zeitzone: zeitzone)
+
+        #expect(einteilung.alleZeilen.map(\.id) == ["angemeldet", "warteliste", "spaeter"])
+    }
+
+    @Test func ohneAnmeldungenIstDieListeLeer() {
+        let einteilung = KurseMeineEinteilung.bilden(aus: [], jetzt: jetzt, zeitzone: zeitzone)
+
+        #expect(einteilung.alleZeilen.isEmpty)
+        #expect(einteilung.istLeer)
+    }
+
+    @Test func alleZeilenEnthaeltGenauDieDreiAbschnitte() {
+        let einteilung = KurseMeineEinteilung.bilden(
+            aus: [
+                termin(id: "a", startVersatzStunden: 2),
+                termin(id: "w", startVersatzStunden: 5, ownStatus: "waitlisted"),
+                termin(id: "s", startVersatzStunden: 24 * 9),
+            ],
+            jetzt: jetzt, zeitzone: zeitzone)
+
+        let summeDerAbschnitte =
+            einteilung.angemeldet.count + einteilung.warteliste.count + einteilung.spaeter.count
+        #expect(einteilung.alleZeilen.count == summeDerAbschnitte)
+    }
+}

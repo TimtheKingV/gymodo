@@ -439,7 +439,22 @@ struct KursDetailView: View {
             }
             if let platz {
                 trenner
-                eckdatenZeile(icon: "person.2", label: "Plätze", wert: platz)
+                eckdatenZeile(icon: "person.2", label: "Plätze", wert: platz) {
+                    // Die Leiste tritt neben die Zahl, nicht an ihre Stelle:
+                    // dieselbe Aussage, einmal zum Ablesen und einmal fuer
+                    // den Blick. Schmaler als im Tagesplan (96 statt 132),
+                    // weil die Zeile links schon Symbol und Label traegt.
+                    //
+                    // `platz` ist die eine Bedingung fuer beides -- steht
+                    // dort nichts (vorbei, abgesagt, ohne Netz, zu alter
+                    // Abruf), gibt es auch keine Leiste. Eine Leiste von
+                    // vorhin waere dieselbe Unwahrheit wie eine Zahl von
+                    // vorhin (Spec 5.2).
+                    if let belegung = ansicht.belegung {
+                        BelegungsleisteView(
+                            belegt: belegung.belegt, kapazitaet: belegung.kapazitaet, breite: 96)
+                    }
+                }
             }
         }
         .background(DesignSystem.Color.surface)
@@ -460,7 +475,10 @@ struct KursDetailView: View {
     /// ohne Ziffern (Trainername, Raum): die Eigenschaft wirkt nur auf
     /// Ziffern-Glyphen, Buchstaben bleiben unveraendert -- eine Fallunter-
     /// scheidung "istZahl" waere hier reine Redundanz.
-    private func eckdatenZeile(icon: String, label: String, wert: String) -> some View {
+    private func eckdatenZeile<Beiwerk: View>(
+        icon: String, label: String, wert: String,
+        @ViewBuilder beiwerk: () -> Beiwerk = { EmptyView() }
+    ) -> some View {
         HStack(spacing: DesignSystem.Spacing.s12) {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .semibold))
@@ -470,6 +488,7 @@ struct KursDetailView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(DesignSystem.Color.textMuted)
             Spacer()
+            beiwerk()
             Text(wert)
                 .font(.system(size: 16, weight: .bold).monospacedDigit())
                 .foregroundStyle(DesignSystem.Color.text)

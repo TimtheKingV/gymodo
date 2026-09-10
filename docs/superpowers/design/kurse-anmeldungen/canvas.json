@@ -1,0 +1,35 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 393, "h": 852, "title": "01 · Heute · diese Woche" },
+    { "file": "NaechsteWoche.dc.html", "x": 473, "y": 0, "w": 393, "h": 852, "title": "02 · Nach dem Wischen · nächste Woche" },
+    { "file": "VieleAnmeldungen.dc.html", "x": 946, "y": 0, "w": 393, "h": 852, "title": "03 · Wenn es mehr Anmeldungen werden" },
+    { "file": "TagOhneKurse.dc.html", "x": 1419, "y": 0, "w": 393, "h": 852, "title": "04 · Tag ohne Kurse" },
+    { "file": "OhneAnmeldung.dc.html", "x": 1892, "y": 0, "w": 393, "h": 852, "title": "05 · Niemand angemeldet" },
+    { "file": "Belegung.dc.html", "x": 0, "y": 1010, "w": 900, "h": 2150, "title": "06 · Belegungsleiste · auch Kursdetail" },
+    { "file": "Bausteine.dc.html", "x": 1020, "y": 1010, "w": 900, "h": 2700, "title": "07 · Bausteine & Entscheidungen" }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -340,
+      "w": 866,
+      "text": "Umgesetzt:\n\n• Beide Anmeldungen im Band tragen jetzt den Abmeldehinweis — auch die Warteliste. Dort steht „Abmelden jederzeit möglich“ statt einer Uhrzeit: die Stornofrist gilt laut 0036_kurse_platzvergabe.sql ausdrücklich nur für einen BESTÄTIGTEN Platz.\n• Über dem Streifen nur noch die Überschrift „Alle Kurse“. Keine Wochenleiste, keine Pfeile — gewischt wird auf den Tagesboxen selbst.\n• Die Tageszeile trägt jetzt das Datum („Heute · Do, 27. November“). Ohne Wochenleiste wäre nach zwei Wischern sonst unklar, welcher Monat das ist.\n• Belegungsleiste auch in der Kursdetailseite, in der Eckdaten-Zeile „Plätze“ neben der Zahl. Blatt 06.\n\nIm Tagesplan bleibt es kompakt: Kontur und Marke, kein zweiter Abmelden-Knopf. Der rote Knopf steht genau einmal auf dem Screen."
+    },
+    {
+      "id": "hoehe",
+      "x": 946,
+      "y": -340,
+      "w": 393,
+      "text": "Das Band ist mit zwei Anmeldungen jetzt 356 pt hoch — der Tagesplan beginnt erst bei rund 600 pt, es bleiben zwei Kurszeilen sichtbar. Der 44-pt-Knopf auf beiden Karten ist der Grund.\n\nArtboard 03 zeigt den Hebel: die nächste Anmeldung voll, jede weitere als Zeile. Ab drei Anmeldungen ist das nötig, nicht Feinschliff."
+    },
+    {
+      "id": "offen",
+      "x": 1419,
+      "y": -340,
+      "w": 866,
+      "text": "Drei Dinge zum Nachfassen:\n\n1. Ohne Pfeile ist der antippbare Zwilling der Wischgeste weg. Der Streifen MUSS deshalb ein echter Paging-Container werden (TabView(.page) oder ScrollView mit paging), plus accessibilityScrollAction — sonst kann ein VoiceOver-Nutzer die Woche gar nicht mehr wechseln. Blatt 07, Abschnitt 2.\n\n2. Grün = belegter Platz heißt: je voller der Kurs, desto grüner. Blatt 06 stellt die Gegenlesart (frei = grün) daneben.\n\n3. Auf der angemeldeten Zeile heißt Grün zweierlei — „deiner“ und „belegter Platz“. Blatt 06 zeigt auch die Fassung mit gedeckter Leiste."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

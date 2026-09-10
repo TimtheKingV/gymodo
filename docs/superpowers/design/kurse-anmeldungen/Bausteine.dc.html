@@ -1,0 +1,264 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .abschnitt { display: flex; flex-direction: column; gap: 12px; }
+    .woche { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+    .tag { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .tagbox { width: 100%; height: 44px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #9BA3AF; }
+    .tagbox.on { background: #D4FF3F; color: #0A0B0D; }
+    .kuerzel { font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+    .tagnr { font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+    .punkt { width: 5px; height: 5px; border-radius: 50%; }
+    .belegung { display: flex; align-items: center; gap: 8px; padding-top: 2px; }
+    .balken { display: flex; gap: 2px; width: 132px; height: 7px; flex: none; }
+    .balken > span { flex: 1 1 0; min-width: 0; border-radius: 1.5px; background: #2A2E36; }
+    .balken > span.belegt { background: #D4FF3F; }
+    .liste { display: flex; flex-direction: column; gap: 12px; }
+    .zeile { background: #14161A; border-radius: 12px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
+    .zeile.on { box-shadow: inset 0 0 0 1.5px #D4FF3F; }
+    .zeile.warte { box-shadow: inset 0 0 0 1px #FFB02055; }
+    .zeit { width: 54px; flex: none; display: flex; flex-direction: column; gap: 4px; }
+    .mitte { flex-grow: 1; display: flex; flex-direction: column; gap: 4px; }
+    .name { font-size: 16px; font-weight: 700; }
+    .neben { font-size: 12px; color: #9BA3AF; }
+    .zahl { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; color: #9BA3AF; }
+    .chip { font-size: 10px; font-weight: 800; letter-spacing: .7px; border-radius: 999px; padding: 4px 8px; white-space: nowrap; }
+    .chevron { flex: none; margin-top: 2px; }
+    .karte { background: #14161A; border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 0 1.5px #D4FF3F; }
+    .karte.warte { box-shadow: inset 0 0 0 1px #FFB02055; }
+    .trenner { height: 1px; background: #2A2E36; }
+    .fuss { padding: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .fusstext { font-size: 12px; color: #9BA3AF; line-height: 1.4; }
+    .abmelden { flex: none; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #FF5A4E; }
+    .datum { width: 46px; flex: none; padding: 8px 0; background: #1D2026; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .datum-k { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; }
+    .datum-n { font-size: 19px; font-weight: 900; font-variant-numeric: tabular-nums; }
+    .haken { width: 26px; height: 26px; flex: none; border-radius: 50%; background: #D4FF3F; display: flex; align-items: center; justify-content: center; }
+    .platz { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .blatt { width: 900px; background: #0A0B0D; color: #F2F4F7; padding: 48px 56px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 40px; }
+    .h1 { font-size: 40px; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; line-height: 1; }
+    .h2 { font-size: 22px; font-weight: 900; letter-spacing: -.02em; text-transform: uppercase; }
+    .regel { height: 1px; background: #2A2E36; }
+    .cap { font-size: 13px; color: #9BA3AF; line-height: 1.55; }
+    .cap b { color: #F2F4F7; font-weight: 700; }
+    .mono { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; color: #5C636E; }
+    code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; color: #D4FF3F; }
+    .zeile, .karte, .eck { width: 353px; box-sizing: border-box; }
+    .tagbox { width: 44px; }
+    .probe { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 122px; }
+    .spalte { display: flex; flex-direction: column; gap: 10px; }
+    .notiz { border: 1px solid #2A2E36; border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; }
+    .notiz p { margin: 0; font-size: 13px; line-height: 1.55; color: #9BA3AF; }
+    .notiz b { color: #F2F4F7; font-weight: 700; }
+    .reihe { display: flex; align-items: center; gap: 16px; }
+    .reihe .lab { width: 150px; flex: none; font-size: 13px; color: #9BA3AF; }
+    .eck { background: #14161A; border-radius: 14px; border: 1px solid #2A2E36; overflow: hidden; }
+    .eckzeile { padding: 12px; min-height: 44px; display: flex; align-items: center; gap: 12px; }
+    .ecklabel { font-size: 15px; font-weight: 600; color: #9BA3AF; }
+    .eckwert { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; color: #F2F4F7; }
+  </style>
+</helmet>
+
+<div class="blatt">
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <div class="eyebrow">Kurse · Wochenplan mit Anmeldungen</div>
+    <div class="h1">Bausteine</div>
+    <div class="cap" style="max-width: 640px">Alle Werte aus <code>DesignSystem.swift</code>. Neu sind drei Dinge: der Punkt unter der Tagesbox, der wischbare Wochenstreifen — und die Belegungsleiste, die ihr eigenes Blatt hat.</div>
+  </div>
+
+  <div class="regel"></div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div class="h2">1 · Tag im Wochenstreifen</div>
+    <div class="cap" style="max-width: 640px">Der Punkt sitzt <b>unter</b> der Box: 6&#8239;pt Abstand, 5&#8239;pt Durchmesser. Er ist ein Hinweis, keine Aussage — die Tagesliste bleibt die Wahrheit. Die Trefferfläche bleibt die Box mit ihren 44&#8239;pt; der Punkt vergrößert sie nicht.</div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap">
+  <div class="probe"><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><div class="tagbox"><span class="kuerzel">MO</span><span class="tagnr">24</span></div><div class="punkt" style="background: #5C636E"></div></div><div class="cap" style="text-align: center; font-size: 12px">Kurse an dem Tag</div><div class="mono">textFaint · 5C636E</div></div>
+  <div class="probe"><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><div class="tagbox"><span class="kuerzel">DI</span><span class="tagnr">25</span></div><div class="punkt" style="background: #D4FF3F"></div></div><div class="cap" style="text-align: center; font-size: 12px">Du bist angemeldet</div><div class="mono">accent · D4FF3F</div></div>
+  <div class="probe"><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><div class="tagbox"><span class="kuerzel">MI</span><span class="tagnr">26</span></div><div class="punkt"></div></div><div class="cap" style="text-align: center; font-size: 12px">Kein Kurs an dem Tag</div><div class="mono">kein Punkt, Platz bleibt</div></div>
+  <div class="probe"><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><div class="tagbox on"><span class="kuerzel">DO</span><span class="tagnr">27</span></div><div class="punkt" style="background: #D4FF3F"></div></div><div class="cap" style="text-align: center; font-size: 12px">Gewählt, angemeldet</div><div class="mono">Fläche accent + Punkt</div></div>
+  <div class="probe"><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><div class="tagbox on"><span class="kuerzel">FR</span><span class="tagnr">28</span></div><div class="punkt" style="background: #5C636E"></div></div><div class="cap" style="text-align: center; font-size: 12px">Gewählt, nicht angemeldet</div><div class="mono">Fläche accent</div></div>
+    </div>
+    <div class="notiz" style="max-width: 720px">
+      <p><b>Warteliste bekommt keinen grünen Punkt.</b> Grün heißt „dein Platz steht“ — dasselbe wie Kontur und Haken. Ein Wartelistentag trägt den gedeckten Punkt wie jeder andere Tag mit Kursen.</p>
+      <p><b>Kontrast.</b> Der gedeckte Punkt liegt bei rund 3,3&#8239;:&#8239;1 auf <code>bg</code> — über der 3&#8239;:&#8239;1-Schwelle für nicht-textliche Elemente, und er trägt nichts allein. VoiceOver liest ihn nicht als eigenes Element, sondern im Tageslabel mit: „Donnerstag, 27. Heute. 4 Kurse, du bist angemeldet.“</p>
+    </div>
+  </div>
+
+  <div class="regel"></div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div class="h2">2 · Wochenwechsel</div>
+    <div class="cap" style="max-width: 640px">Über dem Streifen steht nur noch die Überschrift <b>Alle Kurse</b> — keine Wochenleiste, keine Pfeile. Gewischt wird auf den Tagesboxen selbst, seitenweise.</div>
+
+    <div style="display: flex; gap: 40px; flex-wrap: wrap; align-items: flex-start">
+      <div class="spalte" style="width: 353px">
+        <div class="eyebrow" style="color: #5C636E">Diese Woche</div>
+        <div style="width: 353px; box-sizing: border-box; background: #14161A; border-radius: 12px; padding: 14px 8px; display: flex; flex-direction: column; gap: 12px">
+          <div class="eyebrow" style="padding-left: 6px">Alle Kurse</div>
+          <div class="woche">
+            <div class="tag"><div class="tagbox"><span class="kuerzel">MO</span><span class="tagnr">24</span></div><div class="punkt" style="background: #5C636E"></div></div>
+            <div class="tag"><div class="tagbox"><span class="kuerzel">DI</span><span class="tagnr">25</span></div><div class="punkt" style="background: #5C636E"></div></div>
+            <div class="tag"><div class="tagbox"><span class="kuerzel">MI</span><span class="tagnr">26</span></div><div class="punkt" style="background: #5C636E"></div></div>
+            <div class="tag"><div class="tagbox on"><span class="kuerzel">DO</span><span class="tagnr">27</span></div><div class="punkt" style="background: #D4FF3F"></div></div>
+            <div class="tag"><div class="tagbox"><span class="kuerzel">FR</span><span class="tagnr">28</span></div><div class="punkt" style="background: #5C636E"></div></div>
+            <div class="tag"><div class="tagbox"><span class="kuerzel">SA</span><span class="tagnr">29</span></div><div class="punkt"></div></div>
+            <div class="tag"><div class="tagbox"><span class="kuerzel">SO</span><span class="tagnr">30</span></div><div class="punkt" style="background: #5C636E"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="spalte" style="width: 353px">
+        <div class="eyebrow" style="color: #5C636E">Nach einem Wisch nach links</div>
+        <div style="width: 353px; box-sizing: border-box; background: #14161A; border-radius: 12px; padding: 14px 8px; display: flex; flex-direction: column; gap: 12px">
+          <div class="eyebrow" style="padding-left: 6px">Alle Kurse</div>
+          <div class="woche">
+            <div class="tag"><div class="tagbox on"><span class="kuerzel">MO</span><span class="tagnr">1</span></div><div class="punkt" style="background: #5C636E"></div></div>
+            <div class="tag"><div class="tagbox"><span class="kuerzel">DI</span><span class="tagnr">2</span></div><div class="punkt" style="background: #5C636E"></div></div>
+            <div class="tag"><div class="tagbox"><span class="kuerzel">MI</span><span class="tagnr">3</span></div><div class="punkt" style="background: #5C636E"></div></div>
+            <div class="tag"><div class="tagbox"><span class="kuerzel">DO</span><span class="tagnr">4</span></div><div class="punkt" style="background: #5C636E"></div></div>
+            <div class="tag"><div class="tagbox"><span class="kuerzel">FR</span><span class="tagnr">5</span></div><div class="punkt" style="background: #5C636E"></div></div>
+            <div class="tag"><div class="tagbox"><span class="kuerzel">SA</span><span class="tagnr">6</span></div><div class="punkt"></div></div>
+            <div class="tag"><div class="tagbox"><span class="kuerzel">SO</span><span class="tagnr">7</span></div><div class="punkt" style="background: #5C636E"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px">
+      <div class="notiz">
+        <p><b>Das muss ein echter Paging-Container sein</b> — <code>TabView(.page)</code> oder ein <code>ScrollView</code> mit <code>paging</code>, nicht eine selbstgebaute <code>DragGesture</code>. Mit den Pfeilen ist der antippbare Zwilling der Wischgeste weggefallen; nur ein echter Paging-Container gibt VoiceOver den Dreifinger-Wisch und den Rotor zurück.</p>
+        <p>Dazu eine <code>accessibilityScrollAction</code> am Streifen, die dieselbe Woche weiterschaltet. Ohne beides kann ein VoiceOver-Nutzer die Woche <b>gar nicht</b> mehr wechseln.</p>
+      </div>
+      <div class="notiz">
+        <p><b>Wie weit man kommt, entscheidet der Server.</b> <code>KurseStore.laden</code> holt ein Fenster: Montag dieser Woche bis <i>jetzt + 14 Tage</i>. Das sind zwei Wochen, an einem Sonntag drei. Weiter — und überhaupt zurück in vergangene Wochen — braucht einen zweiten Ladeweg.</p>
+        <p>Am Rand federt die Wischgeste zurück, statt in eine leere Woche zu laufen.</p>
+      </div>
+      <div class="notiz">
+        <p><b>Ohne Wochenleiste fehlt die Datumsangabe.</b> Deshalb trägt sie jetzt die Tageszeile unter dem Streifen: „Heute · Do, 27. November“, in der nächsten Woche „Mo, 1. Dezember“. Format wie <code>KursZeit.datumAusgeschrieben</code> (<code>ccc, d. MMMM</code>) — sonst weiß nach zwei Wischern niemand mehr, welcher Monat das ist.</p>
+      </div>
+      <div class="notiz">
+        <p><b>Der gewählte Tag beim Wechsel.</b> Vorschlag: beim Wischen in eine andere Woche wird der Montag der neuen Woche gewählt, beim Zurückwischen in die laufende Woche wieder der heutige Tag.</p>
+        <p>Das Band <i>Deine Kurse</i> wischt nicht mit — es zeigt immer alle Anmeldungen des ganzen Fensters, egal welche Woche im Streifen steht.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="regel"></div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div class="h2">3 · Anmeldung: zweimal auf dem Screen</div>
+    <div class="cap" style="max-width: 640px">Derselbe Kurs erscheint oben im Band und unten im Tagesplan. Deshalb tragen die beiden <b>verschiedene Lasten</b>: oben die Karte mit Datumsblock und dem Abmeldehinweis samt Knopf, unten nur die Markierung. So steht der rote Knopf genau einmal auf dem Screen und die Zeile im Plan bleibt so hoch wie ihre Nachbarn.</div>
+
+    <div style="display: flex; gap: 24px; flex-wrap: wrap">
+      <div class="spalte">
+        <div class="eyebrow" style="color: #D4FF3F">Im Band · angemeldet</div>
+      <div class="karte ">
+        <div style="padding: 16px; display: flex; gap: 12px; align-items: flex-start">
+          <div class="datum"><span class="datum-k" style="color: #D4FF3F">DO</span><span class="datum-n">27</span></div>
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 18px; font-weight: 800; letter-spacing: -.015em">Kraftzirkel</span>
+            <span style="font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: #9BA3AF">18:00 – 19:00 · Kursraum 2</span>
+            <span class="neben">Marek T.</span>
+          </div>
+          <div class="haken" style="width: 26px; height: 26px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0A0B0D" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+        </div>
+        <div class="trenner"></div>
+        <div class="fuss">
+          <span class="fusstext">Abmelden bis 16:00 möglich</span>
+          <span class="abmelden">Abmelden</span>
+        </div>
+      </div>
+      </div>
+      <div class="spalte">
+        <div class="eyebrow" style="color: #FFB020">Im Band · Warteliste</div>
+      <div class="karte warte">
+        <div style="padding: 16px; display: flex; gap: 12px; align-items: flex-start">
+          <div class="datum"><span class="datum-k" style="color: #FFB020">DO</span><span class="datum-n">27</span></div>
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 18px; font-weight: 800; letter-spacing: -.015em">Spinning</span>
+            <span style="font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: #9BA3AF">19:15 – 20:15 · Cycling-Raum</span>
+            
+          </div>
+          <div class="platz"><span class="num" style="font-size: 20px; color: #FFB020">3</span><span style="font-size: 9px; font-weight: 800; letter-spacing: 1px; color: #FFB020">PLATZ</span></div>
+        </div>
+        <div class="trenner"></div>
+        <div class="fuss">
+          <span class="fusstext">Abmelden jederzeit möglich</span>
+          <span class="abmelden">Abmelden</span>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <div class="notiz" style="max-width: 720px">
+      <p><b>Von der Warteliste kommt man jederzeit runter.</b> <code>0036_kurse_platzvergabe.sql</code> sagt es ausdrücklich: die Stornofrist „trifft nur das Mitglied selbst, nur einen <i>bestätigten</i> Platz und nur einen Termin, der stattfindet“. Deshalb steht auf der Wartelistenkarte <b>„Abmelden jederzeit möglich“</b> und keine Uhrzeit — eine Frist zu nennen, die es nicht gibt, wäre eine Falschaussage im Klartext.</p>
+    </div>
+
+    <div style="display: flex; gap: 24px; flex-wrap: wrap">
+      <div class="spalte">
+        <div class="eyebrow" style="color: #5C636E">Im Tagesplan · vorher</div>
+        <div class="zeile">
+          <div class="zeit"><span class="num" style="font-size: 17px">18:00</span><span class="zahl">60 min</span></div>
+          <div class="mitte"><span class="name">Kraftzirkel</span><span class="neben">Marek T. · Kursraum 2</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span></div><span class="zahl">12 von 16</span></div></div>
+          <div style="flex: none; display: flex; gap: 8px; align-items: center"><span class="chip" style="color: #9BA3AF; border: 1px solid #9BA3AF">ANGEMELDET</span><svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 5 7 7-7 7"/></svg></div>
+        </div>
+        <div class="zeile">
+          <div class="zeit"><span class="num" style="font-size: 17px">19:15</span><span class="zahl">60 min</span></div>
+          <div class="mitte"><span class="name">Spinning</span><span class="neben">Anna B. · Cycling-Raum</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span></div><span class="zahl">20 von 20</span></div></div>
+          <div style="flex: none; display: flex; gap: 8px; align-items: center"><span class="chip" style="color: #9BA3AF; border: 1px solid #9BA3AF">WARTELISTE</span><svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C636E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 5 7 7-7 7"/></svg></div>
+        </div>
+      </div>
+      <div class="spalte">
+        <div class="eyebrow" style="color: #5C636E">Im Tagesplan · nachher</div>
+        <div class="zeile on">
+          <div class="zeit"><span class="num" style="font-size: 17px">18:00</span><span class="zahl">60 min</span></div>
+          <div class="mitte"><span class="name" style="font-weight: 800">Kraftzirkel</span><span class="neben">Marek T. · Kursraum 2</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span></span><span></span><span></span><span></span></div><span class="zahl">12 von 16</span></div></div>
+          <div class="haken" style="width: 26px; height: 26px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0A0B0D" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+        </div>
+        <div class="zeile warte">
+          <div class="zeit"><span class="num" style="font-size: 17px">19:15</span><span class="zahl">60 min</span></div>
+          <div class="mitte"><span class="name" style="font-weight: 800">Spinning</span><span class="neben">Anna B. · Cycling-Raum</span><div class="belegung"><div class="balken" style="width: 132px; gap: 2px"><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span><span class="belegt"></span></div><span class="zahl">20 von 20</span></div></div>
+          <div class="platz"><span class="num" style="font-size: 20px; color: #FFB020">3</span><span style="font-size: 9px; font-weight: 800; letter-spacing: 1px; color: #FFB020">PLATZ</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="cap" style="max-width: 640px">Beide Chips fallen weg. Angemeldet: 1,5&#8239;pt Akzentkontur und Hakenplakette. Warteliste: 1&#8239;pt warngelbe Kontur und die Platznummer — dieselbe Marke wie oben auf der Karte. Gleiche Höhe wie jede andere Zeile.</div>
+  </div>
+
+  <div class="regel"></div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div class="h2">4 · Was dabei aufgegeben wird</div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+      <div class="notiz">
+        <p><b>Das Band ist jetzt 356&#8239;pt hoch.</b> Mit zwei Anmeldungen — beide mit Abmeldehinweis und 44&#8239;pt-Knopf — beginnt der Tagesplan erst bei rund 600&#8239;pt. Von 852&#8239;pt Schirm bleiben zwei Kurszeilen sichtbar.</p>
+        <p>Der Hebel dagegen liegt auf Artboard 03: die nächste Anmeldung voll, jede weitere als Zeile. Ab drei Anmeldungen ist das kein Feinschliff mehr, sondern nötig.</p>
+      </div>
+      <div class="notiz">
+        <p><b>Die Ein-Akzent-Regel fällt.</b> Beide Screens halten heute genau eine Akzentfläche. Zusammengelegt sind es der gewählte Tag, die Punkte, die Karte und jede Belegungsleiste.</p>
+        <p>Vorschlag für die neue Regel: <b>Fläche heißt gewählt, Kontur heißt deins.</b> Nur der gewählte Tag ist accent-<i>gefüllt</i>. Die Belegungsleiste passt da nicht hinein — siehe Blatt „Belegung“.</p>
+      </div>
+      <div class="notiz">
+        <p><b>Farbe darf den Status nicht allein tragen.</b> Ohne Chip bleiben Kontur und Haken — der Haken ist eine Form, keine Farbe. Bei der Warteliste trägt die Platznummer dieselbe Last.</p>
+        <p>VoiceOver braucht das Wort trotzdem: das <code>accessibilityLabel</code> der Zeile beginnt weiter mit „Angemeldet“ beziehungsweise „Warteliste, Platz 3“; Haken und Plakette bleiben <code>accessibilityHidden</code>.</p>
+      </div>
+      <div class="notiz">
+        <p><b>„Meine Kurse“ verschwindet als Screen.</b> Damit fallen der Knopf oben rechts, <code>KursRoute</code> und der eigene Ladeweg weg. <code>KurseMeineEinteilung</code> bleibt — sie füttert jetzt das Band. Der Abschnitt <i>Später</i> hat dort keinen eigenen Platz mehr.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

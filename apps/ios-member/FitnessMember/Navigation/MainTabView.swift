@@ -13,8 +13,8 @@ struct MainTabView: View {
     @State private var ausgewaehlterTab = 0
 
     /// Der typisierte Pfad des Kurse-Tabs, wie `pfad` in TrainingRootView
-    /// fuer GeraetRoute -- KursDetail und KurseMeine sind Pushes und
-    /// behalten die Tab-Leiste, statt eigene Tabs zu sein.
+    /// fuer GeraetRoute -- KursDetail ist ein Push und behaelt die
+    /// Tab-Leiste, statt ein eigener Tab zu sein.
     @State private var kursePfad: [KursRoute] = []
 
     var body: some View {
@@ -29,15 +29,12 @@ struct MainTabView: View {
 
             NavigationStack(path: $kursePfad) {
                 KurseWochenView(
-                    beiAuswahl: { termin in kursePfad.append(.detail(sessionId: termin.id)) },
-                    beiMeineKurse: { kursePfad.append(.meine) }
+                    beiAuswahl: { sessionId in kursePfad.append(.detail(sessionId: sessionId)) }
                 )
                 .navigationDestination(for: KursRoute.self) { route in
                     switch route {
                     case .detail(let sessionId):
                         KursDetailView(sessionId: sessionId)
-                    case .meine:
-                        KurseMeineView(beiAuswahl: { sessionId in kursePfad.append(.detail(sessionId: sessionId)) })
                     }
                 }
             }
