@@ -680,7 +680,55 @@ Nach dieser Aufgabe hat der Listenweg alles, was der Scan-Weg hat — bevor es e
 
 - [ ] **Step 1: Den fehlschlagenden Swift-Test schreiben**
 
-Create `apps/ios-member/FitnessMemberTests/GeraetKontextLadenTests.swift`:
+Das Testziel hat bereits `FakeGeraetLoader` und `GeraetTestdaten` (beide in `GeraetModelTests.swift`, beide nicht `private`). Keine zweiten Fassungen anlegen — den vorhandenen Fake erweitern.
+
+**1a.** In `apps/ios-member/FitnessMemberTests/GeraetModelTests.swift` den `FakeGeraetLoader` erweitern (nur die mit NEU markierten Stellen):
+
+```swift
+actor FakeGeraetLoader: GeraetLoading {
+    var kontextResult: Result<TagContextResponse, APIError> = .failure(.offline)
+    var calibrationResult: Result<RecordedCalibration, APIError> = .failure(.offline)
+
+    /// NEU -- wer gerufen wurde. Seit ein Geraet auch ohne Token erreichbar
+    /// ist, ist die Wegwahl selbst pruefenswert, nicht nur das Ergebnis.
+    private(set) var tagAufrufe: [String] = []
+    private(set) var machineAufrufe: [String] = []
+
+    func setKontext(_ value: Result<TagContextResponse, APIError>) { kontextResult = value }
+    func setCalibration(_ value: Result<RecordedCalibration, APIError>) { calibrationResult = value }
+
+    func tagContext(token: String) async throws(APIError) -> TagContextResponse {
+        tagAufrufe.append(token)   // NEU
+        switch kontextResult {
+        case .success(let value): return value
+        case .failure(let error): throw error
+        }
+    }
+
+    /// NEU. Liefert dasselbe wie tagContext: der Server liefert auf beiden
+    /// Wegen dieselbe Form, und geprueft wird hier der Weg, nicht der Inhalt.
+    func machineContext(machineId: String) async throws(APIError) -> TagContextResponse {
+        machineAufrufe.append(machineId)
+        switch kontextResult {
+        case .success(let value): return value
+        case .failure(let error): throw error
+        }
+    }
+
+    func recordCalibration(_ body: CalibrationWrite) async throws(APIError) -> RecordedCalibration {
+        switch calibrationResult {
+        case .success(let value): return value
+        case .failure(let error): throw error
+        }
+    }
+
+    func completeSession(sessionId: UUID) async throws(APIError) -> CompletedSession {
+        throw APIError.offline
+    }
+}
+```
+
+**1b.** Create `apps/ios-member/FitnessMemberTests/GeraetKontextLadenTests.swift`:
 
 ```swift
 import Foundation
@@ -692,149 +740,86 @@ import Testing
 /// Bis zur Geraeteauswahl ohne Scan gab es nur einen: ohne Token stieg die
 /// Methode in der ersten Zeile aus, und der Screen blieb ohne Foto, Video
 /// und Vorschlag stehen. Genau das darf nicht zurueckkommen.
+@MainActor
 struct GeraetKontextLadenTests {
 
-    /// Merkt sich, welcher Weg gerufen wurde. Beide liefern dieselbe
-    /// Antwort -- geprueft wird die Wegwahl, nicht der Inhalt.
-    private final class Fake: GeraetLoading, @unchecked Sendable {
-        var tagAufrufe: [String] = []
-        var machineAufrufe: [String] = []
-
-        func tagContext(token: String) async throws(APIError) -> TagContextResponse {
-            tagAufrufe.append(token)
-            return Fake.antwort
-        }
-
-        func machineContext(machineId: String) async throws(APIError) -> TagContextResponse {
-            machineAufrufe.append(machineId)
-            return Fake.antwort
-        }
-
-        func recordCalibration(_ body: CalibrationWrite) async throws(APIError) -> RecordedCalibration {
-            throw APIError.serverFehler
-        }
-
-        func completeSession(sessionId: UUID) async throws(APIError) -> CompletedSession {
-            throw APIError.serverFehler
-        }
-
-        static let antwort = try! JSONDecoder.api.decode(
-            TagContextResponse.self, from: Data(antwortJSON.utf8))
-
-        static let antwortJSON = """
-        {
-          "machine": { "id": "m1", "label": "12", "locationNote": "Mitte" },
-          "equipmentModel": {
-            "id": "em1", "name": "Kabelzug", "manufacturer": "Technogym",
-            "photoUrl": "https://example.test/foto.jpg",
-            "weightStepKg": 2.5, "minWeightKg": 5, "maxWeightKg": 100
-          },
-          "settingDefinitions": [],
-          "exercises": [
-            { "id": "u1", "name": "Latzug breit", "description": null,
-              "targetRepsMin": 8, "targetRepsMax": 12,
-              "instructionVideoUrl": null }
-          ],
-          "selectedExerciseId": "u1",
-          "calibration": null,
-          "history": [],
-          "suggestion": {
-            "resultWeightKg": 40, "reasonCode": "keine_historie",
-            "inputs": { "currentWeightKg": null }
-          }
-        }
-        """
-    }
-
-    private func modell(token: String?, fake: Fake) -> GeraetModel {
-        GeraetModel(
-            maschine: Testdaten.maschine,
-            uebungId: "u1",
+    private func modell(token: String?, loader: FakeGeraetLoader) -> GeraetModel {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        return GeraetModel(
+            maschine: GeraetTestdaten.maschine,
+            uebungId: "e1",
             token: token,
-            bootstrap: Testdaten.bootstrap,
-            loader: fake,
-            sessions: WorkoutSessionStore(store: SessionFileStore(directory: FileManager.default.temporaryDirectory)),
+            bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+            loader: loader,
+            sessions: WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis)),
             enqueue: { _ in }
         )
     }
 
+    /// Ein Kontext mit Foto -- das Einzige, was die Auswahl ohne ein Wort
+    /// bestaetigen wuerde, und ohne Token bisher nie ankam.
+    private var kontextMitFoto: TagContextResponse {
+        GeraetTestdaten.dekodiere("""
+        {"machine":{"id":"m1","label":"Gerät 7","locationNote":"Fensterseite"},
+         "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":"Technogym",
+           "photoUrl":"https://example.test/foto.jpg","weightStepKg":2.5,
+           "minWeightKg":5.0,"maxWeightKg":150.0},
+         "settingDefinitions":[],
+         "exercises":[{"id":"e1","name":"Beidbeinig","description":null,
+           "targetRepsMin":8,"targetRepsMax":12,"instructionVideoUrl":null}],
+         "selectedExerciseId":"e1","calibration":null,"history":[],
+         "suggestion":{"resultWeightKg":40.0,"reasonCode":"keine_historie",
+           "inputs":{"currentWeightKg":null}}}
+        """)
+    }
+
     @Test func mitTokenGehtEsUeberDenTagWeg() async {
-        let fake = Fake()
+        let loader = FakeGeraetLoader()
+        await loader.setKontext(.success(kontextMitFoto))
 
-        await modell(token: "abc123", fake: fake).kontextLaden()
+        await modell(token: "abc123", loader: loader).kontextLaden()
 
-        #expect(fake.tagAufrufe == ["abc123"])
-        #expect(fake.machineAufrufe.isEmpty)
+        #expect(await loader.tagAufrufe == ["abc123"])
+        #expect(await loader.machineAufrufe.isEmpty)
     }
 
     /// Der Fall, um den es geht: aus der Liste gewaehlt, kein Token.
     @Test func ohneTokenGehtEsUeberDieMachineId() async {
-        let fake = Fake()
+        let loader = FakeGeraetLoader()
+        await loader.setKontext(.success(kontextMitFoto))
 
-        await modell(token: nil, fake: fake).kontextLaden()
+        await modell(token: nil, loader: loader).kontextLaden()
 
-        #expect(fake.machineAufrufe == ["m1"])
-        #expect(fake.tagAufrufe.isEmpty)
+        #expect(await loader.machineAufrufe == ["m1"])
+        #expect(await loader.tagAufrufe.isEmpty)
     }
 
-    /// Ohne Kontext gaebe es kein Geraetefoto -- die Luecke, wegen der
-    /// dieser Zweig ueberhaupt gebaut wurde.
     @Test func ohneTokenKommtDasFotoAn() async {
-        let fake = Fake()
-        let modell = modell(token: nil, fake: fake)
+        let loader = FakeGeraetLoader()
+        await loader.setKontext(.success(kontextMitFoto))
+        let modell = modell(token: nil, loader: loader)
 
         await modell.kontextLaden()
 
         #expect(modell.kontext?.equipmentModel.photoUrl == "https://example.test/foto.jpg")
     }
-}
-```
 
-In derselben Datei, oberhalb der Suite:
+    /// Ein Fehlschlag bleibt kein Fehlerzustand -- der Screen steht aus
+    /// dem Prefetch.
+    @Test func einFehlschlagLaesstDenScreenStehen() async {
+        let loader = FakeGeraetLoader()
+        await loader.setKontext(.failure(.offline))
+        let modell = modell(token: nil, loader: loader)
 
-```swift
-/// `BootstrapResponse` und `BootstrapResponse.Machine` sind `Decodable`
-/// ohne Memberwise-Init -- der einzige Weg, sie zu bauen, fuehrt ueber
-/// JSON. Deshalb steht der Maschinen-JSON hier als Text und wird in den
-/// Bootstrap eingesetzt, statt zweimal durch Codec und Decoder zu laufen.
-private enum Testdaten {
-    static let maschineJSON = """
-    {
-      "id": "m1", "studioId": "s1", "label": "12",
-      "locationNote": "Mitte", "status": "active",
-      "tokenHashes": [], "visitCount": 0,
-      "equipmentModel": {
-        "id": "em1", "name": "Kabelzug", "manufacturer": "Technogym",
-        "photoPath": null, "weightStepKg": 2.5, "minWeightKg": 5,
-        "maxWeightKg": 100, "settingDefinitions": []
-      },
-      "exercises": [
-        { "id": "u1", "name": "Latzug breit",
-          "targetRepsMin": 8, "targetRepsMax": 12 }
-      ]
-    }
-    """
+        await modell.kontextLaden()
 
-    static var maschine: BootstrapResponse.Machine {
-        try! JSONDecoder.api.decode(
-            BootstrapResponse.Machine.self, from: Data(maschineJSON.utf8))
-    }
-
-    static var bootstrap: BootstrapResponse {
-        try! JSONDecoder.api.decode(BootstrapResponse.self, from: Data("""
-        {
-          "member": { "displayName": "Tim" },
-          "studios": [{ "id": "s1", "name": "Gym Ost", "timezone": "Europe/Berlin" }],
-          "machines": [\(maschineJSON)],
-          "calibrations": [],
-          "lastSets": []
-        }
-        """.utf8))
+        #expect(modell.kontext == nil)
     }
 }
 ```
 
-Die Aufrufe im Test heißen damit `Testdaten.maschine` und `Testdaten.bootstrap` (ohne Klammern) — den Helfer `modell(token:fake:)` oben entsprechend anpassen.
+**Achtung, Nebenwirkung im Bestand:** `GeraetModelTests.modell(...)` baut alle Modelle mit `token: nil`. Bisher war `kontextLaden()` dort ein No-op. Nach Step 6 ruft es `machineContext`; mit der Vorgabe `.failure(.offline)` bleibt `kontext` zwar nil wie zuvor, aber jeder vorhandene Test, der `setKontext(.success(...))` setzt UND `kontextLaden()` ruft, aendert sein Verhalten. Kippt dadurch ein Test, ihn nicht abschwaechen, sondern in der Sache entscheiden: prueft er den Tag-Weg (dann `token:` setzen) oder den Listenweg (dann ist die neue Erwartung die richtige)?
 
 - [ ] **Step 2: Test laufen lassen und Fehlschlag bestätigen**
 
@@ -1064,7 +1049,7 @@ struct GeraeteAuswahlTests {
               "performedAt": "\($0.wann)" }
             """
         }.joined(separator: ", ")
-        return try! JSONDecoder.api.decode(BootstrapResponse.self, from: Data("""
+        return GeraetTestdaten.dekodiere("""
         {
           "member": { "displayName": "Tim" },
           "studios": [
@@ -1075,7 +1060,7 @@ struct GeraeteAuswahlTests {
           "calibrations": [],
           "lastSets": [\(saetzeJSON)]
         }
-        """.utf8))
+        """)
     }
 
     // MARK: - Zwei Gruppen ohne Suchtext
