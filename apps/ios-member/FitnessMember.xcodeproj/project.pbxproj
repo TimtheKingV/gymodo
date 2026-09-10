@@ -118,6 +118,7 @@
 		C54BE200B15088F10CE1DBE0 /* MemberRegistrierenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62AE7186437136E3B2723D3A /* MemberRegistrierenView.swift */; };
 		C646BDD9DDB5825D52BF9AFA /* LabeledField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D512A8A7F6C5D60CF41B25 /* LabeledField.swift */; };
 		C6AD1695E384E19A040E3AB6 /* MachineResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4406BEBC7051D319700F05E9 /* MachineResolver.swift */; };
+		CBC840D3961E54257CE0525F /* GeraeteAuswahl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CBC9B358BECD950CD5B0381 /* GeraeteAuswahl.swift */; };
 		CE044ED38AF73A53DC3B0449 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B992AC22F100D1FF9BE1737 /* SessionDetailView.swift */; };
 		CE20B943DBE9C21746B7C572 /* KurseWochenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E54956E5E29B287C6E6F7AB3 /* KurseWochenView.swift */; };
 		CF24481035FBB410E13C5500 /* RastRad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45AE341D5234D5BED46BA218 /* RastRad.swift */; };
@@ -131,6 +132,7 @@
 		DB641A2801D4875409F434F5 /* UebungsfortschrittView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44D56AF5BB1CD13DC7356452 /* UebungsfortschrittView.swift */; };
 		DCC5E98028ED224D32C6FAA5 /* CodeDigitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */; };
 		DD0314F21EDB7E6B9B2F514E /* NameSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9BB75027970B636BE5BC23C /* NameSheet.swift */; };
+		E083161F5526B66B7D721901 /* GeraeteAuswahlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7540F5EE9A274DBB75E9219 /* GeraeteAuswahlTests.swift */; };
 		E1698BAA4B1B123F788DE32C /* KurseTagesindikator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5B0B75C600727218BE93316 /* KurseTagesindikator.swift */; };
 		E1A0397EDF4B789D5970BE5A /* MemberKeinStudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C037A2436D3DBF861C6456FD /* MemberKeinStudioView.swift */; };
 		E2ECF1FE835571FFD6617303 /* SecondaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */; };
@@ -242,6 +244,7 @@
 		60D9445D803C7BFB4FE0E3B0 /* OfflineLeiste.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineLeiste.swift; sourceTree = "<group>"; };
 		61EBAF697D264131A8B819C9 /* GeraetEinstiegTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetEinstiegTests.swift; sourceTree = "<group>"; };
 		62AE7186437136E3B2723D3A /* MemberRegistrierenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberRegistrierenView.swift; sourceTree = "<group>"; };
+		6CBC9B358BECD950CD5B0381 /* GeraeteAuswahl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteAuswahl.swift; sourceTree = "<group>"; };
 		6CDEA4E4113A2333A539F030 /* KursDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursDetailView.swift; sourceTree = "<group>"; };
 		6D6E6743BDCF6E58E971D0CE /* AuthLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthLogicTests.swift; sourceTree = "<group>"; };
 		6FFF2CD62E84CDAE426125B5 /* UebungWechselnSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UebungWechselnSheet.swift; sourceTree = "<group>"; };
@@ -320,6 +323,7 @@
 		F0D97A63F51670FD637DCAFE /* KurseWochenBerechnungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseWochenBerechnungTests.swift; sourceTree = "<group>"; };
 		F3F970AC02F39C7E9D8ABCBF /* TagLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLink.swift; sourceTree = "<group>"; };
 		F433CFBFAAF0BB5791D28FC9 /* VerlaufHerkunftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerlaufHerkunftTests.swift; sourceTree = "<group>"; };
+		F7540F5EE9A274DBB75E9219 /* GeraeteAuswahlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteAuswahlTests.swift; sourceTree = "<group>"; };
 		F86C22F308C4A9EB76B53C19 /* SupabaseAuthBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthBackend.swift; sourceTree = "<group>"; };
 		FAF53764E89CC9198F52E049 /* VerlaufHerkunft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerlaufHerkunft.swift; sourceTree = "<group>"; };
 		FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursRoute.swift; sourceTree = "<group>"; };
@@ -486,6 +490,7 @@
 				FD55A1626F478A9D5D1A0861 /* DTOTests.swift */,
 				E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */,
 				1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */,
+				F7540F5EE9A274DBB75E9219 /* GeraeteAuswahlTests.swift */,
 				61EBAF697D264131A8B819C9 /* GeraetEinstiegTests.swift */,
 				C98822FA4FAF85142CC27A3F /* GeraetKontextLadenTests.swift */,
 				28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */,
@@ -544,6 +549,7 @@
 		9032551F9B527E0B192D842A /* Workout */ = {
 			isa = PBXGroup;
 			children = (
+				6CBC9B358BECD950CD5B0381 /* GeraeteAuswahl.swift */,
 				9356660F927DE0AEC1C66C5D /* GeraetEinstieg.swift */,
 				1B800AB907E579F778EA2656 /* GeraetLoading.swift */,
 				87DEDAB723DC8FE55CB2FFA1 /* LokaleSession.swift */,
@@ -802,6 +808,7 @@
 				48FFCA86209C664A9A0E6964 /* GeraetModel.swift in Sources */,
 				9145F7245C5D69AA90AD9B7A /* GeraetRoute.swift in Sources */,
 				D76C207642BEE6F3A8CD20B1 /* GeraetView.swift in Sources */,
+				CBC840D3961E54257CE0525F /* GeraeteAuswahl.swift in Sources */,
 				1D2F4741B76193A412B5B0D8 /* Herkunftssatz.swift in Sources */,
 				7BFFB3F7F67F86F6F6B72F59 /* HomeRootView.swift in Sources */,
 				15230A9868C0F909306DACBD /* HomeRoute.swift in Sources */,
@@ -898,6 +905,7 @@
 				49188A7C28036BA6E75E3C6E /* GeraetEinstiegTests.swift in Sources */,
 				FDA54C34231DE3E958EF06D9 /* GeraetKontextLadenTests.swift in Sources */,
 				DB3955D030762B13093FA54C /* GeraetModelTests.swift in Sources */,
+				E083161F5526B66B7D721901 /* GeraeteAuswahlTests.swift in Sources */,
 				223F8FDD1BA1AFE59AF71D8C /* HomeZeilenTests.swift in Sources */,
 				E5D5C299EF2C249F20BEA4B9 /* KursDetailInhaltTests.swift in Sources */,
 				8E100E38496E1212C0FF9042 /* KursZustandTests.swift in Sources */,
