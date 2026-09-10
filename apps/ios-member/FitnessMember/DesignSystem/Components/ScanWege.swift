@@ -1,19 +1,21 @@
 import SwiftUI
 
-/// Die zwei Wege zum Geraet, gleichwertig uebereinander (SS11).
+/// Die drei Wege zum Geraet, gleichwertig uebereinander (SS11).
 ///
-/// Bis M1 stand hier nur eine QR-Zeile, und NFC war eine Zeichnung mit dem
-/// Satz "halt dein iPhone an den Aufkleber" -- also gar kein Knopf, sondern
-/// ein Verweis auf das Systembanner von iOS. Beim Geraetetest hiess das:
-/// Handy an den Tag halten, dann oben noch aufs Banner tippen. Zwei
-/// Schritte fuer den Weg, der eigentlich der schnellere sein sollte.
+/// Bis zur Geraeteauswahl ohne Scan waren es zwei, und beide setzten
+/// voraus, dass am Geraet ein AKTIVER Aufkleber klebt. Fehlt er, gab es
+/// keinen Weg -- der dritte schliesst diese Luecke.
 ///
-/// Beide Knoepfe sind Kontur, keiner ist Akzentflaeche: gleichwertig heisst
+/// Alle drei sind Kontur, keiner ist Akzentflaeche: gleichwertig heisst
 /// gleich aussehend, und die eine Akzentflaeche pro Screen bleibt frei
 /// (designsystem.md SS2).
 struct ScanWege: View {
     let beiQR: () -> Void
     let beiNFC: () -> Void
+    /// Optional: ohne geladenen Prefetch gibt es nichts zu waehlen, und
+    /// ein Knopf, der auf einen leeren Screen fuehrt, ist schlechter als
+    /// einer, der fehlt.
+    let beiListe: (() -> Void)?
 
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.s12) {
@@ -24,6 +26,9 @@ struct ScanWege: View {
             // Systembanner bleibt davon unberuehrt.
             if NFCTagLeser.verfuegbar {
                 KonturScanKnopf(symbol: "wave.3.right", titel: "NFC-Tag scannen", aktion: beiNFC)
+            }
+            if let beiListe {
+                KonturScanKnopf(symbol: "list.bullet", titel: "Aus der Liste wählen", aktion: beiListe)
             }
         }
         .frame(maxWidth: .infinity)
@@ -59,7 +64,7 @@ private struct KonturScanKnopf: View {
 }
 
 #Preview {
-    ScanWege(beiQR: {}, beiNFC: {})
+    ScanWege(beiQR: {}, beiNFC: {}, beiListe: {})
         .padding()
         .background(DesignSystem.Color.bg)
 }

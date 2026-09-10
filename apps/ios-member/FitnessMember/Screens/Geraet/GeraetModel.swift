@@ -72,6 +72,37 @@ final class GeraetModel {
     private let sessions: WorkoutSessionStore
     private let enqueue: (PendingSetWrite) -> Void
 
+    /// Wie das Mitglied an diesem Geraet gelandet ist.
+    ///
+    /// Nach einem Scan war das Telefon am Geraet. Nach einer Auswahl aus
+    /// der Liste hat jemand etwas angetippt -- die App weiss nicht, wo er
+    /// steht. Das Wort auf dem Screen darf den Unterschied nicht
+    /// verwischen (designsystem.md SS10).
+    enum Einstiegsart: Equatable {
+        case erkannt
+        case ausgewaehlt
+
+        init(token: String?) {
+            self = token == nil ? .ausgewaehlt : .erkannt
+        }
+
+        var beschriftung: String {
+            switch self {
+            case .erkannt: "ERKANNT"
+            case .ausgewaehlt: "AUSGEWÄHLT"
+            }
+        }
+
+        var symbol: String {
+            switch self {
+            case .erkannt: "wave.3.right"
+            case .ausgewaehlt: "list.bullet"
+            }
+        }
+    }
+
+    var einstiegsart: Einstiegsart { Einstiegsart(token: token) }
+
     init(
         maschine: BootstrapResponse.Machine,
         uebungId: String,
@@ -295,11 +326,24 @@ final class GeraetModel {
 
     // MARK: - Aktionen
 
+    /// Laedt, was der Prefetch nicht hat: Foto, Einweisungsvideo und den
+    /// Gewichtsvorschlag.
+    ///
+    /// Hier stand bis zur Geraeteauswahl ohne Scan ein
+    /// `guard let token else { return }`. Damit blieb ein aus der Liste
+    /// gewaehltes Geraet dauerhaft ohne diese drei Dinge -- und ohne Foto
+    /// fehlt genau das, was die Auswahl ohne ein Wort bestaetigt.
+    ///
+    /// Ein Fehlschlag ist weiterhin kein Fehlerzustand: der Screen steht
+    /// bereits aus dem Prefetch.
     func kontextLaden() async {
-        guard let token else { return }
-        // Ein Fehlschlag ist kein Fehlerzustand: der Screen steht bereits
-        // aus dem Prefetch. Es fehlen nur Video, Foto und Vorschlag.
-        guard let geladen = try? await loader.tagContext(token: token) else { return }
+        let geladen: TagContextResponse? =
+            if let token {
+                try? await loader.tagContext(token: token)
+            } else {
+                try? await loader.machineContext(machineId: maschine.id)
+            }
+        guard let geladen else { return }
         kontextUebernehmen(geladen)
     }
 

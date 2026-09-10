@@ -82,6 +82,8 @@ export type {
 export type { Bootstrap } from "./bootstrap.js";
 export { getTagContext } from "./tag-context.js";
 export type { TagContext } from "./tag-context.js";
+export { getMachineContext } from "./machine-context.js";
+export type { MachineContext } from "./machine-context.js";
 export type { DomainErrorCode } from "./errors.js";
 export {
   completeSession,

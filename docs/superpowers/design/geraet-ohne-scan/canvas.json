@@ -1,0 +1,153 @@
+{
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Der Weg"
+    },
+    {
+      "id": "page-2",
+      "name": "Einstieg · Varianten"
+    },
+    {
+      "id": "page-3",
+      "name": "Bausteine"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "page": "page-1",
+      "x": 0,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "01 · Training · der dritte Weg"
+    },
+    {
+      "file": "Auswahl.dc.html",
+      "page": "page-1",
+      "x": 473,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "02 · Gerät wählen · Liste"
+    },
+    {
+      "file": "Suche.dc.html",
+      "page": "page-1",
+      "x": 946,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "03 · Getippt · Treffer"
+    },
+    {
+      "file": "KeinTreffer.dc.html",
+      "page": "page-1",
+      "x": 1419,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "04 · Kein Treffer"
+    },
+    {
+      "file": "Bestaetigen.dc.html",
+      "page": "page-1",
+      "x": 1892,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "05 · Ausgewählt statt erkannt"
+    },
+    {
+      "file": "EinstiegA.dc.html",
+      "page": "page-2",
+      "x": 0,
+      "y": 0,
+      "w": 393,
+      "h": 330,
+      "title": "06 · Variante A · dritter Knopf"
+    },
+    {
+      "file": "EinstiegB.dc.html",
+      "page": "page-2",
+      "x": 473,
+      "y": 0,
+      "w": 393,
+      "h": 330,
+      "title": "07 · Variante B · leise Zeile"
+    },
+    {
+      "file": "EinstiegC.dc.html",
+      "page": "page-2",
+      "x": 946,
+      "y": 0,
+      "w": 393,
+      "h": 330,
+      "title": "08 · Variante C · Suchfeld"
+    },
+    {
+      "file": "Bausteine.dc.html",
+      "page": "page-3",
+      "x": 0,
+      "y": 0,
+      "w": 900,
+      "h": 2800,
+      "title": "09 · Bausteine & Entscheidungen"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "page": "page-1",
+      "x": 0,
+      "y": -300,
+      "w": 866,
+      "text": "Der Weg, wenn kein Aufkleber da ist — links nach rechts zu lesen.\n\nBlatt 01 trägt drei gleichwertige Knöpfe und keinen Erklärtext mehr. Die Fläche darüber ist der Platz für das Foto eines echten Aufklebers; bis dahin steht dort die Marke aus QR und NFC-Wellen.\n\nAlles Weitere rechnet auf dem Prefetch, den die App ohnehin lädt: BootstrapResponse.machines trägt Gerätename, Nummer, Platz, Status, Übungen und deinen Besuchszähler für jedes Gerät jedes Studios, in dem du Mitglied bist. Liste und Suche brauchen deshalb kein Netz und keinen neuen Endpoint — und funktionieren offline genau wie der Scan-Weg.\n\nBlatt 09 hat die Maße, die Sortierregeln und die eine Stelle, die Serverarbeit braucht."
+    },
+    {
+      "id": "erkannt",
+      "page": "page-1",
+      "x": 1892,
+      "y": -300,
+      "w": 393,
+      "text": "Blatt 05 ist der Grund, warum das kein reiner Kopiervorgang des Scan-Wegs ist.\n\nNach einem Scan war das Telefon nachweislich am Gerät. Nach einer Auswahl hat jemand etwas angetippt. Deshalb Listensymbol statt NFC-Wellen und „AUSGEWÄHLT“ statt „ERKANNT“ — zwei Zeichen, kein Erklärtext.\n\nWas hier fehlt, ist das Gerätefoto. Das ist keine Designentscheidung, sondern die Folge des fehlenden Tokens — und es ist das Einzige, was die Auswahl ohne ein Wort bestätigen würde. Blatt 09, Abschnitt 5."
+    },
+    {
+      "id": "varianten",
+      "page": "page-2",
+      "x": 0,
+      "y": -300,
+      "w": 866,
+      "text": "Die offene Frage: Wie sichtbar ist der Ausweg?\n\nIm Entwurf steckt Variante A (Blatt 01) — drei gleichwertige Knöpfe, kein Erklärtext. Ein Wechsel zu B oder C kostet zwanzig Zeilen; der Rest des Flows bleibt gleich."
+    },
+    {
+      "id": "var-a",
+      "page": "page-2",
+      "x": 0,
+      "y": 450,
+      "w": 393,
+      "text": "A · Dritter Knopf — verbaut\n\nDafür: findet jeder, auch beim ersten Mal. Gleiche Form, gleiche Höhe, gleiche Kontur — kein Weg wirkt zweitklassig. Richtig, wenn in einem Studio viele Geräte gar keinen aktiven Tag haben; dann ist die Liste kein Ausweg, sondern der Hauptweg.\n\nDagegen: drei gleich aussehende Knöpfe sagen nicht mehr, welcher der schnelle ist. Wo jedes Gerät einen Tag trägt, steht der dritte dauerhaft für einen Fall, der nie eintritt."
+    },
+    {
+      "id": "var-b",
+      "page": "page-2",
+      "x": 473,
+      "y": 450,
+      "w": 393,
+      "text": "B · Leise Zeile\n\nDafür: Scannen bleibt sichtbar der schnelle Weg; die Zeile steht in Akzentfarbe und ist 44 pt hoch, also kein verstecktes Kleingedrucktes.\n\nDagegen: wer nicht liest, sieht sie nicht — und sie braucht die Frage „Kein Aufkleber am Gerät?“ darüber, um sich zu erklären. Genau der Text, den Blatt 01 jetzt spart."
+    },
+    {
+      "id": "var-c",
+      "page": "page-2",
+      "x": 946,
+      "y": 450,
+      "w": 393,
+      "text": "C · Suchfeld auf dem Screen\n\nDafür: der schnellste Weg für alle, die den Gerätenamen kennen — kein Zwischenscreen.\n\nDagegen: macht Training zum Suchbildschirm und drückt die beiden Scan-Wege nach unten. Ein Feld mit Tastatur schlägt einen Ein-Sekunden-Scan nur, wenn Scannen meistens nicht geht."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

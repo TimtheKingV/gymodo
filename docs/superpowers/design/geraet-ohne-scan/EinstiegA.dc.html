@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0A0B0D; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #D4FF3F; } a:hover { color: #E8FF8A; }
+    .fr { width: 393px; height: 330px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; padding: 16px 20px 0; gap: 12px; overflow: hidden; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #5C636E; }
+    .weg { height: 60px; border-radius: 16px; border: 1px solid #2A2E36; color: #F2F4F7; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; flex: none; }
+    .feld { height: 52px; border-radius: 14px; background: #14161A; border: 1px solid #2A2E36; display: flex; align-items: center; gap: 10px; padding: 0 14px; flex: none; }
+    .sep { height: 1px; background: #2A2E36; }
+    .fuss { font-size: 12px; color: #9BA3AF; text-align: center; line-height: 1.45; }
+  </style>
+</helmet>
+
+<div class="fr">
+  <div class="eyebrow">Variante A · dritter Knopf · verbaut</div>
+  <div class="weg"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><path d="M13.5 13.5h3v3"/><path d="M20.5 20.5h-3v-3"/></svg> QR-Code scannen</div>
+  <div class="weg"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round"><path d="M7.5 8.5a5 5 0 0 1 0 7"/><path d="M11.5 5.5a10 10 0 0 1 0 13"/><path d="M15.5 2.5a15 15 0 0 1 0 19"/></svg> NFC-Tag scannen</div>
+  <div class="weg"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2" stroke-linecap="round"><path d="M8.5 6.5h12M8.5 12h12M8.5 17.5h12M3.7 6.5h.01M3.7 12h.01M3.7 17.5h.01"/></svg> Aus der Liste wählen</div>
+  </div>
+</x-dc>
+</body>
+</html>

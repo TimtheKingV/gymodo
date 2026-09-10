@@ -1,0 +1,129 @@
+import Foundation
+import Testing
+@testable import FitnessMember
+
+/// Welchen der beiden Wege `kontextLaden()` nimmt.
+///
+/// Bis zur Geraeteauswahl ohne Scan gab es nur einen: ohne Token stieg die
+/// Methode in der ersten Zeile aus, und der Screen blieb ohne Foto, Video
+/// und Vorschlag stehen. Genau das darf nicht zurueckkommen.
+@MainActor
+struct GeraetKontextLadenTests {
+
+    private func modell(token: String?, loader: FakeGeraetLoader) -> GeraetModel {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        return GeraetModel(
+            maschine: GeraetTestdaten.maschine,
+            uebungId: "e1",
+            token: token,
+            bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+            loader: loader,
+            sessions: WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis)),
+            enqueue: { _ in }
+        )
+    }
+
+    /// Ein Kontext mit Foto -- das Einzige, was die Auswahl ohne ein Wort
+    /// bestaetigen wuerde, und ohne Token bisher nie ankam.
+    private var kontextMitFoto: TagContextResponse {
+        GeraetTestdaten.dekodiere("""
+        {"machine":{"id":"m1","label":"Gerät 7","locationNote":"Fensterseite"},
+         "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":"Technogym",
+           "photoUrl":"https://example.test/foto.jpg","weightStepKg":2.5,
+           "minWeightKg":5.0,"maxWeightKg":150.0},
+         "settingDefinitions":[],
+         "exercises":[{"id":"e1","name":"Beidbeinig","description":null,
+           "targetRepsMin":8,"targetRepsMax":12,"instructionVideoUrl":null}],
+         "selectedExerciseId":"e1","calibration":null,"history":[],
+         "suggestion":{"algoVersion":"v1","resultWeightKg":40.0,"reasonCode":"keine_historie",
+           "inputs":{"targetRepsMin":8,"targetRepsMax":12,"weightStepKg":2.5,
+             "minWeightKg":5.0,"maxWeightKg":150.0,"currentWeightKg":null,
+             "consideredBlocks":0}}}
+        """)
+    }
+
+    @Test func mitTokenGehtEsUeberDenTagWeg() async {
+        let loader = FakeGeraetLoader()
+        await loader.setKontext(.success(kontextMitFoto))
+
+        await modell(token: "abc123", loader: loader).kontextLaden()
+
+        #expect(await loader.tagAufrufe == ["abc123"])
+        #expect(await loader.machineAufrufe.isEmpty)
+    }
+
+    /// Der Fall, um den es geht: aus der Liste gewaehlt, kein Token.
+    @Test func ohneTokenGehtEsUeberDieMachineId() async {
+        let loader = FakeGeraetLoader()
+        await loader.setKontext(.success(kontextMitFoto))
+
+        await modell(token: nil, loader: loader).kontextLaden()
+
+        #expect(await loader.machineAufrufe == ["m1"])
+        #expect(await loader.tagAufrufe.isEmpty)
+    }
+
+    @Test func ohneTokenKommtDasFotoAn() async {
+        let loader = FakeGeraetLoader()
+        await loader.setKontext(.success(kontextMitFoto))
+        let modell = modell(token: nil, loader: loader)
+
+        await modell.kontextLaden()
+
+        #expect(modell.kontext?.equipmentModel.photoUrl == "https://example.test/foto.jpg")
+    }
+
+    /// Spec SS3.5: der Zirkel-Tap (`oeffne(_ block:)`, token nil) ist der
+    /// zweite token-lose Einstieg neben der Liste und bekommt dieselbe
+    /// Behandlung -- auch das Gewichtsrad darf der Server-Vorschlag
+    /// befuellen, solange das Mitglied es nicht selbst geoeffnet hat. Das
+    /// war eine Folge des entfernten Wächters (Abschnitt 4), keine eigens
+    /// entworfene Regel -- dieser Test haelt sie fest, jetzt, wo sie
+    /// bewusst statt zufaellig gilt.
+    ///
+    /// Schlaegt bei einem restaurierten `guard let token else { return }`
+    /// fehl: `kontext` bliebe nil und `gewicht` beim Geraetminimum (5.0)
+    /// stehen, nicht bei den 40.0 aus dem Vorschlag.
+    @Test func ohneTokenUebernimmtDasRadDenVorschlagWennNichtGeoeffnet() async {
+        let loader = FakeGeraetLoader()
+        await loader.setKontext(.success(kontextMitFoto))
+        let modell = modell(token: nil, loader: loader)
+        #expect(modell.gewicht == 5.0)
+
+        await modell.kontextLaden()
+
+        #expect(modell.gewicht == 40.0)
+    }
+
+    /// Derselbe Zirkel-Tap, aber das Mitglied hat das Rad vor dem
+    /// eintreffenden Kontext schon geoeffnet -- `gewichtVomNutzer` muss den
+    /// Wert schuetzen, genau wie auf dem Scan-Weg.
+    ///
+    /// Schlaegt fehl, wenn `kontextUebernehmen` den Nutzerschutz fuer den
+    /// machineId-Weg vergaesse: `gewicht` sprang dann trotz geoeffnetem Rad
+    /// auf die 40.0 aus dem Vorschlag.
+    @Test func ohneTokenLaesstEinBereitsGeoeffnetesRadInRuhe() async {
+        let loader = FakeGeraetLoader()
+        await loader.setKontext(.success(kontextMitFoto))
+        let modell = modell(token: nil, loader: loader)
+        modell.radOeffnen()
+        #expect(modell.gewicht == 5.0)
+
+        await modell.kontextLaden()
+
+        #expect(modell.gewicht == 5.0)
+    }
+
+    /// Ein Fehlschlag bleibt kein Fehlerzustand -- der Screen steht aus
+    /// dem Prefetch.
+    @Test func einFehlschlagLaesstDenScreenStehen() async {
+        let loader = FakeGeraetLoader()
+        await loader.setKontext(.failure(.offline))
+        let modell = modell(token: nil, loader: loader)
+
+        await modell.kontextLaden()
+
+        #expect(modell.kontext == nil)
+    }
+}
