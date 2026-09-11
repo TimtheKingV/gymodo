@@ -22,7 +22,7 @@ struct WorkoutSessionStoreTests {
         #expect(sut.aktiveSession() == nil)
 
         let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1",
-                                          weightKg: 80, reps: 10, rir: nil,
+                                          weightKg: 80, reps: 10,
                                           problemFlag: false, problemReason: nil,
                                           jetzt: start)
 
@@ -33,13 +33,13 @@ struct WorkoutSessionStoreTests {
     @Test func setIndexLaeuftInnerhalbDesBlocks() {
         let (sut, _) = store()
         _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                            rir: nil, problemFlag: false, problemReason: nil, jetzt: start)
+                            problemFlag: false, problemReason: nil, jetzt: start)
         // Anderes Geraet dazwischen -- Zirkeltraining.
         _ = sut.satzSichern(machineId: "m2", exerciseId: "e2", weightKg: 45, reps: 12,
-                            rir: nil, problemFlag: false, problemReason: nil,
+                            problemFlag: false, problemReason: nil,
                             jetzt: start.addingTimeInterval(120))
         let dritter = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 9,
-                                      rir: nil, problemFlag: false, problemReason: nil,
+                                      problemFlag: false, problemReason: nil,
                                       jetzt: start.addingTimeInterval(240))
 
         // Zweiter Satz IM BLOCK, nicht dritter Satz der Session.
@@ -50,9 +50,9 @@ struct WorkoutSessionStoreTests {
     @Test func dieselbeSessionInnerhalbVonVierStunden() {
         let (sut, _) = store()
         let erster = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                                     rir: nil, problemFlag: false, problemReason: nil, jetzt: start)
+                                     problemFlag: false, problemReason: nil, jetzt: start)
         let zweiter = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                                      rir: nil, problemFlag: false, problemReason: nil,
+                                      problemFlag: false, problemReason: nil,
                                       jetzt: start.addingTimeInterval(3 * 3600))
 
         #expect(erster.sessionId == zweiter.sessionId)
@@ -61,9 +61,9 @@ struct WorkoutSessionStoreTests {
     @Test func neueSessionNachVierStundenOhneSatz() {
         let (sut, _) = store()
         let erster = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                                     rir: nil, problemFlag: false, problemReason: nil, jetzt: start)
+                                     problemFlag: false, problemReason: nil, jetzt: start)
         let zweiter = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                                      rir: nil, problemFlag: false, problemReason: nil,
+                                      problemFlag: false, problemReason: nil,
                                       jetzt: start.addingTimeInterval(4 * 3600 + 1))
 
         // recordSet prueft serverseitig nicht, ob die Session schon
@@ -75,7 +75,7 @@ struct WorkoutSessionStoreTests {
     @Test func abgelaufeneSessionGiltNichtMehrAlsAktiv() {
         let (sut, _) = store()
         _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                            rir: nil, problemFlag: false, problemReason: nil, jetzt: start)
+                            problemFlag: false, problemReason: nil, jetzt: start)
 
         #expect(sut.aktiveSession(jetzt: start.addingTimeInterval(3 * 3600)) != nil)
         #expect(sut.aktiveSession(jetzt: start.addingTimeInterval(4 * 3600 + 1)) == nil)
@@ -86,7 +86,7 @@ struct WorkoutSessionStoreTests {
             .appendingPathComponent(UUID().uuidString)
         let ersterLauf = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
         let geschrieben = ersterLauf.satzSichern(machineId: "m1", exerciseId: "e1",
-                                                 weightKg: 80, reps: 10, rir: nil,
+                                                 weightKg: 80, reps: 10,
                                                  problemFlag: false, problemReason: nil, jetzt: start)
 
         let zweiterLauf = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
@@ -99,7 +99,7 @@ struct WorkoutSessionStoreTests {
     @Test func beendenLoeschtDieSessionUndGibtIhreKennungZurueck() {
         let (sut, _) = store()
         let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                                          rir: nil, problemFlag: false, problemReason: nil, jetzt: start)
+                                          problemFlag: false, problemReason: nil, jetzt: start)
 
         #expect(sut.beenden() == geschrieben.sessionId)
         #expect(sut.aktiveSession() == nil)
@@ -109,12 +109,14 @@ struct WorkoutSessionStoreTests {
     @Test func dieProblemmeldungLandetImSatzRumpf() {
         let (sut, _) = store()
         let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                                          rir: 2, problemFlag: true, problemReason: .zuSchwer,
+                                          problemFlag: true, problemReason: .zuSchwer,
                                           jetzt: start)
 
         // Die Meldung braucht keinen eigenen Endpoint (M1-Spec SS6.3).
         #expect(geschrieben.body.problemFlag)
         #expect(geschrieben.body.problemReason == .zuSchwer)
-        #expect(geschrieben.body.rir == 2)
+        // Die Reserve wird nicht mehr erfasst -- das Feld bleibt im
+        // Rumpf, aber es geht nur noch null raus.
+        #expect(geschrieben.body.rir == nil)
     }
 }

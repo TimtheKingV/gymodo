@@ -32,10 +32,36 @@ struct Einstellwert: Identifiable, Equatable {
 @MainActor
 @Observable
 final class GeraetModel {
+    /// Was der Screen gerade IST -- nicht, was er zusaetzlich einblendet.
+    ///
+    /// Vorher trug ein `pause: Resttimer?` diese Unterscheidung. Das
+    /// reichte, solange die Pause nur ein Band ueber dem Screen war; sobald
+    /// sie ihn ganz uebernimmt und es einen dritten Zustand gibt ("an
+    /// diesem Geraet ist das Satzziel erreicht"), ist ein Optional die
+    /// falsche Form: es kann nicht sagen, dass gerade KEINE Pause laeuft,
+    /// WEIL nichts mehr geplant ist.
+    enum Phase: Equatable {
+        /// Raeder und "Satz N sichern".
+        case eingabe
+        /// Nur Kopf und Pausenrad. Der Timer traegt seinen Endzeitpunkt
+        /// selbst, die Phase muss nichts mitzaehlen.
+        case pause(Resttimer)
+        /// Das Satzziel ist erreicht: "Geraet abschliessen" oder
+        /// "Weiterer Satz".
+        case abschluss
+
+        /// Eine Pause in der eingestellten Laenge. Drei Aufrufer, eine
+        /// Stelle -- die Dauer aus dem Profil zu lesen ist sonst genau die
+        /// Zeile, die beim vierten Aufrufer vergessen wird.
+        static func neuePause() -> Phase {
+            .pause(Resttimer(dauer: TimeInterval(Einstellungen.resttimerSekunden())))
+        }
+    }
+
     let maschine: BootstrapResponse.Machine
     private(set) var uebungId: String
     private(set) var kontext: TagContextResponse?
-    private(set) var pause: Resttimer?
+    private(set) var phase: Phase = .eingabe
     /// Steigt genau einmal je erfolgreich gesichertem Satz -- unabhaengig
     /// von uebungId und Block. satzNummer ist dafuer ungeeignet: es ist
     /// die naechste Satznummer DER GERADE ANGEZEIGTEN Uebung und springt
@@ -46,7 +72,6 @@ final class GeraetModel {
 
     var gewicht: Double
     var wiederholungen: Int
-    var reserve: Double?
     var radOffen = false
     /// Sobald das Mitglied das Rad geoeffnet hat, gehoert `gewicht` ihm --
     /// ein spaeter eintreffender tagContext (die Anfrage lief seit .task auf
@@ -71,6 +96,12 @@ final class GeraetModel {
     private let loader: any GeraetLoading
     private let sessions: WorkoutSessionStore
     private let enqueue: (PendingSetWrite) -> Void
+    /// Als Closure statt als Zahl: die Einstellung darf sich waehrend des
+    /// Trainings aendern (Profil ist ein Tab weiter), und ein beim Push
+    /// eingefrorener Wert waere dann still falsch. Injizierbar, weil
+    /// `Einstellungen.satzZiel()` sonst auf `UserDefaults.standard` laege
+    /// und Tests sich gegenseitig die Vorgabe verstellten.
+    private let satzZielLesen: () -> Int
 
     /// Wie das Mitglied an diesem Geraet gelandet ist.
     ///
@@ -110,7 +141,8 @@ final class GeraetModel {
         bootstrap: BootstrapResponse,
         loader: any GeraetLoading,
         sessions: WorkoutSessionStore,
-        enqueue: @escaping (PendingSetWrite) -> Void
+        enqueue: @escaping (PendingSetWrite) -> Void,
+        satzZiel: @escaping () -> Int = { Einstellungen.satzZiel() }
     ) {
         self.maschine = maschine
         self.uebungId = uebungId
@@ -119,6 +151,7 @@ final class GeraetModel {
         self.loader = loader
         self.sessions = sessions
         self.enqueue = enqueue
+        satzZielLesen = satzZiel
 
         let letzter = bootstrap.lastSets.first {
             $0.machineId == maschine.id && $0.exerciseId == uebungId
@@ -127,7 +160,6 @@ final class GeraetModel {
         // ohne Daten waere eine Trainingsempfehlung (designsystem.md SS8).
         gewicht = letzter?.weightKg ?? maschine.equipmentModel.minWeightKg
         wiederholungen = letzter?.reps ?? maschine.exercises.first { $0.id == uebungId }?.targetRepsMin ?? 10
-        reserve = letzter?.rir
 
         // Snap erst, nachdem alle gespeicherten Eigenschaften stehen --
         // gewichtsWerte und Rastwerte.wiederholungen sind berechnete
@@ -247,6 +279,20 @@ final class GeraetModel {
 
     var satzNummer: Int {
         sessions.naechsterSetIndex(machineId: maschine.id, exerciseId: uebungId)
+    }
+
+    /// Wie viele Saetze an diesem Geraet geplant sind (Profil, Vorgabe 3).
+    var satzZiel: Int { satzZielLesen() }
+
+    /// Die Pause, solange sie WIRKLICH laeuft.
+    ///
+    /// `.pause` mit abgelaufenem Timer kann einen Wimpernschlag lang
+    /// existieren, bevor der Ablauf-Task in GeraetView greift. In dieser
+    /// Spanne darf der Screen kein Rad auf 00:00 zeigen -- er faellt
+    /// stattdessen auf die Raeder zurueck.
+    var laufendePause: Resttimer? {
+        guard case .pause(let timer) = phase, timer.laeuft() else { return nil }
+        return timer
     }
 
     /// "Vorschlag · +2,5" -- eine Rechnung, keine Empfehlung
@@ -372,8 +418,11 @@ final class GeraetModel {
         gewicht = Rastwerte.naechster(
             zu: letzter?.weightKg ?? modell.min, in: gewichtsWerte)
         wiederholungen = GeraetModel.geklemmt(letzter?.reps ?? aktiveUebung?.targetRepsMin ?? 10)
-        reserve = letzter?.rir
         radOffen = false
+        // Eine andere Uebung hat ihren eigenen Satzzaehler -- eine Pause
+        // oder eine Abschlussentscheidung, die zur vorherigen gehoerte,
+        // gilt hier nicht mehr.
+        phase = .eingabe
         // Neue Uebung, neuer Wert -- ein spaeter fuer diese Uebung
         // eintreffender Vorschlag darf wieder greifen.
         gewichtVomNutzer = false
@@ -382,7 +431,7 @@ final class GeraetModel {
     func satzSichern(problemFlag: Bool, problemReason: ProblemReason?) async {
         let geschrieben = sessions.satzSichern(
             machineId: maschine.id, exerciseId: uebungId,
-            weightKg: gewicht, reps: wiederholungen, rir: reserve,
+            weightKg: gewicht, reps: wiederholungen,
             problemFlag: problemFlag, problemReason: problemReason
         )
         // Immer ueber die Warteschlange, nie direkt: so ist "gespeichert,
@@ -392,16 +441,32 @@ final class GeraetModel {
                                 setId: geschrieben.setId,
                                 body: geschrieben.body))
         radOffen = false
-        pause = Resttimer(dauer: TimeInterval(Einstellungen.resttimerSekunden()))
         // sessions.satzSichern() oben ist der einzige Fehlschlagpfad, und
         // der wirft nicht -- lokal wird immer geschrieben, auch offline
         // (Spec Abschnitt 8.2). Der Zaehler steigt deshalb hier, nicht
         // hinter einem Erfolgs-Guard, den es nicht gibt.
         gesicherteSaetze += 1
+        // satzNummer liest live aus der Session und ist nach dem Schreiben
+        // oben schon die NAECHSTE Nummer: bei Ziel 3 steht nach dem dritten
+        // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
+        // eine Pause vor einem Satz, der nicht kommt, ist nur Wartezeit.
+        phase = satzNummer > satzZiel ? .abschluss : .neuePause()
     }
 
-    func pauseVerlaengern() { pause = pause?.verlaengert() }
-    func pauseBeenden() { pause = nil }
+    func pauseVerlaengern() {
+        guard case .pause(let timer) = phase else { return }
+        phase = .pause(timer.verlaengert())
+    }
+
+    /// "Weiter" und der Ablauf der Pause nehmen denselben Weg zurueck zu
+    /// den Raedern -- ein Mitglied, das vorzeitig weitermacht, landet nicht
+    /// in einem anderen Zustand als eines, das die Pause aussitzt.
+    func pauseBeenden() { phase = .eingabe }
+
+    /// "Weiterer Satz" aus der Abschlussentscheidung heraus. Auch der
+    /// Zusatzsatz bekommt seine Pause -- er ist ein Satz wie jeder andere,
+    /// nur ausserhalb des Ziels.
+    func weitererSatz() { phase = .neuePause() }
 
     func kalibrierungOeffnen() { kalibrierungOffen = true }
 

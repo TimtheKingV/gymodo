@@ -45,6 +45,13 @@ struct Resttimer: Codable, Equatable {
         return min(1, max(0, Double(restsekunden(jetzt: jetzt)) / gesamtdauer))
     }
 
+    /// 0,0 zu Beginn, 1,0 am Ende -- das Gegenstueck zu anteil(jetzt:).
+    /// Das Pausenrad fuellt sich, waehrend die Ziffern in seiner Mitte
+    /// runterzaehlen: der wachsende Bogen ist "wie weit bin ich durch",
+    /// die Ziffern bleiben die Restdauer. Beide lesen dieselbe Rechnung,
+    /// damit Bogen und Zahl nie auseinanderlaufen koennen.
+    func fortschritt(jetzt: Date = Date()) -> Double { 1 - anteil(jetzt: jetzt) }
+
     func verlaengert() -> Resttimer {
         Resttimer(start: start, endetAm: endetAm.addingTimeInterval(Self.verlaengerung))
     }

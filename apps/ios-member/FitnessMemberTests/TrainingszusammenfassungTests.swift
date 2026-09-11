@@ -8,7 +8,7 @@ struct TrainingszusammenfassungTests {
     private func satz(_ index: Int, _ gewicht: Double, _ minuten: Double,
                       problem: Bool = false) -> LokalerSatz {
         LokalerSatz(id: UUID(), setIndex: index, weightKg: gewicht, reps: 10,
-                    rir: nil, problemFlag: problem, problemReason: problem ? .schmerz : nil,
+                    problemFlag: problem, problemReason: problem ? .schmerz : nil,
                     performedAt: start.addingTimeInterval(minuten * 60))
     }
 
@@ -98,7 +98,7 @@ struct AbgelaufeneSessionTests {
     @Test func eineLaufendeEinheitGiltNichtAlsAbgelaufen() {
         let sut = store()
         _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                            rir: nil, problemFlag: false, problemReason: nil, jetzt: start)
+                            problemFlag: false, problemReason: nil, jetzt: start)
 
         #expect(sut.abgelaufeneSession(jetzt: start.addingTimeInterval(600)) == nil)
     }
@@ -106,7 +106,7 @@ struct AbgelaufeneSessionTests {
     @Test func nachVierStundenGiltSieAlsAbgelaufen() {
         let sut = store()
         _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                            rir: nil, problemFlag: false, problemReason: nil, jetzt: start)
+                            problemFlag: false, problemReason: nil, jetzt: start)
 
         #expect(sut.abgelaufeneSession(jetzt: start.addingTimeInterval(4 * 3600 + 1)) != nil)
     }
@@ -114,7 +114,7 @@ struct AbgelaufeneSessionTests {
     @Test func quittierenLaesstSieVerschwinden() {
         let sut = store()
         _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                            rir: nil, problemFlag: false, problemReason: nil, jetzt: start)
+                            problemFlag: false, problemReason: nil, jetzt: start)
         let spaeter = start.addingTimeInterval(5 * 3600)
 
         sut.ausgelaufeneQuittieren()
@@ -126,14 +126,14 @@ struct AbgelaufeneSessionTests {
     @Test func eineSpaetereEinheitBekommtIhrenEigenenHinweis() {
         let sut = store()
         _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                            rir: nil, problemFlag: false, problemReason: nil, jetzt: start)
+                            problemFlag: false, problemReason: nil, jetzt: start)
         sut.ausgelaufeneQuittieren()
 
         // Ohne "Training beenden" zu druecken: der naechste Satz legt eine
         // neue Einheit an, weit genug hinter der ersten, dass sie eigenstaendig ist.
         let zweiterStart = start.addingTimeInterval(5 * 3600)
         _ = sut.satzSichern(machineId: "m2", exerciseId: "e2", weightKg: 45, reps: 10,
-                            rir: nil, problemFlag: false, problemReason: nil, jetzt: zweiterStart)
+                            problemFlag: false, problemReason: nil, jetzt: zweiterStart)
 
         #expect(sut.abgelaufeneSession(jetzt: zweiterStart.addingTimeInterval(4 * 3600 + 1)) != nil)
     }
@@ -141,7 +141,7 @@ struct AbgelaufeneSessionTests {
     @Test func einManuellBeendetesTrainingGiltNichtAlsAusgelaufen() {
         let sut = store()
         _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                            rir: nil, problemFlag: false, problemReason: nil, jetzt: start)
+                            problemFlag: false, problemReason: nil, jetzt: start)
         sut.beenden()
 
         #expect(sut.abgelaufeneSession(jetzt: start.addingTimeInterval(5 * 3600)) == nil)

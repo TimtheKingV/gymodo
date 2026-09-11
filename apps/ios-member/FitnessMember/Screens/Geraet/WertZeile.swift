@@ -10,13 +10,26 @@ struct WertZeile: View {
     @Bindable var modell: GeraetModel
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Die Wiederholungsspalte bekommt feste Breite, das Gewicht den Rest.
+    ///
+    /// Nicht Geschmack, sondern Struktur: Wiederholungen sind hoechstens
+    /// zweistellig (Rastwerte.wiederholungen = 1...40), Gewichte gehen bis
+    /// "1005,0". Zwei gleich breite Spalten gaben dem kurzen Wert genau so
+    /// viel Platz wie dem langen -- und schnitten deshalb das Gewicht ab.
+    /// 104 pt: "40" bei 44 pt Black monospaced misst rund 53 pt, "Wdh."
+    /// bei 17 pt Semibold rund 38 pt, dazu 4 pt Abstand -- knapp 95 pt mit
+    /// etwas Luft. Jeder Punkt mehr fehlt dem Gewicht, und auf einem
+    /// iPhone mini ist dessen Spalte ohnehin die knappe.
+    @ScaledMetric(relativeTo: .body) private var wiederholungsspalte: CGFloat = 104
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             kopf
             HStack(alignment: .top, spacing: DesignSystem.Spacing.s24) {
                 gewichtsrad
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 wiederholungsrad
+                    .frame(width: wiederholungsspalte, alignment: .leading)
             }
             if !modell.radOffen, let zuletzt = modell.zuletztText {
                 Text(zuletzt)
@@ -68,18 +81,21 @@ struct WertZeile: View {
         }
     }
 
-    /// Am Anschlag tritt die Grenze an die Stelle des Kontexts -- sichtbares
-    /// Anschlagsfeedback, nicht nur eine VoiceOver-Ansage (SS6: Haptik nie
-    /// als einzige Rueckmeldung).
+    /// Schritt und Bereich, immer dieselbe Zeile.
+    ///
+    /// Sie hat frueher am Anschlag "Maximum des Geraets erreicht" gezeigt
+    /// und dafuer Schritt und Bereich verdraengt. Der Satz stand damit
+    /// haeufiger da, als die Grenze eine Rolle spielte, und nahm der Zeile
+    /// genau die Zahlen, die man beim Scrollen braucht. Der Anschlag bleibt
+    /// hoerbar (RastRad.voWertMitAnschlag) und spuerbar (anschlagStoss);
+    /// sichtbar traegt ihn jetzt die Bereichsangabe in dieser Zeile, deren
+    /// Ende man erreicht hat.
     private var kontextzeileGewicht: some View {
-        let amAnschlag = modell.anschlagText != nil
-            && Rastwerte.amAnschlag(modell.gewicht, in: modell.gewichtsWerte)
-        let text = amAnschlag
-            ? (modell.anschlagText ?? "")
-            : (modell.radOffen ? modell.kontextzeileGewicht : (modell.vorschlagText ?? modell.kontextzeileGewicht))
-        return Text(text)
+        Text(modell.radOffen
+             ? modell.kontextzeileGewicht
+             : (modell.vorschlagText ?? modell.kontextzeileGewicht))
             .font(.system(size: 12))
-            .foregroundStyle(amAnschlag ? DesignSystem.Color.textMuted : DesignSystem.Color.textFaint)
+            .foregroundStyle(DesignSystem.Color.textFaint)
             .accessibilityHidden(true)
     }
 

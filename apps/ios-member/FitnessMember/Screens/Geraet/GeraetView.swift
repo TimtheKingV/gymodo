@@ -3,6 +3,12 @@ import SwiftUI
 /// Main, GeraetWertRad und GeraetResttimer sind derselbe Screen in drei
 /// Zustaenden -- keine Navigationsziele. designsystem.md SS7 verlangt
 /// dieselbe Silhouette in Ruhe und Offen; zwei Views waeren hier der Fehler.
+///
+/// Die Pause ist der vierte Zustand und der einzige AUSSCHLIESSENDE: sie
+/// ersetzt Raeder, Einstellwerte und Aktionen, statt sich darueberzulegen.
+/// Vorher blieb alles bedienbar -- man konnte mitten in der Pause das
+/// Gewicht verstellen und den naechsten Satz sichern, was den eben
+/// gestarteten Timer sofort wieder neu startete.
 struct GeraetView: View {
     @Bindable var modell: GeraetModel
     let beiUebungWechseln: () -> Void
@@ -26,9 +32,8 @@ struct GeraetView: View {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopfzeile
                 // Sichtbarkeit hier entschieden, nicht in den Komponenten
-                // selbst -- derselbe Aufbau wie beim ResttimerBalken unten,
-                // damit kein VStack einen leer rendernden Kindzustand
-                // umschliesst (Review-Fund Task 15).
+                // selbst -- damit kein VStack einen leer rendernden
+                // Kindzustand umschliesst (Review-Fund Task 15).
                 if !netz.istOnline {
                     OfflineLeiste(istOnline: netz.istOnline)
                 }
@@ -41,23 +46,29 @@ struct GeraetView: View {
                                     beiQuittieren: katalog.verworfeneQuittieren)
                 }
                 geraetUndUebung
-                if let pause = modell.pause, pause.laeuft() {
-                    ResttimerBalken(timer: pause, beiVerlaengern: modell.pauseVerlaengern)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-                einstellung
-                WertZeile(modell: modell)
-                aktionen
-                produktgrenze
+                inhalt
             }
             .padding(.horizontal, 20)
             .padding(.bottom, DesignSystem.Spacing.s32)
-            .animation(reduceMotion ? nil : DesignSystem.Motion.pause, value: modell.pause)
+            .animation(reduceMotion ? nil : DesignSystem.Motion.pause, value: modell.phase)
             .animation(reduceMotion ? nil : DesignSystem.Motion.oeffnen, value: modell.radOffen)
         }
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
         .task { await modell.kontextLaden() }
+        // Die Pause muss sich selbst beenden. Vorher lief sie gegen einen
+        // Zustand, den niemand zuruecksetzte: der Balken blieb auf 00:00
+        // stehen, bis irgendein anderes Ereignis ein Re-Render ausloeste.
+        // Als Band war das nur haesslich; als ausschliessender Zustand
+        // waere es eine Sackgasse. Der Endzeitpunkt ist die id, damit
+        // "+30 s" den Task neu aufsetzt statt zu frueh zu feuern.
+        .task(id: modell.laufendePause?.endetAm) {
+            guard let ende = modell.laufendePause?.endetAm else { return }
+            let rest = ende.timeIntervalSinceNow
+            if rest > 0 { try? await Task.sleep(for: .seconds(rest)) }
+            guard !Task.isCancelled else { return }
+            modell.pauseBeenden()
+        }
         // Der Reconnect-Moment: laeuft die Schlange leer, steht zwei
         // Sekunden "Gesendet". Der eigentliche Timer sitzt im .task(id:)
         // unten -- hier wird nur die naechste Runde ausgeloest.
@@ -81,6 +92,25 @@ struct GeraetView: View {
         }
     }
 
+    /// Die eine Stelle, an der der Screen entscheidet, was er ist.
+    @ViewBuilder
+    private var inhalt: some View {
+        if let pause = modell.laufendePause {
+            PausenRad(timer: pause,
+                      beiVerlaengern: modell.pauseVerlaengern,
+                      beiWeiter: modell.pauseBeenden)
+                .transition(.opacity)
+        } else if modell.phase == .abschluss {
+            abschlussEntscheidung
+                .transition(.opacity)
+        } else {
+            einstellung
+            WertZeile(modell: modell)
+            aktionen
+            produktgrenze
+        }
+    }
+
     private var kopfzeile: some View {
         Text([modell.maschine.label, modell.maschine.locationNote]
             .compactMap { $0 }.joined(separator: " · ").uppercased())
@@ -101,13 +131,17 @@ struct GeraetView: View {
                     .foregroundStyle(DesignSystem.Color.textMuted)
             }
             Spacer()
-            // Abweichung vom Artboard (Spec Abschnitt 9): dort accent. Die
-            // eine Akzentflaeche des Screens ist die Hauptaktion.
-            Button("andere Übung", action: beiUebungWechseln)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .frame(minHeight: 44)
-                .buttonStyle(PressButtonStyle())
+            // Nur im Eingabezustand: Pause und Abschlussentscheidung zeigen
+            // Geraet und Uebung zur Orientierung, nicht als Auswahl.
+            if modell.phase == .eingabe {
+                // Abweichung vom Artboard (Spec Abschnitt 9): dort accent. Die
+                // eine Akzentflaeche des Screens ist die Hauptaktion.
+                Button("andere Übung", action: beiUebungWechseln)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .frame(minHeight: 44)
+                    .buttonStyle(PressButtonStyle())
+            }
         }
     }
 
@@ -160,7 +194,6 @@ struct GeraetView: View {
 
     private var aktionen: some View {
         VStack(spacing: DesignSystem.Spacing.s12) {
-            reserveZeile
             // Bleibt im offenen Zustand sichtbar und sichert direkt -- kein
             // Schliessen-Tap dazwischen (Interaktionsbudget SS9).
             PrimaryButton(title: hauptaktion) {
@@ -168,20 +201,13 @@ struct GeraetView: View {
             }
             .accessibilityLabel("\(hauptaktion), \(Zahlformat.gewichtGesprochen(modell.gewicht))")
 
-            if modell.pause != nil {
-                SecondaryButton(title: "Übung wechseln", action: beiUebungWechseln)
-            }
-            Button("Problem melden", action: beiProblem)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .frame(maxWidth: .infinity, minHeight: 44)
-                .buttonStyle(PressButtonStyle())
-                .accessibilityHint("Verhindert einen Steigerungsvorschlag")
-            Button("← Zurück zum Training", action: beiZurueckZumTraining)
-                .font(.system(size: 15))
-                .foregroundStyle(DesignSystem.Color.textFaint)
-                .frame(maxWidth: .infinity, minHeight: 44)
-                .buttonStyle(PressButtonStyle())
+            // Steht direkt unter dem Weg zum naechsten Satz, weil es die
+            // andere Haelfte derselben Frage ist: noch einer, oder fertig
+            // hier? Vorher gab es dafuer nur ein kleingesetztes "Zurueck zum
+            // Training" ganz unten -- eine Navigation, kein Abschluss.
+            SecondaryButton(title: "Gerät abschließen", action: beiZurueckZumTraining)
+
+            problemMelden
         }
         // Am umschliessenden VStack, nicht am PrimaryButton selbst: der
         // Knopf verschwindet je nach Zustand aus der Hierarchie, der
@@ -203,47 +229,39 @@ struct GeraetView: View {
         "Satz \(modell.satzNummer) sichern"
     }
 
-    /// RIR, laut SS9 optional und ueber das Profil abschaltbar.
-    @AppStorage(Einstellungen.rirSichtbarKey) private var rirSichtbar = true
+    /// Nach dem letzten geplanten Satz. Eine Pause vor einem Satz, der nicht
+    /// mehr kommt, ist nur Wartezeit -- an ihrer Stelle steht die Frage, die
+    /// jetzt wirklich ansteht.
+    private var abschlussEntscheidung: some View {
+        VStack(spacing: DesignSystem.Spacing.s12) {
+            Text("\(modell.satzZiel) SÄTZE GESCHAFFT")
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            PrimaryButton(title: "Gerät abschließen") { beiZurueckZumTraining() }
+            SecondaryButton(title: "Weiterer Satz") { modell.weitererSatz() }
+
+            problemMelden
+        }
+    }
+
+    /// In beiden Aktionsgruppen dieselbe Zeile -- zweimal getippt waere sie
+    /// die naechste, die auseinanderlaeuft.
+    private var problemMelden: some View {
+        Button("Problem melden", action: beiProblem)
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(DesignSystem.Color.textMuted)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .buttonStyle(PressButtonStyle())
+            .accessibilityHint("Verhindert einen Steigerungsvorschlag")
+    }
+
     /// Haptik beim Sichern, ueber das Profil abschaltbar (SS6: Haptik nie
     /// als einzige Rueckmeldung -- die sichtbare Bestaetigung bleibt in
     /// jedem Fall bestehen).
     @AppStorage(Einstellungen.vibrationBeimSichernKey) private var vibrationBeimSichern = true
-
-    @ViewBuilder
-    private var reserveZeile: some View {
-        if rirSichtbar {
-            HStack(spacing: DesignSystem.Spacing.s8) {
-                Text("RESERVE")
-                    .font(DesignSystem.Typography.label)
-                    .tracking(1.5)
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-                Text("optional")
-                    .font(.system(size: 12))
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-                Spacer()
-                ForEach([0.0, 1.0, 2.0, 3.0, 4.0], id: \.self) { wert in
-                    // Umriss, nie Flaeche -- die dokumentierte Abweichung vom
-                    // Artboard (Spec Abschnitt 9).
-                    Button(wert == 4 ? "4+" : String(Int(wert))) {
-                        modell.reserve = modell.reserve == wert ? nil : wert
-                    }
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(modell.reserve == wert
-                                     ? DesignSystem.Color.text : DesignSystem.Color.textMuted)
-                    .frame(width: 44, height: 44)
-                    .overlay(
-                        Capsule().stroke(
-                            modell.reserve == wert
-                                ? DesignSystem.Color.text : DesignSystem.Color.line,
-                            lineWidth: modell.reserve == wert ? 2 : 1)
-                    )
-                    .buttonStyle(PressButtonStyle())
-                    .accessibilityLabel("Reserve \(Int(wert))\(wert == 4 ? " oder mehr" : "")")
-                }
-            }
-        }
-    }
 
     private var produktgrenze: some View {
         Text(modell.produktgrenze)

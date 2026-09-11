@@ -79,7 +79,6 @@ final class WorkoutSessionStore {
         exerciseId: String,
         weightKg: Double,
         reps: Int,
-        rir: Double?,
         problemFlag: Bool,
         problemReason: ProblemReason?,
         jetzt: Date = Date()
@@ -92,9 +91,14 @@ final class WorkoutSessionStore {
         }
         let setIndex = (index.map { session.bloecke[$0].saetze.count } ?? 0) + 1
 
+        // rir bleibt am Satz und im Schreibvorgang erhalten, wird aber
+        // nicht mehr erfasst: die Reserve-Abfrage ist aus dem Satzpfad
+        // verschwunden. Das Feld traegt weiterhin Altdaten aus der
+        // Sessiondatei und aus der Datenbank -- es zu loeschen hiesse, alte
+        // Einheiten nicht mehr dekodieren zu koennen.
         let satz = LokalerSatz(
             id: UUID(), setIndex: setIndex, weightKg: weightKg, reps: reps,
-            rir: rir, problemFlag: problemFlag, problemReason: problemReason,
+            rir: nil, problemFlag: problemFlag, problemReason: problemReason,
             performedAt: jetzt
         )
 
@@ -111,7 +115,7 @@ final class WorkoutSessionStore {
 
         let body = SetWrite(
             machineId: machineId, exerciseId: exerciseId, setIndex: setIndex,
-            weightKg: weightKg, reps: reps, rir: rir,
+            weightKg: weightKg, reps: reps, rir: nil,
             problemFlag: problemFlag, problemReason: problemReason,
             performedAt: ISO8601DateFormatter().string(from: jetzt)
         )

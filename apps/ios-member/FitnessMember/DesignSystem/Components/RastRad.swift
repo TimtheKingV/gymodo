@@ -1,4 +1,7 @@
 import SwiftUI
+// Fuer UIFont.capHeight in unterstrichVersatz -- SwiftUI allein garantiert
+// den UIKit-Typ nicht.
+import UIKit
 
 enum UnterstrichStil {
     case akzent   // Gewicht: 4pt accent
@@ -82,16 +85,34 @@ struct RastRad: View {
 
     // MARK: - Bestandteile
 
+    /// Der Abstand von der Zeilenmitte zur Grundlinie der Ziffern.
+    ///
+    /// Der Scroller rastet mit `anchor: .center`, die Mitte der gewaehlten
+    /// Zeile ist also bekannt. SwiftUI zentriert darin den Zeilenkasten, und
+    /// der ist nicht symmetrisch: unter der Grundlinie liegt noch die
+    /// Unterlaenge. Die Grundlinie sitzt deshalb um `(ascender + descender) / 2`
+    /// unter der Mitte (`descender` ist negativ) -- nicht auf ihr. Ziffern
+    /// stehen auf der Grundlinie, das ist also genau ihre Unterkante; `s8`
+    /// ist der Abstand, der daraus eine Unterstreichung statt eines
+    /// Anstossens macht.
+    ///
+    /// Aus der Schrift gerechnet und nicht als Zahl hingeschrieben, weil
+    /// dasselbe Rad in zwei Groessen laeuft (64pt Gewicht, 44pt
+    /// Wiederholungen) und ein fester Versatz nur fuer eine davon stimmte.
+    private var unterstrichVersatz: CGFloat {
+        let schrift = UIFont.systemFont(ofSize: basisGroesse, weight: .black)
+        return (schrift.ascender + schrift.descender) / 2 + DesignSystem.Spacing.s8
+    }
+
     /// Liegt fest. Bewegt sich nie -- das ist der ganze Punkt.
+    ///
+    /// Sie liegt UNTER der Zahl, nicht auf ihrer Mitte: eine Linie mitten
+    /// durch die Ziffern markiert nicht, sie streicht durch.
     private var unterstreichung: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            Rectangle()
-                .fill(unterstrich == .akzent ? DesignSystem.Color.accent : DesignSystem.Color.line)
-                .frame(height: unterstrich == .akzent ? 4 : 3)
-            Spacer()
-        }
-        .frame(height: zeilenhoehe * 1.6)
+        Rectangle()
+            .fill(unterstrich == .akzent ? DesignSystem.Color.accent : DesignSystem.Color.line)
+            .frame(height: unterstrich == .akzent ? 4 : 3)
+            .offset(y: unterstrichVersatz)
     }
 
     private var scroller: some View {
@@ -107,6 +128,15 @@ struct RastRad: View {
                     Text(text(wert))
                         .font(.system(size: basisGroesse, weight: .black).monospacedDigit())
                         .foregroundStyle(DesignSystem.Color.text)
+                        // Ohne diese drei Zeilen kuerzte SwiftUI "100,5" zu
+                        // "1..." -- ein Rad, das seinen eigenen Wert nicht
+                        // zeigt, ist schlimmer als eine kleinere Ziffer.
+                        // Der Regelfall bleibt unangetastet: geschrumpft
+                        // wird nur, wo die Spalte wirklich nicht reicht
+                        // (Geraet ohne Obergrenze, grosse Dynamic-Type-Stufen).
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                        .allowsTightening(true)
                         .frame(height: zeilenhoehe)
                         .frame(maxWidth: .infinity)
                         .scrollTransition(.interactive, axis: .vertical) { inhalt, phase in

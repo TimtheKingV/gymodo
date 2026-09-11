@@ -63,4 +63,29 @@ struct ResttimerTests {
         #expect(timer.gesprochen(start.addingTimeInterval(30)) == "Pause, noch 1 Minute")
         #expect(timer.gesprochen(start.addingTimeInterval(90)) == "Pause beendet")
     }
+
+    /// Das Pausenrad fuellt sich, die Ziffern in seiner Mitte zaehlen
+    /// runter -- beide muessen aus derselben Rechnung kommen, sonst zeigt
+    /// ein voller Bogen noch Restsekunden an.
+    @Test func fortschrittLaeuftVonNullNachEins() {
+        let start = Date(timeIntervalSince1970: 1_000_000)
+        let timer = Resttimer(start: start, dauer: 90)
+
+        #expect(timer.fortschritt(jetzt: start) == 0)
+        #expect(timer.fortschritt(jetzt: start.addingTimeInterval(45)) == 0.5)
+        #expect(timer.fortschritt(jetzt: start.addingTimeInterval(90)) == 1)
+        #expect(timer.fortschritt(jetzt: start.addingTimeInterval(200)) == 1)
+    }
+
+    /// Die Gegenprobe zum eingefrorenen Balken: nach "+30 s" waechst die
+    /// Gesamtdauer mit, der Bogen faellt also zurueck statt bei voll zu
+    /// kleben.
+    @Test func fortschrittFaelltNachDerVerlaengerungZurueck() {
+        let start = Date(timeIntervalSince1970: 1_000_000)
+        let timer = Resttimer(start: start, dauer: 90).verlaengert()
+        let jetzt = start.addingTimeInterval(90)
+
+        #expect(timer.fortschritt(jetzt: jetzt) == 0.75)
+        #expect(timer.fortschritt(jetzt: jetzt) + timer.anteil(jetzt: jetzt) == 1)
+    }
 }

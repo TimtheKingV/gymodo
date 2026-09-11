@@ -7,10 +7,10 @@ struct ProfilRootView: View {
 
     let apiClient: APIClient
 
-    @AppStorage(Einstellungen.rirSichtbarKey) private var rirSichtbar = true
     @AppStorage(Einstellungen.vibrationBeimSichernKey) private var vibrationBeimSichern = true
     @AppStorage(Einstellungen.resttimerSekundenKey) private var resttimerSekunden =
         Einstellungen.resttimerVorgabe
+    @AppStorage(Einstellungen.satzZielKey) private var satzZiel = Einstellungen.satzZielVorgabe
 
     @State private var nameOffen = false
 
@@ -104,8 +104,12 @@ struct ProfilRootView: View {
                     Text("\(stufe) s").tag(stufe)
                 }
             }
+            Picker("Sätze pro Gerät", selection: $satzZiel) {
+                ForEach(Einstellungen.satzZielStufen, id: \.self) { stufe in
+                    Text("\(stufe)").tag(stufe)
+                }
+            }
             Toggle("Vibration beim Sichern", isOn: $vibrationBeimSichern)
-            Toggle("Reserve (RIR) abfragen", isOn: $rirSichtbar)
 
             NavigationLink("Passwort ändern") { MemberPasswortAendernView() }
             NavigationLink("Studios") { MemberStudiosView() }

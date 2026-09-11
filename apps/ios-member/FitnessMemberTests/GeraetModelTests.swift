@@ -11,7 +11,8 @@ struct GeraetModelTests {
         bootstrap: BootstrapResponse,
         sessions: WorkoutSessionStore? = nil,
         loader: FakeGeraetLoader = FakeGeraetLoader(),
-        enqueue: @escaping (PendingSetWrite) -> Void = { _ in }
+        enqueue: @escaping (PendingSetWrite) -> Void = { _ in },
+        satzZiel: Int = Einstellungen.satzZielVorgabe
     ) -> GeraetModel {
         let verzeichnis = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
@@ -22,7 +23,8 @@ struct GeraetModelTests {
             bootstrap: bootstrap,
             loader: loader,
             sessions: sessions ?? WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis)),
-            enqueue: enqueue
+            enqueue: enqueue,
+            satzZiel: { satzZiel }
         )
     }
 
@@ -103,7 +105,7 @@ struct GeraetModelTests {
 
     @Test func satzNummerZaehltImBlock() async {
         // Jeder Satz geht durch die Warteschlange, immer -- ein geloeschter
-        // enqueue-Aufruf muss hier auffallen, nicht nur satzNummer/pause/
+        // enqueue-Aufruf muss hier auffallen, nicht nur satzNummer/phase/
         // radOffen (designsystem.md Konstante "gespeichert, wird gesendet").
         let erfasser = Erfassungswarteschlange()
         let verzeichnis = FileManager.default.temporaryDirectory
@@ -118,7 +120,7 @@ struct GeraetModelTests {
         await sut.satzSichern(problemFlag: false, problemReason: nil)
 
         #expect(sut.satzNummer == 2)
-        #expect(sut.pause != nil)
+        #expect(sut.laufendePause != nil)
         #expect(sut.radOffen == false)
 
         let laufendeSession = sessions.aktiveSession()
@@ -128,6 +130,112 @@ struct GeraetModelTests {
         #expect(erfasser.geschriebene.first?.setId == gespeicherterSatz?.id)
         #expect(erfasser.geschriebene.first?.body.weightKg == sut.gewicht)
         #expect(erfasser.geschriebene.first?.body.reps == sut.wiederholungen)
+    }
+
+    // MARK: - Phasen
+
+    @Test func vorDemLetztenGeplantenSatzStartetDiePause() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 3)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.laufendePause != nil)
+        #expect(sut.phase != .abschluss)
+
+        sut.pauseBeenden()
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.laufendePause != nil)
+    }
+
+    @Test func nachDemLetztenGeplantenSatzKommtKeinePauseSondernDieEntscheidung() async {
+        // Eine Pause vor einem Satz, der nicht mehr kommt, ist nur
+        // Wartezeit -- an ihrer Stelle steht die Frage "noch einer, oder
+        // fertig hier?".
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         sessions: sessions,
+                         satzZiel: 3)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        sut.pauseBeenden()
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        sut.pauseBeenden()
+        #expect(sut.satzNummer == 3)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(sut.phase == .abschluss)
+        #expect(sut.laufendePause == nil)
+    }
+
+    @Test func weitererSatzStartetEineNeuePause() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 1)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.phase == .abschluss)
+
+        sut.weitererSatz()
+        #expect(sut.laufendePause != nil)
+    }
+
+    @Test func pauseBeendenSchaltetZurueckAufDieEingabe() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 3)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        sut.pauseBeenden()
+
+        #expect(sut.phase == .eingabe)
+        #expect(sut.laufendePause == nil)
+    }
+
+    @Test func verlaengernSchiebtNurDasEndeUndNurInDerPause() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 3)
+
+        // Ausserhalb der Pause ist "+30 s" wirkungslos statt zustandsbildend.
+        sut.pauseVerlaengern()
+        #expect(sut.phase == .eingabe)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        let vorher = sut.laufendePause
+        sut.pauseVerlaengern()
+
+        #expect(sut.laufendePause?.start == vorher?.start)
+        #expect(sut.laufendePause?.endetAm == vorher?.endetAm.addingTimeInterval(30))
+    }
+
+    @Test func uebungWechselnSetztDiePhaseZurueck() async {
+        let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 1)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.phase == .abschluss)
+
+        // e2 hat eigene Saetze und ein eigenes Ziel -- die Entscheidung von
+        // e1 gilt dort nicht.
+        sut.uebungWechseln(zu: "e2")
+        #expect(sut.phase == .eingabe)
+    }
+
+    @Test func satzSichernSchreibtKeineReserveMehr() async {
+        let erfasser = Erfassungswarteschlange()
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         enqueue: { erfasser.geschriebene.append($0) })
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(erfasser.geschriebene.first?.body.rir == nil)
     }
 
     @Test func gesicherteSaetzeSteigtNurBeimSichernNichtBeimUebungswechsel() async {
@@ -143,9 +251,9 @@ struct GeraetModelTests {
         // e2 hat schon zwei gesicherte Saetze -- mehr, als e1 unten nach
         // dem einen gesicherten Satz haben wird.
         _ = sessions.satzSichern(machineId: "m1", exerciseId: "e2", weightKg: 40, reps: 10,
-                                  rir: nil, problemFlag: false, problemReason: nil)
+                                  problemFlag: false, problemReason: nil)
         _ = sessions.satzSichern(machineId: "m1", exerciseId: "e2", weightKg: 40, reps: 10,
-                                  rir: nil, problemFlag: false, problemReason: nil)
+                                  problemFlag: false, problemReason: nil)
         let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
                          sessions: sessions)
@@ -291,7 +399,7 @@ struct GeraetModelTests {
         #expect(erstesModell.istErstkontakt == true)
         erstesModell.erstkontaktAbschliessen()
         _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 40, reps: 10,
-                                  rir: nil, problemFlag: false, problemReason: nil)
+                                  problemFlag: false, problemReason: nil)
 
         // Ein neuer Push: dieselbe sessions-Instanz, aber ein komplett neues
         // GeraetModel -- erledigt der ersten Instanz ist damit weg, nur
@@ -313,7 +421,7 @@ struct GeraetModelTests {
 
         sut.erstkontaktAbschliessen()
         _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 40, reps: 10,
-                                  rir: nil, problemFlag: false, problemReason: nil)
+                                  problemFlag: false, problemReason: nil)
         #expect(sut.istErstkontakt == false)
 
         sut.uebungWechseln(zu: "e2")

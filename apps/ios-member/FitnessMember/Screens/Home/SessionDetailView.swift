@@ -80,9 +80,6 @@ struct SessionDetailView: View {
 
     private func satzZeile(_ satz: SessionSummary.Block.Set) -> some View {
         var label = "Satz \(satz.setIndex), \(Zahlformat.gewichtGesprochen(satz.weightKg)), \(Zahlformat.wiederholungenGesprochen(satz.reps))"
-        if let rir = satz.rir {
-            label.append(", RIR \(Int(rir))")
-        }
         if satz.problemFlag {
             label.append(", Problem gemeldet")
         }
@@ -102,16 +99,6 @@ struct SessionDetailView: View {
                 .font(DesignSystem.Typography.fliesstext)
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .monospacedDigit()
-
-            // Nur wo eine Reserve erfasst wurde -- der Schalter im Profil
-            // entscheidet ueber die ERFASSUNG, nicht rueckwirkend ueber
-            // die Anzeige dessen, was schon gespeichert ist.
-            if let rir = satz.rir {
-                Text("RIR \(Int(rir))")
-                    .font(DesignSystem.Typography.fliesstext)
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                    .monospacedDigit()
-            }
 
             if satz.problemFlag {
                 Image(systemName: "exclamationmark.triangle")

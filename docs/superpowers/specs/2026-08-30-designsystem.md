@@ -93,8 +93,8 @@ Fünf Stile, einmal definiert, überall gleich:
 
 ## 6. Bewegung
 
-- **Resttimer als linearer Balken, kein Spinner.** Er zeigt Restdauer, nicht Beschäftigung.
-- **Reduce Motion** ersetzt jede Animation durch einen Zustandswechsel, nie durch Weglassen der Information. Der Balken springt dann sekundenweise statt zu laufen.
+- **Resttimer als Rad, kein Spinner.** Ein Bogen, der sich füllt, mit der Restdauer in seiner Mitte: determiniert, zeigt Restdauer statt Beschäftigung. Bis zum Satzpfad-Feinschliff war es ein linearer 4-pt-Balken über dem Screen — der Grund ist derselbe geblieben, die Form hat sich geändert, weil die Pause den Screen inzwischen ganz übernimmt statt als Band über ihm zu liegen. Auf einer leeren Fläche ist ein Kreis mit Ziffern aus zwei Metern Abstand lesbar, ein 4-pt-Balken nicht.
+- **Reduce Motion** ersetzt jede Animation durch einen Zustandswechsel, nie durch Weglassen der Information. Der Bogen springt dann sekundenweise statt zu laufen.
 - **Haptik nie als einzige Rückmeldung** (M1-Spec 5.9). Jede Bestätigung ist zusätzlich sichtbar.
 
 ---
@@ -105,11 +105,15 @@ Gewicht und Wiederholungen stehen **nackt auf der Fläche**: große Zahl, darunt
 
 **Der Kniff: die Linie bleibt liegen, die Zahlen ziehen daran vorbei.** Es braucht keinen Auswahlbalken und keine Umrandung — die Unterstreichung, die im Ruhezustand schon den aktiven Wert markiert, ist im offenen Zustand die Rastmarke. Damit hat der Screen in beiden Zuständen dieselbe Silhouette, und der Übergang ist eine Bewegung statt eines Aufbaus.
 
+**Sie unterstreicht, sie streicht nicht durch.** Die Linie liegt eine halbe Versalhöhe unter der Zeilenmitte, nicht auf ihr — aus der Schriftgröße gerechnet, weil dasselbe Rad in zwei Größen läuft. Eine Linie mitten durch die Ziffern markiert nicht, sie durchstreicht.
+
+**Der Wert wird nie gekürzt.** `10,5` oder `100,5` als `1…` zu zeigen, nimmt dem Rad seine einzige Aufgabe. Die Gewichtsspalte bekommt deshalb die Restbreite und die Wiederholungsspalte eine feste — Wiederholungen sind strukturell zweistellig, Gewichte nicht. Wo es trotzdem eng wird (Gerät ohne Obergrenze, große Dynamic-Type-Stufen), skaliert die Ziffer, statt zu kürzen.
+
 **Es gibt keine ± Tasten.** Sie belegten je 56–62 pt links und rechts vom Wert und lösten nichts, was das Rad nicht schneller löst.
 
 | Zustand | Aussehen |
 | --- | --- |
-| Ruhe | Wert 64 pt, darunter 4 pt `accent` (Gewicht) bzw. 3 pt `line` (Wiederholungen). Unter der Linie der Kontext: `Vorschlag · +2,5` bzw. `Ziel 8 – 12` |
+| Ruhe | Wert 64 pt, **darunter** 4 pt `accent` (Gewicht) bzw. 3 pt `line` (Wiederholungen). Unter der Linie der Kontext: `Vorschlag · +2,5` bzw. `Ziel 8 – 12` |
 | Offen | Zwei Nachbarn je Richtung, 30 pt in `text-faint` und 26 pt in `line`, nach oben und unten in `bg` ausgeblendet. Der gewählte Wert behält Größe und Akzentlinie |
 
 **Die Rastung kommt aus dem Gerät, nicht aus dem Entwurf:** `equipment_models.weight_step_kg`. Dieselbe Daumenstrecke deckt an einer Beinpresse mit 2,5-kg-Platten eine andere Spanne ab als an einem Beinbeuger mit 5-kg-Platten. Wiederholungen rasten immer auf 1.
@@ -155,7 +159,9 @@ Daraus folgt direkt:
 
 - **Kein Keyboard, nirgends im Satzpfad.** Gewicht und Wiederholungen sind Räder mit der Schrittweite des Gerätemodells (Abschnitt 7), nicht Textfelder.
 - **Übungsauswahl kostet im Normalfall keinen Tap** (M1-Spec 5.7): eine Übung → übersprungen; Historie vorhanden → vorausgewählt.
-- **RIR ist optional und abschaltbar** (Profil). Wer es nicht nutzt, sieht das Feld nicht.
+- **Keine RIR-Abfrage im Satzpfad.** Sie war bis zum Satzpfad-Feinschliff eine optionale, im Profil abschaltbare Zeile aus fünf Knöpfen. Sie ist ganz gefallen: wie viele Wiederholungen jemand geschafft hat, steht schon im zweiten Rad, und eine geschätzte Reserve daneben ist ein zweiter Satz derselben Aussage. Die Spalte `workout_sets.rir` bleibt nullable und trägt Altdaten; die Progression fällt ohne sie auf ihre Regel „zweimal am oberen Ende des Korridors" zurück (`packages/domain/src/progression.ts`).
+- **Das Satzziel steht im Profil** (Vorgabe 3, je Gerät und Übung). Es gibt keinen Trainingsplan in den Daten — `exercises` kennt nur einen Wiederholungskorridor. Eine Vorgabe, die das Mitglied selbst verschiebt, ist ehrlicher als eine erfundene Zahl vom Server. Nach dem letzten geplanten Satz kommt keine Pause, sondern die Frage: **Gerät abschließen** oder **Weiterer Satz**.
+- **Die Pause ist ein Zustand, kein Band.** Solange sie läuft, zeigt der Geräte-Screen nur Gerät, Übung und das Rad — keine Wertwahl, keine Hauptaktion. Ein Screen, auf dem man während der Pause den nächsten Satz sichern kann, startet die Pause, die er gerade zeigt, sofort neu.
 
 ---
 
