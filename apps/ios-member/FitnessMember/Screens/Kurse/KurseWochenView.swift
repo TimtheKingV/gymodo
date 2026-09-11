@@ -199,14 +199,32 @@ enum KurseWochenBerechnung {
 }
 
 /// Der Wochenplan der Kurse (Kurse.dc.html) -- Kopf mit Studioname,
-/// Wochenstreifen, die Termine des gewaehlten Tages, Fussnote.
+/// Wochenstreifen, Umschalter, die passende Liste darunter, Fussnote.
 ///
-/// Der Screen traegt seit der Zusammenlegung drei Abschnitte: das Band
-/// „Deine Kurse“ (frueher der eigene Screen „Meine Kurse“, siehe
-/// `KurseBandView`), den wischbaren Wochenstreifen unter der Ueberschrift
-/// „Alle Kurse“, und die Termine des gewaehlten Tages.
+/// Der Screen zeigt seit dem Umbau EINEN Kalender ganz oben und darunter
+/// entweder die eigenen Anmeldungen (`KurseBandView`) oder die Termine des
+/// gewaehlten Tages -- umgeschaltet ueber die beiden Haelften unter dem
+/// Streifen (`KurseAnsicht`). Davor standen beide Listen untereinander:
+/// wer angemeldet war, scrollte an den eigenen Kursen vorbei zum Plan, und
+/// wer es nicht war, las eine Ueberschrift ohne Inhalt.
 ///
-/// Vier Festlegungen, die dabei gefallen sind:
+/// Drei Festlegungen zum Umschalter:
+///
+/// 1. **Er erscheint nur mit mindestens einer offenen Anmeldung.** Sonst
+///    beginnt der Screen direkt mit dem Wochenplan -- eine Haelfte, die
+///    auf eine leere Liste zeigt, ist schlimmer als kein Knopf.
+/// 2. **Der Kalender wirkt nur auf „Alle Kurse“.** „Angemeldet“ zeigt alle
+///    kommenden Anmeldungen des Ladefensters, naechste zuerst. Tagesweise
+///    gefiltert waere diese Haelfte an den meisten Tagen leer. Die Punkte
+///    unter den Tageszellen sagen weiterhin, an welchen Tagen ein eigener
+///    Platz steht.
+/// 3. **Die Ueberschriften der beiden Listen sind weg** -- „DEINE KURSE“
+///    ueber dem Band und „ALLE KURSE“ ueber dem Streifen. Beide Woerter
+///    stehen jetzt auf dem Umschalter; zweimal dasselbe untereinander sagt
+///    nichts doppelt so gut. Die Tagesueberschrift („Heute · Mi, 9.
+///    September“) bleibt, sie sagt etwas anderes.
+///
+/// Vier aeltere Festlegungen gelten unveraendert weiter:
 ///
 /// 1. **Die Ein-Akzent-Regel ist aufgegeben.** Frueher trug dieser Screen
 ///    genau eine Akzentflaeche (den gewaehlten Tag). Das laesst sich nicht
@@ -245,6 +263,13 @@ struct KurseWochenView: View {
     /// wenn die Mitternacht waehrend einer offenen App-Sitzung vergeht.
     @State private var gewaehlterTagId: String?
 
+    /// nil, solange niemand den Umschalter angefasst hat -- dann gilt die
+    /// Vorauswahl aus `KurseAnsicht.geltend`. Dasselbe Muster wie
+    /// `gewaehlterTagId` darueber und aus demselben Grund: eine rein
+    /// abgeleitete Vorauswahl bleibt auch dann richtig, wenn sich die
+    /// Daten unter der offenen App aendern.
+    @State private var gewaehlteAnsicht: KurseAnsicht?
+
     /// 60-Sekunden-Kadenz statt einer einmalig beim Aufbau gelesenen
     /// Date() -- dasselbe Muster wie in KursDetailView und KurseMeineView,
     /// und aus demselben Grund: @Observable loest kein Neuzeichnen aus,
@@ -259,25 +284,48 @@ struct KurseWochenView: View {
     }
 
     private func screenInhalt(jetzt: Date) -> some View {
-        ScrollView {
+        // EINE Einteilung je Durchlauf, hier oben gebildet: sie entscheidet
+        // zugleich, ob der Umschalter erscheint, welche Haelfte gilt und was
+        // die Liste zeigt. Bildete KurseBandView sie selbst noch einmal,
+        // koennten die drei auseinanderlaufen.
+        let eigene = kurse.eigene
+        let einteilung = eigene.map {
+            KurseMeineEinteilung.bilden(aus: $0.termine, jetzt: jetzt, zeitzone: $0.timezone)
+        }
+        let hatAnmeldungen = !(einteilung?.istLeer ?? true)
+        let ansicht = KurseAnsicht.geltend(
+            gewaehlt: gewaehlteAnsicht, hatAnmeldungen: hatAnmeldungen)
+
+        return ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopf
-                KurseBandView(beiAuswahl: beiAuswahl, jetzt: jetzt)
-                kalender(jetzt: jetzt)
-                let herkunft = herkunft(jetzt: jetzt)
-                if kurse.woche != nil,
-                   let hinweis = herkunft.satz(
-                       stand: kurse.wocheStand,
-                       zusatz: "Die freien Plätze lassen wir deshalb weg. Zum Aktualisieren nach unten ziehen.") {
-                    InlineBanner(tone: .muted, message: hinweis, icon: herkunft.symbol)
+                kalender(jetzt: jetzt, hatAnmeldungen: hatAnmeldungen, ansicht: ansicht)
+                if ansicht == .angemeldet, let eigene, let einteilung {
+                    KurseBandView(
+                        beiAuswahl: beiAuswahl, jetzt: jetzt,
+                        einteilung: einteilung, eigene: eigene)
+                } else {
+                    let herkunft = herkunft(jetzt: jetzt)
+                    // Der Banner gehoert zum Wochenplan, nicht zum Screen:
+                    // er erklaert die fehlenden Platzzahlen der Terminliste.
+                    // Ueber den eigenen Anmeldungen stuende er ohne Bezug --
+                    // die kommen von der Platte und zeigen gar keine Zahl.
+                    if kurse.woche != nil,
+                       let hinweis = herkunft.satz(
+                           stand: kurse.wocheStand,
+                           zusatz: "Die freien Plätze lassen wir deshalb weg. Zum Aktualisieren nach unten ziehen.") {
+                        InlineBanner(tone: .muted, message: hinweis, icon: herkunft.symbol)
+                    }
+                    tagesliste(
+                        jetzt: jetzt, herkunft: herkunft, hatAnmeldungen: hatAnmeldungen)
                 }
-                tagesliste(jetzt: jetzt, herkunft: herkunft)
                 fussnote
             }
             .padding(.horizontal, 20)
             .padding(.top, DesignSystem.Spacing.s24)
             .padding(.bottom, DesignSystem.Spacing.s32)
             .animation(reduceMotion ? nil : DesignSystem.Motion.oeffnen, value: gewaehlterTagId)
+            .animation(reduceMotion ? nil : DesignSystem.Motion.oeffnen, value: ansicht)
         }
         .background(DesignSystem.Color.bg)
         // Ziehen zum Aktualisieren: der Weg, den das Mitglied ohne
@@ -400,19 +448,65 @@ struct KurseWochenView: View {
         gewaehlterTagId = (tage.first { $0.istHeute } ?? tage.first)?.id
     }
 
-    /// „Alle Kurse“ ist die einzige Ueberschrift ueber dem Streifen -- die
-    /// fruehere Wochenleiste mit Datumsspanne und Vor/Zurueck-Pfeilen ist
-    /// weg, gewischt wird auf den Tagesboxen selbst. Weil damit die einzige
-    /// Monatsangabe des Screens verschwunden war, traegt sie jetzt die
+    /// Der Kalender steht ganz oben und ohne Ueberschrift: die fruehere
+    /// Wochenleiste mit Datumsspanne und Vor/Zurueck-Pfeilen ist weg
+    /// (gewischt wird auf den Tagesboxen selbst), und „ALLE KURSE“ darueber
+    /// ist mit dem Umbau in den Umschalter gewandert. Weil damit die
+    /// einzige Monatsangabe des Screens verschwunden war, traegt sie die
     /// Tagesueberschrift unter dem Streifen.
-    private func kalender(jetzt: Date) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            Text("ALLE KURSE")
-                .font(DesignSystem.Typography.label)
-                .tracking(1.5)
-                .foregroundStyle(DesignSystem.Color.textMuted)
+    ///
+    /// Streifen und Umschalter stehen in EINEM Block mit engerem Abstand
+    /// (s16 statt der s24 zwischen den Abschnitten): der Umschalter gehoert
+    /// sichtbar zum Kalender darueber, nicht zur Liste darunter -- sonst
+    /// laese er sich als Ueberschrift der Liste, und die Verbindung zum
+    /// Tag, den er in einer seiner beiden Haelften filtert, ginge verloren.
+    private func kalender(
+        jetzt: Date, hatAnmeldungen: Bool, ansicht: KurseAnsicht
+    ) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
             wochenstreifen(jetzt: jetzt)
+            if KurseAnsicht.zeigtUmschalter(hatAnmeldungen: hatAnmeldungen) {
+                umschalter(ansicht)
+            }
         }
+    }
+
+    /// Die beiden Haelften „Angemeldet“ und „Alle Kurse“.
+    ///
+    /// Die gewaehlte Haelfte ist accent-GEFUELLT -- die zweite Akzentflaeche
+    /// des Screens neben dem gewaehlten Tag, und aus demselben Grund
+    /// zulaessig: sie sagt dasselbe Wort („das hier ist gewaehlt“), nicht
+    /// ein zweites. Beide Haelften sind gleich breit, damit keine wie die
+    /// wichtigere aussieht, und beide 44pt hoch (designsystem.md SS4).
+    ///
+    /// `.isSelected` statt einer zweiten Beschriftung: VoiceOver sagt damit
+    /// „ausgewaehlt“, ohne dass der Zustand am Gruen allein haengt.
+    private func umschalter(_ ansicht: KurseAnsicht) -> some View {
+        HStack(spacing: 0) {
+            ForEach(KurseAnsicht.allCases, id: \.self) { haelfte in
+                let aktiv = haelfte == ansicht
+                Button {
+                    gewaehlteAnsicht = haelfte
+                } label: {
+                    Text(haelfte.titel)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(
+                            aktiv ? DesignSystem.Color.onAccent : DesignSystem.Color.textMuted)
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .background(aktiv ? DesignSystem.Color.accent : Color.clear)
+                        .clipShape(Capsule())
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(PressButtonStyle())
+                .accessibilityLabel(haelfte.titel)
+                .accessibilityAddTraits(aktiv ? .isSelected : [])
+            }
+        }
+        // 2pt Luft zwischen gefuellter Haelfte und Aussenkontur -- ohne sie
+        // liefen die beiden Kapselkanten aufeinander und die Kontur
+        // verschwaende hinter dem Gruen.
+        .padding(2)
+        .overlay(Capsule().stroke(DesignSystem.Color.line, lineWidth: 1))
     }
 
     /// Ein ECHTER Paging-Container, keine selbstgebaute DragGesture.
@@ -548,13 +642,15 @@ struct KurseWochenView: View {
     /// naechsten Reachability-Meldung kurz "online" zeigen, waehrend die
     /// Anfrage selbst laengst mit .offline gescheitert ist -- der
     /// tatsaechlich gefangene Fehler ist die verlässlichere Quelle.
-    private func tagesliste(jetzt: Date, herkunft: KurseHerkunft) -> some View {
+    private func tagesliste(
+        jetzt: Date, herkunft: KurseHerkunft, hatAnmeldungen: Bool
+    ) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             Text(tagesueberschrift(jetzt: jetzt).uppercased())
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
-            inhalt(jetzt: jetzt, herkunft: herkunft)
+            inhalt(jetzt: jetzt, herkunft: herkunft, hatAnmeldungen: hatAnmeldungen)
         }
     }
 
@@ -568,7 +664,9 @@ struct KurseWochenView: View {
     }
 
     @ViewBuilder
-    private func inhalt(jetzt: Date, herkunft: KurseHerkunft) -> some View {
+    private func inhalt(
+        jetzt: Date, herkunft: KurseHerkunft, hatAnmeldungen: Bool
+    ) -> some View {
         if kurse.woche != nil {
             if termineDesTages(jetzt: jetzt).isEmpty {
                 leerZustand
@@ -581,9 +679,9 @@ struct KurseWochenView: View {
             }
         } else if case .fehlgeschlagen(let fehler) = kurse.ladeZustand {
             if fehler == .offline {
-                offlineKarte
+                offlineKarte(hatAnmeldungen: hatAnmeldungen)
             } else {
-                fehlerKarte(fehler.servertext)
+                fehlerKarte(fehler.servertext, hatAnmeldungen: hatAnmeldungen)
             }
         } else {
             skelett
@@ -633,12 +731,12 @@ struct KurseWochenView: View {
     }
 
     /// danger-Umriss auf 10% danger-Flaeche, wie OfflineLeiste (GeraetView)
-    /// -- derselbe Ton fuer denselben Zustand. Das Band „Deine Kurse“
-    /// darueber bleibt stehen (es liest aus `KurseStore.eigene`, also von
-    /// der Platte, und braucht kein Netz), das sagt der zweite Satz
-    /// ausdruecklich. Frueher nannte er „Meine Kurse“ -- den Screen gibt
-    /// es nicht mehr, die Aussage gilt unveraendert.
-    private var offlineKarte: some View {
+    /// -- derselbe Ton fuer denselben Zustand. Die Haelfte „Angemeldet“
+    /// bleibt erreichbar (sie liest aus `KurseStore.eigene`, also von der
+    /// Platte, und braucht kein Netz), das sagt der zweite Satz
+    /// ausdruecklich. Er nannte nacheinander „Meine Kurse“ und „Deine
+    /// Kurse“; beide gibt es nicht mehr, die Aussage gilt unveraendert.
+    private func offlineKarte(hatAnmeldungen: Bool) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             HStack(spacing: DesignSystem.Spacing.s8) {
                 Image(systemName: "wifi.slash")
@@ -646,7 +744,14 @@ struct KurseWochenView: View {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                     Text("Kein Empfang")
                         .font(.system(size: 15, weight: .semibold))
-                    Text("Der Wochenplan braucht Empfang. Deine Anmeldungen oben bleiben sichtbar.")
+                    // Der zweite Satz zeigt auf eine Haelfte des
+                    // Umschalters -- und der steht nur da, wenn es
+                    // ueberhaupt eine Anmeldung gibt. Ohne diese Bedingung
+                    // verwiese die Karte auf einen Knopf, den es auf dem
+                    // Screen nicht gibt.
+                    Text(hatAnmeldungen
+                        ? "Der Wochenplan braucht Empfang. Deine Anmeldungen stehen oben unter „Angemeldet“."
+                        : "Der Wochenplan braucht Empfang.")
                         .font(.system(size: 13))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                         .lineSpacing(3)
@@ -696,16 +801,20 @@ struct KurseWochenView: View {
     /// (`KurseLadeZustand.fehlgeschlagen(APIError)`). Der zweite Satz sagt,
     /// was trotzdem gilt (designsystem.md SS5: Fehler sagen, was falsch
     /// ist UND was gilt).
-    private func fehlerKarte(_ text: String) -> some View {
+    private func fehlerKarte(_ text: String, hatAnmeldungen: Bool) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
                 Text(text)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(DesignSystem.Color.danger)
-                Text("Deine eigenen Anmeldungen stehen weiterhin oben unter „Deine Kurse“.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                    .lineSpacing(3)
+                // Siehe offlineKarte: der Verweis steht nur, wenn es die
+                // Haelfte gibt, auf die er zeigt.
+                if hatAnmeldungen {
+                    Text("Deine eigenen Anmeldungen stehen weiterhin oben unter „Angemeldet“.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .lineSpacing(3)
+                }
             }
             .accessibilityElement(children: .combine)
             wiederholenKnopf

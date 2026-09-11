@@ -1,29 +1,48 @@
 import SwiftUI
 
-/// Das Band „Deine Kurse“ am Kopf des Kurse-Screens -- der frühere Screen
-/// „Meine Kurse“, an die Stelle gerueckt, an der man ihn braucht.
+/// Die Liste der eigenen Anmeldungen -- die linke Haelfte des
+/// Umschalters auf dem Kurse-Screen („Angemeldet“, siehe `KurseAnsicht`),
+/// und vor dem Umbau das Band „Deine Kurse“ am Kopf desselben Screens.
 ///
-/// Der Grund fuer die Zusammenlegung ist einfach: die eigenen Anmeldungen
-/// waren hinter einem Textknopf oben rechts versteckt, und ein Wochenplan,
-/// der nicht zeigt, wo man selbst eingetragen ist, beantwortet die
-/// haeufigste Frage nicht. Jetzt steht sie oben, bevor der Plan beginnt.
+/// Der Grund ist unveraendert: ein Wochenplan, der nicht zeigt, wo man
+/// selbst eingetragen ist, beantwortet die haeufigste Frage nicht. Neu ist
+/// nur, dass die Antwort nicht mehr ueber dem Plan steht, sondern an
+/// seiner Stelle -- wer angemeldet ist, sieht zuerst seine eigenen Kurse
+/// und scrollt nicht an ihnen vorbei.
 ///
-/// Drei Abschnitte gibt es hier nicht mehr (`alleZeilen` statt
+/// Eine eigene Ueberschrift traegt die Liste seit dem Umbau nicht mehr:
+/// die steht als Beschriftung auf der angetippten Haelfte des Umschalters
+/// direkt darueber, und zweimal dasselbe Wort untereinander sagt nichts
+/// doppelt so gut.
+///
+/// Drei Abschnitte gibt es hier ebenfalls nicht (`alleZeilen` statt
 /// angemeldet/warteliste/spaeter): der Zustand steht auf der Karte selbst
 /// -- Kontur, Marke, Abmeldehinweis -- und muss nicht noch einmal als
 /// Ueberschrift darueber. Der naechste Kurs steht oben.
 ///
-/// Das Band traegt als einzige Stelle den Abmelden-Knopf. Die Zeile im
-/// Tagesplan darunter markiert dieselbe Anmeldung nur (Kontur und Haken);
-/// stuende der rote Knopf zweimal auf einem Screen, waere nicht mehr
-/// erkennbar, dass es dieselbe Handlung ist -- und die Zeile im Plan waere
-/// um ihre Fusszeile hoeher als jede andere.
+/// Die Liste traegt als einzige Stelle den Abmelden-Knopf. Die Zeile im
+/// Tagesplan der anderen Haelfte markiert dieselbe Anmeldung nur (Kontur
+/// und Haken); stuende der rote Knopf zweimal auf einem Screen, waere
+/// nicht mehr erkennbar, dass es dieselbe Handlung ist -- und die Zeile im
+/// Plan waere um ihre Fusszeile hoeher als jede andere.
 struct KurseBandView: View {
     let beiAuswahl: (String) -> Void
     /// Aus dem 60-Sekunden-Tick des Screens, nicht aus einem frischen
     /// `Date()`: sonst blieben Abmeldefrist und Zustand stehen, bis
     /// irgendein unabhaengiger Grund neu zeichnet.
     let jetzt: Date
+    /// Die fertige Zuordnung und die Buchungen, aus denen sie entstanden
+    /// ist -- beide kommen vom Screen, statt hier ein zweites Mal gebildet
+    /// zu werden.
+    ///
+    /// Nicht bloss gespartes Rechnen: derselbe Wert entscheidet oben, ob
+    /// der Umschalter ueberhaupt erscheint
+    /// (`KurseAnsicht.zeigtUmschalter`). Bildete diese Liste ihre eigene
+    /// Einteilung, koennten die beiden auseinanderlaufen -- ein Umschalter
+    /// mit einer leeren Haelfte, oder eine Liste ohne den Knopf, ueber den
+    /// man zu ihr zurueckkaeme.
+    let einteilung: KurseMeineEinteilung
+    let eigene: GespeicherteBuchungen
 
     @Environment(KurseStore.self) private var kurse
 
@@ -35,19 +54,9 @@ struct KurseBandView: View {
     @State private var fehlermeldungen: [String: String] = [:]
 
     var body: some View {
-        if let eigene = kurse.eigene {
-            let einteilung = KurseMeineEinteilung.bilden(
-                aus: eigene.termine, jetzt: jetzt, zeitzone: eigene.timezone)
-            if !einteilung.istLeer {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-                    Text("DEINE KURSE")
-                        .font(DesignSystem.Typography.label)
-                        .tracking(1.5)
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                    ForEach(einteilung.alleZeilen) { zeile in
-                        karte(zeile, eigene: eigene)
-                    }
-                }
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            ForEach(einteilung.alleZeilen) { zeile in
+                karte(zeile, eigene: eigene)
             }
         }
     }
@@ -149,8 +158,10 @@ struct KurseBandView: View {
     /// wie der Satz es sagt.
     ///
     /// Woertlich uebernommen bis auf zwei Woerter: „unter Meine Kurse“ ist
-    /// „unter Deine Kurse“ geworden, weil der Satz sonst auf einen Screen
-    /// zeigte, den es nicht mehr gibt.
+    /// „unter Angemeldet“ geworden -- erst, weil es den Screen „Meine
+    /// Kurse“ nicht mehr gibt, dann, weil auch das Band „Deine Kurse“ dem
+    /// Umschalter gewichen ist. Der Satz zeigt damit auf die Beschriftung,
+    /// die tatsaechlich auf dem Screen steht.
     private var wartelistenErklaerung: some View {
         HStack(alignment: .top, spacing: DesignSystem.Spacing.s8) {
             Image(systemName: "info.circle")
@@ -159,7 +170,7 @@ struct KurseBandView: View {
             // textMuted statt textFaint: der Satz ist die tragende
             // Information dieser Karte (designsystem.md SS2 laesst
             // textFaint nur fuer nicht tragenden Text zu).
-            Text("Rückt jemand ab, bekommst du den Platz automatisch. Du siehst es hier unter Deine Kurse. Bis dahin ist nichts reserviert.")
+            Text("Rückt jemand ab, bekommst du den Platz automatisch. Du siehst es hier unter Angemeldet. Bis dahin ist nichts reserviert.")
                 .font(.system(size: 12))
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .lineSpacing(3)
