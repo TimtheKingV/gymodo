@@ -10,9 +10,13 @@ import SwiftUI
 /// Arbeit.
 struct KurseWochentag: Identifiable, Equatable {
     let id: String
-    /// "Mo", "Di", ... -- wie designsystem.md SS10 (KursZeit-Kommentar):
-    /// "ccc" (stand-alone), nicht "EEE", liefert das ohne Punkt.
-    let kuerzel: String
+    /// "M", "D", "M", ... -- die schmalste Form ("ccccc", stand-alone).
+    /// Sieben Zellen nebeneinander sind ein Raster, kein Text: der zweite
+    /// Buchstabe kostet Breite und sagt nichts, was die Stellung im
+    /// Streifen nicht schon sagt. Dieselbe Zelle wie im Home-Kalender
+    /// (HomeSerieTag.buchstabe) -- zwei Wochenstreifen in einer App, die
+    /// sich in Form und Beschriftung unterscheiden, waeren zwei Entwuerfe.
+    let buchstabe: String
     /// "Montag", "Dienstag", ... fuer die Tagesueberschrift und VoiceOver.
     let wochentagVoll: String
     let tagesnummer: Int
@@ -168,10 +172,13 @@ enum KurseWochenBerechnung {
         idFormatter.timeZone = kalender.timeZone
         idFormatter.dateFormat = "yyyy-MM-dd"
 
-        let kuerzelFormatter = DateFormatter()
-        kuerzelFormatter.locale = Locale(identifier: "de_DE")
-        kuerzelFormatter.timeZone = kalender.timeZone
-        kuerzelFormatter.dateFormat = "ccc"
+        let buchstabenFormatter = DateFormatter()
+        buchstabenFormatter.locale = Locale(identifier: "de_DE")
+        buchstabenFormatter.timeZone = kalender.timeZone
+        // "ccccc" (stand-alone, narrow) liefert "M", "D", "M", "D", "F",
+        // "S", "S" -- nicht "EEEEE", das in manchen Sprachen die Form
+        // fuer "am Montag" waehlt.
+        buchstabenFormatter.dateFormat = "ccccc"
 
         let vollFormatter = DateFormatter()
         vollFormatter.locale = Locale(identifier: "de_DE")
@@ -182,7 +189,7 @@ enum KurseWochenBerechnung {
             let tag = kalender.date(byAdding: .day, value: versatz, to: montag) ?? montag
             return KurseWochentag(
                 id: idFormatter.string(from: tag),
-                kuerzel: kuerzelFormatter.string(from: tag),
+                buchstabe: buchstabenFormatter.string(from: tag).uppercased(),
                 wochentagVoll: vollFormatter.string(from: tag),
                 tagesnummer: kalender.component(.day, from: tag),
                 istHeute: kalender.isDate(tag, inSameDayAs: heute),
@@ -435,10 +442,10 @@ struct KurseWochenView: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        // Feste Hoehe: 44pt Tagesbox, 6pt Abstand, 5pt Punkt. Eine
-        // TabView hat keine Eigenhoehe, ohne diese Angabe fuellte sie den
-        // ganzen ScrollView.
-        .frame(height: 55)
+        // Feste Hoehe: 12pt Buchstabe, 6pt Abstand, 40pt Kreis, 6pt
+        // Abstand, 5pt Punkt. Eine TabView hat keine Eigenhoehe, ohne
+        // diese Angabe fuellte sie den ganzen ScrollView.
+        .frame(height: 69)
         .accessibilityAction(named: "Nächste Woche") {
             waehleWoche(index: min(index + 1, alle.count - 1), jetzt: jetzt)
         }
@@ -457,22 +464,35 @@ struct KurseWochenView: View {
                     gewaehlterTagId = tag.id
                 } label: {
                     VStack(spacing: 6) {
-                        VStack(spacing: DesignSystem.Spacing.s4) {
-                            Text(tag.kuerzel.uppercased())
-                                .font(.system(size: 10, weight: .heavy))
-                                .tracking(1)
+                        // Der Buchstabe steht UEBER der Zelle, nicht darin:
+                        // dieselbe Anordnung wie im Home-Kalender, und die
+                        // Zelle bleibt dadurch ein Kreis statt eines Kastens
+                        // mit zwei Zeilen.
+                        Text(tag.buchstabe)
+                            .font(.system(size: 10, weight: .heavy))
+                            .tracking(1.2)
+                            .foregroundStyle(
+                                ausgewaehlt
+                                    ? DesignSystem.Color.text : DesignSystem.Color.textFaint)
+
+                        ZStack {
+                            // Die einzige AkzentFLAECHE des Screens: nur der
+                            // gewaehlte Tag traegt sie (siehe Festlegung 1 oben).
+                            Circle().fill(ausgewaehlt ? DesignSystem.Color.accent : Color.clear)
                             Text("\(tag.tagesnummer)")
                                 .font(.system(size: 16, weight: .black).monospacedDigit())
+                                .foregroundStyle(
+                                    ausgewaehlt
+                                        ? DesignSystem.Color.onAccent : DesignSystem.Color.textMuted)
                         }
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        // Die einzige AkzentFLAECHE des Screens: nur der
-                        // gewaehlte Tag traegt sie (siehe Festlegung 1 oben).
-                        .background(ausgewaehlt ? DesignSystem.Color.accent : Color.clear)
-                        .foregroundStyle(ausgewaehlt ? DesignSystem.Color.onAccent : DesignSystem.Color.textMuted)
-                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+                        .frame(width: 40, height: 40)
 
                         punkt(indikator)
                     }
+                    // Die Trefferflaeche ist die ganze Spalte, nicht der
+                    // Kreis: 40 pt allein blieben unter den 44 aus
+                    // designsystem.md SS4.
+                    .frame(maxWidth: .infinity, minHeight: 44)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(PressButtonStyle())

@@ -11,6 +11,12 @@ import SwiftUI
 /// Die frueheren Kennzahlen ("diese Woche / gesamt / Tage her") sind
 /// dafuer weggefallen: der Streifen und seine Fussnote tragen sie
 /// vollstaendig (siehe HomeSerieView).
+///
+/// Mit ihm ist auch die Liste "Letzte Trainings" gegangen. Sie zeigte
+/// dieselben Karten ein zweites Mal, nur nach Datum statt nach Tag
+/// geordnet -- und ein Tag mit zwei Einheiten stand darin zweimal unter
+/// derselben Ueberschrift. Der Kalender ist jetzt der eine Weg in den
+/// Verlauf: Tag antippen, Karte antippen, Detail.
 struct HomeRootView: View {
     @Environment(VerlaufStore.self) private var verlauf
     @Environment(CatalogStore.self) private var katalog
@@ -26,9 +32,18 @@ struct HomeRootView: View {
     @State private var pfad: [HomeRoute] = []
     @State private var scannerOffen = false
 
-    private var studioName: String? {
-        katalog.bootstrap?.studios.first { $0.id == katalog.activeStudioId }?.name
+    /// Einmal aufgeloest, zweimal gelesen: Name fuer den Kopf, Zeitzone
+    /// fuer die Buendelung der Einheiten. Dieselbe Ableitung wie
+    /// `KurseWochenView.zeitzoneFuerAnfrage`.
+    private var aktivesStudio: BootstrapResponse.Studio? {
+        katalog.bootstrap?.studios.first { $0.id == katalog.activeStudioId }
     }
+
+    private var studioName: String? { aktivesStudio?.name }
+
+    /// Eine Einheit gehoert dem Studio, nicht dem Geraet -- sonst schoebe
+    /// ein Mitglied im Urlaub seine Abendeinheit auf den Folgetag.
+    private var zeitzone: String { aktivesStudio?.timezone ?? "UTC" }
 
     var body: some View {
         NavigationStack(path: $pfad) {
@@ -46,13 +61,15 @@ struct HomeRootView: View {
                             stand: serie,
                             gesamt: verlauf.summary?.totalCount ?? 0,
                             lastSessionAt: verlauf.summary?.lastSessionAt,
-                            jetzt: Date())
+                            jetzt: Date(),
+                            einheitenJeTag: HomeSerie.einheitenJeTag(
+                                verlauf.sessions, zeitzone: zeitzone),
+                            beiAuswahl: { id in pfad.append(.sessionDetail(id: id)) })
                     }
 
                     if HomeZeilen.abgeschlossene(verlauf.sessions).isEmpty {
                         leer
                     } else {
-                        letzteTrainings
                         fortschritt
                     }
                 }
@@ -146,53 +163,6 @@ private extension HomeRootView {
         }
         .font(DesignSystem.Typography.fliesstext)
         .foregroundStyle(DesignSystem.Color.textMuted)
-    }
-
-    var letzteTrainings: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            Text("LETZTE TRAININGS")
-                .font(DesignSystem.Typography.label)
-                .kerning(1.5)
-                .foregroundStyle(DesignSystem.Color.textMuted)
-
-            ForEach(HomeZeilen.abgeschlossene(verlauf.sessions)) { einheit in
-                Button {
-                    pfad.append(.sessionDetail(id: einheit.id))
-                } label: {
-                    trainingsZeile(einheit)
-                }
-                .buttonStyle(PressButtonStyle())
-            }
-        }
-    }
-
-    func trainingsZeile(_ einheit: SessionSummary) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-            Text(Zeitpunkt.parse(einheit.startedAt).map(Zahlformat.wochentagDatum) ?? "")
-                .font(DesignSystem.Typography.uebungsname)
-                .foregroundStyle(DesignSystem.Color.text)
-
-            HStack(spacing: DesignSystem.Spacing.s8) {
-                if einheit.completedReason == "auto" {
-                    Text("AUTO BEENDET")
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(DesignSystem.Color.warn)
-                        .padding(.horizontal, DesignSystem.Spacing.s8)
-                        .padding(.vertical, DesignSystem.Spacing.s4)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: DesignSystem.Radius.pille)
-                                .stroke(DesignSystem.Color.warn, lineWidth: 1))
-                }
-                Text(HomeZeilen.zeilenText(einheit))
-                    .font(DesignSystem.Typography.fliesstext)
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                    .monospacedDigit()
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(DesignSystem.Spacing.s16)
-        .background(DesignSystem.Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
 
     var fortschritt: some View {

@@ -88,7 +88,7 @@ struct KurseWochenPagingTests {
         #expect(tage.map(\.id) == [
             "2026-09-14", "2026-09-15", "2026-09-16", "2026-09-17",
             "2026-09-18", "2026-09-19", "2026-09-20"])
-        #expect(tage.first?.kuerzel == "Mo")
+        #expect(tage.first?.buchstabe == "M")
     }
 
     /// In einer kuenftigen Woche ist kein Tag "heute" -- sonst truege der
