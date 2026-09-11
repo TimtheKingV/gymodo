@@ -14,6 +14,13 @@ enum HomeSerieAuswahl: Equatable {
 /// Der Kalender am Kopf des Home-Tabs -- Flamme, Wochenstreifen, die
 /// Einheiten des gewaehlten Tages, ein Umschalter auf den Monat.
 ///
+/// **Nur ein Trainingstag ist antippbar.** Ein Tag ohne Einheit tut
+/// nichts -- er hat nichts zu zeigen. Er oeffnete eine Zeit lang
+/// stattdessen den Monat, und das war beim Benutzen schlicht verwirrend:
+/// dieselbe Geste schlug je nach Tag in zwei verschiedene Richtungen
+/// aus, ohne dass man vorher sah, in welche. Auf den Monat fuehrt jetzt
+/// genau eine Stelle, und die steht sichtbar darunter.
+///
 /// **Er ist der Zugang zum Verlauf.** Die fruehere Liste "Letzte
 /// Trainings" ist weggefallen: sie zeigte dieselben Karten noch einmal,
 /// nur nach Datum statt nach Tag geordnet, und ein Tag mit zwei
@@ -115,19 +122,17 @@ private extension HomeSerieView {
         !(einheitenJeTag[tagId] ?? []).isEmpty
     }
 
-    /// Ein Tag mit Einheiten klappt auf und wieder zu. Einer ohne hat
-    /// nichts zu zeigen -- in der Woche oeffnet er stattdessen den Monat,
-    /// im Monat bleibt er stumm, weil dort schon alles offen ist.
-    func tippen(_ tag: HomeSerieTag, gewaehlt: String?) {
-        guard !tag.ausserhalb else { return }
+    /// Antippbar ist nur, was etwas zu zeigen hat: ein Tag mit Einheiten,
+    /// und keiner aus einem Nachbarmonat. Alles andere ist gar kein
+    /// Knopf -- VoiceOver liest es als Text, nicht als Bedienelement, und
+    /// niemand tippt ins Leere.
+    func istWaehlbar(_ tag: HomeSerieTag) -> Bool {
+        hatEinheiten(tag.id) && !tag.ausserhalb
+    }
 
-        if hatEinheiten(tag.id) {
-            auswahl = gewaehlt == tag.id ? .keiner : .tag(tag.id)
-            return
-        }
-        guard !monatOffen else { return }
-        auswahl = .keiner
-        monatOffen = true
+    /// Derselbe Tag noch einmal klappt ihn wieder zu.
+    func auswaehlen(_ tag: HomeSerieTag, gewaehlt: String?) {
+        auswahl = gewaehlt == tag.id ? .keiner : .tag(tag.id)
     }
 }
 
@@ -193,20 +198,22 @@ private extension HomeSerieView {
         // damit auf jedem Geraet im selben Verhaeltnis.
         HStack(spacing: 0) {
             ForEach(tage) { tag in
-                Button {
-                    tippen(tag, gewaehlt: gewaehlt)
-                } label: {
-                    VStack(spacing: DesignSystem.Spacing.s8) {
-                        buchstabe(tag, istGewaehlt: tag.id == gewaehlt)
-                        zelle(tag, istGewaehlt: tag.id == gewaehlt)
+                if istWaehlbar(tag) {
+                    Button {
+                        auswaehlen(tag, gewaehlt: gewaehlt)
+                    } label: {
+                        wochenzelle(tag, gewaehlt: gewaehlt)
+                            .contentShape(Rectangle())
                     }
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
+                    .buttonStyle(PressButtonStyle())
+                    .accessibilityLabel(tagLabel(tag))
+                    .accessibilityHint("Zeigt die Einheiten des Tages.")
+                    .accessibilityAddTraits(tag.id == gewaehlt ? .isSelected : [])
+                } else {
+                    wochenzelle(tag, gewaehlt: gewaehlt)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(tagLabel(tag))
                 }
-                .buttonStyle(PressButtonStyle())
-                .accessibilityLabel(tagLabel(tag))
-                .accessibilityHint(tagHinweis(tag))
-                .accessibilityAddTraits(tag.id == gewaehlt ? .isSelected : [])
             }
         }
     }
@@ -236,22 +243,43 @@ private extension HomeSerieView {
                 .accessibilityHidden(true)
 
                 ForEach(tage) { tag in
-                    Button {
-                        tippen(tag, gewaehlt: gewaehlt)
-                    } label: {
-                        zelle(tag, istGewaehlt: tag.id == gewaehlt)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                            .contentShape(Rectangle())
+                    if istWaehlbar(tag) {
+                        Button {
+                            auswaehlen(tag, gewaehlt: gewaehlt)
+                        } label: {
+                            monatszelle(tag, gewaehlt: gewaehlt)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(PressButtonStyle())
+                        .accessibilityLabel(tagLabel(tag))
+                        .accessibilityHint("Zeigt die Einheiten des Tages.")
+                        .accessibilityAddTraits(tag.id == gewaehlt ? .isSelected : [])
+                    } else {
+                        monatszelle(tag, gewaehlt: gewaehlt)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityHidden(tag.ausserhalb)
+                            .accessibilityLabel(tagLabel(tag))
                     }
-                    .buttonStyle(PressButtonStyle())
-                    .disabled(tag.ausserhalb)
-                    .accessibilityHidden(tag.ausserhalb)
-                    .accessibilityLabel(tagLabel(tag))
-                    .accessibilityAddTraits(tag.id == gewaehlt ? .isSelected : [])
                 }
             }
         }
+    }
+
+    /// Die Zelle mit ihrem Buchstaben -- die Trefferflaeche ist die ganze
+    /// Spalte, nicht der Kreis: 40 pt allein blieben unter den 44 aus
+    /// designsystem.md SS4.
+    func wochenzelle(_ tag: HomeSerieTag, gewaehlt: String?) -> some View {
+        VStack(spacing: DesignSystem.Spacing.s8) {
+            buchstabe(tag, istGewaehlt: tag.id == gewaehlt)
+            zelle(tag, istGewaehlt: tag.id == gewaehlt)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    func monatszelle(_ tag: HomeSerieTag, gewaehlt: String?) -> some View {
+        zelle(tag, istGewaehlt: tag.id == gewaehlt)
+            .frame(maxWidth: .infinity)
+            .frame(height: 44)
     }
 
     func buchstabe(_ tag: HomeSerieTag, istGewaehlt: Bool) -> some View {
@@ -357,29 +385,34 @@ private extension HomeSerieView {
 // MARK: - Umschalter
 
 private extension HomeSerieView {
-    /// Der Aufbau von `SecondaryButton` (48 pt, Radius 14, Umriss), aber
-    /// mit Winkel -- die Nebenaktion selbst nimmt keinen. Umriss statt
-    /// Flaeche: sie zaehlt damit nicht als die eine Akzentflaeche des
-    /// Screens (designsystem.md SS2).
+    /// Kein Rahmen und keine volle Breite: ein 48 pt hoher Umriss quer
+    /// ueber den Screen wog schwerer als die Karten darueber, um die es
+    /// eigentlich geht. Uebrig bleibt das Wort und ein Winkel darunter,
+    /// rechtsbuendig unter dem Streifen -- der Winkel zeigt in die
+    /// Richtung, in die der Kalender geht.
+    ///
+    /// Die 44 pt aus designsystem.md SS4 traegt die Trefferflaeche, nicht
+    /// die Schrift: sichtbar sind rund 28, antippbar der ganze Streifen
+    /// rechts.
     var umschalter: some View {
-        Button {
-            monatOffen.toggle()
-        } label: {
-            HStack(spacing: DesignSystem.Spacing.s8) {
-                Text(monatOffen ? "Wochenansicht" : "Monatsansicht")
-                    .font(.system(size: 15, weight: .semibold))
-                Image(systemName: monatOffen ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
+        HStack(spacing: 0) {
+            Spacer(minLength: 0)
+            Button {
+                monatOffen.toggle()
+            } label: {
+                VStack(spacing: DesignSystem.Spacing.s4) {
+                    Text(monatOffen ? "Wochenansicht" : "Monatsansicht")
+                        .font(.system(size: 13, weight: .semibold))
+                    Image(systemName: monatOffen ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 11, weight: .bold))
+                }
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .padding(.leading, DesignSystem.Spacing.s24)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 48)
+            .buttonStyle(PressButtonStyle())
         }
-        .foregroundStyle(DesignSystem.Color.text)
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.neben)
-                .stroke(DesignSystem.Color.line, lineWidth: 1))
-        .buttonStyle(PressButtonStyle())
     }
 }
 
@@ -404,9 +437,6 @@ private extension HomeSerieView {
         return teile.joined(separator: " ")
     }
 
-    func tagHinweis(_ tag: HomeSerieTag) -> String {
-        hatEinheiten(tag.id) ? "Zeigt die Einheiten des Tages." : "Öffnet die Monatsansicht."
-    }
 }
 
 // MARK: - Vorschau
