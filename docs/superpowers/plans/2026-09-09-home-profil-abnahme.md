@@ -14,6 +14,17 @@ Session, der Store-Reset bei abgelaufener Session, die durchgereichte
 Postgres-Meldung in `profil.ts`, zwei zeitzonenabhängige Testerwartungen)
 und dabei sechs Tests ergänzt (313 → 319).
 
+> **Nachtrag 11.09.2026 — dieser Absatz ist erledigt.** Docker läuft auf der
+> Maschine inzwischen. Die lokale Instanz wurde gestartet, alle Migrationen
+> (inzwischen 40, einschließlich `0039_profiles_insert_own.sql`) sind
+> angewendet, und die gesamte Integrationssuite lief zum ersten Mal: **585
+> Tests in 49 Dateien, alle grün** — darunter die in den Aufgaben 1–3
+> geschriebenen Ergänzungen in `domain-sessions`, `domain-progress` und die
+> komplett neue `api-profil.test.ts`. Zusätzlich gegengeprüft nach einem
+> vollständigen `supabase db reset`, also gegen ein aus den Migrationen neu
+> aufgebautes Schema. Die Serverhälfte dieses Sub-Projekts gilt damit als
+> bewiesen; die offenen Punkte weiter unten bleiben davon unberührt.
+
 Auf dieser Maschine ist Docker nicht installiert. Die lokale
 Supabase-Instanz lief deshalb nie, Migration `0039_profiles_insert_own.sql`
 wurde nie angewendet, und die in den Aufgaben 1–3 geschriebenen
