@@ -206,11 +206,14 @@ struct TrainingRootView: View {
         // echten NFC-Knopf gibt: die Zeichnung war die Anleitung fuer einen
         // Weg, den man nicht antippen konnte, und eine Anleitung neben dem
         // Knopf, den sie beschreibt, ist nur noch Laerm.
-        Text("Am Gerät klebt ein Aufkleber mit dem gymodo-Zeichen. Dein Training startet von selbst, sobald du den ersten Satz sicherst — es gibt keinen Startknopf.")
-            .font(DesignSystem.Typography.fliesstext)
-            .foregroundStyle(DesignSystem.Color.textMuted)
+        //
+        // Aus demselben Grund ist auch der erklaerende Fliesstext raus, der
+        // hier stand: ueber der Knopfgruppe steht jetzt nur noch, WOZU sie
+        // da ist.
+        Text("Training starten")
+            .font(.system(size: 22, weight: .bold))
+            .foregroundStyle(DesignSystem.Color.text)
             .multilineTextAlignment(.center)
-            .lineSpacing(4)
             .frame(maxWidth: .infinity)
             .padding(.vertical, DesignSystem.Spacing.s24)
 
@@ -224,22 +227,10 @@ struct TrainingRootView: View {
             InlineBanner(tone: .danger, message: scanFehler)
         }
 
-        VStack(spacing: DesignSystem.Spacing.s12) {
-            scanWege
-            // Abweichung vom Artboard: dort text-faint bei 12pt. Der Satz
-            // traegt die Gleichwertigkeit von Scan und Antippen, die die
-            // Optik allein nicht zeigt (SS11) -- das ist tragende
-            // Information, und die faellt unter 15pt nicht unter textFaint
-            // (designsystem.md SS2). Der zweite Halbsatz uebernimmt, was
-            // vorher die geloeschte Ueberschrift trug: der Aufkleber
-            // funktioniert auch, wenn die App gar nicht offen ist.
-            Text("Auf jedem Aufkleber ist beides — antippen oder scannen, gleiches Ergebnis. Antippen geht auch, ohne dass die App offen ist.")
-                .font(.system(size: 12))
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .multilineTextAlignment(.center)
-                .lineSpacing(2)
-        }
-        .frame(maxWidth: .infinity)
+        // Der Gleichwertigkeitssatz unter den Knoepfen ("Auf jedem Aufkleber
+        // ist beides ...") ist raus: seit QR und NFC nebeneinander in einer
+        // Zeile stehen, zeigt die Anordnung selbst, dass sie dasselbe tun.
+        scanWege
     }
 
     /// Die zwei Wege, in beiden Zustaenden dieselben -- Kontur, keiner
