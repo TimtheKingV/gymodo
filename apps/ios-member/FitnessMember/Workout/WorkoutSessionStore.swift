@@ -15,11 +15,15 @@ final class WorkoutSessionStore {
     static let sessionPause: TimeInterval = 4 * 60 * 60
 
     private var gespeicherteSession: LokaleSession?
+    /// Der erste Geraetekontakt, solange es noch keine Session gibt. Siehe
+    /// geraetBetreten(jetzt:).
+    private var gemerkterBeginn: Date?
     private let fileStore: SessionFileStore
 
     init(fileStore: SessionFileStore = SessionFileStore()) {
         self.fileStore = fileStore
         gespeicherteSession = fileStore.load()
+        gemerkterBeginn = fileStore.loadBeginn()
     }
 
     /// Die Session, sofern sie noch laeuft. Ohne Argument gegen die aktuelle
@@ -66,6 +70,50 @@ final class WorkoutSessionStore {
         guard abgelaufeneSession() != nil else { return }
         gespeicherteSession = nil
         fileStore.save(nil)
+        beginnVerwerfen()
+    }
+
+    /// Die Uhr gehoert zur Einheit: endet sie, endet auch der gemerkte
+    /// Beginn. Sonst uebernaehme die naechste Einheit die Startzeit der
+    /// vorherigen.
+    private func beginnVerwerfen() {
+        gemerkterBeginn = nil
+        fileStore.saveBeginn(nil)
+    }
+
+    /// Das Mitglied steht an einem Geraet -- ab hier laeuft die
+    /// Trainingsuhr.
+    ///
+    /// Die Einheit selbst entsteht weiterhin erst mit dem ersten
+    /// gesicherten Satz (M1-Spec SS5.6: es gibt keinen Startknopf). Zwischen
+    /// dem Scan des ersten Geraets und diesem Satz liegen aber Einweisung,
+    /// Kalibrierung und der erste Anlauf -- Zeit, die zum Training gehoert.
+    /// Der Zeitpunkt wird deshalb hier gemerkt und beim Anlegen der Session
+    /// als deren `startedAt` uebernommen: beide Screens zeigen dann
+    /// dieselbe Zahl, und "seit 18:04" meint den Scan, nicht den ersten
+    /// Satz.
+    ///
+    /// Ruft ein zweites Geraet auf, bleibt der erste Zeitpunkt stehen --
+    /// abgesehen von dem Fall, dass er laengst ausgelaufen ist (siehe
+    /// trainingsbeginn(jetzt:)); dann beginnt hier eine neue Einheit.
+    func geraetBetreten(jetzt: Date = Date()) {
+        guard trainingsbeginn(jetzt: jetzt) == nil else { return }
+        gemerkterBeginn = jetzt
+        fileStore.saveBeginn(jetzt)
+    }
+
+    /// Woran die Trainingsuhr haengt: die laufende Einheit, sonst der
+    /// gemerkte erste Geraetekontakt.
+    ///
+    /// Der gemerkte Zeitpunkt verfaellt nach derselben Vier-Stunden-Regel
+    /// wie die Session -- sonst zaehlte die Uhr am naechsten Tag noch die
+    /// Stunden seit einem Geraet, an dem nie ein Satz gesichert wurde.
+    func trainingsbeginn(jetzt: Date = Date()) -> Date? {
+        if let session = aktiveSession(jetzt: jetzt) { return session.startedAt }
+        guard let gemerkterBeginn,
+              jetzt.timeIntervalSince(gemerkterBeginn) <= Self.sessionPause
+        else { return nil }
+        return gemerkterBeginn
     }
 
     func naechsterSetIndex(machineId: String, exerciseId: String, jetzt: Date = Date()) -> Int {
@@ -83,8 +131,14 @@ final class WorkoutSessionStore {
         problemReason: ProblemReason?,
         jetzt: Date = Date()
     ) -> (sessionId: UUID, setId: UUID, body: SetWrite) {
+        // startedAt ist der erste Geraetekontakt, nicht dieser Satz -- die
+        // Uhr auf dem Geraete-Screen laeuft seit dem Scan und darf beim
+        // ersten gesicherten Satz nicht zurueckspringen. Ohne gemerkten
+        // Beginn (App-Neustart dazwischen, Satz ohne vorherigen Screen im
+        // Test) bleibt es beim bisherigen Verhalten.
         var session = aktiveSession(jetzt: jetzt)
-            ?? LokaleSession(id: UUID(), startedAt: jetzt, bloecke: [])
+            ?? LokaleSession(id: UUID(), startedAt: trainingsbeginn(jetzt: jetzt) ?? jetzt,
+                             bloecke: [])
 
         let index = session.bloecke.firstIndex {
             $0.machineId == machineId && $0.exerciseId == exerciseId
@@ -129,6 +183,7 @@ final class WorkoutSessionStore {
         let id = gespeicherteSession?.id
         gespeicherteSession = nil
         fileStore.save(nil)
+        beginnVerwerfen()
         return id
     }
 

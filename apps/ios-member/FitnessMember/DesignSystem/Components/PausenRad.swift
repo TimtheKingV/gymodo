@@ -49,9 +49,6 @@ struct PausenRad: View {
                 SecondaryButton(title: "+30 s", action: beiVerlaengern)
                     .accessibilityLabel("Pause um 30 Sekunden verlängern")
             }
-            Text("Läuft weiter, auch wenn du wegsiehst.")
-                .font(.system(size: 13))
-                .foregroundStyle(DesignSystem.Color.textMuted)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, DesignSystem.Spacing.s24)

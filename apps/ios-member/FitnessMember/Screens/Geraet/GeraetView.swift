@@ -55,7 +55,9 @@ struct GeraetView: View {
         }
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
-        .task { await modell.kontextLaden() }
+        // Die Trainingsuhr startet am ersten Geraet, nicht am ersten
+        // gesicherten Satz -- deshalb hier und nicht in satzSichern.
+        .task { modell.geraetBetreten(); await modell.kontextLaden() }
         // Die Pause muss sich selbst beenden. Vorher lief sie gegen einen
         // Zustand, den niemand zuruecksetzte: der Balken blieb auf 00:00
         // stehen, bis irgendein anderes Ereignis ein Re-Render ausloeste.
@@ -107,16 +109,43 @@ struct GeraetView: View {
             einstellung
             WertZeile(modell: modell)
             aktionen
-            produktgrenze
         }
     }
 
     private var kopfzeile: some View {
-        Text([modell.maschine.label, modell.maschine.locationNote]
-            .compactMap { $0 }.joined(separator: " · ").uppercased())
-            .font(DesignSystem.Typography.label)
-            .tracking(1.5)
-            .foregroundStyle(DesignSystem.Color.textFaint)
+        HStack(alignment: .firstTextBaseline) {
+            Text([modell.maschine.label, modell.maschine.locationNote]
+                .compactMap { $0 }.joined(separator: " · ").uppercased())
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textFaint)
+            Spacer(minLength: DesignSystem.Spacing.s12)
+            trainingsuhr
+        }
+    }
+
+    /// Wie lange das Training schon laeuft -- oben rechts, in derselben
+    /// Zeile wie der Ort.
+    ///
+    /// Gegen einen gespeicherten Zeitpunkt gerechnet statt mitgezaehlt, wie
+    /// auf dem Training-Tab und beim Resttimer: ein Zeitpunkt ueberlebt
+    /// Hintergrund und Sperrbildschirm, ein Zaehler nicht. Ohne
+    /// Trainingsbeginn (die Vier-Stunden-Grenze ist waehrend des Screens
+    /// abgelaufen) steht hier nichts -- eine Uhr auf 00:00 waere eine
+    /// Behauptung ueber ein Training, das nicht mehr laeuft.
+    @ViewBuilder
+    private var trainingsuhr: some View {
+        if let beginn = modell.trainingsbeginn {
+            TimelineView(.periodic(from: .now, by: 1)) { zeit in
+                Text(Zahlformat.verstrichen(seit: beginn, bis: zeit.date))
+                    .font(.system(size: 15, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    // Ohne Label liest VoiceOver "23:41" als Uhrzeit
+                    // (designsystem.md SS12, wie auf dem Training-Tab).
+                    .accessibilityLabel(Zahlformat.verstrichenGesprochen(seit: beginn, bis: zeit.date))
+            }
+            .fixedSize()
+        }
     }
 
     private var geraetUndUebung: some View {
@@ -133,7 +162,11 @@ struct GeraetView: View {
             Spacer()
             // Nur im Eingabezustand: Pause und Abschlussentscheidung zeigen
             // Geraet und Uebung zur Orientierung, nicht als Auswahl.
-            if modell.phase == .eingabe {
+            //
+            // Und nur, wenn das Geraet ueberhaupt eine zweite Uebung kennt:
+            // sonst fuehrte der Knopf zu einem Sheet mit genau der Uebung,
+            // die ohnehin schon laeuft.
+            if modell.phase == .eingabe && modell.hatWeitereUebungen {
                 // Abweichung vom Artboard (Spec Abschnitt 9): dort accent. Die
                 // eine Akzentflaeche des Screens ist die Hauptaktion.
                 Button("andere Übung", action: beiUebungWechseln)
@@ -262,13 +295,6 @@ struct GeraetView: View {
     /// als einzige Rueckmeldung -- die sichtbare Bestaetigung bleibt in
     /// jedem Fall bestehen).
     @AppStorage(Einstellungen.vibrationBeimSichernKey) private var vibrationBeimSichern = true
-
-    private var produktgrenze: some View {
-        Text(modell.produktgrenze)
-            .font(.system(size: 12))
-            .foregroundStyle(DesignSystem.Color.textFaint)
-            .lineSpacing(3)
-    }
 }
 
 /// Bindet Sheets und den Dreischritt an GeraetView. Getrennt, damit

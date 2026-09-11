@@ -3,9 +3,16 @@ import SwiftUI
 // den UIKit-Typ nicht.
 import UIKit
 
+/// Wie kraeftig die Rastlinie unter dem Rad liegt.
+///
+/// Nur noch eine Frage der Staerke, nicht der Farbe: beide Raeder rasten,
+/// also tragen beide dieselbe accent-Linie. Die Wiederholungen bekommen
+/// die duennere -- sie sind der zweite Wert der Zeile (44pt gegen 64pt),
+/// und eine gleich dicke Linie unter der kleineren Zahl waere schwerer als
+/// die unter der groesseren.
 enum UnterstrichStil {
-    case akzent   // Gewicht: 4pt accent
-    case linie    // Wiederholungen: 3pt line
+    case held        // Gewicht: 4pt
+    case zweitwert   // Wiederholungen: 3pt
 }
 
 /// Ein Wertrad. Ruhe und Offen sind derselbe Aufbau.
@@ -110,9 +117,34 @@ struct RastRad: View {
     /// durch die Ziffern markiert nicht, sie streicht durch.
     private var unterstreichung: some View {
         Rectangle()
-            .fill(unterstrich == .akzent ? DesignSystem.Color.accent : DesignSystem.Color.line)
-            .frame(height: unterstrich == .akzent ? 4 : 3)
+            .fill(DesignSystem.Color.accent)
+            .frame(height: unterstrich == .held ? 4 : 3)
             .offset(y: unterstrichVersatz)
+    }
+
+    /// Wo der Verlauf oben (und gespiegelt unten) voll deckend wird --
+    /// als Anteil der aktuellen Radhoehe, weil LinearGradient in Anteilen
+    /// rechnet, die Zeile aber in Punkten steht.
+    ///
+    /// Fest verdrahtete 0,32 standen hier vorher, und im offenen Rad
+    /// stimmen sie auch: 0,32 von 220 pt sind rund 70 pt, also anderthalb
+    /// Zeilen Ausblendung je Seite. Im geschlossenen Rad ist der
+    /// Ausschnitt aber nur `zeilenhoehe * 1.6` hoch (rund 70 pt) -- dort
+    /// blieben von den 0,32 gerade 22 pt Ausblendung JE SEITE uebrig und
+    /// damit keine 26 pt voll deckende Mitte, waehrend die Versalhoehe der
+    /// 64-pt-Ziffern bei rund 46 pt liegt. Der Verlauf hat die gewaehlte
+    /// Zahl also oben und unten weggeblendet: sie sah ausgegraut und
+    /// kleiner aus als dieselbe Zahl im offenen Rad, obwohl beide mit
+    /// `basisGroesse` und voller Deckkraft rendern.
+    ///
+    /// Deshalb aus der Zeile gerechnet statt hingeschrieben: die voll
+    /// deckende Mitte ist immer `zeilenhoehe * 1.8` hoch. Offen ergibt das
+    /// wieder genau die 0,32 von vorher, geschlossen faellt die
+    /// Ausblendung auf null -- dort gibt es ohnehin keine Nachbarn, die
+    /// ausblenden koennten (deckkraft(fuer:) setzt sie auf 0).
+    private var verlaufsrand: CGFloat {
+        let hoehe = offen ? radhoehe : zeilenhoehe * 1.6
+        return max(0, (1 - (zeilenhoehe * 1.8) / hoehe) / 2)
     }
 
     private var scroller: some View {
@@ -158,8 +190,8 @@ struct RastRad: View {
             LinearGradient(
                 stops: [
                     .init(color: .clear, location: 0),
-                    .init(color: .black, location: 0.32),
-                    .init(color: .black, location: 0.68),
+                    .init(color: .black, location: verlaufsrand),
+                    .init(color: .black, location: 1 - verlaufsrand),
                     .init(color: .clear, location: 1),
                 ],
                 startPoint: .top, endPoint: .bottom
@@ -288,7 +320,7 @@ struct RastRad: View {
                     werte: Rastwerte.gewichte(min: 5, max: 150, schritt: 2.5),
                     auswahl: $gewicht,
                     offen: offen,
-                    unterstrich: .akzent,
+                    unterstrich: .held,
                     voLabel: "Gewicht",
                     voWert: Zahlformat.gewichtGesprochen,
                     anschlagText: "Maximum des Geräts erreicht",

@@ -66,7 +66,7 @@ struct WertZeile: View {
                     werte: modell.gewichtsWerte,
                     auswahl: $modell.gewicht,
                     offen: modell.radOffen,
-                    unterstrich: .akzent,
+                    unterstrich: .held,
                     voLabel: "Gewicht",
                     voWert: Zahlformat.gewichtGesprochen,
                     anschlagText: modell.anschlagText,
@@ -112,7 +112,12 @@ struct WertZeile: View {
                         set: { modell.wiederholungen = Int($0) }
                     ),
                     offen: modell.radOffen,
-                    unterstrich: .linie,
+                    // Dieselbe accent-Linie wie beim Gewicht, nur duenner
+                    // (siehe UnterstrichStil): die Linie sagt "hier rastet
+                    // der Wert ein" -- dieselbe Aussage gehoert in beiden
+                    // Spalten in dieselbe Farbe. Vorher war sie in `line`
+                    // kaum von der Flaeche zu unterscheiden.
+                    unterstrich: .zweitwert,
                     voLabel: "Wiederholungen",
                     voWert: { Zahlformat.wiederholungenGesprochen(Int($0)) },
                     anschlagText: nil,
