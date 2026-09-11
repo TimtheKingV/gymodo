@@ -17,6 +17,10 @@ struct PausenRad: View {
     let timer: Resttimer
     let beiVerlaengern: () -> Void
     let beiWeiter: () -> Void
+    /// Der Weg zurueck zum Training, ohne den Umweg ueber den naechsten
+    /// Satz. Wer am Geraet fertig ist, merkt das in der Pause -- nicht
+    /// erst, wenn die Raeder wieder dastehen.
+    let beiAbschliessen: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Der gedrosselte Ansagetext (SS12). Ein eigener Task-Takt statt einer
@@ -30,10 +34,14 @@ struct PausenRad: View {
     @ScaledMetric(relativeTo: .body) private var durchmesser: CGFloat = 240
     @ScaledMetric(relativeTo: .body) private var strichstaerke: CGFloat = 12
 
-    init(timer: Resttimer, beiVerlaengern: @escaping () -> Void, beiWeiter: @escaping () -> Void) {
+    init(timer: Resttimer,
+         beiVerlaengern: @escaping () -> Void,
+         beiWeiter: @escaping () -> Void,
+         beiAbschliessen: @escaping () -> Void) {
         self.timer = timer
         self.beiVerlaengern = beiVerlaengern
         self.beiWeiter = beiWeiter
+        self.beiAbschliessen = beiAbschliessen
         _ansage = State(initialValue: timer.gesprochen())
     }
 
@@ -46,8 +54,14 @@ struct PausenRad: View {
                 // laeuft, gibt es keine zweite.
                 PrimaryButton(title: "Weiter") { beiWeiter() }
                     .accessibilityHint("Beendet die Pause und zeigt wieder die Räder")
-                SecondaryButton(title: "+30 s", action: beiVerlaengern)
-                    .accessibilityLabel("Pause um 30 Sekunden verlängern")
+                // Nebeneinander, weil beide dasselbe beantworten: was
+                // passiert nach dieser Pause? Noch etwas laenger -- oder gar
+                // nicht mehr an diesem Geraet.
+                HStack(spacing: DesignSystem.Spacing.s12) {
+                    SecondaryButton(title: "+30 s", action: beiVerlaengern)
+                        .accessibilityLabel("Pause um 30 Sekunden verlängern")
+                    SecondaryButton(title: "Gerät abschließen", action: beiAbschliessen)
+                }
             }
         }
         .frame(maxWidth: .infinity)
@@ -112,7 +126,7 @@ struct PausenRad: View {
 }
 
 #Preview {
-    PausenRad(timer: Resttimer(), beiVerlaengern: {}, beiWeiter: {})
+    PausenRad(timer: Resttimer(), beiVerlaengern: {}, beiWeiter: {}, beiAbschliessen: {})
         .padding(20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DesignSystem.Color.bg)

@@ -34,16 +34,27 @@ struct GeraetView: View {
                 // Sichtbarkeit hier entschieden, nicht in den Komponenten
                 // selbst -- damit kein VStack einen leer rendernden
                 // Kindzustand umschliesst (Review-Fund Task 15).
-                if !netz.istOnline {
-                    OfflineLeiste(istOnline: netz.istOnline)
-                }
-                if !katalog.pendingWrites.isEmpty || geradeGesendet {
-                    WarteschlangeKarte(offen: katalog.pendingWrites.count,
-                                       geradeGesendet: geradeGesendet)
-                }
-                if !katalog.verworfeneWrites.isEmpty {
-                    AbgelehnteKarte(anzahl: katalog.verworfeneWrites.count,
-                                    beiQuittieren: katalog.verworfeneQuittieren)
+                //
+                // Waehrend der Pause schweigen die drei Statuskarten. Die
+                // Pause ist der ausschliessende Zustand (siehe oben), und
+                // die Warteschlangenkarte war dort das Gegenteil davon: sie
+                // blitzte nach jedem gesicherten Satz kurz auf ("wartet auf
+                // Empfang", dann "gesendet", dann weg) und riss beim
+                // Verschwinden das Rad samt Ziffern nach oben. Ein
+                // erfolgreicher Normalfall braucht diese Meldung nicht --
+                // sie steht nach der Pause wieder da, solange sie gilt.
+                if modell.laufendePause == nil {
+                    if !netz.istOnline {
+                        OfflineLeiste(istOnline: netz.istOnline)
+                    }
+                    if !katalog.pendingWrites.isEmpty || geradeGesendet {
+                        WarteschlangeKarte(offen: katalog.pendingWrites.count,
+                                           geradeGesendet: geradeGesendet)
+                    }
+                    if !katalog.verworfeneWrites.isEmpty {
+                        AbgelehnteKarte(anzahl: katalog.verworfeneWrites.count,
+                                        beiQuittieren: katalog.verworfeneQuittieren)
+                    }
                 }
                 geraetUndUebung
                 inhalt
@@ -100,7 +111,10 @@ struct GeraetView: View {
         if let pause = modell.laufendePause {
             PausenRad(timer: pause,
                       beiVerlaengern: modell.pauseVerlaengern,
-                      beiWeiter: modell.pauseBeenden)
+                      beiWeiter: modell.pauseBeenden,
+                      // Derselbe Weg wie "Geraet abschliessen" unter den
+                      // Raedern -- nur ohne den Umweg ueber "Weiter".
+                      beiAbschliessen: beiZurueckZumTraining)
                 .transition(.opacity)
         } else if modell.phase == .abschluss {
             abschlussEntscheidung

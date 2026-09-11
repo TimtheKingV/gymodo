@@ -12,6 +12,12 @@ struct SecondaryButton: View {
         } label: {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
+                // Die Hoehe ist fest: eine zweite Zeile waere abgeschnitten.
+                // Betrifft die geteilten Zeilen (zwei Knoepfe nebeneinander)
+                // und grosse Dynamic-Type-Stufen.
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .padding(.horizontal, DesignSystem.Spacing.s8)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
         }

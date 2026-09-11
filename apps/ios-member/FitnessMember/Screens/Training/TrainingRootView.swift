@@ -61,62 +61,69 @@ struct TrainingRootView: View {
 
     var body: some View {
         NavigationStack(path: $pfad) {
-            ScrollView {
-                // Die Kadenz von 60 s zwingt body dazu, sessions.aktiveSession()
-                // periodisch neu auszuwerten. @Observable zeichnet sonst nur bei
-                // einer Aenderung von gespeicherteSession neu -- beim Ablauf der
-                // Vier-Stunden-Frist aendert sich dort nichts, und ohne diese
-                // TimelineView bliebe der Screen auf "laufend" stehen, obwohl die
-                // Einheit laengst ausgelaufen ist (M2). Die sekundengenaue Uhr im
-                // laufenden Zustand hat ihre EIGENE, innere TimelineView weiter
-                // unten -- diese hier betrifft nur die Umschaltung.
-                TimelineView(.periodic(from: .now, by: 60)) { context in
-                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                        if let session = sessions.aktiveSession() {
-                            laufendInhalt(session)
-                        } else {
-                            leerInhalt
+            // Die Kadenz von 60 s zwingt body dazu, sessions.aktiveSession()
+            // periodisch neu auszuwerten. @Observable zeichnet sonst nur bei
+            // einer Aenderung von gespeicherteSession neu -- beim Ablauf der
+            // Vier-Stunden-Frist aendert sich dort nichts, und ohne diese
+            // TimelineView bliebe der Screen auf "laufend" stehen, obwohl die
+            // Einheit laengst ausgelaufen ist (M2). Die sekundengenaue Uhr im
+            // laufenden Zustand hat ihre EIGENE, innere TimelineView weiter
+            // unten -- diese hier betrifft nur die Umschaltung.
+            TimelineView(.periodic(from: .now, by: 60)) { context in
+                // Nur der leere Zustand scrollt als Ganzes. Der laufende
+                // bringt sein eigenes Geruest mit: scrollende Geraeteliste,
+                // feststehende Fussgruppe -- sonst schoeben schon fuenf
+                // Geraete die Scanknoepfe unter die Falz.
+                Group {
+                    if let session = sessions.aktiveSession() {
+                        laufendInhalt(session)
+                    } else {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
+                                leerInhalt
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, DesignSystem.Spacing.s24)
                         }
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, DesignSystem.Spacing.s24)
-                    // Der Umschalttick selbst wertet nur SEINEN Inhalt neu
-                    // aus, nicht den aeusseren body -- und aus einem
-                    // ViewBuilder heraus darf ohnehin kein Zustand
-                    // geschrieben werden. .task(id:) ist der Ort, der den
-                    // Tick wirklich erreicht und schreiben darf. Die ID
-                    // kombiniert context.date (den 60-Sekunden-Tick) UND
-                    // neuAuswerten (den scenePhase-Ausloeser): faellt
-                    // context.date bei einem vom scenePhase-Wechsel
-                    // erzwungenen Neuaufbau zufaellig mit dem letzten
-                    // Tick-Wert zusammen, macht neuAuswerten die ID trotzdem
-                    // neu -- ohne diese Kombination koennte die Erklaerung
-                    // bis zu 60 s hinter der bereits umgeschalteten Anzeige
-                    // zurueckbleiben.
-                    //
-                    // abgelaufeneSession() liefert NUR etwas, wenn die
-                    // gespeicherte Einheit noch existiert UND
-                    // aktiveSession() wegen Zeitablauf nil ist -- das
-                    // unterscheidet den selbsttaetigen Ablauf sauber von
-                    // einem manuellen "Training beenden": beenden() nullt
-                    // gespeicherteSession bereits VOR dem naechsten Tick,
-                    // abgelaufeneSession() liefert dann nichts mehr (sonst
-                    // waere M1 wieder da). Nach dem ersten Treffer ist
-                    // gespeicherteSession geloescht, jeder weitere Tick
-                    // liefert deshalb von selbst nichts mehr -- ohne
-                    // eigenes Merker-Flag genau einmal. Deckt zugleich den
-                    // Kalteinstieg ab -- aber ueber das ERSCHEINEN, nicht
-                    // ueber einen Tick: .task(id:) laeuft, sobald die View
-                    // im Baum auftaucht, und danach bei jeder Aenderung
-                    // der ID. Wer die ID spaeter gegen etwas tauscht, das
-                    // nicht am Erscheinen haengt, verliert damit den
-                    // Kalteinstieg -- und das gesonderte .task unten
-                    // braucht die Pruefung deswegen nicht.
-                    .task(id: UmschaltTick(datum: context.date, wach: neuAuswerten)) {
-                        guard sessions.abgelaufeneSession() != nil else { return }
-                        zeigeAusgelaufenHinweis = true
-                        sessions.ausgelaufeneQuittieren()
-                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                // Der Umschalttick selbst wertet nur SEINEN Inhalt neu
+                // aus, nicht den aeusseren body -- und aus einem
+                // ViewBuilder heraus darf ohnehin kein Zustand
+                // geschrieben werden. .task(id:) ist der Ort, der den
+                // Tick wirklich erreicht und schreiben darf. Die ID
+                // kombiniert context.date (den 60-Sekunden-Tick) UND
+                // neuAuswerten (den scenePhase-Ausloeser): faellt
+                // context.date bei einem vom scenePhase-Wechsel
+                // erzwungenen Neuaufbau zufaellig mit dem letzten
+                // Tick-Wert zusammen, macht neuAuswerten die ID trotzdem
+                // neu -- ohne diese Kombination koennte die Erklaerung
+                // bis zu 60 s hinter der bereits umgeschalteten Anzeige
+                // zurueckbleiben.
+                //
+                // abgelaufeneSession() liefert NUR etwas, wenn die
+                // gespeicherte Einheit noch existiert UND
+                // aktiveSession() wegen Zeitablauf nil ist -- das
+                // unterscheidet den selbsttaetigen Ablauf sauber von
+                // einem manuellen "Training beenden": beenden() nullt
+                // gespeicherteSession bereits VOR dem naechsten Tick,
+                // abgelaufeneSession() liefert dann nichts mehr (sonst
+                // waere M1 wieder da). Nach dem ersten Treffer ist
+                // gespeicherteSession geloescht, jeder weitere Tick
+                // liefert deshalb von selbst nichts mehr -- ohne
+                // eigenes Merker-Flag genau einmal. Deckt zugleich den
+                // Kalteinstieg ab -- aber ueber das ERSCHEINEN, nicht
+                // ueber einen Tick: .task(id:) laeuft, sobald die View
+                // im Baum auftaucht, und danach bei jeder Aenderung
+                // der ID. Wer die ID spaeter gegen etwas tauscht, das
+                // nicht am Erscheinen haengt, verliert damit den
+                // Kalteinstieg -- und das gesonderte .task unten
+                // braucht die Pruefung deswegen nicht.
+                .task(id: UmschaltTick(datum: context.date, wach: neuAuswerten)) {
+                    guard sessions.abgelaufeneSession() != nil else { return }
+                    zeigeAusgelaufenHinweis = true
+                    sessions.ausgelaufeneQuittieren()
                 }
             }
             .background(DesignSystem.Color.bg)
@@ -268,28 +275,49 @@ struct TrainingRootView: View {
 
     // MARK: - Laufender Zustand (TrainingLaeuft.dc.html)
 
-    @ViewBuilder
+    /// Kopf, scrollende Geraeteliste, feststehende Fussgruppe.
+    ///
+    /// Bis zum Umbau war der ganze Zustand EIN Scrollinhalt. Die Knoepfe
+    /// standen damit hinter der Liste: wer sechs Geraete hatte, musste zum
+    /// siebten erst scrollen -- und das mitten im Training, mit dem Handy in
+    /// einer Hand. Jetzt wandert nur die Liste, die Aktionen bleiben stehen.
     private func laufendInhalt(_ session: LokaleSession) -> some View {
-        laufendKopf(session)
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
+            laufendKopf(session)
+                .padding(.horizontal, 20)
+                .padding(.top, DesignSystem.Spacing.s24)
 
-        VStack(spacing: DesignSystem.Spacing.s12) {
-            ForEach(session.bloecke) { block in
-                Button { oeffne(block) } label: { blockZeile(block) }
-                    .buttonStyle(PressButtonStyle())
+            ScrollView {
+                VStack(spacing: DesignSystem.Spacing.s12) {
+                    ForEach(zuletztZuerst(session.bloecke)) { block in
+                        Button { oeffne(block) } label: { blockZeile(block) }
+                            .buttonStyle(PressButtonStyle())
+                    }
+                    zirkelHinweis
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, DesignSystem.Spacing.s12)
             }
-            zirkelHinweis
-        }
+            // Die Liste gibt nach, die Fussgruppe nicht: bei einem Geraet
+            // steht sie dicht unter dem Kopf, bei zehn scrollt sie.
+            .scrollBounceBehavior(.basedOnSize)
 
-        // Direkt ueber der Aktionsgruppe, nicht dahinter (M3): stand vor dem
-        // Umbau zwischen Blockliste und Hauptknopf, ist beim Ausbau der
-        // Fussgruppe versehentlich ganz nach unten gewandert. Ab etwa fuenf
-        // Bloecken waere das unter der Falz -- ein Scanfehler mitten im
-        // Training muss im Sichtfeld stehen.
-        if let scanFehler {
-            InlineBanner(tone: .danger, message: scanFehler)
+            laufendFuss
+                .padding(.horizontal, 20)
+                .padding(.bottom, DesignSystem.Spacing.s24)
         }
+    }
 
+    /// Die feststehende Fussgruppe: Scanfehler, die drei Wege, das Ende.
+    @ViewBuilder
+    private var laufendFuss: some View {
         VStack(spacing: DesignSystem.Spacing.s12) {
+            // Direkt ueber der Aktionsgruppe, nicht dahinter (M3): ein
+            // Scanfehler mitten im Training muss im Sichtfeld stehen -- hier
+            // ist er das jetzt immer, unabhaengig von der Listenlaenge.
+            if let scanFehler {
+                InlineBanner(tone: .danger, message: scanFehler)
+            }
             // Die Beschriftung, die vorher auf dem einen Knopf stand. Sie
             // wird gebraucht: zwei gleich aussehende Scan-Knoepfe sagen fuer
             // sich genommen nicht, WOZU man hier scannt.
@@ -299,20 +327,29 @@ struct TrainingRootView: View {
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
             scanWege
-            // Abgesetzt, damit "Training beenden" nicht als dritter,
-            // gleichrangiger Knopf in der Reihe steht -- es beendet etwas,
-            // die beiden darueber setzen es fort.
-            VStack(spacing: DesignSystem.Spacing.s4) {
-                SecondaryButton(title: "Training beenden") { beenden() }
-                // Zulaessig in textFaint (anders als der Gleichwertigkeitssatz
-                // oben): der Satz erklaert nur eine Alternative, er traegt
-                // selbst nichts (designsystem.md SS2).
-                Text("Ohne neuen Satz endet das Training nach vier Stunden von selbst.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.top, DesignSystem.Spacing.s8)
+            // Die eine Akzentflaeche dieses Screens (designsystem.md SS2):
+            // das Beenden ist die einzige Aktion hier, die etwas abschliesst
+            // -- die Wege darueber tragen den Akzent nur in der Kontur.
+            PrimaryButton(title: "Training beenden") { beenden() }
+            // Zulaessig in textFaint: der Satz erklaert nur eine Alternative,
+            // er traegt selbst nichts (designsystem.md SS2).
+            Text("Ohne neuen Satz endet das Training nach vier Stunden von selbst.")
+                .font(.system(size: 12))
+                .foregroundStyle(DesignSystem.Color.textFaint)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+        }
+    }
+
+    /// Zuletzt bespieltes Geraet nach oben. Nicht einfach umgedreht: im
+    /// Zirkel kehrt man zu einem frueheren Block zurueck, und dann ist DER
+    /// das zuletzt benutzte Geraet, nicht der zuletzt angelegte Block.
+    /// Bloecke ohne Satz koennen nicht vorkommen (ein Block entsteht mit
+    /// seinem ersten Satz) -- .distantPast ist nur der sichere Boden.
+    private func zuletztZuerst(_ bloecke: [LokalerBlock]) -> [LokalerBlock] {
+        bloecke.sorted {
+            ($0.saetze.map(\.performedAt).max() ?? .distantPast)
+                > ($1.saetze.map(\.performedAt).max() ?? .distantPast)
         }
     }
 
