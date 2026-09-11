@@ -52,6 +52,23 @@ function newId(): string {
   return crypto.randomUUID();
 }
 
+/**
+ * Der Abschlusszeitpunkt kommt aus der Datenbank, nicht aus diesem Prozess.
+ *
+ * `started_at` faellt auf `default now()` -- also die Uhr der Datenbank.
+ * Ein hier gebildetes `new Date()` ist die Uhr des Testlaufs, und zwischen
+ * beiden liegen im Docker nur Millisekunden. Laeuft die Datenbankuhr auch
+ * nur 20 ms vor (in einer VM die Regel, nicht die Ausnahme), ist
+ * `completed_at` frueher als `started_at` und
+ * `workout_sessions_completed_after_start` schlaegt zu -- in einem Test,
+ * der mit dem Constraint gar nichts zu tun hat.
+ *
+ * `'now'` ist ein Sonderwert von Postgres fuer Datums- und Zeittypen und
+ * wird beim Schreiben zum Transaktionszeitpunkt. Damit vergleicht der
+ * Constraint zwei Zeitstempel DERSELBEN Uhr.
+ */
+const JETZT = "now";
+
 describe("RLS auf workout_sessions", () => {
   it("positiv: ein Mitglied legt seine eigene Session an", async () => {
     const client = await userClient(memberAEmail);
@@ -161,7 +178,7 @@ describe("RLS auf workout_sessions", () => {
     const { error } = await client
       .from("workout_sessions")
       .update({
-        completed_at: new Date().toISOString(),
+        completed_at: JETZT,
         completed_reason: "manual",
       })
       .eq("id", sessionId);
@@ -183,7 +200,7 @@ describe("RLS auf workout_sessions", () => {
     await client
       .from("workout_sessions")
       .update({
-        completed_at: new Date().toISOString(),
+        completed_at: JETZT,
         completed_reason: "manual",
       })
       .eq("id", otherId);
@@ -231,7 +248,7 @@ describe("RLS auf workout_sessions", () => {
       id: newId(),
       studio_id: studioA,
       user_id: memberAId,
-      completed_at: new Date().toISOString(),
+      completed_at: JETZT,
     });
 
     expect(error).not.toBeNull();
