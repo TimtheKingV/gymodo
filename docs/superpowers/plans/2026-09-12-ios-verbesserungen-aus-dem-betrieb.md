@@ -53,16 +53,14 @@ rechts, auf die Höhe der Monatsüberschrift („SEPTEMBER 2026").
 ### 2. Training beendet — Grafik, Entwicklung, Rekord
 
 Der Abschluss-Screen zeigt drei Zahlen und die Vorschläge fürs nächste Mal.
-Dazu soll die **Entwicklung** kommen: eine Grafik statt einer weiteren Zahl,
-plus die Kennzeichnung eines **Rekords**, wenn ein Satz die bisherige
-Bestleistung schlägt.
+Dazu kommt die **Entwicklung** als Grafik statt als weitere Zahl, und die
+**Erfolge** des Trainings (Rekorde und übersetzte Stats — siehe den eigenen
+Abschnitt „Stats und Erfolge" weiter unten; es ist dieselbe Ableitung wie in
+Punkt 9, nur ein anderer Ort).
 
-Offen: Grafik je Übung (Gewichtsverlauf über die letzten Einheiten) oder eine
-je Training? Rekord als Marke auf der Übungskarte?
-
-Datenlage: `getSessions`/`ExerciseProgress` liefern heute nur den aktuellen
-Wert und die Veränderung (`changeKg`); für eine Verlaufskurve braucht es die
-Reihe der letzten N Werte je Übung — entweder aus dem vorhandenen
+Datenlage für die Grafik: `getSessions`/`ExerciseProgress` liefern heute nur
+den aktuellen Wert und die Veränderung (`changeKg`). Eine Verlaufskurve
+braucht die Reihe der letzten N Werte je Übung — entweder aus dem vorhandenen
 Fortschrittsfenster (`Verlauf/Fortschrittsfenster.swift`,
 `UebungsfortschrittView`) oder als eigene Serverantwort.
 
@@ -110,47 +108,103 @@ steht nirgends. Heute bekommt den Akzent (siehe Festlegung oben).
 
 *Bild 8. `Screens/Kurse/KurseWochenView.swift`, `tagesboxen`.*
 
-### 7. Kurse — Überschrift „Nächste Woche"
+### 7. Kurse — Überschriften nach Woche
 
 Unter „Angemeldet" steht bei Auswahl von Freitag, 11., eine Karte für Montag,
-den 14. — ohne Hinweis, dass sie nicht mehr zu dieser Woche gehört. Termine
-späterer Kalenderwochen brauchen eine Überschrift.
+den 14. — ohne Hinweis, dass sie nicht mehr zu dieser Woche gehört. Die Liste
+bekommt Überschriften, und zwar **nach Abstand in Wochen**, nicht nach Status:
 
-Die Zuordnung gibt es bereits und ist getestet:
-`KurseMeineEinteilung.spaeter` (Abschnitt hieß früher „Nächste Woche", heute
-„Später", weil das Ladefenster 14 Tage weit reicht). Das Band zeigt seit der
-Zusammenlegung nur noch `alleZeilen`, also eine flache Liste. Die Überschrift
-kommt zurück — Wortlaut prüfen, „Später" trifft es bei zwei Wochen Fenster
-genauer als „Nächste Woche".
+- „Diese Woche"
+- „Nächste Woche"
+- „Übernächste Woche"
+- „Bald" — alles, was noch weiter weg ist
+
+Die Zuordnung existiert halb: `KurseMeineEinteilung` teilt heute in
+`angemeldet` / `warteliste` / `spaeter` (der Abschnitt hieß früher „Nächste
+Woche" und wurde zu „Später" umbenannt, weil das Ladefenster 14 Tage weit
+reicht). Aus dem einen `spaeter` werden jetzt drei Stufen, gerechnet auf
+Kalenderwochen ab dem Montag der laufenden Woche (Studio-Zeitzone) — die
+Rechnung dafür steht schon in `KurseWochenBerechnung.montag`. Der Status
+(Warteliste) bleibt auf der Karte, er ist keine Überschrift mehr.
+
+„Bald" bleibt beim heutigen 14-Tage-Fenster leer; die Stufe wird trotzdem
+gebaut, damit ein größeres Fenster sie nur noch füllen muss.
 
 *Bild 9. `Kurse/KurseMeineEinteilung.swift`, `Screens/Kurse/KurseBandView.swift`.*
 
-### 8. Training starten — „Training läuft" anzeigen
+### 8. Training starten — „Training läuft" in der Mitte
 
-Auf der freien Fläche unter dem Startblock soll sichtbar sein, dass gerade
-ein Training läuft. Im Repo ist das heute ein ausschließender Zustand
-derselben Wurzel (`laufendInhalt` statt `leerInhalt`); gemeint ist
-offenbar, dass beides zusammen steht — Startwege unten, laufendes Training
-darüber.
+Gehört zu Punkt 3: die Startwege rutschen nach unten, und **in die Mitte des
+Screens kommt das laufende Training** — der Satz „Training läuft" plus die
+**bisher gelaufene Zeit**. Beides steht gleichzeitig da, Startwege unten,
+Laufendes darüber.
 
-Offen: Zusammenspiel mit Punkt 3 bestätigen.
+Heute sind das zwei sich ausschließende Zustände derselben Wurzel
+(`laufendInhalt` statt `leerInhalt`). Die laufende Uhr gibt es schon: die
+innere `TimelineView` im laufenden Zustand tickt sekundengenau, die äußere
+schaltet im Minutentakt um. Wenn kein Training läuft, bleibt die Mitte leer —
+dort steht keine Null.
 
-*Bild 10. `Screens/Training/TrainingRootView.swift`.*
+*Bild 3 + Bild 10. `Screens/Training/TrainingRootView.swift`.*
 
-### 9. Session-Detail — noch nicht entziffert
+### 9. Stats und Erfolge — die eigentliche Idee hinter Bild 2 und Bild 7
 
-Bild 7 trägt drei Notizen über den Satzkarten, die ich nicht sicher lese:
-etwas wie „Ein Auf…" über der Beinpresse, „2. Stock" in der Mitte und
-„+ Erfolg(e)" unten. Rückfrage läuft.
+Nicht mehr Zahlen, sondern Zahlen, die man jemandem erzählt. Zwei Sorten:
 
-*Bild 6 ist derselbe Screen ohne Markierung (Referenz).*
-*`Screens/Home/SessionDetailView.swift`.*
+**a) Erfolge (Rekorde).** „Höchstes Gewicht" und „meiste Wiederholungen" je
+Gerät und Übung, und die Marke „neuer Rekord", wenn ein Satz die bisherige
+Bestleistung schlägt. Die Daten liegen vollständig vor: `workout_sets` trägt
+`weight_kg`, `reps`, `performed_at` je Satz, `machine_id` und `exercise_id`
+daneben. Zu klären ist nur, ob der Rekord serverseitig als eigene Antwort
+kommt (sauber, eine Abfrage über die ganze Historie) oder im Client aus dem
+geladenen Fenster gerechnet wird (fällt bei mehr als 50 Einheiten falsch aus —
+dieselbe Falle wie bei der Serie, siehe `HomeSerie`: „hier wird nicht
+gerechnet, hier wird gelesen").
+
+**b) Übersetzte Stats.** „Heute hast du ein Auto in den 2. Stock getragen" —
+Hubarbeit aus Gewicht, Wiederholungen, Sätzen und Hubweg, übersetzt in etwas
+Anschauliches.
+
+Die Rechnung: `Arbeit = Σ (Gewicht × Wiederholungen × Hubweg)` in kg·m.
+Vergleich: ein Kleinwagen (1.400 kg) sechs Meter hoch (2. Stock) sind
+8.400 kg·m.
+
+Zwei Dinge fallen dabei auf:
+
+1. **Der Hubweg fehlt in den Daten.** Weder `exercises` noch
+   `equipment_models` kennen eine Bewegungsstrecke. Drei Wege: ein Feld an der
+   Übung (Meter, vom Studio gepflegt — genau, aber Pflegeaufwand für jedes
+   Studio), ein Vorgabewert je Muskelgruppe (0,3–0,6 m — kommt mit Punkt 5
+   ohnehin ins Datenmodell), oder ganz ohne Weg, nur bewegtes Volumen in
+   Kilogramm („2,3 t bewegt — ein Kleinwagen"). Der mittlere Weg ist der
+   billigste ehrliche.
+2. **Der Vergleich muss zur Zahl passen, nicht umgekehrt.** Ein reales
+   Training aus den Screenshots (3 Sätze × 10 Wdh × 60 kg, 0,4 m Hubweg) sind
+   720 kg·m — ein Zwölftel des Autos. Es braucht deshalb eine Leiter von
+   Vergleichen (Wasserkasten in den 3. Stock, Fahrrad aufs Dach, Kühlschrank,
+   Klavier, Kleinwagen, Elefant), aus der die passende Stufe gewählt wird.
+   Sonst trägt jedes Training ein Auto, und der Satz ist beim zweiten Mal
+   nichts mehr wert.
+
+**Ehrlichkeit.** Der Screen sagt heute „gymodo misst nichts. Es zeigt, was du
+bestätigst." Eine Beinpresse drückt schräg, ein Kabelzug lenkt um — die
+Hubarbeit ist ein Überschlag, kein Messwert, und muss auch so beschriftet sein
+(„ungefähr", „überschlagen"). Die Rekorde dagegen sind exakt: sie stehen so in
+den bestätigten Sätzen.
+
+**Wo das steht:** Trainingsabschluss (Bild 2) und Session-Detail (Bild 7) —
+eine Ableitung, zwei Orte. Ob auch Home einen Platz dafür bekommt, ist offen.
+
+*Bild 6 (Referenz ohne Markierung), Bild 7, Bild 2.*
+*`Screens/Home/SessionDetailView.swift`, `Screens/Training/TrainingAbschlussView.swift`,*
+*neue Ableitung neben `Verlauf/HomeZeilen.swift`.*
 
 ## Offene Fragen
 
-1. Punkt 2: Grafik je Übung oder je Training, und was genau zählt als Rekord?
-2. Punkt 8: läuft ein Training, stehen Startwege und laufendes Training
-   gemeinsam auf dem Screen?
-3. Punkt 9: Bild 7 entziffern.
-4. Punkt 5: Muskelgruppe sauber ins Datenmodell (Migration + Portal) — oder
-   erst einmal ohne Portalpflege, mit einer Vorgabeliste je Studio?
+1. Punkt 2: Grafik je Übung (Gewichtsverlauf über die letzten Einheiten) oder
+   eine je Training?
+2. Punkt 9a: Rekorde vom Server oder aus dem geladenen Fenster gerechnet?
+3. Punkt 9b: Hubweg als gepflegtes Feld, als Vorgabe je Muskelgruppe oder gar
+   nicht (nur Volumen in Kilogramm)?
+4. Punkt 5: Muskelgruppe ins Datenmodell mit Pflege im Portal — oder erst
+   einmal mit einer Vorgabeliste je Studio?
