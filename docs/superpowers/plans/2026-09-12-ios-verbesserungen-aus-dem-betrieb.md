@@ -199,6 +199,69 @@ eine Ableitung, zwei Orte. Ob auch Home einen Platz dafür bekommt, ist offen.
 *`Screens/Home/SessionDetailView.swift`, `Screens/Training/TrainingAbschlussView.swift`,*
 *neue Ableitung neben `Verlauf/HomeZeilen.swift`.*
 
+### 10. Geräteeinstieg — das Training startet nach diesem Screen
+
+Heute entsteht die Einheit beim **ersten gesicherten Satz**
+(`WorkoutSessionStore.satzSichern` legt sie an, davor gibt es sie nicht).
+Künftig startet sie, **wenn der Einstiegsscreen verlassen wird** — also mit
+dem Tap auf die Übung unter „Was machst du heute?".
+
+Was daran hängt:
+
+- **Drei Texte werden falsch.** „Dein Training startet von selbst, sobald du
+  den ersten Satz sicherst — es gibt keinen Startknopf"
+  (`TrainingRootView.leerInhalt`), „Sätze sichern — meistens reicht ein
+  Antippen. Das Training startet dabei von selbst" (`HomeRootView.leer`), und
+  „Ein Tap genügt — du landest direkt beim Satz" auf dem Einstieg selbst.
+- **Leere Einheiten werden möglich.** Wer scannt, die Übung antippt und dann
+  weggeht, hinterlässt eine Einheit ohne einen einzigen Satz. Regel nötig:
+  eine Einheit ohne Satz wird beim Verlassen bzw. beim Ablauf verworfen und
+  nie an den Server gemeldet — sonst stehen im Verlauf Einheiten mit „0 Sätze",
+  und die Serie zählt Tage, an denen nichts passiert ist.
+- **Die Dauer wird ehrlicher.** Sie enthält dann Einweisung und Einstellung,
+  nicht erst ab dem ersten Satz — und die Uhr aus Punkt 8 („Training läuft")
+  hat einen Anfang, den das Mitglied selbst gesetzt hat.
+
+*Bild 11. `Screens/Geraet/GeraetEinstieg*`, `Workout/WorkoutSessionStore.swift`.*
+
+### 11. Satzpfad — die Räder sind immer aktiv
+
+Heute sind die Räder zu, bis man eine der beiden Zahlen antippt
+(`GeraetModel.radOffen`, Kopfzeile „antippen und scrollen" → „scrollen, dann
+sichern"). Der Tap fällt weg: **gescrollt wird sofort.**
+
+Damit fällt auch der Grund für zwei Layouts weg (siehe Punkt 13) — es gibt nur
+noch einen Zustand.
+
+Zu prüfen beim Umbau: `zuletztText` und `vorschlagText` stehen heute nur im
+geschlossenen Zustand („Zuletzt 55,0 kg × 10", der Vorschlag in der
+Kontextzeile). Beide müssen einen Platz im offenen Zustand bekommen, sonst
+verliert der Screen den Rückblick, der die Zahl erst einordnet.
+
+*Bild 12, Bild 15. `Screens/Geraet/WertZeile.swift`, `Screens/Geraet/GeraetModel.swift`.*
+
+### 12. Satzpfad — alles auf einen Screen
+
+Der Satzpfad soll ohne Scrollen der Seite lesbar sein: Kopf, Einstellwerte,
+beide Räder, „Satz N sichern", „Gerät abschließen". Gescrollt wird nur in den
+Rädern.
+
+Das ist mit Punkt 11 zusammen zu rechnen — der offene Zustand ist der höhere.
+Kandidaten zum Kürzen: die Einstellwerte als eine Zeile (Punkt 13), „Problem
+melden" als Zeile statt als dritter Knopf.
+
+*Bild 13. `Screens/Geraet/GeraetView.swift`.*
+
+### 13. Einstellwerte — eine Darstellung statt zwei
+
+„Sitzhöhe 1 · Rückenlehne 1 · ändern" (eine schmale Zeile) und die Karte mit
+großen Zahlen („SITZHÖHE 4 / RÜCKENLEHNE 2 / ändern") sind derselbe Inhalt in
+zwei Gestalten — heute umgeschaltet über `radOffen` (`GeraetView.einstellung`).
+Es bleibt eine. Mit Punkt 11 entscheidet sich das von selbst: die schmale
+Zeile, weil sie in Punkt 12 den Platz nicht frisst.
+
+*Bild 14, Bild 15. `Screens/Geraet/GeraetView.swift`, `einstellung`.*
+
 ## Offene Fragen
 
 1. Punkt 2: Grafik je Übung (Gewichtsverlauf über die letzten Einheiten) oder
@@ -208,3 +271,7 @@ eine Ableitung, zwei Orte. Ob auch Home einen Platz dafür bekommt, ist offen.
    nicht (nur Volumen in Kilogramm)?
 4. Punkt 5: Muskelgruppe ins Datenmodell mit Pflege im Portal — oder erst
    einmal mit einer Vorgabeliste je Studio?
+5. Punkt 10: Einheit ohne einen einzigen Satz — verwerfen (mein Vorschlag)
+   oder als leere Einheit behalten?
+6. Punkt 11: wo stehen „Zuletzt 55,0 kg × 10" und der Vorschlag, wenn es den
+   geschlossenen Zustand nicht mehr gibt?
