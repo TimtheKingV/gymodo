@@ -233,10 +233,16 @@ sichern"). Der Tap fällt weg: **gescrollt wird sofort.**
 Damit fällt auch der Grund für zwei Layouts weg (siehe Punkt 13) — es gibt nur
 noch einen Zustand.
 
-Zu prüfen beim Umbau: `zuletztText` und `vorschlagText` stehen heute nur im
-geschlossenen Zustand („Zuletzt 55,0 kg × 10", der Vorschlag in der
-Kontextzeile). Beide müssen einen Platz im offenen Zustand bekommen, sonst
-verliert der Screen den Rückblick, der die Zahl erst einordnet.
+**Wohin mit Rückblick und Empfehlung.** Beide stehen heute nur im
+geschlossenen Zustand: „Zuletzt 55,0 kg × 10" (`GeraetModel.zuletztText`) unter
+den Werten, „Vorschlag · +2,5" (`vorschlagText`) in der Kontextzeile. Sie
+ziehen in einen **Drawer, der beim Öffnen des Geräts von unten hereinkommt** —
+einmal am Anfang, nicht nach jedem Satz. Weggewischt bleibt der Satzpfad
+zurück: Räder aktiv, ein Layout, nichts, was ihn höher macht (Punkt 12).
+
+Zu klären: kommt der Drawer bei jedem Einstieg oder nur beim ersten Satz eines
+Geräteblocks, und was steht darin, wenn es weder Vorschlag noch letzten Satz
+gibt (erstes Mal an diesem Gerät)? Vermutlich: dann kommt er gar nicht.
 
 *Bild 12, Bild 15. `Screens/Geraet/WertZeile.swift`, `Screens/Geraet/GeraetModel.swift`.*
 
@@ -273,5 +279,6 @@ Zeile, weil sie in Punkt 12 den Platz nicht frisst.
    einmal mit einer Vorgabeliste je Studio?
 5. Punkt 10: Einheit ohne einen einzigen Satz — verwerfen (mein Vorschlag)
    oder als leere Einheit behalten?
-6. Punkt 11: wo stehen „Zuletzt 55,0 kg × 10" und der Vorschlag, wenn es den
-   geschlossenen Zustand nicht mehr gibt?
+6. Punkt 11: kommt der Empfehlungs-Drawer bei jedem Geräteeinstieg oder nur
+   beim ersten Satz — und entfällt er ganz, wenn es weder Vorschlag noch
+   letzten Satz gibt?
