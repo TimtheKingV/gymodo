@@ -240,9 +240,10 @@ ziehen in einen **Drawer, der beim Öffnen des Geräts von unten hereinkommt** �
 einmal am Anfang, nicht nach jedem Satz. Weggewischt bleibt der Satzpfad
 zurück: Räder aktiv, ein Layout, nichts, was ihn höher macht (Punkt 12).
 
-Zu klären: kommt der Drawer bei jedem Einstieg oder nur beim ersten Satz eines
-Geräteblocks, und was steht darin, wenn es weder Vorschlag noch letzten Satz
-gibt (erstes Mal an diesem Gerät)? Vermutlich: dann kommt er gar nicht.
+Zwei Regeln dazu stehen fest: er kommt **nur vor dem ersten Satz** eines
+Geräteblocks, nicht vor jedem weiteren, und beim **ersten Mal an diesem Gerät**
+kommt er gar nicht — ohne letzten Satz und ohne Vorschlag hätte er nichts zu
+sagen.
 
 *Bild 12, Bild 15. `Screens/Geraet/WertZeile.swift`, `Screens/Geraet/GeraetModel.swift`.*
 
@@ -268,6 +269,30 @@ Zeile, weil sie in Punkt 12 den Platz nicht frisst.
 
 *Bild 14, Bild 15. `Screens/Geraet/GeraetView.swift`, `einstellung`.*
 
+### 14. Geräteeinstieg — ein Bild der Übung
+
+Oben auf dem Einstieg steht heute ein leerer Kasten mit Platzhalter-Symbol.
+Dort gehört ein Bild hin, und zwar **von der Übung**, nicht nur vom Gerät.
+
+Was da ist und was fehlt:
+
+- Angezeigt wird heute `equipmentModel.photoUrl` — **ein** Foto je
+  Gerätemodell (Bucket `equipment-photos`, `machine-context.ts`). Steht die
+  Rudermaschine für „Rudern sitzend" und „Rudern eng", zeigen beide dasselbe
+  Bild; ist keins hochgeladen, steht der leere Kasten da.
+- Je **Modell und Übung** gibt es bereits eine Ablage:
+  `instruction_assets.equipment_model_exercise_id` — aber nur mit
+  `kind = 'video'` (Einweisungsvideo, Bucket `instruction-videos`). Ein Bild
+  gehört genau dorthin: `check (kind = 'video')` auf `('video','image')`
+  erweitern, Bucket `exercise-photos` oder die Fotos mit in
+  `equipment-photos`, Pflege im Portal neben dem Video.
+- Bis ein Studio ein Übungsbild hinterlegt hat, bleibt das Gerätefoto der
+  Rückfall — und wenn auch das fehlt, steht besser gar kein Kasten da als ein
+  leerer.
+
+*Bild 19. `Screens/Geraet/GeraetErkanntView.swift`, `packages/domain/src/machine-context.ts`,*
+*`supabase/migrations/0006_instruction_assets.sql`, Portal-Medienpflege.*
+
 ## Offene Fragen
 
 1. Punkt 2: Grafik je Übung (Gewichtsverlauf über die letzten Einheiten) oder
@@ -279,6 +304,5 @@ Zeile, weil sie in Punkt 12 den Platz nicht frisst.
    einmal mit einer Vorgabeliste je Studio?
 5. Punkt 10: Einheit ohne einen einzigen Satz — verwerfen (mein Vorschlag)
    oder als leere Einheit behalten?
-6. Punkt 11: kommt der Empfehlungs-Drawer bei jedem Geräteeinstieg oder nur
-   beim ersten Satz — und entfällt er ganz, wenn es weder Vorschlag noch
-   letzten Satz gibt?
+6. Punkt 14: Übungsbild in `instruction_assets` mit aufnehmen (mein
+   Vorschlag) oder eine eigene Tabelle?
