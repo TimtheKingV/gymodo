@@ -360,6 +360,40 @@ Gerät dasselbe wäre.
 
 *Bild 23. `Screens/Home/HomeRootView.swift` (`fortschrittsZeile`).*
 
+### 19. Ein Training nachträglich löschen
+
+Ein Fehlstart, ein Test, eine Einheit, die jemand anders auf dem Gerät
+ausgelöst hat — das muss weggehen können. Heute geht es nicht: es gibt
+**keine Delete-Policy** auf `workout_sessions` und `workout_sets`
+(0012/0013 kennen nur select, insert, update), und keinen Weg in der App.
+
+Was dazugehört:
+
+- **Server.** Eine Delete-Policy für die eigenen Zeilen — `user_id =
+  auth.uid()`, wie bei select seit der Datenschutzgrenze (0033). Die Sätze
+  hängen mit `on delete cascade` an der Session, sie gehen von selbst mit.
+  Löschen statt Verstecken: es sind die Daten des Mitglieds, und ein
+  `deleted_at`, das überall mitgefiltert werden muss, ist die schlechtere
+  Wahrheit.
+- **Was sich mitbewegt.** Serie (`serie.ts`), Fortschritt und die Rekorde aus
+  Punkt 9a rechnen aus denselben Zeilen — sie stimmen nach dem Löschen von
+  selbst, auch wenn eine Serie dadurch rückwirkend reißt. Das ist richtig so.
+  Der Studio-Überblick (`0034_studio_ueberblick.sql`) zählt Einheiten pro Tag
+  und wird ebenfalls kleiner; das ist die ehrliche Folge und kein Fehler.
+- **Client.** Warteschlange mitnehmen: liegen für die gelöschte Einheit noch
+  ungesendete Sätze in `PendingWriteStore`, müssen die mit weg, sonst
+  erscheint die Einheit nach dem nächsten Reconnect wieder.
+- **Der Weg in der App.** Im Session-Detail (nicht auf der Home-Karte —
+  Wischen zum Löschen neben einer Liste, die man zum Öffnen antippt, ist zu
+  nah beieinander), mit Rückfrage und ohne Rückgängig.
+
+Zu klären: darf auch die **laufende** Einheit verworfen werden („Training
+verwerfen" statt „Training beenden")? Und was passiert beim Löschen eines
+Teils einer zusammengefassten Karte (Punkt 15) — nur der Teil, nehme ich an.
+
+*Ohne Bild, aus der Besprechung. `Screens/Home/SessionDetailView.swift`,*
+*neue Migration, `packages/domain/src/sessions.ts`, `Catalog/PendingWriteStore.swift`.*
+
 ## Offene Fragen
 
 1. Punkt 2: Grafik je Übung (Gewichtsverlauf über die letzten Einheiten) oder
@@ -373,3 +407,4 @@ Gerät dasselbe wäre.
    oder als leere Einheit behalten?
 6. Punkt 15: trägt die zusammengefasste Karte die summierte Trainingszeit
    (ohne die Pause dazwischen) — oder die Spanne von Anfang bis Ende?
+7. Punkt 19: darf auch die laufende Einheit verworfen werden?
