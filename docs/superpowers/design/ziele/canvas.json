@@ -1,0 +1,141 @@
+{
+  "artboards": [
+    {
+      "file": "Onboarding1.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "01 · Über dich"
+    },
+    {
+      "file": "Onboarding2.dc.html",
+      "x": 473,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "02 · Dein Körper"
+    },
+    {
+      "file": "Onboarding3.dc.html",
+      "x": 946,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "03 · Dein Ziel"
+    },
+    {
+      "file": "Onboarding4.dc.html",
+      "x": 1419,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "04 · Wie oft?"
+    },
+    {
+      "file": "Onboarding5.dc.html",
+      "x": 1892,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "05 · Zielgewicht"
+    },
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 1000,
+      "w": 393,
+      "h": 852,
+      "title": "06 · Home · Deine Ziele"
+    },
+    {
+      "file": "HomeNachholen.dc.html",
+      "x": 473,
+      "y": 1000,
+      "w": 393,
+      "h": 852,
+      "title": "07 · Home · übersprungen"
+    },
+    {
+      "file": "HomeZielErreicht.dc.html",
+      "x": 946,
+      "y": 1000,
+      "w": 393,
+      "h": 852,
+      "title": "08 · Home · Ziel erreicht"
+    },
+    {
+      "file": "Gewichtsverlauf.dc.html",
+      "x": 1419,
+      "y": 1000,
+      "w": 393,
+      "h": 852,
+      "title": "09 · Gewichtsverlauf"
+    },
+    {
+      "file": "GewichtEintragen.dc.html",
+      "x": 1892,
+      "y": 1000,
+      "w": 393,
+      "h": 852,
+      "title": "10 · Gewicht eintragen"
+    },
+    {
+      "file": "Profil.dc.html",
+      "x": 0,
+      "y": 2000,
+      "w": 393,
+      "h": 852,
+      "title": "11 · Profil"
+    },
+    {
+      "file": "ProfilAlter.dc.html",
+      "x": 473,
+      "y": 2000,
+      "w": 393,
+      "h": 852,
+      "title": "12 · Profil · Alter ändern"
+    },
+    {
+      "file": "Bausteine.dc.html",
+      "x": 946,
+      "y": 2000,
+      "w": 900,
+      "h": 1560,
+      "title": "13 · Bausteine & Entscheidungen"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -300,
+      "w": 866,
+      "text": "Ziele & Fortschritt — Spec 2026-09-13-ziele-und-fortschritt-design.md.\n\nReihe 1: das Onboarding nach der Registrierung, fünf Schritte, jeder überspringbar. Schritt 5 nur, wenn Schritt 2 ein Gewicht hat.\nReihe 2: Home in drei Zuständen, der Gewichtsverlauf, das Eintrag-Sheet.\nReihe 3: Profil mit den zwei neuen Abschnitten, ein Picker-Sheet stellvertretend für alle, die Bausteine.\n\nBeispielperson wie in den bisherigen Artboards: Lena, Kraftwerk Nord. 82,5 kg, Ziel 78,0, 3 Tage pro Woche."
+    },
+    {
+      "id": "volt",
+      "x": 946,
+      "y": -300,
+      "w": 866,
+      "text": "Genau eine Akzentfläche je Screen (§2): im Onboarding der Knopf, auf Home die Flamme, im Verlauf der Zeitraum-Chip. Gewählte Chips und Kacheln tragen Volt nur als Strich — wie der Fokusrand der Felder.\n\nDer Serien-Streifen bleibt, wie er ist. Neu sind zwei Zeilen: „Ziel 3 Tage“ rechts im Kopf, „2 von 3 Tagen“ mit drei Strichen darunter. Die Flamme wechselt ihre Aussage von „Wochen“ zu „im Ziel“, nicht ihre Form."
+    },
+    {
+      "id": "offen",
+      "x": 1892,
+      "y": -300,
+      "w": 393,
+      "text": "Zum Prüfen:\n\n• Reicht „im Ziel“ als Flammen-Label, oder soll die Flamme weiter alle Wochen zählen und das Ziel nur in der Zeile darunter stehen?\n\n• Schritt 4: zwei große Knöpfe statt Rad. Sieben Werte brauchen kein Rad — aber ist es dir zu leer?"
+    },
+    {
+      "id": "home",
+      "x": 2365,
+      "y": 1000,
+      "w": 393,
+      "text": "06 mit Zielen, 07 nach „Später“ — die Karte öffnet dieselben fünf Schritte als Sheet, 08 nach dem Eintrag, der die Marke erreicht.\n\nDie Gewichtskarte zeigt nur Zahlen mit Deckung: letzter Eintrag, Datum, Differenz zum ersten, Abstand zum Ziel. Kein Trend, kein BMI, keine Prognose."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

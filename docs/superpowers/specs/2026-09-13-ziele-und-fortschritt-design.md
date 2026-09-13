@@ -1,7 +1,7 @@
 # iOS Member-App — Persönliche Ziele & Fortschritt
 
 **Stand:** 13. September 2026
-**Status:** Entwurf, zur Entscheidung. Noch kein Umsetzungsplan.
+**Status:** Entschieden am 13. September (Abschnitt 9), Artboards unter `docs/superpowers/design/ziele/`. Noch kein Umsetzungsplan.
 **Vorbedingung:** Sub-Projekte 1–4 der Member-App stehen (`0001`–`0040`, Home mit Serien-Streifen, Profil mit Name, `PUT /me/profile`).
 **Zitierweise:** `§n` ohne Dokumentangabe verweist auf `2026-08-30-designsystem.md`.
 **Verhältnis zu anderen Dokumenten:** untergeordnet gegenüber `2026-08-28-fitness-retrofit-m1-design.md` (Produktgrenze, M3-Abgrenzung) und `2026-09-09-ios-home-profil-design.md` (Home, Profil, Verlauf-Cache). Es ergänzt beide um eine zweite Sorte Fortschritt: die Person statt das Gerät.
@@ -27,7 +27,7 @@ Dieser Bauabschnitt fügt drei Dinge hinzu:
 **Enthalten:**
 
 - Onboarding-Flow (fünf Screens), einmalig, überspringbar, im Profil nachholbar
-- Stammdaten: Vorname (bereits da), Geschlecht, Geburtsjahr, Größe — alle optional
+- Stammdaten: Vorname (bereits da), Geschlecht, Altersspanne, Größe — alle optional
 - Körpergewicht als Verlauf: eintragen, ansehen, korrigieren, löschen
 - Drei Zielsorten: Trainingstage je Woche · Zielgewicht · Trainingsziel (Richtung)
 - Home: Block „Deine Ziele" mit Wochenziel und Gewichtskarte
@@ -55,14 +55,14 @@ Drei Migrationen, alle additiv. Nichts an `workout_*`, nichts an `studios`.
 | Spalte | Typ | Bemerkung |
 | --- | --- | --- |
 | `sex` | enum `member_sex` (`female`, `male`, `diverse`) | nullable; „keine Angabe" ist `null`, kein vierter Wert |
-| `birth_year` | `smallint` | nullable, Check `between 1900 and extract(year from now())`; **Jahr statt Datum** — Datensparsamkeit, ein Alter braucht kein Geburtsdatum |
+| `age_band` | enum `age_band` (`under_18`, `18_24`, `25_34`, `35_44`, `45_54`, `55_64`, `65_plus`) | nullable; **Spanne statt Jahr** — noch eine Stufe sparsamer als das Geburtsjahr, und für alles, was die App je damit tun soll (Vorschläge, Pläne), reicht die Spanne. Sie altert nicht mit: wer 35 wird, bleibt in `25_34`, bis er es selbst ändert — ehrlicher als ein Alter, das die App aus einem Jahr rechnet |
 | `height_cm` | `smallint` | nullable, Check `between 100 and 250` |
 | `training_goal` | enum `training_goal` (`lose_weight`, `build_muscle`, `stay_fit`, `get_stronger`) | nullable; die Richtung, kein Zahlwert |
 | `onboarding_completed_at` | `timestamptz` | nullable; gesetzt beim Abschluss **oder** beim Überspringen — das Onboarding erscheint nie zweimal |
 
 `profiles_select_own`, `_update_own`, `_insert_own` aus `0001`/`0039` decken die neuen Spalten ohne Änderung. Kein Spaltenrecht für Personal existiert, keines kommt dazu.
 
-**Warum Geschlecht und Geburtsjahr trotzdem nullable:** siehe Abschnitt 9, Frage 1 — heute rechnet keine Funktion damit.
+**Warum Geschlecht erhoben wird, obwohl heute keine Funktion damit rechnet:** Entscheidung vom 13. September (Abschnitt 9) — als Grundlage für Startgewicht-Vorschläge am Gerät und später für Trainingspläne (M3). Beides ist nicht Teil dieser Runde; die Spalte ist vorbereitet, nicht ausgewertet. Bis eine Funktion sie liest, sagt der Onboarding-Screen, wofür sie gedacht ist.
 
 ### 3.2 `0042_body_measurements.sql` — Körpergewicht als Verlauf
 
@@ -117,7 +117,7 @@ Sechs Änderungen, alle in `packages/domain` plus je eine Route.
 member: {
   displayName:            string | null,     // wie bisher
   sex:                    "female" | "male" | "diverse" | null,
-  birthYear:              number | null,
+  ageBand:                "under_18" | "18_24" | "25_34" | "35_44" | "45_54" | "55_64" | "65_plus" | null,
   heightCm:               number | null,
   trainingGoal:           "lose_weight" | "build_muscle" | "stay_fit" | "get_stronger" | null,
   onboardingCompletedAt:  string | null,
@@ -204,7 +204,7 @@ Ein `OnboardingFlow` mit eigenem `NavigationStack`, Schrittanzeige oben (`1 / 5`
 
 | # | Screen | Eingabe | Vorgabe |
 | --- | --- | --- | --- |
-| 1 | **Über dich** | Geschlecht (drei Chips + „keine Angabe"), Geburtsjahr (Rad) | nichts gewählt |
+| 1 | **Über dich** | Geschlecht (drei Chips), Altersspanne (sieben Chips); „keine Angabe" heißt, nichts zu wählen | nichts gewählt |
 | 2 | **Dein Körper** | Größe in cm (`Stepper44`/Rad), Gewicht in kg mit einer Nachkommastelle (`RastRad`, Schritt 0,5) | leer |
 | 3 | **Dein Ziel** | vier Kacheln: Abnehmen · Muskeln aufbauen · Fit bleiben · Stärker werden | nichts gewählt |
 | 4 | **Wie oft?** | Trainingstage pro Woche, 1–7 | 3 |
@@ -236,7 +236,7 @@ Der Verlauf-Cache (`VerlaufFileStore`) trägt die Messwerte mit — sie ändern 
 
 ### 5.5 Profil: zwei neue Abschnitte
 
-**„ÜBER DICH"** — Name (bestehende Kopfkarte), Geschlecht, Geburtsjahr, Größe; jede Zeile öffnet einen Picker, jede hat „Entfernen". Schreibt über `PUT /me/profile` mit `null`.
+**„ÜBER DICH"** — Name (bestehende Kopfkarte), Geschlecht, Alter (Spanne), Größe; jede Zeile öffnet einen Picker, jede hat „Entfernen". Schreibt über `PUT /me/profile` mit `null`.
 
 **„ZIELE"** — Trainingsziel (Richtung), Tage pro Woche, Zielgewicht; „Gewicht eintragen" als Zeile; „Gewichtsverlauf" als `NavigationLink`. Dropdown-Änderung schreibt sofort, wie die drei Schalter darunter.
 
@@ -258,7 +258,7 @@ Dieser Bauabschnitt ist der erste, der **Gesundheitsdaten im Sinn von Art. 9 DSG
 2. **Personal sieht nichts, auch nicht als Summe.** `0033` hat die Trainingsdaten vor dem Personal geschlossen und `studio_overview` als einzige Öffnung gelassen. Körperdaten bekommen **keine** solche Öffnung: `body_measurements` und die neuen `profiles`-Spalten tauchen in keiner `SECURITY DEFINER`-Funktion auf. Der Migrationskommentar hält das fest, damit es später eine Entscheidung ist und kein Versehen.
 3. **Keine Interpretation.** Kein BMI, keine Kalorien, kein „gesund"/„übergewichtig", keine Empfehlung, wie viel man abnehmen sollte. Die App zeigt eingetragene Zahlen und ihre Differenz. Das Trainingsziel „Abnehmen" ist eine Absicht des Mitglieds, keine Bewertung durch die Plattform — und der Screen sagt das.
 
-**Datensparsamkeit:** Geburtsjahr statt Geburtsdatum; Geschlecht mit „keine Angabe" als Vorgabe; keine Angabe wird zur Nutzung erzwungen.
+**Datensparsamkeit:** Altersspanne statt Geburtsdatum oder -jahr; Geschlecht ohne Vorauswahl; keine Angabe wird zur Nutzung erzwungen.
 
 **Für M3 (DSGVO-Löschung und -Export):** beide neuen Tabellen hängen mit `on delete cascade` an `auth.users`; der Export ist eine `select`-Abfrage je Tabelle. Nichts hier macht M3 schwerer.
 
@@ -270,10 +270,13 @@ Dieser Bauabschnitt ist der erste, der **Gesundheitsdaten im Sinn von Art. 9 DSG
 
 Wie bei jedem Bauabschnitt seit Phase 3: erst die Artboards, dann der Plan. Neu zu zeichnen unter `docs/superpowers/design/ziele/`:
 
-- `Onboarding1` bis `Onboarding5` plus `OnboardingFertig`
-- `HomeZiele` (drei Zustände: leer, Wochenziel, Gewicht) und `HomeZielErreicht`
+- `Onboarding1` bis `Onboarding5` — der letzte Screen landet direkt auf Home; ein eigener „Fertig"-Screen wäre ein Zwischenschritt ohne Inhalt
+- `Main` (Home mit Zielen), `HomeNachholen` (übersprungen), `HomeZielErreicht`
 - `Gewichtsverlauf` und `GewichtEintragen` (Sheet)
-- `ProfilUeberDich`, `ProfilZiele`
+- `Profil` (beide neuen Abschnitte) und `ProfilAlter` (ein Picker-Sheet mit „Entfernen", stellvertretend für alle)
+- `Bausteine` — Chips, Zielkachel, Wochenzielmarke, Gewichtskarte
+
+Gezeichnet am 13. September, Canvas: `docs/superpowers/design/ziele/`.
 
 Bausteine aus `member/Fundament.dc.html`; neu nur die Zielkachel.
 
@@ -284,7 +287,7 @@ Bausteine aus `member/Fundament.dc.html`; neu nur die Zielkachel.
 **Unit (`packages/domain`), weil rein:**
 
 - `serienstand` mit Schwelle: `weeksOnTarget` bei Ziel 3 und Wochen mit 3, 2, 4 Tagen; laufende Woche zählt erst, wenn sie das Ziel erreicht hat; `null` ohne Ziel
-- `profilSchema`: jedes Feld einzeln gültig, ungültig, `null`; `onboardingDone` nur `true`
+- `profilSchema`: jedes Feld einzeln gültig, ungültig, `null`; `ageBand` nur aus der Liste; `onboardingDone` nur `true`
 - `zielErreicht(start, ziel, neu)`: Richtung aus dem Start, Gleichstand zählt, kein Start → nie erreicht
 - `messwertSchema`: Datum in der Zukunft, Gewicht außerhalb 20–400, zwei Nachkommastellen
 
@@ -309,14 +312,14 @@ Bausteine aus `member/Fundament.dc.html`; neu nur die Zielkachel.
 
 ---
 
-## 9. Offene Entscheidungen
+## 9. Entscheidungen
 
-Vier Fragen, die den Plan ändern. Empfehlung jeweils zuerst.
+Vier Fragen standen offen; entschieden am 13. September.
 
-1. **Geschlecht und Geburtsjahr überhaupt erheben?** Heute nutzt sie keine Funktion — die App rechnet keine Kalorien und kein Idealgewicht, und soll es laut Produktgrenze auch nicht. Ein Feld, das nichts trägt, ist im Onboarding eine Hürde und in der Datenbank ein Risiko. **Empfehlung:** in dieser Runde weglassen und Screen 1 streichen (vier Screens statt fünf). Sie kommen dazu, sobald eine Funktion sie braucht — das Datenmodell ist dann eine Migration entfernt. Der Plan oben enthält sie, weil sie in der Anfrage stehen; die Streichung kostet nichts.
-2. **Wochenziel in Tagen oder Einheiten?** Der Streifen zählt Tage, und zwei Einheiten an einem Tag sind ein Trainingstag. **Empfehlung:** Tage — sonst zeigt der Streifen „2 Tage" neben „3 von 3 Einheiten".
-3. **Onboarding-Gate vor oder nach dem Studiobeitritt?** Oben steht *vor*. Alternative: erst nach dem ersten Beitritt, damit die ersten Minuten dem Scan gehören. **Empfehlung:** vor — die Angaben gehören zur Person, und „Später" hält den Weg zum Scan kurz.
-4. **Übungsziele jetzt oder in Runde 2?** Das Datenmodell lässt sie zu (`exercise_weight`, `exercise_id`). **Empfehlung:** Runde 2 — `ExerciseProgress` zeigt die Steigerung schon, und Runde 1 ist mit drei Migrationen und fünf Screens groß genug.
+1. **Geschlecht und Alter bleiben.** Alter als **Spanne**, nicht als Jahr (3.1). Geschlecht als Grundlage für spätere Startgewicht-Vorschläge am Gerät und für Trainingspläne (M3) — in dieser Runde gespeichert, nicht ausgewertet.
+2. **Wochenziel in Tagen.** Der Streifen zählt Tage, das Ziel auch; zwei Einheiten an einem Tag sind ein Trainingstag.
+3. **Onboarding-Gate vor dem Studiobeitritt.** Die Angaben gehören zur Person; „Später" hält den Weg zum Scan kurz.
+4. **Übungsziele in Runde 2.** Das Datenmodell lässt sie zu (`exercise_weight`, `exercise_id`); `ExerciseProgress` zeigt die Steigerung schon.
 
 ---
 

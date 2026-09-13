@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0A0B0D; color: #F2F4F7; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+    a { color: #D4FF3F; text-decoration: none; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .card { background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; overflow: hidden; }
+    .row { padding: 13px 16px; display: flex; align-items: center; gap: 12px; }
+    .sep { height: 1px; background: #2A2E36; }
+    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
+    .tab.on { color: #D4FF3F; }
+    /* Chip: 44 pt, Pille. Gewaehlt = Akzentstrich, keine Flaeche (Designsystem SS2). */
+    .chip { height: 44px; border-radius: 22px; border: 1px solid #2A2E36; color: #9BA3AF; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .chip.on { border: 1.5px solid #D4FF3F; background: #14161A; color: #F2F4F7; }
+    /* Zielkachel: Karte mit Symbol, Titel, Zeile. Gewaehlt wie der Chip. */
+    .kachel { min-height: 132px; padding: 16px; border-radius: 14px; background: #14161A; border: 1px solid #2A2E36; display: flex; flex-direction: column; gap: 10px; }
+    .kachel.on { border: 1.5px solid #D4FF3F; }
+    .kachel-titel { font-size: 16px; font-weight: 800; line-height: 1.15; }
+    .kachel-zeile { font-size: 12px; line-height: 1.4; color: #5C636E; }
+    /* Stepper44 als Zeile: Minus, Wert, Plus. */
+    .stepper { display: flex; align-items: stretch; gap: 8px; height: 58px; }
+    .stepper-knopf { flex: none; width: 58px; border-radius: 14px; border: 1px solid #2A2E36; display: flex; align-items: center; justify-content: center; }
+    .stepper-wert { flex-grow: 1; border-radius: 14px; background: #14161A; border: 1px solid #2A2E36; display: flex; align-items: baseline; justify-content: center; gap: 5px; }
+    /* Rastrad ohne Rahmen -- GeraetWertRad.dc.html, eine Spalte. */
+    .rad { position: relative; height: 244px; overflow: hidden; }
+    .far { height: 34px; display: flex; align-items: center; justify-content: center; }
+    .near { height: 38px; display: flex; align-items: center; justify-content: center; }
+    .fT { position: absolute; left: 0; right: 0; top: 0; height: 66px; background: linear-gradient(180deg, #0A0B0D 12%, rgba(10,11,13,0) 100%); pointer-events: none; }
+    .fB { position: absolute; left: 0; right: 0; bottom: 0; height: 66px; background: linear-gradient(0deg, #0A0B0D 12%, rgba(10,11,13,0) 100%); pointer-events: none; }
+    .rad.im-sheet .fT { background: linear-gradient(180deg, #14161A 12%, rgba(20,22,26,0) 100%); }
+    .rad.im-sheet .fB { background: linear-gradient(0deg, #14161A 12%, rgba(20,22,26,0) 100%); }
+    /* Serie: Flamme links, Wochenstreifen rechts (home-serie/Main). */
+    .serie { display: flex; align-items: center; gap: 12px; }
+    .flamme { flex: none; width: 56px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .flamme-reihe { display: flex; align-items: center; gap: 4px; }
+    .flamme-zahl { font-size: 27px; line-height: 1; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.04em; color: #D4FF3F; }
+    .flamme-label { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #D4FF3F; }
+    .woche { flex-grow: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+    .tagbox { height: 44px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+    .kuerzel { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: #5C636E; }
+    .tagnr { font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.03em; color: #5C636E; }
+    .tagbox.trainiert { background: #1D2026; }
+    .tagbox.trainiert .kuerzel { color: #9BA3AF; }
+    .tagbox.heute { box-shadow: inset 0 0 0 1.5px #2A2E36; }
+    .tagbox.heute .kuerzel, .tagbox.heute .tagnr { color: #9BA3AF; }
+    .serie-fuss { font-size: 12px; font-weight: 600; color: #5C636E; font-variant-numeric: tabular-nums; }
+    /* Wochenziel: drei Striche je Zieltag, gefuellt = trainiert. */
+    .zielstriche { display: flex; gap: 4px; }
+    .strich { width: 18px; height: 4px; border-radius: 2px; background: #2A2E36; }
+    .strich.voll { background: #F2F4F7; }
+    /* Sheet ueber einem abgedunkelten Screen. */
+    .scrim { position: absolute; inset: 0; background: rgba(10,11,13,.72); }
+    .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: #14161A; border-radius: 24px 24px 0 0; padding: 10px 20px 20px; display: flex; flex-direction: column; }
+    .griff { width: 36px; height: 5px; border-radius: 3px; background: #2A2E36; align-self: center; }
+    .note { font-size: 13px; line-height: 1.5; color: #9BA3AF; }
+    .note-faint { font-size: 12px; line-height: 1.5; color: #5C636E; }
+  </style>
+</helmet>
+<div class="ph"><div style="height: 54px; flex: none;"></div><div style="flex: none; padding: 14px 20px 0"><div style="font-size: 32px; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; line-height: 1">Profil</div></div><div class="scrim"></div><div class="sheet" style="height: 420px;"><div class="griff"></div><!-- Picker-Sheet im Profil, stellvertretend fuer Geschlecht, Alter, Groesse, Richtung: waehlen oder entfernen. --><div style="flex: none; padding: 22px 0 0; font-size: 22px; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; line-height: 1;">Alter</div><div style="flex: none; margin-top: 8px;" class="note">Als Spanne. Ändert sich nicht von selbst.</div><div style="flex: none; margin-top: 20px;"><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;"><div class="chip">bis 17</div><div class="chip">18–24</div><div class="chip on">25–34</div><div class="chip">35–44</div><div class="chip">45–54</div><div class="chip">55–64</div><div class="chip">65+</div></div></div><div style="flex-grow: 1;"></div><div style="flex: none; display: flex; flex-direction: column; gap: 12px;"><div style="height: 64px; border-radius: 16px; background: #D4FF3F; color: #0A0B0D; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 9px;">Übernehmen</div><div style="height: 52px; border-radius: 14px; border: 1px solid rgba(255,90,78,.45); color: #FF5A4E; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center;">Angabe entfernen</div></div></div></div></x-dc>
+</body>
+</html>
