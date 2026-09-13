@@ -16,7 +16,7 @@ Dieser Bauabschnitt fügt drei Dinge hinzu:
 
 1. **Ein Onboarding** nach der Registrierung: ein paar Screens mit Angaben zur Person und einem Ziel.
 2. **Ziele, die man erreichen kann:** Trainingstage pro Woche, ein Zielgewicht, ein Trainingsziel als Richtung („Abnehmen", „Muskeln aufbauen", …).
-3. **Fortschritt auf Home:** Wochenziel gegen die Serie, Gewichtsverlauf, Abstand zum Ziel.
+3. **Fortschritt auf Home:** Wochenziel neben der Serie, Gewichtsverlauf, Abstand zum Ziel.
 
 **Was es nicht ist:** kein Trainingsplan (M3, M1-Spec §5.5 und Zeile 490), keine Ernährungs- oder Gesundheitsberatung, keine Sensorik. Alles, was hier gespeichert wird, gibt das Mitglied selbst ein — die Produktgrenze aus M1 §4.3 („gymodo misst nichts") gilt unverändert und wird für Körperdaten sogar strenger (Abschnitt 6).
 
@@ -160,19 +160,18 @@ summary: {
 
 ### 4.5 `GET /me/sessions` — die Kopfzeile kennt das Wochenziel
 
-`summary.streak` bekommt zwei Felder:
+`summary.streak` bekommt ein Feld:
 
 ```
 streak: {
-  weeks, weekStart, today, trainedDays,       // wie bisher
-  weeklyTarget:   number | null,              // aktives weekly_days-Ziel
-  weeksOnTarget:  number | null               // Wochen in Folge, in denen das Ziel erreicht wurde
+  weeks, weekStart, today, trainedDays,       // wie bisher, unverändert gerechnet
+  weeklyTarget:   number | null               // aktives weekly_days-Ziel
 }
 ```
 
-`serienstand` rechnet heute schon Wochen in Folge mit *mindestens einer* Einheit. `weeksOnTarget` ist dieselbe Rechnung mit *mindestens N Trainingstagen* — eine zweite Schwelle in derselben reinen Funktion, keine zweite Funktion. Beides `null` ohne Ziel oder ohne Zeitzone, aus demselben Grund wie `thisWeekCount`.
+**Die Serie bleibt, was sie ist: Wochen in Folge mit mindestens einer Einheit.** Entschieden am 13. September (Abschnitt 9, Punkt 5). Das Wochenziel ändert an `serienstand` nichts — keine zweite Schwelle, keine „Wochen im Ziel". Wer sich drei Tage vornimmt und zwei schafft, hat seine Serie nicht gerissen; er hat sein Ziel diese Woche nicht erreicht, und genau das steht in der Zeile unter dem Streifen. Zwei Zahlen, zwei Aussagen, und die strengere von beiden bleibt eine Zeile, keine Flamme.
 
-**Der Client vergleicht nicht selbst.** „2 von 3 diese Woche" liest er aus `trainedDays.count` gegen `weeklyTarget`; ob das Ziel *erreicht* ist, sagt der Server. Dieselbe Regel wie in `HomeSerie`: hier wird gelesen, nicht gerechnet.
+`weeklyTarget` liegt trotzdem hier und nicht nur im Bootstrap: die Zeile „2 von 3 Tagen" braucht `trainedDays` und das Ziel aus demselben Abruf, sonst zeigt ein alter Cache das eine gegen das andere. Der Vergleich selbst — Anzahl gegen Ziel — ist die eine Rechnung, die der Client macht; sie ist ein Zählen, keine Wochengrenze.
 
 ### 4.6 Was „Ziel erreicht" für das Gewicht heißt
 
@@ -222,7 +221,7 @@ Zwischen Serien-Streifen und „Letzte Trainings". Drei Zustände:
 
 **Nichts gesetzt** (übersprungen): eine Karte „Ziele festlegen — Wochenziel, Gewicht, Richtung. Dauert eine Minute." mit Knopf, der den `OnboardingFlow` als Sheet öffnet. Dieselben fünf Screens, kein zweiter Flow.
 
-**Wochenziel gesetzt:** der bestehende `HomeSerieView` bekommt eine Zeile „2 von 3 Tagen diese Woche" und markiert die Zielmarke im Streifen — die sieben Tagesboxen tragen das schon, es fehlt nur der Sollwert. `weeksOnTarget` ersetzt in der Fußnote die reine Serie, sobald ein Ziel steht: „4 Wochen im Ziel · 34 Einheiten gesamt". Ohne Ziel bleibt die Fußnote, wie sie ist.
+**Wochenziel gesetzt:** der bestehende `HomeSerieView` bekommt rechts im Kopf „Ziel 3 Tage" und unter dem Streifen eine Zeile „2 von 3 Tagen diese Woche" mit einem Strich je Zieltag, gefüllt für jeden Trainingstag. **Flamme und Fußnote bleiben unverändert** — die Flamme zählt weiter jede Woche mit mindestens einer Einheit, die Fußnote weiter „34 Einheiten gesamt · zuletzt gestern". Ohne Ziel fehlt nur die neue Zeile.
 
 **Gewicht gesetzt:** eine Karte mit aktuellem Wert, Datum, Differenz zum ersten Eintrag, Abstand zum Ziel („noch 3,5 kg"), Mini-Kurve der letzten 12 Punkte, und „Eintragen" als Sekundäraktion, die ein Sheet mit dem `RastRad` öffnet, Vorgabe heutiges Datum. Tippen auf die Karte öffnet den Gewichtsverlauf (5.4).
 
@@ -286,7 +285,7 @@ Bausteine aus `member/Fundament.dc.html`; neu nur die Zielkachel.
 
 **Unit (`packages/domain`), weil rein:**
 
-- `serienstand` mit Schwelle: `weeksOnTarget` bei Ziel 3 und Wochen mit 3, 2, 4 Tagen; laufende Woche zählt erst, wenn sie das Ziel erreicht hat; `null` ohne Ziel
+- `serienstand` bleibt unverändert — ein Test sichert zu, dass ein gesetztes Wochenziel die Serie nicht verändert: Ziel 3, Woche mit 2 Tagen, Serie läuft weiter
 - `profilSchema`: jedes Feld einzeln gültig, ungültig, `null`; `ageBand` nur aus der Liste; `onboardingDone` nur `true`
 - `zielErreicht(start, ziel, neu)`: Richtung aus dem Start, Gleichstand zählt, kein Start → nie erreicht
 - `messwertSchema`: Datum in der Zukunft, Gewicht außerhalb 20–400, zwei Nachkommastellen
@@ -320,6 +319,7 @@ Vier Fragen standen offen; entschieden am 13. September.
 2. **Wochenziel in Tagen.** Der Streifen zählt Tage, das Ziel auch; zwei Einheiten an einem Tag sind ein Trainingstag.
 3. **Onboarding-Gate vor dem Studiobeitritt.** Die Angaben gehören zur Person; „Später" hält den Weg zum Scan kurz.
 4. **Übungsziele in Runde 2.** Das Datenmodell lässt sie zu (`exercise_weight`, `exercise_id`); `ExerciseProgress` zeigt die Steigerung schon.
+5. **Die Serie hängt nicht am Wochenziel.** Sie zählt weiter Wochen mit mindestens einer Einheit, wie seit dem Serien-Streifen. Das Wochenziel ist eine eigene Zeile darunter — wer sein Ziel verfehlt, verliert dadurch keine Serie. Die frühere Fassung dieser Spec („Wochen im Ziel" in der Flamme) ist damit zurückgenommen.
 
 ---
 
@@ -344,7 +344,7 @@ Migrationen vor Deploy, wie in `2026-09-01-gesamtfahrplan.md` §4f begründet: d
 ## 11. Selbstprüfung
 
 - Kein Bedienelement ohne Ziel: die Nachholkarte erscheint nur ohne Ziele, die Zielgewicht-Linie nur mit Ziel, Screen 5 nur mit Gewicht.
-- Keine Zahl ohne Deckung: `weeksOnTarget` rechnet der Server über die ganze Geschichte, `changeKg` steht neben seinen Rohwerten, kein Trend, kein BMI.
+- Keine Zahl ohne Deckung: die Serie rechnet weiter nur der Server, `changeKg` steht neben seinen Rohwerten, kein Trend, kein BMI.
 - Keine zweite Antwort auf eine bestehende Frage: ein Profil-Schreibweg, ein Onboarding-Flow für Erststart und Nachholen, ein Rad für Gewicht am Gerät und am Körper, ein Reset beim Abmelden.
 - Die Produktgrenze wird enger, nicht weiter: mehr Daten, aber weniger, die jemand außer dem Mitglied sieht.
 - Alles Neue ist nullable, löschbar und überspringbar.

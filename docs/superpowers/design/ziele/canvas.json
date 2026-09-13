@@ -118,14 +118,14 @@
       "x": 946,
       "y": -300,
       "w": 866,
-      "text": "Genau eine Akzentfläche je Screen (§2): im Onboarding der Knopf, auf Home die Flamme, im Verlauf der Zeitraum-Chip. Gewählte Chips und Kacheln tragen Volt nur als Strich — wie der Fokusrand der Felder.\n\nDer Serien-Streifen bleibt, wie er ist. Neu sind zwei Zeilen: „Ziel 3 Tage“ rechts im Kopf, „2 von 3 Tagen“ mit drei Strichen darunter. Die Flamme wechselt ihre Aussage von „Wochen“ zu „im Ziel“, nicht ihre Form."
+      "text": "Genau eine Akzentfläche je Screen (§2): im Onboarding der Knopf, auf Home die Flamme, im Verlauf der Zeitraum-Chip. Gewählte Chips und Kacheln tragen Volt nur als Strich — wie der Fokusrand der Felder.\n\nSerie und Flamme bleiben, wie sie sind: Wochen in Folge mit mindestens einer Einheit. Neu sind zwei Zeilen: „Ziel 3 Tage“ rechts im Kopf, „2 von 3 Tagen“ mit drei Strichen darunter. Das Wochenziel ist eine eigene Aussage neben der Serie, nicht ihre Bedingung — entschieden am 13. September."
     },
     {
       "id": "offen",
       "x": 1892,
       "y": -300,
       "w": 393,
-      "text": "Zum Prüfen:\n\n• Reicht „im Ziel“ als Flammen-Label, oder soll die Flamme weiter alle Wochen zählen und das Ziel nur in der Zeile darunter stehen?\n\n• Schritt 4: zwei große Knöpfe statt Rad. Sieben Werte brauchen kein Rad — aber ist es dir zu leer?"
+      "text": "Zum Prüfen:\n\n• Schritt 4: zwei große Knöpfe statt Rad. Sieben Werte brauchen kein Rad — aber ist es dir zu leer?"
     },
     {
       "id": "home",

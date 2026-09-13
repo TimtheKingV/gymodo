@@ -336,7 +336,7 @@ def serie_block(ziel=None, wochen=6, trainiert=(u'MO', u'DI'), fuss=u'34 Einheit
     out = [u'<div style="flex: none; padding: 24px 20px 0; display: flex; flex-direction: column; gap: 12px">', kopf,
            u'<div class="serie"><div class="flamme"><div class="flamme-reihe">%s<span class="flamme-zahl">%d</span></div>'
            u'<span class="flamme-label">%s</span></div>%s</div>'
-           % (FLAMME, wochen, u'im Ziel' if ziel else u'Wochen', streifen(trainiert))]
+           % (FLAMME, wochen, u'Wochen', streifen(trainiert))]
     if ziel:
         out.append(u'<div style="display: flex; align-items: center; justify-content: space-between;">'
                    u'<span class="serie-fuss" style="color: #9BA3AF;">%d von %d Tagen diese Woche</span>%s</div>'
@@ -417,8 +417,8 @@ def home(ziele_block, serie, kommentar=u''):
 
 schreibe(u'Main.dc.html', home(
     gewichtskarte(),
-    serie_block(ziel=3, wochen=4, fuss=u'4 Wochen in Folge im Ziel · 34 Einheiten gesamt'),
-    kommentar=u'<!-- Home mit Zielen: die Flamme zaehlt jetzt Wochen IM ZIEL, die Zeile unter dem Streifen zeigt den Stand der Woche. -->'))
+    serie_block(ziel=3),
+    kommentar=u'<!-- Home mit Zielen: die Flamme zaehlt unveraendert Wochen mit mindestens einer Einheit; die Zeile unter dem Streifen zeigt den Stand gegen das Wochenziel. -->'))
 
 schreibe(u'HomeNachholen.dc.html', home(
     nachholkarte(),
@@ -427,7 +427,7 @@ schreibe(u'HomeNachholen.dc.html', home(
 
 schreibe(u'HomeZielErreicht.dc.html', home(
     gewichtskarte(wert=u'78,0', datum=u'heute', erreicht=True),
-    serie_block(ziel=3, wochen=11, trainiert=(u'MO', u'DI', u'MI'), fuss=u'11 Wochen in Folge im Ziel · 61 Einheiten gesamt'),
+    serie_block(ziel=3, wochen=11, trainiert=(u'MO', u'DI', u'MI'), fuss=u'61 Einheiten gesamt · zuletzt heute'),
     kommentar=u'<!-- Ziel erreicht: eine Zeile mit Haken, kein Konfetti. Bleibt, bis ein neues Ziel steht. -->'))
 
 
@@ -502,7 +502,7 @@ schreibe(u'Gewichtsverlauf.dc.html', gewichtsverlauf())
 
 def hinter_home():
     """Der abgedunkelte Home-Kopf hinter einem Sheet -- nur so viel, dass man weiss, wo man ist."""
-    return spacer_top() + kopf_home() + serie_block(ziel=3, wochen=4, fuss=u'4 Wochen in Folge im Ziel · 34 Einheiten gesamt')
+    return spacer_top() + kopf_home() + serie_block(ziel=3)
 
 
 def sheet(inhalt, hinten, hoehe):
@@ -592,7 +592,7 @@ def bausteine():
               reihe(box(110, u'<div class="chip">Divers</div>'), box(110, u'<div class="chip on">Weiblich</div>'))),
         block(u'Zielkachel', u'Karte 14 pt Radius, Symbol 24 pt Strich 2 in #9BA3AF, Titel 16/800, Zeile 12 in #5C636E. Gewählt wie der Chip, das Symbol wird weiß.',
               reihe(box(160, kachel(ICON_MUSKEL, u'Muskeln aufbauen', u'Mehr Gewicht je Übung')), box(160, kachel(ICON_AB, u'Abnehmen', u'Gewicht runter, Kraft halten', an=True)))),
-        block(u'Wochenziel unter dem Streifen', u'Ein Strich je Zieltag, 18 × 4 pt. Gefüllt = trainiert. Die Flamme zählt mit Ziel „Wochen im Ziel“ statt „Wochen“ — dieselbe Silhouette, andere Aussage.',
+        block(u'Wochenziel unter dem Streifen', u'Ein Strich je Zieltag, 18 × 4 pt. Gefüllt = trainiert. Die Flamme bleibt davon unberührt: sie zählt weiter Wochen mit mindestens einer Einheit. Ein verfehltes Wochenziel reißt keine Serie.',
               u'<div style="display: flex; flex-direction: column; gap: 10px; width: 353px;">'
               + u''.join(u'<div style="display: flex; align-items: center; justify-content: space-between;"><span class="serie-fuss" style="color: #9BA3AF;">%s</span>%s</div>' % (t, zielstriche(v, 3))
                          for t, v in [(u'0 von 3 Tagen diese Woche', 0), (u'2 von 3 Tagen diese Woche', 2), (u'3 von 3 Tagen · Ziel erreicht', 3)])
@@ -650,9 +650,9 @@ canvas = {
                   u'Beispielperson wie in den bisherigen Artboards: Lena, Kraftwerk Nord. 82,5 kg, Ziel 78,0, 3 Tage pro Woche.'},
         {u'id': u'volt', u'x': 946, u'y': -300, u'w': 866,
          u'text': u'Genau eine Akzentfläche je Screen (§2): im Onboarding der Knopf, auf Home die Flamme, im Verlauf der Zeitraum-Chip. Gewählte Chips und Kacheln tragen Volt nur als Strich — wie der Fokusrand der Felder.\n\n'
-                  u'Der Serien-Streifen bleibt, wie er ist. Neu sind zwei Zeilen: „Ziel 3 Tage“ rechts im Kopf, „2 von 3 Tagen“ mit drei Strichen darunter. Die Flamme wechselt ihre Aussage von „Wochen“ zu „im Ziel“, nicht ihre Form.'},
+                  u'Serie und Flamme bleiben, wie sie sind: Wochen in Folge mit mindestens einer Einheit. Neu sind zwei Zeilen: „Ziel 3 Tage“ rechts im Kopf, „2 von 3 Tagen“ mit drei Strichen darunter. Das Wochenziel ist eine eigene Aussage neben der Serie, nicht ihre Bedingung — entschieden am 13. September.'},
         {u'id': u'offen', u'x': 1892, u'y': -300, u'w': 393,
-         u'text': u'Zum Prüfen:\n\n• Reicht „im Ziel“ als Flammen-Label, oder soll die Flamme weiter alle Wochen zählen und das Ziel nur in der Zeile darunter stehen?\n\n• Schritt 4: zwei große Knöpfe statt Rad. Sieben Werte brauchen kein Rad — aber ist es dir zu leer?'},
+         u'text': u'Zum Prüfen:\n\n• Schritt 4: zwei große Knöpfe statt Rad. Sieben Werte brauchen kein Rad — aber ist es dir zu leer?'},
         {u'id': u'home', u'x': 2365, u'y': 1000, u'w': 393,
          u'text': u'06 mit Zielen, 07 nach „Später“ — die Karte öffnet dieselben fünf Schritte als Sheet, 08 nach dem Eintrag, der die Marke erreicht.\n\n'
                   u'Die Gewichtskarte zeigt nur Zahlen mit Deckung: letzter Eintrag, Datum, Differenz zum ersten, Abstand zum Ziel. Kein Trend, kein BMI, keine Prognose.'},
