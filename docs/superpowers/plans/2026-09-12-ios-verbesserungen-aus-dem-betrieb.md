@@ -443,6 +443,134 @@ Was daran hängt:
 *`packages/domain/src/sessions.ts`, `Verlauf/VerlaufStore.swift`, `Verlauf/HomeSerie.swift`,*
 *`Screens/Home/HomeRootView.swift`.*
 
+## Umsetzung: Schnitte und Reihenfolge
+
+Zwanzig Punkte sind kein Vorhaben, sondern sieben. Geschnitten ist nach
+**einem Grund je Schnitt** — nicht nach Screen und nicht nach Bildnummer:
+was dieselbe Regel ändert, dieselbe Migration braucht oder denselben
+Zustand umbaut, gehört zusammen. Sortiert ist nach **Risiko und
+Abhängigkeit**: erst was nur die Oberfläche anfasst, dann was das Verhalten
+ändert, dann was das Datenmodell erweitert.
+
+Jeder Schnitt ist für sich auslieferbar und endet grün (`xcodebuild test`,
+`pnpm test`, betroffene Specs nachgezogen).
+
+### Schnitt 0 — Stand nachziehen (Voraussetzung, nicht meine Arbeit)
+
+Der Monatskalender auf Home, der Startblock mit „Suchen" und die
+Gerätenummern im Session-Detail liegen nur im Build, nicht im Repo (siehe
+Vorbemerkung). Ohne diesen Schritt arbeitet jeder Schnitt unten gegen einen
+Screen, den es hier nicht gibt.
+
+### Schnitt 1 — Kalender, Karten, Überschriften (Client, ohne Server)
+
+**Punkte 1, 4, 6, 7, 15, 17.** Ein Grund: der Verlauf soll auf einen Blick
+lesbar sein.
+
+- Die Regel „heute = Akzent, ausgewählt = Weiß" in beiden Streifen
+  (Home-Kalender und Kurse-Wochenplan), Designsystem §2 nachziehen.
+- „Wochenansicht" nach oben rechts.
+- Kurse-Band: Überschriften nach Wochenabstand.
+- Trainingskarte: Zeit und Sätze groß, Uhrzeit klein.
+- Benachbarte Einheiten (< 60 min Lücke) in einer Karte zusammenfassen,
+  Session-Detail zeigt die Teile untereinander.
+
+Reine Ableitungen, alle in `HomeZeilen` / `KurseMeineEinteilung` prüfbar —
+der Schnitt kostet wenig und macht die vier folgenden sichtbar besser.
+Er geht zuerst, weil er nichts voraussetzt und nichts blockiert.
+
+### Schnitt 2 — Training-Tab (Client, ohne Server)
+
+**Punkte 3, 8, 16.** Ein Grund: der Tab soll zeigen, was gerade ist, und den
+Start in die Daumenzone holen.
+
+- Startwege nach unten, laufendes Training samt Uhr in die Mitte.
+- Geräteliste mit Vorschaubild (nutzt `equipment_models.photo_url`, also
+  ohne neue Daten — deshalb hier und nicht im Bilder-Schnitt).
+
+### Schnitt 3 — Satzpfad am Gerät (Client, ohne Server)
+
+**Punkte 11, 12, 13.** Ein Grund: `radOffen` verschwindet, und damit fällt
+alles weg, was daran hing.
+
+- Räder immer aktiv, Kopfzeile ohne „antippen".
+- Empfehlung und letzter Satz als Drawer von unten — nur vor dem ersten Satz
+  eines Blocks, beim ersten Mal am Gerät gar nicht.
+- Einstellwerte nur noch als schmale Zeile.
+- Ergebnis messen: passt der Pfad ohne Seiten-Scrollen auf ein iPhone mini
+  bei Standard-Dynamic-Type?
+
+### Schnitt 4 — Was eine Einheit ist (Client + eine Migration)
+
+**Punkte 10, 19.** Ein Grund: der Anfang und das Ende einer Einheit ändern
+sich — und beides gehört in denselben Schnitt, weil der frühere Start genau
+die Fehleinheiten erzeugt, die das Löschen wieder wegnimmt.
+
+- Einheit entsteht beim Verlassen des Einstiegsscreens; drei Texte
+  umschreiben; eine Einheit ohne Satz wird verworfen und nie gemeldet.
+- Delete-Policy auf `workout_sessions` (Sätze per Cascade), Warteschlange
+  miträumen.
+- „Verwerfen" auf dem Abschluss-Screen, Löschen im Session-Detail.
+
+Riskantester Schnitt der Reihe: er ändert, was gezählt wird. Deshalb nach
+den drei Oberflächenschnitten, aber vor allem, was auf Einheiten aufbaut.
+Wer die Testdaten früher loswerden will, kann das Löschen (19) auch schon in
+Schnitt 1 mitnehmen — es hängt an nichts.
+
+### Schnitt 5 — Datenmodell und Portalpflege (Server + Portal + Client)
+
+**Punkte 5, 14, 18.** Ein Grund: zwei fehlende Felder an der Übung, beide
+nur mit Pflege im Portal sinnvoll — eine Migration, ein Portalformular, ein
+Durchreichen.
+
+- Muskelgruppe an `exercises` (Aufzählung), Pflege im Portal, Gruppierung im
+  Übungsfortschritt.
+- `instruction_assets.kind` auf `('video','image')`, `duration_s` nullable,
+  Bild je Modell und Übung, Pflege neben dem Video.
+- Anzeige: Bild auf dem Geräteeinstieg (Rückfall Gerätefoto, sonst kein
+  Kasten) und in den Fortschrittszeilen.
+
+Der teuerste Schnitt, und der einzige, der das Trainerportal anfasst. Er
+steht vor Schnitt 7, weil die Muskelgruppe dort den Hubweg trägt.
+
+### Schnitt 6 — Kurse zählen als Einheit (Server + Client)
+
+**Punkt 20.** Ein Grund: eine zweite Quelle für „Einheit" — Liste, Zählung
+und Serie lesen ab hier aus zwei Töpfen.
+
+- Teilnahme aus der Buchung ableiten (gebucht, Termin vorbei, nicht
+  abgesagt), Korrektur über das Löschen aus Schnitt 4.
+- `serie.ts` und `getSessions` um Kurstermine erweitern, Trainingstage als
+  Vereinigung.
+- Eigene Karte mit Name und Dauer, Antippen führt ins Kursdetail; kein
+  Zusammenfassen mit Gerätetrainings.
+
+### Schnitt 7 — Stats und Erfolge (Server + Client)
+
+**Punkte 2, 9.** Ein Grund: alles, was aus der Historie gerechnet wird —
+und der einzige Schnitt, der neue Zahlen erfindet statt vorhandene zu
+zeigen.
+
+- Rekorde je Gerät und Übung serverseitig (nicht aus dem 50er-Fenster).
+- Verlaufsreihe je Übung für die Grafik auf dem Abschluss.
+- Hubarbeit mit Hubweg-Vorgabe je Muskelgruppe, Vergleichsleiter statt
+  einem festen Auto, überall als Überschlag beschriftet.
+- Kurse bleiben außen vor (keine Sätze, kein Volumen).
+
+Zuletzt, weil er auf Schnitt 5 (Muskelgruppe), Schnitt 6 (was zählt) und
+einer sauberen Einheitendefinition aus Schnitt 4 aufsetzt.
+
+### Was wovon abhängt
+
+- 12, 13 ⟵ 11 (ohne `radOffen` kein zweites Layout)
+- 15 ⟵ 10 (der frühere Start erzeugt mehr Bruchstücke)
+- 19 ⟶ 10, 20 (die Korrektur für Fehleinheiten und falsche Kurstage)
+- 18 ⟵ 14, 5 (Bild und Muskelgruppe)
+- 9b ⟵ 5 (Hubweg je Muskelgruppe)
+- 2 ⟵ 9a (der Rekord ist die Marke in der Grafik)
+
+Alles andere steht für sich und könnte auch einzeln gehen.
+
 ## Offene Fragen
 
 1. Punkt 2: Grafik je Übung (Gewichtsverlauf über die letzten Einheiten) oder
