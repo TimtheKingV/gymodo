@@ -307,15 +307,20 @@ wiederkommt, erzeugt eine zweite Einheit; wer zwischendurch beendet und nach
 zwanzig Minuten weitermacht, auch. Mit Punkt 10 (Start schon beim
 Geräteeinstieg) wird das eher häufiger.
 
-Zu entscheiden ist die Regel:
+Die Regel steht (entschieden):
 
-- **Nur Anzeige oder wirklich zusammenlegen?** Ich würde es auf der
-  Anzeigeebene halten (`HomeZeilen`): die Einheiten bleiben in den Daten
-  getrennt, die Karte fasst sie zusammen und zeigt „08:32 – 09:06 · 2 Blöcke".
-  Dann muss keine Serverabfrage rückwirkend Sätze umhängen, und das
-  Session-Detail kann beide Teile untereinander zeigen.
-- **Ab welcher Lücke ist es ein neues Training?** Vorschlag: unter 60 Minuten
-  Abstand wird zusammengefasst, darüber nicht.
+- **Zusammengefasst wird nur in der Anzeige** (`HomeZeilen`). Die Einheiten
+  bleiben in den Daten getrennt, die Karte fasst sie zusammen; keine
+  Serverabfrage hängt rückwirkend Sätze um, und das Session-Detail zeigt die
+  Teile untereinander.
+- **Unter 60 Minuten Lücke** gehört es zusammen, darüber ist es ein neues
+  Training. Gemessen zwischen dem Ende der einen und dem Beginn der nächsten
+  Einheit.
+
+Offen bleibt nur die Beschriftung: die zusammengefasste Karte trägt die
+Spanne über alle Teile (Beginn des ersten bis Ende des letzten), Zeit und
+Sätze summiert — die enthaltene Pause zählt dabei nicht als Trainingszeit,
+sonst wäre die große Zahl aus Punkt 17 gelogen.
 
 *Bild 20. `Verlauf/HomeZeilen.swift`, `Screens/Home/HomeRootView.swift`,*
 *`Screens/Home/SessionDetailView.swift`.*
@@ -332,25 +337,16 @@ Zeile wie heute, ohne grauen Platzhalterkasten.
 
 *Bild 21. `Workout/GeraeteAuswahl.swift`, `Screens/Geraet/GeraeteAuswahlView.swift`.*
 
-### 17. Home — Uhrzeit kleiner, dafür Zeit, Sätze, Intensität
+### 17. Home — Uhrzeit kleiner, Zeit und Sätze groß
 
 Auf der Trainingskarte ist heute die **Uhrzeitspanne** die größte Zahl
 („15:36 – 16:16"), darunter klein „41 min · 1 Gerät · 3 Sätze". Das dreht sich
-um: die Uhrzeit wird klein, und die Karte trägt **Zeit, Sätze und
-Intensität**.
+um: **Zeit und Satzzahl werden groß, die Uhrzeitspanne klein.**
 
-Zeit und Sätze liegen vor. **Intensität ist neu und muss definiert werden** —
-drei Kandidaten:
-
-1. **Volumen je Minute** (kg/min, aus Gewicht × Wiederholungen ÷ Dauer) — sagt
-   „wie dicht", und trennt die 6-Minuten-Einheit mit 5 Sätzen sauber von den
-   83 Minuten mit 3 Sätzen.
-2. **Gesamtvolumen** (kg) — dieselbe Zahl wie in Punkt 9b, aber ohne Hubweg.
-3. **Auslastung** in Prozent des eigenen Bestwerts je Übung — am
-   aussagekräftigsten, hängt aber an den Rekorden aus Punkt 9a.
-
-Mein Vorschlag: (1), weil sie ohne neue Daten auskommt und die Karte etwas
-sagt, was Dauer und Satzzahl einzeln nicht sagen.
+Keine Intensität — entschieden. Die Idee (Volumen je Minute) war ein
+Kandidat, sie fällt vorerst weg; Zeit und Sätze reichen. Die Gerätezahl bleibt
+klein neben der Uhrzeit stehen, sie beantwortet „was war das für ein
+Training", nicht „wie viel".
 
 *Bild 22. `Verlauf/HomeZeilen.swift` (`zeilenText`), `Screens/Home/HomeRootView.swift`.*
 
@@ -375,6 +371,5 @@ Gerät dasselbe wäre.
    einmal mit einer Vorgabeliste je Studio?
 5. Punkt 10: Einheit ohne einen einzigen Satz — verwerfen (mein Vorschlag)
    oder als leere Einheit behalten?
-6. Punkt 15: zusammenfassen nur in der Anzeige (mein Vorschlag) oder in den
-   Daten — und ab welcher Lücke ist es ein neues Training?
-7. Punkt 17: was ist „Intensität"? Vorschlag: Volumen je Minute.
+6. Punkt 15: trägt die zusammengefasste Karte die summierte Trainingszeit
+   (ohne die Pause dazwischen) — oder die Spanne von Anfang bis Ende?
