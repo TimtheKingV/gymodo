@@ -383,16 +383,65 @@ Was dazugehört:
 - **Client.** Warteschlange mitnehmen: liegen für die gelöschte Einheit noch
   ungesendete Sätze in `PendingWriteStore`, müssen die mit weg, sonst
   erscheint die Einheit nach dem nächsten Reconnect wieder.
-- **Der Weg in der App.** Im Session-Detail (nicht auf der Home-Karte —
-  Wischen zum Löschen neben einer Liste, die man zum Öffnen antippt, ist zu
-  nah beieinander), mit Rückfrage und ohne Rückgängig.
+- **Zwei Wege in der App.** Im Session-Detail, mit Rückfrage und ohne
+  Rückgängig — nicht als Wisch auf der Home-Karte, dafür liegen Öffnen und
+  Löschen zu nah beieinander. Und **auf dem Abschluss-Screen**: wer „Training
+  beenden" drückt, sieht die Zusammenfassung, und dort steht neben „Fertig"
+  ein **„Verwerfen"** (entschieden). Das ist der Moment, in dem man merkt,
+  dass die Einheit ein Fehlstart war — nicht drei Tage später im Verlauf.
+  Verwerfen ist dort die Nebenaktion, „Fertig" bleibt die Hauptaktion, und
+  die Rückfrage bleibt auch hier.
 
-Zu klären: darf auch die **laufende** Einheit verworfen werden („Training
-verwerfen" statt „Training beenden")? Und was passiert beim Löschen eines
-Teils einer zusammengefassten Karte (Punkt 15) — nur der Teil, nehme ich an.
+Beim Löschen eines Teils einer zusammengefassten Karte (Punkt 15) geht nur
+dieser Teil, nicht der ganze Tag.
 
 *Ohne Bild, aus der Besprechung. `Screens/Home/SessionDetailView.swift`,*
 *neue Migration, `packages/domain/src/sessions.ts`, `Catalog/PendingWriteStore.swift`.*
+
+### 20. Kursteilnahme zählt als Einheit
+
+Wer im Kurs war, hat trainiert — heute sieht die App das nicht. Verlauf,
+Serie und „Einheiten gesamt" kennen ausschließlich `workout_sessions`; ein
+Body-Pump am Montag hinterlässt dort nichts.
+
+Künftig steht die Teilnahme **in der Liste der Einheiten** (mit **Name und
+Dauer** des Kurses statt Geräten und Sätzen: „Body-Pump · 60 min") und
+**zählt in der Serie** wie ein Gerätetraining.
+
+Der Haken sitzt in den Daten: **es gibt keine Anwesenheit.**
+`course_bookings.status` kennt nur `booked`, `waitlisted`, `cancelled` — ob
+jemand wirklich da war, weiß niemand. Drei Wege:
+
+1. **Aus der Buchung ableiten:** `booked` + Termin vorbei + nicht abgesagt =
+   teilgenommen. Kostet nichts, ist aber eine Annahme — und die App sagt sonst
+   „gymodo misst nichts, es zeigt, was du bestätigst". Vertretbar, weil sich
+   die Einheit über Punkt 19 löschen lässt: wer doch nicht da war, nimmt sie
+   weg.
+2. **Nachfragen:** nach dem Kurs einmal „Warst du dabei?" — ehrlich, aber ein
+   Schritt mehr, und wer nicht antwortet, verliert den Tag in der Serie.
+3. **Einchecken lassen** (Aufkleber am Kursraum, wie am Gerät) oder das Studio
+   abhaken lassen — am genauesten, am teuersten.
+
+Mein Vorschlag ist 1, mit der Löschmöglichkeit als Korrektur.
+
+Was daran hängt:
+
+- **Serie und Zählung** (`serie.ts`, `getSessions`) rechnen heute auf
+  `workout_sessions`. Die Kurstermine kommen als zweite Quelle dazu — die
+  Trainingstage sind dann die Vereinigung beider, ein Tag mit Kurs UND
+  Gerätetraining zählt einmal.
+- **Die Karte ist eine andere.** Kein „3 Geräte · 7 Sätze", sondern Name und
+  Dauer; das Antippen führt ins Kursdetail, nicht ins Session-Detail. Zeit und
+  Sätze groß (Punkt 17) heißt hier: Dauer groß, Kursname darüber.
+- **Zusammenfassen (Punkt 15) gilt hier nicht.** Ein Kurs neben einem
+  Gerätetraining bleibt eine eigene Karte, auch wenn beides in einer Stunde
+  liegt — es sind zwei verschiedene Dinge.
+- **Stats (Punkt 9) lassen den Kurs aus.** Ohne Sätze gibt es kein Volumen und
+  keinen Rekord; die Karte trägt Name und Dauer, mehr nicht.
+
+*Ohne Bild, aus der Besprechung. `packages/domain/src/serie.ts`,*
+*`packages/domain/src/sessions.ts`, `Verlauf/VerlaufStore.swift`, `Verlauf/HomeSerie.swift`,*
+*`Screens/Home/HomeRootView.swift`.*
 
 ## Offene Fragen
 
@@ -407,4 +456,5 @@ Teils einer zusammengefassten Karte (Punkt 15) — nur der Teil, nehme ich an.
    oder als leere Einheit behalten?
 6. Punkt 15: trägt die zusammengefasste Karte die summierte Trainingszeit
    (ohne die Pause dazwischen) — oder die Spanne von Anfang bis Ende?
-7. Punkt 19: darf auch die laufende Einheit verworfen werden?
+7. Punkt 20: Teilnahme aus der Buchung ableiten (mein Vorschlag) — oder
+   nachfragen bzw. einchecken lassen?
