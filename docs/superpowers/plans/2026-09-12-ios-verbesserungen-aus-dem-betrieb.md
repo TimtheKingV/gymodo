@@ -283,15 +283,86 @@ Was da ist und was fehlt:
 - Je **Modell und Übung** gibt es bereits eine Ablage:
   `instruction_assets.equipment_model_exercise_id` — aber nur mit
   `kind = 'video'` (Einweisungsvideo, Bucket `instruction-videos`). Ein Bild
-  gehört genau dorthin: `check (kind = 'video')` auf `('video','image')`
-  erweitern, Bucket `exercise-photos` oder die Fotos mit in
-  `equipment-photos`, Pflege im Portal neben dem Video.
+  gehört genau dorthin: **`check (kind = 'video')` wird auf
+  `('video','image')` erweitert** (entschieden, keine eigene Tabelle), Bucket
+  `exercise-photos` oder die Fotos mit in `equipment-photos`, Pflege im Portal
+  neben dem Video. `duration_s` muss dabei für Bilder nullable werden — der
+  Check `duration_s > 0 and <= 45` gilt nur noch für Videos.
 - Bis ein Studio ein Übungsbild hinterlegt hat, bleibt das Gerätefoto der
   Rückfall — und wenn auch das fehlt, steht besser gar kein Kasten da als ein
   leerer.
 
 *Bild 19. `Screens/Geraet/GeraetErkanntView.swift`, `packages/domain/src/machine-context.ts`,*
 *`supabase/migrations/0006_instruction_assets.sql`, Portal-Medienpflege.*
+
+### 15. Home — Trainings teilweise zusammenfassen
+
+Ein Freitag mit fünf Einträgen (08:32, 10:14, 13:20, 14:00, 15:36) sind nicht
+fünf Trainings. Was zeitlich zusammengehört, gehört in eine Karte.
+
+Der Grund liegt in der heutigen Regel: eine Einheit endet selbsttätig, wenn
+vier Stunden lang kein Satz kam (`WorkoutSessionStore.sessionPause`) — und
+sonst nur, wenn jemand „Training beenden" drückt. Wer das vergisst und später
+wiederkommt, erzeugt eine zweite Einheit; wer zwischendurch beendet und nach
+zwanzig Minuten weitermacht, auch. Mit Punkt 10 (Start schon beim
+Geräteeinstieg) wird das eher häufiger.
+
+Zu entscheiden ist die Regel:
+
+- **Nur Anzeige oder wirklich zusammenlegen?** Ich würde es auf der
+  Anzeigeebene halten (`HomeZeilen`): die Einheiten bleiben in den Daten
+  getrennt, die Karte fasst sie zusammen und zeigt „08:32 – 09:06 · 2 Blöcke".
+  Dann muss keine Serverabfrage rückwirkend Sätze umhängen, und das
+  Session-Detail kann beide Teile untereinander zeigen.
+- **Ab welcher Lücke ist es ein neues Training?** Vorschlag: unter 60 Minuten
+  Abstand wird zusammengefasst, darüber nicht.
+
+*Bild 20. `Verlauf/HomeZeilen.swift`, `Screens/Home/HomeRootView.swift`,*
+*`Screens/Home/SessionDetailView.swift`.*
+
+### 16. Gerät wählen — Bild je Gerät in der Liste
+
+Die Liste („Rudermaschine · 20 · Freihantelbereich Nord · vor 2 Stunden ·
+7,5 kg") ist reine Typografie. Ein kleines Bild je Zeile macht das Suchen im
+Studio schneller als jeder Name.
+
+Genutzt wird dasselbe Foto wie auf dem Einstieg (`equipment_models.photo_url`),
+also ohne neue Datenhaltung — nur als Vorschaugröße. Ohne Foto bleibt die
+Zeile wie heute, ohne grauen Platzhalterkasten.
+
+*Bild 21. `Workout/GeraeteAuswahl.swift`, `Screens/Geraet/GeraeteAuswahlView.swift`.*
+
+### 17. Home — Uhrzeit kleiner, dafür Zeit, Sätze, Intensität
+
+Auf der Trainingskarte ist heute die **Uhrzeitspanne** die größte Zahl
+(„15:36 – 16:16"), darunter klein „41 min · 1 Gerät · 3 Sätze". Das dreht sich
+um: die Uhrzeit wird klein, und die Karte trägt **Zeit, Sätze und
+Intensität**.
+
+Zeit und Sätze liegen vor. **Intensität ist neu und muss definiert werden** —
+drei Kandidaten:
+
+1. **Volumen je Minute** (kg/min, aus Gewicht × Wiederholungen ÷ Dauer) — sagt
+   „wie dicht", und trennt die 6-Minuten-Einheit mit 5 Sätzen sauber von den
+   83 Minuten mit 3 Sätzen.
+2. **Gesamtvolumen** (kg) — dieselbe Zahl wie in Punkt 9b, aber ohne Hubweg.
+3. **Auslastung** in Prozent des eigenen Bestwerts je Übung — am
+   aussagekräftigsten, hängt aber an den Rekorden aus Punkt 9a.
+
+Mein Vorschlag: (1), weil sie ohne neue Daten auskommt und die Karte etwas
+sagt, was Dauer und Satzzahl einzeln nicht sagen.
+
+*Bild 22. `Verlauf/HomeZeilen.swift` (`zeilenText`), `Screens/Home/HomeRootView.swift`.*
+
+### 18. Übungsfortschritt — Bild der Übung je Zeile
+
+Dieselbe Sache wie Punkt 14, an zweiter Stelle: die Zeilen des
+Übungsfortschritts („22 · Beincurler liegend  55,0 kg  ±0") bekommen das
+Übungsbild als kleine Vorschau. Setzt Punkt 14 voraus (Bild je Modell und
+Übung); bis dahin bliebe nur das Gerätefoto, das für zwei Übungen am selben
+Gerät dasselbe wäre.
+
+*Bild 23. `Screens/Home/HomeRootView.swift` (`fortschrittsZeile`).*
 
 ## Offene Fragen
 
@@ -304,5 +375,6 @@ Was da ist und was fehlt:
    einmal mit einer Vorgabeliste je Studio?
 5. Punkt 10: Einheit ohne einen einzigen Satz — verwerfen (mein Vorschlag)
    oder als leere Einheit behalten?
-6. Punkt 14: Übungsbild in `instruction_assets` mit aufnehmen (mein
-   Vorschlag) oder eine eigene Tabelle?
+6. Punkt 15: zusammenfassen nur in der Anzeige (mein Vorschlag) oder in den
+   Daten — und ab welcher Lücke ist es ein neues Training?
+7. Punkt 17: was ist „Intensität"? Vorschlag: Volumen je Minute.
