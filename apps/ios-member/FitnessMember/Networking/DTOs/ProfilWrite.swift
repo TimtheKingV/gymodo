@@ -11,8 +11,13 @@ import Foundation
 /// unberuehrt; `null` loescht sie). `Feld<T>` traegt die Unterscheidung:
 /// die Eigenschaft selbst `nil` heisst "nicht gesendet", `.setzen`/
 /// `.loeschen` heisst "gesendet, mit diesem Wert".
-struct ProfilWrite: Encodable {
-    enum Feld<T: Encodable>: Encodable {
+///
+/// Sendable explizit, wie `BootstrapResponse.Member` -- derselbe Grund:
+/// `APIClient.updateProfile` (actor-isoliert) nimmt diesen Typ als
+/// Parameter, und die implizite Sendable-Herleitung verpasst das
+/// generische `Feld<T>` bei einem sauberen Build.
+struct ProfilWrite: Encodable, Sendable {
+    enum Feld<T: Encodable & Sendable>: Encodable, Sendable {
         case setzen(T)
         case loeschen
 
