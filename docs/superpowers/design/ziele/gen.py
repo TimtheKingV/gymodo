@@ -36,7 +36,7 @@ HEAD = u"""<!doctype html>
     .card { background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; overflow: hidden; }
     .row { padding: 13px 16px; display: flex; align-items: center; gap: 12px; }
     .sep { height: 1px; background: #2A2E36; }
-    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tabs { position: absolute; left: 0; right: 0; bottom: 0; background: #0A0B0D; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
     .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
     .tab.on { color: #D4FF3F; }
     /* Chip: 44 pt, Pille. Gewaehlt = Akzentstrich, keine Flaeche (Designsystem SS2). */
@@ -59,21 +59,28 @@ HEAD = u"""<!doctype html>
     .fB { position: absolute; left: 0; right: 0; bottom: 0; height: 66px; background: linear-gradient(0deg, #0A0B0D 12%, rgba(10,11,13,0) 100%); pointer-events: none; }
     .rad.im-sheet .fT { background: linear-gradient(180deg, #14161A 12%, rgba(20,22,26,0) 100%); }
     .rad.im-sheet .fB { background: linear-gradient(0deg, #14161A 12%, rgba(20,22,26,0) 100%); }
-    /* Serie: Flamme links, Wochenstreifen rechts (home-serie/Main). */
-    .serie { display: flex; align-items: center; gap: 12px; }
-    .flamme { flex: none; width: 56px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    /* Kalender am Kopf des Home-Tabs (HomeSerieView auf master): Flamme
+       ueber dem Streifen, Fussnote daneben, sieben Kreiszellen 40 pt in
+       gleich breiten Spalten, Buchstabe darueber. */
+    .kopfzeile { display: flex; align-items: center; gap: 16px; }
+    .flamme { flex: none; width: 56px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .flamme-reihe { display: flex; align-items: center; gap: 4px; }
     .flamme-zahl { font-size: 27px; line-height: 1; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.04em; color: #D4FF3F; }
     .flamme-label { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #D4FF3F; }
-    .woche { flex-grow: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
-    .tagbox { height: 44px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
-    .kuerzel { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: #5C636E; }
-    .tagnr { font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.03em; color: #5C636E; }
-    .tagbox.trainiert { background: #1D2026; }
-    .tagbox.trainiert .kuerzel { color: #9BA3AF; }
-    .tagbox.heute { box-shadow: inset 0 0 0 1.5px #2A2E36; }
-    .tagbox.heute .kuerzel, .tagbox.heute .tagnr { color: #9BA3AF; }
     .serie-fuss { font-size: 12px; font-weight: 600; color: #5C636E; font-variant-numeric: tabular-nums; }
+    .woche { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; }
+    .spalte { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .buchstabe { font-size: 10px; font-weight: 800; letter-spacing: .12em; color: #5C636E; }
+    .spalte.trainiert .buchstabe, .spalte.heute .buchstabe { color: #9BA3AF; }
+    .spalte.gewaehlt .buchstabe { color: #F2F4F7; }
+    .zelle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .spalte.trainiert .zelle { background: #1D2026; }
+    .spalte.gewaehlt .zelle { background: #2A2E36; }
+    .spalte.heute .zelle { box-shadow: inset 0 0 0 1.5px #D4FF3F; }
+    .tagnr { font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.03em; color: #5C636E; }
+    .spalte.heute .tagnr { color: #9BA3AF; }
+    .umschalter { display: flex; justify-content: flex-end; }
+    .umschalter div { min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 13px; font-weight: 600; color: #9BA3AF; }
     /* Wochenziel: drei Striche je Zieltag, gefuellt = trainiert. */
     .zielstriche { display: flex; gap: 4px; }
     .strich { width: 18px; height: 4px; border-radius: 2px; background: #2A2E36; }
@@ -309,17 +316,26 @@ def kopf_home(vorname=u'Lena', studio=u'Kraftwerk Nord'):
             u'<div class="eyebrow">%s</div></div>' % (vorname, studio))
 
 
-def streifen(trainiert, heute=u'MI'):
+HANTEL_15 = (u'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2.4" '
+             u'stroke-linecap="round"><path d="M4 9v6M7.5 6.5v11M16.5 6.5v11M20 9v6M7.5 12h9"/></svg>')
+CHEVRON_D = (u'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9BA3AF" stroke-width="3" '
+             u'stroke-linecap="round" stroke-linejoin="round"><path d="m5 9.5 7 7 7-7"/></svg>')
+
+
+def streifen(trainiert, heute=u'MI', gewaehlt=None):
+    """Sieben Spalten, Buchstabe ueber Kreiszelle. Fuellung sagt, was der
+    Tag ist (nichts, trainiert, gewaehlt), der Ring sagt heute."""
     tage = [(u'MO', 8), (u'DI', 9), (u'MI', 10), (u'DO', 11), (u'FR', 12), (u'SA', 13), (u'SO', 14)]
-    boxen = []
+    spalten = []
     for kuerzel, nr in tage:
-        if kuerzel in trainiert:
-            boxen.append(u'<div class="tagbox trainiert"><span class="kuerzel">%s</span>%s</div>' % (kuerzel, HANTEL))
-        elif kuerzel == heute:
-            boxen.append(u'<div class="tagbox heute"><span class="kuerzel">%s</span><span class="tagnr">%d</span></div>' % (kuerzel, nr))
-        else:
-            boxen.append(u'<div class="tagbox"><span class="kuerzel">%s</span><span class="tagnr">%d</span></div>' % (kuerzel, nr))
-    return u'<div class="woche">%s</div>' % u''.join(boxen)
+        klassen = [u'spalte']
+        if kuerzel in trainiert: klassen.append(u'trainiert')
+        if kuerzel == heute: klassen.append(u'heute')
+        if kuerzel == gewaehlt: klassen.append(u'gewaehlt')
+        innen = HANTEL_15 if kuerzel in trainiert else u'<span class="tagnr">%d</span>' % nr
+        spalten.append(u'<div class="%s"><span class="buchstabe">%s</span><div class="zelle">%s</div></div>'
+                       % (u' '.join(klassen), kuerzel[0], innen))
+    return u'<div class="woche">%s</div>' % u''.join(spalten)
 
 
 def zielstriche(voll, gesamt):
@@ -327,21 +343,34 @@ def zielstriche(voll, gesamt):
         u'<div class="strich%s"></div>' % (u' voll' if i < voll else u'') for i in range(gesamt))
 
 
-def serie_block(ziel=None, wochen=6, trainiert=(u'MO', u'DI'), fuss=u'34 Einheiten gesamt · zuletzt gestern'):
-    """Der Serien-Abschnitt aus home-serie/Main -- mit Wochenziel, wenn eins steht."""
+def tageskarte(zeit=u'18:04 – 18:51', zeile=u'47 min · 3 Geräte · 8 Sätze'):
+    return (u'<div class="card"><div style="padding: 16px; display: flex; flex-direction: column; gap: 4px;">'
+            u'<div class="num" style="font-size: 15px; font-weight: 700; letter-spacing: 0;">%s</div>'
+            u'<div class="num" style="font-size: 13px; font-weight: 600; color: #9BA3AF; letter-spacing: 0;">%s</div></div></div>' % (zeit, zeile))
+
+
+def serie_block(ziel=None, wochen=6, trainiert=(u'MO', u'DI'), gewaehlt=u'DI', tagestitel=u'Dienstag, 9. September',
+                fuss=u'34 Einheiten gesamt · zuletzt gestern'):
+    """Der Kalender aus HomeSerieView: Label, Flamme mit Fussnote,
+    Wochenstreifen, Einheiten des gewaehlten Tages, Umschalter. Mit
+    Wochenziel kommen genau zwei Zeilen dazu -- Flamme und Fussnote
+    bleiben, wie sie sind."""
     kopf = u'<span class="eyebrow">Deine Serie</span>'
     if ziel:
         kopf = (u'<div style="display: flex; align-items: baseline; justify-content: space-between;">%s'
                 u'<span class="eyebrow" style="color: #5C636E;">Ziel %d Tage</span></div>' % (kopf, ziel))
     out = [u'<div style="flex: none; padding: 24px 20px 0; display: flex; flex-direction: column; gap: 12px">', kopf,
-           u'<div class="serie"><div class="flamme"><div class="flamme-reihe">%s<span class="flamme-zahl">%d</span></div>'
-           u'<span class="flamme-label">%s</span></div>%s</div>'
-           % (FLAMME, wochen, u'Wochen', streifen(trainiert))]
+           u'<div class="kopfzeile"><div class="flamme"><div class="flamme-reihe">%s<span class="flamme-zahl">%d</span></div>'
+           u'<span class="flamme-label">Wochen</span></div><span class="serie-fuss">%s</span></div>' % (FLAMME, wochen, fuss),
+           streifen(trainiert, gewaehlt=gewaehlt)]
     if ziel:
         out.append(u'<div style="display: flex; align-items: center; justify-content: space-between;">'
                    u'<span class="serie-fuss" style="color: #9BA3AF;">%d von %d Tagen diese Woche</span>%s</div>'
                    % (len(trainiert), ziel, zielstriche(len(trainiert), ziel)))
-    out.append(u'<div class="serie-fuss">%s</div></div>' % fuss)
+    if gewaehlt:
+        out.append(u'<div style="display: flex; flex-direction: column; gap: 12px;"><span class="eyebrow">%s</span>%s</div>'
+                   % (tagestitel, tageskarte()))
+    out.append(u'<div class="umschalter"><div><span>Monatsansicht</span>%s</div></div></div>' % CHEVRON_D)
     return u''.join(out)
 
 
@@ -396,29 +425,29 @@ def nachholkarte():
             u'<div style="%s">Loslegen</div></div></div>' % NEBEN)
 
 
-def letzte_trainings(anzahl=2):
-    zeilen = [(u'Dienstag, 9. September', u'47 min · 3 Geräte · 8 Sätze'),
-              (u'Montag, 8. September', u'52 min · 4 Geräte · 11 Sätze')][:anzahl]
-    innen = u'<div class="sep"></div>'.join(
-        u'<div class="row"><div style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">'
-        u'<div style="font-size: 15px; font-weight: 700">%s</div>'
-        u'<div class="num" style="font-size: 12px; font-weight: 700; color: #5C636E">%s</div></div>%s</div>'
-        % (t, z, CHEVRON_R) for t, z in zeilen)
-    return (u'<div style="flex: none; padding: 24px 20px 0; display: flex; flex-direction: column; gap: 11px">'
-            u'<div class="eyebrow">Letzte Trainings</div><div class="card">%s</div></div>' % innen)
+def uebungsfortschritt():
+    """Der Block aus dem bestehenden Home -- unveraendert, folgt den Zielen."""
+    zeile = lambda name, wert, delta: (
+        u'<div class="row" style="padding: 16px;"><span style="flex-grow: 1; font-size: 15px; font-weight: 700;">%s</span>'
+        u'<span class="num" style="font-size: 17px;">%s <span style="font-size: 11px; font-weight: 700; color: #9BA3AF;">kg</span></span>'
+        u'<span class="num" style="font-size: 12px; font-weight: 800; color: #9BA3AF;">%s</span></div>' % (name, wert, delta))
+    return (u'<div style="flex: none; padding: 24px 20px 0; display: flex; flex-direction: column; gap: 12px">'
+            u'<div class="eyebrow">Übungsfortschritt</div>'
+            u'<div class="card">%s</div><div class="card">%s</div></div>'
+            % (zeile(u'Beinpresse · Beidbeinig', u'80,0', u'+15,0'), zeile(u'Latzug · Breiter Griff', u'45,0', u'+2,5')))
 
 
 def home(ziele_block, serie, kommentar=u''):
     return (u'<div class="ph">' + kommentar + spacer_top() + kopf_home() + serie
             + u'<div style="flex: none; padding: 24px 20px 0; display: flex; flex-direction: column; gap: 11px">'
             + u'<div class="eyebrow">Deine Ziele</div>' + ziele_block + u'</div>'
-            + letzte_trainings() + fuellen() + tabs(u'Home') + u'</div>')
+            + uebungsfortschritt() + u'<div style="height: 90px; flex: none;"></div>' + tabs(u'Home') + u'</div>')
 
 
 schreibe(u'Main.dc.html', home(
     gewichtskarte(),
     serie_block(ziel=3),
-    kommentar=u'<!-- Home mit Zielen: die Flamme zaehlt unveraendert Wochen mit mindestens einer Einheit; die Zeile unter dem Streifen zeigt den Stand gegen das Wochenziel. -->'))
+    kommentar=u'<!-- Home mit Zielen, auf dem Kalender-Home von master (Flamme oben, Kreiszellen, Tagesausklapper): die Flamme zaehlt unveraendert Wochen mit mindestens einer Einheit; neu sind nur die Zielzeile unter dem Streifen und der Block darunter. -->'))
 
 schreibe(u'HomeNachholen.dc.html', home(
     nachholkarte(),
@@ -427,7 +456,7 @@ schreibe(u'HomeNachholen.dc.html', home(
 
 schreibe(u'HomeZielErreicht.dc.html', home(
     gewichtskarte(wert=u'78,0', datum=u'heute', erreicht=True),
-    serie_block(ziel=3, wochen=11, trainiert=(u'MO', u'DI', u'MI'), fuss=u'61 Einheiten gesamt · zuletzt heute'),
+    serie_block(ziel=3, wochen=11, trainiert=(u'MO', u'DI', u'MI'), gewaehlt=u'MI', tagestitel=u'Mittwoch, 10. September', fuss=u'61 Einheiten gesamt · zuletzt heute'),
     kommentar=u'<!-- Ziel erreicht: eine Zeile mit Haken, kein Konfetti. Bleibt, bis ein neues Ziel steht. -->'))
 
 
@@ -502,7 +531,7 @@ schreibe(u'Gewichtsverlauf.dc.html', gewichtsverlauf())
 
 def hinter_home():
     """Der abgedunkelte Home-Kopf hinter einem Sheet -- nur so viel, dass man weiss, wo man ist."""
-    return spacer_top() + kopf_home() + serie_block(ziel=3)
+    return spacer_top() + kopf_home() + serie_block(ziel=3, gewaehlt=None)
 
 
 def sheet(inhalt, hinten, hoehe):
@@ -645,7 +674,7 @@ canvas = {
         {u'id': u'brief', u'x': 0, u'y': -300, u'w': 866,
          u'text': u'Ziele & Fortschritt — Spec 2026-09-13-ziele-und-fortschritt-design.md.\n\n'
                   u'Reihe 1: das Onboarding nach der Registrierung, fünf Schritte, jeder überspringbar. Schritt 5 nur, wenn Schritt 2 ein Gewicht hat.\n'
-                  u'Reihe 2: Home in drei Zuständen, der Gewichtsverlauf, das Eintrag-Sheet.\n'
+                  u'Reihe 2: Home in drei Zuständen — auf dem Kalender-Home von master (Flamme oben, Kreiszellen, Tagesausklapper, Umschalter), der Block „Deine Ziele“ steht zwischen Kalender und Übungsfortschritt. Dazu der Gewichtsverlauf und das Eintrag-Sheet.\n'
                   u'Reihe 3: Profil mit den zwei neuen Abschnitten, ein Picker-Sheet stellvertretend für alle, die Bausteine.\n\n'
                   u'Beispielperson wie in den bisherigen Artboards: Lena, Kraftwerk Nord. 82,5 kg, Ziel 78,0, 3 Tage pro Woche.'},
         {u'id': u'volt', u'x': 946, u'y': -300, u'w': 866,

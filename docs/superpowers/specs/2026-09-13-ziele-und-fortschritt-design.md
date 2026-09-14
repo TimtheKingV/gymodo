@@ -217,7 +217,7 @@ Danach **„Los geht's"**: schreibt in dieser Reihenfolge `PUT /me/profile` (Sta
 
 ### 5.3 Home: der Block „Deine Ziele"
 
-Zwischen Serien-Streifen und „Letzte Trainings". Drei Zustände:
+Zwischen dem Kalender (`HomeSerieView`: Flamme, Wochenstreifen, Tagesausklapper, Umschalter — Stand `master` vom 13. September, die Liste „Letzte Trainings" gibt es nicht mehr) und „Übungsfortschritt". Drei Zustände:
 
 **Nichts gesetzt** (übersprungen): eine Karte „Ziele festlegen — Wochenziel, Gewicht, Richtung. Dauert eine Minute." mit Knopf, der den `OnboardingFlow` als Sheet öffnet. Dieselben fünf Screens, kein zweiter Flow.
 

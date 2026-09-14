@@ -18,7 +18,7 @@
     .card { background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; overflow: hidden; }
     .row { padding: 13px 16px; display: flex; align-items: center; gap: 12px; }
     .sep { height: 1px; background: #2A2E36; }
-    .tabs { flex: none; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tabs { position: absolute; left: 0; right: 0; bottom: 0; background: #0A0B0D; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
     .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
     .tab.on { color: #D4FF3F; }
     /* Chip: 44 pt, Pille. Gewaehlt = Akzentstrich, keine Flaeche (Designsystem SS2). */
@@ -41,21 +41,28 @@
     .fB { position: absolute; left: 0; right: 0; bottom: 0; height: 66px; background: linear-gradient(0deg, #0A0B0D 12%, rgba(10,11,13,0) 100%); pointer-events: none; }
     .rad.im-sheet .fT { background: linear-gradient(180deg, #14161A 12%, rgba(20,22,26,0) 100%); }
     .rad.im-sheet .fB { background: linear-gradient(0deg, #14161A 12%, rgba(20,22,26,0) 100%); }
-    /* Serie: Flamme links, Wochenstreifen rechts (home-serie/Main). */
-    .serie { display: flex; align-items: center; gap: 12px; }
-    .flamme { flex: none; width: 56px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    /* Kalender am Kopf des Home-Tabs (HomeSerieView auf master): Flamme
+       ueber dem Streifen, Fussnote daneben, sieben Kreiszellen 40 pt in
+       gleich breiten Spalten, Buchstabe darueber. */
+    .kopfzeile { display: flex; align-items: center; gap: 16px; }
+    .flamme { flex: none; width: 56px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .flamme-reihe { display: flex; align-items: center; gap: 4px; }
     .flamme-zahl { font-size: 27px; line-height: 1; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.04em; color: #D4FF3F; }
     .flamme-label { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #D4FF3F; }
-    .woche { flex-grow: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
-    .tagbox { height: 44px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
-    .kuerzel { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: #5C636E; }
-    .tagnr { font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.03em; color: #5C636E; }
-    .tagbox.trainiert { background: #1D2026; }
-    .tagbox.trainiert .kuerzel { color: #9BA3AF; }
-    .tagbox.heute { box-shadow: inset 0 0 0 1.5px #2A2E36; }
-    .tagbox.heute .kuerzel, .tagbox.heute .tagnr { color: #9BA3AF; }
     .serie-fuss { font-size: 12px; font-weight: 600; color: #5C636E; font-variant-numeric: tabular-nums; }
+    .woche { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; }
+    .spalte { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .buchstabe { font-size: 10px; font-weight: 800; letter-spacing: .12em; color: #5C636E; }
+    .spalte.trainiert .buchstabe, .spalte.heute .buchstabe { color: #9BA3AF; }
+    .spalte.gewaehlt .buchstabe { color: #F2F4F7; }
+    .zelle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .spalte.trainiert .zelle { background: #1D2026; }
+    .spalte.gewaehlt .zelle { background: #2A2E36; }
+    .spalte.heute .zelle { box-shadow: inset 0 0 0 1.5px #D4FF3F; }
+    .tagnr { font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.03em; color: #5C636E; }
+    .spalte.heute .tagnr { color: #9BA3AF; }
+    .umschalter { display: flex; justify-content: flex-end; }
+    .umschalter div { min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 13px; font-weight: 600; color: #9BA3AF; }
     /* Wochenziel: drei Striche je Zieltag, gefuellt = trainiert. */
     .zielstriche { display: flex; gap: 4px; }
     .strich { width: 18px; height: 4px; border-radius: 2px; background: #2A2E36; }
