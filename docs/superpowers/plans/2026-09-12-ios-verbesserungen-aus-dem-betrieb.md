@@ -5,22 +5,36 @@ Dokument ist eine **Sammelstelle, kein Umsetzungsplan**: es hält fest, was
 gemeint ist, welchen Code es trifft und was noch offen ist. Es wächst mit
 jeder weiteren Runde Screenshots.
 
-## Vorbemerkung: der Build ist dem Repo voraus
+## Stand: das Repo ist aktuell (14. September)
 
-Die Screenshots zeigen Screens, die es auf `origin/master` (`58d4fb5`) noch
-nicht gibt:
+Die Sammelrunde lief gegen einen Build, den es im Repo noch nicht gab. Mit
+`f8db46f` liegt er jetzt auf `master` — sieben Commits, die genau die Screens
+der Screenshots bringen. Wo die Punkte unten hingreifen, hat sich damit
+präzisiert:
 
-- **Home** hat dort einen Sieben-Tage-Serienstreifen (`HomeSerieView`), keinen
-  Monatskalender, kein Aufklappen „Wochenansicht", keine Tagesgruppierung
-  („FREITAG, 11. SEPTEMBER") und Karten mit Datum statt Uhrzeitspanne.
-- **Training (leer)** hat dort den Erklärtext, aber keine Überschrift
-  „Training starten" und kein Feld „Suchen".
-- **Session-Detail** hat dort keine Gerätenummer vor dem Übungsnamen.
-
-Deckungsgleich sind nur „Training beendet" (`TrainingAbschlussView`) und der
-Kurse-Wochenplan (`KurseWochenView`). Der aktuelle Stand wird vor der
-Umsetzung nachgezogen; die Dateiverweise unten zeigen deshalb auf den Ort der
-Sache, nicht zwingend auf die Zeile.
+- **Home** trägt den Kalender jetzt in `HomeSerieView` (Wochenstreifen,
+  `monatsgitter`, Tagesauswahl mit `tagesliste`, Umschalter
+  „Monatsansicht/Wochenansicht" unten rechts). „Letzte Trainings" ist ganz
+  weg; die Karten hängen am gewählten Tag. Die Ableitungen dazu stehen in
+  `HomeSerie` (`trainingstage`, `einheitenJeTag`, `monatstage`).
+- **Auswahl und heute** sind im Home-Kalender schon getrennt, aber anders
+  als besprochen: gewählt = Füllung in `Color.line` (grau), heute = Ring in
+  Akzent (`HomeSerieView.fuellung`, `zelle`). Punkt 4 ist damit ein
+  Farbwechsel grau → weiß, kein Umbau.
+- **Kurse** haben den Kalender oben und den Umschalter Angemeldet/Alle
+  darunter (`KurseAnsicht`, `KurseWochenView`, `KurseBandView`). Der gewählte
+  Tag ist weiterhin akzentgefüllt, **heute trägt weiterhin keine Marke** —
+  Punkt 6 steht unverändert, und mit ihm die Regel unten.
+- **Training** hat „Training starten" plus QR / NFC / Suchen
+  (`ScanWege`), und der laufende Zustand zeigt dieselben Scanwege
+  (`laufendInhalt`). Punkt 3 und 8 greifen also an einem Screen, der die
+  Teile schon hat — es geht um Anordnung und die Uhr.
+- **Gerät** hat seit `8f73fa0` eine Trainingsuhr im Kopf
+  (`GeraetView.trainingsuhr`); `radOffen` gibt es weiterhin, Punkt 11 bis 13
+  bleiben wie beschrieben.
+- **Die Karten** heißen jetzt `HomeZeilen.kartenTitel` (Zeitraum, sonst „ab
+  18:04") und `zeilenText` („41 min · 1 Gerät · 3 Sätze") — das sind die
+  beiden Zeilen, die Punkt 17 tauscht.
 
 ## Eine Regel, die mehrfach auftaucht: heute vs. ausgewählt
 
