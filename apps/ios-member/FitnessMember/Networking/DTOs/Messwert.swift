@@ -26,8 +26,8 @@ struct MeasurementsResponse: Decodable, Equatable, Sendable {
     struct Summary: Codable, Equatable, Sendable {
         let first: Messwert?
         let latest: Messwert?
-        /// latest - first, eine Nachkommastelle. Kein Trend, keine
-        /// Glaettung -- eine Differenz (Spec Abschnitt 6).
+        /// latest - first, eine Nachkommastelle -- eine Differenz
+        /// eingetragener Werte, keine Glaettung (Spec Abschnitt 6).
         let changeKg: Double?
     }
 

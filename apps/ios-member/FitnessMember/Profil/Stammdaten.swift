@@ -36,8 +36,8 @@ enum Geschlecht: String, CaseIterable {
 }
 
 /// Die Richtung ist eine Absicht des Mitglieds, keine Bewertung durch die
-/// Plattform (Spec Abschnitt 6) -- `zeile` bleibt deshalb bei der
-/// Absicht selbst, ohne Kalorien, ohne "gesund".
+/// Plattform (Spec Abschnitt 6) -- `zeile` beschreibt deshalb nur die
+/// Absicht selbst, keine Bewertung des Koerpers.
 enum Trainingsrichtung: String, CaseIterable {
     case abnehmen = "lose_weight", muskelnAufbauen = "build_muscle",
          fitBleiben = "stay_fit", staerkerWerden = "get_stronger"
@@ -53,12 +53,14 @@ enum Trainingsrichtung: String, CaseIterable {
         }
     }
 
+    /// Wortlaut aus dem Onboarding-Artboard (docs/superpowers/design/ziele/gen.py,
+    /// Schritt 3, Kacheltexte) -- eine Stelle statt einer zweiten Abschrift.
     var zeile: String {
         switch self {
         case .abnehmen: return "Gewicht runter, Kraft halten"
-        case .muskelnAufbauen: return "Muskeln aufbauen, Gewicht kann steigen"
-        case .fitBleiben: return "Fit bleiben, ohne Gewichtsziel"
-        case .staerkerWerden: return "Kraft steigern, Gewicht ist zweitrangig"
+        case .muskelnAufbauen: return "Mehr Gewicht je Übung"
+        case .fitBleiben: return "Dranbleiben, regelmäßig"
+        case .staerkerWerden: return "Schwerere Sätze"
         }
     }
 }

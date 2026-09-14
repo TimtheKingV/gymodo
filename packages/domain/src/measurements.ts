@@ -56,7 +56,7 @@ export type Measurements = {
   summary: {
     first: Messpunkt | null;
     latest: Messpunkt | null;
-    /** latest - first. Kein Trend, keine Glaettung -- eine Differenz. */
+    /** latest - first -- eine Differenz eingetragener Werte, keine Glaettung. */
     changeKg: number | null;
   };
 };
