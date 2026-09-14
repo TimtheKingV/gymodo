@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
+import { aktiveZiele } from "./goals.js";
+import type { AktiveZiele } from "./goals.js";
 import type { Messpunkt } from "./measurements.js";
 import type { Profil } from "./profil.js";
 import { zuProfil } from "./profil.js";
@@ -22,9 +24,11 @@ export type Bootstrap = {
   member: Profil & {
     /**
      * Der juengste Gewichtseintrag, damit die Gewichtskarte auf Home ohne
-     * eigenen Verlaufsabruf einen Wert zeigt. Die Ziele folgen in Aufgabe 3.
+     * eigenen Verlaufsabruf einen Wert zeigt.
      */
     latestWeight: Messpunkt | null;
+    /** Die aktiven Ziele des Mitglieds, siehe Migration 0043. */
+    goals: AktiveZiele;
   };
   studios: Array<{ id: string; name: string; timezone: string }>;
   machines: Array<{
@@ -350,6 +354,7 @@ export async function getBootstrap(
         },
       ),
       latestWeight: weight ? { measuredOn: weight.measured_on, weightKg: Number(weight.weight_kg) } : null,
+      goals: await aktiveZiele(client, userId),
     },
     studios: (studioRows ?? []) as Bootstrap["studios"],
     machines,

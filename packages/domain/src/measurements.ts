@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireUserId } from "./auth.js";
 import { DomainError } from "./errors.js";
+import { aktiveZiele, markiereErreicht } from "./goals.js";
 
 /** Drei Jahre taeglich -- mehr liest niemand auf einem Telefon. */
 const MEASUREMENT_LIMIT = 1000;
@@ -109,8 +110,7 @@ export async function getMeasurements(
  * Ein Wert je Tag: der Upsert ersetzt, statt eine zweite Zeile anzulegen.
  *
  * "Ziel erreicht" wird HIER geprueft, beim Schreiben, nicht beim Lesen --
- * der Moment gehoert zu dem Eintrag, der ihn ausloest. Die Zielpruefung
- * kommt in Aufgabe 3 dazu; bis dahin ist goalReached immer false.
+ * der Moment gehoert zu dem Eintrag, der ihn ausloest.
  */
 export async function putMeasurement(
   client: SupabaseClient,
@@ -127,7 +127,28 @@ export async function putMeasurement(
     );
   if (error) throw new DomainError("internal", "Das Gewicht konnte nicht gespeichert werden.");
 
-  return { ...eingabe, goalReached: false };
+  // Bekannt und akzeptiert: Upsert und Markierung sind zwei Statements,
+  // keine Transaktion. Scheitert die Markierung, steht der Messwert, und
+  // der naechste Eintrag unter der Marke markiert nach. Ein RPC dafuer
+  // waere eine dritte Funktion fuer einen Fall, der nur bei einem
+  // Netzabbruch zwischen zwei Millisekunden entsteht.
+  const ziele = await aktiveZiele(client, userId);
+  let goalReached = false;
+  if (ziele.targetWeight) {
+    const { data: erster } = await client
+      .from("body_measurements")
+      .select("weight_kg")
+      .eq("user_id", userId)
+      .order("measured_on", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    const startKg = erster ? Number((erster as { weight_kg: number | string }).weight_kg) : null;
+    if (zielErreicht(startKg, ziele.targetWeight.targetValue, eingabe.weightKg)) {
+      await markiereErreicht(client, ziele.targetWeight.id);
+      goalReached = true;
+    }
+  }
+  return { ...eingabe, goalReached };
 }
 
 export async function deleteMeasurement(client: SupabaseClient, measuredOnRoh: unknown): Promise<void> {

@@ -90,6 +90,16 @@ export {
   deleteMeasurement,
 } from "./measurements.js";
 export type { Measurements, Messpunkt, RecordedMeasurement } from "./measurements.js";
+export {
+  GOAL_KINDS,
+  zielSchema,
+  pruefeZiel,
+  setGoal,
+  dropGoal,
+  aktiveZiele,
+  markiereErreicht,
+} from "./goals.js";
+export type { AktiveZiele, GoalKind, Ziel } from "./goals.js";
 export { getSessions, serienstand, zaehleDieseWoche } from "./sessions.js";
 export type {
   Serienstand,

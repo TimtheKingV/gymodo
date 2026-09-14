@@ -1,8 +1,17 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { GET as bootstrapGET } from "@/app/api/v1/me/bootstrap/route";
+import { PUT as goalPUT } from "@/app/api/v1/me/goals/route";
 import { DELETE as measurementDELETE } from "@/app/api/v1/me/measurements/[measuredOn]/route";
 import { GET as measurementsGET, PUT as measurementsPUT } from "@/app/api/v1/me/measurements/route";
 import { accessTokenFor, createTestUser, uniqueEmail } from "./helpers/clients.js";
+
+function goalPutRequest(rumpf: unknown, auth: string): Request {
+  return new Request("http://localhost/api/v1/me/goals", {
+    method: "PUT",
+    headers: { authorization: `Bearer ${auth}` },
+    body: JSON.stringify(rumpf),
+  });
+}
 
 function putRequest(rumpf: unknown, auth?: string): Request {
   return new Request("http://localhost/api/v1/me/measurements", {
@@ -156,5 +165,53 @@ describe("GET /me/bootstrap -- latestWeight", () => {
       member: { latestWeight: { measuredOn: string; weightKg: number } | null };
     };
     expect(payload.member.latestWeight).toEqual({ measuredOn: "2026-09-05", weightKg: 88.5 });
+  });
+});
+
+describe("PUT /me/measurements -- Ziel erreicht", () => {
+  it("meldet goalReached, sobald der Eintrag das Zielgewicht abnehmend erreicht", async () => {
+    const bearer = await neuerBearer("messwert-ziel-erreicht");
+    await goalPUT(goalPutRequest({ kind: "target_weight", targetValue: 78 }, bearer));
+    await measurementsPUT(putRequest({ measuredOn: "2026-09-01", weightKg: 82.5 }, bearer));
+
+    const response = await measurementsPUT(putRequest({ measuredOn: "2026-09-10", weightKg: 78.0 }, bearer));
+    const payload = (await response.json()) as { goalReached: boolean };
+    expect(payload.goalReached).toBe(true);
+
+    // Erreicht heisst abgeschlossen: der Bootstrap zeigt kein aktives
+    // Zielgewicht mehr -- es steht als "reached" in der Geschichte.
+    const bootstrap = await bootstrapGET(
+      new Request("http://localhost/api/v1/me/bootstrap", {
+        headers: { authorization: `Bearer ${bearer}` },
+      }),
+    );
+    const bootstrapPayload = (await bootstrap.json()) as {
+      member: { goals: { targetWeight: unknown } };
+    };
+    expect(bootstrapPayload.member.goals.targetWeight).toBeNull();
+  });
+
+  it("meldet goalReached: false, solange das Zielgewicht noch nicht erreicht ist", async () => {
+    const bearer = await neuerBearer("messwert-ziel-nicht-erreicht");
+    await goalPUT(goalPutRequest({ kind: "target_weight", targetValue: 78 }, bearer));
+    await measurementsPUT(putRequest({ measuredOn: "2026-09-01", weightKg: 82.5 }, bearer));
+
+    const response = await measurementsPUT(putRequest({ measuredOn: "2026-09-05", weightKg: 78.5 }, bearer));
+    const payload = (await response.json()) as { goalReached: boolean };
+    expect(payload.goalReached).toBe(false);
+  });
+
+  it("gegengeprueft in Zunahme-Richtung: das Ziel liegt ueber dem Start", async () => {
+    const bearer = await neuerBearer("messwert-ziel-zunahme");
+    await goalPUT(goalPutRequest({ kind: "target_weight", targetValue: 78 }, bearer));
+    await measurementsPUT(putRequest({ measuredOn: "2026-09-01", weightKg: 74.0 }, bearer));
+
+    const nichtErreicht = await measurementsPUT(
+      putRequest({ measuredOn: "2026-09-05", weightKg: 77.5 }, bearer),
+    );
+    expect(((await nichtErreicht.json()) as { goalReached: boolean }).goalReached).toBe(false);
+
+    const erreicht = await measurementsPUT(putRequest({ measuredOn: "2026-09-10", weightKg: 78.0 }, bearer));
+    expect(((await erreicht.json()) as { goalReached: boolean }).goalReached).toBe(true);
   });
 });
