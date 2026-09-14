@@ -151,10 +151,10 @@ Bei ausgewähltem Freitag steht heute eine Karte für den Montag darauf ohne Hin
   - `struct KurseAbschnitt: Identifiable { let titel: String; let zeilen: [KurseMeineZeile]; var id: String { titel } }`
   - `KurseMeineEinteilung.abschnitte(jetzt: Date, zeitzone: String) -> [KurseAbschnitt]` — leere Abschnitte fallen weg, die Reihenfolge ist zeitlich
 
-- [ ] **Step 1: Tests schreiben.** Wochenabstand über `KurseWochenBerechnung.montag(enthaelt:zeitzone:)`, gerechnet in ganzen Wochen: 0 → „Diese Woche", 1 → „Nächste Woche", 2 → „Übernächste Woche", ≥ 3 → „Bald". Dazu: Sonntag 23:30 und Montag 00:30 liegen in verschiedenen Abschnitten (die Woche beginnt am Montag, Studio-Zeitzone); ein leerer Abschnitt erscheint nicht.
-- [ ] **Step 2: `abschnitte` implementieren.** „Bald" bleibt beim heutigen 14-Tage-Ladefenster leer — die Stufe wird trotzdem gebaut, damit ein größeres Fenster sie nur noch füllt.
-- [ ] **Step 3: `KurseBandView` rendert Abschnitte** mit `Typography.label` + `tracking(1.5)` + `textMuted` als Überschrift, wie „ALLE KURSE" im selben Screen. Bei genau einem Abschnitt „Diese Woche" steht keine Überschrift — die Beschriftung des Umschalters darüber sagt schon, was die Liste ist.
-- [ ] **Step 4: `xcodebuild test`.**
+- [x] **Step 1: Tests schreiben.** Wochenabstand über `KurseWochenBerechnung.montag(enthaelt:zeitzone:)`, gerechnet in ganzen Wochen: 0 → „Diese Woche", 1 → „Nächste Woche", 2 → „Übernächste Woche", ≥ 3 → „Bald". Dazu: Sonntag 23:30 und Montag 00:30 liegen in verschiedenen Abschnitten (die Woche beginnt am Montag, Studio-Zeitzone); ein leerer Abschnitt erscheint nicht.
+- [x] **Step 2: `abschnitte` implementieren.** „Bald" bleibt beim heutigen 14-Tage-Ladefenster leer — die Stufe wird trotzdem gebaut, damit ein größeres Fenster sie nur noch füllt.
+- [x] **Step 3: `KurseBandView` rendert Abschnitte** mit `Typography.label` + `tracking(1.5)` + `textMuted` als Überschrift, wie „ALLE KURSE" im selben Screen. Bei genau einem Abschnitt „Diese Woche" steht keine Überschrift — die Beschriftung des Umschalters darüber sagt schon, was die Liste ist.
+- [x] **Step 4: `xcodebuild test`.**
 
 ---
 
