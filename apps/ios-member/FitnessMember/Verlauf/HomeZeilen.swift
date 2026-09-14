@@ -16,6 +16,16 @@ struct Trainingskarte: Identifiable {
     var id: String { teile[0].id }
 }
 
+extension Trainingskarte {
+    /// Ein Teil genuegt: die Marke sagt, dass an dieser Karte ein Ende
+    /// gesetzt statt bestaetigt wurde. Das gilt fuer die ganze Karte,
+    /// sobald es fuer einen ihrer Teile gilt -- ihre Dauer ist dann eine
+    /// Untergrenze (siehe HomeZeilen.dauerText).
+    var istAutoBeendet: Bool {
+        teile.contains { $0.completedReason == "auto" }
+    }
+}
+
 /// Die reinen Ableitungen des Home-Tabs -- getrennt vom View, damit sie
 /// pruefbar bleiben.
 enum HomeZeilen {
@@ -60,17 +70,6 @@ enum HomeZeilen {
     /// ist trotzdem Mehrzahl).
     static func tageHerLabel(_ tage: Int) -> String {
         tage == 1 ? "Tag her" : "Tage her"
-    }
-
-    /// "18:04 – 18:51" -- der Zeitraum einer Einheit. `nil` bei einer
-    /// selbsttaetig beendeten: ihr Ende liegt beim letzten Satz, nicht beim
-    /// Ende des Trainings (siehe dauerText).
-    static func zeitraum(_ einheit: SessionSummary) -> String? {
-        guard let start = Zeitpunkt.parse(einheit.startedAt),
-              let ende = gueltigesEnde(einheit)
-        else { return nil }
-
-        return zeitangabe(beginn: start, ende: ende)
     }
 
     /// "08:32 – 09:06", sonst "ab 08:32" -- die Ueberschrift ueber den
@@ -154,7 +153,10 @@ enum HomeZeilen {
 
     /// Die Karte, auf der diese Einheit liegt -- fuer das Detail, das nur
     /// eine Session-Id bekommt. Faltet dieselbe Liste nach derselben
-    /// Regel, damit Liste und Detail nicht verschieden gruppieren.
+    /// Regel, damit Liste und Detail gleich gruppieren. Die eine Ausnahme
+    /// ist gewollt: die Liste faltet je Ortstag, das Detail den ganzen
+    /// Verlauf -- eine Karte ueber Mitternacht zeigt im Detail beide
+    /// Tage, in der Liste je Tag ihren Teil.
     static func karte(fuer sessionId: String, in einheiten: [SessionSummary]) -> Trainingskarte? {
         trainingskarten(einheiten).first { karte in
             karte.teile.contains { $0.id == sessionId }
@@ -196,7 +198,7 @@ enum HomeZeilen {
             verschiedeneGeraete(karte), singular: "Gerät", plural: "Geräte")
         let spanne = zeitangabe(
             beginn: Zeitpunkt.parse(karte.teile[0].startedAt),
-            ende: gueltigesEnde(karte.teile[karte.teile.count - 1]))
+            ende: karte.teile.last.flatMap(gueltigesEnde))
 
         return [spanne, geraete].compactMap { $0 }.joined(separator: " · ")
     }

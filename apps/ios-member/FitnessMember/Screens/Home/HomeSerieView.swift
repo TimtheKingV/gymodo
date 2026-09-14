@@ -12,7 +12,7 @@ enum HomeSerieAuswahl: Equatable {
 }
 
 /// Der Kalender am Kopf des Home-Tabs -- Flamme, Wochenstreifen, die
-/// Einheiten des gewaehlten Tages, ein Umschalter auf den Monat.
+/// Trainingskarten des gewaehlten Tages, ein Umschalter auf den Monat.
 ///
 /// **Nur ein Trainingstag ist antippbar.** Ein Tag ohne Einheit tut
 /// nichts -- er hat nichts zu zeigen. Er oeffnete eine Zeit lang
@@ -148,8 +148,9 @@ private extension HomeSerieView {
 
             // Die dehnbare Stelle der Zeile ist die Fussnote, nicht der
             // Umschalter: wird der Platz knapp, bricht ihr Satz um, waehrend
-            // das Wort "Monatsansicht" seine Breite behaelt. Ein gestauchter
-            // Umschalter waere schlechter als eine zweizeilige Fussnote.
+            // das Wort "Monatsansicht" seine Breite behaelt (fixedSize am
+            // Umschalter). Ein gestauchter Umschalter waere schlechter als
+            // eine zweizeilige Fussnote.
             Text(
                 HomeSerie.fussnote(
                     gesamt: gesamt, lastSessionAt: lastSessionAt,
@@ -340,7 +341,7 @@ private extension HomeSerieView {
                 .monospacedDigit()
 
             HStack(spacing: DesignSystem.Spacing.s8) {
-                if istAutoBeendet(karte) {
+                if karte.istAutoBeendet {
                     Text("AUTO BEENDET")
                         .font(DesignSystem.Typography.label)
                         .foregroundStyle(DesignSystem.Color.warn)
@@ -361,21 +362,13 @@ private extension HomeSerieView {
         .background(DesignSystem.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
-
-    /// Ein Teil genuegt: die Marke sagt, dass an dieser Karte ein Ende
-    /// gesetzt statt bestaetigt wurde. Das gilt fuer die ganze Karte,
-    /// sobald es fuer einen ihrer Teile gilt -- ihre Dauer ist dann eine
-    /// Untergrenze (siehe HomeZeilen.dauerText).
-    func istAutoBeendet(_ karte: Trainingskarte) -> Bool {
-        karte.teile.contains { $0.completedReason == "auto" }
-    }
 }
 
 // MARK: - Umschalter
 
 private extension HomeSerieView {
     /// Kein Rahmen und keine volle Breite: ein 48 pt hoher Umriss quer
-    /// ueber den Screen wog schwerer als die Karten darueber, um die es
+    /// ueber den Screen wog schwerer als die Karten darunter, um die es
     /// eigentlich geht. Uebrig bleibt das Wort und ein Winkel darunter.
     ///
     /// Er steht oben rechts in der Kopfzeile, nicht mehr unter dem
@@ -399,6 +392,9 @@ private extension HomeSerieView {
                     .font(.system(size: 11, weight: .bold))
             }
             .foregroundStyle(DesignSystem.Color.textMuted)
+            // Nur waagerecht fest: die Zeile gibt den Platzmangel an die
+            // Fussnote weiter, statt das Wort abzuschneiden.
+            .fixedSize(horizontal: true, vertical: false)
             .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
@@ -433,7 +429,7 @@ private extension HomeSerieView {
     /// der kleinen Zeile, gehoert im Satz aber ans Ende.
     func kartenLabel(_ karte: Trainingskarte) -> String {
         var teile = ["\(HomeZeilen.grosseZeile(karte)). \(HomeZeilen.kleineZeile(karte))."]
-        if istAutoBeendet(karte) { teile.append("Auto beendet.") }
+        if karte.istAutoBeendet { teile.append("Auto beendet.") }
         return teile.joined(separator: " ")
     }
 }
@@ -443,10 +439,17 @@ private extension HomeSerieView {
 /// Fester Tag statt `Date()`: sonst wanderte der Ring jeden Tag eine
 /// Zelle weiter und die Vorschau zeigte je nach Wochentag etwas anderes.
 #Preview {
+    // Mit Bloecken: die kleine Zeile der Karte zaehlt die verschiedenen
+    // machineId, ohne Bloecke stuende in der Vorschau "0 Geraete".
     func einheit(_ id: String, _ start: String, _ ende: String) -> SessionSummary {
-        SessionSummary(
+        let bloecke = ["Beinpresse", "Latzug"].map { geraet in
+            SessionSummary.Block(
+                machineId: geraet, machineLabel: geraet, exerciseId: "u-\(geraet)",
+                exerciseName: geraet, sets: [])
+        }
+        return SessionSummary(
             id: id, startedAt: start, completedAt: ende, completedReason: "manual",
-            machineCount: 3, setCount: 8, blocks: [])
+            machineCount: bloecke.count, setCount: 8, blocks: bloecke)
     }
 
     return ScrollView {

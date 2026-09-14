@@ -92,7 +92,7 @@ struct KurseWochenPagingTests {
     }
 
     /// In einer kuenftigen Woche ist kein Tag "heute" -- sonst truege der
-    /// Streifen dort eine Akzentflaeche ohne Anlass.
+    /// Streifen dort einen Akzentring ohne Anlass.
     @Test func inEinerKuenftigenWocheIstKeinTagHeute() {
         let mittwoch = zeitpunkt("2026-09-09T12:00:00Z")
         let naechsterMontag = KurseWochenBerechnung.wochenMontage(ab: mittwoch, zeitzone: zeitzone)[1]

@@ -208,10 +208,34 @@ struct KurseMeineEinteilungTests {
         #expect(abschnitte.first?.zeilen.map(\.termin.sessionId) == ["donnerstag", "freitag"])
     }
 
-    /// Eine Woche mit Zeitumstellung hat 169 bzw. 167 Stunden. Gezaehlt
-    /// wird in Kalendertagen zwischen den Montagen, nicht in Sekunden --
-    /// sonst rutschte der Montag nach der Umstellung in die falsche Stufe.
-    /// Herbst: Europe/Berlin stellt am 2026-10-25 zurueck.
+    // MARK: - Ueberschriften nur, wenn sie etwas trennen
+
+    private func abschnitt(_ titel: String) -> KurseAbschnitt {
+        KurseAbschnitt(titel: titel, zeilen: [])
+    }
+
+    /// Liegt alles in dieser Woche, trennt die Ueberschrift nichts -- die
+    /// Beschriftung des Umschalters sagt schon, was die Liste ist.
+    @Test func nurDieseWocheZeigtKeineUeberschrift() {
+        #expect(!KurseMeineEinteilung.zeigtUeberschriften([abschnitt("Diese Woche")]))
+    }
+
+    /// Ein einzelner Abschnitt einer SPAETEREN Woche braucht seine
+    /// Ueberschrift: ohne sie laese sich die Karte wie diese Woche.
+    @Test func nurNaechsteWocheZeigtDieUeberschrift() {
+        #expect(KurseMeineEinteilung.zeigtUeberschriften([abschnitt("Nächste Woche")]))
+    }
+
+    @Test func dieseWocheUndEineWeitereZeigenUeberschriften() {
+        #expect(KurseMeineEinteilung.zeigtUeberschriften(
+            [abschnitt("Diese Woche"), abschnitt("Übernächste Woche")]))
+    }
+
+    /// Herbst: die 169-Stunden-Woche. Dieser Test haelt nur fest, dass
+    /// die lange Woche als eine Woche zaehlt -- eine abgeschnittene
+    /// Sekundenrechnung ergaebe hier ebenfalls 1 (169/168), er faengt sie
+    /// also nicht. Das tut der Fruehjahrstest darunter.
+    /// Europe/Berlin stellt am 2026-10-25 zurueck.
     @Test func eineWocheMitZeitumstellungImHerbstZaehltAlsEineWoche() {
         // Donnerstag 2026-10-22, 12:00 Europe/Berlin (Sommerzeit).
         let jetztHerbst = ISO8601DateFormatter().date(from: "2026-10-22T10:00:00Z")!

@@ -23,7 +23,7 @@ struct KalenderzelleTests {
                 == DesignSystem.Color.text)
     }
 
-    @Test func trainiertUndNichtGewaehltTraegtDieErhoheneFlaeche() {
+    @Test func trainiertUndNichtGewaehltTraegtDieErhoehteFlaeche() {
         #expect(
             Kalenderfarben.fuellung(istGewaehlt: false, trainiert: true)
                 == DesignSystem.Color.surfaceRaised)
@@ -79,13 +79,26 @@ struct KalenderzelleTests {
         #expect(Kalenderfarben.ring(istHeute: false) == nil)
     }
 
+    // MARK: - Einzug: heute UND gewaehlt
+
     /// Der Fall, an dem sich die Trennung der beiden Kanaele entscheidet:
-    /// ein Tag kann zugleich heute UND gewaehlt sein, und beide Aussagen
-    /// muessen nebeneinander lesbar bleiben.
-    @Test func gewaehltUndHeuteZeigtFuellungUndRing() {
+    /// ein Tag kann zugleich heute UND gewaehlt sein. Fuellung und Ring
+    /// allein reichen dafuer nicht -- `accent` direkt auf `text` hat
+    /// kaum Kontrast, der Ring verschwaende auf der weissen Flaeche.
+    /// Erst der Einzug laesst einen Streifen Hintergrund zwischen beiden.
+    @Test func gewaehltUndHeuteZiehtDieFuellungVomRingEin() {
         #expect(
             Kalenderfarben.fuellung(istGewaehlt: true, trainiert: false)
                 == DesignSystem.Color.text)
         #expect(Kalenderfarben.ring(istHeute: true) == DesignSystem.Color.accent)
+        #expect(Kalenderfarben.fuellungsEinzug(istGewaehlt: true, istHeute: true) > 0)
+    }
+
+    /// Ohne Ring gibt es nichts freizuhalten, und ohne Fuellung nichts
+    /// einzuziehen -- in beiden Faellen bleibt der Kreis voll.
+    @Test func nurGewaehltOderNurHeuteZiehtNichtsEin() {
+        #expect(Kalenderfarben.fuellungsEinzug(istGewaehlt: true, istHeute: false) == 0)
+        #expect(Kalenderfarben.fuellungsEinzug(istGewaehlt: false, istHeute: true) == 0)
+        #expect(Kalenderfarben.fuellungsEinzug(istGewaehlt: false, istHeute: false) == 0)
     }
 }

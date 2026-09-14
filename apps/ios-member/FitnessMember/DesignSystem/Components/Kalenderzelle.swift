@@ -42,6 +42,22 @@ enum Kalenderfarben {
     static func ring(istHeute: Bool) -> Color? {
         istHeute ? DesignSystem.Color.accent : nil
     }
+
+    /// Wie weit die weisse Fuellung vom Rand weicht, wenn heute gewaehlt
+    /// ist. `accent` direkt auf `text` hat kaum Kontrast (rund 1,05 : 1),
+    /// ein innen liegender Ring auf der Fuellung waere unsichtbar. Der
+    /// Einzug laesst einen Streifen Hintergrund zwischen Ring und Fuellung,
+    /// und der Streifen traegt den Kontrast.
+    ///
+    /// `s4` statt eines freien Werts, weil es der kleinste Abstand des
+    /// Rasters ist: 1,5 pt Ring plus 2,5 pt Luft reichen, damit der
+    /// Streifen als Luecke liest, und die Fuellung behaelt 32 pt -- Zahl
+    /// und Hantel passen weiter hinein, und die Zelle bleibt 40 pt, die
+    /// Spalten ruecken nicht. Nur bei beidem zugleich: ohne Ring gibt es
+    /// nichts freizuhalten, ohne Fuellung nichts einzuziehen.
+    static func fuellungsEinzug(istGewaehlt: Bool, istHeute: Bool) -> CGFloat {
+        istGewaehlt && istHeute ? DesignSystem.Spacing.s4 : 0
+    }
 }
 
 /// Die Tageszelle beider Kalender -- der 40-pt-Kreis, ohne den
@@ -51,8 +67,10 @@ enum Kalenderfarben {
 /// **Zwei Kanaele an der Tageszelle, und nur zwei.** Die FUELLUNG sagt,
 /// was der Tag ist (nichts, trainiert, gewaehlt), der RING sagt heute.
 /// Weil sie getrennt sind, kollidiert kein Zustand mit einem anderen --
-/// ein Tag kann zugleich heute, trainiert und gewaehlt sein, und alle
-/// drei bleiben lesbar. Der Akzent bleibt dabei eine Linie, keine
+/// ein Tag kann zugleich heute, trainiert und gewaehlt sein. Lesbar
+/// bleiben alle drei, weil die weisse Fuellung dann vom Ring einzieht
+/// (`Kalenderfarben.fuellungsEinzug`): der Akzentring laege sonst auf
+/// Weiss und waere unsichtbar. Der Akzent bleibt dabei eine Linie, keine
 /// Flaeche: designsystem.md SS2 laesst genau eine Akzentflaeche je
 /// Screen zu, und die traegt auf Home die Flamme, im Kursplan der
 /// Umschalter „Angemeldet/Alle Kurse“.
@@ -75,7 +93,9 @@ struct Kalenderzelle: View {
 
     var body: some View {
         ZStack {
-            Circle().fill(Kalenderfarben.fuellung(istGewaehlt: istGewaehlt, trainiert: trainiert))
+            Circle()
+                .fill(Kalenderfarben.fuellung(istGewaehlt: istGewaehlt, trainiert: trainiert))
+                .padding(Kalenderfarben.fuellungsEinzug(istGewaehlt: istGewaehlt, istHeute: istHeute))
 
             switch inhalt {
             case .hantel:
@@ -107,6 +127,7 @@ struct Kalenderzelle: View {
         Kalenderzelle(inhalt: .zahl(3), istGewaehlt: false, istHeute: false)
         Kalenderzelle(inhalt: .zahl(4), istGewaehlt: false, istHeute: true)
         Kalenderzelle(inhalt: .hantel, istGewaehlt: false, istHeute: false, trainiert: true)
+        Kalenderzelle(inhalt: .zahl(5), istGewaehlt: true, istHeute: false)
         Kalenderzelle(inhalt: .hantel, istGewaehlt: true, istHeute: true, trainiert: true)
         Kalenderzelle(inhalt: .zahl(7), istGewaehlt: false, istHeute: false, gedeckt: true)
     }

@@ -85,6 +85,19 @@ struct KurseMeineEinteilung {
     /// Abstand auf.
     private static let abschnittTitel = ["Diese Woche", "Nächste Woche", "Übernächste Woche", "Bald"]
 
+    /// Ob die Liste ihre Wochen-Ueberschriften zeigt. Liegt alles in dieser
+    /// Woche, trennt die Ueberschrift nichts, und die Beschriftung des
+    /// Umschalters darueber sagt schon, was die Liste ist. Ein einzelner
+    /// Abschnitt einer SPAETEREN Woche behaelt sie -- ohne sie laese sich
+    /// die Karte wie diese Woche.
+    ///
+    /// Gegen den Titel aus `abschnittTitel`, nicht gegen ein zweites
+    /// Literal im View: sonst liefe ein umbenannter Titel still an der
+    /// Regel vorbei.
+    static func zeigtUeberschriften(_ abschnitte: [KurseAbschnitt]) -> Bool {
+        !(abschnitte.count == 1 && abschnitte.first?.titel == abschnittTitel[0])
+    }
+
     /// Die eigenen Anmeldungen, geschnitten nach ganzen Wochen Abstand zur
     /// Woche von `jetzt`: 0 "Diese Woche", 1 "Nächste Woche",
     /// 2 "Übernächste Woche", ab 3 "Bald". Leere Abschnitte fallen weg --

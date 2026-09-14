@@ -97,8 +97,8 @@ struct HomeZeilenTests {
         #expect(HomeZeilen.tageHerLabel(2) == "Tage her")
     }
 
-    /// Baut dieselbe "18:04 – 18:51"-Angabe wie HomeZeilen.zeitraum
-    /// aus denselben Zeitpunkten, statt sie als Text vorherzusagen:
+    /// Baut die erwartete "18:04 – 18:51"-Angabe aus denselben
+    /// Zeitpunkten, statt sie als Text vorherzusagen:
     /// Zahlformat.uhrzeit folgt TimeZone.current (richtig -- die Zeit
     /// gehoert dem Geraet, siehe Zahlformat-Kommentar), ein woertlich
     /// erwarteter String waere deshalb nur in der Zeitzone des
@@ -107,18 +107,6 @@ struct HomeZeilenTests {
         let start = Zeitpunkt.parse(session.startedAt)!
         let ende = Zeitpunkt.parse(session.completedAt!)!
         return "\(Zahlformat.uhrzeit(start)) – \(Zahlformat.uhrzeit(ende))"
-    }
-
-    // MARK: - Der Zeitraum einer Einheit
-
-    /// Ein erfundenes Ende waere schlimmer als ein offener Zeitraum -- das
-    /// Ende einer selbsttaetig beendeten Einheit liegt beim letzten Satz.
-    @Test func eineSelbsttaetigBeendeteEinheitZeigtNurIhrenBeginn() {
-        #expect(HomeZeilen.zeitraum(einheit(completedReason: "auto")) == nil)
-    }
-
-    @Test func eineEinheitOhneEndeHatKeinenZeitraum() {
-        #expect(HomeZeilen.zeitraum(einheit(completedAt: nil)) == nil)
     }
 
     // MARK: - Die Ueberschrift eines Teils im Detail
@@ -354,6 +342,30 @@ struct HomeZeilenTests {
         ))
 
         #expect(karten.map(\.id) == ["a"])
+    }
+
+    /// Ein selbsttaetig beendeter Teil genuegt fuer die Marke: die Dauer
+    /// der ganzen Karte ist dann eine Untergrenze.
+    @Test func eineKarteMitEinemAutoBeendetenTeilIstAutoBeendet() {
+        let karten = HomeZeilen.trainingskarten(tagesliste(
+            einheit(id: "a", startedAt: "2026-09-11T08:32:00Z", completedAt: "2026-09-11T09:06:00Z"),
+            einheit(
+                id: "b", startedAt: "2026-09-11T09:20:00Z", completedAt: "2026-09-11T09:50:00Z",
+                completedReason: "auto")
+        ))
+
+        #expect(karten.count == 1)
+        #expect(karten[0].istAutoBeendet)
+    }
+
+    @Test func eineKarteOhneAutoBeendetenTeilIstNichtAutoBeendet() {
+        let karten = HomeZeilen.trainingskarten(tagesliste(
+            einheit(id: "a", startedAt: "2026-09-11T08:32:00Z", completedAt: "2026-09-11T09:06:00Z"),
+            einheit(id: "b", startedAt: "2026-09-11T09:20:00Z", completedAt: "2026-09-11T09:50:00Z")
+        ))
+
+        #expect(karten.count == 1)
+        #expect(!karten[0].istAutoBeendet)
     }
 
     /// Das Detail bekommt die Id eines beliebigen Teils und muss die ganze

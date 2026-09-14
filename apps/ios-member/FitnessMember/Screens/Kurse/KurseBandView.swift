@@ -61,7 +61,7 @@ struct KurseBandView: View {
 
     var body: some View {
         let abschnitte = einteilung.abschnitte(jetzt: jetzt, zeitzone: eigene.timezone)
-        let zeigtUeberschriften = !(abschnitte.count == 1 && abschnitte.first?.titel == "Diese Woche")
+        let zeigtUeberschriften = KurseMeineEinteilung.zeigtUeberschriften(abschnitte)
 
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
             ForEach(abschnitte) { abschnitt in

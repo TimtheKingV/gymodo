@@ -15,7 +15,9 @@ import SwiftUI
 /// darf nicht in ein Detail fuehren, das eine davon verschweigt -- die
 /// Saetze der zweiten waeren sonst nirgends zu sehen. Die Teile kommen
 /// aus derselben Faltung wie die Liste (`HomeZeilen.karte(fuer:in:)`),
-/// damit Liste und Detail nie verschieden gruppieren.
+/// damit Liste und Detail gleich gruppieren -- bis auf eine Karte ueber
+/// Mitternacht: die Liste faltet je Ortstag, das Detail den ganzen
+/// Verlauf, und dort steht dann auch der Teil des Nachbartags.
 ///
 /// Das Zusammenfassen bleibt reine ANZEIGE: die Teile stehen untereinander
 /// und behalten ihre eigene Ueberschrift, in den Daten bleiben sie
@@ -89,6 +91,12 @@ struct SessionDetailView: View {
                     .font(DesignSystem.Typography.label)
                     .tracking(1.5)
                     .foregroundStyle(DesignSystem.Color.textMuted)
+                    // Gemischte Schreibweise fuers Vorlesen: "AB" in
+                    // Grossbuchstaben buchstabiert VoiceOver. Als Kopfzeile
+                    // springt der Rotor von Teil zu Teil, wie bei den
+                    // Wochen-Ueberschriften im Kursplan.
+                    .accessibilityLabel(HomeZeilen.teilUeberschrift(teil))
+                    .accessibilityAddTraits(.isHeader)
             }
 
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {

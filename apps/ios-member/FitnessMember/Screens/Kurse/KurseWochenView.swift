@@ -476,8 +476,8 @@ struct KurseWochenView: View {
 
     /// Die beiden Haelften „Angemeldet“ und „Alle Kurse“.
     ///
-    /// Die gewaehlte Haelfte ist accent-GEFUELLT -- die EINZIGE
-    /// Akzentflaeche des Screens, seit der gewaehlte Tag im Streifen
+    /// Die gewaehlte Haelfte ist accent-GEFUELLT -- die einzige
+    /// Akzentflaeche fuer eine Aktion, seit der gewaehlte Tag im Streifen
     /// weiss ist und heute nur noch einen Ring traegt. Sie steht hier
     /// richtig, weil der Umschalter die Hauptaktion des Screens ist: er
     /// entscheidet, was die Liste ueberhaupt zeigt. Beide Haelften sind

@@ -40,7 +40,7 @@ Verworfene Alternativen: eine helle, instrumentenhafte Richtung (präziser, aber
 
 1. **Genau eine Akzentfläche je Screen.** Der Akzent markiert die eine Hauptaktion und den aktiven Wert. Flächig als Dekor eingesetzt verliert er die Signalwirkung, für die er gewählt wurde — und der Nutzer verliert die Fähigkeit, im Halbdunkel in einer Sekunde zu erkennen, wo er hinfassen muss.
 
-   In den Kalendern trägt „heute" den Akzent deshalb als 1,5-pt-Ring — eine Linie, keine Fläche —, und die Auswahl ist weiß (`text`). So bleibt die eine Akzentfläche des Screens für die Hauptaktion frei: auf Home die Flamme, im Kursplan der Umschalter „Angemeldet/Alle Kurse". Zwei Aussagen an derselben Zelle vertragen sich nur, wenn sie verschiedene Kanäle benutzen.
+   In den Kalendern trägt „heute" den Akzent deshalb als 1,5-pt-Ring — eine Linie, keine Fläche —, und die Auswahl ist weiß (`text`); ist heute zugleich ausgewählt, sitzt die weiße Füllung um 4 pt eingezogen im Ring, damit zwischen beiden ein Streifen Hintergrund bleibt und der Ring sichtbar ist. So bleibt die eine Akzentfläche des Screens für die Hauptaktion frei: auf Home die Flamme, im Kursplan der Umschalter „Angemeldet/Alle Kurse". Zwei Aussagen an derselben Zelle vertragen sich nur, wenn sie verschiedene Kanäle benutzen.
 2. **Kein reines Schwarz.** `#000000` lässt keinen Raum für Ebenen und schmiert beim Scrollen auf OLED.
 
 `warn` erscheint ausschließlich als **Umriss**, nie als Fläche: eine Problemmeldung ist Feedback des Nutzers, kein Systemfehler. Eine warngelbe Fläche würde sie als Fehlverhalten lesen lassen.
