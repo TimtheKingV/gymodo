@@ -197,6 +197,9 @@ struct GeraetErkanntScreen: View {
             // Online zeigt das Geraetefoto den eigentlichen Nutzen bei zwei
             // baugleichen Stationen (designsystem.md SS8) -- der Offline-
             // Platzhalter in GeraetErkanntView bleibt unveraendert.
-            .task { await modell.kontextLaden() }
+            // Erster Geraetekontakt: nach einem Scan ist das der Screen,
+            // der als erstes steht -- die Trainingsuhr laeuft ab hier, nicht
+            // erst, wenn eine Uebung gewaehlt ist.
+            .task { modell.geraetBetreten(); await modell.kontextLaden() }
     }
 }

@@ -24,7 +24,7 @@ struct HomeSerieTests {
         let tage = HomeSerie.tage(stand())
 
         #expect(tage.count == 7)
-        #expect(tage.map(\.kuerzel) == ["MO", "DI", "MI", "DO", "FR", "SA", "SO"])
+        #expect(tage.map(\.buchstabe) == ["M", "D", "M", "D", "F", "S", "S"])
         #expect(tage.map(\.tagesnummer) == [7, 8, 9, 10, 11, 12, 13])
     }
 
@@ -140,8 +140,9 @@ struct HomeSerieTests {
 
     // MARK: - VoiceOver
 
-    /// Der Streifen ist EIN Element, nicht sieben: er ist nicht bedienbar,
-    /// und sieben einzeln vorgelesene Tagesboxen waeren nur Weg.
+    /// Die Tageszellen sind einzeln bedienbar und tragen ihr eigenes
+    /// Label; dieser Satz haengt an der Flamme und beantwortet die Woche
+    /// auf einmal, ohne dass VoiceOver sieben Elemente durchlaufen muss.
     @Test func vorlesetextNenntSerieUndTrainingstage() {
         let text = HomeSerie.vorlesetext(wochen: 6, tage: HomeSerie.tage(stand()))
 
@@ -168,5 +169,163 @@ struct HomeSerieTests {
             wochen: 0, tage: HomeSerie.tage(stand(weeks: 0, trainedDays: [])))
 
         #expect(text == "Keine laufende Serie. Diese Woche noch nicht trainiert.")
+    }
+
+    // MARK: - Das Monatsgitter
+
+    private func einheit(
+        id: String = "s1",
+        startedAt: String = "2026-09-08T16:04:00Z",
+        completedAt: String? = "2026-09-08T16:51:00Z"
+    ) -> SessionSummary {
+        SessionSummary(
+            id: id, startedAt: startedAt, completedAt: completedAt,
+            completedReason: "manual", machineCount: 3, setCount: 8, blocks: [])
+    }
+
+    @Test func dasGitterFuelltVolleWochenVonMontagBisSonntag() {
+        let tage = HomeSerie.monatstage(
+            um: "2026-09-11", heute: "2026-09-11", trainingstage: [])
+
+        // September 2026 beginnt an einem Dienstag: ein Tag Vorlauf,
+        // 30 Tage, macht fuenf Zeilen.
+        #expect(tage.count == 35)
+        #expect(tage.first?.id == "2026-08-31")
+        #expect(tage.last?.id == "2026-10-04")
+        #expect(tage.map(\.buchstabe).prefix(7) == ["M", "D", "M", "D", "F", "S", "S"])
+    }
+
+    /// Die auffuellenden Tage stehen drin, statt zu fehlen: ein Gitter mit
+    /// Loechern liesse die Spalten wandern, und dann stuende der 1. nicht
+    /// mehr unter seinem Wochentag.
+    @Test func nachbarmonateStehenDrinUndSindAlsSolcheMarkiert() {
+        let tage = HomeSerie.monatstage(
+            um: "2026-09-11", heute: "2026-09-11", trainingstage: [])
+
+        #expect(tage.first?.ausserhalb == true)
+        #expect(tage.last?.ausserhalb == true)
+        #expect(tage.filter(\.ausserhalb).map(\.id) == [
+            "2026-08-31", "2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04",
+        ])
+        #expect(tage.first(where: { $0.id == "2026-09-01" })?.ausserhalb == false)
+    }
+
+    /// Keine feste Sechszeiligkeit: der Monat wird nie umgeschaltet, und
+    /// eine dauerhaft leere Zeile waere nur Nichts unter dem Gitter.
+    @Test func dasGitterWaechstUndSchrumpftMitDemMonat() {
+        // Maerz 2026 beginnt an einem Sonntag und hat 31 Tage -- sechs Zeilen.
+        #expect(
+            HomeSerie.monatstage(um: "2026-03-15", heute: "", trainingstage: []).count == 42)
+        // Februar 2027 beginnt an einem Montag und hat 28 Tage -- vier
+        // Zeilen, und kein einziger Fuelltag.
+        let februar = HomeSerie.monatstage(um: "2027-02-15", heute: "", trainingstage: [])
+        #expect(februar.count == 28)
+        #expect(februar.allSatisfy { !$0.ausserhalb })
+    }
+
+    @Test func nurDieGenanntenTageTragenImGitterEineHantel() {
+        let tage = HomeSerie.monatstage(
+            um: "2026-09-11", heute: "2026-09-11",
+            trainingstage: ["2026-09-07", "2026-09-09", "2026-10-02"])
+
+        #expect(tage.filter(\.trainiert).map(\.id) == [
+            "2026-09-07", "2026-09-09", "2026-10-02",
+        ])
+        #expect(tage.filter(\.istHeute).map(\.id) == ["2026-09-11"])
+    }
+
+    @Test func einUnlesbaresDatumErgibtKeinGitter() {
+        #expect(HomeSerie.monatstage(um: "kaputt", heute: "", trainingstage: []).isEmpty)
+    }
+
+    // MARK: - Die Einheiten eines Tages
+
+    /// Eine Einheit gehoert dem STUDIO, nicht dem Geraet: 22:30 UTC ist in
+    /// Berlin schon der naechste Tag, und der Streifen muss sie dort
+    /// zeigen, wo der Server sie zaehlt.
+    @Test func einheitenFallenInDenOrtstagDesStudios() {
+        let gebuendelt = HomeSerie.einheitenJeTag(
+            [
+                einheit(
+                    id: "spaet", startedAt: "2026-09-08T22:30:00Z",
+                    completedAt: "2026-09-08T23:10:00Z")
+            ],
+            zeitzone: "Europe/Berlin")
+
+        #expect(gebuendelt.keys.sorted() == ["2026-09-09"])
+    }
+
+    @Test func dieselbeEinheitInUTCFaelltAufDenVortag() {
+        let gebuendelt = HomeSerie.einheitenJeTag(
+            [
+                einheit(
+                    id: "spaet", startedAt: "2026-09-08T22:30:00Z",
+                    completedAt: "2026-09-08T23:10:00Z")
+            ],
+            zeitzone: "UTC")
+
+        #expect(gebuendelt.keys.sorted() == ["2026-09-08"])
+    }
+
+    /// Was noch laeuft, ist kein Verlauf -- es hat kein Ende und darum
+    /// auch keine Karte.
+    @Test func dieLaufendeEinheitWirdNichtGebuendelt() {
+        let gebuendelt = HomeSerie.einheitenJeTag(
+            [einheit(id: "laeuft", completedAt: nil)], zeitzone: "Europe/Berlin")
+
+        #expect(gebuendelt.isEmpty)
+    }
+
+    @Test func zweiEinheitenEinesTagesStehenMitDerJuengstenZuerst() {
+        let gebuendelt = HomeSerie.einheitenJeTag(
+            [
+                einheit(
+                    id: "frueh", startedAt: "2026-09-08T05:12:00Z",
+                    completedAt: "2026-09-08T05:38:00Z"),
+                einheit(id: "abends"),
+            ],
+            zeitzone: "Europe/Berlin")
+
+        #expect(gebuendelt["2026-09-08"]?.map(\.id) == ["abends", "frueh"])
+    }
+
+    /// Der Server kennt die laufende Woche, die Liste den Rest -- beide
+    /// zusammen, damit derselbe Tag in Woche und Monat nicht verschieden
+    /// aussieht.
+    @Test func trainingstageLegenBeideQuellenZusammen() {
+        let menge = HomeSerie.trainingstage(
+            stand: stand(trainedDays: ["2026-09-07", "2026-09-08"]),
+            einheitenJeTag: ["2026-08-24": [einheit()]])
+
+        #expect(menge == ["2026-09-07", "2026-09-08", "2026-08-24"])
+    }
+
+    /// Ein Tag, an dem gerade noch trainiert wird, steht in `trainedDays`,
+    /// aber in keiner Buendelung -- seine Hantel darf trotzdem stehen.
+    @Test func einLaufenderTagBehaeltSeineHantel() {
+        let menge = HomeSerie.trainingstage(
+            stand: stand(trainedDays: ["2026-09-09"]), einheitenJeTag: [:])
+        let tage = HomeSerie.tage(stand(trainedDays: ["2026-09-09"]), trainingstage: menge)
+
+        #expect(tage.filter(\.trainiert).map(\.id) == ["2026-09-09"])
+    }
+
+    // MARK: - Ueberschriften
+
+    /// Mit Jahr: das Gitter kann ueber den Jahreswechsel reichen, und dann
+    /// ist "Januar" allein zweideutig.
+    @Test func derMonatstitelNenntDasJahr() {
+        #expect(HomeSerie.monatstitel("2026-09-11") == "September 2026")
+    }
+
+    /// Ohne Jahr, wie Zahlformat.wochentagDatum: der gewaehlte Tag steht
+    /// zwei Zentimeter darueber im Gitter.
+    @Test func derTagestitelNenntWochentagUndDatum() {
+        #expect(HomeSerie.tagestitel("2026-09-11") == "Freitag, 11. September")
+    }
+
+    @Test func unlesbareDatenErgebenKeineUeberschrift() {
+        #expect(HomeSerie.monatstitel("kaputt").isEmpty)
+        #expect(HomeSerie.tagestitel("kaputt").isEmpty)
     }
 }

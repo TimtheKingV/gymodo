@@ -200,6 +200,16 @@ final class GeraetModel {
 
     var aktiveUebung: GeraetUebung? { uebungen.first { $0.id == uebungId } }
 
+    /// Ob es an diesem Geraet ueberhaupt etwas zu wechseln gibt. Ein
+    /// Geraet mit genau einer Uebung bekommt kein "andere Übung" -- ein
+    /// Knopf, der eine Liste mit einem Eintrag oeffnet, verspricht eine
+    /// Wahl, die es nicht gibt.
+    var hatWeitereUebungen: Bool { uebungen.count > 1 }
+
+    /// Seit wann die Trainingsuhr laeuft: seit dem ersten Geraet dieser
+    /// Einheit, nicht seit dem ersten gesicherten Satz.
+    var trainingsbeginn: Date? { sessions.trainingsbeginn() }
+
     private var modell: (schritt: Double, min: Double, max: Double?) {
         if let kontext {
             return (kontext.equipmentModel.weightStepKg,
@@ -371,6 +381,11 @@ final class GeraetModel {
         """
 
     // MARK: - Aktionen
+
+    /// Der Screen ist da, also steht das Mitglied am Geraet -- der Moment,
+    /// ab dem die Trainingsuhr laeuft. Beim zweiten Geraet folgenlos, der
+    /// Store behaelt den ersten Zeitpunkt.
+    func geraetBetreten() { sessions.geraetBetreten() }
 
     /// Laedt, was der Prefetch nicht hat: Foto, Einweisungsvideo und den
     /// Gewichtsvorschlag.

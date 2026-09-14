@@ -88,7 +88,7 @@ struct KurseWochenBerechnungTests {
             "2026-09-07", "2026-09-08", "2026-09-09", "2026-09-10",
             "2026-09-11", "2026-09-12", "2026-09-13",
         ])
-        #expect(tage.map(\.kuerzel) == ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"])
+        #expect(tage.map(\.buchstabe) == ["M", "D", "M", "D", "F", "S", "S"])
     }
 
     @Test func wochentageStimmenAuchAmSonntagStartpunkt() {

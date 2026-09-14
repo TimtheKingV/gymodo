@@ -125,4 +125,29 @@ struct HomeZeilenTests {
         let ende = Zeitpunkt.parse(session.completedAt!)!
         return "\(Zahlformat.uhrzeit(start)) – \(Zahlformat.uhrzeit(ende))"
     }
+
+    // MARK: - Die Karte im Tages-Ausklapper
+
+    /// Die Uhrzeit steht dort, wo in "Letzte Trainings" das Datum stand:
+    /// welcher Tag es ist, sagt der Kalender darueber.
+    @Test func dieKarteTraegtDenZeitraum() {
+        let einheit = einheit()
+
+        #expect(HomeZeilen.kartenTitel(einheit) == HomeZeilen.zeitraum(einheit))
+        #expect(HomeZeilen.zeitraum(einheit)?.contains(" – ") == true)
+    }
+
+    /// Ein erfundenes Ende waere schlimmer als ein offener Zeitraum -- das
+    /// Ende einer selbsttaetig beendeten Einheit liegt beim letzten Satz.
+    @Test func eineSelbsttaetigBeendeteEinheitZeigtNurIhrenBeginn() {
+        let auto = einheit(completedReason: "auto")
+
+        #expect(HomeZeilen.zeitraum(auto) == nil)
+        #expect(HomeZeilen.kartenTitel(auto).hasPrefix("ab "))
+        #expect(HomeZeilen.kartenTitel(auto).contains(" – ") == false)
+    }
+
+    @Test func eineEinheitOhneEndeHatKeinenZeitraum() {
+        #expect(HomeZeilen.zeitraum(einheit(completedAt: nil)) == nil)
+    }
 }
