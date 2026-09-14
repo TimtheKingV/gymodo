@@ -3,17 +3,30 @@ import Testing
 @testable import FitnessMember
 
 struct HomeZeilenTests {
+    /// `machineIds` bleibt standardmaessig im Gleichklang mit `machineCount`:
+    /// die Karte zaehlt die verschiedenen `machineId` der Bloecke, die
+    /// einzelne Einheit ihr `machineCount` -- fuer eine Karte aus einem
+    /// einzigen Teil muessen beide Wege dieselbe Zahl liefern.
     private func einheit(
         id: String = "s1",
         startedAt: String = "2026-09-08T16:04:00Z",
         completedAt: String? = "2026-09-08T16:51:00Z",
         completedReason: String? = "manual",
         machineCount: Int = 3,
-        setCount: Int = 8
+        setCount: Int = 8,
+        machineIds: [String]? = nil
     ) -> SessionSummary {
-        SessionSummary(
+        let geraete = machineIds ?? (0..<machineCount).map { "m\($0 + 1)" }
+        return SessionSummary(
             id: id, startedAt: startedAt, completedAt: completedAt,
-            completedReason: completedReason, machineCount: machineCount, setCount: setCount, blocks: [])
+            completedReason: completedReason, machineCount: machineCount, setCount: setCount,
+            blocks: geraete.map(block))
+    }
+
+    private func block(_ machineId: String) -> SessionSummary.Block {
+        SessionSummary.Block(
+            machineId: machineId, machineLabel: machineId, exerciseId: "e-\(machineId)",
+            exerciseName: "Übung \(machineId)", sets: [])
     }
 
     /// Was heute noch laeuft, ist kein Verlauf -- die laufende Einheit
@@ -185,5 +198,181 @@ struct HomeZeilenTests {
     @Test func kleineZeileUnterscheidetEinzahlUndMehrzahlBeiEinemGeraet() {
         let session = einheit(machineCount: 1)
         #expect(HomeZeilen.kleineZeile(session) == "\(zeitraum(session)) · 1 Gerät")
+    }
+
+    // MARK: - Benachbarte Einheiten werden eine Karte
+
+    /// Wie `HomeSerie.einheitenJeTag` buendelt: juengste Einheit zuerst.
+    private func tagesliste(_ einheiten: SessionSummary...) -> [SessionSummary] {
+        einheiten.sorted { $0.startedAt > $1.startedAt }
+    }
+
+    private func uhrzeit(_ iso: String) -> String {
+        Zahlformat.uhrzeit(Zeitpunkt.parse(iso)!)
+    }
+
+    /// Wie `zeitraum(_:)`, aber aus zwei beliebigen Zeitpunkten -- die
+    /// Spanne einer Karte reicht vom Beginn des ersten bis zum Ende des
+    /// letzten Teils.
+    private func spanne(_ vonIso: String, _ bisIso: String) -> String {
+        "\(uhrzeit(vonIso)) – \(uhrzeit(bisIso))"
+    }
+
+    /// 34 Minuten Training, 14 Minuten Pause, 30 Minuten Training: eine
+    /// Karte, und ihre grosse Zeile zeigt 64 Minuten -- nicht die 78
+    /// Minuten der Spanne. Die Pause ist keine Trainingszeit.
+    @Test func zweiEinheitenMitKurzerLueckeWerdenEineKarte() {
+        let karten = HomeZeilen.trainingskarten(tagesliste(
+            einheit(id: "a", startedAt: "2026-09-11T08:32:00Z", completedAt: "2026-09-11T09:06:00Z", setCount: 5),
+            einheit(id: "b", startedAt: "2026-09-11T09:20:00Z", completedAt: "2026-09-11T09:50:00Z", setCount: 3)
+        ))
+
+        #expect(karten.map { $0.teile.map(\.id) } == [["a", "b"]])
+        #expect(HomeZeilen.grosseZeile(karten[0]) == "64 min · 8 Sätze")
+        #expect(HomeZeilen.kleineZeile(karten[0])
+            == "\(spanne("2026-09-11T08:32:00Z", "2026-09-11T09:50:00Z")) · 3 Geräte")
+    }
+
+    @Test func zweiEinheitenMitLangerLueckeBleibenZweiKarten() {
+        let karten = HomeZeilen.trainingskarten(tagesliste(
+            einheit(id: "a", startedAt: "2026-09-11T08:32:00Z", completedAt: "2026-09-11T09:06:00Z"),
+            einheit(id: "b", startedAt: "2026-09-11T10:14:00Z", completedAt: "2026-09-11T10:20:00Z")
+        ))
+
+        #expect(karten.map { $0.teile.map(\.id) } == [["b"], ["a"]])
+    }
+
+    /// Die Grenze gehoert nach oben: genau 60 Minuten Lücke trennt, 59
+    /// fasst zusammen.
+    @Test func genauSechzigMinutenLueckeTrennt() {
+        func karten(naechsterBeginn: String) -> [[String]] {
+            HomeZeilen.trainingskarten(tagesliste(
+                einheit(id: "a", startedAt: "2026-09-11T08:32:00Z", completedAt: "2026-09-11T09:06:00Z"),
+                einheit(id: "b", startedAt: naechsterBeginn, completedAt: "2026-09-11T10:30:00Z")
+            )).map { $0.teile.map(\.id) }
+        }
+
+        #expect(karten(naechsterBeginn: "2026-09-11T10:06:00Z") == [["b"], ["a"]])
+        #expect(karten(naechsterBeginn: "2026-09-11T10:05:00Z") == [["a", "b"]])
+    }
+
+    /// Der selbsttaetig beendete Teil bringt seine Saetze und sein Geraet
+    /// mit, aber keine Dauer: sein Ende liegt beim letzten Satz (siehe
+    /// dauerText).
+    @Test func einAutoBeendeterTeilZaehltFuerSaetzeUndGeraeteAberNichtFuerDieDauer() {
+        let karten = HomeZeilen.trainingskarten(tagesliste(
+            einheit(
+                id: "a", startedAt: "2026-09-11T08:32:00Z", completedAt: "2026-09-11T09:06:00Z",
+                completedReason: "auto", setCount: 5, machineIds: ["m1"]),
+            einheit(
+                id: "b", startedAt: "2026-09-11T09:20:00Z", completedAt: "2026-09-11T09:50:00Z",
+                setCount: 3, machineIds: ["m2"])
+        ))
+
+        #expect(karten.count == 1)
+        #expect(HomeZeilen.grosseZeile(karten[0]) == "30 min · 8 Sätze")
+        #expect(HomeZeilen.kleineZeile(karten[0])
+            == "\(spanne("2026-09-11T08:32:00Z", "2026-09-11T09:50:00Z")) · 2 Geräte")
+    }
+
+    /// Traegt die Karte nur selbsttaetig beendete Teile, steht keine Dauer
+    /// da -- eine erfundene waere schlimmer als gar keine.
+    @Test func eineKarteAusNurAutoBeendetenTeilenZeigtKeineDauer() {
+        let karten = HomeZeilen.trainingskarten(tagesliste(
+            einheit(
+                id: "a", startedAt: "2026-09-11T08:32:00Z", completedAt: "2026-09-11T09:06:00Z",
+                completedReason: "auto", setCount: 5, machineIds: ["m1"]),
+            einheit(
+                id: "b", startedAt: "2026-09-11T09:20:00Z", completedAt: "2026-09-11T09:50:00Z",
+                completedReason: "auto", setCount: 3, machineIds: ["m2"])
+        ))
+
+        #expect(karten.count == 1)
+        #expect(HomeZeilen.grosseZeile(karten[0]) == "8 Sätze")
+    }
+
+    /// Endet der letzte Teil selbsttaetig, bleibt die Spanne offen: das
+    /// Ende der Karte ist unbekannt, nicht der letzte Satz.
+    @Test func endetDerLetzteTeilSelbsttaetigZeigtDieKarteNurIhrenBeginn() {
+        let karten = HomeZeilen.trainingskarten(tagesliste(
+            einheit(
+                id: "a", startedAt: "2026-09-11T08:32:00Z", completedAt: "2026-09-11T09:06:00Z",
+                machineIds: ["m1"]),
+            einheit(
+                id: "b", startedAt: "2026-09-11T09:20:00Z", completedAt: "2026-09-11T09:50:00Z",
+                completedReason: "auto", machineIds: ["m2"])
+        ))
+
+        #expect(karten.count == 1)
+        #expect(HomeZeilen.kleineZeile(karten[0]) == "ab \(uhrzeit("2026-09-11T08:32:00Z")) · 2 Geräte")
+    }
+
+    /// Wer nach der Pause an dasselbe Geraet zurueckkehrt, hat kein
+    /// zweites benutzt -- die Summe der `machineCount` waere hier 3.
+    @Test func dasselbeGeraetInZweiTeilenIstEinGeraet() {
+        let karten = HomeZeilen.trainingskarten(tagesliste(
+            einheit(
+                id: "a", startedAt: "2026-09-11T08:32:00Z", completedAt: "2026-09-11T09:06:00Z",
+                machineIds: ["m1", "m2"]),
+            einheit(
+                id: "b", startedAt: "2026-09-11T09:20:00Z", completedAt: "2026-09-11T09:50:00Z",
+                machineIds: ["m2"])
+        ))
+
+        #expect(karten.count == 1)
+        #expect(HomeZeilen.kleineZeile(karten[0])
+            == "\(spanne("2026-09-11T08:32:00Z", "2026-09-11T09:50:00Z")) · 2 Geräte")
+    }
+
+    /// Ohne lesbares Ende gibt es keine Luecke, weder zur vorigen noch zur
+    /// naechsten Einheit -- ohne diese Regel wuerden alle drei Einheiten
+    /// hier zu einer Karte (je 10 Minuten Abstand).
+    @Test func eineEinheitOhneLesbaresEndeStehtAllein() {
+        let karten = HomeZeilen.trainingskarten(tagesliste(
+            einheit(id: "a", startedAt: "2026-09-11T08:00:00Z", completedAt: "2026-09-11T08:30:00Z"),
+            einheit(id: "b", startedAt: "2026-09-11T08:40:00Z", completedAt: "nicht lesbar"),
+            einheit(id: "c", startedAt: "2026-09-11T08:50:00Z", completedAt: "2026-09-11T09:20:00Z")
+        ))
+
+        #expect(karten.map { $0.teile.map(\.id) } == [["c"], ["b"], ["a"]])
+    }
+
+    /// Eine Karte aus einem einzigen Teil darf nicht anders aussehen als
+    /// die Einheit selbst -- sonst haette der Tages-Ausklapper zwei
+    /// Darstellungen derselben Sache.
+    @Test func eineKarteAusEinemTeilZeigtDieselbenZeilenWieDieEinheit() {
+        for einzeln in [einheit(), einheit(completedReason: "auto"), einheit(machineCount: 1, setCount: 1)] {
+            let karten = HomeZeilen.trainingskarten([einzeln])
+
+            #expect(karten.count == 1)
+            #expect(HomeZeilen.grosseZeile(karten[0]) == HomeZeilen.grosseZeile(einzeln))
+            #expect(HomeZeilen.kleineZeile(karten[0]) == HomeZeilen.kleineZeile(einzeln))
+        }
+    }
+
+    /// Die Karte traegt die Id ihres aeltesten Teils: die Route ins Detail
+    /// bleibt `sessionDetail(id:)`, und das Detail sucht sich die uebrigen
+    /// Teile selbst.
+    @Test func dieKarteTraegtDieIdIhresAeltestenTeils() {
+        let karten = HomeZeilen.trainingskarten(tagesliste(
+            einheit(id: "a", startedAt: "2026-09-11T08:32:00Z", completedAt: "2026-09-11T09:06:00Z"),
+            einheit(id: "b", startedAt: "2026-09-11T09:20:00Z", completedAt: "2026-09-11T09:50:00Z")
+        ))
+
+        #expect(karten.map(\.id) == ["a"])
+    }
+
+    /// Das Detail bekommt die Id eines beliebigen Teils und muss die ganze
+    /// Karte finden -- auch die des zweiten Teils.
+    @Test func karteFuerFindetDieKarteZuJedemTeil() {
+        let einheiten = tagesliste(
+            einheit(id: "a", startedAt: "2026-09-11T08:32:00Z", completedAt: "2026-09-11T09:06:00Z"),
+            einheit(id: "b", startedAt: "2026-09-11T09:20:00Z", completedAt: "2026-09-11T09:50:00Z"),
+            einheit(id: "c", startedAt: "2026-09-11T14:00:00Z", completedAt: "2026-09-11T14:30:00Z")
+        )
+
+        #expect(HomeZeilen.karte(fuer: "b", in: einheiten)?.teile.map(\.id) == ["a", "b"])
+        #expect(HomeZeilen.karte(fuer: "c", in: einheiten)?.teile.map(\.id) == ["c"])
+        #expect(HomeZeilen.karte(fuer: "unbekannt", in: einheiten) == nil)
     }
 }

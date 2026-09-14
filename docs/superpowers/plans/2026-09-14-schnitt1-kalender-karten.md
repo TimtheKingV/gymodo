@@ -63,15 +63,15 @@ Die große Zeit der zusammengefassten Karte ist die **summierte Trainingszeit**,
   - `HomeZeilen.grosseZeile(_ karte: Trainingskarte) -> String`, `HomeZeilen.kleineZeile(_ karte: Trainingskarte) -> String` — dieselben zwei Zeilen wie in Task 1, über alle Teile gerechnet
   - `HomeZeilen.karte(fuer sessionId: String, in einheiten: [SessionSummary]) -> Trainingskarte?` — für das Detail (Task 5)
 
-- [ ] **Step 1: Tests schreiben.** Die Fälle, die wehtun:
+- [x] **Step 1: Tests schreiben.** Die Fälle, die wehtun:
   - zwei Einheiten mit 14 Minuten Lücke → eine Karte, Dauer = Summe der Teile
   - zwei Einheiten mit 68 Minuten Lücke → zwei Karten
   - genau 60 Minuten → zwei Karten (die Grenze gehört nach oben, nicht nach unten)
   - ein auto beendeter Teil → zählt für Sätze und Geräte, aber nicht für die Dauer; trägt die Karte nur auto beendete Teile, steht keine Dauer da
   - derselbe `machineId` in zwei Teilen → ein Gerät
   - eine Einheit ohne lesbares `completedAt` steht allein (sie kann keine Lücke begründen)
-- [ ] **Step 2: `trainingskarten` implementieren.** Aufsteigend sortieren, falten, am Ende umdrehen. Kein `Date()` in der Ableitung — alles kommt aus den Zeitstempeln.
-- [ ] **Step 3: `xcodebuild test`.**
+- [x] **Step 2: `trainingskarten` implementieren.** Aufsteigend sortieren, falten, am Ende umdrehen. Kein `Date()` in der Ableitung — alles kommt aus den Zeitstempeln.
+- [x] **Step 3: `xcodebuild test`.**
 
 ---
 
