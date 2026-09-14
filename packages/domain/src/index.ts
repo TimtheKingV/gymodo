@@ -67,7 +67,18 @@ export type {
   StudioExercise,
 } from "./catalog.js";
 export { getBootstrap } from "./bootstrap.js";
-export { anzeigenameSchema, pruefeAnzeigename, setDisplayName } from "./profil.js";
+export {
+  anzeigenameSchema,
+  pruefeAnzeigename,
+  profilSchema,
+  pruefeProfil,
+  updateProfile,
+  zuProfil,
+  SEX,
+  AGE_BANDS,
+  TRAINING_GOALS,
+} from "./profil.js";
+export type { Profil, ProfilEingabe } from "./profil.js";
 export { getProgress, progressOptionsSchema } from "./progress.js";
 export type { ExerciseProgress, Progress, ProgressOptions, ProgressPoint } from "./progress.js";
 export { getSessions, serienstand, zaehleDieseWoche } from "./sessions.js";
