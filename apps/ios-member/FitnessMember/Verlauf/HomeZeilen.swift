@@ -36,10 +36,8 @@ enum HomeZeilen {
     /// Die gerundeten Minuten hinter `dauerText` -- die Karte summiert sie
     /// ueber ihre Teile und braucht sie deshalb als Zahl.
     private static func dauerMinuten(_ session: SessionSummary) -> Int? {
-        guard session.completedReason != "auto",
-              let endeIso = session.completedAt,
-              let start = Zeitpunkt.parse(session.startedAt),
-              let ende = Zeitpunkt.parse(endeIso)
+        guard let start = Zeitpunkt.parse(session.startedAt),
+              let ende = gueltigesEnde(session)
         else { return nil }
 
         return Int((ende.timeIntervalSince(start) / 60).rounded())
@@ -68,13 +66,39 @@ enum HomeZeilen {
     /// selbsttaetig beendeten: ihr Ende liegt beim letzten Satz, nicht beim
     /// Ende des Trainings (siehe dauerText).
     static func zeitraum(_ einheit: SessionSummary) -> String? {
-        guard einheit.completedReason != "auto",
-              let start = Zeitpunkt.parse(einheit.startedAt),
-              let endeIso = einheit.completedAt,
-              let ende = Zeitpunkt.parse(endeIso)
+        guard let start = Zeitpunkt.parse(einheit.startedAt),
+              let ende = gueltigesEnde(einheit)
         else { return nil }
 
-        return "\(Zahlformat.uhrzeit(start)) – \(Zahlformat.uhrzeit(ende))"
+        return zeitangabe(beginn: start, ende: ende)
+    }
+
+    /// "08:32 – 09:06", sonst "ab 08:32" -- die Ueberschrift ueber den
+    /// Bloecken eines Teils im Session-Detail. Sie steht nur da, wo eine
+    /// Karte mehrere Teile traegt, und muss dann sagen, welcher Teil
+    /// darunter liegt; die Uhrzeit ist das Einzige, was sie unterscheidet.
+    ///
+    /// Ohne lesbaren Beginn bleibt sie leer: eine Ueberschrift ohne Zeit
+    /// sagt weniger als keine, und erfunden wird keine (designsystem.md SS10).
+    static func teilUeberschrift(_ einheit: SessionSummary) -> String {
+        zeitangabe(beginn: Zeitpunkt.parse(einheit.startedAt), ende: gueltigesEnde(einheit)) ?? ""
+    }
+
+    /// Das BESTAETIGTE Ende einer Einheit. `nil` bei einer selbsttaetig
+    /// beendeten: getSessions setzt deren Ende auf den letzten Satz, das
+    /// ist der letzte Satz und nicht das Ende des Trainings (siehe dauerText).
+    private static func gueltigesEnde(_ einheit: SessionSummary) -> Date? {
+        guard einheit.completedReason != "auto", let endeIso = einheit.completedAt else { return nil }
+        return Zeitpunkt.parse(endeIso)
+    }
+
+    /// Die eine Stelle, an der aus zwei Zeitpunkten Text wird: "08:32 – 09:06"
+    /// mit Ende, "ab 08:32" ohne. Ueberschrift, kleine Zeile der Einheit und
+    /// kleine Zeile der Karte sagen dasselbe und sollen es gleich schreiben.
+    private static func zeitangabe(beginn: Date?, ende: Date?) -> String? {
+        guard let beginn else { return nil }
+        guard let ende else { return "ab \(Zahlformat.uhrzeit(beginn))" }
+        return "\(Zahlformat.uhrzeit(beginn)) – \(Zahlformat.uhrzeit(ende))"
     }
 
     /// "41 min · 3 Sätze" -- die grosse Zeile der getauschten Karte (Plan
@@ -95,9 +119,8 @@ enum HomeZeilen {
     /// ein erfundenes Ende waere schlimmer als ein offener Zeitraum.
     static func kleineZeile(_ einheit: SessionSummary) -> String {
         let geraete = zahlWortMitPlural(einheit.machineCount, singular: "Gerät", plural: "Geräte")
-        if let zeitraum = zeitraum(einheit) { return "\(zeitraum) · \(geraete)" }
-        guard let start = Zeitpunkt.parse(einheit.startedAt) else { return geraete }
-        return "ab \(Zahlformat.uhrzeit(start)) · \(geraete)"
+        let zeit = zeitangabe(beginn: Zeitpunkt.parse(einheit.startedAt), ende: gueltigesEnde(einheit))
+        return [zeit, geraete].compactMap { $0 }.joined(separator: " · ")
     }
 
     // MARK: - Benachbarte Einheiten werden eine Karte
@@ -171,16 +194,11 @@ enum HomeZeilen {
     static func kleineZeile(_ karte: Trainingskarte) -> String {
         let geraete = zahlWortMitPlural(
             verschiedeneGeraete(karte), singular: "Gerät", plural: "Geräte")
+        let spanne = zeitangabe(
+            beginn: Zeitpunkt.parse(karte.teile[0].startedAt),
+            ende: gueltigesEnde(karte.teile[karte.teile.count - 1]))
 
-        guard let start = Zeitpunkt.parse(karte.teile[0].startedAt) else { return geraete }
-
-        let letzter = karte.teile[karte.teile.count - 1]
-        if letzter.completedReason != "auto",
-           let endeIso = letzter.completedAt,
-           let ende = Zeitpunkt.parse(endeIso) {
-            return "\(Zahlformat.uhrzeit(start)) – \(Zahlformat.uhrzeit(ende)) · \(geraete)"
-        }
-        return "ab \(Zahlformat.uhrzeit(start)) · \(geraete)"
+        return [spanne, geraete].compactMap { $0 }.joined(separator: " · ")
     }
 
     private static func verschiedeneGeraete(_ karte: Trainingskarte) -> Int {
@@ -220,21 +238,6 @@ enum HomeZeilen {
         else { return nil }
 
         return (beginn, ende)
-    }
-
-    /// "18:04 – 18:51 · 47 min · 3 Geräte · 8 Sätze" -- die Zeile unter dem Datum
-    /// im Session-Detail. Bei einer selbsttaetig beendeten Einheit entfallen
-    /// Zeitraum und Dauer: ihr Ende liegt beim letzten Satz, nicht beim Ende
-    /// des Trainings.
-    static func detailUntertitel(_ einheit: SessionSummary) -> String {
-        var teile: [String] = []
-
-        if let zeitraum = zeitraum(einheit) { teile.append(zeitraum) }
-        if let dauer = dauerText(einheit) { teile.append(dauer) }
-        teile.append(zahlWortMitPlural(einheit.machineCount, singular: "Gerät", plural: "Geräte"))
-        teile.append(zahlWortMitPlural(einheit.setCount, singular: "Satz", plural: "Sätze"))
-
-        return teile.joined(separator: " · ")
     }
 
     /// Helper fuer Singular/Plural bei Zaehler > 1.

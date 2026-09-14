@@ -97,24 +97,7 @@ struct HomeZeilenTests {
         #expect(HomeZeilen.tageHerLabel(2) == "Tage her")
     }
 
-    @Test func detailUntertitelZeigtZeitraumUndDauerFuerEineManuellBeendeteEinheit() {
-        let session = einheit()
-        #expect(HomeZeilen.detailUntertitel(session) == "\(zeitraum(session)) · 47 min · 3 Geräte · 8 Sätze")
-    }
-
-    @Test func detailUntertitelLaesstZeitraumUndDauerFuerEineSelbsttaetigBeendeteEinheitWeg() {
-        #expect(HomeZeilen.detailUntertitel(einheit(completedReason: "auto")) == "3 Geräte · 8 Sätze")
-    }
-
-    @Test func detailUntertitelUnterscheidetEinzahlUndMehrzahlBeiGeraetenUndSaetzen() {
-        let eins = einheit(machineCount: 1, setCount: 1)
-        #expect(HomeZeilen.detailUntertitel(eins) == "\(zeitraum(eins)) · 47 min · 1 Gerät · 1 Satz")
-
-        let mehrere = einheit(machineCount: 2, setCount: 2)
-        #expect(HomeZeilen.detailUntertitel(mehrere) == "\(zeitraum(mehrere)) · 47 min · 2 Geräte · 2 Sätze")
-    }
-
-    /// Baut dieselbe "18:04 – 18:51"-Angabe wie HomeZeilen.detailUntertitel
+    /// Baut dieselbe "18:04 – 18:51"-Angabe wie HomeZeilen.zeitraum
     /// aus denselben Zeitpunkten, statt sie als Text vorherzusagen:
     /// Zahlformat.uhrzeit folgt TimeZone.current (richtig -- die Zeit
     /// gehoert dem Geraet, siehe Zahlformat-Kommentar), ein woertlich
@@ -136,6 +119,28 @@ struct HomeZeilenTests {
 
     @Test func eineEinheitOhneEndeHatKeinenZeitraum() {
         #expect(HomeZeilen.zeitraum(einheit(completedAt: nil)) == nil)
+    }
+
+    // MARK: - Die Ueberschrift eines Teils im Detail
+
+    /// Eine Karte, die zwei Einheiten zeigt, oeffnet ein Detail mit zwei
+    /// Teilen -- jeder Teil steht unter seiner eigenen Uhrzeit, sonst
+    /// waere nicht zu sehen, wo der eine aufhoert und der naechste anfaengt.
+    @Test func teilUeberschriftZeigtDenZeitraumDesTeils() {
+        let session = einheit()
+        #expect(HomeZeilen.teilUeberschrift(session) == zeitraum(session))
+    }
+
+    /// Ein erfundenes Ende waere schlimmer als ein offener Zeitraum -- wie
+    /// in der kleinen Zeile bleibt die Ueberschrift beim Beginn.
+    @Test func teilUeberschriftZeigtNurDenBeginnBeiEinemSelbsttaetigBeendetenTeil() {
+        let auto = einheit(completedReason: "auto")
+        #expect(HomeZeilen.teilUeberschrift(auto) == "ab \(uhrzeit(auto.startedAt))")
+    }
+
+    @Test func teilUeberschriftZeigtOhneEndeNurDenBeginn() {
+        let offen = einheit(completedAt: nil, completedReason: nil)
+        #expect(HomeZeilen.teilUeberschrift(offen) == "ab \(uhrzeit(offen.startedAt))")
     }
 
     // MARK: - Die getauschten Zeilen (Zeit/Saetze gross, Uhrzeit/Geraete klein)

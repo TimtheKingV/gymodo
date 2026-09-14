@@ -128,10 +128,10 @@ Wird eine zusammengefasste Karte angetippt, gehören alle ihre Teile in das Deta
 **Files:**
 - Modify: `apps/ios-member/FitnessMember/Screens/Home/SessionDetailView.swift`
 
-- [ ] **Step 1: Die Teile über `HomeZeilen.karte(fuer:in:)` aus `verlauf.sessions` holen**, statt `first { $0.id == sessionId }`. Fällt die Einheit aus dem geladenen Fenster, bleibt der vorhandene Satz „Diese Einheit steht nicht mehr im Verlauf."
-- [ ] **Step 2: Kopf über alle Teile** — Datum wie bisher, Untertitel aus `grosseZeile`/`kleineZeile` der Karte.
-- [ ] **Step 3: Je Teil eine Überschrift mit seinem Zeitraum**, darunter dessen Blöcke — aber nur, wenn die Karte mehr als einen Teil hat. Bei einem Teil bleibt der Screen wie er ist.
-- [ ] **Step 4: `xcodebuild test`.**
+- [x] **Step 1: Die Teile über `HomeZeilen.karte(fuer:in:)` aus `verlauf.sessions` holen**, statt `first { $0.id == sessionId }`. Fällt die Einheit aus dem geladenen Fenster, bleibt der vorhandene Satz „Diese Einheit steht nicht mehr im Verlauf."
+- [x] **Step 2: Kopf über alle Teile** — Datum wie bisher, Untertitel aus `grosseZeile`/`kleineZeile` der Karte.
+- [x] **Step 3: Je Teil eine Überschrift mit seinem Zeitraum**, darunter dessen Blöcke — aber nur, wenn die Karte mehr als einen Teil hat. Bei einem Teil bleibt der Screen wie er ist.
+- [x] **Step 4: `xcodebuild test`.**
 
 ---
 
