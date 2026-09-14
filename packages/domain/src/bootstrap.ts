@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
+import type { Messpunkt } from "./measurements.js";
 import type { Profil } from "./profil.js";
 import { zuProfil } from "./profil.js";
 
@@ -18,7 +19,13 @@ export type Bootstrap = {
    * entscheidet im Client ueber das Onboarding-Gate, deshalb haengt es am
    * Abruf, der ohnehin bei jedem Start laeuft.
    */
-  member: Profil;
+  member: Profil & {
+    /**
+     * Der juengste Gewichtseintrag, damit die Gewichtskarte auf Home ohne
+     * eigenen Verlaufsabruf einen Wert zeigt. Die Ziele folgen in Aufgabe 3.
+     */
+    latestWeight: Messpunkt | null;
+  };
   studios: Array<{ id: string; name: string; timezone: string }>;
   machines: Array<{
     id: string;
@@ -169,6 +176,14 @@ export async function getBootstrap(
     .from("profiles")
     .select("display_name, sex, age_band, height_cm, training_goal, onboarding_completed_at")
     .eq("id", userId)
+    .maybeSingle();
+
+  const { data: weightRow } = await client
+    .from("body_measurements")
+    .select("measured_on, weight_kg")
+    .eq("user_id", userId)
+    .order("measured_on", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   const hashesByMachine = new Map<string, string[]>();
@@ -324,13 +339,18 @@ export async function getBootstrap(
     exercises: exercisesByModel.get(row.equipment_models.id) ?? [],
   }));
 
+  const weight = weightRow as { measured_on: string; weight_kg: number | string } | null;
+
   return {
-    member: zuProfil(
-      (profilRow as Parameters<typeof zuProfil>[0] | null) ?? {
-        display_name: null, sex: null, age_band: null, height_cm: null,
-        training_goal: null, onboarding_completed_at: null,
-      },
-    ),
+    member: {
+      ...zuProfil(
+        (profilRow as Parameters<typeof zuProfil>[0] | null) ?? {
+          display_name: null, sex: null, age_band: null, height_cm: null,
+          training_goal: null, onboarding_completed_at: null,
+        },
+      ),
+      latestWeight: weight ? { measuredOn: weight.measured_on, weightKg: Number(weight.weight_kg) } : null,
+    },
     studios: (studioRows ?? []) as Bootstrap["studios"],
     machines,
     calibrations,

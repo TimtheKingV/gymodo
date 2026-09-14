@@ -81,6 +81,15 @@ export {
 export type { Profil, ProfilEingabe } from "./profil.js";
 export { getProgress, progressOptionsSchema } from "./progress.js";
 export type { ExerciseProgress, Progress, ProgressOptions, ProgressPoint } from "./progress.js";
+export {
+  messwertSchema,
+  pruefeMesswert,
+  zielErreicht,
+  getMeasurements,
+  putMeasurement,
+  deleteMeasurement,
+} from "./measurements.js";
+export type { Measurements, Messpunkt, RecordedMeasurement } from "./measurements.js";
 export { getSessions, serienstand, zaehleDieseWoche } from "./sessions.js";
 export type {
   Serienstand,
