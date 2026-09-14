@@ -11,6 +11,35 @@ import Foundation
 struct BootstrapResponse: Decodable, Equatable, Sendable {
     struct Member: Decodable, Equatable, Sendable {
         let displayName: String?
+        let sex: String?
+        let ageBand: String?
+        let heightCm: Int?
+        let trainingGoal: String?
+        let onboardingCompletedAt: String?
+        /// Die aktiven Ziele -- weeklyDays und/oder targetWeight, siehe
+        /// AktiveZiele im Server.
+        let goals: Ziele
+        /// Der juengste Gewichtseintrag, damit die Gewichtskarte auf Home
+        /// ohne eigenen Verlaufsabruf einen Wert zeigt.
+        let latestWeight: Messwert?
+
+        /// Eigener Init mit Vorgaben statt des synthetisierten: bestehende
+        /// Testdaten (GeraetEinstiegTests) bauen nur `displayName` und
+        /// sollen mit den neuen Feldern weiter kompilieren.
+        init(
+            displayName: String?, sex: String? = nil, ageBand: String? = nil,
+            heightCm: Int? = nil, trainingGoal: String? = nil, onboardingCompletedAt: String? = nil,
+            goals: Ziele = Ziele(weeklyDays: nil, targetWeight: nil), latestWeight: Messwert? = nil
+        ) {
+            self.displayName = displayName
+            self.sex = sex
+            self.ageBand = ageBand
+            self.heightCm = heightCm
+            self.trainingGoal = trainingGoal
+            self.onboardingCompletedAt = onboardingCompletedAt
+            self.goals = goals
+            self.latestWeight = latestWeight
+        }
     }
 
     struct Studio: Decodable, Equatable, Identifiable {
@@ -81,6 +110,18 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
     let lastSets: [LastSet]
 }
 
-struct AnzeigenameWrite: Encodable { let displayName: String }
-
-struct ProfilAntwort: Decodable, Equatable { let displayName: String }
+/// Antwort auf `PUT /me/profile` -- die sechs Profilfelder, OHNE `goals`
+/// und `latestWeight`: die schreibt dieser Weg nicht mit (R14). Anders
+/// als `BootstrapResponse.Member`, deshalb ein eigener Typ statt
+/// desselben.
+///
+/// Sendable explizit, aus demselben Grund wie `Member`: der Rueckgabeweg
+/// laeuft ueber den Actor (`APIClient.updateProfile`).
+struct ProfilAntwort: Decodable, Equatable, Sendable {
+    let displayName: String?
+    let sex: String?
+    let ageBand: String?
+    let heightCm: Int?
+    let trainingGoal: String?
+    let onboardingCompletedAt: String?
+}

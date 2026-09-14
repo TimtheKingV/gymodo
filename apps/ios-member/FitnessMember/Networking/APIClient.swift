@@ -122,12 +122,43 @@ actor APIClient {
         try await sendNoBody("course-sessions/\(sessionId)/booking", method: "DELETE")
     }
 
-    // MARK: - Profil (Sub-Projekt 4, ausserhalb M1-Spec SS6.3)
+    // MARK: - Profil, Koerperdaten und Ziele (Sub-Projekt 4, ausserhalb M1-Spec SS6.3)
 
-    /// Der einzige Schreibweg des Namens -- Registrierung wie spaeteres
-    /// Aendern. Die Antwort traegt den geputzten Namen zurueck.
+    /// Der einzige Schreibweg des Profils -- Registrierung (nur der
+    /// Name), Onboarding (alles auf einmal), Profil (ein Feld, oder eins
+    /// auf `null`). Die Antwort traegt den geputzten Stand zurueck.
+    func updateProfile(_ body: ProfilWrite) async throws(APIError) -> ProfilAntwort {
+        try await send("me/profile", method: "PUT", body: body)
+    }
+
+    /// Bequemlichkeit fuer die Registrierung -- ein Name, kein Teilobjekt
+    /// zum Zusammenbauen an der Aufrufstelle.
     func setDisplayName(_ name: String) async throws(APIError) -> ProfilAntwort {
-        try await send("me/profile", method: "PUT", body: AnzeigenameWrite(displayName: name))
+        try await updateProfile(ProfilWrite(displayName: .setzen(name)))
+    }
+
+    func measurements() async throws(APIError) -> MeasurementsResponse {
+        try await get("me/measurements")
+    }
+
+    func putMeasurement(_ body: MesswertWrite) async throws(APIError) -> MesswertAntwort {
+        try await send("me/measurements", method: "PUT", body: body)
+    }
+
+    /// Ein Tag ohne Eintrag ist danach genau das -- kein Fehler, auch
+    /// beim zweiten Aufruf (204, siehe Server-Route).
+    func deleteMeasurement(measuredOn: String) async throws(APIError) {
+        try await executeNoContent(path: "me/measurements/\(measuredOn)", method: "DELETE")
+    }
+
+    func setGoal(_ body: ZielWrite) async throws(APIError) -> Ziel {
+        try await send("me/goals", method: "PUT", body: body)
+    }
+
+    /// Aufgeben, nicht loeschen -- kein aktives Ziel dieser Sorte ist
+    /// kein Fehler, auch beim zweiten Aufruf (204, siehe Server-Route).
+    func dropGoal(kind: String) async throws(APIError) {
+        try await executeNoContent(path: "me/goals/\(kind)", method: "DELETE")
     }
 
     // MARK: - Hilfsmethoden

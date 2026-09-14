@@ -40,6 +40,21 @@ struct Serienstand: Codable, Equatable {
     let today: String
     /// Die Tage der laufenden Woche mit mindestens einer Einheit.
     let trainedDays: [String]
+    /// Das aktive Wochenziel, oder `nil` ohne eins. Liegt NEBEN der
+    /// Serie, nicht in ihr -- die Serie zaehlt weiter jede Woche mit
+    /// mindestens einer Einheit, dieses Feld rechnet keine zweite
+    /// Schwelle nach (siehe `Serienstand.weeklyTarget` im Server,
+    /// Migration 0043). Optional, auch weil ein Cache von vor dieser
+    /// Fassung das Feld nicht kennt.
+    let weeklyTarget: Int?
+
+    init(weeks: Int, weekStart: String, today: String, trainedDays: [String], weeklyTarget: Int? = nil) {
+        self.weeks = weeks
+        self.weekStart = weekStart
+        self.today = today
+        self.trainedDays = trainedDays
+        self.weeklyTarget = weeklyTarget
+    }
 }
 
 /// Codable statt nur Decodable (Aufgabe 5): derselbe Grund wie bei

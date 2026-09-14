@@ -17,6 +17,11 @@ struct GespeicherterVerlauf: Codable {
     let sessions: [SessionSummary]
     let summary: SessionsSummary
     let fortschritt: [ExerciseProgress]
+    /// Optional, beides (Aufgabe 5): ein Cache von vor dieser Fassung
+    /// kennt weder Messwerte noch ihre Kopfzeile, und muss trotzdem
+    /// weiter dekodieren.
+    let messwerte: [Messwert]?
+    let messwertKopf: MeasurementsResponse.Summary?
 }
 
 /// Wie `KurseFileStore` und `SessionFileStore`: App-Support-Verzeichnis,
