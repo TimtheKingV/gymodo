@@ -96,11 +96,11 @@ Die Regel — **heute = Akzentring, gewählt = weiße Füllung** — bekommt gen
   - sonst → keine Füllung, Vordergrund `textMuted` (heute) bzw. `textFaint`
   - heute → Ring `accent` 1,5 pt, unabhängig von allem anderen; gewählt UND heute zeigt beides
 
-- [ ] **Step 1: Tests für `Kalenderfarben`** — die sechs Kombinationen aus (gewählt, trainiert, heute), plus: gewählt und heute ergibt weiße Füllung UND Ring.
-- [ ] **Step 2: Komponente bauen**, `strokeBorder` statt `stroke` (der Ring liegt innen, sonst wandern die Spalten).
-- [ ] **Step 3: `HomeSerieView.zelle` durch die Komponente ersetzen.** Der Dokukommentar am Typ („Zwei Kanaele an der Tageszelle") wandert mit — er beschreibt jetzt die Komponente.
-- [ ] **Step 4: `KurseWochenView.tagesboxen` ebenso.** Der Punkt unter der Zelle (`punkt(indikator)`) bleibt, wo er ist. Die Kommentare an `tagesboxen` und an der Datei („Die einzige AkzentFLAECHE des Screens: nur der gewaehlte Tag") sind danach falsch und werden umgeschrieben: die einzige Akzentfläche ist jetzt der Umschalter.
-- [ ] **Step 5: `xcodegen generate`, `xcodebuild test`.**
+- [x] **Step 1: Tests für `Kalenderfarben`** — die sechs Kombinationen aus (gewählt, trainiert, heute), plus: gewählt und heute ergibt weiße Füllung UND Ring.
+- [x] **Step 2: Komponente bauen**, `strokeBorder` statt `stroke` (der Ring liegt innen, sonst wandern die Spalten).
+- [x] **Step 3: `HomeSerieView.zelle` durch die Komponente ersetzen.** Der Dokukommentar am Typ („Zwei Kanaele an der Tageszelle") wandert mit — er beschreibt jetzt die Komponente.
+- [x] **Step 4: `KurseWochenView.tagesboxen` ebenso.** Der Punkt unter der Zelle (`punkt(indikator)`) bleibt, wo er ist. Die Kommentare an `tagesboxen` und an der Datei („Die einzige AkzentFLAECHE des Screens: nur der gewaehlte Tag") sind danach falsch und werden umgeschrieben: die einzige Akzentfläche ist jetzt der Umschalter.
+- [x] **Step 5: `xcodegen generate`, `xcodebuild test`.**
 
 ---
 

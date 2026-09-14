@@ -27,14 +27,6 @@ enum HomeSerieAuswahl: Equatable {
 /// Einheiten stand darin zweimal mit derselben Ueberschrift. Wer eine
 /// Einheit sucht, tippt jetzt ihren Tag an.
 ///
-/// **Zwei Kanaele an der Tageszelle, und nur zwei.** Die FUELLUNG sagt,
-/// was der Tag ist (nichts, trainiert, gewaehlt), der RING sagt heute.
-/// Weil sie getrennt sind, kollidiert kein Zustand mit einem anderen --
-/// ein Tag kann zugleich heute, trainiert und gewaehlt sein, und alle
-/// drei bleiben lesbar. Der Akzent bleibt dabei eine Linie, keine
-/// Flaeche: designsystem.md SS2 laesst genau eine Akzentflaeche je
-/// Screen zu, und die traegt hier die Flamme.
-///
 /// **Die Flamme steht ueber dem Streifen, nicht darin.** Sie sass links
 /// neben den Tagen und nahm ihnen 68 pt -- sieben Zellen auf 282 pt
 /// standen so dicht, dass der Streifen gestaucht wirkte. Jetzt hat er
@@ -289,38 +281,16 @@ private extension HomeSerieView {
             .foregroundStyle(buchstabenfarbe(tag, istGewaehlt: istGewaehlt))
     }
 
-    /// Die Hantel ERSETZT die Tagesnummer, sie steht nicht daneben. Der
-    /// Streifen beantwortet auf einen Blick "an welchen Tagen", und dafuer
-    /// muss die Antwort die groesste Form in der Zelle sein.
+    /// Nur die Uebersetzung `HomeSerieTag` -> `Kalenderzelle`: die Zelle
+    /// selbst und ihre Farbregel stehen im Designsystem, weil der
+    /// Kursplan dieselbe braucht.
     func zelle(_ tag: HomeSerieTag, istGewaehlt: Bool) -> some View {
-        ZStack {
-            Circle().fill(fuellung(tag, istGewaehlt: istGewaehlt))
-
-            if tag.trainiert {
-                Image(systemName: "dumbbell.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Color.text)
-            } else {
-                Text("\(tag.tagesnummer)")
-                    .font(.system(size: 16, weight: .black).monospacedDigit())
-                    .foregroundStyle(
-                        tag.istHeute ? DesignSystem.Color.textMuted : DesignSystem.Color.textFaint)
-            }
-        }
-        .frame(width: 40, height: 40)
-        // strokeBorder statt stroke: der Ring liegt INNEN und laesst die
-        // Zelle 40 pt breit, sonst sprungen die Spalten um den heutigen
-        // Tag herum auseinander.
-        .overlay(
-            Circle().strokeBorder(
-                DesignSystem.Color.accent, lineWidth: tag.istHeute ? 1.5 : 0))
-        .opacity(tag.ausserhalb ? 0.4 : 1)
-    }
-
-    func fuellung(_ tag: HomeSerieTag, istGewaehlt: Bool) -> Color {
-        if istGewaehlt { return DesignSystem.Color.line }
-        if tag.trainiert { return DesignSystem.Color.surfaceRaised }
-        return .clear
+        Kalenderzelle(
+            inhalt: tag.trainiert ? .hantel : .zahl(tag.tagesnummer),
+            istGewaehlt: istGewaehlt,
+            istHeute: tag.istHeute,
+            trainiert: tag.trainiert,
+            gedeckt: tag.ausserhalb)
     }
 
     func buchstabenfarbe(_ tag: HomeSerieTag, istGewaehlt: Bool) -> Color {

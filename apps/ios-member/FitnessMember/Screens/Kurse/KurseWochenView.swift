@@ -159,8 +159,8 @@ enum KurseWochenBerechnung {
     /// Dieselben sieben Tage, aber fuer eine BELIEBIGE Woche -- das ist,
     /// was der wischbare Streifen braucht. `jetzt` bleibt getrennt, weil
     /// nur daran haengt, welcher Tag `istHeute` traegt: in einer kuenftigen
-    /// Woche ist das keiner, und der Streifen traegt dort folglich keine
-    /// Akzentflaeche ohne Anlass.
+    /// Woche ist das keiner, und der Streifen traegt dort folglich keinen
+    /// Akzentring ohne Anlass.
     static func wochentage(abMontag montag: Date, jetzt: Date, zeitzone: String) -> [KurseWochentag] {
         let kalender = kalender(zeitzone: zeitzone)
         let heute = kalender.startOfDay(for: jetzt)
@@ -224,15 +224,18 @@ enum KurseWochenBerechnung {
 ///    nichts doppelt so gut. Die Tagesueberschrift („Heute · Mi, 9.
 ///    September“) bleibt, sie sagt etwas anderes.
 ///
-/// Vier aeltere Festlegungen gelten unveraendert weiter:
+/// Vier aeltere Festlegungen, die erste davon neu gefasst:
 ///
-/// 1. **Die Ein-Akzent-Regel ist aufgegeben.** Frueher trug dieser Screen
-///    genau eine Akzentflaeche (den gewaehlten Tag). Das laesst sich nicht
-///    halten, wenn die eigenen Anmeldungen mit auf den Screen kommen --
-///    sie MUESSEN sich abheben, sonst war die Zusammenlegung sinnlos.
-///    Die neue Regel: **Flaeche heisst gewaehlt, Kontur heisst deins.**
-///    Nur der gewaehlte Tag ist accent-GEFUELLT; Anmeldungen tragen den
-///    Akzent als Kontur, Plakette und Punkt.
+/// 1. **Die eine Akzentflaeche des Screens ist der Umschalter**
+///    „Angemeldet/Alle Kurse“, nicht mehr der gewaehlte Tag. Der Tag
+///    hatte sie an sich gezogen, obwohl er nicht die Hauptaktion des
+///    Screens ist -- und der heutige Tag blieb dadurch voellig
+///    unmarkiert, weil die Flaeche schon vergeben war. Jetzt ist der
+///    gewaehlte Tag weiss (`text`) und heute traegt den Akzent als RING:
+///    eine Linie kostet keine Flaeche, also stehen beide Aussagen
+///    nebeneinander. Fuer die Anmeldungen bleibt es dabei, dass sie sich
+///    abheben MUESSEN, sonst war die Zusammenlegung sinnlos -- sie
+///    tragen den Akzent als Kontur, Plakette und Punkt.
 /// 2. **Kein ANGEMELDET-Chip mehr.** Zwei Woerter unterschieden die eigene
 ///    Zeile von ihren Nachbarn; jetzt tun es Kontur und Haken. Farbe traegt
 ///    den Status dabei nicht allein: der Haken ist eine Form, und sein
@@ -473,11 +476,13 @@ struct KurseWochenView: View {
 
     /// Die beiden Haelften „Angemeldet“ und „Alle Kurse“.
     ///
-    /// Die gewaehlte Haelfte ist accent-GEFUELLT -- die zweite Akzentflaeche
-    /// des Screens neben dem gewaehlten Tag, und aus demselben Grund
-    /// zulaessig: sie sagt dasselbe Wort („das hier ist gewaehlt“), nicht
-    /// ein zweites. Beide Haelften sind gleich breit, damit keine wie die
-    /// wichtigere aussieht, und beide 44pt hoch (designsystem.md SS4).
+    /// Die gewaehlte Haelfte ist accent-GEFUELLT -- die EINZIGE
+    /// Akzentflaeche des Screens, seit der gewaehlte Tag im Streifen
+    /// weiss ist und heute nur noch einen Ring traegt. Sie steht hier
+    /// richtig, weil der Umschalter die Hauptaktion des Screens ist: er
+    /// entscheidet, was die Liste ueberhaupt zeigt. Beide Haelften sind
+    /// gleich breit, damit keine wie die wichtigere aussieht, und beide
+    /// 44pt hoch (designsystem.md SS4).
     ///
     /// `.isSelected` statt einer zweiten Beschriftung: VoiceOver sagt damit
     /// „ausgewaehlt“, ohne dass der Zustand am Gruen allein haengt.
@@ -569,17 +574,15 @@ struct KurseWochenView: View {
                                 ausgewaehlt
                                     ? DesignSystem.Color.text : DesignSystem.Color.textFaint)
 
-                        ZStack {
-                            // Die einzige AkzentFLAECHE des Screens: nur der
-                            // gewaehlte Tag traegt sie (siehe Festlegung 1 oben).
-                            Circle().fill(ausgewaehlt ? DesignSystem.Color.accent : Color.clear)
-                            Text("\(tag.tagesnummer)")
-                                .font(.system(size: 16, weight: .black).monospacedDigit())
-                                .foregroundStyle(
-                                    ausgewaehlt
-                                        ? DesignSystem.Color.onAccent : DesignSystem.Color.textMuted)
-                        }
-                        .frame(width: 40, height: 40)
+                        // Dieselbe Zelle wie im Home-Kalender -- der
+                        // Kursplan kennt keine trainierten Tage und keine
+                        // Nachbarmonate, beides bleibt deshalb aus.
+                        Kalenderzelle(
+                            inhalt: .zahl(tag.tagesnummer),
+                            istGewaehlt: ausgewaehlt,
+                            istHeute: tag.istHeute,
+                            trainiert: false,
+                            gedeckt: false)
 
                         punkt(indikator)
                     }

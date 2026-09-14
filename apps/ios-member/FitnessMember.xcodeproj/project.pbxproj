@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0075B0E3CF0E786F9D22AFFF /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC66ACF7FB394ECB319166C3 /* APIClient.swift */; };
 		05C4AB096D32DA3E6C4E62D7 /* PressButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CEB043A2F6633F4B756357E /* PressButtonStyle.swift */; };
+		083EDED79E112D31F4F5DE41 /* KalenderzelleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2353FE282D4892F87C027C9B /* KalenderzelleTests.swift */; };
 		0A66C707066A8C209342D669 /* TrainingAbschlussZeilenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05572CBE819B0984F2CACC32 /* TrainingAbschlussZeilenTests.swift */; };
 		0B8F8186023C8395BE77A351 /* EinstellungenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */; };
 		0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */; };
@@ -114,6 +115,7 @@
 		B8218DBF6B9B3168086F00E6 /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82F1E9C17FC9A2A3742B15D /* JSONValue.swift */; };
 		B854BF7F3EC5F92A64658311 /* KurseWochenBerechnungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0D97A63F51670FD637DCAFE /* KurseWochenBerechnungTests.swift */; };
 		B90035F502BFCB437C290355 /* TrainingAbschlussView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5EDFCF55AFA4CDCD53104DC /* TrainingAbschlussView.swift */; };
+		B92439396CE2B728C3A2B5DA /* Kalenderzelle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A96F27D1E2E9BE4F4CC5F986 /* Kalenderzelle.swift */; };
 		BB4049269A55E59A041A3AC8 /* VerlaufHerkunftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F433CFBFAAF0BB5791D28FC9 /* VerlaufHerkunftTests.swift */; };
 		BCCED66A72ECB12C420D30B9 /* Fortschrittsfenster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 941088E8ADF755FB4FCC5B33 /* Fortschrittsfenster.swift */; };
 		C01062BE7395A2DAD05A3EE4 /* AuthLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D6E6743BDCF6E58E971D0CE /* AuthLogicTests.swift */; };
@@ -204,6 +206,7 @@
 		213A5216BA472EAE4240C049 /* MemberPasswortAendernView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortAendernView.swift; sourceTree = "<group>"; };
 		218ADC42D32AAB9758D0AB91 /* LoginMailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginMailView.swift; sourceTree = "<group>"; };
 		22E2DF311877D3BA39FFA5D5 /* ExerciseProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseProgress.swift; sourceTree = "<group>"; };
+		2353FE282D4892F87C027C9B /* KalenderzelleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KalenderzelleTests.swift; sourceTree = "<group>"; };
 		252C3FD021F6C5CB033A8E7D /* Zeitpunkt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zeitpunkt.swift; sourceTree = "<group>"; };
 		25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeDigitsView.swift; sourceTree = "<group>"; };
 		26B1A62413AE0C5835F9E9CA /* RastwerteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RastwerteTests.swift; sourceTree = "<group>"; };
@@ -293,6 +296,7 @@
 		A7C465BC565F5CCD8965C8F8 /* ScanWege.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanWege.swift; sourceTree = "<group>"; };
 		A7F2549F14DFAAA175305BC5 /* VerlaufFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerlaufFileStore.swift; sourceTree = "<group>"; };
 		A8B00715694B1D3131EDABCE /* WertZeile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WertZeile.swift; sourceTree = "<group>"; };
+		A96F27D1E2E9BE4F4CC5F986 /* Kalenderzelle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Kalenderzelle.swift; sourceTree = "<group>"; };
 		A971E16E06A36BD3EA3B0ED4 /* AuthRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthRoute.swift; sourceTree = "<group>"; };
 		ACA345A636C594A2D95A59FD /* WorkoutSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSet.swift; sourceTree = "<group>"; };
 		AF593B1FA0A81491726D24E0 /* Belegungsleiste.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Belegungsleiste.swift; sourceTree = "<group>"; };
@@ -465,6 +469,7 @@
 				1B227508179FE62A4DAA06A0 /* Chip.swift */,
 				25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */,
 				13D8C4AC64870FF3423C494F /* InlineBanner.swift */,
+				A96F27D1E2E9BE4F4CC5F986 /* Kalenderzelle.swift */,
 				58D512A8A7F6C5D60CF41B25 /* LabeledField.swift */,
 				093AF1E26DA1B50273353878 /* PausenRad.swift */,
 				9CEB043A2F6633F4B756357E /* PressButtonStyle.swift */,
@@ -513,6 +518,7 @@
 				28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */,
 				35520B42726A403ECBA04A24 /* HomeSerieTests.swift */,
 				EC41D34D6C45ECA67DC8B7D5 /* HomeZeilenTests.swift */,
+				2353FE282D4892F87C027C9B /* KalenderzelleTests.swift */,
 				02610C837B8435320AACE71B /* KursDetailInhaltTests.swift */,
 				5BEA03DCAFAFE701E8EE10E1 /* KurseAnsichtTests.swift */,
 				10A0239BC8D0EA913F1574D8 /* KurseHerkunftTests.swift */,
@@ -840,6 +846,7 @@
 				750CEBE3A0D07E711D31D94F /* InlineBanner.swift in Sources */,
 				B8218DBF6B9B3168086F00E6 /* JSONValue.swift in Sources */,
 				762BAF4D2EA117D55549EDED /* JoinResult.swift in Sources */,
+				B92439396CE2B728C3A2B5DA /* Kalenderzelle.swift in Sources */,
 				2D961BA7EA388A8E6895AD01 /* KalibrierungSchritt.swift in Sources */,
 				C2DE29ED55762D2C1E529802 /* KursDetailView.swift in Sources */,
 				11BA7A3A80B08733F442CDFE /* KursRoute.swift in Sources */,
@@ -934,6 +941,7 @@
 				E083161F5526B66B7D721901 /* GeraeteAuswahlTests.swift in Sources */,
 				3FC052B589C402381A71036E /* HomeSerieTests.swift in Sources */,
 				223F8FDD1BA1AFE59AF71D8C /* HomeZeilenTests.swift in Sources */,
+				083EDED79E112D31F4F5DE41 /* KalenderzelleTests.swift in Sources */,
 				E5D5C299EF2C249F20BEA4B9 /* KursDetailInhaltTests.swift in Sources */,
 				8E100E38496E1212C0FF9042 /* KursZustandTests.swift in Sources */,
 				235337FF6CD63761130A93E5 /* KurseAnsichtTests.swift in Sources */,
