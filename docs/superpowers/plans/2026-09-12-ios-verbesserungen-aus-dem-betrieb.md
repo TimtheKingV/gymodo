@@ -517,21 +517,20 @@ den drei Oberflächenschnitten, aber vor allem, was auf Einheiten aufbaut.
 Wer die Testdaten früher loswerden will, kann das Löschen (19) auch schon in
 Schnitt 1 mitnehmen — es hängt an nichts.
 
-### Schnitt 5 — Datenmodell und Portalpflege (Server + Portal + Client)
+### Schnitt 5 — Bild der Übung (Server + Portal + Client)
 
-**Punkte 5, 14, 18.** Ein Grund: zwei fehlende Felder an der Übung, beide
-nur mit Pflege im Portal sinnvoll — eine Migration, ein Portalformular, ein
+**Punkte 14, 18.** Ein Grund: ein fehlendes Medium an der Übung, nur mit
+Pflege im Portal sinnvoll — eine Migration, ein Portalfeld, ein
 Durchreichen.
 
-- Muskelgruppe an `exercises` (Aufzählung), Pflege im Portal, Gruppierung im
-  Übungsfortschritt.
 - `instruction_assets.kind` auf `('video','image')`, `duration_s` nullable,
   Bild je Modell und Übung, Pflege neben dem Video.
-- Anzeige: Bild auf dem Geräteeinstieg (Rückfall Gerätefoto, sonst kein
-  Kasten) und in den Fortschrittszeilen.
+- Anzeige auf dem Geräteeinstieg (Rückfall Gerätefoto, sonst kein Kasten)
+  und in den Fortschrittszeilen.
 
-Der teuerste Schnitt, und der einzige, der das Trainerportal anfasst. Er
-steht vor Schnitt 7, weil die Muskelgruppe dort den Hubweg trägt.
+Der einzige Schnitt des ersten Umfangs, der das Trainerportal anfasst — und
+der einzige, der externe Arbeit braucht: ohne hochgeladene Bilder sieht man
+nichts. Deshalb früh anfangen, spät bewerten.
 
 ### Schnitt 6 — Kurse zählen als Einheit (Server + Client)
 
@@ -545,44 +544,57 @@ und Serie lesen ab hier aus zwei Töpfen.
 - Eigene Karte mit Name und Dauer, Antippen führt ins Kursdetail; kein
   Zusammenfassen mit Gerätetrainings.
 
-### Schnitt 7 — Stats und Erfolge (Server + Client)
+### Schnitt 7 — Rekorde und die Grafik (Server + Client)
 
-**Punkte 2, 9.** Ein Grund: alles, was aus der Historie gerechnet wird —
-und der einzige Schnitt, der neue Zahlen erfindet statt vorhandene zu
-zeigen.
+**Punkte 2, 9a.** Ein Grund: alles, was aus der eigenen Historie gerechnet
+wird.
 
-- Rekorde je Gerät und Übung serverseitig (nicht aus dem 50er-Fenster).
-- Verlaufsreihe je Übung für die Grafik auf dem Abschluss.
-- Hubarbeit mit Hubweg-Vorgabe je Muskelgruppe, Vergleichsleiter statt
-  einem festen Auto, überall als Überschlag beschriftet.
+- Rekorde je Gerät und Übung **serverseitig** über die ganze Historie, nicht
+  aus dem 50er-Fenster.
+- Verlaufsreihe **je Übung** für die Grafik auf dem Abschluss-Screen, die
+  Rekordmarke darin.
 - Kurse bleiben außen vor (keine Sätze, kein Volumen).
 
-Zuletzt, weil er auf Schnitt 5 (Muskelgruppe), Schnitt 6 (was zählt) und
-einer sauberen Einheitendefinition aus Schnitt 4 aufsetzt.
+Zuletzt im ersten Umfang, weil er auf einer sauberen Einheitendefinition aus
+Schnitt 4 und auf dem sitzt, was Schnitt 6 zusätzlich zählt.
+
+### Umfang 2 — Muskelgruppe und die übersetzten Stats
+
+**Punkte 5, 9b.** Bewusst abgetrennt: die Muskelgruppe kommt ins
+Datenmodell, aber die Ausgestaltung kommt noch (Aufzählung, Pflege, wer
+zuordnet). Ohne sie hat auch die Hubarbeit keinen Hubweg — beide warten
+zusammen.
+
+- Muskelgruppe an der Übung, Pflege im Portal, Gruppierung im
+  Übungsfortschritt.
+- Hubweg als Vorgabe je Muskelgruppe, daraus die Hubarbeit, daraus die
+  Vergleichsleiter („ein Wasserkasten in den 3. Stock" bis „ein Elefant"),
+  überall als Überschlag beschriftet.
 
 ### Was wovon abhängt
 
 - 12, 13 ⟵ 11 (ohne `radOffen` kein zweites Layout)
 - 15 ⟵ 10 (der frühere Start erzeugt mehr Bruchstücke)
 - 19 ⟶ 10, 20 (die Korrektur für Fehleinheiten und falsche Kurstage)
-- 18 ⟵ 14, 5 (Bild und Muskelgruppe)
-- 9b ⟵ 5 (Hubweg je Muskelgruppe)
+- 18 ⟵ 14 (ohne Übungsbild bliebe das Gerätefoto, für zwei Übungen dasselbe)
+- 9b ⟵ 5 (Hubweg je Muskelgruppe — deshalb beide in Umfang 2)
 - 2 ⟵ 9a (der Rekord ist die Marke in der Grafik)
 
 Alles andere steht für sich und könnte auch einzeln gehen.
 
-## Offene Fragen
+## Entschieden
 
-1. Punkt 2: Grafik je Übung (Gewichtsverlauf über die letzten Einheiten) oder
-   eine je Training?
-2. Punkt 9a: Rekorde vom Server oder aus dem geladenen Fenster gerechnet?
-3. Punkt 9b: Hubweg als gepflegtes Feld, als Vorgabe je Muskelgruppe oder gar
-   nicht (nur Volumen in Kilogramm)?
-4. Punkt 5: Muskelgruppe ins Datenmodell mit Pflege im Portal — oder erst
-   einmal mit einer Vorgabeliste je Studio?
-5. Punkt 10: Einheit ohne einen einzigen Satz — verwerfen (mein Vorschlag)
-   oder als leere Einheit behalten?
-6. Punkt 15: trägt die zusammengefasste Karte die summierte Trainingszeit
-   (ohne die Pause dazwischen) — oder die Spanne von Anfang bis Ende?
-7. Punkt 20: Teilnahme aus der Buchung ableiten (mein Vorschlag) — oder
-   nachfragen bzw. einchecken lassen?
+Alle sieben Fragen der Sammelrunde sind beantwortet (14. September):
+
+1. **Zusammengefasste Karte** trägt die summierte Trainingszeit groß, die
+   Spanne klein daneben — die Pause zählt nicht als Training.
+2. **Einheit ohne Satz** wird verworfen und nie gemeldet.
+3. **Muskelgruppe** kommt ins Datenmodell, aber erst in Umfang 2; wie genau
+   sie geschnitten wird, kommt noch.
+4. **Kursteilnahme** wird aus der Anmeldung abgeleitet.
+5. **Rekorde** rechnet der Server über die ganze Historie.
+6. **Grafik je Übung**, nicht je Training.
+7. **Hubweg** als Vorgabe je Muskelgruppe (damit in Umfang 2).
+
+Offen bleibt nur eines, und es kommt von außen: die Ausgestaltung der
+Muskelgruppe für Umfang 2.
