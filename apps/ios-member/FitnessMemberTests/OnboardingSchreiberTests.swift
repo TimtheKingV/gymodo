@@ -3,9 +3,10 @@ import Testing
 @testable import FitnessMember
 
 /// Ein ausgepacktes `ProfilWrite` -- die Attrappe speichert diesen
-/// Schnappschuss statt `ProfilWrite` selbst: dessen `Feld<T>` traegt kein
-/// `Sendable` (nur `Encodable`, siehe ProfilWrite.swift) und duerfte die
-/// Actor-Grenze der Attrappe deshalb gar nicht ueberqueren.
+/// Schnappschuss statt `ProfilWrite` selbst: dessen `Feld<T>` ist zwar seit
+/// dieser Aufgabe `Sendable` (und darf die Actor-Grenze der Attrappe
+/// deshalb ueberqueren), aber nicht `Equatable` -- ein Schnappschuss aus
+/// einfachen Werten laesst sich dagegen mit `#expect` vergleichen.
 struct ProfilSchreibVersuch: Equatable, Sendable {
     let onboardingDone: Bool?
     let sex: String?
@@ -77,6 +78,18 @@ struct OnboardingSchreiberTests {
         return antworten
     }
 
+    /// Groesse, Gewicht und Wochentage, aber kein "ueber dich" (Geschlecht/
+    /// Altersspanne) und keine Richtung -- der Fall aus R19, der die alte,
+    /// screen-basierte `offen`-Ableitung zu Fall gebracht hatte: das
+    /// Profil-PUT traegt hier NUR die Groesse.
+    private var antwortenOhneUeberDichUndZiel: OnboardingAntworten {
+        var antworten = OnboardingAntworten()
+        antworten.groesseCm = 170
+        antworten.gewichtKg = 65.5
+        antworten.tageProWoche = 4
+        return antworten
+    }
+
     @Test("volle Antworten schreiben in genau dieser Reihenfolge")
     func volleAntwortenReihenfolge() async {
         let fake = FakeProfilSchreibend()
@@ -111,16 +124,17 @@ struct OnboardingSchreiberTests {
             Issue.record("erwartet .teilweise, bekam \(ersterVersuch)")
             return
         }
-        // Reihenfolge wie geschrieben wird: erst Koerper (die gescheiterte
-        // Messung), dann Wochenziel, dann Zielgewicht -- beide noch nicht
-        // einmal versucht, weil beim ersten Fehler abgebrochen wird.
-        #expect(offen == [.koerper, .wieOft, .zielgewicht])
+        // Reihenfolge wie geschrieben wird: erst die gescheiterte Messung,
+        // dann Wochenziel und Zielgewicht -- beide noch nicht einmal
+        // versucht, weil beim ersten Fehler abgebrochen wird.
+        #expect(offen == [.messwert, .wochenziel, .zielgewicht])
 
         let aufrufeNachErstemVersuch = await fake.aufrufe
         #expect(aufrufeNachErstemVersuch == ["updateProfile", "putMeasurement"])
 
-        // Ein zweiter Aufruf mit demselben `offen` wiederholt nur das
-        // Offene -- kein zweites `onboardingDone`.
+        // Ein zweiter Aufruf mit demselben `offen` wiederholt NUR das
+        // Offene, in dieser Reihenfolge -- kein zweites `updateProfile`,
+        // also auch kein zweites `onboardingDone`.
         await fake.lassGelingen("putMeasurement")
         let zweiterVersuch = await OnboardingSchreiber.schreiben(volleAntworten, mit: fake, offen: offen)
         #expect(zweiterVersuch == .fertig)
@@ -134,7 +148,7 @@ struct OnboardingSchreiberTests {
         #expect(profilSchreiben.count == 1)
     }
 
-    @Test("scheitert das Profil, wird nichts weiter versucht -- offen enthaelt alles")
+    @Test("scheitert das Profil, wird nichts weiter versucht -- offen enthaelt alles, was eine Antwort hat")
     func profilScheitertStopptAlles() async {
         let fake = FakeProfilSchreibend()
         await fake.lassFehlschlagen("updateProfile")
@@ -144,8 +158,88 @@ struct OnboardingSchreiberTests {
             Issue.record("erwartet .teilweise, bekam \(ergebnis)")
             return
         }
-        #expect(offen == [.ueberDich, .koerper, .ziel, .wieOft, .zielgewicht])
+        #expect(offen == [.profil, .messwert, .wochenziel, .zielgewicht])
         let aufrufe = await fake.aufrufe
         #expect(aufrufe == ["updateProfile"])
+    }
+
+    @Test("scheitert das Profil bei leeren Antworten, enthaelt offen nur das Profil selbst")
+    func profilScheitertBeiLeerenAntworten() async {
+        let fake = FakeProfilSchreibend()
+        await fake.lassFehlschlagen("updateProfile")
+
+        let ergebnis = await OnboardingSchreiber.schreiben(OnboardingAntworten(), mit: fake)
+        guard case .teilweise(let offen, _) = ergebnis else {
+            Issue.record("erwartet .teilweise, bekam \(ergebnis)")
+            return
+        }
+        #expect(offen == [.profil])
+
+        // Wiederholung schreibt wieder nur das Profil, mit onboardingDone.
+        await fake.lassGelingen("updateProfile")
+        let zweiterVersuch = await OnboardingSchreiber.schreiben(OnboardingAntworten(), mit: fake, offen: offen)
+        #expect(zweiterVersuch == .fertig)
+        let aufrufe = await fake.aufrufe
+        #expect(aufrufe == ["updateProfile", "updateProfile"])
+        let profilSchreiben = await fake.profilSchreiben
+        #expect(profilSchreiben.allSatisfy { $0.onboardingDone == true })
+    }
+
+    // R19: der Fall, der die alte screen-basierte Ableitung zu Fall
+    // gebracht hatte -- Groesse UND Gewicht gesetzt, aber kein "ueber
+    // dich" und keine Richtung. `.koerper` als Screen waere hier
+    // zweideutig; `.profil`/`.messwert` als Schreibvorgaenge sind es nicht.
+    @Test("scheitert das Profil mit Groesse, Gewicht und Wochentagen, bleibt das Profil selbst in offen -- keine Verwechslung mit der Messung")
+    func profilScheitertMitGroesseUndGewicht() async {
+        let fake = FakeProfilSchreibend()
+        await fake.lassFehlschlagen("updateProfile")
+
+        let ergebnis = await OnboardingSchreiber.schreiben(antwortenOhneUeberDichUndZiel, mit: fake)
+        guard case .teilweise(let offen, _) = ergebnis else {
+            Issue.record("erwartet .teilweise, bekam \(ergebnis)")
+            return
+        }
+        #expect(offen == [.profil, .messwert, .wochenziel])
+
+        // Die Wiederholung schreibt das Profil ZUERST -- mit der Groesse
+        // und onboardingDone -- dann erst die Messung und das Wochenziel.
+        await fake.lassGelingen("updateProfile")
+        let zweiterVersuch = await OnboardingSchreiber.schreiben(antwortenOhneUeberDichUndZiel, mit: fake, offen: offen)
+        #expect(zweiterVersuch == .fertig)
+
+        let aufrufe = await fake.aufrufe
+        #expect(aufrufe == ["updateProfile", "updateProfile", "putMeasurement", "setGoal(weekly_days)"])
+        let profilSchreiben = await fake.profilSchreiben
+        #expect(profilSchreiben.count == 2)
+        #expect(profilSchreiben.last?.onboardingDone == true)
+        #expect(profilSchreiben.last?.heightCm == 170)
+    }
+
+    @Test("scheitert ein spaeterer Vorgang bei der Wiederholung, schrumpft offen auf ihn und die folgenden")
+    func spaetererVorgangScheitertBeiWiederholung() async {
+        let fake = FakeProfilSchreibend()
+        await fake.lassFehlschlagen("putMeasurement")
+        let ersterVersuch = await OnboardingSchreiber.schreiben(volleAntworten, mit: fake)
+        guard case .teilweise(let ersteOffen, _) = ersterVersuch else {
+            Issue.record("erwartet .teilweise, bekam \(ersterVersuch)")
+            return
+        }
+        #expect(ersteOffen == [.messwert, .wochenziel, .zielgewicht])
+
+        // Messung gelingt jetzt, aber das Wochenziel scheitert neu.
+        await fake.lassGelingen("putMeasurement")
+        await fake.lassFehlschlagen("setGoal(weekly_days)")
+        let zweiterVersuch = await OnboardingSchreiber.schreiben(volleAntworten, mit: fake, offen: ersteOffen)
+        guard case .teilweise(let zweiteOffen, _) = zweiterVersuch else {
+            Issue.record("erwartet .teilweise, bekam \(zweiterVersuch)")
+            return
+        }
+        #expect(zweiteOffen == [.wochenziel, .zielgewicht])
+
+        let aufrufe = await fake.aufrufe
+        #expect(aufrufe == ["updateProfile", "putMeasurement", "putMeasurement", "setGoal(weekly_days)"])
+        // Kein zweites Profil-PUT in keinem der beiden Versuche.
+        let profilSchreiben = await fake.profilSchreiben
+        #expect(profilSchreiben.count == 1)
     }
 }

@@ -17,11 +17,24 @@ protocol ProfilSchreibend: Sendable {
 
 extension APIClient: ProfilSchreibend {}
 
+/// Die vier Schreibvorgaenge des Onboardings, in Sendereihenfolge.
+///
+/// R19: `offen` merkt sich SCHREIBVORGAENGE, nicht Screens. `OnboardingSchritt`
+/// (fuenf Screens) und diese vier Aufrufe faelen unterschiedlich fein --
+/// `.profil` deckt allein drei Screens ab (ueberDich, die Groesse aus
+/// koerper, ziel), waehrend `koerper` als Screen zugleich zur Messung
+/// gehoert. Eine Wiederholung, die sich Screens merkt, kann diese
+/// Ueberschneidung nicht auflösen (siehe Git-Historie dieser Datei); ein
+/// Schreibvorgang ist dagegen genau ein API-Aufruf und eindeutig.
+enum OnboardingSchreibvorgang: Equatable, Sendable, CaseIterable {
+    case profil, messwert, wochenziel, zielgewicht
+}
+
 /// Das Ergebnis eines Schreibversuchs -- `offen` traegt genug, um einen
 /// Wiederholungsversuch auf genau das zu beschraenken, was noch fehlt.
 enum OnboardingErgebnis: Equatable {
     case fertig
-    case teilweise(offen: [OnboardingSchritt], fehler: APIError)
+    case teilweise(offen: [OnboardingSchreibvorgang], fehler: APIError)
 }
 
 /// Ordnet die Schreibvorgaenge des Onboardings -- eine `enum` mit einer
@@ -32,17 +45,10 @@ enum OnboardingErgebnis: Equatable {
 /// die Ziele danach, oeffnet sich das Gate nicht mehr, aber Home zeigt die
 /// Nachholkarte, und die traegt dieselben Antworten (Spec 5.2).
 enum OnboardingSchreiber {
-    /// Die vier Schreibvorgaenge in Sendereihenfolge. `.profil` deckt drei
-    /// Screens auf einmal ab (ueberDich, die Groesse aus koerper, ziel) --
-    /// ein einzelnes `PUT /me/profile`, kein Screen fuer sich.
-    private enum Aufruf: Int, CaseIterable {
-        case profil, messung, wochenziel, zielgewicht
-    }
-
     static func schreiben(
         _ antworten: OnboardingAntworten,
         mit client: some ProfilSchreibend,
-        offen: [OnboardingSchritt]? = nil
+        offen: [OnboardingSchreibvorgang]? = nil
     ) async -> OnboardingErgebnis {
         if mussLaufen(.profil, antworten: antworten, offen: offen) {
             let schreibvorgang = ProfilWrite(
@@ -55,15 +61,15 @@ enum OnboardingSchreiber {
             do {
                 _ = try await client.updateProfile(schreibvorgang)
             } catch {
-                return .teilweise(offen: offeneSchritte(abFehlerBei: .profil, antworten: antworten), fehler: error)
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .profil, antworten: antworten), fehler: error)
             }
         }
 
-        if mussLaufen(.messung, antworten: antworten, offen: offen) {
+        if mussLaufen(.messwert, antworten: antworten, offen: offen) {
             do {
                 _ = try await client.putMeasurement(MesswertWrite(measuredOn: heute(), weightKg: antworten.gewichtKg!))
             } catch {
-                return .teilweise(offen: offeneSchritte(abFehlerBei: .messung, antworten: antworten), fehler: error)
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .messwert, antworten: antworten), fehler: error)
             }
         }
 
@@ -71,7 +77,7 @@ enum OnboardingSchreiber {
             do {
                 _ = try await client.setGoal(ZielWrite(kind: "weekly_days", targetValue: Double(antworten.tageProWoche!)))
             } catch {
-                return .teilweise(offen: offeneSchritte(abFehlerBei: .wochenziel, antworten: antworten), fehler: error)
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .wochenziel, antworten: antworten), fehler: error)
             }
         }
 
@@ -79,82 +85,45 @@ enum OnboardingSchreiber {
             do {
                 _ = try await client.setGoal(ZielWrite(kind: "target_weight", targetValue: antworten.zielgewichtKg!))
             } catch {
-                return .teilweise(offen: offeneSchritte(abFehlerBei: .zielgewicht, antworten: antworten), fehler: error)
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .zielgewicht, antworten: antworten), fehler: error)
             }
         }
 
         return .fertig
     }
 
-    /// Ob dieser Aufruf in diesem Versuch stattfinden soll.
-    ///
-    /// Erster Versuch (`offen == nil`): das Profil laeuft immer -- es
-    /// setzt `onboardingDone`, auch bei leeren Antworten. Die drei
-    /// anderen laufen nur, wenn es dafuer etwas zu schreiben gibt.
-    ///
-    /// Wiederholung (`offen` gesetzt): `.koerper` ist zweideutig -- es
-    /// steht sowohl fuer die Groesse (Teil des Profils) als auch fuer das
-    /// Gewicht (die Messung). Ein erfolgreich geschriebenes Profil darf
-    /// dadurch kein zweites Mal laufen (R18, kein zweites
-    /// `onboardingDone`); `.koerper` zaehlt fuer das Profil deshalb nur,
-    /// wenn gar kein Gewicht ansteht -- dann kann `.koerper` nur von der
-    /// Groesse stammen, nie von einer Messung, die es nicht gibt.
-    private static func mussLaufen(_ aufruf: Aufruf, antworten: OnboardingAntworten, offen: [OnboardingSchritt]?) -> Bool {
-        switch aufruf {
-        case .profil:
-            guard let offen else { return true }
-            return offen.contains(.ueberDich) || offen.contains(.ziel)
-                || (offen.contains(.koerper) && antworten.gewichtKg == nil)
-        case .messung:
-            guard antworten.gewichtKg != nil else { return false }
-            guard let offen else { return true }
-            return offen.contains(.koerper)
-        case .wochenziel:
-            guard antworten.tageProWoche != nil else { return false }
-            guard let offen else { return true }
-            return offen.contains(.wieOft)
-        case .zielgewicht:
-            guard antworten.zielgewichtKg != nil else { return false }
-            guard let offen else { return true }
-            return offen.contains(.zielgewicht)
+    /// Ob es fuer diesen Vorgang ueberhaupt etwas zu schreiben gibt.
+    /// `.profil` laeuft immer -- er setzt `onboardingDone`, auch bei
+    /// leeren Antworten. Die drei anderen nur, wenn ihr Feld gesetzt ist.
+    private static func hatAntwort(_ vorgang: OnboardingSchreibvorgang, antworten: OnboardingAntworten) -> Bool {
+        switch vorgang {
+        case .profil: true
+        case .messwert: antworten.gewichtKg != nil
+        case .wochenziel: antworten.tageProWoche != nil
+        case .zielgewicht: antworten.zielgewichtKg != nil
         }
     }
 
-    /// Die Schritte, die der jeweilige Aufruf beantwortet -- leer, wenn er
-    /// mangels Antwort gar nicht laeuft. Das Profil faellt auf `.ueberDich`
-    /// als alleinigen Platzhalter zurueck, wenn keins seiner drei Felder
-    /// etwas zu sagen hat: der Aufruf findet trotzdem statt (wegen
-    /// `onboardingDone`) und braucht bei einem Fehler eine gemeldete Stelle.
-    private static func schritte(fuer aufruf: Aufruf, antworten: OnboardingAntworten) -> [OnboardingSchritt] {
-        switch aufruf {
-        case .profil:
-            var schritte: [OnboardingSchritt] = []
-            if antworten.geschlecht != nil || antworten.altersspanne != nil { schritte.append(.ueberDich) }
-            if antworten.groesseCm != nil { schritte.append(.koerper) }
-            if antworten.richtung != nil { schritte.append(.ziel) }
-            return schritte.isEmpty ? [.ueberDich] : schritte
-        case .messung:
-            return antworten.gewichtKg != nil ? [.koerper] : []
-        case .wochenziel:
-            return antworten.tageProWoche != nil ? [.wieOft] : []
-        case .zielgewicht:
-            return antworten.zielgewichtKg != nil ? [.zielgewicht] : []
-        }
+    /// Ob dieser Vorgang in diesem Versuch stattfinden soll.
+    ///
+    /// Erster Versuch (`offen == nil`): jeder Vorgang mit einer Antwort.
+    /// Wiederholung (`offen` gesetzt): nur, wer darin steht -- `offen`
+    /// benennt Schreibvorgaenge (R19), keine Screens, also keine
+    /// Mehrdeutigkeit: ein erfolgreich geschriebenes Profil taucht in
+    /// keinem spaeteren `offen` mehr auf (R18).
+    private static func mussLaufen(_ vorgang: OnboardingSchreibvorgang, antworten: OnboardingAntworten, offen: [OnboardingSchreibvorgang]?) -> Bool {
+        guard hatAntwort(vorgang, antworten: antworten) else { return false }
+        guard let offen else { return true }
+        return offen.contains(vorgang)
     }
 
-    /// `offen` fuer einen Fehler bei `fehlerBei`: dessen eigene Schritte,
-    /// plus die aller spaeteren Aufrufe -- die wurden ja nie versucht,
-    /// weil beim ersten Fehler abgebrochen wird. In Schreibreihenfolge,
-    /// ohne Dopplung (siehe `schritte(fuer:)`, `.koerper` kann zweimal
-    /// auftauchen).
-    private static func offeneSchritte(abFehlerBei fehlerBei: Aufruf, antworten: OnboardingAntworten) -> [OnboardingSchritt] {
-        var ergebnis: [OnboardingSchritt] = []
-        for aufruf in Aufruf.allCases where aufruf.rawValue >= fehlerBei.rawValue {
-            for schritt in schritte(fuer: aufruf, antworten: antworten) where !ergebnis.contains(schritt) {
-                ergebnis.append(schritt)
-            }
-        }
-        return ergebnis
+    /// `offen` fuer einen Fehler bei `fehlerBei`: dieser Vorgang selbst,
+    /// plus alle spaeteren mit einer Antwort -- die wurden nie versucht,
+    /// weil beim ersten Fehler abgebrochen wird. In Schreibreihenfolge.
+    private static func offeneVorgaenge(abFehlerBei fehlerBei: OnboardingSchreibvorgang, antworten: OnboardingAntworten) -> [OnboardingSchreibvorgang] {
+        OnboardingSchreibvorgang.allCases
+            .drop { $0 != fehlerBei }
+            .filter { hatAntwort($0, antworten: antworten) }
     }
 
     /// Das Ortsdatum des Geraets fuer den Gewichtseintrag -- das
