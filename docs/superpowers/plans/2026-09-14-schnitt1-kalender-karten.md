@@ -113,11 +113,11 @@ Oben rechts heißt: in der Kopfzeile neben Flamme und Fußnote, rechtsbündig. N
 **Files:**
 - Modify: `apps/ios-member/FitnessMember/Screens/Home/HomeSerieView.swift`
 
-- [ ] **Step 1: Umschalter in `kopfzeile` ziehen**, Fußnote bekommt `frame(maxWidth: .infinity, alignment: .leading)`, der Umschalter behält seine 44 pt Trefferfläche. Der eigene `umschalter`-Aufruf am Ende des `body` entfällt.
-- [ ] **Step 2: `tagesliste` auf `HomeZeilen.trainingskarten` umstellen.** Die Karte zeigt oben `grosseZeile` in `Typography.wertSekundaer`, darunter `kleineZeile` in `fliesstext`/`textMuted`. Die Marke „AUTO BEENDET" bleibt und steht an der Karte, sobald **ein** Teil auto beendet ist.
-- [ ] **Step 3: `beiAuswahl` gibt die `id` der Karte weiter** (die des ersten Teils) — die Route bleibt `HomeRoute.sessionDetail(id:)`, das Detail sucht sich die Teile selbst (Task 5).
-- [ ] **Step 4: Prüfen, dass die Auswahl weiß ist** (kommt aus Task 3) und dass ein Tag mit zwei zusammengefassten Einheiten nur noch eine Karte zeigt.
-- [ ] **Step 5: `xcodebuild test`.**
+- [x] **Step 1: Umschalter in `kopfzeile` ziehen**, Fußnote bekommt `frame(maxWidth: .infinity, alignment: .leading)`, der Umschalter behält seine 44 pt Trefferfläche. Der eigene `umschalter`-Aufruf am Ende des `body` entfällt.
+- [x] **Step 2: `tagesliste` auf `HomeZeilen.trainingskarten` umstellen.** Die Karte zeigt oben `grosseZeile` in `Typography.wertSekundaer`, darunter `kleineZeile` in `fliesstext`/`textMuted`. Die Marke „AUTO BEENDET" bleibt und steht an der Karte, sobald **ein** Teil auto beendet ist.
+- [x] **Step 3: `beiAuswahl` gibt die `id` der Karte weiter** (die des ersten Teils) — die Route bleibt `HomeRoute.sessionDetail(id:)`, das Detail sucht sich die Teile selbst (Task 5).
+- [x] **Step 4: Prüfen, dass die Auswahl weiß ist** (kommt aus Task 3) und dass ein Tag mit zwei zusammengefassten Einheiten nur noch eine Karte zeigt.
+- [x] **Step 5: `xcodebuild test`.**
 
 ---
 

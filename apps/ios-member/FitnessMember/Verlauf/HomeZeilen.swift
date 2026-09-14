@@ -64,18 +64,6 @@ enum HomeZeilen {
         tage == 1 ? "Tag her" : "Tage her"
     }
 
-    /// "47 min · 3 Geräte · 8 Sätze" -- die Zeile unter der Uhrzeit auf
-    /// einer Tageskarte. Ohne Dauer bei einer selbsttaetig beendeten
-    /// Einheit (siehe dauerText) faellt das erste Glied einfach weg,
-    /// statt eine erfundene Dauer zu zeigen.
-    static func zeilenText(_ einheit: SessionSummary) -> String {
-        let geraete = zahlWortMitPlural(einheit.machineCount, singular: "Gerät", plural: "Geräte")
-        let saetze = zahlWortMitPlural(einheit.setCount, singular: "Satz", plural: "Sätze")
-        return [dauerText(einheit), geraete, saetze]
-            .compactMap { $0 }
-            .joined(separator: " · ")
-    }
-
     /// "18:04 – 18:51" -- der Zeitraum einer Einheit. `nil` bei einer
     /// selbsttaetig beendeten: ihr Ende liegt beim letzten Satz, nicht beim
     /// Ende des Trainings (siehe dauerText).
@@ -104,8 +92,7 @@ enum HomeZeilen {
     /// Uhrzeit und Geraetezahl sagen, was fuer ein Training es war, nicht
     /// wie viel, darum keine Akzentflaeche und keine grosse Schrift dafuer.
     /// "ab 15:36 · 1 Gerät" bei einer selbsttaetig beendeten Einheit --
-    /// ein erfundenes Ende waere schlimmer als ein offener Zeitraum
-    /// (wie bei kartenTitel).
+    /// ein erfundenes Ende waere schlimmer als ein offener Zeitraum.
     static func kleineZeile(_ einheit: SessionSummary) -> String {
         let geraete = zahlWortMitPlural(einheit.machineCount, singular: "Gerät", plural: "Geräte")
         if let zeitraum = zeitraum(einheit) { return "\(zeitraum) · \(geraete)" }
@@ -233,20 +220,6 @@ enum HomeZeilen {
         else { return nil }
 
         return (beginn, ende)
-    }
-
-    /// Die Titelzeile einer Karte im Tages-Ausklapper des Home-Kalenders.
-    ///
-    /// Dort steht die Uhrzeit, wo in "Letzte Trainings" das Datum stand:
-    /// welcher Tag es ist, sagt der Kalender darueber, und zwei Einheiten
-    /// desselben Tages unterscheiden sich nur in der Uhrzeit.
-    ///
-    /// "ab 18:04" bei einer selbsttaetig beendeten Einheit -- ein
-    /// erfundenes Ende waere schlimmer als ein offener Zeitraum.
-    static func kartenTitel(_ einheit: SessionSummary) -> String {
-        if let zeitraum = zeitraum(einheit) { return zeitraum }
-        guard let start = Zeitpunkt.parse(einheit.startedAt) else { return "" }
-        return "ab \(Zahlformat.uhrzeit(start))"
     }
 
     /// "18:04 – 18:51 · 47 min · 3 Geräte · 8 Sätze" -- die Zeile unter dem Datum

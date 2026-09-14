@@ -19,7 +19,7 @@ enum HomeSerieAuswahl: Equatable {
 /// stattdessen den Monat, und das war beim Benutzen schlicht verwirrend:
 /// dieselbe Geste schlug je nach Tag in zwei verschiedene Richtungen
 /// aus, ohne dass man vorher sah, in welche. Auf den Monat fuehrt jetzt
-/// genau eine Stelle, und die steht sichtbar darunter.
+/// genau eine Stelle, und die steht oben rechts in der Kopfzeile.
 ///
 /// **Er ist der Zugang zum Verlauf.** Die fruehere Liste "Letzte
 /// Trainings" ist weggefallen: sie zeigte dieselben Karten noch einmal,
@@ -71,8 +71,6 @@ struct HomeSerieView: View {
             if let gewaehlt, let einheiten = einheitenJeTag[gewaehlt], !einheiten.isEmpty {
                 tagesliste(tagId: gewaehlt, einheiten: einheiten)
             }
-
-            umschalter
         }
         .animation(DesignSystem.Motion.oeffnen, value: monatOffen)
         .animation(DesignSystem.Motion.oeffnen, value: gewaehlt)
@@ -148,6 +146,10 @@ private extension HomeSerieView {
                 .accessibilityLabel(
                     HomeSerie.vorlesetext(wochen: stand.weeks, tage: wochentage))
 
+            // Die dehnbare Stelle der Zeile ist die Fussnote, nicht der
+            // Umschalter: wird der Platz knapp, bricht ihr Satz um, waehrend
+            // das Wort "Monatsansicht" seine Breite behaelt. Ein gestauchter
+            // Umschalter waere schlechter als eine zweizeilige Fussnote.
             Text(
                 HomeSerie.fussnote(
                     gesamt: gesamt, lastSessionAt: lastSessionAt,
@@ -155,6 +157,9 @@ private extension HomeSerieView {
             )
             .font(.system(size: 12, weight: .semibold).monospacedDigit())
             .foregroundStyle(DesignSystem.Color.textFaint)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            umschalterKnopf
         }
     }
 
@@ -310,26 +315,32 @@ private extension HomeSerieView {
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
 
-            ForEach(einheiten) { einheit in
+            // Karten, nicht Einheiten: wer nach einer kurzen Pause
+            // weitermacht, hat einmal trainiert (HomeZeilen.trainingskarten).
+            ForEach(HomeZeilen.trainingskarten(einheiten)) { karte in
                 Button {
-                    beiAuswahl(einheit.id)
+                    // Die Id des aeltesten Teils -- die Route bleibt
+                    // sessionDetail(id:), das Detail sucht sich die uebrigen
+                    // Teile selbst.
+                    beiAuswahl(karte.id)
                 } label: {
-                    tageskarte(einheit)
+                    tageskarte(karte)
                 }
                 .buttonStyle(PressButtonStyle())
+                .accessibilityLabel(kartenLabel(karte))
             }
         }
     }
 
-    func tageskarte(_ einheit: SessionSummary) -> some View {
+    func tageskarte(_ karte: Trainingskarte) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-            Text(HomeZeilen.kartenTitel(einheit))
-                .font(DesignSystem.Typography.uebungsname)
+            Text(HomeZeilen.grosseZeile(karte))
+                .font(DesignSystem.Typography.wertSekundaer)
                 .foregroundStyle(DesignSystem.Color.text)
                 .monospacedDigit()
 
             HStack(spacing: DesignSystem.Spacing.s8) {
-                if einheit.completedReason == "auto" {
+                if istAutoBeendet(karte) {
                     Text("AUTO BEENDET")
                         .font(DesignSystem.Typography.label)
                         .foregroundStyle(DesignSystem.Color.warn)
@@ -339,7 +350,7 @@ private extension HomeSerieView {
                             RoundedRectangle(cornerRadius: DesignSystem.Radius.pille)
                                 .stroke(DesignSystem.Color.warn, lineWidth: 1))
                 }
-                Text(HomeZeilen.zeilenText(einheit))
+                Text(HomeZeilen.kleineZeile(karte))
                     .font(DesignSystem.Typography.fliesstext)
                     .foregroundStyle(DesignSystem.Color.textMuted)
                     .monospacedDigit()
@@ -350,6 +361,14 @@ private extension HomeSerieView {
         .background(DesignSystem.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
+
+    /// Ein Teil genuegt: die Marke sagt, dass an dieser Karte ein Ende
+    /// gesetzt statt bestaetigt wurde. Das gilt fuer die ganze Karte,
+    /// sobald es fuer einen ihrer Teile gilt -- ihre Dauer ist dann eine
+    /// Untergrenze (siehe HomeZeilen.dauerText).
+    func istAutoBeendet(_ karte: Trainingskarte) -> Bool {
+        karte.teile.contains { $0.completedReason == "auto" }
+    }
 }
 
 // MARK: - Umschalter
@@ -357,32 +376,33 @@ private extension HomeSerieView {
 private extension HomeSerieView {
     /// Kein Rahmen und keine volle Breite: ein 48 pt hoher Umriss quer
     /// ueber den Screen wog schwerer als die Karten darueber, um die es
-    /// eigentlich geht. Uebrig bleibt das Wort und ein Winkel darunter,
-    /// rechtsbuendig unter dem Streifen -- der Winkel zeigt in die
-    /// Richtung, in die der Kalender geht.
+    /// eigentlich geht. Uebrig bleibt das Wort und ein Winkel darunter.
+    ///
+    /// Er steht oben rechts in der Kopfzeile, nicht mehr unter dem
+    /// Kalender: die Wochenansicht hat keinen Monatstitel, an dem er
+    /// haengen koennte, und ein Umschalter, der je nach Ansicht woanders
+    /// sitzt, ist zweimal zu suchen -- in der Kopfzeile findet er sich in
+    /// beiden Ansichten an derselben Stelle. Dafuer steht er nicht mehr
+    /// unter der Liste, die er umschaltet; der Winkel zeigt weiterhin in
+    /// die Richtung, in die der Kalender aufgeht.
     ///
     /// Die 44 pt aus designsystem.md SS4 traegt die Trefferflaeche, nicht
-    /// die Schrift: sichtbar sind rund 28, antippbar der ganze Streifen
-    /// rechts.
-    var umschalter: some View {
-        HStack(spacing: 0) {
-            Spacer(minLength: 0)
-            Button {
-                monatOffen.toggle()
-            } label: {
-                VStack(spacing: DesignSystem.Spacing.s4) {
-                    Text(monatOffen ? "Wochenansicht" : "Monatsansicht")
-                        .font(.system(size: 13, weight: .semibold))
-                    Image(systemName: monatOffen ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 11, weight: .bold))
-                }
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .padding(.leading, DesignSystem.Spacing.s24)
-                .frame(minHeight: 44)
-                .contentShape(Rectangle())
+    /// die Schrift: sichtbar sind rund 28.
+    var umschalterKnopf: some View {
+        Button {
+            monatOffen.toggle()
+        } label: {
+            VStack(spacing: DesignSystem.Spacing.s4) {
+                Text(monatOffen ? "Wochenansicht" : "Monatsansicht")
+                    .font(.system(size: 13, weight: .semibold))
+                Image(systemName: monatOffen ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 11, weight: .bold))
             }
-            .buttonStyle(PressButtonStyle())
+            .foregroundStyle(DesignSystem.Color.textMuted)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(PressButtonStyle())
     }
 }
 
@@ -407,6 +427,15 @@ private extension HomeSerieView {
         return teile.joined(separator: " ")
     }
 
+    /// Die Karte als Satz: erst die grosse Zeile (Zeit und Saetze), dann
+    /// die kleine (Uhrzeit und Geraete). Ohne eigenes Label laese VoiceOver
+    /// die Marke "AUTO BEENDET" mitten hinein -- sie steht im Layout vor
+    /// der kleinen Zeile, gehoert im Satz aber ans Ende.
+    func kartenLabel(_ karte: Trainingskarte) -> String {
+        var teile = ["\(HomeZeilen.grosseZeile(karte)). \(HomeZeilen.kleineZeile(karte))."]
+        if istAutoBeendet(karte) { teile.append("Auto beendet.") }
+        return teile.joined(separator: " ")
+    }
 }
 
 // MARK: - Vorschau

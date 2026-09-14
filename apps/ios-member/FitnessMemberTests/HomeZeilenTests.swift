@@ -85,19 +85,6 @@ struct HomeZeilenTests {
         #expect(HomeZeilen.initialen("Lena Marie Wagner") == "LM")
     }
 
-    @Test func zeilenTextUnterscheidetEinzahlUndMehrzahlBeiGeraetenUndSaetzen() {
-        #expect(HomeZeilen.zeilenText(einheit(machineCount: 1, setCount: 1)) == "47 min · 1 Gerät · 1 Satz")
-        #expect(HomeZeilen.zeilenText(einheit(machineCount: 2, setCount: 2)) == "47 min · 2 Geräte · 2 Sätze")
-    }
-
-    /// Die selbsttaetig beendete Einheit hat keine Dauer (dauerText liefert
-    /// nil) -- die Zeile faellt dann auf Geraete und Saetze zurueck, statt
-    /// eine leere erste Angabe vor dem ersten Trennpunkt zu zeigen.
-    @Test func zeilenTextLaesstDieDauerOhneGueltigeWeg() {
-        #expect(HomeZeilen.zeilenText(einheit()) == "47 min · 3 Geräte · 8 Sätze")
-        #expect(HomeZeilen.zeilenText(einheit(completedReason: "auto")) == "3 Geräte · 8 Sätze")
-    }
-
     @Test func veraenderungZeigtVorzeichenUndPlusMinusNullBeiKeinerAenderung() {
         #expect(HomeZeilen.veraenderung(15) == "+15,0")
         #expect(HomeZeilen.veraenderung(-2.5) == "-2,5")
@@ -139,25 +126,12 @@ struct HomeZeilenTests {
         return "\(Zahlformat.uhrzeit(start)) – \(Zahlformat.uhrzeit(ende))"
     }
 
-    // MARK: - Die Karte im Tages-Ausklapper
-
-    /// Die Uhrzeit steht dort, wo in "Letzte Trainings" das Datum stand:
-    /// welcher Tag es ist, sagt der Kalender darueber.
-    @Test func dieKarteTraegtDenZeitraum() {
-        let einheit = einheit()
-
-        #expect(HomeZeilen.kartenTitel(einheit) == HomeZeilen.zeitraum(einheit))
-        #expect(HomeZeilen.zeitraum(einheit)?.contains(" – ") == true)
-    }
+    // MARK: - Der Zeitraum einer Einheit
 
     /// Ein erfundenes Ende waere schlimmer als ein offener Zeitraum -- das
     /// Ende einer selbsttaetig beendeten Einheit liegt beim letzten Satz.
     @Test func eineSelbsttaetigBeendeteEinheitZeigtNurIhrenBeginn() {
-        let auto = einheit(completedReason: "auto")
-
-        #expect(HomeZeilen.zeitraum(auto) == nil)
-        #expect(HomeZeilen.kartenTitel(auto).hasPrefix("ab "))
-        #expect(HomeZeilen.kartenTitel(auto).contains(" – ") == false)
+        #expect(HomeZeilen.zeitraum(einheit(completedReason: "auto")) == nil)
     }
 
     @Test func eineEinheitOhneEndeHatKeinenZeitraum() {
@@ -188,7 +162,7 @@ struct HomeZeilenTests {
 
     /// Ein erfundenes Ende waere schlimmer als ein offener Zeitraum -- die
     /// kleine Zeile zeigt bei einer selbsttaetig beendeten Einheit nur den
-    /// Beginn ("ab 08:32"), wie kartenTitel es heute schon tut.
+    /// Beginn ("ab 08:32").
     @Test func kleineZeileZeigtNurDenBeginnBeiEinerSelbsttaetigBeendetenEinheit() {
         let auto = einheit(completedReason: "auto")
         let start = Zeitpunkt.parse(auto.startedAt)!
@@ -233,6 +207,21 @@ struct HomeZeilenTests {
             == "\(spanne("2026-09-11T08:32:00Z", "2026-09-11T09:50:00Z")) · 3 Geräte")
     }
 
+    /// Gerundet wird JE TEIL, dann summiert -- nicht andersherum: 34:30 und
+    /// 30:30 sind 35 + 31 = 66 Minuten, summiert und dann gerundet waeren
+    /// es 65. Der Weg ueber die Teile haelt eine Karte aus einem Teil mit
+    /// `dauerText` im Gleichklang, und genau das pinnt dieser Test -- die
+    /// Sekunden der beiden Teile trennen die zwei Rechenwege.
+    @Test func dieKarteSummiertJeTeilGerundeteMinuten() {
+        let karten = HomeZeilen.trainingskarten(tagesliste(
+            einheit(id: "a", startedAt: "2026-09-11T08:32:00Z", completedAt: "2026-09-11T09:06:30Z", setCount: 5),
+            einheit(id: "b", startedAt: "2026-09-11T09:20:00Z", completedAt: "2026-09-11T09:50:30Z", setCount: 3)
+        ))
+
+        #expect(karten.count == 1)
+        #expect(HomeZeilen.grosseZeile(karten[0]) == "66 min · 8 Sätze")
+    }
+
     @Test func zweiEinheitenMitLangerLueckeBleibenZweiKarten() {
         let karten = HomeZeilen.trainingskarten(tagesliste(
             einheit(id: "a", startedAt: "2026-09-11T08:32:00Z", completedAt: "2026-09-11T09:06:00Z"),
@@ -242,7 +231,7 @@ struct HomeZeilenTests {
         #expect(karten.map { $0.teile.map(\.id) } == [["b"], ["a"]])
     }
 
-    /// Die Grenze gehoert nach oben: genau 60 Minuten Lücke trennt, 59
+    /// Die Grenze gehoert nach oben: genau 60 Minuten Luecke trennt, 59
     /// fasst zusammen.
     @Test func genauSechzigMinutenLueckeTrennt() {
         func karten(naechsterBeginn: String) -> [[String]] {
