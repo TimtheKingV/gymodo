@@ -150,4 +150,40 @@ struct HomeZeilenTests {
     @Test func eineEinheitOhneEndeHatKeinenZeitraum() {
         #expect(HomeZeilen.zeitraum(einheit(completedAt: nil)) == nil)
     }
+
+    // MARK: - Die getauschten Zeilen (Zeit/Saetze gross, Uhrzeit/Geraete klein)
+
+    @Test func grosseZeileZeigtDauerUndSaetze() {
+        #expect(HomeZeilen.grosseZeile(einheit()) == "47 min · 8 Sätze")
+    }
+
+    /// Die selbsttaetig beendete Einheit hat keine Dauer (dauerText liefert
+    /// nil) -- die grosse Zeile faellt dann auf die Saetze zurueck, statt
+    /// eine leere erste Angabe vor dem Trennpunkt zu zeigen.
+    @Test func grosseZeileLaesstDieDauerOhneGueltigeWeg() {
+        #expect(HomeZeilen.grosseZeile(einheit(completedReason: "auto")) == "8 Sätze")
+    }
+
+    @Test func grosseZeileUnterscheidetEinzahlUndMehrzahlBeiEinemSatz() {
+        #expect(HomeZeilen.grosseZeile(einheit(setCount: 1)) == "47 min · 1 Satz")
+    }
+
+    @Test func kleineZeileZeigtZeitraumUndGeraete() {
+        let session = einheit()
+        #expect(HomeZeilen.kleineZeile(session) == "\(zeitraum(session)) · 3 Geräte")
+    }
+
+    /// Ein erfundenes Ende waere schlimmer als ein offener Zeitraum -- die
+    /// kleine Zeile zeigt bei einer selbsttaetig beendeten Einheit nur den
+    /// Beginn ("ab 08:32"), wie kartenTitel es heute schon tut.
+    @Test func kleineZeileZeigtNurDenBeginnBeiEinerSelbsttaetigBeendetenEinheit() {
+        let auto = einheit(completedReason: "auto")
+        let start = Zeitpunkt.parse(auto.startedAt)!
+        #expect(HomeZeilen.kleineZeile(auto) == "ab \(Zahlformat.uhrzeit(start)) · 3 Geräte")
+    }
+
+    @Test func kleineZeileUnterscheidetEinzahlUndMehrzahlBeiEinemGeraet() {
+        let session = einheit(machineCount: 1)
+        #expect(HomeZeilen.kleineZeile(session) == "\(zeitraum(session)) · 1 Gerät")
+    }
 }

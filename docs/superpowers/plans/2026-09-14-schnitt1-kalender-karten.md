@@ -40,9 +40,9 @@ Die Entscheidung dahinter (Plan Punkt 17): keine Intensität. Die Gerätezahl bl
   - `HomeZeilen.kleineZeile(_ einheit: SessionSummary) -> String` — „15:36 – 16:16 · 1 Gerät"; ohne Zeitraum „ab 15:36 · 1 Gerät"
 - `kartenTitel` und `zeilenText` entfallen, sobald Task 2 und 4 durch sind — bis dahin bleiben sie stehen, damit der Baum grün bleibt.
 
-- [ ] **Step 1: Tests schreiben** (`HomeZeilenTests`): Normalfall, auto beendete Einheit (keine Dauer, kein Zeitraum, „ab 08:32"), Einzahl/Mehrzahl bei einem Satz und einem Gerät.
-- [ ] **Step 2: Beide Funktionen ergänzen**, aufgebaut auf den vorhandenen `dauerText`, `zeitraum`, `zahlWortMitPlural`.
-- [ ] **Step 3: `xcodebuild test`** — grün, bevor ein View angefasst wird.
+- [x] **Step 1: Tests schreiben** (`HomeZeilenTests`): Normalfall, auto beendete Einheit (keine Dauer, kein Zeitraum, „ab 08:32"), Einzahl/Mehrzahl bei einem Satz und einem Gerät.
+- [x] **Step 2: Beide Funktionen ergänzen**, aufgebaut auf den vorhandenen `dauerText`, `zeitraum`, `zahlWortMitPlural`.
+- [x] **Step 3: `xcodebuild test`** — grün, bevor ein View angefasst wird.
 
 ---
 

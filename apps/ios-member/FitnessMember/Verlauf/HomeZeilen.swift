@@ -68,6 +68,30 @@ enum HomeZeilen {
         return "\(Zahlformat.uhrzeit(start)) – \(Zahlformat.uhrzeit(ende))"
     }
 
+    /// "41 min · 3 Sätze" -- die grosse Zeile der getauschten Karte (Plan
+    /// Punkt 17): Zeit und Saetze sagen, wie viel trainiert wurde, das
+    /// gehoert nach oben. Ohne Dauer bei einer selbsttaetig beendeten
+    /// Einheit (siehe dauerText) bleiben nur die Saetze.
+    static func grosseZeile(_ einheit: SessionSummary) -> String {
+        let saetze = zahlWortMitPlural(einheit.setCount, singular: "Satz", plural: "Sätze")
+        return [dauerText(einheit), saetze]
+            .compactMap { $0 }
+            .joined(separator: " · ")
+    }
+
+    /// "15:36 – 16:16 · 1 Gerät" -- die kleine Zeile der getauschten Karte:
+    /// Uhrzeit und Geraetezahl sagen, was fuer ein Training es war, nicht
+    /// wie viel, darum keine Akzentflaeche und keine grosse Schrift dafuer.
+    /// "ab 15:36 · 1 Gerät" bei einer selbsttaetig beendeten Einheit --
+    /// ein erfundenes Ende waere schlimmer als ein offener Zeitraum
+    /// (wie bei kartenTitel).
+    static func kleineZeile(_ einheit: SessionSummary) -> String {
+        let geraete = zahlWortMitPlural(einheit.machineCount, singular: "Gerät", plural: "Geräte")
+        if let zeitraum = zeitraum(einheit) { return "\(zeitraum) · \(geraete)" }
+        guard let start = Zeitpunkt.parse(einheit.startedAt) else { return geraete }
+        return "ab \(Zahlformat.uhrzeit(start)) · \(geraete)"
+    }
+
     /// Die Titelzeile einer Karte im Tages-Ausklapper des Home-Kalenders.
     ///
     /// Dort steht die Uhrzeit, wo in "Letzte Trainings" das Datum stand:
