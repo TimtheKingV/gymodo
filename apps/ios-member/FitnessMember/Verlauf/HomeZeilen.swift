@@ -43,6 +43,42 @@ enum HomeZeilen {
         tage == 1 ? "Tag her" : "Tage her"
     }
 
+    /// Dieselbe Rechnung wie `tageHer`, aber fuer ein reines Ortsdatum
+    /// ("yyyy-MM-dd") statt eines Zeitstempels: `Zeitpunkt.parse` erwartet
+    /// ein volles ISO8601-Datum mit Uhrzeit und scheitert an
+    /// `Messwert.measuredOn`, das nur einen Tag traegt (Aufgabe 8).
+    static func tageHerVonTag(_ tag: String?, jetzt: Date, kalender: Calendar) -> Int? {
+        guard let tag, let zeitpunkt = ortsdatumFormatter.date(from: tag) else { return nil }
+
+        return kalender.dateComponents(
+            [.day],
+            from: kalender.startOfDay(for: zeitpunkt),
+            to: kalender.startOfDay(for: jetzt)
+        ).day
+    }
+
+    /// "heute" / "gestern" / "vor 3 Tagen" -- dieselbe Ausdrucksform wie
+    /// in `HomeSerie.fussnote` ("...zuletzt gestern"), hier aber
+    /// eigenstaendig: die Gewichtskarte (Aufgabe 8) braucht das Datum
+    /// allein, ohne einen Halbsatz drumherum.
+    static func tageHerText(_ tage: Int) -> String {
+        switch tage {
+        case ...0: "heute"
+        case 1: "gestern"
+        default: "vor \(tage) Tagen"
+        }
+    }
+
+    /// en_US_POSIX/UTC fuer ein rein numerisches, festes Ortsdatum --
+    /// dieselbe Begruendung wie bei `HomeSerie.datumsFormatter`.
+    private static let ortsdatumFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+
     /// "47 min · 3 Geräte · 8 Sätze" -- die Zeile unter der Uhrzeit auf
     /// einer Tageskarte. Ohne Dauer bei einer selbsttaetig beendeten
     /// Einheit (siehe dauerText) faellt das erste Glied einfach weg,

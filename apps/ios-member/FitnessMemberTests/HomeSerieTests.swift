@@ -171,6 +171,44 @@ struct HomeSerieTests {
         #expect(text == "Keine laufende Serie. Diese Woche noch nicht trainiert.")
     }
 
+    /// Das Wochenziel ist eine zweite, unabhaengige Aussage neben der
+    /// Serie (nicht-verhandelbare Regel 1) -- VoiceOver muss beide hoeren
+    /// koennen, ohne dass eine die andere ersetzt.
+    @Test func vorlesetextErwaehntDasZielWennEinsSteht() {
+        let text = HomeSerie.vorlesetext(wochen: 6, tage: HomeSerie.tage(stand()), ziel: 3)
+
+        #expect(
+            text
+                == "Serie: 6 Wochen. Diese Woche Montag und Dienstag trainiert. Ziel 3 Tage, 2 erreicht.")
+    }
+
+    @Test func vorlesetextOhneZielBleibtBeiZweiSaetzen() {
+        let text = HomeSerie.vorlesetext(wochen: 6, tage: HomeSerie.tage(stand()))
+
+        #expect(!text.contains("Ziel"))
+    }
+
+    // MARK: - Die Zielzeile
+
+    @Test func zielzeileNenntStandUndZielInDerWoche() {
+        #expect(HomeSerie.zielzeile(trainiert: 2, ziel: 3) == "2 von 3 Tagen diese Woche")
+    }
+
+    @Test func zielzeileMeldetDasZielAlsErreicht() {
+        #expect(HomeSerie.zielzeile(trainiert: 3, ziel: 3) == "3 von 3 Tagen · Ziel erreicht")
+    }
+
+    /// Singular "Tag" bei einem Ziel von genau einem Tag.
+    @Test func zielzeileHaeltDieEinzahlBeiEinemZieltag() {
+        #expect(HomeSerie.zielzeile(trainiert: 0, ziel: 1) == "0 von 1 Tag diese Woche")
+        #expect(HomeSerie.zielzeile(trainiert: 1, ziel: 1) == "1 von 1 Tag · Ziel erreicht")
+    }
+
+    /// Mehr als das Ziel ist erreicht, nicht falsch.
+    @Test func zielzeileUeberDemZielBleibtErreicht() {
+        #expect(HomeSerie.zielzeile(trainiert: 4, ziel: 3) == "4 von 3 Tagen · Ziel erreicht")
+    }
+
     // MARK: - Das Monatsgitter
 
     private func einheit(

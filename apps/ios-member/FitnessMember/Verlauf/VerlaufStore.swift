@@ -26,8 +26,25 @@ final class VerlaufStore {
     /// `messwertEintragen` sie nachzieht.
     private(set) var messwerte: [Messwert] = []
     private(set) var messwertKopf: MeasurementsResponse.Summary?
+    /// Der einmalige "Ziel erreicht"-Moment fuer das Gewicht (Aufgabe 8,
+    /// Brief Entscheidung 2). `BootstrapResponse.Member.goals` kennt nur
+    /// AKTIVE Ziele -- ein erreichtes Zielgewicht steht dort als `null`,
+    /// weil das Ziel dabei abgeschlossen wird. Diese Zeile lebt deshalb
+    /// ausschliesslich im Speicher, ausgeloest durch die Antwort von
+    /// `putMeasurement` (`goalReached`, Aufgabe 9), und verschwindet beim
+    /// naechsten Appstart oder sobald ein neues Zielgewicht gesetzt wird
+    /// (Aufgabe 10, `neuesZielgewichtGesetzt`) -- bewusst NICHT Teil von
+    /// `GespeicherterVerlauf`. Das ist der Preis dafuer, keinen eigenen
+    /// Endpoint "zuletzt erreichte Ziele" zu bauen, statt ihn ungefragt zu
+    /// erfinden.
+    private(set) var erreichtesZielgewicht: ErreichtesZielgewicht?
     private(set) var stand: Date?
     private(set) var ladeZustand: VerlaufLadeZustand = .bereit
+
+    struct ErreichtesZielgewicht: Equatable, Sendable {
+        let weightKg: Double
+        let measuredOn: String
+    }
 
     var herkunft: VerlaufHerkunft { VerlaufHerkunft.bilden(ladeZustand: ladeZustand) }
 
@@ -112,9 +129,23 @@ final class VerlaufStore {
         fortschritt = []
         messwerte = []
         messwertKopf = nil
+        erreichtesZielgewicht = nil
         stand = nil
         ladeZustand = .bereit
         fileStore.save(nil)
+    }
+
+    /// Aufgabe 9 ruft dies nach einer `putMeasurement`-Antwort mit
+    /// `goalReached == true` auf.
+    func zielgewichtErreicht(_ wert: ErreichtesZielgewicht) {
+        erreichtesZielgewicht = wert
+    }
+
+    /// Aufgabe 10 ruft dies auf, sobald ein neues Zielgewicht gesetzt
+    /// wird -- die alte Zeile gehoert zum alten Ziel und darf das neue
+    /// nicht ueberdauern.
+    func neuesZielgewichtGesetzt() {
+        erreichtesZielgewicht = nil
     }
 
     /// Zieht den lokalen Stand sofort nach, statt auf den naechsten

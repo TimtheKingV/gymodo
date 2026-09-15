@@ -18,6 +18,8 @@ import SwiftUI
 /// derselben Ueberschrift. Der Kalender ist jetzt der eine Weg in den
 /// Verlauf: Tag antippen, Karte antippen, Detail.
 struct HomeRootView: View {
+    let apiClient: APIClient
+
     @Environment(VerlaufStore.self) private var verlauf
     @Environment(CatalogStore.self) private var katalog
     @Environment(NetzwerkMonitor.self) private var netz
@@ -64,7 +66,36 @@ struct HomeRootView: View {
                             jetzt: Date(),
                             einheitenJeTag: HomeSerie.einheitenJeTag(
                                 verlauf.sessions, zeitzone: zeitzone),
+                            // Aus DIESEM Abruf (R24), nicht aus den
+                            // Bootstrap-Zielen: „2 von 3 Tagen" braucht
+                            // `trainedDays` und das Wochenziel aus
+                            // demselben Stand, sonst zeigt ein alter Cache
+                            // das eine gegen das andere (Spec 4.5).
+                            wochenziel: serie.weeklyTarget,
                             beiAuswahl: { id in pfad.append(.sessionDetail(id: id)) })
+                    }
+
+                    if let member = katalog.bootstrap?.member {
+                        HomeZieleView(
+                            member: member,
+                            messwerte: verlauf.messwerte,
+                            erreichtesZielgewicht: verlauf.erreichtesZielgewicht,
+                            jetzt: Date(),
+                            apiClient: apiClient,
+                            beiKarteTap: { pfad.append(.gewichtsverlauf) },
+                            beiOnboardingAbgeschlossen: {
+                                Task {
+                                    await katalog.load()
+                                    await neuLaden()
+                                }
+                            },
+                            // "Eintragen" (Aufgabe 9) und "Neues Ziel
+                            // setzen" (Aufgabe 10) existieren als Sheets
+                            // noch nicht (R23) -- jede Zeile, deren
+                            // Callback fehlt, rendert bei sich selbst
+                            // nicht.
+                            beiEintragen: nil,
+                            beiNeuemZiel: nil)
                     }
 
                     if HomeZeilen.abgeschlossene(verlauf.sessions).isEmpty {
@@ -85,6 +116,9 @@ struct HomeRootView: View {
                     SessionDetailView(sessionId: id)
                 case .uebungsfortschritt(let exerciseId):
                     UebungsfortschrittView(exerciseId: exerciseId)
+                case .gewichtsverlauf:
+                    // Aufgabe 9 baut den echten Screen.
+                    PlaceholderView(title: "Gewichtsverlauf")
                 }
             }
             .sheet(isPresented: $scannerOffen) {
