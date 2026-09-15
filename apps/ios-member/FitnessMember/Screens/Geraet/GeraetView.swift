@@ -194,7 +194,7 @@ struct GeraetView: View {
             // Hoehenbudget auf 667 pt nicht hat. Schrumpfen statt kuerzen --
             // ein abgeschnittener Name sagt nicht, an welchem Geraet man
             // steht. Der Name steht ueber der Uebungszeile und nicht neben
-            // "andere Übung", weil der Knopf ihm sonst 100 pt Breite nimmt
+            // "andere Uebung", weil der Knopf ihm sonst 100 pt Breite nimmt
             // und schon "RUDERMASCHINE" auf dem SE umbricht.
             Text(modell.maschine.equipmentModel.name.uppercased())
                 .font(DesignSystem.Typography.geraetename)
@@ -221,11 +221,18 @@ struct GeraetView: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                         .frame(minHeight: 44)
-                        // Die 44 pt Trefferflaeche ragen in die 16 pt Luft
-                        // ueber und unter der Zeile hinein, statt die
-                        // 20-pt-Zeile auf 44 zu strecken: Design SS4 verlangt
-                        // die Trefferflaeche, nicht die Zeilenhoehe -- und die
-                        // 24 pt kostete das Hoehenbudget auf 667 pt.
+                        // Die 44 pt Trefferflaeche ragen je 12 pt aus der
+                        // 20-pt-Zeile heraus, statt sie auf 44 zu strecken:
+                        // Design SS4 verlangt die Trefferflaeche, nicht die
+                        // Zeilenhoehe -- und die 24 pt kostete das
+                        // Hoehenbudget auf 667 pt. Nach unten liegen 16 pt
+                        // Luft bis zur "aendern"-Zeile, es bleiben also 4 pt
+                        // Abstand; nach oben sind es nur 4 pt bis zum
+                        // Geraetenamen, die Flaeche ueberlappt seinen
+                        // Textkasten um rund 8 pt. Der Name ist ein blosser
+                        // Text ohne eigene Trefferflaeche -- es gibt dort
+                        // nichts, womit der Knopf um den Tipp streiten
+                        // koennte.
                         .padding(.vertical, -DesignSystem.Spacing.s12)
                         .buttonStyle(PressButtonStyle())
                 }
