@@ -62,7 +62,11 @@ actor VorschauLader {
     /// zweiten Download desselben Originalfotos an.
     private var laufend: [String: Task<UIImage?, Never>] = [:]
 
-    init(session: URLSession = .shared) {
+    // Ephemeral statt .shared: die URL traegt einen Token, der nur 15
+    // Minuten gilt und bei jedem Oeffnen der Liste ein anderer ist -- eine
+    // im URLCache abgelegte Antwort wuerde nie wieder treffen und dort nur
+    // Platz belegen.
+    init(session: URLSession = URLSession(configuration: .ephemeral)) {
         self.session = session
     }
 

@@ -1,6 +1,7 @@
 import Foundation
 
-/// Was der Training-Tab zwischen Titel und Startwegen zeigt.
+/// Was der Training-Tab in seiner Mitte zeigt -- Titel und Kopf schliessen
+/// sich gegenseitig aus (TrainingRootView), Startwege stehen im Fuss darunter.
 ///
 /// Ein reines enum wie GeraeteAuswahl: Die Wurzel hat genug Lebenszyklus
 /// (Umschalttick, Scan, NFC), die Regel "ohne Training keine Null" soll
@@ -17,7 +18,7 @@ enum TrainingTab {
         /// mitgezaehlten Wert: ein gespeicherter Zeitpunkt ueberlebt
         /// Hintergrund und Sperrbildschirm.
         let startedAt: Date
-        /// nil ohne Satz -- "0 Geraete · 0 Saetze" waere eine Zahl, die
+        /// nil ohne Satz -- "0 Geraete - 0 Saetze" waere eine Zahl, die
         /// nichts Bestaetigtes zeigt (designsystem.md SS10).
         let zahlen: Zahlen?
     }

@@ -498,7 +498,7 @@ Tap darauf in den Training-Tab führt, ist ebenfalls offen.
 
 ## Umsetzung: Schnitte und Reihenfolge
 
-Zwanzig Punkte sind kein Vorhaben, sondern sieben. Geschnitten ist nach
+Einundzwanzig Punkte sind kein Vorhaben, sondern sieben. Geschnitten ist nach
 **einem Grund je Schnitt** — nicht nach Screen und nicht nach Bildnummer:
 was dieselbe Regel ändert, dieselbe Migration braucht oder denselben
 Zustand umbaut, gehört zusammen. Sortiert ist nach **Risiko und
@@ -583,6 +583,10 @@ Durchreichen.
   Bild je Modell und Übung, Pflege neben dem Video.
 - Anzeige auf dem Geräteeinstieg (Rückfall Gerätefoto, sonst kein Kasten)
   und in den Fortschrittszeilen.
+- Vorschaugrößen beim Upload serverseitig erzeugen. Heute lädt die App für
+  die Gerätefotos in der Geräteliste (Schnitt 2) das Original bis 10 MiB
+  herunter und verkleinert nur lokal auf dem Gerät — jede Zeile bezahlt den
+  vollen Download für ein 56-pt-Bild.
 
 Der einzige Schnitt des ersten Umfangs, der das Trainerportal anfasst — und
 der einzige, der externe Arbeit braucht: ohne hochgeladene Bilder sieht man

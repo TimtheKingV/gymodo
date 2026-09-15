@@ -2,8 +2,9 @@ import SwiftUI
 
 /// Leer und laufend sind kein zweiter Screen, sondern zwei Zustaende
 /// derselben Wurzel (TrainingLeer.dc.html / TrainingLaeuft.dc.html). Seit
-/// Schnitt 2 teilen sie sich EIN Geruest aus Titel, Mitte und Fuss -- nur die
-/// Mitte wechselt je nachdem, ob ein Training laeuft.
+/// Schnitt 2 teilen sie sich EIN Geruest aus Mitte und Fuss -- der Titel
+/// gehoert nur noch zum leeren Zustand, im laufenden nimmt der Kopf
+/// ("TRAINING LAEUFT" + Uhr) an derselben Stelle seinen Platz ein.
 ///
 /// Sub-Projekt 2 hatte diese Wurzel als Rumpf gebaut, damit der Kernflow
 /// schliessbar war: POST .../complete brauchte einen Ausloeser,
@@ -21,6 +22,13 @@ struct TrainingRootView: View {
     @State private var pfad: [GeraetRoute] = []
     @State private var scannerOffen = false
     @State private var scanFehler: String?
+    /// Lebt an der Wurzel, nicht in GeraeteAuswahlView: "Geraet waehlen"
+    /// wird bei jedem Geraet neu aufgemacht (Suchen -> zurueck -> naechstes
+    /// Geraet -> Suchen), und eine signierte Foto-URL ist bei jedem Oeffnen
+    /// eine andere. Ohne diesen einen Lader wuerde jedes erneute Oeffnen
+    /// dieselben Originalfotos nochmal herunterladen, obwohl die
+    /// dekodierten Vorschaubilder schon vorliegen.
+    @State private var vorschauLader = VorschauLader()
     /// Der aktive NFC-Scan. Liegt hier und nicht in ScanWege, weil sein
     /// Ergebnis in dieselbe Aufloesung muendet wie der QR-Scan -- und weil
     /// eine laufende Sitzung einen zweiten Tap ueberstehen muss.
@@ -210,7 +218,7 @@ struct TrainingRootView: View {
         }
     }
 
-    // MARK: - Titel (beide Zustaende)
+    // MARK: - Titel (nur leerer Zustand)
 
     private var titel: some View {
         Text("TRAINING")
@@ -298,7 +306,8 @@ struct TrainingRootView: View {
     // MARK: - Laufende Mitte (TrainingLaeuft.dc.html)
 
     /// Kopf, scrollende Geraeteliste, Beenden -- die Mitte des laufenden
-    /// Zustands zwischen Titel und Fuss.
+    /// Zustands zwischen ihrem eigenen Kopf (er ersetzt den Titel) und dem
+    /// gemeinsamen Fuss darunter.
     ///
     /// Bis zum Umbau war der ganze laufende Zustand EIN Scrollinhalt. Die
     /// Knoepfe standen damit hinter der Liste: wer sechs Geraete hatte,
@@ -333,11 +342,18 @@ struct TrainingRootView: View {
                 PrimaryButton(title: "Training beenden") { beenden() }
                 // Zulaessig in textFaint: der Satz erklaert nur eine Alternative,
                 // er traegt selbst nichts (designsystem.md SS2).
+                //
+                // fixedSize(vertical:): ohne das ist dieser Text das einzige
+                // schrumpfbare Kind der Beenden-Gruppe, und auf dem SE (667 pt)
+                // gibt die ScrollView darueber ihre Hoehe nicht her -- der Satz
+                // wuerde auf eine Zeile mit Ellipse zusammengedrueckt statt
+                // umzubrechen.
                 Text("Ohne neuen Satz endet das Training nach vier Stunden von selbst.")
                     .font(.system(size: 12))
                     .foregroundStyle(DesignSystem.Color.textFaint)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, 20)
             // Der Abstand zum Fuss darunter ist s12, nicht s24 wie zwischen
@@ -495,7 +511,7 @@ struct TrainingRootView: View {
     private func ziel(_ route: GeraetRoute) -> some View {
         switch route {
         case .auswahl:
-            GeraeteAuswahlView(fotoLader: apiClient) { machineId in
+            GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader) { machineId in
                 pfad.append(.erkannt(machineId: machineId, token: nil))
             }
         case .erkannt(let machineId, let token):

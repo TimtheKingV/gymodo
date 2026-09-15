@@ -22,6 +22,7 @@ let rudermaschineId: string;
 let beinpresseId: string;
 let latzugId: string;
 let crosstrainerId: string;
+let stepperId: string;
 
 function request(url: string, auth?: string): Request {
   return new Request(url, {
@@ -95,6 +96,37 @@ beforeAll(async () => {
     .insert({ studio_id: studioA, equipment_model_id: beinpresseId, label: "B1" });
   if (beinpresseMachineError) throw beinpresseMachineError;
 
+  // Stepper: gesperrt (status inactive), mit Foto, eigenes Geraet.
+  // Die Liste zeigt gesperrte Geraete gedimmt statt sie auszublenden
+  // ("gesperrte eingeschlossen") -- das Foto muss deshalb auch fuer ein
+  // rein gesperrtes Modell ankommen.
+  const stepperPfad = `${studioA}/${crypto.randomUUID()}.jpg`;
+  const { error: stepperUploadError } = await admin.storage
+    .from("equipment-photos")
+    .upload(stepperPfad, jpegBytes());
+  if (stepperUploadError) throw stepperUploadError;
+
+  const { data: stepper, error: stepperError } = await admin
+    .from("equipment_models")
+    .insert({
+      studio_id: studioA,
+      name: "Stepper",
+      weight_step_kg: 1,
+      photo_path: stepperPfad,
+    })
+    .select("id")
+    .single();
+  if (stepperError) throw stepperError;
+  stepperId = stepper.id;
+
+  const { error: stepperMachineError } = await admin.from("machines").insert({
+    studio_id: studioA,
+    equipment_model_id: stepperId,
+    label: "S1",
+    status: "inactive",
+  });
+  if (stepperMachineError) throw stepperMachineError;
+
   // Latzug: photo_path zeigt auf ein nicht hochgeladenes Objekt.
   const { data: latzug, error: latzugError } = await admin
     .from("equipment_models")
@@ -161,6 +193,23 @@ describe("GET /api/v1/me/machine-photos", () => {
     };
     const eintraege = payload.photos.filter(
       (foto) => foto.equipmentModelId === rudermaschineId,
+    );
+    expect(eintraege).toHaveLength(1);
+
+    const geladen = await fetch(eintraege[0]!.url);
+    expect(geladen.status).toBe(200);
+  });
+
+  it("ein gesperrtes Geraet liefert das Foto seines Modells trotzdem", async () => {
+    const response = await machinePhotosGET(
+      request("http://localhost/api/v1/me/machine-photos", bearerA),
+    );
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as {
+      photos: Array<{ equipmentModelId: string; url: string }>;
+    };
+    const eintraege = payload.photos.filter(
+      (foto) => foto.equipmentModelId === stepperId,
     );
     expect(eintraege).toHaveLength(1);
 

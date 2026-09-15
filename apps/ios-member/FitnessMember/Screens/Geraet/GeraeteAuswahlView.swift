@@ -11,6 +11,11 @@ struct GeraeteAuswahlView: View {
     @Environment(CatalogStore.self) private var katalog
 
     let fotoLader: any GeraetefotosLoading
+    /// Kommt von der Wurzel (TrainingRootView), nicht als eigenes @State
+    /// hier: dieser Screen selbst lebt nur, waehrend er offen ist, der
+    /// Lader dagegen soll ueber mehrere Oeffnungen hinweg gemerkt bleiben
+    /// -- siehe der Kommentar an seinem @State dort.
+    let vorschauLader: VorschauLader
     let beiAuswahl: (String) -> Void
 
     @State private var suchtext = ""
@@ -27,7 +32,6 @@ struct GeraeteAuswahlView: View {
     @State private var fotos: [String: URL] = [:]
     /// Modell -> fertig dekodiertes Vorschaubild.
     @State private var bilder: [String: UIImage] = [:]
-    @State private var vorschauLader = VorschauLader()
 
     /// Abgeleitet statt in `.task` nachtraeglich befuellt: `.task` laeuft
     /// erst NACH dem ersten body-Durchlauf, und der Screen zeigte fuer
@@ -244,6 +248,13 @@ struct GeraeteAuswahlView: View {
         .accessibilityElement(children: .combine)
         .task(id: fotos[eintrag.modellId]) {
             guard let url = fotos[eintrag.modellId], bilder[eintrag.modellId] == nil else { return }
+            // Schnelles Scrollen laesst viele Zeilen kurz durchs Bild fliegen --
+            // ohne diese Wartezeit wuerde jede von ihnen einen Download
+            // anstossen, obwohl sie laengst wieder aus dem Bild ist. task(id:)
+            // storniert sich selbst, sobald die Zeile verschwindet, das
+            // guard danach faengt den Rest ab (Cancellation ist kooperativ).
+            try? await Task.sleep(for: .milliseconds(200))
+            guard !Task.isCancelled else { return }
             bilder[eintrag.modellId] = await vorschauLader.bild(modellId: eintrag.modellId, url: url, kantePixel: 168)
         }
     }

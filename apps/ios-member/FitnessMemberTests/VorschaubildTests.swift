@@ -32,7 +32,7 @@ struct VorschaubildTests {
 
     @Test func vergroessertKleineBilderNicht() throws {
         let bild = try #require(Vorschau.verkleinert(jpeg(breite: 100, hoehe: 80), kantePixel: 168))
-        #expect(bild.width <= 100)
+        #expect(bild.width == 100 && bild.height == 80)
     }
 
     @Test func keinBildGibtNil() {
@@ -43,10 +43,22 @@ struct VorschaubildTests {
 /// Faengt jede Anfrage ab und zaehlt sie -- prueft, dass VorschauLader
 /// gleichzeitige Aufrufe fuer dasselbe Modell buendelt, statt das
 /// Originalfoto zweimal zu laden.
+///
+/// Antwortet verzoegert statt sofort: eine synchrone Antwort war schon
+/// beendet, bevor der zweite gleichzeitige Aufruf ueberhaupt bei
+/// VorschauLader ankam -- der Test bewies dann nicht mehr, dass sich zwei
+/// UEBERLAPPENDE Downloads einen Task teilen, sondern nur, dass zwei
+/// nacheinander liefen.
 private final class ZaehlendesURLProtocol: URLProtocol {
     nonisolated(unsafe) static var anzahl = 0
     nonisolated(unsafe) static var antwort = Data()
     private static let lock = NSLock()
+
+    // Schuetzt `abgebrochen` gegen den gleichzeitigen Zugriff aus
+    // stopLoading() (Aufrufer-Thread) und dem verzoegerten Block unten
+    // (globale Queue).
+    private let eigeneLock = NSLock()
+    private var abgebrochen = false
 
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
@@ -55,13 +67,31 @@ private final class ZaehlendesURLProtocol: URLProtocol {
         Self.lock.lock()
         Self.anzahl += 1
         Self.lock.unlock()
-        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
-        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-        client?.urlProtocol(self, didLoad: Self.antwort)
-        client?.urlProtocolDidFinishLoading(self)
+        // URLProtocol darf sich laut Foundation nicht als Sendable ausgeben
+        // (die Konformitaet ist an der Basisklasse "unavailable"), ein
+        // @Sendable-Escaping-Block wie asyncAfter(...) duerfte self deshalb
+        // gar nicht erst einfangen. nonisolated(unsafe) ist hier zulaessig,
+        // weil die einzige veraenderliche Eigenschaft (abgebrochen) bereits
+        // hinter eigeneLock steckt -- die eigentliche Sicherheit kommt von
+        // dort, nicht von dieser Zusicherung.
+        nonisolated(unsafe) let mich = self
+        DispatchQueue.global().asyncAfter(deadline: .now() + 0.2) {
+            mich.eigeneLock.lock()
+            let abgebrochen = mich.abgebrochen
+            mich.eigeneLock.unlock()
+            guard !abgebrochen else { return }
+            let response = HTTPURLResponse(url: mich.request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            mich.client?.urlProtocol(mich, didReceive: response, cacheStoragePolicy: .notAllowed)
+            mich.client?.urlProtocol(mich, didLoad: Self.antwort)
+            mich.client?.urlProtocolDidFinishLoading(mich)
+        }
     }
 
-    override func stopLoading() {}
+    override func stopLoading() {
+        eigeneLock.lock()
+        abgebrochen = true
+        eigeneLock.unlock()
+    }
 }
 
 @Suite("VorschauLader", .serialized)
