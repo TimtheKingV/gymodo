@@ -25,16 +25,24 @@ präzisiert:
   darunter (`KurseAnsicht`, `KurseWochenView`, `KurseBandView`). Der gewählte
   Tag ist weiterhin akzentgefüllt, **heute trägt weiterhin keine Marke** —
   Punkt 6 steht unverändert, und mit ihm die Regel unten.
-- **Training** hat „Training starten" plus QR / NFC / Suchen
-  (`ScanWege`), und der laufende Zustand zeigt dieselben Scanwege
-  (`laufendInhalt`). Punkt 3 und 8 greifen also an einem Screen, der die
-  Teile schon hat — es geht um Anordnung und die Uhr.
+- **Training** teilt sich seit Schnitt 2 ein Gerüst aus Mitte und Fuß
+  (`TrainingRootView`): die Startwege QR / NFC / Suchen (`ScanWege`) stehen
+  in beiden Zuständen unten im Fuß, darüber steht — nur wenn ein Training
+  läuft — die Mitte mit Uhr, Zahlen, Geräteliste und „Training beenden".
+  Der Titel „TRAINING" steht nur im leeren Zustand; im laufenden übernimmt
+  der Kopf („TRAINING LÄUFT" + Uhr) dessen Platz, damit auf kleinen iPhones
+  genug Höhe für die Geräteliste bleibt. Ohne Training bleibt die Mitte
+  leer. Punkt 3 und 8 sind damit umgesetzt.
 - **Gerät** hat seit `8f73fa0` eine Trainingsuhr im Kopf
   (`GeraetView.trainingsuhr`); `radOffen` gibt es weiterhin, Punkt 11 bis 13
   bleiben wie beschrieben.
 - **Die Karten** heißen jetzt `HomeZeilen.kartenTitel` (Zeitraum, sonst „ab
   18:04") und `zeilenText` („41 min · 1 Gerät · 3 Sätze") — das sind die
   beiden Zeilen, die Punkt 17 tauscht.
+- **Geräteliste** zeigt seit Schnitt 2 ein Vorschaubild je Zeile
+  (`GeraeteAuswahlView.vorschau`, `Vorschau.verkleinert`). Vorschaugrößen am
+  Server gibt es weiterhin nicht — übertragen wird das Originalfoto, die App
+  verkleinert selbst (siehe Schnitt 5).
 
 ## Eine Regel, die mehrfach auftaucht: heute vs. ausgewählt
 
@@ -236,6 +244,18 @@ Was daran hängt:
   nicht erst ab dem ersten Satz — und die Uhr aus Punkt 8 („Training läuft")
   hat einen Anfang, den das Mitglied selbst gesetzt hat.
 
+**Entschieden (15. September): ein eigener Screen „Training starten“.** Die
+Einheit beginnt nicht schon mit dem Tap auf die Übung, sondern auf einem
+eigenen Screen nach Geräte- und Übungswahl. Mit dem Tap dort beginnt die
+Uhr. Das hebt M1-Spec §5.6 („es gibt keinen Startknopf“) auf, die Spec wird
+beim Umsetzen nachgezogen. Für Schnitt 4 offen:
+
+- Kommt der Screen nur, wenn noch kein Training läuft? Das nächste Gerät
+  mitten im Training soll vermutlich ohne ihn auskommen, sonst kostet jeder
+  Gerätewechsel einen Tap mehr.
+- Die Regel für leere Einheiten bleibt nötig: wer „Training starten“
+  drückt und geht, hinterlässt eine Einheit ohne Satz.
+
 *Bild 11. `Screens/Geraet/GeraetEinstieg*`, `Workout/WorkoutSessionStore.swift`.*
 
 ### 11. Satzpfad — die Räder sind immer aktiv
@@ -345,9 +365,13 @@ Die Liste („Rudermaschine · 20 · Freihantelbereich Nord · vor 2 Stunden ·
 7,5 kg") ist reine Typografie. Ein kleines Bild je Zeile macht das Suchen im
 Studio schneller als jeder Name.
 
-Genutzt wird dasselbe Foto wie auf dem Einstieg (`equipment_models.photo_url`),
+Genutzt wird dasselbe Foto wie auf dem Einstieg (`equipment_models.photo_path`),
 also ohne neue Datenhaltung — nur als Vorschaugröße. Ohne Foto bleibt die
 Zeile wie heute, ohne grauen Platzhalterkasten.
+
+Die Liste holt die signierten URLs über `GET /api/v1/me/machine-photos` (der
+Bucket ist privat, das Bootstrap trägt nur Pfade) und dekodiert die Bilder in
+der App direkt auf Vorschaugröße.
 
 *Bild 21. `Workout/GeraeteAuswahl.swift`, `Screens/Geraet/GeraeteAuswahlView.swift`.*
 
@@ -457,9 +481,24 @@ Was daran hängt:
 *`packages/domain/src/sessions.ts`, `Verlauf/VerlaufStore.swift`, `Verlauf/HomeSerie.swift`,*
 *`Screens/Home/HomeRootView.swift`.*
 
+### 21. Home — laufendes Training oben rechts
+
+Läuft ein Training, soll es auch auf Home zu sehen sein, oben rechts: wie
+im Training-Tab mit „Training läuft“ und der gelaufenen Zeit. Ohne
+laufendes Training steht dort nichts, wie in der Mitte des Training-Tabs.
+
+Die Ableitung gibt es mit Schnitt 2 schon (`TrainingTab.mitte`), die
+Anzeige wäre eine zweite Stelle dafür. Offen ist der Platz: oben rechts
+steht seit Schnitt 1 der Umschalter „Monatsansicht/Wochenansicht“ in der
+Kopfzeile von `HomeSerieView`. Einer von beiden muss ausweichen. Ob ein
+Tap darauf in den Training-Tab führt, ist ebenfalls offen.
+
+*Ohne Bild, aus der Besprechung zu Schnitt 2 (15. September).*
+*`Screens/Home/HomeSerieView.swift` (`kopfzeile`), `Workout/TrainingTab.swift`.*
+
 ## Umsetzung: Schnitte und Reihenfolge
 
-Zwanzig Punkte sind kein Vorhaben, sondern sieben. Geschnitten ist nach
+Einundzwanzig Punkte sind kein Vorhaben, sondern sieben. Geschnitten ist nach
 **einem Grund je Schnitt** — nicht nach Screen und nicht nach Bildnummer:
 was dieselbe Regel ändert, dieselbe Migration braucht oder denselben
 Zustand umbaut, gehört zusammen. Sortiert ist nach **Risiko und
@@ -493,14 +532,15 @@ Reine Ableitungen, alle in `HomeZeilen` / `KurseMeineEinteilung` prüfbar —
 der Schnitt kostet wenig und macht die vier folgenden sichtbar besser.
 Er geht zuerst, weil er nichts voraussetzt und nichts blockiert.
 
-### Schnitt 2 — Training-Tab (Client, ohne Server)
+### Schnitt 2 — Training-Tab (Client, ein Endpunkt)
 
 **Punkte 3, 8, 16.** Ein Grund: der Tab soll zeigen, was gerade ist, und den
 Start in die Daumenzone holen.
 
 - Startwege nach unten, laufendes Training samt Uhr in die Mitte.
-- Geräteliste mit Vorschaubild (nutzt `equipment_models.photo_url`, also
-  ohne neue Daten — deshalb hier und nicht im Bilder-Schnitt).
+- Geräteliste mit Vorschaubild (nutzt `equipment_models.photo_path`, also
+  ohne neue Daten — deshalb hier und nicht im Bilder-Schnitt). Die App holt
+  die signierten URLs über `GET /api/v1/me/machine-photos`.
 
 ### Schnitt 3 — Satzpfad am Gerät (Client, ohne Server)
 
@@ -520,8 +560,10 @@ alles weg, was daran hing.
 sich — und beides gehört in denselben Schnitt, weil der frühere Start genau
 die Fehleinheiten erzeugt, die das Löschen wieder wegnimmt.
 
-- Einheit entsteht beim Verlassen des Einstiegsscreens; drei Texte
-  umschreiben; eine Einheit ohne Satz wird verworfen und nie gemeldet.
+- Einheit entsteht auf einem eigenen Screen „Training starten“ nach
+  Geräte- und Übungswahl (entschieden 15. September, siehe Punkt 10), dort
+  beginnt die Uhr; drei Texte umschreiben; M1-Spec §5.6 nachziehen; eine
+  Einheit ohne Satz wird verworfen und nie gemeldet.
 - Delete-Policy auf `workout_sessions` (Sätze per Cascade), Warteschlange
   miträumen.
 - „Verwerfen" auf dem Abschluss-Screen, Löschen im Session-Detail.
@@ -541,6 +583,10 @@ Durchreichen.
   Bild je Modell und Übung, Pflege neben dem Video.
 - Anzeige auf dem Geräteeinstieg (Rückfall Gerätefoto, sonst kein Kasten)
   und in den Fortschrittszeilen.
+- Vorschaugrößen beim Upload serverseitig erzeugen. Heute lädt die App für
+  die Gerätefotos in der Geräteliste (Schnitt 2) das Original bis 10 MiB
+  herunter und verkleinert nur lokal auf dem Gerät — jede Zeile bezahlt den
+  vollen Download für ein 56-pt-Bild.
 
 Der einzige Schnitt des ersten Umfangs, der das Trainerportal anfasst — und
 der einzige, der externe Arbeit braucht: ohne hochgeladene Bilder sieht man
