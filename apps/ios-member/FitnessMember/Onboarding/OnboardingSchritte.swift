@@ -425,6 +425,9 @@ struct ZielSchritt: View {
 /// wann daraus eine echte Antwort wird (R16).
 struct WieOftSchritt: View {
     @Binding var tage: Int
+    /// `false` im Ziel-Sheet: dort steht "Tage pro Woche" schon als Titel
+    /// darueber, ein zweites Mal unter der Zahl waere dieselbe Zeile doppelt.
+    var zeigtBeschriftung: Bool = true
     private let bereich = 1...7
 
     var body: some View {
@@ -433,10 +436,12 @@ struct WieOftSchritt: View {
                 Text(String(tage))
                     .font(.system(size: 96, weight: .black).monospacedDigit())
                     .foregroundStyle(DesignSystem.Color.text)
-                Text("TAGE PRO WOCHE")
-                    .font(DesignSystem.Typography.label)
-                    .tracking(1.5)
-                    .foregroundStyle(DesignSystem.Color.textMuted)
+                if zeigtBeschriftung {
+                    Text("TAGE PRO WOCHE")
+                        .font(DesignSystem.Typography.label)
+                        .tracking(1.5)
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                }
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Tage pro Woche")
@@ -539,7 +544,7 @@ struct ZielgewichtSchritt: View {
     }
 
     /// "noch 4,5 kg · Schritt 0,5 kg" -- eine Differenz eingetragener
-    /// Zahlen, keine Vorhersage und keine Bewertung (Spec Abschnitt 6). Ohne
+    /// Zahlen, keine Bewertung (Spec Abschnitt 6). Ohne
     /// bekanntes aktuelles Gewicht nur der Schritt, statt eine Differenz
     /// zu einer erfundenen Null vorzutaeuschen.
     private var kontextzeile: String {

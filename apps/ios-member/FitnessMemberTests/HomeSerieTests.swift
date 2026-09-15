@@ -209,6 +209,18 @@ struct HomeSerieTests {
         #expect(HomeSerie.zielzeile(trainiert: 4, ziel: 3) == "4 von 3 Tagen · Ziel erreicht")
     }
 
+    // MARK: - Der Zielkopf ueber dem Kalender
+
+    /// "ZIEL 1 TAGE" soll gar nicht erst entstehen koennen -- der View
+    /// setzt die Zeile nur noch in Grossbuchstaben.
+    @Test func zielkopfHaeltDieEinzahlBeiEinemTag() {
+        #expect(HomeSerie.zielkopf(ziel: 1) == "Ziel 1 Tag")
+    }
+
+    @Test func zielkopfSagtTageAbZwei() {
+        #expect(HomeSerie.zielkopf(ziel: 3) == "Ziel 3 Tage")
+    }
+
     // MARK: - Das Monatsgitter
 
     private func einheit(

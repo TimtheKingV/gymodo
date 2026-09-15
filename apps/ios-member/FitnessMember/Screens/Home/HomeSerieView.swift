@@ -77,7 +77,7 @@ struct HomeSerieView: View {
                     .foregroundStyle(DesignSystem.Color.textMuted)
                 Spacer()
                 if let wochenziel {
-                    Text("ZIEL \(wochenziel) TAGE")
+                    Text(HomeSerie.zielkopf(ziel: wochenziel).uppercased())
                         .font(DesignSystem.Typography.label)
                         .tracking(1.5)
                         .foregroundStyle(DesignSystem.Color.textFaint)

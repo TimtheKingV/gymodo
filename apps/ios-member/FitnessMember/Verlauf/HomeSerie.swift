@@ -230,6 +230,13 @@ enum HomeSerie {
         return "\(trainiert) von \(ziel) \(einheit) diese Woche"
     }
 
+    /// "Ziel 3 Tage" / "Ziel 1 Tag" -- rechts ueber dem Kalender. Der View
+    /// setzt die Zeile in Grossbuchstaben; die Einzahl entscheidet sich
+    /// hier, damit "ZIEL 1 TAGE" nicht entstehen kann.
+    static func zielkopf(ziel: Int) -> String {
+        "Ziel \(ziel) \(ziel == 1 ? "Tag" : "Tage")"
+    }
+
     // MARK: - Innereien
 
     private static func bauen(

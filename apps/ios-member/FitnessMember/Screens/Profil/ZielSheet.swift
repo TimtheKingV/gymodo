@@ -139,7 +139,7 @@ struct ZielSheetInhalt: View {
     private var inhalt: some View {
         switch art {
         case .tageProWoche:
-            WieOftSchritt(tage: $tage)
+            WieOftSchritt(tage: $tage, zeigtBeschriftung: false)
         case .zielgewicht:
             ZielgewichtSchritt(gewichtKg: letzterMesswert?.weightKg, zielgewichtKg: $zielgewichtKg)
         }
