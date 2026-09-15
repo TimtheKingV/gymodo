@@ -56,6 +56,7 @@ struct TestnotizMenue: View {
     private var eintraege: [Eintrag] {
         [
             Eintrag(id: "ausschnitt", titel: "Ausschnitt", symbol: "crop") { testnotiz.modus = .ausschnitt },
+            Eintrag(id: "element", titel: "Element", symbol: "hand.tap") { testnotiz.modus = .element },
         ]
     }
 

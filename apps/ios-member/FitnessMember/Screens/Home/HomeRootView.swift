@@ -220,6 +220,7 @@ private extension HomeRootView {
             schritt(3, "Sätze sichern", "Meistens reicht ein Antippen. Das Training startet dabei von selbst.")
 
             PrimaryButton(title: "Erstes Gerät") { scannerOffen = true }
+                .testnotizElement("home.erstes-geraet", typ: "PrimaryButton")
 
             Text("gymodo misst nichts. Es zeigt, was du bestätigst.")
                 .font(DesignSystem.Typography.fliesstext)

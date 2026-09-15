@@ -261,6 +261,7 @@ struct TrainingRootView: View {
                 ? nil
                 : { pfad.append(.auswahl) }
         )
+        .testnotizElement("training.scanwege", typ: "ScanWege")
     }
 
     /// Der aktive NFC-Scan aus der App heraus. Sein Ergebnis geht durch
@@ -332,6 +333,7 @@ struct TrainingRootView: View {
             // das Beenden ist die einzige Aktion hier, die etwas abschliesst
             // -- die Wege darueber tragen den Akzent nur in der Kontur.
             PrimaryButton(title: "Training beenden") { beenden() }
+                .testnotizElement("training.beenden", typ: "PrimaryButton")
             // Zulaessig in textFaint: der Satz erklaert nur eine Alternative,
             // er traegt selbst nichts (designsystem.md SS2).
             Text("Ohne neuen Satz endet das Training nach vier Stunden von selbst.")

@@ -14,6 +14,10 @@ struct TestnotizOberflaeche: View {
                 TestnotizMenue()
             case .ausschnitt:
                 AuswahlOverlay(art: .rechteck, beiRechteck: testnotiz.ausschnittGewaehlt, beiPunkt: { _ in }, beiAbbruch: testnotiz.zurRuhe)
+            case .element:
+                AuswahlOverlay(art: .punkt, beiRechteck: { _ in }, beiPunkt: { punkt in
+                    Task { await testnotiz.elementGewaehlt(punkt) }
+                }, beiAbbruch: testnotiz.zurRuhe)
             }
         }
     }

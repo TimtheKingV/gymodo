@@ -11,7 +11,7 @@ final class Testnotiz {
     static let shared = Testnotiz()
 
     enum Modus: Equatable {
-        case ruhe, menue, ausschnitt
+        case ruhe, menue, ausschnitt, element
     }
 
     /// Was zwischen Knopf-Tipp und Sichern entsteht. Das Foto kommt beim
@@ -32,6 +32,7 @@ final class Testnotiz {
     /// Ruhe jede Beruehrung zur App durch.
     var knopfRahmen: CGRect = .zero
     var stapel = TestnotizScreenStapel()
+    var register = TestnotizElementRegister()
     var entwurf: Entwurf?
     private(set) var eintragsanzahl = 0
     private(set) var letzterFehler: String?
@@ -86,6 +87,19 @@ final class Testnotiz {
         entwurf = neu
         // Bis zum Notiz-Blatt (Aufgabe 7) wird ohne Notiz gesichert.
         Task { await sichern(notiz: nil, audio: nil) }
+    }
+
+    func elementGewaehlt(_ punkt: CGPoint) async {
+        guard var neu = entwurf, let fenster, let szene = fenster.windowScene else {
+            zurRuhe()
+            return
+        }
+        let kandidat = await AccessibilityBaum.element(an: punkt, szene: szene, ohne: fenster)
+        neu.art = .element
+        neu.element = kandidat.map { register.element(aus: $0) }
+        entwurf = neu
+        // Bis zum Notiz-Blatt (Aufgabe 7) wird ohne Notiz gesichert.
+        await sichern(notiz: nil, audio: nil)
     }
 
     /// Das Blatt ist sofort zu; geschrieben wird danach. Wer testet, soll
