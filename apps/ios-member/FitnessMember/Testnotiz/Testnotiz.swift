@@ -58,7 +58,6 @@ final class Testnotiz {
     }
 
     func knopfGetippt() {
-        letzterFehler = nil
         guard let fenster, let szene = fenster.windowScene else { return }
         let screen = stapel.aktueller.map {
             TestnotizEintrag.Screen(name: $0.name, file: $0.datei, stack: stapel.pfad, context: $0.kontext)
@@ -113,6 +112,8 @@ final class Testnotiz {
                 ausschnitt: entwurf.ausschnitt?.pngData(),
                 audio: audio
             )
+            // Erst ein gelungener Eintrag loescht die alte Meldung -- sonst loeschte der naechste Knopf-Tipp sie, bevor das Menue sie zeigt.
+            letzterFehler = nil
             eintragsanzahl = await ablage.anzahl
         } catch {
             letzterFehler = "Nicht gesichert: \(error.localizedDescription)"
