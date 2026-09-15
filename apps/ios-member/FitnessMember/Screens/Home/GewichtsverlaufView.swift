@@ -77,7 +77,7 @@ struct GewichtsverlaufView: View {
                 vorgabe: bearbeitenMesswert?.weightKg,
                 tag: bearbeitenMesswert?.measuredOn ?? GewichtEintragenHilfen.heute(),
                 letzterMesswert: verlauf.messwerte.last,
-                speichern: gewichtSpeichern)
+                speichern: { body in await verlauf.gewichtSpeichern(body, katalogNeuLaden: { await katalog.load() }) })
         }
     }
 
@@ -392,28 +392,6 @@ struct GewichtsverlaufZeile: View {
 // MARK: - Schreiben
 
 private extension GewichtsverlaufView {
-    /// Ruling R25: Server schreiben, danach den lokalen Stand nachziehen;
-    /// bei `goalReached` den einmaligen Moment merken und den Katalog neu
-    /// laden, weil das Zielgewicht dabei serverseitig abgeschlossen wird
-    /// (es steht danach nicht mehr unter den aktiven Zielen).
-    func gewichtSpeichern(_ body: MesswertWrite) async -> String? {
-        do throws(APIError) {
-            let antwort = try await apiClient.putMeasurement(body)
-            verlauf.messwertEintragen(antwort)
-            if antwort.goalReached {
-                verlauf.zielgewichtErreicht(
-                    .init(weightKg: antwort.weightKg, measuredOn: antwort.measuredOn))
-                await katalog.load()
-            }
-            return nil
-        } catch {
-            guard error != .offline else {
-                return "Keine Verbindung. Das Gewicht wurde nicht gespeichert."
-            }
-            return error.servertext
-        }
-    }
-
     /// Ruling: Loeschen ist NICHT optimistisch -- erst der Server, dann
     /// erst `messwertEntfernen`. Misslingt der Aufruf, bleibt die Zeile
     /// stehen und der Fehler steht ueber der Liste, statt eine Zeile

@@ -193,7 +193,7 @@ struct OnboardingFlow: View {
             ))
         case .zielgewicht:
             ZielgewichtSchritt(
-                gewichtKg: antworten.gewichtKg ?? 0,
+                gewichtKg: antworten.gewichtKg,
                 zielgewichtKg: Binding(
                     get: { antworten.zielgewichtKg ?? antworten.gewichtKg ?? 75.0 },
                     set: { antworten.zielgewichtKg = $0 }

@@ -38,6 +38,10 @@ struct HomeRootView: View {
     /// 8) und `apiClient`/`verlauf`/`katalog` fuer den Schreibweg ohnehin
     /// schon in DIESEM View bereitstehen.
     @State private var eintragenOffen = false
+    /// "Neues Ziel setzen" (Aufgabe 10, R23) -- erscheint nur, solange ein
+    /// Zielgewicht erreicht ist (`HomeZiele.Zustand.karte.erreichtText`),
+    /// oeffnet dasselbe `ZielSheet` wie das Profil.
+    @State private var neuesZielOffen = false
 
     /// Einmal aufgeloest, zweimal gelesen: Name fuer den Kopf, Zeitzone
     /// fuer die Buendelung der Einheiten. Dieselbe Ableitung wie
@@ -94,12 +98,8 @@ struct HomeRootView: View {
                                     await neuLaden()
                                 }
                             },
-                            // "Neues Ziel setzen" (Aufgabe 10) existiert
-                            // als Sheet noch nicht (R23) -- die Zeile
-                            // rendert bei sich selbst nicht, solange ihr
-                            // Callback fehlt.
                             beiEintragen: { eintragenOffen = true },
-                            beiNeuemZiel: nil)
+                            beiNeuemZiel: { neuesZielOffen = true })
                     }
 
                     if HomeZeilen.abgeschlossene(verlauf.sessions).isEmpty {
@@ -128,7 +128,22 @@ struct HomeRootView: View {
                 GewichtEintragenSheet(
                     vorgabe: verlauf.messwerte.last?.weightKg,
                     letzterMesswert: verlauf.messwerte.last,
-                    speichern: eintragenSpeichern)
+                    speichern: { body in await verlauf.gewichtSpeichern(body, katalogNeuLaden: { await katalog.load() }) })
+            }
+            .sheet(isPresented: $neuesZielOffen) {
+                ZielSheet(
+                    art: .zielgewicht,
+                    aktiv: katalog.bootstrap?.member.goals.targetWeight,
+                    letzterMesswert: verlauf.messwerte.last,
+                    uebernehmen: { wert in
+                        await ZielSchreiben.setzen(
+                            kind: ZielSheet.Art.zielgewicht.kind, targetValue: wert,
+                            apiClient: apiClient, katalog: katalog, verlauf: verlauf)
+                    },
+                    aufgeben: {
+                        await ZielSchreiben.aufgeben(
+                            kind: ZielSheet.Art.zielgewicht.kind, apiClient: apiClient, katalog: katalog, verlauf: verlauf)
+                    })
             }
             .sheet(isPresented: $scannerOffen) {
                 ScannerSheet(
@@ -171,31 +186,6 @@ private extension HomeRootView {
     /// damit `studioId` nicht an vier Stellen gelesen wird.
     func neuLaden() async {
         await verlauf.laden(studioId: katalog.activeStudioId)
-    }
-
-    /// Ruling R25: Server schreiben, dann den lokalen Stand nachziehen;
-    /// bei `goalReached` den einmaligen Moment merken und den Katalog neu
-    /// laden -- das Zielgewicht ist dabei serverseitig abgeschlossen
-    /// worden und steht danach nicht mehr unter den aktiven Zielen.
-    /// Dieselbe Logik wie `GewichtsverlaufView.gewichtSpeichern` (dort
-    /// fuer das Bearbeiten einer Verlaufszeile), hier fuer den neuen
-    /// Eintrag von Home aus.
-    func eintragenSpeichern(_ body: MesswertWrite) async -> String? {
-        do throws(APIError) {
-            let antwort = try await apiClient.putMeasurement(body)
-            verlauf.messwertEintragen(antwort)
-            if antwort.goalReached {
-                verlauf.zielgewichtErreicht(
-                    .init(weightKg: antwort.weightKg, measuredOn: antwort.measuredOn))
-                await katalog.load()
-            }
-            return nil
-        } catch {
-            guard error != .offline else {
-                return "Keine Verbindung. Das Gewicht wurde nicht gespeichert."
-            }
-            return error.servertext
-        }
     }
 
     @ViewBuilder var kopf: some View {

@@ -183,7 +183,11 @@ private struct OnboardingAbschnitt<Inhalt: View>: View {
 /// Ein Gitter aus `Chip`s, genau eine Auswahl. Ein zweiter Tipp auf die
 /// gewaehlte Chip waehlt ab (Brief Step 2) -- "nichts gewaehlt" ist ein
 /// gueltiger Endzustand, kein Zwischenzustand.
-private struct ChipGitter<Wert: Hashable>: View {
+///
+/// Nicht `private`: `AuswahlSheet` (Aufgabe 10) zeigt Geschlecht, Alter
+/// und Richtung im Profil mit demselben Chip-Gitter statt es ein zweites
+/// Mal zu zeichnen (Aufgabe-10-Brief: "wie im Onboarding").
+struct ChipGitter<Wert: Hashable>: View {
     let werte: [Wert]
     let text: (Wert) -> String
     @Binding var auswahl: Wert?
@@ -239,7 +243,10 @@ struct KoerperSchritt: View {
 /// zum ersten Tipp; der startet bei 170 -- ein Stepper braucht einen
 /// Startwert, und 170 ist die Mitte des moeglichen Bereichs, unabhaengig
 /// davon, ob der erste Tipp Minus oder Plus war (wie beim Gewichtsrad).
-private struct GroesseStepperZeile: View {
+///
+/// Nicht `private`: `GroesseSheet` (Aufgabe 10) reicht dieselbe Zeile
+/// unveraendert durch, statt sie im Profil ein zweites Mal zu bauen.
+struct GroesseStepperZeile: View {
     @Binding var groesseCm: Int?
     private let bereich = 100...250
 
@@ -496,8 +503,16 @@ struct WieOftSchritt: View {
 /// `RastRad` startet beim eingegebenen Gewicht (Spec 5.2, letzte Zeile).
 /// `gewichtKg` ist hier kein `Binding` mehr: Schritt 5 selbst aendert das
 /// Gewicht aus Schritt 2 nie.
+///
+/// `gewichtKg` ist `Double?`, nicht `Double`: im Onboarding steht immer
+/// eines da (Schritt 5 wird ohne Gewicht aus Schritt 2 uebersprungen,
+/// Spec 5.2), aber `ZielSheet` (Aufgabe 10) reicht denselben Typ im
+/// Profil durch, wo ein Zielgewicht auch OHNE je eingetragenes Gewicht
+/// gesetzt werden darf -- die Kontextzeile faellt dann auf den Schritt
+/// allein zurueck, statt eine Differenz zu einer Zahl zu erfinden, die
+/// niemand eingetragen hat (SS5).
 struct ZielgewichtSchritt: View {
-    let gewichtKg: Double
+    let gewichtKg: Double?
     @Binding var zielgewichtKg: Double
 
     private static let werte = Array(stride(from: 20.0, through: 400.0, by: 0.5))
@@ -524,8 +539,11 @@ struct ZielgewichtSchritt: View {
     }
 
     /// "noch 4,5 kg · Schritt 0,5 kg" -- eine Differenz eingetragener
-    /// Zahlen, keine Prognose (designsystem.md, Kein-BMI-Regel).
+    /// Zahlen, keine Prognose (designsystem.md, Kein-BMI-Regel). Ohne
+    /// bekanntes aktuelles Gewicht nur der Schritt, statt eine Differenz
+    /// zu einer erfundenen Null vorzutaeuschen.
     private var kontextzeile: String {
-        "noch \(Zahlformat.gewicht(abs(gewichtKg - zielgewichtKg))) kg · Schritt 0,5 kg"
+        guard let gewichtKg else { return "Schritt 0,5 kg" }
+        return "noch \(Zahlformat.gewicht(abs(gewichtKg - zielgewichtKg))) kg · Schritt 0,5 kg"
     }
 }

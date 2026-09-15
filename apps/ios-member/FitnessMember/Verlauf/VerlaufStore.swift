@@ -7,6 +7,11 @@ protocol VerlaufLoading: Sendable {
     func sessions(studio: String?) async throws(APIError) -> SessionsResponse
     func progress() async throws(APIError) -> [ExerciseProgress]
     func measurements() async throws(APIError) -> MeasurementsResponse
+    /// Aufgabe 10 (Ruling R27): der EINE Schreibweg eines Gewichtseintrags
+    /// braucht den Schreibzugriff auf demselben Protokoll wie die drei
+    /// Lesezugriffe oben, statt `APIClient` an `gewichtSpeichern`
+    /// vorbeizureichen -- `VerlaufStore` haelt ohnehin schon `loader`.
+    func putMeasurement(_ body: MesswertWrite) async throws(APIError) -> MesswertAntwort
 }
 
 extension APIClient: VerlaufLoading {}
@@ -146,6 +151,36 @@ final class VerlaufStore {
     /// nicht ueberdauern.
     func neuesZielgewichtGesetzt() {
         erreichtesZielgewicht = nil
+    }
+
+    /// Ruling R27: DER eine Schreibweg eines Gewichtseintrags -- Home
+    /// (`HomeRootView.eintragenSpeichern`), der Gewichtsverlauf
+    /// (`GewichtsverlaufView.gewichtSpeichern`) und das Profil (Aufgabe 9
+    /// bzw. 10) riefen dieselben vier Zeilen bisher an zwei bzw. drei
+    /// Stellen auf. Eine dritte Kopie waere genau die Invariante, die als
+    /// naechstes auseinanderlaeuft (derselbe Befund wie im Kommentar zu
+    /// `Rastwerte.amAnschlag`).
+    ///
+    /// `katalogNeuLaden` bleibt eine Closure statt eines gespeicherten
+    /// `CatalogStore`: `VerlaufStore` kennt sonst keinen zweiten Store,
+    /// und nur `goalReached` braucht ihn ueberhaupt (das Zielgewicht ist
+    /// serverseitig abgeschlossen und steht danach nicht mehr unter den
+    /// aktiven Zielen).
+    func gewichtSpeichern(_ body: MesswertWrite, katalogNeuLaden: () async -> Void) async -> String? {
+        do throws(APIError) {
+            let antwort = try await loader.putMeasurement(body)
+            messwertEintragen(antwort)
+            if antwort.goalReached {
+                zielgewichtErreicht(.init(weightKg: antwort.weightKg, measuredOn: antwort.measuredOn))
+                await katalogNeuLaden()
+            }
+            return nil
+        } catch {
+            guard error != .offline else {
+                return "Keine Verbindung. Das Gewicht wurde nicht gespeichert."
+            }
+            return error.servertext
+        }
     }
 
     /// Zieht den lokalen Stand sofort nach, statt auf den naechsten

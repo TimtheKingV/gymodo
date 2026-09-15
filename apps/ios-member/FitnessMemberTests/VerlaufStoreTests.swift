@@ -18,6 +18,12 @@ struct VerlaufStoreTests {
         var messwerte: MeasurementsResponse?
         var fehler: APIError?
         var abrufe = 0
+        /// Die naechste Antwort auf `putMeasurement` -- getrennt von
+        /// `fehler` (der die drei Lesezugriffe oben betrifft), weil ein
+        /// Test das Schreiben unabhaengig vom Laden scheitern lassen muss.
+        var putMeasurementAntwort: MesswertAntwort?
+        var putMeasurementFehler: APIError?
+        var putMeasurementAufrufe = 0
 
         func sessions(studio: String?) async throws(APIError) -> SessionsResponse {
             abrufe += 1
@@ -34,6 +40,13 @@ struct VerlaufStoreTests {
             if let fehler { throw fehler }
             return messwerte
                 ?? MeasurementsResponse(points: [], summary: .init(first: nil, latest: nil, changeKg: nil))
+        }
+
+        func putMeasurement(_ body: MesswertWrite) async throws(APIError) -> MesswertAntwort {
+            putMeasurementAufrufe += 1
+            if let putMeasurementFehler { throw putMeasurementFehler }
+            return putMeasurementAntwort
+                ?? MesswertAntwort(measuredOn: body.measuredOn, weightKg: body.weightKg, goalReached: false)
         }
     }
 
@@ -191,5 +204,65 @@ struct VerlaufStoreTests {
 
         #expect(verlauf.messwerte.map(\.measuredOn) == ["2026-08-15"])
         #expect(verlauf.messwertKopf?.changeKg == 0)
+    }
+
+    // MARK: - gewichtSpeichern (Ruling R27: der eine Schreibweg)
+
+    @Test func gewichtSpeichernZiehtDenLokalenStandNach() async {
+        let loader = FakeLoader()
+        loader.putMeasurementAntwort = MesswertAntwort(measuredOn: "2026-09-13", weightKg: 82.5, goalReached: false)
+        let verlauf = store(loader)
+        var katalogAufrufe = 0
+
+        let fehler = await verlauf.gewichtSpeichern(
+            MesswertWrite(measuredOn: "2026-09-13", weightKg: 82.5), katalogNeuLaden: { katalogAufrufe += 1 })
+
+        #expect(fehler == nil)
+        #expect(verlauf.messwerte.map(\.weightKg) == [82.5])
+        // Ohne goalReached laedt der Katalog nicht neu -- kein aktives
+        // Ziel wurde serverseitig abgeschlossen.
+        #expect(katalogAufrufe == 0)
+    }
+
+    /// `goalReached == true` merkt den einmaligen Moment UND laedt den
+    /// Katalog neu, weil das Zielgewicht dabei serverseitig abgeschlossen
+    /// wurde und nicht mehr unter den aktiven Zielen steht.
+    @Test func gewichtSpeichernMerktEinErreichtesZielUndLaedtDenKatalog() async {
+        let loader = FakeLoader()
+        loader.putMeasurementAntwort = MesswertAntwort(measuredOn: "2026-09-13", weightKg: 78.0, goalReached: true)
+        let verlauf = store(loader)
+        var katalogAufrufe = 0
+
+        let fehler = await verlauf.gewichtSpeichern(
+            MesswertWrite(measuredOn: "2026-09-13", weightKg: 78.0), katalogNeuLaden: { katalogAufrufe += 1 })
+
+        #expect(fehler == nil)
+        #expect(verlauf.erreichtesZielgewicht == VerlaufStore.ErreichtesZielgewicht(weightKg: 78.0, measuredOn: "2026-09-13"))
+        #expect(katalogAufrufe == 1)
+    }
+
+    /// `.offline` bekommt den eigenen, screen-unabhaengigen Satz -- nicht
+    /// den rohen Servertext (SS5).
+    @Test func gewichtSpeichernOhneVerbindungZeigtDenOfflineSatz() async {
+        let loader = FakeLoader()
+        loader.putMeasurementFehler = .offline
+        let verlauf = store(loader)
+
+        let fehler = await verlauf.gewichtSpeichern(
+            MesswertWrite(measuredOn: "2026-09-13", weightKg: 82.5), katalogNeuLaden: {})
+
+        #expect(fehler == "Keine Verbindung. Das Gewicht wurde nicht gespeichert.")
+        #expect(verlauf.messwerte.isEmpty)
+    }
+
+    @Test func gewichtSpeichernZeigtDenServertextBeiEinemAnderenFehler() async {
+        let loader = FakeLoader()
+        loader.putMeasurementFehler = .validation(message: "Das Datum liegt in der Zukunft.")
+        let verlauf = store(loader)
+
+        let fehler = await verlauf.gewichtSpeichern(
+            MesswertWrite(measuredOn: "2026-09-13", weightKg: 82.5), katalogNeuLaden: {})
+
+        #expect(fehler == "Das Datum liegt in der Zukunft.")
     }
 }
