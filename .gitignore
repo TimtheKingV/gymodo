@@ -23,3 +23,8 @@ apps/ios-member/Config.xcconfig
 
 # Isolierte Arbeitsbereiche (superpowers:using-git-worktrees)
 .worktrees/
+
+# Testsitzungen vom Geraet (Testnotiz-Modul): Screenshots zeigen
+# Trainingsdaten, deshalb nur lokal. Die README erklaert den Weg hierher.
+apps/ios-member/testnotizen/*
+!apps/ios-member/testnotizen/README.md

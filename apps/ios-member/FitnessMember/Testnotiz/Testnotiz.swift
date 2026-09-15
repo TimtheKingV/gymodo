@@ -11,7 +11,7 @@ final class Testnotiz {
     static let shared = Testnotiz()
 
     enum Modus: Equatable {
-        case ruhe, menue, ausschnitt, element, notiz
+        case ruhe, menue, ausschnitt, element, notiz, sitzung
     }
 
     /// Was zwischen Knopf-Tipp und Sichern entsteht. Das Foto kommt beim
@@ -103,6 +103,11 @@ final class Testnotiz {
     func nurNotiz() {
         entwurf?.art = .note
         modus = .notiz
+    }
+
+    func neueSitzung() {
+        ablage = nil
+        eintragsanzahl = 0
     }
 
     /// Das Blatt ist sofort zu; geschrieben wird danach. Wer testet, soll

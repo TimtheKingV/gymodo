@@ -107,6 +107,7 @@
 		8FC7A533B3262AA6723ED9C1 /* Rastwerte.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE7999237F8B3E7635E236AE /* Rastwerte.swift */; };
 		9145F7245C5D69AA90AD9B7A /* GeraetRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF6476398D0D632AA4C97E66 /* GeraetRoute.swift */; };
 		95794FEE5EC5FFA101C74C3D /* MemberPasswortAendernView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 213A5216BA472EAE4240C049 /* MemberPasswortAendernView.swift */; };
+		95A75D03EB1CB2035C1F6987 /* SitzungBlatt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3485543C6E0CF68AD35F7E /* SitzungBlatt.swift */; };
 		9658183FB704B5244DD0C883 /* testnotiz-beispiel.json in Resources */ = {isa = PBXBuildFile; fileRef = CFBC22CBF40859396B6DD869 /* testnotiz-beispiel.json */; };
 		9793B3801AD0CD565B3DF666 /* TagProtokoll.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB59D56AD33C31AE1F0089FF /* TagProtokoll.swift */; };
 		99C6072F04520557A7E34EDC /* Bildschirmfoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE699B4D15C780F3DBD1E924 /* Bildschirmfoto.swift */; };
@@ -279,6 +280,7 @@
 		45FB518781BA996FB7400814 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		4A0146A99A9A62AD4D28BDBB /* KurseMeineEinteilung.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseMeineEinteilung.swift; sourceTree = "<group>"; };
 		4A055AE066E95BA635068E45 /* GeraetErkanntView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetErkanntView.swift; sourceTree = "<group>"; };
+		4B3485543C6E0CF68AD35F7E /* SitzungBlatt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SitzungBlatt.swift; sourceTree = "<group>"; };
 		4C040CEC32DA51B93411E58C /* WorkoutSessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionStoreTests.swift; sourceTree = "<group>"; };
 		4C4E8B114BF9C48A1CD5DED0 /* Einstellungen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Einstellungen.swift; sourceTree = "<group>"; };
 		4CA9131802B15B415EE3362E /* KurseMeineEinteilungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseMeineEinteilungTests.swift; sourceTree = "<group>"; };
@@ -421,6 +423,7 @@
 				DE699B4D15C780F3DBD1E924 /* Bildschirmfoto.swift */,
 				860C70249404ED6DB23710D3 /* Laufzeitkontext.swift */,
 				9DBCB339999903CCAC2AE5DB /* NotizBlatt.swift */,
+				4B3485543C6E0CF68AD35F7E /* SitzungBlatt.swift */,
 				D78D049011DE97B7CF4B2543 /* Sprachnotiz.swift */,
 				7D036BE10720B20565F673DA /* Testnotiz.swift */,
 				36E7DA3B2E3971750743AD7C /* TestnotizAblage.swift */,
@@ -1009,6 +1012,7 @@
 				FA5959C8725D9AD6B4B0338D /* SessionFileStore.swift in Sources */,
 				FA5C4C53322F44C0895B0C2D /* SessionStore.swift in Sources */,
 				4AEFC85D03F8ED25B641E430 /* SessionSummary.swift in Sources */,
+				95A75D03EB1CB2035C1F6987 /* SitzungBlatt.swift in Sources */,
 				0C0BA55BD76F5F65CED3F906 /* Sprachnotiz.swift in Sources */,
 				2B9E1A87F4B91757DDEC90A6 /* Stepper44.swift in Sources */,
 				A67217C418DEF1C2DC617DB9 /* SupabaseAuthBackend.swift in Sources */,
