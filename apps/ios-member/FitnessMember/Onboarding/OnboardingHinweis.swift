@@ -15,10 +15,13 @@ import Foundation
 enum OnboardingHinweis {
     static func hinweis(offen: [OnboardingSchreibvorgang], fehler: APIError) -> String {
         guard !offen.contains(.profil) else {
-            // `fehler.servertext` liefert fuer .offline bereits woertlich
-            // "Keine Verbindung." -- ein zweiter Fall dafuer waere eine
-            // zweite Abschrift desselben Satzes.
-            return "\(fehler.servertext) Noch nichts gespeichert — deine Angaben bleiben hier stehen."
+            // `.offline` MUSS vor `servertext` abgefangen werden
+            // (APIError.servertext dokumentiert das als Pflicht jedes
+            // Aufrufers, siehe ProfilRootView) -- dass `servertext` fuer
+            // .offline zufaellig denselben Satz liefert, ist kein Ersatz
+            // fuer die eigene Fallunterscheidung.
+            let satz1 = fehler == .offline ? "Keine Verbindung." : fehler.servertext
+            return "\(satz1) Noch nichts gespeichert — deine Angaben bleiben hier stehen."
         }
 
         let liste = aufzaehlung(offen.compactMap(name))

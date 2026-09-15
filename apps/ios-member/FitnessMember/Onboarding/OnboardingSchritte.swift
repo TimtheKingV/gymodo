@@ -52,6 +52,7 @@ struct OnboardingScreen<Inhalt: View>: View {
             Text("SCHRITT \(schrittNummer) VON \(gesamtSchritte)")
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
+                .monospacedDigit()
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 // Ein Element statt drei (Eyebrow + fuenf Segmente): die
                 // sichtbare Grossschreibung bleibt, VoiceOver hoert die
@@ -91,6 +92,11 @@ struct OnboardingScreen<Inhalt: View>: View {
                 .foregroundStyle(DesignSystem.Color.text)
             Text(lead)
                 .font(.system(size: 15))
+                // Nur Schritt 5 traegt eine Ziffer ("Heute 82,5 kg. …"),
+                // aber die Zeile ist fuer alle fuenf Screens dieselbe --
+                // tabellarisch schadet den ziffernlosen Leads nicht
+                // (globale Regel "Alle Ziffern tabellarisch").
+                .monospacedDigit()
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .lineSpacing(3)
         }
@@ -342,6 +348,7 @@ private struct GewichtsRadOderPlatzhalter: View {
                     .font(DesignSystem.Typography.label)
                     .tracking(1)
                     .textCase(.uppercase)
+                    .monospacedDigit()
                     .foregroundStyle(DesignSystem.Color.textFaint)
             }
         } else {
@@ -445,6 +452,7 @@ struct WieOftSchritt: View {
             if let grenzhinweis {
                 Text(grenzhinweis)
                     .font(.system(size: 12))
+                    .monospacedDigit()
                     .foregroundStyle(DesignSystem.Color.textFaint)
             }
         }
@@ -510,6 +518,7 @@ struct ZielgewichtSchritt: View {
                 .font(DesignSystem.Typography.label)
                 .tracking(1)
                 .textCase(.uppercase)
+                .monospacedDigit()
                 .foregroundStyle(DesignSystem.Color.textFaint)
         }
     }
