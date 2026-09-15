@@ -23,8 +23,9 @@ struct OnboardingFlow: View {
     @State private var pfad: [Int] = []
     @State private var ergebnis: OnboardingErgebnis?
     /// Aus einem `.teilweise`-Ergebnis uebernommen: der naechste Versuch
-    /// (ob per "Erneut versuchen" oder per "Später") wiederholt NUR das
-    /// hier Genannte (R19), nie einen kompletten Neuanfang.
+    /// (per "Erneut versuchen", oder per "Später", solange das Profil offen
+    /// ist) wiederholt NUR das hier Genannte (R19), nie einen kompletten
+    /// Neuanfang.
     @State private var offenNachFehler: [OnboardingSchreibvorgang]?
     @State private var schreibtGerade = false
 
@@ -36,7 +37,6 @@ struct OnboardingFlow: View {
                 }
         }
         .tint(DesignSystem.Color.accent)
-        .toolbar(.hidden, for: .navigationBar)
     }
 
     // MARK: - Eine Schrittansicht
@@ -63,7 +63,7 @@ struct OnboardingFlow: View {
             primaryLoading: schreibtGerade,
             primaryDisabledHint: schreibtGerade ? "Schreibt gerade" : nil,
             spaeterEnabled: !schreibtGerade,
-            beiSpaeter: { Task { await abschliessen() } },
+            beiSpaeter: { Task { await spaeter() } },
             beiWeiter: { await primaryAktion(schritt: schritt, istLetzter: istLetzter) }
         ) {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
@@ -73,6 +73,12 @@ struct OnboardingFlow: View {
                 inhalt(fuer: schritt)
             }
         }
+        // Am Schritt selbst, nicht am NavigationStack: der Modifier stellt
+        // den umgebenden Container ein, und die gepushten Schritte bekaemen
+        // sonst eine System-Leiste mit Zurueck-Pfeil ueber der eigenen
+        // Schrittzeile. Zurueck ist im Entwurf nicht vorgesehen.
+        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarBackButtonHidden(true)
     }
 
     private func primaryTitle(fuer schritt: OnboardingSchritt, istLetzter: Bool) -> String {
@@ -107,6 +113,19 @@ struct OnboardingFlow: View {
         }
     }
 
+    /// "Später": vor dem ersten Schreibversuch und solange das Profil
+    /// offen ist ein Schreibversuch (`abschliessen`). Ist das Profil nach
+    /// einem Teilerfolg geschrieben, beendet es ohne neuen Versuch
+    /// (`OnboardingSchreiber.spaeterBeendet`) -- "Erneut versuchen" bleibt
+    /// dafuer der Weg.
+    private func spaeter() async {
+        if case .teilweise(let offen, _) = ergebnis, OnboardingSchreiber.spaeterBeendet(offen: offen) {
+            await beenden()
+        } else {
+            await abschliessen()
+        }
+    }
+
     /// "Später" ruft dies auf JEDEM Schritt auf, mit den bis dahin
     /// gesetzten Antworten -- nie mit leeren (Brief Step 1). Es setzt
     /// bewusst KEINE Vorgabe: wer auf Schritt 4 "Später" tippt, bevor er
@@ -123,15 +142,25 @@ struct OnboardingFlow: View {
         case .fertig:
             ergebnis = nil
             offenNachFehler = nil
-            // Wurzel-Modus: der Bootstrap traegt jetzt onboardingCompletedAt,
-            // das Gate schliesst sich beim naechsten Neuladen von selbst.
-            // Sheet-Modus: der Aufrufer (Home) laedt selbst neu (Aufgabe 8).
-            if !alsSheet { await catalogStore.load() }
-            beiFertig()
+            await beendenOhneSperre()
         case .teilweise(let offen, _):
             ergebnis = neuesErgebnis
             offenNachFehler = offen
         }
+    }
+
+    private func beenden() async {
+        schreibtGerade = true
+        defer { schreibtGerade = false }
+        await beendenOhneSperre()
+    }
+
+    /// Wurzel-Modus: der Bootstrap traegt jetzt onboardingCompletedAt, das
+    /// Gate schliesst sich mit dem Neuladen von selbst. Sheet-Modus: der
+    /// Aufrufer (Home) laedt selbst neu (Aufgabe 8).
+    private func beendenOhneSperre() async {
+        if !alsSheet { await catalogStore.load() }
+        beiFertig()
     }
 
     // MARK: - Texte je Schritt (verbatim aus gen.py, siehe R20 fuer die eine Ausnahme)

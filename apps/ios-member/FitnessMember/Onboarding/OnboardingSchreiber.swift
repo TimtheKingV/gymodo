@@ -103,6 +103,19 @@ enum OnboardingSchreiber {
         return .fertig
     }
 
+    /// Ob "Später" nach einem Teilerfolg (`.teilweise(offen:)`) den Flow
+    /// beendet, statt nur erneut zu versuchen.
+    ///
+    /// Steht `.profil` nicht mehr in `offen`, traegt der Server
+    /// `onboardingDone` bereits -- ab da uebernimmt die Nachholkarte auf
+    /// Home (Spec 5.2), und ein Vorgang, der dauerhaft scheitert, darf das
+    /// Mitglied nicht im Onboarding festhalten. Steht `.profil` noch drin,
+    /// ist nichts gespeichert: im Wurzel-Modus koennte sich das Gate gar
+    /// nicht schliessen, also bleibt "Später" dort ein neuer Versuch.
+    static func spaeterBeendet(offen: [OnboardingSchreibvorgang]) -> Bool {
+        !offen.contains(.profil)
+    }
+
     /// Ob es fuer diesen Vorgang ueberhaupt etwas zu schreiben gibt.
     ///
     /// `.profil` laeuft im Wurzel-Modus (`mitAbschluss == true`) immer --

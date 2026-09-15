@@ -288,4 +288,22 @@ struct OnboardingSchreiberTests {
         let profilSchreiben = await fake.profilSchreiben
         #expect(profilSchreiben.count == 1)
     }
+
+    // MARK: - "Später" nach einem Teilerfolg
+
+    // Spec 5.2: ist das Profil (mit onboardingDone) geschrieben, uebernimmt
+    // die Nachholkarte auf Home. "Später" darf dann nicht weiter nur
+    // wiederholen -- sonst kommt nicht heraus, wessen Gewicht dauerhaft
+    // scheitert.
+    @Test("Profil geschrieben, Rest offen: Später beendet ohne neuen Versuch")
+    func spaeterBeendetNachGeschriebenemProfil() {
+        #expect(OnboardingSchreiber.spaeterBeendet(offen: [.messwert, .wochenziel, .zielgewicht]))
+        #expect(OnboardingSchreiber.spaeterBeendet(offen: [.zielgewicht]))
+    }
+
+    @Test("Profil noch offen: Später versucht erneut -- nichts ist gespeichert, das Gate kann nicht schliessen")
+    func spaeterWiederholtSolangeDasProfilOffenIst() {
+        #expect(!OnboardingSchreiber.spaeterBeendet(offen: [.profil]))
+        #expect(!OnboardingSchreiber.spaeterBeendet(offen: [.profil, .messwert, .wochenziel]))
+    }
 }
