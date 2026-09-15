@@ -15,10 +15,16 @@ import SwiftUI
 /// direkt darueber, und zweimal dasselbe Wort untereinander sagt nichts
 /// doppelt so gut.
 ///
-/// Drei Abschnitte gibt es hier ebenfalls nicht (`alleZeilen` statt
-/// angemeldet/warteliste/spaeter): der Zustand steht auf der Karte selbst
-/// -- Kontur, Marke, Abmeldehinweis -- und muss nicht noch einmal als
-/// Ueberschrift darueber. Der naechste Kurs steht oben.
+/// Geteilt wird nach Wochenabstand (`KurseMeineEinteilung.abschnitte`:
+/// "Diese Woche", "Nächste Woche", ...), nicht nach Status. Der Zustand
+/// steht weiter auf der Karte selbst -- Kontur, Marke, Abmeldehinweis --
+/// und muss nicht noch einmal als Ueberschrift darueber. Die Woche dagegen
+/// stand nirgends: unter einem gewaehlten Freitag las sich die Karte fuer
+/// den Montag darauf wie ein Teil derselben Woche.
+///
+/// Liegt alles in dieser Woche, entfaellt die Ueberschrift: dann trennt
+/// sie nichts, und die Beschriftung des Umschalters darueber sagt schon,
+/// was die Liste ist.
 ///
 /// Die Liste traegt als einzige Stelle den Abmelden-Knopf. Die Zeile im
 /// Tagesplan der anderen Haelfte markiert dieselbe Anmeldung nur (Kontur
@@ -54,11 +60,35 @@ struct KurseBandView: View {
     @State private var fehlermeldungen: [String: String] = [:]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            ForEach(einteilung.alleZeilen) { zeile in
-                karte(zeile, eigene: eigene)
+        let abschnitte = einteilung.abschnitte(jetzt: jetzt, zeitzone: eigene.timezone)
+        let zeigtUeberschriften = KurseMeineEinteilung.zeigtUeberschriften(abschnitte)
+
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
+            ForEach(abschnitte) { abschnitt in
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+                    if zeigtUeberschriften {
+                        ueberschrift(abschnitt.titel)
+                    }
+                    ForEach(abschnitt.zeilen) { zeile in
+                        karte(zeile, eigene: eigene)
+                    }
+                }
             }
         }
+    }
+
+    /// Dieselbe Form wie die Tagesueberschrift im Wochenplan
+    /// (`KurseWochenView.tagesliste`): beide Haelften des Umschalters
+    /// gliedern ihre Liste mit derselben Stimme. Als Kopfzeile markiert,
+    /// damit VoiceOver per Rotor von Woche zu Woche springt, statt jede
+    /// Karte einzeln zu durchlaufen.
+    private func ueberschrift(_ titel: String) -> some View {
+        Text(titel.uppercased())
+            .font(DesignSystem.Typography.label)
+            .tracking(1.5)
+            .foregroundStyle(DesignSystem.Color.textMuted)
+            .accessibilityLabel(titel)
+            .accessibilityAddTraits(.isHeader)
     }
 
     // MARK: - Eine Karte je Anmeldung
