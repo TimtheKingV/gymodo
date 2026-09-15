@@ -11,7 +11,20 @@ final class Testnotiz {
     static let shared = Testnotiz()
 
     enum Modus: Equatable {
-        case ruhe, menue
+        case ruhe, menue, ausschnitt
+    }
+
+    /// Was zwischen Knopf-Tipp und Sichern entsteht. Das Foto kommt beim
+    /// Tipp auf den Knopf: danach aendert sich die App nicht mehr, weil das
+    /// Fenster ab dann alle Beruehrungen faengt.
+    struct Entwurf {
+        var zeitpunkt: Date
+        var vollbild: UIImage
+        var screen: TestnotizEintrag.Screen?
+        var art: TestnotizEintrag.Art = .note
+        var ausschnitt: UIImage?
+        var ausschnittsrahmen: TestnotizEintrag.Ausschnittsrahmen?
+        var element: TestnotizEintrag.Element?
     }
 
     var modus: Modus = .ruhe
@@ -19,7 +32,11 @@ final class Testnotiz {
     /// Ruhe jede Beruehrung zur App durch.
     var knopfRahmen: CGRect = .zero
     var stapel = TestnotizScreenStapel()
+    var entwurf: Entwurf?
+    private(set) var eintragsanzahl = 0
+    private(set) var letzterFehler: String?
 
+    @ObservationIgnored private(set) var ablage: TestnotizAblage?
     @ObservationIgnored private(set) var fenster: TestnotizFenster?
     @ObservationIgnored private(set) weak var netz: NetzwerkMonitor?
     @ObservationIgnored private(set) weak var katalog: CatalogStore?
@@ -41,11 +58,73 @@ final class Testnotiz {
     }
 
     func knopfGetippt() {
+        letzterFehler = nil
+        guard let fenster, let szene = fenster.windowScene else { return }
+        let screen = stapel.aktueller.map {
+            TestnotizEintrag.Screen(name: $0.name, file: $0.datei, stack: stapel.pfad, context: $0.kontext)
+        }
+        entwurf = Entwurf(
+            zeitpunkt: Date(),
+            vollbild: Bildschirmfoto.aufnehmen(szene: szene, ohne: fenster),
+            screen: screen
+        )
         modus = .menue
     }
 
     func zurRuhe() {
+        entwurf = nil
         modus = .ruhe
+    }
+
+    func ausschnittGewaehlt(_ punkte: CGRect) {
+        guard var neu = entwurf, let geschnitten = Ausschnitt.schneiden(neu.vollbild, punkte: punkte) else {
+            zurRuhe()
+            return
+        }
+        neu.art = .crop
+        neu.ausschnitt = geschnitten.bild
+        neu.ausschnittsrahmen = geschnitten.rahmen
+        entwurf = neu
+        // Bis zum Notiz-Blatt (Aufgabe 7) wird ohne Notiz gesichert.
+        Task { await sichern(notiz: nil, audio: nil) }
+    }
+
+    /// Das Blatt ist sofort zu; geschrieben wird danach. Wer testet, soll
+    /// nicht auf PNG-Kodierung und Protokoll warten.
+    func sichern(notiz: String?, audio: URL?) async {
+        guard let entwurf else {
+            zurRuhe()
+            return
+        }
+        zurRuhe()
+        let laufzeit = Laufzeitkontext.laufzeit(netz: netz, katalog: katalog, session: session)
+        let protokoll = await TestnotizProtokoll.lesenImHintergrund(seit: 300, bis: entwurf.zeitpunkt)
+        let eintrag = TestnotizEintrag(
+            id: UUID(), index: 0, createdAt: entwurf.zeitpunkt, kind: entwurf.art,
+            screen: entwurf.screen, screenshot: "", crop: nil, cropRect: entwurf.ausschnittsrahmen,
+            element: entwurf.element, note: notiz, audio: nil, transcript: nil,
+            runtime: laufzeit, log: protokoll
+        )
+        do {
+            let ablage = try ablageHolen(jetzt: entwurf.zeitpunkt)
+            _ = try await ablage.schreiben(
+                eintrag,
+                voll: entwurf.vollbild.pngData() ?? Data(),
+                ausschnitt: entwurf.ausschnitt?.pngData(),
+                audio: audio
+            )
+            eintragsanzahl = await ablage.anzahl
+        } catch {
+            letzterFehler = "Nicht gesichert: \(error.localizedDescription)"
+        }
+    }
+
+    private func ablageHolen(jetzt: Date) throws -> TestnotizAblage {
+        if let ablage { return ablage }
+        let wurzel = URL.documentsDirectory.appendingPathComponent("Testnotizen")
+        let neu = try TestnotizAblage(wurzel: wurzel, kopf: Laufzeitkontext.sitzungskopf(jetzt: jetzt, szene: fenster?.windowScene))
+        ablage = neu
+        return neu
     }
 }
 

@@ -29,6 +29,14 @@ struct TestnotizMenue: View {
                     .foregroundStyle(DesignSystem.Color.textMuted)
                     .padding(DesignSystem.Spacing.s16)
 
+                if let fehler = testnotiz.letzterFehler {
+                    Text(fehler)
+                        .font(DesignSystem.Typography.fliesstext)
+                        .foregroundStyle(DesignSystem.Color.danger)
+                        .padding(.horizontal, DesignSystem.Spacing.s16)
+                        .padding(.bottom, DesignSystem.Spacing.s8)
+                }
+
                 ForEach(eintraege) { eintrag in
                     zeile(titel: eintrag.titel, symbol: eintrag.symbol, farbe: DesignSystem.Color.text, aktion: eintrag.aktion)
                 }
@@ -42,12 +50,13 @@ struct TestnotizMenue: View {
     }
 
     private var kopfzeile: String {
-        (testnotiz.stapel.aktueller?.name ?? "Testnotiz").uppercased()
+        (testnotiz.entwurf?.screen?.name ?? "Testnotiz").uppercased()
     }
 
     private var eintraege: [Eintrag] {
-        // Aufgabe 5 bis 8 tragen hier je einen Modus ein.
-        []
+        [
+            Eintrag(id: "ausschnitt", titel: "Ausschnitt", symbol: "crop") { testnotiz.modus = .ausschnitt },
+        ]
     }
 
     private func zeile(titel: String, symbol: String, farbe: Color, aktion: @escaping () -> Void) -> some View {

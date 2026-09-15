@@ -12,6 +12,8 @@ struct TestnotizOberflaeche: View {
                 TestnotizKnopf()
             case .menue:
                 TestnotizMenue()
+            case .ausschnitt:
+                AuswahlOverlay(art: .rechteck, beiRechteck: testnotiz.ausschnittGewaehlt, beiPunkt: { _ in }, beiAbbruch: testnotiz.zurRuhe)
             }
         }
     }
