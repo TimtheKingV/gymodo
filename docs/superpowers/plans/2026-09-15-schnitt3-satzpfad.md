@@ -374,7 +374,7 @@ Der Rückblick kommt als Sheet von unten, sobald `GeraetView` erscheint und `rue
 - Consumes: `Rueckblick`, `GeraetModel.rueckblick`, `rueckblickOffen`, `geraetGeoeffnet()` aus Task 2; `GeraetModel.aktiveUebung`.
 - Produces: `struct RueckblickSheet: View { let uebung: String; let rueckblick: Rueckblick; let beiWeiter: () -> Void }`.
 
-- [ ] **Step 1: `RueckblickSheet.swift`.**
+- [x] **Step 1: `RueckblickSheet.swift`.**
 
 ```swift
 import SwiftUI
@@ -454,7 +454,7 @@ struct RueckblickSheet: View {
 }
 ```
 
-- [ ] **Step 2: Verdrahten.**
+- [x] **Step 2: Verdrahten.**
   - `GeraetView`, `.task` Z. 71: `.task { modell.geraetBetreten(); modell.geraetGeoeffnet(); await modell.kontextLaden() }`. Der Kommentar darüber bekommt einen Satz dazu: „Der Drawer haengt am selben Moment: einmal beim Oeffnen, nicht nach jedem Satz.“
   - `GeraetScreen`, neben den beiden `.sheet`:
 
@@ -476,11 +476,11 @@ struct RueckblickSheet: View {
 
   - Der Erstkontakt-`fullScreenCover` und der Drawer schließen sich gegenseitig aus, ohne dass jemand es prüfen muss: `istErstkontakt` verlangt `!hatLetztenSatz`, `rueckblick` verlangt einen letzten Satz. Das steht als Kommentar an der `.sheet`-Zeile nicht noch einmal; es steht in Task 2 am Modell.
 
-- [ ] **Step 3: `xcodegen generate`, `xcodebuild test`**, grün. `git status`: `Package.resolved` unverändert, die neue Datei und `project.pbxproj` dabei.
+- [x] **Step 3: `xcodegen generate`, `xcodebuild test`**, grün. `git status`: `Package.resolved` unverändert, die neue Datei und `project.pbxproj` dabei.
 
 - [ ] **Step 4: Im Simulator (iPhone 17 Pro) einmal ansehen**, ohne Backend geht das nicht — der Drawer braucht einen letzten Satz aus dem Bootstrap. Deshalb hier nur bauen; der Sichtcheck in Task 7 prüft: Das Sheet erscheint **nach** dem Push und nicht gar nicht (SwiftUI stellt ein Sheet, das während der Push-Animation angefordert wird, normalerweise nach ihr dar; bleibt es aus, hilft in `geraetGeoeffnet`-Aufruf ein `try? await Task.sleep(for: .milliseconds(400))` davor — dann mit Kommentar, warum).
 
-- [ ] **Step 5: Commit** — `feat(geraet): Rueckblick und Vorschlag als Drawer beim Oeffnen des Geraets`
+- [x] **Step 5: Commit** — `feat(geraet): Rueckblick und Vorschlag als Drawer beim Oeffnen des Geraets`
 
 ---
 
@@ -570,7 +570,7 @@ Der negative vertikale Padding am Knopf ist der einzige Trick in diesem Layout, 
   - `nonisolated static func RastRad.nachbarstufe(phase: Double, sichtbareZeilen: Int) -> Nachbarstufe`
   - `RastRad.sichtbareZeilen: Int = 5` — neuer Parameter mit Vorgabe, `WertZeile` übergibt 3. `GewichtEintragenSheet` und `OnboardingSchritte` bleiben bei 5 (dort ist Platz, und sie gehören nicht zu diesem Schnitt).
 
-- [ ] **Step 1: Test schreiben** (`RastRadTests.swift`)
+- [x] **Step 1: Test schreiben** (`RastRadTests.swift`)
 
 ```swift
 import Testing
@@ -601,9 +601,9 @@ struct RastRadTests {
 }
 ```
 
-- [ ] **Step 2: Rot sehen.** `xcodegen generate`, `-only-testing:FitnessMemberTests/RastRadTests`. Erwartet: „type 'RastRad' has no member 'nachbarstufe'“.
+- [x] **Step 2: Rot sehen.** `xcodegen generate`, `-only-testing:FitnessMemberTests/RastRadTests`. Erwartet: „type 'RastRad' has no member 'nachbarstufe'“.
 
-- [ ] **Step 3: `RastRad` mit `sichtbareZeilen`.**
+- [x] **Step 3: `RastRad` mit `sichtbareZeilen`.**
 
 ```swift
 /// Wie das Rad eine Zeile zeigt: die gewaehlte in voller Groesse, die
@@ -675,7 +675,7 @@ private nonisolated static func deckkraft(_ stufe: Nachbarstufe) -> Double {
 
 `WertZeile`: beide `RastRad`-Aufrufe bekommen `sichtbareZeilen: 3` (nach `basisGroesse` bzw. vor `text:` — die Reihenfolge der Memberwise-Init folgt der Deklaration, `sichtbareZeilen` steht nach `basisGroesse`).
 
-- [ ] **Step 4: `GeraetView`-Layout.**
+- [x] **Step 4: `GeraetView`-Layout.**
   - `body`: `VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16)`, `kopfzeile` mit `.padding(.bottom, -DesignSystem.Spacing.s8)` (8 statt 16 zum Namen; oder Kopfzeile und Kopf in einer eigenen `VStack(spacing: s8)`), `.padding(.bottom, DesignSystem.Spacing.s8)`, dazu `.scrollBounceBehavior(.basedOnSize)` an der `ScrollView`. Der `.padding(.top, s8)` an `aktionen` entfällt (Abstand 16 wie überall). Kommentar am `VStack`:
 
 ```swift
@@ -722,9 +722,9 @@ private var aktionen: some View {
 
   - `abschlussEntscheidung`: derselbe Umbau — `SecondaryButton(title: "Weiterer Satz")` und `problemMelden` in einer `HStack(spacing: s12)`. Der Kommentar an `problemMelden` („In beiden Aktionsgruppen dieselbe Zeile“) bleibt richtig; `problemMelden` behält `.frame(maxWidth: .infinity, minHeight: 44)`, damit die Zeile hälftig teilt (auf dem SE 161 pt je Seite; „Gerät abschließen“ braucht 130 + 16).
 
-- [ ] **Step 5: Grün sehen.** `xcodebuild test`, ganz.
+- [x] **Step 5: Grün sehen.** `xcodebuild test`, ganz.
 
-- [ ] **Step 6: Commit** — `feat(geraet): Satzpfad passt ohne Scrollen auf 667 pt -- drei Radzeilen, Problem melden in der Zeile`
+- [x] **Step 6: Commit** — `feat(geraet): Satzpfad passt ohne Scrollen auf 667 pt -- drei Radzeilen, Problem melden in der Zeile`
 
 ---
 
@@ -737,18 +737,18 @@ Was der Umbau falsch macht, wird in einem Commit geradegezogen: das Designsystem
 - Modify: `docs/superpowers/plans/2026-09-12-ios-verbesserungen-aus-dem-betrieb.md` („Stand“, Punkt **Gerät**, Z. 32–34; Kopf von „Schnitt 3“, Z. 545–555)
 - Modify: `docs/superpowers/specs/2026-09-07-ios-geraet-kernflow-design.md` (Z. 207, 333)
 
-- [ ] **Step 1: designsystem.md §7.**
+- [x] **Step 1: designsystem.md §7.**
   - Überschrift: „## 7. Wertwahl — scrollen, dann sichern“.
   - Absatz 1, Satz 2 wird: „**Beide Räder sind immer aktiv** — gescrollt wird sofort, ohne Tap, ohne Tastatur, mit dem Daumen der Hand, die das Handy hält. (Bis Schnitt 3 öffnete ein Tap auf eine der Zahlen beide Räder; der Tap ist gefallen, Sammelstelle Punkt 11.)“
   - Absatz 2 („Der Kniff“): der letzte Satz „Damit hat der Screen in beiden Zuständen dieselbe Silhouette, und der Übergang ist eine Bewegung statt eines Aufbaus.“ entfällt; stattdessen: „Die Unterstreichung markiert den aktiven Wert und ist zugleich die Rastmarke.“
   - Die Tabelle „Zustand / Aussehen“ wird ein Absatz: „**Aussehen:** Wert 64 pt (Gewicht) bzw. 44 pt (Wiederholungen), **darunter** 4 pt bzw. 3 pt `accent`. Je Richtung ein Nachbar, 30 pt in `text-faint`, nach oben und unten in `bg` ausgeblendet; auf dem Satzpfad drei Zeilen, in Onboarding und Gewichtseintrag fünf (zwei Nachbarn, der äußere 26 pt in `line`). Unter der Linie der Kontext: `Schritt 2,5 kg · 5,0 – 150,0` bzw. `Ziel 8 – 12`. **Rückblick und Vorschlag** („Zuletzt 77,5 kg × 11“, „Vorschlag · +2,5“) stehen nicht unter dem Rad, sondern in einem Drawer, der beim Öffnen des Geräts von unten kommt — nur vor dem ersten Satz eines Geräteblocks, beim ersten Mal an einem Gerät gar nicht.“ (Die alte Zeile „3 pt `line` (Wiederholungen)“ war schon vor diesem Schnitt falsch: `RastRad` zeichnet beide Linien in `accent`.)
-- [ ] **Step 2: designsystem.md §9**, Z. 156: „Wer abweicht, zahlt genau **einen** zusätzlichen Tap — er öffnet beide Räder, und danach ist Scrollen kostenlos. Damit bleibt auch der Abweichungsfall bei zwei Interaktionen.“ wird „Wer abweicht, scrollt — die Räder sind immer aktiv, ein Tap kommt nicht dazu. Damit bleibt auch der Abweichungsfall bei zwei Interaktionen: scrollen, sichern.“
-- [ ] **Step 3: Sammelstelle.**
+- [x] **Step 2: designsystem.md §9**, Z. 156: „Wer abweicht, zahlt genau **einen** zusätzlichen Tap — er öffnet beide Räder, und danach ist Scrollen kostenlos. Damit bleibt auch der Abweichungsfall bei zwei Interaktionen.“ wird „Wer abweicht, scrollt — die Räder sind immer aktiv, ein Tap kommt nicht dazu. Damit bleibt auch der Abweichungsfall bei zwei Interaktionen: scrollen, sichern.“
+- [x] **Step 3: Sammelstelle.**
   - „Stand“, Punkt **Gerät** wird: „**Gerät** hat seit `8f73fa0` eine Trainingsuhr im Kopf (`GeraetView.trainingsuhr`). Seit Schnitt 3 sind die Räder immer aktiv (`radOffen` gibt es nicht mehr), Rückblick und Vorschlag stehen in einem Drawer beim Öffnen (`GeraetModel.rueckblick`, `rueckblickFaellig`, `RueckblickSheet`), die Einstellwerte nur noch als Zeile, und der Satzpfad passt mit drei Radzeilen und „Problem melden“ neben „Gerät abschließen“ auf 667 pt (gerechnet 492 von 510 pt, die iOS 26 dem Inhalt dort lässt). Punkt 11 bis 13 sind damit umgesetzt.“
   - Kopf von „Schnitt 3“: unter der Überschrift ein Satz „Umgesetzt, Plan: `docs/superpowers/plans/2026-09-15-schnitt3-satzpfad.md`.“ Der letzte Spiegelstrich („Ergebnis messen: passt der Pfad ohne Seiten-Scrollen auf ein iPhone mini …“) bekommt das Ergebnis aus Task 7 nachgetragen (Zahl und Simulator).
   - Bei Punkt 11 bis 13 nichts löschen — die Sammelstelle hält fest, was gemeint war.
-- [ ] **Step 4: Kernflow-Spec.** Z. 207 („ein Tap öffnet beide Räder, Scrollen ist kostenlos …“) und Z. 333 („dort steht stattdessen der letzte eigene Wert aus `bootstrap.lastSets`“) bekommen je einen Einschub „(seit Schnitt 3: die Räder sind immer aktiv, kein Tap; Rückblick und Vorschlag stehen im Drawer beim Öffnen, siehe designsystem.md §7)“. Nicht umschreiben — die Spec beschreibt den Stand vom 7. September.
-- [ ] **Step 5: Commit** — `docs: Designsystem SS7/SS9 und Sammelstelle fuer Schnitt 3 nachgezogen`
+- [x] **Step 4: Kernflow-Spec.** Z. 207 („ein Tap öffnet beide Räder, Scrollen ist kostenlos …“) und Z. 333 („dort steht stattdessen der letzte eigene Wert aus `bootstrap.lastSets`“) bekommen je einen Einschub „(seit Schnitt 3: die Räder sind immer aktiv, kein Tap; Rückblick und Vorschlag stehen im Drawer beim Öffnen, siehe designsystem.md §7)“. Nicht umschreiben — die Spec beschreibt den Stand vom 7. September.
+- [x] **Step 5: Commit** — `docs: Designsystem SS7/SS9 und Sammelstelle fuer Schnitt 3 nachgezogen`
 
 ---
 
@@ -789,12 +789,12 @@ Der Sichtcheck von Schnitt 2 zeigte auf dem SE in der Pause den Gerätenamen und
 - Modify: `apps/ios-member/FitnessMember/DesignSystem/Components/PausenRad.swift` (Z. 68)
 - Modify: je nach Ursache `apps/ios-member/FitnessMember/Screens/Geraet/GeraetView.swift` (`kopfzeile`, `geraetUndUebung`, `inhalt`) oder `PausenRad.swift`
 
-- [ ] **Step 1: Reproduzieren** auf dem SE-Simulator aus Task 7: Satz sichern, Pause läuft, Screenshot. Zeigt er den Abschnitt links, mit `Debug View Hierarchy` oder durch schrittweises Ausblenden (`PausenRad` durch `Color.clear.frame(height: 444)` ersetzen, dann die Knopfzeile, dann das Rad) das Kind finden, das breiter als 335 pt ist oder den Inhalt verschiebt. Ursache in den Bericht.
-- [ ] **Step 2: Kleinster Fix** an der gefundenen Stelle, mit Kommentar, der die Ursache nennt. Kein Umbau des Pausenzustands.
-- [ ] **Step 3: `.padding(.vertical, DesignSystem.Spacing.s24)`** in `PausenRad.body` entfällt, und der äußere `VStack(spacing: s32)` wird `s24`; die Preview zeigt das Rad ohnehin mit `.padding(20)` auf `bg`, sie braucht nichts. Kommentar am `VStack` in `PausenRad`: „Kein eigenes vertikales Padding: der Abstand kommt vom Satzpfad-VStack, und 48 pt hier machten die Pause auf einem 667-pt-iPhone 17 pt zu hoch (Plan Schnitt 3, Task 8).“
-- [ ] **Step 4: Screenshot SE**, Pause: Kopfzeile und Gerätename vollständig, „Weiter“ und die geteilte Knopfzeile im Bild, ohne Scrollen.
-- [ ] **Step 5: `xcodebuild test`**, grün.
-- [ ] **Step 6: Commit** — `fix(geraet): Pausenscreen schneidet auf 667 pt nichts mehr ab`
+- [x] **Step 1: Reproduzieren** auf dem SE-Simulator aus Task 7: Satz sichern, Pause läuft, Screenshot. Zeigt er den Abschnitt links, mit `Debug View Hierarchy` oder durch schrittweises Ausblenden (`PausenRad` durch `Color.clear.frame(height: 444)` ersetzen, dann die Knopfzeile, dann das Rad) das Kind finden, das breiter als 335 pt ist oder den Inhalt verschiebt. Ursache in den Bericht.
+- [x] **Step 2: Kleinster Fix** an der gefundenen Stelle, mit Kommentar, der die Ursache nennt. Kein Umbau des Pausenzustands.
+- [x] **Step 3: `.padding(.vertical, DesignSystem.Spacing.s24)`** in `PausenRad.body` entfällt, und der äußere `VStack(spacing: s32)` wird `s24`; die Preview zeigt das Rad ohnehin mit `.padding(20)` auf `bg`, sie braucht nichts. Kommentar am `VStack` in `PausenRad`: „Kein eigenes vertikales Padding: der Abstand kommt vom Satzpfad-VStack, und 48 pt hier machten die Pause auf einem 667-pt-iPhone 17 pt zu hoch (Plan Schnitt 3, Task 8).“
+- [x] **Step 4: Screenshot SE**, Pause: Kopfzeile und Gerätename vollständig, „Weiter“ und die geteilte Knopfzeile im Bild, ohne Scrollen.
+- [x] **Step 5: `xcodebuild test`**, grün.
+- [x] **Step 6: Commit** — `fix(geraet): Pausenscreen schneidet auf 667 pt nichts mehr ab`
 
 ## Selbstprüfung
 
