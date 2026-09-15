@@ -1,13 +1,16 @@
 import SwiftUI
+import UIKit
 
 /// „Gerät wählen" -- der Weg zum Geraet ohne Aufkleber (Blatt 02-04).
 ///
-/// Rechnet vollstaendig auf dem Prefetch: kein Netz, kein Ladezustand,
-/// keine Fehlerzustaende. Die Regeln stehen in `GeraeteAuswahl`, hier
-/// steht nur, wie sie aussehen.
+/// Rechnet auf dem Prefetch: kein Ladezustand, keine Fehlerzustaende fuer
+/// die Liste selbst. Nur die Vorschaubilder kommen aus dem Netz -- sie
+/// laden je Zeile nach und fehlen still, wenn es keins gibt. Die Regeln
+/// stehen in `GeraeteAuswahl`, hier steht nur, wie sie aussehen.
 struct GeraeteAuswahlView: View {
     @Environment(CatalogStore.self) private var katalog
 
+    let fotoLader: any GeraetefotosLoading
     let beiAuswahl: (String) -> Void
 
     @State private var suchtext = ""
@@ -18,6 +21,13 @@ struct GeraeteAuswahlView: View {
     /// `aktivesStudioId` unten liefert bis dahin katalog.activeStudioId.
     @State private var studioId: String?
     @FocusState private var feldAktiv: Bool
+
+    /// Modell -> signierte URL, einmal je Oeffnen der Liste geladen
+    /// (passend zur Lebensdauer der signierten URLs).
+    @State private var fotos: [String: URL] = [:]
+    /// Modell -> fertig dekodiertes Vorschaubild.
+    @State private var bilder: [String: UIImage] = [:]
+    @State private var vorschauLader = VorschauLader()
 
     /// Abgeleitet statt in `.task` nachtraeglich befuellt: `.task` laeuft
     /// erst NACH dem ersten body-Durchlauf, und der Screen zeigte fuer
@@ -35,6 +45,7 @@ struct GeraeteAuswahlView: View {
         }
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
+        .task { fotos = await GeraeteFotos.laden(von: fotoLader) }
     }
 
     // MARK: - Kopf
@@ -125,7 +136,10 @@ struct GeraeteAuswahlView: View {
             leerZustand
         } else {
             ScrollView {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+                // LazyVStack statt VStack: eine Section liefert hier keine
+                // eigene VStack fuer ihre Zeilen (siehe gruppe), sonst laedt
+                // die innere VStack doch wieder alle Zeilen auf einmal.
+                LazyVStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
                     if !g.zuletzt.isEmpty {
                         gruppe("ZULETZT BEI DIR", g.zuletzt)
                     }
@@ -139,12 +153,9 @@ struct GeraeteAuswahlView: View {
         }
     }
 
+    @ViewBuilder
     private func gruppe(_ titel: String, _ eintraege: [GeraeteAuswahl.Eintrag]) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-            Text(titel)
-                .font(DesignSystem.Typography.label)
-                .tracking(1.5)
-                .foregroundStyle(DesignSystem.Color.textMuted)
+        Section {
             ForEach(eintraege) { eintrag in
                 if eintrag.gesperrt {
                     zeile(eintrag).opacity(0.55)
@@ -153,11 +164,23 @@ struct GeraeteAuswahlView: View {
                         .buttonStyle(PressButtonStyle())
                 }
             }
+        } header: {
+            Text(titel)
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                // Die umschliessende LazyVStack setzt 12pt zwischen allen
+                // Kindern (auch Header zu erster Zeile). Gemessen war der
+                // Abstand Ueberschrift-zu-Zeile bisher 8pt -- die
+                // Ueberschrift zieht sich um die Differenz zusammen, statt
+                // die Zeilenabstaende ungleich zu machen.
+                .padding(.bottom, -4)
         }
     }
 
     private func zeile(_ eintrag: GeraeteAuswahl.Eintrag) -> some View {
         HStack(spacing: DesignSystem.Spacing.s12) {
+            vorschau(eintrag)
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                 Text(eintrag.name)
                     .font(.system(size: 16, weight: .bold))
@@ -208,6 +231,32 @@ struct GeraeteAuswahlView: View {
                 .stroke(DesignSystem.Color.line, lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
+        .task(id: fotos[eintrag.modellId]) {
+            guard let url = fotos[eintrag.modellId], bilder[eintrag.modellId] == nil else { return }
+            bilder[eintrag.modellId] = await vorschauLader.bild(modellId: eintrag.modellId, url: url, kantePixel: 168)
+        }
+    }
+
+    /// Ohne Foto steht hier nichts -- kein grauer Kasten, die Zeile bleibt
+    /// wie vorher (Sammelstelle Punkt 16). Das Bild erscheint, sobald es da
+    /// ist; bis dahin haelt die Zeile keinen Platz frei, sonst stuende im
+    /// Keller ohne Empfang dauerhaft eine Luecke da.
+    @ViewBuilder
+    private func vorschau(_ eintrag: GeraeteAuswahl.Eintrag) -> some View {
+        if let bild = bilder[eintrag.modellId] {
+            Image(uiImage: bild)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 56, height: 56)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+                // clipShape VOR overlay (Vorlage: InlineBanner). Die Kontur
+                // haelt die Kante eines dunklen Fotos auf surface sichtbar.
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                        .stroke(DesignSystem.Color.line, lineWidth: 1)
+                )
+                .accessibilityHidden(true)
+        }
     }
 
     private func zuletztText(_ zuletzt: GeraeteAuswahl.Zuletzt) -> String {

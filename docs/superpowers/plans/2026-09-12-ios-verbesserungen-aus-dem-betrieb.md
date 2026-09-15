@@ -39,6 +39,10 @@ präzisiert:
 - **Die Karten** heißen jetzt `HomeZeilen.kartenTitel` (Zeitraum, sonst „ab
   18:04") und `zeilenText` („41 min · 1 Gerät · 3 Sätze") — das sind die
   beiden Zeilen, die Punkt 17 tauscht.
+- **Geräteliste** zeigt seit Schnitt 2 ein Vorschaubild je Zeile
+  (`GeraeteAuswahlView.vorschau`, `Vorschau.verkleinert`). Vorschaugrößen am
+  Server gibt es weiterhin nicht — übertragen wird das Originalfoto, die App
+  verkleinert selbst (siehe Schnitt 5).
 
 ## Eine Regel, die mehrfach auftaucht: heute vs. ausgewählt
 
@@ -365,6 +369,10 @@ Genutzt wird dasselbe Foto wie auf dem Einstieg (`equipment_models.photo_url`),
 also ohne neue Datenhaltung — nur als Vorschaugröße. Ohne Foto bleibt die
 Zeile wie heute, ohne grauen Platzhalterkasten.
 
+Die Liste holt die signierten URLs über `GET /api/v1/me/machine-photos` (der
+Bucket ist privat, das Bootstrap trägt nur Pfade) und dekodiert die Bilder in
+der App direkt auf Vorschaugröße.
+
 *Bild 21. `Workout/GeraeteAuswahl.swift`, `Screens/Geraet/GeraeteAuswahlView.swift`.*
 
 ### 17. Home — Uhrzeit kleiner, Zeit und Sätze groß
@@ -524,14 +532,15 @@ Reine Ableitungen, alle in `HomeZeilen` / `KurseMeineEinteilung` prüfbar —
 der Schnitt kostet wenig und macht die vier folgenden sichtbar besser.
 Er geht zuerst, weil er nichts voraussetzt und nichts blockiert.
 
-### Schnitt 2 — Training-Tab (Client, ohne Server)
+### Schnitt 2 — Training-Tab (Client, ein Endpunkt)
 
 **Punkte 3, 8, 16.** Ein Grund: der Tab soll zeigen, was gerade ist, und den
 Start in die Daumenzone holen.
 
 - Startwege nach unten, laufendes Training samt Uhr in die Mitte.
 - Geräteliste mit Vorschaubild (nutzt `equipment_models.photo_url`, also
-  ohne neue Daten — deshalb hier und nicht im Bilder-Schnitt).
+  ohne neue Daten — deshalb hier und nicht im Bilder-Schnitt). Die App holt
+  die signierten URLs über `GET /api/v1/me/machine-photos`.
 
 ### Schnitt 3 — Satzpfad am Gerät (Client, ohne Server)
 
