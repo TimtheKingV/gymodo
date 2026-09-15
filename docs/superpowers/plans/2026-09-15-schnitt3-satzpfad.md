@@ -747,11 +747,30 @@ Tests beweisen Ableitungen, nicht Sichtbarkeit und Höhe. Der Sichtcheck läuft 
 - [ ] **Step 3: Kein Drawer** in drei Fällen: Gerät zum ersten Mal (Dreischritt läuft, danach kein Drawer), zweiter Satz nach der Pause, Rückkehr ans Gerät über die Blockliste. Für jeden Fall ein Screenshot des Satzpfads ohne Sheet.
 - [ ] **Step 4: Räder**: am Gewicht drehen, dann `kontextLaden` abwarten (Vorschlag) — der Wert bleibt. Anschlag: am Minimum weiterdrehen, das Rad klopft (nicht sichtbar prüfbar, aber der Wert bleibt am Rand).
 - [ ] **Step 5: Gerät ohne Einstellwerte**: keine Zeile, kein Loch — der Abstand Übung → Räder ist 16. Gerät mit langem Namen: eine Zeile, geschrumpft, nicht abgeschnitten.
-- [ ] **Step 6: Pause und Abschluss** auf dem SE: Pausenrad, „Weiter“, „+30 s | Gerät abschließen“; Abschluss mit „Weiterer Satz | Problem melden“. Screenshot. Hier auch die Frage a) aus dem Aufgabenbrief reproduzieren (Gerätename und Ort links abgeschnitten) und die Ursache notieren — Fix nur, wenn der Auftraggeber a) in diesen Schnitt genommen hat (siehe „Offen“).
+- [ ] **Step 6: Pause und Abschluss** auf dem SE: Pausenrad, „Weiter“, „+30 s | Gerät abschließen“; Abschluss mit „Weiterer Satz | Problem melden“. Screenshot. Hier auch Frage a) reproduzieren (Gerätename und Ort links abgeschnitten) und die Ursache notieren — der Fix ist Task 8.
 - [ ] **Step 7: Dynamic Type** `xcrun simctl ui <udid> content_size extra-extra-extra-large` auf dem SE: der Satzpfad darf scrollen, aber nichts überlappt, die Räder zeigen ihren Wert (geschrumpft, nicht gekürzt), der Drawer wächst mit und „Weiter“ bleibt erreichbar. Danach `content_size medium`.
 - [ ] **Step 8: Bericht**: Liste der Screenshots mit je einem Satz, was sie zeigen; Abweichungen als Nachtrag-Commit `fix(geraet): Nachzuege aus dem Sichtcheck -- …` oder als Notiz unter „Beim Sichtcheck gefunden, außerhalb dieses Schnitts“ im Abschlussbericht. SE-Simulator löschen, Web-API beenden.
 
 ---
+
+---
+
+## Task 8: Pausenscreen auf dem SE (Frage a, aufgenommen am 15. September)
+
+Der Sichtcheck von Schnitt 2 zeigte auf dem SE in der Pause den Gerätenamen und den Ort links abgeschnitten („ASCHINE“ statt „RUDERMASCHINE“). Aus dem Code allein ist die Ursache nicht eindeutig (siehe „Offen“ unten); Task 7, Step 6 reproduziert sie. Dazu kommt der Nebenbefund aus dem Höhenbudget: die Pause ist auf dem SE auch nach Task 5 zu hoch.
+
+**Höhenbudget der Pause auf dem SE** (554 pt für den Inhalt), nach Task 5: Kopfzeile 17,7 + 16 + Gerät/Übung 61,7 (ohne „andere Übung“, der Knopf zeigt nur im Eingabezustand) + 16 + `PausenRad` 444 (24 + 240 + 32 + 64 + 12 + 48 + 24) + Fuß 16 = **571,4 — 17 zu viel.** Das `.padding(.vertical, s24)` am `PausenRad` (48 pt) ist überflüssig, der umschließende `VStack` trägt den Abstand: ohne es **523,4**, 31 Reserve.
+
+**Files:**
+- Modify: `apps/ios-member/FitnessMember/DesignSystem/Components/PausenRad.swift` (Z. 68)
+- Modify: je nach Ursache `apps/ios-member/FitnessMember/Screens/Geraet/GeraetView.swift` (`kopfzeile`, `geraetUndUebung`, `inhalt`) oder `PausenRad.swift`
+
+- [ ] **Step 1: Reproduzieren** auf dem SE-Simulator aus Task 7: Satz sichern, Pause läuft, Screenshot. Zeigt er den Abschnitt links, mit `Debug View Hierarchy` oder durch schrittweises Ausblenden (`PausenRad` durch `Color.clear.frame(height: 444)` ersetzen, dann die Knopfzeile, dann das Rad) das Kind finden, das breiter als 335 pt ist oder den Inhalt verschiebt. Ursache in den Bericht.
+- [ ] **Step 2: Kleinster Fix** an der gefundenen Stelle, mit Kommentar, der die Ursache nennt. Kein Umbau des Pausenzustands.
+- [ ] **Step 3: `.padding(.vertical, DesignSystem.Spacing.s24)`** in `PausenRad.body` entfällt; die Preview zeigt das Rad ohnehin mit `.padding(20)` auf `bg`, sie braucht nichts. Kommentar am `VStack` in `PausenRad`: „Kein eigenes vertikales Padding: der Abstand kommt vom Satzpfad-VStack, und 48 pt hier machten die Pause auf einem 667-pt-iPhone 17 pt zu hoch (Plan Schnitt 3, Task 8).“
+- [ ] **Step 4: Screenshot SE**, Pause: Kopfzeile und Gerätename vollständig, „Weiter“ und die geteilte Knopfzeile im Bild, ohne Scrollen.
+- [ ] **Step 5: `xcodebuild test`**, grün.
+- [ ] **Step 6: Commit** — `fix(geraet): Pausenscreen schneidet auf 667 pt nichts mehr ab`
 
 ## Selbstprüfung
 
@@ -772,15 +791,15 @@ Tests beweisen Ableitungen, nicht Sichtbarkeit und Höhe. Der Sichtcheck läuft 
 
 ## Offen — vor der Umsetzung zu entscheiden
 
-**a) Pausenscreen schneidet Gerätename und Ort links ab** (Sichtcheck Schnitt 2, SE: „ASCHINE“ statt „RUDERMASCHINE“). Derselbe Screen, derselbe Kopf (`kopfzeile`, `geraetUndUebung`) in allen Zuständen — aber nur in der Pause abgeschnitten. Im Code ist im Pausenzustand nichts breiter als der Screen: `PausenRad` misst 240 pt, die geteilte Knopfzeile braucht auf dem SE 146 von 161 pt je Seite, die Kopfzeile 241 + 12 + 40 pt von 335. Ein Abschnitt links bei vollem rechtem Rand entsteht, wenn ein `ScrollView`-Inhalt breiter als der Viewport ist und zentriert wird — welches Kind das ist, zeigt erst die Reproduktion. Nebenbefund aus dem Höhenbudget: die Pause ist auf dem SE mit 571 pt (nach Task 5) 17 pt zu hoch und scrollt. **Empfehlung:** in Schnitt 3 aufnehmen als Task 8 nach dem Sichtcheck — die SE-Umgebung steht dann, die Reproduktion kostet nichts, und der Fix liegt in `GeraetView`/`PausenRad`, wo dieser Schnitt ohnehin arbeitet. Wenn die Ursache außerhalb liegt, wird sie notiert, nicht gefixt.
+**a) Pausenscreen schneidet Gerätename und Ort links ab** (Sichtcheck Schnitt 2, SE: „ASCHINE“ statt „RUDERMASCHINE“). Derselbe Screen, derselbe Kopf (`kopfzeile`, `geraetUndUebung`) in allen Zuständen — aber nur in der Pause abgeschnitten. Im Code ist im Pausenzustand nichts breiter als der Screen: `PausenRad` misst 240 pt, die geteilte Knopfzeile braucht auf dem SE 146 von 161 pt je Seite, die Kopfzeile 241 + 12 + 40 pt von 335. Ein Abschnitt links bei vollem rechtem Rand entsteht, wenn ein `ScrollView`-Inhalt breiter als der Viewport ist und zentriert wird — welches Kind das ist, zeigt erst die Reproduktion. Nebenbefund aus dem Höhenbudget: die Pause ist auf dem SE mit 571 pt (nach Task 5) 17 pt zu hoch und scrollt. **Entschieden (15. September): in Schnitt 3, als Task 8** nach dem Sichtcheck — die SE-Umgebung steht dann, die Reproduktion kostet nichts, und der Fix liegt in `GeraetView`/`PausenRad`, wo dieser Schnitt ohnehin arbeitet. Wenn die Ursache außerhalb liegt, wird sie notiert, nicht gefixt.
 
-**b) Gerät ohne Einstellwerte kommt nicht über die Kalibrierung hinaus** (`POST /me/calibrations` → 422 „Es wurde kein Einstellwert uebergeben.“, `pruefeEinstellwerte` in `packages/domain/src/calibration.ts` Z. 61–64). `KalibrierungSchritt` zeigt dann nur den Trainer-Schalter und „Speichern und weiter“, das Banner mit dem Servertext, kein Weiter. Zwei Fixes, beide klein: der Server akzeptiert leere `settingValues`, wenn das Modell keine Definitionen hat (eine Bedingung, ein Unit- und ein Integrationstest); und/oder die App überspringt Schritt 2, wenn `einstellDefinitionen` leer ist, und zeigt „ändern“ nicht. **Empfehlung:** eigener Fix, nicht in Schnitt 3 — es ist Erstkontakt und Server, nicht Satzpfad, und der Schnitt bleibt „Client, ohne Server“. Der Sichtcheck umgeht es über eine vorab angelegte Zeile in `member_machine_calibrations`.
+**b) Gerät ohne Einstellwerte kommt nicht über die Kalibrierung hinaus** (`POST /me/calibrations` → 422 „Es wurde kein Einstellwert uebergeben.“, `pruefeEinstellwerte` in `packages/domain/src/calibration.ts` Z. 61–64). `KalibrierungSchritt` zeigt dann nur den Trainer-Schalter und „Speichern und weiter“, das Banner mit dem Servertext, kein Weiter. Zwei Fixes, beide klein: der Server akzeptiert leere `settingValues`, wenn das Modell keine Definitionen hat (eine Bedingung, ein Unit- und ein Integrationstest); und/oder die App überspringt Schritt 2, wenn `einstellDefinitionen` leer ist, und zeigt „ändern“ nicht. **Entschieden (15. September): eigener Fix, nicht in Schnitt 3** — es ist Erstkontakt und Server, nicht Satzpfad, und der Schnitt bleibt „Client, ohne Server“. Der Sichtcheck umgeht es über eine vorab angelegte Zeile in `member_machine_calibrations`.
 
 ## Was dieser Schnitt NICHT tut
 
 - **Startzeitpunkt der Einheit und der Screen „Training starten“** (Punkt 10, Schnitt 4). Die Uhr zählt weiter ab dem ersten Gerät (`geraetBetreten`), der Dreischritt bleibt, wie er ist.
 - **Löschen einer Einheit** (Punkt 19), **Übungsbilder** (Punkte 14 und 18, Schnitt 5), **laufendes Training auf Home** (Punkt 21).
-- **Frage b)** — Gerät ohne Einstellwerte am Erstkontakt — bleibt ein eigener Fix, sofern der Auftraggeber nicht anders entscheidet.
+- **Frage b)** — Gerät ohne Einstellwerte am Erstkontakt (422) — ist ein eigener Fix, entschieden am 15. September.
 - **Die Artboards** `docs/superpowers/design/member/GeraetWertRad.dc.html` und `Main.dc.html` bleiben, wie sie sind: sie zeigen den Entwurf vom September-Anfang mit Ruhe- und Offen-Zustand. Kommentare im Code, die auf sie verweisen (`RastRad.basisGroesse`, `WertZeile.wiederholungsrad`), bleiben richtig — sie zitieren Schriftgrößen, nicht Zustände.
 - **Kein „Vorschlag übernehmen“ im Drawer.** Das Rad steht schon auf dem Vorschlag, sobald er da ist (`kontextUebernehmen`); ein Knopf dafür wäre ein Tap für etwas, das schon passiert ist.
 - **`RastRad` in Onboarding und Gewichtseintrag** behalten fünf Zeilen. `sichtbareZeilen` ist ein Parameter mit Vorgabe 5, nicht eine Änderung an diesen Screens.
