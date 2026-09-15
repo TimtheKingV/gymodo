@@ -95,6 +95,7 @@
 		604F2EDF6B1BD1F6C0E6B2A5 /* KurseWochenInhalt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810AA944DFBA5CA775A08184 /* KurseWochenInhalt.swift */; };
 		60550E206CC7C6325A9F3F1A /* ZielSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A8B71893CB0948BB6A7FE6 /* ZielSheet.swift */; };
 		60D24FEA40C280F061776F34 /* Stammdaten.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A7C08B1E55D753C748A62B /* Stammdaten.swift */; };
+		623391FEE484E105F85E2BFB /* RastRadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AAB4EF55CE7557296B1A97 /* RastRadTests.swift */; };
 		635B651CF96DE3A5916EB956 /* ProfilZeilenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28729494126B3B466AEDB7C4 /* ProfilZeilenTests.swift */; };
 		64DE54AADAEF254C04697CD4 /* GewichtEintragenHilfenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26938FABB4BBFFF4A17B5D63 /* GewichtEintragenHilfenTests.swift */; };
 		67CB5A92D5A22F772F336E2F /* FortschrittsfensterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */; };
@@ -390,6 +391,7 @@
 		941088E8ADF755FB4FCC5B33 /* Fortschrittsfenster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fortschrittsfenster.swift; sourceTree = "<group>"; };
 		943C19386AFE9634615213ED /* Info-Additions.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info-Additions.plist"; sourceTree = "<group>"; };
 		9465205BEFD3A3A8588D48D2 /* HomeZeilen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeZeilen.swift; sourceTree = "<group>"; };
+		94AAB4EF55CE7557296B1A97 /* RastRadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RastRadTests.swift; sourceTree = "<group>"; };
 		962343020926813A08DE01CA /* KurseFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseFileStore.swift; sourceTree = "<group>"; };
 		9ABF3C0BB5050A962881A269 /* GeraeteAuswahlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteAuswahlView.swift; sourceTree = "<group>"; };
 		9AC1E765B0B287F9AC69A3B8 /* CourseWeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseWeek.swift; sourceTree = "<group>"; };
@@ -744,6 +746,7 @@
 				3083F4ABC58427C5FDB7D835 /* PendingTagStoreTests.swift */,
 				E07C7F4A13CB277BC11B8D77 /* PendingWriteStoreTests.swift */,
 				28729494126B3B466AEDB7C4 /* ProfilZeilenTests.swift */,
+				94AAB4EF55CE7557296B1A97 /* RastRadTests.swift */,
 				26B1A62413AE0C5835F9E9CA /* RastwerteTests.swift */,
 				707F099CE279C3111DDD2149 /* ResttimerTests.swift */,
 				0753010E9ACC09DF6D948170 /* RootDestinationTests.swift */,
@@ -1250,6 +1253,7 @@
 				382451921E71AB26611C0BA0 /* PendingTagStoreTests.swift in Sources */,
 				F1E9DFA75153BCFFEF5FDD62 /* PendingWriteStoreTests.swift in Sources */,
 				635B651CF96DE3A5916EB956 /* ProfilZeilenTests.swift in Sources */,
+				623391FEE484E105F85E2BFB /* RastRadTests.swift in Sources */,
 				AD152D48FC554F180FA72F58 /* RastwerteTests.swift in Sources */,
 				44EA0E9CBF440F567DCD049C /* ResttimerTests.swift in Sources */,
 				74330F94DB89B468FB230AB0 /* RootDestinationTests.swift in Sources */,

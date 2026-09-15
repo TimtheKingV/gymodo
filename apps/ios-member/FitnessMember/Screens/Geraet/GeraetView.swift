@@ -31,40 +31,56 @@ struct GeraetView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                kopfzeile
-                // Sichtbarkeit hier entschieden, nicht in den Komponenten
-                // selbst -- damit kein VStack einen leer rendernden
-                // Kindzustand umschliesst (Review-Fund Task 15).
-                //
-                // Waehrend der Pause schweigen die drei Statuskarten. Die
-                // Pause ist der ausschliessende Zustand (siehe oben), und
-                // die Warteschlangenkarte war dort das Gegenteil davon: sie
-                // blitzte nach jedem gesicherten Satz kurz auf ("wartet auf
-                // Empfang", dann "gesendet", dann weg) und riss beim
-                // Verschwinden das Rad samt Ziffern nach oben. Ein
-                // erfolgreicher Normalfall braucht diese Meldung nicht --
-                // sie steht nach der Pause wieder da, solange sie gilt.
-                if modell.laufendePause == nil {
-                    if !netz.istOnline {
-                        OfflineLeiste(istOnline: netz.istOnline)
+            // 16 statt 24 zwischen den Bloecken: der Satzpfad muss auf ein
+            // 667-pt-iPhone passen, ohne dass die Seite scrollt -- und iOS 26
+            // laesst dem Inhalt dort nur 510 pt (54 pt Navigationsleiste,
+            // 83 pt Safe Area fuer die schwebende Tab-Leiste; Sammelstelle
+            // Punkt 12, Rechnung im Plan zu Schnitt 3). Die
+            // Einstellwerte-Zeile ist 44 pt hoch bei 15 pt Schrift und traegt
+            // ihre Luft selbst. Scrollen tut die Seite nur noch mit
+            // Statuskarten -- deshalb basedOnSize, sonst federt ein Pfad, der
+            // passt.
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+                // Label ueber seinem Titel: Kopfzeile und Geraetename sind
+                // eine Einheit und stehen deshalb 8 auseinander, nicht 16.
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
+                    kopfzeile
+                    // Sichtbarkeit hier entschieden, nicht in den Komponenten
+                    // selbst -- damit kein VStack einen leer rendernden
+                    // Kindzustand umschliesst (Review-Fund Task 15).
+                    //
+                    // Waehrend der Pause schweigen die drei Statuskarten. Die
+                    // Pause ist der ausschliessende Zustand (siehe oben), und
+                    // die Warteschlangenkarte war dort das Gegenteil davon: sie
+                    // blitzte nach jedem gesicherten Satz kurz auf ("wartet auf
+                    // Empfang", dann "gesendet", dann weg) und riss beim
+                    // Verschwinden das Rad samt Ziffern nach oben. Ein
+                    // erfolgreicher Normalfall braucht diese Meldung nicht --
+                    // sie steht nach der Pause wieder da, solange sie gilt.
+                    if modell.laufendePause == nil {
+                        if !netz.istOnline {
+                            OfflineLeiste(istOnline: netz.istOnline)
+                        }
+                        if !katalog.pendingWrites.isEmpty || geradeGesendet {
+                            WarteschlangeKarte(offen: katalog.pendingWrites.count,
+                                               geradeGesendet: geradeGesendet)
+                        }
+                        if !katalog.verworfeneWrites.isEmpty {
+                            AbgelehnteKarte(anzahl: katalog.verworfeneWrites.count,
+                                            beiQuittieren: katalog.verworfeneQuittieren)
+                        }
                     }
-                    if !katalog.pendingWrites.isEmpty || geradeGesendet {
-                        WarteschlangeKarte(offen: katalog.pendingWrites.count,
-                                           geradeGesendet: geradeGesendet)
-                    }
-                    if !katalog.verworfeneWrites.isEmpty {
-                        AbgelehnteKarte(anzahl: katalog.verworfeneWrites.count,
-                                        beiQuittieren: katalog.verworfeneQuittieren)
-                    }
+                    geraetUndUebung
                 }
-                geraetUndUebung
                 inhalt
             }
             .padding(.horizontal, 20)
-            .padding(.bottom, DesignSystem.Spacing.s32)
+            // 8 statt 32: die 83 pt Safe Area der schwebenden Tab-Leiste
+            // tragen den Abstand nach unten schon.
+            .padding(.bottom, DesignSystem.Spacing.s8)
             .animation(reduceMotion ? nil : DesignSystem.Motion.pause, value: modell.phase)
         }
+        .scrollBounceBehavior(.basedOnSize)
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
         // Die Trainingsuhr startet am ersten Geraet, nicht am ersten
@@ -172,32 +188,47 @@ struct GeraetView: View {
     }
 
     private var geraetUndUebung: some View {
-        HStack(alignment: .lastTextBaseline) {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                Text(modell.maschine.equipmentModel.name.uppercased())
-                    .font(DesignSystem.Typography.geraetename)
-                    .tracking(-0.8)
-                    .foregroundStyle(DesignSystem.Color.text)
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+            // Eine Zeile: ein zweizeiliger Name (BEINPRESSE SITZEND misst
+            // rund 380 pt bei 32 pt Black) kostete 38 pt, die das
+            // Hoehenbudget auf 667 pt nicht hat. Schrumpfen statt kuerzen --
+            // ein abgeschnittener Name sagt nicht, an welchem Geraet man
+            // steht. Der Name steht ueber der Uebungszeile und nicht neben
+            // "andere Übung", weil der Knopf ihm sonst 100 pt Breite nimmt
+            // und schon "RUDERMASCHINE" auf dem SE umbricht.
+            Text(modell.maschine.equipmentModel.name.uppercased())
+                .font(DesignSystem.Typography.geraetename)
+                .tracking(-0.8)
+                .foregroundStyle(DesignSystem.Color.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            HStack(alignment: .center) {
                 Text(modell.aktiveUebung?.name ?? "")
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.textMuted)
-            }
-            Spacer()
-            // Nur im Eingabezustand: Pause und Abschlussentscheidung zeigen
-            // Geraet und Uebung zur Orientierung, nicht als Auswahl.
-            //
-            // Und nur, wenn das Geraet ueberhaupt eine zweite Uebung kennt:
-            // sonst fuehrte der Knopf zu einem Sheet mit genau der Uebung,
-            // die ohnehin schon laeuft.
-            if modell.phase == .eingabe && modell.hatWeitereUebungen {
-                // Abweichung vom Artboard (Spec Abschnitt 9): dort accent. Die
-                // eine Akzentflaeche des Screens ist die Hauptaktion.
-                Button("andere Übung", action: beiUebungWechseln)
-                    .testnotizElement("geraet.uebung-wechseln", typ: "Button")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                    .frame(minHeight: 44)
-                    .buttonStyle(PressButtonStyle())
+                Spacer()
+                // Nur im Eingabezustand: Pause und Abschlussentscheidung zeigen
+                // Geraet und Uebung zur Orientierung, nicht als Auswahl.
+                //
+                // Und nur, wenn das Geraet ueberhaupt eine zweite Uebung kennt:
+                // sonst fuehrte der Knopf zu einem Sheet mit genau der Uebung,
+                // die ohnehin schon laeuft.
+                if modell.phase == .eingabe && modell.hatWeitereUebungen {
+                    // Abweichung vom Artboard (Spec Abschnitt 9): dort accent. Die
+                    // eine Akzentflaeche des Screens ist die Hauptaktion.
+                    Button("andere Übung", action: beiUebungWechseln)
+                        .testnotizElement("geraet.uebung-wechseln", typ: "Button")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .frame(minHeight: 44)
+                        // Die 44 pt Trefferflaeche ragen in die 16 pt Luft
+                        // ueber und unter der Zeile hinein, statt die
+                        // 20-pt-Zeile auf 44 zu strecken: Design SS4 verlangt
+                        // die Trefferflaeche, nicht die Zeilenhoehe -- und die
+                        // 24 pt kostete das Hoehenbudget auf 667 pt.
+                        .padding(.vertical, -DesignSystem.Spacing.s12)
+                        .buttonStyle(PressButtonStyle())
+                }
             }
         }
     }
@@ -242,14 +273,18 @@ struct GeraetView: View {
             .testnotizElement("geraet.satz-sichern", typ: "PrimaryButton")
             .accessibilityLabel("\(hauptaktion), \(Zahlformat.gewichtGesprochen(modell.gewicht))")
 
-            // Steht direkt unter dem Weg zum naechsten Satz, weil es die
-            // andere Haelfte derselben Frage ist: noch einer, oder fertig
-            // hier? Vorher gab es dafuer nur ein kleingesetztes "Zurueck zum
-            // Training" ganz unten -- eine Navigation, kein Abschluss.
-            SecondaryButton(title: "Gerät abschließen", action: beiZurueckZumTraining)
-                .testnotizElement("geraet.abschliessen", typ: "SecondaryButton")
-
-            problemMelden
+            // Abschliessen und Problem melden in EINER Zeile (Sammelstelle
+            // Punkt 12): als dritte Zeile kostete "Problem melden" 56 pt, die
+            // auf einem 667-pt-iPhone fehlten. Es bleibt ein Textknopf mit
+            // 44 pt Hoehe, kein zweiter Umriss -- die Ausnahme, nicht die
+            // Alternative. "Geraet abschliessen" steht weiter direkt unter dem
+            // Weg zum naechsten Satz, weil es die andere Haelfte derselben
+            // Frage ist: noch einer, oder fertig hier?
+            HStack(spacing: DesignSystem.Spacing.s12) {
+                SecondaryButton(title: "Gerät abschließen", action: beiZurueckZumTraining)
+                    .testnotizElement("geraet.abschliessen", typ: "SecondaryButton")
+                problemMelden
+            }
         }
         // Am umschliessenden VStack, nicht am PrimaryButton selbst: der
         // Knopf verschwindet je nach Zustand aus der Hierarchie, der
@@ -284,10 +319,12 @@ struct GeraetView: View {
 
             PrimaryButton(title: "Gerät abschließen") { beiZurueckZumTraining() }
                 .testnotizElement("geraet.abschliessen", typ: "PrimaryButton")
-            SecondaryButton(title: "Weiterer Satz") { modell.weitererSatz() }
-                .testnotizElement("geraet.weiterer-satz", typ: "SecondaryButton")
-
-            problemMelden
+            // Dieselbe Zeile wie unter den Raedern (Sammelstelle Punkt 12).
+            HStack(spacing: DesignSystem.Spacing.s12) {
+                SecondaryButton(title: "Weiterer Satz") { modell.weitererSatz() }
+                    .testnotizElement("geraet.weiterer-satz", typ: "SecondaryButton")
+                problemMelden
+            }
         }
     }
 

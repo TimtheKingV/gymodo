@@ -62,7 +62,8 @@ struct WertZeile: View {
                     voLabel: "Gewicht",
                     voWert: Zahlformat.gewichtGesprochen,
                     anschlagText: modell.anschlagText,
-                    text: Zahlformat.gewicht
+                    text: Zahlformat.gewicht,
+                    sichtbareZeilen: 3
                 )
                 Text("kg")
                     .font(DesignSystem.Typography.uebungsname)
@@ -115,7 +116,8 @@ struct WertZeile: View {
                     voWert: { Zahlformat.wiederholungenGesprochen(Int($0)) },
                     anschlagText: nil,
                     text: { String(Int($0)) },
-                    basisGroesse: 44
+                    basisGroesse: 44,
+                    sichtbareZeilen: 3
                 )
                 Text("Wdh.")
                     .font(DesignSystem.Typography.uebungsname)

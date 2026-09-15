@@ -15,6 +15,14 @@ enum UnterstrichStil {
     case zweitwert   // Wiederholungen: 3pt
 }
 
+/// Wie das Rad eine Zeile zeigt: die gewaehlte in voller Groesse, die
+/// Nachbarn kleiner und blasser (designsystem.md SS7).
+enum Nachbarstufe: Equatable {
+    case gewaehlt
+    case nachbar
+    case fern
+}
+
 /// Ein Wertrad, immer offen.
 ///
 /// Der Kniff aus designsystem.md SS7: "die Linie bleibt liegen, die Zahlen
@@ -55,6 +63,12 @@ struct RastRad: View {
     /// auf 44 korrigiert). Additiv mit Default, damit das Gewichtsrad aus
     /// Aufgabe 7 unangetastet bleibt.
     var basisGroesse: CGFloat = 64
+    /// Wie viele Zeilen der Ausschnitt zeigt -- immer ungerade, die gewaehlte
+    /// in der Mitte. Fuenf ist die Vorgabe (zwei Nachbarn je Richtung); der
+    /// Satzpfad nimmt drei, weil er auf ein 667-pt-iPhone passen muss
+    /// (Sammelstelle Punkt 12) und ein Nachbar fuer die Aussage des Rads
+    /// reicht: wer 80,0 sieht, sieht auch, dass der naechste Schritt 82,5 ist.
+    var sichtbareZeilen = 5
 
     @ScaledMetric(relativeTo: .body) private var zeilenhoehe: CGFloat = 44
     @State private var scrollPosition: Double?
@@ -65,8 +79,7 @@ struct RastRad: View {
         return Rastwerte.amAnschlag(auswahl, in: werte)
     }
 
-    /// Fuenf Zeilen: der gewaehlte Wert plus zwei Nachbarn je Richtung.
-    private var radhoehe: CGFloat { zeilenhoehe * 5 }
+    private var radhoehe: CGFloat { zeilenhoehe * CGFloat(sichtbareZeilen) }
 
     var body: some View {
         ZStack {
@@ -131,7 +144,10 @@ struct RastRad: View {
     }
 
     private var scroller: some View {
-        ScrollView(.vertical, showsIndicators: false) {
+        // Die Effekt-Closure unten laeuft nonisolated und darf keinen
+        // Instanzzustand lesen -- ein lokaler Int geht mit.
+        let zeilen = sichtbareZeilen
+        return ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: 0) {
                 ForEach(werte, id: \.self) { wert in
                     // `scrollTransition`s Effekt-Closure bekommt keine View,
@@ -155,9 +171,10 @@ struct RastRad: View {
                         .frame(height: zeilenhoehe)
                         .frame(maxWidth: .infinity)
                         .scrollTransition(.interactive, axis: .vertical) { inhalt, phase in
-                            inhalt
-                                .scaleEffect(Self.skalierung(fuer: phase.value))
-                                .opacity(Self.deckkraft(fuer: phase.value))
+                            let stufe = Self.nachbarstufe(phase: phase.value, sichtbareZeilen: zeilen)
+                            return inhalt
+                                .scaleEffect(Self.skalierung(stufe))
+                                .opacity(Self.deckkraft(stufe))
                         }
                 }
             }
@@ -221,11 +238,7 @@ struct RastRad: View {
     // sondern kontinuierlich auf [-1, 1] begrenzt (-1 = topLeading, 0 =
     // identity, +1 = bottomTrailing). Bei einem Fuenf-Zeilen-Viewport landet
     // der erste Nachbar (1 Zeile Abstand) bei |phase| ~ 0,5 und der zweite
-    // Nachbar (2 Zeilen Abstand) bei |phase| ~ 1,0. Die Schwellen 0,25 und
-    // 0,75 liegen deshalb jeweils in der Mitte zwischen "0 Zeilen" / "1
-    // Zeile" bzw. "1 Zeile" / "2 Zeilen" -- nicht bei 0,5/1,5, was fuer den
-    // begrenzten Wertebereich zu hoch waere und den radFern-Zweig nie
-    // erreichen wuerde.
+    // Nachbar (2 Zeilen Abstand) bei |phase| ~ 1,0.
     //
     // ZWEITE KORREKTUR: `scrollTransition`s Effekt-Closure liefert ein
     // `VisualEffect`, kein `View` -- `.font` und `.foregroundStyle` gibt es
@@ -252,22 +265,37 @@ struct RastRad: View {
     // gerechnet werden.
 
     // static/nonisolated, weil scrollTransition's Effekt-Closure nonisolated
-    // laeuft (sie bekommt ein VisualEffect, kein View) -- beide Funktionen
-    // duerfen deshalb nicht implizit @MainActor sein. Beide lesen keinen
+    // laeuft (sie bekommt ein VisualEffect, kein View) -- die drei Funktionen
+    // duerfen deshalb nicht implizit @MainActor sein. Alle drei lesen keinen
     // Instanzzustand, sind also verlustfrei aus dem Actor loesbar.
-    private nonisolated static func skalierung(fuer phase: Double) -> CGFloat {
-        switch abs(phase) {
-        case ..<0.25: 1.0
-        case ..<0.75: 30.0 / 64.0
-        default: 26.0 / 64.0
+
+    /// Phase -> Stufe, aus der Zeilenzahl gerechnet. `phase` ist auf [-1, 1]
+    /// ueber den HALBEN Ausschnitt begrenzt: bei fuenf Zeilen liegt der erste
+    /// Nachbar bei 0,5, bei drei Zeilen schon bei 1,0. Die Schwellen 0,5 und
+    /// 1,5 ZEILEN sind fuer beide dieselben -- deshalb wird die Phase erst in
+    /// Zeilen umgerechnet.
+    nonisolated static func nachbarstufe(phase: Double, sichtbareZeilen: Int) -> Nachbarstufe {
+        let halberAusschnitt = Double(sichtbareZeilen - 1) / 2
+        return switch abs(phase) * halberAusschnitt {
+        case ..<0.5: .gewaehlt
+        case ..<1.5: .nachbar
+        default: .fern
         }
     }
 
-    private nonisolated static func deckkraft(fuer phase: Double) -> Double {
-        switch abs(phase) {
-        case ..<0.25: 1.0
-        case ..<0.75: 0.38
-        default: 0.15
+    private nonisolated static func skalierung(_ stufe: Nachbarstufe) -> CGFloat {
+        switch stufe {
+        case .gewaehlt: 1.0
+        case .nachbar: 30.0 / 64.0
+        case .fern: 26.0 / 64.0
+        }
+    }
+
+    private nonisolated static func deckkraft(_ stufe: Nachbarstufe) -> Double {
+        switch stufe {
+        case .gewaehlt: 1.0
+        case .nachbar: 0.38
+        case .fern: 0.15
         }
     }
 
