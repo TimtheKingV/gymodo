@@ -236,6 +236,18 @@ Was daran hängt:
   nicht erst ab dem ersten Satz — und die Uhr aus Punkt 8 („Training läuft")
   hat einen Anfang, den das Mitglied selbst gesetzt hat.
 
+**Entschieden (15. September): ein eigener Screen „Training starten“.** Die
+Einheit beginnt nicht schon mit dem Tap auf die Übung, sondern auf einem
+eigenen Screen nach Geräte- und Übungswahl. Mit dem Tap dort beginnt die
+Uhr. Das hebt M1-Spec §5.6 („es gibt keinen Startknopf“) auf, die Spec wird
+beim Umsetzen nachgezogen. Für Schnitt 4 offen:
+
+- Kommt der Screen nur, wenn noch kein Training läuft? Das nächste Gerät
+  mitten im Training soll vermutlich ohne ihn auskommen, sonst kostet jeder
+  Gerätewechsel einen Tap mehr.
+- Die Regel für leere Einheiten bleibt nötig: wer „Training starten“
+  drückt und geht, hinterlässt eine Einheit ohne Satz.
+
 *Bild 11. `Screens/Geraet/GeraetEinstieg*`, `Workout/WorkoutSessionStore.swift`.*
 
 ### 11. Satzpfad — die Räder sind immer aktiv
@@ -457,6 +469,21 @@ Was daran hängt:
 *`packages/domain/src/sessions.ts`, `Verlauf/VerlaufStore.swift`, `Verlauf/HomeSerie.swift`,*
 *`Screens/Home/HomeRootView.swift`.*
 
+### 21. Home — laufendes Training oben rechts
+
+Läuft ein Training, soll es auch auf Home zu sehen sein, oben rechts: wie
+im Training-Tab mit „Training läuft“ und der gelaufenen Zeit. Ohne
+laufendes Training steht dort nichts, wie in der Mitte des Training-Tabs.
+
+Die Ableitung gibt es mit Schnitt 2 schon (`TrainingTab.mitte`), die
+Anzeige wäre eine zweite Stelle dafür. Offen ist der Platz: oben rechts
+steht seit Schnitt 1 der Umschalter „Monatsansicht/Wochenansicht“ in der
+Kopfzeile von `HomeSerieView`. Einer von beiden muss ausweichen. Ob ein
+Tap darauf in den Training-Tab führt, ist ebenfalls offen.
+
+*Ohne Bild, aus der Besprechung zu Schnitt 2 (15. September).*
+*`Screens/Home/HomeSerieView.swift` (`kopfzeile`), `Workout/TrainingTab.swift`.*
+
 ## Umsetzung: Schnitte und Reihenfolge
 
 Zwanzig Punkte sind kein Vorhaben, sondern sieben. Geschnitten ist nach
@@ -520,8 +547,10 @@ alles weg, was daran hing.
 sich — und beides gehört in denselben Schnitt, weil der frühere Start genau
 die Fehleinheiten erzeugt, die das Löschen wieder wegnimmt.
 
-- Einheit entsteht beim Verlassen des Einstiegsscreens; drei Texte
-  umschreiben; eine Einheit ohne Satz wird verworfen und nie gemeldet.
+- Einheit entsteht auf einem eigenen Screen „Training starten“ nach
+  Geräte- und Übungswahl (entschieden 15. September, siehe Punkt 10), dort
+  beginnt die Uhr; drei Texte umschreiben; M1-Spec §5.6 nachziehen; eine
+  Einheit ohne Satz wird verworfen und nie gemeldet.
 - Delete-Policy auf `workout_sessions` (Sätze per Cascade), Warteschlange
   miträumen.
 - „Verwerfen" auf dem Abschluss-Screen, Löschen im Session-Detail.

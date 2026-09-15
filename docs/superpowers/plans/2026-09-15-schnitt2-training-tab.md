@@ -189,7 +189,9 @@ Training starten | NÄCHSTES GERÄT
 [Suchen]                      <- Fuss, in beiden Zustaenden an derselben Stelle
 ```
 
-**Entscheidung im Plan:** „Training beenden“ steht nicht mehr ganz unten, sondern über den Startwegen. So springen die Startwege beim Wechsel zwischen den Zuständen nicht, und die häufigere Aktion mitten im Training (nächstes Gerät) liegt in der Daumenzone. Beenden kommt einmal je Training vor. Am Satz „Ohne neuen Satz endet das Training nach vier Stunden von selbst.“ ändert sich nichts, er steht unter dem Knopf.
+**Entscheidung (bestätigt 15. September):** „Training beenden“ steht nicht mehr ganz unten, sondern über den Startwegen. So springen die Startwege beim Wechsel zwischen den Zuständen nicht, und die häufigere Aktion mitten im Training (nächstes Gerät) liegt in der Daumenzone. Beenden kommt einmal je Training vor. Am Satz „Ohne neuen Satz endet das Training nach vier Stunden von selbst.“ ändert sich nichts, er steht unter dem Knopf.
+
+Ebenfalls bestätigt: Der Kopf mit der Uhr steht oben in der Mitte, direkt unter dem Titel, und nicht senkrecht mittig. Im leeren Zustand bleibt „Training starten“ als 22-pt-Überschrift, im laufenden steht „NÄCHSTES GERÄT“ als Label.
 
 **Files:**
 - Modify: `apps/ios-member/FitnessMember/Screens/Training/TrainingRootView.swift` (`body` Z. 72–90, `leerInhalt` Z. 203–241, `laufendInhalt`/`laufendFuss`/`zuletztZuerst`/`laufendKopf` Z. 278–409)
@@ -721,7 +723,8 @@ private func vorschau(_ eintrag: GeraeteAuswahl.Eintrag) -> some View {
 
 ## Was dieser Schnitt NICHT tut
 
-- **Startzeitpunkt der Einheit** (Punkt 10, Schnitt 4). Die Uhr zählt weiter ab dem ersten gesicherten Satz. Die drei Texte, die Punkt 10 falsch macht, bleiben stehen. `TrainingTab.Mitte.zahlen == nil` ist der einzige Vorgriff, er kostet eine Zeile und verhindert die Null, sobald Schnitt 4 Einheiten ohne Satz möglich macht.
+- **Startzeitpunkt der Einheit** (Punkt 10, Schnitt 4). Entschieden ist ein eigener Screen „Training starten“ nach Geräte- und Übungswahl, mit dem die Uhr beginnt. Gebaut wird er in Schnitt 4. Bis dahin zählt die Uhr ab dem ersten gesicherten Satz. Die drei Texte, die Punkt 10 falsch macht, bleiben stehen. `TrainingTab.Mitte.zahlen == nil` ist der einzige Vorgriff, er kostet eine Zeile und verhindert die Null, sobald Schnitt 4 Einheiten ohne Satz möglich macht.
+- **Laufendes Training auf Home oben rechts** (Punkt 21, neu). Dort steht der Umschalter aus Schnitt 1. Der Platz ist offen, notiert in der Sammelstelle.
 - **Satzpfad am Gerät** (Punkte 11–13, Schnitt 3). `GeraetView` und `radOffen` bleiben unberührt.
 - **Übungsbilder** (Punkte 14 und 18, Schnitt 5). Die Liste zeigt das Foto **des Gerätemodells**. `GeraetErkanntView` bekommt kein neues Bild, und der leere Kasten dort bleibt.
 - **Vorschaugrößen am Server.** Die App verkleinert selbst, übertragen wird trotzdem das Original. Eine Vorschau beim Upload gehört zum Portal- und Medienumbau in Schnitt 5 und wird dort notiert.
