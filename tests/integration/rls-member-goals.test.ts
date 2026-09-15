@@ -107,6 +107,84 @@ describe("RLS auf member_goals", () => {
     expect(data).toEqual([]);
   });
 
+  it("negativ: eine Zeile mit fremder user_id kann nicht angelegt werden", async () => {
+    const { email } = await frischesMitglied("ziel-fremd-insert");
+    const { userId: fremdeId } = await frischesMitglied("ziel-fremd-ziel");
+    const client = await userClient(email);
+
+    const { error } = await client
+      .from("member_goals")
+      .insert({ user_id: fremdeId, kind: "weekly_days", target_value: 3 });
+    expect(error).not.toBeNull();
+
+    const { data: nachher } = await serviceClient()
+      .from("member_goals")
+      .select("id")
+      .eq("user_id", fremdeId);
+    expect(nachher).toEqual([]);
+  });
+
+  it("negativ: ein anderes Mitglied desselben Studios kann meine Zeile weder aendern noch loeschen", async () => {
+    const eigenes = await frischesMitglied("ziel-eigen");
+    const anderes = await frischesMitglied("ziel-anderes");
+    const admin = serviceClient();
+    const { data: seed, error: seedError } = await admin
+      .from("member_goals")
+      .insert({ user_id: eigenes.userId, kind: "weekly_days", target_value: 3 })
+      .select("id")
+      .single();
+    if (seedError) throw seedError;
+
+    const client = await userClient(anderes.email);
+    const { error: updateError, count: updateCount } = await client
+      .from("member_goals")
+      .update({ target_value: 7, status: "dropped" }, { count: "exact" })
+      .eq("id", seed.id);
+    // RLS filtert die Zeilenmenge des Statements auf leer -- kein Fehler,
+    // aber auch keine getroffene Zeile.
+    expect(updateError).toBeNull();
+    expect(updateCount).toBe(0);
+
+    const { error: deleteError, count: deleteCount } = await client
+      .from("member_goals")
+      .delete({ count: "exact" })
+      .eq("id", seed.id);
+    expect(deleteError).toBeNull();
+    expect(deleteCount).toBe(0);
+
+    const { data: nachher } = await admin
+      .from("member_goals")
+      .select("user_id, target_value, status")
+      .eq("id", seed.id);
+    expect(nachher).toEqual([{ user_id: eigenes.userId, target_value: 3, status: "active" }]);
+  });
+
+  it("Austritt aendert nichts: nach Loeschen der Mitgliedschaft liest das Mitglied seine Ziele weiter", async () => {
+    // Eigenes Mitglied statt memberA: die geloeschte Mitgliedschaft soll
+    // keinem anderen Test die Grundlage wegziehen.
+    const { email, userId } = await frischesMitglied("ziel-austritt");
+    const admin = serviceClient();
+    const { error: seedError } = await admin
+      .from("member_goals")
+      .insert({ user_id: userId, kind: "target_weight", target_value: 72 });
+    if (seedError) throw seedError;
+
+    const { error: deleteError } = await admin
+      .from("studio_memberships")
+      .delete()
+      .eq("user_id", userId);
+    if (deleteError) throw deleteError;
+
+    const client = await userClient(email);
+    const { data } = await client
+      .from("member_goals")
+      .select("kind, target_value")
+      .eq("user_id", userId);
+
+    // Die Ziele gehoeren zur Person, nicht zur Mitgliedschaft.
+    expect(data).toEqual([{ kind: "target_weight", target_value: 72 }]);
+  });
+
   it("genau ein aktives Ziel je Sorte: ein zweiter direkter Insert scheitert am Index", async () => {
     const { email } = await frischesMitglied("ziel-index");
     const client = await userClient(email);

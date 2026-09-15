@@ -136,6 +136,52 @@ describe("RLS auf body_measurements", () => {
     expect(error).not.toBeNull();
   });
 
+  it("negativ: ein anderes Mitglied desselben Studios kann meine Zeile weder aendern noch loeschen", async () => {
+    // Eigene zwei Mitglieder statt memberA/memberA2: der Austritt-Test
+    // loescht memberAs Mitgliedschaft, und "desselben Studios" soll hier
+    // unabhaengig von der Reihenfolge gelten.
+    const admin = serviceClient();
+    const eigeneEmail = uniqueEmail("gewicht-eigen");
+    const andereEmail = uniqueEmail("gewicht-anderes");
+    const eigeneId = await createTestUser(eigeneEmail);
+    const andereId = await createTestUser(andereEmail);
+    const { error: membershipError } = await admin.from("studio_memberships").insert([
+      { studio_id: studioA, user_id: eigeneId, role: "member" },
+      { studio_id: studioA, user_id: andereId, role: "member" },
+    ]);
+    if (membershipError) throw membershipError;
+
+    const { data: seed, error: seedError } = await admin
+      .from("body_measurements")
+      .insert({ user_id: eigeneId, measured_on: "2026-09-10", weight_kg: 77.5 })
+      .select("id")
+      .single();
+    if (seedError) throw seedError;
+
+    const client = await userClient(andereEmail);
+    const { error: updateError, count: updateCount } = await client
+      .from("body_measurements")
+      .update({ weight_kg: 60.0 }, { count: "exact" })
+      .eq("id", seed.id);
+    // RLS filtert die Zeilenmenge des Statements auf leer -- kein Fehler,
+    // aber auch keine getroffene Zeile.
+    expect(updateError).toBeNull();
+    expect(updateCount).toBe(0);
+
+    const { error: deleteError, count: deleteCount } = await client
+      .from("body_measurements")
+      .delete({ count: "exact" })
+      .eq("id", seed.id);
+    expect(deleteError).toBeNull();
+    expect(deleteCount).toBe(0);
+
+    const { data: nachher } = await admin
+      .from("body_measurements")
+      .select("user_id, measured_on, weight_kg")
+      .eq("id", seed.id);
+    expect(nachher).toEqual([{ user_id: eigeneId, measured_on: "2026-09-10", weight_kg: 77.5 }]);
+  });
+
   it("ein Wert je Tag: ein zweiter Insert scheitert, ein Upsert ersetzt", async () => {
     const client = await userClient(memberAEmail);
 
