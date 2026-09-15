@@ -11,7 +11,7 @@ final class Testnotiz {
     static let shared = Testnotiz()
 
     enum Modus: Equatable {
-        case ruhe, menue, ausschnitt, element
+        case ruhe, menue, ausschnitt, element, notiz
     }
 
     /// Was zwischen Knopf-Tipp und Sichern entsteht. Das Foto kommt beim
@@ -85,8 +85,7 @@ final class Testnotiz {
         neu.ausschnitt = geschnitten.bild
         neu.ausschnittsrahmen = geschnitten.rahmen
         entwurf = neu
-        // Bis zum Notiz-Blatt (Aufgabe 7) wird ohne Notiz gesichert.
-        Task { await sichern(notiz: nil, audio: nil) }
+        modus = .notiz
     }
 
     func elementGewaehlt(_ punkt: CGPoint) async {
@@ -98,8 +97,12 @@ final class Testnotiz {
         neu.art = .element
         neu.element = kandidat.map { register.element(aus: $0) }
         entwurf = neu
-        // Bis zum Notiz-Blatt (Aufgabe 7) wird ohne Notiz gesichert.
-        await sichern(notiz: nil, audio: nil)
+        modus = .notiz
+    }
+
+    func nurNotiz() {
+        entwurf?.art = .note
+        modus = .notiz
     }
 
     /// Das Blatt ist sofort zu; geschrieben wird danach. Wer testet, soll
@@ -120,7 +123,7 @@ final class Testnotiz {
         )
         do {
             let ablage = try ablageHolen(jetzt: entwurf.zeitpunkt)
-            _ = try await ablage.schreiben(
+            let gesichert = try await ablage.schreiben(
                 eintrag,
                 voll: entwurf.vollbild.pngData() ?? Data(),
                 ausschnitt: entwurf.ausschnitt?.pngData(),
@@ -129,6 +132,14 @@ final class Testnotiz {
             // Erst ein gelungener Eintrag loescht die alte Meldung -- sonst loeschte der naechste Knopf-Tipp sie, bevor das Menue sie zeigt.
             letzterFehler = nil
             eintragsanzahl = await ablage.anzahl
+            if let name = gesichert.audio {
+                let datei = ablage.ordner.appendingPathComponent(name)
+                let index = gesichert.index
+                Task {
+                    guard let text = await Transkription.transkribieren(datei) else { return }
+                    try? await ablage.transkriptNachtragen(index: index, text: text)
+                }
+            }
         } catch {
             letzterFehler = "Nicht gesichert: \(error.localizedDescription)"
         }
