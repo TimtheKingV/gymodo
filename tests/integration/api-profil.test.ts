@@ -49,7 +49,7 @@ describe("PUT /me/profile", () => {
     const response = await profilePUT(request({ displayName: "  Lena  " }, bearer));
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ displayName: "Lena" });
+    expect(await response.json()).toMatchObject({ displayName: "Lena" });
   });
 
   it("aendert einen bestehenden Namen", async () => {
@@ -95,6 +95,41 @@ describe("profiles_insert_own", () => {
   });
 });
 
+describe("PUT /me/profile -- Stammdaten", () => {
+  it("setzt ein Feld, ohne die anderen anzufassen", async () => {
+    await profilePUT(request({ displayName: "Lena", heightCm: 168 }, bearer));
+    const response = await profilePUT(request({ ageBand: "25_34" }, bearer));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ displayName: "Lena", heightCm: 168, ageBand: "25_34" });
+  });
+
+  it("loescht mit null", async () => {
+    await profilePUT(request({ sex: "female" }, bearer));
+    const response = await profilePUT(request({ sex: null }, bearer));
+
+    expect((await response.json()).sex).toBeNull();
+  });
+
+  it("setzt den Abschlusszeitpunkt nur ueber onboardingDone", async () => {
+    const abgelehnt = await profilePUT(request({ onboardingCompletedAt: "2026-01-01T00:00:00Z" }, bearer));
+    expect(abgelehnt.status).toBe(422);
+
+    await profilePUT(request({ displayName: "Lena" }, bearer));
+    const response = await profilePUT(request({ onboardingDone: true }, bearer));
+    const profil = (await response.json()) as { onboardingCompletedAt: string | null; displayName: string | null };
+    expect(profil.onboardingCompletedAt).not.toBeNull();
+    // Der Upsert hat nur die gesendete Spalte angefasst -- der eigens
+    // gesetzte Name steht noch.
+    expect(profil.displayName).toBe("Lena");
+  });
+
+  it("weist eine unbekannte Altersspanne ab", async () => {
+    const response = await profilePUT(request({ ageBand: "30_35" }, bearer));
+    expect(response.status).toBe(422);
+  });
+});
+
 describe("GET /me/bootstrap -- member", () => {
   it("liefert den gesetzten Namen", async () => {
     await profilePUT(request({ displayName: "Lena" }, bearer));
@@ -110,7 +145,7 @@ describe("GET /me/bootstrap -- member", () => {
     expect(payload.member.displayName).toBe("Lena");
   });
 
-  it("liefert null fuer ein Mitglied ohne Zeile", async () => {
+  it("liefert lauter null fuer ein Mitglied ohne Zeile", async () => {
     const ohneName = uniqueEmail("profil-ohne-name");
     await createTestUser(ohneName);
     const anderesBearer = await accessTokenFor(ohneName);
@@ -121,7 +156,36 @@ describe("GET /me/bootstrap -- member", () => {
       }),
     );
 
-    const payload = (await response.json()) as { member: { displayName: string | null } };
-    expect(payload.member.displayName).toBeNull();
+    const payload = (await response.json()) as { member: Record<string, unknown> };
+    // toMatchObject, nicht toEqual -- die Felder aus Aufgabe 2/3 (goals,
+    // latestWeight) sollen hier nicht mitspielen.
+    expect(payload.member).toMatchObject({
+      displayName: null,
+      sex: null,
+      ageBand: null,
+      heightCm: null,
+      trainingGoal: null,
+      onboardingCompletedAt: null,
+    });
+  });
+
+  it("liefert Groesse und Altersspanne, die ueber updateProfile gesetzt wurden", async () => {
+    const email = uniqueEmail("profil-stammdaten");
+    await createTestUser(email);
+    const eigenerBearer = await accessTokenFor(email);
+
+    await profilePUT(request({ heightCm: 172, ageBand: "35_44" }, eigenerBearer));
+
+    const response = await bootstrapGET(
+      new Request("http://localhost/api/v1/me/bootstrap", {
+        headers: { authorization: `Bearer ${eigenerBearer}` },
+      }),
+    );
+
+    const payload = (await response.json()) as {
+      member: { heightCm: number | null; ageBand: string | null };
+    };
+    expect(payload.member.heightCm).toBe(172);
+    expect(payload.member.ageBand).toBe("35_44");
   });
 });

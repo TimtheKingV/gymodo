@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
+import { aktiveZiele } from "./goals.js";
 import { ortszeitTeile } from "./serie.js";
 import type { ProblemReason } from "./workout.js";
 
@@ -68,6 +69,14 @@ export type Serienstand = {
   today: string;
   /** Die Tage der laufenden Woche mit mindestens einer Einheit, aufsteigend. */
   trainedDays: string[];
+  /**
+   * Das aktive Wochenziel, oder `null` ohne eins. Liegt NEBEN der Serie,
+   * nicht in ihr -- `serienstand` selbst rechnet nichts davon und laesst
+   * das Feld deshalb weg; `getSessions` setzt es beim Zusammenbau von
+   * `streak` (Migration 0043). Optional statt eines dritten Rueckgabewerts
+   * fuer `serienstand`, damit dessen Rechnung unangetastet bleibt.
+   */
+  weeklyTarget?: number | null;
 };
 
 /** Der Montag der Woche, in die eine Tagesnummer faellt. */
@@ -262,7 +271,14 @@ export async function getSessions(
       ? zaehleDieseWoche(sessions.map((session) => session.started_at), new Date(), zeitzone)
       : null,
     streak: zeitzone
-      ? serienstand(await startsFuerDieSerie(client, userId, sessions), new Date(), zeitzone)
+      ? {
+          ...serienstand(await startsFuerDieSerie(client, userId, sessions), new Date(), zeitzone),
+          // Das Ziel liegt neben der Serie, nicht in ihr: die Zeile
+          // "2 von 3 Tagen" braucht trainedDays und das Ziel aus
+          // DEMSELBEN Abruf, sonst zeigt ein alter Cache das eine gegen
+          // das andere. Die Serie rechnet davon nichts.
+          weeklyTarget: (await aktiveZiele(client, userId)).weeklyDays?.targetValue ?? null,
+        }
       : null,
     // Die Liste kommt absteigend -- die erste Zeile ist die juengste. Eine
     // noch laufende Einheit zaehlt mit: wer gerade trainiert, hat heute

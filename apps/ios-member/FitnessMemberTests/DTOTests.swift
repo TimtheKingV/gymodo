@@ -30,7 +30,7 @@ struct DTOTests {
     func decodesBootstrap() throws {
         let json = """
         {
-          "member": {"displayName": null},
+          "member": {"displayName": null, "goals": {"weeklyDays": null, "targetWeight": null}},
           "studios": [{"id":"s1","name":"Kraftwerk Nord","timezone":"Europe/Berlin"}],
           "machines": [{
             "id":"m1","studioId":"s1","label":"07","locationNote":null,"status":"active",
@@ -51,7 +51,7 @@ struct DTOTests {
     @Test func bootstrapDecodiertVisitCount() throws {
         let json = """
         {
-          "member": {"displayName": null},
+          "member": {"displayName": null, "goals": {"weeklyDays": null, "targetWeight": null}},
           "studios": [],
           "machines": [{
             "id": "m1", "studioId": "s1", "label": "Gerät 7",
@@ -83,10 +83,73 @@ struct DTOTests {
 
     @Test("dekodiert ein Bootstrap ohne gesetzten Namen")
     func decodesMemberOhneNamen() throws {
-        let json = #"{"member":{"displayName":null},"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#
+        let json = #"{"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null}},"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#
         let response = try JSONDecoder().decode(BootstrapResponse.self, from: Data(json.utf8))
 
         #expect(response.member.displayName == nil)
+    }
+
+    @Test("dekodiert ein Member mit gesetzten Stammdaten, Zielen und Gewicht")
+    func decodesMemberMitStammdatenUndZielen() throws {
+        let json = """
+        {
+          "member": {
+            "displayName": "Mia", "sex": "female", "ageBand": "25_34", "heightCm": 168,
+            "trainingGoal": "lose_weight", "onboardingCompletedAt": "2026-09-01T10:00:00Z",
+            "goals": {
+              "weeklyDays": {"id":"g1","kind":"weekly_days","targetValue":3,"createdAt":"2026-09-01T10:00:00Z"},
+              "targetWeight": {"id":"g2","kind":"target_weight","targetValue":75,"createdAt":"2026-09-01T10:00:00Z"}
+            },
+            "latestWeight": {"measuredOn":"2026-09-10","weightKg":82.5}
+          },
+          "studios": [], "machines": [], "calibrations": [], "lastSets": []
+        }
+        """
+        let response = try JSONDecoder().decode(BootstrapResponse.self, from: Data(json.utf8))
+
+        #expect(response.member.ageBand == "25_34")
+        #expect(response.member.goals.weeklyDays?.targetValue == 3)
+        #expect(response.member.latestWeight?.weightKg == 82.5)
+    }
+
+    @Test("dekodiert ein Member ohne Stammdaten und ohne Ziele")
+    func decodesMemberOhneStammdaten() throws {
+        let json = """
+        {
+          "member": {
+            "displayName": null, "sex": null, "ageBand": null, "heightCm": null,
+            "trainingGoal": null, "onboardingCompletedAt": null,
+            "goals": {"weeklyDays": null, "targetWeight": null},
+            "latestWeight": null
+          },
+          "studios": [], "machines": [], "calibrations": [], "lastSets": []
+        }
+        """
+        let response = try JSONDecoder().decode(BootstrapResponse.self, from: Data(json.utf8))
+
+        #expect(response.member.sex == nil)
+        #expect(response.member.goals.weeklyDays == nil)
+        #expect(response.member.goals.targetWeight == nil)
+        #expect(response.member.latestWeight == nil)
+    }
+
+    @Test("dekodiert einen Serienstand ohne weeklyTarget (alter Cache)")
+    func decodesSerienstandOhneWeeklyTarget() throws {
+        let json = #"{"weeks":2,"weekStart":"2026-09-07","today":"2026-09-14","trainedDays":["2026-09-08"]}"#
+        let serienstand = try JSONDecoder().decode(Serienstand.self, from: Data(json.utf8))
+
+        #expect(serienstand.weeklyTarget == nil)
+    }
+
+    @Test("kodiert ProfilWrite mit Loeschen und Setzen, ohne unbeteiligte Felder")
+    func encodesProfilWrite() throws {
+        let write = ProfilWrite(heightCm: .loeschen, ageBand: .setzen("25_34"))
+        let data = try JSONEncoder().encode(write)
+        let json = String(data: data, encoding: .utf8)!
+
+        #expect(json.contains(#""heightCm":null"#))
+        #expect(json.contains(#""ageBand":"25_34""#))
+        #expect(!json.contains("displayName"))
     }
 
     @Test("dekodiert einen TagContextResponse mit leerer Historie")

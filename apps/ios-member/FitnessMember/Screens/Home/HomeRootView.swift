@@ -18,6 +18,8 @@ import SwiftUI
 /// derselben Ueberschrift. Der Kalender ist jetzt der eine Weg in den
 /// Verlauf: Tag antippen, Karte antippen, Detail.
 struct HomeRootView: View {
+    let apiClient: APIClient
+
     @Environment(VerlaufStore.self) private var verlauf
     @Environment(CatalogStore.self) private var katalog
     @Environment(NetzwerkMonitor.self) private var netz
@@ -31,6 +33,15 @@ struct HomeRootView: View {
 
     @State private var pfad: [HomeRoute] = []
     @State private var scannerOffen = false
+    /// "Eintragen" (R23) -- das Sheet lebt hier statt in `HomeZieleView`,
+    /// weil `beiEintragen` dort nur ein `() -> Void`-Ausloeser ist (Aufgabe
+    /// 8) und `apiClient`/`verlauf`/`katalog` fuer den Schreibweg ohnehin
+    /// schon in DIESEM View bereitstehen.
+    @State private var eintragenOffen = false
+    /// "Neues Ziel setzen" (Aufgabe 10, R23) -- erscheint nur, solange ein
+    /// Zielgewicht erreicht ist (`HomeZiele.Zustand.karte.erreichtText`),
+    /// oeffnet dasselbe `ZielSheet` wie das Profil.
+    @State private var neuesZielOffen = false
 
     /// Einmal aufgeloest, zweimal gelesen: Name fuer den Kopf, Zeitzone
     /// fuer die Buendelung der Einheiten. Dieselbe Ableitung wie
@@ -64,7 +75,31 @@ struct HomeRootView: View {
                             jetzt: Date(),
                             einheitenJeTag: HomeSerie.einheitenJeTag(
                                 verlauf.sessions, zeitzone: zeitzone),
+                            // Aus DIESEM Abruf (R24), nicht aus den
+                            // Bootstrap-Zielen: „2 von 3 Tagen" braucht
+                            // `trainedDays` und das Wochenziel aus
+                            // demselben Stand, sonst zeigt ein alter Cache
+                            // das eine gegen das andere (Spec 4.5).
+                            wochenziel: serie.weeklyTarget,
                             beiAuswahl: { id in pfad.append(.sessionDetail(id: id)) })
+                    }
+
+                    if let member = katalog.bootstrap?.member {
+                        HomeZieleView(
+                            member: member,
+                            messwerte: verlauf.messwerte,
+                            erreichtesZielgewicht: verlauf.erreichtesZielgewicht,
+                            jetzt: Date(),
+                            apiClient: apiClient,
+                            beiKarteTap: { pfad.append(.gewichtsverlauf) },
+                            beiOnboardingAbgeschlossen: {
+                                Task {
+                                    await katalog.load()
+                                    await neuLaden()
+                                }
+                            },
+                            beiEintragen: { eintragenOffen = true },
+                            beiNeuemZiel: { neuesZielOffen = true })
                     }
 
                     if HomeZeilen.abgeschlossene(verlauf.sessions).isEmpty {
@@ -85,7 +120,30 @@ struct HomeRootView: View {
                     SessionDetailView(sessionId: id)
                 case .uebungsfortschritt(let exerciseId):
                     UebungsfortschrittView(exerciseId: exerciseId)
+                case .gewichtsverlauf:
+                    GewichtsverlaufView(apiClient: apiClient)
                 }
+            }
+            .sheet(isPresented: $eintragenOffen) {
+                GewichtEintragenSheet(
+                    vorgabe: verlauf.messwerte.last?.weightKg,
+                    letzterMesswert: verlauf.messwerte.last,
+                    speichern: { body in await verlauf.gewichtSpeichern(body, katalogNeuLaden: { await katalog.load() }) })
+            }
+            .sheet(isPresented: $neuesZielOffen) {
+                ZielSheet(
+                    art: .zielgewicht,
+                    aktiv: katalog.bootstrap?.member.goals.targetWeight,
+                    letzterMesswert: verlauf.messwerte.last,
+                    uebernehmen: { wert in
+                        await ZielSchreiben.setzen(
+                            kind: ZielSheet.Art.zielgewicht.kind, targetValue: wert,
+                            apiClient: apiClient, katalog: katalog, verlauf: verlauf)
+                    },
+                    aufgeben: {
+                        await ZielSchreiben.aufgeben(
+                            kind: ZielSheet.Art.zielgewicht.kind, apiClient: apiClient, katalog: katalog, verlauf: verlauf)
+                    })
             }
             .sheet(isPresented: $scannerOffen) {
                 ScannerSheet(

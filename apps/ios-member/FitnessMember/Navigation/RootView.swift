@@ -16,7 +16,11 @@ struct RootView: View {
     @State private var hatteSession = false
 
     var body: some View {
-        let destination = RootDestinationLogic.destination(session: sessionStore.session, catalogState: catalogStore.loadState)
+        // Nur aussagekraeftig bei geladenem Bootstrap -- destination(...)
+        // fragt onboardingOffen ohnehin nur im .loaded-Zweig ab, deshalb
+        // darf der Wert hier grob (nil == "offen") berechnet werden.
+        let onboardingOffen = catalogStore.bootstrap?.member.onboardingCompletedAt == nil
+        let destination = RootDestinationLogic.destination(session: sessionStore.session, catalogState: catalogStore.loadState, onboardingOffen: onboardingOffen)
 
         Group {
             switch destination {
@@ -27,6 +31,8 @@ struct RootView: View {
                     .tint(DesignSystem.Color.accent)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(DesignSystem.Color.bg)
+            case .onboarding:
+                OnboardingFlow(apiClient: apiClient, alsSheet: false) { }
             case .noStudio:
                 NavigationStack { MemberKeinStudioView() }
                     .tint(DesignSystem.Color.accent)

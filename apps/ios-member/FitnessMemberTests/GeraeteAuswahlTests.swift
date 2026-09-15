@@ -61,7 +61,7 @@ struct GeraeteAuswahlTests {
         }.joined(separator: ", ")
         return GeraetTestdaten.dekodiere("""
         {
-          "member": { "displayName": "Tim" },
+          "member": { "displayName": "Tim", "goals": {"weeklyDays": null, "targetWeight": null} },
           "studios": [
             { "id": "s1", "name": "Gym Ost", "timezone": "Europe/Berlin" },
             { "id": "s2", "name": "Gym West", "timezone": "Europe/Berlin" }

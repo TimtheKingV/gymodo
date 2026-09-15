@@ -117,4 +117,17 @@ describe("serienstand", () => {
 
     expect(serienstand([naechsteWoche], mittwoch, BERLIN).weeks).toBe(0);
   });
+
+  // Migration 0043: das Wochenziel ist eine eigene Aussage NEBEN der
+  // Serie. serienstand nimmt kein Ziel-Argument entgegen und rechnet
+  // damit auch nicht -- eine Woche mit zwei Einheiten zaehlt genauso wie
+  // ohne jedes Ziel.
+  it("rechnet ohne Ziel-Argument -- das Wochenziel liegt daneben, nicht darin", () => {
+    const zweiEinheitenDieseWoche = [
+      "2026-09-07T08:00:00.000Z",
+      "2026-09-09T08:00:00.000Z",
+    ];
+
+    expect(serienstand(zweiEinheitenDieseWoche, mittwoch, BERLIN).weeks).toBe(1);
+  });
 });

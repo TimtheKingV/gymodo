@@ -29,6 +29,7 @@ let kleinStudioId: string;
 let antippStudioId: string;
 let trainerEmail: string;
 let mitgliedEmail: string;
+let mitgliedId: string;
 let fremdTrainerEmail: string;
 let kleinTrainerEmail: string;
 let antippTrainerEmail: string;
@@ -194,7 +195,7 @@ beforeAll(async () => {
   antippTrainerEmail = uniqueEmail("ueb-antipp-trainer");
 
   const trainerId = await createTestUser(trainerEmail);
-  const mitgliedId = await createTestUser(mitgliedEmail);
+  mitgliedId = await createTestUser(mitgliedEmail);
   const fremdTrainerId = await createTestUser(fremdTrainerEmail);
   const kleinTrainerId = await createTestUser(kleinTrainerEmail);
   const antippTrainerId = await createTestUser(antippTrainerEmail);
@@ -363,5 +364,100 @@ describe("studio_overview -- wer darf", () => {
 
     expect(error).toBeNull();
     expect(data).toBeNull();
+  });
+});
+
+/**
+ * Koerperdaten-Woerter, deren blosses Vorkommen als Teilstring nichts
+ * beweisen wuerde: "age" steckt auch in "average", "message" und "page".
+ * Deshalb wird jeder Schluessel in seine Wortbestandteile zerlegt -- an
+ * "_" und an camelCase-Grenzen -- und nur ein ganzes Wortsegment zaehlt
+ * als Treffer.
+ */
+const KOERPERDATEN_WOERTER = new Set(["weight", "measurement", "goal", "sex", "age", "height"]);
+
+function schluesselSegmente(schluessel: string): string[] {
+  return schluessel
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
+
+/** Rekursiv ueber Objekte und Arrays -- gibt die Pfade aller Treffer zurueck. */
+function findeKoerperdatenSchluessel(wert: unknown, pfad = ""): string[] {
+  if (Array.isArray(wert)) {
+    return wert.flatMap((eintrag, i) => findeKoerperdatenSchluessel(eintrag, `${pfad}[${i}]`));
+  }
+  if (wert === null || typeof wert !== "object") {
+    return [];
+  }
+  const treffer: string[] = [];
+  for (const [schluessel, teilwert] of Object.entries(wert as Record<string, unknown>)) {
+    const eigenerPfad = pfad ? `${pfad}.${schluessel}` : schluessel;
+    if (schluesselSegmente(schluessel).some((segment) => KOERPERDATEN_WOERTER.has(segment))) {
+      treffer.push(eigenerPfad);
+    }
+    treffer.push(...findeKoerperdatenSchluessel(teilwert, eigenerPfad));
+  }
+  return treffer;
+}
+
+describe("studio_overview -- Koerperdaten bleiben aussen vor", () => {
+  it("Positivkontrolle: der Scan-Helfer erkennt Koerperdaten-Schluessel", () => {
+    // Beweist, dass der Helfer unten wirklich etwas findet -- sonst koennte
+    // der naechste Test nur bestehen, weil der Helfer selbst nichts findet.
+    expect(findeKoerperdatenSchluessel({ breakdown: [{ latestWeight: 1 }] })).toEqual([
+      "breakdown[0].latestWeight",
+    ]);
+    expect(findeKoerperdatenSchluessel({ age_band: "x" })).toEqual(["age_band"]);
+    // Und die Gegenprobe zum Wortsegment-Vergleich: "average", "message"
+    // und "page" enthalten "age" nur als Teilstring, kein eigenstaendiges
+    // Wortsegment -- der Helfer darf hier nichts finden.
+    expect(findeKoerperdatenSchluessel({ average: 1, message: "x", page: 2 })).toEqual([]);
+  });
+
+  it("traegt keinen Koerperdaten-Schluessel, auch nicht als Summe -- Spec Abschnitt 6", async () => {
+    // Spec Abschnitt 6: Koerperdaten bekommen keine Oeffnung, auch nicht
+    // als Summe. studio_overview ist nach Abschnitt 4 die einzige Stelle,
+    // an der Personal ueberhaupt etwas aggregiert sieht -- dieser Test
+    // belegt, dass Koerpermesswerte, Ziele und Profil-Stammdaten eines
+    // Mitglieds des betrachteten Studios davon ausgenommen bleiben.
+    const admin = serviceClient();
+
+    const { error: profilError } = await admin.from("profiles").upsert({
+      id: mitgliedId,
+      sex: "female",
+      age_band: "25_34",
+      height_cm: 170,
+    });
+    if (profilError) throw profilError;
+
+    const { error: messError } = await admin.from("body_measurements").insert([
+      { user_id: mitgliedId, measured_on: "2026-09-01", weight_kg: 70.0 },
+      { user_id: mitgliedId, measured_on: "2026-09-02", weight_kg: 69.5 },
+      { user_id: mitgliedId, measured_on: "2026-09-03", weight_kg: 69.0 },
+    ]);
+    if (messError) throw messError;
+
+    const { error: zielError } = await admin.from("member_goals").insert([
+      { user_id: mitgliedId, kind: "weekly_days", target_value: 3 },
+      { user_id: mitgliedId, kind: "target_weight", target_value: 65 },
+    ]);
+    if (zielError) throw zielError;
+
+    const client = await userClient(trainerEmail);
+    const { data, error } = await client.rpc("studio_overview", {
+      p_studio_id: studioId,
+      p_days: 30,
+    });
+
+    expect(error).toBeNull();
+    const uebersicht = data as Uebersicht;
+    // Die Schwelle muss erreicht sein, sonst waere der Scan bedeutungslos:
+    // ein fast leeres Objekt haette ohnehin keine Koerperdaten-Schluessel.
+    // studioId liegt mit sechs Erfassenden ueber der Mindestzahl von fuenf.
+    expect(uebersicht.breakdown).toBe(true);
+    expect(findeKoerperdatenSchluessel(uebersicht)).toEqual([]);
   });
 });

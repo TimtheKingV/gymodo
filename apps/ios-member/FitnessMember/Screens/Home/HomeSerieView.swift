@@ -43,6 +43,13 @@ struct HomeSerieView: View {
     /// Aufrufer (`HomeSerie.einheitenJeTag`), damit dieser View die
     /// Zeitzone des Studios nicht kennen muss.
     let einheitenJeTag: [String: [SessionSummary]]
+    /// Aus `Serienstand.weeklyTarget` (Aufgabe 8, R24) -- NICHT aus den
+    /// Bootstrap-Zielen: „2 von 3 Tagen" braucht `trainedDays` und das
+    /// Wochenziel aus demselben Abruf, sonst zeigt ein alter Cache das
+    /// eine gegen das andere (Spec 4.5). `nil` blendet Label und Zeile
+    /// vollstaendig aus -- die Serie bleibt unveraendert (nicht-
+    /// verhandelbare Regel 1).
+    let wochenziel: Int?
     let beiAuswahl: (String) -> Void
 
     @State private var auswahl: HomeSerieAuswahl = .vorgabe
@@ -55,17 +62,33 @@ struct HomeSerieView: View {
         let gewaehlt = gewaehlterTag(wochentage: wochentage)
 
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            Text("DEINE SERIE")
-                .font(DesignSystem.Typography.label)
-                .tracking(1.5)
-                .foregroundStyle(DesignSystem.Color.textMuted)
+            HStack(alignment: .firstTextBaseline) {
+                Text("DEINE SERIE")
+                    .font(DesignSystem.Typography.label)
+                    .tracking(1.5)
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                Spacer()
+                if let wochenziel {
+                    Text(HomeSerie.zielkopf(ziel: wochenziel).uppercased())
+                        .font(DesignSystem.Typography.label)
+                        .tracking(1.5)
+                        .foregroundStyle(DesignSystem.Color.textFaint)
+                        .monospacedDigit()
+                }
+            }
 
             kopfzeile(wochentage)
 
+            // Nur im Wochenstreifen, nicht im Monatsgitter: "diese Woche"
+            // meint genau die laufende Woche, die das Gitter beim
+            // Umschalten verlaesst.
             if monatOffen {
                 monatsgitter(trainingstage: trainingstage, gewaehlt: gewaehlt)
             } else {
                 wochenstreifen(wochentage, gewaehlt: gewaehlt)
+                if let wochenziel {
+                    zielzeile(wochentage, ziel: wochenziel)
+                }
             }
 
             if let gewaehlt, let einheiten = einheitenJeTag[gewaehlt], !einheiten.isEmpty {
@@ -144,7 +167,7 @@ private extension HomeSerieView {
                 // Elemente durchlaufen muss.
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
-                    HomeSerie.vorlesetext(wochen: stand.weeks, tage: wochentage))
+                    HomeSerie.vorlesetext(wochen: stand.weeks, tage: wochentage, ziel: wochenziel))
 
             // Die dehnbare Stelle der Zeile ist die Fussnote, nicht der
             // Umschalter: wird der Platz knapp, bricht ihr Satz um, waehrend
@@ -212,6 +235,39 @@ private extension HomeSerieView {
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(tagLabel(tag))
                 }
+            }
+        }
+    }
+
+    /// „2 von 3 Tagen diese Woche" -- eine zweite, unabhaengige Aussage
+    /// neben der Serie (nicht-verhandelbare Regel 1): sie zaehlt dieselbe
+    /// Menge, die der Streifen darueber schon faerbt, keine zweite Quelle.
+    ///
+    /// Der „Ziel erreicht"-Teil ist reiner Text in `textMuted`, ohne
+    /// Akzent und ohne Animation -- die Flamme traegt den Akzent des
+    /// Screens bereits, und ein Zustandswechsel hier ist kein Erfolg zum
+    /// Feiern, nur eine Zaehlung (designsystem.md SS2, SS6).
+    func zielzeile(_ wochentage: [HomeSerieTag], ziel: Int) -> some View {
+        let trainiert = wochentage.filter(\.trainiert).count
+        return HStack(spacing: DesignSystem.Spacing.s8) {
+            Text(HomeSerie.zielzeile(trainiert: trainiert, ziel: ziel))
+                .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                .foregroundStyle(DesignSystem.Color.textMuted)
+            Spacer(minLength: 0)
+            zielstriche(trainiert: trainiert, ziel: ziel)
+                // Der Text daneben sagt bereits alles -- die Striche sind
+                // eine zweite, rein visuelle Form derselben Aussage und
+                // sollen VoiceOver nicht ein zweites Mal durchlaufen.
+                .accessibilityHidden(true)
+        }
+    }
+
+    func zielstriche(trainiert: Int, ziel: Int) -> some View {
+        HStack(spacing: DesignSystem.Spacing.s4) {
+            ForEach(0..<max(ziel, 0), id: \.self) { index in
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(index < trainiert ? DesignSystem.Color.text : DesignSystem.Color.line)
+                    .frame(width: 18, height: 4)
             }
         }
     }
@@ -471,6 +527,7 @@ private extension HomeSerieView {
                     einheit("g", "2026-09-01T16:20:00Z", "2026-09-01T17:05:00Z"),
                 ],
                 zeitzone: "Europe/Berlin"),
+            wochenziel: 3,
             beiAuswahl: { _ in })
         .padding(.horizontal, 20)
         .padding(.vertical, DesignSystem.Spacing.s24)

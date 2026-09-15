@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { getSessions } from "@fitretro/domain";
+import { getSessions, setGoal } from "@fitretro/domain";
 import {
   anonClient,
   createTestUser,
@@ -427,5 +427,56 @@ describe("getSessions -- summary", () => {
     expect(summary.totalCount).toBe(0);
     expect(summary.thisWeekCount).toBe(0);
     expect(summary.lastSessionAt).toBeNull();
+  });
+});
+
+describe("getSessions -- streak.weeklyTarget", () => {
+  it("traegt das Wochenziel neben der Serie, ohne deren Rechnung zu veraendern", async () => {
+    const email = uniqueEmail("streak-wochenziel");
+    const userId = await createTestUser(email);
+    const admin = serviceClient();
+
+    const { error: membershipError } = await admin
+      .from("studio_memberships")
+      .insert({ studio_id: studioA, user_id: userId, role: "member" });
+    if (membershipError) throw membershipError;
+
+    // Zwei echte Einheiten in der laufenden Woche -- serienstand zaehlt
+    // Wochen, nicht Einheiten, deshalb bleibt weeks bei 1, egal ob ein
+    // Ziel gesetzt ist.
+    const { error: seedError } = await admin.from("workout_sessions").insert([
+      {
+        id: newId(),
+        studio_id: studioA,
+        user_id: userId,
+        started_at: isoAgo(2),
+        completed_at: isoAgo(1.5),
+        completed_reason: "manual" as const,
+      },
+      {
+        id: newId(),
+        studio_id: studioA,
+        user_id: userId,
+        started_at: isoAgo(1),
+        completed_at: isoAgo(0.5),
+        completed_reason: "manual" as const,
+      },
+    ]);
+    if (seedError) throw seedError;
+
+    const client = await userClient(email);
+
+    const vorher = await getSessions(client, { studioId: studioA });
+    expect(vorher.summary.streak?.weeks).toBe(1);
+    // Ohne Ziel: null, kein erfundener Wert.
+    expect(vorher.summary.streak?.weeklyTarget).toBeNull();
+
+    await setGoal(client, { kind: "weekly_days", targetValue: 3 });
+
+    const nachher = await getSessions(client, { studioId: studioA });
+    // Das Wochenziel liegt NEBEN der Serie, nicht in ihr: dieselben zwei
+    // Einheiten ergeben dieselbe Wochenzahl, ob ein Ziel steht oder nicht.
+    expect(nachher.summary.streak?.weeks).toBe(vorher.summary.streak?.weeks);
+    expect(nachher.summary.streak?.weeklyTarget).toBe(3);
   });
 });

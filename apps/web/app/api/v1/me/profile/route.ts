@@ -1,11 +1,11 @@
-import { setDisplayName } from "@fitretro/domain";
+import { updateProfile } from "@fitretro/domain";
 import { errorResponse, fromDomainError } from "@/lib/api/respond";
 import { bearerClientFrom } from "@/lib/supabase/bearer";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Den eigenen Anzeigenamen setzen.
+ * Das eigene Profil schreiben.
  *
  * Ausserhalb der sechs Endpoints aus M1-Spec SS6.3 -- wie schon die
  * Studio-Endpoints aus Sub-Projekt 1, der Tag-Kontext aus Sub-Projekt 2
@@ -14,6 +14,9 @@ export const dynamic = "force-dynamic";
  *
  * PUT, nicht POST: derselbe Aufruf zweimal gesendet ergibt denselben
  * Namen -- dasselbe Muster wie beim Satz-Schreibweg.
+ *
+ * Teilobjekt -- die Registrierung schickt nur den Namen, das Onboarding
+ * alles, das Profil ein Feld.
  */
 export async function PUT(request: Request): Promise<Response> {
   const client = bearerClientFrom(request);
@@ -27,7 +30,7 @@ export async function PUT(request: Request): Promise<Response> {
   }
 
   try {
-    const profil = await setDisplayName(client, payload);
+    const profil = await updateProfile(client, payload);
     return Response.json(profil, { status: 200 });
   } catch (error) {
     return fromDomainError(error);

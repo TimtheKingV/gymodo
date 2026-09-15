@@ -67,9 +67,39 @@ export type {
   StudioExercise,
 } from "./catalog.js";
 export { getBootstrap } from "./bootstrap.js";
-export { anzeigenameSchema, pruefeAnzeigename, setDisplayName } from "./profil.js";
+export {
+  anzeigenameSchema,
+  pruefeAnzeigename,
+  profilSchema,
+  pruefeProfil,
+  updateProfile,
+  zuProfil,
+  SEX,
+  AGE_BANDS,
+  TRAINING_GOALS,
+} from "./profil.js";
+export type { Profil, ProfilEingabe } from "./profil.js";
 export { getProgress, progressOptionsSchema } from "./progress.js";
 export type { ExerciseProgress, Progress, ProgressOptions, ProgressPoint } from "./progress.js";
+export {
+  messwertSchema,
+  pruefeMesswert,
+  zielErreicht,
+  getMeasurements,
+  putMeasurement,
+  deleteMeasurement,
+} from "./measurements.js";
+export type { Measurements, Messpunkt, RecordedMeasurement } from "./measurements.js";
+export {
+  GOAL_KINDS,
+  zielSchema,
+  pruefeZiel,
+  setGoal,
+  dropGoal,
+  aktiveZiele,
+  markiereErreicht,
+} from "./goals.js";
+export type { AktiveZiele, GoalKind, Ziel } from "./goals.js";
 export { getSessions, serienstand, zaehleDieseWoche } from "./sessions.js";
 export type {
   Serienstand,

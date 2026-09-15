@@ -5,4 +5,7 @@ import Foundation
 enum HomeRoute: Hashable {
     case sessionDetail(id: String)
     case uebungsfortschritt(exerciseId: String)
+    /// Die Gewichtskarte auf Home fuehrt hierher (Aufgabe 8); der Screen
+    /// selbst ist `GewichtsverlaufView` (Aufgabe 9).
+    case gewichtsverlauf
 }

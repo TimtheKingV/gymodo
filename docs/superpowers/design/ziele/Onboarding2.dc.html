@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0A0B0D; color: #F2F4F7; font-family: Archivo, -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+    a { color: #D4FF3F; text-decoration: none; } a:hover { color: #E8FF8A; }
+    .ph { width: 393px; height: 852px; background: #0A0B0D; color: #F2F4F7; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9BA3AF; }
+    .num { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: -.03em; }
+    .card { background: #14161A; border: 1px solid #2A2E36; border-radius: 14px; overflow: hidden; }
+    .row { padding: 13px 16px; display: flex; align-items: center; gap: 12px; }
+    .sep { height: 1px; background: #2A2E36; }
+    .tabs { position: absolute; left: 0; right: 0; bottom: 0; background: #0A0B0D; height: 78px; border-top: 1px solid #2A2E36; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 11px; }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #5C636E; }
+    .tab.on { color: #D4FF3F; }
+    /* Chip: 44 pt, Pille. Gewaehlt = Akzentstrich, keine Flaeche (Designsystem SS2). */
+    .chip { height: 44px; border-radius: 22px; border: 1px solid #2A2E36; color: #9BA3AF; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .chip.on { border: 1.5px solid #D4FF3F; background: #14161A; color: #F2F4F7; }
+    /* Zielkachel: Karte mit Symbol, Titel, Zeile. Gewaehlt wie der Chip. */
+    .kachel { min-height: 132px; padding: 16px; border-radius: 14px; background: #14161A; border: 1px solid #2A2E36; display: flex; flex-direction: column; gap: 10px; }
+    .kachel.on { border: 1.5px solid #D4FF3F; }
+    .kachel-titel { font-size: 16px; font-weight: 800; line-height: 1.15; }
+    .kachel-zeile { font-size: 12px; line-height: 1.4; color: #5C636E; }
+    /* Stepper44 als Zeile: Minus, Wert, Plus. */
+    .stepper { display: flex; align-items: stretch; gap: 8px; height: 58px; }
+    .stepper-knopf { flex: none; width: 58px; border-radius: 14px; border: 1px solid #2A2E36; display: flex; align-items: center; justify-content: center; }
+    .stepper-wert { flex-grow: 1; border-radius: 14px; background: #14161A; border: 1px solid #2A2E36; display: flex; align-items: baseline; justify-content: center; gap: 5px; }
+    /* Rastrad ohne Rahmen -- GeraetWertRad.dc.html, eine Spalte. */
+    .rad { position: relative; height: 244px; overflow: hidden; }
+    .far { height: 34px; display: flex; align-items: center; justify-content: center; }
+    .near { height: 38px; display: flex; align-items: center; justify-content: center; }
+    .fT { position: absolute; left: 0; right: 0; top: 0; height: 66px; background: linear-gradient(180deg, #0A0B0D 12%, rgba(10,11,13,0) 100%); pointer-events: none; }
+    .fB { position: absolute; left: 0; right: 0; bottom: 0; height: 66px; background: linear-gradient(0deg, #0A0B0D 12%, rgba(10,11,13,0) 100%); pointer-events: none; }
+    .rad.im-sheet .fT { background: linear-gradient(180deg, #14161A 12%, rgba(20,22,26,0) 100%); }
+    .rad.im-sheet .fB { background: linear-gradient(0deg, #14161A 12%, rgba(20,22,26,0) 100%); }
+    /* Kalender am Kopf des Home-Tabs (HomeSerieView auf master): Flamme
+       ueber dem Streifen, Fussnote daneben, sieben Kreiszellen 40 pt in
+       gleich breiten Spalten, Buchstabe darueber. */
+    .kopfzeile { display: flex; align-items: center; gap: 16px; }
+    .flamme { flex: none; width: 56px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .flamme-reihe { display: flex; align-items: center; gap: 4px; }
+    .flamme-zahl { font-size: 27px; line-height: 1; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.04em; color: #D4FF3F; }
+    .flamme-label { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #D4FF3F; }
+    .serie-fuss { font-size: 12px; font-weight: 600; color: #5C636E; font-variant-numeric: tabular-nums; }
+    .woche { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; }
+    .spalte { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .buchstabe { font-size: 10px; font-weight: 800; letter-spacing: .12em; color: #5C636E; }
+    .spalte.trainiert .buchstabe, .spalte.heute .buchstabe { color: #9BA3AF; }
+    .spalte.gewaehlt .buchstabe { color: #F2F4F7; }
+    .zelle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .spalte.trainiert .zelle { background: #1D2026; }
+    .spalte.gewaehlt .zelle { background: #2A2E36; }
+    .spalte.heute .zelle { box-shadow: inset 0 0 0 1.5px #D4FF3F; }
+    .tagnr { font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.03em; color: #5C636E; }
+    .spalte.heute .tagnr { color: #9BA3AF; }
+    .umschalter { display: flex; justify-content: flex-end; }
+    .umschalter div { min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 13px; font-weight: 600; color: #9BA3AF; }
+    /* Wochenziel: drei Striche je Zieltag, gefuellt = trainiert. */
+    .zielstriche { display: flex; gap: 4px; }
+    .strich { width: 18px; height: 4px; border-radius: 2px; background: #2A2E36; }
+    .strich.voll { background: #F2F4F7; }
+    /* Sheet ueber einem abgedunkelten Screen. */
+    .scrim { position: absolute; inset: 0; background: rgba(10,11,13,.72); }
+    .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: #14161A; border-radius: 24px 24px 0 0; padding: 10px 20px 20px; display: flex; flex-direction: column; }
+    .griff { width: 36px; height: 5px; border-radius: 3px; background: #2A2E36; align-self: center; }
+    .note { font-size: 13px; line-height: 1.5; color: #9BA3AF; }
+    .note-faint { font-size: 12px; line-height: 1.5; color: #5C636E; }
+  </style>
+</helmet>
+<div class="ph"><!-- Schritt 2: Stepper44 fuer die Groesse, das Rastrad vom Geraet fuer das Gewicht (Schritt 0,5). --><div style="height: 54px; flex: none;"></div><div style="flex: none; height: 44px; padding: 0 28px; display: flex; align-items: center; justify-content: space-between;"><span class="eyebrow">Schritt 2 von 5</span><span style="font-size: 14px; font-weight: 700; color: #9BA3AF;">Später</span></div><div style="flex: none; padding: 0 28px; display: flex; gap: 4px;"><div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #F2F4F7"></div><div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #F2F4F7"></div><div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #2A2E36"></div><div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #2A2E36"></div><div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #2A2E36"></div></div><div style="flex: none; padding: 28px 28px 0; display: flex; flex-direction: column; gap: 10px;"><div style="font-size: 32px; font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; line-height: 1.02;">Dein Körper</div><div class="note">Das Gewicht wird der erste Punkt deines Verlaufs.</div></div><div style="flex: none; padding: 28px 28px 0; display: flex; flex-direction: column; gap: 10px;"><span class="eyebrow">Größe</span><div class="stepper"><div class="stepper-knopf"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg></div><div class="stepper-wert"><span class="num" style="font-size: 22px;">168</span><span style="font-size: 13px; font-weight: 700; color: #9BA3AF;">cm</span></div><div class="stepper-knopf"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F2F4F7" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></div></div></div><div style="flex: none; padding: 22px 28px 0; display: flex; flex-direction: column; gap: 10px;"><span class="eyebrow">Gewicht heute</span></div><div class="rad" style="flex: none;"><div style="display: flex; flex-direction: column;"><div class="far"><span class="num" style="font-size: 26px; color: #2A2E36">81,5</span></div><div class="near"><span class="num" style="font-size: 30px; color: #5C636E">82,0</span></div><div style="height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 7px;"><div style="display: flex; align-items: baseline; gap: 7px;"><span class="num" style="font-size: 64px; line-height: 1">82,5</span><span style="font-size: 19px; font-weight: 700; color: #9BA3AF">kg</span></div><div style="height: 4px; width: 180px; background: #D4FF3F; border-radius: 2px"></div></div><div class="near"><span class="num" style="font-size: 30px; color: #5C636E">83,0</span></div><div class="far"><span class="num" style="font-size: 26px; color: #2A2E36">83,5</span></div></div><div class="fT"></div><div class="fB"></div></div><div class="num" style="flex: none; padding: 6px 28px 0; text-align: center; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #5C636E;">Schritt 0,5 kg · scrollen</div><div style="flex-grow: 1;"></div><div style="flex: none; padding: 0 28px 20px; display: flex; flex-direction: column; gap: 12px;"><div style="height: 64px; border-radius: 16px; background: #D4FF3F; color: #0A0B0D; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 9px;">Weiter</div><div class="note-faint" style="text-align: center;">Beides freiwillig. Änderbar und löschbar im Profil.</div></div></div></x-dc>
+</body>
+</html>

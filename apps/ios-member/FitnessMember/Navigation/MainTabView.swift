@@ -19,7 +19,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $ausgewaehlterTab) {
-            HomeRootView()
+            HomeRootView(apiClient: apiClient)
                 .tabItem { Label("Home", systemImage: "house") }
                 .tag(0)
 

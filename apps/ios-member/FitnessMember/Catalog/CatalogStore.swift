@@ -76,8 +76,15 @@ final class CatalogStore {
         activeStudioId = defaults.string(forKey: Self.activeStudioDefaultsKey)
     }
 
+    /// `.loading` nur beim ersten Laden: RootView zeigt dafuer den
+    /// Ladebildschirm und baut danach `MainTabView` neu -- Tab zurueck auf
+    /// Home, gepushte Screens weg. Seit Profilfelder, Ziele und die
+    /// Nachholkarte nach jedem Schreiben neu laden, bleibt ein vorhandener
+    /// Bootstrap waehrend des Neuladens stehen. Scheitert es, gilt der
+    /// alte weiter: die Daten sind nur aelter, und ein Mitglied mit Studio
+    /// soll nicht ploetzlich "Kein Studio" sehen (wie `VerlaufStore.laden`).
     func load() async {
-        loadState = .loading
+        if bootstrap == nil { loadState = .loading }
         do {
             let response = try await loader.bootstrap()
             bootstrap = response
@@ -93,7 +100,7 @@ final class CatalogStore {
                 }
             }
         } catch {
-            loadState = .failed
+            if bootstrap == nil { loadState = .failed }
         }
     }
 
