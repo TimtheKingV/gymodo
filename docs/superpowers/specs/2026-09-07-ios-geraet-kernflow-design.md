@@ -195,7 +195,7 @@ Was wir spezifizieren, weil wir es tatsächlich fahren:
 | Satz gesichert → Pause | `.spring(response: 0.4, dampingFraction: 0.9)` | Timerbalken fährt von oben ein, die neue Blockzeile schiebt sich in die Liste; dazu `.sensoryFeedback(.success)` |
 | Press-Feedback, **alle** Buttons | `.spring(response: 0.22, dampingFraction: 0.9)` | `scaleEffect(0.97)` und `accent` → `accent-pressed` |
 
-`response` unter 0,4 s hält den Öffnen-Moment innerhalb des „antippen und scrollen"-Gedankens; `dampingFraction` knapp unter 1 gibt einen Hauch Nachschwingen ohne Wackeln.
+`response` unter 0,4 s hält den Öffnen-Moment innerhalb des „antippen und scrollen"-Gedankens (seit Schnitt 3: die Räder sind immer aktiv, kein Tap; siehe designsystem.md §7); `dampingFraction` knapp unter 1 gibt einen Hauch Nachschwingen ohne Wackeln.
 
 Das Press-Feedback wird **einmal** als `ButtonStyle` in `DesignSystem` definiert und von `PrimaryButton`/`SecondaryButton` benutzt — dieselbe Lehre wie bei den Maßkonstanten in Sub-Projekt 1: eine gemeinsame Komponente macht die Abweichung strukturell unmöglich statt nur unerwünscht.
 
@@ -204,7 +204,7 @@ Das Press-Feedback wird **einmal** als `ButtonStyle` in `DesignSystem` definiert
 **Interaktionsbudget nachgerechnet** (§9, Abnahmebedingung):
 
 - Normalfall: ein Tap auf „Satz N sichern".
-- Abweichungsfall: ein Tap öffnet beide Räder, Scrollen ist kostenlos, „Satz N sichern" bleibt im offenen Zustand sichtbar und sichert direkt — kein Schließen-Tap dazwischen. **Zwei Interaktionen.** ✔
+- Abweichungsfall: ein Tap öffnet beide Räder, Scrollen ist kostenlos, „Satz N sichern" bleibt im offenen Zustand sichtbar und sichert direkt — kein Schließen-Tap dazwischen (seit Schnitt 3: die Räder sind immer aktiv, kein Tap; Rückblick und Vorschlag stehen im Drawer beim Öffnen, siehe designsystem.md §7). **Zwei Interaktionen.** ✔
 
 ---
 
@@ -330,7 +330,7 @@ Kein Toast, kein Häkchen-Jubel — §10 verbietet den Motivationston, und ein e
 
 ### 8.6 Der Vorschlag
 
-Unter dem Gewicht steht „Vorschlag · +2,5", nie „Du solltest" (§10: eine Rechnung, keine Empfehlung). Der Wert kommt aus `tagContext.suggestion` und existiert offline nicht — dort steht stattdessen der letzte eigene Wert aus `bootstrap.lastSets`. Beim Erstkontakt steht dort nichts (Abschnitt 7.3).
+Unter dem Gewicht steht „Vorschlag · +2,5", nie „Du solltest" (§10: eine Rechnung, keine Empfehlung). Der Wert kommt aus `tagContext.suggestion` und existiert offline nicht — dort steht stattdessen der letzte eigene Wert aus `bootstrap.lastSets` (seit Schnitt 3: die Räder sind immer aktiv, kein Tap; Rückblick und Vorschlag stehen im Drawer beim Öffnen, siehe designsystem.md §7). Beim Erstkontakt steht dort nichts (Abschnitt 7.3).
 
 ---
 

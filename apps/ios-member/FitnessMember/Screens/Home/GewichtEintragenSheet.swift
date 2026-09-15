@@ -219,7 +219,6 @@ struct GewichtEintragenSheet: View {
                     RastRad(
                         werte: Self.gewichtswerte,
                         auswahl: $gewicht,
-                        offen: true,
                         unterstrich: .held,
                         voLabel: "Gewicht",
                         voWert: Zahlformat.gewichtGesprochen,

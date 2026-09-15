@@ -101,11 +101,11 @@ Fünf Stile, einmal definiert, überall gleich:
 
 ---
 
-## 7. Wertwahl — ein Tap, dann scrollen
+## 7. Wertwahl — scrollen, dann sichern
 
-Gewicht und Wiederholungen stehen **nackt auf der Fläche**: große Zahl, darunter eine Linie. Kein Kasten, kein Rahmen, kein Eingabefeld. **Ein Tap auf eine der beiden Zahlen öffnet beide Räder** — danach wird nur noch gescrollt, ohne weiteren Tap und ohne Tastatur, mit dem Daumen der Hand, die das Handy hält.
+Gewicht und Wiederholungen stehen **nackt auf der Fläche**: große Zahl, darunter eine Linie. Kein Kasten, kein Rahmen, kein Eingabefeld. **Beide Räder sind immer aktiv** — gescrollt wird sofort, ohne Tap, ohne Tastatur, mit dem Daumen der Hand, die das Handy hält. (Bis Schnitt 3 öffnete ein Tap auf eine der Zahlen beide Räder; der Tap ist gefallen, Sammelstelle Punkt 11.)
 
-**Der Kniff: die Linie bleibt liegen, die Zahlen ziehen daran vorbei.** Es braucht keinen Auswahlbalken und keine Umrandung — die Unterstreichung, die im Ruhezustand schon den aktiven Wert markiert, ist im offenen Zustand die Rastmarke. Damit hat der Screen in beiden Zuständen dieselbe Silhouette, und der Übergang ist eine Bewegung statt eines Aufbaus.
+**Der Kniff: die Linie bleibt liegen, die Zahlen ziehen daran vorbei.** Es braucht keinen Auswahlbalken und keine Umrandung — die Unterstreichung markiert den aktiven Wert und ist zugleich die Rastmarke.
 
 **Sie unterstreicht, sie streicht nicht durch.** Die Linie liegt eine halbe Versalhöhe unter der Zeilenmitte, nicht auf ihr — aus der Schriftgröße gerechnet, weil dasselbe Rad in zwei Größen läuft. Eine Linie mitten durch die Ziffern markiert nicht, sie durchstreicht.
 
@@ -113,10 +113,7 @@ Gewicht und Wiederholungen stehen **nackt auf der Fläche**: große Zahl, darunt
 
 **Es gibt keine ± Tasten.** Sie belegten je 56–62 pt links und rechts vom Wert und lösten nichts, was das Rad nicht schneller löst.
 
-| Zustand | Aussehen |
-| --- | --- |
-| Ruhe | Wert 64 pt, **darunter** 4 pt `accent` (Gewicht) bzw. 3 pt `line` (Wiederholungen). Unter der Linie der Kontext: `Vorschlag · +2,5` bzw. `Ziel 8 – 12` |
-| Offen | Zwei Nachbarn je Richtung, 30 pt in `text-faint` und 26 pt in `line`, nach oben und unten in `bg` ausgeblendet. Der gewählte Wert behält Größe und Akzentlinie |
+**Aussehen:** Wert 64 pt (Gewicht) bzw. 44 pt (Wiederholungen), **darunter** 4 pt bzw. 3 pt `accent`. Je Richtung ein Nachbar, 30 pt in `text-faint`, nach oben und unten in `bg` ausgeblendet; auf dem Satzpfad drei Zeilen, in Onboarding und Gewichtseintrag fünf (zwei Nachbarn, der äußere 26 pt in `line`). Unter der Linie der Kontext: `Schritt 2,5 kg · 5,0 – 150,0` bzw. `Ziel 8 – 12`. **Rückblick und Vorschlag** („Zuletzt 77,5 kg × 11“, „Vorschlag · +2,5“) stehen nicht unter dem Rad, sondern in einem Drawer, der beim Öffnen des Geräts von unten kommt — nur vor dem ersten Satz eines Geräteblocks, beim ersten Mal an einem Gerät gar nicht. (Die alte Zeile „3 pt `line` (Wiederholungen)“ war schon vor diesem Schnitt falsch: `RastRad` zeichnet beide Linien in `accent`.)
 
 **Die Rastung kommt aus dem Gerät, nicht aus dem Entwurf:** `equipment_models.weight_step_kg`. Dieselbe Daumenstrecke deckt an einer Beinpresse mit 2,5-kg-Platten eine andere Spanne ab als an einem Beinbeuger mit 5-kg-Platten. Wiederholungen rasten immer auf 1.
 
@@ -153,7 +150,7 @@ Die Kalibrierungswerte (Sitz, Lehne, Winkel) bleiben ± Stepper statt Räder —
 
 > Ein normaler Satz lässt sich mit höchstens **zwei** Interaktionen bestätigen. (Blueprint §5.6)
 
-Im Normalfall ist es **eine**: Gewicht steht (Vorschlag übernommen), Wiederholungen stehen (letzter Wert), ein Tap auf „Satz N sichern". Wer abweicht, zahlt genau **einen** zusätzlichen Tap — er öffnet beide Räder, und danach ist Scrollen kostenlos. Damit bleibt auch der Abweichungsfall bei zwei Interaktionen.
+Im Normalfall ist es **eine**: Gewicht steht (Vorschlag übernommen), Wiederholungen stehen (letzter Wert), ein Tap auf „Satz N sichern". Wer abweicht, scrollt — die Räder sind immer aktiv, ein Tap kommt nicht dazu. Damit bleibt auch der Abweichungsfall bei zwei Interaktionen: scrollen, sichern.
 
 Diese Zahl ist eine Abnahmebedingung, kein Ziel. Ein Entwurf, der drei Interaktionen braucht, wird neu entworfen — nicht abgewogen.
 

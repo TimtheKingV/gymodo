@@ -344,7 +344,6 @@ private struct GewichtsRadOderPlatzhalter: View {
                 RastRad(
                     werte: werte,
                     auswahl: Binding(get: { gewichtKg }, set: { self.gewichtKg = $0 }),
-                    offen: true,
                     unterstrich: .held,
                     voLabel: "Gewicht",
                     voWert: Zahlformat.gewichtGesprochen,
@@ -527,7 +526,6 @@ struct ZielgewichtSchritt: View {
             RastRad(
                 werte: Self.werte,
                 auswahl: $zielgewichtKg,
-                offen: true,
                 unterstrich: .held,
                 voLabel: "Zielgewicht",
                 voWert: Zahlformat.gewichtGesprochen,
