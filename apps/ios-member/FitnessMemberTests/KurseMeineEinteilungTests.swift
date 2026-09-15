@@ -117,6 +117,149 @@ struct KurseMeineEinteilungTests {
         let einteilung = KurseMeineEinteilung.bilden(aus: [], jetzt: jetzt, zeitzone: zeitzone)
         #expect(einteilung.istLeer)
     }
+
+    // MARK: - Abschnitte nach Wochenabstand
+
+    private func titel(_ abschnitte: [KurseAbschnitt]) -> [String] {
+        abschnitte.map(\.titel)
+    }
+
+    @Test func einTerminDieserWocheStehtUnterDieseWoche() {
+        // Freitag 2026-09-11, 18:00 Europe/Berlin.
+        let t = termin(startsAt: "2026-09-11T16:00:00Z")
+        let abschnitte = KurseMeineEinteilung.bilden(aus: [t], jetzt: jetzt, zeitzone: zeitzone)
+            .abschnitte(jetzt: jetzt, zeitzone: zeitzone)
+
+        #expect(titel(abschnitte) == ["Diese Woche"])
+        #expect(abschnitte.first?.zeilen.map(\.termin.sessionId) == ["k1"])
+    }
+
+    @Test func einTerminDerFolgewocheStehtUnterNaechsteWoche() {
+        let t = termin(startsAt: "2026-09-15T16:00:00Z")
+        let abschnitte = KurseMeineEinteilung.bilden(aus: [t], jetzt: jetzt, zeitzone: zeitzone)
+            .abschnitte(jetzt: jetzt, zeitzone: zeitzone)
+
+        #expect(titel(abschnitte) == ["Nächste Woche"])
+        #expect(abschnitte.first?.zeilen.map(\.termin.sessionId) == ["k1"])
+    }
+
+    @Test func einTerminDerUebernaechstenWocheStehtUnterUebernaechsteWoche() {
+        let t = termin(startsAt: "2026-09-22T09:00:00Z")
+        let abschnitte = KurseMeineEinteilung.bilden(aus: [t], jetzt: jetzt, zeitzone: zeitzone)
+            .abschnitte(jetzt: jetzt, zeitzone: zeitzone)
+
+        #expect(titel(abschnitte) == ["Übernächste Woche"])
+        #expect(abschnitte.first?.zeilen.map(\.termin.sessionId) == ["k1"])
+    }
+
+    /// Drei UND vier Wochen: "Bald" ist eine offene Stufe, keine vierte
+    /// feste Woche. `bilden` begrenzt das Fenster nicht, deshalb kommen
+    /// solche Termine hier an, obwohl das Ladefenster sie heute nie liefert.
+    @Test func abDreiWochenStehtAllesUnterBald() {
+        let dreiWochen = termin(sessionId: "drei", startsAt: "2026-10-01T09:00:00Z")
+        let vierWochen = termin(sessionId: "vier", startsAt: "2026-10-08T09:00:00Z")
+        let abschnitte = KurseMeineEinteilung.bilden(aus: [vierWochen, dreiWochen], jetzt: jetzt, zeitzone: zeitzone)
+            .abschnitte(jetzt: jetzt, zeitzone: zeitzone)
+
+        #expect(titel(abschnitte) == ["Bald"])
+        #expect(abschnitte.first?.zeilen.map(\.termin.sessionId) == ["drei", "vier"])
+    }
+
+    /// Die Woche beginnt am Montag 00:00 in der Studio-Zeitzone -- eine
+    /// Stunde Abstand ueber diese Grenze sind zwei verschiedene Wochen.
+    @Test func sonntagSpaetUndMontagFruehLiegenInVerschiedenenAbschnitten() {
+        // Sonntag 2026-09-13, 23:30 Europe/Berlin.
+        let sonntag = termin(sessionId: "sonntag", startsAt: "2026-09-13T21:30:00Z")
+        // Montag 2026-09-14, 00:30 Europe/Berlin.
+        let montag = termin(sessionId: "montag", startsAt: "2026-09-13T22:30:00Z")
+        let abschnitte = KurseMeineEinteilung.bilden(aus: [montag, sonntag], jetzt: jetzt, zeitzone: zeitzone)
+            .abschnitte(jetzt: jetzt, zeitzone: zeitzone)
+
+        #expect(titel(abschnitte) == ["Diese Woche", "Nächste Woche"])
+        #expect(abschnitte.map { $0.zeilen.map(\.termin.sessionId) } == [["sonntag"], ["montag"]])
+    }
+
+    @Test func einLeererAbschnittErscheintNicht() {
+        let dieseWoche = termin(sessionId: "diese", startsAt: "2026-09-11T16:00:00Z")
+        let uebernaechste = termin(sessionId: "uebernaechste", startsAt: "2026-09-22T09:00:00Z")
+        let abschnitte = KurseMeineEinteilung.bilden(aus: [uebernaechste, dieseWoche], jetzt: jetzt, zeitzone: zeitzone)
+            .abschnitte(jetzt: jetzt, zeitzone: zeitzone)
+
+        #expect(titel(abschnitte) == ["Diese Woche", "Übernächste Woche"])
+        #expect(abschnitte.map { $0.zeilen.map(\.termin.sessionId) } == [["diese"], ["uebernaechste"]])
+    }
+
+    @Test func ohneAnmeldungenGibtEsKeinenAbschnitt() {
+        let abschnitte = KurseMeineEinteilung.bilden(aus: [], jetzt: jetzt, zeitzone: zeitzone)
+            .abschnitte(jetzt: jetzt, zeitzone: zeitzone)
+
+        #expect(abschnitte.isEmpty)
+    }
+
+    /// Innerhalb eines Abschnitts zaehlt nur die Zeit, nicht der Status:
+    /// die Warteliste am Donnerstag steht vor dem festen Platz am Freitag.
+    @Test func innerhalbEinesAbschnittsStehtDerFruehereTerminOben() {
+        let freitag = termin(sessionId: "freitag", startsAt: "2026-09-11T16:00:00Z", ownStatus: "booked")
+        let donnerstag = termin(sessionId: "donnerstag", startsAt: "2026-09-10T18:00:00Z", ownStatus: "waitlisted")
+        let abschnitte = KurseMeineEinteilung.bilden(aus: [freitag, donnerstag], jetzt: jetzt, zeitzone: zeitzone)
+            .abschnitte(jetzt: jetzt, zeitzone: zeitzone)
+
+        #expect(titel(abschnitte) == ["Diese Woche"])
+        #expect(abschnitte.first?.zeilen.map(\.termin.sessionId) == ["donnerstag", "freitag"])
+    }
+
+    // MARK: - Ueberschriften nur, wenn sie etwas trennen
+
+    private func abschnitt(_ titel: String) -> KurseAbschnitt {
+        KurseAbschnitt(titel: titel, zeilen: [])
+    }
+
+    /// Liegt alles in dieser Woche, trennt die Ueberschrift nichts -- die
+    /// Beschriftung des Umschalters sagt schon, was die Liste ist.
+    @Test func nurDieseWocheZeigtKeineUeberschrift() {
+        #expect(!KurseMeineEinteilung.zeigtUeberschriften([abschnitt("Diese Woche")]))
+    }
+
+    /// Ein einzelner Abschnitt einer SPAETEREN Woche braucht seine
+    /// Ueberschrift: ohne sie laese sich die Karte wie diese Woche.
+    @Test func nurNaechsteWocheZeigtDieUeberschrift() {
+        #expect(KurseMeineEinteilung.zeigtUeberschriften([abschnitt("Nächste Woche")]))
+    }
+
+    @Test func dieseWocheUndEineWeitereZeigenUeberschriften() {
+        #expect(KurseMeineEinteilung.zeigtUeberschriften(
+            [abschnitt("Diese Woche"), abschnitt("Übernächste Woche")]))
+    }
+
+    /// Herbst: die 169-Stunden-Woche. Dieser Test haelt nur fest, dass
+    /// die lange Woche als eine Woche zaehlt -- eine abgeschnittene
+    /// Sekundenrechnung ergaebe hier ebenfalls 1 (169/168), er faengt sie
+    /// also nicht. Das tut der Fruehjahrstest darunter.
+    /// Europe/Berlin stellt am 2026-10-25 zurueck.
+    @Test func eineWocheMitZeitumstellungImHerbstZaehltAlsEineWoche() {
+        // Donnerstag 2026-10-22, 12:00 Europe/Berlin (Sommerzeit).
+        let jetztHerbst = ISO8601DateFormatter().date(from: "2026-10-22T10:00:00Z")!
+        // Montag 2026-10-26, 09:00 Europe/Berlin (Winterzeit).
+        let t = termin(startsAt: "2026-10-26T08:00:00Z")
+        let abschnitte = KurseMeineEinteilung.bilden(aus: [t], jetzt: jetztHerbst, zeitzone: zeitzone)
+            .abschnitte(jetzt: jetztHerbst, zeitzone: zeitzone)
+
+        #expect(titel(abschnitte) == ["Nächste Woche"])
+    }
+
+    /// Fruehjahr: die 167-Stunden-Woche ist der Fall, in dem eine
+    /// abgeschnittene Sekundenrechnung (167/168 -> 0) tatsaechlich falsch
+    /// laege. Europe/Berlin stellt am 2027-03-28 vor.
+    @Test func eineWocheMitZeitumstellungImFruehjahrZaehltAlsEineWoche() {
+        // Donnerstag 2027-03-25, 12:00 Europe/Berlin (Winterzeit).
+        let jetztFruehjahr = ISO8601DateFormatter().date(from: "2027-03-25T11:00:00Z")!
+        // Montag 2027-03-29, 00:30 Europe/Berlin (Sommerzeit).
+        let t = termin(startsAt: "2027-03-28T22:30:00Z")
+        let abschnitte = KurseMeineEinteilung.bilden(aus: [t], jetzt: jetztFruehjahr, zeitzone: zeitzone)
+            .abschnitte(jetzt: jetztFruehjahr, zeitzone: zeitzone)
+
+        #expect(titel(abschnitte) == ["Nächste Woche"])
+    }
 }
 
 /// `KurseMeineAbmeldeZustand.fuer` -- Review-Fund M2: mehrere Zeilen
@@ -164,8 +307,8 @@ struct KurseMeineAbmeldeZustandTests {
     }
 }
 
-/// Das Band auf dem Kurse-Screen zeigt die eigenen Anmeldungen als EINE
-/// Liste -- die drei Abschnitte von "Meine Kurse" gibt es dort nicht mehr.
+/// `alleZeilen` fuehrt die drei Status-Listen zu EINER zeitlichen Folge
+/// zusammen -- die Eingabe, die `abschnitte` danach nach Woche schneidet.
 struct KurseMeineEinteilungAlleZeilenTests {
     private let zeitzone = "Europe/Berlin"
     /// Donnerstag, 2026-09-10, 12:00 Uhr Europe/Berlin -- dieselbe
@@ -186,9 +329,9 @@ struct KurseMeineEinteilungAlleZeilenTests {
                 ownStatus: ownStatus, ownBookingId: "b-\(id)", ownWaitlistPosition: nil))
     }
 
-    /// Zeitlich aufsteigend ueber alle drei Abschnitte hinweg -- im Band
-    /// steht der naechste Kurs oben, ganz gleich ob er ein bestaetigter
-    /// Platz, eine Warteliste oder ein Termin naechster Woche ist.
+    /// Zeitlich aufsteigend ueber alle drei Listen hinweg -- sonst stuende
+    /// in einem Wochenabschnitt die Warteliste hinter einem spaeteren
+    /// festen Platz, nur weil sie aus einer anderen Liste kommt.
     @Test func alleZeilenStehenZeitlichAufsteigend() {
         let einteilung = KurseMeineEinteilung.bilden(
             aus: [

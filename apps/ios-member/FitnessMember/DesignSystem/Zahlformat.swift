@@ -65,6 +65,42 @@ enum Zahlformat {
         "\(gewicht(kg)) kg"
     }
 
+    /// UTC statt `gebietsschema`s Geraetezeitzone: der Aufrufer speist hier
+    /// immer einen aus einem reinen Ortsdatum ("yyyy-MM-dd", Messwert.
+    /// measuredOn) gebauten Zeitpunkt ein, und der darf beim Formatieren
+    /// nicht noch einmal durch eine Zeitzone wandern (Aufgabe 8, dieselbe
+    /// Festlegung wie bei HomeSerie.tagesFormatter).
+    private static let tagMonatFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = gebietsschema
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.dateFormat = "d. MMMM"
+        return formatter
+    }()
+
+    private static let tagMonatKurzFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = gebietsschema
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.dateFormat = "d. MMM"
+        return formatter
+    }()
+
+    /// "3. November" -- Tag und Monat ohne Wochentag und ohne Jahr, fuer
+    /// die Zeile "Zielgewicht erreicht ... am 3. November": der Moment
+    /// liegt hoechstens ein paar Wochen zurueck, ein Jahr waere dort
+    /// Rauschen (dieselbe Begruendung wie bei `wochentagDatum`).
+    static func tagMonat(_ zeitpunkt: Date) -> String {
+        tagMonatFormatter.string(from: zeitpunkt)
+    }
+
+    /// "1. Sept." -- dieselbe Angabe verkuerzt, fuer die kleine, blasse
+    /// "seit ..."-Zeile unter der Gewichtsdifferenz: der ausgeschriebene
+    /// Monat waere dort breiter als der Wert, den er begleitet.
+    static func tagMonatKurz(_ zeitpunkt: Date) -> String {
+        tagMonatKurzFormatter.string(from: zeitpunkt)
+    }
+
     /// "Donnerstag, 27. August" -- die Zeile ueber einer Einheit im
     /// Verlauf. Ohne Jahr: der Verlauf reicht 50 Einheiten zurueck, und
     /// eine Jahreszahl an jeder Zeile waere Rauschen.

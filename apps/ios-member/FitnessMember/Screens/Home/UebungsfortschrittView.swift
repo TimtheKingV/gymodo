@@ -107,7 +107,7 @@ struct UebungsfortschrittView: View {
                 }
             }
         }
-        .chartYScale(domain: Fortschrittsfenster.achsenbereich(punkte))
+        .chartYScale(domain: Fortschrittsfenster.achsenbereich(punkte.map(\.topWeightKg)))
         // Achsenbeschriftung in text-faint (SS13) -- eine andere Regel als
         // die direkte Beschriftung an den Datenpunkten oben: beide stehen
         // nebeneinander. Kurzform "9. Jul", keine Wochentage -- die

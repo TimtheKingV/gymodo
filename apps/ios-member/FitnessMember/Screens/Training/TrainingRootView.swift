@@ -1,7 +1,10 @@
 import SwiftUI
 
 /// Leer und laufend sind kein zweiter Screen, sondern zwei Zustaende
-/// derselben Wurzel (TrainingLeer.dc.html / TrainingLaeuft.dc.html).
+/// derselben Wurzel (TrainingLeer.dc.html / TrainingLaeuft.dc.html). Seit
+/// Schnitt 2 teilen sie sich EIN Geruest aus Mitte und Fuss -- der Titel
+/// gehoert nur noch zum leeren Zustand, im laufenden nimmt der Kopf
+/// ("TRAINING LAEUFT" + Uhr) an derselben Stelle seinen Platz ein.
 ///
 /// Sub-Projekt 2 hatte diese Wurzel als Rumpf gebaut, damit der Kernflow
 /// schliessbar war: POST .../complete brauchte einen Ausloeser,
@@ -19,6 +22,13 @@ struct TrainingRootView: View {
     @State private var pfad: [GeraetRoute] = []
     @State private var scannerOffen = false
     @State private var scanFehler: String?
+    /// Lebt an der Wurzel, nicht in GeraeteAuswahlView: "Geraet waehlen"
+    /// wird bei jedem Geraet neu aufgemacht (Suchen -> zurueck -> naechstes
+    /// Geraet -> Suchen), und eine signierte Foto-URL ist bei jedem Oeffnen
+    /// eine andere. Ohne diesen einen Lader wuerde jedes erneute Oeffnen
+    /// dieselben Originalfotos nochmal herunterladen, obwohl die
+    /// dekodierten Vorschaubilder schon vorliegen.
+    @State private var vorschauLader = VorschauLader()
     /// Der aktive NFC-Scan. Liegt hier und nicht in ScanWege, weil sein
     /// Ergebnis in dieselbe Aufloesung muendet wie der QR-Scan -- und weil
     /// eine laufende Sitzung einen zweiten Tap ueberstehen muss.
@@ -70,22 +80,32 @@ struct TrainingRootView: View {
             // laufenden Zustand hat ihre EIGENE, innere TimelineView weiter
             // unten -- diese hier betrifft nur die Umschaltung.
             TimelineView(.periodic(from: .now, by: 60)) { context in
-                // Nur der leere Zustand scrollt als Ganzes. Der laufende
-                // bringt sein eigenes Geruest mit: scrollende Geraeteliste,
-                // feststehende Fussgruppe -- sonst schoeben schon fuenf
-                // Geraete die Scanknoepfe unter die Falz.
-                Group {
-                    if let session = sessions.aktiveSession() {
-                        laufendInhalt(session)
+                // Ein Geruest fuer beide Zustaende: nur die Mitte haengt daran, ob
+                // ein Training laeuft. Die Startwege stehen so immer an derselben
+                // Stelle in der Daumenzone, statt beim ersten Satz von oben nach unten
+                // zu springen (Sammelstelle Punkt 3 und 8).
+                let session = sessions.aktiveSession()
+                let mitte = TrainingTab.mitte(session)
+                VStack(alignment: .leading, spacing: 0) {
+                    if let mitte, let session {
+                        laufendeMitte(mitte, session: session)
                     } else {
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                                leerInhalt
-                            }
+                        // Der Titel steht nur im leeren Zustand. Im laufenden
+                        // uebernimmt der Kopf ("TRAINING LAEUFT" + Uhr) an
+                        // derselben Stelle dessen Rolle -- auf 667-pt-iPhones
+                        // (SE, weiterhin unter iOS 17 im Einsatz) reicht die
+                        // Hoehe sonst nicht fuer Titel UND Kopf UND Liste UND
+                        // Beenden-Gruppe UND Fuss, und der Liste bliebe kein
+                        // Platz zum Schrumpfen.
+                        titel
                             .padding(.horizontal, 20)
-                            .padding(.vertical, DesignSystem.Spacing.s24)
-                        }
+                            .padding(.top, DesignSystem.Spacing.s24)
+                        // Leer heisst leer: keine Uhr auf null, kein Platzhaltersatz.
+                        Spacer(minLength: 0)
                     }
+                    fuss(laeuft: mitte != nil)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, DesignSystem.Spacing.s24)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 // Der Umschalttick selbst wertet nur SEINEN Inhalt neu
@@ -199,54 +219,22 @@ struct TrainingRootView: View {
         }
     }
 
-    // MARK: - Leerer Zustand (TrainingLeer.dc.html)
+    // MARK: - Titel (nur leerer Zustand)
 
-    @ViewBuilder
-    private var leerInhalt: some View {
+    private var titel: some View {
         Text("TRAINING")
             .font(DesignSystem.Typography.screentitel)
             .tracking(-1)
             .foregroundStyle(DesignSystem.Color.text)
-
-        // Abweichung vom Artboard TrainingLeer.dc.html: dort tragen eine
-        // grosse NFC-Zeichnung und die Ueberschrift "HALT DEIN IPHONE AN DEN
-        // AUFKLEBER" den leeren Zustand. Beides ist raus, seit es einen
-        // echten NFC-Knopf gibt: die Zeichnung war die Anleitung fuer einen
-        // Weg, den man nicht antippen konnte, und eine Anleitung neben dem
-        // Knopf, den sie beschreibt, ist nur noch Laerm.
-        //
-        // Aus demselben Grund ist auch der erklaerende Fliesstext raus, der
-        // hier stand: ueber der Knopfgruppe steht jetzt nur noch, WOZU sie
-        // da ist.
-        Text("Training starten")
-            .font(.system(size: 22, weight: .bold))
-            .foregroundStyle(DesignSystem.Color.text)
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, DesignSystem.Spacing.s24)
-
-        if zeigeAusgelaufenHinweis {
-            InlineBanner(tone: .muted, message: "Dein letztes Training wurde automatisch beendet.")
-        }
-
-        // Direkt ueber der Aktionsgruppe, nicht dahinter (M3): ein Fehler
-        // muss im Sichtfeld stehen, nicht unter der Falz.
-        if let scanFehler {
-            InlineBanner(tone: .danger, message: scanFehler)
-        }
-
-        // Der Gleichwertigkeitssatz unter den Knoepfen ("Auf jedem Aufkleber
-        // ist beides ...") ist raus: seit QR und NFC nebeneinander in einer
-        // Zeile stehen, zeigt die Anordnung selbst, dass sie dasselbe tun.
-        scanWege
     }
 
-    /// Die zwei Wege, in beiden Zustaenden dieselben -- Kontur, keiner
-    /// Akzentflaeche. Der leere Zustand hatte bis M1 gar keine Hauptaktion
-    /// auf dem Bildschirm (die Anweisung lautete "halt dein iPhone an den
-    /// Aufkleber"), der laufende hatte "Naechstes Geraet" als Akzent. Jetzt
-    /// steht an beiden Stellen dasselbe Paar, und die eine Akzentflaeche pro
-    /// Screen bleibt frei (designsystem.md SS2).
+    /// Die drei Wege zum Geraet -- Kontur, keine Akzentflaeche. Der leere
+    /// Zustand hatte bis M1 gar keine Hauptaktion auf dem Bildschirm (die
+    /// Anweisung lautete "halt dein iPhone an den Aufkleber"), der laufende
+    /// hatte "Naechstes Geraet" als Akzent. Seit Schnitt 2 rendert
+    /// `fuss(laeuft:)` sie an EINER Stelle fuer beide Zustaende statt
+    /// zweimal, und die eine Akzentflaeche pro Screen bleibt frei
+    /// (designsystem.md SS2).
     private var scanWege: some View {
         ScanWege(
             beiQR: { scannerOffen = true },
@@ -275,23 +263,68 @@ struct TrainingRootView: View {
         }
     }
 
-    // MARK: - Laufender Zustand (TrainingLaeuft.dc.html)
+    // MARK: - Fuss (beide Zustaende)
 
-    /// Kopf, scrollende Geraeteliste, feststehende Fussgruppe.
+    /// Banner, Ueberschrift, die drei Wege -- in beiden Zustaenden an derselben
+    /// Stelle. Die Banner stehen direkt ueber der Aktionsgruppe, nicht dahinter
+    /// (M3): ein Fehler muss im Sichtfeld stehen, nicht unter der Falz.
+    @ViewBuilder
+    private func fuss(laeuft: Bool) -> some View {
+        VStack(spacing: DesignSystem.Spacing.s12) {
+            if zeigeAusgelaufenHinweis {
+                InlineBanner(tone: .muted, message: "Dein letztes Training wurde automatisch beendet.")
+            }
+            if let scanFehler {
+                InlineBanner(tone: .danger, message: scanFehler)
+            }
+            if laeuft {
+                // Zwei gleich aussehende Scan-Knoepfe sagen fuer sich genommen
+                // nicht, WOZU man mitten im Training scannt.
+                Text("NÄCHSTES GERÄT")
+                    .font(DesignSystem.Typography.label)
+                    .tracking(1.5)
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                // Abweichung vom Artboard TrainingLeer.dc.html: dort tragen eine
+                // grosse NFC-Zeichnung und die Ueberschrift "HALT DEIN IPHONE AN DEN
+                // AUFKLEBER" den leeren Zustand. Beides ist raus, seit es einen
+                // echten NFC-Knopf gibt: die Zeichnung war die Anleitung fuer einen
+                // Weg, den man nicht antippen konnte, und eine Anleitung neben dem
+                // Knopf, den sie beschreibt, ist nur noch Laerm.
+                //
+                // Aus demselben Grund ist auch der erklaerende Fliesstext raus, der
+                // hier stand: ueber der Knopfgruppe steht jetzt nur noch, WOZU sie
+                // da ist.
+                Text("Training starten")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .frame(maxWidth: .infinity)
+            }
+            scanWege
+        }
+    }
+
+    // MARK: - Laufende Mitte (TrainingLaeuft.dc.html)
+
+    /// Kopf, scrollende Geraeteliste, Beenden -- die Mitte des laufenden
+    /// Zustands zwischen ihrem eigenen Kopf (er ersetzt den Titel) und dem
+    /// gemeinsamen Fuss darunter.
     ///
-    /// Bis zum Umbau war der ganze Zustand EIN Scrollinhalt. Die Knoepfe
-    /// standen damit hinter der Liste: wer sechs Geraete hatte, musste zum
-    /// siebten erst scrollen -- und das mitten im Training, mit dem Handy in
-    /// einer Hand. Jetzt wandert nur die Liste, die Aktionen bleiben stehen.
-    private func laufendInhalt(_ session: LokaleSession) -> some View {
+    /// Bis zum Umbau war der ganze laufende Zustand EIN Scrollinhalt. Die
+    /// Knoepfe standen damit hinter der Liste: wer sechs Geraete hatte,
+    /// musste zum siebten erst scrollen -- und das mitten im Training, mit
+    /// dem Handy in einer Hand. Jetzt wandert nur die Liste, Kopf und
+    /// Beenden bleiben stehen.
+    private func laufendeMitte(_ mitte: TrainingTab.Mitte, session: LokaleSession) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-            laufendKopf(session)
+            laufendKopf(mitte)
                 .padding(.horizontal, 20)
                 .padding(.top, DesignSystem.Spacing.s24)
 
             ScrollView {
                 VStack(spacing: DesignSystem.Spacing.s12) {
-                    ForEach(zuletztZuerst(session.bloecke)) { block in
+                    ForEach(TrainingTab.zuletztZuerst(session.bloecke)) { block in
                         Button { oeffne(block) } label: { blockZeile(block) }
                             .buttonStyle(PressButtonStyle())
                     }
@@ -300,66 +333,43 @@ struct TrainingRootView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, DesignSystem.Spacing.s12)
             }
-            // Die Liste gibt nach, die Fussgruppe nicht: bei einem Geraet
-            // steht sie dicht unter dem Kopf, bei zehn scrollt sie.
+            // Die Liste gibt nach, Kopf und Beenden nicht: bei einem Geraet
+            // steht die Liste dicht unter dem Kopf, bei zehn scrollt sie.
             .scrollBounceBehavior(.basedOnSize)
 
-            laufendFuss
-                .padding(.horizontal, 20)
-                .padding(.bottom, DesignSystem.Spacing.s24)
-        }
-    }
-
-    /// Die feststehende Fussgruppe: Scanfehler, die drei Wege, das Ende.
-    @ViewBuilder
-    private var laufendFuss: some View {
-        VStack(spacing: DesignSystem.Spacing.s12) {
-            // Direkt ueber der Aktionsgruppe, nicht dahinter (M3): ein
-            // Scanfehler mitten im Training muss im Sichtfeld stehen -- hier
-            // ist er das jetzt immer, unabhaengig von der Listenlaenge.
-            if let scanFehler {
-                InlineBanner(tone: .danger, message: scanFehler)
+            VStack(spacing: DesignSystem.Spacing.s12) {
+                // Die eine Akzentflaeche dieses Screens (designsystem.md SS2):
+                // das Beenden ist die einzige Aktion hier, die etwas abschliesst
+                // -- die Wege im Fuss darunter tragen den Akzent nur in der Kontur.
+                PrimaryButton(title: "Training beenden") { beenden() }
+                    .testnotizElement("training.beenden", typ: "PrimaryButton")
+                // Zulaessig in textFaint: der Satz erklaert nur eine Alternative,
+                // er traegt selbst nichts (designsystem.md SS2).
+                //
+                // fixedSize(vertical:): ohne das ist dieser Text das einzige
+                // schrumpfbare Kind der Beenden-Gruppe, und auf dem SE (667 pt)
+                // gibt die ScrollView darueber ihre Hoehe nicht her -- der Satz
+                // wuerde auf eine Zeile mit Ellipse zusammengedrueckt statt
+                // umzubrechen.
+                Text("Ohne neuen Satz endet das Training nach vier Stunden von selbst.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(DesignSystem.Color.textFaint)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            // Die Beschriftung, die vorher auf dem einen Knopf stand. Sie
-            // wird gebraucht: zwei gleich aussehende Scan-Knoepfe sagen fuer
-            // sich genommen nicht, WOZU man hier scannt.
-            Text("NÄCHSTES GERÄT")
-                .font(DesignSystem.Typography.label)
-                .tracking(1.5)
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            scanWege
-            // Die eine Akzentflaeche dieses Screens (designsystem.md SS2):
-            // das Beenden ist die einzige Aktion hier, die etwas abschliesst
-            // -- die Wege darueber tragen den Akzent nur in der Kontur.
-            PrimaryButton(title: "Training beenden") { beenden() }
-                .testnotizElement("training.beenden", typ: "PrimaryButton")
-            // Zulaessig in textFaint: der Satz erklaert nur eine Alternative,
-            // er traegt selbst nichts (designsystem.md SS2).
-            Text("Ohne neuen Satz endet das Training nach vier Stunden von selbst.")
-                .font(.system(size: 12))
-                .foregroundStyle(DesignSystem.Color.textFaint)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
+            .padding(.horizontal, 20)
+            // Der Abstand zum Fuss darunter ist s12, nicht s24 wie zwischen
+            // Kopf und Liste: die Beenden-Gruppe und die Startwege im Fuss
+            // gehoerten vor dem Umbau zu EINER Fussgruppe mit s12 -- dieser
+            // Abstand bleibt bestehen, obwohl beide jetzt getrennte Funktionen
+            // sind, sonst waechst die feste Hoehe auf Kosten der Liste.
+            .padding(.bottom, DesignSystem.Spacing.s12)
         }
     }
 
-    /// Zuletzt bespieltes Geraet nach oben. Nicht einfach umgedreht: im
-    /// Zirkel kehrt man zu einem frueheren Block zurueck, und dann ist DER
-    /// das zuletzt benutzte Geraet, nicht der zuletzt angelegte Block.
-    /// Bloecke ohne Satz koennen nicht vorkommen (ein Block entsteht mit
-    /// seinem ersten Satz) -- .distantPast ist nur der sichere Boden.
-    private func zuletztZuerst(_ bloecke: [LokalerBlock]) -> [LokalerBlock] {
-        bloecke.sorted {
-            ($0.saetze.map(\.performedAt).max() ?? .distantPast)
-                > ($1.saetze.map(\.performedAt).max() ?? .distantPast)
-        }
-    }
-
-    private func laufendKopf(_ session: LokaleSession) -> some View {
-        let geraeteAnzahl = Set(session.bloecke.map(\.machineId)).count
-        let saetzeAnzahl = session.bloecke.flatMap(\.saetze).count
-        return HStack(alignment: .bottom) {
+    private func laufendKopf(_ mitte: TrainingTab.Mitte) -> some View {
+        HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                 HStack(spacing: DesignSystem.Spacing.s8) {
                     Circle()
@@ -367,14 +377,15 @@ struct TrainingRootView: View {
                         .frame(width: 8, height: 8)
                         .accessibilityHidden(true)
                     // Abweichung vom Artboard: dort accent fuer Punkt und
-                    // Label. Die eine Akzentflaeche dieses Screens ist
-                    // "Naechstes Geraet" (designsystem.md SS2, siehe Bericht).
+                    // Label. Die bleiben textMuted, weil die eine
+                    // Akzentflaeche dieses Screens "Training beenden" gehoert
+                    // (designsystem.md SS2).
                     Text("TRAINING LÄUFT")
                         .font(DesignSystem.Typography.label)
                         .tracking(1.5)
                         .foregroundStyle(DesignSystem.Color.textMuted)
                 }
-                // Gegen session.startedAt gerechnet, nicht gegen einen
+                // Gegen mitte.startedAt gerechnet, nicht gegen einen
                 // mitgezaehlten Wert: ein gespeicherter Zeitpunkt ueberlebt
                 // Hintergrund und Sperrbildschirm, ein Zaehler nicht --
                 // dasselbe Muster wie der Resttimer aus Sub-Projekt 2.
@@ -384,23 +395,28 @@ struct TrainingRootView: View {
                     // dem echten "seit 18:04" darunter. verstrichenGesprochen
                     // macht daraus "23 Minuten trainiert" (designsystem.md
                     // SS12, wie Zahlformat.gewichtGesprochen).
-                    Text(Zahlformat.verstrichen(seit: session.startedAt, bis: zeit.date))
+                    Text(Zahlformat.verstrichen(seit: mitte.startedAt, bis: zeit.date))
                         .font(.system(size: 40, weight: .black).monospacedDigit())
                         .foregroundStyle(DesignSystem.Color.text)
-                        .accessibilityLabel(Zahlformat.verstrichenGesprochen(seit: session.startedAt, bis: zeit.date))
+                        .accessibilityLabel(Zahlformat.verstrichenGesprochen(seit: mitte.startedAt, bis: zeit.date))
                 }
                 // M1-Spec SS5.6: es gibt keinen Startknopf. Ohne diesen Satz
                 // wuesste niemand, warum ploetzlich ein Training laeuft.
-                Text("seit \(Zahlformat.uhrzeit(session.startedAt))")
+                Text("seit \(Zahlformat.uhrzeit(mitte.startedAt))")
                     .font(.system(size: 13))
                     .foregroundStyle(DesignSystem.Color.textMuted)
             }
             Spacer()
-            HStack(spacing: DesignSystem.Spacing.s16) {
-                statistik(wert: geraeteAnzahl, label: "GERÄTE",
-                          gesprochen: geraeteAnzahl == 1 ? "1 Gerät" : "\(geraeteAnzahl) Geräte")
-                statistik(wert: saetzeAnzahl, label: "SÄTZE",
-                          gesprochen: saetzeAnzahl == 1 ? "1 Satz" : "\(saetzeAnzahl) Sätze")
+            // Ohne Satz zeigt "die App misst nichts" (SS10) auch keine
+            // Geraete- und Satzzahl -- mitte.zahlen ist dann nil, und die
+            // rechte Spalte entfaellt ganz statt eine Null zu zeigen.
+            if let zahlen = mitte.zahlen {
+                HStack(spacing: DesignSystem.Spacing.s16) {
+                    statistik(wert: zahlen.geraete, label: "GERÄTE",
+                              gesprochen: zahlen.geraete == 1 ? "1 Gerät" : "\(zahlen.geraete) Geräte")
+                    statistik(wert: zahlen.saetze, label: "SÄTZE",
+                              gesprochen: zahlen.saetze == 1 ? "1 Satz" : "\(zahlen.saetze) Sätze")
+                }
             }
         }
         // Fasst Kopf und Statistik zu EINEM gesprochenen Satz zusammen statt
@@ -429,8 +445,7 @@ struct TrainingRootView: View {
         HStack(alignment: .top, spacing: DesignSystem.Spacing.s8) {
             Image(systemName: "info.circle")
                 .font(.system(size: 14))
-            // Abweichung vom Artboard: dort text-faint bei 12pt. Dieselbe
-            // Begruendung wie beim Gleichwertigkeitssatz oben: dieser Satz
+            // Abweichung vom Artboard: dort text-faint bei 12pt. Dieser Satz
             // ist die einzige Stelle in der App, die den Zirkelweg aus
             // M1-Spec SS5.3 erklaert -- tragende Information, und die faellt
             // unter 15pt nicht unter textFaint (designsystem.md SS2).
@@ -499,7 +514,7 @@ struct TrainingRootView: View {
     private func ziel(_ route: GeraetRoute) -> some View {
         switch route {
         case .auswahl:
-            GeraeteAuswahlView { machineId in
+            GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader) { machineId in
                 pfad.append(.erkannt(machineId: machineId, token: nil))
             }
         case .erkannt(let machineId, let token):

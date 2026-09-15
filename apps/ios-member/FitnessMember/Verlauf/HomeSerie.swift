@@ -193,7 +193,13 @@ enum HomeSerie {
     /// tragen ihr eigenes Label; dieser Satz bleibt trotzdem, weil er die
     /// Woche auf einmal beantwortet, ohne dass VoiceOver sieben Elemente
     /// durchlaufen muss.
-    static func vorlesetext(wochen: Int, tage: [HomeSerieTag]) -> String {
+    ///
+    /// `ziel` haengt einen dritten Halbsatz an, nur wenn eins steht --
+    /// dieselbe Regel wie bei der sichtbaren Zielzeile: die Serie zaehlt
+    /// unveraendert Wochen, das Wochenziel ist eine zweite, unabhaengige
+    /// Aussage (nicht-verhandelbare Regel 1), und VoiceOver muss beide
+    /// hoeren koennen, ohne dass eine die andere ersetzt.
+    static func vorlesetext(wochen: Int, tage: [HomeSerieTag], ziel: Int? = nil) -> String {
         let serie = wochen == 0
             ? "Keine laufende Serie."
             : "Serie: \(wochen) \(wochenLabel(wochen))."
@@ -203,7 +209,32 @@ enum HomeSerie {
             ? "Diese Woche noch nicht trainiert."
             : "Diese Woche \(aufzaehlung(trainingstage)) trainiert."
 
-        return "\(serie) \(woche)"
+        guard let ziel else { return "\(serie) \(woche)" }
+        let zielEinheit = ziel == 1 ? "Tag" : "Tage"
+        return "\(serie) \(woche) Ziel \(ziel) \(zielEinheit), \(trainingstage.count) erreicht."
+    }
+
+    /// "2 von 3 Tagen diese Woche" / "3 von 3 Tagen · Ziel erreicht" -- die
+    /// Zeile unter dem Wochenstreifen, nur mit gesetztem Wochenziel.
+    ///
+    /// `trainiert >= ziel` gilt als erreicht, auch darueber ("4 von 3"):
+    /// mehr als das Ziel ist erreicht, nicht falsch. Das ist eine zweite,
+    /// unabhaengige Aussage neben der Serie (nicht-verhandelbare Regel 1)
+    /// -- sie zaehlt hier nach, rechnet aber keine zweite Wochengrenze,
+    /// sondern vergleicht nur die Anzahl, die der Streifen ohnehin zeigt.
+    static func zielzeile(trainiert: Int, ziel: Int) -> String {
+        let einheit = ziel == 1 ? "Tag" : "Tagen"
+        guard trainiert < ziel else {
+            return "\(trainiert) von \(ziel) \(einheit) · Ziel erreicht"
+        }
+        return "\(trainiert) von \(ziel) \(einheit) diese Woche"
+    }
+
+    /// "Ziel 3 Tage" / "Ziel 1 Tag" -- rechts ueber dem Kalender. Der View
+    /// setzt die Zeile in Grossbuchstaben; die Einzahl entscheidet sich
+    /// hier, damit "ZIEL 1 TAGE" nicht entstehen kann.
+    static func zielkopf(ziel: Int) -> String {
+        "Ziel \(ziel) \(ziel == 1 ? "Tag" : "Tage")"
     }
 
     // MARK: - Innereien

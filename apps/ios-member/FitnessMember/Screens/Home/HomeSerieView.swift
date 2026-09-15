@@ -12,28 +12,20 @@ enum HomeSerieAuswahl: Equatable {
 }
 
 /// Der Kalender am Kopf des Home-Tabs -- Flamme, Wochenstreifen, die
-/// Einheiten des gewaehlten Tages, ein Umschalter auf den Monat.
+/// Trainingskarten des gewaehlten Tages, ein Umschalter auf den Monat.
 ///
 /// **Nur ein Trainingstag ist antippbar.** Ein Tag ohne Einheit tut
 /// nichts -- er hat nichts zu zeigen. Er oeffnete eine Zeit lang
 /// stattdessen den Monat, und das war beim Benutzen schlicht verwirrend:
 /// dieselbe Geste schlug je nach Tag in zwei verschiedene Richtungen
 /// aus, ohne dass man vorher sah, in welche. Auf den Monat fuehrt jetzt
-/// genau eine Stelle, und die steht sichtbar darunter.
+/// genau eine Stelle, und die steht oben rechts in der Kopfzeile.
 ///
 /// **Er ist der Zugang zum Verlauf.** Die fruehere Liste "Letzte
 /// Trainings" ist weggefallen: sie zeigte dieselben Karten noch einmal,
 /// nur nach Datum statt nach Tag geordnet, und ein Tag mit zwei
 /// Einheiten stand darin zweimal mit derselben Ueberschrift. Wer eine
 /// Einheit sucht, tippt jetzt ihren Tag an.
-///
-/// **Zwei Kanaele an der Tageszelle, und nur zwei.** Die FUELLUNG sagt,
-/// was der Tag ist (nichts, trainiert, gewaehlt), der RING sagt heute.
-/// Weil sie getrennt sind, kollidiert kein Zustand mit einem anderen --
-/// ein Tag kann zugleich heute, trainiert und gewaehlt sein, und alle
-/// drei bleiben lesbar. Der Akzent bleibt dabei eine Linie, keine
-/// Flaeche: designsystem.md SS2 laesst genau eine Akzentflaeche je
-/// Screen zu, und die traegt hier die Flamme.
 ///
 /// **Die Flamme steht ueber dem Streifen, nicht darin.** Sie sass links
 /// neben den Tagen und nahm ihnen 68 pt -- sieben Zellen auf 282 pt
@@ -51,6 +43,13 @@ struct HomeSerieView: View {
     /// Aufrufer (`HomeSerie.einheitenJeTag`), damit dieser View die
     /// Zeitzone des Studios nicht kennen muss.
     let einheitenJeTag: [String: [SessionSummary]]
+    /// Aus `Serienstand.weeklyTarget` (Aufgabe 8, R24) -- NICHT aus den
+    /// Bootstrap-Zielen: „2 von 3 Tagen" braucht `trainedDays` und das
+    /// Wochenziel aus demselben Abruf, sonst zeigt ein alter Cache das
+    /// eine gegen das andere (Spec 4.5). `nil` blendet Label und Zeile
+    /// vollstaendig aus -- die Serie bleibt unveraendert (nicht-
+    /// verhandelbare Regel 1).
+    let wochenziel: Int?
     let beiAuswahl: (String) -> Void
 
     @State private var auswahl: HomeSerieAuswahl = .vorgabe
@@ -63,24 +62,38 @@ struct HomeSerieView: View {
         let gewaehlt = gewaehlterTag(wochentage: wochentage)
 
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            Text("DEINE SERIE")
-                .font(DesignSystem.Typography.label)
-                .tracking(1.5)
-                .foregroundStyle(DesignSystem.Color.textMuted)
+            HStack(alignment: .firstTextBaseline) {
+                Text("DEINE SERIE")
+                    .font(DesignSystem.Typography.label)
+                    .tracking(1.5)
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                Spacer()
+                if let wochenziel {
+                    Text(HomeSerie.zielkopf(ziel: wochenziel).uppercased())
+                        .font(DesignSystem.Typography.label)
+                        .tracking(1.5)
+                        .foregroundStyle(DesignSystem.Color.textFaint)
+                        .monospacedDigit()
+                }
+            }
 
             kopfzeile(wochentage)
 
+            // Nur im Wochenstreifen, nicht im Monatsgitter: "diese Woche"
+            // meint genau die laufende Woche, die das Gitter beim
+            // Umschalten verlaesst.
             if monatOffen {
                 monatsgitter(trainingstage: trainingstage, gewaehlt: gewaehlt)
             } else {
                 wochenstreifen(wochentage, gewaehlt: gewaehlt)
+                if let wochenziel {
+                    zielzeile(wochentage, ziel: wochenziel)
+                }
             }
 
             if let gewaehlt, let einheiten = einheitenJeTag[gewaehlt], !einheiten.isEmpty {
                 tagesliste(tagId: gewaehlt, einheiten: einheiten)
             }
-
-            umschalter
         }
         .animation(DesignSystem.Motion.oeffnen, value: monatOffen)
         .animation(DesignSystem.Motion.oeffnen, value: gewaehlt)
@@ -154,8 +167,13 @@ private extension HomeSerieView {
                 // Elemente durchlaufen muss.
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
-                    HomeSerie.vorlesetext(wochen: stand.weeks, tage: wochentage))
+                    HomeSerie.vorlesetext(wochen: stand.weeks, tage: wochentage, ziel: wochenziel))
 
+            // Die dehnbare Stelle der Zeile ist die Fussnote, nicht der
+            // Umschalter: wird der Platz knapp, bricht ihr Satz um, waehrend
+            // das Wort "Monatsansicht" seine Breite behaelt (fixedSize am
+            // Umschalter). Ein gestauchter Umschalter waere schlechter als
+            // eine zweizeilige Fussnote.
             Text(
                 HomeSerie.fussnote(
                     gesamt: gesamt, lastSessionAt: lastSessionAt,
@@ -163,6 +181,9 @@ private extension HomeSerieView {
             )
             .font(.system(size: 12, weight: .semibold).monospacedDigit())
             .foregroundStyle(DesignSystem.Color.textFaint)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            umschalterKnopf
         }
     }
 
@@ -214,6 +235,39 @@ private extension HomeSerieView {
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(tagLabel(tag))
                 }
+            }
+        }
+    }
+
+    /// „2 von 3 Tagen diese Woche" -- eine zweite, unabhaengige Aussage
+    /// neben der Serie (nicht-verhandelbare Regel 1): sie zaehlt dieselbe
+    /// Menge, die der Streifen darueber schon faerbt, keine zweite Quelle.
+    ///
+    /// Der „Ziel erreicht"-Teil ist reiner Text in `textMuted`, ohne
+    /// Akzent und ohne Animation -- die Flamme traegt den Akzent des
+    /// Screens bereits, und ein Zustandswechsel hier ist kein Erfolg zum
+    /// Feiern, nur eine Zaehlung (designsystem.md SS2, SS6).
+    func zielzeile(_ wochentage: [HomeSerieTag], ziel: Int) -> some View {
+        let trainiert = wochentage.filter(\.trainiert).count
+        return HStack(spacing: DesignSystem.Spacing.s8) {
+            Text(HomeSerie.zielzeile(trainiert: trainiert, ziel: ziel))
+                .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                .foregroundStyle(DesignSystem.Color.textMuted)
+            Spacer(minLength: 0)
+            zielstriche(trainiert: trainiert, ziel: ziel)
+                // Der Text daneben sagt bereits alles -- die Striche sind
+                // eine zweite, rein visuelle Form derselben Aussage und
+                // sollen VoiceOver nicht ein zweites Mal durchlaufen.
+                .accessibilityHidden(true)
+        }
+    }
+
+    func zielstriche(trainiert: Int, ziel: Int) -> some View {
+        HStack(spacing: DesignSystem.Spacing.s4) {
+            ForEach(0..<max(ziel, 0), id: \.self) { index in
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(index < trainiert ? DesignSystem.Color.text : DesignSystem.Color.line)
+                    .frame(width: 18, height: 4)
             }
         }
     }
@@ -289,38 +343,16 @@ private extension HomeSerieView {
             .foregroundStyle(buchstabenfarbe(tag, istGewaehlt: istGewaehlt))
     }
 
-    /// Die Hantel ERSETZT die Tagesnummer, sie steht nicht daneben. Der
-    /// Streifen beantwortet auf einen Blick "an welchen Tagen", und dafuer
-    /// muss die Antwort die groesste Form in der Zelle sein.
+    /// Nur die Uebersetzung `HomeSerieTag` -> `Kalenderzelle`: die Zelle
+    /// selbst und ihre Farbregel stehen im Designsystem, weil der
+    /// Kursplan dieselbe braucht.
     func zelle(_ tag: HomeSerieTag, istGewaehlt: Bool) -> some View {
-        ZStack {
-            Circle().fill(fuellung(tag, istGewaehlt: istGewaehlt))
-
-            if tag.trainiert {
-                Image(systemName: "dumbbell.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Color.text)
-            } else {
-                Text("\(tag.tagesnummer)")
-                    .font(.system(size: 16, weight: .black).monospacedDigit())
-                    .foregroundStyle(
-                        tag.istHeute ? DesignSystem.Color.textMuted : DesignSystem.Color.textFaint)
-            }
-        }
-        .frame(width: 40, height: 40)
-        // strokeBorder statt stroke: der Ring liegt INNEN und laesst die
-        // Zelle 40 pt breit, sonst sprungen die Spalten um den heutigen
-        // Tag herum auseinander.
-        .overlay(
-            Circle().strokeBorder(
-                DesignSystem.Color.accent, lineWidth: tag.istHeute ? 1.5 : 0))
-        .opacity(tag.ausserhalb ? 0.4 : 1)
-    }
-
-    func fuellung(_ tag: HomeSerieTag, istGewaehlt: Bool) -> Color {
-        if istGewaehlt { return DesignSystem.Color.line }
-        if tag.trainiert { return DesignSystem.Color.surfaceRaised }
-        return .clear
+        Kalenderzelle(
+            inhalt: tag.trainiert ? .hantel : .zahl(tag.tagesnummer),
+            istGewaehlt: istGewaehlt,
+            istHeute: tag.istHeute,
+            trainiert: tag.trainiert,
+            gedeckt: tag.ausserhalb)
     }
 
     func buchstabenfarbe(_ tag: HomeSerieTag, istGewaehlt: Bool) -> Color {
@@ -340,26 +372,32 @@ private extension HomeSerieView {
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
 
-            ForEach(einheiten) { einheit in
+            // Karten, nicht Einheiten: wer nach einer kurzen Pause
+            // weitermacht, hat einmal trainiert (HomeZeilen.trainingskarten).
+            ForEach(HomeZeilen.trainingskarten(einheiten)) { karte in
                 Button {
-                    beiAuswahl(einheit.id)
+                    // Die Id des aeltesten Teils -- die Route bleibt
+                    // sessionDetail(id:), das Detail sucht sich die uebrigen
+                    // Teile selbst.
+                    beiAuswahl(karte.id)
                 } label: {
-                    tageskarte(einheit)
+                    tageskarte(karte)
                 }
                 .buttonStyle(PressButtonStyle())
+                .accessibilityLabel(kartenLabel(karte))
             }
         }
     }
 
-    func tageskarte(_ einheit: SessionSummary) -> some View {
+    func tageskarte(_ karte: Trainingskarte) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-            Text(HomeZeilen.kartenTitel(einheit))
-                .font(DesignSystem.Typography.uebungsname)
+            Text(HomeZeilen.grosseZeile(karte))
+                .font(DesignSystem.Typography.wertSekundaer)
                 .foregroundStyle(DesignSystem.Color.text)
                 .monospacedDigit()
 
             HStack(spacing: DesignSystem.Spacing.s8) {
-                if einheit.completedReason == "auto" {
+                if karte.istAutoBeendet {
                     Text("AUTO BEENDET")
                         .font(DesignSystem.Typography.label)
                         .foregroundStyle(DesignSystem.Color.warn)
@@ -369,7 +407,7 @@ private extension HomeSerieView {
                             RoundedRectangle(cornerRadius: DesignSystem.Radius.pille)
                                 .stroke(DesignSystem.Color.warn, lineWidth: 1))
                 }
-                Text(HomeZeilen.zeilenText(einheit))
+                Text(HomeZeilen.kleineZeile(karte))
                     .font(DesignSystem.Typography.fliesstext)
                     .foregroundStyle(DesignSystem.Color.textMuted)
                     .monospacedDigit()
@@ -386,33 +424,37 @@ private extension HomeSerieView {
 
 private extension HomeSerieView {
     /// Kein Rahmen und keine volle Breite: ein 48 pt hoher Umriss quer
-    /// ueber den Screen wog schwerer als die Karten darueber, um die es
-    /// eigentlich geht. Uebrig bleibt das Wort und ein Winkel darunter,
-    /// rechtsbuendig unter dem Streifen -- der Winkel zeigt in die
-    /// Richtung, in die der Kalender geht.
+    /// ueber den Screen wog schwerer als die Karten darunter, um die es
+    /// eigentlich geht. Uebrig bleibt das Wort und ein Winkel darunter.
+    ///
+    /// Er steht oben rechts in der Kopfzeile, nicht mehr unter dem
+    /// Kalender: die Wochenansicht hat keinen Monatstitel, an dem er
+    /// haengen koennte, und ein Umschalter, der je nach Ansicht woanders
+    /// sitzt, ist zweimal zu suchen -- in der Kopfzeile findet er sich in
+    /// beiden Ansichten an derselben Stelle. Dafuer steht er nicht mehr
+    /// unter der Liste, die er umschaltet; der Winkel zeigt weiterhin in
+    /// die Richtung, in die der Kalender aufgeht.
     ///
     /// Die 44 pt aus designsystem.md SS4 traegt die Trefferflaeche, nicht
-    /// die Schrift: sichtbar sind rund 28, antippbar der ganze Streifen
-    /// rechts.
-    var umschalter: some View {
-        HStack(spacing: 0) {
-            Spacer(minLength: 0)
-            Button {
-                monatOffen.toggle()
-            } label: {
-                VStack(spacing: DesignSystem.Spacing.s4) {
-                    Text(monatOffen ? "Wochenansicht" : "Monatsansicht")
-                        .font(.system(size: 13, weight: .semibold))
-                    Image(systemName: monatOffen ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 11, weight: .bold))
-                }
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .padding(.leading, DesignSystem.Spacing.s24)
-                .frame(minHeight: 44)
-                .contentShape(Rectangle())
+    /// die Schrift: sichtbar sind rund 28.
+    var umschalterKnopf: some View {
+        Button {
+            monatOffen.toggle()
+        } label: {
+            VStack(spacing: DesignSystem.Spacing.s4) {
+                Text(monatOffen ? "Wochenansicht" : "Monatsansicht")
+                    .font(.system(size: 13, weight: .semibold))
+                Image(systemName: monatOffen ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 11, weight: .bold))
             }
-            .buttonStyle(PressButtonStyle())
+            .foregroundStyle(DesignSystem.Color.textMuted)
+            // Nur waagerecht fest: die Zeile gibt den Platzmangel an die
+            // Fussnote weiter, statt das Wort abzuschneiden.
+            .fixedSize(horizontal: true, vertical: false)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(PressButtonStyle())
     }
 }
 
@@ -437,6 +479,15 @@ private extension HomeSerieView {
         return teile.joined(separator: " ")
     }
 
+    /// Die Karte als Satz: erst die grosse Zeile (Zeit und Saetze), dann
+    /// die kleine (Uhrzeit und Geraete). Ohne eigenes Label laese VoiceOver
+    /// die Marke "AUTO BEENDET" mitten hinein -- sie steht im Layout vor
+    /// der kleinen Zeile, gehoert im Satz aber ans Ende.
+    func kartenLabel(_ karte: Trainingskarte) -> String {
+        var teile = ["\(HomeZeilen.grosseZeile(karte)). \(HomeZeilen.kleineZeile(karte))."]
+        if karte.istAutoBeendet { teile.append("Auto beendet.") }
+        return teile.joined(separator: " ")
+    }
 }
 
 // MARK: - Vorschau
@@ -444,10 +495,17 @@ private extension HomeSerieView {
 /// Fester Tag statt `Date()`: sonst wanderte der Ring jeden Tag eine
 /// Zelle weiter und die Vorschau zeigte je nach Wochentag etwas anderes.
 #Preview {
+    // Mit Bloecken: die kleine Zeile der Karte zaehlt die verschiedenen
+    // machineId, ohne Bloecke stuende in der Vorschau "0 Geraete".
     func einheit(_ id: String, _ start: String, _ ende: String) -> SessionSummary {
-        SessionSummary(
+        let bloecke = ["Beinpresse", "Latzug"].map { geraet in
+            SessionSummary.Block(
+                machineId: geraet, machineLabel: geraet, exerciseId: "u-\(geraet)",
+                exerciseName: geraet, sets: [])
+        }
+        return SessionSummary(
             id: id, startedAt: start, completedAt: ende, completedReason: "manual",
-            machineCount: 3, setCount: 8, blocks: [])
+            machineCount: bloecke.count, setCount: 8, blocks: bloecke)
     }
 
     return ScrollView {
@@ -469,6 +527,7 @@ private extension HomeSerieView {
                     einheit("g", "2026-09-01T16:20:00Z", "2026-09-01T17:05:00Z"),
                 ],
                 zeitzone: "Europe/Berlin"),
+            wochenziel: 3,
             beiAuswahl: { _ in })
         .padding(.horizontal, 20)
         .padding(.vertical, DesignSystem.Spacing.s24)

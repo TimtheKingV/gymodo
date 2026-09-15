@@ -9,22 +9,35 @@ import SwiftUI
 /// Ohne Vorschlaege: die gehoeren zum Abschluss. Fuer eine selbsttaetig
 /// beendete Einheit existiert gar keine Vorschlagszeile (abschluss.ts),
 /// ein Abschnitt dafuer bliebe hier bei jeder vergessenen Einheit leer.
+///
+/// Der Screen zeigt ALLE Teile der angetippten Karte, nicht nur die
+/// Einheit hinter der Id: eine Karte, die zwei Einheiten zusammenfasst,
+/// darf nicht in ein Detail fuehren, das eine davon verschweigt -- die
+/// Saetze der zweiten waeren sonst nirgends zu sehen. Die Teile kommen
+/// aus derselben Faltung wie die Liste (`HomeZeilen.karte(fuer:in:)`),
+/// damit Liste und Detail gleich gruppieren -- bis auf eine Karte ueber
+/// Mitternacht: die Liste faltet je Ortstag, das Detail den ganzen
+/// Verlauf, und dort steht dann auch der Teil des Nachbartags.
+///
+/// Das Zusammenfassen bleibt reine ANZEIGE: die Teile stehen untereinander
+/// und behalten ihre eigene Ueberschrift, in den Daten bleiben sie
+/// getrennte Sessions -- kein Satz wird umgehaengt.
 struct SessionDetailView: View {
     let sessionId: String
 
     @Environment(VerlaufStore.self) private var verlauf
 
-    private var einheit: SessionSummary? {
-        verlauf.sessions.first { $0.id == sessionId }
+    private var karte: Trainingskarte? {
+        HomeZeilen.karte(fuer: sessionId, in: verlauf.sessions)
     }
 
     var body: some View {
         ScrollView {
-            if let einheit {
+            if let karte {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                    kopf(einheit)
-                    ForEach(Array(einheit.blocks.enumerated()), id: \.offset) { _, block in
-                        blockKarte(block)
+                    kopf(karte)
+                    ForEach(karte.teile) { teil in
+                        teilAbschnitt(teil, mitUeberschrift: karte.teile.count > 1)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -45,16 +58,53 @@ struct SessionDetailView: View {
         .testnotizScreen(kontext: ["sessionId": sessionId])
     }
 
-    private func kopf(_ einheit: SessionSummary) -> some View {
+    /// Datum des aeltesten Teils, darunter dieselben zwei Zeilen wie auf
+    /// der Karte: wer die Karte antippt, soll oben wiederfinden, was er
+    /// angetippt hat, statt eine zweite Rechnung ueber dieselbe Sache.
+    private func kopf(_ karte: Trainingskarte) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-            Text(Zeitpunkt.parse(einheit.startedAt).map(Zahlformat.kurzerWochentagDatum) ?? "")
+            Text(Zeitpunkt.parse(karte.teile[0].startedAt).map(Zahlformat.kurzerWochentagDatum) ?? "")
                 .font(DesignSystem.Typography.detailScreentitel)
                 .foregroundStyle(DesignSystem.Color.text)
 
-            Text(HomeZeilen.detailUntertitel(einheit))
+            Text(HomeZeilen.grosseZeile(karte))
+                .font(DesignSystem.Typography.wertSekundaer)
+                .foregroundStyle(DesignSystem.Color.text)
+                .monospacedDigit()
+
+            Text(HomeZeilen.kleineZeile(karte))
                 .font(DesignSystem.Typography.fliesstext)
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .monospacedDigit()
+        }
+    }
+
+    /// Die Bloecke eines Teils unter seiner Uhrzeit.
+    ///
+    /// Die Ueberschrift steht nur bei mehreren Teilen: bei einem einzigen
+    /// truege sie nichts bei, was der Kopf nicht schon sagt. Ohne sie hat
+    /// der Abschnitt ein einziges Kind -- der Screen sieht dann aus wie
+    /// vor dem Zusammenfassen.
+    private func teilAbschnitt(_ teil: SessionSummary, mitUeberschrift: Bool) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            if mitUeberschrift {
+                Text(HomeZeilen.teilUeberschrift(teil).uppercased())
+                    .font(DesignSystem.Typography.label)
+                    .tracking(1.5)
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    // Gemischte Schreibweise fuers Vorlesen: "AB" in
+                    // Grossbuchstaben buchstabiert VoiceOver. Als Kopfzeile
+                    // springt der Rotor von Teil zu Teil, wie bei den
+                    // Wochen-Ueberschriften im Kursplan.
+                    .accessibilityLabel(HomeZeilen.teilUeberschrift(teil))
+                    .accessibilityAddTraits(.isHeader)
+            }
+
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
+                ForEach(Array(teil.blocks.enumerated()), id: \.offset) { _, block in
+                    blockKarte(block)
+                }
+            }
         }
     }
 

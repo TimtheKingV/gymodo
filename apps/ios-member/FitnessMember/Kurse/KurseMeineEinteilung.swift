@@ -16,6 +16,19 @@ struct KurseMeineZeile: Identifiable, Equatable {
     var id: String { termin.sessionId }
 }
 
+/// Ein Abschnitt der eigenen Anmeldungen, benannt nach seinem Abstand zur
+/// laufenden Woche ("Diese Woche", "Nächste Woche", ...).
+///
+/// `titel` ist der Nutzertext in normaler Schreibweise; die Grossschrift
+/// ist Sache der Darstellung, damit VoiceOver das Wort liest und nicht
+/// buchstabiert. `id` ist der Titel selbst: jede Stufe kommt hoechstens
+/// einmal vor.
+struct KurseAbschnitt: Identifiable, Equatable {
+    let titel: String
+    let zeilen: [KurseMeineZeile]
+    var id: String { titel }
+}
+
 /// Ordnet die gespeicherten eigenen Termine (`KurseStore.eigene.termine`)
 /// den drei Abschnitten des Artboards zu -- eine reine Ableitung, getestet
 /// in `KurseMeineEinteilungTests`, ohne jede UI-Abhaengigkeit.
@@ -37,7 +50,10 @@ struct KurseMeineZeile: Identifiable, Equatable {
 ///    das nach. (Diese Regel steht nicht woertlich im Aufgabenbrief --
 ///    siehe Bericht.) Der Abschnitt hiess bis zur Schlusswelle "Nächste
 ///    Woche"; seit das Ladefenster bis "jetzt plus 14 Tage" reicht, kann
-///    er auch Termine der uebernaechsten Woche enthalten.
+///    er auch Termine der uebernaechsten Woche enthalten. Der Screen zeigt
+///    die drei Listen nicht mehr in dieser Form, sondern neu geschnitten
+///    nach Wochenabstand (`abschnitte`) -- sie bleiben die getestete
+///    Grundlage, aus der dieser Schnitt entsteht.
 /// 3. Innerhalb der aktuellen Kalenderwoche entscheidet der eigene Status:
 ///    `.angemeldet` -> "Angemeldet", `.warteliste` -> "Auf der
 ///    Warteliste".
@@ -53,18 +69,74 @@ struct KurseMeineEinteilung {
 
     var istLeer: Bool { angemeldet.isEmpty && warteliste.isEmpty && spaeter.isEmpty }
 
-    /// Alle eigenen Anmeldungen als EINE zeitlich aufsteigende Liste.
+    /// Alle eigenen Anmeldungen als EINE zeitlich aufsteigende Liste --
+    /// die Eingabe von `abschnitte`.
     ///
-    /// Das Band auf dem Kurse-Screen kennt die drei Abschnitte nicht mehr:
-    /// dort steht der naechste Kurs oben, ganz gleich ob bestaetigter
-    /// Platz, Warteliste oder Termin naechster Woche -- der Zustand steht
-    /// auf der Karte selbst (Kontur, Marke, Abmeldehinweis), er muss nicht
-    /// noch einmal als Ueberschrift daruebergesetzt werden.
-    ///
-    /// Die drei Abschnitte bleiben trotzdem: sie sind die getestete
-    /// Zuordnung, aus der diese Liste entsteht.
+    /// Erst zusammenfuehren, dann nach Woche schneiden: die Liste auf dem
+    /// Kurse-Screen teilt nach Zeit, nicht nach Status, und innerhalb einer
+    /// Woche steht der naechste Kurs oben, ganz gleich ob bestaetigter
+    /// Platz oder Warteliste -- der Zustand steht auf der Karte selbst
+    /// (Kontur, Marke, Abmeldehinweis).
     var alleZeilen: [KurseMeineZeile] {
         (angemeldet + warteliste + spaeter).sorted { $0.beginn < $1.beginn }
+    }
+
+    /// Die Stufen in zeitlicher Folge; die letzte nimmt alles ab ihrem
+    /// Abstand auf.
+    private static let abschnittTitel = ["Diese Woche", "Nächste Woche", "Übernächste Woche", "Bald"]
+
+    /// Ob die Liste ihre Wochen-Ueberschriften zeigt. Liegt alles in dieser
+    /// Woche, trennt die Ueberschrift nichts, und die Beschriftung des
+    /// Umschalters darueber sagt schon, was die Liste ist. Ein einzelner
+    /// Abschnitt einer SPAETEREN Woche behaelt sie -- ohne sie laese sich
+    /// die Karte wie diese Woche.
+    ///
+    /// Gegen den Titel aus `abschnittTitel`, nicht gegen ein zweites
+    /// Literal im View: sonst liefe ein umbenannter Titel still an der
+    /// Regel vorbei.
+    static func zeigtUeberschriften(_ abschnitte: [KurseAbschnitt]) -> Bool {
+        !(abschnitte.count == 1 && abschnitte.first?.titel == abschnittTitel[0])
+    }
+
+    /// Die eigenen Anmeldungen, geschnitten nach ganzen Wochen Abstand zur
+    /// Woche von `jetzt`: 0 "Diese Woche", 1 "Nächste Woche",
+    /// 2 "Übernächste Woche", ab 3 "Bald". Leere Abschnitte fallen weg --
+    /// eine Ueberschrift ohne Karte darunter sagte nur "hier ist nichts".
+    ///
+    /// Die Woche beginnt am Montag 00:00 in der Studio-Zeitzone
+    /// (`KurseWochenBerechnung.montag`), dieselbe Grenze wie der
+    /// Wochenstreifen darueber -- sonst stuende ein Termin unter "Nächste
+    /// Woche", den der Kalender noch in dieser zeigt.
+    ///
+    /// Gezaehlt in Kalendertagen zwischen den beiden Montagen, nicht in
+    /// Sekunden: eine Woche mit Zeitumstellung hat 167 oder 169 Stunden,
+    /// und eine abgeschnittene Sekundenrechnung legte den Montag nach der
+    /// Umstellung im Fruehjahr noch in die laufende Woche.
+    ///
+    /// "Bald" bleibt beim heutigen Ladefenster (jetzt plus 14 Tage,
+    /// `KurseWochenBerechnung.fensterEnde`) leer. Die Stufe steht trotzdem
+    /// hier, damit ein groesseres Fenster sie nur noch fuellt, statt dass
+    /// die vierte Woche dann ohne Ueberschrift unter der dritten landet.
+    func abschnitte(jetzt: Date, zeitzone: String) -> [KurseAbschnitt] {
+        var kalender = Calendar(identifier: .gregorian)
+        kalender.timeZone = TimeZone(identifier: zeitzone) ?? TimeZone(identifier: "UTC")!
+        let heutigerMontag = KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zeitzone)
+        let titel = Self.abschnittTitel
+
+        var stufen = Array(repeating: [KurseMeineZeile](), count: titel.count)
+        for zeile in alleZeilen {
+            let montag = KurseWochenBerechnung.montag(enthaelt: zeile.beginn, zeitzone: zeitzone)
+            let tage = kalender.dateComponents([.day], from: heutigerMontag, to: montag).day ?? 0
+            // Nach unten geklemmt, obwohl `bilden` Vergangenes schon
+            // aussortiert: ein negativer Index waere ein Absturz, eine
+            // Karte unter "Diese Woche" nur ungenau.
+            let stufe = min(max(tage / 7, 0), titel.count - 1)
+            stufen[stufe].append(zeile)
+        }
+
+        return zip(titel, stufen)
+            .filter { !$0.1.isEmpty }
+            .map { KurseAbschnitt(titel: $0.0, zeilen: $0.1) }
     }
 
     static func bilden(aus termine: [GespeicherterTermin], jetzt: Date, zeitzone: String) -> KurseMeineEinteilung {

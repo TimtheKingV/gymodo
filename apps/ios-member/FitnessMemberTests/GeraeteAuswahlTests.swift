@@ -61,7 +61,7 @@ struct GeraeteAuswahlTests {
         }.joined(separator: ", ")
         return GeraetTestdaten.dekodiere("""
         {
-          "member": { "displayName": "Tim" },
+          "member": { "displayName": "Tim", "goals": {"weeklyDays": null, "targetWeight": null} },
           "studios": [
             { "id": "s1", "name": "Gym Ost", "timezone": "Europe/Berlin" },
             { "id": "s2", "name": "Gym West", "timezone": "Europe/Berlin" }
@@ -177,6 +177,18 @@ struct GeraeteAuswahlTests {
 
         #expect(gruppen.alle[0].ortsangabe == "Gerät 21")
         #expect(gruppen.alle[1].ortsangabe == "Gerät 14 · Rückwand rechts")
+    }
+
+    /// `maschineJSON` baut die Modell-ID als `"em-\(id)"` -- der Schluessel,
+    /// unter dem der Server das Foto signiert (Aufgabe 4).
+    @Test func eintragTraegtDasModell() {
+        let daten = bootstrap(maschinen: [
+            maschineJSON(id: "m1", name: "Latzug", label: "14", ort: nil),
+        ])
+
+        let g = GeraeteAuswahl.gruppen(bootstrap: daten, studioId: "s1", suchtext: "")
+
+        #expect(g.alle.first?.modellId == "em-m1")
     }
 
     @Test func geraeteFremderStudiosFehlen() {

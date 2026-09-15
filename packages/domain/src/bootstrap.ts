@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
+import { aktiveZiele } from "./goals.js";
+import type { AktiveZiele } from "./goals.js";
+import type { Messpunkt } from "./measurements.js";
+import type { Profil } from "./profil.js";
+import { zuProfil } from "./profil.js";
 
 /**
  * Obergrenze fuer die Satzhistorie, aus der die letzten Werte je Kombination
@@ -12,12 +17,19 @@ const SET_SCAN_LIMIT = 2000;
 
 export type Bootstrap = {
   /**
-   * Der Lesepfad des eigenen Namens. `null`, solange keiner gesetzt ist
-   * -- Home gruesst dann nicht, und das Profil zeigt nur die
-   * Mailadresse. Aus der Mailadresse Initialen abzuleiten waere geraten,
-   * und geraten sieht so lange richtig aus, bis es jemanden trifft.
+   * Das Profil als Lesepfad. Alles nullable; `onboardingCompletedAt`
+   * entscheidet im Client ueber das Onboarding-Gate, deshalb haengt es am
+   * Abruf, der ohnehin bei jedem Start laeuft.
    */
-  member: { displayName: string | null };
+  member: Profil & {
+    /**
+     * Der juengste Gewichtseintrag, damit die Gewichtskarte auf Home ohne
+     * eigenen Verlaufsabruf einen Wert zeigt.
+     */
+    latestWeight: Messpunkt | null;
+    /** Die aktiven Ziele des Mitglieds, siehe Migration 0043. */
+    goals: AktiveZiele;
+  };
   studios: Array<{ id: string; name: string; timezone: string }>;
   machines: Array<{
     id: string;
@@ -166,8 +178,16 @@ export async function getBootstrap(
 
   const { data: profilRow } = await client
     .from("profiles")
-    .select("display_name")
+    .select("display_name, sex, age_band, height_cm, training_goal, onboarding_completed_at")
     .eq("id", userId)
+    .maybeSingle();
+
+  const { data: weightRow } = await client
+    .from("body_measurements")
+    .select("measured_on, weight_kg")
+    .eq("user_id", userId)
+    .order("measured_on", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   const hashesByMachine = new Map<string, string[]>();
@@ -323,9 +343,18 @@ export async function getBootstrap(
     exercises: exercisesByModel.get(row.equipment_models.id) ?? [],
   }));
 
+  const weight = weightRow as { measured_on: string; weight_kg: number | string } | null;
+
   return {
     member: {
-      displayName: (profilRow as { display_name: string | null } | null)?.display_name ?? null,
+      ...zuProfil(
+        (profilRow as Parameters<typeof zuProfil>[0] | null) ?? {
+          display_name: null, sex: null, age_band: null, height_cm: null,
+          training_goal: null, onboarding_completed_at: null,
+        },
+      ),
+      latestWeight: weight ? { measuredOn: weight.measured_on, weightKg: Number(weight.weight_kg) } : null,
+      goals: await aktiveZiele(client, userId),
     },
     studios: (studioRows ?? []) as Bootstrap["studios"],
     machines,
