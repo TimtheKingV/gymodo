@@ -222,6 +222,18 @@ struct DTOTests {
         #expect(response.summary.lastSessionAt == nil)
     }
 
+    @Test func dekodiertGeraetefotos() throws {
+        let json = #"{"photos":[{"equipmentModelId":"em1","url":"https://example.test/a.jpg"}]}"#
+        let response = try JSONDecoder().decode(MachinePhotosResponse.self, from: Data(json.utf8))
+
+        #expect(response.photos.count == 1)
+        #expect(response.photos[0].equipmentModelId == "em1")
+        #expect(response.photos[0].url == "https://example.test/a.jpg")
+
+        let leer = try JSONDecoder().decode(MachinePhotosResponse.self, from: Data(#"{"photos":[]}"#.utf8))
+        #expect(leer.photos.isEmpty)
+    }
+
     @Test func completedSessionDecodiertVorschlaege() throws {
         let json = """
         {

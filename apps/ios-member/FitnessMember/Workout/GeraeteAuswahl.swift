@@ -22,6 +22,9 @@ enum GeraeteAuswahl {
     struct Eintrag: Equatable, Identifiable {
         var id: String { machineId }
         let machineId: String
+        /// `equipmentModel.id` -- der Schluessel, unter dem der Server das
+        /// Foto signiert.
+        let modellId: String
         /// `equipmentModel.name` -- das Wort, das am Geraet steht.
         let name: String
         /// `label · locationNote`, dieselbe Fuegung wie die Kopfzeile auf
@@ -128,6 +131,7 @@ enum GeraeteAuswahl {
     ) -> Eintrag {
         Eintrag(
             machineId: maschine.id,
+            modellId: maschine.equipmentModel.id,
             name: maschine.equipmentModel.name,
             ortsangabe: [maschine.label, maschine.locationNote]
                 .compactMap { $0 }

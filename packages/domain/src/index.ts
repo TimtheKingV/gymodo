@@ -114,6 +114,8 @@ export { getTagContext } from "./tag-context.js";
 export type { TagContext } from "./tag-context.js";
 export { getMachineContext } from "./machine-context.js";
 export type { MachineContext } from "./machine-context.js";
+export { getMachinePhotos } from "./machine-photos.js";
+export type { MachinePhotos } from "./machine-photos.js";
 export type { DomainErrorCode } from "./errors.js";
 export {
   completeSession,
