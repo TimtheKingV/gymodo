@@ -87,6 +87,20 @@ struct GeraetModelTests {
         #expect(sut.vorschlagText == "Vorschlag · +2,5")
     }
 
+    @Test func uebungWechselnGibtDenWertWiederFrei() {
+        // Neue Uebung, neuer Wert: die Markierung "vom Mitglied gewaehlt" gilt
+        // fuer die alte Uebung. Ein Vorschlag, der danach eintrifft, darf
+        // wieder greifen -- sonst bliebe das Rad fuer e2 auf dem Wert von e1.
+        let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        sut.gewichtGewaehlt(75.0)
+
+        sut.uebungWechseln(zu: "e2")
+        sut.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 80.0))
+
+        #expect(sut.gewicht == 80.0)
+    }
+
     @Test func meldetDenAnschlagNurWennEsEinenGibt() {
         let sut = modell(maschine: GeraetTestdaten.maschine,
                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []))

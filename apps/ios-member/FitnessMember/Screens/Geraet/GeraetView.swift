@@ -221,25 +221,31 @@ struct GeraetView: View {
                 if modell.phase == .eingabe && modell.hatWeitereUebungen {
                     // Abweichung vom Artboard (Spec Abschnitt 9): dort accent. Die
                     // eine Akzentflaeche des Screens ist die Hauptaktion.
-                    Button("andere Übung", action: beiUebungWechseln)
-                        .testnotizElement("geraet.uebung-wechseln", typ: "Button")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                        .frame(minHeight: 44)
-                        // Die 44 pt Trefferflaeche ragen je 12 pt aus der
-                        // 20-pt-Zeile heraus, statt sie auf 44 zu strecken:
-                        // Design SS4 verlangt die Trefferflaeche, nicht die
-                        // Zeilenhoehe -- und die 24 pt kostete das
-                        // Hoehenbudget auf 667 pt. Nach unten liegen 16 pt
-                        // Luft bis zur "aendern"-Zeile, es bleiben also 4 pt
-                        // Abstand; nach oben sind es nur 4 pt bis zum
-                        // Geraetenamen, die Flaeche ueberlappt seinen
-                        // Textkasten um rund 8 pt. Der Name ist ein blosser
-                        // Text ohne eigene Trefferflaeche -- es gibt dort
-                        // nichts, womit der Knopf um den Tipp streiten
-                        // koennte.
-                        .padding(.vertical, -DesignSystem.Spacing.s12)
-                        .buttonStyle(PressButtonStyle())
+                    Button(action: beiUebungWechseln) {
+                        Text("andere Übung")
+                            .font(.system(size: 13, weight: .semibold))
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .testnotizElement("geraet.uebung-wechseln", typ: "Button")
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    // Die 44 pt Trefferflaeche ragen je 12 pt aus der
+                    // 20-pt-Zeile heraus, statt sie auf 44 zu strecken:
+                    // Design SS4 verlangt die Trefferflaeche, nicht die
+                    // Zeilenhoehe -- und die 24 pt kostete das
+                    // Hoehenbudget auf 667 pt. Der Rahmen steht INNEN im
+                    // Label, denn bei einem eigenen ButtonStyle ist nur das
+                    // gestylte Label tippbar -- ein Rahmen um den Button
+                    // legte bloss leere, nicht treffbare Flaeche daneben.
+                    // Nach unten liegen 16 pt Luft bis zur
+                    // "aendern"-Zeile, es bleiben also 4 pt Abstand; nach
+                    // oben sind es nur 4 pt bis zum Geraetenamen, die
+                    // Flaeche ueberlappt seinen Textkasten um rund 8 pt.
+                    // Der Name ist ein blosser Text ohne eigene
+                    // Trefferflaeche -- es gibt dort nichts, womit der
+                    // Knopf um den Tipp streiten koennte.
+                    .padding(.vertical, -DesignSystem.Spacing.s12)
+                    .buttonStyle(PressButtonStyle())
                 }
             }
         }
@@ -266,12 +272,17 @@ struct GeraetView: View {
     }
 
     private var aendernKnopf: some View {
-        Button("ändern") { modell.kalibrierungOeffnen() }
-            .testnotizElement("geraet.kalibrierung-aendern", typ: "Button")
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(DesignSystem.Color.textMuted)
-            .frame(minHeight: 44)
-            .buttonStyle(PressButtonStyle())
+        // Der Rahmen steht im Label, nicht um den Button: mit eigenem
+        // ButtonStyle ist nur das gestylte Label tippbar.
+        Button { modell.kalibrierungOeffnen() } label: {
+            Text("ändern")
+                .font(.system(size: 13, weight: .semibold))
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .testnotizElement("geraet.kalibrierung-aendern", typ: "Button")
+        .foregroundStyle(DesignSystem.Color.textMuted)
+        .buttonStyle(PressButtonStyle())
     }
 
     private var aktionen: some View {
@@ -343,13 +354,18 @@ struct GeraetView: View {
     /// In beiden Aktionsgruppen dieselbe Zeile -- zweimal getippt waere sie
     /// die naechste, die auseinanderlaeuft.
     private var problemMelden: some View {
-        Button("Problem melden", action: beiProblem)
-            .testnotizElement("geraet.problem", typ: "Button")
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(DesignSystem.Color.textMuted)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .buttonStyle(PressButtonStyle())
-            .accessibilityHint("Verhindert einen Steigerungsvorschlag")
+        // Der Rahmen steht im Label, nicht um den Button: mit eigenem
+        // ButtonStyle ist nur das gestylte Label tippbar.
+        Button(action: beiProblem) {
+            Text("Problem melden")
+                .font(.system(size: 15, weight: .semibold))
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .testnotizElement("geraet.problem", typ: "Button")
+        .foregroundStyle(DesignSystem.Color.textMuted)
+        .buttonStyle(PressButtonStyle())
+        .accessibilityHint("Verhindert einen Steigerungsvorschlag")
     }
 
     /// Haptik beim Sichern, ueber das Profil abschaltbar (SS6: Haptik nie

@@ -135,12 +135,27 @@ struct RastRad: View {
 
     /// Wo der Verlauf oben (und gespiegelt unten) voll deckend wird -- als
     /// Anteil der Radhoehe, weil LinearGradient in Anteilen rechnet, die
-    /// Zeile aber in Punkten steht. Die voll deckende Mitte ist immer
-    /// `zeilenhoehe * 1.8` hoch: die Versalhoehe der 64-pt-Ziffern liegt bei
+    /// Zeile aber in Punkten steht.
+    ///
+    /// Wie breit das voll deckende Band sein muss, haengt an der Zeilenzahl:
+    ///
+    /// Bei fuenf Zeilen reichen 1,8 Zeilen. Das Band muss nur die gewaehlte
+    /// Zahl selbst freihalten -- die Versalhoehe der 64-pt-Ziffern liegt bei
     /// rund 46 pt, und ein Verlauf, der schon in der Mitte beginnt, blendet
-    /// die gewaehlte Zahl selbst an -- sie saehe ausgegraut aus.
+    /// die gewaehlte Zahl an, sie saehe ausgegraut aus. Die Nachbarn liegen
+    /// dort weit genug innen, um den Verlauf nur zu streifen.
+    ///
+    /// Bei drei Zeilen ist der einzige Nachbar zugleich die Randzeile, und
+    /// 1,8 Zeilen Band liessen genau ihn verblassen: sein Glyph steht
+    /// (skaliert auf 30/64) bei rund 11 bis 33 pt seiner 44-pt-Zeile, das
+    /// Band muesste also bis auf rund 11 pt an den Rand reichen. 2,5 Zeilen
+    /// tun das -- ohne sie multipliziert der Verlauf die ohnehin nur 0,38
+    /// deckende Nachbarzeile noch einmal herunter, und SS7 verlangt, dass
+    /// genau dieser Nachbar lesbar bleibt: er ist die ganze Begruendung des
+    /// Rads.
     private var verlaufsrand: CGFloat {
-        max(0, (1 - (zeilenhoehe * 1.8) / radhoehe) / 2)
+        let band = zeilenhoehe * (sichtbareZeilen <= 3 ? 2.5 : 1.8)
+        return max(0, (1 - band / radhoehe) / 2)
     }
 
     private var scroller: some View {
@@ -323,17 +338,15 @@ struct RastRad: View {
         @State private var gewicht = 80.0
 
         var body: some View {
-            VStack(spacing: DesignSystem.Spacing.s32) {
-                RastRad(
-                    werte: Rastwerte.gewichte(min: 5, max: 150, schritt: 2.5),
-                    auswahl: $gewicht,
-                    unterstrich: .held,
-                    voLabel: "Gewicht",
-                    voWert: Zahlformat.gewichtGesprochen,
-                    anschlagText: "Maximum des Geräts erreicht",
-                    text: Zahlformat.gewicht
-                )
-            }
+            RastRad(
+                werte: Rastwerte.gewichte(min: 5, max: 150, schritt: 2.5),
+                auswahl: $gewicht,
+                unterstrich: .held,
+                voLabel: "Gewicht",
+                voWert: Zahlformat.gewichtGesprochen,
+                anschlagText: "Maximum des Geräts erreicht",
+                text: Zahlformat.gewicht
+            )
             .padding(20)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(DesignSystem.Color.bg)

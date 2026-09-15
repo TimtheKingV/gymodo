@@ -25,10 +25,11 @@ struct Einstellwert: Identifiable, Equatable {
 /// sagen haette: beim ersten Mal an diesem Geraet gibt es weder einen
 /// letzten Satz noch einen Vorschlag (Sammelstelle Punkt 11).
 struct Rueckblick: Equatable {
-    /// "77,5 kg × 11" -- der letzte eigene Satz dieser Uebung an diesem
-    /// Geraet, aus dem Prefetch, also auch offline.
+    /// "77,5 kg x 11" (im UI mit Malzeichen) -- der letzte eigene Satz
+    /// dieser Uebung an diesem Geraet, aus dem Prefetch, also auch offline.
     let zuletzt: String
-    /// "Vorschlag · +2,5", sobald der Kontext da ist. Offline nil.
+    /// "Vorschlag - +2,5" (im UI mit Mittelpunkt), sobald der Kontext da
+    /// ist. Offline nil.
     let vorschlag: String?
 }
 
