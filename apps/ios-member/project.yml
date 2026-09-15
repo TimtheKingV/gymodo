@@ -37,6 +37,13 @@ targets:
         # separate Info.plist-Datei per INFOPLIST_FILE in die generierte
         # Info.plist eingemischt (siehe FitnessMember/Info-Additions.plist).
         INFOPLIST_FILE: FitnessMember/Info-Additions.plist
+      configs:
+        # Nur der Entwicklungsbuild: Testnotiz-Modul (Mikrofon, Sprache,
+        # Dateien-App). Release fragt nie nach einem Mikrofon.
+        Debug:
+          INFOPLIST_FILE: FitnessMember/Info-Additions-Debug.plist
+          INFOPLIST_KEY_NSMicrophoneUsageDescription: "Nur im Entwicklungsbuild: Sprachnotizen zu Testfunden."
+          INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: "Nur im Entwicklungsbuild: Sprachnotizen werden auf dem Gerät in Text umgewandelt."
     dependencies:
       - package: Supabase
         product: Auth
