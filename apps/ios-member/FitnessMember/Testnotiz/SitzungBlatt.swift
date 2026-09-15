@@ -22,11 +22,11 @@ struct SitzungBlatt: View {
                         ShareLink(item: zip) {
                             Text("Sitzung teilen")
                                 .font(.system(size: 19, weight: .heavy))
-                                .foregroundStyle(DesignSystem.Color.onAccent)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 64)
-                                .background(DesignSystem.Color.accent, in: RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt))
+                                .foregroundStyle(DesignSystem.Color.onAccent)
                         }
+                        .buttonStyle(HauptaktionButtonStyle(isEnabled: true))
                     } else {
                         ProgressView().tint(DesignSystem.Color.accent)
                     }
