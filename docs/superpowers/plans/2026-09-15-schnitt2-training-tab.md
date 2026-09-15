@@ -305,7 +305,7 @@ Welche Modelle: dieselben, die der Bootstrap über `machines` liest, also alle G
   - `GET /api/v1/me/machine-photos` → `200 { "photos": [{ "equipmentModelId": "…", "url": "https://…" }] }`, `401 unauthorized` ohne Bearer, `cache-control: private, no-store`
 - Ein Modell ohne Foto oder mit einem Pfad, der sich nicht signieren lässt (Objekt fehlt), **fehlt** in `photos`. Es kommt nicht als `null`: Die App zeigt dann keine Vorschau, und ein fehlendes Foto macht die Liste nicht kaputt.
 
-- [ ] **Step 1: Integrationstest schreiben** (`tests/integration/api-machine-photos.test.ts`). Aufbau wie `api-me.test.ts` (Studios und Mitgliedschaften über `serviceClient()`, Bearer über `accessTokenFor`), JPEG-Bytes wie `storage-media.test.ts` (`jpegBytes()`), Upload mit `admin.storage.from("equipment-photos").upload(\`${studioId}/${crypto.randomUUID()}.jpg\`, jpegBytes())`. Daten:
+- [x] **Step 1: Integrationstest schreiben** (`tests/integration/api-machine-photos.test.ts`). Aufbau wie `api-me.test.ts` (Studios und Mitgliedschaften über `serviceClient()`, Bearer über `accessTokenFor`), JPEG-Bytes wie `storage-media.test.ts` (`jpegBytes()`), Upload mit `admin.storage.from("equipment-photos").upload(\`${studioId}/${crypto.randomUUID()}.jpg\`, jpegBytes())`. Daten:
   - Studio A: Modell „Rudermaschine“ **mit** Foto, zwei Geräte davon. Modell „Beinpresse“ **ohne** Foto, ein Gerät. Modell „Latzug“ mit `photo_path` auf ein **nicht hochgeladenes** Objekt, ein Gerät. Mitglied A.
   - Studio B: Modell „Crosstrainer“ mit Foto, ein Gerät. Mitglied B.
 
@@ -317,9 +317,9 @@ Welche Modelle: dieselben, die der Bootstrap über `machines` liest, also alle G
   - `it("cross-tenant: das Foto aus Studio B erscheint bei A nicht")`: Die `equipmentModelId` des Crosstrainers kommt bei Mitglied A nicht vor, bei Mitglied B schon.
   - `it("antwortet private, no-store")`: Header prüfen.
 
-- [ ] **Step 2: Rot sehen.** `pnpm test:integration tests/integration/api-machine-photos.test.ts`. Erwartet: Importfehler, die Route gibt es nicht.
+- [x] **Step 2: Rot sehen.** `pnpm test:integration tests/integration/api-machine-photos.test.ts`. Erwartet: Importfehler, die Route gibt es nicht.
 
-- [ ] **Step 3: Domain-Funktion** (`packages/domain/src/machine-photos.ts`)
+- [x] **Step 3: Domain-Funktion** (`packages/domain/src/machine-photos.ts`)
 
 ```ts
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -379,7 +379,7 @@ export async function getMachinePhotos(
 
 In `index.ts`: `export { getMachinePhotos } from "./machine-photos.js";` und `export type { MachinePhotos } from "./machine-photos.js";`.
 
-- [ ] **Step 4: Route** (`apps/web/app/api/v1/me/machine-photos/route.ts`), gebaut wie `me/bootstrap/route.ts`:
+- [x] **Step 4: Route** (`apps/web/app/api/v1/me/machine-photos/route.ts`), gebaut wie `me/bootstrap/route.ts`:
 
 ```ts
 import { getMachinePhotos } from "@fitretro/domain";
@@ -412,9 +412,9 @@ export async function GET(request: Request): Promise<Response> {
 }
 ```
 
-- [ ] **Step 5: Grün sehen.** Die Einzeldatei, dann `pnpm typecheck`, `pnpm test`, `pnpm test:integration`. Vor dem vollen Integrationslauf `df -h /`.
+- [x] **Step 5: Grün sehen.** Die Einzeldatei, dann `pnpm typecheck`, `pnpm test`, `pnpm test:integration`. Vor dem vollen Integrationslauf `df -h /`.
 
-- [ ] **Step 6: Commit** — `feat(api): signierte Geraetefotos fuer die Geraeteliste`
+- [x] **Step 6: Commit** — `feat(api): signierte Geraetefotos fuer die Geraeteliste`
 
 ---
 
