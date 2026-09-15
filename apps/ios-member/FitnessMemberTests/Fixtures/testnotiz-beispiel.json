@@ -1,0 +1,70 @@
+{
+  "format": "gymodo.testnotiz/1",
+  "platform": "ios",
+  "session": {
+    "id": "2026-09-13-1412",
+    "startedAt": "2026-09-13T14:12:03+02:00",
+    "app": { "bundleId": "de.gymtaro.member", "version": "1.0", "build": "42", "configuration": "Debug" },
+    "device": { "model": "iPhone14,4", "os": "iOS 26.6.1", "screen": { "width": 375, "height": 812, "scale": 3 } }
+  },
+  "entries": [
+    {
+      "id": "8F0C2A4E-6B1D-4C3A-9E7F-1A2B3C4D5E6F",
+      "index": 1,
+      "createdAt": "2026-09-13T14:13:41+02:00",
+      "kind": "crop",
+      "screen": {
+        "name": "GeraetView",
+        "file": "apps/ios-member/FitnessMember/Screens/Geraet/GeraetView.swift",
+        "stack": ["apps/ios-member/FitnessMember/Screens/Geraet/GeraetView.swift"],
+        "context": { "machineId": "m_123", "exerciseId": "e_456", "phase": "eingabe" }
+      },
+      "screenshot": "01-voll.png",
+      "crop": "01-ausschnitt.png",
+      "cropRect": {
+        "points": { "x": 20, "y": 412, "width": 335, "height": 96 },
+        "pixels": { "x": 60, "y": 1236, "width": 1005, "height": 288 }
+      },
+      "element": null,
+      "note": "Das Gewicht wird abgeschnitten wenn 100,5",
+      "audio": "01-notiz.m4a",
+      "transcript": "Das Gewicht wird abgeschnitten wenn hundert komma fünf drinsteht",
+      "runtime": { "online": true, "pendingWrites": 0, "signedIn": true, "studioId": "s_789" },
+      "log": [
+        { "at": "2026-09-13T14:13:02+02:00", "level": "info", "category": "tag", "message": "Tab-Wechsel auf Training wegen offenem Tag-Eingang" }
+      ]
+    },
+    {
+      "id": "0B7E9C1D-2F3A-4B5C-8D6E-7F8091A2B3C4",
+      "index": 2,
+      "createdAt": "2026-09-13T14:15:10+02:00",
+      "kind": "element",
+      "screen": {
+        "name": "UebungWechselnSheet",
+        "file": "apps/ios-member/FitnessMember/Screens/Geraet/UebungWechselnSheet.swift",
+        "stack": [
+          "apps/ios-member/FitnessMember/Screens/Geraet/GeraetView.swift",
+          "apps/ios-member/FitnessMember/Screens/Geraet/UebungWechselnSheet.swift"
+        ],
+        "context": { "machineId": "m_123" }
+      },
+      "screenshot": "02-voll.png",
+      "crop": null,
+      "cropRect": null,
+      "element": {
+        "source": "accessibility",
+        "identifier": "geraet.satz-sichern",
+        "label": "Satz 2 sichern, 42,5 Kilogramm",
+        "type": "Button",
+        "frame": { "x": 20, "y": 640, "width": 335, "height": 64 },
+        "file": "apps/ios-member/FitnessMember/Screens/Geraet/GeraetView.swift",
+        "line": 212
+      },
+      "note": "Knopf bleibt nach dem Tipp einen Moment grau",
+      "audio": null,
+      "transcript": null,
+      "runtime": { "online": false, "pendingWrites": 2, "signedIn": true, "studioId": null },
+      "log": []
+    }
+  ]
+}
