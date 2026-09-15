@@ -30,6 +30,7 @@
 		207B8D6F6D17D7C2F5BA2FA5 /* GeraetEinstieg.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9356660F927DE0AEC1C66C5D /* GeraetEinstieg.swift */; };
 		223F8FDD1BA1AFE59AF71D8C /* HomeZeilenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC41D34D6C45ECA67DC8B7D5 /* HomeZeilenTests.swift */; };
 		235337FF6CD63761130A93E5 /* KurseAnsichtTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BEA03DCAFAFE701E8EE10E1 /* KurseAnsichtTests.swift */; };
+		237F44B99D39C2A8A006D31D /* TrainingTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0891F265EBB3E05C805211B8 /* TrainingTab.swift */; };
 		2867121C23926588568A4707 /* LoginMailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 218ADC42D32AAB9758D0AB91 /* LoginMailView.swift */; };
 		2B9E1A87F4B91757DDEC90A6 /* Stepper44.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C18F50D5DFB2CBD6785AADA /* Stepper44.swift */; };
 		2CBC0FE2189073DA214F4138 /* AuthFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20071A27526D769989C545B0 /* AuthFlow.swift */; };
@@ -74,6 +75,7 @@
 		67CB5A92D5A22F772F336E2F /* FortschrittsfensterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */; };
 		6812F175D0293265578050F9 /* NFCTagLeser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33916355F38A81716A43C018 /* NFCTagLeser.swift */; };
 		6D53A3B77BA1BA710E5457DD /* ErstkontaktFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CFAD7B15E65FF7B1029BCD3 /* ErstkontaktFlow.swift */; };
+		6F3003FCB4FCB68E265AC28E /* TrainingTabTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC4D984EF1252BC49392F988 /* TrainingTabTests.swift */; };
 		72E7D4549F672199CE5DE950 /* Belegungsleiste.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF593B1FA0A81491726D24E0 /* Belegungsleiste.swift */; };
 		74330F94DB89B468FB230AB0 /* RootDestinationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0753010E9ACC09DF6D948170 /* RootDestinationTests.swift */; };
 		750CEBE3A0D07E711D31D94F /* InlineBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D8C4AC64870FF3423C494F /* InlineBanner.swift */; };
@@ -187,6 +189,7 @@
 		05572CBE819B0984F2CACC32 /* TrainingAbschlussZeilenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAbschlussZeilenTests.swift; sourceTree = "<group>"; };
 		05BD4A4984000E15E1DDB8A2 /* KurseStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseStoreTests.swift; sourceTree = "<group>"; };
 		0753010E9ACC09DF6D948170 /* RootDestinationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootDestinationTests.swift; sourceTree = "<group>"; };
+		0891F265EBB3E05C805211B8 /* TrainingTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingTab.swift; sourceTree = "<group>"; };
 		093AF1E26DA1B50273353878 /* PausenRad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PausenRad.swift; sourceTree = "<group>"; };
 		0DE16B16CA9E4D25698A02C0 /* KurseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseStore.swift; sourceTree = "<group>"; };
 		10A0239BC8D0EA913F1574D8 /* KurseHerkunftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseHerkunftTests.swift; sourceTree = "<group>"; };
@@ -322,6 +325,7 @@
 		D79138C4B32315198E734356 /* EmailValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailValidator.swift; sourceTree = "<group>"; };
 		D922539BB579EDDA0F7747CD /* ErrorEnvelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorEnvelope.swift; sourceTree = "<group>"; };
 		DB8CC4AA1ADA4ED3E6D39207 /* CatalogStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogStoreTests.swift; sourceTree = "<group>"; };
+		DC4D984EF1252BC49392F988 /* TrainingTabTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingTabTests.swift; sourceTree = "<group>"; };
 		DCB083ACE9E51B4E98A6065F /* BelegungsleisteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BelegungsleisteView.swift; sourceTree = "<group>"; };
 		DDEF31B56AE35C7453FC34B9 /* LoginCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginCodeView.swift; sourceTree = "<group>"; };
 		DFFADB880946E0F424CFDAB8 /* VerlaufStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerlaufStoreTests.swift; sourceTree = "<group>"; };
@@ -538,6 +542,7 @@
 				C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */,
 				05572CBE819B0984F2CACC32 /* TrainingAbschlussZeilenTests.swift */,
 				9BA53E0FF9AB052ED88E68C7 /* TrainingszusammenfassungTests.swift */,
+				DC4D984EF1252BC49392F988 /* TrainingTabTests.swift */,
 				F433CFBFAAF0BB5791D28FC9 /* VerlaufHerkunftTests.swift */,
 				DFFADB880946E0F424CFDAB8 /* VerlaufStoreTests.swift */,
 				4C040CEC32DA51B93411E58C /* WorkoutSessionStoreTests.swift */,
@@ -583,6 +588,7 @@
 				57043EA2F2DFD5D046567083 /* Resttimer.swift */,
 				F059477D28A854A97A90AD70 /* SessionFileStore.swift */,
 				8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */,
+				0891F265EBB3E05C805211B8 /* TrainingTab.swift */,
 				35466DCA1BAC23049D7DCB30 /* WorkoutSessionStore.swift */,
 			);
 			path = Workout;
@@ -907,6 +913,7 @@
 				9793B3801AD0CD565B3DF666 /* TagProtokoll.swift in Sources */,
 				B90035F502BFCB437C290355 /* TrainingAbschlussView.swift in Sources */,
 				42F254CA382E78A97F1AC840 /* TrainingRootView.swift in Sources */,
+				237F44B99D39C2A8A006D31D /* TrainingTab.swift in Sources */,
 				0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */,
 				EC0E21421C05D51C3F32E51D /* UebungWechselnSheet.swift in Sources */,
 				DB641A2801D4875409F434F5 /* UebungsfortschrittView.swift in Sources */,
@@ -960,6 +967,7 @@
 				B3410F91BF63957604BF8340 /* SessionStoreTests.swift in Sources */,
 				9E4947346E28638E0FA99C6A /* TagLinkTests.swift in Sources */,
 				0A66C707066A8C209342D669 /* TrainingAbschlussZeilenTests.swift in Sources */,
+				6F3003FCB4FCB68E265AC28E /* TrainingTabTests.swift in Sources */,
 				600E5516A47D964636050F36 /* TrainingszusammenfassungTests.swift in Sources */,
 				BB4049269A55E59A041A3AC8 /* VerlaufHerkunftTests.swift in Sources */,
 				F3EC6BE2F4C7D29CB4039D48 /* VerlaufStoreTests.swift in Sources */,
