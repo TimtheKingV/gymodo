@@ -43,7 +43,7 @@ Heute schaltet `GeraetView.einstellung` über `radOffen` zwischen einer schmalen
 **Interfaces:**
 - Produces: keine neuen Typen. `einstellung` liest `radOffen` nicht mehr.
 
-- [ ] **Step 1: `einstellung` auf die Zeile reduzieren.** Der `if modell.radOffen`-Zweig bleibt als einziger Inhalt, der `else`-Zweig (Karte mit `ForEach`, `wertSekundaer`, `surface`-Hintergrund) entfällt. Der Kommentar „Schrumpft auf eine Zeile, sobald die Raeder offen sind …“ wird falsch und wird ersetzt:
+- [x] **Step 1: `einstellung` auf die Zeile reduzieren.** Der `if modell.radOffen`-Zweig bleibt als einziger Inhalt, der `else`-Zweig (Karte mit `ForEach`, `wertSekundaer`, `surface`-Hintergrund) entfällt. Der Kommentar „Schrumpft auf eine Zeile, sobald die Raeder offen sind …“ wird falsch und wird ersetzt:
 
 ```swift
 /// Eine Zeile, nicht die Karte: derselbe Inhalt stand vorher in zwei
@@ -67,9 +67,9 @@ private var einstellung: some View {
 }
 ```
 
-- [ ] **Step 2: Bauen und Tests.** `xcodebuild test …` grün (kein Test hängt an der Karte; `DesignSystem.Typography.wertSekundaer` bleibt, es hat sieben andere Nutzer).
+- [x] **Step 2: Bauen und Tests.** `xcodebuild test …` grün (kein Test hängt an der Karte; `DesignSystem.Typography.wertSekundaer` bleibt, es hat sieben andere Nutzer).
 
-- [ ] **Step 3: Commit** — `feat(geraet): Einstellwerte nur noch als Zeile`
+- [x] **Step 3: Commit** — `feat(geraet): Einstellwerte nur noch als Zeile`
 
 ---
 
@@ -97,7 +97,7 @@ Die Regel, wie in der Sammelstelle festgelegt:
   - `GeraetModel.geraetGeoeffnet()` — setzt `rueckblickOffen = rueckblickFaellig`.
   - `zuletztText` entfällt. `vorschlagText` bleibt (der Drawer und der Test in Task 3 lesen ihn).
 
-- [ ] **Step 1: Tests schreiben** (`GeraetModelTests.swift`). Z. 47 wird `#expect(sut.rueckblick?.zuletzt == "77,5 kg × 11")`. Dazu ein neuer Abschnitt:
+- [x] **Step 1: Tests schreiben** (`GeraetModelTests.swift`). Z. 47 wird `#expect(sut.rueckblick?.zuletzt == "77,5 kg × 11")`. Dazu ein neuer Abschnitt:
 
 ```swift
 // MARK: - Rueckblick (Sammelstelle Punkt 11)
@@ -178,9 +178,9 @@ Die Regel, wie in der Sammelstelle festgelegt:
 }
 ```
 
-- [ ] **Step 2: Rot sehen.** `-only-testing:FitnessMemberTests/GeraetModelTests`. Erwartet: Build-Fehler „cannot find 'Rueckblick' in scope“.
+- [x] **Step 2: Rot sehen.** `-only-testing:FitnessMemberTests/GeraetModelTests`. Erwartet: Build-Fehler „cannot find 'Rueckblick' in scope“.
 
-- [ ] **Step 3: Implementieren** (`GeraetModel.swift`). Neben `Einstellwert` auf Dateiebene:
+- [x] **Step 3: Implementieren** (`GeraetModel.swift`). Neben `Einstellwert` auf Dateiebene:
 
 ```swift
 /// Was der Drawer beim Oeffnen des Geraets sagt. nil, wenn er nichts zu
@@ -226,9 +226,9 @@ func geraetGeoeffnet() { rueckblickOffen = rueckblickFaellig }
 
 Der Kommentar an `vorschlagText` („Fehlt offline und beim Erstkontakt“) bleibt richtig.
 
-- [ ] **Step 4: Grün sehen.** Dieselbe Suite; `WertZeile` liest `zuletztText` noch — der Build bricht dort. Für diesen Task in `WertZeile.swift` Z. 34–38 den `if !modell.radOffen, let zuletzt = modell.zuletztText { … }`-Block entfernen (Task 3 baut die Datei ohnehin um). Dann der volle `xcodebuild test`.
+- [x] **Step 4: Grün sehen.** Dieselbe Suite; `WertZeile` liest `zuletztText` noch — der Build bricht dort. Für diesen Task in `WertZeile.swift` Z. 34–38 den `if !modell.radOffen, let zuletzt = modell.zuletztText { … }`-Block entfernen (Task 3 baut die Datei ohnehin um). Dann der volle `xcodebuild test`.
 
-- [ ] **Step 5: Commit** — `feat(geraet): Rueckblick als Ableitung mit der Regel, wann der Drawer kommt`
+- [x] **Step 5: Commit** — `feat(geraet): Rueckblick als Ableitung mit der Regel, wann der Drawer kommt`
 
 ---
 
@@ -263,7 +263,7 @@ Der Nutzerschutz bleibt: `gewichtVomNutzer` wird gesetzt, sobald das Mitglied am
   - `RastRad` ohne `offen`. Signatur danach: `RastRad(werte:auswahl:unterstrich:voLabel:voWert:anschlagText:text:basisGroesse:)`.
   - `radOffen`, `radOeffnen()` entfallen.
 
-- [ ] **Step 1: Tests umschreiben.**
+- [x] **Step 1: Tests umschreiben.**
   - `GeraetModelTests`, Z. 72–86: aus `kontextUebernehmenLaesstEinBereitsGeoeffnetesRadInRuhe` wird
 
 ```swift
@@ -289,9 +289,9 @@ Der Nutzerschutz bleibt: `gewichtVomNutzer` wird gesetzt, sobald das Mitglied am
   - `GeraetModelTests`, Z. 106–133 (`satzNummerZaehltImBlock`): `#expect(sut.radOffen == false)` entfällt, im Kommentar Z. 107–109 wird „satzNummer/phase/radOffen“ zu „satzNummer/phase“.
   - `GeraetKontextLadenTests`, Z. 99–115: aus `ohneTokenLaesstEinBereitsGeoeffnetesRadInRuhe` wird `ohneTokenLaesstEinenSelbstGewaehltenWertInRuhe`: statt `modell.radOeffnen()` steht `modell.gewichtGewaehlt(7.5)`, beide `#expect` prüfen `7.5`. Der Kommentar darüber („das Rad vor dem eintreffenden Kontext schon geoeffnet“) wird „am Rad gedreht“.
 
-- [ ] **Step 2: Rot sehen.** `-only-testing:FitnessMemberTests/GeraetModelTests`. Erwartet: „value of type 'GeraetModel' has no member 'gewichtGewaehlt'“.
+- [x] **Step 2: Rot sehen.** `-only-testing:FitnessMemberTests/GeraetModelTests`. Erwartet: „value of type 'GeraetModel' has no member 'gewichtGewaehlt'“.
 
-- [ ] **Step 3: Modell.** `radOffen` (Z. 75) und `radOeffnen()` (Z. 421–426) entfallen, ebenso `radOffen = false` in `uebungWechseln` (Z. 436) und `satzSichern` (Z. 458). Dafür:
+- [x] **Step 3: Modell.** `radOffen` (Z. 75) und `radOeffnen()` (Z. 421–426) entfallen, ebenso `radOffen = false` in `uebungWechseln` (Z. 436) und `satzSichern` (Z. 458). Dafür:
 
 ```swift
 /// Sobald das Mitglied am Rad gedreht hat, gehoert `gewicht` ihm -- ein
@@ -313,7 +313,7 @@ func gewichtGewaehlt(_ neu: Double) {
 
 Der Kommentar in `kontextUebernehmen` (Z. 413–415, „hat das Mitglied das Rad schon geoeffnet“) wird „hat das Mitglied schon am Rad gedreht“.
 
-- [ ] **Step 4: `RastRad` ohne `offen`.**
+- [x] **Step 4: `RastRad` ohne `offen`.**
   - `let offen: Bool` entfällt. `body`: `.frame(height: radhoehe)`, das `.animation(…, value: offen)` entfällt.
   - `verlaufsrand`: `max(0, (1 - (zeilenhoehe * 1.8) / radhoehe) / 2)`. Vom Kommentarblock Z. 125–148 bleibt nur der Grund, nicht mehr die Geschichte des geschlossenen Rads:
 
@@ -332,7 +332,7 @@ Der Kommentar in `kontextUebernehmen` (Z. 413–415, „hat das Mitglied das Rad
   - Preview: `offen` und der Schließen/Öffnen-Knopf entfallen.
   - Aufrufer: `GewichtEintragenSheet.swift` Z. 222, `OnboardingSchritte.swift` Z. 347 und 530: die Zeile `offen: true,` entfällt.
 
-- [ ] **Step 5: `WertZeile` ohne Tap.**
+- [x] **Step 5: `WertZeile` ohne Tap.**
   - Typkommentar: „Ein Tap auf EINE der beiden Zahlen oeffnet BEIDE Raeder. Danach wird nur noch gescrollt …“ wird „Beide Raeder sind immer aktiv (Sammelstelle Punkt 11): gescrollt wird sofort, ohne Tap, ohne Tastatur, mit dem Daumen der Hand, die das Handy haelt.“
   - `@Environment(\.accessibilityReduceMotion)` entfällt (nur der Gesture las es). `.contentShape(Rectangle())` und `.onTapGesture { … }` entfallen.
   - `kopf`: `Text("scrollen, dann sichern")` statt des Ternärs.
@@ -340,15 +340,15 @@ Der Kommentar in `kontextUebernehmen` (Z. 413–415, „hat das Mitglied das Rad
   - `kontextzeileGewicht`: `Text(modell.kontextzeileGewicht)`. Vom Kommentar Z. 84–92 bleibt der Grund für Schritt und Bereich; dazu ein Satz: „Der Vorschlag stand hier im geschlossenen Zustand; seit Schnitt 3 steht er im Drawer beim Oeffnen des Geraets (RueckblickSheet), damit die Zeile immer dasselbe sagt.“
   - Der `zuletzt`-Block ist seit Task 2 weg.
 
-- [ ] **Step 6: `GeraetView` und `ErsteWerteSchritt`.**
+- [x] **Step 6: `GeraetView` und `ErsteWerteSchritt`.**
   - `GeraetView` Z. 65 (`.animation(…, value: modell.radOffen)`) entfällt.
   - Typkommentar Z. 3–5 wird: „Main, Pause und Abschluss sind derselbe Screen in drei Zustaenden -- keine Navigationsziele. Einen vierten (Raeder zu / offen) gibt es seit Schnitt 3 nicht mehr: die Raeder sind immer aktiv, und was am geschlossenen Zustand hing, ist weg oder im Drawer (Sammelstelle Punkt 11 bis 13).“ Der Absatz zur Pause bleibt.
   - Kommentar an `PrimaryButton` in `aktionen` (Z. 252–253) wird: „Sichert direkt aus dem Rad heraus: scrollen, dann sichern -- zwei Interaktionen, kein Tap dazwischen (Interaktionsbudget SS9).“
   - `ErsteWerteSchritt` Z. 47 (`.onAppear { modell.radOeffnen() }`) entfällt.
 
-- [ ] **Step 7: Grün sehen.** `xcodebuild test`, ganz. Danach `grep -rn "radOffen\|radOeffnen\|offen: " apps/ios-member/FitnessMember apps/ios-member/FitnessMemberTests` — außer `kalibrierungOffen`, `datumOffen`, `rueckblickOffen` und ähnlichen Namen darf nichts mehr kommen.
+- [x] **Step 7: Grün sehen.** `xcodebuild test`, ganz. Danach `grep -rn "radOffen\|radOeffnen\|offen: " apps/ios-member/FitnessMember apps/ios-member/FitnessMemberTests` — außer `kalibrierungOffen`, `datumOffen`, `rueckblickOffen` und ähnlichen Namen darf nichts mehr kommen.
 
-- [ ] **Step 8: Commit** — `feat(geraet): Raeder immer aktiv, radOffen verschwindet`
+- [x] **Step 8: Commit** — `feat(geraet): Raeder immer aktiv, radOffen verschwindet`
 
 ---
 
@@ -535,6 +535,29 @@ Vor Task 1 war es mit der Karte (71) statt der Zeile (44) noch mehr. Zwei Zeilen
 
 **25 pt Reserve** auf dem SE. Ohne Einstellwerte 469. Was die Reserve frisst: eine zweizeilige Kopfzeile (+13, ab etwa 32 Zeichen bei 11 pt mit Tracking 1,5 — „RUDERMASCHINE · FENSTERSEITE“ misst 241 pt, passt) und ein zweizeiliger Gerätename (+38, „BEINPRESSE SITZEND“ bei 32 pt Black misst rund 380 pt, passt nicht in 335). Der Name bekommt deshalb `lineLimit(1)` mit `minimumScaleFactor(0.75)`: schrumpfen statt kürzen, ein abgeschnittener Name sagt nicht, an welchem Gerät man steht. Die Statuskarten (Offline, Warteschlange, Abgelehnt) sind Ausnahmezustände; mit ihnen scrollt die Seite, und das ist in Ordnung. Das iPhone 17 Pro (874 pt, Inhalt ~ 741 pt) hat danach über 200 pt Luft — es bleibt oben ausgerichtet, nichts wird gestreckt.
 
+**Nachgetragen vor der Umsetzung (15. September, gemessen auf dem SE-Simulator mit iOS 26.3, Stand nach Task 3):** Die Rechnung oben nimmt 44 pt Navigationsleiste und 49 pt Tab-Leiste an. Auf iOS 26 sind es **54 pt Navigationsleiste** (Rahmen y 20, Höhe 54 → Inhalt ab 74) und **83 pt untere Safe Area** für die schwebende Tab-Leiste (Rahmen y 584, Höhe 83). Dem Inhalt bleiben **510 pt**, nicht 554 — die 529 oben reichen nicht. Zweiter Befund aus demselben Lauf: „andere Übung“ steht heute in derselben `HStack` wie der Gerätename und nimmt ihm 100 pt Breite; „RUDERMASCHINE“ bricht deshalb schon auf dem SE in zwei Zeilen („RUDERMASCHI / NE“). Beides ändert Step 4:
+
+1. **Kopf umbauen:** Der Gerätename bekommt die volle Breite in seiner eigenen Zeile (mit `lineLimit(1)` und `minimumScaleFactor(0.75)` wie geplant); darunter eine `HStack(alignment: .center)` aus Übungsname, `Spacer` und „andere Übung“. Die Zeile ist 44 pt hoch (der Knopf), der Übungsname steht mittig darin. Gerät + Übung = 37,7 + 4 + 44 = **85,7 mit Knopf**, ohne Knopf (Pause, Abschluss, nur eine Übung) 37,7 + 4 + 20 = 61,7. Vorher 75,2 — aber vorher mit falsch umbrechendem Namen.
+2. **Abstände:** Kopfzeile → Name **8** (Label über seinem Titel, eine Einheit), Name → Einstellwerte 16, Einstellwerte → Räder 16, Räder → Aktionen **16** (statt 24), Fuß **8** (die 83 pt Safe Area tragen schon den Abstand zur Tab-Leiste).
+
+| Element | pt |
+| --- | ---: |
+| Kopfzeile | 17,7 |
+| Abstand | 8 |
+| Gerät + Übung (mit „andere Übung“) | 85,7 |
+| Abstand | 16 |
+| Einstellwerte | 44 |
+| Abstand | 16 |
+| WertZeile | 180,2 |
+| Abstand | 16 |
+| Aktionen | 124 |
+| Fuß | 8 |
+| **Summe** | **515,6** |
+
+Das sind **5,6 pt zu viel** bei Gerät mit Einstellwerten UND zweiter Übung. Deshalb zusätzlich: **die Übungszeile ist 44 pt hoch nur durch den Knopf** — der Knopf bekommt `.frame(minHeight: 44)` weiterhin, aber die Zeile richtet sich nach dem Text: `.padding(.vertical, -12)` am Knopf hebt seine 44 pt über die 20-pt-Zeile hinaus, ohne die Zeile zu strecken; die Trefferfläche bleibt 44, die Zeile misst 20. Gerät + Übung = 61,7 in jedem Zustand. Summe dann **491,6 von 510 — 18 pt Reserve.** Ohne Einstellwerte 431,6. Eine zweizeilige Kopfzeile (Ortsangabe lang und Training über einer Stunde: „RUDERMASCHINE · LINKS AM FENSTER“ misst 273 pt, die Uhr „1:23:41“ 52, dazu 12 Abstand = 337 > 335) kostet 13,5 und lässt die Seite um 0 bis 5 pt scrollen — hingenommen, weil selten und ohne Überlappung.
+
+Der negative vertikale Padding am Knopf ist der einzige Trick in diesem Layout, und er ist begründet: eine 44-pt-Trefferfläche muss die Zeile nicht 44 pt hoch machen, wenn über und unter ihr 16 pt Luft liegen, in die sie hineinragen darf (Design §4 verlangt die Trefferfläche, nicht die Zeilenhöhe). Der Kommentar am Knopf sagt das.
+
 **Files:**
 - Modify: `apps/ios-member/FitnessMember/DesignSystem/Components/RastRad.swift` (`radhoehe` Z. 70, `scrollTransition` Z. 174–178, `skalierung`/`deckkraft` Z. 277–291)
 - Create: `apps/ios-member/FitnessMemberTests/RastRadTests.swift`
@@ -653,18 +676,20 @@ private nonisolated static func deckkraft(_ stufe: Nachbarstufe) -> Double {
 `WertZeile`: beide `RastRad`-Aufrufe bekommen `sichtbareZeilen: 3` (nach `basisGroesse` bzw. vor `text:` — die Reihenfolge der Memberwise-Init folgt der Deklaration, `sichtbareZeilen` steht nach `basisGroesse`).
 
 - [ ] **Step 4: `GeraetView`-Layout.**
-  - `body`: `VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16)`, `.padding(.bottom, DesignSystem.Spacing.s16)`, dazu `.scrollBounceBehavior(.basedOnSize)` an der `ScrollView`. Kommentar am `VStack`:
+  - `body`: `VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16)`, `kopfzeile` mit `.padding(.bottom, -DesignSystem.Spacing.s8)` (8 statt 16 zum Namen; oder Kopfzeile und Kopf in einer eigenen `VStack(spacing: s8)`), `.padding(.bottom, DesignSystem.Spacing.s8)`, dazu `.scrollBounceBehavior(.basedOnSize)` an der `ScrollView`. Der `.padding(.top, s8)` an `aktionen` entfällt (Abstand 16 wie überall). Kommentar am `VStack`:
 
 ```swift
-// 16 statt 24 zwischen den Bloecken, 24 nur vor den Aktionen: der
-// Satzpfad muss auf ein 667-pt-iPhone passen, ohne dass die Seite
-// scrollt (Sammelstelle Punkt 12; Rechnung im Plan zu Schnitt 3). Die
-// Einstellwerte-Zeile ist 44 pt hoch bei 15 pt Schrift und traegt
-// ihre Luft selbst. Scrollen tut die Seite nur noch mit Statuskarten
-// -- deshalb basedOnSize, sonst federt ein Pfad, der passt.
+// 16 statt 24 zwischen den Bloecken: der Satzpfad muss auf ein
+// 667-pt-iPhone passen, ohne dass die Seite scrollt -- und iOS 26 laesst
+// dem Inhalt dort nur 510 pt (54 pt Navigationsleiste, 83 pt Safe Area
+// fuer die schwebende Tab-Leiste; Sammelstelle Punkt 12, Rechnung im
+// Plan zu Schnitt 3). Die Einstellwerte-Zeile ist 44 pt hoch bei 15 pt
+// Schrift und traegt ihre Luft selbst. Scrollen tut die Seite nur noch
+// mit Statuskarten -- deshalb basedOnSize, sonst federt ein Pfad, der
+// passt.
 ```
 
-  - `geraetUndUebung`, Gerätename: `.lineLimit(1)` und `.minimumScaleFactor(0.75)` mit Kommentar: „Eine Zeile: ein zweizeiliger Name (BEINPRESSE SITZEND misst rund 380 pt bei 32 pt Black) kostete 38 pt, die das Hoehenbudget auf 667 pt nicht hat. Schrumpfen statt kuerzen -- ein abgeschnittener Name sagt nicht, an welchem Geraet man steht.“
+  - `geraetUndUebung` wird zum Kopf aus dem Nachtrag oben: `VStack(alignment: .leading, spacing: s4) { Name; HStack(alignment: .center) { Übungsname; Spacer(); if eingabe && hatWeitereUebungen { Button … .frame(minHeight: 44).padding(.vertical, -12) } } }`. Gerätename: `.lineLimit(1)` und `.minimumScaleFactor(0.75)` mit Kommentar: „Eine Zeile: ein zweizeiliger Name (BEINPRESSE SITZEND misst rund 380 pt bei 32 pt Black) kostete 38 pt, die das Hoehenbudget auf 667 pt nicht hat. Schrumpfen statt kuerzen -- ein abgeschnittener Name sagt nicht, an welchem Geraet man steht.“
   - `aktionen`:
 
 ```swift
@@ -691,12 +716,11 @@ private var aktionen: some View {
             problemMelden
         }
     }
-    .padding(.top, DesignSystem.Spacing.s8)
     // (sensoryFeedback samt Kommentar unveraendert)
 }
 ```
 
-  - `abschlussEntscheidung`: derselbe Umbau — `SecondaryButton(title: "Weiterer Satz")` und `problemMelden` in einer `HStack(spacing: s12)`, `.padding(.top, s8)` am `VStack`. Der Kommentar an `problemMelden` („In beiden Aktionsgruppen dieselbe Zeile“) bleibt richtig; `problemMelden` behält `.frame(maxWidth: .infinity, minHeight: 44)`, damit die Zeile hälftig teilt (auf dem SE 161 pt je Seite; „Gerät abschließen“ braucht 130 + 16).
+  - `abschlussEntscheidung`: derselbe Umbau — `SecondaryButton(title: "Weiterer Satz")` und `problemMelden` in einer `HStack(spacing: s12)`. Der Kommentar an `problemMelden` („In beiden Aktionsgruppen dieselbe Zeile“) bleibt richtig; `problemMelden` behält `.frame(maxWidth: .infinity, minHeight: 44)`, damit die Zeile hälftig teilt (auf dem SE 161 pt je Seite; „Gerät abschließen“ braucht 130 + 16).
 
 - [ ] **Step 5: Grün sehen.** `xcodebuild test`, ganz.
 
@@ -720,7 +744,7 @@ Was der Umbau falsch macht, wird in einem Commit geradegezogen: das Designsystem
   - Die Tabelle „Zustand / Aussehen“ wird ein Absatz: „**Aussehen:** Wert 64 pt (Gewicht) bzw. 44 pt (Wiederholungen), **darunter** 4 pt bzw. 3 pt `accent`. Je Richtung ein Nachbar, 30 pt in `text-faint`, nach oben und unten in `bg` ausgeblendet; auf dem Satzpfad drei Zeilen, in Onboarding und Gewichtseintrag fünf (zwei Nachbarn, der äußere 26 pt in `line`). Unter der Linie der Kontext: `Schritt 2,5 kg · 5,0 – 150,0` bzw. `Ziel 8 – 12`. **Rückblick und Vorschlag** („Zuletzt 77,5 kg × 11“, „Vorschlag · +2,5“) stehen nicht unter dem Rad, sondern in einem Drawer, der beim Öffnen des Geräts von unten kommt — nur vor dem ersten Satz eines Geräteblocks, beim ersten Mal an einem Gerät gar nicht.“ (Die alte Zeile „3 pt `line` (Wiederholungen)“ war schon vor diesem Schnitt falsch: `RastRad` zeichnet beide Linien in `accent`.)
 - [ ] **Step 2: designsystem.md §9**, Z. 156: „Wer abweicht, zahlt genau **einen** zusätzlichen Tap — er öffnet beide Räder, und danach ist Scrollen kostenlos. Damit bleibt auch der Abweichungsfall bei zwei Interaktionen.“ wird „Wer abweicht, scrollt — die Räder sind immer aktiv, ein Tap kommt nicht dazu. Damit bleibt auch der Abweichungsfall bei zwei Interaktionen: scrollen, sichern.“
 - [ ] **Step 3: Sammelstelle.**
-  - „Stand“, Punkt **Gerät** wird: „**Gerät** hat seit `8f73fa0` eine Trainingsuhr im Kopf (`GeraetView.trainingsuhr`). Seit Schnitt 3 sind die Räder immer aktiv (`radOffen` gibt es nicht mehr), Rückblick und Vorschlag stehen in einem Drawer beim Öffnen (`GeraetModel.rueckblick`, `rueckblickFaellig`, `RueckblickSheet`), die Einstellwerte nur noch als Zeile, und der Satzpfad passt mit drei Radzeilen und „Problem melden“ neben „Gerät abschließen“ auf 667 pt (gerechnet 529 von 554 pt). Punkt 11 bis 13 sind damit umgesetzt.“
+  - „Stand“, Punkt **Gerät** wird: „**Gerät** hat seit `8f73fa0` eine Trainingsuhr im Kopf (`GeraetView.trainingsuhr`). Seit Schnitt 3 sind die Räder immer aktiv (`radOffen` gibt es nicht mehr), Rückblick und Vorschlag stehen in einem Drawer beim Öffnen (`GeraetModel.rueckblick`, `rueckblickFaellig`, `RueckblickSheet`), die Einstellwerte nur noch als Zeile, und der Satzpfad passt mit drei Radzeilen und „Problem melden“ neben „Gerät abschließen“ auf 667 pt (gerechnet 492 von 510 pt, die iOS 26 dem Inhalt dort lässt). Punkt 11 bis 13 sind damit umgesetzt.“
   - Kopf von „Schnitt 3“: unter der Überschrift ein Satz „Umgesetzt, Plan: `docs/superpowers/plans/2026-09-15-schnitt3-satzpfad.md`.“ Der letzte Spiegelstrich („Ergebnis messen: passt der Pfad ohne Seiten-Scrollen auf ein iPhone mini …“) bekommt das Ergebnis aus Task 7 nachgetragen (Zahl und Simulator).
   - Bei Punkt 11 bis 13 nichts löschen — die Sammelstelle hält fest, was gemeint war.
 - [ ] **Step 4: Kernflow-Spec.** Z. 207 („ein Tap öffnet beide Räder, Scrollen ist kostenlos …“) und Z. 333 („dort steht stattdessen der letzte eigene Wert aus `bootstrap.lastSets`“) bekommen je einen Einschub „(seit Schnitt 3: die Räder sind immer aktiv, kein Tap; Rückblick und Vorschlag stehen im Drawer beim Öffnen, siehe designsystem.md §7)“. Nicht umschreiben — die Spec beschreibt den Stand vom 7. September.
@@ -759,7 +783,7 @@ Tests beweisen Ableitungen, nicht Sichtbarkeit und Höhe. Der Sichtcheck läuft 
 
 Der Sichtcheck von Schnitt 2 zeigte auf dem SE in der Pause den Gerätenamen und den Ort links abgeschnitten („ASCHINE“ statt „RUDERMASCHINE“). Aus dem Code allein ist die Ursache nicht eindeutig (siehe „Offen“ unten); Task 7, Step 6 reproduziert sie. Dazu kommt der Nebenbefund aus dem Höhenbudget: die Pause ist auf dem SE auch nach Task 5 zu hoch.
 
-**Höhenbudget der Pause auf dem SE** (554 pt für den Inhalt), nach Task 5: Kopfzeile 17,7 + 16 + Gerät/Übung 61,7 (ohne „andere Übung“, der Knopf zeigt nur im Eingabezustand) + 16 + `PausenRad` 444 (24 + 240 + 32 + 64 + 12 + 48 + 24) + Fuß 16 = **571,4 — 17 zu viel.** Das `.padding(.vertical, s24)` am `PausenRad` (48 pt) ist überflüssig, der umschließende `VStack` trägt den Abstand: ohne es **523,4**, 31 Reserve.
+**Höhenbudget der Pause auf dem SE** (510 pt für den Inhalt auf iOS 26, siehe Nachtrag in Task 5), nach Task 5: Kopfzeile 17,7 + 8 + Gerät/Übung 61,7 (ohne „andere Übung“, der Knopf zeigt nur im Eingabezustand) + 16 + `PausenRad` 444 (24 + 240 + 32 + 64 + 12 + 48 + 24) + Fuß 8 = **555,4 — 45 zu viel.** Das `.padding(.vertical, s24)` am `PausenRad` (48 pt) ist überflüssig, der umschließende `VStack` trägt den Abstand: ohne es **507,4**, 2,6 Reserve — zu knapp. Dazu `spacing: s24` statt `s32` zwischen Rad und Knöpfen (−8): **499,4, 10,6 Reserve.**
 
 **Files:**
 - Modify: `apps/ios-member/FitnessMember/DesignSystem/Components/PausenRad.swift` (Z. 68)
@@ -767,7 +791,7 @@ Der Sichtcheck von Schnitt 2 zeigte auf dem SE in der Pause den Gerätenamen und
 
 - [ ] **Step 1: Reproduzieren** auf dem SE-Simulator aus Task 7: Satz sichern, Pause läuft, Screenshot. Zeigt er den Abschnitt links, mit `Debug View Hierarchy` oder durch schrittweises Ausblenden (`PausenRad` durch `Color.clear.frame(height: 444)` ersetzen, dann die Knopfzeile, dann das Rad) das Kind finden, das breiter als 335 pt ist oder den Inhalt verschiebt. Ursache in den Bericht.
 - [ ] **Step 2: Kleinster Fix** an der gefundenen Stelle, mit Kommentar, der die Ursache nennt. Kein Umbau des Pausenzustands.
-- [ ] **Step 3: `.padding(.vertical, DesignSystem.Spacing.s24)`** in `PausenRad.body` entfällt; die Preview zeigt das Rad ohnehin mit `.padding(20)` auf `bg`, sie braucht nichts. Kommentar am `VStack` in `PausenRad`: „Kein eigenes vertikales Padding: der Abstand kommt vom Satzpfad-VStack, und 48 pt hier machten die Pause auf einem 667-pt-iPhone 17 pt zu hoch (Plan Schnitt 3, Task 8).“
+- [ ] **Step 3: `.padding(.vertical, DesignSystem.Spacing.s24)`** in `PausenRad.body` entfällt, und der äußere `VStack(spacing: s32)` wird `s24`; die Preview zeigt das Rad ohnehin mit `.padding(20)` auf `bg`, sie braucht nichts. Kommentar am `VStack` in `PausenRad`: „Kein eigenes vertikales Padding: der Abstand kommt vom Satzpfad-VStack, und 48 pt hier machten die Pause auf einem 667-pt-iPhone 17 pt zu hoch (Plan Schnitt 3, Task 8).“
 - [ ] **Step 4: Screenshot SE**, Pause: Kopfzeile und Gerätename vollständig, „Weiter“ und die geteilte Knopfzeile im Bild, ohne Scrollen.
 - [ ] **Step 5: `xcodebuild test`**, grün.
 - [ ] **Step 6: Commit** — `fix(geraet): Pausenscreen schneidet auf 667 pt nichts mehr ab`
