@@ -33,6 +33,11 @@ struct HomeRootView: View {
 
     @State private var pfad: [HomeRoute] = []
     @State private var scannerOffen = false
+    /// "Eintragen" (R23) -- das Sheet lebt hier statt in `HomeZieleView`,
+    /// weil `beiEintragen` dort nur ein `() -> Void`-Ausloeser ist (Aufgabe
+    /// 8) und `apiClient`/`verlauf`/`katalog` fuer den Schreibweg ohnehin
+    /// schon in DIESEM View bereitstehen.
+    @State private var eintragenOffen = false
 
     /// Einmal aufgeloest, zweimal gelesen: Name fuer den Kopf, Zeitzone
     /// fuer die Buendelung der Einheiten. Dieselbe Ableitung wie
@@ -89,12 +94,11 @@ struct HomeRootView: View {
                                     await neuLaden()
                                 }
                             },
-                            // "Eintragen" (Aufgabe 9) und "Neues Ziel
-                            // setzen" (Aufgabe 10) existieren als Sheets
-                            // noch nicht (R23) -- jede Zeile, deren
-                            // Callback fehlt, rendert bei sich selbst
-                            // nicht.
-                            beiEintragen: nil,
+                            // "Neues Ziel setzen" (Aufgabe 10) existiert
+                            // als Sheet noch nicht (R23) -- die Zeile
+                            // rendert bei sich selbst nicht, solange ihr
+                            // Callback fehlt.
+                            beiEintragen: { eintragenOffen = true },
                             beiNeuemZiel: nil)
                     }
 
@@ -117,9 +121,14 @@ struct HomeRootView: View {
                 case .uebungsfortschritt(let exerciseId):
                     UebungsfortschrittView(exerciseId: exerciseId)
                 case .gewichtsverlauf:
-                    // Aufgabe 9 baut den echten Screen.
-                    PlaceholderView(title: "Gewichtsverlauf")
+                    GewichtsverlaufView(apiClient: apiClient)
                 }
+            }
+            .sheet(isPresented: $eintragenOffen) {
+                GewichtEintragenSheet(
+                    vorgabe: verlauf.messwerte.last?.weightKg,
+                    letzterMesswert: verlauf.messwerte.last,
+                    speichern: eintragenSpeichern)
             }
             .sheet(isPresented: $scannerOffen) {
                 ScannerSheet(
@@ -162,6 +171,31 @@ private extension HomeRootView {
     /// damit `studioId` nicht an vier Stellen gelesen wird.
     func neuLaden() async {
         await verlauf.laden(studioId: katalog.activeStudioId)
+    }
+
+    /// Ruling R25: Server schreiben, dann den lokalen Stand nachziehen;
+    /// bei `goalReached` den einmaligen Moment merken und den Katalog neu
+    /// laden -- das Zielgewicht ist dabei serverseitig abgeschlossen
+    /// worden und steht danach nicht mehr unter den aktiven Zielen.
+    /// Dieselbe Logik wie `GewichtsverlaufView.gewichtSpeichern` (dort
+    /// fuer das Bearbeiten einer Verlaufszeile), hier fuer den neuen
+    /// Eintrag von Home aus.
+    func eintragenSpeichern(_ body: MesswertWrite) async -> String? {
+        do throws(APIError) {
+            let antwort = try await apiClient.putMeasurement(body)
+            verlauf.messwertEintragen(antwort)
+            if antwort.goalReached {
+                verlauf.zielgewichtErreicht(
+                    .init(weightKg: antwort.weightKg, measuredOn: antwort.measuredOn))
+                await katalog.load()
+            }
+            return nil
+        } catch {
+            guard error != .offline else {
+                return "Keine Verbindung. Das Gewicht wurde nicht gespeichert."
+            }
+            return error.servertext
+        }
     }
 
     @ViewBuilder var kopf: some View {

@@ -6,6 +6,6 @@ enum HomeRoute: Hashable {
     case sessionDetail(id: String)
     case uebungsfortschritt(exerciseId: String)
     /// Die Gewichtskarte auf Home fuehrt hierher (Aufgabe 8); der Screen
-    /// selbst kommt erst in Aufgabe 9 (bis dahin `PlaceholderView`).
+    /// selbst ist `GewichtsverlaufView` (Aufgabe 9).
     case gewichtsverlauf
 }

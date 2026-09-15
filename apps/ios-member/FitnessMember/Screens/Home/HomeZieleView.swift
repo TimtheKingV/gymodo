@@ -13,17 +13,16 @@ struct HomeZieleView: View {
     /// im View, damit eine Vorschau reproduzierbar bleibt.
     let jetzt: Date
     let apiClient: APIClient
-    /// Tippen auf die Karte oeffnet den Gewichtsverlauf (Aufgabe 9, bis
-    /// dahin `PlaceholderView` in `HomeRoute.gewichtsverlauf`).
+    /// Tippen auf die Karte oeffnet den Gewichtsverlauf (`GewichtsverlaufView`
+    /// ueber `HomeRoute.gewichtsverlauf`, Aufgabe 9).
     let beiKarteTap: () -> Void
     /// Die Nachholkarte oeffnet den Onboarding-Flow als Sheet; danach
     /// muss Home Bootstrap (neue Ziele) und Verlauf (neuer Messwert) neu
     /// laden, weil beides ausserhalb dieses Views lebt.
     let beiOnboardingAbgeschlossen: () -> Void
-    /// "Eintragen" (Aufgabe 9) und "Neues Ziel setzen" (Aufgabe 10) sind
-    /// Sheets, die es noch nicht gibt (R23) -- jede Zeile, deren Callback
-    /// hier `nil` ist, rendert nicht. `HomeRootView` reicht in dieser
-    /// Aufgabe fuer beide `nil` durch.
+    /// "Eintragen" oeffnet das Sheet, das `HomeRootView` haelt (Aufgabe 9).
+    /// "Neues Ziel setzen" (Aufgabe 10) gibt es als Sheet noch nicht (R23)
+    /// -- die Zeile, deren Callback hier `nil` ist, rendert nicht.
     let beiEintragen: (() -> Void)?
     let beiNeuemZiel: (() -> Void)?
 
