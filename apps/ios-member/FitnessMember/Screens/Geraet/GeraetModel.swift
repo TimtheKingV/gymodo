@@ -260,6 +260,11 @@ final class GeraetModel {
     /// Fuer KalibrierungSchritt -- dieselben Definitionen, oeffentlich.
     var einstellDefinitionen: [TagContextResponse.SettingDefinition] { definitionen }
 
+    /// Ob es an diesem Modell ueberhaupt etwas einzustellen gibt. Liest
+    /// dieselbe Quelle wie `einstellDefinitionen`, damit Dreischritt und
+    /// Kalibrierungsschritt nie verschiedener Meinung sind.
+    var hatEinstellparameter: Bool { !definitionen.isEmpty }
+
     /// tag-context.ts berechnet calibration und suggestion serverseitig fuer
     /// genau eine Uebung (selectedExerciseId). Nach einem Uebungswechsel
     /// gehoert der geladene Kontext noch zur vorherigen Uebung -- ohne diese
