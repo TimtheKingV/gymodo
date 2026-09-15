@@ -226,6 +226,150 @@ struct CatalogStoreTests {
         await store.load()
         #expect(store.loadState == .loaded(hasStudio: true))
     }
+
+    // MARK: - Neuladen ueber einem geladenen Bootstrap
+
+    // RootView baut bei .loading den ganzen MainTabView neu (Tab zurueck
+    // auf Home, gepushte Screens weg). Seit Profilfelder, Ziele und die
+    // Nachholkarte nach jedem Schreiben neu laden, darf ein Neuladen ueber
+    // einem vorhandenen Bootstrap darum nie durch .loading laufen.
+    @Test("ein Neuladen mit geladenem Bootstrap laeuft nie durch .loading")
+    func neuladenOhneLoading() async {
+        let loader = BeobachtenderBootstrapLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        await loader.setzeErgebnis(.success(emptyBootstrap(studios: [kraftwerkNord])))
+        await store.load()
+        await loader.beobachte { store.loadState }
+
+        await store.load()
+
+        #expect(await loader.gesehen == [.loaded(hasStudio: true)])
+        #expect(store.loadState == .loaded(hasStudio: true))
+    }
+
+    @Test("ein gescheitertes Neuladen behaelt den vorigen Bootstrap und Zustand")
+    func gescheitertesNeuladenBehaeltAltenStand() async {
+        let loader = BeobachtenderBootstrapLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        let vorher = emptyBootstrap(studios: [kraftwerkNord])
+        await loader.setzeErgebnis(.success(vorher))
+        await store.load()
+
+        await loader.setzeErgebnis(.failure(.offline))
+        await store.load()
+
+        #expect(store.bootstrap == vorher)
+        #expect(store.loadState == .loaded(hasStudio: true))
+        #expect(store.activeStudioId == "s1")
+    }
+
+    @Test("der erste Ladevorgang geht weiter ueber .loading nach .loaded")
+    func ersterLadevorgangErfolgreich() async {
+        let loader = BeobachtenderBootstrapLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        await loader.setzeErgebnis(.success(emptyBootstrap(studios: [kraftwerkNord])))
+        await loader.beobachte { store.loadState }
+
+        await store.load()
+
+        #expect(await loader.gesehen == [.loading])
+        #expect(store.loadState == .loaded(hasStudio: true))
+    }
+
+    @Test("der erste Ladevorgang geht weiter ueber .loading nach .failed")
+    func ersterLadevorgangGescheitert() async {
+        let loader = BeobachtenderBootstrapLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        await loader.setzeErgebnis(.failure(.offline))
+        await loader.beobachte { store.loadState }
+
+        await store.load()
+
+        #expect(await loader.gesehen == [.loading])
+        #expect(store.loadState == .failed)
+        #expect(store.bootstrap == nil)
+    }
+
+    // Das Gate schliesst sich nach "onboardingDone" nicht mehr ueber den
+    // Umweg .loading -> .loaded, sondern allein ueber den neuen Bootstrap.
+    // Dieselbe Ableitung wie in RootView.body.
+    @Test("ein Neuladen mit gesetztem onboardingCompletedAt fuehrt vom Onboarding direkt nach main")
+    func neuladenSchliesstDasOnboardingGate() async {
+        let session = Session(accessToken: "t", userId: "u", email: "lena@example.de", expiresAt: .distantFuture)
+        let loader = BeobachtenderBootstrapLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        let ziel: () -> RootDestination = {
+            RootDestinationLogic.destination(
+                session: session, catalogState: store.loadState,
+                onboardingOffen: store.bootstrap?.member.onboardingCompletedAt == nil)
+        }
+        await loader.setzeErgebnis(.success(bootstrap(onboardingCompletedAt: nil, studios: [kraftwerkNord])))
+        await store.load()
+        #expect(ziel() == .onboarding)
+
+        await loader.setzeErgebnis(.success(bootstrap(onboardingCompletedAt: "2026-09-15T08:00:00Z", studios: [kraftwerkNord])))
+        await loader.beobachte { store.loadState }
+        await store.load()
+
+        #expect(await loader.gesehen == [.loaded(hasStudio: true)])
+        #expect(ziel() == .main)
+    }
+
+    @Test("ohne Studio fuehrt dasselbe Neuladen vom Onboarding nach noStudio")
+    func neuladenSchliesstDasOnboardingGateOhneStudio() async {
+        let session = Session(accessToken: "t", userId: "u", email: "lena@example.de", expiresAt: .distantFuture)
+        let loader = BeobachtenderBootstrapLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        let ziel: () -> RootDestination = {
+            RootDestinationLogic.destination(
+                session: session, catalogState: store.loadState,
+                onboardingOffen: store.bootstrap?.member.onboardingCompletedAt == nil)
+        }
+        await loader.setzeErgebnis(.success(bootstrap(onboardingCompletedAt: nil, studios: [])))
+        await store.load()
+        #expect(ziel() == .onboarding)
+
+        await loader.setzeErgebnis(.success(bootstrap(onboardingCompletedAt: "2026-09-15T08:00:00Z", studios: [])))
+        await store.load()
+
+        #expect(ziel() == .noStudio)
+    }
+
+    private var kraftwerkNord: BootstrapResponse.Studio {
+        .init(id: "s1", name: "Kraftwerk Nord", timezone: "Europe/Berlin")
+    }
+
+    private func bootstrap(onboardingCompletedAt: String?, studios: [BootstrapResponse.Studio]) -> BootstrapResponse {
+        BootstrapResponse(
+            member: .init(displayName: nil, onboardingCompletedAt: onboardingCompletedAt),
+            studios: studios, machines: [], calibrations: [], lastSets: [])
+    }
+}
+
+/// Liest den Ladezustand des Stores WAEHREND `bootstrap()` laeuft -- genau
+/// der Moment, in dem RootView einen .loading-Zustand sehen wuerde.
+private actor BeobachtenderBootstrapLoader: BootstrapLoading {
+    private var ergebnis: FakeBootstrapLoader.Result = .failure(.offline)
+    private var beobachter: (@MainActor @Sendable () -> CatalogLoadState)?
+    private(set) var gesehen: [CatalogLoadState] = []
+
+    func setzeErgebnis(_ wert: FakeBootstrapLoader.Result) { ergebnis = wert }
+    func beobachte(_ beobachter: @escaping @MainActor @Sendable () -> CatalogLoadState) {
+        self.beobachter = beobachter
+    }
+
+    func bootstrap() async throws(APIError) -> BootstrapResponse {
+        if let beobachter { gesehen.append(await beobachter()) }
+        switch ergebnis {
+        case .success(let response): return response
+        case .failure(let error): throw error
+        }
+    }
+
+    func putSet(sessionId: UUID, setId: UUID, _ body: SetWrite) async throws(APIError) -> RecordedSet { throw .offline }
+    func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
+    func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
+    func leaveStudioMembership(studioId: String) async throws(APIError) { throw .offline }
 }
 
 struct APIErrorDauerhaftTests {
