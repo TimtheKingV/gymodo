@@ -68,8 +68,10 @@ struct GeraetView: View {
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
         // Die Trainingsuhr startet am ersten Geraet, nicht am ersten
-        // gesicherten Satz -- deshalb hier und nicht in satzSichern.
-        .task { modell.geraetBetreten(); await modell.kontextLaden() }
+        // gesicherten Satz -- deshalb hier und nicht in satzSichern. Der
+        // Drawer haengt am selben Moment: einmal beim Oeffnen, nicht nach
+        // jedem Satz.
+        .task { modell.geraetBetreten(); modell.geraetGeoeffnet(); await modell.kontextLaden() }
         // Die Pause muss sich selbst beenden. Vorher lief sie gegen einen
         // Zustand, den niemand zuruecksetzte: der Balken blieb auf 00:00
         // stehen, bis irgendein anderes Ereignis ein Re-Render ausloeste.
@@ -329,6 +331,19 @@ struct GeraetScreen: View {
         }
         .sheet(isPresented: $problemOffen) {
             ProblemSheet(modell: modell) {}
+        }
+        // Der Rueckblick vor dem ersten Satz. Das Sheet haengt an rueckblickOffen,
+        // die Regel dahinter am Modell (rueckblickFaellig) -- der View entscheidet
+        // nichts. Faellt der Rueckblick weg, waehrend das Sheet steht (kommt nicht
+        // vor: der Bootstrap aendert sich waehrend des Screens nicht), bleibt das
+        // Sheet leer statt zu stuerzen.
+        .sheet(isPresented: $modell.rueckblickOffen) {
+            if let rueckblick = modell.rueckblick {
+                RueckblickSheet(uebung: modell.aktiveUebung?.name ?? "",
+                                rueckblick: rueckblick) {
+                    modell.rueckblickOffen = false
+                }
+            }
         }
         // Der Dreischritt: fullScreenCover verdeckt die Tab-Leiste.
         .fullScreenCover(isPresented: Binding(
