@@ -26,11 +26,7 @@ struct HomeZieleTests {
 
     /// Fest auf UTC, wie in HomeSerieTests: sonst haengt "gestern" an der
     /// Zeitzone der Maschine, auf der der Test laeuft.
-    private let kalender: Calendar = {
-        var kalender = Calendar(identifier: .gregorian)
-        kalender.timeZone = TimeZone(identifier: "UTC")!
-        return kalender
-    }()
+    private let zeitzone = TimeZone(identifier: "UTC")!
     /// Mittwoch, 9. September 2026, 12:00 UTC -- derselbe Zeitpunkt wie in
     /// HomeSerieTests.
     private let jetzt = Date(timeIntervalSince1970: 1_788_955_200)
@@ -40,7 +36,7 @@ struct HomeZieleTests {
     @Test func ohneZieleUndOhneGewichtIstNachholen() {
         let zustand = HomeZiele.zustand(
             member: member(weeklyDays: nil, targetWeight: nil), messwerte: [],
-            erreichtesZielgewicht: nil, jetzt: jetzt, kalender: kalender)
+            erreichtesZielgewicht: nil, jetzt: jetzt, zeitzone: zeitzone)
 
         #expect(zustand == .nachholen)
     }
@@ -48,7 +44,7 @@ struct HomeZieleTests {
     @Test func mitWochenzielAberOhneGewichtIstNurEintragen() {
         let zustand = HomeZiele.zustand(
             member: member(weeklyDays: ziel("weekly_days", 3), targetWeight: nil), messwerte: [],
-            erreichtesZielgewicht: nil, jetzt: jetzt, kalender: kalender)
+            erreichtesZielgewicht: nil, jetzt: jetzt, zeitzone: zeitzone)
 
         #expect(zustand == .nurEintragen)
     }
@@ -56,7 +52,7 @@ struct HomeZieleTests {
     @Test func mitZielgewichtAberOhneGewichtIstEbenfallsNurEintragen() {
         let zustand = HomeZiele.zustand(
             member: member(targetWeight: ziel("target_weight", 78)), messwerte: [],
-            erreichtesZielgewicht: nil, jetzt: jetzt, kalender: kalender)
+            erreichtesZielgewicht: nil, jetzt: jetzt, zeitzone: zeitzone)
 
         #expect(zustand == .nurEintragen)
     }
@@ -64,7 +60,7 @@ struct HomeZieleTests {
     @Test func mitMesswertIstKarteAuchOhneZielgewicht() {
         let zustand = HomeZiele.zustand(
             member: member(targetWeight: nil), messwerte: [messwert("2026-09-08", 82.5)],
-            erreichtesZielgewicht: nil, jetzt: jetzt, kalender: kalender)
+            erreichtesZielgewicht: nil, jetzt: jetzt, zeitzone: zeitzone)
 
         guard case .karte(let karte) = zustand else {
             Issue.record("Erwartet .karte, war \(zustand)")
@@ -81,7 +77,7 @@ struct HomeZieleTests {
         let zustand = HomeZiele.zustand(
             member: member(targetWeight: ziel("target_weight", 78)),
             messwerte: [messwert("2026-09-01", 84.5), messwert("2026-09-08", 82.5)],
-            erreichtesZielgewicht: nil, jetzt: jetzt, kalender: kalender)
+            erreichtesZielgewicht: nil, jetzt: jetzt, zeitzone: zeitzone)
 
         guard case .karte(let karte) = zustand else {
             Issue.record("Erwartet .karte, war \(zustand)")
@@ -144,15 +140,54 @@ struct HomeZieleTests {
     // MARK: - datumText
 
     @Test func datumTextSagtHeute() {
-        #expect(HomeZiele.datumText("2026-09-09", jetzt: jetzt, kalender: kalender) == "heute")
+        #expect(HomeZiele.datumText("2026-09-09", jetzt: jetzt, zeitzone: zeitzone) == "heute")
     }
 
     @Test func datumTextSagtGestern() {
-        #expect(HomeZiele.datumText("2026-09-08", jetzt: jetzt, kalender: kalender) == "gestern")
+        #expect(HomeZiele.datumText("2026-09-08", jetzt: jetzt, zeitzone: zeitzone) == "gestern")
     }
 
     @Test func datumTextZaehltTage() {
-        #expect(HomeZiele.datumText("2026-09-06", jetzt: jetzt, kalender: kalender) == "vor 3 Tagen")
+        #expect(HomeZiele.datumText("2026-09-06", jetzt: jetzt, zeitzone: zeitzone) == "vor 3 Tagen")
+    }
+
+    /// R26: der Messtag ist ein Ortstag des Mitglieds -- "heute"/"gestern"
+    /// muss gegen den ORTSTAG des Geraets gelten, nicht gegen UTC. Baut
+    /// den Zeitpunkt ueber Kalender-Komponenten in der jeweiligen
+    /// Zeitzone (siehe `HomeZeilenTests.tageHerVonTag...`, dieselben drei
+    /// Faelle, hier einmal ueber den sichtbaren Text statt der Tageszahl).
+    @Test func datumTextRechnetGegenDenOrtstagAmerikasNichtGegenUTC() {
+        let newYork = TimeZone(identifier: "America/New_York")!
+        let dort = wanduhrzeit(2026, 9, 14, 21, 0, zeitzone: newYork)
+
+        #expect(HomeZiele.datumText("2026-09-14", jetzt: dort, zeitzone: newYork) == "heute")
+        #expect(HomeZiele.datumText("2026-09-13", jetzt: dort, zeitzone: newYork) == "gestern")
+    }
+
+    @Test func datumTextRechnetGegenDenOrtstagNeuseelandsNichtGegenUTC() {
+        let auckland = TimeZone(identifier: "Pacific/Auckland")!
+        let dort = wanduhrzeit(2026, 9, 15, 7, 0, zeitzone: auckland)
+
+        #expect(HomeZiele.datumText("2026-09-15", jetzt: dort, zeitzone: auckland) == "heute")
+        #expect(HomeZiele.datumText("2026-09-14", jetzt: dort, zeitzone: auckland) == "gestern")
+    }
+
+    @Test func datumTextRechnetKurzNachMitternachtInBerlinRichtig() {
+        let berlin = TimeZone(identifier: "Europe/Berlin")!
+        let dort = wanduhrzeit(2026, 9, 15, 0, 30, zeitzone: berlin)
+
+        #expect(HomeZiele.datumText("2026-09-14", jetzt: dort, zeitzone: berlin) == "gestern")
+    }
+
+    private func wanduhrzeit(
+        _ jahr: Int, _ monat: Int, _ tag: Int, _ stunde: Int, _ minute: Int, zeitzone: TimeZone
+    ) -> Date {
+        var kalender = Calendar(identifier: .gregorian)
+        kalender.timeZone = zeitzone
+        var teile = DateComponents()
+        teile.year = jahr; teile.month = monat; teile.day = tag
+        teile.hour = stunde; teile.minute = minute
+        return kalender.date(from: teile)!
     }
 
     // MARK: - Entscheidung 2: "Ziel erreicht" lebt im Speicher
@@ -174,7 +209,7 @@ struct HomeZieleTests {
         let erreicht = VerlaufStore.ErreichtesZielgewicht(weightKg: 78, measuredOn: "2026-11-03")
         let zustand = HomeZiele.zustand(
             member: member(targetWeight: nil), messwerte: [messwert("2026-11-03", 78)],
-            erreichtesZielgewicht: erreicht, jetzt: jetzt, kalender: kalender)
+            erreichtesZielgewicht: erreicht, jetzt: jetzt, zeitzone: zeitzone)
 
         guard case .karte(let karte) = zustand else {
             Issue.record("Erwartet .karte, war \(zustand)")

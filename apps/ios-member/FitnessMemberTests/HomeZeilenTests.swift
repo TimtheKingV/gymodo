@@ -52,6 +52,58 @@ struct HomeZeilenTests {
         #expect(HomeZeilen.tageHer(nil, jetzt: Date(), kalender: .current) == nil)
     }
 
+    // MARK: - tageHerVonTag rechnet gegen den ORTSTAG, nicht gegen UTC (R26)
+
+    /// Ein reines Ortsdatum ("yyyy-MM-dd", `Messwert.measuredOn`) hat
+    /// keine Uhrzeit -- `tageHerVonTag` darf den Vergleichstag "heute"
+    /// deshalb nicht ueber `Calendar.startOfDay` auf einen UTC-verankerten
+    /// Zeitpunkt bilden (das verschiebt ihn je nach Geraetezeitzone um bis
+    /// zu einen Tag), sondern muss ihn zuerst als Tagesstring IN der
+    /// Geraetezeitzone bauen. Baut den Zeitpunkt ueber Kalender-Komponenten
+    /// in der jeweiligen Zeitzone, statt einen Unix-Zeitstempel zu raten.
+    private func wanduhrzeit(
+        _ jahr: Int, _ monat: Int, _ tag: Int, _ stunde: Int, _ minute: Int, zeitzone: TimeZone
+    ) -> Date {
+        var kalender = Calendar(identifier: .gregorian)
+        kalender.timeZone = zeitzone
+        var teile = DateComponents()
+        teile.year = jahr; teile.month = monat; teile.day = tag
+        teile.hour = stunde; teile.minute = minute
+        return kalender.date(from: teile)!
+    }
+
+    /// 21:00 Ortszeit am 14. September ist bereits 01:00 UTC am 15.
+    /// September -- ein Vergleich gegen UTC.startOfDay wuerde "heute" auf
+    /// den 15. legen und den Messtag vom 14. faelschlich einen Tag zu weit
+    /// zurueckdatieren.
+    @Test func tageHerVonTagRechnetInAmerikaGegenDenOrtstagNichtGegenUTC() {
+        let newYork = TimeZone(identifier: "America/New_York")!
+        let jetzt = wanduhrzeit(2026, 9, 14, 21, 0, zeitzone: newYork)
+
+        #expect(HomeZeilen.tageHerVonTag("2026-09-14", jetzt: jetzt, zeitzone: newYork) == 0)
+        #expect(HomeZeilen.tageHerVonTag("2026-09-13", jetzt: jetzt, zeitzone: newYork) == 1)
+    }
+
+    /// Spiegelbildlich vor UTC: 07:00 Ortszeit am 15. September ist noch
+    /// 19:00 UTC am 14. -- ein Vergleich gegen UTC.startOfDay wuerde
+    /// "heute" auf den 14. legen.
+    @Test func tageHerVonTagRechnetInNeuseelandGegenDenOrtstagNichtGegenUTC() {
+        let auckland = TimeZone(identifier: "Pacific/Auckland")!
+        let jetzt = wanduhrzeit(2026, 9, 15, 7, 0, zeitzone: auckland)
+
+        #expect(HomeZeilen.tageHerVonTag("2026-09-15", jetzt: jetzt, zeitzone: auckland) == 0)
+        #expect(HomeZeilen.tageHerVonTag("2026-09-14", jetzt: jetzt, zeitzone: auckland) == 1)
+    }
+
+    /// Auch nahe an UTC (Berlin) kurz nach Mitternacht: der Ortstag ist
+    /// bereits der 15., "gestern" bleibt der 14.
+    @Test func tageHerVonTagRechnetKurzNachMitternachtInBerlinRichtig() {
+        let berlin = TimeZone(identifier: "Europe/Berlin")!
+        let jetzt = wanduhrzeit(2026, 9, 15, 0, 30, zeitzone: berlin)
+
+        #expect(HomeZeilen.tageHerVonTag("2026-09-14", jetzt: jetzt, zeitzone: berlin) == 1)
+    }
+
     @Test func derGrussNimmtDenErstenNamensteil() {
         #expect(HomeZeilen.vorname("Lena Wagner") == "Lena")
         #expect(HomeZeilen.vorname("Lena") == "Lena")

@@ -39,15 +39,18 @@ enum HomeZiele {
     }
 
     /// Der Zustand aus Bootstrap-Zielen, Messwerten und dem gemerkten
-    /// "erreicht"-Stand -- `kalender` als Parameter wie bei `HomeSerie`,
-    /// damit ein Test nicht von der Systemzeitzone der Maschine abhaengt,
-    /// auf der er laeuft.
+    /// "erreicht"-Stand. `zeitzone` statt eines `Calendar` (Ruling R26):
+    /// der Messtag ist ein Ortstag des Mitglieds, und "heute" muss darum
+    /// in der Geraetezeitzone gebaut werden, nicht ueber `Calendar.
+    /// startOfDay` auf einen UTC-verankerten Zeitpunkt (siehe
+    /// `HomeZeilen.tageHerVonTag`) -- Vorgabe `.current` fuer Aufrufer,
+    /// Tests pinnen sie.
     static func zustand(
         member: BootstrapResponse.Member,
         messwerte: [Messwert],
         erreichtesZielgewicht: VerlaufStore.ErreichtesZielgewicht?,
         jetzt: Date,
-        kalender: Calendar = .current
+        zeitzone: TimeZone = .current
     ) -> Zustand {
         guard let letzter = messwerte.last else {
             let hatZiel = member.goals.weeklyDays != nil || member.goals.targetWeight != nil
@@ -59,7 +62,7 @@ enum HomeZiele {
 
         return .karte(Gewichtskarte(
             wert: letzter.weightKg,
-            datumText: datumText(letzter.measuredOn, jetzt: jetzt, kalender: kalender),
+            datumText: datumText(letzter.measuredOn, jetzt: jetzt, zeitzone: zeitzone),
             differenzText: differenzText(letzter.weightKg - erster.weightKg),
             seitText: "seit \(kurzesDatum(erster.measuredOn))",
             abstandText: abstandText(aktuell: letzter.weightKg, ziel: ziel),
@@ -101,9 +104,11 @@ enum HomeZiele {
     /// (`Messwert.measuredOn`), nicht ueber einen Zeitstempel wie
     /// `HomeSerie.fussnote`. `HomeZeilen.tageHer` erwartet ein volles
     /// ISO8601-Datum mit Uhrzeit und scheitert an einem reinen Tag,
-    /// deshalb der eigene Weg ueber `tageHerVonTag`.
-    static func datumText(_ measuredOn: String, jetzt: Date, kalender: Calendar) -> String {
-        guard let tage = HomeZeilen.tageHerVonTag(measuredOn, jetzt: jetzt, kalender: kalender)
+    /// deshalb der eigene Weg ueber `tageHerVonTag` -- der rechnet den
+    /// Messtag gegen den ORTSTAG des Geraets in `zeitzone`, nicht gegen
+    /// UTC (R26).
+    static func datumText(_ measuredOn: String, jetzt: Date, zeitzone: TimeZone) -> String {
+        guard let tage = HomeZeilen.tageHerVonTag(measuredOn, jetzt: jetzt, zeitzone: zeitzone)
         else { return "" }
         return HomeZeilen.tageHerText(tage)
     }

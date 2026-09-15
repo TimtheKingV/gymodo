@@ -47,14 +47,25 @@ enum HomeZeilen {
     /// ("yyyy-MM-dd") statt eines Zeitstempels: `Zeitpunkt.parse` erwartet
     /// ein volles ISO8601-Datum mit Uhrzeit und scheitert an
     /// `Messwert.measuredOn`, das nur einen Tag traegt (Aufgabe 8).
-    static func tageHerVonTag(_ tag: String?, jetzt: Date, kalender: Calendar) -> Int? {
-        guard let tag, let zeitpunkt = ortsdatumFormatter.date(from: tag) else { return nil }
+    ///
+    /// Der Messtag ist ein ORTSTAG des Mitglieds (R9) -- "heute" wird
+    /// deshalb zuerst als Tagesstring IN `zeitzone` gebaut, nicht per
+    /// `Calendar.startOfDay` auf den UTC-Mitternachts-Zeitpunkt von `tag`
+    /// angewandt: `startOfDay` auf einen UTC-Mitternachts-Instant
+    /// verschiebt den Tag je nach Geraetezeitzone um bis zu einen Tag
+    /// (Ruling R26 -- ein Geraet hinter UTC laesst "heute" sonst um einen
+    /// Tag zurueckfallen). Die eigentliche Differenz danach ist reine
+    /// Kalendertag-Arithmetik zwischen zwei Tagesstrings in einem festen
+    /// UTC-Kalender (wie `HomeSerie`s privater Kalender) -- keine
+    /// Instant-Subtraktion, die noch einmal von einer Zeitzone abhaengen
+    /// koennte.
+    static func tageHerVonTag(_ tag: String?, jetzt: Date, zeitzone: TimeZone = .current) -> Int? {
+        guard let tag,
+              let tagDatum = ortsdatumFormatter.date(from: tag),
+              let heuteDatum = ortsdatumFormatter.date(from: ortstag(jetzt, zeitzone: zeitzone))
+        else { return nil }
 
-        return kalender.dateComponents(
-            [.day],
-            from: kalender.startOfDay(for: zeitpunkt),
-            to: kalender.startOfDay(for: jetzt)
-        ).day
+        return utcTageskalender.dateComponents([.day], from: tagDatum, to: heuteDatum).day
     }
 
     /// "heute" / "gestern" / "vor 3 Tagen" -- dieselbe Ausdrucksform wie
@@ -69,6 +80,20 @@ enum HomeZeilen {
         }
     }
 
+    /// "yyyy-MM-dd" des Geraets zum Zeitpunkt `jetzt`, IN `zeitzone` --
+    /// der Messtag ist ein Ortstag (R9), niemand traegt "UTC-Mittwoch"
+    /// ein. `Calendar.dateComponents` statt eines zweiten, mutierten
+    /// `DateFormatter`: ein `DateFormatter` ist eine Klasse, und seine
+    /// `timeZone` bei jedem Aufruf umzuschreiben waere ein geteilter,
+    /// veraenderlicher Zustand ueber gleichzeitige Aufrufe hinweg.
+    private static func ortstag(_ jetzt: Date, zeitzone: TimeZone) -> String {
+        var kalender = Calendar(identifier: .gregorian)
+        kalender.timeZone = zeitzone
+        let teile = kalender.dateComponents([.year, .month, .day], from: jetzt)
+        guard let jahr = teile.year, let monat = teile.month, let tag = teile.day else { return "" }
+        return String(format: "%04d-%02d-%02d", jahr, monat, tag)
+    }
+
     /// en_US_POSIX/UTC fuer ein rein numerisches, festes Ortsdatum --
     /// dieselbe Begruendung wie bei `HomeSerie.datumsFormatter`.
     private static let ortsdatumFormatter: DateFormatter = {
@@ -77,6 +102,16 @@ enum HomeZeilen {
         formatter.timeZone = TimeZone(identifier: "UTC")
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter
+    }()
+
+    /// UTC, fest -- fuer die Differenz zweier Tagesstrings, die beide ueber
+    /// `ortsdatumFormatter` auf UTC-Mitternacht geparst wurden: eine reine
+    /// Kalendertag-Subtraktion ohne Zeitzonen-Einfluss, dieselbe
+    /// Festlegung wie `HomeSerie`s privater Kalender.
+    private static let utcTageskalender: Calendar = {
+        var kalender = Calendar(identifier: .gregorian)
+        kalender.timeZone = TimeZone(identifier: "UTC")!
+        return kalender
     }()
 
     /// "47 min · 3 Geräte · 8 Sätze" -- die Zeile unter der Uhrzeit auf
