@@ -25,12 +25,14 @@ präzisiert:
   darunter (`KurseAnsicht`, `KurseWochenView`, `KurseBandView`). Der gewählte
   Tag ist weiterhin akzentgefüllt, **heute trägt weiterhin keine Marke** —
   Punkt 6 steht unverändert, und mit ihm die Regel unten.
-- **Training** teilt sich seit Schnitt 2 ein Gerüst aus Titel, Mitte und
-  Fuß (`TrainingRootView`): die Startwege QR / NFC / Suchen (`ScanWege`)
-  stehen in beiden Zuständen unten im Fuß, darüber steht — nur wenn ein
-  Training läuft — die Mitte mit Uhr, Zahlen, Geräteliste und „Training
-  beenden". Ohne Training bleibt die Mitte leer. Punkt 3 und 8 sind damit
-  umgesetzt.
+- **Training** teilt sich seit Schnitt 2 ein Gerüst aus Mitte und Fuß
+  (`TrainingRootView`): die Startwege QR / NFC / Suchen (`ScanWege`) stehen
+  in beiden Zuständen unten im Fuß, darüber steht — nur wenn ein Training
+  läuft — die Mitte mit Uhr, Zahlen, Geräteliste und „Training beenden".
+  Der Titel „TRAINING" steht nur im leeren Zustand; im laufenden übernimmt
+  der Kopf („TRAINING LÄUFT" + Uhr) dessen Platz, damit auf kleinen iPhones
+  genug Höhe für die Geräteliste bleibt. Ohne Training bleibt die Mitte
+  leer. Punkt 3 und 8 sind damit umgesetzt.
 - **Gerät** hat seit `8f73fa0` eine Trainingsuhr im Kopf
   (`GeraetView.trainingsuhr`); `radOffen` gibt es weiterhin, Punkt 11 bis 13
   bleiben wie beschrieben.

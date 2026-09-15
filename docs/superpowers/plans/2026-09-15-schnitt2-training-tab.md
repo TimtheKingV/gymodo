@@ -50,7 +50,7 @@ Ob in der Mitte etwas steht und welche Zahlen, entscheidet heute der View: `lauf
   - `static func TrainingTab.mitte(_ session: LokaleSession?) -> Mitte?`: `nil` ohne Session. `zahlen == nil`, solange kein Satz in der Session steht.
   - `static func TrainingTab.zuletztZuerst(_ bloecke: [LokalerBlock]) -> [LokalerBlock]`: zieht unverändert aus `TrainingRootView` um.
 
-- [ ] **Step 1: Tests schreiben** (`TrainingTabTests.swift`)
+- [x] **Step 1: Tests schreiben** (`TrainingTabTests.swift`)
 
 ```swift
 import Foundation
@@ -111,9 +111,9 @@ struct TrainingTabTests {
 }
 ```
 
-- [ ] **Step 2: Rot sehen.** `xcodegen generate`, dann `xcodebuild test … -only-testing:FitnessMemberTests/TrainingTabTests`. Erwartet: Build-Fehler „cannot find 'TrainingTab' in scope“.
+- [x] **Step 2: Rot sehen.** `xcodegen generate`, dann `xcodebuild test … -only-testing:FitnessMemberTests/TrainingTabTests`. Erwartet: Build-Fehler „cannot find 'TrainingTab' in scope“.
 
-- [ ] **Step 3: Implementieren** (`TrainingTab.swift`)
+- [x] **Step 3: Implementieren** (`TrainingTab.swift`)
 
 ```swift
 import Foundation
@@ -163,9 +163,9 @@ enum TrainingTab {
 }
 ```
 
-- [ ] **Step 4: Grün sehen.** Dieselbe Suite, dann der volle `xcodebuild test`.
+- [x] **Step 4: Grün sehen.** Dieselbe Suite, dann der volle `xcodebuild test`.
 
-- [ ] **Step 5: Commit** — `feat(training): Mitte des Training-Tabs als pruefbare Ableitung`
+- [x] **Step 5: Commit** — `feat(training): Mitte des Training-Tabs als pruefbare Ableitung`
 
 ---
 
@@ -174,9 +174,9 @@ enum TrainingTab {
 Heute rendert die Wurzel entweder `leerInhalt` (Titel, „Training starten“, Scanwege, alles oben im Scrollinhalt) oder `laufendInhalt` (Kopf mit Uhr, Liste, Fuß mit Scanwegen). Die Startwege stehen damit je nach Zustand oben oder unten. Danach gibt es **ein** Gerüst:
 
 ```
-TRAINING                      <- Titel, beide Zustaende
+TRAINING                      <- Titel, NUR leerer Zustand
 ┌ Mitte ───────────────────┐
-│ ● TRAINING LÄUFT   2   5 │  <- nur laufend: Kopf mit Uhr und Zahlen
+│ ● TRAINING LÄUFT   2   5 │  <- nur laufend: Kopf (ersetzt den Titel) mit Uhr und Zahlen
 │ 23:41        GERÄTE SÄTZE│
 │ seit 18:04               │
 │ [Block] [Block] …        │  <- nur laufend: scrollende Liste + Zirkelhinweis
@@ -191,7 +191,7 @@ Training starten | NÄCHSTES GERÄT
 
 **Entscheidung (bestätigt 15. September):** „Training beenden“ steht nicht mehr ganz unten, sondern über den Startwegen. So springen die Startwege beim Wechsel zwischen den Zuständen nicht, und die häufigere Aktion mitten im Training (nächstes Gerät) liegt in der Daumenzone. Beenden kommt einmal je Training vor. Am Satz „Ohne neuen Satz endet das Training nach vier Stunden von selbst.“ ändert sich nichts, er steht unter dem Knopf.
 
-Ebenfalls bestätigt: Der Kopf mit der Uhr steht oben in der Mitte, direkt unter dem Titel, und nicht senkrecht mittig. Im leeren Zustand bleibt „Training starten“ als 22-pt-Überschrift, im laufenden steht „NÄCHSTES GERÄT“ als Label.
+Ebenfalls bestätigt: Der Kopf mit der Uhr steht oben in der Mitte, nicht senkrecht mittig. **Nachgezogen nach dem Review (Fix-Runde 1):** Der Titel „TRAINING“ steht nur im leeren Zustand — im laufenden Zustand entfällt er, und der Kopf übernimmt an derselben Stelle seine Rolle, weil auf kleinen iPhones (SE, 667 pt) sonst nicht genug Höhe für Titel, Kopf, Liste und Beenden-Gruppe zugleich bleibt. Im leeren Zustand bleibt „Training starten“ als 22-pt-Überschrift, im laufenden steht „NÄCHSTES GERÄT“ als Label.
 
 **Files:**
 - Modify: `apps/ios-member/FitnessMember/Screens/Training/TrainingRootView.swift` (`body` Z. 72–90, `leerInhalt` Z. 203–241, `laufendInhalt`/`laufendFuss`/`zuletztZuerst`/`laufendKopf` Z. 278–409)
@@ -201,7 +201,7 @@ Ebenfalls bestätigt: Der Kopf mit der Uhr steht oben in der Mitte, direkt unter
 - Consumes: `TrainingTab.mitte(_:)`, `TrainingTab.zuletztZuerst(_:)` aus Task 1.
 - Produces: keine neuen Typen. `leerInhalt`, `laufendInhalt`, `laufendFuss` und die private `zuletztZuerst` entfallen, dafür kommen `titel`, `mitte(_:)` und `fuss(laeuft:)`.
 
-- [ ] **Step 1: `body` auf das Gerüst umstellen.** Die Umschalt-`TimelineView` (60 s) und ihr `.task(id: UmschaltTick…)` bleiben **unverändert** samt Kommentaren. Nur der `Group`-Inhalt wird ersetzt:
+- [x] **Step 1: `body` auf das Gerüst umstellen.** Die Umschalt-`TimelineView` (60 s) und ihr `.task(id: UmschaltTick…)` bleiben **unverändert** samt Kommentaren. Nur der `Group`-Inhalt wird ersetzt:
 
 ```swift
 TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -232,13 +232,13 @@ TimelineView(.periodic(from: .now, by: 60)) { context in
 
 Der Kommentar „Nur der leere Zustand scrollt als Ganzes …“ (Z. 73–76) ist danach falsch und entfällt. Die Begründung, warum nur die Liste scrollt, wandert an `laufendeMitte`.
 
-- [ ] **Step 2: `titel` und `laufendeMitte` bauen.**
+- [x] **Step 2: `titel` und `laufendeMitte` bauen.**
   - `titel`: `Text("TRAINING")` mit `Typography.screentitel`, `tracking(-1)`, `Color.text`, wie bisher in `leerInhalt`.
   - `laufendeMitte(_ mitte: TrainingTab.Mitte, session: LokaleSession)`: ein `VStack(alignment: .leading, spacing: s24)` aus `laufendKopf(mitte)` (Seitenkante 20), dann die `ScrollView` mit `ForEach(TrainingTab.zuletztZuerst(session.bloecke))` und `zirkelHinweis` (wie heute, `.scrollBounceBehavior(.basedOnSize)`), dann `PrimaryButton(title: "Training beenden") { beenden() }` und der Vier-Stunden-Satz (Seitenkante 20). Der Kommentar „Die eine Akzentflaeche dieses Screens“ zieht mit an den Knopf.
   - `laufendKopf` bekommt `TrainingTab.Mitte` statt `LokaleSession`. Statt selbst zu zählen, liest es `mitte.zahlen`. Ist `zahlen == nil`, entfällt der rechte `HStack` mit den zwei `statistik`-Spalten ganz. Die innere 1-s-`TimelineView` rechnet gegen `mitte.startedAt`.
   - Im Kopf steht noch der falsche Kommentar „Die eine Akzentflaeche dieses Screens ist 'Naechstes Geraet'“ (Z. 366–368). Seit `9591345` ist es „Training beenden“. Umschreiben: Der Punkt und das Label bleiben `textMuted`, weil die Akzentfläche dem Beenden gehört.
 
-- [ ] **Step 3: `fuss(laeuft:)` bauen.** Er ersetzt `laufendFuss` und den unteren Teil von `leerInhalt`:
+- [x] **Step 3: `fuss(laeuft:)` bauen.** Er ersetzt `laufendFuss` und den unteren Teil von `leerInhalt`:
 
 ```swift
 /// Banner, Ueberschrift, die drei Wege -- in beiden Zustaenden an derselben
@@ -274,15 +274,15 @@ private func fuss(laeuft: Bool) -> some View {
 
 `zeigeAusgelaufenHinweis` ist im laufenden Zustand ohnehin `false` (der `onChange` auf `aktiveSession() != nil` setzt ihn zurück). Er braucht deshalb keine eigene `laeuft`-Bedingung. Der Kommentarblock „Abweichung vom Artboard TrainingLeer.dc.html …“ (Z. 210–219) zieht mit an die Überschrift „Training starten“. Der `.padding(.vertical, s24)` an ihr entfällt, der Abstand kommt aus dem Gerüst.
 
-- [ ] **Step 4: Dateikommentar am Typ umschreiben.** „Leer und laufend sind kein zweiter Screen, sondern zwei Zustaende derselben Wurzel“ stimmt weiterhin, aber der Satz muss sagen, dass sie sich seit Schnitt 2 **ein Gerüst teilen** und nur die Mitte wechselt. Den Kommentar an `scanWege` („in beiden Zustaenden dieselben“) prüfen: Er bleibt richtig.
+- [x] **Step 4: Dateikommentar am Typ umschreiben.** „Leer und laufend sind kein zweiter Screen, sondern zwei Zustaende derselben Wurzel“ stimmt weiterhin, aber der Satz muss sagen, dass sie sich seit Schnitt 2 **ein Gerüst teilen** und nur die Mitte wechselt. Den Kommentar an `scanWege` („in beiden Zustaenden dieselben“) prüfen: Er bleibt richtig.
 
-- [ ] **Step 5: Überdeckung und Kontrast selbst prüfen**, nicht nur bauen. Im Simulator (iPhone 17 Pro) beide Zustände ansehen. Den laufenden Zustand bekommst du über einen gesicherten Satz, am schnellsten über „Suchen“ → Gerät → Satz sichern → zurück zum Tab. Außerdem: Dynamic Type auf `accessibilityExtraExtraExtraLarge` (Xcode-Umgebungsüberschreibung). Fällt dabei der Fuß über die Tab-Leiste oder schiebt er den Titel aus dem Bild, bekommt der leere Zustand eine `ScrollView` mit `frame(minHeight:)` aus einem `GeometryReader`, damit der Fuß unten bleibt und trotzdem scrollt. Das Ergebnis kommt in den Bericht.
+- [x] **Step 5: Überdeckung und Kontrast selbst prüfen**, nicht nur bauen. Im Simulator (iPhone 17 Pro) beide Zustände ansehen. Den laufenden Zustand bekommst du über einen gesicherten Satz, am schnellsten über „Suchen“ → Gerät → Satz sichern → zurück zum Tab. Außerdem: Dynamic Type auf `accessibilityExtraExtraExtraLarge` (Xcode-Umgebungsüberschreibung). Fällt dabei der Fuß über die Tab-Leiste oder schiebt er den Titel aus dem Bild, bekommt der leere Zustand eine `ScrollView` mit `frame(minHeight:)` aus einem `GeometryReader`, damit der Fuß unten bleibt und trotzdem scrollt. Das Ergebnis kommt in den Bericht.
 
-- [ ] **Step 6: Sammelstelle nachziehen.** Unter „Stand“, Punkt **Training**: Die Startwege stehen in beiden Zuständen unten, das laufende Training mit Uhr in der Mitte (Schnitt 2). Bei Punkt 3 und 8 nichts löschen, die Sammelstelle hält fest, was gemeint war.
+- [x] **Step 6: Sammelstelle nachziehen.** Unter „Stand“, Punkt **Training**: Die Startwege stehen in beiden Zuständen unten, das laufende Training mit Uhr in der Mitte (Schnitt 2). Bei Punkt 3 und 8 nichts löschen, die Sammelstelle hält fest, was gemeint war.
 
-- [ ] **Step 7: `xcodebuild test`**, grün.
+- [x] **Step 7: `xcodebuild test`**, grün.
 
-- [ ] **Step 8: Commit** — `feat(training): Startwege stehen unten, laufendes Training in der Mitte`
+- [x] **Step 8: Commit** — `feat(training): Startwege stehen unten, laufendes Training in der Mitte`
 
 ---
 

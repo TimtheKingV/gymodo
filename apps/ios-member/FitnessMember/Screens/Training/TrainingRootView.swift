@@ -78,13 +78,20 @@ struct TrainingRootView: View {
                 // zu springen (Sammelstelle Punkt 3 und 8).
                 let session = sessions.aktiveSession()
                 let mitte = TrainingTab.mitte(session)
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                    titel
-                        .padding(.horizontal, 20)
-                        .padding(.top, DesignSystem.Spacing.s24)
+                VStack(alignment: .leading, spacing: 0) {
                     if let mitte, let session {
                         laufendeMitte(mitte, session: session)
                     } else {
+                        // Der Titel steht nur im leeren Zustand. Im laufenden
+                        // uebernimmt der Kopf ("TRAINING LAEUFT" + Uhr) an
+                        // derselben Stelle dessen Rolle -- auf 667-pt-iPhones
+                        // (SE, weiterhin unter iOS 17 im Einsatz) reicht die
+                        // Hoehe sonst nicht fuer Titel UND Kopf UND Liste UND
+                        // Beenden-Gruppe UND Fuss, und der Liste bliebe kein
+                        // Platz zum Schrumpfen.
+                        titel
+                            .padding(.horizontal, 20)
+                            .padding(.top, DesignSystem.Spacing.s24)
                         // Leer heisst leer: keine Uhr auf null, kein Platzhaltersatz.
                         Spacer(minLength: 0)
                     }
@@ -212,12 +219,13 @@ struct TrainingRootView: View {
             .foregroundStyle(DesignSystem.Color.text)
     }
 
-    /// Die zwei Wege, in beiden Zustaenden dieselben -- Kontur, keiner
-    /// Akzentflaeche. Der leere Zustand hatte bis M1 gar keine Hauptaktion
-    /// auf dem Bildschirm (die Anweisung lautete "halt dein iPhone an den
-    /// Aufkleber"), der laufende hatte "Naechstes Geraet" als Akzent. Jetzt
-    /// steht an beiden Stellen dasselbe Paar, und die eine Akzentflaeche pro
-    /// Screen bleibt frei (designsystem.md SS2).
+    /// Die drei Wege zum Geraet -- Kontur, keine Akzentflaeche. Der leere
+    /// Zustand hatte bis M1 gar keine Hauptaktion auf dem Bildschirm (die
+    /// Anweisung lautete "halt dein iPhone an den Aufkleber"), der laufende
+    /// hatte "Naechstes Geraet" als Akzent. Seit Schnitt 2 rendert
+    /// `fuss(laeuft:)` sie an EINER Stelle fuer beide Zustaende statt
+    /// zweimal, und die eine Akzentflaeche pro Screen bleibt frei
+    /// (designsystem.md SS2).
     private var scanWege: some View {
         ScanWege(
             beiQR: { scannerOffen = true },
@@ -301,6 +309,7 @@ struct TrainingRootView: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
             laufendKopf(mitte)
                 .padding(.horizontal, 20)
+                .padding(.top, DesignSystem.Spacing.s24)
 
             ScrollView {
                 VStack(spacing: DesignSystem.Spacing.s12) {
@@ -331,6 +340,12 @@ struct TrainingRootView: View {
                     .frame(maxWidth: .infinity)
             }
             .padding(.horizontal, 20)
+            // Der Abstand zum Fuss darunter ist s12, nicht s24 wie zwischen
+            // Kopf und Liste: die Beenden-Gruppe und die Startwege im Fuss
+            // gehoerten vor dem Umbau zu EINER Fussgruppe mit s12 -- dieser
+            // Abstand bleibt bestehen, obwohl beide jetzt getrennte Funktionen
+            // sind, sonst waechst die feste Hoehe auf Kosten der Liste.
+            .padding(.bottom, DesignSystem.Spacing.s12)
         }
     }
 
@@ -343,9 +358,9 @@ struct TrainingRootView: View {
                         .frame(width: 8, height: 8)
                         .accessibilityHidden(true)
                     // Abweichung vom Artboard: dort accent fuer Punkt und
-                    // Label. Seit 9591345 ist "Training beenden" die eine
-                    // Akzentflaeche dieses Screens (designsystem.md SS2) --
-                    // Punkt und Label bleiben deshalb textMuted.
+                    // Label. Die bleiben textMuted, weil die eine
+                    // Akzentflaeche dieses Screens "Training beenden" gehoert
+                    // (designsystem.md SS2).
                     Text("TRAINING LÄUFT")
                         .font(DesignSystem.Typography.label)
                         .tracking(1.5)
