@@ -47,6 +47,10 @@ struct NotizBlatt: View {
             }
         }
         .presentationDetents([.medium, .large])
+        // Wischen schliesst das Blatt ohne "Verwerfen"; ohne diese Zeile blieben
+        // Aufnahme und Audio-Sitzung aktiv. Nach "Sichern" hat abgeben() die Datei
+        // schon uebernommen, dann tut verwerfen() nichts.
+        .onDisappear { aufnahme.verwerfen() }
     }
 
     private var titel: String {
