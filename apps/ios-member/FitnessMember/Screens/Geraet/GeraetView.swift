@@ -199,41 +199,22 @@ struct GeraetView: View {
         }
     }
 
-    /// Schrumpft auf eine Zeile, sobald die Raeder offen sind -- damit das
-    /// Rad Platz hat (Artboard-Kommentar in GeraetWertRad.dc.html).
+    /// Eine Zeile, nicht die Karte: derselbe Inhalt stand vorher in zwei
+    /// Gestalten (Sammelstelle Punkt 13), und die Karte mit grossen Zahlen kostete
+    /// 71 pt, die der Satzpfad auf einem 667-pt-iPhone nicht hat (Punkt 12).
+    /// Die Zeile ist 44 pt hoch, weil "aendern" es ist -- ein Hit-Target unter
+    /// 44 pt gibt es nicht.
     @ViewBuilder
     private var einstellung: some View {
         if !modell.einstellwerte.isEmpty {
-            if modell.radOffen {
-                HStack {
-                    Text(modell.einstellwerte.map { "\($0.label) \($0.anzeige)" }
-                        .joined(separator: " · "))
-                        .font(.system(size: 13))
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                        .lineLimit(1)
-                    Spacer()
-                    aendernKnopf
-                }
-            } else {
-                HStack(alignment: .top) {
-                    ForEach(modell.einstellwerte) { wert in
-                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                            Text(wert.label.uppercased())
-                                .font(DesignSystem.Typography.label)
-                                .tracking(1.5)
-                                .foregroundStyle(DesignSystem.Color.textFaint)
-                            Text(wert.anzeige)
-                                .font(DesignSystem.Typography.wertSekundaer)
-                                .foregroundStyle(DesignSystem.Color.text)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .accessibilityElement(children: .combine)
-                    }
-                    aendernKnopf
-                }
-                .padding(DesignSystem.Spacing.s16)
-                .background(DesignSystem.Color.surface)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+            HStack {
+                Text(modell.einstellwerte.map { "\($0.label) \($0.anzeige)" }
+                    .joined(separator: " · "))
+                    .font(.system(size: 13))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .lineLimit(1)
+                Spacer()
+                aendernKnopf
             }
         }
     }
