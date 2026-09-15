@@ -1,7 +1,7 @@
 # iOS Member-App — Persönliche Ziele & Fortschritt
 
 **Stand:** 13. September 2026
-**Status:** Entschieden am 13. September (Abschnitt 9), Artboards unter `docs/superpowers/design/ziele/`, Umsetzungsplan `docs/superpowers/plans/2026-09-14-ziele-und-fortschritt.md`.
+**Status:** Entschieden am 13. September (Abschnitt 9), Artboards unter `docs/superpowers/design/ziele/`, Umsetzungsplan `docs/superpowers/plans/2026-09-14-ziele-und-fortschritt.md`, gebaut am 15. September (Branch `claude/personal-goals-progress-k39j79`), Abnahme offen: `docs/superpowers/plans/2026-09-15-ziele-abnahme.md`.
 **Vorbedingung:** Sub-Projekte 1–4 der Member-App stehen (`0001`–`0040`, Home mit Serien-Streifen, Profil mit Name, `PUT /me/profile`).
 **Zitierweise:** `§n` ohne Dokumentangabe verweist auf `2026-08-30-designsystem.md`.
 **Verhältnis zu anderen Dokumenten:** untergeordnet gegenüber `2026-08-28-fitness-retrofit-m1-design.md` (Produktgrenze, M3-Abgrenzung) und `2026-09-09-ios-home-profil-design.md` (Home, Profil, Verlauf-Cache). Es ergänzt beide um eine zweite Sorte Fortschritt: die Person statt das Gerät.
