@@ -591,8 +591,10 @@ Erwartet: `Test run with 5 tests in 1 suite passed`.
 ```bash
 cd apps/ios-member
 xcodebuild -scheme FitnessMember -configuration Release -destination "generic/platform=iOS" \
-  -derivedDataPath /tmp/dd-testnotiz CODE_SIGNING_ALLOWED=NO build 2>&1 | grep -E "error:|BUILD"
-APP=/tmp/dd-testnotiz/Build/Products/Release-iphoneos/FitnessMember.app
+  -derivedDataPath /tmp/dd-relproof CODE_SIGNING_ALLOWED=NO build 2>&1 | grep -E "error:|BUILD"
+APP=/tmp/dd-relproof/Build/Products/Release-iphoneos/FitnessMember.app
+# Der Build-Pfad darf das Suchwort nicht enthalten, sonst liefern #file-Strings
+# der Abhaengigkeiten Falschtreffer.
 # Archivieren strippt die Debug-Symbole; unverstrippt stehen Objektdateinamen
 # wie TestnotizScreenModifier.o in der Symboltabelle. Deshalb die gestrippte Kopie.
 xcrun strip -S -x -o /tmp/FitnessMember-stripped "$APP/FitnessMember"
@@ -607,8 +609,8 @@ Gegenprobe am Debug-Build, sonst beweisen die Nullen nichts. Seit Xcode 16 liegt
 
 ```bash
 cd apps/ios-member
-xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" -derivedDataPath /tmp/dd-testnotiz build 2>&1 | grep -E "error:|BUILD"
-D=/tmp/dd-testnotiz/Build/Products/Debug-iphonesimulator/FitnessMember.app
+xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" -derivedDataPath /tmp/dd-relproof build 2>&1 | grep -E "error:|BUILD"
+D=/tmp/dd-relproof/Build/Products/Debug-iphonesimulator/FitnessMember.app
 grep -a -i -c testnotiz "$D/FitnessMember.debug.dylib"                                # erwartet > 0
 plutil -p "$D/Info.plist" | grep -c -E 'NSMicrophoneUsageDescription|NSSpeechRecognitionUsageDescription|UIFileSharingEnabled|LSSupportsOpeningDocumentsInPlace'   # erwartet 4
 ```
@@ -4923,8 +4925,10 @@ Erwartet: `Test run with 502 tests in 66 suites passed` (Stand 14. September; mi
 ```bash
 cd apps/ios-member
 xcodebuild -scheme FitnessMember -configuration Release -destination "generic/platform=iOS" \
-  -derivedDataPath /tmp/dd-testnotiz CODE_SIGNING_ALLOWED=NO build 2>&1 | grep -E "error:|BUILD"
-APP=/tmp/dd-testnotiz/Build/Products/Release-iphoneos/FitnessMember.app
+  -derivedDataPath /tmp/dd-relproof CODE_SIGNING_ALLOWED=NO build 2>&1 | grep -E "error:|BUILD"
+APP=/tmp/dd-relproof/Build/Products/Release-iphoneos/FitnessMember.app
+# Der Build-Pfad darf das Suchwort nicht enthalten, sonst liefern #file-Strings
+# der Abhaengigkeiten Falschtreffer.
 # Archivieren strippt die Debug-Symbole; unverstrippt stehen Objektdateinamen
 # wie TestnotizScreenModifier.o in der Symboltabelle. Deshalb die gestrippte Kopie.
 xcrun strip -S -x -o /tmp/FitnessMember-stripped "$APP/FitnessMember"
@@ -4939,8 +4943,8 @@ Gegenprobe am Debug-Build, sonst beweisen die Nullen nichts. Seit Xcode 16 liegt
 
 ```bash
 cd apps/ios-member
-xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" -derivedDataPath /tmp/dd-testnotiz build 2>&1 | grep -E "error:|BUILD"
-D=/tmp/dd-testnotiz/Build/Products/Debug-iphonesimulator/FitnessMember.app
+xcodebuild -scheme FitnessMember -destination "platform=iOS Simulator,name=iPhone 17 Pro" -derivedDataPath /tmp/dd-relproof build 2>&1 | grep -E "error:|BUILD"
+D=/tmp/dd-relproof/Build/Products/Debug-iphonesimulator/FitnessMember.app
 grep -a -i -c testnotiz "$D/FitnessMember.debug.dylib"                                # erwartet > 0
 plutil -p "$D/Info.plist" | grep -c -E 'NSMicrophoneUsageDescription|NSSpeechRecognitionUsageDescription|UIFileSharingEnabled|LSSupportsOpeningDocumentsInPlace'   # erwartet 4
 ```
@@ -4976,7 +4980,7 @@ Was Fenster, Foto, Berührung oder Mikrofon anfasst, beweist kein Test. Am Gerä
 - [ ] Sprachnotiz: Transkript auf Deutsch; ohne Modell der Ersatzsatz; verweigert der Hinweis.
 - [ ] Protokoll: nach einem Tag-Scan stehen `tag`-Zeilen im Eintrag.
 - [ ] Teilen → AirDrop → Eingang → Claude Code: eine Änderung ohne Rückfrage.
-- [ ] Keine Personendaten: `grep -ri "<eigene Adresse>" <ordner>` findet nichts; der Anzeigename steht nicht in `sitzung.json`.
+- [ ] Keine Personendaten: `grep -ri "<eigene Adresse>" <ordner>` findet nichts; der Anzeigename steht in `sitzung.json` nur in Einträgen, deren Element (`element.label`) oder Notiz ihn zeigt.
 
 ---
 

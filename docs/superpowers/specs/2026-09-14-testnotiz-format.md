@@ -75,8 +75,11 @@ nie weggelassen. Zeitpunkte sind ISO 8601 mit Offset der Gerätezeitzone
 
 ### Datenschutz
 
-- Kein Feld trägt E-Mail, Access-Token oder Anzeigenamen. `signedIn` und
-  `studioId` genügen.
+- Kein Feld trägt **automatisch erhobene** E-Mail, Access-Token oder
+  Anzeigenamen. `signedIn` und `studioId` genügen. `element.label` und `note`
+  geben wieder, was auf dem Bildschirm stand oder der Tester schrieb — tippt
+  er auf eine Profilzeile, steht deren Text im Label. Sie fallen deshalb wie
+  die Screenshots unter „nie ins Repository“.
 - `log` übernimmt nur Kategorien aus einer festen Liste, deren Zeilen
   nachweislich keine Personendaten tragen (iOS: `tag`). Im eigenen Prozess
   schwärzt das System private Werte nicht; die Liste ist deshalb die einzige
