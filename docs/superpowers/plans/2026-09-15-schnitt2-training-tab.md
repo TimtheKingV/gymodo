@@ -439,7 +439,7 @@ Die Liste kennt heute weder das Modell einer Zeile noch einen Weg zum Server. Be
   - `enum GeraeteFotos { static func zuordnung(_ antwort: MachinePhotosResponse) -> [String: URL]; static func laden(von loader: any GeraetefotosLoading) async -> [String: URL] }`: Schlüssel ist die `equipmentModelId`. Jeder Fehler (offline, 401, 5xx) liefert `[:]`.
   - `GeraeteAuswahl.Eintrag.modellId: String`, aus `maschine.equipmentModel.id`
 
-- [ ] **Step 1: Tests schreiben.**
+- [x] **Step 1: Tests schreiben.**
   - `DTOTests`: `@Test func dekodiertGeraetefotos()` mit `{"photos":[{"equipmentModelId":"em1","url":"https://example.test/a.jpg"}]}` → ein Eintrag mit beiden Feldern. Dazu `{"photos":[]}` → leer.
   - `GeraeteAuswahlTests`: `@Test func eintragTraegtDasModell()`. Der Helfer `maschineJSON` baut die Modell-ID schon als `"em-\(id)"`, also `#expect(g.alle.first?.modellId == "em-m1")`.
   - `GeraeteFotosTests`:
@@ -488,9 +488,9 @@ struct GeraeteFotosTests {
 
   Falls `MachinePhotosResponse`/`Photo` als reines `Decodable` keinen Memberwise-Init anbieten: Er entsteht automatisch, solange kein eigener `init` im Typ steht. Den Typ deshalb ohne eigenen `init` bauen. `.offline` ist der Fall, den `APIClientTests` für Netzwerkfehler prüft. Meldet Swift 6, dass `UIImage` die Actor-Grenze nicht überqueren darf, nicht mit `nonisolated(unsafe)` zudecken, sondern im Bericht melden.
 
-- [ ] **Step 2: Rot sehen.** `xcodegen generate`, `xcodebuild test … -only-testing:FitnessMemberTests/GeraeteFotosTests`. Erwartet: Build-Fehler.
+- [x] **Step 2: Rot sehen.** `xcodegen generate`, `xcodebuild test … -only-testing:FitnessMemberTests/GeraeteFotosTests`. Erwartet: Build-Fehler.
 
-- [ ] **Step 3: Implementieren.**
+- [x] **Step 3: Implementieren.**
   - DTO wie unter Interfaces.
   - `APIClient`: nach `machineContext`:
     ```swift
@@ -535,9 +535,9 @@ struct GeraeteFotosTests {
     ```
   - `GeraeteAuswahl.Eintrag`: `let modellId: String` mit Kommentar „`equipmentModel.id` -- der Schluessel, unter dem der Server das Foto signiert“, gesetzt in `eintrag(_:zuletzt:trefferUebung:)`.
 
-- [ ] **Step 4: `xcodebuild test`**, grün.
+- [x] **Step 4: `xcodebuild test`**, grün.
 
-- [ ] **Step 5: Commit** — `feat(geraet): Geraetefotos fuer die Liste laden`
+- [x] **Step 5: Commit** — `feat(geraet): Geraetefotos fuer die Liste laden`
 
 ---
 

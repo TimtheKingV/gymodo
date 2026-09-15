@@ -36,6 +36,12 @@ actor APIClient {
         try await get("machines/\(machineId)/context")
     }
 
+    /// Signierte Geraetefotos fuer die Liste. Eigener Abruf statt eines
+    /// Bootstrap-Felds: die URLs leben 15 Minuten, der Prefetch Stunden.
+    func machinePhotos() async throws(APIError) -> MachinePhotosResponse {
+        try await get("me/machine-photos")
+    }
+
     /// Liefert die volle Antwort statt nur der Liste: die Kopfzeile von
     /// Home braucht `summary`, und ein zweiter Abruf dafuer waere
     /// derselbe Abruf.
