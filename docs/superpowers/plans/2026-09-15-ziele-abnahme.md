@@ -22,9 +22,9 @@ Alle vier Ebenen liefen kalt am 15. September, mit isoliertem
 | Ebene | Ergebnis |
 | --- | --- |
 | Domänen-Unit (`packages/domain`) | 165/165 Tests grün (15 Dateien) |
-| Integration (`pnpm vitest run`, Repo-Wurzel) | 628/631 Tests grün (53 Dateien); 3 Fehlschläge, alle vorbestehend |
+| Integration (`pnpm vitest run`, Repo-Wurzel) | 632/635 Tests grün (53 Dateien); 3 Fehlschläge, alle vorbestehend |
 | `pnpm typecheck` | sauber |
-| iOS (`xcodebuild test`, iPhone 17 Pro Simulator) | 568/568 Tests grün (66 Suiten), genau die vier vorbestehenden Warnungen |
+| iOS (`xcodebuild test`, iPhone 17 Pro Simulator) | 581/581 Tests grün (66 Suiten), genau die vier vorbestehenden Warnungen |
 
 Die drei Fehlschläge sind namentlich:
 
@@ -131,6 +131,9 @@ festgehalten.
 5. **Flugmodus auf „Los geht's".** Banner nennt, was gespeichert ist und was
    nicht; Flugmodus aus, „Erneut versuchen" holt nur das Fehlende nach; kein
    zweites `onboardingDone` (Serverlog).
+   Onboarding: Profil gespeichert, Gewicht scheitert (z. B. Flugmodus nach
+   dem ersten Schreibvorgang) — „Später" führt auf Home, dort steht die
+   Nachholkarte oder die Karte.
 6. **Wochenziel 3, zwei Trainingstage.** Zielzeile „2 von 3", zwei Striche
    gefüllt — **die Flamme zählt unverändert**, die Fußnote auch. Dritter
    Tag: „3 von 3 · Ziel erreicht", Flamme unverändert.
@@ -146,6 +149,8 @@ festgehalten.
     Profil.
 11. **Jede Angabe im Profil entfernen.** Danach steht „—", Home zeigt die
     Nachholkarte, wenn kein Ziel mehr aktiv ist.
+    Eine Profilangabe übernehmen: das Sheet schließt, du bleibst im
+    Profil-Tab, kein Ladebildschirm.
 12. **Dynamic Type XXL** auf Onboarding 1 und 3, Home, Gewichtsverlauf,
     Profil. Zusätzlich zu prüfen: der Block „Deine Ziele" auf Home und die
     Profilzeilen setzen — wie der Rest von Home — feste Schriftgrößen statt
@@ -155,12 +160,6 @@ festgehalten.
 13. **VoiceOver** auf dem Gewichtsverlauf: Kurve und Rohwerte erreichbar; die
     Zielzeile im Kalender wird als ein Satz gelesen.
 14. **Reduce Motion:** Schrittwechsel und Sheet ohne Bewegung, nichts fehlt.
-
-Zusätzlich, ohne eigene Nummer, weil beim Bauen schon beobachtet und nicht
-ausgeräumt: im Tage-pro-Woche-Sheet (Profil → Wochenziel ändern) erscheint
-die Beschriftung „TAGE PRO WOCHE" zweimal (wiederverwendete Bauteile aus dem
-Onboarding-Schritt). Prüfen, ob das beim Ansehen ebenso auffällt wie beim
-Lesen des Codes.
 
 ## Abweichungen von Artboard und Plan, bewusst
 
