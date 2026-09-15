@@ -148,6 +148,11 @@ enum AXSchalter {
         funktionen()?.lesen()
     }
 
+    /// Steht, solange der Schalter von uns an ist. Ueberlebt ein Prozessende
+    /// in der Pause, damit aufraeumen() beim naechsten Start weiss, dass die
+    /// 1 von hier stammt und nicht von einem Assistenzdienst.
+    static let marker = "testnotiz.axSchalterGesetzt"
+
     static func eingeschaltet<T>(_ arbeit: @MainActor () -> T) async -> T {
         guard let schalter = funktionen() else { return arbeit() }
         let lesen = schalter.lesen
@@ -155,13 +160,31 @@ enum AXSchalter {
 
         let vorher = lesen()
         if vorher == 0 {
+            UserDefaults.standard.set(true, forKey: marker)
             setzen(1)
             // Ein Runloop-Durchlauf, damit SwiftUI den Baum aufbaut.
             try? await Task.sleep(for: .milliseconds(150))
         }
         let ergebnis = arbeit()
-        if vorher == 0 { setzen(0) }
+        if vorher == 0 {
+            setzen(0)
+            UserDefaults.standard.removeObject(forKey: marker)
+        }
         return ergebnis
+    }
+
+    /// Absturz oder Debugger-Stopp zwischen Ein- und Ausschalten liesse den
+    /// gespeicherten Schalter an; der naechste Debug-Start stellt ihn zurueck.
+    static func aufraeumen() {
+        guard UserDefaults.standard.bool(forKey: marker) else { return }
+        funktionen()?.setzen(0)
+        UserDefaults.standard.removeObject(forKey: marker)
+    }
+
+    /// Nur fuer Tests: einen liegengebliebenen Schalter nachstellen, ohne
+    /// den Prozess abzubrechen.
+    static func setzenFuerTest(_ wert: Int32) {
+        funktionen()?.setzen(wert)
     }
 }
 #endif

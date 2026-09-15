@@ -36,6 +36,12 @@ final class Testnotiz {
     var entwurf: Entwurf?
     private(set) var eintragsanzahl = 0
     private(set) var letzterFehler: String?
+    /// Waehrend der Element-Suche zeigt das Overlay noch Picker und
+    /// Abbrechen; ein zweiter Tipp darf keine zweite Suche starten.
+    private(set) var suchtElement = false
+
+    /// Tests legen die Sitzungen in tmp ab, statt in die Dateien-App.
+    @ObservationIgnored var ablageWurzel: URL = URL.documentsDirectory.appendingPathComponent("Testnotizen")
 
     @ObservationIgnored private(set) var ablage: TestnotizAblage?
     @ObservationIgnored private(set) var fenster: TestnotizFenster?
@@ -49,6 +55,7 @@ final class Testnotiz {
         self.netz = netz
         self.katalog = katalog
         self.session = session
+        AXSchalter.aufraeumen()
         guard fenster == nil else { return }
         let neu = TestnotizFenster(windowScene: szene)
         let host = UIHostingController(rootView: TestnotizOberflaeche())
@@ -73,6 +80,7 @@ final class Testnotiz {
 
     func zurRuhe() {
         entwurf = nil
+        suchtElement = false
         modus = .ruhe
     }
 
@@ -89,11 +97,18 @@ final class Testnotiz {
     }
 
     func elementGewaehlt(_ punkt: CGPoint) async {
+        // Getrennt vom Guard darunter: ein Tipp waehrend der Suche soll sie
+        // nicht ueber zurRuhe() abbrechen, sondern nur verpuffen.
+        guard !suchtElement, modus == .element else { return }
         guard var neu = entwurf, let fenster, let szene = fenster.windowScene else {
             zurRuhe()
             return
         }
+        suchtElement = true
         let kandidat = await AccessibilityBaum.element(an: punkt, szene: szene, ohne: fenster)
+        suchtElement = false
+        // In der Pause kann Abbrechen oder ein neuer Knopf-Tipp den Entwurf ersetzt haben; der gehoert dann nicht mehr dieser Suche.
+        guard modus == .element, entwurf?.zeitpunkt == neu.zeitpunkt else { return }
         neu.art = .element
         neu.element = kandidat.map { register.element(aus: $0) }
         entwurf = neu
@@ -136,7 +151,9 @@ final class Testnotiz {
             )
             // Erst ein gelungener Eintrag loescht die alte Meldung -- sonst loeschte der naechste Knopf-Tipp sie, bevor das Menue sie zeigt.
             letzterFehler = nil
-            eintragsanzahl = await ablage.anzahl
+            let anzahl = await ablage.anzahl
+            // "Neue Sitzung" in der Pause hat den Zaehler schon auf 0 gesetzt; die alte Ablage darf ihn nicht zurueckdrehen.
+            if self.ablage === ablage { eintragsanzahl = anzahl }
             if let name = gesichert.audio {
                 let datei = ablage.ordner.appendingPathComponent(name)
                 let index = gesichert.index
@@ -152,8 +169,12 @@ final class Testnotiz {
 
     private func ablageHolen(jetzt: Date) throws -> TestnotizAblage {
         if let ablage { return ablage }
-        let wurzel = URL.documentsDirectory.appendingPathComponent("Testnotizen")
-        let neu = try TestnotizAblage(wurzel: wurzel, kopf: Laufzeitkontext.sitzungskopf(jetzt: jetzt, szene: fenster?.windowScene))
+        let neu = try TestnotizAblage(wurzel: ablageWurzel, kopf: Laufzeitkontext.sitzungskopf(jetzt: jetzt, szene: fenster?.windowScene))
+        // Screenshots und Sprachnotizen sind Arbeitsmaterial, kein Nutzerdatum; im Backup belegten sie nur Platz. Scheitert es, wird trotzdem gesichert.
+        var werte = URLResourceValues()
+        werte.isExcludedFromBackup = true
+        var wurzel = ablageWurzel
+        try? wurzel.setResourceValues(werte)
         ablage = neu
         return neu
     }

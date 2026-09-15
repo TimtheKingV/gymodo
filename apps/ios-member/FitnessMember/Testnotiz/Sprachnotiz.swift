@@ -99,10 +99,16 @@ enum Transkription {
         let anfrage = SFSpeechURLRecognitionRequest(url: audio)
         anfrage.requiresOnDeviceRecognition = true
         anfrage.shouldReportPartialResults = false
+        // Erkenner, Anfrage und Task haelt sonst niemand: ARC gaebe sie nach
+        // dem Start frei, der Task braeche ab, und das Transkript fehlte
+        // still. Die Nutzung im defer liegt hinter dem Resume. (Ein async
+        // withExtendedLifetime um das Warten kennt das SDK nicht.)
+        var aufgabe: SFSpeechRecognitionTask?
+        defer { withExtendedLifetime((erkenner, anfrage, aufgabe)) {} }
         return await withCheckedContinuation { fortsetzung in
             // Der Callback kommt mehrfach; die Continuation darf genau einmal laufen.
             var erledigt = false
-            erkenner.recognitionTask(with: anfrage) { ergebnis, fehler in
+            aufgabe = erkenner.recognitionTask(with: anfrage) { ergebnis, fehler in
                 guard !erledigt else { return }
                 if let ergebnis, ergebnis.isFinal {
                     erledigt = true

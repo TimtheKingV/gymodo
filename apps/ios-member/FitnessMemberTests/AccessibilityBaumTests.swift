@@ -3,7 +3,10 @@ import SwiftUI
 import Testing
 @testable import FitnessMember
 
+// Seriell: der Schalter ist prozessweit, und ein Test, der ihn umstellt,
+// darf nicht in die 150-ms-Pause eines anderen fallen.
 @MainActor
+@Suite(.serialized)
 struct AccessibilityBaumTests {
     private let karte = AccessibilityKandidat(kennung: nil, label: "Karte", typ: "Text", rahmen: CGRect(x: 0, y: 0, width: 300, height: 200))
     private let knopf = AccessibilityKandidat(kennung: "geraet.satz-sichern", label: "Satz 2 sichern", typ: "Button", rahmen: CGRect(x: 20, y: 120, width: 260, height: 64))
@@ -44,6 +47,23 @@ struct AccessibilityBaumTests {
         let waehrend = await AXSchalter.eingeschaltet { AXSchalter.stand }
         #expect(waehrend == 1)
         #expect(AXSchalter.stand == vorher)
+    }
+
+    // Endet der Prozess zwischen Ein- und Ausschalten, bliebe der Schalter
+    // gespeichert an; der naechste Debug-Start muss das heilen.
+    @Test func aufraeumenStelltEinenLiegengebliebenenSchalterZurueck() throws {
+        let vorher = try #require(AXSchalter.stand)
+        defer {
+            AXSchalter.setzenFuerTest(vorher)
+            UserDefaults.standard.removeObject(forKey: AXSchalter.marker)
+        }
+        AXSchalter.setzenFuerTest(1)
+        UserDefaults.standard.set(true, forKey: AXSchalter.marker)
+
+        AXSchalter.aufraeumen()
+
+        #expect(AXSchalter.stand == 0)
+        #expect(UserDefaults.standard.object(forKey: AXSchalter.marker) == nil)
     }
 
     // Der Beweis aus dem Spike, im echten Ziel: ohne VoiceOver liefert der

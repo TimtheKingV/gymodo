@@ -56,7 +56,10 @@ actor TestnotizAblage {
 
         if let audio {
             let name = "\(praefix)-notiz.m4a"
-            try FileManager.default.moveItem(at: audio, to: ordner.appendingPathComponent(name))
+            let ziel = ordner.appendingPathComponent(name)
+            // Scheiterte beim letzten Mal erst sitzung.json, liegt die Datei unter dieser Nummer schon da und blockierte jeden weiteren Audio-Eintrag.
+            try? FileManager.default.removeItem(at: ziel)
+            try FileManager.default.moveItem(at: audio, to: ziel)
             e.audio = name
         } else {
             e.audio = nil
