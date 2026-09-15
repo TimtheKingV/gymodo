@@ -29,6 +29,17 @@ enum GewichtsverlaufHilfen {
         guard let index = alle.firstIndex(of: messwert), index > 0 else { return nil }
         return alle[index - 1]
     }
+
+    /// "\(Tag)T12:00:00Z" -- Mittag UTC statt Mitternacht, wie
+    /// `UebungsfortschrittView.diagramm`: derselbe Trick vermeidet, dass
+    /// das Parsen an einer Tagesgrenze in eine falsche Zeitzone faellt.
+    static func datum(_ measuredOn: String) -> Date {
+        Zeitpunkt.parse("\(measuredOn)T12:00:00Z") ?? Date()
+    }
+
+    static func datumKurz(_ measuredOn: String) -> String {
+        Zahlformat.tagMonatKurz(datum(measuredOn))
+    }
 }
 
 /// Gewichtsverlauf.dc.html -- nach dem Vorbild von `UebungsfortschrittView`
@@ -88,12 +99,15 @@ struct GewichtsverlaufView: View {
 
         return List {
             Group {
-                kopf(erster: erster, letzter: letzter)
+                GewichtsverlaufKopf(erster: erster, letzter: letzter, zielwert: zielwert)
                 umschalter
-                diagrammKarte(sichtbar)
-                rohwerteKopf
+                GewichtsverlaufDiagrammKarte(punkte: sichtbar, zielwert: zielwert)
+                    .padding(.horizontal, 20)
+                    .padding(.top, DesignSystem.Spacing.s24)
+                GewichtsverlaufRohwerteKopf()
                 if let loeschFehler {
                     InlineBanner(tone: .danger, message: loeschFehler)
+                        .padding(.horizontal, 20)
                 }
             }
             .listRowInsets(EdgeInsets())
@@ -101,15 +115,25 @@ struct GewichtsverlaufView: View {
             .listRowBackground(DesignSystem.Color.bg)
 
             ForEach(sichtbar.reversed(), id: \.measuredOn) { messwert in
+                let vorheriger = GewichtsverlaufHilfen.vorheriger(verlauf.messwerte, vor: messwert)
+                let diffKg = vorheriger.map { messwert.weightKg - $0.weightKg }
+
                 Button {
                     bearbeitenMesswert = messwert
                     bearbeitenOffen = true
                 } label: {
-                    zeile(messwert)
+                    GewichtsverlaufZeile(
+                        messwert: messwert,
+                        diffText: diffKg.map(HomeZiele.differenzText),
+                        unveraendert: diffKg.map { (($0 * 10).rounded() / 10) == 0 } ?? true)
                 }
                 .buttonStyle(.plain)
-                .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+                .listRowInsets(EdgeInsets())
                 .listRowBackground(DesignSystem.Color.surface)
+                // Der native Trennstrich traegt sonst Systemgrau statt des
+                // Design-Tokens -- dieselbe Linie wie die Karten im Rest
+                // der App (designsystem.md SS2).
+                .listRowSeparatorTint(DesignSystem.Color.line)
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) {
                         Task { await loeschen(messwert) }
@@ -123,12 +147,35 @@ struct GewichtsverlaufView: View {
         .scrollContentBackground(.hidden)
         .environment(\.defaultMinListRowHeight, 44)
     }
+
+    /// Der Akzent markiert den aktiven Wert -- die eine Akzentflaeche
+    /// dieses Screens (SS2), wie in `UebungsfortschrittView`.
+    private var umschalter: some View {
+        HStack(spacing: DesignSystem.Spacing.s8) {
+            ForEach(Fortschrittsfenster.allCases) { wahl in
+                Button(wahl.titel) { fenster = wahl }
+                    .font(DesignSystem.Typography.label)
+                    .padding(.horizontal, DesignSystem.Spacing.s16)
+                    .frame(height: 44)
+                    .background(wahl == fenster ? DesignSystem.Color.accent : DesignSystem.Color.surface)
+                    .foregroundStyle(wahl == fenster ? DesignSystem.Color.onAccent : DesignSystem.Color.textMuted)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.pille))
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, DesignSystem.Spacing.s16)
+    }
 }
 
-// MARK: - Kopf
+// MARK: - Kopf (eigener Typ: steht ausserhalb jeder List/ScrollView und
+// laesst sich deshalb einzeln rendern -- Sichtpruefung Task 9)
 
-private extension GewichtsverlaufView {
-    func kopf(erster: Messwert, letzter: Messwert) -> some View {
+struct GewichtsverlaufKopf: View {
+    let erster: Messwert
+    let letzter: Messwert
+    let zielwert: Double?
+
+    var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
             Text("GEWICHT")
                 .font(DesignSystem.Typography.detailScreentitel)
@@ -151,10 +198,14 @@ private extension GewichtsverlaufView {
                         .foregroundStyle(DesignSystem.Color.accent)
                         .monospacedDigit()
                     if let seitText = GewichtsverlaufHilfen.seitText(erster.measuredOn) {
+                        // Die Zeile traegt in Gewichtsverlauf.dc.html die
+                        // ".eyebrow"-Klasse (color: #9BA3AF) mit nur der
+                        // Schriftgroesse ueberschrieben -- textMuted, nicht
+                        // textFaint (Sichtpruefung, zweite Runde).
                         Text(seitText.uppercased())
                             .font(.system(size: 10, weight: .heavy))
                             .tracking(1.2)
-                            .foregroundStyle(DesignSystem.Color.textFaint)
+                            .foregroundStyle(DesignSystem.Color.textMuted)
                     }
                 }
             }
@@ -166,32 +217,17 @@ private extension GewichtsverlaufView {
         .accessibilityLabel(
             "Gewicht, \(Zahlformat.gewichtGesprochen(letzter.weightKg)), Veränderung \(HomeZiele.differenzText(letzter.weightKg - erster.weightKg))")
     }
-
-    /// Der Akzent markiert den aktiven Wert -- die eine Akzentflaeche
-    /// dieses Screens (SS2), wie in `UebungsfortschrittView`.
-    var umschalter: some View {
-        HStack(spacing: DesignSystem.Spacing.s8) {
-            ForEach(Fortschrittsfenster.allCases) { wahl in
-                Button(wahl.titel) { fenster = wahl }
-                    .font(DesignSystem.Typography.label)
-                    .padding(.horizontal, DesignSystem.Spacing.s16)
-                    .frame(height: 44)
-                    .background(wahl == fenster ? DesignSystem.Color.accent : DesignSystem.Color.surface)
-                    .foregroundStyle(wahl == fenster ? DesignSystem.Color.onAccent : DesignSystem.Color.textMuted)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.pille))
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, DesignSystem.Spacing.s16)
-    }
 }
 
-// MARK: - Diagramm
+// MARK: - Diagramm (eigener Typ, siehe Kopf oben)
 
-private extension GewichtsverlaufView {
-    func diagrammKarte(_ punkte: [Messwert]) -> some View {
+struct GewichtsverlaufDiagrammKarte: View {
+    let punkte: [Messwert]
+    let zielwert: Double?
+
+    var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-            diagramm(punkte)
+            diagramm
             Text("Dein Eintrag je Tag · kg · keine Glättung")
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(DesignSystem.Color.textFaint)
@@ -203,11 +239,9 @@ private extension GewichtsverlaufView {
             RoundedRectangle(cornerRadius: DesignSystem.Radius.neben)
                 .stroke(DesignSystem.Color.line, lineWidth: 1)
         )
-        .padding(.horizontal, 20)
-        .padding(.top, DesignSystem.Spacing.s24)
     }
 
-    func diagramm(_ punkte: [Messwert]) -> some View {
+    private var diagramm: some View {
         Chart {
             // Gestrichelte Ziellinie in text-faint -- Text traegt
             // Textfarben, nie die Serienfarbe (designsystem.md SS13).
@@ -224,7 +258,7 @@ private extension GewichtsverlaufView {
 
             ForEach(punkte, id: \.measuredOn) { punkt in
                 LineMark(
-                    x: .value("Datum", datum(punkt.measuredOn)),
+                    x: .value("Datum", GewichtsverlaufHilfen.datum(punkt.measuredOn)),
                     y: .value("Gewicht", punkt.weightKg)
                 )
                 .lineStyle(StrokeStyle(lineWidth: 2))
@@ -233,7 +267,7 @@ private extension GewichtsverlaufView {
                 // Messpunkte >= 8pt (SS13) -- 64 entspricht derselben
                 // Punktgroesse wie in UebungsfortschrittView.
                 PointMark(
-                    x: .value("Datum", datum(punkt.measuredOn)),
+                    x: .value("Datum", GewichtsverlaufHilfen.datum(punkt.measuredOn)),
                     y: .value("Gewicht", punkt.weightKg)
                 )
                 .symbolSize(64)
@@ -275,22 +309,15 @@ private extension GewichtsverlaufView {
         .accessibilityLabel("Gewichtsverlauf")
         .accessibilityChartDescriptor(GewichtsverlaufChartDescriptor(punkte: punkte, zielwert: zielwert))
     }
-
-    /// "\(Tag)T12:00:00Z" -- Mittag UTC statt Mitternacht, wie
-    /// `UebungsfortschrittView.diagramm`: derselbe Trick vermeidet, dass
-    /// das Parsen an einer Tagesgrenze in eine falsche Zeitzone faellt.
-    func datum(_ measuredOn: String) -> Date {
-        Zeitpunkt.parse("\(measuredOn)T12:00:00Z") ?? Date()
-    }
 }
 
-// MARK: - Rohwerte
+// MARK: - Rohwerte (eigene Typen, siehe Kopf oben)
 
-private extension GewichtsverlaufView {
-    /// "ZULETZT" links, "Antippen ändert, Wischen löscht" rechts, beides
-    /// in text-faint -- die Geste steht sichtbar da, statt stumm zu
-    /// bleiben (designsystem.md SS5, Brief Step 3).
-    var rohwerteKopf: some View {
+/// "ZULETZT" links, "Antippen ändert, Wischen löscht" rechts, beides in
+/// text-faint -- die Geste steht sichtbar da, statt stumm zu bleiben
+/// (designsystem.md SS5, Brief Step 3).
+struct GewichtsverlaufRohwerteKopf: View {
+    var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Text("ZULETZT")
                 .font(DesignSystem.Typography.label)
@@ -305,17 +332,25 @@ private extension GewichtsverlaufView {
         .padding(.top, DesignSystem.Spacing.s24)
         .padding(.bottom, DesignSystem.Spacing.s8)
     }
+}
 
-    func zeile(_ messwert: Messwert) -> some View {
-        let vorheriger = GewichtsverlaufHilfen.vorheriger(verlauf.messwerte, vor: messwert)
-        let diffKg = vorheriger.map { messwert.weightKg - $0.weightKg }
-        let diffText = diffKg.map(HomeZiele.differenzText)
-        let unveraendert = diffKg.map { (($0 * 10).rounded() / 10) == 0 } ?? true
+/// Eine Rohwertzeile -- Datum, Gewicht, Differenz zum Vortag. Nimmt die
+/// Differenz FERTIG BERECHNET entgegen (statt selbst in der vollstaendigen
+/// Messwertliste nachzuschlagen): so bleibt der Typ ohne `VerlaufStore`
+/// instanziierbar, sowohl in der echten Liste als auch in einer
+/// Sichtpruefung als schlichter `VStack` (Task 9, Sichtpruefung).
+struct GewichtsverlaufZeile: View {
+    let messwert: Messwert
+    let diffText: String?
+    let unveraendert: Bool
 
-        return HStack(spacing: DesignSystem.Spacing.s12) {
-            Text(datumKurz(messwert.measuredOn))
+    var body: some View {
+        HStack(spacing: DesignSystem.Spacing.s12) {
+            // color: #5C636E in Gewichtsverlauf.dc.html -- textFaint, nicht
+            // textMuted (Sichtpruefung, zweite Runde).
+            Text(GewichtsverlaufHilfen.datumKurz(messwert.measuredOn))
                 .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(DesignSystem.Color.textMuted)
+                .foregroundStyle(DesignSystem.Color.textFaint)
                 .monospacedDigit()
                 .frame(width: 62, alignment: .leading)
 
@@ -337,6 +372,7 @@ private extension GewichtsverlaufView {
                     .monospacedDigit()
             }
         }
+        .padding(.horizontal, 20)
         .padding(.vertical, DesignSystem.Spacing.s12)
         .frame(minHeight: 44)
         .contentShape(Rectangle())
@@ -345,13 +381,11 @@ private extension GewichtsverlaufView {
         // Element statt dreier unzusammenhaengender Fetzen.
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            diffText.map { "\(Zahlformat.wochentagDatum(datum(messwert.measuredOn))), \(Zahlformat.gewichtGesprochen(messwert.weightKg)), Veränderung \($0)" }
-                ?? "\(Zahlformat.wochentagDatum(datum(messwert.measuredOn))), \(Zahlformat.gewichtGesprochen(messwert.weightKg))")
+            diffText.map {
+                "\(Zahlformat.wochentagDatum(GewichtsverlaufHilfen.datum(messwert.measuredOn))), \(Zahlformat.gewichtGesprochen(messwert.weightKg)), Veränderung \($0)"
+            }
+                ?? "\(Zahlformat.wochentagDatum(GewichtsverlaufHilfen.datum(messwert.measuredOn))), \(Zahlformat.gewichtGesprochen(messwert.weightKg))")
         .accessibilityHint("Antippen ändert, Wischen löscht")
-    }
-
-    func datumKurz(_ measuredOn: String) -> String {
-        Zahlformat.tagMonatKurz(datum(measuredOn))
     }
 }
 

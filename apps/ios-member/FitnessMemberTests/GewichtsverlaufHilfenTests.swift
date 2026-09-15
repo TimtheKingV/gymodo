@@ -66,4 +66,20 @@ struct GewichtsverlaufHilfenTests {
 
         #expect(vorheriger == verlauf[2])
     }
+
+    // MARK: - datum / datumKurz
+    //
+    // Verschoben aus `GewichtsverlaufView` in die Sichtpruefung nach Task 9
+    // (Bausteine mussten ausserhalb jeder List/ScrollView instanziierbar
+    // werden): jetzt pruefbar statt nur privat im View.
+
+    @Test func datumParstDenTagAlsMittagUTC() {
+        let erwartet = Zeitpunkt.parse("2026-09-13T12:00:00Z")
+
+        #expect(GewichtsverlaufHilfen.datum("2026-09-13") == erwartet)
+    }
+
+    @Test func datumKurzKuerztAufTagUndMonat() {
+        #expect(GewichtsverlaufHilfen.datumKurz("2026-09-13") == "13. Sept.")
+    }
 }

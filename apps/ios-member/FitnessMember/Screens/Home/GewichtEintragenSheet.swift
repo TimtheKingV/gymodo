@@ -68,6 +68,102 @@ enum GewichtEintragenHilfen {
     }
 }
 
+/// Der Sheet-Inhalt ohne ScrollView-Huelle -- eigener Typ statt einer
+/// privaten `body`-Rechnung, aus zwei Gruenden: (1) `GewichtEintragenSheet`
+/// selbst bleibt eine ScrollView (Dynamic Type XXL, kleine Geraete --
+/// designsystem.md SS12), und `ImageRenderer` kann eine ScrollView nicht
+/// zeichnen (Sichtpruefung Task 9, Kaltbau-Bericht); dieser Typ schon,
+/// direkt instanziiert. (2) Das Rad kommt als `@ViewBuilder`-Slot: die
+/// Sichtpruefung ersetzt es durch `EmptyView()` ("Inhalt minus Rad"), ohne
+/// dass irgendwo Layout dafuer dupliziert werden muesste.
+struct GewichtEintragenInhalt<Rad: View>: View {
+    @Binding var tag: Date
+    @Binding var datumOffen: Bool
+    let kontextZeile: String
+    let fehler: String?
+    let laeuft: Bool
+    @ViewBuilder let rad: () -> Rad
+    let eintragen: () async -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+            Text("GEWICHT EINTRAGEN")
+                .font(.system(size: 22, weight: .black))
+                .tracking(-0.4)
+                .foregroundStyle(DesignSystem.Color.text)
+
+            datumsZeile
+
+            rad()
+
+            Text(kontextZeile)
+                .font(DesignSystem.Typography.label)
+                .tracking(1)
+                .textCase(.uppercase)
+                .monospacedDigit()
+                .foregroundStyle(DesignSystem.Color.textFaint)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            if let fehler {
+                InlineBanner(tone: .danger, message: fehler)
+            }
+
+            VStack(spacing: DesignSystem.Spacing.s12) {
+                PrimaryButton(title: "Eintragen", isLoading: laeuft) {
+                    await eintragen()
+                }
+                Text("Ein Wert je Tag. Ein zweiter am selben Tag ersetzt den ersten.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(DesignSystem.Color.textFaint)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
+            .padding(.top, DesignSystem.Spacing.s8)
+        }
+    }
+
+    /// Die Datumszeile -- Anzeige plus, bei Antippen, das `DatePicker` IM
+    /// Sheet (Brief Step 2): kein zweiter Screen fuer eine einzige Angabe.
+    /// `in: ...Date()`, weil `measuredOn` nicht in der Zukunft liegen darf
+    /// (Spec 4.3).
+    private var datumsZeile: some View {
+        VStack(spacing: DesignSystem.Spacing.s8) {
+            Button {
+                datumOffen.toggle()
+            } label: {
+                HStack(spacing: DesignSystem.Spacing.s12) {
+                    Text(GewichtEintragenHilfen.datumsZeile(tag))
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(DesignSystem.Color.text)
+                    Spacer(minLength: 0)
+                    Image(systemName: datumOffen ? "chevron.down" : "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Color.textFaint)
+                }
+                .padding(.horizontal, DesignSystem.Spacing.s16)
+                .frame(height: 52)
+                .frame(minHeight: 44)
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.neben)
+                        .stroke(DesignSystem.Color.line, lineWidth: 1)
+                )
+            }
+            .buttonStyle(PressButtonStyle())
+            .accessibilityLabel("Datum")
+            .accessibilityValue(GewichtEintragenHilfen.datumsZeile(tag))
+
+            if datumOffen {
+                DatePicker(
+                    "Datum", selection: $tag, in: ...Date(), displayedComponents: .date
+                )
+                .datePickerStyle(.graphical)
+                .labelsHidden()
+                .tint(DesignSystem.Color.accent)
+            }
+        }
+    }
+}
+
 /// GewichtEintragen.dc.html -- der einzige Schreibweg des Gewichts nach
 /// dem Onboarding (Brief). Von Home aus immer mit dem heutigen Tag
 /// vorbelegt; aus `GewichtsverlaufView` (Tippen auf eine Zeile) mit dem
@@ -113,96 +209,32 @@ struct GewichtEintragenSheet: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
-                Text("GEWICHT EINTRAGEN")
-                    .font(.system(size: 22, weight: .black))
-                    .tracking(-0.4)
-                    .foregroundStyle(DesignSystem.Color.text)
-
-                datumsZeile
-
-                RastRad(
-                    werte: Self.gewichtswerte,
-                    auswahl: $gewicht,
-                    offen: true,
-                    unterstrich: .held,
-                    voLabel: "Gewicht",
-                    voWert: Zahlformat.gewichtGesprochen,
-                    anschlagText: nil,
-                    text: Zahlformat.gewicht
-                )
-
-                Text(GewichtEintragenHilfen.kontextZeile(letzterMesswert: letzterMesswert))
-                    .font(DesignSystem.Typography.label)
-                    .tracking(1)
-                    .textCase(.uppercase)
-                    .monospacedDigit()
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-                    .frame(maxWidth: .infinity, alignment: .center)
-
-                if let fehler {
-                    InlineBanner(tone: .danger, message: fehler)
-                }
-
-                VStack(spacing: DesignSystem.Spacing.s12) {
-                    PrimaryButton(title: "Eintragen", isLoading: laeuft) {
-                        await eintragen()
-                    }
-                    Text("Ein Wert je Tag. Ein zweiter am selben Tag ersetzt den ersten.")
-                        .font(.system(size: 12))
-                        .foregroundStyle(DesignSystem.Color.textFaint)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                }
-                .padding(.top, DesignSystem.Spacing.s8)
-            }
+            GewichtEintragenInhalt(
+                tag: $ausgewaehlterTag,
+                datumOffen: $datumOffen,
+                kontextZeile: GewichtEintragenHilfen.kontextZeile(letzterMesswert: letzterMesswert),
+                fehler: fehler,
+                laeuft: laeuft,
+                rad: {
+                    RastRad(
+                        werte: Self.gewichtswerte,
+                        auswahl: $gewicht,
+                        offen: true,
+                        unterstrich: .held,
+                        voLabel: "Gewicht",
+                        voWert: Zahlformat.gewichtGesprochen,
+                        anschlagText: nil,
+                        text: Zahlformat.gewicht
+                    )
+                },
+                eintragen: eintragen
+            )
             .padding(.horizontal, 20)
             .padding(.top, DesignSystem.Spacing.s24)
             .padding(.bottom, DesignSystem.Spacing.s24)
         }
         .background(DesignSystem.Color.bg)
         .scrollContentBackground(.hidden)
-    }
-
-    /// Die Datumszeile -- Anzeige plus, bei Antippen, das `DatePicker` IM
-    /// Sheet (Brief Step 2): kein zweiter Screen fuer eine einzige Angabe.
-    /// `in: ...Date()`, weil `measuredOn` nicht in der Zukunft liegen darf
-    /// (Spec 4.3).
-    private var datumsZeile: some View {
-        VStack(spacing: DesignSystem.Spacing.s8) {
-            Button {
-                datumOffen.toggle()
-            } label: {
-                HStack(spacing: DesignSystem.Spacing.s12) {
-                    Text(GewichtEintragenHilfen.datumsZeile(ausgewaehlterTag))
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(DesignSystem.Color.text)
-                    Spacer(minLength: 0)
-                    Image(systemName: datumOffen ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(DesignSystem.Color.textFaint)
-                }
-                .padding(.horizontal, DesignSystem.Spacing.s16)
-                .frame(height: 52)
-                .frame(minHeight: 44)
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.neben)
-                        .stroke(DesignSystem.Color.line, lineWidth: 1)
-                )
-            }
-            .buttonStyle(PressButtonStyle())
-            .accessibilityLabel("Datum")
-            .accessibilityValue(GewichtEintragenHilfen.datumsZeile(ausgewaehlterTag))
-
-            if datumOffen {
-                DatePicker(
-                    "Datum", selection: $ausgewaehlterTag, in: ...Date(), displayedComponents: .date
-                )
-                .datePickerStyle(.graphical)
-                .labelsHidden()
-                .tint(DesignSystem.Color.accent)
-            }
-        }
     }
 
     private func eintragen() async {
