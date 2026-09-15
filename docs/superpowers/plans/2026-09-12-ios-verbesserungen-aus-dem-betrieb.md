@@ -365,7 +365,7 @@ Die Liste („Rudermaschine · 20 · Freihantelbereich Nord · vor 2 Stunden ·
 7,5 kg") ist reine Typografie. Ein kleines Bild je Zeile macht das Suchen im
 Studio schneller als jeder Name.
 
-Genutzt wird dasselbe Foto wie auf dem Einstieg (`equipment_models.photo_url`),
+Genutzt wird dasselbe Foto wie auf dem Einstieg (`equipment_models.photo_path`),
 also ohne neue Datenhaltung — nur als Vorschaugröße. Ohne Foto bleibt die
 Zeile wie heute, ohne grauen Platzhalterkasten.
 
@@ -538,7 +538,7 @@ Er geht zuerst, weil er nichts voraussetzt und nichts blockiert.
 Start in die Daumenzone holen.
 
 - Startwege nach unten, laufendes Training samt Uhr in die Mitte.
-- Geräteliste mit Vorschaubild (nutzt `equipment_models.photo_url`, also
+- Geräteliste mit Vorschaubild (nutzt `equipment_models.photo_path`, also
   ohne neue Daten — deshalb hier und nicht im Bilder-Schnitt). Die App holt
   die signierten URLs über `GET /api/v1/me/machine-photos`.
 

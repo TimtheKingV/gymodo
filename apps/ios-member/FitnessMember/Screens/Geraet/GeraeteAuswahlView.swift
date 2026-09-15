@@ -139,12 +139,23 @@ struct GeraeteAuswahlView: View {
                 // LazyVStack statt VStack: eine Section liefert hier keine
                 // eigene VStack fuer ihre Zeilen (siehe gruppe), sonst laedt
                 // die innere VStack doch wieder alle Zeilen auf einmal.
-                LazyVStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+                // Spacing bleibt s8, wie vorher die VStack je Gruppe (Kopf
+                // zu erster Zeile UND Zeile zu Zeile waren dort beide 8pt,
+                // eine einzelne VStack kennt kein gemischtes Spacing) --
+                // eine eigene VStack je Gruppe ginge mit einer Section fuer
+                // die Laziness nicht mehr. Der zusaetzliche Abstand zur
+                // vorherigen Gruppe (12pt wie vorher) kommt deshalb nicht
+                // aus dem Spacing hier, sondern als Top-Padding auf jedem
+                // Gruppenkopf ausser dem ersten (siehe gruppe).
+                LazyVStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
                     if !g.zuletzt.isEmpty {
-                        gruppe("ZULETZT BEI DIR", g.zuletzt)
+                        gruppe("ZULETZT BEI DIR", g.zuletzt, ersteGruppe: true)
                     }
                     if !g.alle.isEmpty {
-                        gruppe(suchtext.isEmpty ? "ALLE GERÄTE · A–Z" : "\(g.alle.count) TREFFER", g.alle)
+                        gruppe(
+                            suchtext.isEmpty ? "ALLE GERÄTE · A–Z" : "\(g.alle.count) TREFFER", g.alle,
+                            ersteGruppe: g.zuletzt.isEmpty
+                        )
                     }
                 }
                 .padding(.horizontal, 20)
@@ -154,7 +165,7 @@ struct GeraeteAuswahlView: View {
     }
 
     @ViewBuilder
-    private func gruppe(_ titel: String, _ eintraege: [GeraeteAuswahl.Eintrag]) -> some View {
+    private func gruppe(_ titel: String, _ eintraege: [GeraeteAuswahl.Eintrag], ersteGruppe: Bool) -> some View {
         Section {
             ForEach(eintraege) { eintrag in
                 if eintrag.gesperrt {
@@ -169,12 +180,12 @@ struct GeraeteAuswahlView: View {
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
-                // Die umschliessende LazyVStack setzt 12pt zwischen allen
-                // Kindern (auch Header zu erster Zeile). Gemessen war der
-                // Abstand Ueberschrift-zu-Zeile bisher 8pt -- die
-                // Ueberschrift zieht sich um die Differenz zusammen, statt
-                // die Zeilenabstaende ungleich zu machen.
-                .padding(.bottom, -4)
+                // Nur ab der zweiten Gruppe: legt zusammen mit dem s8-
+                // Spacing der umschliessenden LazyVStack den alten
+                // Gruppenabstand von 12pt wieder her (8 + 4), ohne das
+                // Spacing selbst zu erhoehen -- das wuerde auch Kopf-zu-
+                // Zeile und Zeile-zu-Zeile innerhalb der Gruppe treffen.
+                .padding(.top, ersteGruppe ? 0 : DesignSystem.Spacing.s4)
         }
     }
 

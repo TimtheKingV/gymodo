@@ -559,7 +559,7 @@ Die Fotos kommen, wie das Studio sie hochgeladen hat, bis 10 MiB. Beim Upload en
   - `actor VorschauLader { init(session: URLSession = .shared); func bild(modellId: String, url: URL, kantePixel: Int) async -> UIImage? }`: merkt sich fertige Bilder je `modellId`, liefert bei jedem Fehler `nil`
   - `GeraeteAuswahlView(fotoLader: any GeraetefotosLoading, beiAuswahl: (String) -> Void)`
 
-- [ ] **Step 1: Tests für `Vorschau.verkleinert`** (`VorschaubildTests.swift`)
+- [x] **Step 1: Tests für `Vorschau.verkleinert`** (`VorschaubildTests.swift`)
 
 ```swift
 import Foundation
@@ -601,9 +601,9 @@ struct VorschaubildTests {
 
   Falls ImageIO ein kleines Bild bei `CreateThumbnailFromImageAlways` doch auf `kantePixel` hochzieht, ist der zweite Test rot. Dann liefert `verkleinert` die Kante als `min(kantePixel, längste Originalkante)` (aus `CGImageSourceCopyPropertiesAtIndex`, `kCGImagePropertyPixelWidth/Height`). Den Test nicht aufweichen.
 
-- [ ] **Step 2: Rot sehen.** `xcodegen generate`, `-only-testing:FitnessMemberTests/VorschaubildTests`.
+- [x] **Step 2: Rot sehen.** `xcodegen generate`, `-only-testing:FitnessMemberTests/VorschaubildTests`.
 
-- [ ] **Step 3: `Vorschaubild.swift` implementieren.**
+- [x] **Step 3: `Vorschaubild.swift` implementieren.**
 
 ```swift
 import ImageIO
@@ -656,7 +656,7 @@ actor VorschauLader {
 }
 ```
 
-- [ ] **Step 4: `GeraeteAuswahlView` umbauen.**
+- [x] **Step 4: `GeraeteAuswahlView` umbauen.**
   - Neuer Parameter `let fotoLader: any GeraetefotosLoading` vor `beiAuswahl`. Neue Zustände: `@State private var fotos: [String: URL] = [:]`, `@State private var bilder: [String: UIImage] = [:]`, `@State private var vorschauLader = VorschauLader()`.
   - Am `body`: `.task { fotos = await GeraeteFotos.laden(von: fotoLader) }`. Das ist ein Abruf je Öffnen, passend zur Lebensdauer der URLs.
   - `inhalt`: Den äußeren `VStack` in der `ScrollView` durch `LazyVStack(alignment: .leading, spacing: DesignSystem.Spacing.s12)` ersetzen. `gruppe` liefert dafür keine eigene `VStack` mehr, sondern `Section { ForEach … } header: { Überschrift }`, sonst lädt die innere `VStack` doch wieder alle Zeilen auf einmal. Die Abstände bleiben sichtbar wie heute: Überschrift zu erster Zeile 8, Zeile zu Zeile 12 (die Überschrift bekommt dafür `.padding(.bottom, -4)` oder eine eigene Zeilenhöhe, nachmessen, nicht raten).
@@ -690,18 +690,18 @@ private func vorschau(_ eintrag: GeraeteAuswahl.Eintrag) -> some View {
   - `accessibilityElement(children: .combine)` an der Zeile bleibt. Das Bild ist versteckt, VoiceOver liest die Zeile wie heute.
   - Dateikommentar am Typ: „Rechnet vollstaendig auf dem Prefetch: kein Netz, kein Ladezustand, keine Fehlerzustaende“ stimmt danach nicht mehr. Umschreiben: Die Liste rechnet auf dem Prefetch, **nur die Vorschaubilder** kommen aus dem Netz und fehlen still, wenn es keins gibt.
 
-- [ ] **Step 5: `TrainingRootView.ziel(_:)`**, Fall `.auswahl`: `GeraeteAuswahlView(fotoLader: apiClient) { machineId in … }`.
+- [x] **Step 5: `TrainingRootView.ziel(_:)`**, Fall `.auswahl`: `GeraeteAuswahlView(fotoLader: apiClient) { machineId in … }`.
 
 - [ ] **Step 6: Kontrast und Überdeckung selbst prüfen.** Die lokale Datenbank hat Geräte ohne Fotos. Deshalb im Simulator gegen das lokale Supabase ein Foto über das Trainerportal hochladen (Modell → Foto) oder per `serviceClient` in `equipment-photos` legen und `photo_path` setzen, einmal hell, einmal fast schwarz. Nachsehen: Die dunkle Vorschau hat eine sichtbare Kante, eine gesperrte Zeile dimmt das Bild mit, und der Text neben dem Bild bricht bei langen Namen („Beinpresse sitzend 45°“) um statt abzuschneiden. Außerdem die Zeilen ohne Bild: Die linke Textkante liegt dort, wo sie heute liegt. Ergebnis in den Bericht.
 
-- [ ] **Step 7: Sammelstelle nachziehen.**
+- [x] **Step 7: Sammelstelle nachziehen.**
   - Punkt 16: Der Satz „also ohne neue Datenhaltung — nur als Vorschaugröße“ bleibt richtig. Dazu kommt ein Satz, dass die Liste die URLs über `GET /api/v1/me/machine-photos` holt (Bucket privat, Bootstrap trägt nur Pfade) und die Bilder in der App auf Vorschaugröße dekodiert.
   - Kopf von „Schnitt 2 — Training-Tab“: „(Client, ohne Server)“ wird „(Client, ein Endpunkt)“, der zweite Spiegelstrich nennt den Endpunkt.
   - Unter „Stand“ einen Punkt **Geräteliste** ergänzen: Vorschaubild je Zeile seit Schnitt 2, Vorschaugrößen am Server gibt es nicht (siehe Schnitt 5).
 
-- [ ] **Step 8: `xcodebuild test`**, grün.
+- [x] **Step 8: `xcodebuild test`**, grün.
 
-- [ ] **Step 9: Commit** — `feat(geraet): Vorschaubild je Zeile in der Geraeteliste`
+- [x] **Step 9: Commit** — `feat(geraet): Vorschaubild je Zeile in der Geraeteliste`
 
 ---
 
