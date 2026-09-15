@@ -15,13 +15,14 @@ enum UnterstrichStil {
     case zweitwert   // Wiederholungen: 3pt
 }
 
-/// Ein Wertrad. Ruhe und Offen sind derselbe Aufbau.
+/// Ein Wertrad, immer offen.
 ///
 /// Der Kniff aus designsystem.md SS7: "die Linie bleibt liegen, die Zahlen
 /// ziehen daran vorbei." Die Unterstreichung gehoert deshalb NICHT zur
 /// scrollenden Zeile -- sie liegt statisch hinter dem Scroller auf Hoehe der
-/// Mittelzeile. Dadurch hat der Screen in beiden Zustaenden dieselbe
-/// Silhouette und der Uebergang ist eine Bewegung statt eines Aufbaus.
+/// Mittelzeile. Seit Schnitt 3 gibt es keinen geschlossenen Zustand mehr
+/// (Sammelstelle Punkt 11): gescrollt wird sofort, und die Linie ist von
+/// Anfang an die Rastmarke.
 ///
 /// Momentum, Deceleration, Rubber-Banding und Unterbrechbarkeit kommen vom
 /// System-Scroller. Das sind genau die vier Dinge, die eine handgeschriebene
@@ -36,7 +37,6 @@ struct RastRad: View {
     /// weder `amAnschlag` je einen Treffer, noch findet `scrollPosition`
     /// eine passende Zeile.
     @Binding var auswahl: Double
-    let offen: Bool
     let unterstrich: UnterstrichStil
     /// VoiceOver: "Gewicht" bzw. "Wiederholungen".
     let voLabel: String
@@ -56,7 +56,6 @@ struct RastRad: View {
     /// Aufgabe 7 unangetastet bleibt.
     var basisGroesse: CGFloat = 64
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .body) private var zeilenhoehe: CGFloat = 44
     @State private var scrollPosition: Double?
     @State private var anschlagStoss = 0
@@ -74,8 +73,7 @@ struct RastRad: View {
             unterstreichung
             scroller
         }
-        .frame(height: offen ? radhoehe : zeilenhoehe * 1.6)
-        .animation(reduceMotion ? nil : DesignSystem.Motion.oeffnen, value: offen)
+        .frame(height: radhoehe)
         .sensoryFeedback(.selection, trigger: auswahl)
         .sensoryFeedback(.impact(weight: .light), trigger: anschlagStoss)
         .accessibilityElement(children: .ignore)
@@ -122,29 +120,14 @@ struct RastRad: View {
             .offset(y: unterstrichVersatz)
     }
 
-    /// Wo der Verlauf oben (und gespiegelt unten) voll deckend wird --
-    /// als Anteil der aktuellen Radhoehe, weil LinearGradient in Anteilen
-    /// rechnet, die Zeile aber in Punkten steht.
-    ///
-    /// Fest verdrahtete 0,32 standen hier vorher, und im offenen Rad
-    /// stimmen sie auch: 0,32 von 220 pt sind rund 70 pt, also anderthalb
-    /// Zeilen Ausblendung je Seite. Im geschlossenen Rad ist der
-    /// Ausschnitt aber nur `zeilenhoehe * 1.6` hoch (rund 70 pt) -- dort
-    /// blieben von den 0,32 gerade 22 pt Ausblendung JE SEITE uebrig und
-    /// damit keine 26 pt voll deckende Mitte, waehrend die Versalhoehe der
-    /// 64-pt-Ziffern bei rund 46 pt liegt. Der Verlauf hat die gewaehlte
-    /// Zahl also oben und unten weggeblendet: sie sah ausgegraut und
-    /// kleiner aus als dieselbe Zahl im offenen Rad, obwohl beide mit
-    /// `basisGroesse` und voller Deckkraft rendern.
-    ///
-    /// Deshalb aus der Zeile gerechnet statt hingeschrieben: die voll
-    /// deckende Mitte ist immer `zeilenhoehe * 1.8` hoch. Offen ergibt das
-    /// wieder genau die 0,32 von vorher, geschlossen faellt die
-    /// Ausblendung auf null -- dort gibt es ohnehin keine Nachbarn, die
-    /// ausblenden koennten (deckkraft(fuer:) setzt sie auf 0).
+    /// Wo der Verlauf oben (und gespiegelt unten) voll deckend wird -- als
+    /// Anteil der Radhoehe, weil LinearGradient in Anteilen rechnet, die
+    /// Zeile aber in Punkten steht. Die voll deckende Mitte ist immer
+    /// `zeilenhoehe * 1.8` hoch: die Versalhoehe der 64-pt-Ziffern liegt bei
+    /// rund 46 pt, und ein Verlauf, der schon in der Mitte beginnt, blendet
+    /// die gewaehlte Zahl selbst an -- sie saehe ausgegraut aus.
     private var verlaufsrand: CGFloat {
-        let hoehe = offen ? radhoehe : zeilenhoehe * 1.6
-        return max(0, (1 - (zeilenhoehe * 1.8) / hoehe) / 2)
+        max(0, (1 - (zeilenhoehe * 1.8) / radhoehe) / 2)
     }
 
     private var scroller: some View {
@@ -174,13 +157,12 @@ struct RastRad: View {
                         .scrollTransition(.interactive, axis: .vertical) { inhalt, phase in
                             inhalt
                                 .scaleEffect(Self.skalierung(fuer: phase.value))
-                                .opacity(deckkraft(fuer: phase.value))
+                                .opacity(Self.deckkraft(fuer: phase.value))
                         }
                 }
             }
             .scrollTargetLayout()
         }
-        .scrollDisabled(!offen)
         .scrollTargetBehavior(.viewAligned)
         .scrollPosition(id: $scrollPosition, anchor: .center)
         // Damit Minimum und Maximum mittig einrasten koennen.
@@ -271,9 +253,8 @@ struct RastRad: View {
 
     // static/nonisolated, weil scrollTransition's Effekt-Closure nonisolated
     // laeuft (sie bekommt ein VisualEffect, kein View) -- beide Funktionen
-    // duerfen deshalb nicht implizit @MainActor sein. skalierung liest
-    // keinen Instanzzustand, deckkraft nur `offen` (ein `let`), beide sind
-    // also verlustfrei aus dem Actor loesbar.
+    // duerfen deshalb nicht implizit @MainActor sein. Beide lesen keinen
+    // Instanzzustand, sind also verlustfrei aus dem Actor loesbar.
     private nonisolated static func skalierung(fuer phase: Double) -> CGFloat {
         switch abs(phase) {
         case ..<0.25: 1.0
@@ -282,11 +263,11 @@ struct RastRad: View {
         }
     }
 
-    private nonisolated func deckkraft(fuer phase: Double) -> Double {
+    private nonisolated static func deckkraft(fuer phase: Double) -> Double {
         switch abs(phase) {
         case ..<0.25: 1.0
-        case ..<0.75: offen ? 0.38 : 0
-        default: offen ? 0.15 : 0
+        case ..<0.75: 0.38
+        default: 0.15
         }
     }
 
@@ -312,22 +293,18 @@ struct RastRad: View {
 #Preview {
     struct Vorschau: View {
         @State private var gewicht = 80.0
-        @State private var offen = true
 
         var body: some View {
             VStack(spacing: DesignSystem.Spacing.s32) {
                 RastRad(
                     werte: Rastwerte.gewichte(min: 5, max: 150, schritt: 2.5),
                     auswahl: $gewicht,
-                    offen: offen,
                     unterstrich: .held,
                     voLabel: "Gewicht",
                     voWert: Zahlformat.gewichtGesprochen,
                     anschlagText: "Maximum des Geräts erreicht",
                     text: Zahlformat.gewicht
                 )
-                Button(offen ? "Schließen" : "Öffnen") { offen.toggle() }
-                    .foregroundStyle(DesignSystem.Color.accent)
             }
             .padding(20)
             .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -3,13 +3,12 @@ import SwiftUI
 /// Die beiden Werte, nackt auf der Flaeche -- kein Kasten, kein Rahmen,
 /// kein Eingabefeld (designsystem.md SS7).
 ///
-/// Ein Tap auf EINE der beiden Zahlen oeffnet BEIDE Raeder. Danach wird nur
-/// noch gescrollt: ohne weiteren Tap und ohne Tastatur, mit dem Daumen der
-/// Hand, die das Handy haelt.
+/// Beide Raeder sind immer aktiv (Sammelstelle Punkt 11): gescrollt wird
+/// sofort, ohne Tap, ohne Tastatur, mit dem Daumen der Hand, die das Handy
+/// haelt.
 struct WertZeile: View {
     @Bindable var modell: GeraetModel
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Die Wiederholungsspalte bekommt feste Breite, das Gewicht den Rest.
     ///
     /// Nicht Geschmack, sondern Struktur: Wiederholungen sind hoechstens
@@ -32,13 +31,6 @@ struct WertZeile: View {
                     .frame(width: wiederholungsspalte, alignment: .leading)
             }
         }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            guard !modell.radOffen else { return }
-            withAnimation(reduceMotion ? nil : DesignSystem.Motion.oeffnen) {
-                modell.radOeffnen()
-            }
-        }
     }
 
     private var kopf: some View {
@@ -47,7 +39,7 @@ struct WertZeile: View {
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
-            Text(modell.radOffen ? "scrollen, dann sichern" : "antippen und scrollen")
+            Text("scrollen, dann sichern")
                 .font(.system(size: 12))
                 .foregroundStyle(DesignSystem.Color.textFaint)
         }
@@ -59,8 +51,13 @@ struct WertZeile: View {
             HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.s4) {
                 RastRad(
                     werte: modell.gewichtsWerte,
-                    auswahl: $modell.gewicht,
-                    offen: modell.radOffen,
+                    // Ueber gewichtGewaehlt, nicht $modell.gewicht: nur so
+                    // weiss das Modell, dass der Wert vom Mitglied kommt und
+                    // ein spaeter Vorschlag ihn nicht mehr ersetzen darf.
+                    auswahl: Binding(
+                        get: { modell.gewicht },
+                        set: { modell.gewichtGewaehlt($0) }
+                    ),
                     unterstrich: .held,
                     voLabel: "Gewicht",
                     voWert: Zahlformat.gewichtGesprochen,
@@ -85,10 +82,12 @@ struct WertZeile: View {
     /// hoerbar (RastRad.voWertMitAnschlag) und spuerbar (anschlagStoss);
     /// sichtbar traegt ihn jetzt die Bereichsangabe in dieser Zeile, deren
     /// Ende man erreicht hat.
+    ///
+    /// Der Vorschlag stand hier im geschlossenen Zustand; seit Schnitt 3
+    /// steht er im Drawer beim Oeffnen des Geraets (RueckblickSheet), damit
+    /// die Zeile immer dasselbe sagt.
     private var kontextzeileGewicht: some View {
-        Text(modell.radOffen
-             ? modell.kontextzeileGewicht
-             : (modell.vorschlagText ?? modell.kontextzeileGewicht))
+        Text(modell.kontextzeileGewicht)
             .font(.system(size: 12))
             .foregroundStyle(DesignSystem.Color.textFaint)
             .accessibilityHidden(true)
@@ -106,7 +105,6 @@ struct WertZeile: View {
                         get: { Double(modell.wiederholungen) },
                         set: { modell.wiederholungen = Int($0) }
                     ),
-                    offen: modell.radOffen,
                     // Dieselbe accent-Linie wie beim Gewicht, nur duenner
                     // (siehe UnterstrichStil): die Linie sagt "hier rastet
                     // der Wert ein" -- dieselbe Aussage gehoert in beiden

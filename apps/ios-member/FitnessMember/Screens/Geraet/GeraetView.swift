@@ -1,10 +1,12 @@
 import SwiftUI
 
-/// Main, GeraetWertRad und GeraetResttimer sind derselbe Screen in drei
-/// Zustaenden -- keine Navigationsziele. designsystem.md SS7 verlangt
-/// dieselbe Silhouette in Ruhe und Offen; zwei Views waeren hier der Fehler.
+/// Main, Pause und Abschluss sind derselbe Screen in drei Zustaenden --
+/// keine Navigationsziele. Einen vierten (Raeder zu / offen) gibt es seit
+/// Schnitt 3 nicht mehr: die Raeder sind immer aktiv, und was am
+/// geschlossenen Zustand hing, ist weg oder im Drawer (Sammelstelle
+/// Punkt 11 bis 13).
 ///
-/// Die Pause ist der vierte Zustand und der einzige AUSSCHLIESSENDE: sie
+/// Die Pause ist unter ihnen der einzige AUSSCHLIESSENDE Zustand: sie
 /// ersetzt Raeder, Einstellwerte und Aktionen, statt sich darueberzulegen.
 /// Vorher blieb alles bedienbar -- man konnte mitten in der Pause das
 /// Gewicht verstellen und den naechsten Satz sichern, was den eben
@@ -62,7 +64,6 @@ struct GeraetView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, DesignSystem.Spacing.s32)
             .animation(reduceMotion ? nil : DesignSystem.Motion.pause, value: modell.phase)
-            .animation(reduceMotion ? nil : DesignSystem.Motion.oeffnen, value: modell.radOffen)
         }
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
@@ -230,8 +231,9 @@ struct GeraetView: View {
 
     private var aktionen: some View {
         VStack(spacing: DesignSystem.Spacing.s12) {
-            // Bleibt im offenen Zustand sichtbar und sichert direkt -- kein
-            // Schliessen-Tap dazwischen (Interaktionsbudget SS9).
+            // Sichert direkt aus dem Rad heraus: scrollen, dann sichern --
+            // zwei Interaktionen, kein Tap dazwischen
+            // (Interaktionsbudget SS9).
             PrimaryButton(title: hauptaktion) {
                 await modell.satzSichern(problemFlag: false, problemReason: nil)
             }

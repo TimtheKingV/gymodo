@@ -69,17 +69,19 @@ struct GeraetModelTests {
         #expect(sut.gewicht == 80.0)
     }
 
-    @Test func kontextUebernehmenLaesstEinBereitsGeoeffnetesRadInRuhe() {
+    @Test func kontextUebernehmenLaesstEinenSelbstGewaehltenWertInRuhe() {
         // Ein spaet eintreffender tagContext darf den Wert nicht mehr unter
-        // dem Daumen ersetzen, sobald das Mitglied das Rad geoeffnet hat
-        // (Review-Fund I2). radOeffnen() ist der einzige Weg dahin.
+        // dem Daumen ersetzen, sobald das Mitglied am Rad gedreht hat
+        // (Review-Fund I2). gewichtGewaehlt(_:) ist der einzige Weg dahin --
+        // seit die Raeder immer offen sind, gibt es kein "Oeffnen" mehr, an
+        // dem man es festmachen koennte.
         let bootstrap = GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)])
         let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrap)
-        sut.radOeffnen()
+        sut.gewichtGewaehlt(75.0)
 
         sut.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 80.0))
 
-        #expect(sut.gewicht == 77.5)
+        #expect(sut.gewicht == 75.0)
         // Der Vorschlag selbst bleibt sichtbar -- nur die Uebernahme in
         // gewicht unterbleibt.
         #expect(sut.vorschlagText == "Vorschlag · +2,5")
@@ -105,8 +107,8 @@ struct GeraetModelTests {
 
     @Test func satzNummerZaehltImBlock() async {
         // Jeder Satz geht durch die Warteschlange, immer -- ein geloeschter
-        // enqueue-Aufruf muss hier auffallen, nicht nur satzNummer/phase/
-        // radOffen (designsystem.md Konstante "gespeichert, wird gesendet").
+        // enqueue-Aufruf muss hier auffallen, nicht nur satzNummer/phase
+        // (designsystem.md Konstante "gespeichert, wird gesendet").
         let erfasser = Erfassungswarteschlange()
         let verzeichnis = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
@@ -121,7 +123,6 @@ struct GeraetModelTests {
 
         #expect(sut.satzNummer == 2)
         #expect(sut.laufendePause != nil)
-        #expect(sut.radOffen == false)
 
         let laufendeSession = sessions.aktiveSession()
         let gespeicherterSatz = laufendeSession?.bloecke.first?.saetze.first

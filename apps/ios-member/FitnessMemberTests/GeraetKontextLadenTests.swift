@@ -96,23 +96,23 @@ struct GeraetKontextLadenTests {
         #expect(modell.gewicht == 40.0)
     }
 
-    /// Derselbe Zirkel-Tap, aber das Mitglied hat das Rad vor dem
-    /// eintreffenden Kontext schon geoeffnet -- `gewichtVomNutzer` muss den
-    /// Wert schuetzen, genau wie auf dem Scan-Weg.
+    /// Derselbe Zirkel-Tap, aber das Mitglied hat vor dem eintreffenden
+    /// Kontext schon am Rad gedreht -- `gewichtVomNutzer` muss den Wert
+    /// schuetzen, genau wie auf dem Scan-Weg.
     ///
     /// Schlaegt fehl, wenn `kontextUebernehmen` den Nutzerschutz fuer den
-    /// machineId-Weg vergaesse: `gewicht` sprang dann trotz geoeffnetem Rad
-    /// auf die 40.0 aus dem Vorschlag.
-    @Test func ohneTokenLaesstEinBereitsGeoeffnetesRadInRuhe() async {
+    /// machineId-Weg vergaesse: `gewicht` sprang dann trotz selbst
+    /// gewaehltem Wert auf die 40.0 aus dem Vorschlag.
+    @Test func ohneTokenLaesstEinenSelbstGewaehltenWertInRuhe() async {
         let loader = FakeGeraetLoader()
         await loader.setKontext(.success(kontextMitFoto))
         let modell = modell(token: nil, loader: loader)
-        modell.radOeffnen()
-        #expect(modell.gewicht == 5.0)
+        modell.gewichtGewaehlt(7.5)
+        #expect(modell.gewicht == 7.5)
 
         await modell.kontextLaden()
 
-        #expect(modell.gewicht == 5.0)
+        #expect(modell.gewicht == 7.5)
     }
 
     /// Ein Fehlschlag bleibt kein Fehlerzustand -- der Screen steht aus

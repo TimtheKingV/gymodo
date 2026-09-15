@@ -83,12 +83,11 @@ final class GeraetModel {
 
     var gewicht: Double
     var wiederholungen: Int
-    var radOffen = false
-    /// Sobald das Mitglied das Rad geoeffnet hat, gehoert `gewicht` ihm --
-    /// ein spaeter eintreffender tagContext (die Anfrage lief seit .task auf
-    /// GeraetView, kann in einem Keller zehn Sekunden brauchen) darf den
-    /// Wert dann nicht mehr unter dem Daumen ersetzen. Der einzige Ort mit
-    /// zwei Schreibern auf denselben Zustand im ganzen Branch.
+    /// Sobald das Mitglied am Rad gedreht hat, gehoert `gewicht` ihm -- ein
+    /// spaeter eintreffender tagContext (die Anfrage lief seit .task auf
+    /// GeraetView, kann in einem Keller zehn Sekunden brauchen) darf den Wert
+    /// dann nicht mehr unter dem Daumen ersetzen. Der einzige Ort mit zwei
+    /// Schreibern auf denselben Zustand im ganzen Branch.
     private var gewichtVomNutzer = false
     /// Die Kalibrierung ist auch ausserhalb des Dreischritts erreichbar
     /// ("aendern" auf Main) -- genau der Fall, der den eigenen Endpoint
@@ -439,18 +438,20 @@ final class GeraetModel {
 
     func kontextUebernehmen(_ geladen: TagContextResponse) {
         kontext = geladen
-        // Unangetastet uebernehmen; hat das Mitglied das Rad schon
-        // geoeffnet, gehoert ihm der Wert -- ein spaeter Vorschlag darf ihn
-        // nicht mehr unter dem Daumen ersetzen.
+        // Unangetastet uebernehmen; hat das Mitglied schon am Rad gedreht,
+        // gehoert ihm der Wert -- ein spaeter Vorschlag darf ihn nicht mehr
+        // unter dem Daumen ersetzen.
         if !gewichtVomNutzer, let vorschlag = geladen.suggestion.resultWeightKg {
             gewicht = Rastwerte.naechster(zu: vorschlag, in: gewichtsWerte)
         }
     }
 
-    /// Einziger Ort, an dem das Rad geoeffnet wird -- markiert `gewicht`
-    /// zugleich als vom Mitglied uebernommen (siehe gewichtVomNutzer).
-    func radOeffnen() {
-        radOffen = true
+    /// Der einzige Weg, auf dem das Mitglied selbst das Gewicht setzt: das
+    /// Rad schreibt hierher, nicht direkt in `gewicht`. init, uebungWechseln
+    /// und kontextUebernehmen setzen `gewicht` programmatisch und lassen die
+    /// Markierung in Ruhe -- sonst schuetzte ein Vorschlag sich vor sich selbst.
+    func gewichtGewaehlt(_ neu: Double) {
+        gewicht = neu
         gewichtVomNutzer = true
     }
 
@@ -462,7 +463,6 @@ final class GeraetModel {
         gewicht = Rastwerte.naechster(
             zu: letzter?.weightKg ?? modell.min, in: gewichtsWerte)
         wiederholungen = GeraetModel.geklemmt(letzter?.reps ?? aktiveUebung?.targetRepsMin ?? 10)
-        radOffen = false
         // Eine andere Uebung hat ihren eigenen Satzzaehler -- eine Pause
         // oder eine Abschlussentscheidung, die zur vorherigen gehoerte,
         // gilt hier nicht mehr.
@@ -484,7 +484,6 @@ final class GeraetModel {
         enqueue(PendingSetWrite(sessionId: geschrieben.sessionId,
                                 setId: geschrieben.setId,
                                 body: geschrieben.body))
-        radOffen = false
         // sessions.satzSichern() oben ist der einzige Fehlschlagpfad, und
         // der wirft nicht -- lokal wird immer geschrieben, auch offline
         // (Spec Abschnitt 8.2). Der Zaehler steigt deshalb hier, nicht
