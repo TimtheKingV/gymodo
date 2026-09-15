@@ -195,7 +195,12 @@ struct GeraetView: View {
             // ein abgeschnittener Name sagt nicht, an welchem Geraet man
             // steht. Der Name steht ueber der Uebungszeile und nicht neben
             // "andere Uebung", weil der Knopf ihm sonst 100 pt Breite nimmt
-            // und schon "RUDERMASCHINE" auf dem SE umbricht.
+            // und schon "RUDERMASCHINE" auf dem SE umbricht. Nebenbei
+            // behoben: der Name hat dadurch in jedem Zustand dieselbe volle
+            // Breite, statt sie zwischen Eingabe und Pause zu wechseln --
+            // genau das liess den Namen im Sichtcheck zu Schnitt 2 in der
+            // Pause links abgeschnitten aufblitzen, waehrend die Breite
+            // unter der Zustandsanimation interpolierte.
             Text(modell.maschine.equipmentModel.name.uppercased())
                 .font(DesignSystem.Typography.geraetename)
                 .tracking(-0.8)

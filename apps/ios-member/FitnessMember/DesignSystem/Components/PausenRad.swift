@@ -46,7 +46,12 @@ struct PausenRad: View {
     }
 
     var body: some View {
-        VStack(spacing: DesignSystem.Spacing.s32) {
+        // Kein eigenes vertikales Padding: der Abstand kommt vom
+        // Satzpfad-VStack, und 48 pt hier plus 32 statt 24 pt Abstand zum
+        // Knopfblock machten die Pause auf einem 667-pt-iPhone auf iOS 26
+        // (510 pt Inhaltshoehe dort) rund 45 pt zu hoch (Plan Schnitt 3,
+        // Task 8).
+        VStack(spacing: DesignSystem.Spacing.s24) {
             rad
             VStack(spacing: DesignSystem.Spacing.s12) {
                 // "Weiter" ist die Hauptaktion dieses Zustands und damit die
@@ -65,7 +70,6 @@ struct PausenRad: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, DesignSystem.Spacing.s24)
     }
 
     /// Eine einzige, ungeschachtelte TimelineView treibt Bogen UND Ziffern
