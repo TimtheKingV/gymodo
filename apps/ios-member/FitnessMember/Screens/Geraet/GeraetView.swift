@@ -103,6 +103,12 @@ struct GeraetView: View {
             guard !Task.isCancelled else { return }
             geradeGesendet = false
         }
+        .testnotizScreen(kontext: [
+            "machineId": modell.maschine.id,
+            "exerciseId": modell.uebungId,
+            // Nur der Fallname: .pause traegt einen Timer, dessen Text sich jede Sekunde aendert.
+            "phase": String(String(describing: modell.phase).prefix { $0 != "(" }),
+        ])
     }
 
     /// Die eine Stelle, an der der Screen entscheidet, was er ist.
@@ -184,6 +190,7 @@ struct GeraetView: View {
                 // Abweichung vom Artboard (Spec Abschnitt 9): dort accent. Die
                 // eine Akzentflaeche des Screens ist die Hauptaktion.
                 Button("andere Übung", action: beiUebungWechseln)
+                    .testnotizElement("geraet.uebung-wechseln", typ: "Button")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(DesignSystem.Color.textMuted)
                     .frame(minHeight: 44)
@@ -233,6 +240,7 @@ struct GeraetView: View {
 
     private var aendernKnopf: some View {
         Button("ändern") { modell.kalibrierungOeffnen() }
+            .testnotizElement("geraet.kalibrierung-aendern", typ: "Button")
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(DesignSystem.Color.textMuted)
             .frame(minHeight: 44)
@@ -246,6 +254,7 @@ struct GeraetView: View {
             PrimaryButton(title: hauptaktion) {
                 await modell.satzSichern(problemFlag: false, problemReason: nil)
             }
+            .testnotizElement("geraet.satz-sichern", typ: "PrimaryButton")
             .accessibilityLabel("\(hauptaktion), \(Zahlformat.gewichtGesprochen(modell.gewicht))")
 
             // Steht direkt unter dem Weg zum naechsten Satz, weil es die
@@ -253,6 +262,7 @@ struct GeraetView: View {
             // hier? Vorher gab es dafuer nur ein kleingesetztes "Zurueck zum
             // Training" ganz unten -- eine Navigation, kein Abschluss.
             SecondaryButton(title: "Gerät abschließen", action: beiZurueckZumTraining)
+                .testnotizElement("geraet.abschliessen", typ: "SecondaryButton")
 
             problemMelden
         }
@@ -288,7 +298,9 @@ struct GeraetView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             PrimaryButton(title: "Gerät abschließen") { beiZurueckZumTraining() }
+                .testnotizElement("geraet.abschliessen", typ: "PrimaryButton")
             SecondaryButton(title: "Weiterer Satz") { modell.weitererSatz() }
+                .testnotizElement("geraet.weiterer-satz", typ: "SecondaryButton")
 
             problemMelden
         }
@@ -298,6 +310,7 @@ struct GeraetView: View {
     /// die naechste, die auseinanderlaeuft.
     private var problemMelden: some View {
         Button("Problem melden", action: beiProblem)
+            .testnotizElement("geraet.problem", typ: "Button")
             .font(.system(size: 15, weight: .semibold))
             .foregroundStyle(DesignSystem.Color.textMuted)
             .frame(maxWidth: .infinity, minHeight: 44)

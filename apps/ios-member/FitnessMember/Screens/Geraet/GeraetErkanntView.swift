@@ -25,6 +25,7 @@ struct GeraetErkanntView: View {
         }
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
+        .testnotizScreen(kontext: ["machineId": modell.maschine.id])
     }
 
     private var kopfzeile: some View {

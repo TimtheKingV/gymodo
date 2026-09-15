@@ -62,6 +62,7 @@ struct ProblemSheet: View {
             }
         }
         .presentationDragIndicator(.visible)
+        .testnotizScreen(kontext: ["machineId": modell.maschine.id])
     }
 
     private var kopf: some View {

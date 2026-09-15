@@ -69,6 +69,7 @@ struct ProfilRootView: View {
                 }
             }
         }
+        .testnotizScreen()
         .sheet(item: $offenesAuswahlFeld) { feld in
             auswahlSheet(feld)
         }
@@ -261,6 +262,7 @@ struct ProfilRootView: View {
                     Text("\(stufe)").tag(stufe)
                 }
             }
+            .testnotizElement("profil.satzziel", typ: "Picker")
             Toggle("Vibration beim Sichern", isOn: $vibrationBeimSichern)
 
             NavigationLink("Passwort ändern") { MemberPasswortAendernView() }
@@ -306,6 +308,7 @@ struct ProfilRootView: View {
                 // ein zweiter Aufruf hier waere ein zweiter Abmeldepfad.
                 Task { await sessionStore.signOut() }
             }
+            .testnotizElement("profil.abmelden", typ: "Button")
         }
         .listRowBackground(DesignSystem.Color.surface)
     }

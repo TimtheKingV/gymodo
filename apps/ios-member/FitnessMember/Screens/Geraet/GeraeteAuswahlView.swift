@@ -49,6 +49,7 @@ struct GeraeteAuswahlView: View {
         }
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
+        .testnotizScreen()
         .task { fotos = await GeraeteFotos.laden(von: fotoLader) }
     }
 

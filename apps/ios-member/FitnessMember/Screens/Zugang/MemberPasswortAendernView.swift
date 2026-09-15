@@ -44,6 +44,7 @@ struct MemberPasswortAendernView: View {
             .padding(.bottom, 20)
             .background(DesignSystem.Color.bg)
         }
+        .testnotizScreen()
     }
 
     private func save() async {

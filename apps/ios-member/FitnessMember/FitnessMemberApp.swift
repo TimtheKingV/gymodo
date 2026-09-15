@@ -24,6 +24,7 @@ struct FitnessMemberApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(apiClient: apiClient)
+                .testnotizInstallieren(netz: netzwerkMonitor, katalog: catalogStore, session: sessionStore)
                 .environment(sessionStore)
                 .environment(catalogStore)
                 .environment(workoutStore)

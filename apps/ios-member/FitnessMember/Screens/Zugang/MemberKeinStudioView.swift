@@ -84,6 +84,7 @@ struct MemberKeinStudioView: View {
                 }
             )
         }
+        .testnotizScreen()
     }
 
     private func joinByCode() async {

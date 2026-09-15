@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Wiederholt Info-Additions.plist: INFOPLIST_FILE gilt je Konfiguration nur einmal. -->
+	<key>SUPABASE_URL</key>
+	<string>$(SUPABASE_URL)</string>
+	<key>SUPABASE_ANON_KEY</key>
+	<string>$(SUPABASE_ANON_KEY)</string>
+	<key>API_BASE_URL</key>
+	<string>$(API_BASE_URL)</string>
+	<key>DATENSCHUTZ_URL</key>
+	<string>$(DATENSCHUTZ_URL)</string>
+	<!-- Testnotiz: Ordner in der Dateien-App und im Finder. Xcode kennt
+	     UIFileSharingEnabled nicht als INFOPLIST_KEY_ (Spike 2026-09-14). -->
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+</dict>
+</plist>

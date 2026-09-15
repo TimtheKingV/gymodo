@@ -65,6 +65,7 @@ struct EinweisungSchritt: View {
             .padding(.vertical, DesignSystem.Spacing.s32)
         }
         .background(DesignSystem.Color.bg)
+        .testnotizScreen()
     }
 
     /// Alle drei Artboards zeigen ein Chevron/Kreuz vor dem Eyebrow-Text in

@@ -55,6 +55,7 @@ struct SessionDetailView: View {
         .background(DesignSystem.Color.bg)
         .scrollContentBackground(.hidden)
         .navigationBarTitleDisplayMode(.inline)
+        .testnotizScreen(kontext: ["sessionId": sessionId])
     }
 
     /// Datum des aeltesten Teils, darunter dieselben zwei Zeilen wie auf

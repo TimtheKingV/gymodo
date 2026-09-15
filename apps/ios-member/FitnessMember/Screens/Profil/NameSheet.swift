@@ -52,5 +52,6 @@ struct NameSheet: View {
             .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear { name = bisher ?? "" }
+        .testnotizScreen()
     }
 }

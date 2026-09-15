@@ -101,6 +101,7 @@ struct TrainingAbschlussView: View {
                 ausfall = error == .offline ? .ohneEmpfang : .serverfehler(error.servertext)
             }
         }
+        .testnotizScreen(kontext: ["sessionId": sessionId.uuidString])
     }
 
     // MARK: - Kopf
