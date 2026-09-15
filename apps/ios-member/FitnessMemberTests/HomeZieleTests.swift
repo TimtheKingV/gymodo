@@ -91,6 +91,56 @@ struct HomeZieleTests {
         #expect(karte.kurve == [84.5, 82.5])
     }
 
+    // MARK: - latestWeight aus dem Bootstrap
+
+    // Spec 4.1: der Bootstrap traegt den juengsten Messwert, damit die Karte
+    // auch ohne Verlaufsabruf (frische Installation, gescheiterter Abruf)
+    // einen Wert zeigt statt der Nachholkarte.
+    @Test func ohneVerlaufAberMitLatestWeightIstKarteMitEinemPunkt() {
+        let mitglied = BootstrapResponse.Member(
+            displayName: nil, trainingGoal: "lose_weight",
+            goals: Ziele(weeklyDays: nil, targetWeight: ziel("target_weight", 78)),
+            latestWeight: messwert("2026-09-08", 82.5))
+        let zustand = HomeZiele.zustand(
+            member: mitglied, messwerte: [],
+            erreichtesZielgewicht: nil, jetzt: jetzt, zeitzone: zeitzone)
+
+        guard case .karte(let karte) = zustand else {
+            Issue.record("Erwartet .karte, war \(zustand)")
+            return
+        }
+        #expect(karte.wert == 82.5)
+        #expect(karte.datumText == "gestern")
+        #expect(karte.differenzText == "±0,0 kg")
+        #expect(karte.abstandText == "noch 4,5 kg")
+        #expect(karte.kurve == [82.5])
+    }
+
+    @Test func ohneVerlaufOhneLatestWeightUndOhneZieleBleibtNachholen() {
+        let zustand = HomeZiele.zustand(
+            member: BootstrapResponse.Member(displayName: nil, latestWeight: nil), messwerte: [],
+            erreichtesZielgewicht: nil, jetzt: jetzt, zeitzone: zeitzone)
+
+        #expect(zustand == .nachholen)
+    }
+
+    /// Der Verlauf gewinnt, sobald er da ist -- `latestWeight` ist nur der
+    /// Ersatz fuer einen leeren.
+    @Test func mitVerlaufZaehltLatestWeightNicht() {
+        let mitglied = BootstrapResponse.Member(
+            displayName: nil, latestWeight: messwert("2026-09-08", 90))
+        let zustand = HomeZiele.zustand(
+            member: mitglied, messwerte: [messwert("2026-09-01", 84.5), messwert("2026-09-07", 82.5)],
+            erreichtesZielgewicht: nil, jetzt: jetzt, zeitzone: zeitzone)
+
+        guard case .karte(let karte) = zustand else {
+            Issue.record("Erwartet .karte, war \(zustand)")
+            return
+        }
+        #expect(karte.wert == 82.5)
+        #expect(karte.kurve == [84.5, 82.5])
+    }
+
     // MARK: - abstandText
 
     @Test func abstandTextNenntDenRestwegZumZiel() {

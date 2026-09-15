@@ -52,6 +52,11 @@ enum HomeZiele {
         jetzt: Date,
         zeitzone: TimeZone = .current
     ) -> Zustand {
+        // Spec 4.1: `latestWeight` steht im Bootstrap, damit die Karte auch
+        // ohne Verlauf (frische Installation, gescheiterter Abruf) einen
+        // Wert hat. Als Verlauf aus einem Punkt: Wert und Datum, Differenz
+        // null, Abstand zum Ziel. Ein geladener Verlauf gewinnt immer.
+        let messwerte = messwerte.isEmpty ? (member.latestWeight.map { [$0] } ?? []) : messwerte
         guard let letzter = messwerte.last else {
             let hatZiel = member.goals.weeklyDays != nil || member.goals.targetWeight != nil
             return hatZiel ? .nurEintragen : .nachholen
