@@ -31,11 +31,6 @@ struct WertZeile: View {
                 wiederholungsrad
                     .frame(width: wiederholungsspalte, alignment: .leading)
             }
-            if !modell.radOffen, let zuletzt = modell.zuletztText {
-                Text(zuletzt)
-                    .font(.system(size: 13))
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-            }
         }
         .contentShape(Rectangle())
         .onTapGesture {

@@ -44,7 +44,7 @@ struct GeraetModelTests {
 
         #expect(sut.gewicht == 77.5)
         #expect(sut.wiederholungen == 11)
-        #expect(sut.zuletztText?.contains("77,5 kg") == true)
+        #expect(sut.rueckblick?.zuletzt == "77,5 kg × 11")
     }
 
     @Test func rastetEinenVorschlagAufDieSchrittweite() {
@@ -440,6 +440,83 @@ struct GeraetModelTests {
 
         #expect(ergebnis == false)
         #expect(sut.kalibrierungFehler?.contains("Ohne Empfang") == true)
+    }
+
+    // MARK: - Rueckblick (Sammelstelle Punkt 11)
+
+    @Test func rueckblickTraegtDenLetztenSatzUndSpaeterDenVorschlag() {
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)])
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrap)
+        // Offline gibt es nur den letzten Satz; der Vorschlag kommt mit dem Kontext.
+        #expect(sut.rueckblick == Rueckblick(zuletzt: "77,5 kg × 11", vorschlag: nil))
+
+        sut.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 80.0))
+
+        #expect(sut.rueckblick == Rueckblick(zuletzt: "77,5 kg × 11", vorschlag: "Vorschlag · +2,5"))
+    }
+
+    @Test func beimErstenMalAmGeraetGibtEsKeinenRueckblick() {
+        // Ohne letzten Satz und ohne Vorschlag haette der Drawer nichts zu
+        // sagen -- er kommt gar nicht (Sammelstelle Punkt 11).
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        #expect(sut.rueckblick == nil)
+        #expect(sut.rueckblickFaellig == false)
+
+        sut.geraetGeoeffnet()
+
+        #expect(sut.rueckblickOffen == false)
+    }
+
+    @Test func rueckblickKommtNurVorDemErstenSatzDesBlocks() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)]),
+                         satzZiel: 3)
+        #expect(sut.rueckblickFaellig == true)
+        sut.geraetGeoeffnet()
+        #expect(sut.rueckblickOffen == true)
+        sut.rueckblickOffen = false
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        sut.pauseBeenden()
+
+        // Vor Satz 2 ist der Rueckblick da, aber nicht mehr faellig -- und ein
+        // erneutes "Oeffnen" (das im View nicht vorkommt) holte ihn nicht zurueck.
+        #expect(sut.rueckblick != nil)
+        #expect(sut.rueckblickFaellig == false)
+        sut.geraetGeoeffnet()
+        #expect(sut.rueckblickOffen == false)
+    }
+
+    @Test func imZirkelZurueckAmGeraetKommtDerRueckblickNichtNochEinmal() {
+        // Ueber die Blockliste entsteht ein FRISCHES GeraetModel
+        // (TrainingRootView.modell(...)); bootstrap ist die alte Momentaufnahme
+        // mit dem letzten Satz von gestern, nur die lokale Session weiss vom
+        // ersten Satz von heute. satzNummer liest aus der Session -- deshalb
+        // ist sie die tragende Bedingung, nicht bootstrap.
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 77.5, reps: 11,
+                                  problemFlag: false, problemReason: nil)
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)]),
+                         sessions: sessions)
+
+        #expect(sut.rueckblick != nil)
+        #expect(sut.rueckblickFaellig == false)
+    }
+
+    @Test func rueckblickGehoertZurAngezeigtenUebung() {
+        // Derselbe Uebungs-Vorbehalt wie bei kalibrierungswerte: der letzte Satz
+        // von e2 sagt nichts ueber e1.
+        let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: [("m1", "e2", 40, 10)]))
+        #expect(sut.rueckblick == nil)
+
+        sut.uebungWechseln(zu: "e2")
+
+        #expect(sut.rueckblick?.zuletzt == "40,0 kg × 10")
     }
 }
 

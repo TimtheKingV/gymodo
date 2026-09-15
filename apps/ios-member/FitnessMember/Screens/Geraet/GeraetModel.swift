@@ -21,6 +21,17 @@ struct Einstellwert: Identifiable, Equatable {
     let anzeige: String
 }
 
+/// Was der Drawer beim Oeffnen des Geraets sagt. nil, wenn er nichts zu
+/// sagen haette: beim ersten Mal an diesem Geraet gibt es weder einen
+/// letzten Satz noch einen Vorschlag (Sammelstelle Punkt 11).
+struct Rueckblick: Equatable {
+    /// "77,5 kg × 11" -- der letzte eigene Satz dieser Uebung an diesem
+    /// Geraet, aus dem Prefetch, also auch offline.
+    let zuletzt: String
+    /// "Vorschlag · +2,5", sobald der Kontext da ist. Offline nil.
+    let vorschlag: String?
+}
+
 /// Der Zustand eines geoeffneten Geraete-Screens.
 ///
 /// Kein weiterer globaler Store: Der Screen wird gepusht, lebt so lange wie
@@ -320,12 +331,30 @@ final class GeraetModel {
         return "Vorschlag · \(vorzeichen)\(Zahlformat.gewicht(abs(delta)))"
     }
 
-    var zuletztText: String? {
+    var rueckblick: Rueckblick? {
         guard let letzter = bootstrap.lastSets.first(where: {
             $0.machineId == maschine.id && $0.exerciseId == uebungId
         }) else { return nil }
-        return "Zuletzt \(Zahlformat.gewichtMitEinheit(letzter.weightKg)) × \(letzter.reps)"
+        return Rueckblick(
+            zuletzt: "\(Zahlformat.gewichtMitEinheit(letzter.weightKg)) × \(letzter.reps)",
+            vorschlag: vorschlagText
+        )
     }
+
+    /// Die Regel "wann kommt der Drawer": nur vor dem ersten Satz DIESES
+    /// Geraeteblocks, und nur, wenn es einen Rueckblick gibt. satzNummer liest
+    /// live aus der lokalen Session -- im Zirkel zurueck am selben Geraet ist
+    /// der erste Satz laengst gesichert, auch wenn bootstrap ihn nicht kennt.
+    var rueckblickFaellig: Bool { satzNummer == 1 && rueckblick != nil }
+
+    /// Ob der Drawer gerade steht. GeraetScreen bindet sein Sheet daran.
+    var rueckblickOffen = false
+
+    /// Einmal beim Oeffnen des Screens -- nicht nach jedem Satz und nicht beim
+    /// Uebungswechsel. Der Drawer ist der Blick zurueck VOR dem ersten Satz;
+    /// danach waere er eine Karte, die den Satzpfad wieder hoeher macht
+    /// (Punkt 12).
+    func geraetGeoeffnet() { rueckblickOffen = rueckblickFaellig }
 
     func letztesGewicht(fuer uebungId: String) -> Double? {
         bootstrap.lastSets.first {
