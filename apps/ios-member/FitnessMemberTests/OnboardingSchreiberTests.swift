@@ -215,6 +215,52 @@ struct OnboardingSchreiberTests {
         #expect(profilSchreiben.last?.heightCm == 170)
     }
 
+    // R21: die Nachholkarte (Aufgabe 8) laeuft nach einem bereits
+    // abgeschlossenen Onboarding -- `onboardingDone` darf hier nie
+    // (wieder) gesetzt werden, auch wenn alle Stammdaten beantwortet sind.
+    @Test("mitAbschluss: false schreibt das Profil ohne onboardingDone, obwohl Stammdaten beantwortet sind")
+    func sheetModusOhneAbschlussFlag() async {
+        let fake = FakeProfilSchreibend()
+        let ergebnis = await OnboardingSchreiber.schreiben(volleAntworten, mit: fake, mitAbschluss: false)
+        #expect(ergebnis == .fertig)
+
+        let aufrufe = await fake.aufrufe
+        #expect(aufrufe == ["updateProfile", "putMeasurement", "setGoal(weekly_days)", "setGoal(target_weight)"])
+
+        let profilSchreiben = await fake.profilSchreiben
+        #expect(profilSchreiben.count == 1)
+        // nil, nicht false: die Eigenschaft heisst "nicht gesendet"
+        // (siehe ProfilWrite.encode), ein explizites false waere ein
+        // zweiter Weg, dasselbe zu sagen.
+        #expect(profilSchreiben.first?.onboardingDone == nil)
+    }
+
+    // R21: ohne jede Antwort und ohne Abschluss gibt es nichts zu
+    // schreiben -- anders als im Wurzel-Modus laeuft `updateProfile` hier
+    // NICHT automatisch mit, weil kein `onboardingDone` zu setzen ist.
+    @Test("mitAbschluss: false und leere Antworten schreiben gar nichts")
+    func sheetModusOhneAbschlussFlagUndLeereAntworten() async {
+        let fake = FakeProfilSchreibend()
+        let ergebnis = await OnboardingSchreiber.schreiben(OnboardingAntworten(), mit: fake, mitAbschluss: false)
+        #expect(ergebnis == .fertig)
+        let aufrufe = await fake.aufrufe
+        #expect(aufrufe.isEmpty)
+    }
+
+    // R21: nur Gewicht beantwortet (kein Stammdatenfeld) -- das Profil-PUT
+    // muss aussenvor bleiben, weil es ohne mitAbschluss und ohne eigene
+    // Antwort nichts zu sagen haette.
+    @Test("mitAbschluss: false ohne Stammdaten, aber mit Gewicht, schreibt nur die Messung")
+    func sheetModusOhneAbschlussFlagNurGewicht() async {
+        let fake = FakeProfilSchreibend()
+        var antworten = OnboardingAntworten()
+        antworten.gewichtKg = 82.5
+        let ergebnis = await OnboardingSchreiber.schreiben(antworten, mit: fake, mitAbschluss: false)
+        #expect(ergebnis == .fertig)
+        let aufrufe = await fake.aufrufe
+        #expect(aufrufe == ["putMeasurement"])
+    }
+
     @Test("scheitert ein spaeterer Vorgang bei der Wiederholung, schrumpft offen auf ihn und die folgenden")
     func spaetererVorgangScheitertBeiWiederholung() async {
         let fake = FakeProfilSchreibend()

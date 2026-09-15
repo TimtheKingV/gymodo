@@ -32,9 +32,7 @@ struct RootView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(DesignSystem.Color.bg)
             case .onboarding:
-                // Aufgabe 7 ersetzt dies durch den OnboardingFlow; bis dahin
-                // haelt der Platzhalter den Bau gruen (Brief Step 3).
-                PlaceholderView(title: "Onboarding")
+                OnboardingFlow(apiClient: apiClient, alsSheet: false) { }
             case .noStudio:
                 NavigationStack { MemberKeinStudioView() }
                     .tint(DesignSystem.Color.accent)

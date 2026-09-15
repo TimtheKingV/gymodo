@@ -45,47 +45,58 @@ enum OnboardingErgebnis: Equatable {
 /// die Ziele danach, oeffnet sich das Gate nicht mehr, aber Home zeigt die
 /// Nachholkarte, und die traegt dieselben Antworten (Spec 5.2).
 enum OnboardingSchreiber {
+    /// `mitAbschluss` unterscheidet die zwei Laeufe desselben Flows (R21):
+    /// als Wurzel-Gate (Vorgabe `true`) setzt das Profil-PUT
+    /// `onboardingDone`, und laeuft deshalb immer mit, auch bei leeren
+    /// Antworten -- irgendetwas muss das Gate schliessen. Als Sheet
+    /// (Nachholkarte auf Home, Aufgabe 8) ist das Onboarding auf dem
+    /// Server bereits abgeschlossen: ein zweites `onboardingDone` gaebe es
+    /// nicht, und das Profil-PUT liefe nur noch fuer eigene Antworten mit.
     static func schreiben(
         _ antworten: OnboardingAntworten,
         mit client: some ProfilSchreibend,
+        mitAbschluss: Bool = true,
         offen: [OnboardingSchreibvorgang]? = nil
     ) async -> OnboardingErgebnis {
-        if mussLaufen(.profil, antworten: antworten, offen: offen) {
+        if mussLaufen(.profil, antworten: antworten, mitAbschluss: mitAbschluss, offen: offen) {
             let schreibvorgang = ProfilWrite(
                 sex: antworten.geschlecht.map { .setzen($0.rawValue) },
                 heightCm: antworten.groesseCm.map { .setzen($0) },
                 ageBand: antworten.altersspanne.map { .setzen($0.rawValue) },
                 trainingGoal: antworten.richtung.map { .setzen($0.rawValue) },
-                onboardingDone: true
+                // nil statt false im Sheet-Modus: die Eigenschaft heisst
+                // "nicht gesendet" (siehe ProfilWrite.encode), kein
+                // zweiter Weg, dasselbe zu sagen.
+                onboardingDone: mitAbschluss ? true : nil
             )
             do {
                 _ = try await client.updateProfile(schreibvorgang)
             } catch {
-                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .profil, antworten: antworten), fehler: error)
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .profil, antworten: antworten, mitAbschluss: mitAbschluss), fehler: error)
             }
         }
 
-        if mussLaufen(.messwert, antworten: antworten, offen: offen) {
+        if mussLaufen(.messwert, antworten: antworten, mitAbschluss: mitAbschluss, offen: offen) {
             do {
                 _ = try await client.putMeasurement(MesswertWrite(measuredOn: heute(), weightKg: antworten.gewichtKg!))
             } catch {
-                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .messwert, antworten: antworten), fehler: error)
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .messwert, antworten: antworten, mitAbschluss: mitAbschluss), fehler: error)
             }
         }
 
-        if mussLaufen(.wochenziel, antworten: antworten, offen: offen) {
+        if mussLaufen(.wochenziel, antworten: antworten, mitAbschluss: mitAbschluss, offen: offen) {
             do {
                 _ = try await client.setGoal(ZielWrite(kind: "weekly_days", targetValue: Double(antworten.tageProWoche!)))
             } catch {
-                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .wochenziel, antworten: antworten), fehler: error)
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .wochenziel, antworten: antworten, mitAbschluss: mitAbschluss), fehler: error)
             }
         }
 
-        if mussLaufen(.zielgewicht, antworten: antworten, offen: offen) {
+        if mussLaufen(.zielgewicht, antworten: antworten, mitAbschluss: mitAbschluss, offen: offen) {
             do {
                 _ = try await client.setGoal(ZielWrite(kind: "target_weight", targetValue: antworten.zielgewichtKg!))
             } catch {
-                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .zielgewicht, antworten: antworten), fehler: error)
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .zielgewicht, antworten: antworten, mitAbschluss: mitAbschluss), fehler: error)
             }
         }
 
@@ -93,11 +104,19 @@ enum OnboardingSchreiber {
     }
 
     /// Ob es fuer diesen Vorgang ueberhaupt etwas zu schreiben gibt.
-    /// `.profil` laeuft immer -- er setzt `onboardingDone`, auch bei
-    /// leeren Antworten. Die drei anderen nur, wenn ihr Feld gesetzt ist.
-    private static func hatAntwort(_ vorgang: OnboardingSchreibvorgang, antworten: OnboardingAntworten) -> Bool {
+    ///
+    /// `.profil` laeuft im Wurzel-Modus (`mitAbschluss == true`) immer --
+    /// er setzt `onboardingDone`, auch bei leeren Antworten. Im
+    /// Sheet-Modus gibt es kein Gate zu schliessen, also laeuft er nur mit
+    /// einer eigenen Antwort: einem der vier Stammdatenfelder. Gewicht,
+    /// Wochentage und Zielgewicht gehoeren zu den anderen drei Vorgaengen
+    /// und zaehlen hier nicht mit.
+    private static func hatAntwort(_ vorgang: OnboardingSchreibvorgang, antworten: OnboardingAntworten, mitAbschluss: Bool) -> Bool {
         switch vorgang {
-        case .profil: true
+        case .profil:
+            mitAbschluss
+                || antworten.geschlecht != nil || antworten.altersspanne != nil
+                || antworten.groesseCm != nil || antworten.richtung != nil
         case .messwert: antworten.gewichtKg != nil
         case .wochenziel: antworten.tageProWoche != nil
         case .zielgewicht: antworten.zielgewichtKg != nil
@@ -111,8 +130,8 @@ enum OnboardingSchreiber {
     /// benennt Schreibvorgaenge (R19), keine Screens, also keine
     /// Mehrdeutigkeit: ein erfolgreich geschriebenes Profil taucht in
     /// keinem spaeteren `offen` mehr auf (R18).
-    private static func mussLaufen(_ vorgang: OnboardingSchreibvorgang, antworten: OnboardingAntworten, offen: [OnboardingSchreibvorgang]?) -> Bool {
-        guard hatAntwort(vorgang, antworten: antworten) else { return false }
+    private static func mussLaufen(_ vorgang: OnboardingSchreibvorgang, antworten: OnboardingAntworten, mitAbschluss: Bool, offen: [OnboardingSchreibvorgang]?) -> Bool {
+        guard hatAntwort(vorgang, antworten: antworten, mitAbschluss: mitAbschluss) else { return false }
         guard let offen else { return true }
         return offen.contains(vorgang)
     }
@@ -120,10 +139,10 @@ enum OnboardingSchreiber {
     /// `offen` fuer einen Fehler bei `fehlerBei`: dieser Vorgang selbst,
     /// plus alle spaeteren mit einer Antwort -- die wurden nie versucht,
     /// weil beim ersten Fehler abgebrochen wird. In Schreibreihenfolge.
-    private static func offeneVorgaenge(abFehlerBei fehlerBei: OnboardingSchreibvorgang, antworten: OnboardingAntworten) -> [OnboardingSchreibvorgang] {
+    private static func offeneVorgaenge(abFehlerBei fehlerBei: OnboardingSchreibvorgang, antworten: OnboardingAntworten, mitAbschluss: Bool) -> [OnboardingSchreibvorgang] {
         OnboardingSchreibvorgang.allCases
             .drop { $0 != fehlerBei }
-            .filter { hatAntwort($0, antworten: antworten) }
+            .filter { hatAntwort($0, antworten: antworten, mitAbschluss: mitAbschluss) }
     }
 
     /// Das Ortsdatum des Geraets fuer den Gewichtseintrag -- das
