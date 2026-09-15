@@ -34,8 +34,13 @@ präzisiert:
   genug Höhe für die Geräteliste bleibt. Ohne Training bleibt die Mitte
   leer. Punkt 3 und 8 sind damit umgesetzt.
 - **Gerät** hat seit `8f73fa0` eine Trainingsuhr im Kopf
-  (`GeraetView.trainingsuhr`); `radOffen` gibt es weiterhin, Punkt 11 bis 13
-  bleiben wie beschrieben.
+  (`GeraetView.trainingsuhr`). Seit Schnitt 3 sind die Räder immer aktiv
+  (`radOffen` gibt es nicht mehr), Rückblick und Vorschlag stehen in einem
+  Drawer beim Öffnen (`GeraetModel.rueckblick`, `rueckblickFaellig`,
+  `RueckblickSheet`), die Einstellwerte nur noch als Zeile, und der
+  Satzpfad passt mit drei Radzeilen und „Problem melden“ neben „Gerät
+  abschließen“ auf 667 pt (gerechnet 492 von 510 pt, die iOS 26 dem Inhalt
+  dort lässt). Punkt 11 bis 13 sind damit umgesetzt.
 - **Die Karten** heißen jetzt `HomeZeilen.kartenTitel` (Zeitraum, sonst „ab
   18:04") und `zeilenText` („41 min · 1 Gerät · 3 Sätze") — das sind die
   beiden Zeilen, die Punkt 17 tauscht.
@@ -544,6 +549,8 @@ Start in die Daumenzone holen.
 
 ### Schnitt 3 — Satzpfad am Gerät (Client, ohne Server)
 
+Umgesetzt, Plan: `docs/superpowers/plans/2026-09-15-schnitt3-satzpfad.md`.
+
 **Punkte 11, 12, 13.** Ein Grund: `radOffen` verschwindet, und damit fällt
 alles weg, was daran hing.
 
@@ -552,7 +559,9 @@ alles weg, was daran hing.
   eines Blocks, beim ersten Mal am Gerät gar nicht.
 - Einstellwerte nur noch als schmale Zeile.
 - Ergebnis messen: passt der Pfad ohne Seiten-Scrollen auf ein iPhone mini
-  bei Standard-Dynamic-Type?
+  bei Standard-Dynamic-Type? Gemessen auf dem iPhone-SE-Simulator (3. Gen.,
+  iOS 26.3): 510 pt Inhaltshöhe, Satzpfad 492 pt — passt ohne
+  Seiten-Scrollen.
 
 ### Schnitt 4 — Was eine Einheit ist (Client + eine Migration)
 

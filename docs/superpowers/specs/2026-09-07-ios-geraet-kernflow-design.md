@@ -204,7 +204,7 @@ Das Press-Feedback wird **einmal** als `ButtonStyle` in `DesignSystem` definiert
 **Interaktionsbudget nachgerechnet** (§9, Abnahmebedingung):
 
 - Normalfall: ein Tap auf „Satz N sichern".
-- Abweichungsfall: ein Tap öffnet beide Räder, Scrollen ist kostenlos, „Satz N sichern" bleibt im offenen Zustand sichtbar und sichert direkt — kein Schließen-Tap dazwischen. **Zwei Interaktionen.** ✔
+- Abweichungsfall: ein Tap öffnet beide Räder, Scrollen ist kostenlos, „Satz N sichern" bleibt im offenen Zustand sichtbar und sichert direkt — kein Schließen-Tap dazwischen (seit Schnitt 3: die Räder sind immer aktiv, kein Tap; Rückblick und Vorschlag stehen im Drawer beim Öffnen, siehe designsystem.md §7). **Zwei Interaktionen.** ✔
 
 ---
 
@@ -330,7 +330,7 @@ Kein Toast, kein Häkchen-Jubel — §10 verbietet den Motivationston, und ein e
 
 ### 8.6 Der Vorschlag
 
-Unter dem Gewicht steht „Vorschlag · +2,5", nie „Du solltest" (§10: eine Rechnung, keine Empfehlung). Der Wert kommt aus `tagContext.suggestion` und existiert offline nicht — dort steht stattdessen der letzte eigene Wert aus `bootstrap.lastSets`. Beim Erstkontakt steht dort nichts (Abschnitt 7.3).
+Unter dem Gewicht steht „Vorschlag · +2,5", nie „Du solltest" (§10: eine Rechnung, keine Empfehlung). Der Wert kommt aus `tagContext.suggestion` und existiert offline nicht — dort steht stattdessen der letzte eigene Wert aus `bootstrap.lastSets` (seit Schnitt 3: die Räder sind immer aktiv, kein Tap; Rückblick und Vorschlag stehen im Drawer beim Öffnen, siehe designsystem.md §7). Beim Erstkontakt steht dort nichts (Abschnitt 7.3).
 
 ---
 
