@@ -259,6 +259,7 @@ struct KursDetailView: View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             screenInhalt(jetzt: context.date)
         }
+        .testnotizScreen(kontext: ["sessionId": sessionId])
     }
 
     @ViewBuilder

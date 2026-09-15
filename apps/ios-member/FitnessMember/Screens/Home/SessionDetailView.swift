@@ -42,6 +42,7 @@ struct SessionDetailView: View {
         .background(DesignSystem.Color.bg)
         .scrollContentBackground(.hidden)
         .navigationBarTitleDisplayMode(.inline)
+        .testnotizScreen(kontext: ["sessionId": sessionId])
     }
 
     private func kopf(_ einheit: SessionSummary) -> some View {

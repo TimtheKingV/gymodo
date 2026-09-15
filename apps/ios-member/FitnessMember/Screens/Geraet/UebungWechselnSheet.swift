@@ -45,6 +45,7 @@ struct UebungWechselnSheet: View {
             }
         }
         .presentationDragIndicator(.visible)
+        .testnotizScreen(kontext: ["machineId": modell.maschine.id])
     }
 
     private func zeile(_ uebung: GeraetUebung) -> some View {

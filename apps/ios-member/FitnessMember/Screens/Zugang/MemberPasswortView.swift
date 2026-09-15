@@ -50,6 +50,7 @@ struct MemberPasswortView: View {
         .navigationDestination(isPresented: $didRequest) {
             MemberPasswortZuruecksetzenView(email: requestEmail)
         }
+        .testnotizScreen()
     }
 
     /// Schaltet unabhaengig vom tatsaechlichen Ergebnis weiter -- die

@@ -65,6 +65,7 @@ struct MemberStudiosView: View {
         } message: { _ in
             Text("Ein Studio, das du verlässt, verliert dich als Mitglied — deine Sätze und dein Fortschritt bleiben bei dir.")
         }
+        .testnotizScreen()
     }
 
     private func leave(_ studio: BootstrapResponse.Studio) async {

@@ -52,6 +52,7 @@ struct ScannerSheet: View {
         .sensoryFeedback(.success, trigger: erkannt)
         .presentationDragIndicator(.hidden)
         .presentationCornerRadius(DesignSystem.Radius.haupt)
+        .testnotizScreen(kontext: ["titel": titel])
     }
 
     private var kopf: some View {

@@ -45,6 +45,7 @@ struct ErsteWerteSchritt: View {
         }
         .background(DesignSystem.Color.bg)
         .onAppear { modell.radOeffnen() }
+        .testnotizScreen()
     }
 
     private var kopf: some View {

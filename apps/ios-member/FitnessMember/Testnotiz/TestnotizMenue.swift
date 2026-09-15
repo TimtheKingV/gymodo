@@ -42,7 +42,7 @@ struct TestnotizMenue: View {
     }
 
     private var kopfzeile: String {
-        "TESTNOTIZ"
+        (testnotiz.stapel.aktueller?.name ?? "Testnotiz").uppercased()
     }
 
     private var eintraege: [Eintrag] {

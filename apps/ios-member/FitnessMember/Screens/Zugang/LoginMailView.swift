@@ -59,6 +59,7 @@ struct LoginMailView: View {
             .padding(.bottom, 20)
             .background(DesignSystem.Color.bg)
         }
+        .testnotizScreen()
     }
 
     private func submit() async {

@@ -281,6 +281,7 @@ struct KurseWochenView: View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             screenInhalt(jetzt: context.date)
         }
+        .testnotizScreen()
     }
 
     private func screenInhalt(jetzt: Date) -> some View {

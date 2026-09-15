@@ -79,6 +79,7 @@ struct HomeRootView: View {
             .background(DesignSystem.Color.bg)
             .scrollContentBackground(.hidden)
             .refreshable { await neuLaden() }
+            .testnotizScreen()
             .navigationDestination(for: HomeRoute.self) { route in
                 switch route {
                 case .sessionDetail(let id):

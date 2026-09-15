@@ -127,6 +127,7 @@ struct TrainingRootView: View {
                 }
             }
             .background(DesignSystem.Color.bg)
+            .testnotizScreen()
             .navigationDestination(for: GeraetRoute.self, destination: ziel)
             .sheet(isPresented: $scannerOffen) {
                 ScannerSheet(

@@ -64,6 +64,7 @@ struct MemberRegistrierenView: View {
         .navigationDestination(isPresented: $didRequireConfirmation) {
             LoginCodeView(email: email, apiClient: apiClient)
         }
+        .testnotizScreen()
     }
 
     private func submit() async {

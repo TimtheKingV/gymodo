@@ -37,6 +37,7 @@ struct UebungsfortschrittView: View {
         .background(DesignSystem.Color.bg)
         .scrollContentBackground(.hidden)
         .navigationBarTitleDisplayMode(.inline)
+        .testnotizScreen(kontext: ["exerciseId": exerciseId])
     }
 
     private func kopf(_ uebung: ExerciseProgress) -> some View {

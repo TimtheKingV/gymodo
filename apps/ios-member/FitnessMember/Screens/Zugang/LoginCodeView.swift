@@ -67,6 +67,7 @@ struct LoginCodeView: View {
         .onChange(of: code.isComplete) { _, complete in
             if complete { Task { await submit() } }
         }
+        .testnotizScreen()
     }
 
     private var formattedCountdown: String {

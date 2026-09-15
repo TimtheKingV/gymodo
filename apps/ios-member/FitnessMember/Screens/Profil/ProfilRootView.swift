@@ -54,6 +54,7 @@ struct ProfilRootView: View {
                 }
             }
         }
+        .testnotizScreen()
     }
 
     /// Antippbar, anders als im Artboard: die Registrierung erfragt den

@@ -35,6 +35,7 @@ struct GeraeteAuswahlView: View {
         }
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
+        .testnotizScreen()
     }
 
     // MARK: - Kopf

@@ -18,6 +18,7 @@ final class Testnotiz {
     /// Bildschirmrahmen des Knopfs. Ausserhalb davon laesst das Fenster in
     /// Ruhe jede Beruehrung zur App durch.
     var knopfRahmen: CGRect = .zero
+    var stapel = TestnotizScreenStapel()
 
     @ObservationIgnored private(set) var fenster: TestnotizFenster?
     @ObservationIgnored private(set) weak var netz: NetzwerkMonitor?

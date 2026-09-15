@@ -71,6 +71,7 @@ struct KalibrierungSchritt: View {
         // das startete das Rad immer am Minimum statt an der bisherigen
         // Kalibrierung, weil `entwurfEinstellung` sonst nie befuellt wird.
         .onAppear { modell.kalibrierungVorbereiten() }
+        .testnotizScreen()
     }
 
     private var kopf: some View {

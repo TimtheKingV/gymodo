@@ -103,6 +103,12 @@ struct GeraetView: View {
             guard !Task.isCancelled else { return }
             geradeGesendet = false
         }
+        .testnotizScreen(kontext: [
+            "machineId": modell.maschine.id,
+            "exerciseId": modell.uebungId,
+            // Nur der Fallname: .pause traegt einen Timer, dessen Text sich jede Sekunde aendert.
+            "phase": String(String(describing: modell.phase).prefix { $0 != "(" }),
+        ])
     }
 
     /// Die eine Stelle, an der der Screen entscheidet, was er ist.
