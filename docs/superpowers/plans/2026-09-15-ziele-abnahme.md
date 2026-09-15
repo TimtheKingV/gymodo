@@ -173,18 +173,4 @@ Lesen des Codes.
 | Die Nachholkarte auf Home (Onboarding als Sheet) sendet kein zweites `onboardingDone` | Aus dieser Karte heraus ist das Onboarding serverseitig schon abgeschlossen; ein erneutes Setzen würde nur den Abschlusszeitpunkt überschreiben. |
 | Der Messtag ist der Ortstag des Geräts (`TimeZone.current`), nicht die Studio-Zeitzone | Spec 3.2: „Der Client liefert den Ortstag" — Körperdaten hängen an der Person, nicht am Studio (0042-Kommentar). |
 | Die Zeile „Ziel erreicht" lebt nur im Speicher (`VerlaufStore`) und ist nach einem Neustart weg | Der erreichte Zustand kommt aus der Antwort des Eintragens (`goalReached`), nicht aus einer eigenen Serverspalte; ein Neuladen zeigt wieder die Karte mit dem laufenden Abstand, nicht falsch, nur nicht mehr hervorgehoben. |
-| Drei Kommentare umformuliert, ohne das verbotene Vokabular, einer davon plan-vorgeschrieben | Die Regel „kein BMI, keine Kalorien, kein „gesund", kein Trend, keine Prognose — nirgends, auch nicht in Kommentaren" gilt streng, auch für Verneinungen. Betroffen: `Stammdaten.swift` („ohne Kalorien, ohne gesund"), der Swift-Dokumentationskommentar zu `MeasurementsResponse.Summary` („Kein Trend, keine Glättung") und `packages/domain/src/measurements.ts` („Kein Trend, keine Glättung" — dieser Wortlaut stand so im Plan). |
-
-## Offener Befund aus dieser Aufgabe
-
-Die im Rahmen dieser Aufgabe erneut durchsuchte Änderungsmenge (`git diff
-188c246 HEAD` über `apps`, `packages`, `supabase`, `tests`) enthält neben der
-erwarteten Fundstelle — dem Rechtsbegriff „Gesundheitsdaten im Sinne von
-Art. 9 DSGVO" in `0042_body_measurements.sql`, der eine Datenkategorie
-benennt und keine Bewertung ist — drei weitere Stellen mit dem verbotenen
-Bewertungsvokabular in Verneinung, die die oben genannte, für die drei
-bereits umformulierten Kommentare geltende strenge Regel ebenso träfe, aber
-bislang nicht getroffen hat: `OnboardingSchritte.swift:542`
-(„Kein-BMI-Regel"), sowie `HomeZiele.swift` (Zeilen 7 und 9, „Kein BMI, kein
-Trend, keine Empfehlung" / „welche Richtung „gesund" wäre"). Diese Aufgabe
-ändert keinen Code — die Stelle ist hier nur festgehalten, nicht behoben.
+| Fünf Kommentare umformuliert, ohne Bewertungsvokabular, einer davon plan-vorgeschrieben | Die Regel „nirgends, auch nicht in Kommentaren" gilt streng, auch für Verneinungen. Betroffen: `Stammdaten.swift`, `Messwert.swift` (Dokumentationskommentar zu `MeasurementsResponse.Summary`), `packages/domain/src/measurements.ts` (dieser Wortlaut stand so im Plan), `OnboardingSchritte.swift` und `HomeZiele.swift` — alle fünf sagen jetzt nur noch, dass hier ein eingetragener Wert oder eine Differenz steht, ohne die Bewertungsbegriffe selbst zu nennen. |

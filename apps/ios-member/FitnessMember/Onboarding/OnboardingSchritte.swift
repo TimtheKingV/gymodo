@@ -539,7 +539,7 @@ struct ZielgewichtSchritt: View {
     }
 
     /// "noch 4,5 kg · Schritt 0,5 kg" -- eine Differenz eingetragener
-    /// Zahlen, keine Prognose (designsystem.md, Kein-BMI-Regel). Ohne
+    /// Zahlen, keine Vorhersage und keine Bewertung (Spec Abschnitt 6). Ohne
     /// bekanntes aktuelles Gewicht nur der Schritt, statt eine Differenz
     /// zu einer erfundenen Null vorzutaeuschen.
     private var kontextzeile: String {

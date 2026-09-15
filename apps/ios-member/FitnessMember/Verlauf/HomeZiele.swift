@@ -4,9 +4,9 @@ import Foundation
 /// vom View, damit sie ohne SwiftUI pruefbar bleiben (wie
 /// `HomeSerie`/`HomeZeilen`).
 ///
-/// **Kein BMI, kein Trend, keine Empfehlung.** Alles hier ist entweder ein
+/// **Keine Bewertung, keine Empfehlung.** Alles hier ist entweder ein
 /// eingetragener Wert oder eine Differenz zwischen zwei eingetragenen
-/// Werten -- nie eine Interpretation, welche Richtung "gesund" waere
+/// Werten -- nie eine Aussage darueber, welche Richtung die bessere waere
 /// (Spec Abschnitt 6, nicht-verhandelbare Regel 3).
 enum HomeZiele {
     /// Die drei Kartenzustaende (Brief Entscheidung 1). Die Gewichtskarte
