@@ -523,6 +523,9 @@ struct TrainingRootView: View {
                     pfad.append(.geraet(machineId: machineId, exerciseId: uebungId, token: token))
                 }
             }
+        case .start(let machineId, let exerciseId, let token):
+            EmptyView()
+            // Task 3 baut den Screen.
         case .geraet(let machineId, let exerciseId, let token):
             if let modell = modell(machineId: machineId, exerciseId: exerciseId, token: token) {
                 GeraetScreen(modell: modell) { pfad.removeAll() }

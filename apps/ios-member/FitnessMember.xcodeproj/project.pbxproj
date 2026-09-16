@@ -87,7 +87,9 @@
 		55B3BF3DEC193D15E4F6B8A8 /* Resttimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57043EA2F2DFD5D046567083 /* Resttimer.swift */; };
 		55D7F293518DDA5C5B44A849 /* PendingTagStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B414241FEB56BDD45194AA /* PendingTagStore.swift */; };
 		57A315378B9D590DB52C7122 /* TestnotizAblageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D01D5A0C042B12A034AC4BC /* TestnotizAblageTests.swift */; };
+		58C786ACAF354ACAD106F47D /* TrainingStart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 854F29434377E1EE1C9902E1 /* TrainingStart.swift */; };
 		58F6B0FF65B6EF09ED716D0B /* Zeitpunkt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C3FD021F6C5CB033A8E7D /* Zeitpunkt.swift */; };
+		59E027E7F44A1BFAA8D4012F /* TrainingStartTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24509D862989B0CA2DB743F3 /* TrainingStartTests.swift */; };
 		5B7545790836B8F1AF77031F /* VorschaubildTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 691D7A55E93218DCF36E3CF3 /* VorschaubildTests.swift */; };
 		5B7C293A4A3C2C42F2969ADE /* PendingWriteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F89B657647B40C20CCA5FE4 /* PendingWriteStore.swift */; };
 		5CC058FDF3D698829231E5DE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33AEE94B0EDB5593285596C /* RootView.swift */; };
@@ -288,6 +290,7 @@
 		218ADC42D32AAB9758D0AB91 /* LoginMailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginMailView.swift; sourceTree = "<group>"; };
 		22E2DF311877D3BA39FFA5D5 /* ExerciseProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseProgress.swift; sourceTree = "<group>"; };
 		2353FE282D4892F87C027C9B /* KalenderzelleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KalenderzelleTests.swift; sourceTree = "<group>"; };
+		24509D862989B0CA2DB743F3 /* TrainingStartTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingStartTests.swift; sourceTree = "<group>"; };
 		252C3FD021F6C5CB033A8E7D /* Zeitpunkt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zeitpunkt.swift; sourceTree = "<group>"; };
 		25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeDigitsView.swift; sourceTree = "<group>"; };
 		26938FABB4BBFFF4A17B5D63 /* GewichtEintragenHilfenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GewichtEintragenHilfenTests.swift; sourceTree = "<group>"; };
@@ -378,6 +381,7 @@
 		810AA944DFBA5CA775A08184 /* KurseWochenInhalt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseWochenInhalt.swift; sourceTree = "<group>"; };
 		83A7C08B1E55D753C748A62B /* Stammdaten.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stammdaten.swift; sourceTree = "<group>"; };
 		83A8B71893CB0948BB6A7FE6 /* ZielSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZielSheet.swift; sourceTree = "<group>"; };
+		854F29434377E1EE1C9902E1 /* TrainingStart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingStart.swift; sourceTree = "<group>"; };
 		860C70249404ED6DB23710D3 /* Laufzeitkontext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Laufzeitkontext.swift; sourceTree = "<group>"; };
 		87DEDAB723DC8FE55CB2FFA1 /* LokaleSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LokaleSession.swift; sourceTree = "<group>"; };
 		8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trainingszusammenfassung.swift; sourceTree = "<group>"; };
@@ -761,6 +765,7 @@
 				056DF9A32E77D8CCCB5DEB7D /* TestnotizProtokollTests.swift */,
 				07D0CE6DE62F683A513080FC /* TestnotizScreenStapelTests.swift */,
 				05572CBE819B0984F2CACC32 /* TrainingAbschlussZeilenTests.swift */,
+				24509D862989B0CA2DB743F3 /* TrainingStartTests.swift */,
 				9BA53E0FF9AB052ED88E68C7 /* TrainingszusammenfassungTests.swift */,
 				DC4D984EF1252BC49392F988 /* TrainingTabTests.swift */,
 				F433CFBFAAF0BB5791D28FC9 /* VerlaufHerkunftTests.swift */,
@@ -810,6 +815,7 @@
 				EE7999237F8B3E7635E236AE /* Rastwerte.swift */,
 				57043EA2F2DFD5D046567083 /* Resttimer.swift */,
 				F059477D28A854A97A90AD70 /* SessionFileStore.swift */,
+				854F29434377E1EE1C9902E1 /* TrainingStart.swift */,
 				8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */,
 				0891F265EBB3E05C805211B8 /* TrainingTab.swift */,
 				35466DCA1BAC23049D7DCB30 /* WorkoutSessionStore.swift */,
@@ -1189,6 +1195,7 @@
 				042F6324294F8E5E71B29B11 /* TestnotizScreenStapel.swift in Sources */,
 				B90035F502BFCB437C290355 /* TrainingAbschlussView.swift in Sources */,
 				42F254CA382E78A97F1AC840 /* TrainingRootView.swift in Sources */,
+				58C786ACAF354ACAD106F47D /* TrainingStart.swift in Sources */,
 				237F44B99D39C2A8A006D31D /* TrainingTab.swift in Sources */,
 				0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */,
 				EC0E21421C05D51C3F32E51D /* UebungWechselnSheet.swift in Sources */,
@@ -1268,6 +1275,7 @@
 				44520832FCC324FD2A42E9A3 /* TestnotizProtokollTests.swift in Sources */,
 				3B67A99D89AA7431D240196B /* TestnotizScreenStapelTests.swift in Sources */,
 				0A66C707066A8C209342D669 /* TrainingAbschlussZeilenTests.swift in Sources */,
+				59E027E7F44A1BFAA8D4012F /* TrainingStartTests.swift in Sources */,
 				6F3003FCB4FCB68E265AC28E /* TrainingTabTests.swift in Sources */,
 				600E5516A47D964636050F36 /* TrainingszusammenfassungTests.swift in Sources */,
 				BB4049269A55E59A041A3AC8 /* VerlaufHerkunftTests.swift in Sources */,
