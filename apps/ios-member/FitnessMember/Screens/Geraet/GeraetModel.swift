@@ -217,8 +217,9 @@ final class GeraetModel {
     /// Wahl, die es nicht gibt.
     var hatWeitereUebungen: Bool { uebungen.count > 1 }
 
-    /// Seit wann die Trainingsuhr laeuft: seit dem ersten Geraet dieser
-    /// Einheit, nicht seit dem ersten gesicherten Satz.
+    /// Seit wann die Trainingsuhr laeuft: seit dem Tap auf "Training
+    /// starten" -- die Einheit traegt ihren Beginn selbst, ein gemerkter
+    /// Geraetekontakt daneben gibt es seit Schnitt 4 nicht mehr.
     var trainingsbeginn: Date? { sessions.trainingsbeginn() }
 
     private var modell: (schritt: Double, min: Double, max: Double?) {
@@ -415,11 +416,6 @@ final class GeraetModel {
         """
 
     // MARK: - Aktionen
-
-    /// Der Screen ist da, also steht das Mitglied am Geraet -- der Moment,
-    /// ab dem die Trainingsuhr laeuft. Beim zweiten Geraet folgenlos, der
-    /// Store behaelt den ersten Zeitpunkt.
-    func geraetBetreten() { sessions.geraetBetreten() }
 
     /// Laedt, was der Prefetch nicht hat: Foto, Einweisungsvideo und den
     /// Gewichtsvorschlag.

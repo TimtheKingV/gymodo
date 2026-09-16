@@ -22,8 +22,10 @@ struct LokalerBlock: Codable, Equatable, Identifiable {
     var saetze: [LokalerSatz]
 }
 
-/// Die laufende Einheit. Entsteht implizit beim ersten Satz -- es gibt
-/// keinen Startknopf (M1-Spec SS5.6).
+/// Die laufende Einheit. Entsteht seit Schnitt 4 mit dem Tap auf
+/// "Training starten" (WorkoutSessionStore.trainingStarten) -- vorher
+/// implizit mit dem ersten Satz (M1-Spec SS5.6, aufgehoben am
+/// 15. September). Der Rueckfallweg ueber satzSichern bleibt.
 struct LokaleSession: Codable, Equatable {
     let id: UUID
     let startedAt: Date
@@ -32,4 +34,8 @@ struct LokaleSession: Codable, Equatable {
     var letzterSatzAm: Date? {
         bloecke.flatMap(\.saetze).map(\.performedAt).max()
     }
+
+    /// Ohne Satz ist eine Einheit ein Fehlstart, kein Training: sie wird
+    /// verworfen, nicht abgeschlossen (Sammelstelle, Entschieden 2).
+    var hatSaetze: Bool { bloecke.contains { !$0.saetze.isEmpty } }
 }
