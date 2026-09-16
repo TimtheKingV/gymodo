@@ -120,6 +120,8 @@ export type { DomainErrorCode } from "./errors.js";
 export {
   completeSession,
   completeSessionInputSchema,
+  deleteSession,
+  deleteSessionInputSchema,
   problemReasonSchema,
   recordSet,
   recordSetInputSchema,

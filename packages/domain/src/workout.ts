@@ -302,3 +302,37 @@ export async function completeSession(
     ),
   };
 }
+
+export const deleteSessionInputSchema = z.object({
+  sessionId: z.string().uuid("Die Kennung der Einheit ist keine gueltige UUID."),
+});
+
+/**
+ * Loescht eine eigene Einheit samt Saetzen (Cascade aus 0013) --
+ * Sammelstelle Punkt 19.
+ *
+ * Idempotent wie deleteMeasurement: eine Einheit, die es nicht (mehr) gibt,
+ * ist danach genau das. RLS blendet fremde aus, der Aufruf trifft dann null
+ * Zeilen und antwortet trotzdem ohne Fehler -- "nicht gefunden" verriete,
+ * dass es die Kennung gibt. Der zusaetzliche Filter auf user_id sagt das
+ * auch dem Leser, nicht nur der Policy.
+ */
+export async function deleteSession(
+  client: SupabaseClient,
+  rawInput: unknown,
+): Promise<void> {
+  const parsed = deleteSessionInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    throw new DomainError("validation_failed", parsed.error.issues[0]!.message);
+  }
+  const userId = await requireUserId(client);
+
+  const { error } = await client
+    .from("workout_sessions")
+    .delete()
+    .eq("id", parsed.data.sessionId)
+    .eq("user_id", userId);
+  if (error) {
+    throw new DomainError("internal", "Die Einheit konnte nicht geloescht werden.");
+  }
+}
