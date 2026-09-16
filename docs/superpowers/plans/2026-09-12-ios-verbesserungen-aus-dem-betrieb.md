@@ -41,6 +41,19 @@ präzisiert:
   Satzpfad passt mit drei Radzeilen und „Problem melden“ neben „Gerät
   abschließen“ auf 667 pt (gerechnet 492 von 510 pt, die iOS 26 dem Inhalt
   dort lässt). Punkt 11 bis 13 sind damit umgesetzt.
+- **Einheit** (Schnitt 4): sie beginnt auf dem Screen „Training starten“ nach
+  Geräte- und Übungswahl, nur wenn noch kein Training läuft
+  (`TrainingStart.ziel`, `TrainingStartView`,
+  `WorkoutSessionStore.trainingStarten`); der gemerkte Gerätekontakt
+  (`geraetBetreten`) ist weg. Eine Einheit ohne Satz wird beim Ablauf still
+  verworfen und beim manuellen Beenden mit dem Satz „Kein Satz gesichert —
+  das Training wurde verworfen.“; beim Server liegt sie nie (`recordSet`
+  legt die Session erst mit dem ersten Satz an, und der PUT trägt seit
+  Schnitt 4 `sessionStartedAt`). Löschen: `DELETE /workout-sessions/{id}`
+  (Migration 0044), „Training verwerfen“ auf dem Abschluss, „Training
+  löschen“ je Teil im Session-Detail, Warteschlange und Verlaufscache räumen
+  mit (`CatalogStore.schreibvorgaengeVerwerfen`, `VerlaufStore.einheitEntfernen`).
+  Punkt 10 und 19 sind damit umgesetzt.
 - **Die Karten** heißen jetzt `HomeZeilen.kartenTitel` (Zeitraum, sonst „ab
   18:04") und `zeilenText` („41 min · 1 Gerät · 3 Sätze") — das sind die
   beiden Zeilen, die Punkt 17 tauscht.
@@ -235,7 +248,8 @@ dem Tap auf die Übung unter „Was machst du heute?".
 
 Was daran hängt:
 
-- **Drei Texte werden falsch.** „Dein Training startet von selbst, sobald du
+- **Drei Texte werden falsch.** (der erste, `TrainingRootView.leerInhalt`,
+  war seit Schnitt 2 schon weg) „Dein Training startet von selbst, sobald du
   den ersten Satz sicherst — es gibt keinen Startknopf"
   (`TrainingRootView.leerInhalt`), „Sätze sichern — meistens reicht ein
   Antippen. Das Training startet dabei von selbst" (`HomeRootView.leer`), und
@@ -255,11 +269,9 @@ eigenen Screen nach Geräte- und Übungswahl. Mit dem Tap dort beginnt die
 Uhr. Das hebt M1-Spec §5.6 („es gibt keinen Startknopf“) auf, die Spec wird
 beim Umsetzen nachgezogen. Für Schnitt 4 offen:
 
-- Kommt der Screen nur, wenn noch kein Training läuft? Das nächste Gerät
-  mitten im Training soll vermutlich ohne ihn auskommen, sonst kostet jeder
-  Gerätewechsel einen Tap mehr.
-- Die Regel für leere Einheiten bleibt nötig: wer „Training starten“
-  drückt und geht, hinterlässt eine Einheit ohne Satz.
+**Umgesetzt (Schnitt 4, 15. September):** der Screen kommt nur ohne
+laufendes Training; die Regel für leere Einheiten ist
+`abgelaufeneSession`/`trainingStarten` mit Test.
 
 *Bild 11. `Screens/Geraet/GeraetEinstieg*`, `Workout/WorkoutSessionStore.swift`.*
 
@@ -438,6 +450,8 @@ Was dazugehört:
 Beim Löschen eines Teils einer zusammengefassten Karte (Punkt 15) geht nur
 dieser Teil, nicht der ganze Tag.
 
+**Umgesetzt (Schnitt 4).**
+
 *Ohne Bild, aus der Besprechung. `Screens/Home/SessionDetailView.swift`,*
 *neue Migration, `packages/domain/src/sessions.ts`, `Catalog/PendingWriteStore.swift`.*
 
@@ -569,13 +583,16 @@ alles weg, was daran hing.
 sich — und beides gehört in denselben Schnitt, weil der frühere Start genau
 die Fehleinheiten erzeugt, die das Löschen wieder wegnimmt.
 
-- Einheit entsteht auf einem eigenen Screen „Training starten“ nach
+- [x] Einheit entsteht auf einem eigenen Screen „Training starten“ nach
   Geräte- und Übungswahl (entschieden 15. September, siehe Punkt 10), dort
   beginnt die Uhr; drei Texte umschreiben; M1-Spec §5.6 nachziehen; eine
   Einheit ohne Satz wird verworfen und nie gemeldet.
-- Delete-Policy auf `workout_sessions` (Sätze per Cascade), Warteschlange
+- [x] Delete-Policy auf `workout_sessions` (Sätze per Cascade), Warteschlange
   miträumen.
-- „Verwerfen" auf dem Abschluss-Screen, Löschen im Session-Detail.
+- [x] „Verwerfen" auf dem Abschluss-Screen, Löschen im Session-Detail.
+
+Zusätzlich zum Plan: der Satz-PUT trägt `sessionStartedAt`, damit Home
+dieselbe Dauer zeigt wie die App (Frage c des Plans).
 
 Riskantester Schnitt der Reihe: er ändert, was gezählt wird. Deshalb nach
 den drei Oberflächenschnitten, aber vor allem, was auf Einheiten aufbaut.

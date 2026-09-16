@@ -145,7 +145,7 @@ Gegenüber Blueprint §9.1 entfallen `Workout` als eigener Screen (geht im Gerä
 
 ### 5.2 Session-Lebenszyklus
 
-**Start: automatisch beim ersten gescannten Gerät.** Es gibt keinen Startknopf — der Training-Tab füllt sich einfach.
+**Start: automatisch beim ersten gescannten Gerät.** Es gibt keinen Startknopf — der Training-Tab füllt sich einfach. *(Seit Schnitt 4, 15. September, aufgehoben: die Einheit beginnt mit dem Tap auf „Training starten“ nach Geräte- und Übungswahl, wenn noch kein Training läuft; ihren Beginn setzt der Client mit dem ersten Satz-PUT. Siehe `docs/superpowers/plans/2026-09-15-schnitt4-einheit.md`.)*
 
 **Ende: explizit** über „Training beenden" im Training-Tab.
 
@@ -209,7 +209,7 @@ Bewusst mitgekauft: Diese beiden Detailscreens plus der zusätzliche Endpoint si
 
 Der Tap ist ein **Kalteinstieg**: Das Mitglied tappt ein Gerät, ohne die App an diesem Tag geöffnet zu haben. Zwischen Blueprint §7.1 (Tap → Geräteansicht) und §7.3 (Satz speichern) fehlt der Schritt „Session anlegen" — er ist dort nirgends definiert.
 
-Lösung: Es gibt keinen „Workout starten"-Button. Die Session entsteht implizit beim ersten gespeicherten Satz (siehe Abschnitt 7.2).
+Lösung: Es gibt keinen „Workout starten"-Button. Die Session entsteht implizit beim ersten gespeicherten Satz (siehe Abschnitt 7.2). *(Seit Schnitt 4 aufgehoben: es gibt den Screen „Training starten“; serverseitig entsteht die Session weiterhin mit dem ersten Satz, deshalb liegt eine Einheit ohne Satz nie beim Server. Eine Einheit lässt sich seit Migration 0044 löschen.)*
 
 ### 5.7 Übungsauswahl
 

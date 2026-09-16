@@ -134,7 +134,7 @@ Nach dem Tap entscheidet die **eigene Historie am Gerät**, wo das Mitglied land
 | ab 2 | mehrere | Gerät erkannt, zuletzt genutzte Übung oben |
 | ab 2 | immer dieselbe | **direkt zum Satz** |
 
-**Der Erkennungs-Screen zeigt das Gerätefoto.** Es bestätigt in einer Sekunde, dass man am richtigen Gerät steht — das ist bei zwei baugleichen Stationen nebeneinander der eigentliche Nutzen, nicht Dekoration. Ein Tap auf eine Übung führt direkt zum Satz; es gibt keinen Bestätigungsknopf.
+**Der Erkennungs-Screen zeigt das Gerätefoto.** Es bestätigt in einer Sekunde, dass man am richtigen Gerät steht — das ist bei zwei baugleichen Stationen nebeneinander der eigentliche Nutzen, nicht Dekoration. Ein Tap auf eine Übung führt direkt zum Satz; es gibt keinen Bestätigungsknopf. *(Seit Schnitt 4: ohne laufendes Training folgt der Screen „Training starten“ — sein Knopf startet die Einheit, er bestätigt keine Übung. Mitten im Training führt der Tap weiterhin direkt zum Satz.)*
 
 **Das weicht von Spec §5.7 ab.** Dort wurde die Auswahl schon übersprungen, sobald ein Gerät nur eine Übung trägt. Jetzt entscheidet die **Gewohnheit des Mitglieds**, nicht der Katalog des Studios: Wer erst einmal hier war, sieht weiterhin, was es sonst noch gäbe. Das kostet in genau einem Fall einen Tap ohne Wahlmöglichkeit — zweiter Besuch an einem Gerät mit nur einer Übung — und kauft dafür, dass niemand eine Übung nie findet, weil die App zu früh optimiert hat.
 
