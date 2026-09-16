@@ -34,6 +34,7 @@
 		1C4527A7D5538B33563C6EC6 /* OnboardingAntworten.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9CDE09BB8F4123D3068E9D2 /* OnboardingAntworten.swift */; };
 		1CD0DCB2169CA69666C725FB /* GeraeteFotos.swift in Sources */ = {isa = PBXBuildFile; fileRef = 036DE820A26503345FF14BB0 /* GeraeteFotos.swift */; };
 		1D2F4741B76193A412B5B0D8 /* Herkunftssatz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E67B77D484B574613C4314E /* Herkunftssatz.swift */; };
+		1EA236B8D47811FA647721C5 /* TrainingStartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 024E875EF3390D4641B65EDC /* TrainingStartView.swift */; };
 		206D113D8EEB2FF4D9BF05EB /* CatalogLoadState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C759C755CAAFA0F5ED7616 /* CatalogLoadState.swift */; };
 		207B8D6F6D17D7C2F5BA2FA5 /* GeraetEinstieg.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9356660F927DE0AEC1C66C5D /* GeraetEinstieg.swift */; };
 		223F8FDD1BA1AFE59AF71D8C /* HomeZeilenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC41D34D6C45ECA67DC8B7D5 /* HomeZeilenTests.swift */; };
@@ -251,6 +252,7 @@
 
 /* Begin PBXFileReference section */
 		00B25E595924E3D70A9F8C8F /* Zahlformat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zahlformat.swift; sourceTree = "<group>"; };
+		024E875EF3390D4641B65EDC /* TrainingStartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingStartView.swift; sourceTree = "<group>"; };
 		02610C837B8435320AACE71B /* KursDetailInhaltTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursDetailInhaltTests.swift; sourceTree = "<group>"; };
 		036DE820A26503345FF14BB0 /* GeraeteFotos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteFotos.swift; sourceTree = "<group>"; };
 		04D2DE954DD4A21DF9C0C586 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
@@ -828,6 +830,7 @@
 			children = (
 				D5EDFCF55AFA4CDCD53104DC /* TrainingAbschlussView.swift */,
 				42F3F334438C1FBD98C386D0 /* TrainingRootView.swift */,
+				024E875EF3390D4641B65EDC /* TrainingStartView.swift */,
 			);
 			path = Training;
 			sourceTree = "<group>";
@@ -1196,6 +1199,7 @@
 				B90035F502BFCB437C290355 /* TrainingAbschlussView.swift in Sources */,
 				42F254CA382E78A97F1AC840 /* TrainingRootView.swift in Sources */,
 				58C786ACAF354ACAD106F47D /* TrainingStart.swift in Sources */,
+				1EA236B8D47811FA647721C5 /* TrainingStartView.swift in Sources */,
 				237F44B99D39C2A8A006D31D /* TrainingTab.swift in Sources */,
 				0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */,
 				EC0E21421C05D51C3F32E51D /* UebungWechselnSheet.swift in Sources */,

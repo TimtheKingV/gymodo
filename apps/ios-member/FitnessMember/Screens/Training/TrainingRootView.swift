@@ -60,14 +60,13 @@ struct TrainingRootView: View {
     /// Die drei Stellen: das .task(id: UmschaltTick(...)) in der
     /// TimelineView unten (Kalteinstieg UND der selbsttaetige Ablauf
     /// waehrend die App offen bleibt -- M2b), und die beiden Zweige von
-    /// beenden() (manuelles
-    /// Beenden setzt false, der Fehlerfall dort setzt true). Er bleibt
-    /// stehen, bis die Wurzel verlassen wird -- ODER bis er selbst nicht
-    /// mehr gilt: beenden() setzt ihn beim manuellen Beenden zurueck, der
-    /// onChange unten zusaetzlich beim Uebergang in einen neuen laufenden
-    /// Zustand. Der Satz gehoert zu GENAU EINER abgelaufenen Einheit, nicht
-    /// zur View.
-    @State private var zeigeAusgelaufenHinweis = false
+    /// beenden() (manuelles Beenden mit Satz setzt nil, ohne Satz
+    /// `.verworfen`). Er bleibt stehen, bis die Wurzel verlassen wird --
+    /// ODER bis er selbst nicht mehr gilt: beenden() setzt ihn beim
+    /// manuellen Beenden zurueck, der onChange unten zusaetzlich beim
+    /// Uebergang in einen neuen laufenden Zustand. Der Satz gehoert zu
+    /// GENAU EINER abgelaufenen Einheit, nicht zur View.
+    @State private var hinweis: TabHinweis?
 
     var body: some View {
         NavigationStack(path: $pfad) {
@@ -141,8 +140,10 @@ struct TrainingRootView: View {
                 // Kalteinstieg -- und das gesonderte .task unten
                 // braucht die Pruefung deswegen nicht.
                 .task(id: UmschaltTick(datum: context.date, wach: neuAuswerten)) {
-                    guard sessions.abgelaufeneSession() != nil else { return }
-                    zeigeAusgelaufenHinweis = true
+                    // Mit Satz bekommt die ausgelaufene Einheit den Satz im Fuss; ohne
+                    // Satz liefert abgelaufeneSession() nichts, und sie wird still
+                    // geraeumt (Entschieden 2). ausgelaufeneQuittieren() raeumt beide.
+                    if sessions.abgelaufeneSession() != nil { hinweis = .ausgelaufen }
                     sessions.ausgelaufeneQuittieren()
                 }
             }
@@ -203,7 +204,7 @@ struct TrainingRootView: View {
             // entsteht -- egal ob durch einen neuen Satz oder weil beenden()
             // ihn schon zurueckgesetzt hat --, gilt er nicht mehr.
             .onChange(of: sessions.aktiveSession() != nil) { _, laeuft in
-                if laeuft { zeigeAusgelaufenHinweis = false }
+                if laeuft { hinweis = nil }
             }
             // Ein gescheiterter NFC-Scan landet im selben Banner wie ein
             // gescheiterter QR-Scan. Der Leser haelt seinen Fehler getrennt,
@@ -271,8 +272,8 @@ struct TrainingRootView: View {
     @ViewBuilder
     private func fuss(laeuft: Bool) -> some View {
         VStack(spacing: DesignSystem.Spacing.s12) {
-            if zeigeAusgelaufenHinweis {
-                InlineBanner(tone: .muted, message: "Dein letztes Training wurde automatisch beendet.")
+            if let hinweis {
+                InlineBanner(tone: .muted, message: hinweis.text)
             }
             if let scanFehler {
                 InlineBanner(tone: .danger, message: scanFehler)
@@ -328,7 +329,8 @@ struct TrainingRootView: View {
                         Button { oeffne(block) } label: { blockZeile(block) }
                             .buttonStyle(PressButtonStyle())
                     }
-                    zirkelHinweis
+                    // Vor dem ersten Satz (seit Schnitt 4 moeglich) gibt es keinen Block zum Antippen -- der Satz zum Zirkel waere ein Raetsel.
+                    if !session.bloecke.isEmpty { zirkelHinweis }
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, DesignSystem.Spacing.s12)
@@ -400,8 +402,7 @@ struct TrainingRootView: View {
                         .foregroundStyle(DesignSystem.Color.text)
                         .accessibilityLabel(Zahlformat.verstrichenGesprochen(seit: mitte.startedAt, bis: zeit.date))
                 }
-                // M1-Spec SS5.6: es gibt keinen Startknopf. Ohne diesen Satz
-                // wuesste niemand, warum ploetzlich ein Training laeuft.
+                // Der Beginn ist seit Schnitt 4 der Tap auf "Training starten". Die Zeile bleibt: eine Uhr ohne Anker ("23:41 -- seit wann?") sagt nichts.
                 Text("seit \(Zahlformat.uhrzeit(mitte.startedAt))")
                     .font(.system(size: 13))
                     .foregroundStyle(DesignSystem.Color.textMuted)
@@ -520,12 +521,24 @@ struct TrainingRootView: View {
         case .erkannt(let machineId, let token):
             if let modell = modell(machineId: machineId, exerciseId: nil, token: token) {
                 GeraetErkanntScreen(modell: modell) { uebungId in
-                    pfad.append(.geraet(machineId: machineId, exerciseId: uebungId, token: token))
+                    pfad.append(TrainingStart.ziel(machineId: machineId, exerciseId: uebungId, token: token,
+                                                    trainingLaeuft: sessions.aktiveSession() != nil))
                 }
             }
         case .start(let machineId, let exerciseId, let token):
-            EmptyView()
-            // Task 3 baut den Screen.
+            if let modell = modell(machineId: machineId, exerciseId: exerciseId, token: token) {
+                TrainingStartView(modell: modell) {
+                    sessions.trainingStarten()
+                    // ERSETZEN, nicht stapeln: "Zurueck" vom Satzpfad soll auf
+                    // "Geraet erkannt" fuehren, nicht auf einen Startknopf fuer ein
+                    // Training, das schon laeuft. Der Startscreen ist immer der
+                    // oberste Eintrag, wenn sein Knopf gedrueckt wird; der Guard
+                    // schuetzt nur vor einem Tap waehrend einer laufenden
+                    // Pop-Animation.
+                    let satzpfad = GeraetRoute.geraet(machineId: machineId, exerciseId: exerciseId, token: token)
+                    if case .start = pfad.last { pfad[pfad.count - 1] = satzpfad } else { pfad.append(satzpfad) }
+                }
+            }
         case .geraet(let machineId, let exerciseId, let token):
             if let modell = modell(machineId: machineId, exerciseId: exerciseId, token: token) {
                 GeraetScreen(modell: modell) { pfad.removeAll() }
@@ -641,12 +654,15 @@ struct TrainingRootView: View {
             let uebung = GeraetEinstiegRechner.letzteUebung(machineId: maschine.id, in: bootstrap)
                 ?? maschine.exercises.first?.id
             guard let uebung else { return }
-            pfad.append(.geraet(machineId: maschine.id, exerciseId: uebung, token: token))
+            // Auch der Direktweg beginnt ohne laufendes Training auf dem Startscreen -- sonst entstuende die Einheit fuer Stammgaeste weiter erst mit dem Satz.
+            pfad.append(TrainingStart.ziel(machineId: maschine.id, exerciseId: uebung, token: token,
+                                            trainingLaeuft: sessions.aktiveSession() != nil))
         }
     }
 
     private func oeffne(_ block: LokalerBlock) {
         // Der Zirkelfall: ein Tap statt eines Scans (M1-Spec SS5.3).
+        // Kein TrainingStart.ziel: die Blockliste gibt es nur, solange ein Training laeuft.
         pfad.append(.geraet(machineId: block.machineId, exerciseId: block.exerciseId, token: nil))
     }
 
@@ -654,28 +670,43 @@ struct TrainingRootView: View {
         guard let session = sessions.aktiveSession(),
               let zusammenfassung = Trainingszusammenfassung(session)
         else {
-            // Der Knopf sah bedienbar aus -- "laufend" stand auf dem
-            // Bildschirm --, aber die Einheit ist zwischen dem letzten
-            // Neuzeichnen und diesem Tap verschwunden, meist weil die
-            // Vier-Stunden-Grenze waehrend einer laengeren Pause im
-            // Vordergrund ablief (M2). "Nie stumm": das Mitglied muss
-            // erfahren, was jetzt gilt, nicht nur, dass der Tap wirkungslos
-            // war. sessions.beenden() raeumt unbedingt auf -- anders als
-            // ausgelaufeneQuittieren() auch dann, wenn die Einheit technisch
-            // noch als aktiv gilt, aber ohne Saetze keine Zusammenfassung
-            // hergibt.
-            zeigeAusgelaufenHinweis = true
+            // Ohne Satz gibt es keinen Abschluss und nichts, was der Server
+            // wissen muesste: die Einheit wird verworfen (Entschieden 2). Das
+            // trifft seit Schnitt 4 den Regelfall "Training starten, dann doch
+            // nicht" -- und weiterhin den seltenen, dass die Einheit zwischen
+            // Neuzeichnen und Tap ausgelaufen ist. sessions.beenden() raeumt
+            // unbedingt, anders als ausgelaufeneQuittieren().
+            hinweis = .verworfen
             sessions.beenden()
             return
         }
-        // Der Satz zur ausgelaufenen Einheit gehoert zu GENAU EINER
-        // abgelaufenen Einheit (M1): mit dem manuellen Beenden hier gilt er
-        // nicht mehr.
-        zeigeAusgelaufenHinweis = false
+        // Der Satz im Fuss gehoert zu GENAU EINER frueheren Einheit (M1): mit
+        // dem manuellen Beenden hier gilt er nicht mehr.
+        hinweis = nil
         // Erst festhalten, dann beenden -- andersherum sind die Zahlen weg,
         // bevor der Screen sie zeigt.
         sessions.beenden()
         pfad.append(.abschluss(sessionId: session.id, zusammenfassung: zusammenfassung))
+    }
+}
+
+/// Der Satz im Fuss ueber einer Einheit, die nicht mehr laeuft. Zwei
+/// Faelle, ein Zustand: gleichzeitig gelten sie nie, und ein zweites Bool
+/// haette zwei Banner uebereinander erlaubt.
+private enum TabHinweis {
+    /// Vier Stunden ohne Satz -- die Einheit MIT Saetzen ist beim Server
+    /// (oder in der Warteschlange) und gilt als beendet.
+    case ausgelaufen
+    /// "Training beenden" ohne einen Satz: verworfen, nie gemeldet
+    /// (Sammelstelle, Entschieden 2). Nie stumm -- der Tap hatte eine
+    /// Wirkung, und die soll man lesen koennen.
+    case verworfen
+
+    var text: String {
+        switch self {
+        case .ausgelaufen: "Dein letztes Training wurde automatisch beendet."
+        case .verworfen: "Kein Satz gesichert — das Training wurde verworfen."
+        }
     }
 }
 
