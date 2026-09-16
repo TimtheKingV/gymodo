@@ -17,6 +17,8 @@ struct WorkoutSessionStoreTests {
     // fehlschlagen lassen, unabhaengig von der Implementierung.
     private let start = Date()
 
+    // Rueckfall ohne Start: die Einheit laeuft auf dem Satzpfad aus, der
+    // naechste Satz legt eine neue an.
     @Test func derErsteSatzLegtDieSessionAn() {
         let (sut, _) = store()
         #expect(sut.aktiveSession() == nil)
@@ -106,102 +108,144 @@ struct WorkoutSessionStoreTests {
         #expect(sut.beenden() == nil)
     }
 
-    // MARK: - Trainingsuhr
+    // MARK: - Start der Einheit (Sammelstelle Punkt 10, Entschieden 2)
 
-    @Test func dieUhrLaeuftAbDemErstenGeraetNichtAbDemErstenSatz() {
+    @Test func trainingStartenLegtEineLeereEinheitAn() {
         let (sut, _) = store()
-        #expect(sut.trainingsbeginn(jetzt: start) == nil)
+        #expect(sut.aktiveSession(jetzt: start) == nil)
 
-        sut.geraetBetreten(jetzt: start)
+        let einheit = sut.trainingStarten(jetzt: start)
 
+        // Die Einheit gibt es ab dem Tap -- ohne Satz, mit Uhr.
+        #expect(sut.aktiveSession(jetzt: start.addingTimeInterval(300)) == einheit)
+        #expect(einheit.bloecke.isEmpty)
+        #expect(einheit.startedAt == start)
         #expect(sut.trainingsbeginn(jetzt: start.addingTimeInterval(300)) == start)
-        // Noch kein Satz, also noch keine Einheit -- die Uhr laeuft trotzdem.
-        #expect(sut.aktiveSession(jetzt: start.addingTimeInterval(300)) == nil)
     }
 
-    @Test func dasZweiteGeraetVerschiebtDenBeginnNicht() {
+    @Test func einZweiterStartVerschiebtDenBeginnNicht() {
         let (sut, _) = store()
-        sut.geraetBetreten(jetzt: start)
-        sut.geraetBetreten(jetzt: start.addingTimeInterval(900))
+        let erste = sut.trainingStarten(jetzt: start)
 
+        let zweite = sut.trainingStarten(jetzt: start.addingTimeInterval(900))
+
+        #expect(zweite == erste)
         #expect(sut.trainingsbeginn(jetzt: start.addingTimeInterval(900)) == start)
     }
 
-    @Test func dieSessionUebernimmtDenBeginnDesErstenGeraets() {
+    @Test func derErsteSatzHaengtAnDerGestartetenEinheit() {
         let (sut, _) = store()
-        sut.geraetBetreten(jetzt: start)
+        let einheit = sut.trainingStarten(jetzt: start)
 
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                            problemFlag: false, problemReason: nil,
-                            jetzt: start.addingTimeInterval(600))
+        let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
+                                          problemFlag: false, problemReason: nil,
+                                          jetzt: start.addingTimeInterval(600))
 
-        // Sonst spraenge die Uhr beim ersten gesicherten Satz auf 00:00
-        // zurueck -- und "seit 18:04" auf dem Training-Tab meinte den Satz
-        // statt den Scan.
+        // Sonst spraenge die Uhr beim ersten Satz auf 00:00 zurueck, und
+        // "seit 18:04" auf dem Training-Tab meinte den Satz statt den Start.
+        #expect(geschrieben.sessionId == einheit.id)
+        #expect(geschrieben.body.setIndex == 1)
         #expect(sut.aktiveSession(jetzt: start.addingTimeInterval(600))?.startedAt == start)
     }
 
-    @Test func ohneGeraetekontaktBleibtEsBeimZeitpunktDesSatzes() {
+    @Test func derSatzTraegtDenBeginnDerEinheitZumServer() {
         let (sut, _) = store()
-        let jetzt = start.addingTimeInterval(600)
+        sut.trainingStarten(jetzt: start)
 
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                            problemFlag: false, problemReason: nil, jetzt: jetzt)
+        let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
+                                          problemFlag: false, problemReason: nil,
+                                          jetzt: start.addingTimeInterval(600))
 
-        #expect(sut.aktiveSession(jetzt: jetzt)?.startedAt == jetzt)
+        // Sonst bekaeme die Session beim Server den Zeitpunkt des ersten PUT
+        // als Beginn -- nach einem Offline-Training Stunden spaeter.
+        #expect(geschrieben.body.sessionStartedAt == ISO8601DateFormatter().string(from: start))
     }
 
-    @Test func einGemerkterBeginnVerfaelltNachVierStunden() {
+    @Test func derFallbackSatzOhneTrainingStartenTraegtEbenfallsDenBeginnZumServer() {
         let (sut, _) = store()
-        sut.geraetBetreten(jetzt: start)
 
-        #expect(sut.trainingsbeginn(jetzt: start.addingTimeInterval(4 * 3600 + 1)) == nil)
+        // Ohne vorheriges trainingStarten() (z.B. nach einem Vier-Stunden-
+        // Ablauf) legt satzSichern die Session selbst an -- ihr Beginn ist
+        // dann der Satz selbst (startedAt == jetzt, derErsteSatzLegtDieSessionAn).
+        // Genau den muss der Body auch als sessionStartedAt tragen, sonst
+        // faellt der Server auf diesem Pfad auf now() zurueck.
+        let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
+                                          problemFlag: false, problemReason: nil, jetzt: start)
 
-        // Und das naechste Geraet beginnt eine neue Uhr, statt an der
-        // ausgelaufenen haengenzubleiben.
-        let spaeter = start.addingTimeInterval(4 * 3600 + 2)
-        sut.geraetBetreten(jetzt: spaeter)
-        #expect(sut.trainingsbeginn(jetzt: spaeter) == spaeter)
+        #expect(geschrieben.body.sessionStartedAt == ISO8601DateFormatter().string(from: start))
     }
 
-    @Test func beendenVerwirftDenBeginn() {
+    @Test func eineLeereEinheitLaeuftNachVierStundenAus() {
         let (sut, _) = store()
-        sut.geraetBetreten(jetzt: start)
+        sut.trainingStarten(jetzt: start)
+
+        #expect(sut.aktiveSession(jetzt: start.addingTimeInterval(4 * 3600)) != nil)
+        #expect(sut.aktiveSession(jetzt: start.addingTimeInterval(4 * 3600 + 1)) == nil)
+    }
+
+    @Test func eineAbgelaufeneEinheitOhneSatzWirdStillVerworfen() {
+        let (sut, _) = store()
+        sut.trainingStarten(jetzt: start)
+        let spaeter = start.addingTimeInterval(5 * 3600)
+
+        // Kein "automatisch beendet" fuer ein Training, das nie stattfand.
+        #expect(sut.abgelaufeneSession(jetzt: spaeter) == nil)
+
+        sut.ausgelaufeneQuittieren(jetzt: spaeter)
+
+        // Geraeumt ist sie trotzdem: der naechste Start ist eine neue Einheit.
+        let neue = sut.trainingStarten(jetzt: spaeter)
+        #expect(neue.startedAt == spaeter)
+    }
+
+    @Test func ausgelaufeneQuittierenRaeumtEineNochLaufendeEinheitNicht() {
+        let (sut, _) = store()
+        sut.trainingStarten(jetzt: start)
+        let nochInnerhalbDerFrist = start.addingTimeInterval(3 * 3600)
+
+        // Die Guard-Bedingung in ausgelaufeneQuittieren() lautet
+        // gespeicherteSession != nil && aktiveSession(jetzt:) == nil -- hier
+        // ist aktiveSession noch da, der Aufruf darf also nichts raeumen.
+        sut.ausgelaufeneQuittieren(jetzt: nochInnerhalbDerFrist)
+
+        #expect(sut.aktiveSession(jetzt: nochInnerhalbDerFrist) != nil)
+    }
+
+    @Test func eineAbgelaufeneEinheitMitSatzWirdGemeldet() {
+        let (sut, _) = store()
+        sut.trainingStarten(jetzt: start)
         _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
+        let spaeter = start.addingTimeInterval(5 * 3600)
 
-        _ = sut.beenden()
+        #expect(sut.abgelaufeneSession(jetzt: spaeter)?.startedAt == start)
 
-        // Sonst uebernaehme die naechste Einheit die Startzeit der
-        // vorherigen.
-        #expect(sut.trainingsbeginn(jetzt: start.addingTimeInterval(60)) == nil)
+        sut.ausgelaufeneQuittieren(jetzt: spaeter)
+
+        #expect(sut.abgelaufeneSession(jetzt: spaeter) == nil)
+        #expect(sut.trainingsbeginn(jetzt: spaeter) == nil)
     }
 
-    @Test func derBeginnUeberlebtEinenProzessNeustart() {
+    @Test func beendenRaeumtAuchEineLeereEinheit() {
+        let (sut, _) = store()
+        let einheit = sut.trainingStarten(jetzt: start)
+
+        // Ob daraus ein Abschluss oder ein Verwerfen wird, entscheidet der
+        // Training-Tab an der Zusammenfassung -- der Store raeumt nur.
+        #expect(sut.beenden() == einheit.id)
+        #expect(sut.aktiveSession(jetzt: start) == nil)
+        #expect(sut.trainingsbeginn(jetzt: start) == nil)
+    }
+
+    @Test func derStartUeberlebtEinenProzessNeustart() {
         let verzeichnis = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
         let ersterLauf = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
-        ersterLauf.geraetBetreten(jetzt: start)
+        let einheit = ersterLauf.trainingStarten(jetzt: start)
 
         let zweiterLauf = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
 
-        #expect(zweiterLauf.trainingsbeginn(jetzt: start.addingTimeInterval(60)) == start)
-    }
-
-    @Test func ausgelaufeneQuittierenVerwirftAuchDenBeginn() {
-        let (sut, _) = store()
-        // ausgelaufeneQuittieren() rechnet gegen die echte Uhr -- die
-        // Einheit muss also wirklich in der Vergangenheit liegen.
-        let gestern = start.addingTimeInterval(-5 * 3600)
-        sut.geraetBetreten(jetzt: gestern)
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
-                            problemFlag: false, problemReason: nil, jetzt: gestern)
-        #expect(sut.abgelaufeneSession() != nil)
-
-        sut.ausgelaufeneQuittieren()
-
-        #expect(sut.abgelaufeneSession() == nil)
-        #expect(sut.trainingsbeginn() == nil)
+        #expect(zweiterLauf.aktiveSession(jetzt: start.addingTimeInterval(60)) == einheit)
     }
 
     @Test func dieProblemmeldungLandetImSatzRumpf() {

@@ -95,7 +95,7 @@ Hier steht auch der stille Satz zum automatischen Ende (Abschnitt 4.4).
 
 Zwei Sätze, die die Design-Challenge angemahnt hat:
 
-- **Der implizite Start braucht eine Erklärung.** Es gibt keinen Startknopf (M1-Spec §5.6), also weiß niemand, warum plötzlich ein Training läuft. Unter der verstrichenen Zeit steht „seit 18:04".
+- **Der implizite Start braucht eine Erklärung.** Es gibt keinen Startknopf (M1-Spec §5.6), also weiß niemand, warum plötzlich ein Training läuft. Unter der verstrichenen Zeit steht „seit 18:04". *(Seit Schnitt 4 gibt es ihn — „Training starten“ —, die Zeile „seit 18:04“ bleibt als Anker der Uhr.)*
 - **Das automatische Ende gehört neben „Training beenden":** „Ohne neuen Satz endet das Training nach vier Stunden von selbst." Dort, wo es zählt — als Erklärung, was passiert, wenn man den Knopf nicht drückt.
 
 Der Zirkel-Hinweis („Tipp auf den Block statt neu zu scannen") bleibt wie im Artboard. Er beschreibt den Fall, für den die Wurzel überhaupt existiert (M1-Spec §5.3).
@@ -193,7 +193,7 @@ Swift wird gegen Artboard **plus** diese Tabelle abgenommen. Die HTML-Dateien bl
 | Artboard | Zeigt | Swift baut | Warum |
 | --- | --- | --- | --- |
 | `TrainingLaeuft` | kein automatisches Ende | Satz neben „Training beenden" | M1 §5.2 nennt vergessenes Beenden den Regelfall |
-| `TrainingLaeuft` | keinen Hinweis auf den impliziten Start | „seit 18:04" | ohne Startknopf sonst unerklärlich |
+| `TrainingLaeuft` | keinen Hinweis auf den impliziten Start | „seit 18:04" | ohne Startknopf sonst unerklärlich *(seit Schnitt 4: Anker der Uhr)* |
 | `TrainingScan` | QR dominant | NFC dominant, nach Vorbild `TrainingLeer` | Design-Challenge-Entscheidung #3 |
 | `TrainingScan` | Schließen 34 px | 44 pt | §4 |
 | `TrainingScan` | kein Erfolgs-Feedback | sichtbare Bestätigung | §6 |

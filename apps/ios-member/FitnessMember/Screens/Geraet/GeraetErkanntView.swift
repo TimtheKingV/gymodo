@@ -2,8 +2,9 @@ import SwiftUI
 
 /// "Was machst du heute?" -- die Uebungsliste eines erkannten Geraets.
 ///
-/// Ein Tap auf eine Uebung fuehrt direkt zum Satz; es gibt keinen
-/// Bestaetigungsknopf (designsystem.md SS8).
+/// Ein Tap auf eine Uebung waehlt sie; es gibt keinen Bestaetigungsknopf
+/// (designsystem.md SS8). Ohne laufendes Training folgt "Training starten"
+/// (TrainingStart.ziel, Schnitt 4), sonst direkt der Satzpfad.
 struct GeraetErkanntView: View {
     let modell: GeraetModel
     let beiAuswahl: (String) -> Void
@@ -172,7 +173,7 @@ struct GeraetErkanntView: View {
     }
 
     private var hinweis: some View {
-        Text("Ein Tap genügt — du landest direkt beim Satz. Trainierst du hier immer dasselbe, überspringt gymodo diesen Schritt künftig.")
+        Text("Ein Tap wählt die Übung. Läuft noch kein Training, kommt danach „Training starten“. Trainierst du hier immer dasselbe, überspringt gymodo diese Liste künftig.")
             .font(.system(size: 12))
             .foregroundStyle(DesignSystem.Color.textFaint)
             .lineSpacing(3)
@@ -197,10 +198,9 @@ struct GeraetErkanntScreen: View {
         GeraetErkanntView(modell: modell, beiAuswahl: beiAuswahl)
             // Online zeigt das Geraetefoto den eigentlichen Nutzen bei zwei
             // baugleichen Stationen (designsystem.md SS8) -- der Offline-
-            // Platzhalter in GeraetErkanntView bleibt unveraendert.
-            // Erster Geraetekontakt: nach einem Scan ist das der Screen,
-            // der als erstes steht -- die Trainingsuhr laeuft ab hier, nicht
-            // erst, wenn eine Uebung gewaehlt ist.
-            .task { modell.geraetBetreten(); await modell.kontextLaden() }
+            // Platzhalter in GeraetErkanntView bleibt unveraendert. Die
+            // Trainingsuhr laeuft hier NICHT los: seit Schnitt 4 beginnt die
+            // Einheit erst mit "Training starten" (TrainingStartView).
+            .task { await modell.kontextLaden() }
     }
 }

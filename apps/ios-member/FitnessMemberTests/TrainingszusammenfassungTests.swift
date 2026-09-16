@@ -12,10 +12,12 @@ struct TrainingszusammenfassungTests {
                     performedAt: start.addingTimeInterval(minuten * 60))
     }
 
-    @Test func rechnetDauerVomErstenBisZumLetztenSatz() throws {
+    @Test func rechnetDauerVomStartBisZumLetztenSatz() throws {
+        // Der erste Satz faellt zehn Minuten nach dem Start: Einweisung und
+        // Einstellung gehoeren zum Training (Sammelstelle Punkt 10).
         let session = LokaleSession(id: UUID(), startedAt: start, bloecke: [
             LokalerBlock(machineId: "m1", exerciseId: "e1",
-                         saetze: [satz(1, 80, 0), satz(2, 80, 47)]),
+                         saetze: [satz(1, 80, 10), satz(2, 80, 47)]),
         ])
 
         let z = try #require(Trainingszusammenfassung(session))

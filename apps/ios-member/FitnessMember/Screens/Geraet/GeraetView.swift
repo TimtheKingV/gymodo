@@ -83,11 +83,12 @@ struct GeraetView: View {
         .scrollBounceBehavior(.basedOnSize)
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
-        // Die Trainingsuhr startet am ersten Geraet, nicht am ersten
-        // gesicherten Satz -- deshalb hier und nicht in satzSichern. Der
-        // Drawer haengt am selben Moment: einmal beim Oeffnen, nicht nach
-        // jedem Satz.
-        .task { modell.geraetBetreten(); modell.geraetGeoeffnet(); await modell.kontextLaden() }
+        // Seit Schnitt 4 startet die Trainingsuhr nicht mehr hier, sondern
+        // mit "Training starten" (WorkoutSessionStore.trainingStarten) --
+        // dieser Screen kommt erst danach. geraetGeoeffnet() bleibt im
+        // .task: der Drawer haengt am selben Moment wie zuvor, einmal beim
+        // Oeffnen, nicht nach jedem Satz.
+        .task { modell.geraetGeoeffnet(); await modell.kontextLaden() }
         // Die Pause muss sich selbst beenden. Vorher lief sie gegen einen
         // Zustand, den niemand zuruecksetzte: der Balken blieb auf 00:00
         // stehen, bis irgendein anderes Ereignis ein Re-Render ausloeste.

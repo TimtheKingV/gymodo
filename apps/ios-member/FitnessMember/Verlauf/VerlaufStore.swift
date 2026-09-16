@@ -194,7 +194,7 @@ final class VerlaufStore {
         messwerte.append(punkt)
         messwerte.sort { $0.measuredOn < $1.measuredOn }
         messwertKopfNachziehen()
-        cacheMitMesswertenSchreiben()
+        cacheSchreiben()
     }
 
     /// Dieselbe Nachziehung wie messwertEintragen, fuer den Wisch-zum-
@@ -202,7 +202,16 @@ final class VerlaufStore {
     func messwertEntfernen(measuredOn: String) {
         messwerte.removeAll { $0.measuredOn == measuredOn }
         messwertKopfNachziehen()
-        cacheMitMesswertenSchreiben()
+        cacheSchreiben()
+    }
+
+    /// Nach dem Loeschen einer Einheit (Sammelstelle Punkt 19): die Liste
+    /// sofort ohne sie, die Kopfzeile erst mit dem naechsten Abruf --
+    /// Gesamtzahl, Woche und Serie rechnet der Server, und eine lokal
+    /// heruntergezaehlte Serie waere eine zweite Regel neben serie.ts.
+    func einheitEntfernen(id: String) {
+        sessions.removeAll { $0.id == id }
+        cacheSchreiben()
     }
 
     /// Spiegelt dieselbe Rechnung wie `getMeasurements` im Server
@@ -222,7 +231,7 @@ final class VerlaufStore {
     /// `summary`/`stand` gibt es noch keinen vollstaendigen
     /// `GespeicherterVerlauf` zu schreiben, und die In-Memory-Werte oben
     /// reichen der Home-Karte bis zum naechsten Abruf.
-    private func cacheMitMesswertenSchreiben() {
+    private func cacheSchreiben() {
         guard let summary, let stand else { return }
         fileStore.save(
             GespeicherterVerlauf(

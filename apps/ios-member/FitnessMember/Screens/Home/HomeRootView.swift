@@ -118,7 +118,7 @@ struct HomeRootView: View {
             .navigationDestination(for: HomeRoute.self) { route in
                 switch route {
                 case .sessionDetail(let id):
-                    SessionDetailView(sessionId: id)
+                    SessionDetailView(sessionId: id, apiClient: apiClient)
                 case .uebungsfortschritt(let exerciseId):
                     UebungsfortschrittView(exerciseId: exerciseId)
                 case .gewichtsverlauf:
@@ -275,7 +275,7 @@ private extension HomeRootView {
 
             schritt(1, "iPhone an den Aufkleber halten", "Auf jedem Gerät klebt einer. QR-Code geht genauso.")
             schritt(2, "Einweisung ansehen, Gerät einstellen", "Einmal. Danach stehen deine Werte jedes Mal da.")
-            schritt(3, "Sätze sichern", "Meistens reicht ein Antippen. Das Training startet dabei von selbst.")
+            schritt(3, "Training starten, Sätze sichern", "Ein Tap startet die Uhr. Jeder Satz danach ist meistens nur ein Antippen.")
 
             PrimaryButton(title: "Erstes Gerät") { scannerOffen = true }
                 .testnotizElement("home.erstes-geraet", typ: "PrimaryButton")

@@ -132,6 +132,11 @@ final class CatalogStore {
 
     func flushPending() async {
         for write in pendingWrites {
+            // Erneut pruefen: schreibvorgaengeVerwerfen() kann waehrend eines
+            // await hier dazwischengekommen sein -- die Schleife laeuft ueber
+            // eine Kopie von pendingWrites, sonst sendet sie eine gerade
+            // verworfene oder geloeschte Einheit doch noch an den Server.
+            guard pendingWrites.contains(where: { $0.id == write.id }) else { continue }
             do {
                 _ = try await loader.putSet(sessionId: write.sessionId, setId: write.setId, write.body)
                 entferneAusPendingWrites(write)
@@ -158,6 +163,21 @@ final class CatalogStore {
     private func entferneAusPendingWrites(_ write: PendingSetWrite) {
         pendingWrites.removeAll { $0.id == write.id }
         pendingWriteStore.save(pendingWrites)
+    }
+
+    /// Die offenen Schreibvorgaenge einer verworfenen oder geloeschten Einheit
+    /// (Sammelstelle Punkt 19): blieben sie liegen, legte der naechste
+    /// Reconnect die Einheit beim Server wieder an. Speicher und Platte
+    /// zusammen, wie ueberall hier.
+    func schreibvorgaengeVerwerfen(sessionId: UUID) {
+        pendingWrites.removeAll { $0.sessionId == sessionId }
+        pendingWriteStore.save(pendingWrites)
+    }
+
+    /// Wie viele Saetze dieser Einheit den Server noch nicht erreicht haben --
+    /// EinheitVerwerfen.weg entscheidet daran, ob ein DELETE noetig ist.
+    func offeneSchreibvorgaenge(sessionId: UUID) -> Int {
+        pendingWrites.filter { $0.sessionId == sessionId }.count
     }
 
     /// Nach dem Anzeigen quittiert der Screen die abgelehnten Vorgaenge.

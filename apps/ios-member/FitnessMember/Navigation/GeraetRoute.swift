@@ -9,6 +9,11 @@ enum GeraetRoute: Hashable {
     /// Tab-Leiste stehen bleibt (designsystem.md SS11).
     case auswahl
     case erkannt(machineId: String, token: String?)
+    /// "Training starten" -- nur ohne laufendes Training (TrainingStart.ziel).
+    /// Mit dem Tap dort entsteht die Einheit; der Fall wird dann durch
+    /// `geraet` ERSETZT, damit "Zurueck" vom Satzpfad nicht auf einen
+    /// Startknopf fuer ein Training fuehrt, das schon laeuft.
+    case start(machineId: String, exerciseId: String, token: String?)
     case geraet(machineId: String, exerciseId: String, token: String?)
     /// Der Abschluss-Screen (Aufgabe 6) braucht die Zahlen der beendeten
     /// Einheit -- sessionId dient nur der Nachverfolgung, die Anzeige

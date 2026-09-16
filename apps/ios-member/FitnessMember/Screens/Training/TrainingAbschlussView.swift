@@ -25,9 +25,12 @@ struct TrainingAbschlussView: View {
     let beiFertig: () -> Void
 
     @Environment(CatalogStore.self) private var katalog
+    @Environment(VerlaufStore.self) private var verlauf
 
     @State private var vorschlaege: [Blockvorschlag]?
     @State private var ausfall: Vorschlagsausfall?
+    @State private var verwerfenGefragt = false
+    @State private var verwerfenFehler: String?
 
     /// Warum kein Vorschlag da ist -- getrennt nach Ursache, wie im
     /// Ladepfad der drei Kurse-Screens.
@@ -77,14 +80,41 @@ struct TrainingAbschlussView: View {
         }
         .background(DesignSystem.Color.bg)
         .safeAreaInset(edge: .bottom) {
-            // Die eine Hauptaktion des Screens, 64pt (designsystem.md SS4).
-            // Nie deaktiviert, nie stumm: sie haengt an nichts, was vom
-            // Netz kommen koennte -- "Fertig" muss auch dann aus dem
-            // Screen herausfuehren, wenn completeSession nie antwortet.
-            PrimaryButton(title: "Fertig") { beiFertig() }
-                .padding(.horizontal, 20)
-                .padding(.bottom, DesignSystem.Spacing.s24)
-                .background(DesignSystem.Color.bg)
+            VStack(spacing: DesignSystem.Spacing.s12) {
+                if let verwerfenFehler {
+                    InlineBanner(tone: .danger, message: verwerfenFehler)
+                }
+                // Die eine Hauptaktion des Screens, 64pt (designsystem.md SS4).
+                // Nie deaktiviert, nie stumm: sie haengt an nichts, was vom Netz
+                // kommen koennte -- "Fertig" muss auch dann aus dem Screen
+                // herausfuehren, wenn completeSession nie antwortet.
+                PrimaryButton(title: "Fertig") { beiFertig() }
+                // Die Nebenaktion (Sammelstelle Punkt 19): hier merkt man, dass
+                // die Einheit ein Fehlstart war, nicht drei Tage spaeter im
+                // Verlauf. Als Text in danger, kein zweiter Umriss neben der
+                // Akzentflaeche (designsystem.md SS2). Der Rahmen steht im Label:
+                // mit PressButtonStyle ist nur das Label tippbar
+                // (GeraetView.problemMelden).
+                Button { verwerfenGefragt = true } label: {
+                    Text("Training verwerfen")
+                        .font(.system(size: 15, weight: .semibold))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .foregroundStyle(DesignSystem.Color.danger)
+                .buttonStyle(PressButtonStyle())
+                .accessibilityHint("Löscht diese Einheit nach einer Rückfrage")
+                .testnotizElement("abschluss.verwerfen", typ: "Button")
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, DesignSystem.Spacing.s24)
+            .background(DesignSystem.Color.bg)
+        }
+        .confirmationDialog("Dieses Training verwerfen?", isPresented: $verwerfenGefragt, titleVisibility: .visible) {
+            Button("Verwerfen", role: .destructive) { Task { await verwerfen() } }
+            Button("Abbrechen", role: .cancel) {}
+        } message: {
+            Text("Sätze und Zeit dieser Einheit sind danach weg. Das lässt sich nicht rückgängig machen.")
         }
         .task {
             // `do throws(APIError)`, damit `error` im catch getippt ist:
@@ -276,6 +306,39 @@ struct TrainingAbschlussView: View {
         }
         .foregroundStyle(DesignSystem.Color.textMuted)
         .padding(.top, DesignSystem.Spacing.s4)
+    }
+}
+
+// MARK: - Verwerfen
+
+extension TrainingAbschlussView {
+    /// Erst der Server, dann die Warteschlange, dann der Verlauf -- die
+    /// Reihenfolge begruendet EinheitVerwerfen.Weg. Der Fall .nurLokal kommt
+    /// ohne Netz aus; der andere sagt bei fehlendem Empfang, was jetzt gilt,
+    /// statt eine halbe Einheit stehen zu lassen.
+    private func verwerfen() async {
+        verwerfenFehler = nil
+        let weg = EinheitVerwerfen.weg(
+            offeneSchreibvorgaenge: katalog.offeneSchreibvorgaenge(sessionId: sessionId),
+            satzAnzahl: zusammenfassung.satzAnzahl)
+        if weg == .ueberDenServer {
+            do throws(APIError) {
+                try await apiClient.deleteSession(sessionId: sessionId.uuidString)
+            } catch {
+                verwerfenFehler = error == .offline
+                    ? "Keine Verbindung. Zum Verwerfen brauchst du Empfang — bis dahin bleibt die Einheit gespeichert."
+                    : error.servertext
+                return
+            }
+        }
+        katalog.schreibvorgaengeVerwerfen(sessionId: sessionId)
+        verlauf.einheitEntfernen(id: sessionId.uuidString)
+        // Wie im Session-Detail: einheitEntfernen raeumt nur die Liste, Gesamtzahl,
+        // Woche und Serie kommen erst mit dem naechsten Abruf. Home laedt beim
+        // Tab-Wechsel nicht neu (HomeRootView), deshalb hier anstossen -- sonst
+        // zeigt die Kopfzeile eine gerade verworfene Einheit noch mit.
+        Task { await verlauf.laden(studioId: katalog.activeStudioId) }
+        beiFertig()
     }
 }
 

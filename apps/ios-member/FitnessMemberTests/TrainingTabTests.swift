@@ -37,9 +37,8 @@ struct TrainingTabTests {
     }
 
     @Test func sessionOhneSatzZeigtUhrAberKeineZahlen() throws {
-        // Heute entsteht die Einheit mit dem ersten Satz, der Fall kommt also
-        // nicht vor. Mit Schnitt 4 (Start beim Verlassen des Einstiegs) kommt
-        // er, und dann darf dort keine "0 Saetze" stehen.
+        // Seit Schnitt 4 entsteht die Einheit mit "Training starten" -- vor
+        // dem ersten Satz steht die Uhr ohne Zahlen, nie "0 Saetze".
         let session = LokaleSession(id: UUID(), startedAt: start, bloecke: [])
         let mitte = try #require(TrainingTab.mitte(session))
         #expect(mitte.zahlen == nil)

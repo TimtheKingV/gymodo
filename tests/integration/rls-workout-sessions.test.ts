@@ -15,6 +15,8 @@ let trainerAEmail: string;
 let memberAId: string;
 let memberA2Id: string;
 let memberBId: string;
+let machineA: string;
+let exerciseA: string;
 
 beforeAll(async () => {
   const admin = serviceClient();
@@ -45,6 +47,29 @@ beforeAll(async () => {
       { studio_id: studioA, user_id: trainerAId, role: "trainer" },
     ]);
   if (membershipError) throw membershipError;
+
+  const { data: model, error: modelError } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioA, name: "Sessions-Kabelzug", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (modelError) throw modelError;
+
+  const { data: machine, error: machineError } = await admin
+    .from("machines")
+    .insert({ studio_id: studioA, equipment_model_id: model.id, label: "S1" })
+    .select("id")
+    .single();
+  if (machineError) throw machineError;
+  machineA = machine.id;
+
+  const { data: exercise, error: exerciseError } = await admin
+    .from("exercises")
+    .insert({ studio_id: studioA, name: "Sessions-Latzug", target_reps_min: 8, target_reps_max: 12 })
+    .select("id")
+    .single();
+  if (exerciseError) throw exerciseError;
+  exerciseA = exercise.id;
 });
 
 /** Sessions tragen eine clientseitig erzeugte UUID (Spec Abschnitt 6.3). */
@@ -213,21 +238,43 @@ describe("RLS auf workout_sessions", () => {
     expect(data?.completed_at).toBeNull();
   });
 
-  it("Historie: auch die eigene Session laesst sich nicht loeschen", async () => {
+  it("positiv: ein Mitglied loescht seine eigene Session, die Saetze gehen mit", async () => {
     const client = await userClient(memberAEmail);
     const sessionId = newId();
     const { error: insertError } = await client
       .from("workout_sessions")
       .insert({ id: sessionId, studio_id: studioA, user_id: memberAId });
     if (insertError) throw insertError;
+    const { error: setError } = await client.from("workout_sets").insert({
+      id: newId(), studio_id: studioA, user_id: memberAId, session_id: sessionId,
+      machine_id: machineA, exercise_id: exerciseA, set_index: 1, weight_kg: 80, reps: 10,
+    });
+    if (setError) throw setError;
 
-    await client.from("workout_sessions").delete().eq("id", sessionId);
+    const { error } = await client.from("workout_sessions").delete().eq("id", sessionId);
+    expect(error).toBeNull();
 
     const admin = serviceClient();
-    const { data } = await admin
+    const { data: sessions } = await admin.from("workout_sessions").select("id").eq("id", sessionId);
+    const { data: sets } = await admin.from("workout_sets").select("id").eq("session_id", sessionId);
+    expect(sessions).toHaveLength(0);
+    // Cascade aus 0013 -- ohne eigene Delete-Policy auf workout_sets.
+    expect(sets).toHaveLength(0);
+  });
+
+  it("negativ: die Session eines anderen Mitglieds laesst sich nicht loeschen", async () => {
+    const a = await userClient(memberAEmail);
+    const sessionId = newId();
+    const { error: insertError } = await a
       .from("workout_sessions")
-      .select("id")
-      .eq("id", sessionId);
+      .insert({ id: sessionId, studio_id: studioA, user_id: memberAId });
+    if (insertError) throw insertError;
+
+    const a2 = await userClient(memberA2Email);
+    await a2.from("workout_sessions").delete().eq("id", sessionId);
+
+    const admin = serviceClient();
+    const { data } = await admin.from("workout_sessions").select("id").eq("id", sessionId);
     expect(data).toHaveLength(1);
   });
 

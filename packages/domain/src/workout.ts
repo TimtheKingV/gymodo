@@ -37,11 +37,21 @@ export const recordSetInputSchema = z
     problemFlag: z.boolean().default(false),
     problemReason: problemReasonSchema.nullish(),
     performedAt: z.string().datetime().optional(),
+    // Der Beginn der Einheit, vom Client gesetzt ("Training starten",
+    // Schnitt 4). Nur beim Anlegen der Session uebernommen, siehe recordSet.
+    sessionStartedAt: z.string().datetime().optional(),
   })
   .refine((value) => !value.problemReason || value.problemFlag, {
     path: ["problemReason"],
     message: "Eine Problemursache setzt das Problemkennzeichen voraus.",
-  });
+  })
+  .refine(
+    (value) =>
+      !value.sessionStartedAt ||
+      !value.performedAt ||
+      Date.parse(value.sessionStartedAt) <= Date.parse(value.performedAt),
+    { path: ["sessionStartedAt"], message: "Der Beginn der Einheit liegt nach dem Satz." },
+  );
 
 export type RecordSetInput = z.infer<typeof recordSetInputSchema>;
 
@@ -100,8 +110,10 @@ function toRecordedSet(row: SetRow): RecordedSet {
  * Speichert einen bestaetigten Satz.
  *
  * Idempotent durch die clientseitig erzeugten UUIDs: derselbe Aufruf zweimal
- * ergibt dieselbe Zeile (Spec 6.3). Die Session entsteht dabei implizit --
- * es gibt keinen Startknopf und keinen Endpoint dafuer (Spec 5.2).
+ * ergibt dieselbe Zeile (Spec 6.3). Die Session entsteht dabei mit dem
+ * ersten Satz -- einen Start-Endpoint gibt es nicht, und deshalb liegt eine
+ * Einheit ohne Satz nie hier (Sammelstelle Schnitt 4, Entschieden 2). Ihren
+ * Beginn setzt der Client (Spec 5.2, seit Schnitt 4).
  */
 export async function recordSet(
   client: SupabaseClient,
@@ -138,9 +150,24 @@ export async function recordSet(
   }
 
   // `ignoreDuplicates` macht daraus ON CONFLICT DO NOTHING: ein zweiter Satz
-  // in derselben Session verschiebt deren Startzeitpunkt nicht.
+  // in derselben Session verschiebt deren Startzeitpunkt nicht -- auch
+  // nicht mit einem anderen sessionStartedAt.
   const { error: sessionError } = await client.from("workout_sessions").upsert(
-    { id: input.sessionId, studio_id: studioId, user_id: userId },
+    {
+      id: input.sessionId,
+      studio_id: studioId,
+      user_id: userId,
+      // Ohne den Wert griffe der Default now(): die Ankunft des ersten PUT,
+      // nach einem Offline-Training Stunden nach dem Start. Nach oben auf
+      // die Serverzeit gekappt, weil eine vorgehende Client-Uhr sonst einen
+      // started_at in der Zukunft schreibt -- das reisst spaeter die
+      // workout_sessions_completed_after_start-Check in completeSession
+      // (started_at <= completed_at, completed_at ist now()) und verschiebt
+      // Wochenzaehler/Serie/Reihenfolge in sessions.ts.
+      ...(input.sessionStartedAt
+        ? { started_at: new Date(Math.min(Date.parse(input.sessionStartedAt), Date.now())).toISOString() }
+        : {}),
+    },
     { onConflict: "id", ignoreDuplicates: true },
   );
   if (sessionError) {
@@ -281,4 +308,38 @@ export async function completeSession(
       userId,
     ),
   };
+}
+
+export const deleteSessionInputSchema = z.object({
+  sessionId: z.string().uuid("Die Kennung der Einheit ist keine gueltige UUID."),
+});
+
+/**
+ * Loescht eine eigene Einheit samt Saetzen (Cascade aus 0013) --
+ * Sammelstelle Punkt 19.
+ *
+ * Idempotent wie deleteMeasurement: eine Einheit, die es nicht (mehr) gibt,
+ * ist danach genau das. RLS blendet fremde aus, der Aufruf trifft dann null
+ * Zeilen und antwortet trotzdem ohne Fehler -- "nicht gefunden" verriete,
+ * dass es die Kennung gibt. Der zusaetzliche Filter auf user_id sagt das
+ * auch dem Leser, nicht nur der Policy.
+ */
+export async function deleteSession(
+  client: SupabaseClient,
+  rawInput: unknown,
+): Promise<void> {
+  const parsed = deleteSessionInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    throw new DomainError("validation_failed", parsed.error.issues[0]!.message);
+  }
+  const userId = await requireUserId(client);
+
+  const { error } = await client
+    .from("workout_sessions")
+    .delete()
+    .eq("id", parsed.data.sessionId)
+    .eq("user_id", userId);
+  if (error) {
+    throw new DomainError("internal", "Die Einheit konnte nicht geloescht werden.");
+  }
 }

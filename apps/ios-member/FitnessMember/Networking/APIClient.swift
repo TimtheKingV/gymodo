@@ -70,6 +70,12 @@ actor APIClient {
         try await postNoBody("workout-sessions/\(sessionId.uuidString)/complete")
     }
 
+    /// Eine Einheit, die es nicht (mehr) gibt, ist danach genau das -- kein
+    /// Fehler, auch beim zweiten Aufruf (204, siehe Server-Route).
+    func deleteSession(sessionId: String) async throws(APIError) {
+        try await executeNoContent(path: "workout-sessions/\(sessionId)", method: "DELETE")
+    }
+
     // MARK: - Kalibrierung (Sub-Projekt 2, ausserhalb M1-Spec SS6.3)
 
     func recordCalibration(_ body: CalibrationWrite) async throws(APIError) -> RecordedCalibration {

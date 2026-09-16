@@ -15,15 +15,11 @@ final class WorkoutSessionStore {
     static let sessionPause: TimeInterval = 4 * 60 * 60
 
     private var gespeicherteSession: LokaleSession?
-    /// Der erste Geraetekontakt, solange es noch keine Session gibt. Siehe
-    /// geraetBetreten(jetzt:).
-    private var gemerkterBeginn: Date?
     private let fileStore: SessionFileStore
 
     init(fileStore: SessionFileStore = SessionFileStore()) {
         self.fileStore = fileStore
         gespeicherteSession = fileStore.load()
-        gemerkterBeginn = fileStore.loadBeginn()
     }
 
     /// Die Session, sofern sie noch laeuft. Ohne Argument gegen die aktuelle
@@ -38,19 +34,57 @@ final class WorkoutSessionStore {
         return jetzt.timeIntervalSince(letzte) > Self.sessionPause ? nil : session
     }
 
-    /// Die gespeicherte Einheit, sofern sie NICHT mehr laeuft.
+    /// Das Mitglied hat "Training starten" gedrueckt -- ab hier gibt es die
+    /// Einheit, und mit ihr laeuft die Uhr (Sammelstelle Punkt 10, entschieden
+    /// 15. September; hebt M1-Spec SS5.6 auf).
+    ///
+    /// Der Server erfaehrt davon nichts: er legt die Einheit weiterhin erst
+    /// mit dem ersten Satz an (recordSet upsertet workout_sessions), einen
+    /// Start-Endpoint gibt es nicht. Genau deshalb kann eine Einheit ohne
+    /// Satz nie bei ihm liegen -- "wird verworfen und nie gemeldet"
+    /// (Entschieden 2) ist Struktur, nicht Disziplin. Wer einen
+    /// Start-Endpoint baut, verliert das.
+    ///
+    /// Idempotent: laeuft schon eine Einheit, bleibt sie. Der Startscreen
+    /// kommt zwar nur ohne laufendes Training (TrainingStart.ziel), aber ein
+    /// zweiter Tap darf die Uhr nicht zuruecksetzen.
+    @discardableResult
+    func trainingStarten(jetzt: Date = Date()) -> LokaleSession {
+        if let laufende = aktiveSession(jetzt: jetzt) { return laufende }
+        let session = LokaleSession(id: UUID(), startedAt: jetzt, bloecke: [])
+        gespeicherteSession = session
+        fileStore.save(session)
+        return session
+    }
+
+    /// Woran die Trainingsuhr haengt: der Beginn der laufenden Einheit --
+    /// seit Schnitt 4 nichts daneben. Vorher lief hier ein gemerkter
+    /// Geraetekontakt der Einheit voraus, weil die erst mit dem ersten Satz
+    /// entstand; jetzt beginnt die Einheit selbst mit dem Tap.
+    func trainingsbeginn(jetzt: Date = Date()) -> Date? {
+        aktiveSession(jetzt: jetzt)?.startedAt
+    }
+
+    /// Die gespeicherte Einheit, sofern sie NICHT mehr laeuft UND einen Satz
+    /// hatte.
     ///
     /// Vergessenes Beenden ist laut M1-Spec SS5.2 der Regelfall. Ohne diesen
     /// Zugriff saehe das Mitglied am naechsten Tag einen leeren Tab und
     /// wuesste nicht, ob sein Training angekommen ist.
+    ///
+    /// Eine abgelaufene Einheit OHNE Satz gibt es hier nicht zu sehen: sie
+    /// wird still verworfen (Sammelstelle, Entschieden 2). "Automatisch
+    /// beendet" auf dem leeren Tab spraeche von einem Training, das nie
+    /// stattgefunden hat -- und beim Server liegt davon ohnehin nichts.
     func abgelaufeneSession(jetzt: Date = Date()) -> LokaleSession? {
-        guard let session = gespeicherteSession, aktiveSession(jetzt: jetzt) == nil
+        guard let session = gespeicherteSession, session.hatSaetze,
+              aktiveSession(jetzt: jetzt) == nil
         else { return nil }
         return session
     }
 
-    /// Raeumt die abgelaufene Einheit weg, damit der Satz auf dem leeren Tab
-    /// einmal steht, nicht bei jedem Oeffnen.
+    /// Raeumt eine ausgelaufene Einheit weg -- mit Satz nach dem Satz auf dem
+    /// leeren Tab (abgelaufeneSession), ohne Satz still.
     ///
     /// Kein separates Merker-Bool: das wuerde store-global gelten und damit
     /// jede SPAETERE abgelaufene Einheit stumm halten, sobald einmal
@@ -66,54 +100,10 @@ final class WorkoutSessionStore {
     /// falsch-negativ ist ein Satz zu viel auf dem leeren Tab, falsch-positiv
     /// ist das Training des Mitglieds weg. Der Guard gehoert deshalb hier
     /// hin, nicht nur in die Disziplin der Aufrufer.
-    func ausgelaufeneQuittieren() {
-        guard abgelaufeneSession() != nil else { return }
+    func ausgelaufeneQuittieren(jetzt: Date = Date()) {
+        guard gespeicherteSession != nil, aktiveSession(jetzt: jetzt) == nil else { return }
         gespeicherteSession = nil
         fileStore.save(nil)
-        beginnVerwerfen()
-    }
-
-    /// Die Uhr gehoert zur Einheit: endet sie, endet auch der gemerkte
-    /// Beginn. Sonst uebernaehme die naechste Einheit die Startzeit der
-    /// vorherigen.
-    private func beginnVerwerfen() {
-        gemerkterBeginn = nil
-        fileStore.saveBeginn(nil)
-    }
-
-    /// Das Mitglied steht an einem Geraet -- ab hier laeuft die
-    /// Trainingsuhr.
-    ///
-    /// Die Einheit selbst entsteht weiterhin erst mit dem ersten
-    /// gesicherten Satz (M1-Spec SS5.6: es gibt keinen Startknopf). Zwischen
-    /// dem Scan des ersten Geraets und diesem Satz liegen aber Einweisung,
-    /// Kalibrierung und der erste Anlauf -- Zeit, die zum Training gehoert.
-    /// Der Zeitpunkt wird deshalb hier gemerkt und beim Anlegen der Session
-    /// als deren `startedAt` uebernommen: beide Screens zeigen dann
-    /// dieselbe Zahl, und "seit 18:04" meint den Scan, nicht den ersten
-    /// Satz.
-    ///
-    /// Ruft ein zweites Geraet auf, bleibt der erste Zeitpunkt stehen --
-    /// abgesehen von dem Fall, dass er laengst ausgelaufen ist (siehe
-    /// trainingsbeginn(jetzt:)); dann beginnt hier eine neue Einheit.
-    func geraetBetreten(jetzt: Date = Date()) {
-        guard trainingsbeginn(jetzt: jetzt) == nil else { return }
-        gemerkterBeginn = jetzt
-        fileStore.saveBeginn(jetzt)
-    }
-
-    /// Woran die Trainingsuhr haengt: die laufende Einheit, sonst der
-    /// gemerkte erste Geraetekontakt.
-    ///
-    /// Der gemerkte Zeitpunkt verfaellt nach derselben Vier-Stunden-Regel
-    /// wie die Session -- sonst zaehlte die Uhr am naechsten Tag noch die
-    /// Stunden seit einem Geraet, an dem nie ein Satz gesichert wurde.
-    func trainingsbeginn(jetzt: Date = Date()) -> Date? {
-        if let session = aktiveSession(jetzt: jetzt) { return session.startedAt }
-        guard let gemerkterBeginn,
-              jetzt.timeIntervalSince(gemerkterBeginn) <= Self.sessionPause
-        else { return nil }
-        return gemerkterBeginn
     }
 
     func naechsterSetIndex(machineId: String, exerciseId: String, jetzt: Date = Date()) -> Int {
@@ -131,14 +121,11 @@ final class WorkoutSessionStore {
         problemReason: ProblemReason?,
         jetzt: Date = Date()
     ) -> (sessionId: UUID, setId: UUID, body: SetWrite) {
-        // startedAt ist der erste Geraetekontakt, nicht dieser Satz -- die
-        // Uhr auf dem Geraete-Screen laeuft seit dem Scan und darf beim
-        // ersten gesicherten Satz nicht zurueckspringen. Ohne gemerkten
-        // Beginn (App-Neustart dazwischen, Satz ohne vorherigen Screen im
-        // Test) bleibt es beim bisherigen Verhalten.
+        // Ohne laufende Einheit (sie ist auf dem Satzpfad ausgelaufen, oder ein
+        // Test sichert ohne Start) entsteht sie hier -- der Rueckfallweg, nicht
+        // der Regelfall: den setzt seit Schnitt 4 trainingStarten(jetzt:).
         var session = aktiveSession(jetzt: jetzt)
-            ?? LokaleSession(id: UUID(), startedAt: trainingsbeginn(jetzt: jetzt) ?? jetzt,
-                             bloecke: [])
+            ?? LokaleSession(id: UUID(), startedAt: jetzt, bloecke: [])
 
         let index = session.bloecke.firstIndex {
             $0.machineId == machineId && $0.exerciseId == exerciseId
@@ -167,23 +154,25 @@ final class WorkoutSessionStore {
         gespeicherteSession = session
         fileStore.save(session)
 
+        let formatter = ISO8601DateFormatter()
         let body = SetWrite(
             machineId: machineId, exerciseId: exerciseId, setIndex: setIndex,
             weightKg: weightKg, reps: reps, rir: nil,
             problemFlag: problemFlag, problemReason: problemReason,
-            performedAt: ISO8601DateFormatter().string(from: jetzt)
+            performedAt: formatter.string(from: jetzt),
+            sessionStartedAt: formatter.string(from: session.startedAt)
         )
         return (session.id, satz.id, body)
     }
 
-    /// Gibt die Kennung zurueck, damit der Aufrufer
-    /// POST .../complete schicken kann.
+    /// Gibt die Kennung zurueck, damit der Aufrufer POST .../complete
+    /// schicken kann -- oder, ohne Satz, gar nichts (TrainingRootView.beenden
+    /// verwirft dann).
     @discardableResult
     func beenden() -> UUID? {
         let id = gespeicherteSession?.id
         gespeicherteSession = nil
         fileStore.save(nil)
-        beginnVerwerfen()
         return id
     }
 
