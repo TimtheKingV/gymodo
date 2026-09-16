@@ -64,7 +64,7 @@ Die Regel für Einheiten ohne Satz (Sammelstelle, Entschieden 2) wird hier zur A
   - `LokaleSession.hatSaetze: Bool`.
   - Entfällt: `geraetBetreten(jetzt:)`, `GeraetModel.geraetBetreten()`, `SessionFileStore.loadBeginn()/saveBeginn(_:)`.
 
-- [ ] **Step 1: Tests umschreiben** (`WorkoutSessionStoreTests.swift`). Der Abschnitt `// MARK: - Trainingsuhr` mit seinen acht Tests (`dieUhrLaeuftAbDemErstenGeraet…`, `dasZweiteGeraet…`, `dieSessionUebernimmtDenBeginn…`, `ohneGeraetekontakt…`, `einGemerkterBeginn…`, `beendenVerwirftDenBeginn`, `derBeginnUeberlebt…`, `ausgelaufeneQuittierenVerwirftAuchDenBeginn`) wird ersetzt durch:
+- [x] **Step 1: Tests umschreiben** (`WorkoutSessionStoreTests.swift`). Der Abschnitt `// MARK: - Trainingsuhr` mit seinen acht Tests (`dieUhrLaeuftAbDemErstenGeraet…`, `dasZweiteGeraet…`, `dieSessionUebernimmtDenBeginn…`, `ohneGeraetekontakt…`, `einGemerkterBeginn…`, `beendenVerwirftDenBeginn`, `derBeginnUeberlebt…`, `ausgelaufeneQuittierenVerwirftAuchDenBeginn`) wird ersetzt durch:
 
 ```swift
 // MARK: - Start der Einheit (Sammelstelle Punkt 10, Entschieden 2)
@@ -172,9 +172,9 @@ Der bestehende Test `derErsteSatzLegtDieSessionAn` bleibt — er beweist den Rü
 
 In `TrainingTabTests.sessionOhneSatzZeigtUhrAberKeineZahlen` wird der Kommentar: `// Seit Schnitt 4 entsteht die Einheit mit "Training starten" -- vor dem ersten Satz steht die Uhr ohne Zahlen, nie "0 Saetze".`
 
-- [ ] **Step 2: Rot sehen.** `-only-testing:FitnessMemberTests/WorkoutSessionStoreTests`. Erwartet: Build-Fehler „value of type 'WorkoutSessionStore' has no member 'trainingStarten'“.
+- [x] **Step 2: Rot sehen.** `-only-testing:FitnessMemberTests/WorkoutSessionStoreTests`. Erwartet: Build-Fehler „value of type 'WorkoutSessionStore' has no member 'trainingStarten'“.
 
-- [ ] **Step 3: Store umbauen** (`WorkoutSessionStore.swift`). `gemerkterBeginn`, die Zeile `gemerkterBeginn = fileStore.loadBeginn()` im `init`, `beginnVerwerfen()` und `geraetBetreten(jetzt:)` entfallen. Dafür:
+- [x] **Step 3: Store umbauen** (`WorkoutSessionStore.swift`). `gemerkterBeginn`, die Zeile `gemerkterBeginn = fileStore.loadBeginn()` im `init`, `beginnVerwerfen()` und `geraetBetreten(jetzt:)` entfallen. Dafür:
 
 ```swift
 /// Das Mitglied hat "Training starten" gedrueckt -- ab hier gibt es die
@@ -266,7 +266,7 @@ var session = aktiveSession(jetzt: jetzt)
 
 In `beenden()` entfällt `beginnVerwerfen()`; der Kommentar wird: `/// Gibt die Kennung zurueck, damit der Aufrufer POST .../complete schicken kann -- oder, ohne Satz, gar nichts (TrainingRootView.beenden verwirft dann).` Der Typkommentar an `sessionPause` bleibt.
 
-- [ ] **Step 4: `LokaleSession`, `SessionFileStore`, `GeraetModel`, `GeraetErkanntScreen`.**
+- [x] **Step 4: `LokaleSession`, `SessionFileStore`, `GeraetModel`, `GeraetErkanntScreen`.**
 
 `LokaleSession.swift`, Typkommentar und neue Eigenschaft:
 
@@ -313,9 +313,9 @@ GeraetErkanntView(modell: modell, beiAuswahl: beiAuswahl)
     .task { await modell.kontextLaden() }
 ```
 
-- [ ] **Step 5: Grün sehen.** `grep -rn "geraetBetreten\|gemerkterBeginn\|loadBeginn\|saveBeginn" apps/ios-member` — nichts mehr. Dann `xcodebuild test`, ganz.
+- [x] **Step 5: Grün sehen.** `grep -rn "geraetBetreten\|gemerkterBeginn\|loadBeginn\|saveBeginn" apps/ios-member` — nichts mehr. Dann `xcodebuild test`, ganz.
 
-- [ ] **Step 6: Commit** — `feat(training): Die Einheit beginnt mit Training starten -- der gemerkte Geraetekontakt verschwindet`
+- [x] **Step 6: Commit** — `feat(training): Die Einheit beginnt mit Training starten -- der gemerkte Geraetekontakt verschwindet`
 
 ---
 
@@ -333,7 +333,7 @@ Frage a) aus der Sammelstelle, hier entschieden (Empfehlung, siehe „Offen“):
   - `GeraetRoute.start(machineId: String, exerciseId: String, token: String?)`
   - `enum TrainingStart { static func ziel(machineId: String, exerciseId: String, token: String?, trainingLaeuft: Bool) -> GeraetRoute }`
 
-- [ ] **Step 1: Test schreiben** (`TrainingStartTests.swift`):
+- [x] **Step 1: Test schreiben** (`TrainingStartTests.swift`):
 
 ```swift
 import Testing
@@ -355,9 +355,9 @@ struct TrainingStartTests {
 }
 ```
 
-- [ ] **Step 2: Rot sehen.** `xcodegen generate`, dann `-only-testing:FitnessMemberTests/TrainingStartTests`. Erwartet: „cannot find 'TrainingStart' in scope“.
+- [x] **Step 2: Rot sehen.** `xcodegen generate`, dann `-only-testing:FitnessMemberTests/TrainingStartTests`. Erwartet: „cannot find 'TrainingStart' in scope“.
 
-- [ ] **Step 3: Implementieren.** `GeraetRoute.swift`, zwischen `erkannt` und `geraet`:
+- [x] **Step 3: Implementieren.** `GeraetRoute.swift`, zwischen `erkannt` und `geraet`:
 
 ```swift
 /// "Training starten" -- nur ohne laufendes Training (TrainingStart.ziel).
@@ -392,9 +392,9 @@ enum TrainingStart {
 
 Der `switch` in `TrainingRootView.ziel(_:)` ist danach nicht mehr erschöpfend — für diesen Task dort einen Fall `case .start: EmptyView()` mit Kommentar `// Task 3 baut den Screen.` einfügen, damit der Build steht.
 
-- [ ] **Step 4: Grün sehen.** `xcodebuild test`, ganz. `git status`: `Package.resolved` unverändert, die zwei neuen Dateien und `project.pbxproj` dabei.
+- [x] **Step 4: Grün sehen.** `xcodebuild test`, ganz. `git status`: `Package.resolved` unverändert, die zwei neuen Dateien und `project.pbxproj` dabei.
 
-- [ ] **Step 5: Commit** — `feat(training): TrainingStart entscheidet, wann der Startscreen kommt`
+- [x] **Step 5: Commit** — `feat(training): TrainingStart entscheidet, wann der Startscreen kommt`
 
 ---
 
@@ -436,7 +436,7 @@ Rahmen wie im Nachtrag von Schnitt 3 **gemessen** (SE 3. Gen., iOS 26.3, 15. Sep
 - Consumes: `WorkoutSessionStore.trainingStarten()` (Task 1), `TrainingStart.ziel(...)` und `GeraetRoute.start` (Task 2), `GeraetModel.maschine`, `.aktiveUebung`, `.einstiegsart`, `.uebungId` (Bestand).
 - Produces: `TrainingStartView(modell: GeraetModel, beiStart: () -> Void)`; in `TrainingRootView` ein privates `enum TabHinweis { case ausgelaufen, verworfen }` an Stelle von `zeigeAusgelaufenHinweis: Bool`.
 
-- [ ] **Step 1: `TrainingStartView.swift`.**
+- [x] **Step 1: `TrainingStartView.swift`.**
 
 ```swift
 import SwiftUI
@@ -485,7 +485,7 @@ struct TrainingStartView: View {
     }
 
     /// Dieselbe Zeile wie auf "Geraet erkannt": wer ueber den Scan kommt,
-    /// sieht "ERKANNT", wer ueber die Liste kommt, "AUSGEWÄHLT" -- die App
+    /// sieht "ERKANNT", wer ueber die Liste kommt, "AUSGEWAEHLT" -- die App
     /// weiss im zweiten Fall nicht, wo das Mitglied steht (designsystem.md
     /// SS10).
     private var kopfzeile: some View {
@@ -546,7 +546,7 @@ struct TrainingStartView: View {
 
 Kein `#Preview`: ein `GeraetModel` braucht Bootstrap, Loader und Store, und weder `GeraetView` noch `GeraetErkanntView` haben deshalb eine Preview — der Sichtcheck (Task 9) zeigt den Screen. `DesignSystem.Typography.geraetename`, `.uebungsname`, `.label`, `.fliesstext` sowie `Einstiegsart.beschriftung`/`.symbol` sind Bestand (`GeraetErkanntView`, `SessionDetailView`, `GeraetModel`).
 
-- [ ] **Step 2: `TrainingRootView` verdrahten.**
+- [x] **Step 2: `TrainingRootView` verdrahten.**
 
 1. **`ziel(_:)`**, der Platzhalter aus Task 2 wird:
 
@@ -645,7 +645,7 @@ private func beenden() {
 
 7. **`laufendKopf`**, der Kommentar an `Text("seit …")` wird: `// Der Beginn ist seit Schnitt 4 der Tap auf "Training starten". Die Zeile bleibt: eine Uhr ohne Anker ("23:41 -- seit wann?") sagt nichts.`
 
-- [ ] **Step 3: Die zwei Texte.** Der dritte aus der Sammelstelle (`TrainingRootView.leerInhalt`, „Dein Training startet von selbst, sobald du den ersten Satz sicherst — es gibt keinen Startknopf“) existiert seit Schnitt 2 nicht mehr — im Fuß steht nur noch „Training starten“ über den Scanwegen, und das bleibt richtig. Im Abschlussbericht vermerken.
+- [x] **Step 3: Die zwei Texte.** Der dritte aus der Sammelstelle (`TrainingRootView.leerInhalt`, „Dein Training startet von selbst, sobald du den ersten Satz sicherst — es gibt keinen Startknopf“) existiert seit Schnitt 2 nicht mehr — im Fuß steht nur noch „Training starten“ über den Scanwegen, und das bleibt richtig. Im Abschlussbericht vermerken.
 
 `GeraetErkanntView.swift`, Typkommentar:
 
@@ -661,11 +661,11 @@ private func beenden() {
 
 `HomeRootView.swift` Z. 278: `schritt(3, "Training starten, Sätze sichern", "Ein Tap startet die Uhr. Jeder Satz danach ist meistens nur ein Antippen.")`
 
-- [ ] **Step 4: `xcodegen generate`, `xcodebuild test`**, ganz. `grep -rn "zeigeAusgelaufenHinweis\|startet dabei von selbst\|landest direkt beim Satz" apps/ios-member` — nichts mehr. `git status`: `Package.resolved` unverändert.
+- [x] **Step 4: `xcodegen generate`, `xcodebuild test`**, ganz. `grep -rn "zeigeAusgelaufenHinweis\|startet dabei von selbst\|landest direkt beim Satz" apps/ios-member` — nichts mehr. `git status`: `Package.resolved` unverändert.
 
-- [ ] **Step 5: Im Simulator (iPhone 17 Pro) einmal bauen und den Startscreen ansehen** — geht nur mit Backend; deshalb hier nur bauen, der Sichtcheck in Task 9 prüft.
+- [x] **Step 5: Im Simulator (iPhone 17 Pro) einmal bauen und den Startscreen ansehen** — geht nur mit Backend; deshalb hier nur bauen, der Sichtcheck in Task 9 prüft.
 
-- [ ] **Step 6: Commit** — `feat(training): Screen Training starten nach Geraete- und Uebungswahl`
+- [x] **Step 6: Commit** — `feat(training): Screen Training starten nach Geraete- und Uebungswahl`
 
 ---
 
@@ -694,7 +694,7 @@ Das zweite ist eine Server-Änderung über „eine Migration“ hinaus (ein opti
   - Server: `sessionStartedAt` optional im Rumpf des Satz-PUT; wird nur beim Anlegen der Session übernommen.
   - `Trainingszusammenfassung.von == session.startedAt`.
 
-- [ ] **Step 1: Swift-Tests.** In `TrainingszusammenfassungTests.swift` wird `rechnetDauerVomErstenBisZumLetztenSatz`:
+- [x] **Step 1: Swift-Tests.** In `TrainingszusammenfassungTests.swift` wird `rechnetDauerVomErstenBisZumLetztenSatz`:
 
 ```swift
 @Test func rechnetDauerVomStartBisZumLetztenSatz() throws {
@@ -730,9 +730,9 @@ In `WorkoutSessionStoreTests.swift`, Abschnitt „Start der Einheit“:
 }
 ```
 
-- [ ] **Step 2: Rot sehen.** `-only-testing:FitnessMemberTests/TrainingszusammenfassungTests -only-testing:FitnessMemberTests/WorkoutSessionStoreTests`. Erwartet: der Dauer-Test schlägt mit 37 statt 47 fehl; der Store-Test bricht am Build („no member 'sessionStartedAt'“).
+- [x] **Step 2: Rot sehen.** `-only-testing:FitnessMemberTests/TrainingszusammenfassungTests -only-testing:FitnessMemberTests/WorkoutSessionStoreTests`. Erwartet: der Dauer-Test schlägt mit 37 statt 47 fehl; der Store-Test bricht am Build („no member 'sessionStartedAt'“).
 
-- [ ] **Step 3: Swift implementieren.** `Trainingszusammenfassung.init`:
+- [x] **Step 3: Swift implementieren.** `Trainingszusammenfassung.init`:
 
 ```swift
 /// nil fuer eine Einheit ohne Saetze -- die wird verworfen, nicht
@@ -763,7 +763,7 @@ var sessionStartedAt: String? = nil
 
 `satzSichern`, beim Bau von `body`: `sessionStartedAt: ISO8601DateFormatter().string(from: session.startedAt)` (denselben Formatter wie für `performedAt` einmal in eine lokale Konstante ziehen, statt ihn zweimal zu bauen).
 
-- [ ] **Step 4: Server-Test.** `packages/domain/src/workout.test.ts`:
+- [x] **Step 4: Server-Test.** `packages/domain/src/workout.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -825,7 +825,7 @@ it("uebernimmt den Beginn der Einheit vom Client, und nur beim ersten Satz", asy
 
 Rot sehen: `pnpm --filter @fitretro/domain test` — „weist einen Beginn nach dem Satz ab“ schlägt fehl (unbekannte Felder werden von Zod verworfen, das Schema akzeptiert). Integrationstest: `started_at` ≠ `beginn`.
 
-- [ ] **Step 5: Server implementieren** (`workout.ts`). Im Schema nach `performedAt`:
+- [x] **Step 5: Server implementieren** (`workout.ts`). Im Schema nach `performedAt`:
 
 ```ts
     // Der Beginn der Einheit, vom Client gesetzt ("Training starten",
@@ -864,9 +864,9 @@ Der Kommentar an `recordSet` wird: „Idempotent durch die clientseitig erzeugte
   );
 ```
 
-- [ ] **Step 6: Grün sehen.** `pnpm typecheck`, `pnpm test`, `pnpm test:integration`; `xcodebuild test`, ganz.
+- [x] **Step 6: Grün sehen.** `pnpm typecheck`, `pnpm test`, `pnpm test:integration`; `xcodebuild test`, ganz.
 
-- [ ] **Step 7: Commit** — `feat(training): Die Dauer beginnt beim Start -- Zusammenfassung und Server uebernehmen den Beginn`
+- [x] **Step 7: Commit** — `feat(training): Die Dauer beginnt beim Start -- Zusammenfassung und Server uebernehmen den Beginn`
 
 ---
 
@@ -890,7 +890,7 @@ Antwort auf eine unbekannte oder fremde Kennung: **204**, wie `deleteMeasurement
   - `deleteSession(client: SupabaseClient, rawInput: unknown): Promise<void>` mit `{ sessionId }`.
   - Policy `workout_sessions_delete`.
 
-- [ ] **Step 1: RLS-Tests.** In `rls-workout-sessions.test.ts` wird `Historie: auch die eigene Session laesst sich nicht loeschen` ersetzt durch zwei Tests:
+- [x] **Step 1: RLS-Tests.** In `rls-workout-sessions.test.ts` wird `Historie: auch die eigene Session laesst sich nicht loeschen` ersetzt durch zwei Tests:
 
 ```ts
   it("positiv: ein Mitglied loescht seine eigene Session, die Saetze gehen mit", async () => {
@@ -961,7 +961,7 @@ Das `beforeAll` dieser Datei legt bisher kein Gerät und keine Übung an. Oben b
   exerciseA = exercise.id;
 ```
 
-- [ ] **Step 2: API-Test** `tests/integration/api-workout-session-delete.test.ts`, nach dem Muster von `api-workout-sets.test.ts` (dasselbe `beforeAll`: Studio A und B, Mitglied A und A2, Gerät und Übung in A):
+- [x] **Step 2: API-Test** `tests/integration/api-workout-session-delete.test.ts`, nach dem Muster von `api-workout-sets.test.ts` (dasselbe `beforeAll`: Studio A und B, Mitglied A und A2, Gerät und Übung in A):
 
 ```ts
 import { beforeAll, describe, expect, it } from "vitest";
@@ -1097,9 +1097,9 @@ describe("DELETE /workout-sessions/{id}", () => {
 });
 ```
 
-- [ ] **Step 3: Rot sehen.** `pnpm test:integration -- rls-workout-sessions api-workout-session-delete`. Erwartet: der positive RLS-Test findet die Zeile noch (keine Policy); die API-Datei bricht am Import der Route.
+- [x] **Step 3: Rot sehen.** `pnpm test:integration -- rls-workout-sessions api-workout-session-delete`. Erwartet: der positive RLS-Test findet die Zeile noch (keine Policy); die API-Datei bricht am Import der Route.
 
-- [ ] **Step 4: Migration** `supabase/migrations/0044_workout_sessions_delete.sql`:
+- [x] **Step 4: Migration** `supabase/migrations/0044_workout_sessions_delete.sql`:
 
 ```sql
 -- Loeschen einer eigenen Einheit (Sammelstelle Punkt 19, Schnitt 4).
@@ -1132,7 +1132,7 @@ create policy workout_sessions_delete on public.workout_sessions
 
 Lokal einspielen: `supabase db reset` in `apps/web` (oder wie die anderen Migrationen dieses Repos lokal eingespielt werden — `supabase migration up` prüfen), bevor die Integrationstests laufen.
 
-- [ ] **Step 5: Domain und Route.** `workout.ts`, ans Ende:
+- [x] **Step 5: Domain und Route.** `workout.ts`, ans Ende:
 
 ```ts
 export const deleteSessionInputSchema = z.object({
@@ -1203,9 +1203,9 @@ export async function DELETE(request: Request, context: Context): Promise<Respon
 }
 ```
 
-- [ ] **Step 6: Grün sehen.** `pnpm typecheck`, `pnpm test`, `pnpm test:integration` (ganz — `domain-sessions`, `studio-ueberblick` und die RLS-Tests dürfen nicht kippen).
+- [x] **Step 6: Grün sehen.** `pnpm typecheck`, `pnpm test`, `pnpm test:integration` (ganz — `domain-sessions`, `studio-ueberblick` und die RLS-Tests dürfen nicht kippen).
 
-- [ ] **Step 7: Commit** — `feat(server): Eine eigene Einheit laesst sich loeschen -- Delete-Policy, Domain, Route`
+- [x] **Step 7: Commit** — `feat(server): Eine eigene Einheit laesst sich loeschen -- Delete-Policy, Domain, Route`
 
 ---
 
@@ -1233,7 +1233,7 @@ Drei Dinge müssen mit, wenn eine Einheit weggeht, und alle drei sind ohne View 
   - `VerlaufStore.einheitEntfernen(id: String)`
   - `enum EinheitVerwerfen { enum Weg: Equatable { case nurLokal, ueberDenServer }; static func weg(offeneSchreibvorgaenge: Int, satzAnzahl: Int) -> Weg }`
 
-- [ ] **Step 1: Tests.** `EinheitVerwerfenTests.swift`:
+- [x] **Step 1: Tests.** `EinheitVerwerfenTests.swift`:
 
 ```swift
 import Testing
@@ -1298,9 +1298,9 @@ func verwerfenNimmtNurDieEineEinheit() {
 }
 ```
 
-- [ ] **Step 2: Rot sehen.** `xcodegen generate`, dann `-only-testing:FitnessMemberTests/EinheitVerwerfenTests -only-testing:FitnessMemberTests/CatalogStoreTests -only-testing:FitnessMemberTests/VerlaufStoreTests`. Erwartet: Build-Fehler an den drei neuen Namen.
+- [x] **Step 2: Rot sehen.** `xcodegen generate`, dann `-only-testing:FitnessMemberTests/EinheitVerwerfenTests -only-testing:FitnessMemberTests/CatalogStoreTests -only-testing:FitnessMemberTests/VerlaufStoreTests`. Erwartet: Build-Fehler an den drei neuen Namen.
 
-- [ ] **Step 3: Implementieren.** `EinheitVerwerfen.swift`:
+- [x] **Step 3: Implementieren.** `EinheitVerwerfen.swift`:
 
 ```swift
 import Foundation
@@ -1367,9 +1367,9 @@ func deleteSession(sessionId: String) async throws(APIError) {
 }
 ```
 
-- [ ] **Step 4: Grün sehen.** `xcodebuild test`, ganz. `git status`: `Package.resolved` unverändert.
+- [x] **Step 4: Grün sehen.** `xcodebuild test`, ganz. `git status`: `Package.resolved` unverändert.
 
-- [ ] **Step 5: Commit** — `feat(verlauf): Ableitungen fuers Verwerfen und Loeschen -- Warteschlange, Verlaufscache, Weg`
+- [x] **Step 5: Commit** — `feat(verlauf): Ableitungen fuers Verwerfen und Loeschen -- Warteschlange, Verlaufscache, Weg`
 
 ---
 
@@ -1386,7 +1386,7 @@ Zwei Wege, beide mit Rückfrage und ohne Rückgängig, nie als Wisch auf der Hom
 - Consumes: `EinheitVerwerfen.weg`, `CatalogStore.offeneSchreibvorgaenge/schreibvorgaengeVerwerfen`, `VerlaufStore.einheitEntfernen`, `APIClient.deleteSession` (Task 6); `VerlaufStore.laden(studioId:)`, `CatalogStore.activeStudioId` (Bestand).
 - Produces: `SessionDetailView(sessionId: String, apiClient: APIClient)`.
 
-- [ ] **Step 1: Abschluss-Screen.** In `TrainingAbschlussView`:
+- [x] **Step 1: Abschluss-Screen.** In `TrainingAbschlussView`:
 
 ```swift
 @Environment(VerlaufStore.self) private var verlauf
@@ -1466,7 +1466,7 @@ private func verwerfen() async {
 
 Der laufende `completeSession`-Task braucht keine Behandlung: kommt seine Antwort nach dem DELETE, ist der Screen weg; läuft er nach dem DELETE erst los, antwortet der Server 404, und `ausfall` trifft einen Screen, den niemand mehr sieht.
 
-- [ ] **Step 2: Session-Detail.** `SessionDetailView` bekommt `let apiClient: APIClient`, dazu:
+- [x] **Step 2: Session-Detail.** `SessionDetailView` bekommt `let apiClient: APIClient`, dazu:
 
 ```swift
 @Environment(CatalogStore.self) private var katalog
@@ -1542,9 +1542,9 @@ private extension SessionDetailView {
 
 `HomeRootView.swift`: `SessionDetailView(sessionId: id)` wird `SessionDetailView(sessionId: id, apiClient: apiClient)`.
 
-- [ ] **Step 3: `xcodebuild test`**, ganz (kein Test hängt an den Views; der Build muss stehen).
+- [x] **Step 3: `xcodebuild test`**, ganz (kein Test hängt an den Views; der Build muss stehen).
 
-- [ ] **Step 4: Commit** — `feat(verlauf): Verwerfen auf dem Abschluss-Screen, Loeschen im Session-Detail`
+- [x] **Step 4: Commit** — `feat(verlauf): Verwerfen auf dem Abschluss-Screen, Loeschen im Session-Detail`
 
 ---
 
@@ -1558,19 +1558,19 @@ Was der Umbau in Specs und Sammelstelle falsch macht. Specs werden nicht umgesch
 - Modify: `docs/superpowers/specs/2026-09-08-ios-training-kurse-design.md` (Z. 98 und Z. 196)
 - Modify: `docs/superpowers/specs/2026-08-30-designsystem.md` (§8, Satz „Ein Tap auf eine Übung führt direkt zum Satz; es gibt keinen Bestätigungsknopf.“)
 
-- [ ] **Step 1: Sammelstelle.** Unter „Stand“ ein Spiegelstrich hinter dem zu „Gerät“:
+- [x] **Step 1: Sammelstelle.** Unter „Stand“ ein Spiegelstrich hinter dem zu „Gerät“:
 
 > - **Einheit** (Schnitt 4): sie beginnt auf dem Screen „Training starten“ nach Geräte- und Übungswahl, nur wenn noch kein Training läuft (`TrainingStart.ziel`, `TrainingStartView`, `WorkoutSessionStore.trainingStarten`); der gemerkte Gerätekontakt (`geraetBetreten`) ist weg. Eine Einheit ohne Satz wird beim Ablauf still verworfen und beim manuellen Beenden mit dem Satz „Kein Satz gesichert — das Training wurde verworfen.“; beim Server liegt sie nie (`recordSet` legt die Session erst mit dem ersten Satz an, und der PUT trägt seit Schnitt 4 `sessionStartedAt`). Löschen: `DELETE /workout-sessions/{id}` (Migration 0044), „Training verwerfen“ auf dem Abschluss, „Training löschen“ je Teil im Session-Detail, Warteschlange und Verlaufscache räumen mit (`CatalogStore.schreibvorgaengeVerwerfen`, `VerlaufStore.einheitEntfernen`). Punkt 10 und 19 sind damit umgesetzt.
 
 Bei Punkt 10 hinter „Für Schnitt 4 offen:“ die beiden Spiegelstriche durch „**Umgesetzt (Schnitt 4, 15. September):** der Screen kommt nur ohne laufendes Training; die Regel für leere Einheiten ist `abgelaufeneSession`/`trainingStarten` mit Test.“ ersetzen. Der Spiegelstrich „Drei Texte werden falsch“ bekommt den Zusatz „(der erste, `TrainingRootView.leerInhalt`, war seit Schnitt 2 schon weg)“. Bei Punkt 19 vor dem kursiven Schluss: „**Umgesetzt (Schnitt 4).**“ Unter „Schnitt 4“ die drei Spiegelstriche als erledigt markieren und den Satz ergänzen: „Zusätzlich zum Plan: der Satz-PUT trägt `sessionStartedAt`, damit Home dieselbe Dauer zeigt wie die App (Frage c des Plans).“
 
-- [ ] **Step 2: M1-Spec.** §5.2 hinter „Es gibt keinen Startknopf — der Training-Tab füllt sich einfach.“: „*(Seit Schnitt 4, 15. September, aufgehoben: die Einheit beginnt mit dem Tap auf „Training starten“ nach Geräte- und Übungswahl, wenn noch kein Training läuft; ihren Beginn setzt der Client mit dem ersten Satz-PUT. Siehe `docs/superpowers/plans/2026-09-15-schnitt4-einheit.md`.)*“ §5.6 hinter „Die Session entsteht implizit beim ersten gespeicherten Satz (siehe Abschnitt 7.2).“: „*(Seit Schnitt 4 aufgehoben: es gibt den Screen „Training starten“; serverseitig entsteht die Session weiterhin mit dem ersten Satz, deshalb liegt eine Einheit ohne Satz nie beim Server. Eine Einheit lässt sich seit Migration 0044 löschen.)*“
+- [x] **Step 2: M1-Spec.** §5.2 hinter „Es gibt keinen Startknopf — der Training-Tab füllt sich einfach.“: „*(Seit Schnitt 4, 15. September, aufgehoben: die Einheit beginnt mit dem Tap auf „Training starten“ nach Geräte- und Übungswahl, wenn noch kein Training läuft; ihren Beginn setzt der Client mit dem ersten Satz-PUT. Siehe `docs/superpowers/plans/2026-09-15-schnitt4-einheit.md`.)*“ §5.6 hinter „Die Session entsteht implizit beim ersten gespeicherten Satz (siehe Abschnitt 7.2).“: „*(Seit Schnitt 4 aufgehoben: es gibt den Screen „Training starten“; serverseitig entsteht die Session weiterhin mit dem ersten Satz, deshalb liegt eine Einheit ohne Satz nie beim Server. Eine Einheit lässt sich seit Migration 0044 löschen.)*“
 
-- [ ] **Step 3: Training/Kurse-Spec.** Z. 98 hinter „Es gibt keinen Startknopf (M1-Spec §5.6), also weiß niemand, warum plötzlich ein Training läuft.“: „*(Seit Schnitt 4 gibt es ihn — „Training starten“ —, die Zeile „seit 18:04“ bleibt als Anker der Uhr.)*“ Z. 196, Spalte „warum“: „ohne Startknopf sonst unerklärlich *(seit Schnitt 4: Anker der Uhr)*“.
+- [x] **Step 3: Training/Kurse-Spec.** Z. 98 hinter „Es gibt keinen Startknopf (M1-Spec §5.6), also weiß niemand, warum plötzlich ein Training läuft.“: „*(Seit Schnitt 4 gibt es ihn — „Training starten“ —, die Zeile „seit 18:04“ bleibt als Anker der Uhr.)*“ Z. 196, Spalte „warum“: „ohne Startknopf sonst unerklärlich *(seit Schnitt 4: Anker der Uhr)*“.
 
-- [ ] **Step 4: Designsystem §8.** Hinter „Ein Tap auf eine Übung führt direkt zum Satz; es gibt keinen Bestätigungsknopf.“: „*(Seit Schnitt 4: ohne laufendes Training folgt der Screen „Training starten“ — sein Knopf startet die Einheit, er bestätigt keine Übung. Mitten im Training führt der Tap weiterhin direkt zum Satz.)*“
+- [x] **Step 4: Designsystem §8.** Hinter „Ein Tap auf eine Übung führt direkt zum Satz; es gibt keinen Bestätigungsknopf.“: „*(Seit Schnitt 4: ohne laufendes Training folgt der Screen „Training starten“ — sein Knopf startet die Einheit, er bestätigt keine Übung. Mitten im Training führt der Tap weiterhin direkt zum Satz.)*“
 
-- [ ] **Step 5: Commit** — `docs: Sammelstelle, M1-Spec SS5.2/SS5.6 und Designsystem SS8 fuer Schnitt 4 nachgezogen`
+- [x] **Step 5: Commit** — `docs: Sammelstelle, M1-Spec SS5.2/SS5.6 und Designsystem SS8 fuer Schnitt 4 nachgezogen`
 
 ---
 
@@ -1587,18 +1587,18 @@ Tests beweisen Ableitungen, nicht Sichtbarkeit und Höhe. Der Sichtcheck läuft 
 - Harness-Regeln: `TEST_RUNNER_`-Umgebung kommt nicht an, die Schritte kommen über `schritte.txt` im Scratchpad; Taps über die Element-Koordinate (`tapc:<Label>`); jeder Lauf beginnt mit `launch`, sonst bleibt der Navigationsstapel vom letzten Lauf; Geräte unterhalb der Falz über das Suchfeld (`type:Gerät, Übung oder Platz:<Text>`); `frames` schreibt die Rahmen aller Elemente in den Bericht; `shot:<name>` macht den Screenshot mit `xcrun simctl io <udid> screenshot`.
 - SE-Simulator: `xcrun simctl create "SE-Schnitt4" "iPhone SE (3rd generation)" <iOS-26.3-Runtime aus simctl list runtimes>`, am Ende `xcrun simctl delete SE-Schnitt4`. Für den 17-Pro-Vergleich ebenso `"Pro-Schnitt4"` mit „iPhone 17 Pro“, ebenfalls löschen.
 
-- [ ] **Step 1: Der Startscreen auf dem SE** — Gerät über die Suche wählen, Übung antippen: Kopfzeile, Gerätename (eine Zeile, geschrumpft bei „BEINPRESSE SITZEND“), Übung, die Karte „WAS JETZT PASSIERT“, „Training starten“ über der Tab-Leiste. Screenshot `se-start.png`, `frames`: der Knopf ist 64 pt hoch, sein Unterrand liegt über der Safe Area (y + Höhe ≤ 584), die Karte reicht nicht in den Knopf. Auf dem 17 Pro: `pro-start.png`, der Knopf sitzt über dem Home-Indikator.
-- [ ] **Step 2: Der Tap** — „Training starten“: der Satzpfad kommt, die Uhr im Kopf läuft ab 0:00 (Screenshot nach 5 s: `se-satzpfad-uhr.png`). „Zurück“ führt auf „Gerät erkannt“, nicht auf den Startscreen (`se-zurueck-erkannt.png`).
-- [ ] **Step 3: Training-Tab vor dem ersten Satz** — Tab „Training“: „TRAINING LÄUFT“ mit Uhr und „seit hh:mm“, keine Zahlen rechts, keine Blockliste, kein Zirkel-Satz, „Training beenden“ und die Scanwege im Fuß (`se-training-leer-laeuft.png`).
-- [ ] **Step 4: Beenden ohne Satz** — „Training beenden“: kein Abschluss-Screen, der Tab ist leer, im Fuß steht „Kein Satz gesichert — das Training wurde verworfen.“ (`se-verworfen.png`). Danach im Browser/`psql` gegen das lokale Supabase: `select count(*) from workout_sessions where user_id = '<id>'` — die Zahl ist nicht gestiegen.
-- [ ] **Step 5: Das nächste Gerät kommt ohne Startscreen** — Start, einen Satz sichern, „Gerät abschließen“, zweites Gerät über die Suche, Übung antippen: direkt der Satzpfad (`se-zweites-geraet.png`). Blockliste antippen: direkt der Satzpfad.
-- [ ] **Step 6: Direktweg** — an einem Gerät mit `visitCount ≥ 2` und genau einer genutzten Übung ohne laufendes Training: nach der Wahl aus der Liste kommt der Startscreen, nicht der Satzpfad (`se-direkt-start.png`). (Der Seed liefert dafür ein Gerät mit einem letzten Satz einer Übung und `visit_count` 2 — im Seed prüfen, sonst nachtragen.)
-- [ ] **Step 7: Dauer** — Start, 90 s warten, Satz, „Gerät abschließen“, „Training beenden“: der Abschluss zeigt „HEUTE · hh:mm – hh:mm“ ab dem Start und „2 MINUTEN“ (nicht 0) (`se-abschluss-dauer.png`). „Fertig“, Home neu laden: die Karte zeigt dieselbe Spanne „ab hh:mm“ des Starts, nicht des Satzes (`se-home-karte.png`).
-- [ ] **Step 8: Verwerfen auf dem Abschluss** — noch eine Einheit mit Satz, „Training beenden“: unter „Fertig“ steht „Training verwerfen“ in danger, 44 pt (`frames`); Tap → Rückfrage „Dieses Training verwerfen?“ (`se-verwerfen-dialog.png`); „Verwerfen“ → zurück auf dem leeren Tab; Home neu laden: die Einheit fehlt, die Wochenzahl ist um eins kleiner (`se-home-nach-verwerfen.png`). Dasselbe im **Flugmodus** mit einer Einheit, deren Satz nie rausging: Verwerfen gelingt ohne Fehlerbanner (`.nurLokal`), Flugmodus aus, kein Satz erscheint nach dem Reconnect. Und im Flugmodus mit einer Einheit, deren erster Satz schon draußen war: das Banner „Keine Verbindung. Zum Verwerfen brauchst du Empfang …“, die Einheit bleibt (`se-verwerfen-offline.png`).
-- [ ] **Step 9: Löschen im Detail** — Home, Karte antippen: unter den Blöcken „Training löschen“ (52 pt Umriss, `frames`); Rückfrage; „Löschen“ → zurück auf Home, die Karte ist weg, Serie und Wochenzahl rechnen neu nach dem Abruf (`se-detail-loeschen.png`, `se-home-nach-loeschen.png`). Eine zusammengefasste Karte (zwei Einheiten kurz nacheinander, Punkt 15): je Teil ein Knopf „Diesen Teil löschen“, nur der eine Teil geht (`se-detail-zwei-teile.png`).
-- [ ] **Step 10: Dynamic Type** `xcrun simctl ui <udid> content_size extra-extra-extra-large` auf dem SE: Startscreen und Abschluss dürfen scrollen, nichts überlappt, „Training starten“ und „Training verwerfen“ bleiben erreichbar (`se-start-xxxl.png`). Danach `content_size medium`.
-- [ ] **Step 11: VoiceOver-Beschriftungen** aus dem Accessibility-Baum (`frames` liefert Labels mit): der Startscreen liest Kopfzeile, Gerät, Übung, die Karte als einen Satz, „Training starten“; der Abschluss liest „Training verwerfen“ mit dem Hint.
-- [ ] **Step 12: Bericht** — Liste der Screenshots mit je einem Satz, was sie zeigen, plus die gemessenen Rahmen der drei Knöpfe; Abweichungen als Nachtrag-Commit `fix(training): Nachzuege aus dem Sichtcheck -- <was>` oder als Notiz unter „Beim Sichtcheck gefunden, außerhalb dieses Schnitts“. Beide Simulatoren löschen, Web-API beenden, Testnutzer und Studio per Service-Key wieder entfernen (der Seed räumt beim nächsten Lauf ohnehin).
+- [x] **Step 1: Der Startscreen auf dem SE** — Gerät über die Suche wählen, Übung antippen: Kopfzeile, Gerätename (eine Zeile, geschrumpft bei „BEINPRESSE SITZEND“), Übung, die Karte „WAS JETZT PASSIERT“, „Training starten“ über der Tab-Leiste. Screenshot `se-start.png`, `frames`: der Knopf ist 64 pt hoch, sein Unterrand liegt über der Safe Area (y + Höhe ≤ 584), die Karte reicht nicht in den Knopf. Auf dem 17 Pro: `pro-start.png`, der Knopf sitzt über dem Home-Indikator.
+- [x] **Step 2: Der Tap** — „Training starten“: der Satzpfad kommt, die Uhr im Kopf läuft ab 0:00 (Screenshot nach 5 s: `se-satzpfad-uhr.png`). „Zurück“ führt auf „Gerät erkannt“, nicht auf den Startscreen (`se-zurueck-erkannt.png`).
+- [x] **Step 3: Training-Tab vor dem ersten Satz** — Tab „Training“: „TRAINING LÄUFT“ mit Uhr und „seit hh:mm“, keine Zahlen rechts, keine Blockliste, kein Zirkel-Satz, „Training beenden“ und die Scanwege im Fuß (`se-training-leer-laeuft.png`).
+- [x] **Step 4: Beenden ohne Satz** — „Training beenden“: kein Abschluss-Screen, der Tab ist leer, im Fuß steht „Kein Satz gesichert — das Training wurde verworfen.“ (`se-verworfen.png`). Danach im Browser/`psql` gegen das lokale Supabase: `select count(*) from workout_sessions where user_id = '<id>'` — die Zahl ist nicht gestiegen.
+- [x] **Step 5: Das nächste Gerät kommt ohne Startscreen** — Start, einen Satz sichern, „Gerät abschließen“, zweites Gerät über die Suche, Übung antippen: direkt der Satzpfad (`se-zweites-geraet.png`). Blockliste antippen: direkt der Satzpfad.
+- [x] **Step 6: Direktweg** — an einem Gerät mit `visitCount ≥ 2` und genau einer genutzten Übung ohne laufendes Training: nach der Wahl aus der Liste kommt der Startscreen, nicht der Satzpfad (`se-direkt-start.png`). (Der Seed liefert dafür ein Gerät mit einem letzten Satz einer Übung und `visit_count` 2 — im Seed prüfen, sonst nachtragen.)
+- [x] **Step 7: Dauer** — Start, 90 s warten, Satz, „Gerät abschließen“, „Training beenden“: der Abschluss zeigt „HEUTE · hh:mm – hh:mm“ ab dem Start und „2 MINUTEN“ (nicht 0) (`se-abschluss-dauer.png`). „Fertig“, Home neu laden: die Karte zeigt dieselbe Spanne „ab hh:mm“ des Starts, nicht des Satzes (`se-home-karte.png`).
+- [x] **Step 8: Verwerfen auf dem Abschluss** — noch eine Einheit mit Satz, „Training beenden“: unter „Fertig“ steht „Training verwerfen“ in danger, 44 pt (`frames`); Tap → Rückfrage „Dieses Training verwerfen?“ (`se-verwerfen-dialog.png`); „Verwerfen“ → zurück auf dem leeren Tab; Home neu laden: die Einheit fehlt, die Wochenzahl ist um eins kleiner (`se-home-nach-verwerfen.png`). Dasselbe im **Flugmodus** mit einer Einheit, deren Satz nie rausging: Verwerfen gelingt ohne Fehlerbanner (`.nurLokal`), Flugmodus aus, kein Satz erscheint nach dem Reconnect. Und im Flugmodus mit einer Einheit, deren erster Satz schon draußen war: das Banner „Keine Verbindung. Zum Verwerfen brauchst du Empfang …“, die Einheit bleibt (`se-verwerfen-offline.png`).
+- [x] **Step 9: Löschen im Detail** — Home, Karte antippen: unter den Blöcken „Training löschen“ (52 pt Umriss, `frames`); Rückfrage; „Löschen“ → zurück auf Home, die Karte ist weg, Serie und Wochenzahl rechnen neu nach dem Abruf (`se-detail-loeschen.png`, `se-home-nach-loeschen.png`). Eine zusammengefasste Karte (zwei Einheiten kurz nacheinander, Punkt 15): je Teil ein Knopf „Diesen Teil löschen“, nur der eine Teil geht (`se-detail-zwei-teile.png`).
+- [x] **Step 10: Dynamic Type** `xcrun simctl ui <udid> content_size extra-extra-extra-large` auf dem SE: Startscreen und Abschluss dürfen scrollen, nichts überlappt, „Training starten“ und „Training verwerfen“ bleiben erreichbar (`se-start-xxxl.png`). Danach `content_size medium`.
+- [x] **Step 11: VoiceOver-Beschriftungen** aus dem Accessibility-Baum (`frames` liefert Labels mit): der Startscreen liest Kopfzeile, Gerät, Übung, die Karte als einen Satz, „Training starten“; der Abschluss liest „Training verwerfen“ mit dem Hint.
+- [x] **Step 12: Bericht** — Liste der Screenshots mit je einem Satz, was sie zeigen, plus die gemessenen Rahmen der drei Knöpfe; Abweichungen als Nachtrag-Commit `fix(training): Nachzuege aus dem Sichtcheck -- <was>` oder als Notiz unter „Beim Sichtcheck gefunden, außerhalb dieses Schnitts“. Beide Simulatoren löschen, Web-API beenden, Testnutzer und Studio per Service-Key wieder entfernen (der Seed räumt beim nächsten Lauf ohnehin).
 
 ---
 
