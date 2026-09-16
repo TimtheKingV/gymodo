@@ -37,11 +37,21 @@ export const recordSetInputSchema = z
     problemFlag: z.boolean().default(false),
     problemReason: problemReasonSchema.nullish(),
     performedAt: z.string().datetime().optional(),
+    // Der Beginn der Einheit, vom Client gesetzt ("Training starten",
+    // Schnitt 4). Nur beim Anlegen der Session uebernommen, siehe recordSet.
+    sessionStartedAt: z.string().datetime().optional(),
   })
   .refine((value) => !value.problemReason || value.problemFlag, {
     path: ["problemReason"],
     message: "Eine Problemursache setzt das Problemkennzeichen voraus.",
-  });
+  })
+  .refine(
+    (value) =>
+      !value.sessionStartedAt ||
+      !value.performedAt ||
+      Date.parse(value.sessionStartedAt) <= Date.parse(value.performedAt),
+    { path: ["sessionStartedAt"], message: "Der Beginn der Einheit liegt nach dem Satz." },
+  );
 
 export type RecordSetInput = z.infer<typeof recordSetInputSchema>;
 
@@ -100,8 +110,10 @@ function toRecordedSet(row: SetRow): RecordedSet {
  * Speichert einen bestaetigten Satz.
  *
  * Idempotent durch die clientseitig erzeugten UUIDs: derselbe Aufruf zweimal
- * ergibt dieselbe Zeile (Spec 6.3). Die Session entsteht dabei implizit --
- * es gibt keinen Startknopf und keinen Endpoint dafuer (Spec 5.2).
+ * ergibt dieselbe Zeile (Spec 6.3). Die Session entsteht dabei mit dem
+ * ersten Satz -- einen Start-Endpoint gibt es nicht, und deshalb liegt eine
+ * Einheit ohne Satz nie hier (Sammelstelle Schnitt 4, Entschieden 2). Ihren
+ * Beginn setzt der Client (Spec 5.2, seit Schnitt 4).
  */
 export async function recordSet(
   client: SupabaseClient,
@@ -138,9 +150,17 @@ export async function recordSet(
   }
 
   // `ignoreDuplicates` macht daraus ON CONFLICT DO NOTHING: ein zweiter Satz
-  // in derselben Session verschiebt deren Startzeitpunkt nicht.
+  // in derselben Session verschiebt deren Startzeitpunkt nicht -- auch
+  // nicht mit einem anderen sessionStartedAt.
   const { error: sessionError } = await client.from("workout_sessions").upsert(
-    { id: input.sessionId, studio_id: studioId, user_id: userId },
+    {
+      id: input.sessionId,
+      studio_id: studioId,
+      user_id: userId,
+      // Ohne den Wert griffe der Default now(): die Ankunft des ersten PUT,
+      // nach einem Offline-Training Stunden nach dem Start.
+      ...(input.sessionStartedAt ? { started_at: input.sessionStartedAt } : {}),
+    },
     { onConflict: "id", ignoreDuplicates: true },
   );
   if (sessionError) {

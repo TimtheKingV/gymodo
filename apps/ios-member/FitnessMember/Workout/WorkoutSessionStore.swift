@@ -154,11 +154,13 @@ final class WorkoutSessionStore {
         gespeicherteSession = session
         fileStore.save(session)
 
+        let formatter = ISO8601DateFormatter()
         let body = SetWrite(
             machineId: machineId, exerciseId: exerciseId, setIndex: setIndex,
             weightKg: weightKg, reps: reps, rir: nil,
             problemFlag: problemFlag, problemReason: problemReason,
-            performedAt: ISO8601DateFormatter().string(from: jetzt)
+            performedAt: formatter.string(from: jetzt),
+            sessionStartedAt: formatter.string(from: session.startedAt)
         )
         return (session.id, satz.id, body)
     }

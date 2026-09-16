@@ -148,6 +148,19 @@ struct WorkoutSessionStoreTests {
         #expect(sut.aktiveSession(jetzt: start.addingTimeInterval(600))?.startedAt == start)
     }
 
+    @Test func derSatzTraegtDenBeginnDerEinheitZumServer() {
+        let (sut, _) = store()
+        sut.trainingStarten(jetzt: start)
+
+        let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
+                                          problemFlag: false, problemReason: nil,
+                                          jetzt: start.addingTimeInterval(600))
+
+        // Sonst bekaeme die Session beim Server den Zeitpunkt des ersten PUT
+        // als Beginn -- nach einem Offline-Training Stunden spaeter.
+        #expect(geschrieben.body.sessionStartedAt == ISO8601DateFormatter().string(from: start))
+    }
+
     @Test func eineLeereEinheitLaeuftNachVierStundenAus() {
         let (sut, _) = store()
         sut.trainingStarten(jetzt: start)

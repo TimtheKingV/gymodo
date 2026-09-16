@@ -21,6 +21,11 @@ struct SetWrite: Codable, Equatable {
     var problemFlag: Bool = false
     var problemReason: ProblemReason? = nil
     var performedAt: String? = nil
+    /// Der Beginn der Einheit, ISO 8601 wie performedAt. Der Server legt die
+    /// Session mit dem ersten Satz an und uebernimmt ihn dabei -- ohne ihn
+    /// staende dort die Ankunft des ersten PUT, nach einem Offline-Training
+    /// Stunden nach dem Start (Sammelstelle Punkt 10).
+    var sessionStartedAt: String? = nil
 }
 
 struct RecordedSet: Decodable, Equatable {

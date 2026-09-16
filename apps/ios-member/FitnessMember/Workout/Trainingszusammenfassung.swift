@@ -33,18 +33,20 @@ struct Trainingszusammenfassung: Equatable, Hashable {
     let satzAnzahl: Int
     let bloecke: [Blockzeile]
 
-    /// nil fuer eine Einheit ohne Saetze -- die gibt es zwar nicht, weil
-    /// die Session mit dem ersten Satz entsteht, aber ein Abschluss ohne
-    /// Inhalt waere eine leere Statistik mit Nullen (SS5).
+    /// nil fuer eine Einheit ohne Saetze -- die wird verworfen, nicht
+    /// abgeschlossen (Entschieden 2), und ein Abschluss ohne Inhalt waere eine
+    /// leere Statistik mit Nullen (SS5).
     init?(_ session: LokaleSession) {
         let alle = session.bloecke.flatMap(\.saetze)
-        guard let erster = alle.map(\.performedAt).min(),
-              let letzter = alle.map(\.performedAt).max()
-        else { return nil }
+        guard let letzter = alle.map(\.performedAt).max() else { return nil }
 
-        von = erster
+        // Ab dem Start, nicht ab dem ersten Satz: seit Schnitt 4 hat das
+        // Mitglied den Beginn selbst gesetzt, und Einweisung und Einstellung
+        // gehoeren zum Training (Sammelstelle Punkt 10).
+        von = session.startedAt
         bis = letzter
-        dauerMinuten = Int(letzter.timeIntervalSince(erster) / 60)
+        dauerMinuten = Int(letzter.timeIntervalSince(session.startedAt) / 60)
+        // geraeteAnzahl, satzAnzahl und bloecke bleiben, wie sie sind.
         // Geraete, nicht Bloecke: zwei Uebungen an derselben Maschine sind
         // ein Geraet (so zaehlt es auch der Server in machineCount).
         geraeteAnzahl = Set(session.bloecke.map(\.machineId)).count

@@ -112,7 +112,7 @@ describe("recordSet", () => {
     expect(saved.setIndex).toBe(1);
   });
 
-  it("legt die Session implizit an -- es gibt keinen Startknopf", async () => {
+  it("legt die Session mit dem ersten Satz an -- einen Start-Endpoint gibt es nicht", async () => {
     const client = await userClient(memberAEmail);
     const input = payload();
 
@@ -126,6 +126,24 @@ describe("recordSet", () => {
       .single();
     expect(data?.user_id).toBe(memberAId);
     expect(data?.studio_id).toBe(studioA);
+  });
+
+  it("uebernimmt den Beginn der Einheit vom Client, und nur beim ersten Satz", async () => {
+    const client = await userClient(memberAEmail);
+    const sessionId = newId();
+    const beginn = "2026-09-15T16:04:00.000Z";
+
+    await recordSet(client, payload({ sessionId, sessionStartedAt: beginn, performedAt: "2026-09-15T16:14:00.000Z" }));
+    // Ein zweiter Satz mit anderem Beginn verschiebt nichts (ignoreDuplicates).
+    await recordSet(client, payload({ sessionId, setIndex: 2, sessionStartedAt: "2026-09-15T16:30:00.000Z", performedAt: "2026-09-15T16:31:00.000Z" }));
+
+    const admin = serviceClient();
+    const { data } = await admin
+      .from("workout_sessions")
+      .select("started_at")
+      .eq("id", sessionId)
+      .single();
+    expect(Date.parse(data!.started_at)).toBe(Date.parse(beginn));
   });
 
   it("leitet das Studio aus dem Geraet ab, statt es vom Client zu glauben", async () => {
