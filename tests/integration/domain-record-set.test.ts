@@ -146,6 +146,25 @@ describe("recordSet", () => {
     expect(Date.parse(data!.started_at)).toBe(Date.parse(beginn));
   });
 
+  it("kappt einen Beginn in der Zukunft auf die Serverzeit -- eine vorgehende Client-Uhr darf started_at nicht in die Zukunft schreiben", async () => {
+    const client = await userClient(memberAEmail);
+    const sessionId = newId();
+    const inDerZukunft = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+    await recordSet(client, payload({ sessionId, sessionStartedAt: inDerZukunft }));
+
+    const admin = serviceClient();
+    const { data } = await admin
+      .from("workout_sessions")
+      .select("started_at")
+      .eq("id", sessionId)
+      .single();
+    // Toleranz statt exakter Gleichheit: der Server-now() zwischen recordSet
+    // und dieser Abfrage liegt ein paar Millisekunden auseinander.
+    expect(Date.parse(data!.started_at)).toBeLessThanOrEqual(Date.now());
+    expect(Date.parse(data!.started_at)).toBeGreaterThan(Date.now() - 10_000);
+  });
+
   it("leitet das Studio aus dem Geraet ab, statt es vom Client zu glauben", async () => {
     const client = await userClient(memberAEmail);
     const input = payload({ studioId: studioB });

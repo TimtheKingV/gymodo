@@ -122,16 +122,16 @@ struct TrainingRootView: View {
                 // zurueckbleiben.
                 //
                 // abgelaufeneSession() liefert NUR etwas, wenn die
-                // gespeicherte Einheit noch existiert UND
-                // aktiveSession() wegen Zeitablauf nil ist -- das
-                // unterscheidet den selbsttaetigen Ablauf sauber von
-                // einem manuellen "Training beenden": beenden() nullt
+                // gespeicherte Einheit noch existiert, mindestens einen Satz
+                // hat UND aktiveSession() wegen Zeitablauf nil ist -- das
+                // unterscheidet den selbsttaetigen Ablauf sauber von einem
+                // manuellen "Training beenden": beenden() nullt
                 // gespeicherteSession bereits VOR dem naechsten Tick,
-                // abgelaufeneSession() liefert dann nichts mehr (sonst
-                // waere M1 wieder da). Nach dem ersten Treffer ist
-                // gespeicherteSession geloescht, jeder weitere Tick
-                // liefert deshalb von selbst nichts mehr -- ohne
-                // eigenes Merker-Flag genau einmal. Deckt zugleich den
+                // abgelaufeneSession() liefert dann nichts mehr (sonst waere
+                // M1 wieder da). Nach dem ersten Treffer ist
+                // gespeicherteSession geloescht, jeder weitere Tick liefert
+                // deshalb von selbst nichts mehr -- ohne eigenes Merker-Flag
+                // genau einmal. Deckt zugleich den
                 // Kalteinstieg ab -- aber ueber das ERSCHEINEN, nicht
                 // ueber einen Tick: .task(id:) laeuft, sobald die View
                 // im Baum auftaucht, und danach bei jeder Aenderung
@@ -329,7 +329,9 @@ struct TrainingRootView: View {
                         Button { oeffne(block) } label: { blockZeile(block) }
                             .buttonStyle(PressButtonStyle())
                     }
-                    // Vor dem ersten Satz (seit Schnitt 4 moeglich) gibt es keinen Block zum Antippen -- der Satz zum Zirkel waere ein Raetsel.
+                    // Vor dem ersten Satz (seit Schnitt 4 moeglich) gibt es
+                    // keinen Block zum Antippen -- der Satz zum Zirkel waere
+                    // ein Raetsel.
                     if !session.bloecke.isEmpty { zirkelHinweis }
                 }
                 .padding(.horizontal, 20)
@@ -402,7 +404,9 @@ struct TrainingRootView: View {
                         .foregroundStyle(DesignSystem.Color.text)
                         .accessibilityLabel(Zahlformat.verstrichenGesprochen(seit: mitte.startedAt, bis: zeit.date))
                 }
-                // Der Beginn ist seit Schnitt 4 der Tap auf "Training starten". Die Zeile bleibt: eine Uhr ohne Anker ("23:41 -- seit wann?") sagt nichts.
+                // Der Beginn ist seit Schnitt 4 der Tap auf "Training
+                // starten". Die Zeile bleibt: eine Uhr ohne Anker ("23:41 --
+                // seit wann?") sagt nichts.
                 Text("seit \(Zahlformat.uhrzeit(mitte.startedAt))")
                     .font(.system(size: 13))
                     .foregroundStyle(DesignSystem.Color.textMuted)
@@ -654,7 +658,9 @@ struct TrainingRootView: View {
             let uebung = GeraetEinstiegRechner.letzteUebung(machineId: maschine.id, in: bootstrap)
                 ?? maschine.exercises.first?.id
             guard let uebung else { return }
-            // Auch der Direktweg beginnt ohne laufendes Training auf dem Startscreen -- sonst entstuende die Einheit fuer Stammgaeste weiter erst mit dem Satz.
+            // Auch der Direktweg beginnt ohne laufendes Training auf dem
+            // Startscreen -- sonst entstuende die Einheit fuer Stammgaeste
+            // weiter erst mit dem Satz.
             pfad.append(TrainingStart.ziel(machineId: maschine.id, exerciseId: uebung, token: token,
                                             trainingLaeuft: sessions.aktiveSession() != nil))
         }
@@ -662,7 +668,8 @@ struct TrainingRootView: View {
 
     private func oeffne(_ block: LokalerBlock) {
         // Der Zirkelfall: ein Tap statt eines Scans (M1-Spec SS5.3).
-        // Kein TrainingStart.ziel: die Blockliste gibt es nur, solange ein Training laeuft.
+        // Kein TrainingStart.ziel: die Blockliste gibt es nur, solange ein
+        // Training laeuft.
         pfad.append(.geraet(machineId: block.machineId, exerciseId: block.exerciseId, token: nil))
     }
 
@@ -694,8 +701,8 @@ struct TrainingRootView: View {
 /// Faelle, ein Zustand: gleichzeitig gelten sie nie, und ein zweites Bool
 /// haette zwei Banner uebereinander erlaubt.
 private enum TabHinweis {
-    /// Vier Stunden ohne Satz -- die Einheit MIT Saetzen ist beim Server
-    /// (oder in der Warteschlange) und gilt als beendet.
+    /// Vier Stunden ohne neuen Satz -- die Einheit MIT Saetzen ist beim
+    /// Server (oder in der Warteschlange) und gilt als beendet.
     case ausgelaufen
     /// "Training beenden" ohne einen Satz: verworfen, nie gemeldet
     /// (Sammelstelle, Entschieden 2). Nie stumm -- der Tap hatte eine

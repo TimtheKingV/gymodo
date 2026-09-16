@@ -248,12 +248,12 @@ dem Tap auf die Übung unter „Was machst du heute?".
 
 Was daran hängt:
 
-- **Drei Texte werden falsch.** (der erste, `TrainingRootView.leerInhalt`,
-  war seit Schnitt 2 schon weg) „Dein Training startet von selbst, sobald du
+- **Drei Texte werden falsch.** „Dein Training startet von selbst, sobald du
   den ersten Satz sicherst — es gibt keinen Startknopf"
   (`TrainingRootView.leerInhalt`), „Sätze sichern — meistens reicht ein
   Antippen. Das Training startet dabei von selbst" (`HomeRootView.leer`), und
   „Ein Tap genügt — du landest direkt beim Satz" auf dem Einstieg selbst.
+  (der erste, `TrainingRootView.leerInhalt`, war seit Schnitt 2 schon weg)
 - **Leere Einheiten werden möglich.** Wer scannt, die Übung antippt und dann
   weggeht, hinterlässt eine Einheit ohne einen einzigen Satz. Regel nötig:
   eine Einheit ohne Satz wird beim Verlassen bzw. beim Ablauf verworfen und

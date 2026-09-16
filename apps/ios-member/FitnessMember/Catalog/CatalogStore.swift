@@ -132,6 +132,11 @@ final class CatalogStore {
 
     func flushPending() async {
         for write in pendingWrites {
+            // Erneut pruefen: schreibvorgaengeVerwerfen() kann waehrend eines
+            // await hier dazwischengekommen sein -- die Schleife laeuft ueber
+            // eine Kopie von pendingWrites, sonst sendet sie eine gerade
+            // verworfene oder geloeschte Einheit doch noch an den Server.
+            guard pendingWrites.contains(where: { $0.id == write.id }) else { continue }
             do {
                 _ = try await loader.putSet(sessionId: write.sessionId, setId: write.setId, write.body)
                 entferneAusPendingWrites(write)

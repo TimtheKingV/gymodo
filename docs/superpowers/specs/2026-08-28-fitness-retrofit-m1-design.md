@@ -284,7 +284,7 @@ PUT  /api/v1/workout-sessions/{sessionId}/sets/{setId}
 POST /api/v1/workout-sessions/{sessionId}/complete
 ```
 
-Sechs Endpoints für die gesamte Member-App.
+Sechs Endpoints für die gesamte Member-App. *(Seit Schnitt 4: dazu `DELETE /api/v1/workout-sessions/{sessionId}` (Migration 0044) zum Löschen einer eigenen Einheit. Die Liste war schon vorher unvollständig — Messwerte, Ziele und Studio-Beitritt per Code fehlen ebenfalls —, das wird hier nicht rückwirkend nachgezogen.)*
 
 `GET /me/progress` liefert Aggregate je Übung und Datum, keine Rohsatzliste. Damit bleibt die Nutzlast auch nach einem Jahr Training klein und die Auswertungslogik serverseitig (§16.1).
 

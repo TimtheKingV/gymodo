@@ -542,6 +542,67 @@ struct FlushPendingTests {
         #expect(await loader.zweiterAufrufSahDenEntferntenEintrag == true)
         #expect(catalog.verworfeneWrites.count == 2)
     }
+
+    // Regression: schreibvorgaengeVerwerfen() kann waehrend eines await in
+    // flushPending() dazwischenkommen (Mitglied tippt "Training verwerfen",
+    // waehrend der Flush noch auf putSet fuer einen anderen Eintrag wartet).
+    // Die Schleife laeuft ueber eine Kopie von pendingWrites -- ohne die
+    // erneute Pruefung vor jedem Eintrag wuerde b trotzdem gesendet und die
+    // gerade verworfene Einheit beim Server wieder angelegt.
+    @Test func flushPendingUebergehtEinenWaehrendDesLaufsVerworfenenEintrag() async {
+        let loader = PausableBootstrapLoader()
+        let catalog = store(loader: loader)
+        let a = PendingSetWrite(
+            sessionId: UUID(), setId: UUID(),
+            body: SetWrite(machineId: "m1", exerciseId: "e1", setIndex: 1, weightKg: 80, reps: 10))
+        let b = PendingSetWrite(
+            sessionId: UUID(), setId: UUID(),
+            body: SetWrite(machineId: "m2", exerciseId: "e2", setIndex: 1, weightKg: 60, reps: 8))
+        catalog.enqueue(a)
+        catalog.enqueue(b)
+
+        let flush = Task { await catalog.flushPending() }
+        // Wartet, bis flushPending() im putSet fuer a haengt -- erst dann darf
+        // b verworfen werden, sonst laeuft die Schleife noch gar nicht.
+        while await loader.putSetCalls.isEmpty { await Task.yield() }
+
+        catalog.schreibvorgaengeVerwerfen(sessionId: b.sessionId)
+        await loader.weiter()
+        await flush.value
+
+        #expect(await loader.putSetCalls == [a.setId])
+        #expect(catalog.pendingWrites.isEmpty)
+    }
+}
+
+/// Pausiert innerhalb von putSet, bis der Test weiter() aufruft -- damit ein
+/// Test genau den await treffen kann, in dem flushPending() beim
+/// Netzwerkaufruf auf eine Antwort wartet (siehe Race-Kommentar dort).
+private actor PausableBootstrapLoader: BootstrapLoading {
+    private(set) var putSetCalls: [UUID] = []
+    private var wartend: CheckedContinuation<Void, Never>?
+
+    func bootstrap() async throws(APIError) -> BootstrapResponse { throw .offline }
+
+    func putSet(sessionId: UUID, setId: UUID, _ body: SetWrite) async throws(APIError) -> RecordedSet {
+        putSetCalls.append(setId)
+        await withCheckedContinuation { continuation in
+            wartend = continuation
+        }
+        return RecordedSet(
+            id: "r1", studioId: "s1", userId: "u1", sessionId: sessionId.uuidString,
+            machineId: "m1", exerciseId: "e1", setIndex: 1, weightKg: 80, reps: 10, rir: nil,
+            problemFlag: false, problemReason: nil, performedAt: "2026-09-01T10:00:00Z")
+    }
+
+    func weiter() {
+        wartend?.resume()
+        wartend = nil
+    }
+
+    func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
+    func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
+    func leaveStudioMembership(studioId: String) async throws(APIError) { throw .offline }
 }
 
 /// Prueft beim ZWEITEN putSet-Aufruf, ob der erste Eintrag zu diesem

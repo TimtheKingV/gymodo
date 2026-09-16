@@ -161,6 +161,20 @@ struct WorkoutSessionStoreTests {
         #expect(geschrieben.body.sessionStartedAt == ISO8601DateFormatter().string(from: start))
     }
 
+    @Test func derFallbackSatzOhneTrainingStartenTraegtEbenfallsDenBeginnZumServer() {
+        let (sut, _) = store()
+
+        // Ohne vorheriges trainingStarten() (z.B. nach einem Vier-Stunden-
+        // Ablauf) legt satzSichern die Session selbst an -- ihr Beginn ist
+        // dann der Satz selbst (startedAt == jetzt, derErsteSatzLegtDieSessionAn).
+        // Genau den muss der Body auch als sessionStartedAt tragen, sonst
+        // faellt der Server auf diesem Pfad auf now() zurueck.
+        let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
+                                          problemFlag: false, problemReason: nil, jetzt: start)
+
+        #expect(geschrieben.body.sessionStartedAt == ISO8601DateFormatter().string(from: start))
+    }
+
     @Test func eineLeereEinheitLaeuftNachVierStundenAus() {
         let (sut, _) = store()
         sut.trainingStarten(jetzt: start)
@@ -182,6 +196,19 @@ struct WorkoutSessionStoreTests {
         // Geraeumt ist sie trotzdem: der naechste Start ist eine neue Einheit.
         let neue = sut.trainingStarten(jetzt: spaeter)
         #expect(neue.startedAt == spaeter)
+    }
+
+    @Test func ausgelaufeneQuittierenRaeumtEineNochLaufendeEinheitNicht() {
+        let (sut, _) = store()
+        sut.trainingStarten(jetzt: start)
+        let nochInnerhalbDerFrist = start.addingTimeInterval(3 * 3600)
+
+        // Die Guard-Bedingung in ausgelaufeneQuittieren() lautet
+        // gespeicherteSession != nil && aktiveSession(jetzt:) == nil -- hier
+        // ist aktiveSession noch da, der Aufruf darf also nichts raeumen.
+        sut.ausgelaufeneQuittieren(jetzt: nochInnerhalbDerFrist)
+
+        #expect(sut.aktiveSession(jetzt: nochInnerhalbDerFrist) != nil)
     }
 
     @Test func eineAbgelaufeneEinheitMitSatzWirdGemeldet() {

@@ -333,6 +333,11 @@ extension TrainingAbschlussView {
         }
         katalog.schreibvorgaengeVerwerfen(sessionId: sessionId)
         verlauf.einheitEntfernen(id: sessionId.uuidString)
+        // Wie im Session-Detail: einheitEntfernen raeumt nur die Liste, Gesamtzahl,
+        // Woche und Serie kommen erst mit dem naechsten Abruf. Home laedt beim
+        // Tab-Wechsel nicht neu (HomeRootView), deshalb hier anstossen -- sonst
+        // zeigt die Kopfzeile eine gerade verworfene Einheit noch mit.
+        Task { await verlauf.laden(studioId: katalog.activeStudioId) }
         beiFertig()
     }
 }

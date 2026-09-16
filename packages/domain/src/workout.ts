@@ -158,8 +158,15 @@ export async function recordSet(
       studio_id: studioId,
       user_id: userId,
       // Ohne den Wert griffe der Default now(): die Ankunft des ersten PUT,
-      // nach einem Offline-Training Stunden nach dem Start.
-      ...(input.sessionStartedAt ? { started_at: input.sessionStartedAt } : {}),
+      // nach einem Offline-Training Stunden nach dem Start. Nach oben auf
+      // die Serverzeit gekappt, weil eine vorgehende Client-Uhr sonst einen
+      // started_at in der Zukunft schreibt -- das reisst spaeter die
+      // workout_sessions_completed_after_start-Check in completeSession
+      // (started_at <= completed_at, completed_at ist now()) und verschiebt
+      // Wochenzaehler/Serie/Reihenfolge in sessions.ts.
+      ...(input.sessionStartedAt
+        ? { started_at: new Date(Math.min(Date.parse(input.sessionStartedAt), Date.now())).toISOString() }
+        : {}),
     },
     { onConflict: "id", ignoreDuplicates: true },
   );
