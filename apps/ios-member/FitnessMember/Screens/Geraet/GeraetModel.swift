@@ -21,6 +21,18 @@ struct Einstellwert: Identifiable, Equatable {
     let anzeige: String
 }
 
+/// Was der Drawer beim Oeffnen des Geraets sagt. nil, wenn er nichts zu
+/// sagen haette: beim ersten Mal an diesem Geraet gibt es weder einen
+/// letzten Satz noch einen Vorschlag (Sammelstelle Punkt 11).
+struct Rueckblick: Equatable {
+    /// "77,5 kg x 11" (im UI mit Malzeichen) -- der letzte eigene Satz
+    /// dieser Uebung an diesem Geraet, aus dem Prefetch, also auch offline.
+    let zuletzt: String
+    /// "Vorschlag - +2,5" (im UI mit Mittelpunkt), sobald der Kontext da
+    /// ist. Offline nil.
+    let vorschlag: String?
+}
+
 /// Der Zustand eines geoeffneten Geraete-Screens.
 ///
 /// Kein weiterer globaler Store: Der Screen wird gepusht, lebt so lange wie
@@ -72,12 +84,11 @@ final class GeraetModel {
 
     var gewicht: Double
     var wiederholungen: Int
-    var radOffen = false
-    /// Sobald das Mitglied das Rad geoeffnet hat, gehoert `gewicht` ihm --
-    /// ein spaeter eintreffender tagContext (die Anfrage lief seit .task auf
-    /// GeraetView, kann in einem Keller zehn Sekunden brauchen) darf den
-    /// Wert dann nicht mehr unter dem Daumen ersetzen. Der einzige Ort mit
-    /// zwei Schreibern auf denselben Zustand im ganzen Branch.
+    /// Sobald das Mitglied am Rad gedreht hat, gehoert `gewicht` ihm -- ein
+    /// spaeter eintreffender tagContext (die Anfrage lief seit .task auf
+    /// GeraetView, kann in einem Keller zehn Sekunden brauchen) darf den Wert
+    /// dann nicht mehr unter dem Daumen ersetzen. Der einzige Ort mit zwei
+    /// Schreibern auf denselben Zustand im ganzen Branch.
     private var gewichtVomNutzer = false
     /// Die Kalibrierung ist auch ausserhalb des Dreischritts erreichbar
     /// ("aendern" auf Main) -- genau der Fall, der den eigenen Endpoint
@@ -320,12 +331,30 @@ final class GeraetModel {
         return "Vorschlag · \(vorzeichen)\(Zahlformat.gewicht(abs(delta)))"
     }
 
-    var zuletztText: String? {
+    var rueckblick: Rueckblick? {
         guard let letzter = bootstrap.lastSets.first(where: {
             $0.machineId == maschine.id && $0.exerciseId == uebungId
         }) else { return nil }
-        return "Zuletzt \(Zahlformat.gewichtMitEinheit(letzter.weightKg)) × \(letzter.reps)"
+        return Rueckblick(
+            zuletzt: "\(Zahlformat.gewichtMitEinheit(letzter.weightKg)) × \(letzter.reps)",
+            vorschlag: vorschlagText
+        )
     }
+
+    /// Die Regel "wann kommt der Drawer": nur vor dem ersten Satz DIESES
+    /// Geraeteblocks, und nur, wenn es einen Rueckblick gibt. satzNummer liest
+    /// live aus der lokalen Session -- im Zirkel zurueck am selben Geraet ist
+    /// der erste Satz laengst gesichert, auch wenn bootstrap ihn nicht kennt.
+    var rueckblickFaellig: Bool { satzNummer == 1 && rueckblick != nil }
+
+    /// Ob der Drawer gerade steht. GeraetScreen bindet sein Sheet daran.
+    var rueckblickOffen = false
+
+    /// Einmal beim Oeffnen des Screens -- nicht nach jedem Satz und nicht beim
+    /// Uebungswechsel. Der Drawer ist der Blick zurueck VOR dem ersten Satz;
+    /// danach waere er eine Karte, die den Satzpfad wieder hoeher macht
+    /// (Punkt 12).
+    func geraetGeoeffnet() { rueckblickOffen = rueckblickFaellig }
 
     func letztesGewicht(fuer uebungId: String) -> Double? {
         bootstrap.lastSets.first {
@@ -410,18 +439,20 @@ final class GeraetModel {
 
     func kontextUebernehmen(_ geladen: TagContextResponse) {
         kontext = geladen
-        // Unangetastet uebernehmen; hat das Mitglied das Rad schon
-        // geoeffnet, gehoert ihm der Wert -- ein spaeter Vorschlag darf ihn
-        // nicht mehr unter dem Daumen ersetzen.
+        // Unangetastet uebernehmen; hat das Mitglied schon am Rad gedreht,
+        // gehoert ihm der Wert -- ein spaeter Vorschlag darf ihn nicht mehr
+        // unter dem Daumen ersetzen.
         if !gewichtVomNutzer, let vorschlag = geladen.suggestion.resultWeightKg {
             gewicht = Rastwerte.naechster(zu: vorschlag, in: gewichtsWerte)
         }
     }
 
-    /// Einziger Ort, an dem das Rad geoeffnet wird -- markiert `gewicht`
-    /// zugleich als vom Mitglied uebernommen (siehe gewichtVomNutzer).
-    func radOeffnen() {
-        radOffen = true
+    /// Der einzige Weg, auf dem das Mitglied selbst das Gewicht setzt: das
+    /// Rad schreibt hierher, nicht direkt in `gewicht`. init, uebungWechseln
+    /// und kontextUebernehmen setzen `gewicht` programmatisch und lassen die
+    /// Markierung in Ruhe -- sonst schuetzte ein Vorschlag sich vor sich selbst.
+    func gewichtGewaehlt(_ neu: Double) {
+        gewicht = neu
         gewichtVomNutzer = true
     }
 
@@ -433,7 +464,6 @@ final class GeraetModel {
         gewicht = Rastwerte.naechster(
             zu: letzter?.weightKg ?? modell.min, in: gewichtsWerte)
         wiederholungen = GeraetModel.geklemmt(letzter?.reps ?? aktiveUebung?.targetRepsMin ?? 10)
-        radOffen = false
         // Eine andere Uebung hat ihren eigenen Satzzaehler -- eine Pause
         // oder eine Abschlussentscheidung, die zur vorherigen gehoerte,
         // gilt hier nicht mehr.
@@ -455,7 +485,6 @@ final class GeraetModel {
         enqueue(PendingSetWrite(sessionId: geschrieben.sessionId,
                                 setId: geschrieben.setId,
                                 body: geschrieben.body))
-        radOffen = false
         // sessions.satzSichern() oben ist der einzige Fehlschlagpfad, und
         // der wirft nicht -- lokal wird immer geschrieben, auch offline
         // (Spec Abschnitt 8.2). Der Zaehler steigt deshalb hier, nicht

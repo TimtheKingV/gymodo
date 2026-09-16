@@ -1,10 +1,12 @@
 import SwiftUI
 
-/// Main, GeraetWertRad und GeraetResttimer sind derselbe Screen in drei
-/// Zustaenden -- keine Navigationsziele. designsystem.md SS7 verlangt
-/// dieselbe Silhouette in Ruhe und Offen; zwei Views waeren hier der Fehler.
+/// Main, Pause und Abschluss sind derselbe Screen in drei Zustaenden --
+/// keine Navigationsziele. Einen vierten (Raeder zu / offen) gibt es seit
+/// Schnitt 3 nicht mehr: die Raeder sind immer aktiv, und was am
+/// geschlossenen Zustand hing, ist weg oder im Drawer (Sammelstelle
+/// Punkt 11 bis 13).
 ///
-/// Die Pause ist der vierte Zustand und der einzige AUSSCHLIESSENDE: sie
+/// Die Pause ist unter ihnen der einzige AUSSCHLIESSENDE Zustand: sie
 /// ersetzt Raeder, Einstellwerte und Aktionen, statt sich darueberzulegen.
 /// Vorher blieb alles bedienbar -- man konnte mitten in der Pause das
 /// Gewicht verstellen und den naechsten Satz sichern, was den eben
@@ -29,46 +31,63 @@ struct GeraetView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                kopfzeile
-                // Sichtbarkeit hier entschieden, nicht in den Komponenten
-                // selbst -- damit kein VStack einen leer rendernden
-                // Kindzustand umschliesst (Review-Fund Task 15).
-                //
-                // Waehrend der Pause schweigen die drei Statuskarten. Die
-                // Pause ist der ausschliessende Zustand (siehe oben), und
-                // die Warteschlangenkarte war dort das Gegenteil davon: sie
-                // blitzte nach jedem gesicherten Satz kurz auf ("wartet auf
-                // Empfang", dann "gesendet", dann weg) und riss beim
-                // Verschwinden das Rad samt Ziffern nach oben. Ein
-                // erfolgreicher Normalfall braucht diese Meldung nicht --
-                // sie steht nach der Pause wieder da, solange sie gilt.
-                if modell.laufendePause == nil {
-                    if !netz.istOnline {
-                        OfflineLeiste(istOnline: netz.istOnline)
+            // 16 statt 24 zwischen den Bloecken: der Satzpfad muss auf ein
+            // 667-pt-iPhone passen, ohne dass die Seite scrollt -- und iOS 26
+            // laesst dem Inhalt dort nur 510 pt (54 pt Navigationsleiste,
+            // 83 pt Safe Area fuer die schwebende Tab-Leiste; Sammelstelle
+            // Punkt 12, Rechnung im Plan zu Schnitt 3). Die
+            // Einstellwerte-Zeile ist 44 pt hoch bei 15 pt Schrift und traegt
+            // ihre Luft selbst. Scrollen tut die Seite nur noch mit
+            // Statuskarten -- deshalb basedOnSize, sonst federt ein Pfad, der
+            // passt.
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+                // Label ueber seinem Titel: Kopfzeile und Geraetename sind
+                // eine Einheit und stehen deshalb 8 auseinander, nicht 16.
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
+                    kopfzeile
+                    // Sichtbarkeit hier entschieden, nicht in den Komponenten
+                    // selbst -- damit kein VStack einen leer rendernden
+                    // Kindzustand umschliesst (Review-Fund Task 15).
+                    //
+                    // Waehrend der Pause schweigen die drei Statuskarten. Die
+                    // Pause ist der ausschliessende Zustand (siehe oben), und
+                    // die Warteschlangenkarte war dort das Gegenteil davon: sie
+                    // blitzte nach jedem gesicherten Satz kurz auf ("wartet auf
+                    // Empfang", dann "gesendet", dann weg) und riss beim
+                    // Verschwinden das Rad samt Ziffern nach oben. Ein
+                    // erfolgreicher Normalfall braucht diese Meldung nicht --
+                    // sie steht nach der Pause wieder da, solange sie gilt.
+                    if modell.laufendePause == nil {
+                        if !netz.istOnline {
+                            OfflineLeiste(istOnline: netz.istOnline)
+                        }
+                        if !katalog.pendingWrites.isEmpty || geradeGesendet {
+                            WarteschlangeKarte(offen: katalog.pendingWrites.count,
+                                               geradeGesendet: geradeGesendet)
+                        }
+                        if !katalog.verworfeneWrites.isEmpty {
+                            AbgelehnteKarte(anzahl: katalog.verworfeneWrites.count,
+                                            beiQuittieren: katalog.verworfeneQuittieren)
+                        }
                     }
-                    if !katalog.pendingWrites.isEmpty || geradeGesendet {
-                        WarteschlangeKarte(offen: katalog.pendingWrites.count,
-                                           geradeGesendet: geradeGesendet)
-                    }
-                    if !katalog.verworfeneWrites.isEmpty {
-                        AbgelehnteKarte(anzahl: katalog.verworfeneWrites.count,
-                                        beiQuittieren: katalog.verworfeneQuittieren)
-                    }
+                    geraetUndUebung
                 }
-                geraetUndUebung
                 inhalt
             }
             .padding(.horizontal, 20)
-            .padding(.bottom, DesignSystem.Spacing.s32)
+            // 8 statt 32: die 83 pt Safe Area der schwebenden Tab-Leiste
+            // tragen den Abstand nach unten schon.
+            .padding(.bottom, DesignSystem.Spacing.s8)
             .animation(reduceMotion ? nil : DesignSystem.Motion.pause, value: modell.phase)
-            .animation(reduceMotion ? nil : DesignSystem.Motion.oeffnen, value: modell.radOffen)
         }
+        .scrollBounceBehavior(.basedOnSize)
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
         // Die Trainingsuhr startet am ersten Geraet, nicht am ersten
-        // gesicherten Satz -- deshalb hier und nicht in satzSichern.
-        .task { modell.geraetBetreten(); await modell.kontextLaden() }
+        // gesicherten Satz -- deshalb hier und nicht in satzSichern. Der
+        // Drawer haengt am selben Moment: einmal beim Oeffnen, nicht nach
+        // jedem Satz.
+        .task { modell.geraetBetreten(); modell.geraetGeoeffnet(); await modell.kontextLaden() }
         // Die Pause muss sich selbst beenden. Vorher lief sie gegen einen
         // Zustand, den niemand zuruecksetzte: der Balken blieb auf 00:00
         // stehen, bis irgendein anderes Ereignis ein Re-Render ausloeste.
@@ -169,102 +188,126 @@ struct GeraetView: View {
     }
 
     private var geraetUndUebung: some View {
-        HStack(alignment: .lastTextBaseline) {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                Text(modell.maschine.equipmentModel.name.uppercased())
-                    .font(DesignSystem.Typography.geraetename)
-                    .tracking(-0.8)
-                    .foregroundStyle(DesignSystem.Color.text)
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+            // Eine Zeile: ein zweizeiliger Name (BEINPRESSE SITZEND misst
+            // rund 380 pt bei 32 pt Black) kostete 38 pt, die das
+            // Hoehenbudget auf 667 pt nicht hat. Schrumpfen statt kuerzen --
+            // ein abgeschnittener Name sagt nicht, an welchem Geraet man
+            // steht. Der Name steht ueber der Uebungszeile und nicht neben
+            // "andere Uebung", weil der Knopf ihm sonst 100 pt Breite nimmt
+            // und schon "RUDERMASCHINE" auf dem SE umbricht. Nebenbei
+            // behoben: der Name hat dadurch in jedem Zustand dieselbe volle
+            // Breite, statt sie zwischen Eingabe und Pause zu wechseln --
+            // genau das liess den Namen im Sichtcheck zu Schnitt 2 in der
+            // Pause links abgeschnitten aufblitzen, waehrend die Breite
+            // unter der Zustandsanimation interpolierte.
+            Text(modell.maschine.equipmentModel.name.uppercased())
+                .font(DesignSystem.Typography.geraetename)
+                .tracking(-0.8)
+                .foregroundStyle(DesignSystem.Color.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            HStack(alignment: .center) {
                 Text(modell.aktiveUebung?.name ?? "")
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.textMuted)
-            }
-            Spacer()
-            // Nur im Eingabezustand: Pause und Abschlussentscheidung zeigen
-            // Geraet und Uebung zur Orientierung, nicht als Auswahl.
-            //
-            // Und nur, wenn das Geraet ueberhaupt eine zweite Uebung kennt:
-            // sonst fuehrte der Knopf zu einem Sheet mit genau der Uebung,
-            // die ohnehin schon laeuft.
-            if modell.phase == .eingabe && modell.hatWeitereUebungen {
-                // Abweichung vom Artboard (Spec Abschnitt 9): dort accent. Die
-                // eine Akzentflaeche des Screens ist die Hauptaktion.
-                Button("andere Übung", action: beiUebungWechseln)
+                Spacer()
+                // Nur im Eingabezustand: Pause und Abschlussentscheidung zeigen
+                // Geraet und Uebung zur Orientierung, nicht als Auswahl.
+                //
+                // Und nur, wenn das Geraet ueberhaupt eine zweite Uebung kennt:
+                // sonst fuehrte der Knopf zu einem Sheet mit genau der Uebung,
+                // die ohnehin schon laeuft.
+                if modell.phase == .eingabe && modell.hatWeitereUebungen {
+                    // Abweichung vom Artboard (Spec Abschnitt 9): dort accent. Die
+                    // eine Akzentflaeche des Screens ist die Hauptaktion.
+                    Button(action: beiUebungWechseln) {
+                        Text("andere Übung")
+                            .font(.system(size: 13, weight: .semibold))
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
                     .testnotizElement("geraet.uebung-wechseln", typ: "Button")
-                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(DesignSystem.Color.textMuted)
-                    .frame(minHeight: 44)
+                    // Die 44 pt Trefferflaeche ragen je 12 pt aus der
+                    // 20-pt-Zeile heraus, statt sie auf 44 zu strecken:
+                    // Design SS4 verlangt die Trefferflaeche, nicht die
+                    // Zeilenhoehe -- und die 24 pt kostete das
+                    // Hoehenbudget auf 667 pt. Der Rahmen steht INNEN im
+                    // Label, denn bei einem eigenen ButtonStyle ist nur das
+                    // gestylte Label tippbar -- ein Rahmen um den Button
+                    // legte bloss leere, nicht treffbare Flaeche daneben.
+                    // Nach unten liegen 16 pt Luft bis zur
+                    // "aendern"-Zeile, es bleiben also 4 pt Abstand; nach
+                    // oben sind es nur 4 pt bis zum Geraetenamen, die
+                    // Flaeche ueberlappt seinen Textkasten um rund 8 pt.
+                    // Der Name ist ein blosser Text ohne eigene
+                    // Trefferflaeche -- es gibt dort nichts, womit der
+                    // Knopf um den Tipp streiten koennte.
+                    .padding(.vertical, -DesignSystem.Spacing.s12)
                     .buttonStyle(PressButtonStyle())
+                }
             }
         }
     }
 
-    /// Schrumpft auf eine Zeile, sobald die Raeder offen sind -- damit das
-    /// Rad Platz hat (Artboard-Kommentar in GeraetWertRad.dc.html).
+    /// Eine Zeile, nicht die Karte: derselbe Inhalt stand vorher in zwei
+    /// Gestalten (Sammelstelle Punkt 13), und die Karte mit grossen Zahlen kostete
+    /// 71 pt, die der Satzpfad auf einem 667-pt-iPhone nicht hat (Punkt 12).
+    /// Die Zeile ist 44 pt hoch, weil "aendern" es ist -- ein Hit-Target unter
+    /// 44 pt gibt es nicht.
     @ViewBuilder
     private var einstellung: some View {
         if !modell.einstellwerte.isEmpty {
-            if modell.radOffen {
-                HStack {
-                    Text(modell.einstellwerte.map { "\($0.label) \($0.anzeige)" }
-                        .joined(separator: " · "))
-                        .font(.system(size: 13))
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                        .lineLimit(1)
-                    Spacer()
-                    aendernKnopf
-                }
-            } else {
-                HStack(alignment: .top) {
-                    ForEach(modell.einstellwerte) { wert in
-                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                            Text(wert.label.uppercased())
-                                .font(DesignSystem.Typography.label)
-                                .tracking(1.5)
-                                .foregroundStyle(DesignSystem.Color.textFaint)
-                            Text(wert.anzeige)
-                                .font(DesignSystem.Typography.wertSekundaer)
-                                .foregroundStyle(DesignSystem.Color.text)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .accessibilityElement(children: .combine)
-                    }
-                    aendernKnopf
-                }
-                .padding(DesignSystem.Spacing.s16)
-                .background(DesignSystem.Color.surface)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+            HStack {
+                Text(modell.einstellwerte.map { "\($0.label) \($0.anzeige)" }
+                    .joined(separator: " · "))
+                    .font(.system(size: 13))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .lineLimit(1)
+                Spacer()
+                aendernKnopf
             }
         }
     }
 
     private var aendernKnopf: some View {
-        Button("ändern") { modell.kalibrierungOeffnen() }
-            .testnotizElement("geraet.kalibrierung-aendern", typ: "Button")
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(DesignSystem.Color.textMuted)
-            .frame(minHeight: 44)
-            .buttonStyle(PressButtonStyle())
+        // Der Rahmen steht im Label, nicht um den Button: mit eigenem
+        // ButtonStyle ist nur das gestylte Label tippbar.
+        Button { modell.kalibrierungOeffnen() } label: {
+            Text("ändern")
+                .font(.system(size: 13, weight: .semibold))
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .testnotizElement("geraet.kalibrierung-aendern", typ: "Button")
+        .foregroundStyle(DesignSystem.Color.textMuted)
+        .buttonStyle(PressButtonStyle())
     }
 
     private var aktionen: some View {
         VStack(spacing: DesignSystem.Spacing.s12) {
-            // Bleibt im offenen Zustand sichtbar und sichert direkt -- kein
-            // Schliessen-Tap dazwischen (Interaktionsbudget SS9).
+            // Sichert direkt aus dem Rad heraus: scrollen, dann sichern --
+            // zwei Interaktionen, kein Tap dazwischen
+            // (Interaktionsbudget SS9).
             PrimaryButton(title: hauptaktion) {
                 await modell.satzSichern(problemFlag: false, problemReason: nil)
             }
             .testnotizElement("geraet.satz-sichern", typ: "PrimaryButton")
             .accessibilityLabel("\(hauptaktion), \(Zahlformat.gewichtGesprochen(modell.gewicht))")
 
-            // Steht direkt unter dem Weg zum naechsten Satz, weil es die
-            // andere Haelfte derselben Frage ist: noch einer, oder fertig
-            // hier? Vorher gab es dafuer nur ein kleingesetztes "Zurueck zum
-            // Training" ganz unten -- eine Navigation, kein Abschluss.
-            SecondaryButton(title: "Gerät abschließen", action: beiZurueckZumTraining)
-                .testnotizElement("geraet.abschliessen", typ: "SecondaryButton")
-
-            problemMelden
+            // Abschliessen und Problem melden in EINER Zeile (Sammelstelle
+            // Punkt 12): als dritte Zeile kostete "Problem melden" 56 pt, die
+            // auf einem 667-pt-iPhone fehlten. Es bleibt ein Textknopf mit
+            // 44 pt Hoehe, kein zweiter Umriss -- die Ausnahme, nicht die
+            // Alternative. "Geraet abschliessen" steht weiter direkt unter dem
+            // Weg zum naechsten Satz, weil es die andere Haelfte derselben
+            // Frage ist: noch einer, oder fertig hier?
+            HStack(spacing: DesignSystem.Spacing.s12) {
+                SecondaryButton(title: "Gerät abschließen", action: beiZurueckZumTraining)
+                    .testnotizElement("geraet.abschliessen", typ: "SecondaryButton")
+                problemMelden
+            }
         }
         // Am umschliessenden VStack, nicht am PrimaryButton selbst: der
         // Knopf verschwindet je nach Zustand aus der Hierarchie, der
@@ -299,23 +342,30 @@ struct GeraetView: View {
 
             PrimaryButton(title: "Gerät abschließen") { beiZurueckZumTraining() }
                 .testnotizElement("geraet.abschliessen", typ: "PrimaryButton")
-            SecondaryButton(title: "Weiterer Satz") { modell.weitererSatz() }
-                .testnotizElement("geraet.weiterer-satz", typ: "SecondaryButton")
-
-            problemMelden
+            // Dieselbe Zeile wie unter den Raedern (Sammelstelle Punkt 12).
+            HStack(spacing: DesignSystem.Spacing.s12) {
+                SecondaryButton(title: "Weiterer Satz") { modell.weitererSatz() }
+                    .testnotizElement("geraet.weiterer-satz", typ: "SecondaryButton")
+                problemMelden
+            }
         }
     }
 
     /// In beiden Aktionsgruppen dieselbe Zeile -- zweimal getippt waere sie
     /// die naechste, die auseinanderlaeuft.
     private var problemMelden: some View {
-        Button("Problem melden", action: beiProblem)
-            .testnotizElement("geraet.problem", typ: "Button")
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(DesignSystem.Color.textMuted)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .buttonStyle(PressButtonStyle())
-            .accessibilityHint("Verhindert einen Steigerungsvorschlag")
+        // Der Rahmen steht im Label, nicht um den Button: mit eigenem
+        // ButtonStyle ist nur das gestylte Label tippbar.
+        Button(action: beiProblem) {
+            Text("Problem melden")
+                .font(.system(size: 15, weight: .semibold))
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .testnotizElement("geraet.problem", typ: "Button")
+        .foregroundStyle(DesignSystem.Color.textMuted)
+        .buttonStyle(PressButtonStyle())
+        .accessibilityHint("Verhindert einen Steigerungsvorschlag")
     }
 
     /// Haptik beim Sichern, ueber das Profil abschaltbar (SS6: Haptik nie
@@ -346,6 +396,19 @@ struct GeraetScreen: View {
         }
         .sheet(isPresented: $problemOffen) {
             ProblemSheet(modell: modell) {}
+        }
+        // Der Rueckblick vor dem ersten Satz. Das Sheet haengt an rueckblickOffen,
+        // die Regel dahinter am Modell (rueckblickFaellig) -- der View entscheidet
+        // nichts. Faellt der Rueckblick weg, waehrend das Sheet steht (kommt nicht
+        // vor: der Bootstrap aendert sich waehrend des Screens nicht), bleibt das
+        // Sheet leer statt zu stuerzen.
+        .sheet(isPresented: $modell.rueckblickOffen) {
+            if let rueckblick = modell.rueckblick {
+                RueckblickSheet(uebung: modell.aktiveUebung?.name ?? "",
+                                rueckblick: rueckblick) {
+                    modell.rueckblickOffen = false
+                }
+            }
         }
         // Der Dreischritt: fullScreenCover verdeckt die Tab-Leiste.
         .fullScreenCover(isPresented: Binding(
