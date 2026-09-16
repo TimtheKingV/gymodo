@@ -24,8 +24,16 @@ import SwiftUI
 /// getrennte Sessions -- kein Satz wird umgehaengt.
 struct SessionDetailView: View {
     let sessionId: String
+    let apiClient: APIClient
 
     @Environment(VerlaufStore.self) private var verlauf
+    @Environment(CatalogStore.self) private var katalog
+    @Environment(\.dismiss) private var dismiss
+
+    /// Der Teil, fuer den die Rueckfrage offen ist -- wie
+    /// MemberStudiosView.studioPendingLeave.
+    @State private var zuLoeschen: SessionSummary?
+    @State private var loeschFehler: String?
 
     private var karte: Trainingskarte? {
         HomeZeilen.karte(fuer: sessionId, in: verlauf.sessions)
@@ -36,6 +44,9 @@ struct SessionDetailView: View {
             if let karte {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                     kopf(karte)
+                    if let loeschFehler {
+                        InlineBanner(tone: .danger, message: loeschFehler)
+                    }
                     ForEach(karte.teile) { teil in
                         teilAbschnitt(teil, mitUeberschrift: karte.teile.count > 1)
                     }
@@ -55,6 +66,17 @@ struct SessionDetailView: View {
         .background(DesignSystem.Color.bg)
         .scrollContentBackground(.hidden)
         .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog(
+            "Dieses Training löschen?",
+            isPresented: Binding(get: { zuLoeschen != nil }, set: { if !$0 { zuLoeschen = nil } }),
+            titleVisibility: .visible,
+            presenting: zuLoeschen
+        ) { teil in
+            Button("Löschen", role: .destructive) { Task { await loeschen(teil) } }
+            Button("Abbrechen", role: .cancel) {}
+        } message: { _ in
+            Text("Sätze und Zeit sind danach weg, Wochenzahl und Serie rechnen neu. Das lässt sich nicht rückgängig machen.")
+        }
         .testnotizScreen(kontext: ["sessionId": sessionId])
     }
 
@@ -105,6 +127,15 @@ struct SessionDetailView: View {
                     blockKarte(block)
                 }
             }
+
+            // Ein Knopf JE TEIL, nicht je Karte: beim Loeschen eines Teils einer
+            // zusammengefassten Karte geht nur dieser Teil, nicht der ganze Tag
+            // (Sammelstelle Punkt 19). Umriss in danger, keine Flaeche -- der Screen
+            // hat keine Akzentflaeche (designsystem.md SS2).
+            DangerOutlineButton(title: mitUeberschrift ? "Diesen Teil löschen" : "Training löschen") {
+                zuLoeschen = teil
+            }
+            .testnotizElement("session.loeschen", typ: "DangerOutlineButton")
         }
     }
 
@@ -160,5 +191,33 @@ struct SessionDetailView: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label)
+    }
+}
+
+// MARK: - Loeschen
+
+private extension SessionDetailView {
+    /// Nicht optimistisch, wie beim Gewicht: erst der Server, dann der
+    /// lokale Stand. Misslingt der Aufruf, bleibt der Screen stehen und der
+    /// Fehler steht oben, statt eine Einheit verschwinden zu lassen, die
+    /// serverseitig noch existiert.
+    ///
+    /// Danach zurueck: die Karte, ueber die man kam, gibt es so nicht mehr
+    /// -- und die Kopfzeile auf Home holt sich Woche und Serie mit dem
+    /// Abruf, den `laden` hier anstoesst.
+    func loeschen(_ teil: SessionSummary) async {
+        loeschFehler = nil
+        do throws(APIError) {
+            try await apiClient.deleteSession(sessionId: teil.id)
+        } catch {
+            loeschFehler = error == .offline
+                ? "Keine Verbindung. Das Training wurde nicht gelöscht."
+                : error.servertext
+            return
+        }
+        if let id = UUID(uuidString: teil.id) { katalog.schreibvorgaengeVerwerfen(sessionId: id) }
+        verlauf.einheitEntfernen(id: teil.id)
+        Task { await verlauf.laden(studioId: katalog.activeStudioId) }
+        dismiss()
     }
 }
