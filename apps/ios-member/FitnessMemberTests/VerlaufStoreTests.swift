@@ -206,6 +206,21 @@ struct VerlaufStoreTests {
         #expect(verlauf.messwertKopf?.changeKg == 0)
     }
 
+    @Test func einheitEntfernenNimmtSieAusListeUndCache() async {
+        let loader = FakeLoader()
+        loader.antwort = SessionsResponse(sessions: [einheit(id: "s1"), einheit(id: "s2")], summary: leereKopfzeile)
+        let verzeichnis = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let sut = store(loader, verzeichnis: verzeichnis)
+        await sut.laden(studioId: nil)
+
+        sut.einheitEntfernen(id: "s1")
+
+        #expect(sut.sessions.map(\.id) == ["s2"])
+        // Der Cache auch -- sonst staende die geloeschte Einheit beim naechsten
+        // Kaltstart wieder da, bis der Abruf durch ist.
+        #expect(store(loader, verzeichnis: verzeichnis).sessions.map(\.id) == ["s2"])
+    }
+
     // MARK: - gewichtSpeichern (Ruling R27: der eine Schreibweg)
 
     @Test func gewichtSpeichernZiehtDenLokalenStandNach() async {

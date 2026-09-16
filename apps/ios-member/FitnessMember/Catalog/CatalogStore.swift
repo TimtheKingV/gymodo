@@ -160,6 +160,21 @@ final class CatalogStore {
         pendingWriteStore.save(pendingWrites)
     }
 
+    /// Die offenen Schreibvorgaenge einer verworfenen oder geloeschten Einheit
+    /// (Sammelstelle Punkt 19): blieben sie liegen, legte der naechste
+    /// Reconnect die Einheit beim Server wieder an. Speicher und Platte
+    /// zusammen, wie ueberall hier.
+    func schreibvorgaengeVerwerfen(sessionId: UUID) {
+        pendingWrites.removeAll { $0.sessionId == sessionId }
+        pendingWriteStore.save(pendingWrites)
+    }
+
+    /// Wie viele Saetze dieser Einheit den Server noch nicht erreicht haben --
+    /// EinheitVerwerfen.weg entscheidet daran, ob ein DELETE noetig ist.
+    func offeneSchreibvorgaenge(sessionId: UUID) -> Int {
+        pendingWrites.filter { $0.sessionId == sessionId }.count
+    }
+
     /// Nach dem Anzeigen quittiert der Screen die abgelehnten Vorgaenge.
     func verworfeneQuittieren() {
         verworfeneWrites = []

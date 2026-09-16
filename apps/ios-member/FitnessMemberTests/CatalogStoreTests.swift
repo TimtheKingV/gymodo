@@ -135,6 +135,26 @@ struct CatalogStoreTests {
         #expect(store.pendingWrites == [write])
     }
 
+    @Test("schreibvorgaengeVerwerfen nimmt nur die Eintraege der einen Einheit -- Speicher und Platte")
+    func verwerfenNimmtNurDieEineEinheit() {
+        let directory = tempDirectory()
+        let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: directory))
+        let a = UUID(), b = UUID()
+        let body = SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil)
+        let a1 = PendingSetWrite(sessionId: a, setId: UUID(), body: body)
+        let a2 = PendingSetWrite(sessionId: a, setId: UUID(), body: body)
+        let b1 = PendingSetWrite(sessionId: b, setId: UUID(), body: body)
+        store.enqueue(a1); store.enqueue(a2); store.enqueue(b1)
+        #expect(store.offeneSchreibvorgaenge(sessionId: a) == 2)
+
+        store.schreibvorgaengeVerwerfen(sessionId: a)
+
+        // Sonst legte der naechste Reconnect die verworfene Einheit wieder an.
+        #expect(store.pendingWrites == [b1])
+        #expect(PendingWriteStore(directory: directory).loadAll() == [b1])
+        #expect(store.offeneSchreibvorgaenge(sessionId: a) == 0)
+    }
+
     @Test("joinStudio(byCode:) laedt danach den Katalog neu")
     func joinByCodeReloads() async {
         let loader = FakeBootstrapLoader()
