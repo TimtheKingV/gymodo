@@ -119,6 +119,28 @@ struct GeraetModelTests {
         #expect(sut.einstellwerte.first?.anzeige == "4")
     }
 
+    @Test func hatEinstellparameterFolgtDenDefinitionenDesModells() {
+        let mit = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        let ohne = modell(maschine: GeraetTestdaten.maschineOhneEinstellparameter,
+                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+
+        #expect(mit.hatEinstellparameter == true)
+        #expect(ohne.hatEinstellparameter == false)
+    }
+
+    @Test func ohneEinstellparameterBleibenDieEinstellwerteLeer() {
+        // GeraetView haengt die Zeile mit "aendern" an nicht leere
+        // Einstellwerte. Ohne Definitionen gibt es nichts zu beschriften --
+        // auch dann nicht, wenn bootstrap zu diesem Geraet noch Werte traegt
+        // (etwa aus einer Zeit, in der das Modell Parameter hatte). Sonst
+        // fuehrte "aendern" in einen Schritt, den es nicht mehr gibt.
+        let sut = modell(maschine: GeraetTestdaten.maschineOhneEinstellparameter,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: [], mitKalibrierung: true))
+
+        #expect(sut.einstellwerte.isEmpty)
+    }
+
     @Test func satzNummerZaehltImBlock() async {
         // Jeder Satz geht durch die Warteschlange, immer -- ein geloeschter
         // enqueue-Aufruf muss hier auffallen, nicht nur satzNummer/phase
@@ -594,6 +616,19 @@ enum GeraetTestdaten {
 
     static var maschine: BootstrapResponse.Machine { maschine(maxWeightKg: "150.0") }
     static var maschineOhneMaximum: BootstrapResponse.Machine { maschine(maxWeightKg: "null") }
+
+    /// Ein Modell ohne Einstellparameter -- laut Trainerportal ein
+    /// regulaerer Zustand, kein Datenfehler.
+    static var maschineOhneEinstellparameter: BootstrapResponse.Machine {
+        dekodiere("""
+        {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":"Fensterseite",
+         "status":"active","tokenHashes":[],"visitCount":2,
+         "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":"Technogym",
+           "photoPath":null,"weightStepKg":2.5,"minWeightKg":5.0,"maxWeightKg":150.0,
+           "settingDefinitions":[]},
+         "exercises":[{"id":"e1","name":"Beidbeinig","targetRepsMin":8,"targetRepsMax":12}]}
+        """)
+    }
 
     static func maschine(maxWeightKg: String) -> BootstrapResponse.Machine {
         dekodiere("""

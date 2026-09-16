@@ -3,6 +3,10 @@ import SwiftUI
 /// Der modale Dreischritt. fullScreenCover verdeckt die Tab-Leiste -- genau
 /// das verlangt designsystem.md SS8 ("ohne Tab-Leiste"). Er laeuft genau
 /// einmal je Geraet UND Uebung.
+///
+/// "Drei" ist der Regelfall: an einem Modell ohne Einstellparameter faellt
+/// die Einstellung weg, und auf die Einweisung folgt direkt der erste Satz
+/// (GeraetEinstiegRechner.erstkontaktSchritte).
 struct ErstkontaktFlow: View {
     @Bindable var modell: GeraetModel
     let beiAbschluss: () -> Void
@@ -15,18 +19,40 @@ struct ErstkontaktFlow: View {
     /// faelschlich "erledigt".
     let beiAbbruch: () -> Void
 
-    @State private var schritt = 1
+    /// Einmal beim Oeffnen bestimmt, nicht bei jedem Rendern: die
+    /// Definitionen koennen mit dem spaeter eintreffenden tagContext
+    /// wechseln, und ein Flow, der mittendrin seine Stationen umbaut,
+    /// zeigte dem Mitglied unter derselben Position ploetzlich einen
+    /// anderen Schritt -- oder griff hinter das Ende der Liste.
+    @State private var schritte: [ErstkontaktSchritt]
+    @State private var position = 0
+
+    init(modell: GeraetModel, beiAbschluss: @escaping () -> Void, beiAbbruch: @escaping () -> Void) {
+        self.modell = modell
+        self.beiAbschluss = beiAbschluss
+        self.beiAbbruch = beiAbbruch
+        _schritte = State(initialValue: GeraetEinstiegRechner.erstkontaktSchritte(
+            hatEinstellparameter: modell.hatEinstellparameter))
+    }
 
     var body: some View {
         Group {
-            switch schritt {
-            case 1: EinweisungSchritt(modell: modell, beiAbbruch: beiAbbruch) { schritt = 2 }
-            case 2: KalibrierungSchritt(modell: modell,
-                                        titel: "Schritt 2 von 3 · Deine Einstellung",
-                                        beiZurueck: { schritt = 1 }) { schritt = 3 }
-            default: ErsteWerteSchritt(modell: modell, beiZurueck: { schritt = 2 }, beiSichern: beiAbschluss)
+            switch schritte[position] {
+            case .einweisung:
+                EinweisungSchritt(modell: modell, beiAbbruch: beiAbbruch) { weiter() }
+            case .einstellung:
+                // Der Titel darf "von 3" sagen: die Einstellung steht nur in
+                // der dreiteiligen Liste.
+                KalibrierungSchritt(modell: modell,
+                                    titel: "Schritt 2 von 3 · Deine Einstellung",
+                                    beiZurueck: { zurueck() }) { weiter() }
+            case .ersteWerte:
+                ErsteWerteSchritt(modell: modell, beiZurueck: { zurueck() }, beiSichern: beiAbschluss)
             }
         }
         .background(DesignSystem.Color.bg)
     }
+
+    private func weiter() { position = min(position + 1, schritte.count - 1) }
+    private func zurueck() { position = max(position - 1, 0) }
 }

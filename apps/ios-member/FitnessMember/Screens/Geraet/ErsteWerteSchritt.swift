@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Schritt 3 von 3. Fuehrt die Rad-Geste zum ersten Mal ein -- deshalb ist
+/// Der letzte Schritt des Dreischritts (3 von 3; ohne Einstellparameter
+/// 2 von 2). Fuehrt die Rad-Geste zum ersten Mal ein -- deshalb ist
 /// die Groesse hier dieselbe wie ueberall (64pt), nicht 58 wie im Artboard.
 ///
 /// gymodo schlaegt beim ersten Mal bewusst nichts vor: es hat keine
@@ -8,8 +9,8 @@ import SwiftUI
 /// (designsystem.md SS8). Das Rad startet am Geraetminimum.
 struct ErsteWerteSchritt: View {
     @Bindable var modell: GeraetModel
-    /// Ein Schritt zurueck zur Kalibrierung -- keine Sackgasse (Review
-    /// Aufgabe 13, Fund 3).
+    /// Ein Schritt zurueck -- zur Kalibrierung, ohne Einstellparameter zur
+    /// Einweisung. Keine Sackgasse (Review Aufgabe 13, Fund 3).
     let beiZurueck: () -> Void
     let beiSichern: () -> Void
 

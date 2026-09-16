@@ -8,6 +8,14 @@ enum GeraetEinstieg: Equatable {
     case direktZumSatz
 }
 
+/// Die Stationen des Dreischritts (designsystem.md SS8). Welche davon ein
+/// Geraet wirklich zeigt, entscheidet `GeraetEinstiegRechner.erstkontaktSchritte`.
+enum ErstkontaktSchritt: Equatable {
+    case einweisung
+    case einstellung
+    case ersteWerte
+}
+
 /// Die Tabelle aus designsystem.md SS8, als reine Funktionen.
 ///
 /// Sie faellt bewusst aus dem Prefetch und nicht aus tagContext: M1-Spec
@@ -26,6 +34,23 @@ enum GeraetEinstiegRechner {
     /// einmal je Paar (designsystem.md SS8).
     static func istErstkontakt(hatKalibrierung: Bool, hatLetztenSatz: Bool) -> Bool {
         !hatKalibrierung && !hatLetztenSatz
+    }
+
+    /// Ein Modell ohne Einstellparameter ist im Trainerportal ein regulaerer
+    /// Zustand ("das Mitglied hat nichts einzustellen"). Die Einstellung
+    /// faellt dann aus dem Dreischritt: der Schritt haette nur den
+    /// Trainer-Schalter und einen Knopf, der am Server mit 422 endet, weil
+    /// pruefeEinstellwerte einen leeren Satz zu Recht abweist -- eine
+    /// Kalibrierung ohne Werte ist keine. Das Mitglied kaeme nie zu
+    /// Schritt 3.
+    ///
+    /// Eine Kalibrierungszeile entsteht so nicht; istErstkontakt wird
+    /// stattdessen ueber den ersten gesicherten Satz falsch (hatLetztenSatz,
+    /// bis zum naechsten Bootstrap der lokale Session-Index).
+    static func erstkontaktSchritte(hatEinstellparameter: Bool) -> [ErstkontaktSchritt] {
+        hatEinstellparameter
+            ? [.einweisung, .einstellung, .ersteWerte]
+            : [.einweisung, .ersteWerte]
     }
 
     static func genutzteUebungen(machineId: String, in bootstrap: BootstrapResponse) -> Int {

@@ -65,6 +65,22 @@ struct GeraetEinstiegTests {
         #expect(!GeraetEinstiegRechner.istErstkontakt(hatKalibrierung: true, hatLetztenSatz: false))
     }
 
+    @Test func dreischrittMitEinstellparameternHatAlleDreiSchritte() {
+        #expect(GeraetEinstiegRechner.erstkontaktSchritte(hatEinstellparameter: true)
+                == [.einweisung, .einstellung, .ersteWerte])
+    }
+
+    @Test func ohneEinstellparameterFaelltDieEinstellungAusDemDreischritt() {
+        // Ein Modell ohne Einstellparameter ist im Trainerportal ein
+        // regulaerer Zustand ("das Mitglied hat nichts einzustellen").
+        // Schritt 2 zeigte dann nur den Trainer-Schalter und einen Knopf,
+        // der am Server mit 422 scheitert -- pruefeEinstellwerte weist einen
+        // leeren Satz ab, und das zu Recht: eine Kalibrierung ohne Werte
+        // ist keine. Also faellt der Schritt weg, nicht die Regel.
+        #expect(GeraetEinstiegRechner.erstkontaktSchritte(hatEinstellparameter: false)
+                == [.einweisung, .ersteWerte])
+    }
+
     @Test func zaehltGenutzteUebungenAusDenLetztenSaetzen() {
         let bootstrap = bootstrapMitLetztenSaetzen([("m1", "e1"), ("m1", "e2"), ("m2", "e1")])
         #expect(GeraetEinstiegRechner.genutzteUebungen(machineId: "m1", in: bootstrap) == 2)
