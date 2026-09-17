@@ -467,7 +467,8 @@
 }
 
 /* background-color, nicht background: Konvention aus der Spec -- eine
-   Flaeche, die einen WERT zeigt, ist keine Aktionsflaeche. */
+   Flaeche, die einen WERT zeigt, ist keine Aktionsflaeche. Dieselbe
+   Trennung, die das Rad der Member-App beim aktiven Wert schon macht. */
 .anteilFuellung {
   height: 100%;
   background-color: var(--daten);
@@ -486,8 +487,12 @@
   max-width: 320px;
 }
 
+/* Die leise Stufe: vier Balken einer Rangliste sind Zusammenhang, der
+   Anteil oben ist die Zahl mit einer Handlung dahinter. Gleiche Farbe,
+   damit es eine Familie bleibt -- eine Stufe dunkler, damit die Reihe die
+   Hauptfigur nicht ueberstimmt. */
 .balken {
   height: 100%;
-  background-color: var(--daten);
+  background-color: var(--daten-leise);
   border-radius: var(--r-pill);
 }

@@ -240,17 +240,22 @@ Abschnitt 1 begründet die Richtung mit dem Nutzungskontext der Member-App: Kell
 
 Regel 1 aus Abschnitt 2 bleibt für die Member-App wörtlich gültig. Für das Portal wird sie **präzisiert, nicht gelockert**: *genau eine Akzent**aktion** je Bildschirm*. Der Akzent als Aktionsfläche bleibt einmalig; als Wertfarbe zählt er nicht mit — was Abschnitt 2 in der Tabelle selbst schon sagt („Hauptaktion, aktiver Wert, Verlaufskurve") und was die Konvention `background` (Aktion) gegen `background-color` (Wert) im Code seit Beginn trennt.
 
-### 15.2 Neu: `daten`
+### 15.2 Neu: `daten` — ein Name, keine neue Farbe
 
 | Token | Wert | Verwendung |
 | --- | --- | --- |
-| `daten` | `#3987E5` | Balken, Anteile, Ranglisten — Werte ohne Signalbedeutung |
+| `daten` | `accent` | Der eine Wert eines Bildschirms, hinter dem eine Handlung steht: der Anteilsbalken |
+| `daten-leise` | `accent-pressed` | Die vielen kleinen Werte daneben: Balken einer Rangliste |
 
 Bis hierher kannte das System drei Farben, und alle drei sind Signale: `accent` die Hauptaktion, `warn` die Problemmeldung, `danger` den Fehler. Eine Rangliste hatte damit nur die Wahl zwischen einem missbrauchten Signal und Grau — und wurde überall Grau.
 
-Geprüft, nicht geschätzt (`validate_palette.js`, 17. September, gegen `surface` `#14161A`): Kontrast 4,6 : 1 · CVD-Abstand zu `accent` ΔE 44 (Protanopie), 32 (Tritanopie) · normalsichtig ΔE 46. Der Akzent selbst fällt in derselben Prüfung durch das Helligkeitsband für Markierungsflächen (L 0,94) — als Balkenfüllung wäre er zu laut. Er bleibt die Handlung.
+**Verworfen: eine eigene Datenfarbe.** Die erste Fassung dieses Abschnitts führte ein geprüftes Blau (`#3987E5`) ein — sauber validiert, aber eine zweite Farbfamilie, die Aufmerksamkeit zieht, ohne eine zweite Aussage zu tragen. Das Portal hat eine Primärfarbe; ein Wert ist darin kein Fremdkörper. Rückgängig gemacht am 17. September, noch am Tag der Einführung.
 
-**Eine Farbe, keine Palette.** Eine kategoriale Reihe gibt es im Portal nicht; käme eine, wird sie als Reihe validiert und hier eingetragen, nie einzeln dazuerfunden.
+**Warum die Tokens trotzdem bestehen bleiben und nicht einfach `accent` heißen:** Sie trennen zwei Rollen, die dieselbe Farbe haben dürfen, aber nicht dasselbe bedeuten — `accent` wird *gedrückt*, `daten` wird *gelesen*. Wer die Marke ändert, ändert beide; wer die Wertdarstellung ändert, nur diese Zeile. Ohne die Trennung wäre Regel 15.1 („genau eine Akzent**aktion**") im Code nicht mehr prüfbar: jede `var(--accent)`-Fundstelle müsste einzeln gelesen werden, um zu wissen, ob sie eine Fläche zum Drücken ist.
+
+**Zwei Stufen, eine Farbe.** Der Anteil oben trägt die helle Stufe, die vier Balken der Rangliste die dunklere. Vier gleich helle Balken neben der Hauptfigur wären vier gleich laute Stimmen; die Reihe ist Zusammenhang, nicht Aufforderung. Eine Farbe in zwei Helligkeiten ist genau die Ordnung, die eine sequenzielle Darstellung verlangt — und keine Farbe mehr im System als vorher.
+
+**Käme je eine kategoriale Reihe** (mehrere Serien, die auseinandergehalten werden müssen), braucht sie eigene Hues und wird als Reihe validiert, bevor sie hier steht. Einzeln dazuerfundene Farben gibt es nicht.
 
 ### 15.3 Wo ein Balken erlaubt ist
 

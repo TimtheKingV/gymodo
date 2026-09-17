@@ -29,23 +29,34 @@
   --warn: #ffb020;
   --danger: #ff5a4e;
 
-  /* Neu: die Wertfarbe des Schreibtischs. Das Designsystem kannte drei
-     Farben, und alle drei sind Signale -- accent die Hauptaktion, warn die
-     Problemmeldung, danger den Fehler. Eine Rangliste, ein Anteil, eine
-     Auslastung hatte damit nur die Wahl zwischen einem missbrauchten
-     Signal und Grau, und wurde deshalb ueberall Grau: "212 / 198 / 164
-     Saetze" rechtsbuendig, der Vergleich im Kopf des Lesers.
+  /* Neu: die Wertfarbe des Schreibtischs -- ein eigener NAME, aber keine
+     eigene Farbe.
 
-     Blau, weil es neben dem Limettenakzent nicht als Handlung zu lesen
-     ist. Der Wert stammt aus der Blau-Rampe der dataviz-Referenz
-     (Dark-Stufe von Slot 1) und ist gegen --surface geprueft, nicht
-     geschaetzt: Kontrast 4,6 : 1, CVD-Abstand zum Akzent dE 44
-     (Protanopie) -- validate_palette.js, 17. September.
+     Das Designsystem kannte drei Farben, und alle drei sind Signale:
+     accent die Hauptaktion, warn die Problemmeldung, danger den Fehler.
+     Eine Rangliste, ein Anteil, eine Auslastung hatte damit nur die Wahl
+     zwischen einem missbrauchten Signal und Grau -- und wurde ueberall
+     Grau: "212 / 198 / 164 Saetze" rechtsbuendig, der Vergleich im Kopf
+     des Lesers.
 
-     Der Akzent selbst faellt durch das Helligkeitsband dieser Pruefung
-     (L 0,94): als Balkenfuellung waere er zu laut. Er bleibt, wozu
-     Designsystem 2 ihn bestimmt -- die eine Handlung je Bildschirm. */
-  --daten: #3987e5;
+     Die erste Fassung loeste das mit einem eigenen Blau. Verworfen am
+     17. September: eine zweite Farbfamilie zieht Aufmerksamkeit auf sich,
+     ohne eine zweite Aussage zu tragen. Das Portal hat eine Primaerfarbe,
+     und ein Wert ist kein Fremdkoerper darin.
+
+     Das Token bleibt trotzdem stehen und wird nicht durch --accent
+     ersetzt: es trennt die beiden ROLLEN. --accent wird gedrueckt,
+     --daten wird gelesen. Wer eines Tages die Marke aendert, aendert
+     beide; wer die Wertdarstellung aendert, nur diese Zeile.
+
+     --daten-leise ist derselbe Farbton, eine Stufe dunkler (der
+     gedrueckte Schritt der Marke). Er traegt die vielen kleinen Balken
+     einer Liste, damit die eine Zahl mit Handlung -- der Anteil oben --
+     die hellere bleibt. Eine Farbe, zwei Stufen: genau die Ordnung, die
+     eine sequenzielle Darstellung verlangt, und keine Farbe mehr im
+     System als vorher. */
+  --daten: var(--accent);
+  --daten-leise: var(--accent-pressed);
 
   /* Plastik. Auf nahezu schwarzem Grund traegt ein Schlagschatten wenig;
      was Ebenen trennt, ist die hellere Oberkante -- dasselbe Mittel, das

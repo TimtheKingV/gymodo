@@ -12,6 +12,10 @@ import styles from "./bausteine.module.css";
  * gedachten Obergrenze: die Frage ist "welches Geraet laeuft am meisten",
  * nicht "wie weit ist es von irgendetwas entfernt".
  *
+ * Farbe: --daten-leise, die dunklere Stufe derselben Primaerfarbe. Vier
+ * gleich helle Balken neben dem Anteil oben haetten vier gleich laute
+ * Stimmen ergeben; die Reihe ist Zusammenhang, nicht Aufforderung.
+ *
  * aria-hidden, weil die Zahl in derselben Zeile steht. Ein Screenreader,
  * der erst "212 Sätze" und dann "87 Prozent" sagt, gibt keine zweite
  * Auskunft, sondern dieselbe zweimal.

@@ -15,10 +15,10 @@ import styles from "./bausteine.module.css";
  * Handlung, und die stand bislang als vierte von vier gleich grossen,
  * gleich grauen Zahlen da.
  *
- * Die Fuellung traegt --daten, nicht --accent: der Akzent markiert die
- * eine Handlung je Bildschirm, und der Ueberblick hat keine. Der Rest der
- * Bahn bleibt --surface-raised statt einer zweiten Stufe derselben Farbe
- * -- dasselbe Paar wie beim Upload-Fortschritt, das im Portal schon steht.
+ * Die Fuellung traegt --daten -- die Primaerfarbe in ihrer Rolle als Wert,
+ * nicht als Aktionsflaeche (Designsystem 15.1: genau eine Akzent-AKTION je
+ * Bildschirm, und der Ueberblick hat keine). Die Bahn dahinter bleibt
+ * --surface-raised, dasselbe Paar wie beim Upload-Fortschritt.
  */
 export function Anteil({
   erreicht,
