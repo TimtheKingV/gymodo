@@ -259,6 +259,16 @@ Das ist kein Testproblem. **Ein Trainer tippt „Sitzposition" und legt „Wiede
 
 Der Fix ist eine Zeile: `aufScroll` meldet nur noch eine **echte** Indexänderung (`gemeldet`-Ref). Vier Testfälle in `EinstellungRad.test.tsx` decken ihn ab, gegengeprüft — ohne den Fix sind drei davon rot.
 
+#### Ein dritter Fall derselben Sache: der Wochenwechsel
+
+Mit dem Rad-Fix wurde der Einstellungsschritt grün — und im selben Lauf (35269314873) fiel `kurse.spec.ts` aus: Ein Klick auf „Vorige Woche" ließ den Kursplan auf derselben Woche stehen.
+
+Das ist der **dritte** Fall des Musters, das dieser PR schon zweimal getroffen hat: ein `<Link>`, der nur den Suchparameter ändert, läuft im Produktionsbau ins Leere. Das Termindetail wechselte am 6. September auf ein `<a>`, die Mitgliederliste in diesem PR, jetzt die Wochenwahl.
+
+Kein Testproblem: Wer im Studio auf die Vorwoche klickt und dieselbe Woche sieht, klickt noch einmal. Dass es mal hier und mal dort auftritt, ist die Handschrift dieses Fehlers — er hängt an Prefetch und Timing, nicht an der Stelle.
+
+**Offen als Aufräumarbeit:** Es gibt jetzt drei Einzelfixes derselben Ursache. Ein vierter Link dieser Art irgendwo im Portal würde denselben Weg gehen. Entweder sucht jemand sie alle (`grep` nach `<Link href={`…?`), oder es braucht einen Baustein, der „Wechsel im Suchparameter" kapselt und dabei ein `<a>` rendert.
+
 #### Der Weg dorthin, weil er lehrreich war
 
 Drei Runden, und zwei davon haben vor allem die eigene Ungeduld vermessen:

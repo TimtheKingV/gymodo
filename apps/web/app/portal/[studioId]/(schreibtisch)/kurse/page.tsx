@@ -74,13 +74,26 @@ export default async function KursePage({
     <Seite titel="Kurse">
       <div className={styles.wochenleiste}>
         <nav className={styles.wochenwahl} aria-label="Woche wählen">
-          <Link className={styles.secondary} href={`${basis}?woche=${fenster.vorige}`}>
+          {/* <a>, kein <Link> -- dritter Fall derselben Sache, nachgezogen
+              am 17. September. Nexts Client-Router laesst einen Wechsel,
+              der nur den Suchparameter aendert, im Produktionsbau ins
+              Leere laufen: das Termindetail musste am 6. September
+              wechseln, die Mitgliederliste heute frueher, und im CI-Lauf
+              35269314873 blieb hier der Kursplan nach einem Klick auf
+              "Vorige Woche" auf derselben Woche stehen.
+
+              Das ist kein Testproblem: wer im Studio auf die Vorwoche
+              klickt und dieselbe Woche sieht, klickt noch einmal. Ein
+              volles Dokument zu laden ist hier ohnehin richtig -- die
+              Seite traegt keinen Browserzustand, der verlorenginge, und
+              die Woche steht in der Adresse. */}
+          <a className={styles.secondary} href={`${basis}?woche=${fenster.vorige}`}>
             ← Vorige Woche
-          </Link>
+          </a>
           <span className={styles.wochenTitel}>{fenster.titel}</span>
-          <Link className={styles.secondary} href={`${basis}?woche=${fenster.naechste}`}>
+          <a className={styles.secondary} href={`${basis}?woche=${fenster.naechste}`}>
             Nächste Woche →
-          </Link>
+          </a>
         </nav>
         <div className={styles.rowActions}>
           <Link className={styles.secondary} href={`${basis}/vorlagen`}>
