@@ -99,6 +99,8 @@ function RadSpalte({
   const [index, setIndex] = useState(startIndex);
   const ref = useRef<HTMLDivElement>(null);
   const rahmen = useRef<number | null>(null);
+  /** Der zuletzt GEMELDETE Index -- siehe aufScroll. */
+  const gemeldet = useRef(startIndex);
 
   // Nur beim Einhaengen auf den Anfangswert stellen -- danach scrollt der
   // Trainer selbst, ein erneutes Setzen wuerde ihm den Finger wegziehen.
@@ -108,6 +110,28 @@ function RadSpalte({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * Nur eine ECHTE Aenderung wird gemeldet.
+   *
+   * Vorher rief jedes Scroll-Ereignis onWahl auf -- auch eines, das die
+   * Mitte gar nicht bewegt. Das hat Daten gekostet: NameFeld unten gibt
+   * `onWahl: onChange` mit, das Vorschlagsrad oeffnet beim Fokus und steht
+   * dann auf Index 0. Kam danach irgendein Scroll-Ereignis (Layout,
+   * scrollIntoView eines Nachbarn, Fokuswechsel), schrieb das Rad seinen
+   * ersten Vorschlag ins Feld und ueberschrieb, was der Trainer getippt
+   * hatte.
+   *
+   * Gefunden am 17. September im CI-Lauf 35268246152: das Formular legte
+   * eine Einstellung namens "Wiederholungen" an -- der erste Eintrag aus
+   * nameVorschlaege() --, obwohl "Sitzposition" im Feld stand. Der Test
+   * war seit dem 15. September unzuverlaessig rot, und niemand haette es
+   * bemerkt, bis ein Mitglied vor einem Geraet mit der falschen
+   * Einstellung steht.
+   *
+   * `gemeldet` ist ein Ref und kein State: der Vergleich muss auch dann
+   * stimmen, wenn mehrere Scroll-Ereignisse in einem Bild zusammenfallen,
+   * und darf selbst kein erneutes Rendern ausloesen.
+   */
   function aufScroll() {
     const el = ref.current;
     if (!el) return;
@@ -117,6 +141,8 @@ function RadSpalte({
         werte.length - 1,
         Math.max(0, Math.round(el.scrollTop / zeilenhoehe)),
       );
+      if (naechster === gemeldet.current) return;
+      gemeldet.current = naechster;
       setIndex(naechster);
       onWahl?.(werte[naechster]?.wert ?? "");
     });

@@ -244,7 +244,34 @@ Drei E2E-Tests rot, 100 grün. Auseinandersortiert:
 2. **`leute.spec.ts` — „Alle anzeigen" ändert die Adresse nicht.** Kein Befund dieser Runde, aber ein bekannter: derselbe Kürzungs-Link im Termindetail musste am 6. September auf ein `<a>` wechseln, weil Nexts Client-Router einen Wechsel, der nur den Suchparameter ändert, im Produktionsbau ins Leere laufen lässt. Der Kommentar an dieser Stelle nahm sie ausdrücklich davon aus („gegen denselben Bau geprüft und geht durch"). Die Annahme ist widerlegt; die Stelle ist jetzt ebenfalls ein `<a>`. Dass es lange gutging, passt zum Zwilling: dort war es allein grün und nur unter Last rot.
 3. **`trainerportal.spec.ts` — „Sitzposition" erscheint nicht nach dem Anlegen.** **Älter als diese Runde.** Derselbe Test mit derselben Meldung war schon rot in den Master-Läufen vom 15. September (35003414706), 16. September (35058847408) und 16. September (35059607277) — damals an Zeile 194, heute an 199, weil diese Runde fünf Zeilen darüber ergänzt hat. Dazwischen war er einmal grün (35146547192): er ist unzuverlässig, nicht konstant rot. Hier ist er unangetastet geblieben; die Ursache ist offen und gehört in einen eigenen Schnitt.
 
-#### Was zu Fall 3 geprüft wurde
+#### Fall 3, aufgelöst: das Vorschlagsrad überschrieb den getippten Namen
+
+**Gefunden am 17. September, CI-Lauf 35268246152.** Der Test scheiterte nicht daran, dass nichts angelegt wurde — sondern daran, dass etwas **Falsches** angelegt wurde:
+
+```
+Expected substring: "Sitzposition"
+Received string:    "Wiederholungen1 · 2 · 3 · 4 · 5 · 6 … · 8 Rasten…"
+```
+
+`nameVorschlaege()[0]` ist `"Wiederholungen"`. Der Mechanismus: `NameFeld` gibt dem Vorschlagsrad `onWahl: onChange` mit, das Rad öffnet beim Fokus und steht dann auf Index 0. `RadSpalte.aufScroll` rief `onWahl` bei **jedem** Scroll-Ereignis auf — auch bei einem, das die Mitte gar nicht bewegt. Kam nach dem Tippen irgendein solches Ereignis (Layout, Fokuswechsel, `scrollIntoView` eines Nachbarn), schrieb das Rad seinen ersten Vorschlag ins Feld und überschrieb, was dastand.
+
+Das ist kein Testproblem. **Ein Trainer tippt „Sitzposition" und legt „Wiederholungen" an**, ohne es zu merken — bis ein Mitglied vor einem Gerät mit der falschen Einstellung steht. Dass es nur manchmal passiert, hat es jahrelang unsichtbar gemacht: der Test war seit dem 15. September mal rot, mal grün.
+
+Der Fix ist eine Zeile: `aufScroll` meldet nur noch eine **echte** Indexänderung (`gemeldet`-Ref). Vier Testfälle in `EinstellungRad.test.tsx` decken ihn ab, gegengeprüft — ohne den Fix sind drei davon rot.
+
+#### Der Weg dorthin, weil er lehrreich war
+
+Drei Runden, und zwei davon haben vor allem die eigene Ungeduld vermessen:
+
+1. **Die dreistufige Zusicherung** meldete „die Aktion meldet einen Fehler mit leerem Text". Das führte zu einem echten, aber unbeteiligten Fund: `createSettingDefinition` fiel mit `error?.message ?? "…"` auf seinen Ersatztext zurück, und `??` fängt keine leeren Zeichenketten — eine rote Fläche ohne ein Wort darin wäre die Folge gewesen. Repariert, aber nicht die Ursache.
+2. **Der Seitenabzug im CI-Protokoll** zeigte `button "Wird gespeichert …" [disabled]`: Der Test hatte auf „Zeile **oder** Meldung" gewartet und auf einem beliebigen, leeren `role="alert"` ausgelöst — **während die Aktion noch lief**. Er fotografierte den Zwischenstand und hielt ihn für das Ergebnis.
+3. Erst das Warten auf das ehrliche Signal — der Absendeknopf trägt während der Aktion „Wird gespeichert …" — brachte den wahren Vergleich und damit den falschen Namen ans Licht.
+
+Die Lehre für das nächste Mal: **zuerst auf das Ende der Handlung warten, dann urteilen.** Eine Zusicherung, die auf „irgendein Element" wartet, misst die eigene Geschwindigkeit, nicht das Verhalten der Anwendung.
+
+Nebenbei entstanden und bleibend: Der Next-Serverlauf hängt jetzt im CI-Protokoll (`playwright.config.ts`, `stdout`/`stderr` auf `"pipe"`). Ohne ihn wäre Runde 2 nicht zu widerlegen gewesen — das `console.error` einer Server Action ist die einzige Stelle, an der ein Fehler seinen Code nennt.
+
+#### Was zu Fall 3 vorher geprüft wurde
 
 Am Code ausgeschlossen, nicht vermutet:
 
