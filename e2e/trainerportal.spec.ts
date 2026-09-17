@@ -197,60 +197,40 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await radWaehlen(page, "Maximum", "8");
   await page.getByRole("button", { name: "Einstellung anlegen" }).click();
 
-  // Drei Stufen statt einer stummen Zusicherung. Dieser Schritt faellt seit
-  // dem 15. September immer wieder aus -- rot in den Master-Laeufen
-  // 35003414706, 35058847408, 35059607277 und 35259521533, gruen in
-  // 35146547192 --, und der Bericht sagte jedes Mal nur "element(s) not
-  // found". Das laesst drei ganz verschiedene Ursachen offen: die Aktion
-  // meldete einen Fehler, sie legte etwas unter anderem Namen an, oder die
-  // Seite frischte nicht auf. Ausgeschlossen sind inzwischen (am Code
-  // geprueft, nicht vermutet): ein vorzeitiges Absenden durch die
-  // Auswahl-Komponente (ihr Ausloeser ist type="button", ihre Zeilen sind
-  // <div>), ein Ueberschreiben des Namensfelds durch das Vorschlagsrad (es
-  // startet auf Index 0 und feuert ohne Scroll kein onWahl) und eine
-  // Mehrdeutigkeit der Textsuche.
+  // Warten, bis die Aktion GEANTWORTET hat -- und erst dann urteilen.
   //
-  // Die Stufen trennen die drei Faelle, ohne den Test weicher zu machen:
-  // Stufe 1 wartet, bis die Aktion ueberhaupt geantwortet hat -- Zeile ODER
-  // Fehlermeldung. Laeuft sie in den Timeout, hat die Seite nicht
-  // aufgefrischt. Stufe 2 nennt den Satz aus dem Formular. Stufe 3 prueft
-  // den Namen, jetzt auf die benannte Liste gezielt statt auf die ganze
-  // Seite.
-  const einstellungen = page.getByRole("list", { name: "Einstellungen am Modell" });
-  await expect(
-    einstellungen.getByRole("listitem").first().or(page.getByRole("alert").first()),
-  ).toBeVisible();
+  // Die Fassung davor wartete auf "Zeile ODER Meldung" und schlug zu,
+  // sobald irgendein Element mit role="alert" auf der Seite stand. Der
+  // Abzug aus Lauf 35267333125 zeigt, was das anrichtete: unten im
+  // Formular stand `button "Wird gespeichert …" [disabled]` -- der
+  // Absendeknopf war noch im Lauf. Der Test hat also den Zwischenstand
+  // fotografiert und ihn fuer das Ergebnis gehalten. Zwei Runden
+  // Spurensuche haben damit vor allem die eigene Ungeduld vermessen.
+  //
+  // Der Knopf ist das ehrliche Signal: waehrend der Aktion heisst er
+  // "Wird gespeichert …" und ist gesperrt (Form.tsx, useFormStatus).
+  // Traegt er wieder seinen Namen, ist das Ergebnis da -- ob Zeile oder
+  // Meldung, entscheidet sich danach.
+  const absenden = page.getByRole("button", { name: "Einstellung anlegen" });
+  await expect(absenden).toBeEnabled();
 
-  // Ausgeloest wird die Spurensuche allein von der fehlenden Zeile, nicht
-  // von der Meldung daneben: solange die Einstellung dasteht, ist der
-  // Schritt in Ordnung -- und ein Test, der an einem leeren, womoeglich
-  // harmlosen Element scheitert, machte aus einem unzuverlaessigen einen
-  // immer roten.
+  const einstellungen = page.getByRole("list", { name: "Einstellungen am Modell" });
   const zeilen = await einstellungen.getByRole("listitem").count();
-  const meldungen = page.getByRole("alert");
   if (zeilen === 0) {
-    // Runde zwei der Spurensuche. Runde eins (35265281027, 35266322400)
-    // sagte: es steht eine Meldung da, und ihr Text ist leer. Seither ist
-    // ausgeschlossen, dass sie aus der Aktion kommt -- der Serverlauf
-    // haengt jetzt im CI-Protokoll (playwright.config.ts) und zeigt kein
-    // einziges "Portal-Aktion fehlgeschlagen". Die Aktion meldet also
-    // nichts; trotzdem traegt die Seite ein Element mit role="alert" ohne
-    // Text, und die Liste bleibt leer.
-    //
-    // Was fehlt, ist der Blick auf die Seite selbst. Die error-context.md
-    // im Artefakt haette ihn, laesst sich aber aus der Arbeitsumgebung
-    // nicht laden (Egress-Policy). Also kommt der Abzug hier in die
-    // Fehlermeldung -- derselbe Baum, nur durch den Kanal, der offen ist.
-    const rohes =
-      (await meldungen.count()) > 0
-        ? await meldungen.first().evaluate((el) => el.outerHTML)
-        : "keine";
+    // Der Abzug kommt in die Fehlermeldung, weil die error-context.md im
+    // Artefakt aus der Arbeitsumgebung nicht ladbar ist (Egress-Policy).
+    // Ohne die option-Zeilen: die beiden Raeder tragen je 200 Werte, und
+    // 400 Zeilen Rauschen verdecken die Auskunft.
+    const meldungen = page.getByRole("alert");
+    const abzug = (await page.getByRole("main").ariaSnapshot())
+      .split("\n")
+      .filter((zeile) => !/^\s*- option "/.test(zeile))
+      .join("\n");
     throw new Error(
       [
-        `Einstellung nicht angelegt. Zeilen in der Liste: ${zeilen}.`,
+        "Einstellung nicht angelegt: die Liste ist leer, nachdem die Aktion geantwortet hat.",
         `Meldungen (${await meldungen.count()}): ${JSON.stringify(await meldungen.allInnerTexts())}`,
-        `HTML der ersten Meldung: ${rohes}`,
-        `Seite:\n${await page.getByRole("main").ariaSnapshot()}`,
+        `Seite:\n${abzug}`,
       ].join("\n"),
     );
   }
