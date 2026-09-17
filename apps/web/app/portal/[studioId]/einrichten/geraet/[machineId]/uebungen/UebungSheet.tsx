@@ -120,7 +120,7 @@ export function UebungSheet({
         <div className={styles.feld}>
           <span className={styles.label}>Einweisungsvideo</span>
           <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-            <MedienVorschau url={objektUrl} art="video" leerText="Kein Video" mini />
+            <MedienVorschau url={objektUrl} art="video" leerText="Kein Video" groesse="mini" />
             <DateiKnopf
               label="Video auswählen"
               accept="video/mp4,video/quicktime"

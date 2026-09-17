@@ -29,6 +29,42 @@
   --warn: #ffb020;
   --danger: #ff5a4e;
 
+  /* Neu: die Wertfarbe des Schreibtischs -- ein eigener NAME, aber keine
+     eigene Farbe.
+
+     Das Designsystem kannte drei Farben, und alle drei sind Signale:
+     accent die Hauptaktion, warn die Problemmeldung, danger den Fehler.
+     Eine Rangliste, ein Anteil, eine Auslastung hatte damit nur die Wahl
+     zwischen einem missbrauchten Signal und Grau -- und wurde ueberall
+     Grau: "212 / 198 / 164 Saetze" rechtsbuendig, der Vergleich im Kopf
+     des Lesers.
+
+     Die erste Fassung loeste das mit einem eigenen Blau. Verworfen am
+     17. September: eine zweite Farbfamilie zieht Aufmerksamkeit auf sich,
+     ohne eine zweite Aussage zu tragen. Das Portal hat eine Primaerfarbe,
+     und ein Wert ist kein Fremdkoerper darin.
+
+     Das Token bleibt trotzdem stehen und wird nicht durch --accent
+     ersetzt: es trennt die beiden ROLLEN. --accent wird gedrueckt,
+     --daten wird gelesen. Wer eines Tages die Marke aendert, aendert
+     beide; wer die Wertdarstellung aendert, nur diese Zeile.
+
+     --daten-leise ist derselbe Farbton, eine Stufe dunkler (der
+     gedrueckte Schritt der Marke). Er traegt die vielen kleinen Balken
+     einer Liste, damit die eine Zahl mit Handlung -- der Anteil oben --
+     die hellere bleibt. Eine Farbe, zwei Stufen: genau die Ordnung, die
+     eine sequenzielle Darstellung verlangt, und keine Farbe mehr im
+     System als vorher. */
+  --daten: var(--accent);
+  --daten-leise: var(--accent-pressed);
+
+  /* Plastik. Auf nahezu schwarzem Grund traegt ein Schlagschatten wenig;
+     was Ebenen trennt, ist die hellere Oberkante -- dasselbe Mittel, das
+     eine Materialkante im Streiflicht zeigt. Beides zusammen, sparsam:
+     eine Karte hebt sich, ein Feld bleibt eine Mulde. */
+  --karte-glanz: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --karte-schatten: 0 1px 2px rgba(0, 0, 0, 0.45), 0 14px 28px -18px rgba(0, 0, 0, 0.9);
+
   /* Abstandsskala der Spec, fuer den Desktop um 20 und 40 ergaenzt. */
   --s4: 4px;
   --s8: 8px;

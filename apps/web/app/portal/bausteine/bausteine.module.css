@@ -100,6 +100,7 @@
   border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--surface);
+  box-shadow: var(--karte-glanz), var(--karte-schatten);
   overflow: hidden;
 }
 
@@ -158,8 +159,12 @@
   border-bottom: none;
 }
 
+/* Waechst mit: ohne flex-grow richtete sich die Breite nach dem laengsten
+   Titel, und ein Balken darunter (Balken.tsx, "Meistgenutzt") waere so
+   breit wie der Geraetename statt so breit wie die Spalte. */
 .zeileHaupt {
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .zeileTitel {
@@ -182,17 +187,29 @@
 
 /* Reiter: Links auf eigene Routen, kein Umschalter im selben Dokument --
    Begruendung in Reiter.tsx. Werte wie .tabs / .tab / .tabActive. */
+/* overflow-x statt Umbruch: auf 390 px brachen die vier Reiter mit ihren
+   Zaehlstaenden auf zwei und drei Zeilen unterschiedlicher Hoehe, und der
+   Aktivstrich sass auf halber Hoehe der Nachbarn. Geschoben wird er
+   seitlich, wie die Chipreihe der Halle. */
 .reiter {
   display: flex;
   gap: var(--s4);
   border-bottom: 1px solid var(--line);
   margin-top: var(--s24);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.reiter::-webkit-scrollbar {
+  display: none;
 }
 
 /* 12px 16px, so zeichnen es alle Artboards mit Reiterleiste. Der Wert
    traegt mehr als das Aussehen: mit 8px blieb der Reiter unter 40 px und
    damit unter dem Schreibtischmass fuer eine Nebenaktion. */
 .reiterEintrag {
+  flex-shrink: 0;
+  white-space: nowrap;
   padding: var(--s12) var(--s16);
   border-bottom: 2px solid transparent;
   color: var(--text-muted);
@@ -256,9 +273,11 @@
    .kachel / .kachelZahl / .kachelLabel. */
 .kacheln {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  /* 150 statt 180: auf 390 px passten vorher genau 1,9 Kacheln, also eine
+     -- drei Beobachtungszahlen fuellten damit den halben Bildschirm. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: var(--s12);
-  margin-top: var(--s32);
+  margin-top: var(--s16);
 }
 
 .kachel {
@@ -266,6 +285,7 @@
   border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--surface);
+  box-shadow: var(--karte-glanz), var(--karte-schatten);
 }
 
 .kachelZahl {
@@ -323,4 +343,156 @@
   line-height: 1.45;
   margin-top: var(--s24);
   max-width: 70ch;
+}
+
+/* Noch zu tun: die Restliste eines Objekts (NochZuTun.tsx). Aufbau wie
+   .abschnitt, aber die Karte traegt links eine 2-px-Kante in --warn --
+   dieselbe Rolle wie die Akzentkante der aktiven Rail-Zeile: eine Linie,
+   keine Flaeche. Designsystem 2 laesst warn nur als Umriss zu, und was an
+   einem Geraet noch fehlt, ist kein Fehlverhalten des Trainers. */
+.nochZuTun {
+  margin-top: var(--s24);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--warn);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.nochZuTunKopf {
+  padding: var(--s12) var(--s20);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s16);
+}
+
+/* Der offene Punkt traegt einen Punkt in --warn, der unvollstaendige
+   einen in --text-faint: "ohne Tag" haelt das Geraet auf, "ohne Video"
+   nicht. Zwei Stufen, ein Kanal -- die Farbe. Kein Traeger der Aussage:
+   sie steht im Titel daneben ("1 Übung ohne Einweisungsvideo") und im
+   Grund darunter ("Nutzbar, nur ohne Anleitung"). */
+.nochZuTunMarke,
+.nochZuTunMarkeSanft {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: var(--s8);
+  vertical-align: 2px;
+}
+
+.nochZuTunMarke {
+  background-color: var(--warn);
+}
+
+.nochZuTunMarkeSanft {
+  background-color: var(--text-faint);
+}
+
+/* Fertig ist eine Zeile, keine Karte: ein Objekt ohne offenen Punkt soll
+   den Bildschirm nicht mit einer Erfolgsmeldung fuellen. */
+.nochZuTunFertig {
+  margin-top: var(--s16);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Bild und Text einer Zeile bilden zusammen den Hauptteil -- die Aktionen
+   bleiben dadurch am rechten Rand, statt hinter dem Bild einzurasten.
+   Ohne Bild kostet der Umschlag nichts: ein leeres Flex-Kind mehr. */
+.zeileMitBild {
+  display: flex;
+  align-items: center;
+  gap: var(--s16);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Anteil (Anteil.tsx): die eine Zahl des Ueberblicks, hinter der eine
+   Handlung steht. Groesser als eine Kachel, weil sie nicht neben den
+   Beobachtungszahlen steht, sondern ueber ihnen. */
+.anteil {
+  margin-top: var(--s24);
+  padding: var(--s20) var(--s24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--karte-glanz), var(--karte-schatten);
+}
+
+.anteilKopf {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s16);
+  flex-wrap: wrap;
+}
+
+.anteilZahl {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+/* "von 12" ist der Bezug, nicht der Wert -- kleiner und leiser, damit die
+   erreichte Zahl die gelesene bleibt. */
+.anteilVon {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: -0.01em;
+}
+
+.anteilFuss {
+  color: var(--warn);
+  font-size: 13px;
+  text-align: right;
+}
+
+.anteilFussVoll {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: right;
+}
+
+.anteilBahn {
+  margin-top: var(--s16);
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+
+/* background-color, nicht background: Konvention aus der Spec -- eine
+   Flaeche, die einen WERT zeigt, ist keine Aktionsflaeche. Dieselbe
+   Trennung, die das Rad der Member-App beim aktiven Wert schon macht. */
+.anteilFuellung {
+  height: 100%;
+  background-color: var(--daten);
+  border-radius: var(--r-pill);
+}
+
+/* Balken einer Rangliste (Balken.tsx). Unter dem Namen, nicht daneben:
+   die Zeile traegt rechts schon ihre Zahl, und ein Balken zwischen Name
+   und Zahl draengte beide an den Rand. */
+.balkenBahn {
+  margin-top: 6px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  overflow: hidden;
+  max-width: 320px;
+}
+
+/* Die leise Stufe: vier Balken einer Rangliste sind Zusammenhang, der
+   Anteil oben ist die Zahl mit einer Handlung dahinter. Gleiche Farbe,
+   damit es eine Familie bleibt -- eine Stufe dunkler, damit die Reihe die
+   Hauptfigur nicht ueberstimmt. */
+.balken {
+  height: 100%;
+  background-color: var(--daten-leise);
+  border-radius: var(--r-pill);
 }

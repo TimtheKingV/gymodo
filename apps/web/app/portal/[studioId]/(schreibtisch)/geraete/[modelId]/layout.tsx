@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ladeKatalog } from "../../../catalog";
+import { offenePunkte } from "../../../offen";
+import { Modellbild } from "../../../../bausteine/Modellbild";
+import { NochZuTun } from "../../../../bausteine/NochZuTun";
 import { ModellReiter } from "./ModellReiter";
 import styles from "../../../../portal.module.css";
 
@@ -33,6 +36,8 @@ export default async function ModellLayout({
 
   const mitVideo = modell.exercises.filter((uebung) => uebung.hasVideo).length;
   const ohneTag = modell.machines.filter((geraet) => geraet.activeTagCount === 0).length;
+  const fotoUrl = modell.photoPath ? katalog.photoUrls[modell.photoPath] : undefined;
+  const punkte = offenePunkte(studioId, modell);
 
   return (
     <>
@@ -41,12 +46,22 @@ export default async function ModellLayout({
           ← Geräte
         </Link>
       </p>
-      <h1 className={styles.pageTitle}>{modell.name}</h1>
-      <p className={styles.pageLead}>
-        {modell.manufacturer ?? "Ohne Herstellerangabe"} · Schritt{" "}
-        {kg(modell.weightStepKg)} · ab {kg(modell.minWeightKg)}
-        {modell.maxWeightKg === null ? "" : ` bis ${kg(modell.maxWeightKg)}`}
-      </p>
+      <div className={styles.objektKopf}>
+        <Modellbild
+          url={fotoUrl}
+          name={modell.name}
+          leerText="Kein Foto"
+          groesse="kopf"
+        />
+        <div style={{ minWidth: 0 }}>
+          <h1 className={styles.pageTitle}>{modell.name}</h1>
+          <p className={styles.pageLead}>
+            {modell.manufacturer ?? "Ohne Herstellerangabe"} · Schritt{" "}
+            {kg(modell.weightStepKg)} · ab {kg(modell.minWeightKg)}
+            {modell.maxWeightKg === null ? "" : ` bis ${kg(modell.maxWeightKg)}`}
+          </p>
+        </div>
+      </div>
       <ModellReiter
         studioId={studioId}
         modelId={modelId}
@@ -54,6 +69,7 @@ export default async function ModellLayout({
         uebungenZusatz={`${modell.exercises.length} · ${mitVideo} mit Video`}
         instanzenZusatz={`${modell.machines.length} · ${ohneTag} ohne Tag`}
       />
+      <NochZuTun punkte={punkte} />
       {children}
     </>
   );

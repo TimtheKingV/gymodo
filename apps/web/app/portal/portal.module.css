@@ -273,6 +273,7 @@
   border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--surface);
+  box-shadow: var(--karte-glanz), var(--karte-schatten);
   overflow: hidden;
 }
 
@@ -467,6 +468,25 @@
 
 .primary:hover {
   background: var(--accent-pressed);
+}
+
+/* Druckgefuehl. Bis hierher gab es im ganzen Portal keinen :active-Zustand:
+   ein Knopf sah gedrueckt genauso aus wie ungedrueckt, und die einzige
+   Rueckmeldung kam, wenn der Server geantwortet hatte. 1 px ist genug --
+   die prefers-reduced-motion-Regel in globals.css schaltet den Uebergang
+   ab, die Verschiebung selbst bleibt (sie ist Zustand, keine Bewegung). */
+.primary,
+.secondary,
+.destructive {
+  transition:
+    background-color 120ms ease,
+    transform 80ms ease;
+}
+
+.primary:active:not(:disabled),
+.secondary:active:not(:disabled),
+.destructive:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .primary:disabled {
@@ -692,9 +712,11 @@
    ist. */
 .kacheln {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  /* 150 statt 180: auf 390 px passten vorher genau 1,9 Kacheln, also eine
+     -- vier Zahlen fuellten dann den halben Bildschirm. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: var(--s12);
-  margin-top: var(--s32);
+  margin-top: var(--s24);
 }
 
 .kachel {
@@ -702,6 +724,7 @@
   border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--surface);
+  box-shadow: var(--karte-glanz), var(--karte-schatten);
 }
 
 .kachelZahl {
@@ -812,4 +835,77 @@
 .seitenformular > form > section,
 .seitenformular > form > p {
   margin-top: 0;
+}
+
+/* Kopf eines Objekts: Bild links, Name und Kennwerte rechts. Bis hierher
+   stand der Name allein da und das Foto lag einen Reiter weiter -- auf dem
+   Uebungs-Reiter war das Geraet, um das es geht, nur ein Wort in der
+   Ueberschrift. */
+.objektKopf {
+  display: flex;
+  align-items: center;
+  gap: var(--s16);
+}
+
+/* Die Erfolgsmeldung neben der Hauptaktion. Kein Akzent und keine Flaeche:
+   sie ist die Quittung einer Handlung, die schon geschehen ist, und die
+   eine Akzentflaeche des Bildschirms gehoert der naechsten. */
+.erfolg {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.erfolg:empty {
+  display: none;
+}
+
+/* Die Videospalte einer Uebungszeile: Standbild oben, Ausloeser darunter,
+   88 px breit. Kein mediaRow (nebeneinander) -- in einer Zeile mit Titel,
+   Meta und drei Aktionen ist die Breite das Knappe, nicht die Hoehe. */
+.videoSpalte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s8);
+  flex-shrink: 0;
+  width: 104px;
+}
+
+/* Zeile mit Medienkachel: Bild links, Text rechts -- zusammen das, was in
+   .row als "Hauptteil" gilt, damit die Aktionen weiterhin am rechten Rand
+   stehen und nicht hinter dem Bild einrasten. */
+.zeileMitBild {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s16);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Das Abzeichen unter Titel und Meta, nicht daneben: "Vorauswahl am
+   Gerät" ist eine Aussage ueber die Zeile, kein Teil ihres Namens. */
+.rowMarke {
+  margin-top: var(--s8);
+}
+
+/* Die zweite Metazeile einer Listenzeile: was im Raum steht, steht oben --
+   ob es fertig ist, darunter. */
+.zeileZustand {
+  display: block;
+  margin-top: 2px;
+}
+
+/* Offener Punkt in einer Liste: warn als Schrift, nicht als Flaeche
+   (Designsystem 2). Derselbe Ton wie die Marke im Band "Noch zu tun". */
+.offenMarke {
+  color: var(--warn);
+}
+
+/* Die Nebenauskunft unter der Meta-Zeile: die Art einer Einstellung.
+   text-faint ist hier zulaessig -- "Auswahl" wiederholt, was die Werte
+   darueber schon zeigen, und traegt nichts, was jemand lesen MUSS
+   (Designsystem 2). */
+.rowMetaFaint {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-top: 2px;
 }

@@ -73,7 +73,7 @@ export default async function ModellInstanzenPage({
             </p>
           </div>
         ) : (
-          <ul className={styles.rows}>
+          <ul className={styles.rows} aria-label="Geräte im Raum">
             {modell.machines.map((geraet) => {
               // Erreichbar heisst: in Betrieb UND mit aktivem Tag -- genau
               // die Rechnung aus erreichbarkeit() in catalog.ts, die auf
@@ -140,9 +140,18 @@ export default async function ModellInstanzenPage({
           </ul>
         )}
 
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <h2 className={styles.sectionTitle}>Gerät anlegen</h2>
+          <span className={styles.sectionNote}>Ein Gerät je Absenden.</span>
+        </div>
         <AktionsFormular
           action={geraetAnlegen.bind(null, studioId, modelId)}
           submitLabel="Gerät anlegen"
+          erfolgText="Angelegt. Nächstes?"
+          leertNachErfolg
         >
           <div className={styles.grid}>
             <Feld

@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { modellAnlegen } from "../../../actions";
 import { erreichbarkeit, ladeKatalog, railZahlen } from "../../catalog";
+import { offenePunkte } from "../../offen";
 import { Seite } from "../../../bausteine/Seite";
 import { Abschnitt } from "../../../bausteine/Abschnitt";
 import { Zeile, Zeilen } from "../../../bausteine/Zeile";
 import { Zustand } from "../../../bausteine/Zustand";
+import { Modellbild } from "../../../bausteine/Modellbild";
 import { ModellAnlegenFormular } from "./ModellAnlegenFormular";
 import styles from "../../../portal.module.css";
 
@@ -72,46 +74,60 @@ export default async function GeraetePage({
             {katalog.models.map((modell) => {
               const stand = erreichbarkeit(modell);
               const mitVideo = modell.exercises.filter((uebung) => uebung.hasVideo).length;
-              const fotoDa = Boolean(modell.photoPath);
-              const einstellungenAnzahl = modell.settingDefinitions.length;
+              const offen = offenePunkte(studioId, modell);
+              const blockiert = offen.filter((punkt) => punkt.art === "blockiert");
 
               return (
                 <Zeile
                   key={modell.id}
+                  bild={
+                    <Modellbild
+                      url={modell.photoPath ? katalog.photoUrls[modell.photoPath] : undefined}
+                      name={modell.name}
+                      leerText="Kein Foto"
+                      groesse="zeile"
+                    />
+                  }
                   titel={modell.name}
                   meta={
+                    // Zwei Zeilen statt einer Kette aus fuenf durch Punkte
+                    // getrennten Tatsachen: die erste sagt, was im Raum
+                    // steht, die zweite, ob das Modell fertig ist. Vorher
+                    // stand beides in einem Lauf, und was davon ein Mangel
+                    // war, musste man Wort fuer Wort lesen.
                     <>
-                      {modell.manufacturer ? (
-                        modell.manufacturer
-                      ) : (
-                        <span className={styles.absent}>Ohne Hersteller</span>
-                      )}
-                      {" · "}
-                      {stand.geraete === 0 ? (
-                        <span className={styles.absent}>noch kein Gerät</span>
-                      ) : (
-                        `${stand.geraete} ${stand.geraete === 1 ? "Gerät" : "Geräte"}, ${stand.erreichbar} erreichbar`
-                      )}
-                      {" · "}
-                      {modell.exercises.length === 0 ? (
-                        <span className={styles.absent}>keine Übung</span>
-                      ) : (
-                        `${modell.exercises.length} ${modell.exercises.length === 1 ? "Übung" : "Übungen"}, ${mitVideo} mit Video`
-                      )}
-                      {" · "}
-                      {!fotoDa && einstellungenAnzahl === 0 ? (
-                        <span className={styles.absent}>kein Foto, keine Einstellungen</span>
-                      ) : (
-                        <>
-                          {fotoDa ? "Foto" : <span className={styles.absent}>kein Foto</span>}
-                          {" · "}
-                          {einstellungenAnzahl > 0 ? (
-                            `${einstellungenAnzahl} Einstellungen`
-                          ) : (
-                            <span className={styles.absent}>keine Einstellungen</span>
-                          )}
-                        </>
-                      )}
+                      <span>
+                        {modell.manufacturer ? (
+                          modell.manufacturer
+                        ) : (
+                          <span className={styles.absent}>Ohne Hersteller</span>
+                        )}
+                        {" · "}
+                        {stand.geraete === 0 ? (
+                          <span className={styles.absent}>noch kein Gerät</span>
+                        ) : (
+                          `${stand.geraete} ${stand.geraete === 1 ? "Gerät" : "Geräte"}, ${stand.erreichbar} erreichbar`
+                        )}
+                        {" · "}
+                        {modell.exercises.length === 0 ? (
+                          <span className={styles.absent}>keine Übung</span>
+                        ) : (
+                          `${modell.exercises.length} ${modell.exercises.length === 1 ? "Übung" : "Übungen"}, ${mitVideo} mit Video`
+                        )}
+                      </span>
+                      <span className={styles.zeileZustand}>
+                        {offen.length === 0 ? (
+                          "Fertig eingerichtet"
+                        ) : blockiert.length === 0 ? (
+                          <span className={styles.absent}>{offen[0]!.titel}</span>
+                        ) : (
+                          <span className={styles.offenMarke}>
+                            {blockiert.length === 1
+                              ? blockiert[0]!.titel
+                              : `${blockiert.length} Punkte offen · ${blockiert[0]!.titel}`}
+                          </span>
+                        )}
+                      </span>
                     </>
                   }
                   aktionen={

@@ -225,5 +225,55 @@ Ein Diagramm in M1: der Gewichtsverlauf je Übung (Swift Charts, keine externe A
 
 - **Wortmarke und App-Icon.** In der Canvas steht „gymodo" gesetzt mit einem Akzentpunkt — ein Platzhalter, kein Logo.
 - **Gerätefotos und Einweisungsvideos** sind in allen Artboards Platzhalter. Echte Inhalte kommen aus dem Trainerportal.
-- **Trainerportal und Betreiber-Dashboard** haben keine Gestaltung. Sie sind Desktop/Tablet, haben Formulare, Upload-Fortschritt und Tabellen und teilen mit der Member-App nur die Tokens aus Abschnitt 2. Eigene Designrunde.
+- **Betreiber-Dashboard** hat keine Gestaltung. Eigene Designrunde. *(Das Trainerportal hat seine inzwischen — Abschnitt 15.)*
 - **Hell-Modus.** Bewusst nicht gebaut. Wird er nachgerüstet, ist Abschnitt 5 (Zustände) die teure Stelle, nicht die Farbtabelle.
+
+---
+
+## 15. Schreibtischebene (Trainerportal)
+
+*Nachtrag vom 17. September 2026. Anlass: `2026-09-17-web-ux-challenge.md`, Befunde 14 bis 17 und 19.*
+
+Abschnitt 1 begründet die Richtung mit dem Nutzungskontext der Member-App: Keller, schummriges Licht, einhändig, feuchte Hände, drei Sekunden Blick. Daraus folgt „wenig Farbe, keine Dekoration". Das Trainerportal hat diesen Kontext nicht — Tageslicht, Maus, zwei Hände, Minuten bis Stunden am Stück — hatte aber alle Farbregeln geerbt. Es zog daraus zwei zusätzliche **Grau**stufen (`well`, `surface-hover`); die Farbebene wurde nie übersetzt. Ergebnis: sechs Graustufen, drei Textgraus, drei Signalfarben und keine einzige Farbe, die etwas *beschreibt*.
+
+### 15.1 Akzentfläche und Wertfarbe
+
+Regel 1 aus Abschnitt 2 bleibt für die Member-App wörtlich gültig. Für das Portal wird sie **präzisiert, nicht gelockert**: *genau eine Akzent**aktion** je Bildschirm*. Der Akzent als Aktionsfläche bleibt einmalig; als Wertfarbe zählt er nicht mit — was Abschnitt 2 in der Tabelle selbst schon sagt („Hauptaktion, aktiver Wert, Verlaufskurve") und was die Konvention `background` (Aktion) gegen `background-color` (Wert) im Code seit Beginn trennt.
+
+### 15.2 Neu: `daten` — ein Name, keine neue Farbe
+
+| Token | Wert | Verwendung |
+| --- | --- | --- |
+| `daten` | `accent` | Der eine Wert eines Bildschirms, hinter dem eine Handlung steht: der Anteilsbalken |
+| `daten-leise` | `accent-pressed` | Die vielen kleinen Werte daneben: Balken einer Rangliste |
+
+Bis hierher kannte das System drei Farben, und alle drei sind Signale: `accent` die Hauptaktion, `warn` die Problemmeldung, `danger` den Fehler. Eine Rangliste hatte damit nur die Wahl zwischen einem missbrauchten Signal und Grau — und wurde überall Grau.
+
+**Verworfen: eine eigene Datenfarbe.** Die erste Fassung dieses Abschnitts führte ein geprüftes Blau (`#3987E5`) ein — sauber validiert, aber eine zweite Farbfamilie, die Aufmerksamkeit zieht, ohne eine zweite Aussage zu tragen. Das Portal hat eine Primärfarbe; ein Wert ist darin kein Fremdkörper. Rückgängig gemacht am 17. September, noch am Tag der Einführung.
+
+**Warum die Tokens trotzdem bestehen bleiben und nicht einfach `accent` heißen:** Sie trennen zwei Rollen, die dieselbe Farbe haben dürfen, aber nicht dasselbe bedeuten — `accent` wird *gedrückt*, `daten` wird *gelesen*. Wer die Marke ändert, ändert beide; wer die Wertdarstellung ändert, nur diese Zeile. Ohne die Trennung wäre Regel 15.1 („genau eine Akzent**aktion**") im Code nicht mehr prüfbar: jede `var(--accent)`-Fundstelle müsste einzeln gelesen werden, um zu wissen, ob sie eine Fläche zum Drücken ist.
+
+**Zwei Stufen, eine Farbe.** Der Anteil oben trägt die helle Stufe, die vier Balken der Rangliste die dunklere. Vier gleich helle Balken neben der Hauptfigur wären vier gleich laute Stimmen; die Reihe ist Zusammenhang, nicht Aufforderung. Eine Farbe in zwei Helligkeiten ist genau die Ordnung, die eine sequenzielle Darstellung verlangt — und keine Farbe mehr im System als vorher.
+
+**Käme je eine kategoriale Reihe** (mehrere Serien, die auseinandergehalten werden müssen), braucht sie eigene Hues und wird als Reihe validiert, bevor sie hier steht. Einzeln dazuerfundene Farben gibt es nicht.
+
+### 15.3 Wo ein Balken erlaubt ist
+
+Nicht überall — der Überblick sagt, **ob** das Studio benutzt wird, nicht wie weit es von etwas entfernt ist. Ein Balken setzt ein Ziel voraus:
+
+- **Ja** bei „9 von 12 Geräten erreichbar": das Ziel ist die Zahl der Geräte im Raum, und zwischen 9 und 12 liegt eine Handlung.
+- **Ja** in einer Rangliste, relativ zum größten Wert: die Länge trägt den Vergleich, der der Zweck der Liste ist.
+- **Nein** bei aktiven Mitgliedern, erfassten Sätzen, gemeldeten Problemen. Dort gibt es kein Ziel, und ein Balken erfände eines.
+
+### 15.4 Plastik
+
+Auf nahezu schwarzem Grund trägt ein Schlagschatten wenig; was Ebenen trennt, ist die hellere Oberkante.
+
+| Token | Wert | Verwendung |
+| --- | --- | --- |
+| `karte-glanz` | `inset 0 1px 0 rgba(255,255,255,0.05)` | Oberkante einer Karte |
+| `karte-schatten` | `0 1px 2px rgba(0,0,0,0.45), 0 14px 28px -18px rgba(0,0,0,0.9)` | Abstand zum Grund |
+
+Karten und Kacheln tragen beides. Ein Eingabefeld trägt keines — es ist eine Mulde in der Karte, keine weitere Karte darauf.
+
+**Druckgefühl.** Jede Knopfart bekommt `:active { transform: translateY(1px) }` mit 80 ms Übergang. Bis hierher gab es im ganzen Portal keinen `:active`-Zustand: ein Knopf sah gedrückt aus wie ungedrückt, und die erste Rückmeldung kam, wenn der Server geantwortet hatte. Die Verschiebung ist ein Zustand, keine Bewegung — sie bleibt auch unter `prefers-reduced-motion`, der Übergang nicht.
