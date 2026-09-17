@@ -236,6 +236,16 @@ Drei Commits, in der Reihenfolge aus Abschnitt 7.
 - **Die Nomenklatur Geräte/Modelle/Einzelne Geräte** (Befund 4). Unverändert; die Änderung trifft Navigation, Routen und Texte an einem Dutzend Stellen und gehört in einen eigenen Schnitt.
 - **Der Einrichten-Gang** ist in dieser Runde nicht angefasst worden. Er war auch nicht der Befund.
 
+### Was die CI danach sagte (Lauf 35259521533)
+
+Drei E2E-Tests rot, 100 grün. Auseinandersortiert:
+
+1. **`schreibtisch.spec.ts` — „Tag scannen" zweimal auf dem Schirm.** Verursacht durch diese Runde und behoben: das Band „Noch zu tun" bietet denselben Weg an wie die Gerätezeile, wenn genau ein Gerät ohne Tag dasteht. Das ist Absicht — das Band nennt den nächsten Schritt, die Zeile gehört dem Gerät —, aber eine ungezielte Frage nach „dem Link mit dem Namen" trifft jetzt zwei. Die Zusicherung zielt auf die benannte Liste, wie die beiden anderen im selben Lauf schon.
+2. **`leute.spec.ts` — „Alle anzeigen" ändert die Adresse nicht.** Kein Befund dieser Runde, aber ein bekannter: derselbe Kürzungs-Link im Termindetail musste am 6. September auf ein `<a>` wechseln, weil Nexts Client-Router einen Wechsel, der nur den Suchparameter ändert, im Produktionsbau ins Leere laufen lässt. Der Kommentar an dieser Stelle nahm sie ausdrücklich davon aus („gegen denselben Bau geprüft und geht durch"). Die Annahme ist widerlegt; die Stelle ist jetzt ebenfalls ein `<a>`. Dass es lange gutging, passt zum Zwilling: dort war es allein grün und nur unter Last rot.
+3. **`trainerportal.spec.ts` — „Sitzposition" erscheint nicht nach dem Anlegen.** **Älter als diese Runde.** Derselbe Test mit derselben Meldung war schon rot in den Master-Läufen vom 15. September (35003414706), 16. September (35058847408) und 16. September (35059607277) — damals an Zeile 194, heute an 199, weil diese Runde fünf Zeilen darüber ergänzt hat. Dazwischen war er einmal grün (35146547192): er ist unzuverlässig, nicht konstant rot. Hier ist er unangetastet geblieben; die Ursache ist offen und gehört in einen eigenen Schnitt.
+
+Eine Vermutung zu 3, ausdrücklich unbewiesen: sie riecht nach derselben Familie wie 2 — nach dem Anlegen zeigt die Seite die neue Zeile nicht, obwohl die Aktion `revalidatePath` meldet. Beides sind Fälle von „der Produktionsbau frischt clientseitig nicht auf, der Dev-Server schon". Wer das angeht, braucht den Playwright-Bericht des roten Laufs (die `error-context.md` im Artefakt sagt, ob eine Fehlermeldung im Formular stand oder die Liste einfach leer blieb) — raten hilft hier nicht.
+
 ### Wie geprüft
 
 `pnpm typecheck` und `pnpm test` nach jedem Block; dreizehn neue Testfälle für die beiden Ableitungen. Die E2E-Zusicherungen wurden an zwei Stellen nachgezogen (der Anlege-Weg und die jetzt benannten Listen), **aber nicht ausgeführt**: `supabase start` scheitert in dieser Umgebung an der Egress-Policy (403 auf die ghcr.io-Blobs), und ohne lokale Datenbank läuft kein E2E-Test. Das ist die offene Flanke dieser Runde — die Oberfläche ist an der gerenderten Seite geprüft, der Datenweg nur am Typ.

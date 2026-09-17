@@ -89,20 +89,28 @@ export default async function LeutePage({
               // Serverseitig gekuerzt, serverseitig aufgeklappt: ein
               // gewoehnlicher Link auf ?alle=1, kein Zustand im Browser.
               //
-              // Hier bleibt es ein <Link>. Das Termindetail traegt
-              // denselben Kuerzungs-Link und musste am 6. September auf
-              // ein <a> wechseln, weil Nexts Client-Router ihn im
-              // Produktionsbau ins Leere laufen liess -- gemessen und
-              // nachgestellt. Diese Stelle ist gegen denselben Bau
-              // geprueft und geht durch; der Unterschied ist die Route,
-              // nicht das Muster (dort ein dynamisches Blattsegment,
-              // hier nicht). Wer das aendert, prueft es gegen
-              // `next start`, nicht gegen `next dev`.
+              // Ein <a>, kein <Link> -- nachgezogen am 17. September. Das
+              // Termindetail traegt denselben Kuerzungs-Link und musste am
+              // 6. September aus genau diesem Grund wechseln: Nexts
+              // Client-Router laesst einen Wechsel, der nur den
+              // Suchparameter aendert, im Produktionsbau ins Leere laufen.
+              // Der Kommentar, der hier stand, nahm diese Stelle davon aus
+              // ("gegen denselben Bau geprueft und geht durch") -- die
+              // Annahme ist widerlegt: im CI-Lauf 35259521533 blieb die
+              // Adresse nach dem Klick auf /leute stehen, ohne ?alle=1.
+              //
+              // Dass es lange gutging, passt zum Zwilling: dort war es
+              // ebenfalls nur unter Last rot und allein gruen. Lokal laeuft
+              // E2E gegen `next dev`, die CI gegen den Bau -- wer das hier
+              // wieder aendert, prueft gegen `next start`.
+              //
+              // Ein volles Dokument zu laden ist ohnehin richtig: die Seite
+              // traegt keinen Browserzustand, der verlorenginge.
               <div className={styles.rowActions}>
                 <span className={styles.absent}>… {weitere} weitere</span>
-                <Link href={`${pfad}?alle=1`} className={styles.secondary}>
+                <a href={`${pfad}?alle=1`} className={styles.secondary}>
                   Alle anzeigen
-                </Link>
+                </a>
               </div>
             ) : null}
           </>
