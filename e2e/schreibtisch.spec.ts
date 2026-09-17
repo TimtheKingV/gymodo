@@ -403,8 +403,15 @@ test("Der Reiter Einzelne Geräte traegt das Stilllegen, auch wenn das Artboard 
 
   await page.goto(`/portal/${studioId}/geraete/${modell.id}/instanzen`);
 
-  await expect(page.getByRole("button", { name: "Stilllegen" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Tag scannen" })).toBeVisible();
+  // Auf die benannte Liste gezielt: seit dem UX-Schnitt bietet das Band
+  // "Noch zu tun" ueber den Reitern denselben Weg an, wenn genau ein
+  // Geraet ohne Tag dasteht -- dieselbe Adresse, zweimal auf dem Schirm.
+  // Das ist Absicht (das Band nennt den naechsten Schritt, die Zeile
+  // gehoert dem Geraet); ungezielt gefragt ist es eine Verletzung des
+  // strict mode.
+  const geraeteliste = page.getByRole("list", { name: "Geräte im Raum" });
+  await expect(geraeteliste.getByRole("button", { name: "Stilllegen" })).toBeVisible();
+  await expect(geraeteliste.getByRole("link", { name: "Tag scannen" })).toBeVisible();
 });
 
 /**

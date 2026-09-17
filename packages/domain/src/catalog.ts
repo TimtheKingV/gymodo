@@ -201,11 +201,18 @@ export async function createSettingDefinition(
     .single<{ id: string }>();
 
   if (error || !data) {
+    // `??` faengt nur null und undefined -- eine LEERE Meldung reichte es
+    // durch, und das Formular zeigte dann eine rote Flaeche ohne ein Wort
+    // darin (CI-Lauf 35265281027). Ein Fehler ohne Satz ist keiner:
+    // Designsystem 5 verlangt, dass dasteht, was falsch ist.
+    const satz = error?.message?.trim();
     throw new DomainError(
       error?.code === "23505" ? "conflict" : "internal",
       error?.code === "23505"
         ? "Diesen Schluessel gibt es an dem Modell schon."
-        : (error?.message ?? "Parameter nicht angelegt."),
+        : satz && satz.length > 0
+          ? satz
+          : `Parameter nicht angelegt${error?.code ? ` (${error.code})` : ""}.`,
     );
   }
   return { id: data.id };

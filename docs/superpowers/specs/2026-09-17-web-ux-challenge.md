@@ -236,6 +236,64 @@ Drei Commits, in der Reihenfolge aus Abschnitt 7.
 - **Die Nomenklatur Geräte/Modelle/Einzelne Geräte** (Befund 4). Unverändert; die Änderung trifft Navigation, Routen und Texte an einem Dutzend Stellen und gehört in einen eigenen Schnitt.
 - **Der Einrichten-Gang** ist in dieser Runde nicht angefasst worden. Er war auch nicht der Befund.
 
+### Was die CI danach sagte (Lauf 35259521533)
+
+Drei E2E-Tests rot, 100 grün. Auseinandersortiert:
+
+1. **`schreibtisch.spec.ts` — „Tag scannen" zweimal auf dem Schirm.** Verursacht durch diese Runde und behoben: das Band „Noch zu tun" bietet denselben Weg an wie die Gerätezeile, wenn genau ein Gerät ohne Tag dasteht. Das ist Absicht — das Band nennt den nächsten Schritt, die Zeile gehört dem Gerät —, aber eine ungezielte Frage nach „dem Link mit dem Namen" trifft jetzt zwei. Die Zusicherung zielt auf die benannte Liste, wie die beiden anderen im selben Lauf schon.
+2. **`leute.spec.ts` — „Alle anzeigen" ändert die Adresse nicht.** Kein Befund dieser Runde, aber ein bekannter: derselbe Kürzungs-Link im Termindetail musste am 6. September auf ein `<a>` wechseln, weil Nexts Client-Router einen Wechsel, der nur den Suchparameter ändert, im Produktionsbau ins Leere laufen lässt. Der Kommentar an dieser Stelle nahm sie ausdrücklich davon aus („gegen denselben Bau geprüft und geht durch"). Die Annahme ist widerlegt; die Stelle ist jetzt ebenfalls ein `<a>`. Dass es lange gutging, passt zum Zwilling: dort war es allein grün und nur unter Last rot.
+3. **`trainerportal.spec.ts` — „Sitzposition" erscheint nicht nach dem Anlegen.** **Älter als diese Runde.** Derselbe Test mit derselben Meldung war schon rot in den Master-Läufen vom 15. September (35003414706), 16. September (35058847408) und 16. September (35059607277) — damals an Zeile 194, heute an 199, weil diese Runde fünf Zeilen darüber ergänzt hat. Dazwischen war er einmal grün (35146547192): er ist unzuverlässig, nicht konstant rot. Hier ist er unangetastet geblieben; die Ursache ist offen und gehört in einen eigenen Schnitt.
+
+#### Fall 3, aufgelöst: das Vorschlagsrad überschrieb den getippten Namen
+
+**Gefunden am 17. September, CI-Lauf 35268246152.** Der Test scheiterte nicht daran, dass nichts angelegt wurde — sondern daran, dass etwas **Falsches** angelegt wurde:
+
+```
+Expected substring: "Sitzposition"
+Received string:    "Wiederholungen1 · 2 · 3 · 4 · 5 · 6 … · 8 Rasten…"
+```
+
+`nameVorschlaege()[0]` ist `"Wiederholungen"`. Der Mechanismus: `NameFeld` gibt dem Vorschlagsrad `onWahl: onChange` mit, das Rad öffnet beim Fokus und steht dann auf Index 0. `RadSpalte.aufScroll` rief `onWahl` bei **jedem** Scroll-Ereignis auf — auch bei einem, das die Mitte gar nicht bewegt. Kam nach dem Tippen irgendein solches Ereignis (Layout, Fokuswechsel, `scrollIntoView` eines Nachbarn), schrieb das Rad seinen ersten Vorschlag ins Feld und überschrieb, was dastand.
+
+Das ist kein Testproblem. **Ein Trainer tippt „Sitzposition" und legt „Wiederholungen" an**, ohne es zu merken — bis ein Mitglied vor einem Gerät mit der falschen Einstellung steht. Dass es nur manchmal passiert, hat es jahrelang unsichtbar gemacht: der Test war seit dem 15. September mal rot, mal grün.
+
+Der Fix ist eine Zeile: `aufScroll` meldet nur noch eine **echte** Indexänderung (`gemeldet`-Ref). Vier Testfälle in `EinstellungRad.test.tsx` decken ihn ab, gegengeprüft — ohne den Fix sind drei davon rot.
+
+#### Ein dritter Fall derselben Sache: der Wochenwechsel
+
+Mit dem Rad-Fix wurde der Einstellungsschritt grün — und im selben Lauf (35269314873) fiel `kurse.spec.ts` aus: Ein Klick auf „Vorige Woche" ließ den Kursplan auf derselben Woche stehen.
+
+Das ist der **dritte** Fall des Musters, das dieser PR schon zweimal getroffen hat: ein `<Link>`, der nur den Suchparameter ändert, läuft im Produktionsbau ins Leere. Das Termindetail wechselte am 6. September auf ein `<a>`, die Mitgliederliste in diesem PR, jetzt die Wochenwahl.
+
+Kein Testproblem: Wer im Studio auf die Vorwoche klickt und dieselbe Woche sieht, klickt noch einmal. Dass es mal hier und mal dort auftritt, ist die Handschrift dieses Fehlers — er hängt an Prefetch und Timing, nicht an der Stelle.
+
+**Offen als Aufräumarbeit:** Es gibt jetzt drei Einzelfixes derselben Ursache. Ein vierter Link dieser Art irgendwo im Portal würde denselben Weg gehen. Entweder sucht jemand sie alle (`grep` nach `<Link href={`…?`), oder es braucht einen Baustein, der „Wechsel im Suchparameter" kapselt und dabei ein `<a>` rendert.
+
+#### Der Weg dorthin, weil er lehrreich war
+
+Drei Runden, und zwei davon haben vor allem die eigene Ungeduld vermessen:
+
+1. **Die dreistufige Zusicherung** meldete „die Aktion meldet einen Fehler mit leerem Text". Das führte zu einem echten, aber unbeteiligten Fund: `createSettingDefinition` fiel mit `error?.message ?? "…"` auf seinen Ersatztext zurück, und `??` fängt keine leeren Zeichenketten — eine rote Fläche ohne ein Wort darin wäre die Folge gewesen. Repariert, aber nicht die Ursache.
+2. **Der Seitenabzug im CI-Protokoll** zeigte `button "Wird gespeichert …" [disabled]`: Der Test hatte auf „Zeile **oder** Meldung" gewartet und auf einem beliebigen, leeren `role="alert"` ausgelöst — **während die Aktion noch lief**. Er fotografierte den Zwischenstand und hielt ihn für das Ergebnis.
+3. Erst das Warten auf das ehrliche Signal — der Absendeknopf trägt während der Aktion „Wird gespeichert …" — brachte den wahren Vergleich und damit den falschen Namen ans Licht.
+
+Die Lehre für das nächste Mal: **zuerst auf das Ende der Handlung warten, dann urteilen.** Eine Zusicherung, die auf „irgendein Element" wartet, misst die eigene Geschwindigkeit, nicht das Verhalten der Anwendung.
+
+Nebenbei entstanden und bleibend: Der Next-Serverlauf hängt jetzt im CI-Protokoll (`playwright.config.ts`, `stdout`/`stderr` auf `"pipe"`). Ohne ihn wäre Runde 2 nicht zu widerlegen gewesen — das `console.error` einer Server Action ist die einzige Stelle, an der ein Fehler seinen Code nennt.
+
+#### Was zu Fall 3 vorher geprüft wurde
+
+Am Code ausgeschlossen, nicht vermutet:
+
+- **Kein vorzeitiges Absenden durch die Auswahl-Komponente.** Ihr Auslöser ist `type="button"`, ihre Zeilen sind `<div role="option">` — ein Klick darin sendet das Formular nicht ab.
+- **Kein Überschreiben des Namensfelds durch das Vorschlagsrad.** Es öffnet beim Fokus, startet auf Index 0 (`naechsterIndex` fällt für einen nicht-numerischen Startwert auf 0), und `useEffect` setzt `scrollTop` damit auf 0 — ein Scroll-Ereignis, und damit `onWahl`, gibt es ohne echtes Scrollen nicht.
+- **Keine Mehrdeutigkeit der Textsuche.** Die Meldung lautet „element(s) not found", nicht „strict mode violation".
+- **Kein Validierungsfehler durch ein nicht übernommenes Rad.** `radWaehlen` wartet auf `aria-selected="true"`, und das versteckte Feld hängt an derselben Zustandsvariable wie dieses Attribut.
+
+Was bleibt, sind drei Möglichkeiten, die der Bericht nicht auseinanderhält: die Aktion meldete einen Fehler, sie legte etwas unter anderem Namen an, oder die Seite frischte nicht auf. **Die `error-context.md` im Artefakt würde es beantworten** — sie ließ sich aus dieser Umgebung aber nicht laden: der Download leitet auf `productionresultssa12.blob.core.windows.net` um, und die Egress-Policy lehnt die Verbindung ab (403). Über die GitHub-Oberfläche ist sie erreichbar.
+
+Statt zu raten ist die Zusicherung deshalb dreistufig geworden (`trainerportal.spec.ts`): erst warten, bis die Aktion überhaupt geantwortet hat — Zeile **oder** Fehlermeldung —, dann den Satz aus dem Formular in die Fehlermeldung des Tests heben, dann den Namen prüfen, jetzt auf die benannte Liste gezielt. Der Test ist dadurch nicht weicher; er sagt beim nächsten roten Lauf, **welcher** der drei Fälle es war. Läuft schon Stufe 1 in den Timeout, ist es die Auffrischung — dieselbe Familie wie Fall 2, und dann gehört der Fix dorthin, wo `revalidatePath` auf den Client trifft.
+
 ### Wie geprüft
 
 `pnpm typecheck` und `pnpm test` nach jedem Block; dreizehn neue Testfälle für die beiden Ableitungen. Die E2E-Zusicherungen wurden an zwei Stellen nachgezogen (der Anlege-Weg und die jetzt benannten Listen), **aber nicht ausgeführt**: `supabase start` scheitert in dieser Umgebung an der Egress-Policy (403 auf die ghcr.io-Blobs), und ohne lokale Datenbank läuft kein E2E-Test. Das ist die offene Flanke dieser Runde — die Oberfläche ist an der gerenderten Seite geprüft, der Datenweg nur am Typ.

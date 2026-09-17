@@ -196,7 +196,46 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await radWaehlen(page, "Minimum", "1");
   await radWaehlen(page, "Maximum", "8");
   await page.getByRole("button", { name: "Einstellung anlegen" }).click();
-  await expect(page.getByText("Sitzposition")).toBeVisible();
+
+  // Warten, bis die Aktion GEANTWORTET hat -- und erst dann urteilen.
+  //
+  // Die Fassung davor wartete auf "Zeile ODER Meldung" und schlug zu,
+  // sobald irgendein Element mit role="alert" auf der Seite stand. Der
+  // Abzug aus Lauf 35267333125 zeigt, was das anrichtete: unten im
+  // Formular stand `button "Wird gespeichert …" [disabled]` -- der
+  // Absendeknopf war noch im Lauf. Der Test hat also den Zwischenstand
+  // fotografiert und ihn fuer das Ergebnis gehalten. Zwei Runden
+  // Spurensuche haben damit vor allem die eigene Ungeduld vermessen.
+  //
+  // Der Knopf ist das ehrliche Signal: waehrend der Aktion heisst er
+  // "Wird gespeichert …" und ist gesperrt (Form.tsx, useFormStatus).
+  // Traegt er wieder seinen Namen, ist das Ergebnis da -- ob Zeile oder
+  // Meldung, entscheidet sich danach.
+  const absenden = page.getByRole("button", { name: "Einstellung anlegen" });
+  await expect(absenden).toBeEnabled();
+
+  const einstellungen = page.getByRole("list", { name: "Einstellungen am Modell" });
+  const zeilen = await einstellungen.getByRole("listitem").count();
+  if (zeilen === 0) {
+    // Der Abzug kommt in die Fehlermeldung, weil die error-context.md im
+    // Artefakt aus der Arbeitsumgebung nicht ladbar ist (Egress-Policy).
+    // Ohne die option-Zeilen: die beiden Raeder tragen je 200 Werte, und
+    // 400 Zeilen Rauschen verdecken die Auskunft.
+    const meldungen = page.getByRole("alert");
+    const abzug = (await page.getByRole("main").ariaSnapshot())
+      .split("\n")
+      .filter((zeile) => !/^\s*- option "/.test(zeile))
+      .join("\n");
+    throw new Error(
+      [
+        "Einstellung nicht angelegt: die Liste ist leer, nachdem die Aktion geantwortet hat.",
+        `Meldungen (${await meldungen.count()}): ${JSON.stringify(await meldungen.allInnerTexts())}`,
+        `Seite:\n${abzug}`,
+      ].join("\n"),
+    );
+  }
+
+  await expect(einstellungen).toContainText("Sitzposition");
 
   await page.goto(`/portal/${studio.id}/geraete/${modelId}/uebungen`);
   await page.getByLabel("Name").fill("Latzug breit");

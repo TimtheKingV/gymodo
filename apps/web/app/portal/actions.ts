@@ -56,10 +56,27 @@ export type Ergebnis<T> = ({ ok: true } & T) | { ok: false; error: string };
  */
 /** Ein DomainError zeigt seinen Satz direkt; alles andere wird geloggt, aber
     nie im Wortlaut angezeigt -- seine Meldung kann Spaltennamen oder IDs
-    fremder Zeilen enthalten. */
+    fremder Zeilen enthalten.
+
+    Ein DomainError OHNE Satz ist ein Fehler im Fehler, und er hat einen
+    gekostet: das Formular rendert seine Meldung, sobald ein Ergebnis nicht
+    ok ist (Form.tsx), also stand im CI-Lauf 35265281027 eine leere rote
+    Flaeche auf dem Bildschirm -- kein Wort darin. Designsystem 5 verlangt
+    einen Satz, der sagt, was falsch ist UND was gilt; nichts zu sagen ist
+    die schlechtere Fassung von "ungueltig". Ein leerer Satz faellt deshalb
+    auf denselben Weg wie ein unbekannter Fehler: geloggt (mit Code, damit
+    die naechste Spur nicht wieder bei null anfaengt) und mit einem lesbaren
+    Ersatz gezeigt. */
 function fehlerAus(fehler: unknown): { ok: false; error: string } {
-  if (fehler instanceof DomainError) return { ok: false, error: fehler.message };
-  console.error("Portal-Aktion fehlgeschlagen:", fehler);
+  if (fehler instanceof DomainError && fehler.message.trim().length > 0) {
+    return { ok: false, error: fehler.message };
+  }
+  console.error(
+    fehler instanceof DomainError
+      ? `Portal-Aktion fehlgeschlagen, DomainError ohne Satz (${fehler.code}):`
+      : "Portal-Aktion fehlgeschlagen:",
+    fehler,
+  );
   return { ok: false, error: "Das hat nicht geklappt. Bitte noch einmal." };
 }
 
