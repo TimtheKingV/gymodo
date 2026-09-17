@@ -42,5 +42,13 @@ export default defineConfig({
     url: basis,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    // Der Serverlauf gehoert ins Protokoll. Ohne das verschluckt Playwright
+    // die Ausgabe des Next-Servers, und ein console.error aus einer Server
+    // Action -- die einzige Stelle, an der ein Fehler seinen Code nennt --
+    // war in der CI nicht zu sehen. Gekostet hat das eine ganze Runde:
+    // "Einstellung anlegen" scheiterte seit dem 15. September immer
+    // wieder, und der Bericht sagte nur, DASS etwas fehlte.
+    stdout: "pipe",
+    stderr: "pipe",
   },
 });
