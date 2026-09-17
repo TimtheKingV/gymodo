@@ -221,10 +221,37 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
     einstellungen.getByRole("listitem").first().or(page.getByRole("alert").first()),
   ).toBeVisible();
 
-  const formularfehler = page.getByRole("alert");
-  if ((await formularfehler.count()) > 0) {
+  // Ausgeloest wird die Spurensuche allein von der fehlenden Zeile, nicht
+  // von der Meldung daneben: solange die Einstellung dasteht, ist der
+  // Schritt in Ordnung -- und ein Test, der an einem leeren, womoeglich
+  // harmlosen Element scheitert, machte aus einem unzuverlaessigen einen
+  // immer roten.
+  const zeilen = await einstellungen.getByRole("listitem").count();
+  const meldungen = page.getByRole("alert");
+  if (zeilen === 0) {
+    // Runde zwei der Spurensuche. Runde eins (35265281027, 35266322400)
+    // sagte: es steht eine Meldung da, und ihr Text ist leer. Seither ist
+    // ausgeschlossen, dass sie aus der Aktion kommt -- der Serverlauf
+    // haengt jetzt im CI-Protokoll (playwright.config.ts) und zeigt kein
+    // einziges "Portal-Aktion fehlgeschlagen". Die Aktion meldet also
+    // nichts; trotzdem traegt die Seite ein Element mit role="alert" ohne
+    // Text, und die Liste bleibt leer.
+    //
+    // Was fehlt, ist der Blick auf die Seite selbst. Die error-context.md
+    // im Artefakt haette ihn, laesst sich aber aus der Arbeitsumgebung
+    // nicht laden (Egress-Policy). Also kommt der Abzug hier in die
+    // Fehlermeldung -- derselbe Baum, nur durch den Kanal, der offen ist.
+    const rohes =
+      (await meldungen.count()) > 0
+        ? await meldungen.first().evaluate((el) => el.outerHTML)
+        : "keine";
     throw new Error(
-      `"Einstellung anlegen" meldete: ${await formularfehler.first().innerText()}`,
+      [
+        `Einstellung nicht angelegt. Zeilen in der Liste: ${zeilen}.`,
+        `Meldungen (${await meldungen.count()}): ${JSON.stringify(await meldungen.allInnerTexts())}`,
+        `HTML der ersten Meldung: ${rohes}`,
+        `Seite:\n${await page.getByRole("main").ariaSnapshot()}`,
+      ].join("\n"),
     );
   }
 
