@@ -244,7 +244,18 @@ Drei E2E-Tests rot, 100 grün. Auseinandersortiert:
 2. **`leute.spec.ts` — „Alle anzeigen" ändert die Adresse nicht.** Kein Befund dieser Runde, aber ein bekannter: derselbe Kürzungs-Link im Termindetail musste am 6. September auf ein `<a>` wechseln, weil Nexts Client-Router einen Wechsel, der nur den Suchparameter ändert, im Produktionsbau ins Leere laufen lässt. Der Kommentar an dieser Stelle nahm sie ausdrücklich davon aus („gegen denselben Bau geprüft und geht durch"). Die Annahme ist widerlegt; die Stelle ist jetzt ebenfalls ein `<a>`. Dass es lange gutging, passt zum Zwilling: dort war es allein grün und nur unter Last rot.
 3. **`trainerportal.spec.ts` — „Sitzposition" erscheint nicht nach dem Anlegen.** **Älter als diese Runde.** Derselbe Test mit derselben Meldung war schon rot in den Master-Läufen vom 15. September (35003414706), 16. September (35058847408) und 16. September (35059607277) — damals an Zeile 194, heute an 199, weil diese Runde fünf Zeilen darüber ergänzt hat. Dazwischen war er einmal grün (35146547192): er ist unzuverlässig, nicht konstant rot. Hier ist er unangetastet geblieben; die Ursache ist offen und gehört in einen eigenen Schnitt.
 
-Eine Vermutung zu 3, ausdrücklich unbewiesen: sie riecht nach derselben Familie wie 2 — nach dem Anlegen zeigt die Seite die neue Zeile nicht, obwohl die Aktion `revalidatePath` meldet. Beides sind Fälle von „der Produktionsbau frischt clientseitig nicht auf, der Dev-Server schon". Wer das angeht, braucht den Playwright-Bericht des roten Laufs (die `error-context.md` im Artefakt sagt, ob eine Fehlermeldung im Formular stand oder die Liste einfach leer blieb) — raten hilft hier nicht.
+#### Was zu Fall 3 geprüft wurde
+
+Am Code ausgeschlossen, nicht vermutet:
+
+- **Kein vorzeitiges Absenden durch die Auswahl-Komponente.** Ihr Auslöser ist `type="button"`, ihre Zeilen sind `<div role="option">` — ein Klick darin sendet das Formular nicht ab.
+- **Kein Überschreiben des Namensfelds durch das Vorschlagsrad.** Es öffnet beim Fokus, startet auf Index 0 (`naechsterIndex` fällt für einen nicht-numerischen Startwert auf 0), und `useEffect` setzt `scrollTop` damit auf 0 — ein Scroll-Ereignis, und damit `onWahl`, gibt es ohne echtes Scrollen nicht.
+- **Keine Mehrdeutigkeit der Textsuche.** Die Meldung lautet „element(s) not found", nicht „strict mode violation".
+- **Kein Validierungsfehler durch ein nicht übernommenes Rad.** `radWaehlen` wartet auf `aria-selected="true"`, und das versteckte Feld hängt an derselben Zustandsvariable wie dieses Attribut.
+
+Was bleibt, sind drei Möglichkeiten, die der Bericht nicht auseinanderhält: die Aktion meldete einen Fehler, sie legte etwas unter anderem Namen an, oder die Seite frischte nicht auf. **Die `error-context.md` im Artefakt würde es beantworten** — sie ließ sich aus dieser Umgebung aber nicht laden: der Download leitet auf `productionresultssa12.blob.core.windows.net` um, und die Egress-Policy lehnt die Verbindung ab (403). Über die GitHub-Oberfläche ist sie erreichbar.
+
+Statt zu raten ist die Zusicherung deshalb dreistufig geworden (`trainerportal.spec.ts`): erst warten, bis die Aktion überhaupt geantwortet hat — Zeile **oder** Fehlermeldung —, dann den Satz aus dem Formular in die Fehlermeldung des Tests heben, dann den Namen prüfen, jetzt auf die benannte Liste gezielt. Der Test ist dadurch nicht weicher; er sagt beim nächsten roten Lauf, **welcher** der drei Fälle es war. Läuft schon Stufe 1 in den Timeout, ist es die Auffrischung — dieselbe Familie wie Fall 2, und dann gehört der Fix dorthin, wo `revalidatePath` auf den Client trifft.
 
 ### Wie geprüft
 

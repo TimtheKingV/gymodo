@@ -196,7 +196,39 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await radWaehlen(page, "Minimum", "1");
   await radWaehlen(page, "Maximum", "8");
   await page.getByRole("button", { name: "Einstellung anlegen" }).click();
-  await expect(page.getByText("Sitzposition")).toBeVisible();
+
+  // Drei Stufen statt einer stummen Zusicherung. Dieser Schritt faellt seit
+  // dem 15. September immer wieder aus -- rot in den Master-Laeufen
+  // 35003414706, 35058847408, 35059607277 und 35259521533, gruen in
+  // 35146547192 --, und der Bericht sagte jedes Mal nur "element(s) not
+  // found". Das laesst drei ganz verschiedene Ursachen offen: die Aktion
+  // meldete einen Fehler, sie legte etwas unter anderem Namen an, oder die
+  // Seite frischte nicht auf. Ausgeschlossen sind inzwischen (am Code
+  // geprueft, nicht vermutet): ein vorzeitiges Absenden durch die
+  // Auswahl-Komponente (ihr Ausloeser ist type="button", ihre Zeilen sind
+  // <div>), ein Ueberschreiben des Namensfelds durch das Vorschlagsrad (es
+  // startet auf Index 0 und feuert ohne Scroll kein onWahl) und eine
+  // Mehrdeutigkeit der Textsuche.
+  //
+  // Die Stufen trennen die drei Faelle, ohne den Test weicher zu machen:
+  // Stufe 1 wartet, bis die Aktion ueberhaupt geantwortet hat -- Zeile ODER
+  // Fehlermeldung. Laeuft sie in den Timeout, hat die Seite nicht
+  // aufgefrischt. Stufe 2 nennt den Satz aus dem Formular. Stufe 3 prueft
+  // den Namen, jetzt auf die benannte Liste gezielt statt auf die ganze
+  // Seite.
+  const einstellungen = page.getByRole("list", { name: "Einstellungen am Modell" });
+  await expect(
+    einstellungen.getByRole("listitem").first().or(page.getByRole("alert").first()),
+  ).toBeVisible();
+
+  const formularfehler = page.getByRole("alert");
+  if ((await formularfehler.count()) > 0) {
+    throw new Error(
+      `"Einstellung anlegen" meldete: ${await formularfehler.first().innerText()}`,
+    );
+  }
+
+  await expect(einstellungen).toContainText("Sitzposition");
 
   await page.goto(`/portal/${studio.id}/geraete/${modelId}/uebungen`);
   await page.getByLabel("Name").fill("Latzug breit");
