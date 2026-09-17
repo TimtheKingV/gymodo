@@ -1,4 +1,10 @@
 import { notFound } from "next/navigation";
+import {
+  MEDIA_URL_TTL_SECONDS,
+  VIDEO_BUCKET,
+  signMediaUrls,
+} from "@fitretro/domain";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { AktionsKnopf } from "../../../../../Form";
 import { VideoUpload } from "../../../../../VideoUpload";
 import { uebungAnlegen, uebungLoesen, uebungVerschieben } from "../../../../../actions";
@@ -13,19 +19,33 @@ import styles from "../../../../../portal.module.css";
  *
  * Die Reihenfolge ist keine Kosmetik. Canvas-Notiz `note-uebungen`:
  * "Übung 1 ist am Gerät die Vorauswahl des Mitglieds." Der Umordnen-Weg
- * bleibt deshalb vollstaendig -- Hoch, Runter, Entfernen -- und jede Zeile
- * traegt ihre Nummer sichtbar, weil genau die Nummer die Vorauswahl ist.
+ * bleibt deshalb vollstaendig -- Hoch, Runter, Entfernen -- und Platz 1
+ * traegt seine Bedeutung jetzt als Abzeichen an der Zeile statt nur als
+ * Satz im Vorspann darueber.
  *
  * uebungVerschieben nimmt die FERTIGE Reihenfolge als Liste von linkIds
  * entgegen, nicht "dieses Element eins hoch". Jede Zeile rechnet ihre
- * beiden Ziel-Reihenfolgen deshalb hier aus; am Rand (erste Zeile "Hoch",
- * letzte "Runter") bleibt die Liste unveraendert und der Druck folgenlos.
+ * beiden Ziel-Reihenfolgen deshalb hier aus; am Rand ist der Knopf
+ * abgeschaltet statt folgenlos -- ein Druck, der eine Server-Aktion
+ * ausloest, die Liste laedt und nichts aendert, ist schlechter als einer,
+ * der gar nicht erst geht.
  *
- * Genau eine Akzentflaeche: "Übung anlegen". Hoch und Runter sind
- * Nebenaktionen, Entfernen ist zerstoerend. Der Fortschrittsbalken in
- * VideoUpload traegt waehrend eines laufenden Uploads ebenfalls
- * var(--accent) -- Befund 11, entschieden in Aufgabe 21, nicht hier; im
- * Ruhezustand rendert er nicht.
+ * Neu seit dem UX-Schnitt (Befund 6 und 7 der Challenge vom 17. September):
+ *
+ * 1. Jede Zeile zeigt das Einweisungsvideo als Standbild. Vorher stand
+ *    dort "Video 34 s" und sonst nichts -- ob darin die richtige Uebung zu
+ *    sehen ist, war ohne Herunterladen nicht zu beantworten. Die URLs
+ *    dafuer werden hier signiert und nicht in ladeKatalog: nur dieser
+ *    Reiter braucht sie, und der Katalog haengt an jeder Portalseite.
+ * 2. "Entfernen" traegt seine danger-Farbe erst, wenn es scharf ist
+ *    (AktionsKnopf). Bei sechs Uebungen standen vorher sechs rote Umrisse
+ *    gleichmaessig verteilt in der Karte -- die auffaelligste Farbe des
+ *    Bildschirms gehoerte dem Loeschen, nicht der Hauptaktion.
+ *
+ * Genau eine Akzentflaeche: "Übung anlegen" in der Karte darunter. Der
+ * Fortschrittsbalken in VideoUpload traegt waehrend eines laufenden
+ * Uploads ebenfalls var(--accent) -- Befund 11, entschieden in Aufgabe 21,
+ * nicht hier; im Ruhezustand rendert er nicht.
  */
 export default async function ModellUebungenPage({
   params,
@@ -37,13 +57,23 @@ export default async function ModellUebungenPage({
   const modell = katalog.models.find((eintrag) => eintrag.id === modelId);
   if (!modell) notFound();
 
+  const client = await createServerSupabaseClient();
+  const videoUrls = await signMediaUrls(
+    client,
+    VIDEO_BUCKET,
+    modell.exercises
+      .map((uebung) => uebung.videoStoragePath)
+      .filter((pfad): pfad is string => Boolean(pfad)),
+    MEDIA_URL_TTL_SECONDS,
+  );
+
   const reihenfolge = modell.exercises.map((eintrag) => eintrag.linkId);
 
   return (
     <>
       <p className={styles.pageLead}>
-        Die Reihenfolge bestimmt, was am Gerät zuerst vorgeschlagen wird —
-        "Hoch" schiebt eine Übung nach vorn, "Runter" nach hinten.
+        Die erste Übung ist am Gerät die Vorauswahl des Mitglieds — &bdquo;Hoch&ldquo;
+        schiebt eine Übung nach vorn, &bdquo;Runter&ldquo; nach hinten.
       </p>
 
       <section className={styles.section}>
@@ -72,33 +102,48 @@ export default async function ModellUebungenPage({
 
               return (
                 <li key={uebung.linkId} className={styles.row}>
-                  <div className={styles.rowMain}>
-                    <div className={styles.rowTitle}>
-                      {index + 1}. {uebung.name}
-                    </div>
-                    <div className={styles.rowMeta}>
-                      {uebung.targetRepsMin}–{uebung.targetRepsMax} Wiederholungen ·{" "}
-                      {uebung.hasVideo ? (
-                        `Video ${uebung.videoDurationS} s`
-                      ) : (
-                        <span className={styles.absent}>ohne Video</span>
-                      )}
-                    </div>
+                  <div className={styles.zeileMitBild}>
                     <VideoUpload
                       studioId={studioId}
                       modelId={modelId}
                       linkId={uebung.linkId}
                       hatVideo={uebung.hasVideo}
+                      videoUrl={
+                        uebung.videoStoragePath
+                          ? videoUrls.get(uebung.videoStoragePath)
+                          : undefined
+                      }
+                      knapp
                     />
+                    <div className={styles.rowMain}>
+                      <div className={styles.rowTitle}>
+                        {index + 1}. {uebung.name}
+                      </div>
+                      <div className={styles.rowMeta}>
+                        {uebung.targetRepsMin}–{uebung.targetRepsMax} Wiederholungen ·{" "}
+                        {uebung.hasVideo ? (
+                          `Video ${uebung.videoDurationS} s`
+                        ) : (
+                          <span className={styles.absent}>ohne Video</span>
+                        )}
+                      </div>
+                      {index === 0 ? (
+                        <div className={styles.rowMarke}>
+                          <span className={styles.badge}>Vorauswahl am Gerät</span>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                   <div className={styles.rowActions}>
                     <AktionsKnopf
                       aktion={uebungVerschieben.bind(null, studioId, modelId, hoch)}
                       label="Hoch"
+                      deaktiviert={index === 0}
                     />
                     <AktionsKnopf
                       aktion={uebungVerschieben.bind(null, studioId, modelId, runter)}
                       label="Runter"
+                      deaktiviert={index === reihenfolge.length - 1}
                     />
                     <AktionsKnopf
                       aktion={uebungLoesen.bind(null, studioId, modelId, uebung.linkId)}
@@ -112,7 +157,6 @@ export default async function ModellUebungenPage({
             })}
           </ul>
         )}
-
       </section>
 
       <section className={styles.section}>

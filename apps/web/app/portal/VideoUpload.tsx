@@ -31,11 +31,23 @@ export function VideoUpload({
   modelId,
   linkId,
   hatVideo,
+  videoUrl,
+  knapp = false,
 }: {
   studioId: string;
   modelId: string;
   linkId: string;
   hatVideo: boolean;
+  /** Das bereits gespeicherte Video, signiert. Ohne diese Eigenschaft
+      zeigte die Vorschau "Kein Video", sobald man die Seite neu lud --
+      sie kannte nur die Datei, die gerade in diesem Browserfenster
+      ausgewaehlt worden war. */
+  videoUrl?: string | undefined;
+  /** In einer Listenzeile: Vorschau ueber dem Ausloeser, ohne den langen
+      Hinweis zur Hoechstlaenge. Der gehoert an die Stelle, an der jemand
+      ein Video zum ersten Mal waehlt (das Anlege-Formular), nicht
+      sechsmal untereinander an jede Zeile. */
+  knapp?: boolean;
 }) {
   const [fehler, setFehler] = useState<string | null>(null);
   const [fortschritt, setFortschritt] = useState<number | null>(null);
@@ -76,12 +88,26 @@ export function VideoUpload({
   const laeuft = fortschritt !== null;
 
   return (
-    <div className={styles.field}>
-      <div className={styles.mediaRow}>
-        <MedienVorschau url={objektUrl} art="video" leerText="Kein Video" mini />
+    <div className={knapp ? styles.videoSpalte : styles.field}>
+      <div className={knapp ? styles.videoSpalte : styles.mediaRow}>
+        <MedienVorschau
+          url={objektUrl ?? videoUrl ?? null}
+          art="video"
+          leerText={hatVideo ? "Video" : "Kein Video"}
+          groesse={knapp ? "zeile" : "mini"}
+        />
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <DateiKnopf
-            label={hatVideo ? "Video ersetzen" : "Einweisungsvideo"}
+            label={
+              knapp
+                ? hatVideo
+                  ? "Ersetzen"
+                  : "Aufnehmen"
+                : hatVideo
+                  ? "Video ersetzen"
+                  : "Einweisungsvideo"
+            }
+            ariaLabel={hatVideo ? "Video ersetzen" : "Einweisungsvideo hochladen"}
             accept="video/mp4,video/quicktime"
             capture="environment"
             disabled={laeuft}
@@ -89,10 +115,12 @@ export function VideoUpload({
               if (datei) void starte(datei);
             }}
           />
-          <span className={styles.hint}>
-            Höchstens {MAX_VIDEO_SECONDS} Sekunden. Länger nimmt der Upload nicht
-            an — die Länge wird an der Datei geprüft, nicht geschätzt.
-          </span>
+          {knapp ? null : (
+            <span className={styles.hint}>
+              Höchstens {MAX_VIDEO_SECONDS} Sekunden. Länger nimmt der Upload
+              nicht an — die Länge wird an der Datei geprüft, nicht geschätzt.
+            </span>
+          )}
         </div>
       </div>
 

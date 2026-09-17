@@ -378,3 +378,14 @@
   font-size: 12px;
   color: var(--text-muted);
 }
+
+/* Bild und Text einer Zeile bilden zusammen den Hauptteil -- die Aktionen
+   bleiben dadurch am rechten Rand, statt hinter dem Bild einzurasten.
+   Ohne Bild kostet der Umschlag nichts: ein leeres Flex-Kind mehr. */
+.zeileMitBild {
+  display: flex;
+  align-items: center;
+  gap: var(--s16);
+  min-width: 0;
+  flex: 1 1 auto;
+}

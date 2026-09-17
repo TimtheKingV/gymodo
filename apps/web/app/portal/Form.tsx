@@ -109,6 +109,7 @@ export function AktionsKnopf({
   art = "secondary",
   bestaetigung,
   gross,
+  deaktiviert = false,
 }: {
   aktion: () => Promise<ActionResult>;
   label: string;
@@ -116,6 +117,11 @@ export function AktionsKnopf({
   art?: "secondary" | "destructive";
   bestaetigung?: string;
   gross?: boolean;
+  /** Fuer Aktionen, die an ihrem Rand folgenlos waeren -- "Hoch" in der
+      ersten Zeile, "Runter" in der letzten. Sie liefen bisher durch:
+      Server-Aktion, Revalidierung, dieselbe Liste. Ein abgeschalteter
+      Knopf sagt vorher, dass da nichts mehr kommt. */
+  deaktiviert?: boolean;
 }) {
   const [fehler, setFehler] = useState<string | null>(null);
   const [laeuft, starte] = useTransition();
@@ -134,8 +140,14 @@ export function AktionsKnopf({
       ) : null}
       <button
         type="button"
+        // Die danger-Farbe erst, wenn der Knopf scharf ist. Eine Liste mit
+        // sechs Zeilen trug vorher sechs rote Umrisse, gleichmaessig
+        // verteilt -- die auffaelligste Farbe des Bildschirms gehoerte dem
+        // Loeschen, und die eine Akzentflaeche der Hauptaktion verlor
+        // gegen sie (Befund 7 der UX-Challenge). Ohne Bestaetigungsstufe
+        // bleibt es wie bisher: dort ist der erste Druck schon der echte.
         className={
-          art === "destructive"
+          art === "destructive" && !brauchtBestaetigung
             ? gross
               ? styles.destructiveGross
               : styles.destructive
@@ -143,7 +155,7 @@ export function AktionsKnopf({
               ? styles.secondaryGross
               : styles.secondary
         }
-        disabled={laeuft}
+        disabled={laeuft || deaktiviert}
         onClick={() => {
           if (brauchtBestaetigung) {
             setBestaetigt(true);

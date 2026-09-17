@@ -201,7 +201,7 @@ export function VideoAufnehmen({
         {hatVideo ? `Video ersetzen für ${uebungName}` : `Video für ${uebungName}`}
       </span>
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-        <MedienVorschau url={objektUrl} art="video" leerText="Kein Video" mini />
+        <MedienVorschau url={objektUrl} art="video" leerText="Kein Video" groesse="mini" />
         <DateiKnopf
           label={hatVideo ? "Ersetzen" : "Aufnehmen"}
           ariaLabel={hatVideo ? `Video ersetzen für ${uebungName}` : `Video für ${uebungName}`}

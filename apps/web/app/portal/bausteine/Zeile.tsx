@@ -12,16 +12,24 @@ export function Zeile({
   titel,
   meta,
   aktionen,
+  bild,
 }: {
   titel: React.ReactNode;
   meta?: React.ReactNode;
   aktionen?: React.ReactNode;
+  /** Die Kachel am linken Rand -- das Geraetefoto in der Modellliste.
+      Optional, weil die meisten Listen des Portals (Tags, Leute, Termine)
+      kein Bild haben und keins erfinden sollen. */
+  bild?: React.ReactNode;
 }) {
   return (
     <li className={styles.zeile}>
-      <div className={styles.zeileHaupt}>
-        <div className={styles.zeileTitel}>{titel}</div>
-        {meta ? <div className={styles.zeileMeta}>{meta}</div> : null}
+      <div className={styles.zeileMitBild}>
+        {bild}
+        <div className={styles.zeileHaupt}>
+          <div className={styles.zeileTitel}>{titel}</div>
+          {meta ? <div className={styles.zeileMeta}>{meta}</div> : null}
+        </div>
       </div>
       {aktionen ? <div className={styles.zeileAktionen}>{aktionen}</div> : null}
     </li>

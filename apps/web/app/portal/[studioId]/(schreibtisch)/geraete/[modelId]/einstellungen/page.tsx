@@ -3,6 +3,7 @@ import { AktionsKnopf } from "../../../../../Form";
 import { EinstellungFormular } from "../../../../../EinstellungFormular";
 import { parameterAnlegen, parameterLoeschen } from "../../../../../actions";
 import { ladeKatalog } from "../../../../catalog";
+import { rastenText } from "../../../../rasten";
 import styles from "../../../../../portal.module.css";
 
 /**
@@ -34,7 +35,9 @@ export default async function ModellEinstellungenPage({
   return (
     <>
       <p className={styles.pageLead}>
-        Was ein Mitglied am Gerät einstellt und sich merken soll.
+        Was ein Mitglied am Gerät einstellt und sich merken soll. Unter jeder
+        Zeile stehen die Rasten, aus denen es wählen kann — nicht die
+        Definition, sondern die Werte selbst.
       </p>
 
       <section className={styles.section}>
@@ -53,12 +56,13 @@ export default async function ModellEinstellungenPage({
               <li key={parameter.id} className={styles.row}>
                 <div className={styles.rowMain}>
                   <div className={styles.rowTitle}>{parameter.label}</div>
-                  <div className={styles.rowMeta}>
-                    {parameter.kind === "enum"
-                      ? (parameter.allowedValues ?? []).join(" · ")
-                      : `${parameter.minValue ?? "?"} bis ${parameter.maxValue ?? "?"}${
-                          parameter.stepValue ? ` in Schritten von ${parameter.stepValue}` : ""
-                        }${parameter.unit ? ` ${parameter.unit}` : ""}`}
+                  {/* Die Rasten, nicht die Definition: "1 · 2 · 3 · 4 ·
+                      5 · 6 … · 8 Rasten" statt "1 bis 8 in Schritten von
+                      1". Was am Geraet waehlbar ist, war bis hierher nur
+                      auszurechnen (Befund 9 der UX-Challenge). */}
+                  <div className={styles.rowMeta}>{rastenText(parameter)}</div>
+                  <div className={styles.rowMetaFaint}>
+                    {parameter.kind === "enum" ? "Auswahl" : "Zahl mit Bereich"}
                   </div>
                 </div>
                 <AktionsKnopf

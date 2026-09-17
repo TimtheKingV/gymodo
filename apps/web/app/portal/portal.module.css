@@ -835,3 +835,54 @@
 .erfolg:empty {
   display: none;
 }
+
+/* Die Videospalte einer Uebungszeile: Standbild oben, Ausloeser darunter,
+   88 px breit. Kein mediaRow (nebeneinander) -- in einer Zeile mit Titel,
+   Meta und drei Aktionen ist die Breite das Knappe, nicht die Hoehe. */
+.videoSpalte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s8);
+  flex-shrink: 0;
+  width: 104px;
+}
+
+/* Zeile mit Medienkachel: Bild links, Text rechts -- zusammen das, was in
+   .row als "Hauptteil" gilt, damit die Aktionen weiterhin am rechten Rand
+   stehen und nicht hinter dem Bild einrasten. */
+.zeileMitBild {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s16);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Das Abzeichen unter Titel und Meta, nicht daneben: "Vorauswahl am
+   Gerät" ist eine Aussage ueber die Zeile, kein Teil ihres Namens. */
+.rowMarke {
+  margin-top: var(--s8);
+}
+
+/* Die zweite Metazeile einer Listenzeile: was im Raum steht, steht oben --
+   ob es fertig ist, darunter. */
+.zeileZustand {
+  display: block;
+  margin-top: 2px;
+}
+
+/* Offener Punkt in einer Liste: warn als Schrift, nicht als Flaeche
+   (Designsystem 2). Derselbe Ton wie die Marke im Band "Noch zu tun". */
+.offenMarke {
+  color: var(--warn);
+}
+
+/* Die Nebenauskunft unter der Meta-Zeile: die Art einer Einstellung.
+   text-faint ist hier zulaessig -- "Auswahl" wiederholt, was die Werte
+   darueber schon zeigen, und traegt nichts, was jemand lesen MUSS
+   (Designsystem 2). */
+.rowMetaFaint {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}

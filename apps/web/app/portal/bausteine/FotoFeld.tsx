@@ -68,7 +68,7 @@ export function FotoFeld({
         art="bild"
         leerText="Noch kein Foto"
         alt={alt}
-        mini={mini}
+        groesse={mini ? "mini" : "voll"}
       />
       <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: "1 1 200px" }}>
         <DateiKnopf
