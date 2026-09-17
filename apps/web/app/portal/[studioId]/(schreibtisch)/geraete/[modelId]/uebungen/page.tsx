@@ -56,7 +56,10 @@ export default async function ModellUebungenPage({
             </p>
           </div>
         ) : (
-          <ul className={styles.rows}>
+          // Benannt, weil auf diesem Bildschirm mehrere Listen stehen --
+          // das Band "Noch zu tun" darueber ist auch eine. "Liste mit 3
+          // Eintraegen" ist ohne Namen keine Auskunft.
+          <ul className={styles.rows} aria-label="Übungen am Modell">
             {modell.exercises.map((uebung, index) => {
               const hoch = [...reihenfolge];
               if (index > 0) {
@@ -110,6 +113,15 @@ export default async function ModellUebungenPage({
           </ul>
         )}
 
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <h2 className={styles.sectionTitle}>Übung anlegen</h2>
+          <span className={styles.sectionNote}>
+            Kommt ans Ende der Liste. Die Reihenfolge änderst du oben.
+          </span>
+        </div>
         <UebungFormular
           studioId={studioId}
           modelId={modelId}

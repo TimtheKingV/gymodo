@@ -813,3 +813,25 @@
 .seitenformular > form > p {
   margin-top: 0;
 }
+
+/* Kopf eines Objekts: Bild links, Name und Kennwerte rechts. Bis hierher
+   stand der Name allein da und das Foto lag einen Reiter weiter -- auf dem
+   Uebungs-Reiter war das Geraet, um das es geht, nur ein Wort in der
+   Ueberschrift. */
+.objektKopf {
+  display: flex;
+  align-items: center;
+  gap: var(--s16);
+}
+
+/* Die Erfolgsmeldung neben der Hauptaktion. Kein Akzent und keine Flaeche:
+   sie ist die Quittung einer Handlung, die schon geschehen ist, und die
+   eine Akzentflaeche des Bildschirms gehoert der naechsten. */
+.erfolg {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.erfolg:empty {
+  display: none;
+}

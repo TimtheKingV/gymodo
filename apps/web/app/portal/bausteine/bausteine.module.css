@@ -324,3 +324,57 @@
   margin-top: var(--s24);
   max-width: 70ch;
 }
+
+/* Noch zu tun: die Restliste eines Objekts (NochZuTun.tsx). Aufbau wie
+   .abschnitt, aber die Karte traegt links eine 2-px-Kante in --warn --
+   dieselbe Rolle wie die Akzentkante der aktiven Rail-Zeile: eine Linie,
+   keine Flaeche. Designsystem 2 laesst warn nur als Umriss zu, und was an
+   einem Geraet noch fehlt, ist kein Fehlverhalten des Trainers. */
+.nochZuTun {
+  margin-top: var(--s24);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--warn);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.nochZuTunKopf {
+  padding: var(--s12) var(--s20);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s16);
+}
+
+/* Der offene Punkt traegt einen Punkt in --warn, der unvollstaendige
+   einen in --text-faint: "ohne Tag" haelt das Geraet auf, "ohne Video"
+   nicht. Zwei Stufen, ein Kanal -- die Farbe. Kein Traeger der Aussage:
+   sie steht im Titel daneben ("1 Übung ohne Einweisungsvideo") und im
+   Grund darunter ("Nutzbar, nur ohne Anleitung"). */
+.nochZuTunMarke,
+.nochZuTunMarkeSanft {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: var(--s8);
+  vertical-align: 2px;
+}
+
+.nochZuTunMarke {
+  background-color: var(--warn);
+}
+
+.nochZuTunMarkeSanft {
+  background-color: var(--text-faint);
+}
+
+/* Fertig ist eine Zeile, keine Karte: ein Objekt ohne offenen Punkt soll
+   den Bildschirm nicht mit einer Erfolgsmeldung fuellen. */
+.nochZuTunFertig {
+  margin-top: var(--s16);
+  font-size: 12px;
+  color: var(--text-muted);
+}

@@ -40,7 +40,12 @@ export function EinstellungFormular({
   const werteId = useId();
 
   return (
-    <AktionsFormular action={action} submitLabel="Einstellung anlegen">
+    <AktionsFormular
+      action={action}
+      submitLabel="Einstellung anlegen"
+      erfolgText="Angelegt. Nächste?"
+      leertNachErfolg
+    >
       <input type="hidden" name="key" value={schluesselAus(label)} />
       <div className={styles.grid}>
         <NameFeld

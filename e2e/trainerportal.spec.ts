@@ -150,12 +150,17 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await radWaehlen(page, "Maximum", "100");
   await page.getByRole("button", { name: "Modell anlegen" }).click();
 
-  // "Latzug" stand hier nur je als Rail-Link -- Aufgabe 12 hat die Rail von
-  // Modell-Eintraegen befreit. Der Modellname steht in der Liste jetzt als
-  // Text, nicht als Link; "Bearbeiten" bleibt der einzige Link der Zeile.
-  await expect(page.getByText("Latzug")).toBeVisible();
-  await page.getByRole("link", { name: "Bearbeiten" }).first().click();
+  // Anlegen fuehrt zum Angelegten: der Schreibtisch blieb frueher auf der
+  // Liste stehen, und das neue Modell war eine Zeile unter anderen. Kein
+  // Klick auf "Bearbeiten" mehr -- die Weiterleitung IST der Befund.
   await expect(page.getByRole("heading", { name: "Latzug" })).toBeVisible();
+
+  // Und die Seite sagt, was als Naechstes fehlt, statt vier Nullen in der
+  // Reiterleiste zu zeigen. Das Foto steht oben, weil ohne es niemand das
+  // Geraet wiedererkennt.
+  const nochZuTun = page.getByRole("list", { name: "Noch zu tun" });
+  await expect(nochZuTun.getByRole("listitem").first()).toContainText("Kein Foto");
+  await expect(nochZuTun.getByRole("listitem")).toHaveCount(4);
 
   // Der Modell-Detailpfad ist seit Aufgabe 16 /geraete/<modelId> (vier
   // Reiter statt fuenf Abschnitte auf einem Bildschirm); die Modell-Id

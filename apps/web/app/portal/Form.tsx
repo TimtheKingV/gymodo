@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, useState, useTransition } from "react";
+import { useActionState, useId, useRef, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import styles from "./portal.module.css";
 import type { ActionResult } from "./actions";
@@ -15,6 +15,8 @@ export function AktionsFormular({
   children,
   onErfolg,
   gross,
+  erfolgText,
+  leertNachErfolg = false,
 }: {
   action: (prev: unknown, formData: FormData) => Promise<ActionResult>;
   submitLabel: string;
@@ -25,18 +27,42 @@ export function AktionsFormular({
       (Designsystem 1). Ersetzt die eigenen .haupt/.neben/.gefaehrlich aus
       halle.module.css. */
   gross?: boolean;
+  /** Was nach dem Anlegen dasteht. Ohne diesen Text bleibt Erfolg stumm --
+      richtig fuer ein Formular, das speichert, was schon da war (die
+      Studio-Einstellungen), falsch fuer eines, das etwas Neues in eine
+      Liste legt: dort war Erfolg bis hierher daran zu erkennen, dass
+      irgendwo darueber eine Zeile dazugekommen ist. */
+  erfolgText?: string;
+  /** Anlegen heisst: gleich das naechste. Leert die Felder und setzt den
+      Zeiger zurueck ins erste -- nur fuer Formulare, die mehrfach
+      hintereinander abgesendet werden (Uebung, Einstellung, Geraet), nie
+      fuer eines, das bestehende Werte zeigt. */
+  leertNachErfolg?: boolean;
 }) {
+  const formRef = useRef<HTMLFormElement>(null);
+
   const [ergebnis, formAction] = useActionState(
     async (prev: ActionResult | null, formData: FormData) => {
       const antwort = await action(prev, formData);
-      if (antwort.ok) onErfolg?.();
+      if (antwort.ok) {
+        onErfolg?.();
+        if (leertNachErfolg && formRef.current) {
+          formRef.current.reset();
+          // Das erste sichtbare Eingabefeld, nicht das erste Element
+          // ueberhaupt: davor koennen versteckte Felder stehen, und ein
+          // Rad (role="button") ist kein Feld, in dem jemand weitertippt.
+          formRef.current
+            .querySelector<HTMLInputElement>("input:not([type=hidden]), textarea")
+            ?.focus();
+        }
+      }
       return antwort;
     },
     null,
   );
 
   return (
-    <form action={formAction} className={styles.sectionBody}>
+    <form ref={formRef} action={formAction} className={styles.sectionBody}>
       {children}
       {ergebnis && !ergebnis.ok ? (
         <p className={styles.error} role="alert">
@@ -45,6 +71,14 @@ export function AktionsFormular({
       ) : null}
       <div className={styles.actions}>
         <Absenden label={submitLabel} gross={gross ?? false} />
+        {/* role="status" statt role="alert": Erfolg unterbricht keinen
+            Screenreader mitten im Satz, er wird nachgereicht. Immer im
+            DOM, damit die Ansage ueberhaupt kommt -- ein Element, das erst
+            mit seinem Text erscheint, wird von manchen Lesern nicht
+            gemeldet. */}
+        <span className={styles.erfolg} role="status">
+          {ergebnis?.ok && erfolgText ? erfolgText : ""}
+        </span>
       </div>
     </form>
   );

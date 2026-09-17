@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { Feld } from "../../../../../Form";
 import { DateiKnopf } from "../../../../../bausteine/DateiKnopf";
 import { MedienVorschau } from "../../../../../bausteine/MedienVorschau";
@@ -37,6 +37,7 @@ export function UebungFormular({
   modelId: string;
   action: (prev: unknown, formData: FormData) => Promise<Ergebnis<{ linkId: string }>>;
 }) {
+  const formRef = useRef<HTMLFormElement>(null);
   const [datei, setDatei] = useState<File | null>(null);
   const [objektUrl, setObjektUrl] = useState<string | null>(null);
   const [fortschritt, setFortschritt] = useState<number | null>(null);
@@ -78,13 +79,18 @@ export function UebungFormular({
       }
 
       aufDatei(null);
+      // Wie AktionsFormular mit leertNachErfolg: Uebungen legt man
+      // mehrere hintereinander an, und das Namensfeld ist das erste, in
+      // das jemand dann tippt.
+      formRef.current?.reset();
+      formRef.current?.querySelector<HTMLInputElement>("input:not([type=hidden])")?.focus();
       return { ok: true as const };
     },
     null,
   );
 
   return (
-    <form action={formAction} className={styles.sectionBody}>
+    <form ref={formRef} action={formAction} className={styles.sectionBody}>
       <Feld name="name" label="Name" required placeholder="Latzug breit" />
       <UebungRepsRad />
 
@@ -132,6 +138,9 @@ export function UebungFormular({
         <button type="submit" className={styles.primary} disabled={laeuft}>
           {laeuft ? "Wird angelegt …" : "Übung anlegen"}
         </button>
+        <span className={styles.erfolg} role="status">
+          {ergebnis?.ok ? "Angelegt — sie steht jetzt unten in der Liste." : ""}
+        </span>
       </div>
     </form>
   );

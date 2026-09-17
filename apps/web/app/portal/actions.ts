@@ -96,13 +96,29 @@ function zahl(formData: FormData, name: string): number | undefined {
   return Number.isFinite(wert) ? wert : Number.NaN;
 }
 
+/**
+ * Legt an und geht hin. Bis hierher blieb der Schreibtisch nach dem
+ * Anlegen auf der Liste stehen -- das neue Modell war eine Zeile unter
+ * anderen, und der naechste Schritt (Foto, Einstellungen, Uebungen, Geraete,
+ * Tag) stand nirgends. Der Gang durch die Halle macht es seit jeher anders
+ * (einrichten/modell/neu leitet auf die Einstellungen weiter); dass
+ * ausgerechnet derselbe Knopf am Schreibtisch nirgendwohin fuehrte, war der
+ * Bruch, nicht die Weiterleitung.
+ *
+ * `redirect` wirft eine Sonderausnahme, die Next auswertet -- sie darf
+ * deshalb nicht in das try von `fuehreAus` geraten, sonst faengt fehlerAus
+ * sie ab und der Trainer liest "Das hat nicht geklappt" ueber einem Modell,
+ * das angelegt ist. Deshalb hier von Hand statt ueber fuehreAus.
+ */
 export async function modellAnlegen(
   studioId: string,
   _prev: unknown,
   formData: FormData,
 ): Promise<ActionResult> {
-  return fuehreAus(`/portal/${studioId}`, async (client) => {
-    await createEquipmentModel(client, {
+  const client = await createServerSupabaseClient();
+  let modelId: string;
+  try {
+    const modell = await createEquipmentModel(client, {
       studioId,
       name: text(formData, "name"),
       manufacturer: optionalerText(formData, "manufacturer"),
@@ -110,7 +126,12 @@ export async function modellAnlegen(
       minWeightKg: zahl(formData, "minWeightKg") ?? 0,
       maxWeightKg: zahl(formData, "maxWeightKg") ?? null,
     });
-  });
+    modelId = modell.id;
+  } catch (fehler) {
+    return fehlerAus(fehler);
+  }
+  revalidatePath(`/portal/${studioId}`, "layout");
+  redirect(`/portal/${studioId}/geraete/${modelId}`);
 }
 
 export async function modellAendern(

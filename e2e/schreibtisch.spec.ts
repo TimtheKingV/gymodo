@@ -360,7 +360,12 @@ test("Umordnen aendert die Vorauswahl am Geraet, nicht nur die Anzeige", async (
 
   await page.goto(`/portal/${studioId}/geraete/${modell.id}/uebungen`);
 
-  const zeilen = page.getByRole("listitem");
+  // Auf die benannte Liste gezielt, nicht auf "irgendein listitem": ueber
+  // den Reitern steht seit dem UX-Schnitt das Band "Noch zu tun", und das
+  // ist ebenfalls eine Liste. nth(0) traefe sonst dessen ersten Eintrag.
+  const zeilen = page
+    .getByRole("list", { name: "Übungen am Modell" })
+    .getByRole("listitem");
   await expect(zeilen.nth(0)).toContainText("1. Rudern");
   await expect(zeilen.nth(1)).toContainText("2. Latzug breit");
 
@@ -371,7 +376,7 @@ test("Umordnen aendert die Vorauswahl am Geraet, nicht nur die Anzeige", async (
 
   // Und nicht nur in der Anzeige: neu geladen steht dieselbe Reihenfolge da.
   await page.reload();
-  await expect(page.getByRole("listitem").nth(0)).toContainText("1. Latzug breit");
+  await expect(zeilen.nth(0)).toContainText("1. Latzug breit");
 });
 
 /**
@@ -431,7 +436,10 @@ test("Ein stillgelegtes Geraet bleibt sichtbar und benannt", async ({ page }) =>
 
   // Geraete werden stillgelegt, nie geloescht (Designsystem 10). Ein
   // verschwundenes Geraet naehme die Zuordnungshistorie mit.
-  const zeile = page.getByRole("listitem").filter({ hasText: "13" });
+  const zeile = page
+    .getByRole("list", { name: "Geräte im Raum" })
+    .getByRole("listitem")
+    .filter({ hasText: "13" });
   await expect(zeile).toBeVisible();
   await expect(zeile).toContainText("stillgelegt");
   await expect(zeile.getByRole("button", { name: "Wieder in Betrieb" })).toBeVisible();
@@ -475,7 +483,12 @@ test("Ein neu angelegtes Geraet erscheint ohne Neuladen im Reiter", async ({ pag
   await page.getByRole("button", { name: "Gerät anlegen" }).click();
 
   // OHNE page.reload().
-  await expect(page.getByRole("listitem").filter({ hasText: "12" })).toBeVisible();
+  await expect(
+    page
+      .getByRole("list", { name: "Geräte im Raum" })
+      .getByRole("listitem")
+      .filter({ hasText: "12" }),
+  ).toBeVisible();
 
   const reiter = page.getByRole("navigation", { name: "Modell" });
   await expect(reiter.getByRole("link", { name: /Einzelne Geräte/ })).toContainText(

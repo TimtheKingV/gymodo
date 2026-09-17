@@ -48,7 +48,7 @@ export default async function ModellEinstellungenPage({
             </p>
           </div>
         ) : (
-          <ul className={styles.rows}>
+          <ul className={styles.rows} aria-label="Einstellungen am Modell">
             {modell.settingDefinitions.map((parameter) => (
               <li key={parameter.id} className={styles.row}>
                 <div className={styles.rowMain}>
@@ -72,6 +72,12 @@ export default async function ModellEinstellungenPage({
           </ul>
         )}
 
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <h2 className={styles.sectionTitle}>Einstellung anlegen</h2>
+        </div>
         <EinstellungFormular action={parameterAnlegen.bind(null, studioId, modelId)} />
       </section>
     </>

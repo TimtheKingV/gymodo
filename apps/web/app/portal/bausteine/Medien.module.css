@@ -23,3 +23,47 @@
   height: 72px;
   font-size: 11px;
 }
+
+/* Modellbild (Modellbild.tsx): dasselbe Foto in zwei Rollen. Der Kopf
+   traegt es neben Name und Kennwerten, die Zeile als Wiedererkennung am
+   linken Rand. Beide composen .photo/.photoEmpty -- Radius, Rand und
+   object-fit leben weiter an einer Stelle, nur die Masse weichen ab. */
+
+.bildKopf {
+  composes: photo from "../portal.module.css";
+  width: 104px;
+  height: 78px;
+}
+
+.bildKopfLeer {
+  composes: photoEmpty from "../portal.module.css";
+  width: 104px;
+  height: 78px;
+  font-size: 11px;
+}
+
+.bildZeile {
+  composes: photo from "../portal.module.css";
+  width: 64px;
+  height: 48px;
+  border-radius: var(--r-control);
+}
+
+.bildZeileLeer {
+  composes: photoEmpty from "../portal.module.css";
+  width: 64px;
+  height: 48px;
+  border-radius: var(--r-control);
+  font-size: 10px;
+  padding: var(--s4);
+}
+
+@media (max-width: 600px) {
+  /* Auf dem Telefon nimmt das Kopfbild sonst ein Drittel der Breite fuer
+     eine Information, die der Name schon traegt. */
+  .bildKopf,
+  .bildKopfLeer {
+    width: 72px;
+    height: 54px;
+  }
+}
