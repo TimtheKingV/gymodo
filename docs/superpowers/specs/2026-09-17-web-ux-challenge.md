@@ -1,7 +1,7 @@
 # gymodo — Web-Portal UX-Challenge
 
 **Stand:** 17. September 2026
-**Status:** Befundsammlung. Nichts davon ist entschieden; Abschnitt 7 schlägt drei Arbeitsblöcke mit Reihenfolge vor.
+**Status:** Befundsammlung (Abschnitte 1–6 unverändert als Nachweis erhalten), Abschnitt 7 schlägt drei Arbeitsblöcke vor, **Abschnitt 8 hält fest, was davon am selben Tag umgesetzt wurde** — und was offen blieb.
 **Scope:** Das Trainerportal unter `apps/web/app/portal/**` — Überblick, Geräte/Modelle, die vier Modell-Reiter, der Einrichten-Gang. Nicht geprüft: Kurse, Leute, Einstellungen, Beitritt/Scan.
 **Anlass:** Drei Beobachtungen aus dem Betrieb, nach der iOS-Arbeit: (a) der Flow „Gerät anlegen" ist nicht klar, (b) man sieht nicht, was zu welcher Übung gehört und was man wie einstellt, (c) die Oberfläche wirkt grau, unplastisch, ohne Farbakzente und ohne Grafik — besonders auf dem Überblick.
 
@@ -214,3 +214,26 @@ Braucht zuerst eine Entscheidung, weil er eine als nicht verhandelbar markierte 
 - **Der Überblick bekommt eine Hauptfigur**: „9 von 12 Geräte erreichbar" als Anteil mit Balken statt als Kachel neben drei anderen — die Zahl, die eine Handlung auslöst, oben und groß; die drei Beobachtungszahlen darunter und kleiner.
 
 **Reihenfolge:** A, dann B, dann C. A und B sind unstrittig und machen die Seite sofort benutzbarer; C braucht eine Designsystem-Entscheidung und sollte nicht nebenbei passieren.
+
+---
+
+## 8. Umgesetzt am 17. September
+
+Drei Commits, in der Reihenfolge aus Abschnitt 7.
+
+**Block A — Der Weg.** Befunde 1, 2, 3, 5 und 10 geschlossen. `modellAnlegen` am Schreibtisch leitet auf die neue Modellseite weiter; der Modellkopf trägt das Band „Noch zu tun" mit den offenen Pflichten in Aufbaureihenfolge (`offen.ts`, sechs Testfälle); die Anlege-Formulare der drei Reiter haben eine eigene Karte mit eigenem Kopf; Erfolg ist nicht mehr stumm (Meldung, geleerte Felder, Zeiger zurück ins erste). Das Foto bleibt am Schreibtisch optional — die Pflicht steht jetzt sichtbar im Band, statt den Knopf zu sperren.
+
+**Block B — Sehen, was gemeint ist.** Befunde 6, 7, 8 und 9. Jede Übungszeile zeigt das Einweisungsvideo als Standbild; `VideoUpload` zeigt das gespeicherte Video statt nur die gerade gewählte Datei; die Modellliste trägt Fotos und statt der Punktkette zwei Zeilen (was im Raum steht, ob es fertig ist); der Einstellungs-Reiter zeigt die Rasten statt der Definition (`rasten.ts`, sieben Testfälle). „Entfernen" ist grau, bis es scharf ist; „Hoch"/„Runter" sind am Rand abgeschaltet statt folgenlos; Platz 1 trägt „Vorauswahl am Gerät".
+
+**Block C — Farbe und Plastik.** Befunde 14 bis 17 und 19, dazu 11 und 12 aus dem Mobilteil. Das Designsystem hat einen Abschnitt 15 „Schreibtischebene" mit der präzisierten Akzentregel, dem neuen Token `daten` (validiert, nicht geschätzt), der Regel, wo ein Balken erlaubt ist, und der Plastik. Der Überblick führt mit „9 von 12 Geräte erreichbar" samt Anteilsbalken; die drei Beobachtungszahlen stehen kleiner darunter; „Meistgenutzt" hat Balken. Karten tragen Oberkante und Schatten, Knöpfe ein Druckgefühl. Die Reiterleiste schiebt sich auf schmalen Schirmen seitlich, statt auf drei Zeilen zu brechen; die Kennzahlen stehen auf dem Telefon zweispaltig.
+
+### Offen geblieben
+
+- **Umordnen durch Ziehen** (Teil von Befund 8). Die Knöpfe sind ehrlicher geworden, aber eine Übung von Platz 5 auf Platz 1 sind weiter vier Klicks.
+- **Eine eigene Telefonsicht des Schreibtischs** (Befund 13). Die Seiten brechen jetzt sauber, aber die Frage dahinter — *was macht ein Trainer am Telefon am Schreibtisch?* — ist nicht beantwortet.
+- **Die Nomenklatur Geräte/Modelle/Einzelne Geräte** (Befund 4). Unverändert; die Änderung trifft Navigation, Routen und Texte an einem Dutzend Stellen und gehört in einen eigenen Schnitt.
+- **Der Einrichten-Gang** ist in dieser Runde nicht angefasst worden. Er war auch nicht der Befund.
+
+### Wie geprüft
+
+`pnpm typecheck` und `pnpm test` nach jedem Block; dreizehn neue Testfälle für die beiden Ableitungen. Die E2E-Zusicherungen wurden an zwei Stellen nachgezogen (der Anlege-Weg und die jetzt benannten Listen), **aber nicht ausgeführt**: `supabase start` scheitert in dieser Umgebung an der Egress-Policy (403 auf die ghcr.io-Blobs), und ohne lokale Datenbank läuft kein E2E-Test. Das ist die offene Flanke dieser Runde — die Oberfläche ist an der gerenderten Seite geprüft, der Datenweg nur am Typ.

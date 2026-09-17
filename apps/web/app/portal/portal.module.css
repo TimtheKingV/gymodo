@@ -273,6 +273,7 @@
   border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--surface);
+  box-shadow: var(--karte-glanz), var(--karte-schatten);
   overflow: hidden;
 }
 
@@ -467,6 +468,25 @@
 
 .primary:hover {
   background: var(--accent-pressed);
+}
+
+/* Druckgefuehl. Bis hierher gab es im ganzen Portal keinen :active-Zustand:
+   ein Knopf sah gedrueckt genauso aus wie ungedrueckt, und die einzige
+   Rueckmeldung kam, wenn der Server geantwortet hatte. 1 px ist genug --
+   die prefers-reduced-motion-Regel in globals.css schaltet den Uebergang
+   ab, die Verschiebung selbst bleibt (sie ist Zustand, keine Bewegung). */
+.primary,
+.secondary,
+.destructive {
+  transition:
+    background-color 120ms ease,
+    transform 80ms ease;
+}
+
+.primary:active:not(:disabled),
+.secondary:active:not(:disabled),
+.destructive:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .primary:disabled {
@@ -692,9 +712,11 @@
    ist. */
 .kacheln {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  /* 150 statt 180: auf 390 px passten vorher genau 1,9 Kacheln, also eine
+     -- vier Zahlen fuellten dann den halben Bildschirm. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: var(--s12);
-  margin-top: var(--s32);
+  margin-top: var(--s24);
 }
 
 .kachel {
@@ -702,6 +724,7 @@
   border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--surface);
+  box-shadow: var(--karte-glanz), var(--karte-schatten);
 }
 
 .kachelZahl {

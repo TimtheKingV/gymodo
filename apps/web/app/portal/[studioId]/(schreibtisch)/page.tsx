@@ -7,6 +7,8 @@ import { Seite } from "../../bausteine/Seite";
 import { Abschnitt } from "../../bausteine/Abschnitt";
 import { Zeile, Zeilen } from "../../bausteine/Zeile";
 import { Kacheln, Kachel } from "../../bausteine/Kachel";
+import { Anteil } from "../../bausteine/Anteil";
+import { Balken } from "../../bausteine/Balken";
 import { Zustand } from "../../bausteine/Zustand";
 import { Produktgrenze } from "../../bausteine/Produktgrenze";
 import styles from "../../portal.module.css";
@@ -107,6 +109,16 @@ export default async function UeberblickPage({
     wocheFehler = e instanceof DomainError ? e.message : "Der Kursplan liess sich nicht laden.";
   }
 
+  // Der laengste Balken der Rangliste ist der groesste Wert, nicht eine
+  // gedachte Obergrenze: die Frage ist, welches Geraet am meisten laeuft.
+  // Math.max(..., 1) faengt den Fall ab, dass die Liste zwar Zeilen hat,
+  // aber alle mit 0 -- eine Division durch null zeichnete sonst NaN in
+  // die Breite.
+  const hoechsteNutzung = Math.max(
+    1,
+    ...(uebersicht?.topMachines ?? []).map((geraet) => geraet.sets),
+  );
+
   // Extrahiert, weil sie im Fehlerfall der Summen allein steht (kein Platz
   // fuer "Meistgenutzt" daneben), sonst aber die linke Haelfte der
   // zweispaltigen Reihe aus Main.dc.html bildet.
@@ -200,22 +212,32 @@ export default async function UeberblickPage({
           naechsterSchritt="Das Studio hat weder ein Gerät noch eine begonnene Einheit. Fang mit dem ersten Gerätemodell an — die Zahlen kommen von selbst, sobald jemand trainiert."
         />
       ) : (
-        <Kacheln>
-          <Kachel
-            zahl={
-              <>
-                {erreichbarGesamt} / {geraeteGesamt}
-              </>
-            }
+        <>
+          {/* Die Erreichbarkeit stand bis hierher als vierte von vier
+              gleich grossen, gleich grauen Zahlen da -- "9 / 12" sah aus
+              wie "84 Mitglieder aktiv", obwohl das eine ein Missstand ist
+              und das andere eine gute Nachricht. Sie ist der einzige Wert
+              des Ueberblicks mit einem Ziel, und deshalb der einzige mit
+              einem Balken (Begruendung in Anteil.tsx). */}
+          <Anteil
+            erreicht={erreichbarGesamt}
+            gesamt={geraeteGesamt}
             label="Geräte erreichbar"
+            fuss={
+              ohneTag === 0
+                ? "Jedes Gerät in Betrieb ist für Mitglieder auffindbar."
+                : `${ohneTag} ${ohneTag === 1 ? "Gerät" : "Geräte"} ohne Tag — für Mitglieder nicht auffindbar`
+            }
           />
-          <Kachel zahl={uebersicht.activeMembers} label="Mitglieder aktiv" />
-          {/* Ein Strich, keine 0: unter der Mindestzahl ist die Zahl
-              verdeckt, nicht null. Die Begruendung steht in den beiden
-              Abschnitten weiter unten und wird hier nicht wiederholt. */}
-          <Kachel zahl={uebersicht.sets ?? "—"} label="Sätze erfasst" />
-          <Kachel zahl={uebersicht.problemReports ?? "—"} label="Probleme gemeldet" />
-        </Kacheln>
+          <Kacheln>
+            <Kachel zahl={uebersicht.activeMembers} label="Mitglieder aktiv" />
+            {/* Ein Strich, keine 0: unter der Mindestzahl ist die Zahl
+                verdeckt, nicht null. Die Begruendung steht in den beiden
+                Abschnitten weiter unten und wird hier nicht wiederholt. */}
+            <Kachel zahl={uebersicht.sets ?? "—"} label="Sätze erfasst" />
+            <Kachel zahl={uebersicht.problemReports ?? "—"} label="Probleme gemeldet" />
+          </Kacheln>
+        </>
       )}
 
       <Abschnitt
@@ -297,6 +319,7 @@ export default async function UeberblickPage({
                         ) : null}
                       </>
                     }
+                    meta={<Balken anteil={geraet.sets / hoechsteNutzung} />}
                     aktionen={
                       <span>
                         {geraet.sets} {geraet.sets === 1 ? "Satz" : "Sätze"}

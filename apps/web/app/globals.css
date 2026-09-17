@@ -29,6 +29,31 @@
   --warn: #ffb020;
   --danger: #ff5a4e;
 
+  /* Neu: die Wertfarbe des Schreibtischs. Das Designsystem kannte drei
+     Farben, und alle drei sind Signale -- accent die Hauptaktion, warn die
+     Problemmeldung, danger den Fehler. Eine Rangliste, ein Anteil, eine
+     Auslastung hatte damit nur die Wahl zwischen einem missbrauchten
+     Signal und Grau, und wurde deshalb ueberall Grau: "212 / 198 / 164
+     Saetze" rechtsbuendig, der Vergleich im Kopf des Lesers.
+
+     Blau, weil es neben dem Limettenakzent nicht als Handlung zu lesen
+     ist. Der Wert stammt aus der Blau-Rampe der dataviz-Referenz
+     (Dark-Stufe von Slot 1) und ist gegen --surface geprueft, nicht
+     geschaetzt: Kontrast 4,6 : 1, CVD-Abstand zum Akzent dE 44
+     (Protanopie) -- validate_palette.js, 17. September.
+
+     Der Akzent selbst faellt durch das Helligkeitsband dieser Pruefung
+     (L 0,94): als Balkenfuellung waere er zu laut. Er bleibt, wozu
+     Designsystem 2 ihn bestimmt -- die eine Handlung je Bildschirm. */
+  --daten: #3987e5;
+
+  /* Plastik. Auf nahezu schwarzem Grund traegt ein Schlagschatten wenig;
+     was Ebenen trennt, ist die hellere Oberkante -- dasselbe Mittel, das
+     eine Materialkante im Streiflicht zeigt. Beides zusammen, sparsam:
+     eine Karte hebt sich, ein Feld bleibt eine Mulde. */
+  --karte-glanz: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --karte-schatten: 0 1px 2px rgba(0, 0, 0, 0.45), 0 14px 28px -18px rgba(0, 0, 0, 0.9);
+
   /* Abstandsskala der Spec, fuer den Desktop um 20 und 40 ergaenzt. */
   --s4: 4px;
   --s8: 8px;
