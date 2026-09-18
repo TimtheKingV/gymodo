@@ -28,9 +28,21 @@ struct RootDestinationLogicTests {
         #expect(RootDestinationLogic.destination(session: session, catalogState: .loaded(hasStudio: true), onboardingOffen: false) == .main)
     }
 
-    @Test("ein fehlgeschlagenes Laden fuehrt konservativ zu noStudio, nicht main")
-    func failedFallsBackToNoStudio() {
-        #expect(RootDestinationLogic.destination(session: session, catalogState: .failed, onboardingOffen: false) == .noStudio)
+    @Test("ein fehlgeschlagenes Laden fuehrt auf den Ladefehler -- nicht auf main und nicht auf noStudio")
+    func failedGetsOwnScreen() {
+        #expect(RootDestinationLogic.destination(session: session, catalogState: .failed, onboardingOffen: false) == .ladefehler)
+    }
+
+    // Der Regressionstest zum Ausfall vom 18. September: .failed und
+    // "geladen, kein Studio" sind zwei verschiedene Aussagen und duerfen nie
+    // wieder auf denselben Bildschirm fallen. Solange diese beiden Werte
+    // sich unterscheiden, kann ein Serverausfall nicht mehr als
+    // Mitgliedschaftslage durchgehen.
+    @Test("Ladefehler und 'kein Studio' sind zwei verschiedene Ziele")
+    func failedIsNotNoStudio() {
+        let beiFehler = RootDestinationLogic.destination(session: session, catalogState: .failed, onboardingOffen: false)
+        let ohneStudio = RootDestinationLogic.destination(session: session, catalogState: .loaded(hasStudio: false), onboardingOffen: false)
+        #expect(beiFehler != ohneStudio)
     }
 
     // MARK: - Onboarding-Gate (Aufgabe 6)
@@ -53,7 +65,7 @@ struct RootDestinationLogicTests {
 
     @Test("ein gescheiterter Bootstrap zeigt nie das Onboarding")
     func onboardingNeverWhenFailed() {
-        #expect(RootDestinationLogic.destination(session: session, catalogState: .failed, onboardingOffen: true) == .noStudio)
+        #expect(RootDestinationLogic.destination(session: session, catalogState: .failed, onboardingOffen: true) == .ladefehler)
     }
 
     @Test("ohne Session nie das Onboarding, egal was onboardingOffen sagt")

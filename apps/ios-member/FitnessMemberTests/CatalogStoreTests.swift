@@ -100,6 +100,32 @@ struct CatalogStoreTests {
         #expect(store.loadState == .failed)
     }
 
+    // Der Fehler wurde bis zum 18. September im catch gefangen und fiel
+    // dort ersatzlos weg. Der Ladefehler-Bildschirm kann ohne ihn nur
+    // sagen, DASS etwas nicht ging -- und genau diese Wortlosigkeit hat
+    // den Serverausfall unauffindbar gemacht.
+    @Test("ein gescheiterter Ladevorgang behaelt seinen Fehler")
+    func loadFailureKeepsError() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setBootstrapResult(.failure(.server(message: "Die Ziele konnten nicht gelesen werden.")))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        await store.load()
+        #expect(store.letzterLadefehler == .server(message: "Die Ziele konnten nicht gelesen werden."))
+    }
+
+    @Test("ein gelungener Ladevorgang raeumt den alten Fehler weg")
+    func successClearsError() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setBootstrapResult(.failure(.offline))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        await store.load()
+        #expect(store.letzterLadefehler == .offline)
+
+        await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s1", name: "Kraftwerk Nord", timezone: "Europe/Berlin")])))
+        await store.load()
+        #expect(store.letzterLadefehler == nil)
+    }
+
     @Test("enqueue speichert sofort auf Platte")
     func enqueuePersists() {
         let directory = tempDirectory()

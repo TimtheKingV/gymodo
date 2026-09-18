@@ -28,6 +28,18 @@ final class CatalogStore {
     private(set) var pendingWrites: [PendingSetWrite]
     private(set) var activeStudioId: String?
 
+    /// Der Fehler des letzten gescheiterten Ladevorgangs, oder nil, solange
+    /// der letzte gelungen ist.
+    ///
+    /// `loadState == .failed` sagt nur DASS, nicht WAS -- und bis zum
+    /// 18. September sagte es nicht einmal das nach aussen weiter: der
+    /// Fehler wurde hier gefangen und fiel dann ersatzlos weg. Ein
+    /// Bildschirm, der den Ausfall benennen soll, braucht ihn aber. Kein
+    /// eigener Zustandsfall an CatalogLoadState, weil der Fehler auch
+    /// dann noch gilt, wenn `loadState` beim Neuladen ueber einem
+    /// bestehenden Bootstrap auf `.loaded` stehen bleibt (siehe `load()`).
+    private(set) var letzterLadefehler: APIError?
+
     /// Was auf Home ueber allem steht, nachdem ein Scan ein Studio
     /// hinzugefuegt oder gewechselt hat (Home.dc.html).
     ///
@@ -87,6 +99,7 @@ final class CatalogStore {
         if bootstrap == nil { loadState = .loading }
         do {
             let response = try await loader.bootstrap()
+            letzterLadefehler = nil
             bootstrap = response
             loadState = .loaded(hasStudio: !response.studios.isEmpty)
             if activeStudioId == nil || !response.studios.contains(where: { $0.id == activeStudioId }) {
@@ -100,6 +113,7 @@ final class CatalogStore {
                 }
             }
         } catch {
+            letzterLadefehler = error
             if bootstrap == nil { loadState = .failed }
         }
     }
@@ -114,6 +128,7 @@ final class CatalogStore {
     func reset() {
         bootstrap = nil
         loadState = .idle
+        letzterLadefehler = nil
         activeStudioId = nil
         defaults.removeObject(forKey: Self.activeStudioDefaultsKey)
         pendingWrites = []

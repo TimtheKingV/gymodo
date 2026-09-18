@@ -36,6 +36,9 @@ struct RootView: View {
             case .noStudio:
                 NavigationStack { MemberKeinStudioView() }
                     .tint(DesignSystem.Color.accent)
+            case .ladefehler:
+                NavigationStack { MemberLadefehlerView() }
+                    .tint(DesignSystem.Color.accent)
             case .main:
                 MainTabView(apiClient: apiClient)
             }
