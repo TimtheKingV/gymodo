@@ -105,7 +105,11 @@ enum Transkription {
         else { return nil }
         let anfrage = SFSpeechURLRecognitionRequest(url: audio)
         anfrage.requiresOnDeviceRecognition = true
-        anfrage.shouldReportPartialResults = false
+        // true, obwohl nur das Endergebnis zaehlt: bei laengeren Aufnahmen
+        // (> ca. 15s) verliert das On-Device-Modell beim finalen Ergebnis
+        // sonst den Anfang -- vermutlich ein begrenztes Kontextfenster. Der
+        // laengste bisher gesehene Zwischenstand ueberlebt das.
+        anfrage.shouldReportPartialResults = true
         // Erkenner, Anfrage und Task haelt sonst niemand: ARC gaebe sie nach
         // dem Start frei, der Task braeche ab, und das Transkript fehlte
         // still. Die Nutzung im defer liegt hinter dem Resume. (Ein async
@@ -115,14 +119,20 @@ enum Transkription {
         return await withCheckedContinuation { fortsetzung in
             // Der Callback kommt mehrfach; die Continuation darf genau einmal laufen.
             var erledigt = false
+            var bester = ""
             aufgabe = erkenner.recognitionTask(with: anfrage) { ergebnis, fehler in
                 guard !erledigt else { return }
-                if let ergebnis, ergebnis.isFinal {
-                    erledigt = true
-                    fortsetzung.resume(returning: ergebnis.bestTranscription.formattedString)
+                if let ergebnis {
+                    let text = ergebnis.bestTranscription.formattedString
+                    if text.count > bester.count { bester = text }
+                    if ergebnis.isFinal {
+                        erledigt = true
+                        fortsetzung.resume(returning: bester.isEmpty ? nil : bester)
+                    }
                 } else if fehler != nil {
+                    // Auch bei Abbruch zaehlt der bis dahin erkannte Text mehr als nichts.
                     erledigt = true
-                    fortsetzung.resume(returning: nil)
+                    fortsetzung.resume(returning: bester.isEmpty ? nil : bester)
                 }
             }
         }
