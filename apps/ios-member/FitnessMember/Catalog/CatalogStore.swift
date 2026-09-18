@@ -97,7 +97,10 @@ final class CatalogStore {
     /// soll nicht ploetzlich "Kein Studio" sehen (wie `VerlaufStore.laden`).
     func load() async {
         if bootstrap == nil { loadState = .loading }
-        do {
+        // `do throws(APIError)` statt `do`: der Typ im catch ist sonst nur
+        // abgeleitet, und `letzterLadefehler` haengt daran. Derselbe Griff
+        // wie in ProfilRootView, dort mit derselben Begruendung.
+        do throws(APIError) {
             let response = try await loader.bootstrap()
             letzterLadefehler = nil
             bootstrap = response
