@@ -47,6 +47,10 @@ final class Aufnahme {
         stoppen()
         if let datei { try? FileManager.default.removeItem(at: datei) }
         datei = nil
+        // Erst hier, nicht in stoppen(): "Neu aufnehmen" soll die Sitzung
+        // warm halten, sonst schluckt jede Wiederholung die ersten Worte,
+        // waehrend sich die Audioroute nach dem Reaktivieren erst einpendelt.
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     private func starten() throws {
@@ -76,7 +80,6 @@ final class Aufnahme {
         rekorder?.stop()
         rekorder = nil
         laeuft = false
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     /// nonisolated: der Callback kommt auf einer beliebigen Queue. Aus dem
