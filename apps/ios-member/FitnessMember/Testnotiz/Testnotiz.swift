@@ -84,6 +84,17 @@ final class Testnotiz {
         modus = .ruhe
     }
 
+    /// Wie ausschnittGewaehlt(_:), nur ohne Ziehen: das ganze Vollbild als
+    /// Rechteck. Fuer Meldungen, bei denen die ganze Seite zaehlt, nicht ein
+    /// Ausschnitt davon.
+    func seiteGewaehlt() {
+        guard let entwurf else {
+            zurRuhe()
+            return
+        }
+        ausschnittGewaehlt(CGRect(origin: .zero, size: entwurf.vollbild.size))
+    }
+
     func ausschnittGewaehlt(_ punkte: CGRect) {
         guard var neu = entwurf, let geschnitten = Ausschnitt.schneiden(neu.vollbild, punkte: punkte) else {
             zurRuhe()

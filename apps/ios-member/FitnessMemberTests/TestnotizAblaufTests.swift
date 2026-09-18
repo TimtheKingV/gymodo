@@ -40,6 +40,22 @@ struct TestnotizAblaufTests {
         #expect(try wurzel.resourceValues(forKeys: [.isExcludedFromBackupKey]).isExcludedFromBackup == true)
     }
 
+    // "Seite" ist ein Ausschnitt ohne Ziehen: das ganze Vollbild als Rechteck.
+    @Test func seiteGewaehltSchneidetDenGesamtenBildschirm() throws {
+        let testnotiz = Testnotiz()
+        let neu = entwurf()
+        testnotiz.entwurf = neu
+        testnotiz.modus = .menue
+
+        testnotiz.seiteGewaehlt()
+
+        let entwurfNachher = try #require(testnotiz.entwurf)
+        #expect(entwurfNachher.art == .crop)
+        #expect(entwurfNachher.ausschnitt?.size == neu.vollbild.size)
+        #expect(entwurfNachher.ausschnittsrahmen?.points == TestnotizEintrag.Rechteck(CGRect(origin: .zero, size: neu.vollbild.size)))
+        #expect(testnotiz.modus == .notiz)
+    }
+
     // Abbrechen waehrend der Element-Suche darf den verworfenen Entwurf nicht
     // als Notiz-Blatt zurueckholen.
     @Test func elementSucheNachZurRuheSchreibtNichts() async {
