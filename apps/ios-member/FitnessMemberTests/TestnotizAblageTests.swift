@@ -48,8 +48,8 @@ struct TestnotizAblageTests {
 
     @Test func nummeriertEintraegeUndBenenntDateien() async throws {
         let ablage = try TestnotizAblage(wurzel: frischeWurzel(), kopf: kopf(), zeitzone: berlin)
-        let erster = try await ablage.schreiben(eintrag(), voll: Data([1]), ausschnitt: Data([2]), audio: nil)
-        let zweiter = try await ablage.schreiben(eintrag(), voll: Data([3]), ausschnitt: nil, audio: nil)
+        let erster = try await ablage.schreiben(eintrag(), voll: Data([1]), ausschnitt: Data([2]))
+        let zweiter = try await ablage.schreiben(eintrag(), voll: Data([3]), ausschnitt: nil)
 
         #expect(erster.index == 1)
         #expect(erster.screenshot == "01-voll.png")
@@ -66,7 +66,7 @@ struct TestnotizAblageTests {
 
     @Test func schreibtJsonUndMarkdownNachJedemEintrag() async throws {
         let ablage = try TestnotizAblage(wurzel: frischeWurzel(), kopf: kopf(), zeitzone: berlin)
-        _ = try await ablage.schreiben(eintrag(), voll: Data([1]), ausschnitt: nil, audio: nil)
+        _ = try await ablage.schreiben(eintrag(), voll: Data([1]), ausschnitt: nil)
 
         let json = try Data(contentsOf: ablage.ordner.appendingPathComponent("sitzung.json"))
         let gelesen = try JSONDecoder.testnotiz().decode(TestnotizSitzung.self, from: json)
@@ -75,20 +75,17 @@ struct TestnotizAblageTests {
         #expect(md.contains("## 1 · 14:15 · Element"))
     }
 
-    @Test func verschiebtDasAudioInDenOrdner() async throws {
-        let quelle = FileManager.default.temporaryDirectory.appendingPathComponent("aufnahme-\(UUID().uuidString).m4a")
-        try Data([9, 9]).write(to: quelle)
+    // Sprachnotizen entfielen wieder; audio bleibt im Vertrag, ist fuer iOS aber immer null.
+    @Test func schreibtImmerOhneAudio() async throws {
         let ablage = try TestnotizAblage(wurzel: frischeWurzel(), kopf: kopf(), zeitzone: berlin)
-        let gesichert = try await ablage.schreiben(eintrag(), voll: Data([1]), ausschnitt: nil, audio: quelle)
+        let gesichert = try await ablage.schreiben(eintrag(), voll: Data([1]), ausschnitt: nil)
 
-        #expect(gesichert.audio == "01-notiz.m4a")
-        #expect(!FileManager.default.fileExists(atPath: quelle.path))
-        #expect(FileManager.default.fileExists(atPath: ablage.ordner.appendingPathComponent("01-notiz.m4a").path))
+        #expect(gesichert.audio == nil)
     }
 
-@Test func zipIstEinZipArchiv() async throws {
+    @Test func zipIstEinZipArchiv() async throws {
         let ablage = try TestnotizAblage(wurzel: frischeWurzel(), kopf: kopf(), zeitzone: berlin)
-        _ = try await ablage.schreiben(eintrag(), voll: Data([1]), ausschnitt: nil, audio: nil)
+        _ = try await ablage.schreiben(eintrag(), voll: Data([1]), ausschnitt: nil)
         let zip = try await ablage.zipFuerTeilen()
         #expect(zip.pathExtension == "zip")
         let kopfbytes = try Data(contentsOf: zip).prefix(2)

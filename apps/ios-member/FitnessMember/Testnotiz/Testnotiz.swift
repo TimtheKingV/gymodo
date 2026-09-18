@@ -85,14 +85,18 @@ final class Testnotiz {
     }
 
     /// Wie ausschnittGewaehlt(_:), nur ohne Ziehen: das ganze Vollbild als
-    /// Rechteck. Fuer Meldungen, bei denen die ganze Seite zaehlt, nicht ein
-    /// Ausschnitt davon.
+    /// Rechteck. Ohne eigenes Ausschnittbild -- das waere Pixel fuer Pixel
+    /// dasselbe wie das ohnehin gespeicherte Vollbild.
     func seiteGewaehlt() {
-        guard let entwurf else {
+        guard var neu = entwurf, let geschnitten = Ausschnitt.schneiden(neu.vollbild, punkte: CGRect(origin: .zero, size: neu.vollbild.size)) else {
             zurRuhe()
             return
         }
-        ausschnittGewaehlt(CGRect(origin: .zero, size: entwurf.vollbild.size))
+        neu.art = .crop
+        neu.ausschnitt = nil
+        neu.ausschnittsrahmen = geschnitten.rahmen
+        entwurf = neu
+        modus = .notiz
     }
 
     func ausschnittGewaehlt(_ punkte: CGRect) {
@@ -138,10 +142,7 @@ final class Testnotiz {
 
     /// Das Blatt ist sofort zu; geschrieben wird danach. Wer testet, soll
     /// nicht auf PNG-Kodierung und Protokoll warten.
-    /// Das Transkript kommt schon fertig (und ggf. von Hand korrigiert) aus
-    /// der Vorschau im Blatt -- hier wird nur noch geschrieben, nicht mehr
-    /// nachtraeglich im Hintergrund erkannt.
-    func sichern(notiz: String?, audio: URL?, transkript: String?) async {
+    func sichern(notiz: String?) async {
         guard let entwurf else {
             zurRuhe()
             return
@@ -152,7 +153,7 @@ final class Testnotiz {
         let eintrag = TestnotizEintrag(
             id: UUID(), index: 0, createdAt: entwurf.zeitpunkt, kind: entwurf.art,
             screen: entwurf.screen, screenshot: "", crop: nil, cropRect: entwurf.ausschnittsrahmen,
-            element: entwurf.element, note: notiz, audio: nil, transcript: transkript,
+            element: entwurf.element, note: notiz, audio: nil, transcript: nil,
             runtime: laufzeit, log: protokoll
         )
         do {
@@ -160,8 +161,7 @@ final class Testnotiz {
             _ = try await ablage.schreiben(
                 eintrag,
                 voll: entwurf.vollbild.pngData() ?? Data(),
-                ausschnitt: entwurf.ausschnitt?.pngData(),
-                audio: audio
+                ausschnitt: entwurf.ausschnitt?.pngData()
             )
             // Erst ein gelungener Eintrag loescht die alte Meldung -- sonst loeschte der naechste Knopf-Tipp sie, bevor das Menue sie zeigt.
             letzterFehler = nil

@@ -25,7 +25,7 @@ struct TestnotizAblaufTests {
         testnotiz.entwurf = entwurf()
         testnotiz.modus = .notiz
 
-        await testnotiz.sichern(notiz: "x", audio: nil, transkript: nil)
+        await testnotiz.sichern(notiz: "x")
 
         let ordner = try #require(testnotiz.ablage?.ordner)
         #expect(ordner.deletingLastPathComponent().standardizedFileURL == wurzel.standardizedFileURL)
@@ -40,26 +40,9 @@ struct TestnotizAblaufTests {
         #expect(try wurzel.resourceValues(forKeys: [.isExcludedFromBackupKey]).isExcludedFromBackup == true)
     }
 
-    // Das Transkript kommt jetzt aus der Vorschau im Blatt, nicht mehr aus
-    // einem Hintergrund-Task nach dem Sichern -- direkt im Eintrag erwartet.
-    @Test func sichernSchreibtDasUebergebeneTranskriptDirekt() async throws {
-        let testnotiz = Testnotiz()
-        let wurzel = FileManager.default.temporaryDirectory.appendingPathComponent("testnotiz-ablauf-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: wurzel) }
-        testnotiz.ablageWurzel = wurzel
-        testnotiz.entwurf = entwurf()
-        testnotiz.modus = .notiz
-
-        await testnotiz.sichern(notiz: nil, audio: nil, transkript: "hallo welt")
-
-        let ordner = try #require(testnotiz.ablage?.ordner)
-        let json = try Data(contentsOf: ordner.appendingPathComponent("sitzung.json"))
-        let sitzung = try JSONDecoder.testnotiz().decode(TestnotizSitzung.self, from: json)
-        #expect(sitzung.entries.first?.transcript == "hallo welt")
-    }
-
-    // "Seite" ist ein Ausschnitt ohne Ziehen: das ganze Vollbild als Rechteck.
-    @Test func seiteGewaehltSchneidetDenGesamtenBildschirm() throws {
+    // "Seite" ist ein Ausschnitt ohne Ziehen: das ganze Vollbild als Rechteck,
+    // aber ohne eigenes Ausschnittbild -- das waere dasselbe wie das Vollbild.
+    @Test func seiteGewaehltUebernimmtDenRahmenOhneEigenesBild() throws {
         let testnotiz = Testnotiz()
         let neu = entwurf()
         testnotiz.entwurf = neu
@@ -69,7 +52,7 @@ struct TestnotizAblaufTests {
 
         let entwurfNachher = try #require(testnotiz.entwurf)
         #expect(entwurfNachher.art == .crop)
-        #expect(entwurfNachher.ausschnitt?.size == neu.vollbild.size)
+        #expect(entwurfNachher.ausschnitt == nil)
         #expect(entwurfNachher.ausschnittsrahmen?.points == TestnotizEintrag.Rechteck(CGRect(origin: .zero, size: neu.vollbild.size)))
         #expect(testnotiz.modus == .notiz)
     }
