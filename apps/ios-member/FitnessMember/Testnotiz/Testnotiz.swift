@@ -138,7 +138,10 @@ final class Testnotiz {
 
     /// Das Blatt ist sofort zu; geschrieben wird danach. Wer testet, soll
     /// nicht auf PNG-Kodierung und Protokoll warten.
-    func sichern(notiz: String?, audio: URL?) async {
+    /// Das Transkript kommt schon fertig (und ggf. von Hand korrigiert) aus
+    /// der Vorschau im Blatt -- hier wird nur noch geschrieben, nicht mehr
+    /// nachtraeglich im Hintergrund erkannt.
+    func sichern(notiz: String?, audio: URL?, transkript: String?) async {
         guard let entwurf else {
             zurRuhe()
             return
@@ -149,12 +152,12 @@ final class Testnotiz {
         let eintrag = TestnotizEintrag(
             id: UUID(), index: 0, createdAt: entwurf.zeitpunkt, kind: entwurf.art,
             screen: entwurf.screen, screenshot: "", crop: nil, cropRect: entwurf.ausschnittsrahmen,
-            element: entwurf.element, note: notiz, audio: nil, transcript: nil,
+            element: entwurf.element, note: notiz, audio: nil, transcript: transkript,
             runtime: laufzeit, log: protokoll
         )
         do {
             let ablage = try ablageHolen(jetzt: entwurf.zeitpunkt)
-            let gesichert = try await ablage.schreiben(
+            _ = try await ablage.schreiben(
                 eintrag,
                 voll: entwurf.vollbild.pngData() ?? Data(),
                 ausschnitt: entwurf.ausschnitt?.pngData(),
@@ -165,14 +168,6 @@ final class Testnotiz {
             let anzahl = await ablage.anzahl
             // "Neue Sitzung" in der Pause hat den Zaehler schon auf 0 gesetzt; die alte Ablage darf ihn nicht zurueckdrehen.
             if self.ablage === ablage { eintragsanzahl = anzahl }
-            if let name = gesichert.audio {
-                let datei = ablage.ordner.appendingPathComponent(name)
-                let index = gesichert.index
-                Task {
-                    guard let text = await Transkription.transkribieren(datei) else { return }
-                    try? await ablage.transkriptNachtragen(index: index, text: text)
-                }
-            }
         } catch {
             letzterFehler = "Nicht gesichert: \(error.localizedDescription)"
         }

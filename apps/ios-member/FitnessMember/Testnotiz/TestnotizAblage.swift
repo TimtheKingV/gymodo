@@ -70,14 +70,6 @@ actor TestnotizAblage {
         return e
     }
 
-    /// Die Transkription laeuft nach dem Sichern; ihr Ergebnis kommt hier
-    /// nachtraeglich in beide Dateien.
-    func transkriptNachtragen(index: Int, text: String) throws {
-        guard let i = sitzung.entries.firstIndex(where: { $0.index == index }) else { return }
-        sitzung.entries[i].transcript = text
-        try Self.sitzungSchreiben(sitzung, nach: ordner, zeitzone: zeitzone)
-    }
-
     /// Zip ohne Fremdbibliothek: NSFileCoordinator packt einen Ordner beim
     /// Lesen mit .forUploading.
     func zipFuerTeilen() throws -> URL {

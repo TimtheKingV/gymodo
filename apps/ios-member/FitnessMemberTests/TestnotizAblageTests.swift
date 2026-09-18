@@ -86,16 +86,7 @@ struct TestnotizAblageTests {
         #expect(FileManager.default.fileExists(atPath: ablage.ordner.appendingPathComponent("01-notiz.m4a").path))
     }
 
-    @Test func transkriptWirdNachgetragen() async throws {
-        let ablage = try TestnotizAblage(wurzel: frischeWurzel(), kopf: kopf(), zeitzone: berlin)
-        let gesichert = try await ablage.schreiben(eintrag(), voll: Data([1]), ausschnitt: nil, audio: nil)
-        try await ablage.transkriptNachtragen(index: gesichert.index, text: "hallo")
-
-        let json = try Data(contentsOf: ablage.ordner.appendingPathComponent("sitzung.json"))
-        #expect(try JSONDecoder.testnotiz().decode(TestnotizSitzung.self, from: json).entries[0].transcript == "hallo")
-    }
-
-    @Test func zipIstEinZipArchiv() async throws {
+@Test func zipIstEinZipArchiv() async throws {
         let ablage = try TestnotizAblage(wurzel: frischeWurzel(), kopf: kopf(), zeitzone: berlin)
         _ = try await ablage.schreiben(eintrag(), voll: Data([1]), ausschnitt: nil, audio: nil)
         let zip = try await ablage.zipFuerTeilen()

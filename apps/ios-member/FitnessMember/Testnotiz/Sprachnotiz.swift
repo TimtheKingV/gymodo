@@ -12,6 +12,8 @@ final class Aufnahme {
     private(set) var laeuft = false
     private(set) var datei: URL?
     private(set) var fehler: String?
+    /// Zeitbasis fuer die Aufnahmeanzeige; nil ausserhalb einer laufenden Aufnahme.
+    private(set) var gestartetUm: Date?
     @ObservationIgnored private var rekorder: AVAudioRecorder?
 
     /// Erster Tipp fragt nach dem Mikrofon -- nicht beim App-Start.
@@ -72,6 +74,7 @@ final class Aufnahme {
         rekorder = neu
         datei = ziel
         laeuft = true
+        gestartetUm = Date()
         fehler = nil
     }
 
@@ -80,6 +83,7 @@ final class Aufnahme {
         rekorder?.stop()
         rekorder = nil
         laeuft = false
+        gestartetUm = nil
     }
 
     /// nonisolated: der Callback kommt auf einer beliebigen Queue. Aus dem
