@@ -106,9 +106,10 @@ enum Transkription {
         let anfrage = SFSpeechURLRecognitionRequest(url: audio)
         anfrage.requiresOnDeviceRecognition = true
         // true, obwohl nur das Endergebnis zaehlt: bei laengeren Aufnahmen
-        // (> ca. 15s) verliert das On-Device-Modell beim finalen Ergebnis
-        // sonst den Anfang -- vermutlich ein begrenztes Kontextfenster. Der
-        // laengste bisher gesehene Zwischenstand ueberlebt das.
+        // setzt das On-Device-Modell seine wachsende Zwischenerkennung
+        // mehrfach neu an (faellt sichtbar zurueck), statt einmal durchgaengig
+        // zu wachsen. Jeder Ruecksetzer beendet einen Abschnitt; die Abschnitte
+        // werden unten aneinandergehaengt, statt nur den laengsten zu nehmen.
         anfrage.shouldReportPartialResults = true
         // Erkenner, Anfrage und Task haelt sonst niemand: ARC gaebe sie nach
         // dem Start frei, der Task braeche ab, und das Transkript fehlte
@@ -119,20 +120,33 @@ enum Transkription {
         return await withCheckedContinuation { fortsetzung in
             // Der Callback kommt mehrfach; die Continuation darf genau einmal laufen.
             var erledigt = false
-            var bester = ""
+            var abschnitte: [String] = []
+            var laufend = ""
+            func einordnen(_ text: String) {
+                // Ein deutlicher Ruecksprung (nicht nur eine kleine Korrektur)
+                // heisst: das Modell hat einen neuen Abschnitt begonnen, der
+                // vorige ist fertig und gehoert gesichert.
+                if !laufend.isEmpty, text.count + 20 < laufend.count {
+                    abschnitte.append(laufend)
+                }
+                laufend = text
+            }
             aufgabe = erkenner.recognitionTask(with: anfrage) { ergebnis, fehler in
                 guard !erledigt else { return }
                 if let ergebnis {
-                    let text = ergebnis.bestTranscription.formattedString
-                    if text.count > bester.count { bester = text }
+                    einordnen(ergebnis.bestTranscription.formattedString)
                     if ergebnis.isFinal {
                         erledigt = true
-                        fortsetzung.resume(returning: bester.isEmpty ? nil : bester)
+                        abschnitte.append(laufend)
+                        let text = abschnitte.joined(separator: " ")
+                        fortsetzung.resume(returning: text.isEmpty ? nil : text)
                     }
                 } else if fehler != nil {
                     // Auch bei Abbruch zaehlt der bis dahin erkannte Text mehr als nichts.
                     erledigt = true
-                    fortsetzung.resume(returning: bester.isEmpty ? nil : bester)
+                    abschnitte.append(laufend)
+                    let text = abschnitte.joined(separator: " ")
+                    fortsetzung.resume(returning: text.isEmpty ? nil : text)
                 }
             }
         }
