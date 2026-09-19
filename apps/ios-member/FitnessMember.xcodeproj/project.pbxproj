@@ -39,6 +39,7 @@
 		1EA236B8D47811FA647721C5 /* TrainingStartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 024E875EF3390D4641B65EDC /* TrainingStartView.swift */; };
 		206D113D8EEB2FF4D9BF05EB /* CatalogLoadState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C759C755CAAFA0F5ED7616 /* CatalogLoadState.swift */; };
 		207B8D6F6D17D7C2F5BA2FA5 /* GeraetEinstieg.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9356660F927DE0AEC1C66C5D /* GeraetEinstieg.swift */; };
+		20E8D50394C01DAD3CB2618E /* SensorAufnahmeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918AEF34456589ED570B0B53 /* SensorAufnahmeTests.swift */; };
 		223F8FDD1BA1AFE59AF71D8C /* HomeZeilenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC41D34D6C45ECA67DC8B7D5 /* HomeZeilenTests.swift */; };
 		235337FF6CD63761130A93E5 /* KurseAnsichtTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BEA03DCAFAFE701E8EE10E1 /* KurseAnsichtTests.swift */; };
 		237F44B99D39C2A8A006D31D /* TrainingTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0891F265EBB3E05C805211B8 /* TrainingTab.swift */; };
@@ -61,6 +62,7 @@
 		382451921E71AB26611C0BA0 /* PendingTagStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083F4ABC58427C5FDB7D835 /* PendingTagStoreTests.swift */; };
 		3860154F0E5C17CE14445DCF /* ScanWege.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C465BC565F5CCD8965C8F8 /* ScanWege.swift */; };
 		39876DCABA0D4C90A172BF11 /* CatalogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E651ABDF81EA57E18D7363D /* CatalogStore.swift */; };
+		3A69FB4F5F3CE12EF6DAA944 /* SensorAufnahmeDatei.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A3838CD8D849CEBA13892B3 /* SensorAufnahmeDatei.swift */; };
 		3B26567CF080FB300019E7A8 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = B1DA3D9245AAF15DFFD8CA8F /* Auth */; };
 		3B67A99D89AA7431D240196B /* TestnotizScreenStapelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07D0CE6DE62F683A513080FC /* TestnotizScreenStapelTests.swift */; };
 		3CD1164921DFFE2CEB9E5177 /* TestnotizMenue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124682B7B2E451091CD871EE /* TestnotizMenue.swift */; };
@@ -219,6 +221,7 @@
 		E15B191B9059D4BB0F811C8C /* Zielkachel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F343E35EB2C94664395961 /* Zielkachel.swift */; };
 		E1698BAA4B1B123F788DE32C /* KurseTagesindikator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5B0B75C600727218BE93316 /* KurseTagesindikator.swift */; };
 		E1A0397EDF4B789D5970BE5A /* MemberKeinStudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C037A2436D3DBF861C6456FD /* MemberKeinStudioView.swift */; };
+		E2E01BE0BA5756FB27E39C9B /* SensorAufnahme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74C52572C0FBB01F7BC28060 /* SensorAufnahme.swift */; };
 		E2ECF1FE835571FFD6617303 /* SecondaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */; };
 		E5D5C299EF2C249F20BEA4B9 /* KursDetailInhaltTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02610C837B8435320AACE71B /* KursDetailInhaltTests.swift */; };
 		E64981273BFE15AE13E3F69C /* TestnotizScreenModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0922864C7B289CC11400B5CB /* TestnotizScreenModifier.swift */; };
@@ -335,6 +338,7 @@
 		385298CAA798858C18611878 /* KurseWochenPagingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseWochenPagingTests.swift; sourceTree = "<group>"; };
 		398AB48ADA8A1BB8EDB1C086 /* NetzwerkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetzwerkMonitor.swift; sourceTree = "<group>"; };
 		39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitnessMemberApp.swift; sourceTree = "<group>"; };
+		3A3838CD8D849CEBA13892B3 /* SensorAufnahmeDatei.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorAufnahmeDatei.swift; sourceTree = "<group>"; };
 		3A3BA42E747095E74D6BF83A /* EinweisungSchritt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EinweisungSchritt.swift; sourceTree = "<group>"; };
 		3B16A62990D2DCAE39041199 /* FitnessMemberTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FitnessMemberTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C3D6DF5C1CF76DEAC63015E /* MemberStudiosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberStudiosView.swift; sourceTree = "<group>"; };
@@ -385,6 +389,7 @@
 		70EDCD91DBF3DA79135DC7C5 /* KurseAnsicht.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseAnsicht.swift; sourceTree = "<group>"; };
 		7115CDC39F17B5DF97E47CD8 /* QRScannerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerController.swift; sourceTree = "<group>"; };
 		718C690CC2C544C9C8550447 /* CalibrationWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationWrite.swift; sourceTree = "<group>"; };
+		74C52572C0FBB01F7BC28060 /* SensorAufnahme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorAufnahme.swift; sourceTree = "<group>"; };
 		758481038BBBDDBB2647CA79 /* AccessibilityBaumTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityBaumTests.swift; sourceTree = "<group>"; };
 		761B6ACA4FD549615771E3C6 /* CodeEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeEntry.swift; sourceTree = "<group>"; };
 		7650558ABB456D6EDF5735C7 /* KalibrierungSchritt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KalibrierungSchritt.swift; sourceTree = "<group>"; };
@@ -405,6 +410,7 @@
 		8D54275FD3C78205F883D9A0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		8D8E52BC8202E83D789FC2E5 /* DangerOutlineButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DangerOutlineButton.swift; sourceTree = "<group>"; };
 		8F549FAB0B22E1E37C716899 /* VerlaufStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerlaufStore.swift; sourceTree = "<group>"; };
+		918AEF34456589ED570B0B53 /* SensorAufnahmeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorAufnahmeTests.swift; sourceTree = "<group>"; };
 		927CF0E8A6C3CD19C832E6FD /* ProblemSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProblemSheet.swift; sourceTree = "<group>"; };
 		9356660F927DE0AEC1C66C5D /* GeraetEinstieg.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetEinstieg.swift; sourceTree = "<group>"; };
 		941088E8ADF755FB4FCC5B33 /* Fortschrittsfenster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fortschrittsfenster.swift; sourceTree = "<group>"; };
@@ -601,6 +607,8 @@
 		34A92A9DFB60840CCAEB4F1F /* Sensor */ = {
 			isa = PBXGroup;
 			children = (
+				74C52572C0FBB01F7BC28060 /* SensorAufnahme.swift */,
+				3A3838CD8D849CEBA13892B3 /* SensorAufnahmeDatei.swift */,
 				B7AA0D9137D7F6F1F35E38ED /* SensorMesswert.swift */,
 				0C4AD4185A38BA34714BB5FB /* SensorStatistik.swift */,
 				43AA2A6148C449A1B7D3102D /* WitMotionBefehl.swift */,
@@ -783,6 +791,7 @@
 				26B1A62413AE0C5835F9E9CA /* RastwerteTests.swift */,
 				707F099CE279C3111DDD2149 /* ResttimerTests.swift */,
 				0753010E9ACC09DF6D948170 /* RootDestinationTests.swift */,
+				918AEF34456589ED570B0B53 /* SensorAufnahmeTests.swift */,
 				D5B3CA1EF2EE2EE35261BF6F /* SensorStatistikTests.swift */,
 				CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */,
 				9AF7AC0FF4D60C0CA0FA03A2 /* StammdatenTests.swift */,
@@ -1204,6 +1213,8 @@
 				3860154F0E5C17CE14445DCF /* ScanWege.swift in Sources */,
 				0D0B75F5C030106C7CB21F85 /* ScannerSheet.swift in Sources */,
 				E2ECF1FE835571FFD6617303 /* SecondaryButton.swift in Sources */,
+				E2E01BE0BA5756FB27E39C9B /* SensorAufnahme.swift in Sources */,
+				3A69FB4F5F3CE12EF6DAA944 /* SensorAufnahmeDatei.swift in Sources */,
 				DCDAF0FC91BAD454E2EEDD16 /* SensorMesswert.swift in Sources */,
 				C2CF313EE5FB4861C8AFF4BD /* SensorStatistik.swift in Sources */,
 				A70571D779E8721B0D8FC96D /* Session.swift in Sources */,
@@ -1305,6 +1316,7 @@
 				AD152D48FC554F180FA72F58 /* RastwerteTests.swift in Sources */,
 				44EA0E9CBF440F567DCD049C /* ResttimerTests.swift in Sources */,
 				74330F94DB89B468FB230AB0 /* RootDestinationTests.swift in Sources */,
+				20E8D50394C01DAD3CB2618E /* SensorAufnahmeTests.swift in Sources */,
 				044968EE612FF338A3D91FCF /* SensorStatistikTests.swift in Sources */,
 				B3410F91BF63957604BF8340 /* SessionStoreTests.swift in Sources */,
 				9E3E041191EB9672BE0AAFF0 /* StammdatenTests.swift in Sources */,
