@@ -4,7 +4,6 @@ import SwiftUI
 struct NotizBlatt: View {
     private let testnotiz = Testnotiz.shared
     @State private var text = ""
-    @State private var aufnahme = Aufnahme()
     @State private var sichert = false
 
     var body: some View {
@@ -20,16 +19,6 @@ struct NotizBlatt: View {
                         .padding(DesignSystem.Spacing.s12)
                         .background(DesignSystem.Color.surface, in: RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
 
-                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-                        SecondaryButton(title: aufnahmeTitel) { await aufnahme.umschalten() }
-                        if aufnahme.erlaubnis == .verweigert {
-                            hinweis("Mikrofon in den Einstellungen freigeben")
-                        }
-                        if let fehler = aufnahme.fehler {
-                            hinweis(fehler)
-                        }
-                    }
-
                     PrimaryButton(title: "Sichern", isLoading: sichert) { await sichern() }
                 }
                 .padding(DesignSystem.Spacing.s16)
@@ -39,18 +28,11 @@ struct NotizBlatt: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Verwerfen") {
-                        aufnahme.verwerfen()
-                        testnotiz.zurRuhe()
-                    }
+                    Button("Verwerfen") { testnotiz.zurRuhe() }
                 }
             }
         }
         .presentationDetents([.medium, .large])
-        // Wischen schliesst das Blatt ohne "Verwerfen"; ohne diese Zeile blieben
-        // Aufnahme und Audio-Sitzung aktiv. Nach "Sichern" hat abgeben() die Datei
-        // schon uebernommen, dann tut verwerfen() nichts.
-        .onDisappear { aufnahme.verwerfen() }
     }
 
     private var titel: String {
@@ -59,11 +41,6 @@ struct NotizBlatt: View {
         case .element: "Element"
         case .note: "Notiz"
         }
-    }
-
-    private var aufnahmeTitel: String {
-        if aufnahme.laeuft { return "Aufnahme beenden" }
-        return aufnahme.datei == nil ? "Sprachnotiz aufnehmen" : "Neu aufnehmen"
     }
 
     @ViewBuilder
@@ -87,17 +64,10 @@ struct NotizBlatt: View {
         }
     }
 
-    private func hinweis(_ text: String) -> some View {
-        Text(text)
-            .font(DesignSystem.Typography.fliesstext)
-            .foregroundStyle(DesignSystem.Color.textMuted)
-    }
-
     private func sichern() async {
         sichert = true
-        let audio = aufnahme.abgeben()
         let notiz = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        await testnotiz.sichern(notiz: notiz.isEmpty ? nil : notiz, audio: audio)
+        await testnotiz.sichern(notiz: notiz.isEmpty ? nil : notiz)
     }
 }
 #endif

@@ -25,7 +25,7 @@ struct TestnotizAblaufTests {
         testnotiz.entwurf = entwurf()
         testnotiz.modus = .notiz
 
-        await testnotiz.sichern(notiz: "x", audio: nil)
+        await testnotiz.sichern(notiz: "x")
 
         let ordner = try #require(testnotiz.ablage?.ordner)
         #expect(ordner.deletingLastPathComponent().standardizedFileURL == wurzel.standardizedFileURL)
@@ -38,6 +38,23 @@ struct TestnotizAblaufTests {
         #expect(testnotiz.modus == .ruhe)
         #expect(testnotiz.letzterFehler == nil)
         #expect(try wurzel.resourceValues(forKeys: [.isExcludedFromBackupKey]).isExcludedFromBackup == true)
+    }
+
+    // "Seite" ist ein Ausschnitt ohne Ziehen: das ganze Vollbild als Rechteck,
+    // aber ohne eigenes Ausschnittbild -- das waere dasselbe wie das Vollbild.
+    @Test func seiteGewaehltUebernimmtDenRahmenOhneEigenesBild() throws {
+        let testnotiz = Testnotiz()
+        let neu = entwurf()
+        testnotiz.entwurf = neu
+        testnotiz.modus = .menue
+
+        testnotiz.seiteGewaehlt()
+
+        let entwurfNachher = try #require(testnotiz.entwurf)
+        #expect(entwurfNachher.art == .crop)
+        #expect(entwurfNachher.ausschnitt == nil)
+        #expect(entwurfNachher.ausschnittsrahmen?.points == TestnotizEintrag.Rechteck(CGRect(origin: .zero, size: neu.vollbild.size)))
+        #expect(testnotiz.modus == .notiz)
     }
 
     // Abbrechen waehrend der Element-Suche darf den verworfenen Entwurf nicht

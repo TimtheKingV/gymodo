@@ -84,6 +84,21 @@ final class Testnotiz {
         modus = .ruhe
     }
 
+    /// Wie ausschnittGewaehlt(_:), nur ohne Ziehen: das ganze Vollbild als
+    /// Rechteck. Ohne eigenes Ausschnittbild -- das waere Pixel fuer Pixel
+    /// dasselbe wie das ohnehin gespeicherte Vollbild.
+    func seiteGewaehlt() {
+        guard var neu = entwurf, let geschnitten = Ausschnitt.schneiden(neu.vollbild, punkte: CGRect(origin: .zero, size: neu.vollbild.size)) else {
+            zurRuhe()
+            return
+        }
+        neu.art = .crop
+        neu.ausschnitt = nil
+        neu.ausschnittsrahmen = geschnitten.rahmen
+        entwurf = neu
+        modus = .notiz
+    }
+
     func ausschnittGewaehlt(_ punkte: CGRect) {
         guard var neu = entwurf, let geschnitten = Ausschnitt.schneiden(neu.vollbild, punkte: punkte) else {
             zurRuhe()
@@ -127,7 +142,7 @@ final class Testnotiz {
 
     /// Das Blatt ist sofort zu; geschrieben wird danach. Wer testet, soll
     /// nicht auf PNG-Kodierung und Protokoll warten.
-    func sichern(notiz: String?, audio: URL?) async {
+    func sichern(notiz: String?) async {
         guard let entwurf else {
             zurRuhe()
             return
@@ -143,25 +158,16 @@ final class Testnotiz {
         )
         do {
             let ablage = try ablageHolen(jetzt: entwurf.zeitpunkt)
-            let gesichert = try await ablage.schreiben(
+            _ = try await ablage.schreiben(
                 eintrag,
                 voll: entwurf.vollbild.pngData() ?? Data(),
-                ausschnitt: entwurf.ausschnitt?.pngData(),
-                audio: audio
+                ausschnitt: entwurf.ausschnitt?.pngData()
             )
             // Erst ein gelungener Eintrag loescht die alte Meldung -- sonst loeschte der naechste Knopf-Tipp sie, bevor das Menue sie zeigt.
             letzterFehler = nil
             let anzahl = await ablage.anzahl
             // "Neue Sitzung" in der Pause hat den Zaehler schon auf 0 gesetzt; die alte Ablage darf ihn nicht zurueckdrehen.
             if self.ablage === ablage { eintragsanzahl = anzahl }
-            if let name = gesichert.audio {
-                let datei = ablage.ordner.appendingPathComponent(name)
-                let index = gesichert.index
-                Task {
-                    guard let text = await Transkription.transkribieren(datei) else { return }
-                    try? await ablage.transkriptNachtragen(index: index, text: text)
-                }
-            }
         } catch {
             letzterFehler = "Nicht gesichert: \(error.localizedDescription)"
         }

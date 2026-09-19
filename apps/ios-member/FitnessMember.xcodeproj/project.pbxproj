@@ -15,7 +15,6 @@
 		083EDED79E112D31F4F5DE41 /* KalenderzelleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2353FE282D4892F87C027C9B /* KalenderzelleTests.swift */; };
 		0A66C707066A8C209342D669 /* TrainingAbschlussZeilenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05572CBE819B0984F2CACC32 /* TrainingAbschlussZeilenTests.swift */; };
 		0B8F8186023C8395BE77A351 /* EinstellungenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */; };
-		0C0BA55BD76F5F65CED3F906 /* Sprachnotiz.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78D049011DE97B7CF4B2543 /* Sprachnotiz.swift */; };
 		0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */; };
 		0C79D05D0F5B192800FDB707 /* MemberPasswortZuruecksetzenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1987FE7CD53A2E411EAD2595 /* MemberPasswortZuruecksetzenView.swift */; };
 		0CC21610F7CED89559C379C4 /* MemberPasswortView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4C1D2382AF3657C5135CBE2 /* MemberPasswortView.swift */; };
@@ -451,7 +450,6 @@
 		D50BD9B08F5E126815EAACAC /* RootDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootDestination.swift; sourceTree = "<group>"; };
 		D5EDFCF55AFA4CDCD53104DC /* TrainingAbschlussView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAbschlussView.swift; sourceTree = "<group>"; };
 		D78C8636341914B90296B220 /* AppConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigTests.swift; sourceTree = "<group>"; };
-		D78D049011DE97B7CF4B2543 /* Sprachnotiz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sprachnotiz.swift; sourceTree = "<group>"; };
 		D79138C4B32315198E734356 /* EmailValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailValidator.swift; sourceTree = "<group>"; };
 		D8B181EA25F1AE0F34024FB1 /* TestnotizAblaufTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizAblaufTests.swift; sourceTree = "<group>"; };
 		D922539BB579EDDA0F7747CD /* ErrorEnvelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorEnvelope.swift; sourceTree = "<group>"; };
@@ -514,7 +512,6 @@
 				860C70249404ED6DB23710D3 /* Laufzeitkontext.swift */,
 				9DBCB339999903CCAC2AE5DB /* NotizBlatt.swift */,
 				4B3485543C6E0CF68AD35F7E /* SitzungBlatt.swift */,
-				D78D049011DE97B7CF4B2543 /* Sprachnotiz.swift */,
 				7D036BE10720B20565F673DA /* Testnotiz.swift */,
 				36E7DA3B2E3971750743AD7C /* TestnotizAblage.swift */,
 				B6BC48D13AE6028E26E09E52 /* TestnotizEintrag.swift */,
@@ -1184,7 +1181,6 @@
 				FA5C4C53322F44C0895B0C2D /* SessionStore.swift in Sources */,
 				4AEFC85D03F8ED25B641E430 /* SessionSummary.swift in Sources */,
 				95A75D03EB1CB2035C1F6987 /* SitzungBlatt.swift in Sources */,
-				0C0BA55BD76F5F65CED3F906 /* Sprachnotiz.swift in Sources */,
 				60D24FEA40C280F061776F34 /* Stammdaten.swift in Sources */,
 				2B9E1A87F4B91757DDEC90A6 /* Stepper44.swift in Sources */,
 				A67217C418DEF1C2DC617DB9 /* SupabaseAuthBackend.swift in Sources */,
@@ -1321,8 +1317,6 @@
 				INFOPLIST_FILE = "FitnessMember/Info-Additions-Debug.plist";
 				INFOPLIST_KEY_NFCReaderUsageDescription = "gymodo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "gymodo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Nur im Entwicklungsbuild: Sprachnotizen zu Testfunden.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Nur im Entwicklungsbuild: Sprachnotizen werden auf dem Gerät in Text umgewandelt.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

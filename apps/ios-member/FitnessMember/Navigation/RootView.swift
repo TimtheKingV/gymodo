@@ -31,6 +31,7 @@ struct RootView: View {
                     .tint(DesignSystem.Color.accent)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(DesignSystem.Color.bg)
+                    .testnotizScreen()
             case .onboarding:
                 OnboardingFlow(apiClient: apiClient, alsSheet: false) { }
             case .noStudio:

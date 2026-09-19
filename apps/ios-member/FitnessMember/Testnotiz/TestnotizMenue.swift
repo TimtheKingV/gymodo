@@ -56,6 +56,7 @@ struct TestnotizMenue: View {
     private var eintraege: [Eintrag] {
         [
             Eintrag(id: "ausschnitt", titel: "Ausschnitt", symbol: "crop") { testnotiz.modus = .ausschnitt },
+            Eintrag(id: "seite", titel: "Seite", symbol: "rectangle.portrait") { testnotiz.seiteGewaehlt() },
             Eintrag(id: "element", titel: "Element", symbol: "hand.tap") { testnotiz.modus = .element },
             Eintrag(id: "notiz", titel: "Nur Notiz", symbol: "square.and.pencil") { testnotiz.nurNotiz() },
             Eintrag(id: "sitzung", titel: "Sitzung (\(testnotiz.eintragsanzahl))", symbol: "folder") { testnotiz.modus = .sitzung },

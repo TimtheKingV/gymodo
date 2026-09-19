@@ -36,9 +36,8 @@ actor TestnotizAblage {
     var anzahl: Int { sitzung.entries.count }
 
     /// Vergibt Nummer und Dateinamen, schreibt die Dateien und danach
-    /// sitzung.json und sitzung.md neu. Das Audio wird verschoben, nicht
-    /// kopiert: die Aufnahme liegt vorher in tmp.
-    func schreiben(_ eintrag: TestnotizEintrag, voll: Data, ausschnitt: Data?, audio: URL?) throws -> TestnotizEintrag {
+    /// sitzung.json und sitzung.md neu.
+    func schreiben(_ eintrag: TestnotizEintrag, voll: Data, ausschnitt: Data?) throws -> TestnotizEintrag {
         var e = eintrag
         e.index = sitzung.entries.count + 1
         let praefix = String(format: "%02d", e.index)
@@ -53,29 +52,14 @@ actor TestnotizAblage {
         } else {
             e.crop = nil
         }
-
-        if let audio {
-            let name = "\(praefix)-notiz.m4a"
-            let ziel = ordner.appendingPathComponent(name)
-            // Scheiterte beim letzten Mal erst sitzung.json, liegt die Datei unter dieser Nummer schon da und blockierte jeden weiteren Audio-Eintrag.
-            try? FileManager.default.removeItem(at: ziel)
-            try FileManager.default.moveItem(at: audio, to: ziel)
-            e.audio = name
-        } else {
-            e.audio = nil
-        }
+        // Sprachnotizen entfielen wieder -- audio/transcript bleiben Teil des
+        // Formatvertrags (docs/superpowers/specs/2026-09-14-testnotiz-format.md),
+        // stehen fuer iOS aber immer null.
+        e.audio = nil
 
         sitzung.entries.append(e)
         try Self.sitzungSchreiben(sitzung, nach: ordner, zeitzone: zeitzone)
         return e
-    }
-
-    /// Die Transkription laeuft nach dem Sichern; ihr Ergebnis kommt hier
-    /// nachtraeglich in beide Dateien.
-    func transkriptNachtragen(index: Int, text: String) throws {
-        guard let i = sitzung.entries.firstIndex(where: { $0.index == index }) else { return }
-        sitzung.entries[i].transcript = text
-        try Self.sitzungSchreiben(sitzung, nach: ordner, zeitzone: zeitzone)
     }
 
     /// Zip ohne Fremdbibliothek: NSFileCoordinator packt einen Ordner beim
