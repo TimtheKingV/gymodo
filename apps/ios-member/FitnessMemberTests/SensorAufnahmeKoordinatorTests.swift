@@ -209,5 +209,101 @@ struct SensorAufnahmeKoordinatorTests {
         #expect(ergebnis.statistik.rateIstHz == 10)
         #expect(ergebnis.sensor.name == "WT901BLE67")
     }
+
+    // MARK: - Jede Trennung ist eine Luecke, unabhaengig vom Zielzustand
+
+    @Test func bluetoothAusImSatzSchreibtEineLuecke() throws {
+        let (sut, quelle, wurzel, uhr) = aufbau()
+        sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
+        uhr.t = 105
+        // Nicht .getrennt, sondern Bluetooth komplett aus -- die alte
+        // Implementierung erkannte nur .getrennt als Luecken-Ausloeser.
+        quelle.zustand = .bluetoothNichtBereit(.ausgeschaltet)
+        sut.empfangen(.zustand(quelle.zustand))
+        #expect(sut.aufnahmeLaeuft)
+        uhr.t = 108
+        quelle.zustand = Self.verbunden
+        sut.empfangen(.zustand(Self.verbunden))
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 108)))
+        sut.satzGesichert(Self.satz)
+
+        let gelesen = try SensorAufnahmeLeser.lesen(ordner: ordner(in: wurzel)[0])
+        #expect(gelesen.eintraege.contains(.luecke(von: 5, bis: 8)))
+        #expect(gelesen.datei.statistik.luecken == 1)
+        #expect(gelesen.datei.abschluss == .gesichert)
+        // Die drei Sekunden Ausfall duerfen nicht als normaler Paketabstand
+        // in die Statistik gefaltet werden.
+        #expect(gelesen.datei.statistik.abstandMs.max < 1000)
+    }
+
+    @Test func mehrereNichtVerbundeneZustaendeZaehlenAlsEineLuecke() throws {
+        let (sut, quelle, wurzel, uhr) = aufbau()
+        sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
+        uhr.t = 105
+        quelle.zustand = .getrennt(wirdNeuVerbunden: true)
+        sut.empfangen(.zustand(quelle.zustand))
+        quelle.zustand = .sucht
+        sut.empfangen(.zustand(quelle.zustand))
+        quelle.zustand = .verbindet
+        sut.empfangen(.zustand(quelle.zustand))
+        uhr.t = 108
+        quelle.zustand = Self.verbunden
+        sut.empfangen(.zustand(Self.verbunden))
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 108)))
+        sut.satzGesichert(Self.satz)
+
+        let gelesen = try SensorAufnahmeLeser.lesen(ordner: ordner(in: wurzel)[0])
+        let luecken = gelesen.eintraege.filter {
+            if case .luecke = $0 { return true }
+            return false
+        }
+        #expect(luecken.count == 1)
+        #expect(gelesen.eintraege.contains(.luecke(von: 5, bis: 8)))
+        #expect(gelesen.datei.statistik.luecken == 1)
+    }
+
+    @Test func sensorStirbtUndDerSatzWirdTrotzdemGesichert() throws {
+        let (sut, quelle, wurzel, uhr) = aufbau()
+        sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
+        uhr.t = 105
+        quelle.zustand = .aus
+        sut.empfangen(.zustand(quelle.zustand))
+        uhr.t = 130
+        sut.satzGesichert(Self.satz)
+
+        let gelesen = try SensorAufnahmeLeser.lesen(ordner: ordner(in: wurzel)[0])
+        // Der Sensor kommt nicht wieder: die offene Luecke reicht bis zum
+        // Ende der Aufnahme (abschliessen() schliesst sie beim Beenden).
+        #expect(gelesen.eintraege.last == .luecke(von: 5, bis: 30))
+        #expect(gelesen.datei.abschluss == .gesichert)
+        #expect(gelesen.datei.label == .init(weightKg: 77.5, reps: 11, problemFlag: false))
+    }
+
+    @Test func ratentestUeberEinenAbrissHinweg() throws {
+        let (sut, quelle, wurzel, uhr) = aufbau()
+        sut.ratentestStarten()
+        #expect(sut.ratentestRest == 300)
+        // Erste Haelfte bei 10 Hz, dann bricht der Sensor weg.
+        for n in 0..<1500 { sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100 + Double(n) * 0.1))) }
+        uhr.t = 250
+        quelle.zustand = .aus
+        sut.empfangen(.zustand(quelle.zustand))
+        uhr.t = 260
+        quelle.zustand = Self.verbunden
+        sut.empfangen(.zustand(Self.verbunden))
+        // Der Sensor liefert nach dem Reconnect wieder seine eigene Uptime,
+        // zehn Sekunden weiter als der letzte Messwert vor dem Abriss.
+        for n in 1600...3000 { sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100 + Double(n) * 0.1))) }
+
+        #expect(sut.ratentestRest == nil)
+        let url = try #require(sut.letzterRatentest)
+        #expect(url.deletingLastPathComponent().path == wurzel.path)
+        let ergebnis = try JSONDecoder.testnotiz().decode(SensorRatentestDatei.self, from: Data(contentsOf: url))
+        #expect(ergebnis.statistik.luecken == 1)
+        #expect(ergebnis.statistik.rateIstHz == 10)
+    }
 }
 #endif

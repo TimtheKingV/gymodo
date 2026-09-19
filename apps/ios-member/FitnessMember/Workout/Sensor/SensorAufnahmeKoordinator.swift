@@ -41,6 +41,13 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     @ObservationIgnored private var offenerKontext: SatzMitschnittKontext?
     @ObservationIgnored private var gesamt = SensorStatistik()
     @ObservationIgnored private var letzteAnzeige: TimeInterval = 0
+    /// Merkt sich die letzte Verbunden-Kante, nicht welcher Zustand konkret
+    /// vorliegt: jeder Uebergang verbunden -> nicht-verbunden ist EINE Luecke,
+    /// egal ob danach .getrennt, .aus, .sucht oder .bluetoothNichtBereit
+    /// gemeldet wird. Ohne diese Kante wuerde jeder nicht-verbundene
+    /// Nicht-.getrennt-Zustand die Ausfallzeit als normalen Paketabstand in
+    /// die Statistik falten und Median/p95/Rate verfaelschen.
+    @ObservationIgnored private var warVerbunden: Bool
     @ObservationIgnored private var ratentest: (statistik: SensorStatistik, startT: TimeInterval?, start: Date, verworfen: Int)?
     @ObservationIgnored private var lauscher: Task<Void, Never>?
 
@@ -54,6 +61,10 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
         self.einstellungen = einstellungen
         self.uhr = uhr
         self.jetzt = jetzt
+        // Ein Koordinator, der erst nach dem Verbinden entsteht (Tests bauen
+        // ihn ueber aufbau(zustand: verbunden) so auf), muss die erste
+        // Trennung noch als Kante erkennen -- sonst faellt sie unter den Tisch.
+        self.warVerbunden = quelle.zustand.istVerbunden
     }
 
     /// Einmal beim App-Start. Getrennt vom init, damit Tests `empfangen`
@@ -121,6 +132,7 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
 
     private func zustandVerarbeiten(_ zustand: SensorZustand) {
         if zustand.istVerbunden {
+            warVerbunden = true
             if verbundenSeit == nil { verbundenSeit = jetzt() }
             if let aufnahme {
                 do { try aufnahme.lueckeEndet(t: uhr()) } catch { abbrechen(wegen: error) }
@@ -129,13 +141,25 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
             }
         } else {
             anzeigeRateHz = 0
-            if case .getrennt = zustand {
+            // Die Luecke gehoert an die Kante, nicht an den Zielzustand: sonst
+            // wuerde z.B. .getrennt -> .sucht -> .verbindet dieselbe Trennung
+            // dreimal zaehlen, und ein Wechsel direkt nach .aus/.bluetoothNichtBereit
+            // (Bluetooth aus waehrend des Satzes) wuerde ueberhaupt keine Luecke
+            // schreiben -- die Ausfallzeit laege dann als normaler Paketabstand
+            // in `abstaende` und verdirbt Median/p95/Rate der Aufnahme.
+            if warVerbunden {
+                warVerbunden = false
                 gesamt.lueckeBegonnen()
                 ratentest?.statistik.lueckeBegonnen()
                 if let aufnahme {
                     aufnahmeStatistik.lueckeBegonnen()
                     aufnahme.lueckeBeginnt(t: uhr())
                 }
+            }
+            if case .getrennt = zustand {
+                // Erwartete kurze Unterbrechung (Spec 6.4/7.3): die Anzeige-
+                // Statistik ueberlebt den Reconnect, eine laufende Aufnahme
+                // oder ein laufender Ratentest hat ihre Luecke oben schon.
             } else {
                 verbundenSeit = nil
                 gesamt = SensorStatistik()
