@@ -124,6 +124,20 @@ struct SensorAufnahmeTests {
         #expect(throws: (any Error).self) { try sut.schreiben(Self.messwert(t: 101)) }
     }
 
+    @Test func einZweiterAbschlussUeberschreibtNichts() throws {
+        let sut = try neu(wurzel())
+        try sut.abschliessen(.gesichert, kontext: Self.kontext,
+                             label: .init(weightKg: 50, reps: 8, problemFlag: false),
+                             akkuProzent: nil, statistik: .leer, ende: Self.start, endeT: 100)
+        #expect(throws: (any Error).self) {
+            try sut.abschliessen(.abgebrochen, kontext: Self.kontext, label: .init(), akkuProzent: nil,
+                                 statistik: .leer, ende: Self.start, endeT: 100)
+        }
+        let datei = try json(sut.ordner)
+        #expect(datei.abschluss == .gesichert)
+        #expect(datei.label.reps == 8)
+    }
+
     @Test func traegtVerwaisteOrdnerNach() throws {
         let w = wurzel()
         let verwaist = try neu(w)

@@ -66,6 +66,9 @@ final class SensorAufnahme {
     func abschliessen(_ abschluss: SensorAufnahmeDatei.Abschluss, kontext: SensorAufnahmeDatei.Kontext,
                       label: SensorAufnahmeDatei.Label, akkuProzent: Int?,
                       statistik: SensorStatistik.Ergebnis, ende: Date, endeT: TimeInterval) throws {
+        // Ein abgeschlossener Datensatz ist die Wahrheit fuer den spaeteren
+        // Zaehler und darf durch einen zweiten Aufruf nicht ueberschrieben werden.
+        guard griff != nil else { throw Fehler.abgeschlossen }
         // Eine offene Luecke reicht bis zum Ende: der Sensor kam nicht wieder.
         try lueckeEndet(t: endeT)
         try griff?.synchronize()
