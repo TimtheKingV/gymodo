@@ -43,7 +43,7 @@ struct SensorStatistikTests {
     @Test func rateDerLetztenSekunde() {
         var sut = SensorStatistik()
         for n in 0..<150 { sut.erfassen(t: Double(n) * 0.02) }   // 3 s bei 50 Hz
-        #expect(sut.rateLetzteSekunde(bis: 2.985) == 50)
+        #expect(sut.rateLetzteSekunde(bis: 2.98) == 50)
         // Nach einer Sekunde Stille steht 0 da, nicht der alte Wert.
         #expect(sut.rateLetzteSekunde(bis: 4.5) == 0)
     }
