@@ -83,5 +83,114 @@ struct AbspielSensorQuelleTests {
             .getrennt(wirdNeuVerbunden: false),
         ])
     }
+
+    // MARK: - .echtzeit / trennen() waehrend des Wartens
+
+    /// Sammelt Ereignisse aus dem Strom im Hintergrund ein, damit der Test
+    /// nicht selbst in einem `for await` haengen bleiben kann, nachdem er
+    /// schon trennen() aufgerufen hat.
+    @MainActor
+    private final class Sammler {
+        private(set) var ereignisse: [SensorEreignis] = []
+        func anhaengen(_ ereignis: SensorEreignis) { ereignisse.append(ereignis) }
+    }
+
+    /// Kurze, selbst geschriebene Aufnahme fuer .echtzeit-Tests: die Luecke
+    /// dauert nur 0.4 s, damit die Tests nicht auf die 2.5 s der Beispieldatei
+    /// warten muessen.
+    private func kurzeAufnahme() throws -> URL {
+        let wurzel = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let aufnahme = try SensorAufnahme(
+            wurzel: wurzel, start: SensorAufnahmeTests.start, startT: 100,
+            sensor: SensorAufnahmeTests.sensor, geraet: SensorAufnahmeTests.geraet,
+            kontext: SensorAufnahmeTests.kontext, befestigung: nil, zeitzone: SensorAufnahmeTests.berlin)
+        try aufnahme.schreiben(SensorAufnahmeTests.messwert(t: 100.00))
+        try aufnahme.schreiben(SensorAufnahmeTests.messwert(t: 100.05))
+        aufnahme.lueckeBeginnt(t: 100.05)
+        try aufnahme.lueckeEndet(t: 100.45)
+        try aufnahme.schreiben(SensorAufnahmeTests.messwert(t: 100.45))
+        try aufnahme.schreiben(SensorAufnahmeTests.messwert(t: 100.50))
+        try aufnahme.abschliessen(.gesichert, kontext: SensorAufnahmeTests.kontext,
+                                  label: .init(weightKg: 50, reps: 8, problemFlag: false), akkuProzent: nil,
+                                  statistik: .leer, ende: SensorAufnahmeTests.start, endeT: 100.50)
+        return aufnahme.ordner
+    }
+
+    /// Pollt statt zu blockieren: ein `for await` nach trennen() koennte fuer
+    /// immer haengen, wenn die Quelle sich (fehlerhaft) doch nochmal meldet.
+    private func warteBis(timeoutMs: Int = 2000, _ bedingung: () -> Bool) async throws {
+        let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000)
+        while !bedingung(), Date() < deadline {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+    }
+
+    @Test func trennenWaehrendDerLueckeMeldetNichtWiederVerbunden() async throws {
+        let sut = try AbspielSensorQuelle(ordner: try kurzeAufnahme(), tempo: .echtzeit)
+        let sammler = Sammler()
+        let strom = sut.ereignisse()
+        let aufgabe = Task { @MainActor in
+            for await ereignis in strom { sammler.anhaengen(ereignis) }
+        }
+
+        sut.verbinden()
+        try await warteBis { sammler.ereignisse.contains(.zustand(.getrennt(wirdNeuVerbunden: true))) }
+        sut.trennen()
+
+        // Laenger als die restliche Luecke (0.4 s): kaeme der Fehler wieder
+        // durch, meldete sich die Quelle in dieser Zeit erneut als verbunden.
+        try await Task.sleep(for: .milliseconds(700))
+        aufgabe.cancel()
+
+        #expect(sut.zustand == .aus)
+        let lueckenIndex = sammler.ereignisse.firstIndex(of: .zustand(.getrennt(wirdNeuVerbunden: true)))
+        let danach = lueckenIndex.map { Array(sammler.ereignisse[($0 + 1)...]) } ?? []
+        // trennen() selbst meldet legitim .aus -- alles danach waere der Fehler
+        // (ein wiederholtes .verbunden oder ein Messwert nach dem Abbruch).
+        let unerwartet = danach.filter { $0 != .zustand(.aus) }
+        #expect(unerwartet.isEmpty, "nach trennen() duerfen keine weiteren Ereignisse mehr ankommen: \(unerwartet)")
+    }
+
+    @Test func einAlterLaufStoertEinenNeuenNicht() async throws {
+        let sut = try AbspielSensorQuelle(ordner: try kurzeAufnahme(), tempo: .echtzeit)
+        let sammler = Sammler()
+        let strom = sut.ereignisse()
+        let aufgabe = Task { @MainActor in
+            for await ereignis in strom { sammler.anhaengen(ereignis) }
+        }
+
+        sut.verbinden()
+        sut.verbinden() // sofort erneut: lauf existiert schon, muss folgenlos bleiben
+        try await Task.sleep(for: .milliseconds(20))
+        let verbundenNachStart = sammler.ereignisse.filter {
+            if case .zustand(.verbunden) = $0 { return true }
+            return false
+        }
+        #expect(verbundenNachStart.count == 1)
+
+        try await warteBis { sammler.ereignisse.contains(.zustand(.getrennt(wirdNeuVerbunden: true))) }
+        sut.trennen()
+        sut.verbinden()
+
+        // Laenger als eine komplette Wiedergabe (rund 0.5 s): der neue Lauf
+        // muss fertig werden, ohne dass der alte (abgebrochene) noch mitmischt.
+        try await warteBis(timeoutMs: 3000) {
+            sammler.ereignisse.contains(.zustand(.getrennt(wirdNeuVerbunden: false)))
+        }
+        // Reserve, damit ein evtl. doppelter Abschluss noch ankaeme.
+        try await Task.sleep(for: .milliseconds(100))
+        aufgabe.cancel()
+
+        let abschluesse = sammler.ereignisse.filter { $0 == .zustand(.getrennt(wirdNeuVerbunden: false)) }
+        #expect(abschluesse.count == 1)
+        #expect(sut.zustand == .getrennt(wirdNeuVerbunden: false))
+        let messwerte = sammler.ereignisse.compactMap { ereignis -> TimeInterval? in
+            if case .messwert(let m) = ereignis { return m.t }
+            return nil
+        }
+        // Der alte Lauf kommt nach der Luecke nicht mehr zum Zug: nur der
+        // neue Lauf liefert 0.45 und 0.5.
+        #expect(messwerte == [0, 0.05, 0, 0.05, 0.45, 0.5])
+    }
 }
 #endif
