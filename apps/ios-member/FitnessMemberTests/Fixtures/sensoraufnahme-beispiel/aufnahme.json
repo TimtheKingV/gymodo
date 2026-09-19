@@ -1,0 +1,21 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : "Gewichtsstapel oben",
+  "endedAt" : "2026-09-19T14:12:45+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : { "appBuild" : "1", "model" : "iPhone17,1", "os" : "iOS 26.0" },
+  "kontext" : {
+    "exerciseId" : "e1", "exerciseName" : "Beidbeinig",
+    "machineId" : "m1", "machineName" : "Beinpresse",
+    "sessionId" : "6F1B1C9E-3C0B-4C58-9F5B-0B9B1B7C2A11",
+    "setId" : "0D3C2E44-8A77-4E0A-8C35-5D2A0E6B9F02",
+    "setIndex" : 2
+  },
+  "label" : { "problemFlag" : false, "reps" : 11, "weightKg" : 77.5 },
+  "sensor" : { "akkuProzent" : 82, "name" : "WT901BLE67", "rateSollHz" : 50 },
+  "startedAt" : "2026-09-19T14:12:03+02:00",
+  "statistik" : {
+    "abstandMs" : { "max" : 20, "median" : 20, "p95" : 20 },
+    "luecken" : 1, "pakete" : 5, "rateIstHz" : 50, "verworfeneBytes" : 0
+  }
+}

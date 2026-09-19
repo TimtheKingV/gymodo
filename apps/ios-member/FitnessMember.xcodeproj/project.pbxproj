@@ -132,7 +132,9 @@
 		85D677DEC1CC8E3688FF5248 /* Ziel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B76CEB6D3CEED5662117CF5E /* Ziel.swift */; };
 		8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B577EC22237E86AA0F3755B7 /* AppConfig.swift */; };
 		876C68594995FB10C4C5F383 /* HomeZieleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 178A941D7DAEF42B0D12FC59 /* HomeZieleTests.swift */; };
+		87865E436B888BE06D25F6F7 /* AbspielSensorQuelle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96B76A61BE1E25C178C185D6 /* AbspielSensorQuelle.swift */; };
 		87EEB80060292F83431092AC /* AccessibilityBaumTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 758481038BBBDDBB2647CA79 /* AccessibilityBaumTests.swift */; };
+		8A1DA3B61BCDFBCE5195D8ED /* SensorQuelle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CA7F946AF789AD52181CFC3 /* SensorQuelle.swift */; };
 		8B75427616870118E08E4936 /* NetzwerkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 398AB48ADA8A1BB8EDB1C086 /* NetzwerkMonitor.swift */; };
 		8C1C7D2E198E0CB922AB48BB /* EinheitVerwerfen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB20D0098C4EAC5A32B4EA0E /* EinheitVerwerfen.swift */; };
 		8E100E38496E1212C0FF9042 /* KursZustandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2D588E7E4F6611509CF03B1 /* KursZustandTests.swift */; };
@@ -141,6 +143,7 @@
 		8FC7A533B3262AA6723ED9C1 /* Rastwerte.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE7999237F8B3E7635E236AE /* Rastwerte.swift */; };
 		9145F7245C5D69AA90AD9B7A /* GeraetRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF6476398D0D632AA4C97E66 /* GeraetRoute.swift */; };
 		93DBEB6C2CFE4B1D336BF064 /* RueckblickSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C221503A0DB97EC0D39E3B43 /* RueckblickSheet.swift */; };
+		948E669F22070CFE77699844 /* SensorAufnahmeLeser.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD74745D7D237A80926862E8 /* SensorAufnahmeLeser.swift */; };
 		95794FEE5EC5FFA101C74C3D /* MemberPasswortAendernView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 213A5216BA472EAE4240C049 /* MemberPasswortAendernView.swift */; };
 		95A75D03EB1CB2035C1F6987 /* SitzungBlatt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3485543C6E0CF68AD35F7E /* SitzungBlatt.swift */; };
 		9658183FB704B5244DD0C883 /* testnotiz-beispiel.json in Resources */ = {isa = PBXBuildFile; fileRef = CFBC22CBF40859396B6DD869 /* testnotiz-beispiel.json */; };
@@ -170,6 +173,7 @@
 		B5B7A351BB87D823FD163DF1 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5CA620D337B41A12B5D8A33 /* MainTabView.swift */; };
 		B6342F2803AFA48AEEC73B7C /* WorkoutSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35466DCA1BAC23049D7DCB30 /* WorkoutSessionStore.swift */; };
 		B68C2AD5B96D1812B2F124A0 /* PasswordPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F85DB74C44633BFB4BAAB94 /* PasswordPolicy.swift */; };
+		B80028575BDB46C9F540C677 /* sensoraufnahme-beispiel in Resources */ = {isa = PBXBuildFile; fileRef = 39D3B597FB0FCE1455A04ADF /* sensoraufnahme-beispiel */; };
 		B8218DBF6B9B3168086F00E6 /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82F1E9C17FC9A2A3742B15D /* JSONValue.swift */; };
 		B854BF7F3EC5F92A64658311 /* KurseWochenBerechnungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0D97A63F51670FD637DCAFE /* KurseWochenBerechnungTests.swift */; };
 		B90035F502BFCB437C290355 /* TrainingAbschlussView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5EDFCF55AFA4CDCD53104DC /* TrainingAbschlussView.swift */; };
@@ -178,6 +182,7 @@
 		BC882EF4EABB4D6AC287BE0C /* GewichtEintragenSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 776038DDD81851939CEDC670 /* GewichtEintragenSheet.swift */; };
 		BCCED66A72ECB12C420D30B9 /* Fortschrittsfenster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 941088E8ADF755FB4FCC5B33 /* Fortschrittsfenster.swift */; };
 		BD2FAC079B2E5818EF787FA5 /* TestnotizAblaufTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B181EA25F1AE0F34024FB1 /* TestnotizAblaufTests.swift */; };
+		BE586D44AE4DD5FEA6C125AF /* AbspielSensorQuelleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5DB91C9C99E1790C7FBBC98 /* AbspielSensorQuelleTests.swift */; };
 		BF43021ADD4CB5DCE73DC6E4 /* TestnotizOberflaeche.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF49095F47C56BEDA79CE3F0 /* TestnotizOberflaeche.swift */; };
 		C01062BE7395A2DAD05A3EE4 /* AuthLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D6E6743BDCF6E58E971D0CE /* AuthLogicTests.swift */; };
 		C0D21B900231DB8BC9A5323E /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E48EE365B2AEEBD3FCBC2E /* DesignSystem.swift */; };
@@ -338,6 +343,7 @@
 		385298CAA798858C18611878 /* KurseWochenPagingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseWochenPagingTests.swift; sourceTree = "<group>"; };
 		398AB48ADA8A1BB8EDB1C086 /* NetzwerkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetzwerkMonitor.swift; sourceTree = "<group>"; };
 		39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitnessMemberApp.swift; sourceTree = "<group>"; };
+		39D3B597FB0FCE1455A04ADF /* sensoraufnahme-beispiel */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "sensoraufnahme-beispiel"; path = "FitnessMemberTests/Fixtures/sensoraufnahme-beispiel"; sourceTree = SOURCE_ROOT; };
 		3A3838CD8D849CEBA13892B3 /* SensorAufnahmeDatei.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorAufnahmeDatei.swift; sourceTree = "<group>"; };
 		3A3BA42E747095E74D6BF83A /* EinweisungSchritt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EinweisungSchritt.swift; sourceTree = "<group>"; };
 		3B16A62990D2DCAE39041199 /* FitnessMemberTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FitnessMemberTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -395,6 +401,7 @@
 		7650558ABB456D6EDF5735C7 /* KalibrierungSchritt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KalibrierungSchritt.swift; sourceTree = "<group>"; };
 		776038DDD81851939CEDC670 /* GewichtEintragenSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GewichtEintragenSheet.swift; sourceTree = "<group>"; };
 		7BBBF93AF7F82B0A6C8D237F /* Vorschaubild.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vorschaubild.swift; sourceTree = "<group>"; };
+		7CA7F946AF789AD52181CFC3 /* SensorQuelle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorQuelle.swift; sourceTree = "<group>"; };
 		7D036BE10720B20565F673DA /* Testnotiz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Testnotiz.swift; sourceTree = "<group>"; };
 		7D79A89B3E91A0F18C9E8DBC /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
 		810AA944DFBA5CA775A08184 /* KurseWochenInhalt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseWochenInhalt.swift; sourceTree = "<group>"; };
@@ -418,6 +425,7 @@
 		9465205BEFD3A3A8588D48D2 /* HomeZeilen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeZeilen.swift; sourceTree = "<group>"; };
 		94AAB4EF55CE7557296B1A97 /* RastRadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RastRadTests.swift; sourceTree = "<group>"; };
 		962343020926813A08DE01CA /* KurseFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseFileStore.swift; sourceTree = "<group>"; };
+		96B76A61BE1E25C178C185D6 /* AbspielSensorQuelle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbspielSensorQuelle.swift; sourceTree = "<group>"; };
 		9ABF3C0BB5050A962881A269 /* GeraeteAuswahlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteAuswahlView.swift; sourceTree = "<group>"; };
 		9AC1E765B0B287F9AC69A3B8 /* CourseWeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseWeek.swift; sourceTree = "<group>"; };
 		9AF7AC0FF4D60C0CA0FA03A2 /* StammdatenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StammdatenTests.swift; sourceTree = "<group>"; };
@@ -440,6 +448,7 @@
 		AB20D0098C4EAC5A32B4EA0E /* EinheitVerwerfen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EinheitVerwerfen.swift; sourceTree = "<group>"; };
 		AB60D85B419DB84251C5D60A /* TestnotizMarkdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizMarkdown.swift; sourceTree = "<group>"; };
 		ACA345A636C594A2D95A59FD /* WorkoutSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSet.swift; sourceTree = "<group>"; };
+		AD74745D7D237A80926862E8 /* SensorAufnahmeLeser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorAufnahmeLeser.swift; sourceTree = "<group>"; };
 		AF593B1FA0A81491726D24E0 /* Belegungsleiste.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Belegungsleiste.swift; sourceTree = "<group>"; };
 		B0B9A011C3F3321D6CF11AF7 /* WitMotionPaket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WitMotionPaket.swift; sourceTree = "<group>"; };
 		B35373D3C51509959FCF6FB0 /* MachinePhotosResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MachinePhotosResponse.swift; sourceTree = "<group>"; };
@@ -468,6 +477,7 @@
 		D382CA0B325C07B61F776A1D /* PendingSetWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingSetWrite.swift; sourceTree = "<group>"; };
 		D50BD9B08F5E126815EAACAC /* RootDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootDestination.swift; sourceTree = "<group>"; };
 		D5B3CA1EF2EE2EE35261BF6F /* SensorStatistikTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorStatistikTests.swift; sourceTree = "<group>"; };
+		D5DB91C9C99E1790C7FBBC98 /* AbspielSensorQuelleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbspielSensorQuelleTests.swift; sourceTree = "<group>"; };
 		D5EDFCF55AFA4CDCD53104DC /* TrainingAbschlussView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAbschlussView.swift; sourceTree = "<group>"; };
 		D78C8636341914B90296B220 /* AppConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigTests.swift; sourceTree = "<group>"; };
 		D79138C4B32315198E734356 /* EmailValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailValidator.swift; sourceTree = "<group>"; };
@@ -607,9 +617,12 @@
 		34A92A9DFB60840CCAEB4F1F /* Sensor */ = {
 			isa = PBXGroup;
 			children = (
+				96B76A61BE1E25C178C185D6 /* AbspielSensorQuelle.swift */,
 				74C52572C0FBB01F7BC28060 /* SensorAufnahme.swift */,
 				3A3838CD8D849CEBA13892B3 /* SensorAufnahmeDatei.swift */,
+				AD74745D7D237A80926862E8 /* SensorAufnahmeLeser.swift */,
 				B7AA0D9137D7F6F1F35E38ED /* SensorMesswert.swift */,
+				7CA7F946AF789AD52181CFC3 /* SensorQuelle.swift */,
 				0C4AD4185A38BA34714BB5FB /* SensorStatistik.swift */,
 				43AA2A6148C449A1B7D3102D /* WitMotionBefehl.swift */,
 				B0B9A011C3F3321D6CF11AF7 /* WitMotionPaket.swift */,
@@ -620,6 +633,7 @@
 		357291D6F6BF9120FA400FC6 = {
 			isa = PBXGroup;
 			children = (
+				39D3B597FB0FCE1455A04ADF /* sensoraufnahme-beispiel */,
 				1DB65EF52280A0A517AC2743 /* FitnessMember */,
 				5D15656A46C8A3FB04179564 /* FitnessMemberTests */,
 				FF747D7359045865244B6B44 /* ios-member */,
@@ -747,6 +761,7 @@
 		5D15656A46C8A3FB04179564 /* FitnessMemberTests */ = {
 			isa = PBXGroup;
 			children = (
+				D5DB91C9C99E1790C7FBBC98 /* AbspielSensorQuelleTests.swift */,
 				758481038BBBDDBB2647CA79 /* AccessibilityBaumTests.swift */,
 				7D79A89B3E91A0F18C9E8DBC /* APIClientTests.swift */,
 				D78C8636341914B90296B220 /* AppConfigTests.swift */,
@@ -1082,6 +1097,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B80028575BDB46C9F540C677 /* sensoraufnahme-beispiel in Resources */,
 				9658183FB704B5244DD0C883 /* testnotiz-beispiel.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1095,6 +1111,7 @@
 			files = (
 				0075B0E3CF0E786F9D22AFFF /* APIClient.swift in Sources */,
 				9B358A72607B4F450BF64E0C /* APIError.swift in Sources */,
+				87865E436B888BE06D25F6F7 /* AbspielSensorQuelle.swift in Sources */,
 				D73848050F680755E93B0CEB /* AccessibilityBaum.swift in Sources */,
 				8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */,
 				CCCF27D0544C08BABCEE5F51 /* AuswahlOverlay.swift in Sources */,
@@ -1215,7 +1232,9 @@
 				E2ECF1FE835571FFD6617303 /* SecondaryButton.swift in Sources */,
 				E2E01BE0BA5756FB27E39C9B /* SensorAufnahme.swift in Sources */,
 				3A69FB4F5F3CE12EF6DAA944 /* SensorAufnahmeDatei.swift in Sources */,
+				948E669F22070CFE77699844 /* SensorAufnahmeLeser.swift in Sources */,
 				DCDAF0FC91BAD454E2EEDD16 /* SensorMesswert.swift in Sources */,
+				8A1DA3B61BCDFBCE5195D8ED /* SensorQuelle.swift in Sources */,
 				C2CF313EE5FB4861C8AFF4BD /* SensorStatistik.swift in Sources */,
 				A70571D779E8721B0D8FC96D /* Session.swift in Sources */,
 				CE044ED38AF73A53DC3B0449 /* SessionDetailView.swift in Sources */,
@@ -1273,6 +1292,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A82CD4C097FBBD45ACE7BB6E /* APIClientTests.swift in Sources */,
+				BE586D44AE4DD5FEA6C125AF /* AbspielSensorQuelleTests.swift in Sources */,
 				87EEB80060292F83431092AC /* AccessibilityBaumTests.swift in Sources */,
 				D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */,
 				6C1C7736AAA82B6C3372EEA1 /* AusschnittTests.swift in Sources */,

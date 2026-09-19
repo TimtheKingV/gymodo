@@ -61,7 +61,14 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - FitnessMemberTests
+      - path: FitnessMemberTests
+        excludes:
+          - "Fixtures/sensoraufnahme-beispiel"
+      # Als Ordner-Referenz: der Abspiel-Test liest einen Aufnahme-ORDNER,
+      # und abgeflachte Ressourcen haetten keine Ordnerstruktur mehr.
+      - path: FitnessMemberTests/Fixtures/sensoraufnahme-beispiel
+        type: folder
+        buildPhase: resources
     settings:
       base:
         SWIFT_VERSION: "6.0"
