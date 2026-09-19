@@ -83,11 +83,11 @@ Eine Wegwerf-Probe verbindet sich mit dem Sensor und loggt rohe Bytes als Hex. S
 
 Zu klären:
 
-1. Stimmen Service- und Characteristic-UUIDs? Welche Eigenschaften hat `FFE9` (write mit oder ohne Antwort)?
+1. Stimmen Service- und Characteristic-UUIDs? Steht `FFE5` im Advertisement, oder ist der Sensor nur am Namen zu erkennen? Welche Eigenschaften hat `FFE9` (write mit oder ohne Antwort)?
 2. Stimmen Header, Paketlänge und Byte-Reihenfolge? Plausibilitätsprobe: Sensor flach und ruhig → eine Achse nahe ±1 g, Drehraten nahe 0.
 3. Wie viele Pakete kommen je Notification an — genau eines, mehrere, auch Bruchstücke?
 4. Welches Format hat die Antwort auf „Akkustand lesen" (erwartet: Registerantwort mit Header `55 71`), und wie wird daraus Prozent?
-5. Greift ein Ratenbefehl sofort und ohne „Konfiguration speichern"? Überlebt er ein Aus- und Einschalten (erwartet: nein)?
+5. Greift ein Ratenbefehl sofort, ohne vorheriges Entsperren (`FF AA 69 88 B5`) und ohne „Konfiguration speichern"? Überlebt er ein Aus- und Einschalten (erwartet: nein)?
 6. Stimmt der abgeleitete Befehl für 20 Hz (`FF AA 03 07 00`)?
 7. Reale Rate am iPhone bei 20, 50 und 100 Hz über je 5 Minuten: Pakete je Sekunde, Abstand Median / p95 / Maximum.
 
