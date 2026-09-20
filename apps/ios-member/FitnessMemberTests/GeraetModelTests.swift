@@ -12,7 +12,8 @@ struct GeraetModelTests {
         sessions: WorkoutSessionStore? = nil,
         loader: FakeGeraetLoader = FakeGeraetLoader(),
         enqueue: @escaping (PendingSetWrite) -> Void = { _ in },
-        satzZiel: Int = Einstellungen.satzZielVorgabe
+        satzZiel: Int = Einstellungen.satzZielVorgabe,
+        mitschnitt: (any SatzMitschnitt)? = nil
     ) -> GeraetModel {
         let verzeichnis = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
@@ -24,7 +25,8 @@ struct GeraetModelTests {
             loader: loader,
             sessions: sessions ?? WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis)),
             enqueue: enqueue,
-            satzZiel: { satzZiel }
+            satzZiel: { satzZiel },
+            mitschnitt: mitschnitt
         )
     }
 
@@ -555,6 +557,89 @@ struct GeraetModelTests {
 
         #expect(sut.rueckblick?.zuletzt == "40,0 kg × 10")
     }
+
+    // MARK: - Mitschnitt
+
+    @Test func oeffnenMeldetDieEingabeMitGeraetUndUebung() {
+        let spion = MitschnittSpion()
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []), mitschnitt: spion)
+        sut.geraetGeoeffnet()
+        #expect(spion.ereignisse == [.eingabe(SatzMitschnittKontext(
+            machineId: "m1", machineName: "Beinpresse", exerciseId: "e1", exerciseName: "Beidbeinig"))])
+    }
+
+    @Test func sichernMeldetGenauDenGeschriebenenSatz() async throws {
+        let spion = MitschnittSpion()
+        var geschrieben: [PendingSetWrite] = []
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)]),
+                         enqueue: { geschrieben.append($0) }, mitschnitt: spion)
+        sut.geraetGeoeffnet()
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        let write = try #require(geschrieben.first)
+        #expect(spion.ereignisse.last == .gesichert(GesicherterSatz(
+            sessionId: write.sessionId, setId: write.setId, setIndex: 1,
+            weightKg: 77.5, reps: 11, problemFlag: false)))
+    }
+
+    @Test func nachDerPauseBeginntDieEingabeErneut() async {
+        let spion = MitschnittSpion()
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []), mitschnitt: spion)
+        sut.geraetGeoeffnet()
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(spion.eingaben == 1)          // in der Pause laeuft nichts
+        sut.pauseBeenden()
+        #expect(spion.eingaben == 2)
+    }
+
+    @Test func uebungswechselInDerEingabeMeldetDenNeuenKontext() {
+        let spion = MitschnittSpion()
+        let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []), mitschnitt: spion)
+        sut.geraetGeoeffnet()
+        sut.uebungWechseln(zu: "e2")
+        #expect(spion.ereignisse.last == .eingabe(SatzMitschnittKontext(
+            machineId: "m1", machineName: "Beinpresse", exerciseId: "e2", exerciseName: "Einbeinig")))
+        #expect(spion.eingaben == 2)
+    }
+
+    @Test func uebungswechselAusDerPauseMeldetGenauEinmal() async {
+        let spion = MitschnittSpion()
+        let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []), mitschnitt: spion)
+        sut.geraetGeoeffnet()
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        sut.uebungWechseln(zu: "e2")
+        #expect(spion.eingaben == 2)
+    }
+
+    @Test func verlassenWirdWeitergereicht() {
+        let spion = MitschnittSpion()
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []), mitschnitt: spion)
+        sut.geraetGeoeffnet()
+        sut.screenVerlassen()
+        #expect(spion.ereignisse.last == .verlassen)
+    }
+}
+
+@MainActor
+final class MitschnittSpion: SatzMitschnitt {
+    enum Ereignis: Equatable {
+        case eingabe(SatzMitschnittKontext)
+        case gesichert(GesicherterSatz)
+        case verlassen
+    }
+    var ereignisse: [Ereignis] = []
+    var eingaben: Int { ereignisse.filter { if case .eingabe = $0 { true } else { false } }.count }
+
+    func eingabeBegonnen(_ kontext: SatzMitschnittKontext) { ereignisse.append(.eingabe(kontext)) }
+    func satzGesichert(_ satz: GesicherterSatz) { ereignisse.append(.gesichert(satz)) }
+    func screenVerlassen() { ereignisse.append(.verlassen) }
 }
 
 /// Faengt ein, was eine GeraetModel-Instanz einreiht -- damit ein

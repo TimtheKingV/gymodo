@@ -113,6 +113,10 @@ final class GeraetModel {
     /// `Einstellungen.satzZiel()` sonst auf `UserDefaults.standard` laege
     /// und Tests sich gegenseitig die Vorgabe verstellten.
     private let satzZielLesen: () -> Int
+    /// Im Release immer nil. Im Debug-Build der Sensor-Koordinator; das
+    /// Modell weiss davon nichts ausser diesen drei Aufrufen (Spec
+    /// Sensor-Anbindung 7.3).
+    private let mitschnitt: (any SatzMitschnitt)?
 
     /// Wie das Mitglied an diesem Geraet gelandet ist.
     ///
@@ -153,7 +157,8 @@ final class GeraetModel {
         loader: any GeraetLoading,
         sessions: WorkoutSessionStore,
         enqueue: @escaping (PendingSetWrite) -> Void,
-        satzZiel: @escaping () -> Int = { Einstellungen.satzZiel() }
+        satzZiel: @escaping () -> Int = { Einstellungen.satzZiel() },
+        mitschnitt: (any SatzMitschnitt)? = nil
     ) {
         self.maschine = maschine
         self.uebungId = uebungId
@@ -163,6 +168,7 @@ final class GeraetModel {
         self.sessions = sessions
         self.enqueue = enqueue
         satzZielLesen = satzZiel
+        self.mitschnitt = mitschnitt
 
         let letzter = bootstrap.lastSets.first {
             $0.machineId == maschine.id && $0.exerciseId == uebungId
@@ -360,7 +366,13 @@ final class GeraetModel {
     /// Uebungswechsel. Der Drawer ist der Blick zurueck VOR dem ersten Satz;
     /// danach waere er eine Karte, die den Satzpfad wieder hoeher macht
     /// (Punkt 12).
-    func geraetGeoeffnet() { rueckblickOffen = rueckblickFaellig }
+    func geraetGeoeffnet() {
+        rueckblickOffen = rueckblickFaellig
+        // Kommt das Mitglied per Zurueck wieder auf den Screen, laeuft .task
+        // erneut und der Mitschnitt beginnt neu. In Pause und Abschluss
+        // stehen keine Raeder da -- dort laeuft nichts.
+        if phase == .eingabe { mitschnittBeginnen() }
+    }
 
     func letztesGewicht(fuer uebungId: String) -> Double? {
         bootstrap.lastSets.first {
@@ -472,6 +484,9 @@ final class GeraetModel {
         // Neue Uebung, neuer Wert -- ein spaeter fuer diese Uebung
         // eintreffender Vorschlag darf wieder greifen.
         gewichtVomNutzer = false
+        // Ein laufender Mitschnitt gehoert zur alten Uebung;
+        // eingabeBegonnen bricht ihn ab und beginnt mit dem neuen Kontext.
+        mitschnittBeginnen()
     }
 
     func satzSichern(problemFlag: Bool, problemReason: ProblemReason?) async {
@@ -491,6 +506,12 @@ final class GeraetModel {
         // (Spec Abschnitt 8.2). Der Zaehler steigt deshalb hier, nicht
         // hinter einem Erfolgs-Guard, den es nicht gibt.
         gesicherteSaetze += 1
+        // Nach dem Schreiben, mit genau den geschriebenen Werten: das ist
+        // das Label der Aufnahme. Wirft nicht, wartet nicht.
+        mitschnitt?.satzGesichert(GesicherterSatz(
+            sessionId: geschrieben.sessionId, setId: geschrieben.setId,
+            setIndex: geschrieben.body.setIndex,
+            weightKg: gewicht, reps: wiederholungen, problemFlag: problemFlag))
         // satzNummer liest live aus der Session und ist nach dem Schreiben
         // oben schon die NAECHSTE Nummer: bei Ziel 3 steht nach dem dritten
         // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
@@ -506,12 +527,27 @@ final class GeraetModel {
     /// "Weiter" und der Ablauf der Pause nehmen denselben Weg zurueck zu
     /// den Raedern -- ein Mitglied, das vorzeitig weitermacht, landet nicht
     /// in einem anderen Zustand als eines, das die Pause aussitzt.
-    func pauseBeenden() { phase = .eingabe }
+    func pauseBeenden() {
+        // Ablauf-Task und "Weiter" koennen beide feuern. Der zweite Aufruf
+        // wuerde den eben begonnenen Mitschnitt sofort wieder abbrechen.
+        guard phase != .eingabe else { return }
+        phase = .eingabe
+        mitschnittBeginnen()
+    }
 
     /// "Weiterer Satz" aus der Abschlussentscheidung heraus. Auch der
     /// Zusatzsatz bekommt seine Pause -- er ist ein Satz wie jeder andere,
     /// nur ausserhalb des Ziels.
     func weitererSatz() { phase = .neuePause() }
+
+    private func mitschnittBeginnen() {
+        mitschnitt?.eingabeBegonnen(SatzMitschnittKontext(
+            machineId: maschine.id, machineName: maschine.equipmentModel.name,
+            exerciseId: uebungId, exerciseName: aktiveUebung?.name ?? ""))
+    }
+
+    /// GeraetView ruft das aus onDisappear.
+    func screenVerlassen() { mitschnitt?.screenVerlassen() }
 
     func kalibrierungOeffnen() { kalibrierungOffen = true }
 
