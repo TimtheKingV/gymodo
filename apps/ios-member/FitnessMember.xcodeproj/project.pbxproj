@@ -125,6 +125,7 @@
 		80BDCB40CB6953255B669BB5 /* GeraetErkanntView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A055AE066E95BA635068E45 /* GeraetErkanntView.swift */; };
 		80FCC59829071327C07CF2C2 /* PausenRad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 093AF1E26DA1B50273353878 /* PausenRad.swift */; };
 		824071B2AEF074DCEB6CEF53 /* Zahlformat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00B25E595924E3D70A9F8C8F /* Zahlformat.swift */; };
+		5C9E4718D3A62B0F847E15CC /* Navigationsleiste.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B241D0E93F5A86C204BE3D1 /* Navigationsleiste.swift */; };
 		85D677DEC1CC8E3688FF5248 /* Ziel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B76CEB6D3CEED5662117CF5E /* Ziel.swift */; };
 		8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B577EC22237E86AA0F3755B7 /* AppConfig.swift */; };
 		876C68594995FB10C4C5F383 /* HomeZieleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 178A941D7DAEF42B0D12FC59 /* HomeZieleTests.swift */; };
@@ -253,6 +254,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7B241D0E93F5A86C204BE3D1 /* Navigationsleiste.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigationsleiste.swift; sourceTree = "<group>"; };
 		00B25E595924E3D70A9F8C8F /* Zahlformat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zahlformat.swift; sourceTree = "<group>"; };
 		024E875EF3390D4641B65EDC /* TrainingStartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingStartView.swift; sourceTree = "<group>"; };
 		02610C837B8435320AACE71B /* KursDetailInhaltTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursDetailInhaltTests.swift; sourceTree = "<group>"; };
@@ -629,6 +631,7 @@
 			children = (
 				45FB518781BA996FB7400814 /* Color+Hex.swift */,
 				33E48EE365B2AEEBD3FCBC2E /* DesignSystem.swift */,
+				7B241D0E93F5A86C204BE3D1 /* Navigationsleiste.swift */,
 				00B25E595924E3D70A9F8C8F /* Zahlformat.swift */,
 				413B8EEC7637B74CCF75A59E /* Components */,
 			);
@@ -1218,6 +1221,7 @@
 				4196455285CC682E9475A449 /* WertZeile.swift in Sources */,
 				B6342F2803AFA48AEEC73B7C /* WorkoutSessionStore.swift in Sources */,
 				F7EE8A3131BCD293674276A2 /* WorkoutSet.swift in Sources */,
+				5C9E4718D3A62B0F847E15CC /* Navigationsleiste.swift in Sources */,
 				824071B2AEF074DCEB6CEF53 /* Zahlformat.swift in Sources */,
 				79E5376EBDA10908D1B86692 /* Zeitformat.swift in Sources */,
 				58F6B0FF65B6EF09ED716D0B /* Zeitpunkt.swift in Sources */,
