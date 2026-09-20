@@ -163,6 +163,30 @@ enum HomeSerie {
         return tagesFormatter.string(from: tag)
     }
 
+    /// Ob die Flamme brennt -- die Farbe der Serie, nicht ihre Zahl.
+    ///
+    /// **Zwei verschiedene Aussagen, die auseinanderfallen duerfen.** Die
+    /// Zahl beantwortet "wie viele Wochen in Folge" und bleibt in einer
+    /// noch leeren Woche stehen: der Server zaehlt die laufende Woche erst
+    /// mit, sobald ihre erste Einheit steht (`serienstand` in
+    /// packages/domain/src/sessions.ts), damit die Serie nicht jeden
+    /// Montagmorgen um eins faellt. Wer zwei Wochen hintereinander
+    /// trainiert hat, liest am Mittwoch der dritten weiterhin "2".
+    ///
+    /// Die FARBE beantwortet etwas anderes: "steht diese Woche schon
+    /// etwas?". Gruen in einer leeren Woche sagte dem Mitglied, alles sei
+    /// erledigt, obwohl die Serie bis Sonntag an einer Einheit haengt.
+    /// Gedeckt sagt: hier ist noch etwas zu tun, die Zahl daneben sagt,
+    /// worum es geht (Testnotiz vom 19. September, Eintrag 3).
+    ///
+    /// `trainedDays` reicht dafuer genau: es sind die Tage der LAUFENDEN
+    /// Woche mit mindestens einer Einheit, fertig vom Server und in der
+    /// Zeitzone des Studios gerechnet -- keine zweite Wochengrenze im
+    /// Client.
+    static func serieLaeuft(_ stand: Serienstand) -> Bool {
+        stand.weeks > 0 && !stand.trainedDays.isEmpty
+    }
+
     /// "Woche" nur bei genau einer -- "1 Wochen" soll gar nicht erst
     /// entstehen koennen. Null Wochen bleiben Mehrzahl.
     static func wochenLabel(_ wochen: Int) -> String {

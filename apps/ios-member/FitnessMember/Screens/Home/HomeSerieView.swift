@@ -152,11 +152,12 @@ private extension HomeSerieView {
 // MARK: - Kopfzeile
 
 private extension HomeSerieView {
-    /// Gedeckt bei einer Serie von null -- die Zahl bleibt trotzdem
-    /// stehen. Sie ist die Antwort auf "wie lange schon", und "0" ist
-    /// eine Antwort; die Flamme sagt ueber die Farbe, dass gerade nichts
-    /// laeuft.
-    var laeuft: Bool { stand.weeks > 0 }
+    /// Gedeckt bei einer Serie von null UND in einer Woche, die noch
+    /// leer ist -- die Zahl bleibt beide Male stehen. Sie ist die Antwort
+    /// auf "wie lange schon", und "0" wie "2" sind Antworten; die Flamme
+    /// sagt ueber die Farbe etwas anderes, naemlich ob diese Woche schon
+    /// etwas steht. Die Begruendung steht an `HomeSerie.serieLaeuft`.
+    var laeuft: Bool { HomeSerie.serieLaeuft(stand) }
 
     func kopfzeile(_ wochentage: [HomeSerieTag]) -> some View {
         HStack(spacing: DesignSystem.Spacing.s16) {
@@ -265,8 +266,14 @@ private extension HomeSerieView {
     func zielstriche(trainiert: Int, ziel: Int) -> some View {
         HStack(spacing: DesignSystem.Spacing.s4) {
             ForEach(0..<max(ziel, 0), id: \.self) { index in
+                // Erledigte Zieltage in der Signalfarbe, offene in `line`.
+                // Weiss sagte hier nur "gefuellt" -- dieselbe Farbe, die
+                // im Streifen darueber jede Tageszahl traegt, ob trainiert
+                // oder nicht. Ein erreichter Zieltag ist aber genau das,
+                // wofuer die Signalfarbe da ist (Testnotiz vom
+                // 19. September, Eintrag 2).
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(index < trainiert ? DesignSystem.Color.text : DesignSystem.Color.line)
+                    .fill(index < trainiert ? DesignSystem.Color.accent : DesignSystem.Color.line)
                     .frame(width: 18, height: 4)
             }
         }
