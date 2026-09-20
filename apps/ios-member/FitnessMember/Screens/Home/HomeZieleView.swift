@@ -178,17 +178,28 @@ private extension HomeZieleView {
                     .font(.system(size: 10, weight: .heavy))
                     .tracking(1.4)
                     .foregroundStyle(DesignSystem.Color.textFaint)
+                // Die Zahl bricht NIE um. Ohne das Zugestaendnis stand auf
+                // einem 375pt-Screen "75," in der einen und "0" in der
+                // naechsten Zeile -- SwiftUI darf einen Text mitten in
+                // einer Zahl trennen, und der Platz war knapp, weil die
+                // Kurve daneben ihre 120pt fest beanspruchte (Testnotiz
+                // vom 19. September, Eintrag 5). Nachgeben soll die Kurve,
+                // nicht der Messwert: sie ist laut ihrem eigenen Kommentar
+                // eine Form, kein Wert.
                 HStack(alignment: .lastTextBaseline, spacing: 5) {
                     Text(Zahlformat.gewicht(karte.wert))
                         .font(.system(size: 26, weight: .black).monospacedDigit())
                         .foregroundStyle(DesignSystem.Color.text)
+                        .fixedSize(horizontal: true, vertical: false)
                     Text("kg")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(DesignSystem.Color.textMuted)
+                        .fixedSize(horizontal: true, vertical: false)
                     Text(karte.datumText)
                         .font(.system(size: 12))
                         .foregroundStyle(DesignSystem.Color.textFaint)
                         .monospacedDigit()
+                        .lineLimit(1)
                         .padding(.leading, 2)
                 }
             }
@@ -216,29 +227,72 @@ private extension HomeZieleView {
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
                     .foregroundStyle(DesignSystem.Color.textFaint)
             }
-            ForEach(Array(karte.kurve.enumerated()), id: \.offset) { index, wert in
-                LineMark(x: .value("Punkt", index), y: .value("Gewicht", wert))
-                    .lineStyle(StrokeStyle(lineWidth: 2))
-                    .foregroundStyle(DesignSystem.Color.accent)
-            }
-            if let letzterIndex = karte.kurve.indices.last {
-                PointMark(
-                    x: .value("Punkt", letzterIndex), y: .value("Gewicht", karte.kurve[letzterIndex])
-                )
-                .symbolSize(48)
-                .foregroundStyle(DesignSystem.Color.accent)
-            }
+
+            kurvenInhalt(karte)
         }
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
         .chartLegend(.hidden)
         .chartYScale(domain: kurvenBereich(karte))
-        .frame(width: 120, height: 44)
+        // maxWidth statt width, damit die Kurve nachgibt und nicht die
+        // Zahl links daneben umbricht (siehe kopfzeile).
+        .frame(maxWidth: 120, minHeight: 44, maxHeight: 44)
+        .layoutPriority(-1)
         // Der Zahlenblock daneben traegt die Aussage schon vollstaendig;
         // die Kurve ist eine dekorative Zusammenfassung, keine zweite
         // Informationsquelle (designsystem.md SS13: die Rohwerte stehen
         // im vollstaendigen Verlauf, Aufgabe 9).
         .accessibilityHidden(true)
+    }
+
+    /// Die Marken der Kurve, je nach `HomeZiele.Kurvenform`. Getrennt von
+    /// `miniKurve`, weil `if case` im ChartContentBuilder lesbarer bleibt
+    /// als ein Schalter mitten im Chart -- und weil die Fallunterscheidung
+    /// selbst geprueft ist (`HomeZieleTests`), nicht dieser Aufbau.
+    @ChartContentBuilder
+    func kurvenInhalt(_ karte: HomeZiele.Gewichtskarte) -> some ChartContent {
+        let form = HomeZiele.kurvenform(kurve: karte.kurve, zielwert: karte.zielwert)
+
+        // Die gestrichelte Strecke zum Ziel -- gedeckt, nie in der
+        // Signalfarbe: sie verbindet einen gemessenen mit einem
+        // gewuenschten Wert und darf keinen Verlauf behaupten (die
+        // Begruendung steht an `HomeZiele.Kurvenform`).
+        if case .einPunktMitZiel(let wert, let ziel) = form {
+            LineMark(x: .value("Punkt", 0), y: .value("Gewicht", wert))
+                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
+                .foregroundStyle(DesignSystem.Color.textFaint)
+            LineMark(x: .value("Punkt", 1), y: .value("Gewicht", ziel))
+                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
+                .foregroundStyle(DesignSystem.Color.textFaint)
+            PointMark(x: .value("Punkt", 1), y: .value("Gewicht", ziel))
+                .symbolSize(36)
+                .foregroundStyle(DesignSystem.Color.textFaint)
+        }
+
+        if case .punkte(let werte) = form {
+            ForEach(Array(werte.enumerated()), id: \.offset) { index, wert in
+                LineMark(x: .value("Punkt", index), y: .value("Gewicht", wert))
+                    .lineStyle(StrokeStyle(lineWidth: 2))
+                    .foregroundStyle(DesignSystem.Color.accent)
+            }
+        }
+
+        // Der gemessene Wert ist in jeder Form der einzige Akzent.
+        if let index = messpunktIndex(form), let wert = karte.kurve.last {
+            PointMark(x: .value("Punkt", index), y: .value("Gewicht", wert))
+                .symbolSize(48)
+                .foregroundStyle(DesignSystem.Color.accent)
+        }
+    }
+
+    /// Die x-Stelle des juengsten Messwerts -- bei `.einPunktMitZiel`
+    /// immer 0, weil die 1 dort dem Ziel gehoert. `nil` ohne Messwert.
+    func messpunktIndex(_ form: HomeZiele.Kurvenform) -> Int? {
+        switch form {
+        case .leer: nil
+        case .einzelnerPunkt, .einPunktMitZiel: 0
+        case .punkte(let werte): werte.count - 1
+        }
     }
 
     /// Der Zielwert MUSS im Bereich liegen -- sonst faellt die

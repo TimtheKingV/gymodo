@@ -84,6 +84,44 @@ enum HomeZiele {
         messwerte.suffix(12).map(\.weightKg)
     }
 
+    /// Was die Mini-Kurve ueberhaupt zeichnen kann.
+    ///
+    /// Mit einem einzigen Messwert gab es nichts zu verbinden, und uebrig
+    /// blieb ein einzelner Punkt mitten im leeren Rahmen -- er sah aus wie
+    /// ein Zeichenfehler, nicht wie ein Anfang (Testnotiz vom
+    /// 19. September, Eintrag 5). Steht ein Zielgewicht daneben, gibt es
+    /// aber sehr wohl etwas zu zeigen: wo es hingehen soll.
+    ///
+    /// **Die Strecke dorthin ist gedeckt und gestrichelt, nie in der
+    /// Signalfarbe.** Sie verbindet einen gemessenen mit einem
+    /// gewuenschten Wert; durchgezogen oder gruen behauptete sie einen
+    /// Verlauf, den niemand eingetragen hat (Spec Abschnitt 6: keine
+    /// Glaettung, keine Interpretation). Der gemessene Punkt bleibt der
+    /// einzige Akzent im Bild.
+    enum Kurvenform: Equatable {
+        /// Der Normalfall -- zwei oder mehr eingetragene Werte.
+        case punkte([Double])
+        /// Genau ein Wert, und ein Ziel, auf das er zeigen kann.
+        case einPunktMitZiel(wert: Double, ziel: Double)
+        /// Ein Wert ohne Ziel: es gaebe nichts, worauf die Strecke
+        /// zeigte. Bleibt der einzelne Punkt -- lieber karg als erfunden.
+        case einzelnerPunkt(Double)
+        /// Gar kein Messwert. Kommt ueber `zustand(...)` nicht vor (die
+        /// Karte entsteht erst mit einem Wert), aber die Form soll auch
+        /// fuer sich genommen vollstaendig sein.
+        case leer
+    }
+
+    static func kurvenform(kurve: [Double], zielwert: Double?) -> Kurvenform {
+        switch kurve.count {
+        case 0: .leer
+        case 1:
+            if let zielwert { .einPunktMitZiel(wert: kurve[0], ziel: zielwert) }
+            else { .einzelnerPunkt(kurve[0]) }
+        default: .punkte(kurve)
+        }
+    }
+
     /// "−2,0 kg" / "+1,5 kg" / "±0,0 kg" -- U+2212 statt Bindestrich, weil
     /// ein ASCII-Minus sich lesend mit einem Trennstrich verwechseln
     /// laesst. Immer mit einer Nachkommastelle ueber `Zahlformat.gewicht`
