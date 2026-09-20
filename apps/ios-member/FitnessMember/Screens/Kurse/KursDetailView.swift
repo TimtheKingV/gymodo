@@ -250,6 +250,12 @@ struct KursDetailView: View {
     @State private var aktionLaeuft = false
     @State private var fehlermeldung: String?
 
+    /// Die Abmeldung, nach der gerade gefragt wird -- nil, solange der
+    /// Dialog zu ist. Nur Abmelden und Warteliste-verlassen fragen; wer
+    /// sich anmeldet, kann das mit demselben Knopf zuruecknehmen und
+    /// braucht keine Rueckfrage (`KurseAbmeldefrage`).
+    @State private var abmeldefrage: KursDetailHauptaktion?
+
     var body: some View {
         // 60-Sekunden-Kadenz statt einer einmalig beim Aufbau gelesenen
         // Date() -- sonst blieben sowohl der Kursbeginn-Uebergang
@@ -589,7 +595,15 @@ struct KursDetailView: View {
             }
             if let hauptaktion {
                 PrimaryButton(title: hauptaktion.titel, isLoading: aktionLaeuft) {
-                    await ausfuehren(hauptaktion)
+                    // Buchen geht sofort -- es ist mit demselben Knopf
+                    // umkehrbar. Abmelden fragt: der Platz geht an den
+                    // Naechsten, und zurueck gibt es ihn nur, wenn der
+                    // Kurs dann noch frei ist (`KurseAbmeldefrage`).
+                    if hauptaktion.istBuchen {
+                        await ausfuehren(hauptaktion)
+                    } else {
+                        abmeldefrage = hauptaktion
+                    }
                 }
             }
             if let fusstext {
@@ -600,6 +614,29 @@ struct KursDetailView: View {
                     .lineSpacing(3)
                     .frame(maxWidth: .infinity)
             }
+        }
+        .confirmationDialog(
+            abmeldefrage.map {
+                KurseAbmeldefrage.titel(
+                    kursname: ansicht.name, istWarteliste: $0 == .wartelisteVerlassen)
+            } ?? "",
+            isPresented: Binding(
+                get: { abmeldefrage != nil },
+                set: { if !$0 { abmeldefrage = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: abmeldefrage
+        ) { aktion in
+            // `aktion.titel` statt eines eigenen Worts: der Dialog nennt
+            // die Tat so, wie der Knopf sie eben genannt hat -- hier also
+            // "Abmelden" oder "Warteliste verlassen" (siehe die Notiz am
+            // Ende von KurseAbmeldefrage).
+            Button(aktion.titel, role: .destructive) {
+                Task { await ausfuehren(aktion) }
+            }
+            Button("Abbrechen", role: .cancel) {}
+        } message: { aktion in
+            Text(KurseAbmeldefrage.erklaerung(istWarteliste: aktion == .wartelisteVerlassen))
         }
     }
 

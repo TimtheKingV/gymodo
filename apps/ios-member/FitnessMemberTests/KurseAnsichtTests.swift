@@ -54,4 +54,60 @@ struct KurseAnsichtTests {
         #expect(KurseAnsicht.angemeldet.titel == "Angemeldet")
         #expect(KurseAnsicht.alle.titel == "Alle Kurse")
     }
+
+    // MARK: - Der Tag-Tipp (Testnotiz 19. September, Eintrag 8)
+
+    /// Der Fund: in „Angemeldet“ zeigt das Band alle eigenen Anmeldungen,
+    /// egal welcher Tag gewaehlt ist. Ein Tipp auf einen Tag ohne eigenen
+    /// Platz liess das Band stehen -- und es sah aus, als faende dieser
+    /// Kurs an diesem Tag statt.
+    @Test func einTagOhneEigenenPlatzSchaltetAufAlleKurse() {
+        #expect(KurseAnsicht.nachTagwahl(bisher: .angemeldet, indikator: .kurse) == .alle)
+        #expect(KurseAnsicht.nachTagwahl(bisher: .angemeldet, indikator: .keiner) == .alle)
+    }
+
+    /// Ein Tag MIT eigenem Platz laesst die Haelfte stehen: was man
+    /// angetippt hat, steht dort schon.
+    @Test func einTagMitEigenemPlatzLaesstAngemeldetStehen() {
+        #expect(KurseAnsicht.nachTagwahl(bisher: .angemeldet, indikator: .angemeldet) == .angemeldet)
+    }
+
+    /// Aus „Alle Kurse“ heraus aendert ein Tipp nie etwas -- dort filtert
+    /// der Kalender bereits, und ein Sprung nach „Angemeldet“ waere genau
+    /// die Verwirrung, die dieser Fall beheben soll, nur andersherum.
+    @Test func ausAlleKurseHerausAendertEinTagNichts() {
+        for indikator: KurseTagesindikator in [.keiner, .kurse, .angemeldet] {
+            #expect(KurseAnsicht.nachTagwahl(bisher: .alle, indikator: indikator) == .alle)
+        }
+    }
+}
+
+/// Die Rueckfrage vor dem Abmelden (Testnotiz 19. September, Eintrag 9).
+///
+/// Geprueft wird hier nur, dass die beiden Faelle verschiedene Saetze
+/// bekommen und der Kursname im Titel steht -- beides ist der Grund,
+/// warum die Texte ueberhaupt aus dem View heraus an eine gemeinsame
+/// Stelle gewandert sind.
+struct KurseAbmeldefrageTests {
+    @Test func derTitelNenntDenKurs() {
+        #expect(
+            KurseAbmeldefrage.titel(kursname: "Rückenfit", istWarteliste: false)
+                == "Von Rückenfit abmelden?")
+        #expect(
+            KurseAbmeldefrage.titel(kursname: "Rückenfit", istWarteliste: true)
+                == "Warteliste für Rückenfit verlassen?")
+    }
+
+    /// Ein bestaetigter Platz geht an den Naechsten -- das ist die Folge,
+    /// die man vor dem Tippen wissen will. Ein Wartelistenplatz kostet nur
+    /// die Position; derselbe Satz waere dort eine Drohung ohne Deckung.
+    @Test func beideFaelleSagenVerschiedenesUndKeinerDrohtOhneDeckung() {
+        let platz = KurseAbmeldefrage.erklaerung(istWarteliste: false)
+        let warteliste = KurseAbmeldefrage.erklaerung(istWarteliste: true)
+
+        #expect(platz != warteliste)
+        #expect(platz.contains("Nächsten"))
+        #expect(warteliste.contains("Warteliste"))
+        #expect(!warteliste.contains("Nächsten"))
+    }
 }
