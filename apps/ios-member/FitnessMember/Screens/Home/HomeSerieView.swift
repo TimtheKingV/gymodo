@@ -152,11 +152,12 @@ private extension HomeSerieView {
 // MARK: - Kopfzeile
 
 private extension HomeSerieView {
-    /// Gedeckt bei einer Serie von null -- die Zahl bleibt trotzdem
-    /// stehen. Sie ist die Antwort auf "wie lange schon", und "0" ist
-    /// eine Antwort; die Flamme sagt ueber die Farbe, dass gerade nichts
-    /// laeuft.
-    var laeuft: Bool { stand.weeks > 0 }
+    /// Gedeckt bei einer Serie von null UND in einer Woche, die noch
+    /// leer ist -- die Zahl bleibt beide Male stehen. Sie ist die Antwort
+    /// auf "wie lange schon", und "0" wie "2" sind Antworten; die Flamme
+    /// sagt ueber die Farbe etwas anderes, naemlich ob diese Woche schon
+    /// etwas steht. Die Begruendung steht an `HomeSerie.serieLaeuft`.
+    var laeuft: Bool { HomeSerie.serieLaeuft(stand) }
 
     func kopfzeile(_ wochentage: [HomeSerieTag]) -> some View {
         HStack(spacing: DesignSystem.Spacing.s16) {
@@ -265,8 +266,14 @@ private extension HomeSerieView {
     func zielstriche(trainiert: Int, ziel: Int) -> some View {
         HStack(spacing: DesignSystem.Spacing.s4) {
             ForEach(0..<max(ziel, 0), id: \.self) { index in
+                // Erledigte Zieltage in der Signalfarbe, offene in `line`.
+                // Weiss sagte hier nur "gefuellt" -- dieselbe Farbe, die
+                // im Streifen darueber jede Tageszahl traegt, ob trainiert
+                // oder nicht. Ein erreichter Zieltag ist aber genau das,
+                // wofuer die Signalfarbe da ist (Testnotiz vom
+                // 19. September, Eintrag 2).
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(index < trainiert ? DesignSystem.Color.text : DesignSystem.Color.line)
+                    .fill(index < trainiert ? DesignSystem.Color.accent : DesignSystem.Color.line)
                     .frame(width: 18, height: 4)
             }
         }
@@ -396,22 +403,17 @@ private extension HomeSerieView {
                 .foregroundStyle(DesignSystem.Color.text)
                 .monospacedDigit()
 
-            HStack(spacing: DesignSystem.Spacing.s8) {
-                if karte.istAutoBeendet {
-                    Text("AUTO BEENDET")
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(DesignSystem.Color.warn)
-                        .padding(.horizontal, DesignSystem.Spacing.s8)
-                        .padding(.vertical, DesignSystem.Spacing.s4)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: DesignSystem.Radius.pille)
-                                .stroke(DesignSystem.Color.warn, lineWidth: 1))
-                }
-                Text(HomeZeilen.kleineZeile(karte))
-                    .font(DesignSystem.Typography.fliesstext)
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                    .monospacedDigit()
-            }
+            // Keine "AUTO BEENDET"-Marke mehr: sie stand vor dieser Zeile
+            // und war damit das Erste, was an einem erledigten Training
+            // ins Auge fiel -- eine Warnfarbe fuer eine Nebensaechlichkeit,
+            // auf einem Screen, der sonst nur Zahlen zeigt. Sie steht
+            // jetzt im Detail, wo sie einen erklaerenden Satz neben sich
+            // hat (`SessionDetailView.autoBeendetHinweis`, Testnotiz vom
+            // 19. September, Eintrag 4).
+            Text(HomeZeilen.kleineZeile(karte))
+                .font(DesignSystem.Typography.fliesstext)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .monospacedDigit()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(DesignSystem.Spacing.s16)
@@ -480,13 +482,14 @@ private extension HomeSerieView {
     }
 
     /// Die Karte als Satz: erst die grosse Zeile (Zeit und Saetze), dann
-    /// die kleine (Uhrzeit und Geraete). Ohne eigenes Label laese VoiceOver
-    /// die Marke "AUTO BEENDET" mitten hinein -- sie steht im Layout vor
-    /// der kleinen Zeile, gehoert im Satz aber ans Ende.
+    /// die kleine (Uhrzeit und Geraete).
+    ///
+    /// Ohne "Auto beendet", seit die Marke ins Detail gewandert ist: das
+    /// Label soll sagen, was die Karte zeigt, und nicht eine Ansage mehr
+    /// machen als das Auge. Wer es genau wissen will, oeffnet die Einheit
+    /// -- dort liest VoiceOver den Hinweis samt Erklaerung.
     func kartenLabel(_ karte: Trainingskarte) -> String {
-        var teile = ["\(HomeZeilen.grosseZeile(karte)). \(HomeZeilen.kleineZeile(karte))."]
-        if karte.istAutoBeendet { teile.append("Auto beendet.") }
-        return teile.joined(separator: " ")
+        "\(HomeZeilen.grosseZeile(karte)). \(HomeZeilen.kleineZeile(karte))."
     }
 }
 

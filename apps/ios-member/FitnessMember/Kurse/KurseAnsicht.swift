@@ -53,4 +53,26 @@ enum KurseAnsicht: Hashable, CaseIterable {
         guard hatAnmeldungen else { return .alle }
         return gewaehlt ?? .angemeldet
     }
+
+    /// Die Ansicht, nachdem ein Tag im Streifen angetippt wurde.
+    ///
+    /// **Der Kalender wirkt nur auf „Alle Kurse".** Das bleibt so -- das
+    /// Band der eigenen Anmeldungen zeigt bewusst alle, nicht die eines
+    /// Tages. Nur hatte das eine Nebenwirkung: wer in der
+    /// „Angemeldet"-Haelfte auf einen Tag tippte, sah darunter weiter
+    /// seine Anmeldungen stehen, und es wirkte, als faende genau dieser
+    /// Kurs an genau diesem Tag statt. Der Tag antwortete nicht, aber es
+    /// sah aus, als haette er (Testnotiz vom 19. September, Eintrag 8).
+    ///
+    /// Deshalb schaltet ein Tag OHNE eigenen Platz auf „Alle Kurse" um --
+    /// dorthin, wo er ueberhaupt etwas zu sagen hat. Ein Tag MIT eigenem
+    /// Platz laesst die Haelfte stehen: dort steht das, wonach man
+    /// getippt hat, schon im Band.
+    ///
+    /// Aus `.alle` heraus aendert der Tipp nie etwas -- der Kalender
+    /// filtert dort bereits.
+    static func nachTagwahl(bisher: KurseAnsicht, indikator: KurseTagesindikator) -> KurseAnsicht {
+        guard bisher == .angemeldet, indikator != .angemeldet else { return bisher }
+        return .alle
+    }
 }

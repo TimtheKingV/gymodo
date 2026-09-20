@@ -187,6 +187,45 @@ struct HomeZieleTests {
         #expect(HomeZiele.kurve(messwerte) == [84, 82.5])
     }
 
+    // MARK: - kurvenform (Testnotiz 19. September, Eintrag 5)
+
+    @Test func zweiOderMehrWerteSindDerNormalfall() {
+        #expect(
+            HomeZiele.kurvenform(kurve: [84, 82.5], zielwert: 78) == .punkte([84, 82.5]))
+        #expect(
+            HomeZiele.kurvenform(kurve: [84, 82.5], zielwert: nil) == .punkte([84, 82.5]))
+    }
+
+    /// Der eigentliche Fund: ein einzelner Punkt im leeren Rahmen sah aus
+    /// wie ein Zeichenfehler. Mit einem Ziel gibt es etwas zu zeigen --
+    /// wohin es gehen soll.
+    @Test func einWertMitZielZeigtDieStreckeDorthin() {
+        #expect(
+            HomeZiele.kurvenform(kurve: [75], zielwert: 73)
+                == .einPunktMitZiel(wert: 75, ziel: 73))
+    }
+
+    /// Ohne Ziel gaebe es nichts, worauf die Strecke zeigte -- dann bleibt
+    /// es beim einzelnen Punkt. Lieber karg als erfunden.
+    @Test func einWertOhneZielBleibtEinPunkt() {
+        #expect(HomeZiele.kurvenform(kurve: [75], zielwert: nil) == .einzelnerPunkt(75))
+    }
+
+    @Test func ohneWerteGibtEsNichtsZuZeichnen() {
+        #expect(HomeZiele.kurvenform(kurve: [], zielwert: 73) == .leer)
+        #expect(HomeZiele.kurvenform(kurve: [], zielwert: nil) == .leer)
+    }
+
+    /// Die Richtung ist der Form egal: sie zeichnet die Strecke zum Ziel,
+    /// ob es darueber oder darunter liegt. Welche Richtung die gewollte
+    /// ist, sagt das Trainingsziel in der Eyebrow, nicht die Kurve (Spec
+    /// Abschnitt 6).
+    @Test func dieFormBewertetDieRichtungNicht() {
+        #expect(
+            HomeZiele.kurvenform(kurve: [75], zielwert: 80)
+                == .einPunktMitZiel(wert: 75, ziel: 80))
+    }
+
     // MARK: - datumText
 
     @Test func datumTextSagtHeute() {

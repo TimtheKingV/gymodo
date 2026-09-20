@@ -378,4 +378,25 @@ struct HomeSerieTests {
         #expect(HomeSerie.monatstitel("kaputt").isEmpty)
         #expect(HomeSerie.tagestitel("kaputt").isEmpty)
     }
+
+    // MARK: - Die Farbe der Flamme (Testnotiz 19. September, Eintrag 3)
+
+    @Test func dieFlammeBrenntMitSerieUndEinerEinheitInDieserWoche() {
+        #expect(HomeSerie.serieLaeuft(stand(weeks: 2, trainedDays: ["2026-09-08"])))
+    }
+
+    @Test func ohneSerieBrenntSieNie() {
+        #expect(!HomeSerie.serieLaeuft(stand(weeks: 0, trainedDays: [])))
+    }
+
+    /// Der eigentliche Fund: die Serie steht bei zwei Wochen, weil der
+    /// Server die noch leere laufende Woche nicht mitzaehlt -- die Zahl
+    /// ist richtig. Gruen waere hier trotzdem falsch: bis Sonntag haengt
+    /// die Serie an einer Einheit, und genau das soll die Farbe sagen.
+    @Test func eineNochLeereWocheDecktDieFlammeAbOhneDieZahlAnzutasten() {
+        let stehendeSerie = stand(weeks: 2, trainedDays: [])
+
+        #expect(!HomeSerie.serieLaeuft(stehendeSerie))
+        #expect(stehendeSerie.weeks == 2)
+    }
 }

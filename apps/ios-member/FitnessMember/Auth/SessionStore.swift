@@ -21,8 +21,24 @@ final class SessionStore {
         self.backend = backend
     }
 
+    /// false, bis `restoreSession()` einmal gelaufen ist -- und zwar
+    /// unabhaengig davon, ob dabei eine Session herauskam.
+    ///
+    /// Ohne diese Unterscheidung heisst `session == nil` zweierlei: "nicht
+    /// angemeldet" UND "wir haben noch nicht nachgesehen". Der zweite Fall
+    /// gilt in jedem Kaltstart fuer die ersten Frames -- `restoreSession()`
+    /// laeuft in `.task` und damit erst NACH dem ersten body-Durchlauf --,
+    /// und die Wurzel zeichnete in dieser Zeit den Anmeldebildschirm, nur
+    /// um ihn Sekundenbruchteile spaeter gegen Home zu tauschen. Wer die
+    /// App oeffnet, sah sein Passwortfeld aufblitzen, obwohl er angemeldet
+    /// war (Testnotiz vom 19. September, Eintrag 1).
+    private(set) var wiederhergestellt = false
+
     func restoreSession() async {
         session = await backend.currentSession()
+        // Auch wenn nichts zurueckkam: der Versuch ist gelaufen, und ab
+        // jetzt heisst `session == nil` wirklich "nicht angemeldet".
+        wiederhergestellt = true
     }
 
     /// Fuer den tokenProvider des APIClient: fragt immer das Backend, nie die
