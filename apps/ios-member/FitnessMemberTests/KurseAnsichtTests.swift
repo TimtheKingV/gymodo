@@ -80,6 +80,23 @@ struct KurseAnsichtTests {
             #expect(KurseAnsicht.nachTagwahl(bisher: .alle, indikator: indikator) == .alle)
         }
     }
+
+    /// Der Grund, warum der Screen das Ergebnis nur bei einer echten
+    /// Aenderung schreibt: `nil` in `gewaehlteAnsicht` heisst "hat den
+    /// Umschalter noch nie angefasst", und `geltend` macht daraus
+    /// `.angemeldet`, sobald es Anmeldungen gibt. Wuerde jeder Tag-Tipp
+    /// das Ergebnis blind zurueckschreiben, haette sich ein Mitglied ohne
+    /// Anmeldungen mit einem Tag-Tipp stillschweigend auf `.alle`
+    /// festgelegt -- und faende nach seiner ersten Buchung den Wochenplan
+    /// statt seiner Anmeldungen vor.
+    ///
+    /// Die Funktion gibt in diesen Faellen `bisher` unveraendert zurueck;
+    /// dass daraus kein Schreibvorgang wird, entscheidet der Screen.
+    @Test func inDenNichtstunFaellenKommtDieAusgangsansichtUnveraendertZurueck() {
+        #expect(KurseAnsicht.nachTagwahl(bisher: .alle, indikator: .kurse) == .alle)
+        #expect(
+            KurseAnsicht.nachTagwahl(bisher: .angemeldet, indikator: .angemeldet) == .angemeldet)
+    }
 }
 
 /// Die Rueckfrage vor dem Abmelden (Testnotiz 19. September, Eintrag 9).

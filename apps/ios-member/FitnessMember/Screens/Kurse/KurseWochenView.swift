@@ -565,8 +565,19 @@ struct KurseWochenView: View {
                     // Ein Tag ohne eigenen Platz hat in der
                     // "Angemeldet"-Haelfte nichts zu sagen -- die
                     // Begruendung steht an KurseAnsicht.nachTagwahl.
-                    gewaehlteAnsicht = KurseAnsicht.nachTagwahl(
+                    //
+                    // NUR bei einer echten Aenderung schreiben. Sonst
+                    // machte jeder Tag-Tipp aus `nil` eine getippte Wahl,
+                    // und `nil` heisst hier etwas: "hat den Umschalter
+                    // noch nie angefasst". Wer ohne Anmeldungen (also in
+                    // `.alle`) einen Tag antippt, haette sich damit
+                    // stillschweigend auf `.alle` festgelegt -- und nach
+                    // seiner ersten Buchung stuende der Screen auf "Alle
+                    // Kurse" statt auf den eigenen Anmeldungen, ohne dass
+                    // er je umgeschaltet hat.
+                    let neueAnsicht = KurseAnsicht.nachTagwahl(
                         bisher: ansicht, indikator: indikator)
+                    if neueAnsicht != ansicht { gewaehlteAnsicht = neueAnsicht }
                 } label: {
                     VStack(spacing: 6) {
                         // Der Buchstabe steht UEBER der Zelle, nicht darin:

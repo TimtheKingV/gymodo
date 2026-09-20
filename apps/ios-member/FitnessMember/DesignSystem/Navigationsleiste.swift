@@ -30,6 +30,11 @@ import UIKit
 enum Navigationsleiste {
     /// Einmal beim Start, vor dem ersten Aufbau einer Leiste --
     /// `appearance()` wirkt nur auf Leisten, die danach entstehen.
+    ///
+    /// `@MainActor`, weil `UINavigationBarAppearance` und
+    /// `UINavigationBar` es sind. Der Aufrufer (`FitnessMemberApp.init`)
+    /// ist es ueber das `App`-Protokoll ohnehin schon.
+    @MainActor
     static func einrichten() {
         let erscheinung = UINavigationBarAppearance()
         // Genau die Werte aus DesignSystem.Typography.screentitel bzw.
