@@ -151,6 +151,10 @@ struct AbspielSensorQuelleTests {
         #expect(unerwartet.isEmpty, "nach trennen() duerfen keine weiteren Ereignisse mehr ankommen: \(unerwartet)")
     }
 
+    /// Beweist nur, dass keine Messwerte oder Zustaende des alten Laufs in den
+    /// neuen durchsickern -- NICHT den Abschluss-Guard selbst: die Luecke ist
+    /// hier nicht der letzte Eintrag, der Schleifenkopf-Check faengt den alten
+    /// Lauf schon vorher ab (siehe Fix-Runde 1/2).
     @Test func einAlterLaufStoertEinenNeuenNicht() async throws {
         let sut = try AbspielSensorQuelle(ordner: try kurzeAufnahme(), tempo: .echtzeit)
         let sammler = Sammler()
@@ -191,6 +195,77 @@ struct AbspielSensorQuelleTests {
         // Der alte Lauf kommt nach der Luecke nicht mehr zum Zug: nur der
         // neue Lauf liefert 0.45 und 0.5.
         #expect(messwerte == [0, 0.05, 0, 0.05, 0.45, 0.5])
+    }
+
+    /// Aufnahme, die MIT einer offenen Luecke endet: der Sensor faellt am
+    /// Ende des Satzes aus, abschliessen() traegt die Luecke bis zum Ende
+    /// nach (Spec 6.2) -- eine ganz natuerliche Aufnahme, kein Kunstgriff.
+    /// Wichtig fuer den Test unten: die Luecke ist damit der LETZTE Eintrag,
+    /// es gibt also keine weitere Schleifen-Runde mehr, die einen veralteten
+    /// Lauf ueber den `!Task.isCancelled`-Check am Schleifenkopf abfangen
+    /// koennte -- nur eine Pruefung direkt nach dem Luecken-Schlaf kann das.
+    private func kurzeAufnahmeMitOffenerLuecke() throws -> URL {
+        let wurzel = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let aufnahme = try SensorAufnahme(
+            wurzel: wurzel, start: SensorAufnahmeTests.start, startT: 100,
+            sensor: SensorAufnahmeTests.sensor, geraet: SensorAufnahmeTests.geraet,
+            kontext: SensorAufnahmeTests.kontext, befestigung: nil, zeitzone: SensorAufnahmeTests.berlin)
+        try aufnahme.schreiben(SensorAufnahmeTests.messwert(t: 100.00))
+        try aufnahme.schreiben(SensorAufnahmeTests.messwert(t: 100.10))
+        aufnahme.lueckeBeginnt(t: 100.10)
+        // Keine weiteren Messwerte, kein lueckeEndet(): abschliessen()
+        // schliesst die offene Luecke bis endeT von selbst.
+        try aufnahme.abschliessen(.gesichert, kontext: SensorAufnahmeTests.kontext,
+                                  label: .init(weightKg: 50, reps: 8, problemFlag: false), akkuProzent: nil,
+                                  statistik: .leer, ende: SensorAufnahmeTests.start, endeT: 100.70)
+        return aufnahme.ordner
+    }
+
+    /// Beweist die Pruefung direkt nach dem Luecken-Schlaf: die Luecke ist der
+    /// letzte Eintrag, also gibt es keine weitere Schleifen-Runde mehr, die
+    /// einen veralteten Lauf noch ueber den Schleifenkopf-Check abfangen
+    /// koennte -- nur diese eine Pruefung schuetzt hier. Experimentell
+    /// bestaetigt (Fix-Runde 2): entfernt man sie zusammen mit dem
+    /// Abschluss-Guard, schlaegt dieser Test fehl; der Abschluss-Guard allein
+    /// ist an dieser Stelle defensiv und wird von diesem Test nicht einzeln
+    /// erreicht, weil die Luecken-Pruefung vorher schon zurueckkehrt.
+    @Test func einAlterLaufBeendetEinenNeuenNichtVorzeitig() async throws {
+        let sut = try AbspielSensorQuelle(ordner: try kurzeAufnahmeMitOffenerLuecke(), tempo: .echtzeit)
+        let sammler = Sammler()
+        let strom = sut.ereignisse()
+        let aufgabe = Task { @MainActor in
+            for await ereignis in strom { sammler.anhaengen(ereignis) }
+        }
+
+        sut.verbinden()
+        try await warteBis { sammler.ereignisse.contains(.zustand(.getrennt(wirdNeuVerbunden: true))) }
+        sut.trennen()
+        sut.verbinden()
+
+        // Der ALTE Lauf schlaeft 0.6 s (seine Luecke). Der NEUE Lauf faengt
+        // bei 0 neu an, erreicht seine EIGENE Luecke erst nach 0.1 s und
+        // schlaeft dann ebenfalls 0.6 s -- bei 0.65 s ist er also noch mitten
+        // in seiner Luecke, waehrend der alte Lauf laengst haette "aufwachen"
+        // muessen.
+        try await Task.sleep(for: .milliseconds(650))
+
+        #expect(!sammler.ereignisse.contains(.zustand(.getrennt(wirdNeuVerbunden: false))),
+                "der alte Lauf hat sich nach seinem Schlaf faelschlich beendet, bevor der neue fertig war")
+
+        let zustandWaehrendDesLaufs = sut.zustand
+        sut.verbinden() // waehrend der neue Lauf noch laeuft: muss folgenlos bleiben
+        #expect(sut.zustand == zustandWaehrendDesLaufs,
+                "verbinden() hat den Zustand veraendert -- lauf war also nil, der alte Lauf hat ihn geklaut")
+
+        try await warteBis(timeoutMs: 2000) {
+            sammler.ereignisse.contains(.zustand(.getrennt(wirdNeuVerbunden: false)))
+        }
+        // Reserve, damit ein evtl. doppelter Abschluss noch ankaeme.
+        try await Task.sleep(for: .milliseconds(100))
+        aufgabe.cancel()
+
+        let abschluesse = sammler.ereignisse.filter { $0 == .zustand(.getrennt(wirdNeuVerbunden: false)) }
+        #expect(abschluesse.count == 1, "genau ein Abschluss -- vom neuen Lauf, nicht vom alten")
     }
 }
 #endif
