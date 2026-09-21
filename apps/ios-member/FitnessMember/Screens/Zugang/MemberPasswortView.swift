@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// Schritt 1 von 2 des Passwort-Zuruecksetzen-Flows: nur die E-Mail-Adresse
-/// anfordern. Schritt 2 (Code + neues Passwort) ist ein eigener, gepushter
-/// Screen (MemberPasswortZuruecksetzenView) -- das gibt eine echte
-/// Zurueck-Navigation, falls die Adresse falsch war oder der Code
-/// abgelaufen ist, statt beides auf einem Screen zu vermischen.
+/// Schritt 1 von 3 des Passwort-Zuruecksetzen-Flows: nur die E-Mail-Adresse
+/// anfordern. Es folgen `MemberPasswortCodeView` (Code aus der Mail) und
+/// `MemberPasswortNeuView` (neues Passwort) als eigene, gepushte Screens --
+/// das gibt eine echte Zurueck-Navigation, falls die Adresse falsch war
+/// oder der Code abgelaufen ist, statt alles auf einem Screen zu
+/// vermischen.
 struct MemberPasswortView: View {
     @Environment(SessionStore.self) private var sessionStore
 
@@ -22,7 +23,7 @@ struct MemberPasswortView: View {
                 }
 
                 LabeledField(label: "E-Mail-Adresse") {
-                    TextField("name@beispiel.de", text: $requestEmail)
+                    TextField("", text: $requestEmail, prompt: Text.platzhalter("name@beispiel.de"))
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -48,7 +49,7 @@ struct MemberPasswortView: View {
             .background(DesignSystem.Color.bg)
         }
         .navigationDestination(isPresented: $didRequest) {
-            MemberPasswortZuruecksetzenView(email: requestEmail)
+            MemberPasswortCodeView(email: requestEmail)
         }
         .testnotizScreen()
     }

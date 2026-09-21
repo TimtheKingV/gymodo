@@ -10,6 +10,8 @@ enum AuthCopy {
     static let sicherheitshinweisPasswortVergessen =
         "Wenn es zu dieser Adresse ein Konto gibt, ist die Mail unterwegs."
     static let codeUngueltig = "Der Code ist ungültig oder abgelaufen."
+    static let passwortNichtGespeichert =
+        "Das Passwort konnte nicht gespeichert werden. Fordere einen neuen Code an."
     static let passwoerterStimmenNichtUeberein = "Die beiden Passwörter stimmen nicht überein."
     static let aktuellesPasswortFalsch = "Das aktuelle Passwort ist falsch."
 }

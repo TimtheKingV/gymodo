@@ -16,7 +16,8 @@
 		0A66C707066A8C209342D669 /* TrainingAbschlussZeilenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05572CBE819B0984F2CACC32 /* TrainingAbschlussZeilenTests.swift */; };
 		0B8F8186023C8395BE77A351 /* EinstellungenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */; };
 		0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */; };
-		0C79D05D0F5B192800FDB707 /* MemberPasswortZuruecksetzenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1987FE7CD53A2E411EAD2595 /* MemberPasswortZuruecksetzenView.swift */; };
+		0C79D05D0F5B192800FDB801 /* MemberPasswortCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1987FE7CD53A2E411EAD2801 /* MemberPasswortCodeView.swift */; };
+		0C79D05D0F5B192800FDB802 /* MemberPasswortNeuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1987FE7CD53A2E411EAD2802 /* MemberPasswortNeuView.swift */; };
 		0CC21610F7CED89559C379C4 /* MemberPasswortView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4C1D2382AF3657C5135CBE2 /* MemberPasswortView.swift */; };
 		0D0B75F5C030106C7CB21F85 /* ScannerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55093183C1B476C12C44B469 /* ScannerSheet.swift */; };
 		0F23761D47A8B1CAFDAA582B /* TestnotizEintrag.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BC48D13AE6028E26E09E52 /* TestnotizEintrag.swift */; };
@@ -283,7 +284,8 @@
 		186F9A8308C2902F45F6E10E /* KursZustand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursZustand.swift; sourceTree = "<group>"; };
 		1969ECB20DA7445E4167A9C0 /* TestnotizEintragTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizEintragTests.swift; sourceTree = "<group>"; };
 		19832BC95D12C1DCBEFF10E9 /* SessionSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSummary.swift; sourceTree = "<group>"; };
-		1987FE7CD53A2E411EAD2595 /* MemberPasswortZuruecksetzenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortZuruecksetzenView.swift; sourceTree = "<group>"; };
+		1987FE7CD53A2E411EAD2801 /* MemberPasswortCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortCodeView.swift; sourceTree = "<group>"; };
+		1987FE7CD53A2E411EAD2802 /* MemberPasswortNeuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortNeuView.swift; sourceTree = "<group>"; };
 		1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FortschrittsfensterTests.swift; sourceTree = "<group>"; };
 		1B227508179FE62A4DAA06A0 /* Chip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chip.swift; sourceTree = "<group>"; };
 		1B800AB907E579F778EA2656 /* GeraetLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetLoading.swift; sourceTree = "<group>"; };
@@ -882,7 +884,8 @@
 				C037A2436D3DBF861C6456FD /* MemberKeinStudioView.swift */,
 				213A5216BA472EAE4240C049 /* MemberPasswortAendernView.swift */,
 				E4C1D2382AF3657C5135CBE2 /* MemberPasswortView.swift */,
-				1987FE7CD53A2E411EAD2595 /* MemberPasswortZuruecksetzenView.swift */,
+				1987FE7CD53A2E411EAD2801 /* MemberPasswortCodeView.swift */,
+				1987FE7CD53A2E411EAD2802 /* MemberPasswortNeuView.swift */,
 				62AE7186437136E3B2723D3A /* MemberRegistrierenView.swift */,
 				33916355F38A81716A43C018 /* NFCTagLeser.swift */,
 				7115CDC39F17B5DF97E47CD8 /* QRScannerController.swift */,
@@ -1146,7 +1149,8 @@
 				E1A0397EDF4B789D5970BE5A /* MemberKeinStudioView.swift in Sources */,
 				95794FEE5EC5FFA101C74C3D /* MemberPasswortAendernView.swift in Sources */,
 				0CC21610F7CED89559C379C4 /* MemberPasswortView.swift in Sources */,
-				0C79D05D0F5B192800FDB707 /* MemberPasswortZuruecksetzenView.swift in Sources */,
+				0C79D05D0F5B192800FDB801 /* MemberPasswortCodeView.swift in Sources */,
+				0C79D05D0F5B192800FDB802 /* MemberPasswortNeuView.swift in Sources */,
 				C54BE200B15088F10CE1DBE0 /* MemberRegistrierenView.swift in Sources */,
 				B43F29AF4430526E932E3952 /* MemberStudiosView.swift in Sources */,
 				A20E9991662F803A7FE958CD /* Messwert.swift in Sources */,

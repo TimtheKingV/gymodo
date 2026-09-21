@@ -15,6 +15,17 @@ enum DesignSystem {
         static let accent = SwiftUI.Color(hex: 0xD4FF3F)
         static let accentPressed = SwiftUI.Color(hex: 0xA8CC2A)
         static let onAccent = SwiftUI.Color(hex: 0x0A0B0D)
+        /// Die Hauptaktion, solange sie nicht ausloesbar ist. Grau las sich
+        /// wie "kaputt" und wie jede andere tote Flaeche im Screen; dieselbe
+        /// Farbfamilie ohne Signalkraft sagt stattdessen "dieser Knopf, nur
+        /// noch nicht" -- der Blick bleibt beim richtigen Ziel, auch bevor
+        /// das Formular vollstaendig ist (Testnotiz 21.09., Eintrag 1).
+        static let accentMuted = SwiftUI.Color(hex: 0x2E3716)
+        /// Schrift auf `accentMuted` und Platzhalter in Eingabefeldern --
+        /// der Akzent so weit heruntergedreht, dass er neben echtem Inhalt
+        /// nicht als solcher durchgeht. 4,4 : 1 auf `accentMuted`,
+        /// 6,3 : 1 auf `surface`.
+        static let accentDim = SwiftUI.Color(hex: 0x819B2A)
         static let warn = SwiftUI.Color(hex: 0xFFB020)
         static let danger = SwiftUI.Color(hex: 0xFF5A4E)
     }

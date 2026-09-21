@@ -31,7 +31,7 @@ struct MemberKeinStudioView: View {
 
                 Text("KEIN CODE ZUR HAND?").font(DesignSystem.Typography.label).foregroundStyle(DesignSystem.Color.textMuted)
                 LabeledField(label: "Studio-Code") {
-                    TextField("ABCD1234", text: $manualCode)
+                    TextField("", text: $manualCode, prompt: Text.platzhalter("ABCD1234"))
                         .textInputAutocapitalization(.characters)
                         .autocorrectionDisabled()
                         .focused($codeFokus)
