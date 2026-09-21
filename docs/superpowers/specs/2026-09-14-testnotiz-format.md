@@ -1,7 +1,9 @@
 # Testnotiz-Format — Spec
 
-**Stand:** 2026-09-14. **Version:** `gymodo.testnotiz/1`.
+**Stand:** 2026-09-21. **Version:** `gymodo.testnotiz/1`.
 **Umsetzung iOS:** `docs/superpowers/plans/2026-09-13-ios-testnotizen.md`.
+**Umsetzung Web:** `docs/superpowers/plans/2026-09-21-web-testnotizen.md`
+(Trainerportal, nur Dev-Server; Abschnitt „Web“ unten nennt die Abweichungen).
 **Verbindliches Beispiel:** `apps/ios-member/FitnessMemberTests/Fixtures/testnotiz-beispiel.json`
 (entsteht in Aufgabe 2 des Plans; der Test `TestnotizEintragTests` liest es).
 
@@ -9,8 +11,9 @@
 
 Wer die App am Gerät testet, hält Funde fest. Am Ende steht ein Ordner, den
 Claude Code ohne Rückfrage abarbeiten kann. Dieser Ordner ist ein Vertrag
-zwischen Plattformen: die iOS-App schreibt ihn heute, eine spätere
-Android-App schreibt ihn genauso, und ein Leser prüft beide mit einem Schema.
+zwischen Plattformen: die iOS-App schreibt ihn heute, das Trainerportal im
+Dev-Server schreibt ihn genauso, eine spätere Android-App ebenso, und ein
+Leser prüft alle mit einem Schema.
 
 ## Ordner
 
@@ -42,18 +45,18 @@ nie weggelassen. Zeitpunkte sind ISO 8601 mit Offset der Gerätezeitzone
 | Pfad | Typ | Bedeutung |
 | --- | --- | --- |
 | `format` | String | `gymodo.testnotiz/1`. Leser prüfen den String und lehnen Unbekanntes ab. |
-| `platform` | String | `ios` oder `android` |
+| `platform` | String | `ios`, `android` oder `web` |
 | `session.id` | String | Ordnername |
 | `session.startedAt` | Zeitpunkt | Anlage des Ordners, also der erste Eintrag |
 | `session.app` | Objekt | `bundleId`, `version`, `build`, `configuration` (immer `Debug`) |
-| `session.device` | Objekt | `model` (Hardware-Kennung wie `iPhone14,4`), `os` (`iOS 26.6.1`), `screen` (`width`, `height` in Punkten, `scale`) |
+| `session.device` | Objekt | `model` (Hardware-Kennung wie `iPhone14,4`, Web: Browser wie `Chrome 143`), `os` (`iOS 26.6.1`, Web: `macOS`), `screen` (`width`, `height` in Punkten bzw. CSS-Pixeln, `scale`) |
 | `entries[]` | Array | chronologisch |
 | `entries[].id` | UUID | |
 | `entries[].index` | Int | 1, 2, 3 … lückenlos, entspricht dem Dateipräfix |
 | `entries[].createdAt` | Zeitpunkt | Tipp auf den Knopf, nicht das Sichern |
 | `entries[].kind` | String | `crop`, `element` oder `note` |
 | `entries[].screen` | Objekt oder `null` | `null`, wenn sich kein Screen gemeldet hat |
-| `entries[].screen.name` | String | Dateiname ohne Endung |
+| `entries[].screen.name` | String | Dateiname ohne Endung; Web: das Routenmuster (`portal/[studioId]/geraete`), weil dort jede Seite `page.tsx` heißt |
 | `entries[].screen.file` | String | Repo-relativer Pfad der Quelldatei |
 | `entries[].screen.stack` | String[] | Sichtbare Ebenen von unten nach oben, als Dateipfade. Ein Push ersetzt die unterste Ebene; Sheets und Cover liegen darüber. Das ist **kein** Navigationsverlauf. |
 | `entries[].screen.context` | Objekt | String → String, z. B. `machineId`, `exerciseId`, `phase`, `sessionId` |
@@ -61,7 +64,7 @@ nie weggelassen. Zeitpunkte sind ISO 8601 mit Offset der Gerätezeitzone
 | `entries[].crop` | String oder `null` | Dateiname des Ausschnitts |
 | `entries[].cropRect` | Objekt oder `null` | `points` und `pixels`, je `x`, `y`, `width`, `height`. Pixel sind nach außen auf ganze Pixel gerundet und aufs Bild beschnitten. |
 | `entries[].element` | Objekt oder `null` | nur bei `kind = element`; `null`, wenn unter dem Finger nichts lag |
-| `entries[].element.source` | String | `accessibility` (iOS-Accessibility-Baum) oder `semantics` (Android-Semantics-Baum) |
+| `entries[].element.source` | String | `accessibility` (iOS-Accessibility-Baum), `semantics` (Android-Semantics-Baum) oder `dom` (Web) |
 | `entries[].element.identifier` | String oder `null` | Kennung im Code (`geraet.satz-sichern`); iOS: `accessibilityIdentifier`, Android: `testTag` |
 | `entries[].element.label` | String oder `null` | Was ein Screenreader vorliest |
 | `entries[].element.type` | String | Komponente aus dem Code (`PrimaryButton`), sonst die Rolle (`Button`, `Text`, `Adjustable`, `Header`, `Image`, `Link`) |
@@ -201,11 +204,52 @@ Regeln, die ein Leser voraussetzen darf:
 | Bilder | Ausschnitt vor Vollbild |
 | Protokoll | nur mit Zeilen, in `<details>`, je Zeile `HH:mm:ss level category — message` |
 
+## Web, seit 2026-09-21
+
+Das Trainerportal schreibt denselben Ordner — `apps/web/testnotizen/` —, und
+zwar der **Dev-Server**: der Browser schickt Bild und Notiz an
+`POST /api/testnotiz`, Node legt Ordner und Dateien an. Im Produktionsbau gibt
+es weder die Route noch die Oberfläche. Nichts muss übertragen werden, der
+Ordner liegt schon im Arbeitsverzeichnis.
+
+Dieselben Felder, drei Eigenheiten der Plattform:
+
+| Feld | Web |
+| --- | --- |
+| `platform` | `web` |
+| `session.app` | `bundleId` `gymodo.web.portal`, `version` aus `package.json`, `build` `dev`, `configuration` `Debug` (das Modul läuft nur im Entwicklungsbau) |
+| `session.device` | `model` ist der Browser (`Chrome 143`), `os` die Plattform (`macOS`), `screen` das Sichtfenster in CSS-Pixeln samt `devicePixelRatio` als `scale` |
+| `screen.name` | das Routenmuster ohne Klammergruppen: `portal/[studioId]/geraete/[modelId]` |
+| `screen.file` | die `page.tsx` der Route, aufgelöst aus dem Pfad — keine Seite trägt eine Markierung |
+| `screen.stack` | die Hüllen von außen nach innen, zuletzt die Seite: `app/layout.tsx`, `portal/layout.tsx`, …, `page.tsx` |
+| `screen.context` | die aufgelösten dynamischen Segmente (`studioId`, `modelId`) plus die Abfrage der URL |
+| `element.source` | `dom` |
+| `element.identifier` | `data-testnotiz`, sonst `data-testid`, sonst `id` |
+| `element.type` | der Name der React-Komponente, aus der das Element stammt; bei server-gerendertem Markup die Rolle (`button`, `input[type=number]`) |
+| `element.file`, `.line` | `null`, außer das Markup trägt `data-testnotiz-datei` und `-zeile`: React 19 führt keine Quellangabe mehr. Die Fundstelle steht stattdessen in `screen.file`. |
+| `element.frame` | in CSS-Pixeln |
+| `cropRect.points` | in CSS-Pixeln des Sichtfensters, `pixels` im Bild der Freigabe |
+| `runtime.pendingWrites` | immer `0` — das Portal schreibt unmittelbar gegen den Server |
+| `audio`, `transcript` | immer `null` |
+| `log[].category` | `console` (übernommene Konsolenzeile) oder `fehler` (unbehandelter Fehler, `level` `fault`) |
+
+Das Foto kommt aus der Bildschirmfreigabe des Tabs (`getDisplayMedia`), einmal
+je Sitzung freigegeben. Die Oberfläche des Moduls ist für die Aufnahme
+unsichtbar — Knopf und Menü stehen nie im Bild.
+
+**Datenschutz, zusätzlich:** anders als OSLog kennt die Konsole keine
+Kategorien, an denen sich Personendaten ausschließen ließen. Was das Portal in
+die Konsole schreibt, steht im Ordner. Der ist deshalb — wie der der App —
+gitignoriert.
+
 ## Versionierung
 
 Jede Änderung, die einen bestehenden Leser bricht, zählt `format` hoch
 (`/2`). Neue Felder mit `null` als Vorgabe brechen nichts und bleiben bei `/1`,
 wenn dieses Dokument und die Beispieldatei sie im selben Commit aufnehmen.
+Dasselbe gilt für neue Werte in `platform` und `element.source`: ein Leser
+prüft beide gegen die Liste dieses Dokuments, nicht gegen eine eigene —
+deshalb bleibt Web bei `/1`.
 
 ## Android, später
 

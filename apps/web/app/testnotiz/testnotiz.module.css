@@ -1,0 +1,273 @@
+/* Die Oberflaeche des Testnotiz-Moduls.
+   Entspricht dem Overlay-Fenster der iOS-App: in Ruhe laesst sie jeden Klick
+   zur Seite durch (pointer-events), in jedem anderen Modus faengt sie alles
+   -- so kann sich die Seite zwischen Foto und Sichern nicht mehr aendern. */
+
+.wurzel {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--text);
+}
+
+.fangend {
+  pointer-events: auto;
+}
+
+/* Knopf -------------------------------------------------------------- */
+
+.knopf {
+  position: fixed;
+  right: var(--s8);
+  width: 44px;
+  height: 44px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  box-shadow: var(--karte-schatten);
+  color: var(--accent);
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.knopf:active {
+  cursor: grabbing;
+}
+
+.zaehler {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+/* Menue -------------------------------------------------------------- */
+
+.schleier {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 11, 13, 0.5);
+}
+
+.menue {
+  position: absolute;
+  right: var(--s16);
+  bottom: var(--s16);
+  width: 280px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-raised);
+  box-shadow: var(--karte-schatten);
+  overflow: hidden;
+}
+
+.kopfzeile {
+  padding: var(--s12) var(--s16);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.zeile {
+  display: flex;
+  align-items: center;
+  gap: var(--s12);
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--s16);
+  border: none;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.zeile:hover {
+  background: var(--surface-hover);
+}
+
+.zeileLeise {
+  color: var(--text-muted);
+}
+
+.trenner {
+  height: 1px;
+  background: var(--line);
+}
+
+.fehler {
+  padding: 0 var(--s16) var(--s12);
+  color: var(--danger);
+  overflow-wrap: anywhere;
+}
+
+/* Auswahl ------------------------------------------------------------ */
+
+.auswahl {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+}
+
+.dunkel {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 11, 13, 0.45);
+}
+
+/* Das Loch im Schleier: der Rahmen selbst bleibt frei, der Schatten
+   uebernimmt die Abdunklung ringsum. */
+.rahmen {
+  position: absolute;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 9999px rgba(10, 11, 13, 0.45);
+  pointer-events: none;
+}
+
+.elementRahmen {
+  position: absolute;
+  border: 2px solid var(--accent);
+  background: rgba(212, 255, 63, 0.12);
+  pointer-events: none;
+}
+
+.hinweis {
+  position: absolute;
+  top: var(--s16);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--s8) var(--s16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  box-shadow: var(--karte-schatten);
+  pointer-events: none;
+}
+
+.abbrechen {
+  position: absolute;
+  top: var(--s16);
+  right: var(--s16);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* Blaetter ----------------------------------------------------------- */
+
+.blatt {
+  position: absolute;
+  right: var(--s16);
+  bottom: var(--s16);
+  width: 360px;
+  max-height: calc(100vh - 2 * var(--s16));
+  display: flex;
+  flex-direction: column;
+  gap: var(--s12);
+  padding: var(--s16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-raised);
+  box-shadow: var(--karte-schatten);
+  overflow-y: auto;
+}
+
+.blattTitel {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.leise {
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.vorschau {
+  max-height: 120px;
+  width: auto;
+  max-width: 100%;
+  align-self: flex-start;
+  border-radius: var(--r-control);
+  border: 1px solid var(--line);
+}
+
+.feld {
+  width: 100%;
+  min-height: 88px;
+  padding: var(--s12);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--well);
+  color: var(--text);
+  resize: vertical;
+}
+
+.knoepfe {
+  display: flex;
+  gap: var(--s8);
+}
+
+.haupt {
+  flex: 1;
+  min-height: 44px;
+  border: none;
+  border-radius: var(--r-control);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.haupt:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.zweit {
+  min-height: 44px;
+  padding: 0 var(--s16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.auftrag {
+  padding: var(--s12);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--well);
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
