@@ -1,19 +1,29 @@
-import { readdirSync } from "node:fs";
-import path from "node:path";
-
 /**
  * Welche Quelldatei zeigt gerade, was im Browser steht?
  *
  * Auf iOS meldet das ein Modifier an jeder Screen-Wurzel (`#filePath`). Im
  * App-Router steht dieselbe Angabe schon im Verzeichnisbaum: eine URL fuehrt
  * genau auf eine `page.tsx`, die Huellen darueber sind ihre Ebenen. Deshalb
- * traegt keine Seite eine Markierung -- die Zuordnung passiert beim Sichern
- * auf dem Server, aus dem Pfad.
+ * traegt keine Seite eine Markierung.
  *
- * Aufgeloest wird nur gegen das, was `readdir` liefert; aus einem Segment
- * wird nie ein Pfad gebaut. Ein `..` in der URL kann so nicht aus dem
- * App-Verzeichnis herausfuehren.
+ * Der Baum kommt als fertige Karte (`routenkarte.mjs`, zur Bauzeit gelesen
+ * und per DefinePlugin ins Buendel gelegt). Diese Datei rechnet nur noch:
+ * keine Dateisystemzugriffe, laeuft deshalb auch im Browser -- und der
+ * braucht sie, seit die Sitzung ohne Server auskommt.
+ *
+ * Aufgeloest wird nur gegen das, was in der Karte steht; aus einem Segment
+ * wird nie ein Pfad gebaut. Ein `..` in der URL kann so nichts erreichen.
  */
+
+import type { Screen } from "./format";
+
+export type Routenknoten = {
+  /** Repo-relativer Pfad der `page.tsx`, falls dieser Knoten eine Seite ist. */
+  seite?: string;
+  /** Repo-relativer Pfad der `layout.tsx`, falls dieser Knoten eine Huelle hat. */
+  huelle?: string;
+  kinder: Record<string, Routenknoten>;
+};
 
 export type Seitentreffer = {
   /** Repo-relativ, z. B. `apps/web/app/portal/[studioId]/(schreibtisch)/geraete/page.tsx`. */
@@ -26,55 +36,61 @@ export type Seitentreffer = {
   parameter: Record<string, string>;
 };
 
-const ENDUNGEN = [".tsx", ".ts", ".jsx", ".js"];
-
 type Zustand = {
-  verzeichnis: string;
+  knoten: Routenknoten;
   muster: string[];
   stapel: string[];
   parameter: Record<string, string>;
 };
 
-export function seiteFinden(
-  pfad: string,
-  optionen: { wurzel: string; praefix: string },
-): Seitentreffer | null {
-  const segmente = pfad.split("/").filter((teil) => teil.length > 0);
-  return suchen(
-    { verzeichnis: optionen.wurzel, muster: [], stapel: [], parameter: {} },
-    segmente,
-    optionen,
-  );
+/**
+ * Der `screen`-Teil eines Eintrags: die Quelldatei samt Ebenen, dazu als
+ * Kontext die aufgeloesten Segmente der Route, die Abfrage der URL und was
+ * der Aufrufer sonst noch mitgibt.
+ */
+export function screenBauen(
+  karte: Routenknoten | null,
+  ort: { pfad: string; suche?: string; kontext?: Record<string, string> },
+): Screen | null {
+  const treffer = seiteFinden(karte, ort.pfad);
+  if (!treffer) return null;
+
+  const context: Record<string, string> = { ...treffer.parameter };
+  for (const [schluessel, wert] of new URLSearchParams(ort.suche ?? "")) {
+    context[schluessel] = wert;
+  }
+  for (const [schluessel, wert] of Object.entries(ort.kontext ?? {})) {
+    context[schluessel] = wert;
+  }
+
+  return { name: treffer.name, file: treffer.datei, stack: treffer.stapel, context };
 }
 
-function suchen(
-  zustand: Zustand,
-  segmente: string[],
-  optionen: { wurzel: string; praefix: string },
-): Seitentreffer | null {
-  const eintraege = lesen(zustand.verzeichnis);
-  if (!eintraege) return null;
+export function seiteFinden(karte: Routenknoten | null, pfad: string): Seitentreffer | null {
+  if (!karte) return null;
+  const segmente = pfad.split("/").filter((teil) => teil.length > 0);
+  return suchen({ knoten: karte, muster: [], stapel: [], parameter: {} }, segmente);
+}
 
-  const stapel = [...zustand.stapel];
-  const huelle = datei(eintraege, "layout");
-  if (huelle) stapel.push(relativ(path.join(zustand.verzeichnis, huelle), optionen));
-
-  const gruppen = eintraege.filter((name) => name.startsWith("(") && name.endsWith(")"));
+function suchen(zustand: Zustand, segmente: string[]): Seitentreffer | null {
+  const stapel = zustand.knoten.huelle ? [...zustand.stapel, zustand.knoten.huelle] : zustand.stapel;
+  const namen = Object.keys(zustand.knoten.kinder);
+  const gruppen = namen.filter((name) => name.startsWith("(") && name.endsWith(")"));
 
   if (segmente.length === 0) {
-    const seite = datei(eintraege, "page");
+    const seite = zustand.knoten.seite;
     if (seite) {
       return {
-        datei: relativ(path.join(zustand.verzeichnis, seite), optionen),
+        datei: seite,
         name: zustand.muster.length > 0 ? zustand.muster.join("/") : "start",
-        stapel: [...stapel, relativ(path.join(zustand.verzeichnis, seite), optionen)],
+        stapel: [...stapel, seite],
         parameter: zustand.parameter,
       };
     }
     // Eine Gruppe traegt keine eigene URL-Ebene: /portal/s_1 liegt in
     // (schreibtisch), die Seite steht also erst eine Ebene tiefer.
     return ersterTreffer(gruppen, (gruppe) =>
-      suchen({ ...zustand, verzeichnis: path.join(zustand.verzeichnis, gruppe), stapel }, [], optionen),
+      suchen({ ...zustand, knoten: kind(zustand, gruppe), stapel }, []),
     );
   }
 
@@ -84,55 +100,55 @@ function suchen(
 
   // Reihenfolge wie im Router: woertlich schlaegt Gruppe schlaegt dynamisch
   // schlaegt Sammelsegment.
-  const woertlich = eintraege.find((name) => name === segment && istVerzeichnis(zustand.verzeichnis, name));
-  if (woertlich) {
+  if (!segment.startsWith("(") && namen.includes(segment)) {
     const treffer = suchen(
       {
-        verzeichnis: path.join(zustand.verzeichnis, woertlich),
-        muster: [...zustand.muster, woertlich],
+        knoten: kind(zustand, segment),
+        muster: [...zustand.muster, segment],
         stapel,
         parameter: zustand.parameter,
       },
       rest,
-      optionen,
     );
     if (treffer) return treffer;
   }
 
   const ausGruppe = ersterTreffer(gruppen, (gruppe) =>
-    suchen({ ...zustand, verzeichnis: path.join(zustand.verzeichnis, gruppe), stapel }, segmente, optionen),
+    suchen({ ...zustand, knoten: kind(zustand, gruppe), stapel }, segmente),
   );
   if (ausGruppe) return ausGruppe;
 
-  const dynamisch = eintraege.filter((name) => /^\[[^.\]]+\]$/.test(name));
+  const dynamisch = namen.filter((name) => /^\[[^.\]]+\]$/.test(name));
   const ausDynamisch = ersterTreffer(dynamisch, (name) =>
     suchen(
       {
-        verzeichnis: path.join(zustand.verzeichnis, name),
+        knoten: kind(zustand, name),
         muster: [...zustand.muster, name],
         stapel,
         parameter: { ...zustand.parameter, [name.slice(1, -1)]: segment },
       },
       rest,
-      optionen,
     ),
   );
   if (ausDynamisch) return ausDynamisch;
 
-  const sammel = eintraege.filter((name) => /^\[\[?\.\.\..+?\]\]?$/.test(name));
+  const sammel = namen.filter((name) => /^\[\[?\.\.\..+?\]\]?$/.test(name));
   return ersterTreffer(sammel, (name) => {
     const schluessel = name.replace(/^\[+\.\.\./, "").replace(/\]+$/, "");
     return suchen(
       {
-        verzeichnis: path.join(zustand.verzeichnis, name),
+        knoten: kind(zustand, name),
         muster: [...zustand.muster, name],
         stapel,
         parameter: { ...zustand.parameter, [schluessel]: segmente.join("/") },
       },
       [],
-      optionen,
     );
   });
+}
+
+function kind(zustand: Zustand, name: string): Routenknoten {
+  return zustand.knoten.kinder[name] ?? { kinder: {} };
 }
 
 function ersterTreffer<T>(werte: T[], versuch: (wert: T) => Seitentreffer | null): Seitentreffer | null {
@@ -141,29 +157,4 @@ function ersterTreffer<T>(werte: T[], versuch: (wert: T) => Seitentreffer | null
     if (treffer) return treffer;
   }
   return null;
-}
-
-function lesen(verzeichnis: string): string[] | null {
-  try {
-    return readdirSync(verzeichnis);
-  } catch {
-    return null;
-  }
-}
-
-function istVerzeichnis(elternteil: string, name: string): boolean {
-  try {
-    return readdirSync(path.join(elternteil, name)) !== null;
-  } catch {
-    return false;
-  }
-}
-
-function datei(eintraege: string[], basis: string): string | undefined {
-  return ENDUNGEN.map((endung) => `${basis}${endung}`).find((name) => eintraege.includes(name));
-}
-
-function relativ(absolut: string, optionen: { wurzel: string; praefix: string }): string {
-  const teil = path.relative(optionen.wurzel, absolut).split(path.sep).join("/");
-  return `${optionen.praefix}/${teil}`;
 }

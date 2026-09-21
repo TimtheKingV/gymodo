@@ -25,6 +25,8 @@ export function mitteY(gewuenscht: number, hoehe: number): number {
 export function TestnotizKnopf({ anzahl, beiKlick }: { anzahl: number; beiKlick: () => void }) {
   const [y, setY] = useState<number | null>(null);
   const zug = useRef<{ zeiger: number; start: number; mitte: number } | null>(null);
+  /** Ein Zug endet auch in einem Klick -- der darf das Menue nicht oeffnen. */
+  const gezogen = useRef(false);
 
   useEffect(() => {
     const gemerkt = Number(window.localStorage.getItem(SCHLUESSEL));
@@ -43,22 +45,31 @@ export function TestnotizKnopf({ anzahl, beiKlick }: { anzahl: number; beiKlick:
       onPointerDown={(ereignis) => {
         ereignis.currentTarget.setPointerCapture(ereignis.pointerId);
         zug.current = { zeiger: ereignis.pointerId, start: ereignis.clientY, mitte: y };
+        gezogen.current = false;
       }}
       onPointerMove={(ereignis) => {
         if (zug.current?.zeiger !== ereignis.pointerId) return;
         const weg = ereignis.clientY - zug.current.start;
-        if (!istKlick(weg)) setY(mitteY(zug.current.mitte + weg, window.innerHeight));
+        if (istKlick(weg)) return;
+        gezogen.current = true;
+        setY(mitteY(zug.current.mitte + weg, window.innerHeight));
       }}
       onPointerUp={(ereignis) => {
         const lauf = zug.current;
         zug.current = null;
         if (lauf?.zeiger !== ereignis.pointerId) return;
-        if (istKlick(ereignis.clientY - lauf.start)) {
-          setY(lauf.mitte);
-          beiKlick();
-        } else {
-          window.localStorage.setItem(SCHLUESSEL, String(y));
+        if (gezogen.current) window.localStorage.setItem(SCHLUESSEL, String(y));
+        else setY(lauf.mitte);
+      }}
+      // Das Oeffnen haengt am Klick, nicht am Zeiger: ein Fingertipp am Handy
+      // erzeugt nicht verlaesslich ein pointerup am Knopf (gemessen), und mit
+      // der Tastatur gaebe es ueberhaupt keines. Der Zug unterdrueckt ihn.
+      onClick={() => {
+        if (gezogen.current) {
+          gezogen.current = false;
+          return;
         }
+        beiKlick();
       }}
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">

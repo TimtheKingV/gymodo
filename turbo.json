@@ -6,7 +6,18 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
-      "env": ["APPLE_TEAM_ID", "APPLE_BUNDLE_ID", "SUPABASE_URL", "SUPABASE_ANON_KEY"]
+      "env": [
+        "APPLE_TEAM_ID",
+        "APPLE_BUNDLE_ID",
+        "SUPABASE_URL",
+        "SUPABASE_ANON_KEY",
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "NEXT_PUBLIC_TESTNOTIZ",
+        "NEXT_PUBLIC_VERCEL_ENV",
+        "NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF",
+        "NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA"
+      ]
     }
   }
 }
