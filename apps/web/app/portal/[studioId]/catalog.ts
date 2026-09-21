@@ -5,6 +5,7 @@ import {
   PHOTO_BUCKET,
   MEDIA_URL_TTL_SECONDS,
   getStudioCatalog,
+  istAuthAusfall,
   listStudioMembers,
   signMediaUrls,
   type StudioCatalog,
@@ -24,16 +25,37 @@ export type PortalCatalog = StudioCatalog & {
 
 export const ladeKatalog = cache(async (studioId: string): Promise<PortalCatalog> => {
   const client = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await client.auth.getUser();
-  if (!user) redirect("/login");
+  // Ein Ausfall des Auth-Dienstes ist keine Aussage darueber, ob jemand
+  // angemeldet ist. Ohne diese Unterscheidung landete ein 429, ein 5xx oder
+  // ein abgerissener Aufruf als Sprung zum Login -- lautlos, ohne eine
+  // Zeile im Protokoll, und von aussen nicht von einer abgelaufenen Sitzung
+  // zu unterscheiden (derselbe Schnitt wie in PR #17). Ein ungueltiges oder
+  // fehlendes Token bleibt, was es war: zum Login.
+  const { data, error } = await client.auth.getUser();
+  if (istAuthAusfall(error)) {
+    console.error("Portal: Anmeldung liess sich nicht pruefen:", error);
+    throw error;
+  }
+  if (!data.user) redirect("/login");
 
   let katalog: StudioCatalog;
   try {
     katalog = await getStudioCatalog(client, studioId);
   } catch (fehler) {
-    if (fehler instanceof DomainError) notFound();
+    // Nur "es gibt dieses Studio nicht" ist eine 404. Bis hierher fiel JEDER
+    // DomainError auf notFound() -- ein Ausfall der Datenbank und eine
+    // ungeprueft gebliebene Anmeldung lasen sich damit wortgleich als
+    // "diese Seite gibt es nicht", und zwar ohne eine einzige Zeile im
+    // Serverprotokoll. Genau dieser Weg macht einen Ausfall in der CI
+    // unsichtbar: die Seite steht da, nur eben die falsche.
+    if (fehler instanceof DomainError && fehler.code === "not_found") notFound();
+    if (fehler instanceof DomainError && fehler.code === "unauthorized") {
+      console.error("Portal: Katalog ohne gueltige Anmeldung:", fehler.message);
+      redirect("/login");
+    }
+    if (fehler instanceof DomainError) {
+      console.error(`Portal: Katalog nicht ladbar (${fehler.code}):`, fehler.message);
+    }
     throw fehler;
   }
 

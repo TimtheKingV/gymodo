@@ -13,6 +13,7 @@ export {
   toBlocks,
 } from "./progression.js";
 export { DomainError } from "./errors.js";
+export { istAuthAusfall } from "./auth.js";
 export {
   MAX_PHOTO_BYTES,
   MAX_VIDEO_BYTES,

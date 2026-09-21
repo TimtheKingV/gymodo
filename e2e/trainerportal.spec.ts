@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { auswaehlen } from "./helpers/auswahl";
+import { seitenBefund } from "./helpers/befund";
 import { E2E_PASSWORD, anmelden } from "./helpers/login";
 import { radWaehlen } from "./helpers/rad";
 import { tagAnlegen } from "../tests/helpers/tags";
@@ -153,7 +154,28 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   // Anlegen fuehrt zum Angelegten: der Schreibtisch blieb frueher auf der
   // Liste stehen, und das neue Modell war eine Zeile unter anderen. Kein
   // Klick auf "Bearbeiten" mehr -- die Weiterleitung IST der Befund.
-  await expect(page.getByRole("heading", { name: "Latzug" })).toBeVisible();
+  //
+  // Der Abzug im Fehlerfall ist hier nicht Luxus, sondern die Lehre aus drei
+  // roten Laeufen (35424679953, 35534606330, 35574620070): genau diese
+  // Zusicherung fiel, und im Protokoll stand nichts weiter als "element(s)
+  // not found" -- keine Adresse, keine Meldung, keine Seite. Ob das Formular
+  // gar nicht abgeschickt wurde, ob die Aktion widersprochen hat oder ob die
+  // Weiterleitung auf einer 404 landete, war nicht zu unterscheiden.
+  try {
+    await expect(page.getByRole("heading", { name: "Latzug" })).toBeVisible();
+  } catch {
+    throw await seitenBefund(
+      page,
+      "Modell nicht angelegt: nach \"Modell anlegen\" steht keine Ueberschrift \"Latzug\".",
+    );
+  }
+
+  // Und die Raeder haben getragen, was der Test in sie gescrollt hat. Ohne
+  // diese Zeile faellt ein verlorener Scroll nicht auf: das Formular schickt
+  // dann klaglos seine Startwerte (Schritt 2,5, ab 0, kein Anschlag) ab, das
+  // Modell entsteht, die Weiterleitung kommt -- und der Test haelt eine
+  // Auswahl fuer geprueft, die nie angekommen ist.
+  await expect(page.getByText("Schritt 2,5 kg · ab 5,0 kg bis 100,0 kg")).toBeVisible();
 
   // Und die Seite sagt, was als Naechstes fehlt, statt vier Nullen in der
   // Reiterleiste zu zeigen. Das Foto steht oben, weil ohne es niemand das
@@ -217,21 +239,9 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   const einstellungen = page.getByRole("list", { name: "Einstellungen am Modell" });
   const zeilen = await einstellungen.getByRole("listitem").count();
   if (zeilen === 0) {
-    // Der Abzug kommt in die Fehlermeldung, weil die error-context.md im
-    // Artefakt aus der Arbeitsumgebung nicht ladbar ist (Egress-Policy).
-    // Ohne die option-Zeilen: die beiden Raeder tragen je 200 Werte, und
-    // 400 Zeilen Rauschen verdecken die Auskunft.
-    const meldungen = page.getByRole("alert");
-    const abzug = (await page.getByRole("main").ariaSnapshot())
-      .split("\n")
-      .filter((zeile) => !/^\s*- option "/.test(zeile))
-      .join("\n");
-    throw new Error(
-      [
-        "Einstellung nicht angelegt: die Liste ist leer, nachdem die Aktion geantwortet hat.",
-        `Meldungen (${await meldungen.count()}): ${JSON.stringify(await meldungen.allInnerTexts())}`,
-        `Seite:\n${abzug}`,
-      ].join("\n"),
+    throw await seitenBefund(
+      page,
+      "Einstellung nicht angelegt: die Liste ist leer, nachdem die Aktion geantwortet hat.",
     );
   }
 
