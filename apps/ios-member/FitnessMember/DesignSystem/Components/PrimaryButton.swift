@@ -24,7 +24,7 @@ struct PrimaryButton: View {
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 64)
-                .foregroundStyle(isEnabled ? DesignSystem.Color.onAccent : DesignSystem.Color.textFaint)
+                .foregroundStyle(isEnabled ? DesignSystem.Color.onAccent : DesignSystem.Color.accentDim)
             }
             .buttonStyle(HauptaktionButtonStyle(isEnabled: isEnabled))
             .disabled(!isEnabled || isLoading)

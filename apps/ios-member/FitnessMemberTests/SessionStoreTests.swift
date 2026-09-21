@@ -182,6 +182,56 @@ struct SessionStoreTests {
         #expect(aufgerufen == false)
     }
 
+    @Test("verifyPasswordResetCode meldet noch niemanden an")
+    func verifyPasswordResetCodeHoldsSessionBack() async throws {
+        let backend = FakeAuthBackend()
+        await backend.setBehavior(.succeed(testSession))
+        let store = SessionStore(backend: backend)
+        try await store.verifyPasswordResetCode(email: "lena@example.de", code: "123456")
+        // Waere sie hier veroeffentlicht, schaltete die Wurzel sofort auf
+        // Home um -- mitten im Fluss, das neue Passwort noch ungesetzt.
+        #expect(store.session == nil)
+    }
+
+    @Test("completePasswordReset setzt das Passwort und gibt die Session frei")
+    func completePasswordResetPublishesSession() async throws {
+        let backend = FakeAuthBackend()
+        await backend.setBehavior(.succeed(testSession))
+        let store = SessionStore(backend: backend)
+        try await store.verifyPasswordResetCode(email: "lena@example.de", code: "123456")
+        try await store.completePasswordReset(newPassword: "neuesPasswort1")
+        #expect(await backend.updatePasswordCalls == ["neuesPasswort1"])
+        #expect(store.session == testSession)
+    }
+
+    @Test("completePasswordReset ohne geprueften Code schlaegt fehl")
+    func completePasswordResetNeedsVerifiedCode() async {
+        let backend = FakeAuthBackend()
+        await backend.setBehavior(.succeed(testSession))
+        let store = SessionStore(backend: backend)
+        await #expect(throws: AuthError.unknown) {
+            try await store.completePasswordReset(newPassword: "neuesPasswort1")
+        }
+        #expect(await backend.updatePasswordCalls.isEmpty)
+        #expect(store.session == nil)
+    }
+
+    @Test("cancelPasswordReset verwirft die halbe Wiederherstellung im Backend")
+    func cancelPasswordResetSignsOut() async throws {
+        let backend = FakeAuthBackend()
+        await backend.setBehavior(.succeed(testSession))
+        let store = SessionStore(backend: backend)
+        try await store.verifyPasswordResetCode(email: "lena@example.de", code: "123456")
+        await store.cancelPasswordReset()
+        // Sonst meldete der naechste Kaltstart jemanden an, der nie ein
+        // Passwort gesetzt hat -- der Code aus der Mail ist die Erlaubnis,
+        // eines zu setzen, keine dauerhafte Anmeldung.
+        #expect(await backend.currentSession() == nil)
+        await #expect(throws: AuthError.unknown) {
+            try await store.completePasswordReset(newPassword: "neuesPasswort1")
+        }
+    }
+
     @Test("changePassword meldet aktuelles Passwort falsch als eigenen Fehler")
     func changePasswordWrongCurrent() async {
         let backend = FakeAuthBackend()
