@@ -486,6 +486,6 @@ Zusätzlich zu den mechanisch angepassten Bestandstests:
 
 ## 14. Nächste Schritte
 
-1. Umsetzungspläne in drei Schnitten: (a) Migration + Domain + Integrationstests (`2026-09-22-cardio-schnitt1-datenmodell-domain.md`, umgesetzt), (b) Portal, (c) iOS. Schnitt (a) ist **baubar** ohne (b) und (c), aber nicht allein **deploybar**: die API-Antworten tragen neue Feldnamen, die die heutige App als Pflichtfelder unter den alten Namen erwartet. Live gehen (a) und (c) gemeinsam, als ein TestFlight-Schnitt vor dem Pilot; (b) kann davor oder danach.
+1. Umsetzungspläne in drei Schnitten: (a) Migration + Domain + Integrationstests (`2026-09-22-cardio-schnitt1-datenmodell-domain.md`, umgesetzt), (b) Portal (`2026-09-22-cardio-schnitt2-portal.md`, umgesetzt), (c) iOS. Schnitt (a) ist **baubar** ohne (b) und (c), aber nicht allein **deploybar**: die API-Antworten tragen neue Feldnamen, die die heutige App als Pflichtfelder unter den alten Namen erwartet. Live gehen (a) und (c) gemeinsam, als ein TestFlight-Schnitt vor dem Pilot; (b) kann davor oder danach.
 2. Artboard-Nachtrag für die vier Portal-Screens (je ein Auswahlfeld).
 3. Fachliche Prüfung der Cardio-Schwellen vor dem Pilot (Offener Punkt 3).
