@@ -6,7 +6,7 @@ import { MAX_PHOTO_BYTES } from "@fitretro/domain/media";
 import { modellAnlegen } from "../../actions";
 import { Feld } from "../../../../Form";
 import { FotoFeld } from "../../../../bausteine/FotoFeld";
-import { ModellGewichtRad } from "../../../../bausteine/ModellGewichtRad";
+import { ModellBelastungRad } from "../../../../bausteine/ModellBelastungRad";
 import styles from "../../halle.module.css";
 import portalStyles from "../../../../portal.module.css";
 
@@ -14,9 +14,11 @@ import portalStyles from "../../../../portal.module.css";
  * Bewusst knapp: Foto, Name, Hersteller, Schrittweite, Spanne. Alles Weitere
  * bleibt Schreibtisch (Entscheidung 6).
  *
- * Schrittweite/Minimum/Maximum kommen als Rad (ModellGewichtRad, gross) --
- * ersetzt die vormalige Chip-Reihe fuer die Schrittweite und die getippten
- * Ab/Bis-Felder, gleicher Stil wie bei den Einstellungen.
+ * Kategorie, Belastung, Rastung und Nebenbelastung kommen aus
+ * ModellBelastungRad (gross) -- ersetzt die vormalige Chip-Reihe fuer die
+ * Schrittweite und die getippten Ab/Bis-Felder, gleicher Stil wie bei den
+ * Einstellungen. Ein Kraftgeraet braucht die beiden Auswahlfelder nicht
+ * anzufassen.
  *
  * Das Foto kommt ueber capture aus der Systemkamera und nicht aus einem
  * eigenen Sucher: dieselbe Bedienung, vom Betriebssystem gestellt, und
@@ -80,7 +82,7 @@ export function ModellNeuFormular({ studioId }: { studioId: string }) {
         placeholder="Technogym"
       />
 
-      <ModellGewichtRad gross />
+      <ModellBelastungRad gross />
       <p className={styles.notiz}>
         Die Schrittweite kommt von den Platten am Gerät. Sie rastet später das
         Rad des Mitglieds — ein Wert, den das Gerät nicht kann, wird damit

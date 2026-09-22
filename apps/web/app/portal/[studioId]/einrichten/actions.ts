@@ -15,6 +15,7 @@ import {
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { belastungAusFormular } from "../../formfelder";
 import type { Befund } from "./befund";
 
 /**
@@ -92,9 +93,9 @@ export async function modellAnlegen(
       studioId,
       name: text(formData, "name"),
       manufacturer: optionalerText(formData, "manufacturer"),
+      ...belastungAusFormular(formData),
       loadStep: zahl(formData, "loadStep") ?? Number.NaN,
       loadMin: zahl(formData, "loadMin") ?? 0,
-      loadMax: zahl(formData, "loadMax") ?? null,
     });
     modelId = modell.id;
   } catch (fehler) {
