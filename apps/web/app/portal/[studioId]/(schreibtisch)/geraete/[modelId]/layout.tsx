@@ -1,4 +1,5 @@
 import { formatLoad } from "@fitretro/domain/belastung";
+import { EINHEIT_ANZEIGE, KATEGORIE_OPTIONEN } from "../../../../bausteine/einstellungVorschlaege";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ladeKatalog } from "../../../catalog";
@@ -52,9 +53,18 @@ export default async function ModellLayout({
         <div style={{ minWidth: 0 }}>
           <h1 className={styles.pageTitle}>{modell.name}</h1>
           <p className={styles.pageLead}>
+            {KATEGORIE_OPTIONEN.find((o) => o.wert === modell.category)?.anzeige}
+            {" · "}
             {modell.manufacturer ?? "Ohne Herstellerangabe"} · Schritt{" "}
             {formatLoad(modell.loadStep, modell.loadUnit)} · ab {formatLoad(modell.loadMin, modell.loadUnit)}
             {modell.loadMax === null ? "" : ` bis ${formatLoad(modell.loadMax, modell.loadUnit)}`}
+            {modell.secondaryUnit !== null &&
+            modell.secondaryMin !== null &&
+            modell.secondaryStep !== null
+              ? ` · Nebenbelastung ${EINHEIT_ANZEIGE[modell.secondaryUnit]}, ${formatLoad(modell.secondaryMin, modell.secondaryUnit)}${
+                  modell.secondaryMax === null ? "" : ` bis ${formatLoad(modell.secondaryMax, modell.secondaryUnit)}`
+                }, Schritt ${formatLoad(modell.secondaryStep, modell.secondaryUnit)}`
+              : ""}
           </p>
         </div>
       </div>
