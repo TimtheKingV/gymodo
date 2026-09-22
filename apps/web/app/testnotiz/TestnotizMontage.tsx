@@ -1,5 +1,5 @@
+import { cookies } from "next/headers";
 import dynamic from "next/dynamic";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 /**
  * Der eine Ort, an dem das Modul in die Seite kommt (`app/portal/layout.tsx`).
@@ -31,13 +31,24 @@ const Oberflaeche =
 
 export async function TestnotizMontage() {
   if (!Oberflaeche) return null;
+  return <Oberflaeche angemeldet={await angemeldet()} />;
+}
 
-  // Nur ja/nein, nie E-Mail oder Name: der Ordner traegt keine Personendaten
-  // (Spec, Abschnitt Datenschutz).
-  const client = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await client.auth.getUser();
-
-  return <Oberflaeche angemeldet={user !== null} />;
+/**
+ * Nur ja/nein, nie E-Mail oder Name: der Ordner traegt keine Personendaten
+ * (Spec, Abschnitt Datenschutz).
+ *
+ * Und bewusst ohne Supabase-Client: der braeuchte SUPABASE_URL und
+ * SUPABASE_ANON_KEY und wuerde ohne sie werfen -- ein Debug-Werkzeug darf
+ * keine Seite mitnehmen, wenn eine Umgebung unvollstaendig konfiguriert ist
+ * (gesehen in einer Vorschau, 2026-09-22). Der Keks des Anmeldediensts
+ * beantwortet die Frage ohne Netz und ohne Konfiguration.
+ */
+async function angemeldet(): Promise<boolean> {
+  try {
+    const kekse = await cookies();
+    return kekse.getAll().some((keks) => /^sb-.+-auth-token(\.\d+)?$/.test(keks.name));
+  } catch {
+    return false;
+  }
 }
