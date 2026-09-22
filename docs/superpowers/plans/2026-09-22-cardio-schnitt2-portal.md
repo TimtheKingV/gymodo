@@ -71,7 +71,8 @@
 ## Stand nach der Umsetzung (22. September)
 
 - Web-Unit-Tests: 106 grün (vorher 95), neu `formfelder` (8), `ModellBelastungRad` (4), `UebungUmfangRad` (3). `pnpm typecheck` grün.
-- **Nicht ausgeführt:** `pnpm test:integration` und `pnpm test:e2e`. In der Cloud-Umgebung dieser Session lässt sich Docker zwar starten, aber die Netzwerkrichtlinie weist die Image-Downloads aller drei Registries (Docker Hub, ECR, GHCR) mit 403 ab; ohne Images kein `supabase start`. Beides gehört in den ersten lokalen Lauf: `supabase db reset && pnpm test:integration && pnpm test:e2e`. Die bestehenden E2E-Schritte wurden gegen die geänderten Texte und Rad-Beschriftungen gegengelesen (Substring-Matches, Beschriftungen unverändert).
+- **Nachtrag:** Die CI von PR #25 (Run 35755418877 auf 0f82b4f) hat beides ausgeführt: Integration 659 grün, E2E 103 von 103 grün, nach zwei Seed-Korrekturen (siehe Schnitt-1-Plan). Der folgende Absatz beschreibt den Stand davor.
+- **Nicht in der Cloud-Session ausführbar:** `pnpm test:integration` und `pnpm test:e2e`. In der Cloud-Umgebung dieser Session lässt sich Docker zwar starten, aber die Netzwerkrichtlinie weist die Image-Downloads aller drei Registries (Docker Hub, ECR, GHCR) mit 403 ab; ohne Images kein `supabase start`. Beides gehört in den ersten lokalen Lauf: `supabase db reset && pnpm test:integration && pnpm test:e2e`. Die bestehenden E2E-Schritte wurden gegen die geänderten Texte und Rad-Beschriftungen gegengelesen (Substring-Matches, Beschriftungen unverändert).
 - Deploy-Hinweis aus Schnitt 1 gilt weiter: Datenbank, API und Portal gehen zusammen mit Schnitt 3 (iOS) live.
 
 ## Was dieser Schnitt NICHT tut

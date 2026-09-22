@@ -223,7 +223,7 @@ Keine neue Oberfläche. Formularfelder heißen `loadMin/loadMax/loadStep` und `t
 - Domain: 219 Tests grün (vorher 167), davon 44 Progressionsfälle doppelt über Beinpresse und Ergometer, 14 in `belastung`, 4 im Wächter.
 - `pnpm typecheck` grün über Domain, Web, Tests und E2E.
 - **Nicht allein deployen.** Die API-Antworten (Bootstrap, Gerätekontext, Sessions, Progress, Abschluss) tragen jetzt `load`/`volume`/`loadStep` usw.; die iOS-DTOs verlangen `weightKg`/`reps`/`weightStepKg` als Pflichtfelder und würden nicht mehr dekodieren. Der Alias im Satz-PUT hilft nur der Offline-Warteschlange. Migration 0045 und dieser Stand gehen zusammen mit Schnitt 3 (iOS) live; die Spec (Abschnitte 6 und 14) sagt das jetzt so.
-- Offen: `pnpm test:integration` gegen ein lokales Supabase, und danach `pnpm test:e2e` für das Portal (Formularfelder heißen jetzt `loadMin/loadMax/loadStep` und `targetMin/targetMax`; die Labels und der Text „Schritt 2,5 kg · ab 5,0 kg bis 100,0 kg" sind unverändert).
+- **CI-Lauf (PR #25, Run 35755418877 auf 0f82b4f): Integration 659 Tests grün, E2E 103 von 103 grün.** Zwei Seed-Fehler auf dem Weg dorthin (Bulk-Insert gab Kraftmodellen `null` statt Default; E2E-Seeds noch mit `weight_step_kg`), beide in b3ba3b0 und 0f82b4f behoben. Damit erledigt: `pnpm test:integration` und `pnpm test:e2e` für das Portal (Formularfelder heißen jetzt `loadMin/loadMax/loadStep` und `targetMin/targetMax`; die Labels und der Text „Schritt 2,5 kg · ab 5,0 kg bis 100,0 kg" sind unverändert).
 
 ## Was dieser Schnitt NICHT tut
 
