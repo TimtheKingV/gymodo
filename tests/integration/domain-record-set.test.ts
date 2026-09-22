@@ -51,30 +51,40 @@ beforeAll(async () => {
     .insert([
       { studio_id: studioA, name: "Beinpresse", load_step: 2.5 },
       { studio_id: studioB, name: "Fremdpresse", load_step: 2.5 },
-      // Laufband mit Neigung als Nebenbelastung (Cardio-Spec 3.1b).
-      {
-        studio_id: studioA,
-        name: "Laufband",
-        category: "cardio",
-        load_unit: "kmh",
-        load_step: 0.5,
-        load_min: 0,
-        load_max: 20,
-        secondary_unit: "pct",
-        secondary_step: 0.5,
-        secondary_min: 0,
-        secondary_max: 15,
-      },
     ])
     .select("id");
   if (modelError) throw modelError;
+
+  // Laufband mit Neigung als Nebenbelastung (Cardio-Spec 3.1b) -- als
+  // eigener Insert, nicht in der Liste oben: ein Bulk-Insert vereinheitlicht
+  // die Spalten aller Zeilen, und die Kraftmodelle bekaemen fuer category,
+  // load_unit und load_min ein ausdrueckliches null statt des Defaults
+  // (CI-Lauf 35753939999: "null value in column load_min").
+  const { data: laufbandModell, error: laufbandModellError } = await admin
+    .from("equipment_models")
+    .insert({
+      studio_id: studioA,
+      name: "Laufband",
+      category: "cardio",
+      load_unit: "kmh",
+      load_step: 0.5,
+      load_min: 0,
+      load_max: 20,
+      secondary_unit: "pct",
+      secondary_step: 0.5,
+      secondary_min: 0,
+      secondary_max: 15,
+    })
+    .select("id")
+    .single();
+  if (laufbandModellError) throw laufbandModellError;
 
   const { data: machines, error: machineError } = await admin
     .from("machines")
     .insert([
       { studio_id: studioA, equipment_model_id: models[0]!.id, label: "07" },
       { studio_id: studioB, equipment_model_id: models[1]!.id, label: "99" },
-      { studio_id: studioA, equipment_model_id: models[2]!.id, label: "L1" },
+      { studio_id: studioA, equipment_model_id: laufbandModell.id, label: "L1" },
     ])
     .select("id");
   if (machineError) throw machineError;
@@ -97,19 +107,27 @@ beforeAll(async () => {
         target_min: 8,
         target_max: 12,
       },
-      {
-        studio_id: studioA,
-        name: "Dauerlauf",
-        volume_kind: "seconds",
-        target_min: 900,
-        target_max: 1200,
-      },
     ])
     .select("id");
   if (exerciseError) throw exerciseError;
   exerciseA = exercises[0]!.id;
   exerciseB = exercises[1]!.id;
-  dauerlauf = exercises[2]!.id;
+
+  // Eigener Insert aus demselben Grund wie beim Laufband: volume_kind
+  // wuerde den Kraftuebungen sonst als null mitgegeben.
+  const { data: dauerlaufZeile, error: dauerlaufError } = await admin
+    .from("exercises")
+    .insert({
+      studio_id: studioA,
+      name: "Dauerlauf",
+      volume_kind: "seconds",
+      target_min: 900,
+      target_max: 1200,
+    })
+    .select("id")
+    .single();
+  if (dauerlaufError) throw dauerlaufError;
+  dauerlauf = dauerlaufZeile.id;
 });
 
 function payload(overrides: Record<string, unknown> = {}) {
