@@ -1,6 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireUserId } from "./auth.js";
+import {
+  MAX_VOLUME,
+  snapToStep,
+  volumeZuGross,
+  type LoadUnit,
+  type VolumeKind,
+} from "./belastung.js";
 import { DomainError } from "./errors.js";
 import {
   gespeicherteVorschlaege,
@@ -18,21 +25,51 @@ export const problemReasonSchema = z.enum([
 export type ProblemReason = z.infer<typeof problemReasonSchema>;
 
 /**
+ * Alte Feldnamen fuer EINEN Release annehmen.
+ *
+ * `PendingWriteStore` auf einem Geraet, das vor dem App-Update offline
+ * trainiert hat, schickt seine Saetze noch als weightKg/reps. Ohne diesen
+ * Alias gingen genau die Saetze verloren, die das Mitglied am laengsten
+ * mit sich herumtraegt. Der Alias faellt mit dem uebernaechsten Release
+ * (Cardio-Spec Abschnitt 5.1); der Test in workout.test.ts haelt fest,
+ * dass er bis dahin da ist.
+ */
+function aliasAufloesen(roh: unknown): unknown {
+  if (typeof roh !== "object" || roh === null || Array.isArray(roh)) return roh;
+  const eingabe = roh as Record<string, unknown>;
+  const { weightKg, reps, ...rest } = eingabe;
+  const ergebnis: Record<string, unknown> = { ...rest };
+  if (!("load" in rest) && weightKg !== undefined) ergebnis.load = weightKg;
+  if (!("volume" in rest) && reps !== undefined) ergebnis.volume = reps;
+  return ergebnis;
+}
+
+/**
  * Eingabe des Satz-PUT.
  *
  * `studioId` steht bewusst NICHT drin: es wird serverseitig aus dem Geraet
  * abgeleitet. Ein Client, der es mitschickt, wird ignoriert -- sonst haetten
  * wir eine Mandantengrenze, die von der App behauptet statt geprueft wird.
+ *
+ * `load` und `volume` sind Zahlen ohne Einheit; was sie bedeuten, sagen
+ * das Geraetemodell (load_unit) und die Uebung (volume_kind). Die
+ * Obergrenze hier ist die Datenbankschranke; die fachliche je Umfangsart
+ * prueft recordSet gegen die Uebung. `secondaryLoad` ist Pflicht genau
+ * dann, wenn das Modell eine Nebenbelastung hat -- auch das weiss erst
+ * recordSet.
  */
-export const recordSetInputSchema = z
+export const recordSetInputSchema = z.preprocess(
+  aliasAufloesen,
+  z
   .object({
     sessionId: z.string().uuid(),
     setId: z.string().uuid(),
     machineId: z.string().uuid(),
     exerciseId: z.string().uuid(),
     setIndex: z.number().int().min(1),
-    weightKg: z.number().min(0).max(9999),
-    reps: z.number().int().min(1).max(1000),
+    load: z.number().min(0).max(9999),
+    volume: z.number().int().min(1).max(100000),
+    secondaryLoad: z.number().min(0).max(9999).nullish(),
     rir: z.number().min(0).max(10).nullish(),
     problemFlag: z.boolean().default(false),
     problemReason: problemReasonSchema.nullish(),
@@ -51,7 +88,8 @@ export const recordSetInputSchema = z
       !value.performedAt ||
       Date.parse(value.sessionStartedAt) <= Date.parse(value.performedAt),
     { path: ["sessionStartedAt"], message: "Der Beginn der Einheit liegt nach dem Satz." },
-  );
+  ),
+);
 
 export type RecordSetInput = z.infer<typeof recordSetInputSchema>;
 
@@ -63,8 +101,9 @@ export type RecordedSet = {
   machineId: string;
   exerciseId: string;
   setIndex: number;
-  weightKg: number;
-  reps: number;
+  load: number;
+  secondaryLoad: number | null;
+  volume: number;
   rir: number | null;
   problemFlag: boolean;
   problemReason: ProblemReason | null;
@@ -79,8 +118,9 @@ type SetRow = {
   machine_id: string;
   exercise_id: string;
   set_index: number;
-  weight_kg: number | string;
-  reps: number;
+  load: number | string;
+  secondary_load: number | string | null;
+  volume: number;
   rir: number | string | null;
   problem_flag: boolean;
   problem_reason: ProblemReason | null;
@@ -97,8 +137,9 @@ function toRecordedSet(row: SetRow): RecordedSet {
     exerciseId: row.exercise_id,
     setIndex: row.set_index,
     // numeric kommt je nach Treiber als Zeichenkette zurueck.
-    weightKg: Number(row.weight_kg),
-    reps: row.reps,
+    load: Number(row.load),
+    secondaryLoad: row.secondary_load === null ? null : Number(row.secondary_load),
+    volume: row.volume,
     rir: row.rir === null ? null : Number(row.rir),
     problemFlag: row.problem_flag,
     problemReason: row.problem_reason,
@@ -128,25 +169,72 @@ export async function recordSet(
   const userId = await requireUserId(client);
 
   // Das Studio kommt aus dem Geraet. RLS macht ein fremdes Geraet unsichtbar,
-  // der Aufruf endet dann hier statt an einer Policy weiter unten.
+  // der Aufruf endet dann hier statt an einer Policy weiter unten. Das
+  // Modell kommt mit, weil nur es weiss, ob der Satz eine Nebenbelastung
+  // tragen muss und wie sie rastet.
   const { data: machine } = await client
     .from("machines")
-    .select("studio_id")
+    .select(
+      "studio_id, equipment_models (secondary_unit, secondary_step, secondary_min, secondary_max)",
+    )
     .eq("id", input.machineId)
-    .maybeSingle<{ studio_id: string }>();
+    .maybeSingle<{
+      studio_id: string;
+      equipment_models: {
+        secondary_unit: LoadUnit | null;
+        secondary_step: number | string | null;
+        secondary_min: number | string | null;
+        secondary_max: number | string | null;
+      };
+    }>();
   if (!machine) {
     throw new DomainError("not_found", "Geraet nicht gefunden.");
   }
   const studioId = machine.studio_id;
+  const modell = machine.equipment_models;
 
   const { data: exercise } = await client
     .from("exercises")
-    .select("id")
+    .select("id, volume_kind")
     .eq("id", input.exerciseId)
     .eq("studio_id", studioId)
-    .maybeSingle<{ id: string }>();
+    .maybeSingle<{ id: string; volume_kind: VolumeKind }>();
   if (!exercise) {
     throw new DomainError("not_found", "Uebung nicht gefunden.");
+  }
+
+  // Die fachliche Obergrenze kennt nur die Uebung: 1000 Wiederholungen,
+  // vier Stunden, 100 km. Die Datenbank prueft nur die Schranke gegen
+  // Unsinn (Migration 0045).
+  if (input.volume > MAX_VOLUME[exercise.volume_kind]) {
+    throw new DomainError("validation_failed", volumeZuGross(exercise.volume_kind));
+  }
+
+  // Nebenbelastung: Pflicht genau dann, wenn das Modell eine hat. Ein Satz
+  // am Laufband ohne Neigung waere fuer die Regel eine andere Bedingung als
+  // jeder Satz davor; ein Satz an der Beinpresse MIT Neigung ein Wert, den
+  // niemand je liest.
+  let secondaryLoad: number | null = null;
+  if (modell.secondary_unit !== null) {
+    if (input.secondaryLoad === null || input.secondaryLoad === undefined) {
+      throw new DomainError(
+        "validation_failed",
+        "Dieses Geraet braucht einen Wert fuer die Nebenbelastung.",
+      );
+    }
+    // Auf die Rastung des Modells, damit "82 U/min" und "85 U/min" dieselbe
+    // Bedingung sind (Cardio-Spec Abschnitt 5.1).
+    secondaryLoad = snapToStep(
+      input.secondaryLoad,
+      Number(modell.secondary_min ?? 0),
+      modell.secondary_max === null ? null : Number(modell.secondary_max),
+      Number(modell.secondary_step ?? 0),
+    );
+  } else if (input.secondaryLoad !== null && input.secondaryLoad !== undefined) {
+    throw new DomainError(
+      "validation_failed",
+      "Dieses Geraet hat keine Nebenbelastung.",
+    );
   }
 
   // `ignoreDuplicates` macht daraus ON CONFLICT DO NOTHING: ein zweiter Satz
@@ -184,8 +272,9 @@ export async function recordSet(
       machine_id: input.machineId,
       exercise_id: input.exerciseId,
       set_index: input.setIndex,
-      weight_kg: input.weightKg,
-      reps: input.reps,
+      load: input.load,
+      secondary_load: secondaryLoad,
+      volume: input.volume,
       rir: input.rir ?? null,
       problem_flag: input.problemFlag,
       problem_reason: input.problemReason ?? null,
@@ -194,7 +283,7 @@ export async function recordSet(
       ...(input.performedAt ? { performed_at: input.performedAt } : {}),
     })
     .select(
-      "id, studio_id, user_id, session_id, machine_id, exercise_id, set_index, weight_kg, reps, rir, problem_flag, problem_reason, performed_at",
+      "id, studio_id, user_id, session_id, machine_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, performed_at",
     )
     .single<SetRow>();
 
