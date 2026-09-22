@@ -340,7 +340,7 @@ Alle Verträge sind screenorientiert (M1 §6.3) und ändern nur Feldnamen:
 | `GET /me/progress` | `…Load`, `loadUnit` |
 | `POST /workout-sessions/{id}/complete` | `suggestions[].deltaLoad`, `.loadUnit`, `.secondaryLoad`, `.secondaryUnit` |
 
-Keine neuen Endpunkte. Keine Versionierung des Pfads: es gibt vor dem Pilot keinen zweiten Client, und der Alias im Satz-PUT deckt den einzigen realen Übergangsfall (Abschnitt 5.1).
+Keine neuen Endpunkte. Keine Versionierung des Pfads: es gibt vor dem Pilot keinen zweiten Client. Der Alias im Satz-PUT deckt nur den Übergangsfall der Offline-Warteschlange (Abschnitt 5.1); die **Antworten** ändern ihre Feldnamen ohne Alias, und die heutigen iOS-DTOs (`BootstrapResponse`, `TagContextResponse`, `WorkoutSet`) verlangen die alten Namen als Pflichtfelder. Datenbank und API gehen deshalb **zusammen mit dem iOS-Stand aus Schnitt 3** live, nicht davor (Abschnitt 14).
 
 ---
 
@@ -486,6 +486,6 @@ Zusätzlich zu den mechanisch angepassten Bestandstests:
 
 ## 14. Nächste Schritte
 
-1. Umsetzungsplan `docs/superpowers/plans/…-cardio-geraete.md` in drei Schnitten: (a) Migration + Domain + Integrationstests, (b) Portal, (c) iOS. Schnitt (a) ist ohne (b) und (c) deploybar, weil alle Bestandsdaten `kg`/`reps` sind und der Satz-PUT die Aliase annimmt.
+1. Umsetzungspläne in drei Schnitten: (a) Migration + Domain + Integrationstests (`2026-09-22-cardio-schnitt1-datenmodell-domain.md`, umgesetzt), (b) Portal, (c) iOS. Schnitt (a) ist **baubar** ohne (b) und (c), aber nicht allein **deploybar**: die API-Antworten tragen neue Feldnamen, die die heutige App als Pflichtfelder unter den alten Namen erwartet. Live gehen (a) und (c) gemeinsam, als ein TestFlight-Schnitt vor dem Pilot; (b) kann davor oder danach.
 2. Artboard-Nachtrag für die vier Portal-Screens (je ein Auswahlfeld).
 3. Fachliche Prüfung der Cardio-Schwellen vor dem Pilot (Offener Punkt 3).
