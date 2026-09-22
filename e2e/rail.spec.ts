@@ -8,12 +8,12 @@ test("Die Rail zeigt sechs feste Bereiche in drei Gruppen, nicht jedes Modell", 
   const { studioId, admin } = await studioMitTrainer(page, "rail-fest");
 
   // Drei Modelle anlegen -- frueher waeren das drei Rail-Eintraege gewesen.
-  // weight_step_kg ist in equipment_models NOT NULL ohne Default (0004) --
+  // load_step ist in equipment_models NOT NULL ohne Default (0004) --
   // ohne den Wert bricht der Insert an der Datenbank, nicht am Test.
   for (const name of ["Latzug", "Beinpresse", "Brustpresse"]) {
     const { error } = await admin
       .from("equipment_models")
-      .insert({ studio_id: studioId, name, weight_step_kg: 5 });
+      .insert({ studio_id: studioId, name, load_step: 5 });
     if (error) throw error;
   }
 
@@ -87,12 +87,12 @@ test("Ein Mitglied bekommt eine Rail ohne Zahlen statt einer kaputten Seite", as
 
 test("Geräte ist der Bereich, und seine Startseite listet die Modelle", async ({ page }) => {
   const { studioId, admin } = await studioMitTrainer(page, "geraete-bereich");
-  // weight_step_kg ist in equipment_models NOT NULL ohne Default (0004) --
+  // load_step ist in equipment_models NOT NULL ohne Default (0004) --
   // ohne den Wert bricht der Insert an der Datenbank, nicht am Test (wie
   // im ersten Testfall dieser Datei schon dokumentiert).
   const { error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug", manufacturer: "Technogym", weight_step_kg: 5 });
+    .insert({ studio_id: studioId, name: "Latzug", manufacturer: "Technogym", load_step: 5 });
   if (error) throw error;
 
   await page.goto(`/portal/${studioId}`);

@@ -213,7 +213,7 @@ test("Das Modell zeigt vier Reiter, und jeder traegt seinen Zustand", async ({ p
   const { studioId, admin } = await studioMitTrainer(page, "modell-reiter");
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug", manufacturer: "Technogym", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Latzug", manufacturer: "Technogym", load_step: 2.5 })
     .select("id")
     .single();
   if (error) throw error;
@@ -247,7 +247,7 @@ test("Jeder Modellreiter traegt genau eine Akzentflaeche -- ein Formular je Bild
   const { studioId, admin } = await studioMitTrainer(page, "modell-akzent");
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Beinpresse", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Beinpresse", load_step: 2.5 })
     .select("id")
     .single();
   if (error) throw error;
@@ -270,7 +270,7 @@ test("Der alte Modellpfad fuehrt auf den neuen", async ({ page }) => {
   const { studioId, admin } = await studioMitTrainer(page, "modell-alt");
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Brustpresse", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Brustpresse", load_step: 2.5 })
     .select("id")
     .single();
   if (error) throw error;
@@ -286,11 +286,11 @@ test("Der alte Modellpfad fuehrt auf den neuen", async ({ page }) => {
  */
 test("Ohne Einstellungen sagt der Reiter, wofuer sie da sind", async ({ page }) => {
   const { studioId, admin } = await studioMitTrainer(page, "modell-param-leer");
-  // weight_step_kg ist in equipment_models NOT NULL ohne Default (0004).
+  // load_step ist in equipment_models NOT NULL ohne Default (0004).
   // Fehlt es, scheitert schon der Insert.
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Latzug", load_step: 2.5 })
     .select("id")
     .single();
   if (error) throw error;
@@ -303,7 +303,7 @@ test("Ohne Uebung nennt der Reiter den naechsten Schritt", async ({ page }) => {
   const { studioId, admin } = await studioMitTrainer(page, "modell-uebung-leer");
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Latzug", load_step: 2.5 })
     .select("id")
     .single();
   if (error) throw error;
@@ -326,7 +326,7 @@ test("Umordnen aendert die Vorauswahl am Geraet, nicht nur die Anzeige", async (
   const { studioId, admin } = await studioMitTrainer(page, "modell-umordnen");
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Latzug", load_step: 2.5 })
     .select("id")
     .single();
   if (error) throw error;
@@ -343,8 +343,8 @@ test("Umordnen aendert die Vorauswahl am Geraet, nicht nur die Anzeige", async (
       .insert({
         studio_id: studioId,
         name,
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       })
       .select("id")
       .single();
@@ -389,10 +389,10 @@ test("Der Reiter Einzelne Geräte traegt das Stilllegen, auch wenn das Artboard 
   page,
 }) => {
   const { studioId, admin } = await studioMitTrainer(page, "modell-instanzen");
-  // weight_step_kg ist in equipment_models NOT NULL ohne Default (0004).
+  // load_step ist in equipment_models NOT NULL ohne Default (0004).
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Latzug", load_step: 2.5 })
     .select("id")
     .single();
   if (error) throw error;
@@ -427,7 +427,7 @@ test("Ein stillgelegtes Geraet bleibt sichtbar und benannt", async ({ page }) =>
   const { studioId, admin } = await studioMitTrainer(page, "modell-ausser-betrieb");
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Latzug", load_step: 2.5 })
     .select("id")
     .single();
   if (error) throw error;
@@ -479,7 +479,7 @@ test("Ein neu angelegtes Geraet erscheint ohne Neuladen im Reiter", async ({ pag
   const { studioId, admin } = await studioMitTrainer(page, "modell-anlegen-frisch");
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Latzug", load_step: 2.5 })
     .select("id")
     .single();
   if (error) throw error;
