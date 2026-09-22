@@ -1,9 +1,11 @@
 # Testnotiz-Format — Spec
 
-**Stand:** 2026-09-21. **Version:** `gymodo.testnotiz/1`.
+**Stand:** 2026-09-22. **Version:** `gymodo.testnotiz/1` (iOS), `/2` (Web).
+Der Unterschied ist ein einziges Feld, siehe „Versionierung".
 **Umsetzung iOS:** `docs/superpowers/plans/2026-09-13-ios-testnotizen.md`.
 **Umsetzung Web:** `docs/superpowers/plans/2026-09-21-web-testnotizen.md`
-(Trainerportal, nur Dev-Server; Abschnitt „Web“ unten nennt die Abweichungen).
+(Trainerportal), fortgeschrieben in `docs/superpowers/plans/2026-09-22-testnotizen-handy.md`
+(Handy und Vorschau). Der Abschnitt „Web“ unten nennt die Abweichungen.
 **Verbindliches Beispiel:** `apps/ios-member/FitnessMemberTests/Fixtures/testnotiz-beispiel.json`
 (entsteht in Aufgabe 2 des Plans; der Test `TestnotizEintragTests` liest es).
 
@@ -44,7 +46,7 @@ nie weggelassen. Zeitpunkte sind ISO 8601 mit Offset der Gerätezeitzone
 
 | Pfad | Typ | Bedeutung |
 | --- | --- | --- |
-| `format` | String | `gymodo.testnotiz/1`. Leser prüfen den String und lehnen Unbekanntes ab. |
+| `format` | String | `gymodo.testnotiz/1` (iOS, Android) oder `/2` (Web). Leser prüfen den String und lehnen Unbekanntes ab. |
 | `platform` | String | `ios`, `android` oder `web` |
 | `session.id` | String | Ordnername |
 | `session.startedAt` | Zeitpunkt | Anlage des Ordners, also der erste Eintrag |
@@ -60,7 +62,7 @@ nie weggelassen. Zeitpunkte sind ISO 8601 mit Offset der Gerätezeitzone
 | `entries[].screen.file` | String | Repo-relativer Pfad der Quelldatei |
 | `entries[].screen.stack` | String[] | Sichtbare Ebenen von unten nach oben, als Dateipfade. Ein Push ersetzt die unterste Ebene; Sheets und Cover liegen darüber. Das ist **kein** Navigationsverlauf. |
 | `entries[].screen.context` | Objekt | String → String, z. B. `machineId`, `exerciseId`, `phase`, `sessionId` |
-| `entries[].screenshot` | String | Dateiname des Vollbilds |
+| `entries[].screenshot` | String oder `null` | Dateiname des Vollbilds. Ab `/2` nullbar: am Handy hängt der Tester sein Bild selbst an, und eine reine Notiz hat keines. In `/1` steht dort immer ein Name. |
 | `entries[].crop` | String oder `null` | Dateiname des Ausschnitts |
 | `entries[].cropRect` | Objekt oder `null` | `points` und `pixels`, je `x`, `y`, `width`, `height`. Pixel sind nach außen auf ganze Pixel gerundet und aufs Bild beschnitten. |
 | `entries[].element` | Objekt oder `null` | nur bei `kind = element`; `null`, wenn unter dem Finger nichts lag |
@@ -206,41 +208,54 @@ Regeln, die ein Leser voraussetzen darf:
 
 ## Web, seit 2026-09-21
 
-Das Trainerportal schreibt denselben Ordner — `apps/web/testnotizen/` —, und
-zwar der **Dev-Server**: der Browser schickt Bild und Notiz an
-`POST /api/testnotiz`, Node legt Ordner und Dateien an. Im Produktionsbau gibt
-es weder die Route noch die Oberfläche. Nichts muss übertragen werden, der
-Ordner liegt schon im Arbeitsverzeichnis.
+Das Trainerportal schreibt denselben Ordner — nur schreibt ihn niemand auf
+einen Server: der Browser sammelt die Einträge und gibt am Ende eine **Zip**
+heraus, die entpackt genau diesen Ordner ergibt. Weitergabe per Share-Sheet
+(Handy) oder Download (Rechner); der Empfänger entpackt nach
+`apps/web/testnotizen/`. Nichts davon berührt eine Datenbank.
 
-Dieselben Felder, drei Eigenheiten der Plattform:
+Das Modul läuft im **Dev-Server** und in einer **Vercel-Vorschau**
+(`NEXT_PUBLIC_VERCEL_ENV=preview`) — damit auch ein Kollege am eigenen Gerät
+testen kann. In der Produktionsfassung ist es restlos aus dem Bündel
+entfernt.
+
+Dieselben Felder, die Eigenheiten der Plattform:
 
 | Feld | Web |
 | --- | --- |
+| `format` | `gymodo.testnotiz/2` |
 | `platform` | `web` |
-| `session.app` | `bundleId` `gymodo.web.portal`, `version` aus `package.json`, `build` `dev`, `configuration` `Debug` (das Modul läuft nur im Entwicklungsbau) |
-| `session.device` | `model` ist der Browser (`Chrome 143`), `os` die Plattform (`macOS`), `screen` das Sichtfenster in CSS-Pixeln samt `devicePixelRatio` als `scale` |
+| `session.app` | `bundleId` `gymodo.web.portal`; `version` der Git-Zweig der Vorschau (lokal `lokal`), `build` der kurze Commit (lokal `dev`) — so steht im Ordner, welcher Stand getestet wurde; `configuration` `Debug` |
+| `session.device` | `model` ist der Browser (`Chrome 143`), `os` die Plattform (`macOS`, `iOS`), `screen` das Sichtfenster in CSS-Pixeln samt `devicePixelRatio` als `scale` |
 | `screen.name` | das Routenmuster ohne Klammergruppen: `portal/[studioId]/geraete/[modelId]` |
-| `screen.file` | die `page.tsx` der Route, aufgelöst aus dem Pfad — keine Seite trägt eine Markierung |
-| `screen.stack` | die Hüllen von außen nach innen, zuletzt die Seite: `app/layout.tsx`, `portal/layout.tsx`, …, `page.tsx` |
-| `screen.context` | die aufgelösten dynamischen Segmente (`studioId`, `modelId`) plus die Abfrage der URL |
+| `screen.file` | die `page.tsx` der Route, aufgelöst gegen eine zur Bauzeit gelesene Routenkarte — keine Seite trägt eine Markierung |
+| `screen.stack` | die Hüllen von außen nach innen, zuletzt die Seite |
+| `screen.context` | die aufgelösten dynamischen Segmente plus die Abfrage der URL |
 | `element.source` | `dom` |
 | `element.identifier` | `data-testnotiz`, sonst `data-testid`, sonst `id` |
-| `element.type` | der Name der React-Komponente, aus der das Element stammt; bei server-gerendertem Markup die Rolle (`button`, `input[type=number]`) |
-| `element.file`, `.line` | `null`, außer das Markup trägt `data-testnotiz-datei` und `-zeile`: React 19 führt keine Quellangabe mehr. Die Fundstelle steht stattdessen in `screen.file`. |
-| `element.frame` | in CSS-Pixeln |
-| `cropRect.points` | in CSS-Pixeln des Sichtfensters, `pixels` im Bild der Freigabe |
+| `element.type` | der Name der React-Komponente; bei server-gerendertem Markup die Rolle (`button`, `input[type=number]`) |
+| `element.file`, `.line` | `null`, außer das Markup trägt `data-testnotiz-datei` und `-zeile`: React 19 führt keine Quellangabe mehr. Die Fundstelle steht in `screen.file`. |
+| `screenshot` | am Rechner das Bild der Tab-Freigabe (`.png`); am Handy der angehängte Screenshot, dessen Endung dem Typ folgt (`.png`, aus der Fotomediathek auch `.jpg`); **`null`**, wenn der Tester keines angehängt hat |
+| `cropRect` | `points` in CSS-Pixeln des Sichtfensters, `pixels` im Bild der Freigabe; am Handy gibt es keinen Ausschnitt (zuschneiden macht die Fotos-App) |
 | `runtime.pendingWrites` | immer `0` — das Portal schreibt unmittelbar gegen den Server |
 | `audio`, `transcript` | immer `null` |
 | `log[].category` | `console` (übernommene Konsolenzeile) oder `fehler` (unbehandelter Fehler, `level` `fault`) |
 
-Das Foto kommt aus der Bildschirmfreigabe des Tabs (`getDisplayMedia`), einmal
-je Sitzung freigegeben. Die Oberfläche des Moduls ist für die Aufnahme
-unsichtbar — Knopf und Menü stehen nie im Bild.
+Am Rechner kommt das Foto aus der Bildschirmfreigabe des Tabs
+(`getDisplayMedia`), einmal je Sitzung erteilt; die Oberfläche des Moduls ist
+für die Aufnahme unsichtbar. Am Handy gibt es diese Schnittstelle nicht —
+weder iOS-Safari noch Chrome für Android kennen sie —, dort hängt der Tester
+seinen eigenen Screenshot an.
+
+Die Sitzung liegt bis zum Teilen in der IndexedDB des Browsers und übersteht
+damit Seitenwechsel, Anmeldung und Neuladen.
 
 **Datenschutz, zusätzlich:** anders als OSLog kennt die Konsole keine
 Kategorien, an denen sich Personendaten ausschließen ließen. Was das Portal in
-die Konsole schreibt, steht im Ordner. Der ist deshalb — wie der der App —
-gitignoriert.
+die Konsole schreibt, steht im Ordner. Und eine Vorschau zeigt echte Daten:
+die Zip liegt beim Tester und geht nur an den, dem er sie schickt — kein
+Server speichert sie. Entpackt gehört sie in den gitignorierten Eingang
+`apps/web/testnotizen/`.
 
 ## Versionierung
 
@@ -248,8 +263,13 @@ Jede Änderung, die einen bestehenden Leser bricht, zählt `format` hoch
 (`/2`). Neue Felder mit `null` als Vorgabe brechen nichts und bleiben bei `/1`,
 wenn dieses Dokument und die Beispieldatei sie im selben Commit aufnehmen.
 Dasselbe gilt für neue Werte in `platform` und `element.source`: ein Leser
-prüft beide gegen die Liste dieses Dokuments, nicht gegen eine eigene —
-deshalb bleibt Web bei `/1`.
+prüft beide gegen die Liste dieses Dokuments, nicht gegen eine eigene.
+
+**`/2` gibt es seit dem 22. September und nur im Web.** Der Grund ist ein
+einziges Feld: `screenshot` darf dort `null` sein, weil ein Eintrag am Handy
+ohne Bild entstehen kann. Ein Leser, der `/1` strikt prüft, bricht daran —
+deshalb die neue Zahl. iOS schreibt unverändert `/1`, und beide Ordner sehen
+in `sitzung.md` gleich aus.
 
 ## Android, später
 

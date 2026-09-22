@@ -6,6 +6,11 @@ import styles from "./testnotiz.module.css";
  * Ein eigenes Panel statt eines Menues aus der Seite: es muss ueber allem
  * liegen und darf keinen Klick zur Seite durchlassen, solange es offen ist.
  * Genau wie in der App.
+ *
+ * Die Zeilen richten sich danach, ob der Browser den Tab freigeben kann.
+ * Am Rechner gibt es Ausschnitt und Seite, weil dort ein Foto entsteht; am
+ * Handy fuehren beide Wege ins Notizblatt, wo der Tester seinen eigenen
+ * Screenshot anhaengt.
  */
 export function TestnotizMenue({
   titel,
@@ -13,6 +18,7 @@ export function TestnotizMenue({
   fehler,
   bereit,
   laeuft,
+  freigabe,
   beiAusschnitt,
   beiSeite,
   beiElement,
@@ -26,6 +32,7 @@ export function TestnotizMenue({
   fehler: string | null;
   bereit: boolean;
   laeuft: boolean;
+  freigabe: boolean;
   beiAusschnitt: () => void;
   beiSeite: () => void;
   beiElement: () => void;
@@ -42,7 +49,12 @@ export function TestnotizMenue({
 
         {fehler ? <div className={styles.fehler}>{fehler}</div> : null}
 
-        {bereit ? (
+        {!freigabe ? (
+          <>
+            <Zeile titel="Notiz" beiKlick={beiNotiz} />
+            <Zeile titel="Element" beiKlick={beiElement} />
+          </>
+        ) : bereit ? (
           <>
             <Zeile titel="Ausschnitt" beiKlick={beiAusschnitt} />
             <Zeile titel="Seite" beiKlick={beiSeite} />

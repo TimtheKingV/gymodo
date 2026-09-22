@@ -10,7 +10,11 @@ Seite samt Quelldatei, Element samt Kennung, Konsole der letzten Minuten.
 „Web“. Derselbe Ordner, dasselbe `sitzung.md` — nur `platform: "web"`.
 
 **Stand:** 2026-09-21, umgesetzt und im Dev-Server geprüft (Abschnitt
-„Geprüft“).
+„Geprüft“). **Fortgeschrieben am 22. September:** seitdem läuft das Modul
+auch in einer Vercel-Vorschau und gibt die Sitzung als Zip heraus statt sie vom
+Dev-Server schreiben zu lassen — `docs/superpowers/plans/2026-09-22-testnotizen-handy.md`.
+Was unten über die Ablage und die Route `/api/testnotiz` steht, gilt seitdem
+nicht mehr.
 
 ---
 

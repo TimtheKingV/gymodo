@@ -64,8 +64,10 @@ export function abschnitt(e: Eintrag): string {
 
   const bilder: string[] = [];
   if (e.crop) bilder.push(`![Ausschnitt](${e.crop})`);
-  bilder.push(`![Vollbild](${e.screenshot})`);
-  zeilen.push(bilder.join("\n"));
+  if (e.screenshot) bilder.push(`![Vollbild](${e.screenshot})`);
+  // Ohne Bild bleibt die Zeile weg statt leer dazustehen: am Handy ist das
+  // Anhaengen freiwillig, ein Eintrag kann aus Notiz und Screen bestehen.
+  if (bilder.length > 0) zeilen.push(bilder.join("\n"));
 
   if (e.log.length > 0) {
     const anzahl = e.log.length === 1 ? "1 Zeile" : `${e.log.length} Zeilen`;

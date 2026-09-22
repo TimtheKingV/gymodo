@@ -1,80 +1,44 @@
 "use client";
 
-import type { Eintragsentwurf, Laufzeit } from "@/lib/testnotiz/format";
-import { zeitstempel } from "@/lib/testnotiz/zeit";
-import type { Bild } from "./bildschirmfoto";
+import type { Laufzeit, Sitzungskopf } from "@/lib/testnotiz/format";
+import { ordnername, zeitstempel } from "@/lib/testnotiz/zeit";
 
 /**
- * Der Weg eines Eintrags vom Browser in den Ordner.
+ * Der Kopf einer Sitzung und die Laufzeitwerte je Eintrag.
  *
- * Die laufende Sitzung steht im `localStorage`: eine Testsitzung im Portal
- * ueberlebt Neuladen, Anmelden und Serverneustart, und all das kommt beim
- * Testen dauernd vor. Die Kennung ist der Ordnername -- mehr merkt sich der
- * Browser nicht, die Wahrheit steht in `sitzung.json`.
+ * Alles hier entsteht im Browser: seit die Sitzung als Zip herausgeht, gibt
+ * es keinen Server mehr, der etwas ergaenzen koennte. Was die Zeilen tragen,
+ * ist bewusst knapp -- kein Name, keine E-Mail, kein Token (Spec, Abschnitt
+ * Datenschutz).
  */
 
-const SCHLUESSEL = "testnotiz.sitzung";
-const EINGANG = "/api/testnotiz";
-
-export type Sitzungsstand = { sitzung: string; ordner: string; anzahl: number };
-
-export function gemerkteSitzung(): string | null {
-  try {
-    return window.localStorage.getItem(SCHLUESSEL);
-  } catch {
-    return null;
-  }
-}
-
-export function sitzungMerken(id: string | null): void {
-  try {
-    if (id) window.localStorage.setItem(SCHLUESSEL, id);
-    else window.localStorage.removeItem(SCHLUESSEL);
-  } catch {
-    // Privater Modus ohne Speicher: dann eben nur fuer diese Seite.
-  }
-}
-
-export async function sitzungStand(id: string): Promise<Sitzungsstand | null> {
-  try {
-    const antwort = await fetch(`${EINGANG}?sitzung=${encodeURIComponent(id)}`, { cache: "no-store" });
-    if (!antwort.ok) return null;
-    return (await antwort.json()) as Sitzungsstand;
-  } catch {
-    return null;
-  }
-}
-
-export async function eintragSichern(
-  entwurf: Eintragsentwurf,
-  voll: Bild,
-  ausschnitt: Bild | null,
-  zusatzkontext: Record<string, string>,
-): Promise<Sitzungsstand> {
-  const formular = new FormData();
-  formular.set("eintrag", JSON.stringify(entwurf));
-  formular.set("sitzung", gemerkteSitzung() ?? "");
-  formular.set("kopf", JSON.stringify(kopfDaten(new Date())));
-  formular.set(
-    "ort",
-    JSON.stringify({
-      pfad: window.location.pathname,
-      suche: window.location.search,
-      kontext: zusatzkontext,
-    }),
-  );
-  formular.set("voll", voll.blob, "voll.png");
-  if (ausschnitt) formular.set("ausschnitt", ausschnitt.blob, "ausschnitt.png");
-
-  const antwort = await fetch(EINGANG, { method: "POST", body: formular });
-  if (!antwort.ok) {
-    const fehler = await antwort.json().catch(() => ({ error: `HTTP ${antwort.status}` }));
-    throw new Error(String((fehler as { error?: string }).error ?? `HTTP ${antwort.status}`));
-  }
-
-  const stand = (await antwort.json()) as Sitzungsstand;
-  sitzungMerken(stand.sitzung);
-  return stand;
+export function sitzungAnlegenDaten(jetzt: Date): { id: string; kopf: Sitzungskopf } {
+  const startedAt = zeitstempel(jetzt);
+  return {
+    id: ordnername(startedAt),
+    kopf: {
+      id: "",
+      startedAt,
+      app: {
+        bundleId: "gymodo.web.portal",
+        // Auf Vercel der Zweig und der Stand, aus dem die Vorschau gebaut
+        // wurde -- genau das, was einen Fund einordnet, wenn ein Kollege ihn
+        // schickt. Lokal steht dort, dass es der Dev-Server war.
+        version: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF ?? "lokal",
+        build: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev",
+        configuration: "Debug",
+      },
+      device: {
+        model: browser(),
+        os: betriebssystem(),
+        screen: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+          scale: window.devicePixelRatio,
+        },
+      },
+    },
+  };
 }
 
 export function laufzeit(angemeldet: boolean): Laufzeit {
@@ -90,21 +54,6 @@ export function laufzeit(angemeldet: boolean): Laufzeit {
 
 export function studioAusPfad(pfad: string): string | null {
   return pfad.match(/^\/portal\/([^/]+)/)?.[1] ?? null;
-}
-
-function kopfDaten(jetzt: Date) {
-  return {
-    startedAt: zeitstempel(jetzt),
-    device: {
-      model: browser(),
-      os: betriebssystem(),
-      screen: {
-        width: window.innerWidth,
-        height: window.innerHeight,
-        scale: window.devicePixelRatio,
-      },
-    },
-  };
 }
 
 type Marken = { brands?: { brand: string; version: string }[]; platform?: string };
@@ -140,10 +89,10 @@ function betriebssystem(): string {
   const platform = marken()?.platform;
   if (platform) return platform;
   const ua = navigator.userAgent;
+  if (/iPhone|iPad/.test(ua)) return "iOS";
+  if (/Android/.test(ua)) return "Android";
   if (/Mac OS X/.test(ua)) return "macOS";
   if (/Windows/.test(ua)) return "Windows";
-  if (/Android/.test(ua)) return "Android";
-  if (/iPhone|iPad/.test(ua)) return "iOS";
   if (/Linux/.test(ua)) return "Linux";
   return "unbekannt";
 }

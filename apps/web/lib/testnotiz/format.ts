@@ -10,7 +10,14 @@
  * Zeichenkettenmitteln (`zeit.ts`).
  */
 
-export const FORMAT_KENNUNG = "gymodo.testnotiz/1";
+/**
+ * `/2` statt `/1`: seit dem Handy-Weg kann ein Eintrag ohne Bild entstehen
+ * (Nur Notiz, ohne angehaengten Screenshot), `screenshot` ist also nullbar.
+ * Das bricht einen strikten Leser des alten Vertrags, deshalb die neue Zahl.
+ * iOS schreibt unveraendert `/1`; beide Ordner sehen in `sitzung.md` gleich
+ * aus.
+ */
+export const FORMAT_KENNUNG = "gymodo.testnotiz/2";
 export const PLATTFORM = "web";
 
 /** ISO 8601 mit Offset, ohne Sekundenbruchteile: `2026-09-21T14:12:03+02:00`. */
@@ -68,7 +75,8 @@ export type Eintrag = {
   createdAt: Zeitpunkt;
   kind: Art;
   screen: Screen | null;
-  screenshot: string;
+  /** `null`, wenn kein Bild zustande kam -- am Handy ist das Anhaengen freiwillig. */
+  screenshot: string | null;
   crop: string | null;
   cropRect: Ausschnittsrahmen | null;
   element: ElementAngabe | null;
