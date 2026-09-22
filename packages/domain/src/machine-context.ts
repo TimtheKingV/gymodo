@@ -7,9 +7,10 @@ import {
   VIDEO_BUCKET,
 } from "./media.js";
 import { signMediaUrl, signMediaUrls } from "./media-store.js";
+import type { LoadUnit, VolumeKind } from "./belastung.js";
 import {
   PROGRESSION_ALGO_VERSION,
-  suggestNextWeight,
+  suggestNextLoad,
   toBlocks,
   type BlockInput,
   type ProgressionSuggestion,
@@ -29,9 +30,20 @@ export type MachineContext = {
      * mit einem Pfad allein koennte der Screen nichts laden.
      */
     photoUrl: string | null;
-    weightStepKg: number;
-    minWeightKg: number;
-    maxWeightKg: number | null;
+    /** Was am Geraet gedreht wird, und in welcher Einheit (Cardio-Spec 3.1). */
+    loadUnit: LoadUnit;
+    loadStep: number;
+    loadMin: number;
+    loadMax: number | null;
+    /**
+     * Der zweite Intensitaetsregler, wenn das Modell einen hat (Cardio-Spec
+     * 3.1b). Alle vier null bei Kraftgeraeten -- dann gibt es kein drittes
+     * Rad und keinen Wert im Satz.
+     */
+    secondaryUnit: LoadUnit | null;
+    secondaryStep: number | null;
+    secondaryMin: number | null;
+    secondaryMax: number | null;
   };
   settingDefinitions: Array<{
     key: string;
@@ -48,8 +60,10 @@ export type MachineContext = {
     id: string;
     name: string;
     description: string | null;
-    targetRepsMin: number;
-    targetRepsMax: number;
+    /** Woran der Korridor gemessen wird: Wiederholungen, Sekunden, Meter. */
+    volumeKind: VolumeKind;
+    targetMin: number;
+    targetMax: number;
     /** Ebenfalls signiert; null, solange kein Video da ist (Spec 6.8). */
     instructionVideoUrl: string | null;
   }>;
@@ -62,16 +76,18 @@ export type MachineContext = {
   } | null;
   history: Array<{
     performedOn: string;
-    weightKg: number;
-    reps: number[];
+    load: number;
+    secondaryLoad: number | null;
+    volume: number[];
   }>;
   suggestion: ProgressionSuggestion;
 };
 
 type SetRow = {
   exercise_id: string;
-  weight_kg: number | string;
-  reps: number;
+  load: number | string;
+  secondary_load: number | string | null;
+  volume: number;
   rir: number | string | null;
   problem_flag: boolean;
   performed_at: string;
@@ -120,7 +136,7 @@ export async function resolveMachineContext(
   const { data: machine } = await client
     .from("machines")
     .select(
-      "id, label, location_note, studio_id, equipment_models (id, name, manufacturer, photo_path, weight_step_kg, min_weight_kg, max_weight_kg)",
+      "id, label, location_note, studio_id, equipment_models (id, name, manufacturer, photo_path, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max)",
     )
     .eq("id", machineId)
     .maybeSingle<{
@@ -133,9 +149,14 @@ export async function resolveMachineContext(
         name: string;
         manufacturer: string | null;
         photo_path: string | null;
-        weight_step_kg: number | string;
-        min_weight_kg: number | string;
-        max_weight_kg: number | string | null;
+        load_unit: LoadUnit;
+        load_step: number | string;
+        load_min: number | string;
+        load_max: number | string | null;
+        secondary_unit: LoadUnit | null;
+        secondary_step: number | string | null;
+        secondary_min: number | string | null;
+        secondary_max: number | string | null;
       };
     }>();
   if (!machine) {
@@ -154,7 +175,7 @@ export async function resolveMachineContext(
   const { data: links } = await client
     .from("equipment_model_exercises")
     .select(
-      "sort_order, exercises (id, name, description, target_reps_min, target_reps_max), instruction_assets (storage_path)",
+      "sort_order, exercises (id, name, description, volume_kind, target_min, target_max), instruction_assets (storage_path)",
     )
     .eq("equipment_model_id", model.id)
     .order("sort_order", { ascending: true });
@@ -164,8 +185,9 @@ export async function resolveMachineContext(
       id: string;
       name: string;
       description: string | null;
-      target_reps_min: number;
-      target_reps_max: number;
+      volume_kind: VolumeKind;
+      target_min: number;
+      target_max: number;
     };
     instruction_assets: Array<{ storage_path: string }>;
   };
@@ -189,8 +211,9 @@ export async function resolveMachineContext(
       id: row.exercises.id,
       name: row.exercises.name,
       description: row.exercises.description,
-      targetRepsMin: row.exercises.target_reps_min,
-      targetRepsMax: row.exercises.target_reps_max,
+      volumeKind: row.exercises.volume_kind,
+      targetMin: row.exercises.target_min,
+      targetMax: row.exercises.target_max,
       instructionVideoUrl: (pfad && videoUrls.get(pfad)) || null,
     };
   });
@@ -210,12 +233,12 @@ export async function resolveMachineContext(
 
   let calibration: MachineContext["calibration"] = null;
   let blocks: BlockInput[] = [];
-  let suggestion: ProgressionSuggestion = suggestNextWeight({
-    targetRepsMin: 0,
-    targetRepsMax: 0,
-    weightStepKg: Number(model.weight_step_kg),
-    minWeightKg: Number(model.min_weight_kg),
-    maxWeightKg: Number(model.max_weight_kg ?? 9999),
+  let suggestion: ProgressionSuggestion = suggestNextLoad({
+    targetMin: 0,
+    targetMax: 0,
+    loadStep: Number(model.load_step),
+    loadMin: Number(model.load_min),
+    loadMax: Number(model.load_max ?? 9999),
     history: [],
   });
 
@@ -247,7 +270,7 @@ export async function resolveMachineContext(
 
     const { data: setRows } = await client
       .from("workout_sets")
-      .select("exercise_id, weight_kg, reps, rir, problem_flag, performed_at")
+      .select("exercise_id, load, secondary_load, volume, rir, problem_flag, performed_at")
       .eq("user_id", userId)
       .eq("machine_id", machine.id)
       .eq("exercise_id", selectedExerciseId)
@@ -256,12 +279,12 @@ export async function resolveMachineContext(
 
     blocks = toBlocks((setRows ?? []) as SetRow[]);
 
-    suggestion = suggestNextWeight({
-      targetRepsMin: selected?.targetRepsMin ?? 8,
-      targetRepsMax: selected?.targetRepsMax ?? 12,
-      weightStepKg: Number(model.weight_step_kg),
-      minWeightKg: Number(model.min_weight_kg),
-      maxWeightKg: Number(model.max_weight_kg ?? 9999),
+    suggestion = suggestNextLoad({
+      targetMin: selected?.targetMin ?? 8,
+      targetMax: selected?.targetMax ?? 12,
+      loadStep: Number(model.load_step),
+      loadMin: Number(model.load_min),
+      loadMax: Number(model.load_max ?? 9999),
       history: blocks,
     });
 
@@ -273,7 +296,7 @@ export async function resolveMachineContext(
       exercise_id: selectedExerciseId,
       algo_version: PROGRESSION_ALGO_VERSION,
       inputs: suggestion.inputs,
-      result_weight_kg: suggestion.resultWeightKg,
+      result_load: suggestion.resultLoad,
       reason_code: suggestion.reasonCode,
     });
   }
@@ -289,10 +312,14 @@ export async function resolveMachineContext(
       name: model.name,
       manufacturer: model.manufacturer,
       photoUrl,
-      weightStepKg: Number(model.weight_step_kg),
-      minWeightKg: Number(model.min_weight_kg),
-      maxWeightKg:
-        model.max_weight_kg === null ? null : Number(model.max_weight_kg),
+      loadUnit: model.load_unit,
+      loadStep: Number(model.load_step),
+      loadMin: Number(model.load_min),
+      loadMax: model.load_max === null ? null : Number(model.load_max),
+      secondaryUnit: model.secondary_unit,
+      secondaryStep: model.secondary_step === null ? null : Number(model.secondary_step),
+      secondaryMin: model.secondary_min === null ? null : Number(model.secondary_min),
+      secondaryMax: model.secondary_max === null ? null : Number(model.secondary_max),
     },
     settingDefinitions: (settings ?? []).map((setting) => {
       const row = setting as unknown as {
@@ -321,8 +348,9 @@ export async function resolveMachineContext(
     calibration,
     history: blocks.map((block) => ({
       performedOn: block.performedOn,
-      weightKg: block.sets[0]?.weightKg ?? 0,
-      reps: block.sets.map((set) => set.reps),
+      load: block.sets[0]?.load ?? 0,
+      secondaryLoad: block.sets[0]?.secondaryLoad ?? null,
+      volume: block.sets.map((set) => set.volume),
     })),
     suggestion,
   };

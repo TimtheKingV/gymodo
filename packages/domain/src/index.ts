@@ -179,6 +179,7 @@ export {
   zuVorschlag,
 } from "./abschluss.js";
 export type {
+  Blockeinheiten,
   Blockvorschlag,
   GespeicherteVorschlagZeile,
 } from "./abschluss.js";

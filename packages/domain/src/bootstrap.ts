@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
+import type { Category, LoadUnit, VolumeKind } from "./belastung.js";
 import { aktiveZiele } from "./goals.js";
 import type { AktiveZiele } from "./goals.js";
 import type { Messpunkt } from "./measurements.js";
@@ -49,9 +50,17 @@ export type Bootstrap = {
       name: string;
       manufacturer: string | null;
       photoPath: string | null;
-      weightStepKg: number;
-      minWeightKg: number;
-      maxWeightKg: number | null;
+      /** Nur Anzeige: Gruppierung in der Geraetesuche (Cardio-Spec 3.5). */
+      category: Category;
+      loadUnit: LoadUnit;
+      loadStep: number;
+      loadMin: number;
+      loadMax: number | null;
+      /** Nebenbelastung, alle vier null bei Kraftgeraeten (Cardio-Spec 3.1b). */
+      secondaryUnit: LoadUnit | null;
+      secondaryStep: number | null;
+      secondaryMin: number | null;
+      secondaryMax: number | null;
       /**
        * Beschriftungen der Einstellparameter. Ohne sie zeigt der
        * Offline-Zustand den rohen Schluessel ("sitz 4") statt "Sitz 4" --
@@ -71,8 +80,9 @@ export type Bootstrap = {
     exercises: Array<{
       id: string;
       name: string;
-      targetRepsMin: number;
-      targetRepsMax: number;
+      volumeKind: VolumeKind;
+      targetMin: number;
+      targetMax: number;
     }>;
   }>;
   calibrations: Array<{
@@ -85,8 +95,9 @@ export type Bootstrap = {
   lastSets: Array<{
     machineId: string;
     exerciseId: string;
-    weightKg: number;
-    reps: number;
+    load: number;
+    secondaryLoad: number | null;
+    volume: number;
     rir: number | null;
     performedAt: string;
   }>;
@@ -94,6 +105,11 @@ export type Bootstrap = {
 
 function key(machineId: string, exerciseId: string): string {
   return `${machineId}:${exerciseId}`;
+}
+
+/** numeric kommt je nach Treiber als Zeichenkette zurueck. */
+function zahlOderNull(wert: number | string | null): number | null {
+  return wert === null ? null : Number(wert);
 }
 
 /**
@@ -140,7 +156,7 @@ export async function getBootstrap(
   const { data: machineRows } = await client
     .from("machines")
     .select(
-      "id, studio_id, label, location_note, status, equipment_models (id, name, manufacturer, photo_path, weight_step_kg, min_weight_kg, max_weight_kg)",
+      "id, studio_id, label, location_note, status, equipment_models (id, name, manufacturer, photo_path, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max)",
     )
     .order("label", { ascending: true });
 
@@ -152,7 +168,7 @@ export async function getBootstrap(
   const { data: linkRows } = await client
     .from("equipment_model_exercises")
     .select(
-      "equipment_model_id, sort_order, exercises (id, name, target_reps_min, target_reps_max)",
+      "equipment_model_id, sort_order, exercises (id, name, volume_kind, target_min, target_max)",
     )
     .order("sort_order", { ascending: true });
 
@@ -164,7 +180,7 @@ export async function getBootstrap(
 
   const { data: setRows } = await client
     .from("workout_sets")
-    .select("machine_id, exercise_id, session_id, weight_kg, reps, rir, performed_at")
+    .select("machine_id, exercise_id, session_id, load, secondary_load, volume, rir, performed_at")
     .eq("user_id", userId)
     .order("performed_at", { ascending: false })
     .limit(SET_SCAN_LIMIT);
@@ -210,16 +226,18 @@ export async function getBootstrap(
     exercises: {
       id: string;
       name: string;
-      target_reps_min: number;
-      target_reps_max: number;
+      volume_kind: VolumeKind;
+      target_min: number;
+      target_max: number;
     };
   }>) {
     const list = exercisesByModel.get(row.equipment_model_id) ?? [];
     list.push({
       id: row.exercises.id,
       name: row.exercises.name,
-      targetRepsMin: row.exercises.target_reps_min,
-      targetRepsMax: row.exercises.target_reps_max,
+      volumeKind: row.exercises.volume_kind,
+      targetMin: row.exercises.target_min,
+      targetMax: row.exercises.target_max,
     });
     exercisesByModel.set(row.equipment_model_id, list);
   }
@@ -253,8 +271,9 @@ export async function getBootstrap(
     machine_id: string;
     exercise_id: string;
     session_id: string;
-    weight_kg: number | string;
-    reps: number;
+    load: number | string;
+    secondary_load: number | string | null;
+    volume: number;
     rir: number | string | null;
     performed_at: string;
   }>) {
@@ -264,8 +283,9 @@ export async function getBootstrap(
     lastSets.push({
       machineId: row.machine_id,
       exerciseId: row.exercise_id,
-      weightKg: Number(row.weight_kg),
-      reps: row.reps,
+      load: Number(row.load),
+      secondaryLoad: row.secondary_load === null ? null : Number(row.secondary_load),
+      volume: row.volume,
       rir: row.rir === null ? null : Number(row.rir),
       performedAt: row.performed_at,
     });
@@ -315,9 +335,15 @@ export async function getBootstrap(
       name: string;
       manufacturer: string | null;
       photo_path: string | null;
-      weight_step_kg: number | string;
-      min_weight_kg: number | string;
-      max_weight_kg: number | string | null;
+      category: Category;
+      load_unit: LoadUnit;
+      load_step: number | string;
+      load_min: number | string;
+      load_max: number | string | null;
+      secondary_unit: LoadUnit | null;
+      secondary_step: number | string | null;
+      secondary_min: number | string | null;
+      secondary_max: number | string | null;
     };
   }>).map((row) => ({
     id: row.id,
@@ -332,12 +358,15 @@ export async function getBootstrap(
       name: row.equipment_models.name,
       manufacturer: row.equipment_models.manufacturer,
       photoPath: row.equipment_models.photo_path,
-      weightStepKg: Number(row.equipment_models.weight_step_kg),
-      minWeightKg: Number(row.equipment_models.min_weight_kg),
-      maxWeightKg:
-        row.equipment_models.max_weight_kg === null
-          ? null
-          : Number(row.equipment_models.max_weight_kg),
+      category: row.equipment_models.category,
+      loadUnit: row.equipment_models.load_unit,
+      loadStep: Number(row.equipment_models.load_step),
+      loadMin: Number(row.equipment_models.load_min),
+      loadMax: zahlOderNull(row.equipment_models.load_max),
+      secondaryUnit: row.equipment_models.secondary_unit,
+      secondaryStep: zahlOderNull(row.equipment_models.secondary_step),
+      secondaryMin: zahlOderNull(row.equipment_models.secondary_min),
+      secondaryMax: zahlOderNull(row.equipment_models.secondary_max),
       settingDefinitions: einstellungenJeModell.get(row.equipment_models.id) ?? [],
     },
     exercises: exercisesByModel.get(row.equipment_models.id) ?? [],
