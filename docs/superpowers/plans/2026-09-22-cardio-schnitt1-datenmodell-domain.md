@@ -30,9 +30,9 @@
 **Files:**
 - Modify: `docs/superpowers/specs/2026-09-21-cardio-geraete-design.md` (Abschnitt 3.3, Abschnitt 5.2 letzter Absatz, Abschnitt 9 Rudergerät-Satz)
 
-- [ ] **Step 1:** Abschnitt 3.3 umschreiben: `rir` bleibt Spalte und Regelpfad für Altdaten, die App erfasst sie seit dem 11. September nicht mehr. Für Cardio wie für Kraft entscheidet damit der Zwei-Tage-Pfad (`topTwice`). Kein Reserve-Chip in Schnitt 3.
-- [ ] **Step 2:** Abschnitt 9, Rudergerät: „Dann entscheidet allein die Reserve" → „Dann entscheidet der Zwei-Tage-Pfad: zweimal in Folge das Ziel erreicht, eine Stufe hoch."
-- [ ] **Step 3:** Commit `docs(specs): Cardio -- Reserve ist in der App schon gefallen`.
+- [x] **Step 1:** Abschnitt 3.3 umschreiben: `rir` bleibt Spalte und Regelpfad für Altdaten, die App erfasst sie seit dem 11. September nicht mehr. Für Cardio wie für Kraft entscheidet damit der Zwei-Tage-Pfad (`topTwice`). Kein Reserve-Chip in Schnitt 3.
+- [x] **Step 2:** Abschnitt 9, Rudergerät: „Dann entscheidet allein die Reserve" → „Dann entscheidet der Zwei-Tage-Pfad: zweimal in Folge das Ziel erreicht, eine Stufe hoch."
+- [x] **Step 3:** Commit `docs(specs): Cardio -- Reserve ist in der App schon gefallen`.
 
 ---
 
@@ -44,9 +44,9 @@
 **Interfaces:**
 - Produces: Spalten `equipment_models.load_unit/load_step/load_min/load_max/secondary_unit/secondary_step/secondary_min/secondary_max/category`, `exercises.volume_kind/target_min/target_max`, `workout_sets.load/volume/secondary_load`, `progression_suggestions.result_load`. Constraints wie Spec Abschnitt 4.3.
 
-- [ ] **Step 1:** Migration schreiben, Inhalt aus Spec Abschnitt 4.3, mit Begründungskommentaren. Der Check auf `reps` heißt `workout_sets_reps_check` (inline in 0013, automatisch benannt).
-- [ ] **Step 2:** Lokal gegen PostgreSQL 16 prüfen: temporärer Cluster im Scratchpad, ein Shim für `auth.users`, `auth.uid()`, die Rollen `anon`/`authenticated`/`service_role` und `storage.buckets`/`storage.objects`, dann alle 45 Migrationen in Reihenfolge. Danach ein Rauchtest: eine Beinpresse und ein Laufband anlegen, je eine Übung, einen Satz mit und ohne `secondary_load`, die Constraints `secondary_all_or_none` und `volume_check` gezielt verletzen. Der Cluster wird danach gelöscht; das Skript liegt nicht im Repo.
-- [ ] **Step 3:** Commit `feat(db): Belastung und Umfang statt Kilogramm und Wiederholungen (0045)`.
+- [x] **Step 1:** Migration schreiben, Inhalt aus Spec Abschnitt 4.3, mit Begründungskommentaren. Der Check auf `reps` heißt `workout_sets_reps_check` (inline in 0013, automatisch benannt).
+- [x] **Step 2:** Lokal gegen PostgreSQL 16 prüfen: temporärer Cluster im Scratchpad, ein Shim für `auth.users`, `auth.uid()`, die Rollen `anon`/`authenticated`/`service_role` und `storage.buckets`/`storage.objects`, dann alle 45 Migrationen in Reihenfolge. Danach ein Rauchtest: eine Beinpresse und ein Laufband anlegen, je eine Übung, einen Satz mit und ohne `secondary_load`, die Constraints `secondary_all_or_none` und `volume_check` gezielt verletzen. Der Cluster wird danach gelöscht; das Skript liegt nicht im Repo.
+- [x] **Step 3:** Commit `feat(db): Belastung und Umfang statt Kilogramm und Wiederholungen (0045)`.
 
 ---
 
@@ -78,9 +78,9 @@ export function snapToStep(value: number, min: number, max: number | null, step:
 ```
 `formatLoad` für `kg` liefert genau, was `kg()` in `layout.tsx` heute liefert (eine Nachkommastelle, `de-DE`), damit der E2E-Text „Schritt 2,5 kg · ab 5,0 kg bis 100,0 kg" unverändert bleibt.
 
-- [ ] **Step 1:** Tests zuerst: je Einheit ein Formatierungsfall, `20:00 min` und `12:30 min`, Bereich mit Tausenderpunkt, `snapToStep` rastet 82 auf 80 und 83 auf 85 (Schritt 5, min 50), klemmt am Maximum.
-- [ ] **Step 2:** Modul schreiben. Kommentar am Kopf: warum ein Ort (Spec 5.3), und dass eine neue Einheit hier eine Zeile je Funktion kostet, sonst nichts.
-- [ ] **Step 3:** Commit `feat(domain): belastung.ts -- ein Ort fuer Einheiten, Umfangsarten und Formatierung`.
+- [x] **Step 1:** Tests zuerst: je Einheit ein Formatierungsfall, `20:00 min` und `12:30 min`, Bereich mit Tausenderpunkt, `snapToStep` rastet 82 auf 80 und 83 auf 85 (Schritt 5, min 50), klemmt am Maximum.
+- [x] **Step 2:** Modul schreiben. Kommentar am Kopf: warum ein Ort (Spec 5.3), und dass eine neue Einheit hier eine Zeile je Funktion kostet, sonst nichts.
+- [x] **Step 3:** Commit `feat(domain): belastung.ts -- ein Ort fuer Einheiten, Umfangsarten und Formatierung`.
 
 ---
 
@@ -103,10 +103,10 @@ export function suggestNextLoad(input: ProgressionInput): ProgressionSuggestion;
 ```
 `uniformWeight` → `uniformLoad`, liefert `{ load, secondaryLoad } | null`. `topTwice` und `missedTwice` vergleichen das Paar des Vorblocks. `resultSecondaryLoad = resultLoad === null ? null : currentSecondaryLoad`. Begründungscodes unverändert.
 
-- [ ] **Step 1:** Bestehende Tests umbenennen (Felder), dann je Fall eine Kopie mit `watt`/`seconds`-Werten und identischer Erwartung (`describe.each` über zwei Geräte: Beinpresse 2,5 kg 8–12 und Ergometer 5 W 1200–1800 s).
-- [ ] **Step 2:** Neue Fälle: Neigung wechselt im Block → `daten_uneindeutig`; Neigung im Vorblock anders → kein `topTwice` (bleibt `im_korridor`), kein `missedTwice`; gleiche Neigung → identisch zu ohne; `secondaryLoad` wird im Ergebnis und in `inputs` mitgegeben; `target_min = target_max` mit zwei Tagen → Stufe hoch.
-- [ ] **Step 3:** Implementierung. Kopfkommentar ergänzen: Version 2.0.0, was sich änderte und warum die Regel keinen Zweig hat.
-- [ ] **Step 4:** Commit `feat(domain): Progression 2.0.0 -- Belastung und Umfang, Nebenbelastung muss gleich bleiben`.
+- [x] **Step 1:** Bestehende Tests umbenennen (Felder), dann je Fall eine Kopie mit `watt`/`seconds`-Werten und identischer Erwartung (`describe.each` über zwei Geräte: Beinpresse 2,5 kg 8–12 und Ergometer 5 W 1200–1800 s).
+- [x] **Step 2:** Neue Fälle: Neigung wechselt im Block → `daten_uneindeutig`; Neigung im Vorblock anders → kein `topTwice` (bleibt `im_korridor`), kein `missedTwice`; gleiche Neigung → identisch zu ohne; `secondaryLoad` wird im Ergebnis und in `inputs` mitgegeben; `target_min = target_max` mit zwei Tagen → Stufe hoch.
+- [x] **Step 3:** Implementierung. Kopfkommentar ergänzen: Version 2.0.0, was sich änderte und warum die Regel keinen Zweig hat.
+- [x] **Step 4:** Commit `feat(domain): Progression 2.0.0 -- Belastung und Umfang, Nebenbelastung muss gleich bleiben`.
 
 ---
 
@@ -126,9 +126,9 @@ export type GespeicherteVorschlagZeile = { …; result_load; inputs: { currentLo
 ```
 `bloeckeDerSession` liest die Einheiten mit (`machines (equipment_models (load_unit, secondary_unit))` in derselben Abfrage über `workout_sets`) und gibt `einheitenJeGeraet` zurück; beide Pfade (rechnen, zurücklesen) bekommen sie so ohne zusätzlichen Roundtrip. Fehlt ein Gerät in der Map (darf nicht vorkommen), fällt der Block weg statt auf `kg` zu raten.
 
-- [ ] **Step 1:** Tests umbenennen und um Einheiten ergänzen; ein Fall „Einheit fehlt → Block fällt weg".
-- [ ] **Step 2:** Implementierung; Abfragen auf `load`, `volume`, `secondary_load`, `result_load`, `target_min/max`, `load_step/min/max`.
-- [ ] **Step 3:** Commit `feat(domain): Abschlussvorschlag traegt Belastungseinheit und Nebenbelastung`.
+- [x] **Step 1:** Tests umbenennen und um Einheiten ergänzen; ein Fall „Einheit fehlt → Block fällt weg".
+- [x] **Step 2:** Implementierung; Abfragen auf `load`, `volume`, `secondary_load`, `result_load`, `target_min/max`, `load_step/min/max`.
+- [x] **Step 3:** Commit `feat(domain): Abschlussvorschlag traegt Belastungseinheit und Nebenbelastung`.
 
 ---
 
@@ -150,9 +150,9 @@ export type RecordedSet = { …; load; secondaryLoad: number | null; volume; …
 2. `secondary_unit` gesetzt ⇒ `secondaryLoad` Pflicht; nicht gesetzt ⇒ `secondaryLoad` muss fehlen oder `null` sein. Sonst `validation_failed`.
 3. `secondaryLoad` wird mit `snapToStep` auf die Rastung des Modells gerundet.
 
-- [ ] **Step 1:** Tests: Alias wird abgebildet; `secondaryLoad` optional im Schema; Beginn-nach-Satz-Fall bleibt. (Die Modellprüfung braucht die Datenbank und lebt in `tests/integration/domain-record-set.test.ts`, Task 9.)
-- [ ] **Step 2:** Implementierung.
-- [ ] **Step 3:** Commit `feat(domain): Satz-PUT mit load, volume und secondaryLoad; Aliase fuer einen Release`.
+- [x] **Step 1:** Tests: Alias wird abgebildet; `secondaryLoad` optional im Schema; Beginn-nach-Satz-Fall bleibt. (Die Modellprüfung braucht die Datenbank und lebt in `tests/integration/domain-record-set.test.ts`, Task 9.)
+- [x] **Step 2:** Implementierung.
+- [x] **Step 3:** Commit `feat(domain): Satz-PUT mit load, volume und secondaryLoad; Aliase fuer einen Release`.
 
 ---
 
@@ -175,9 +175,9 @@ Feldnamen nach Spec Abschnitt 5.4 und 6:
 | catalog | `exerciseInputSchema`, `CatalogExercise`, `StudioExercise` | `volumeKind`, `targetMin`, `targetMax` |
 | index | Exporte | `suggestNextLoad`, `belastung.ts`-Exporte, Typen |
 
-- [ ] **Step 1:** Datei für Datei umbenennen, Abfragen auf die neuen Spalten, Kommentare nachziehen. `machine-context` und `abschluss` rufen `suggestNextLoad` mit `loadMax: model.load_max ?? 9999` wie heute.
-- [ ] **Step 2:** `pnpm -F @fitretro/domain typecheck` und `test` grün.
-- [ ] **Step 3:** Commit `feat(domain): Lesepfade auf Belastung, Umfang und Kategorie`.
+- [x] **Step 1:** Datei für Datei umbenennen, Abfragen auf die neuen Spalten, Kommentare nachziehen. `machine-context` und `abschluss` rufen `suggestNextLoad` mit `loadMax: model.load_max ?? 9999` wie heute.
+- [x] **Step 2:** `pnpm -F @fitretro/domain typecheck` und `test` grün.
+- [x] **Step 3:** Commit `feat(domain): Lesepfade auf Belastung, Umfang und Kategorie`.
 
 ---
 
@@ -186,8 +186,8 @@ Feldnamen nach Spec Abschnitt 5.4 und 6:
 **Files:**
 - Create: `packages/domain/src/kategorie-waechter.test.ts`
 
-- [ ] **Step 1:** Test liest `progression.ts`, `abschluss.ts`, `workout.ts`, `machine-context.ts` als Text (`readFileSync`) und erwartet, dass `/\bcategory\b/` nirgends vorkommt. Kommentar: Spec Abschnitt 3.5, warum das die einzige Stelle ist, die das Versprechen hält.
-- [ ] **Step 2:** Commit `test(domain): Waechter -- category bleibt aus der Regel draussen`.
+- [x] **Step 1:** Test liest `progression.ts`, `abschluss.ts`, `workout.ts`, `machine-context.ts` als Text (`readFileSync`) und erwartet, dass `/\bcategory\b/` nirgends vorkommt. Kommentar: Spec Abschnitt 3.5, warum das die einzige Stelle ist, die das Versprechen hält.
+- [x] **Step 2:** Commit `test(domain): Waechter -- category bleibt aus der Regel draussen`.
 
 ---
 
@@ -203,20 +203,26 @@ Feldnamen nach Spec Abschnitt 5.4 und 6:
 
 Keine neue Oberfläche. Formularfelder heißen `loadMin/loadMax/loadStep` und `targetMin/targetMax`; Labels und Texte bleiben. `layout.tsx` formatiert über `formatLoad(wert, modell.loadUnit)`; für `kg` ist die Ausgabe identisch. Übungstexte „8–12 Wiederholungen" über `formatVolumeRange`.
 
-- [ ] **Step 1:** Web umbenennen; `pnpm typecheck` grün.
-- [ ] **Step 2:** Integrationstests umbenennen und ergänzen; `pnpm typecheck` grün. Ausführen, wenn `supabase start` verfügbar ist (`pnpm test:integration`); sonst im Commit und in der Zusammenfassung ausdrücklich festhalten, dass sie nicht gelaufen sind.
-- [ ] **Step 3:** Commit `feat(web,tests): Feldnamen auf Belastung und Umfang; Integrationstests fuer Laufband und Nebenbelastung`.
+- [x] **Step 1:** Web umbenennen; `pnpm typecheck` grün.
+- [x] **Step 2:** Integrationstests umbenennen und ergänzen; `pnpm typecheck` grün. **Nicht ausgeführt** (22. September): in der Umgebung gibt es kein Docker, also kein `supabase start`. Vor dem Merge lokal `supabase db reset && pnpm test:integration` laufen lassen; die erwarteten Neuerungen stehen in `domain-record-set` und `domain-machine-context`.
+- [x] **Step 3:** Commit `feat(web,tests): Feldnamen auf Belastung und Umfang; Integrationstests fuer Laufband und Nebenbelastung`.
 
 ---
 
 ## Selbstprüfung
 
-- [ ] `pnpm -F @fitretro/domain test` grün, Zahl der Tests gestiegen (Progression doppelt, belastung, Wächter).
-- [ ] `pnpm typecheck` grün über Domain, Web, Tests, E2E.
-- [ ] `grep -rn "weight_kg\|weightKg" packages apps/web tests` trifft nur noch Körpergewicht (`measurements`, `goals`, `body_measurements`, `latestWeight`).
-- [ ] `grep -n category packages/domain/src/{progression,abschluss,workout,machine-context}.ts` leer.
-- [ ] Migration lief lokal gegen Postgres 16 durch, samt Rauchtest.
-- [ ] Spec Abschnitt 3.3 stimmt mit dem Stand der App überein.
+- [x] `pnpm -F @fitretro/domain test` grün, Zahl der Tests gestiegen (Progression doppelt, belastung, Wächter).
+- [x] `pnpm typecheck` grün über Domain, Web, Tests, E2E.
+- [x] `grep -rn "weight_kg\|weightKg" packages apps/web tests` trifft nur noch Körpergewicht (`measurements`, `goals`, `body_measurements`, `latestWeight`).
+- [x] `grep -n category packages/domain/src/{progression,abschluss,workout,machine-context}.ts` leer.
+- [x] Migration lief lokal gegen Postgres 16 durch, samt Rauchtest (alle 45 Migrationen mit Auth-/Storage-Shim; die fünf neuen Constraints greifen, Umfang 1000 geht jetzt durch).
+- [x] Spec Abschnitt 3.3 stimmt mit dem Stand der App überein.
+
+## Stand nach der Umsetzung (22. September)
+
+- Domain: 219 Tests grün (vorher 167), davon 44 Progressionsfälle doppelt über Beinpresse und Ergometer, 14 in `belastung`, 4 im Wächter.
+- `pnpm typecheck` grün über Domain, Web, Tests und E2E.
+- Offen: `pnpm test:integration` gegen ein lokales Supabase, und danach `pnpm test:e2e` für das Portal (Formularfelder heißen jetzt `loadMin/loadMax/loadStep` und `targetMin/targetMax`; die Labels und der Text „Schritt 2,5 kg · ab 5,0 kg bis 100,0 kg" sind unverändert).
 
 ## Was dieser Schnitt NICHT tut
 
