@@ -109,9 +109,9 @@ Die Übung sagt, was das Mitglied schaffen soll. Heute ist das ein Wiederholungs
 
 Zwischen Belastungseinheit und Umfangsart gibt es **keine erzwungene Kopplung.** Eine Übung „Halten 60 s" an einer Kraftmaschine (isometrisch) ist eine `seconds`-Übung an einem `kg`-Modell und damit ohne Sonderfall ausdrückbar. Der Trainer entscheidet, was sinnvoll ist.
 
-### 3.3 Reserve und Problem bleiben
+### 3.3 Reserve ist schon gefallen, Problem bleibt
 
-`rir` bleibt Spalte, Skala 0–10 und Schwelle `>= 1`. Nur der Wortlaut im Geräte-Screen wird einheitenfrei: „Wie viel hattest du noch?" statt „Wiederholungen in Reserve". `2026-09-07-ios-geraet-kernflow-design.md` Abschnitt 7.6 nennt den Chip ohnehin schon „Reserve".
+Die App erfasst die Reserve (RIR) seit dem 11. September nicht mehr: Eingabe, Profilschalter und Verlaufsanzeige sind weg, neue Sätze schreiben `null` (`2026-09-11-satzpfad-feinschliff.md`, Punkt 4). `rir` bleibt als Spalte und als Regelpfad für Altdaten bestehen, bekommt aber kein Cardio-Rad und keinen neuen Wortlaut. Für Cardio wie für Kraft entscheidet damit in der Praxis der Zwei-Tage-Pfad: zweimal in Folge das obere Korridorende erreicht, eine Stufe hoch.
 
 Die Problemmeldung (M1 §5.8) ändert sich nicht. `zu_schwer` liest sich am Ergometer als „zu hart" und bleibt derselbe Code.
 
@@ -293,7 +293,7 @@ Für Kraftgeräte ist `secondaryLoad` in jedem Satz `null`, und `(80, null) === 
 
 `PROGRESSION_ALGO_VERSION` wird `2.0.0`, weil der persistierte `inputs`-Datensatz andere Schlüssel trägt. Die Begründungscodes bleiben wörtlich (`korridor_oben_erreicht`, `geraetegrenze_erreicht` usw.); sie waren nie an kg gebunden. `snapToNearestStep` und `withinMachineLimits` rechnen bereits nur mit Zahlen und steigern nur die Belastung; die Nebenbelastung wird im Vorschlag unverändert mitgegeben (`resultSecondaryLoad = currentSecondaryLoad`), damit der Abschluss-Screen „+0,5 km/h bei 6 %" schreiben kann.
 
-`HISTORY_WINDOW = 2` bleibt. Für Cardio heißt das wie für Kraft: oberes Korridorende mit angegebener Reserve, dann eine Stufe hoch; ohne Reserveangabe zwei Trainingstage in Folge am oberen Ende. Das ist konservativ und vor dem Pilot fachlich zu prüfen, wie die Kraftschwellen auch (M1 §8.4).
+`HISTORY_WINDOW = 2` bleibt. Weil die App keine Reserve mehr erfasst (Abschnitt 3.3), heißt das für Cardio wie für Kraft: zwei Trainingstage in Folge am oberen Korridorende, dann eine Stufe hoch. Das ist konservativ und vor dem Pilot fachlich zu prüfen, wie die Kraftschwellen auch (M1 §8.4).
 
 ### 5.3 Ein Formatierer, nicht viele
 
@@ -406,7 +406,7 @@ Das Modell gilt als allgemein genug, wenn diese vier Geräte ohne neue Spalte un
 | Stairmaster | cardio | `level`, 1–20, Schritt 1 | — | — | Stufen, `seconds` 10–15 min | +1 Level |
 | Rudergerät | cardio | `level`, 1–10, Schritt 1 | — | Fußschlaufe 1–6 | 2 km, `meters` 2 000–2 000 | +1 Level |
 
-Das Rudergerät zeigt den Grenzfall: bei einem festen Ziel („genau 2 km") ist `target_min = target_max`. Dann entscheidet allein die Reserve über die Steigerung. Das ist korrekt und braucht keine Sonderregel; der Trainer kann den Korridor auch weiter fassen.
+Das Rudergerät zeigt den Grenzfall: bei einem festen Ziel („genau 2 km") ist `target_min = target_max`. Dann entscheidet der Zwei-Tage-Pfad: zweimal in Folge das Ziel erreicht, eine Stufe hoch. Das ist korrekt und braucht keine Sonderregel; der Trainer kann den Korridor auch weiter fassen.
 
 Das Laufband zeigt den Zweck der Nebenbelastung: läuft das Mitglied diese Woche bei 6 % statt 2 %, sieht die Regel ein anderes Paar, zählt die Vorwoche nicht als zweiten Beleg und schlägt nichts auf falscher Grundlage vor.
 
