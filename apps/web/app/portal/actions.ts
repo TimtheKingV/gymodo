@@ -26,7 +26,7 @@ import {
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { belastungAusFormular } from "./formfelder";
+import { belastungAusFormular, umfangAusFormular } from "./formfelder";
 
 /**
  * Die Trainerfunktionen als Server Actions -- kein HTTP, keine Endpoints.
@@ -244,8 +244,7 @@ export async function uebungAnlegen(
       studioId,
       name: text(formData, "name"),
       description: optionalerText(formData, "description"),
-      targetMin: zahl(formData, "targetMin") ?? Number.NaN,
-      targetMax: zahl(formData, "targetMax") ?? Number.NaN,
+      ...umfangAusFormular(formData),
     });
     // Anlegen und zuordnen in einem Schritt: eine Uebung, die an keinem
     // Geraet haengt, taucht nirgends auf und waere ein stiller Fehlschlag.
