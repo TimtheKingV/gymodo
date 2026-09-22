@@ -66,7 +66,7 @@ beforeAll(async () => {
     .insert({
       studio_id: studioA,
       name: "Rudermaschine",
-      weight_step_kg: 2.5,
+      load_step: 2.5,
       photo_path: rudermaschinePfad,
     })
     .select("id")
@@ -85,7 +85,7 @@ beforeAll(async () => {
   // Beinpresse: ohne Foto, ein Geraet.
   const { data: beinpresse, error: beinpresseError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioA, name: "Beinpresse", weight_step_kg: 5 })
+    .insert({ studio_id: studioA, name: "Beinpresse", load_step: 5 })
     .select("id")
     .single();
   if (beinpresseError) throw beinpresseError;
@@ -111,7 +111,7 @@ beforeAll(async () => {
     .insert({
       studio_id: studioA,
       name: "Stepper",
-      weight_step_kg: 1,
+      load_step: 1,
       photo_path: stepperPfad,
     })
     .select("id")
@@ -133,7 +133,7 @@ beforeAll(async () => {
     .insert({
       studio_id: studioA,
       name: "Latzug",
-      weight_step_kg: 5,
+      load_step: 5,
       photo_path: `${studioA}/${crypto.randomUUID()}.jpg`,
     })
     .select("id")
@@ -158,7 +158,7 @@ beforeAll(async () => {
     .insert({
       studio_id: studioB,
       name: "Crosstrainer",
-      weight_step_kg: 1,
+      load_step: 1,
       photo_path: crosstrainerPfad,
     })
     .select("id")

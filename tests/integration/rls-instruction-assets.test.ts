@@ -45,7 +45,7 @@ beforeAll(async () => {
 
   const { data: model, error: modelError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioA, name: "Beinstrecker", weight_step_kg: 5 })
+    .insert({ studio_id: studioA, name: "Beinstrecker", load_step: 5 })
     .select("id")
     .single();
   if (modelError) throw modelError;
@@ -55,8 +55,8 @@ beforeAll(async () => {
     .insert({
       studio_id: studioA,
       name: "Beinstrecken",
-      target_reps_min: 8,
-      target_reps_max: 12,
+      target_min: 8,
+      target_max: 12,
     })
     .select("id")
     .single();
@@ -76,7 +76,7 @@ beforeAll(async () => {
   // Studio der Zeile selbst prueft.
   const { data: modelB, error: modelBError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioB, name: "Beinstrecker B", weight_step_kg: 5 })
+    .insert({ studio_id: studioB, name: "Beinstrecker B", load_step: 5 })
     .select("id")
     .single();
   if (modelBError) throw modelBError;
@@ -86,8 +86,8 @@ beforeAll(async () => {
     .insert({
       studio_id: studioB,
       name: "Beinstrecken B",
-      target_reps_min: 8,
-      target_reps_max: 12,
+      target_min: 8,
+      target_max: 12,
     })
     .select("id")
     .single();
@@ -434,7 +434,7 @@ describe("RLS auf instruction_assets", () => {
 
       const { data: model, error: modelError } = await admin
         .from("equipment_models")
-        .insert({ studio_id: studioA, name: "Loeschkette-Modell", weight_step_kg: 5 })
+        .insert({ studio_id: studioA, name: "Loeschkette-Modell", load_step: 5 })
         .select("id")
         .single();
       if (modelError) throw modelError;
@@ -444,8 +444,8 @@ describe("RLS auf instruction_assets", () => {
         .insert({
           studio_id: studioA,
           name: "Loeschkette-Uebung",
-          target_reps_min: 8,
-          target_reps_max: 12,
+          target_min: 8,
+          target_max: 12,
         })
         .select("id")
         .single();

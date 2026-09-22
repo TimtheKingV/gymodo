@@ -53,7 +53,7 @@ beforeAll(async () => {
 
   const { data: model, error: modelError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioA, name: "Kabelzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioA, name: "Kabelzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modelError) throw modelError;
@@ -75,14 +75,14 @@ beforeAll(async () => {
       {
         studio_id: studioA,
         name: "Latzug breit",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
       {
         studio_id: studioA,
         name: "Latzug eng",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
     ])
     .select("id");
@@ -117,7 +117,7 @@ async function seedSet(options: {
   exerciseId: string;
   setIndex: number;
   performedAt: string;
-  weightKg?: number;
+  load?: number;
 }): Promise<void> {
   const { error } = await serviceClient().from("workout_sets").insert({
     id: newId(),
@@ -127,8 +127,8 @@ async function seedSet(options: {
     machine_id: options.machineId,
     exercise_id: options.exerciseId,
     set_index: options.setIndex,
-    weight_kg: options.weightKg ?? 45,
-    reps: 10,
+    load: options.load ?? 45,
+    volume: 10,
     performed_at: options.performedAt,
   });
   if (error) throw error;

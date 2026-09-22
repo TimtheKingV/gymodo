@@ -92,9 +92,9 @@ export async function modellAnlegen(
       studioId,
       name: text(formData, "name"),
       manufacturer: optionalerText(formData, "manufacturer"),
-      weightStepKg: zahl(formData, "weightStepKg") ?? Number.NaN,
-      minWeightKg: zahl(formData, "minWeightKg") ?? 0,
-      maxWeightKg: zahl(formData, "maxWeightKg") ?? null,
+      loadStep: zahl(formData, "loadStep") ?? Number.NaN,
+      loadMin: zahl(formData, "loadMin") ?? 0,
+      loadMax: zahl(formData, "loadMax") ?? null,
     });
     modelId = modell.id;
   } catch (fehler) {
@@ -378,8 +378,8 @@ export async function uebungAnlegen(
       studioId,
       name: text(formData, "name"),
       description: null,
-      targetRepsMin: zahl(formData, "targetRepsMin") ?? Number.NaN,
-      targetRepsMax: zahl(formData, "targetRepsMax") ?? Number.NaN,
+      targetMin: zahl(formData, "targetMin") ?? Number.NaN,
+      targetMax: zahl(formData, "targetMax") ?? Number.NaN,
     });
     const link = await attachExerciseToModel(client, {
       equipmentModelId: modelId,

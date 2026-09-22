@@ -22,12 +22,12 @@ export function UebungRepsRad({
       gross={gross}
       spalten={[
         {
-          name: "targetRepsMin",
+          name: "targetMin",
           label: "Wiederholungen ab",
           werte: wiederholungenWerte(),
           start: abStart,
         },
-        { name: "targetRepsMax", label: "bis", werte: wiederholungenWerte(), start: bisStart },
+        { name: "targetMax", label: "bis", werte: wiederholungenWerte(), start: bisStart },
       ]}
     />
   );

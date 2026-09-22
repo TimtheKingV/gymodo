@@ -63,8 +63,8 @@ beforeAll(async () => {
   const { data: modelle, error: modellFehler } = await admin
     .from("equipment_models")
     .insert([
-      { studio_id: studioA, name: "Binden-Modell A", weight_step_kg: 5 },
-      { studio_id: studioB, name: "Binden-Modell B", weight_step_kg: 5 },
+      { studio_id: studioA, name: "Binden-Modell A", load_step: 5 },
+      { studio_id: studioB, name: "Binden-Modell B", load_step: 5 },
     ])
     .select("id");
   if (modellFehler) throw modellFehler;

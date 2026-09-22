@@ -48,7 +48,7 @@ describe("RLS auf equipment_models", () => {
     const client = await userClient(staffAEmail);
     const { data, error } = await client
       .from("equipment_models")
-      .insert({ studio_id: studioA, name: "Beinpresse", weight_step_kg: 5 })
+      .insert({ studio_id: studioA, name: "Beinpresse", load_step: 5 })
       .select("id")
       .single();
     expect(error).toBeNull();
@@ -59,7 +59,7 @@ describe("RLS auf equipment_models", () => {
     const client = await userClient(memberAEmail);
     const { error } = await client
       .from("equipment_models")
-      .insert({ studio_id: studioA, name: "Verboten", weight_step_kg: 5 });
+      .insert({ studio_id: studioA, name: "Verboten", load_step: 5 });
     expect(error).not.toBeNull();
   });
 
@@ -67,7 +67,7 @@ describe("RLS auf equipment_models", () => {
     const client = await userClient(memberBEmail);
     const { error } = await client
       .from("equipment_models")
-      .insert({ studio_id: studioA, name: "Fremd", weight_step_kg: 5 });
+      .insert({ studio_id: studioA, name: "Fremd", load_step: 5 });
     expect(error).not.toBeNull();
   });
 
@@ -91,7 +91,7 @@ describe("RLS auf equipment_models", () => {
     const client = await userClient(staffAEmail);
     const { error } = await client
       .from("equipment_models")
-      .insert({ studio_id: studioA, name: "Ungueltig", weight_step_kg: 0 });
+      .insert({ studio_id: studioA, name: "Ungueltig", load_step: 0 });
     expect(error).not.toBeNull();
   });
 
@@ -99,7 +99,7 @@ describe("RLS auf equipment_models", () => {
     const client = await userClient(staffBEmail);
     const { error } = await client
       .from("equipment_models")
-      .insert({ studio_id: studioA, name: "Fremd-Staff", weight_step_kg: 5 });
+      .insert({ studio_id: studioA, name: "Fremd-Staff", load_step: 5 });
     expect(error).not.toBeNull();
   });
 
@@ -114,10 +114,10 @@ describe("RLS auf equipment_models", () => {
       const { data, error } = await admin
         .from("equipment_models")
         .insert([
-          { studio_id: studioA, name: "Update-Ziel", weight_step_kg: 5 },
-          { studio_id: studioA, name: "Move-Ziel", weight_step_kg: 5 },
-          { studio_id: studioA, name: "Delete-Ziel", weight_step_kg: 5 },
-          { studio_id: studioA, name: "Delete-Verboten-Ziel", weight_step_kg: 5 },
+          { studio_id: studioA, name: "Update-Ziel", load_step: 5 },
+          { studio_id: studioA, name: "Move-Ziel", load_step: 5 },
+          { studio_id: studioA, name: "Delete-Ziel", load_step: 5 },
+          { studio_id: studioA, name: "Delete-Verboten-Ziel", load_step: 5 },
         ])
         .select("id");
       if (error) throw error;
@@ -200,7 +200,7 @@ describe("RLS auf equipment_setting_definitions", () => {
     const admin = serviceClient();
     const { data, error } = await admin
       .from("equipment_models")
-      .insert({ studio_id: studioA, name: "Latzug", weight_step_kg: 2.5 })
+      .insert({ studio_id: studioA, name: "Latzug", load_step: 2.5 })
       .select("id")
       .single();
     if (error) throw error;
@@ -208,7 +208,7 @@ describe("RLS auf equipment_setting_definitions", () => {
 
     const { data: modelBData, error: modelBError } = await admin
       .from("equipment_models")
-      .insert({ studio_id: studioB, name: "Latzug B", weight_step_kg: 2.5 })
+      .insert({ studio_id: studioB, name: "Latzug B", load_step: 2.5 })
       .select("id")
       .single();
     if (modelBError) throw modelBError;

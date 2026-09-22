@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { formatVolumeRange } from "@fitretro/domain/belastung";
 import {
   MEDIA_URL_TTL_SECONDS,
   VIDEO_BUCKET,
@@ -120,7 +121,7 @@ export default async function ModellUebungenPage({
                         {index + 1}. {uebung.name}
                       </div>
                       <div className={styles.rowMeta}>
-                        {uebung.targetRepsMin}–{uebung.targetRepsMax} Wiederholungen ·{" "}
+                        {formatVolumeRange(uebung.targetMin, uebung.targetMax, uebung.volumeKind)} ·{" "}
                         {uebung.hasVideo ? (
                           `Video ${uebung.videoDurationS} s`
                         ) : (

@@ -139,9 +139,9 @@ export async function modellAnlegen(
       studioId,
       name: text(formData, "name"),
       manufacturer: optionalerText(formData, "manufacturer"),
-      weightStepKg: zahl(formData, "weightStepKg") ?? Number.NaN,
-      minWeightKg: zahl(formData, "minWeightKg") ?? 0,
-      maxWeightKg: zahl(formData, "maxWeightKg") ?? null,
+      loadStep: zahl(formData, "loadStep") ?? Number.NaN,
+      loadMin: zahl(formData, "loadMin") ?? 0,
+      loadMax: zahl(formData, "loadMax") ?? null,
     });
     modelId = modell.id;
   } catch (fehler) {
@@ -161,9 +161,9 @@ export async function modellAendern(
     await updateEquipmentModel(client, modelId, {
       name: text(formData, "name"),
       manufacturer: optionalerText(formData, "manufacturer"),
-      weightStepKg: zahl(formData, "weightStepKg"),
-      minWeightKg: zahl(formData, "minWeightKg"),
-      maxWeightKg: zahl(formData, "maxWeightKg") ?? null,
+      loadStep: zahl(formData, "loadStep"),
+      loadMin: zahl(formData, "loadMin"),
+      loadMax: zahl(formData, "loadMax") ?? null,
     });
   }, "layout");
 }
@@ -245,8 +245,8 @@ export async function uebungAnlegen(
       studioId,
       name: text(formData, "name"),
       description: optionalerText(formData, "description"),
-      targetRepsMin: zahl(formData, "targetRepsMin") ?? Number.NaN,
-      targetRepsMax: zahl(formData, "targetRepsMax") ?? Number.NaN,
+      targetMin: zahl(formData, "targetMin") ?? Number.NaN,
+      targetMax: zahl(formData, "targetMax") ?? Number.NaN,
     });
     // Anlegen und zuordnen in einem Schritt: eine Uebung, die an keinem
     // Geraet haengt, taucht nirgends auf und waere ein stiller Fehlschlag.

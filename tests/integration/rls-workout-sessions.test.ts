@@ -50,7 +50,7 @@ beforeAll(async () => {
 
   const { data: model, error: modelError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioA, name: "Sessions-Kabelzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioA, name: "Sessions-Kabelzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modelError) throw modelError;
@@ -65,7 +65,7 @@ beforeAll(async () => {
 
   const { data: exercise, error: exerciseError } = await admin
     .from("exercises")
-    .insert({ studio_id: studioA, name: "Sessions-Latzug", target_reps_min: 8, target_reps_max: 12 })
+    .insert({ studio_id: studioA, name: "Sessions-Latzug", target_min: 8, target_max: 12 })
     .select("id")
     .single();
   if (exerciseError) throw exerciseError;
@@ -247,7 +247,7 @@ describe("RLS auf workout_sessions", () => {
     if (insertError) throw insertError;
     const { error: setError } = await client.from("workout_sets").insert({
       id: newId(), studio_id: studioA, user_id: memberAId, session_id: sessionId,
-      machine_id: machineA, exercise_id: exerciseA, set_index: 1, weight_kg: 80, reps: 10,
+      machine_id: machineA, exercise_id: exerciseA, set_index: 1, load: 80, volume: 10,
     });
     if (setError) throw setError;
 

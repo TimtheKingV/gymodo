@@ -13,7 +13,7 @@ import styles from "../../../../portal.module.css";
  * Client-Interaktion braucht -- die Seite selbst laedt den Katalog und
  * bleibt Server-Component.
  *
- * Die Bestandswerte (minWeightKg/maxWeightKg/weightStepKg) gehen als
+ * Die Bestandswerte (loadMin/loadMax/loadStep) gehen als
  * `start` ins Rad -- eine krumme Bestandszahl faellt dabei auf die
  * naechstliegende Zeile, nicht still auf die erste (naechsterIndex() in
  * EinstellungRad.tsx).
@@ -24,7 +24,7 @@ export function StammdatenFormular({
   fotoUrl,
 }: {
   action: (prev: unknown, formData: FormData) => Promise<ActionResult>;
-  modell: { name: string; manufacturer: string | null; weightStepKg: number; minWeightKg: number; maxWeightKg: number | null };
+  modell: { name: string; manufacturer: string | null; loadStep: number; loadMin: number; loadMax: number | null };
   fotoUrl: string | undefined;
 }) {
   return (
@@ -38,9 +38,9 @@ export function StammdatenFormular({
         />
       </div>
       <ModellGewichtRad
-        minStart={String(modell.minWeightKg)}
-        maxStart={modell.maxWeightKg === null ? "" : String(modell.maxWeightKg)}
-        schrittStart={String(modell.weightStepKg).replace(".", ",")}
+        minStart={String(modell.loadMin)}
+        maxStart={modell.loadMax === null ? "" : String(modell.loadMax)}
+        schrittStart={String(modell.loadStep).replace(".", ",")}
       />
       <FotoFeld
         name="photo"

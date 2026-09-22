@@ -1,3 +1,4 @@
+import { formatLoad } from "@fitretro/domain/belastung";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ladeKatalog } from "../../../catalog";
@@ -6,11 +7,6 @@ import { Modellbild } from "../../../../bausteine/Modellbild";
 import { NochZuTun } from "../../../../bausteine/NochZuTun";
 import { ModellReiter } from "./ModellReiter";
 import styles from "../../../../portal.module.css";
-
-/** 80,0 statt 80 -- sonst liest sich ein Wechsel auf 82,5 wie ein Formatfehler. */
-function kg(wert: number): string {
-  return `${wert.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg`;
-}
 
 /**
  * Kopf und Reiterleiste fuer alle vier Modell-Reiter (Aufgabe 16). Die
@@ -57,8 +53,8 @@ export default async function ModellLayout({
           <h1 className={styles.pageTitle}>{modell.name}</h1>
           <p className={styles.pageLead}>
             {modell.manufacturer ?? "Ohne Herstellerangabe"} · Schritt{" "}
-            {kg(modell.weightStepKg)} · ab {kg(modell.minWeightKg)}
-            {modell.maxWeightKg === null ? "" : ` bis ${kg(modell.maxWeightKg)}`}
+            {formatLoad(modell.loadStep, modell.loadUnit)} · ab {formatLoad(modell.loadMin, modell.loadUnit)}
+            {modell.loadMax === null ? "" : ` bis ${formatLoad(modell.loadMax, modell.loadUnit)}`}
           </p>
         </div>
       </div>

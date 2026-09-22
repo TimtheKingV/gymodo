@@ -35,8 +35,8 @@ beforeAll(async () => {
   const { data: models, error: modelError } = await admin
     .from("equipment_models")
     .insert([
-      { studio_id: studioA, name: "Tag-Testgeraet A", weight_step_kg: 5 },
-      { studio_id: studioB, name: "Tag-Testgeraet B", weight_step_kg: 5 },
+      { studio_id: studioA, name: "Tag-Testgeraet A", load_step: 5 },
+      { studio_id: studioB, name: "Tag-Testgeraet B", load_step: 5 },
     ])
     .select("id");
   if (modelError) throw modelError;
@@ -125,7 +125,7 @@ describe("machine_tags: active-Constraint und Fremdschluessel", () => {
 
     const { data: model, error: modelError } = await admin
       .from("equipment_models")
-      .insert({ studio_id: studioC, name: "Tag-Testgeraet C", weight_step_kg: 5 })
+      .insert({ studio_id: studioC, name: "Tag-Testgeraet C", load_step: 5 })
       .select("id")
       .single();
     if (modelError) throw modelError;
@@ -199,7 +199,7 @@ describe("machine_tags: active-Constraint und Fremdschluessel", () => {
 
     const { data: model, error: modelError } = await admin
       .from("equipment_models")
-      .insert({ studio_id: studioC, name: "Tag-Testgeraet D", weight_step_kg: 5 })
+      .insert({ studio_id: studioC, name: "Tag-Testgeraet D", load_step: 5 })
       .select("id")
       .single();
     if (modelError) throw modelError;

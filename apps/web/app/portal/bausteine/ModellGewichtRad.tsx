@@ -29,10 +29,10 @@ export function ModellGewichtRad({
     <Rad
       gross={gross}
       spalten={[
-        { name: "minWeightKg", label: "Minimum", werte: minMaxWerte(), start: minStart },
-        { name: "maxWeightKg", label: "Maximum", werte: maxGewichtWerte(), start: maxStart },
+        { name: "loadMin", label: "Minimum", werte: minMaxWerte(), start: minStart },
+        { name: "loadMax", label: "Maximum", werte: maxGewichtWerte(), start: maxStart },
         {
-          name: "weightStepKg",
+          name: "loadStep",
           label: "Schritt",
           werte: gewichtsSchrittWerte(),
           start: schrittStart,

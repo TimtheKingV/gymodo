@@ -36,7 +36,7 @@ async function modell(name = "Katalog-Modell"): Promise<string> {
   const { id } = await createEquipmentModel(client, {
     studioId: studioA,
     name: `${name} ${crypto.randomUUID().slice(0, 8)}`,
-    weightStepKg: 2.5,
+    loadStep: 2.5,
   });
   return id;
 }
@@ -71,20 +71,20 @@ describe("createEquipmentModel", () => {
       studioId: studioA,
       name: "Latzug",
       manufacturer: "Technogym",
-      weightStepKg: 2.5,
-      minWeightKg: 5,
-      maxWeightKg: 100,
+      loadStep: 2.5,
+      loadMin: 5,
+      loadMax: 100,
     });
 
     const admin = serviceClient();
     const { data } = await admin
       .from("equipment_models")
-      .select("studio_id, name, weight_step_kg")
+      .select("studio_id, name, load_step")
       .eq("id", id)
       .single();
     expect(data?.studio_id).toBe(studioA);
     expect(data?.name).toBe("Latzug");
-    expect(Number(data?.weight_step_kg)).toBe(2.5);
+    expect(Number(data?.load_step)).toBe(2.5);
   });
 
   it("negativ: ein einfaches Mitglied legt kein Modell an", async () => {
@@ -94,7 +94,7 @@ describe("createEquipmentModel", () => {
       createEquipmentModel(client, {
         studioId: studioA,
         name: "Verbotenes Modell",
-        weightStepKg: 5,
+        loadStep: 5,
       }),
     ).rejects.toThrow(DomainError);
   });
@@ -106,7 +106,7 @@ describe("createEquipmentModel", () => {
       createEquipmentModel(client, {
         studioId: studioB,
         name: "Fremdes Modell",
-        weightStepKg: 5,
+        loadStep: 5,
       }),
     ).rejects.toThrow(DomainError);
   });
@@ -115,7 +115,7 @@ describe("createEquipmentModel", () => {
     const client = await userClient(trainerA);
 
     await expect(
-      createEquipmentModel(client, { studioId: studioA, name: "   ", weightStepKg: 5 }),
+      createEquipmentModel(client, { studioId: studioA, name: "   ", loadStep: 5 }),
     ).rejects.toThrow(DomainError);
   });
 
@@ -123,7 +123,7 @@ describe("createEquipmentModel", () => {
     const client = await userClient(trainerA);
 
     await expect(
-      createEquipmentModel(client, { studioId: studioA, name: "Ohne Schritt", weightStepKg: 0 }),
+      createEquipmentModel(client, { studioId: studioA, name: "Ohne Schritt", loadStep: 0 }),
     ).rejects.toThrow(DomainError);
   });
 
@@ -134,9 +134,9 @@ describe("createEquipmentModel", () => {
       createEquipmentModel(client, {
         studioId: studioA,
         name: "Verdreht",
-        weightStepKg: 5,
-        minWeightKg: 50,
-        maxWeightKg: 10,
+        loadStep: 5,
+        loadMin: 50,
+        loadMax: 10,
       }),
     ).rejects.toThrow(DomainError);
   });
@@ -145,16 +145,16 @@ describe("createEquipmentModel", () => {
     const client = await userClient(trainerA);
     const id = await modell();
 
-    await updateEquipmentModel(client, id, { manufacturer: "Gym80", maxWeightKg: 120 });
+    await updateEquipmentModel(client, id, { manufacturer: "Gym80", loadMax: 120 });
 
     const admin = serviceClient();
     const { data } = await admin
       .from("equipment_models")
-      .select("manufacturer, max_weight_kg")
+      .select("manufacturer, load_max")
       .eq("id", id)
       .single();
     expect(data?.manufacturer).toBe("Gym80");
-    expect(Number(data?.max_weight_kg)).toBe(120);
+    expect(Number(data?.load_max)).toBe(120);
   });
 });
 
@@ -259,14 +259,14 @@ describe("Uebungen und ihre Reihenfolge", () => {
     const erste = await createExercise(client, {
       studioId: studioA,
       name: "Latzug breit",
-      targetRepsMin: 8,
-      targetRepsMax: 12,
+      targetMin: 8,
+      targetMax: 12,
     });
     const zweite = await createExercise(client, {
       studioId: studioA,
       name: "Latzug eng",
-      targetRepsMin: 8,
-      targetRepsMax: 12,
+      targetMin: 8,
+      targetMax: 12,
     });
 
     const linkErste = await attachExerciseToModel(client, {
@@ -299,8 +299,8 @@ describe("Uebungen und ihre Reihenfolge", () => {
       createExercise(client, {
         studioId: studioA,
         name: "Verdreht",
-        targetRepsMin: 12,
-        targetRepsMax: 8,
+        targetMin: 12,
+        targetMax: 8,
       }),
     ).rejects.toThrow(DomainError);
   });
@@ -312,8 +312,8 @@ describe("Uebungen und ihre Reihenfolge", () => {
       .insert({
         studio_id: studioB,
         name: "Fremde Uebung",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       })
       .select("id")
       .single();
@@ -336,8 +336,8 @@ describe("Uebungen und ihre Reihenfolge", () => {
     const uebung = await createExercise(client, {
       studioId: studioA,
       name: "Zu loesen",
-      targetRepsMin: 8,
-      targetRepsMax: 12,
+      targetMin: 8,
+      targetMax: 12,
     });
     const link = await attachExerciseToModel(client, {
       equipmentModelId: modelId,
@@ -362,8 +362,8 @@ describe("Uebungen und ihre Reihenfolge", () => {
     const uebung = await createExercise(client, {
       studioId: studioA,
       name: "Mit Video",
-      targetRepsMin: 8,
-      targetRepsMax: 12,
+      targetMin: 8,
+      targetMax: 12,
     });
     const link = await attachExerciseToModel(client, {
       equipmentModelId: modelId,
@@ -541,8 +541,8 @@ describe("getStudioCatalog", () => {
     const uebung = await createExercise(client, {
       studioId: studioA,
       name: "Baum-Uebung",
-      targetRepsMin: 8,
-      targetRepsMax: 12,
+      targetMin: 8,
+      targetMax: 12,
     });
     await attachExerciseToModel(client, {
       equipmentModelId: modelId,
@@ -573,8 +573,8 @@ describe("getStudioCatalog", () => {
     const uebung = await createExercise(client, {
       studioId: studioA,
       name: "Noch ohne Video",
-      targetRepsMin: 8,
-      targetRepsMax: 12,
+      targetMin: 8,
+      targetMax: 12,
     });
     await attachExerciseToModel(client, {
       equipmentModelId: modelId,

@@ -2,6 +2,7 @@
 
 import { useActionState, useId, useState, useTransition } from "react";
 import type { StudioExercise } from "@fitretro/domain";
+import { formatVolumeRange } from "@fitretro/domain/belastung";
 import {
   uebungAnlegen,
   uebungHinzufuegen,
@@ -180,7 +181,7 @@ export function UebungSheet({
                   {uebung.modelCount === 0
                     ? "Noch an keinem Modell"
                     : `An ${uebung.modelCount} ${uebung.modelCount === 1 ? "Modell" : "Modellen"}`}{" "}
-                  · {uebung.targetRepsMin}–{uebung.targetRepsMax} Wiederholungen
+                  · {formatVolumeRange(uebung.targetMin, uebung.targetMax, uebung.volumeKind)}
                 </div>
               </div>
               <button
