@@ -1,6 +1,6 @@
 # Cardio-Geräte — Belastung und Umfang statt Kilogramm und Wiederholungen
 
-**Stand:** 21. September 2026
+**Stand:** 22. September 2026 (Fassung 3: Nebenbelastung und Kategorie, Abschnitte 3.1b und 3.5)
 **Status:** Entschieden, bereit für Umsetzungsplan.
 **Vorbedingung:** Der Satzpfad aus `2026-09-07-ios-geraet-kernflow-design.md` und der Abschluss-Screen aus `2026-09-08-ios-training-kurse-design.md` sind gebaut und in `master`.
 **Zitierweise:** `M1 §n` verweist auf `2026-08-28-fitness-retrofit-m1-design.md`, `Blueprint §n` auf `fitness-retrofit-technical-blueprint.md`; Verweise innerhalb dieses Dokuments stehen als „Abschnitt n".
@@ -31,11 +31,11 @@ Die Anpassung ist deshalb **keine Cardio-Logik, sondern das Herauslösen der Ein
 
 **Enthalten:**
 
-- Datenmodell: Belastungseinheit am Gerätemodell, Umfangsart an der Übung, generische Wertspalten am Satz (Abschnitt 4, Migration 0045)
-- Domain: Umbenennung der Typen, ein Formatierer für Belastungswerte, Algorithmusversion 2.0.0 ohne Regeländerung (Abschnitt 5)
+- Datenmodell: Belastungseinheit und optionale Nebenbelastung am Gerätemodell, Umfangsart an der Übung, generische Wertspalten am Satz, Kategorie Kraft/Cardio am Modell (Abschnitt 4, Migration 0045)
+- Domain: Umbenennung der Typen, ein Formatierer für Belastungswerte, Algorithmusversion 2.0.0 mit genau einer Regelergänzung: die Nebenbelastung muss gleich bleiben (Abschnitt 5)
 - API: Feldnamen in Gerätekontext, Bootstrap, Satz-PUT, Sessions, Progress, Abschluss (Abschnitt 6)
 - Portal: Belastungsart am Modell, Umfangsart an der Übung, Räder mit Wertelisten je Einheit (Abschnitt 7)
-- iOS: Zeit- und Streckenrad, Einheit an allen Stellen, an denen heute „kg" hart steht (Abschnitt 8)
+- iOS: Zeit- und Streckenrad, ein drittes Rad für die Nebenbelastung, Einheit an allen Stellen, an denen heute „kg" hart steht, Gerätesuche nach Kategorie (Abschnitt 8)
 - Tests, die zeigen, dass die Regel für Watt/Minuten dasselbe tut wie für kg/Wiederholungen (Abschnitt 12)
 
 **Nicht enthalten** (bewusst, siehe Abschnitt 10):
@@ -61,14 +61,39 @@ Das Modell bestimmt, was man drehen kann: den Gewichtsstapel, den Widerstandsreg
 | `level` | Crosstrainer, Stairmaster, Rudergerät | 1 |
 | `kmh` | Laufband | 0,5 |
 
-**Genau eine Belastung pro Modell.** Das ist die Entscheidung, die die „hundert Anpassungen" verhindert. Ein Laufband hat Tempo und Neigung, ein Ergometer Watt und Trittfrequenz. Nur eine davon dreht die Progression. Wohin die andere gehört, entscheidet eine Frage, die für jedes Gerät gleich lautet:
+**Genau eine Belastung pro Modell wird progressiert.** Das ist die Entscheidung, die die „hundert Anpassungen" verhindert. Ein Laufband hat Tempo und Neigung, ein Ergometer ohne Wattanzeige Stufe und Trittfrequenz. Nur eine davon dreht die Regel. Wohin die andere gehört, entscheidet eine Frage, die für jedes Gerät gleich lautet:
 
-- **Verändert der Regler die Intensität?** Dann ist er entweder die Belastung oder **Teil der Übung**. Die Laufband-Neigung ist das Vorbild: „Dauerlauf, 0 %" und „Bergauf-Gehen, 8 %" sind zwei Übungen mit eigenem Korridor und eigener Historie, so wie am Latzug „Breiter Griff" und „Enger Griff" zwei Übungen sind. Der Trainer legt den Wert in Name und Beschreibung fest, die Regel dreht in beiden nur das Tempo, und ein Wechsel der Neigung ist ein Wechsel der Übung, kein stiller Wechsel der Bedingungen.
+- **Verändert der Regler die Intensität?** Dann ist er entweder die **Belastung** (die Regel steigert ihn) oder die **Nebenbelastung** (Abschnitt 3.1b: sie wird mitgeschrieben, und die Regel verlangt, dass sie gleich bleibt). Was der Trainer darüber hinaus festlegen will („Bergauf-Gehen: 8 %"), steht in der Übung, wie „Breiter Griff" am Latzug.
 - **Verändert der Regler nur die Passform?** Dann ist er ein **Einstellwert** in `equipment_setting_definitions`, wie heute: Sitzhöhe, Fußschlaufe, Rückenpolster. Das Mitglied kalibriert ihn einmal, die Regel sieht ihn nie, und das ist richtig, weil er die Intensität nicht ändert.
 
 Die Neigung als Einstellwert zu führen wäre der Fehler, den die Frage verhindert: das Mitglied liefe 8 km/h bei 2 %, dann 8 km/h bei 6 %, und die Regel sähe „gleiche Belastung, Korridor erreicht" und schlüge mehr Tempo vor, obwohl die Intensität schon gestiegen ist.
 
-Weitere Einheiten (`mph`, `kmh` vs. `min_per_km`, `spm`) kommen, wenn ein Studio sie braucht, als ein Eintrag im Check-Constraint und eine Zeile im Formatierer (Abschnitt 5.3). Sie ändern nichts an der Regel.
+### 3.1b Die Nebenbelastung
+
+Die Fassung 2 dieses Dokuments legte die Neigung allein in die Übung („Dauerlauf 0 %", „Bergauf-Gehen 8 %"). Beim Ergometer taucht dasselbe Muster zum zweiten Mal auf: Stufe, Trittfrequenz, Zeit. Zeigt das Rad Watt, ist Watt die Belastung und die Trittfrequenz steckt darin. Zeigt es nur die Stufe, ist die Trittfrequenz die versteckte zweite Intensitätsdimension. Zweimal dasselbe Problem verdient eine Struktur statt eines Namensschemas.
+
+Deshalb kann ein Modell **genau eine Nebenbelastung** tragen, optional:
+
+| Am Modell | Am Satz | Bedeutung |
+|---|---|---|
+| `secondary_unit` (nullable), `secondary_step`, `secondary_min`, `secondary_max` | `secondary_load` (nullable) | Der zweite Intensitätsregler, mit eigener Rastung |
+
+| Gerät | Belastung | Nebenbelastung |
+|---|---|---|
+| Laufband | `kmh` | Neigung, `pct`, 0–15, Schritt 0,5 |
+| Ergometer mit Stufenanzeige | `level` | Trittfrequenz, `rpm`, 50–120, Schritt 5 |
+| Ergometer mit Wattanzeige | `watt` | keine |
+| Beinpresse | `kg` | keine |
+
+Drei Regeln halten das klein:
+
+1. **Die Regel steigert nie die Nebenbelastung.** Sie verlangt nur, dass sie im Block und zwischen den zwei betrachteten Blöcken gleich ist (Abschnitt 5.2). Ändert das Mitglied die Neigung, gibt es keinen Vorschlag statt eines falschen.
+2. **Das dritte Rad erscheint nur, wenn das Modell eine Nebenbelastung hat**, und ist vom letzten Satz vorbelegt. Im Normalfall bleibt sie gleich, und das Mitglied fasst das Rad nicht an; die Interaktionszahl (Blueprint §2.1, Punkt 8) steigt nicht.
+3. **Für Kraftgeräte ist alles null.** Kein Rad, keine Spalte in der Anzeige, kein Zweig in der Regel: der Tupelvergleich `(load, secondary_load)` mit `(80, null)` ist derselbe Vergleich wie mit `(8.5, 6)`.
+
+Das ist die eine kontrollierte Stelle, an der Cardio-Geräte anders aussehen als Kraftgeräte. Sie liegt im Datenmodell, nicht in der Regel.
+
+Weitere Einheiten (`mph`, `spm`, `min_per_km`) kommen, wenn ein Studio sie braucht, als ein Eintrag im Check-Constraint und eine Zeile im Formatierer (Abschnitt 5.3). Belastung und Nebenbelastung teilen sich dieselbe Einheitenliste. Sie ändern nichts an der Regel.
 
 ### 3.2 Umfang gehört an die Übung
 
@@ -94,6 +119,14 @@ Die Problemmeldung (M1 §5.8) ändert sich nicht. `zu_schwer` liest sich am Ergo
 
 Ein Cardio-Block hat meist genau einen Satz („20 Minuten bei 120 W"). Das ist für die Regel kein Sonderfall: `HISTORY_WINDOW` zählt Blöcke je Trainingstag, nicht Sätze. Block, Session, Zirkel-Logik (M1 §5.3), Resttimer, Abschluss: alles unverändert. Das Wort „Satz" bleibt auch im UI; Abschnitt 13 hält die Alternative fest.
 
+### 3.5 Kategorie: Kraft oder Cardio, nur für Listen
+
+Die Gerätesuche (`2026-09-10-ios-geraet-ohne-scan-design.md`) und die Geräteliste im Portal sollen nach Kraft und Cardio trennen können. Dafür trägt das Modell `category text not null default 'kraft'` mit Check `in ('kraft', 'cardio')`, vom Trainer gesetzt.
+
+Die Kategorie wird **nicht** aus der Belastungseinheit abgeleitet. `level` gibt es an hydraulischen Kraftmaschinen wie an Crosstrainern, und ein Rudergerät ordnet ein Studio als Cardio ein, ein anderes als Ganzkörperkraft. Der Trainer weiß es, die Einheit nicht.
+
+Und sie ist **ausschließlich Anzeige**: Gruppierung in der Suche, Filter im Portal, später eine Kennzahl im Studio-Überblick. Die Regel, der Satzpfad, der Abschluss und der Verlauf lesen sie nie. Genau das unterscheidet sie von dem `modality`-Schalter, den Abschnitt 10 verwirft: der hätte in `progression.ts` gelebt, die Kategorie lebt in `GeraeteAuswahl` und einer Portal-Liste. Ein Wächter-Test in `packages/domain` hält fest, dass `category` in `progression.ts`, `abschluss.ts`, `workout.ts` und `machine-context.ts` nicht vorkommt. Damit bringt die Trennung in der Suche das Modell keinen Schritt näher an getrennte Tabellen.
+
 ---
 
 ## 4. Datenmodell
@@ -104,10 +137,13 @@ Ein Cardio-Block hat meist genau einen Satz („20 Minuten bei 120 W"). Das ist 
 
 | Heute | Künftig | Anmerkung |
 |---|---|---|
-| — | `load_unit text not null default 'kg'` | Check `in ('kg','watt','level','kmh')` |
+| — | `load_unit text not null default 'kg'` | Check `in ('kg','watt','level','kmh','pct','rpm')` |
 | `weight_step_kg` | `load_step` | Constraint `> 0` bleibt |
 | `min_weight_kg` | `load_min` | Constraint `>= 0` bleibt |
 | `max_weight_kg` | `load_max` | Constraint bleibt |
+| — | `secondary_unit text` (nullable) | Dieselbe Einheitenliste wie `load_unit` |
+| — | `secondary_step`, `secondary_min`, `secondary_max numeric` | Check: alle drei gesetzt genau dann, wenn `secondary_unit` gesetzt ist; `secondary_step > 0`, `secondary_max >= secondary_min` |
+| — | `category text not null default 'kraft'` | Check `in ('kraft','cardio')`; nur Anzeige (Abschnitt 3.5) |
 
 **`exercises`**
 
@@ -123,6 +159,7 @@ Ein Cardio-Block hat meist genau einen Satz („20 Minuten bei 120 W"). Das ist 
 |---|---|---|
 | `weight_kg numeric(6,2)` | `load numeric(6,2)` | Constraint `>= 0` bleibt; 9999,99 reicht für Watt |
 | `reps int` | `volume int` | Check `> 0 and <= 100000`; die Obergrenze je Art prüft die Domain (Abschnitt 5.1) |
+| — | `secondary_load numeric(6,2)` (nullable) | Check `>= 0`; ob es gesetzt sein muss, prüft die Domain gegen das Modell (Abschnitt 5.1) |
 
 **`progression_suggestions`**
 
@@ -160,7 +197,31 @@ alter table public.equipment_models
   rename column max_weight_kg to load_max;
 alter table public.equipment_models
   add column load_unit text not null default 'kg'
-    check (load_unit in ('kg', 'watt', 'level', 'kmh'));
+    check (load_unit in ('kg', 'watt', 'level', 'kmh', 'pct', 'rpm'));
+
+-- Optionale Nebenbelastung (Spec Abschnitt 3.1b): der zweite
+-- Intensitaetsregler, den die Regel nie steigert, aber konstant verlangt.
+-- Alle vier Spalten zusammen oder keine -- eine Einheit ohne Rastung
+-- haette kein Rad, eine Rastung ohne Einheit keinen Namen.
+alter table public.equipment_models
+  add column secondary_unit text
+    check (secondary_unit is null
+           or secondary_unit in ('kg', 'watt', 'level', 'kmh', 'pct', 'rpm')),
+  add column secondary_step numeric check (secondary_step is null or secondary_step > 0),
+  add column secondary_min  numeric check (secondary_min is null or secondary_min >= 0),
+  add column secondary_max  numeric,
+  add constraint equipment_models_secondary_all_or_none
+    check ((secondary_unit is null) = (secondary_step is null)
+       and (secondary_unit is null) = (secondary_min is null)
+       and (secondary_unit is null) = (secondary_max is null)),
+  add constraint equipment_models_secondary_range
+    check (secondary_max is null or secondary_max >= secondary_min);
+
+-- Nur Anzeige: Suche, Filter, Kennzahl. Keine Regel liest sie
+-- (Spec Abschnitt 3.5, Waechter-Test in packages/domain).
+alter table public.equipment_models
+  add column category text not null default 'kraft'
+    check (category in ('kraft', 'cardio'));
 
 alter table public.exercises
   rename column target_reps_min to target_min;
@@ -181,6 +242,9 @@ alter table public.workout_sets
 alter table public.workout_sets
   add constraint workout_sets_volume_check
     check (volume > 0 and volume <= 100000);
+alter table public.workout_sets
+  add column secondary_load numeric(6, 2)
+    check (secondary_load is null or secondary_load >= 0);
 
 alter table public.progression_suggestions
   rename column result_weight_kg to result_load;
@@ -201,38 +265,45 @@ Die Umbenennungen geschehen **in place**, nicht über neue Spalten mit Kopie: al
 ```ts
 load: z.number().min(0).max(9999),
 volume: z.number().int().min(1).max(100000),
+secondaryLoad: z.number().min(0).max(9999).nullish(),
 ```
+
+`recordSet` lädt das Modell ohnehin (für `studio_id`) und prüft: hat das Modell eine `secondary_unit`, muss `secondaryLoad` gesetzt sein; hat es keine, muss es fehlen. Beides sonst `validation_failed`. Der Wert wird wie die Belastung auf die Rastung des Modells gerundet, damit „82 rpm" und „85 rpm" nicht als zwei verschiedene Bedingungen zählen.
 
 Die feinere Obergrenze je Umfangsart prüft `recordSet` gegen die Übung, die ohnehin geladen wird: `reps` ≤ 1000, `seconds` ≤ 14 400 (vier Stunden), `meters` ≤ 100 000. Ein Wert darüber ist `validation_failed` mit dem Wortlaut der Art („Mehr als vier Stunden sind kein Satz.").
 
 **Kompatibilität für einen Release:** `recordSetInputSchema` nimmt `weightKg` und `reps` zusätzlich als Aliase an und bildet sie auf `load`/`volume` ab. Grund: `PendingWriteStore` auf einem Gerät, das vor dem Update offline trainiert hat, schickt noch die alten Namen. Ohne Alias gingen diese Sätze verloren. Der Alias wird mit dem übernächsten Release entfernt; ein Test hält fest, dass er existiert.
 
-### 5.2 Progression: Version 2.0.0 ohne Regeländerung
+### 5.2 Progression: Version 2.0.0 mit einer Ergänzung
 
-`progression.ts` benennt um, entscheidet aber identisch:
+`progression.ts` benennt um:
 
 | Heute | Künftig |
 |---|---|
-| `WorkoutSetInput.weightKg` / `.reps` | `.load` / `.volume` |
+| `WorkoutSetInput.weightKg` / `.reps` | `.load` / `.volume`, neu `.secondaryLoad: number \| null` |
 | `ProgressionInput.targetRepsMin/Max` | `.targetMin/Max` |
 | `ProgressionInput.weightStepKg/minWeightKg/maxWeightKg` | `.loadStep/loadMin/loadMax` |
 | `ProgressionSuggestion.resultWeightKg` | `.resultLoad` |
-| `ProgressionInputsRecord.currentWeightKg` | `.currentLoad` |
+| `ProgressionInputsRecord.currentWeightKg` | `.currentLoad`, neu `.currentSecondaryLoad` |
 | `suggestNextWeight` | `suggestNextLoad` |
 
-`PROGRESSION_ALGO_VERSION` wird `2.0.0`, weil der persistierte `inputs`-Datensatz andere Schlüssel trägt. Die Begründungscodes bleiben wörtlich (`korridor_oben_erreicht`, `geraetegrenze_erreicht` usw.); sie waren nie an kg gebunden. `snapToNearestStep` und `withinMachineLimits` rechnen bereits nur mit Zahlen.
+Die einzige Änderung an der Entscheidung: `uniformWeight(block)` wird `uniformLoad(block)` und vergleicht das Paar `(load, secondaryLoad)` statt der einen Zahl. Wechselt innerhalb des neuesten Blocks eine der beiden, ist das `daten_uneindeutig` wie heute bei wechselndem Gewicht. In den Pfaden, die den vorigen Block heranziehen (`topTwice`, `missedTwice`), muss das Paar des vorigen Blocks gleich sein; sonst zählt er nicht als zweiter Beleg, und es bleibt bei `im_korridor`. Der Pfad „Korridor oben mit Reserve" schaut nur auf den neuesten Block und braucht den vorigen nicht: wer bei 8 km/h und 6 % den Korridor mit Reserve erreicht, bekommt +0,5 km/h bei 6 %, egal, was letzte Woche die Neigung war.
 
-`HISTORY_WINDOW = 2` bleibt. Für Cardio heißt das: zwei Trainingstage in Folge am oberen Korridorende mit Reserve, dann eine Stufe hoch. Das ist konservativ und vor dem Pilot fachlich zu prüfen, wie die Kraftschwellen auch (M1 §8.4).
+Für Kraftgeräte ist `secondaryLoad` in jedem Satz `null`, und `(80, null) === (80, null)` ist der Vergleich von heute. Es gibt keinen Zweig „wenn Nebenbelastung vorhanden".
+
+`PROGRESSION_ALGO_VERSION` wird `2.0.0`, weil der persistierte `inputs`-Datensatz andere Schlüssel trägt. Die Begründungscodes bleiben wörtlich (`korridor_oben_erreicht`, `geraetegrenze_erreicht` usw.); sie waren nie an kg gebunden. `snapToNearestStep` und `withinMachineLimits` rechnen bereits nur mit Zahlen und steigern nur die Belastung; die Nebenbelastung wird im Vorschlag unverändert mitgegeben (`resultSecondaryLoad = currentSecondaryLoad`), damit der Abschluss-Screen „+0,5 km/h bei 6 %" schreiben kann.
+
+`HISTORY_WINDOW = 2` bleibt. Für Cardio heißt das wie für Kraft: oberes Korridorende mit angegebener Reserve, dann eine Stufe hoch; ohne Reserveangabe zwei Trainingstage in Folge am oberen Ende. Das ist konservativ und vor dem Pilot fachlich zu prüfen, wie die Kraftschwellen auch (M1 §8.4).
 
 ### 5.3 Ein Formatierer, nicht viele
 
 Neues Modul `packages/domain/src/belastung.ts`:
 
 ```ts
-export type LoadUnit = "kg" | "watt" | "level" | "kmh";
+export type LoadUnit = "kg" | "watt" | "level" | "kmh" | "pct" | "rpm";
 export type VolumeKind = "reps" | "seconds" | "meters";
 
-/** "80 kg", "120 W", "Level 8", "8,5 km/h" -- EIN Ort fuer die Einheit. */
+/** "80 kg", "120 W", "Level 8", "8,5 km/h", "6 %", "85 U/min" -- EIN Ort fuer die Einheit. */
 export function formatLoad(value: number, unit: LoadUnit): string;
 /** "+2,5 kg", "+10 W", "+1 Level", "+0,5 km/h" */
 export function formatLoadDelta(delta: number, unit: LoadUnit): string;
@@ -247,12 +318,12 @@ Das ist die Stelle, die bei einer neuen Einheit wächst: eine Zeile je Funktion.
 
 ### 5.4 Weitere Domain-Dateien
 
-- `abschluss.ts`: `Blockvorschlag.deltaKg` → `deltaLoad`, `resultWeightKg` → `resultLoad`, dazu `loadUnit` im Vorschlag, damit der Abschluss-Screen ohne zweiten Lookup formatieren kann.
-- `machine-context.ts`: `equipmentModel.loadUnit`, `loadStep/loadMin/loadMax`; `exercises[].volumeKind`, `targetMin/Max`; `history[].load`, `history[].volume: number[]`.
-- `bootstrap.ts`: dieselben Felder in `machines[].equipmentModel`, `exercises[]`, `lastSets[]`.
+- `abschluss.ts`: `Blockvorschlag.deltaKg` → `deltaLoad`, `resultWeightKg` → `resultLoad`, dazu `loadUnit`, `secondaryLoad` und `secondaryUnit` im Vorschlag, damit der Abschluss-Screen ohne zweiten Lookup formatieren kann.
+- `machine-context.ts`: `equipmentModel.loadUnit`, `loadStep/loadMin/loadMax`, `secondaryUnit/Step/Min/Max` (alle null bei Kraft); `exercises[].volumeKind`, `targetMin/Max`; `history[].load`, `history[].secondaryLoad`, `history[].volume: number[]`.
+- `bootstrap.ts`: dieselben Felder in `machines[].equipmentModel` (plus `category`), `exercises[]`, `lastSets[]`.
 - `sessions.ts`: `sets[].load`, `.volume`; die Blockzusammenfassung „3 Sätze · 80 kg" wird serverseitig mit `formatLoad` gebildet oder liefert `loadUnit` mit.
 - `progress.ts`: `firstWeightKg/currentWeightKg/changeKg/topWeightKg` → `firstLoad/currentLoad/changeLoad/topLoad`, plus `loadUnit` je Übung.
-- `catalog.ts`: Modell-Schemas mit `loadUnit`, Übungs-Schemas mit `volumeKind`; Vorgaben aus `belastung.ts`.
+- `catalog.ts`: Modell-Schemas mit `loadUnit`, `category` und optionaler Nebenbelastung (alle vier Felder oder keines, wie der Constraint), Übungs-Schemas mit `volumeKind`; Vorgaben aus `belastung.ts`.
 
 ---
 
@@ -264,10 +335,10 @@ Alle Verträge sind screenorientiert (M1 §6.3) und ändern nur Feldnamen:
 |---|---|
 | `GET /machines/{id}/context`, `GET /tags/{token}/context` | Felder wie in Abschnitt 5.4 |
 | `GET /me/bootstrap` | Felder wie in Abschnitt 5.4 |
-| `PUT /workout-sessions/{id}/sets/{setId}` | `load`, `volume`; Aliase `weightKg`, `reps` für einen Release |
+| `PUT /workout-sessions/{id}/sets/{setId}` | `load`, `volume`, `secondaryLoad` (Pflicht genau dann, wenn das Modell eine Nebenbelastung hat); Aliase `weightKg`, `reps` für einen Release |
 | `GET /me/sessions` | `sets[].load/.volume`, `blocks[].loadUnit` |
 | `GET /me/progress` | `…Load`, `loadUnit` |
-| `POST /workout-sessions/{id}/complete` | `suggestions[].deltaLoad`, `.loadUnit` |
+| `POST /workout-sessions/{id}/complete` | `suggestions[].deltaLoad`, `.loadUnit`, `.secondaryLoad`, `.secondaryUnit` |
 
 Keine neuen Endpunkte. Keine Versionierung des Pfads: es gibt vor dem Pilot keinen zweiten Client, und der Alias im Satz-PUT deckt den einzigen realen Übergangsfall (Abschnitt 5.1).
 
@@ -275,11 +346,11 @@ Keine neuen Endpunkte. Keine Versionierung des Pfads: es gibt vor dem Pilot kein
 
 ## 7. Portal
 
-**Modell anlegen / Stammdaten** (`StammdatenFormular.tsx`, Halle `TelefonModellNeu`): ein Auswahlfeld **Belastung** mit den vier Einheiten vor dem Rad. `ModellGewichtRad` wird `ModellBelastungRad` und bekommt seine drei Wertelisten aus `defaultLoadRange(unit)` in `einstellungVorschlaege.ts`: für `kg` wie heute, für `watt` 0–600 in 5er-Schritten, für `level` 1–30, für `kmh` 0–25 in 0,5er-Schritten. Die Spaltenlabels sind „Minimum", „Maximum", „Schritt" wie heute, die Einheit steht im Kopf des Rads.
+**Modell anlegen / Stammdaten** (`StammdatenFormular.tsx`, Halle `TelefonModellNeu`): ein Auswahlfeld **Kategorie** (Kraft / Cardio) und ein Auswahlfeld **Belastung** mit den Einheiten vor dem Rad. Darunter ein aufklappbarer Block **Nebenbelastung** („keine" ist die Vorgabe), der bei Auswahl einer Einheit dasselbe Dreier-Rad noch einmal zeigt. Für ein Kraftgerät bleibt der Block zu; das Formular sieht aus wie heute plus zwei Auswahlfelder. `ModellGewichtRad` wird `ModellBelastungRad` und bekommt seine drei Wertelisten aus `defaultLoadRange(unit)` in `einstellungVorschlaege.ts`: für `kg` wie heute, für `watt` 0–600 in 5er-Schritten, für `level` 1–30, für `kmh` 0–25 in 0,5er-Schritten. Die Spaltenlabels sind „Minimum", „Maximum", „Schritt" wie heute, die Einheit steht im Kopf des Rads.
 
 **Übung anlegen** (`UebungSheet.tsx`, `TelefonUebungNeu`): ein Auswahlfeld **Umfang** (Wiederholungen / Minuten / Meter). `UebungRepsRad` wird `UebungUmfangRad`; die Werteliste folgt der Art: Wiederholungen 1–50 (heute), Minuten 1–90, Meter 500–20 000. Minuten werden im Formular als Minuten eingegeben und als Sekunden gespeichert; die Umrechnung liegt in der Server-Action, nicht im Rad.
 
-**Geräteliste und Übungsreiter:** überall, wo heute „2,5 kg" oder „8–12" steht, formatieren `formatLoad`/`formatVolume`.
+**Geräteliste und Übungsreiter:** überall, wo heute „2,5 kg" oder „8–12" steht, formatieren `formatLoad`/`formatVolume`. Die Geräteliste (`Geraete`-Artboard) bekommt einen Filter Kraft / Cardio / Alle über `category`.
 
 Kein neuer Screen. Die Artboards `Modell`, `ModellUebungen`, `TelefonModellNeu`, `TelefonUebungNeu` bekommen je ein Auswahlfeld dazu; das wird im Umsetzungsplan als Artboard-Nachtrag geführt, nicht als eigenes Design.
 
@@ -297,22 +368,26 @@ Kein neuer Screen. Die Artboards `Modell`, `ModellUebungen`, `TelefonModellNeu`,
 | `seconds` | 30, 60, … 5400 | 180 |
 | `meters` | 100, 200, … 20 000 | 200 |
 
-Das Belastungsrad `Rastwerte.gewichte(min:max:schritt:)` bleibt unverändert und wird zu `Rastwerte.belastung(…)` umbenannt; es rechnet nur mit Zahlen. `maxRastenOhneObergrenze = 200` passt für alle vier Einheiten.
+Das Belastungsrad `Rastwerte.gewichte(min:max:schritt:)` bleibt unverändert und wird zu `Rastwerte.belastung(…)` umbenannt; es rechnet nur mit Zahlen und dient auch der Nebenbelastung. `maxRastenOhneObergrenze = 200` passt für alle Einheiten.
+
+Das **dritte Rad** für die Nebenbelastung erscheint nur, wenn `equipmentModel.secondaryUnit` gesetzt ist. Es steht zwischen Belastung und Umfang, ist vom letzten Satz vorbelegt (sonst von `secondaryMin`) und ist im Dreischritt kein eigener Schritt: wer es nicht anfasst, bestätigt den Vorwert. Für ein Kraftgerät gibt es das Rad nicht, und der Screen ist Pixel für Pixel der heutige.
 
 `RastRad` zeigt für `seconds` das Format „20:00" statt „1200" und für `meters` „2.000 m". Das ist Anzeige, nicht Wert; der gespeicherte Wert bleibt die ganze Zahl.
 
 ### 8.2 Modelle und DTOs
 
-- `LokalerSatz.weightKg/reps` → `load/volume`. `SessionFileStore` liest alte Dateien mit einem `CodingKeys`-Fallback, damit eine laufende Session das App-Update überlebt.
+- `LokalerSatz.weightKg/reps` → `load/volume`, neu `secondaryLoad: Double?`. `SessionFileStore` liest alte Dateien mit einem `CodingKeys`-Fallback, damit eine laufende Session das App-Update überlebt.
 - DTOs `TagContextResponse`, `BootstrapResponse`, `WorkoutSet`, `SessionSummary`, `ExerciseProgress`: Felder nach Abschnitt 5.4.
 - `GeraetModel`: `gewicht` → `belastung`, `wiederholungen` → `umfang`; Vorbelegung aus `letzter?.load ?? modell.min` und `letzter?.volume ?? uebung.targetMin` wie heute. Der Zieltext „Ziel 8 – 12" wird „Ziel 15 – 20 min" über `formatVolume`.
 - `Zahlformat.gewichtMitEinheit` bleibt für Körpergewicht. Neu: `Zahlformat.belastung(_:einheit:)` und `Zahlformat.umfang(_:art:)`, Spiegel von `belastung.ts`.
+- `GeraeteAuswahl`: `Zuletzt.gewichtKg` → `load` plus Einheit; `Gruppen` bekommt die Kategorie: ohne Suchtext zwei Abschnitte „Kraft" und „Cardio" unter „Zuletzt", mit Suchtext eine flache Trefferliste wie heute. Die reine Funktion bleibt netzfrei und ohne UI prüfbar.
 
 ### 8.3 Screens
 
-- **Geräte-Screen:** Belastungsrad mit Einheit im Kopf; Umfangsrad je Art; Reserve-Chip mit einheitenfreiem Wortlaut. Der Dreischritt (Abschnitt 7.3 der Kernflow-Spec) bleibt.
-- **TrainingLaeuft:** Blockzeile „1 Satz · 120 W" statt „3 Sätze · 80 kg", über `Zahlformat.belastung`.
-- **TrainingAbschluss:** `VorschlagsAnzeige(reasonCode:deltaKg:)` → `(reasonCode:deltaLoad:loadUnit:)`, Text „+10 W" oder „+0,5 km/h". Der Grundsatz „Zahl, nie Aufforderung" bleibt.
+- **Geräte-Screen:** Belastungsrad mit Einheit im Kopf; bei Nebenbelastung ein drittes Rad (Abschnitt 8.1); Umfangsrad je Art; Reserve-Chip mit einheitenfreiem Wortlaut. Der Dreischritt (Abschnitt 7.3 der Kernflow-Spec) bleibt.
+- **Geräteauswahl:** Abschnitte Kraft und Cardio (Abschnitt 8.2), sonst unverändert.
+- **TrainingLaeuft:** Blockzeile „1 Satz · 8,5 km/h · 6 %" statt „3 Sätze · 80 kg", über `Zahlformat.belastung`; ohne Nebenbelastung entfällt der dritte Teil.
+- **TrainingAbschluss:** `VorschlagsAnzeige(reasonCode:deltaKg:)` → `(reasonCode:deltaLoad:loadUnit:secondary:)`, Text „+10 W" oder „+0,5 km/h bei 6 %". Der Grundsatz „Zahl, nie Aufforderung" bleibt.
 - **SessionDetail, Uebungsfortschritt:** Achsen- und Zeilenbeschriftung über die Einheit.
 
 Kein neues Artboard. Alle Änderungen sind Beschriftung und Wertelisten auf bestehenden Screens.
@@ -323,16 +398,19 @@ Kein neues Artboard. Alle Änderungen sind Beschriftung und Wertelisten auf best
 
 Das Modell gilt als allgemein genug, wenn diese vier Geräte ohne neue Spalte und ohne Zweig in der Regel durchgehen:
 
-| Gerät | Belastung (Modell) | Einstellwert (Kalibrierung) | Übung (Umfang) | Regel steigert |
-|---|---|---|---|---|
-| Laufband | `kmh`, 0–20, Schritt 0,5 | — | Dauerlauf 0 %, `seconds` 15–20 min; Bergauf-Gehen 8 %, `seconds` 15–20 min | +0,5 km/h je Übung |
-| Ergometer | `watt`, 25–400, Schritt 5 | Sitzhöhe 1–12 | Grundlage, `seconds` 20–30 min | +5 W |
-| Stairmaster | `level`, 1–20, Schritt 1 | — | Stufen, `seconds` 10–15 min | +1 Level |
-| Rudergerät | `level`, 1–10, Schritt 1 | Fußschlaufe 1–6 | 2 km, `meters` 2 000–2 000 | +1 Level |
+| Gerät | Kategorie | Belastung (Modell) | Nebenbelastung (Modell) | Einstellwert (Kalibrierung) | Übung (Umfang) | Regel steigert |
+|---|---|---|---|---|---|---|
+| Laufband | cardio | `kmh`, 0–20, Schritt 0,5 | Neigung `pct`, 0–15, Schritt 0,5 | — | Dauerlauf, `seconds` 15–20 min | +0,5 km/h, Neigung bleibt |
+| Ergometer (Stufenanzeige) | cardio | `level`, 1–20, Schritt 1 | Trittfrequenz `rpm`, 50–120, Schritt 5 | Sitzhöhe 1–12 | Grundlage, `seconds` 20–30 min | +1 Stufe, Trittfrequenz bleibt |
+| Ergometer (Wattanzeige) | cardio | `watt`, 25–400, Schritt 5 | — | Sitzhöhe 1–12 | Grundlage, `seconds` 20–30 min | +5 W |
+| Stairmaster | cardio | `level`, 1–20, Schritt 1 | — | — | Stufen, `seconds` 10–15 min | +1 Level |
+| Rudergerät | cardio | `level`, 1–10, Schritt 1 | — | Fußschlaufe 1–6 | 2 km, `meters` 2 000–2 000 | +1 Level |
 
 Das Rudergerät zeigt den Grenzfall: bei einem festen Ziel („genau 2 km") ist `target_min = target_max`. Dann entscheidet allein die Reserve über die Steigerung. Das ist korrekt und braucht keine Sonderregel; der Trainer kann den Korridor auch weiter fassen.
 
-Und die Gegenprobe: eine Beinpresse mit `kg`, 0–200, Schritt 2,5 und „Beidbeinig, `reps` 8–12" ist nach der Migration Bit für Bit dasselbe wie heute.
+Das Laufband zeigt den Zweck der Nebenbelastung: läuft das Mitglied diese Woche bei 6 % statt 2 %, sieht die Regel ein anderes Paar, zählt die Vorwoche nicht als zweiten Beleg und schlägt nichts auf falscher Grundlage vor.
+
+Und die Gegenprobe: eine Beinpresse mit `kraft`, `kg`, 0–200, Schritt 2,5, ohne Nebenbelastung und „Beidbeinig, `reps` 8–12" ist nach der Migration Bit für Bit dasselbe wie heute. Kein drittes Rad, kein zusätzlicher Vergleich, kein Text mehr auf dem Screen.
 
 ---
 
@@ -340,9 +418,15 @@ Und die Gegenprobe: eine Beinpresse mit `kg`, 0–200, Schritt 2,5 und „Beidbe
 
 **Eigene Tabellen `cardio_sets`, `cardio_exercises`.** Verdoppelt RLS, Session-Lebenszyklus, Historienpfad, Abschluss und Progress. Jede spätere Funktion (Pläne, Trainerloop, Kennzahlen) müsste beides kennen. Verworfen.
 
-**Zwei Belastungsdimensionen pro Modell (Tempo und Neigung).** Die Regel müsste dann entscheiden, welche sie dreht, und der Vorschlag hätte zwei Zahlen. Verworfen; die zweite Dimension wird vom Trainer in der Übung festgelegt (Abschnitt 3.1).
+**Zwei progressierte Belastungsdimensionen pro Modell.** Die Regel müsste dann entscheiden, welche sie dreht, und der Vorschlag hätte zwei Zahlen. Verworfen; die Nebenbelastung wird mitgeschrieben und konstant verlangt, aber nie gesteigert (Abschnitt 3.1b).
 
 **Neigung als persönlicher Einstellwert.** Klingt naheliegend, weil das Rad dafür schon existiert. Aber ein Einstellwert ist für die Regel unsichtbar, und die Neigung verändert die Intensität. Verworfen, Begründung in Abschnitt 3.1.
+
+**Neigung als Übungsvariante („Bergauf-Gehen 8 %").** Fassung 2 dieses Dokuments. Funktioniert, kostet keine Spalte, verliert aber die Zahl und macht die Regel blind, wenn das Mitglied die Neigung innerhalb derselben Übung ändert. Beim Ergometer (Stufe plus Trittfrequenz) trat das Muster zum zweiten Mal auf; zweimal dasselbe verdient eine Struktur. Ersetzt durch die Nebenbelastung (Abschnitt 3.1b). Übungsvarianten bleiben möglich, wenn der Trainer einen festen Wert vorgeben will.
+
+**Beobachtungswerte als jsonb am Satz** (Distanz, Puls, Trittfrequenz als freie Schlüssel). Hält die Daten, aber unstrukturiert, und lädt dazu ein, später doch Logik darauf zu bauen. Die eine Dimension, die die Regel braucht, ist als Spalte ehrlicher. Verworfen.
+
+**Getrennte Cardio-Tabellen und eigene Cardio-Regel** (`cardio_sets` mit Dauer, Distanz, Stufe, Tempo, Neigung, Puls). Drei- bis vierfacher Aufwand, und dauerhaft: RLS doppelt, Session-Lebenszyklus doppelt, Blockliste, Abschluss, Progress, Bootstrap und die iOS-Session brauchen einen zweiten Satztyp; jede künftige Funktion kostet zweimal. Und die Spaltenliste je Gerät ist genau die Hundert-Anpassungen-Falle. Verworfen. Die Trennung von Kraft und Cardio in Suche und Listen (Abschnitt 3.5) ist eine Kategorie am Modell und kein Schritt in diese Richtung.
 
 **Nebenwerte am Satz (Distanz, Puls, kcal).** Sie gehen nie in die Regel ein und das Gerät zeigt sie selbst; die Plattform misst nichts (Blueprint §2.3). Wenn sie ein Studio will, passt das Muster aus `member_machine_calibrations`: `observations jsonb` mit `schema_version`. Für v1 gestrichen.
 
@@ -350,7 +434,7 @@ Und die Gegenprobe: eine Beinpresse mit `kg`, 0–200, Schritt 2,5 und „Beidbe
 
 **Laufender Timer im Geräte-Screen.** Nett, aber das Gerät hat eine Uhr, und das Mitglied liest die Endanzeige ab wie beim Gewicht. Verworfen für v1.
 
-**`modality`-Enum am Modell (`strength` / `cardio`).** Verführt zu `if (modality === 'cardio')` an genau den Stellen, die keinen Zweig haben sollen. Die Einheit reicht.
+**`modality`-Enum als Regelschalter.** Verführt zu `if (modality === 'cardio')` an genau den Stellen, die keinen Zweig haben sollen. Verworfen. Die `category` aus Abschnitt 3.5 ist etwas anderes: sie wird nur von Listen gelesen, und ein Wächter-Test hält die Regel davon fern.
 
 ---
 
@@ -358,13 +442,13 @@ Und die Gegenprobe: eine Beinpresse mit `kg`, 0–200, Schritt 2,5 und „Beidbe
 
 **Migration:** `supabase/migrations/0045_belastung_umfang.sql` (neu).
 
-**Domain (`packages/domain/src/`):** `belastung.ts` (neu), `progression.ts`, `abschluss.ts`, `machine-context.ts`, `bootstrap.ts`, `workout.ts`, `sessions.ts`, `progress.ts`, `catalog.ts`, `index.ts`. Dazu die Tests `progression.test.ts`, `abschluss.test.ts`, `workout.test.ts`, `index.test.ts`.
+**Domain (`packages/domain/src/`):** `belastung.ts` (neu), `kategorie-waechter.test.ts` (neu), `progression.ts`, `abschluss.ts`, `machine-context.ts`, `bootstrap.ts`, `workout.ts`, `sessions.ts`, `progress.ts`, `catalog.ts`, `index.ts`. Dazu die Tests `progression.test.ts`, `abschluss.test.ts`, `workout.test.ts`, `index.test.ts`.
 
 **Integrationstests (`tests/integration/`):** `api-workout-sets`, `api-tag-context`, `api-me`, `domain-record-set`, `domain-machine-context`, `domain-tag-context`, `domain-bootstrap`, `domain-catalog`, `domain-exercises`, `domain-progress`, `domain-sessions`, `rls-workout-sets`, `rls-progression-suggestions`, `rls-equipment-models`, `rls-exercises`, `studio-ueberblick` sowie alle Tests, deren Seed ein Modell oder eine Übung anlegt (`api-machine-photos`, `fallback-inhalt`, `join-studio-by-tag`, `machine-tags-kind`, `resolve-tag-fallback`, `rls-machines`, `rls-member-machine-calibrations`, `tag-binden`, `tag-chargen`, `updated-at-trigger`, `equipment-setting-definitions-enum`). Bei den letzteren ändert sich nur der Seed.
 
 **Portal (`apps/web/app/portal/`):** `actions.ts`, `[studioId]/einrichten/actions.ts`, `bausteine/einstellungVorschlaege.ts`, `bausteine/ModellGewichtRad.tsx` → `ModellBelastungRad.tsx`, `bausteine/UebungRepsRad.tsx` → `UebungUmfangRad.tsx`, `[studioId]/(schreibtisch)/geraete/[modelId]/StammdatenFormular.tsx`, `…/layout.tsx`, `…/uebungen/page.tsx`, `[studioId]/einrichten/geraet/[machineId]/uebungen/UebungSheet.tsx`, `…/uebungen/page.tsx`. Dazu `EinstellungRad.test.tsx` und die E2E-Tests, die ein Modell anlegen.
 
-**iOS (`apps/ios-member/FitnessMember/`):** `Workout/Rastwerte.swift`, `Workout/LokaleSession.swift`, `Workout/SessionFileStore.swift`, `Workout/WorkoutSessionStore.swift`, `Workout/Trainingszusammenfassung.swift`, `Workout/GeraeteAuswahl.swift`, `Networking/DTOs/TagContextResponse.swift`, `…/BootstrapResponse.swift`, `…/WorkoutSet.swift`, `…/SessionSummary.swift`, `…/ExerciseProgress.swift`, `DesignSystem/Zahlformat.swift`, `Screens/Geraet/GeraetModel.swift`, `…/GeraetErkanntView.swift`, `…/UebungWechselnSheet.swift`, `Screens/Training/TrainingRootView.swift`, `…/TrainingAbschlussView.swift`, `Screens/Home/SessionDetailView.swift`, `…/UebungsfortschrittView.swift`, `Verlauf/VerlaufStore.swift`. Dazu die Tests `RastwerteTests`, `GeraetModelTests`, `WorkoutSessionStoreTests`, `TrainingszusammenfassungTests`, `TrainingAbschlussZeilenTests`, `DTOTests`, `VerlaufStoreTests`, `PendingWriteStoreTests`, `GeraetKontextLadenTests`, `TrainingTabTests`.
+**iOS (`apps/ios-member/FitnessMember/`):** `Workout/Rastwerte.swift`, `Workout/GeraeteAuswahl.swift` und die zugehörige Listenansicht, `Workout/LokaleSession.swift`, `Workout/SessionFileStore.swift`, `Workout/WorkoutSessionStore.swift`, `Workout/Trainingszusammenfassung.swift`, `Workout/GeraeteAuswahl.swift`, `Networking/DTOs/TagContextResponse.swift`, `…/BootstrapResponse.swift`, `…/WorkoutSet.swift`, `…/SessionSummary.swift`, `…/ExerciseProgress.swift`, `DesignSystem/Zahlformat.swift`, `Screens/Geraet/GeraetModel.swift`, `…/GeraetErkanntView.swift`, `…/UebungWechselnSheet.swift`, `Screens/Training/TrainingRootView.swift`, `…/TrainingAbschlussView.swift`, `Screens/Home/SessionDetailView.swift`, `…/UebungsfortschrittView.swift`, `Verlauf/VerlaufStore.swift`. Dazu die Tests `RastwerteTests`, `GeraetModelTests`, `WorkoutSessionStoreTests`, `TrainingszusammenfassungTests`, `TrainingAbschlussZeilenTests`, `DTOTests`, `VerlaufStoreTests`, `PendingWriteStoreTests`, `GeraetKontextLadenTests`, `TrainingTabTests`.
 
 **Nicht anfassen**, obwohl `weight` darin vorkommt: `measurements.ts`, `goals.ts`, `0042_body_measurements.sql`, `GewichtEintragenSheet`, `GewichtsverlaufView`, `HomeZiele`, `ZielSheet`, `Messwert.swift`, `OnboardingSchreiber`, `ProfilZeilen`. Das ist Körpergewicht.
 
@@ -376,13 +460,16 @@ Und die Gegenprobe: eine Beinpresse mit `kg`, 0–200, Schritt 2,5 und „Beidbe
 
 Zusätzlich zu den mechanisch angepassten Bestandstests:
 
-- **`progression.test.ts`:** Jeder bestehende Fall einmal mit `kg`/`reps` und einmal mit `watt`/`seconds` bei identischer Erwartung. Das ist der Beleg, dass die Regel keinen Zweig hat. Dazu: `target_min = target_max` (Rudergerät), Steigerung nur mit Reserve.
+- **`progression.test.ts`:** Jeder bestehende Fall einmal mit `kg`/`reps` und einmal mit `watt`/`seconds` bei identischer Erwartung. Das ist der Beleg, dass die Regel keinen Zweig hat. Dazu: `target_min = target_max` (Rudergerät), Steigerung nur mit Reserve. Nebenbelastung: wechselnde Neigung im Block → `daten_uneindeutig`; andere Neigung im Vorblock → kein `topTwice`, kein `missedTwice`; gleiche Neigung → identisch zum Fall ohne Nebenbelastung; `null` gegen `null` verhält sich wie heute.
+- **`kategorie-waechter.test.ts`:** liest `progression.ts`, `abschluss.ts`, `workout.ts`, `machine-context.ts` als Text und schlägt fehl, wenn `category` darin vorkommt. Billig, und die einzige Stelle, die die Zusage aus Abschnitt 3.5 hält.
 - **`belastung.test.ts`:** Formatierung aller vier Einheiten und drei Arten inkl. `de_DE`-Dezimaltrennzeichen und `20:00`-Format.
-- **`workout.test.ts`:** Obergrenze je Umfangsart; Alias `weightKg`/`reps` wird angenommen und abgebildet.
+- **`workout.test.ts`:** Obergrenze je Umfangsart; Alias `weightKg`/`reps` wird angenommen und abgebildet; `secondaryLoad` ist Pflicht bei Modell mit Nebenbelastung und verboten ohne; Rundung auf `secondary_step`.
 - **`smoke:migrations`:** 0045 läuft auf einem Bestand mit Sätzen, Vorschlägen und Kalibrierungen durch; danach lesen `machine-context` und `progress` dieselben Werte wie vorher.
 - **`RastwerteTests`:** Längen und Endpunkte der drei Umfangslisten; `naechster(zu:in:)` rastet 1195 s auf 1200.
+- **`GeraeteAuswahlTests`:** ohne Suchtext zwei Abschnitte nach Kategorie, leere Abschnitte entfallen; mit Suchtext flache Liste wie heute.
+- **`GeraetModelTests`:** drittes Rad nur bei `secondaryUnit`; Vorbelegung aus dem letzten Satz; Satz-PUT trägt `secondaryLoad` genau dann.
 - **`SessionFileStore`:** Eine Session-Datei im alten Format (`weightKg`, `reps`) lädt und ergibt `load`/`volume`.
-- **Portal E2E:** Ein Laufband mit `kmh` und einer Minuten-Übung anlegen, im Gerätekontext erscheinen `loadUnit: "kmh"` und `volumeKind: "seconds"`.
+- **Portal E2E:** Ein Laufband mit Kategorie Cardio, `kmh`, Nebenbelastung `pct` und einer Minuten-Übung anlegen; im Gerätekontext erscheinen `category: "cardio"`, `loadUnit: "kmh"`, `secondaryUnit: "pct"` und `volumeKind: "seconds"`. Ein Kraftgerät ohne Nebenbelastung liefert `secondaryUnit: null`.
 
 ---
 
@@ -392,7 +479,8 @@ Zusätzlich zu den mechanisch angepassten Bestandstests:
 2. **Hinweis im Portal bei unplausibler Kombination** (Wiederholungs-Übung an einem Watt-Modell). Bewusst nicht erzwungen (Abschnitt 3.2). Ob ein Hinweis nötig ist, zeigt das Onboarding im Pilot.
 3. **Schwellen für Cardio** (Reserve ≥ 1, zwei Tage in Folge) sind Kraftschwellen. Vor dem Pilot mit dem Trainer prüfen, wie M1 §8.4 es für Kraft vorsieht.
 4. **`kmh` vs. Pace.** Läufer denken in min/km. Anzeige-Umrechnung ist eine Zeile im Formatierer; gespeichert wird km/h, weil das Laufband so rastet.
-5. **Progression über die zweite Dimension** (eine Übung, die die Neigung steigern soll statt des Tempos). In v1 löst das der Trainer über gestufte Übungen („Bergauf 4 %", „6 %", „8 %"). Wird es im Pilot gebraucht, ist die saubere Erweiterung, dass die Übung wählt, welche Dimension des Modells sie progressiert: `exercises.load_setting_key`, das auf eine Einstellparameter-Definition mit Rastung zeigt und für diese Übung die Modell-Belastung ersetzt. Das bricht nichts an diesem Modell und bleibt bewusst draußen, bis ein Trainer es verlangt.
+5. **Progression über die Nebenbelastung** (eine Übung, die die Neigung steigern soll statt des Tempos). In v1 steigert die Regel nur die Belastung; der Trainer löst das über gestufte Übungen („Bergauf 4 %", „6 %", „8 %"). Wird es im Pilot gebraucht, ist die saubere Erweiterung ein Feld an der Übung, das sagt, ob sie Belastung oder Nebenbelastung progressiert (`exercises.progresses = 'load' | 'secondary'`). Die Regel tauscht dann nur, welches Element des Paars sie steigert und welches sie konstant verlangt. Das bricht nichts an diesem Modell und bleibt bewusst draußen, bis ein Trainer es verlangt.
+6. **Kategorie als Kennzahl.** Der Studio-Überblick könnte Kraft- und Cardio-Nutzung getrennt zeigen. Reine Anzeige, liest `category`, passt zu Abschnitt 3.5. Kommt, wenn ein Betreiber danach fragt.
 
 ---
 
