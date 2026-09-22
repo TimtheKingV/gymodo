@@ -61,7 +61,12 @@ Das Modell bestimmt, was man drehen kann: den Gewichtsstapel, den Widerstandsreg
 | `level` | Crosstrainer, Stairmaster, Rudergerät | 1 |
 | `kmh` | Laufband | 0,5 |
 
-**Genau eine Belastung pro Modell.** Das ist die Entscheidung, die die „hundert Anpassungen" verhindert. Ein Laufband hat Tempo und Neigung, ein Ergometer Watt und Trittfrequenz. Nur eine davon dreht die Progression. Die andere ist ein **Einstellwert**, und dafür gibt es `equipment_setting_definitions` heute schon: „Neigung, number, 0–15 %, Schritt 0,5" wird beim Modell angelegt wie „Sitzhöhe 1–10", und das Mitglied kalibriert sie einmal.
+**Genau eine Belastung pro Modell.** Das ist die Entscheidung, die die „hundert Anpassungen" verhindert. Ein Laufband hat Tempo und Neigung, ein Ergometer Watt und Trittfrequenz. Nur eine davon dreht die Progression. Wohin die andere gehört, entscheidet eine Frage, die für jedes Gerät gleich lautet:
+
+- **Verändert der Regler die Intensität?** Dann ist er entweder die Belastung oder **Teil der Übung**. Die Laufband-Neigung ist das Vorbild: „Dauerlauf, 0 %" und „Bergauf-Gehen, 8 %" sind zwei Übungen mit eigenem Korridor und eigener Historie, so wie am Latzug „Breiter Griff" und „Enger Griff" zwei Übungen sind. Der Trainer legt den Wert in Name und Beschreibung fest, die Regel dreht in beiden nur das Tempo, und ein Wechsel der Neigung ist ein Wechsel der Übung, kein stiller Wechsel der Bedingungen.
+- **Verändert der Regler nur die Passform?** Dann ist er ein **Einstellwert** in `equipment_setting_definitions`, wie heute: Sitzhöhe, Fußschlaufe, Rückenpolster. Das Mitglied kalibriert ihn einmal, die Regel sieht ihn nie, und das ist richtig, weil er die Intensität nicht ändert.
+
+Die Neigung als Einstellwert zu führen wäre der Fehler, den die Frage verhindert: das Mitglied liefe 8 km/h bei 2 %, dann 8 km/h bei 6 %, und die Regel sähe „gleiche Belastung, Korridor erreicht" und schlüge mehr Tempo vor, obwohl die Intensität schon gestiegen ist.
 
 Weitere Einheiten (`mph`, `kmh` vs. `min_per_km`, `spm`) kommen, wenn ein Studio sie braucht, als ein Eintrag im Check-Constraint und eine Zeile im Formatierer (Abschnitt 5.3). Sie ändern nichts an der Regel.
 
@@ -320,7 +325,7 @@ Das Modell gilt als allgemein genug, wenn diese vier Geräte ohne neue Spalte un
 
 | Gerät | Belastung (Modell) | Einstellwert (Kalibrierung) | Übung (Umfang) | Regel steigert |
 |---|---|---|---|---|
-| Laufband | `kmh`, 0–20, Schritt 0,5 | Neigung 0–15 %, Schritt 0,5 | Dauerlauf, `seconds` 15–20 min | +0,5 km/h |
+| Laufband | `kmh`, 0–20, Schritt 0,5 | — | Dauerlauf 0 %, `seconds` 15–20 min; Bergauf-Gehen 8 %, `seconds` 15–20 min | +0,5 km/h je Übung |
 | Ergometer | `watt`, 25–400, Schritt 5 | Sitzhöhe 1–12 | Grundlage, `seconds` 20–30 min | +5 W |
 | Stairmaster | `level`, 1–20, Schritt 1 | — | Stufen, `seconds` 10–15 min | +1 Level |
 | Rudergerät | `level`, 1–10, Schritt 1 | Fußschlaufe 1–6 | 2 km, `meters` 2 000–2 000 | +1 Level |
@@ -335,7 +340,9 @@ Und die Gegenprobe: eine Beinpresse mit `kg`, 0–200, Schritt 2,5 und „Beidbe
 
 **Eigene Tabellen `cardio_sets`, `cardio_exercises`.** Verdoppelt RLS, Session-Lebenszyklus, Historienpfad, Abschluss und Progress. Jede spätere Funktion (Pläne, Trainerloop, Kennzahlen) müsste beides kennen. Verworfen.
 
-**Zwei Belastungsdimensionen pro Modell (Tempo und Neigung).** Die Regel müsste dann entscheiden, welche sie dreht, und der Vorschlag hätte zwei Zahlen. Verworfen; die zweite Dimension ist ein Einstellwert (Abschnitt 3.1).
+**Zwei Belastungsdimensionen pro Modell (Tempo und Neigung).** Die Regel müsste dann entscheiden, welche sie dreht, und der Vorschlag hätte zwei Zahlen. Verworfen; die zweite Dimension wird vom Trainer in der Übung festgelegt (Abschnitt 3.1).
+
+**Neigung als persönlicher Einstellwert.** Klingt naheliegend, weil das Rad dafür schon existiert. Aber ein Einstellwert ist für die Regel unsichtbar, und die Neigung verändert die Intensität. Verworfen, Begründung in Abschnitt 3.1.
 
 **Nebenwerte am Satz (Distanz, Puls, kcal).** Sie gehen nie in die Regel ein und das Gerät zeigt sie selbst; die Plattform misst nichts (Blueprint §2.3). Wenn sie ein Studio will, passt das Muster aus `member_machine_calibrations`: `observations jsonb` mit `schema_version`. Für v1 gestrichen.
 
@@ -385,6 +392,7 @@ Zusätzlich zu den mechanisch angepassten Bestandstests:
 2. **Hinweis im Portal bei unplausibler Kombination** (Wiederholungs-Übung an einem Watt-Modell). Bewusst nicht erzwungen (Abschnitt 3.2). Ob ein Hinweis nötig ist, zeigt das Onboarding im Pilot.
 3. **Schwellen für Cardio** (Reserve ≥ 1, zwei Tage in Folge) sind Kraftschwellen. Vor dem Pilot mit dem Trainer prüfen, wie M1 §8.4 es für Kraft vorsieht.
 4. **`kmh` vs. Pace.** Läufer denken in min/km. Anzeige-Umrechnung ist eine Zeile im Formatierer; gespeichert wird km/h, weil das Laufband so rastet.
+5. **Progression über die zweite Dimension** (eine Übung, die die Neigung steigern soll statt des Tempos). In v1 löst das der Trainer über gestufte Übungen („Bergauf 4 %", „6 %", „8 %"). Wird es im Pilot gebraucht, ist die saubere Erweiterung, dass die Übung wählt, welche Dimension des Modells sie progressiert: `exercises.load_setting_key`, das auf eine Einstellparameter-Definition mit Rastung zeigt und für diese Übung die Modell-Belastung ersetzt. Das bricht nichts an diesem Modell und bleibt bewusst draußen, bis ein Trainer es verlangt.
 
 ---
 
