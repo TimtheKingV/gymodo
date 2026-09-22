@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireUserId } from "./auth.js";
+import type { LoadUnit, VolumeKind } from "./belastung.js";
 import { DomainError } from "./errors.js";
 
 /**
@@ -21,8 +22,8 @@ export type ProgressOptions = z.infer<typeof progressOptionsSchema>;
 
 export type ProgressPoint = {
   performedOn: string;
-  topWeightKg: number;
-  reps: number;
+  topLoad: number;
+  volume: number;
 };
 
 export type ExerciseProgress = {
@@ -34,9 +35,12 @@ export type ExerciseProgress = {
    * Geraetemodell (0005_exercises.sql).
    */
   machineLabel: string;
-  firstWeightKg: number;
-  currentWeightKg: number;
-  changeKg: number;
+  /** Einheit des Geraets des juengsten Satzes -- wie machineLabel. */
+  loadUnit: LoadUnit;
+  volumeKind: VolumeKind;
+  firstLoad: number;
+  currentLoad: number;
+  changeLoad: number;
   points: ProgressPoint[];
 };
 
@@ -44,11 +48,11 @@ export type Progress = { exercises: ExerciseProgress[] };
 
 type SetRow = {
   exercise_id: string;
-  weight_kg: number | string;
-  reps: number;
+  load: number | string;
+  volume: number;
   performed_at: string;
-  exercises: { name: string };
-  machines: { label: string };
+  exercises: { name: string; volume_kind: VolumeKind };
+  machines: { label: string; equipment_models: { load_unit: LoadUnit } };
 };
 
 /**
@@ -58,7 +62,7 @@ type SetRow = {
  * Rohsatzliste: so bleibt die Nutzlast auch nach einem Jahr Training klein
  * und die Auswertungslogik auf dem Server.
  *
- * Je Tag zaehlt der schwerste bestaetigte Satz. Ein Mittelwert waere
+ * Je Tag zaehlt der Satz mit der hoechsten Belastung. Ein Mittelwert waere
  * irrefuehrend -- er faellt, sobald jemand einen leichten Zusatzsatz anhaengt.
  */
 export async function getProgress(
@@ -74,7 +78,7 @@ export async function getProgress(
   let query = client
     .from("workout_sets")
     .select(
-      "exercise_id, weight_kg, reps, performed_at, exercises (name), machines (label)",
+      "exercise_id, load, volume, performed_at, exercises (name, volume_kind), machines (label, equipment_models (load_unit))",
     )
     .eq("user_id", userId)
     .order("performed_at", { ascending: true })
@@ -86,29 +90,41 @@ export async function getProgress(
 
   const { data: setRows } = await query;
 
-  // Je (Uebung, Tag) den schwersten Satz behalten.
+  // Je (Uebung, Tag) den Satz mit der hoechsten Belastung behalten.
   const byExercise = new Map<
     string,
-    { name: string; machineLabel: string; days: Map<string, ProgressPoint> }
+    {
+      name: string;
+      machineLabel: string;
+      loadUnit: LoadUnit;
+      volumeKind: VolumeKind;
+      days: Map<string, ProgressPoint>;
+    }
   >();
   for (const row of (setRows ?? []) as unknown as SetRow[]) {
     const entry = byExercise.get(row.exercise_id) ?? {
       name: row.exercises.name,
       machineLabel: row.machines.label,
+      loadUnit: row.machines.equipment_models.load_unit,
+      volumeKind: row.exercises.volume_kind,
       days: new Map<string, ProgressPoint>(),
     };
-    // Aufsteigend sortiert -- die letzte Zeile ist die juengste.
+    // Aufsteigend sortiert -- die letzte Zeile ist die juengste. Mit dem
+    // Geraet wandert die Einheit mit: dieselbe Uebung an einem anderen
+    // Modell (Watt statt Level) ist ein Grenzfall, den der Trainer durch
+    // getrennte Uebungen vermeidet.
     entry.machineLabel = row.machines.label;
+    entry.loadUnit = row.machines.equipment_models.load_unit;
     byExercise.set(row.exercise_id, entry);
 
     const day = row.performed_at.slice(0, 10);
-    const weightKg = Number(row.weight_kg);
+    const load = Number(row.load);
     const current = entry.days.get(day);
-    if (!current || weightKg > current.topWeightKg) {
+    if (!current || load > current.topLoad) {
       entry.days.set(day, {
         performedOn: day,
-        topWeightKg: weightKg,
-        reps: row.reps,
+        topLoad: load,
+        volume: row.volume,
       });
     }
   }
@@ -125,9 +141,11 @@ export async function getProgress(
       exerciseId,
       exerciseName: entry.name,
       machineLabel: entry.machineLabel,
-      firstWeightKg: first.topWeightKg,
-      currentWeightKg: last.topWeightKg,
-      changeKg: last.topWeightKg - first.topWeightKg,
+      loadUnit: entry.loadUnit,
+      volumeKind: entry.volumeKind,
+      firstLoad: first.topLoad,
+      currentLoad: last.topLoad,
+      changeLoad: Number((last.topLoad - first.topLoad).toFixed(2)),
       points,
     });
   }

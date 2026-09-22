@@ -129,7 +129,7 @@ describe("Die Halde", () => {
 
     const { data: modell, error: modellFehler } = await admin
       .from("equipment_models")
-      .insert({ studio_id: studioA, name: "Halde-Geraet", weight_step_kg: 5 })
+      .insert({ studio_id: studioA, name: "Halde-Geraet", load_step: 5 })
       .select("id")
       .single();
     if (modellFehler) throw modellFehler;

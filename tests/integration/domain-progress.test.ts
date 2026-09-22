@@ -50,7 +50,7 @@ beforeAll(async () => {
 
   const { data: model, error: modelError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioA, name: "Beinpresse", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioA, name: "Beinpresse", load_step: 2.5 })
     .select("id")
     .single();
   if (modelError) throw modelError;
@@ -78,14 +78,14 @@ beforeAll(async () => {
       {
         studio_id: studioA,
         name: "Beidbeinig",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
       {
         studio_id: studioA,
         name: "Nie trainiert",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
     ])
     .select("id");
@@ -121,19 +121,19 @@ beforeAll(async () => {
     user_id: memberAId,
     machine_id: machineA,
     exercise_id: breitId,
-    reps: 10,
+    volume: 10,
     rir: null,
     problem_flag: false,
     problem_reason: null,
   };
   const { error: setError } = await admin.from("workout_sets").insert([
     // 13. August: zwei Saetze, der schwerste ist 75,0
-    { ...base, id: newId(), set_index: 1, weight_kg: 70, performed_at: at("2026-08-13", 18) },
-    { ...base, id: newId(), set_index: 2, weight_kg: 75, performed_at: at("2026-08-13", 19) },
+    { ...base, id: newId(), set_index: 1, load: 70, performed_at: at("2026-08-13", 18) },
+    { ...base, id: newId(), set_index: 2, load: 75, performed_at: at("2026-08-13", 19) },
     // 20. August
-    { ...base, id: newId(), set_index: 3, weight_kg: 77.5, performed_at: at("2026-08-20") },
+    { ...base, id: newId(), set_index: 3, load: 77.5, performed_at: at("2026-08-20") },
     // 27. August
-    { ...base, id: newId(), set_index: 4, weight_kg: 80, performed_at: at("2026-08-27") },
+    { ...base, id: newId(), set_index: 4, load: 80, performed_at: at("2026-08-27") },
     // Fremdes Mitglied, gleiche Uebung -- darf nicht auftauchen
     {
       ...base,
@@ -141,7 +141,7 @@ beforeAll(async () => {
       user_id: memberA2Id,
       session_id: foreignSessionId,
       set_index: 1,
-      weight_kg: 200,
+      load: 200,
       performed_at: at("2026-08-27"),
     },
   ]);
@@ -170,7 +170,7 @@ describe("getProgress", () => {
     const { exercises } = await getProgress(client);
     const entry = exercises.find((item) => item.exerciseId === breitId);
 
-    expect(entry?.points[0]?.topWeightKg).toBe(75);
+    expect(entry?.points[0]?.topLoad).toBe(75);
   });
 
   it("liefert den aktuellen Wert und die Veraenderung seit dem ersten Punkt", async () => {
@@ -179,9 +179,9 @@ describe("getProgress", () => {
     const { exercises } = await getProgress(client);
     const entry = exercises.find((item) => item.exerciseId === breitId);
 
-    expect(entry?.currentWeightKg).toBe(80);
-    expect(entry?.firstWeightKg).toBe(75);
-    expect(entry?.changeKg).toBe(5);
+    expect(entry?.currentLoad).toBe(80);
+    expect(entry?.firstLoad).toBe(75);
+    expect(entry?.changeLoad).toBe(5);
     expect(entry?.exerciseName).toBe("Beidbeinig");
   });
 
@@ -201,7 +201,7 @@ describe("getProgress", () => {
     const { exercises } = await getProgress(client);
     const entry = exercises.find((item) => item.exerciseId === breitId);
 
-    expect(entry?.currentWeightKg).toBe(80);
+    expect(entry?.currentLoad).toBe(80);
   });
 
   it("grenzt den Zeitraum auf Wunsch ein", async () => {
@@ -239,7 +239,7 @@ describe("getProgress", () => {
       session_id: sessionId,
       user_id: memberAId,
       exercise_id: breitId,
-      reps: 10,
+      volume: 10,
       rir: null,
       problem_flag: false,
       problem_reason: null,
@@ -250,7 +250,7 @@ describe("getProgress", () => {
         id: newId(),
         machine_id: machineA,
         set_index: 1,
-        weight_kg: 82.5,
+        load: 82.5,
         performed_at: at("2026-09-03", 18),
       },
       // Zwei Stunden spaeter, am baugleichen zweiten Geraet.
@@ -259,7 +259,7 @@ describe("getProgress", () => {
         id: newId(),
         machine_id: machineB,
         set_index: 2,
-        weight_kg: 85,
+        load: 85,
         performed_at: at("2026-09-03", 19),
       },
     ]);

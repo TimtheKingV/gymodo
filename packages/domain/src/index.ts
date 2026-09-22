@@ -9,9 +9,27 @@ export {
 export { naechsteGeraeteNummer } from "./nummern.js";
 export {
   PROGRESSION_ALGO_VERSION,
-  suggestNextWeight,
+  suggestNextLoad,
   toBlocks,
 } from "./progression.js";
+export {
+  CATEGORIES,
+  LOAD_UNITS,
+  MAX_VOLUME,
+  VOLUME_KINDS,
+  categorySchema,
+  defaultLoadRange,
+  defaultTargetRange,
+  formatLoad,
+  formatLoadDelta,
+  formatVolume,
+  formatVolumeRange,
+  loadUnitSchema,
+  snapToStep,
+  volumeKindSchema,
+  volumeZuGross,
+} from "./belastung.js";
+export type { Category, LoadUnit, VolumeKind } from "./belastung.js";
 export { DomainError } from "./errors.js";
 export { istAuthAusfall } from "./auth.js";
 export {
@@ -161,6 +179,7 @@ export {
   zuVorschlag,
 } from "./abschluss.js";
 export type {
+  Blockeinheiten,
   Blockvorschlag,
   GespeicherteVorschlagZeile,
 } from "./abschluss.js";

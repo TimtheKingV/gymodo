@@ -79,9 +79,9 @@ beforeAll(async () => {
       studio_id: studioA,
       name: "Kabelzug",
       manufacturer: "Technogym",
-      weight_step_kg: 2.5,
-      min_weight_kg: 5,
-      max_weight_kg: 100,
+      load_step: 2.5,
+      load_min: 5,
+      load_max: 100,
       photo_path: fotoPfad,
     })
     .select("id")
@@ -136,14 +136,14 @@ beforeAll(async () => {
       {
         studio_id: studioA,
         name: "Latzug breit",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
       {
         studio_id: studioA,
         name: "Latzug eng",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
     ])
     .select("id");
@@ -181,7 +181,7 @@ beforeAll(async () => {
 
   const { data: foreignModel, error: foreignModelError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioB, name: "Fremdgeraet", weight_step_kg: 5 })
+    .insert({ studio_id: studioB, name: "Fremdgeraet", load_step: 5 })
     .select("id")
     .single();
   if (foreignModelError) throw foreignModelError;
@@ -215,7 +215,7 @@ describe("getTagContext", () => {
     expect(context.machine.id).toBe(machineA);
     expect(context.machine.label).toBe("12");
     expect(context.equipmentModel.name).toBe("Kabelzug");
-    expect(context.equipmentModel.weightStepKg).toBe(2.5);
+    expect(context.equipmentModel.loadStep).toBe(2.5);
     expect(context.settingDefinitions).toHaveLength(2);
     expect(context.settingDefinitions[0]!.key).toBe("sitz");
   });
@@ -289,7 +289,7 @@ describe("getTagContext", () => {
     const context = await getTagContext(client, tokenA);
 
     expect(context.selectedExerciseId).toBe(breitId);
-    expect(context.suggestion.resultWeightKg).toBeNull();
+    expect(context.suggestion.resultLoad).toBeNull();
     expect(context.suggestion.reasonCode).toBe("kein_verlauf");
   });
 
@@ -308,8 +308,8 @@ describe("getTagContext", () => {
       machine_id: machineA,
       exercise_id: engId,
       set_index: 1,
-      weight_kg: 45,
-      reps: 12,
+      load: 45,
+      volume: 12,
       performed_at: new Date("2026-08-27T18:00:00Z").toISOString(),
     });
     if (setError) throw setError;
@@ -336,8 +336,8 @@ describe("getTagContext", () => {
       machine_id: machineA,
       exercise_id: engId,
       set_index: 2,
-      weight_kg: 45,
-      reps: 12,
+      load: 45,
+      volume: 12,
       rir: 2,
       performed_at: new Date("2026-08-28T18:00:00Z").toISOString(),
     });
@@ -347,11 +347,11 @@ describe("getTagContext", () => {
     const context = await getTagContext(client, tokenA);
 
     expect(context.suggestion.reasonCode).toBe("korridor_oben_erreicht");
-    expect(context.suggestion.resultWeightKg).toBe(47.5);
+    expect(context.suggestion.resultLoad).toBe(47.5);
 
     const { data } = await admin
       .from("progression_suggestions")
-      .select("reason_code, result_weight_kg")
+      .select("reason_code, result_load")
       .eq("user_id", memberAId)
       .eq("machine_id", machineA)
       .eq("exercise_id", engId)

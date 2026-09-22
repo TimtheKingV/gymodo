@@ -1,8 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { DomainError } from "./errors.js";
+import type { LoadUnit } from "./belastung.js";
 import {
   PROGRESSION_ALGO_VERSION,
-  suggestNextWeight,
+  suggestNextLoad,
   toBlocks,
   type ProgressionReasonCode,
   type ProgressionSuggestion,
@@ -10,17 +11,31 @@ import {
 } from "./progression.js";
 
 /**
+ * Belastungs- und Nebenbelastungseinheit eines Geraets -- der Screen soll
+ * "+0,5 km/h bei 6 %" schreiben koennen, ohne das Modell nachzuladen
+ * (M1-Spec SS6.3, screenorientiert).
+ */
+export type Blockeinheiten = {
+  loadUnit: LoadUnit;
+  secondaryUnit: LoadUnit | null;
+};
+
+/**
  * Was TrainingAbschluss unter "Beim naechsten Mal" je Block zeigt.
  *
- * deltaKg ist der sichtbare Teil ("+2,5"), resultWeightKg der Wert dahinter.
+ * deltaLoad ist der sichtbare Teil ("+2,5"), resultLoad der Wert dahinter.
  * Beide sind null, wenn es keinen Vorschlag gibt -- der reasonCode sagt
- * dann, warum.
+ * dann, warum. secondaryLoad ist die Nebenbelastung, bei der der Vorschlag
+ * gilt (Cardio-Spec Abschnitt 3.1b); sie wird nie gesteigert, nur genannt.
  */
 export type Blockvorschlag = {
   machineId: string;
   exerciseId: string;
-  resultWeightKg: number | null;
-  deltaKg: number | null;
+  resultLoad: number | null;
+  deltaLoad: number | null;
+  secondaryLoad: number | null;
+  loadUnit: LoadUnit;
+  secondaryUnit: LoadUnit | null;
   reasonCode: ProgressionReasonCode;
   algoVersion: string;
 };
@@ -46,26 +61,31 @@ export function blockPaare(
 
 /**
  * Das Delta ist die Zahl, die der Screen zeigt. Es entsteht nur, wenn es
- * beides gibt: einen Vorschlag und ein bisheriges Gewicht, gegen das er
+ * beides gibt: einen Vorschlag und eine bisherige Belastung, gegen die er
  * sich vergleichen laesst.
  */
 export function zuVorschlag(eingabe: {
   machineId: string;
   exerciseId: string;
   suggestion: ProgressionSuggestion;
+  einheiten: Blockeinheiten;
 }): Blockvorschlag {
-  const { resultWeightKg, reasonCode, algoVersion, inputs } = eingabe.suggestion;
-  const bisher = inputs.currentWeightKg;
-  const deltaKg =
-    resultWeightKg === null || bisher === null || bisher === undefined
+  const { resultLoad, resultSecondaryLoad, reasonCode, algoVersion, inputs } =
+    eingabe.suggestion;
+  const bisher = inputs.currentLoad;
+  const deltaLoad =
+    resultLoad === null || bisher === null || bisher === undefined
       ? null
-      : Number((resultWeightKg - bisher).toFixed(2));
+      : Number((resultLoad - bisher).toFixed(2));
 
   return {
     machineId: eingabe.machineId,
     exerciseId: eingabe.exerciseId,
-    resultWeightKg,
-    deltaKg,
+    resultLoad,
+    deltaLoad,
+    secondaryLoad: resultSecondaryLoad,
+    loadUnit: eingabe.einheiten.loadUnit,
+    secondaryUnit: eingabe.einheiten.secondaryUnit,
     reasonCode,
     algoVersion,
   };
@@ -77,9 +97,18 @@ export type GespeicherteVorschlagZeile = {
   exercise_id: string;
   created_at: string;
   algo_version: string;
-  result_weight_kg: number | string | null;
+  result_load: number | string | null;
   reason_code: string;
-  inputs: { currentWeightKg?: number | string | null } | null;
+  /**
+   * Schluessel der Algorithmusversion 2.0.0. Eine Zeile aus 1.0.0 traegt
+   * currentWeightKg statt currentLoad; ihr Delta bleibt dann offen, der
+   * Vorschlag selbst wird trotzdem gezeigt. Alte Zeilen werden nie
+   * umgeschrieben (Migration 0015: kein Update).
+   */
+  inputs: {
+    currentLoad?: number | string | null;
+    currentSecondaryLoad?: number | string | null;
+  } | null;
 };
 
 /**
@@ -136,6 +165,7 @@ export function ausGespeichertenZeilen(
   paare: Array<{ machineId: string; exerciseId: string }>,
   zeilen: GespeicherteVorschlagZeile[],
   completedAt: string,
+  einheitenJeGeraet: Map<string, Blockeinheiten>,
 ): Blockvorschlag[] {
   const grenze = Date.parse(completedAt);
   const fensterVon = grenze - ABSCHLUSS_ZEITFENSTER_MS;
@@ -154,6 +184,12 @@ export function ausGespeichertenZeilen(
   for (const paar of paare) {
     const liste = nachBlock.get(`${paar.machineId}:${paar.exerciseId}`);
     if (!liste || liste.length === 0) continue;
+    // Ohne Einheit kein Vorschlag: "kg" zu raten waere an einem Laufband
+    // eine Falschaussage. Kommt nicht vor, solange bloeckeDerSession die
+    // Geraete mitliest -- die Schranke steht fuer den Fall, dass das mal
+    // nicht mehr stimmt.
+    const einheiten = einheitenJeGeraet.get(paar.machineId);
+    if (!einheiten) continue;
 
     const sortiert = [...liste].sort(
       (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
@@ -166,22 +202,30 @@ export function ausGespeichertenZeilen(
       sortiert[sortiert.length - 1]!;
 
     const ergebnis =
-      zeile.result_weight_kg === null || zeile.result_weight_kg === undefined
+      zeile.result_load === null || zeile.result_load === undefined
         ? null
-        : Number(zeile.result_weight_kg);
-    const bisherRoh = zeile.inputs?.currentWeightKg;
+        : Number(zeile.result_load);
+    const bisherRoh = zeile.inputs?.currentLoad;
     const bisher =
       bisherRoh === null || bisherRoh === undefined ? null : Number(bisherRoh);
-    const deltaKg =
+    const deltaLoad =
       ergebnis === null || bisher === null
         ? null
         : Number((ergebnis - bisher).toFixed(2));
+    const nebenRoh = zeile.inputs?.currentSecondaryLoad;
+    const secondaryLoad =
+      ergebnis === null || nebenRoh === null || nebenRoh === undefined
+        ? null
+        : Number(nebenRoh);
 
     vorschlaege.push({
       machineId: paar.machineId,
       exerciseId: paar.exerciseId,
-      resultWeightKg: ergebnis,
-      deltaKg,
+      resultLoad: ergebnis,
+      deltaLoad,
+      secondaryLoad,
+      loadUnit: einheiten.loadUnit,
+      secondaryUnit: einheiten.secondaryUnit,
       reasonCode: zeile.reason_code as ProgressionReasonCode,
       algoVersion: zeile.algo_version,
     });
@@ -191,8 +235,10 @@ export function ausGespeichertenZeilen(
 
 /**
  * Die Bloecke einer Session, in der Reihenfolge ihres ersten Auftretens,
- * samt Studio -- die eine Abfrage, die beide Wege (rechnen und zuruecklesen)
- * gleichermassen brauchen.
+ * samt Studio und den Einheiten je Geraet -- die eine Abfrage, die beide
+ * Wege (rechnen und zuruecklesen) gleichermassen brauchen. Die Einheiten
+ * kommen ueber den Join mit, damit der Rueckleseweg keinen zweiten
+ * Roundtrip braucht.
  */
 async function bloeckeDerSession(
   client: SupabaseClient,
@@ -201,22 +247,37 @@ async function bloeckeDerSession(
 ): Promise<{
   paare: Array<{ machineId: string; exerciseId: string }>;
   studioId: string | null;
+  einheitenJeGeraet: Map<string, Blockeinheiten>;
 }> {
   const { data: sessionSaetze, error } = await client
     .from("workout_sets")
-    .select("machine_id, exercise_id, studio_id")
+    .select(
+      "machine_id, exercise_id, studio_id, machines (equipment_models (load_unit, secondary_unit))",
+    )
     .eq("session_id", sessionId)
     .eq("user_id", userId)
     .order("performed_at", { ascending: true });
   if (error) throw new DomainError("internal", error.message);
 
-  const zeilen = (sessionSaetze ?? []) as Array<{
+  const zeilen = (sessionSaetze ?? []) as unknown as Array<{
     machine_id: string;
     exercise_id: string;
     studio_id: string;
+    machines: {
+      equipment_models: { load_unit: LoadUnit; secondary_unit: LoadUnit | null };
+    } | null;
   }>;
   const paare = blockPaare(zeilen);
-  return { paare, studioId: zeilen[0]?.studio_id ?? null };
+  const einheitenJeGeraet = new Map<string, Blockeinheiten>();
+  for (const zeile of zeilen) {
+    const modell = zeile.machines?.equipment_models;
+    if (!modell || einheitenJeGeraet.has(zeile.machine_id)) continue;
+    einheitenJeGeraet.set(zeile.machine_id, {
+      loadUnit: modell.load_unit,
+      secondaryUnit: modell.secondary_unit,
+    });
+  }
+  return { paare, studioId: zeilen[0]?.studio_id ?? null, einheitenJeGeraet };
 }
 
 /**
@@ -234,7 +295,11 @@ export async function gespeicherteVorschlaege(
   userId: string,
   completedAt: string,
 ): Promise<Blockvorschlag[]> {
-  const { paare } = await bloeckeDerSession(client, sessionId, userId);
+  const { paare, einheitenJeGeraet } = await bloeckeDerSession(
+    client,
+    sessionId,
+    userId,
+  );
   if (paare.length === 0) return [];
 
   const machineIds = [...new Set(paare.map((p) => p.machineId))];
@@ -252,7 +317,7 @@ export async function gespeicherteVorschlaege(
   const { data: zeilen, error } = await client
     .from("progression_suggestions")
     .select(
-      "machine_id, exercise_id, created_at, algo_version, result_weight_kg, reason_code, inputs",
+      "machine_id, exercise_id, created_at, algo_version, result_load, reason_code, inputs",
     )
     .eq("user_id", userId)
     .in("machine_id", machineIds)
@@ -267,6 +332,7 @@ export async function gespeicherteVorschlaege(
     paare,
     (zeilen ?? []) as GespeicherteVorschlagZeile[],
     completedAt,
+    einheitenJeGeraet,
   );
 }
 
@@ -298,7 +364,11 @@ export async function vorschlaegeFuerAbschluss(
   sessionId: string,
   userId: string,
 ): Promise<Blockvorschlag[]> {
-  const { paare, studioId } = await bloeckeDerSession(client, sessionId, userId);
+  const { paare, studioId, einheitenJeGeraet } = await bloeckeDerSession(
+    client,
+    sessionId,
+    userId,
+  );
   if (paare.length === 0 || studioId === null) return [];
 
   const machineIds = [...new Set(paare.map((p) => p.machineId))];
@@ -306,14 +376,14 @@ export async function vorschlaegeFuerAbschluss(
 
   const { data: uebungen, error: uebungenFehler } = await client
     .from("exercises")
-    .select("id, target_reps_min, target_reps_max")
+    .select("id, target_min, target_max")
     .in("id", exerciseIds);
   if (uebungenFehler) throw new DomainError("internal", uebungenFehler.message);
 
   const { data: geraete, error: geraeteFehler } = await client
     .from("machines")
     .select(
-      "id, equipment_models (weight_step_kg, min_weight_kg, max_weight_kg)",
+      "id, equipment_models (load_step, load_min, load_max)",
     )
     .in("id", machineIds);
   if (geraeteFehler) throw new DomainError("internal", geraeteFehler.message);
@@ -327,7 +397,7 @@ export async function vorschlaegeFuerAbschluss(
   const { data: historie, error: historieFehler } = await client
     .from("workout_sets")
     .select(
-      "machine_id, exercise_id, performed_at, weight_kg, reps, rir, problem_flag",
+      "machine_id, exercise_id, performed_at, load, secondary_load, volume, rir, problem_flag",
     )
     .eq("user_id", userId)
     .in("machine_id", machineIds)
@@ -335,7 +405,7 @@ export async function vorschlaegeFuerAbschluss(
     .limit(paare.length * 60);
   // Die folgenschwerste der fuenf Pruefungen. Ohne sie faellt ein
   // Transportfehler per `?? []` auf eine LEERE Historie zurueck,
-  // suggestNextWeight liefert `kein_verlauf`, und der insert unten
+  // suggestNextLoad liefert `kein_verlauf`, und der insert unten
   // schreibt das als Nachweiszeile fest: in der Ablage, die laut
   // M1-Spec SS8.4 dokumentiert, WARUM ein Vorschlag so ausfiel, staende
   // dann "keine Historie" fuer ein Mitglied, das Historie hat. Eine
@@ -346,7 +416,7 @@ export async function vorschlaegeFuerAbschluss(
 
   const uebungNach = new Map(
     (uebungen ?? []).map((u) => {
-      const row = u as { id: string; target_reps_min: number; target_reps_max: number };
+      const row = u as { id: string; target_min: number; target_max: number };
       return [row.id, row];
     }),
   );
@@ -355,9 +425,9 @@ export async function vorschlaegeFuerAbschluss(
       const row = g as unknown as {
         id: string;
         equipment_models: {
-          weight_step_kg: number | string;
-          min_weight_kg: number | string;
-          max_weight_kg: number | string | null;
+          load_step: number | string;
+          load_min: number | string;
+          load_max: number | string | null;
         };
       };
       return [row.id, row.equipment_models];
@@ -386,27 +456,28 @@ export async function vorschlaegeFuerAbschluss(
     exercise_id: string;
     algo_version: string;
     inputs: ProgressionSuggestion["inputs"];
-    result_weight_kg: number | null;
+    result_load: number | null;
     reason_code: ProgressionReasonCode;
   }> = [];
 
   for (const paar of paare) {
     const uebung = uebungNach.get(paar.exerciseId);
     const modell = modellNach.get(paar.machineId);
-    if (!uebung || !modell) continue;
+    const einheiten = einheitenJeGeraet.get(paar.machineId);
+    if (!uebung || !modell || !einheiten) continue;
 
-    const suggestion = suggestNextWeight({
-      targetRepsMin: uebung.target_reps_min,
-      targetRepsMax: uebung.target_reps_max,
-      weightStepKg: Number(modell.weight_step_kg),
-      minWeightKg: Number(modell.min_weight_kg),
-      maxWeightKg: Number(modell.max_weight_kg ?? 9999),
+    const suggestion = suggestNextLoad({
+      targetMin: uebung.target_min,
+      targetMax: uebung.target_max,
+      loadStep: Number(modell.load_step),
+      loadMin: Number(modell.load_min),
+      loadMax: Number(modell.load_max ?? 9999),
       history: toBlocks(
         historieNach.get(`${paar.machineId}:${paar.exerciseId}`) ?? [],
       ),
     });
 
-    const vorschlag = zuVorschlag({ ...paar, suggestion });
+    const vorschlag = zuVorschlag({ ...paar, suggestion, einheiten });
     vorschlaege.push(vorschlag);
     zeilenFuerInsert.push({
       studio_id: studioId,
@@ -415,7 +486,7 @@ export async function vorschlaegeFuerAbschluss(
       exercise_id: vorschlag.exerciseId,
       algo_version: PROGRESSION_ALGO_VERSION,
       inputs: suggestion.inputs,
-      result_weight_kg: vorschlag.resultWeightKg,
+      result_load: vorschlag.resultLoad,
       reason_code: vorschlag.reasonCode,
     });
   }

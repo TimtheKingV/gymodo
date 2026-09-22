@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ladeKatalog } from "../../catalog";
+import { KATEGORIE_OPTIONEN } from "../../../bausteine/einstellungVorschlaege";
 import { Schrittleiste } from "../../../bausteine/Schrittleiste";
 import { Seite } from "../../../bausteine/Seite";
 import styles from "../halle.module.css";
@@ -19,6 +20,7 @@ export default async function ModellWaehlenPage({
 
   function meta(modell: (typeof katalog.models)[number]): string {
     const teile = [
+      KATEGORIE_OPTIONEN.find((o) => o.wert === modell.category)?.anzeige ?? "Kraft",
       modell.manufacturer ?? "Ohne Hersteller",
       `${modell.machines.length} ${modell.machines.length === 1 ? "Gerät" : "Geräte"}`,
       `${modell.exercises.length} ${modell.exercises.length === 1 ? "Übung" : "Übungen"}`,

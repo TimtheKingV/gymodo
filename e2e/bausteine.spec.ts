@@ -92,7 +92,7 @@ test("Vergebene Geraete-Tags zeigt nur vergebene Tags, keine vorraetigen", async
 
   const { data: modell, error: modellFehler } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Testmodell", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Testmodell", load_step: 2.5 })
     .select("id")
     .single<{ id: string }>();
   if (modellFehler) throw modellFehler;

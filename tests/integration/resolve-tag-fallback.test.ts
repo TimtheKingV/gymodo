@@ -28,7 +28,7 @@ beforeAll(async () => {
 
   const { data: model, error: modelError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studio.id, name: "Resolve-Fallback Geraet", weight_step_kg: 5 })
+    .insert({ studio_id: studio.id, name: "Resolve-Fallback Geraet", load_step: 5 })
     .select("id")
     .single();
   if (modelError) throw modelError;

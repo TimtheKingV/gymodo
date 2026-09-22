@@ -4,13 +4,13 @@ import { useActionState, useRef, useState } from "react";
 import { Feld } from "../../../../../Form";
 import { DateiKnopf } from "../../../../../bausteine/DateiKnopf";
 import { MedienVorschau } from "../../../../../bausteine/MedienVorschau";
-import { UebungRepsRad } from "../../../../../bausteine/UebungRepsRad";
+import { UebungUmfangRad } from "../../../../../bausteine/UebungUmfangRad";
 import { ladeVideoHoch } from "../../../../../bausteine/videoUpload";
 import { videoBestaetigen, type Ergebnis } from "../../../../../actions";
 import styles from "../../../../../portal.module.css";
 
 /**
- * Wiederholungen ab/bis kommen als Rad (UebungRepsRad), gleicher Stil wie
+ * Umfangsart und Korridor kommen aus UebungUmfangRad, gleicher Stil wie
  * bei den Einstellungen. Das Einweisungsvideo laesst sich gleich hier mit
  * anhaengen -- Trainer-Wunsch: "Upload ins Anlege-Formular integrieren",
  * ein Schritt statt zwei.
@@ -92,7 +92,7 @@ export function UebungFormular({
   return (
     <form ref={formRef} action={formAction} className={styles.sectionBody}>
       <Feld name="name" label="Name" required placeholder="Latzug breit" />
-      <UebungRepsRad />
+      <UebungUmfangRad />
 
       <div className={styles.field}>
         <span className={styles.label}>Einweisungsvideo</span>

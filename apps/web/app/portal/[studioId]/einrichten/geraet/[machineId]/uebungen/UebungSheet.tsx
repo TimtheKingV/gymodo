@@ -2,6 +2,7 @@
 
 import { useActionState, useId, useState, useTransition } from "react";
 import type { StudioExercise } from "@fitretro/domain";
+import { formatVolumeRange } from "@fitretro/domain/belastung";
 import {
   uebungAnlegen,
   uebungHinzufuegen,
@@ -10,7 +11,7 @@ import {
 import { useUploads } from "../../../Uploads";
 import { DateiKnopf } from "../../../../../bausteine/DateiKnopf";
 import { MedienVorschau } from "../../../../../bausteine/MedienVorschau";
-import { UebungRepsRad } from "../../../../../bausteine/UebungRepsRad";
+import { UebungUmfangRad } from "../../../../../bausteine/UebungUmfangRad";
 import styles from "../../../halle.module.css";
 
 type Ansicht = "zu" | "waehlen" | "neu";
@@ -111,7 +112,7 @@ export function UebungSheet({
           required
           placeholder="Latzug · Neutralgriff"
         />
-        <UebungRepsRad gross />
+        <UebungUmfangRad gross />
         <p className={styles.notiz}>
           Die Spanne ist ein Ziel, kein Vorschlag. gymodo rechnet daraus nichts
           aus — sie steht dem Mitglied unter dem Rad.
@@ -180,7 +181,7 @@ export function UebungSheet({
                   {uebung.modelCount === 0
                     ? "Noch an keinem Modell"
                     : `An ${uebung.modelCount} ${uebung.modelCount === 1 ? "Modell" : "Modellen"}`}{" "}
-                  · {uebung.targetRepsMin}–{uebung.targetRepsMax} Wiederholungen
+                  · {formatVolumeRange(uebung.targetMin, uebung.targetMax, uebung.volumeKind)}
                 </div>
               </div>
               <button

@@ -63,7 +63,7 @@ async function studioMitDaten(
 
   const { data: modell, error: modellError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studio.id, name: "Kraftgerät", weight_step_kg: 2.5 })
+    .insert({ studio_id: studio.id, name: "Kraftgerät", load_step: 2.5 })
     .select("id")
     .single();
   if (modellError) throw modellError;
@@ -76,8 +76,8 @@ async function studioMitDaten(
     .insert({
       studio_id: studio.id,
       name: "Zug",
-      target_reps_min: 8,
-      target_reps_max: 12,
+      target_min: 8,
+      target_max: 12,
     })
     .select("id")
     .single();
@@ -136,8 +136,8 @@ async function studioMitDaten(
         machine_id: geraete[0]!.id,
         exercise_id: uebung.id,
         set_index: 1,
-        weight_kg: 40,
-        reps: 10,
+        load: 40,
+        volume: 10,
         problem_flag: false,
       },
       {
@@ -148,8 +148,8 @@ async function studioMitDaten(
         machine_id: geraete[0]!.id,
         exercise_id: uebung.id,
         set_index: 2,
-        weight_kg: 40,
-        reps: 8,
+        load: 40,
+        volume: 8,
         problem_flag: false,
       },
       {
@@ -160,8 +160,8 @@ async function studioMitDaten(
         machine_id: geraete[1]!.id,
         exercise_id: uebung.id,
         set_index: 1,
-        weight_kg: 30,
-        reps: 12,
+        load: 30,
+        volume: 12,
         problem_flag: true,
         problem_reason: "schmerz",
       },

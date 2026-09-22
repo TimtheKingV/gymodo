@@ -19,7 +19,9 @@ let memberAEmail: string;
 let memberAId: string;
 let machineA: string;
 let machineForeign: string;
+let laufband: string;
 let breitId: string;
+let dauerlaufId: string;
 let tokenA: string;
 
 beforeAll(async () => {
@@ -47,9 +49,9 @@ beforeAll(async () => {
       studio_id: studioA,
       name: "Kabelzug",
       manufacturer: "Technogym",
-      weight_step_kg: 2.5,
-      min_weight_kg: 5,
-      max_weight_kg: 100,
+      load_step: 2.5,
+      load_min: 5,
+      load_max: 100,
     })
     .select("id")
     .single();
@@ -74,8 +76,8 @@ beforeAll(async () => {
     .insert({
       studio_id: studioA,
       name: "Latzug breit",
-      target_reps_min: 8,
-      target_reps_max: 12,
+      target_min: 8,
+      target_max: 12,
     })
     .select("id");
   if (exerciseError) throw exerciseError;
@@ -96,7 +98,7 @@ beforeAll(async () => {
 
   const { data: foreignModel, error: foreignModelError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioB, name: "Fremdgeraet", weight_step_kg: 5 })
+    .insert({ studio_id: studioB, name: "Fremdgeraet", load_step: 5 })
     .select("id")
     .single();
   if (foreignModelError) throw foreignModelError;
@@ -113,6 +115,54 @@ beforeAll(async () => {
   if (foreignMachineError) throw foreignMachineError;
   machineForeign = foreign.id;
 
+  // Laufband: Tempo als Belastung, Neigung als Nebenbelastung, Minuten als
+  // Umfang (Cardio-Spec Abschnitt 9, Probe aufs Exempel).
+  const { data: laufbandModell, error: laufbandModellError } = await admin
+    .from("equipment_models")
+    .insert({
+      studio_id: studioA,
+      name: "Laufband",
+      category: "cardio",
+      load_unit: "kmh",
+      load_step: 0.5,
+      load_min: 0,
+      load_max: 20,
+      secondary_unit: "pct",
+      secondary_step: 0.5,
+      secondary_min: 0,
+      secondary_max: 15,
+    })
+    .select("id")
+    .single();
+  if (laufbandModellError) throw laufbandModellError;
+
+  const { data: dauerlauf, error: dauerlaufError } = await admin
+    .from("exercises")
+    .insert({
+      studio_id: studioA,
+      name: "Dauerlauf",
+      volume_kind: "seconds",
+      target_min: 900,
+      target_max: 1200,
+    })
+    .select("id")
+    .single();
+  if (dauerlaufError) throw dauerlaufError;
+  dauerlaufId = dauerlauf.id;
+
+  const { error: laufbandLinkError } = await admin
+    .from("equipment_model_exercises")
+    .insert({ equipment_model_id: laufbandModell.id, exercise_id: dauerlaufId, sort_order: 1 });
+  if (laufbandLinkError) throw laufbandLinkError;
+
+  const { data: laufbandGeraet, error: laufbandGeraetError } = await admin
+    .from("machines")
+    .insert({ studio_id: studioA, equipment_model_id: laufbandModell.id, label: "L1" })
+    .select("id")
+    .single();
+  if (laufbandGeraetError) throw laufbandGeraetError;
+  laufband = laufbandGeraet.id;
+
   tokenA = createTagToken();
   await tagsAnlegen(admin, [
     { studioId: studioA, machineId: machineA, token: tokenA, status: "active" },
@@ -128,10 +178,41 @@ describe("getMachineContext", () => {
     expect(context.machine.id).toBe(machineA);
     expect(context.machine.label).toBe("12");
     expect(context.equipmentModel.name).toBe("Kabelzug");
-    expect(context.equipmentModel.weightStepKg).toBe(2.5);
+    expect(context.equipmentModel.loadStep).toBe(2.5);
+    // Ein Kraftgeraet nach 0045: Kilogramm, keine Nebenbelastung.
+    expect(context.equipmentModel.loadUnit).toBe("kg");
+    expect(context.equipmentModel.secondaryUnit).toBeNull();
+    expect(context.equipmentModel.secondaryStep).toBeNull();
     expect(context.settingDefinitions.map((s) => s.key)).toEqual(["sitz"]);
     expect(context.exercises.map((e) => e.name)).toEqual(["Latzug breit"]);
+    expect(context.exercises[0]?.volumeKind).toBe("reps");
     expect(context.selectedExerciseId).toBe(breitId);
+  });
+
+  it("liefert am Laufband Einheit, Nebenbelastung und Umfangsart der Uebung", async () => {
+    const client = await userClient(memberAEmail);
+
+    const context = await getMachineContext(client, laufband);
+
+    expect(context.equipmentModel).toMatchObject({
+      loadUnit: "kmh",
+      loadStep: 0.5,
+      loadMin: 0,
+      loadMax: 20,
+      secondaryUnit: "pct",
+      secondaryStep: 0.5,
+      secondaryMin: 0,
+      secondaryMax: 15,
+    });
+    expect(context.exercises[0]).toMatchObject({
+      id: dauerlaufId,
+      volumeKind: "seconds",
+      targetMin: 900,
+      targetMax: 1200,
+    });
+    // Erstkontakt: kein Vorschlag, aber die Eingaben tragen die Rastung.
+    expect(context.suggestion.reasonCode).toBe("kein_verlauf");
+    expect(context.suggestion.inputs.loadStep).toBe(0.5);
   });
 
   // Der eigentliche Punkt der Aufteilung: beide Wege muessen dasselbe

@@ -26,6 +26,7 @@ import {
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { belastungAusFormular, umfangAusFormular } from "./formfelder";
 
 /**
  * Die Trainerfunktionen als Server Actions -- kein HTTP, keine Endpoints.
@@ -139,9 +140,9 @@ export async function modellAnlegen(
       studioId,
       name: text(formData, "name"),
       manufacturer: optionalerText(formData, "manufacturer"),
-      weightStepKg: zahl(formData, "weightStepKg") ?? Number.NaN,
-      minWeightKg: zahl(formData, "minWeightKg") ?? 0,
-      maxWeightKg: zahl(formData, "maxWeightKg") ?? null,
+      ...belastungAusFormular(formData),
+      loadStep: zahl(formData, "loadStep") ?? Number.NaN,
+      loadMin: zahl(formData, "loadMin") ?? 0,
     });
     modelId = modell.id;
   } catch (fehler) {
@@ -161,9 +162,7 @@ export async function modellAendern(
     await updateEquipmentModel(client, modelId, {
       name: text(formData, "name"),
       manufacturer: optionalerText(formData, "manufacturer"),
-      weightStepKg: zahl(formData, "weightStepKg"),
-      minWeightKg: zahl(formData, "minWeightKg"),
-      maxWeightKg: zahl(formData, "maxWeightKg") ?? null,
+      ...belastungAusFormular(formData),
     });
   }, "layout");
 }
@@ -245,8 +244,7 @@ export async function uebungAnlegen(
       studioId,
       name: text(formData, "name"),
       description: optionalerText(formData, "description"),
-      targetRepsMin: zahl(formData, "targetRepsMin") ?? Number.NaN,
-      targetRepsMax: zahl(formData, "targetRepsMax") ?? Number.NaN,
+      ...umfangAusFormular(formData),
     });
     // Anlegen und zuordnen in einem Schritt: eine Uebung, die an keinem
     // Geraet haengt, taucht nirgends auf und waere ein stiller Fehlschlag.
