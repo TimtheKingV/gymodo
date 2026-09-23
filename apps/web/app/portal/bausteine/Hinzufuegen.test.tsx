@@ -6,7 +6,7 @@ import { Hinzufuegen } from "./Hinzufuegen";
 afterEach(cleanup);
 
 describe("Hinzufuegen", () => {
-  function formular(offen?: boolean) {
+  function formular(offen: boolean) {
     render(
       <Hinzufuegen knopf="Gerät hinzufügen" titel="Modell anlegen" offen={offen}>
         <form>
