@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { AktionsFormular, AktionsKnopf, Feld } from "../../../../../Form";
 import { VideoUpload } from "../../../../../VideoUpload";
 import { MedienVorschau } from "../../../../../bausteine/MedienVorschau";
+import { VideoAbspieler } from "../../../../../bausteine/VideoAbspieler";
 import { StiftKnopf } from "../../../../../bausteine/Stift";
 import { UebungRepsRad } from "../../../../../bausteine/UebungRepsRad";
 import type { ActionResult } from "../../../../../actions";
@@ -53,12 +54,19 @@ export function UebungZeile({
     <li className={eigene.zeile}>
       <div className={eigene.zeileKopf}>
         <div className={styles.zeileMitBild}>
-          <MedienVorschau
-            url={videoUrl ?? null}
-            art="video"
-            leerText={uebung.hasVideo ? "Video" : "Kein Video"}
-            groesse="zeile"
-          />
+          {/* Die Kachel spielt auf Tipp ab, im Vollbild (Testnotiz 23.09.,
+              #6) -- ob die richtige Uebung zu sehen ist, beantwortet sich
+              ohne Aufklappen. */}
+          {videoUrl ? (
+            <VideoAbspieler url={videoUrl} titel={uebung.name} groesse="zeile" />
+          ) : (
+            <MedienVorschau
+              url={null}
+              art="video"
+              leerText={uebung.hasVideo ? "Video" : "Kein Video"}
+              groesse="zeile"
+            />
+          )}
           <div className={styles.rowMain}>
             <div className={styles.rowTitle}>
               {nummer}. {uebung.name}
@@ -108,6 +116,7 @@ export function UebungZeile({
               linkId={uebung.linkId}
               hatVideo={uebung.hasVideo}
               videoUrl={videoUrl}
+              titel={uebung.name}
             />
           </div>
           <div className={eigene.entfernen}>

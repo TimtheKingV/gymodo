@@ -83,6 +83,10 @@
   max-width: none;
   max-height: none;
   background: transparent;
+  /* Das UA-Stylesheet gibt <dialog> color: CanvasText -- Schwarz. Ohne
+     diese Zeile erbte alles ohne eigene Farbe (der Studioname) Schwarz auf
+     --surface (Testnotiz 23.09., #1). */
+  color: var(--text);
 }
 
 .drawer::backdrop {
@@ -907,4 +911,26 @@
   font-size: 12px;
   color: var(--text-faint);
   margin-top: 2px;
+}
+
+/* Ablauf "Gerät hinzufügen" (ModellRahmen.tsx, Testnotiz 23.09., #7):
+   die Schrittleiste steht, wo sonst die Reiter stehen, und unten eine
+   Fussleiste mit Zurück links und Weiter rechts. Am Telefon klebt sie am
+   unteren Rand -- der naechste Schritt soll nicht erst gesucht werden. */
+.ablaufLeiste {
+  margin-top: var(--s24);
+}
+
+.ablaufFuss {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: var(--s32);
+  padding: var(--s12) 0 max(var(--s12), env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s12);
+  background: var(--bg);
+  border-top: 1px solid var(--line);
 }
