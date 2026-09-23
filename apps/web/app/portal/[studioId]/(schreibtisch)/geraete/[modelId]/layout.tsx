@@ -70,6 +70,8 @@ export default async function ModellLayout({
         einstellungenZusatz={`${modell.settingDefinitions.length} Einstellungen`}
         uebungenZusatz={`${modell.exercises.length} · ${mitVideo} mit Video`}
         instanzenZusatz={`${modell.machines.length} · ${ohneTag} ohne Tag`}
+        einstellungenAnzahl={modell.settingDefinitions.length}
+        uebungenAnzahl={modell.exercises.length}
         nochZuTun={<NochZuTun punkte={punkte} />}
       >
         {children}

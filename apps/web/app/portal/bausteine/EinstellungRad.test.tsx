@@ -101,3 +101,39 @@ describe("NameFeld", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Testnotiz 23.09. (zweite Sitzung), #3: Minimum und Maximum zaehlen im
+ * Takt des Schritts. Wechselt der Takt, bekommt die Spalte neue Werte --
+ * und bleibt auf dem naechstliegenden stehen, statt auf einem Index, der
+ * jetzt etwas anderes bedeutet.
+ */
+describe("Rad mit wechselnden Werten", () => {
+  function takt(schritt: number) {
+    return Array.from({ length: Math.floor(20 / schritt) + 1 }, (_, i) => ({
+      wert: String(i * schritt),
+      anzeige: String(i * schritt),
+    }));
+  }
+
+  it("bleibt beim Taktwechsel auf dem naechstliegenden Wert", () => {
+    const { container, rerender } = render(
+      <Rad spalten={[{ name: "minValue", label: "Minimum", werte: takt(1), start: "7" }]} />,
+    );
+    const feld = () => container.querySelector<HTMLInputElement>('input[name="minValue"]')!;
+    expect(feld().value).toBe("7");
+
+    rerender(<Rad spalten={[{ name: "minValue", label: "Minimum", werte: takt(5), start: "7" }]} />);
+    expect(feld().value).toBe("5");
+    expect(screen.getAllByRole("option").map((zeile) => zeile.textContent)).toEqual([
+      "0",
+      "5",
+      "10",
+      "15",
+      "20",
+    ]);
+    expect(screen.getByRole("option", { selected: true }).textContent).toBe("5");
+    // Und die Spalte steht sichtbar dort -- Zeile 1 bei 40 px Zeilenhoehe.
+    expect(screen.getByRole("listbox", { name: "Minimum" }).scrollTop).toBe(40);
+  });
+});

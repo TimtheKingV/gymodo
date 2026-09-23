@@ -21,7 +21,7 @@ import styles from "../../../../../portal.module.css";
  * Designsystem 2 verbietet dafuer 3,6 : 1 (Befund 19).
  *
  * Genau eine Akzentflaeche: "Weitere Einstellung hinzufügen" -- oder,
- * aufgeklappt, "Einstellung anlegen" im EinstellungFormular (Hinzufuegen).
+ * aufgeklappt, "Einstellung speichern" im EinstellungFormular (Hinzufuegen).
  * Loeschen ist zerstoerend (.destructive), nicht Akzent.
  */
 export default async function ModellEinstellungenPage({
@@ -41,16 +41,6 @@ export default async function ModellEinstellungenPage({
         Zeile stehen die Rasten, aus denen es wählen kann — nicht die
         Definition, sondern die Werte selbst.
       </p>
-
-      {/* Ueber der Liste und erst auf Klick offen, sobald es eine
-          Einstellung gibt (Testnotiz 22.09., #10). */}
-      <Hinzufuegen
-        knopf="Weitere Einstellung hinzufügen"
-        titel="Einstellung anlegen"
-        offen={modell.settingDefinitions.length === 0}
-      >
-        <EinstellungFormular action={parameterAnlegen.bind(null, studioId, modelId)} />
-      </Hinzufuegen>
 
       <section className={styles.section}>
         {modell.settingDefinitions.length === 0 ? (
@@ -87,8 +77,26 @@ export default async function ModellEinstellungenPage({
             ))}
           </ul>
         )}
-
       </section>
+
+      {/* Unter der Liste (Testnotiz 23.09., zweite Sitzung, #1): was
+          gespeichert ist, steht oben, darunter "Weitere Einstellung
+          hinzufügen". Offen traegt das Formular unten Speichern und
+          Abbrechen und klappt nach dem Speichern zu -- im Ablauf gibt es
+          erst dann "Weiter" (ModellRahmen.tsx). Bei leerer Liste gleich
+          offen (Testnotiz 22.09., #10). */}
+      <Hinzufuegen
+        knopf={
+          modell.settingDefinitions.length === 0
+            ? "Einstellung hinzufügen"
+            : "Weitere Einstellung hinzufügen"
+        }
+        titel="Einstellung anlegen"
+        offen={modell.settingDefinitions.length === 0}
+        abbrechenImFormular
+      >
+        <EinstellungFormular action={parameterAnlegen.bind(null, studioId, modelId)} />
+      </Hinzufuegen>
     </>
   );
 }

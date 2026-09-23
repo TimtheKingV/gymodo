@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { MAX_VIDEO_SECONDS } from "@fitretro/domain/media";
 import { videoBestaetigen } from "./actions";
 import { DateiKnopf } from "./bausteine/DateiKnopf";
-import { MedienVorschau } from "./bausteine/MedienVorschau";
 import { VideoAbspieler } from "./bausteine/VideoAbspieler";
 import { ladeVideoHoch } from "./bausteine/videoUpload";
 import styles from "./portal.module.css";
@@ -93,33 +92,40 @@ export function VideoUpload({
       <span className={styles.label}>Einweisungsvideo</span>
       {/* Ist ein Video da, steht es in voller Breite ueber dem Knopf und
           oeffnet auf Tipp den Player (Testnotiz 23.09., #6). Ohne Video
-          bleibt der kleine Platzhalter neben dem Knopf. */}
-      {vorschauUrl ? <VideoAbspieler url={vorschauUrl} titel={titel} /> : null}
-      <div className={styles.mediaRow}>
-        {vorschauUrl ? null : (
-          <MedienVorschau
-            url={null}
-            art="video"
-            leerText={hatVideo ? "Video" : "Kein Video"}
-            groesse="mini"
-          />
-        )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <DateiKnopf
-            label={hatVideo ? "Video ersetzen" : "Video hinzufügen"}
-            ariaLabel={hatVideo ? "Video ersetzen" : "Einweisungsvideo hochladen"}
-            accept="video/mp4,video/quicktime"
-            disabled={laeuft}
-            onDatei={(datei) => {
-              if (datei) void starte(datei);
-            }}
-          />
-          <span className={styles.hint}>
-            Höchstens {MAX_VIDEO_SECONDS} Sekunden. Länger nimmt der Upload
-            nicht an — die Länge wird an der Datei geprüft, nicht geschätzt.
-          </span>
-        </div>
-      </div>
+          ist das Feld selbst, ebenso breit, der Ausloeser fuer
+          "aufnehmen oder auswaehlen" (Testnotiz 23.09., zweite Sitzung,
+          #4) -- vorher eine 96-px-Kachel, die auf Tipp nichts tat. */}
+      {vorschauUrl ? (
+        <>
+          <VideoAbspieler url={vorschauUrl} titel={titel} />
+          <div>
+            <DateiKnopf
+              label="Video ersetzen"
+              ariaLabel="Video ersetzen"
+              accept="video/mp4,video/quicktime"
+              disabled={laeuft}
+              onDatei={(datei) => {
+                if (datei) void starte(datei);
+              }}
+            />
+          </div>
+        </>
+      ) : (
+        <DateiKnopf
+          art="flaeche"
+          label={hatVideo ? "Video ersetzen" : "Video aufnehmen oder auswählen"}
+          ariaLabel={hatVideo ? "Video ersetzen" : "Einweisungsvideo hochladen"}
+          accept="video/mp4,video/quicktime"
+          disabled={laeuft}
+          onDatei={(datei) => {
+            if (datei) void starte(datei);
+          }}
+        />
+      )}
+      <span className={styles.hint}>
+        Höchstens {MAX_VIDEO_SECONDS} Sekunden. Länger nimmt der Upload
+        nicht an — die Länge wird an der Datei geprüft, nicht geschätzt.
+      </span>
 
       {laeuft ? (
         <>

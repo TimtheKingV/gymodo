@@ -2,6 +2,7 @@
 
 import { forwardRef, useRef } from "react";
 import portalStyles from "../portal.module.css";
+import medien from "./Medien.module.css";
 
 /**
  * Ein gestalteter Ausloeser statt eines nackten <input type="file">
@@ -21,6 +22,10 @@ import portalStyles from "../portal.module.css";
  * oeffnete iOS direkt die Kamera, und ein Foto oder Video aus der
  * Mediathek liess sich gar nicht waehlen. Ohne capture fragt das System
  * selbst -- Mediathek, Aufnehmen oder Datei.
+ *
+ * `art="flaeche"` (Testnotiz 23.09., zweite Sitzung, #4): der Ausloeser ist
+ * das leere Feld selbst, in voller Breite und 16:9 -- vorher lag daneben
+ * eine 96-px-Kachel "Kein Video", die auf Tipp nichts tat.
  */
 export const DateiKnopf = forwardRef<
   HTMLInputElement,
@@ -37,10 +42,11 @@ export const DateiKnopf = forwardRef<
     accept?: string;
     disabled?: boolean;
     gross?: boolean;
+    art?: "knopf" | "flaeche";
     onDatei: (datei: File | null) => void;
   }
 >(function DateiKnopf(
-  { id, name, label, ariaLabel, accept, disabled, gross = false, onDatei },
+  { id, name, label, ariaLabel, accept, disabled, gross = false, art = "knopf", onDatei },
   aeussererRef,
 ) {
   const innererRef = useRef<HTMLInputElement>(null);
@@ -64,11 +70,37 @@ export const DateiKnopf = forwardRef<
       />
       <button
         type="button"
-        className={gross ? portalStyles.secondaryGross : portalStyles.secondary}
+        className={
+          art === "flaeche"
+            ? medien.wahlFlaeche
+            : gross
+              ? portalStyles.secondaryGross
+              : portalStyles.secondary
+        }
         disabled={disabled}
         onClick={() => innererRef.current?.click()}
       >
-        {label}
+        {art === "flaeche" ? (
+          <>
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="6" width="13" height="12" rx="2" />
+              <path d="M16 10.5l5-3v9l-5-3" />
+            </svg>
+            <span>{label}</span>
+          </>
+        ) : (
+          label
+        )}
       </button>
     </>
   );

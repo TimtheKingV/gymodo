@@ -125,6 +125,32 @@ function RadSpalte({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Neue Werte (Testnotiz 23.09., zweite Sitzung, #3: Minimum/Maximum im
+  // Takt des Schritts): auf dem naechstliegenden Wert bleiben, statt dass
+  // derselbe Index ploetzlich etwas anderes bedeutet oder ins Leere zeigt.
+  // Waehrend des Renderns umgestellt (React-Muster "Zustand aus Props
+  // anpassen"), damit das versteckte Feld nie einen Zwischenstand traegt.
+  const werteSchluessel = werte.map((wert) => wert.wert).join("|");
+  const [bisherigeWerte, setBisherigeWerte] = useState({ schluessel: werteSchluessel, werte });
+  if (bisherigeWerte.schluessel !== werteSchluessel) {
+    const neu = naechsterIndex(werte, bisherigeWerte.werte[index]?.wert);
+    setBisherigeWerte({ schluessel: werteSchluessel, werte });
+    setIndex(neu);
+    gemeldet.current = neu;
+  }
+
+  // Die Spalte sichtbar dorthin stellen. Das Scroll-Ereignis danach meldet
+  // nichts: die Mitte ist schon `gemeldet`.
+  const ersterTakt = useRef(true);
+  useEffect(() => {
+    if (ersterTakt.current) {
+      ersterTakt.current = false;
+      return;
+    }
+    const el = ref.current;
+    if (el) el.scrollTop = gemeldet.current * zeilenhoehe;
+  }, [werteSchluessel, zeilenhoehe]);
+
   /**
    * Nur eine ECHTE Aenderung wird gemeldet.
    *

@@ -66,3 +66,25 @@ export function assistentSchritt(
 export function assistentStart(studioId: string, modelId: string): string {
   return adresse(studioId, modelId, REIHE[1]!.segment);
 }
+
+/**
+ * Ob "Weiter" im Ablauf schon frei ist (Testnotiz 23.09., zweite Sitzung,
+ * #1 und #5): `null` heisst frei, sonst steht der Satz an seiner Stelle.
+ *
+ * Einstellungen: erst mit einer gespeicherten -- und nicht, solange das
+ * Formular offen ist, denn ein Klick auf "Weiter" wuerde das Getippte
+ * wortlos verwerfen. Uebungen: erst ab einer angelegten. Das offene
+ * Formular zaehlt dort nicht, weil es nach dem Anlegen fuer die naechste
+ * Uebung offen bleibt (Hinzufuegen.tsx).
+ */
+export function weiterSperre(
+  segment: string | null,
+  stand: { einstellungen: number; uebungen: number; formularOffen: boolean },
+): string | null {
+  if (segment === "einstellungen") {
+    if (stand.einstellungen === 0) return "Zuerst eine Einstellung speichern.";
+    if (stand.formularOffen) return "Erst speichern oder abbrechen.";
+  }
+  if (segment === "uebungen" && stand.uebungen === 0) return "Zuerst eine Übung anlegen.";
+  return null;
+}

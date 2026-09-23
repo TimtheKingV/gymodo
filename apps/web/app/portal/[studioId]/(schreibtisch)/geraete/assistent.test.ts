@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { ASSISTENT_SCHRITTE, assistentSchritt, assistentStart } from "./assistent";
+import {
+  ASSISTENT_SCHRITTE,
+  assistentSchritt,
+  assistentStart,
+  weiterSperre,
+} from "./assistent";
 
 const studio = "s1";
 const modell = "m1";
@@ -54,5 +59,35 @@ describe("assistentSchritt", () => {
 describe("assistentStart", () => {
   it("ist der zweite Schritt: nach dem Anlegen geht es mit den Einstellungen weiter", () => {
     expect(assistentStart(studio, modell)).toBe(`${basis}/einstellungen?neu=1`);
+  });
+});
+
+/**
+ * Testnotiz 23.09. (zweite Sitzung), #1 und #5: "Weiter" erst, wenn in
+ * diesem Schritt etwas gespeichert ist -- und bei den Einstellungen nicht,
+ * solange das Formular offen steht.
+ */
+describe("weiterSperre", () => {
+  const leer = { einstellungen: 0, uebungen: 0, formularOffen: false };
+
+  it("sperrt die Einstellungen, bis eine gespeichert ist", () => {
+    expect(weiterSperre("einstellungen", leer)).toBe("Zuerst eine Einstellung speichern.");
+    expect(weiterSperre("einstellungen", { ...leer, einstellungen: 1 })).toBeNull();
+  });
+
+  it("sperrt die Einstellungen, solange das Formular offen ist", () => {
+    expect(
+      weiterSperre("einstellungen", { ...leer, einstellungen: 2, formularOffen: true }),
+    ).toBe("Erst speichern oder abbrechen.");
+  });
+
+  it("sperrt die Übungen, bis eine angelegt ist", () => {
+    expect(weiterSperre("uebungen", leer)).toBe("Zuerst eine Übung anlegen.");
+    expect(weiterSperre("uebungen", { ...leer, uebungen: 1, formularOffen: true })).toBeNull();
+  });
+
+  it("sperrt Stammdaten und Einzelne Geräte nie", () => {
+    expect(weiterSperre(null, leer)).toBeNull();
+    expect(weiterSperre("instanzen", leer)).toBeNull();
   });
 });
