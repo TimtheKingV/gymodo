@@ -495,6 +495,16 @@
   cursor: not-allowed;
 }
 
+/* "Änderungen speichern" ohne Aenderung (AktionsFormular nurBeiAenderung):
+   gesperrt, aber weiter die Hauptaktion des Reiters -- deshalb Akzent,
+   nur gedaempft, statt ins Grau eines kaputten Knopfs zu fallen. Die eine
+   Akzentflaeche je Bildschirm bleibt so auch im Ruhezustand stehen. */
+.primaryRuhend:disabled {
+  background: var(--accent);
+  color: var(--on-accent);
+  opacity: 0.45;
+}
+
 .secondary {
   display: inline-flex;
   align-items: center;

@@ -147,7 +147,9 @@ function Absenden({
   return (
     <button
       type="submit"
-      className={gross ? styles.primaryGross : styles.primary}
+      className={`${gross ? styles.primaryGross : styles.primary}${
+        gesperrt && !pending ? ` ${styles.primaryRuhend}` : ""
+      }`}
       disabled={pending || gesperrt}
     >
       {pending ? "Wird gespeichert …" : label}

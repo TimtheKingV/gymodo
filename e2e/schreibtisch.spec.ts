@@ -375,9 +375,19 @@ test("Umordnen aendert die Vorauswahl am Geraet, nicht nur die Anzeige", async (
   // mit dem Finger, nur ohne Koordinaten, die in CI wackeln.
   await page.getByRole("button", { name: "Reihenfolge ändern" }).click();
   const dialog = page.getByRole("dialog", { name: "Reihenfolge ändern" });
-  await dialog.getByRole("button", { name: "Latzug breit verschieben" }).focus();
+  const griff = dialog.getByRole("button", { name: "Latzug breit verschieben" });
+  await griff.focus();
   await page.keyboard.press("Space");
-  await page.keyboard.press("ArrowUp");
+  await expect(griff).toHaveAttribute("aria-pressed", "true");
+  // dnd-kit wertet einen Pfeil, der in den ersten Millisekunden nach dem
+  // Aufnehmen kommt, nicht immer aus -- Playwright drueckt schneller als
+  // jeder Mensch. In menschlichem Takt (150 ms) ging es lokal 25 von 25
+  // Mal; ohne Pause nicht. Deshalb: Pfeil, bis die Ansage "Platz 1" steht.
+  // Bei zwei Uebungen ist ein zweiter Pfeil folgenlos (oben ist oben).
+  await expect(async () => {
+    await page.keyboard.press("ArrowUp");
+    await expect(page.getByText("Latzug breit auf Platz 1.")).toBeAttached({ timeout: 500 });
+  }).toPass({ timeout: 10_000 });
   await page.keyboard.press("Space");
   await expect(dialog.getByRole("listitem").nth(0)).toContainText("Latzug breit");
   await dialog.getByRole("button", { name: "Fertig" }).click();
