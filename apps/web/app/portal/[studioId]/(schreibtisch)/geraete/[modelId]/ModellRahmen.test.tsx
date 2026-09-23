@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const navigation = vi.hoisted(() => ({ segment: null as string | null, suche: "" }));
@@ -16,11 +16,23 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+import { useFormularOffen } from "../../../../bausteine/FormularOffen";
 import { ModellRahmen } from "./ModellRahmen";
 
 afterEach(cleanup);
 
-function rahmen(segment: string | null, suche: string) {
+/** Steht fuer das Hinzufuegen-Formular auf der Seite darunter. */
+let melden: (offen: boolean) => void = () => {};
+function Seitenformular() {
+  melden = useFormularOffen();
+  return null;
+}
+
+function rahmen(
+  segment: string | null,
+  suche: string,
+  anzahl = { einstellungen: 1, uebungen: 1 },
+) {
   navigation.segment = segment;
   navigation.suche = suche;
   render(
@@ -30,9 +42,12 @@ function rahmen(segment: string | null, suche: string) {
       einstellungenZusatz="0 Einstellungen"
       uebungenZusatz="0 · 0 mit Video"
       instanzenZusatz="0 · 0 ohne Tag"
+      einstellungenAnzahl={anzahl.einstellungen}
+      uebungenAnzahl={anzahl.uebungen}
       nochZuTun={<p>BAND NOCH ZU TUN</p>}
     >
       <p>INHALT DES REITERS</p>
+      <Seitenformular />
     </ModellRahmen>,
   );
 }
@@ -76,5 +91,32 @@ describe("ModellRahmen", () => {
     rahmen(null, "neu=1");
     expect(screen.getByText("Schritt 1 von 4 · Stammdaten")).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Zurück" })).toBeNull();
+  });
+
+  // Testnotiz 23.09. (zweite Sitzung), #1 und #5.
+  it("zeigt kein Weiter, solange keine Einstellung gespeichert ist", () => {
+    rahmen("einstellungen", "neu=1", { einstellungen: 0, uebungen: 0 });
+    expect(screen.queryByRole("link", { name: "Weiter zu den Übungen" })).toBeNull();
+    expect(screen.getByText("Zuerst eine Einstellung speichern.")).toBeTruthy();
+    // Zurueck bleibt -- nur das Weiterkommen haengt am Speichern.
+    expect(screen.getByRole("link", { name: "Zurück" })).toBeTruthy();
+  });
+
+  it("nimmt Weiter weg, solange das Formular offen ist", () => {
+    rahmen("einstellungen", "neu=1", { einstellungen: 2, uebungen: 0 });
+    expect(screen.getByRole("link", { name: "Weiter zu den Übungen" })).toBeTruthy();
+
+    act(() => melden(true));
+    expect(screen.queryByRole("link", { name: "Weiter zu den Übungen" })).toBeNull();
+    expect(screen.getByText("Erst speichern oder abbrechen.")).toBeTruthy();
+
+    act(() => melden(false));
+    expect(screen.getByRole("link", { name: "Weiter zu den Übungen" })).toBeTruthy();
+  });
+
+  it("zeigt bei den Übungen Weiter erst ab einer Übung", () => {
+    rahmen("uebungen", "neu=1", { einstellungen: 1, uebungen: 0 });
+    expect(screen.queryByRole("link", { name: "Weiter zu den Geräten" })).toBeNull();
+    expect(screen.getByText("Zuerst eine Übung anlegen.")).toBeTruthy();
   });
 });

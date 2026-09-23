@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useFormularOffen } from "./FormularOffen";
 import styles from "./bausteine.module.css";
 import portalStyles from "../portal.module.css";
 
@@ -20,12 +21,19 @@ import portalStyles from "../portal.module.css";
  *
  * Genau eine Akzentflaeche: zu ist es der Knopf, offen die Absende-Aktion
  * im Formular. "Schließen" ist deshalb nur .secondary.
+ *
+ * Mit `abbrechenImFormular` (Testnotiz 23.09., zweite Sitzung, #1) steht
+ * kein "Schließen" im Kopf: das Formular traegt unten "Abbrechen" neben
+ * dem Speichern und klappt nach dem Speichern zu, auch wenn es fuer eine
+ * leere Liste offen begonnen hat. Beides holt es sich ueber
+ * useHinzufuegen().
  */
 export function Hinzufuegen({
   knopf,
   titel,
   notiz,
   offen: offenAnfangs = false,
+  abbrechenImFormular = false,
   children,
 }: {
   /** Text des Akzentknopfs, z. B. "Gerät hinzufügen". */
@@ -35,9 +43,13 @@ export function Hinzufuegen({
   notiz?: React.ReactNode;
   /** Anfangs offen -- fuer eine leere Liste. */
   offen?: boolean;
+  /** Schliessen nicht im Kopf, sondern ueber das Formular (Abbrechen,
+      nach Erfolg) -- siehe useHinzufuegen(). */
+  abbrechenImFormular?: boolean;
   children: React.ReactNode;
 }) {
   const [offen, setOffen] = useState(offenAnfangs);
+  const melden = useFormularOffen();
   const karte = useRef<HTMLElement>(null);
   const knopfRef = useRef<HTMLButtonElement>(null);
   const vomNutzer = useRef(false);
@@ -56,6 +68,13 @@ export function Hinzufuegen({
       knopfRef.current?.focus();
     }
   }, [offen]);
+
+  useEffect(() => {
+    melden(offen);
+  }, [melden, offen]);
+  // Verlaesst jemand die Seite mit offenem Formular, gilt es als zu --
+  // sonst bliebe "Weiter" im naechsten Schritt gesperrt.
+  useEffect(() => () => melden(false), [melden]);
 
   function umschalten(neu: boolean) {
     vomNutzer.current = true;
@@ -83,7 +102,7 @@ export function Hinzufuegen({
       <div className={portalStyles.sectionHead}>
         <h2 className={portalStyles.sectionTitle}>{titel}</h2>
         {notiz ? <span className={portalStyles.sectionNote}>{notiz}</span> : null}
-        {offenAnfangs ? null : (
+        {offenAnfangs || abbrechenImFormular ? null : (
           <button
             type="button"
             className={styles.hinzufuegenSchliessen}
@@ -95,7 +114,19 @@ export function Hinzufuegen({
           </button>
         )}
       </div>
-      {children}
+      <HinzufuegenKontext.Provider
+        value={abbrechenImFormular ? { schliessen: () => umschalten(false) } : null}
+      >
+        {children}
+      </HinzufuegenKontext.Provider>
     </section>
   );
+}
+
+const HinzufuegenKontext = createContext<{ schliessen: () => void } | null>(null);
+
+/** Fuer das Formular in einem Hinzufuegen mit `abbrechenImFormular`;
+    sonst `null`. */
+export function useHinzufuegen(): { schliessen: () => void } | null {
+  return useContext(HinzufuegenKontext);
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Rad } from "./EinstellungRad";
 import { gewichtsSchrittWerte, maxGewichtWerte, minMaxWerte } from "./einstellungVorschlaege";
 
@@ -13,6 +14,11 @@ import { gewichtsSchrittWerte, maxGewichtWerte, minMaxWerte } from "./einstellun
  * "∞" (maxGewichtWerte(), kein Anschlag) haelt die bisherige Freiheit
  * lebendig, die Obergrenze offenzulassen -- ein Rad kennt sonst kein
  * "leer".
+ *
+ * Minimum und Maximum zaehlen im Takt des Schritts (Testnotiz 23.09.,
+ * zweite Sitzung, #3): bei 5 kg stehen dort 0, 5, 10 … -- ein Minimum von
+ * 7 kg gibt es an so einem Stapel nicht. Wechselt der Schritt, bleiben
+ * beide Spalten auf dem naechstliegenden Wert (EinstellungRad.tsx).
  */
 export function ModellGewichtRad({
   gross = false,
@@ -25,17 +31,19 @@ export function ModellGewichtRad({
   maxStart?: string;
   schrittStart?: string;
 }) {
+  const [schritt, setSchritt] = useState(schrittStart);
   return (
     <Rad
       gross={gross}
       spalten={[
-        { name: "minWeightKg", label: "Minimum", werte: minMaxWerte(), start: minStart },
-        { name: "maxWeightKg", label: "Maximum", werte: maxGewichtWerte(), start: maxStart },
+        { name: "minWeightKg", label: "Minimum", werte: minMaxWerte(schritt), start: minStart },
+        { name: "maxWeightKg", label: "Maximum", werte: maxGewichtWerte(schritt), start: maxStart },
         {
           name: "weightStepKg",
           label: "Schritt",
           werte: gewichtsSchrittWerte(),
           start: schrittStart,
+          onWahl: setSchritt,
         },
       ]}
     />

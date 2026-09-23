@@ -174,9 +174,12 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   }
   await expect(page).toHaveURL(/\/einstellungen\?neu=1$/);
   await expect(page.getByText("Schritt 2 von 4 · Einstellungen")).toBeVisible();
-  // Im Ablauf keine Reiter: die Fussleiste fuehrt weiter.
+  // Im Ablauf keine Reiter: die Fussleiste fuehrt weiter -- aber erst,
+  // wenn eine Einstellung gespeichert ist (Testnotiz 23.09., zweite
+  // Sitzung, #1). Bis dahin steht dort, warum.
   await expect(page.getByRole("navigation", { name: "Modell" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Weiter zu den Übungen" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Weiter zu den Übungen" })).toHaveCount(0);
+  await expect(page.getByText("Zuerst eine Einstellung speichern.")).toBeVisible();
 
   // Und die Raeder haben getragen, was der Test in sie gescrollt hat. Ohne
   // diese Zeile faellt ein verlorener Scroll nicht auf: das Formular schickt
@@ -228,12 +231,18 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   // prueft die Leerzustaende beider Reiter und das Umordnen -- und legt
   // dafuer selbst per Datenbank an. Der Weg, den ein Trainer wirklich
   // geht, lief also nirgends durch.
-  await page.goto(`/portal/${studio.id}/geraete/${modelId}/einstellungen`);
+  //
+  // Im Ablauf (?neu=1), damit auch das Freigeben von "Weiter" nach dem
+  // Speichern geprueft ist. Der Name kommt seit Testnotiz 23.09. (zweite
+  // Sitzung, #2) aus dem Rad; "Sonstiges …" fuehrt ueber das Textfeld, der
+  // Weg mit eigenem Namen ist der, auf dem am meisten schiefgehen kann.
+  await page.goto(`/portal/${studio.id}/geraete/${modelId}/einstellungen?neu=1`);
+  await radWaehlen(page, "Einstellung", "Sonstiges …");
   await page.getByLabel("Beschriftung").fill("Sitzposition");
   await auswaehlen(page, page.getByRole("button", { name: "Art" }), "Zahl mit Bereich");
   await radWaehlen(page, "Minimum", "1");
   await radWaehlen(page, "Maximum", "8");
-  await page.getByRole("button", { name: "Einstellung anlegen", exact: true }).click();
+  await page.getByRole("button", { name: "Einstellung speichern", exact: true }).click();
 
   // Warten, bis die Aktion GEANTWORTET hat -- und erst dann urteilen.
   //
@@ -247,10 +256,14 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   //
   // Der Knopf ist das ehrliche Signal: waehrend der Aktion heisst er
   // "Wird gespeichert …" und ist gesperrt (Form.tsx, useFormStatus).
-  // Traegt er wieder seinen Namen, ist das Ergebnis da -- ob Zeile oder
-  // Meldung, entscheidet sich danach.
-  const absenden = page.getByRole("button", { name: "Einstellung anlegen", exact: true });
-  await expect(absenden).toBeEnabled();
+  // Seit Testnotiz 23.09. (zweite Sitzung, #1) klappt das Formular nach
+  // Erfolg zu -- geantwortet hat die Aktion also, sobald entweder der
+  // Knopf "Weitere Einstellung hinzufügen" dasteht oder der Absendeknopf
+  // wieder seinen Namen traegt (Fehler, Formular bleibt offen). Ob Zeile
+  // oder Meldung, entscheidet sich danach.
+  const weitere = page.getByRole("button", { name: "+ Weitere Einstellung hinzufügen" });
+  const absenden = page.getByRole("button", { name: "Einstellung speichern", exact: true });
+  await expect(weitere.or(absenden)).toBeVisible();
 
   const einstellungen = page.getByRole("list", { name: "Einstellungen am Modell" });
   const zeilen = await einstellungen.getByRole("listitem").count();
@@ -262,13 +275,20 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   }
 
   await expect(einstellungen).toContainText("Sitzposition");
+  // Gespeichert, Formular zu: jetzt gibt der Ablauf "Weiter" frei.
+  await expect(weitere).toBeVisible();
+  await page.getByRole("link", { name: "Weiter zu den Übungen" }).click();
 
-  await page.goto(`/portal/${studio.id}/geraete/${modelId}/uebungen`);
+  // Auch bei den Uebungen erst weiter, wenn eine angelegt ist (#5).
+  await expect(page.getByText("Schritt 3 von 4 · Übungen")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Weiter zu den Geräten" })).toHaveCount(0);
+  await expect(page.getByText("Zuerst eine Übung anlegen.")).toBeVisible();
   await page.getByLabel("Name").fill("Latzug breit");
   await radWaehlen(page, "Wiederholungen ab", "8");
   await radWaehlen(page, "bis", "12");
   await page.getByRole("button", { name: "Übung anlegen", exact: true }).click();
   await expect(page.getByText("Latzug breit")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Weiter zu den Geräten" })).toBeVisible();
 
   // 4. Geraeteinstanz -- weiter ueber die Datenbank. Ihr Reiter legt
   // Geraete an, aber der Weg dorthin ist der Gang durch die Halle

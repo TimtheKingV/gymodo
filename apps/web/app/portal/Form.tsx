@@ -18,6 +18,7 @@ export function AktionsFormular({
   erfolgText,
   leertNachErfolg = false,
   nurBeiAenderung = false,
+  nebenAktion,
 }: {
   action: (prev: unknown, formData: FormData) => Promise<ActionResult>;
   submitLabel: string;
@@ -46,6 +47,10 @@ export function AktionsFormular({
       der Knopf unveraendert da, und es sah aus, als haette es nicht
       geklappt. */
   nurBeiAenderung?: boolean;
+  /** Ein zweiter, sekundaerer Knopf neben dem Absenden -- "Abbrechen"
+      eines aufgeklappten Anlege-Formulars (Testnotiz 23.09., zweite
+      Sitzung, #1). */
+  nebenAktion?: React.ReactNode;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const gespeichert = useRef<string | null>(null);
@@ -105,6 +110,7 @@ export function AktionsFormular({
           gross={gross ?? false}
           gesperrt={nurBeiAenderung && !geaendert}
         />
+        {nebenAktion}
         {/* role="status" statt role="alert": Erfolg unterbricht keinen
             Screenreader mitten im Satz, er wird nachgereicht. Immer im
             DOM, damit die Ansage ueberhaupt kommt -- ein Element, das erst

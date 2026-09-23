@@ -3,7 +3,7 @@
 import { useActionState, useRef, useState } from "react";
 import { Feld } from "../../../../../Form";
 import { DateiKnopf } from "../../../../../bausteine/DateiKnopf";
-import { MedienVorschau } from "../../../../../bausteine/MedienVorschau";
+import { VideoAbspieler } from "../../../../../bausteine/VideoAbspieler";
 import { UebungRepsRad } from "../../../../../bausteine/UebungRepsRad";
 import { ladeVideoHoch } from "../../../../../bausteine/videoUpload";
 import { videoBestaetigen, type Ergebnis } from "../../../../../actions";
@@ -27,6 +27,10 @@ import styles from "../../../../../portal.module.css";
  * (gleiches Muster wie beim Modell-Foto in actions.ts) -- eine Fehlermeldung
  * dazu, aber kein Rueckabwickeln. Ein Video laesst sich an der Zeile
  * jederzeit nachtragen oder ersetzen (VideoUpload.tsx).
+ *
+ * Das Videofeld steht in voller Breite (Testnotiz 23.09., zweite Sitzung,
+ * #4): leer ist es selbst der Ausloeser fuer "aufnehmen oder auswaehlen",
+ * gewaehlt zeigt es das Video zum Ansehen.
  */
 export function UebungFormular({
   studioId,
@@ -96,15 +100,29 @@ export function UebungFormular({
 
       <div className={styles.field}>
         <span className={styles.label}>Einweisungsvideo</span>
-        <div className={styles.mediaRow}>
-          <MedienVorschau url={objektUrl} art="video" leerText="Kein Video" groesse="mini" />
+        {objektUrl ? (
+          <>
+            <VideoAbspieler url={objektUrl} titel="Einweisungsvideo" />
+            <div>
+              <DateiKnopf
+                label="Anderes Video wählen"
+                ariaLabel="Einweisungsvideo wählen"
+                accept="video/mp4,video/quicktime"
+                disabled={laeuft}
+                onDatei={aufDatei}
+              />
+            </div>
+          </>
+        ) : (
           <DateiKnopf
-            label="Video hinzufügen"
+            art="flaeche"
+            label="Video aufnehmen oder auswählen"
+            ariaLabel="Einweisungsvideo wählen"
             accept="video/mp4,video/quicktime"
             disabled={laeuft}
             onDatei={aufDatei}
           />
-        </div>
+        )}
         <span className={styles.hint}>
           Optional — lässt sich auch später an der Zeile nachtragen oder
           ersetzen.
