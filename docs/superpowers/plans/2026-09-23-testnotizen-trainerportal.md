@@ -81,4 +81,16 @@ Schritte: **1 Stammdaten → 2 Einstellungen → 3 Übungen → 4 Einzelne Gerä
 
 ## Geprüft
 
-(wird nach der Umsetzung ergänzt)
+- Vitest: 20 Dateien, 125 Tests grün, darunter die neuen `MobileNav`,
+  `Stift`, `NochZuTun`, `VideoAbspieler`, `assistent`, `ModellRahmen` — die
+  neuen Verhaltens-Tests zuerst rot gesehen (`Stift` ist ein
+  Charakterisierungstest: der Baustein konnte die Zahl schon, neu sind Farbe
+  und Verwendung).
+- `pnpm typecheck` (Web) und `tsc --noEmit` an der Wurzel (inkl. E2E) sauber.
+- `pnpm build` (Produktionsbau) grün, `/portal/[studioId]/geraete/neu`
+  steht als eigene Route; `useSearchParams` im Modell-Layout bricht den Bau
+  nicht (die Route ist ohnehin dynamisch).
+- **Nicht lokal gelaufen:** Playwright. `supabase start` braucht
+  Docker-Images, die das Netz dieser Umgebung nicht lädt — die E2E-Specs
+  laufen in CI. Ebenfalls offen: der Blick am iPhone auf Farbe der
+  Schublade, Vollbild-Player und klebende Fußleiste.
