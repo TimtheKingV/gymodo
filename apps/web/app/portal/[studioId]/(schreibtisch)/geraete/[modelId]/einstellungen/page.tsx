@@ -3,6 +3,7 @@ import { AktionsKnopf } from "../../../../../Form";
 import { EinstellungFormular } from "../../../../../EinstellungFormular";
 import { parameterAnlegen, parameterLoeschen } from "../../../../../actions";
 import { ladeKatalog } from "../../../../catalog";
+import { Hinzufuegen } from "../../../../../bausteine/Hinzufuegen";
 import { rastenText } from "../../../../rasten";
 import styles from "../../../../../portal.module.css";
 
@@ -19,7 +20,8 @@ import styles from "../../../../../portal.module.css";
  * sagt, wofuer dieser Reiter da ist -- Pflichttext also, und
  * Designsystem 2 verbietet dafuer 3,6 : 1 (Befund 19).
  *
- * Genau eine Akzentflaeche: "Einstellung anlegen" im EinstellungFormular.
+ * Genau eine Akzentflaeche: "Weitere Einstellung hinzufügen" -- oder,
+ * aufgeklappt, "Einstellung anlegen" im EinstellungFormular (Hinzufuegen).
  * Loeschen ist zerstoerend (.destructive), nicht Akzent.
  */
 export default async function ModellEinstellungenPage({
@@ -39,6 +41,16 @@ export default async function ModellEinstellungenPage({
         Zeile stehen die Rasten, aus denen es wählen kann — nicht die
         Definition, sondern die Werte selbst.
       </p>
+
+      {/* Ueber der Liste und erst auf Klick offen, sobald es eine
+          Einstellung gibt (Testnotiz 22.09., #10). */}
+      <Hinzufuegen
+        knopf="Weitere Einstellung hinzufügen"
+        titel="Einstellung anlegen"
+        offen={modell.settingDefinitions.length === 0}
+      >
+        <EinstellungFormular action={parameterAnlegen.bind(null, studioId, modelId)} />
+      </Hinzufuegen>
 
       <section className={styles.section}>
         {modell.settingDefinitions.length === 0 ? (
@@ -76,13 +88,6 @@ export default async function ModellEinstellungenPage({
           </ul>
         )}
 
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Einstellung anlegen</h2>
-        </div>
-        <EinstellungFormular action={parameterAnlegen.bind(null, studioId, modelId)} />
       </section>
     </>
   );

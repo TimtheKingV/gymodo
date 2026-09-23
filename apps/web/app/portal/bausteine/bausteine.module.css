@@ -185,6 +185,13 @@
   flex-shrink: 0;
 }
 
+.zeileAktionenOben {
+  composes: zeileAktionen;
+  align-self: flex-start;
+  margin-top: calc(-1 * var(--s4));
+  margin-right: calc(-1 * var(--s8));
+}
+
 /* Reiter: Links auf eigene Routen, kein Umschalter im selben Dokument --
    Begruendung in Reiter.tsx. Werte wie .tabs / .tab / .tabActive. */
 /* overflow-x statt Umbruch: auf 390 px brachen die vier Reiter mit ihren
@@ -495,4 +502,76 @@
   height: 100%;
   background-color: var(--daten-leise);
   border-radius: var(--r-pill);
+}
+
+/* Hinzufuegen (Hinzufuegen.tsx): der Akzentknopf ueber der Liste, der das
+   Anlege-Formular aufklappt (Testnotiz 22.09., #4/#10). */
+.hinzufuegenLeiste {
+  margin-top: var(--s24);
+  display: flex;
+}
+
+.hinzufuegenSchliessen {
+  margin-left: auto;
+  background: none;
+  border: none;
+  padding: var(--s4) var(--s8);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--r-control);
+}
+
+.hinzufuegenSchliessen:hover {
+  color: var(--text);
+}
+
+/* Stift (Stift.tsx): der kleine Bearbeiten-Ausloeser oben rechts an einer
+   Karte (Testnotiz 22.09., #1/#12). 40 px Trefferflaeche wie .secondary,
+   sichtbar aber nur das Zeichen. */
+.stift {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  border-radius: var(--r-control);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.stift:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.stiftAktiv {
+  composes: stift;
+  background: var(--surface-raised);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+/* Was am Eintrag noch fehlt, als Zahl am Stift -- warn wie das Band "Noch
+   zu tun": ein offener Punkt, kein Fehler. */
+.stiftMarke {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--warn);
+  color: var(--on-accent);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
 }

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { modellAnlegen } from "../../../actions";
 import { erreichbarkeit, ladeKatalog, railZahlen } from "../../catalog";
 import { offenePunkte } from "../../offen";
@@ -7,6 +6,8 @@ import { Abschnitt } from "../../../bausteine/Abschnitt";
 import { Zeile, Zeilen } from "../../../bausteine/Zeile";
 import { Zustand } from "../../../bausteine/Zustand";
 import { Modellbild } from "../../../bausteine/Modellbild";
+import { Hinzufuegen } from "../../../bausteine/Hinzufuegen";
+import { StiftLink } from "../../../bausteine/Stift";
 import { ModellAnlegenFormular } from "./ModellAnlegenFormular";
 import styles from "../../../portal.module.css";
 
@@ -62,6 +63,21 @@ export default async function GeraetePage({
       titel="Geräte"
       vorspann="Ein Modell beschreibt den Gerätetyp. Die einzelnen Geräte im Raum sind Instanzen davon — zwei Kabelzüge nebeneinander sind ein Modell und zwei Geräte."
     >
+      {/*
+        Ueber der Liste, hinter einem Akzentknopf (Testnotiz 22.09., #4):
+        vorher stand das Formular immer offen unter der Liste. Bei leerem
+        Katalog steht es gleich offen -- dann gibt es nichts anderes zu tun.
+        AktionsFormular bringt sein eigenes sectionBody-Polster mit, deshalb
+        die rohe Karte aus Hinzufuegen und nicht der Abschnitt-Baustein.
+      */}
+      <Hinzufuegen
+        knopf="Gerät hinzufügen"
+        titel="Modell anlegen"
+        offen={katalog.models.length === 0}
+      >
+        <ModellAnlegenFormular action={modellAnlegen.bind(null, studioId)} />
+      </Hinzufuegen>
+
       <Abschnitt titel="Alle Gerätemodelle">
         {katalog.models.length === 0 ? (
           <Zustand
@@ -130,19 +146,17 @@ export default async function GeraetePage({
                       </span>
                     </>
                   }
+                  aktionenOben
                   aktionen={
-                    // "Bearbeiten" bleibt der sichtbare Text (Aufgabe 12) --
-                    // aria-label ergaenzt den Modellnamen fuer den
-                    // Accessibility-Baum, denn eine Liste mit lauter
-                    // gleichlautenden "Bearbeiten"-Links sagt einem
-                    // Screenreader nicht, welche Zeile gemeint ist.
-                    <Link
-                      className={styles.secondary}
+                    // Ein Stift oben rechts statt des breiten Knopfs
+                    // "Bearbeiten" (Testnotiz 22.09., #1). Der Modellname
+                    // steht im aria-label -- eine Liste aus lauter gleichen
+                    // Stiften sagt einem Screenreader sonst nicht, welche
+                    // Zeile gemeint ist.
+                    <StiftLink
                       href={`/portal/${studioId}/geraete/${modell.id}`}
-                      aria-label={`${modell.name} bearbeiten`}
-                    >
-                      Bearbeiten
-                    </Link>
+                      label={`${modell.name} bearbeiten`}
+                    />
                   }
                 />
               );
@@ -150,20 +164,6 @@ export default async function GeraetePage({
           </Zeilen>
         )}
       </Abschnitt>
-
-      {/*
-        Bewusst kein Abschnitt-Baustein: AktionsFormular bringt sein eigenes
-        styles.sectionBody-Polster mit, das zusammen mit Abschnitts eigenem
-        Polster (abschnittRumpf) doppelt aufgetragen wuerde. Modell-Detail,
-        Einstellungen und die Kurs-Formulare tragen ihre Eingabeformulare aus
-        demselben Grund ebenfalls roh (styles.section), nicht im Baustein.
-      */}
-      <section className={styles.section} id="modell-anlegen">
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Modell anlegen</h2>
-        </div>
-        <ModellAnlegenFormular action={modellAnlegen.bind(null, studioId)} />
-      </section>
     </Seite>
   );
 }
