@@ -22,6 +22,7 @@ import {
   setMembershipRole,
   setStudioJoinCodeActive,
   updateEquipmentModel,
+  updateExercise,
   updateStudioSettings,
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
@@ -260,6 +261,24 @@ export async function uebungAnlegen(
   }
   revalidatePath(`/portal/${studioId}/geraete/${modelId}`, "layout");
   return { ok: true, linkId };
+}
+
+/** Name und Wiederholungen einer bestehenden Uebung (Testnotiz 22.09.,
+    #12: der Stift an der Zeile oeffnet genau diese Uebung zum Ergaenzen). */
+export async function uebungAendern(
+  studioId: string,
+  modelId: string,
+  exerciseId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionResult> {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
+    await updateExercise(client, exerciseId, {
+      name: text(formData, "name"),
+      targetRepsMin: zahl(formData, "targetRepsMin") ?? Number.NaN,
+      targetRepsMax: zahl(formData, "targetRepsMax") ?? Number.NaN,
+    });
+  }, "layout");
 }
 
 export async function uebungLoesen(

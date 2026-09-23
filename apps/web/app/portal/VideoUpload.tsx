@@ -34,7 +34,6 @@ export function VideoUpload({
   linkId,
   hatVideo,
   videoUrl,
-  knapp = false,
 }: {
   studioId: string;
   modelId: string;
@@ -45,11 +44,6 @@ export function VideoUpload({
       sie kannte nur die Datei, die gerade in diesem Browserfenster
       ausgewaehlt worden war. */
   videoUrl?: string | undefined;
-  /** In einer Listenzeile: Vorschau ueber dem Ausloeser, ohne den langen
-      Hinweis zur Hoechstlaenge. Der gehoert an die Stelle, an der jemand
-      ein Video zum ersten Mal waehlt (das Anlege-Formular), nicht
-      sechsmal untereinander an jede Zeile. */
-  knapp?: boolean;
 }) {
   const [fehler, setFehler] = useState<string | null>(null);
   const [fortschritt, setFortschritt] = useState<number | null>(null);
@@ -90,25 +84,18 @@ export function VideoUpload({
   const laeuft = fortschritt !== null;
 
   return (
-    <div className={knapp ? styles.videoSpalte : styles.field}>
-      <div className={knapp ? styles.videoSpalte : styles.mediaRow}>
+    <div className={styles.field}>
+      <span className={styles.label}>Einweisungsvideo</span>
+      <div className={styles.mediaRow}>
         <MedienVorschau
           url={objektUrl ?? videoUrl ?? null}
           art="video"
           leerText={hatVideo ? "Video" : "Kein Video"}
-          groesse={knapp ? "zeile" : "mini"}
+          groesse="mini"
         />
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <DateiKnopf
-            label={
-              knapp
-                ? hatVideo
-                  ? "Ersetzen"
-                  : "Video hinzufügen"
-                : hatVideo
-                  ? "Video ersetzen"
-                  : "Video hinzufügen"
-            }
+            label={hatVideo ? "Video ersetzen" : "Video hinzufügen"}
             ariaLabel={hatVideo ? "Video ersetzen" : "Einweisungsvideo hochladen"}
             accept="video/mp4,video/quicktime"
             disabled={laeuft}
@@ -116,12 +103,10 @@ export function VideoUpload({
               if (datei) void starte(datei);
             }}
           />
-          {knapp ? null : (
-            <span className={styles.hint}>
-              Höchstens {MAX_VIDEO_SECONDS} Sekunden. Länger nimmt der Upload
-              nicht an — die Länge wird an der Datei geprüft, nicht geschätzt.
-            </span>
-          )}
+          <span className={styles.hint}>
+            Höchstens {MAX_VIDEO_SECONDS} Sekunden. Länger nimmt der Upload
+            nicht an — die Länge wird an der Datei geprüft, nicht geschätzt.
+          </span>
         </div>
       </div>
 

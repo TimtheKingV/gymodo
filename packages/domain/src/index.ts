@@ -48,6 +48,7 @@ export {
   equipmentModelInputSchema,
   equipmentModelPatchSchema,
   exerciseInputSchema,
+  exercisePatchSchema,
   getStudioCatalog,
   listStudioExercises,
   reactivateMachine,
@@ -55,6 +56,7 @@ export {
   revokeTag,
   settingDefinitionInputSchema,
   updateEquipmentModel,
+  updateExercise,
 } from "./catalog.js";
 export type {
   CatalogExercise,

@@ -859,17 +859,6 @@
   display: none;
 }
 
-/* Die Videospalte einer Uebungszeile: Standbild oben, Ausloeser darunter,
-   88 px breit. Kein mediaRow (nebeneinander) -- in einer Zeile mit Titel,
-   Meta und drei Aktionen ist die Breite das Knappe, nicht die Hoehe. */
-.videoSpalte {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s8);
-  flex-shrink: 0;
-  width: 104px;
-}
-
 /* Zeile mit Medienkachel: Bild links, Text rechts -- zusammen das, was in
    .row als "Hauptteil" gilt, damit die Aktionen weiterhin am rechten Rand
    stehen und nicht hinter dem Bild einrasten. */

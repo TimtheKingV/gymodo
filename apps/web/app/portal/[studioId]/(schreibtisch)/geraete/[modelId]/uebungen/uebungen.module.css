@@ -1,0 +1,161 @@
+/* Reiter "Übungen" nach der Testnotiz vom 22.09. (#11, #12): die Zeile
+   zeigt nur noch, was ist, und traegt rechts oben einen Stift. Alles, was
+   man an einer Uebung tut, steht im aufgeklappten Teil darunter. */
+
+.zeile {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--line);
+}
+
+.zeile:last-child {
+  border-bottom: none;
+}
+
+.zeileKopf {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s12);
+  padding: var(--s12) var(--s12) var(--s12) var(--s20);
+}
+
+.zeileKopf > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Der aufgeklappte Teil: eine Stufe tiefer als die Zeile (--well), damit
+   klar ist, dass er zu genau dieser Uebung gehoert. */
+.bearbeiten {
+  border-top: 1px solid var(--line);
+  background: var(--well);
+}
+
+.bearbeitenTeil {
+  padding: 0 var(--s20) var(--s20);
+}
+
+.entfernen {
+  padding: var(--s16) var(--s20) var(--s20);
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Werkzeugleiste ueber der Liste: "Reihenfolge ändern". */
+.leiste {
+  margin-top: var(--s16);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.leiste + section {
+  margin-top: var(--s12);
+}
+
+/* Der Sortier-Dialog -- natives <dialog>, wie die Schublade (MobileNav):
+   Escape und ::backdrop kommen vom Browser. */
+.dialog {
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+.dialogKopf {
+  padding: var(--s16) var(--s20);
+  border-bottom: 1px solid var(--line);
+}
+
+.dialogTitel {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dialogHinweis {
+  margin-top: var(--s4);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.sortierListe {
+  list-style: none;
+  margin: 0;
+  padding: var(--s12) var(--s16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s8);
+}
+
+.sortierZeile {
+  display: flex;
+  align-items: center;
+  gap: var(--s12);
+  padding: var(--s8) var(--s8) var(--s8) var(--s12);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-raised);
+  touch-action: manipulation;
+}
+
+.sortierZeileZieht {
+  composes: sortierZeile;
+  border-color: var(--accent);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
+  position: relative;
+  z-index: 1;
+}
+
+.sortierNummer {
+  width: 20px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.sortierName {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Der Griff: nur hier startet das Ziehen, damit die Liste im Dialog auf
+   dem Telefon weiter scrollbar bleibt. touch-action none, sonst nimmt der
+   Browser die Geste als Scroll. */
+.griff {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--text-muted);
+  cursor: grab;
+  touch-action: none;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.griff:active {
+  cursor: grabbing;
+}
+
+.dialogFuss {
+  padding: var(--s16) var(--s20);
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s12);
+  flex-wrap: wrap;
+}

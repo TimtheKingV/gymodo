@@ -369,7 +369,19 @@ test("Umordnen aendert die Vorauswahl am Geraet, nicht nur die Anzeige", async (
   await expect(zeilen.nth(0)).toContainText("1. Rudern");
   await expect(zeilen.nth(1)).toContainText("2. Latzug breit");
 
-  await zeilen.nth(1).getByRole("button", { name: "Hoch" }).click();
+  // Umordnen im Dialog "Reihenfolge ändern" (Testnotiz 22.09., #11) --
+  // per Tastatur, wie dnd-kit es anbietet: Griff fokussieren, Leertaste
+  // nimmt auf, Pfeil hoch verschiebt, Leertaste legt ab. Derselbe Weg wie
+  // mit dem Finger, nur ohne Koordinaten, die in CI wackeln.
+  await page.getByRole("button", { name: "Reihenfolge ändern" }).click();
+  const dialog = page.getByRole("dialog", { name: "Reihenfolge ändern" });
+  await dialog.getByRole("button", { name: "Latzug breit verschieben" }).focus();
+  await page.keyboard.press("Space");
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("Space");
+  await expect(dialog.getByRole("listitem").nth(0)).toContainText("Latzug breit");
+  await dialog.getByRole("button", { name: "Fertig" }).click();
+  await expect(dialog).toBeHidden();
 
   await expect(zeilen.nth(0)).toContainText("1. Latzug breit");
   await expect(zeilen.nth(1)).toContainText("2. Rudern");
