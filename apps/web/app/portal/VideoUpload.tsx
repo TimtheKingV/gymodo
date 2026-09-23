@@ -14,8 +14,10 @@ import styles from "./portal.module.css";
 /**
  * Der einzige Pfad des Portals, der auf dem Telefon tragen muss: die
  * Aufnahme entsteht auf dem Trainerhandy und wird aus mobilem Safari
- * hochgeladen (Spec 6.8). Deshalb capture am Dateifeld und eine
- * Fortschrittsanzeige, die auch bei schlechtem Studio-WLAN etwas sagt.
+ * hochgeladen (Spec 6.8). Deshalb eine Fortschrittsanzeige, die auch bei
+ * schlechtem Studio-WLAN etwas sagt. Bewusst ohne `capture` am Dateifeld:
+ * iOS bietet dann selbst "Mediathek" oder "Video aufnehmen" an -- mit
+ * capture ging nur die Kamera (Testnotiz 22.09., #13).
  *
  * Der Upload laeuft ueber TUS direkt gegen den Storage-Dienst
  * (ladeVideoHoch() in bausteine/videoUpload.ts). Bricht die Verbindung ab,
@@ -102,14 +104,13 @@ export function VideoUpload({
               knapp
                 ? hatVideo
                   ? "Ersetzen"
-                  : "Aufnehmen"
+                  : "Video hinzufügen"
                 : hatVideo
                   ? "Video ersetzen"
-                  : "Einweisungsvideo"
+                  : "Video hinzufügen"
             }
             ariaLabel={hatVideo ? "Video ersetzen" : "Einweisungsvideo hochladen"}
             accept="video/mp4,video/quicktime"
-            capture="environment"
             disabled={laeuft}
             onDatei={(datei) => {
               if (datei) void starte(datei);

@@ -61,12 +61,14 @@ export function gewichtsSchrittWerte(): RadWert[] {
   return werte(["1,25", "2,5", "5", "10", "20"]);
 }
 
-/** Wie minMaxWerte(), nur mit "kein Anschlag" am Anfang -- die Obergrenze
-    eines Modells bleibt optional (vormaliger Hinweis: "leer lassen, wenn
-    kein Anschlag bekannt ist"). "kein Anschlag" traegt "" als Wert, geht
-    also als nicht gesetzt durch, genau wie die leere Auswahl vorher. */
+/** Wie minMaxWerte(), nur mit "∞" (kein Anschlag) am Ende -- die
+    Obergrenze eines Modells bleibt optional (vormaliger Hinweis: "leer
+    lassen, wenn kein Anschlag bekannt ist"). "∞" traegt "" als Wert, geht
+    also als nicht gesetzt durch, genau wie die leere Auswahl vorher.
+    Am Ende statt am Anfang und als Zeichen statt als Wort: Testnotiz vom
+    22.09. -- "kein Anschlag" oben vor der 0 las sich wie ein Minimum. */
 export function maxGewichtWerte(): RadWert[] {
-  return [{ anzeige: "kein Anschlag", wert: "" }, ...minMaxWerte()];
+  return [...minMaxWerte(), { anzeige: "∞", wert: "" }];
 }
 
 /** 1 bis 50 -- deckt Kraft- ebenso wie Ausdauerbereiche ab, ohne die 200

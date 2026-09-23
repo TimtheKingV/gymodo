@@ -136,7 +136,7 @@ export default async function UeberblickPage({
               titel="Noch kein Gerät angelegt"
               meta="Fang mit dem Gerät an, das am häufigsten benutzt wird."
               aktionen={
-                <Link className={styles.secondary} href={`/portal/${studioId}/modelle`}>
+                <Link className={styles.secondary} href={`/portal/${studioId}/geraete`}>
                   Modell anlegen
                 </Link>
               }
@@ -171,7 +171,7 @@ export default async function UeberblickPage({
               }
               meta="Nutzbar, nur ohne Anleitung"
               aktionen={
-                <Link className={styles.secondary} href={`/portal/${studioId}/modelle`}>
+                <Link className={styles.secondary} href={`/portal/${studioId}/geraete`}>
                   Ansehen
                 </Link>
               }

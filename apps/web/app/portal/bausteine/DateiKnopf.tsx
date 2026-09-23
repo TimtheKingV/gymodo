@@ -16,6 +16,11 @@ import portalStyles from "../portal.module.css";
  * Ein eigener innerer Ref loest den Knopf-Klick aus, der aeussere bleibt
  * unabhaengig davon nutzbar -- zwei Refs auf denselben Knoten, keiner
  * ersetzt den anderen.
+ *
+ * Kein `capture`-Attribut, mit Absicht (Testnotiz 22.09., #8/#13): damit
+ * oeffnete iOS direkt die Kamera, und ein Foto oder Video aus der
+ * Mediathek liess sich gar nicht waehlen. Ohne capture fragt das System
+ * selbst -- Mediathek, Aufnehmen oder Datei.
  */
 export const DateiKnopf = forwardRef<
   HTMLInputElement,
@@ -30,13 +35,12 @@ export const DateiKnopf = forwardRef<
         gesetzt. */
     ariaLabel?: string | undefined;
     accept?: string;
-    capture?: boolean | "user" | "environment";
     disabled?: boolean;
     gross?: boolean;
     onDatei: (datei: File | null) => void;
   }
 >(function DateiKnopf(
-  { id, name, label, ariaLabel, accept, capture, disabled, gross = false, onDatei },
+  { id, name, label, ariaLabel, accept, disabled, gross = false, onDatei },
   aeussererRef,
 ) {
   const innererRef = useRef<HTMLInputElement>(null);
@@ -54,7 +58,6 @@ export const DateiKnopf = forwardRef<
         type="file"
         aria-label={ariaLabel ?? label}
         accept={accept}
-        capture={capture}
         disabled={disabled}
         style={{ display: "none" }}
         onChange={(ereignis) => onDatei(ereignis.target.files?.[0] ?? null)}

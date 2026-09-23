@@ -138,7 +138,7 @@ export default async function GeraetePage({
                     // Screenreader nicht, welche Zeile gemeint ist.
                     <Link
                       className={styles.secondary}
-                      href={`/portal/${studioId}/modelle/${modell.id}`}
+                      href={`/portal/${studioId}/geraete/${modell.id}`}
                       aria-label={`${modell.name} bearbeiten`}
                     >
                       Bearbeiten

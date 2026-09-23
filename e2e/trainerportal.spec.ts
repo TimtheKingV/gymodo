@@ -172,7 +172,7 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
 
   // Und die Raeder haben getragen, was der Test in sie gescrollt hat. Ohne
   // diese Zeile faellt ein verlorener Scroll nicht auf: das Formular schickt
-  // dann klaglos seine Startwerte (Schritt 2,5, ab 0, kein Anschlag) ab, das
+  // dann klaglos seine Startwerte (Schritt 2,5, ab 0, ∞ -- kein Anschlag) ab, das
   // Modell entsteht, die Weiterleitung kommt -- und der Test haelt eine
   // Auswahl fuer geprueft, die nie angekommen ist.
   await expect(page.getByText("Schritt 2,5 kg · ab 5,0 kg bis 100,0 kg")).toBeVisible();
@@ -200,6 +200,11 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   });
   await page.getByRole("button", { name: "Änderungen speichern" }).click();
   await expect(page.getByRole("img", { name: "Foto von Latzug" })).toBeVisible();
+  // Gespeichert heisst sichtbar gespeichert (Testnotiz 22.09., #9): ein
+  // Satz neben dem Knopf, und der Knopf selbst ist aus, bis wieder etwas
+  // geaendert wird.
+  await expect(page.getByText("Gespeichert ✓")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Änderungen speichern" })).toBeDisabled();
 
   // 2. Einstellungen und 3. Uebung -- ueber ihre Reiter, nicht ueber
   // die Datenbank. Bis Aufgabe 17 und 18 gab es die Reiter nicht, und
