@@ -495,6 +495,16 @@
   cursor: not-allowed;
 }
 
+/* "Änderungen speichern" ohne Aenderung (AktionsFormular nurBeiAenderung):
+   gesperrt, aber weiter die Hauptaktion des Reiters -- deshalb Akzent,
+   nur gedaempft, statt ins Grau eines kaputten Knopfs zu fallen. Die eine
+   Akzentflaeche je Bildschirm bleibt so auch im Ruhezustand stehen. */
+.primaryRuhend:disabled {
+  background: var(--accent);
+  color: var(--on-accent);
+  opacity: 0.45;
+}
+
 .secondary {
   display: inline-flex;
   align-items: center;
@@ -857,17 +867,6 @@
 
 .erfolg:empty {
   display: none;
-}
-
-/* Die Videospalte einer Uebungszeile: Standbild oben, Ausloeser darunter,
-   88 px breit. Kein mediaRow (nebeneinander) -- in einer Zeile mit Titel,
-   Meta und drei Aktionen ist die Breite das Knappe, nicht die Hoehe. */
-.videoSpalte {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s8);
-  flex-shrink: 0;
-  width: 104px;
 }
 
 /* Zeile mit Medienkachel: Bild links, Text rechts -- zusammen das, was in

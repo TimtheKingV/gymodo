@@ -11,6 +11,30 @@
   composes: photoEmpty from "../portal.module.css";
 }
 
+/* Die volle Groesse -- das Uploadfeld einer Seite (FotoFeld auf
+   "Stammdaten"). Eigene Klassen statt einer Regel auf .vorschau, weil
+   Mini und Zeile von .vorschau erben und auf dem Telefon klein bleiben
+   sollen. */
+.vorschauVoll {
+  composes: vorschau;
+}
+
+.vorschauVollLeer {
+  composes: vorschauLeer;
+}
+
+/* Auf dem Telefon so breit wie der Inhalt (Testnotiz 22.09., #7): 160 px
+   waren dort ein Briefmarkenbild neben viel leerem Platz. 4:3 wie am
+   Schreibtisch, nur skaliert. */
+@media (max-width: 600px) {
+  .vorschauVoll,
+  .vorschauVollLeer {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+}
+
 .vorschauMini {
   composes: vorschau;
   width: 96px;

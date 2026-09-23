@@ -369,7 +369,29 @@ test("Umordnen aendert die Vorauswahl am Geraet, nicht nur die Anzeige", async (
   await expect(zeilen.nth(0)).toContainText("1. Rudern");
   await expect(zeilen.nth(1)).toContainText("2. Latzug breit");
 
-  await zeilen.nth(1).getByRole("button", { name: "Hoch" }).click();
+  // Umordnen im Dialog "Reihenfolge ändern" (Testnotiz 22.09., #11) --
+  // per Tastatur, wie dnd-kit es anbietet: Griff fokussieren, Leertaste
+  // nimmt auf, Pfeil hoch verschiebt, Leertaste legt ab. Derselbe Weg wie
+  // mit dem Finger, nur ohne Koordinaten, die in CI wackeln.
+  await page.getByRole("button", { name: "Reihenfolge ändern" }).click();
+  const dialog = page.getByRole("dialog", { name: "Reihenfolge ändern" });
+  const griff = dialog.getByRole("button", { name: "Latzug breit verschieben" });
+  await griff.focus();
+  await page.keyboard.press("Space");
+  await expect(griff).toHaveAttribute("aria-pressed", "true");
+  // dnd-kit wertet einen Pfeil, der in den ersten Millisekunden nach dem
+  // Aufnehmen kommt, nicht immer aus -- Playwright drueckt schneller als
+  // jeder Mensch. In menschlichem Takt (150 ms) ging es lokal 25 von 25
+  // Mal; ohne Pause nicht. Deshalb: Pfeil, bis die Ansage "Platz 1" steht.
+  // Bei zwei Uebungen ist ein zweiter Pfeil folgenlos (oben ist oben).
+  await expect(async () => {
+    await page.keyboard.press("ArrowUp");
+    await expect(page.getByText("Latzug breit auf Platz 1.")).toBeAttached({ timeout: 500 });
+  }).toPass({ timeout: 10_000 });
+  await page.keyboard.press("Space");
+  await expect(dialog.getByRole("listitem").nth(0)).toContainText("Latzug breit");
+  await dialog.getByRole("button", { name: "Fertig" }).click();
+  await expect(dialog).toBeHidden();
 
   await expect(zeilen.nth(0)).toContainText("1. Latzug breit");
   await expect(zeilen.nth(1)).toContainText("2. Rudern");

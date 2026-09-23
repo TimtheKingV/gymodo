@@ -10,7 +10,7 @@ import { gewichtsSchrittWerte, maxGewichtWerte, minMaxWerte } from "./einstellun
  * ModellNeuFormular.tsx (Halle) sowie die Textfelder unter "Modell
  * anlegen" und "Stammdaten" (Schreibtisch).
  *
- * "kein Anschlag" (maxGewichtWerte()) haelt die bisherige Freiheit
+ * "∞" (maxGewichtWerte(), kein Anschlag) haelt die bisherige Freiheit
  * lebendig, die Obergrenze offenzulassen -- ein Rad kennt sonst kein
  * "leer".
  */

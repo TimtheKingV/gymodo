@@ -5,12 +5,19 @@ import {
   signMediaUrls,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { AktionsKnopf } from "../../../../../Form";
-import { VideoUpload } from "../../../../../VideoUpload";
-import { uebungAnlegen, uebungLoesen, uebungVerschieben } from "../../../../../actions";
+import {
+  uebungAendern,
+  uebungAnlegen,
+  uebungLoesen,
+  uebungVerschieben,
+} from "../../../../../actions";
+import { Hinzufuegen } from "../../../../../bausteine/Hinzufuegen";
 import { ladeKatalog } from "../../../../catalog";
+import { ReihenfolgeDialog } from "./ReihenfolgeDialog";
 import { UebungFormular } from "./UebungFormular";
+import { UebungZeile } from "./UebungZeile";
 import styles from "../../../../../portal.module.css";
+import eigene from "./uebungen.module.css";
 
 /**
  * Reiter "Übungen" -- Abschnitt 3 der frueheren, einteiligen Modellseite.
@@ -18,17 +25,20 @@ import styles from "../../../../../portal.module.css";
  * Titel und Reitername stehen im Layout darueber.
  *
  * Die Reihenfolge ist keine Kosmetik. Canvas-Notiz `note-uebungen`:
- * "Übung 1 ist am Gerät die Vorauswahl des Mitglieds." Der Umordnen-Weg
- * bleibt deshalb vollstaendig -- Hoch, Runter, Entfernen -- und Platz 1
- * traegt seine Bedeutung jetzt als Abzeichen an der Zeile statt nur als
- * Satz im Vorspann darueber.
+ * "Übung 1 ist am Gerät die Vorauswahl des Mitglieds." Platz 1 traegt
+ * seine Bedeutung als Abzeichen an der Zeile.
  *
- * uebungVerschieben nimmt die FERTIGE Reihenfolge als Liste von linkIds
- * entgegen, nicht "dieses Element eins hoch". Jede Zeile rechnet ihre
- * beiden Ziel-Reihenfolgen deshalb hier aus; am Rand ist der Knopf
- * abgeschaltet statt folgenlos -- ein Druck, der eine Server-Aktion
- * ausloest, die Liste laedt und nichts aendert, ist schlechter als einer,
- * der gar nicht erst geht.
+ * Seit der Testnotiz vom 22.09. (#11, #12):
+ *
+ * - Umordnen geschieht im Dialog "Reihenfolge ändern" ueber der Liste
+ *   (ReihenfolgeDialog.tsx, Ziehen am Griff) statt mit Hoch/Runter an
+ *   jeder Karte. uebungVerschieben nimmt ohnehin die FERTIGE Reihenfolge
+ *   als Liste von linkIds -- der Dialog schickt sie einmal, bei "Fertig".
+ * - Jede Zeile traegt rechts oben einen Stift (UebungZeile.tsx) mit der
+ *   Zahl dessen, was noch fehlt. Er klappt genau diese Uebung auf: Name,
+ *   Wiederholungen, Video, Entfernen.
+ * - "Übung anlegen" steht hinter dem Knopf "Übung hinzufügen" ueber der
+ *   Liste; bei leerer Liste gleich offen (Hinzufuegen.tsx).
  *
  * Neu seit dem UX-Schnitt (Befund 6 und 7 der Challenge vom 17. September):
  *
@@ -38,14 +48,11 @@ import styles from "../../../../../portal.module.css";
  *    dafuer werden hier signiert und nicht in ladeKatalog: nur dieser
  *    Reiter braucht sie, und der Katalog haengt an jeder Portalseite.
  * 2. "Entfernen" traegt seine danger-Farbe erst, wenn es scharf ist
- *    (AktionsKnopf). Bei sechs Uebungen standen vorher sechs rote Umrisse
- *    gleichmaessig verteilt in der Karte -- die auffaelligste Farbe des
- *    Bildschirms gehoerte dem Loeschen, nicht der Hauptaktion.
+ *    (AktionsKnopf), und steht nur noch im aufgeklappten Teil einer Zeile.
  *
- * Genau eine Akzentflaeche: "Übung anlegen" in der Karte darunter. Der
+ * Genau eine Akzentflaeche im Ruhezustand: "Übung hinzufügen". Der
  * Fortschrittsbalken in VideoUpload traegt waehrend eines laufenden
- * Uploads ebenfalls var(--accent) -- Befund 11, entschieden in Aufgabe 21,
- * nicht hier; im Ruhezustand rendert er nicht.
+ * Uploads ebenfalls var(--accent) -- Befund 11, entschieden in Aufgabe 21.
  */
 export default async function ModellUebungenPage({
   params,
@@ -67,17 +74,40 @@ export default async function ModellUebungenPage({
     MEDIA_URL_TTL_SECONDS,
   );
 
-  const reihenfolge = modell.exercises.map((eintrag) => eintrag.linkId);
+  const hatUebungen = modell.exercises.length > 0;
 
   return (
     <>
       <p className={styles.pageLead}>
-        Die erste Übung ist am Gerät die Vorauswahl des Mitglieds — &bdquo;Hoch&ldquo;
-        schiebt eine Übung nach vorn, &bdquo;Runter&ldquo; nach hinten.
+        Die erste Übung ist am Gerät die Vorauswahl des Mitglieds. Der Stift an
+        einer Übung öffnet sie zum Ergänzen — eine Zahl daran heißt, dass noch
+        etwas fehlt.
       </p>
 
+      <Hinzufuegen
+        knopf="Übung hinzufügen"
+        titel="Übung anlegen"
+        notiz="Kommt ans Ende der Liste."
+        offen={!hatUebungen}
+      >
+        <UebungFormular
+          studioId={studioId}
+          modelId={modelId}
+          action={uebungAnlegen.bind(null, studioId, modelId)}
+        />
+      </Hinzufuegen>
+
+      {modell.exercises.length > 1 ? (
+        <div className={eigene.leiste}>
+          <ReihenfolgeDialog
+            uebungen={modell.exercises.map(({ linkId, name }) => ({ linkId, name }))}
+            speichern={uebungVerschieben.bind(null, studioId, modelId)}
+          />
+        </div>
+      ) : null}
+
       <section className={styles.section}>
-        {modell.exercises.length === 0 ? (
+        {!hatUebungen ? (
           <div className={styles.empty}>
             <p className={styles.emptyTitle}>Noch keine Übung.</p>
             <p className={styles.emptyNext}>
@@ -90,87 +120,22 @@ export default async function ModellUebungenPage({
           // das Band "Noch zu tun" darueber ist auch eine. "Liste mit 3
           // Eintraegen" ist ohne Namen keine Auskunft.
           <ul className={styles.rows} aria-label="Übungen am Modell">
-            {modell.exercises.map((uebung, index) => {
-              const hoch = [...reihenfolge];
-              if (index > 0) {
-                [hoch[index - 1], hoch[index]] = [hoch[index]!, hoch[index - 1]!];
-              }
-              const runter = [...reihenfolge];
-              if (index < reihenfolge.length - 1) {
-                [runter[index], runter[index + 1]] = [runter[index + 1]!, runter[index]!];
-              }
-
-              return (
-                <li key={uebung.linkId} className={styles.row}>
-                  <div className={styles.zeileMitBild}>
-                    <VideoUpload
-                      studioId={studioId}
-                      modelId={modelId}
-                      linkId={uebung.linkId}
-                      hatVideo={uebung.hasVideo}
-                      videoUrl={
-                        uebung.videoStoragePath
-                          ? videoUrls.get(uebung.videoStoragePath)
-                          : undefined
-                      }
-                      knapp
-                    />
-                    <div className={styles.rowMain}>
-                      <div className={styles.rowTitle}>
-                        {index + 1}. {uebung.name}
-                      </div>
-                      <div className={styles.rowMeta}>
-                        {uebung.targetRepsMin}–{uebung.targetRepsMax} Wiederholungen ·{" "}
-                        {uebung.hasVideo ? (
-                          `Video ${uebung.videoDurationS} s`
-                        ) : (
-                          <span className={styles.absent}>ohne Video</span>
-                        )}
-                      </div>
-                      {index === 0 ? (
-                        <div className={styles.rowMarke}>
-                          <span className={styles.badge}>Vorauswahl am Gerät</span>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className={styles.rowActions}>
-                    <AktionsKnopf
-                      aktion={uebungVerschieben.bind(null, studioId, modelId, hoch)}
-                      label="Hoch"
-                      deaktiviert={index === 0}
-                    />
-                    <AktionsKnopf
-                      aktion={uebungVerschieben.bind(null, studioId, modelId, runter)}
-                      label="Runter"
-                      deaktiviert={index === reihenfolge.length - 1}
-                    />
-                    <AktionsKnopf
-                      aktion={uebungLoesen.bind(null, studioId, modelId, uebung.linkId)}
-                      label="Entfernen"
-                      bestaetigung="Wirklich entfernen?"
-                      art="destructive"
-                    />
-                  </div>
-                </li>
-              );
-            })}
+            {modell.exercises.map((uebung, index) => (
+              <UebungZeile
+                key={uebung.linkId}
+                studioId={studioId}
+                modelId={modelId}
+                uebung={uebung}
+                nummer={index + 1}
+                videoUrl={
+                  uebung.videoStoragePath ? videoUrls.get(uebung.videoStoragePath) : undefined
+                }
+                aendern={uebungAendern.bind(null, studioId, modelId, uebung.exerciseId)}
+                loesen={uebungLoesen.bind(null, studioId, modelId, uebung.linkId)}
+              />
+            ))}
           </ul>
         )}
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Übung anlegen</h2>
-          <span className={styles.sectionNote}>
-            Kommt ans Ende der Liste. Die Reihenfolge änderst du oben.
-          </span>
-        </div>
-        <UebungFormular
-          studioId={studioId}
-          modelId={modelId}
-          action={uebungAnlegen.bind(null, studioId, modelId)}
-        />
       </section>
     </>
   );

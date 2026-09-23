@@ -101,6 +101,21 @@ function RadSpalte({
   const rahmen = useRef<number | null>(null);
   /** Der zuletzt GEMELDETE Index -- siehe aufScroll. */
   const gemeldet = useRef(startIndex);
+  const verborgen = useRef<HTMLInputElement>(null);
+  const ersterLauf = useRef(true);
+
+  // Ein verstecktes Feld meldet keine Eingabe, wenn React seinen Wert
+  // setzt. Das umgebende Formular soll eine Rad-Wahl aber genauso sehen
+  // wie getippten Text (AktionsFormular mit nurBeiAenderung) -- daher
+  // nach jedem Wechsel ein eigenes, blubberndes input-Ereignis, erst nach
+  // dem Rendern, damit der neue Wert schon im Feld steht.
+  useEffect(() => {
+    if (ersterLauf.current) {
+      ersterLauf.current = false;
+      return;
+    }
+    verborgen.current?.dispatchEvent(new Event("input", { bubbles: true }));
+  }, [index]);
 
   // Nur beim Einhaengen auf den Anfangswert stellen -- danach scrollt der
   // Trainer selbst, ein erneutes Setzen wuerde ihm den Finger wegziehen.
@@ -191,7 +206,9 @@ function RadSpalte({
           </div>
         ))}
       </div>
-      {name ? <input type="hidden" name={name} value={werte[index]?.wert ?? ""} /> : null}
+      {name ? (
+        <input ref={verborgen} type="hidden" name={name} value={werte[index]?.wert ?? ""} />
+      ) : null}
     </div>
   );
 }

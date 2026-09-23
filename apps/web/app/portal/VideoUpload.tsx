@@ -14,8 +14,10 @@ import styles from "./portal.module.css";
 /**
  * Der einzige Pfad des Portals, der auf dem Telefon tragen muss: die
  * Aufnahme entsteht auf dem Trainerhandy und wird aus mobilem Safari
- * hochgeladen (Spec 6.8). Deshalb capture am Dateifeld und eine
- * Fortschrittsanzeige, die auch bei schlechtem Studio-WLAN etwas sagt.
+ * hochgeladen (Spec 6.8). Deshalb eine Fortschrittsanzeige, die auch bei
+ * schlechtem Studio-WLAN etwas sagt. Bewusst ohne `capture` am Dateifeld:
+ * iOS bietet dann selbst "Mediathek" oder "Video aufnehmen" an -- mit
+ * capture ging nur die Kamera (Testnotiz 22.09., #13).
  *
  * Der Upload laeuft ueber TUS direkt gegen den Storage-Dienst
  * (ladeVideoHoch() in bausteine/videoUpload.ts). Bricht die Verbindung ab,
@@ -32,7 +34,6 @@ export function VideoUpload({
   linkId,
   hatVideo,
   videoUrl,
-  knapp = false,
 }: {
   studioId: string;
   modelId: string;
@@ -43,11 +44,6 @@ export function VideoUpload({
       sie kannte nur die Datei, die gerade in diesem Browserfenster
       ausgewaehlt worden war. */
   videoUrl?: string | undefined;
-  /** In einer Listenzeile: Vorschau ueber dem Ausloeser, ohne den langen
-      Hinweis zur Hoechstlaenge. Der gehoert an die Stelle, an der jemand
-      ein Video zum ersten Mal waehlt (das Anlege-Formular), nicht
-      sechsmal untereinander an jede Zeile. */
-  knapp?: boolean;
 }) {
   const [fehler, setFehler] = useState<string | null>(null);
   const [fortschritt, setFortschritt] = useState<number | null>(null);
@@ -88,39 +84,29 @@ export function VideoUpload({
   const laeuft = fortschritt !== null;
 
   return (
-    <div className={knapp ? styles.videoSpalte : styles.field}>
-      <div className={knapp ? styles.videoSpalte : styles.mediaRow}>
+    <div className={styles.field}>
+      <span className={styles.label}>Einweisungsvideo</span>
+      <div className={styles.mediaRow}>
         <MedienVorschau
           url={objektUrl ?? videoUrl ?? null}
           art="video"
           leerText={hatVideo ? "Video" : "Kein Video"}
-          groesse={knapp ? "zeile" : "mini"}
+          groesse="mini"
         />
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <DateiKnopf
-            label={
-              knapp
-                ? hatVideo
-                  ? "Ersetzen"
-                  : "Aufnehmen"
-                : hatVideo
-                  ? "Video ersetzen"
-                  : "Einweisungsvideo"
-            }
+            label={hatVideo ? "Video ersetzen" : "Video hinzufügen"}
             ariaLabel={hatVideo ? "Video ersetzen" : "Einweisungsvideo hochladen"}
             accept="video/mp4,video/quicktime"
-            capture="environment"
             disabled={laeuft}
             onDatei={(datei) => {
               if (datei) void starte(datei);
             }}
           />
-          {knapp ? null : (
-            <span className={styles.hint}>
-              Höchstens {MAX_VIDEO_SECONDS} Sekunden. Länger nimmt der Upload
-              nicht an — die Länge wird an der Datei geprüft, nicht geschätzt.
-            </span>
-          )}
+          <span className={styles.hint}>
+            Höchstens {MAX_VIDEO_SECONDS} Sekunden. Länger nimmt der Upload
+            nicht an — die Länge wird an der Datei geprüft, nicht geschätzt.
+          </span>
         </div>
       </div>
 

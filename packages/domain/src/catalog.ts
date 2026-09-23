@@ -278,6 +278,51 @@ export async function createExercise(
   return { id: data.id };
 }
 
+export const exercisePatchSchema = z
+  .object({
+    name: z.string().trim().min(1, "Die Uebung braucht einen Namen."),
+    targetRepsMin: z.number().int().positive("Mindestens eine Wiederholung."),
+    targetRepsMax: z.number().int().positive(),
+  })
+  .refine((werte) => werte.targetRepsMax >= werte.targetRepsMin, {
+    message: "Die obere Wiederholungszahl liegt unter der unteren.",
+  });
+
+/**
+ * Name und Wiederholungsbereich einer bestehenden Uebung aendern -- bis
+ * hierher liess sich eine Uebung nur anlegen und loesen, ein Tippfehler im
+ * Namen hiess: neu anlegen und das Video noch einmal hochladen.
+ *
+ * Die Aenderung gilt fuer die Uebung, nicht fuer eine Verknuepfung: haengt
+ * dieselbe Uebung an mehreren Modellen, heisst sie danach ueberall so.
+ */
+export async function updateExercise(
+  client: SupabaseClient,
+  exerciseId: string,
+  patch: z.input<typeof exercisePatchSchema>,
+): Promise<void> {
+  const werte = parseOrThrow(exercisePatchSchema, patch);
+  const userId = await requireUserId(client);
+
+  const { data: uebung } = await client
+    .from("exercises")
+    .select("studio_id")
+    .eq("id", exerciseId)
+    .maybeSingle<{ studio_id: string }>();
+  if (!uebung) throw new DomainError("not_found", "Diese Uebung gibt es nicht.");
+  await requireStudioStaff(client, uebung.studio_id, userId);
+
+  const { error } = await client
+    .from("exercises")
+    .update({
+      name: werte.name,
+      target_reps_min: werte.targetRepsMin,
+      target_reps_max: werte.targetRepsMax,
+    })
+    .eq("id", exerciseId);
+  if (error) throw new DomainError("internal", error.message);
+}
+
 /**
  * Uebung an ein Modell haengen. Die Policy aus 0005 erzwingt, dass beide
  * demselben Studio gehoeren -- eine fremde Uebung ist hier gar nicht sichtbar.

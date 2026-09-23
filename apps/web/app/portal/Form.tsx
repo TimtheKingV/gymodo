@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, useRef, useState, useTransition } from "react";
+import { useActionState, useEffect, useId, useRef, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import styles from "./portal.module.css";
 import type { ActionResult } from "./actions";
@@ -17,6 +17,7 @@ export function AktionsFormular({
   gross,
   erfolgText,
   leertNachErfolg = false,
+  nurBeiAenderung = false,
 }: {
   action: (prev: unknown, formData: FormData) => Promise<ActionResult>;
   submitLabel: string;
@@ -38,13 +39,37 @@ export function AktionsFormular({
       hintereinander abgesendet werden (Uebung, Einstellung, Geraet), nie
       fuer eines, das bestehende Werte zeigt. */
   leertNachErfolg?: boolean;
+  /** Fuer Formulare, die Bestehendes zeigen ("Änderungen speichern"): der
+      Knopf ist nur scharf, wenn sich seit dem Laden oder dem letzten
+      Speichern etwas geaendert hat, und der Erfolgstext steht, bis wieder
+      etwas geaendert wird. Testnotiz 22.09., #9: nach dem Speichern stand
+      der Knopf unveraendert da, und es sah aus, als haette es nicht
+      geklappt. */
+  nurBeiAenderung?: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const gespeichert = useRef<string | null>(null);
+  const [geaendert, setGeaendert] = useState(false);
+
+  useEffect(() => {
+    if (nurBeiAenderung && formRef.current) {
+      gespeichert.current = momentaufnahme(formRef.current);
+    }
+  }, [nurBeiAenderung]);
+
+  function aufEingabe() {
+    if (!nurBeiAenderung || !formRef.current) return;
+    setGeaendert(momentaufnahme(formRef.current) !== gespeichert.current);
+  }
 
   const [ergebnis, formAction] = useActionState(
     async (prev: ActionResult | null, formData: FormData) => {
       const antwort = await action(prev, formData);
       if (antwort.ok) {
+        if (nurBeiAenderung && formRef.current) {
+          gespeichert.current = momentaufnahme(formRef.current);
+          setGeaendert(false);
+        }
         onErfolg?.();
         if (leertNachErfolg && formRef.current) {
           formRef.current.reset();
@@ -62,7 +87,12 @@ export function AktionsFormular({
   );
 
   return (
-    <form ref={formRef} action={formAction} className={styles.sectionBody}>
+    <form
+      ref={formRef}
+      action={formAction}
+      className={styles.sectionBody}
+      onInput={aufEingabe}
+    >
       {children}
       {ergebnis && !ergebnis.ok ? (
         <p className={styles.error} role="alert">
@@ -70,27 +100,57 @@ export function AktionsFormular({
         </p>
       ) : null}
       <div className={styles.actions}>
-        <Absenden label={submitLabel} gross={gross ?? false} />
+        <Absenden
+          label={submitLabel}
+          gross={gross ?? false}
+          gesperrt={nurBeiAenderung && !geaendert}
+        />
         {/* role="status" statt role="alert": Erfolg unterbricht keinen
             Screenreader mitten im Satz, er wird nachgereicht. Immer im
             DOM, damit die Ansage ueberhaupt kommt -- ein Element, das erst
             mit seinem Text erscheint, wird von manchen Lesern nicht
             gemeldet. */}
         <span className={styles.erfolg} role="status">
-          {ergebnis?.ok && erfolgText ? erfolgText : ""}
+          {ergebnis?.ok && erfolgText && !geaendert ? erfolgText : ""}
         </span>
       </div>
     </form>
   );
 }
 
-function Absenden({ label, gross }: { label: string; gross?: boolean }) {
+/**
+ * Der Formularstand als Vergleichswert: Felder samt versteckter Rad-Werte,
+ * eine gewaehlte Datei als Name/Groesse/Datum (ihr Inhalt aendert am
+ * Vergleich nichts).
+ */
+function momentaufnahme(form: HTMLFormElement): string {
+  return JSON.stringify(
+    [...new FormData(form).entries()]
+      .filter(([name]) => !name.startsWith("$ACTION"))
+      .map(([name, wert]) => [
+        name,
+        wert instanceof File ? `${wert.name}:${wert.size}:${wert.lastModified}` : wert,
+      ]),
+  );
+}
+
+function Absenden({
+  label,
+  gross,
+  gesperrt = false,
+}: {
+  label: string;
+  gross?: boolean;
+  gesperrt?: boolean;
+}) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
-      className={gross ? styles.primaryGross : styles.primary}
-      disabled={pending}
+      className={`${gross ? styles.primaryGross : styles.primary}${
+        gesperrt && !pending ? ` ${styles.primaryRuhend}` : ""
+      }`}
+      disabled={pending || gesperrt}
     >
       {pending ? "Wird gespeichert …" : label}
     </button>

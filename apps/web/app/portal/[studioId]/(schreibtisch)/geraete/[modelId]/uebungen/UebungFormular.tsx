@@ -99,9 +99,8 @@ export function UebungFormular({
         <div className={styles.mediaRow}>
           <MedienVorschau url={objektUrl} art="video" leerText="Kein Video" groesse="mini" />
           <DateiKnopf
-            label="Video auswählen"
+            label="Video hinzufügen"
             accept="video/mp4,video/quicktime"
-            capture="environment"
             disabled={laeuft}
             onDatei={aufDatei}
           />
