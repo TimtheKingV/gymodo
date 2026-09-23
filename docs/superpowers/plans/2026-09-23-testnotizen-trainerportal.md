@@ -47,7 +47,8 @@ sofort; der Ladezustand der Seite ist dann das, was man sieht.
 
 - Neuer Baustein `VideoAbspieler`: ist ein Video da, steht das Standbild in
   voller Breite (16:9) mit Abspiel-Symbol; ein Tipp öffnet einen
-  Vollbild-Dialog mit Player (`controls`, `autoPlay`). Ohne `playsInline`,
+  Vollbild-Dialog mit Player (`controls`). `play()` läuft im Klick selbst,
+  nicht per `autoPlay` — sonst lässt iOS keinen Ton zu. Ohne `playsInline`,
   damit iOS-Safari beim Start in den nativen Vollbild-Player geht.
 - `VideoUpload` nutzt ihn statt der Mini-Vorschau; ohne Video bleibt der
   Platzhalter. Auch das Vorschaubild links in der Übungszeile öffnet den
