@@ -39,16 +39,21 @@ export function NochZuTun({
     ) : null;
   }
 
+  // Eingeklappt, bis jemand hineinschaut (Testnotiz 23.09., #4): das Band
+  // steht ueber jedem Reiter, und aufgeklappt schob es die eigentliche
+  // Arbeit des Reiters unter den Rand. Der Kopf nennt die Anzahl -- wer
+  // wissen will, was, klappt auf. <details> statt eigenem Zustand: Tastatur,
+  // Screenreader und Suchen-im-Text kommen vom Browser.
   return (
-    <section className={styles.nochZuTun} aria-labelledby="noch-zu-tun">
-      <div className={styles.nochZuTunKopf}>
+    <details className={styles.nochZuTun}>
+      <summary className={styles.nochZuTunKopf}>
         <h2 className={styles.abschnittTitel} id="noch-zu-tun">
           Noch zu tun
         </h2>
         <span className={styles.abschnittNotiz}>
           {punkte.length === 1 ? "1 Punkt offen" : `${punkte.length} Punkte offen`}
         </span>
-      </div>
+      </summary>
       <ul className={styles.zeilen} aria-label="Noch zu tun">
         {punkte.map((punkt) => (
           <li key={punkt.href + punkt.titel} className={styles.zeile}>
@@ -80,6 +85,6 @@ export function NochZuTun({
           </li>
         ))}
       </ul>
-    </section>
+    </details>
   );
 }

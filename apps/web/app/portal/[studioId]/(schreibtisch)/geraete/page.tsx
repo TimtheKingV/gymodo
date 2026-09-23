@@ -1,4 +1,4 @@
-import { modellAnlegen } from "../../../actions";
+import Link from "next/link";
 import { erreichbarkeit, ladeKatalog, railZahlen } from "../../catalog";
 import { offenePunkte } from "../../offen";
 import { Seite } from "../../../bausteine/Seite";
@@ -6,10 +6,9 @@ import { Abschnitt } from "../../../bausteine/Abschnitt";
 import { Zeile, Zeilen } from "../../../bausteine/Zeile";
 import { Zustand } from "../../../bausteine/Zustand";
 import { Modellbild } from "../../../bausteine/Modellbild";
-import { Hinzufuegen } from "../../../bausteine/Hinzufuegen";
 import { StiftLink } from "../../../bausteine/Stift";
-import { ModellAnlegenFormular } from "./ModellAnlegenFormular";
 import styles from "../../../portal.module.css";
+import bausteine from "../../../bausteine/bausteine.module.css";
 
 /**
  * Geraete und Modelle sind ein Bereich (Struktur-Spec, Entscheidung 5) --
@@ -64,19 +63,16 @@ export default async function GeraetePage({
       vorspann="Ein Modell beschreibt den Gerätetyp. Die einzelnen Geräte im Raum sind Instanzen davon — zwei Kabelzüge nebeneinander sind ein Modell und zwei Geräte."
     >
       {/*
-        Ueber der Liste, hinter einem Akzentknopf (Testnotiz 22.09., #4):
-        vorher stand das Formular immer offen unter der Liste. Bei leerem
-        Katalog steht es gleich offen -- dann gibt es nichts anderes zu tun.
-        AktionsFormular bringt sein eigenes sectionBody-Polster mit, deshalb
-        die rohe Karte aus Hinzufuegen und nicht der Abschnitt-Baustein.
+        Ein Link auf den eigenen Ablauf statt eines aufklappenden Formulars
+        ueber der Liste (Testnotiz 23.09., #7): beim Anlegen sollen die
+        anderen Geraete nicht darunter stehen, und nach den Stammdaten
+        geht es mit "Weiter" durch Einstellungen, Uebungen und Geraete.
       */}
-      <Hinzufuegen
-        knopf="Gerät hinzufügen"
-        titel="Modell anlegen"
-        offen={katalog.models.length === 0}
-      >
-        <ModellAnlegenFormular action={modellAnlegen.bind(null, studioId)} />
-      </Hinzufuegen>
+      <div className={bausteine.hinzufuegenLeiste}>
+        <Link href={`/portal/${studioId}/geraete/neu`} className={styles.primary}>
+          + Gerät hinzufügen
+        </Link>
+      </div>
 
       <Abschnitt titel="Alle Gerätemodelle">
         {katalog.models.length === 0 ? (
@@ -91,7 +87,6 @@ export default async function GeraetePage({
               const stand = erreichbarkeit(modell);
               const mitVideo = modell.exercises.filter((uebung) => uebung.hasVideo).length;
               const offen = offenePunkte(studioId, modell);
-              const blockiert = offen.filter((punkt) => punkt.art === "blockiert");
 
               return (
                 <Zeile
@@ -131,31 +126,26 @@ export default async function GeraetePage({
                           `${modell.exercises.length} ${modell.exercises.length === 1 ? "Übung" : "Übungen"}, ${mitVideo} mit Video`
                         )}
                       </span>
-                      <span className={styles.zeileZustand}>
-                        {offen.length === 0 ? (
-                          "Fertig eingerichtet"
-                        ) : blockiert.length === 0 ? (
-                          <span className={styles.absent}>{offen[0]!.titel}</span>
-                        ) : (
-                          <span className={styles.offenMarke}>
-                            {blockiert.length === 1
-                              ? blockiert[0]!.titel
-                              : `${blockiert.length} Punkte offen · ${blockiert[0]!.titel}`}
-                          </span>
-                        )}
-                      </span>
+                      {/* Offenes zaehlt die Marke am Stift (Testnotiz
+                          23.09., #3) -- der orange Hinweis hier stand
+                          doppelt. Nur "fertig" bekommt noch eine Zeile. */}
+                      {offen.length === 0 ? (
+                        <span className={styles.zeileZustand}>Fertig eingerichtet</span>
+                      ) : null}
                     </>
                   }
                   aktionenOben
                   aktionen={
                     // Ein Stift oben rechts statt des breiten Knopfs
-                    // "Bearbeiten" (Testnotiz 22.09., #1). Der Modellname
+                    // "Bearbeiten" (Testnotiz 22.09., #1), mit der Zahl
+                    // offener Punkte als gruene Marke (23.09., #3). Der Modellname
                     // steht im aria-label -- eine Liste aus lauter gleichen
                     // Stiften sagt einem Screenreader sonst nicht, welche
                     // Zeile gemeint ist.
                     <StiftLink
                       href={`/portal/${studioId}/geraete/${modell.id}`}
                       label={`${modell.name} bearbeiten`}
+                      offen={offen.length}
                     />
                   }
                 />

@@ -112,3 +112,111 @@
     height: 54px;
   }
 }
+
+/* Einweisungsvideo zum Ansehen (VideoAbspieler.tsx, Testnotiz 23.09., #6):
+   das Standbild ist ein Knopf, der den Player oeffnet. Voll heisst: so
+   breit wie der Inhalt, 16:9 -- ein Handyvideo im Querformat fuellt es,
+   ein hochkantes steht mittig auf Schwarz. */
+.abspielenVoll,
+.abspielenZeile {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: #000;
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.abspielenVoll {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--r-card);
+}
+
+.abspielenZeile {
+  width: 104px;
+  height: 78px;
+  border-radius: var(--r-control);
+}
+
+.abspielenStandbild {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  display: block;
+}
+
+.abspielenSymbol {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 11, 13, 0.66);
+  color: var(--text);
+}
+
+.abspielenZeile .abspielenSymbol {
+  width: 32px;
+  height: 32px;
+}
+
+.abspielenVoll:focus-visible,
+.abspielenZeile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Der Player selbst: ein Dialog, der den ganzen Bildschirm schwarz fuellt. */
+.player {
+  border: none;
+  margin: 0;
+  padding: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  background: #000;
+  color: var(--text);
+}
+
+.player[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player::backdrop {
+  background: #000;
+}
+
+.playerVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.playerSchliessen {
+  position: absolute;
+  top: max(var(--s12), env(safe-area-inset-top));
+  right: max(var(--s12), env(safe-area-inset-right));
+  z-index: 1;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(10, 11, 13, 0.66);
+  color: var(--text);
+  cursor: pointer;
+}

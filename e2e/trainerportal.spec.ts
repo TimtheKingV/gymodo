@@ -143,17 +143,20 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await page.goto(`/portal/${studio.id}/modelle`);
   await expect(page.getByRole("heading", { name: "Geräte", exact: true })).toBeVisible();
 
-  // 1. Geraetemodell
+  // 1. Geraetemodell -- ueber den Ablauf "Gerät hinzufügen" (Testnotiz
+  // 23.09., #7): ein eigener Bildschirm nur mit den Stammdaten, ohne die
+  // Geraeteliste darunter, und "Weiter" statt "Modell anlegen".
+  await page.getByRole("link", { name: "+ Gerät hinzufügen" }).click();
+  await expect(page.getByText("Schritt 1 von 4 · Stammdaten")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Alle Gerätemodelle" })).toHaveCount(0);
   await page.getByLabel("Name").fill("Latzug");
   await page.getByLabel("Hersteller").fill("Technogym");
   await radWaehlen(page, "Schritt", "2,5");
   await radWaehlen(page, "Minimum", "5");
   await radWaehlen(page, "Maximum", "100");
-  await page.getByRole("button", { name: "Modell anlegen", exact: true }).click();
+  await page.getByRole("button", { name: "Weiter", exact: true }).click();
 
-  // Anlegen fuehrt zum Angelegten: der Schreibtisch blieb frueher auf der
-  // Liste stehen, und das neue Modell war eine Zeile unter anderen. Kein
-  // Klick auf "Bearbeiten" mehr -- die Weiterleitung IST der Befund.
+  // "Weiter" legt an und fuehrt in Schritt 2 desselben Modells.
   //
   // Der Abzug im Fehlerfall ist hier nicht Luxus, sondern die Lehre aus drei
   // roten Laeufen (35424679953, 35534606330, 35574620070): genau diese
@@ -166,9 +169,14 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   } catch {
     throw await seitenBefund(
       page,
-      "Modell nicht angelegt: nach \"Modell anlegen\" steht keine Ueberschrift \"Latzug\".",
+      "Modell nicht angelegt: nach \"Weiter\" steht keine Ueberschrift \"Latzug\".",
     );
   }
+  await expect(page).toHaveURL(/\/einstellungen\?neu=1$/);
+  await expect(page.getByText("Schritt 2 von 4 · Einstellungen")).toBeVisible();
+  // Im Ablauf keine Reiter: die Fussleiste fuehrt weiter.
+  await expect(page.getByRole("navigation", { name: "Modell" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Weiter zu den Übungen" })).toBeVisible();
 
   // Und die Raeder haben getragen, was der Test in sie gescrollt hat. Ohne
   // diese Zeile faellt ein verlorener Scroll nicht auf: das Formular schickt
@@ -177,17 +185,20 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   // Auswahl fuer geprueft, die nie angekommen ist.
   await expect(page.getByText("Schritt 2,5 kg · ab 5,0 kg bis 100,0 kg")).toBeVisible();
 
-  // Und die Seite sagt, was als Naechstes fehlt, statt vier Nullen in der
-  // Reiterleiste zu zeigen. Das Foto steht oben, weil ohne es niemand das
-  // Geraet wiedererkennt.
+  // Der Modell-Detailpfad ist seit Aufgabe 16 /geraete/<modelId> (vier
+  // Reiter statt fuenf Abschnitte auf einem Bildschirm); die Modell-Id
+  // steht nur in der URL -- hier vor dem Reiter-Segment.
+  const modelId = new URL(page.url()).pathname.split("/").at(-2)!;
+
+  // Ausserhalb des Ablaufs sagt die Seite, was als Naechstes fehlt, statt
+  // vier Nullen in der Reiterleiste zu zeigen. Seit Testnotiz 23.09., #4
+  // eingeklappt: der Kopf nennt die Anzahl, die Liste kommt auf Klick. Das
+  // Foto steht oben, weil ohne es niemand das Geraet wiedererkennt.
+  await page.goto(`/portal/${studio.id}/geraete/${modelId}`);
+  await page.getByText("4 Punkte offen").click();
   const nochZuTun = page.getByRole("list", { name: "Noch zu tun" });
   await expect(nochZuTun.getByRole("listitem").first()).toContainText("Kein Foto");
   await expect(nochZuTun.getByRole("listitem")).toHaveCount(4);
-
-  // Der Modell-Detailpfad ist seit Aufgabe 16 /geraete/<modelId> (vier
-  // Reiter statt fuenf Abschnitte auf einem Bildschirm); die Modell-Id
-  // steht jetzt nur noch in der URL, nicht mehr in einem Formularfeld.
-  const modelId = new URL(page.url()).pathname.split("/").pop()!;
 
   // 1b. Foto -- laeuft durch den Server, damit die Aufnahmedaten wegfallen.
   // Stammdaten und Foto teilen sich seit Aufgabe 16 eine Akzentflaeche
@@ -295,6 +306,11 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await expect(
     page.getByRole("listitem").filter({ hasText: "Latzug" }),
   ).toContainText("1 Gerät, 1 erreichbar");
+  // Was noch fehlt (das Video), zaehlt die gruene Marke am Stift -- der
+  // Hinweis darunter ist entfallen (Testnotiz 23.09., #3).
+  await expect(
+    page.getByRole("link", { name: "Latzug bearbeiten (1 Punkt offen)" }),
+  ).toBeVisible();
 
   // Ohne Bearer-Token bleibt der Kontext verschlossen. Der Tag allein reicht
   // nie -- er ist eine Ortsangabe, kein Ausweis (Spec 10.4).

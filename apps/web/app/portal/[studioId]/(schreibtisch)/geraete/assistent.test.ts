@@ -1,0 +1,58 @@
+import { describe, expect, it } from "vitest";
+import { ASSISTENT_SCHRITTE, assistentSchritt, assistentStart } from "./assistent";
+
+const studio = "s1";
+const modell = "m1";
+const basis = "/portal/s1/geraete/m1";
+
+describe("assistentSchritt", () => {
+  it("zaehlt vier Schritte in der Reihenfolge der Reiter", () => {
+    expect(ASSISTENT_SCHRITTE).toBe(4);
+  });
+
+  it("Stammdaten ist Schritt 1 und fuehrt zu den Einstellungen", () => {
+    expect(assistentSchritt(studio, modell, null)).toEqual({
+      nummer: 1,
+      titel: "Stammdaten",
+      zurueck: null,
+      weiter: { href: `${basis}/einstellungen?neu=1`, label: "Weiter zu den Einstellungen" },
+    });
+  });
+
+  it("Einstellungen ist Schritt 2, zurueck zu den Stammdaten, weiter zu den Übungen", () => {
+    expect(assistentSchritt(studio, modell, "einstellungen")).toEqual({
+      nummer: 2,
+      titel: "Einstellungen",
+      zurueck: `${basis}?neu=1`,
+      weiter: { href: `${basis}/uebungen?neu=1`, label: "Weiter zu den Übungen" },
+    });
+  });
+
+  it("Übungen ist Schritt 3 und fuehrt zu den einzelnen Geräten", () => {
+    expect(assistentSchritt(studio, modell, "uebungen")).toEqual({
+      nummer: 3,
+      titel: "Übungen",
+      zurueck: `${basis}/einstellungen?neu=1`,
+      weiter: { href: `${basis}/instanzen?neu=1`, label: "Weiter zu den Geräten" },
+    });
+  });
+
+  it("Einzelne Geräte ist der letzte Schritt und endet auf der Geräteliste", () => {
+    expect(assistentSchritt(studio, modell, "instanzen")).toEqual({
+      nummer: 4,
+      titel: "Einzelne Geräte",
+      zurueck: `${basis}/uebungen?neu=1`,
+      weiter: { href: "/portal/s1/geraete", label: "Fertig" },
+    });
+  });
+
+  it("kennt kein anderes Segment", () => {
+    expect(assistentSchritt(studio, modell, "irgendwas")).toBeNull();
+  });
+});
+
+describe("assistentStart", () => {
+  it("ist der zweite Schritt: nach dem Anlegen geht es mit den Einstellungen weiter", () => {
+    expect(assistentStart(studio, modell)).toBe(`${basis}/einstellungen?neu=1`);
+  });
+});

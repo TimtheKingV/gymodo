@@ -8,6 +8,7 @@ import { MAX_VIDEO_SECONDS } from "@fitretro/domain/media";
 import { videoBestaetigen } from "./actions";
 import { DateiKnopf } from "./bausteine/DateiKnopf";
 import { MedienVorschau } from "./bausteine/MedienVorschau";
+import { VideoAbspieler } from "./bausteine/VideoAbspieler";
 import { ladeVideoHoch } from "./bausteine/videoUpload";
 import styles from "./portal.module.css";
 
@@ -34,6 +35,7 @@ export function VideoUpload({
   linkId,
   hatVideo,
   videoUrl,
+  titel = "Einweisungsvideo",
 }: {
   studioId: string;
   modelId: string;
@@ -44,6 +46,8 @@ export function VideoUpload({
       sie kannte nur die Datei, die gerade in diesem Browserfenster
       ausgewaehlt worden war. */
   videoUrl?: string | undefined;
+  /** Wofuer das Video ist -- der Name der Uebung, fuer den Abspielknopf. */
+  titel?: string;
 }) {
   const [fehler, setFehler] = useState<string | null>(null);
   const [fortschritt, setFortschritt] = useState<number | null>(null);
@@ -82,17 +86,24 @@ export function VideoUpload({
   }
 
   const laeuft = fortschritt !== null;
+  const vorschauUrl = objektUrl ?? videoUrl ?? null;
 
   return (
     <div className={styles.field}>
       <span className={styles.label}>Einweisungsvideo</span>
+      {/* Ist ein Video da, steht es in voller Breite ueber dem Knopf und
+          oeffnet auf Tipp den Player (Testnotiz 23.09., #6). Ohne Video
+          bleibt der kleine Platzhalter neben dem Knopf. */}
+      {vorschauUrl ? <VideoAbspieler url={vorschauUrl} titel={titel} /> : null}
       <div className={styles.mediaRow}>
-        <MedienVorschau
-          url={objektUrl ?? videoUrl ?? null}
-          art="video"
-          leerText={hatVideo ? "Video" : "Kein Video"}
-          groesse="mini"
-        />
+        {vorschauUrl ? null : (
+          <MedienVorschau
+            url={null}
+            art="video"
+            leerText={hatVideo ? "Video" : "Kein Video"}
+            groesse="mini"
+          />
+        )}
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <DateiKnopf
             label={hatVideo ? "Video ersetzen" : "Video hinzufügen"}

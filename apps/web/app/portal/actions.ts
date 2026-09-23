@@ -27,6 +27,7 @@ import {
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { assistentStart } from "./[studioId]/(schreibtisch)/geraete/assistent";
 
 /**
  * Die Trainerfunktionen als Server Actions -- kein HTTP, keine Endpoints.
@@ -149,7 +150,10 @@ export async function modellAnlegen(
     return fehlerAus(fehler);
   }
   revalidatePath(`/portal/${studioId}`, "layout");
-  redirect(`/portal/${studioId}/geraete/${modelId}`);
+  // Weiter im Ablauf "Gerät hinzufügen": Schritt 2, die Einstellungen
+  // (Testnotiz 23.09., #7) -- nicht mehr auf die Stammdaten, die gerade
+  // eingetippt wurden.
+  redirect(assistentStart(studioId, modelId));
 }
 
 export async function modellAendern(
