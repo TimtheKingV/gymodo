@@ -362,6 +362,33 @@ export async function geraetAnlegen(
   }, "layout");
 }
 
+/**
+ * Ein weiteres Geraet eines vorhandenen Typs, angelegt aus dem Ablauf
+ * "Gerät hinzufügen" (Testnotiz 25.09., #7). Wie geraetAnlegen, nur kommt
+ * das Modell aus dem Formular statt aus der Route -- und danach geht es auf
+ * "Einzelne Geräte" dieses Modells, wo das neue Geraet seinen Tag bekommt.
+ */
+export async function exemplarAnlegen(
+  studioId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionResult> {
+  const modelId = text(formData, "modelId");
+  const client = await createServerSupabaseClient();
+  try {
+    await createMachine(client, {
+      studioId,
+      equipmentModelId: modelId,
+      label: text(formData, "label"),
+      locationNote: optionalerText(formData, "locationNote"),
+    });
+  } catch (fehler) {
+    return fehlerAus(fehler);
+  }
+  revalidatePath(`/portal/${studioId}`, "layout");
+  redirect(`/portal/${studioId}/geraete/${modelId}/instanzen`);
+}
+
 export async function geraetStilllegen(
   studioId: string,
   pfad: string,

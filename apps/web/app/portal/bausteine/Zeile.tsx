@@ -14,6 +14,7 @@ export function Zeile({
   aktionen,
   aktionenOben = false,
   bild,
+  darunter,
 }: {
   titel: React.ReactNode;
   meta?: React.ReactNode;
@@ -25,9 +26,12 @@ export function Zeile({
       Optional, weil die meisten Listen des Portals (Tags, Leute, Termine)
       kein Bild haben und keins erfinden sollen. */
   bild?: React.ReactNode;
+  /** Was unter der Zeile aufklappt, in voller Breite -- die Optionen
+      hinter einem Stift (Testnotiz 25.09., #5). */
+  darunter?: React.ReactNode;
 }) {
   return (
-    <li className={styles.zeile}>
+    <li className={darunter ? styles.zeileMitDarunter : styles.zeile}>
       <div className={styles.zeileMitBild}>
         {bild}
         <div className={styles.zeileHaupt}>
@@ -40,6 +44,7 @@ export function Zeile({
           {aktionen}
         </div>
       ) : null}
+      {darunter ? <div className={styles.zeileDarunter}>{darunter}</div> : null}
     </li>
   );
 }

@@ -159,6 +159,23 @@
   border-bottom: none;
 }
 
+/* Mit aufgeklapptem Teil darunter: der bricht in eine eigene, volle Zeile
+   um. Nur hier flex-wrap -- an jeder anderen Zeile wuerde ein langer Titel
+   sonst die Aktionen nach unten schieben statt zu kuerzen. */
+.zeileMitDarunter {
+  composes: zeile;
+  flex-wrap: wrap;
+}
+
+.zeileDarunter {
+  flex: 1 0 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s8);
+  padding-top: var(--s12);
+  border-top: 1px solid var(--line);
+}
+
 /* Waechst mit: ohne flex-grow richtete sich die Breite nach dem laengsten
    Titel, und ein Balken darunter (Balken.tsx, "Meistgenutzt") waere so
    breit wie der Geraetename statt so breit wie die Spalte. */
@@ -255,7 +272,7 @@
    Baustein traegt seit den Leute-Reitern die Datenschutzgrenze und den
    Satz, der das Hochstufen erklaert -- Pflichttext, und Designsystem 2
    verbietet dafuer 3,6 : 1 (Befund 19 und 29, derselbe Schnitt wie in
-   Produktgrenze.tsx). Der Baustein heisst "Erlaeuterung", weil er
+   der frueheren Produktgrenze.tsx). Der Baustein heisst "Erlaeuterung", weil er
    erklaert; was erklaert, muss lesbar sein. */
 /* globals.css:97 nimmt jedem <a> Farbe und Unterstreichung. Fuer Rail,
    Reiter und Knopf-Links ist das richtig -- die tragen eigene Klassen und
@@ -338,18 +355,6 @@
    (.label in portal.module.css / halle.module.css). */
 .label {
   composes: label from "../portal.module.css";
-}
-
-/* Produktgrenze: Befund 19 -- derselbe Satz stand an drei Stellen in
-   text-faint, einem Kontrast, den Designsystem 2 fuer Pflichttext
-   ausdruecklich verbietet ("gymodo misst nichts ..." ist Inhalt, keine
-   Fussnote). text-muted statt text-faint, sonst wie der bisherige .hint. */
-.produktgrenze {
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.45;
-  margin-top: var(--s24);
-  max-width: 70ch;
 }
 
 /* Noch zu tun: die Restliste eines Objekts (NochZuTun.tsx). Aufbau wie

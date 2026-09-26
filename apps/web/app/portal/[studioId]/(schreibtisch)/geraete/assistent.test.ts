@@ -3,6 +3,7 @@ import {
   ASSISTENT_SCHRITTE,
   assistentSchritt,
   assistentStart,
+  neuAnsicht,
   weiterSperre,
 } from "./assistent";
 
@@ -89,5 +90,26 @@ describe("weiterSperre", () => {
   it("sperrt Stammdaten und Einzelne Geräte nie", () => {
     expect(weiterSperre(null, leer)).toBeNull();
     expect(weiterSperre("instanzen", leer)).toBeNull();
+  });
+});
+
+/** Testnotiz 25.09., #7: erst fragen, ob es das Geraet schon gibt. */
+describe("neuAnsicht", () => {
+  it("fragt zuerst, sobald es einen Geraetetyp gibt", () => {
+    expect(neuAnsicht(undefined, 2)).toBe("frage");
+  });
+
+  it("ohne Geraetetyp gibt es nichts zu fragen -- direkt die Stammdaten", () => {
+    expect(neuAnsicht(undefined, 0)).toBe("typ");
+    expect(neuAnsicht("exemplar", 0)).toBe("typ");
+  });
+
+  it("folgt der Wahl", () => {
+    expect(neuAnsicht("typ", 2)).toBe("typ");
+    expect(neuAnsicht("exemplar", 2)).toBe("exemplar");
+  });
+
+  it("eine unbekannte Wahl fragt erneut", () => {
+    expect(neuAnsicht("quatsch", 2)).toBe("frage");
   });
 });
