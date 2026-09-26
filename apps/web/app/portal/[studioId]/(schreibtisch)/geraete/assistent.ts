@@ -88,3 +88,18 @@ export function weiterSperre(
   if (segment === "uebungen" && stand.uebungen === 0) return "Zuerst eine Übung anlegen.";
   return null;
 }
+
+export type NeuAnsicht = "frage" | "typ" | "exemplar";
+
+/**
+ * Was /geraete/neu zeigt (Testnotiz 25.09., #7). Bisher kam das zweite
+ * gleiche Geraet nur ueber den letzten Reiter "Einzelne Geräte" des Modells
+ * dazu. Jetzt fragt der Ablauf zuerst, ob es den Typ schon gibt -- aber nur,
+ * wenn es ueberhaupt einen gibt: ohne Modell waere "vorhandenen Typ waehlen"
+ * eine leere Liste.
+ */
+export function neuAnsicht(art: string | undefined, modellAnzahl: number): NeuAnsicht {
+  if (modellAnzahl === 0) return "typ";
+  if (art === "typ" || art === "exemplar") return art;
+  return "frage";
+}

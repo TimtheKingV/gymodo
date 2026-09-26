@@ -177,6 +177,15 @@ export {
   setStudioJoinCodeActive,
 } from "./people.js";
 export type { StudioMember } from "./people.js";
+export {
+  acceptStaffInvite,
+  createStaffInvite,
+  getStaffInviteInfo,
+  istEinladungsToken,
+  listStaffInvites,
+  revokeStaffInvite,
+} from "./einladungen.js";
+export type { StaffInvite, StaffInviteInfo } from "./einladungen.js";
 export { getStudioOverview } from "./overview.js";
 export type {
   OverviewMachine,

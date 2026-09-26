@@ -3,6 +3,7 @@ import { DomainError, getStudioOverview, listCourseWeek } from "@fitretro/domain
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { erreichbarkeit, ladeKatalog } from "../catalog";
 import { uhrzeit, wochenFenster } from "./kurse/woche";
+import { geraeteName } from "./ueberblick";
 import { Seite } from "../../bausteine/Seite";
 import { Abschnitt } from "../../bausteine/Abschnitt";
 import { Zeile, Zeilen } from "../../bausteine/Zeile";
@@ -10,7 +11,6 @@ import { Kacheln, Kachel } from "../../bausteine/Kachel";
 import { Anteil } from "../../bausteine/Anteil";
 import { Balken } from "../../bausteine/Balken";
 import { Zustand } from "../../bausteine/Zustand";
-import { Produktgrenze } from "../../bausteine/Produktgrenze";
 import styles from "../../portal.module.css";
 
 const problemLabel: Record<string, string> = {
@@ -183,17 +183,10 @@ export default async function UeberblickPage({
   );
 
   return (
-    <Seite
-      titel="Überblick"
-      vorspann={
-        uebersicht ? (
-          <>
-            Letzte {uebersicht.days} Tage. Studioweite Summen — welches Mitglied
-            was trainiert hat, zeigt das Portal nirgends.
-          </>
-        ) : undefined
-      }
-    >
+    // Ohne Vorspann und ohne Produktgrenze im Fuss (Testnotiz 25.09., #3
+    // und #4): beide Saetze erklaerten, was das Portal nicht tut, und
+    // standen auf jedem Besuch zwischen Titel und Zahlen.
+    <Seite titel="Überblick">
       {!uebersicht ? (
         <Zustand
           art="fehler"
@@ -313,7 +306,7 @@ export default async function UeberblickPage({
                     key={geraet.machineId}
                     titel={
                       <>
-                        {geraet.label}
+                        {geraeteName(katalog, geraet.machineId, geraet.label)}
                         {geraet.status === "inactive" ? (
                           <> <span className={styles.badge}>stillgelegt</span></>
                         ) : null}
@@ -353,7 +346,7 @@ export default async function UeberblickPage({
               {uebersicht.problems.map((meldung) => (
                 <Zeile
                   key={`${meldung.machineId}-${meldung.reason ?? "ohne"}`}
-                  titel={meldung.label}
+                  titel={geraeteName(katalog, meldung.machineId, meldung.label)}
                   meta={
                     meldung.reason
                       ? (problemLabel[meldung.reason] ?? meldung.reason)
@@ -366,11 +359,6 @@ export default async function UeberblickPage({
           )}
         </Abschnitt>
       ) : null}
-
-      <Produktgrenze>
-        gymodo misst nichts. Alles hier ist gezählt, was Mitglieder selbst
-        bestätigt haben.
-      </Produktgrenze>
     </Seite>
   );
 }

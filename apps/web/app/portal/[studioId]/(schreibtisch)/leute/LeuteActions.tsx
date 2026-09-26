@@ -5,6 +5,7 @@ import type { StudioMember } from "@fitretro/domain";
 import { AktionsKnopf } from "../../../Form";
 import { mitgliedEntfernen, mitgliedRolleAendern } from "../../../actions";
 import { Auswahl } from "../../../bausteine/Auswahl";
+import { StiftKnopf } from "../../../bausteine/Stift";
 import { Zeile } from "../../../bausteine/Zeile";
 import styles from "../../../portal.module.css";
 
@@ -81,6 +82,11 @@ export function MitgliedZeile({
  * Die Inhaberzeile traegt gar keine Aktion: RLS laesst sie ohnehin nicht
  * zu, und ein Knopf, der zuverlaessig scheitert, ist schlechter als
  * keiner.
+ *
+ * Testnotiz 25.09., #5: "Zum Mitglied herabstufen" stand als breiter Knopf
+ * in der Zeile und presste E-Mail und Datum auf dem Telefon zusammen.
+ * Jetzt sitzt dort der Stift wie an den Uebungen; ein Druck klappt die
+ * Optionen darunter auf. Die zweistufige Bestaetigung bleibt.
  */
 export function MitarbeiterZeile({
   studioId,
@@ -95,6 +101,10 @@ export function MitarbeiterZeile({
   seit: string;
   selbst: boolean;
 }) {
+  const [offen, setOffen] = useState(false);
+  const bereich = useId();
+  const bearbeitbar = !selbst && person.role !== "owner";
+
   return (
     <Zeile
       titel={
@@ -106,17 +116,30 @@ export function MitarbeiterZeile({
         </>
       }
       meta={seit}
+      aktionenOben={bearbeitbar}
       aktionen={
         selbst ? (
           <span className={styles.rowMeta}>Das bist du</span>
-        ) : person.role === "owner" ? null : (
-          <AktionsKnopf
-            label="Zum Mitglied herabstufen"
-            art="destructive"
-            bestaetigung="Wirklich herabstufen?"
-            aktion={() => mitgliedRolleAendern(studioId, pfad, person.userId, "member")}
+        ) : bearbeitbar ? (
+          <StiftKnopf
+            label={`${person.email} bearbeiten`}
+            gedrueckt={offen}
+            controls={bereich}
+            onClick={() => setOffen((bisher) => !bisher)}
           />
-        )
+        ) : null
+      }
+      darunter={
+        bearbeitbar && offen ? (
+          <div id={bereich}>
+            <AktionsKnopf
+              label="Zum Mitglied herabstufen"
+              art="destructive"
+              bestaetigung="Wirklich herabstufen?"
+              aktion={() => mitgliedRolleAendern(studioId, pfad, person.userId, "member")}
+            />
+          </div>
+        ) : undefined
       }
     />
   );
@@ -141,6 +164,11 @@ export function MitarbeiterZeile({
  * damit KEINE Akzentflaeche mehr -- der Reiter haette seine eine Flaeche
  * genau so lange nicht, wie noch niemand ausgewaehlt hat. Vor dem
  * Versehen schuetzt die zweistufige Bestaetigung, nicht ein leeres Feld.
+ *
+ * Seit der Testnotiz 25.09. (#6) ist der Knopf .secondary: die eine
+ * Akzentflaeche des Reiters gehoert jetzt "Einladungslink erstellen"
+ * (EinladungErstellen.tsx), dem Weg, auf dem Personal kuenftig ins Studio
+ * kommt. Hochstufen bleibt fuer den, der schon Mitglied ist.
  */
 export function MitgliedHochstufen({
   studioId,
@@ -187,7 +215,7 @@ export function MitgliedHochstufen({
       <div className={styles.actions}>
         <button
           type="button"
-          className={styles.primary}
+          className={styles.secondary}
           disabled={laeuft}
           onClick={() => {
             if (!bestaetigt) {

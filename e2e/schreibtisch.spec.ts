@@ -65,30 +65,22 @@ test("Ein frisches Studio zeigt keine vier Nullen, sondern einen Anfang", async 
   await expect(page.getByText("Mitglieder aktiv")).toHaveCount(0);
 });
 
-test("Der Ueberblick nennt die Produktgrenze und die Datenschutzgrenze", async ({ page }) => {
+/**
+ * Befund 19 (Fix-Runde 1), geschaerft in Fix-Runde 2: der Satz war zwar
+ * sichtbar, stand aber in text-faint (3,6 : 1). Bis zum 25.09. prueften
+ * hier zwei Tests Sichtbarkeit und Farbe der Produktgrenze auf dem
+ * Ueberblick. Seit der Testnotiz 25.09. (#3, #4) steht sie dort nicht
+ * mehr, ebenso wenig der Vorspann "Letzte 30 Tage ..." -- der Inhaber
+ * wollte beide Saetze nicht. Landeseite und Tag-Fallback behalten die
+ * Produktgrenze samt Farbtest (wurzel.spec.ts, tag-fallback.spec.ts).
+ */
+test("Der Ueberblick traegt weder Produktgrenze noch Vorspann", async ({ page }) => {
   const { studioId } = await studioMitTrainer(page, "ueberblick-grenzen");
   await page.goto(`/portal/${studioId}`);
 
-  await expect(page.getByText(/gymodo misst nichts/)).toBeVisible();
-});
-
-/**
- * Befund 19 (Fix-Runde 1), geschaerft in Fix-Runde 2: der Satz war zwar
- * sichtbar, stand aber in text-faint (3,6 : 1) -- ein Kontrast, den
- * Designsystem 2 fuer Pflichttext verbietet. "Sichtbar" allein sichert
- * das nicht zu; erst der Farbvergleich tut es. Geprueft wird auf
- * Gleichheit mit dem ERWARTETEN Wert (--text-muted, #9ba3af, im Browser
- * rgb(155, 163, 175)), nicht nur auf Ungleichheit mit dem verbotenen
- * --text-faint (rgb(92, 99, 110)) -- sonst bliebe ein anderer, ebenso zu
- * blasser Ton unentdeckt.
- */
-test("Die Produktgrenze steht in text-muted", async ({ page }) => {
-  const { studioId } = await studioMitTrainer(page, "ueberblick-kontrast");
-  await page.goto(`/portal/${studioId}`);
-
-  const satz = page.getByText(/gymodo misst nichts/);
-  const farbe = await satz.evaluate((el) => getComputedStyle(el).color);
-  expect(farbe).toBe("rgb(155, 163, 175)");
+  await expect(page.getByRole("heading", { name: "Überblick" })).toBeVisible();
+  await expect(page.getByText(/gymodo misst nichts/)).toHaveCount(0);
+  await expect(page.getByText(/Studioweite Summen/)).toHaveCount(0);
 });
 
 test("Ein Mitglied sieht den Ueberblick nicht, aber auch keinen Absturz", async ({ page }) => {
@@ -260,6 +252,33 @@ test("Jeder Modellreiter traegt genau eine Akzentflaeche -- ein Formular je Bild
       `Reiter "${reiter || "Stammdaten"}" traegt ${flaechen.length}: ${flaechen.join(", ")}`,
     ).toBe(1);
   }
+});
+
+/**
+ * Testnotiz 25.09., #7: "Gerät hinzufügen" fragt zuerst, ob es den Typ
+ * schon gibt. Ein weiteres Geraet braucht dann nur die Nummer -- Stammdaten,
+ * Einstellungen und Uebungen haengen am Modell und werden nicht kopiert.
+ * Danach steht es unter "Einzelne Geräte" desselben Modells.
+ */
+test("Ein weiteres Geraet eines vorhandenen Typs braucht nur die Nummer", async ({ page }) => {
+  const { studioId, admin } = await studioMitTrainer(page, "modell-exemplar");
+  const { data: modell, error } = await admin
+    .from("equipment_models")
+    .insert({ studio_id: studioId, name: "Beinpresse", weight_step_kg: 2.5 })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  await page.goto(`/portal/${studioId}/geraete/neu`);
+  await expect(page.getByText("Hast du dieses Gerät schon einmal angelegt?")).toBeVisible();
+  await page.getByRole("link", { name: /Ja, ein weiteres Gerät dieses Typs/ }).click();
+
+  await expect(page.getByRole("button", { name: "Gerätetyp" })).toContainText("Beinpresse");
+  await page.getByLabel("Nummer").fill("7");
+  await page.getByRole("button", { name: "Gerät anlegen" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/geraete/${modell.id}/instanzen$`));
+  await expect(page.getByRole("list", { name: "Geräte im Raum" })).toContainText("7");
 });
 
 /**
@@ -556,6 +575,10 @@ test("Die eigene Zeile traegt keinen Knopf, der die eigene Rolle nimmt", async (
   await expect(eigene).toBeVisible();
   await expect(eigene.getByText("Das bist du")).toBeVisible();
   await expect(eigene.getByRole("button", { name: /herabstufen/i })).toHaveCount(0);
+  // Seit der Testnotiz 25.09. (#5) steckt das Herabstufen hinter einem
+  // Stift. Die eigene Zeile traegt auch den nicht -- sonst waere der Knopf
+  // nur einen Druck entfernt.
+  await expect(eigene.getByRole("button", { name: /bearbeiten/ })).toHaveCount(0);
 });
 
 test("Hochstufen sagt vorher, was es bedeutet", async ({ page }) => {
@@ -627,6 +650,9 @@ test("Ein Mitglied steht im Mitglieder-Reiter und nicht bei den Mitarbeitern", a
  *   Mitarbeiter   EINE. "Zum Trainer machen" ist die Hauptaktion, und
  *                 sie steht genau einmal da: ein Auswahlfeld ueber alle
  *                 Mitglieder, ein Knopf (LeuteMitarbeiter.dc.html).
+ *                 Seit der Testnotiz 25.09. (#6) ist es
+ *                 "Einladungslink erstellen"; "Zum Trainer machen" ist
+ *                 Nebenaktion. Die Zahl bleibt eins.
  *
  * Eine wiederholte Zeilenaktion -- ein Akzentknopf je Mitglied -- waere
  * hier der Fehler, den dieser Test faengt: gemessen an einem Studio mit

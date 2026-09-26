@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  createStaffInvite,
+  revokeStaffInvite,
   DomainError,
   attachExerciseToModel,
   confirmInstructionVideo,
@@ -360,6 +362,62 @@ export async function geraetAnlegen(
       locationNote: optionalerText(formData, "locationNote"),
     });
   }, "layout");
+}
+
+/**
+ * Ein weiteres Geraet eines vorhandenen Typs, angelegt aus dem Ablauf
+ * "Gerät hinzufügen" (Testnotiz 25.09., #7). Wie geraetAnlegen, nur kommt
+ * das Modell aus dem Formular statt aus der Route -- und danach geht es auf
+ * "Einzelne Geräte" dieses Modells, wo das neue Geraet seinen Tag bekommt.
+ */
+export async function exemplarAnlegen(
+  studioId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionResult> {
+  const modelId = text(formData, "modelId");
+  const client = await createServerSupabaseClient();
+  try {
+    await createMachine(client, {
+      studioId,
+      equipmentModelId: modelId,
+      label: text(formData, "label"),
+      locationNote: optionalerText(formData, "locationNote"),
+    });
+  } catch (fehler) {
+    return fehlerAus(fehler);
+  }
+  revalidatePath(`/portal/${studioId}`, "layout");
+  redirect(`/portal/${studioId}/geraete/${modelId}/instanzen`);
+}
+
+/**
+ * Einladungslink fuer Personal (Testnotiz 25.09., #6). Der Token kommt
+ * genau hier einmal zum Browser -- gespeichert ist nur sein Hash (0045).
+ */
+export async function einladungErstellen(
+  studioId: string,
+  pfad: string,
+): Promise<Ergebnis<{ token: string }>> {
+  const client = await createServerSupabaseClient();
+  let token: string;
+  try {
+    token = await createStaffInvite(client, studioId);
+  } catch (fehler) {
+    return fehlerAus(fehler);
+  }
+  revalidatePath(pfad);
+  return { ok: true, token };
+}
+
+export async function einladungZurueckziehen(
+  studioId: string,
+  pfad: string,
+  inviteId: string,
+): Promise<ActionResult> {
+  return fuehreAus(pfad, async (client) => {
+    await revokeStaffInvite(client, inviteId);
+  });
 }
 
 export async function geraetStilllegen(

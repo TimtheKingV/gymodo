@@ -259,3 +259,63 @@ test("Alle anzeigen klappt die Mitgliederliste auf -- geklickt, nicht angesteuer
   await expect(page).toHaveURL(/\?alle=1$/);
   await expect(page.getByText("… 1 weitere")).toHaveCount(0);
 });
+
+/**
+ * Testnotiz 25.09., #6 -- Moeglichkeit 2: Mitarbeiter per Link einladen.
+ *
+ * Der ganze Weg in einem Stueck: der Trainer erzeugt den Link, eine
+ * zweite, nicht angemeldete Person oeffnet ihn, sieht das Studio, meldet
+ * sich an, landet ueber ?weiter= wieder auf der Einladung, nimmt an und
+ * steht im Portal. Danach gilt der Link nicht mehr.
+ *
+ * Der Link wird aus dem Feld gelesen, nicht aus der Zwischenablage: die
+ * braucht in Chromium eine eigene Berechtigung, und geprueft werden soll
+ * der Link, nicht der Browser.
+ */
+test("ein Trainer laedt per Link ein, und die Person steht danach im Portal", async ({
+  page,
+  browser,
+}) => {
+  const { studioId, admin: client } = await studioMitTrainer(page, "leute-einladung");
+  const { data: studio } = await client.from("studios").select("name").eq("id", studioId).single();
+
+  const neuEmail = `e2e-leute-eingeladen-${crypto.randomUUID()}@example.test`;
+  const { error: nutzerFehler } = await client.auth.admin.createUser({
+    email: neuEmail,
+    password: E2E_PASSWORD,
+    email_confirm: true,
+  });
+  if (nutzerFehler) throw nutzerFehler;
+
+  await page.goto(`/portal/${studioId}/leute/mitarbeiter`);
+  await page.getByRole("button", { name: "Einladungslink erstellen" }).click();
+  const link = await page.getByLabel("Einladungslink").inputValue();
+  expect(link).toMatch(/\/einladung\/[0-9a-f]{64}$/);
+  await expect(page.getByText(/Offene Einladung · gilt bis/)).toBeVisible();
+
+  // Eine frische Sitzung ohne Cookies -- die eingeladene Person.
+  const fremd = await browser.newContext();
+  const gast = await fremd.newPage();
+  await gast.goto(link);
+  await expect(gast.getByRole("heading", { name: `Einladung zu ${studio!.name}` })).toBeVisible();
+
+  await gast.getByRole("link", { name: "Schon ein Konto? Anmelden" }).click();
+  await gast.getByLabel("E-Mail").fill(neuEmail);
+  await gast.getByLabel("Passwort").fill(E2E_PASSWORD);
+  await gast.getByRole("button", { name: "Anmelden" }).click();
+
+  await expect(gast).toHaveURL(new RegExp(`${new URL(link).pathname}$`));
+  await gast.getByRole("button", { name: "Einladung annehmen" }).click();
+  await expect(gast).toHaveURL(new RegExp(`/portal/${studioId}$`));
+
+  // Ein zweites Mal gilt derselbe Link nicht.
+  await gast.goto(link);
+  await expect(gast.getByRole("heading", { name: "Diese Einladung gilt nicht mehr" })).toBeVisible();
+  await fremd.close();
+
+  // Beim Trainer steht die Person bei den Mitarbeitern, die Einladung ist weg.
+  await page.reload();
+  const mitarbeiter = page.locator("section").filter({ hasText: "Alle Mitarbeiter" });
+  await expect(mitarbeiter.locator("li", { hasText: neuEmail })).toBeVisible();
+  await expect(page.getByText(/Offene Einladung · gilt bis/)).toHaveCount(0);
+});
