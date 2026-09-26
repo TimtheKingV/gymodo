@@ -1,11 +1,17 @@
+import { DomainError, listStaffInvites, type StaffInvite } from "@fitretro/domain";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { AktionsKnopf } from "../../../../Form";
+import { einladungZurueckziehen } from "../../../../actions";
 import { Abschnitt } from "../../../../bausteine/Abschnitt";
 import { Erlaeuterung } from "../../../../bausteine/Erlaeuterung";
 import { Reiter } from "../../../../bausteine/Reiter";
 import { Seite } from "../../../../bausteine/Seite";
-import { Zeilen } from "../../../../bausteine/Zeile";
+import { Zeile, Zeilen } from "../../../../bausteine/Zeile";
 import { Zustand } from "../../../../bausteine/Zustand";
+import { EinladungErstellen } from "../EinladungErstellen";
 import { MitarbeiterZeile, MitgliedHochstufen } from "../LeuteActions";
 import { ladeLeute, leuteReiter, seit } from "../leute";
+import styles from "../../../../portal.module.css";
 
 /**
  * Reiter "Mitarbeiter" (Aufgabe 19, LeuteMitarbeiter.dc.html) -- nach
@@ -28,7 +34,17 @@ import { ladeLeute, leuteReiter, seit } from "../leute";
  * EIN Mitglied, nicht ueber das Studio: studio_overview (0034) gibt
  * Personal weiterhin Summen heraus, davon lebt der Ueberblick. "Das
  * Portal zeigt keine Trainingsdaten" waere falsch.
+ *
+ * Seit der Testnotiz 25.09. (#6) steht hier "Mitarbeiter einladen": ein
+ * Link fuer eine Person, sieben Tage gueltig (0045). Darunter die offenen
+ * Einladungen, jede zurueckziehbar. Der Weg ueber Studio-Code und
+ * Hochstufen bleibt, ist aber nicht mehr der erste.
  */
+
+/** "3. Oktober" in der Studio-Zeitzone (Designsystem 10). */
+function tag(iso: string, timeZone: string): string {
+  return new Date(iso).toLocaleDateString("de-DE", { day: "numeric", month: "long", timeZone });
+}
 export default async function LeuteMitarbeiterPage({
   params,
 }: {
@@ -50,6 +66,17 @@ export default async function LeuteMitarbeiterPage({
     );
   }
 
+  // Die offenen Einladungen. Ein Fehler hier nimmt der Seite nicht die
+  // Mitarbeiterliste -- er steht im eigenen Abschnitt.
+  let einladungen: StaffInvite[] = [];
+  let einladungenFehler: string | null = null;
+  try {
+    einladungen = await listStaffInvites(await createServerSupabaseClient(), studioId);
+  } catch (e) {
+    einladungenFehler =
+      e instanceof DomainError ? e.message : "Die Einladungen ließen sich nicht laden.";
+  }
+
   return (
     <Seite
       titel="Mitarbeiter"
@@ -67,7 +94,7 @@ export default async function LeuteMitarbeiterPage({
           <Zustand
             art="leer"
             titel="Noch niemand pflegt dieses Studio."
-            naechsterSchritt="Stuf ein Mitglied hoch, dann steht es hier."
+            naechsterSchritt="Lade jemanden ein oder stuf ein Mitglied hoch, dann steht es hier."
           />
         ) : (
           <Zeilen>
@@ -83,6 +110,35 @@ export default async function LeuteMitarbeiterPage({
             ))}
           </Zeilen>
         )}
+      </Abschnitt>
+
+      <Abschnitt titel="Mitarbeiter einladen">
+        <p className={styles.sectionNote}>
+          Schick den Link an die Person, die mitarbeiten soll. Sie legt ein Konto an oder meldet
+          sich an und ist danach Trainer.
+        </p>
+        <EinladungErstellen studioId={studioId} pfad={pfad} />
+        {einladungenFehler ? (
+          <Zustand art="fehler" titel={einladungenFehler} />
+        ) : einladungen.length > 0 ? (
+          <Zeilen>
+            {einladungen.map((einladung) => (
+              <Zeile
+                key={einladung.id}
+                titel={`Offene Einladung · gilt bis ${tag(einladung.expiresAt, daten.zeitzone)}`}
+                meta={`Erstellt am ${tag(einladung.createdAt, daten.zeitzone)}`}
+                aktionen={
+                  <AktionsKnopf
+                    label="Zurückziehen"
+                    art="destructive"
+                    bestaetigung="Link ungültig machen?"
+                    aktion={einladungZurueckziehen.bind(null, studioId, pfad, einladung.id)}
+                  />
+                }
+              />
+            ))}
+          </Zeilen>
+        ) : null}
       </Abschnitt>
 
       <Abschnitt titel="Mitglied hochstufen">

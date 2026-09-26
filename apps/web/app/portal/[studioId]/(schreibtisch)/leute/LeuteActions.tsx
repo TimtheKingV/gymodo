@@ -164,6 +164,11 @@ export function MitarbeiterZeile({
  * damit KEINE Akzentflaeche mehr -- der Reiter haette seine eine Flaeche
  * genau so lange nicht, wie noch niemand ausgewaehlt hat. Vor dem
  * Versehen schuetzt die zweistufige Bestaetigung, nicht ein leeres Feld.
+ *
+ * Seit der Testnotiz 25.09. (#6) ist der Knopf .secondary: die eine
+ * Akzentflaeche des Reiters gehoert jetzt "Einladungslink erstellen"
+ * (EinladungErstellen.tsx), dem Weg, auf dem Personal kuenftig ins Studio
+ * kommt. Hochstufen bleibt fuer den, der schon Mitglied ist.
  */
 export function MitgliedHochstufen({
   studioId,
@@ -210,7 +215,7 @@ export function MitgliedHochstufen({
       <div className={styles.actions}>
         <button
           type="button"
-          className={styles.primary}
+          className={styles.secondary}
           disabled={laeuft}
           onClick={() => {
             if (!bestaetigt) {

@@ -136,3 +136,75 @@ Einladungsweg für Personal. Jeder tritt über den Studio-Code bei
 (`join_studio_by_code`, 0030; Code unter Einstellungen) und ist dann
 Mitglied; ein Inhaber oder Trainer stuft ihn unter Leute → Mitarbeiter hoch.
 Siehe Antwort im Chat für die Optionen.
+
+---
+
+## Nachtrag · Etappe 5 · Mitarbeiter einladen per Link (Notiz #6, Möglichkeit 2)
+
+Entschieden am 26.09.: ein einmal gültiger Einladungslink mit Ablauf, kein
+Mailversand.
+
+**Ablauf.** Unter Leute → Mitarbeiter erzeugt ein Trainer oder Inhaber
+„Einladungslink erstellen“. Der Link (`/einladung/<token>`) wird genau dann
+angezeigt, zum Kopieren oder Teilen (iOS-Teilen-Blatt über
+`navigator.share`). Er gilt 7 Tage und für eine Person. Offene Einladungen
+stehen darunter mit Ablaufdatum und lassen sich zurückziehen.
+Wer den Link öffnet:
+- nicht angemeldet → „Du bist eingeladen, bei <Studio> als Trainer
+  mitzuarbeiten“ mit **Konto anlegen** / **Anmelden**; beide führen nach
+  dem Anmelden (auch nach dem Bestätigungscode) zurück auf den Link
+  (`?weiter=`),
+- angemeldet → **Einladung annehmen** → Trainer im Studio → Portal.
+- abgelaufen, benutzt, zurückgezogen oder unbekannt → ein Satz, alle gleich
+  (sonst ließen sich gültige Links erraten).
+
+**Datenbank (0045_mitarbeiter_einladung.sql).** Tabelle `staff_invites`;
+gespeichert wird nur der SHA-256 des Tokens, nie der Token selbst — eine
+gelesene Zeile ist kein Link. Lesen per RLS nur Personal des Studios,
+Schreiben nur über SECURITY-DEFINER-Funktionen:
+`create_staff_invite`, `staff_invite_info` (auch für `anon`: Name des
+Studios vor der Anmeldung), `accept_staff_invite` (einmalig, sperrt die
+Zeile `for update`; aus einem Mitglied wird Trainer, ein Inhaber bleibt
+Inhaber), `revoke_staff_invite`.
+
+**Tests.**
+- Integration (rot zuerst, laufen in CI gegen Supabase):
+  `tests/integration/staff-invites.test.ts` — nur Personal erzeugt; der
+  Token liegt nicht in der Tabelle; anonym liest man den Studionamen;
+  Annehmen macht Trainer, ein zweites Annehmen scheitert; abgelaufen und
+  zurückgezogen gelten nicht; Inhaber wird nicht herabgestuft; ein Mitglied
+  sieht keine Einladungen.
+- Vitest: `weiter.test.ts` (nur eigene Pfade als Rücksprung, kein
+  `//evil.example`), `EinladungErstellen.test.tsx` (Link erscheint nach dem
+  Erzeugen, Kopieren schreibt ihn in die Zwischenablage).
+- E2E `leute.spec.ts`: Trainer erzeugt Link, ein anderes Konto öffnet ihn,
+  meldet sich an, nimmt an und steht im Portal.
+
+**Eine Akzentfläche.** „Einladungslink erstellen“ wird die Hauptaktion des
+Reiters, „Zum Trainer machen“ wird Nebenaktion — der Weg über das
+Hochstufen bleibt, ist aber nicht mehr der erste.
+
+### Geprüft (Etappe 5)
+
+- Vitest Web: 31 Dateien, 187 Tests grün; Domäne: 17 Dateien, 169 Tests.
+  Zuerst rot gesehen: `weiter.test.ts`, `EinladungErstellen.test.tsx`,
+  `einladungen.test.ts` (Domäne).
+- Migration 0045 gegen ein lokales PostgreSQL 16 mit nachgebauten
+  Supabase-Grundlagen (`auth.uid()`, Rollen `anon`/`authenticated`,
+  `studios`, `studio_memberships`, `is_studio_staff`) eingespielt und von
+  Hand durchgespielt: Trainer erzeugt, Mitglied darf nicht; anonym liest
+  den Studionamen, darf nicht annehmen; Annehmen macht aus Mitglied und
+  neuem Konto Trainer, genau einmal; Inhaber bleibt Inhaber; abgelaufen und
+  zurückgezogen gelten nicht; im Speicher steht kein Klartext-Token; direkt
+  in die Tabelle schreiben scheitert an RLS.
+- **Nicht lokal gelaufen:** `tests/integration/staff-invites.test.ts` und
+  der E2E-Fall in `leute.spec.ts` — beide brauchen `supabase start`, laufen
+  in CI.
+- `pnpm typecheck`, `tsc --noEmit` (Wurzel), `pnpm build` grün;
+  `/einladung/[token]` steht als Route.
+- **Vor dem Ausrollen:** Migration 0045 muss in die Produktionsdatenbank
+  (`pnpm smoke:migrations` meldet den Rückstand), sonst scheitert
+  „Einladungslink erstellen“ mit einem Datenbankfehler.
+- **Am iPhone anzusehen:** „Teilen“ öffnet das Teilen-Blatt; Kopieren;
+  der Weg Link → Konto anlegen → Code aus der Mail → zurück auf der
+  Einladung.

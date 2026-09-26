@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  createStaffInvite,
+  revokeStaffInvite,
   DomainError,
   attachExerciseToModel,
   confirmInstructionVideo,
@@ -387,6 +389,35 @@ export async function exemplarAnlegen(
   }
   revalidatePath(`/portal/${studioId}`, "layout");
   redirect(`/portal/${studioId}/geraete/${modelId}/instanzen`);
+}
+
+/**
+ * Einladungslink fuer Personal (Testnotiz 25.09., #6). Der Token kommt
+ * genau hier einmal zum Browser -- gespeichert ist nur sein Hash (0045).
+ */
+export async function einladungErstellen(
+  studioId: string,
+  pfad: string,
+): Promise<Ergebnis<{ token: string }>> {
+  const client = await createServerSupabaseClient();
+  let token: string;
+  try {
+    token = await createStaffInvite(client, studioId);
+  } catch (fehler) {
+    return fehlerAus(fehler);
+  }
+  revalidatePath(pfad);
+  return { ok: true, token };
+}
+
+export async function einladungZurueckziehen(
+  studioId: string,
+  pfad: string,
+  inviteId: string,
+): Promise<ActionResult> {
+  return fuehreAus(pfad, async (client) => {
+    await revokeStaffInvite(client, inviteId);
+  });
 }
 
 export async function geraetStilllegen(

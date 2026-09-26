@@ -650,6 +650,9 @@ test("Ein Mitglied steht im Mitglieder-Reiter und nicht bei den Mitarbeitern", a
  *   Mitarbeiter   EINE. "Zum Trainer machen" ist die Hauptaktion, und
  *                 sie steht genau einmal da: ein Auswahlfeld ueber alle
  *                 Mitglieder, ein Knopf (LeuteMitarbeiter.dc.html).
+ *                 Seit der Testnotiz 25.09. (#6) ist es
+ *                 "Einladungslink erstellen"; "Zum Trainer machen" ist
+ *                 Nebenaktion. Die Zahl bleibt eins.
  *
  * Eine wiederholte Zeilenaktion -- ein Akzentknopf je Mitglied -- waere
  * hier der Fehler, den dieser Test faengt: gemessen an einem Studio mit
