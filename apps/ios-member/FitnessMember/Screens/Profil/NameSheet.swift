@@ -20,7 +20,7 @@ struct NameSheet: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
                 LabeledField(label: "NAME") {
-                    TextField("Dein Name", text: $name)
+                    TextField("", text: $name, prompt: Text.platzhalter("Dein Name"))
                         .textContentType(.givenName)
                 }
 

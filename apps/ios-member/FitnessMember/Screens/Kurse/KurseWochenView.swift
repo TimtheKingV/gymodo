@@ -468,7 +468,7 @@ struct KurseWochenView: View {
         jetzt: Date, hatAnmeldungen: Bool, ansicht: KurseAnsicht
     ) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
-            wochenstreifen(jetzt: jetzt)
+            wochenstreifen(jetzt: jetzt, ansicht: ansicht)
             if KurseAnsicht.zeigtUmschalter(hatAnmeldungen: hatAnmeldungen) {
                 umschalter(ansicht)
             }
@@ -523,7 +523,7 @@ struct KurseWochenView: View {
     /// bringt den Dreifinger-Wisch mit; die beiden benannten
     /// Aktionen darunter machen den Wochenwechsel zusaetzlich ueber den
     /// Rotor erreichbar -- und ueber Schaltersteuerung.
-    private func wochenstreifen(jetzt: Date) -> some View {
+    private func wochenstreifen(jetzt: Date, ansicht: KurseAnsicht) -> some View {
         let alle = montage(jetzt: jetzt)
         let index = wochenIndex(jetzt: jetzt)
 
@@ -536,7 +536,7 @@ struct KurseWochenView: View {
                 tagesboxen(
                     KurseWochenBerechnung.wochentage(
                         abMontag: montag, jetzt: jetzt, zeitzone: zeitzoneFuerAnfrage),
-                    jetzt: jetzt)
+                    jetzt: jetzt, ansicht: ansicht)
                 .frame(maxHeight: .infinity, alignment: .top)
                 .tag(seite)
             }
@@ -554,7 +554,7 @@ struct KurseWochenView: View {
         }
     }
 
-    private func tagesboxen(_ tage: [KurseWochentag], jetzt: Date) -> some View {
+    private func tagesboxen(_ tage: [KurseWochentag], jetzt: Date, ansicht: KurseAnsicht) -> some View {
         HStack(spacing: DesignSystem.Spacing.s4) {
             ForEach(tage) { tag in
                 let ausgewaehlt = tag.id == gewaehlterTag(jetzt: jetzt)
@@ -562,6 +562,22 @@ struct KurseWochenView: View {
                     tagId: tag.id, termine: kurse.woche?.sessions ?? [], jetzt: jetzt)
                 Button {
                     gewaehlterTagId = tag.id
+                    // Ein Tag ohne eigenen Platz hat in der
+                    // "Angemeldet"-Haelfte nichts zu sagen -- die
+                    // Begruendung steht an KurseAnsicht.nachTagwahl.
+                    //
+                    // NUR bei einer echten Aenderung schreiben. Sonst
+                    // machte jeder Tag-Tipp aus `nil` eine getippte Wahl,
+                    // und `nil` heisst hier etwas: "hat den Umschalter
+                    // noch nie angefasst". Wer ohne Anmeldungen (also in
+                    // `.alle`) einen Tag antippt, haette sich damit
+                    // stillschweigend auf `.alle` festgelegt -- und nach
+                    // seiner ersten Buchung stuende der Screen auf "Alle
+                    // Kurse" statt auf den eigenen Anmeldungen, ohne dass
+                    // er je umgeschaltet hat.
+                    let neueAnsicht = KurseAnsicht.nachTagwahl(
+                        bisher: ansicht, indikator: indikator)
+                    if neueAnsicht != ansicht { gewaehlteAnsicht = neueAnsicht }
                 } label: {
                     VStack(spacing: 6) {
                         // Der Buchstabe steht UEBER der Zelle, nicht darin:

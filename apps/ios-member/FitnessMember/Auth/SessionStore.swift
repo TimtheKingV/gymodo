@@ -17,12 +17,33 @@ final class SessionStore {
     /// nichts Halbes gespeichert.
     private(set) var vorgemerkterName: String?
 
+    /// Die Session aus `verifyPasswordResetCode`, bis `completePasswordReset`
+    /// sie freigibt oder `cancelPasswordReset` sie verwirft. Privat, und
+    /// deshalb liest die Wurzel sie nicht -- genau das ist der Punkt.
+    private var offeneWiederherstellung: Session?
+
     init(backend: AuthBackend) {
         self.backend = backend
     }
 
+    /// false, bis `restoreSession()` einmal gelaufen ist -- und zwar
+    /// unabhaengig davon, ob dabei eine Session herauskam.
+    ///
+    /// Ohne diese Unterscheidung heisst `session == nil` zweierlei: "nicht
+    /// angemeldet" UND "wir haben noch nicht nachgesehen". Der zweite Fall
+    /// gilt in jedem Kaltstart fuer die ersten Frames -- `restoreSession()`
+    /// laeuft in `.task` und damit erst NACH dem ersten body-Durchlauf --,
+    /// und die Wurzel zeichnete in dieser Zeit den Anmeldebildschirm, nur
+    /// um ihn Sekundenbruchteile spaeter gegen Home zu tauschen. Wer die
+    /// App oeffnet, sah sein Passwortfeld aufblitzen, obwohl er angemeldet
+    /// war (Testnotiz vom 19. September, Eintrag 1).
+    private(set) var wiederhergestellt = false
+
     func restoreSession() async {
         session = await backend.currentSession()
+        // Auch wenn nichts zurueckkam: der Versuch ist gelaufen, und ab
+        // jetzt heisst `session == nil` wirklich "nicht angemeldet".
+        wiederhergestellt = true
     }
 
     /// Fuer den tokenProvider des APIClient: fragt immer das Backend, nie die
@@ -91,11 +112,44 @@ final class SessionStore {
         try? await backend.requestPasswordReset(email: email)
     }
 
-    func resetPassword(email: String, code: String, newPassword: String) async throws(AuthError) {
+    /// Der Code-Schritt des Zuruecksetzens: prueft den Code aus der Mail
+    /// (MemberPasswortCodeView).
+    ///
+    /// Die Session, die dabei entsteht, landet bewusst NICHT in `session`,
+    /// sondern in `offeneWiederherstellung`. Veroeffentlicht wuerde sie die
+    /// Wurzel sofort auf Home umschalten -- mitten im Fluss, mit dem alten
+    /// Passwort noch in Kraft und dem Passwort-Screen nie gezeigt.
+    func verifyPasswordResetCode(email: String, code: String) async throws(AuthError) {
+        do { offeneWiederherstellung = try await backend.verifyRecoveryCode(email: email, code: code) }
+        catch { throw AuthError.map(error) }
+    }
+
+    /// Der Passwort-Schritt (MemberPasswortNeuView): setzt das neue Passwort
+    /// und gibt erst damit die Session frei, die der Code-Schritt
+    /// zurueckgehalten hat.
+    ///
+    /// `currentSession()` statt der zurueckgelegten Session, falls das
+    /// Setzen des Passworts einen frischen Token geliefert hat -- die
+    /// zurueckgelegte ist nur der Rueckfall.
+    func completePasswordReset(newPassword: String) async throws(AuthError) {
+        guard let offene = offeneWiederherstellung else { throw AuthError.unknown }
         do {
-            session = try await backend.verifyRecoveryCode(email: email, code: code)
             try await backend.updatePassword(newPassword)
+            offeneWiederherstellung = nil
+            session = await backend.currentSession() ?? offene
         } catch { throw AuthError.map(error) }
+    }
+
+    /// Verlaesst jemand den Fluss zwischen Code und neuem Passwort -- zurueck
+    /// gewischt, App weggelegt --, darf die halbe Wiederherstellung nicht im
+    /// Keychain liegen bleiben: `restoreSession()` haette ihn beim naechsten
+    /// Start angemeldet, ohne dass je ein Passwort gesetzt wurde. Ein Code
+    /// aus einer Mail ist die Erlaubnis, ein Passwort zu setzen, keine
+    /// dauerhafte Anmeldung.
+    func cancelPasswordReset() async {
+        guard offeneWiederherstellung != nil else { return }
+        offeneWiederherstellung = nil
+        try? await backend.signOut()
     }
 
     /// Bestaetigt das aktuelle Passwort durch eine erneute Anmeldung, bevor

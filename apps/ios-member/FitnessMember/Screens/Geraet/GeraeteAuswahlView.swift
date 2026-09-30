@@ -41,20 +41,46 @@ struct GeraeteAuswahlView: View {
         studioId ?? katalog.activeStudioId
     }
 
+    /// **Zwei Aufbauten, einer je nach System.**
+    ///
+    /// Ab iOS 26 macht das System, worum die Testnotiz vom 19. September
+    /// bittet (Eintraege 7 und 10): der grosse Titel schrumpft beim
+    /// Scrollen in die Leiste, und die Suchleiste klappt zur Lupe oben
+    /// rechts zusammen -- im selben Material wie der Zurueck-Knopf links,
+    /// der genau als Vorbild genannt wurde. Das ist kein nachgebauter
+    /// Effekt, sondern die Leiste selbst; dass die Schrift dabei zum Rest
+    /// der App passt, besorgt `Navigationsleiste`.
+    ///
+    /// Darunter bleibt alles beim Alten: der handgezeichnete Kopf und das
+    /// eigene Suchfeld, beide fest ueber der Liste. Sie nachzubauen hiesse,
+    /// Scroll-Offsets von Hand zu verrechnen und Glas mit `.ultraThinMaterial`
+    /// anzudeuten -- viel eigener Code fuer etwas, das auf dem Zielgeraet
+    /// ohnehin vom System kommt. Das Deployment-Target bleibt bei 17.
     var body: some View {
-        VStack(spacing: 0) {
-            kopf
-            suchfeld
-            inhalt
+        Group {
+            if #available(iOS 26.0, *) {
+                inhalt
+                    .navigationTitle("GERÄT WÄHLEN")
+                    .navigationBarTitleDisplayMode(.large)
+                    .modifier(SystemkopfAbIOS26(untertitel: untertitel, suchtext: $suchtext))
+            } else {
+                VStack(spacing: 0) {
+                    kopf
+                    suchfeld
+                    inhalt
+                }
+                .navigationBarTitleDisplayMode(.inline)
+            }
         }
         .background(DesignSystem.Color.bg)
-        .navigationBarTitleDisplayMode(.inline)
         .testnotizScreen()
         .task { fotos = await GeraeteFotos.laden(von: fotoLader) }
     }
 
     // MARK: - Kopf
 
+    /// Nur noch der Weg unter iOS 26 -- darueber tragen Titel und
+    /// Untertitel die Navigationsleiste (siehe `body`).
     private var kopf: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
             Text("GERÄT WÄHLEN")
@@ -84,9 +110,14 @@ struct GeraeteAuswahlView: View {
 
     // MARK: - Suchfeld
 
-    /// Ein eigenes Feld, nicht `.searchable`: die Systemsuchleiste setzt
-    /// sich unter den Navigationstitel, und das Feld gehoert hier in den
-    /// Inhalt -- es ist die Hauptaktion des Screens.
+    /// Ein eigenes Feld, nicht `.searchable` -- unter iOS 26.
+    ///
+    /// Die Begruendung von damals: die Systemsuchleiste setzt sich unter
+    /// den Navigationstitel, und das Feld gehoert in den Inhalt, es ist
+    /// die Hauptaktion des Screens. Ab iOS 26 gilt sie nicht mehr: dort
+    /// sitzt die Suche in der Leiste und klappt beim Scrollen zur Lupe
+    /// zusammen, statt Platz zu belegen -- und genau das war der Wunsch
+    /// (siehe `body`). Darunter bleibt es bei diesem Feld.
     private var suchfeld: some View {
         HStack(spacing: DesignSystem.Spacing.s12) {
             Image(systemName: "magnifyingglass")
@@ -260,26 +291,52 @@ struct GeraeteAuswahlView: View {
         }
     }
 
-    /// Ohne Foto steht hier nichts -- kein grauer Kasten, die Zeile bleibt
-    /// wie vorher (Sammelstelle Punkt 16). Das Bild erscheint, sobald es da
-    /// ist; bis dahin haelt die Zeile keinen Platz frei, sonst stuende im
-    /// Keller ohne Empfang dauerhaft eine Luecke da.
-    @ViewBuilder
+    /// Immer 56 pt breit -- mit Foto oder ohne.
+    ///
+    /// **Umgedreht gegenueber Sammelstelle Punkt 16.** Dort stand: kein
+    /// grauer Kasten, die Zeile haelt keinen Platz frei, sonst stuende im
+    /// Keller ohne Empfang dauerhaft eine Luecke da. Der Gedanke war, dem
+    /// Fehlen nicht auch noch eine Flaeche zu geben.
+    ///
+    /// Beim Lesen der Liste kostet das aber mehr, als es spart: ohne
+    /// Vorschau begann der Geraetename am Kartenrand, mit Vorschau 68 pt
+    /// weiter innen. Untereinander ergab das eine ausgefranste Kante, und
+    /// die Namen -- das Einzige, wonach man hier sucht -- standen von
+    /// Zeile zu Zeile woanders (Testnotiz vom 19. September, Eintrag 6).
+    /// Ein ruhiger Platzhalter ist das kleinere Uebel als eine Liste, die
+    /// beim Ueberfliegen springt; er wackelt ausserdem nicht mehr, wenn
+    /// das Bild nach der Ladeverzoegerung eintrifft.
+    ///
+    /// Die Hantel ist dabei ein Sinnbild, keine Aussage ueber DIESES
+    /// Geraet -- sie steht in `textFaint`, damit sie als Platzhalter
+    /// lesbar bleibt und nicht als Symbol eines Geraetetyps.
     private func vorschau(_ eintrag: GeraeteAuswahl.Eintrag) -> some View {
-        if let bild = bilder[eintrag.modellId] {
-            Image(uiImage: bild)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 56, height: 56)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-                // clipShape VOR overlay (Vorlage: InlineBanner). Die Kontur
-                // haelt die Kante eines dunklen Fotos auf surface sichtbar.
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                        .stroke(DesignSystem.Color.line, lineWidth: 1)
-                )
-                .accessibilityHidden(true)
-        }
+        RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+            .fill(DesignSystem.Color.surfaceRaised)
+            .frame(width: 56, height: 56)
+            .overlay {
+                Image(systemName: "dumbbell")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.textFaint)
+            }
+            .overlay {
+                if let bild = bilder[eintrag.modellId] {
+                    Image(uiImage: bild)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 56, height: 56)
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+                }
+            }
+            // clipShape VOR overlay (Vorlage: InlineBanner). Die Kontur
+            // haelt die Kante eines dunklen Fotos auf surface sichtbar --
+            // und zeichnet den leeren Platzhalter als Flaeche, nicht als
+            // Loch.
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                    .stroke(DesignSystem.Color.line, lineWidth: 1)
+            )
+            .accessibilityHidden(true)
     }
 
     private func zuletztText(_ zuletzt: GeraeteAuswahl.Zuletzt) -> String {
@@ -288,6 +345,32 @@ struct GeraeteAuswahlView: View {
         formatter.unitsStyle = .full
         let wann = formatter.localizedString(for: zuletzt.performedAt, relativeTo: .now)
         return "\(wann) · \(Zahlformat.gewichtMitEinheit(zuletzt.gewichtKg))"
+    }
+
+    /// Die drei Modifier, die es erst ab iOS 26 gibt -- in einem eigenen
+    /// Typ statt inline im `body`.
+    ///
+    /// Nicht aus Ordnungsliebe: `@available` laesst sich an einen Typ
+    /// haengen, an einen `if`-Zweig im ViewBuilder aber nur umstaendlich,
+    /// und so steht jede versionsabhaengige Zeile dieses Screens an einer
+    /// Stelle beieinander.
+    ///
+    /// `.minimize` ist das Verhalten aus der Testnotiz: die Suchleiste
+    /// bleibt oben sichtbar, solange man am Anfang der Liste steht, und
+    /// zieht sich beim Scrollen zur Lupe in der Leiste zusammen.
+    @available(iOS 26.0, *)
+    private struct SystemkopfAbIOS26: ViewModifier {
+        let untertitel: String
+        @Binding var suchtext: String
+
+        func body(content: Content) -> some View {
+            content
+                .navigationSubtitle(untertitel)
+                .searchable(
+                    text: $suchtext,
+                    prompt: Text("Gerät, Übung oder Platz"))
+                .searchToolbarBehavior(.minimize)
+        }
     }
 
     /// Zwei Marken, die es sonst nirgends gibt.

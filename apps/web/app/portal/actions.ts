@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  createStaffInvite,
+  revokeStaffInvite,
   DomainError,
   attachExerciseToModel,
   confirmInstructionVideo,
@@ -22,10 +24,12 @@ import {
   setMembershipRole,
   setStudioJoinCodeActive,
   updateEquipmentModel,
+  updateExercise,
   updateStudioSettings,
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { assistentStart } from "./[studioId]/(schreibtisch)/geraete/assistent";
 
 /**
  * Die Trainerfunktionen als Server Actions -- kein HTTP, keine Endpoints.
@@ -148,7 +152,10 @@ export async function modellAnlegen(
     return fehlerAus(fehler);
   }
   revalidatePath(`/portal/${studioId}`, "layout");
-  redirect(`/portal/${studioId}/geraete/${modelId}`);
+  // Weiter im Ablauf "Gerät hinzufügen": Schritt 2, die Einstellungen
+  // (Testnotiz 23.09., #7) -- nicht mehr auf die Stammdaten, die gerade
+  // eingetippt wurden.
+  redirect(assistentStart(studioId, modelId));
 }
 
 export async function modellAendern(
@@ -262,6 +269,24 @@ export async function uebungAnlegen(
   return { ok: true, linkId };
 }
 
+/** Name und Wiederholungen einer bestehenden Uebung (Testnotiz 22.09.,
+    #12: der Stift an der Zeile oeffnet genau diese Uebung zum Ergaenzen). */
+export async function uebungAendern(
+  studioId: string,
+  modelId: string,
+  exerciseId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionResult> {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
+    await updateExercise(client, exerciseId, {
+      name: text(formData, "name"),
+      targetRepsMin: zahl(formData, "targetRepsMin") ?? Number.NaN,
+      targetRepsMax: zahl(formData, "targetRepsMax") ?? Number.NaN,
+    });
+  }, "layout");
+}
+
 export async function uebungLoesen(
   studioId: string,
   modelId: string,
@@ -337,6 +362,62 @@ export async function geraetAnlegen(
       locationNote: optionalerText(formData, "locationNote"),
     });
   }, "layout");
+}
+
+/**
+ * Ein weiteres Geraet eines vorhandenen Typs, angelegt aus dem Ablauf
+ * "Gerät hinzufügen" (Testnotiz 25.09., #7). Wie geraetAnlegen, nur kommt
+ * das Modell aus dem Formular statt aus der Route -- und danach geht es auf
+ * "Einzelne Geräte" dieses Modells, wo das neue Geraet seinen Tag bekommt.
+ */
+export async function exemplarAnlegen(
+  studioId: string,
+  _prev: unknown,
+  formData: FormData,
+): Promise<ActionResult> {
+  const modelId = text(formData, "modelId");
+  const client = await createServerSupabaseClient();
+  try {
+    await createMachine(client, {
+      studioId,
+      equipmentModelId: modelId,
+      label: text(formData, "label"),
+      locationNote: optionalerText(formData, "locationNote"),
+    });
+  } catch (fehler) {
+    return fehlerAus(fehler);
+  }
+  revalidatePath(`/portal/${studioId}`, "layout");
+  redirect(`/portal/${studioId}/geraete/${modelId}/instanzen`);
+}
+
+/**
+ * Einladungslink fuer Personal (Testnotiz 25.09., #6). Der Token kommt
+ * genau hier einmal zum Browser -- gespeichert ist nur sein Hash (0045).
+ */
+export async function einladungErstellen(
+  studioId: string,
+  pfad: string,
+): Promise<Ergebnis<{ token: string }>> {
+  const client = await createServerSupabaseClient();
+  let token: string;
+  try {
+    token = await createStaffInvite(client, studioId);
+  } catch (fehler) {
+    return fehlerAus(fehler);
+  }
+  revalidatePath(pfad);
+  return { ok: true, token };
+}
+
+export async function einladungZurueckziehen(
+  studioId: string,
+  pfad: string,
+  inviteId: string,
+): Promise<ActionResult> {
+  return fuehreAus(pfad, async (client) => {
+    await revokeStaffInvite(client, inviteId);
+  });
 }
 
 export async function geraetStilllegen(

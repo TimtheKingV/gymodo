@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { sichererWeiter } from "../einladung/weiter";
 
 const registrierenSchema = z.object({
   email: z.string().email("Bitte eine gueltige E-Mail eingeben."),
@@ -30,7 +31,7 @@ export async function registrieren(_prev: unknown, formData: FormData) {
   // Ist die Bestaetigungspflicht aus (lokal, siehe .env.example), liefert
   // signUp bereits eine Session -- dann direkt weiter, sonst zeigt die Seite
   // das Codefeld.
-  if (data.session) redirect("/");
+  if (data.session) redirect(sichererWeiter(String(formData.get("weiter") ?? "")));
 
   return { sentTo: parsed.data.email };
 }
@@ -50,5 +51,5 @@ export async function registrierungBestaetigen(_prev: unknown, formData: FormDat
   });
   if (error) return { error: "Der Code ist ungueltig oder abgelaufen." };
 
-  redirect("/");
+  redirect(sichererWeiter(String(formData.get("weiter") ?? "")));
 }

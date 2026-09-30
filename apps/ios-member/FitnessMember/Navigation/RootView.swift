@@ -20,18 +20,21 @@ struct RootView: View {
         // fragt onboardingOffen ohnehin nur im .loaded-Zweig ab, deshalb
         // darf der Wert hier grob (nil == "offen") berechnet werden.
         let onboardingOffen = catalogStore.bootstrap?.member.onboardingCompletedAt == nil
-        let destination = RootDestinationLogic.destination(session: sessionStore.session, catalogState: catalogStore.loadState, onboardingOffen: onboardingOffen)
+        let destination = RootDestinationLogic.destination(
+            session: sessionStore.session, catalogState: catalogStore.loadState,
+            onboardingOffen: onboardingOffen,
+            wiederhergestellt: sessionStore.wiederhergestellt)
 
         Group {
             switch destination {
             case .authFlow:
                 AuthFlow(apiClient: apiClient)
-            case .loadingCatalog:
-                ProgressView()
-                    .tint(DesignSystem.Color.accent)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(DesignSystem.Color.bg)
-                    .testnotizScreen()
+            // Zwei Gruende, derselbe Bildschirm: beim Kaltstart wissen wir
+            // die Anmeldung noch nicht, danach den Katalog noch nicht.
+            // Beide Male laeuft etwas, und beide Male ist das Einzige, was
+            // die App ehrlich sagen kann, genau das.
+            case .start, .loadingCatalog:
+                ladeschirm
             case .onboarding:
                 OnboardingFlow(apiClient: apiClient, alsSheet: false) { }
             case .noStudio:
@@ -76,5 +79,13 @@ struct RootView: View {
                 verlaufStore.reset()
             }
         }
+    }
+
+    private var ladeschirm: some View {
+        ProgressView()
+            .tint(DesignSystem.Color.accent)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(DesignSystem.Color.bg)
+            .testnotizScreen()
     }
 }

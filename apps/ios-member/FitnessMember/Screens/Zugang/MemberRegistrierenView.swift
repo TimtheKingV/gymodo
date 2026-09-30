@@ -19,11 +19,11 @@ struct MemberRegistrierenView: View {
                 }
 
                 LabeledField(label: "Vorname") {
-                    TextField("Dein Vorname", text: $vorname)
+                    TextField("", text: $vorname, prompt: Text.platzhalter("Dein Vorname"))
                         .textContentType(.givenName)
                 }
                 LabeledField(label: "E-Mail-Adresse") {
-                    TextField("name@beispiel.de", text: $email)
+                    TextField("", text: $email, prompt: Text.platzhalter("name@beispiel.de"))
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()

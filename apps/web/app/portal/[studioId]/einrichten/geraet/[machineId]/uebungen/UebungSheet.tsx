@@ -122,9 +122,8 @@ export function UebungSheet({
           <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
             <MedienVorschau url={objektUrl} art="video" leerText="Kein Video" groesse="mini" />
             <DateiKnopf
-              label="Video auswählen"
+              label="Video hinzufügen"
               accept="video/mp4,video/quicktime"
-              capture="environment"
               gross
               onDatei={aufDatei}
             />

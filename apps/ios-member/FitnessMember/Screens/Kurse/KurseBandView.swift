@@ -59,6 +59,18 @@ struct KurseBandView: View {
     @State private var stornierendeIds: Set<String> = []
     @State private var fehlermeldungen: [String: String] = [:]
 
+    /// Wonach der Dialog gerade fragt -- nil, solange er zu ist.
+    ///
+    /// Ein optionaler Wert statt eines Bool, weil im Band mehrere Karten
+    /// uebereinander liegen: der Dialog muss wissen, WELCHE Anmeldung
+    /// gemeint ist. Dasselbe Muster wie `SessionDetailView.zuLoeschen`.
+    private struct Abmeldefrage: Equatable {
+        let sessionId: String
+        let kursname: String
+        let istWarteliste: Bool
+    }
+    @State private var abmeldefrage: Abmeldefrage?
+
     var body: some View {
         let abschnitte = einteilung.abschnitte(jetzt: jetzt, zeitzone: eigene.timezone)
         let zeigtUeberschriften = KurseMeineEinteilung.zeigtUeberschriften(abschnitte)
@@ -74,6 +86,27 @@ struct KurseBandView: View {
                     }
                 }
             }
+        }
+        .confirmationDialog(
+            abmeldefrage.map {
+                KurseAbmeldefrage.titel(kursname: $0.kursname, istWarteliste: $0.istWarteliste)
+            } ?? "",
+            isPresented: Binding(
+                get: { abmeldefrage != nil },
+                set: { if !$0 { abmeldefrage = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: abmeldefrage
+        ) { frage in
+            // "Abmelden" wie auf dem Knopf, der den Dialog geoeffnet hat
+            // -- auch bei einer Warteliste, wo der Knopf im Band genauso
+            // heisst (siehe die Notiz am Ende von KurseAbmeldefrage).
+            Button("Abmelden", role: .destructive) {
+                Task { await abmelden(sessionId: frage.sessionId) }
+            }
+            Button("Abbrechen", role: .cancel) {}
+        } message: { frage in
+            Text(KurseAbmeldefrage.erklaerung(istWarteliste: frage.istWarteliste))
         }
     }
 
@@ -151,7 +184,11 @@ struct KurseBandView: View {
                     }
                     Spacer(minLength: 0)
                     if zeigtKnopf {
-                        abmeldenKnopf(zeile.termin.sessionId)
+                        abmeldenKnopf(
+                            Abmeldefrage(
+                                sessionId: zeile.termin.sessionId,
+                                kursname: zeile.termin.name,
+                                istWarteliste: zustand == .warteliste))
                     }
                 }
                 .padding(DesignSystem.Spacing.s12)
@@ -287,10 +324,15 @@ struct KurseBandView: View {
     /// Zeigt waehrend des eigenen Versuchs einen ProgressView statt Text --
     /// nie ein stummer deaktivierter Zustand -, und nur DIESE Karte ist
     /// gesperrt, jede andere bleibt unabhaengig bedienbar.
-    private func abmeldenKnopf(_ sessionId: String) -> some View {
-        let laeuft = abmeldeZustand(sessionId) == .laeuft
+    ///
+    /// Der Tipp meldet nicht mehr ab, er FRAGT -- die Begruendung steht an
+    /// `KurseAbmeldefrage`. Die Sperre bleibt trotzdem hier und nicht im
+    /// Dialog: sie soll auch den zweiten Tipp auf einen Knopf abfangen,
+    /// dessen Abmeldung schon laeuft.
+    private func abmeldenKnopf(_ frage: Abmeldefrage) -> some View {
+        let laeuft = abmeldeZustand(frage.sessionId) == .laeuft
         return Button {
-            Task { await abmelden(sessionId: sessionId) }
+            abmeldefrage = frage
         } label: {
             Group {
                 if laeuft {

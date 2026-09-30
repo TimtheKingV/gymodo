@@ -72,4 +72,50 @@ struct RootDestinationLogicTests {
     func onboardingNeverWithoutSession() {
         #expect(RootDestinationLogic.destination(session: nil, catalogState: .loaded(hasStudio: false), onboardingOffen: true) == .authFlow)
     }
+
+    // MARK: - Der Kaltstart (Testnotiz 19. September, Eintrag 1)
+
+    @Test("vor der Wiederherstellung zeigt eine fehlende Session den Ladeschirm, nicht die Anmeldung")
+    func startBeforeRestore() {
+        #expect(
+            RootDestinationLogic.destination(
+                session: nil, catalogState: .idle, onboardingOffen: false,
+                wiederhergestellt: false) == .start)
+    }
+
+    @Test("nach der Wiederherstellung heisst 'keine Session' wieder authFlow")
+    func authFlowAfterRestore() {
+        #expect(
+            RootDestinationLogic.destination(
+                session: nil, catalogState: .idle, onboardingOffen: false,
+                wiederhergestellt: true) == .authFlow)
+    }
+
+    // Der Regressionstest zum aufblitzenden Anmeldebildschirm: solange
+    // niemand nachgesehen hat, ob eine Sitzung im Schluesselbund liegt,
+    // darf die Wurzel das Passwortfeld nicht zeichnen. Egal, was der
+    // Katalog gerade sagt -- er kann ohne Session ohnehin nichts wissen.
+    @Test("ein nicht wiederhergestellter Start fuehrt in KEINEM Katalogzustand auf authFlow")
+    func startNeverAuthFlow() {
+        let zustaende: [CatalogLoadState] = [
+            .idle, .loading, .loaded(hasStudio: true), .loaded(hasStudio: false), .failed,
+        ]
+        for zustand in zustaende {
+            #expect(
+                RootDestinationLogic.destination(
+                    session: nil, catalogState: zustand, onboardingOffen: false,
+                    wiederhergestellt: false) != .authFlow)
+        }
+    }
+
+    // Wer sich gerade erst angemeldet hat, hat nie eine Wiederherstellung
+    // gebraucht -- die Session steht trotzdem, und der Ladeschirm waere
+    // hier ein Rueckschritt statt eines Fortschritts.
+    @Test("eine frische Anmeldung gewinnt gegen das Flag")
+    func freshSignInBeatsFlag() {
+        #expect(
+            RootDestinationLogic.destination(
+                session: session, catalogState: .loaded(hasStudio: true), onboardingOffen: false,
+                wiederhergestellt: false) == .main)
+    }
 }

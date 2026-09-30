@@ -12,6 +12,10 @@ struct FitnessMemberApp: App {
     private let apiClient: APIClient
 
     init() {
+        // Vor allem anderen: UINavigationBar.appearance() wirkt nur auf
+        // Leisten, die danach entstehen.
+        Navigationsleiste.einrichten()
+
         let session = SessionStore(backend: SupabaseAuthBackend())
         let client = APIClient(baseURL: AppConfig.apiBaseURL) { await session.currentAccessToken() }
         _sessionStore = State(initialValue: session)

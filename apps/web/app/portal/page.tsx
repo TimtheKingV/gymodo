@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { istAuthAusfall } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Einstieg } from "../einstieg/Einstieg";
 import einstiegStyles from "../einstieg/einstieg.module.css";
@@ -25,9 +26,16 @@ import styles from "./portal.module.css";
  */
 export default async function PortalPage() {
   const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Ein Ausfall des Auth-Dienstes ist keine Aussage darueber, ob jemand
+  // angemeldet ist (derselbe Schnitt wie in ladeKatalog und requireUserId).
+  // Ohne die Unterscheidung schickt ein 429 oder ein abgerissener Aufruf ein
+  // angemeldetes Konto lautlos zum Login zurueck.
+  const { data, error } = await supabase.auth.getUser();
+  if (istAuthAusfall(error)) {
+    console.error("Portal: Anmeldung liess sich nicht pruefen:", error);
+    throw error;
+  }
+  const user = data.user;
   if (!user) redirect("/login");
 
   // memberships_select_staff (0031) laesst Mitarbeiter alle Zeilen ihres

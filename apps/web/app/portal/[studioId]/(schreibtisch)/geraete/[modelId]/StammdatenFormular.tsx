@@ -28,7 +28,12 @@ export function StammdatenFormular({
   fotoUrl: string | undefined;
 }) {
   return (
-    <AktionsFormular action={action} submitLabel="Änderungen speichern">
+    <AktionsFormular
+      action={action}
+      submitLabel="Änderungen speichern"
+      erfolgText="Gespeichert ✓"
+      nurBeiAenderung
+    >
       <div className={styles.grid}>
         <Feld name="name" label="Name" required defaultValue={modell.name} />
         <Feld

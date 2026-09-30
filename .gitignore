@@ -29,5 +29,9 @@ apps/ios-member/Config.xcconfig
 apps/ios-member/testnotizen/*
 !apps/ios-member/testnotizen/README.md
 
+# Dasselbe aus dem Trainerportal: der Dev-Server schreibt hierher.
+apps/web/testnotizen/*
+!apps/web/testnotizen/README.md
+
 # Worktrees der Claude-Sessions
 .claude/worktrees/

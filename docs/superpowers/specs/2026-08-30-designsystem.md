@@ -31,10 +31,14 @@ Verworfene Alternativen: eine helle, instrumentenhafte Richtung (präziser, aber
 | `accent` | `#D4FF3F` | Hauptaktion, aktiver Wert, Verlaufskurve |
 | `accent-pressed` | `#A8CC2A` | gedrückte Hauptaktion |
 | `on-accent` | `#0A0B0D` | Schrift **auf** dem Akzent |
+| `accent-muted` | `#2E3716` | Fläche der Hauptaktion, solange sie nicht auslösbar ist |
+| `accent-dim` | `#819B2A` | Schrift auf `accent-muted`; Platzhalter in Eingabefeldern |
 | `warn` | `#FFB020` | Problemmeldung |
 | `danger` | `#FF5A4E` | Offline, Fehler, Abmelden |
 
 **Kontrast gegen `bg`:** `accent` 17,4 : 1 · `text` 17,9 : 1 · `text-muted` 7,4 : 1 · `text-faint` 3,6 : 1. `text-faint` ist damit nur für Text ≥ 15 pt oder nicht-tragende Information zulässig — nie für etwas, das gelesen werden muss.
+
+`accent-dim` trägt 4,4 : 1 auf `accent-muted` und 6,3 : 1 auf `surface` — für die 19-pt-Black-Schrift der Hauptaktion und für Platzhalter reicht beides. Die beiden gedeckten Töne sind **keine** dritte Akzentfläche im Sinn von Regel 1: sie sitzen genau dort, wo der Akzent ohnehin sitzt, nur heruntergedreht.
 
 ### Zwei Regeln, die nicht verhandelbar sind
 
@@ -89,7 +93,9 @@ Fünf Stile, einmal definiert, überall gleich:
 | **Leer** | Überschrift + nächster Schritt | Erklärt, was zu tun ist. Nie eine leere Statistik mit Nullen. |
 | **Offline** | `danger`-Umriss, 10 % `danger`-Fläche | Formulierung immer „gespeichert, wird gesendet" — **nie** „fehlgeschlagen". Der Satz ist lokal sicher; das muss die Sprache tragen. |
 | **Fehler** | `danger`-Umriss, voller Kontrast | Sagt, was falsch ist **und** was gilt („Gewicht liegt über dem Gerätemaximum"), nie nur „ungültig". |
-| **Deaktiviert** | `surface-raised` auf `text-faint` | Nie stumm — daneben steht, was fehlt. |
+| **Deaktiviert** | `accent-muted` auf `accent-dim` für die Hauptaktion, sonst `surface-raised` auf `text-faint` | Nie stumm — daneben steht, was fehlt. |
+
+**Warum die Hauptaktion beim Deaktiviert-Stil aus der Reihe tanzt:** Ein grauer Knopf unter einem leeren Formular sah aus wie jede andere tote Fläche im Screen — oder wie etwas Kaputtes. Er ist aber weder das eine noch das andere: er ist der richtige Knopf, nur noch nicht dran. Die gedeckte Variante derselben Farbe sagt genau das, und der Blick bleibt beim Ziel, während man tippt. Bei den Steuerelementen, die am Anschlag deaktivieren — Stepper, Radzeilen —, bleibt es bei `surface-raised`/`text-faint`: die tragen den Akzent auch im aktiven Zustand nicht, sie dürfen ihn im inaktiven nicht erben.
 
 ---
 

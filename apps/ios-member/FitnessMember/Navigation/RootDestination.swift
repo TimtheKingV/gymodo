@@ -1,6 +1,9 @@
 import Foundation
 
 enum RootDestination: Equatable {
+    /// Der Kaltstart, bevor `SessionStore.restoreSession()` geantwortet
+    /// hat -- siehe `destination(...)`.
+    case start
     case authFlow
     case loadingCatalog
     case onboarding
@@ -34,8 +37,25 @@ enum RootDestinationLogic {
     /// beides gleich zeichnet, macht den Ausfall von aussen unauffindbar --
     /// und schickt das Mitglied auf die Suche nach einem Code, den es
     /// laengst eingeloest hat.
-    static func destination(session: Session?, catalogState: CatalogLoadState, onboardingOffen: Bool) -> RootDestination {
-        guard session != nil else { return .authFlow }
+    ///
+    /// `.start` geht allem voran, solange noch keine Sitzung
+    /// wiederhergestellt wurde (`SessionStore.wiederhergestellt`). "Noch
+    /// nicht nachgesehen" ist keine Aussage ueber die Anmeldung, genauso
+    /// wenig wie ein Ladefehler eine ueber die Mitgliedschaft ist -- und
+    /// derselbe Fehler stand hier: ein `session == nil` aus den ersten
+    /// Frames eines Kaltstarts wurde als "nicht angemeldet" gelesen und
+    /// liess den Anmeldebildschirm aufblitzen, bevor Home ihn ersetzte.
+    /// Ein Ladeschirm sagt stattdessen, was wirklich gilt: es laeuft noch.
+    ///
+    /// Eine bereits vorhandene Session gewinnt gegen das Flag: die
+    /// Anmeldung im selben Lauf setzt `session`, ohne dass
+    /// `restoreSession()` je lief, und darf nicht in den Ladeschirm
+    /// zurueckfallen.
+    static func destination(
+        session: Session?, catalogState: CatalogLoadState, onboardingOffen: Bool,
+        wiederhergestellt: Bool = true
+    ) -> RootDestination {
+        guard session != nil else { return wiederhergestellt ? .authFlow : .start }
         switch catalogState {
         case .idle, .loading: return .loadingCatalog
         case .loaded(let hasStudio):

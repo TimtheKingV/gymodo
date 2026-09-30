@@ -25,7 +25,7 @@ struct LoginMailView: View {
                 }
 
                 LabeledField(label: "E-Mail-Adresse") {
-                    TextField("name@beispiel.de", text: $email)
+                    TextField("", text: $email, prompt: Text.platzhalter("name@beispiel.de"))
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()

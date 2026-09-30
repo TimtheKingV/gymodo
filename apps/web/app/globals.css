@@ -99,6 +99,19 @@ body {
   padding: 0;
 }
 
+/* Feste Breite auf dem Telefon (Testnotiz 22.09., #2): die Seite laesst
+   sich nicht mehr seitlich verschieben, und Zwei-Finger-Zoom ist aus.
+   `clip` statt `hidden`, weil `hidden` einen Scroll-Container erzeugt und
+   damit position: sticky (Rail, Kopfleisten) bricht. `pan-x pan-y` sperrt
+   nur das Zoomen -- seitlich scrollende Innenelemente (Reiterleiste)
+   bleiben wischbar. iOS ignoriert user-scalable=no im Viewport seit
+   Jahren, touch-action respektiert es. */
+html,
+body {
+  overflow-x: clip;
+  touch-action: pan-x pan-y;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -148,6 +161,18 @@ textarea {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* iOS Safari zoomt beim Antippen in jedes Feld unter 16 px hinein -- und
+   zoomt danach nicht zurueck. Das war der "komische Zoom" aus der
+   Testnotiz vom 22.09. Unter 900 px (Telefon/Tablet) tragen Felder deshalb
+   mindestens 16 px; am Schreibtisch bleibt es bei der Grundschrift. */
+@media (max-width: 900px) {
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

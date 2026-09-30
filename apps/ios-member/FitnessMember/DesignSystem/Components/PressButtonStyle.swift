@@ -33,8 +33,14 @@ struct HauptaktionButtonStyle: ButtonStyle {
                        value: configuration.isPressed)
     }
 
+    /// Drei Staerken derselben Farbe statt zweier Farben und einem Grau:
+    /// inaktiv `accent-muted`, bereit `accent`, gedrueckt `accent-pressed`.
+    /// Der Knopf bleibt damit ueber alle Zustaende derselbe Gegenstand --
+    /// vorher wechselte er beim ersten Zeichen im Formular von einer grauen
+    /// Flaeche zu einer gruenen und sah aus wie ein anderer (Testnotiz
+    /// 21.09., Eintrag 1).
     private func hintergrund(gedrueckt: Bool) -> Color {
-        guard isEnabled else { return DesignSystem.Color.surfaceRaised }
+        guard isEnabled else { return DesignSystem.Color.accentMuted }
         return gedrueckt ? DesignSystem.Color.accentPressed : DesignSystem.Color.accent
     }
 }

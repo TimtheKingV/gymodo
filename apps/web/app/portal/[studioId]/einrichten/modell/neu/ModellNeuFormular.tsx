@@ -18,8 +18,9 @@ import portalStyles from "../../../../portal.module.css";
  * ersetzt die vormalige Chip-Reihe fuer die Schrittweite und die getippten
  * Ab/Bis-Felder, gleicher Stil wie bei den Einstellungen.
  *
- * Das Foto kommt ueber capture aus der Systemkamera und nicht aus einem
- * eigenen Sucher: dieselbe Bedienung, vom Betriebssystem gestellt, und
+ * Das Foto kommt ueber den Dateidialog des Systems (Kamera oder Mediathek)
+ * und nicht aus einem eigenen Sucher: dieselbe Bedienung, vom
+ * Betriebssystem gestellt, und
  * getUserMedia bleibt dem Tag-Sucher vorbehalten, wo es keine Alternative
  * gibt. Spec 5 nennt "Foto am Telefon" ausdruecklich vollstaendig vorhanden.
  */

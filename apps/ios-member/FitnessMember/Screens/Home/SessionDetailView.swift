@@ -98,7 +98,44 @@ struct SessionDetailView: View {
                 .font(DesignSystem.Typography.fliesstext)
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .monospacedDigit()
+
+            if karte.istAutoBeendet { autoBeendetHinweis }
         }
+    }
+
+    /// Hier und NICHT auf der Tageskarte auf Home (Testnotiz vom
+    /// 19. September, Eintrag 4).
+    ///
+    /// Die Marke ist richtig, aber sie stand am falschen Ort: auf Home lag
+    /// sie vor der kleinen Zeile und war damit das Erste, was an einem
+    /// erledigten Training ins Auge fiel -- eine Warnfarbe fuer eine
+    /// Nebensaechlichkeit. Wer wissen will, woran er bei einer Einheit
+    /// ist, tippt sie an, und genau dort steht die Marke jetzt: mit dem
+    /// Satz daneben, der sie erklaert, statt allein und ohne Zusammenhang.
+    ///
+    /// "Untergrenze", weil `getSessions` das Ende einer selbsttaetig
+    /// beendeten Einheit auf den letzten Satz setzt -- siehe
+    /// `HomeZeilen.dauerText`, der aus demselben Grund gar keine Dauer
+    /// zeigt.
+    private var autoBeendetHinweis: some View {
+        HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.s8) {
+            Text("AUTO BEENDET")
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(DesignSystem.Color.warn)
+                .padding(.horizontal, DesignSystem.Spacing.s8)
+                .padding(.vertical, DesignSystem.Spacing.s4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.pille)
+                        .stroke(DesignSystem.Color.warn, lineWidth: 1))
+
+            Text("Ohne Bestätigung beendet — die Dauer ist eine Untergrenze.")
+                .font(.system(size: 12))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+        }
+        .padding(.top, DesignSystem.Spacing.s4)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "Auto beendet. Ohne Bestätigung beendet, die Dauer ist eine Untergrenze.")
     }
 
     /// Die Bloecke eines Teils unter seiner Uhrzeit.
