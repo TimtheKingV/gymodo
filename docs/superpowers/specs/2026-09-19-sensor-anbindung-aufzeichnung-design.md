@@ -45,16 +45,18 @@ A kommt zuerst, weil der Zähler mehrere Iterationen brauchen wird. Offline gege
 - Hintergrundmodus `bluetooth-central`. In A bleibt der Bildschirm wach (Abschnitt 5.3); ob Mitglieder das Telefon beim Satz in die Tasche stecken, entscheidet B.
 - Bindung Sensor ↔ Gerät über den NFC-Tag, mehrere Sensoren gleichzeitig, Live-Graph, Sichtbarkeit im Release-Build
 
-## 3. Protokoll (Stand vor Verifikation)
+## 3. Protokoll (am 30. September 2026 am Sensor verifiziert)
 
-Quelle: Herstellerangaben, zusammengetragen in einer Vorrecherche. Jede Zeile gilt erst als gesichert, wenn Abschnitt 4 sie bestätigt.
+Quelle: Herstellerangaben, zusammengetragen in einer Vorrecherche, korrigiert nach der Verifikation in Abschnitt 4.
 
 | | |
 |---|---|
-| Anzeigename | `WT901BLE` + Nummer |
-| Service | `FFE5` |
-| Notify (Daten) | `FFE4` |
-| Write (Befehle) | `FFE9` |
+| Anzeigename | `WT901BLE` + Nummer (am Testsensor `WT901BLE67`) |
+| Service | `0000FFE5-0000-1000-8000-00805F9A34FB` |
+| Notify (Daten) | `0000FFE4-0000-1000-8000-00805F9A34FB` |
+| Write (Befehle) | `0000FFE9-0000-1000-8000-00805F9A34FB`, mit und ohne Antwort |
+
+Die UUIDs sind 128-Bit-UUIDs des Herstellers, keine 16-Bit-Kurzformen: die Basis endet auf `…9A34FB`, die Bluetooth-Basis auf `…9B34FB`. `CBUUID(string: "FFE5")` passt deshalb nicht. Im weiteren Text stehen `FFE5`, `FFE4` und `FFE9` als Kürzel für diese drei UUIDs.
 
 **Datenpaket:** 20 Byte. Header `0x55 0x61`, danach 18 Byte: Beschleunigung X/Y/Z, Drehrate X/Y/Z, Winkel X/Y/Z, je ein `Int16`, Low-Byte zuerst.
 
@@ -75,7 +77,9 @@ Quelle: Herstellerangaben, zusammengetragen in einer Vorrecherche. Jede Zeile gi
 | Konfiguration speichern | `FF AA 00 00 00` | **nein** |
 | Beschleunigung kalibrieren | `FF AA 01 01 00` | **nein** |
 
-Die Pakete tragen keinen Zeitstempel. Den Empfangszeitpunkt setzt die App selbst (Abschnitt 5.3).
+Ein Ratenbefehl greift sofort und braucht kein Entsperren. Der Sensor behält die zuletzt gesetzte Rate über einen Reconnect und über Aus- und Einschalten hinweg, auch ohne „Konfiguration speichern".
+
+Die Pakete tragen keinen Zeitstempel. Den Empfangszeitpunkt setzt die App selbst (Abschnitt 5.3). Eine Notification trägt mehrere Pakete (zwei bei 50 Hz, vier bei 100 Hz), die sich damit einen Empfangszeitpunkt teilen.
 
 ## 4. Verifikation am Sensor (erster Schritt der Umsetzung)
 
@@ -91,9 +95,21 @@ Zu klären:
 6. Stimmt der abgeleitete Befehl für 20 Hz (`FF AA 03 07 00`)?
 7. Reale Rate am iPhone bei 20, 50 und 100 Hz über je 5 Minuten: Pakete je Sekunde, Abstand Median / p95 / Maximum.
 
-**Ergebnis:** *(wird im ersten Umsetzungsschritt eingetragen, samt Empfehlung für die Standardrate. Bis dahin gilt 50 Hz.)*
+**Ergebnis** (30. September 2026, Punkte 1 bis 6 mit einer Wegwerf-Probe am Mac, Sensor `WT901BLE67` flach und ruhig auf dem Tisch):
 
-Weicht das Ergebnis von Abschnitt 3 ab, wird Abschnitt 3 korrigiert, bevor Code entsteht.
+1. **UUIDs und Advertisement.** Service, Notify und Write tragen die Nummern `FFE5`, `FFE4`, `FFE9`, aber als 128-Bit-UUIDs mit der Herstellerbasis `0000xxxx-0000-1000-8000-00805F9A34FB`. Das Advertisement nennt den Namen `WT901BLE67` immer und den Service meistens: in einem von mehreren Läufen fehlte er im ersten Fund. Der Sensor wird deshalb am Service **oder** am Namenspräfix `WT` erkannt. `FFE9` hat die Eigenschaften 12, also Schreiben mit und ohne Antwort; `FFE4` hat 16, also nur Notify.
+2. **Paket.** Header, Länge und Byte-Reihenfolge stimmen. Ein echtes Paket:
+   `55 61 F5 FF 2E 00 00 08 FE FF FF FF FF FF D9 FF B5 00 00 00`
+   ergibt Beschleunigung −0,0054 / 0,0225 / 1,0000 g, Drehrate −0,122 / −0,061 / −0,061 °/s, Winkel −0,214 / 0,994 / 0,000 °. Die Schwerkraft liegt wie erwartet auf z, die Drehraten bei null.
+3. **Pakete je Notification.** Nie Bruchstücke; jede Notification war ein Vielfaches von 20 Byte. Bei 50 Hz kommen zwei Pakete je Notification (40 Byte), bei 100 Hz vier (80 Byte), bei 20 Hz eines. Der Mac bekam bei 50 und 100 Hz gleichbleibend rund 25 Notifications je Sekunde. Gebündelte Messwerte teilen sich also einen Empfangszeitpunkt, am Mac im Raster von etwa 40 ms. Für den Zähler in B ist das die Grenze der Zeitauflösung; wie das Raster am iPhone aussieht, misst Punkt 7.
+4. **Akku.** Die Antwort ist eine Registerantwort und kam mitten in einer 60-Byte-Notification zwischen zwei Messwerten an:
+   `55 71 64 00 7E 01 00 00 33 9B 76 FC A3 C4 00 00 00 00 E8 03`
+   Register `0x64`, erster Wert `0x017E` = 382, also 3,82 V in Hundertstel Volt. Nach der Stufentabelle sind das 60 %.
+5. **Ratenbefehl.** Greift innerhalb einer Sekunde, ohne Entsperren und ohne „Konfiguration speichern": nach `FF AA 03 09 00` stieg die Rate von 48–50 auf 96–100 Pakete je Sekunde. **Abweichend von der Erwartung bleibt die Rate erhalten**, sowohl über Trennen und Neuverbinden als auch über Aus- und Einschalten: nach dem Neustart sendete der Sensor weiter mit 100 Hz. Die App setzt die Rate deshalb bei jedem Verbinden ausdrücklich und verlässt sich nie auf einen Ausgangszustand. Nach der Probe steht der Sensor wieder auf 50 Hz.
+6. **20 Hz.** `FF AA 03 07 00` stimmt: 144 Notifications zu je einem Paket in 7,3 s, rund 19,7 je Sekunde.
+7. *Folgt aus Task 11* (5-Minuten-Test am iPhone), samt Empfehlung für die Standardrate. Bis dahin gilt 50 Hz.
+
+Abschnitt 3 ist entsprechend korrigiert (UUIDs, Verhalten der Rate, Bündelung). Parser, Befehle und Akku-Umrechnung bleiben, wie sie sind.
 
 ## 5. Komponenten
 
@@ -145,8 +161,8 @@ Die genaue Form (ein Strom je Abonnent, `@MainActor`-Bindung des Zustands) legt 
 
 ### 5.3 `BluetoothSensorQuelle`
 
-- Scan nach Service `FFE5`. Ein Fund → verbinden. Mehrere Funde und keine gemerkte ID → `mehrereGefunden`, die Oberfläche lässt wählen. Die gewählte Peripheral-ID liegt in `UserDefaults`; beim nächsten Mal wird über `retrievePeripherals(withIdentifiers:)` direkt verbunden.
-- Nach dem Verbinden: Service und Characteristics suchen, `FFE4` abonnieren, Rate setzen (Standard 50 Hz, **ohne** „Konfiguration speichern" — ein Fehlversuch kann den Sensor so nicht dauerhaft verstellen), Akku lesen, danach alle 60 s erneut.
+- Scan ohne Dienstfilter; als Sensor gilt, wer Service `FFE5` im Advertisement nennt oder dessen Name mit `WT` beginnt (siehe 4.1). Ein Fund → verbinden. Mehrere Funde und keine gemerkte ID → `mehrereGefunden`, die Oberfläche lässt wählen. Die gewählte Peripheral-ID liegt in `UserDefaults`; beim nächsten Mal wird über `retrievePeripherals(withIdentifiers:)` direkt verbunden.
+- Nach dem Verbinden: Service und Characteristics suchen, `FFE4` abonnieren, Rate setzen (Standard 50 Hz, **ohne** „Konfiguration speichern"; der Sensor behält die Rate trotzdem über einen Neustart, siehe 4.5, deshalb setzt die App sie bei jedem Verbinden neu), Akku lesen, danach alle 60 s erneut.
 - **Zeitstempel:** als Erstes im Delegate-Callback, aus einer monotonen Uhr, vor Parser und Weitergabe.
 - **Abriss:** Zustand `getrennt(wirdNeuVerbunden: true)`, sofort erneutes `connect`. Core Bluetooth kennt dafür kein Timeout; der Versuch steht, bis der Sensor wieder da ist oder `trennen()` gerufen wird.
 - **Berechtigung:** Der `CBCentralManager` entsteht erst beim ersten `verbinden()`, also nach einem Tipp. Der Start der App fragt nicht nach Bluetooth.
