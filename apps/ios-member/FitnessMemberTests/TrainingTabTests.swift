@@ -8,7 +8,7 @@ struct TrainingTabTests {
     private let start = Date(timeIntervalSince1970: 1_757_930_400)
 
     private func satz(_ index: Int, minuten: Double) -> LokalerSatz {
-        LokalerSatz(id: UUID(), setIndex: index, weightKg: 50, reps: 10, rir: nil,
+        LokalerSatz(id: UUID(), setIndex: index, load: 50, volume: 10, rir: nil,
                     problemFlag: false, problemReason: nil,
                     performedAt: start.addingTimeInterval(minuten * 60))
     }

@@ -112,7 +112,7 @@ Die Enums dekodieren strikt: eine Einheit, die die App nicht kennt, ist ein Deko
 - `satzSichern(machineId:exerciseId:load:secondaryLoad:volume:…)` und `SetWrite` entsprechend.
 - `Trainingszusammenfassung.Blockzeile.gewichtKg` → `belastung: Double?` (nil bei uneinheitlichen Sätzen), plus `nebenbelastung: Double?`, `loadUnit`, `secondaryUnit`, `volumeKind`.
 
-- [ ] Tests, Umbau, Commit `feat(ios-member): laufende Einheit mit Belastung, Nebenbelastung und Umfang`.
+- [x] Tests, Umbau, Commit `feat(ios-member): laufende Einheit mit Belastung, Nebenbelastung und Umfang`.
 
 ---
 

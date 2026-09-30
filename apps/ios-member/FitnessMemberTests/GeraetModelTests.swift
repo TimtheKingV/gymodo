@@ -287,9 +287,11 @@ struct GeraetModelTests {
         let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
         // e2 hat schon zwei gesicherte Saetze -- mehr, als e1 unten nach
         // dem einen gesicherten Satz haben wird.
-        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e2", weightKg: 40, reps: 10,
+        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e2",
+                                  einheiten: .kilogrammWiederholungen, load: 40, volume: 10,
                                   problemFlag: false, problemReason: nil)
-        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e2", weightKg: 40, reps: 10,
+        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e2",
+                                  einheiten: .kilogrammWiederholungen, load: 40, volume: 10,
                                   problemFlag: false, problemReason: nil)
         let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
@@ -435,7 +437,8 @@ struct GeraetModelTests {
         let erstesModell = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrap, sessions: sessions)
         #expect(erstesModell.istErstkontakt == true)
         erstesModell.erstkontaktAbschliessen()
-        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 40, reps: 10,
+        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1",
+                                  einheiten: .kilogrammWiederholungen, load: 40, volume: 10,
                                   problemFlag: false, problemReason: nil)
 
         // Ein neuer Push: dieselbe sessions-Instanz, aber ein komplett neues
@@ -457,7 +460,8 @@ struct GeraetModelTests {
         #expect(sut.istErstkontakt == true)
 
         sut.erstkontaktAbschliessen()
-        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 40, reps: 10,
+        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1",
+                                  einheiten: .kilogrammWiederholungen, load: 40, volume: 10,
                                   problemFlag: false, problemReason: nil)
         #expect(sut.istErstkontakt == false)
 
@@ -534,7 +538,8 @@ struct GeraetModelTests {
         let verzeichnis = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
         let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
-        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 77.5, reps: 11,
+        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1",
+                                  einheiten: .kilogrammWiederholungen, load: 77.5, volume: 11,
                                   problemFlag: false, problemReason: nil)
         let sut = modell(maschine: GeraetTestdaten.maschine,
                          bootstrap: GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)]),

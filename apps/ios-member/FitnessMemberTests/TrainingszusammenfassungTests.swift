@@ -7,7 +7,7 @@ struct TrainingszusammenfassungTests {
 
     private func satz(_ index: Int, _ gewicht: Double, _ minuten: Double,
                       problem: Bool = false) -> LokalerSatz {
-        LokalerSatz(id: UUID(), setIndex: index, weightKg: gewicht, reps: 10,
+        LokalerSatz(id: UUID(), setIndex: index, load: gewicht, volume: 10,
                     problemFlag: problem, problemReason: problem ? .schmerz : nil,
                     performedAt: start.addingTimeInterval(minuten * 60))
     }
@@ -64,9 +64,52 @@ struct TrainingszusammenfassungTests {
 
         let z = try #require(Trainingszusammenfassung(session))
 
-        #expect(z.bloecke[0].gewichtKg == 80)
+        #expect(z.bloecke[0].belastung == 80)
         // Uneinheitlich: lieber keine Zahl als eine falsche.
-        #expect(z.bloecke[1].gewichtKg == nil)
+        #expect(z.bloecke[1].belastung == nil)
+    }
+
+    @Test func dieBlockzeileTraegtDieEinheitenDesBlocks() throws {
+        let laufband = Blockeinheiten(loadUnit: .kmh, secondaryUnit: .pct, volumeKind: .seconds)
+        let lauf = LokalerSatz(id: UUID(), setIndex: 1, load: 8.5, secondaryLoad: 6, volume: 1200,
+                               problemFlag: false, problemReason: nil, performedAt: start)
+        let session = LokaleSession(id: UUID(), startedAt: start, bloecke: [
+            LokalerBlock(machineId: "m9", exerciseId: "e9", einheiten: laufband, saetze: [lauf]),
+            LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [satz(1, 80, 25)]),
+        ])
+
+        let z = try #require(Trainingszusammenfassung(session))
+
+        #expect(z.bloecke[0].belastung == 8.5)
+        #expect(z.bloecke[0].nebenbelastung == 6)
+        #expect(z.bloecke[0].loadUnit == .kmh)
+        #expect(z.bloecke[0].secondaryUnit == .pct)
+        #expect(z.bloecke[0].volumeKind == .seconds)
+        // Die Gegenprobe: am Kraftgeraet ist alles zur Nebenbelastung nil.
+        #expect(z.bloecke[1].belastung == 80)
+        #expect(z.bloecke[1].nebenbelastung == nil)
+        #expect(z.bloecke[1].loadUnit == .kg)
+        #expect(z.bloecke[1].secondaryUnit == nil)
+        #expect(z.bloecke[1].volumeKind == .reps)
+    }
+
+    @Test func nenntDieNebenbelastungNurWennAlleSaetzeSichEinigSind() throws {
+        let laufband = Blockeinheiten(loadUnit: .kmh, secondaryUnit: .pct, volumeKind: .seconds)
+        func lauf(_ index: Int, neigung: Double) -> LokalerSatz {
+            LokalerSatz(id: UUID(), setIndex: index, load: 8.5, secondaryLoad: neigung, volume: 600,
+                        problemFlag: false, problemReason: nil,
+                        performedAt: start.addingTimeInterval(Double(index) * 600))
+        }
+        let session = LokaleSession(id: UUID(), startedAt: start, bloecke: [
+            LokalerBlock(machineId: "m9", exerciseId: "e9", einheiten: laufband,
+                         saetze: [lauf(1, neigung: 2), lauf(2, neigung: 6)]),
+        ])
+
+        let z = try #require(Trainingszusammenfassung(session))
+
+        // Das Tempo blieb gleich und darf stehen; die Neigung wechselte.
+        #expect(z.bloecke[0].belastung == 8.5)
+        #expect(z.bloecke[0].nebenbelastung == nil)
     }
 
     @Test func merktSichEinGemeldetesProblemJeBlock() throws {
@@ -99,7 +142,8 @@ struct AbgelaufeneSessionTests {
 
     @Test func eineLaufendeEinheitGiltNichtAlsAbgelaufen() {
         let sut = store()
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
+        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+                            einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
 
         #expect(sut.abgelaufeneSession(jetzt: start.addingTimeInterval(600)) == nil)
@@ -107,7 +151,8 @@ struct AbgelaufeneSessionTests {
 
     @Test func nachVierStundenGiltSieAlsAbgelaufen() {
         let sut = store()
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
+        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+                            einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
 
         #expect(sut.abgelaufeneSession(jetzt: start.addingTimeInterval(4 * 3600 + 1)) != nil)
@@ -115,7 +160,8 @@ struct AbgelaufeneSessionTests {
 
     @Test func quittierenLaesstSieVerschwinden() {
         let sut = store()
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
+        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+                            einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
         let spaeter = start.addingTimeInterval(5 * 3600)
 
@@ -127,14 +173,16 @@ struct AbgelaufeneSessionTests {
 
     @Test func eineSpaetereEinheitBekommtIhrenEigenenHinweis() {
         let sut = store()
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
+        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+                            einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
         sut.ausgelaufeneQuittieren()
 
         // Ohne "Training beenden" zu druecken: der naechste Satz legt eine
         // neue Einheit an, weit genug hinter der ersten, dass sie eigenstaendig ist.
         let zweiterStart = start.addingTimeInterval(5 * 3600)
-        _ = sut.satzSichern(machineId: "m2", exerciseId: "e2", weightKg: 45, reps: 10,
+        _ = sut.satzSichern(machineId: "m2", exerciseId: "e2",
+                            einheiten: .kilogrammWiederholungen, load: 45, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: zweiterStart)
 
         #expect(sut.abgelaufeneSession(jetzt: zweiterStart.addingTimeInterval(4 * 3600 + 1)) != nil)
@@ -142,7 +190,8 @@ struct AbgelaufeneSessionTests {
 
     @Test func einManuellBeendetesTrainingGiltNichtAlsAusgelaufen() {
         let sut = store()
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1", weightKg: 80, reps: 10,
+        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+                            einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
         sut.beenden()
 

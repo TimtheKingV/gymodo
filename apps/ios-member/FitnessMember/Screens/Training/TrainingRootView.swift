@@ -477,7 +477,7 @@ struct TrainingRootView: View {
                     .foregroundStyle(DesignSystem.Color.text)
                 HStack(spacing: DesignSystem.Spacing.s8) {
                     Text("\(block.saetze.count) \(block.saetze.count == 1 ? "Satz" : "Sätze")"
-                         + (letztes.map { " · \(Zahlformat.gewichtMitEinheit($0.weightKg))" } ?? ""))
+                         + (letztes.map { " · \(Zahlformat.gewichtMitEinheit($0.load))" } ?? ""))
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                     if gemeldet {

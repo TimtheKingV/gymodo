@@ -477,7 +477,8 @@ final class GeraetModel {
     func satzSichern(problemFlag: Bool, problemReason: ProblemReason?) async {
         let geschrieben = sessions.satzSichern(
             machineId: maschine.id, exerciseId: uebungId,
-            weightKg: gewicht, reps: wiederholungen,
+            einheiten: .kilogrammWiederholungen,
+            load: gewicht, volume: wiederholungen,
             problemFlag: problemFlag, problemReason: problemReason
         )
         // Immer ueber die Warteschlange, nie direkt: so ist "gespeichert,

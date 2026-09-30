@@ -8,7 +8,8 @@ struct TrainingAbschlussZeilenTests {
     private func block(_ machineId: String = "m1", _ exerciseId: String = "e1",
                        gewicht: Double? = 80, saetze: Int = 3, gemeldet: Bool = false) -> Blockzeile {
         Blockzeile(machineId: machineId, exerciseId: exerciseId,
-                   gewichtKg: gewicht, satzAnzahl: saetze, problemGemeldet: gemeldet)
+                   belastung: gewicht, nebenbelastung: nil, loadUnit: .kg, secondaryUnit: nil,
+                   volumeKind: .reps, satzAnzahl: saetze, problemGemeldet: gemeldet)
     }
 
     private func vorschlag(_ machineId: String = "m1", _ exerciseId: String = "e1",

@@ -34,6 +34,45 @@ struct PendingWriteStoreTests {
         #expect(secondProcess.loadAll() == [write])
     }
 
+    @Test("liest eine Warteschlange, die die Fassung vor Migration 0045 geschrieben hat")
+    func liestAlteWarteschlange() throws {
+        // Wer vor dem App-Update offline trainiert hat, traegt seine Saetze
+        // als weightKg/reps in der Datei. Dekodierte sie nicht mehr, gaebe
+        // loadAll() eine leere Liste -- und die Saetze waeren still weg.
+        let directory = makeTempDirectory()
+        let sessionId = UUID()
+        let setId = UUID()
+        let alt = """
+        [{"sessionId":"\(sessionId.uuidString)","setId":"\(setId.uuidString)",
+          "body":{"machineId":"m1","exerciseId":"ex1","setIndex":1,"weightKg":80,"reps":10,
+                  "problemFlag":false,"performedAt":"2026-09-20T10:00:00Z",
+                  "sessionStartedAt":"2026-09-20T09:50:00Z"}}]
+        """
+        try Data(alt.utf8).write(to: directory.appendingPathComponent("pending-writes.json"))
+
+        let geladen = PendingWriteStore(directory: directory).loadAll()
+
+        #expect(geladen.count == 1)
+        #expect(geladen.first?.setId == setId)
+        #expect(geladen.first?.body.load == 80)
+        #expect(geladen.first?.body.volume == 10)
+        #expect(geladen.first?.body.secondaryLoad == nil)
+        #expect(geladen.first?.body.sessionStartedAt == "2026-09-20T09:50:00Z")
+    }
+
+    @Test("ein Laufband-Satz uebersteht den Neustart mit seiner Nebenbelastung")
+    func nebenbelastungUeberstehtNeustart() {
+        let directory = makeTempDirectory()
+        let write = PendingSetWrite(
+            sessionId: UUID(), setId: UUID(),
+            body: SetWrite(machineId: "m9", exerciseId: "ex9", setIndex: 1,
+                           load: 8.5, volume: 1200, secondaryLoad: 6)
+        )
+        PendingWriteStore(directory: directory).save([write])
+
+        #expect(PendingWriteStore(directory: directory).loadAll() == [write])
+    }
+
     @Test("speichert eine leere Liste, wenn alles abgearbeitet ist")
     func savingEmptyListClears() {
         let directory = makeTempDirectory()

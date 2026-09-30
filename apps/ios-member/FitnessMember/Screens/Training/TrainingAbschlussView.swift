@@ -240,7 +240,7 @@ struct TrainingAbschlussView: View {
                     // dann die Satzzahl ("80,0 kg · 3 Sätze"). Fehlt das
                     // Gewicht (uneinheitliche Saetze), bleibt die
                     // Satzzahl allein stehen.
-                    Text((zeile.block.gewichtKg.map { "\(Zahlformat.gewichtMitEinheit($0)) · " } ?? "")
+                    Text((zeile.block.belastung.map { "\(Zahlformat.gewichtMitEinheit($0)) · " } ?? "")
                          + "\(zeile.block.satzAnzahl) \(zeile.block.satzAnzahl == 1 ? "Satz" : "Sätze")")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(DesignSystem.Color.textMuted)
