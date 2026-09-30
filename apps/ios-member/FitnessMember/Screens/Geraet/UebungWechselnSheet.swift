@@ -94,14 +94,14 @@ struct UebungWechselnSheet: View {
             if saetze > 0 {
                 teile.append(saetze == 1 ? "1 Satz" : "\(saetze) Sätze")
             }
-            teile.append(Zahlformat.gewichtMitEinheit(modell.gewicht))
+            teile.append(Zahlformat.gewichtMitEinheit(modell.belastung))
             return teile.joined(separator: " · ")
         }
-        if let gewicht = modell.letztesGewicht(fuer: uebung.id) {
+        if let gewicht = modell.letzteBelastung(fuer: uebung.id) {
             let zuletzt = altersangabe(fuer: uebung.id).map { "zuletzt \($0)" } ?? "zuletzt"
             return "\(Zahlformat.gewichtMitEinheit(gewicht)) · \(zuletzt)"
         }
-        return "Noch nie trainiert · Ziel \(uebung.targetRepsMin) – \(uebung.targetRepsMax) Wdh."
+        return "Noch nie trainiert · Ziel \(Zahlformat.korridorMitEinheit(uebung.targetMin, uebung.targetMax, uebung.volumeKind))"
     }
 
     /// "heute" statt "vor 0 Tagen" -- Letzteres liest sich wie ein

@@ -139,6 +139,38 @@ struct BelastungTests {
         #expect(Zahlformat.umfangGesprochen(750, .meters) == "750 Meter")
     }
 
+    @Test func korridorMitEinheitSagtAuchBeiWiederholungenWasGezaehltWird() {
+        #expect(Zahlformat.korridorMitEinheit(8, 12, .reps) == "8 – 12 Wdh.")
+        #expect(Zahlformat.korridorMitEinheit(900, 1200, .seconds) == "15 – 20 min")
+        #expect(Zahlformat.korridorMitEinheit(2000, 5000, .meters) == "2.000 – 5.000 m")
+    }
+
+    // MARK: - Ein Satz in einer Zeile
+
+    @Test func dieNebenbelastungStehtNurWennWertUndEinheitDaSind() {
+        #expect(Zahlformat.belastungMitNebenbelastung(8.5, .kmh, neben: 6, .pct) == "8,5 km/h · 6,0 %")
+        #expect(Zahlformat.belastungMitNebenbelastung(8, .level, neben: 85, .rpm) == "Level 8 · 85 U/min")
+        #expect(Zahlformat.belastungMitNebenbelastung(80, .kg, neben: nil, nil) == "80,0 kg")
+        // Halb gesetzt gibt es laut Constraint nicht -- dann lieber keine
+        // Zahl als eine ohne Einheit.
+        #expect(Zahlformat.belastungMitNebenbelastung(8.5, .kmh, neben: 6, nil) == "8,5 km/h")
+        #expect(Zahlformat.belastungMitNebenbelastung(8.5, .kmh, neben: nil, .pct) == "8,5 km/h")
+    }
+
+    @Test func malUmfangBrauchtBeiZeitUndStreckeDieEinheit() {
+        #expect(Zahlformat.malUmfang(11, .reps) == "× 11")
+        #expect(Zahlformat.malUmfang(1200, .seconds) == "× 20:00 min")
+        #expect(Zahlformat.malUmfang(2000, .meters) == "× 2.000 m")
+    }
+
+    @Test func einSatzInEinerZeile() {
+        // Die Beinpresse Zeichen fuer Zeichen wie vor dem Umbau.
+        #expect(Zahlformat.satz(77.5, .kg, neben: nil, nil, umfang: 11, .reps) == "77,5 kg × 11")
+        #expect(Zahlformat.satz(8.5, .kmh, neben: 6, .pct, umfang: 1200, .seconds)
+                == "8,5 km/h · 6,0 % × 20:00 min")
+        #expect(Zahlformat.satz(6, .level, neben: nil, nil, umfang: 2000, .meters) == "Level 6 × 2.000 m")
+    }
+
     @Test func korridorNenntDieVorgabeInDerEinheitDerUebung() {
         #expect(Zahlformat.korridor(8, 12, .reps) == "8 – 12")
         // Minuten ohne Sekunden: ein Korridor ist eine Vorgabe, keine

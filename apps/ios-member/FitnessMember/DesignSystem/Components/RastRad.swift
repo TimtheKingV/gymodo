@@ -339,7 +339,7 @@ struct RastRad: View {
 
         var body: some View {
             RastRad(
-                werte: Rastwerte.gewichte(min: 5, max: 150, schritt: 2.5),
+                werte: Rastwerte.belastung(min: 5, max: 150, schritt: 2.5),
                 auswahl: $gewicht,
                 unterstrich: .held,
                 voLabel: "Gewicht",

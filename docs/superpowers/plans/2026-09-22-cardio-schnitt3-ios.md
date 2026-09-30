@@ -139,8 +139,8 @@ static func umfang(_ art: VolumeKind) -> [Int]   // reps 1...40 | seconds 30, 60
 - `letztesGewicht(fuer:)` → `letzteBelastung(fuer:)`.
 - `satzSichern` übergibt `secondaryLoad: nebenbelastung`.
 
-- [ ] Tests: Umfangslisten; Vorbelegung der Nebenbelastung (letzter Satz, sonst Minimum, nil ohne Nebenbelastung); Kontextzeilen je Einheit; Vorschlag übernimmt Belastung und Nebenbelastung, nicht aber eine vom Nutzer gesetzte.
-- [ ] Commit `feat(ios-member): GeraetModel rechnet in Belastung und Umfang`.
+- [x] Tests: Umfangslisten; Vorbelegung der Nebenbelastung (letzter Satz, sonst Minimum, nil ohne Nebenbelastung); Kontextzeilen je Einheit; Vorschlag übernimmt Belastung und Nebenbelastung, nicht aber eine vom Nutzer gesetzte.
+- [x] Commit `feat(ios-member): GeraetModel rechnet in Belastung und Umfang`.
 
 ---
 

@@ -50,13 +50,13 @@ struct WertZeile: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
             HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.s4) {
                 RastRad(
-                    werte: modell.gewichtsWerte,
+                    werte: modell.belastungsWerte,
                     // Ueber gewichtGewaehlt, nicht $modell.gewicht: nur so
                     // weiss das Modell, dass der Wert vom Mitglied kommt und
                     // ein spaeter Vorschlag ihn nicht mehr ersetzen darf.
                     auswahl: Binding(
-                        get: { modell.gewicht },
-                        set: { modell.gewichtGewaehlt($0) }
+                        get: { modell.belastung },
+                        set: { modell.belastungGewaehlt($0) }
                     ),
                     unterstrich: .held,
                     voLabel: "Gewicht",
@@ -88,7 +88,7 @@ struct WertZeile: View {
     /// steht er im Drawer beim Oeffnen des Geraets (RueckblickSheet), damit
     /// die Zeile immer dasselbe sagt.
     private var kontextzeileGewicht: some View {
-        Text(modell.kontextzeileGewicht)
+        Text(modell.kontextzeileBelastung)
             .font(.system(size: 12))
             .foregroundStyle(DesignSystem.Color.textFaint)
             .accessibilityHidden(true)
@@ -101,10 +101,10 @@ struct WertZeile: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
             HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.s4) {
                 RastRad(
-                    werte: Rastwerte.wiederholungen.map(Double.init),
+                    werte: modell.umfangsWerte.map(Double.init),
                     auswahl: Binding(
-                        get: { Double(modell.wiederholungen) },
-                        set: { modell.wiederholungen = Int($0) }
+                        get: { Double(modell.umfang) },
+                        set: { modell.umfang = Int($0) }
                     ),
                     // Dieselbe accent-Linie wie beim Gewicht, nur duenner
                     // (siehe UnterstrichStil): die Linie sagt "hier rastet
@@ -124,7 +124,7 @@ struct WertZeile: View {
                     .foregroundStyle(DesignSystem.Color.textMuted)
                     .accessibilityHidden(true)
             }
-            Text(modell.kontextzeileWiederholungen)
+            Text(modell.kontextzeileUmfang)
                 .font(.system(size: 12))
                 .foregroundStyle(DesignSystem.Color.textFaint)
                 .accessibilityHidden(true)

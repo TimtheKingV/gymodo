@@ -151,8 +151,8 @@ struct GeraetErkanntView: View {
     /// Alter ("vor 8 Tagen") sagt, wie verlaesslich die Zahl noch ist,
     /// bevor man die Scheiben auflegt.
     private func untertitel(_ uebung: GeraetUebung) -> String {
-        guard let letztesGewicht = modell.letztesGewicht(fuer: uebung.id) else {
-            return "Noch nie · Ziel \(uebung.targetRepsMin) – \(uebung.targetRepsMax) Wdh."
+        guard let letztesGewicht = modell.letzteBelastung(fuer: uebung.id) else {
+            return "Noch nie · Ziel \(Zahlformat.korridorMitEinheit(uebung.targetMin, uebung.targetMax, uebung.volumeKind))"
         }
         let gewichtText = Zahlformat.gewichtMitEinheit(letztesGewicht)
         let alter = altersangabe(fuer: uebung.id)

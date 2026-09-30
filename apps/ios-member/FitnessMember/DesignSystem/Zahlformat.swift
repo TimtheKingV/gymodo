@@ -272,6 +272,40 @@ enum Zahlformat {
         }
     }
 
+    /// "8 – 12 Wdh.", sonst wie korridor -- fuer Zeilen, die nicht neben
+    /// einem beschrifteten Rad stehen und deshalb sagen muessen, was die
+    /// Zahlen zaehlen ("Noch nie · Ziel 8 – 12 Wdh.").
+    static func korridorMitEinheit(_ min: Int, _ max: Int, _ art: VolumeKind) -> String {
+        art == .reps ? "\(korridor(min, max, art)) \(art.kurz)" : korridor(min, max, art)
+    }
+
+    /// "80,0 kg", "8,5 km/h · 6,0 %" -- Belastung und, wenn das Geraet eine
+    /// hat, die Nebenbelastung dahinter. Beide Optionals muessen gesetzt
+    /// sein: eine Zahl ohne Einheit liesse sich nicht ehrlich schreiben.
+    static func belastungMitNebenbelastung(
+        _ wert: Double, _ einheit: LoadUnit, neben: Double?, _ nebeneinheit: LoadUnit?
+    ) -> String {
+        guard let neben, let nebeneinheit else { return belastungMitEinheit(wert, einheit) }
+        return "\(belastungMitEinheit(wert, einheit)) · \(belastungMitEinheit(neben, nebeneinheit))"
+    }
+
+    /// "× 11", "× 20:00 min", "× 2.000 m" -- der Umfang hinter der
+    /// Belastung eines Satzes. Wiederholungen ohne Wort: "80,0 kg × 11"
+    /// liest jeder als elfmal. Zeit und Strecke brauchen ihre Einheit,
+    /// sonst stuende "× 20:00" wie eine Uhrzeit da.
+    static func malUmfang(_ wert: Int, _ art: VolumeKind) -> String {
+        art == .reps ? "× \(umfang(wert, art))" : "× \(umfangMitEinheit(wert, art))"
+    }
+
+    /// "77,5 kg × 11", "8,5 km/h · 6,0 % × 20:00 min" -- ein ganzer Satz
+    /// in einer Zeile.
+    static func satz(
+        _ wert: Double, _ einheit: LoadUnit, neben: Double?, _ nebeneinheit: LoadUnit?,
+        umfang: Int, _ art: VolumeKind
+    ) -> String {
+        "\(belastungMitNebenbelastung(wert, einheit, neben: neben, nebeneinheit)) \(malUmfang(umfang, art))"
+    }
+
     /// "23:41", ab einer Stunde "1:20:14" -- sonst kippt die Lesart: "80:14"
     /// liest sich nicht mehr eindeutig als Minuten:Sekunden, und eine
     /// Trainingseinheit darf bis zu vier Stunden laufen

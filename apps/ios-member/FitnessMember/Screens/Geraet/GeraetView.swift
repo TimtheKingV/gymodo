@@ -295,7 +295,7 @@ struct GeraetView: View {
                 await modell.satzSichern(problemFlag: false, problemReason: nil)
             }
             .testnotizElement("geraet.satz-sichern", typ: "PrimaryButton")
-            .accessibilityLabel("\(hauptaktion), \(Zahlformat.gewichtGesprochen(modell.gewicht))")
+            .accessibilityLabel("\(hauptaktion), \(Zahlformat.gewichtGesprochen(modell.belastung))")
 
             // Abschliessen und Problem melden in EINER Zeile (Sammelstelle
             // Punkt 12): als dritte Zeile kostete "Problem melden" 56 pt, die

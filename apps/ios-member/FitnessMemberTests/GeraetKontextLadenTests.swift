@@ -76,43 +76,43 @@ struct GeraetKontextLadenTests {
 
     /// Spec SS3.5: der Zirkel-Tap (`oeffne(_ block:)`, token nil) ist der
     /// zweite token-lose Einstieg neben der Liste und bekommt dieselbe
-    /// Behandlung -- auch das Gewichtsrad darf der Server-Vorschlag
+    /// Behandlung -- auch das Belastungsrad darf der Server-Vorschlag
     /// befuellen, solange das Mitglied es nicht selbst geoeffnet hat. Das
     /// war eine Folge des entfernten Wächters (Abschnitt 4), keine eigens
     /// entworfene Regel -- dieser Test haelt sie fest, jetzt, wo sie
     /// bewusst statt zufaellig gilt.
     ///
     /// Schlaegt bei einem restaurierten `guard let token else { return }`
-    /// fehl: `kontext` bliebe nil und `gewicht` beim Geraetminimum (5.0)
+    /// fehl: `kontext` bliebe nil und `belastung` beim Geraetminimum (5.0)
     /// stehen, nicht bei den 40.0 aus dem Vorschlag.
     @Test func ohneTokenUebernimmtDasRadDenVorschlagWennNichtGeoeffnet() async {
         let loader = FakeGeraetLoader()
         await loader.setKontext(.success(kontextMitFoto))
         let modell = modell(token: nil, loader: loader)
-        #expect(modell.gewicht == 5.0)
+        #expect(modell.belastung == 5.0)
 
         await modell.kontextLaden()
 
-        #expect(modell.gewicht == 40.0)
+        #expect(modell.belastung == 40.0)
     }
 
     /// Derselbe Zirkel-Tap, aber das Mitglied hat vor dem eintreffenden
-    /// Kontext schon am Rad gedreht -- `gewichtVomNutzer` muss den Wert
+    /// Kontext schon am Rad gedreht -- `belastungVomNutzer` muss den Wert
     /// schuetzen, genau wie auf dem Scan-Weg.
     ///
     /// Schlaegt fehl, wenn `kontextUebernehmen` den Nutzerschutz fuer den
-    /// machineId-Weg vergaesse: `gewicht` sprang dann trotz selbst
+    /// machineId-Weg vergaesse: `belastung` sprang dann trotz selbst
     /// gewaehltem Wert auf die 40.0 aus dem Vorschlag.
     @Test func ohneTokenLaesstEinenSelbstGewaehltenWertInRuhe() async {
         let loader = FakeGeraetLoader()
         await loader.setKontext(.success(kontextMitFoto))
         let modell = modell(token: nil, loader: loader)
-        modell.gewichtGewaehlt(7.5)
-        #expect(modell.gewicht == 7.5)
+        modell.belastungGewaehlt(7.5)
+        #expect(modell.belastung == 7.5)
 
         await modell.kontextLaden()
 
-        #expect(modell.gewicht == 7.5)
+        #expect(modell.belastung == 7.5)
     }
 
     /// Ein Fehlschlag bleibt kein Fehlerzustand -- der Screen steht aus
