@@ -66,9 +66,9 @@ extension Zahlformat {
 ```
 Die Strings entsprechen `formatLoad`/`formatVolume` in `belastung.ts` bis auf das Minuszeichen: iOS schreibt „−" (U+2212) wie heute in `GeraetModel.vorschlagText`. `gewicht`/`gewichtMitEinheit`/`gewichtGesprochen` bleiben für Körpergewicht bestehen; `belastung(_:.kg)` liefert dasselbe.
 
-- [ ] **Step 1:** Tests zuerst, je Einheit und Art ein Fall, plus „20:00", „12:30", Tausenderpunkt, Gesprochenes.
-- [ ] **Step 2:** Typen und Formatierer. Kopfkommentar: warum ein Ort (Spec 5.3), und dass eine neue Einheit hier je Funktion eine Zeile kostet.
-- [ ] **Step 3:** `xcodegen generate`, Suite grün, Commit `feat(ios-member): Belastung.swift -- Einheiten, Umfangsarten und Formatierung`.
+- [x] **Step 1:** Tests zuerst, je Einheit und Art ein Fall, plus „20:00", „12:30", Tausenderpunkt, Gesprochenes.
+- [x] **Step 2:** Typen und Formatierer. Kopfkommentar: warum ein Ort (Spec 5.3), und dass eine neue Einheit hier je Funktion eine Zeile kostet.
+- [x] **Step 3:** `xcodegen generate`, Suite grün, Commit `feat(ios-member): Belastung.swift -- Einheiten, Umfangsarten und Formatierung`.
 
 ---
 
