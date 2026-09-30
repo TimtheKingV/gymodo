@@ -165,8 +165,8 @@ struct GeraetModelTests {
         #expect(erfasser.geschriebene.count == 1)
         #expect(erfasser.geschriebene.first?.sessionId == laufendeSession?.id)
         #expect(erfasser.geschriebene.first?.setId == gespeicherterSatz?.id)
-        #expect(erfasser.geschriebene.first?.body.weightKg == sut.gewicht)
-        #expect(erfasser.geschriebene.first?.body.reps == sut.wiederholungen)
+        #expect(erfasser.geschriebene.first?.body.load == sut.gewicht)
+        #expect(erfasser.geschriebene.first?.body.volume == sut.wiederholungen)
     }
 
     // MARK: - Phasen
@@ -614,8 +614,8 @@ enum GeraetTestdaten {
         try! JSONDecoder().decode(T.self, from: Data(json.utf8))
     }
 
-    static var maschine: BootstrapResponse.Machine { maschine(maxWeightKg: "150.0") }
-    static var maschineOhneMaximum: BootstrapResponse.Machine { maschine(maxWeightKg: "null") }
+    static var maschine: BootstrapResponse.Machine { maschine(loadMax: "150.0") }
+    static var maschineOhneMaximum: BootstrapResponse.Machine { maschine(loadMax: "null") }
 
     /// Ein Modell ohne Einstellparameter -- laut Trainerportal ein
     /// regulaerer Zustand, kein Datenfehler.
@@ -624,21 +624,21 @@ enum GeraetTestdaten {
         {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":"Fensterseite",
          "status":"active","tokenHashes":[],"visitCount":2,
          "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":"Technogym",
-           "photoPath":null,"weightStepKg":2.5,"minWeightKg":5.0,"maxWeightKg":150.0,
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,
            "settingDefinitions":[]},
-         "exercises":[{"id":"e1","name":"Beidbeinig","targetRepsMin":8,"targetRepsMax":12}]}
+         "exercises":[{"id":"e1","name":"Beidbeinig","volumeKind":"reps","targetMin":8,"targetMax":12}]}
         """)
     }
 
-    static func maschine(maxWeightKg: String) -> BootstrapResponse.Machine {
+    static func maschine(loadMax: String) -> BootstrapResponse.Machine {
         dekodiere("""
         {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":"Fensterseite",
          "status":"active","tokenHashes":[],"visitCount":2,
          "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":"Technogym",
-           "photoPath":null,"weightStepKg":2.5,"minWeightKg":5.0,"maxWeightKg":\(maxWeightKg),
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":\(loadMax),
            "settingDefinitions":[{"key":"sitz","label":"Sitzposition","kind":"number",
              "minValue":1,"maxValue":8,"stepValue":1,"unit":null,"allowedValues":null}]},
-         "exercises":[{"id":"e1","name":"Beidbeinig","targetRepsMin":8,"targetRepsMax":12}]}
+         "exercises":[{"id":"e1","name":"Beidbeinig","volumeKind":"reps","targetMin":8,"targetMax":12}]}
         """)
     }
 
@@ -649,11 +649,11 @@ enum GeraetTestdaten {
         {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":"Fensterseite",
          "status":"active","tokenHashes":[],"visitCount":2,
          "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":"Technogym",
-           "photoPath":null,"weightStepKg":2.5,"minWeightKg":5.0,"maxWeightKg":150.0,
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,
            "settingDefinitions":[{"key":"sitz","label":"Sitzposition","kind":"number",
              "minValue":1,"maxValue":8,"stepValue":1,"unit":null,"allowedValues":null}]},
-         "exercises":[{"id":"e1","name":"Beidbeinig","targetRepsMin":8,"targetRepsMax":12},
-                      {"id":"e2","name":"Einbeinig","targetRepsMin":6,"targetRepsMax":10}]}
+         "exercises":[{"id":"e1","name":"Beidbeinig","volumeKind":"reps","targetMin":8,"targetMax":12},
+                      {"id":"e2","name":"Einbeinig","volumeKind":"reps","targetMin":6,"targetMax":10}]}
         """)
     }
 
@@ -666,7 +666,7 @@ enum GeraetTestdaten {
         let saetze = lastSets.map { eintrag in
             """
             {"machineId":"\(eintrag.0)","exerciseId":"\(eintrag.1)",
-             "weightKg":\(eintrag.2),"reps":\(eintrag.3),"rir":null,
+             "load":\(eintrag.2),"volume":\(eintrag.3),"rir":null,
              "performedAt":"2026-09-01T10:00:00Z"}
             """
         }.joined(separator: ",")
@@ -685,19 +685,19 @@ enum GeraetTestdaten {
         return dekodiere("""
         {"machine":{"id":"m1","label":"Gerät 7","locationNote":"Fensterseite"},
          "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":"Technogym",
-           "photoUrl":null,"weightStepKg":2.5,"minWeightKg":5.0,"maxWeightKg":150.0},
+           "photoUrl":null,"loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0},
          "settingDefinitions":[{"key":"sitz","label":"Sitzposition","kind":"number",
            "minValue":1,"maxValue":8,"stepValue":1,"unit":null,"allowedValues":null}],
          "exercises":[{"id":"e1","name":"Beidbeinig","description":null,
-           "targetRepsMin":8,"targetRepsMax":12,"instructionVideoUrl":null},
+           "volumeKind":"reps","targetMin":8,"targetMax":12,"instructionVideoUrl":null},
            {"id":"e2","name":"Einbeinig","description":null,
-           "targetRepsMin":6,"targetRepsMax":10,"instructionVideoUrl":null}],
+           "volumeKind":"reps","targetMin":6,"targetMax":10,"instructionVideoUrl":null}],
          "selectedExerciseId":"e1","calibration":\(kalibrierung),
-         "history":[{"performedOn":"2026-09-01","weightKg":77.5,"reps":[11,11,10]}],
-         "suggestion":{"algoVersion":"v1","resultWeightKg":\(vorschlag),
-           "reasonCode":"steigerung","inputs":{"targetRepsMin":8,"targetRepsMax":12,
-             "weightStepKg":2.5,"minWeightKg":5.0,"maxWeightKg":150.0,
-             "currentWeightKg":77.5,"consideredBlocks":1}}}
+         "history":[{"performedOn":"2026-09-01","load":77.5,"volume":[11,11,10]}],
+         "suggestion":{"algoVersion":"v1","resultLoad":\(vorschlag),
+           "reasonCode":"steigerung","inputs":{"targetMin":8,"targetMax":12,
+             "loadStep":2.5,"loadMin":5.0,"loadMax":150.0,
+             "currentLoad":77.5,"consideredBlocks":1}}}
         """)
     }
 }

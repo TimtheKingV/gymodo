@@ -30,7 +30,7 @@ struct GeraeteAuswahlTests {
         let tagsJSON = tags.map { "\"\($0)\"" }.joined(separator: ", ")
         let uebungenJSON = uebungen.map {
             """
-            { "id": "\($0.0)", "name": "\($0.1)", "targetRepsMin": 8, "targetRepsMax": 12 }
+            { "id": "\($0.0)", "name": "\($0.1)", "volumeKind":"reps","targetMin":8, "targetMax":12 }
             """
         }.joined(separator: ", ")
         return """
@@ -40,8 +40,8 @@ struct GeraeteAuswahlTests {
           "tokenHashes": [\(tagsJSON)], "visitCount": \(besuche),
           "equipmentModel": {
             "id": "em-\(id)", "name": "\(name)", "manufacturer": "Technogym",
-            "photoPath": null, "weightStepKg": 2.5, "minWeightKg": 5,
-            "maxWeightKg": 100, "settingDefinitions": []
+            "category":"kraft","photoPath": null, "loadUnit":"kg","loadStep":2.5, "loadMin":5,
+            "loadMax":100, "settingDefinitions": []
           },
           "exercises": [\(uebungenJSON)]
         }
@@ -55,7 +55,7 @@ struct GeraeteAuswahlTests {
         let saetzeJSON = saetze.map {
             """
             { "machineId": "\($0.machine)", "exerciseId": "\($0.uebung)",
-              "weightKg": \($0.kg), "reps": 10, "rir": null,
+              "load":\($0.kg), "volume":10, "rir": null,
               "performedAt": "\($0.wann)" }
             """
         }.joined(separator: ", ")

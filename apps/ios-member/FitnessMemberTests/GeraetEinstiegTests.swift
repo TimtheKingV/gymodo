@@ -96,11 +96,11 @@ struct GeraetEinstiegTests {
             member: .init(displayName: nil),
             studios: [], machines: [maschine(id: "m1", tokenHashes: [])], calibrations: [],
             lastSets: [
-                BootstrapResponse.LastSet(machineId: "m1", exerciseId: "e1", weightKg: 40, reps: 10,
+                BootstrapResponse.LastSet(machineId: "m1", exerciseId: "e1", load: 40, secondaryLoad: nil, volume: 10,
                                           rir: nil, performedAt: "2026-08-01T10:00:00Z"),
-                BootstrapResponse.LastSet(machineId: "m1", exerciseId: "e2", weightKg: 40, reps: 10,
+                BootstrapResponse.LastSet(machineId: "m1", exerciseId: "e2", load: 40, secondaryLoad: nil, volume: 10,
                                           rir: nil, performedAt: "2026-09-01T10:00:00Z"),
-                BootstrapResponse.LastSet(machineId: "m2", exerciseId: "e3", weightKg: 40, reps: 10,
+                BootstrapResponse.LastSet(machineId: "m2", exerciseId: "e3", load: 40, secondaryLoad: nil, volume: 10,
                                           rir: nil, performedAt: "2026-09-05T10:00:00Z"),
             ]
         )
@@ -129,7 +129,7 @@ private func bootstrapMitLetztenSaetzen(_ paare: [(String, String)]) -> Bootstra
         calibrations: [],
         lastSets: paare.map { paar in
             BootstrapResponse.LastSet(machineId: paar.0, exerciseId: paar.1,
-                                      weightKg: 80, reps: 10, rir: nil,
+                                      load: 80, secondaryLoad: nil, volume: 10, rir: nil,
                                       performedAt: "2026-09-01T10:00:00Z")
         }
     )
@@ -141,7 +141,8 @@ private func maschine(id: String, tokenHashes: [String]) -> BootstrapResponse.Ma
         status: "active", tokenHashes: tokenHashes, visitCount: 0,
         equipmentModel: BootstrapResponse.EquipmentModel(
             id: "em1", name: "Beinpresse", manufacturer: nil, photoPath: nil,
-            weightStepKg: 2.5, minWeightKg: 5, maxWeightKg: 150,
+            category: .kraft, loadUnit: .kg, loadStep: 2.5, loadMin: 5, loadMax: 150,
+            secondaryUnit: nil, secondaryStep: nil, secondaryMin: nil, secondaryMax: nil,
             settingDefinitions: []
         ),
         exercises: []

@@ -366,7 +366,7 @@ struct AbschlussZeile: Equatable, Identifiable {
             }
             return AbschlussZeile(
                 block: block,
-                anzeige: VorschlagsAnzeige(reasonCode: vorschlag?.reasonCode, deltaKg: vorschlag?.deltaKg)
+                anzeige: VorschlagsAnzeige(reasonCode: vorschlag?.reasonCode, deltaKg: vorschlag?.deltaLoad)
             )
         }
     }

@@ -14,7 +14,8 @@ struct TrainingAbschlussZeilenTests {
     private func vorschlag(_ machineId: String = "m1", _ exerciseId: String = "e1",
                            delta: Double? = nil, reasonCode: String) -> Blockvorschlag {
         Blockvorschlag(machineId: machineId, exerciseId: exerciseId,
-                       resultWeightKg: nil, deltaKg: delta, reasonCode: reasonCode, algoVersion: "v1")
+                       resultLoad: nil, deltaLoad: delta, secondaryLoad: nil,
+                       loadUnit: .kg, secondaryUnit: nil, reasonCode: reasonCode, algoVersion: "v1")
     }
 
     @Test func korridorObenErreichtZeigtDasPositiveDelta() {

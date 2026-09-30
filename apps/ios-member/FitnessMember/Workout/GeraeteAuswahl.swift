@@ -163,7 +163,7 @@ enum GeraeteAuswahl {
         for satz in bootstrap.lastSets {
             guard let datum = Zeitpunkt.parse(satz.performedAt) else { continue }
             if let vorhanden = juengste[satz.machineId], vorhanden.performedAt >= datum { continue }
-            juengste[satz.machineId] = Zuletzt(performedAt: datum, gewichtKg: satz.weightKg)
+            juengste[satz.machineId] = Zuletzt(performedAt: datum, gewichtKg: satz.load)
         }
         return juengste
     }

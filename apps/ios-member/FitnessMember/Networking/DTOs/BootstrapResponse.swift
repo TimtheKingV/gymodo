@@ -53,9 +53,23 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         let name: String
         let manufacturer: String?
         let photoPath: String?
-        let weightStepKg: Double
-        let minWeightKg: Double
-        let maxWeightKg: Double?
+        /// Nur Anzeige: die Geraetesuche gruppiert danach (Cardio-Spec
+        /// Abschnitt 3.5). Der Satzpfad liest sie nie -- deshalb steht sie
+        /// auch nur hier und nicht im TagContextResponse.
+        let category: Kategorie
+        /// Was am Geraet gedreht wird, und in welchen Rasten. Die Einheit
+        /// ist ein Wert, den Raeder und Formatierer lesen -- kein Zweig.
+        let loadUnit: LoadUnit
+        let loadStep: Double
+        let loadMin: Double
+        let loadMax: Double?
+        /// Der zweite Intensitaetsregler (Neigung am Laufband), mit eigener
+        /// Rastung. Alle vier gesetzt oder keiner: so erzwingt es der
+        /// Constraint aus Migration 0045. Bei einem Kraftgeraet nil.
+        let secondaryUnit: LoadUnit?
+        let secondaryStep: Double?
+        let secondaryMin: Double?
+        let secondaryMax: Double?
         /// Derselbe Typ wie in TagContextResponse -- GeraetModel verarbeitet
         /// online und offline dieselbe Liste, statt zwei Formen zu kennen.
         ///
@@ -67,8 +81,11 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
     struct Exercise: Decodable, Equatable, Identifiable {
         let id: String
         let name: String
-        let targetRepsMin: Int
-        let targetRepsMax: Int
+        /// Was der Korridor zaehlt: Wiederholungen, Sekunden oder Meter.
+        /// targetMin/targetMax stehen in genau dieser Einheit.
+        let volumeKind: VolumeKind
+        let targetMin: Int
+        let targetMax: Int
     }
 
     struct Machine: Decodable, Equatable, Identifiable {
@@ -97,8 +114,11 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
     struct LastSet: Decodable, Equatable {
         let machineId: String
         let exerciseId: String
-        let weightKg: Double
-        let reps: Int
+        /// Zahlen ohne Einheit: was sie bedeuten, sagen loadUnit am Modell
+        /// und volumeKind an der Uebung.
+        let load: Double
+        let secondaryLoad: Double?
+        let volume: Int
         let rir: Double?
         let performedAt: String
     }

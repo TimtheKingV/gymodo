@@ -169,8 +169,8 @@ final class GeraetModel {
         }
         // Ohne Historie startet das Rad am Geraetminimum -- ein Vorschlag
         // ohne Daten waere eine Trainingsempfehlung (designsystem.md SS8).
-        gewicht = letzter?.weightKg ?? maschine.equipmentModel.minWeightKg
-        wiederholungen = letzter?.reps ?? maschine.exercises.first { $0.id == uebungId }?.targetRepsMin ?? 10
+        gewicht = letzter?.load ?? maschine.equipmentModel.loadMin
+        wiederholungen = letzter?.volume ?? maschine.exercises.first { $0.id == uebungId }?.targetMin ?? 10
 
         // Snap erst, nachdem alle gespeicherten Eigenschaften stehen --
         // gewichtsWerte und Rastwerte.wiederholungen sind berechnete
@@ -198,13 +198,13 @@ final class GeraetModel {
         if let kontext {
             return kontext.exercises.map {
                 GeraetUebung(id: $0.id, name: $0.name,
-                             targetRepsMin: $0.targetRepsMin, targetRepsMax: $0.targetRepsMax,
+                             targetRepsMin: $0.targetMin, targetRepsMax: $0.targetMax,
                              videoURL: $0.instructionVideoUrl.flatMap(URL.init(string:)))
             }
         }
         return maschine.exercises.map {
             GeraetUebung(id: $0.id, name: $0.name,
-                         targetRepsMin: $0.targetRepsMin, targetRepsMax: $0.targetRepsMax,
+                         targetRepsMin: $0.targetMin, targetRepsMax: $0.targetMax,
                          videoURL: nil)
         }
     }
@@ -224,13 +224,13 @@ final class GeraetModel {
 
     private var modell: (schritt: Double, min: Double, max: Double?) {
         if let kontext {
-            return (kontext.equipmentModel.weightStepKg,
-                    kontext.equipmentModel.minWeightKg,
-                    kontext.equipmentModel.maxWeightKg)
+            return (kontext.equipmentModel.loadStep,
+                    kontext.equipmentModel.loadMin,
+                    kontext.equipmentModel.loadMax)
         }
-        return (maschine.equipmentModel.weightStepKg,
-                maschine.equipmentModel.minWeightKg,
-                maschine.equipmentModel.maxWeightKg)
+        return (maschine.equipmentModel.loadStep,
+                maschine.equipmentModel.loadMin,
+                maschine.equipmentModel.loadMax)
     }
 
     var gewichtsWerte: [Double] {
@@ -328,8 +328,8 @@ final class GeraetModel {
         // Derselbe Uebungs-Vorbehalt wie kalibrierungswerte: der Vorschlag
         // gilt fuer selectedExerciseId, nicht fuer die aktuell gewaehlte.
         guard kontextPasstZurUebung,
-              let vorschlag = kontext?.suggestion.resultWeightKg,
-              let vorher = kontext?.suggestion.inputs.currentWeightKg
+              let vorschlag = kontext?.suggestion.resultLoad,
+              let vorher = kontext?.suggestion.inputs.currentLoad
         else { return nil }
         let delta = vorschlag - vorher
         guard delta != 0 else { return "Vorschlag · halten" }
@@ -342,7 +342,7 @@ final class GeraetModel {
             $0.machineId == maschine.id && $0.exerciseId == uebungId
         }) else { return nil }
         return Rueckblick(
-            zuletzt: "\(Zahlformat.gewichtMitEinheit(letzter.weightKg)) × \(letzter.reps)",
+            zuletzt: "\(Zahlformat.gewichtMitEinheit(letzter.load)) × \(letzter.volume)",
             vorschlag: vorschlagText
         )
     }
@@ -365,7 +365,7 @@ final class GeraetModel {
     func letztesGewicht(fuer uebungId: String) -> Double? {
         bootstrap.lastSets.first {
             $0.machineId == maschine.id && $0.exerciseId == uebungId
-        }?.weightKg
+        }?.load
     }
 
     /// Ganze Tage seit dem letzten Satz -- "vor 8 Tagen" in der
@@ -443,7 +443,7 @@ final class GeraetModel {
         // Unangetastet uebernehmen; hat das Mitglied schon am Rad gedreht,
         // gehoert ihm der Wert -- ein spaeter Vorschlag darf ihn nicht mehr
         // unter dem Daumen ersetzen.
-        if !gewichtVomNutzer, let vorschlag = geladen.suggestion.resultWeightKg {
+        if !gewichtVomNutzer, let vorschlag = geladen.suggestion.resultLoad {
             gewicht = Rastwerte.naechster(zu: vorschlag, in: gewichtsWerte)
         }
     }
@@ -463,8 +463,8 @@ final class GeraetModel {
             $0.machineId == maschine.id && $0.exerciseId == neue
         }
         gewicht = Rastwerte.naechster(
-            zu: letzter?.weightKg ?? modell.min, in: gewichtsWerte)
-        wiederholungen = GeraetModel.geklemmt(letzter?.reps ?? aktiveUebung?.targetRepsMin ?? 10)
+            zu: letzter?.load ?? modell.min, in: gewichtsWerte)
+        wiederholungen = GeraetModel.geklemmt(letzter?.volume ?? aktiveUebung?.targetRepsMin ?? 10)
         // Eine andere Uebung hat ihren eigenen Satzzaehler -- eine Pause
         // oder eine Abschlussentscheidung, die zur vorherigen gehoerte,
         // gilt hier nicht mehr.

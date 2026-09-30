@@ -50,16 +50,16 @@ struct UebungsfortschrittView: View {
                 .foregroundStyle(DesignSystem.Color.textMuted)
 
             HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.s8) {
-                Text(Zahlformat.gewichtMitEinheit(uebung.currentWeightKg))
+                Text(Zahlformat.gewichtMitEinheit(uebung.currentLoad))
                     .font(DesignSystem.Typography.wertHeld)
                     .foregroundStyle(DesignSystem.Color.text)
-                Text(HomeZeilen.veraenderung(uebung.changeKg))
+                Text(HomeZeilen.veraenderung(uebung.changeLoad))
                     .font(DesignSystem.Typography.wertSekundaer)
                     .foregroundStyle(DesignSystem.Color.textMuted)
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(
-                "\(Zahlformat.gewichtGesprochen(uebung.currentWeightKg)), Veränderung \(HomeZeilen.veraenderung(uebung.changeKg)) Kilogramm")
+                "\(Zahlformat.gewichtGesprochen(uebung.currentLoad)), Veränderung \(HomeZeilen.veraenderung(uebung.changeLoad)) Kilogramm")
         }
     }
 
@@ -83,14 +83,14 @@ struct UebungsfortschrittView: View {
         Chart(punkte, id: \.performedOn) { punkt in
             LineMark(
                 x: .value("Datum", Zeitpunkt.parse("\(punkt.performedOn)T12:00:00Z") ?? Date()),
-                y: .value("Gewicht", punkt.topWeightKg)
+                y: .value("Gewicht", punkt.topLoad)
             )
             .lineStyle(StrokeStyle(lineWidth: 2))
             .foregroundStyle(DesignSystem.Color.accent)
 
             PointMark(
                 x: .value("Datum", Zeitpunkt.parse("\(punkt.performedOn)T12:00:00Z") ?? Date()),
-                y: .value("Gewicht", punkt.topWeightKg)
+                y: .value("Gewicht", punkt.topLoad)
             )
             .symbolSize(64)
             .foregroundStyle(DesignSystem.Color.accent)
@@ -100,14 +100,14 @@ struct UebungsfortschrittView: View {
             .annotation(position: .top) {
                 if punkt.performedOn == punkte.first?.performedOn
                     || punkt.performedOn == punkte.last?.performedOn {
-                    Text(Zahlformat.gewicht(punkt.topWeightKg))
+                    Text(Zahlformat.gewicht(punkt.topLoad))
                         .font(DesignSystem.Typography.fliesstext)
                         .foregroundStyle(DesignSystem.Color.textMuted)
                         .monospacedDigit()
                 }
             }
         }
-        .chartYScale(domain: Fortschrittsfenster.achsenbereich(punkte.map(\.topWeightKg)))
+        .chartYScale(domain: Fortschrittsfenster.achsenbereich(punkte.map(\.topLoad)))
         // Achsenbeschriftung in text-faint (SS13) -- eine andere Regel als
         // die direkte Beschriftung an den Datenpunkten oben: beide stehen
         // nebeneinander. Kurzform "9. Jul", keine Wochentage -- die
@@ -155,9 +155,9 @@ struct UebungsfortschrittView: View {
                     Text(datum(punkt.performedOn))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                     Spacer()
-                    Text(Zahlformat.gewichtMitEinheit(punkt.topWeightKg))
+                    Text(Zahlformat.gewichtMitEinheit(punkt.topLoad))
                         .foregroundStyle(DesignSystem.Color.text)
-                    Text("× \(punkt.reps)")
+                    Text("× \(punkt.volume)")
                         .foregroundStyle(DesignSystem.Color.textMuted)
                 }
                 .font(DesignSystem.Typography.fliesstext)

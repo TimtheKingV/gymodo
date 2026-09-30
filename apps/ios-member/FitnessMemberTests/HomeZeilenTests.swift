@@ -26,7 +26,8 @@ struct HomeZeilenTests {
     private func block(_ machineId: String) -> SessionSummary.Block {
         SessionSummary.Block(
             machineId: machineId, machineLabel: machineId, exerciseId: "e-\(machineId)",
-            exerciseName: "Übung \(machineId)", sets: [])
+            exerciseName: "Übung \(machineId)",
+            loadUnit: .kg, secondaryUnit: nil, volumeKind: .reps, sets: [])
     }
 
     /// Was heute noch laeuft, ist kein Verlauf -- die laufende Einheit

@@ -35,16 +35,27 @@ struct DTOTests {
           "machines": [{
             "id":"m1","studioId":"s1","label":"07","locationNote":null,"status":"active",
             "tokenHashes":["abc"],"visitCount":0,
-            "equipmentModel":{"id":"e1","name":"Beinpresse","manufacturer":null,"photoPath":null,"weightStepKg":2.5,"minWeightKg":10,"maxWeightKg":200,"settingDefinitions":[]},
-            "exercises":[{"id":"ex1","name":"Beidbeinig","targetRepsMin":8,"targetRepsMax":12}]
+            "equipmentModel":{"id":"e1","name":"Beinpresse","manufacturer":null,"photoPath":null,"category":"kraft","loadUnit":"kg","loadStep":2.5,"loadMin":10,"loadMax":200,"secondaryUnit":null,"secondaryStep":null,"secondaryMin":null,"secondaryMax":null,"settingDefinitions":[]},
+            "exercises":[{"id":"ex1","name":"Beidbeinig","volumeKind":"reps","targetMin":8,"targetMax":12}]
           }],
           "calibrations": [{"machineId":"m1","exerciseId":"ex1","settingValues":{"sitz":3},"schemaVersion":1,"createdAt":"2026-09-01T10:00:00Z"}],
-          "lastSets": [{"machineId":"m1","exerciseId":"ex1","weightKg":80,"reps":10,"rir":2,"performedAt":"2026-09-01T10:05:00Z"}]
+          "lastSets": [{"machineId":"m1","exerciseId":"ex1","load":80,"secondaryLoad":null,"volume":10,"rir":2,"performedAt":"2026-09-01T10:05:00Z"}]
         }
         """
         let response = try JSONDecoder().decode(BootstrapResponse.self, from: Data(json.utf8))
         #expect(response.studios.count == 1)
-        #expect(response.machines[0].equipmentModel.weightStepKg == 2.5)
+        let modell = response.machines[0].equipmentModel
+        #expect(modell.loadStep == 2.5)
+        #expect(modell.loadUnit == .kg)
+        #expect(modell.category == .kraft)
+        // Die Gegenprobe aus Spec Abschnitt 9: an einem Kraftgeraet ist
+        // alles, was zur Nebenbelastung gehoert, nil.
+        #expect(modell.secondaryUnit == nil)
+        #expect(modell.secondaryStep == nil)
+        #expect(response.machines[0].exercises[0].volumeKind == .reps)
+        #expect(response.lastSets[0].load == 80)
+        #expect(response.lastSets[0].secondaryLoad == nil)
+        #expect(response.lastSets[0].volume == 10)
         #expect(response.calibrations[0].settingValues == .object(["sitz": .number(3)]))
     }
 
@@ -59,8 +70,8 @@ struct DTOTests {
             "tokenHashes": ["abc"], "visitCount": 3,
             "equipmentModel": {
               "id": "em1", "name": "Beinpresse", "manufacturer": null,
-              "photoPath": null, "weightStepKg": 2.5,
-              "minWeightKg": 5.0, "maxWeightKg": 150.0,
+              "photoPath": null, "category": "kraft", "loadUnit": "kg",
+              "loadStep": 2.5, "loadMin": 5.0, "loadMax": 150.0,
               "settingDefinitions": [{
                 "key": "sitz", "label": "Sitzposition", "kind": "number",
                 "minValue": 1, "maxValue": 8, "stepValue": 1,
@@ -157,13 +168,13 @@ struct DTOTests {
         let json = """
         {
           "machine":{"id":"m1","label":"07","locationNote":null},
-          "equipmentModel":{"id":"e1","name":"Beinpresse","manufacturer":null,"photoUrl":null,"weightStepKg":2.5,"minWeightKg":10,"maxWeightKg":200},
+          "equipmentModel":{"id":"e1","name":"Beinpresse","manufacturer":null,"photoUrl":null,"loadUnit":"kg","loadStep":2.5,"loadMin":10,"loadMax":200,"secondaryUnit":null,"secondaryStep":null,"secondaryMin":null,"secondaryMax":null},
           "settingDefinitions":[],
-          "exercises":[{"id":"ex1","name":"Beidbeinig","description":null,"targetRepsMin":8,"targetRepsMax":12,"instructionVideoUrl":null}],
+          "exercises":[{"id":"ex1","name":"Beidbeinig","description":null,"volumeKind":"reps","targetMin":8,"targetMax":12,"instructionVideoUrl":null}],
           "selectedExerciseId":"ex1",
           "calibration":null,
           "history":[],
-          "suggestion":{"algoVersion":"1.0.0","resultWeightKg":null,"reasonCode":"kein_verlauf","inputs":{"targetRepsMin":8,"targetRepsMax":12,"weightStepKg":2.5,"minWeightKg":10,"maxWeightKg":200,"currentWeightKg":null,"consideredBlocks":0}}
+          "suggestion":{"algoVersion":"2.0.0","resultLoad":null,"resultSecondaryLoad":null,"reasonCode":"kein_verlauf","inputs":{"targetMin":8,"targetMax":12,"loadStep":2.5,"loadMin":10,"loadMax":200,"currentLoad":null,"currentSecondaryLoad":null,"consideredBlocks":0}}
         }
         """
         let response = try JSONDecoder().decode(TagContextResponse.self, from: Data(json.utf8))
@@ -175,13 +186,133 @@ struct DTOTests {
     func encodesSetWriteWithProblem() throws {
         let write = SetWrite(
             machineId: "m1", exerciseId: "ex1", setIndex: 1,
-            weightKg: 80, reps: 10, rir: 2,
+            load: 80, volume: 10, rir: 2,
             problemFlag: true, problemReason: .zuSchwer, performedAt: nil
         )
         let data = try JSONEncoder().encode(write)
         let decoded = try JSONDecoder().decode(SetWrite.self, from: data)
         #expect(decoded == write)
         #expect(decoded.problemReason == .zuSchwer)
+    }
+
+    @Test("SetWrite schreibt load und volume, nie die alten Namen")
+    func setWriteSchreibtDieNeuenNamen() throws {
+        let write = SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10)
+        let json = String(data: try JSONEncoder().encode(write), encoding: .utf8)!
+
+        #expect(json.contains(#""load":80"#))
+        #expect(json.contains(#""volume":10"#))
+        #expect(!json.contains("weightKg"))
+        #expect(!json.contains("reps"))
+        // Ohne Nebenbelastung fehlt das Feld ganz: der Server weist ein
+        // gesetztes secondaryLoad an einem Kraftgeraet ab (Spec 5.1).
+        #expect(!json.contains("secondaryLoad"))
+    }
+
+    @Test("SetWrite traegt die Nebenbelastung, wenn es eine gibt")
+    func setWriteMitNebenbelastung() throws {
+        let write = SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1,
+                             load: 8.5, volume: 1200, secondaryLoad: 6)
+        let json = String(data: try JSONEncoder().encode(write), encoding: .utf8)!
+
+        #expect(json.contains(#""secondaryLoad":6"#))
+        #expect(try JSONDecoder().decode(SetWrite.self, from: Data(json.utf8)) == write)
+    }
+
+    @Test("SetWrite liest einen Schreibvorgang mit den alten Namen")
+    func setWriteLiestAlteNamen() throws {
+        // So liegt ein Satz in pending-writes.json, den die Fassung vor
+        // Migration 0045 offline gepuffert hat.
+        let alt = #"{"machineId":"m1","exerciseId":"ex1","setIndex":2,"weightKg":82.5,"reps":9,"problemFlag":false,"performedAt":"2026-09-20T10:00:00Z"}"#
+        let write = try JSONDecoder().decode(SetWrite.self, from: Data(alt.utf8))
+
+        #expect(write.load == 82.5)
+        #expect(write.volume == 9)
+        #expect(write.secondaryLoad == nil)
+        #expect(write.setIndex == 2)
+        #expect(write.performedAt == "2026-09-20T10:00:00Z")
+    }
+
+    @Test("dekodiert ein Laufband im Bootstrap")
+    func decodesBootstrapLaufband() throws {
+        let json = """
+        {
+          "member": {"displayName": null, "goals": {"weeklyDays": null, "targetWeight": null}},
+          "studios": [],
+          "machines": [{
+            "id":"m9","studioId":"s1","label":"Laufband 2","locationNote":null,"status":"active",
+            "tokenHashes":[],"visitCount":1,
+            "equipmentModel":{"id":"e9","name":"Laufband","manufacturer":null,"photoPath":null,
+              "category":"cardio","loadUnit":"kmh","loadStep":0.5,"loadMin":0,"loadMax":20,
+              "secondaryUnit":"pct","secondaryStep":0.5,"secondaryMin":0,"secondaryMax":15,
+              "settingDefinitions":[]},
+            "exercises":[{"id":"ex9","name":"Dauerlauf","volumeKind":"seconds","targetMin":900,"targetMax":1200}]
+          }],
+          "calibrations": [],
+          "lastSets": [{"machineId":"m9","exerciseId":"ex9","load":8.5,"secondaryLoad":6,"volume":1200,"rir":null,"performedAt":"2026-09-20T10:05:00Z"}]
+        }
+        """
+        let response = try JSONDecoder().decode(BootstrapResponse.self, from: Data(json.utf8))
+        let modell = response.machines[0].equipmentModel
+
+        #expect(modell.category == .cardio)
+        #expect(modell.loadUnit == .kmh)
+        #expect(modell.loadStep == 0.5)
+        #expect(modell.secondaryUnit == .pct)
+        #expect(modell.secondaryStep == 0.5)
+        #expect(modell.secondaryMin == 0)
+        #expect(modell.secondaryMax == 15)
+        #expect(response.machines[0].exercises[0].volumeKind == .seconds)
+        #expect(response.machines[0].exercises[0].targetMin == 900)
+        #expect(response.lastSets[0].load == 8.5)
+        #expect(response.lastSets[0].secondaryLoad == 6)
+        #expect(response.lastSets[0].volume == 1200)
+    }
+
+    @Test("dekodiert ein Laufband im Tag-Kontext")
+    func decodesTagContextLaufband() throws {
+        let json = """
+        {
+          "machine":{"id":"m9","label":"Laufband 2","locationNote":null},
+          "equipmentModel":{"id":"e9","name":"Laufband","manufacturer":null,"photoUrl":null,
+            "loadUnit":"kmh","loadStep":0.5,"loadMin":0,"loadMax":20,
+            "secondaryUnit":"pct","secondaryStep":0.5,"secondaryMin":0,"secondaryMax":15},
+          "settingDefinitions":[],
+          "exercises":[{"id":"ex9","name":"Dauerlauf","description":null,"volumeKind":"seconds","targetMin":900,"targetMax":1200,"instructionVideoUrl":null}],
+          "selectedExerciseId":"ex9",
+          "calibration":null,
+          "history":[{"performedOn":"2026-09-20","load":8.5,"secondaryLoad":6,"volume":[1200]}],
+          "suggestion":{"algoVersion":"2.0.0","resultLoad":9,"resultSecondaryLoad":6,"reasonCode":"korridor_oben_erreicht","inputs":{"targetMin":900,"targetMax":1200,"loadStep":0.5,"loadMin":0,"loadMax":20,"currentLoad":8.5,"currentSecondaryLoad":6,"consideredBlocks":2}}
+        }
+        """
+        let response = try JSONDecoder().decode(TagContextResponse.self, from: Data(json.utf8))
+
+        #expect(response.equipmentModel.loadUnit == .kmh)
+        #expect(response.equipmentModel.secondaryUnit == .pct)
+        #expect(response.exercises[0].volumeKind == .seconds)
+        #expect(response.history[0].load == 8.5)
+        #expect(response.history[0].secondaryLoad == 6)
+        #expect(response.history[0].volume == [1200])
+        #expect(response.suggestion.resultLoad == 9)
+        #expect(response.suggestion.resultSecondaryLoad == 6)
+        #expect(response.suggestion.inputs.currentLoad == 8.5)
+        #expect(response.suggestion.inputs.currentSecondaryLoad == 6)
+    }
+
+    @Test("eine unbekannte Belastungseinheit laesst das Bootstrap scheitern")
+    func bootstrapMitUnbekannterEinheitScheitert() {
+        // Kein stilles "kg": ein Rad in der falschen Einheit waere
+        // schlimmer als ein Prefetch, der auf das App-Update wartet.
+        let json = """
+        {"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null}},"studios":[],
+         "machines":[{"id":"m1","studioId":"s1","label":"07","locationNote":null,"status":"active","tokenHashes":[],"visitCount":0,
+           "equipmentModel":{"id":"e1","name":"Skierg","manufacturer":null,"photoPath":null,"category":"cardio","loadUnit":"spm","loadStep":1,"loadMin":0,"loadMax":60,"settingDefinitions":[]},
+           "exercises":[]}],
+         "calibrations":[],"lastSets":[]}
+        """
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(BootstrapResponse.self, from: Data(json.utf8))
+        }
     }
 
     @Test("dekodiert die Fehlerhuelle")
@@ -194,22 +325,26 @@ struct DTOTests {
     @Test("dekodiert eine SessionsResponse mit einem Block")
     func decodesSessions() throws {
         let json = """
-        {"sessions":[{"id":"sess1","startedAt":"2026-09-01T10:00:00Z","completedAt":null,"completedReason":null,"machineCount":1,"setCount":1,"blocks":[{"machineId":"m1","machineLabel":"07","exerciseId":"ex1","exerciseName":"Beidbeinig","sets":[{"setIndex":1,"weightKg":80,"reps":10,"rir":null,"problemFlag":false,"problemReason":null,"performedAt":"2026-09-01T10:05:00Z"}]}]}],"summary":{"totalCount":34,"thisWeekCount":2,"lastSessionAt":"2026-09-01T10:00:00Z"}}
+        {"sessions":[{"id":"sess1","startedAt":"2026-09-01T10:00:00Z","completedAt":null,"completedReason":null,"machineCount":1,"setCount":1,"blocks":[{"machineId":"m1","machineLabel":"07","exerciseId":"ex1","exerciseName":"Beidbeinig","loadUnit":"kg","secondaryUnit":null,"volumeKind":"reps","sets":[{"setIndex":1,"load":80,"secondaryLoad":null,"volume":10,"rir":null,"problemFlag":false,"problemReason":null,"performedAt":"2026-09-01T10:05:00Z"}]}]}],"summary":{"totalCount":34,"thisWeekCount":2,"lastSessionAt":"2026-09-01T10:00:00Z"}}
         """
         let response = try JSONDecoder().decode(SessionsResponse.self, from: Data(json.utf8))
-        #expect(response.sessions[0].blocks[0].sets[0].weightKg == 80)
+        #expect(response.sessions[0].blocks[0].sets[0].load == 80)
+        #expect(response.sessions[0].blocks[0].loadUnit == .kg)
+        #expect(response.sessions[0].blocks[0].volumeKind == .reps)
         #expect(response.summary.totalCount == 34)
     }
 
     @Test("dekodiert eine ProgressResponse mit Geraetelabel")
     func decodesProgress() throws {
         let json = """
-        {"exercises":[{"exerciseId":"u1","exerciseName":"Beidbeinig","machineLabel":"Beinpresse","firstWeightKg":65,"currentWeightKg":80,"changeKg":15,"points":[{"performedOn":"2026-07-09","topWeightKg":65,"reps":12},{"performedOn":"2026-08-27","topWeightKg":80,"reps":10}]}]}
+        {"exercises":[{"exerciseId":"u1","exerciseName":"Beidbeinig","machineLabel":"Beinpresse","loadUnit":"kg","volumeKind":"reps","firstLoad":65,"currentLoad":80,"changeLoad":15,"points":[{"performedOn":"2026-07-09","topLoad":65,"volume":12},{"performedOn":"2026-08-27","topLoad":80,"volume":10}]}]}
         """
         let response = try JSONDecoder().decode(ProgressResponse.self, from: Data(json.utf8))
 
         #expect(response.exercises[0].machineLabel == "Beinpresse")
-        #expect(response.exercises[0].changeKg == 15)
+        #expect(response.exercises[0].changeLoad == 15)
+        #expect(response.exercises[0].loadUnit == .kg)
+        #expect(response.exercises[0].points[0].topLoad == 65)
         #expect(response.exercises[0].points.count == 2)
     }
 
@@ -240,22 +375,34 @@ struct DTOTests {
           "id": "s1", "startedAt": "2026-09-08T18:04:00Z",
           "completedAt": "2026-09-08T18:51:00Z", "completedReason": "manual",
           "vorschlaege": [
-            { "machineId": "m1", "exerciseId": "e1", "resultWeightKg": 82.5,
-              "deltaKg": 2.5, "reasonCode": "korridor_oben_erreicht",
-              "algoVersion": "v1" },
-            { "machineId": "m2", "exerciseId": "e2", "resultWeightKg": null,
-              "deltaKg": null, "reasonCode": "problem_gemeldet",
-              "algoVersion": "v1" }
+            { "machineId": "m1", "exerciseId": "e1", "resultLoad": 82.5,
+              "deltaLoad": 2.5, "secondaryLoad": null, "loadUnit": "kg",
+              "secondaryUnit": null, "reasonCode": "korridor_oben_erreicht",
+              "algoVersion": "2.0.0" },
+            { "machineId": "m2", "exerciseId": "e2", "resultLoad": null,
+              "deltaLoad": null, "secondaryLoad": null, "loadUnit": "kg",
+              "secondaryUnit": null, "reasonCode": "problem_gemeldet",
+              "algoVersion": "2.0.0" },
+            { "machineId": "m9", "exerciseId": "e9", "resultLoad": 9,
+              "deltaLoad": 0.5, "secondaryLoad": 6, "loadUnit": "kmh",
+              "secondaryUnit": "pct", "reasonCode": "korridor_oben_erreicht",
+              "algoVersion": "2.0.0" }
           ]
         }
         """.data(using: .utf8)!
 
         let beendet = try JSONDecoder().decode(CompletedSession.self, from: json)
 
-        #expect(beendet.vorschlaege.count == 2)
-        #expect(beendet.vorschlaege[0].deltaKg == 2.5)
+        #expect(beendet.vorschlaege.count == 3)
+        #expect(beendet.vorschlaege[0].deltaLoad == 2.5)
+        #expect(beendet.vorschlaege[0].loadUnit == .kg)
         // Kein Vorschlag heisst: beide Zahlen fehlen, der Grund bleibt.
-        #expect(beendet.vorschlaege[1].deltaKg == nil)
+        #expect(beendet.vorschlaege[1].deltaLoad == nil)
         #expect(beendet.vorschlaege[1].reasonCode == "problem_gemeldet")
+        // Das Laufband bringt seine Einheiten mit -- der Abschluss schreibt
+        // "+0,5 km/h bei 6,0 %", ohne das Modell nachzuschlagen.
+        #expect(beendet.vorschlaege[2].loadUnit == .kmh)
+        #expect(beendet.vorschlaege[2].secondaryLoad == 6)
+        #expect(beendet.vorschlaege[2].secondaryUnit == .pct)
     }
 }

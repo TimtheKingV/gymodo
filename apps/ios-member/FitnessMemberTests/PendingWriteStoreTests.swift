@@ -22,7 +22,7 @@ struct PendingWriteStoreTests {
         let directory = makeTempDirectory()
         let write = PendingSetWrite(
             sessionId: UUID(), setId: UUID(),
-            body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil)
+            body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10, rir: nil)
         )
 
         let firstProcess = PendingWriteStore(directory: directory)
@@ -39,7 +39,7 @@ struct PendingWriteStoreTests {
         let directory = makeTempDirectory()
         let write = PendingSetWrite(
             sessionId: UUID(), setId: UUID(),
-            body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil)
+            body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10, rir: nil)
         )
         let store = PendingWriteStore(directory: directory)
         store.save([write])

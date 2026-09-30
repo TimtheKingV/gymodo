@@ -30,15 +30,15 @@ struct GeraetKontextLadenTests {
         GeraetTestdaten.dekodiere("""
         {"machine":{"id":"m1","label":"Gerät 7","locationNote":"Fensterseite"},
          "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":"Technogym",
-           "photoUrl":"https://example.test/foto.jpg","weightStepKg":2.5,
-           "minWeightKg":5.0,"maxWeightKg":150.0},
+           "photoUrl":"https://example.test/foto.jpg","loadUnit":"kg","loadStep":2.5,
+           "loadMin":5.0,"loadMax":150.0},
          "settingDefinitions":[],
          "exercises":[{"id":"e1","name":"Beidbeinig","description":null,
-           "targetRepsMin":8,"targetRepsMax":12,"instructionVideoUrl":null}],
+           "volumeKind":"reps","targetMin":8,"targetMax":12,"instructionVideoUrl":null}],
          "selectedExerciseId":"e1","calibration":null,"history":[],
-         "suggestion":{"algoVersion":"v1","resultWeightKg":40.0,"reasonCode":"keine_historie",
-           "inputs":{"targetRepsMin":8,"targetRepsMax":12,"weightStepKg":2.5,
-             "minWeightKg":5.0,"maxWeightKg":150.0,"currentWeightKg":null,
+         "suggestion":{"algoVersion":"v1","resultLoad":40.0,"reasonCode":"keine_historie",
+           "inputs":{"targetMin":8,"targetMax":12,"loadStep":2.5,
+             "loadMin":5.0,"loadMax":150.0,"currentLoad":null,
              "consideredBlocks":0}}}
         """)
     }

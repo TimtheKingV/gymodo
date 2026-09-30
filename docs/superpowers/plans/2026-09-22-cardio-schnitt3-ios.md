@@ -95,9 +95,9 @@ Die Enums dekodieren strikt: eine Einheit, die die App nicht kennt, ist ein Deko
 
 **Verlauf-Cache:** `VerlaufFileStore` schreibt `SessionSummary` und `ExerciseProgress` auf Platte. Ein Cache aus der alten Fassung dekodiert nicht mehr → wie bei `Serienstand` optional behandeln: Dekodierfehler heißt leerer Cache, der nächste Abruf füllt ihn. Kein `CodingKeys`-Fallback für Verlaufsdaten, die der Server ohnehin liefert.
 
-- [ ] **Step 1:** DTOTests-Fixtures umschreiben; ein Laufband-Fixture (kmh/pct/seconds) für Bootstrap und Tag-Kontext; Test, dass ein alter Verlauf-Cache still verworfen wird.
-- [ ] **Step 2:** DTOs umbenennen. Der Rumpf des `PendingWriteStore` bleibt: er speichert `SetWrite` als JSON, neue Sätze gehen als `load`/`volume`; alte gepufferte Sätze mit `weightKg`/`reps` nimmt der Server über den Alias an (Spec 5.1).
-- [ ] **Step 3:** Commit `feat(ios-member): DTOs auf Belastung, Umfang und Kategorie`.
+- [x] **Step 1:** DTOTests-Fixtures umschreiben; ein Laufband-Fixture (kmh/pct/seconds) für Bootstrap und Tag-Kontext; Test, dass ein alter Verlauf-Cache still verworfen wird.
+- [x] **Step 2:** DTOs umbenennen. Der Rumpf des `PendingWriteStore` bleibt: er speichert `SetWrite` als JSON, neue Sätze gehen als `load`/`volume`; alte gepufferte Sätze mit `weightKg`/`reps` nimmt der Server über den Alias an (Spec 5.1).
+- [x] **Step 3:** Commit `feat(ios-member): DTOs auf Belastung, Umfang und Kategorie`.
 
 ---
 

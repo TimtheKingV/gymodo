@@ -177,6 +177,33 @@ struct VerlaufStoreTests {
         #expect(verlauf.messwertKopf == nil)
     }
 
+    /// Ein Cache von vor Migration 0045 traegt Saetze als weightKg/reps und
+    /// Bloecke ohne Einheit. Er dekodiert nicht mehr -- und das ist
+    /// gewollt: der Verlauf kommt ohnehin vom Server, ein leerer Cache
+    /// fuellt sich mit dem naechsten Abruf. Ein Rueckfall auf "kg" waere
+    /// hier geraten. Der Store darf daran nur nicht haengen bleiben.
+    @Test func alterCacheMitKilogrammUndWiederholungenWirdStillVerworfen() async {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        try? FileManager.default.createDirectory(at: verzeichnis, withIntermediateDirectories: true)
+        let alterCache = """
+        {"stand":800000000,"sessions":[{"id":"s1","startedAt":"2026-09-01T10:00:00Z","completedAt":null,"completedReason":null,"machineCount":1,"setCount":1,"blocks":[{"machineId":"m1","machineLabel":"07","exerciseId":"e1","exerciseName":"Beidbeinig","sets":[{"setIndex":1,"weightKg":80,"reps":10,"rir":null,"problemFlag":false,"problemReason":null,"performedAt":"2026-09-01T10:05:00Z"}]}]}],"summary":{"totalCount":1,"thisWeekCount":1,"lastSessionAt":"2026-09-01T10:00:00Z","streak":null},"fortschritt":[{"exerciseId":"e1","exerciseName":"Beidbeinig","machineLabel":"07","firstWeightKg":80,"currentWeightKg":80,"changeKg":0,"points":[{"performedOn":"2026-09-01","topWeightKg":80,"reps":10}]}]}
+        """
+        try? Data(alterCache.utf8).write(to: verzeichnis.appendingPathComponent("verlauf.json"))
+        let loader = FakeLoader()
+        loader.antwort = SessionsResponse(sessions: [einheit(id: "neu")], summary: leereKopfzeile)
+
+        let verlauf = store(loader, verzeichnis: verzeichnis)
+
+        #expect(verlauf.stand == nil)
+        #expect(verlauf.sessions.isEmpty)
+
+        await verlauf.laden(studioId: nil)
+
+        #expect(verlauf.sessions.map(\.id) == ["neu"])
+        #expect(VerlaufFileStore(directory: verzeichnis).load()?.sessions.map(\.id) == ["neu"])
+    }
+
     /// Ersetzt den Punkt desselben Tages statt einen zweiten anzuhaengen,
     /// und haelt die Liste aufsteigend sortiert.
     @Test func messwertEintragenErsetztDenselbenTagUndSortiert() async {

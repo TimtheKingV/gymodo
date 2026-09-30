@@ -157,7 +157,7 @@ final class WorkoutSessionStore {
         let formatter = ISO8601DateFormatter()
         let body = SetWrite(
             machineId: machineId, exerciseId: exerciseId, setIndex: setIndex,
-            weightKg: weightKg, reps: reps, rir: nil,
+            load: weightKg, volume: reps, rir: nil,
             problemFlag: problemFlag, problemReason: problemReason,
             performedAt: formatter.string(from: jetzt),
             sessionStartedAt: formatter.string(from: session.startedAt)

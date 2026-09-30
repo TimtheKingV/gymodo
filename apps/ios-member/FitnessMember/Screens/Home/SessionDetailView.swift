@@ -198,7 +198,7 @@ struct SessionDetailView: View {
     }
 
     private func satzZeile(_ satz: SessionSummary.Block.Set) -> some View {
-        var label = "Satz \(satz.setIndex), \(Zahlformat.gewichtGesprochen(satz.weightKg)), \(Zahlformat.wiederholungenGesprochen(satz.reps))"
+        var label = "Satz \(satz.setIndex), \(Zahlformat.gewichtGesprochen(satz.load)), \(Zahlformat.wiederholungenGesprochen(satz.volume))"
         if satz.problemFlag {
             label.append(", Problem gemeldet")
         }
@@ -209,12 +209,12 @@ struct SessionDetailView: View {
                 .foregroundStyle(DesignSystem.Color.textFaint)
                 .frame(width: 16, alignment: .leading)
 
-            Text(Zahlformat.gewichtMitEinheit(satz.weightKg))
+            Text(Zahlformat.gewichtMitEinheit(satz.load))
                 .font(DesignSystem.Typography.fliesstext)
                 .foregroundStyle(DesignSystem.Color.text)
                 .monospacedDigit()
 
-            Text("× \(satz.reps)")
+            Text("× \(satz.volume)")
                 .font(DesignSystem.Typography.fliesstext)
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .monospacedDigit()
