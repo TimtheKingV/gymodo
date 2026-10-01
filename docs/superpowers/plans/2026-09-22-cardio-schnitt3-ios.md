@@ -194,7 +194,7 @@ Das Satzziel aus `Einstellungen.satzZiel` (Vorgabe 3) entscheidet, wann nach dem
 - `Gruppen` bekommt `kraft: [Eintrag]` und `cardio: [Eintrag]` (statt `alle`) für den Fall ohne Suchtext; mit Suchtext bleibt die flache Trefferliste (`treffer`). Leere Gruppen entfallen in der Ansicht. Überschriften „KRAFT · A–Z", „CARDIO · A–Z".
 - `zuletztText`: „vor 2 Tagen · 8,5 km/h".
 
-- [ ] Tests: zwei Gruppen ohne Suchtext, leere Gruppe fehlt, Suche flach wie heute. Commit `feat(ios-member): Geraetesuche trennt Kraft und Cardio`.
+- [x] Tests: zwei Gruppen ohne Suchtext, leere Gruppe fehlt, Suche flach wie heute. Commit `feat(ios-member): Geraetesuche trennt Kraft und Cardio`.
 
 ---
 
