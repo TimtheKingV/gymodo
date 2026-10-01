@@ -33,6 +33,18 @@ enum TrainingTab {
         return Mitte(startedAt: session.startedAt, zahlen: zahlen)
     }
 
+    /// "3 Sätze · 80,0 kg", "1 Satz · 8,5 km/h · 6,0 %" -- die Zeile unter
+    /// einem Block auf TrainingLaeuft. Die Zahlen sind die des letzten
+    /// Satzes, die Einheiten die des Blocks: so formatiert der Tab auch
+    /// ohne Prefetch richtig.
+    static func blockzeile(_ block: LokalerBlock) -> String {
+        let saetze = "\(block.saetze.count) \(block.saetze.count == 1 ? "Satz" : "Sätze")"
+        guard let letzter = block.saetze.last else { return saetze }
+        let werte = Zahlformat.belastungMitNebenbelastung(
+            letzter.load, block.loadUnit, neben: letzter.secondaryLoad, block.secondaryUnit)
+        return "\(saetze) · \(werte)"
+    }
+
     /// Zuletzt bespieltes Geraet nach oben. Nicht einfach umgedreht: im
     /// Zirkel kehrt man zu einem frueheren Block zurueck, und dann ist DER
     /// das zuletzt benutzte Geraet, nicht der zuletzt angelegte Block.

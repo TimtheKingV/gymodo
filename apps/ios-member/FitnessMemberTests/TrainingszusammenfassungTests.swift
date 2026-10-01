@@ -297,15 +297,15 @@ struct TrainingszeitraumTests {
 /// nackte Zahl ohne den Rahmen, den Sehende aus der Ueberschrift bekommen.
 struct VorschlagsAnzeigeGesprochenTests {
     @Test func einPositivesDeltaNenntDasWortVorschlag() {
-        #expect(VorschlagsAnzeige.delta(2.5).gesprochen == "Vorschlag plus 2,5 Kilogramm")
+        #expect(VorschlagsAnzeige.delta(Vorschlagsdelta(wert: 2.5, einheit: .kg, nebenbelastung: nil, nebeneinheit: nil)).gesprochen == "Vorschlag plus 2,5 Kilogramm")
     }
 
     @Test func einNegativesDeltaSprichtMinusStattEinesMinuszeichens() {
-        #expect(VorschlagsAnzeige.delta(-2.5).gesprochen == "Vorschlag minus 2,5 Kilogramm")
+        #expect(VorschlagsAnzeige.delta(Vorschlagsdelta(wert: -2.5, einheit: .kg, nebenbelastung: nil, nebeneinheit: nil)).gesprochen == "Vorschlag minus 2,5 Kilogramm")
     }
 
     @Test func haltenUndKeinerTragenDenRahmenEbenfalls() {
-        #expect(VorschlagsAnzeige.halten.gesprochen == "Vorschlag: Gewicht halten")
+        #expect(VorschlagsAnzeige.halten(.kg).gesprochen == "Vorschlag: Gewicht halten")
         #expect(VorschlagsAnzeige.keiner.gesprochen == "Kein Vorschlag")
     }
 }

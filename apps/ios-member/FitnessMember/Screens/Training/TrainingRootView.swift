@@ -467,7 +467,6 @@ struct TrainingRootView: View {
     private func blockZeile(_ block: LokalerBlock) -> some View {
         let maschine = katalog.bootstrap?.machines.first { $0.id == block.machineId }
         let uebung = maschine?.exercises.first { $0.id == block.exerciseId }
-        let letztes = block.saetze.last
         let gemeldet = block.saetze.contains(where: \.problemFlag)
         return HStack {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
@@ -476,8 +475,7 @@ struct TrainingRootView: View {
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.text)
                 HStack(spacing: DesignSystem.Spacing.s8) {
-                    Text("\(block.saetze.count) \(block.saetze.count == 1 ? "Satz" : "Sätze")"
-                         + (letztes.map { " · \(Zahlformat.gewichtMitEinheit($0.load))" } ?? ""))
+                    Text(TrainingTab.blockzeile(block))
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                     if gemeldet {

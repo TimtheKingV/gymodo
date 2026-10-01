@@ -180,7 +180,7 @@ Das Satzziel aus `Einstellungen.satzZiel` (Vorgabe 3) entscheidet, wann nach dem
 - Blockzeile: „1 Satz · 8,5 km/h · 6,0 %" statt „3 Sätze · 80,0 kg"; ohne Nebenbelastung entfällt der dritte Teil.
 - `VorschlagsAnzeige(reasonCode:deltaLoad:loadUnit:secondaryLoad:secondaryUnit:)`: `.delta` trägt Einheit und Nebenbelastung; `text` „+0,5 km/h bei 6,0 %", „+2,5 kg"; `.halten` „Gewicht halten" bei kg, sonst „Belastung halten"; `gesprochen` über `belastungGesprochen`.
 
-- [ ] Tests für die vier Einheiten und den Fall mit Nebenbelastung. Commit `feat(ios-member): Abschluss nennt Einheit und Nebenbelastung`.
+- [x] Tests für die vier Einheiten und den Fall mit Nebenbelastung. Commit `feat(ios-member): Abschluss nennt Einheit und Nebenbelastung`.
 
 ---
 
