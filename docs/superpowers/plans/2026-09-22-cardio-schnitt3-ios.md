@@ -154,8 +154,8 @@ static func umfang(_ art: VolumeKind) -> [Int]   // reps 1...40 | seconds 30, 60
 - **Nebenbelastung:** unter den beiden Rädern, nur wenn `modell.secondaryUnit != nil`, eine Zeile `Stepper44` mit Beschriftung aus der Einheit („Neigung" für pct, „Trittfrequenz" für rpm, sonst `kurz`), Wert `Zahlformat.belastungMitEinheit`, Schritt `secondaryStep`, Grenzen `secondaryMin`/`secondaryMax`. Kein drittes Rad (siehe Architecture). Für ein Kraftgerät gibt es die Zeile nicht, und der Screen ist der heutige.
 - `GeraetErkanntView` und `UebungWechselnSheet`: „Noch nie · Ziel 15 – 20 min" über `Zahlformat.korridor`.
 
-- [ ] Sichtcheck auf iPhone 17 Pro und einem SE-Simulator (667 pt): Beinpresse unverändert; Laufband mit Stepper-Zeile passt ohne Scrollen bei Standard-Schriftgröße. Screenshots in den Commit-Text, nicht ins Repo.
-- [ ] Commit `feat(ios-member): Geraete-Screen mit Einheit, Zeitrad und Nebenbelastung`.
+- [x] Sichtcheck auf iPhone 17 Pro und einem SE-Simulator (667 pt): Beinpresse unverändert; Laufband mit Stepper-Zeile passt ohne Scrollen bei Standard-Schriftgröße. Screenshots in den Commit-Text, nicht ins Repo.
+- [x] Commit `feat(ios-member): Geraete-Screen mit Einheit, Zeitrad und Nebenbelastung`.
 
 ---
 

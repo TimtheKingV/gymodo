@@ -6,13 +6,13 @@ import UIKit
 /// Wie kraeftig die Rastlinie unter dem Rad liegt.
 ///
 /// Nur noch eine Frage der Staerke, nicht der Farbe: beide Raeder rasten,
-/// also tragen beide dieselbe accent-Linie. Die Wiederholungen bekommen
-/// die duennere -- sie sind der zweite Wert der Zeile (44pt gegen 64pt),
+/// also tragen beide dieselbe accent-Linie. Der Umfang bekommt
+/// die duennere -- er ist der zweite Wert der Zeile (44pt gegen 64pt),
 /// und eine gleich dicke Linie unter der kleineren Zahl waere schwerer als
 /// die unter der groesseren.
 enum UnterstrichStil {
-    case held        // Gewicht: 4pt
-    case zweitwert   // Wiederholungen: 3pt
+    case held        // Belastung: 4pt
+    case zweitwert   // Umfang: 3pt
 }
 
 /// Wie das Rad eine Zeile zeigt: die gewaehlte in voller Groesse, die
@@ -46,7 +46,7 @@ struct RastRad: View {
     /// eine passende Zeile.
     @Binding var auswahl: Double
     let unterstrich: UnterstrichStil
-    /// VoiceOver: "Gewicht" bzw. "Wiederholungen".
+    /// VoiceOver: "Belastung" bzw. "Wiederholungen", "Dauer", "Strecke".
     let voLabel: String
     /// VoiceOver: der Wert als EINE Zeichenkette, inklusive Einheit.
     let voWert: (Double) -> String
@@ -56,11 +56,11 @@ struct RastRad: View {
     /// Formatiert die Zahl auf der Zeile.
     let text: (Double) -> String
     /// Schriftgroesse der gewaehlten Zeile. Default 64pt trifft
-    /// `DesignSystem.Typography.wertHeld` (Gewicht, der Held der
-    /// Satz-Wertzeile). Die Wiederholungen sind der zweite Wert und
-    /// bekommen 44pt (Main.dc.html; die Design-Challenge hat die
+    /// `DesignSystem.Typography.wertHeld` (Belastung, der Held der
+    /// Satz-Wertzeile). Der Umfang ist der zweite Wert und
+    /// bekommt 44pt (Main.dc.html; die Design-Challenge hat die
     /// gegenteilige 50px-Abweichung in GeraetWertRad.dc.html gefunden und
-    /// auf 44 korrigiert). Additiv mit Default, damit das Gewichtsrad aus
+    /// auf 44 korrigiert). Additiv mit Default, damit das Belastungsrad aus
     /// Aufgabe 7 unangetastet bleibt.
     var basisGroesse: CGFloat = 64
     /// Wie viele Zeilen der Ausschnitt zeigt -- immer ungerade, die gewaehlte
@@ -115,8 +115,8 @@ struct RastRad: View {
     /// Anstossens macht.
     ///
     /// Aus der Schrift gerechnet und nicht als Zahl hingeschrieben, weil
-    /// dasselbe Rad in zwei Groessen laeuft (64pt Gewicht, 44pt
-    /// Wiederholungen) und ein fester Versatz nur fuer eine davon stimmte.
+    /// dasselbe Rad in zwei Groessen laeuft (64pt Belastung, 44pt
+    /// Umfang) und ein fester Versatz nur fuer eine davon stimmte.
     private var unterstrichVersatz: CGFloat {
         let schrift = UIFont.systemFont(ofSize: basisGroesse, weight: .black)
         return (schrift.ascender + schrift.descender) / 2 + DesignSystem.Spacing.s8
@@ -262,7 +262,7 @@ struct RastRad: View {
     // Zieltypografien zu treffen, ohne sie zu erfinden:
     //
     // Groesse -- exakt per Skalierung: jede Zeile rendert mit `basisGroesse`
-    // (64pt fuers Gewicht, 44pt fuer die Wiederholungen); ein Glyph bei
+    // (64pt fuer die Belastung, 44pt fuer den Umfang); ein Glyph bei
     // 30/64 = 0,469 skaliert sieht aus wie 30pt der 64pt-Basis bzw. 20,6pt
     // der 44pt-Basis, bei 26/64 = 0,406 wie 26pt bzw. 17,9pt. Die Faktoren
     // 30/64 und 26/64 bleiben deshalb Verhaeltnisse, nicht absolute Groessen

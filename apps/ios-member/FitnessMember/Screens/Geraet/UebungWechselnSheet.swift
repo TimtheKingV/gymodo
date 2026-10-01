@@ -80,10 +80,11 @@ struct UebungWechselnSheet: View {
     }
 
     /// Drei Zustaende, nicht ein pauschales "laeuft"/"zuletzt": die laufende
-    /// Zeile nennt Satzzahl und Gewicht, weil beides schon feststeht; jede
-    /// andere Zeile mit Historie nennt Gewicht und Alter, damit erkennbar
-    /// ist, wie verlaesslich die Zahl noch ist, bevor man die Scheiben
-    /// auflegt (GeraetUebungWechseln.dc.html).
+    /// Zeile nennt Satzzahl und Belastung, weil beides schon feststeht;
+    /// jede andere Zeile mit Historie nennt Belastung und Alter, damit
+    /// erkennbar ist, wie verlaesslich die Zahl noch ist, bevor man das
+    /// Geraet danach einstellt (GeraetUebungWechseln.dc.html). Ohne
+    /// Historie steht der Korridor in der Umfangsart der Uebung.
     private func untertitel(_ uebung: GeraetUebung, laeuft: Bool) -> String {
         if laeuft {
             // satzNummer ist der naechste Index, nicht die Anzahl bisheriger
@@ -94,19 +95,19 @@ struct UebungWechselnSheet: View {
             if saetze > 0 {
                 teile.append(saetze == 1 ? "1 Satz" : "\(saetze) Sätze")
             }
-            teile.append(Zahlformat.gewichtMitEinheit(modell.belastung))
+            teile.append(Zahlformat.belastungMitEinheit(modell.belastung, modell.loadUnit))
             return teile.joined(separator: " · ")
         }
-        if let gewicht = modell.letzteBelastung(fuer: uebung.id) {
+        if let belastung = modell.letzteBelastung(fuer: uebung.id) {
             let zuletzt = altersangabe(fuer: uebung.id).map { "zuletzt \($0)" } ?? "zuletzt"
-            return "\(Zahlformat.gewichtMitEinheit(gewicht)) · \(zuletzt)"
+            return "\(Zahlformat.belastungMitEinheit(belastung, modell.loadUnit)) · \(zuletzt)"
         }
         return "Noch nie trainiert · Ziel \(Zahlformat.korridorMitEinheit(uebung.targetMin, uebung.targetMax, uebung.volumeKind))"
     }
 
     /// "heute" statt "vor 0 Tagen" -- Letzteres liest sich wie ein
     /// Rechenfehler. nil ohne Historie oder wenn sich das Datum nicht
-    /// parsen laesst; die Zeile zeigt dann nur das Gewicht.
+    /// parsen laesst; die Zeile zeigt dann nur die Belastung.
     private func altersangabe(fuer uebungId: String) -> String? {
         guard let tage = modell.letzteNutzungInTagen(fuer: uebungId) else { return nil }
         if tage <= 0 { return "heute" }

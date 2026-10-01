@@ -59,6 +59,23 @@ extension LoadUnit {
     }
 }
 
+extension LoadUnit {
+    /// Wie der Regler heisst, wenn diese Einheit die NEBENbelastung ist:
+    /// neben dem Wert "6,0 %" braucht die Zeile ein Wort, das sagt, was
+    /// sich da einstellen laesst. Die Belastung selbst braucht keins --
+    /// sie steht als Rad mitten auf dem Screen.
+    var reglername: String {
+        switch self {
+        case .kg: "Gewicht"
+        case .watt: "Leistung"
+        case .level: "Stufe"
+        case .kmh: "Tempo"
+        case .pct: "Neigung"
+        case .rpm: "Trittfrequenz"
+        }
+    }
+}
+
 extension VolumeKind {
     /// Das Wort neben dem Umfangsrad.
     var kurz: String {
@@ -66,6 +83,15 @@ extension VolumeKind {
         case .reps: "Wdh."
         case .seconds: "min"
         case .meters: "m"
+        }
+    }
+
+    /// Wie VoiceOver das Umfangsrad ansagt.
+    var radname: String {
+        switch self {
+        case .reps: "Wiederholungen"
+        case .seconds: "Dauer"
+        case .meters: "Strecke"
         }
     }
 }

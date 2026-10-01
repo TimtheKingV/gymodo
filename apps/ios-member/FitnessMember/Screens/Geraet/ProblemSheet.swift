@@ -71,7 +71,7 @@ struct ProblemSheet: View {
                 .font(.system(size: 13))
                 .foregroundStyle(DesignSystem.Color.textMuted)
             Spacer()
-            Text(Zahlformat.gewichtMitEinheit(modell.belastung))
+            Text(Zahlformat.belastungMitEinheit(modell.belastung, modell.loadUnit))
                 .font(DesignSystem.Typography.wertSekundaer)
                 .foregroundStyle(DesignSystem.Color.text)
         }

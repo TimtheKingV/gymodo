@@ -26,10 +26,25 @@ struct BelastungTests {
         #expect(LoadUnit.rpm.nachkommastellen == 0)
     }
 
+    @Test func derReglerDerNebenbelastungHatEinenNamen() {
+        #expect(LoadUnit.pct.reglername == "Neigung")
+        #expect(LoadUnit.rpm.reglername == "Trittfrequenz")
+        #expect(LoadUnit.kmh.reglername == "Tempo")
+        #expect(LoadUnit.level.reglername == "Stufe")
+        #expect(LoadUnit.watt.reglername == "Leistung")
+        #expect(LoadUnit.kg.reglername == "Gewicht")
+    }
+
     @Test func dieUmfangsartNebenDemRadIstKurz() {
         #expect(VolumeKind.reps.kurz == "Wdh.")
         #expect(VolumeKind.seconds.kurz == "min")
         #expect(VolumeKind.meters.kurz == "m")
+    }
+
+    @Test func dasUmfangsradHatFuerVoiceOverEinenNamen() {
+        #expect(VolumeKind.reps.radname == "Wiederholungen")
+        #expect(VolumeKind.seconds.radname == "Dauer")
+        #expect(VolumeKind.meters.radname == "Strecke")
     }
 
     @Test func eineUnbekannteEinheitIstEinDekodierfehlerUndKeinStillesKilogramm() {
