@@ -166,8 +166,8 @@ static func umfang(_ art: VolumeKind) -> [Int]   // reps 1...40 | seconds 30, 60
 
 Das Satzziel aus `Einstellungen.satzZiel` (Vorgabe 3) entscheidet, wann nach dem Sichern statt der Pause die Wahl „Gerät abschließen / Weiterer Satz" kommt. An einem Laufband ist ein Satz die Einheit; nach 20 Minuten Dauerlauf eine 90-Sekunden-Pause zu starten wäre falsch. Deshalb: `satzZiel` ist 1, wenn `volumeKind != .reps`. Das ist die eine Stelle, an der die Umfangsart eine Regel trägt — mit diesem Kommentar.
 
-- [ ] Test: Laufband-Übung → nach dem ersten Satz `phase == .entscheidung`; Beinpresse unverändert.
-- [ ] Commit `feat(ios-member): ein Satz ist bei Zeit und Strecke die Einheit`.
+- [x] Test: Laufband-Übung → nach dem ersten Satz `phase == .entscheidung`; Beinpresse unverändert.
+- [x] Commit `feat(ios-member): ein Satz ist bei Zeit und Strecke die Einheit`.
 
 ---
 

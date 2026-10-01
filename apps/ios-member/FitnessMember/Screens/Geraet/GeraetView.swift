@@ -335,7 +335,7 @@ struct GeraetView: View {
     /// jetzt wirklich ansteht.
     private var abschlussEntscheidung: some View {
         VStack(spacing: DesignSystem.Spacing.s12) {
-            Text("\(modell.satzZiel) SÄTZE GESCHAFFT")
+            Text(modell.satzZiel == 1 ? "1 SATZ GESCHAFFT" : "\(modell.satzZiel) SÄTZE GESCHAFFT")
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)

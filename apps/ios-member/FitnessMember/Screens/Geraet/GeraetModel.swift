@@ -380,7 +380,15 @@ final class GeraetModel {
     }
 
     /// Wie viele Saetze an diesem Geraet geplant sind (Profil, Vorgabe 3).
-    var satzZiel: Int { satzZielLesen() }
+    ///
+    /// Die eine Stelle, an der die Umfangsart eine Regel traegt: bei Zeit
+    /// und Strecke ist ein Satz die ganze Einheit am Geraet ("20 Minuten
+    /// Dauerlauf", Cardio-Spec 3.4). Nach 20 Minuten Laufband eine
+    /// 90-Sekunden-Pause vor einem zweiten Satz zu starten, waere falsch --
+    /// stattdessen kommt nach dem ersten Satz gleich die Frage "Geraet
+    /// abschliessen / Weiterer Satz". Das Profil-Satzziel ist ein Ziel
+    /// fuer Wiederholungsuebungen und gilt nur dort.
+    var satzZiel: Int { volumeKind == .reps ? satzZielLesen() : 1 }
 
     /// Die Pause, solange sie WIRKLICH laeuft.
     ///

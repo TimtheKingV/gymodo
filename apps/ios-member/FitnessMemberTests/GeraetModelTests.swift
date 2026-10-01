@@ -738,6 +738,57 @@ struct GeraetModelTests {
         #expect(sut.nebenbelastung == 0)
     }
 
+    // MARK: - Satzziel bei Zeit und Strecke (Task 6)
+
+    @Test func amLaufbandIstNachDemErstenSatzDieEntscheidungDran() async {
+        // Ein Satz ist bei Zeit und Strecke die Einheit: keine Pause vor
+        // einem zweiten Dauerlauf, auch wenn das Profil drei Saetze plant.
+        let sut = modell(maschine: GeraetTestdaten.laufband,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 3)
+        #expect(sut.satzZiel == 1)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(sut.phase == .abschluss)
+        #expect(sut.laufendePause == nil)
+    }
+
+    @Test func einWeitererSatzAmLaufbandBekommtSeinePause() async {
+        // Wer trotzdem weitermacht (Intervalle), bekommt die Pause wie
+        // jeder Zusatzsatz -- die Regel aendert nur, wann gefragt wird.
+        let sut = modell(maschine: GeraetTestdaten.laufband,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 3)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        sut.weitererSatz()
+
+        #expect(sut.laufendePause != nil)
+    }
+
+    @Test func auchMeterUebungenHabenEinenSatz() {
+        let sut = modell(maschine: GeraetTestdaten.laufband,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 4)
+        sut.uebungWechseln(zu: "e10")
+
+        #expect(sut.volumeKind == .meters)
+        #expect(sut.satzZiel == 1)
+    }
+
+    @Test func dieBeinpresseFolgtWeiterDemProfil() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 3)
+        #expect(sut.satzZiel == 3)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(sut.phase != .abschluss)
+        #expect(sut.laufendePause != nil)
+    }
+
     @Test func derUebungswechselRastetDenUmfangAufDieNeueUmfangsart() {
         // Vom Dauerlauf (Sekunden) auf das Intervall (Meter): die Liste
         // wechselt, und der Startwert ist das untere Korridorende der neuen
