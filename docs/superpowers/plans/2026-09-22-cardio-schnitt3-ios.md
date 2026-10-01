@@ -208,7 +208,7 @@ Das Satzziel aus `Einstellungen.satzZiel` (Vorgabe 3) entscheidet, wann nach dem
 - Übungsfortschritt: Achse und Punkte in `loadUnit`; `HomeZeilen.veraenderung(_:einheit:)` liefert „+0,5 km/h".
 - **Nicht anfassen:** alles mit Körpergewicht (Gewichtsverlauf, Zielgewicht, Messwerte).
 
-- [ ] Commit `feat(ios-member): Verlauf und Fortschritt in der Einheit des Geraets`.
+- [x] Commit `feat(ios-member): Verlauf und Fortschritt in der Einheit des Geraets`.
 
 ---
 

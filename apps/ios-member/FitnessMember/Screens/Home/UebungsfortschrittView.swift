@@ -22,7 +22,7 @@ struct UebungsfortschrittView: View {
                     kopf(uebung)
                     umschalter
                     diagramm(punkte, uebung: uebung)
-                    rohwerte(punkte)
+                    rohwerte(punkte, uebung: uebung)
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, DesignSystem.Spacing.s24)
@@ -50,16 +50,16 @@ struct UebungsfortschrittView: View {
                 .foregroundStyle(DesignSystem.Color.textMuted)
 
             HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.s8) {
-                Text(Zahlformat.gewichtMitEinheit(uebung.currentLoad))
+                Text(Zahlformat.belastungMitEinheit(uebung.currentLoad, uebung.loadUnit))
                     .font(DesignSystem.Typography.wertHeld)
                     .foregroundStyle(DesignSystem.Color.text)
-                Text(HomeZeilen.veraenderung(uebung.changeLoad))
+                Text(HomeZeilen.veraenderung(uebung.changeLoad, einheit: uebung.loadUnit))
                     .font(DesignSystem.Typography.wertSekundaer)
                     .foregroundStyle(DesignSystem.Color.textMuted)
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(
-                "\(Zahlformat.gewichtGesprochen(uebung.currentLoad)), Veränderung \(HomeZeilen.veraenderung(uebung.changeLoad)) Kilogramm")
+                "\(Zahlformat.belastungGesprochen(uebung.currentLoad, uebung.loadUnit)), Veränderung \(HomeZeilen.veraenderung(uebung.changeLoad, einheit: uebung.loadUnit)) \(Zahlformat.einheitGesprochen(uebung.loadUnit))")
         }
     }
 
@@ -83,14 +83,14 @@ struct UebungsfortschrittView: View {
         Chart(punkte, id: \.performedOn) { punkt in
             LineMark(
                 x: .value("Datum", Zeitpunkt.parse("\(punkt.performedOn)T12:00:00Z") ?? Date()),
-                y: .value("Gewicht", punkt.topLoad)
+                y: .value("Belastung", punkt.topLoad)
             )
             .lineStyle(StrokeStyle(lineWidth: 2))
             .foregroundStyle(DesignSystem.Color.accent)
 
             PointMark(
                 x: .value("Datum", Zeitpunkt.parse("\(punkt.performedOn)T12:00:00Z") ?? Date()),
-                y: .value("Gewicht", punkt.topLoad)
+                y: .value("Belastung", punkt.topLoad)
             )
             .symbolSize(64)
             .foregroundStyle(DesignSystem.Color.accent)
@@ -100,7 +100,7 @@ struct UebungsfortschrittView: View {
             .annotation(position: .top) {
                 if punkt.performedOn == punkte.first?.performedOn
                     || punkt.performedOn == punkte.last?.performedOn {
-                    Text(Zahlformat.gewicht(punkt.topLoad))
+                    Text(Zahlformat.belastung(punkt.topLoad, uebung.loadUnit))
                         .font(DesignSystem.Typography.fliesstext)
                         .foregroundStyle(DesignSystem.Color.textMuted)
                         .monospacedDigit()
@@ -133,17 +133,17 @@ struct UebungsfortschrittView: View {
         }
         .frame(height: 200)
         // Geraet UND Uebung im Label (designsystem.md SS12, woertlich
-        // "Gewichtsverlauf Beinpresse, Beidbeinig") -- sonst kann
+        // "Verlauf Beinpresse, Beidbeinig") -- sonst kann
         // VoiceOver auf einem Screen mit mehreren Uebungen nicht sagen,
         // auf welcher Kurve es steht.
-        .accessibilityLabel("Gewichtsverlauf \(uebung.machineLabel), \(uebung.exerciseName)")
+        .accessibilityLabel("Verlauf \(uebung.machineLabel), \(uebung.exerciseName)")
     }
 
     /// Die Plattform misst nichts -- die Kurve ist eine Zusammenfassung
     /// und muss nachpruefbar bleiben (SS13). Diese Liste ist zugleich die
     /// Wertetabelle, die VoiceOver als Alternative zur Kurve braucht
     /// (SS12).
-    private func rohwerte(_ punkte: [ExerciseProgress.Point]) -> some View {
+    private func rohwerte(_ punkte: [ExerciseProgress.Point], uebung: ExerciseProgress) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             Text("SCHWERSTER BESTÄTIGTER SATZ JE TRAININGSTAG")
                 .font(DesignSystem.Typography.label)
@@ -155,9 +155,9 @@ struct UebungsfortschrittView: View {
                     Text(datum(punkt.performedOn))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                     Spacer()
-                    Text(Zahlformat.gewichtMitEinheit(punkt.topLoad))
+                    Text(Zahlformat.belastungMitEinheit(punkt.topLoad, uebung.loadUnit))
                         .foregroundStyle(DesignSystem.Color.text)
-                    Text("× \(punkt.volume)")
+                    Text(Zahlformat.malUmfang(punkt.volume, uebung.volumeKind))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                 }
                 .font(DesignSystem.Typography.fliesstext)

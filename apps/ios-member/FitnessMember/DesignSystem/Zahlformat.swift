@@ -208,14 +208,31 @@ enum Zahlformat {
     /// als "k, m, Schraegstrich, h".
     static func belastungGesprochen(_ wert: Double, _ einheit: LoadUnit) -> String {
         let zahl = belastung(wert, einheit)
-        return switch einheit {
-        case .kg: "\(zahl) Kilogramm"
-        case .watt: "\(zahl) Watt"
-        case .level: "Level \(zahl)"
-        case .kmh: "\(zahl) Kilometer pro Stunde"
-        case .pct: "\(zahl) Prozent"
-        case .rpm: "\(zahl) Umdrehungen pro Minute"
+        return einheit == .level ? "Level \(zahl)" : "\(zahl) \(einheitGesprochen(einheit))"
+    }
+
+    /// Das ausgeschriebene Wort der Einheit -- fuer Saetze, in denen die
+    /// Zahl schon anders steht ("Veränderung +0,5 Kilometer pro Stunde").
+    static func einheitGesprochen(_ einheit: LoadUnit) -> String {
+        switch einheit {
+        case .kg: "Kilogramm"
+        case .watt: "Watt"
+        case .level: "Level"
+        case .kmh: "Kilometer pro Stunde"
+        case .pct: "Prozent"
+        case .rpm: "Umdrehungen pro Minute"
         }
+    }
+
+    /// "80,0 Kilogramm, 10 Wiederholungen", "8,5 Kilometer pro Stunde bei
+    /// 6,0 Prozent, 20 Minuten" -- ein Satz fuer VoiceOver.
+    static func satzGesprochen(
+        _ wert: Double, _ einheit: LoadUnit, neben: Double?, _ nebeneinheit: LoadUnit?,
+        umfang: Int, _ art: VolumeKind
+    ) -> String {
+        var text = belastungGesprochen(wert, einheit)
+        if let neben, let nebeneinheit { text += " bei \(belastungGesprochen(neben, nebeneinheit))" }
+        return "\(text), \(umfangGesprochen(umfang, art))"
     }
 
     /// "12", "20:00", "2.000" -- die Anzeige auf dem Umfangsrad. Der

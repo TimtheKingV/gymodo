@@ -248,10 +248,10 @@ private extension HomeRootView {
                 .font(DesignSystem.Typography.uebungsname)
                 .foregroundStyle(DesignSystem.Color.text)
             Spacer()
-            Text(Zahlformat.gewichtMitEinheit(uebung.currentLoad))
+            Text(Zahlformat.belastungMitEinheit(uebung.currentLoad, uebung.loadUnit))
                 .font(DesignSystem.Typography.wertSekundaer)
                 .foregroundStyle(DesignSystem.Color.text)
-            Text(HomeZeilen.veraenderung(uebung.changeLoad))
+            Text(HomeZeilen.veraenderung(uebung.changeLoad, einheit: uebung.loadUnit))
                 .font(DesignSystem.Typography.fliesstext)
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .monospacedDigit()
@@ -261,7 +261,7 @@ private extension HomeRootView {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "\(uebung.machineLabel), \(uebung.exerciseName), \(Zahlformat.gewichtGesprochen(uebung.currentLoad))")
+            "\(uebung.machineLabel), \(uebung.exerciseName), \(Zahlformat.belastungGesprochen(uebung.currentLoad, uebung.loadUnit))")
     }
 
     var leer: some View {

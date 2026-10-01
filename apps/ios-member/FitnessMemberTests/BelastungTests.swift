@@ -123,6 +123,13 @@ struct BelastungTests {
         #expect(Zahlformat.belastungGesprochen(85, .rpm) == "85 Umdrehungen pro Minute")
     }
 
+    @Test func einSatzGesprochen() {
+        #expect(Zahlformat.satzGesprochen(80, .kg, neben: nil, nil, umfang: 10, .reps)
+                == "80,0 Kilogramm, 10 Wiederholungen")
+        #expect(Zahlformat.satzGesprochen(8.5, .kmh, neben: 6, .pct, umfang: 1200, .seconds)
+                == "8,5 Kilometer pro Stunde bei 6,0 Prozent, 20 Minuten")
+    }
+
     // MARK: - Umfang
 
     @Test func umfangOhneEinheit() {
