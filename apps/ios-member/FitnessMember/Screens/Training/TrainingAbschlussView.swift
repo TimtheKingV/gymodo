@@ -257,11 +257,24 @@ struct TrainingAbschlussView: View {
             // VoiceOver blieb eine nackte Zahl. "Vorschlaege sind eine
             // Rechnung, keine Empfehlung" ist bindend -- das Wort gehoert
             // also auch in die gesprochene Fassung (designsystem.md SS10).
-            Text(zeile.anzeige.text)
-                .font(.system(size: 19, weight: .black).monospacedDigit())
-                .foregroundStyle(farbe(zeile.anzeige, gemeldet: gemeldet))
-                .multilineTextAlignment(.trailing)
-                .accessibilityLabel(zeile.anzeige.gesprochen)
+            //
+            // Die Nebenbelastung steht als eigene, kleinere Zeile unter der
+            // Zahl: in einer Zeile brach "+0,5 km/h bei 6,0 %" im Sichtcheck
+            // mitten in "6,0 %" um und drueckte den Geraetenamen zusammen.
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(zeile.anzeige.zahl)
+                    .font(.system(size: 19, weight: .black).monospacedDigit())
+                    .foregroundStyle(farbe(zeile.anzeige, gemeldet: gemeldet))
+                    .multilineTextAlignment(.trailing)
+                if let zusatz = zeile.anzeige.zusatz {
+                    Text(zusatz)
+                        .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .fixedSize()
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(zeile.anzeige.gesprochen)
         }
         .padding(DesignSystem.Spacing.s16)
         .frame(minHeight: 44)
@@ -456,6 +469,19 @@ enum VorschlagsAnzeige: Equatable {
         case .keiner:
             return "Kein Vorschlag"
         }
+    }
+
+    /// Die grosse Zahl der Zeile: "+0,5 km/h", "Gewicht halten".
+    var zahl: String {
+        guard case .delta(let delta) = self else { return text }
+        return Zahlformat.belastungDelta(delta.wert, delta.einheit)
+    }
+
+    /// "bei 6,0 %" unter der Zahl -- nil an jedem Geraet ohne
+    /// Nebenbelastung und bei "halten"/"Kein Vorschlag".
+    var zusatz: String? {
+        guard case .delta(let delta) = self, let bei = delta.beiNebenbelastung else { return nil }
+        return bei.geschrieben.trimmingCharacters(in: .whitespaces)
     }
 
     /// Ueber Zahlformat.belastungDelta -- nie selbst formatiert

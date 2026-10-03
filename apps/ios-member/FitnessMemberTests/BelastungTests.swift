@@ -200,4 +200,11 @@ struct BelastungTests {
         #expect(Zahlformat.korridor(900, 1200, .seconds) == "15 – 20 min")
         #expect(Zahlformat.korridor(2000, 5000, .meters) == "2.000 – 5.000 m")
     }
+
+    @Test func einFestesZielIstEineZahlUndKeinBereich() {
+        #expect(Zahlformat.korridor(2000, 2000, .meters) == "2.000 m")
+        #expect(Zahlformat.korridor(1200, 1200, .seconds) == "20 min")
+        #expect(Zahlformat.korridor(10, 10, .reps) == "10")
+        #expect(Zahlformat.korridorMitEinheit(10, 10, .reps) == "10 Wdh.")
+    }
 }

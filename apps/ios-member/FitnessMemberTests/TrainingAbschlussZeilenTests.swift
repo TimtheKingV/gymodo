@@ -54,6 +54,10 @@ struct TrainingAbschlussZeilenTests {
                                         secondaryLoad: 6, secondaryUnit: .pct)
         #expect(anzeige == .delta(Vorschlagsdelta(wert: 0.5, einheit: .kmh, nebenbelastung: 6, nebeneinheit: .pct)))
         #expect(anzeige.text == "+0,5 km/h bei 6,0 %")
+        // Auf dem Screen zweizeilig: die Zahl gross, die Neigung darunter.
+        #expect(anzeige.zahl == "+0,5 km/h")
+        #expect(anzeige.zusatz == "bei 6,0 %")
+        #expect(VorschlagsAnzeige(reasonCode: "korridor_oben_erreicht", deltaLoad: 2.5, loadUnit: .kg).zusatz == nil)
         #expect(anzeige.gesprochen == "Vorschlag plus 0,5 Kilometer pro Stunde bei 6,0 Prozent")
     }
 

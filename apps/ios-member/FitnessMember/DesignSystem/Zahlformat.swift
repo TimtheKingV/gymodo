@@ -279,14 +279,13 @@ enum Zahlformat {
     /// Stoppuhr (formatVolumeRange). Wiederholungen ohne Wort, wie der
     /// Geraete-Screen sie bisher nannte ("Ziel 8 – 12").
     static func korridor(_ min: Int, _ max: Int, _ art: VolumeKind) -> String {
-        switch art {
-        case .reps:
-            "\(gruppiert(min)) – \(gruppiert(max))"
-        case .seconds:
-            "\(gruppiert(Int((Double(min) / 60).rounded()))) – \(gruppiert(Int((Double(max) / 60).rounded()))) \(art.kurz)"
-        case .meters:
-            "\(gruppiert(min)) – \(gruppiert(max)) \(art.kurz)"
-        }
+        // Ein festes Ziel ("genau 2 km", Rudergeraet in Spec Abschnitt 9)
+        // ist eine Zahl, kein Bereich -- "2.000 – 2.000 m" las sich im
+        // Sichtcheck wie ein Tippfehler.
+        // Minuten ohne Sekunden: ein Korridor ist eine Vorgabe.
+        let zahl: (Int) -> String = { art == .seconds ? gruppiert(Int((Double($0) / 60).rounded())) : gruppiert($0) }
+        let bereich = min == max ? zahl(min) : "\(zahl(min)) – \(zahl(max))"
+        return art == .reps ? bereich : "\(bereich) \(art.kurz)"
     }
 
     /// "8 – 12 Wdh.", sonst wie korridor -- fuer Zeilen, die nicht neben
