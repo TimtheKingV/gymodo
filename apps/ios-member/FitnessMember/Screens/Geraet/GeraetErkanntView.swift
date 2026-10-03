@@ -149,17 +149,17 @@ struct GeraetErkanntView: View {
     /// Wort "zuletzt", jede andere Zeile mit Historie nicht -- sonst stuende
     /// "zuletzt" auf zwei Zeilen gleichzeitig und waere bedeutungslos. Das
     /// Alter ("vor 8 Tagen") sagt, wie verlaesslich die Zahl noch ist,
-    /// bevor man die Scheiben auflegt.
+    /// bevor man das Geraet danach einstellt.
     private func untertitel(_ uebung: GeraetUebung) -> String {
-        guard let letztesGewicht = modell.letztesGewicht(fuer: uebung.id) else {
-            return "Noch nie · Ziel \(uebung.targetRepsMin) – \(uebung.targetRepsMax) Wdh."
+        guard let letzteBelastung = modell.letzteBelastung(fuer: uebung.id) else {
+            return "Noch nie · Ziel \(Zahlformat.korridorMitEinheit(uebung.targetMin, uebung.targetMax, uebung.volumeKind))"
         }
-        let gewichtText = Zahlformat.gewichtMitEinheit(letztesGewicht)
+        let belastungText = Zahlformat.belastungMitEinheit(letzteBelastung, modell.loadUnit)
         let alter = altersangabe(fuer: uebung.id)
         if uebung.id == modell.uebungId {
-            return ["zuletzt · \(gewichtText)", alter].compactMap { $0 }.joined(separator: " ")
+            return ["zuletzt · \(belastungText)", alter].compactMap { $0 }.joined(separator: " ")
         }
-        return [gewichtText, alter].compactMap { $0 }.joined(separator: " · ")
+        return [belastungText, alter].compactMap { $0 }.joined(separator: " · ")
     }
 
     /// "heute" statt "vor 0 Tagen" -- Letzteres liest sich wie ein

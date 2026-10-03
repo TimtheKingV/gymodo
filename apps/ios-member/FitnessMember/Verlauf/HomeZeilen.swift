@@ -318,10 +318,13 @@ enum HomeZeilen {
         "\(zahl) \(zahl == 1 ? singular : plural)"
     }
 
-    /// "+15,0" / "±0" -- eine Rechnung, keine Empfehlung (designsystem.md SS10).
-    static func veraenderung(_ kg: Double) -> String {
-        guard kg != 0 else { return "±0" }
-        return (kg > 0 ? "+" : "-") + Zahlformat.gewicht(abs(kg))
+    /// "+15,0" / "+10" / "±0" -- eine Rechnung, keine Empfehlung
+    /// (designsystem.md SS10). Ohne Einheit: die Zahl steht immer direkt
+    /// hinter dem aktuellen Wert, der sie schon traegt ("80,0 kg +15,0",
+    /// "8,5 km/h +0,5"). Die Einheit bestimmt nur die Nachkommastellen.
+    static func veraenderung(_ delta: Double, einheit: LoadUnit) -> String {
+        guard delta != 0 else { return "±0" }
+        return (delta > 0 ? "+" : "-") + Zahlformat.belastung(abs(delta), einheit)
     }
 
     /// Der erste Namensteil -- "Hallo Lena", nicht "Hallo Lena Wagner".

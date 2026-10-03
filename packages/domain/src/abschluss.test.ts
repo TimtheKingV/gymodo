@@ -4,8 +4,12 @@ import {
   ausGespeichertenZeilen,
   blockPaare,
   zuVorschlag,
+  type Blockeinheiten,
   type GespeicherteVorschlagZeile,
 } from "./abschluss.js";
+
+const kg: Blockeinheiten = { loadUnit: "kg", secondaryUnit: null };
+const laufband: Blockeinheiten = { loadUnit: "kmh", secondaryUnit: "pct" };
 
 describe("blockPaare", () => {
   it("fasst Saetze zu Paaren aus Geraet und Uebung zusammen", () => {
@@ -51,22 +55,25 @@ describe("zuVorschlag", () => {
     exerciseId: "e1",
     suggestion: {
       algoVersion: "v1",
-      resultWeightKg: 82.5,
+      resultLoad: 82.5,
+      resultSecondaryLoad: null,
       reasonCode: "korridor_oben_erreicht" as const,
       inputs: {
-        targetRepsMin: 8,
-        targetRepsMax: 12,
-        weightStepKg: 2.5,
-        minWeightKg: 5,
-        maxWeightKg: 150,
-        currentWeightKg: 80,
+        targetMin: 8,
+        targetMax: 12,
+        loadStep: 2.5,
+        loadMin: 5,
+        loadMax: 150,
+        currentLoad: 80,
+        currentSecondaryLoad: null,
         consideredBlocks: 1,
       },
     },
+    einheiten: kg,
   };
 
   it("rechnet das Delta aus Vorschlag und bisherigem Gewicht", () => {
-    expect(zuVorschlag(basis).deltaKg).toBe(2.5);
+    expect(zuVorschlag(basis).deltaLoad).toBe(2.5);
   });
 
   it("laesst das Delta offen, wenn es keinen Vorschlag gibt", () => {
@@ -74,13 +81,13 @@ describe("zuVorschlag", () => {
       ...basis,
       suggestion: {
         ...basis.suggestion,
-        resultWeightKg: null,
+        resultLoad: null,
         reasonCode: "problem_gemeldet" as const,
       },
     };
 
-    expect(zuVorschlag(ohne).deltaKg).toBeNull();
-    expect(zuVorschlag(ohne).resultWeightKg).toBeNull();
+    expect(zuVorschlag(ohne).deltaLoad).toBeNull();
+    expect(zuVorschlag(ohne).resultLoad).toBeNull();
     expect(zuVorschlag(ohne).reasonCode).toBe("problem_gemeldet");
   });
 
@@ -89,11 +96,30 @@ describe("zuVorschlag", () => {
       ...basis,
       suggestion: {
         ...basis.suggestion,
-        inputs: { ...basis.suggestion.inputs, currentWeightKg: null },
+        inputs: { ...basis.suggestion.inputs, currentLoad: null },
       },
     };
 
-    expect(zuVorschlag(ersterKontakt).deltaKg).toBeNull();
+    expect(zuVorschlag(ersterKontakt).deltaLoad).toBeNull();
+  });
+
+  it("traegt Einheiten und Nebenbelastung des Geraets", () => {
+    const cardio = {
+      ...basis,
+      suggestion: {
+        ...basis.suggestion,
+        resultLoad: 9,
+        resultSecondaryLoad: 6,
+        inputs: { ...basis.suggestion.inputs, currentLoad: 8.5, currentSecondaryLoad: 6 },
+      },
+      einheiten: laufband,
+    };
+
+    const vorschlag = zuVorschlag(cardio);
+    expect(vorschlag.loadUnit).toBe("kmh");
+    expect(vorschlag.secondaryUnit).toBe("pct");
+    expect(vorschlag.secondaryLoad).toBe(6);
+    expect(vorschlag.deltaLoad).toBe(0.5);
   });
 
   it("gibt ein negatives Delta unveraendert weiter", () => {
@@ -101,12 +127,12 @@ describe("zuVorschlag", () => {
       ...basis,
       suggestion: {
         ...basis.suggestion,
-        resultWeightKg: 77.5,
+        resultLoad: 77.5,
         reasonCode: "korridor_unten_verfehlt" as const,
       },
     };
 
-    expect(zuVorschlag(runter).deltaKg).toBe(-2.5);
+    expect(zuVorschlag(runter).deltaLoad).toBe(-2.5);
   });
 });
 
@@ -116,6 +142,7 @@ describe("ausGespeichertenZeilen", () => {
     { machineId: "m1", exerciseId: "e1" },
     { machineId: "m1", exerciseId: "e2" },
   ];
+  const einheiten = new Map<string, Blockeinheiten>([["m1", kg]]);
 
   function zeile(
     ueber: Partial<GespeicherteVorschlagZeile> = {},
@@ -125,9 +152,9 @@ describe("ausGespeichertenZeilen", () => {
       exercise_id: "e1",
       created_at: "2026-09-08T18:00:01.000Z",
       algo_version: "v1",
-      result_weight_kg: 82.5,
+      result_load: 82.5,
       reason_code: "korridor_oben_erreicht",
-      inputs: { currentWeightKg: 80 },
+      inputs: { currentLoad: 80 },
       ...ueber,
     };
   }
@@ -137,18 +164,62 @@ describe("ausGespeichertenZeilen", () => {
       [paare[0]!],
       [zeile()],
       abschlussZeit,
+      einheiten,
     );
 
     expect(vorschlaege).toEqual([
       {
         machineId: "m1",
         exerciseId: "e1",
-        resultWeightKg: 82.5,
-        deltaKg: 2.5,
+        resultLoad: 82.5,
+        deltaLoad: 2.5,
+        secondaryLoad: null,
+        loadUnit: "kg",
+        secondaryUnit: null,
         reasonCode: "korridor_oben_erreicht",
         algoVersion: "v1",
       },
     ]);
+  });
+
+  it("liest die Nebenbelastung aus der festgehaltenen Eingabe zurueck", () => {
+    const vorschlaege = ausGespeichertenZeilen(
+      [paare[0]!],
+      [zeile({ result_load: 9, inputs: { currentLoad: 8.5, currentSecondaryLoad: "6.00" } })],
+      abschlussZeit,
+      new Map([["m1", laufband]]),
+    );
+
+    expect(vorschlaege[0]).toMatchObject({
+      resultLoad: 9,
+      deltaLoad: 0.5,
+      secondaryLoad: 6,
+      loadUnit: "kmh",
+      secondaryUnit: "pct",
+    });
+  });
+
+  it("laesst einen Block weg, dessen Geraet keine Einheit hat -- kg wird nie geraten", () => {
+    const vorschlaege = ausGespeichertenZeilen(
+      [paare[0]!],
+      [zeile()],
+      abschlussZeit,
+      new Map(),
+    );
+
+    expect(vorschlaege).toEqual([]);
+  });
+
+  it("laesst das Delta einer Zeile aus Version 1.0.0 offen, zeigt den Vorschlag aber", () => {
+    const vorschlaege = ausGespeichertenZeilen(
+      [paare[0]!],
+      [zeile({ inputs: { currentWeightKg: 80 } as unknown as GespeicherteVorschlagZeile["inputs"] })],
+      abschlussZeit,
+      einheiten,
+    );
+
+    expect(vorschlaege[0]!.resultLoad).toBe(82.5);
+    expect(vorschlaege[0]!.deltaLoad).toBeNull();
   });
 
   it("nimmt die aelteste Zeile ab dem Abschluss, nicht eine spaetere vom Geraetescan", () => {
@@ -156,13 +227,14 @@ describe("ausGespeichertenZeilen", () => {
       [paare[0]!],
       [
         // Innerhalb des Fensters, aber spaeter -- ein Geraetescan.
-        zeile({ created_at: "2026-09-08T18:04:00.000Z", result_weight_kg: 85 }),
-        zeile({ created_at: "2026-09-08T18:00:01.000Z", result_weight_kg: 82.5 }),
+        zeile({ created_at: "2026-09-08T18:04:00.000Z", result_load: 85 }),
+        zeile({ created_at: "2026-09-08T18:00:01.000Z", result_load: 82.5 }),
       ],
       abschlussZeit,
+      einheiten,
     );
 
-    expect(vorschlaege[0]!.resultWeightKg).toBe(82.5);
+    expect(vorschlaege[0]!.resultLoad).toBe(82.5);
   });
 
   it("nimmt eine Zeile knapp VOR dem Abschluss -- der Uhrendifferenz-Fall", () => {
@@ -171,11 +243,12 @@ describe("ausGespeichertenZeilen", () => {
     // rechnerisch davor -- sie gehoert trotzdem dazu.
     const vorschlaege = ausGespeichertenZeilen(
       [paare[0]!],
-      [zeile({ created_at: "2026-09-08T17:59:59.000Z", result_weight_kg: 82.5 })],
+      [zeile({ created_at: "2026-09-08T17:59:59.000Z", result_load: 82.5 })],
       abschlussZeit,
+      einheiten,
     );
 
-    expect(vorschlaege[0]!.resultWeightKg).toBe(82.5);
+    expect(vorschlaege[0]!.resultLoad).toBe(82.5);
   });
 
   it("ordnet KEINE Zeile aus einer anderen Einheit zu", () => {
@@ -185,10 +258,11 @@ describe("ausGespeichertenZeilen", () => {
     const vorschlaege = ausGespeichertenZeilen(
       [paare[0]!],
       [
-        zeile({ created_at: "2026-09-07T10:00:00.000Z", result_weight_kg: 75 }),
-        zeile({ created_at: "2026-09-08T20:00:00.000Z", result_weight_kg: 90 }),
+        zeile({ created_at: "2026-09-07T10:00:00.000Z", result_load: 75 }),
+        zeile({ created_at: "2026-09-08T20:00:00.000Z", result_load: 90 }),
       ],
       abschlussZeit,
+      einheiten,
     );
 
     expect(vorschlaege).toEqual([]);
@@ -197,13 +271,15 @@ describe("ausGespeichertenZeilen", () => {
   it("zieht die Grenze bei ABSCHLUSS_ZEITFENSTER_MS", () => {
     const gerade = ausGespeichertenZeilen(
       [paare[0]!],
-      [zeile({ created_at: "2026-09-08T18:04:59.000Z", result_weight_kg: 82.5 })],
+      [zeile({ created_at: "2026-09-08T18:04:59.000Z", result_load: 82.5 })],
       abschlussZeit,
+      einheiten,
     );
     const knappDarueber = ausGespeichertenZeilen(
       [paare[0]!],
-      [zeile({ created_at: "2026-09-08T18:05:01.000Z", result_weight_kg: 82.5 })],
+      [zeile({ created_at: "2026-09-08T18:05:01.000Z", result_load: 82.5 })],
       abschlussZeit,
+      einheiten,
     );
 
     expect(ABSCHLUSS_ZEITFENSTER_MS).toBe(5 * 60 * 1000);
@@ -212,7 +288,7 @@ describe("ausGespeichertenZeilen", () => {
   });
 
   it("laesst einen Block weg, zu dem nichts festgehalten wurde", () => {
-    expect(ausGespeichertenZeilen(paare, [zeile()], abschlussZeit)).toHaveLength(
+    expect(ausGespeichertenZeilen(paare, [zeile()], abschlussZeit, einheiten)).toHaveLength(
       1,
     );
   });
@@ -221,33 +297,36 @@ describe("ausGespeichertenZeilen", () => {
     const vorschlaege = ausGespeichertenZeilen(
       paare,
       [
-        zeile({ exercise_id: "e2", result_weight_kg: 40 }),
-        zeile({ exercise_id: "e1", result_weight_kg: 82.5 }),
+        zeile({ exercise_id: "e2", result_load: 40 }),
+        zeile({ exercise_id: "e1", result_load: 82.5 }),
       ],
       abschlussZeit,
+      einheiten,
     );
 
-    expect(vorschlaege.map((v) => v.resultWeightKg)).toEqual([82.5, 40]);
+    expect(vorschlaege.map((v) => v.resultLoad)).toEqual([82.5, 40]);
   });
 
-  it("liefert kein Delta ohne bisheriges Gewicht", () => {
+  it("liefert kein Delta ohne bisherige Belastung", () => {
     const vorschlaege = ausGespeichertenZeilen(
       [paare[0]!],
-      [zeile({ result_weight_kg: null, inputs: { currentWeightKg: null } })],
+      [zeile({ result_load: null, inputs: { currentLoad: null } })],
       abschlussZeit,
+      einheiten,
     );
 
-    expect(vorschlaege[0]!.deltaKg).toBeNull();
-    expect(vorschlaege[0]!.resultWeightKg).toBeNull();
+    expect(vorschlaege[0]!.deltaLoad).toBeNull();
+    expect(vorschlaege[0]!.resultLoad).toBeNull();
   });
 
   it("nimmt numerische Werte auch als Text entgegen", () => {
     const vorschlaege = ausGespeichertenZeilen(
       [paare[0]!],
-      [zeile({ result_weight_kg: "82.50", inputs: { currentWeightKg: "80.00" } })],
+      [zeile({ result_load: "82.50", inputs: { currentLoad: "80.00" } })],
       abschlussZeit,
+      einheiten,
     );
 
-    expect(vorschlaege[0]!.deltaKg).toBe(2.5);
+    expect(vorschlaege[0]!.deltaLoad).toBe(2.5);
   });
 });

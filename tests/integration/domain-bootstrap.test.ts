@@ -51,19 +51,19 @@ beforeAll(async () => {
       {
         studio_id: studioA,
         name: "Kabelzug",
-        weight_step_kg: 2.5,
-        min_weight_kg: 5,
-        max_weight_kg: 100,
+        load_step: 2.5,
+        load_min: 5,
+        load_max: 100,
       },
-      // min_weight_kg hier ausdruecklich: bei einem Bulk-Insert vereinheitlicht
+      // load_min hier ausdruecklich: bei einem Bulk-Insert vereinheitlicht
       // PostgREST die Spaltenmenge und schickt fuer fehlende Schluessel NULL
       // statt DEFAULT -- der Not-Null-Constraint schluege sonst zu.
       {
         studio_id: studioB,
         name: "Fremdgeraet",
-        weight_step_kg: 5,
-        min_weight_kg: 0,
-        max_weight_kg: null,
+        load_step: 5,
+        load_min: 0,
+        load_max: null,
       },
     ])
     .select("id");
@@ -75,14 +75,14 @@ beforeAll(async () => {
       {
         studio_id: studioA,
         name: "Latzug breit",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
       {
         studio_id: studioA,
         name: "Latzug eng",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
     ])
     .select("id");
@@ -155,8 +155,8 @@ beforeAll(async () => {
       machine_id: machineA,
       exercise_id: breitId,
       set_index: 1,
-      weight_kg: 42.5,
-      reps: 12,
+      load: 42.5,
+      volume: 12,
       performed_at: new Date("2026-08-20T18:00:00Z").toISOString(),
     },
     {
@@ -167,8 +167,8 @@ beforeAll(async () => {
       machine_id: machineA,
       exercise_id: breitId,
       set_index: 2,
-      weight_kg: 45,
-      reps: 11,
+      load: 45,
+      volume: 11,
       performed_at: new Date("2026-08-27T18:00:00Z").toISOString(),
     },
   ]);
@@ -191,8 +191,8 @@ describe("getBootstrap", () => {
 
     const machine = bootstrap.machines.find((m) => m.id === machineA);
     expect(machine?.label).toBe("12");
-    expect(machine?.equipmentModel.weightStepKg).toBe(2.5);
-    expect(machine?.equipmentModel.maxWeightKg).toBe(100);
+    expect(machine?.equipmentModel.loadStep).toBe(2.5);
+    expect(machine?.equipmentModel.loadMax).toBe(100);
   });
 
   it("liefert je Geraet die Tag-Hashes fuer die Aufloesung ohne Empfang", async () => {
@@ -238,8 +238,8 @@ describe("getBootstrap", () => {
     const last = bootstrap.lastSets.find(
       (set) => set.machineId === machineA && set.exerciseId === breitId,
     );
-    expect(last?.weightKg).toBe(45);
-    expect(last?.reps).toBe(11);
+    expect(last?.load).toBe(45);
+    expect(last?.volume).toBe(11);
   });
 
   it("cross-tenant: ein Geraet aus einem fremden Studio fehlt", async () => {

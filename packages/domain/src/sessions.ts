@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
+import type { LoadUnit, VolumeKind } from "./belastung.js";
 import { aktiveZiele } from "./goals.js";
 import { ortszeitTeile } from "./serie.js";
 import type { ProblemReason } from "./workout.js";
@@ -142,10 +143,15 @@ export type SessionBlock = {
   machineLabel: string;
   exerciseId: string;
   exerciseName: string;
+  /** Einheiten des Blocks, damit "1 Satz · 8,5 km/h · 6 %" ohne Nachladen geht. */
+  loadUnit: LoadUnit;
+  secondaryUnit: LoadUnit | null;
+  volumeKind: VolumeKind;
   sets: Array<{
     setIndex: number;
-    weightKg: number;
-    reps: number;
+    load: number;
+    secondaryLoad: number | null;
+    volume: number;
     rir: number | null;
     problemFlag: boolean;
     problemReason: ProblemReason | null;
@@ -189,14 +195,18 @@ type SetRow = {
   machine_id: string;
   exercise_id: string;
   set_index: number;
-  weight_kg: number | string;
-  reps: number;
+  load: number | string;
+  secondary_load: number | string | null;
+  volume: number;
   rir: number | string | null;
   problem_flag: boolean;
   problem_reason: ProblemReason | null;
   performed_at: string;
-  machines: { label: string };
-  exercises: { name: string };
+  machines: {
+    label: string;
+    equipment_models: { load_unit: LoadUnit; secondary_unit: LoadUnit | null };
+  };
+  exercises: { name: string; volume_kind: VolumeKind };
 };
 
 /**
@@ -291,7 +301,7 @@ export async function getSessions(
   const { data: setRows } = await client
     .from("workout_sets")
     .select(
-      "session_id, machine_id, exercise_id, set_index, weight_kg, reps, rir, problem_flag, problem_reason, performed_at, machines (label), exercises (name)",
+      "session_id, machine_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, performed_at, machines (label, equipment_models (load_unit, secondary_unit)), exercises (name, volume_kind)",
     )
     .eq("user_id", userId)
     .in(
@@ -325,6 +335,9 @@ export async function getSessions(
           machineLabel: row.machines.label,
           exerciseId: row.exercise_id,
           exerciseName: row.exercises.name,
+          loadUnit: row.machines.equipment_models.load_unit,
+          secondaryUnit: row.machines.equipment_models.secondary_unit,
+          volumeKind: row.exercises.volume_kind,
           sets: [],
         };
         blocks.set(id, block);
@@ -332,8 +345,9 @@ export async function getSessions(
       }
       block.sets.push({
         setIndex: row.set_index,
-        weightKg: Number(row.weight_kg),
-        reps: row.reps,
+        load: Number(row.load),
+        secondaryLoad: row.secondary_load === null ? null : Number(row.secondary_load),
+        volume: row.volume,
         rir: row.rir === null ? null : Number(row.rir),
         problemFlag: row.problem_flag,
         problemReason: row.problem_reason,

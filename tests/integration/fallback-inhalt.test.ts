@@ -83,7 +83,7 @@ beforeAll(async () => {
       studio_id: studioId,
       name: "Latzug",
       manufacturer: "Technogym",
-      weight_step_kg: 2.5,
+      load_step: 2.5,
       photo_path: fotoPfad,
     })
     .select("id")
@@ -93,8 +93,8 @@ beforeAll(async () => {
   const { data: uebungen, error: uebungError } = await admin
     .from("exercises")
     .insert([
-      { studio_id: studioId, name: "Latzug breit", target_reps_min: 8, target_reps_max: 12 },
-      { studio_id: studioId, name: "Latzug eng", target_reps_min: 8, target_reps_max: 12 },
+      { studio_id: studioId, name: "Latzug breit", target_min: 8, target_max: 12 },
+      { studio_id: studioId, name: "Latzug eng", target_min: 8, target_max: 12 },
     ])
     .select("id");
   if (uebungError) throw uebungError;
@@ -188,7 +188,7 @@ describe("resolve_tag_fallback liefert Einweisungsinhalte", () => {
     const zeilen = await loese(aktiverToken);
     const roh = JSON.stringify(zeilen);
 
-    for (const verboten of ["user_id", "weight_kg", "reps", "email", "studio_id"]) {
+    for (const verboten of ["user_id", "load", "volume", "email", "studio_id"]) {
       expect(roh).not.toContain(verboten);
     }
   });

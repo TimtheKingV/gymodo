@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { listStudioExercises } from "@fitretro/domain";
+import { DomainError, listStudioExercises, updateExercise } from "@fitretro/domain";
 import {
   createTestUser,
   serviceClient,
@@ -32,8 +32,8 @@ beforeAll(async () => {
   const { data: modelle, error: modellFehler } = await admin
     .from("equipment_models")
     .insert([
-      { studio_id: studioA, name: "Uebungen-Modell 1", weight_step_kg: 5 },
-      { studio_id: studioA, name: "Uebungen-Modell 2", weight_step_kg: 5 },
+      { studio_id: studioA, name: "Uebungen-Modell 1", load_step: 5 },
+      { studio_id: studioA, name: "Uebungen-Modell 2", load_step: 5 },
     ])
     .select("id");
   if (modellFehler) throw modellFehler;
@@ -44,20 +44,20 @@ beforeAll(async () => {
       {
         studio_id: studioA,
         name: "Rudern sitzend",
-        target_reps_min: 10,
-        target_reps_max: 15,
+        target_min: 10,
+        target_max: 15,
       },
       {
         studio_id: studioA,
         name: "Trizepsdruecken am Seil",
-        target_reps_min: 10,
-        target_reps_max: 15,
+        target_min: 10,
+        target_max: 15,
       },
       {
         studio_id: studioB,
         name: "Fremde Uebung",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
     ])
     .select("id");
@@ -99,8 +99,8 @@ describe("listStudioExercises", () => {
 
     const rudern = liste.find((uebung) => uebung.name === "Rudern sitzend")!;
     expect(rudern.modelCount).toBe(2);
-    expect(rudern.targetRepsMin).toBe(10);
-    expect(rudern.targetRepsMax).toBe(15);
+    expect(rudern.targetMin).toBe(10);
+    expect(rudern.targetMax).toBe(15);
 
     const trizeps = liste.find(
       (uebung) => uebung.name === "Trizepsdruecken am Seil",
@@ -119,5 +119,53 @@ describe("listStudioExercises", () => {
     const client = await userClient(trainerA);
     const liste = await listStudioExercises(client, studioB);
     expect(liste).toEqual([]);
+  });
+});
+
+describe("updateExercise", () => {
+  it("schreibt Name, Umfangsart und Korridor", async () => {
+    const client = await userClient(trainerA);
+    const { data: uebung } = await serviceClient()
+      .from("exercises")
+      .insert({ studio_id: studioA, name: "Dauerlauf", target_min: 8, target_max: 12 })
+      .select("id")
+      .single<{ id: string }>();
+
+    await updateExercise(client, uebung!.id, {
+      name: "Dauerlauf locker",
+      volumeKind: "seconds",
+      targetMin: 900,
+      targetMax: 1200,
+    });
+
+    const { data: nachher } = await serviceClient()
+      .from("exercises")
+      .select("name, volume_kind, target_min, target_max")
+      .eq("id", uebung!.id)
+      .single();
+    expect(nachher).toEqual({
+      name: "Dauerlauf locker",
+      volume_kind: "seconds",
+      target_min: 900,
+      target_max: 1200,
+    });
+  });
+
+  it("lehnt einen Korridor ab, dessen oberes Ende unter dem unteren liegt", async () => {
+    const client = await userClient(trainerA);
+    const { data: uebung } = await serviceClient()
+      .from("exercises")
+      .insert({ studio_id: studioA, name: "Rudern 2 km", target_min: 2000, target_max: 2000 })
+      .select("id")
+      .single<{ id: string }>();
+
+    await expect(
+      updateExercise(client, uebung!.id, {
+        name: "Rudern 2 km",
+        volumeKind: "meters",
+        targetMin: 5000,
+        targetMax: 2000,
+      }),
+    ).rejects.toBeInstanceOf(DomainError);
   });
 });

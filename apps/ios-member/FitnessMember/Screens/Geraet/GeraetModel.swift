@@ -8,8 +8,11 @@ import Observation
 struct GeraetUebung: Identifiable, Equatable {
     let id: String
     let name: String
-    let targetRepsMin: Int
-    let targetRepsMax: Int
+    /// Was der Korridor zaehlt -- targetMin/targetMax stehen in dieser
+    /// Einheit, und das Umfangsrad nimmt seine Werteliste von hier.
+    let volumeKind: VolumeKind
+    let targetMin: Int
+    let targetMax: Int
     let videoURL: URL?
 }
 
@@ -25,11 +28,12 @@ struct Einstellwert: Identifiable, Equatable {
 /// sagen haette: beim ersten Mal an diesem Geraet gibt es weder einen
 /// letzten Satz noch einen Vorschlag (Sammelstelle Punkt 11).
 struct Rueckblick: Equatable {
-    /// "77,5 kg x 11" (im UI mit Malzeichen) -- der letzte eigene Satz
-    /// dieser Uebung an diesem Geraet, aus dem Prefetch, also auch offline.
+    /// "77,5 kg x 11" oder "8,5 km/h - 6,0 % x 20:00 min" (im UI mit
+    /// Malzeichen und Mittelpunkt) -- der letzte eigene Satz dieser Uebung
+    /// an diesem Geraet, aus dem Prefetch, also auch offline.
     let zuletzt: String
-    /// "Vorschlag - +2,5" (im UI mit Mittelpunkt), sobald der Kontext da
-    /// ist. Offline nil.
+    /// "Vorschlag - +2,5 kg" (im UI mit Mittelpunkt), sobald der Kontext
+    /// da ist. Offline nil.
     let vorschlag: String?
 }
 
@@ -82,14 +86,26 @@ final class GeraetModel {
     /// auf eine Uebung mit mehr bereits gesicherten Saetzen).
     private(set) var gesicherteSaetze = 0
 
-    var gewicht: Double
-    var wiederholungen: Int
-    /// Sobald das Mitglied am Rad gedreht hat, gehoert `gewicht` ihm -- ein
-    /// spaeter eintreffender tagContext (die Anfrage lief seit .task auf
-    /// GeraetView, kann in einem Keller zehn Sekunden brauchen) darf den Wert
-    /// dann nicht mehr unter dem Daumen ersetzen. Der einzige Ort mit zwei
-    /// Schreibern auf denselben Zustand im ganzen Branch.
-    private var gewichtVomNutzer = false
+    /// Was am Geraet gedreht wird, in der Einheit des Modells (loadUnit):
+    /// Kilogramm an der Beinpresse, km/h am Laufband.
+    var belastung: Double
+    /// Was das Mitglied geschafft hat, in der Umfangsart der Uebung
+    /// (volumeKind): Wiederholungen, Sekunden oder Meter.
+    var umfang: Int
+    /// Der zweite Intensitaetsregler (Neigung am Laufband). Genau dann
+    /// gesetzt, wenn das Modell eine Nebenbelastung hat -- der Server
+    /// verlangt sie dann im Satz und weist sie sonst ab (Cardio-Spec 5.1).
+    private(set) var nebenbelastung: Double?
+    /// Sobald das Mitglied am Rad gedreht hat, gehoert `belastung` ihm --
+    /// ein spaeter eintreffender tagContext (die Anfrage lief seit .task
+    /// auf GeraetView, kann in einem Keller zehn Sekunden brauchen) darf
+    /// den Wert dann nicht mehr unter dem Daumen ersetzen. Zusammen mit
+    /// `nebenbelastungVomNutzer` der einzige Ort mit zwei Schreibern auf
+    /// denselben Zustand.
+    private var belastungVomNutzer = false
+    /// Dieselbe Regel fuer die Nebenbelastung, getrennt gefuehrt: wer nur
+    /// die Neigung anfasst, soll den Tempo-Vorschlag trotzdem bekommen.
+    private var nebenbelastungVomNutzer = false
     /// Die Kalibrierung ist auch ausserhalb des Dreischritts erreichbar
     /// ("aendern" auf Main) -- genau der Fall, der den eigenen Endpoint
     /// noetig macht.
@@ -169,27 +185,28 @@ final class GeraetModel {
         }
         // Ohne Historie startet das Rad am Geraetminimum -- ein Vorschlag
         // ohne Daten waere eine Trainingsempfehlung (designsystem.md SS8).
-        gewicht = letzter?.weightKg ?? maschine.equipmentModel.minWeightKg
-        wiederholungen = letzter?.reps ?? maschine.exercises.first { $0.id == uebungId }?.targetRepsMin ?? 10
+        belastung = letzter?.load ?? maschine.equipmentModel.loadMin
+        umfang = letzter?.volume ?? maschine.exercises.first { $0.id == uebungId }?.targetMin ?? 10
 
         // Snap erst, nachdem alle gespeicherten Eigenschaften stehen --
-        // gewichtsWerte und Rastwerte.wiederholungen sind berechnete
-        // Zugriffe, die vorher nicht aufgerufen werden duerfen. Ein
-        // gespeichertes Gewicht kann abseits des Rasters liegen, wenn das
-        // Studio die Schrittweite seither geaendert hat, und eine
-        // gespeicherte Wiederholungszahl kann ausserhalb 1...40 liegen --
-        // RastRad verlangt, dass die Auswahl ein Element der Werteliste ist.
-        gewicht = Rastwerte.naechster(zu: gewicht, in: gewichtsWerte)
-        wiederholungen = GeraetModel.geklemmt(wiederholungen)
+        // belastungsWerte und umfangsWerte sind berechnete Zugriffe, die
+        // vorher nicht aufgerufen werden duerfen. Eine gespeicherte
+        // Belastung kann abseits des Rasters liegen, wenn das Studio die
+        // Schrittweite seither geaendert hat, und ein gespeicherter Umfang
+        // ausserhalb der Liste seiner Umfangsart -- RastRad verlangt, dass
+        // die Auswahl ein Element der Werteliste ist.
+        belastung = Rastwerte.naechster(zu: belastung, in: belastungsWerte)
+        umfang = Rastwerte.naechster(zu: umfang, in: umfangsWerte)
+        nebenbelastung = nebenbelastungVorbelegt(aus: letzter?.secondaryLoad)
     }
 
-    /// Klemmt auf Rastwerte.wiederholungen (1...40) -- RastRad verlangt, dass
-    /// die Auswahl ein Element der Werteliste ist. Braucht init (gespeicherte
-    /// Werte koennen ausserhalb liegen) und uebungWechseln (dieselbe Regel
-    /// beim Wechsel der Uebung).
-    private static func geklemmt(_ wiederholungen: Int) -> Int {
-        min(max(wiederholungen, Rastwerte.wiederholungen.first ?? 1),
-            Rastwerte.wiederholungen.last ?? 40)
+    /// Letzter Satz an diesem Geraet und dieser Uebung, sonst das Minimum
+    /// -- dieselbe Regel wie bei der Belastung. Im Normalfall bleibt die
+    /// Neigung gleich, und das Mitglied fasst den Regler gar nicht an
+    /// (Cardio-Spec 3.1b). nil, wenn das Modell keine Nebenbelastung hat.
+    private func nebenbelastungVorbelegt(aus letzte: Double?) -> Double? {
+        guard let neben = nebenmodell else { return nil }
+        return Rastwerte.naechster(zu: letzte ?? neben.min, in: nebenbelastungsWerte)
     }
 
     // MARK: - Abgeleitetes
@@ -197,14 +214,14 @@ final class GeraetModel {
     var uebungen: [GeraetUebung] {
         if let kontext {
             return kontext.exercises.map {
-                GeraetUebung(id: $0.id, name: $0.name,
-                             targetRepsMin: $0.targetRepsMin, targetRepsMax: $0.targetRepsMax,
+                GeraetUebung(id: $0.id, name: $0.name, volumeKind: $0.volumeKind,
+                             targetMin: $0.targetMin, targetMax: $0.targetMax,
                              videoURL: $0.instructionVideoUrl.flatMap(URL.init(string:)))
             }
         }
         return maschine.exercises.map {
-            GeraetUebung(id: $0.id, name: $0.name,
-                         targetRepsMin: $0.targetRepsMin, targetRepsMax: $0.targetRepsMax,
+            GeraetUebung(id: $0.id, name: $0.name, volumeKind: $0.volumeKind,
+                         targetMin: $0.targetMin, targetMax: $0.targetMax,
                          videoURL: nil)
         }
     }
@@ -224,17 +241,67 @@ final class GeraetModel {
 
     private var modell: (schritt: Double, min: Double, max: Double?) {
         if let kontext {
-            return (kontext.equipmentModel.weightStepKg,
-                    kontext.equipmentModel.minWeightKg,
-                    kontext.equipmentModel.maxWeightKg)
+            return (kontext.equipmentModel.loadStep,
+                    kontext.equipmentModel.loadMin,
+                    kontext.equipmentModel.loadMax)
         }
-        return (maschine.equipmentModel.weightStepKg,
-                maschine.equipmentModel.minWeightKg,
-                maschine.equipmentModel.maxWeightKg)
+        return (maschine.equipmentModel.loadStep,
+                maschine.equipmentModel.loadMin,
+                maschine.equipmentModel.loadMax)
     }
 
-    var gewichtsWerte: [Double] {
-        Rastwerte.gewichte(min: modell.min, max: modell.max, schritt: modell.schritt)
+    /// Die Einheit der Belastung. Ein Wert, den Rad und Formatierer lesen
+    /// -- keine Stelle im Modell verzweigt danach.
+    var loadUnit: LoadUnit {
+        kontext?.equipmentModel.loadUnit ?? maschine.equipmentModel.loadUnit
+    }
+
+    /// Die Umfangsart der aktiven Uebung. `.reps` nur, wenn es die Uebung
+    /// nicht gibt -- derselbe Notfall, fuer den init die 10 bereithaelt.
+    var volumeKind: VolumeKind { aktiveUebung?.volumeKind ?? .reps }
+
+    /// Einheit und Rastung der Nebenbelastung, oder nil, wenn das Modell
+    /// keine hat. Alle vier Felder zusammen: so erzwingt es der Constraint
+    /// aus Migration 0046, und ein halber Satz waere kein Regler.
+    private var nebenmodell: (einheit: LoadUnit, schritt: Double, min: Double, max: Double)? {
+        let quelle: (LoadUnit?, Double?, Double?, Double?) =
+            if let modell = kontext?.equipmentModel {
+                (modell.secondaryUnit, modell.secondaryStep, modell.secondaryMin, modell.secondaryMax)
+            } else {
+                (maschine.equipmentModel.secondaryUnit, maschine.equipmentModel.secondaryStep,
+                 maschine.equipmentModel.secondaryMin, maschine.equipmentModel.secondaryMax)
+            }
+        guard let einheit = quelle.0, let schritt = quelle.1,
+              let min = quelle.2, let max = quelle.3 else { return nil }
+        return (einheit, schritt, min, max)
+    }
+
+    /// nil an jedem Geraet ohne Nebenbelastung -- der Screen zeigt dann
+    /// keine Zeile dafuer und ist der eines Kraftgeraets.
+    var secondaryUnit: LoadUnit? { nebenmodell?.einheit }
+
+    /// Schritt und Grenzen fuer den Regler der Nebenbelastung.
+    var nebenbelastungSchritt: Double { nebenmodell?.schritt ?? 1 }
+    var nebenbelastungBereich: ClosedRange<Double>? {
+        nebenmodell.map { $0.min...Swift.max($0.min, $0.max) }
+    }
+
+    var belastungsWerte: [Double] {
+        Rastwerte.belastung(min: modell.min, max: modell.max, schritt: modell.schritt)
+    }
+
+    var nebenbelastungsWerte: [Double] {
+        guard let neben = nebenmodell else { return [] }
+        return Rastwerte.belastung(min: neben.min, max: neben.max, schritt: neben.schritt)
+    }
+
+    var umfangsWerte: [Int] { Rastwerte.umfang(volumeKind) }
+
+    /// Was der Block ueber seine Zahlen wissen muss -- geht mit dem Satz
+    /// in die lokale Einheit, damit TrainingLaeuft und Abschluss ohne
+    /// Prefetch formatieren koennen.
+    var einheiten: Blockeinheiten {
+        Blockeinheiten(loadUnit: loadUnit, secondaryUnit: secondaryUnit, volumeKind: volumeKind)
     }
 
     /// Nur wo es einen dokumentierten Anschlag gibt.
@@ -242,16 +309,20 @@ final class GeraetModel {
         modell.max == nil ? nil : Rastwerte.maximumErreicht
     }
 
-    var kontextzeileGewicht: String {
+    /// "Schritt 2,5 kg · 5,0 – 150,0", "Schritt 0,5 km/h · 0,0 – 20,0".
+    /// Die Einheit steht hinter der Schrittweite, auch bei Level: "Schritt
+    /// 1 Level" ist eine Aenderung um eine Stufe, nicht die Stufe 1.
+    var kontextzeileBelastung: String {
         let bereich = modell.max.map {
-            "\(Zahlformat.gewicht(modell.min)) – \(Zahlformat.gewicht($0))"
-        } ?? "ab \(Zahlformat.gewicht(modell.min))"
-        return "Schritt \(Zahlformat.gewicht(modell.schritt)) kg · \(bereich)"
+            "\(Zahlformat.belastung(modell.min, loadUnit)) – \(Zahlformat.belastung($0, loadUnit))"
+        } ?? "ab \(Zahlformat.belastung(modell.min, loadUnit))"
+        return "Schritt \(Zahlformat.belastung(modell.schritt, loadUnit)) \(loadUnit.kurz) · \(bereich)"
     }
 
-    var kontextzeileWiederholungen: String {
+    /// "Ziel 8 – 12", "Ziel 15 – 20 min".
+    var kontextzeileUmfang: String {
         guard let uebung = aktiveUebung else { return "" }
-        return "Ziel \(uebung.targetRepsMin) – \(uebung.targetRepsMax)"
+        return "Ziel \(Zahlformat.korridor(uebung.targetMin, uebung.targetMax, uebung.volumeKind))"
     }
 
     private var definitionen: [TagContextResponse.SettingDefinition] {
@@ -309,7 +380,15 @@ final class GeraetModel {
     }
 
     /// Wie viele Saetze an diesem Geraet geplant sind (Profil, Vorgabe 3).
-    var satzZiel: Int { satzZielLesen() }
+    ///
+    /// Die eine Stelle, an der die Umfangsart eine Regel traegt: bei Zeit
+    /// und Strecke ist ein Satz die ganze Einheit am Geraet ("20 Minuten
+    /// Dauerlauf", Cardio-Spec 3.4). Nach 20 Minuten Laufband eine
+    /// 90-Sekunden-Pause vor einem zweiten Satz zu starten, waere falsch --
+    /// stattdessen kommt nach dem ersten Satz gleich die Frage "Geraet
+    /// abschliessen / Weiterer Satz". Das Profil-Satzziel ist ein Ziel
+    /// fuer Wiederholungsuebungen und gilt nur dort.
+    var satzZiel: Int { volumeKind == .reps ? satzZielLesen() : 1 }
 
     /// Die Pause, solange sie WIRKLICH laeuft.
     ///
@@ -322,19 +401,20 @@ final class GeraetModel {
         return timer
     }
 
-    /// "Vorschlag · +2,5" -- eine Rechnung, keine Empfehlung
-    /// (designsystem.md SS10). Fehlt offline und beim Erstkontakt.
+    /// "Vorschlag · +2,5 kg", "Vorschlag · +0,5 km/h" -- eine Rechnung,
+    /// keine Empfehlung (designsystem.md SS10). Fehlt offline und beim
+    /// Erstkontakt. Mit Einheit: an einem Geraet mit zwei Reglern sagte
+    /// eine nackte Zahl nicht, welcher gemeint ist.
     var vorschlagText: String? {
         // Derselbe Uebungs-Vorbehalt wie kalibrierungswerte: der Vorschlag
         // gilt fuer selectedExerciseId, nicht fuer die aktuell gewaehlte.
         guard kontextPasstZurUebung,
-              let vorschlag = kontext?.suggestion.resultWeightKg,
-              let vorher = kontext?.suggestion.inputs.currentWeightKg
+              let vorschlag = kontext?.suggestion.resultLoad,
+              let vorher = kontext?.suggestion.inputs.currentLoad
         else { return nil }
         let delta = vorschlag - vorher
         guard delta != 0 else { return "Vorschlag · halten" }
-        let vorzeichen = delta > 0 ? "+" : "−"
-        return "Vorschlag · \(vorzeichen)\(Zahlformat.gewicht(abs(delta)))"
+        return "Vorschlag · \(Zahlformat.belastungDelta(delta, loadUnit))"
     }
 
     var rueckblick: Rueckblick? {
@@ -342,7 +422,9 @@ final class GeraetModel {
             $0.machineId == maschine.id && $0.exerciseId == uebungId
         }) else { return nil }
         return Rueckblick(
-            zuletzt: "\(Zahlformat.gewichtMitEinheit(letzter.weightKg)) × \(letzter.reps)",
+            zuletzt: Zahlformat.satz(letzter.load, loadUnit,
+                                     neben: letzter.secondaryLoad, secondaryUnit,
+                                     umfang: letzter.volume, volumeKind),
             vorschlag: vorschlagText
         )
     }
@@ -362,16 +444,16 @@ final class GeraetModel {
     /// (Punkt 12).
     func geraetGeoeffnet() { rueckblickOffen = rueckblickFaellig }
 
-    func letztesGewicht(fuer uebungId: String) -> Double? {
+    func letzteBelastung(fuer uebungId: String) -> Double? {
         bootstrap.lastSets.first {
             $0.machineId == maschine.id && $0.exerciseId == uebungId
-        }?.weightKg
+        }?.load
     }
 
     /// Ganze Tage seit dem letzten Satz -- "vor 8 Tagen" in der
     /// Uebungsliste sagt dem Mitglied, wie alt die Zahl ist, bevor es die
     /// Scheiben auflegt. nil ohne Historie oder wenn performedAt sich nicht
-    /// parsen laesst; die Zeile zeigt dann nur das Gewicht.
+    /// parsen laesst; die Zeile zeigt dann nur die Belastung.
     func letzteNutzungInTagen(fuer uebungId: String) -> Int? {
         guard let letzter = bootstrap.lastSets.first(where: {
             $0.machineId == maschine.id && $0.exerciseId == uebungId
@@ -418,7 +500,7 @@ final class GeraetModel {
     // MARK: - Aktionen
 
     /// Laedt, was der Prefetch nicht hat: Foto, Einweisungsvideo und den
-    /// Gewichtsvorschlag.
+    /// Vorschlag fuer die Belastung.
     ///
     /// Hier stand bis zur Geraeteauswahl ohne Scan ein
     /// `guard let token else { return }`. Damit blieb ein aus der Liste
@@ -443,41 +525,82 @@ final class GeraetModel {
         // Unangetastet uebernehmen; hat das Mitglied schon am Rad gedreht,
         // gehoert ihm der Wert -- ein spaeter Vorschlag darf ihn nicht mehr
         // unter dem Daumen ersetzen.
-        if !gewichtVomNutzer, let vorschlag = geladen.suggestion.resultWeightKg {
-            gewicht = Rastwerte.naechster(zu: vorschlag, in: gewichtsWerte)
+        if !belastungVomNutzer, let vorschlag = geladen.suggestion.resultLoad {
+            belastung = Rastwerte.naechster(zu: vorschlag, in: belastungsWerte)
+        }
+        // Der Kontext kann ein anderes Modell zeigen als der Prefetch (das
+        // Studio hat seither eine Nebenbelastung eingetragen oder
+        // gestrichen). `nebenbelastung` muss genau dann gesetzt sein, wenn
+        // das Modell eine hat -- sonst weist der Server den Satz ab.
+        guard nebenmodell != nil else {
+            nebenbelastung = nil
+            return
+        }
+        // Die Regel steigert die Nebenbelastung nie, sie gibt nur mit, bei
+        // welcher der Vorschlag gilt (Cardio-Spec 5.2). Uebernommen wird
+        // sie wie die Belastung: nur, solange das Mitglied sie nicht
+        // selbst angefasst hat.
+        if !nebenbelastungVomNutzer, let vorschlag = geladen.suggestion.resultSecondaryLoad {
+            nebenbelastung = Rastwerte.naechster(zu: vorschlag, in: nebenbelastungsWerte)
+        } else if let bisher = nebenbelastung {
+            nebenbelastung = Rastwerte.naechster(zu: bisher, in: nebenbelastungsWerte)
+        } else {
+            nebenbelastung = nebenbelastungVorbelegt(aus: letzterSatz(fuer: uebungId)?.secondaryLoad)
         }
     }
 
-    /// Der einzige Weg, auf dem das Mitglied selbst das Gewicht setzt: das
-    /// Rad schreibt hierher, nicht direkt in `gewicht`. init, uebungWechseln
-    /// und kontextUebernehmen setzen `gewicht` programmatisch und lassen die
-    /// Markierung in Ruhe -- sonst schuetzte ein Vorschlag sich vor sich selbst.
-    func gewichtGewaehlt(_ neu: Double) {
-        gewicht = neu
-        gewichtVomNutzer = true
+    /// Der einzige Weg, auf dem das Mitglied selbst die Belastung setzt:
+    /// das Rad schreibt hierher, nicht direkt in `belastung`. init,
+    /// uebungWechseln und kontextUebernehmen setzen `belastung`
+    /// programmatisch und lassen die Markierung in Ruhe -- sonst schuetzte
+    /// ein Vorschlag sich vor sich selbst.
+    func belastungGewaehlt(_ neu: Double) {
+        belastung = neu
+        belastungVomNutzer = true
+    }
+
+    /// Dasselbe fuer die Nebenbelastung. An einem Geraet ohne sie gibt es
+    /// keinen Regler, der hierher schreiben koennte; kaeme der Aufruf
+    /// trotzdem, bliebe sie nil -- ein gesetzter Wert liesse den Server
+    /// den Satz abweisen.
+    func nebenbelastungGewaehlt(_ neu: Double) {
+        guard nebenmodell != nil else { return }
+        nebenbelastung = Rastwerte.naechster(zu: neu, in: nebenbelastungsWerte)
+        nebenbelastungVomNutzer = true
+    }
+
+    private func letzterSatz(fuer uebungId: String) -> BootstrapResponse.LastSet? {
+        bootstrap.lastSets.first {
+            $0.machineId == maschine.id && $0.exerciseId == uebungId
+        }
     }
 
     func uebungWechseln(zu neue: String) {
         uebungId = neue
-        let letzter = bootstrap.lastSets.first {
-            $0.machineId == maschine.id && $0.exerciseId == neue
-        }
-        gewicht = Rastwerte.naechster(
-            zu: letzter?.weightKg ?? modell.min, in: gewichtsWerte)
-        wiederholungen = GeraetModel.geklemmt(letzter?.reps ?? aktiveUebung?.targetRepsMin ?? 10)
+        let letzter = letzterSatz(fuer: neue)
+        belastung = Rastwerte.naechster(
+            zu: letzter?.load ?? modell.min, in: belastungsWerte)
+        // umfangsWerte liest die Umfangsart der NEUEN Uebung: von
+        // "Dauerlauf" (Sekunden) auf "Intervall 400 m" (Meter) wechselt
+        // damit auch die Liste, auf die der Wert rastet.
+        umfang = Rastwerte.naechster(
+            zu: letzter?.volume ?? aktiveUebung?.targetMin ?? 10, in: umfangsWerte)
+        nebenbelastung = nebenbelastungVorbelegt(aus: letzter?.secondaryLoad)
         // Eine andere Uebung hat ihren eigenen Satzzaehler -- eine Pause
         // oder eine Abschlussentscheidung, die zur vorherigen gehoerte,
         // gilt hier nicht mehr.
         phase = .eingabe
         // Neue Uebung, neuer Wert -- ein spaeter fuer diese Uebung
         // eintreffender Vorschlag darf wieder greifen.
-        gewichtVomNutzer = false
+        belastungVomNutzer = false
+        nebenbelastungVomNutzer = false
     }
 
     func satzSichern(problemFlag: Bool, problemReason: ProblemReason?) async {
         let geschrieben = sessions.satzSichern(
             machineId: maschine.id, exerciseId: uebungId,
-            weightKg: gewicht, reps: wiederholungen,
+            einheiten: einheiten,
+            load: belastung, secondaryLoad: nebenbelastung, volume: umfang,
             problemFlag: problemFlag, problemReason: problemReason
         )
         // Immer ueber die Warteschlange, nie direkt: so ist "gespeichert,

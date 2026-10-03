@@ -35,7 +35,7 @@ beforeAll(async () => {
 
   const { data: model, error: modelError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioA, name: "Beinpresse", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioA, name: "Beinpresse", load_step: 2.5 })
     .select("id")
     .single();
   if (modelError) throw modelError;
@@ -50,7 +50,7 @@ beforeAll(async () => {
 
   const { data: exercise, error: exerciseError } = await admin
     .from("exercises")
-    .insert({ studio_id: studioA, name: "Beidbeinig", target_reps_min: 8, target_reps_max: 12 })
+    .insert({ studio_id: studioA, name: "Beidbeinig", target_min: 8, target_max: 12 })
     .select("id")
     .single();
   if (exerciseError) throw exerciseError;
@@ -75,7 +75,7 @@ async function einheitMitSatz(bearer: string): Promise<{ sessionId: string; setI
     new Request(`http://localhost/api/v1/workout-sessions/${sessionId}/sets/${setId}`, {
       method: "PUT",
       headers: { "content-type": "application/json", authorization: `Bearer ${bearer}` },
-      body: JSON.stringify({ machineId: machineA, exerciseId: exerciseA, setIndex: 1, weightKg: 80, reps: 10 }),
+      body: JSON.stringify({ machineId: machineA, exerciseId: exerciseA, setIndex: 1, load: 80, volume: 10 }),
     }),
     { params: Promise.resolve({ sessionId, setId }) },
   );

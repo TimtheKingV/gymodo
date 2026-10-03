@@ -504,7 +504,8 @@ private extension HomeSerieView {
         let bloecke = ["Beinpresse", "Latzug"].map { geraet in
             SessionSummary.Block(
                 machineId: geraet, machineLabel: geraet, exerciseId: "u-\(geraet)",
-                exerciseName: geraet, sets: [])
+                exerciseName: geraet,
+                loadUnit: .kg, secondaryUnit: nil, volumeKind: .reps, sets: [])
         }
         return SessionSummary(
             id: id, startedAt: start, completedAt: ende, completedReason: "manual",

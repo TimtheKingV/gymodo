@@ -58,8 +58,8 @@ beforeAll(async () => {
   const { data: models, error: modelError } = await admin
     .from("equipment_models")
     .insert([
-      { studio_id: studioA, name: "Beinpresse", weight_step_kg: 2.5 },
-      { studio_id: studioB, name: "Fremdpresse", weight_step_kg: 2.5 },
+      { studio_id: studioA, name: "Beinpresse", load_step: 2.5 },
+      { studio_id: studioB, name: "Fremdpresse", load_step: 2.5 },
     ])
     .select("id");
   if (modelError) throw modelError;
@@ -81,14 +81,14 @@ beforeAll(async () => {
       {
         studio_id: studioA,
         name: "Beidbeinig",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
       {
         studio_id: studioB,
         name: "Fremduebung",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
     ])
     .select("id");
@@ -117,8 +117,8 @@ function setOfMemberA(overrides: Record<string, unknown> = {}) {
     machine_id: machineA,
     exercise_id: exerciseA,
     set_index: 1,
-    weight_kg: 80,
-    reps: 10,
+    load: 80,
+    volume: 10,
     ...overrides,
   };
 }
@@ -185,8 +185,8 @@ describe("RLS auf workout_sets", () => {
       machine_id: machineB,
       exercise_id: exerciseB,
       set_index: 1,
-      weight_kg: 50,
-      reps: 10,
+      load: 50,
+      volume: 10,
     });
     if (seedError) throw seedError;
 
@@ -210,8 +210,8 @@ describe("RLS auf workout_sets", () => {
       machine_id: machineA,
       exercise_id: exerciseA,
       set_index: 1,
-      weight_kg: 60,
-      reps: 10,
+      load: 60,
+      volume: 10,
     });
     if (seedError) throw seedError;
 
@@ -235,8 +235,8 @@ describe("RLS auf workout_sets", () => {
       machine_id: machineA,
       exercise_id: exerciseA,
       set_index: 90,
-      weight_kg: 80,
-      reps: 10,
+      load: 80,
+      volume: 10,
     });
     if (seedError) throw seedError;
 
@@ -254,7 +254,7 @@ describe("RLS auf workout_sets", () => {
 
   it("Idempotenz: derselbe Satz zweimal geschickt ergibt genau eine Zeile", async () => {
     const client = await userClient(memberAEmail);
-    const payload = setOfMemberA({ set_index: 20, reps: 10 });
+    const payload = setOfMemberA({ set_index: 20, volume: 10 });
 
     const first = await client.from("workout_sets").upsert(payload);
     expect(first.error).toBeNull();
@@ -290,8 +290,8 @@ describe("RLS auf workout_sets", () => {
       .insert({
         studio_id: studioA,
         name: "Einbeinig",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       })
       .select("id")
       .single();

@@ -6,7 +6,9 @@ import { Abschnitt } from "../../../bausteine/Abschnitt";
 import { Zeile, Zeilen } from "../../../bausteine/Zeile";
 import { Zustand } from "../../../bausteine/Zustand";
 import { Modellbild } from "../../../bausteine/Modellbild";
+import { Reiter } from "../../../bausteine/Reiter";
 import { StiftLink } from "../../../bausteine/Stift";
+import { KATEGORIE_OPTIONEN, istKategorie } from "../../../bausteine/einstellungVorschlaege";
 import styles from "../../../portal.module.css";
 import bausteine from "../../../bausteine/bausteine.module.css";
 
@@ -22,11 +24,24 @@ import bausteine from "../../../bausteine/bausteine.module.css";
  */
 export default async function GeraetePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ studioId: string }>;
+  searchParams: Promise<{ kategorie?: string }>;
 }) {
   const { studioId } = await params;
+  const { kategorie } = await searchParams;
   const [katalog, zahlen] = await Promise.all([ladeKatalog(studioId), railZahlen(studioId)]);
+
+  // Der Filter ist ein Anzeigefilter ueber equipment_models.category
+  // (Cardio-Spec Abschnitt 3.5) -- ein unbekannter Wert heisst "Alle",
+  // keine Fehlerseite. Als Reiter mit eigener Adresse, damit ein Trainer
+  // die gefilterte Liste verlinken kann.
+  const gewaehlt = kategorie !== undefined && istKategorie(kategorie) ? kategorie : null;
+  const modelle = gewaehlt
+    ? katalog.models.filter((modell) => modell.category === gewaehlt)
+    : katalog.models;
+  const kategorieName = new Map(KATEGORIE_OPTIONEN.map((o) => [o.wert, o.anzeige]));
 
   // Der Gerätekatalog ist auf Datenbankebene fuer Mitglieder sichtbar:
   // equipment_models_select und die Machines-Police in 0004/0007 pruefen
@@ -74,16 +89,38 @@ export default async function GeraetePage({
         </Link>
       </div>
 
-      <Abschnitt titel="Alle Gerätemodelle">
+      {katalog.models.length > 0 ? (
+        <Reiter
+          name="Kategorie"
+          eintraege={[
+            { href: `/portal/${studioId}/geraete`, label: "Alle", aktiv: gewaehlt === null },
+            ...KATEGORIE_OPTIONEN.map((option) => ({
+              href: `/portal/${studioId}/geraete?kategorie=${option.wert}`,
+              label: option.anzeige,
+              zusatz: String(
+                katalog.models.filter((modell) => modell.category === option.wert).length,
+              ),
+              aktiv: gewaehlt === option.wert,
+            })),
+          ]}
+        />
+      ) : null}
+      <Abschnitt titel={gewaehlt ? `${kategorieName.get(gewaehlt)}-Modelle` : "Alle Gerätemodelle"}>
         {katalog.models.length === 0 ? (
           <Zustand
             art="leer"
             titel="Noch kein Gerätemodell."
             naechsterSchritt="Fang mit dem Gerät an, das am häufigsten benutzt wird."
           />
+        ) : modelle.length === 0 ? (
+          <Zustand
+            art="leer"
+            titel={`Noch kein ${kategorieName.get(gewaehlt!)}-Modell.`}
+            naechsterSchritt="Beim Hinzufügen die Kategorie wählen."
+          />
         ) : (
           <Zeilen>
-            {katalog.models.map((modell) => {
+            {modelle.map((modell) => {
               const stand = erreichbarkeit(modell);
               const mitVideo = modell.exercises.filter((uebung) => uebung.hasVideo).length;
               const offen = offenePunkte(studioId, modell);
@@ -108,6 +145,8 @@ export default async function GeraetePage({
                     // war, musste man Wort fuer Wort lesen.
                     <>
                       <span>
+                        {kategorieName.get(modell.category)}
+                        {" · "}
                         {modell.manufacturer ? (
                           modell.manufacturer
                         ) : (
