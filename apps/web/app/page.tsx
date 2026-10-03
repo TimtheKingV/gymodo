@@ -49,16 +49,16 @@ export default async function HomePage() {
               Konto anlegen
             </Link>
             <p className={styles.mitgliedshinweis}>
-              Du bist Mitglied? gymodo ist eine App fürs iPhone — im Web gibt es nichts für
+              Du bist Mitglied? Gymtavo ist eine App fürs iPhone — im Web gibt es nichts für
               dich zu tun. Frag an der Theke nach der Einladung, oder tippe einfach ein Gerät
               an.
             </p>
           </div>
         </main>
         <footer className={styles.fuss}>
-          gymodo misst nichts. Angezeigt wird ausschließlich, was Mitglieder selbst bestätigt
+          Gymtavo misst nichts. Angezeigt wird ausschließlich, was Mitglieder selbst bestätigt
           haben. Einweisungsvideos und Einstellhinweise sind Inhalte des Studios, keine
-          Trainings- oder Gesundheitsempfehlung von gymodo.
+          Trainings- oder Gesundheitsempfehlung von Gymtavo.
         </footer>
       </div>
     );

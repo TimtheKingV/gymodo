@@ -113,7 +113,7 @@ export function UebungSheet({
         />
         <UebungRepsRad gross />
         <p className={styles.notiz}>
-          Die Spanne ist ein Ziel, kein Vorschlag. gymodo rechnet daraus nichts
+          Die Spanne ist ein Ziel, kein Vorschlag. Gymtavo rechnet daraus nichts
           aus — sie steht dem Mitglied unter dem Rad.
         </p>
 

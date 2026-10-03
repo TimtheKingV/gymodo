@@ -102,7 +102,7 @@ export default async function TagFallbackPage({
         <header>
           <span className={styles.label}>Aushang</span>
           <h1 className={styles.geraet}>{zeile.studio_name}</h1>
-          <p className={styles.standort}>Dein Studio arbeitet mit gymodo.</p>
+          <p className={styles.standort}>Dein Studio arbeitet mit Gymtavo.</p>
         </header>
 
         <section className={styles.nutzen}>
@@ -246,8 +246,8 @@ export default async function TagFallbackPage({
       </section>
 
       <p className={styles.grenze}>
-        gymodo misst nichts. Einweisungsvideos und Einstellhinweise sind Inhalte
-        deines Studios, keine Trainings- oder Gesundheitsempfehlung von gymodo.
+        Gymtavo misst nichts. Einweisungsvideos und Einstellhinweise sind Inhalte
+        deines Studios, keine Trainings- oder Gesundheitsempfehlung von Gymtavo.
       </p>
     </main>
   );

@@ -28,7 +28,7 @@ test("Wer ohne Konto auf die Wurzelseite kommt, findet beide Wege hinein", async
 
 test("Die Landeseite nennt die Produktgrenze, ohne dass man danach sucht", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText(/gymodo misst nichts/)).toBeVisible();
+  await expect(page.getByText(/Gymtavo misst nichts/)).toBeVisible();
 });
 
 test("Sie sagt einem Mitglied, dass es im Web nichts zu tun hat", async ({ page }) => {
@@ -154,7 +154,7 @@ test("Ein falscher Studio-Code meldet sich als Warnung", async ({ page }) => {
 test("Die Produktgrenze der Landeseite steht in text-muted", async ({ page }) => {
   await page.goto("/");
 
-  const satz = page.getByText(/gymodo misst nichts/);
+  const satz = page.getByText(/Gymtavo misst nichts/);
   const farbe = await satz.evaluate((el) => getComputedStyle(el).color);
   expect(farbe).toBe("rgb(155, 163, 175)");
 });
@@ -191,4 +191,9 @@ test("Auf 320 px laeuft der Kopf der Landeseite nicht ueber", async ({ page }) =
   const marke = await page.getByRole("banner").getByRole("img", { name: "GYMTAVO" }).boundingBox();
   const ziel = await knopf.boundingBox();
   expect(ziel!.x - (marke!.x + marke!.width)).toBeGreaterThanOrEqual(16);
+});
+
+test("Der Browsertab heisst Gymtavo", async ({ page }) => {
+  await page.goto("/");
+  await expect(page).toHaveTitle(/Gymtavo/);
 });

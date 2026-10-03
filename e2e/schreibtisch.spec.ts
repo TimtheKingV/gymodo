@@ -79,7 +79,7 @@ test("Der Ueberblick traegt weder Produktgrenze noch Vorspann", async ({ page })
   await page.goto(`/portal/${studioId}`);
 
   await expect(page.getByRole("heading", { name: "Überblick" })).toBeVisible();
-  await expect(page.getByText(/gymodo misst nichts/)).toHaveCount(0);
+  await expect(page.getByText(/misst nichts/)).toHaveCount(0);
   await expect(page.getByText(/Studioweite Summen/)).toHaveCount(0);
 });
 
