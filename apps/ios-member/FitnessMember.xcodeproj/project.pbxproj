@@ -1335,8 +1335,9 @@
 				DEVELOPMENT_TEAM = ZJP24W38LQ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "FitnessMember/Info-Additions-Debug.plist";
-				INFOPLIST_KEY_NFCReaderUsageDescription = "gymodo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "gymodo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
+				INFOPLIST_KEY_CFBundleDisplayName = Gymtavo;
+				INFOPLIST_KEY_NFCReaderUsageDescription = "Gymtavo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1444,8 +1445,9 @@
 				DEVELOPMENT_TEAM = ZJP24W38LQ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "FitnessMember/Info-Additions.plist";
-				INFOPLIST_KEY_NFCReaderUsageDescription = "gymodo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "gymodo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
+				INFOPLIST_KEY_CFBundleDisplayName = Gymtavo;
+				INFOPLIST_KEY_NFCReaderUsageDescription = "Gymtavo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

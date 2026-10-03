@@ -410,9 +410,9 @@ final class GeraetModel {
 
     /// Pflichtort laut designsystem.md SS10.
     let produktgrenze = """
-        gymodo misst nichts. Angezeigt wird ausschließlich, was du selbst \
+        Gymtavo misst nichts. Angezeigt wird ausschließlich, was du selbst \
         bestätigt hast. Einweisungsvideos und Einstellhinweise sind Inhalte \
-        deines Studios, keine Trainings- oder Gesundheitsempfehlung von gymodo.
+        deines Studios, keine Trainings- oder Gesundheitsempfehlung von Gymtavo.
         """
 
     // MARK: - Aktionen
