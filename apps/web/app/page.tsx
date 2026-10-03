@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { BeitrittsFormular } from "./BeitrittsFormular";
+import { GymtavoWordmark } from "./branding/GymtavoWordmark";
 import { Einstieg } from "./einstieg/Einstieg";
 import einstiegStyles from "./einstieg/einstieg.module.css";
 import styles from "./einstieg/landeseite.module.css";
@@ -21,7 +22,7 @@ export default async function HomePage() {
     return (
       <div className={styles.bildschirm}>
         <header className={styles.kopf}>
-          <span className={styles.marke}>gymodo</span>
+          <GymtavoWordmark />
           <Link href="/login" className={styles.anmeldenKopf}>
             Anmelden
           </Link>

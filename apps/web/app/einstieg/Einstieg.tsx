@@ -1,3 +1,4 @@
+import { GymtavoWordmark } from "../branding/GymtavoWordmark";
 import styles from "./einstieg.module.css";
 
 /**
@@ -33,7 +34,7 @@ export function Einstieg({
   return (
     <div className={styles.bildschirm}>
       <header className={styles.kopf}>
-        <span className={styles.marke}>gymodo</span>
+        <GymtavoWordmark />
       </header>
       <main className={styles.seite}>
         <div className={styles.karte}>
