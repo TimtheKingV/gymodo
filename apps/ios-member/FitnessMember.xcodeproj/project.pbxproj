@@ -7,8 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A709210001B4A7D1F00A0001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A709210001B4A7D1F00A0002 /* Assets.xcassets */; };
 		0075B0E3CF0E786F9D22AFFF /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC66ACF7FB394ECB319166C3 /* APIClient.swift */; };
 		013D40E89B567A7C02B5A99A /* GewichtsverlaufHilfenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA471448D3B4B628A0BD6D5 /* GewichtsverlaufHilfenTests.swift */; };
+		A709210001B4A7D1F00A0003 /* MarkenAssetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A709210001B4A7D1F00A0004 /* MarkenAssetTests.swift */; };
 		042F6324294F8E5E71B29B11 /* TestnotizScreenStapel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20C077400AA8EF5A0B1AE96 /* TestnotizScreenStapel.swift */; };
 		05C4AB096D32DA3E6C4E62D7 /* PressButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CEB043A2F6633F4B756357E /* PressButtonStyle.swift */; };
 		07E4E7DC6F1BE36A492B13C0 /* TestnotizMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB60D85B419DB84251C5D60A /* TestnotizMarkdown.swift */; };
@@ -255,6 +257,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		A709210001B4A7D1F00A0002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7B241D0E93F5A86C204BE3D1 /* Navigationsleiste.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigationsleiste.swift; sourceTree = "<group>"; };
 		00B25E595924E3D70A9F8C8F /* Zahlformat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zahlformat.swift; sourceTree = "<group>"; };
 		024E875EF3390D4641B65EDC /* TrainingStartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingStartView.swift; sourceTree = "<group>"; };
@@ -449,6 +452,7 @@
 		CB59D56AD33C31AE1F0089FF /* TagProtokoll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagProtokoll.swift; sourceTree = "<group>"; };
 		CF7B9170FFCF2B3FBDF4A2F0 /* ColorHexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHexTests.swift; sourceTree = "<group>"; };
 		CFA471448D3B4B628A0BD6D5 /* GewichtsverlaufHilfenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GewichtsverlaufHilfenTests.swift; sourceTree = "<group>"; };
+		A709210001B4A7D1F00A0004 /* MarkenAssetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkenAssetTests.swift; sourceTree = "<group>"; };
 		CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStoreTests.swift; sourceTree = "<group>"; };
 		CFBC22CBF40859396B6DD869 /* testnotiz-beispiel.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "testnotiz-beispiel.json"; sourceTree = "<group>"; };
 		D33AEE94B0EDB5593285596C /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -545,6 +549,7 @@
 				3E67B77D484B574613C4314E /* Herkunftssatz.swift */,
 				FEAB5E8D33541765AD0B109B /* Info-Additions-Debug.plist */,
 				943C19386AFE9634615213ED /* Info-Additions.plist */,
+				A709210001B4A7D1F00A0002 /* Assets.xcassets */,
 				8D54275FD3C78205F883D9A0 /* PrivacyInfo.xcprivacy */,
 				F3F970AC02F39C7E9D8ABCBF /* TagLink.swift */,
 				CB59D56AD33C31AE1F0089FF /* TagProtokoll.swift */,
@@ -741,6 +746,7 @@
 				28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */,
 				26938FABB4BBFFF4A17B5D63 /* GewichtEintragenHilfenTests.swift */,
 				CFA471448D3B4B628A0BD6D5 /* GewichtsverlaufHilfenTests.swift */,
+				A709210001B4A7D1F00A0004 /* MarkenAssetTests.swift */,
 				35520B42726A403ECBA04A24 /* HomeSerieTests.swift */,
 				EC41D34D6C45ECA67DC8B7D5 /* HomeZeilenTests.swift */,
 				178A941D7DAEF42B0D12FC59 /* HomeZieleTests.swift */,
@@ -1045,6 +1051,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A709210001B4A7D1F00A0001 /* Assets.xcassets in Resources */,
 				1B9CF10D96ED6BE26D2D7742 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1260,6 +1267,7 @@
 				6F40C74FE72F58BD66FE5FAD /* GeraeteFotosTests.swift in Sources */,
 				64DE54AADAEF254C04697CD4 /* GewichtEintragenHilfenTests.swift in Sources */,
 				013D40E89B567A7C02B5A99A /* GewichtsverlaufHilfenTests.swift in Sources */,
+				A709210001B4A7D1F00A0003 /* MarkenAssetTests.swift in Sources */,
 				3FC052B589C402381A71036E /* HomeSerieTests.swift in Sources */,
 				223F8FDD1BA1AFE59AF71D8C /* HomeZeilenTests.swift in Sources */,
 				876C68594995FB10C4C5F383 /* HomeZieleTests.swift in Sources */,
@@ -1320,7 +1328,7 @@
 		1B182B3E950C62913802912C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_ENTITLEMENTS = FitnessMember/FitnessMember.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
@@ -1429,7 +1437,7 @@
 		500BD211546D4958AB586D13 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_ENTITLEMENTS = FitnessMember/FitnessMember.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
