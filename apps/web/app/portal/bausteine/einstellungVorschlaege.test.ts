@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   SONSTIGES,
+  belastungMinimum,
+  einheitenFuer,
   maxGewichtWerte,
   minMaxWerte,
   nameRadWerte,
@@ -64,5 +66,34 @@ describe("minMaxWerte", () => {
     const werte = maxGewichtWerte("5");
     expect(werte[1]!.wert).toBe("5");
     expect(werte.at(-1)).toEqual({ anzeige: "∞", wert: "" });
+  });
+});
+
+/** Testnotiz 03.10., #1: Kraft und Cardio bieten verschiedene Einheiten. */
+describe("einheitenFuer", () => {
+  it("Kraft misst in kg", () => {
+    expect(einheitenFuer("kraft")).toEqual(["kg"]);
+  });
+
+  it("Cardio bietet alles ausser kg", () => {
+    expect(einheitenFuer("cardio")).toEqual(["watt", "level", "kmh", "pct", "rpm"]);
+  });
+});
+
+/** Testnotiz 03.10., #2: kein Minimum mehr im Rad. */
+describe("belastungMinimum", () => {
+  it("ist ohne Bestand der Schritt -- der kleinste Wert ueber null", () => {
+    expect(belastungMinimum("2,5")).toBe("2,5");
+    expect(belastungMinimum("0,5")).toBe("0,5");
+  });
+
+  it("behaelt ein Bestandsminimum ueber null im Takt", () => {
+    expect(belastungMinimum("2,5", "5")).toBe("5");
+    expect(belastungMinimum("5", "25")).toBe("25");
+  });
+
+  it("verwirft null und Werte ausserhalb des Takts", () => {
+    expect(belastungMinimum("2,5", "0")).toBe("2,5");
+    expect(belastungMinimum("5", "7,5")).toBe("5");
   });
 });

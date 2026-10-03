@@ -5,13 +5,15 @@ import type { Category, LoadUnit } from "@fitretro/domain/belastung";
 import { Auswahl } from "./Auswahl";
 import { Rad } from "./EinstellungRad";
 import {
-  EINHEIT_OPTIONEN,
+  EINHEIT_ANZEIGE,
   KATEGORIE_OPTIONEN,
-  NEBENBELASTUNG_OPTIONEN,
+  belastungMinimum,
   belastungsWerte,
   dezimal,
+  einheitenFuer,
   istEinheit,
   istKategorie,
+  maxAb,
 } from "./einstellungVorschlaege";
 import styles from "../portal.module.css";
 
@@ -44,17 +46,32 @@ export type ModellBelastungStart = {
  * des Hauptrads ("Nebenbelastung ab" statt "Minimum"): zwei Raeder mit
  * gleichlautenden Spalten waeren fuer Screenreader und Tests nicht
  * auseinanderzuhalten.
+ *
+ * Testnotiz 03.10.: Die Kategorie bestimmt die Einheiten (#1) -- Kraft nur
+ * kg, ohne Belastungs- und Nebenbelastungsfeld; Cardio alles ausser kg.
+ * Beim Anlegen am Schreibtisch ist sie vorher gefragt (`kategorie`), dann
+ * steht hier kein Kategoriefeld. Das Rad steht Schritt zuerst (#2), weil
+ * der Schritt den Takt des Maximums setzt und man links anfaengt; das
+ * Minimum hat keine Spalte mehr, es ist der kleinste Wert ueber null im
+ * Takt (belastungMinimum). Die Nebenbelastung behaelt ihr "ab": 0 %
+ * Neigung ist ein echter Wert.
  */
 export function ModellBelastungRad({
   gross = false,
   start,
+  kategorie,
 }: {
   gross?: boolean;
   /** Bestandswerte beim Bearbeiten; ohne sie gelten die Kraft-Vorgaben. */
   start?: ModellBelastungStart;
+  /** Vorher gefragt (geraete/neu): kein Kategoriefeld, nur diese Einheiten. */
+  kategorie?: Category;
 }) {
-  const [category, setCategory] = useState<Category>(start?.category ?? "kraft");
-  const [loadUnit, setLoadUnit] = useState<LoadUnit>(start?.loadUnit ?? "kg");
+  const startKategorie = start?.category ?? kategorie ?? "kraft";
+  const [category, setCategory] = useState<Category>(startKategorie);
+  const [loadUnit, setLoadUnit] = useState<LoadUnit>(
+    start?.loadUnit ?? einheitenFuer(startKategorie)[0]!,
+  );
   const [secondaryUnit, setSecondaryUnit] = useState<LoadUnit | "">(
     start?.secondaryUnit ?? "",
   );
@@ -76,10 +93,28 @@ export function ModellBelastungRad({
   // (Testnotiz 23.09., zweite Sitzung, #3). Je Einheit gemerkt: der
   // Schritt von kg gilt nach einem Wechsel auf km/h nicht mehr.
   const [hauptSchritt, setHauptSchritt] = useState({ einheit: loadUnit, wert: hauptStart.schritt });
-  const haupt = belastungsWerte(
-    loadUnit,
-    hauptSchritt.einheit === loadUnit ? hauptSchritt.wert : hauptStart.schritt,
+  const schritt = hauptSchritt.einheit === loadUnit ? hauptSchritt.wert : hauptStart.schritt;
+  const haupt = belastungsWerte(loadUnit, schritt);
+  const minimum = belastungMinimum(
+    schritt,
+    start && start.loadUnit === loadUnit ? dezimal(start.loadMin) : undefined,
   );
+
+  // Einheiten der Kategorie; ein Bestandswert ausserhalb bleibt waehlbar,
+  // statt beim Oeffnen still auf eine andere Einheit zu springen.
+  const einheiten = mitBestand(einheitenFuer(category), start?.loadUnit);
+  const nebenEinheiten = mitBestand(
+    category === "cardio" ? einheitenFuer("cardio") : [],
+    start?.secondaryUnit ?? undefined,
+  );
+  const zeigeNeben = nebenEinheiten.length > 0 || secondaryUnit !== "";
+
+  function kategorieWaehlen(neu: Category) {
+    setCategory(neu);
+    const passend = einheitenFuer(neu);
+    if (!passend.includes(loadUnit)) setLoadUnit(passend[0]!);
+    if (secondaryUnit && neu === "kraft") setSecondaryUnit("");
+  }
 
   const nebenStart =
     secondaryUnit &&
@@ -109,40 +144,47 @@ export function ModellBelastungRad({
   return (
     <>
       <div className={styles.grid}>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor={kategorieId}>
-            Kategorie
-          </label>
-          <Auswahl
-            id={kategorieId}
-            name="category"
-            gross={gross}
-            value={category}
-            onChange={(wert) => setCategory(istKategorie(wert) ? wert : "kraft")}
-            optionen={KATEGORIE_OPTIONEN}
-          />
-        </div>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor={einheitId}>
-            Belastung
-          </label>
-          <Auswahl
-            id={einheitId}
-            name="loadUnit"
-            gross={gross}
-            value={loadUnit}
-            onChange={(wert) => setLoadUnit(istEinheit(wert) ? wert : "kg")}
-            optionen={EINHEIT_OPTIONEN}
-          />
-        </div>
+        {kategorie ? (
+          <input type="hidden" name="category" value={category} />
+        ) : (
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor={kategorieId}>
+              Kategorie
+            </label>
+            <Auswahl
+              id={kategorieId}
+              name="category"
+              gross={gross}
+              value={category}
+              onChange={(wert) => kategorieWaehlen(istKategorie(wert) ? wert : "kraft")}
+              optionen={KATEGORIE_OPTIONEN}
+            />
+          </div>
+        )}
+        {einheiten.length > 1 ? (
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor={einheitId}>
+              Belastung
+            </label>
+            <Auswahl
+              id={einheitId}
+              name="loadUnit"
+              gross={gross}
+              value={loadUnit}
+              onChange={(wert) => setLoadUnit(istEinheit(wert) ? wert : einheiten[0]!)}
+              optionen={optionen(einheiten)}
+            />
+          </div>
+        ) : (
+          <input type="hidden" name="loadUnit" value={loadUnit} />
+        )}
       </div>
 
+      <input type="hidden" name="loadMin" value={minimum} />
       <Rad
         key={loadUnit}
         gross={gross}
         spalten={[
-          { name: "loadMin", label: "Minimum", werte: haupt.min, start: hauptStart.min },
-          { name: "loadMax", label: "Maximum", werte: haupt.max, start: hauptStart.max },
           {
             name: "loadStep",
             label: "Schritt",
@@ -150,33 +192,48 @@ export function ModellBelastungRad({
             start: hauptStart.schritt,
             onWahl: (wert) => setHauptSchritt({ einheit: loadUnit, wert }),
           },
+          {
+            name: "loadMax",
+            label: "Maximum",
+            werte: maxAb(haupt.max, minimum),
+            start: hauptStart.max,
+          },
         ]}
       />
 
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor={nebenId}>
-          Nebenbelastung
-        </label>
-        <Auswahl
-          id={nebenId}
-          name="secondaryUnit"
-          gross={gross}
-          value={secondaryUnit}
-          onChange={(wert) => setSecondaryUnit(istEinheit(wert) ? wert : "")}
-          optionen={NEBENBELASTUNG_OPTIONEN}
-        />
-        <span className={styles.hint}>
-          Ein zweiter Regler, der die Intensität verändert — die Neigung am
-          Laufband, die Trittfrequenz am Ergometer. Das Mitglied trägt ihn
-          je Satz ein; die Steigerung betrifft nur die Belastung.
-        </span>
-      </div>
+      {zeigeNeben ? (
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor={nebenId}>
+            Nebenbelastung
+          </label>
+          <Auswahl
+            id={nebenId}
+            name="secondaryUnit"
+            gross={gross}
+            value={secondaryUnit}
+            onChange={(wert) => setSecondaryUnit(istEinheit(wert) ? wert : "")}
+            optionen={[{ wert: "", anzeige: "keine" }, ...optionen(nebenEinheiten)]}
+          />
+          <span className={styles.hint}>
+            Ein zweiter Regler, der die Intensität verändert — die Neigung am
+            Laufband, die Trittfrequenz am Ergometer. Das Mitglied trägt ihn
+            je Satz ein; die Steigerung betrifft nur die Belastung.
+          </span>
+        </div>
+      ) : null}
 
       {neben && nebenStart ? (
         <Rad
           key={`neben-${secondaryUnit}`}
           gross={gross}
           spalten={[
+            {
+              name: "secondaryStep",
+              label: "Nebenbelastung Schritt",
+              werte: neben.schritt,
+              start: nebenStart.schritt,
+              onWahl: (wert) => setNebenSchritt({ einheit: secondaryUnit, wert }),
+            },
             {
               name: "secondaryMin",
               label: "Nebenbelastung ab",
@@ -189,16 +246,17 @@ export function ModellBelastungRad({
               werte: neben.max,
               start: nebenStart.max,
             },
-            {
-              name: "secondaryStep",
-              label: "Nebenbelastung Schritt",
-              werte: neben.schritt,
-              start: nebenStart.schritt,
-              onWahl: (wert) => setNebenSchritt({ einheit: secondaryUnit, wert }),
-            },
           ]}
         />
       ) : null}
     </>
   );
+}
+
+function mitBestand(liste: LoadUnit[], bestand: LoadUnit | undefined): LoadUnit[] {
+  return bestand && !liste.includes(bestand) ? [...liste, bestand] : liste;
+}
+
+function optionen(einheiten: LoadUnit[]) {
+  return einheiten.map((wert) => ({ wert, anzeige: EINHEIT_ANZEIGE[wert] }));
 }
