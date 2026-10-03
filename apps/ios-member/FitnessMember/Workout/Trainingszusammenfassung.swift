@@ -11,9 +11,15 @@ struct Blockzeile: Equatable, Hashable, Identifiable {
     var id: String { "\(machineId):\(exerciseId)" }
     let machineId: String
     let exerciseId: String
-    /// nil, wenn die Saetze sich nicht auf ein Gewicht einigen -- dann
+    /// nil, wenn die Saetze sich nicht auf eine Belastung einigen -- dann
     /// lieber keine Zahl als eine falsche.
-    let gewichtKg: Double?
+    let belastung: Double?
+    /// Dieselbe Regel fuer die Nebenbelastung; nil auch an jedem Geraet,
+    /// das keine hat.
+    let nebenbelastung: Double?
+    let loadUnit: LoadUnit
+    let secondaryUnit: LoadUnit?
+    let volumeKind: VolumeKind
     let satzAnzahl: Int
     let problemGemeldet: Bool
 }
@@ -52,11 +58,18 @@ struct Trainingszusammenfassung: Equatable, Hashable {
         geraeteAnzahl = Set(session.bloecke.map(\.machineId)).count
         satzAnzahl = alle.count
         bloecke = session.bloecke.map { block in
-            let gewichte = Set(block.saetze.map(\.weightKg))
+            let belastungen = Set(block.saetze.map(\.load))
+            let nebenbelastungen = Set(block.saetze.map(\.secondaryLoad))
             return Blockzeile(
                 machineId: block.machineId,
                 exerciseId: block.exerciseId,
-                gewichtKg: gewichte.count == 1 ? gewichte.first : nil,
+                belastung: belastungen.count == 1 ? belastungen.first : nil,
+                // flatMap: das einzige Element der Menge ist selbst ein
+                // Optional (nil an einem Geraet ohne Nebenbelastung).
+                nebenbelastung: nebenbelastungen.count == 1 ? nebenbelastungen.first.flatMap { $0 } : nil,
+                loadUnit: block.loadUnit,
+                secondaryUnit: block.secondaryUnit,
+                volumeKind: block.volumeKind,
                 satzAnzahl: block.saetze.count,
                 problemGemeldet: block.saetze.contains(where: \.problemFlag)
             )

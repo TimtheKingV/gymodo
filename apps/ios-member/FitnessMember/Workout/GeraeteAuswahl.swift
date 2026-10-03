@@ -13,10 +13,12 @@ import Foundation
 /// UI pruefbar sind.
 enum GeraeteAuswahl {
 
-    /// Der letzte Satz an diesem Geraet.
+    /// Der letzte Satz an diesem Geraet -- die Belastung mit ihrer
+    /// Einheit, damit die Zeile "vor 2 Tagen · 8,5 km/h" schreiben kann.
     struct Zuletzt: Equatable {
         let performedAt: Date
-        let gewichtKg: Double
+        let load: Double
+        let loadUnit: LoadUnit
     }
 
     struct Eintrag: Equatable, Identifiable {
@@ -27,6 +29,10 @@ enum GeraeteAuswahl {
         let modellId: String
         /// `equipmentModel.name` -- das Wort, das am Geraet steht.
         let name: String
+        /// Nur fuer die Gruppierung ohne Suchtext (Cardio-Spec 3.5). Die
+        /// Suche selbst kennt sie nicht: wer "lauf" tippt, will das
+        /// Laufband, egal unter welcher Ueberschrift es sonst stuende.
+        let kategorie: Kategorie
         /// `label · locationNote`, dieselbe Fuegung wie die Kopfzeile auf
         /// dem Geraete-Screen.
         let ortsangabe: String
@@ -42,10 +48,19 @@ enum GeraeteAuswahl {
         let nichtScannbar: Bool
     }
 
+    /// Ohne Suchtext: zuletzt, dann Kraft und Cardio je alphabetisch. Mit
+    /// Suchtext: nur `treffer`, flach wie vor der Kategorie -- die drei
+    /// anderen sind dann leer. Eine leere Gruppe zeigt die Ansicht nicht.
     struct Gruppen: Equatable {
         /// Hoechstens drei; bei aktiver Suche leer.
         let zuletzt: [Eintrag]
-        let alle: [Eintrag]
+        let kraft: [Eintrag]
+        let cardio: [Eintrag]
+        let treffer: [Eintrag]
+
+        static let leer = Gruppen(zuletzt: [], kraft: [], cardio: [], treffer: [])
+
+        var istLeer: Bool { zuletzt.isEmpty && kraft.isEmpty && cardio.isEmpty && treffer.isEmpty }
     }
 
     /// Mehr, und die Gruppe verdraengt die Liste, die sie abkuerzen soll.
@@ -77,14 +92,17 @@ enum GeraeteAuswahl {
                 .sorted { letzteSaetze[$0.id]!.performedAt > letzteSaetze[$1.id]!.performedAt }
                 .prefix(deckel)
             let obenIds = Set(benutzt.map(\.id))
+            // Was oben steht, steht unten nicht noch einmal.
+            let unten = maschinen
+                .filter { !obenIds.contains($0.id) }
+                .map { eintrag($0, zuletzt: letzteSaetze[$0.id], trefferUebung: nil) }
+                .sorted(by: alphabetischGesperrteAnsEnde)
 
             return Gruppen(
                 zuletzt: benutzt.map { eintrag($0, zuletzt: letzteSaetze[$0.id], trefferUebung: nil) },
-                // Was oben steht, steht unten nicht noch einmal.
-                alle: maschinen
-                    .filter { !obenIds.contains($0.id) }
-                    .map { eintrag($0, zuletzt: letzteSaetze[$0.id], trefferUebung: nil) }
-                    .sorted(by: alphabetischGesperrteAnsEnde)
+                kraft: unten.filter { $0.kategorie == .kraft },
+                cardio: unten.filter { $0.kategorie == .cardio },
+                treffer: []
             )
         }
 
@@ -100,7 +118,7 @@ enum GeraeteAuswahl {
             return eintrag(maschine, zuletzt: letzteSaetze[maschine.id], trefferUebung: uebung)
         }
 
-        return Gruppen(zuletzt: [], alle: treffer.sorted(by: trefferReihenfolge))
+        return Gruppen(zuletzt: [], kraft: [], cardio: [], treffer: treffer.sorted(by: trefferReihenfolge))
     }
 
     // MARK: - Reihenfolgen
@@ -133,6 +151,7 @@ enum GeraeteAuswahl {
             machineId: maschine.id,
             modellId: maschine.equipmentModel.id,
             name: maschine.equipmentModel.name,
+            kategorie: maschine.equipmentModel.category,
             ortsangabe: [maschine.label, maschine.locationNote]
                 .compactMap { $0 }
                 .joined(separator: " · "),
@@ -160,10 +179,16 @@ enum GeraeteAuswahl {
     /// wie in `GeraetEinstiegRechner.letzteUebung`.
     private static func juengsteSaetze(in bootstrap: BootstrapResponse) -> [String: Zuletzt] {
         var juengste: [String: Zuletzt] = [:]
+        let einheiten = Dictionary(
+            bootstrap.machines.map { ($0.id, $0.equipmentModel.loadUnit) },
+            uniquingKeysWith: { erste, _ in erste })
         for satz in bootstrap.lastSets {
+            // Ohne das Geraet im Prefetch keine Einheit -- und ohne Einheit
+            // keine Zahl. Zeigen koennte die Zeile das Geraet ohnehin nicht.
+            guard let einheit = einheiten[satz.machineId] else { continue }
             guard let datum = Zeitpunkt.parse(satz.performedAt) else { continue }
             if let vorhanden = juengste[satz.machineId], vorhanden.performedAt >= datum { continue }
-            juengste[satz.machineId] = Zuletzt(performedAt: datum, gewichtKg: satz.weightKg)
+            juengste[satz.machineId] = Zuletzt(performedAt: datum, load: satz.load, loadUnit: einheit)
         }
         return juengste
     }

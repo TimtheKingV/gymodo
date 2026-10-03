@@ -41,7 +41,7 @@ beforeAll(async () => {
 
   const { data: model, error: modelError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studio.id, name: "Beinpresse", weight_step_kg: 2.5 })
+    .insert({ studio_id: studio.id, name: "Beinpresse", load_step: 2.5 })
     .select("id")
     .single();
   if (modelError) throw modelError;
@@ -58,8 +58,8 @@ beforeAll(async () => {
     .insert({
       studio_id: studio.id,
       name: "Beidbeinig",
-      target_reps_min: 8,
-      target_reps_max: 12,
+      target_min: 8,
+      target_max: 12,
     })
     .select("id")
     .single();
@@ -94,8 +94,8 @@ beforeAll(async () => {
     machine_id: machine.id,
     exercise_id: exerciseId,
     set_index: 1,
-    weight_kg: 80,
-    reps: 10,
+    load: 80,
+    volume: 10,
     performed_at: new Date("2026-08-27T18:10:00Z").toISOString(),
   });
   if (setError) throw setError;
@@ -113,11 +113,11 @@ describe("GET /api/v1/me/bootstrap", () => {
     const payload = (await response.json()) as {
       studios: unknown[];
       machines: Array<{ label: string }>;
-      lastSets: Array<{ weightKg: number }>;
+      lastSets: Array<{ load: number }>;
     };
     expect(payload.studios).toHaveLength(1);
     expect(payload.machines[0]?.label).toBe("07");
-    expect(payload.lastSets[0]?.weightKg).toBe(80);
+    expect(payload.lastSets[0]?.load).toBe(80);
   });
 
   it("antwortet ohne Token mit 401", async () => {
@@ -191,12 +191,12 @@ describe("GET /api/v1/me/progress", () => {
 
     expect(response.status).toBe(200);
     const payload = (await response.json()) as {
-      exercises: Array<{ exerciseId: string; currentWeightKg: number }>;
+      exercises: Array<{ exerciseId: string; currentLoad: number }>;
     };
     const entry = payload.exercises.find(
       (item) => item.exerciseId === exerciseId,
     );
-    expect(entry?.currentWeightKg).toBe(80);
+    expect(entry?.currentLoad).toBe(80);
   });
 
   it("nimmt den Zeitraum aus der Abfragezeichenfolge", async () => {

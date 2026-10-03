@@ -15,6 +15,7 @@ import {
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { belastungAusFormular, umfangAusFormular } from "../../formfelder";
 import type { Befund } from "./befund";
 
 /**
@@ -92,9 +93,9 @@ export async function modellAnlegen(
       studioId,
       name: text(formData, "name"),
       manufacturer: optionalerText(formData, "manufacturer"),
-      weightStepKg: zahl(formData, "weightStepKg") ?? Number.NaN,
-      minWeightKg: zahl(formData, "minWeightKg") ?? 0,
-      maxWeightKg: zahl(formData, "maxWeightKg") ?? null,
+      ...belastungAusFormular(formData),
+      loadStep: zahl(formData, "loadStep") ?? Number.NaN,
+      loadMin: zahl(formData, "loadMin") ?? 0,
     });
     modelId = modell.id;
   } catch (fehler) {
@@ -378,8 +379,7 @@ export async function uebungAnlegen(
       studioId,
       name: text(formData, "name"),
       description: null,
-      targetRepsMin: zahl(formData, "targetRepsMin") ?? Number.NaN,
-      targetRepsMax: zahl(formData, "targetRepsMax") ?? Number.NaN,
+      ...umfangAusFormular(formData),
     });
     const link = await attachExerciseToModel(client, {
       equipmentModelId: modelId,

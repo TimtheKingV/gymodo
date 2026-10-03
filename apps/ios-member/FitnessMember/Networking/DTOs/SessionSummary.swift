@@ -63,8 +63,9 @@ struct SessionSummary: Codable, Equatable, Identifiable {
     struct Block: Codable, Equatable {
         struct Set: Codable, Equatable {
             let setIndex: Int
-            let weightKg: Double
-            let reps: Int
+            let load: Double
+            let secondaryLoad: Double?
+            let volume: Int
             let rir: Double?
             let problemFlag: Bool
             let problemReason: ProblemReason?
@@ -74,6 +75,12 @@ struct SessionSummary: Codable, Equatable, Identifiable {
         let machineLabel: String
         let exerciseId: String
         let exerciseName: String
+        /// Die Einheiten des Blocks, vom Server mitgeliefert: der Verlauf
+        /// reicht weiter zurueck als der Prefetch, und ein inzwischen
+        /// stillgelegtes Geraet steht dort nicht mehr.
+        let loadUnit: LoadUnit
+        let secondaryUnit: LoadUnit?
+        let volumeKind: VolumeKind
         let sets: [Set]
     }
 

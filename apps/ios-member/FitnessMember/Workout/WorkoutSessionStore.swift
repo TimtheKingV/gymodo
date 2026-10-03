@@ -115,8 +115,10 @@ final class WorkoutSessionStore {
     func satzSichern(
         machineId: String,
         exerciseId: String,
-        weightKg: Double,
-        reps: Int,
+        einheiten: Blockeinheiten,
+        load: Double,
+        secondaryLoad: Double? = nil,
+        volume: Int,
         problemFlag: Bool,
         problemReason: ProblemReason?,
         jetzt: Date = Date()
@@ -138,8 +140,8 @@ final class WorkoutSessionStore {
         // Sessiondatei und aus der Datenbank -- es zu loeschen hiesse, alte
         // Einheiten nicht mehr dekodieren zu koennen.
         let satz = LokalerSatz(
-            id: UUID(), setIndex: setIndex, weightKg: weightKg, reps: reps,
-            rir: nil, problemFlag: problemFlag, problemReason: problemReason,
+            id: UUID(), setIndex: setIndex, load: load, secondaryLoad: secondaryLoad,
+            volume: volume, rir: nil, problemFlag: problemFlag, problemReason: problemReason,
             performedAt: jetzt
         )
 
@@ -147,7 +149,11 @@ final class WorkoutSessionStore {
             session.bloecke[index].saetze.append(satz)
         } else {
             session.bloecke.append(
-                LokalerBlock(machineId: machineId, exerciseId: exerciseId, saetze: [satz])
+                // Die Einheiten gelten ab dem ersten Satz fuer den ganzen
+                // Block: aendert das Studio das Modell mitten in der
+                // Einheit, bleiben die schon gesicherten Saetze lesbar.
+                LokalerBlock(machineId: machineId, exerciseId: exerciseId,
+                             einheiten: einheiten, saetze: [satz])
             )
         }
 
@@ -157,7 +163,7 @@ final class WorkoutSessionStore {
         let formatter = ISO8601DateFormatter()
         let body = SetWrite(
             machineId: machineId, exerciseId: exerciseId, setIndex: setIndex,
-            weightKg: weightKg, reps: reps, rir: nil,
+            load: load, volume: volume, secondaryLoad: secondaryLoad, rir: nil,
             problemFlag: problemFlag, problemReason: problemReason,
             performedAt: formatter.string(from: jetzt),
             sessionStartedAt: formatter.string(from: session.startedAt)

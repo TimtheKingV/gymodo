@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { listStudioExercises } from "@fitretro/domain";
+import { formatVolumeRange } from "@fitretro/domain/belastung";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { ladeKatalog } from "../../../../catalog";
 import { Schrittleiste } from "../../../../../bausteine/Schrittleiste";
@@ -68,8 +69,7 @@ export default async function UebungenPage({
                         {index + 1}. {uebung.name}
                       </div>
                       <div className={styles.zeileMeta}>
-                        {uebung.targetRepsMin}–{uebung.targetRepsMax}{" "}
-                        Wiederholungen
+                        {formatVolumeRange(uebung.targetMin, uebung.targetMax, uebung.volumeKind)}
                         {uebung.hasVideo
                           ? ` · Video ${uebung.videoDurationS ?? "?"} s`
                           : " · ohne Video"}

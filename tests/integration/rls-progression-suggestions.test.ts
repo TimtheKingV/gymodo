@@ -50,8 +50,8 @@ beforeAll(async () => {
   const { data: models, error: modelError } = await admin
     .from("equipment_models")
     .insert([
-      { studio_id: studioA, name: "Beinpresse", weight_step_kg: 2.5 },
-      { studio_id: studioB, name: "Fremdpresse", weight_step_kg: 2.5 },
+      { studio_id: studioA, name: "Beinpresse", load_step: 2.5 },
+      { studio_id: studioB, name: "Fremdpresse", load_step: 2.5 },
     ])
     .select("id");
   if (modelError) throw modelError;
@@ -73,14 +73,14 @@ beforeAll(async () => {
       {
         studio_id: studioA,
         name: "Beidbeinig",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
       {
         studio_id: studioB,
         name: "Fremduebung",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
     ])
     .select("id");
@@ -96,8 +96,8 @@ function suggestionForMemberA(overrides: Record<string, unknown> = {}) {
     machine_id: machineA,
     exercise_id: exerciseA,
     algo_version: PROGRESSION_ALGO_VERSION,
-    inputs: { targetRepsMin: 8, targetRepsMax: 12, currentWeightKg: 80 },
-    result_weight_kg: 82.5,
+    inputs: { targetMin: 8, targetMax: 12, currentLoad: 80 },
+    result_load: 82.5,
     reason_code: "korridor_oben_erreicht",
     ...overrides,
   };
@@ -155,7 +155,7 @@ describe("RLS auf progression_suggestions", () => {
         exercise_id: exerciseB,
         algo_version: PROGRESSION_ALGO_VERSION,
         inputs: {},
-        result_weight_kg: 50,
+        result_load: 50,
         reason_code: "im_korridor",
       })
       .select("id")
@@ -213,7 +213,7 @@ describe("RLS auf progression_suggestions", () => {
 
     const { error } = await client.from("progression_suggestions").insert(
       suggestionForMemberA({
-        result_weight_kg: null,
+        result_load: null,
         reason_code: "kein_verlauf",
       }),
     );
@@ -245,7 +245,7 @@ describe("RLS auf progression_suggestions", () => {
     const admin = serviceClient();
     const { data: seeded, error: seedError } = await admin
       .from("progression_suggestions")
-      .insert(suggestionForMemberA({ result_weight_kg: 82.5 }))
+      .insert(suggestionForMemberA({ result_load: 82.5 }))
       .select("id")
       .single();
     if (seedError) throw seedError;
@@ -253,15 +253,15 @@ describe("RLS auf progression_suggestions", () => {
     const client = await userClient(memberAEmail);
     await client
       .from("progression_suggestions")
-      .update({ result_weight_kg: 200 })
+      .update({ result_load: 200 })
       .eq("id", seeded!.id);
 
     const { data } = await admin
       .from("progression_suggestions")
-      .select("result_weight_kg")
+      .select("result_load")
       .eq("id", seeded!.id)
       .single();
-    expect(Number(data?.result_weight_kg)).toBe(82.5);
+    expect(Number(data?.result_load)).toBe(82.5);
   });
 
   it("Historie: ein Vorschlag laesst sich nicht loeschen", async () => {

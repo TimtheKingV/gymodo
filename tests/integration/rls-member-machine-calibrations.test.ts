@@ -52,8 +52,8 @@ beforeAll(async () => {
   const { data: models, error: modelError } = await admin
     .from("equipment_models")
     .insert([
-      { studio_id: studioA, name: "Beinpresse", weight_step_kg: 2.5 },
-      { studio_id: studioB, name: "Fremdpresse", weight_step_kg: 2.5 },
+      { studio_id: studioA, name: "Beinpresse", load_step: 2.5 },
+      { studio_id: studioB, name: "Fremdpresse", load_step: 2.5 },
     ])
     .select("id");
   if (modelError) throw modelError;
@@ -75,14 +75,14 @@ beforeAll(async () => {
       {
         studio_id: studioA,
         name: "Beidbeinig",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
       {
         studio_id: studioB,
         name: "Fremduebung",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       },
     ])
     .select("id");

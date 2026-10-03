@@ -1,12 +1,13 @@
 "use client";
 
 import { useId, useState } from "react";
+import { formatVolumeRange, type VolumeKind } from "@fitretro/domain/belastung";
 import { AktionsFormular, AktionsKnopf, Feld } from "../../../../../Form";
 import { VideoUpload } from "../../../../../VideoUpload";
 import { MedienVorschau } from "../../../../../bausteine/MedienVorschau";
 import { VideoAbspieler } from "../../../../../bausteine/VideoAbspieler";
 import { StiftKnopf } from "../../../../../bausteine/Stift";
-import { UebungRepsRad } from "../../../../../bausteine/UebungRepsRad";
+import { UebungUmfangRad } from "../../../../../bausteine/UebungUmfangRad";
 import type { ActionResult } from "../../../../../actions";
 import styles from "../../../../../portal.module.css";
 import eigene from "./uebungen.module.css";
@@ -17,7 +18,7 @@ import eigene from "./uebungen.module.css";
  * als Inhalt. Jetzt zeigt die Zeile nur, was ist, und rechts oben sitzt ein
  * Stift. Fehlt noch etwas (heute: das Einweisungsvideo), traegt er die
  * Anzahl als Marke. Ein Druck klappt genau diese Uebung darunter auf:
- * Name und Wiederholungen, Video, Entfernen.
+ * Name und Korridor (in seiner Umfangsart), Video, Entfernen.
  *
  * Die Reihenfolge steht nicht mehr hier, sondern im Dialog "Reihenfolge
  * ändern" ueber der Liste (ReihenfolgeDialog.tsx, #11).
@@ -36,8 +37,9 @@ export function UebungZeile({
   uebung: {
     linkId: string;
     name: string;
-    targetRepsMin: number;
-    targetRepsMax: number;
+    volumeKind: VolumeKind;
+    targetMin: number;
+    targetMax: number;
     hasVideo: boolean;
     videoDurationS: number | null;
   };
@@ -72,7 +74,7 @@ export function UebungZeile({
               {nummer}. {uebung.name}
             </div>
             <div className={styles.rowMeta}>
-              {uebung.targetRepsMin}–{uebung.targetRepsMax} Wiederholungen ·{" "}
+              {formatVolumeRange(uebung.targetMin, uebung.targetMax, uebung.volumeKind)} ·{" "}
               {uebung.hasVideo ? (
                 `Video ${uebung.videoDurationS} s`
               ) : (
@@ -104,9 +106,12 @@ export function UebungZeile({
             nurBeiAenderung
           >
             <Feld name="name" label="Name" required defaultValue={uebung.name} />
-            <UebungRepsRad
-              abStart={String(uebung.targetRepsMin)}
-              bisStart={String(uebung.targetRepsMax)}
+            <UebungUmfangRad
+              start={{
+                volumeKind: uebung.volumeKind,
+                targetMin: uebung.targetMin,
+                targetMax: uebung.targetMax,
+              }}
             />
           </AktionsFormular>
           <div className={eigene.bearbeitenTeil}>

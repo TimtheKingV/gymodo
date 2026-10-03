@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DOMAIN_PACKAGE_NAME,
   PROGRESSION_ALGO_VERSION,
-  suggestNextWeight,
+  suggestNextLoad,
 } from "./index.js";
 
 describe("domain package", () => {
@@ -11,14 +11,14 @@ describe("domain package", () => {
   });
 
   it("stellt die Progressionsregel ueber den Paketeinstieg bereit", () => {
-    expect(PROGRESSION_ALGO_VERSION).toBe("1.0.0");
+    expect(PROGRESSION_ALGO_VERSION).toBe("2.0.0");
     expect(
-      suggestNextWeight({
-        targetRepsMin: 8,
-        targetRepsMax: 12,
-        weightStepKg: 2.5,
-        minWeightKg: 5,
-        maxWeightKg: 150,
+      suggestNextLoad({
+        targetMin: 8,
+        targetMax: 12,
+        loadStep: 2.5,
+        loadMin: 5,
+        loadMax: 150,
         history: [],
       }).reasonCode,
     ).toBe("kein_verlauf");

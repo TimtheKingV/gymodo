@@ -32,6 +32,11 @@ struct RueckblickSheet: View {
                     .font(DesignSystem.Typography.detailScreentitel)
                     .monospacedDigit()
                     .foregroundStyle(DesignSystem.Color.text)
+                    // "8,5 km/h · 6,0 % × 20:00 min" passt auf einem
+                    // 375-pt-iPhone nicht in eine Zeile und wurde im
+                    // Sichtcheck abgeschnitten. Umbrechen statt kuerzen: die
+                    // Hoehe des Sheets wird gemessen und waechst mit.
+                    .fixedSize(horizontal: false, vertical: true)
                 if let vorschlag = rueckblick.vorschlag {
                     // Eine Rechnung, keine Empfehlung (designsystem.md SS10)
                     // -- woertlich der Text, der vorher in der Kontextzeile
@@ -42,7 +47,7 @@ struct RueckblickSheet: View {
                 }
             }
             // Ein Element fuer VoiceOver: "Zuletzt, Beidbeinig, 77,5 kg
-            // mal 11, Vorschlag plus 2,5" -- drei Zeilen, ein Gedanke.
+            // mal 11, Vorschlag plus 2,5 kg" -- drei Zeilen, ein Gedanke.
             .accessibilityElement(children: .combine)
 
             // Nebenaktion, keine Akzentflaeche: die eine des Screens ist
@@ -69,7 +74,7 @@ struct RueckblickSheet: View {
     Color.clear
         .sheet(isPresented: .constant(true)) {
             RueckblickSheet(uebung: "Beidbeinig",
-                            rueckblick: Rueckblick(zuletzt: "77,5 kg × 11", vorschlag: "Vorschlag · +2,5"),
+                            rueckblick: Rueckblick(zuletzt: "77,5 kg × 11", vorschlag: "Vorschlag · +2,5 kg"),
                             beiWeiter: {})
         }
 }

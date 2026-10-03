@@ -26,7 +26,8 @@ struct HomeZeilenTests {
     private func block(_ machineId: String) -> SessionSummary.Block {
         SessionSummary.Block(
             machineId: machineId, machineLabel: machineId, exerciseId: "e-\(machineId)",
-            exerciseName: "Übung \(machineId)", sets: [])
+            exerciseName: "Übung \(machineId)",
+            loadUnit: .kg, secondaryUnit: nil, volumeKind: .reps, sets: [])
     }
 
     /// Was heute noch laeuft, ist kein Verlauf -- die laufende Einheit
@@ -138,9 +139,13 @@ struct HomeZeilenTests {
     }
 
     @Test func veraenderungZeigtVorzeichenUndPlusMinusNullBeiKeinerAenderung() {
-        #expect(HomeZeilen.veraenderung(15) == "+15,0")
-        #expect(HomeZeilen.veraenderung(-2.5) == "-2,5")
-        #expect(HomeZeilen.veraenderung(0) == "±0")
+        #expect(HomeZeilen.veraenderung(15, einheit: .kg) == "+15,0")
+        #expect(HomeZeilen.veraenderung(-2.5, einheit: .kg) == "-2,5")
+        #expect(HomeZeilen.veraenderung(0, einheit: .kg) == "±0")
+        // Die Nachkommastellen folgen der Einheit: Watt und Level sind ganz.
+        #expect(HomeZeilen.veraenderung(0.5, einheit: .kmh) == "+0,5")
+        #expect(HomeZeilen.veraenderung(10, einheit: .watt) == "+10")
+        #expect(HomeZeilen.veraenderung(-1, einheit: .level) == "-1")
     }
 
     @Test func tageHerLabelIstNurBeiGenauEinemTagEinzahl() {

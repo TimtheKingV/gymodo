@@ -107,7 +107,7 @@ test("Schritt 2 fragt ein fehlendes Foto nach und nimmt Parameter auf", async ({
   // Ein Altmodell ohne Foto -- genau der Fall aus Entscheidung 12.
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Brustpresse", weight_step_kg: 5 })
+    .insert({ studio_id: studioId, name: "Brustpresse", load_step: 5 })
     .select("id")
     .single();
   if (error) throw error;
@@ -153,7 +153,7 @@ test("Schritt 3 schlaegt die naechste Nummer vor und legt das Geraet an", async 
 
   const { data: modell, error: modellFehler } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Kabelzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modellFehler) throw modellFehler;
@@ -196,7 +196,7 @@ test("Schritt 4 beantwortet den Tag und verbindet ihn mit dem Geraet", async ({
 
   const { data: modell, error: modellFehler } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Kabelzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modellFehler) throw modellFehler;
@@ -276,7 +276,7 @@ test("Schritt 5 waehlt aus dem Studio, legt neu an und ordnet um", async ({
 
   const { data: modell, error: modellFehler } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Kabelzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modellFehler) throw modellFehler;
@@ -296,8 +296,8 @@ test("Schritt 5 waehlt aus dem Studio, legt neu an und ordnet um", async ({
   const { error: uebungFehler } = await admin.from("exercises").insert({
     studio_id: studioId,
     name: "Rudern sitzend",
-    target_reps_min: 10,
-    target_reps_max: 15,
+    target_min: 10,
+    target_max: 15,
   });
   if (uebungFehler) throw uebungFehler;
 
@@ -339,7 +339,7 @@ test("Ein Video wartet in der Warteschlange und ueberlebt den Seitenwechsel", as
 
   const { data: modell, error: modellFehler } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Kabelzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modellFehler) throw modellFehler;
@@ -356,8 +356,8 @@ test("Ein Video wartet in der Warteschlange und ueberlebt den Seitenwechsel", as
     .insert({
       studio_id: studioId,
       name: "Rudern sitzend",
-      target_reps_min: 10,
-      target_reps_max: 15,
+      target_min: 10,
+      target_max: 15,
     })
     .select("id")
     .single();
@@ -474,7 +474,7 @@ test("Ein zerkratzter Tag wird ersetzt, und der alte wird dabei ungueltig", asyn
 
   const { data: modell, error: modellFehler } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Latzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modellFehler) throw modellFehler;
@@ -573,7 +573,7 @@ test("Verweigerte Kamera ist keine Sackgasse -- das Token-Feld traegt weiter", a
 
   const { data: modell, error: modellFehler } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Kabelzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modellFehler) throw modellFehler;

@@ -59,8 +59,8 @@ beforeAll(async () => {
   const { data: models, error: modelError } = await admin
     .from("equipment_models")
     .insert([
-      { studio_id: studioA, name: "Tagschreib-Modell A", weight_step_kg: 5 },
-      { studio_id: studioB, name: "Tagschreib-Modell B", weight_step_kg: 5 },
+      { studio_id: studioA, name: "Tagschreib-Modell A", load_step: 5 },
+      { studio_id: studioB, name: "Tagschreib-Modell B", load_step: 5 },
     ])
     .select("id");
   if (modelError) throw modelError;
