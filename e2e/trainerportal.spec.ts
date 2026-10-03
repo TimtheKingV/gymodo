@@ -147,12 +147,17 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   // 23.09., #7): ein eigener Bildschirm nur mit den Stammdaten, ohne die
   // Geraeteliste darunter, und "Weiter" statt "Modell anlegen".
   await page.getByRole("link", { name: "+ Gerät hinzufügen" }).click();
+  // Seit Testnotiz 03.10., #1 vorher Kraft oder Cardio -- ohne vorhandenen
+  // Typ entfaellt nur die Frage nach "weiteres Geraet", diese nicht.
+  await page.getByRole("link", { name: /^Kraft/ }).click();
   await expect(page.getByText("Schritt 1 von 4 · Stammdaten")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Alle Gerätemodelle" })).toHaveCount(0);
   await page.getByLabel("Name").fill("Latzug");
   await page.getByLabel("Hersteller").fill("Technogym");
-  await radWaehlen(page, "Schritt", "2,5");
-  await radWaehlen(page, "Minimum", "5");
+  // Kein Minimum mehr (Testnotiz 03.10., #2): es ist der Schritt. Schritt
+  // 5 statt der Vorgabe 2,5, damit die Zeile unten zeigt, dass das Rad
+  // getragen hat.
+  await radWaehlen(page, "Schritt", "5");
   await radWaehlen(page, "Maximum", "100");
   await page.getByRole("button", { name: "Weiter", exact: true }).click();
 
@@ -200,10 +205,10 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
 
   // Und die Raeder haben getragen, was der Test in sie gescrollt hat. Ohne
   // diese Zeile faellt ein verlorener Scroll nicht auf: das Formular schickt
-  // dann klaglos seine Startwerte (Schritt 2,5, ab 0, ∞ -- kein Anschlag) ab, das
+  // dann klaglos seine Startwerte (Schritt 2,5, ab 2,5, ∞ -- kein Anschlag) ab, das
   // Modell entsteht, die Weiterleitung kommt -- und der Test haelt eine
   // Auswahl fuer geprueft, die nie angekommen ist.
-  await expect(page.getByText("Schritt 2,5 kg · ab 5,0 kg bis 100,0 kg")).toBeVisible();
+  await expect(page.getByText("Schritt 5,0 kg · ab 5,0 kg bis 100,0 kg")).toBeVisible();
 
   // Der Modell-Detailpfad ist seit Aufgabe 16 /geraete/<modelId> (vier
   // Reiter statt fuenf Abschnitte auf einem Bildschirm); die Modell-Id

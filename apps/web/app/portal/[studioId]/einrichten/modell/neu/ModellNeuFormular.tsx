@@ -17,8 +17,9 @@ import portalStyles from "../../../../portal.module.css";
  * Kategorie, Belastung, Rastung und Nebenbelastung kommen aus
  * ModellBelastungRad (gross) -- ersetzt die vormalige Chip-Reihe fuer die
  * Schrittweite und die getippten Ab/Bis-Felder, gleicher Stil wie bei den
- * Einstellungen. Ein Kraftgeraet braucht die beiden Auswahlfelder nicht
- * anzufassen.
+ * Einstellungen. Ein Kraftgeraet braucht das Kategoriefeld nicht
+ * anzufassen; Belastung und Nebenbelastung erscheinen erst bei Cardio
+ * (Testnotiz 03.10., #1).
  *
  * Das Foto kommt ueber den Dateidialog des Systems (Kamera oder Mediathek)
  * und nicht aus einem eigenen Sucher: dieselbe Bedienung, vom

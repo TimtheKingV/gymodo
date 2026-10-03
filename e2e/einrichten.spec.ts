@@ -62,9 +62,9 @@ test("Schritt 1 legt ein Modell mit Pflichtfoto an und geht zu den Einstellungen
 
   await page.getByLabel("Name").fill("Kabelzug");
   await page.getByLabel("Hersteller").fill("Technogym");
-  await radWaehlen(page, "Minimum", "5");
-  await radWaehlen(page, "Maximum", "100");
+  // Schritt zuerst, ein Minimum gibt es nicht mehr (Testnotiz 03.10., #2).
   await radWaehlen(page, "Schritt", "5");
+  await radWaehlen(page, "Maximum", "100");
 
   // Ohne Foto geht es nicht weiter -- Entscheidung 10.
   await expect(
@@ -406,7 +406,6 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
   await page.getByRole("link", { name: "Neues Modell anlegen" }).click();
   await page.getByLabel("Name").fill("Kabelzug");
   await page.getByLabel("Hersteller").fill("Technogym");
-  await radWaehlen(page, "Minimum", "5");
   await radWaehlen(page, "Maximum", "100");
   await page.getByLabel("Foto des Modells").setInputFiles({
     name: "kabelzug.jpg",

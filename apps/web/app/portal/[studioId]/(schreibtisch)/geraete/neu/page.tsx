@@ -22,6 +22,10 @@ import styles from "../../../../portal.module.css";
  * Wechsel nur des Suchparameters laeuft mit Nexts Client-Router im
  * Produktionsbau ins Leere (ausfuehrlich in kurse/page.tsx).
  *
+ * Fuer einen neuen Typ danach Kraft oder Cardio (Testnotiz 03.10., #1),
+ * ebenso in der Adresse (?art=typ&kategorie=kraft). Das Formular kennt die
+ * Kategorie dann und bietet nur ihre Einheiten an (ModellBelastungRad).
+ *
  * Eine statische Route neben [modelId]: Next nimmt "neu" vor dem
  * dynamischen Segment, eine Modell-Id kann nie "neu" heissen (UUID).
  */
@@ -30,10 +34,10 @@ export default async function GeraetNeuPage({
   searchParams,
 }: {
   params: Promise<{ studioId: string }>;
-  searchParams: Promise<{ art?: string }>;
+  searchParams: Promise<{ art?: string; kategorie?: string }>;
 }) {
   const { studioId } = await params;
-  const { art } = await searchParams;
+  const { art, kategorie } = await searchParams;
   const zahlen = await railZahlen(studioId);
 
   // Dieselbe Sperre wie auf der Geraeteliste (geraete/page.tsx, dort
@@ -51,7 +55,7 @@ export default async function GeraetNeuPage({
   }
 
   const katalog = await ladeKatalog(studioId);
-  const ansicht = neuAnsicht(art, katalog.models.length);
+  const ansicht = neuAnsicht(art, katalog.models.length, kategorie);
   const basis = `/portal/${studioId}/geraete/neu`;
   // Immer zur Geraeteliste, auch aus ?art=... heraus: zurueck zur Frage
   // hiesse nur den Suchparameter wechseln, und genau das schluckt <Link>
@@ -110,6 +114,36 @@ export default async function GeraetNeuPage({
     );
   }
 
+  if (ansicht === "kategorie") {
+    return (
+      <Seite
+        titel="Gerät hinzufügen"
+        vorspann="Ist es ein Kraft- oder ein Cardiogerät?"
+        rueckweg={rueckweg}
+      >
+        <ul className={styles.wahlListe}>
+          <li>
+            <a className={styles.wahl} href={`${basis}?art=typ&kategorie=kraft`}>
+              <span className={styles.wahlTitel}>Kraft</span>
+              <span className={styles.wahlText}>
+                Belastung in kg, etwa Latzug, Beinpresse oder Kabelzug.
+              </span>
+            </a>
+          </li>
+          <li>
+            <a className={styles.wahl} href={`${basis}?art=typ&kategorie=cardio`}>
+              <span className={styles.wahlTitel}>Cardio</span>
+              <span className={styles.wahlText}>
+                Belastung in Watt, Level, km/h, % oder U/min, etwa Laufband oder
+                Ergometer.
+              </span>
+            </a>
+          </li>
+        </ul>
+      </Seite>
+    );
+  }
+
   return (
     <Seite
       titel="Gerät hinzufügen"
@@ -120,7 +154,10 @@ export default async function GeraetNeuPage({
         <Schrittleiste nummer={1} titel="Stammdaten" von={ASSISTENT_SCHRITTE} />
       </div>
       <section className={styles.section}>
-        <ModellAnlegenFormular action={modellAnlegen.bind(null, studioId)} />
+        <ModellAnlegenFormular
+          action={modellAnlegen.bind(null, studioId)}
+          kategorie={kategorie === "cardio" ? "cardio" : "kraft"}
+        />
       </section>
     </Seite>
   );

@@ -99,17 +99,25 @@ describe("neuAnsicht", () => {
     expect(neuAnsicht(undefined, 2)).toBe("frage");
   });
 
-  it("ohne Geraetetyp gibt es nichts zu fragen -- direkt die Stammdaten", () => {
-    expect(neuAnsicht(undefined, 0)).toBe("typ");
-    expect(neuAnsicht("exemplar", 0)).toBe("typ");
+  it("ohne Geraetetyp gibt es nichts zu fragen -- direkt zur Kategorie", () => {
+    expect(neuAnsicht(undefined, 0)).toBe("kategorie");
+    expect(neuAnsicht("exemplar", 0)).toBe("kategorie");
+    expect(neuAnsicht(undefined, 0, "kraft")).toBe("typ");
   });
 
   it("folgt der Wahl", () => {
-    expect(neuAnsicht("typ", 2)).toBe("typ");
+    expect(neuAnsicht("typ", 2, "cardio")).toBe("typ");
     expect(neuAnsicht("exemplar", 2)).toBe("exemplar");
   });
 
   it("eine unbekannte Wahl fragt erneut", () => {
     expect(neuAnsicht("quatsch", 2)).toBe("frage");
+  });
+
+  // Testnotiz 03.10., #1: Kraft oder Cardio als eigener Schritt.
+  it("fragt nach dem neuen Typ erst Kraft oder Cardio", () => {
+    expect(neuAnsicht("typ", 2)).toBe("kategorie");
+    expect(neuAnsicht("typ", 2, "quatsch")).toBe("kategorie");
+    expect(neuAnsicht("typ", 2, "kraft")).toBe("typ");
   });
 });

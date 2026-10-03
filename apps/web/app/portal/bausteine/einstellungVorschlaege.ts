@@ -174,6 +174,41 @@ export const KATEGORIE_OPTIONEN: AuswahlOption[] = [
   { wert: "cardio", anzeige: "Cardio" },
 ];
 
+/**
+ * Welche Einheiten zu welcher Kategorie passen (Testnotiz 03.10., #1).
+ * Kraft misst in kg, Cardio in allem anderen -- ein Laufband in kg oder
+ * ein Latzug in km/h war bisher waehlbar und nie gemeint.
+ */
+const EINHEITEN_JE_KATEGORIE: Record<Category, LoadUnit[]> = {
+  kraft: ["kg"],
+  cardio: ["watt", "level", "kmh", "pct", "rpm"],
+};
+
+export function einheitenFuer(kategorie: Category): LoadUnit[] {
+  return EINHEITEN_JE_KATEGORIE[kategorie];
+}
+
+/**
+ * Das Minimum eines Modells ohne eigene Spalte (Testnotiz 03.10., #2):
+ * der kleinste Wert ueber null im Takt, also der Schritt selbst -- 2,5 kg
+ * bei 2,5 kg. Ein Bestandsminimum bleibt, solange es ueber null und im
+ * Takt liegt; sonst wuerde jedes Speichern der Stammdaten es verschieben.
+ */
+export function belastungMinimum(schritt: string, bestand?: string): string {
+  const takt = zahlAus(schritt);
+  if (bestand === undefined || !Number.isFinite(takt) || takt <= 0) return schritt;
+  const wert = zahlAus(bestand);
+  const vielfaches = wert / takt;
+  const imTakt = Math.abs(vielfaches - Math.round(vielfaches)) < 1e-6;
+  return wert > 0 && imTakt ? dezimal(wert) : schritt;
+}
+
+/** Das Maximum kann nicht unter dem Minimum liegen -- "∞" bleibt stehen. */
+export function maxAb(liste: RadWert[], minimum: string): RadWert[] {
+  const untergrenze = zahlAus(minimum);
+  return liste.filter((zeile) => zeile.wert === "" || zahlAus(zeile.wert) >= untergrenze - 1e-9);
+}
+
 export const EINHEIT_ANZEIGE: Record<LoadUnit, string> = {
   kg: "kg",
   watt: "Watt",
