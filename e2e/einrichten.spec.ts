@@ -448,7 +448,10 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
   await page.getByRole("link", { name: "Einrichtung abschließen" }).click();
 
   // 6 Fertig -- Schritt 6 ist uebersprungen, und das ist erlaubt.
-  await expect(page.getByText("Kabelzug 14 steht")).toBeVisible();
+  // Als Ueberschrift, nicht als Text: seit Next 16 sagt der Route-Announcer
+  // (#__next-route-announcer__) nach der Navigation die <h1> an, und
+  // getByText traf dann zwei Elemente.
+  await expect(page.getByRole("heading", { name: "Kabelzug 14 steht" })).toBeVisible();
   await expect(page.getByText("Für Mitglieder auffindbar")).toBeVisible();
   await expect(page.getByText("Tag verbunden")).toBeVisible();
   await expect(page.getByText("1 Übung ohne Video")).toBeVisible();

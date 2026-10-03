@@ -173,17 +173,19 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   // Seit der Abzug da ist, sagt er es (Laeufe 35755418877 und 35757318576,
   // je 102 von 103 gruen): die Seite steht noch auf /geraete, der Knopf
   // heisst "Wird gespeichert …" und ist gesperrt, kein Alert, keine Zeile
-  // im Serverprotokoll. Das Formular wurde also abgeschickt, die Aktion
-  // hat nicht widersprochen, und die Weiterleitung ist nach 20 Sekunden
-  // noch nicht angekommen. Diese Aktion ist die einzige im Portal, die
-  // revalidatePath auf das ganze Studio-Layout mit einem redirect
-  // verbindet -- die Antwort traegt damit den kompletten Neuaufbau der
-  // Zielseite samt aller Layouts, gegen ein Supabase, das sich den Runner
-  // mit einem zweiten Worker teilt. Ein Wiederholungslauf desselben
-  // Commits ging durch. Deshalb bekommt genau diese Zusicherung das
-  // Budget des Tests statt der 20 Sekunden aus der Config: faellt sie
-  // auch nach 60 Sekunden, ist es ein Haenger und kein Tempo, und der
-  // Abzug unten sagt es.
+  // im Serverprotokoll.
+  //
+  // Die Ursache war kein Tempo (Laeufe 37111374212, 37129724687): die
+  // Antwort der Aktion war nach gut einer Sekunde vollstaendig da, die
+  // Chunks der Zielseite geladen -- und React liess die Navigation trotzdem
+  // nie fallen. Die Root stand mit suspendierten Transition-Lanes da, alle
+  // Promises, auf die sie wartete, waren erfuellt, der Ping ging verloren.
+  // Ein Race im React-Canary, den Next 15.5 mitbringt (vercel/next.js
+  // Discussion #88767), lokal in rund jedem zehnten Lauf; ohne
+  // revalidatePath und mit router.push statt redirect genauso. Behoben mit
+  // Next 16 (React-Canary vom 31.07.2026): 70 von 70 Laeufen gruen. Die 60
+  // Sekunden bleiben, der Abzug unten auch -- kommt der Haenger wieder,
+  // sagt er es.
   try {
     await expect(page.getByRole("heading", { name: "Latzug" })).toBeVisible({
       timeout: 60_000,
