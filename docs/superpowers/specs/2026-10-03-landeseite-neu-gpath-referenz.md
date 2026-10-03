@@ -1,7 +1,7 @@
 # gymodo — Landeseite neu (`/` und `/studios`), Referenz getgpath.com
 
 **Stand:** 3. Oktober 2026
-**Status:** Entwurf, Entscheidungen E1–E8 getroffen (Abschnitt 9). **Noch nichts umgesetzt.** Plan für Etappe 1: `docs/superpowers/plans/2026-10-03-landeseite-etappe1.md`.
+**Status:** Entwurf, Entscheidungen E1–E9 getroffen (Abschnitt 9). **Noch nichts umgesetzt.** Plan für Etappe 1: `docs/superpowers/plans/2026-10-03-landeseite-etappe1.md`.
 **Rohdaten:** `docs/superpowers/recherche/2026-10-03-gpath/` (drei Berichte mit allen Texten wörtlich, allen CSS-/JS-Werten, je Section).
 **Verhältnis zu anderen Dokumenten:** untergeordnet gegenüber `2026-08-28-fitness-retrofit-m1-design.md` (Produktgrenze, Käufer/Nutzer) und `2026-08-30-designsystem.md` (zitiert als `§n`).
 
@@ -194,7 +194,15 @@ Eigener Ordner neben `einstieg/` (die Landeseite ist weder Einstieg noch Schreib
 
 #### 7.2.2 Ohne/Mit — Interaktionsmodell
 
-Offen bis zum Prototyp-Vergleich (siehe Abschnitt 9, E9).
+**Entschieden: „Schwelle“** (E9, Prototyp-Vergleich am 3. Oktober gegen „Bühne“ — Abschnitt klebt, Scrollweg steuert direkt — und „Tippen“ — nur der Schalter).
+
+- **Auslöser:** 1-px-Sonde in der Kartenmitte, IO `rootMargin: 0px 0px -42% 0px`. „Mit“, solange die Sonde schneidet (Kartenmitte zwischen Oberkante und 58 % Viewport), sonst „Ohne“. Umkehrbar in beide Richtungen.
+- **Tippen übersteuert:** Der Schalter (`button role="switch"`, `aria-checked`) setzt den Zustand von Hand und schaltet die Sonde ab, **bis die Karte den Viewport ganz verlassen hat** (zweiter IO auf der Karte); danach übernimmt wieder der Scroll. Ohne diese Regel kippte die Sonde den getippten Zustand beim nächsten Scrollpixel zurück.
+- **Logik als reine Funktion** `ohneMitZustand(vorher, ereignis)` in `ohnemit.logik.ts` (Ereignisse: `sonde`, `tipp`, `karteWeg`), mit Vitest — wie die Kaufleiste.
+- **Pillenflug:** Richtung weg von der Bühnenmitte, Weite 160 px waagrecht / 120 px senkrecht, Drehung abwechselnd ±24–32°, Werte als Inline-Stil je Pille. Zeiten wie in der Tabelle (550/400 ms `--ease-out`, Staffel 15 ms je Pille, zurück ohne Staffel).
+- **Feed:** startet 120 ms nach „Mit“, ein Durchgang (halten 1100 ms, gleiten 480 ms), steht dann auf „Einweisung ansehen“; „Ohne“ stoppt und setzt nach dem Rückflug auf den ersten Eintrag zurück.
+- **Schalter:** 60 × 36 px, Trefferfläche per `::before` auf 46 px erweitert (§4). Knopf 28 px, `translateX(24px)` 300 ms `--ease-out`, Druckrückmeldung `scale(.92)` auf `:active`. Spur „Ohne“ `--surface-raised`, „Mit“ **`--text` mit Knopf in `--bg` — nicht `--accent`**: der Akzent gehört der Hauptaktion (§2), und `akzentflaechen()` zählte die Spur sonst als zweite Fläche. Beschriftung „Ohne Gymtavo“ / „Mit Gymtavo“ links und rechts, die aktive Seite in `--text`, die andere in `--text-faint` (nur Zustandsanzeige, die Information steht im Schalter).
+- **Hinweiszeile** unter dem Schalter: „Scroll, oder tipp auf den Schalter.“ in `--text-muted`.
 
 Typo: Hero-H1 nach dem vorhandenen `.titel` (Black, Versalien, −0.045em), mobil `clamp(44px, 13vw, 92px)`. Buttons nach §4: Hauptaktion 64 px/Radius 16 statt Gpaths 47 px/10.
 
@@ -326,3 +334,4 @@ Mails: anfangs die **Stripe-Belege** (Kaufbeleg, Rechnung); eigene Versandmail e
 - **E6 — Medien.** → **Etappe 1 mit echten App-Screenshots (Simulator, Sichtcheck-UI-Test) und einem Posterbild; Video später.** `Held` nimmt ein optionales `video` an; ohne Video bleibt die ganze Video-Logik aus. Die Video-Logik wird in Etappe 1 trotzdem gebaut und mit einem kurzen Testclip geprüft. `VideoOverlay` und der Button „Rundgang ansehen" entfallen, bis es ein Rundgang-Video gibt — kein Knopf, hinter dem nichts kommt. **Offen:** wer Hero-, Tap- und Rundgang-Video dreht (Tim).
 - **E7 — Zahlen im Laufband.** → **Fakten ohne Zahlen, ruhend.** Drei geprüfte Fakten als statische, umbrechende Zeile (= der reduced-motion-Zweig des Bausteins). Das Laufen schaltet eine Prop `laufend` erst in Etappe 3 mit Live-Zahlen frei. Begründung: Ein Laufband trägt den „so viele schon"-Effekt; mit Sätzen ist es Bewegung ohne Zweck und konkurriert mit der einen Inszenierung (Ohne/Mit, §3 Schluss). Jeder Fakt wird vor dem Bau gegen den Code geprüft.
 - **E8 — Marke** (nachgetragen). → **GYMTAVO.** Die Landeseite nutzt den Baustein `app/branding/GymtavoWordmark.tsx` aus `feat/gymtavo-branding`; dieser Branch setzt auf dessen Spitze auf. Sichtbare Texte heißen „Gymtavo" (Versalien nur in der Wortmarke); Domain, Bundle-ID und Formatkennungen bleiben (README `assets/branding`). Wo diese Spec „gymodo" schreibt, ist für sichtbare Texte „Gymtavo" gemeint. Die Produktgrenze wird **nicht** auf der Landeseite allein umbenannt — sie zieht mit App, Portal und `/t/[token]` zusammen um (Befund 19: ein Satz, eine Quelle).
+- **E9 — Ohne/Mit-Interaktionsmodell** (nachgetragen, aus der Prüfung von Abschnitt 7). → **„Schwelle“** wie Gpath, Tippen übersteuert bis zum Verlassen des Viewports. Details 7.2.2.
