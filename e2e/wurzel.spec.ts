@@ -28,7 +28,7 @@ test("Wer ohne Konto auf die Wurzelseite kommt, findet beide Wege hinein", async
 
 test("Die Landeseite nennt die Produktgrenze, ohne dass man danach sucht", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText(/gymodo misst nichts/)).toBeVisible();
+  await expect(page.getByText(/Gymtavo misst nichts/)).toBeVisible();
 });
 
 test("Sie sagt einem Mitglied, dass es im Web nichts zu tun hat", async ({ page }) => {
@@ -154,7 +154,46 @@ test("Ein falscher Studio-Code meldet sich als Warnung", async ({ page }) => {
 test("Die Produktgrenze der Landeseite steht in text-muted", async ({ page }) => {
   await page.goto("/");
 
-  const satz = page.getByText(/gymodo misst nichts/);
+  const satz = page.getByText(/Gymtavo misst nichts/);
   const farbe = await satz.evaluate((el) => getComputedStyle(el).color);
   expect(farbe).toBe("rgb(155, 163, 175)");
+});
+
+/**
+ * GYMTAVO-Wortmarke statt Textschriftzug. Als Bild mit Namen, damit
+ * Screenreader die Marke lesen, und auf 320 px ohne Querscrollen --
+ * der Kopf traegt links Marke, rechts "Anmelden" bei 48 px Rand.
+ */
+test("Die Landeseite zeigt die GYMTAVO-Wortmarke", async ({ page }) => {
+  await page.goto("/");
+  const marke = page.getByRole("banner").getByRole("img", { name: "GYMTAVO" });
+  await expect(marke).toBeVisible();
+  expect(await marke.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(0);
+});
+
+test("Die Einstiegsseiten zeigen dieselbe Wortmarke", async ({ page }) => {
+  await page.goto("/login");
+  await expect(page.getByRole("banner").getByRole("img", { name: "GYMTAVO" })).toBeVisible();
+});
+
+test("Auf 320 px laeuft der Kopf der Landeseite nicht ueber", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.goto("/");
+  const ueberlauf = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(ueberlauf).toBe(0);
+  const knopf = page.getByRole("link", { name: "Anmelden", exact: true });
+  await expect(knopf).toBeInViewport();
+
+  // Kein Ueberlauf reicht nicht: bei 2 x 48 px Rand stiess der Punkt der
+  // Marke am 03.10. ohne Luft an den Knopf.
+  const marke = await page.getByRole("banner").getByRole("img", { name: "GYMTAVO" }).boundingBox();
+  const ziel = await knopf.boundingBox();
+  expect(ziel!.x - (marke!.x + marke!.width)).toBeGreaterThanOrEqual(16);
+});
+
+test("Der Browsertab heisst Gymtavo", async ({ page }) => {
+  await page.goto("/");
+  await expect(page).toHaveTitle(/Gymtavo/);
 });

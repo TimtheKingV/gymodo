@@ -218,7 +218,7 @@ struct MemberLadefehlerView: View {
             return "Dein Studio ließ sich nicht laden."
         }
         return fehler == .offline
-            ? "Keine Verbindung. gymodo konnte dein Studio nicht abrufen."
+            ? "Keine Verbindung. Gymtavo konnte dein Studio nicht abrufen."
             : fehler.servertext
     }
 }

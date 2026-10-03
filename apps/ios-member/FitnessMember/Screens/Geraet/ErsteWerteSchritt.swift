@@ -31,7 +31,7 @@ struct ErsteWerteSchritt: View {
 
                 WertZeile(modell: modell)
 
-                Text("gymodo schlägt beim ersten Mal bewusst nichts vor — es kennt dich noch nicht. Vorschläge entstehen erst aus deiner eigenen Historie.")
+                Text("Gymtavo schlägt beim ersten Mal bewusst nichts vor — es kennt dich noch nicht. Vorschläge entstehen erst aus deiner eigenen Historie.")
                     .font(.system(size: 12))
                     .foregroundStyle(DesignSystem.Color.textFaint)
                     .lineSpacing(3)

@@ -72,7 +72,7 @@ export function EinladungErstellen({ studioId, pfad }: { studioId: string; pfad:
                 className={styles.secondary}
                 onClick={() => {
                   // Abbrechen im Teilen-Blatt wirft AbortError -- kein Fehler.
-                  navigator.share({ title: "Einladung zu gymodo", url: link }).catch(() => {});
+                  navigator.share({ title: "Einladung zu Gymtavo", url: link }).catch(() => {});
                 }}
               >
                 Teilen

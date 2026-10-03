@@ -280,7 +280,7 @@ private extension HomeRootView {
             PrimaryButton(title: "Erstes Gerät") { scannerOffen = true }
                 .testnotizElement("home.erstes-geraet", typ: "PrimaryButton")
 
-            Text("gymodo misst nichts. Es zeigt, was du bestätigst.")
+            Text("Gymtavo misst nichts. Es zeigt, was du bestätigst.")
                 .font(DesignSystem.Typography.fliesstext)
                 .foregroundStyle(DesignSystem.Color.textFaint)
         }

@@ -114,7 +114,7 @@ export function StudioFormular({
             </div>
             <span id={fristHinweisId} className={styles.hint}>
               Bis wann sich ein Mitglied abmelden kann. Das ist eure Regel,
-              keine Vorgabe von gymodo. 0 heißt: bis zum Beginn. Gespeichert
+              keine Vorgabe von Gymtavo. 0 heißt: bis zum Beginn. Gespeichert
               wird sie mit den Stammdaten darüber.
             </span>
           </div>

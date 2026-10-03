@@ -17,6 +17,7 @@
 		0B8F8186023C8395BE77A351 /* EinstellungenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */; };
 		0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */; };
 		0CC21610F7CED89559C379C4 /* MemberPasswortView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4C1D2382AF3657C5135CBE2 /* MemberPasswortView.swift */; };
+		0CC624443C0CFE0C0A80A543 /* MarkenAssetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2544360B27EEB7C56A35775 /* MarkenAssetTests.swift */; };
 		0D0B75F5C030106C7CB21F85 /* ScannerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55093183C1B476C12C44B469 /* ScannerSheet.swift */; };
 		0F23761D47A8B1CAFDAA582B /* TestnotizEintrag.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BC48D13AE6028E26E09E52 /* TestnotizEintrag.swift */; };
 		11BA7A3A80B08733F442CDFE /* KursRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */; };
@@ -224,6 +225,7 @@
 		E7A45EB36FF558A4EFDA9A14 /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A36C578F3E7767ABE5EE6B6 /* AuthError.swift */; };
 		E82A9E515726BBBF77B45AD2 /* BelastungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D659FEA5E712905994628D /* BelastungTests.swift */; };
 		E9F322710ED44F9FC30002B2 /* WorkoutSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C040CEC32DA51B93411E58C /* WorkoutSessionStoreTests.swift */; };
+		EA568214BF5138F1363FB6D5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5B68C408348334AEBF697CDB /* Assets.xcassets */; };
 		EC0E21421C05D51C3F32E51D /* UebungWechselnSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FFF2CD62E84CDAE426125B5 /* UebungWechselnSheet.swift */; };
 		EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */; };
 		EF061CDAF1B6712C17872C0A /* ProfilRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0DEE6D2287369CE3EBBECBC /* ProfilRootView.swift */; };
@@ -360,6 +362,7 @@
 		58D512A8A7F6C5D60CF41B25 /* LabeledField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabeledField.swift; sourceTree = "<group>"; };
 		5A36C578F3E7767ABE5EE6B6 /* AuthError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthError.swift; sourceTree = "<group>"; };
 		5ABCE1755F5D30B517E1502E /* GeraeteFotosTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteFotosTests.swift; sourceTree = "<group>"; };
+		5B68C408348334AEBF697CDB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5BEA03DCAFAFE701E8EE10E1 /* KurseAnsichtTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseAnsichtTests.swift; sourceTree = "<group>"; };
 		5C18F50D5DFB2CBD6785AADA /* Stepper44.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stepper44.swift; sourceTree = "<group>"; };
 		5D01D5A0C042B12A034AC4BC /* TestnotizAblageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizAblageTests.swift; sourceTree = "<group>"; };
@@ -489,6 +492,7 @@
 		EF6476398D0D632AA4C97E66 /* GeraetRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetRoute.swift; sourceTree = "<group>"; };
 		F059477D28A854A97A90AD70 /* SessionFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionFileStore.swift; sourceTree = "<group>"; };
 		F0D97A63F51670FD637DCAFE /* KurseWochenBerechnungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseWochenBerechnungTests.swift; sourceTree = "<group>"; };
+		F2544360B27EEB7C56A35775 /* MarkenAssetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkenAssetTests.swift; sourceTree = "<group>"; };
 		F3F970AC02F39C7E9D8ABCBF /* TagLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLink.swift; sourceTree = "<group>"; };
 		F433CFBFAAF0BB5791D28FC9 /* VerlaufHerkunftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerlaufHerkunftTests.swift; sourceTree = "<group>"; };
 		F7540F5EE9A274DBB75E9219 /* GeraeteAuswahlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteAuswahlTests.swift; sourceTree = "<group>"; };
@@ -543,6 +547,7 @@
 			isa = PBXGroup;
 			children = (
 				B577EC22237E86AA0F3755B7 /* AppConfig.swift */,
+				5B68C408348334AEBF697CDB /* Assets.xcassets */,
 				4C4E8B114BF9C48A1CD5DED0 /* Einstellungen.swift */,
 				EAEDFB14623AE11C1FD67B11 /* FitnessMember.entitlements */,
 				39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */,
@@ -760,6 +765,7 @@
 				B8CD72E24D559ACE32FF8817 /* KurseWochenInhaltTests.swift */,
 				385298CAA798858C18611878 /* KurseWochenPagingTests.swift */,
 				A2D588E7E4F6611509CF03B1 /* KursZustandTests.swift */,
+				F2544360B27EEB7C56A35775 /* MarkenAssetTests.swift */,
 				0F4F2DAEB38D14F84C2ECC1B /* OnboardingAntwortenTests.swift */,
 				E25BD6B14373C1068B24705E /* OnboardingHinweisTests.swift */,
 				2A4773C0A268BE47D48C1059 /* OnboardingSchreiberTests.swift */,
@@ -1051,6 +1057,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EA568214BF5138F1363FB6D5 /* Assets.xcassets in Resources */,
 				1B9CF10D96ED6BE26D2D7742 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1282,6 +1289,7 @@
 				B854BF7F3EC5F92A64658311 /* KurseWochenBerechnungTests.swift in Sources */,
 				43997DDAFC0EF59A8C083DC7 /* KurseWochenInhaltTests.swift in Sources */,
 				FA9F18E9FD57D18F60D1D587 /* KurseWochenPagingTests.swift in Sources */,
+				0CC624443C0CFE0C0A80A543 /* MarkenAssetTests.swift in Sources */,
 				28DB21D330D60931AE02D035 /* OnboardingAntwortenTests.swift in Sources */,
 				535788FB463D3843006BCB3A /* OnboardingHinweisTests.swift in Sources */,
 				CBB43A0EC79168878C2B5A0D /* OnboardingSchreiberTests.swift in Sources */,
@@ -1328,15 +1336,16 @@
 		1B182B3E950C62913802912C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_ENTITLEMENTS = FitnessMember/FitnessMember.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = ZJP24W38LQ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "FitnessMember/Info-Additions-Debug.plist";
-				INFOPLIST_KEY_NFCReaderUsageDescription = "gymodo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "gymodo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
+				INFOPLIST_KEY_CFBundleDisplayName = Gymtavo;
+				INFOPLIST_KEY_NFCReaderUsageDescription = "Gymtavo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1437,15 +1446,16 @@
 		500BD211546D4958AB586D13 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_ENTITLEMENTS = FitnessMember/FitnessMember.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = ZJP24W38LQ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "FitnessMember/Info-Additions.plist";
-				INFOPLIST_KEY_NFCReaderUsageDescription = "gymodo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "gymodo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
+				INFOPLIST_KEY_CFBundleDisplayName = Gymtavo;
+				INFOPLIST_KEY_NFCReaderUsageDescription = "Gymtavo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

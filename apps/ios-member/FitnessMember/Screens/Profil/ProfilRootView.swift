@@ -275,7 +275,7 @@ struct ProfilRootView: View {
     private var deineDaten: some View {
         Section("DEINE DATEN") {
             Text(
-                "gymodo misst nichts. Gespeichert wird nur, was du selbst bestätigst — Einstellwerte, Sätze, ob ein Trainer dabei war."
+                "Gymtavo misst nichts. Gespeichert wird nur, was du selbst bestätigst — Einstellwerte, Sätze, ob ein Trainer dabei war."
             )
             .font(DesignSystem.Typography.fliesstext)
             .foregroundStyle(DesignSystem.Color.textMuted)
@@ -317,7 +317,7 @@ struct ProfilRootView: View {
         Section {
             Text(
                 [
-                    "gymodo \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")",
+                    "Gymtavo \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")",
                     studioName,
                 ]
                 .compactMap { $0 }

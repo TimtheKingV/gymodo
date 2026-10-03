@@ -252,7 +252,7 @@ test("aktiver Tag zeigt Geraet, Foto und Einweisungsvideo vor dem Installationsh
 
   // Befund 19, zweite Stelle: die Produktgrenze stand in text-faint
   // (3,6 : 1). Designsystem 10 verlangt sie verbindlich UND sichtbar.
-  const grenze = page.getByText(/gymodo misst nichts/);
+  const grenze = page.getByText(/Gymtavo misst nichts/);
   expect(await grenze.evaluate((el) => getComputedStyle(el).color)).toBe(
     "rgb(155, 163, 175)",
   );
