@@ -1,7 +1,7 @@
 # gymodo — Landeseite neu (`/` und `/studios`), Referenz getgpath.com
 
 **Stand:** 3. Oktober 2026
-**Status:** Entwurf — Analyse, Übertragung und technischer Plan. **Noch nichts umgesetzt.** Abschnitt 9 sammelt, was vor dem Bau entschieden sein muss.
+**Status:** Entwurf, Entscheidungen E1–E8 getroffen (Abschnitt 9). **Noch nichts umgesetzt.** Plan für Etappe 1: `docs/superpowers/plans/2026-10-03-landeseite-etappe1.md`.
 **Rohdaten:** `docs/superpowers/recherche/2026-10-03-gpath/` (drei Berichte mit allen Texten wörtlich, allen CSS-/JS-Werten, je Section).
 **Verhältnis zu anderen Dokumenten:** untergeordnet gegenüber `2026-08-28-fitness-retrofit-m1-design.md` (Produktgrenze, Käufer/Nutzer) und `2026-08-30-designsystem.md` (zitiert als `§n`).
 
@@ -280,7 +280,7 @@ Mails: anfangs die **Stripe-Belege** (Kaufbeleg, Rechnung); eigene Versandmail e
 
 ### 7.7 Reihenfolge
 
-1. **Bausteine + `/` ohne Verkauf.** Hero, Laufband, Ohne/Mit, Schritte, Fragen, Kaufleiste mit „App laden", Fuß; dazu `wurzel.spec` neu. Liefert sofort den Mitgliedsweg, der heute fehlt.
+1. **Bausteine + `/` ohne Verkauf.** Kopf, Hero (Poster, Video-Logik ohne echtes Video, E6), Laufband ruhend mit Fakten (E7), Ohne/Mit, Schritte mit Screenshots, Verlauf & Ziele ohne Overlay, Fragen (inkl. Sensor „in Entwicklung", E1), Kaufleiste mit „App laden", Fuß; dazu `wurzel.spec` neu. Liefert sofort den Mitgliedsweg, der heute fehlt. Kein Sensor-Abschnitt, keine Warteliste, kein `VideoOverlay`.
 2. **`/studios` + Kontakt + Rechtsseiten.** Funktioniert ohne Preismodell.
 3. **Laufband mit Live-Zahlen**, sobald sie tragen.
 4. **Sensor-Checkout (Testmodus)**, sobald E1 und Rechtsseiten stehen; Webhook + `bestellungen`.
@@ -300,15 +300,13 @@ Mails: anfangs die **Stripe-Belege** (Kaufbeleg, Rechnung); eigene Versandmail e
 
 ---
 
-## 9. Offene Entscheidungen
+## 9. Entscheidungen (getroffen am 3. Oktober 2026)
 
-- **E1 — Was verkauft `/` heute?** Den Sensor gibt es noch nicht.
-  - (a) App laden + Warteliste für den Sensor (empfohlen bis Prototyp und Preis stehen)
-  - (b) Vorbestellung mit sofortiger Zahlung
-  - (c) Vorbestellung mit gespeicherter Karte (`setup`)
-- **E2 — Optik.** gymodo-dunkel mit Flächenstufen (empfohlen, §1) oder Gpaths Hell-Dunkel-Takt mit eigener heller Landeseiten-Palette.
-- **E3 — App-Preis.** Ist die App für Mitglieder kostenlos? Gibt es ein Premium-Abo? In-App-Käufe unterliegen dem App Store.
-- **E4 — Preismodell Studio** (M1 §13.1): pro Gerät, pro Mitglied oder Flatrate. Bis dahin „auf Anfrage".
-- **E5 — Sensor auf `/studios` erwähnen?** Erst wenn er ausgeliefert wird (empfohlen).
-- **E6 — Medien.** Wer dreht Hero-Video, Tap-Video und App-Rundgang? Gpaths Wirkung hängt am Hochkant-Video im Hero.
-- **E7 — Zahlen im Laufband:** live aus der Datenbank oder vorerst Fakten ohne Zahlen.
+- **E1 — Was verkauft `/` heute?** → **(a) App laden; Sensor später als Warteliste.** Etappe 1 verkauft nichts und sammelt nichts: kein Sensor-Abschnitt, kein Formular. Der Sensor erscheint nur als Antwort in den Fragen („Wann kommt der Sensor?" → „In Entwicklung. Einen Termin nennen wir erst, wenn er feststeht."). Die Warteliste (Checkbox + Double-Opt-in, eigene Tabelle, Bestätigungsmail, Datenschutztext) wird eine eigene Etappe nach 7.7/2. Vorbestellung mit Zahlung (b) oder gespeicherter Karte (c) erst mit Preis, Lieferzeit und Rechtsseiten.
+- **E2 — Optik.** → **gymodo-dunkel mit Flächenstufen** (`bg` ↔ `surface`), harte Zäsuren nur durch vollflächige Bild-/Video-Sections. Keine helle Palette (§1).
+- **E3 — App-Preis.** → **Kostenlos für Mitglieder, kein Abo.** Das Studio zahlt (M1 §2). Fragen-Antwort: „Nein. Die App ist kostenlos, dein Studio nutzt Gymtavo."
+- **E4 — Preismodell Studio.** → **Vorerst „Preis auf Anfrage"**, `/studios` endet beim Gespräch. Das Modell (M1 §13.1) wird mit dem ersten Betreibertermin entschieden; Stripe Billing (7.7/5) wartet darauf.
+- **E5 — Sensor auf `/studios`.** → **Erst ab Auslieferung.** Bis dahin „ohne Hardware", Produktgrenze unverändert.
+- **E6 — Medien.** → **Etappe 1 mit echten App-Screenshots (Simulator, Sichtcheck-UI-Test) und einem Posterbild; Video später.** `Held` nimmt ein optionales `video` an; ohne Video bleibt die ganze Video-Logik aus. Die Video-Logik wird in Etappe 1 trotzdem gebaut und mit einem kurzen Testclip geprüft. `VideoOverlay` und der Button „Rundgang ansehen" entfallen, bis es ein Rundgang-Video gibt — kein Knopf, hinter dem nichts kommt. **Offen:** wer Hero-, Tap- und Rundgang-Video dreht (Tim).
+- **E7 — Zahlen im Laufband.** → **Fakten ohne Zahlen, ruhend.** Drei geprüfte Fakten als statische, umbrechende Zeile (= der reduced-motion-Zweig des Bausteins). Das Laufen schaltet eine Prop `laufend` erst in Etappe 3 mit Live-Zahlen frei. Begründung: Ein Laufband trägt den „so viele schon"-Effekt; mit Sätzen ist es Bewegung ohne Zweck und konkurriert mit der einen Inszenierung (Ohne/Mit, §3 Schluss). Jeder Fakt wird vor dem Bau gegen den Code geprüft.
+- **E8 — Marke** (nachgetragen). → **GYMTAVO.** Die Landeseite nutzt den Baustein `app/branding/GymtavoWordmark.tsx` aus `feat/gymtavo-branding`; dieser Branch setzt auf dessen Spitze auf. Sichtbare Texte heißen „Gymtavo" (Versalien nur in der Wortmarke); Domain, Bundle-ID und Formatkennungen bleiben (README `assets/branding`). Wo diese Spec „gymodo" schreibt, ist für sichtbare Texte „Gymtavo" gemeint. Die Produktgrenze wird **nicht** auf der Landeseite allein umbenannt — sie zieht mit App, Portal und `/t/[token]` zusammen um (Befund 19: ein Satz, eine Quelle).
