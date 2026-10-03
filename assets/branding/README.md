@@ -31,9 +31,10 @@ umgestellt.
 
 ## Abnahme
 
-- [ ] Wortmarke im Browser gegen die HTML-Referenz vergleichen, auch bei 320 px.
-- [ ] Xcode-Build und Sichtpruefung auf kleinem iPhone: keine abgeschnittenen
-      Felder oder Buttons, Wortmarke korrekt, VoiceOver liest GYMTAVO.
+- [x] Wortmarke im Browser gegen die HTML-Referenz vergleichen, auch bei 320 px
+      (03.10., Chromium 1280 und 320 px; e2e wurzel.spec.ts prueft Abstand).
+- [x] Xcode-Build und Sichtpruefung auf iPhone 17 Pro, Login hell und dunkel.
+- [ ] Sichtpruefung auf kleinem iPhone und VoiceOver live (Label ist gesetzt).
 - [ ] CI fuer diesen Commit pruefen.
 
 QR/NFC: siehe `../../docs/branding/qr-nfc-design-status.md`.
