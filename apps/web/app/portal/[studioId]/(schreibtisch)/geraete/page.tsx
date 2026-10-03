@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { modellAnlegen } from "../../../actions";
 import { erreichbarkeit, ladeKatalog, railZahlen } from "../../catalog";
 import { offenePunkte } from "../../offen";
 import { Seite } from "../../../bausteine/Seite";
@@ -8,9 +7,10 @@ import { Zeile, Zeilen } from "../../../bausteine/Zeile";
 import { Zustand } from "../../../bausteine/Zustand";
 import { Modellbild } from "../../../bausteine/Modellbild";
 import { Reiter } from "../../../bausteine/Reiter";
+import { StiftLink } from "../../../bausteine/Stift";
 import { KATEGORIE_OPTIONEN, istKategorie } from "../../../bausteine/einstellungVorschlaege";
-import { ModellAnlegenFormular } from "./ModellAnlegenFormular";
 import styles from "../../../portal.module.css";
+import bausteine from "../../../bausteine/bausteine.module.css";
 
 /**
  * Geraete und Modelle sind ein Bereich (Struktur-Spec, Entscheidung 5) --
@@ -77,6 +77,18 @@ export default async function GeraetePage({
       titel="Geräte"
       vorspann="Ein Modell beschreibt den Gerätetyp. Die einzelnen Geräte im Raum sind Instanzen davon — zwei Kabelzüge nebeneinander sind ein Modell und zwei Geräte."
     >
+      {/*
+        Ein Link auf den eigenen Ablauf statt eines aufklappenden Formulars
+        ueber der Liste (Testnotiz 23.09., #7): beim Anlegen sollen die
+        anderen Geraete nicht darunter stehen, und nach den Stammdaten
+        geht es mit "Weiter" durch Einstellungen, Uebungen und Geraete.
+      */}
+      <div className={bausteine.hinzufuegenLeiste}>
+        <Link href={`/portal/${studioId}/geraete/neu`} className={styles.primary}>
+          + Gerät hinzufügen
+        </Link>
+      </div>
+
       {katalog.models.length > 0 ? (
         <Reiter
           name="Kategorie"
@@ -104,7 +116,7 @@ export default async function GeraetePage({
           <Zustand
             art="leer"
             titel={`Noch kein ${kategorieName.get(gewaehlt!)}-Modell.`}
-            naechsterSchritt="Beim Anlegen unten die Kategorie wählen."
+            naechsterSchritt="Beim Hinzufügen die Kategorie wählen."
           />
         ) : (
           <Zeilen>
@@ -112,7 +124,6 @@ export default async function GeraetePage({
               const stand = erreichbarkeit(modell);
               const mitVideo = modell.exercises.filter((uebung) => uebung.hasVideo).length;
               const offen = offenePunkte(studioId, modell);
-              const blockiert = offen.filter((punkt) => punkt.art === "blockiert");
 
               return (
                 <Zeile
@@ -154,34 +165,27 @@ export default async function GeraetePage({
                           `${modell.exercises.length} ${modell.exercises.length === 1 ? "Übung" : "Übungen"}, ${mitVideo} mit Video`
                         )}
                       </span>
-                      <span className={styles.zeileZustand}>
-                        {offen.length === 0 ? (
-                          "Fertig eingerichtet"
-                        ) : blockiert.length === 0 ? (
-                          <span className={styles.absent}>{offen[0]!.titel}</span>
-                        ) : (
-                          <span className={styles.offenMarke}>
-                            {blockiert.length === 1
-                              ? blockiert[0]!.titel
-                              : `${blockiert.length} Punkte offen · ${blockiert[0]!.titel}`}
-                          </span>
-                        )}
-                      </span>
+                      {/* Offenes zaehlt die Marke am Stift (Testnotiz
+                          23.09., #3) -- der orange Hinweis hier stand
+                          doppelt. Nur "fertig" bekommt noch eine Zeile. */}
+                      {offen.length === 0 ? (
+                        <span className={styles.zeileZustand}>Fertig eingerichtet</span>
+                      ) : null}
                     </>
                   }
+                  aktionenOben
                   aktionen={
-                    // "Bearbeiten" bleibt der sichtbare Text (Aufgabe 12) --
-                    // aria-label ergaenzt den Modellnamen fuer den
-                    // Accessibility-Baum, denn eine Liste mit lauter
-                    // gleichlautenden "Bearbeiten"-Links sagt einem
-                    // Screenreader nicht, welche Zeile gemeint ist.
-                    <Link
-                      className={styles.secondary}
-                      href={`/portal/${studioId}/modelle/${modell.id}`}
-                      aria-label={`${modell.name} bearbeiten`}
-                    >
-                      Bearbeiten
-                    </Link>
+                    // Ein Stift oben rechts statt des breiten Knopfs
+                    // "Bearbeiten" (Testnotiz 22.09., #1), mit der Zahl
+                    // offener Punkte als gruene Marke (23.09., #3). Der Modellname
+                    // steht im aria-label -- eine Liste aus lauter gleichen
+                    // Stiften sagt einem Screenreader sonst nicht, welche
+                    // Zeile gemeint ist.
+                    <StiftLink
+                      href={`/portal/${studioId}/geraete/${modell.id}`}
+                      label={`${modell.name} bearbeiten`}
+                      offen={offen.length}
+                    />
                   }
                 />
               );
@@ -189,20 +193,6 @@ export default async function GeraetePage({
           </Zeilen>
         )}
       </Abschnitt>
-
-      {/*
-        Bewusst kein Abschnitt-Baustein: AktionsFormular bringt sein eigenes
-        styles.sectionBody-Polster mit, das zusammen mit Abschnitts eigenem
-        Polster (abschnittRumpf) doppelt aufgetragen wuerde. Modell-Detail,
-        Einstellungen und die Kurs-Formulare tragen ihre Eingabeformulare aus
-        demselben Grund ebenfalls roh (styles.section), nicht im Baustein.
-      */}
-      <section className={styles.section} id="modell-anlegen">
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Modell anlegen</h2>
-        </div>
-        <ModellAnlegenFormular action={modellAnlegen.bind(null, studioId)} />
-      </section>
     </Seite>
   );
 }

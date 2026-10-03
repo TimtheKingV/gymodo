@@ -13,7 +13,7 @@ import Foundation
 /// falschen "kg" auf einem Laufband.
 ///
 /// Die Rohwerte sind die Servernamen (Check-Constraint aus Migration
-/// 0045). Dekodiert wird strikt: eine Einheit, die die App nicht kennt, ist
+/// 0046). Dekodiert wird strikt: eine Einheit, die die App nicht kennt, ist
 /// ein Dekodierfehler und kein stilles Kilogramm.
 ///
 /// Belastung und Nebenbelastung teilen sich dieselbe Liste: die Neigung

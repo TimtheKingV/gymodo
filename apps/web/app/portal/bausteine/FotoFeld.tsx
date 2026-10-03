@@ -73,10 +73,9 @@ export function FotoFeld({
       <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: "1 1 200px" }}>
         <DateiKnopf
           name={name}
-          label={ausloeserText ?? (vorhandeneUrl ? "Ersetzen" : "Foto auswählen")}
+          label={ausloeserText ?? (vorhandeneUrl ? "Ersetzen" : "Foto hinzufügen")}
           ariaLabel={ariaLabel}
           accept="image/jpeg,image/png"
-          capture="environment"
           gross={gross}
           onDatei={aufDatei}
         />

@@ -143,17 +143,20 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await page.goto(`/portal/${studio.id}/modelle`);
   await expect(page.getByRole("heading", { name: "Geräte", exact: true })).toBeVisible();
 
-  // 1. Geraetemodell
+  // 1. Geraetemodell -- ueber den Ablauf "Gerät hinzufügen" (Testnotiz
+  // 23.09., #7): ein eigener Bildschirm nur mit den Stammdaten, ohne die
+  // Geraeteliste darunter, und "Weiter" statt "Modell anlegen".
+  await page.getByRole("link", { name: "+ Gerät hinzufügen" }).click();
+  await expect(page.getByText("Schritt 1 von 4 · Stammdaten")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Alle Gerätemodelle" })).toHaveCount(0);
   await page.getByLabel("Name").fill("Latzug");
   await page.getByLabel("Hersteller").fill("Technogym");
   await radWaehlen(page, "Schritt", "2,5");
   await radWaehlen(page, "Minimum", "5");
   await radWaehlen(page, "Maximum", "100");
-  await page.getByRole("button", { name: "Modell anlegen" }).click();
+  await page.getByRole("button", { name: "Weiter", exact: true }).click();
 
-  // Anlegen fuehrt zum Angelegten: der Schreibtisch blieb frueher auf der
-  // Liste stehen, und das neue Modell war eine Zeile unter anderen. Kein
-  // Klick auf "Bearbeiten" mehr -- die Weiterleitung IST der Befund.
+  // "Weiter" legt an und fuehrt in Schritt 2 desselben Modells.
   //
   // Der Abzug im Fehlerfall ist hier nicht Luxus, sondern die Lehre aus drei
   // roten Laeufen (35424679953, 35534606330, 35574620070): genau diese
@@ -183,28 +186,39 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   } catch {
     throw await seitenBefund(
       page,
-      "Modell nicht angelegt: nach \"Modell anlegen\" steht keine Ueberschrift \"Latzug\".",
+      "Modell nicht angelegt: nach \"Weiter\" steht keine Ueberschrift \"Latzug\".",
     );
   }
+  await expect(page).toHaveURL(/\/einstellungen\?neu=1$/);
+  await expect(page.getByText("Schritt 2 von 4 · Einstellungen")).toBeVisible();
+  // Im Ablauf keine Reiter: die Fussleiste fuehrt weiter -- aber erst,
+  // wenn eine Einstellung gespeichert ist (Testnotiz 23.09., zweite
+  // Sitzung, #1). Bis dahin steht dort, warum.
+  await expect(page.getByRole("navigation", { name: "Modell" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Weiter zu den Übungen" })).toHaveCount(0);
+  await expect(page.getByText("Zuerst eine Einstellung speichern.")).toBeVisible();
 
   // Und die Raeder haben getragen, was der Test in sie gescrollt hat. Ohne
   // diese Zeile faellt ein verlorener Scroll nicht auf: das Formular schickt
-  // dann klaglos seine Startwerte (Schritt 2,5, ab 0, kein Anschlag) ab, das
+  // dann klaglos seine Startwerte (Schritt 2,5, ab 0, ∞ -- kein Anschlag) ab, das
   // Modell entsteht, die Weiterleitung kommt -- und der Test haelt eine
   // Auswahl fuer geprueft, die nie angekommen ist.
   await expect(page.getByText("Schritt 2,5 kg · ab 5,0 kg bis 100,0 kg")).toBeVisible();
 
-  // Und die Seite sagt, was als Naechstes fehlt, statt vier Nullen in der
-  // Reiterleiste zu zeigen. Das Foto steht oben, weil ohne es niemand das
-  // Geraet wiedererkennt.
+  // Der Modell-Detailpfad ist seit Aufgabe 16 /geraete/<modelId> (vier
+  // Reiter statt fuenf Abschnitte auf einem Bildschirm); die Modell-Id
+  // steht nur in der URL -- hier vor dem Reiter-Segment.
+  const modelId = new URL(page.url()).pathname.split("/").at(-2)!;
+
+  // Ausserhalb des Ablaufs sagt die Seite, was als Naechstes fehlt, statt
+  // vier Nullen in der Reiterleiste zu zeigen. Seit Testnotiz 23.09., #4
+  // eingeklappt: der Kopf nennt die Anzahl, die Liste kommt auf Klick. Das
+  // Foto steht oben, weil ohne es niemand das Geraet wiedererkennt.
+  await page.goto(`/portal/${studio.id}/geraete/${modelId}`);
+  await page.getByText("4 Punkte offen").click();
   const nochZuTun = page.getByRole("list", { name: "Noch zu tun" });
   await expect(nochZuTun.getByRole("listitem").first()).toContainText("Kein Foto");
   await expect(nochZuTun.getByRole("listitem")).toHaveCount(4);
-
-  // Der Modell-Detailpfad ist seit Aufgabe 16 /geraete/<modelId> (vier
-  // Reiter statt fuenf Abschnitte auf einem Bildschirm); die Modell-Id
-  // steht jetzt nur noch in der URL, nicht mehr in einem Formularfeld.
-  const modelId = new URL(page.url()).pathname.split("/").pop()!;
 
   // 1b. Foto -- laeuft durch den Server, damit die Aufnahmedaten wegfallen.
   // Stammdaten und Foto teilen sich seit Aufgabe 16 eine Akzentflaeche
@@ -217,6 +231,11 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   });
   await page.getByRole("button", { name: "Änderungen speichern" }).click();
   await expect(page.getByRole("img", { name: "Foto von Latzug" })).toBeVisible();
+  // Gespeichert heisst sichtbar gespeichert (Testnotiz 22.09., #9): ein
+  // Satz neben dem Knopf, und der Knopf selbst ist aus, bis wieder etwas
+  // geaendert wird.
+  await expect(page.getByText("Gespeichert ✓")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Änderungen speichern" })).toBeDisabled();
 
   // 2. Einstellungen und 3. Uebung -- ueber ihre Reiter, nicht ueber
   // die Datenbank. Bis Aufgabe 17 und 18 gab es die Reiter nicht, und
@@ -229,12 +248,18 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   // prueft die Leerzustaende beider Reiter und das Umordnen -- und legt
   // dafuer selbst per Datenbank an. Der Weg, den ein Trainer wirklich
   // geht, lief also nirgends durch.
-  await page.goto(`/portal/${studio.id}/geraete/${modelId}/einstellungen`);
+  //
+  // Im Ablauf (?neu=1), damit auch das Freigeben von "Weiter" nach dem
+  // Speichern geprueft ist. Der Name kommt seit Testnotiz 23.09. (zweite
+  // Sitzung, #2) aus dem Rad; "Sonstiges …" fuehrt ueber das Textfeld, der
+  // Weg mit eigenem Namen ist der, auf dem am meisten schiefgehen kann.
+  await page.goto(`/portal/${studio.id}/geraete/${modelId}/einstellungen?neu=1`);
+  await radWaehlen(page, "Einstellung", "Sonstiges …");
   await page.getByLabel("Beschriftung").fill("Sitzposition");
   await auswaehlen(page, page.getByRole("button", { name: "Art" }), "Zahl mit Bereich");
   await radWaehlen(page, "Minimum", "1");
   await radWaehlen(page, "Maximum", "8");
-  await page.getByRole("button", { name: "Einstellung anlegen" }).click();
+  await page.getByRole("button", { name: "Einstellung speichern", exact: true }).click();
 
   // Warten, bis die Aktion GEANTWORTET hat -- und erst dann urteilen.
   //
@@ -248,10 +273,14 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   //
   // Der Knopf ist das ehrliche Signal: waehrend der Aktion heisst er
   // "Wird gespeichert …" und ist gesperrt (Form.tsx, useFormStatus).
-  // Traegt er wieder seinen Namen, ist das Ergebnis da -- ob Zeile oder
-  // Meldung, entscheidet sich danach.
-  const absenden = page.getByRole("button", { name: "Einstellung anlegen" });
-  await expect(absenden).toBeEnabled();
+  // Seit Testnotiz 23.09. (zweite Sitzung, #1) klappt das Formular nach
+  // Erfolg zu -- geantwortet hat die Aktion also, sobald entweder der
+  // Knopf "Weitere Einstellung hinzufügen" dasteht oder der Absendeknopf
+  // wieder seinen Namen traegt (Fehler, Formular bleibt offen). Ob Zeile
+  // oder Meldung, entscheidet sich danach.
+  const weitere = page.getByRole("button", { name: "+ Weitere Einstellung hinzufügen" });
+  const absenden = page.getByRole("button", { name: "Einstellung speichern", exact: true });
+  await expect(weitere.or(absenden)).toBeVisible();
 
   const einstellungen = page.getByRole("list", { name: "Einstellungen am Modell" });
   const zeilen = await einstellungen.getByRole("listitem").count();
@@ -263,13 +292,20 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   }
 
   await expect(einstellungen).toContainText("Sitzposition");
+  // Gespeichert, Formular zu: jetzt gibt der Ablauf "Weiter" frei.
+  await expect(weitere).toBeVisible();
+  await page.getByRole("link", { name: "Weiter zu den Übungen" }).click();
 
-  await page.goto(`/portal/${studio.id}/geraete/${modelId}/uebungen`);
+  // Auch bei den Uebungen erst weiter, wenn eine angelegt ist (#5).
+  await expect(page.getByText("Schritt 3 von 4 · Übungen")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Weiter zu den Geräten" })).toHaveCount(0);
+  await expect(page.getByText("Zuerst eine Übung anlegen.")).toBeVisible();
   await page.getByLabel("Name").fill("Latzug breit");
   await radWaehlen(page, "Wiederholungen ab", "8");
   await radWaehlen(page, "bis", "12");
-  await page.getByRole("button", { name: "Übung anlegen" }).click();
+  await page.getByRole("button", { name: "Übung anlegen", exact: true }).click();
   await expect(page.getByText("Latzug breit")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Weiter zu den Geräten" })).toBeVisible();
 
   // 4. Geraeteinstanz -- weiter ueber die Datenbank. Ihr Reiter legt
   // Geraete an, aber der Weg dorthin ist der Gang durch die Halle
@@ -307,6 +343,11 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await expect(
     page.getByRole("listitem").filter({ hasText: "Latzug" }),
   ).toContainText("1 Gerät, 1 erreichbar");
+  // Was noch fehlt (das Video), zaehlt die gruene Marke am Stift -- der
+  // Hinweis darunter ist entfallen (Testnotiz 23.09., #3).
+  await expect(
+    page.getByRole("link", { name: "Latzug bearbeiten (1 Punkt offen)" }),
+  ).toBeVisible();
 
   // Ohne Bearer-Token bleibt der Kontext verschlossen. Der Tag allein reicht
   // nie -- er ist eine Ortsangabe, kein Ausweis (Spec 10.4).

@@ -65,7 +65,7 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         let loadMax: Double?
         /// Der zweite Intensitaetsregler (Neigung am Laufband), mit eigener
         /// Rastung. Alle vier gesetzt oder keiner: so erzwingt es der
-        /// Constraint aus Migration 0045. Bei einem Kraftgeraet nil.
+        /// Constraint aus Migration 0046. Bei einem Kraftgeraet nil.
         let secondaryUnit: LoadUnit?
         let secondaryStep: Double?
         let secondaryMin: Double?

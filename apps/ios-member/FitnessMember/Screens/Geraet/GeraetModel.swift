@@ -262,7 +262,7 @@ final class GeraetModel {
 
     /// Einheit und Rastung der Nebenbelastung, oder nil, wenn das Modell
     /// keine hat. Alle vier Felder zusammen: so erzwingt es der Constraint
-    /// aus Migration 0045, und ein halber Satz waere kein Regler.
+    /// aus Migration 0046, und ein halber Satz waere kein Regler.
     private var nebenmodell: (einheit: LoadUnit, schritt: Double, min: Double, max: Double)? {
         let quelle: (LoadUnit?, Double?, Double?, Double?) =
             if let modell = kontext?.equipmentModel {

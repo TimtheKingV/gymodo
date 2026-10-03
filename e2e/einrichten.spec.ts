@@ -126,7 +126,7 @@ test("Schritt 2 fragt ein fehlendes Foto nach und nimmt Parameter auf", async ({
   await radWaehlen(page, "Von", "1");
   await radWaehlen(page, "Bis", "8");
   await radWaehlen(page, "Schritt", "1");
-  await page.getByRole("button", { name: "Hinzufügen" }).click();
+  await page.getByRole("button", { name: "Hinzufügen", exact: true }).click();
 
   await expect(page.getByText("Sitzhöhe")).toBeVisible();
   await expect(page.getByText("Zahl · 1 – 8 · Schritt 1")).toBeVisible();
@@ -316,7 +316,7 @@ test("Schritt 5 waehlt aus dem Studio, legt neu an und ordnet um", async ({
   await page.getByLabel("Name").fill("Latzug · Neutralgriff");
   await radWaehlen(page, "Wiederholungen ab", "8");
   await radWaehlen(page, "bis", "12");
-  await page.getByRole("button", { name: "Hinzufügen" }).click();
+  await page.getByRole("button", { name: "Hinzufügen", exact: true }).click();
   await expect(page.getByText("2. Latzug · Neutralgriff")).toBeVisible();
 
   // Die Reihenfolge ist keine Kosmetik: Uebung 1 ist am Geraet die Vorauswahl.
@@ -423,7 +423,7 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
   await page.getByLabel("Beschriftung").fill("Sitzhöhe");
   await radWaehlen(page, "Von", "1");
   await radWaehlen(page, "Bis", "8");
-  await page.getByRole("button", { name: "Hinzufügen" }).click();
+  await page.getByRole("button", { name: "Hinzufügen", exact: true }).click();
   await expect(page.getByText("Sitzhöhe")).toBeVisible();
   await page.getByRole("link", { name: "Weiter zum Gerät" }).click();
 
@@ -444,7 +444,7 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
   await page.getByLabel("Name").fill("Rudern sitzend");
   await radWaehlen(page, "Wiederholungen ab", "10");
   await radWaehlen(page, "bis", "15");
-  await page.getByRole("button", { name: "Hinzufügen" }).click();
+  await page.getByRole("button", { name: "Hinzufügen", exact: true }).click();
   await expect(page.getByText("1. Rudern sitzend")).toBeVisible();
   await page.getByRole("link", { name: "Einrichtung abschließen" }).click();
 

@@ -177,7 +177,7 @@ struct VerlaufStoreTests {
         #expect(verlauf.messwertKopf == nil)
     }
 
-    /// Ein Cache von vor Migration 0045 traegt Saetze als weightKg/reps und
+    /// Ein Cache von vor Migration 0046 traegt Saetze als weightKg/reps und
     /// Bloecke ohne Einheit. Er dekodiert nicht mehr -- und das ist
     /// gewollt: der Verlauf kommt ohnehin vom Server, ein leerer Cache
     /// fuellt sich mit dem naechsten Abruf. Ein Rueckfall auf "kg" waere

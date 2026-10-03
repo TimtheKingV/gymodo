@@ -25,7 +25,7 @@ extension LokalerSatz {
         case id, setIndex, load, secondaryLoad, volume, rir, problemFlag, problemReason, performedAt
     }
 
-    /// Die Feldnamen von vor Migration 0045.
+    /// Die Feldnamen von vor Migration 0046.
     private enum AlteKeys: String, CodingKey { case weightKg, reps }
 
     /// Das App-Update kann mitten in einer offenen Einheit kommen: die
@@ -62,7 +62,7 @@ struct Blockeinheiten: Equatable, Hashable {
     let secondaryUnit: LoadUnit?
     let volumeKind: VolumeKind
 
-    /// Was vor Migration 0045 jeder Block war. Der Rueckfall fuer eine
+    /// Was vor Migration 0046 jeder Block war. Der Rueckfall fuer eine
     /// Sessiondatei aus dieser Zeit -- dort ist es keine Annahme, sondern
     /// eine Tatsache: es gab nichts anderes.
     static let kilogrammWiederholungen = Blockeinheiten(
@@ -98,7 +98,7 @@ struct LokalerBlock: Codable, Equatable, Identifiable {
     }
 
     /// Derselbe Grund wie bei LokalerSatz: ein Block aus der Fassung vor
-    /// 0045 traegt keine Einheiten, und er war Kilogramm mal
+    /// 0046 traegt keine Einheiten, und er war Kilogramm mal
     /// Wiederholungen.
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)

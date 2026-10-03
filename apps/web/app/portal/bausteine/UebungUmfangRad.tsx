@@ -17,10 +17,29 @@ import styles from "../portal.module.css";
  * Die Vorgabe bleibt "Wiederholungen ab 8 bis 12" -- wer eine Kraftuebung
  * anlegt, fasst die Auswahl nicht an.
  */
-export function UebungUmfangRad({ gross = false }: { gross?: boolean }) {
-  const [kind, setKind] = useState<VolumeKind>("reps");
+export function UebungUmfangRad({
+  gross = false,
+  start,
+}: {
+  gross?: boolean;
+  /** Bestandswerte beim Bearbeiten (UebungZeile), so gespeichert, wie
+      die Datenbank sie haelt -- Sekunden, nicht Minuten. */
+  start?: { volumeKind: VolumeKind; targetMin: number; targetMax: number };
+}) {
+  const [kind, setKind] = useState<VolumeKind>(start?.volumeKind ?? "reps");
   const artId = useId();
   const umfang = umfangWerte(kind);
+  // Bestandswerte nur fuer die Art, in der sie gespeichert wurden; das
+  // Rad zaehlt Minuten, die Datenbank Sekunden (formfelder.ts rechnet
+  // beim Speichern zurueck).
+  const faktor = kind === "seconds" ? 60 : 1;
+  const radStart =
+    start && start.volumeKind === kind
+      ? {
+          min: String(Math.round(start.targetMin / faktor)),
+          max: String(Math.round(start.targetMax / faktor)),
+        }
+      : umfang.start;
 
   return (
     <>
@@ -41,8 +60,8 @@ export function UebungUmfangRad({ gross = false }: { gross?: boolean }) {
         key={kind}
         gross={gross}
         spalten={[
-          { name: "targetMin", label: umfang.labelAb, werte: umfang.liste, start: umfang.start.min },
-          { name: "targetMax", label: umfang.labelBis, werte: umfang.liste, start: umfang.start.max },
+          { name: "targetMin", label: umfang.labelAb, werte: umfang.liste, start: radStart.min },
+          { name: "targetMax", label: umfang.labelBis, werte: umfang.liste, start: radStart.max },
         ]}
       />
     </>

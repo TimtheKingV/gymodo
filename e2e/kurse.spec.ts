@@ -365,6 +365,29 @@ test("Der Wochenwechsel wechselt wirklich die Woche", async ({ page }) => {
 });
 
 /**
+ * Testnotiz 25.09., #1: Woche und Monat umschaltbar, die Woche mit einem
+ * Streifen wie in der App. Ein Tipp in den Monat fuehrt in die Woche des
+ * Tages. Feste Daten wie oben.
+ */
+test("Die Monatsansicht zaehlt die Kurse je Tag und fuehrt in die Woche", async ({ page }) => {
+  const { studioId, admin } = await studioMitTrainer(page, "kurse-monat");
+  const vorlageId = await vorlageAnlegen(admin, studioId, "Kraftzirkel");
+  await terminAnlegen(admin, studioId, vorlageId, "2026-11-04T17:00:00.000Z");
+  const basis = `/portal/${studioId}/kurse`;
+
+  await page.goto(`${basis}?woche=2026-11-04`);
+  const streifen = page.getByRole("list", { name: "Tage der Woche" });
+  await expect(streifen.getByRole("link", { name: "Mittwoch, 4. November · 1 Kurs" })).toBeVisible();
+
+  await page.getByRole("navigation", { name: "Ansicht" }).getByRole("link", { name: "Monat" }).click();
+  await expect(page.getByText("November 2026")).toBeVisible();
+  await page.getByRole("link", { name: "Mittwoch, 4. November · 1 Kurs" }).click();
+
+  await expect(page.getByText("Mo., 2. November – So., 8. November 2026")).toBeVisible();
+  await expect(page.getByRole("link", { name: /18:00 · Kraftzirkel/ })).toBeVisible();
+});
+
+/**
  * Ab hier Aufgabe 22b: die letzten beiden Kurse-Bildschirme -- "Termin
  * anlegen" (TerminAnlegen.dc.html) und das Termindetail (Termin.dc.html).
  */

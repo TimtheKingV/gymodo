@@ -47,4 +47,19 @@ describe("UebungUmfangRad", () => {
     expect(feldwert("targetMin")).toBe("2000");
     expect(feldwert("targetMax")).toBe("5000");
   });
+
+  it("zeigt Bestandswerte in Minuten, wenn die Uebung Sekunden zaehlt", () => {
+    render(<UebungUmfangRad start={{ volumeKind: "seconds", targetMin: 900, targetMax: 1200 }} />);
+
+    expect(feldwert("volumeKind")).toBe("seconds");
+    expect(feldwert("targetMin")).toBe("15");
+    expect(feldwert("targetMax")).toBe("20");
+  });
+
+  it("nimmt Wiederholungen als Bestandswerte unveraendert", () => {
+    render(<UebungUmfangRad start={{ volumeKind: "reps", targetMin: 6, targetMax: 10 }} />);
+
+    expect(feldwert("targetMin")).toBe("6");
+    expect(feldwert("targetMax")).toBe("10");
+  });
 });

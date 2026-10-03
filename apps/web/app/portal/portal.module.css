@@ -83,6 +83,10 @@
   max-width: none;
   max-height: none;
   background: transparent;
+  /* Das UA-Stylesheet gibt <dialog> color: CanvasText -- Schwarz. Ohne
+     diese Zeile erbte alles ohne eigene Farbe (der Studioname) Schwarz auf
+     --surface (Testnotiz 23.09., #1). */
+  color: var(--text);
 }
 
 .drawer::backdrop {
@@ -495,6 +499,16 @@
   cursor: not-allowed;
 }
 
+/* "Änderungen speichern" ohne Aenderung (AktionsFormular nurBeiAenderung):
+   gesperrt, aber weiter die Hauptaktion des Reiters -- deshalb Akzent,
+   nur gedaempft, statt ins Grau eines kaputten Knopfs zu fallen. Die eine
+   Akzentflaeche je Bildschirm bleibt so auch im Ruhezustand stehen. */
+.primaryRuhend:disabled {
+  background: var(--accent);
+  color: var(--on-accent);
+  opacity: 0.45;
+}
+
 .secondary {
   display: inline-flex;
   align-items: center;
@@ -767,11 +781,19 @@
   flex-wrap: wrap;
 }
 
+/* Seit der Testnotiz 25.09. (#1) eine eigene Zeile unter Umschalter und
+   Aktionen: Pfeil, Titel, Pfeil -- der Titel waechst, damit die Pfeile an
+   den Raendern stehen wie in der App. */
 .wochenwahl {
   display: flex;
   align-items: center;
   gap: var(--s12);
-  flex-wrap: wrap;
+  margin-top: var(--s16);
+}
+
+.wochenwahl .wochenTitel {
+  flex: 1 1 auto;
+  text-align: center;
 }
 
 .wochenTitel {
@@ -859,17 +881,6 @@
   display: none;
 }
 
-/* Die Videospalte einer Uebungszeile: Standbild oben, Ausloeser darunter,
-   88 px breit. Kein mediaRow (nebeneinander) -- in einer Zeile mit Titel,
-   Meta und drei Aktionen ist die Breite das Knappe, nicht die Hoehe. */
-.videoSpalte {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s8);
-  flex-shrink: 0;
-  width: 104px;
-}
-
 /* Zeile mit Medienkachel: Bild links, Text rechts -- zusammen das, was in
    .row als "Hauptteil" gilt, damit die Aktionen weiterhin am rechten Rand
    stehen und nicht hinter dem Bild einrasten. */
@@ -908,4 +919,64 @@
   font-size: 12px;
   color: var(--text-faint);
   margin-top: 2px;
+}
+
+/* Ablauf "Gerät hinzufügen" (ModellRahmen.tsx, Testnotiz 23.09., #7):
+   die Schrittleiste steht, wo sonst die Reiter stehen, und unten eine
+   Fussleiste mit Zurück links und Weiter rechts. Am Telefon klebt sie am
+   unteren Rand -- der naechste Schritt soll nicht erst gesucht werden. */
+.ablaufLeiste {
+  margin-top: var(--s24);
+}
+
+.ablaufFuss {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: var(--s32);
+  padding: var(--s12) 0 max(var(--s12), env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s12);
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+}
+
+/* Die Frage am Anfang von "Gerät hinzufügen" (Testnotiz 25.09., #7): zwei
+   grosse Wahlflaechen statt zweier Knoepfe. Ohne Akzent -- keine der beiden
+   ist die Hauptaktion, erst die Wahl fuehrt zu einer. */
+.wahlListe {
+  list-style: none;
+  margin: var(--s24) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s12);
+}
+
+.wahl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  min-height: 56px;
+  padding: var(--s16) var(--s20);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.wahl:hover {
+  background: var(--surface-hover);
+}
+
+.wahlTitel {
+  font-weight: 700;
+}
+
+.wahlText {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-muted);
 }

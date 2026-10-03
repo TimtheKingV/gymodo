@@ -222,7 +222,7 @@ struct DTOTests {
     @Test("SetWrite liest einen Schreibvorgang mit den alten Namen")
     func setWriteLiestAlteNamen() throws {
         // So liegt ein Satz in pending-writes.json, den die Fassung vor
-        // Migration 0045 offline gepuffert hat.
+        // Migration 0046 offline gepuffert hat.
         let alt = #"{"machineId":"m1","exerciseId":"ex1","setIndex":2,"weightKg":82.5,"reps":9,"problemFlag":false,"performedAt":"2026-09-20T10:00:00Z"}"#
         let write = try JSONDecoder().decode(SetWrite.self, from: Data(alt.utf8))
 

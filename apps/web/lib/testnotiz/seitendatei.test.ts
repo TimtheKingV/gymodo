@@ -2,9 +2,11 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { seiteFinden } from "./seitendatei";
+import { karteLesen } from "./routenkarte.mjs";
+import { type Routenknoten, screenBauen, seiteFinden } from "./seitendatei";
 
 let wurzel: string;
+let karte: Routenknoten;
 
 /**
  * Ein Baum wie der echte App-Router: Klammergruppe, dynamische Segmente,
@@ -26,10 +28,12 @@ beforeAll(() => {
   anlegen("portal/[studioId]/(schreibtisch)/geraete/[modelId]/uebungen", ["page.tsx"]);
   anlegen("portal/[studioId]/einrichten", ["page.tsx"]);
   anlegen("t/[...rest]", ["page.tsx"]);
+
+  karte = karteLesen(wurzel, "apps/web/app");
 });
 
 function finden(pfad: string) {
-  return seiteFinden(pfad, { wurzel, praefix: "apps/web/app" });
+  return seiteFinden(karte, pfad);
 }
 
 describe("seiteFinden", () => {
@@ -79,5 +83,36 @@ describe("seiteFinden", () => {
 
   it("fuehrt kein .. aus dem App-Verzeichnis heraus", () => {
     expect(finden("/../../etc")).toBeNull();
+  });
+
+  it("ohne Karte gibt es keinen Treffer", () => {
+    expect(seiteFinden(null, "/portal/s_1")).toBeNull();
+  });
+});
+
+describe("screenBauen", () => {
+  it("sammelt Segmente, Abfrage und eigenen Kontext", () => {
+    expect(
+      screenBauen(karte, {
+        pfad: "/portal/s_1/geraete/m_2/uebungen",
+        suche: "?filter=neu",
+        kontext: { phase: "eingabe" },
+      }),
+    ).toEqual({
+      name: "portal/[studioId]/geraete/[modelId]/uebungen",
+      file: "apps/web/app/portal/[studioId]/(schreibtisch)/geraete/[modelId]/uebungen/page.tsx",
+      stack: [
+        "apps/web/app/layout.tsx",
+        "apps/web/app/portal/[studioId]/(schreibtisch)/layout.tsx",
+        "apps/web/app/portal/[studioId]/(schreibtisch)/geraete/[modelId]/layout.tsx",
+        "apps/web/app/portal/[studioId]/(schreibtisch)/geraete/[modelId]/uebungen/page.tsx",
+      ],
+      context: { studioId: "s_1", modelId: "m_2", filter: "neu", phase: "eingabe" },
+    });
+  });
+
+  it("ohne Treffer bleibt der Screen leer", () => {
+    expect(screenBauen(karte, { pfad: "/gibtsnicht" })).toBeNull();
+    expect(screenBauen(null, { pfad: "/portal/s_1" })).toBeNull();
   });
 });

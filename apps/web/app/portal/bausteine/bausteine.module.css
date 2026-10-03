@@ -159,6 +159,23 @@
   border-bottom: none;
 }
 
+/* Mit aufgeklapptem Teil darunter: der bricht in eine eigene, volle Zeile
+   um. Nur hier flex-wrap -- an jeder anderen Zeile wuerde ein langer Titel
+   sonst die Aktionen nach unten schieben statt zu kuerzen. */
+.zeileMitDarunter {
+  composes: zeile;
+  flex-wrap: wrap;
+}
+
+.zeileDarunter {
+  flex: 1 0 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s8);
+  padding-top: var(--s12);
+  border-top: 1px solid var(--line);
+}
+
 /* Waechst mit: ohne flex-grow richtete sich die Breite nach dem laengsten
    Titel, und ein Balken darunter (Balken.tsx, "Meistgenutzt") waere so
    breit wie der Geraetename statt so breit wie die Spalte. */
@@ -183,6 +200,13 @@
   gap: var(--s8);
   flex-wrap: wrap;
   flex-shrink: 0;
+}
+
+.zeileAktionenOben {
+  composes: zeileAktionen;
+  align-self: flex-start;
+  margin-top: calc(-1 * var(--s4));
+  margin-right: calc(-1 * var(--s8));
 }
 
 /* Reiter: Links auf eigene Routen, kein Umschalter im selben Dokument --
@@ -248,7 +272,7 @@
    Baustein traegt seit den Leute-Reitern die Datenschutzgrenze und den
    Satz, der das Hochstufen erklaert -- Pflichttext, und Designsystem 2
    verbietet dafuer 3,6 : 1 (Befund 19 und 29, derselbe Schnitt wie in
-   Produktgrenze.tsx). Der Baustein heisst "Erlaeuterung", weil er
+   der frueheren Produktgrenze.tsx). Der Baustein heisst "Erlaeuterung", weil er
    erklaert; was erklaert, muss lesbar sein. */
 /* globals.css:97 nimmt jedem <a> Farbe und Unterstreichung. Fuer Rail,
    Reiter und Knopf-Links ist das richtig -- die tragen eigene Klassen und
@@ -333,18 +357,6 @@
   composes: label from "../portal.module.css";
 }
 
-/* Produktgrenze: Befund 19 -- derselbe Satz stand an drei Stellen in
-   text-faint, einem Kontrast, den Designsystem 2 fuer Pflichttext
-   ausdruecklich verbietet ("gymodo misst nichts ..." ist Inhalt, keine
-   Fussnote). text-muted statt text-faint, sonst wie der bisherige .hint. */
-.produktgrenze {
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.45;
-  margin-top: var(--s24);
-  max-width: 70ch;
-}
-
 /* Noch zu tun: die Restliste eines Objekts (NochZuTun.tsx). Aufbau wie
    .abschnitt, aber die Karte traegt links eine 2-px-Kante in --warn --
    dieselbe Rolle wie die Akzentkante der aktiven Rail-Zeile: eine Linie,
@@ -361,11 +373,50 @@
 
 .nochZuTunKopf {
   padding: var(--s12) var(--s20);
-  border-bottom: 1px solid var(--line);
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--s16);
+  min-height: 44px;
+  box-sizing: border-box;
+  cursor: pointer;
+  list-style: none;
+}
+
+/* Das Dreieck des Browsers weg (Safari braucht den Webkit-Namen) -- an
+   seiner Stelle ein Winkel hinter der Anzahl, der sich beim Aufklappen
+   dreht. Die Trennlinie steht nur, wenn darunter etwas kommt. */
+.nochZuTunKopf::-webkit-details-marker {
+  display: none;
+}
+
+.nochZuTunKopf::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 160ms ease-out;
+}
+
+.nochZuTun[open] > .nochZuTunKopf {
+  border-bottom: 1px solid var(--line);
+}
+
+.nochZuTun[open] > .nochZuTunKopf::after {
+  transform: translateY(1px) rotate(-135deg);
+}
+
+.nochZuTunKopf > h2 {
+  flex: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nochZuTunKopf::after {
+    transition: none;
+  }
 }
 
 /* Der offene Punkt traegt einen Punkt in --warn, der unvollstaendige
@@ -495,4 +546,78 @@
   height: 100%;
   background-color: var(--daten-leise);
   border-radius: var(--r-pill);
+}
+
+/* Hinzufuegen (Hinzufuegen.tsx): der Akzentknopf ueber der Liste, der das
+   Anlege-Formular aufklappt (Testnotiz 22.09., #4/#10). */
+.hinzufuegenLeiste {
+  margin-top: var(--s24);
+  display: flex;
+}
+
+.hinzufuegenSchliessen {
+  margin-left: auto;
+  background: none;
+  border: none;
+  padding: var(--s4) var(--s8);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--r-control);
+}
+
+.hinzufuegenSchliessen:hover {
+  color: var(--text);
+}
+
+/* Stift (Stift.tsx): der kleine Bearbeiten-Ausloeser oben rechts an einer
+   Karte (Testnotiz 22.09., #1/#12). 40 px Trefferflaeche wie .secondary,
+   sichtbar aber nur das Zeichen. */
+.stift {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  border-radius: var(--r-control);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.stift:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.stiftAktiv {
+  composes: stift;
+  background: var(--surface-raised);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+/* Was am Eintrag noch fehlt, als Zahl am Stift. Gruen (--accent), nicht
+   warn (Testnotiz 23.09., #3/#5): die Marke ersetzt in der Geraeteliste den
+   orangen Hinweis darunter und sagt "hier geht es weiter", nicht "hier
+   stimmt etwas nicht". */
+.stiftMarke {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
 }

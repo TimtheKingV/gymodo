@@ -62,7 +62,6 @@ export function ModellBelastungRad({
   const einheitId = useId();
   const nebenId = useId();
 
-  const haupt = belastungsWerte(loadUnit);
   // Bestandswerte nur fuer die Einheit, mit der sie gespeichert wurden --
   // nach einem Wechsel gelten die Vorgaben der neuen Einheit.
   const hauptStart =
@@ -72,11 +71,18 @@ export function ModellBelastungRad({
           max: start.loadMax === null ? "" : dezimal(start.loadMax),
           schritt: dezimal(start.loadStep),
         }
-      : haupt.start;
+      : belastungsWerte(loadUnit).start;
+  // Der gewaehlte Schritt bestimmt den Takt von Minimum und Maximum
+  // (Testnotiz 23.09., zweite Sitzung, #3). Je Einheit gemerkt: der
+  // Schritt von kg gilt nach einem Wechsel auf km/h nicht mehr.
+  const [hauptSchritt, setHauptSchritt] = useState({ einheit: loadUnit, wert: hauptStart.schritt });
+  const haupt = belastungsWerte(
+    loadUnit,
+    hauptSchritt.einheit === loadUnit ? hauptSchritt.wert : hauptStart.schritt,
+  );
 
-  const neben = secondaryUnit ? belastungsWerte(secondaryUnit) : null;
   const nebenStart =
-    neben &&
+    secondaryUnit &&
     start &&
     start.secondaryUnit === secondaryUnit &&
     start.secondaryMin !== null &&
@@ -86,7 +92,19 @@ export function ModellBelastungRad({
           max: start.secondaryMax === null ? "" : dezimal(start.secondaryMax),
           schritt: dezimal(start.secondaryStep),
         }
-      : neben?.start;
+      : secondaryUnit
+        ? belastungsWerte(secondaryUnit).start
+        : undefined;
+  const [nebenSchritt, setNebenSchritt] = useState<{ einheit: LoadUnit | ""; wert: string }>({
+    einheit: secondaryUnit,
+    wert: nebenStart?.schritt ?? "",
+  });
+  const neben = secondaryUnit
+    ? belastungsWerte(
+        secondaryUnit,
+        nebenSchritt.einheit === secondaryUnit ? nebenSchritt.wert : nebenStart?.schritt,
+      )
+    : null;
 
   return (
     <>
@@ -125,7 +143,13 @@ export function ModellBelastungRad({
         spalten={[
           { name: "loadMin", label: "Minimum", werte: haupt.min, start: hauptStart.min },
           { name: "loadMax", label: "Maximum", werte: haupt.max, start: hauptStart.max },
-          { name: "loadStep", label: "Schritt", werte: haupt.schritt, start: hauptStart.schritt },
+          {
+            name: "loadStep",
+            label: "Schritt",
+            werte: haupt.schritt,
+            start: hauptStart.schritt,
+            onWahl: (wert) => setHauptSchritt({ einheit: loadUnit, wert }),
+          },
         ]}
       />
 
@@ -170,6 +194,7 @@ export function ModellBelastungRad({
               label: "Nebenbelastung Schritt",
               werte: neben.schritt,
               start: nebenStart.schritt,
+              onWahl: (wert) => setNebenSchritt({ einheit: secondaryUnit, wert }),
             },
           ]}
         />

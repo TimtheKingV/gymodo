@@ -33,13 +33,13 @@ export function MedienVorschau({
 }) {
   const klasse =
     groesse === "voll"
-      ? styles.vorschau
+      ? styles.vorschauVoll
       : groesse === "mini"
         ? styles.vorschauMini
         : styles.vorschauZeile;
   const leerKlasse =
     groesse === "voll"
-      ? styles.vorschauLeer
+      ? styles.vorschauVollLeer
       : groesse === "mini"
         ? styles.vorschauMiniLeer
         : styles.vorschauZeileLeer;

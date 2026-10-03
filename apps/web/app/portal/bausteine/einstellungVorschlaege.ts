@@ -41,10 +41,55 @@ export function nameVorschlaege(): RadWert[] {
   ]);
 }
 
-/** 0 bis 200 -- grosszuegig genug fuer Rasten, Zentimeter und
-    Gewichtsstufen. */
-export function minMaxWerte(): RadWert[] {
-  return zahlenWerte(0, 200);
+/** Das Namensrad des Schreibtischs (Testnotiz 23.09., zweite Sitzung,
+    #2): erst die Vorschlaege, am Ende "Sonstiges …" -- nur dann erscheint
+    ein Textfeld fuer einen eigenen Namen. */
+export const SONSTIGES = "__sonstiges";
+
+export function nameRadWerte(): RadWert[] {
+  return [...nameVorschlaege(), { anzeige: "Sonstiges …", wert: SONSTIGES }];
+}
+
+export type Vorgabe = { min: string; max: string; schritt: string; einheit: string };
+
+/** Was ein Name ueber seinen Bereich verraet -- Winkel sind Grad in
+    5er-Schritten, eine Sitzhoehe sind Stufen. Nur eine Vorauswahl: jede
+    Spalte bleibt danach frei drehbar. */
+const VORGABEN: Record<string, Vorgabe> = {
+  Wiederholungen: { min: "1", max: "30", schritt: "1", einheit: "Wdh." },
+  Gewicht: { min: "0", max: "100", schritt: "2,5", einheit: "kg" },
+  Winkel: { min: "0", max: "90", schritt: "5", einheit: "°" },
+  Sitzhöhe: { min: "1", max: "10", schritt: "1", einheit: "Stufe" },
+  Rückenlehne: { min: "1", max: "8", schritt: "1", einheit: "Stufe" },
+  Griffweite: { min: "1", max: "5", schritt: "1", einheit: "Stufe" },
+  Neigung: { min: "0", max: "45", schritt: "5", einheit: "°" },
+  Standbreite: { min: "20", max: "60", schritt: "5", einheit: "cm" },
+};
+
+const NEUTRAL: Vorgabe = { min: "0", max: "10", schritt: "1", einheit: "" };
+
+export function vorgabeFuer(name: string): Vorgabe {
+  return VORGABEN[name] ?? NEUTRAL;
+}
+
+function zahlAus(text: string): number {
+  return Number(text.replace(",", "."));
+}
+
+/** Deutsch geschrieben, ohne Rundungsreste (0,1 + 0,2 …). */
+function zahlText(zahl: number): string {
+  return String(Math.round(zahl * 100) / 100).replace(".", ",");
+}
+
+/** 0 bis 200 im Takt des Schritts -- grosszuegig genug fuer Rasten,
+    Zentimeter und Gewichtsstufen. Mit Schritt 5 stehen nur 0, 5, 10 …
+    im Rad (Testnotiz 23.09., zweite Sitzung, #3): ein Minimum von 7 bei
+    Schritt 5 waere am Geraet ohnehin nicht einstellbar. */
+export function minMaxWerte(schritt = "1"): RadWert[] {
+  const takt = zahlAus(schritt);
+  if (!Number.isFinite(takt) || takt <= 0) return zahlenWerte(0, 200);
+  const anzahl = Math.floor(200 / takt + 1e-9);
+  return werte(Array.from({ length: anzahl + 1 }, (_, i) => zahlText(i * takt)));
 }
 
 export function schrittWerte(): RadWert[] {
@@ -70,12 +115,14 @@ export function gewichtsSchrittWerte(): RadWert[] {
   return werte(["1,25", "2,5", "5", "10", "20"]);
 }
 
-/** Wie minMaxWerte(), nur mit "kein Anschlag" am Anfang -- die Obergrenze
-    eines Modells bleibt optional (vormaliger Hinweis: "leer lassen, wenn
-    kein Anschlag bekannt ist"). "kein Anschlag" traegt "" als Wert, geht
-    also als nicht gesetzt durch, genau wie die leere Auswahl vorher. */
-export function maxGewichtWerte(): RadWert[] {
-  return [{ anzeige: "kein Anschlag", wert: "" }, ...minMaxWerte()];
+/** Wie minMaxWerte(), nur mit "∞" (kein Anschlag) am Ende -- die
+    Obergrenze eines Modells bleibt optional (vormaliger Hinweis: "leer
+    lassen, wenn kein Anschlag bekannt ist"). "∞" traegt "" als Wert, geht
+    also als nicht gesetzt durch, genau wie die leere Auswahl vorher.
+    Am Ende statt am Anfang und als Zeichen statt als Wort: Testnotiz vom
+    22.09. -- "kein Anschlag" oben vor der 0 las sich wie ein Minimum. */
+export function maxGewichtWerte(schritt?: string): RadWert[] {
+  return [...minMaxWerte(schritt), { anzeige: "∞", wert: "" }];
 }
 
 /** 1 bis 50 -- deckt Kraft- ebenso wie Ausdauerbereiche ab, ohne die 200
@@ -169,37 +216,44 @@ export type BelastungsWerte = {
  * Rastung, die ein Geraet dieser Art tatsaechlich hat. Der Trainer
  * korrigiert am Rad, was nicht passt.
  */
-export function belastungsWerte(unit: LoadUnit): BelastungsWerte {
+/**
+ * Die Raeder eines Modells je Einheit. Minimum und Maximum zaehlen im Takt
+ * des gewaehlten Schritts (Testnotiz 23.09., zweite Sitzung, #3) -- bei
+ * 0,5 km/h stehen dort 0, 0,5, 1 …, bei 5 W 0, 5, 10 …; "∞" (kein
+ * Anschlag) steht am Ende des Maximums (Testnotiz 22.09.). Ohne Schritt
+ * gilt der Vorgabeschritt der Einheit. Fuer kg sind es exakt
+ * minMaxWerte/maxGewichtWerte.
+ */
+export function belastungsWerte(unit: LoadUnit, schritt?: string): BelastungsWerte {
   const vorgabe = defaultLoadRange(unit);
   const start = {
     min: dezimal(vorgabe.min),
     max: vorgabe.max === null ? "" : dezimal(vorgabe.max),
     schritt: dezimal(vorgabe.step),
   };
-  const kein: RadWert = { anzeige: "kein Anschlag", wert: "" };
+  const takt = schritt ?? start.schritt;
+  const unbegrenzt: RadWert = { anzeige: "∞", wert: "" };
+  const imTakt = (bis: number): RadWert[] => {
+    const zahl = zahlAus(takt);
+    return bereich(0, bis, Number.isFinite(zahl) && zahl > 0 ? zahl : 1);
+  };
+  const mit = (bis: number, schritte: string[]) => {
+    const liste = imTakt(bis);
+    return { min: liste, max: [...liste, unbegrenzt], schritt: werte(schritte), start };
+  };
   switch (unit) {
     case "kg":
-      return { min: minMaxWerte(), max: maxGewichtWerte(), schritt: gewichtsSchrittWerte(), start };
-    case "watt": {
-      const liste = bereich(0, 500, 5);
-      return { min: liste, max: [kein, ...liste], schritt: werte(["5", "10", "25"]), start };
-    }
-    case "level": {
-      const liste = bereich(0, 30, 1);
-      return { min: liste, max: [kein, ...liste], schritt: werte(["1"]), start };
-    }
-    case "kmh": {
-      const liste = bereich(0, 30, 0.5);
-      return { min: liste, max: [kein, ...liste], schritt: werte(["0,1", "0,5", "1"]), start };
-    }
-    case "pct": {
-      const liste = bereich(0, 30, 0.5);
-      return { min: liste, max: [kein, ...liste], schritt: werte(["0,5", "1"]), start };
-    }
-    case "rpm": {
-      const liste = bereich(0, 200, 5);
-      return { min: liste, max: [kein, ...liste], schritt: werte(["5", "10"]), start };
-    }
+      return { min: minMaxWerte(takt), max: maxGewichtWerte(takt), schritt: gewichtsSchrittWerte(), start };
+    case "watt":
+      return mit(500, ["5", "10", "25"]);
+    case "level":
+      return mit(30, ["1"]);
+    case "kmh":
+      return mit(30, ["0,1", "0,5", "1"]);
+    case "pct":
+      return mit(30, ["0,5", "1"]);
+    case "rpm":
+      return mit(200, ["5", "10"]);
   }
 }
 

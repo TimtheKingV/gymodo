@@ -101,6 +101,15 @@ export function MobileNav({
           // nicht die Schublade darin) schliesst -- derselbe Griff wie
           // "Klick ausserhalb des Panels" in jedem anderen Overlay.
           if (event.target === dialogRef.current) dialogRef.current?.close();
+          // Ein Link schliesst sofort, nicht erst mit dem Pfadwechsel nach
+          // dem Laden (Testnotiz 23.09., #2): bis dahin stand die Schublade
+          // offen ueber einer Seite, die gerade ihren Inhalt tauscht, und
+          // auf iOS rutschte ihr Kopf dabei nach unten. Next hat die
+          // Navigation zu diesem Zeitpunkt schon angestossen -- der Klick
+          // erreicht den Link vor dem Dialog.
+          if (event.target instanceof Element && event.target.closest("a")) {
+            dialogRef.current?.close();
+          }
         }}
       >
         <div className={styles.drawerPanel}>

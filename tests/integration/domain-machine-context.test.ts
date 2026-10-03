@@ -179,7 +179,7 @@ describe("getMachineContext", () => {
     expect(context.machine.label).toBe("12");
     expect(context.equipmentModel.name).toBe("Kabelzug");
     expect(context.equipmentModel.loadStep).toBe(2.5);
-    // Ein Kraftgeraet nach 0045: Kilogramm, keine Nebenbelastung.
+    // Ein Kraftgeraet nach 0046: Kilogramm, keine Nebenbelastung.
     expect(context.equipmentModel.loadUnit).toBe("kg");
     expect(context.equipmentModel.secondaryUnit).toBeNull();
     expect(context.equipmentModel.secondaryStep).toBeNull();

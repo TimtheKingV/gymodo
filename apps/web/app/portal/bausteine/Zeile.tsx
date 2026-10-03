@@ -12,18 +12,26 @@ export function Zeile({
   titel,
   meta,
   aktionen,
+  aktionenOben = false,
   bild,
+  darunter,
 }: {
   titel: React.ReactNode;
   meta?: React.ReactNode;
   aktionen?: React.ReactNode;
+  /** Aktionen oben rechts statt mittig -- fuer den einzelnen Stift
+      (Stift.tsx), der wie eine Ecke der Karte sitzen soll. */
+  aktionenOben?: boolean;
   /** Die Kachel am linken Rand -- das Geraetefoto in der Modellliste.
       Optional, weil die meisten Listen des Portals (Tags, Leute, Termine)
       kein Bild haben und keins erfinden sollen. */
   bild?: React.ReactNode;
+  /** Was unter der Zeile aufklappt, in voller Breite -- die Optionen
+      hinter einem Stift (Testnotiz 25.09., #5). */
+  darunter?: React.ReactNode;
 }) {
   return (
-    <li className={styles.zeile}>
+    <li className={darunter ? styles.zeileMitDarunter : styles.zeile}>
       <div className={styles.zeileMitBild}>
         {bild}
         <div className={styles.zeileHaupt}>
@@ -31,7 +39,12 @@ export function Zeile({
           {meta ? <div className={styles.zeileMeta}>{meta}</div> : null}
         </div>
       </div>
-      {aktionen ? <div className={styles.zeileAktionen}>{aktionen}</div> : null}
+      {aktionen ? (
+        <div className={aktionenOben ? styles.zeileAktionenOben : styles.zeileAktionen}>
+          {aktionen}
+        </div>
+      ) : null}
+      {darunter ? <div className={styles.zeileDarunter}>{darunter}</div> : null}
     </li>
   );
 }

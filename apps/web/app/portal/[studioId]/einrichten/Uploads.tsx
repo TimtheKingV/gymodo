@@ -203,10 +203,9 @@ export function VideoAufnehmen({
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
         <MedienVorschau url={objektUrl} art="video" leerText="Kein Video" groesse="mini" />
         <DateiKnopf
-          label={hatVideo ? "Ersetzen" : "Aufnehmen"}
+          label={hatVideo ? "Ersetzen" : "Video hinzufügen"}
           ariaLabel={hatVideo ? `Video ersetzen für ${uebungName}` : `Video für ${uebungName}`}
           accept="video/mp4,video/quicktime"
-          capture="environment"
           gross
           onDatei={(datei) => {
             if (!datei) return;

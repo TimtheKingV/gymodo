@@ -29,7 +29,7 @@
   ```
   Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
   ```
-- **Sichtcheck nur gegen das lokale Backend** (`supabase start` + `pnpm --filter @fitretro/web dev`), nie gegen Produktion. Die Produktion trägt Migration 0045 erst nach dem Merge.
+- **Sichtcheck nur gegen das lokale Backend** (`supabase start` + `pnpm --filter @fitretro/web dev`), nie gegen Produktion. Die Produktion trägt Migration 0046 erst nach dem Merge.
 
 ---
 
@@ -91,7 +91,7 @@ Die Strings entsprechen `formatLoad`/`formatVolume` in `belastung.ts` bis auf da
 | `SessionSummary.Block` | — | `loadUnit`, `secondaryUnit: LoadUnit?`, `volumeKind`; `Set.weightKg/reps` → `load`, `secondaryLoad`, `volume` |
 | `ExerciseProgress` | `firstWeightKg/currentWeightKg/changeKg`, `Point.topWeightKg/reps` | `firstLoad/currentLoad/changeLoad`, `loadUnit`, `volumeKind`, `Point.topLoad/volume` |
 
-Die Enums dekodieren strikt: eine Einheit, die die App nicht kennt, ist ein Dekodierfehler und kein stilles „kg". Der Check-Constraint aus 0045 kennt genau diese sechs; eine siebte braucht ohnehin ein App-Update.
+Die Enums dekodieren strikt: eine Einheit, die die App nicht kennt, ist ein Dekodierfehler und kein stilles „kg". Der Check-Constraint aus 0046 kennt genau diese sechs; eine siebte braucht ohnehin ein App-Update.
 
 **Verlauf-Cache:** `VerlaufFileStore` schreibt `SessionSummary` und `ExerciseProgress` auf Platte. Ein Cache aus der alten Fassung dekodiert nicht mehr → wie bei `Serienstand` optional behandeln: Dekodierfehler heißt leerer Cache, der nächste Abruf füllt ihn. Kein `CodingKeys`-Fallback für Verlaufsdaten, die der Server ohnehin liefert.
 
@@ -233,9 +233,10 @@ Abweichungen vom Plan, jeweils im Commit begründet:
 
 ## Offene Punkte
 
-1. **Migrationsnummer kollidiert mit `master`.** `master` trägt seit PR #30 `0045_mitarbeiter_einladung.sql`, dieser Branch `0045_belastung_umfang.sql`. Supabase versioniert nach dem Präfix — eine der beiden muss vor dem Merge umnummeriert werden (DB, nicht dieser Schnitt).
-2. **PR #25 ist gegen `master` im Konflikt** (`mergeable: CONFLICTING`), in `apps/web/app/portal/actions.ts`, `geraete/page.tsx`, `geraete/[modelId]/uebungen/page.tsx`, `UebungFormular.tsx` und `ModellGewichtRad.tsx` (auf master geändert, hier umbenannt). Der Branch liegt 21 Commits hinter `master`. Portal-Arbeit, nicht dieser Schnitt.
-3. `apps/ios-member` ist zwischen `master` und diesem Branch konfliktfrei.
+Beide Punkte vom 1. Oktober sind am 3. Oktober erledigt (Merge von `master` in diesen Branch):
+
+1. ~~Migrationsnummer kollidiert mit `master`~~ — `0045` gehört jetzt `0045_mitarbeiter_einladung.sql` aus `master`; die Belastungs-Migration heißt `0046_belastung_umfang.sql`, alle Verweise in Code und Doku sind nachgezogen. Sie berührt `staff_invites` nicht, die Reihenfolge ist egal.
+2. ~~PR #25 im Konflikt mit `master`~~ — gelöst. Die Portal-Neuerungen aus `master` (Ablauf „Gerät hinzufügen", Stift-Zeilen, Übung bearbeiten, Rad im Takt des Schritts) sprechen jetzt Belastung und Umfang: `ModellGewichtRad` ist in `ModellBelastungRad` aufgegangen (Minimum/Maximum im Takt des Schritts, „∞" am Ende, für jede Einheit), `UebungZeile` bearbeitet über `UebungUmfangRad` mit Bestandswerten, `updateExercise` schreibt `volume_kind`/`target_min`/`target_max`.
 
 ## Selbstprüfung
 

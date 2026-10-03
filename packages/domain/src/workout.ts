@@ -205,7 +205,7 @@ export async function recordSet(
 
   // Die fachliche Obergrenze kennt nur die Uebung: 1000 Wiederholungen,
   // vier Stunden, 100 km. Die Datenbank prueft nur die Schranke gegen
-  // Unsinn (Migration 0045).
+  // Unsinn (Migration 0046).
   if (input.volume > MAX_VOLUME[exercise.volume_kind]) {
     throw new DomainError("validation_failed", volumeZuGross(exercise.volume_kind));
   }

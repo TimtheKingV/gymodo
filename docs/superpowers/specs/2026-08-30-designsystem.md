@@ -123,7 +123,7 @@ Gewicht und Wiederholungen stehen **nackt auf der Fläche**: große Zahl, darunt
 
 **Die Rastung kommt aus dem Gerät, nicht aus dem Entwurf:** `equipment_models.weight_step_kg`. Dieselbe Daumenstrecke deckt an einer Beinpresse mit 2,5-kg-Platten eine andere Spanne ab als an einem Beinbeuger mit 5-kg-Platten. Wiederholungen rasten immer auf 1.
 
-> **Nachtrag (Cardio-Geräte, Oktober 2026):** Seit Migration 0045 heißt die Spalte `equipment_models.load_step` (mit `load_min`/`load_max`), und die Rastung gilt für jede Belastungseinheit — kg, W, Level, km/h, %, U/min. Das zweite Rad liest seine Werteliste aus der Umfangsart der Übung: Wiederholungen 1–40, Zeit 0:30–90:00 in halben Minuten, Strecke 100–20 000 m. Der Grundsatz „die Rastung kommt aus dem Gerät" bleibt wörtlich. Siehe `2026-09-21-cardio-geraete-design.md` §8.1 und `../plans/2026-09-22-cardio-schnitt3-ios.md`.
+> **Nachtrag (Cardio-Geräte, Oktober 2026):** Seit Migration 0046 heißt die Spalte `equipment_models.load_step` (mit `load_min`/`load_max`), und die Rastung gilt für jede Belastungseinheit — kg, W, Level, km/h, %, U/min. Das zweite Rad liest seine Werteliste aus der Umfangsart der Übung: Wiederholungen 1–40, Zeit 0:30–90:00 in halben Minuten, Strecke 100–20 000 m. Der Grundsatz „die Rastung kommt aus dem Gerät" bleibt wörtlich. Siehe `2026-09-21-cardio-geraete-design.md` §8.1 und `../plans/2026-09-22-cardio-schnitt3-ios.md`.
 
 Das Rad ersetzt keinen Wert, es **zeigt die Nachbarn**: wer 80,0 sieht, sieht auch, dass der nächste Schritt 82,5 ist und nicht 81. Die Plattenabstufung des Geräts steht damit in der Bedienung statt in einer Fußnote — der häufigste Fehler beim Eintippen, ein Wert den das Gerät gar nicht kann, wird strukturell unmöglich.
 

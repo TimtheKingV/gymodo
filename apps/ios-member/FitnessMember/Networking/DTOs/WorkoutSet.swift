@@ -38,7 +38,7 @@ extension SetWrite {
              problemFlag, problemReason, performedAt, sessionStartedAt
     }
 
-    /// Die Feldnamen von vor Migration 0045.
+    /// Die Feldnamen von vor Migration 0046.
     private enum AlteKeys: String, CodingKey { case weightKg, reps }
 
     /// Eigener Dekoder nur wegen der Warteschlange auf Platte

@@ -166,7 +166,7 @@ export function FotoNachreichen({
       <FotoFeld
         mini
         vorhandeneUrl={fotoUrl}
-        ausloeserText={laeuft ? "…" : hatFoto ? "Ersetzen" : "Aufnehmen"}
+        ausloeserText={laeuft ? "…" : hatFoto ? "Ersetzen" : "Foto hinzufügen"}
         ariaLabel={hatFoto ? "Foto ersetzen" : "Foto nachreichen"}
         onDatei={(datei) => {
           if (!datei) return;

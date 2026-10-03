@@ -31,7 +31,7 @@ Die Anpassung ist deshalb **keine Cardio-Logik, sondern das Herauslösen der Ein
 
 **Enthalten:**
 
-- Datenmodell: Belastungseinheit und optionale Nebenbelastung am Gerätemodell, Umfangsart an der Übung, generische Wertspalten am Satz, Kategorie Kraft/Cardio am Modell (Abschnitt 4, Migration 0045)
+- Datenmodell: Belastungseinheit und optionale Nebenbelastung am Gerätemodell, Umfangsart an der Übung, generische Wertspalten am Satz, Kategorie Kraft/Cardio am Modell (Abschnitt 4, Migration 0046)
 - Domain: Umbenennung der Typen, ein Formatierer für Belastungswerte, Algorithmusversion 2.0.0 mit genau einer Regelergänzung: die Nebenbelastung muss gleich bleiben (Abschnitt 5)
 - API: Feldnamen in Gerätekontext, Bootstrap, Satz-PUT, Sessions, Progress, Abschluss (Abschnitt 6)
 - Portal: Belastungsart am Modell, Umfangsart an der Übung, Räder mit Wertelisten je Einheit (Abschnitt 7)
@@ -177,7 +177,9 @@ Die additive Variante (`reps` bleibt, `duration_s` kommt hinzu, Check „genau e
 
 Mit `load` und `volume` als reinen Zahlen hat die Regel-Engine null Verzweigungen. Die Bedeutung lebt an genau zwei Stellen: `load_unit` am Modell, `volume_kind` an der Übung. Der Preis ist, dass `reps` nicht mehr `reps` heißt. Dafür steht in jedem Typ und jeder Migration ein Kommentar, der das Wort erklärt.
 
-### 4.3 Migrationsskizze `0045_belastung_umfang.sql`
+### 4.3 Migrationsskizze `0046_belastung_umfang.sql`
+
+> Ursprünglich als `0045` geschrieben; beim Zusammenführen mit `master` am 3. Oktober 2026 auf `0046` umnummeriert, weil `0045_mitarbeiter_einladung.sql` dort zuerst ankam.
 
 ```sql
 -- Belastung und Umfang statt Kilogramm und Wiederholungen.
@@ -440,7 +442,7 @@ Und die Gegenprobe: eine Beinpresse mit `kraft`, `kg`, 0–200, Schritt 2,5, ohn
 
 ## 11. Betroffene Dateien
 
-**Migration:** `supabase/migrations/0045_belastung_umfang.sql` (neu).
+**Migration:** `supabase/migrations/0046_belastung_umfang.sql` (neu).
 
 **Domain (`packages/domain/src/`):** `belastung.ts` (neu), `kategorie-waechter.test.ts` (neu), `progression.ts`, `abschluss.ts`, `machine-context.ts`, `bootstrap.ts`, `workout.ts`, `sessions.ts`, `progress.ts`, `catalog.ts`, `index.ts`. Dazu die Tests `progression.test.ts`, `abschluss.test.ts`, `workout.test.ts`, `index.test.ts`.
 
@@ -464,7 +466,7 @@ Zusätzlich zu den mechanisch angepassten Bestandstests:
 - **`kategorie-waechter.test.ts`:** liest `progression.ts`, `abschluss.ts`, `workout.ts`, `machine-context.ts` als Text und schlägt fehl, wenn `category` darin vorkommt. Billig, und die einzige Stelle, die die Zusage aus Abschnitt 3.5 hält.
 - **`belastung.test.ts`:** Formatierung aller vier Einheiten und drei Arten inkl. `de_DE`-Dezimaltrennzeichen und `20:00`-Format.
 - **`workout.test.ts`:** Obergrenze je Umfangsart; Alias `weightKg`/`reps` wird angenommen und abgebildet; `secondaryLoad` ist Pflicht bei Modell mit Nebenbelastung und verboten ohne; Rundung auf `secondary_step`.
-- **`smoke:migrations`:** 0045 läuft auf einem Bestand mit Sätzen, Vorschlägen und Kalibrierungen durch; danach lesen `machine-context` und `progress` dieselben Werte wie vorher.
+- **`smoke:migrations`:** 0046 läuft auf einem Bestand mit Sätzen, Vorschlägen und Kalibrierungen durch; danach lesen `machine-context` und `progress` dieselben Werte wie vorher.
 - **`RastwerteTests`:** Längen und Endpunkte der drei Umfangslisten; `naechster(zu:in:)` rastet 1195 s auf 1200.
 - **`GeraeteAuswahlTests`:** ohne Suchtext zwei Abschnitte nach Kategorie, leere Abschnitte entfallen; mit Suchtext flache Liste wie heute.
 - **`GeraetModelTests`:** drittes Rad nur bei `secondaryUnit`; Vorbelegung aus dem letzten Satz; Satz-PUT trägt `secondaryLoad` genau dann.

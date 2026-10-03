@@ -48,7 +48,7 @@ struct BelastungTests {
     }
 
     @Test func eineUnbekannteEinheitIstEinDekodierfehlerUndKeinStillesKilogramm() {
-        // Der Check-Constraint aus Migration 0045 kennt genau sechs
+        // Der Check-Constraint aus Migration 0046 kennt genau sechs
         // Einheiten; eine siebte braucht ohnehin ein App-Update. Ein
         // stilles "kg" schriebe "8,5 kg" an ein Laufband.
         let json = Data(#"["mph"]"#.utf8)

@@ -6,7 +6,7 @@ import { ladeKatalog } from "../../../catalog";
 import { offenePunkte } from "../../../offen";
 import { Modellbild } from "../../../../bausteine/Modellbild";
 import { NochZuTun } from "../../../../bausteine/NochZuTun";
-import { ModellReiter } from "./ModellReiter";
+import { ModellRahmen } from "./ModellRahmen";
 import styles from "../../../../portal.module.css";
 
 /**
@@ -68,15 +68,20 @@ export default async function ModellLayout({
           </p>
         </div>
       </div>
-      <ModellReiter
+      {/* Reiter und "Noch zu tun" -- oder, im Ablauf "Gerät hinzufügen"
+          (?neu=1), Schrittleiste und Zurück/Weiter (ModellRahmen.tsx). */}
+      <ModellRahmen
         studioId={studioId}
         modelId={modelId}
         einstellungenZusatz={`${modell.settingDefinitions.length} Einstellungen`}
         uebungenZusatz={`${modell.exercises.length} · ${mitVideo} mit Video`}
         instanzenZusatz={`${modell.machines.length} · ${ohneTag} ohne Tag`}
-      />
-      <NochZuTun punkte={punkte} />
-      {children}
+        einstellungenAnzahl={modell.settingDefinitions.length}
+        uebungenAnzahl={modell.exercises.length}
+        nochZuTun={<NochZuTun punkte={punkte} />}
+      >
+        {children}
+      </ModellRahmen>
     </>
   );
 }

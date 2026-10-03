@@ -1,6 +1,6 @@
 # Cardio Schnitt 3 (iOS) — Abnahme
 
-Manuelle Abnahme gegen das **lokale** Backend (`supabase db reset` auf dem Branch-Stand mit `0045_belastung_umfang.sql`, `pnpm --filter @fitretro/web dev`, App mit `SUPABASE_URL`/`API_BASE_URL` auf `127.0.0.1` als Build-Einstellung überschrieben — `Config.xcconfig` blieb unangetastet). Gegen Produktion lief nichts.
+Manuelle Abnahme gegen das **lokale** Backend (`supabase db reset` auf dem Branch-Stand mit `0046_belastung_umfang.sql`, `pnpm --filter @fitretro/web dev`, App mit `SUPABASE_URL`/`API_BASE_URL` auf `127.0.0.1` als Build-Einstellung überschrieben — `Config.xcconfig` blieb unangetastet). Gegen Produktion lief nichts.
 
 Gefahren wurde die App im Simulator (iPhone 17 Pro, iPhone SE 3. Generation, iOS 26.3, Standard-Schriftgröße) über einen Wegwerf-UI-Test, der tippt, wischt, Screenshots und den Accessibility-Baum ablegt. Der Treiber liegt nicht im Repository. „Scan" heißt hier immer „Suchen": der Simulator hat keine Kamera und keinen NFC-Leser.
 

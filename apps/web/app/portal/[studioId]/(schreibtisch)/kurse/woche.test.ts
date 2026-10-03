@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nachTagenGruppieren, wochenFenster } from "./woche";
+import { kalenderTage, monatsFenster, nachTagenGruppieren, wochenFenster } from "./woche";
 
 const BERLIN = "Europe/Berlin";
 
@@ -104,5 +104,76 @@ describe("nachTagenGruppieren", () => {
     const gruppen = nachTagenGruppieren([spaeterTermin], "2026-08-31T00:00:00Z", BERLIN);
     expect(gruppen[0]!.sessions).toHaveLength(0);
     expect(gruppen[1]!.sessions).toHaveLength(1);
+  });
+});
+
+/** Testnotiz 25.09., #1: Wochenstreifen wie in der App, dazu ein Monat. */
+describe("wochenFenster: Anschluss an den Kalender", () => {
+  it("nennt den Montag und den Monat, in dem der groessere Teil der Woche liegt", () => {
+    // Mo 31. August bis So 6. September: sechs Tage im September.
+    const fenster = wochenFenster("2026-09-03", BERLIN);
+    expect(fenster.montag).toBe("2026-08-31");
+    expect(fenster.monat).toBe("2026-09");
+  });
+});
+
+describe("monatsFenster", () => {
+  it("umfasst volle Wochen von Montag vor dem Ersten bis Sonntag nach dem Letzten", () => {
+    // Der 1. September 2026 ist ein Dienstag, der 30. ein Mittwoch.
+    const fenster = monatsFenster("2026-09", BERLIN);
+    expect(fenster.titel).toBe("September 2026");
+    expect(fenster.erster).toBe("2026-08-31");
+    expect(fenster.tage).toBe(35);
+    expect(fenster.von).toBe("2026-08-30T22:00:00.000Z");
+    expect(fenster.bis).toBe("2026-10-04T22:00:00.000Z");
+    expect(fenster.vorige).toBe("2026-08");
+    expect(fenster.naechste).toBe("2026-10");
+  });
+
+  it("rechnet ueber die Zeitumstellung auf der Wanduhr", () => {
+    // Maerz 2026: der 1. ist ein Sonntag, die Uhr springt am 29.
+    const fenster = monatsFenster("2026-03", BERLIN);
+    expect(fenster.erster).toBe("2026-02-23");
+    expect(fenster.tage).toBe(42);
+    expect(fenster.von).toBe("2026-02-22T23:00:00.000Z");
+    expect(fenster.bis).toBe("2026-04-05T22:00:00.000Z");
+  });
+
+  it("wechselt ueber den Jahreswechsel", () => {
+    expect(monatsFenster("2026-12", BERLIN).naechste).toBe("2027-01");
+    expect(monatsFenster("2026-01", BERLIN).vorige).toBe("2025-12");
+  });
+
+  it("ein unlesbarer Anker faellt auf den aktuellen Monat zurueck", () => {
+    expect(() => monatsFenster("abc", BERLIN)).not.toThrow();
+    expect(monatsFenster("2026-13", BERLIN).von).toBe(monatsFenster(undefined, BERLIN).von);
+  });
+});
+
+describe("kalenderTage", () => {
+  const sessions = [
+    { localDay: "2026-09-01", status: "planned" as const },
+    { localDay: "2026-09-01", status: "planned" as const },
+    { localDay: "2026-09-02", status: "cancelled" as const },
+  ];
+
+  it("zaehlt je Tag die stattfindenden Kurse, abgesagte nicht", () => {
+    const tage = kalenderTage("2026-08-31", 7, "2026-09-02", sessions);
+    expect(tage.map((tag) => tag.kurse)).toEqual([0, 2, 0, 0, 0, 0, 0]);
+  });
+
+  it("traegt Buchstabe, Nummer und heute wie der Streifen der App", () => {
+    const tage = kalenderTage("2026-08-31", 7, "2026-09-02", sessions);
+    expect(tage.map((tag) => tag.buchstabe).join("")).toBe("MDMDFSS");
+    expect(tage.map((tag) => tag.nummer)).toEqual([31, 1, 2, 3, 4, 5, 6]);
+    expect(tage.filter((tag) => tag.istHeute).map((tag) => tag.iso)).toEqual(["2026-09-02"]);
+  });
+
+  it("markiert Tage ausserhalb des Monats", () => {
+    const tage = kalenderTage("2026-08-31", 35, "2026-09-02", sessions, "2026-09");
+    expect(tage[0]!.imMonat).toBe(false);
+    expect(tage[1]!.imMonat).toBe(true);
+    expect(tage[34]!.iso).toBe("2026-10-04");
+    expect(tage[34]!.imMonat).toBe(false);
   });
 });

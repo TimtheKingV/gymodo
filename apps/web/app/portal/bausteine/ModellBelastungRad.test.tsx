@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { ModellBelastungRad } from "./ModellBelastungRad";
 
@@ -15,6 +15,12 @@ beforeAll(() => {
 function feldwert(name: string): string | null {
   const feld = document.querySelector<HTMLInputElement>(`input[name="${name}"]`);
   return feld ? feld.value : null;
+}
+
+function zeilen(spalte: string): (string | null)[] {
+  return [...screen.getByRole("listbox", { name: spalte }).querySelectorAll('[role="option"]')].map(
+    (zeile) => zeile.textContent,
+  );
 }
 
 async function auswaehlen(label: string, anzeige: string) {
@@ -82,5 +88,50 @@ describe("ModellBelastungRad", () => {
     expect(feldwert("loadMax")).toBe("18");
     expect(feldwert("secondaryUnit")).toBe("pct");
     expect(feldwert("secondaryMax")).toBe("12");
+  });
+
+  // Testnotiz 23.09. (zweite Sitzung), #3 -- vormals in ModellGewichtRad.test.tsx.
+  it("zaehlt Minimum und Maximum im Takt des Schritts, mit ∞ am Ende", () => {
+    render(<ModellBelastungRad />);
+
+    expect(zeilen("Minimum").slice(0, 3)).toEqual(["0", "2,5", "5"]);
+    expect(zeilen("Maximum").slice(0, 3)).toEqual(["0", "2,5", "5"]);
+    expect(zeilen("Maximum").at(-1)).toBe("∞");
+  });
+
+  it("folgt einem neu gewaehlten Schritt", async () => {
+    render(
+      <ModellBelastungRad
+        start={{
+          category: "kraft",
+          loadUnit: "kg",
+          loadMin: 5,
+          loadMax: null,
+          loadStep: 2.5,
+          secondaryUnit: null,
+          secondaryMin: null,
+          secondaryMax: null,
+          secondaryStep: null,
+        }}
+      />,
+    );
+
+    const schritt = screen.getByRole("listbox", { name: "Schritt" });
+    schritt.scrollTop = zeilen("Schritt").indexOf("10") * 40;
+    fireEvent.scroll(schritt);
+    await act(() => new Promise((fertig) => requestAnimationFrame(() => fertig(null))));
+
+    expect(zeilen("Minimum").slice(0, 3)).toEqual(["0", "10", "20"]);
+    // 5 liegt zwischen 0 und 10 -- der naechstliegende ist der erste Treffer.
+    expect(feldwert("loadMin")).toBe("0");
+  });
+
+  it("zaehlt auch am Laufband im Takt des Schritts", async () => {
+    render(<ModellBelastungRad />);
+
+    await auswaehlen("Belastung", "km/h");
+
+    expect(zeilen("Minimum").slice(0, 3)).toEqual(["0", "0,5", "1"]);
+    expect(zeilen("Maximum").at(-1)).toBe("∞");
   });
 });

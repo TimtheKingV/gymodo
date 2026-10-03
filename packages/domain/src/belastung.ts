@@ -8,7 +8,7 @@ import { z } from "zod";
  * `load_unit` am Geraetemodell und `volume_kind` an der Uebung. Alles, was
  * eine Einheit KENNEN muss -- Formatierung, Vorgaben, Obergrenzen -- steht
  * hier und nirgends sonst. Eine neue Einheit kostet je Funktion eine
- * Zeile und einen Eintrag im Check-Constraint (Migration 0045).
+ * Zeile und einen Eintrag im Check-Constraint (Migration 0046).
  *
  * Belastung und Nebenbelastung teilen sich dieselbe Liste: die Neigung
  * (pct) ist am Laufband Nebenbelastung, koennte an einem anderen Geraet
@@ -31,7 +31,7 @@ export const categorySchema = z.enum(CATEGORIES);
 
 /**
  * Obergrenze je Umfangsart. Die Datenbank kennt nur die Schranke gegen
- * Unsinn (100000, Migration 0045); die fachliche Grenze prueft recordSet
+ * Unsinn (100000, Migration 0046); die fachliche Grenze prueft recordSet
  * gegen die Uebung. Vier Stunden sind kein Satz, und 1000 Wiederholungen
  * waren schon vorher die Grenze.
  */

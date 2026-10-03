@@ -4,7 +4,7 @@
 
 **Goal:** Die Datenbank und `packages/domain` kennen Belastung, Nebenbelastung, Umfang und Kategorie statt Kilogramm und Wiederholungen. Eine Beinpresse mit 2,5-kg-Schritten und „Beidbeinig 8–12" verhält sich danach Bit für Bit wie heute; ein Laufband mit km/h, Neigung und „Dauerlauf 15–20 min" lässt sich anlegen, bespielen und bekommt denselben Vorschlag von derselben Regel. Web kompiliert und funktioniert unverändert (nur Feldnamen); die neue Portal-Oberfläche ist Schnitt 2, iOS ist Schnitt 3.
 
-**Architecture:** Migration `0045` benennt Spalten um und ergänzt sechs (Spec Abschnitt 4). In der Domain entsteht ein Modul `belastung.ts` als einziger Ort für Einheiten, Umfangsarten, Grenzen und Formatierung. `progression.ts` wird zu Version 2.0.0: dieselbe Regel, nur der Blockvergleich vergleicht das Paar `(load, secondaryLoad)`. Alles andere ist Umbenennung entlang derselben Nahtstellen. Ein Wächter-Test hält `category` aus der Regel fern (Spec Abschnitt 3.5).
+**Architecture:** Migration `0046` benennt Spalten um und ergänzt sechs (Spec Abschnitt 4). In der Domain entsteht ein Modul `belastung.ts` als einziger Ort für Einheiten, Umfangsarten, Grenzen und Formatierung. `progression.ts` wird zu Version 2.0.0: dieselbe Regel, nur der Blockvergleich vergleicht das Paar `(load, secondaryLoad)`. Alles andere ist Umbenennung entlang derselben Nahtstellen. Ein Wächter-Test hält `category` aus der Regel fern (Spec Abschnitt 3.5).
 
 **Tech Stack:** PostgreSQL 16 (lokal nur zur Syntaxprüfung), Supabase-Migrationen, TypeScript / Zod / Vitest (`packages/domain`), Next.js Server Actions (`apps/web`, nur Umbenennung).
 
@@ -36,17 +36,17 @@
 
 ---
 
-## Task 2: Migration `0045_belastung_umfang.sql`
+## Task 2: Migration `0046_belastung_umfang.sql`
 
 **Files:**
-- Create: `supabase/migrations/0045_belastung_umfang.sql`
+- Create: `supabase/migrations/0046_belastung_umfang.sql`
 
 **Interfaces:**
 - Produces: Spalten `equipment_models.load_unit/load_step/load_min/load_max/secondary_unit/secondary_step/secondary_min/secondary_max/category`, `exercises.volume_kind/target_min/target_max`, `workout_sets.load/volume/secondary_load`, `progression_suggestions.result_load`. Constraints wie Spec Abschnitt 4.3.
 
 - [x] **Step 1:** Migration schreiben, Inhalt aus Spec Abschnitt 4.3, mit Begründungskommentaren. Der Check auf `reps` heißt `workout_sets_reps_check` (inline in 0013, automatisch benannt).
 - [x] **Step 2:** Lokal gegen PostgreSQL 16 prüfen: temporärer Cluster im Scratchpad, ein Shim für `auth.users`, `auth.uid()`, die Rollen `anon`/`authenticated`/`service_role` und `storage.buckets`/`storage.objects`, dann alle 45 Migrationen in Reihenfolge. Danach ein Rauchtest: eine Beinpresse und ein Laufband anlegen, je eine Übung, einen Satz mit und ohne `secondary_load`, die Constraints `secondary_all_or_none` und `volume_check` gezielt verletzen. Der Cluster wird danach gelöscht; das Skript liegt nicht im Repo.
-- [x] **Step 3:** Commit `feat(db): Belastung und Umfang statt Kilogramm und Wiederholungen (0045)`.
+- [x] **Step 3:** Commit `feat(db): Belastung und Umfang statt Kilogramm und Wiederholungen (0046)`.
 
 ---
 
@@ -222,7 +222,7 @@ Keine neue Oberfläche. Formularfelder heißen `loadMin/loadMax/loadStep` und `t
 
 - Domain: 219 Tests grün (vorher 167), davon 44 Progressionsfälle doppelt über Beinpresse und Ergometer, 14 in `belastung`, 4 im Wächter.
 - `pnpm typecheck` grün über Domain, Web, Tests und E2E.
-- **Nicht allein deployen.** Die API-Antworten (Bootstrap, Gerätekontext, Sessions, Progress, Abschluss) tragen jetzt `load`/`volume`/`loadStep` usw.; die iOS-DTOs verlangen `weightKg`/`reps`/`weightStepKg` als Pflichtfelder und würden nicht mehr dekodieren. Der Alias im Satz-PUT hilft nur der Offline-Warteschlange. Migration 0045 und dieser Stand gehen zusammen mit Schnitt 3 (iOS) live; die Spec (Abschnitte 6 und 14) sagt das jetzt so.
+- **Nicht allein deployen.** Die API-Antworten (Bootstrap, Gerätekontext, Sessions, Progress, Abschluss) tragen jetzt `load`/`volume`/`loadStep` usw.; die iOS-DTOs verlangen `weightKg`/`reps`/`weightStepKg` als Pflichtfelder und würden nicht mehr dekodieren. Der Alias im Satz-PUT hilft nur der Offline-Warteschlange. Migration 0046 und dieser Stand gehen zusammen mit Schnitt 3 (iOS) live; die Spec (Abschnitte 6 und 14) sagt das jetzt so.
 - **CI-Lauf (PR #25, Run 35755418877 auf 0f82b4f): Integration 659 Tests grün, E2E 103 von 103 grün.** Zwei Seed-Fehler auf dem Weg dorthin (Bulk-Insert gab Kraftmodellen `null` statt Default; E2E-Seeds noch mit `weight_step_kg`), beide in b3ba3b0 und 0f82b4f behoben. Damit erledigt: `pnpm test:integration` und `pnpm test:e2e` für das Portal (Formularfelder heißen jetzt `loadMin/loadMax/loadStep` und `targetMin/targetMax`; die Labels und der Text „Schritt 2,5 kg · ab 5,0 kg bis 100,0 kg" sind unverändert).
 
 ## Was dieser Schnitt NICHT tut

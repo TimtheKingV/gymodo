@@ -12,14 +12,18 @@ import styles from "./bausteine.module.css";
 export function Abschnitt({
   titel,
   notiz,
+  id,
   children,
 }: {
   titel: string;
   notiz?: React.ReactNode;
+  /** Sprungziel -- der Wochenstreifen im Kursplan springt zum Tag
+      (Testnotiz 25.09., #1). */
+  id?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className={styles.abschnitt}>
+    <section className={styles.abschnitt} id={id}>
       <div className={styles.abschnittKopf}>
         <h2 className={styles.abschnittTitel}>{titel}</h2>
         {notiz ? <span className={styles.abschnittNotiz}>{notiz}</span> : null}

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { sichererWeiter } from "../einladung/weiter";
 
 const anmeldenSchema = z.object({
   email: z.string().email(),
@@ -20,5 +21,5 @@ export async function anmelden(_prev: unknown, formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { error: "E-Mail oder Passwort ist falsch." };
 
-  redirect("/");
+  redirect(sichererWeiter(String(formData.get("weiter") ?? "")));
 }

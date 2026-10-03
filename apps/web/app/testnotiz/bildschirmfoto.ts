@@ -29,6 +29,15 @@ export type Bild = {
 let strom: MediaStream | null = null;
 let video: HTMLVideoElement | null = null;
 
+/**
+ * Kann dieser Browser den Tab ueberhaupt freigeben? Am Handy nicht: weder
+ * iOS-Safari noch Chrome fuer Android kennen `getDisplayMedia`. Dort haengt
+ * der Tester seinen eigenen Screenshot an.
+ */
+export function freigabeMoeglich(): boolean {
+  return typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getDisplayMedia === "function";
+}
+
 export function freigabeAktiv(): boolean {
   return strom !== null && strom.getVideoTracks().some((spur) => spur.readyState === "live");
 }

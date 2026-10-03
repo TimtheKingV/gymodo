@@ -172,7 +172,7 @@ struct WorkoutSessionStoreTests {
     }
 
     @Test func eineSessiondateiImAltenFormatLaedtWeiter() throws {
-        // So schrieb die Fassung vor Migration 0045: weightKg/reps am Satz,
+        // So schrieb die Fassung vor Migration 0046: weightKg/reps am Satz,
         // keine Einheiten am Block. Das App-Update kann mitten in einer
         // offenen Einheit kommen -- die darf dabei nicht verloren gehen.
         let verzeichnis = FileManager.default.temporaryDirectory

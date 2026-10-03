@@ -1,0 +1,192 @@
+/* Kalenderleiste des Kursplans (Kalender.tsx, Testnotiz 25.09., #1).
+   Der Streifen folgt dem der App: Buchstabe, Nummer, Ring fuer heute,
+   Punkt fuer Tage mit Kursen. Farben nur aus den Tokens; der Akzent
+   erscheint nur als Ring um heute, nie als Flaeche -- auch nicht als
+   Punkt: die eine Akzentflaeche gehoert "Termin anlegen", und
+   akzentflaechen() in e2e/helpers/abnahme.ts zaehlt jede Flaeche. */
+
+.umschalter {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+}
+
+.umschalterEintrag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  min-height: 40px;
+  padding: 0 var(--s16);
+  border-radius: var(--r-pill);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.umschalterEintrag:hover {
+  color: var(--text);
+}
+
+.umschalterAktiv {
+  composes: umschalterEintrag;
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.pfeil {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.pfeil:hover {
+  background: var(--surface-hover);
+}
+
+.streifen {
+  list-style: none;
+  margin: var(--s16) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--s4);
+}
+
+.zelle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 64px;
+  padding: var(--s8) 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  color: var(--text);
+}
+
+.zelle:hover {
+  background: var(--surface-hover);
+}
+
+.zelleHeute {
+  composes: zelle;
+  border-color: var(--accent);
+}
+
+.buchstabe {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.nummer {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.punkt,
+.punktLeer {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.punkt {
+  background: var(--text-muted);
+}
+
+.monat {
+  margin-top: var(--s16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.monatKopf {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  padding: var(--s8) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.monatRaster {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.monatZelle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 64px;
+  padding: var(--s8);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+}
+
+.monatRaster > li:nth-child(7n) .monatZelle {
+  border-right: none;
+}
+
+.monatZelle:hover {
+  background: var(--surface-hover);
+}
+
+.monatHeute .monatNummer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  margin: -4px 0 0 -4px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-pill);
+}
+
+.monatAussen {
+  color: var(--text-faint);
+}
+
+.monatNummer {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.monatAnzahl {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Am Telefon ist eine Siebtelspalte rund 50 px breit: Inhalt mittig und
+   die Anzahl kleiner, damit "2 Kurse" nicht umbricht. */
+@media (max-width: 520px) {
+  .monatZelle {
+    align-items: center;
+    padding: var(--s8) 0;
+  }
+
+  .monatAnzahl {
+    font-size: 11px;
+  }
+}

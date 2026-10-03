@@ -34,7 +34,7 @@ struct PendingWriteStoreTests {
         #expect(secondProcess.loadAll() == [write])
     }
 
-    @Test("liest eine Warteschlange, die die Fassung vor Migration 0045 geschrieben hat")
+    @Test("liest eine Warteschlange, die die Fassung vor Migration 0046 geschrieben hat")
     func liestAlteWarteschlange() throws {
         // Wer vor dem App-Update offline trainiert hat, traegt seine Saetze
         // als weightKg/reps in der Datei. Dekodierte sie nicht mehr, gaebe

@@ -6,7 +6,15 @@ import { Seite } from "../../../bausteine/Seite";
 import { Zeile, Zeilen } from "../../../bausteine/Zeile";
 import { Zustand } from "../../../bausteine/Zustand";
 import styles from "../../../portal.module.css";
-import { nachTagenGruppieren, uhrzeit, wochenFenster } from "./woche";
+import { AnsichtUmschalter, Blaettern, Monatsraster, Wochenstreifen } from "./Kalender";
+import {
+  kalenderTage,
+  monatsFenster,
+  nachTagenGruppieren,
+  ortszeitAlsDatum,
+  uhrzeit,
+  wochenFenster,
+} from "./woche";
 
 /**
  * Der Kursplan einer Woche (Kurse.dc.html).
@@ -24,16 +32,22 @@ import { nachTagenGruppieren, uhrzeit, wochenFenster } from "./woche";
  * Leiste, aber genau das ist Befund 37: globals.css nimmt jedem Link
  * Farbe und Unterstreichung, und im Fliesstext bleibt dann null
  * Unterschied zum Text daneben. Als Pille ist sie das, was sie ist.
+ *
+ * Testnotiz 25.09., #1: oben ein Umschalter Woche | Monat, in der Woche
+ * ein Streifen wie in der App (Kalender.tsx), im Monat ein Raster, aus dem
+ * ein Tipp in die Woche des Tages fuehrt. Die Ansicht steht in der Adresse
+ * (?ansicht=monat&monat=2026-09), wie die Woche auch.
  */
 export default async function KursePage({
   params,
   searchParams,
 }: {
   params: Promise<{ studioId: string }>;
-  searchParams: Promise<{ woche?: string }>;
+  searchParams: Promise<{ woche?: string; ansicht?: string; monat?: string }>;
 }) {
   const { studioId } = await params;
-  const { woche } = await searchParams;
+  const { woche, ansicht: ansichtParam, monat } = await searchParams;
+  const ansicht = ansichtParam === "monat" ? "monat" : "woche";
   const client = await createServerSupabaseClient();
   const basis = `/portal/${studioId}/kurse`;
 
@@ -48,10 +62,14 @@ export default async function KursePage({
   const zeitzone = studio?.timezone ?? "Europe/Berlin";
 
   const fenster = wochenFenster(woche, zeitzone);
+  const monatFenster = monatsFenster(ansicht === "monat" ? monat : fenster.monat, zeitzone);
+  // Das Fenster der Abfrage: im Monat das ganze Raster, sonst die Woche.
+  // Dieselbe course_week-Abfrage, nur breiter.
+  const abfrage = ansicht === "monat" ? monatFenster : fenster;
 
   let plan: Awaited<ReturnType<typeof listCourseWeek>>;
   try {
-    plan = await listCourseWeek(client, studioId, fenster.von, fenster.bis);
+    plan = await listCourseWeek(client, studioId, abfrage.von, abfrage.bis);
   } catch (fehler) {
     return (
       <Seite titel="Kurse">
@@ -69,32 +87,17 @@ export default async function KursePage({
   }
 
   const gruppen = nachTagenGruppieren(plan.sessions, fenster.von, plan.timezone);
+  const heute = ortszeitAlsDatum(new Date(), plan.timezone);
+  // Aus der Woche in den Monat ihres Donnerstags, aus dem Monat in dessen
+  // erste Woche -- der Umschalter verliert den Ort nicht.
+  const wocheHref =
+    ansicht === "monat" ? `${basis}?woche=${monatFenster.monat}-01` : `${basis}?woche=${fenster.montag}`;
+  const monatHref = `${basis}?ansicht=monat&monat=${monatFenster.monat}`;
 
   return (
     <Seite titel="Kurse">
       <div className={styles.wochenleiste}>
-        <nav className={styles.wochenwahl} aria-label="Woche wählen">
-          {/* <a>, kein <Link> -- dritter Fall derselben Sache, nachgezogen
-              am 17. September. Nexts Client-Router laesst einen Wechsel,
-              der nur den Suchparameter aendert, im Produktionsbau ins
-              Leere laufen: das Termindetail musste am 6. September
-              wechseln, die Mitgliederliste heute frueher, und im CI-Lauf
-              35269314873 blieb hier der Kursplan nach einem Klick auf
-              "Vorige Woche" auf derselben Woche stehen.
-
-              Das ist kein Testproblem: wer im Studio auf die Vorwoche
-              klickt und dieselbe Woche sieht, klickt noch einmal. Ein
-              volles Dokument zu laden ist hier ohnehin richtig -- die
-              Seite traegt keinen Browserzustand, der verlorenginge, und
-              die Woche steht in der Adresse. */}
-          <a className={styles.secondary} href={`${basis}?woche=${fenster.vorige}`}>
-            ← Vorige Woche
-          </a>
-          <span className={styles.wochenTitel}>{fenster.titel}</span>
-          <a className={styles.secondary} href={`${basis}?woche=${fenster.naechste}`}>
-            Nächste Woche →
-          </a>
-        </nav>
+        <AnsichtUmschalter ansicht={ansicht} wocheHref={wocheHref} monatHref={monatHref} />
         <div className={styles.rowActions}>
           <Link className={styles.secondary} href={`${basis}/vorlagen`}>
             Vorlagen verwalten
@@ -105,8 +108,71 @@ export default async function KursePage({
         </div>
       </div>
 
-      {gruppen.map((gruppe) => (
-        <Abschnitt key={gruppe.localDay} titel={gruppe.ueberschrift}>
+      {ansicht === "monat" ? (
+        <>
+          <nav className={styles.wochenwahl} aria-label="Monat wählen">
+            <Blaettern
+              href={`${basis}?ansicht=monat&monat=${monatFenster.vorige}`}
+              label="Voriger Monat"
+              richtung="zurueck"
+            />
+            <span className={styles.wochenTitel}>{monatFenster.titel}</span>
+            <Blaettern
+              href={`${basis}?ansicht=monat&monat=${monatFenster.naechste}`}
+              label="Nächster Monat"
+              richtung="vor"
+            />
+          </nav>
+          <Monatsraster
+            basis={basis}
+            tage={kalenderTage(
+              monatFenster.erster,
+              monatFenster.tage,
+              heute,
+              plan.sessions,
+              monatFenster.monat,
+            )}
+          />
+        </>
+      ) : (
+        <>
+          <nav className={styles.wochenwahl} aria-label="Woche wählen">
+            {/* <a>, kein <Link> -- dritter Fall derselben Sache, nachgezogen
+                am 17. September. Nexts Client-Router laesst einen Wechsel,
+                der nur den Suchparameter aendert, im Produktionsbau ins
+                Leere laufen: das Termindetail musste am 6. September
+                wechseln, die Mitgliederliste heute frueher, und im CI-Lauf
+                35269314873 blieb hier der Kursplan nach einem Klick auf
+                "Vorige Woche" auf derselben Woche stehen.
+
+                Das ist kein Testproblem: wer im Studio auf die Vorwoche
+                klickt und dieselbe Woche sieht, klickt noch einmal. Ein
+                volles Dokument zu laden ist hier ohnehin richtig -- die
+                Seite traegt keinen Browserzustand, der verlorenginge, und
+                die Woche steht in der Adresse.
+
+                Seit der Testnotiz 25.09. (#1) Pfeile statt Textpillen, wie
+                in der App; der Name steht im aria-label (Kalender.tsx). */}
+            <Blaettern
+              href={`${basis}?woche=${fenster.vorige}`}
+              label="Vorige Woche"
+              richtung="zurueck"
+            />
+            <span className={styles.wochenTitel}>{fenster.titel}</span>
+            <Blaettern
+              href={`${basis}?woche=${fenster.naechste}`}
+              label="Nächste Woche"
+              richtung="vor"
+            />
+          </nav>
+          <Wochenstreifen
+            tage={kalenderTage(fenster.montag, 7, heute, plan.sessions)}
+          />
+        </>
+      )}
+
+      {ansicht === "monat" ? null : gruppen.map((gruppe) => (
+        <Abschnitt key={gruppe.localDay} id={`tag-${gruppe.localDay}`} titel={gruppe.ueberschrift}>
           {gruppe.sessions.length === 0 ? (
             // Kein Zustand-Baustein: ein Tag ohne Kurse ist keine leere
             // Liste, die einen naechsten Schritt braucht, sondern eine

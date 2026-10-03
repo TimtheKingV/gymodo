@@ -41,7 +41,7 @@ const uuid = z.string().uuid();
 
 /**
  * Die Nebenbelastung eines Modells (Cardio-Spec 3.1b): alle vier Felder
- * oder keines -- dieselbe Regel wie der Constraint aus 0045, hier nur
+ * oder keines -- dieselbe Regel wie der Constraint aus 0046, hier nur
  * frueher und mit einer Meldung, die im Formular etwas taugt.
  */
 const nebenbelastungFelder = {
@@ -180,7 +180,7 @@ export async function updateEquipmentModel(
   if (werte.loadMax !== undefined) zeile.load_max = werte.loadMax;
   // Die Nebenbelastung wird als Ganzes gesetzt oder als Ganzes geloescht
   // (null in allen vier Feldern) -- pruefeNebenbelastung laesst nichts
-  // dazwischen durch, und der Constraint aus 0045 auch nicht.
+  // dazwischen durch, und der Constraint aus 0046 auch nicht.
   if (werte.secondaryUnit !== undefined) {
     zeile.secondary_unit = werte.secondaryUnit;
     zeile.secondary_step = werte.secondaryStep ?? null;
@@ -363,6 +363,54 @@ export async function createExercise(
     throw new DomainError("internal", error?.message ?? "Uebung nicht angelegt.");
   }
   return { id: data.id };
+}
+
+export const exercisePatchSchema = z
+  .object({
+    name: z.string().trim().min(1, "Die Uebung braucht einen Namen."),
+    /** Dieselben drei Felder wie beim Anlegen (exerciseInputSchema). */
+    volumeKind: volumeKindSchema,
+    targetMin: z.number().int().positive("Der Korridor beginnt bei mindestens eins."),
+    targetMax: z.number().int().positive(),
+  })
+  .refine((werte) => werte.targetMax >= werte.targetMin, {
+    message: "Das obere Ende des Korridors liegt unter dem unteren.",
+  });
+
+/**
+ * Name, Umfangsart und Korridor einer bestehenden Uebung aendern -- bis
+ * hierher liess sich eine Uebung nur anlegen und loesen, ein Tippfehler im
+ * Namen hiess: neu anlegen und das Video noch einmal hochladen.
+ *
+ * Die Aenderung gilt fuer die Uebung, nicht fuer eine Verknuepfung: haengt
+ * dieselbe Uebung an mehreren Modellen, heisst sie danach ueberall so.
+ */
+export async function updateExercise(
+  client: SupabaseClient,
+  exerciseId: string,
+  patch: z.input<typeof exercisePatchSchema>,
+): Promise<void> {
+  const werte = parseOrThrow(exercisePatchSchema, patch);
+  const userId = await requireUserId(client);
+
+  const { data: uebung } = await client
+    .from("exercises")
+    .select("studio_id")
+    .eq("id", exerciseId)
+    .maybeSingle<{ studio_id: string }>();
+  if (!uebung) throw new DomainError("not_found", "Diese Uebung gibt es nicht.");
+  await requireStudioStaff(client, uebung.studio_id, userId);
+
+  const { error } = await client
+    .from("exercises")
+    .update({
+      name: werte.name,
+      volume_kind: werte.volumeKind,
+      target_min: werte.targetMin,
+      target_max: werte.targetMax,
+    })
+    .eq("id", exerciseId);
+  if (error) throw new DomainError("internal", error.message);
 }
 
 /**
