@@ -50,7 +50,7 @@ anfängt, dreht die Grenzen, bevor der Takt steht.
   `belastungMinimum`; `ModellBelastungRad.test.tsx` — keine Spalte
   „Minimum“, `loadMin` folgt dem Schritt, Schritt ist die erste Spalte.
 - E2E: `radWaehlen(page, "Minimum", …)` entfällt in `trainerportal.spec.ts`
-  und `einrichten.spec.ts`; die Zusammenfassung zeigt „ab 2,5 kg“.
+  und `einrichten.spec.ts`; der Test wählt Schritt 5, die Zusammenfassung zeigt „ab 5,0 kg“.
 
 ---
 
