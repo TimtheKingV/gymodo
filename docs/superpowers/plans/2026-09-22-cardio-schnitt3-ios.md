@@ -214,15 +214,34 @@ Das Satzziel aus `Einstellungen.satzZiel` (Vorgabe 3) entscheidet, wann nach dem
 
 ## Task 10: Doku und Abnahme
 
-- [ ] `docs/superpowers/specs/2026-08-30-designsystem.md` §7: Fußnote, dass die Rastung aus `load_step` kommt und das zweite Rad je Umfangsart liest. Kernflow-Spec Abschnitt 5 (Wertrad): Fußnote auf diesen Plan.
-- [ ] Manuelle Abnahme gegen das lokale Backend mit einem Laufband (kmh, pct, Dauerlauf 15–20 min) und einer Beinpresse: Scan → Satz → Pause/Entscheidung → Abschluss → Home. Befund in `docs/superpowers/plans/…-cardio-schnitt3-abnahme.md` wie bei den vorigen Schnitten.
-- [ ] Abschnitt „Stand" hier, Verweis in der Spec (Abschnitt 14: „(c) iOS, umgesetzt").
+- [x] `docs/superpowers/specs/2026-08-30-designsystem.md` §7: Fußnote, dass die Rastung aus `load_step` kommt und das zweite Rad je Umfangsart liest. Kernflow-Spec Abschnitt 5 (Wertrad): Fußnote auf diesen Plan.
+- [x] Manuelle Abnahme gegen das lokale Backend mit einem Laufband (kmh, pct, Dauerlauf 15–20 min) und einer Beinpresse: Scan → Satz → Pause/Entscheidung → Abschluss → Home. Befund in `docs/superpowers/plans/…-cardio-schnitt3-abnahme.md` wie bei den vorigen Schnitten.
+- [x] Abschnitt „Stand" hier, Verweis in der Spec (Abschnitt 14: „(c) iOS, umgesetzt").
+
+## Stand
+
+Umgesetzt am 30. September bis 3. Oktober 2026, ein Commit je Task plus ein Abnahme-Fix (`7eb58a0` … `18a731e`). iOS-Suite: 809 Tests in 85 Suiten grün auf dem iPhone 17 Pro (Ausgangsstand 735). Abnahme: `2026-10-01-cardio-schnitt3-abnahme.md`.
+
+Abweichungen vom Plan, jeweils im Commit begründet:
+
+- **Task 2:** `SetWrite` liest `weightKg`/`reps` als Rückfall. Ohne ihn dekodierte eine vor dem Update geschriebene `pending-writes.json` nicht mehr, und die gepufferten Sätze wären verloren, bevor der Server-Alias sie überhaupt sieht.
+- **Task 4/5:** Der Vorschlag im Rückblick trägt die Einheit („Vorschlag · +2,5 kg"), wie der Plan es verlangt — an der Beinpresse ist das eine sichtbare Änderung im Drawer. Der Satzpfad selbst ist pixelgleich.
+- **Task 5:** Die Breite der Umfangsspalte folgt der Textlänge der Werteliste, nicht der Umfangsart. Die Nebenbelastungszeile heißt nach `LoadUnit.reglername` („Neigung", „Trittfrequenz", „Tempo" …) statt nach `kurz`.
+- **Task 7:** `.halten` sagt „Gewicht halten" / „Tempo halten" (über `reglername`) statt „Belastung halten". Negative Deltas tragen U+2212.
+- **Task 9:** `HomeZeilen.veraenderung(_:einheit:)` schreibt keine Einheit („+0,5"), weil sie direkt am aktuellen Wert davor steht; so bleibt die Beinpresse bei „80,0 kg +15,0".
+- **Abnahme:** Vorschlag im Abschluss zweizeilig, festes Ziel als einzelne Zahl.
+
+## Offene Punkte
+
+1. **Migrationsnummer kollidiert mit `master`.** `master` trägt seit PR #30 `0045_mitarbeiter_einladung.sql`, dieser Branch `0045_belastung_umfang.sql`. Supabase versioniert nach dem Präfix — eine der beiden muss vor dem Merge umnummeriert werden (DB, nicht dieser Schnitt).
+2. **PR #25 ist gegen `master` im Konflikt** (`mergeable: CONFLICTING`), in `apps/web/app/portal/actions.ts`, `geraete/page.tsx`, `geraete/[modelId]/uebungen/page.tsx`, `UebungFormular.tsx` und `ModellGewichtRad.tsx` (auf master geändert, hier umbenannt). Der Branch liegt 21 Commits hinter `master`. Portal-Arbeit, nicht dieser Schnitt.
+3. `apps/ios-member` ist zwischen `master` und diesem Branch konfliktfrei.
 
 ## Selbstprüfung
 
-- [ ] `grep -rn "weightKg\|targetReps\|weightStepKg" FitnessMember FitnessMemberTests` trifft nur noch Körpergewicht (`Messwert`, `Ziele`, `Gewicht…`, `latestWeight`).
-- [ ] Beinpresse: Screenshot vor/nach identisch.
-- [ ] Alle Suiten grün auf iPhone 17 Pro.
+- [x] `grep -rn "weightKg\|targetReps\|weightStepKg" FitnessMember FitnessMemberTests` trifft nur noch Körpergewicht (`Messwert`, `Ziele`, `Gewicht…`, `latestWeight`).
+- [x] Beinpresse: Screenshot vor/nach identisch.
+- [x] Alle Suiten grün auf iPhone 17 Pro.
 
 ## Was dieser Schnitt NICHT tut
 

@@ -162,6 +162,8 @@ Zwei Randfälle:
 - **`maxWeightKg == nil`** (die Spalte ist nullable): Das Rad endet bei `minWeightKg + 200 · weightStepKg`, und es gibt kein Anschlag-Feedback, weil kein dokumentierter Anschlag existiert. Der Server rechnet an dieser Stelle mit 9999 — als Radlänge wäre das absurd.
 - **Wiederholungen:** 1 – 40, Schritt 1. Die Datenbank ließe bis 1000 zu; ein Rad ist kein Formularfeld, und 1–40 deckt jedes reale Kraft- und Ausdauerschema ab.
 
+> **Nachtrag (Cardio-Geräte, Oktober 2026):** Die Felder heißen seit Migration 0045 `loadStep`/`loadMin`/`loadMax` und tragen eine Einheit (`loadUnit`); der Code heißt `Rastwerte.belastung(min:max:schritt:)`. Das zweite Rad ist das Umfangsrad: `Rastwerte.umfang(volumeKind)` liefert Wiederholungen 1–40, Sekunden 30–5400 („20:00") oder Meter 100–20 000 („2.000"). Eine Nebenbelastung (Neigung am Laufband) steht als 44-pt-Stepperzeile unter den Rädern, kein drittes Rad. Siehe `../plans/2026-09-22-cardio-schnitt3-ios.md`.
+
 ### 5.5 Feedback
 
 - **Rastung:** `.sensoryFeedback(.selection, trigger: auswahl)`. Sichtbar ist sie ohnehin, weil sich die Zahl ändert — Haptik ist damit nie die einzige Rückmeldung (§6).
