@@ -173,15 +173,28 @@ Eigener Ordner neben `einstieg/` (die Landeseite ist weder Einstieg noch Schreib
 
 | Baustein | Art | Kern |
 |---|---|---|
-| `Kopf.tsx` | Client (nur Menü) | sticky Pille 54 px, Radius 16, Glas auf `bg`-Basis (`rgba(10,11,13,.72)` + `backdrop-filter: blur(22px) saturate(1.2)`), `@supports not (backdrop-filter)` → `surface`. Mobilmenü als wachsende Pille (.34s `cubic-bezier(.16,1,.3,1)`), `aria-expanded`, Escape schließt. Setzt `--kopf-hoehe` per `ResizeObserver` |
-| `Held.tsx` | Client (dünn) | Höhe `calc(var(--held-hoehe, 100svh))`. `useLayoutEffect` setzt `--held-hoehe = innerHeight px` einmal, neu nur bei `orientationchange` +250 ms. Video nur bei `(max-width: 989px)` ∧ `!prefers-reduced-motion` ∧ sichtbar (IO .15), Poster als `next/image priority`. **Pause-Knopf** sichtbar (WCAG 2.2.2) |
-| `Laufband.tsx` | Server + CSS | Inhalt 2×, zweite Hälfte `aria-hidden`; `@keyframes` `translate3d(-50%)` 36 s mobil / 45 s; Pause per IO in winzigem Client-Wrapper; reduced-motion → statische Liste, umbrechend statt abgeschnitten |
-| `OhneMit.tsx` | Client | Gpaths Clarity. Positionen als CSS-Variablen je Pille, mobil nur 10. Umschalten per IO-Sonde (`rootMargin: 0px 0px -42% 0px`). **Anders als Gpath:** der Schalter ist ein echter `button role="switch"` und lässt sich auch tippen, Animation nur über `transform`/`opacity` (kein `left`, Blur nur auf einer Ebene). Feed-Takt 1100/480 ms, Kurve `cubic-bezier(.22,1,.36,1)`. reduced-motion: Zustandswechsel ohne Flug, Feed als stille Liste (§6) |
-| `Schritte.tsx` | Server | `<ol>`, mobil Scroll-Snap-Slider (wie Gpath-Produktseite) mit Nummern-Indikatoren 44 px (§4 Trefferfläche), Desktop 3 Spalten |
-| `VideoOverlay.tsx` | Client | natives `<dialog>` mit `showModal()` → Fokusfalle, Escape und `inert` für den Rest gibt es gratis. Setzt `data-overlay-offen` auf `<html>`; Kopf und Kaufleiste blenden darüber aus. `object-fit: contain`, nicht `cover` |
-| `Fragen.tsx` | Server | `details/summary`, Antworten als `<p>`; `FAQPage`-JSON-LD |
+| `Kopf.tsx` | Client (nur Menü) | sticky Pille 54 px, Radius 16, Glas auf `bg`-Basis (`rgba(10,11,13,.72)` + `backdrop-filter: blur(22px) saturate(1.2)`), `@supports not (backdrop-filter)` und `prefers-reduced-transparency: reduce` → `surface` deckend. Mobilmenü als wachsende Pille, **aber über `clip-path`, nicht `height`**: das Menü liegt fertig ausgelegt absolut unter der Pille und wird von `inset(0 0 calc(100% - 54px) 0 round 16px)` auf `inset(0 round 16px)` aufgezogen — kein Layout pro Frame, kein negativer `margin-bottom` gegen Verschiebung. 240 ms `var(--ease-out)` auf, 180 ms zu, gleicher Weg zurück; Menüeinträge `opacity` + `translateY(-6px)` 200 ms, 40 ms später. CSS-Transition an `data-offen`, damit Auf/Zu mitten im Lauf umkehrt. `aria-expanded`, Escape schließt, Fokus zurück auf den Knopf. **Kein `ResizeObserver`:** `--kopf-hoehe` ist eine CSS-Konstante (54 + 2 × 8 px), weil die Pille feste Pixelhöhe hat |
+| `Held.tsx` | Server; Video-Teil Client | Höhe `min-height: 100vh; min-height: 100svh`. **Kein JS-Höhenschloss:** `svh` ist die kleine Viewporthöhe und ändert sich beim Ein-/Ausfahren der Safari-Leiste nicht — genau das, was Gpaths `--hero-height-lock` von Hand nachbaut (dort zusätzlich wegen der Ansageleiste, die wir nicht haben). Keine Einblendanimation. Video (E6: optionale Prop) nur bei `(max-width: 989px)` ∧ `!prefers-reduced-motion` ∧ sichtbar (IO .15), sonst bleibt das Poster (`next/image priority`). **Pause-Knopf** sichtbar, sobald ein Video läuft (WCAG 2.2.2, Schleife > 5 s) |
+| `Laufband.tsx` | Server + CSS | **Etappe 1 ruhend (E7):** statische, umbrechende Liste. Ab Etappe 3 Prop `laufend`: Inhalt 2×, zweite Hälfte `aria-hidden`; `@keyframes` `translate3d(-50%)` `linear` 36 s mobil / 45 s (CSS-Animation, läuft abseits des Hauptthreads); Pause per IO außerhalb des Viewports **und ein sichtbarer Pause-Knopf** (WCAG 2.2.2: läuft > 5 s neben anderem Inhalt; Gpath hat keinen). reduced-motion → die ruhende Liste |
+| `OhneMit.tsx` | Client | Gpaths Clarity, die eine Inszenierung der Seite. Interaktionsmodell siehe 7.2.2 (Prototyp-Entscheid). Gemeinsam für alle Varianten: Pillen fliegen über `transform` (`translate(--sx,--sy) scale(.55) rotate(±24–32°)`) + `opacity` als **CSS-Transition, nicht Keyframes** — Hin- und Rückweg kehren mitten im Flug um. Hinweg `transform` 550 ms / `opacity` 400 ms `var(--ease-out)`, Staffel 0–140 ms (≈ 15 ms je Pille); Rückweg ohne Staffel. Mobil 10 Pillen, Positionen als Inline-Transform je Pille, nicht als Variable am Elternelement (sonst Stilneuberechnung aller Kinder). **Unschärfe nicht animieren:** zwei gestapelte Hintergrundebenen, eine statisch `blur(6px) saturate(.75) scale(1.08)`, eine scharf, Überblendung nur über `opacity` 450 ms — Gpath animiert `filter` auf einer großen Fläche, das kostet Paint in jedem Frame. Schalterknopf über `translateX`, nicht `left`; Spur aus `--line` → `--accent`. Feed: 4 Einträge, halten 1100 ms, gleiten 480 ms `var(--ease-in-out)` (Bewegung auf der Fläche, kein Ein-/Austritt). **Aktueller Eintrag in Originalgröße, Nachbarn `scale(.55)`** statt Gpaths aktuell `scale(1.12)` — hochskalierter Text wird unscharf. Feed läuft **einen Durchgang** und steht dann auf dem letzten Eintrag; „Ohne“ stoppt ihn (WCAG 2.2.2: der Schalter ist der Stopp-Mechanismus). reduced-motion: Zustandswechsel ohne Flug, Feed als stille Liste aller vier Einträge (§6) |
+| `Schritte.tsx` | Server + kleiner Client-Teil | `<ol>`, mobil Scroll-Snap-Slider (wie Gpath-Produktseite) mit Nummern-Indikatoren 44 px (§4 Trefferfläche), Desktop 3 Spalten. Keine eigene Animation — das native Scrollen liefert Impuls und Einrasten. Aktiver Indikator per IO je Folie (`threshold .6`) statt Gpaths „Scroll-Ende + 150 ms“-Timer; Tipp auf Indikator `scrollIntoView({ behavior })` mit `auto` bei reduced-motion |
+| `VideoOverlay.tsx` | Client, **nicht in Etappe 1** (E6) | natives `<dialog>` mit `showModal()` → Fokusfalle, Escape und `inert` für den Rest gibt es gratis. Setzt `data-overlay-offen` auf `<html>`; Kopf und Kaufleiste blenden darüber aus. `object-fit: contain`, nicht `cover` |
+| `Fragen.tsx` | Server | `details/summary`, Antworten als `<p>`; `FAQPage`-JSON-LD. Keine Höhenanimation (wie Gpath); nur der Pfeil dreht wie `.nochZuTunKopf::after` im Portal, 160 ms `ease-out` |
 | `Kaufleiste.tsx` | Client | siehe 7.3 |
 | `Fuss.tsx` | Server | Rechtslinks offen, Produktgrenze |
+
+#### 7.2.1 Bewegung — Prüfung mit `apple-design` und `animate` (3. Oktober)
+
+- **Kurven als Tokens in `globals.css`**, nicht als Literale je Baustein (heute gibt es keine): `--ease-out: cubic-bezier(.23,1,.32,1)` (ersetzt Gpaths `.22,1,.36,1` und `.16,1,.3,1`, praktisch gleich), `--ease-in-out: cubic-bezier(.77,0,.175,1)` (Bewegung auf der Fläche), `--ease-drawer: cubic-bezier(.32,.72,0,1)` (Kaufleiste). **Gpaths `cubic-bezier(.4,0,.2,1)` entfällt** — die Material-Standardkurve beginnt zu träge für eine Leiste, die auf Scrollrichtung reagiert.
+- **reduced-motion = Zustandswechsel** (Designsystem §6). Die globale Regel in `globals.css` (`transition-/animation-duration: .01ms !important`) bleibt und gilt auch hier; die Bausteine sehen keine eigenen „sanfteren“ Ersatzanimationen vor, die diese Regel ohnehin überschreiben würde. Information geht dabei nie verloren (Feed als Liste, Laufband als Liste, Video als Poster).
+- **Unterbrechbarkeit:** Alles, was der Nutzer mehrfach in kurzer Folge auslöst (Menü, Kaufleiste, Ohne/Mit), läuft über **CSS-Transitions an einem Datenattribut** — sie setzen vom aktuellen Wert aus neu an. Keyframes nur für Endlosbewegung (Laufband ab Etappe 3). Keine Bewegungsbibliothek; nichts hier ist gestengesteuert mit Freigabegeschwindigkeit, also keine Federn nötig.
+- **Nur `transform`, `opacity`, `clip-path`.** Kein `height` (Menü), kein `left` (Schalter), kein animiertes `filter` (Ohne/Mit).
+- **Material:** Glas nur für Kopf und Kaufleiste, nie Glas auf Glas (Menü öffnet in derselben Pille). `prefers-reduced-transparency: reduce` und `prefers-contrast: more` → deckende `surface` mit `--line`-Rahmen.
+- **Keine Einblendanimationen beim Scrollen** (kein „fade-up“ je Section). Gpaths Ruhe außerhalb der einen Inszenierung ist Teil der Wirkung (§3, Schluss).
+
+#### 7.2.2 Ohne/Mit — Interaktionsmodell
+
+Offen bis zum Prototyp-Vergleich (siehe Abschnitt 9, E9).
 
 Typo: Hero-H1 nach dem vorhandenen `.titel` (Black, Versalien, −0.045em), mobil `clamp(44px, 13vw, 92px)`. Buttons nach §4: Hauptaktion 64 px/Radius 16 statt Gpaths 47 px/10.
 
@@ -190,7 +203,7 @@ Typo: Hero-H1 nach dem vorhandenen `.titel` (Black, Versalien, −0.045em), mobi
 ```tsx
 <Kaufleiste
   anker="held-aktion"            // id des Haupt-CTA; Leiste erscheint, wenn dieser oben raus ist
-  ende="landung-fuss"            // id des Fußes; Leiste verschwindet, wenn er sichtbar wird
+  verdecker={["landung-cta", "landung-fuss"]}  // weicht, solange eines davon sichtbar ist
   titel="gymodo"
   merkmale={["Tap am Gerät", "Deine Werte", "Für iPhone"]}
   bild={{ src, alt }}            // nur ≥ 990 px
@@ -203,12 +216,15 @@ Typo: Hero-H1 nach dem vorhandenen `.titel` (Black, Versalien, −0.045em), mobi
 **Logik** — reine Funktion `naechsterZustand(vorher, messung)` in `kaufleiste.logik.ts`, mit Vitest testbar (die Repo-Konvention „testgetrieben" gilt):
 
 - `ankerVorbei` per **IntersectionObserver** auf den Anker (`rootMargin: -${kopfHoehe}px 0px 0px 0px`; vorbei = nicht schneidend ∧ `boundingClientRect.top < 0`). Ersetzt Gpaths Messung in jedem Frame.
-- `endeSichtbar` per IO auf den Fuß (`threshold: 0.15`).
-- Richtung: `scroll`-Listener, rAF-gedrosselt, `delta = y - letztesY`; `delta > 4` → `richtung = runter`, `delta < -4` → `hoch`. Sichtbar = `ankerVorbei ∧ ¬endeSichtbar ∧ (richtung = hoch ∨ y - ankerUnterkante < 24)`.
-- `resize`/`load`: nur `kopfHoehe` neu; die IOs rechnen selbst.
+- `verdeckt` per IO auf alle `verdecker` (`threshold: 0.15`), wahr, solange mindestens einer schneidet.
+- Richtung: `scroll`-Listener (`passive`), rAF-gedrosselt, `y` auf `[0, scrollHöhe − Viewport]` begrenzt (iOS-Gummiband am Rand liefert sonst negative Werte und kippt die Richtung). Richtung wechselt erst nach **12 px Weg am Stück** in die neue Richtung (Hysterese statt Gpaths 4 px je Frame — bei 120 Hz und Impulsscrollen flackert die Leiste sonst am Umkehrpunkt).
+- **Konkurrenten statt nur Fuß:** `ende` wird zu `verdecker: string[]` — ids aller Elemente, bei deren Sichtbarkeit die Leiste weicht: der Fuß **und jede weitere Hauptaktion** (CTA-Section „App laden“ nach „So geht's“). Sonst stehen dort zwei Akzentflächen im Viewport (Regel §4.2).
+- **Fokus hält die Leiste:** Liegt der Fokus in der Leiste (`:focus-within`), bleibt sie sichtbar, auch beim Runterscrollen per Tastatur — sonst verschwände das fokussierte Element unter `inert`.
+- Sichtbar = `ankerVorbei ∧ ¬verdeckt ∧ (fokusDrin ∨ richtung = hoch ∨ y − ankerUnterkante < 24)`.
+- `resize`/`load`: nichts neu messen; `kopfHoehe` ist eine CSS-Konstante, die IOs rechnen selbst.
 
 **Darstellung** (Live-Werte aus dem Brief, auf unsere Tokens übertragen):
-`position: fixed; left/right: 1.2rem; bottom: calc(1.2rem + env(safe-area-inset-bottom)); max-width: 42rem; margin-inline: auto` (≥ 990 px: 44rem/1.6rem). Glas `rgba(20,22,26,.72)` (= `surface` mit Deckkraft) + `blur(20px)`, Rahmen 1 px `--line`, Radius 20 px. Versteckt `translateY(110%)`, Übergang `transform 350ms cubic-bezier(.4,0,.2,1)`; Erst-Einblendung eigene Keyframe 450 ms. reduced-motion → nur `opacity` 150 ms.
+`position: fixed; left/right: 1.2rem; bottom: calc(1.2rem + env(safe-area-inset-bottom)); max-width: 42rem; margin-inline: auto` (≥ 990 px: 44rem/1.6rem). Glas `rgba(20,22,26,.72)` (= `surface` mit Deckkraft) + `blur(20px)`, Rahmen 1 px `--line`, Radius 20 px. Versteckt `translateY(calc(100% + 1.2rem + env(safe-area-inset-bottom)))` — Gpaths `110%` reicht bei Randabstand plus Safe Area nicht ganz aus dem Bild. **Eine** Transition für alle Wechsel: Einblenden 240 ms `var(--ease-drawer)`, Ausblenden 200 ms auf demselben Weg nach unten. **Keine eigene Erst-Einblendung als Keyframe** (Gpath 450 ms): Keyframes setzen bei Unterbrechung auf null zurück, und genau beim ersten Erscheinen kehrt der Nutzer oft gleich wieder um. Die Leiste wird einmal pro Besuch oft ein- und ausgeblendet (Größenordnung zehnmal), daher unter 300 ms. reduced-motion → Zustandswechsel (7.2.1).
 **Barrierefreiheit:** versteckt = `inert` + `aria-hidden` (beides, nicht nur `aria-hidden` wie Gpath); als `<aside aria-label="Kaufen">`. Kollidiert nie mit dem Overlay (`html[data-overlay-offen] .kaufleiste { visibility: hidden }`).
 **Preis-Synchronität:** Hauptpreis und Leiste lesen denselben Server-Wert (7.4). Gpath hält ihn nicht synchron; der Streichpreis steht dort im DOM als „0,00 zł".
 
