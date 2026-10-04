@@ -165,6 +165,12 @@ struct AbspielSensorQuelleTests {
 
         sut.verbinden()
         sut.verbinden() // sofort erneut: lauf existiert schon, muss folgenlos bleiben
+        // Erst auf das erste .verbunden warten: unter Last (paralleler Build)
+        // reichen feste 20 ms nicht, bis der Sammler es gesehen hat. Die
+        // Wartezeit danach gibt einem faelschlichen zweiten die Gelegenheit.
+        try await warteBis {
+            sammler.ereignisse.contains { if case .zustand(.verbunden) = $0 { true } else { false } }
+        }
         try await Task.sleep(for: .milliseconds(20))
         let verbundenNachStart = sammler.ereignisse.filter {
             if case .zustand(.verbunden) = $0 { return true }
