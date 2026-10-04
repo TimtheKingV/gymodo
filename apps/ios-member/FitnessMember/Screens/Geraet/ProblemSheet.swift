@@ -21,7 +21,7 @@ struct ProblemSheet: View {
                     Text("Was ist los?")
                         .font(DesignSystem.Typography.uebungsname)
                         .foregroundStyle(DesignSystem.Color.text)
-                    Text("Wird an diesem Satz vermerkt. Solange etwas gemeldet ist, schlägt gymodo keine Steigerung vor.")
+                    Text("Wird an diesem Satz vermerkt. Solange etwas gemeldet ist, schlägt Gymtavo keine Steigerung vor.")
                         .font(.system(size: 13))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                         .lineSpacing(3)
@@ -71,7 +71,7 @@ struct ProblemSheet: View {
                 .font(.system(size: 13))
                 .foregroundStyle(DesignSystem.Color.textMuted)
             Spacer()
-            Text(Zahlformat.gewichtMitEinheit(modell.gewicht))
+            Text(Zahlformat.belastungMitEinheit(modell.belastung, modell.loadUnit))
                 .font(DesignSystem.Typography.wertSekundaer)
                 .foregroundStyle(DesignSystem.Color.text)
         }

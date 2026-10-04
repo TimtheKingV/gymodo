@@ -27,14 +27,18 @@ targets:
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ZJP24W38LQ
         GENERATE_INFOPLIST_FILE: true
+        # Der Asset-Katalog traegt bisher nur die Wortmarke; ohne leeren
+        # Namen sucht actool ein AppIcon und bricht den Build ab.
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
         INFOPLIST_KEY_UILaunchScreen_Generation: true
         TARGETED_DEVICE_FAMILY: "1"
-        INFOPLIST_KEY_NSCameraUsageDescription: "gymodo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen."
-        INFOPLIST_KEY_NFCReaderUsageDescription: "gymodo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen."
+        INFOPLIST_KEY_CFBundleDisplayName: Gymtavo
+        INFOPLIST_KEY_NSCameraUsageDescription: "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen."
+        INFOPLIST_KEY_NFCReaderUsageDescription: "Gymtavo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen."
         # Gilt je Target und steht damit auch im Release-Build, obwohl der
         # Code dahinter nur im Debug-Build existiert. Ohne den Schluessel
         # beendet iOS die App beim ersten CBCentralManager.
-        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "gymodo verbindet sich mit deinem Bewegungssensor, um Wiederholungen zu erfassen."
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Gymtavo verbindet sich mit deinem Bewegungssensor, um Wiederholungen zu erfassen."
         # INFOPLIST_KEY_<Key> deckt bei GENERATE_INFOPLIST_FILE nur Apples
         # bekannte Info.plist-Schluessel ab (z.B. NSCameraUsageDescription).
         # Fuer eigene Schluessel (SUPABASE_URL etc.) wird laut Apple-Doku eine

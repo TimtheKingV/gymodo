@@ -56,7 +56,7 @@ beforeAll(async () => {
 
   const { data: model, error: modelError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioA, name: "Kabelzug", weight_step_kg: 5 })
+    .insert({ studio_id: studioA, name: "Kabelzug", load_step: 5 })
     .select("id")
     .single();
   if (modelError) throw modelError;
@@ -67,8 +67,8 @@ beforeAll(async () => {
     .insert({
       studio_id: studioB,
       name: "Fremde Uebung",
-      target_reps_min: 8,
-      target_reps_max: 12,
+      target_min: 8,
+      target_max: 12,
     })
     .select("id")
     .single();
@@ -82,8 +82,8 @@ describe("RLS auf exercises", () => {
     const { error } = await client.from("exercises").insert({
       studio_id: studioA,
       name: "Breiter Griff",
-      target_reps_min: 8,
-      target_reps_max: 12,
+      target_min: 8,
+      target_max: 12,
     });
     expect(error).toBeNull();
   });
@@ -93,8 +93,8 @@ describe("RLS auf exercises", () => {
     const { error } = await client.from("exercises").insert({
       studio_id: studioA,
       name: "Verboten",
-      target_reps_min: 8,
-      target_reps_max: 12,
+      target_min: 8,
+      target_max: 12,
     });
     expect(error).not.toBeNull();
   });
@@ -104,8 +104,8 @@ describe("RLS auf exercises", () => {
     const { error } = await client.from("exercises").insert({
       studio_id: studioB,
       name: "Cross-Insert-Verboten",
-      target_reps_min: 8,
-      target_reps_max: 12,
+      target_min: 8,
+      target_max: 12,
     });
     expect(error).not.toBeNull();
 
@@ -150,31 +150,31 @@ describe("RLS auf exercises", () => {
       const { data, error } = await admin
         .from("exercises")
         .insert([
-          { studio_id: studioA, name: "Update-Ziel", target_reps_min: 8, target_reps_max: 12 },
+          { studio_id: studioA, name: "Update-Ziel", target_min: 8, target_max: 12 },
           {
             studio_id: studioA,
             name: "Update-Mitglied-Verboten-Ziel",
-            target_reps_min: 8,
-            target_reps_max: 12,
+            target_min: 8,
+            target_max: 12,
           },
           {
             studio_id: studioA,
             name: "Update-Cross-Verboten-Ziel",
-            target_reps_min: 8,
-            target_reps_max: 12,
+            target_min: 8,
+            target_max: 12,
           },
-          { studio_id: studioA, name: "Delete-Ziel", target_reps_min: 8, target_reps_max: 12 },
+          { studio_id: studioA, name: "Delete-Ziel", target_min: 8, target_max: 12 },
           {
             studio_id: studioA,
             name: "Delete-Mitglied-Verboten-Ziel",
-            target_reps_min: 8,
-            target_reps_max: 12,
+            target_min: 8,
+            target_max: 12,
           },
           {
             studio_id: studioA,
             name: "Delete-Cross-Verboten-Ziel",
-            target_reps_min: 8,
-            target_reps_max: 12,
+            target_min: 8,
+            target_max: 12,
           },
         ])
         .select("id");
@@ -340,8 +340,8 @@ describe("RLS auf equipment_model_exercises", () => {
       .insert({
         studio_id: studioA,
         name: "Mitglied-Verknuepfungsversuch",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       })
       .select("id")
       .single();
@@ -369,8 +369,8 @@ describe("RLS auf equipment_model_exercises", () => {
       .insert({
         studio_id: studioA,
         name: "Eigene Uebung",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       })
       .select("id")
       .single();
@@ -399,38 +399,38 @@ describe("RLS auf equipment_model_exercises", () => {
       const { data: exs, error: exErr } = await admin
         .from("exercises")
         .insert([
-          { studio_id: studioA, name: "Link-Select", target_reps_min: 8, target_reps_max: 12 },
-          { studio_id: studioA, name: "Link-Update", target_reps_min: 8, target_reps_max: 12 },
+          { studio_id: studioA, name: "Link-Select", target_min: 8, target_max: 12 },
+          { studio_id: studioA, name: "Link-Update", target_min: 8, target_max: 12 },
           {
             studio_id: studioA,
             name: "Link-Update-Mitglied-Verboten",
-            target_reps_min: 8,
-            target_reps_max: 12,
+            target_min: 8,
+            target_max: 12,
           },
           {
             studio_id: studioA,
             name: "Link-Update-Cross-Verboten",
-            target_reps_min: 8,
-            target_reps_max: 12,
+            target_min: 8,
+            target_max: 12,
           },
           {
             studio_id: studioA,
             name: "Link-Rehang-Verboten",
-            target_reps_min: 8,
-            target_reps_max: 12,
+            target_min: 8,
+            target_max: 12,
           },
-          { studio_id: studioA, name: "Link-Delete", target_reps_min: 8, target_reps_max: 12 },
+          { studio_id: studioA, name: "Link-Delete", target_min: 8, target_max: 12 },
           {
             studio_id: studioA,
             name: "Link-Delete-Mitglied-Verboten",
-            target_reps_min: 8,
-            target_reps_max: 12,
+            target_min: 8,
+            target_max: 12,
           },
           {
             studio_id: studioA,
             name: "Link-Delete-Cross-Verboten",
-            target_reps_min: 8,
-            target_reps_max: 12,
+            target_min: 8,
+            target_max: 12,
           },
         ])
         .select("id");

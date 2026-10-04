@@ -87,7 +87,7 @@ final class NFCTagLeser {
             guard let url else {
                 TagProtokoll.log.error("NFC: NDEF ohne URI-Datensatz gelesen")
                 Task { @MainActor [beiEnde] in
-                    beiEnde("Auf diesem Aufkleber steht kein gymodo-Code.")
+                    beiEnde("Auf diesem Aufkleber steht kein Gymtavo-Code.")
                 }
                 return
             }
@@ -116,7 +116,7 @@ final class NFCTagLeser {
                 // der Normalfall, kein Fehler.
                 return nil
             case .readerSessionInvalidationErrorSessionTimeout:
-                return "Kein Aufkleber erkannt. Halt die Oberkante deines iPhones direkt an das gymodo-Zeichen."
+                return "Kein Aufkleber erkannt. Halt die Oberkante deines iPhones direkt an das Gymtavo-Zeichen."
             default:
                 // Dieselbe neutrale Antwort wie fuer einen unbekannten Tag
                 // (M1-Spec SS10.4): der Weg dahinter unterscheidet nicht,

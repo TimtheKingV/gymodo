@@ -131,7 +131,7 @@ struct CatalogStoreTests {
         let directory = tempDirectory()
         let writeStore = PendingWriteStore(directory: directory)
         let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: writeStore)
-        let write = PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil))
+        let write = PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10, rir: nil))
         store.enqueue(write)
         #expect(PendingWriteStore(directory: directory).loadAll() == [write])
     }
@@ -140,10 +140,10 @@ struct CatalogStoreTests {
     func flushRemovesSucceeded() async {
         let directory = tempDirectory()
         let loader = FakeBootstrapLoader()
-        let recorded = RecordedSet(id: "r1", studioId: "s1", userId: "u1", sessionId: UUID().uuidString, machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil, problemFlag: false, problemReason: nil, performedAt: "2026-09-01T10:00:00Z")
+        let recorded = RecordedSet(id: "r1", studioId: "s1", userId: "u1", sessionId: UUID().uuidString, machineId: "m1", exerciseId: "ex1", setIndex: 1, load: 80, secondaryLoad: nil, volume: 10, rir: nil, problemFlag: false, problemReason: nil, performedAt: "2026-09-01T10:00:00Z")
         await loader.setPutSetResult(.success(recorded))
         let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: directory))
-        let write = PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil))
+        let write = PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10, rir: nil))
         store.enqueue(write)
         await store.flushPending()
         #expect(store.pendingWrites.isEmpty)
@@ -155,7 +155,7 @@ struct CatalogStoreTests {
         let loader = FakeBootstrapLoader()
         await loader.setPutSetResult(.failure(.offline))
         let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: directory))
-        let write = PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil))
+        let write = PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10, rir: nil))
         store.enqueue(write)
         await store.flushPending()
         #expect(store.pendingWrites == [write])
@@ -166,7 +166,7 @@ struct CatalogStoreTests {
         let directory = tempDirectory()
         let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: directory))
         let a = UUID(), b = UUID()
-        let body = SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil)
+        let body = SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10, rir: nil)
         let a1 = PendingSetWrite(sessionId: a, setId: UUID(), body: body)
         let a2 = PendingSetWrite(sessionId: a, setId: UUID(), body: body)
         let b1 = PendingSetWrite(sessionId: b, setId: UUID(), body: body)
@@ -238,11 +238,11 @@ struct CatalogStoreTests {
         // verworfeneWrites raeumen muss -- sonst erbt das naechste Konto auf
         // demselben Geraet die abgelehnten Vorgaenge des vorigen.
         await loader.setPutSetResult(.failure(.notFound(message: "Geraet nicht gefunden.")))
-        store.enqueue(PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, weightKg: 80, reps: 10, rir: nil)))
+        store.enqueue(PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10, rir: nil)))
         await store.flushPending()
         #expect(store.verworfeneWrites.count == 1)
 
-        store.enqueue(PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m2", exerciseId: "ex2", setIndex: 1, weightKg: 60, reps: 8, rir: nil)))
+        store.enqueue(PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m2", exerciseId: "ex2", setIndex: 1, load: 60, volume: 8, rir: nil)))
 
         store.reset()
 
@@ -476,7 +476,7 @@ struct FlushPendingTests {
             sessionId: UUID(),
             setId: UUID(),
             body: SetWrite(machineId: "m1", exerciseId: "e1", setIndex: 1,
-                           weightKg: 80, reps: 10)
+                           load: 80, volume: 10)
         )
     }
 
@@ -556,7 +556,7 @@ struct FlushPendingTests {
         let erste = beispielWrite
         let zweite = PendingSetWrite(
             sessionId: UUID(), setId: UUID(),
-            body: SetWrite(machineId: "m2", exerciseId: "e2", setIndex: 1, weightKg: 40, reps: 8)
+            body: SetWrite(machineId: "m2", exerciseId: "e2", setIndex: 1, load: 40, volume: 8)
         )
         let loader = ZweiterAufrufPrueftPlatteLoader(verzeichnis: verzeichnis, ersterSetId: erste.setId)
         let catalog = store(loader: loader, directory: verzeichnis)
@@ -580,10 +580,10 @@ struct FlushPendingTests {
         let catalog = store(loader: loader)
         let a = PendingSetWrite(
             sessionId: UUID(), setId: UUID(),
-            body: SetWrite(machineId: "m1", exerciseId: "e1", setIndex: 1, weightKg: 80, reps: 10))
+            body: SetWrite(machineId: "m1", exerciseId: "e1", setIndex: 1, load: 80, volume: 10))
         let b = PendingSetWrite(
             sessionId: UUID(), setId: UUID(),
-            body: SetWrite(machineId: "m2", exerciseId: "e2", setIndex: 1, weightKg: 60, reps: 8))
+            body: SetWrite(machineId: "m2", exerciseId: "e2", setIndex: 1, load: 60, volume: 8))
         catalog.enqueue(a)
         catalog.enqueue(b)
 
@@ -617,7 +617,7 @@ private actor PausableBootstrapLoader: BootstrapLoading {
         }
         return RecordedSet(
             id: "r1", studioId: "s1", userId: "u1", sessionId: sessionId.uuidString,
-            machineId: "m1", exerciseId: "e1", setIndex: 1, weightKg: 80, reps: 10, rir: nil,
+            machineId: "m1", exerciseId: "e1", setIndex: 1, load: 80, secondaryLoad: nil, volume: 10, rir: nil,
             problemFlag: false, problemReason: nil, performedAt: "2026-09-01T10:00:00Z")
     }
 

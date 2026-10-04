@@ -73,7 +73,7 @@ struct SensorZeile: View {
              akku.map { "\($0) %" }].compactMap { $0 }.joined(separator: " · ")
         case .getrennt: "Sensor getrennt, wird neu verbunden …"
         case .bluetoothNichtBereit(.ausgeschaltet): "Bluetooth ist ausgeschaltet"
-        case .bluetoothNichtBereit(.verweigert): "Bluetooth ist für gymodo nicht erlaubt"
+        case .bluetoothNichtBereit(.verweigert): "Bluetooth ist für Gymtavo nicht erlaubt"
         case .bluetoothNichtBereit(.nichtUnterstuetzt): "Dieses Gerät hat kein Bluetooth"
         }
     }

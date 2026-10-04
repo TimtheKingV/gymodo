@@ -20,8 +20,10 @@ struct GesicherterSatz: Equatable, Sendable {
     let sessionId: UUID
     let setId: UUID
     let setIndex: Int
-    let weightKg: Double
-    let reps: Int
+    /// nil an Geraeten, die nicht in Kilogramm belasten (Cardio).
+    let weightKg: Double?
+    /// nil, wenn der Umfang keine Wiederholungen sind (Sekunden, Meter).
+    let reps: Int?
     let problemFlag: Bool
 }
 

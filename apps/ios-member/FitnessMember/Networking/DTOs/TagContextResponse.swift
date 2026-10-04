@@ -12,9 +12,14 @@ struct TagContextResponse: Decodable, Equatable {
         let name: String
         let manufacturer: String?
         let photoUrl: String?
-        let weightStepKg: Double
-        let minWeightKg: Double
-        let maxWeightKg: Double?
+        let loadUnit: LoadUnit
+        let loadStep: Double
+        let loadMin: Double
+        let loadMax: Double?
+        let secondaryUnit: LoadUnit?
+        let secondaryStep: Double?
+        let secondaryMin: Double?
+        let secondaryMax: Double?
     }
 
     struct SettingDefinition: Decodable, Equatable, Identifiable {
@@ -33,8 +38,9 @@ struct TagContextResponse: Decodable, Equatable {
         let id: String
         let name: String
         let description: String?
-        let targetRepsMin: Int
-        let targetRepsMax: Int
+        let volumeKind: VolumeKind
+        let targetMin: Int
+        let targetMax: Int
         let instructionVideoUrl: String?
     }
 
@@ -47,22 +53,28 @@ struct TagContextResponse: Decodable, Equatable {
 
     struct HistoryEntry: Decodable, Equatable {
         let performedOn: String
-        let weightKg: Double
-        let reps: [Int]
+        let load: Double
+        let secondaryLoad: Double?
+        /// Der Umfang je Satz dieses Tages, in der Umfangsart der Uebung.
+        let volume: [Int]
     }
 
     struct Suggestion: Decodable, Equatable {
         struct Inputs: Decodable, Equatable {
-            let targetRepsMin: Int
-            let targetRepsMax: Int
-            let weightStepKg: Double
-            let minWeightKg: Double
-            let maxWeightKg: Double
-            let currentWeightKg: Double?
+            let targetMin: Int
+            let targetMax: Int
+            let loadStep: Double
+            let loadMin: Double
+            let loadMax: Double
+            let currentLoad: Double?
+            let currentSecondaryLoad: Double?
             let consideredBlocks: Int
         }
         let algoVersion: String
-        let resultWeightKg: Double?
+        let resultLoad: Double?
+        /// Die Nebenbelastung, bei der der Vorschlag gilt. Die Regel
+        /// steigert sie nie, sie gibt sie nur mit (Cardio-Spec 5.2).
+        let resultSecondaryLoad: Double?
         let reasonCode: String
         let inputs: Inputs
     }

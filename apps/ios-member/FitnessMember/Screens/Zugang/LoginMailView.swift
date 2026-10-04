@@ -11,6 +11,14 @@ struct LoginMailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                // Die Marke steht nur hier: Login ist der erste Screen, den
+                // ein neues Mitglied sieht, danach traegt der Inhalt.
+                Image("GymtavoWordmark")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 26)
+                    .accessibilityLabel("GYMTAVO")
+
                 if pendingTagStore.token != nil {
                     InlineBanner(
                         tone: .accent,

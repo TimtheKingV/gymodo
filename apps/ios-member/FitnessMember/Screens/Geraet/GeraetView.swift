@@ -9,7 +9,7 @@ import SwiftUI
 /// Die Pause ist unter ihnen der einzige AUSSCHLIESSENDE Zustand: sie
 /// ersetzt Raeder, Einstellwerte und Aktionen, statt sich darueberzulegen.
 /// Vorher blieb alles bedienbar -- man konnte mitten in der Pause das
-/// Gewicht verstellen und den naechsten Satz sichern, was den eben
+/// Belastung verstellen und den naechsten Satz sichern, was den eben
 /// gestarteten Timer sofort wieder neu startete.
 struct GeraetView: View {
     @Bindable var modell: GeraetModel
@@ -321,7 +321,7 @@ struct GeraetView: View {
                 await modell.satzSichern(problemFlag: false, problemReason: nil)
             }
             .testnotizElement("geraet.satz-sichern", typ: "PrimaryButton")
-            .accessibilityLabel("\(hauptaktion), \(Zahlformat.gewichtGesprochen(modell.gewicht))")
+            .accessibilityLabel("\(hauptaktion), \(Zahlformat.belastungGesprochen(modell.belastung, modell.loadUnit))")
 
             // Abschliessen und Problem melden in EINER Zeile (Sammelstelle
             // Punkt 12): als dritte Zeile kostete "Problem melden" 56 pt, die
@@ -361,7 +361,7 @@ struct GeraetView: View {
     /// jetzt wirklich ansteht.
     private var abschlussEntscheidung: some View {
         VStack(spacing: DesignSystem.Spacing.s12) {
-            Text("\(modell.satzZiel) SÄTZE GESCHAFFT")
+            Text(modell.satzZiel == 1 ? "1 SATZ GESCHAFFT" : "\(modell.satzZiel) SÄTZE GESCHAFFT")
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)

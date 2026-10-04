@@ -62,9 +62,9 @@ test("Schritt 1 legt ein Modell mit Pflichtfoto an und geht zu den Einstellungen
 
   await page.getByLabel("Name").fill("Kabelzug");
   await page.getByLabel("Hersteller").fill("Technogym");
-  await radWaehlen(page, "Minimum", "5");
-  await radWaehlen(page, "Maximum", "100");
+  // Schritt zuerst, ein Minimum gibt es nicht mehr (Testnotiz 03.10., #2).
   await radWaehlen(page, "Schritt", "5");
+  await radWaehlen(page, "Maximum", "100");
 
   // Ohne Foto geht es nicht weiter -- Entscheidung 10.
   await expect(
@@ -107,7 +107,7 @@ test("Schritt 2 fragt ein fehlendes Foto nach und nimmt Parameter auf", async ({
   // Ein Altmodell ohne Foto -- genau der Fall aus Entscheidung 12.
   const { data: modell, error } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Brustpresse", weight_step_kg: 5 })
+    .insert({ studio_id: studioId, name: "Brustpresse", load_step: 5 })
     .select("id")
     .single();
   if (error) throw error;
@@ -153,7 +153,7 @@ test("Schritt 3 schlaegt die naechste Nummer vor und legt das Geraet an", async 
 
   const { data: modell, error: modellFehler } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Kabelzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modellFehler) throw modellFehler;
@@ -196,7 +196,7 @@ test("Schritt 4 beantwortet den Tag und verbindet ihn mit dem Geraet", async ({
 
   const { data: modell, error: modellFehler } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Kabelzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modellFehler) throw modellFehler;
@@ -276,7 +276,7 @@ test("Schritt 5 waehlt aus dem Studio, legt neu an und ordnet um", async ({
 
   const { data: modell, error: modellFehler } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Kabelzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modellFehler) throw modellFehler;
@@ -296,8 +296,8 @@ test("Schritt 5 waehlt aus dem Studio, legt neu an und ordnet um", async ({
   const { error: uebungFehler } = await admin.from("exercises").insert({
     studio_id: studioId,
     name: "Rudern sitzend",
-    target_reps_min: 10,
-    target_reps_max: 15,
+    target_min: 10,
+    target_max: 15,
   });
   if (uebungFehler) throw uebungFehler;
 
@@ -339,7 +339,7 @@ test("Ein Video wartet in der Warteschlange und ueberlebt den Seitenwechsel", as
 
   const { data: modell, error: modellFehler } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Kabelzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modellFehler) throw modellFehler;
@@ -356,8 +356,8 @@ test("Ein Video wartet in der Warteschlange und ueberlebt den Seitenwechsel", as
     .insert({
       studio_id: studioId,
       name: "Rudern sitzend",
-      target_reps_min: 10,
-      target_reps_max: 15,
+      target_min: 10,
+      target_max: 15,
     })
     .select("id")
     .single();
@@ -406,7 +406,6 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
   await page.getByRole("link", { name: "Neues Modell anlegen" }).click();
   await page.getByLabel("Name").fill("Kabelzug");
   await page.getByLabel("Hersteller").fill("Technogym");
-  await radWaehlen(page, "Minimum", "5");
   await radWaehlen(page, "Maximum", "100");
   await page.getByLabel("Foto des Modells").setInputFiles({
     name: "kabelzug.jpg",
@@ -449,7 +448,10 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
   await page.getByRole("link", { name: "Einrichtung abschließen" }).click();
 
   // 6 Fertig -- Schritt 6 ist uebersprungen, und das ist erlaubt.
-  await expect(page.getByText("Kabelzug 14 steht")).toBeVisible();
+  // Als Ueberschrift, nicht als Text: seit Next 16 sagt der Route-Announcer
+  // (#__next-route-announcer__) nach der Navigation die <h1> an, und
+  // getByText traf dann zwei Elemente.
+  await expect(page.getByRole("heading", { name: "Kabelzug 14 steht" })).toBeVisible();
   await expect(page.getByText("Für Mitglieder auffindbar")).toBeVisible();
   await expect(page.getByText("Tag verbunden")).toBeVisible();
   await expect(page.getByText("1 Übung ohne Video")).toBeVisible();
@@ -474,7 +476,7 @@ test("Ein zerkratzter Tag wird ersetzt, und der alte wird dabei ungueltig", asyn
 
   const { data: modell, error: modellFehler } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Latzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Latzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modellFehler) throw modellFehler;
@@ -573,7 +575,7 @@ test("Verweigerte Kamera ist keine Sackgasse -- das Token-Feld traegt weiter", a
 
   const { data: modell, error: modellFehler } = await admin
     .from("equipment_models")
-    .insert({ studio_id: studioId, name: "Kabelzug", weight_step_kg: 2.5 })
+    .insert({ studio_id: studioId, name: "Kabelzug", load_step: 2.5 })
     .select("id")
     .single();
   if (modellFehler) throw modellFehler;

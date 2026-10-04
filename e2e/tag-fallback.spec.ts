@@ -55,7 +55,7 @@ test("aktiver Tag mit zugewiesenem Geraet zeigt den Installationshinweis", async
 
   const { data: model, error: modelError } = await client
     .from("equipment_models")
-    .insert({ studio_id: studio.id, name: "Testgeraet", weight_step_kg: 5 })
+    .insert({ studio_id: studio.id, name: "Testgeraet", load_step: 5 })
     .select("id")
     .single();
   if (modelError) throw modelError;
@@ -151,7 +151,7 @@ test("aktiver Tag zeigt Geraet, Foto und Einweisungsvideo vor dem Installationsh
     .insert({
       studio_id: studio.id,
       name: "Beinpresse",
-      weight_step_kg: 5,
+      load_step: 5,
       photo_path: fotoPfad,
     })
     .select("id")
@@ -163,8 +163,8 @@ test("aktiver Tag zeigt Geraet, Foto und Einweisungsvideo vor dem Installationsh
     .insert({
       studio_id: studio.id,
       name: "Beidbeinig",
-      target_reps_min: 8,
-      target_reps_max: 12,
+      target_min: 8,
+      target_max: 12,
     })
     .select("id")
     .single();
@@ -252,7 +252,7 @@ test("aktiver Tag zeigt Geraet, Foto und Einweisungsvideo vor dem Installationsh
 
   // Befund 19, zweite Stelle: die Produktgrenze stand in text-faint
   // (3,6 : 1). Designsystem 10 verlangt sie verbindlich UND sichtbar.
-  const grenze = page.getByText(/gymodo misst nichts/);
+  const grenze = page.getByText(/Gymtavo misst nichts/);
   expect(await grenze.evaluate((el) => getComputedStyle(el).color)).toBe(
     "rgb(155, 163, 175)",
   );

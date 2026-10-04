@@ -160,7 +160,7 @@ struct GeraeteAuswahlView: View {
 
     private var gruppen: GeraeteAuswahl.Gruppen {
         guard let bootstrap = katalog.bootstrap else {
-            return GeraeteAuswahl.Gruppen(zuletzt: [], alle: [])
+            return .leer
         }
         return GeraeteAuswahl.gruppen(bootstrap: bootstrap, studioId: aktivesStudioId, suchtext: suchtext)
     }
@@ -168,7 +168,7 @@ struct GeraeteAuswahlView: View {
     @ViewBuilder
     private var inhalt: some View {
         let g = gruppen
-        if g.zuletzt.isEmpty && g.alle.isEmpty {
+        if g.istLeer {
             leerZustand
         } else {
             ScrollView {
@@ -187,11 +187,17 @@ struct GeraeteAuswahlView: View {
                     if !g.zuletzt.isEmpty {
                         gruppe("ZULETZT BEI DIR", g.zuletzt, ersteGruppe: true)
                     }
-                    if !g.alle.isEmpty {
-                        gruppe(
-                            suchtext.isEmpty ? "ALLE GERÄTE · A–Z" : "\(g.alle.count) TREFFER", g.alle,
-                            ersteGruppe: g.zuletzt.isEmpty
-                        )
+                    // Ohne Suchtext Kraft und Cardio getrennt (Cardio-Spec
+                    // 3.5) -- die Kategorie traegt nur diese Ueberschrift,
+                    // keine Regel. Mit Suchtext eine flache Liste.
+                    if !g.kraft.isEmpty {
+                        gruppe("KRAFT · A–Z", g.kraft, ersteGruppe: g.zuletzt.isEmpty)
+                    }
+                    if !g.cardio.isEmpty {
+                        gruppe("CARDIO · A–Z", g.cardio, ersteGruppe: g.zuletzt.isEmpty && g.kraft.isEmpty)
+                    }
+                    if !g.treffer.isEmpty {
+                        gruppe("\(g.treffer.count) TREFFER", g.treffer, ersteGruppe: true)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -344,7 +350,7 @@ struct GeraeteAuswahlView: View {
         formatter.locale = Locale(identifier: "de_DE")
         formatter.unitsStyle = .full
         let wann = formatter.localizedString(for: zuletzt.performedAt, relativeTo: .now)
-        return "\(wann) · \(Zahlformat.gewichtMitEinheit(zuletzt.gewichtKg))"
+        return "\(wann) · \(Zahlformat.belastungMitEinheit(zuletzt.load, zuletzt.loadUnit))"
     }
 
     /// Die drei Modifier, die es erst ab iOS 26 gibt -- in einem eigenen

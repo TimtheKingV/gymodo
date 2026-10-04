@@ -6,7 +6,7 @@ import SwiftUI
 /// Zwei Geschwindigkeiten: Zeitraum, die drei Zahlen und die Bloecke stehen
 /// SOFORT -- sie kommen aus `zusammenfassung`, die beim Druck auf "Training
 /// beenden" bereits lokal feststand (TrainingRootView.beenden()). Die
-/// Vorschlaege je Block (Blockvorschlag.deltaKg/reasonCode) kommen erst mit
+/// Vorschlaege je Block (Blockvorschlag.deltaLoad/reasonCode) kommen erst mit
 /// der Antwort von completeSession und treffen SPAETER ein; bis dahin zeigt
 /// "Beim naechsten Mal" nichts -- kein Skelett, weil designsystem.md SS5
 /// Skelette nur fuer Medien erlaubt, nie ueber einer Zahl, und ein
@@ -236,12 +236,7 @@ struct TrainingAbschlussView: View {
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.text)
                 HStack(spacing: DesignSystem.Spacing.s8) {
-                    // Reihenfolge wie im Artboard: erst das Gewicht,
-                    // dann die Satzzahl ("80,0 kg · 3 Sätze"). Fehlt das
-                    // Gewicht (uneinheitliche Saetze), bleibt die
-                    // Satzzahl allein stehen.
-                    Text((zeile.block.gewichtKg.map { "\(Zahlformat.gewichtMitEinheit($0)) · " } ?? "")
-                         + "\(zeile.block.satzAnzahl) \(zeile.block.satzAnzahl == 1 ? "Satz" : "Sätze")")
+                    Text(AbschlussZeile.untertitel(zeile.block))
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                     if gemeldet {
@@ -262,11 +257,24 @@ struct TrainingAbschlussView: View {
             // VoiceOver blieb eine nackte Zahl. "Vorschlaege sind eine
             // Rechnung, keine Empfehlung" ist bindend -- das Wort gehoert
             // also auch in die gesprochene Fassung (designsystem.md SS10).
-            Text(zeile.anzeige.text)
-                .font(.system(size: 19, weight: .black).monospacedDigit())
-                .foregroundStyle(farbe(zeile.anzeige, gemeldet: gemeldet))
-                .multilineTextAlignment(.trailing)
-                .accessibilityLabel(zeile.anzeige.gesprochen)
+            //
+            // Die Nebenbelastung steht als eigene, kleinere Zeile unter der
+            // Zahl: in einer Zeile brach "+0,5 km/h bei 6,0 %" im Sichtcheck
+            // mitten in "6,0 %" um und drueckte den Geraetenamen zusammen.
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(zeile.anzeige.zahl)
+                    .font(.system(size: 19, weight: .black).monospacedDigit())
+                    .foregroundStyle(farbe(zeile.anzeige, gemeldet: gemeldet))
+                    .multilineTextAlignment(.trailing)
+                if let zusatz = zeile.anzeige.zusatz {
+                    Text(zusatz)
+                        .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .fixedSize()
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(zeile.anzeige.gesprochen)
         }
         .padding(DesignSystem.Spacing.s16)
         .frame(minHeight: 44)
@@ -359,6 +367,19 @@ struct AbschlussZeile: Equatable, Identifiable {
     /// anders sortierten oder unvollstaendigen -- Serverantwort: fehlt ein
     /// Vorschlag fuer einen Block, zeigt die Zeile trotzdem "Kein
     /// Vorschlag" statt zu verschwinden.
+    /// Reihenfolge wie im Artboard: erst die Belastung, dann die Satzzahl
+    /// ("80,0 kg · 3 Sätze", "8,5 km/h · 6,0 % · 1 Satz"). Fehlt die
+    /// Belastung (uneinheitliche Saetze), bleibt die Satzzahl allein
+    /// stehen -- und mit ihr die Nebenbelastung weg, die ohne die
+    /// Belastung nichts mehr beschreibt.
+    static func untertitel(_ block: Blockzeile) -> String {
+        let saetze = "\(block.satzAnzahl) \(block.satzAnzahl == 1 ? "Satz" : "Sätze")"
+        guard let belastung = block.belastung else { return saetze }
+        let werte = Zahlformat.belastungMitNebenbelastung(
+            belastung, block.loadUnit, neben: block.nebenbelastung, block.secondaryUnit)
+        return "\(werte) · \(saetze)"
+    }
+
     static func zeilen(bloecke: [Blockzeile], vorschlaege: [Blockvorschlag]) -> [AbschlussZeile] {
         bloecke.map { block in
             let vorschlag = vorschlaege.first {
@@ -366,9 +387,35 @@ struct AbschlussZeile: Equatable, Identifiable {
             }
             return AbschlussZeile(
                 block: block,
-                anzeige: VorschlagsAnzeige(reasonCode: vorschlag?.reasonCode, deltaKg: vorschlag?.deltaKg)
+                // Die Einheiten des Vorschlags gehen vor: er kommt vom
+                // Server und kennt das Modell, wie es jetzt ist.
+                anzeige: VorschlagsAnzeige(
+                    reasonCode: vorschlag?.reasonCode, deltaLoad: vorschlag?.deltaLoad,
+                    loadUnit: vorschlag?.loadUnit ?? block.loadUnit,
+                    secondaryLoad: vorschlag?.secondaryLoad,
+                    secondaryUnit: vorschlag?.secondaryUnit
+                )
             )
         }
+    }
+}
+
+/// Die Zahl eines Vorschlags mit allem, was es zum Schreiben braucht:
+/// Einheit der Belastung und, wenn das Geraet eine hat, die
+/// Nebenbelastung, bei der der Vorschlag gilt ("+0,5 km/h bei 6,0 %").
+/// Die Nebenbelastung wird nie gesteigert, nur genannt (Cardio-Spec 5.2).
+struct Vorschlagsdelta: Equatable {
+    let wert: Double
+    let einheit: LoadUnit
+    let nebenbelastung: Double?
+    let nebeneinheit: LoadUnit?
+
+    /// " bei 6,0 %" oder nichts -- an einem Kraftgeraet steht die Zeile
+    /// damit Zeichen fuer Zeichen wie vor dem Umbau.
+    fileprivate var beiNebenbelastung: (geschrieben: String, gesprochen: String)? {
+        guard let nebenbelastung, let nebeneinheit else { return nil }
+        return (" bei \(Zahlformat.belastungMitEinheit(nebenbelastung, nebeneinheit))",
+                " bei \(Zahlformat.belastungGesprochen(nebenbelastung, nebeneinheit))")
     }
 }
 
@@ -376,8 +423,10 @@ struct AbschlussZeile: Equatable, Identifiable {
 /// Rechnung, keine Empfehlung -- der Wortlaut bleibt entsprechend nuechtern
 /// ("+2,5 kg", nie "Du solltest").
 enum VorschlagsAnzeige: Equatable {
-    case delta(Double)
-    case halten
+    case delta(Vorschlagsdelta)
+    /// Mit Einheit, weil das Wort davon abhaengt: "Gewicht halten" an der
+    /// Beinpresse, "Tempo halten" am Laufband.
+    case halten(LoadUnit)
     case keiner
 
     /// `reasonCode` fehlt (kein Vorschlag fuer diesen Block in der
@@ -386,12 +435,18 @@ enum VorschlagsAnzeige: Equatable {
     /// `problem_gemeldet`) -- alle fallen auf "Kein Vorschlag", weil sieben
     /// Formulierungen fuer dieselbe Aussage niemandem helfen
     /// (Aufgabenbrief).
-    init(reasonCode: String?, deltaKg: Double?) {
+    init(reasonCode: String?, deltaLoad: Double?, loadUnit: LoadUnit,
+         secondaryLoad: Double? = nil, secondaryUnit: LoadUnit? = nil) {
         switch reasonCode {
         case "korridor_oben_erreicht", "korridor_unten_verfehlt":
-            if let deltaKg { self = .delta(deltaKg) } else { self = .keiner }
+            if let deltaLoad {
+                self = .delta(Vorschlagsdelta(wert: deltaLoad, einheit: loadUnit,
+                                              nebenbelastung: secondaryLoad, nebeneinheit: secondaryUnit))
+            } else {
+                self = .keiner
+            }
         case "im_korridor":
-            self = .halten
+            self = .halten(loadUnit)
         default:
             self = .keiner
         }
@@ -402,29 +457,42 @@ enum VorschlagsAnzeige: Equatable {
     /// vor, und das Wort traegt die Produktgrenze (eine Rechnung, keine
     /// Empfehlung). Eine EINZIGE Zeichenkette, sonst liest VoiceOver
     /// "plus, zwei, Komma, fuenf, k, g" als Einzelteile (SS12, dieselbe
-    /// Begruendung wie bei Zahlformat.gewichtGesprochen).
+    /// Begruendung wie bei Zahlformat.belastungGesprochen).
     var gesprochen: String {
         switch self {
-        case .delta(let kg):
-            let richtung = kg >= 0 ? "plus" : "minus"
-            return "Vorschlag \(richtung) \(Zahlformat.gewichtGesprochen(abs(kg)))"
-        case .halten:
-            return "Vorschlag: Gewicht halten"
+        case .delta(let delta):
+            let richtung = delta.wert >= 0 ? "plus" : "minus"
+            let bei = delta.beiNebenbelastung?.gesprochen ?? ""
+            return "Vorschlag \(richtung) \(Zahlformat.belastungGesprochen(abs(delta.wert), delta.einheit))\(bei)"
+        case .halten(let einheit):
+            return "Vorschlag: \(einheit.reglername) halten"
         case .keiner:
             return "Kein Vorschlag"
         }
     }
 
-    /// Ueber Zahlformat.gewicht, mit Vorzeichen -- nie selbst formatiert
-    /// (Aufgabenbrief). Negative Deltas tragen ihr Minuszeichen schon aus
-    /// dem Formatter, positive bekommen es hier dazu.
+    /// Die grosse Zahl der Zeile: "+0,5 km/h", "Gewicht halten".
+    var zahl: String {
+        guard case .delta(let delta) = self else { return text }
+        return Zahlformat.belastungDelta(delta.wert, delta.einheit)
+    }
+
+    /// "bei 6,0 %" unter der Zahl -- nil an jedem Geraet ohne
+    /// Nebenbelastung und bei "halten"/"Kein Vorschlag".
+    var zusatz: String? {
+        guard case .delta(let delta) = self, let bei = delta.beiNebenbelastung else { return nil }
+        return bei.geschrieben.trimmingCharacters(in: .whitespaces)
+    }
+
+    /// Ueber Zahlformat.belastungDelta -- nie selbst formatiert
+    /// (Aufgabenbrief): "+2,5 kg", "−10 W", "+0,5 km/h bei 6,0 %".
     var text: String {
         switch self {
-        case .delta(let kg):
-            let vorzeichen = kg >= 0 ? "+" : ""
-            return vorzeichen + Zahlformat.gewichtMitEinheit(kg)
-        case .halten:
-            return "Gewicht halten"
+        case .delta(let delta):
+            return Zahlformat.belastungDelta(delta.wert, delta.einheit)
+                + (delta.beiNebenbelastung?.geschrieben ?? "")
+        case .halten(let einheit):
+            return "\(einheit.reglername) halten"
         case .keiner:
             return "Kein Vorschlag"
         }

@@ -8,9 +8,28 @@ struct TrainingTabTests {
     private let start = Date(timeIntervalSince1970: 1_757_930_400)
 
     private func satz(_ index: Int, minuten: Double) -> LokalerSatz {
-        LokalerSatz(id: UUID(), setIndex: index, weightKg: 50, reps: 10, rir: nil,
+        LokalerSatz(id: UUID(), setIndex: index, load: 50, volume: 10, rir: nil,
                     problemFlag: false, problemReason: nil,
                     performedAt: start.addingTimeInterval(minuten * 60))
+    }
+
+    @Test func dieBlockzeileNenntSaetzeUndDieWerteDesLetztenSatzes() {
+        let presse = LokalerBlock(machineId: "m1", exerciseId: "e1",
+                                  saetze: [satz(1, minuten: 0), satz(2, minuten: 3), satz(3, minuten: 6)])
+        #expect(TrainingTab.blockzeile(presse) == "3 Sätze · 50,0 kg")
+
+        let lauf = LokalerSatz(id: UUID(), setIndex: 1, load: 8.5, secondaryLoad: 6, volume: 1200,
+                               problemFlag: false, problemReason: nil, performedAt: start)
+        let laufband = LokalerBlock(machineId: "m9", exerciseId: "e9",
+                                    einheiten: Blockeinheiten(loadUnit: .kmh, secondaryUnit: .pct, volumeKind: .seconds),
+                                    saetze: [lauf])
+        #expect(TrainingTab.blockzeile(laufband) == "1 Satz · 8,5 km/h · 6,0 %")
+
+        let ergometer = LokalerBlock(machineId: "m8", exerciseId: "e8",
+                                     einheiten: Blockeinheiten(loadUnit: .watt, secondaryUnit: nil, volumeKind: .seconds),
+                                     saetze: [LokalerSatz(id: UUID(), setIndex: 1, load: 120, volume: 1500,
+                                                          problemFlag: false, problemReason: nil, performedAt: start)])
+        #expect(TrainingTab.blockzeile(ergometer) == "1 Satz · 120 W")
     }
 
     @Test func ohneSessionBleibtDieMitteLeer() {

@@ -89,7 +89,7 @@ export function weiterSperre(
   return null;
 }
 
-export type NeuAnsicht = "frage" | "typ" | "exemplar";
+export type NeuAnsicht = "frage" | "kategorie" | "typ" | "exemplar";
 
 /**
  * Was /geraete/neu zeigt (Testnotiz 25.09., #7). Bisher kam das zweite
@@ -97,9 +97,19 @@ export type NeuAnsicht = "frage" | "typ" | "exemplar";
  * dazu. Jetzt fragt der Ablauf zuerst, ob es den Typ schon gibt -- aber nur,
  * wenn es ueberhaupt einen gibt: ohne Modell waere "vorhandenen Typ waehlen"
  * eine leere Liste.
+ *
+ * Fuer einen neuen Typ folgt die Frage Kraft oder Cardio (Testnotiz 03.10.,
+ * #1) -- vorher ein Auswahlfeld im Formular. Erst mit der Antwort stehen
+ * die Stammdaten da, mit den Einheiten, die zur Kategorie passen.
  */
-export function neuAnsicht(art: string | undefined, modellAnzahl: number): NeuAnsicht {
-  if (modellAnzahl === 0) return "typ";
-  if (art === "typ" || art === "exemplar") return art;
-  return "frage";
+export function neuAnsicht(
+  art: string | undefined,
+  modellAnzahl: number,
+  kategorie?: string,
+): NeuAnsicht {
+  if (modellAnzahl > 0) {
+    if (art === "exemplar") return art;
+    if (art !== "typ") return "frage";
+  }
+  return kategorie === "kraft" || kategorie === "cardio" ? "typ" : "kategorie";
 }

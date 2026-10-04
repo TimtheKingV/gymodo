@@ -184,7 +184,7 @@ struct OnboardingFlow: View {
         case .koerper:
             "Das Gewicht wird der erste Punkt deines Verlaufs."
         case .ziel:
-            "Eine Richtung. gymodo gibt keine Empfehlung dazu — das Ziel ist deins."
+            "Eine Richtung. Gymtavo gibt keine Empfehlung dazu — das Ziel ist deins."
         case .wieOft:
             // R20: das Artboard sagt "Die Serie auf Home zaehlt gegen
             // dieses Ziel" -- das widerspricht der Spec (die Serie ist vom

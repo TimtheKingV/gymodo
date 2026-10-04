@@ -189,7 +189,7 @@ struct SessionDetailView: View {
             }
 
             ForEach(block.sets, id: \.setIndex) { satz in
-                satzZeile(satz)
+                satzZeile(satz, block: block)
             }
         }
         .padding(DesignSystem.Spacing.s16)
@@ -197,8 +197,12 @@ struct SessionDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
 
-    private func satzZeile(_ satz: SessionSummary.Block.Set) -> some View {
-        var label = "Satz \(satz.setIndex), \(Zahlformat.gewichtGesprochen(satz.weightKg)), \(Zahlformat.wiederholungenGesprochen(satz.reps))"
+    /// "80,0 kg × 10", "8,5 km/h · 6,0 % × 20:00 min" -- die Einheiten
+    /// kommen vom Block, den der Server mitliefert.
+    private func satzZeile(_ satz: SessionSummary.Block.Set, block: SessionSummary.Block) -> some View {
+        var label = "Satz \(satz.setIndex), " + Zahlformat.satzGesprochen(
+            satz.load, block.loadUnit, neben: satz.secondaryLoad, block.secondaryUnit,
+            umfang: satz.volume, block.volumeKind)
         if satz.problemFlag {
             label.append(", Problem gemeldet")
         }
@@ -209,12 +213,13 @@ struct SessionDetailView: View {
                 .foregroundStyle(DesignSystem.Color.textFaint)
                 .frame(width: 16, alignment: .leading)
 
-            Text(Zahlformat.gewichtMitEinheit(satz.weightKg))
+            Text(Zahlformat.belastungMitNebenbelastung(
+                satz.load, block.loadUnit, neben: satz.secondaryLoad, block.secondaryUnit))
                 .font(DesignSystem.Typography.fliesstext)
                 .foregroundStyle(DesignSystem.Color.text)
                 .monospacedDigit()
 
-            Text("× \(satz.reps)")
+            Text(Zahlformat.malUmfang(satz.volume, block.volumeKind))
                 .font(DesignSystem.Typography.fliesstext)
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .monospacedDigit()

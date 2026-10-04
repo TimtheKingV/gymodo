@@ -1,6 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireUserId } from "./auth.js";
+import {
+  categorySchema,
+  loadUnitSchema,
+  volumeKindSchema,
+  type Category,
+  type LoadUnit,
+  type VolumeKind,
+} from "./belastung.js";
 import { DomainError } from "./errors.js";
 import { requireStudioStaff } from "./studio.js";
 
@@ -31,24 +39,78 @@ function parseOrThrow<T extends z.ZodTypeAny>(
 
 const uuid = z.string().uuid();
 
+/**
+ * Die Nebenbelastung eines Modells (Cardio-Spec 3.1b): alle vier Felder
+ * oder keines -- dieselbe Regel wie der Constraint aus 0046, hier nur
+ * frueher und mit einer Meldung, die im Formular etwas taugt.
+ */
+const nebenbelastungFelder = {
+  secondaryUnit: loadUnitSchema.nullish(),
+  secondaryStep: z.number().positive().nullish(),
+  secondaryMin: z.number().min(0).nullish(),
+  secondaryMax: z.number().nullish(),
+};
+
+type Nebenbelastung = {
+  secondaryUnit?: LoadUnit | null | undefined;
+  secondaryStep?: number | null | undefined;
+  secondaryMin?: number | null | undefined;
+  secondaryMax?: number | null | undefined;
+};
+
+function pruefeNebenbelastung(werte: Nebenbelastung, ctx: z.RefinementCtx): void {
+  const gesetzt = [
+    werte.secondaryUnit,
+    werte.secondaryStep,
+    werte.secondaryMin,
+    werte.secondaryMax,
+  ].map((w) => w !== null && w !== undefined);
+  if (gesetzt.some(Boolean) && !gesetzt.every(Boolean)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Die Nebenbelastung braucht Einheit, Minimum, Maximum und Schritt.",
+    });
+  }
+  if (
+    werte.secondaryMin != null &&
+    werte.secondaryMax != null &&
+    werte.secondaryMax < werte.secondaryMin
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Das Maximum der Nebenbelastung liegt unter dem Minimum.",
+    });
+  }
+}
+
 export const equipmentModelInputSchema = z
   .object({
     studioId: uuid,
     name: z.string().trim().min(1, "Das Geraetemodell braucht einen Namen."),
     manufacturer: z.string().trim().min(1).nullish(),
-    weightStepKg: z
+    /** Nur Anzeige (Cardio-Spec 3.5); vom Trainer gesetzt, nie abgeleitet. */
+    category: categorySchema.default("kraft"),
+    loadUnit: loadUnitSchema.default("kg"),
+    loadStep: z
       .number()
-      .positive("Der Gewichtsschritt muss groesser als null sein."),
-    minWeightKg: z.number().min(0).default(0),
-    maxWeightKg: z.number().positive().nullish(),
+      .positive("Der Schritt muss groesser als null sein."),
+    loadMin: z.number().min(0).default(0),
+    loadMax: z.number().positive().nullish(),
+    ...nebenbelastungFelder,
   })
-  .refine(
-    (werte) =>
-      werte.maxWeightKg === null ||
-      werte.maxWeightKg === undefined ||
-      werte.maxWeightKg >= werte.minWeightKg,
-    { message: "Das Maximum liegt unter dem Minimum." },
-  );
+  .superRefine((werte, ctx) => {
+    if (
+      werte.loadMax !== null &&
+      werte.loadMax !== undefined &&
+      werte.loadMax < werte.loadMin
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Das Maximum liegt unter dem Minimum.",
+      });
+    }
+    pruefeNebenbelastung(werte, ctx);
+  });
 
 export type EquipmentModelInput = z.input<typeof equipmentModelInputSchema>;
 
@@ -66,9 +128,15 @@ export async function createEquipmentModel(
       studio_id: werte.studioId,
       name: werte.name,
       manufacturer: werte.manufacturer ?? null,
-      weight_step_kg: werte.weightStepKg,
-      min_weight_kg: werte.minWeightKg,
-      max_weight_kg: werte.maxWeightKg ?? null,
+      category: werte.category,
+      load_unit: werte.loadUnit,
+      load_step: werte.loadStep,
+      load_min: werte.loadMin,
+      load_max: werte.loadMax ?? null,
+      secondary_unit: werte.secondaryUnit ?? null,
+      secondary_step: werte.secondaryStep ?? null,
+      secondary_min: werte.secondaryMin ?? null,
+      secondary_max: werte.secondaryMax ?? null,
     })
     .select("id")
     .single<{ id: string }>();
@@ -79,13 +147,18 @@ export async function createEquipmentModel(
   return { id: data.id };
 }
 
-export const equipmentModelPatchSchema = z.object({
-  name: z.string().trim().min(1).optional(),
-  manufacturer: z.string().trim().min(1).nullish(),
-  weightStepKg: z.number().positive().optional(),
-  minWeightKg: z.number().min(0).optional(),
-  maxWeightKg: z.number().positive().nullish(),
-});
+export const equipmentModelPatchSchema = z
+  .object({
+    name: z.string().trim().min(1).optional(),
+    manufacturer: z.string().trim().min(1).nullish(),
+    category: categorySchema.optional(),
+    loadUnit: loadUnitSchema.optional(),
+    loadStep: z.number().positive().optional(),
+    loadMin: z.number().min(0).optional(),
+    loadMax: z.number().positive().nullish(),
+    ...nebenbelastungFelder,
+  })
+  .superRefine(pruefeNebenbelastung);
 
 export async function updateEquipmentModel(
   client: SupabaseClient,
@@ -100,9 +173,20 @@ export async function updateEquipmentModel(
   const zeile: Record<string, unknown> = {};
   if (werte.name !== undefined) zeile.name = werte.name;
   if (werte.manufacturer !== undefined) zeile.manufacturer = werte.manufacturer;
-  if (werte.weightStepKg !== undefined) zeile.weight_step_kg = werte.weightStepKg;
-  if (werte.minWeightKg !== undefined) zeile.min_weight_kg = werte.minWeightKg;
-  if (werte.maxWeightKg !== undefined) zeile.max_weight_kg = werte.maxWeightKg;
+  if (werte.category !== undefined) zeile.category = werte.category;
+  if (werte.loadUnit !== undefined) zeile.load_unit = werte.loadUnit;
+  if (werte.loadStep !== undefined) zeile.load_step = werte.loadStep;
+  if (werte.loadMin !== undefined) zeile.load_min = werte.loadMin;
+  if (werte.loadMax !== undefined) zeile.load_max = werte.loadMax;
+  // Die Nebenbelastung wird als Ganzes gesetzt oder als Ganzes geloescht
+  // (null in allen vier Feldern) -- pruefeNebenbelastung laesst nichts
+  // dazwischen durch, und der Constraint aus 0046 auch nicht.
+  if (werte.secondaryUnit !== undefined) {
+    zeile.secondary_unit = werte.secondaryUnit;
+    zeile.secondary_step = werte.secondaryStep ?? null;
+    zeile.secondary_min = werte.secondaryMin ?? null;
+    zeile.secondary_max = werte.secondaryMax ?? null;
+  }
   if (Object.keys(zeile).length === 0) return;
 
   const { error } = await client
@@ -245,11 +329,13 @@ export const exerciseInputSchema = z
     studioId: uuid,
     name: z.string().trim().min(1, "Die Uebung braucht einen Namen."),
     description: z.string().trim().min(1).nullish(),
-    targetRepsMin: z.number().int().positive("Mindestens eine Wiederholung."),
-    targetRepsMax: z.number().int().positive(),
+    /** Woran der Korridor gemessen wird (Cardio-Spec 3.2). Vorgabe wie bisher. */
+    volumeKind: volumeKindSchema.default("reps"),
+    targetMin: z.number().int().positive("Der Korridor beginnt bei mindestens eins."),
+    targetMax: z.number().int().positive(),
   })
-  .refine((werte) => werte.targetRepsMax >= werte.targetRepsMin, {
-    message: "Die obere Wiederholungszahl liegt unter der unteren.",
+  .refine((werte) => werte.targetMax >= werte.targetMin, {
+    message: "Das obere Ende des Korridors liegt unter dem unteren.",
   });
 
 export async function createExercise(
@@ -266,8 +352,9 @@ export async function createExercise(
       studio_id: werte.studioId,
       name: werte.name,
       description: werte.description ?? null,
-      target_reps_min: werte.targetRepsMin,
-      target_reps_max: werte.targetRepsMax,
+      volume_kind: werte.volumeKind,
+      target_min: werte.targetMin,
+      target_max: werte.targetMax,
     })
     .select("id")
     .single<{ id: string }>();
@@ -281,15 +368,17 @@ export async function createExercise(
 export const exercisePatchSchema = z
   .object({
     name: z.string().trim().min(1, "Die Uebung braucht einen Namen."),
-    targetRepsMin: z.number().int().positive("Mindestens eine Wiederholung."),
-    targetRepsMax: z.number().int().positive(),
+    /** Dieselben drei Felder wie beim Anlegen (exerciseInputSchema). */
+    volumeKind: volumeKindSchema,
+    targetMin: z.number().int().positive("Der Korridor beginnt bei mindestens eins."),
+    targetMax: z.number().int().positive(),
   })
-  .refine((werte) => werte.targetRepsMax >= werte.targetRepsMin, {
-    message: "Die obere Wiederholungszahl liegt unter der unteren.",
+  .refine((werte) => werte.targetMax >= werte.targetMin, {
+    message: "Das obere Ende des Korridors liegt unter dem unteren.",
   });
 
 /**
- * Name und Wiederholungsbereich einer bestehenden Uebung aendern -- bis
+ * Name, Umfangsart und Korridor einer bestehenden Uebung aendern -- bis
  * hierher liess sich eine Uebung nur anlegen und loesen, ein Tippfehler im
  * Namen hiess: neu anlegen und das Video noch einmal hochladen.
  *
@@ -316,8 +405,9 @@ export async function updateExercise(
     .from("exercises")
     .update({
       name: werte.name,
-      target_reps_min: werte.targetRepsMin,
-      target_reps_max: werte.targetRepsMax,
+      volume_kind: werte.volumeKind,
+      target_min: werte.targetMin,
+      target_max: werte.targetMax,
     })
     .eq("id", exerciseId);
   if (error) throw new DomainError("internal", error.message);
@@ -445,8 +535,9 @@ export type StudioExercise = {
   id: string;
   name: string;
   description: string | null;
-  targetRepsMin: number;
-  targetRepsMax: number;
+  volumeKind: VolumeKind;
+  targetMin: number;
+  targetMax: number;
   /** An wie vielen Modellen sie haengt. Null ist ein gueltiger Zustand. */
   modelCount: number;
 };
@@ -472,7 +563,7 @@ export async function listStudioExercises(
   const { data, error } = await client
     .from("exercises")
     .select(
-      "id, name, description, target_reps_min, target_reps_max, equipment_model_exercises (id)",
+      "id, name, description, volume_kind, target_min, target_max, equipment_model_exercises (id)",
     )
     .eq("studio_id", studioId)
     .order("name", { ascending: true });
@@ -483,8 +574,9 @@ export async function listStudioExercises(
     id: zeile.id as string,
     name: zeile.name as string,
     description: (zeile.description as string | null) ?? null,
-    targetRepsMin: zeile.target_reps_min as number,
-    targetRepsMax: zeile.target_reps_max as number,
+    volumeKind: zeile.volume_kind as VolumeKind,
+    targetMin: zeile.target_min as number,
+    targetMax: zeile.target_max as number,
     modelCount:
       (zeile.equipment_model_exercises as unknown[] | null)?.length ?? 0,
   }));
@@ -654,8 +746,9 @@ export type CatalogExercise = {
   exerciseId: string;
   name: string;
   description: string | null;
-  targetRepsMin: number;
-  targetRepsMax: number;
+  volumeKind: VolumeKind;
+  targetMin: number;
+  targetMax: number;
   sortOrder: number;
   hasVideo: boolean;
   videoAssetId: string | null;
@@ -676,9 +769,15 @@ export type CatalogModel = {
   name: string;
   manufacturer: string | null;
   photoPath: string | null;
-  weightStepKg: number;
-  minWeightKg: number;
-  maxWeightKg: number | null;
+  category: Category;
+  loadUnit: LoadUnit;
+  loadStep: number;
+  loadMin: number;
+  loadMax: number | null;
+  secondaryUnit: LoadUnit | null;
+  secondaryStep: number | null;
+  secondaryMin: number | null;
+  secondaryMax: number | null;
   settingDefinitions: CatalogSettingDefinition[];
   exercises: CatalogExercise[];
   machines: CatalogMachine[];
@@ -740,9 +839,9 @@ export async function getStudioCatalog(
   const { data: modelle, error } = await client
     .from("equipment_models")
     .select(
-      `id, name, manufacturer, photo_path, weight_step_kg, min_weight_kg, max_weight_kg,
+      `id, name, manufacturer, photo_path, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max,
        equipment_setting_definitions (id, key, label, kind, min_value, max_value, step_value, unit, allowed_values, sort_order),
-       equipment_model_exercises (id, sort_order, exercises (id, name, description, target_reps_min, target_reps_max), instruction_assets (id, storage_path, duration_s)),
+       equipment_model_exercises (id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max), instruction_assets (id, storage_path, duration_s)),
        machines (id, label, location_note, status, machine_tags (id, status))`,
     )
     .eq("studio_id", studioId)
@@ -768,9 +867,15 @@ export async function getStudioCatalog(
     name: string;
     manufacturer: string | null;
     photo_path: string | null;
-    weight_step_kg: number | string;
-    min_weight_kg: number | string;
-    max_weight_kg: number | string | null;
+    category: Category;
+    load_unit: LoadUnit;
+    load_step: number | string;
+    load_min: number | string;
+    load_max: number | string | null;
+    secondary_unit: LoadUnit | null;
+    secondary_step: number | string | null;
+    secondary_min: number | string | null;
+    secondary_max: number | string | null;
     equipment_setting_definitions: Array<{
       id: string;
       key: string;
@@ -790,8 +895,9 @@ export async function getStudioCatalog(
         id: string;
         name: string;
         description: string | null;
-        target_reps_min: number;
-        target_reps_max: number;
+        volume_kind: VolumeKind;
+        target_min: number;
+        target_max: number;
       };
       instruction_assets: Array<{
         id: string;
@@ -834,9 +940,15 @@ export async function getStudioCatalog(
     name: row.name,
     manufacturer: row.manufacturer,
     photoPath: row.photo_path,
-    weightStepKg: Number(row.weight_step_kg),
-    minWeightKg: Number(row.min_weight_kg),
-    maxWeightKg: zahl(row.max_weight_kg),
+    category: row.category,
+    loadUnit: row.load_unit,
+    loadStep: Number(row.load_step),
+    loadMin: Number(row.load_min),
+    loadMax: zahl(row.load_max),
+    secondaryUnit: row.secondary_unit,
+    secondaryStep: zahl(row.secondary_step),
+    secondaryMin: zahl(row.secondary_min),
+    secondaryMax: zahl(row.secondary_max),
     settingDefinitions: [...row.equipment_setting_definitions]
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((setting) => ({
@@ -860,8 +972,9 @@ export async function getStudioCatalog(
           exerciseId: link.exercises.id,
           name: link.exercises.name,
           description: link.exercises.description,
-          targetRepsMin: link.exercises.target_reps_min,
-          targetRepsMax: link.exercises.target_reps_max,
+          volumeKind: link.exercises.volume_kind,
+          targetMin: link.exercises.target_min,
+          targetMax: link.exercises.target_max,
           sortOrder: link.sort_order,
           // Nie erzwungen (Spec 6.8) -- nur sichtbar gemacht.
           hasVideo: video !== null,

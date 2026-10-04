@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { BeitrittsFormular } from "./BeitrittsFormular";
+import { GymtavoWordmark } from "./branding/GymtavoWordmark";
 import { Einstieg } from "./einstieg/Einstieg";
 import einstiegStyles from "./einstieg/einstieg.module.css";
 import styles from "./einstieg/landeseite.module.css";
@@ -21,7 +22,7 @@ export default async function HomePage() {
     return (
       <div className={styles.bildschirm}>
         <header className={styles.kopf}>
-          <span className={styles.marke}>gymodo</span>
+          <GymtavoWordmark />
           <Link href="/login" className={styles.anmeldenKopf}>
             Anmelden
           </Link>
@@ -48,16 +49,16 @@ export default async function HomePage() {
               Konto anlegen
             </Link>
             <p className={styles.mitgliedshinweis}>
-              Du bist Mitglied? gymodo ist eine App fürs iPhone — im Web gibt es nichts für
+              Du bist Mitglied? Gymtavo ist eine App fürs iPhone — im Web gibt es nichts für
               dich zu tun. Frag an der Theke nach der Einladung, oder tippe einfach ein Gerät
               an.
             </p>
           </div>
         </main>
         <footer className={styles.fuss}>
-          gymodo misst nichts. Angezeigt wird ausschließlich, was Mitglieder selbst bestätigt
+          Gymtavo misst nichts. Angezeigt wird ausschließlich, was Mitglieder selbst bestätigt
           haben. Einweisungsvideos und Einstellhinweise sind Inhalte des Studios, keine
-          Trainings- oder Gesundheitsempfehlung von gymodo.
+          Trainings- oder Gesundheitsempfehlung von Gymtavo.
         </footer>
       </div>
     );

@@ -42,7 +42,7 @@ describe("updated_at wird serverseitig fortgeschrieben (Migration 0011)", () => 
 
     const { data: created, error: createError } = await admin
       .from("equipment_models")
-      .insert({ studio_id: studio!.id, name: "Updated-At Geraet", weight_step_kg: 5 })
+      .insert({ studio_id: studio!.id, name: "Updated-At Geraet", load_step: 5 })
       .select("id, updated_at")
       .single();
     if (createError) throw createError;
@@ -74,8 +74,8 @@ describe("updated_at wird serverseitig fortgeschrieben (Migration 0011)", () => 
       .insert({
         studio_id: studio!.id,
         name: "Updated-At Uebung",
-        target_reps_min: 8,
-        target_reps_max: 12,
+        target_min: 8,
+        target_max: 12,
       })
       .select("id, updated_at")
       .single();
@@ -105,7 +105,7 @@ describe("updated_at wird serverseitig fortgeschrieben (Migration 0011)", () => 
 
     const { data: model, error: modelError } = await admin
       .from("equipment_models")
-      .insert({ studio_id: studio!.id, name: "Updated-At Geraetemodell", weight_step_kg: 5 })
+      .insert({ studio_id: studio!.id, name: "Updated-At Geraetemodell", load_step: 5 })
       .select("id")
       .single();
     if (modelError) throw modelError;

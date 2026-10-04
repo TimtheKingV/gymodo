@@ -15,14 +15,14 @@
   padding: var(--s32) var(--s48);
 }
 
-.marke {
-  display: block;
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  text-transform: uppercase;
-  color: var(--text);
+/* Unter 480 px fressen 2 x 48 px Rand den Platz fuer Marke und
+   Anmelden-Knopf; 20 px entspricht dem Seitenrand von .seite. */
+@media (max-width: 480px) {
+  .kopf {
+    padding: var(--s24) 20px;
+  }
 }
+
 
 .seite {
   flex: 1;

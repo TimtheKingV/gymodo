@@ -6,7 +6,7 @@ struct FortschrittsfensterTests {
     private let jetzt = ISO8601DateFormatter().date(from: "2026-09-09T12:00:00Z")!
 
     private func punkt(_ tag: String, _ kg: Double) -> ExerciseProgress.Point {
-        ExerciseProgress.Point(performedOn: tag, topWeightKg: kg, reps: 10)
+        ExerciseProgress.Point(performedOn: tag, topLoad: kg, volume: 10)
     }
 
     private var alle: [ExerciseProgress.Point] {
@@ -47,7 +47,7 @@ struct FortschrittsfensterTests {
     /// Trainingsgewichte bewegen sich in einem schmalen Band, und eine
     /// Nullachse macht jeden Fortschritt unsichtbar.
     @Test func dieAchseBeginntNichtBeiNull() {
-        let bereich = Fortschrittsfenster.achsenbereich(alle.map(\.topWeightKg))
+        let bereich = Fortschrittsfenster.achsenbereich(alle.map(\.topLoad))
 
         #expect(bereich.lowerBound > 0)
         #expect(bereich.lowerBound < 60)

@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "gymodo",
+  title: "Gymtavo",
 };
 
 // Feste Breite, kein Zoom (Testnotiz 22.09., #2). maximumScale 1 verhindert

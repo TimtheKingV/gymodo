@@ -1,3 +1,12 @@
+import {
+  defaultLoadRange,
+  defaultTargetRange,
+  type Category,
+  type LoadUnit,
+  type VolumeKind,
+} from "@fitretro/domain/belastung";
+import type { AuswahlOption } from "./Auswahl";
+
 /**
  * Vorschlaege rund um Einstellungen und Stammdaten -- Namen zum schnellen
  * Ausfuellen (ein Klick aufs Namensfeld zeigt ein Rad statt Tastatur) und
@@ -139,4 +148,197 @@ export function schluesselAus(beschriftung: string): string {
     .replace(/ß/g, "ss")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+// ---------------------------------------------------------------------
+// Belastung und Umfang (Cardio-Spec Abschnitt 7): Wertelisten je Einheit
+// und je Umfangsart. Die Startwerte kommen aus der Domain
+// (defaultLoadRange / defaultTargetRange), damit Portal und spaeter iOS
+// dieselben Vorgaben zeigen. Fuer kg sind Listen und Startwerte exakt die
+// bisherigen -- ein Kraftgeraet sieht aus wie vorher.
+// ---------------------------------------------------------------------
+
+
+/** "2,5" statt "2.5", "5" statt "5,0" -- so, wie die Raeder ihre Werte tragen. */
+export function dezimal(wert: number): string {
+  return String(Number(wert.toFixed(2))).replace(".", ",");
+}
+
+function bereich(von: number, bis: number, schritt: number): RadWert[] {
+  const anzahl = Math.floor((bis - von) / schritt + 1e-9) + 1;
+  return werte(Array.from({ length: anzahl }, (_, i) => dezimal(von + i * schritt)));
+}
+
+export const KATEGORIE_OPTIONEN: AuswahlOption[] = [
+  { wert: "kraft", anzeige: "Kraft" },
+  { wert: "cardio", anzeige: "Cardio" },
+];
+
+/**
+ * Welche Einheiten zu welcher Kategorie passen (Testnotiz 03.10., #1).
+ * Kraft misst in kg, Cardio in allem anderen -- ein Laufband in kg oder
+ * ein Latzug in km/h war bisher waehlbar und nie gemeint.
+ */
+const EINHEITEN_JE_KATEGORIE: Record<Category, LoadUnit[]> = {
+  kraft: ["kg"],
+  cardio: ["watt", "level", "kmh", "pct", "rpm"],
+};
+
+export function einheitenFuer(kategorie: Category): LoadUnit[] {
+  return EINHEITEN_JE_KATEGORIE[kategorie];
+}
+
+/**
+ * Das Minimum eines Modells ohne eigene Spalte (Testnotiz 03.10., #2):
+ * der kleinste Wert ueber null im Takt, also der Schritt selbst -- 2,5 kg
+ * bei 2,5 kg. Ein Bestandsminimum bleibt, solange es ueber null und im
+ * Takt liegt; sonst wuerde jedes Speichern der Stammdaten es verschieben.
+ */
+export function belastungMinimum(schritt: string, bestand?: string): string {
+  const takt = zahlAus(schritt);
+  if (bestand === undefined || !Number.isFinite(takt) || takt <= 0) return schritt;
+  const wert = zahlAus(bestand);
+  const vielfaches = wert / takt;
+  const imTakt = Math.abs(vielfaches - Math.round(vielfaches)) < 1e-6;
+  return wert > 0 && imTakt ? dezimal(wert) : schritt;
+}
+
+/** Das Maximum kann nicht unter dem Minimum liegen -- "∞" bleibt stehen. */
+export function maxAb(liste: RadWert[], minimum: string): RadWert[] {
+  const untergrenze = zahlAus(minimum);
+  return liste.filter((zeile) => zeile.wert === "" || zahlAus(zeile.wert) >= untergrenze - 1e-9);
+}
+
+export const EINHEIT_ANZEIGE: Record<LoadUnit, string> = {
+  kg: "kg",
+  watt: "Watt",
+  level: "Level",
+  kmh: "km/h",
+  pct: "%",
+  rpm: "U/min",
+};
+
+export const EINHEIT_OPTIONEN: AuswahlOption[] = (
+  Object.keys(EINHEIT_ANZEIGE) as LoadUnit[]
+).map((wert) => ({ wert, anzeige: EINHEIT_ANZEIGE[wert] }));
+
+/** "keine" vorn: die Nebenbelastung ist die Ausnahme, nicht die Regel. */
+export const NEBENBELASTUNG_OPTIONEN: AuswahlOption[] = [
+  { wert: "", anzeige: "keine" },
+  ...EINHEIT_OPTIONEN,
+];
+
+export const UMFANG_ANZEIGE: Record<VolumeKind, string> = {
+  reps: "Wiederholungen",
+  seconds: "Minuten",
+  meters: "Meter",
+};
+
+export const UMFANG_OPTIONEN: AuswahlOption[] = (
+  Object.keys(UMFANG_ANZEIGE) as VolumeKind[]
+).map((wert) => ({ wert, anzeige: UMFANG_ANZEIGE[wert] }));
+
+export type BelastungsWerte = {
+  min: RadWert[];
+  max: RadWert[];
+  schritt: RadWert[];
+  start: { min: string; max: string; schritt: string };
+};
+
+/**
+ * Die drei Spalten des Belastungsrads je Einheit. Watt in Fuenfern,
+ * Level und Umdrehungen ganz, km/h und Prozent in halben -- jeweils die
+ * Rastung, die ein Geraet dieser Art tatsaechlich hat. Der Trainer
+ * korrigiert am Rad, was nicht passt.
+ */
+/**
+ * Die Raeder eines Modells je Einheit. Minimum und Maximum zaehlen im Takt
+ * des gewaehlten Schritts (Testnotiz 23.09., zweite Sitzung, #3) -- bei
+ * 0,5 km/h stehen dort 0, 0,5, 1 …, bei 5 W 0, 5, 10 …; "∞" (kein
+ * Anschlag) steht am Ende des Maximums (Testnotiz 22.09.). Ohne Schritt
+ * gilt der Vorgabeschritt der Einheit. Fuer kg sind es exakt
+ * minMaxWerte/maxGewichtWerte.
+ */
+export function belastungsWerte(unit: LoadUnit, schritt?: string): BelastungsWerte {
+  const vorgabe = defaultLoadRange(unit);
+  const start = {
+    min: dezimal(vorgabe.min),
+    max: vorgabe.max === null ? "" : dezimal(vorgabe.max),
+    schritt: dezimal(vorgabe.step),
+  };
+  const takt = schritt ?? start.schritt;
+  const unbegrenzt: RadWert = { anzeige: "∞", wert: "" };
+  const imTakt = (bis: number): RadWert[] => {
+    const zahl = zahlAus(takt);
+    return bereich(0, bis, Number.isFinite(zahl) && zahl > 0 ? zahl : 1);
+  };
+  const mit = (bis: number, schritte: string[]) => {
+    const liste = imTakt(bis);
+    return { min: liste, max: [...liste, unbegrenzt], schritt: werte(schritte), start };
+  };
+  switch (unit) {
+    case "kg":
+      return { min: minMaxWerte(takt), max: maxGewichtWerte(takt), schritt: gewichtsSchrittWerte(), start };
+    case "watt":
+      return mit(500, ["5", "10", "25"]);
+    case "level":
+      return mit(30, ["1"]);
+    case "kmh":
+      return mit(30, ["0,1", "0,5", "1"]);
+    case "pct":
+      return mit(30, ["0,5", "1"]);
+    case "rpm":
+      return mit(200, ["5", "10"]);
+  }
+}
+
+export type UmfangsWerte = {
+  liste: RadWert[];
+  labelAb: string;
+  labelBis: string;
+  start: { min: string; max: string };
+};
+
+/**
+ * Das Umfangsrad je Art. Minuten werden als Minuten gewaehlt und erst in
+ * der Server-Action in Sekunden umgerechnet (formfelder.ts) -- ein Rad
+ * voller Sekunden waere fuer niemanden lesbar.
+ */
+export function umfangWerte(kind: VolumeKind): UmfangsWerte {
+  const vorgabe = defaultTargetRange(kind);
+  switch (kind) {
+    case "reps":
+      return {
+        liste: wiederholungenWerte(),
+        labelAb: "Wiederholungen ab",
+        labelBis: "bis",
+        start: { min: String(vorgabe.min), max: String(vorgabe.max) },
+      };
+    case "seconds":
+      return {
+        liste: bereich(1, 90, 1),
+        labelAb: "Minuten ab",
+        labelBis: "bis",
+        start: { min: String(vorgabe.min / 60), max: String(vorgabe.max / 60) },
+      };
+    case "meters":
+      return {
+        liste: bereich(500, 20000, 100),
+        labelAb: "Meter ab",
+        labelBis: "bis",
+        start: { min: String(vorgabe.min), max: String(vorgabe.max) },
+      };
+  }
+}
+
+export function istKategorie(wert: string): wert is Category {
+  return wert === "kraft" || wert === "cardio";
+}
+
+export function istEinheit(wert: string): wert is LoadUnit {
+  return wert in EINHEIT_ANZEIGE;
+}
+
+export function istUmfangsart(wert: string): wert is VolumeKind {
+  return wert in UMFANG_ANZEIGE;
 }

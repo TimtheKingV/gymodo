@@ -321,7 +321,7 @@ struct SensorZeilenTextTests {
         #expect(SensorZeile.text(zustand: .bluetoothNichtBereit(.ausgeschaltet), rateHz: 0)
             == "Bluetooth ist ausgeschaltet")
         #expect(SensorZeile.text(zustand: .bluetoothNichtBereit(.verweigert), rateHz: 0)
-            == "Bluetooth ist für gymodo nicht erlaubt")
+            == "Bluetooth ist für Gymtavo nicht erlaubt")
     }
 }
 #endif

@@ -24,6 +24,7 @@
     "./media": "./src/media.ts",
     "./chargen": "./src/chargen.ts",
     "./tag-scan": "./src/tag-scan.ts",
-    "./serie": "./src/serie.ts"
+    "./serie": "./src/serie.ts",
+    "./belastung": "./src/belastung.ts"
   }
 }
