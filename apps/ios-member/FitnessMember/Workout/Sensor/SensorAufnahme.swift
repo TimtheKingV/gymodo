@@ -12,7 +12,7 @@ final class SensorAufnahme {
 
     let ordner: URL
     private(set) var datei: SensorAufnahmeDatei
-    private let startT: TimeInterval
+    let startT: TimeInterval
     private let zeitzone: TimeZone
     private var griff: FileHandle?
     private var lueckeSeit: TimeInterval?

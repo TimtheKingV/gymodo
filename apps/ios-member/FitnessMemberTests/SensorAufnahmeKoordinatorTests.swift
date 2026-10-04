@@ -75,6 +75,25 @@ struct SensorAufnahmeKoordinatorTests {
         #expect(ordner(in: wurzel).count == 1)
     }
 
+    @Test func einMesswertVomAufnahmestartLandetNichtVorDerNull() throws {
+        // Am iPhone gesehen: ein Paket, das kurz vor dem Anlegen der
+        // Aufnahme empfangen wurde, kam erst danach aus dem Strom und stand
+        // mit t = -0.015 in der CSV.
+        let (sut, _, wurzel, uhr) = aufbau()
+        sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 99.985)))
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100.02)))
+        uhr.t = 101
+        sut.satzGesichert(Self.satz)
+
+        let ordner = ordner(in: wurzel)[0]
+        let zeilen = try String(contentsOf: ordner.appendingPathComponent("messwerte.csv"), encoding: .utf8)
+            .split(separator: "\n").dropFirst()
+        #expect(zeilen.count == 1)
+        #expect(zeilen.first?.hasPrefix("0.020000,") == true)
+        #expect(try datei(ordner).statistik.pakete == 1)
+    }
+
     @Test func sichernSchliesstMitLabelsAb() throws {
         let (sut, _, wurzel, uhr) = aufbau()
         sut.eingabeBegonnen(Self.kontext)

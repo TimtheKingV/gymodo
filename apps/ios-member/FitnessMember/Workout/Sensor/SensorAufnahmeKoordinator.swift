@@ -117,7 +117,10 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
             }
         }
 
-        if let aufnahme {
+        // Ein Paket, das vor dem Anlegen der Aufnahme empfangen wurde, kommt
+        // trotzdem erst danach aus dem Strom. Es gehoert zur Zeit davor und
+        // stuende sonst mit negativem t in der CSV.
+        if let aufnahme, messwert.t >= aufnahme.startT {
             aufnahmeStatistik.erfassen(t: messwert.t)
             do { try aufnahme.schreiben(messwert) } catch { abbrechen(wegen: error) }
         }
