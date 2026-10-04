@@ -306,4 +306,22 @@ struct SensorAufnahmeKoordinatorTests {
         #expect(ergebnis.statistik.rateIstHz == 10)
     }
 }
+
+struct SensorZeilenTextTests {
+    @Test func texteJeZustand() {
+        #expect(SensorZeile.text(zustand: .aus, rateHz: 0) == "Sensor verbinden")
+        #expect(SensorZeile.text(zustand: .sucht, rateHz: 0) == "Sensor wird gesucht …")
+        #expect(SensorZeile.text(zustand: .verbindet, rateHz: 0) == "Sensor wird gesucht …")
+        #expect(SensorZeile.text(zustand: .verbunden(name: "WT901BLE67", akkuProzent: 82), rateHz: 49.8)
+            == "WT901BLE67 · 49,8 Hz · 82 %")
+        #expect(SensorZeile.text(zustand: .verbunden(name: "WT901BLE67", akkuProzent: nil), rateHz: 50)
+            == "WT901BLE67 · 50,0 Hz")
+        #expect(SensorZeile.text(zustand: .getrennt(wirdNeuVerbunden: true), rateHz: 0)
+            == "Sensor getrennt, wird neu verbunden …")
+        #expect(SensorZeile.text(zustand: .bluetoothNichtBereit(.ausgeschaltet), rateHz: 0)
+            == "Bluetooth ist ausgeschaltet")
+        #expect(SensorZeile.text(zustand: .bluetoothNichtBereit(.verweigert), rateHz: 0)
+            == "Bluetooth ist für gymodo nicht erlaubt")
+    }
+}
 #endif

@@ -9,6 +9,18 @@ struct FitnessMemberApp: App {
     @State private var verlaufStore: VerlaufStore
     @State private var netzwerkMonitor = NetzwerkMonitor()
     @State private var pendingTagStore = PendingTagStore()
+    #if DEBUG
+    /// Eine Instanz fuer die ganze App: die Verbindung ueberlebt den Wechsel
+    /// zwischen Geraeten (Spec Sensor-Anbindung 5.3). Der CBCentralManager
+    /// entsteht erst beim Tap auf "Sensor verbinden".
+    @State private var sensorAufnahme = SensorAufnahmeKoordinator(
+        quelle: BluetoothSensorQuelle(),
+        wurzel: URL.documentsDirectory.appendingPathComponent("Sensoraufnahmen"),
+        geraet: .init(
+            model: Laufzeitkontext.modellkennung(),
+            os: "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)",
+            appBuild: Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""))
+    #endif
     private let apiClient: APIClient
 
     init() {
@@ -36,6 +48,9 @@ struct FitnessMemberApp: App {
                 .environment(verlaufStore)
                 .environment(netzwerkMonitor)
                 .environment(pendingTagStore)
+                #if DEBUG
+                .sensorInstallieren(sensorAufnahme)
+                #endif
                 .task {
                     await sessionStore.restoreSession()
                     // Der bisher fehlende Ausloeser der Schreib-Warteschlange.
@@ -60,4 +75,12 @@ struct FitnessMemberApp: App {
                 }
         }
     }
+}
+
+private extension View {
+    #if DEBUG
+    func sensorInstallieren(_ koordinator: SensorAufnahmeKoordinator) -> some View {
+        environment(koordinator).task { koordinator.starten() }
+    }
+    #endif
 }

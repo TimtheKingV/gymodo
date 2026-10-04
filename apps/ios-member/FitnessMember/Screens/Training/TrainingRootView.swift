@@ -15,6 +15,9 @@ struct TrainingRootView: View {
     @Environment(CatalogStore.self) private var katalog
     @Environment(WorkoutSessionStore.self) private var sessions
     @Environment(PendingTagStore.self) private var pendingTag
+    #if DEBUG
+    @Environment(SensorAufnahmeKoordinator.self) private var sensorAufnahme
+    #endif
     @Environment(\.scenePhase) private var scenePhase
 
     let apiClient: APIClient
@@ -573,10 +576,17 @@ struct TrainingRootView: View {
         let zuletzt = GeraetEinstiegRechner.letzteUebung(machineId: machineId, in: bootstrap)
         let gewaehlt = exerciseId ?? zuletzt ?? maschine.exercises.first?.id
         guard let gewaehlt else { return nil }
+        // Im Release gibt es keinen Mitschnitt; im Debug-Build ist es der
+        // Sensor-Koordinator.
+        var mitschnitt: (any SatzMitschnitt)?
+        #if DEBUG
+        mitschnitt = sensorAufnahme
+        #endif
         return GeraetModel(
             maschine: maschine, uebungId: gewaehlt, token: token,
             bootstrap: bootstrap, loader: apiClient, sessions: sessions,
-            enqueue: { katalog.enqueue($0); Task { await katalog.flushPending() } }
+            enqueue: { katalog.enqueue($0); Task { await katalog.flushPending() } },
+            mitschnitt: mitschnitt
         )
     }
 
