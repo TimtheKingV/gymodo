@@ -70,6 +70,50 @@ struct WitMotionPaketTests {
         #expect(ergebnis == [.register(adresse: 0x64, werte: [396, 0, 0, 0, 0, 0, 0, 0])])
     }
 
+    /// Woertlich aus der Verifikation am Sensor (Spec 4.2 und 4.4): eine
+    /// 60-Byte-Notification, die Akku-Antwort zwischen zwei Messwerten.
+    static let echteNotification: [UInt8] = [
+        0x55, 0x61, 0xF5, 0xFF, 0x2E, 0x00, 0x00, 0x08, 0xFE, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xD9, 0xFF, 0xB5, 0x00, 0x00, 0x00,
+        0x55, 0x71, 0x64, 0x00, 0x7E, 0x01, 0x00, 0x00, 0x33, 0x9B,
+        0x76, 0xFC, 0xA3, 0xC4, 0x00, 0x00, 0x00, 0x00, 0xE8, 0x03,
+        0x55, 0x61, 0xF8, 0xFF, 0x2D, 0x00, 0x00, 0x08, 0xFF, 0xFF,
+        0xFE, 0xFF, 0xFF, 0xFF, 0xD9, 0xFF, 0xB5, 0x00, 0x00, 0x00,
+    ]
+
+    @Test func liestDasEchtePaketAusDerVerifikation() {
+        var sut = WitMotionParser()
+        let pakete = sut.lesen(Data(Self.echteNotification))
+        #expect(pakete.count == 3)
+        #expect(sut.verworfeneBytes == 0)
+        guard case .messwert(let a, let g, let w)? = pakete.first else {
+            Issue.record("kein Messwert"); return
+        }
+        // Flach und ruhig auf dem Tisch: die Schwerkraft liegt auf z.
+        #expect(abs(a.x - -0.0054) < 0.001)
+        #expect(abs(a.y - 0.0225) < 0.001)
+        #expect(abs(a.z - 1.0) < 0.001)
+        #expect(abs(g.x - -0.122) < 0.001)
+        #expect(abs(g.y - -0.061) < 0.001)
+        #expect(abs(g.z - -0.061) < 0.001)
+        #expect(abs(w.x - -0.214) < 0.001)
+        #expect(abs(w.y - 0.994) < 0.001)
+        #expect(w.z == 0)
+    }
+
+    @Test func liestDieEchteAkkuAntwortZwischenZweiMesswerten() {
+        var sut = WitMotionParser()
+        let pakete = sut.lesen(Data(Self.echteNotification))
+        guard pakete.count == 3, case .register(let adresse, let werte) = pakete[1] else {
+            Issue.record("keine Registerantwort in der Mitte"); return
+        }
+        #expect(adresse == Akkustand.register)
+        // 3,82 V in Hundertstel Volt.
+        #expect(werte.first == 382)
+        #expect(Akkustand.prozent(hundertstelVolt: Int(werte[0])) == 60)
+        if case .messwert = pakete[2] {} else { Issue.record("dritter Eintrag ist kein Messwert") }
+    }
+
     @Test func leereDatenErgebenNichts() {
         var sut = WitMotionParser()
         #expect(sut.lesen(Data()).isEmpty)
