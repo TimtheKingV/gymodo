@@ -98,11 +98,30 @@ final class BluetoothSensorQuelle: NSObject, SensorQuelle {
         guard gewollt else { return }
         switch zentrale.state {
         case .poweredOn: suchen(zentrale)
-        case .poweredOff: setze(.bluetoothNichtBereit(.ausgeschaltet))
-        case .unauthorized: setze(.bluetoothNichtBereit(.verweigert))
+        case .poweredOff:
+            verbindungAufgeben()
+            setze(.bluetoothNichtBereit(.ausgeschaltet))
+        case .unauthorized:
+            verbindungAufgeben()
+            setze(.bluetoothNichtBereit(.verweigert))
         case .unsupported: setze(.bluetoothNichtBereit(.nichtUnterstuetzt))
         default: break   // .unknown, .resetting: der naechste Aufruf kommt von selbst
         }
+    }
+
+    /// Ohne Bluetooth sind alle CBPeripheral-Objekte ungueltig, und ein
+    /// didDisconnect kommt dafuer nicht. Bliebe `peripheral` stehen, haelt
+    /// suchen() nach dem Wiedereinschalten den Sensor fuer verbunden und tut
+    /// nichts -- am iPhone blieb die Zeile so auf "Bluetooth ist
+    /// ausgeschaltet", bis die App neu startete. `gewollt` bleibt: das
+    /// Mitglied hat nicht getrennt, nach dem Einschalten geht es weiter.
+    private func verbindungAufgeben() {
+        sammelfristBeenden()
+        akkuTakt?.cancel()
+        peripheral = nil
+        schreibziel = nil
+        funde = [:]
+        fundliste = []
     }
 
     private func suchen(_ zentrale: CBCentralManager) {
