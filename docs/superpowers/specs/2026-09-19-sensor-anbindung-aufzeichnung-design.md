@@ -107,7 +107,17 @@ Zu klären:
    Register `0x64`, erster Wert `0x017E` = 382, also 3,82 V in Hundertstel Volt. Nach der Stufentabelle sind das 60 %.
 5. **Ratenbefehl.** Greift innerhalb einer Sekunde, ohne Entsperren und ohne „Konfiguration speichern": nach `FF AA 03 09 00` stieg die Rate von 48–50 auf 96–100 Pakete je Sekunde. **Abweichend von der Erwartung bleibt die Rate erhalten**, sowohl über Trennen und Neuverbinden als auch über Aus- und Einschalten: nach dem Neustart sendete der Sensor weiter mit 100 Hz. Die App setzt die Rate deshalb bei jedem Verbinden ausdrücklich und verlässt sich nie auf einen Ausgangszustand. Nach der Probe steht der Sensor wieder auf 50 Hz.
 6. **20 Hz.** `FF AA 03 07 00` stimmt: 144 Notifications zu je einem Paket in 7,3 s, rund 19,7 je Sekunde.
-7. *Folgt aus Task 11* (5-Minuten-Test am iPhone), samt Empfehlung für die Standardrate. Bis dahin gilt 50 Hz.
+7. **Rate am iPhone** (4. Oktober 2026, iPhone 13 mini mit iOS 26.6.2, Sensor in Ruhe, App im Vordergrund, je 5 Minuten aus der Diagnose):
+
+   | Soll | Pakete | Ist | Abstand Median | p95 | Maximum | Lücken |
+   |---|---|---|---|---|---|---|
+   | 20 Hz | 5.512 | 18,4 Hz (19,9 Hz ohne die 22,4 s im Hintergrund) | 49,7 ms | 90,8 ms | 22.396 ms (Hintergrund) | 0 |
+   | 50 Hz | 14.894 | 49,6 Hz | 0 ms | 60,3 ms | 91,3 ms | 0 |
+   | 100 Hz | 29.789 | 99,3 Hz | 0 ms | 60,1 ms | 120,2 ms | 0 |
+
+   Bei 50 und 100 Hz kommt nichts verloren an. Die Pakete kommen gebündelt: bei 50 Hz zwei je Notification, die Notifications im Abstand von 30 oder 60 ms (am Mac 40 ms). Der Median von 0 ms ist diese Bündelung, nicht ein Messfehler. Die Zeitauflösung am iPhone liegt damit bei rund 30 ms, unabhängig von der Rate; 100 Hz liefert mehr Werte je Bündel, aber keine feineren Zeitstempel.
+
+   **Empfehlung: 50 Hz bleibt die Standardrate.** Eine Wiederholung dauert mehrere Sekunden; 50 Hz zeigt sie in den ersten Aufnahmen deutlich (Drehrate um x bis über 110 °/s). 100 Hz verdoppelt Datenmenge und Funklast ohne bessere Zeitauflösung. 20 Hz wäre möglich, lässt aber für Tempo-Analysen in C wenig Reserve.
 
 Abschnitt 3 ist entsprechend korrigiert (UUIDs, Verhalten der Rate, Bündelung). Parser, Befehle und Akku-Umrechnung bleiben, wie sie sind.
 
@@ -312,6 +322,8 @@ Swift Testing im Target `FitnessMemberTests`, ohne Sensor und ohne Bluetooth.
 10. Ordner im Finder und in der Dateien-App sichtbar
 11. Release-Build: keine Sensor-Zeile, keine Bluetooth-Abfrage
 
+**Ergebnis am iPhone** (4. Oktober 2026): 1 bis 10 gehen. Zwei Funde sind behoben: Nach dem Wiedereinschalten von Bluetooth verband der Sensor nicht wieder, bis die App neu startete (Punkt 6), und ein Ratenwechsel in der Diagnose lag unsichtbar in der Aufnahme (Punkt 2, jetzt `# rate` in 6.2). Dazu kam ein Messwert mit negativer Zeit am Aufnahmestart, ebenfalls behoben. Punkt 11 ist über den Build geprüft: der Release-Build kompiliert ohne jeden Sensor-Typ, weil alles hinter `#if DEBUG` steht; am Gerät angesehen wurde er nicht.
+
 Vor dem Melden das volle Set: `pnpm typecheck`, `pnpm test`, `pnpm test:integration`, `xcodebuild test -scheme FitnessMember -destination 'platform=iOS Simulator,name=iPhone 17 Pro'`.
 
 ## 10. Fertig ist A, wenn
@@ -322,7 +334,7 @@ Vor dem Melden das volle Set: `pnpm typecheck`, `pnpm test`, `pnpm test:integrat
 
 ## 11. Offene Punkte für später
 
-1. **Hintergrundmodus** `bluetooth-central` (B): hängt davon ab, wie Mitglieder das Telefon beim Satz ablegen. Punkt 7 der Geräte-Checkliste liefert die erste Beobachtung.
+1. **Hintergrundmodus** `bluetooth-central` (B): hängt davon ab, wie Mitglieder das Telefon beim Satz ablegen. Beobachtung aus Punkt 7 der Geräte-Checkliste: Geht die App in den Hintergrund, bleibt die Verbindung bestehen, aber es kommen keine Messwerte an (4,0 s und 22,4 s in den Aufnahmen vom 4. Oktober). Weil die Verbindung nicht abreißt, schreibt die Aufnahme dafür **keine** Lücken-Zeile; die Zeit steht nur als großer Paketabstand in der CSV. B muss entweder den Hintergrundmodus einschalten oder solche Abstände selbst als Lücke werten.
 2. **Produktgrenze „gymodo misst nichts"** (B): Sensor schlägt vor, Mitglied bestätigt, Herkunfts-Feld am Satz. Braucht eine Änderung der M1-Spec, nicht nur Code.
 3. **Eigenes Swift-Package** für Parser, Format und Zähler (B): lohnt sich, sobald die Zähler-Iterationen am Simulator hängen. Die Schichten aus Abschnitt 5 sind dafür schon getrennt.
 4. **Einrichtung ohne Herstellerapp** (nach B): Kalibrieren und Speichern aus der App, sobald Studios selbst Sensoren einrichten.
