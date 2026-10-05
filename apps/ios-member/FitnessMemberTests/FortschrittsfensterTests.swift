@@ -25,6 +25,13 @@ struct FortschrittsfensterTests {
         #expect(gefiltert.count == 2)
     }
 
+    /// "Alles" klang nach einer Auswahl unter vielen; gemeint ist der
+    /// Zeitraum ab dem ersten Eintrag (Testnotiz 05.10., #4).
+    @Test func derGesamteZeitraumHeisstSeitStart() {
+        #expect(Fortschrittsfenster.alles.titel == "Seit Start")
+        #expect(Fortschrittsfenster.allCases.map(\.titel) == ["3 Monate", "6 Monate", "Seit Start"])
+    }
+
     @Test func allesLaesstNichtsWeg() {
         #expect(Fortschrittsfenster.alles.punkte(alle, jetzt: jetzt).count == 3)
     }

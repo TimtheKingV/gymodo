@@ -120,6 +120,12 @@ struct LokaleSession: Codable, Equatable {
     let id: UUID
     let startedAt: Date
     var bloecke: [LokalerBlock]
+    /// Seit wann die laufende Pause dauert; nil, solange trainiert wird
+    /// (Testnotiz 05.10., #7, #11). Nur lokal: der Server kennt keine
+    /// Pause, er bekommt weiter Saetze mit ihren Zeitpunkten.
+    var pausiertSeit: Date? = nil
+    /// Die Summe aller abgeschlossenen Pausen.
+    var pausenDauer: TimeInterval = 0
 
     var letzterSatzAm: Date? {
         bloecke.flatMap(\.saetze).map(\.performedAt).max()
@@ -128,4 +134,46 @@ struct LokaleSession: Codable, Equatable {
     /// Ohne Satz ist eine Einheit ein Fehlstart, kein Training: sie wird
     /// verworfen, nicht abgeschlossen (Sammelstelle, Entschieden 2).
     var hatSaetze: Bool { bloecke.contains { !$0.saetze.isEmpty } }
+
+    var istPausiert: Bool { pausiertSeit != nil }
+
+    /// Trainierte Zeit bis `jetzt`, ohne Pausen. Eine laufende Pause
+    /// friert die Uhr ein: gezaehlt wird nur bis zu ihrem Beginn. Liegt
+    /// `jetzt` vor dem Pausenbeginn (der Abschluss rechnet bis zum letzten
+    /// Satz), zaehlt sie gar nicht.
+    func trainiert(bis jetzt: Date) -> TimeInterval {
+        let ende = pausiertSeit.map { min($0, jetzt) } ?? jetzt
+        return max(0, ende.timeIntervalSince(startedAt) - pausenDauer)
+    }
+
+    /// Idempotent: ein zweiter Tap verschiebt den Pausenbeginn nicht.
+    mutating func pausieren(jetzt: Date) {
+        guard pausiertSeit == nil else { return }
+        pausiertSeit = jetzt
+    }
+
+    mutating func fortsetzen(jetzt: Date) {
+        guard let seit = pausiertSeit else { return }
+        pausenDauer += max(0, jetzt.timeIntervalSince(seit))
+        pausiertSeit = nil
+    }
+}
+
+extension LokaleSession {
+    private enum CodingKeys: String, CodingKey {
+        case id, startedAt, bloecke, pausiertSeit, pausenDauer
+    }
+
+    /// Eine Sessiondatei von vor der Pause kennt beide Felder nicht. Ohne
+    /// den Rueckfall dekodierte sie nicht mehr, und ein App-Update mitten
+    /// im Training loeschte die laufende Einheit -- derselbe Grund wie bei
+    /// LokalerSatz.
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        startedAt = try c.decode(Date.self, forKey: .startedAt)
+        bloecke = try c.decode([LokalerBlock].self, forKey: .bloecke)
+        pausiertSeit = try c.decodeIfPresent(Date.self, forKey: .pausiertSeit)
+        pausenDauer = try c.decodeIfPresent(TimeInterval.self, forKey: .pausenDauer) ?? 0
+    }
 }

@@ -228,4 +228,24 @@ struct KursDetailOfflineZustandTests {
         #expect(
             KursDetailOfflineZustand.zustand(fuer: termin(ownStatus: "waitlisted"), jetzt: jetzt) == .warteliste)
     }
+    // MARK: - Testnotiz 05.10., #1
+
+    /// Abmelden und Warteliste-verlassen geben einen Platz her -- rot
+    /// umrandet statt in der Akzentflaeche, die "Anmelden" gehoert.
+    @Test func nurDasStornierenIstZerstoerend() {
+        #expect(KursDetailHauptaktion.abmelden.istZerstoerend)
+        #expect(KursDetailHauptaktion.wartelisteVerlassen.istZerstoerend)
+        #expect(!KursDetailHauptaktion.anmelden.istZerstoerend)
+        #expect(!KursDetailHauptaktion.aufWarteliste.istZerstoerend)
+    }
+
+    /// Der Status steht im Kopf, nicht nur im Knopf: "Abmelden" allein
+    /// sagt nur indirekt, dass man angemeldet ist.
+    @Test func angemeldetNenntDenStatus() {
+        #expect(KursDetailInhalt.statuszeile(fuer: .angemeldet) == "Du bist angemeldet")
+        #expect(KursDetailInhalt.statuszeile(fuer: .frei) == nil)
+        #expect(KursDetailInhalt.statuszeile(fuer: .voll) == nil)
+        #expect(KursDetailInhalt.statuszeile(fuer: .vorbei) == nil)
+        #expect(KursDetailInhalt.statuszeile(fuer: .abgesagt) == nil)
+    }
 }

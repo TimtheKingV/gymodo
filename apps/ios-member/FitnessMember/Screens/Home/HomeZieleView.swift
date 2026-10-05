@@ -272,6 +272,9 @@ private extension HomeZieleView {
         if case .punkte(let werte) = form {
             ForEach(Array(werte.enumerated()), id: \.offset) { index, wert in
                 LineMark(x: .value("Punkt", index), y: .value("Gewicht", wert))
+                    // Ab drei Punkten geschwungen, wie die grossen
+                    // Diagramme (Testnotiz 05.10., #6).
+                    .interpolationMethod(Zeitachse.geschwungen(anzahl: werte.count) ? .monotone : .linear)
                     .lineStyle(StrokeStyle(lineWidth: 2))
                     .foregroundStyle(DesignSystem.Color.accent)
             }

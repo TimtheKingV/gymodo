@@ -16,8 +16,12 @@ struct GeraetView: View {
     let beiUebungWechseln: () -> Void
     let beiProblem: () -> Void
     let beiZurueckZumTraining: () -> Void
+    /// "Training beenden" aus dem Dialog an der Uhr (Testnotiz 05.10.,
+    /// #11). Den Abschluss zeigt die Wurzel des Training-Tabs.
+    var beiTrainingBeenden: () -> Void = {}
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(WorkoutSessionStore.self) private var sessions
     @Environment(NetzwerkMonitor.self) private var netz
     @Environment(CatalogStore.self) private var katalog
     #if DEBUG
@@ -31,59 +35,67 @@ struct GeraetView: View {
     // Anzeige konkurrieren -- und verlaesst die Ansicht die Buehne, endet der
     // Timer mit ihr statt auf einen verschwundenen Zustand zu schreiben.
     @State private var gesendetRunde = 0
+    @State private var steuerungOffen = false
 
     var body: some View {
-        ScrollView {
-            // 16 statt 24 zwischen den Bloecken: der Satzpfad muss auf ein
-            // 667-pt-iPhone passen, ohne dass die Seite scrollt -- und iOS 26
-            // laesst dem Inhalt dort nur 510 pt (54 pt Navigationsleiste,
-            // 83 pt Safe Area fuer die schwebende Tab-Leiste; Sammelstelle
-            // Punkt 12, Rechnung im Plan zu Schnitt 3). Die
-            // Einstellwerte-Zeile ist 44 pt hoch bei 15 pt Schrift und traegt
-            // ihre Luft selbst. Scrollen tut die Seite nur noch mit
-            // Statuskarten -- deshalb basedOnSize, sonst federt ein Pfad, der
-            // passt.
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
-                // Label ueber seinem Titel: Kopfzeile und Geraetename sind
-                // eine Einheit und stehen deshalb 8 auseinander, nicht 16.
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-                    kopfzeile
-                    // Sichtbarkeit hier entschieden, nicht in den Komponenten
-                    // selbst -- damit kein VStack einen leer rendernden
-                    // Kindzustand umschliesst (Review-Fund Task 15).
-                    //
-                    // Waehrend der Pause schweigen die drei Statuskarten. Die
-                    // Pause ist der ausschliessende Zustand (siehe oben), und
-                    // die Warteschlangenkarte war dort das Gegenteil davon: sie
-                    // blitzte nach jedem gesicherten Satz kurz auf ("wartet auf
-                    // Empfang", dann "gesendet", dann weg) und riss beim
-                    // Verschwinden das Rad samt Ziffern nach oben. Ein
-                    // erfolgreicher Normalfall braucht diese Meldung nicht --
-                    // sie steht nach der Pause wieder da, solange sie gilt.
-                    if modell.laufendePause == nil {
-                        if !netz.istOnline {
-                            OfflineLeiste(istOnline: netz.istOnline)
+        // Die Hoehe des sichtbaren Bereichs, damit der Inhalt sie mindestens
+        // fuellt: dann stehen die Knoepfe unten in der Daumenzone und das
+        // Pausenrad in der Mitte, statt alles oben zu sammeln (Testnotiz
+        // 05.10., #12, #13). Passt der Inhalt nicht, scrollt er wie bisher.
+        GeometryReader { sichtbar in
+            ScrollView {
+                // 16 statt 24 zwischen den Bloecken: der Satzpfad muss auf ein
+                // 667-pt-iPhone passen, ohne dass die Seite scrollt -- und iOS 26
+                // laesst dem Inhalt dort nur 510 pt (54 pt Navigationsleiste,
+                // 83 pt Safe Area fuer die schwebende Tab-Leiste; Sammelstelle
+                // Punkt 12, Rechnung im Plan zu Schnitt 3). Die
+                // Einstellwerte-Zeile ist 44 pt hoch bei 15 pt Schrift und traegt
+                // ihre Luft selbst. Scrollen tut die Seite nur noch mit
+                // Statuskarten -- deshalb basedOnSize, sonst federt ein Pfad, der
+                // passt.
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+                    // Label ueber seinem Titel: Kopfzeile und Geraetename sind
+                    // eine Einheit und stehen deshalb 8 auseinander, nicht 16.
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
+                        kopfzeile
+                        // Sichtbarkeit hier entschieden, nicht in den Komponenten
+                        // selbst -- damit kein VStack einen leer rendernden
+                        // Kindzustand umschliesst (Review-Fund Task 15).
+                        //
+                        // Waehrend der Pause schweigen die drei Statuskarten. Die
+                        // Pause ist der ausschliessende Zustand (siehe oben), und
+                        // die Warteschlangenkarte war dort das Gegenteil davon: sie
+                        // blitzte nach jedem gesicherten Satz kurz auf ("wartet auf
+                        // Empfang", dann "gesendet", dann weg) und riss beim
+                        // Verschwinden das Rad samt Ziffern nach oben. Ein
+                        // erfolgreicher Normalfall braucht diese Meldung nicht --
+                        // sie steht nach der Pause wieder da, solange sie gilt.
+                        if modell.laufendePause == nil {
+                            if !netz.istOnline {
+                                OfflineLeiste(istOnline: netz.istOnline)
+                            }
+                            if !katalog.pendingWrites.isEmpty || geradeGesendet {
+                                WarteschlangeKarte(offen: katalog.pendingWrites.count,
+                                                   geradeGesendet: geradeGesendet)
+                            }
+                            if !katalog.verworfeneWrites.isEmpty {
+                                AbgelehnteKarte(anzahl: katalog.verworfeneWrites.count,
+                                                beiQuittieren: katalog.verworfeneQuittieren)
+                            }
                         }
-                        if !katalog.pendingWrites.isEmpty || geradeGesendet {
-                            WarteschlangeKarte(offen: katalog.pendingWrites.count,
-                                               geradeGesendet: geradeGesendet)
-                        }
-                        if !katalog.verworfeneWrites.isEmpty {
-                            AbgelehnteKarte(anzahl: katalog.verworfeneWrites.count,
-                                            beiQuittieren: katalog.verworfeneQuittieren)
-                        }
+                        geraetUndUebung
                     }
-                    geraetUndUebung
+                    inhalt
                 }
-                inhalt
+                .padding(.horizontal, 20)
+                // 8 statt 32: die 83 pt Safe Area der schwebenden Tab-Leiste
+                // tragen den Abstand nach unten schon.
+                .padding(.bottom, DesignSystem.Spacing.s8)
+                .frame(minHeight: sichtbar.size.height, alignment: .top)
+                .animation(reduceMotion ? nil : DesignSystem.Motion.pause, value: modell.phase)
             }
-            .padding(.horizontal, 20)
-            // 8 statt 32: die 83 pt Safe Area der schwebenden Tab-Leiste
-            // tragen den Abstand nach unten schon.
-            .padding(.bottom, DesignSystem.Spacing.s8)
-            .animation(reduceMotion ? nil : DesignSystem.Motion.pause, value: modell.phase)
+            .scrollBounceBehavior(.basedOnSize)
         }
-        .scrollBounceBehavior(.basedOnSize)
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
         // Seit Schnitt 4 startet die Trainingsuhr nicht mehr hier, sondern
@@ -139,6 +151,17 @@ struct GeraetView: View {
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
         #endif
         .testnotizScreen(kontext: testnotizKontext)
+        .trainingSteuerung(
+            istOffen: $steuerungOffen,
+            pausiert: sessions.aktiveSession()?.istPausiert ?? false,
+            beiPauseUmschalten: {
+                if sessions.aktiveSession()?.istPausiert == true {
+                    sessions.fortsetzen()
+                } else {
+                    sessions.pausieren()
+                }
+            },
+            beiBeenden: beiTrainingBeenden)
     }
 
     private var testnotizKontext: [String: String] {
@@ -174,6 +197,7 @@ struct GeraetView: View {
             #endif
             einstellung
             WertZeile(modell: modell)
+            Spacer(minLength: 0)
             aktionen
         }
     }
@@ -191,26 +215,31 @@ struct GeraetView: View {
     }
 
     /// Wie lange das Training schon laeuft -- oben rechts, in derselben
-    /// Zeile wie der Ort.
+    /// Zeile wie der Ort, mit dem pulsierenden Punkt davor (Testnotiz
+    /// 05.10., #10). Ein Tipp oeffnet "Pausieren / Training beenden" (#11).
     ///
-    /// Gegen einen gespeicherten Zeitpunkt gerechnet statt mitgezaehlt, wie
-    /// auf dem Training-Tab und beim Resttimer: ein Zeitpunkt ueberlebt
-    /// Hintergrund und Sperrbildschirm, ein Zaehler nicht. Ohne
-    /// Trainingsbeginn (die Vier-Stunden-Grenze ist waehrend des Screens
-    /// abgelaufen) steht hier nichts -- eine Uhr auf 00:00 waere eine
-    /// Behauptung ueber ein Training, das nicht mehr laeuft.
+    /// Ohne laufende Einheit (die Vier-Stunden-Grenze ist waehrend des
+    /// Screens abgelaufen) steht hier nichts -- eine Uhr auf 00:00 waere
+    /// eine Behauptung ueber ein Training, das nicht mehr laeuft.
     @ViewBuilder
     private var trainingsuhr: some View {
-        if let beginn = modell.trainingsbeginn {
-            TimelineView(.periodic(from: .now, by: 1)) { zeit in
-                Text(Zahlformat.verstrichen(seit: beginn, bis: zeit.date))
-                    .font(.system(size: 15, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                    // Ohne Label liest VoiceOver "23:41" als Uhrzeit
-                    // (designsystem.md SS12, wie auf dem Training-Tab).
-                    .accessibilityLabel(Zahlformat.verstrichenGesprochen(seit: beginn, bis: zeit.date))
+        if let session = sessions.aktiveSession() {
+            Button { steuerungOffen = true } label: {
+                HStack(spacing: 6) {
+                    Laufpunkt(pausiert: session.istPausiert)
+                    TrainingsuhrText(session: session, font: .system(size: 15, weight: .semibold))
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(PressButtonStyle())
+            .testnotizElement("geraet.trainingsuhr", typ: "Button")
+            .accessibilityHint("Pausieren oder Training beenden")
             .fixedSize()
+            // Die 44 pt Trefferflaeche ragen aus der Kopfzeile heraus,
+            // statt sie zu strecken -- dasselbe Hoehenbudget wie bei
+            // "andere Übung".
+            .padding(.vertical, -DesignSystem.Spacing.s12)
         }
     }
 
@@ -367,6 +396,9 @@ struct GeraetView: View {
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
+            // Die Knoepfe unten, wie im Eingabezustand (Testnotiz 05.10., #13).
+            Spacer(minLength: 0)
+
             PrimaryButton(title: "Gerät abschließen") { beiZurueckZumTraining() }
                 .testnotizElement("geraet.abschliessen", typ: "PrimaryButton")
             // Dieselbe Zeile wie unter den Raedern (Sammelstelle Punkt 12).
@@ -376,6 +408,7 @@ struct GeraetView: View {
                 problemMelden
             }
         }
+        .frame(maxHeight: .infinity)
     }
 
     /// In beiden Aktionsgruppen dieselbe Zeile -- zweimal getippt waere sie
@@ -407,6 +440,7 @@ struct GeraetView: View {
 struct GeraetScreen: View {
     @State var modell: GeraetModel
     let beiZurueckZumTraining: () -> Void
+    let beiTrainingBeenden: () -> Void
 
     @State private var uebungWechselnOffen = false
     @State private var problemOffen = false
@@ -416,7 +450,8 @@ struct GeraetScreen: View {
             modell: modell,
             beiUebungWechseln: { uebungWechselnOffen = true },
             beiProblem: { problemOffen = true },
-            beiZurueckZumTraining: beiZurueckZumTraining
+            beiZurueckZumTraining: beiZurueckZumTraining,
+            beiTrainingBeenden: beiTrainingBeenden
         )
         .sheet(isPresented: $uebungWechselnOffen) {
             UebungWechselnSheet(modell: modell) { modell.uebungWechseln(zu: $0) }

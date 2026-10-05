@@ -33,7 +33,7 @@ enum Fortschrittsfenster: CaseIterable, Identifiable {
         switch self {
         case .dreiMonate: "3 Monate"
         case .sechsMonate: "6 Monate"
-        case .alles: "Alles"
+        case .alles: "Seit Start"
         }
     }
 

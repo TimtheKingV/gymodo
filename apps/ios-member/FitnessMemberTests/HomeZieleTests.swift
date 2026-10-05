@@ -306,4 +306,55 @@ struct HomeZieleTests {
         }
         #expect(karte.erreichtText == "Zielgewicht erreicht · 78,0 kg am 3. November")
     }
+    // MARK: - Testnotiz 05.10., #5: erreicht gilt nur ohne Rueckschritt
+
+    /// 73,0 am 26. September erreicht, heute 74,0 -- wieder zugenommen.
+    /// "Zielgewicht erreicht" waere jetzt eine Aussage ueber gestern.
+    @Test func erreichtVerschwindetNachWiederZugenommen() {
+        let erreicht = VerlaufStore.ErreichtesZielgewicht(weightKg: 73, measuredOn: "2026-09-26")
+        let zustand = HomeZiele.zustand(
+            member: member(trainingGoal: "lose_weight"),
+            messwerte: [messwert("2026-08-01", 80), messwert("2026-09-26", 73), messwert("2026-10-05", 74)],
+            erreichtesZielgewicht: erreicht, jetzt: jetzt, zeitzone: zeitzone)
+
+        guard case .karte(let karte) = zustand else {
+            Issue.record("Erwartet .karte, war \(zustand)")
+            return
+        }
+        #expect(karte.erreichtText == nil)
+    }
+
+    /// Weiter abgenommen: das Ziel bleibt erreicht.
+    @Test func erreichtBleibtBeimWeiterAbnehmen() {
+        let erreicht = VerlaufStore.ErreichtesZielgewicht(weightKg: 73, measuredOn: "2026-09-26")
+        let zustand = HomeZiele.zustand(
+            member: member(trainingGoal: "lose_weight"),
+            messwerte: [messwert("2026-08-01", 80), messwert("2026-09-26", 73), messwert("2026-10-05", 72.5)],
+            erreichtesZielgewicht: erreicht, jetzt: jetzt, zeitzone: zeitzone)
+
+        guard case .karte(let karte) = zustand else {
+            Issue.record("Erwartet .karte, war \(zustand)")
+            return
+        }
+        #expect(karte.erreichtText != nil)
+    }
+
+    /// Zunehmen als Ziel: erst ein Wert UNTER dem erreichten ist ein
+    /// Rueckschritt. Ohne Trainingsrichtung "Abnehmen" ergibt sich die
+    /// Richtung aus dem ersten Messwert.
+    @Test func erreichtBeimZunehmenFolgtDerRichtungAusDenDaten() {
+        let erreicht = VerlaufStore.ErreichtesZielgewicht(weightKg: 75, measuredOn: "2026-09-26")
+        let alle = [messwert("2026-08-01", 70), messwert("2026-09-26", 75)]
+
+        #expect(HomeZiele.erreichtGilt(erreicht, messwerte: alle + [messwert("2026-10-05", 76)], trainingGoal: "build_muscle"))
+        #expect(!HomeZiele.erreichtGilt(erreicht, messwerte: alle + [messwert("2026-10-05", 74)], trainingGoal: "build_muscle"))
+    }
+
+    /// Kein spaeterer Eintrag: der Moment gilt, wie bisher.
+    @Test func erreichtGiltOhneSpaeterenEintrag() {
+        let erreicht = VerlaufStore.ErreichtesZielgewicht(weightKg: 73, measuredOn: "2026-09-26")
+
+        #expect(HomeZiele.erreichtGilt(
+            erreicht, messwerte: [messwert("2026-08-01", 80), messwert("2026-09-26", 73)], trainingGoal: "lose_weight"))
+    }
 }

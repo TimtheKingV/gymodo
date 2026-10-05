@@ -51,7 +51,9 @@ struct Trainingszusammenfassung: Equatable, Hashable {
         // gehoeren zum Training (Sammelstelle Punkt 10).
         von = session.startedAt
         bis = letzter
-        dauerMinuten = Int(letzter.timeIntervalSince(session.startedAt) / 60)
+        // Ohne Pausen (Testnotiz 05.10., #7): die Uhr stand in der Pause,
+        // und der Abschluss nennt dieselbe Zeit wie zuletzt die Uhr.
+        dauerMinuten = Int(session.trainiert(bis: letzter) / 60)
         // geraeteAnzahl, satzAnzahl und bloecke bleiben, wie sie sind.
         // Geraete, nicht Bloecke: zwei Uebungen an derselben Maschine sind
         // ein Geraet (so zaehlt es auch der Server in machineCount).

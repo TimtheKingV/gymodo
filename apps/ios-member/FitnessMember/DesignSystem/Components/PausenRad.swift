@@ -51,8 +51,14 @@ struct PausenRad: View {
         // Knopfblock machten die Pause auf einem 667-pt-iPhone auf iOS 26
         // (510 pt Inhaltshoehe dort) rund 45 pt zu hoch (Plan Schnitt 3,
         // Task 8).
+        // Das Rad in der Mitte, die Knoepfe unten in der Daumenzone
+        // (Testnotiz 05.10., #12). Die Spacer greifen nur, wenn der
+        // Satzpfad die Hoehe des Bildschirms anbietet (GeraetView); sonst
+        // bleibt es beim Abstand von 24 pt.
         VStack(spacing: DesignSystem.Spacing.s24) {
+            Spacer(minLength: 0)
             rad
+            Spacer(minLength: 0)
             VStack(spacing: DesignSystem.Spacing.s12) {
                 // "Weiter" ist die Hauptaktion dieses Zustands und damit die
                 // eine Akzentflaeche des Screens (SS2) -- solange die Pause
@@ -69,7 +75,7 @@ struct PausenRad: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     /// Eine einzige, ungeschachtelte TimelineView treibt Bogen UND Ziffern

@@ -327,7 +327,14 @@ enum Zahlformat {
     /// Trainingseinheit darf bis zu vier Stunden laufen
     /// (WorkoutSessionStore.sessionPause).
     static func verstrichen(seit start: Date, bis jetzt: Date) -> String {
-        let sekunden = max(0, Int(jetzt.timeIntervalSince(start)))
+        dauer(jetzt.timeIntervalSince(start))
+    }
+
+    /// Dieselbe Schreibweise fuer eine Dauer statt einer Spanne -- die
+    /// Trainingsuhr zieht seit der Pause (Testnotiz 05.10., #11) Pausen ab
+    /// und hat deshalb keinen einzelnen Beginn mehr.
+    static func dauer(_ dauer: TimeInterval) -> String {
+        let sekunden = max(0, Int(dauer))
         let stunden = sekunden / 3600
         let minuten = (sekunden % 3600) / 60
         let rest = sekunden % 60
@@ -340,7 +347,11 @@ enum Zahlformat {
     /// VoiceOver "23:41" mit hoher Wahrscheinlichkeit als Uhrzeit
     /// (designsystem.md SS12, wie gewichtGesprochen).
     static func verstrichenGesprochen(seit start: Date, bis jetzt: Date) -> String {
-        let minuten = max(0, Int(jetzt.timeIntervalSince(start) / 60))
+        dauerGesprochen(jetzt.timeIntervalSince(start))
+    }
+
+    static func dauerGesprochen(_ dauer: TimeInterval) -> String {
+        let minuten = max(0, Int(dauer / 60))
         let stunden = minuten / 60
         let restminuten = minuten % 60
         guard stunden > 0 else {
