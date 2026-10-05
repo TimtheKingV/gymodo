@@ -19,10 +19,14 @@ import SwiftUI
 /// Verlauf: Tag antippen, Karte antippen, Detail.
 struct HomeRootView: View {
     let apiClient: APIClient
+    /// Wechselt auf den Training-Tab -- derselbe Ort wie ein Tipp auf
+    /// "Training" unten (Testnotiz 05.10., #8).
+    var beiTrainingZeigen: () -> Void = {}
 
     @Environment(VerlaufStore.self) private var verlauf
     @Environment(CatalogStore.self) private var katalog
     @Environment(NetzwerkMonitor.self) private var netz
+    @Environment(WorkoutSessionStore.self) private var sessions
     @Environment(\.scenePhase) private var scenePhase
     /// Reicht einen gescannten Geraete-Code an den Training-Tab weiter --
     /// derselbe Weg wie ein Universal Link (siehe MainTabView,
@@ -190,17 +194,51 @@ private extension HomeRootView {
     }
 
     @ViewBuilder var kopf: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-            if let vorname = HomeZeilen.vorname(katalog.bootstrap?.member.displayName) {
-                Text("Hallo \(vorname)")
-                    .font(DesignSystem.Typography.screentitel)
-                    .foregroundStyle(DesignSystem.Color.text)
+        HStack(alignment: .top, spacing: DesignSystem.Spacing.s12) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                if let vorname = HomeZeilen.vorname(katalog.bootstrap?.member.displayName) {
+                    Text("Hallo \(vorname)")
+                        .font(DesignSystem.Typography.screentitel)
+                        .foregroundStyle(DesignSystem.Color.text)
+                }
+                if let studioName {
+                    Text(studioName)
+                        .font(DesignSystem.Typography.label)
+                        .kerning(1.5)
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                }
             }
-            if let studioName {
-                Text(studioName)
-                    .font(DesignSystem.Typography.label)
-                    .kerning(1.5)
-                    .foregroundStyle(DesignSystem.Color.textMuted)
+            Spacer(minLength: 0)
+            laufendesTraining
+        }
+    }
+
+    /// Oben rechts, solange ein Training laeuft: Punkt, "TRAINING LÄUFT",
+    /// die Uhr. Ein Tipp fuehrt auf den Training-Tab (Testnotiz 05.10.,
+    /// #8) -- wer zwischendurch auf Home schaut, findet ohne Suchen zurueck.
+    ///
+    /// Im Sekundentakt ausgewertet, nicht nur die Ziffern: laeuft die
+    /// Einheit nach vier Stunden aus, verschwindet die Anzeige von selbst.
+    var laufendesTraining: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { zeit in
+            if let session = sessions.aktiveSession(jetzt: zeit.date) {
+                Button(action: beiTrainingZeigen) {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Laufpunkt(pausiert: session.istPausiert)
+                            Text(session.istPausiert ? "PAUSIERT" : "TRAINING LÄUFT")
+                                .font(DesignSystem.Typography.label)
+                                .tracking(1.5)
+                                .foregroundStyle(DesignSystem.Color.textMuted)
+                        }
+                        TrainingsuhrText(session: session, font: .system(size: 20, weight: .black))
+                    }
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(PressButtonStyle())
+                .testnotizElement("home.training-laeuft", typ: "Button")
+                .accessibilityHint("Öffnet das laufende Training")
             }
         }
     }

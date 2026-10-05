@@ -29,6 +29,11 @@ enum KursDetailHauptaktion: Equatable {
         case .abmelden, .wartelisteVerlassen: false
         }
     }
+
+    /// Stornieren gibt einen Platz her und steht deshalb rot umrandet da,
+    /// nicht in der Akzentflaeche, mit der man sich anmeldet. Gelb las
+    /// sich wie "hier geht es weiter" (Testnotiz 05.10., #1).
+    var istZerstoerend: Bool { !istBuchen }
 }
 
 /// Die Sechsertabelle selbst: Zustand -> Hauptaktion und Fusstext -- eine
@@ -52,6 +57,14 @@ enum KursDetailHauptaktion: Equatable {
 /// Wartelistenplatz laesst sich jederzeit bis Kursbeginn verlassen, ohne
 /// Frist. Review-Fund (Aufgabe 10, Nachtrag).
 enum KursDetailInhalt {
+    /// Der eigene Status im Kopf. Vorher sagte nur der Knopf "Abmelden",
+    /// dass man angemeldet ist -- eine Schlussfolgerung statt einer
+    /// Aussage (Testnotiz 05.10., #1). Die Warteliste braucht keine
+    /// eigene Zeile: der Fusstext nennt sie samt Platz.
+    static func statuszeile(fuer zustand: KursZustand) -> String? {
+        zustand == .angemeldet ? "Du bist angemeldet" : nil
+    }
+
     /// `belegungGilt` ist `KurseHerkunft.zeigtBelegung`: ob die Zahlen,
     /// aus denen `.frei` und `.voll` stammen, gerade noch etwas aussagen.
     ///
@@ -454,6 +467,13 @@ struct KursDetailView: View {
                 .font(DesignSystem.Typography.screentitel)
                 .tracking(-0.8)
                 .foregroundStyle(DesignSystem.Color.text)
+            if let status = KursDetailInhalt.statuszeile(fuer: ansicht.zustand) {
+                // Der Akzent ist hier frei: angemeldet gibt es nur
+                // "Abmelden", und das ist rot umrandet (designsystem.md SS2).
+                Label(status, systemImage: "checkmark.circle.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.accent)
+            }
         }
     }
 
@@ -622,15 +642,17 @@ struct KursDetailView: View {
                 InlineBanner(tone: .danger, message: fehlermeldung)
             }
             if let hauptaktion {
-                PrimaryButton(title: hauptaktion.titel, isLoading: aktionLaeuft) {
-                    // Buchen geht sofort -- es ist mit demselben Knopf
-                    // umkehrbar. Abmelden fragt: der Platz geht an den
-                    // Naechsten, und zurueck gibt es ihn nur, wenn der
-                    // Kurs dann noch frei ist (`KurseAbmeldefrage`).
-                    if hauptaktion.istBuchen {
-                        await ausfuehren(hauptaktion)
-                    } else {
+                // Buchen geht sofort -- es ist mit demselben Knopf
+                // umkehrbar. Abmelden fragt: der Platz geht an den
+                // Naechsten, und zurueck gibt es ihn nur, wenn der
+                // Kurs dann noch frei ist (`KurseAbmeldefrage`).
+                if hauptaktion.istZerstoerend {
+                    DangerOutlineButton(title: hauptaktion.titel, isLoading: aktionLaeuft) {
                         abmeldefrage = hauptaktion
+                    }
+                } else {
+                    PrimaryButton(title: hauptaktion.titel, isLoading: aktionLaeuft) {
+                        await ausfuehren(hauptaktion)
                     }
                 }
             }

@@ -73,7 +73,9 @@ enum HomeZiele {
             abstandText: abstandText(aktuell: letzter.weightKg, ziel: ziel),
             zielText: ziel.map { "bis \(Zahlformat.gewicht($0))" },
             zielwert: ziel,
-            erreichtText: erreichtText(erreichtesZielgewicht),
+            erreichtText: erreichtesZielgewicht.flatMap {
+                erreichtGilt($0, messwerte: messwerte, trainingGoal: member.trainingGoal) ? erreichtText($0) : nil
+            },
             kurve: kurve(messwerte)))
     }
 
@@ -165,6 +167,30 @@ enum HomeZiele {
     static func erreichtText(_ erreicht: VerlaufStore.ErreichtesZielgewicht?) -> String? {
         guard let erreicht, let tag = tagFormatter.date(from: erreicht.measuredOn) else { return nil }
         return "Zielgewicht erreicht · \(Zahlformat.gewichtMitEinheit(erreicht.weightKg)) am \(Zahlformat.tagMonat(tag))"
+    }
+
+    /// Ob der gemerkte "erreicht"-Moment noch stimmt. Ein Ziel, das man
+    /// erreicht und danach wieder verlassen hat, ist nicht mehr erreicht
+    /// (Testnotiz 05.10., #5: 73,0 am 26. September, heute 74,0).
+    ///
+    /// Massgeblich ist nur die Richtung: wer abnimmt, darf weiter
+    /// abnehmen, ohne dass die Zeile verschwindet -- erst ein Wert ueber
+    /// dem erreichten ist ein Rueckschritt. Die Richtung kommt aus dem
+    /// Trainingsziel "Abnehmen"; sonst aus den Daten selbst (erster
+    /// Messwert gegen den erreichten), denn ein Zielgewicht ueber dem
+    /// Startgewicht ist ein Zunehmen-Ziel, egal wie das Trainingsziel
+    /// heisst. Verglichen wird auf eine Nachkommastelle, wie angezeigt.
+    static func erreichtGilt(
+        _ erreicht: VerlaufStore.ErreichtesZielgewicht, messwerte: [Messwert], trainingGoal: String?
+    ) -> Bool {
+        guard let letzter = messwerte.last, letzter.measuredOn > erreicht.measuredOn else { return true }
+        let aktuell = (letzter.weightKg * 10).rounded()
+        let ziel = (erreicht.weightKg * 10).rounded()
+        let start = ((messwerte.first?.weightKg ?? erreicht.weightKg) * 10).rounded()
+
+        if trainingGoal == Trainingsrichtung.abnehmen.rawValue || start > ziel { return aktuell <= ziel }
+        if start < ziel { return aktuell >= ziel }
+        return aktuell == ziel
     }
 
     // MARK: - Innereien

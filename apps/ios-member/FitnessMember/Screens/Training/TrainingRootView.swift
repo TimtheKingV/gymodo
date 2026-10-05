@@ -70,6 +70,8 @@ struct TrainingRootView: View {
     /// Uebergang in einen neuen laufenden Zustand. Der Satz gehoert zu
     /// GENAU EINER abgelaufenen Einheit, nicht zur View.
     @State private var hinweis: TabHinweis?
+    /// Der Dialog "Pausieren / Training beenden" (Testnotiz 05.10., #7).
+    @State private var steuerungOffen = false
 
     var body: some View {
         NavigationStack(path: $pfad) {
@@ -152,6 +154,11 @@ struct TrainingRootView: View {
             }
             .background(DesignSystem.Color.bg)
             .testnotizScreen()
+            .trainingSteuerung(
+                istOffen: $steuerungOffen,
+                pausiert: sessions.aktiveSession()?.istPausiert ?? false,
+                beiPauseUmschalten: pauseUmschalten,
+                beiBeenden: beenden)
             .navigationDestination(for: GeraetRoute.self, destination: ziel)
             .sheet(isPresented: $scannerOffen) {
                 ScannerSheet(
@@ -311,18 +318,18 @@ struct TrainingRootView: View {
 
     // MARK: - Laufende Mitte (TrainingLaeuft.dc.html)
 
-    /// Kopf, scrollende Geraeteliste, Beenden -- die Mitte des laufenden
+    /// Kopf und scrollende Geraeteliste -- die Mitte des laufenden
     /// Zustands zwischen ihrem eigenen Kopf (er ersetzt den Titel) und dem
     /// gemeinsamen Fuss darunter.
     ///
     /// Bis zum Umbau war der ganze laufende Zustand EIN Scrollinhalt. Die
     /// Knoepfe standen damit hinter der Liste: wer sechs Geraete hatte,
     /// musste zum siebten erst scrollen -- und das mitten im Training, mit
-    /// dem Handy in einer Hand. Jetzt wandert nur die Liste, Kopf und
-    /// Beenden bleiben stehen.
+    /// dem Handy in einer Hand. Jetzt wandert nur die Liste, der Kopf
+    /// bleibt stehen.
     private func laufendeMitte(_ mitte: TrainingTab.Mitte, session: LokaleSession) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-            laufendKopf(mitte)
+            laufendKopf(mitte, session: session)
                 .padding(.horizontal, 20)
                 .padding(.top, DesignSystem.Spacing.s24)
 
@@ -340,99 +347,79 @@ struct TrainingRootView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, DesignSystem.Spacing.s12)
             }
-            // Die Liste gibt nach, Kopf und Beenden nicht: bei einem Geraet
+            // Die Liste gibt nach, der Kopf nicht: bei einem Geraet
             // steht die Liste dicht unter dem Kopf, bei zehn scrollt sie.
             .scrollBounceBehavior(.basedOnSize)
 
-            VStack(spacing: DesignSystem.Spacing.s12) {
-                // Die eine Akzentflaeche dieses Screens (designsystem.md SS2):
-                // das Beenden ist die einzige Aktion hier, die etwas abschliesst
-                // -- die Wege im Fuss darunter tragen den Akzent nur in der Kontur.
-                PrimaryButton(title: "Training beenden") { beenden() }
-                    .testnotizElement("training.beenden", typ: "PrimaryButton")
-                // Zulaessig in textFaint: der Satz erklaert nur eine Alternative,
-                // er traegt selbst nichts (designsystem.md SS2).
-                //
-                // fixedSize(vertical:): ohne das ist dieser Text das einzige
-                // schrumpfbare Kind der Beenden-Gruppe, und auf dem SE (667 pt)
-                // gibt die ScrollView darueber ihre Hoehe nicht her -- der Satz
-                // wuerde auf eine Zeile mit Ellipse zusammengedrueckt statt
-                // umzubrechen.
-                Text("Ohne neuen Satz endet das Training nach vier Stunden von selbst.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.horizontal, 20)
-            // Der Abstand zum Fuss darunter ist s12, nicht s24 wie zwischen
-            // Kopf und Liste: die Beenden-Gruppe und die Startwege im Fuss
-            // gehoerten vor dem Umbau zu EINER Fussgruppe mit s12 -- dieser
-            // Abstand bleibt bestehen, obwohl beide jetzt getrennte Funktionen
-            // sind, sonst waechst die feste Hoehe auf Kosten der Liste.
-            .padding(.bottom, DesignSystem.Spacing.s12)
+            // Hier stand "Training beenden" als grosser Akzentknopf. Er
+            // nahm der Liste Platz und lag dort, wo man mitten im Training
+            // am ehesten aus Versehen tippt; Beenden ist jetzt ein Weg ueber
+            // den Pausenknopf im Kopf (Testnotiz 05.10., #7).
         }
     }
 
-    private func laufendKopf(_ mitte: TrainingTab.Mitte) -> some View {
-        HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                HStack(spacing: DesignSystem.Spacing.s8) {
-                    Circle()
-                        .fill(DesignSystem.Color.textMuted)
-                        .frame(width: 8, height: 8)
-                        .accessibilityHidden(true)
-                    // Abweichung vom Artboard: dort accent fuer Punkt und
-                    // Label. Die bleiben textMuted, weil die eine
-                    // Akzentflaeche dieses Screens "Training beenden" gehoert
-                    // (designsystem.md SS2).
-                    Text("TRAINING LÄUFT")
-                        .font(DesignSystem.Typography.label)
-                        .tracking(1.5)
+    /// Oben die Zeile "TRAINING LÄUFT" mit dem Pausenknopf rechts, darunter
+    /// Uhr und Zahlen. Der Knopf oeffnet "Pausieren / Training beenden"
+    /// (Testnotiz 05.10., #7); pausiert zeigt er "Fortsetzen" an.
+    private func laufendKopf(_ mitte: TrainingTab.Mitte, session: LokaleSession) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+            HStack(spacing: DesignSystem.Spacing.s8) {
+                Laufpunkt(pausiert: session.istPausiert)
+                // Der Punkt traegt den Akzent und pulsiert (Testnotiz
+                // 05.10., #9). Frueher war er grau, weil der Akzent
+                // "Training beenden" gehoerte -- den Knopf gibt es hier
+                // nicht mehr.
+                Text(session.istPausiert ? "TRAINING PAUSIERT" : "TRAINING LÄUFT")
+                    .font(DesignSystem.Typography.label)
+                    .tracking(1.5)
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                Spacer()
+                pauseKnopf(pausiert: session.istPausiert)
+            }
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                    TrainingsuhrText(session: session, font: .system(size: 40, weight: .black))
+                    // Der Beginn ist seit Schnitt 4 der Tap auf "Training
+                    // starten". Die Zeile bleibt: eine Uhr ohne Anker ("23:41 --
+                    // seit wann?") sagt nichts.
+                    Text("seit \(Zahlformat.uhrzeit(mitte.startedAt))")
+                        .font(.system(size: 13))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                 }
-                // Gegen mitte.startedAt gerechnet, nicht gegen einen
-                // mitgezaehlten Wert: ein gespeicherter Zeitpunkt ueberlebt
-                // Hintergrund und Sperrbildschirm, ein Zaehler nicht --
-                // dasselbe Muster wie der Resttimer aus Sub-Projekt 2.
-                TimelineView(.periodic(from: .now, by: 1)) { zeit in
-                    // Ohne .accessibilityLabel liest VoiceOver "23:41" mit
-                    // hoher Wahrscheinlichkeit als Uhrzeit -- direkt ueber
-                    // dem echten "seit 18:04" darunter. verstrichenGesprochen
-                    // macht daraus "23 Minuten trainiert" (designsystem.md
-                    // SS12, wie Zahlformat.gewichtGesprochen).
-                    Text(Zahlformat.verstrichen(seit: mitte.startedAt, bis: zeit.date))
-                        .font(.system(size: 40, weight: .black).monospacedDigit())
-                        .foregroundStyle(DesignSystem.Color.text)
-                        .accessibilityLabel(Zahlformat.verstrichenGesprochen(seit: mitte.startedAt, bis: zeit.date))
-                }
-                // Der Beginn ist seit Schnitt 4 der Tap auf "Training
-                // starten". Die Zeile bleibt: eine Uhr ohne Anker ("23:41 --
-                // seit wann?") sagt nichts.
-                Text("seit \(Zahlformat.uhrzeit(mitte.startedAt))")
-                    .font(.system(size: 13))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-            }
-            Spacer()
-            // Ohne Satz zeigt "die App misst nichts" (SS10) auch keine
-            // Geraete- und Satzzahl -- mitte.zahlen ist dann nil, und die
-            // rechte Spalte entfaellt ganz statt eine Null zu zeigen.
-            if let zahlen = mitte.zahlen {
-                HStack(spacing: DesignSystem.Spacing.s16) {
-                    statistik(wert: zahlen.geraete, label: "GERÄTE",
-                              gesprochen: zahlen.geraete == 1 ? "1 Gerät" : "\(zahlen.geraete) Geräte")
-                    statistik(wert: zahlen.saetze, label: "SÄTZE",
-                              gesprochen: zahlen.saetze == 1 ? "1 Satz" : "\(zahlen.saetze) Sätze")
+                // Fasst Uhr und Beginn zu EINEM gesprochenen Satz zusammen
+                // (m4). Der Pausenknopf steht bewusst ausserhalb: .combine
+                // verschluckte ihn sonst (wie in Sub-Projekt 2).
+                .accessibilityElement(children: .combine)
+                Spacer()
+                // Ohne Satz zeigt "die App misst nichts" (SS10) auch keine
+                // Geraete- und Satzzahl -- mitte.zahlen ist dann nil, und die
+                // rechte Spalte entfaellt ganz statt eine Null zu zeigen.
+                if let zahlen = mitte.zahlen {
+                    HStack(spacing: DesignSystem.Spacing.s16) {
+                        statistik(wert: zahlen.geraete, label: "GERÄTE",
+                                  gesprochen: zahlen.geraete == 1 ? "1 Gerät" : "\(zahlen.geraete) Geräte")
+                        statistik(wert: zahlen.saetze, label: "SÄTZE",
+                                  gesprochen: zahlen.saetze == 1 ? "1 Satz" : "\(zahlen.saetze) Sätze")
+                    }
                 }
             }
         }
-        // Fasst Kopf und Statistik zu EINEM gesprochenen Satz zusammen statt
-        // vier Bruchstuecken (m4) -- unbedenklich hier, weil kein
-        // Bedienelement in diesem Kopfbereich steckt, das dabei verschwinden
-        // koennte (anders als in Sub-Projekt 2, wo .combine einen Knopf
-        // verschluckt hat).
-        .accessibilityElement(children: .combine)
+    }
+
+    /// Kontur statt Flaeche: Pausieren ist keine Hauptaktion, und ein
+    /// Akzentknopf im Kopf zoege den Blick von der Liste ab.
+    private func pauseKnopf(pausiert: Bool) -> some View {
+        Button { steuerungOffen = true } label: {
+            Image(systemName: pausiert ? "play.fill" : "pause.fill")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(DesignSystem.Color.text)
+                .frame(width: 44, height: 44)
+                .overlay(Circle().stroke(DesignSystem.Color.line, lineWidth: 1))
+                .contentShape(Circle())
+        }
+        .buttonStyle(PressButtonStyle())
+        .testnotizElement("training.pause", typ: "Button")
+        .accessibilityLabel(pausiert ? "Training fortsetzen oder beenden" : "Training pausieren oder beenden")
     }
 
     private func statistik(wert: Int, label: String, gesprochen: String) -> some View {
@@ -546,7 +533,8 @@ struct TrainingRootView: View {
             }
         case .geraet(let machineId, let exerciseId, let token):
             if let modell = modell(machineId: machineId, exerciseId: exerciseId, token: token) {
-                GeraetScreen(modell: modell) { pfad.removeAll() }
+                GeraetScreen(modell: modell, beiZurueckZumTraining: { pfad.removeAll() },
+                             beiTrainingBeenden: beenden)
             }
         case .abschluss(let sessionId, let zusammenfassung):
             // "Fertig" nimmt den Pfad zur Wurzel zurueck (Aufgabenbrief):
@@ -681,6 +669,18 @@ struct TrainingRootView: View {
         pfad.append(.geraet(machineId: block.machineId, exerciseId: block.exerciseId, token: nil))
     }
 
+    private func pauseUmschalten() {
+        if sessions.aktiveSession()?.istPausiert == true {
+            sessions.fortsetzen()
+        } else {
+            sessions.pausieren()
+        }
+    }
+
+    /// Kommt vom Dialog -- auf dem Tab ODER aus dem Geraete-Screen
+    /// (Testnotiz 05.10., #11). Deshalb ersetzt der Abschluss den Pfad,
+    /// statt sich davorzulegen: "Zurueck" vom Abschluss fuehrte sonst in
+    /// ein Geraet eines beendeten Trainings.
     private func beenden() {
         guard let session = sessions.aktiveSession(),
               let zusammenfassung = Trainingszusammenfassung(session)
@@ -693,6 +693,8 @@ struct TrainingRootView: View {
             // unbedingt, anders als ausgelaufeneQuittieren().
             hinweis = .verworfen
             sessions.beenden()
+            // Der Satz dazu steht im Fuss der Wurzel.
+            pfad.removeAll()
             return
         }
         // Der Satz im Fuss gehoert zu GENAU EINER frueheren Einheit (M1): mit
@@ -701,7 +703,7 @@ struct TrainingRootView: View {
         // Erst festhalten, dann beenden -- andersherum sind die Zahlen weg,
         // bevor der Screen sie zeigt.
         sessions.beenden()
-        pfad.append(.abschluss(sessionId: session.id, zusammenfassung: zusammenfassung))
+        pfad = [.abschluss(sessionId: session.id, zusammenfassung: zusammenfassung)]
     }
 }
 

@@ -62,6 +62,15 @@ struct ZahlformatTests {
         #expect(Zahlformat.verstrichen(seit: start, bis: start.addingTimeInterval(4 * 3600 - 1)) == "3:59:59")
     }
 
+    /// Die Uhr rechnet seit der Pause gegen eine Dauer statt gegen einen
+    /// Beginn (Testnotiz 05.10., #11) -- dieselbe Schreibweise.
+    @Test func dauerSchreibtSichWieVerstrichen() {
+        #expect(Zahlformat.dauer(23 * 60 + 41) == "23:41")
+        #expect(Zahlformat.dauer(80 * 60 + 14) == "1:20:14")
+        #expect(Zahlformat.dauer(-5) == "00:00")
+        #expect(Zahlformat.dauerGesprochen(42 * 60 + 10) == "42 Minuten trainiert")
+    }
+
     @Test func verstrichenGesprochenNenntMinutenOderStundenUndMinuten() {
         // designsystem.md SS12: "23:41" liest VoiceOver sonst als Uhrzeit.
         let start = Date(timeIntervalSince1970: 0)

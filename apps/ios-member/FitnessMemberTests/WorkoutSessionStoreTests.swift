@@ -402,4 +402,42 @@ struct WorkoutSessionStoreTests {
         // Rumpf, aber es geht nur noch null raus.
         #expect(geschrieben.body.rir == nil)
     }
+    // MARK: - Pause (Testnotiz 05.10., #7, #11)
+
+    @Test func pausierenUndFortsetzenWerdenGespeichert() {
+        let (sut, verzeichnis) = store()
+        sut.trainingStarten(jetzt: start)
+        sut.pausieren(jetzt: start.addingTimeInterval(60))
+
+        let neu = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        #expect(neu.aktiveSession(jetzt: start.addingTimeInterval(120))?.istPausiert == true)
+
+        neu.fortsetzen(jetzt: start.addingTimeInterval(180))
+        #expect(neu.aktiveSession(jetzt: start.addingTimeInterval(180))?.istPausiert == false)
+        #expect(neu.aktiveSession(jetzt: start.addingTimeInterval(180))?.pausenDauer == 120)
+    }
+
+    /// Wer in der Pause einen Satz sichert, trainiert wieder.
+    @Test func einSatzSetztDiePauseFort() {
+        let (sut, _) = store()
+        sut.trainingStarten(jetzt: start)
+        sut.pausieren(jetzt: start.addingTimeInterval(60))
+
+        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+                            einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
+                            problemFlag: false, problemReason: nil,
+                            jetzt: start.addingTimeInterval(300))
+
+        let session = sut.aktiveSession(jetzt: start.addingTimeInterval(300))
+        #expect(session?.istPausiert == false)
+        #expect(session?.pausenDauer == 240)
+    }
+
+    /// Ohne laufende Einheit gibt es nichts zu pausieren.
+    @Test func pausierenOhneTrainingLegtNichtsAn() {
+        let (sut, _) = store()
+        sut.pausieren(jetzt: start)
+
+        #expect(sut.aktiveSession(jetzt: start) == nil)
+    }
 }

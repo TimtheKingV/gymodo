@@ -65,6 +65,23 @@ final class WorkoutSessionStore {
         aktiveSession(jetzt: jetzt)?.startedAt
     }
 
+    /// Haelt die Trainingsuhr an (Testnotiz 05.10., #7, #11). Die
+    /// Vier-Stunden-Regel bleibt davon unberuehrt: sie haengt am letzten
+    /// Satz, nicht an der Uhr -- wer vier Stunden pausiert, hat aufgehoert.
+    func pausieren(jetzt: Date = Date()) {
+        guard var session = aktiveSession(jetzt: jetzt) else { return }
+        session.pausieren(jetzt: jetzt)
+        gespeicherteSession = session
+        fileStore.save(session)
+    }
+
+    func fortsetzen(jetzt: Date = Date()) {
+        guard var session = aktiveSession(jetzt: jetzt) else { return }
+        session.fortsetzen(jetzt: jetzt)
+        gespeicherteSession = session
+        fileStore.save(session)
+    }
+
     /// Die gespeicherte Einheit, sofern sie NICHT mehr laeuft UND einen Satz
     /// hatte.
     ///
@@ -128,6 +145,10 @@ final class WorkoutSessionStore {
         // der Regelfall: den setzt seit Schnitt 4 trainingStarten(jetzt:).
         var session = aktiveSession(jetzt: jetzt)
             ?? LokaleSession(id: UUID(), startedAt: jetzt, bloecke: [])
+
+        // Wer in der Pause einen Satz sichert, trainiert wieder (Testnotiz
+        // 05.10., #11) -- ohne Umweg ueber "Fortsetzen".
+        session.fortsetzen(jetzt: jetzt)
 
         let index = session.bloecke.firstIndex {
             $0.machineId == machineId && $0.exerciseId == exerciseId

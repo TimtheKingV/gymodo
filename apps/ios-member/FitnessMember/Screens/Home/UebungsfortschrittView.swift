@@ -63,33 +63,39 @@ struct UebungsfortschrittView: View {
         }
     }
 
-    /// Der Akzent markiert hier den aktiven Wert -- der Screen hat keine
-    /// Hauptaktion, und es bleibt bei genau EINER Akzentflaeche (SS2).
     private var umschalter: some View {
-        HStack(spacing: DesignSystem.Spacing.s8) {
-            ForEach(Fortschrittsfenster.allCases) { wahl in
-                Button(wahl.titel) { fenster = wahl }
-                    .font(DesignSystem.Typography.label)
-                    .padding(.horizontal, DesignSystem.Spacing.s16)
-                    .frame(height: 44)
-                    .background(wahl == fenster ? DesignSystem.Color.accent : DesignSystem.Color.surface)
-                    .foregroundStyle(wahl == fenster ? DesignSystem.Color.onAccent : DesignSystem.Color.textMuted)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.pille))
-            }
-        }
+        FensterUmschalter(fenster: $fenster)
     }
 
+    /// Wie der Gewichtsverlauf: senkrechte Striche mit Datum, der letzte
+    /// Eintrag auf zwei Dritteln, ab drei Punkten geschwungen (Testnotiz
+    /// 05.10., #2, #3, #6) -- zwei Diagramme derselben Art lesen sich
+    /// gleich.
     private func diagramm(_ punkte: [ExerciseProgress.Point], uebung: ExerciseProgress) -> some View {
-        Chart(punkte, id: \.performedOn) { punkt in
+        let yBereich = Fortschrittsfenster.achsenbereich(punkte.map(\.topLoad))
+        let daten = punkte.map { datum(von: $0.performedOn) }
+        let linie: InterpolationMethod = Zeitachse.geschwungen(anzahl: punkte.count) ? .monotone : .linear
+
+        return Chart(punkte, id: \.performedOn) { punkt in
+            RuleMark(
+                x: .value("Datum", datum(von: punkt.performedOn)),
+                yStart: .value("Belastung", yBereich.lowerBound),
+                yEnd: .value("Belastung", punkt.topLoad)
+            )
+            .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+            .foregroundStyle(DesignSystem.Color.line)
+            .accessibilityHidden(true)
+
             LineMark(
-                x: .value("Datum", Zeitpunkt.parse("\(punkt.performedOn)T12:00:00Z") ?? Date()),
+                x: .value("Datum", datum(von: punkt.performedOn)),
                 y: .value("Belastung", punkt.topLoad)
             )
+            .interpolationMethod(linie)
             .lineStyle(StrokeStyle(lineWidth: 2))
             .foregroundStyle(DesignSystem.Color.accent)
 
             PointMark(
-                x: .value("Datum", Zeitpunkt.parse("\(punkt.performedOn)T12:00:00Z") ?? Date()),
+                x: .value("Datum", datum(von: punkt.performedOn)),
                 y: .value("Belastung", punkt.topLoad)
             )
             .symbolSize(64)
@@ -107,19 +113,16 @@ struct UebungsfortschrittView: View {
                 }
             }
         }
-        .chartYScale(domain: Fortschrittsfenster.achsenbereich(punkte.map(\.topLoad)))
-        // Achsenbeschriftung in text-faint (SS13) -- eine andere Regel als
-        // die direkte Beschriftung an den Datenpunkten oben: beide stehen
-        // nebeneinander. Kurzform "9. Jul", keine Wochentage -- die
-        // ausgeschriebene Form gehoert der Rohwerteliste unter dem
-        // Diagramm. Keine feste Anzahl von Marken erzwungen: Swift Charts
-        // waehlt sie passend zur Spannweite, ein fester Wert wuerde sie
-        // bei einem kurzen oder langen Zeitraum falsch platzieren.
+        .chartYScale(domain: yBereich)
+        .chartXScale(domain: Zeitachse.bereich(daten) ?? Zeitachse.leererBereich)
+        // Achsenbeschriftung in text-faint (SS13), Kurzform "9. Jul". Die
+        // Marken stehen genau an den Eintraegen, unter ihrem Strich; zu
+        // dichte Beschriftungen laesst .greedy weg.
         .chartXAxis {
-            AxisMarks {
-                AxisGridLine().foregroundStyle(DesignSystem.Color.line)
+            AxisMarks(values: daten) {
                 AxisValueLabel(
-                    format: .dateTime.day().month(.abbreviated).locale(Locale(identifier: "de_DE"))
+                    format: .dateTime.day().month(.abbreviated).locale(Locale(identifier: "de_DE")),
+                    collisionResolution: .greedy
                 )
                 .foregroundStyle(DesignSystem.Color.textFaint)
             }
@@ -164,6 +167,11 @@ struct UebungsfortschrittView: View {
                 .monospacedDigit()
             }
         }
+    }
+
+    /// Mittag UTC, wie `GewichtsverlaufHilfen.datum`.
+    private func datum(von performedOn: String) -> Date {
+        Zeitpunkt.parse("\(performedOn)T12:00:00Z") ?? Date()
     }
 
     /// "Donnerstag, 27. August" statt der rohen ISO-Form -- dieselbe

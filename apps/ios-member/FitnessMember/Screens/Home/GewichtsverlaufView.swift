@@ -72,6 +72,10 @@ struct GewichtsverlaufView: View {
         }
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
+        // Fehlte bisher: Notizen von hier landeten unter dem zuletzt
+        // gemeldeten Screen (Testnotiz 05.10., #2 bis #4 nannten
+        // GeraetErkanntView).
+        .testnotizScreen()
         .sheet(isPresented: $bearbeitenOffen) {
             GewichtEintragenSheet(
                 vorgabe: bearbeitenMesswert?.weightKg,
@@ -148,22 +152,10 @@ struct GewichtsverlaufView: View {
         .environment(\.defaultMinListRowHeight, 44)
     }
 
-    /// Der Akzent markiert den aktiven Wert -- die eine Akzentflaeche
-    /// dieses Screens (SS2), wie in `UebungsfortschrittView`.
     private var umschalter: some View {
-        HStack(spacing: DesignSystem.Spacing.s8) {
-            ForEach(Fortschrittsfenster.allCases) { wahl in
-                Button(wahl.titel) { fenster = wahl }
-                    .font(DesignSystem.Typography.label)
-                    .padding(.horizontal, DesignSystem.Spacing.s16)
-                    .frame(height: 44)
-                    .background(wahl == fenster ? DesignSystem.Color.accent : DesignSystem.Color.surface)
-                    .foregroundStyle(wahl == fenster ? DesignSystem.Color.onAccent : DesignSystem.Color.textMuted)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.pille))
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, DesignSystem.Spacing.s16)
+        FensterUmschalter(fenster: $fenster)
+            .padding(.horizontal, 20)
+            .padding(.top, DesignSystem.Spacing.s16)
     }
 }
 
@@ -242,7 +234,11 @@ struct GewichtsverlaufDiagrammKarte: View {
     }
 
     private var diagramm: some View {
-        Chart {
+        let yBereich = Fortschrittsfenster.achsenbereich(punkte.map(\.weightKg) + (zielwert.map { [$0] } ?? []))
+        let daten = punkte.map { GewichtsverlaufHilfen.datum($0.measuredOn) }
+        let linie: InterpolationMethod = Zeitachse.geschwungen(anzahl: punkte.count) ? .monotone : .linear
+
+        return Chart {
             // Gestrichelte Ziellinie in text-faint -- Text traegt
             // Textfarben, nie die Serienfarbe (designsystem.md SS13).
             if let zielwert {
@@ -257,17 +253,34 @@ struct GewichtsverlaufDiagrammKarte: View {
             }
 
             ForEach(punkte, id: \.measuredOn) { punkt in
+                let datum = GewichtsverlaufHilfen.datum(punkt.measuredOn)
+
+                // Vom Zeitstrahl senkrecht hoch zum Eintrag, darunter sein
+                // Datum (Testnotiz 05.10., #2): so liest man ab, WANN ein
+                // Punkt war, ohne zwischen Achsmarken zu schaetzen. In
+                // `line`, damit die Striche hinter Kurve und Ziellinie
+                // zuruecktreten.
+                RuleMark(
+                    x: .value("Datum", datum),
+                    yStart: .value("Gewicht", yBereich.lowerBound),
+                    yEnd: .value("Gewicht", punkt.weightKg)
+                )
+                .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                .foregroundStyle(DesignSystem.Color.line)
+                .accessibilityHidden(true)
+
                 LineMark(
-                    x: .value("Datum", GewichtsverlaufHilfen.datum(punkt.measuredOn)),
+                    x: .value("Datum", datum),
                     y: .value("Gewicht", punkt.weightKg)
                 )
+                .interpolationMethod(linie)
                 .lineStyle(StrokeStyle(lineWidth: 2))
                 .foregroundStyle(DesignSystem.Color.accent)
 
                 // Messpunkte >= 8pt (SS13) -- 64 entspricht derselben
                 // Punktgroesse wie in UebungsfortschrittView.
                 PointMark(
-                    x: .value("Datum", GewichtsverlaufHilfen.datum(punkt.measuredOn)),
+                    x: .value("Datum", datum),
                     y: .value("Gewicht", punkt.weightKg)
                 )
                 .symbolSize(64)
@@ -286,14 +299,18 @@ struct GewichtsverlaufDiagrammKarte: View {
         }
         // Das Ziel MUSS im Bereich stecken (Brief Step 3) -- sonst faellt
         // die gestrichelte Linie aus der sichtbaren Achse.
-        .chartYScale(
-            domain: Fortschrittsfenster.achsenbereich(punkte.map(\.weightKg) + (zielwert.map { [$0] } ?? []))
-        )
+        .chartYScale(domain: yBereich)
+        // Der letzte Eintrag auf zwei Dritteln (Testnotiz 05.10., #3).
+        .chartXScale(domain: Zeitachse.bereich(daten) ?? Zeitachse.leererBereich)
+        // Marken genau an den Eintraegen statt frei gewaehlter Tage: das
+        // Datum gehoert zum senkrechten Strich darueber. Liegen Eintraege
+        // zu dicht, laesst .greedy einzelne Beschriftungen weg, statt sie
+        // uebereinander zu drucken -- der Strich bleibt trotzdem stehen.
         .chartXAxis {
-            AxisMarks {
-                AxisGridLine().foregroundStyle(DesignSystem.Color.line)
+            AxisMarks(values: daten) {
                 AxisValueLabel(
-                    format: .dateTime.day().month(.abbreviated).locale(Locale(identifier: "de_DE"))
+                    format: .dateTime.day().month(.abbreviated).locale(Locale(identifier: "de_DE")),
+                    collisionResolution: .greedy
                 )
                 .foregroundStyle(DesignSystem.Color.textFaint)
             }
