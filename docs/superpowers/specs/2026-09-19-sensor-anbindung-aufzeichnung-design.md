@@ -322,7 +322,7 @@ Swift Testing im Target `FitnessMemberTests`, ohne Sensor und ohne Bluetooth.
 10. Ordner im Finder und in der Dateien-App sichtbar
 11. Release-Build: keine Sensor-Zeile, keine Bluetooth-Abfrage
 
-**Ergebnis am iPhone** (4. Oktober 2026): 1 bis 10 gehen. Zwei Funde sind behoben: Nach dem Wiedereinschalten von Bluetooth verband der Sensor nicht wieder, bis die App neu startete (Punkt 6), und ein Ratenwechsel in der Diagnose lag unsichtbar in der Aufnahme (Punkt 2, jetzt `# rate` in 6.2). Dazu kam ein Messwert mit negativer Zeit am Aufnahmestart, ebenfalls behoben. Punkt 11 ist über den Build geprüft: der Release-Build kompiliert ohne jeden Sensor-Typ, weil alles hinter `#if DEBUG` steht; am Gerät angesehen wurde er nicht.
+**Ergebnis am iPhone** (4. Oktober 2026): 1 bis 10 gehen. Zwei Funde sind behoben: Nach dem Wiedereinschalten von Bluetooth verband der Sensor nicht wieder, bis die App neu startete (Punkt 6; der Fix ist am 5. Oktober am iPhone bestätigt, über die Einstellungen und über das Kontrollzentrum), und ein Ratenwechsel in der Diagnose lag unsichtbar in der Aufnahme (Punkt 2, jetzt `# rate` in 6.2). Dazu kam ein Messwert mit negativer Zeit am Aufnahmestart, ebenfalls behoben. Punkt 11 ist über den Build geprüft: der Release-Build kompiliert ohne jeden Sensor-Typ, weil alles hinter `#if DEBUG` steht; am Gerät angesehen wurde er nicht.
 
 Vor dem Melden das volle Set: `pnpm typecheck`, `pnpm test`, `pnpm test:integration`, `xcodebuild test -scheme FitnessMember -destination 'platform=iOS Simulator,name=iPhone 17 Pro'`.
 
