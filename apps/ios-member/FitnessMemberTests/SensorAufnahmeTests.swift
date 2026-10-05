@@ -86,6 +86,26 @@ struct SensorAufnahmeTests {
         #expect(zeilen[4].hasPrefix("14.902000,"))
     }
 
+    @Test func schreibtEinenRatenwechselAlsKommentar() throws {
+        let sut = try neu(wurzel())
+        try sut.schreiben(Self.messwert(t: 100.00))
+        try sut.rateGewechselt(.hz100, t: 168.4)
+        try sut.schreiben(Self.messwert(t: 168.41))
+        let zeilen = try csv(sut)
+        #expect(zeilen[2] == "# rate 100 ab 68.400000")
+        #expect(zeilen[3].hasPrefix("68.410000,"))
+    }
+
+    @Test func derLeserLiestDenRatenwechsel() throws {
+        let sut = try neu(wurzel())
+        try sut.schreiben(Self.messwert(t: 100.00))
+        try sut.rateGewechselt(.hz20, t: 101.5)
+        try sut.abschliessen(.abgebrochen, kontext: Self.kontext, label: .init(), akkuProzent: nil,
+                             statistik: .leer, ende: Self.start, endeT: 102)
+        let gelesen = try SensorAufnahmeLeser.lesen(ordner: sut.ordner)
+        #expect(gelesen.eintraege.last == .rate(.hz20, ab: 1.5))
+    }
+
     @Test func abschlussGesichertTraegtLabelsEin() throws {
         let sut = try neu(wurzel())
         try sut.schreiben(Self.messwert(t: 100.00))

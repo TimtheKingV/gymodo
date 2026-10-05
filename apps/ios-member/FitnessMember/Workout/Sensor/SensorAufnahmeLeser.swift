@@ -7,6 +7,7 @@ enum SensorAufnahmeLeser {
     enum Eintrag: Equatable {
         case messwert(SensorMesswert)
         case luecke(von: TimeInterval, bis: TimeInterval)
+        case rate(SensorRate, ab: TimeInterval)
     }
 
     static func lesen(ordner: URL) throws -> (datei: SensorAufnahmeDatei, eintraege: [Eintrag]) {
@@ -23,6 +24,13 @@ enum SensorAufnahmeLeser {
                 let grenzen = zeile.dropFirst("# luecke ".count).split(separator: "-").compactMap { Double($0) }
                 guard grenzen.count == 2 else { throw Fehler.kaputteZeile(String(zeile)) }
                 eintraege.append(.luecke(von: grenzen[0], bis: grenzen[1]))
+            } else if zeile.hasPrefix("# rate ") {
+                let teile = zeile.dropFirst("# rate ".count).split(separator: " ")
+                guard teile.count == 3, teile[1] == "ab",
+                      let hz = Int(teile[0]), let rate = SensorRate(rawValue: hz),
+                      let ab = Double(teile[2])
+                else { throw Fehler.kaputteZeile(String(zeile)) }
+                eintraege.append(.rate(rate, ab: ab))
             } else if zeile.hasPrefix("#") {
                 continue
             } else {

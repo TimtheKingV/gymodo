@@ -198,7 +198,10 @@ t,ax,ay,az,gx,gy,gz,wx,wy,wz
 - `t`: Sekunden seit Aufnahmestart, sechs Nachkommastellen. `a*` in g (vier Stellen), `g*` Drehrate in °/s (zwei Stellen), `w*` Winkel in ° (zwei Stellen).
 - Dezimaltrenner ist immer der Punkt, unabhängig vom Gebietsschema des Geräts.
 - Zeilen werden während der Aufnahme angehängt und regelmäßig auf die Platte gebracht. Nach einem Absturz ist alles bis kurz davor da.
-- Zeilen mit `#` sind Kommentare. Der einzige festgelegte Kommentar ist `# luecke <von>-<bis>`: In diesem Zeitraum war die Verbindung getrennt.
+- Zeilen mit `#` sind Kommentare. Festgelegt sind zwei:
+  - `# luecke <von>-<bis>`: In diesem Zeitraum war die Verbindung getrennt.
+  - `# rate <hz> ab <t>`: Ab `t` sendet der Sensor mit `<hz>` (20, 50 oder 100), weil in der Diagnose umgeschaltet wurde. `rateSollHz` in `aufnahme.json` bleibt die Rate vom Aufnahmestart. Nachgetragen am 4. Oktober 2026, nachdem ein Wechsel mitten im Satz am iPhone unsichtbar in einer Aufnahme lag; die Formatkennung bleibt `/1`, weil ältere Leser unbekannte Kommentare überspringen.
+- Andere Kommentare überspringt ein Leser.
 - CSV statt JSON, weil die Datei sich direkt in Numbers, Python oder einem Plot öffnen lässt. 50 Hz × 60 s sind rund 3000 Zeilen und 200 KB.
 
 ### 6.3 `aufnahme.json`

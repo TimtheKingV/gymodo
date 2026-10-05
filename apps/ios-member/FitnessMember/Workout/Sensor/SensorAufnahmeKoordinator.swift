@@ -246,6 +246,17 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
         einstellungen.set(text.trimmingCharacters(in: .whitespacesAndNewlines), forKey: schluessel(machineId))
     }
 
+    // MARK: - Rate
+
+    /// Ueber den Koordinator statt direkt an der Quelle: eine laufende
+    /// Aufnahme muss den Wechsel festhalten (Spec 6.2).
+    func rateSetzen(_ rate: SensorRate) {
+        guard rate != quelle.rate else { return }
+        quelle.rateSetzen(rate)
+        guard let aufnahme else { return }
+        do { try aufnahme.rateGewechselt(rate, t: uhr()) } catch { abbrechen(wegen: error) }
+    }
+
     // MARK: - Ratentest
 
     func ratentestStarten() {

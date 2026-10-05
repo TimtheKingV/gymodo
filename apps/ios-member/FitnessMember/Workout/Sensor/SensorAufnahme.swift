@@ -63,6 +63,13 @@ final class SensorAufnahme {
         try anhaengen("# luecke \(Self.zahl(von - startT, stellen: 6))-\(Self.zahl(t - startT, stellen: 6))")
     }
 
+    /// Ab `t` sendet der Sensor mit `rate`. `rateSollHz` in aufnahme.json
+    /// bleibt die Rate vom Start; ohne diese Zeile laege ein Wechsel mitten
+    /// im Satz unsichtbar in den Daten.
+    func rateGewechselt(_ rate: SensorRate, t: TimeInterval) throws {
+        try anhaengen("# rate \(rate.rawValue) ab \(Self.zahl(t - startT, stellen: 6))")
+    }
+
     func abschliessen(_ abschluss: SensorAufnahmeDatei.Abschluss, kontext: SensorAufnahmeDatei.Kontext,
                       label: SensorAufnahmeDatei.Label, akkuProzent: Int?,
                       statistik: SensorStatistik.Ergebnis, ende: Date, endeT: TimeInterval) throws {

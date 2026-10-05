@@ -34,7 +34,7 @@ struct SensorDiagnoseBlatt: View {
                 Section("Rate am Sensor") {
                     Picker("Soll-Rate", selection: Binding(
                         get: { koordinator.quelle.rate },
-                        set: { koordinator.quelle.rateSetzen($0) })) {
+                        set: { koordinator.rateSetzen($0) })) {
                         ForEach(SensorRate.allCases, id: \.self) { Text("\($0.rawValue) Hz").tag($0) }
                     }
                     .pickerStyle(.segmented)

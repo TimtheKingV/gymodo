@@ -94,6 +94,31 @@ struct SensorAufnahmeKoordinatorTests {
         #expect(try datei(ordner).statistik.pakete == 1)
     }
 
+    @Test func einRatenwechselInDerAufnahmeStehtInDerCSV() throws {
+        // Am iPhone gesehen: in der Diagnose auf 100 Hz geschaltet, die
+        // Aufnahme behauptete weiter 50 Hz.
+        let (sut, quelle, wurzel, uhr) = aufbau()
+        sut.eingabeBegonnen(Self.kontext)
+        uhr.t = 168.4
+        sut.rateSetzen(.hz100)
+        sut.rateSetzen(.hz100) // dieselbe Rate noch einmal: keine zweite Zeile
+        #expect(quelle.rate == .hz100)
+        uhr.t = 170
+        sut.satzGesichert(Self.satz)
+
+        let gelesen = try SensorAufnahmeLeser.lesen(ordner: ordner(in: wurzel)[0])
+        #expect(gelesen.eintraege == [.rate(.hz100, ab: 68.4)])
+        // rateSollHz bleibt die Rate vom Aufnahmestart.
+        #expect(gelesen.datei.sensor.rateSollHz == 50)
+    }
+
+    @Test func ohneAufnahmeSetztDerRatenwechselNurDieQuelle() {
+        let (sut, quelle, wurzel, _) = aufbau()
+        sut.rateSetzen(.hz20)
+        #expect(quelle.rate == .hz20)
+        #expect(ordner(in: wurzel).isEmpty)
+    }
+
     @Test func sichernSchliesstMitLabelsAb() throws {
         let (sut, _, wurzel, uhr) = aufbau()
         sut.eingabeBegonnen(Self.kontext)

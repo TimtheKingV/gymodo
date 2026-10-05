@@ -63,6 +63,10 @@ final class AbspielSensorQuelle: SensorQuelle {
                     }
                     zuletzt = bis
                     self.setze(verbunden)
+                case .rate:
+                    // Die Zeitstempel tragen den Wechsel schon; die Quelle
+                    // spielt ab, was aufgenommen wurde, statt eine Rate zu setzen.
+                    continue
                 }
             }
             // Auch der Abschluss zaehlt als Seiteneffekt: ein alter Lauf, der
