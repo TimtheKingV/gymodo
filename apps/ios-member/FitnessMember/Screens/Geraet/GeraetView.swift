@@ -20,6 +20,9 @@ struct GeraetView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(NetzwerkMonitor.self) private var netz
     @Environment(CatalogStore.self) private var katalog
+    #if DEBUG
+    @Environment(SensorAufnahmeKoordinator.self) private var sensorAufnahme
+    #endif
     @State private var geradeGesendet = false
     // Zaehlt jede Runde "Warteschlange leergelaufen" hoch. .task(id:) bindet
     // den Zwei-Sekunden-Timer daran statt an einen freilaufenden Task: laeuft
@@ -123,12 +126,32 @@ struct GeraetView: View {
             guard !Task.isCancelled else { return }
             geradeGesendet = false
         }
-        .testnotizScreen(kontext: [
+        // Ein verlassener Screen ohne gesicherten Satz ist ein abgebrochener
+        // Mitschnitt. Im Release ist das ein Aufruf auf nil.
+        .onDisappear { modell.screenVerlassen() }
+        #if DEBUG
+        // Ohne Hintergrundmodus reisst der Mitschnitt ab, sobald der
+        // Bildschirm sperrt (Spec Sensor-Anbindung 5.3). Zurueck auf false
+        // beim Verlassen, sonst bleibt das Telefon in der ganzen App wach.
+        .onChange(of: sensorAufnahme.quelle.zustand.istVerbunden, initial: true) { _, verbunden in
+            UIApplication.shared.isIdleTimerDisabled = verbunden
+        }
+        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
+        #endif
+        .testnotizScreen(kontext: testnotizKontext)
+    }
+
+    private var testnotizKontext: [String: String] {
+        var kontext = [
             "machineId": modell.maschine.id,
             "exerciseId": modell.uebungId,
             // Nur der Fallname: .pause traegt einen Timer, dessen Text sich jede Sekunde aendert.
             "phase": String(String(describing: modell.phase).prefix { $0 != "(" }),
-        ])
+        ]
+        #if DEBUG
+        kontext["sensor"] = sensorAufnahme.quelle.zustand.istVerbunden ? "verbunden" : "aus"
+        #endif
+        return kontext
     }
 
     /// Die eine Stelle, an der der Screen entscheidet, was er ist.
@@ -146,6 +169,9 @@ struct GeraetView: View {
             abschlussEntscheidung
                 .transition(.opacity)
         } else {
+            #if DEBUG
+            SensorZeile(machineId: modell.maschine.id)
+            #endif
             einstellung
             WertZeile(modell: modell)
             aktionen

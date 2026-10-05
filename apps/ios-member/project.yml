@@ -35,6 +35,10 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: Gymtavo
         INFOPLIST_KEY_NSCameraUsageDescription: "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen."
         INFOPLIST_KEY_NFCReaderUsageDescription: "Gymtavo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen."
+        # Gilt je Target und steht damit auch im Release-Build, obwohl der
+        # Code dahinter nur im Debug-Build existiert. Ohne den Schluessel
+        # beendet iOS die App beim ersten CBCentralManager.
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Gymtavo verbindet sich mit deinem Bewegungssensor, um Wiederholungen zu erfassen."
         # INFOPLIST_KEY_<Key> deckt bei GENERATE_INFOPLIST_FILE nur Apples
         # bekannte Info.plist-Schluessel ab (z.B. NSCameraUsageDescription).
         # Fuer eigene Schluessel (SUPABASE_URL etc.) wird laut Apple-Doku eine
@@ -65,7 +69,14 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - FitnessMemberTests
+      - path: FitnessMemberTests
+        excludes:
+          - "Fixtures/sensoraufnahme-beispiel"
+      # Als Ordner-Referenz: der Abspiel-Test liest einen Aufnahme-ORDNER,
+      # und abgeflachte Ressourcen haetten keine Ordnerstruktur mehr.
+      - path: FitnessMemberTests/Fixtures/sensoraufnahme-beispiel
+        type: folder
+        buildPhase: resources
     settings:
       base:
         SWIFT_VERSION: "6.0"
