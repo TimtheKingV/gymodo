@@ -404,6 +404,101 @@ struct GeraetModelTests {
         #expect(sut.kalibrierungOffen == true)
     }
 
+    // MARK: - Auswahl-Einstellungen (Testnotiz 06.10., #17)
+
+    @Test func kalibrierungVorbereitenBelegtEineAuswahlMitDemErstenErlaubtenWert() {
+        let sut = modell(maschine: GeraetTestdaten.maschineMitAuswahl,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+
+        sut.kalibrierungVorbereiten()
+
+        #expect(sut.entwurfAuswahl["griff"] == "eng")
+        // Eine Auswahl ist keine Zahl -- sie darf im Zahlenentwurf nicht
+        // auftauchen, sonst ginge sie als 0 an den Server.
+        #expect(sut.entwurfEinstellung["griff"] == nil)
+        #expect(sut.entwurfEinstellung["hoehe"] == 1)
+        #expect(sut.entwurfEinstellung["sitz"] == 1)
+    }
+
+    @Test func kalibrierungVorbereitenUebernimmtDieBisherigeAuswahl() {
+        let sut = modell(maschine: GeraetTestdaten.maschineMitAuswahl,
+                         bootstrap: GeraetTestdaten.bootstrapMitAuswahl(griff: "weit"))
+
+        sut.kalibrierungVorbereiten()
+
+        #expect(sut.entwurfAuswahl["griff"] == "weit")
+        #expect(sut.entwurfEinstellung["hoehe"] == 7)
+        #expect(sut.entwurfEinstellung["sitz"] == 3)
+    }
+
+    @Test func kalibrierungVorbereitenVerwirftEineNichtMehrErlaubteAuswahl() {
+        // Das Studio hat die Werteliste seither geaendert -- ein alter Wert
+        // ausserhalb der Liste wuerde am Server abgewiesen.
+        let sut = modell(maschine: GeraetTestdaten.maschineMitAuswahl,
+                         bootstrap: GeraetTestdaten.bootstrapMitAuswahl(griff: "breit"))
+
+        sut.kalibrierungVorbereiten()
+
+        #expect(sut.entwurfAuswahl["griff"] == "eng")
+    }
+
+    @Test func kalibrierungSichernSendetEineAuswahlAlsText() async {
+        let loader = FakeGeraetLoader()
+        await loader.setCalibration(.success(RecordedCalibration(
+            id: "c1", machineId: "m1", exerciseId: "e1",
+            settingValues: .null, schemaVersion: 1, source: "self",
+            createdAt: "2026-10-06T10:00:00Z"
+        )))
+        let sut = modell(maschine: GeraetTestdaten.maschineMitAuswahl,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []), loader: loader)
+        sut.kalibrierungVorbereiten()
+        sut.entwurfAuswahl["griff"] = "neutral"
+        sut.entwurfEinstellung["hoehe"] = 12
+
+        let ergebnis = await sut.kalibrierungSichern()
+
+        #expect(ergebnis == true)
+        let gesendet = await loader.kalibrierungen.last?.settingValues
+        #expect(gesendet == ["hoehe": .number(12), "griff": .string("neutral"), "sitz": .number(1)])
+    }
+
+    // MARK: - Uebung abschliessen (Testnotiz 06.10., #12)
+
+    @Test func uebungAbschliessenFragtNurBeiMehrerenUebungenNach() {
+        // Antwort auf die Rueckfrage: der Drawer "Weitere Uebung / Geraet
+        // abschliessen" kommt immer, sobald das Geraet mehr als eine Uebung
+        // hat -- auch wenn alle schon dran waren.
+        let eine = modell(maschine: GeraetTestdaten.maschine,
+                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        #expect(eine.abschlussFragtNach == false)
+        let zwei = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
+                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        #expect(zwei.abschlussFragtNach == true)
+    }
+
+    @Test func blockInEinheitNenntDieSaetzeJederUebungDiesesGeraets() {
+        // Die Uebungsliste zeigt bei schon gemachten Uebungen die Saetze der
+        // laufenden Einheit, wie die Blockliste im Training-Tab.
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []), sessions: sessions)
+        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1",
+                                  einheiten: .kilogrammWiederholungen, load: 40, volume: 10,
+                                  problemFlag: false, problemReason: nil)
+        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1",
+                                  einheiten: .kilogrammWiederholungen, load: 42.5, volume: 9,
+                                  problemFlag: false, problemReason: nil)
+        // Derselbe Uebungs-Schluessel an einem anderen Geraet zaehlt nicht.
+        _ = sessions.satzSichern(machineId: "m2", exerciseId: "e2",
+                                  einheiten: .kilogrammWiederholungen, load: 20, volume: 12,
+                                  problemFlag: false, problemReason: nil)
+
+        #expect(sut.blockInEinheit(fuer: "e1")?.saetze.count == 2)
+        #expect(sut.blockInEinheit(fuer: "e2") == nil)
+    }
+
     @Test func erstkontaktLaeuftGenauEinmalJeGeraetUndUebung() {
         // "Der Dreischritt laeuft genau einmal je Geraet und Uebung" --
         // erstkontaktAbschliessen() ist die einzige Stelle, die istErstkontakt
@@ -951,7 +1046,12 @@ actor FakeGeraetLoader: GeraetLoading {
         }
     }
 
+    /// Was gesendet wurde -- bei Auswahlwerten zaehlt die Form (Text statt
+    /// Zahl), nicht nur, dass gesendet wurde.
+    private(set) var kalibrierungen: [CalibrationWrite] = []
+
     func recordCalibration(_ body: CalibrationWrite) async throws(APIError) -> RecordedCalibration {
+        kalibrierungen.append(body)
         switch calibrationResult {
         case .success(let value): return value
         case .failure(let error): throw error
@@ -981,6 +1081,35 @@ enum GeraetTestdaten {
            "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,
            "settingDefinitions":[]},
          "exercises":[{"id":"e1","name":"Beidbeinig","volumeKind":"reps","targetMin":8,"targetMax":12}]}
+        """)
+    }
+
+    /// Drei Einstellparameter, der mittlere eine Auswahl -- genau der Fall
+    /// aus der Testnotiz 06.10., #17 (Kabelzug mit Griffposition).
+    static var maschineMitAuswahl: BootstrapResponse.Machine {
+        dekodiere("""
+        {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":null,
+         "status":"active","tokenHashes":[],"visitCount":0,
+         "equipmentModel":{"id":"em1","name":"Kabelzug","manufacturer":null,
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":2.5,"loadMin":2.5,"loadMax":100.0,
+           "settingDefinitions":[
+             {"key":"hoehe","label":"Höhe","kind":"number",
+              "minValue":1,"maxValue":20,"stepValue":1,"unit":null,"allowedValues":null},
+             {"key":"griff","label":"Griffposition","kind":"enum",
+              "minValue":null,"maxValue":null,"stepValue":null,"unit":null,
+              "allowedValues":["eng","weit","neutral"]},
+             {"key":"sitz","label":"Sitz","kind":"number",
+              "minValue":1,"maxValue":8,"stepValue":1,"unit":null,"allowedValues":null}]},
+         "exercises":[{"id":"e1","name":"Kabelzug hoch","volumeKind":"reps","targetMin":10,"targetMax":15}]}
+        """)
+    }
+
+    /// Ein Bootstrap mit einer Kalibrierung, die eine Auswahl enthaelt.
+    static func bootstrapMitAuswahl(griff: String) -> BootstrapResponse {
+        dekodiere("""
+        {"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null}},"studios":[],"machines":[],
+         "calibrations":[{"machineId":"m1","exerciseId":"e1","settingValues":{"hoehe":7,"griff":"\(griff)","sitz":3},
+           "schemaVersion":1,"createdAt":"2026-09-01T10:00:00Z"}],"lastSets":[]}
         """)
     }
 

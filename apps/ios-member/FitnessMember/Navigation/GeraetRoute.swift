@@ -5,9 +5,8 @@ import Foundation
 /// Der Geraete-Screen ist kein Tab -- er wird als Push INNERHALB von
 /// Training geoeffnet und behaelt die Tab-Leiste (designsystem.md SS11).
 enum GeraetRoute: Hashable {
-    /// Die Geraeteliste -- ein Push wie die anderen Ziele, damit die
-    /// Tab-Leiste stehen bleibt (designsystem.md SS11).
-    case auswahl
+    // Die Geraeteliste ist seit der Testnotiz 06.10. (#2) die Wurzel des
+    // Tabs selbst und kein Ziel mehr ("case auswahl" ist entfallen).
     case erkannt(machineId: String, token: String?)
     /// "Training starten" -- nur ohne laufendes Training (TrainingStart.ziel).
     /// Mit dem Tap dort entsteht die Einheit; der Fall wird dann durch

@@ -66,26 +66,73 @@ struct TrainingsuhrText: View {
 }
 
 extension View {
-    /// Pausieren oder beenden -- derselbe Dialog vom Training-Tab und von
+    /// Pausieren oder beenden -- derselbe Drawer vom Training-Tab und von
     /// der Uhr am Geraet (Testnotiz 05.10., #7, #11). Pausiert heisst die
-    /// erste Wahl "Fortsetzen". Der Satz zur Vier-Stunden-Regel stand unter
-    /// dem alten Beenden-Knopf und steht jetzt hier, wo beendet wird.
+    /// erste Wahl "Fortsetzen". Der Satz zur Vier-Stunden-Regel steht hier,
+    /// wo beendet wird.
+    ///
+    /// Ein Drawer von unten statt des Aktionsblatts (Testnotiz 06.10., #4):
+    /// das Blatt legte sich als Overlay ueber die Mitte und sah aus wie eine
+    /// Systemwarnung, nicht wie ein Teil der App.
     func trainingSteuerung(
         istOffen: Binding<Bool>,
         pausiert: Bool,
         beiPauseUmschalten: @escaping () -> Void,
         beiBeenden: @escaping () -> Void
     ) -> some View {
-        confirmationDialog(
-            pausiert ? "Training pausiert" : "Training läuft",
-            isPresented: istOffen,
-            titleVisibility: .visible
-        ) {
-            Button(pausiert ? "Fortsetzen" : "Pausieren", action: beiPauseUmschalten)
-            Button("Training beenden", role: .destructive, action: beiBeenden)
-            Button("Abbrechen", role: .cancel) {}
-        } message: {
-            Text("Ohne neuen Satz endet das Training nach vier Stunden von selbst.")
+        sheet(isPresented: istOffen) {
+            TrainingSteuerungSheet(
+                pausiert: pausiert,
+                beiPauseUmschalten: {
+                    istOffen.wrappedValue = false
+                    beiPauseUmschalten()
+                },
+                beiBeenden: {
+                    istOffen.wrappedValue = false
+                    beiBeenden()
+                })
         }
+    }
+}
+
+private struct TrainingSteuerungSheet: View {
+    let pausiert: Bool
+    let beiPauseUmschalten: () -> Void
+    let beiBeenden: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            HStack(spacing: DesignSystem.Spacing.s8) {
+                Laufpunkt(pausiert: pausiert)
+                Text(pausiert ? "TRAINING PAUSIERT" : "TRAINING LÄUFT")
+                    .font(DesignSystem.Typography.label)
+                    .tracking(1.5)
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+            }
+            Text("Ohne neuen Satz endet das Training nach vier Stunden von selbst.")
+                .font(DesignSystem.Typography.fliesstext)
+                .foregroundStyle(DesignSystem.Color.text)
+                .lineSpacing(3)
+                .padding(.bottom, DesignSystem.Spacing.s8)
+            // Fortsetzen ist die Hauptaktion einer Pause; Pausieren ist nur
+            // eine Wahl unter zweien und bleibt Kontur. Beenden ist
+            // zerstoerend und traegt deshalb nie den Akzent.
+            if pausiert {
+                PrimaryButton(title: "Fortsetzen") { beiPauseUmschalten() }
+                    .testnotizElement("training.fortsetzen", typ: "PrimaryButton")
+            } else {
+                SecondaryButton(title: "Pausieren") { beiPauseUmschalten() }
+                    .testnotizElement("training.pausieren", typ: "SecondaryButton")
+            }
+            DangerOutlineButton(title: "Training beenden") { beiBeenden() }
+                .testnotizElement("training.beenden", typ: "DangerOutlineButton")
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, DesignSystem.Spacing.s24)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(DesignSystem.Color.bg)
+        .presentationDetents([.height(300)])
+        .presentationDragIndicator(.visible)
+        .testnotizScreen()
     }
 }

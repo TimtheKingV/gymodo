@@ -27,6 +27,7 @@ struct HomeRootView: View {
     @Environment(CatalogStore.self) private var katalog
     @Environment(NetzwerkMonitor.self) private var netz
     @Environment(WorkoutSessionStore.self) private var sessions
+    @Environment(KurseStore.self) private var kurse
     @Environment(\.scenePhase) private var scenePhase
     /// Reicht einen gescannten Geraete-Code an den Training-Tab weiter --
     /// derselbe Weg wie ein Universal Link (siehe MainTabView,
@@ -60,6 +61,15 @@ struct HomeRootView: View {
     /// ein Mitglied im Urlaub seine Abendeinheit auf den Folgetag.
     private var zeitzone: String { aktivesStudio?.timezone ?? "UTC" }
 
+    /// Die eigenen Kursbuchungen -- nur, wenn sie zum aktiven Studio
+    /// gehoeren. Nach einem Studiowechsel ohne Netz laegen sonst die des
+    /// vorigen Studios im Streifen (dieselbe Pruefung wie auf der
+    /// Kurse-Seite, siehe `GespeicherteBuchungen.studioId`).
+    private var eigeneKurse: GespeicherteBuchungen? {
+        guard let eigene = kurse.eigene, eigene.studioId == katalog.activeStudioId else { return nil }
+        return eigene
+    }
+
     var body: some View {
         NavigationStack(path: $pfad) {
             ScrollView {
@@ -85,7 +95,11 @@ struct HomeRootView: View {
                             // demselben Stand, sonst zeigt ein alter Cache
                             // das eine gegen das andere (Spec 4.5).
                             wochenziel: serie.weeklyTarget,
-                            beiAuswahl: { id in pfad.append(.sessionDetail(id: id)) })
+                            beiAuswahl: { id in pfad.append(.sessionDetail(id: id)) },
+                            kurseJeTag: HomeKurse.termineJeTag(
+                                eigeneKurse?.termine ?? [], jetzt: Date()),
+                            kurseBuchungen: eigeneKurse,
+                            beiKursAuswahl: { id in pfad.append(.kursDetail(sessionId: id)) })
                     }
 
                     if let member = katalog.bootstrap?.member {
@@ -127,6 +141,8 @@ struct HomeRootView: View {
                     UebungsfortschrittView(exerciseId: exerciseId)
                 case .gewichtsverlauf:
                     GewichtsverlaufView(apiClient: apiClient)
+                case .kursDetail(let sessionId):
+                    KursDetailView(sessionId: sessionId)
                 }
             }
             .sheet(isPresented: $eintragenOffen) {
@@ -191,6 +207,23 @@ private extension HomeRootView {
     /// damit `studioId` nicht an vier Stellen gelesen wird.
     func neuLaden() async {
         await verlauf.laden(studioId: katalog.activeStudioId)
+        await kurseLaden()
+    }
+
+    /// Die Kurse laedt sonst nur der Kurse-Tab, und Tabs laden erst beim
+    /// ersten Oeffnen (MainTabView). Ohne diesen Abruf kennte Home nur den
+    /// Stand von der Platte (Testnotiz 06.10., #1). Dasselbe Fenster wie
+    /// `KurseWochenView.neuLaden` -- `KurseStore.laden` ueberschreibt
+    /// `eigene` mit genau dem, was im Fenster liegt, ein zweites Fenster
+    /// beschnitte der Kurse-Seite den Cache.
+    func kurseLaden() async {
+        guard let studioId = katalog.activeStudioId else { return }
+        let jetzt = Date()
+        let zone = kurse.woche?.timezone ?? zeitzone
+        await kurse.laden(
+            studioId: studioId,
+            von: KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zone),
+            bis: KurseWochenBerechnung.fensterEnde(ab: jetzt, zeitzone: zone))
     }
 
     @ViewBuilder var kopf: some View {

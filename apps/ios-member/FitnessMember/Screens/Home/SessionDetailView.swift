@@ -161,7 +161,7 @@ struct SessionDetailView: View {
 
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 ForEach(Array(teil.blocks.enumerated()), id: \.offset) { _, block in
-                    blockKarte(block)
+                    blockKarte(block, teil: teil)
                 }
             }
 
@@ -176,8 +176,13 @@ struct SessionDetailView: View {
         }
     }
 
-    private func blockKarte(_ block: SessionSummary.Block) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+    /// Mit Fortschritt (Testnotiz 06.10., #20): je Satz der Unterschied zum
+    /// Schnitt der bis zu fuenf vorherigen Trainings dieser Uebung, rechts
+    /// oben der Gesamttrend. Die Rechnung steht in `Satzvergleich`.
+    private func blockKarte(_ block: SessionSummary.Block, teil: SessionSummary) -> some View {
+        let vergleich = Satzvergleich.fuer(block: block, in: teil, verlauf: verlauf.sessions)
+        let saetze = block.sets.sorted { $0.setIndex < $1.setIndex }
+        return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             HStack {
                 Text("\(block.machineLabel) · \(block.exerciseName)")
                     .font(DesignSystem.Typography.uebungsname)
@@ -186,10 +191,22 @@ struct SessionDetailView: View {
                 Text("\(block.sets.count) \(block.sets.count == 1 ? "SATZ" : "SÄTZE")")
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Color.textMuted)
+                if let vergleich {
+                    trendSymbol(vergleich.gesamt, groesse: 17)
+                        .accessibilityLabel(gesamtGesprochen(vergleich.gesamt))
+                }
             }
 
-            ForEach(block.sets, id: \.setIndex) { satz in
-                satzZeile(satz, block: block)
+            ForEach(Array(saetze.enumerated()), id: \.element.setIndex) { position, satz in
+                satzZeile(satz, block: block, vergleich: vergleich?.saetze[position])
+            }
+
+            if let vergleich {
+                Text(vergleich.basis == 1
+                     ? "Verglichen mit deinem letzten Training dieser Übung."
+                     : "Verglichen mit dem Schnitt deiner letzten \(vergleich.basis) Trainings dieser Übung.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(DesignSystem.Color.textFaint)
             }
         }
         .padding(DesignSystem.Spacing.s16)
@@ -198,13 +215,18 @@ struct SessionDetailView: View {
     }
 
     /// "80,0 kg × 10", "8,5 km/h · 6,0 % × 20:00 min" -- die Einheiten
-    /// kommen vom Block, den der Server mitliefert.
-    private func satzZeile(_ satz: SessionSummary.Block.Set, block: SessionSummary.Block) -> some View {
+    /// kommen vom Block, den der Server mitliefert. Rechts, wenn es etwas
+    /// zu vergleichen gibt: Pfeil, kg- und Wdh.-Unterschied.
+    private func satzZeile(_ satz: SessionSummary.Block.Set, block: SessionSummary.Block,
+                           vergleich: Satzvergleich.Satz?) -> some View {
         var label = "Satz \(satz.setIndex), " + Zahlformat.satzGesprochen(
             satz.load, block.loadUnit, neben: satz.secondaryLoad, block.secondaryUnit,
             umfang: satz.volume, block.volumeKind)
         if satz.problemFlag {
             label.append(", Problem gemeldet")
+        }
+        if let vergleich {
+            label.append(", gegenüber dem Schnitt \(Satzvergleich.kgText(vergleich.deltaKg)) und \(Satzvergleich.wdhText(vergleich.deltaWdh))")
         }
 
         return HStack(spacing: DesignSystem.Spacing.s12) {
@@ -229,10 +251,49 @@ struct SessionDetailView: View {
                     .foregroundStyle(DesignSystem.Color.warn)
             }
 
-            Spacer()
+            Spacer(minLength: DesignSystem.Spacing.s4)
+
+            if let vergleich {
+                HStack(spacing: DesignSystem.Spacing.s4) {
+                    trendSymbol(vergleich.trend, groesse: 12)
+                    Text("\(Satzvergleich.kgText(vergleich.deltaKg))  \(Satzvergleich.wdhText(vergleich.deltaWdh))")
+                        .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label)
+    }
+
+    /// Nach oben in der Signalfarbe, nach unten gedeckt -- weniger als im
+    /// Schnitt ist kein Fehler, nur eine Zahl. Gleichstand bekommt keinen
+    /// Pfeil (so auf Rueckfrage entschieden).
+    @ViewBuilder
+    private func trendSymbol(_ trend: Satzvergleich.Trend, groesse: CGFloat) -> some View {
+        switch trend {
+        case .hoch:
+            Image(systemName: "chart.line.uptrend.xyaxis")
+                .font(.system(size: groesse, weight: .bold))
+                .foregroundStyle(DesignSystem.Color.accent)
+        case .runter:
+            Image(systemName: "chart.line.downtrend.xyaxis")
+                .font(.system(size: groesse, weight: .bold))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+        case .gleich:
+            EmptyView()
+        }
+    }
+
+    private func gesamtGesprochen(_ trend: Satzvergleich.Trend) -> String {
+        switch trend {
+        case .hoch: "Insgesamt mehr bewegt als im Schnitt"
+        case .runter: "Insgesamt weniger bewegt als im Schnitt"
+        case .gleich: "Insgesamt wie im Schnitt"
+        }
     }
 }
 

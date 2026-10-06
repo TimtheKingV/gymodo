@@ -32,6 +32,14 @@ struct TagContextResponse: Decodable, Equatable {
         let stepValue: Double?
         let unit: String?
         let allowedValues: [String]?
+
+        /// Die Werteliste einer Auswahl (`kind == "enum"`), sonst nil. Ein
+        /// Ort fuer die Unterscheidung, damit Entwurf, Senden und Anzeige
+        /// sie nicht je eigens treffen (Testnotiz 06.10., #17).
+        var auswahlwerte: [String]? {
+            guard kind == "enum", let werte = allowedValues, !werte.isEmpty else { return nil }
+            return werte
+        }
     }
 
     struct Exercise: Decodable, Equatable, Identifiable {

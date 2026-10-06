@@ -1,22 +1,28 @@
 import AVKit
 import SwiftUI
 
-/// Schritt 1 von 3.
+/// Schritt 1 des Erstkontakts.
 ///
-/// Zwei Abweichungen vom Artboard (Spec Abschnitt 9): Der Link heisst nur
-/// "Kenne ich schon" und ueberspringt NUR die Einweisung -- uebersprunge er
-/// den ganzen Dreischritt, gaebe es weder Kalibrierung noch Startwert, und
-/// die Regel "kein Vorschlag beim ersten Mal" haette nichts, worauf sie
-/// fallen koennte. Und es gibt eine Variante ohne Video, die als Artboard
-/// fehlt: ein Geraet ohne Video ist nutzbar (M1-Spec SS8.2).
+/// "Kenne ich schon" ueberspringt Einweisung UND Einstellung (Testnotiz
+/// 06.10., #16). Vorher uebersprang er nur die Einweisung und tat damit
+/// genau dasselbe wie die Hauptaktion. Die Einstellung laesst sich spaeter
+/// auf der Satzseite ueber "aendern" nachtragen; ohne sie bleibt der Erstkontakt
+/// bis zum ersten Satz offen, und "kein Vorschlag beim ersten Mal" gilt
+/// weiter, weil es keine Historie gibt. Es gibt eine Variante ohne Video,
+/// die als Artboard fehlt: ein Geraet ohne Video ist nutzbar (M1-Spec SS8.2).
 struct EinweisungSchritt: View {
     let modell: GeraetModel
-    /// Verlaesst den ganzen Dreischritt (Kreuz oben links). Darf NIE
+    let titel: String
+    /// "Einstellungen erfassen", ohne Einstellparameter "Weiter".
+    let hauptaktion: String
+    /// Verlaesst den ganzen Erstkontakt (Kreuz oben links). Darf NIE
     /// erstkontaktAbschliessen() oder eine Kalibrierung ausloesen -- ohne
-    /// gespeicherten Satz bleibt istErstkontakt true, und der Dreischritt
+    /// gespeicherten Satz bleibt istErstkontakt true, und der Erstkontakt
     /// erscheint beim naechsten Mal zu Recht wieder.
     let beiAbbruch: () -> Void
     let beiWeiter: () -> Void
+    /// nil, wenn es nichts zu ueberspringen gibt (kein Einstellschritt).
+    let beiUeberspringen: (() -> Void)?
 
     var body: some View {
         ScrollView {
@@ -52,26 +58,42 @@ struct EinweisungSchritt: View {
                     .font(.system(size: 12))
                     .foregroundStyle(DesignSystem.Color.textFaint)
                     .lineSpacing(3)
-
-                PrimaryButton(title: "Einstellungen erfassen") { beiWeiter() }
-
-                Button("Kenne ich schon", action: beiWeiter)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .buttonStyle(PressButtonStyle())
             }
             .padding(.horizontal, 20)
             .padding(.vertical, DesignSystem.Spacing.s32)
         }
+        .scrollBounceBehavior(.basedOnSize)
         .background(DesignSystem.Color.bg)
+        // Unten buendig in der Daumenzone, wie auf "Training starten"
+        // (Testnotiz 06.10., #15). Vorher standen beide Knoepfe direkt
+        // unter dem Text, auf grossen iPhones mitten auf dem Screen.
+        .safeAreaInset(edge: .bottom) {
+            VStack(spacing: DesignSystem.Spacing.s4) {
+                PrimaryButton(title: hauptaktion) { beiWeiter() }
+                if let beiUeberspringen {
+                    Button(action: beiUeberspringen) {
+                        Text("Kenne ich schon")
+                            .font(.system(size: 15, weight: .semibold))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .buttonStyle(PressButtonStyle())
+                    .accessibilityHint("Überspringt Einweisung und Einstellung")
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, DesignSystem.Spacing.s8)
+            .padding(.bottom, DesignSystem.Spacing.s16)
+            .background(DesignSystem.Color.bg)
+        }
         .testnotizScreen()
     }
 
     /// Alle drei Artboards zeigen ein Chevron/Kreuz vor dem Eyebrow-Text in
     /// derselben Zeile (GeraetEinweisung.dc.html Kopfzeile) -- ein
     /// fullScreenCover kennt kein Swipe-to-dismiss, ohne diese Zeile waere
-    /// der Dreischritt eine Falle.
+    /// der Erstkontakt eine Falle.
     private var kopf: some View {
         HStack(spacing: DesignSystem.Spacing.s12) {
             Button(action: beiAbbruch) {
@@ -83,7 +105,7 @@ struct EinweisungSchritt: View {
             .buttonStyle(PressButtonStyle())
             .accessibilityLabel("Schließen")
 
-            Text("SCHRITT 1 VON 3 · EINWEISUNG")
+            Text(titel.uppercased())
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textFaint)

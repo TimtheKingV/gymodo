@@ -9,13 +9,25 @@ import SwiftUI
 /// es 204 pt von 510 auf einem 667-pt-iPhone (Plan Schnitt 4, Task 3).
 /// Kein Rueckblick, kein Vorschlag, keine Raeder: die gehoeren zum
 /// Satzpfad, und "die App misst nichts" beginnt erst mit einem Satz.
+///
+/// Seit der Testnotiz 06.10. (#5) auch der letzte Schritt des
+/// Erstkontakts: dort steht er im fullScreenCover ohne Navigationsleiste
+/// und bringt deshalb seinen eigenen Zurueck-Pfeil mit Schrittzeile mit.
 struct TrainingStartView: View {
     let modell: GeraetModel
+    /// "Schritt 3 von 3 · Training starten" im Erstkontakt, sonst nil.
+    var titel: String? = nil
+    /// Nur im Erstkontakt: ein Schritt zurueck zur Einstellung.
+    var beiZurueck: (() -> Void)? = nil
     let beiStart: () -> Void
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
+                if let titel, let beiZurueck {
+                    schrittkopf(titel: titel, beiZurueck: beiZurueck)
+                        .padding(.bottom, DesignSystem.Spacing.s16)
+                }
                 kopfzeile
                 geraetUndUebung
                     .padding(.top, DesignSystem.Spacing.s8)
@@ -62,6 +74,26 @@ struct TrainingStartView: View {
         }
     }
 
+    /// Wie die Kopfzeile der anderen Erstkontakt-Schritte: Pfeil und
+    /// Schrittzeile in einer Zeile.
+    private func schrittkopf(titel: String, beiZurueck: @escaping () -> Void) -> some View {
+        HStack(spacing: DesignSystem.Spacing.s12) {
+            Button(action: beiZurueck) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(PressButtonStyle())
+            .accessibilityLabel("Zurück")
+
+            Text(titel.uppercased())
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textFaint)
+        }
+    }
+
     private var geraetUndUebung: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
             // Schrumpfen statt kuerzen, wie im Satzpfad (Schnitt 3): ein
@@ -87,7 +119,9 @@ struct TrainingStartView: View {
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
-            Text("Mit „Training starten“ läuft die Uhr — auch während Einweisung und Einstellung. Sicherst du keinen Satz, wird das Training verworfen und taucht nirgends auf.")
+            // Ohne "auch waehrend Einweisung und Einstellung": die kommen seit
+            // der Testnotiz 06.10. (#5) vor diesem Screen, nicht danach.
+            Text("Mit „Training starten“ läuft die Uhr. Sicherst du keinen Satz, wird das Training verworfen und taucht nirgends auf.")
                 .font(DesignSystem.Typography.fliesstext)
                 .foregroundStyle(DesignSystem.Color.text)
                 .lineSpacing(3)

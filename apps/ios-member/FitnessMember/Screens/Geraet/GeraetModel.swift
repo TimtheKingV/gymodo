@@ -111,8 +111,13 @@ final class GeraetModel {
     /// noetig macht.
     var kalibrierungOffen = false
     /// Entwurf der Kalibrierung-Steppers, bevor gespeichert wird.
-    /// `kalibrierungVorbereiten()` befuellt ihn.
+    /// `kalibrierungVorbereiten()` befuellt ihn. Nur Zahlen-Parameter.
     var entwurfEinstellung: [String: Double] = [:]
+    /// Entwurf der Auswahl-Parameter (`kind == "enum"`, etwa die
+    /// Griffposition). Getrennt vom Zahlenentwurf: bis zur Testnotiz 06.10.
+    /// (#17) gab es nur den, jede Auswahl bekam ein Zahlenrad und ging als
+    /// Zahl an den Server -- der wies sie ab, egal was gewaehlt war.
+    var entwurfAuswahl: [String: String] = [:]
     var trainerDabei = false
     /// Kommt woertlich vom Server -- er kennt die Grenzen des Geraetemodells
     /// und formuliert, was gilt (designsystem.md SS5).
@@ -239,6 +244,21 @@ final class GeraetModel {
     /// Knopf, der eine Liste mit einem Eintrag oeffnet, verspricht eine
     /// Wahl, die es nicht gibt.
     var hatWeitereUebungen: Bool { uebungen.count > 1 }
+
+    /// Ob "Uebung abschliessen" erst fragt: "Weitere Uebung an dem Geraet"
+    /// oder "Geraet abschliessen" (Testnotiz 06.10., #12). Entschieden:
+    /// immer, sobald das Geraet mehr als eine Uebung kennt -- auch wenn
+    /// alle schon dran waren; die Liste zeigt dann, wie viele Saetze.
+    var abschlussFragtNach: Bool { hatWeitereUebungen }
+
+    /// Der Block dieser Uebung an DIESEM Geraet in der laufenden Einheit,
+    /// sonst nil. Fuer die Uebungsliste: "2 Sätze · 7,5 kg" wie in der
+    /// Blockliste des Trainings (Testnotiz 06.10., #12).
+    func blockInEinheit(fuer uebungId: String) -> LokalerBlock? {
+        sessions.aktiveSession()?.bloecke.first {
+            $0.machineId == maschine.id && $0.exerciseId == uebungId && !$0.saetze.isEmpty
+        }
+    }
 
     /// Seit wann die Trainingsuhr laeuft: seit dem Tap auf "Training
     /// starten" -- die Einheit traegt ihren Beginn selbst, ein gemerkter
@@ -493,14 +513,18 @@ final class GeraetModel {
     /// GeraetModel entsteht.
     var istErstkontakt: Bool {
         !erledigt.contains(uebungId)
-            && sessions.naechsterSetIndex(machineId: maschine.id, exerciseId: uebungId) == 1
-            && GeraetEinstiegRechner.istErstkontakt(
-                hatKalibrierung: GeraetEinstiegRechner.hatKalibrierung(
-                    machineId: maschine.id, exerciseId: uebungId, in: bootstrap),
-                hatLetztenSatz: GeraetEinstiegRechner.hatLetztenSatz(
-                    machineId: maschine.id, exerciseId: uebungId, in: bootstrap)
-            )
+            && GeraetEinstiegRechner.brauchtErstkontakt(
+                machineId: maschine.id, exerciseId: uebungId, in: bootstrap,
+                naechsterSetIndex: sessions.naechsterSetIndex(machineId: maschine.id, exerciseId: uebungId))
     }
+
+    /// Ob gerade ein Training laeuft -- der Erstkontakt haengt
+    /// "Training starten" nur ohne an (Testnotiz 06.10., #5).
+    var trainingLaeuft: Bool { sessions.aktiveSession() != nil }
+
+    /// Der letzte Schritt des Erstkontakts ohne laufendes Training. Derselbe
+    /// Store-Aufruf wie hinter TrainingStartView.
+    func trainingStarten() { sessions.trainingStarten() }
 
     /// Pflichtort laut designsystem.md SS10.
     let produktgrenze = """
@@ -679,19 +703,30 @@ final class GeraetModel {
 
     func kalibrierungOeffnen() { kalibrierungOffen = true }
 
-    /// Fuellt den Entwurf mit den bisherigen Werten, sonst mit dem Minimum.
+    /// Fuellt den Entwurf mit den bisherigen Werten, sonst mit dem Minimum
+    /// bzw. dem ersten erlaubten Wert einer Auswahl.
     func kalibrierungVorbereiten() {
         var entwurf: [String: Double] = [:]
+        var auswahl: [String: String] = [:]
         let bisherige: [String: JSONValue]
         if case .object(let werte)? = kalibrierungswerte { bisherige = werte } else { bisherige = [:] }
         for definition in definitionen {
-            if case .number(let zahl)? = bisherige[definition.key] {
+            if let erlaubt = definition.auswahlwerte {
+                // Ein alter Wert, den das Studio inzwischen gestrichen hat,
+                // wuerde am Server abgewiesen -- dann lieber neu waehlen.
+                if case .string(let text)? = bisherige[definition.key], erlaubt.contains(text) {
+                    auswahl[definition.key] = text
+                } else if let erster = erlaubt.first {
+                    auswahl[definition.key] = erster
+                }
+            } else if case .number(let zahl)? = bisherige[definition.key] {
                 entwurf[definition.key] = zahl
             } else {
                 entwurf[definition.key] = definition.minValue ?? 0
             }
         }
         entwurfEinstellung = entwurf
+        entwurfAuswahl = auswahl
         kalibrierungFehler = nil
     }
 
@@ -700,7 +735,10 @@ final class GeraetModel {
     /// (designsystem.md SS5).
     func kalibrierungSichern() async -> Bool {
         kalibrierungFehler = nil
-        let werte = entwurfEinstellung.mapValues { JSONValue.number($0) }
+        // Zahlen als Zahl, Auswahlen als Text -- calibration.ts prueft die
+        // Form je Definition (Testnotiz 06.10., #17).
+        var werte = entwurfEinstellung.mapValues { JSONValue.number($0) }
+        for (key, text) in entwurfAuswahl { werte[key] = .string(text) }
         do {
             _ = try await loader.recordCalibration(
                 CalibrationWrite(

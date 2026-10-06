@@ -13,9 +13,11 @@ import SwiftUI
 /// gestarteten Timer sofort wieder neu startete.
 struct GeraetView: View {
     @Bindable var modell: GeraetModel
-    let beiUebungWechseln: () -> Void
     let beiProblem: () -> Void
-    let beiZurueckZumTraining: () -> Void
+    /// "Uebung abschliessen" -- an allen drei Stellen (Raeder, Pause,
+    /// Abschluss). Ob danach gefragt wird oder es gleich zurueck zur Liste
+    /// geht, entscheidet GeraetScreen (Testnotiz 06.10., #10, #12).
+    let beiUebungAbschliessen: () -> Void
     /// "Training beenden" aus dem Dialog an der Uhr (Testnotiz 05.10.,
     /// #11). Den Abschluss zeigt die Wurzel des Training-Tabs.
     var beiTrainingBeenden: () -> Void = {}
@@ -184,9 +186,9 @@ struct GeraetView: View {
             PausenRad(timer: pause,
                       beiVerlaengern: modell.pauseVerlaengern,
                       beiWeiter: modell.pauseBeenden,
-                      // Derselbe Weg wie "Geraet abschliessen" unter den
+                      // Derselbe Weg wie "Uebung abschliessen" unter den
                       // Raedern -- nur ohne den Umweg ueber "Weiter".
-                      beiAbschliessen: beiZurueckZumTraining)
+                      beiAbschliessen: beiUebungAbschliessen)
                 .transition(.opacity)
         } else if modell.phase == .abschluss {
             abschlussEntscheidung
@@ -263,47 +265,12 @@ struct GeraetView: View {
                 .foregroundStyle(DesignSystem.Color.text)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
-            HStack(alignment: .center) {
-                Text(modell.aktiveUebung?.name ?? "")
-                    .font(DesignSystem.Typography.uebungsname)
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                Spacer()
-                // Nur im Eingabezustand: Pause und Abschlussentscheidung zeigen
-                // Geraet und Uebung zur Orientierung, nicht als Auswahl.
-                //
-                // Und nur, wenn das Geraet ueberhaupt eine zweite Uebung kennt:
-                // sonst fuehrte der Knopf zu einem Sheet mit genau der Uebung,
-                // die ohnehin schon laeuft.
-                if modell.phase == .eingabe && modell.hatWeitereUebungen {
-                    // Abweichung vom Artboard (Spec Abschnitt 9): dort accent. Die
-                    // eine Akzentflaeche des Screens ist die Hauptaktion.
-                    Button(action: beiUebungWechseln) {
-                        Text("andere Übung")
-                            .font(.system(size: 13, weight: .semibold))
-                            .frame(minHeight: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .testnotizElement("geraet.uebung-wechseln", typ: "Button")
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                    // Die 44 pt Trefferflaeche ragen je 12 pt aus der
-                    // 20-pt-Zeile heraus, statt sie auf 44 zu strecken:
-                    // Design SS4 verlangt die Trefferflaeche, nicht die
-                    // Zeilenhoehe -- und die 24 pt kostete das
-                    // Hoehenbudget auf 667 pt. Der Rahmen steht INNEN im
-                    // Label, denn bei einem eigenen ButtonStyle ist nur das
-                    // gestylte Label tippbar -- ein Rahmen um den Button
-                    // legte bloss leere, nicht treffbare Flaeche daneben.
-                    // Nach unten liegen 16 pt Luft bis zur
-                    // "aendern"-Zeile, es bleiben also 4 pt Abstand; nach
-                    // oben sind es nur 4 pt bis zum Geraetenamen, die
-                    // Flaeche ueberlappt seinen Textkasten um rund 8 pt.
-                    // Der Name ist ein blosser Text ohne eigene
-                    // Trefferflaeche -- es gibt dort nichts, womit der
-                    // Knopf um den Tipp streiten koennte.
-                    .padding(.vertical, -DesignSystem.Spacing.s12)
-                    .buttonStyle(PressButtonStyle())
-                }
-            }
+            // "andere Übung" stand bis zur Testnotiz 06.10. (#11) rechts
+            // daneben. Gewechselt wird jetzt nach "Übung abschließen" --
+            // dann, wenn die eine Uebung fertig ist (#12).
+            Text(modell.aktiveUebung?.name ?? "")
+                .font(DesignSystem.Typography.uebungsname)
+                .foregroundStyle(DesignSystem.Color.textMuted)
         }
     }
 
@@ -356,11 +323,13 @@ struct GeraetView: View {
             // Punkt 12): als dritte Zeile kostete "Problem melden" 56 pt, die
             // auf einem 667-pt-iPhone fehlten. Es bleibt ein Textknopf mit
             // 44 pt Hoehe, kein zweiter Umriss -- die Ausnahme, nicht die
-            // Alternative. "Geraet abschliessen" steht weiter direkt unter dem
+            // Alternative. "Uebung abschliessen" steht weiter direkt unter dem
             // Weg zum naechsten Satz, weil es die andere Haelfte derselben
-            // Frage ist: noch einer, oder fertig hier?
+            // Frage ist: noch einer, oder fertig hier? Bis zur Testnotiz
+            // 06.10. (#10) hiess er "Gerät abschließen" -- abgeschlossen
+            // wird aber die Uebung, das Geraet kann noch eine zweite haben.
             HStack(spacing: DesignSystem.Spacing.s12) {
-                SecondaryButton(title: "Gerät abschließen", action: beiZurueckZumTraining)
+                SecondaryButton(title: "Übung abschließen", action: beiUebungAbschliessen)
                     .testnotizElement("geraet.abschliessen", typ: "SecondaryButton")
                 problemMelden
             }
@@ -399,7 +368,7 @@ struct GeraetView: View {
             // Die Knoepfe unten, wie im Eingabezustand (Testnotiz 05.10., #13).
             Spacer(minLength: 0)
 
-            PrimaryButton(title: "Gerät abschließen") { beiZurueckZumTraining() }
+            PrimaryButton(title: "Übung abschließen") { beiUebungAbschliessen() }
                 .testnotizElement("geraet.abschliessen", typ: "PrimaryButton")
             // Dieselbe Zeile wie unter den Raedern (Sammelstelle Punkt 12).
             HStack(spacing: DesignSystem.Spacing.s12) {
@@ -434,7 +403,7 @@ struct GeraetView: View {
     @AppStorage(Einstellungen.vibrationBeimSichernKey) private var vibrationBeimSichern = true
 }
 
-/// Bindet Sheets und den Dreischritt an GeraetView. Getrennt, damit
+/// Bindet Sheets und den Erstkontakt an GeraetView. Getrennt, damit
 /// GeraetView selbst nur den Screen beschreibt und in der Preview ohne
 /// Umgebung lauffaehig bleibt.
 struct GeraetScreen: View {
@@ -444,17 +413,44 @@ struct GeraetScreen: View {
 
     @State private var uebungWechselnOffen = false
     @State private var problemOffen = false
+    @State private var abschlussfrageOffen = false
+    /// Was nach dem Schliessen der Abschlussfrage folgt. Zwei Sheets
+    /// nacheinander gehen nur ueber onDismiss: solange das eine noch
+    /// verschwindet, praesentiert SwiftUI das naechste nicht.
+    @State private var weitereUebungNachFrage = false
 
     var body: some View {
         GeraetView(
             modell: modell,
-            beiUebungWechseln: { uebungWechselnOffen = true },
             beiProblem: { problemOffen = true },
-            beiZurueckZumTraining: beiZurueckZumTraining,
+            beiUebungAbschliessen: {
+                if modell.abschlussFragtNach {
+                    abschlussfrageOffen = true
+                } else {
+                    beiZurueckZumTraining()
+                }
+            },
             beiTrainingBeenden: beiTrainingBeenden
         )
         .sheet(isPresented: $uebungWechselnOffen) {
             UebungWechselnSheet(modell: modell) { modell.uebungWechseln(zu: $0) }
+        }
+        // Der Drawer nach "Übung abschließen" (Testnotiz 06.10., #12).
+        .sheet(isPresented: $abschlussfrageOffen, onDismiss: {
+            if weitereUebungNachFrage {
+                weitereUebungNachFrage = false
+                uebungWechselnOffen = true
+            }
+        }) {
+            UebungAbschliessenSheet(
+                beiWeitereUebung: {
+                    weitereUebungNachFrage = true
+                    abschlussfrageOffen = false
+                },
+                beiGeraetAbschliessen: {
+                    abschlussfrageOffen = false
+                    beiZurueckZumTraining()
+                })
         }
         .sheet(isPresented: $problemOffen) {
             ProblemSheet(modell: modell) {}
@@ -472,15 +468,17 @@ struct GeraetScreen: View {
                 }
             }
         }
-        // Der Dreischritt: fullScreenCover verdeckt die Tab-Leiste.
+        // Der Erstkontakt: fullScreenCover verdeckt die Tab-Leiste. Er steht
+        // hier auch ohne laufendes Training -- "Training starten" ist dann
+        // sein letzter Schritt (Testnotiz 06.10., #5).
         .fullScreenCover(isPresented: Binding(
             get: { modell.istErstkontakt || modell.kalibrierungOffen },
             set: { if !$0 { modell.kalibrierungOffen = false } }
         )) {
             if modell.kalibrierungOffen && !modell.istErstkontakt {
-                // "aendern" ausserhalb des Dreischritts: ein eigenstaendiger
+                // "aendern" ausserhalb des Erstkontakts: ein eigenstaendiger
                 // Screen ohne vorherigen Schritt, deshalb schliessen sowohl
-                // der Zurueck-Chevron als auch "Speichern und weiter" das
+                // der Zurueck-Chevron als auch "Einstellung speichern" das
                 // Cover -- KalibrierungSchritt verlangt beiZurueck immer,
                 // auch wenn es hier kein "davor" gibt, zu dem er fuehren
                 // koennte.
@@ -493,7 +491,7 @@ struct GeraetScreen: View {
             } else {
                 // beiAbbruch teilt sich bewusst beiZurueckZumTraining: ein
                 // fullScreenCover kennt kein Swipe-to-dismiss, und ein
-                // Ausstieg aus dem Dreischritt soll denselben Weg zurueck
+                // Ausstieg aus dem Erstkontakt soll denselben Weg zurueck
                 // nehmen wie ein regulaeres "Zurueck zum Training" -- die
                 // GeraetScreen-Instanz (und mit ihr das Modell) verschwindet
                 // dabei ganz, statt dass hier zusaetzlich am Cover gedreht
@@ -504,5 +502,38 @@ struct GeraetScreen: View {
                                 beiAbbruch: beiZurueckZumTraining)
             }
         }
+    }
+}
+
+/// Die Frage nach "Übung abschließen", wenn das Geraet mehr als eine Uebung
+/// kennt (Testnotiz 06.10., #12): an diesem Geraet weitermachen oder weiter
+/// zum naechsten. Ein Drawer von unten statt eines Dialogs, wie die
+/// Trainingssteuerung (#4).
+private struct UebungAbschliessenSheet: View {
+    let beiWeitereUebung: () -> Void
+    let beiGeraetAbschliessen: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            Text("ÜBUNG ABGESCHLOSSEN")
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+            Text("An diesem Gerät gibt es noch weitere Übungen.")
+                .font(DesignSystem.Typography.fliesstext)
+                .foregroundStyle(DesignSystem.Color.text)
+                .padding(.bottom, DesignSystem.Spacing.s8)
+            PrimaryButton(title: "Weitere Übung an dem Gerät") { beiWeitereUebung() }
+                .testnotizElement("geraet.weitere-uebung", typ: "PrimaryButton")
+            SecondaryButton(title: "Gerät abschließen", action: beiGeraetAbschliessen)
+                .testnotizElement("geraet.geraet-abschliessen", typ: "SecondaryButton")
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, DesignSystem.Spacing.s24)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(DesignSystem.Color.bg)
+        .presentationDetents([.height(280)])
+        .presentationDragIndicator(.visible)
+        .testnotizScreen()
     }
 }

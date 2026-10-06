@@ -60,19 +60,21 @@ struct PausenRad: View {
             rad
             Spacer(minLength: 0)
             VStack(spacing: DesignSystem.Spacing.s12) {
-                // "Weiter" ist die Hauptaktion dieses Zustands und damit die
-                // eine Akzentflaeche des Screens (SS2) -- solange die Pause
-                // laeuft, gibt es keine zweite.
-                PrimaryButton(title: "Weiter") { beiWeiter() }
-                    .accessibilityHint("Beendet die Pause und zeigt wieder die Räder")
                 // Nebeneinander, weil beide dasselbe beantworten: was
-                // passiert nach dieser Pause? Noch etwas laenger -- oder gar
-                // nicht mehr an diesem Geraet.
+                // passiert nach dieser Pause? Noch etwas laenger -- oder
+                // nicht mehr an dieser Uebung.
                 HStack(spacing: DesignSystem.Spacing.s12) {
                     SecondaryButton(title: "+30 s", action: beiVerlaengern)
                         .accessibilityLabel("Pause um 30 Sekunden verlängern")
-                    SecondaryButton(title: "Gerät abschließen", action: beiAbschliessen)
+                    SecondaryButton(title: "Übung abschließen", action: beiAbschliessen)
                 }
+                // "Weiter" ist die Hauptaktion dieses Zustands und damit die
+                // eine Akzentflaeche des Screens (SS2) -- solange die Pause
+                // laeuft, gibt es keine zweite. Ganz unten, an derselben
+                // Stelle wie "Satz N sichern" auf den Raedern: der Daumen
+                // bleibt, wo er war (Testnotiz 06.10., #7).
+                PrimaryButton(title: "Weiter") { beiWeiter() }
+                    .accessibilityHint("Beendet die Pause und zeigt wieder die Räder")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -98,18 +98,33 @@ struct TrainingAbschlussZeilenTests {
         #expect(anzeige.text == "Gewicht halten")
     }
 
-    @Test func problemGemeldetHeisstKeinVorschlag() {
+    @Test func problemGemeldetHeisstKeinVorschlagMitGrund() {
         let anzeige = VorschlagsAnzeige(reasonCode: "problem_gemeldet", deltaLoad: nil, loadUnit: .kg)
-        #expect(anzeige == .keiner)
+        #expect(anzeige == .ohne(.problemGemeldet))
         #expect(anzeige.text == "Kein Vorschlag")
+        #expect(anzeige.grund == "Du hast ein Problem gemeldet.")
     }
 
-    // Die uebrigen drei reasonCodes zeigt das Artboard nicht -- sie fallen
-    // alle auf "Kein Vorschlag", weil sieben Formulierungen fuer dieselbe
-    // Aussage niemandem helfen (Aufgabenbrief).
-    @Test(arguments: ["kein_verlauf", "daten_uneindeutig", "geraetegrenze_erreicht", "irgendwas_unbekanntes"])
-    func unbekannteOderNichtVorgeseheneReasonCodesFallenAufKeinVorschlag(reasonCode: String) {
-        #expect(VorschlagsAnzeige(reasonCode: reasonCode, deltaLoad: nil, loadUnit: .kg) == .keiner)
+    // Testnotiz 06.10., #19 ("Woher kommen die Vorschlaege?"): statt eines
+    // nackten "Kein Vorschlag" steht der Grund darunter. Vorher fielen alle
+    // vier Codes stumm auf denselben Satz -- und liessen offen, ob die App
+    // etwas falsch gemacht hat.
+    @Test(arguments: [
+        ("kein_verlauf", "Noch kein Verlauf an dieser Übung."),
+        ("daten_uneindeutig", "Das Gewicht wechselte zwischen den Sätzen."),
+        ("geraetegrenze_erreicht", "Die Grenze des Geräts ist erreicht."),
+    ])
+    func dieUebrigenReasonCodesNennenIhrenGrund(reasonCode: String, grund: String) {
+        let anzeige = VorschlagsAnzeige(reasonCode: reasonCode, deltaLoad: nil, loadUnit: .kg)
+        #expect(anzeige.text == "Kein Vorschlag")
+        #expect(anzeige.grund == grund)
+        #expect(anzeige.gesprochen == "Kein Vorschlag. \(grund)")
+    }
+
+    @Test func einUnbekannterReasonCodeBleibtOhneGrund() {
+        let anzeige = VorschlagsAnzeige(reasonCode: "irgendwas_unbekanntes", deltaLoad: nil, loadUnit: .kg)
+        #expect(anzeige == .keiner)
+        #expect(anzeige.grund == nil)
     }
 
     @Test func einKorridorCodeOhneDeltaFaelltEbenfallsAufKeinVorschlag() {

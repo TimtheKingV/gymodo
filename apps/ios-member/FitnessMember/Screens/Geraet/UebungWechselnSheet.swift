@@ -1,7 +1,9 @@
 import SwiftUI
 
 /// Sheet statt Push: der Geraete-Screen bleibt dahinter sichtbar, weil sich
-/// die Aktion auf ihn bezieht (Artboard-Kommentar).
+/// die Aktion auf ihn bezieht (Artboard-Kommentar). Seit der Testnotiz
+/// 06.10. (#11, #12) erreichbar ueber "Übung abschließen" -> "Weitere Übung
+/// an dem Gerät", nicht mehr ueber einen eigenen Knopf auf der Satzseite.
 struct UebungWechselnSheet: View {
     let modell: GeraetModel
     let beiWechsel: (String) -> Void
@@ -26,7 +28,7 @@ struct UebungWechselnSheet: View {
                         .buttonStyle(PressButtonStyle())
                     }
 
-                    Text("Ein Wechsel öffnet einen neuen Block im Training. Deine bisherigen Sätze bleiben erhalten — du kannst jederzeit zurück.")
+                    Text("Jede Übung bekommt ihren eigenen Block im Training. Deine bisherigen Sätze bleiben erhalten — du kannst jederzeit zurück.")
                         .font(.system(size: 12))
                         .foregroundStyle(DesignSystem.Color.textFaint)
                         .lineSpacing(3)
@@ -35,7 +37,7 @@ struct UebungWechselnSheet: View {
                 .padding(.vertical, DesignSystem.Spacing.s24)
             }
             .background(DesignSystem.Color.bg)
-            .navigationTitle("Übung wechseln")
+            .navigationTitle("Weitere Übung")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -48,55 +50,40 @@ struct UebungWechselnSheet: View {
         .testnotizScreen(kontext: ["machineId": modell.maschine.id])
     }
 
+    /// Ohne Akzentbalken und ohne hervorgehobene Flaeche (Testnotiz 06.10.,
+    /// #9): seit der Wechsel nach "Übung abschließen" kommt, ist die zuletzt
+    /// laufende Uebung keine Auswahl mehr, die man markieren muesste. Links
+    /// steht der Platz fuer das Sinnbild der Uebung, wie in der Liste auf
+    /// "Gerät erkannt" (#3).
     private func zeile(_ uebung: GeraetUebung) -> some View {
-        let laeuft = uebung.id == modell.uebungId
-        return HStack {
+        HStack(spacing: DesignSystem.Spacing.s12) {
+            Uebungsbild()
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                 Text(uebung.name)
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.text)
-                Text(untertitel(uebung, laeuft: laeuft))
+                Text(untertitel(uebung))
                     .font(.system(size: 13))
                     .foregroundStyle(DesignSystem.Color.textMuted)
             }
             Spacer()
         }
-        .padding(DesignSystem.Spacing.s16)
+        .padding(DesignSystem.Spacing.s12)
         .frame(minHeight: 44)
-        .background(laeuft ? DesignSystem.Color.surfaceRaised : DesignSystem.Color.surface)
-        .overlay(alignment: .leading) {
-            // Die eine Akzentflaeche des Screens -- markiert den aktiven Wert
-            // (designsystem.md SS2), nicht nur "laeuft" im Text. Dasselbe
-            // Mittel wie in GeraetErkanntView, damit dieselbe Bedeutung nicht
-            // zweimal anders aussieht. Das Artboard setzt den Akzent hier
-            // dreifach (Rahmen, Punkt, Textfarbe) -- dokumentierte Abweichung
-            // Spec Abschnitt 9: genau eine Akzentflaeche, nicht drei.
-            if laeuft {
-                Rectangle().fill(DesignSystem.Color.accent).frame(width: 3)
-            }
-        }
+        .background(DesignSystem.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityElement(children: .combine)
     }
 
-    /// Drei Zustaende, nicht ein pauschales "laeuft"/"zuletzt": die laufende
-    /// Zeile nennt Satzzahl und Belastung, weil beides schon feststeht;
-    /// jede andere Zeile mit Historie nennt Belastung und Alter, damit
-    /// erkennbar ist, wie verlaesslich die Zahl noch ist, bevor man das
-    /// Geraet danach einstellt (GeraetUebungWechseln.dc.html). Ohne
+    /// Drei Zustaende: Schon in dieser Einheit dran gewesen, dann die Saetze
+    /// wie in der Blockliste des Trainings ("2 Sätze · 7,5 kg", Rueckfrage
+    /// zur Testnotiz 06.10., #12). Sonst mit Historie Belastung und Alter,
+    /// damit erkennbar ist, wie verlaesslich die Zahl noch ist, bevor man
+    /// das Geraet danach einstellt (GeraetUebungWechseln.dc.html). Ohne
     /// Historie steht der Korridor in der Umfangsart der Uebung.
-    private func untertitel(_ uebung: GeraetUebung, laeuft: Bool) -> String {
-        if laeuft {
-            // satzNummer ist der naechste Index, nicht die Anzahl bisheriger
-            // Saetze -- und nur fuer die aktive Uebung ueberhaupt sinnvoll,
-            // also genau diese Zeile.
-            let saetze = modell.satzNummer - 1
-            var teile = ["läuft"]
-            if saetze > 0 {
-                teile.append(saetze == 1 ? "1 Satz" : "\(saetze) Sätze")
-            }
-            teile.append(Zahlformat.belastungMitEinheit(modell.belastung, modell.loadUnit))
-            return teile.joined(separator: " · ")
+    private func untertitel(_ uebung: GeraetUebung) -> String {
+        if let block = modell.blockInEinheit(fuer: uebung.id) {
+            return "Heute · \(TrainingTab.blockzeile(block))"
         }
         if let belastung = modell.letzteBelastung(fuer: uebung.id) {
             let zuletzt = altersangabe(fuer: uebung.id).map { "zuletzt \($0)" } ?? "zuletzt"
