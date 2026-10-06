@@ -18,9 +18,11 @@ und ist unveraendert in `assets/branding/sticker/` abgelegt
 Schreibt je Tag ein SVG und fuer die Charge eine PDF (eine Seite je Sticker,
 50 x 50 mm). Der QR traegt exakt die URL, die `charge:csv` fuer denselben Tag
 ausgibt; dieselbe URL kommt auf den NFC-Chip. Fehlerkorrektur H, Ruhezone
-4 Module. Unter 0,4 mm Modulgroesse bricht der Befehl ab (bei
-`https://gymtavo.de` sind es 0,54 mm, bei `https://gymodo-web.vercel.app`
-0,50 mm). Verschrottete Chargen lehnt er ab.
+4 Module. Die Basis-URL darf hoechstens QR-Version 6 ergeben (rund 33
+Zeichen inklusive `https://`), weil ab Version 7 das Logo ein
+Ausrichtungsmuster verdecken wuerde; darueber bricht der Befehl ab.
+`https://gymtavo.de` ergibt 0,54 mm Modulgroesse, `https://gymodo-web.vercel.app`
+0,50 mm. Verschrottete Chargen lehnt er ab.
 
 Die Umsetzung (`packages/domain/src/sticker.ts`) ersetzt nur den Muster-QR
 der Vorlage. Das gruene Band wird dabei ein eigener Pfad, weil der

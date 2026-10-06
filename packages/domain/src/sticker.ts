@@ -24,6 +24,9 @@ const RUHEZONE = 4;
 // Logo-Feld im Muster-Raster; es waechst mit dem Raster, damit es gleich gross bleibt.
 const LOGO_VON = 13.5;
 const LOGO_BIS = 19.5;
+// Ab Version 7 liegt ein Ausrichtungsmuster in der Mitte; das Logo wuerde es
+// verdecken. Die Basis-URL darf darum hoechstens Version 6 ergeben.
+const MAX_VERSION = 6;
 // Unter 0,4 mm Kantenlaenge lesen Handykameras aus Armlaenge unzuverlaessig.
 const MIN_MODUL_MM = 0.4;
 
@@ -46,7 +49,10 @@ export function stickerSvg(
     throw new Error("Vorlage ohne gruenes Band: Sticker-Vorlage pruefen.");
   }
   const innen = muster[1]!;
-  const logo = innen.slice(innen.indexOf(`<rect x="${LOGO_VON}"`));
+  const logoStart = innen.indexOf(`<rect x="${LOGO_VON}"`);
+  // Sonst bliebe ein leeres Feld in der Mitte, und der Code laese sich trotzdem.
+  if (logoStart < 0) throw new Error("Logo im Muster-QR nicht gefunden: Sticker-Vorlage pruefen.");
+  const logo = innen.slice(logoStart);
 
   const qr = QRCode.create(url, { errorCorrectionLevel: "H" });
   const n = qr.modules.size;
@@ -55,6 +61,12 @@ export function stickerSvg(
   if (modulMm < MIN_MODUL_MM) {
     throw new Error(
       `QR-Modul ${modulMm.toFixed(2)} mm, mindestens 0,4 mm noetig: kuerzere Basis-URL waehlen.`,
+    );
+  }
+
+  if (qr.version > MAX_VERSION) {
+    throw new Error(
+      `QR-Version ${qr.version}: ab Version 7 verdeckt das Logo ein Ausrichtungsmuster, kuerzere Basis-URL waehlen.`,
     );
   }
 

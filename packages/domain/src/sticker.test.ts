@@ -43,6 +43,24 @@ describe("stickerSvg", () => {
     expect(() => stickerSvg(vorlage, url)).toThrow(/0,4 mm/);
   });
 
+  // Ab Version 7 liegt ein Ausrichtungsmuster genau in der Mitte, unter dem Logo.
+  test("ab QR-Version 7 bricht der Sticker ab", () => {
+    const url = `https://${"x".repeat(26)}.de/t/${token}`;
+    expect(() => stickerSvg(vorlage, url)).toThrow(/Version 7/);
+  });
+
+  test("die laengste erlaubte URL ist noch lesbar", () => {
+    const url = `https://${"x".repeat(22)}.de/t/${token}`;
+    const { svg, version } = stickerSvg(vorlage, url);
+    expect(version).toBe(6);
+    expect(zuruecklesen(svg)).toBe(url);
+  });
+
+  test("geaendertes Logo im Muster: kein Sticker ohne Logo", () => {
+    const anders = vorlage.replace('<rect x="13.5"', '<rect x="13.6"');
+    expect(() => stickerSvg(anders, `https://gymtavo.de/t/${token}`)).toThrow(/Logo/);
+  });
+
   test("fremdeVorlage: ohne Muster-Block kein Sticker", () => {
     expect(() => stickerSvg("<svg/>", "https://gymtavo.de/t/x")).toThrow(/Muster-QR/);
   });
