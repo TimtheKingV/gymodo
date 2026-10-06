@@ -6,7 +6,7 @@
 
 **Architecture:** Neue Bausteine unter `apps/web/app/landung/`, je Baustein eine `.tsx` mit eigenem CSS-Modul. Server Components, wo nichts reagiert. Client Components nur für Kaufleiste, Ohne/Mit, Held-Video und die Schritt-Indikatoren. Die beiden Zustandsautomaten (Kaufleiste, Ohne/Mit) sind reine Funktionen mit Vitest-Zustandstabellen. Die Komponenten verdrahten nur IntersectionObserver, Scroll und Timer dorthin. Alle Texte stehen in `landung/texte.ts`. `page.tsx` rendert im Zweig ohne Sitzung nur `<Startseite />`.
 
-**Tech Stack:** Next.js 15 / React 19, CSS Modules, Vitest + @testing-library/react (jsdom), Playwright. Keine neue Abhängigkeit.
+**Tech Stack:** Next.js 16 (webpack) / React 19, CSS Modules, Vitest + @testing-library/react (jsdom), Playwright. Keine neue Abhängigkeit.
 
 **Spec:** `docs/superpowers/specs/2026-10-03-landeseite-neu-gpath-referenz.md`. Maßgeblich sind §4 (Grundsätze), §5 (Texte für `/`), §7.2 mit 7.2.1/7.2.2 (Bausteine, Bewegung, Ohne/Mit), §7.3 (Kaufleiste), §7.6 (Tests) und §9 (Entscheidungen E1–E9). Dazu `docs/superpowers/specs/2026-08-30-designsystem.md` §2, §4, §6 und §10.
 
@@ -72,22 +72,14 @@ Testbefehle (aus der Worktree-Wurzel):
 
 ---
 
-### Aufgabe 0: Auf den Stand des Branding-Branches bringen
+### Aufgabe 0: Auf den Stand von `master` bringen
 
-Die Branding-Session (`.claude/worktrees/gymtavo-branding`) stellt in ihrer Aufgabe 4 gerade alle sichtbaren Web-Texte auf „Gymtavo“ um, darunter `apps/web/app/page.tsx` und `e2e/wurzel.spec.ts`, also genau die Dateien von Aufgabe 10. Dieser Plan setzt darauf auf.
+Nachgezogen am 6. Oktober: Der Branding-Branch `feat/gymtavo-branding` ist inzwischen in `master` (Wortmarke `app/branding/GymtavoWordmark.tsx`, sichtbare Texte „Gymtavo“ in `page.tsx` und `wurzel.spec.ts`, neuer Test „Der Browsertab heisst Gymtavo“). Ebenfalls auf `master`: Next 16 (`dev`/`build` mit `--webpack`). Der Plan setzt deshalb direkt auf `master` auf.
 
-- [ ] **Schritt 1: Prüfen, ob die Web-Texte committet sind**
-
-```bash
-git log --oneline master..feat/gymtavo-branding
-git -C ../gymtavo-branding status --short
-```
-Erwartet: ein Commit für „Sichtbare Texte im Web“ (Aufgabe 4 des Branding-Plans), und `apps/web/app/page.tsx` taucht im Status nicht mehr als geändert auf. Wenn nicht: **anhalten und Tim fragen.** Die Aufgaben 1–9 hängen nicht an `page.tsx` und dürfen in dem Fall vorgezogen werden. Aufgabe 10 erst nach dem Rebase.
-
-- [ ] **Schritt 2: Rebase und Grundzustand**
+- [ ] **Schritt 1: Auf `master` vorspulen und Grundzustand**
 
 ```bash
-git rebase feat/gymtavo-branding     # oder master, falls der Branding-PR schon gemergt ist
+git merge --ff-only master
 pnpm install
 pnpm --filter @fitretro/web exec vitest run
 ```
@@ -2586,7 +2578,7 @@ export async function akzentflaechen(
 
 - [ ] **Schritt 2: Rote e2e-Tests schreiben**
 
-In `e2e/wurzel.spec.ts` die Tests zur Seite ohne Konto ersetzen, also alle vor dem Kommentarblock „Der angemeldete Nicht-Mitarbeiter-Zweig“ sowie „Die Produktgrenze der Landeseite steht in text-muted“. Den Kommentar über dem ersten Test fortschreiben. Die Tests für angemeldete Konten und die Wortmarken-/320-px-Tests am Ende bleiben, wie die Branding-Session sie hinterlassen hat. Import erweitern um `akzentflaechen` (schon da). Neu oben:
+In `e2e/wurzel.spec.ts` die Tests zur Seite ohne Konto ersetzen, also alle vor dem Kommentarblock „Der angemeldete Nicht-Mitarbeiter-Zweig“ sowie „Die Produktgrenze der Landeseite steht in text-muted“. Den Kommentar über dem ersten Test fortschreiben. Die Tests für angemeldete Konten, die Wortmarken-/320-px-Tests am Ende und der letzte Test „Der Browsertab heisst Gymtavo“ bleiben, wie die Branding-Session sie hinterlassen hat. Der Titel kommt aus dem Layout und muss auch mit der Startseite noch „Gymtavo“ enthalten. Import erweitern um `akzentflaechen` (schon da). Neu oben:
 
 ```ts
 /**
