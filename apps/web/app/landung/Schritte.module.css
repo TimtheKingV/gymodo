@@ -1,0 +1,115 @@
+.abschnitt {
+  background: var(--surface);
+  padding: var(--s48) 0;
+}
+
+.titel {
+  font-size: 32px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 auto var(--s24);
+  padding: 0 20px;
+  max-width: 1080px;
+}
+
+.liste {
+  list-style: none;
+  margin: 0;
+  padding: 0 20px;
+  display: flex;
+  gap: var(--s16);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 20px;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.liste::-webkit-scrollbar {
+  display: none;
+}
+
+.schritt {
+  flex: 0 0 82%;
+  scroll-snap-align: start;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: var(--s16);
+}
+
+/* Hochkant-Screenshots sind fast doppelt so hoch wie breit; gezeigt wird
+   der obere Teil, dort steht das, worum es im Schritt geht. */
+.bildRahmen {
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+
+.bildDatei {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.nummer {
+  margin: var(--s16) 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.schrittTitel {
+  margin: var(--s4) 0 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.text {
+  margin: var(--s8) 0 0;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.indikatoren {
+  display: flex;
+  justify-content: center;
+  gap: var(--s8);
+  margin-top: var(--s16);
+}
+
+.indikator {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 700;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.indikator[aria-current="step"] {
+  background: var(--surface-raised);
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+@media (min-width: 750px) {
+  .liste {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+  .indikatoren {
+    display: none;
+  }
+}

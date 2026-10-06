@@ -1,0 +1,91 @@
+/* Die Landeseite ist weder Einstieg noch Schreibtisch (frueher
+   einstieg/landeseite.module.css): eigener Satz, eigene Bausteine unter
+   landung/. --kopf-hoehe = 8 px Abstand + 54 px Pille (Kopf.module.css);
+   der Held rechnet damit. */
+.startseite {
+  --kopf-hoehe: 62px;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+/* Sprungziele landen unter dem Kopf, nicht hinter ihm. */
+.startseite section[id] {
+  scroll-margin-top: var(--kopf-hoehe);
+}
+
+.cta {
+  padding: var(--s48) 20px;
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s16);
+}
+
+.ctaTitel,
+.abschnittTitel {
+  font-size: 32px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.ctaText {
+  color: var(--text-muted);
+  font-size: 17px;
+  line-height: 1.5;
+  margin: 0 0 var(--s8);
+}
+
+.verlauf {
+  background: var(--surface);
+  padding: var(--s48) 20px;
+}
+
+.verlauf > * {
+  max-width: 1080px;
+  margin-inline: auto;
+}
+
+.karten {
+  list-style: none;
+  padding: 0;
+  margin-top: var(--s24);
+  display: grid;
+  gap: var(--s16);
+}
+
+.karte {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: var(--s20);
+}
+
+.karteTitel {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.karteText {
+  margin: var(--s8) 0 0;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+  .cta > a {
+    width: 100%;
+  }
+}
+
+@media (min-width: 750px) {
+  .karten {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

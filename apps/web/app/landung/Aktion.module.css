@@ -1,0 +1,31 @@
+/* Die Akzentflaeche der Landeseite (Designsystem 4: Hauptaktion 64 px,
+   Radius 16). Held, CTA und Kaufleiste teilen sie; im Viewport steht immer
+   hoechstens eine davon (Spec 4.2). */
+.hauptaktion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+  padding: 0 var(--s32);
+  border-radius: 16px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+  font-size: 17px;
+  text-decoration: none;
+  transition:
+    transform 120ms var(--ease-out),
+    background-color 120ms ease;
+}
+
+/* Rueckmeldung beim Druck, nicht erst beim Loslassen. */
+.hauptaktion:active {
+  transform: scale(0.97);
+  background: var(--accent-pressed);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hauptaktion:hover {
+    background: var(--accent-pressed);
+  }
+}

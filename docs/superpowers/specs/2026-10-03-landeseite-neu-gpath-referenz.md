@@ -1,7 +1,7 @@
 # gymodo — Landeseite neu (`/` und `/studios`), Referenz getgpath.com
 
 **Stand:** 3. Oktober 2026
-**Status:** Entwurf, Entscheidungen E1–E9 getroffen (Abschnitt 9). **Noch nichts umgesetzt.** Plan für Etappe 1: `docs/superpowers/plans/2026-10-03-landeseite-etappe1.md`.
+**Status:** Entscheidungen E1–E9 getroffen (Abschnitt 9). **Etappe 1 umgesetzt am 6. Oktober 2026** (7.7/1), die drei App-Screenshots stehen noch aus. Plan für Etappe 1: `docs/superpowers/plans/2026-10-03-landeseite-etappe1.md`.
 **Rohdaten:** `docs/superpowers/recherche/2026-10-03-gpath/` (drei Berichte mit allen Texten wörtlich, allen CSS-/JS-Werten, je Section).
 **Verhältnis zu anderen Dokumenten:** untergeordnet gegenüber `2026-08-28-fitness-retrofit-m1-design.md` (Produktgrenze, Käufer/Nutzer) und `2026-08-30-designsystem.md` (zitiert als `§n`).
 
@@ -152,7 +152,7 @@ Käufer ist der Betreiber (M1 §2). Kernargumente aus der M1-Spec: **Retrofit st
 
 ## 7. Technischer Plan (`apps/web`)
 
-Rahmen: Next.js 15 / React 19, CSS Modules, Tokens aus `globals.css`, **keine Bild-/Animationsbibliothek**. Einzige neue Abhängigkeit: `stripe` (Server-SDK, nur serverseitig, landet nicht im Client-Bundle). Kein `@stripe/stripe-js`, denn wir leiten auf den gehosteten Checkout weiter.
+Rahmen: Next.js 16 (Build mit webpack, seit 6. Oktober auf `master`) / React 19, CSS Modules, Tokens aus `globals.css`, **keine Bild-/Animationsbibliothek**. Einzige neue Abhängigkeit: `stripe` (Server-SDK, nur serverseitig, landet nicht im Client-Bundle). Kein `@stripe/stripe-js`, denn wir leiten auf den gehosteten Checkout weiter.
 
 ### 7.1 Routen
 
@@ -165,7 +165,7 @@ app/kauf/danke/page.tsx      success_url (liest session_id, zeigt Bestellnummer)
 app/(rechtliches)/impressum, datenschutz, agb, widerruf, versand
 ```
 
-`/` ruft weiter `auth.getUser()` auf und bleibt dynamisch. Die Landeseite selbst ist eine Server Component ohne Datenabhängigkeit außer den Laufbandzahlen. Die Zahlen kommen aus `unstable_cache` (revalidate 3600) über eine `security definer`-Funktion, die nur Summen liefert. `/studios` existiert heute nicht; `/api/v1/studios` ist API und kollidiert nicht.
+`/` ruft weiter `auth.getUser()` auf und bleibt dynamisch. Die Landeseite selbst ist eine Server Component ohne Datenabhängigkeit außer den Laufbandzahlen. Die Zahlen kommen aus `unstable_cache` (revalidate 3600; vor Etappe 3 gegen das Caching von Next 16 prüfen) über eine `security definer`-Funktion, die nur Summen liefert. `/studios` existiert heute nicht; `/api/v1/studios` ist API und kollidiert nicht.
 
 ### 7.2 Bausteine — `app/landung/`
 
@@ -270,7 +270,7 @@ Die Kaufleiste ist dann ein `<form action={sensorKaufen}>` und führt ohne Waren
 - `checkout.session.completed` (subscription), `customer.subscription.created|updated|deleted`, `invoice.payment_failed` → `studio_abos` upsert.
 - Schreiben mit Service-Role; der Client schreibt nie.
 
-**Migrationen** (fortlaufend ab `0046`, RLS an):
+**Migrationen** (fortlaufend ab der nächsten freien Nummer, RLS an; `0046` ist seit 6. Oktober durch `0046_belastung_umfang.sql` belegt, die Nummern unten verschieben sich):
 - `0046_stripe_kunden_und_abos.sql`
   - `studios.stripe_customer_id text unique`
   - `studio_abos` (`studio_id` pk/fk, `stripe_subscription_id`, `status`, `price_id`, `aktuelle_periode_ende`, `kuendigung_zum`), select nur für Mitarbeiter des Studios
@@ -304,7 +304,7 @@ Mails: anfangs die **Stripe-Belege** (Kaufbeleg, Rechnung); eigene Versandmail e
 
 ### 7.7 Reihenfolge
 
-1. **Bausteine + `/` ohne Verkauf.** Kopf, Hero (Poster, Video-Logik ohne echtes Video, E6), Laufband ruhend mit Fakten (E7), Ohne/Mit, Schritte mit Screenshots, Verlauf & Ziele ohne Overlay, Fragen (inkl. Sensor „in Entwicklung", E1), Kaufleiste mit „App laden", Fuß; dazu `wurzel.spec` neu. Liefert sofort den Mitgliedsweg, der heute fehlt. Kein Sensor-Abschnitt, keine Warteliste, kein `VideoOverlay`, kein Kopfmenü, keine „Brücke zum Studio“ (beide brauchen `/studios`, kommen mit Etappe 2), Ohne/Mit ohne Hintergrundbild (die Unschärfe-Überblendung braucht ein Foto, E6). Plan: `docs/superpowers/plans/2026-10-03-landeseite-etappe1.md`.
+1. **Bausteine + `/` ohne Verkauf.** Kopf, Hero (Poster, Video-Logik ohne echtes Video, E6), Laufband ruhend mit Fakten (E7), Ohne/Mit, Schritte mit Screenshots, Verlauf & Ziele ohne Overlay, Fragen (inkl. Sensor „in Entwicklung", E1), Kaufleiste mit „App laden", Fuß; dazu `wurzel.spec` neu. Liefert sofort den Mitgliedsweg, der heute fehlt. Kein Sensor-Abschnitt, keine Warteliste, kein `VideoOverlay`, kein Kopfmenü, keine „Brücke zum Studio“ (beide brauchen `/studios`, kommen mit Etappe 2), Ohne/Mit ohne Hintergrundbild (die Unschärfe-Überblendung braucht ein Foto, E6). Plan: `docs/superpowers/plans/2026-10-03-landeseite-etappe1.md`. **Umgesetzt am 6. Oktober 2026.** Abweichungen: Die Kaufleiste erscheint erst, wenn der Hero-Knopf ganz aus dem Viewport ist (kein `rootMargin -kopfHoehe` wie in 7.3 — der Glas-Kopf deckt den Knopf nicht ab, sonst stuenden zwei Akzentflaechen im Bild). Weicht die Leiste mit dem Fokus darin, geht der Fokus an den sichtbaren Verdecker oder den Hero-Knopf. Offen: Screenshots (Aufgabe 9), Safe Area am echten iPhone, `NEXT_PUBLIC_APP_STORE_URL`.
 2. **`/studios` + Kontakt + Rechtsseiten.** Funktioniert ohne Preismodell.
 3. **Laufband mit Live-Zahlen**, sobald sie tragen.
 4. **Sensor-Checkout (Testmodus)**, sobald E1 und Rechtsseiten stehen; Webhook + `bestellungen`.
