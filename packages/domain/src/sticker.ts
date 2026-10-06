@@ -1,3 +1,4 @@
+/// <reference path="./svg-to-pdfkit.d.ts" />
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
 import SVGtoPDF from "svg-to-pdfkit";

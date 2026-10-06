@@ -25,9 +25,22 @@ und wird in `LoginMailView.swift` gezeigt. Das Xcode-Projekt wird mit
 `sources: FitnessMember`.
 
 Bei Aenderungen alle SVG-Kopien zusammen aktualisieren. Sichtbare Texte
-heissen "Gymtavo"; App-Icon, Bundle-ID (de.gymtaro.*), Domain
-(gymodo-web.vercel.app) und Testnotiz-Formatkennungen sind bewusst nicht
-umgestellt.
+heissen "Gymtavo"; Bundle-ID (de.gymtaro.*), Domain (gymodo-web.vercel.app)
+und Testnotiz-Formatkennungen sind bewusst nicht umgestellt.
+
+## App-Icon
+
+`app-icon/` ist der Ordner 02-App-Icons aus dem GYMTAVO-Gesamtpaket vom
+6. Oktober 2026: helles G mit gruenem Punkt auf #0A0B0D. Eingebaut sind
+`GYMTAVO-App-Icon-1024.png` als iOS-`AppIcon` (Xcode erzeugt die Groessen),
+`GYMTAVO-App-Icon-Abgerundet.svg` als `apps/web/app/icon.svg` und
+`GYMTAVO-App-Icon-180.png` als `apps/web/app/apple-icon.png`.
+
+## NFC/QR-Sticker
+
+`sticker/` ist der Ordner 03-NFC-QR-Tags aus demselben Paket. Die SVG-Vorlage
+dient `pnpm tags charge:sticker` als Grundlage; Stand und Druckhinweise in
+`../../docs/branding/qr-nfc-design-status.md`.
 
 ## Abnahme
 
@@ -37,4 +50,3 @@ umgestellt.
 - [ ] Sichtpruefung auf kleinem iPhone und VoiceOver live (Label ist gesetzt).
 - [ ] CI fuer diesen Commit pruefen.
 
-QR/NFC: siehe `../../docs/branding/qr-nfc-design-status.md`.

@@ -1,5 +1,7 @@
 #!/usr/bin/env tsx
-import { writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { createClient } from "@supabase/supabase-js";
 import "dotenv/config";
@@ -13,6 +15,7 @@ import {
   studioAufloesen,
   type TagSorte,
 } from "@fitretro/domain/chargen";
+import { stickerPdf, stickerSvg } from "@fitretro/domain/sticker";
 
 /**
  * Das Betreiberwerkzeug. Es schreibt mit dem Service-Role-Schluessel und laeuft
@@ -29,6 +32,7 @@ const HILFE = `Aufruf: pnpm tags <befehl> [optionen]
   charge:anlegen      --code <text> --sorte machine|studio --menge <zahl>
                       [--lieferant <text>] [--bestellt <JJJJ-MM-TT>]
   charge:csv          --code <text> [--basis <url>] [--datei <pfad>]
+  charge:sticker      --code <text> [--basis <url>] [--ordner <pfad>]
   charge:verschrotten --code <text>
   lieferung           --charge <text> --studio <uuid|name>
                       (--menge <zahl> | --nummern 3-7,9)
@@ -89,6 +93,26 @@ function sorte(werte: Record<string, unknown>): TagSorte {
   return wert;
 }
 
+const STICKER_VORLAGE = fileURLToPath(
+  new URL("../assets/branding/sticker/GYMTAVO-NFC-QR-Tag-50x50mm-MUSTER.svg", import.meta.url),
+);
+
+function basisUrl(werte: Record<string, unknown>): string {
+  const basis = werte["basis"] ?? process.env["TAG_URL_BASE"];
+  if (typeof basis !== "string" || basis === "") {
+    throw new DomainError(
+      "validation_failed",
+      "--basis fehlt und TAG_URL_BASE ist nicht gesetzt. Halbe URLs sind nach Druck oder Lieferung nicht mehr zu reparieren.",
+    );
+  }
+  return basis;
+}
+
+// CSV, NFC-Chip und gedruckter QR muessen dieselbe Adresse tragen.
+function tagUrl(basis: string, token: string): string {
+  return `${basis.replace(/\/$/, "")}/t/${token}`;
+}
+
 function umgebung(name: string): string {
   const wert = process.env[name];
   if (!wert) throw new DomainError("validation_failed", `Umgebungsvariable ${name} fehlt.`);
@@ -123,6 +147,7 @@ async function main(): Promise<void> {
       bestellt: { type: "string" },
       basis: { type: "string" },
       datei: { type: "string" },
+      ordner: { type: "string" },
       charge: { type: "string" },
       studio: { type: "string" },
       nummern: { type: "string" },
@@ -154,24 +179,45 @@ async function main(): Promise<void> {
 
     case "charge:csv": {
       const code = pflicht(values, "code");
-      const basis = values.basis ?? process.env["TAG_URL_BASE"];
-      if (!basis) {
-        throw new DomainError(
-          "validation_failed",
-          "--basis fehlt und TAG_URL_BASE ist nicht gesetzt. Eine CSV mit halben URLs ist beim Lieferanten nicht mehr zu reparieren.",
-        );
-      }
+      const basis = basisUrl(values);
       const { charge, zeilen } = await chargeZeilen(admin, code);
       const ziel = values.datei ?? `charge-${charge.code}.csv`;
       const inhalt = [
         "nummer,charge,sorte,token,url",
         ...zeilen.map(
           (zeile) =>
-            `${zeile.nummer},${charge.code},${charge.kind},${zeile.token},${basis.replace(/\/$/, "")}/t/${zeile.token}`,
+            `${zeile.nummer},${charge.code},${charge.kind},${zeile.token},${tagUrl(basis, zeile.token)}`,
         ),
       ].join("\n");
       writeFileSync(ziel, `${inhalt}\n`, "utf8");
       console.log(`${zeilen.length} Zeilen nach ${ziel} geschrieben.`);
+      return;
+    }
+
+    case "charge:sticker": {
+      const code = pflicht(values, "code");
+      const basis = basisUrl(values);
+      const { charge, zeilen } = await chargeZeilen(admin, code);
+      // Verschrottete Tokens loest die Seite nicht mehr auf; Druck waere Muell.
+      if (charge.scrappedAt) {
+        throw new DomainError("validation_failed", `Charge ${charge.code} ist verschrottet.`);
+      }
+      const vorlage = readFileSync(STICKER_VORLAGE, "utf8");
+      const ordner = values.ordner ?? `sticker-${charge.code}`;
+      mkdirSync(ordner, { recursive: true });
+      const svgs: string[] = [];
+      let kleinstesModul = Infinity;
+      for (const zeile of zeilen) {
+        const { svg, modulMm } = stickerSvg(vorlage, tagUrl(basis, zeile.token));
+        const name = `${charge.code}-${String(zeile.nummer).padStart(4, "0")}.svg`;
+        writeFileSync(join(ordner, name), svg, "utf8");
+        svgs.push(svg);
+        kleinstesModul = Math.min(kleinstesModul, modulMm);
+      }
+      writeFileSync(join(ordner, `${charge.code}.pdf`), await stickerPdf(svgs));
+      console.log(
+        `${svgs.length} Sticker nach ${ordner} geschrieben (QR-Modul ${kleinstesModul.toFixed(2)} mm). Vor dem Druck einen Probedruck mit Kamera und App pruefen.`,
+      );
       return;
     }
 
