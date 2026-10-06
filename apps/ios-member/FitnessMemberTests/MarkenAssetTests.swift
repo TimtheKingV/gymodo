@@ -9,6 +9,14 @@ struct MarkenAssetTests {
         #expect(UIImage(named: "GymtavoWordmark", in: .main, with: nil) != nil)
     }
 
+    // Ohne AppIcon zeigt der Home-Bildschirm das leere Standardsymbol, und
+    // App Store Connect lehnt den Upload ab.
+    @Test func appIconIstEingetragen() {
+        let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any]
+        let primaer = icons?["CFBundlePrimaryIcon"] as? [String: Any]
+        #expect(primaer?["CFBundleIconName"] as? String == "AppIcon")
+    }
+
     // Unter dem Icon stand "FitnessMember" (PRODUCT_NAME), weil kein
     // Anzeigename gesetzt war.
     @Test func anzeigenameIstGymtavo() {

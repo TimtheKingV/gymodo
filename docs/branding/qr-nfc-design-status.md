@@ -1,28 +1,38 @@
-# QR/NFC: Designstand vor Integration
+# QR/NFC: Designstand und Druck
 
-Stand 21. September 2026. Die Logo-Integration ist von der Druckvorlage getrennt.
-Eine eindeutig zuordenbare finale QR/NFC-Datei wurde bei der Suche nicht gefunden.
-Die folgende Zusammenfassung basiert auf den bisherigen Designanweisungen;
-sie ist keine Freigabe einer finalen Druckdatei.
+Stand 6. Oktober 2026. Die finale Gestaltung liegt im GYMTAVO-Gesamtpaket
+und ist unveraendert in `assets/branding/sticker/` abgelegt
+(`GYMTAVO-NFC-QR-Tag-50x50mm-MUSTER.svg` ist die Vorlage, siehe README dort).
 
-## Bisherige Richtung
+## Gestaltung
 
-- Abgerundeter Aufkleber, vorgesehenes Format 50 x 50 mm.
-- QR-Code ist Pflicht; NFC-Symbol und QR-Code stehen nebeneinander.
-- NFC-Symbol und Schriftzug NFC sind gruppiert und optisch vertikal am
-  QR-Code zentriert.
-- Letzte Korrektur: Verbindungsboegen etwas verkleinern und den Abstand
-  zum NFC-Schriftzug vergroessern, damit nichts ueberlappt.
-- Ein gebrandeter QR-Code mit Logo in der Mitte wurde gewuenscht. Die
-  Gestaltung der hellen Flaeche und die tatsaechliche Lesbarkeit sind offen.
+- Abgerundeter Aufkleber 50 x 50 mm, Eckenradius 4 mm.
+- QR links mit G.-Logo in der Mitte, NFC-Symbol mit Schriftzug rechts,
+  gruenes Hinweisband "Scannen oder Handy hier halten" unten.
+- Der QR der Vorlage ist ein Muster ("GYMTAVO DESIGNMUSTER") und oeffnet nichts.
 
-## Vor der Integration
+## Sticker je Charge erzeugen
 
-1. Den gerenderten finalen Entwurf nach der letzten Abstandskorrektur
-   identifizieren und zur visuellen Freigabe vorlegen.
-2. Abmessungen, Rand und QR-Ruhezone festhalten. QR- und NFC-Ziel muessen
-   dieselbe echte Tag-URL nutzen; keine einheitliche Demo-URL fuer alle Geraete.
-3. Den finalen Code samt zentralem Logo auf Papier in Originalgroesse mit
-   iPhone-Kamera und App-Scanner pruefen. Erst danach Druckvorlage integrieren.
+    pnpm tags charge:sticker --code <charge> --basis <https://domain> [--ordner <pfad>]
 
-Dieser PR aendert weder Scanner, NFC-Leser, Tag-Routing noch Druckausgaben.
+Schreibt je Tag ein SVG und fuer die Charge eine PDF (eine Seite je Sticker,
+50 x 50 mm). Der QR traegt exakt die URL, die `charge:csv` fuer denselben Tag
+ausgibt; dieselbe URL kommt auf den NFC-Chip. Fehlerkorrektur H, Ruhezone
+4 Module. Die Basis-URL darf hoechstens QR-Version 6 ergeben (rund 33
+Zeichen inklusive `https://`), weil ab Version 7 das Logo ein
+Ausrichtungsmuster verdecken wuerde; darueber bricht der Befehl ab.
+`https://gymtavo.de` ergibt 0,54 mm Modulgroesse, `https://gymodo-web.vercel.app`
+0,50 mm. Verschrottete Chargen lehnt er ab.
+
+Die Umsetzung (`packages/domain/src/sticker.ts`) ersetzt nur den Muster-QR
+der Vorlage. Das gruene Band wird dabei ein eigener Pfad, weil der
+PDF-Renderer `clip-path` nicht auswertet.
+
+## Vor dem ersten echten Druck
+
+1. Endgueltige Domain festlegen. Gedruckte Codes und beschriebene Chips
+   lassen sich nicht mehr aendern.
+2. Probedruck in Originalgroesse (PDF bei 100 %) mit iPhone-Kamera und
+   App-Scanner pruefen.
+3. Beschnitt, Stanzkontur und Farbprofil nach Vorgabe des Tag-Herstellers
+   ergaenzen; die Dateien sind RGB ohne Beschnitt.
