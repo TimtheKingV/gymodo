@@ -1,0 +1,19 @@
+.laufband {
+  background: var(--surface);
+  border-block: 1px solid var(--line);
+  padding: var(--s20) 20px;
+}
+
+.liste {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 1080px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s8) var(--s32);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
