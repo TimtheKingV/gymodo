@@ -1,0 +1,55 @@
+/* 54 px Pille, 8 px vom Rand: zusammen --kopf-hoehe (62 px) auf
+   .startseite. Aendert sich eins davon, muss die Konstante mit. */
+.kopf {
+  position: sticky;
+  top: var(--s8);
+  z-index: 30;
+  height: 54px;
+  margin: var(--s8) var(--s16) 0;
+  padding: 0 var(--s8) 0 var(--s16);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s16);
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(10, 11, 13, 0.72);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  backdrop-filter: blur(22px) saturate(1.2);
+}
+
+/* Ohne Unschaerfe waere 72 % Deckkraft ueber Text unlesbar. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .kopf {
+    background: var(--surface);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .kopf {
+    background: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Nebenaktion wie bisher .anmeldenKopf: Umriss, keine Akzentflaeche. */
+.anmelden {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 var(--s16);
+  border-radius: var(--r-control);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .anmelden:hover {
+    background: var(--surface-hover);
+  }
+}
