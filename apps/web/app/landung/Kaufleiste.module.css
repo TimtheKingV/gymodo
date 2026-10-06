@@ -1,0 +1,86 @@
+/* Versteckt liegt die Leiste ganz unter dem Rand: eigene Hoehe plus Abstand
+   plus Safe Area -- Gpaths 110 % reicht dafuer nicht. Eine Transition fuer
+   alle Wechsel, keine Erst-Einblendung als Keyframe (Spec 7.3): Keyframes
+   fangen bei Unterbrechung von vorn an. */
+.leiste {
+  position: fixed;
+  z-index: 40;
+  left: 1.2rem;
+  right: 1.2rem;
+  bottom: calc(1.2rem + env(safe-area-inset-bottom));
+  max-width: 42rem;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s12);
+  padding: var(--s8) var(--s8) var(--s8) var(--s16);
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: rgba(20, 22, 26, 0.72);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  transform: translateY(calc(100% + 1.2rem + env(safe-area-inset-bottom)));
+  transition: transform 200ms var(--ease-drawer);
+}
+
+.leiste[data-sichtbar] {
+  transform: translateY(0);
+  transition-duration: 240ms;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .leiste {
+    background: var(--surface);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .leiste {
+    background: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (min-width: 990px) {
+  .leiste {
+    max-width: 44rem;
+    bottom: calc(1.6rem + env(safe-area-inset-bottom));
+    transform: translateY(calc(100% + 1.6rem + env(safe-area-inset-bottom)));
+  }
+  .leiste[data-sichtbar] {
+    transform: translateY(0);
+  }
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+}
+
+.titel {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.merkmale {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Dieselbe Akzentflaeche wie der Hero-Knopf, kompakter: die Leiste ist
+   eine Wiederholung der Hauptaktion, kein eigener Ort. 52 px bleiben
+   ueber der Trefferflaeche (Designsystem 4). */
+.aktion {
+  composes: hauptaktion from "./Aktion.module.css";
+  flex: none;
+  height: 52px;
+  padding: 0 20px;
+  font-size: 16px;
+  border-radius: 14px;
+}
