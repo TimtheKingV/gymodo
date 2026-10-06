@@ -471,10 +471,6 @@ struct TrainingRootView: View {
     @ViewBuilder
     private func ziel(_ route: GeraetRoute) -> some View {
         switch route {
-        case .auswahl:
-            GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader) { machineId in
-                pfad.append(.erkannt(machineId: machineId, token: nil))
-            }
         case .erkannt(let machineId, let token):
             if let modell = modell(machineId: machineId, exerciseId: nil, token: token) {
                 GeraetErkanntScreen(modell: modell) { uebungId in

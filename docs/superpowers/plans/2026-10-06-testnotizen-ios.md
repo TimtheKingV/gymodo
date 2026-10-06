@@ -190,12 +190,18 @@ aus den letzten zwei Trainingstagen der Übung
   keinen Linux-Compiler für eine Syntaxprüfung. Die CI baut nur das
   Web-Projekt. Die Tests oben sind geschrieben, aber nicht ausgeführt, also
   auch nicht rot gesehen.
-- Den Diff hat ein zweiter Agent als „Compiler“ gegengelesen: Signaturen,
-  Aufrufer geänderter Inits, Result-Builder, Testerwartungen von Hand
-  nachgerechnet. Seine Funde sind eingearbeitet.
-- **Vor dem Merge am Mac:** `xcodegen generate` (neue Dateien: HomeKurse,
-  Satzvergleich, zwei Testdateien; ErsteWerteSchritt entfernt), dann alle
-  Tests im Simulator.
+- Den Diff hat ein zweiter Agent als „Compiler“ gegengelesen. Geprüft hat
+  er Signaturen, alle Aufrufer geänderter Inits, Result-Builder und
+  Zugriffsrechte, und er hat jede Testerwartung von Hand nachgerechnet. Er
+  fand einen echten Baufehler: `project.pbxproj` kannte die neuen Dateien
+  nicht und verwies noch auf `ErsteWerteSchritt.swift`. Ich habe die
+  Projektdatei von Hand nachgezogen (4 Dateien ein-, 1 ausgetragen, im
+  Format von xcodegen).
+- Zwei Logik-Notizen von ihm sind ebenfalls behoben. „Zurück“ nach „Kenne
+  ich schon“ führt jetzt zur Einweisung statt in die übersprungene
+  Einstellung. Die tote Route `GeraetRoute.auswahl` ist entfernt.
+- **Vor dem Merge am Mac:** alle Tests im Simulator. `xcodegen generate`
+  ist nicht mehr nötig, schadet aber nicht (es vergibt nur neue IDs).
 
 ### Am Gerät ansehen
 

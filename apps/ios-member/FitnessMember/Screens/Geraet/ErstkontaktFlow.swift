@@ -29,6 +29,9 @@ struct ErstkontaktFlow: View {
     /// es, der Schritt darf dabei nicht verschwinden.
     @State private var schritte: [ErstkontaktSchritt]
     @State private var position = 0
+    /// Wohin "Zurueck" nach "Kenne ich schon" fuehrt: an den Schritt, von
+    /// dem aus uebersprungen wurde, nicht in die uebersprungene Einstellung.
+    @State private var ruecksprung: Int?
 
     init(modell: GeraetModel, beiAbschluss: @escaping () -> Void, beiAbbruch: @escaping () -> Void) {
         self.modell = modell
@@ -79,10 +82,18 @@ struct ErstkontaktFlow: View {
         }
     }
 
-    private func zurueck() { position = max(position - 1, 0) }
+    private func zurueck() {
+        if let ziel = ruecksprung {
+            ruecksprung = nil
+            position = ziel
+        } else {
+            position = max(position - 1, 0)
+        }
+    }
 
     private func ueberspringen() {
         if let ziel = GeraetEinstiegRechner.positionNachUeberspringen(in: schritte) {
+            ruecksprung = position
             position = ziel
         } else {
             beiAbschluss()
