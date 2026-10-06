@@ -21,15 +21,22 @@ Nutzt `/superpowers`, wenn verfügbar. Sonst gilt dieser Ablauf.
 - **Ursache vor Symptom.** Beispiel 23.09.: Die Schrift war schwarz, weil
   `<dialog>` vom Browser `color: CanvasText` erbt. Die Lösung war eine Zeile am
   Dialog, nicht eine Farbe am Namen.
-- Ist eine Notiz mehrdeutig, entscheide mit Begründung und nenne die
-  Entscheidung am Ende. Frag nur, wenn die Antwort den Umbau grundlegend ändert.
+- **Rückfragen stellen, nicht raten.** Ist eine Notiz unklar, frag nach,
+  bevor du sie umsetzt. Ebenso bei jeder Entscheidung, die die **Logik**
+  betrifft (was gezählt, berechnet, gespeichert oder ausgelöst wird, welcher
+  Zustand wann gilt). Bündle die Fragen nach dem Lesen aller Notizen in
+  einer Runde, jeweils mit Kontext, Optionen und Empfehlung. Reine
+  Gestaltungsfragen (Abstand, Farbe aus den Tokens, Wortlaut) entscheidest
+  du selbst mit Begründung und nennst sie am Ende.
+- Die Antworten kommen in den Plankopf unter **Rückfragen (beantwortet)**.
 - Verwandte Notizen zu Etappen bündeln (z. B. „Stift-Marke“ #3 + #5).
 
 ## 2 · Plan schreiben
 
 `docs/superpowers/plans/<JJJJ-MM-TT>-testnotizen-trainerportal.md`:
 
-- Kopf: Quelle (Sitzung, Gerät, Stand-Commit), Vorgehen.
+- Kopf: Quelle (Sitzung, Gerät, Stand-Commit), Vorgehen, Rückfragen
+  (beantwortet).
 - Je Etappe: welche Notizen, Ursache, Änderung, **welcher Test zuerst rot
   wird**. Reine CSS-Änderungen ohne Test, dafür begründen.
 - Schluss: Abschnitt **Geprüft**, nach der Umsetzung ausfüllen.
