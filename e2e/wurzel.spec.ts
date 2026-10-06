@@ -4,45 +4,66 @@ import { anmelden, adminClient, E2E_PASSWORD } from "./helpers/login";
 
 /**
  * Die Wurzelseite ohne Konto. Bis zum 3. September stand hier "Nicht
- * angemeldet." und sonst nichts -- die erste Seite, die ein Mensch von
- * gymodo im Web sieht, war ein Satz auf schwarzem Grund.
+ * angemeldet.", danach eine Landung fuer Trainer; seit Etappe 1 der neuen
+ * Landeseite (Spec 2026-10-03) ist sie fuer Mitglieder da. Trainer finden
+ * ihren Weg im Kopf und im Fuss.
  */
-test("Wer ohne Konto auf die Wurzelseite kommt, findet beide Wege hinein", async ({ page }) => {
+test("Ohne Konto: eine Hauptlandmarke und der Weg zur App", async ({ page }) => {
   await page.goto("/");
-
   expect(await hauptlandmarken(page)).toBe(1);
+  await expect(page.getByRole("heading", { level: 1, name: "Nie wieder raten am Gerät." })).toBeVisible();
+  const app = page.locator("#held-aktion");
+  await expect(app).toHaveText("App laden");
+  await expect(app).toHaveAttribute("href", /^https:\/\/apps\.apple\.com\//);
+});
 
-  // Genau eine Akzentflaeche: die Hauptaktion. "Konto anlegen" steht
-  // daneben als Nebenaktion, nicht als zweiter Akzent -- zwei Flaechen
-  // wuerden beide behaupten, DER Weg zu sein.
-  const flaechen = await akzentflaechen(page);
-  expect(flaechen, `Akzentflaechen: ${flaechen.join(", ")}`).toHaveLength(1);
-
-  await page.getByRole("link", { name: "Als Trainer anmelden" }).click();
-  await expect(page).toHaveURL(/\/login$/);
-
+test("Hoechstens eine Akzentflaeche im Bild, an jeder Stelle der Seite", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await page.getByRole("link", { name: "Konto anlegen" }).click();
+  const pruefen = async (wo: string) => {
+    const f = await akzentflaechen(page, { nurViewport: true });
+    expect(f.length, `${wo}: ${f.join(", ")}`).toBeLessThanOrEqual(1);
+  };
+  expect(await akzentflaechen(page, { nurViewport: true })).toHaveLength(1);
+  for (const id of ["so-gehts", "landung-cta", "fragen", "landung-fuss"]) {
+    await page.locator(`#${id}`).scrollIntoViewIfNeeded();
+    // Kaufleiste: 240 ms Transition plus ein Frame.
+    await page.waitForTimeout(400);
+    await pruefen(id);
+  }
+});
+
+test("Trainer kommen weiter zu Anmeldung und Konto", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("banner").getByRole("link", { name: "Anmelden", exact: true }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.goto("/");
+  await page.getByRole("contentinfo").getByRole("link", { name: "Konto anlegen" }).click();
   await expect(page).toHaveURL(/\/registrieren$/);
 });
 
-test("Die Landeseite nennt die Produktgrenze, ohne dass man danach sucht", async ({ page }) => {
+/**
+ * Befund 19 gilt weiter: die Produktgrenze steht sichtbar und in
+ * text-muted, nicht in text-faint (Designsystem 2 und 10).
+ */
+test("Die Produktgrenze steht im Fuss, in text-muted", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText(/Gymtavo misst nichts/)).toBeVisible();
+  const satz = page.getByRole("contentinfo").getByText(/Gymtavo misst nichts/);
+  await satz.scrollIntoViewIfNeeded();
+  await expect(satz).toBeVisible();
+  expect(await satz.evaluate((el) => getComputedStyle(el).color)).toBe("rgb(155, 163, 175)");
 });
 
-test("Sie sagt einem Mitglied, dass es im Web nichts zu tun hat", async ({ page }) => {
+test("Auf 320 px laeuft die ganze Landeseite nicht ueber", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 });
   await page.goto("/");
-  const satz = page.getByText(/im Web gibt es nichts für dich zu tun/);
-  await expect(satz).toBeVisible();
-
-  // Und lesbar. Dieser Absatz ist die ganze Antwort fuer ein Mitglied,
-  // das hier landet -- wer ihn nicht liest, sucht weiter. Derselbe Fall
-  // wie bei der Produktgrenze darunter (Befund 19), nur vierzehn Zeilen
-  // hoeher in derselben Datei; beim ersten Durchgang uebersehen.
-  expect(await satz.evaluate((el) => getComputedStyle(el).color)).toBe(
-    "rgb(155, 163, 175)",
-  );
+  for (const y of [0, 900, 1800, 100_000]) {
+    await page.evaluate((y) => window.scrollTo(0, y), y);
+    const ueberlauf = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(ueberlauf, `bei y=${y}`).toBe(0);
+  }
 });
 
 /**
@@ -136,27 +157,6 @@ test("Ein falscher Studio-Code meldet sich als Warnung", async ({ page }) => {
   // Route-Announcer mit role="alert" ins Dokument, der Selektor ist damit
   // immer mehrdeutig -- und bricht genau im Fehlerfall ab.
   await expect(fehlermeldung(page)).toBeVisible();
-});
-
-/**
- * Befund 19, dritter Ort der Produktgrenze. Der Ueberblick ist in
- * Aufgabe 14 ueber den Baustein Produktgrenze geheilt, /t/<token> in
- * Aufgabe 21 -- die Landeseite trug den Satz weiter in text-faint
- * (3,6 : 1). Nicht der letzte Fall der Regel: .fussnote, .ohneVideo und
- * .mitgliedshinweis folgen derselben Begruendung (Befund 44).
- *
- * Start.dc.html zeichnet die Fusszeile in #5c636e, und darin weicht der
- * Code bewusst ab: Designsystem 2 verbietet text-faint fuer Text, der
- * gelesen werden muss, und Designsystem 10 erklaert genau die
- * Produktgrenze fuer verbindlich UND sichtbar. Wo beide Regeln sich
- * widersprechen, gilt die benannte vor der gezeichneten.
- */
-test("Die Produktgrenze der Landeseite steht in text-muted", async ({ page }) => {
-  await page.goto("/");
-
-  const satz = page.getByText(/Gymtavo misst nichts/);
-  const farbe = await satz.evaluate((el) => getComputedStyle(el).color);
-  expect(farbe).toBe("rgb(155, 163, 175)");
 });
 
 /**

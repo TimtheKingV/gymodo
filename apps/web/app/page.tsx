@@ -1,11 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { BeitrittsFormular } from "./BeitrittsFormular";
-import { GymtavoWordmark } from "./branding/GymtavoWordmark";
 import { Einstieg } from "./einstieg/Einstieg";
 import einstiegStyles from "./einstieg/einstieg.module.css";
-import styles from "./einstieg/landeseite.module.css";
+import { Startseite } from "./landung/Startseite";
 
 export default async function HomePage() {
   const supabase = await createServerSupabaseClient();
@@ -13,56 +11,11 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Bis zum 3. September stand hier nur "Nicht angemeldet." -- die
-  // M0-Rauchprobe ohne Stylesheet und ohne einen Weg weiter. Diese Seite ist
-  // die Landeseite (Start.dc.html): Wortmarke und Anmelden im Kopf, eine
-  // Satzzeile ueber drei Zeilen, ein Absatz, zwei Aktionen, ein Hinweis fuer
-  // Mitglieder und die Produktgrenze im Fuss.
-  if (!user) {
-    return (
-      <div className={styles.bildschirm}>
-        <header className={styles.kopf}>
-          <GymtavoWordmark />
-          <Link href="/login" className={styles.anmeldenKopf}>
-            Anmelden
-          </Link>
-        </header>
-        <main className={styles.inhalt}>
-          <div className={styles.spalte}>
-            <h1 className={styles.titel}>
-              Dein Studio,
-              <br />
-              am Gerät
-              <br />
-              erklärt.
-            </h1>
-            <p className={styles.vorspann}>
-              Ein Tag am Gerät, ein Tap, und das Mitglied sieht die Einweisung, seine eigenen
-              Einstellwerte und was es zuletzt geschafft hat. Du pflegst den Katalog hier.
-            </p>
-            <div className={styles.aktionen}>
-              <Link href="/login" className={styles.knopf}>
-                Als Trainer anmelden
-              </Link>
-            </div>
-            <Link href="/registrieren" className={styles.nebenaktion}>
-              Konto anlegen
-            </Link>
-            <p className={styles.mitgliedshinweis}>
-              Du bist Mitglied? Gymtavo ist eine App fürs iPhone — im Web gibt es nichts für
-              dich zu tun. Frag an der Theke nach der Einladung, oder tippe einfach ein Gerät
-              an.
-            </p>
-          </div>
-        </main>
-        <footer className={styles.fuss}>
-          Gymtavo misst nichts. Angezeigt wird ausschließlich, was Mitglieder selbst bestätigt
-          haben. Einweisungsvideos und Einstellhinweise sind Inhalte des Studios, keine
-          Trainings- oder Gesundheitsempfehlung von Gymtavo.
-        </footer>
-      </div>
-    );
-  }
+  // Ohne Sitzung: die Landeseite fuer Mitglieder (Spec 2026-10-03, Etappe 1).
+  // Bis dahin stand hier die Trainer-Landung aus Start.dc.html mit dem Satz
+  // "im Web gibt es nichts fuer dich zu tun" -- der faellt weg, weil die
+  // Seite jetzt Mitglieder anspricht. Trainer finden Anmelden im Kopf.
+  if (!user) return <Startseite />;
 
   // Wer den Katalog pflegt, gehoert ins Portal. Wer keine Mitarbeiterrolle
   // hat, bleibt hier -- das ist der Mitgliedsbildschirm (KeinStudio.dc.html,

@@ -39,18 +39,32 @@ export async function hauptlandmarken(page: Page): Promise<number> {
  * Gibt Beschreibungen zurueck, keine Zahl -- bei "erwartet 1, waren 2"
  * will man wissen, welche zwei.
  */
-export async function akzentflaechen(page: Page): Promise<string[]> {
-  return await page.evaluate((akzent) => {
-    const treffer: string[] = [];
-    for (const el of Array.from(document.querySelectorAll<HTMLElement>("*"))) {
-      if (getComputedStyle(el).backgroundColor !== akzent) continue;
-      const kasten = el.getBoundingClientRect();
-      if (kasten.width === 0 || kasten.height === 0) continue;
-      const text = (el.textContent ?? "").trim().slice(0, 40);
-      treffer.push(`${el.tagName.toLowerCase()}${text ? ` "${text}"` : ""}`);
-    }
-    return treffer;
-  }, AKZENT);
+export async function akzentflaechen(
+  page: Page,
+  { nurViewport = false }: { nurViewport?: boolean } = {},
+): Promise<string[]> {
+  return await page.evaluate(
+    ({ akzent, nurViewport }) => {
+      const treffer: string[] = [];
+      for (const el of Array.from(document.querySelectorAll<HTMLElement>("*"))) {
+        if (getComputedStyle(el).backgroundColor !== akzent) continue;
+        const kasten = el.getBoundingClientRect();
+        if (kasten.width === 0 || kasten.height === 0) continue;
+        // Spec 4.2 der Landeseite: eine lange Seite hat mehrere Kaufmomente,
+        // die Regel gilt je Bildschirm. Die versteckte Kaufleiste liegt per
+        // transform unter dem Rand und faellt damit heraus.
+        if (
+          nurViewport &&
+          (kasten.bottom <= 0 || kasten.top >= innerHeight || kasten.right <= 0 || kasten.left >= innerWidth)
+        )
+          continue;
+        const text = (el.textContent ?? "").trim().slice(0, 40);
+        treffer.push(`${el.tagName.toLowerCase()}${text ? ` "${text}"` : ""}`);
+      }
+      return treffer;
+    },
+    { akzent: AKZENT, nurViewport },
+  );
 }
 
 /**
