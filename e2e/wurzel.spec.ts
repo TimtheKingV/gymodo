@@ -33,6 +33,20 @@ test("Hoechstens eine Akzentflaeche im Bild, an jeder Stelle der Seite", async (
   }
 });
 
+// Mobil steht der Knopf unten im ersten Bild (Spec 2, Designsystem 4:
+// Bedienbares im unteren Drittel). Das Bild nimmt nur den Platz, der
+// zwischen Text und Knopf frei bleibt.
+for (const [breite, hoehe] of [
+  [390, 844],
+  [375, 667],
+] as const) {
+  test(`Der Hero-Knopf steht auf ${breite} x ${hoehe} im ersten Bild`, async ({ page }) => {
+    await page.setViewportSize({ width: breite, height: hoehe });
+    await page.goto("/");
+    await expect(page.locator("#held-aktion")).toBeInViewport({ ratio: 1 });
+  });
+}
+
 test("Trainer kommen weiter zu Anmeldung und Konto", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("banner").getByRole("link", { name: "Anmelden", exact: true }).click();
