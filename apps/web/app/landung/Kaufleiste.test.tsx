@@ -18,7 +18,8 @@ beforeEach(() => {
     return 1;
   });
   vi.stubGlobal("cancelAnimationFrame", () => {});
-  document.body.innerHTML = '<a id="held-aktion"></a><footer id="fuss"></footer>';
+  document.body.innerHTML =
+    '<a id="held-aktion" href="#"></a><section id="cta"><a id="cta-link" href="#">App laden</a></section><footer id="fuss"></footer>';
   Object.defineProperty(document.documentElement, "scrollHeight", { value: 5000, configurable: true });
   scrollen(0);
 });
@@ -33,7 +34,7 @@ function zeigen() {
   render(
     <Kaufleiste
       anker="held-aktion"
-      verdecker={["fuss"]}
+      verdecker={["cta", "fuss"]}
       titel="Gymtavo"
       merkmale={["Tap am Gerät", "Deine Werte", "Für iPhone"]}
       aktion={{ href: "https://apps.apple.com/", text: "App laden" }}
@@ -75,5 +76,37 @@ describe("Kaufleiste", () => {
       io.melden(document.getElementById("fuss")!, { isIntersecting: true });
     });
     expect(leiste().hasAttribute("data-sichtbar")).toBe(false);
+  });
+
+  // Inert nimmt der Leiste den Fokus; ohne Weitergabe landete er auf body
+  // und die Tastatur faenge oben neu an (WCAG 2.4.3).
+  it("gibt den Fokus an den sichtbaren Verdecker weiter, bevor sie weicht", () => {
+    zeigen();
+    act(() => {
+      scrollen(820);
+      io.melden(document.getElementById("held-aktion")!, {
+        isIntersecting: false,
+        boundingClientRect: { top: -40, bottom: -10 } as DOMRectReadOnly,
+      });
+    });
+    act(() => leiste().querySelector("a")!.focus());
+    act(() => io.melden(document.getElementById("cta")!, { isIntersecting: true }));
+    expect(leiste().hasAttribute("inert")).toBe(true);
+    expect(document.activeElement?.id).toBe("cta-link");
+  });
+
+  it("gibt den Fokus an den Hero-Knopf zurueck, wenn der wieder im Bild ist", () => {
+    zeigen();
+    const anker = document.getElementById("held-aktion")!;
+    act(() => {
+      scrollen(820);
+      io.melden(anker, { isIntersecting: false, boundingClientRect: { top: -40, bottom: -10 } as DOMRectReadOnly });
+    });
+    act(() => leiste().querySelector("a")!.focus());
+    act(() => {
+      scrollen(0);
+      io.melden(anker, { isIntersecting: true, boundingClientRect: { top: 700, bottom: 764 } as DOMRectReadOnly });
+    });
+    expect(document.activeElement).toBe(anker);
   });
 });

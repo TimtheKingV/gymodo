@@ -1,7 +1,7 @@
 /* Die Landeseite ist weder Einstieg noch Schreibtisch (frueher
    einstieg/landeseite.module.css): eigener Satz, eigene Bausteine unter
    landung/. --kopf-hoehe = 8 px Abstand + 54 px Pille (Kopf.module.css);
-   Held und Kaufleiste rechnen damit. */
+   der Held rechnet damit. */
 .startseite {
   --kopf-hoehe: 62px;
   min-height: 100dvh;

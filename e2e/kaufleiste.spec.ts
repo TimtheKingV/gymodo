@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { akzentflaechen } from "./helpers/abnahme";
 
 /**
  * Spec 7.3 und 7.6. Die Zustandstabelle prueft kaufleiste.logik.test.ts;
@@ -23,14 +24,14 @@ test("versteckt beim Laden, erscheint hinter dem Hero-Knopf", async ({ page }) =
   await page.goto("/");
   await expect(leiste(page)).toHaveAttribute("aria-hidden", "true");
   await expect(leiste(page)).not.toBeInViewport();
-  await nach(page, (await ankerUnterkante(page)) - 62 + 10);
+  await nach(page, (await ankerUnterkante(page)) + 10);
   await expect(leiste(page)).toHaveAttribute("data-sichtbar", "");
   await expect(leiste(page)).toBeInViewport();
 });
 
 test("weicht beim Runterscrollen, kommt beim Hochscrollen", async ({ page }) => {
   await page.goto("/");
-  const start = (await ankerUnterkante(page)) - 62 + 10;
+  const start = (await ankerUnterkante(page)) + 10;
   await nach(page, start);
   await expect(leiste(page)).toHaveAttribute("data-sichtbar", "");
   await nach(page, start + 600);
@@ -59,7 +60,7 @@ test("versteckt nicht fokussierbar, sichtbar fokussierbar", async ({ page }) => 
   await link.focus();
   await expect(link).not.toBeFocused();
 
-  await nach(page, (await ankerUnterkante(page)) - 62 + 10);
+  await nach(page, (await ankerUnterkante(page)) + 10);
   await expect(leiste(page)).toHaveAttribute("data-sichtbar", "");
   await link.focus();
   await expect(link).toBeFocused();
@@ -68,4 +69,18 @@ test("versteckt nicht fokussierbar, sichtbar fokussierbar", async ({ page }) => 
   await page.evaluate(() => window.scrollBy(0, 600));
   await page.waitForTimeout(300);
   await expect(leiste(page)).toHaveAttribute("data-sichtbar", "");
+});
+
+// Der Kopf deckt den Hero-Knopf nicht ab: 8 px Rand, runde Ecken und Glas
+// mit 72 % lassen ihn durchscheinen. Die Leiste darf erst kommen, wenn er
+// ganz aus dem Viewport ist (Spec 4.2).
+test("am Hero-Knopf nie zwei Akzentflaechen, Schritt fuer Schritt", async ({ page }) => {
+  await page.goto("/");
+  const unterkante = await ankerUnterkante(page);
+  for (let y = unterkante - 80; y <= unterkante + 40; y += 10) {
+    await nach(page, y);
+    await page.waitForTimeout(350);
+    const f = await akzentflaechen(page, { nurViewport: true });
+    expect(f.length, `y=${y}: ${f.join(", ")}`).toBeLessThanOrEqual(1);
+  }
 });

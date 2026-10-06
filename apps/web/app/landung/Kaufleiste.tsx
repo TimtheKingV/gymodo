@@ -18,33 +18,51 @@ type Props = {
  */
 export function Kaufleiste({ anker, verdecker, titel, merkmale, aktion }: Props) {
   const leiste = useRef<HTMLElement>(null);
-  const [zustand, setZustand] = useState<KaufleistenZustand>(KAUFLEISTE_START);
+  // Der Automat lebt in einer Ref: er rechnet in jedem Scroll-Frame, neu
+  // gerendert wird nur, wenn sich die Sichtbarkeit aendert.
+  const zustand = useRef<KaufleistenZustand>(KAUFLEISTE_START);
+  const [sichtbar, setSichtbar] = useState(false);
   const verdeckerSchluessel = verdecker.join(",");
 
   useEffect(() => {
     const el = leiste.current;
     const ankerEl = document.getElementById(anker);
     if (!el || !ankerEl) return;
-    const kopfHoehe = parseFloat(getComputedStyle(el).getPropertyValue("--kopf-hoehe")) || 0;
-    const lage = { ankerVorbei: false, schwelleY: 0, fokusDrin: false };
+    const lage = { ankerVorbei: false, schwelleY: 0 };
     const sichtbareVerdecker = new Set<Element>();
     let raf = 0;
     // Eigener Merker statt raf !== 0: liefe der Callback sofort, setzte die
     // Zuweisung danach raf wieder und sperrte jede weitere Messung.
     let geplant = false;
 
+    // Inert nimmt der Leiste den Fokus; ohne Weitergabe faellt er auf body
+    // und die Tastatur beginnt oben neu (WCAG 2.4.3). Ziel ist, was die
+    // Leiste gerade verdraengt: der sichtbare Verdecker oder der Hero-Knopf.
+    const fokusWeitergeben = () => {
+      const verdraenger = sichtbareVerdecker.values().next().value as HTMLElement | undefined;
+      const ziel = verdraenger
+        ? verdraenger.querySelector<HTMLElement>("a[href], button:not([disabled])")
+        : ankerEl;
+      ziel?.focus({ preventScroll: true });
+    };
+
     const messen = () => {
       geplant = false;
-      setZustand((vorher) =>
-        naechsterZustand(vorher, {
-          y: window.scrollY,
-          maxY: document.documentElement.scrollHeight - window.innerHeight,
-          ankerVorbei: lage.ankerVorbei,
-          schwelleY: lage.schwelleY,
-          verdeckt: sichtbareVerdecker.size > 0,
-          fokusDrin: lage.fokusDrin,
-        }),
-      );
+      // Live gelesen statt per focusout gemerkt: ob focusout feuert, wenn
+      // inert den Fokus nimmt, ist je nach Browser verschieden.
+      const fokusDrin = el.contains(document.activeElement);
+      const vorher = zustand.current;
+      const naechster = naechsterZustand(vorher, {
+        y: window.scrollY,
+        maxY: document.documentElement.scrollHeight - window.innerHeight,
+        ankerVorbei: lage.ankerVorbei,
+        schwelleY: lage.schwelleY,
+        verdeckt: sichtbareVerdecker.size > 0,
+        fokusDrin,
+      });
+      zustand.current = naechster;
+      if (vorher.sichtbar && !naechster.sichtbar && fokusDrin) fokusWeitergeben();
+      setSichtbar(naechster.sichtbar);
     };
     const anfordern = () => {
       if (geplant) return;
@@ -52,16 +70,15 @@ export function Kaufleiste({ anker, verdecker, titel, merkmale, aktion }: Props)
       raf = requestAnimationFrame(messen);
     };
 
-    const ankerIO = new IntersectionObserver(
-      ([e]) => {
-        if (!e) return;
-        lage.ankerVorbei = !e.isIntersecting && e.boundingClientRect.top < kopfHoehe;
-        lage.schwelleY = e.boundingClientRect.bottom + window.scrollY - kopfHoehe;
-        anfordern();
-      },
-      // Unter dem Kopf ist der Knopf schon nicht mehr zu sehen.
-      { rootMargin: `-${kopfHoehe}px 0px 0px 0px` },
-    );
+    // Ohne rootMargin: Der Kopf deckt den Knopf nicht ab -- 8 px Rand, runde
+    // Ecken und Glas mit 72 % lassen ihn durchscheinen. Die Leiste kommt
+    // erst, wenn er ganz aus dem Viewport ist (Spec 4.2, eine Akzentflaeche).
+    const ankerIO = new IntersectionObserver(([e]) => {
+      if (!e) return;
+      lage.ankerVorbei = !e.isIntersecting && e.boundingClientRect.top < 0;
+      lage.schwelleY = e.boundingClientRect.bottom + window.scrollY;
+      anfordern();
+    });
     ankerIO.observe(ankerEl);
 
     const verdeckerIO = new IntersectionObserver(
@@ -79,32 +96,27 @@ export function Kaufleiste({ anker, verdecker, titel, merkmale, aktion }: Props)
       if (v) verdeckerIO.observe(v);
     }
 
-    // Laege der Fokus in einer Leiste, die inert wird, waere er verloren.
-    const fokus = () => {
-      lage.fokusDrin = el.contains(document.activeElement);
-      anfordern();
-    };
-    el.addEventListener("focusin", fokus);
-    el.addEventListener("focusout", fokus);
+    el.addEventListener("focusin", anfordern);
+    el.addEventListener("focusout", anfordern);
     window.addEventListener("scroll", anfordern, { passive: true });
 
     return () => {
       ankerIO.disconnect();
       verdeckerIO.disconnect();
-      el.removeEventListener("focusin", fokus);
-      el.removeEventListener("focusout", fokus);
+      el.removeEventListener("focusin", anfordern);
+      el.removeEventListener("focusout", anfordern);
       window.removeEventListener("scroll", anfordern);
       if (geplant) cancelAnimationFrame(raf);
     };
   }, [anker, verdeckerSchluessel]);
 
-  const versteckt = !zustand.sichtbar;
+  const versteckt = !sichtbar;
   return (
     <aside
       ref={leiste}
       aria-label="Schnellzugriff"
       className={styles.leiste}
-      data-sichtbar={zustand.sichtbar ? "" : undefined}
+      data-sichtbar={sichtbar ? "" : undefined}
       inert={versteckt}
       aria-hidden={versteckt ? "true" : undefined}
     >
