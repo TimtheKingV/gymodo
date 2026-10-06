@@ -1,71 +1,38 @@
 import SwiftUI
 
-/// Die Wege zum Geraet (SS11): die beiden Scanwege nebeneinander in einer
-/// Zeile, die Suche darunter.
+/// Die Scanwege zum Geraet (SS11): QR-Code und NFC nebeneinander, unten
+/// ueber der Geraeteliste des Training-Tabs schwebend.
 ///
-/// Bis zur Geraeteauswahl ohne Scan waren es zwei, und beide setzten
-/// voraus, dass am Geraet ein AKTIVER Aufkleber klebt. Fehlt er, gab es
-/// keinen Weg -- der dritte schliesst diese Luecke.
-///
-/// Scannen und Antippen sind dasselbe Mittel am selben Aufkleber, deshalb
-/// stehen sie in einer Zeile und tragen als einzige die Akzentfarbe in
-/// Kontur und Schrift. Die Suche darunter ist der andere Weg -- gleich
-/// erreichbar, aber nicht dasselbe, und deshalb neutrale Kontur. Keiner
-/// der drei ist Akzentflaeche: die eine Akzentflaeche pro Screen bleibt
-/// frei (designsystem.md SS2).
+/// Seit der Testnotiz 06.10. (#2, #13) ist die Liste "Gerät wählen" selbst
+/// der Training-Tab -- einen eigenen Knopf "Suchen" gibt es nicht mehr, die
+/// Suche sitzt in der Leiste. Die beiden Scanwege tragen dafuer die
+/// Signalfarbe als Flaeche und einen Schatten: sie sind die Hauptaktion des
+/// Screens und muessen sich von der Liste darunter abheben, ueber der sie
+/// liegen (designsystem.md SS2, eine Akzentflaeche je Screen -- hier eine
+/// Gruppe aus zwei gleichrangigen Wegen).
 struct ScanWege: View {
     let beiQR: () -> Void
     let beiNFC: () -> Void
-    /// Optional: ohne geladenen Prefetch gibt es nichts zu waehlen, und
-    /// ein Knopf, der auf einen leeren Screen fuehrt, ist schlechter als
-    /// einer, der fehlt.
-    let beiListe: (() -> Void)?
 
     var body: some View {
-        VStack(spacing: DesignSystem.Spacing.s12) {
-            HStack(spacing: DesignSystem.Spacing.s12) {
-                KonturScanKnopf(symbol: "qrcode", titel: "QR-Code", farbe: .akzent, aktion: beiQR)
-                // Auf iPads, aelteren iPhones und im Simulator gibt es keinen
-                // aktiven NFC-Scan. Dann steht der QR-Weg allein da, statt dass
-                // ein Knopf ins Leere greift -- der passive Weg ueber das
-                // Systembanner bleibt davon unberuehrt.
-                if NFCTagLeser.verfuegbar {
-                    KonturScanKnopf(symbol: "wave.3.right", titel: "NFC", farbe: .akzent, aktion: beiNFC)
-                }
-            }
-            if let beiListe {
-                KonturScanKnopf(symbol: "magnifyingglass", titel: "Suchen", farbe: .neutral, aktion: beiListe)
+        HStack(spacing: DesignSystem.Spacing.s12) {
+            ScanKnopf(symbol: "qrcode", titel: "QR-Code", aktion: beiQR)
+            // Auf iPads, aelteren iPhones und im Simulator gibt es keinen
+            // aktiven NFC-Scan. Dann steht der QR-Weg allein da, statt dass
+            // ein Knopf ins Leere greift -- der passive Weg ueber das
+            // Systembanner bleibt davon unberuehrt.
+            if NFCTagLeser.verfuegbar {
+                ScanKnopf(symbol: "wave.3.right", titel: "NFC", aktion: beiNFC)
             }
         }
         .frame(maxWidth: .infinity)
     }
 }
 
-/// Die gemeinsame Form aller Wege. Werte aus der frueheren qrReihe in
-/// TrainingRootView: 60pt hoch, Radius.haupt, Kontur 1pt.
-private struct KonturScanKnopf: View {
-    enum Farbe {
-        case akzent
-        case neutral
-
-        var kontur: Color {
-            switch self {
-            case .akzent: DesignSystem.Color.accent
-            case .neutral: DesignSystem.Color.line
-            }
-        }
-
-        var schrift: Color {
-            switch self {
-            case .akzent: DesignSystem.Color.accent
-            case .neutral: DesignSystem.Color.text
-            }
-        }
-    }
-
+/// 56 pt hoch, Radius.haupt, Akzentflaeche mit Schatten.
+private struct ScanKnopf: View {
     let symbol: String
     let titel: String
-    let farbe: Farbe
     let aktion: () -> Void
 
     var body: some View {
@@ -80,21 +47,22 @@ private struct KonturScanKnopf: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            .foregroundStyle(farbe.schrift)
+            .foregroundStyle(DesignSystem.Color.onAccent)
             .frame(maxWidth: .infinity)
-            .frame(height: 60)
-            .contentShape(Rectangle())
+            .frame(height: 56)
+            .background(DesignSystem.Color.accent)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt))
+            .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt))
+            // Schwarz statt Akzent: ein gruener Schein laese sich wie ein
+            // Fokus- oder Aktivzustand.
+            .shadow(color: .black.opacity(0.55), radius: 14, y: 6)
         }
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt)
-                .stroke(farbe.kontur, lineWidth: 1)
-        )
         .buttonStyle(PressButtonStyle())
     }
 }
 
 #Preview {
-    ScanWege(beiQR: {}, beiNFC: {}, beiListe: {})
+    ScanWege(beiQR: {}, beiNFC: {})
         .padding()
         .background(DesignSystem.Color.bg)
 }

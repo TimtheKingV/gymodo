@@ -247,6 +247,15 @@ struct TrainingAbschlussView: View {
                             .foregroundStyle(DesignSystem.Color.warn)
                     }
                 }
+                // Links unter den Zahlen, nicht rechts unter "Kein
+                // Vorschlag": dort ist nur Platz fuer ein paar Zeichen
+                // (Testnotiz 06.10., #19).
+                if let grund = zeile.anzeige.grund {
+                    Text(grund)
+                        .font(.system(size: 12))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .accessibilityHidden(true)
+                }
             }
             Spacer()
             // Abweichung vom Artboard: dort accent (#D4FF3F) fuer das
@@ -298,7 +307,7 @@ struct TrainingAbschlussView: View {
         switch anzeige {
         case .delta: DesignSystem.Color.text
         case .halten: DesignSystem.Color.textMuted
-        case .keiner: gemeldet ? DesignSystem.Color.warn : DesignSystem.Color.textMuted
+        case .ohne, .keiner: gemeldet ? DesignSystem.Color.warn : DesignSystem.Color.textMuted
         }
     }
 
@@ -423,18 +432,31 @@ struct Vorschlagsdelta: Equatable {
 /// Rechnung, keine Empfehlung -- der Wortlaut bleibt entsprechend nuechtern
 /// ("+2,5 kg", nie "Du solltest").
 enum VorschlagsAnzeige: Equatable {
+    /// Warum der Server bewusst nichts vorschlaegt -- die vier Codes aus
+    /// packages/domain/src/progression.ts, die keine Zahl liefern.
+    enum OhneGrund: Equatable {
+        case keinVerlauf
+        case uneinheitlich
+        case problemGemeldet
+        case geraetegrenze
+    }
+
     case delta(Vorschlagsdelta)
     /// Mit Einheit, weil das Wort davon abhaengt: "Gewicht halten" an der
     /// Beinpresse, "Tempo halten" am Laufband.
     case halten(LoadUnit)
+    /// "Kein Vorschlag" mit dem Grund darunter (Testnotiz 06.10., #19).
+    /// Vorher fielen alle vier Codes stumm auf `.keiner` -- "sieben
+    /// Formulierungen fuer dieselbe Aussage helfen niemandem" (Aufgabenbrief).
+    /// Beim Benutzen half aber auch die eine nicht: sie liess offen, ob die
+    /// App etwas falsch gemacht hat. Die Zahl rechts bleibt "Kein
+    /// Vorschlag", der Grund steht klein darunter.
+    case ohne(OhneGrund)
+    /// Kein Vorschlag fuer diesen Block in der Serverantwort, ein
+    /// unbekannter Code oder ein Korridor-Code ohne Zahl -- hier gibt es
+    /// keinen Grund, den die App ehrlich nennen koennte.
     case keiner
 
-    /// `reasonCode` fehlt (kein Vorschlag fuer diesen Block in der
-    /// Serverantwort) oder ist einer der vier uebrigen Codes
-    /// (`kein_verlauf`, `daten_uneindeutig`, `geraetegrenze_erreicht`,
-    /// `problem_gemeldet`) -- alle fallen auf "Kein Vorschlag", weil sieben
-    /// Formulierungen fuer dieselbe Aussage niemandem helfen
-    /// (Aufgabenbrief).
     init(reasonCode: String?, deltaLoad: Double?, loadUnit: LoadUnit,
          secondaryLoad: Double? = nil, secondaryUnit: LoadUnit? = nil) {
         switch reasonCode {
@@ -447,8 +469,29 @@ enum VorschlagsAnzeige: Equatable {
             }
         case "im_korridor":
             self = .halten(loadUnit)
+        case "kein_verlauf":
+            self = .ohne(.keinVerlauf)
+        case "daten_uneindeutig":
+            self = .ohne(.uneinheitlich)
+        case "problem_gemeldet":
+            self = .ohne(.problemGemeldet)
+        case "geraetegrenze_erreicht":
+            self = .ohne(.geraetegrenze)
         default:
             self = .keiner
+        }
+    }
+
+    /// Ein Satz, warum es keine Zahl gibt -- nil fuer alles andere.
+    var grund: String? {
+        guard case .ohne(let grund) = self else { return nil }
+        switch grund {
+        case .keinVerlauf: return "Noch kein Verlauf an dieser Übung."
+        // Die Regel rechnet nur mit einem Gewicht je Tag: eine Pyramide
+        // (40, 45, 50 kg) laesst sich nicht eindeutig fortschreiben.
+        case .uneinheitlich: return "Das Gewicht wechselte zwischen den Sätzen."
+        case .problemGemeldet: return "Du hast ein Problem gemeldet."
+        case .geraetegrenze: return "Die Grenze des Geräts ist erreicht."
         }
     }
 
@@ -466,6 +509,8 @@ enum VorschlagsAnzeige: Equatable {
             return "Vorschlag \(richtung) \(Zahlformat.belastungGesprochen(abs(delta.wert), delta.einheit))\(bei)"
         case .halten(let einheit):
             return "Vorschlag: \(einheit.reglername) halten"
+        case .ohne:
+            return "Kein Vorschlag. \(grund ?? "")"
         case .keiner:
             return "Kein Vorschlag"
         }
@@ -493,7 +538,7 @@ enum VorschlagsAnzeige: Equatable {
                 + (delta.beiNebenbelastung?.geschrieben ?? "")
         case .halten(let einheit):
             return "\(einheit.reglername) halten"
-        case .keiner:
+        case .ohne, .keiner:
             return "Kein Vorschlag"
         }
     }

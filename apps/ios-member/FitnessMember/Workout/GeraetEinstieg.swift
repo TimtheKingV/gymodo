@@ -8,12 +8,19 @@ enum GeraetEinstieg: Equatable {
     case direktZumSatz
 }
 
-/// Die Stationen des Dreischritts (designsystem.md SS8). Welche davon ein
+/// Die Stationen des Erstkontakts (designsystem.md SS8). Welche davon ein
 /// Geraet wirklich zeigt, entscheidet `GeraetEinstiegRechner.erstkontaktSchritte`.
+///
+/// Bis zur Testnotiz 06.10. war der dritte Schritt "Erste Werte" -- ein
+/// eigener Screen mit Raedern, der dasselbe tat wie die Satzseite, nur ohne
+/// Sensor (#8, #18). Jetzt endet der Erstkontakt nach der Einstellung, und
+/// der erste Satz laeuft auf der Satzseite. Laeuft noch kein Training, steht
+/// "Training starten" am Ende -- damit die Uhr erst NACH Einweisung und
+/// Einstellung laeuft (#5).
 enum ErstkontaktSchritt: Equatable {
     case einweisung
     case einstellung
-    case ersteWerte
+    case trainingStarten
 }
 
 /// Die Tabelle aus designsystem.md SS8, als reine Funktionen.
@@ -46,11 +53,33 @@ enum GeraetEinstiegRechner {
     ///
     /// Eine Kalibrierungszeile entsteht so nicht; istErstkontakt wird
     /// stattdessen ueber den ersten gesicherten Satz falsch (hatLetztenSatz,
-    /// bis zum naechsten Bootstrap der lokale Session-Index).
-    static func erstkontaktSchritte(hatEinstellparameter: Bool) -> [ErstkontaktSchritt] {
-        hatEinstellparameter
-            ? [.einweisung, .einstellung, .ersteWerte]
-            : [.einweisung, .ersteWerte]
+    /// bis zum naechsten Bootstrap der lokale Session-Index). Bis dahin
+    /// traegt `GeraetModel.erledigt` den abgeschlossenen Erstkontakt.
+    static func erstkontaktSchritte(hatEinstellparameter: Bool, trainingLaeuft: Bool) -> [ErstkontaktSchritt] {
+        var schritte: [ErstkontaktSchritt] = [.einweisung]
+        if hatEinstellparameter { schritte.append(.einstellung) }
+        if !trainingLaeuft { schritte.append(.trainingStarten) }
+        return schritte
+    }
+
+    /// Wohin "Kenne ich schon" fuehrt: an Einweisung UND Einstellung vorbei
+    /// (Testnotiz 06.10., #16) -- vorher tat der Knopf dasselbe wie
+    /// "Einstellungen erfassen". Steht "Training starten" noch aus, dorthin;
+    /// nil heisst, der Erstkontakt ist damit vorbei.
+    static func positionNachUeberspringen(in schritte: [ErstkontaktSchritt]) -> Int? {
+        schritte.firstIndex(of: .trainingStarten)
+    }
+
+    /// Ob ein Geraet mit dieser Uebung den Erstkontakt zeigt -- schon VOR
+    /// dem Satzpfad bekannt, damit TrainingRootView "Training starten" nicht
+    /// davor schiebt (Testnotiz 06.10., #5). `naechsterSetIndex` liest die
+    /// lokale Einheit: ein Satz, den der Bootstrap noch nicht kennt, zaehlt.
+    static func brauchtErstkontakt(machineId: String, exerciseId: String,
+                                   in bootstrap: BootstrapResponse, naechsterSetIndex: Int) -> Bool {
+        naechsterSetIndex == 1
+            && istErstkontakt(
+                hatKalibrierung: hatKalibrierung(machineId: machineId, exerciseId: exerciseId, in: bootstrap),
+                hatLetztenSatz: hatLetztenSatz(machineId: machineId, exerciseId: exerciseId, in: bootstrap))
     }
 
     static func genutzteUebungen(machineId: String, in bootstrap: BootstrapResponse) -> Int {

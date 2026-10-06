@@ -1,14 +1,17 @@
 import SwiftUI
 
-/// Schritt 2 von 3 -- und zugleich der Screen hinter "aendern" auf
-/// GeraetView. Genau dieser Fall ausserhalb des Dreischritts macht den
+/// Schritt 2 des Erstkontakts -- und zugleich der Screen hinter "aendern"
+/// auf GeraetView. Genau dieser Fall ausserhalb des Erstkontakts macht den
 /// eigenen Endpoint noetig.
+///
+/// Der Knopf heisst "Einstellung speichern" (Testnotiz 06.10., #18): er
+/// speichert die Einstellung, keinen Satz -- beides geht ueber eigene
+/// Endpunkte, nichts in der Datenbank verbindet sie.
 struct KalibrierungSchritt: View {
     @Bindable var modell: GeraetModel
     let titel: String
-    /// Ein Schritt zurueck, nicht "abbrechen" -- eine Einstellung nach dem
-    /// Blick auf Schritt 3 zu korrigieren ist ein echtes Beduerfnis, kein
-    /// hypothetisches (Review Aufgabe 13, Fund 3).
+    /// Ein Schritt zurueck, nicht "abbrechen" -- zur Einweisung, oder
+    /// ausserhalb des Erstkontakts zurueck auf die Satzseite.
     let beiZurueck: () -> Void
     let beiFertig: () -> Void
 
@@ -28,13 +31,25 @@ struct KalibrierungSchritt: View {
                     .lineSpacing(4)
 
                 ForEach(modell.einstellDefinitionen) { definition in
-                    Stepper44(
-                        definition: definition,
-                        wert: Binding(
-                            get: { modell.entwurfEinstellung[definition.key] ?? definition.minValue ?? 0 },
-                            set: { modell.entwurfEinstellung[definition.key] = $0 }
+                    // Eine Auswahl (Griffposition: eng / weit / neutral) ist
+                    // keine Zahl und bekommt kein Rad (Testnotiz 06.10., #17).
+                    if let werte = definition.auswahlwerte {
+                        AuswahlKarte(
+                            label: definition.label, werte: werte,
+                            gewaehlt: Binding(
+                                get: { modell.entwurfAuswahl[definition.key] ?? werte[0] },
+                                set: { modell.entwurfAuswahl[definition.key] = $0 }
+                            )
                         )
-                    )
+                    } else {
+                        Stepper44(
+                            definition: definition,
+                            wert: Binding(
+                                get: { modell.entwurfEinstellung[definition.key] ?? definition.minValue ?? 0 },
+                                set: { modell.entwurfEinstellung[definition.key] = $0 }
+                            )
+                        )
+                    }
                 }
 
                 // Abweichung vom Artboard (Spec Abschnitt 9, wie schon bei
@@ -50,14 +65,6 @@ struct KalibrierungSchritt: View {
                     .font(.system(size: 12))
                     .foregroundStyle(DesignSystem.Color.textFaint)
 
-                if let fehler = modell.kalibrierungFehler {
-                    InlineBanner(tone: .danger, message: fehler)
-                }
-
-                PrimaryButton(title: "Speichern und weiter") {
-                    if await modell.kalibrierungSichern() { beiFertig() }
-                }
-
                 Text("Deine vorherigen Einstellungen bleiben erhalten — jede Änderung legt eine neue Zeile an.")
                     .font(.system(size: 12))
                     .foregroundStyle(DesignSystem.Color.textFaint)
@@ -65,7 +72,25 @@ struct KalibrierungSchritt: View {
             .padding(.horizontal, 20)
             .padding(.vertical, DesignSystem.Spacing.s32)
         }
+        .scrollBounceBehavior(.basedOnSize)
         .background(DesignSystem.Color.bg)
+        // Unten buendig wie Einweisung und "Training starten" (Testnotiz
+        // 06.10., #6, #15). Der Fehler steht direkt ueber dem Knopf, damit
+        // er bei drei Parametern nicht unterhalb des Sichtbaren landet.
+        .safeAreaInset(edge: .bottom) {
+            VStack(spacing: DesignSystem.Spacing.s12) {
+                if let fehler = modell.kalibrierungFehler {
+                    InlineBanner(tone: .danger, message: fehler)
+                }
+                PrimaryButton(title: "Einstellung speichern") {
+                    if await modell.kalibrierungSichern() { beiFertig() }
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, DesignSystem.Spacing.s8)
+            .padding(.bottom, DesignSystem.Spacing.s16)
+            .background(DesignSystem.Color.bg)
+        }
         // Fuellt den Entwurf bei jedem Eintritt neu -- ob aus dem Dreischritt
         // (Aufgabe 13) oder ueber "aendern" auf GeraetView (Aufgabe 12). Ohne
         // das startete das Rad immer am Minimum statt an der bisherigen
@@ -90,5 +115,37 @@ struct KalibrierungSchritt: View {
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textFaint)
         }
+    }
+}
+
+/// Ein Auswahl-Parameter der Kalibrierung: Label und je erlaubtem Wert ein
+/// Chip, auf derselben surface-Karte wie `Stepper44`. Chips statt Menue,
+/// weil die Listen der Studios kurz sind und ein Blick genuegen soll.
+private struct AuswahlKarte: View {
+    let label: String
+    let werte: [String]
+    @Binding var gewaehlt: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            Text(label)
+                .font(DesignSystem.Typography.uebungsname)
+                .foregroundStyle(DesignSystem.Color.text)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: DesignSystem.Spacing.s8)],
+                      spacing: DesignSystem.Spacing.s8) {
+                ForEach(werte, id: \.self) { wert in
+                    Button { gewaehlt = wert } label: {
+                        Chip(text: wert, isActive: wert == gewaehlt)
+                    }
+                    .buttonStyle(PressButtonStyle())
+                    .accessibilityAddTraits(wert == gewaehlt ? .isSelected : [])
+                }
+            }
+        }
+        .padding(DesignSystem.Spacing.s16)
+        .background(DesignSystem.Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(label)
     }
 }

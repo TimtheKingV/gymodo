@@ -14,7 +14,8 @@ enum HomeSerieAuswahl: Equatable {
 /// Der Kalender am Kopf des Home-Tabs -- Flamme, Wochenstreifen, die
 /// Trainingskarten des gewaehlten Tages, ein Umschalter auf den Monat.
 ///
-/// **Nur ein Trainingstag ist antippbar.** Ein Tag ohne Einheit tut
+/// **Nur ein Tag mit Inhalt ist antippbar** -- eine Einheit oder, seit
+/// der Testnotiz 06.10. (#1), ein eigener Kurs. Ein Tag ohne beides tut
 /// nichts -- er hat nichts zu zeigen. Er oeffnete eine Zeit lang
 /// stattdessen den Monat, und das war beim Benutzen schlicht verwirrend:
 /// dieselbe Geste schlug je nach Tag in zwei verschiedene Richtungen
@@ -51,6 +52,14 @@ struct HomeSerieView: View {
     /// verhandelbare Regel 1).
     let wochenziel: Int?
     let beiAuswahl: (String) -> Void
+    /// Die eigenen bevorstehenden Kurse nach Ortstag (`HomeKurse.termineJeTag`),
+    /// fuer den Punkt unter dem Tag und die Karte darunter (Testnotiz
+    /// 06.10., #1).
+    var kurseJeTag: [String: [GespeicherterTermin]] = [:]
+    /// Frist und Zeitzone fuer die Kurskarte -- nil, solange keine
+    /// Buchungen geladen sind; dann gibt es auch keine Kurse anzuzeigen.
+    var kurseBuchungen: GespeicherteBuchungen? = nil
+    var beiKursAuswahl: (String) -> Void = { _ in }
 
     @State private var auswahl: HomeSerieAuswahl = .vorgabe
     @State private var monatOffen = false
@@ -91,8 +100,10 @@ struct HomeSerieView: View {
                 }
             }
 
-            if let gewaehlt, let einheiten = einheitenJeTag[gewaehlt], !einheiten.isEmpty {
-                tagesliste(tagId: gewaehlt, einheiten: einheiten)
+            if let gewaehlt, hatInhalt(gewaehlt) {
+                tagesliste(tagId: gewaehlt,
+                           einheiten: einheitenJeTag[gewaehlt] ?? [],
+                           kurse: kurseJeTag[gewaehlt] ?? [])
             }
         }
         .animation(DesignSystem.Motion.oeffnen, value: monatOffen)
@@ -115,7 +126,7 @@ private extension HomeSerieView {
         case .keiner:
             return nil
         case .tag(let id):
-            return hatEinheiten(id) ? id : vorgabe(wochentage)
+            return hatInhalt(id) ? id : vorgabe(wochentage)
         case .vorgabe:
             return vorgabe(wochentage)
         }
@@ -135,12 +146,19 @@ private extension HomeSerieView {
         !(einheitenJeTag[tagId] ?? []).isEmpty
     }
 
+    /// Einheiten oder eigene Kurse -- beides macht einen Tag antippbar.
+    /// Die Vorgabe bleibt beim juengsten Trainingstag: ein Kurs in drei
+    /// Tagen soll nicht die letzte Einheit verdraengen.
+    func hatInhalt(_ tagId: String) -> Bool {
+        hatEinheiten(tagId) || !(kurseJeTag[tagId] ?? []).isEmpty
+    }
+
     /// Antippbar ist nur, was etwas zu zeigen hat: ein Tag mit Einheiten,
     /// und keiner aus einem Nachbarmonat. Alles andere ist gar kein
     /// Knopf -- VoiceOver liest es als Text, nicht als Bedienelement, und
     /// niemand tippt ins Leere.
     func istWaehlbar(_ tag: HomeSerieTag) -> Bool {
-        hatEinheiten(tag.id) && !tag.ausserhalb
+        hatInhalt(tag.id) && !tag.ausserhalb
     }
 
     /// Derselbe Tag noch einmal klappt ihn wieder zu.
@@ -229,7 +247,7 @@ private extension HomeSerieView {
                     }
                     .buttonStyle(PressButtonStyle())
                     .accessibilityLabel(tagLabel(tag))
-                    .accessibilityHint("Zeigt die Einheiten des Tages.")
+                    .accessibilityHint("Zeigt Trainings und Kurse des Tages.")
                     .accessibilityAddTraits(tag.id == gewaehlt ? .isSelected : [])
                 } else {
                     wochenzelle(tag, gewaehlt: gewaehlt)
@@ -313,7 +331,7 @@ private extension HomeSerieView {
                         }
                         .buttonStyle(PressButtonStyle())
                         .accessibilityLabel(tagLabel(tag))
-                        .accessibilityHint("Zeigt die Einheiten des Tages.")
+                        .accessibilityHint("Zeigt Trainings und Kurse des Tages.")
                         .accessibilityAddTraits(tag.id == gewaehlt ? .isSelected : [])
                     } else {
                         monatszelle(tag, gewaehlt: gewaehlt)
@@ -332,9 +350,26 @@ private extension HomeSerieView {
     func wochenzelle(_ tag: HomeSerieTag, gewaehlt: String?) -> some View {
         VStack(spacing: DesignSystem.Spacing.s8) {
             buchstabe(tag, istGewaehlt: tag.id == gewaehlt)
-            zelle(tag, istGewaehlt: tag.id == gewaehlt)
+            VStack(spacing: 6) {
+                zelle(tag, istGewaehlt: tag.id == gewaehlt)
+                kurspunkt(tag)
+            }
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// Der Punkt unter dem Tag, wenn man dort einen Kurs hat (Testnotiz
+    /// 06.10., #1) -- dieselbe Form wie unter den Tagesboxen der
+    /// Kurse-Seite (`KurseWochenView.punkt`). Gruen fuer einen Platz, Gelb
+    /// fuer die Warteliste. Ohne Kurs bleibt er unsichtbar stehen, damit
+    /// die Zellen nicht in der Hoehe springen.
+    func kurspunkt(_ tag: HomeSerieTag) -> some View {
+        let punkt = HomeKurse.punkt(kurseJeTag[tag.id], jetzt: jetzt)
+        return Circle()
+            .fill(punkt == .warteliste ? DesignSystem.Color.warn : DesignSystem.Color.accent)
+            .frame(width: 5, height: 5)
+            .opacity(punkt == .keiner ? 0 : 1)
+            .accessibilityHidden(true)
     }
 
     func monatszelle(_ tag: HomeSerieTag, gewaehlt: String?) -> some View {
@@ -372,7 +407,7 @@ private extension HomeSerieView {
 // MARK: - Die Einheiten des Tages
 
 private extension HomeSerieView {
-    func tagesliste(tagId: String, einheiten: [SessionSummary]) -> some View {
+    func tagesliste(tagId: String, einheiten: [SessionSummary], kurse: [GespeicherterTermin]) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             Text(HomeSerie.tagestitel(tagId).uppercased())
                 .font(DesignSystem.Typography.label)
@@ -392,6 +427,19 @@ private extension HomeSerieView {
                 }
                 .buttonStyle(PressButtonStyle())
                 .accessibilityLabel(kartenLabel(karte))
+            }
+
+            // Dieselbe Karte wie im Band "Angemeldet" der Kurse-Seite, mit
+            // "Abmelden" und Rueckfrage (Testnotiz 06.10., #1) -- kein
+            // Nachbau, damit Frist, Warteliste und Fehler hier genauso
+            // gelten wie dort.
+            if !kurse.isEmpty, let kurseBuchungen {
+                KurseBandView(
+                    beiAuswahl: beiKursAuswahl,
+                    jetzt: jetzt,
+                    einteilung: KurseMeineEinteilung.bilden(
+                        aus: kurse, jetzt: jetzt, zeitzone: kurseBuchungen.timezone),
+                    eigene: kurseBuchungen)
             }
         }
     }
@@ -477,6 +525,11 @@ private extension HomeSerieView {
             teile.append("Eine Einheit.")
         case let anzahl:
             teile.append("\(anzahl) Einheiten.")
+        }
+        switch HomeKurse.punkt(kurseJeTag[tag.id], jetzt: jetzt) {
+        case .angemeldet: teile.append("Kurs, du bist angemeldet.")
+        case .warteliste: teile.append("Kurs, du stehst auf der Warteliste.")
+        case .keiner: break
         }
         return teile.joined(separator: " ")
     }

@@ -7,7 +7,12 @@ import UIKit
 /// die Liste selbst. Nur die Vorschaubilder kommen aus dem Netz -- sie
 /// laden je Zeile nach und fehlen still, wenn es keins gibt. Die Regeln
 /// stehen in `GeraeteAuswahl`, hier steht nur, wie sie aussehen.
-struct GeraeteAuswahlView: View {
+///
+/// Seit der Testnotiz 06.10. (#2, #13) ist die Liste die Wurzel des
+/// Training-Tabs, nicht mehr ein Schritt hinter "Suchen". `kopfinhalt`
+/// steht ueber den Geraeten und scrollt mit ihnen: im laufenden Training
+/// Uhr und die schon gemachten Uebungen.
+struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     @Environment(CatalogStore.self) private var katalog
 
     let fotoLader: any GeraetefotosLoading
@@ -16,7 +21,17 @@ struct GeraeteAuswahlView: View {
     /// Lader dagegen soll ueber mehrere Oeffnungen hinweg gemerkt bleiben
     /// -- siehe der Kommentar an seinem @State dort.
     let vorschauLader: VorschauLader
+    let kopfinhalt: Kopfinhalt
     let beiAuswahl: (String) -> Void
+
+    init(fotoLader: any GeraetefotosLoading, vorschauLader: VorschauLader,
+         @ViewBuilder kopfinhalt: () -> Kopfinhalt,
+         beiAuswahl: @escaping (String) -> Void) {
+        self.fotoLader = fotoLader
+        self.vorschauLader = vorschauLader
+        self.kopfinhalt = kopfinhalt()
+        self.beiAuswahl = beiAuswahl
+    }
 
     @State private var suchtext = ""
     /// Nur fuer diesen Screen, nicht `katalog.activeStudioId`: sonst
@@ -169,7 +184,12 @@ struct GeraeteAuswahlView: View {
     private var inhalt: some View {
         let g = gruppen
         if g.istLeer {
-            leerZustand
+            VStack(spacing: 0) {
+                kopfinhalt
+                    .padding(.horizontal, 20)
+                    .padding(.top, DesignSystem.Spacing.s16)
+                leerZustand
+            }
         } else {
             ScrollView {
                 // LazyVStack statt VStack: eine Section liefert hier keine
@@ -184,6 +204,8 @@ struct GeraeteAuswahlView: View {
                 // aus dem Spacing hier, sondern als Top-Padding auf jedem
                 // Gruppenkopf ausser dem ersten (siehe gruppe).
                 LazyVStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
+                    kopfinhalt
+                        .padding(.bottom, DesignSystem.Spacing.s16)
                     if !g.zuletzt.isEmpty {
                         gruppe("ZULETZT BEI DIR", g.zuletzt, ersteGruppe: true)
                     }
@@ -449,5 +471,13 @@ struct GeraeteAuswahlView: View {
             }
             .buttonStyle(PressButtonStyle())
         }
+    }
+}
+
+extension GeraeteAuswahlView where Kopfinhalt == EmptyView {
+    init(fotoLader: any GeraetefotosLoading, vorschauLader: VorschauLader,
+         beiAuswahl: @escaping (String) -> Void) {
+        self.init(fotoLader: fotoLader, vorschauLader: vorschauLader,
+                  kopfinhalt: { EmptyView() }, beiAuswahl: beiAuswahl)
     }
 }

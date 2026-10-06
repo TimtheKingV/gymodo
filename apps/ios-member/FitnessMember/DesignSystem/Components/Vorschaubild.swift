@@ -100,3 +100,33 @@ actor VorschauLader {
         return bild
     }
 }
+
+/// Der Platz fuer das Sinnbild einer Uebung (Bild oder GIF), links neben
+/// ihrem Namen -- in Uebungsliste, Uebungswechsel und Blockliste des
+/// Trainings (Testnotiz 06.10., #3, #9, #14).
+///
+/// Noch ohne Inhalt: eine Uebung hat in der Datenbank kein Bildfeld
+/// (`exercises` kennt nur Name und Korridor). Der Rahmen steht trotzdem
+/// schon, damit die Namen jetzt buendig untereinander stehen und das Bild
+/// spaeter nur eingesetzt werden muss. Gleiche Gestalt wie der
+/// Geraete-Platzhalter in GeraeteAuswahlView, nur mit einer Figur statt
+/// der Hantel -- die steht dort fuer das Geraet.
+struct Uebungsbild: View {
+    var kante: CGFloat = 56
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+            .fill(DesignSystem.Color.surfaceRaised)
+            .frame(width: kante, height: kante)
+            .overlay {
+                Image(systemName: "figure.strengthtraining.functional")
+                    .font(.system(size: kante * 0.36, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.textFaint)
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                    .stroke(DesignSystem.Color.line, lineWidth: 1)
+            )
+            .accessibilityHidden(true)
+    }
+}

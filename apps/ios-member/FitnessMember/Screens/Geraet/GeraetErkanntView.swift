@@ -117,9 +117,15 @@ struct GeraetErkanntView: View {
         }
     }
 
+    /// Alle Zeilen gleich (Testnotiz 06.10., #3): bis dahin trug die erste
+    /// einen Akzentbalken und eine hellere Flaeche. Die erste ist aber nur
+    /// eine Vorauswahl -- ohne Historie schlicht die erste Uebung des
+    /// Studios --, und ein Balken dort las sich wie "die ist schon dran".
+    /// Was die zuletzt genutzte Uebung ausmacht, sagt das Wort "zuletzt" im
+    /// Untertitel. Links der Platz fuer das Sinnbild der Uebung.
     private func zeile(_ uebung: GeraetUebung) -> some View {
-        let aktiv = uebung.id == modell.uebungId
-        return HStack(spacing: DesignSystem.Spacing.s12) {
+        HStack(spacing: DesignSystem.Spacing.s12) {
+            Uebungsbild()
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                 Text(uebung.name)
                     .font(DesignSystem.Typography.uebungsname)
@@ -133,15 +139,9 @@ struct GeraetErkanntView: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(DesignSystem.Color.textFaint)
         }
-        .padding(DesignSystem.Spacing.s16)
+        .padding(DesignSystem.Spacing.s12)
         .frame(minHeight: 44)
-        .background(aktiv ? DesignSystem.Color.surfaceRaised : DesignSystem.Color.surface)
-        .overlay(alignment: .leading) {
-            // Die eine Akzentflaeche des Screens.
-            if aktiv {
-                Rectangle().fill(DesignSystem.Color.accent).frame(width: 3)
-            }
-        }
+        .background(DesignSystem.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
 
@@ -173,7 +173,7 @@ struct GeraetErkanntView: View {
     }
 
     private var hinweis: some View {
-        Text("Ein Tap wählt die Übung. Läuft noch kein Training, kommt danach „Training starten“. Trainierst du hier immer dasselbe, überspringt Gymtavo diese Liste künftig.")
+        Text("Ein Tap wählt die Übung. Läuft noch kein Training, kommt vor dem ersten Satz „Training starten“. Trainierst du hier immer dasselbe, überspringt Gymtavo diese Liste künftig.")
             .font(.system(size: 12))
             .foregroundStyle(DesignSystem.Color.textFaint)
             .lineSpacing(3)
