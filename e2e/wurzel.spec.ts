@@ -197,3 +197,16 @@ test("Der Browsertab heisst Gymtavo", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle(/Gymtavo/);
 });
+
+// Bis zum 06.10. lieferte Next kein Icon aus: der Tab und ein auf den
+// Home-Bildschirm gelegter Link zeigten ein leeres Standardsymbol.
+test("Browsertab und Home-Bildschirm zeigen das G.-Icon", async ({ page, request }) => {
+  await page.goto("/");
+  for (const rel of ["icon", "apple-touch-icon"]) {
+    const link = page.locator(`link[rel="${rel}"]`);
+    await expect(link, rel).toHaveCount(1);
+    const href = await link.getAttribute("href");
+    const antwort = await request.get(href!);
+    expect(antwort.status(), rel).toBe(200);
+  }
+});
