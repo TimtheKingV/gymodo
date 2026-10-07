@@ -3,6 +3,7 @@ import { requireUserId } from "./auth.js";
 import type { LoadUnit, VolumeKind } from "./belastung.js";
 import { aktiveZiele } from "./goals.js";
 import { ortszeitTeile } from "./serie.js";
+import { mitVerlaufsnamen, type MitNamen } from "./verlaufsnamen.js";
 import type { ProblemReason } from "./workout.js";
 
 /**
@@ -192,7 +193,8 @@ type SessionRow = {
 
 type SetRow = {
   session_id: string;
-  machine_id: string;
+  machine_id: string | null;
+  equipment_model_id: string;
   exercise_id: string;
   set_index: number;
   load: number | string;
@@ -202,12 +204,20 @@ type SetRow = {
   problem_flag: boolean;
   problem_reason: ProblemReason | null;
   performed_at: string;
+  // null nach einem Austritt: der Verlauf bleibt lesbar, der Katalog des
+  // Studios nicht (0047). mitVerlaufsnamen fuellt die Luecke.
   machines: {
     label: string;
     equipment_models: { load_unit: LoadUnit; secondary_unit: LoadUnit | null };
-  };
-  exercises: { name: string; volume_kind: VolumeKind };
+  } | null;
+  exercises: { name: string; volume_kind: VolumeKind } | null;
 };
+
+type BenannterSatz = MitNamen<SetRow> & { machine_id: string };
+
+function hatGeraet(row: MitNamen<SetRow>): row is BenannterSatz {
+  return row.machine_id !== null;
+}
 
 /**
  * Die Zeitpunkte, auf denen die Serie rechnet.
@@ -301,7 +311,7 @@ export async function getSessions(
   const { data: setRows } = await client
     .from("workout_sets")
     .select(
-      "session_id, machine_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, performed_at, machines (label, equipment_models (load_unit, secondary_unit)), exercises (name, volume_kind)",
+      "session_id, machine_id, equipment_model_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, performed_at, machines (label, equipment_models (load_unit, secondary_unit)), exercises (name, volume_kind)",
     )
     .eq("user_id", userId)
     .in(
@@ -310,8 +320,16 @@ export async function getSessions(
     )
     .order("performed_at", { ascending: true });
 
-  const setsBySession = new Map<string, SetRow[]>();
-  for (const row of (setRows ?? []) as unknown as SetRow[]) {
+  const benannteSaetze = await mitVerlaufsnamen(
+    client,
+    (setRows ?? []) as unknown as SetRow[],
+  );
+
+  const setsBySession = new Map<string, BenannterSatz[]>();
+  for (const row of benannteSaetze) {
+    // Saetze ohne Geraet kennt die API erst ab Etappe 3 (Spec 11); bis
+    // dahin schreibt die App keine, und ein Block braucht eine machineId.
+    if (!hatGeraet(row)) continue;
     const list = setsBySession.get(row.session_id) ?? [];
     list.push(row);
     setsBySession.set(row.session_id, list);

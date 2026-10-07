@@ -147,10 +147,16 @@ export async function getBootstrap(
 ): Promise<Bootstrap> {
   const userId = await requireUserId(client);
 
-  // RLS beschraenkt jede dieser Abfragen auf die Studios des Mitglieds.
+  // RLS beschraenkt diese Abfragen auf die Studios des Mitglieds -- mit
+  // einer Ausnahme: den Gymtavo-Katalog liest seit 0047 jeder Angemeldete.
+  // Er ist kein Studio des Mitglieds und faellt hier deshalb heraus; die
+  // App bekommt ihn erst in Etappe 3 gesondert. Verknuepfungen und
+  // Einstellungen weiter unten liefern Katalogzeilen zwar mit, sie haengen
+  // aber nur an Modellen eigener Geraete und bleiben so unsichtbar.
   const { data: studioRows } = await client
     .from("studios")
     .select("id, name, timezone")
+    .eq("is_catalog", false)
     .order("name", { ascending: true });
 
   const { data: machineRows } = await client
