@@ -183,3 +183,130 @@ create policy media_select on storage.objects
       or public.is_catalog_studio(public.storage_studio_id(name))
     )
   );
+
+-- ---------------------------------------------------------------------
+-- 3. Zuordnung zum Gymtavo-Typ und Verweis auf Gymtavo-Uebungen
+-- ---------------------------------------------------------------------
+
+-- Woher die App weiss, welche Gymtavo-Uebungen in einem Studio passen: das
+-- Studio ordnet jedes seiner Modelle einem Gymtavo-Typ zu (Spec E1). Kein
+-- Spalten-Grant noetig -- equipment_models hat keinen; die Grenze ist der
+-- Trigger unten.
+alter table public.equipment_models
+  add column catalog_model_id uuid
+    references public.equipment_models (id) on delete restrict;
+
+create index on public.equipment_models (catalog_model_id);
+
+-- SECURITY DEFINER, weil das Ziel in einem Studio liegen kann, das der
+-- Aufrufer nicht lesen darf: die Antwort "ungueltig" soll fuer ein fremdes
+-- Studio dieselbe sein wie fuer ein nicht existierendes Modell.
+create or replace function public.equipment_models_zuordnung_pruefen()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if new.catalog_model_id is null then
+    return new;
+  end if;
+
+  if public.is_catalog_studio(new.studio_id)
+     or not exists (
+       select 1 from public.equipment_models ziel
+       where ziel.id = new.catalog_model_id
+         and public.is_catalog_studio(ziel.studio_id)
+     ) then
+    raise exception 'gymtavo_zuordnung_ungueltig';
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function public.equipment_models_zuordnung_pruefen() from public, anon, authenticated;
+
+create trigger equipment_models_zuordnung_pruefen
+  before insert or update of catalog_model_id, studio_id on public.equipment_models
+  for each row execute function public.equipment_models_zuordnung_pruefen();
+
+-- Verweis statt Kopie (Spec E2): ein Studio haengt Gymtavo-Uebungen direkt
+-- an seine Modelle. Die Verknuepfung bleibt gueltig, wenn die Uebung im
+-- Studio des Modells liegt ODER im Katalog -- nie in einem dritten Studio.
+-- Ein Gymtavo-Modell bekommt damit nur Gymtavo-Uebungen: fuer es ist "im
+-- Studio des Modells" und "im Katalog" dasselbe.
+--
+-- Videos, die ein Studio zu einer Gymtavo-Uebung ergaenzt, haengen an
+-- dieser Studio-Verknuepfung und gehoeren damit dem Studio
+-- (instruction_assets_* pruefen ueber em.studio_id).
+drop policy equipment_model_exercises_select on public.equipment_model_exercises;
+create policy equipment_model_exercises_select on public.equipment_model_exercises
+  for select to authenticated
+  using (
+    exists (
+      select 1
+      from public.equipment_models em
+      join public.exercises e
+        on e.id = equipment_model_exercises.exercise_id
+       and (e.studio_id = em.studio_id or public.is_catalog_studio(e.studio_id))
+      where em.id = equipment_model_exercises.equipment_model_id
+        and (public.is_studio_member(em.studio_id) or public.is_catalog_studio(em.studio_id))
+    )
+  );
+
+drop policy equipment_model_exercises_insert on public.equipment_model_exercises;
+create policy equipment_model_exercises_insert on public.equipment_model_exercises
+  for insert to authenticated
+  with check (
+    exists (
+      select 1
+      from public.equipment_models em
+      join public.exercises e
+        on e.id = equipment_model_exercises.exercise_id
+       and (e.studio_id = em.studio_id or public.is_catalog_studio(e.studio_id))
+      where em.id = equipment_model_exercises.equipment_model_id
+        and public.is_studio_staff(em.studio_id)
+    )
+  );
+
+drop policy equipment_model_exercises_update on public.equipment_model_exercises;
+create policy equipment_model_exercises_update on public.equipment_model_exercises
+  for update to authenticated
+  using (
+    exists (
+      select 1
+      from public.equipment_models em
+      join public.exercises e
+        on e.id = equipment_model_exercises.exercise_id
+       and (e.studio_id = em.studio_id or public.is_catalog_studio(e.studio_id))
+      where em.id = equipment_model_exercises.equipment_model_id
+        and public.is_studio_staff(em.studio_id)
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.equipment_models em
+      join public.exercises e
+        on e.id = equipment_model_exercises.exercise_id
+       and (e.studio_id = em.studio_id or public.is_catalog_studio(e.studio_id))
+      where em.id = equipment_model_exercises.equipment_model_id
+        and public.is_studio_staff(em.studio_id)
+    )
+  );
+
+drop policy equipment_model_exercises_delete on public.equipment_model_exercises;
+create policy equipment_model_exercises_delete on public.equipment_model_exercises
+  for delete to authenticated
+  using (
+    exists (
+      select 1
+      from public.equipment_models em
+      join public.exercises e
+        on e.id = equipment_model_exercises.exercise_id
+       and (e.studio_id = em.studio_id or public.is_catalog_studio(e.studio_id))
+      where em.id = equipment_model_exercises.equipment_model_id
+        and public.is_studio_staff(em.studio_id)
+    )
+  );

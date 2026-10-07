@@ -308,3 +308,157 @@ describe("Gymtavo-Katalog lesen", () => {
     expect(error).toBeNull();
   });
 });
+
+describe("Zuordnung zum Gymtavo-Typ und Verweis auf Gymtavo-Uebungen", () => {
+  let katalogTyp: string;
+  let katalogUebung: string;
+  let modellA: string;
+  let modellB: string;
+  let uebungA: string;
+  let uebungB: string;
+  let doppelrolleEmail: string;
+
+  beforeAll(async () => {
+    const admin = serviceClient();
+    const kennung = crypto.randomUUID();
+
+    const { data: modelle, error: modellError } = await admin
+      .from("equipment_models")
+      .insert([
+        { studio_id: GYMTAVO, name: `Kabelzug ${kennung}`, load_step: 2.5 },
+        { studio_id: studioA, name: `Kabelturm A ${kennung}`, load_step: 5 },
+        { studio_id: studioB, name: `Kabelturm B ${kennung}`, load_step: 5 },
+      ])
+      .select("id");
+    if (modellError) throw modellError;
+    katalogTyp = modelle[0]!.id;
+    modellA = modelle[1]!.id;
+    modellB = modelle[2]!.id;
+
+    const { data: uebungen, error: uebungError } = await admin
+      .from("exercises")
+      .insert([
+        { studio_id: GYMTAVO, name: `Face Pull ${kennung}`, target_min: 12, target_max: 15 },
+        { studio_id: studioA, name: `Eigene Uebung A ${kennung}`, target_min: 8, target_max: 12 },
+        { studio_id: studioB, name: `Eigene Uebung B ${kennung}`, target_min: 8, target_max: 12 },
+      ])
+      .select("id");
+    if (uebungError) throw uebungError;
+    katalogUebung = uebungen[0]!.id;
+    uebungA = uebungen[1]!.id;
+    uebungB = uebungen[2]!.id;
+
+    // Gymtavo-Owner und zugleich Trainer in Studio A: der Fall, in dem eine
+    // Person beide Seiten lesen darf und die Regel trotzdem halten muss.
+    doppelrolleEmail = uniqueEmail("katalog-doppelrolle");
+    const doppelrolleId = await createTestUser(doppelrolleEmail);
+    const { error: rollenError } = await admin.from("studio_memberships").insert([
+      { studio_id: GYMTAVO, user_id: doppelrolleId, role: "owner" },
+      { studio_id: studioA, user_id: doppelrolleId, role: "trainer" },
+    ]);
+    if (rollenError) throw rollenError;
+  });
+
+  it("ein Trainer ordnet sein Modell einem Gymtavo-Typ zu", async () => {
+    const client = await userClient(trainerAEmail);
+
+    const { data, error } = await client
+      .from("equipment_models")
+      .update({ catalog_model_id: katalogTyp })
+      .eq("id", modellA)
+      .select("catalog_model_id");
+
+    expect(error).toBeNull();
+    expect(data).toEqual([{ catalog_model_id: katalogTyp }]);
+  });
+
+  it("eine Zuordnung auf das Modell eines anderen Studios wird abgewiesen", async () => {
+    const client = await userClient(trainerAEmail);
+
+    const { error } = await client
+      .from("equipment_models")
+      .update({ catalog_model_id: modellB })
+      .eq("id", modellA);
+
+    expect(error?.message).toContain("gymtavo_zuordnung_ungueltig");
+  });
+
+  it("ein Gymtavo-Typ verweist nicht auf einen anderen", async () => {
+    const admin = serviceClient();
+    const { data: zweiterTyp, error: typError } = await admin
+      .from("equipment_models")
+      .insert({ studio_id: GYMTAVO, name: `Zweiter Typ ${crypto.randomUUID()}`, load_step: 1 })
+      .select("id")
+      .single();
+    if (typError) throw typError;
+
+    const { error } = await admin
+      .from("equipment_models")
+      .update({ catalog_model_id: katalogTyp })
+      .eq("id", zweiterTyp.id);
+
+    expect(error?.message).toContain("gymtavo_zuordnung_ungueltig");
+  });
+
+  it("ein Trainer haengt eine Gymtavo-Uebung an sein Geraet, und Mitglieder sehen sie", async () => {
+    const trainer = await userClient(trainerAEmail);
+    const { error } = await trainer
+      .from("equipment_model_exercises")
+      .insert({ equipment_model_id: modellA, exercise_id: katalogUebung });
+    expect(error).toBeNull();
+
+    const mitglied = await userClient(memberAEmail);
+    const { data } = await mitglied
+      .from("equipment_model_exercises")
+      .select("exercise_id")
+      .eq("equipment_model_id", modellA);
+
+    expect(data).toEqual([{ exercise_id: katalogUebung }]);
+  });
+
+  it("die Uebung eines dritten Studios laesst sich nicht anhaengen", async () => {
+    const client = await userClient(trainerAEmail);
+
+    const { error } = await client
+      .from("equipment_model_exercises")
+      .insert({ equipment_model_id: modellA, exercise_id: uebungB });
+
+    expect(error?.code).toBe("42501");
+  });
+
+  it("an einen Gymtavo-Typ kommt keine Studio-Uebung, auch nicht durch eine Doppelrolle", async () => {
+    const client = await userClient(doppelrolleEmail);
+
+    const { error } = await client
+      .from("equipment_model_exercises")
+      .insert({ equipment_model_id: katalogTyp, exercise_id: uebungA });
+
+    expect(error?.code).toBe("42501");
+  });
+
+  it("ein Studio ergaenzt ein eigenes Video zur Gymtavo-Uebung, das nur seine Mitglieder sehen", async () => {
+    const trainer = await userClient(trainerAEmail);
+    const { data: verknuepfung } = await trainer
+      .from("equipment_model_exercises")
+      .select("id")
+      .eq("equipment_model_id", modellA)
+      .eq("exercise_id", katalogUebung)
+      .single();
+    expect(verknuepfung).not.toBeNull();
+
+    const { error } = await trainer.from("instruction_assets").insert({
+      equipment_model_exercise_id: verknuepfung!.id,
+      kind: "video",
+      storage_path: `${studioA}/${verknuepfung!.id}/${crypto.randomUUID()}.mp4`,
+      duration_s: 30,
+    });
+    expect(error).toBeNull();
+
+    const fremd = await userClient(ohneStudioEmail);
+    const { data } = await fremd
+      .from("instruction_assets")
+      .select("id")
+      .eq("equipment_model_exercise_id", verknuepfung!.id);
+    expect(data).toEqual([]);
+  });
+});
