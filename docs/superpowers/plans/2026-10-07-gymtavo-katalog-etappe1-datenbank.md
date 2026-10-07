@@ -39,16 +39,16 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
 **Files:**
 - Modify: `docs/superpowers/specs/2026-10-06-gymtavo-katalog-offener-zugang-design.md` (Abschnitte 5.1, 5.4, 11)
 
-- [ ] **Step 1 (5.1, Beitritt):** Den Satz „`join_studio_by_tag`, `join_studio_by_code` und `accept_staff_invite` weisen das Gymtavo-Studio ab“ ersetzen durch einen einzigen Wächter-Trigger auf `studio_memberships`: Im Gymtavo-Studio gibt es keine Rolle `member`.
+- [x] **Step 1 (5.1, Beitritt):** Den Satz „`join_studio_by_tag`, `join_studio_by_code` und `accept_staff_invite` weisen das Gymtavo-Studio ab“ ersetzen durch einen einzigen Wächter-Trigger auf `studio_memberships`: Im Gymtavo-Studio gibt es keine Rolle `member`.
   - Begründung: Das deckt jeden heutigen und künftigen Beitrittsweg ab, ohne drei Funktionsrümpfe neu zu tippen.
   - Trainer-Einladungen bleiben möglich. Das Gymtavo-Team braucht sie für die spätere Pflege (Etappe 6).
-- [ ] **Step 2 (5.1, Geräte):** Ergänzen: Ein zweiter Wächter-Trigger verhindert `machines` und `machine_tags` mit dem Gymtavo-Studio. Der Satz „gibt es nicht“ wird damit durchgesetzt statt nur behauptet.
-- [ ] **Step 3 (5.4):** Ergänzen: Ein Füll-Trigger setzt `equipment_model_id` aus `machine_id`, wenn es fehlt. Dadurch schreibt `workout.ts` bis Etappe 3 unverändert weiter.
-- [ ] **Step 4 (11):** Etappe 1 um „Leser absichern“ ergänzen:
+- [x] **Step 2 (5.1, Geräte):** Ergänzen: Ein zweiter Wächter-Trigger verhindert `machines` und `machine_tags` mit dem Gymtavo-Studio. Der Satz „gibt es nicht“ wird damit durchgesetzt statt nur behauptet.
+- [x] **Step 3 (5.4):** Ergänzen: Ein Füll-Trigger setzt `equipment_model_id` aus `machine_id`, wenn es fehlt. Dadurch schreibt `workout.ts` bis Etappe 3 unverändert weiter.
+- [x] **Step 4 (11):** Etappe 1 um „Leser absichern“ ergänzen:
   - Bootstrap und Startseite blenden das Gymtavo-Studio aus.
   - Verlauf und Fortschritt fallen bei fehlenden Namen auf `my_history_labels()` zurück.
-- [ ] **Step 5:** Ergänzen unter 13 (offen): `studio_overview` (0034) gibt dem Gymtavo-Owner Summen über Freies Training aus. Das sind nur Summen, die Datenschutzgrenze bleibt. Wenn das nicht gewollt ist, schließt Etappe 3 das Gymtavo-Studio dort aus.
-- [ ] **Step 6:** Commit `docs(spec): Gymtavo-Katalog -- Waechter, Fuell-Trigger, Leser absichern`.
+- [x] **Step 5:** Ergänzen unter 13 (offen): `studio_overview` (0034) gibt dem Gymtavo-Owner Summen über Freies Training aus. Das sind nur Summen, die Datenschutzgrenze bleibt. Wenn das nicht gewollt ist, schließt Etappe 3 das Gymtavo-Studio dort aus.
+- [x] **Step 6:** Commit `docs(spec): Gymtavo-Katalog -- Waechter, Fuell-Trigger, Leser absichern`.
 
 ---
 
@@ -64,7 +64,7 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
   - Funktion `public.is_catalog_studio(uuid) returns boolean`
   - Konstante Studio-ID `00000000-0000-4000-8000-000000000001`, Name `Gymtavo`
 
-- [ ] **Step 1: Roter Test** in `rls-gymtavo-katalog.test.ts`, im Stil von `rls-workout-sets.test.ts` (`serviceClient`, `createTestUser`, `userClient`, `uniqueEmail`). Testfälle:
+- [x] **Step 1: Roter Test** in `rls-gymtavo-katalog.test.ts`, im Stil von `rls-workout-sets.test.ts` (`serviceClient`, `createTestUser`, `userClient`, `uniqueEmail`). Testfälle:
   - Ein Nutzer ohne jede Mitgliedschaft liest `studios` und bekommt genau die Gymtavo-Zeile (`is_catalog = true`), sonst nichts.
   - Ein Mitglied von Studio A liest `studios` und bekommt Studio A und Gymtavo, nicht Studio B.
   - `service_role` kann keine Mitgliedschaft mit `role = 'member'` im Gymtavo-Studio anlegen. Erwartet wird ein Fehler mit Code `P0001` und dem Text `gymtavo_keine_mitglieder`.
@@ -73,7 +73,7 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
   - Eine `machine_tags`-Zeile mit `studio_id` = Gymtavo wird abgewiesen.
   - `join_studio_by_code` mit dem `join_code` des Gymtavo-Studios liefert die leere Menge (Code inaktiv).
   - Ein Trainer von Studio A kann `is_catalog` an seinem Studio nicht setzen. Erwartet wird Code `42501`, weil der Spalten-Grant aus 0032 nur `name, timezone, cancellation_deadline_hours` erlaubt. Der Test hält fest, dass diese Grenze auch das neue Feld schützt.
-- [ ] **Step 2: Migration, Abschnitt 1**:
+- [x] **Step 2: Migration, Abschnitt 1**:
   ```sql
   alter table public.studios add column is_catalog boolean not null default false;
   create unique index studios_genau_ein_katalog on public.studios (is_catalog) where is_catalog;
@@ -98,8 +98,8 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
   - `machines` und `machine_tags`, `before insert or update of studio_id`: Ist `is_catalog_studio(new.studio_id)`, dann `raise exception 'gymtavo_ohne_geraete'`.
 
   Zu jedem Trigger gehört ein Begründungskommentar. Für die Mitgliedschaft lautet er sinngemäß: Ein Wächter an der Tabelle statt Prüfungen in drei Beitrittsfunktionen erreicht auch künftige Wege.
-- [ ] **Step 3:** Test grün (oder, ohne Docker, typgeprüft plus Rauchprüfung aus Task 8 vorgezogen).
-- [ ] **Step 4:** Commit `feat(db): Gymtavo-Studio als lesbarer Katalog mit Waechtern (0047, Teil 1)`.
+- [x] **Step 3:** Test grün (oder, ohne Docker, typgeprüft plus Rauchprüfung aus Task 8 vorgezogen).
+- [x] **Step 4:** Commit `feat(db): Gymtavo-Studio als lesbarer Katalog mit Waechtern (0047, Teil 1)`.
 
 ---
 
@@ -109,7 +109,7 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
 - Modify: `supabase/migrations/0047_gymtavo_katalog.sql` (Abschnitt 2)
 - Modify: `tests/integration/rls-gymtavo-katalog.test.ts`
 
-- [ ] **Step 1: Roter Test.** Im `beforeAll` legt der Service-Client im Gymtavo-Studio diese Inhalte an:
+- [x] **Step 1: Roter Test.** Im `beforeAll` legt der Service-Client im Gymtavo-Studio diese Inhalte an:
   - Gerätetyp „Langhantel“ (`load_step 2.5`) mit einer Einstellung
   - Übung „Bankdrücken“
   - die Verknüpfung zwischen beiden
@@ -121,7 +121,7 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
   - Nutzer ohne Studio sieht von Studio A weder Modell noch Übung.
   - Nutzer ohne Studio kann im Gymtavo-Studio **nichts** anlegen, ändern oder löschen (je ein Versuch auf `equipment_models`, `exercises`, `equipment_model_exercises`).
   - Der Owner des Gymtavo-Studios (per Service-Rolle eingetragen) kann eine Übung anlegen.
-- [ ] **Step 2: Migration, Abschnitt 2.** `drop` + `create` mit demselben Namen und `or public.is_catalog_studio(…)` für:
+- [x] **Step 2: Migration, Abschnitt 2.** `drop` + `create` mit demselben Namen und `or public.is_catalog_studio(…)` für:
   - `equipment_models_select`: `is_studio_member(equipment_models.studio_id) or is_catalog_studio(equipment_models.studio_id)`
   - `equipment_setting_definitions_select`: im `exists` über `em` dieselbe Erweiterung auf `em.studio_id`
   - `exercises_select`: wie Modelle
@@ -129,8 +129,8 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
   - `media_select` auf `storage.objects`: `… and (is_studio_member(storage_studio_id(name)) or is_catalog_studio(storage_studio_id(name)))`
 
   `equipment_model_exercises_select` folgt in Task 4 zusammen mit der Verweisregel. Die Schreib-Policies bleiben unverändert, denn `is_studio_staff` deckt den Gymtavo-Owner bereits ab.
-- [ ] **Step 3:** Test grün.
-- [ ] **Step 4:** Commit `feat(db): Gymtavo-Katalog fuer alle Angemeldeten lesbar (0047, Teil 2)`.
+- [x] **Step 3:** Test grün.
+- [x] **Step 4:** Commit `feat(db): Gymtavo-Katalog fuer alle Angemeldeten lesbar (0047, Teil 2)`.
 
 ---
 
@@ -140,7 +140,7 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
 - Modify: `supabase/migrations/0047_gymtavo_katalog.sql` (Abschnitt 3)
 - Modify: `tests/integration/rls-gymtavo-katalog.test.ts`
 
-- [ ] **Step 1: Roter Test.**
+- [x] **Step 1: Roter Test.**
   - Ein Trainer von Studio A setzt `catalog_model_id` seines Modells auf die Gymtavo-Langhantel. Das geht.
   - Auf ein Modell von Studio B geht es nicht (`gymtavo_zuordnung_ungueltig`).
   - Ein Gymtavo-Modell mit gesetztem `catalog_model_id` wird abgewiesen, denn ein Katalog verweist nicht auf sich selbst.
@@ -149,7 +149,7 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
   - Die Übung eines dritten Studios an sein Modell zu hängen, scheitert.
   - Eine Studio-A-Übung an das Gymtavo-Modell zu hängen, scheitert, auch für den Gymtavo-Owner.
   - Ein Trainer von Studio A legt unter seiner Verknüpfung mit der Gymtavo-Übung ein eigenes `instruction_assets` an. Das geht, und ein Nutzer ohne Studio sieht es nicht.
-- [ ] **Step 2: Migration, Abschnitt 3:**
+- [x] **Step 2: Migration, Abschnitt 3:**
   - `alter table public.equipment_models add column catalog_model_id uuid references public.equipment_models (id) on delete restrict;` plus Index.
   - Trigger `equipment_models_zuordnung_pruefen` (security definer), `before insert or update of catalog_model_id, studio_id`. Ist `new.catalog_model_id` gesetzt, dann muss gelten:
     - `not is_catalog_studio(new.studio_id)`
@@ -163,8 +163,8 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
     - INSERT/UPDATE/DELETE: `public.is_studio_staff(em.studio_id)`
 
     Die Bedingung `e.id = …exercise_id` steht jetzt im Join, deshalb fällt sie aus dem `where`. Der Kommentar aus 0005 („nur gueltig, wenn … demselben Studio“) wird umgeschrieben: dasselbe Studio oder Gymtavo, nie ein drittes, und ein Gymtavo-Modell nur mit Gymtavo-Übungen.
-- [ ] **Step 3:** Test grün.
-- [ ] **Step 4:** Commit `feat(db): Studio-Modell verweist auf Gymtavo-Typ, Gymtavo-Uebung am Studio-Geraet (0047, Teil 3)`.
+- [x] **Step 3:** Test grün.
+- [x] **Step 4:** Commit `feat(db): Studio-Modell verweist auf Gymtavo-Typ, Gymtavo-Uebung am Studio-Geraet (0047, Teil 3)`.
 
 ---
 
@@ -181,7 +181,7 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
   - `progression_suggestions.equipment_model_id uuid not null`, `progression_suggestions.machine_id` nullable
   - Eindeutigkeit je Block über `(session_id, machine_id, equipment_model_id, exercise_id, set_index)` mit `nulls not distinct`
 
-- [ ] **Step 1: Roter Test.**
+- [x] **Step 1: Roter Test.**
   - Ein Nutzer ohne Studio legt eine Einheit im Gymtavo-Studio an. Er speichert zwei Sätze an der Gymtavo-Langhantel mit „Bankdrücken“, ohne `machine_id`, und liest sie zurück.
   - Derselbe Nutzer kann keine Einheit in Studio A anlegen.
   - Ein Mitglied von Studio A speichert in einer Studio-A-Einheit:
@@ -194,7 +194,7 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
   - Blockstruktur ohne Maschine: zweimal Satz 1 am selben Gymtavo-Typ und derselben Übung in derselben Einheit wird abgewiesen (`23505`).
   - `progression_suggestions` ohne `machine_id` im Gymtavo-Studio wird gespeichert, mit Gerät aus fremdem Studio abgewiesen.
   - Bestehender Satz ohne Payload-Änderung: `rls-workout-sets.test.ts` läuft unverändert grün. Das ist der Beleg, dass `workout.ts` bis Etappe 3 weiterschreibt.
-- [ ] **Step 2: Migration, Abschnitt 4:**
+- [x] **Step 2: Migration, Abschnitt 4:**
   ```sql
   alter table public.workout_sets add column equipment_model_id uuid references public.equipment_models (id) on delete restrict;
   update public.workout_sets s set equipment_model_id = m.equipment_model_id from public.machines m where m.id = s.machine_id;
@@ -231,8 +231,8 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
     Bei `using` reicht wie bisher Nutzer plus Studio.
   - `progression_suggestions_insert`: dieselbe Form ohne Session-Teil.
   - `member_machine_calibrations` bleibt unberührt.
-- [ ] **Step 3:** Test grün, dazu die bestehenden `rls-workout-sets`, `rls-workout-sessions`, `rls-progression-suggestions`, `domain-record-set`, `api-workout-sets`.
-- [ ] **Step 4:** Commit `feat(db): Saetze ohne QR-Geraet und Freies Training im Gymtavo-Studio (0047, Teil 4)`.
+- [x] **Step 3:** Test grün, dazu die bestehenden `rls-workout-sets`, `rls-workout-sessions`, `rls-progression-suggestions`, `domain-record-set`, `api-workout-sets`.
+- [x] **Step 4:** Commit `feat(db): Saetze ohne QR-Geraet und Freies Training im Gymtavo-Studio (0047, Teil 4)`.
 
 ---
 
@@ -251,21 +251,21 @@ Beim Lesen der Migrationen sind drei Punkte aufgefallen, die die Spec genauer fa
 
   Sie gibt je verschiedener Kombination in den **eigenen** Sätzen eine Zeile aus.
 
-- [ ] **Step 1: Roter Test.**
+- [x] **Step 1: Roter Test.**
   - Ein Mitglied trainiert in Studio A an einer Studio-Übung und tritt per `delete` auf die eigene Mitgliedschaft aus.
   - Danach liest es seine Einheiten, Sätze und Vorschläge weiter.
   - `machines` und `exercises` von Studio A sieht es nicht mehr.
   - `rpc('my_history_labels')` liefert Übungsname, Gerätelabel und Studioname.
   - Ein anderer Nutzer bekommt aus `my_history_labels` keine dieser Zeilen.
   - Der Trainer von Studio A sieht die Sätze weiterhin nicht. Die Datenschutzgrenze aus 0033 bleibt bestehen; der Fall steht schon in `rls-workout-sets.test.ts` und muss grün bleiben.
-- [ ] **Step 2: Migration, Abschnitt 5:**
+- [x] **Step 2: Migration, Abschnitt 5:**
   - `workout_sessions_select`, `workout_sets_select` und `progression_suggestions_select` neu, jeweils nur `<tabelle>.user_id = (select auth.uid())`.
   - Kommentar mit Bezug auf 0033: Die Grenze gegenüber dem Personal bleibt. Gelockert wird nur, was der Nutzer selbst sieht, weil der Fortschritt einer Gymtavo-Übung über Studios hinweg läuft (Spec E5).
   - `my_history_labels()`: `language sql security definer stable`, `where s.user_id = auth.uid()`, Left Joins auf `machines`, `equipment_models`, `exercises`, `studios`, `select distinct`.
   - `revoke` von `public, anon`; `grant execute` an `authenticated`.
   - Kommentar: Die Funktion gibt ausschließlich Namen von Zeilen heraus, auf die eigene Sätze verweisen. Sie ist kein Weg, einen fremden Katalog zu lesen.
-- [ ] **Step 3:** Test grün.
-- [ ] **Step 4:** Commit `feat(db): eigener Verlauf bleibt nach dem Austritt sichtbar (0047, Teil 5)`.
+- [x] **Step 3:** Test grün.
+- [x] **Step 4:** Commit `feat(db): eigener Verlauf bleibt nach dem Austritt sichtbar (0047, Teil 5)`.
 
 ---
 
@@ -283,11 +283,11 @@ Durch die Tasks 2 bis 6 sehen drei Leser mehr als vorher. Ohne Absicherung würd
 - Modify: `packages/domain/src/progress.ts` (Satz-Abfrage um Zeile 79)
 - Modify: `tests/integration/domain-bootstrap.test.ts`, `tests/integration/domain-sessions.test.ts`, `tests/integration/domain-progress.test.ts`
 
-- [ ] **Step 1: Rote Tests:**
+- [x] **Step 1: Rote Tests:**
   - **Bootstrap:** Ein Nutzer ohne Studio bekommt `studios: []`. Ein Mitglied von A bekommt nur A, nicht Gymtavo.
   - **Sessions:** Nach dem Austritt aus A liefert `listMySessions` die alte Einheit mit Übungsname und Gerätelabel und wirft nicht.
   - **Progress:** Nach dem Austritt aus A erscheint die Übung im Fortschritt mit Namen.
-- [ ] **Step 2: Umsetzung:**
+- [x] **Step 2: Umsetzung:**
   - `bootstrap.ts`: `.eq("is_catalog", false)` an der Studio-Abfrage. Den Kommentar „RLS beschraenkt jede dieser Abfragen auf die Studios des Mitglieds“ richtigstellen: Das Gymtavo-Studio ist für alle lesbar, und erst Etappe 3 liefert es gesondert als `catalog`. Die übrigen Bootstrap-Abfragen (Verknüpfungen, Einstellungen) liefern jetzt auch Gymtavo-Zeilen. Sie hängen aber nur an Modellen, die über die eigenen Maschinen erreicht werden, und bleiben deshalb unsichtbar. Das hält ein Kommentar fest, und der Bootstrap-Test prüft es (keine Gymtavo-Übung unter `machines[].exercises`).
   - `apps/web/app/page.tsx`: `.eq("is_catalog", false)`.
   - `sessions.ts` und `progress.ts`:
@@ -296,14 +296,14 @@ Durch die Tasks 2 bis 6 sehen drei Leser mehr als vorher. Ohne Absicherung würd
     - Der Blockschlüssel in `sessions.ts` (`${row.machine_id}:${row.exercise_id}`) bleibt. Bis Etappe 3 schreibt die App nur Sätze mit Maschine.
     - Das Gerätelabel fällt ohne Maschine auf `model_name` zurück.
   - Keine weitere Verhaltensänderung. `machine-context.ts`, `abschluss.ts` und `workout.ts` filtern ohnehin nach `machine_id`/`session_id` und bleiben unberührt.
-- [ ] **Step 3:** `pnpm -F @fitretro/domain test`, `pnpm typecheck`, Integrationstests aus Step 1 grün.
-- [ ] **Step 4:** Commit `fix(domain): Gymtavo-Studio nicht als eigenes Studio, Verlauf nach Austritt mit Namen`.
+- [x] **Step 3:** `pnpm -F @fitretro/domain test`, `pnpm typecheck`, Integrationstests aus Step 1 grün.
+- [x] **Step 4:** Commit `fix(domain): Gymtavo-Studio nicht als eigenes Studio, Verlauf nach Austritt mit Namen`.
 
 ---
 
 ## Task 8: Gesamtprüfung
 
-- [ ] **Step 1: Migration gegen PostgreSQL 16**, wie im Cardio-Plan:
+- [x] **Step 1: Migration gegen PostgreSQL 16**, wie im Cardio-Plan:
   - Temporärer Cluster im Scratchpad.
   - Ein Shim für `auth.users`, `auth.uid()`, die Rollen `anon`/`authenticated`/`service_role` und `storage.buckets`/`storage.objects`.
   - Alle 47 Migrationen in Reihenfolge.
@@ -313,13 +313,13 @@ Durch die Tasks 2 bis 6 sehen drei Leser mehr als vorher. Ohne Absicherung würd
   - Ein Altsatz mit Maschine bekommt per Füll-Trigger sein Modell.
 
   Der Cluster wird gelöscht, das Skript liegt nicht im Repo.
-- [ ] **Step 2:** Wenn Docker verfügbar ist: `supabase start`, dann `pnpm test:integration` vollständig. Sonst den Grund festhalten.
-- [ ] **Step 3:** `pnpm typecheck`, `pnpm -F @fitretro/domain test`, `pnpm -F web test`.
-- [ ] **Step 4:** Diff gegen `master` adversarial lesen. Dabei vor allem prüfen:
+- [x] **Step 2:** Wenn Docker verfügbar ist: `supabase start`, dann `pnpm test:integration` vollständig. Sonst den Grund festhalten.
+- [x] **Step 3:** `pnpm typecheck`, `pnpm -F @fitretro/domain test`, `pnpm -F web test`.
+- [x] **Step 4:** Diff gegen `master` adversarial lesen. Dabei vor allem prüfen:
   - jede neue Policy auf qualifizierte Spalten
   - jede SECURITY-DEFINER-Funktion auf `search_path` und Grants
   - dass keine Policy `is_catalog_studio` auf **Schreibwege** des Katalogs ausweitet
-- [ ] **Step 5:** Push auf `claude/gymtavo-katalog-design`. In der Zusammenfassung an Tim stehen:
+- [x] **Step 5:** Push auf `claude/gymtavo-katalog-design`. In der Zusammenfassung an Tim stehen:
   - was lief und was nicht (Docker),
   - dass `supabase db push` aussteht,
   - dass das Gymtavo-Studio danach per Service-Rolle einen Owner braucht (sein Konto).
@@ -329,3 +329,15 @@ Durch die Tasks 2 bis 6 sehen drei Leser mehr als vorher. Ohne Absicherung würd
 ## Danach
 
 Etappe 2 (Import) und Etappe 5 (Portal) bauen nur auf dieser Etappe auf und können parallel geplant werden. Etappe 3 (Domain/API) ist die Voraussetzung für die iOS-Etappe 4.
+
+## Ergebnis (7. Oktober 2026)
+
+- Integrationstests liefen gegen ein lokales Supabase (Docker): nach `supabase db reset` mit allen 47 Migrationen 58 Dateien, 711 Tests grün. Vorher (Stand `master`): 56 Dateien, 674 Tests grün.
+- Abschnitt 4 traf beim schrittweisen Einspielen auf eine Datenbank mit Saetzen aus dem Ausgangslauf: Rueckfuellung und `not null` haben mit echten Zeilen funktioniert.
+- `pnpm typecheck`, `pnpm -F @fitretro/domain test` (235), `pnpm -F web test` (251) gruen. `pnpm build` lief lokal nicht.
+- Abweichungen vom Plan:
+  - Die Lesepolicy der Verknuepfung Modell-Uebung kam schon in Teil 2: ohne sie bleiben die Katalogvideos unsichtbar.
+  - Die Lesepolicies der Trainingstabellen kannten das Gymtavo-Studio schon in Teil 4: die Satzpruefung fragt `workout_sessions` unter RLS ab.
+  - `rls-tenancy.test.ts` prueft das eigene Studio jetzt ohne Katalog. Dass der Katalog fuer alle lesbar ist, ist gewollt.
+  - `getSessions` laesst Saetze ohne Geraet bis Etappe 3 aus, weil ein Block eine `machineId` braucht.
+- Offen fuer Tim: `supabase db push` gegen Produktion und den ersten Owner des Gymtavo-Studios (`00000000-0000-4000-8000-000000000001`) per Service-Rolle eintragen.
