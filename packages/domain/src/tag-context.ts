@@ -2,14 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
 import { DomainError } from "./errors.js";
 import { hashTagToken, isValidTagToken } from "./tags.js";
-import { resolveMachineContext, type MachineContext } from "./machine-context.js";
+import { resolveMachineContext, type GeraeteKontext } from "./machine-context.js";
 
 /**
  * Ein Tag-Kontext ist ein Geraetekontext -- der Tag sagt nur, welches
  * Geraet gemeint ist. Der Alias bleibt exportiert, damit vorhandene
  * Importe nicht brechen.
  */
-export type TagContext = MachineContext;
+export type TagContext = GeraeteKontext;
 
 /**
  * Token -> Geraetekontext.

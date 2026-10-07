@@ -85,6 +85,11 @@ export type MachineContext = {
   suggestion: ProgressionSuggestion;
 };
 
+/** Der Kontext eines Geraets mit QR-Code: hier gibt es das Geraet immer. */
+export type GeraeteKontext = MachineContext & {
+  machine: NonNullable<MachineContext["machine"]>;
+};
+
 type SetRow = {
   exercise_id: string;
   load: number | string;
@@ -116,7 +121,7 @@ type SetRow = {
 export async function getMachineContext(
   client: SupabaseClient,
   machineId: string,
-): Promise<MachineContext> {
+): Promise<GeraeteKontext> {
   const userId = await requireUserId(client);
   return resolveMachineContext(client, userId, machineId);
 }
@@ -134,7 +139,7 @@ export async function resolveMachineContext(
   client: SupabaseClient,
   userId: string,
   machineId: string,
-): Promise<MachineContext> {
+): Promise<GeraeteKontext> {
   const { data: machine } = await client
     .from("machines")
     .select(`id, label, location_note, studio_id, equipment_models (${MODELL_SPALTEN})`)
@@ -150,11 +155,13 @@ export async function resolveMachineContext(
     throw new DomainError("not_found", "Dieses Geraet ist nicht verfuegbar.");
   }
 
-  return kontextAufbauen(client, userId, {
-    machine: { id: machine.id, label: machine.label, locationNote: machine.location_note },
+  const geraet = { id: machine.id, label: machine.label, locationNote: machine.location_note };
+  const kontext = await kontextAufbauen(client, userId, {
+    machine: geraet,
     studioId: machine.studio_id,
     model: machine.equipment_models,
   });
+  return { ...kontext, machine: geraet };
 }
 
 /**
