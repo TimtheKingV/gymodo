@@ -41,7 +41,8 @@ Jeder kann die App nutzen, in jedem Studio und ohne Studio. Gymtavo pflegt eine 
 - `studios.is_catalog boolean not null default false`, eindeutiger Teilindex `where is_catalog` (höchstens eins).
 - Funktion `is_catalog_studio(p_studio_id)` (security definer, stable, `search_path` fest wie in 0040).
 - Die Migration legt das Gymtavo-Studio an (fester, dokumentierter UUID), `join_code_active = false`.
-- `join_studio_by_tag`, `join_studio_by_code` und `accept_staff_invite` weisen das Gymtavo-Studio ab. Owner wird nur per Service-Rolle eingetragen (dein Konto).
+- Ein Waechter-Trigger auf `studio_memberships` verbietet die Rolle `member` im Gymtavo-Studio. Er deckt jeden heutigen und kuenftigen Beitrittsweg ab (Marke, Code), ohne drei Funktionsrumpfe neu zu schreiben. Trainer-Einladungen bleiben moeglich -- das Gymtavo-Team braucht sie fuer die Pflege (Etappe 6). Der erste Owner wird per Service-Rolle eingetragen.
+- Ein zweiter Waechter-Trigger verhindert `machines` und `machine_tags` im Gymtavo-Studio.
 
 ### 5.2 Lesen für alle Angemeldeten
 
@@ -60,6 +61,7 @@ Die SELECT-Policies von `studios`, `equipment_models`, `equipment_setting_defini
 - `workout_sessions` Insert-Policy entsprechend: Mitglied **oder** Gymtavo-Studio.
 - `progression_suggestions`: wie `workout_sets` (`equipment_model_id` dazu, `machine_id` nullable).
 - `member_machine_calibrations` bleibt unverändert: Kalibrierung gibt es nur an echten Geräten.
+- Ein Füll-Trigger setzt `equipment_model_id` aus `machine_id`, wenn es fehlt. So schreibt der heutige Satzpfad (`workout.ts`) bis Etappe 3 unverändert weiter.
 
 ### 5.5 Verlauf gehört dem Nutzer
 
@@ -115,7 +117,7 @@ Die Sensor-Befestigung wird je `machineId` gemerkt, ohne Gerät je `equipmentMod
 
 ## 11. Etappen
 
-1. **Datenbank:** Migration 0047 (5.1–5.5) mit pgTAP- bzw. SQL-Tests für jede Policy.
+1. **Datenbank:** Migration 0047 (5.1–5.5) mit Integrationstests für jede Policy. Dazu Leser absichern, damit sich die App noch nicht ändert: Bootstrap und Startseite blenden das Gymtavo-Studio aus; Verlauf und Fortschritt fallen bei fehlenden Namen auf `my_history_labels()` zurück.
 2. **Import:** `catalog_key`, Skript, Beispieldatei mit einer Handvoll Typen und Übungen.
 3. **Domain/API:** Bootstrap, Satz ohne Gerät, Fortschritt je Übung, Verlaufsnamen.
 4. **iOS:** Studio-Zwang weg, Freies Training, Beitreten im Profil, Scan fremder Studios.
@@ -138,4 +140,5 @@ Jede Etappe ist für sich lauffähig. Etappe 4 setzt 1–3 voraus, Etappe 5 nur 
 
 - Darf ein Studio einzelne Gymtavo-Übungen an seinem Gerät ausblenden? Erst entscheiden, wenn es ein Studio verlangt.
 - Kalibrierung und gemerkte Einstellungen für Geräte ohne QR-Code.
+- `studio_overview` (0034) gibt dem Gymtavo-Owner Summen über Freies Training aus -- nur Summen, die Datenschutzgrenze bleibt. Falls unerwünscht, schließt Etappe 3 das Gymtavo-Studio dort aus.
 - Ob „Freies Training“ in der App so heißt oder z. B. „Ohne Studio“: Wortlaut bei der iOS-Etappe.
