@@ -6,6 +6,7 @@ import type { AktiveZiele } from "./goals.js";
 import type { Messpunkt } from "./measurements.js";
 import type { Profil } from "./profil.js";
 import { zuProfil } from "./profil.js";
+import { stationsSchluessel } from "./station.js";
 
 /**
  * Obergrenze fuer die Satzhistorie, aus der die letzten Werte je Kombination
@@ -32,6 +33,19 @@ export type Bootstrap = {
     goals: AktiveZiele;
   };
   studios: Array<{ id: string; name: string; timezone: string }>;
+  /**
+   * Der Gymtavo-Katalog (Migration 0047): die Geraetetypen, die jeder sieht.
+   * null nur, wenn es kein Katalog-Studio gibt -- dann hat die App schlicht
+   * nichts fuer das Freie Training.
+   */
+  catalog: {
+    studioId: string;
+    equipmentTypes: Array<
+      Geraetemodell & {
+        exercises: Uebung[];
+      }
+    >;
+  } | null;
   machines: Array<{
     id: string;
     studioId: string;
@@ -45,45 +59,16 @@ export type Bootstrap = {
      * deshalb ist die Deckelung durch SET_SCAN_LIMIT unkritisch.
      */
     visitCount: number;
-    equipmentModel: {
-      id: string;
-      name: string;
-      manufacturer: string | null;
-      photoPath: string | null;
-      /** Nur Anzeige: Gruppierung in der Geraetesuche (Cardio-Spec 3.5). */
-      category: Category;
-      loadUnit: LoadUnit;
-      loadStep: number;
-      loadMin: number;
-      loadMax: number | null;
-      /** Nebenbelastung, alle vier null bei Kraftgeraeten (Cardio-Spec 3.1b). */
-      secondaryUnit: LoadUnit | null;
-      secondaryStep: number | null;
-      secondaryMin: number | null;
-      secondaryMax: number | null;
-      /**
-       * Beschriftungen der Einstellparameter. Ohne sie zeigt der
-       * Offline-Zustand den rohen Schluessel ("sitz 4") statt "Sitz 4" --
-       * GeraetOffline.dc.html verlangt die Beschriftung.
-       */
-      settingDefinitions: Array<{
-        key: string;
-        label: string;
-        kind: string;
-        minValue: number | null;
-        maxValue: number | null;
-        stepValue: number | null;
-        unit: string | null;
-        allowedValues: string[] | null;
-      }>;
+    equipmentModel: Geraetemodell & {
+      /** Der Gymtavo-Typ, dem das Studio dieses Modell zugeordnet hat. */
+      catalogModelId: string | null;
     };
-    exercises: Array<{
-      id: string;
-      name: string;
-      volumeKind: VolumeKind;
-      targetMin: number;
-      targetMax: number;
-    }>;
+    /**
+     * Die eigenen Uebungen des Modells, danach die Gymtavo-Uebungen des
+     * zugeordneten Typs -- jede einmal (Spec 8.1). Der Server mischt, damit
+     * die App die Regel nicht ein zweites Mal kennen muss.
+     */
+    exercises: Uebung[];
   }>;
   calibrations: Array<{
     machineId: string;
@@ -101,7 +86,92 @@ export type Bootstrap = {
     rir: number | null;
     performedAt: string;
   }>;
+  /**
+   * Letzte Saetze ohne Geraet, je Gymtavo-Typ und Uebung. Ein eigenes Feld
+   * statt lastSets mit machineId null: die App vor Etappe 4 dekodiert
+   * machineId als Pflichtfeld und verwuerfe sonst den ganzen Bootstrap.
+   */
+  lastTypeSets: Array<{
+    equipmentModelId: string;
+    exerciseId: string;
+    load: number;
+    secondaryLoad: number | null;
+    volume: number;
+    rir: number | null;
+    performedAt: string;
+  }>;
 };
+
+/** Was ein Geraetemodell oder ein Gymtavo-Typ der App mitteilt. */
+type Geraetemodell = {
+  id: string;
+  name: string;
+  manufacturer: string | null;
+  photoPath: string | null;
+  /** Nur Anzeige: Gruppierung in der Geraetesuche (Cardio-Spec 3.5). */
+  category: Category;
+  loadUnit: LoadUnit;
+  loadStep: number;
+  loadMin: number;
+  loadMax: number | null;
+  /** Nebenbelastung, alle vier null bei Kraftgeraeten (Cardio-Spec 3.1b). */
+  secondaryUnit: LoadUnit | null;
+  secondaryStep: number | null;
+  secondaryMin: number | null;
+  secondaryMax: number | null;
+  /**
+   * Beschriftungen der Einstellparameter. Ohne sie zeigt der
+   * Offline-Zustand den rohen Schluessel ("sitz 4") statt "Sitz 4" --
+   * GeraetOffline.dc.html verlangt die Beschriftung.
+   */
+  settingDefinitions: Array<{
+    key: string;
+    label: string;
+    kind: string;
+    minValue: number | null;
+    maxValue: number | null;
+    stepValue: number | null;
+    unit: string | null;
+    allowedValues: string[] | null;
+  }>;
+};
+
+type Uebung = {
+  id: string;
+  name: string;
+  volumeKind: VolumeKind;
+  targetMin: number;
+  targetMax: number;
+};
+
+const MODELL_SPALTEN =
+  "id, name, manufacturer, photo_path, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id";
+
+type ModellZeile = {
+  id: string;
+  name: string;
+  manufacturer: string | null;
+  photo_path: string | null;
+  category: Category;
+  load_unit: LoadUnit;
+  load_step: number | string;
+  load_min: number | string;
+  load_max: number | string | null;
+  secondary_unit: LoadUnit | null;
+  secondary_step: number | string | null;
+  secondary_min: number | string | null;
+  secondary_max: number | string | null;
+  catalog_model_id: string | null;
+};
+
+/**
+ * Eigene Uebungen zuerst, dann die des Katalogtyps; eine Uebung, die das
+ * Studio zusaetzlich selbst angehaengt hat, bleibt an ihrer eigenen Stelle.
+ */
+export function uebungenMitKatalog(eigene: Uebung[], katalog: Uebung[]): Uebung[] {
+  const gesehen = new Set(eigene.map((uebung) => uebung.id));
+  return [...eigene, ...katalog.filter((uebung) => !gesehen.has(uebung.id))];
+}
 
 function key(machineId: string, exerciseId: string): string {
   return `${machineId}:${exerciseId}`;
@@ -150,20 +220,34 @@ export async function getBootstrap(
   // RLS beschraenkt diese Abfragen auf die Studios des Mitglieds -- mit
   // einer Ausnahme: den Gymtavo-Katalog liest seit 0047 jeder Angemeldete.
   // Er ist kein Studio des Mitglieds und faellt hier deshalb heraus; die
-  // App bekommt ihn erst in Etappe 3 gesondert. Verknuepfungen und
-  // Einstellungen weiter unten liefern Katalogzeilen zwar mit, sie haengen
-  // aber nur an Modellen eigener Geraete und bleiben so unsichtbar.
+  // App bekommt ihn gesondert als catalog. Verknuepfungen und
+  // Einstellungen weiter unten liefern Katalogzeilen mit; sie landen am
+  // Gymtavo-Typ im Block catalog und, ueber catalog_model_id, am Geraet.
   const { data: studioRows } = await client
     .from("studios")
     .select("id, name, timezone")
     .eq("is_catalog", false)
     .order("name", { ascending: true });
 
+  // Das Katalog-Studio ist fuer jeden lesbar; seine Modelle, Verknuepfungen
+  // und Einstellungen liefern die Abfragen unten ohnehin mit (RLS seit 0047).
+  const { data: katalogRow } = await client
+    .from("studios")
+    .select("id")
+    .eq("is_catalog", true)
+    .maybeSingle<{ id: string }>();
+
+  const { data: katalogModellRows } = katalogRow
+    ? await client
+        .from("equipment_models")
+        .select(MODELL_SPALTEN)
+        .eq("studio_id", katalogRow.id)
+        .order("name", { ascending: true })
+    : { data: [] };
+
   const { data: machineRows } = await client
     .from("machines")
-    .select(
-      "id, studio_id, label, location_note, status, equipment_models (id, name, manufacturer, photo_path, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max)",
-    )
+    .select(`id, studio_id, label, location_note, status, equipment_models (${MODELL_SPALTEN})`)
     .order("label", { ascending: true });
 
   const { data: tagRows } = await client
@@ -186,7 +270,9 @@ export async function getBootstrap(
 
   const { data: setRows } = await client
     .from("workout_sets")
-    .select("machine_id, exercise_id, session_id, load, secondary_load, volume, rir, performed_at")
+    .select(
+      "machine_id, equipment_model_id, exercise_id, session_id, load, secondary_load, volume, rir, performed_at",
+    )
     .eq("user_id", userId)
     .order("performed_at", { ascending: false })
     .limit(SET_SCAN_LIMIT);
@@ -223,10 +309,7 @@ export async function getBootstrap(
     hashesByMachine.set(row.machine_id, list);
   }
 
-  const exercisesByModel = new Map<
-    string,
-    Bootstrap["machines"][number]["exercises"]
-  >();
+  const exercisesByModel = new Map<string, Uebung[]>();
   for (const row of (linkRows ?? []) as unknown as Array<{
     equipment_model_id: string;
     exercises: {
@@ -271,10 +354,9 @@ export async function getBootstrap(
     });
   }
 
-  const seenSet = new Set<string>();
-  const lastSets: Bootstrap["lastSets"] = [];
-  for (const row of (setRows ?? []) as Array<{
-    machine_id: string;
+  type SatzZeile = {
+    machine_id: string | null;
+    equipment_model_id: string;
     exercise_id: string;
     session_id: string;
     load: number | string;
@@ -282,28 +364,40 @@ export async function getBootstrap(
     volume: number;
     rir: number | string | null;
     performed_at: string;
-  }>) {
-    const id = key(row.machine_id, row.exercise_id);
+  };
+  const saetze = (setRows ?? []) as SatzZeile[];
+  const werte = (row: SatzZeile) => ({
+    exerciseId: row.exercise_id,
+    load: Number(row.load),
+    secondaryLoad: row.secondary_load === null ? null : Number(row.secondary_load),
+    volume: row.volume,
+    rir: row.rir === null ? null : Number(row.rir),
+    performedAt: row.performed_at,
+  });
+
+  const seenSet = new Set<string>();
+  const lastSets: Bootstrap["lastSets"] = [];
+  const lastTypeSets: Bootstrap["lastTypeSets"] = [];
+  for (const row of saetze) {
+    const id = key(stationsSchluessel(row), row.exercise_id);
     if (seenSet.has(id)) continue;
     seenSet.add(id);
-    lastSets.push({
-      machineId: row.machine_id,
-      exerciseId: row.exercise_id,
-      load: Number(row.load),
-      secondaryLoad: row.secondary_load === null ? null : Number(row.secondary_load),
-      volume: row.volume,
-      rir: row.rir === null ? null : Number(row.rir),
-      performedAt: row.performed_at,
-    });
+    if (row.machine_id !== null) {
+      lastSets.push({ machineId: row.machine_id, ...werte(row) });
+    } else {
+      lastTypeSets.push({ equipmentModelId: row.equipment_model_id, ...werte(row) });
+    }
   }
 
   const besucheJeGeraet = zaehleBesucheJeGeraet(
-    (setRows ?? []) as Array<{ machine_id: string; session_id: string }>,
+    saetze.filter(
+      (row): row is SatzZeile & { machine_id: string } => row.machine_id !== null,
+    ),
   );
 
   const einstellungenJeModell = new Map<
     string,
-    Bootstrap["machines"][number]["equipmentModel"]["settingDefinitions"]
+    Geraetemodell["settingDefinitions"]
   >();
   for (const row of (settingRows ?? []) as Array<{
     equipment_model_id: string;
@@ -330,27 +424,30 @@ export async function getBootstrap(
     einstellungenJeModell.set(row.equipment_model_id, liste);
   }
 
+  const zuModell = (row: ModellZeile): Geraetemodell => ({
+    id: row.id,
+    name: row.name,
+    manufacturer: row.manufacturer,
+    photoPath: row.photo_path,
+    category: row.category,
+    loadUnit: row.load_unit,
+    loadStep: Number(row.load_step),
+    loadMin: Number(row.load_min),
+    loadMax: zahlOderNull(row.load_max),
+    secondaryUnit: row.secondary_unit,
+    secondaryStep: zahlOderNull(row.secondary_step),
+    secondaryMin: zahlOderNull(row.secondary_min),
+    secondaryMax: zahlOderNull(row.secondary_max),
+    settingDefinitions: einstellungenJeModell.get(row.id) ?? [],
+  });
+
   const machines = ((machineRows ?? []) as unknown as Array<{
     id: string;
     studio_id: string;
     label: string;
     location_note: string | null;
     status: string;
-    equipment_models: {
-      id: string;
-      name: string;
-      manufacturer: string | null;
-      photo_path: string | null;
-      category: Category;
-      load_unit: LoadUnit;
-      load_step: number | string;
-      load_min: number | string;
-      load_max: number | string | null;
-      secondary_unit: LoadUnit | null;
-      secondary_step: number | string | null;
-      secondary_min: number | string | null;
-      secondary_max: number | string | null;
-    };
+    equipment_models: ModellZeile;
   }>).map((row) => ({
     id: row.id,
     studioId: row.studio_id,
@@ -360,23 +457,26 @@ export async function getBootstrap(
     tokenHashes: hashesByMachine.get(row.id) ?? [],
     visitCount: besucheJeGeraet.get(row.id) ?? 0,
     equipmentModel: {
-      id: row.equipment_models.id,
-      name: row.equipment_models.name,
-      manufacturer: row.equipment_models.manufacturer,
-      photoPath: row.equipment_models.photo_path,
-      category: row.equipment_models.category,
-      loadUnit: row.equipment_models.load_unit,
-      loadStep: Number(row.equipment_models.load_step),
-      loadMin: Number(row.equipment_models.load_min),
-      loadMax: zahlOderNull(row.equipment_models.load_max),
-      secondaryUnit: row.equipment_models.secondary_unit,
-      secondaryStep: zahlOderNull(row.equipment_models.secondary_step),
-      secondaryMin: zahlOderNull(row.equipment_models.secondary_min),
-      secondaryMax: zahlOderNull(row.equipment_models.secondary_max),
-      settingDefinitions: einstellungenJeModell.get(row.equipment_models.id) ?? [],
+      ...zuModell(row.equipment_models),
+      catalogModelId: row.equipment_models.catalog_model_id,
     },
-    exercises: exercisesByModel.get(row.equipment_models.id) ?? [],
+    exercises: uebungenMitKatalog(
+      exercisesByModel.get(row.equipment_models.id) ?? [],
+      row.equipment_models.catalog_model_id
+        ? exercisesByModel.get(row.equipment_models.catalog_model_id) ?? []
+        : [],
+    ),
   }));
+
+  const catalog: Bootstrap["catalog"] = katalogRow
+    ? {
+        studioId: katalogRow.id,
+        equipmentTypes: ((katalogModellRows ?? []) as unknown as ModellZeile[]).map((row) => ({
+          ...zuModell(row),
+          exercises: exercisesByModel.get(row.id) ?? [],
+        })),
+      }
+    : null;
 
   const weight = weightRow as { measured_on: string; weight_kg: number | string } | null;
 
@@ -392,8 +492,10 @@ export async function getBootstrap(
       goals: await aktiveZiele(client, userId),
     },
     studios: (studioRows ?? []) as Bootstrap["studios"],
+    catalog,
     machines,
     calibrations,
     lastSets,
+    lastTypeSets,
   };
 }

@@ -133,7 +133,7 @@ export type {
 export type { Bootstrap } from "./bootstrap.js";
 export { getTagContext } from "./tag-context.js";
 export type { TagContext } from "./tag-context.js";
-export { getMachineContext } from "./machine-context.js";
+export { getEquipmentModelContext, getMachineContext } from "./machine-context.js";
 export type { MachineContext } from "./machine-context.js";
 export { getMachinePhotos } from "./machine-photos.js";
 export type { MachinePhotos } from "./machine-photos.js";

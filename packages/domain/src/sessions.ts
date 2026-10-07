@@ -3,7 +3,8 @@ import { requireUserId } from "./auth.js";
 import type { LoadUnit, VolumeKind } from "./belastung.js";
 import { aktiveZiele } from "./goals.js";
 import { ortszeitTeile } from "./serie.js";
-import { mitVerlaufsnamen, type MitNamen } from "./verlaufsnamen.js";
+import { stationsSchluessel } from "./station.js";
+import { mitVerlaufsnamen, typAlsGeraet, type MitNamen } from "./verlaufsnamen.js";
 import type { ProblemReason } from "./workout.js";
 
 /**
@@ -140,7 +141,10 @@ export function serienstand(startsAt: string[], jetzt: Date, zeitzone: string): 
 }
 
 export type SessionBlock = {
-  machineId: string;
+  /** null an einem Geraetetyp ohne QR-Code (Spec 8.1). */
+  machineId: string | null;
+  equipmentModelId: string;
+  /** Ohne Geraet der Name des Typs ("Langhantel"). */
   machineLabel: string;
   exerciseId: string;
   exerciseName: string;
@@ -204,20 +208,16 @@ type SetRow = {
   problem_flag: boolean;
   problem_reason: ProblemReason | null;
   performed_at: string;
-  // null nach einem Austritt: der Verlauf bleibt lesbar, der Katalog des
-  // Studios nicht (0047). mitVerlaufsnamen fuellt die Luecke.
+  // null ohne Geraet (typAlsGeraet fuellt aus dem Typ) und nach einem
+  // Austritt: der Verlauf bleibt lesbar, der Katalog des Studios nicht
+  // (0047). mitVerlaufsnamen fuellt diese Luecke.
   machines: {
     label: string;
     equipment_models: { load_unit: LoadUnit; secondary_unit: LoadUnit | null };
   } | null;
   exercises: { name: string; volume_kind: VolumeKind } | null;
+  equipment_models: { name: string; load_unit: LoadUnit; secondary_unit: LoadUnit | null } | null;
 };
-
-type BenannterSatz = MitNamen<SetRow> & { machine_id: string };
-
-function hatGeraet(row: MitNamen<SetRow>): row is BenannterSatz {
-  return row.machine_id !== null;
-}
 
 /**
  * Die Zeitpunkte, auf denen die Serie rechnet.
@@ -311,7 +311,7 @@ export async function getSessions(
   const { data: setRows } = await client
     .from("workout_sets")
     .select(
-      "session_id, machine_id, equipment_model_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, performed_at, machines (label, equipment_models (load_unit, secondary_unit)), exercises (name, volume_kind)",
+      "session_id, machine_id, equipment_model_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, performed_at, machines (label, equipment_models (load_unit, secondary_unit)), exercises (name, volume_kind), equipment_models (name, load_unit, secondary_unit)",
     )
     .eq("user_id", userId)
     .in(
@@ -322,14 +322,11 @@ export async function getSessions(
 
   const benannteSaetze = await mitVerlaufsnamen(
     client,
-    (setRows ?? []) as unknown as SetRow[],
+    typAlsGeraet((setRows ?? []) as unknown as SetRow[]),
   );
 
-  const setsBySession = new Map<string, BenannterSatz[]>();
+  const setsBySession = new Map<string, Array<MitNamen<SetRow>>>();
   for (const row of benannteSaetze) {
-    // Saetze ohne Geraet kennt die API erst ab Etappe 3 (Spec 11); bis
-    // dahin schreibt die App keine, und ein Block braucht eine machineId.
-    if (!hatGeraet(row)) continue;
     const list = setsBySession.get(row.session_id) ?? [];
     list.push(row);
     setsBySession.set(row.session_id, list);
@@ -345,11 +342,14 @@ export async function getSessions(
     const blockOrder: string[] = [];
     const blocks = new Map<string, SessionBlock>();
     for (const row of sets) {
-      const id = `${row.machine_id}:${row.exercise_id}`;
+      // Ein Block ist eine Station plus eine Uebung (station.ts): zwei freie
+      // Saetze an verschiedenen Typen sind zwei Bloecke.
+      const id = `${stationsSchluessel(row)}:${row.exercise_id}`;
       let block = blocks.get(id);
       if (!block) {
         block = {
           machineId: row.machine_id,
+          equipmentModelId: row.equipment_model_id,
           machineLabel: row.machines.label,
           exerciseId: row.exercise_id,
           exerciseName: row.exercises.name,
@@ -397,7 +397,9 @@ export async function getSessions(
       startedAt: session.started_at,
       completedAt,
       completedReason,
-      machineCount: new Set(sets.map((row) => row.machine_id)).size,
+      // Zaehlt Stationen: die Langhantel ohne Sticker ist so ein "Geraet" wie
+      // die Beinpresse mit.
+      machineCount: new Set(sets.map((row) => stationsSchluessel(row))).size,
       setCount: sets.length,
       blocks: blockOrder.map((id) => blocks.get(id)!),
     };

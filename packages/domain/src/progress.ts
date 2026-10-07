@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireUserId } from "./auth.js";
 import type { LoadUnit, VolumeKind } from "./belastung.js";
 import { DomainError } from "./errors.js";
-import { mitVerlaufsnamen } from "./verlaufsnamen.js";
+import { mitVerlaufsnamen, typAlsGeraet } from "./verlaufsnamen.js";
 
 /**
  * Obergrenze der gelesenen Saetze. Ausgeliefert werden nur Aggregate; die
@@ -60,6 +60,7 @@ type SetRow = {
     label: string;
     equipment_models: { load_unit: LoadUnit; secondary_unit: LoadUnit | null };
   } | null;
+  equipment_models: { name: string; load_unit: LoadUnit; secondary_unit: LoadUnit | null } | null;
 };
 
 /**
@@ -85,7 +86,7 @@ export async function getProgress(
   let query = client
     .from("workout_sets")
     .select(
-      "machine_id, equipment_model_id, exercise_id, load, volume, performed_at, exercises (name, volume_kind), machines (label, equipment_models (load_unit, secondary_unit))",
+      "machine_id, equipment_model_id, exercise_id, load, volume, performed_at, exercises (name, volume_kind), machines (label, equipment_models (load_unit, secondary_unit)), equipment_models (name, load_unit, secondary_unit)",
     )
     .eq("user_id", userId)
     .order("performed_at", { ascending: true })
@@ -108,7 +109,10 @@ export async function getProgress(
       days: Map<string, ProgressPoint>;
     }
   >();
-  for (const row of await mitVerlaufsnamen(client, (setRows ?? []) as unknown as SetRow[])) {
+  for (const row of await mitVerlaufsnamen(
+    client,
+    typAlsGeraet((setRows ?? []) as unknown as SetRow[]),
+  )) {
     const entry = byExercise.get(row.exercise_id) ?? {
       name: row.exercises.name,
       machineLabel: row.machines.label,

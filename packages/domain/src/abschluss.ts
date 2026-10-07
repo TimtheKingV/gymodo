@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { DomainError } from "./errors.js";
 import type { LoadUnit } from "./belastung.js";
+import { stationsSchluessel } from "./station.js";
 import {
   PROGRESSION_ALGO_VERSION,
   suggestNextLoad,
@@ -29,7 +30,9 @@ export type Blockeinheiten = {
  * gilt (Cardio-Spec Abschnitt 3.1b); sie wird nie gesteigert, nur genannt.
  */
 export type Blockvorschlag = {
-  machineId: string;
+  /** null an einem Geraetetyp ohne QR-Code (Spec 8.1). */
+  machineId: string | null;
+  equipmentModelId: string;
   exerciseId: string;
   resultLoad: number | null;
   deltaLoad: number | null;
@@ -40,21 +43,54 @@ export type Blockvorschlag = {
   algoVersion: string;
 };
 
+/** Ein Block: eine Station (Geraet oder Typ) plus eine Uebung. */
+export type Blockpaar = {
+  machineId: string | null;
+  equipmentModelId: string;
+  exerciseId: string;
+};
+
+type Stationszeile = {
+  machine_id: string | null;
+  equipment_model_id: string;
+  exercise_id: string;
+};
+
+/** Station und Uebung in einem Schluessel -- fuer Zeilen wie fuer Paare. */
+export function blockSchluessel(zeile: Stationszeile): string {
+  return `${stationsSchluessel(zeile)}:${zeile.exercise_id}`;
+}
+
+function paarSchluessel(paar: Blockpaar): string {
+  return blockSchluessel({
+    machine_id: paar.machineId,
+    equipment_model_id: paar.equipmentModelId,
+    exercise_id: paar.exerciseId,
+  });
+}
+
+function stationVon(paar: Blockpaar): string {
+  return stationsSchluessel({ machine_id: paar.machineId, equipment_model_id: paar.equipmentModelId });
+}
+
 /**
- * Die Paare aus Geraet und Uebung dieser Session, in der Reihenfolge ihres
- * ersten Auftretens -- dieselbe Blockdefinition wie im Training selbst
- * (M1-Spec SS5.3: ein Block ist ein Geraet plus eine Uebung).
+ * Die Bloecke dieser Session, in der Reihenfolge ihres ersten Auftretens --
+ * dieselbe Blockdefinition wie im Training selbst (M1-Spec SS5.3). Seit 0047
+ * ist ein Block eine Station plus eine Uebung: zwei freie Saetze an
+ * verschiedenen Typen sind zwei Bloecke, nicht einer "ohne Geraet".
  */
-export function blockPaare(
-  rows: Array<{ machine_id: string; exercise_id: string }>,
-): Array<{ machineId: string; exerciseId: string }> {
+export function blockPaare(rows: Stationszeile[]): Blockpaar[] {
   const gesehen = new Set<string>();
-  const paare: Array<{ machineId: string; exerciseId: string }> = [];
+  const paare: Blockpaar[] = [];
   for (const row of rows) {
-    const schluessel = `${row.machine_id}:${row.exercise_id}`;
+    const schluessel = blockSchluessel(row);
     if (gesehen.has(schluessel)) continue;
     gesehen.add(schluessel);
-    paare.push({ machineId: row.machine_id, exerciseId: row.exercise_id });
+    paare.push({
+      machineId: row.machine_id,
+      equipmentModelId: row.equipment_model_id,
+      exerciseId: row.exercise_id,
+    });
   }
   return paare;
 }
@@ -65,7 +101,8 @@ export function blockPaare(
  * sich vergleichen laesst.
  */
 export function zuVorschlag(eingabe: {
-  machineId: string;
+  machineId: string | null;
+  equipmentModelId: string;
   exerciseId: string;
   suggestion: ProgressionSuggestion;
   einheiten: Blockeinheiten;
@@ -80,6 +117,7 @@ export function zuVorschlag(eingabe: {
 
   return {
     machineId: eingabe.machineId,
+    equipmentModelId: eingabe.equipmentModelId,
     exerciseId: eingabe.exerciseId,
     resultLoad,
     deltaLoad,
@@ -93,7 +131,8 @@ export function zuVorschlag(eingabe: {
 
 /** Eine Zeile aus progression_suggestions, so wie sie zurueckgelesen wird. */
 export type GespeicherteVorschlagZeile = {
-  machine_id: string;
+  machine_id: string | null;
+  equipment_model_id: string;
   exercise_id: string;
   created_at: string;
   algo_version: string;
@@ -162,10 +201,11 @@ export const ABSCHLUSS_ZEITFENSTER_MS = 5 * 60 * 1000;
  * Frueheinstieg da ist.
  */
 export function ausGespeichertenZeilen(
-  paare: Array<{ machineId: string; exerciseId: string }>,
+  paare: Blockpaar[],
   zeilen: GespeicherteVorschlagZeile[],
   completedAt: string,
-  einheitenJeGeraet: Map<string, Blockeinheiten>,
+  /** Schluessel ist die Station (stationsSchluessel), nicht das Geraet. */
+  einheitenJeStation: Map<string, Blockeinheiten>,
 ): Blockvorschlag[] {
   const grenze = Date.parse(completedAt);
   const fensterVon = grenze - ABSCHLUSS_ZEITFENSTER_MS;
@@ -174,7 +214,7 @@ export function ausGespeichertenZeilen(
   for (const zeile of zeilen) {
     const wann = Date.parse(zeile.created_at);
     if (!(wann >= fensterVon && wann <= fensterBis)) continue;
-    const schluessel = `${zeile.machine_id}:${zeile.exercise_id}`;
+    const schluessel = blockSchluessel(zeile);
     const liste = nachBlock.get(schluessel) ?? [];
     liste.push(zeile);
     nachBlock.set(schluessel, liste);
@@ -182,13 +222,13 @@ export function ausGespeichertenZeilen(
 
   const vorschlaege: Blockvorschlag[] = [];
   for (const paar of paare) {
-    const liste = nachBlock.get(`${paar.machineId}:${paar.exerciseId}`);
+    const liste = nachBlock.get(paarSchluessel(paar));
     if (!liste || liste.length === 0) continue;
     // Ohne Einheit kein Vorschlag: "kg" zu raten waere an einem Laufband
     // eine Falschaussage. Kommt nicht vor, solange bloeckeDerSession die
     // Geraete mitliest -- die Schranke steht fuer den Fall, dass das mal
     // nicht mehr stimmt.
-    const einheiten = einheitenJeGeraet.get(paar.machineId);
+    const einheiten = einheitenJeStation.get(stationVon(paar));
     if (!einheiten) continue;
 
     const sortiert = [...liste].sort(
@@ -220,6 +260,7 @@ export function ausGespeichertenZeilen(
 
     vorschlaege.push({
       machineId: paar.machineId,
+      equipmentModelId: paar.equipmentModelId,
       exerciseId: paar.exerciseId,
       resultLoad: ergebnis,
       deltaLoad,
@@ -235,49 +276,48 @@ export function ausGespeichertenZeilen(
 
 /**
  * Die Bloecke einer Session, in der Reihenfolge ihres ersten Auftretens,
- * samt Studio und den Einheiten je Geraet -- die eine Abfrage, die beide
+ * samt Studio und den Einheiten je Station -- die eine Abfrage, die beide
  * Wege (rechnen und zuruecklesen) gleichermassen brauchen. Die Einheiten
- * kommen ueber den Join mit, damit der Rueckleseweg keinen zweiten
- * Roundtrip braucht.
+ * kommen ueber das Modell des Satzes mit (seit 0047 traegt jeder Satz
+ * eines), damit der Rueckleseweg keinen zweiten Roundtrip braucht.
  */
 async function bloeckeDerSession(
   client: SupabaseClient,
   sessionId: string,
   userId: string,
 ): Promise<{
-  paare: Array<{ machineId: string; exerciseId: string }>;
+  paare: Blockpaar[];
   studioId: string | null;
-  einheitenJeGeraet: Map<string, Blockeinheiten>;
+  einheitenJeStation: Map<string, Blockeinheiten>;
 }> {
   const { data: sessionSaetze, error } = await client
     .from("workout_sets")
     .select(
-      "machine_id, exercise_id, studio_id, machines (equipment_models (load_unit, secondary_unit))",
+      "machine_id, equipment_model_id, exercise_id, studio_id, equipment_models (load_unit, secondary_unit)",
     )
     .eq("session_id", sessionId)
     .eq("user_id", userId)
     .order("performed_at", { ascending: true });
   if (error) throw new DomainError("internal", error.message);
 
-  const zeilen = (sessionSaetze ?? []) as unknown as Array<{
-    machine_id: string;
-    exercise_id: string;
-    studio_id: string;
-    machines: {
-      equipment_models: { load_unit: LoadUnit; secondary_unit: LoadUnit | null };
-    } | null;
-  }>;
+  const zeilen = (sessionSaetze ?? []) as unknown as Array<
+    Stationszeile & {
+      studio_id: string;
+      equipment_models: { load_unit: LoadUnit; secondary_unit: LoadUnit | null } | null;
+    }
+  >;
   const paare = blockPaare(zeilen);
-  const einheitenJeGeraet = new Map<string, Blockeinheiten>();
+  const einheitenJeStation = new Map<string, Blockeinheiten>();
   for (const zeile of zeilen) {
-    const modell = zeile.machines?.equipment_models;
-    if (!modell || einheitenJeGeraet.has(zeile.machine_id)) continue;
-    einheitenJeGeraet.set(zeile.machine_id, {
+    const modell = zeile.equipment_models;
+    const station = stationsSchluessel(zeile);
+    if (!modell || einheitenJeStation.has(station)) continue;
+    einheitenJeStation.set(station, {
       loadUnit: modell.load_unit,
       secondaryUnit: modell.secondary_unit,
     });
   }
-  return { paare, studioId: zeilen[0]?.studio_id ?? null, einheitenJeGeraet };
+  return { paare, studioId: zeilen[0]?.studio_id ?? null, einheitenJeStation };
 }
 
 /**
@@ -295,14 +335,17 @@ export async function gespeicherteVorschlaege(
   userId: string,
   completedAt: string,
 ): Promise<Blockvorschlag[]> {
-  const { paare, einheitenJeGeraet } = await bloeckeDerSession(
+  const { paare, einheitenJeStation } = await bloeckeDerSession(
     client,
     sessionId,
     userId,
   );
   if (paare.length === 0) return [];
 
-  const machineIds = [...new Set(paare.map((p) => p.machineId))];
+  // Ueber den Typ statt ueber das Geraet: jede Zeile traegt seit 0047 einen,
+  // auch die ohne Geraet. Welche Zeile zu welcher Station gehoert, trennt
+  // ausGespeichertenZeilen danach ueber blockSchluessel.
+  const modellIds = [...new Set(paare.map((p) => p.equipmentModelId))];
   const exerciseIds = [...new Set(paare.map((p) => p.exerciseId))];
 
   // Dieselbe Zeitschranke wie in ausGespeichertenZeilen, schon in der
@@ -317,10 +360,10 @@ export async function gespeicherteVorschlaege(
   const { data: zeilen, error } = await client
     .from("progression_suggestions")
     .select(
-      "machine_id, exercise_id, created_at, algo_version, result_load, reason_code, inputs",
+      "machine_id, equipment_model_id, exercise_id, created_at, algo_version, result_load, reason_code, inputs",
     )
     .eq("user_id", userId)
-    .in("machine_id", machineIds)
+    .in("equipment_model_id", modellIds)
     .in("exercise_id", exerciseIds)
     .gte("created_at", fensterVon)
     .lte("created_at", fensterBis)
@@ -332,7 +375,7 @@ export async function gespeicherteVorschlaege(
     paare,
     (zeilen ?? []) as GespeicherteVorschlagZeile[],
     completedAt,
-    einheitenJeGeraet,
+    einheitenJeStation,
   );
 }
 
@@ -364,14 +407,14 @@ export async function vorschlaegeFuerAbschluss(
   sessionId: string,
   userId: string,
 ): Promise<Blockvorschlag[]> {
-  const { paare, studioId, einheitenJeGeraet } = await bloeckeDerSession(
+  const { paare, studioId, einheitenJeStation } = await bloeckeDerSession(
     client,
     sessionId,
     userId,
   );
   if (paare.length === 0 || studioId === null) return [];
 
-  const machineIds = [...new Set(paare.map((p) => p.machineId))];
+  const modellIds = [...new Set(paare.map((p) => p.equipmentModelId))];
   const exerciseIds = [...new Set(paare.map((p) => p.exerciseId))];
 
   const { data: uebungen, error: uebungenFehler } = await client
@@ -380,27 +423,27 @@ export async function vorschlaegeFuerAbschluss(
     .in("id", exerciseIds);
   if (uebungenFehler) throw new DomainError("internal", uebungenFehler.message);
 
-  const { data: geraete, error: geraeteFehler } = await client
-    .from("machines")
-    .select(
-      "id, equipment_models (load_step, load_min, load_max)",
-    )
-    .in("id", machineIds);
-  if (geraeteFehler) throw new DomainError("internal", geraeteFehler.message);
+  // Die Stufen kommen vom Modell der Station: am Geraet von dessen Modell,
+  // ohne Geraet vom Gymtavo-Typ.
+  const { data: modelle, error: modelleFehler } = await client
+    .from("equipment_models")
+    .select("id, load_step, load_min, load_max")
+    .in("id", modellIds);
+  if (modelleFehler) throw new DomainError("internal", modelleFehler.message);
 
-  // Die Historie aller betroffenen Geraete in einer Abfrage. Groesseres
-  // Fenster als in tag-context (dort HISTORY_DAYS * 6 = 36 Zeilen fuer EIN
-  // Geraet): hier teilen sich alle Uebungen an derselben Maschine eine
-  // gemeinsame Abfrage, und ein Block muss auch dann noch genug Zeilen
-  // abbekommen, wenn ein anderer Block an derselben Maschine haengt.
+  // Die Historie aller betroffenen Stationen in einer Abfrage, ueber ihre
+  // Modelle. Groesseres Fenster als in tag-context (dort HISTORY_DAYS * 6 =
+  // 36 Zeilen fuer EINE Station): hier teilen sich alle Uebungen am selben
+  // Modell eine gemeinsame Abfrage, und ein Block muss auch dann noch genug
+  // Zeilen abbekommen, wenn ein anderer Block am selben Modell haengt.
   // Deshalb 60 Zeilen je Block statt 36.
   const { data: historie, error: historieFehler } = await client
     .from("workout_sets")
     .select(
-      "machine_id, exercise_id, performed_at, load, secondary_load, volume, rir, problem_flag",
+      "machine_id, equipment_model_id, exercise_id, performed_at, load, secondary_load, volume, rir, problem_flag",
     )
     .eq("user_id", userId)
-    .in("machine_id", machineIds)
+    .in("equipment_model_id", modellIds)
     .order("performed_at", { ascending: false })
     .limit(paare.length * 60);
   // Die folgenschwerste der fuenf Pruefungen. Ohne sie faellt ein
@@ -421,25 +464,20 @@ export async function vorschlaegeFuerAbschluss(
     }),
   );
   const modellNach = new Map(
-    (geraete ?? []).map((g) => {
-      const row = g as unknown as {
+    (modelle ?? []).map((m) => {
+      const row = m as unknown as {
         id: string;
-        equipment_models: {
-          load_step: number | string;
-          load_min: number | string;
-          load_max: number | string | null;
-        };
+        load_step: number | string;
+        load_min: number | string;
+        load_max: number | string | null;
       };
-      return [row.id, row.equipment_models];
+      return [row.id, row];
     }),
   );
 
   const historieNach = new Map<string, SatzZeile[]>();
-  for (const row of (historie ?? []) as Array<SatzZeile & {
-    machine_id: string;
-    exercise_id: string;
-  }>) {
-    const schluessel = `${row.machine_id}:${row.exercise_id}`;
+  for (const row of (historie ?? []) as Array<SatzZeile & Stationszeile>) {
+    const schluessel = blockSchluessel(row);
     const liste = historieNach.get(schluessel) ?? [];
     liste.push(row);
     historieNach.set(schluessel, liste);
@@ -452,7 +490,8 @@ export async function vorschlaegeFuerAbschluss(
   const zeilenFuerInsert: Array<{
     studio_id: string;
     user_id: string;
-    machine_id: string;
+    machine_id: string | null;
+    equipment_model_id: string;
     exercise_id: string;
     algo_version: string;
     inputs: ProgressionSuggestion["inputs"];
@@ -462,8 +501,8 @@ export async function vorschlaegeFuerAbschluss(
 
   for (const paar of paare) {
     const uebung = uebungNach.get(paar.exerciseId);
-    const modell = modellNach.get(paar.machineId);
-    const einheiten = einheitenJeGeraet.get(paar.machineId);
+    const modell = modellNach.get(paar.equipmentModelId);
+    const einheiten = einheitenJeStation.get(stationVon(paar));
     if (!uebung || !modell || !einheiten) continue;
 
     const suggestion = suggestNextLoad({
@@ -472,9 +511,7 @@ export async function vorschlaegeFuerAbschluss(
       loadStep: Number(modell.load_step),
       loadMin: Number(modell.load_min),
       loadMax: Number(modell.load_max ?? 9999),
-      history: toBlocks(
-        historieNach.get(`${paar.machineId}:${paar.exerciseId}`) ?? [],
-      ),
+      history: toBlocks(historieNach.get(paarSchluessel(paar)) ?? []),
     });
 
     const vorschlag = zuVorschlag({ ...paar, suggestion, einheiten });
@@ -483,6 +520,7 @@ export async function vorschlaegeFuerAbschluss(
       studio_id: studioId,
       user_id: userId,
       machine_id: vorschlag.machineId,
+      equipment_model_id: vorschlag.equipmentModelId,
       exercise_id: vorschlag.exerciseId,
       algo_version: PROGRESSION_ALGO_VERSION,
       inputs: suggestion.inputs,
