@@ -105,3 +105,81 @@ create trigger machines_gymtavo_ohne_geraete
 create trigger machine_tags_gymtavo_ohne_geraete
   before insert or update of studio_id on public.machine_tags
   for each row execute function public.gymtavo_ohne_geraete();
+
+-- ---------------------------------------------------------------------
+-- 2. Den Katalog liest jeder Angemeldete
+-- ---------------------------------------------------------------------
+
+-- Nur die Lesepolicies werden weiter. Geschrieben wird weiter mit
+-- is_studio_staff -- fuer den Katalog heisst das: nur das Gymtavo-Team.
+
+drop policy equipment_models_select on public.equipment_models;
+create policy equipment_models_select on public.equipment_models
+  for select to authenticated
+  using (
+    public.is_studio_member(equipment_models.studio_id)
+    or public.is_catalog_studio(equipment_models.studio_id)
+  );
+
+drop policy equipment_setting_definitions_select on public.equipment_setting_definitions;
+create policy equipment_setting_definitions_select on public.equipment_setting_definitions
+  for select to authenticated
+  using (
+    exists (
+      select 1 from public.equipment_models em
+      where em.id = equipment_setting_definitions.equipment_model_id
+        and (public.is_studio_member(em.studio_id) or public.is_catalog_studio(em.studio_id))
+    )
+  );
+
+drop policy exercises_select on public.exercises;
+create policy exercises_select on public.exercises
+  for select to authenticated
+  using (
+    public.is_studio_member(exercises.studio_id)
+    or public.is_catalog_studio(exercises.studio_id)
+  );
+
+drop policy instruction_assets_select on public.instruction_assets;
+create policy instruction_assets_select on public.instruction_assets
+  for select to authenticated
+  using (
+    exists (
+      select 1
+      from public.equipment_model_exercises eme
+      join public.equipment_models em on em.id = eme.equipment_model_id
+      where eme.id = instruction_assets.equipment_model_exercise_id
+        and (public.is_studio_member(em.studio_id) or public.is_catalog_studio(em.studio_id))
+    )
+  );
+
+-- Ohne diese Policy blieben die Videos trotz der Policy oben unsichtbar:
+-- instruction_assets haengt an der Verknuepfung. Der Join auf dasselbe
+-- Studio bleibt hier noch stehen; Abschnitt 3 lockert ihn fuer den Verweis.
+drop policy equipment_model_exercises_select on public.equipment_model_exercises;
+create policy equipment_model_exercises_select on public.equipment_model_exercises
+  for select to authenticated
+  using (
+    exists (
+      select 1
+      from public.equipment_models em
+      join public.exercises e on e.studio_id = em.studio_id
+      where em.id = equipment_model_exercises.equipment_model_id
+        and e.id = equipment_model_exercises.exercise_id
+        and (public.is_studio_member(em.studio_id) or public.is_catalog_studio(em.studio_id))
+    )
+  );
+
+-- Die Videos des Katalogs liegen unter dem Ordner des Gymtavo-Studios.
+-- Ein Video, das ein Studio zu einer Gymtavo-Uebung ergaenzt, liegt dagegen
+-- im Ordner des Studios und bleibt dessen Mitgliedern vorbehalten.
+drop policy media_select on storage.objects;
+create policy media_select on storage.objects
+  for select to authenticated
+  using (
+    bucket_id in ('equipment-photos', 'instruction-videos')
+    and (
+      public.is_studio_member(public.storage_studio_id(name))
+      or public.is_catalog_studio(public.storage_studio_id(name))
+    )
+  );

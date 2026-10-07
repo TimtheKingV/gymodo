@@ -153,3 +153,158 @@ describe("Gymtavo-Studio", () => {
     expect(error?.code).toBe("42501");
   });
 });
+
+describe("Gymtavo-Katalog lesen", () => {
+  let katalogModell: string;
+  let katalogUebung: string;
+  let katalogVerknuepfung: string;
+  let katalogVideoPfad: string;
+  let studioModellA: string;
+  let studioUebungA: string;
+  let gymtavoOwnerEmail: string;
+
+  beforeAll(async () => {
+    const admin = serviceClient();
+    const kennung = crypto.randomUUID();
+
+    const { data: modelle, error: modellError } = await admin
+      .from("equipment_models")
+      .insert([
+        { studio_id: GYMTAVO, name: `Langhantel ${kennung}`, load_step: 2.5 },
+        { studio_id: studioA, name: `Studio-Presse ${kennung}`, load_step: 5 },
+      ])
+      .select("id");
+    if (modellError) throw modellError;
+    katalogModell = modelle[0]!.id;
+    studioModellA = modelle[1]!.id;
+
+    const { error: einstellungError } = await admin.from("equipment_setting_definitions").insert({
+      equipment_model_id: katalogModell,
+      key: "griffbreite",
+      label: "Griffbreite",
+      kind: "number",
+      min_value: 1,
+      max_value: 5,
+      step_value: 1,
+    });
+    if (einstellungError) throw einstellungError;
+
+    const { data: uebungen, error: uebungError } = await admin
+      .from("exercises")
+      .insert([
+        { studio_id: GYMTAVO, name: `Bankdruecken ${kennung}`, target_min: 6, target_max: 10 },
+        { studio_id: studioA, name: `Studio-Uebung ${kennung}`, target_min: 8, target_max: 12 },
+      ])
+      .select("id");
+    if (uebungError) throw uebungError;
+    katalogUebung = uebungen[0]!.id;
+    studioUebungA = uebungen[1]!.id;
+
+    const { data: verknuepfung, error: verknuepfungError } = await admin
+      .from("equipment_model_exercises")
+      .insert({ equipment_model_id: katalogModell, exercise_id: katalogUebung })
+      .select("id")
+      .single();
+    if (verknuepfungError) throw verknuepfungError;
+    katalogVerknuepfung = verknuepfung.id;
+
+    katalogVideoPfad = `${GYMTAVO}/${katalogVerknuepfung}/${kennung}.mp4`;
+    const { error: uploadError } = await admin.storage
+      .from("instruction-videos")
+      .upload(katalogVideoPfad, new Blob([new Uint8Array(16)], { type: "video/mp4" }), {
+        contentType: "video/mp4",
+      });
+    if (uploadError) throw uploadError;
+
+    const { error: assetError } = await admin.from("instruction_assets").insert({
+      equipment_model_exercise_id: katalogVerknuepfung,
+      kind: "video",
+      storage_path: katalogVideoPfad,
+      duration_s: 20,
+    });
+    if (assetError) throw assetError;
+
+    gymtavoOwnerEmail = uniqueEmail("katalog-pflege");
+    const ownerId = await createTestUser(gymtavoOwnerEmail);
+    const { error: ownerError } = await admin
+      .from("studio_memberships")
+      .insert({ studio_id: GYMTAVO, user_id: ownerId, role: "owner" });
+    if (ownerError) throw ownerError;
+  });
+
+  it("ein Nutzer ohne Studio liest Geraetetyp, Einstellung, Uebung, Verknuepfung und Video", async () => {
+    const client = await userClient(ohneStudioEmail);
+
+    const modell = await client.from("equipment_models").select("id").eq("id", katalogModell);
+    const einstellung = await client
+      .from("equipment_setting_definitions")
+      .select("key")
+      .eq("equipment_model_id", katalogModell);
+    const uebung = await client.from("exercises").select("id").eq("id", katalogUebung);
+    const verknuepfung = await client
+      .from("equipment_model_exercises")
+      .select("id")
+      .eq("id", katalogVerknuepfung);
+    const video = await client
+      .from("instruction_assets")
+      .select("storage_path")
+      .eq("equipment_model_exercise_id", katalogVerknuepfung);
+    const signiert = await client.storage
+      .from("instruction-videos")
+      .createSignedUrl(katalogVideoPfad, 60);
+
+    expect(modell.data).toHaveLength(1);
+    expect(einstellung.data).toEqual([{ key: "griffbreite" }]);
+    expect(uebung.data).toHaveLength(1);
+    expect(verknuepfung.data).toHaveLength(1);
+    expect(video.data).toEqual([{ storage_path: katalogVideoPfad }]);
+    expect(signiert.error).toBeNull();
+    expect(signiert.data?.signedUrl).toBeTruthy();
+  });
+
+  it("ein Nutzer ohne Studio sieht von Studio A weder Modell noch Uebung", async () => {
+    const client = await userClient(ohneStudioEmail);
+
+    const modell = await client.from("equipment_models").select("id").eq("id", studioModellA);
+    const uebung = await client.from("exercises").select("id").eq("id", studioUebungA);
+
+    expect(modell.data).toEqual([]);
+    expect(uebung.data).toEqual([]);
+  });
+
+  it("ein Nutzer ohne Studio aendert am Katalog nichts", async () => {
+    const client = await userClient(ohneStudioEmail);
+
+    const neuesModell = await client
+      .from("equipment_models")
+      .insert({ studio_id: GYMTAVO, name: "Eingeschmuggelt", load_step: 1 });
+    const neueUebung = await client
+      .from("exercises")
+      .insert({ studio_id: GYMTAVO, name: "Eingeschmuggelt", target_min: 1, target_max: 2 });
+    const umbenannt = await client
+      .from("exercises")
+      .update({ name: "Umbenannt" })
+      .eq("id", katalogUebung)
+      .select("id");
+    const geloescht = await client
+      .from("equipment_model_exercises")
+      .delete()
+      .eq("id", katalogVerknuepfung)
+      .select("id");
+
+    expect(neuesModell.error?.code).toBe("42501");
+    expect(neueUebung.error?.code).toBe("42501");
+    expect(umbenannt.data).toEqual([]);
+    expect(geloescht.data).toEqual([]);
+  });
+
+  it("der Gymtavo-Owner pflegt den Katalog", async () => {
+    const client = await userClient(gymtavoOwnerEmail);
+
+    const { error } = await client
+      .from("exercises")
+      .insert({ studio_id: GYMTAVO, name: `Kreuzheben ${crypto.randomUUID()}`, target_min: 3, target_max: 6 });
+
+    expect(error).toBeNull();
+  });
+});
