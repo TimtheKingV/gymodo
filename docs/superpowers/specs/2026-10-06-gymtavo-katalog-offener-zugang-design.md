@@ -101,6 +101,36 @@ Die Sensor-Befestigung wird je `machineId` gemerkt, ohne Gerät je `equipmentMod
 - `progression.ts`, `abschluss.ts`, `progress.ts`, `sessions.ts`: Schlüssel `machineId` wird zu (`machineId` oder `equipmentModelId`); der Fortschritt gruppiert nach Übung.
 - `tag-context.ts`/`machine-context.ts`: ohne Änderung am Verhalten; der Scan-Beitritt passiert vorher.
 
+### 8.1 Konkrete Form (Nachtrag zur Etappe 3, 7. Oktober 2026)
+
+**Station:** Ein Block, eine Historie oder ein Vorschlag hängt künftig an einer *Station*. Das ist ein Gerät mit QR-Code, wenn es eines gibt, sonst ein Gerätetyp. Der Schlüssel lautet `geraet:<id>` bzw. `typ:<id>`.
+
+**Bootstrap (nur ergänzend):**
+- `catalog: { studioId, equipmentTypes: [{ …Modellfelder wie bei machines[].equipmentModel…, settingDefinitions, exercises }] } | null`
+- `machines[].equipmentModel.catalogModelId: string | null`
+- `machines[].exercises` enthält zusätzlich die Gymtavo-Übungen des zugeordneten Typs. Eigene Übungen kommen zuerst, jede Übung erscheint nur einmal.
+- `lastSets` bleibt auf Sätze mit Gerät beschränkt, weil die heutige App `machineId` als Pflichtfeld dekodiert.
+- Sätze ohne Gerät stehen in `lastTypeSets: [{ equipmentModelId, exerciseId, load, secondaryLoad, volume, rir, performedAt }]`.
+
+**Satz-PUT:**
+- Entweder `machineId` oder `equipmentModelId`, dazu optional `studioId`. Fehlt es, gilt das Gymtavo-Studio, also Freies Training.
+- Das Studio leitet der Server ab: aus dem Gerät oder aus `studioId`. Ob der Nutzer dort schreiben darf, entscheidet RLS.
+- `RecordedSet` bekommt `equipmentModelId`. `machineId` darf `null` sein.
+
+**Typ-Kontext:** `GET /api/v1/equipment-models/{id}/context?studio=<id>` hat dieselbe Form wie der Gerätekontext.
+- `machine` ist `null`, `calibration` ebenfalls `null`.
+- Die Historie und der Vorschlag beruhen auf eigenen Sätzen **ohne Gerät** an diesem Typ und dieser Übung, über alle Studios hinweg. Die Belastungsstufen kommen vom Typ. Ein Studio-Gerät hat eigene Stufen und damit eine eigene Historie.
+
+**Gerätekontext:** Er enthält zusätzlich die Gymtavo-Übungen des zugeordneten Typs, samt Katalogvideo, falls das Studio keines ergänzt hat.
+
+**Verlauf, Abschluss:** Blöcke und Vorschläge tragen `equipmentModelId`. `machineId` ist `null` bei Sätzen ohne Gerät, `machineLabel` ist dann der Name des Typs.
+
+**Fortschritt:** Er wird wie bisher je Übung gruppiert. Dieselbe Gymtavo-Übung an verschiedenen Stationen ergibt eine Kurve.
+
+**Kompatibilität:**
+- Die heutige iOS-App ignoriert unbekannte Felder. Sie scheitert aber an `null` in Pflichtfeldern.
+- `machineId: null` entsteht nur durch Sätze ohne Gerät, und die schreibt erst die App aus Etappe 4. Sie dekodiert diese drei Felder deshalb optional.
+
 ## 9. Import (Etappe 2)
 
 - Datei `catalog/gymtavo.json` im Repo, Skript `pnpm catalog:import [datei]` mit Service-Rolle.
