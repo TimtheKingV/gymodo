@@ -41,8 +41,8 @@ Jeder kann die App nutzen, in jedem Studio und ohne Studio. Gymtavo pflegt eine 
 - `studios.is_catalog boolean not null default false`, eindeutiger Teilindex `where is_catalog` (höchstens eins).
 - Funktion `is_catalog_studio(p_studio_id)` (security definer, stable, `search_path` fest wie in 0040).
 - Die Migration legt das Gymtavo-Studio an (fester, dokumentierter UUID), `join_code_active = false`.
-- Ein Waechter-Trigger auf `studio_memberships` verbietet die Rolle `member` im Gymtavo-Studio. Er deckt jeden heutigen und kuenftigen Beitrittsweg ab (Marke, Code), ohne drei Funktionsrumpfe neu zu schreiben. Trainer-Einladungen bleiben moeglich -- das Gymtavo-Team braucht sie fuer die Pflege (Etappe 6). Der erste Owner wird per Service-Rolle eingetragen.
-- Ein zweiter Waechter-Trigger verhindert `machines` und `machine_tags` im Gymtavo-Studio.
+- Ein Wächter-Trigger auf `studio_memberships` verbietet die Rolle `member` im Gymtavo-Studio. Er deckt jeden heutigen und künftigen Beitrittsweg ab (Marke, Code), ohne drei Funktionsrümpfe neu zu schreiben. Trainer-Einladungen bleiben möglich – das Gymtavo-Team braucht sie für die Pflege (Etappe 6). Der erste Owner wird per Service-Rolle eingetragen.
+- Ein zweiter Wächter-Trigger verhindert `machines` und `machine_tags` im Gymtavo-Studio.
 
 ### 5.2 Lesen für alle Angemeldeten
 
