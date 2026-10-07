@@ -8,6 +8,7 @@ import {
 } from "./media.js";
 import { signMediaUrl, signMediaUrls } from "./media-store.js";
 import type { LoadUnit, VolumeKind } from "./belastung.js";
+import { stationAufloesen } from "./workout.js";
 import {
   PROGRESSION_ALGO_VERSION,
   suggestNextLoad,
@@ -20,7 +21,8 @@ import {
 const HISTORY_DAYS = 6;
 
 export type MachineContext = {
-  machine: { id: string; label: string; locationNote: string | null };
+  /** null im Kontext eines Gymtavo-Typs ohne Geraet (Spec 8.1). */
+  machine: { id: string; label: string; locationNote: string | null } | null;
   equipmentModel: {
     id: string;
     name: string;
@@ -135,34 +137,129 @@ export async function resolveMachineContext(
 ): Promise<MachineContext> {
   const { data: machine } = await client
     .from("machines")
-    .select(
-      "id, label, location_note, studio_id, equipment_models (id, name, manufacturer, photo_path, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max)",
-    )
+    .select(`id, label, location_note, studio_id, equipment_models (${MODELL_SPALTEN})`)
     .eq("id", machineId)
     .maybeSingle<{
       id: string;
       label: string;
       location_note: string | null;
       studio_id: string;
-      equipment_models: {
-        id: string;
-        name: string;
-        manufacturer: string | null;
-        photo_path: string | null;
-        load_unit: LoadUnit;
-        load_step: number | string;
-        load_min: number | string;
-        load_max: number | string | null;
-        secondary_unit: LoadUnit | null;
-        secondary_step: number | string | null;
-        secondary_min: number | string | null;
-        secondary_max: number | string | null;
-      };
+      equipment_models: ModellZeile;
     }>();
   if (!machine) {
     throw new DomainError("not_found", "Dieses Geraet ist nicht verfuegbar.");
   }
-  const model = machine.equipment_models;
+
+  return kontextAufbauen(client, userId, {
+    machine: { id: machine.id, label: machine.label, locationNote: machine.location_note },
+    studioId: machine.studio_id,
+    model: machine.equipment_models,
+  });
+}
+
+/**
+ * Der Kontext eines Gymtavo-Typs ohne Geraet: Freies Training, oder die
+ * Langhantel im Studio, an der kein Sticker klebt (Spec 8.1).
+ *
+ * `studioId` nennt den Ort; ohne ihn ist es das Gymtavo-Studio. Ort und
+ * Typ prueft stationAufloesen genau wie beim Speichern eines Satzes -- ein
+ * Kontext, der sich oeffnen laesst, fuehrt also nie zu einem Satz, der sich
+ * nicht speichern laesst.
+ */
+export async function getEquipmentModelContext(
+  client: SupabaseClient,
+  equipmentModelId: string,
+  studioId?: string,
+): Promise<MachineContext> {
+  const userId = await requireUserId(client);
+  const station = await stationAufloesen(client, { equipmentModelId, studioId });
+
+  const { data: model } = await client
+    .from("equipment_models")
+    .select(MODELL_SPALTEN)
+    .eq("id", station.equipmentModelId)
+    .maybeSingle<ModellZeile>();
+  if (!model) {
+    throw new DomainError("not_found", "Geraet nicht gefunden.");
+  }
+
+  return kontextAufbauen(client, userId, { machine: null, studioId: station.studioId, model });
+}
+
+const MODELL_SPALTEN =
+  "id, name, manufacturer, photo_path, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id";
+
+type ModellZeile = {
+  id: string;
+  name: string;
+  manufacturer: string | null;
+  photo_path: string | null;
+  load_unit: LoadUnit;
+  load_step: number | string;
+  load_min: number | string;
+  load_max: number | string | null;
+  secondary_unit: LoadUnit | null;
+  secondary_step: number | string | null;
+  secondary_min: number | string | null;
+  secondary_max: number | string | null;
+  catalog_model_id: string | null;
+};
+
+type LinkRow = {
+  equipment_model_id: string;
+  exercises: {
+    id: string;
+    name: string;
+    description: string | null;
+    volume_kind: VolumeKind;
+    target_min: number;
+    target_max: number;
+  };
+  instruction_assets: Array<{ storage_path: string }>;
+};
+
+/**
+ * Uebungen des Modells, danach die des zugeordneten Gymtavo-Typs -- jede
+ * einmal. Hat das Studio eine Gymtavo-Uebung selbst angehaengt, aber kein
+ * eigenes Video dazu, zeigt sie das Video des Katalogs.
+ */
+function uebungenZusammenfuehren(
+  eigene: LinkRow[],
+  katalog: LinkRow[],
+): Array<{ uebung: LinkRow["exercises"]; videoPfad: string | null }> {
+  const katalogVideo = new Map(
+    katalog.map((row) => [row.exercises.id, row.instruction_assets[0]?.storage_path ?? null]),
+  );
+  const ergebnis: Array<{ uebung: LinkRow["exercises"]; videoPfad: string | null }> = [];
+  const gesehen = new Set<string>();
+  for (const row of [...eigene, ...katalog]) {
+    if (gesehen.has(row.exercises.id)) continue;
+    gesehen.add(row.exercises.id);
+    ergebnis.push({
+      uebung: row.exercises,
+      videoPfad:
+        row.instruction_assets[0]?.storage_path ?? katalogVideo.get(row.exercises.id) ?? null,
+    });
+  }
+  return ergebnis;
+}
+
+/**
+ * Der gemeinsame Rumpf fuer Geraet und Typ. Was an einer Station haengt --
+ * zuletzt genutzte Uebung, Historie, Vorschlag -- liest er ueber dieselbe
+ * Station: am Geraet ueber machine_id, am Typ ueber die Saetze ohne Geraet
+ * an diesem Typ.
+ */
+async function kontextAufbauen(
+  client: SupabaseClient,
+  userId: string,
+  ort: {
+    machine: { id: string; label: string; locationNote: string | null } | null;
+    studioId: string;
+    model: ModellZeile;
+  },
+): Promise<MachineContext> {
+  const { model } = ort;
 
   const { data: settings } = await client
     .from("equipment_setting_definitions")
@@ -172,31 +269,25 @@ export async function resolveMachineContext(
     .eq("equipment_model_id", model.id)
     .order("sort_order", { ascending: true });
 
+  const modellIds = model.catalog_model_id ? [model.id, model.catalog_model_id] : [model.id];
   const { data: links } = await client
     .from("equipment_model_exercises")
     .select(
-      "sort_order, exercises (id, name, description, volume_kind, target_min, target_max), instruction_assets (storage_path)",
+      "equipment_model_id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max), instruction_assets (storage_path)",
     )
-    .eq("equipment_model_id", model.id)
+    .in("equipment_model_id", modellIds)
     .order("sort_order", { ascending: true });
 
-  type LinkRow = {
-    exercises: {
-      id: string;
-      name: string;
-      description: string | null;
-      volume_kind: VolumeKind;
-      target_min: number;
-      target_max: number;
-    };
-    instruction_assets: Array<{ storage_path: string }>;
-  };
   const linkRows = (links ?? []) as unknown as LinkRow[];
+  const zusammen = uebungenZusammenfuehren(
+    linkRows.filter((row) => row.equipment_model_id === model.id),
+    linkRows.filter((row) => row.equipment_model_id === model.catalog_model_id),
+  );
 
   // Alle Videopfade in einem Aufruf signieren statt je Uebung einzeln --
   // der Screen soll mit einer Anfrage auskommen (Spec 6.3).
-  const videoPfade = linkRows
-    .map((row) => row.instruction_assets[0]?.storage_path)
+  const videoPfade = zusammen
+    .map((eintrag) => eintrag.videoPfad)
     .filter((pfad): pfad is string => Boolean(pfad));
   const [videoUrls, photoUrl] = await Promise.all([
     signMediaUrls(client, VIDEO_BUCKET, videoPfade, MEDIA_URL_TTL_SECONDS),
@@ -205,26 +296,29 @@ export async function resolveMachineContext(
       : Promise.resolve(null),
   ]);
 
-  const exercises = linkRows.map((row) => {
-    const pfad = row.instruction_assets[0]?.storage_path;
-    return {
-      id: row.exercises.id,
-      name: row.exercises.name,
-      description: row.exercises.description,
-      volumeKind: row.exercises.volume_kind,
-      targetMin: row.exercises.target_min,
-      targetMax: row.exercises.target_max,
-      instructionVideoUrl: (pfad && videoUrls.get(pfad)) || null,
-    };
-  });
+  const exercises = zusammen.map(({ uebung, videoPfad }) => ({
+    id: uebung.id,
+    name: uebung.name,
+    description: uebung.description,
+    volumeKind: uebung.volume_kind,
+    targetMin: uebung.target_min,
+    targetMax: uebung.target_max,
+    instructionVideoUrl: (videoPfad && videoUrls.get(videoPfad)) || null,
+  }));
 
-  // Vorauswahl: zuletzt an diesem Geraet genutzte Uebung, sonst die erste
+  // Die Saetze dieser Station: am Geraet ueber machine_id, am Typ ueber die
+  // Saetze ohne Geraet an diesem Typ -- ein Studio-Geraet hat eigene Stufen
+  // und damit eine eigene Historie (Spec 8.1).
+  const saetzeDerStation = (spalten: string) => {
+    const abfrage = client.from("workout_sets").select(spalten).eq("user_id", userId);
+    return ort.machine
+      ? abfrage.eq("machine_id", ort.machine.id)
+      : abfrage.is("machine_id", null).eq("equipment_model_id", model.id);
+  };
+
+  // Vorauswahl: zuletzt an dieser Station genutzte Uebung, sonst die erste
   // aus der vom Studio gepflegten Reihenfolge (Spec 5.7).
-  const { data: lastUsed } = await client
-    .from("workout_sets")
-    .select("exercise_id")
-    .eq("user_id", userId)
-    .eq("machine_id", machine.id)
+  const { data: lastUsed } = await saetzeDerStation("exercise_id")
     .order("performed_at", { ascending: false })
     .limit(1)
     .maybeSingle<{ exercise_id: string }>();
@@ -245,39 +339,40 @@ export async function resolveMachineContext(
   if (selectedExerciseId) {
     const selected = exercises.find((e) => e.id === selectedExerciseId);
 
-    const { data: calibrationRow } = await client
-      .from("member_machine_calibrations")
-      .select("setting_values, schema_version, source, created_at")
-      .eq("user_id", userId)
-      .eq("machine_id", machine.id)
-      .eq("exercise_id", selectedExerciseId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle<{
-        setting_values: unknown;
-        schema_version: number;
-        source: string;
-        created_at: string;
-      }>();
-    if (calibrationRow) {
-      calibration = {
-        settingValues: calibrationRow.setting_values,
-        schemaVersion: calibrationRow.schema_version,
-        source: calibrationRow.source,
-        createdAt: calibrationRow.created_at,
-      };
+    // Kalibrierung gibt es nur an einem Geraet mit QR-Code (Spec 5.4).
+    if (ort.machine) {
+      const { data: calibrationRow } = await client
+        .from("member_machine_calibrations")
+        .select("setting_values, schema_version, source, created_at")
+        .eq("user_id", userId)
+        .eq("machine_id", ort.machine.id)
+        .eq("exercise_id", selectedExerciseId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle<{
+          setting_values: unknown;
+          schema_version: number;
+          source: string;
+          created_at: string;
+        }>();
+      if (calibrationRow) {
+        calibration = {
+          settingValues: calibrationRow.setting_values,
+          schemaVersion: calibrationRow.schema_version,
+          source: calibrationRow.source,
+          createdAt: calibrationRow.created_at,
+        };
+      }
     }
 
-    const { data: setRows } = await client
-      .from("workout_sets")
-      .select("exercise_id, load, secondary_load, volume, rir, problem_flag, performed_at")
-      .eq("user_id", userId)
-      .eq("machine_id", machine.id)
+    const { data: setRows } = await saetzeDerStation(
+      "exercise_id, load, secondary_load, volume, rir, problem_flag, performed_at",
+    )
       .eq("exercise_id", selectedExerciseId)
       .order("performed_at", { ascending: false })
       .limit(HISTORY_DAYS * 6);
 
-    blocks = toBlocks((setRows ?? []) as SetRow[]);
+    blocks = toBlocks((setRows ?? []) as unknown as SetRow[]);
 
     suggestion = suggestNextLoad({
       targetMin: selected?.targetMin ?? 8,
@@ -290,9 +385,10 @@ export async function resolveMachineContext(
 
     // In derselben Anfrage festhalten -- Nachvollziehbarkeit ohne Queue.
     await client.from("progression_suggestions").insert({
-      studio_id: machine.studio_id,
+      studio_id: ort.studioId,
       user_id: userId,
-      machine_id: machine.id,
+      machine_id: ort.machine?.id ?? null,
+      equipment_model_id: model.id,
       exercise_id: selectedExerciseId,
       algo_version: PROGRESSION_ALGO_VERSION,
       inputs: suggestion.inputs,
@@ -302,11 +398,7 @@ export async function resolveMachineContext(
   }
 
   return {
-    machine: {
-      id: machine.id,
-      label: machine.label,
-      locationNote: machine.location_note,
-    },
+    machine: ort.machine,
     equipmentModel: {
       id: model.id,
       name: model.name,

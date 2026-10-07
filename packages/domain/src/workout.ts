@@ -177,7 +177,7 @@ const NEBEN_SPALTEN = "secondary_unit, secondary_step, secondary_min, secondary_
  * Geraete, Modelle und Studios unsichtbar, und die Antwort soll nicht
  * verraten, ob es sie gibt.
  */
-async function stationAufloesen(
+export async function stationAufloesen(
   client: SupabaseClient,
   input: { machineId?: string | undefined; equipmentModelId?: string | undefined; studioId?: string | undefined },
 ): Promise<{
