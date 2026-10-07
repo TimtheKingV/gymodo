@@ -63,3 +63,35 @@ describe("recordSetInputSchema", () => {
     expect(ergebnis.success).toBe(false);
   });
 });
+
+describe("recordSetInputSchema -- Station", () => {
+  const { machineId: _geraet, ...ohneGeraet } = basis;
+  const typ = "55555555-5555-4555-8555-555555555555";
+  const studio = "66666666-6666-4666-8666-666666666666";
+
+  it("nimmt einen Geraetetyp statt eines Geraets an, mit und ohne Studio", () => {
+    const frei = recordSetInputSchema.safeParse({ ...ohneGeraet, equipmentModelId: typ });
+    const imStudio = recordSetInputSchema.safeParse({
+      ...ohneGeraet,
+      equipmentModelId: typ,
+      studioId: studio,
+    });
+    expect(frei.success).toBe(true);
+    expect(imStudio.success).toBe(true);
+  });
+
+  it("weist Geraet und Geraetetyp zugleich ab", () => {
+    const ergebnis = recordSetInputSchema.safeParse({ ...basis, equipmentModelId: typ });
+    expect(ergebnis.success).toBe(false);
+  });
+
+  it("weist einen Satz ohne Geraet und ohne Geraetetyp ab", () => {
+    const ergebnis = recordSetInputSchema.safeParse(ohneGeraet);
+    expect(ergebnis.success).toBe(false);
+  });
+
+  it("laesst ein Studio neben einem Geraet zu -- recordSet nimmt dann das des Geraets", () => {
+    const ergebnis = recordSetInputSchema.safeParse({ ...basis, studioId: studio });
+    expect(ergebnis.success).toBe(true);
+  });
+});

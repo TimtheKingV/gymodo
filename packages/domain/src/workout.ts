@@ -47,9 +47,13 @@ function aliasAufloesen(roh: unknown): unknown {
 /**
  * Eingabe des Satz-PUT.
  *
- * `studioId` steht bewusst NICHT drin: es wird serverseitig aus dem Geraet
- * abgeleitet. Ein Client, der es mitschickt, wird ignoriert -- sonst haetten
- * wir eine Mandantengrenze, die von der App behauptet statt geprueft wird.
+ * Ein Satz haengt an einer Station (station.ts): an einem Geraet ODER an
+ * einem Geraetetyp ohne QR-Code. Am Geraet kommt das Studio aus dem Geraet;
+ * ein mitgeschicktes `studioId` wird dann ignoriert -- sonst haetten wir eine
+ * Mandantengrenze, die von der App behauptet statt geprueft wird. Am Typ
+ * nennt `studioId` den Ort; ohne es laeuft der Satz im Gymtavo-Studio
+ * (Freies Training). Ob der Nutzer dort schreiben darf, prueft recordSet
+ * gegen das, was RLS ihn lesen laesst.
  *
  * `load` und `volume` sind Zahlen ohne Einheit; was sie bedeuten, sagen
  * das Geraetemodell (load_unit) und die Uebung (volume_kind). Die
@@ -64,7 +68,9 @@ export const recordSetInputSchema = z.preprocess(
   .object({
     sessionId: z.string().uuid(),
     setId: z.string().uuid(),
-    machineId: z.string().uuid(),
+    machineId: z.string().uuid().optional(),
+    equipmentModelId: z.string().uuid().optional(),
+    studioId: z.string().uuid().optional(),
     exerciseId: z.string().uuid(),
     setIndex: z.number().int().min(1),
     load: z.number().min(0).max(9999),
@@ -77,6 +83,10 @@ export const recordSetInputSchema = z.preprocess(
     // Der Beginn der Einheit, vom Client gesetzt ("Training starten",
     // Schnitt 4). Nur beim Anlegen der Session uebernommen, siehe recordSet.
     sessionStartedAt: z.string().datetime().optional(),
+  })
+  .refine((value) => (value.machineId === undefined) !== (value.equipmentModelId === undefined), {
+    path: ["machineId"],
+    message: "Ein Satz braucht entweder ein Geraet oder einen Geraetetyp.",
   })
   .refine((value) => !value.problemReason || value.problemFlag, {
     path: ["problemReason"],
@@ -98,7 +108,9 @@ export type RecordedSet = {
   studioId: string;
   userId: string;
   sessionId: string;
-  machineId: string;
+  /** null an einem Geraetetyp ohne QR-Code (Spec 8.1). */
+  machineId: string | null;
+  equipmentModelId: string;
   exerciseId: string;
   setIndex: number;
   load: number;
@@ -115,7 +127,8 @@ type SetRow = {
   studio_id: string;
   user_id: string;
   session_id: string;
-  machine_id: string;
+  machine_id: string | null;
+  equipment_model_id: string;
   exercise_id: string;
   set_index: number;
   load: number | string;
@@ -134,6 +147,7 @@ function toRecordedSet(row: SetRow): RecordedSet {
     userId: row.user_id,
     sessionId: row.session_id,
     machineId: row.machine_id,
+    equipmentModelId: row.equipment_model_id,
     exerciseId: row.exercise_id,
     setIndex: row.set_index,
     // numeric kommt je nach Treiber als Zeichenkette zurueck.
@@ -145,6 +159,86 @@ function toRecordedSet(row: SetRow): RecordedSet {
     problemReason: row.problem_reason,
     performedAt: row.performed_at,
   };
+}
+
+type Nebenbelastung = {
+  secondary_unit: LoadUnit | null;
+  secondary_step: number | string | null;
+  secondary_min: number | string | null;
+  secondary_max: number | string | null;
+};
+
+const NEBEN_SPALTEN = "secondary_unit, secondary_step, secondary_min, secondary_max";
+
+/**
+ * Studio und Modell eines Satzes, serverseitig bestimmt.
+ *
+ * Alle Absagen sind not_found und gleich formuliert: RLS macht fremde
+ * Geraete, Modelle und Studios unsichtbar, und die Antwort soll nicht
+ * verraten, ob es sie gibt.
+ */
+async function stationAufloesen(
+  client: SupabaseClient,
+  input: { machineId?: string | undefined; equipmentModelId?: string | undefined; studioId?: string | undefined },
+): Promise<{
+  studioId: string;
+  equipmentModelId: string;
+  katalogStudioId: string | null;
+  modell: Nebenbelastung;
+}> {
+  const { data: katalog } = await client
+    .from("studios")
+    .select("id")
+    .eq("is_catalog", true)
+    .maybeSingle<{ id: string }>();
+  const katalogStudioId = katalog?.id ?? null;
+
+  if (input.machineId) {
+    // Das Studio kommt aus dem Geraet. Das Modell kommt mit, weil nur es
+    // weiss, ob der Satz eine Nebenbelastung tragen muss und wie sie rastet.
+    const { data: machine } = await client
+      .from("machines")
+      .select(`studio_id, equipment_model_id, equipment_models (${NEBEN_SPALTEN})`)
+      .eq("id", input.machineId)
+      .maybeSingle<{ studio_id: string; equipment_model_id: string; equipment_models: Nebenbelastung }>();
+    if (!machine) {
+      throw new DomainError("not_found", "Geraet nicht gefunden.");
+    }
+    return {
+      studioId: machine.studio_id,
+      equipmentModelId: machine.equipment_model_id,
+      katalogStudioId,
+      modell: machine.equipment_models,
+    };
+  }
+
+  const studioId = input.studioId ?? katalogStudioId;
+  if (!studioId) {
+    throw new DomainError("not_found", "Studio nicht gefunden.");
+  }
+  // Ein Studio, das der Nutzer nicht lesen darf, ist eines, in dem er nicht
+  // Mitglied ist. Ohne diese Pruefung endete der Versuch an der Policy von
+  // workout_sessions -- als interner Fehler statt als not_found.
+  if (studioId !== katalogStudioId) {
+    const { data: studio } = await client
+      .from("studios")
+      .select("id")
+      .eq("id", studioId)
+      .maybeSingle<{ id: string }>();
+    if (!studio) {
+      throw new DomainError("not_found", "Studio nicht gefunden.");
+    }
+  }
+
+  const { data: modell } = await client
+    .from("equipment_models")
+    .select(`id, studio_id, ${NEBEN_SPALTEN}`)
+    .eq("id", input.equipmentModelId!)
+    .maybeSingle<Nebenbelastung & { id: string; studio_id: string }>();
+  if (!modell || (modell.studio_id !== studioId && modell.studio_id !== katalogStudioId)) {
+    throw new DomainError("not_found", "Geraet nicht gefunden.");
+  }
+  return { studioId, equipmentModelId: modell.id, katalogStudioId, modell };
 }
 
 /**
@@ -168,38 +262,21 @@ export async function recordSet(
 
   const userId = await requireUserId(client);
 
-  // Das Studio kommt aus dem Geraet. RLS macht ein fremdes Geraet unsichtbar,
-  // der Aufruf endet dann hier statt an einer Policy weiter unten. Das
-  // Modell kommt mit, weil nur es weiss, ob der Satz eine Nebenbelastung
-  // tragen muss und wie sie rastet.
-  const { data: machine } = await client
-    .from("machines")
-    .select(
-      "studio_id, equipment_models (secondary_unit, secondary_step, secondary_min, secondary_max)",
-    )
-    .eq("id", input.machineId)
-    .maybeSingle<{
-      studio_id: string;
-      equipment_models: {
-        secondary_unit: LoadUnit | null;
-        secondary_step: number | string | null;
-        secondary_min: number | string | null;
-        secondary_max: number | string | null;
-      };
-    }>();
-  if (!machine) {
-    throw new DomainError("not_found", "Geraet nicht gefunden.");
-  }
-  const studioId = machine.studio_id;
-  const modell = machine.equipment_models;
+  const station = await stationAufloesen(client, input);
+  const studioId = station.studioId;
+  const modell = station.modell;
 
+  // Die Uebung muss im Studio des Satzes liegen oder im Gymtavo-Katalog
+  // (Verweis statt Kopie, Spec E2) -- nie in einem dritten Studio.
   const { data: exercise } = await client
     .from("exercises")
-    .select("id, volume_kind")
+    .select("id, volume_kind, studio_id")
     .eq("id", input.exerciseId)
-    .eq("studio_id", studioId)
-    .maybeSingle<{ id: string; volume_kind: VolumeKind }>();
-  if (!exercise) {
+    .maybeSingle<{ id: string; volume_kind: VolumeKind; studio_id: string }>();
+  if (
+    !exercise ||
+    (exercise.studio_id !== studioId && exercise.studio_id !== station.katalogStudioId)
+  ) {
     throw new DomainError("not_found", "Uebung nicht gefunden.");
   }
 
@@ -269,7 +346,8 @@ export async function recordSet(
       studio_id: studioId,
       user_id: userId,
       session_id: input.sessionId,
-      machine_id: input.machineId,
+      machine_id: input.machineId ?? null,
+      equipment_model_id: station.equipmentModelId,
       exercise_id: input.exerciseId,
       set_index: input.setIndex,
       load: input.load,
@@ -283,7 +361,7 @@ export async function recordSet(
       ...(input.performedAt ? { performed_at: input.performedAt } : {}),
     })
     .select(
-      "id, studio_id, user_id, session_id, machine_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, performed_at",
+      "id, studio_id, user_id, session_id, machine_id, equipment_model_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, performed_at",
     )
     .single<SetRow>();
 
