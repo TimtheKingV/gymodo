@@ -462,3 +462,216 @@ describe("Zuordnung zum Gymtavo-Typ und Verweis auf Gymtavo-Uebungen", () => {
     expect(data).toEqual([]);
   });
 });
+
+describe("Saetze ohne QR-Geraet und Freies Training", () => {
+  let katalogTyp: string;
+  let katalogUebung: string;
+  let modellA: string;
+  let maschineA: string;
+  let uebungB: string;
+  let modellB: string;
+  let ohneStudioId: string;
+  let memberAId: string;
+  let sessionA: string;
+
+  async function eigeneId(email: string): Promise<string> {
+    const client = await userClient(email);
+    const { data, error } = await client.auth.getUser();
+    if (error) throw error;
+    return data.user.id;
+  }
+
+  beforeAll(async () => {
+    const admin = serviceClient();
+    const kennung = crypto.randomUUID();
+    ohneStudioId = await eigeneId(ohneStudioEmail);
+    memberAId = await eigeneId(memberAEmail);
+
+    const { data: modelle, error: modellError } = await admin
+      .from("equipment_models")
+      .insert([
+        { studio_id: GYMTAVO, name: `Kurzhantel ${kennung}`, load_step: 1 },
+        { studio_id: studioA, name: `Bankstation A ${kennung}`, load_step: 2.5 },
+        { studio_id: studioB, name: `Bankstation B ${kennung}`, load_step: 2.5 },
+      ])
+      .select("id");
+    if (modellError) throw modellError;
+    katalogTyp = modelle[0]!.id;
+    modellA = modelle[1]!.id;
+    modellB = modelle[2]!.id;
+
+    const { data: maschine, error: maschineError } = await admin
+      .from("machines")
+      .insert({ studio_id: studioA, equipment_model_id: modellA, label: "B1" })
+      .select("id")
+      .single();
+    if (maschineError) throw maschineError;
+    maschineA = maschine.id;
+
+    const { data: uebungen, error: uebungError } = await admin
+      .from("exercises")
+      .insert([
+        { studio_id: GYMTAVO, name: `Schraegbank ${kennung}`, target_min: 8, target_max: 12 },
+        { studio_id: studioB, name: `Fremde Uebung ${kennung}`, target_min: 8, target_max: 12 },
+      ])
+      .select("id");
+    if (uebungError) throw uebungError;
+    katalogUebung = uebungen[0]!.id;
+    uebungB = uebungen[1]!.id;
+
+    sessionA = crypto.randomUUID();
+    const { error: sessionError } = await admin
+      .from("workout_sessions")
+      .insert({ id: sessionA, studio_id: studioA, user_id: memberAId });
+    if (sessionError) throw sessionError;
+  });
+
+  function satzA(overrides: Record<string, unknown> = {}) {
+    return {
+      id: crypto.randomUUID(),
+      studio_id: studioA,
+      user_id: memberAId,
+      session_id: sessionA,
+      exercise_id: katalogUebung,
+      set_index: 1,
+      load: 20,
+      volume: 10,
+      ...overrides,
+    };
+  }
+
+  it("ein Nutzer ohne Studio trainiert frei im Gymtavo-Studio", async () => {
+    const client = await userClient(ohneStudioEmail);
+    const sessionId = crypto.randomUUID();
+
+    const session = await client
+      .from("workout_sessions")
+      .insert({ id: sessionId, studio_id: GYMTAVO, user_id: ohneStudioId });
+    expect(session.error).toBeNull();
+
+    const saetze = await client.from("workout_sets").insert(
+      [1, 2].map((setIndex) => ({
+        id: crypto.randomUUID(),
+        studio_id: GYMTAVO,
+        user_id: ohneStudioId,
+        session_id: sessionId,
+        equipment_model_id: katalogTyp,
+        exercise_id: katalogUebung,
+        set_index: setIndex,
+        load: 12,
+        volume: 10,
+      })),
+    );
+    expect(saetze.error).toBeNull();
+
+    const { data } = await client
+      .from("workout_sets")
+      .select("machine_id, equipment_model_id")
+      .eq("session_id", sessionId);
+    expect(data).toEqual([
+      { machine_id: null, equipment_model_id: katalogTyp },
+      { machine_id: null, equipment_model_id: katalogTyp },
+    ]);
+  });
+
+  it("ohne Mitgliedschaft entsteht keine Einheit in einem Studio", async () => {
+    const client = await userClient(ohneStudioEmail);
+
+    const { error } = await client
+      .from("workout_sessions")
+      .insert({ id: crypto.randomUUID(), studio_id: studioA, user_id: ohneStudioId });
+
+    expect(error?.code).toBe("42501");
+  });
+
+  it("am Studio-Geraet mit Gymtavo-Uebung fuellt die Datenbank das Modell selbst", async () => {
+    const client = await userClient(memberAEmail);
+    const satz = satzA({ machine_id: maschineA, set_index: 1 });
+
+    const { error } = await client.from("workout_sets").insert(satz);
+    expect(error).toBeNull();
+
+    const { data } = await client
+      .from("workout_sets")
+      .select("equipment_model_id")
+      .eq("id", satz.id)
+      .single();
+    expect(data).toEqual({ equipment_model_id: modellA });
+  });
+
+  it("im Studio geht ein Satz ohne Geraet am Gymtavo-Typ", async () => {
+    const client = await userClient(memberAEmail);
+
+    const { error } = await client
+      .from("workout_sets")
+      .insert(satzA({ equipment_model_id: katalogTyp, set_index: 1 }));
+
+    expect(error).toBeNull();
+  });
+
+  it("ein Geraet, das nicht zum Modell passt, wird abgewiesen", async () => {
+    const client = await userClient(memberAEmail);
+
+    const { error } = await client
+      .from("workout_sets")
+      .insert(satzA({ machine_id: maschineA, equipment_model_id: katalogTyp, set_index: 2 }));
+
+    expect(error?.code).toBe("42501");
+  });
+
+  it("ein Modell aus einem fremden Studio wird abgewiesen", async () => {
+    const client = await userClient(memberAEmail);
+
+    const { error } = await client
+      .from("workout_sets")
+      .insert(satzA({ equipment_model_id: modellB, set_index: 3 }));
+
+    expect(error?.code).toBe("42501");
+  });
+
+  it("eine Uebung aus einem fremden Studio wird abgewiesen", async () => {
+    const client = await userClient(memberAEmail);
+
+    const { error } = await client
+      .from("workout_sets")
+      .insert(satzA({ equipment_model_id: katalogTyp, exercise_id: uebungB, set_index: 4 }));
+
+    expect(error?.code).toBe("42501");
+  });
+
+  it("Blockstruktur gilt auch ohne Geraet", async () => {
+    const client = await userClient(memberAEmail);
+
+    const erster = await client
+      .from("workout_sets")
+      .insert(satzA({ equipment_model_id: katalogTyp, set_index: 7 }));
+    const zweiter = await client
+      .from("workout_sets")
+      .insert(satzA({ equipment_model_id: katalogTyp, set_index: 7 }));
+
+    expect(erster.error).toBeNull();
+    expect(zweiter.error?.code).toBe("23505");
+  });
+
+  it("ein Vorschlag ohne Geraet im Freien Training wird festgehalten, mit fremdem Geraet nicht", async () => {
+    const client = await userClient(ohneStudioEmail);
+    const vorschlag = {
+      studio_id: GYMTAVO,
+      user_id: ohneStudioId,
+      exercise_id: katalogUebung,
+      algo_version: "2.0.0",
+      inputs: {},
+      reason_code: "erstkontakt",
+    };
+
+    const ohneGeraet = await client
+      .from("progression_suggestions")
+      .insert({ ...vorschlag, equipment_model_id: katalogTyp });
+    const fremdesGeraet = await client
+      .from("progression_suggestions")
+      .insert({ ...vorschlag, machine_id: maschineA });
+
+    expect(ohneGeraet.error).toBeNull();
+    expect(fremdesGeraet.error?.code).toBe("42501");
+  });
+});

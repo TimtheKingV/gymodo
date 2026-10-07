@@ -310,3 +310,265 @@ create policy equipment_model_exercises_delete on public.equipment_model_exercis
         and public.is_studio_staff(em.studio_id)
     )
   );
+
+-- ---------------------------------------------------------------------
+-- 4. Saetze ohne QR-Geraet und Freies Training
+-- ---------------------------------------------------------------------
+
+-- Ein Satz haengt kuenftig am Geraetetyp, das Geraet mit QR-Code ist
+-- optional: an der Langhantel im Studio klebt kein Sticker, und im Freien
+-- Training gibt es gar kein Geraet. Die Spalte wird aus dem Geraet
+-- rueckgefuellt, bevor sie not null wird.
+alter table public.workout_sets
+  add column equipment_model_id uuid
+    references public.equipment_models (id) on delete restrict;
+
+update public.workout_sets s
+   set equipment_model_id = m.equipment_model_id
+  from public.machines m
+ where m.id = s.machine_id;
+
+alter table public.workout_sets
+  alter column equipment_model_id set not null,
+  alter column machine_id drop not null;
+
+-- Blockstruktur wie in 0013, jetzt mit dem Typ im Schluessel. nulls not
+-- distinct, weil sonst zwei Saetze ohne Geraet nie kollidierten -- die
+-- Eindeutigkeit gaelte genau im neuen Fall nicht.
+alter table public.workout_sets
+  drop constraint workout_sets_unique_index_per_block;
+alter table public.workout_sets
+  add constraint workout_sets_unique_index_per_block
+    unique nulls not distinct (session_id, machine_id, equipment_model_id, exercise_id, set_index);
+
+create index on public.workout_sets (equipment_model_id);
+
+alter table public.progression_suggestions
+  add column equipment_model_id uuid
+    references public.equipment_models (id) on delete restrict;
+
+update public.progression_suggestions p
+   set equipment_model_id = m.equipment_model_id
+  from public.machines m
+ where m.id = p.machine_id;
+
+alter table public.progression_suggestions
+  alter column equipment_model_id set not null,
+  alter column machine_id drop not null;
+
+create index on public.progression_suggestions (equipment_model_id);
+
+-- Wer nur das Geraet schickt, bekommt den Typ dazu. So schreibt der
+-- bisherige Satzpfad (workout.ts, machine-context.ts) unveraendert weiter,
+-- bis Etappe 3 ihn umstellt.
+--
+-- Die Konsistenzpruefung der Policies wird dadurch nicht umgangen: with
+-- check sieht die Zeile NACH den BEFORE-Triggern, prueft also genau den
+-- gefuellten Wert. SECURITY DEFINER nur, damit das Lesen des Geraets nicht
+-- an RLS scheitert -- ob das Geraet zum Studio passt, entscheidet die Policy.
+create or replace function public.fill_equipment_model_from_machine()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if new.equipment_model_id is null and new.machine_id is not null then
+    select m.equipment_model_id into new.equipment_model_id
+      from public.machines m
+     where m.id = new.machine_id;
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function public.fill_equipment_model_from_machine() from public, anon, authenticated;
+
+create trigger workout_sets_fill_equipment_model
+  before insert or update of machine_id, equipment_model_id on public.workout_sets
+  for each row execute function public.fill_equipment_model_from_machine();
+
+create trigger progression_suggestions_fill_equipment_model
+  before insert on public.progression_suggestions
+  for each row execute function public.fill_equipment_model_from_machine();
+
+-- Freies Training laeuft im Gymtavo-Studio. Dafuer braucht es dort keine
+-- Mitgliedschaft -- es gibt sie auch gar nicht (Abschnitt 1).
+drop policy workout_sessions_insert on public.workout_sessions;
+create policy workout_sessions_insert on public.workout_sessions
+  for insert to authenticated
+  with check (
+    workout_sessions.user_id = (select auth.uid())
+    and (
+      public.is_studio_member(workout_sessions.studio_id)
+      or public.is_catalog_studio(workout_sessions.studio_id)
+    )
+  );
+
+drop policy workout_sessions_update on public.workout_sessions;
+create policy workout_sessions_update on public.workout_sessions
+  for update to authenticated
+  using (
+    workout_sessions.user_id = (select auth.uid())
+    and (
+      public.is_studio_member(workout_sessions.studio_id)
+      or public.is_catalog_studio(workout_sessions.studio_id)
+    )
+  )
+  with check (
+    workout_sessions.user_id = (select auth.uid())
+    and (
+      public.is_studio_member(workout_sessions.studio_id)
+      or public.is_catalog_studio(workout_sessions.studio_id)
+    )
+  );
+
+-- Wie in 0013: aeussere Spalten qualifiziert, sonst prueft die Bedingung
+-- stillschweigend nichts. Modell und Uebung duerfen aus dem Studio der
+-- Einheit oder aus dem Katalog stammen; ein gesetztes Geraet muss zum Studio
+-- UND zum Modell passen.
+drop policy workout_sets_insert on public.workout_sets;
+create policy workout_sets_insert on public.workout_sets
+  for insert to authenticated
+  with check (
+    workout_sets.user_id = (select auth.uid())
+    and (
+      public.is_studio_member(workout_sets.studio_id)
+      or public.is_catalog_studio(workout_sets.studio_id)
+    )
+    and exists (
+      select 1 from public.workout_sessions ws
+      where ws.id = workout_sets.session_id
+        and ws.studio_id = workout_sets.studio_id
+        and ws.user_id = workout_sets.user_id
+    )
+    and exists (
+      select 1 from public.equipment_models em
+      where em.id = workout_sets.equipment_model_id
+        and (em.studio_id = workout_sets.studio_id or public.is_catalog_studio(em.studio_id))
+    )
+    and (
+      workout_sets.machine_id is null
+      or exists (
+        select 1 from public.machines m
+        where m.id = workout_sets.machine_id
+          and m.studio_id = workout_sets.studio_id
+          and m.equipment_model_id = workout_sets.equipment_model_id
+      )
+    )
+    and exists (
+      select 1 from public.exercises e
+      where e.id = workout_sets.exercise_id
+        and (e.studio_id = workout_sets.studio_id or public.is_catalog_studio(e.studio_id))
+    )
+  );
+
+drop policy workout_sets_update on public.workout_sets;
+create policy workout_sets_update on public.workout_sets
+  for update to authenticated
+  using (
+    workout_sets.user_id = (select auth.uid())
+    and (
+      public.is_studio_member(workout_sets.studio_id)
+      or public.is_catalog_studio(workout_sets.studio_id)
+    )
+  )
+  with check (
+    workout_sets.user_id = (select auth.uid())
+    and (
+      public.is_studio_member(workout_sets.studio_id)
+      or public.is_catalog_studio(workout_sets.studio_id)
+    )
+    and exists (
+      select 1 from public.workout_sessions ws
+      where ws.id = workout_sets.session_id
+        and ws.studio_id = workout_sets.studio_id
+        and ws.user_id = workout_sets.user_id
+    )
+    and exists (
+      select 1 from public.equipment_models em
+      where em.id = workout_sets.equipment_model_id
+        and (em.studio_id = workout_sets.studio_id or public.is_catalog_studio(em.studio_id))
+    )
+    and (
+      workout_sets.machine_id is null
+      or exists (
+        select 1 from public.machines m
+        where m.id = workout_sets.machine_id
+          and m.studio_id = workout_sets.studio_id
+          and m.equipment_model_id = workout_sets.equipment_model_id
+      )
+    )
+    and exists (
+      select 1 from public.exercises e
+      where e.id = workout_sets.exercise_id
+        and (e.studio_id = workout_sets.studio_id or public.is_catalog_studio(e.studio_id))
+    )
+  );
+
+drop policy progression_suggestions_insert on public.progression_suggestions;
+create policy progression_suggestions_insert on public.progression_suggestions
+  for insert to authenticated
+  with check (
+    progression_suggestions.user_id = (select auth.uid())
+    and (
+      public.is_studio_member(progression_suggestions.studio_id)
+      or public.is_catalog_studio(progression_suggestions.studio_id)
+    )
+    and exists (
+      select 1 from public.equipment_models em
+      where em.id = progression_suggestions.equipment_model_id
+        and (em.studio_id = progression_suggestions.studio_id or public.is_catalog_studio(em.studio_id))
+    )
+    and (
+      progression_suggestions.machine_id is null
+      or exists (
+        select 1 from public.machines m
+        where m.id = progression_suggestions.machine_id
+          and m.studio_id = progression_suggestions.studio_id
+          and m.equipment_model_id = progression_suggestions.equipment_model_id
+      )
+    )
+    and exists (
+      select 1 from public.exercises e
+      where e.id = progression_suggestions.exercise_id
+        and (e.studio_id = progression_suggestions.studio_id or public.is_catalog_studio(e.studio_id))
+    )
+  );
+
+-- Lesen: die Satzpruefung oben fragt workout_sessions unter RLS ab, und die
+-- App liest ihre Saetze zurueck. Ohne diese Erweiterung waere eine Einheit
+-- im Gymtavo-Studio fuer ihren eigenen Besitzer unsichtbar. Abschnitt 5
+-- loest die Mitgliedschaftsbedingung danach ganz.
+drop policy workout_sessions_select on public.workout_sessions;
+create policy workout_sessions_select on public.workout_sessions
+  for select to authenticated
+  using (
+    workout_sessions.user_id = (select auth.uid())
+    and (
+      public.is_studio_member(workout_sessions.studio_id)
+      or public.is_catalog_studio(workout_sessions.studio_id)
+    )
+  );
+
+drop policy workout_sets_select on public.workout_sets;
+create policy workout_sets_select on public.workout_sets
+  for select to authenticated
+  using (
+    workout_sets.user_id = (select auth.uid())
+    and (
+      public.is_studio_member(workout_sets.studio_id)
+      or public.is_catalog_studio(workout_sets.studio_id)
+    )
+  );
+
+drop policy progression_suggestions_select on public.progression_suggestions;
+create policy progression_suggestions_select on public.progression_suggestions
+  for select to authenticated
+  using (
+    progression_suggestions.user_id = (select auth.uid())
+    and (
+      public.is_studio_member(progression_suggestions.studio_id)
+      or public.is_catalog_studio(progression_suggestions.studio_id)
+    )
+  );
