@@ -572,3 +572,72 @@ create policy progression_suggestions_select on public.progression_suggestions
       or public.is_catalog_studio(progression_suggestions.studio_id)
     )
   );
+
+-- ---------------------------------------------------------------------
+-- 5. Der Verlauf gehoert dem Nutzer
+-- ---------------------------------------------------------------------
+
+-- 0033 hat den Verlauf an die Mitgliedschaft gebunden: wer austrat, sah
+-- seine Einheiten in diesem Studio nicht mehr. Seit der Fortschritt einer
+-- Gymtavo-Uebung ueber Studios hinweg zusammenlaeuft (Spec E2, E5), waere
+-- das ein Loch in der eigenen Kurve. Gelockert wird nur, was der Nutzer
+-- SELBST sieht -- die Grenze gegenueber dem Personal aus 0033 bleibt: keine
+-- dieser Policies kennt is_studio_staff.
+--
+-- member_machine_calibrations bleibt bewusst an die Mitgliedschaft gebunden:
+-- eine Kalibrierung ist eine Einstellung an einem Geraet, das man nach dem
+-- Austritt nicht mehr benutzt, kein Teil des Verlaufs.
+drop policy workout_sessions_select on public.workout_sessions;
+create policy workout_sessions_select on public.workout_sessions
+  for select to authenticated
+  using (workout_sessions.user_id = (select auth.uid()));
+
+drop policy workout_sets_select on public.workout_sets;
+create policy workout_sets_select on public.workout_sets
+  for select to authenticated
+  using (workout_sets.user_id = (select auth.uid()));
+
+drop policy progression_suggestions_select on public.progression_suggestions;
+create policy progression_suggestions_select on public.progression_suggestions
+  for select to authenticated
+  using (progression_suggestions.user_id = (select auth.uid()));
+
+-- Nach dem Austritt sind Geraet, Modell und Studio-Uebung nicht mehr
+-- lesbar, der Verlauf braucht aber ihre Namen. Diese Funktion gibt
+-- ausschliesslich Namen von Zeilen heraus, auf die EIGENE Saetze verweisen
+-- -- sie ist kein Weg, einen fremden Katalog zu lesen. Eine Zeile je
+-- Kombination, nicht je Satz: der Aufrufer fuellt damit nur Luecken.
+create or replace function public.my_history_labels()
+returns table (
+  exercise_id        uuid,
+  exercise_name      text,
+  volume_kind        text,
+  equipment_model_id uuid,
+  model_name         text,
+  load_unit          text,
+  secondary_unit     text,
+  machine_id         uuid,
+  machine_label      text,
+  studio_id          uuid,
+  studio_name        text
+)
+language sql
+security definer
+set search_path = public, pg_temp
+stable
+as $$
+  select distinct
+    e.id, e.name, e.volume_kind::text,
+    em.id, em.name, em.load_unit::text, em.secondary_unit::text,
+    m.id, m.label,
+    st.id, st.name
+  from public.workout_sets s
+  join public.exercises e on e.id = s.exercise_id
+  join public.equipment_models em on em.id = s.equipment_model_id
+  left join public.machines m on m.id = s.machine_id
+  join public.studios st on st.id = s.studio_id
+  where s.user_id = auth.uid();
+$$;
+
+revoke all on function public.my_history_labels() from public, anon;
+grant execute on function public.my_history_labels() to authenticated;

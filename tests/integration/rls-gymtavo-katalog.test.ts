@@ -675,3 +675,158 @@ describe("Saetze ohne QR-Geraet und Freies Training", () => {
     expect(fremdesGeraet.error?.code).toBe("42501");
   });
 });
+
+describe("Der Verlauf gehoert dem Nutzer", () => {
+  let studioC: string;
+  let maschineC: string;
+  let uebungC: string;
+  let sessionC: string;
+  let ehemaligEmail: string;
+  let trainerCEmail: string;
+  const kennung = crypto.randomUUID();
+
+  beforeAll(async () => {
+    const admin = serviceClient();
+
+    const { data: studio, error: studioError } = await admin
+      .from("studios")
+      .insert({ name: `Verlassenes Studio ${kennung}` })
+      .select("id")
+      .single();
+    if (studioError) throw studioError;
+    studioC = studio.id;
+
+    ehemaligEmail = uniqueEmail("katalog-ehemalig");
+    trainerCEmail = uniqueEmail("katalog-trainer-c");
+    const ehemaligId = await createTestUser(ehemaligEmail);
+    const trainerCId = await createTestUser(trainerCEmail);
+    const { error: rollenError } = await admin.from("studio_memberships").insert([
+      { studio_id: studioC, user_id: ehemaligId, role: "member" },
+      { studio_id: studioC, user_id: trainerCId, role: "trainer" },
+    ]);
+    if (rollenError) throw rollenError;
+
+    const { data: modell, error: modellError } = await admin
+      .from("equipment_models")
+      .insert({ studio_id: studioC, name: `Rudermaschine ${kennung}`, load_step: 5 })
+      .select("id")
+      .single();
+    if (modellError) throw modellError;
+
+    const { data: maschine, error: maschineError } = await admin
+      .from("machines")
+      .insert({ studio_id: studioC, equipment_model_id: modell.id, label: "R7" })
+      .select("id")
+      .single();
+    if (maschineError) throw maschineError;
+    maschineC = maschine.id;
+
+    const { data: uebung, error: uebungError } = await admin
+      .from("exercises")
+      .insert({ studio_id: studioC, name: `Rudern eng ${kennung}`, target_min: 8, target_max: 12 })
+      .select("id")
+      .single();
+    if (uebungError) throw uebungError;
+    uebungC = uebung.id;
+
+    sessionC = crypto.randomUUID();
+    const { error: sessionError } = await admin
+      .from("workout_sessions")
+      .insert({ id: sessionC, studio_id: studioC, user_id: ehemaligId });
+    if (sessionError) throw sessionError;
+
+    const { error: satzError } = await admin.from("workout_sets").insert({
+      id: crypto.randomUUID(),
+      studio_id: studioC,
+      user_id: ehemaligId,
+      session_id: sessionC,
+      machine_id: maschineC,
+      exercise_id: uebungC,
+      set_index: 1,
+      load: 40,
+      volume: 10,
+    });
+    if (satzError) throw satzError;
+
+    const { error: vorschlagError } = await admin.from("progression_suggestions").insert({
+      studio_id: studioC,
+      user_id: ehemaligId,
+      machine_id: maschineC,
+      exercise_id: uebungC,
+      algo_version: "2.0.0",
+      inputs: {},
+      reason_code: "erstkontakt",
+    });
+    if (vorschlagError) throw vorschlagError;
+
+    // Austritt auf dem Weg, den die App nimmt: das Mitglied loescht die eigene
+    // Mitgliedschaft selbst (0024).
+    const client = await userClient(ehemaligEmail);
+    const { error: austrittError } = await client
+      .from("studio_memberships")
+      .delete()
+      .eq("studio_id", studioC)
+      .eq("user_id", ehemaligId);
+    if (austrittError) throw austrittError;
+  });
+
+  it("nach dem Austritt bleiben Einheit, Satz und Vorschlag lesbar", async () => {
+    const client = await userClient(ehemaligEmail);
+
+    const einheiten = await client.from("workout_sessions").select("id").eq("id", sessionC);
+    const saetze = await client.from("workout_sets").select("load").eq("session_id", sessionC);
+    const vorschlaege = await client
+      .from("progression_suggestions")
+      .select("reason_code")
+      .eq("exercise_id", uebungC);
+
+    expect(einheiten.data).toEqual([{ id: sessionC }]);
+    expect(saetze.data).toHaveLength(1);
+    expect(vorschlaege.data).toEqual([{ reason_code: "erstkontakt" }]);
+  });
+
+  it("den Katalog des verlassenen Studios sieht der Nutzer nicht mehr", async () => {
+    const client = await userClient(ehemaligEmail);
+
+    const maschinen = await client.from("machines").select("id").eq("id", maschineC);
+    const uebungen = await client.from("exercises").select("id").eq("id", uebungC);
+
+    expect(maschinen.data).toEqual([]);
+    expect(uebungen.data).toEqual([]);
+  });
+
+  it("my_history_labels liefert die Namen zu den eigenen Saetzen", async () => {
+    const client = await userClient(ehemaligEmail);
+
+    const { data, error } = await client.rpc("my_history_labels");
+
+    expect(error).toBeNull();
+    expect(data).toContainEqual(
+      expect.objectContaining({
+        exercise_id: uebungC,
+        exercise_name: `Rudern eng ${kennung}`,
+        machine_id: maschineC,
+        machine_label: "R7",
+        studio_id: studioC,
+        studio_name: `Verlassenes Studio ${kennung}`,
+      }),
+    );
+  });
+
+  it("my_history_labels verraet fremde Saetze nicht", async () => {
+    const client = await userClient(ohneStudioEmail);
+
+    const { data, error } = await client.rpc("my_history_labels");
+
+    expect(error).toBeNull();
+    expect((data ?? []).map((zeile: { exercise_id: string }) => zeile.exercise_id)).not.toContain(uebungC);
+  });
+
+  it("die Datenschutzgrenze bleibt: der Trainer sieht die Saetze nicht", async () => {
+    const client = await userClient(trainerCEmail);
+
+    const { data } = await client.from("workout_sets").select("id").eq("session_id", sessionC);
+
+    expect(data).toEqual([]);
+  });
+});
