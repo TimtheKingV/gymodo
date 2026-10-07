@@ -14,21 +14,21 @@ const laufband: Blockeinheiten = { loadUnit: "kmh", secondaryUnit: "pct" };
 describe("blockPaare", () => {
   it("fasst Saetze zu Paaren aus Geraet und Uebung zusammen", () => {
     const paare = blockPaare([
-      { machine_id: "m1", exercise_id: "e1" },
-      { machine_id: "m1", exercise_id: "e1" },
-      { machine_id: "m2", exercise_id: "e2" },
+      { machine_id: "m1", equipment_model_id: "t1", exercise_id: "e1" },
+      { machine_id: "m1", equipment_model_id: "t1", exercise_id: "e1" },
+      { machine_id: "m2", equipment_model_id: "t1", exercise_id: "e2" },
     ]);
 
     expect(paare).toEqual([
-      { machineId: "m1", exerciseId: "e1" },
-      { machineId: "m2", exerciseId: "e2" },
+      { machineId: "m1", equipmentModelId: "t1", exerciseId: "e1" },
+      { machineId: "m2", equipmentModelId: "t1", exerciseId: "e2" },
     ]);
   });
 
   it("haelt dasselbe Geraet mit zwei Uebungen auseinander", () => {
     const paare = blockPaare([
-      { machine_id: "m1", exercise_id: "e1" },
-      { machine_id: "m1", exercise_id: "e2" },
+      { machine_id: "m1", equipment_model_id: "t1", exercise_id: "e1" },
+      { machine_id: "m1", equipment_model_id: "t1", exercise_id: "e2" },
     ]);
 
     expect(paare).toHaveLength(2);
@@ -36,12 +36,12 @@ describe("blockPaare", () => {
 
   it("behaelt die Reihenfolge des ersten Auftretens", () => {
     const paare = blockPaare([
-      { machine_id: "m2", exercise_id: "e2" },
-      { machine_id: "m1", exercise_id: "e1" },
-      { machine_id: "m2", exercise_id: "e2" },
+      { machine_id: "m2", equipment_model_id: "t1", exercise_id: "e2" },
+      { machine_id: "m1", equipment_model_id: "t1", exercise_id: "e1" },
+      { machine_id: "m2", equipment_model_id: "t1", exercise_id: "e2" },
     ]);
 
-    expect(paare[0]).toEqual({ machineId: "m2", exerciseId: "e2" });
+    expect(paare[0]).toEqual({ machineId: "m2", equipmentModelId: "t1", exerciseId: "e2" });
   });
 
   it("liefert fuer eine Session ohne Saetze nichts", () => {
@@ -52,6 +52,7 @@ describe("blockPaare", () => {
 describe("zuVorschlag", () => {
   const basis = {
     machineId: "m1",
+    equipmentModelId: "t1",
     exerciseId: "e1",
     suggestion: {
       algoVersion: "v1",
@@ -139,16 +140,17 @@ describe("zuVorschlag", () => {
 describe("ausGespeichertenZeilen", () => {
   const abschlussZeit = "2026-09-08T18:00:00.000Z";
   const paare = [
-    { machineId: "m1", exerciseId: "e1" },
-    { machineId: "m1", exerciseId: "e2" },
+    { machineId: "m1", equipmentModelId: "t1", exerciseId: "e1" },
+    { machineId: "m1", equipmentModelId: "t1", exerciseId: "e2" },
   ];
-  const einheiten = new Map<string, Blockeinheiten>([["m1", kg]]);
+  const einheiten = new Map<string, Blockeinheiten>([["geraet:m1", kg]]);
 
   function zeile(
     ueber: Partial<GespeicherteVorschlagZeile> = {},
   ): GespeicherteVorschlagZeile {
     return {
       machine_id: "m1",
+      equipment_model_id: "t1",
       exercise_id: "e1",
       created_at: "2026-09-08T18:00:01.000Z",
       algo_version: "v1",
@@ -170,6 +172,7 @@ describe("ausGespeichertenZeilen", () => {
     expect(vorschlaege).toEqual([
       {
         machineId: "m1",
+        equipmentModelId: "t1",
         exerciseId: "e1",
         resultLoad: 82.5,
         deltaLoad: 2.5,
@@ -187,7 +190,7 @@ describe("ausGespeichertenZeilen", () => {
       [paare[0]!],
       [zeile({ result_load: 9, inputs: { currentLoad: 8.5, currentSecondaryLoad: "6.00" } })],
       abschlussZeit,
-      new Map([["m1", laufband]]),
+      new Map([["geraet:m1", laufband]]),
     );
 
     expect(vorschlaege[0]).toMatchObject({
@@ -328,5 +331,58 @@ describe("ausGespeichertenZeilen", () => {
     );
 
     expect(vorschlaege[0]!.deltaLoad).toBe(2.5);
+  });
+});
+
+describe("Bloecke ueber Stationen (Spec 8.1)", () => {
+  it("trennt zwei Geraetetypen ohne Geraet bei derselben Uebung", () => {
+    const paare = blockPaare([
+      { machine_id: null, equipment_model_id: "t1", exercise_id: "e1" },
+      { machine_id: null, equipment_model_id: "t2", exercise_id: "e1" },
+      { machine_id: null, equipment_model_id: "t1", exercise_id: "e1" },
+    ]);
+
+    expect(paare).toEqual([
+      { machineId: null, equipmentModelId: "t1", exerciseId: "e1" },
+      { machineId: null, equipmentModelId: "t2", exerciseId: "e1" },
+    ]);
+  });
+
+  it("trennt ein Geraet vom freien Satz an dessen Typ", () => {
+    const paare = blockPaare([
+      { machine_id: "m1", equipment_model_id: "t1", exercise_id: "e1" },
+      { machine_id: null, equipment_model_id: "t1", exercise_id: "e1" },
+    ]);
+
+    expect(paare).toHaveLength(2);
+  });
+
+  it("liest einen festgehaltenen Vorschlag ohne Geraet zurueck", () => {
+    const vorschlaege = ausGespeichertenZeilen(
+      [{ machineId: null, equipmentModelId: "t1", exerciseId: "e1" }],
+      [
+        {
+          machine_id: null,
+          equipment_model_id: "t1",
+          exercise_id: "e1",
+          created_at: "2026-10-07T18:00:01.000Z",
+          algo_version: "2.0.0",
+          result_load: 22.5,
+          reason_code: "korridor_oben_erreicht",
+          inputs: { currentLoad: 20 },
+        },
+      ],
+      "2026-10-07T18:00:00.000Z",
+      new Map([["typ:t1", { loadUnit: "kg", secondaryUnit: null }]]),
+    );
+
+    expect(vorschlaege).toEqual([
+      expect.objectContaining({
+        machineId: null,
+        equipmentModelId: "t1",
+        resultLoad: 22.5,
+        deltaLoad: 2.5,
+      }),
+    ]);
   });
 });

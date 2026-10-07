@@ -78,6 +78,33 @@ export function fuelleVerlaufsnamen<R extends SatzMitEinbettung>(
 }
 
 /**
+ * Ein Satz ohne Geraet traegt den Namen und die Einheiten seines Typs. Das
+ * Modell liest die Abfrage ohnehin mit -- ohne diesen Schritt fiele jeder
+ * freie Satz als "Luecke" an mitVerlaufsnamen und kostete einen Aufruf von
+ * my_history_labels, obwohl nichts fehlt.
+ */
+export function typAlsGeraet<
+  R extends SatzMitEinbettung & {
+    equipment_models: { name: string; load_unit: LoadUnit; secondary_unit: LoadUnit | null } | null;
+  },
+>(zeilen: R[]): R[] {
+  return zeilen.map((zeile) =>
+    zeile.machine_id === null && zeile.machines === null && zeile.equipment_models
+      ? {
+          ...zeile,
+          machines: {
+            label: zeile.equipment_models.name,
+            equipment_models: {
+              load_unit: zeile.equipment_models.load_unit,
+              secondary_unit: zeile.equipment_models.secondary_unit,
+            },
+          },
+        }
+      : zeile,
+  );
+}
+
+/**
  * Wie fuelleVerlaufsnamen, holt das Verzeichnis aber nur, wenn eine Luecke
  * da ist -- der Normalfall (nie ausgetreten) kostet keinen zweiten Aufruf.
  */
