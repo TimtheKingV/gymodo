@@ -50,7 +50,9 @@ beforeAll(async () => {
 describe("RLS auf studios", () => {
   it("positiv: Nutzer A sieht sein eigenes Studio", async () => {
     const client = await userClient(emailA);
-    const { data, error } = await client.from("studios").select("id");
+    // Neben dem eigenen Studio ist seit 0047 der Gymtavo-Katalog fuer jeden
+    // Angemeldeten lesbar -- ein fremdes Studio weiterhin nicht.
+    const { data, error } = await client.from("studios").select("id").eq("is_catalog", false);
     expect(error).toBeNull();
     expect(data?.map((row) => row.id)).toEqual([studioA]);
   });

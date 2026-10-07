@@ -38,7 +38,12 @@ export default async function HomePage() {
   if (personalFehler) console.error("Rollenpruefung auf / fehlgeschlagen:", personalFehler);
   if (personal && personal.length > 0) redirect("/portal");
 
-  const { data: studios } = await supabase.from("studios").select("id, name");
+  // Der Gymtavo-Katalog ist fuer jeden lesbar (0047), aber kein eigenes
+  // Studio -- ohne den Filter saehe niemand mehr "Noch kein Studio".
+  const { data: studios } = await supabase
+    .from("studios")
+    .select("id, name")
+    .eq("is_catalog", false);
   const hatStudio = Boolean(studios && studios.length > 0);
 
   // Fix-Runde 1 (Aufgabe 11): Titel und Vorspann muessen in beiden
