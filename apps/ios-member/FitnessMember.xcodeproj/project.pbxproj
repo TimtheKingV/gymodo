@@ -49,10 +49,12 @@
 		235337FF6CD63761130A93E5 /* KurseAnsichtTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BEA03DCAFAFE701E8EE10E1 /* KurseAnsichtTests.swift */; };
 		237F44B99D39C2A8A006D31D /* TrainingTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0891F265EBB3E05C805211B8 /* TrainingTab.swift */; };
 		23E350E22AA8410C99DF73CA /* EinheitVerwerfenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2178B549D47187CBB06809D8 /* EinheitVerwerfenTests.swift */; };
+		2521FD94ACF38940E2EAF8AC /* HomeKurseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A00954754396E772B78770 /* HomeKurseTests.swift */; };
 		252B2A2CF5B923A6E4C79DD0 /* ProfilWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3572D3614535C8EE4621C5E1 /* ProfilWrite.swift */; };
 		2653F678814003A4DEAA7630 /* Belastung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30418C6B8FF7A6F65873B95A /* Belastung.swift */; };
 		2867121C23926588568A4707 /* LoginMailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 218ADC42D32AAB9758D0AB91 /* LoginMailView.swift */; };
 		28DB21D330D60931AE02D035 /* OnboardingAntwortenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4F2DAEB38D14F84C2ECC1B /* OnboardingAntwortenTests.swift */; };
+		2A7BEA48AC7E50EF1695F075 /* SensorProtokollTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EF233ECD7B6B1CBEF906E04 /* SensorProtokollTests.swift */; };
 		2AF01EB57C7BD50319D04C9E /* TestnotizProtokoll.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07D94941E7A9D2E6DF47512A /* TestnotizProtokoll.swift */; };
 		2B9E1A87F4B91757DDEC90A6 /* Stepper44.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C18F50D5DFB2CBD6785AADA /* Stepper44.swift */; };
 		2CBC0FE2189073DA214F4138 /* AuthFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20071A27526D769989C545B0 /* AuthFlow.swift */; };
@@ -74,8 +76,6 @@
 		3CD1164921DFFE2CEB9E5177 /* TestnotizMenue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124682B7B2E451091CD871EE /* TestnotizMenue.swift */; };
 		3D88489EE677ECE6088E4860 /* OnboardingSchreiber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DCD40386E60DD37CDA35015 /* OnboardingSchreiber.swift */; };
 		3FC052B589C402381A71036E /* HomeSerieTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35520B42726A403ECBA04A24 /* HomeSerieTests.swift */; };
-		4540787E689689CA7A4DD93F /* SatzvergleichTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0710F1032307ECA809342650 /* SatzvergleichTests.swift */; };
-		865A000ABB3F1440F4E01D37 /* HomeKurseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561D9B6424CCF94318E976DE /* HomeKurseTests.swift */; };
 		3FEB8C480E33977A36B75C37 /* EinweisungSchritt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A3BA42E747095E74D6BF83A /* EinweisungSchritt.swift */; };
 		4196455285CC682E9475A449 /* WertZeile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8B00715694B1D3131EDABCE /* WertZeile.swift */; };
 		42306793BB6C4D03FC384B86 /* HomeSerieView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138ED9C458C59851090DA3F5 /* HomeSerieView.swift */; };
@@ -150,6 +150,7 @@
 		8E100E38496E1212C0FF9042 /* KursZustandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2D588E7E4F6611509CF03B1 /* KursZustandTests.swift */; };
 		8EA2070784B9E8D6E440FCDB /* AuthRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = A971E16E06A36BD3EA3B0ED4 /* AuthRoute.swift */; };
 		8F24875EC54A33CC1C089F64 /* ErrorEnvelope.swift in Sources */ = {isa = PBXBuildFile; fileRef = D922539BB579EDDA0F7747CD /* ErrorEnvelope.swift */; };
+		8F9C6142B3628C2CB4C681E3 /* SensorProtokoll.swift in Sources */ = {isa = PBXBuildFile; fileRef = E577994CD0351ED04C3D9296 /* SensorProtokoll.swift */; };
 		8FC7A533B3262AA6723ED9C1 /* Rastwerte.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE7999237F8B3E7635E236AE /* Rastwerte.swift */; };
 		9145F7245C5D69AA90AD9B7A /* GeraetRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF6476398D0D632AA4C97E66 /* GeraetRoute.swift */; };
 		93DBEB6C2CFE4B1D336BF064 /* RueckblickSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C221503A0DB97EC0D39E3B43 /* RueckblickSheet.swift */; };
@@ -168,12 +169,12 @@
 		9FD2A7E63039D26A96C9948F /* HomeZiele.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14DFB2ABD1F2AB50BB6C680 /* HomeZiele.swift */; };
 		A20E9991662F803A7FE958CD /* Messwert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6766A553FCAE9B7C6CF68440 /* Messwert.swift */; };
 		A2AE0D99C71F00965EE68BF3 /* HomeSerie.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F772BB738D5F003DF895A42 /* HomeSerie.swift */; };
-		608C72A1A0C34BCDC9E886D6 /* Satzvergleich.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF3D571F648BA281716F886 /* Satzvergleich.swift */; };
 		A2F067EE32F1B07AA7C5F02F /* DangerOutlineButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8E52BC8202E83D789FC2E5 /* DangerOutlineButton.swift */; };
 		A3763049C41DC06FD602295C /* WitMotionPaket.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B9A011C3F3321D6CF11AF7 /* WitMotionPaket.swift */; };
 		A4F50DFBB0D7894E7A7E8FC9 /* OfflineLeiste.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60D9445D803C7BFB4FE0E3B0 /* OfflineLeiste.swift */; };
 		A53325E109EED91CB9834B54 /* BluetoothSensorQuelle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7081B9EFC9138973A8C0D06D /* BluetoothSensorQuelle.swift */; };
 		A536169303BCBE5ED5385A9A /* CatalogStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8CC4AA1ADA4ED3E6D39207 /* CatalogStoreTests.swift */; };
+		A554356A342EDCC3EE0DB147 /* Satzvergleich.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46666C4721F4D3432C1B324B /* Satzvergleich.swift */; };
 		A67217C418DEF1C2DC617DB9 /* SupabaseAuthBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = F86C22F308C4A9EB76B53C19 /* SupabaseAuthBackend.swift */; };
 		A70571D779E8721B0D8FC96D /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4D467E447232623659C42C7 /* Session.swift */; };
 		A82CD4C097FBBD45ACE7BB6E /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D79A89B3E91A0F18C9E8DBC /* APIClientTests.swift */; };
@@ -213,7 +214,9 @@
 		C6AD1695E384E19A040E3AB6 /* MachineResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4406BEBC7051D319700F05E9 /* MachineResolver.swift */; };
 		C826F1FE0D8FF11EF29F326E /* TestnotizFenster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15CA8103EC19C3D5C9F742E7 /* TestnotizFenster.swift */; };
 		C836C124EA01709D44BD467B /* Laufzeitkontext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 860C70249404ED6DB23710D3 /* Laufzeitkontext.swift */; };
+		C9C1FB87A7FDC1EB8B223CE7 /* HomeKurse.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE895F8555B096627408B103 /* HomeKurse.swift */; };
 		CA9FEF94E8BCFF95DCBF8A48 /* TestnotizFensterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1311D4DD8AF74E5D3E800ED /* TestnotizFensterTests.swift */; };
+		CB7700F93F31020EC32F92CA /* SatzvergleichTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9F06768F0BD680121ACAB5 /* SatzvergleichTests.swift */; };
 		CBB43A0EC79168878C2B5A0D /* OnboardingSchreiberTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4773C0A268BE47D48C1059 /* OnboardingSchreiberTests.swift */; };
 		CBC840D3961E54257CE0525F /* GeraeteAuswahl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CBC9B358BECD950CD5B0381 /* GeraeteAuswahl.swift */; };
 		CCCF27D0544C08BABCEE5F51 /* AuswahlOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3586E79E1C18C3841DF9E3CB /* AuswahlOverlay.swift */; };
@@ -243,7 +246,6 @@
 		E083161F5526B66B7D721901 /* GeraeteAuswahlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7540F5EE9A274DBB75E9219 /* GeraeteAuswahlTests.swift */; };
 		E15B191B9059D4BB0F811C8C /* Zielkachel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F343E35EB2C94664395961 /* Zielkachel.swift */; };
 		E1698BAA4B1B123F788DE32C /* KurseTagesindikator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5B0B75C600727218BE93316 /* KurseTagesindikator.swift */; };
-		AED9002B1567E8F50D112CB4 /* HomeKurse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17EBFD5E1B2478FCAD50C8 /* HomeKurse.swift */; };
 		E1A0397EDF4B789D5970BE5A /* MemberKeinStudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C037A2436D3DBF861C6456FD /* MemberKeinStudioView.swift */; };
 		E2E01BE0BA5756FB27E39C9B /* SensorAufnahme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74C52572C0FBB01F7BC28060 /* SensorAufnahme.swift */; };
 		E2ECF1FE835571FFD6617303 /* SecondaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */; };
@@ -358,8 +360,6 @@
 		33EBC4692A4BFF21FC0FCA28 /* BootstrapResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootstrapResponse.swift; sourceTree = "<group>"; };
 		35466DCA1BAC23049D7DCB30 /* WorkoutSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionStore.swift; sourceTree = "<group>"; };
 		35520B42726A403ECBA04A24 /* HomeSerieTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeSerieTests.swift; sourceTree = "<group>"; };
-		0710F1032307ECA809342650 /* SatzvergleichTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatzvergleichTests.swift; sourceTree = "<group>"; };
-		561D9B6424CCF94318E976DE /* HomeKurseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeKurseTests.swift; sourceTree = "<group>"; };
 		3572D3614535C8EE4621C5E1 /* ProfilWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilWrite.swift; sourceTree = "<group>"; };
 		3586E79E1C18C3841DF9E3CB /* AuswahlOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuswahlOverlay.swift; sourceTree = "<group>"; };
 		35907B519ACE98A2A3F021C5 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
@@ -386,6 +386,7 @@
 		44F7BD850EC9E2582E3D0D95 /* TestnotizElement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizElement.swift; sourceTree = "<group>"; };
 		45AE341D5234D5BED46BA218 /* RastRad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RastRad.swift; sourceTree = "<group>"; };
 		45FB518781BA996FB7400814 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		46666C4721F4D3432C1B324B /* Satzvergleich.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Satzvergleich.swift; sourceTree = "<group>"; };
 		49B3AC509274F6574606B6E0 /* GroesseSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroesseSheet.swift; sourceTree = "<group>"; };
 		4A0146A99A9A62AD4D28BDBB /* KurseMeineEinteilung.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseMeineEinteilung.swift; sourceTree = "<group>"; };
 		4A055AE066E95BA635068E45 /* GeraetErkanntView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetErkanntView.swift; sourceTree = "<group>"; };
@@ -395,7 +396,6 @@
 		4C4E8B114BF9C48A1CD5DED0 /* Einstellungen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Einstellungen.swift; sourceTree = "<group>"; };
 		4CA9131802B15B415EE3362E /* KurseMeineEinteilungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseMeineEinteilungTests.swift; sourceTree = "<group>"; };
 		4F772BB738D5F003DF895A42 /* HomeSerie.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeSerie.swift; sourceTree = "<group>"; };
-		BDF3D571F648BA281716F886 /* Satzvergleich.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Satzvergleich.swift; sourceTree = "<group>"; };
 		4FE347CE02DFBA2ACD65350E /* GeraetModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetModel.swift; sourceTree = "<group>"; };
 		5154B94D2372BF17FF532E86 /* AccessibilityBaum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityBaum.swift; sourceTree = "<group>"; };
 		54F72606A30A2CE5C9E3E128 /* KurseTagesindikatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseTagesindikatorTests.swift; sourceTree = "<group>"; };
@@ -438,6 +438,7 @@
 		7CA7F946AF789AD52181CFC3 /* SensorQuelle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorQuelle.swift; sourceTree = "<group>"; };
 		7D036BE10720B20565F673DA /* Testnotiz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Testnotiz.swift; sourceTree = "<group>"; };
 		7D79A89B3E91A0F18C9E8DBC /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
+		7EF233ECD7B6B1CBEF906E04 /* SensorProtokollTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorProtokollTests.swift; sourceTree = "<group>"; };
 		810AA944DFBA5CA775A08184 /* KurseWochenInhalt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseWochenInhalt.swift; sourceTree = "<group>"; };
 		82D659FEA5E712905994628D /* BelastungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BelastungTests.swift; sourceTree = "<group>"; };
 		83A7C08B1E55D753C748A62B /* Stammdaten.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stammdaten.swift; sourceTree = "<group>"; };
@@ -506,10 +507,12 @@
 		C98822FA4FAF85142CC27A3F /* GeraetKontextLadenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetKontextLadenTests.swift; sourceTree = "<group>"; };
 		C9BB75027970B636BE5BC23C /* NameSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameSheet.swift; sourceTree = "<group>"; };
 		CB59D56AD33C31AE1F0089FF /* TagProtokoll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagProtokoll.swift; sourceTree = "<group>"; };
+		CB9F06768F0BD680121ACAB5 /* SatzvergleichTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatzvergleichTests.swift; sourceTree = "<group>"; };
 		CF7B9170FFCF2B3FBDF4A2F0 /* ColorHexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHexTests.swift; sourceTree = "<group>"; };
 		CFA471448D3B4B628A0BD6D5 /* GewichtsverlaufHilfenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GewichtsverlaufHilfenTests.swift; sourceTree = "<group>"; };
 		CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStoreTests.swift; sourceTree = "<group>"; };
 		CFBC22CBF40859396B6DD869 /* testnotiz-beispiel.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "testnotiz-beispiel.json"; sourceTree = "<group>"; };
+		D1A00954754396E772B78770 /* HomeKurseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeKurseTests.swift; sourceTree = "<group>"; };
 		D33AEE94B0EDB5593285596C /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		D382CA0B325C07B61F776A1D /* PendingSetWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingSetWrite.swift; sourceTree = "<group>"; };
 		D50BD9B08F5E126815EAACAC /* RootDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootDestination.swift; sourceTree = "<group>"; };
@@ -527,6 +530,7 @@
 		DCD60366B3F0C3C43DF73AA9 /* ZielSchreiben.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZielSchreiben.swift; sourceTree = "<group>"; };
 		DDEF31B56AE35C7453FC34B9 /* LoginCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginCodeView.swift; sourceTree = "<group>"; };
 		DE699B4D15C780F3DBD1E924 /* Bildschirmfoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bildschirmfoto.swift; sourceTree = "<group>"; };
+		DE895F8555B096627408B103 /* HomeKurse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeKurse.swift; sourceTree = "<group>"; };
 		DE9E610D208194A5E3CA6CC9 /* SensorZeile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorZeile.swift; sourceTree = "<group>"; };
 		DFFADB880946E0F424CFDAB8 /* VerlaufStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerlaufStoreTests.swift; sourceTree = "<group>"; };
 		E07C7F4A13CB277BC11B8D77 /* PendingWriteStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingWriteStoreTests.swift; sourceTree = "<group>"; };
@@ -539,8 +543,8 @@
 		E4C1D2382AF3657C5135CBE2 /* MemberPasswortView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortView.swift; sourceTree = "<group>"; };
 		E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EinstellungenTests.swift; sourceTree = "<group>"; };
 		E54956E5E29B287C6E6F7AB3 /* KurseWochenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseWochenView.swift; sourceTree = "<group>"; };
+		E577994CD0351ED04C3D9296 /* SensorProtokoll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorProtokoll.swift; sourceTree = "<group>"; };
 		E5B0B75C600727218BE93316 /* KurseTagesindikator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseTagesindikator.swift; sourceTree = "<group>"; };
-		6C17EBFD5E1B2478FCAD50C8 /* HomeKurse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeKurse.swift; sourceTree = "<group>"; };
 		E82F1E9C17FC9A2A3742B15D /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
 		EAEDFB14623AE11C1FD67B11 /* FitnessMember.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FitnessMember.entitlements; sourceTree = "<group>"; };
 		EC41D34D6C45ECA67DC8B7D5 /* HomeZeilenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeZeilenTests.swift; sourceTree = "<group>"; };
@@ -667,6 +671,7 @@
 				A66B745D0188C1156F97EE5B /* SensorAufnahmeKoordinator.swift */,
 				AD74745D7D237A80926862E8 /* SensorAufnahmeLeser.swift */,
 				B7AA0D9137D7F6F1F35E38ED /* SensorMesswert.swift */,
+				E577994CD0351ED04C3D9296 /* SensorProtokoll.swift */,
 				7CA7F946AF789AD52181CFC3 /* SensorQuelle.swift */,
 				0C4AD4185A38BA34714BB5FB /* SensorStatistik.swift */,
 				43AA2A6148C449A1B7D3102D /* WitMotionBefehl.swift */,
@@ -732,9 +737,9 @@
 			children = (
 				941088E8ADF755FB4FCC5B33 /* Fortschrittsfenster.swift */,
 				4F772BB738D5F003DF895A42 /* HomeSerie.swift */,
-				BDF3D571F648BA281716F886 /* Satzvergleich.swift */,
 				9465205BEFD3A3A8588D48D2 /* HomeZeilen.swift */,
 				E14DFB2ABD1F2AB50BB6C680 /* HomeZiele.swift */,
+				46666C4721F4D3432C1B324B /* Satzvergleich.swift */,
 				A7F2549F14DFAAA175305BC5 /* VerlaufFileStore.swift */,
 				FAF53764E89CC9198F52E049 /* VerlaufHerkunft.swift */,
 				8F549FAB0B22E1E37C716899 /* VerlaufStore.swift */,
@@ -832,9 +837,8 @@
 				28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */,
 				26938FABB4BBFFF4A17B5D63 /* GewichtEintragenHilfenTests.swift */,
 				CFA471448D3B4B628A0BD6D5 /* GewichtsverlaufHilfenTests.swift */,
+				D1A00954754396E772B78770 /* HomeKurseTests.swift */,
 				35520B42726A403ECBA04A24 /* HomeSerieTests.swift */,
-				0710F1032307ECA809342650 /* SatzvergleichTests.swift */,
-				561D9B6424CCF94318E976DE /* HomeKurseTests.swift */,
 				EC41D34D6C45ECA67DC8B7D5 /* HomeZeilenTests.swift */,
 				178A941D7DAEF42B0D12FC59 /* HomeZieleTests.swift */,
 				2353FE282D4892F87C027C9B /* KalenderzelleTests.swift */,
@@ -859,8 +863,10 @@
 				26B1A62413AE0C5835F9E9CA /* RastwerteTests.swift */,
 				707F099CE279C3111DDD2149 /* ResttimerTests.swift */,
 				0753010E9ACC09DF6D948170 /* RootDestinationTests.swift */,
+				CB9F06768F0BD680121ACAB5 /* SatzvergleichTests.swift */,
 				2CA28C58722A47519E135720 /* SensorAufnahmeKoordinatorTests.swift */,
 				918AEF34456589ED570B0B53 /* SensorAufnahmeTests.swift */,
+				7EF233ECD7B6B1CBEF906E04 /* SensorProtokollTests.swift */,
 				D5B3CA1EF2EE2EE35261BF6F /* SensorStatistikTests.swift */,
 				CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */,
 				9AF7AC0FF4D60C0CA0FA03A2 /* StammdatenTests.swift */,
@@ -1016,6 +1022,7 @@
 			isa = PBXGroup;
 			children = (
 				AF593B1FA0A81491726D24E0 /* Belegungsleiste.swift */,
+				DE895F8555B096627408B103 /* HomeKurse.swift */,
 				8DC8A9787A915F4A7919CC1A /* KurseAbmeldefrage.swift */,
 				70EDCD91DBF3DA79135DC7C5 /* KurseAnsicht.swift */,
 				962343020926813A08DE01CA /* KurseFileStore.swift */,
@@ -1023,7 +1030,6 @@
 				4A0146A99A9A62AD4D28BDBB /* KurseMeineEinteilung.swift */,
 				0DE16B16CA9E4D25698A02C0 /* KurseStore.swift */,
 				E5B0B75C600727218BE93316 /* KurseTagesindikator.swift */,
-				6C17EBFD5E1B2478FCAD50C8 /* HomeKurse.swift */,
 				810AA944DFBA5CA775A08184 /* KurseWochenInhalt.swift */,
 				186F9A8308C2902F45F6E10E /* KursZustand.swift */,
 			);
@@ -1225,10 +1231,10 @@
 				47D979DCC3CDB3ACE62E9FB9 /* GewichtsverlaufView.swift in Sources */,
 				B24C8C319FE4F622FE13EF8E /* GroesseSheet.swift in Sources */,
 				1D2F4741B76193A412B5B0D8 /* Herkunftssatz.swift in Sources */,
+				C9C1FB87A7FDC1EB8B223CE7 /* HomeKurse.swift in Sources */,
 				7BFFB3F7F67F86F6F6B72F59 /* HomeRootView.swift in Sources */,
 				15230A9868C0F909306DACBD /* HomeRoute.swift in Sources */,
 				A2AE0D99C71F00965EE68BF3 /* HomeSerie.swift in Sources */,
-				608C72A1A0C34BCDC9E886D6 /* Satzvergleich.swift in Sources */,
 				42306793BB6C4D03FC384B86 /* HomeSerieView.swift in Sources */,
 				7B323A589D9B8BE99A031994 /* HomeZeilen.swift in Sources */,
 				9FD2A7E63039D26A96C9948F /* HomeZiele.swift in Sources */,
@@ -1249,7 +1255,6 @@
 				51F0AF4C3DD00C9FF9BD766F /* KurseMeineEinteilung.swift in Sources */,
 				1A5F792F17B6BDB868EFADF0 /* KurseStore.swift in Sources */,
 				E1698BAA4B1B123F788DE32C /* KurseTagesindikator.swift in Sources */,
-				AED9002B1567E8F50D112CB4 /* HomeKurse.swift in Sources */,
 				604F2EDF6B1BD1F6C0E6B2A5 /* KurseWochenInhalt.swift in Sources */,
 				CE20B943DBE9C21746B7C572 /* KurseWochenView.swift in Sources */,
 				C646BDD9DDB5825D52BF9AFA /* LabeledField.swift in Sources */,
@@ -1299,6 +1304,7 @@
 				5CC058FDF3D698829231E5DE /* RootView.swift in Sources */,
 				93DBEB6C2CFE4B1D336BF064 /* RueckblickSheet.swift in Sources */,
 				210B62FA2A0496E4CFC195D7 /* SatzMitschnitt.swift in Sources */,
+				A554356A342EDCC3EE0DB147 /* Satzvergleich.swift in Sources */,
 				3860154F0E5C17CE14445DCF /* ScanWege.swift in Sources */,
 				0D0B75F5C030106C7CB21F85 /* ScannerSheet.swift in Sources */,
 				E2ECF1FE835571FFD6617303 /* SecondaryButton.swift in Sources */,
@@ -1308,6 +1314,7 @@
 				948E669F22070CFE77699844 /* SensorAufnahmeLeser.swift in Sources */,
 				19509532F1B3C5FC040FB645 /* SensorDiagnoseBlatt.swift in Sources */,
 				DCDAF0FC91BAD454E2EEDD16 /* SensorMesswert.swift in Sources */,
+				8F9C6142B3628C2CB4C681E3 /* SensorProtokoll.swift in Sources */,
 				8A1DA3B61BCDFBCE5195D8ED /* SensorQuelle.swift in Sources */,
 				C2CF313EE5FB4861C8AFF4BD /* SensorStatistik.swift in Sources */,
 				995B086AD95BD79BE66616DE /* SensorZeile.swift in Sources */,
@@ -1390,9 +1397,8 @@
 				6F40C74FE72F58BD66FE5FAD /* GeraeteFotosTests.swift in Sources */,
 				64DE54AADAEF254C04697CD4 /* GewichtEintragenHilfenTests.swift in Sources */,
 				013D40E89B567A7C02B5A99A /* GewichtsverlaufHilfenTests.swift in Sources */,
+				2521FD94ACF38940E2EAF8AC /* HomeKurseTests.swift in Sources */,
 				3FC052B589C402381A71036E /* HomeSerieTests.swift in Sources */,
-				4540787E689689CA7A4DD93F /* SatzvergleichTests.swift in Sources */,
-				865A000ABB3F1440F4E01D37 /* HomeKurseTests.swift in Sources */,
 				223F8FDD1BA1AFE59AF71D8C /* HomeZeilenTests.swift in Sources */,
 				876C68594995FB10C4C5F383 /* HomeZieleTests.swift in Sources */,
 				083EDED79E112D31F4F5DE41 /* KalenderzelleTests.swift in Sources */,
@@ -1417,8 +1423,10 @@
 				AD152D48FC554F180FA72F58 /* RastwerteTests.swift in Sources */,
 				44EA0E9CBF440F567DCD049C /* ResttimerTests.swift in Sources */,
 				74330F94DB89B468FB230AB0 /* RootDestinationTests.swift in Sources */,
+				CB7700F93F31020EC32F92CA /* SatzvergleichTests.swift in Sources */,
 				0382DA5E0E287C3C9870CAAC /* SensorAufnahmeKoordinatorTests.swift in Sources */,
 				20E8D50394C01DAD3CB2618E /* SensorAufnahmeTests.swift in Sources */,
+				2A7BEA48AC7E50EF1695F075 /* SensorProtokollTests.swift in Sources */,
 				044968EE612FF338A3D91FCF /* SensorStatistikTests.swift in Sources */,
 				B3410F91BF63957604BF8340 /* SessionStoreTests.swift in Sources */,
 				9E3E041191EB9672BE0AAFF0 /* StammdatenTests.swift in Sources */,

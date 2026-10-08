@@ -40,6 +40,10 @@ enum SensorZustand: Equatable, Sendable {
 enum SensorEreignis: Equatable, Sendable {
     case messwert(SensorMesswert)
     case zustand(SensorZustand)
+    /// Rohwert der Akku-Antwort. Nur fuers Protokoll: am 8. Oktober stand
+    /// direkt nach dem Verbinden 0 %, kurz danach 100 % -- ohne Spannung
+    /// laesst sich nicht sagen, ob die Antwort oder die Umrechnung danebenlag.
+    case akku(hundertstelVolt: Int)
 }
 
 /// Alles, was Verbraucher vom Sensor sehen (Spec 5.2). Hinter diesem

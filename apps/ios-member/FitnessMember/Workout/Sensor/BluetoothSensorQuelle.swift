@@ -279,6 +279,7 @@ extension BluetoothSensorQuelle: @preconcurrency CBPeripheralDelegate {
                     t: t, beschleunigung: beschleunigung, drehrate: drehrate, winkel: winkel)))
             case .register(let adresse, let werte):
                 guard adresse == Akkustand.register, let roh = werte.first else { continue }
+                verteiler.senden(.akku(hundertstelVolt: Int(roh)))
                 akku = Akkustand.prozent(hundertstelVolt: Int(roh))
                 if case .verbunden(let name, _) = zustand { setze(.verbunden(name: name, akkuProzent: akku)) }
             }

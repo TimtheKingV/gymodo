@@ -70,6 +70,7 @@ struct AbspielSensorQuelleTests {
             switch ereignis {
             case .messwert(let m): messwerte.append(m)
             case .zustand(let z): zustaende.append(z)
+            case .akku: break
             }
             if case .zustand(.getrennt(wirdNeuVerbunden: false)) = ereignis { break }
         }
