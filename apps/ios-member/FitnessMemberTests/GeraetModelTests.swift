@@ -293,10 +293,10 @@ struct GeraetModelTests {
         let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
         // e2 hat schon zwei gesicherte Saetze -- mehr, als e1 unten nach
         // dem einen gesicherten Satz haben wird.
-        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e2",
+        _ = sessions.satzSichern(station: .testGeraet("m1"), exerciseId: "e2",
                                   einheiten: .kilogrammWiederholungen, load: 40, volume: 10,
                                   problemFlag: false, problemReason: nil)
-        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e2",
+        _ = sessions.satzSichern(station: .testGeraet("m1"), exerciseId: "e2",
                                   einheiten: .kilogrammWiederholungen, load: 40, volume: 10,
                                   problemFlag: false, problemReason: nil)
         let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
@@ -484,14 +484,14 @@ struct GeraetModelTests {
         let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
         let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []), sessions: sessions)
-        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sessions.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                   einheiten: .kilogrammWiederholungen, load: 40, volume: 10,
                                   problemFlag: false, problemReason: nil)
-        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sessions.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                   einheiten: .kilogrammWiederholungen, load: 42.5, volume: 9,
                                   problemFlag: false, problemReason: nil)
         // Derselbe Uebungs-Schluessel an einem anderen Geraet zaehlt nicht.
-        _ = sessions.satzSichern(machineId: "m2", exerciseId: "e2",
+        _ = sessions.satzSichern(station: .testGeraet("m2"), exerciseId: "e2",
                                   einheiten: .kilogrammWiederholungen, load: 20, volume: 12,
                                   problemFlag: false, problemReason: nil)
 
@@ -538,7 +538,7 @@ struct GeraetModelTests {
         let erstesModell = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrap, sessions: sessions)
         #expect(erstesModell.istErstkontakt == true)
         erstesModell.erstkontaktAbschliessen()
-        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sessions.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                   einheiten: .kilogrammWiederholungen, load: 40, volume: 10,
                                   problemFlag: false, problemReason: nil)
 
@@ -561,7 +561,7 @@ struct GeraetModelTests {
         #expect(sut.istErstkontakt == true)
 
         sut.erstkontaktAbschliessen()
-        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sessions.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                   einheiten: .kilogrammWiederholungen, load: 40, volume: 10,
                                   problemFlag: false, problemReason: nil)
         #expect(sut.istErstkontakt == false)
@@ -639,7 +639,7 @@ struct GeraetModelTests {
         let verzeichnis = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
         let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
-        _ = sessions.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sessions.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                   einheiten: .kilogrammWiederholungen, load: 77.5, volume: 11,
                                   problemFlag: false, problemReason: nil)
         let sut = modell(maschine: GeraetTestdaten.maschine,

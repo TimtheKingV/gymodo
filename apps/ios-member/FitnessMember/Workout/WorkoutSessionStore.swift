@@ -123,14 +123,14 @@ final class WorkoutSessionStore {
         fileStore.save(nil)
     }
 
-    func naechsterSetIndex(machineId: String, exerciseId: String, jetzt: Date = Date()) -> Int {
+    func naechsterSetIndex(station: Station, exerciseId: String, jetzt: Date = Date()) -> Int {
         let block = aktiveSession(jetzt: jetzt)?.bloecke
-            .first { $0.machineId == machineId && $0.exerciseId == exerciseId }
+            .first { $0.stationSchluessel == station.schluessel && $0.exerciseId == exerciseId }
         return (block?.saetze.count ?? 0) + 1
     }
 
     func satzSichern(
-        machineId: String,
+        station: Station,
         exerciseId: String,
         einheiten: Blockeinheiten,
         load: Double,
@@ -138,8 +138,7 @@ final class WorkoutSessionStore {
         volume: Int,
         problemFlag: Bool,
         problemReason: ProblemReason?,
-        jetzt: Date = Date(),
-        ort: Ort? = nil
+        jetzt: Date = Date()
     ) -> (sessionId: UUID, setId: UUID, body: SetWrite) {
         // Ohne laufende Einheit (sie ist auf dem Satzpfad ausgelaufen, oder ein
         // Test sichert ohne Start) entsteht sie hier -- der Rueckfallweg, nicht
@@ -153,10 +152,13 @@ final class WorkoutSessionStore {
 
         // Nur der erste bekannte Ort zaehlt: die Einheit gehoert genau einem
         // Ort, ein spaeterer Satz darf sie nicht umhaengen.
-        if session.ort == nil { session.ort = ort }
+        // Der Ort kommt aus der Station, nicht vom Aufrufer: so kann kein Pfad
+        // vergessen, ihn mitzugeben, und das Freie Training (studioId == nil)
+        // wird ebenso festgehalten wie ein Studio.
+        if session.ort == nil { session.ort = station.studioId.map(Ort.studio) ?? .freiesTraining }
 
         let index = session.bloecke.firstIndex {
-            $0.machineId == machineId && $0.exerciseId == exerciseId
+            $0.stationSchluessel == station.schluessel && $0.exerciseId == exerciseId
         }
         let setIndex = (index.map { session.bloecke[$0].saetze.count } ?? 0) + 1
 
@@ -178,7 +180,7 @@ final class WorkoutSessionStore {
                 // Die Einheiten gelten ab dem ersten Satz fuer den ganzen
                 // Block: aendert das Studio das Modell mitten in der
                 // Einheit, bleiben die schon gesicherten Saetze lesbar.
-                LokalerBlock(machineId: machineId, exerciseId: exerciseId,
+                LokalerBlock(station: station, exerciseId: exerciseId,
                              einheiten: einheiten, saetze: [satz])
             )
         }
@@ -187,8 +189,20 @@ final class WorkoutSessionStore {
         fileStore.save(session)
 
         let formatter = ISO8601DateFormatter()
+        // Am Geraet nennt der Satz nur das Geraet (der Server kennt dessen
+        // Studio). Am Typ nennt er Typ und Ort der EINHEIT -- nicht den der
+        // Station: die Einheit gehoert genau einem Ort, und der erste Satz hat
+        // ihn gesetzt. Im Freien Training bleibt studioId weg.
+        let amTyp = station.machineId == nil
+        let studioId: String? = amTyp ? {
+            if case .studio(let id)? = session.ort { return id }
+            return nil
+        }() : nil
         let body = SetWrite(
-            machineId: machineId, exerciseId: exerciseId, setIndex: setIndex,
+            machineId: station.machineId,
+            equipmentModelId: amTyp ? station.equipmentModelId : nil,
+            studioId: studioId,
+            exerciseId: exerciseId, setIndex: setIndex,
             load: load, volume: volume, secondaryLoad: secondaryLoad, rir: nil,
             problemFlag: problemFlag, problemReason: problemReason,
             performedAt: formatter.string(from: jetzt),

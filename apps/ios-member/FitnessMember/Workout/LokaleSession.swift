@@ -69,10 +69,16 @@ struct Blockeinheiten: Equatable, Hashable {
         loadUnit: .kg, secondaryUnit: nil, volumeKind: .reps)
 }
 
-/// Ein Geraet plus eine Uebung, mit seinen Saetzen (M1-Spec SS5.3).
+/// Eine Station plus eine Uebung, mit ihren Saetzen (M1-Spec SS5.3).
 struct LokalerBlock: Codable, Equatable, Identifiable {
-    var id: String { "\(machineId):\(exerciseId)" }
-    let machineId: String
+    var id: String { "\(stationSchluessel):\(exerciseId)" }
+    /// "geraet:<id>" | "typ:<id>" -- gespeichert statt abgeleitet, damit der
+    /// Schluessel einer laufenden Einheit stabil bleibt, auch wenn sich
+    /// Bootstrap und Katalog aendern.
+    let stationSchluessel: String
+    /// nil am Typ.
+    let machineId: String?
+    let equipmentModelId: String?
     let exerciseId: String
     let loadUnit: LoadUnit
     let secondaryUnit: LoadUnit?
@@ -83,9 +89,25 @@ struct LokalerBlock: Codable, Equatable, Identifiable {
         Blockeinheiten(loadUnit: loadUnit, secondaryUnit: secondaryUnit, volumeKind: volumeKind)
     }
 
+    init(station: Station, exerciseId: String,
+         einheiten: Blockeinheiten = .kilogrammWiederholungen, saetze: [LokalerSatz]) {
+        stationSchluessel = station.schluessel
+        machineId = station.machineId
+        equipmentModelId = station.equipmentModelId
+        self.exerciseId = exerciseId
+        loadUnit = einheiten.loadUnit
+        secondaryUnit = einheiten.secondaryUnit
+        volumeKind = einheiten.volumeKind
+        self.saetze = saetze
+    }
+
+    /// Der Block an einem Geraet, wenn nur dessen Kennung vorliegt (Altbestand
+    /// der Tests und Dateien von vor dem Katalog).
     init(machineId: String, exerciseId: String,
          einheiten: Blockeinheiten = .kilogrammWiederholungen, saetze: [LokalerSatz]) {
+        stationSchluessel = "geraet:\(machineId)"
         self.machineId = machineId
+        equipmentModelId = nil
         self.exerciseId = exerciseId
         loadUnit = einheiten.loadUnit
         secondaryUnit = einheiten.secondaryUnit
@@ -94,16 +116,27 @@ struct LokalerBlock: Codable, Equatable, Identifiable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case machineId, exerciseId, loadUnit, secondaryUnit, volumeKind, saetze
+        case stationSchluessel, machineId, equipmentModelId, exerciseId, loadUnit, secondaryUnit, volumeKind, saetze
     }
 
     /// Derselbe Grund wie bei LokalerSatz: ein Block aus der Fassung vor
     /// 0046 traegt keine Einheiten, und er war Kilogramm mal
-    /// Wiederholungen.
+    /// Wiederholungen. Ein Block von vor dem Katalog traegt nur machineId --
+    /// sein Schluessel ist dann "geraet:<id>", wie ihn der Server bildet.
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let alt = Blockeinheiten.kilogrammWiederholungen
-        machineId = try c.decode(String.self, forKey: .machineId)
+        machineId = try c.decodeIfPresent(String.self, forKey: .machineId)
+        equipmentModelId = try c.decodeIfPresent(String.self, forKey: .equipmentModelId)
+        if let schluessel = try c.decodeIfPresent(String.self, forKey: .stationSchluessel) {
+            stationSchluessel = schluessel
+        } else if let machineId {
+            stationSchluessel = "geraet:\(machineId)"
+        } else {
+            throw DecodingError.keyNotFound(
+                CodingKeys.stationSchluessel,
+                .init(codingPath: c.codingPath, debugDescription: "Block ohne Station"))
+        }
         exerciseId = try c.decode(String.self, forKey: .exerciseId)
         loadUnit = try c.decodeIfPresent(LoadUnit.self, forKey: .loadUnit) ?? alt.loadUnit
         secondaryUnit = try c.decodeIfPresent(LoadUnit.self, forKey: .secondaryUnit)

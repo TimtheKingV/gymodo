@@ -35,6 +35,7 @@
 		18E5DDB042457723094DC266 /* FensterUmschalter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F21C7D80571408B3CF415E1 /* FensterUmschalter.swift */; };
 		1938BBAFBE0B05D0BB9E7471 /* DTOTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD55A1626F478A9D5D1A0861 /* DTOTests.swift */; };
 		19509532F1B3C5FC040FB645 /* SensorDiagnoseBlatt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C280F3A3938A1A778116681 /* SensorDiagnoseBlatt.swift */; };
+		1A11AF9A67AC137B03D64DC9 /* StationTestdaten.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D823D0040288974F755113 /* StationTestdaten.swift */; };
 		1A5F792F17B6BDB868EFADF0 /* KurseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE16B16CA9E4D25698A02C0 /* KurseStore.swift */; };
 		1B36CB1A68A9ACE236B005C0 /* KurseTagesindikatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F72606A30A2CE5C9E3E128 /* KurseTagesindikatorTests.swift */; };
 		1B9CF10D96ED6BE26D2D7742 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8D54275FD3C78205F883D9A0 /* PrivacyInfo.xcprivacy */; };
@@ -218,6 +219,7 @@
 		C6AD1695E384E19A040E3AB6 /* MachineResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4406BEBC7051D319700F05E9 /* MachineResolver.swift */; };
 		C826F1FE0D8FF11EF29F326E /* TestnotizFenster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15CA8103EC19C3D5C9F742E7 /* TestnotizFenster.swift */; };
 		C836C124EA01709D44BD467B /* Laufzeitkontext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 860C70249404ED6DB23710D3 /* Laufzeitkontext.swift */; };
+		C8CDA41EEA7DB3A151511528 /* LokaleSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD729F0FF6DCF906AA1C920 /* LokaleSessionTests.swift */; };
 		C9C1FB87A7FDC1EB8B223CE7 /* HomeKurse.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE895F8555B096627408B103 /* HomeKurse.swift */; };
 		CA9FEF94E8BCFF95DCBF8A48 /* TestnotizFensterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1311D4DD8AF74E5D3E800ED /* TestnotizFensterTests.swift */; };
 		CB7700F93F31020EC32F92CA /* SatzvergleichTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9F06768F0BD680121ACAB5 /* SatzvergleichTests.swift */; };
@@ -460,6 +462,7 @@
 		8D8E52BC8202E83D789FC2E5 /* DangerOutlineButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DangerOutlineButton.swift; sourceTree = "<group>"; };
 		8DC8A9787A915F4A7919CC1A /* KurseAbmeldefrage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseAbmeldefrage.swift; sourceTree = "<group>"; };
 		8F549FAB0B22E1E37C716899 /* VerlaufStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerlaufStore.swift; sourceTree = "<group>"; };
+		90D823D0040288974F755113 /* StationTestdaten.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationTestdaten.swift; sourceTree = "<group>"; };
 		918AEF34456589ED570B0B53 /* SensorAufnahmeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorAufnahmeTests.swift; sourceTree = "<group>"; };
 		927CF0E8A6C3CD19C832E6FD /* ProblemSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProblemSheet.swift; sourceTree = "<group>"; };
 		9356660F927DE0AEC1C66C5D /* GeraetEinstieg.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetEinstieg.swift; sourceTree = "<group>"; };
@@ -552,6 +555,7 @@
 		E5B0B75C600727218BE93316 /* KurseTagesindikator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseTagesindikator.swift; sourceTree = "<group>"; };
 		E82F1E9C17FC9A2A3742B15D /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
 		EAEDFB14623AE11C1FD67B11 /* FitnessMember.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FitnessMember.entitlements; sourceTree = "<group>"; };
+		EBD729F0FF6DCF906AA1C920 /* LokaleSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LokaleSessionTests.swift; sourceTree = "<group>"; };
 		EC41D34D6C45ECA67DC8B7D5 /* HomeZeilenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeZeilenTests.swift; sourceTree = "<group>"; };
 		ECD3248CAD211A17B23D8826 /* Trainingsuhr.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trainingsuhr.swift; sourceTree = "<group>"; };
 		EE7999237F8B3E7635E236AE /* Rastwerte.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rastwerte.swift; sourceTree = "<group>"; };
@@ -865,6 +869,7 @@
 				B8CD72E24D559ACE32FF8817 /* KurseWochenInhaltTests.swift */,
 				385298CAA798858C18611878 /* KurseWochenPagingTests.swift */,
 				A2D588E7E4F6611509CF03B1 /* KursZustandTests.swift */,
+				EBD729F0FF6DCF906AA1C920 /* LokaleSessionTests.swift */,
 				F2544360B27EEB7C56A35775 /* MarkenAssetTests.swift */,
 				0F4F2DAEB38D14F84C2ECC1B /* OnboardingAntwortenTests.swift */,
 				E25BD6B14373C1068B24705E /* OnboardingHinweisTests.swift */,
@@ -883,6 +888,7 @@
 				D5B3CA1EF2EE2EE35261BF6F /* SensorStatistikTests.swift */,
 				CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */,
 				9AF7AC0FF4D60C0CA0FA03A2 /* StammdatenTests.swift */,
+				90D823D0040288974F755113 /* StationTestdaten.swift */,
 				A9600E3544B452BECB058708 /* StationTests.swift */,
 				C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */,
 				5D01D5A0C042B12A034AC4BC /* TestnotizAblageTests.swift */,
@@ -1431,6 +1437,7 @@
 				B854BF7F3EC5F92A64658311 /* KurseWochenBerechnungTests.swift in Sources */,
 				43997DDAFC0EF59A8C083DC7 /* KurseWochenInhaltTests.swift in Sources */,
 				FA9F18E9FD57D18F60D1D587 /* KurseWochenPagingTests.swift in Sources */,
+				C8CDA41EEA7DB3A151511528 /* LokaleSessionTests.swift in Sources */,
 				0CC624443C0CFE0C0A80A543 /* MarkenAssetTests.swift in Sources */,
 				28DB21D330D60931AE02D035 /* OnboardingAntwortenTests.swift in Sources */,
 				535788FB463D3843006BCB3A /* OnboardingHinweisTests.swift in Sources */,
@@ -1449,6 +1456,7 @@
 				044968EE612FF338A3D91FCF /* SensorStatistikTests.swift in Sources */,
 				B3410F91BF63957604BF8340 /* SessionStoreTests.swift in Sources */,
 				9E3E041191EB9672BE0AAFF0 /* StammdatenTests.swift in Sources */,
+				1A11AF9A67AC137B03D64DC9 /* StationTestdaten.swift in Sources */,
 				465B5D2B577283F081B21B34 /* StationTests.swift in Sources */,
 				9E4947346E28638E0FA99C6A /* TagLinkTests.swift in Sources */,
 				57A315378B9D590DB52C7122 /* TestnotizAblageTests.swift in Sources */,

@@ -275,7 +275,7 @@ enum HomeZeilen {
     }
 
     private static func verschiedeneGeraete(_ karte: Trainingskarte) -> Int {
-        Set(karte.teile.flatMap { $0.blocks.map(\.machineId) }).count
+        Set(karte.teile.flatMap { $0.blocks.map(\.stationSchluessel) }).count
     }
 
     /// Nach Beginn sortiert, nicht nach der Reihenfolge der Liste: die

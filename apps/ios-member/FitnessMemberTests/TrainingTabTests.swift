@@ -71,4 +71,12 @@ struct TrainingTabTests {
         #expect(TrainingTab.zuletztZuerst([m1, m2]).map(\.machineId) == ["m1", "m2"])
         #expect(TrainingTab.zuletztZuerst([m2, m1]).map(\.machineId) == ["m1", "m2"])
     }
+
+    @Test func typenZaehlenAlsStationen() throws {
+        let session = LokaleSession(id: UUID(), startedAt: start, bloecke: [
+            LokalerBlock(station: .testTyp("t1"), exerciseId: "e1", saetze: [satz(1, minuten: 0)]),
+            LokalerBlock(station: .testTyp("t2"), exerciseId: "e1", saetze: [satz(1, minuten: 4)]),
+        ])
+        #expect(try #require(TrainingTab.mitte(session)).zahlen?.geraete == 2)
+    }
 }

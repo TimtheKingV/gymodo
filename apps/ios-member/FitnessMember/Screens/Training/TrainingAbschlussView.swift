@@ -392,7 +392,7 @@ struct AbschlussZeile: Equatable, Identifiable {
     static func zeilen(bloecke: [Blockzeile], vorschlaege: [Blockvorschlag]) -> [AbschlussZeile] {
         bloecke.map { block in
             let vorschlag = vorschlaege.first {
-                $0.machineId == block.machineId && $0.exerciseId == block.exerciseId
+                $0.stationSchluessel == block.stationSchluessel && $0.exerciseId == block.exerciseId
             }
             return AbschlussZeile(
                 block: block,

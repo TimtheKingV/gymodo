@@ -7,9 +7,11 @@ import Foundation
 /// muss und den Abschluss-Fall mit einer Trainingszusammenfassung im Gepaeck
 /// traegt. Beide Typen bestehen nur aus Hashable-Bestandteilen -- eine
 /// Konformanzzeile ohne Umbau.
-struct Blockzeile: Equatable, Hashable, Identifiable {
-    var id: String { "\(machineId):\(exerciseId)" }
-    let machineId: String
+struct Blockzeile: Equatable, Hashable, Identifiable, StationsBezug {
+    var id: String { "\(stationSchluessel):\(exerciseId)" }
+    /// nil am Typ.
+    let machineId: String?
+    var equipmentModelId: String? = nil
     let exerciseId: String
     /// nil, wenn die Saetze sich nicht auf eine Belastung einigen -- dann
     /// lieber keine Zahl als eine falsche.
@@ -57,13 +59,14 @@ struct Trainingszusammenfassung: Equatable, Hashable {
         // geraeteAnzahl, satzAnzahl und bloecke bleiben, wie sie sind.
         // Geraete, nicht Bloecke: zwei Uebungen an derselben Maschine sind
         // ein Geraet (so zaehlt es auch der Server in machineCount).
-        geraeteAnzahl = Set(session.bloecke.map(\.machineId)).count
+        geraeteAnzahl = Set(session.bloecke.map(\.stationSchluessel)).count
         satzAnzahl = alle.count
         bloecke = session.bloecke.map { block in
             let belastungen = Set(block.saetze.map(\.load))
             let nebenbelastungen = Set(block.saetze.map(\.secondaryLoad))
             return Blockzeile(
                 machineId: block.machineId,
+                equipmentModelId: block.equipmentModelId,
                 exerciseId: block.exerciseId,
                 belastung: belastungen.count == 1 ? belastungen.first : nil,
                 // flatMap: das einzige Element der Menge ist selbst ein

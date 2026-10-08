@@ -92,3 +92,25 @@ private extension String {
         hasPrefix(prefix) ? String(dropFirst(prefix.count)) : nil
     }
 }
+
+/// Server-Bloecke (SessionSummary.Block, Blockvorschlag) und die Blockzeilen
+/// des Abschlusses nennen Geraet und/oder Typ; alte Caches kennen nur
+/// machineId. Der Schluessel wird hier einmal gebildet.
+protocol StationsBezug {
+    var machineId: String? { get }
+    var equipmentModelId: String? { get }
+    var exerciseId: String { get }
+}
+
+extension StationsBezug {
+    /// Ohne beide Kennungen (kommt mit echten Daten nicht vor: der Server
+    /// liefert immer eine) bekommt der Block einen eigenen Schluessel je
+    /// Uebung, damit unbekannte Bloecke nicht zu einer Station verschmelzen.
+    var stationSchluessel: String {
+        if machineId == nil, equipmentModelId == nil { return "unbekannt:\(exerciseId)" }
+        return Station.schluessel(machineId: machineId, equipmentModelId: equipmentModelId ?? "")
+    }
+}
+
+extension SessionSummary.Block: StationsBezug {}
+extension Blockvorschlag: StationsBezug {}

@@ -62,15 +62,15 @@ struct OrtswechselTests {
         return (WorkoutSessionStore(fileStore: SessionFileStore(directory: v)), v)
     }
 
-    private func satz(_ sut: WorkoutSessionStore, ort: Ort?) {
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+    private func satz(_ sut: WorkoutSessionStore, studioId: String?) {
+        _ = sut.satzSichern(station: studioId.map { .testGeraet("m1", studioId: $0) } ?? .testTyp("t1", studioId: nil), exerciseId: "e1",
                             einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
-                            problemFlag: false, problemReason: nil, jetzt: jetzt, ort: ort)
+                            problemFlag: false, problemReason: nil, jetzt: jetzt)
     }
 
     @Test func derErsteSatzMerktSichDenOrtUndSpeichertIhn() {
         let (sut, v) = store()
-        satz(sut, ort: .studio("a"))
+        satz(sut, studioId: "a")
         #expect(sut.aktiveSession(jetzt: jetzt)?.ort == .studio("a"))
         let neu = WorkoutSessionStore(fileStore: SessionFileStore(directory: v))
         #expect(neu.aktiveSession(jetzt: jetzt)?.ort == .studio("a"))
@@ -78,16 +78,14 @@ struct OrtswechselTests {
 
     @Test func spaetereSaetzeUeberschreibenDenOrtNicht() {
         let (sut, _) = store()
-        satz(sut, ort: .studio("a"))
-        satz(sut, ort: .studio("b"))
+        satz(sut, studioId: "a")
+        satz(sut, studioId: "b")
         #expect(sut.aktiveSession(jetzt: jetzt)?.ort == .studio("a"))
     }
 
-    @Test func einSatzOhneOrtLaesstDenOrtOffenUndSpaeterWirdErGesetzt() {
+    @Test func eineStationOhneStudioMachtDieEinheitZumFreienTraining() {
         let (sut, _) = store()
-        satz(sut, ort: nil)
-        #expect(sut.aktiveSession(jetzt: jetzt)?.ort == nil)
-        satz(sut, ort: .freiesTraining)
+        satz(sut, studioId: nil)
         #expect(sut.aktiveSession(jetzt: jetzt)?.ort == .freiesTraining)
     }
 }

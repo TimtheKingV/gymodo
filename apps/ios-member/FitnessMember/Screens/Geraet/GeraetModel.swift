@@ -402,7 +402,7 @@ final class GeraetModel {
     }
 
     var satzNummer: Int {
-        sessions.naechsterSetIndex(machineId: maschine.id, exerciseId: uebungId)
+        sessions.naechsterSetIndex(station: Station(maschine: maschine), exerciseId: uebungId)
     }
 
     /// Wie viele Saetze an diesem Geraet geplant sind (Profil, Vorgabe 3).
@@ -515,7 +515,7 @@ final class GeraetModel {
         !erledigt.contains(uebungId)
             && GeraetEinstiegRechner.brauchtErstkontakt(
                 machineId: maschine.id, exerciseId: uebungId, in: bootstrap,
-                naechsterSetIndex: sessions.naechsterSetIndex(machineId: maschine.id, exerciseId: uebungId))
+                naechsterSetIndex: sessions.naechsterSetIndex(station: Station(maschine: maschine), exerciseId: uebungId))
     }
 
     /// Ob gerade ein Training laeuft -- der Erstkontakt haengt
@@ -637,7 +637,7 @@ final class GeraetModel {
 
     func satzSichern(problemFlag: Bool, problemReason: ProblemReason?) async {
         let geschrieben = sessions.satzSichern(
-            machineId: maschine.id, exerciseId: uebungId,
+            station: Station(maschine: maschine), exerciseId: uebungId,
             einheiten: einheiten,
             load: belastung, secondaryLoad: nebenbelastung, volume: umfang,
             problemFlag: problemFlag, problemReason: problemReason

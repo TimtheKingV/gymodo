@@ -128,6 +128,18 @@ struct TrainingszusammenfassungTests {
 
         #expect(Trainingszusammenfassung(leer) == nil)
     }
+
+    @Test func zaehltTypenAlsStationenUndGeraetUndTypNebeneinander() throws {
+        let session = LokaleSession(id: UUID(), startedAt: start, bloecke: [
+            LokalerBlock(station: .testTyp("t1"), exerciseId: "e1", saetze: [satz(1, 80, 0)]),
+            LokalerBlock(station: .testTyp("t2"), exerciseId: "e1", saetze: [satz(1, 80, 5)]),
+            LokalerBlock(station: .testGeraet("m1"), exerciseId: "e1", saetze: [satz(1, 80, 9)]),
+        ])
+        let z = try #require(Trainingszusammenfassung(session))
+        #expect(z.geraeteAnzahl == 3)
+        #expect(z.bloecke.map(\.id) == ["typ:t1:e1", "typ:t2:e1", "geraet:m1:e1"])
+        #expect(z.bloecke[0].machineId == nil)
+    }
 }
 
 @MainActor
@@ -142,7 +154,7 @@ struct AbgelaufeneSessionTests {
 
     @Test func eineLaufendeEinheitGiltNichtAlsAbgelaufen() {
         let sut = store()
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                             einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
 
@@ -151,7 +163,7 @@ struct AbgelaufeneSessionTests {
 
     @Test func nachVierStundenGiltSieAlsAbgelaufen() {
         let sut = store()
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                             einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
 
@@ -160,7 +172,7 @@ struct AbgelaufeneSessionTests {
 
     @Test func quittierenLaesstSieVerschwinden() {
         let sut = store()
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                             einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
         let spaeter = start.addingTimeInterval(5 * 3600)
@@ -173,7 +185,7 @@ struct AbgelaufeneSessionTests {
 
     @Test func eineSpaetereEinheitBekommtIhrenEigenenHinweis() {
         let sut = store()
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                             einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
         sut.ausgelaufeneQuittieren()
@@ -181,7 +193,7 @@ struct AbgelaufeneSessionTests {
         // Ohne "Training beenden" zu druecken: der naechste Satz legt eine
         // neue Einheit an, weit genug hinter der ersten, dass sie eigenstaendig ist.
         let zweiterStart = start.addingTimeInterval(5 * 3600)
-        _ = sut.satzSichern(machineId: "m2", exerciseId: "e2",
+        _ = sut.satzSichern(station: .testGeraet("m2"), exerciseId: "e2",
                             einheiten: .kilogrammWiederholungen, load: 45, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: zweiterStart)
 
@@ -190,7 +202,7 @@ struct AbgelaufeneSessionTests {
 
     @Test func einManuellBeendetesTrainingGiltNichtAlsAusgelaufen() {
         let sut = store()
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                             einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
         sut.beenden()

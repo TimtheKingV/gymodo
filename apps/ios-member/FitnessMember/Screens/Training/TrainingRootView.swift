@@ -624,10 +624,13 @@ struct TrainingRootView: View {
     /// Startscreen, Satzpfad oder Satzpfad mit Erstkontakt -- die Regel
     /// steht in TrainingStart.ziel, hier werden nur ihre Eingaben gelesen.
     private func zielNachUebungswahl(machineId: String, exerciseId: String, token: String?) -> GeraetRoute {
-        let erstkontakt = katalog.bootstrap.map {
-            GeraetEinstiegRechner.brauchtErstkontakt(
-                machineId: machineId, exerciseId: exerciseId, in: $0,
-                naechsterSetIndex: sessions.naechsterSetIndex(machineId: machineId, exerciseId: exerciseId))
+        let erstkontakt = katalog.bootstrap.map { bootstrap in
+            // Ein Geraet, das der Prefetch nicht (mehr) kennt, hat keine Saetze.
+            let index = bootstrap.station(schluessel: "geraet:\(machineId)", studioId: nil)
+                .map { sessions.naechsterSetIndex(station: $0, exerciseId: exerciseId) } ?? 1
+            return GeraetEinstiegRechner.brauchtErstkontakt(
+                machineId: machineId, exerciseId: exerciseId, in: bootstrap,
+                naechsterSetIndex: index)
         } ?? false
         return TrainingStart.ziel(machineId: machineId, exerciseId: exerciseId, token: token,
                                   trainingLaeuft: sessions.aktiveSession() != nil,
@@ -638,7 +641,9 @@ struct TrainingRootView: View {
         // Der Zirkelfall: ein Tap statt eines Scans (M1-Spec SS5.3).
         // Kein TrainingStart.ziel: die Blockliste gibt es nur, solange ein
         // Training laeuft.
-        pfad.append(.geraet(machineId: block.machineId, exerciseId: block.exerciseId, token: nil))
+        // Bloecke an Typen oeffnen erst mit dem Stationsscreen (Task 9/10).
+        guard let machineId = block.machineId else { return }
+        pfad.append(.geraet(machineId: machineId, exerciseId: block.exerciseId, token: nil))
     }
 
     private func pauseUmschalten() {

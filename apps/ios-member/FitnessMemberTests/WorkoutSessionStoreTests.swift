@@ -23,7 +23,7 @@ struct WorkoutSessionStoreTests {
         let (sut, _) = store()
         #expect(sut.aktiveSession() == nil)
 
-        let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        let geschrieben = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                           einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                                           problemFlag: false, problemReason: nil,
                                           jetzt: start)
@@ -34,15 +34,15 @@ struct WorkoutSessionStoreTests {
 
     @Test func setIndexLaeuftInnerhalbDesBlocks() {
         let (sut, _) = store()
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                             einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
         // Anderes Geraet dazwischen -- Zirkeltraining.
-        _ = sut.satzSichern(machineId: "m2", exerciseId: "e2",
+        _ = sut.satzSichern(station: .testGeraet("m2"), exerciseId: "e2",
                             einheiten: .kilogrammWiederholungen, load: 45, volume: 12,
                             problemFlag: false, problemReason: nil,
                             jetzt: start.addingTimeInterval(120))
-        let dritter = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        let dritter = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                       einheiten: .kilogrammWiederholungen, load: 80, volume: 9,
                                       problemFlag: false, problemReason: nil,
                                       jetzt: start.addingTimeInterval(240))
@@ -54,10 +54,10 @@ struct WorkoutSessionStoreTests {
 
     @Test func dieselbeSessionInnerhalbVonVierStunden() {
         let (sut, _) = store()
-        let erster = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        let erster = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                      einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                                      problemFlag: false, problemReason: nil, jetzt: start)
-        let zweiter = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        let zweiter = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                       einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                                       problemFlag: false, problemReason: nil,
                                       jetzt: start.addingTimeInterval(3 * 3600))
@@ -67,10 +67,10 @@ struct WorkoutSessionStoreTests {
 
     @Test func neueSessionNachVierStundenOhneSatz() {
         let (sut, _) = store()
-        let erster = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        let erster = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                      einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                                      problemFlag: false, problemReason: nil, jetzt: start)
-        let zweiter = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        let zweiter = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                       einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                                       problemFlag: false, problemReason: nil,
                                       jetzt: start.addingTimeInterval(4 * 3600 + 1))
@@ -83,7 +83,7 @@ struct WorkoutSessionStoreTests {
 
     @Test func abgelaufeneSessionGiltNichtMehrAlsAktiv() {
         let (sut, _) = store()
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                             einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
 
@@ -95,14 +95,14 @@ struct WorkoutSessionStoreTests {
         let verzeichnis = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
         let ersterLauf = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
-        let geschrieben = ersterLauf.satzSichern(machineId: "m1", exerciseId: "e1",
+        let geschrieben = ersterLauf.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                                  einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                                                  problemFlag: false, problemReason: nil, jetzt: start)
 
         let zweiterLauf = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
 
         #expect(zweiterLauf.aktiveSession()?.id == geschrieben.sessionId)
-        #expect(zweiterLauf.naechsterSetIndex(machineId: "m1", exerciseId: "e1",
+        #expect(zweiterLauf.naechsterSetIndex(station: .testGeraet("m1"), exerciseId: "e1",
                                               jetzt: start.addingTimeInterval(60)) == 2)
     }
 
@@ -113,7 +113,7 @@ struct WorkoutSessionStoreTests {
     @Test func einLaufbandSatzTraegtNebenbelastungUndEinheitenDesBlocks() {
         let (sut, _) = store()
 
-        let geschrieben = sut.satzSichern(machineId: "m9", exerciseId: "e9", einheiten: laufband,
+        let geschrieben = sut.satzSichern(station: .testGeraet("m9"), exerciseId: "e9", einheiten: laufband,
                                           load: 8.5, secondaryLoad: 6, volume: 1200,
                                           problemFlag: false, problemReason: nil, jetzt: start)
 
@@ -130,7 +130,7 @@ struct WorkoutSessionStoreTests {
         // Nebenbelastung ab (Spec 5.1) -- nil heisst: das Feld fehlt.
         let (sut, _) = store()
 
-        let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        let geschrieben = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                           einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                                           problemFlag: false, problemReason: nil, jetzt: start)
 
@@ -140,12 +140,12 @@ struct WorkoutSessionStoreTests {
 
     @Test func dieEinheitenDesBlocksStehenAbDemErstenSatzFest() {
         let (sut, _) = store()
-        _ = sut.satzSichern(machineId: "m9", exerciseId: "e9", einheiten: laufband,
+        _ = sut.satzSichern(station: .testGeraet("m9"), exerciseId: "e9", einheiten: laufband,
                             load: 8.5, secondaryLoad: 6, volume: 1200,
                             problemFlag: false, problemReason: nil, jetzt: start)
         // Ein zweiter Satz mit anderen Einheiten (das Studio hat das Modell
         // mitten in der Einheit geaendert) deutet den ersten nicht um.
-        _ = sut.satzSichern(machineId: "m9", exerciseId: "e9", einheiten: .kilogrammWiederholungen,
+        _ = sut.satzSichern(station: .testGeraet("m9"), exerciseId: "e9", einheiten: .kilogrammWiederholungen,
                             load: 9, secondaryLoad: 6, volume: 600,
                             problemFlag: false, problemReason: nil, jetzt: start.addingTimeInterval(60))
 
@@ -158,7 +158,7 @@ struct WorkoutSessionStoreTests {
         let verzeichnis = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
         let ersterLauf = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
-        _ = ersterLauf.satzSichern(machineId: "m9", exerciseId: "e9", einheiten: laufband,
+        _ = ersterLauf.satzSichern(station: .testGeraet("m9"), exerciseId: "e9", einheiten: laufband,
                                    load: 8.5, secondaryLoad: 6, volume: 1200,
                                    problemFlag: false, problemReason: nil, jetzt: start)
 
@@ -202,7 +202,7 @@ struct WorkoutSessionStoreTests {
 
         // Und der Store zaehlt an ihr weiter: der naechste Satz ist Satz 3.
         let sut = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
-        #expect(sut.naechsterSetIndex(machineId: "m1", exerciseId: "e1",
+        #expect(sut.naechsterSetIndex(station: .testGeraet("m1"), exerciseId: "e1",
                                       jetzt: start.addingTimeInterval(300)) == 3)
     }
 
@@ -221,7 +221,7 @@ struct WorkoutSessionStoreTests {
         try Data(alt.utf8).write(to: datei)
         let sut = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
 
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                             einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start.addingTimeInterval(120))
 
@@ -235,7 +235,7 @@ struct WorkoutSessionStoreTests {
 
     @Test func beendenLoeschtDieSessionUndGibtIhreKennungZurueck() {
         let (sut, _) = store()
-        let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        let geschrieben = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                           einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                                           problemFlag: false, problemReason: nil, jetzt: start)
 
@@ -273,7 +273,7 @@ struct WorkoutSessionStoreTests {
         let (sut, _) = store()
         let einheit = sut.trainingStarten(jetzt: start)
 
-        let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        let geschrieben = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                           einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                                           problemFlag: false, problemReason: nil,
                                           jetzt: start.addingTimeInterval(600))
@@ -289,7 +289,7 @@ struct WorkoutSessionStoreTests {
         let (sut, _) = store()
         sut.trainingStarten(jetzt: start)
 
-        let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        let geschrieben = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                           einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                                           problemFlag: false, problemReason: nil,
                                           jetzt: start.addingTimeInterval(600))
@@ -307,7 +307,7 @@ struct WorkoutSessionStoreTests {
         // dann der Satz selbst (startedAt == jetzt, derErsteSatzLegtDieSessionAn).
         // Genau den muss der Body auch als sessionStartedAt tragen, sonst
         // faellt der Server auf diesem Pfad auf now() zurueck.
-        let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        let geschrieben = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                           einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                                           problemFlag: false, problemReason: nil, jetzt: start)
 
@@ -353,7 +353,7 @@ struct WorkoutSessionStoreTests {
     @Test func eineAbgelaufeneEinheitMitSatzWirdGemeldet() {
         let (sut, _) = store()
         sut.trainingStarten(jetzt: start)
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                             einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start)
         let spaeter = start.addingTimeInterval(5 * 3600)
@@ -390,7 +390,7 @@ struct WorkoutSessionStoreTests {
 
     @Test func dieProblemmeldungLandetImSatzRumpf() {
         let (sut, _) = store()
-        let geschrieben = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        let geschrieben = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                           einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                                           problemFlag: true, problemReason: .zuSchwer,
                                           jetzt: start)
@@ -423,7 +423,7 @@ struct WorkoutSessionStoreTests {
         sut.trainingStarten(jetzt: start)
         sut.pausieren(jetzt: start.addingTimeInterval(60))
 
-        _ = sut.satzSichern(machineId: "m1", exerciseId: "e1",
+        _ = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                             einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil,
                             jetzt: start.addingTimeInterval(300))
@@ -439,5 +439,63 @@ struct WorkoutSessionStoreTests {
         sut.pausieren(jetzt: start)
 
         #expect(sut.aktiveSession(jetzt: start) == nil)
+    }
+
+    // MARK: - Stationen (Gymtavo-Katalog)
+
+    private func schreiben(_ sut: WorkoutSessionStore, _ station: Station) -> SetWrite {
+        sut.satzSichern(station: station, exerciseId: "e1",
+                        einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
+                        problemFlag: false, problemReason: nil, jetzt: start).body
+    }
+
+    @Test func einSatzAmGeraetNenntNurDasGeraet() throws {
+        let (sut, _) = store()
+        let body = schreiben(sut, .testGeraet("m1"))
+        #expect(body.machineId == "m1")
+        #expect(body.equipmentModelId == nil)
+        #expect(body.studioId == nil)
+        let json = try String(decoding: JSONEncoder().encode(body), as: UTF8.self)
+        #expect(!json.contains("equipmentModelId"))
+        #expect(!json.contains("studioId"))
+    }
+
+    @Test func einSatzAmTypInEinerStudioEinheitSchreibtTypUndStudio() throws {
+        let (sut, _) = store()
+        let body = schreiben(sut, .testTyp("t1", studioId: "s1"))
+        #expect(body.machineId == nil)
+        #expect(body.equipmentModelId == "t1")
+        #expect(body.studioId == "s1")
+        // nil wird weggelassen, nie als null gesendet (Server-Zod .optional()).
+        let json = try String(decoding: JSONEncoder().encode(body), as: UTF8.self)
+        #expect(!json.contains("machineId"))
+        #expect(!json.contains("null"))
+    }
+
+    @Test func einSatzAmTypNimmtDenOrtDerEinheitNichtDenDerStation() {
+        let (sut, _) = store()
+        _ = schreiben(sut, .testGeraet("m1", studioId: "a"))
+        let body = schreiben(sut, .testTyp("t1", studioId: "b"))
+        #expect(body.studioId == "a")
+    }
+
+    @Test func einSatzAmTypImFreienTrainingSchreibtKeineStudioId() {
+        let (sut, _) = store()
+        let body = schreiben(sut, .testTyp("t1", studioId: nil))
+        #expect(body.equipmentModelId == "t1")
+        #expect(body.studioId == nil)
+        #expect(sut.aktiveSession(jetzt: start)?.ort == .freiesTraining)
+    }
+
+    @Test func zweiTypenErgebenZweiBloecke() {
+        let (sut, _) = store()
+        _ = schreiben(sut, .testTyp("t1"))
+        _ = schreiben(sut, .testTyp("t2"))
+        _ = schreiben(sut, .testTyp("t1"))
+        let bloecke = sut.aktiveSession(jetzt: start)?.bloecke ?? []
+        #expect(bloecke.map(\.stationSchluessel) == ["typ:t1", "typ:t2"])
+        #expect(bloecke.map(\.saetze.count) == [2, 1])
+        #expect(sut.naechsterSetIndex(station: .testTyp("t1"), exerciseId: "e1", jetzt: start) == 3)
+        #expect(sut.naechsterSetIndex(station: .testGeraet("t1"), exerciseId: "e1", jetzt: start) == 1)
     }
 }
