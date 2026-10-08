@@ -3,7 +3,11 @@ import SwiftUI
 struct MemberStudiosView: View {
     @Environment(CatalogStore.self) private var catalogStore
     @State private var studioPendingLeave: BootstrapResponse.Studio?
+    @Environment(WorkoutSessionStore.self) private var sessions
+    @Environment(\.dismiss) private var dismiss
     @State private var errorMessage: String?
+    @State private var wechselPending: Ort?
+    let apiClient: APIClient
 
     private var studios: [BootstrapResponse.Studio] {
         catalogStore.bootstrap?.studios ?? []
@@ -11,36 +15,53 @@ struct MemberStudiosView: View {
 
     var body: some View {
         List {
-            ForEach(studios) { studio in
+            ForEach(StudiosListe.zeilen(studios: studios, ort: catalogStore.ort)) { zeile in
                 HStack(spacing: 12) {
                     Circle()
-                        .fill(studio.id == catalogStore.activeStudioId ? DesignSystem.Color.accent : DesignSystem.Color.line)
+                        .fill(zeile.istAktiv ? DesignSystem.Color.accent : DesignSystem.Color.line)
                         .frame(width: 7, height: 7)
 
-                    Text(studio.name)
+                    Text(zeile.name)
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(studio.id == catalogStore.activeStudioId ? DesignSystem.Color.text : DesignSystem.Color.textMuted)
+                        .foregroundStyle(zeile.istAktiv ? DesignSystem.Color.text : DesignSystem.Color.textMuted)
 
                     Spacer()
 
-                    Button("Verlassen") { studioPendingLeave = studio }
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(DesignSystem.Color.danger)
-                        .frame(minWidth: 44, minHeight: 44)
+                    if zeile.istAktiv {
+                        Image(systemName: "checkmark")
+                            .foregroundStyle(DesignSystem.Color.accent)
+                            .accessibilityHidden(true)
+                    }
+
+                    if zeile.darfVerlassen, case .studio(let id) = zeile.ort,
+                       let studio = studios.first(where: { $0.id == id }) {
+                        Button("Verlassen") { studioPendingLeave = studio }
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(DesignSystem.Color.danger)
+                            .frame(minWidth: 44, minHeight: 44)
+                    }
                 }
                 // Trefferflaeche ist die ganze Zeile, nicht nur der ~18pt hohe
                 // Text -- >= 44pt gilt in dieser App durchgaengig.
                 .frame(minHeight: 44)
                 .contentShape(Rectangle())
-                .onTapGesture { catalogStore.setActiveStudio(studio.id) }
+                .onTapGesture { wechseln(zeile.ort) }
+                .accessibilityAddTraits(zeile.istAktiv ? .isSelected : [])
                 .listRowBackground(DesignSystem.Color.surface)
             }
+
+            NavigationLink("Studio beitreten") {
+                StudioBeitretenView { dismiss() }
+            }
+            .font(.system(size: 15, weight: .bold))
+            .frame(minHeight: 44)
+            .listRowBackground(DesignSystem.Color.surface)
         }
         .scrollContentBackground(.hidden)
         .background(DesignSystem.Color.bg)
         .safeAreaInset(edge: .bottom) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Tippen wechselt. Ein Scan im anderen Studio wechselt von selbst.")
+                Text(StudiosListe.fusstext)
                 Text("Ein Studio, das du verlässt, verliert dich als Mitglied — deine Sätze und dein Fortschritt bleiben bei dir.")
                 if let errorMessage {
                     InlineBanner(tone: .danger, message: errorMessage)
@@ -65,7 +86,41 @@ struct MemberStudiosView: View {
         } message: { _ in
             Text("Ein Studio, das du verlässt, verliert dich als Mitglied — deine Sätze und dein Fortschritt bleiben bei dir.")
         }
+        .confirmationDialog(
+            "Training in \(StudiosListe.name(fuer: laufenderOrt, studios: studios)) beenden?",
+            isPresented: Binding(
+                get: { wechselPending != nil },
+                set: { if !$0 { wechselPending = nil } }
+            ),
+            presenting: wechselPending
+        ) { ziel in
+            Button("Training beenden", role: .destructive) { beendenUndWechseln(zu: ziel) }
+            Button("Abbrechen", role: .cancel) {}
+        } message: { _ in
+            Text("Danach wechselst du den Ort.")
+        }
         .testnotizScreen()
+    }
+
+    private var laufenderOrt: Ort {
+        sessions.aktiveSession()?.ort ?? catalogStore.ort
+    }
+
+    private func wechseln(_ ziel: Ort) {
+        switch Ortswechsel.pruefen(ziel: ziel, aktuell: catalogStore.ort,
+                                   offeneEinheit: sessions.aktiveSession()) {
+        case .sofort: catalogStore.setOrt(ziel)
+        case .erstBeenden: wechselPending = ziel
+        }
+    }
+
+    /// Lokal sofort, Server im Hintergrund -- kein Abschluss-Screen in diesem
+    /// Pfad, der Server beendet sonst nach vier Stunden selbst.
+    private func beendenUndWechseln(zu ziel: Ort) {
+        let ende = sessions.beendenFuerOrtswechsel()
+        catalogStore.setOrt(ziel)
+        let client = apiClient
+        Task { await WorkoutSessionStore.melden(ende, loader: client) }
     }
 
     private func leave(_ studio: BootstrapResponse.Studio) async {

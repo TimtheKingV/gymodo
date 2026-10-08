@@ -266,7 +266,7 @@ struct ProfilRootView: View {
             Toggle("Vibration beim Sichern", isOn: $vibrationBeimSichern)
 
             NavigationLink("Passwort ändern") { MemberPasswortAendernView() }
-            NavigationLink("Studios") { MemberStudiosView() }
+            NavigationLink("Studios") { MemberStudiosView(apiClient: apiClient) }
         }
         .tint(DesignSystem.Color.accent)
         .listRowBackground(DesignSystem.Color.surface)
