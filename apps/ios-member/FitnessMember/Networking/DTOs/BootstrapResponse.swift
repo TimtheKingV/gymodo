@@ -48,7 +48,7 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         let timezone: String
     }
 
-    struct EquipmentModel: Decodable, Equatable {
+    struct EquipmentModel: Decodable, Hashable, Sendable {
         let id: String
         let name: String
         let manufacturer: String?
@@ -118,7 +118,7 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         let performedAt: String
     }
 
-    struct Exercise: Decodable, Equatable, Identifiable {
+    struct Exercise: Decodable, Hashable, Sendable, Identifiable {
         let id: String
         let name: String
         /// Was der Korridor zaehlt: Wiederholungen, Sekunden oder Meter.

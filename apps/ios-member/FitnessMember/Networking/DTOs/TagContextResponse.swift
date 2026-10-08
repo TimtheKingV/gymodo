@@ -22,7 +22,7 @@ struct TagContextResponse: Decodable, Equatable {
         let secondaryMax: Double?
     }
 
-    struct SettingDefinition: Decodable, Equatable, Identifiable {
+    struct SettingDefinition: Decodable, Hashable, Sendable, Identifiable {
         var id: String { key }
         let key: String
         let label: String
