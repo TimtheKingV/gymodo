@@ -218,18 +218,20 @@ struct TrainingRootView: View {
 
     // MARK: - Wurzel
 
-    /// Die Liste braucht den Prefetch und ein aktives Studio. Ohne beides
-    /// (etwa direkt nach dem Onboarding oder bei null Studios) liefert
-    /// GeraeteAuswahl.gruppen(studioId: nil) still leere Gruppen -- dann
+    /// Die Liste braucht den Prefetch; der Ort ist immer gesetzt, auch im
+    /// Freien Training. Ohne Prefetch (etwa direkt nach dem Onboarding)
     /// steht der Titel "TRAINING" mit den Scanwegen da, wie vor dem Umbau.
     @ViewBuilder
     private func wurzel(mitte: TrainingTab.Mitte?, session: LokaleSession?) -> some View {
-        if katalog.bootstrap != nil, katalog.activeStudioId != nil {
+        if katalog.bootstrap != nil {
             GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader) {
                 if let mitte, let session {
                     laufendeMitte(mitte, session: session)
                 }
-            } beiAuswahl: { machineId in
+            } beiAuswahl: { station in
+                // Ein Typ hat noch keine Route; sie zieht in Task 9 auf
+                // Stationsschluessel um.
+                guard let machineId = station.machineId else { return }
                 pfad.append(.erkannt(machineId: machineId, token: nil))
             }
             // safeAreaInset statt overlay: die Liste bekommt unten so viel
@@ -524,7 +526,7 @@ struct TrainingRootView: View {
         else { return nil }
         // Vorauswahl: zuletzt genutzte Uebung, sonst die erste aus der vom
         // Studio gepflegten Reihenfolge (M1-Spec SS5.7).
-        let zuletzt = GeraetEinstiegRechner.letzteUebung(machineId: machineId, in: bootstrap)
+        let zuletzt = GeraetEinstiegRechner.letzteUebung(station: "geraet:\(machineId)", in: bootstrap)
         let gewaehlt = exerciseId ?? zuletzt ?? maschine.exercises.first?.id
         guard let gewaehlt else { return nil }
         // Im Release gibt es keinen Mitschnitt; im Debug-Build ist es der
@@ -610,13 +612,13 @@ struct TrainingRootView: View {
         // gerade erst geleerten Wurzel und wird hier nicht ausgeloest.
         pfad.removeAll()
         TagProtokoll.log.info("Geraet aufgeloest, Navigation folgt")
-        let genutzte = GeraetEinstiegRechner.genutzteUebungen(machineId: maschine.id, in: bootstrap)
+        let genutzte = GeraetEinstiegRechner.genutzteUebungen(station: "geraet:\(maschine.id)", in: bootstrap)
         switch GeraetEinstiegRechner.einstieg(visitCount: maschine.visitCount,
                                               genutzteUebungen: genutzte) {
         case .erkannt:
             pfad.append(.erkannt(machineId: maschine.id, token: token))
         case .direktZumSatz:
-            let uebung = GeraetEinstiegRechner.letzteUebung(machineId: maschine.id, in: bootstrap)
+            let uebung = GeraetEinstiegRechner.letzteUebung(station: "geraet:\(maschine.id)", in: bootstrap)
                 ?? maschine.exercises.first?.id
             guard let uebung else { return }
             // Auch der Direktweg beginnt ohne laufendes Training auf dem
@@ -634,7 +636,7 @@ struct TrainingRootView: View {
             let index = bootstrap.station(schluessel: "geraet:\(machineId)", studioId: nil)
                 .map { sessions.naechsterSetIndex(station: $0, exerciseId: exerciseId) } ?? 1
             return GeraetEinstiegRechner.brauchtErstkontakt(
-                machineId: machineId, exerciseId: exerciseId, in: bootstrap,
+                station: "geraet:\(machineId)", exerciseId: exerciseId, in: bootstrap,
                 naechsterSetIndex: index)
         } ?? false
         return TrainingStart.ziel(machineId: machineId, exerciseId: exerciseId, token: token,

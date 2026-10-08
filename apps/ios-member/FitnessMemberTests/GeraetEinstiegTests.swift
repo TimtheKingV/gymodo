@@ -94,14 +94,14 @@ struct GeraetEinstiegTests {
     @Test func brauchtErstkontaktNurOhneKalibrierungOhneSatzUndVorDemErstenSatzDerEinheit() {
         let ohneAlles = bootstrapMitLetztenSaetzen([])
         #expect(GeraetEinstiegRechner.brauchtErstkontakt(
-            machineId: "m1", exerciseId: "e1", in: ohneAlles, naechsterSetIndex: 1))
+            station: "geraet:m1", exerciseId: "e1", in: ohneAlles, naechsterSetIndex: 1))
         // Schon ein Satz in der laufenden Einheit, den der Bootstrap noch
         // nicht kennt.
         #expect(!GeraetEinstiegRechner.brauchtErstkontakt(
-            machineId: "m1", exerciseId: "e1", in: ohneAlles, naechsterSetIndex: 2))
+            station: "geraet:m1", exerciseId: "e1", in: ohneAlles, naechsterSetIndex: 2))
         let mitSatz = bootstrapMitLetztenSaetzen([("m1", "e1")])
         #expect(!GeraetEinstiegRechner.brauchtErstkontakt(
-            machineId: "m1", exerciseId: "e1", in: mitSatz, naechsterSetIndex: 1))
+            station: "geraet:m1", exerciseId: "e1", in: mitSatz, naechsterSetIndex: 1))
     }
 
     @Test func ohneEinstellparameterFaelltDieEinstellungAusDemDreischritt() {
@@ -117,8 +117,8 @@ struct GeraetEinstiegTests {
 
     @Test func zaehltGenutzteUebungenAusDenLetztenSaetzen() {
         let bootstrap = bootstrapMitLetztenSaetzen([("m1", "e1"), ("m1", "e2"), ("m2", "e1")])
-        #expect(GeraetEinstiegRechner.genutzteUebungen(machineId: "m1", in: bootstrap) == 2)
-        #expect(GeraetEinstiegRechner.genutzteUebungen(machineId: "m3", in: bootstrap) == 0)
+        #expect(GeraetEinstiegRechner.genutzteUebungen(station: "geraet:m1", in: bootstrap) == 2)
+        #expect(GeraetEinstiegRechner.genutzteUebungen(station: "geraet:m3", in: bootstrap) == 0)
     }
 
     @Test func letzteUebungLiestDenJuengstenSatzUnabhaengigVonDerReihenfolge() {
@@ -138,8 +138,29 @@ struct GeraetEinstiegTests {
                                           rir: nil, performedAt: "2026-09-05T10:00:00Z"),
             ]
         )
-        #expect(GeraetEinstiegRechner.letzteUebung(machineId: "m1", in: bootstrap) == "e2")
-        #expect(GeraetEinstiegRechner.letzteUebung(machineId: "m3", in: bootstrap) == nil)
+        #expect(GeraetEinstiegRechner.letzteUebung(station: "geraet:m1", in: bootstrap) == "e2")
+        #expect(GeraetEinstiegRechner.letzteUebung(station: "geraet:m3", in: bootstrap) == nil)
+    }
+
+    @Test func zaehltBesucheUndLetzteUebungJeStationAmTyp() {
+        let bootstrap = BootstrapResponse(
+            member: .init(displayName: nil), studios: [], machines: [], calibrations: [], lastSets: [],
+            lastTypeSets: [
+                BootstrapResponse.LastTypeSet(equipmentModelId: "t1", exerciseId: "e1", load: 40, secondaryLoad: nil,
+                                              volume: 10, rir: nil, performedAt: "2026-08-01T10:00:00Z"),
+                BootstrapResponse.LastTypeSet(equipmentModelId: "t1", exerciseId: "e2", load: 40, secondaryLoad: nil,
+                                              volume: 10, rir: nil, performedAt: "2026-09-01T10:00:00Z"),
+                BootstrapResponse.LastTypeSet(equipmentModelId: "t2", exerciseId: "e3", load: 40, secondaryLoad: nil,
+                                              volume: 10, rir: nil, performedAt: "2026-09-05T10:00:00Z"),
+            ])
+        #expect(GeraetEinstiegRechner.genutzteUebungen(station: "typ:t1", in: bootstrap) == 2)
+        #expect(GeraetEinstiegRechner.letzteUebung(station: "typ:t1", in: bootstrap) == "e2")
+        #expect(GeraetEinstiegRechner.letzteUebung(station: "typ:t3", in: bootstrap) == nil)
+        #expect(GeraetEinstiegRechner.hatLetztenSatz(station: "typ:t2", exerciseId: "e3", in: bootstrap))
+        // Kalibrierungen gibt es nur am Geraet.
+        #expect(!GeraetEinstiegRechner.hatKalibrierung(station: "typ:t1", exerciseId: "e1", in: bootstrap))
+        // Ein Typsatz zaehlt nicht fuer ein Geraet.
+        #expect(GeraetEinstiegRechner.genutzteUebungen(station: "geraet:t1", in: bootstrap) == 0)
     }
 }
 

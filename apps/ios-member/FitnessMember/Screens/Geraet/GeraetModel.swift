@@ -514,7 +514,7 @@ final class GeraetModel {
     var istErstkontakt: Bool {
         !erledigt.contains(uebungId)
             && GeraetEinstiegRechner.brauchtErstkontakt(
-                machineId: maschine.id, exerciseId: uebungId, in: bootstrap,
+                station: Station(maschine: maschine).schluessel, exerciseId: uebungId, in: bootstrap,
                 naechsterSetIndex: sessions.naechsterSetIndex(station: Station(maschine: maschine), exerciseId: uebungId))
     }
 
