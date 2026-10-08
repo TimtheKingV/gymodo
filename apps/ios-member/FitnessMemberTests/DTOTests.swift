@@ -405,4 +405,115 @@ struct DTOTests {
         #expect(beendet.vorschlaege[2].secondaryLoad == 6)
         #expect(beendet.vorschlaege[2].secondaryUnit == .pct)
     }
+
+    // MARK: - Gymtavo-Katalog (Etappe 4)
+
+    private static let bootstrapRumpf = """
+    "member": {"displayName": null, "goals": {"weeklyDays": null, "targetWeight": null}},
+    "studios": [], "machines": [], "calibrations": [], "lastSets": []
+    """
+
+    @Test("Bootstrap ohne catalog und lastTypeSets (altes JSON) dekodiert")
+    func bootstrapOhneKatalog() throws {
+        let json = "{\(Self.bootstrapRumpf)}"
+        let b = try JSONDecoder().decode(BootstrapResponse.self, from: Data(json.utf8))
+        #expect(b.catalog == nil)
+        #expect(b.lastTypeSets.isEmpty)
+    }
+
+    @Test("Bootstrap mit catalog und lastTypeSets dekodiert")
+    func bootstrapMitKatalog() throws {
+        let json = """
+        {
+          "member": {"displayName": null, "goals": {"weeklyDays": null, "targetWeight": null}},
+          "studios": [], "calibrations": [], "lastSets": [],
+          "machines": [{"id":"m1","studioId":"s1","label":"07","locationNote":null,"status":"active","tokenHashes":[],"visitCount":0,
+            "equipmentModel":{"id":"e1","name":"Beinpresse","manufacturer":null,"photoPath":null,"category":"kraft","loadUnit":"kg","loadStep":2.5,"loadMin":10,"loadMax":200,"secondaryUnit":null,"secondaryStep":null,"secondaryMin":null,"secondaryMax":null,"settingDefinitions":[],"catalogModelId":"t1"},
+            "exercises":[]}],
+          "catalog": {"studioId":"s1","equipmentTypes":[{
+            "id":"t1","name":"Beinpresse","manufacturer":"Gymtavo","photoPath":null,"category":"kraft",
+            "loadUnit":"kg","loadStep":2.5,"loadMin":10,"loadMax":200,
+            "secondaryUnit":null,"secondaryStep":null,"secondaryMin":null,"secondaryMax":null,
+            "settingDefinitions":[],
+            "exercises":[{"id":"ex1","name":"Beidbeinig","volumeKind":"reps","targetMin":8,"targetMax":12}]
+          }]},
+          "lastTypeSets": [{"equipmentModelId":"t1","exerciseId":"ex1","load":80,"secondaryLoad":null,"volume":10,"rir":2,"performedAt":"2026-09-01T10:05:00Z"}]
+        }
+        """
+        let b = try JSONDecoder().decode(BootstrapResponse.self, from: Data(json.utf8))
+        #expect(b.catalog?.studioId == "s1")
+        #expect(b.catalog?.equipmentTypes[0].exercises[0].targetMax == 12)
+        #expect(b.catalog?.equipmentTypes[0].loadUnit == .kg)
+        #expect(b.lastTypeSets[0].equipmentModelId == "t1")
+        #expect(b.lastTypeSets[0].load == 80)
+        #expect(b.machines[0].equipmentModel.catalogModelId == "t1")
+    }
+
+    @Test("Typ-Kontext mit machine null dekodiert")
+    func typKontextOhneGeraet() throws {
+        let json = """
+        {
+          "machine": null,
+          "equipmentModel":{"id":"e1","name":"Beinpresse","manufacturer":null,"photoUrl":null,"loadUnit":"kg","loadStep":2.5,"loadMin":10,"loadMax":200,"secondaryUnit":null,"secondaryStep":null,"secondaryMin":null,"secondaryMax":null},
+          "settingDefinitions":[], "exercises":[], "selectedExerciseId":null, "calibration":null, "history":[],
+          "suggestion":{"algoVersion":"2.0.0","resultLoad":null,"resultSecondaryLoad":null,"reasonCode":"kein_verlauf","inputs":{"targetMin":8,"targetMax":12,"loadStep":2.5,"loadMin":10,"loadMax":200,"currentLoad":null,"currentSecondaryLoad":null,"consideredBlocks":0}}
+        }
+        """
+        let r = try JSONDecoder().decode(TagContextResponse.self, from: Data(json.utf8))
+        #expect(r.machine == nil)
+    }
+
+    @Test("SetWrite am Typ kodiert ohne machineId, mit equipmentModelId und studioId")
+    func setWriteAmTyp() throws {
+        let w = SetWrite(equipmentModelId: "t1", studioId: "s1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10)
+        let json = String(data: try JSONEncoder().encode(w), encoding: .utf8)!
+        #expect(!json.contains("machineId"))
+        #expect(json.contains(#""equipmentModelId":"t1""#))
+        #expect(json.contains(#""studioId":"s1""#))
+        #expect(try JSONDecoder().decode(SetWrite.self, from: Data(json.utf8)) == w)
+    }
+
+    @Test("SetWrite im Freien Training traegt auch keine studioId")
+    func setWriteFreiesTraining() throws {
+        let w = SetWrite(equipmentModelId: "t1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10)
+        let json = String(data: try JSONEncoder().encode(w), encoding: .utf8)!
+        #expect(!json.contains("machineId"))
+        #expect(!json.contains("studioId"))
+        #expect(json.contains("equipmentModelId"))
+    }
+
+    @Test("Altes PendingSetWrite-JSON mit machineId und weightKg/reps dekodiert weiter")
+    func altesPendingJson() throws {
+        let alt = #"{"machineId":"m1","exerciseId":"ex1","setIndex":2,"weightKg":82.5,"reps":9,"problemFlag":false}"#
+        let w = try JSONDecoder().decode(SetWrite.self, from: Data(alt.utf8))
+        #expect(w.machineId == "m1")
+        #expect(w.equipmentModelId == nil)
+        #expect(w.studioId == nil)
+        #expect(w.load == 82.5)
+        #expect(w.volume == 9)
+    }
+
+    @Test("SessionSummary aus altem verlauf.json ohne equipmentModelId dekodiert")
+    func altesVerlaufJson() throws {
+        let json = #"{"id":"sess1","startedAt":"2026-09-01T10:00:00Z","completedAt":null,"completedReason":null,"machineCount":1,"setCount":1,"blocks":[{"machineId":"m1","machineLabel":"07","exerciseId":"ex1","exerciseName":"Beidbeinig","loadUnit":"kg","secondaryUnit":null,"volumeKind":"reps","sets":[]}]}"#
+        let s = try JSONDecoder().decode(SessionSummary.self, from: Data(json.utf8))
+        #expect(s.blocks[0].machineId == "m1")
+        #expect(s.blocks[0].equipmentModelId == nil)
+    }
+
+    @Test("Block mit machineId null und equipmentModelId dekodiert")
+    func blockOhneGeraet() throws {
+        let json = #"{"id":"sess1","startedAt":"2026-09-01T10:00:00Z","completedAt":null,"completedReason":null,"machineCount":0,"setCount":1,"blocks":[{"machineId":null,"equipmentModelId":"t1","machineLabel":"Beinpresse","exerciseId":"ex1","exerciseName":"Beidbeinig","loadUnit":"kg","secondaryUnit":null,"volumeKind":"reps","sets":[]}]}"#
+        let s = try JSONDecoder().decode(SessionSummary.self, from: Data(json.utf8))
+        #expect(s.blocks[0].machineId == nil)
+        #expect(s.blocks[0].equipmentModelId == "t1")
+    }
+
+    @Test("CompletedSession mit vorschlaege machineId null dekodiert")
+    func vorschlagOhneGeraet() throws {
+        let json = #"{"id":"s1","startedAt":"2026-09-08T18:04:00Z","completedAt":"2026-09-08T18:51:00Z","completedReason":"manual","vorschlaege":[{"machineId":null,"equipmentModelId":"t1","exerciseId":"e1","resultLoad":82.5,"deltaLoad":2.5,"secondaryLoad":null,"loadUnit":"kg","secondaryUnit":null,"reasonCode":"korridor_oben_erreicht","algoVersion":"2.0.0"}]}"#
+        let c = try JSONDecoder().decode(CompletedSession.self, from: Data(json.utf8))
+        #expect(c.vorschlaege[0].machineId == nil)
+        #expect(c.vorschlaege[0].equipmentModelId == "t1")
+    }
 }

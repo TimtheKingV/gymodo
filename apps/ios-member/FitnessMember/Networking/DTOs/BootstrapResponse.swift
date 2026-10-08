@@ -76,6 +76,46 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         /// Ohne diese Beschriftungen zeigt der Offline-Zustand den rohen
         /// Schluessel ("sitz 4") statt "Sitz 4".
         let settingDefinitions: [TagContextResponse.SettingDefinition]
+        /// Der Katalogtyp, aus dem das Geraet stammt; nil bei einem Modell
+        /// ohne Katalogbezug. Als var mit Vorgabe, damit bestehende Aufrufer
+        /// des Memberwise-Inits kompilieren.
+        var catalogModelId: String? = nil
+    }
+
+    /// Der Gymtavo-Katalog des Studios: Geraetetypen mit ihren Uebungen,
+    /// auch ohne dass im Studio ein Geraet davon steht.
+    struct Catalog: Decodable, Equatable, Sendable {
+        struct EquipmentType: Decodable, Equatable, Sendable {
+            let id: String
+            let name: String
+            let manufacturer: String?
+            let photoPath: String?
+            let category: Kategorie
+            let loadUnit: LoadUnit
+            let loadStep: Double
+            let loadMin: Double
+            let loadMax: Double?
+            let secondaryUnit: LoadUnit?
+            let secondaryStep: Double?
+            let secondaryMin: Double?
+            let secondaryMax: Double?
+            let settingDefinitions: [TagContextResponse.SettingDefinition]
+            let exercises: [Exercise]
+        }
+        let studioId: String
+        let equipmentTypes: [EquipmentType]
+    }
+
+    /// Letzter Satz je Typ und Uebung (nicht je Geraet): speist den Vorschlag
+    /// im Freien Training und am Typ ohne Geraet.
+    struct LastTypeSet: Decodable, Equatable, Sendable {
+        let equipmentModelId: String
+        let exerciseId: String
+        let load: Double
+        let secondaryLoad: Double?
+        let volume: Int
+        let rir: Double?
+        let performedAt: String
     }
 
     struct Exercise: Decodable, Equatable, Identifiable {
@@ -128,6 +168,43 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
     let machines: [Machine]
     let calibrations: [Calibration]
     let lastSets: [LastSet]
+    /// nil, solange der Server keinen Katalog liefert (altes Backend, alter
+    /// Cache) oder das Studio keinen hat.
+    var catalog: Catalog? = nil
+    var lastTypeSets: [LastTypeSet] = []
+
+    /// Ausdruecklich statt synthetisiert: die Tests bauen Bootstrap ohne die
+    /// neuen Felder.
+    init(
+        member: Member, studios: [Studio], machines: [Machine],
+        calibrations: [Calibration], lastSets: [LastSet],
+        catalog: Catalog? = nil, lastTypeSets: [LastTypeSet] = []
+    ) {
+        self.member = member
+        self.studios = studios
+        self.machines = machines
+        self.calibrations = calibrations
+        self.lastSets = lastSets
+        self.catalog = catalog
+        self.lastTypeSets = lastTypeSets
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case member, studios, machines, calibrations, lastSets, catalog, lastTypeSets
+    }
+
+    /// catalog/lastTypeSets mit decodeIfPresent: ein gecachtes Bootstrap von
+    /// vor Etappe 3 hat sie nicht und muss lesbar bleiben.
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        member = try c.decode(Member.self, forKey: .member)
+        studios = try c.decode([Studio].self, forKey: .studios)
+        machines = try c.decode([Machine].self, forKey: .machines)
+        calibrations = try c.decode([Calibration].self, forKey: .calibrations)
+        lastSets = try c.decode([LastSet].self, forKey: .lastSets)
+        catalog = try c.decodeIfPresent(Catalog.self, forKey: .catalog)
+        lastTypeSets = try c.decodeIfPresent([LastTypeSet].self, forKey: .lastTypeSets) ?? []
+    }
 }
 
 /// Antwort auf `PUT /me/profile` -- die sechs Profilfelder, OHNE `goals`

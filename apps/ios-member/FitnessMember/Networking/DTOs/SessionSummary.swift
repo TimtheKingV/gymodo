@@ -71,7 +71,9 @@ struct SessionSummary: Codable, Equatable, Identifiable {
             let problemReason: ProblemReason?
             let performedAt: String
         }
-        let machineId: String
+        let machineId: String?
+        /// decodeIfPresent (synthetisiert, da optional): alte verlauf.json hat ihn nicht.
+        var equipmentModelId: String? = nil
         let machineLabel: String
         let exerciseId: String
         let exerciseName: String

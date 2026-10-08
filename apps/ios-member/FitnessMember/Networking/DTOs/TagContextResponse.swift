@@ -87,7 +87,9 @@ struct TagContextResponse: Decodable, Equatable {
         let inputs: Inputs
     }
 
-    let machine: Machine
+    /// nil im Typ-Kontext (equipment-models/{id}/context): dort steht kein
+    /// einzelnes Geraet.
+    let machine: Machine?
     let equipmentModel: EquipmentModel
     let settingDefinitions: [SettingDefinition]
     let exercises: [Exercise]
