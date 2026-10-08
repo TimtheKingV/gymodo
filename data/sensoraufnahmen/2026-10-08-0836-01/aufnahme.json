@@ -1,0 +1,42 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "endedAt" : "2026-10-08T08:36:55+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "exerciseId" : "4b40b313-5cc9-41d1-aa6b-077a5c2697ae",
+    "exerciseName" : "Kabelzug hoch",
+    "machineId" : "5c42f4ed-b8e1-446f-bdbc-0d673615aed1",
+    "machineName" : "Kabelzug",
+    "sessionId" : "8AAF7CDB-FCA4-4821-9A1A-9B8F4DA778F0",
+    "setId" : "BD4781A3-D053-421F-B2A0-1776E63173C1",
+    "setIndex" : 2
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 12,
+    "weightKg" : 10
+  },
+  "sensor" : {
+    "akkuProzent" : 0,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-08T08:36:12+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 90.12,
+      "median" : 0,
+      "p95" : 60.16
+    },
+    "luecken" : 0,
+    "pakete" : 2150,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  }
+}
