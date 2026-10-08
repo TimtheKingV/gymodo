@@ -138,7 +138,8 @@ final class WorkoutSessionStore {
         volume: Int,
         problemFlag: Bool,
         problemReason: ProblemReason?,
-        jetzt: Date = Date()
+        jetzt: Date = Date(),
+        ort: Ort? = nil
     ) -> (sessionId: UUID, setId: UUID, body: SetWrite) {
         // Ohne laufende Einheit (sie ist auf dem Satzpfad ausgelaufen, oder ein
         // Test sichert ohne Start) entsteht sie hier -- der Rueckfallweg, nicht
@@ -149,6 +150,10 @@ final class WorkoutSessionStore {
         // Wer in der Pause einen Satz sichert, trainiert wieder (Testnotiz
         // 05.10., #11) -- ohne Umweg ueber "Fortsetzen".
         session.fortsetzen(jetzt: jetzt)
+
+        // Nur der erste bekannte Ort zaehlt: die Einheit gehoert genau einem
+        // Ort, ein spaeterer Satz darf sie nicht umhaengen.
+        if session.ort == nil { session.ort = ort }
 
         let index = session.bloecke.firstIndex {
             $0.machineId == machineId && $0.exerciseId == exerciseId

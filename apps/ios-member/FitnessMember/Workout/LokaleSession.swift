@@ -126,6 +126,9 @@ struct LokaleSession: Codable, Equatable {
     var pausiertSeit: Date? = nil
     /// Die Summe aller abgeschlossenen Pausen.
     var pausenDauer: TimeInterval = 0
+    /// Der Ort der Einheit, gesetzt mit dem ersten Satz mit bekanntem Ort;
+    /// nil bei Dateien von vor dem Katalog.
+    var ort: Ort? = nil
 
     var letzterSatzAm: Date? {
         bloecke.flatMap(\.saetze).map(\.performedAt).max()
@@ -161,7 +164,7 @@ struct LokaleSession: Codable, Equatable {
 
 extension LokaleSession {
     private enum CodingKeys: String, CodingKey {
-        case id, startedAt, bloecke, pausiertSeit, pausenDauer
+        case id, startedAt, bloecke, pausiertSeit, pausenDauer, ort
     }
 
     /// Eine Sessiondatei von vor der Pause kennt beide Felder nicht. Ohne
@@ -175,5 +178,6 @@ extension LokaleSession {
         bloecke = try c.decode([LokalerBlock].self, forKey: .bloecke)
         pausiertSeit = try c.decodeIfPresent(Date.self, forKey: .pausiertSeit)
         pausenDauer = try c.decodeIfPresent(TimeInterval.self, forKey: .pausenDauer) ?? 0
+        ort = try c.decodeIfPresent(Ort.self, forKey: .ort)
     }
 }
