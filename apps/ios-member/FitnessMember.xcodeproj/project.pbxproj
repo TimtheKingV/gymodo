@@ -144,6 +144,7 @@
 		80BDCB40CB6953255B669BB5 /* GeraetErkanntView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A055AE066E95BA635068E45 /* GeraetErkanntView.swift */; };
 		80FCC59829071327C07CF2C2 /* PausenRad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 093AF1E26DA1B50273353878 /* PausenRad.swift */; };
 		824071B2AEF074DCEB6CEF53 /* Zahlformat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00B25E595924E3D70A9F8C8F /* Zahlformat.swift */; };
+		854C3D3EFF5944BE57FE4684 /* Pfadbereinigung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D1E2849DF1B81F506595B3A /* Pfadbereinigung.swift */; };
 		85D677DEC1CC8E3688FF5248 /* Ziel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B76CEB6D3CEED5662117CF5E /* Ziel.swift */; };
 		8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B577EC22237E86AA0F3755B7 /* AppConfig.swift */; };
 		876C68594995FB10C4C5F383 /* HomeZieleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 178A941D7DAEF42B0D12FC59 /* HomeZieleTests.swift */; };
@@ -278,6 +279,7 @@
 		F91C363B2B081125E044C842 /* QRScannerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7115CDC39F17B5DF97E47CD8 /* QRScannerController.swift */; };
 		F9DAC3407A000DEDA7092660 /* Chip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B227508179FE62A4DAA06A0 /* Chip.swift */; };
 		FA390275F72119D9F7870B0E /* AuthBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4DDD9F8FCC3E699F6E4F79C /* AuthBackend.swift */; };
+		FA54FBB2AC37F7A7EA5FCA74 /* PfadbereinigungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88102EAEB9BC8D4E6FA9BC7 /* PfadbereinigungTests.swift */; };
 		FA5959C8725D9AD6B4B0338D /* SessionFileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F059477D28A854A97A90AD70 /* SessionFileStore.swift */; };
 		FA5C4C53322F44C0895B0C2D /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35907B519ACE98A2A3F021C5 /* SessionStore.swift */; };
 		FA9F18E9FD57D18F60D1D587 /* KurseWochenPagingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 385298CAA798858C18611878 /* KurseWochenPagingTests.swift */; };
@@ -449,6 +451,7 @@
 		7BBBF93AF7F82B0A6C8D237F /* Vorschaubild.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vorschaubild.swift; sourceTree = "<group>"; };
 		7CA7F946AF789AD52181CFC3 /* SensorQuelle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorQuelle.swift; sourceTree = "<group>"; };
 		7D036BE10720B20565F673DA /* Testnotiz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Testnotiz.swift; sourceTree = "<group>"; };
+		7D1E2849DF1B81F506595B3A /* Pfadbereinigung.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pfadbereinigung.swift; sourceTree = "<group>"; };
 		7D79A89B3E91A0F18C9E8DBC /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
 		803825B89FF7EAF1AD8C6CE9 /* StudioBeitretenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudioBeitretenView.swift; sourceTree = "<group>"; };
 		810AA944DFBA5CA775A08184 /* KurseWochenInhalt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseWochenInhalt.swift; sourceTree = "<group>"; };
@@ -537,6 +540,7 @@
 		D6331BCAA9F1DFF57341B82E /* MemberPasswortNeuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortNeuView.swift; sourceTree = "<group>"; };
 		D78C8636341914B90296B220 /* AppConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigTests.swift; sourceTree = "<group>"; };
 		D79138C4B32315198E734356 /* EmailValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailValidator.swift; sourceTree = "<group>"; };
+		D88102EAEB9BC8D4E6FA9BC7 /* PfadbereinigungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PfadbereinigungTests.swift; sourceTree = "<group>"; };
 		D8B181EA25F1AE0F34024FB1 /* TestnotizAblaufTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizAblaufTests.swift; sourceTree = "<group>"; };
 		D922539BB579EDDA0F7747CD /* ErrorEnvelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorEnvelope.swift; sourceTree = "<group>"; };
 		D98716595032172974F2CAB3 /* Station.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Station.swift; sourceTree = "<group>"; };
@@ -887,6 +891,7 @@
 				5A56404F29881EBAC2E63E04 /* OrtswechselTests.swift */,
 				3083F4ABC58427C5FDB7D835 /* PendingTagStoreTests.swift */,
 				E07C7F4A13CB277BC11B8D77 /* PendingWriteStoreTests.swift */,
+				D88102EAEB9BC8D4E6FA9BC7 /* PfadbereinigungTests.swift */,
 				28729494126B3B466AEDB7C4 /* ProfilZeilenTests.swift */,
 				94AAB4EF55CE7557296B1A97 /* RastRadTests.swift */,
 				26B1A62413AE0C5835F9E9CA /* RastwerteTests.swift */,
@@ -1000,6 +1005,7 @@
 				FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */,
 				A5CA620D337B41A12B5D8A33 /* MainTabView.swift */,
 				26B414241FEB56BDD45194AA /* PendingTagStore.swift */,
+				7D1E2849DF1B81F506595B3A /* Pfadbereinigung.swift */,
 				27C292EFD7E692D12EAD9B3A /* PlaceholderView.swift */,
 				D50BD9B08F5E126815EAACAC /* RootDestination.swift */,
 				D33AEE94B0EDB5593285596C /* RootView.swift */,
@@ -1325,6 +1331,7 @@
 				F8A612A78D2961610EE47839 /* PendingSetWrite.swift in Sources */,
 				55D7F293518DDA5C5B44A849 /* PendingTagStore.swift in Sources */,
 				5B7C293A4A3C2C42F2969ADE /* PendingWriteStore.swift in Sources */,
+				854C3D3EFF5944BE57FE4684 /* Pfadbereinigung.swift in Sources */,
 				187B66242C280ADBE3234946 /* PlaceholderView.swift in Sources */,
 				05C4AB096D32DA3E6C4E62D7 /* PressButtonStyle.swift in Sources */,
 				309307436B8EE156A6673AA2 /* PrimaryButton.swift in Sources */,
@@ -1460,6 +1467,7 @@
 				BEEACF828D37DC6D09B01A06 /* OrtswechselTests.swift in Sources */,
 				382451921E71AB26611C0BA0 /* PendingTagStoreTests.swift in Sources */,
 				F1E9DFA75153BCFFEF5FDD62 /* PendingWriteStoreTests.swift in Sources */,
+				FA54FBB2AC37F7A7EA5FCA74 /* PfadbereinigungTests.swift in Sources */,
 				635B651CF96DE3A5916EB956 /* ProfilZeilenTests.swift in Sources */,
 				623391FEE484E105F85E2BFB /* RastRadTests.swift in Sources */,
 				AD152D48FC554F180FA72F58 /* RastwerteTests.swift in Sources */,

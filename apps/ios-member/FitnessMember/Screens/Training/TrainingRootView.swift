@@ -194,8 +194,13 @@ struct TrainingRootView: View {
             // abgelaufenen Einheit (M1): sobald wieder eine laufende Einheit
             // entsteht -- egal ob durch einen neuen Satz oder weil beenden()
             // ihn schon zurueckgesetzt hat --, gilt er nicht mehr.
-            .onChange(of: sessions.aktiveSession() != nil) { _, laeuft in
+            .onChange(of: sessions.aktiveSession() != nil) { vorher, laeuft in
                 if laeuft { hinweis = nil }
+                // Endet die Einheit von aussen (Ortswechsel im Profil), darf
+                // kein Geraete-Screen vom alten Ort stehen bleiben.
+                if Pfadbereinigung.leeren(laeuftVorher: vorher, laeuftJetzt: laeuft, pfad: pfad) {
+                    pfad.removeAll()
+                }
             }
             // Ein gescheiterter NFC-Scan landet im selben Banner wie ein
             // gescheiterter QR-Scan. Der Leser haelt seinen Fehler getrennt,
