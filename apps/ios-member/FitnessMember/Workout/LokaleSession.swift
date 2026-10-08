@@ -101,20 +101,6 @@ struct LokalerBlock: Codable, Equatable, Identifiable {
         self.saetze = saetze
     }
 
-    /// Der Block an einem Geraet, wenn nur dessen Kennung vorliegt (Altbestand
-    /// der Tests und Dateien von vor dem Katalog).
-    init(machineId: String, exerciseId: String,
-         einheiten: Blockeinheiten = .kilogrammWiederholungen, saetze: [LokalerSatz]) {
-        stationSchluessel = Station.schluessel(machineId: machineId)
-        self.machineId = machineId
-        equipmentModelId = nil
-        self.exerciseId = exerciseId
-        loadUnit = einheiten.loadUnit
-        secondaryUnit = einheiten.secondaryUnit
-        volumeKind = einheiten.volumeKind
-        self.saetze = saetze
-    }
-
     private enum CodingKeys: String, CodingKey {
         case stationSchluessel, machineId, equipmentModelId, exerciseId, loadUnit, secondaryUnit, volumeKind, saetze
     }

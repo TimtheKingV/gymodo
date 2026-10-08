@@ -263,45 +263,56 @@ final class CatalogStore {
     /// Wechseln ist reiner Client-Zustand -- "Tippen wechselt" (MemberStudios.dc.html)
     /// beschreibt keine Server-Aktion, sondern welcher Ort lokal gilt.
     ///
-    /// `wechselMelden: false` nimmt einen Wechsel still zurueck -- etwa wenn
-    /// das Mitglied nach einem Beitritt per Scan "Training beenden?"
-    /// abbricht: der Hinweis auf den Beitritt bleibt dann richtig stehen.
+    /// `wechselMelden: false` wechselt ohne "ist jetzt aktiv" -- etwa nach
+    /// einem Beitritt, dessen eigener Hinweis stehen bleiben soll.
     func setOrt(_ neu: Ort, wechselMelden: Bool = true) {
         let alt = ort
         ort = neu
         hatGewaehlt = true
         Self.speichere(neu, in: defaults)
 
+        // "X ist jetzt aktiv" stimmt nach jedem Wechsel nicht mehr; "Du
+        // gehoerst jetzt zu X" bleibt wahr, egal wo man trainiert.
+        if alt != neu, studiohinweis?.beigetreten == false { studiohinweis = nil }
         if wechselMelden, case .studio(let alteId) = alt, case .studio(let id) = neu, alteId != id,
            let name = bootstrap?.studios.first(where: { $0.id == id })?.name {
             studiohinweis = Studiohinweis(studioName: name, beigetreten: false)
         }
     }
 
-    /// Duenne Huelle fuer die Studioliste, bis ihre Views auf `setOrt` stehen.
-    func setActiveStudio(_ id: String) {
-        setOrt(.studio(id))
-    }
-
-    /// Ein Beitritt wechselt auf das Studio -- wer einen Code eingibt oder ein
-    /// Tag scannt, will dort arbeiten. Die machineId reicht der Scanpfad weiter.
+    /// Ein Beitritt macht zum Mitglied, wechselt aber nicht selbst den Ort:
+    /// laeuft anderswo eine Einheit, muss erst "Training in X beenden?"
+    /// kommen (Plan, Entscheidung 1 und 2). Den Wechsel macht der Aufrufer
+    /// ueber `ortNachBeitritt`, nachdem Ortswechsel.pruefen ihn erlaubt.
+    /// Die machineId reicht der Scanpfad weiter.
     @discardableResult
     func joinStudio(byCode code: String) async throws(APIError) -> JoinResult {
         let ergebnis = try await loader.joinStudioByCode(code)
-        await wechsleNachBeitritt(ergebnis)
+        await nachBeitrittLaden(ergebnis)
         return ergebnis
     }
 
     @discardableResult
     func joinStudio(byTag token: String) async throws(APIError) -> JoinResult {
         let ergebnis = try await loader.joinStudioByTag(token)
-        await wechsleNachBeitritt(ergebnis)
+        await nachBeitrittLaden(ergebnis)
         return ergebnis
     }
 
-    private func wechsleNachBeitritt(_ ergebnis: JoinResult) async {
+    private func nachBeitrittLaden(_ ergebnis: JoinResult) async {
+        // Ohne gespeicherte Wahl naehme load() das erste Studio -- das waere
+        // genau der stille Wechsel, den der Aufrufer erst pruefen soll.
+        if !hatGewaehlt { setOrt(ort, wechselMelden: false) }
         await load()
-        setOrt(.studio(ergebnis.studioId))
+        // Nur der Beitritt selbst: "ist jetzt aktiv" gilt erst nach dem Wechsel.
+        if ergebnis.joined { merkeHinweis(fuer: ergebnis) }
+    }
+
+    /// Der Wechsel nach einem Beitritt, sobald er erlaubt ist (sofort oder
+    /// nach "Training beenden"). Der Hinweis nennt den Beitritt, sonst den
+    /// Wechsel.
+    func ortNachBeitritt(_ ergebnis: JoinResult) {
+        setOrt(.studio(ergebnis.studioId), wechselMelden: false)
         merkeHinweis(fuer: ergebnis)
     }
 

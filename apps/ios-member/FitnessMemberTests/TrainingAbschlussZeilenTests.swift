@@ -240,10 +240,38 @@ struct TrainingAbschlussZeilenTests {
         #expect(zeilen[1].anzeige.text != "+2,5 kg")
     }
 
-    /// Der Name kommt ueber die Station: ein Typ-Block steht nicht in
-    /// bootstrap.machines und bliebe sonst namenlos.
-    @Test func dieZeileNenntDenTypNamenUeberDieStation() {
-        #expect(AbschlussZeile.titel(station: .testTyp("t1", studioId: nil), uebung: nil) == "Typ t1")
-        #expect(AbschlussZeile.titel(station: nil, uebung: nil) == "")
+
+    /// Fehlt die Station im Bootstrap (stillgelegtes Geraet, Typ aus einem
+    /// anderen Ort), sucht der Titel Modell und Uebung im ganzen Bootstrap
+    /// -- eine leere Zeile sagt dem Mitglied nichts.
+    @Test func eineFehlendeStationNimmtDieNamenAusDemGanzenBootstrap() {
+        let bootstrap: BootstrapResponse = GeraetTestdaten.dekodiere("""
+        {"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null}},
+         "studios":[],"machines":[],"calibrations":[],"lastSets":[],
+         "catalog":{"studioId":"s1","equipmentTypes":[
+           {"id":"em1","name":"Beinpresse","manufacturer":null,"photoPath":null,
+            "category":"kraft","loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,
+            "settingDefinitions":[],
+            "exercises":[{"id":"e1","name":"Beidbeinig","volumeKind":"reps","targetMin":8,"targetMax":12}]}]}}
+        """)
+        func zeile(machineId: String?, modell: String?, uebung: String) -> Blockzeile {
+            Blockzeile(machineId: machineId, equipmentModelId: modell, exerciseId: uebung,
+                       belastung: 40, nebenbelastung: nil, loadUnit: .kg, secondaryUnit: nil,
+                       volumeKind: .reps, satzAnzahl: 1, problemGemeldet: false)
+        }
+        // Stillgelegtes Geraet m9: das Modell steht noch im Katalog.
+        #expect(AbschlussZeile.titel(block: zeile(machineId: "m9", modell: "em1", uebung: "e1"),
+                                     bootstrap: bootstrap, studioId: "s1") == "Beinpresse · Beidbeinig")
+        // Alter Block ohne Modell: wenigstens die Uebung.
+        #expect(AbschlussZeile.titel(block: zeile(machineId: "m9", modell: nil, uebung: "e1"),
+                                     bootstrap: bootstrap, studioId: "s1") == "Beidbeinig")
+        // Nichts bekannt, auch kein Bootstrap: nie leer.
+        #expect(AbschlussZeile.titel(block: zeile(machineId: "m9", modell: nil, uebung: "x"),
+                                     bootstrap: bootstrap, studioId: "s1") == "Gerät")
+        #expect(AbschlussZeile.titel(block: zeile(machineId: "m9", modell: nil, uebung: "x"),
+                                     bootstrap: nil, studioId: nil) == "Gerät")
+        // Die Station ist da: wie bisher ueber sie.
+        #expect(AbschlussZeile.titel(block: zeile(machineId: nil, modell: "em1", uebung: "e1"),
+                                     bootstrap: bootstrap, studioId: "s1") == "Beinpresse · Beidbeinig")
     }
 }

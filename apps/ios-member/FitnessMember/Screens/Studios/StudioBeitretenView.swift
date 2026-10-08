@@ -1,11 +1,17 @@
 import SwiftUI
 
 /// Studio beitreten per Scan oder Code. Der Presenter schliesst den Screen
-/// in `beiErfolg`; der Ortswechsel und der `studiohinweis` kommen aus dem
-/// CatalogStore (`joinStudio`), nicht von hier.
+/// in `beiErfolg`. Der Beitritt passiert immer; den Ort wechselt dieser
+/// Screen danach ueber dieselbe Pruefung wie die Studioliste im Profil --
+/// laeuft anderswo eine Einheit, fragt er erst "Training in X beenden?".
 struct StudioBeitretenView: View {
     @Environment(CatalogStore.self) private var catalogStore
+    @Environment(WorkoutSessionStore.self) private var sessions
+    /// Meldet den Abschluss einer fuer den Wechsel beendeten Einheit.
+    let loader: any GeraetLoading
     let beiErfolg: () -> Void
+    /// Der Beitritt, der auf "Training in X beenden?" wartet.
+    @State private var wechselPending: JoinResult?
     @State private var manualCode = ""
     @State private var showScanner = false
     @State private var errorMessage: String?
@@ -72,7 +78,25 @@ struct StudioBeitretenView: View {
                 }
             )
         }
+        .confirmationDialog(
+            "Training in \(StudiosListe.name(fuer: laufenderOrt, studios: catalogStore.bootstrap?.studios ?? [])) beenden?",
+            isPresented: Binding(
+                get: { wechselPending != nil },
+                set: { if !$0 { wechselPending = nil } }
+            ),
+            presenting: wechselPending
+        ) { ergebnis in
+            Button("Training beenden", role: .destructive) { beendenUndWechseln(ergebnis) }
+            // Mitglied bleibt man; der Ort bleibt, wo die Einheit laeuft.
+            Button("Abbrechen", role: .cancel) { wechselPending = nil; beiErfolg() }
+        } message: { _ in
+            Text("Danach wechselst du den Ort.")
+        }
         .testnotizScreen()
+    }
+
+    private var laufenderOrt: Ort {
+        sessions.aktiveSession()?.ort ?? catalogStore.ort
     }
 
     private func joinByCode() async {
@@ -81,13 +105,14 @@ struct StudioBeitretenView: View {
         defer { isJoining = false }
         // `do throws(APIError)`, damit `error` im catch getippt ist -- derselbe
         // Griff wie in ProfilRootView und TrainingAbschlussView.
+        let ergebnis: JoinResult
         do throws(APIError) {
-            try await catalogStore.joinStudio(byCode: manualCode)
+            ergebnis = try await catalogStore.joinStudio(byCode: manualCode)
         } catch {
             errorMessage = beitrittsfehler(error, ungueltig: "Dieser Code ist ungültig.")
             return
         }
-        abschliessen()
+        abschliessen(ergebnis)
     }
 
     /// Der QR-Code traegt den vollstaendigen Universal Link
@@ -99,13 +124,14 @@ struct StudioBeitretenView: View {
         errorMessage = nil
         isJoining = true
         defer { isJoining = false }
+        let ergebnis: JoinResult
         do throws(APIError) {
-            try await catalogStore.joinStudio(byTag: token)
+            ergebnis = try await catalogStore.joinStudio(byTag: token)
         } catch {
             errorMessage = beitrittsfehler(error, ungueltig: "Dieser Code ist ungültig.")
             return
         }
-        abschliessen()
+        abschliessen(ergebnis)
     }
 
     /// Ein Beitritt kann aus vier Gruenden scheitern, und nur einer davon
@@ -123,9 +149,30 @@ struct StudioBeitretenView: View {
 
     /// Schliesst nur, wenn das Neuladen gelang: sonst steht das Studio in der
     /// Datenbank, aber nicht auf dem Bildschirm, und der Screen muss es sagen.
-    private func abschliessen() {
+    /// Gewechselt wird nur, wenn keine Einheit an einem anderen Ort laeuft
+    /// (Plan, Entscheidung 1) -- sonst erst nach der Rueckfrage.
+    private func abschliessen(_ ergebnis: JoinResult) {
         errorMessage = nachladefehler()
-        if errorMessage == nil { beiErfolg() }
+        guard errorMessage == nil else { return }
+        switch Ortswechsel.pruefen(ziel: .studio(ergebnis.studioId), aktuell: catalogStore.ort,
+                                   offeneEinheit: sessions.aktiveSession()) {
+        case .sofort:
+            catalogStore.ortNachBeitritt(ergebnis)
+            beiErfolg()
+        case .erstBeenden:
+            wechselPending = ergebnis
+        }
+    }
+
+    /// Wie in der Studioliste: lokal sofort beenden, den Abschluss im
+    /// Hintergrund melden, kein Abschluss-Screen.
+    private func beendenUndWechseln(_ ergebnis: JoinResult) {
+        wechselPending = nil
+        let ende = sessions.beendenFuerOrtswechsel()
+        catalogStore.ortNachBeitritt(ergebnis)
+        let client = loader
+        Task { await WorkoutSessionStore.melden(ende, loader: client) }
+        beiErfolg()
     }
 
     /// Der Beitritt kann gelingen und das anschliessende Neuladen trotzdem

@@ -51,7 +51,7 @@ struct MemberStudiosView: View {
             }
 
             NavigationLink("Studio beitreten") {
-                StudioBeitretenView { dismiss() }
+                StudioBeitretenView(loader: apiClient) { dismiss() }
             }
             .font(.system(size: 15, weight: .bold))
             .frame(minHeight: 44)

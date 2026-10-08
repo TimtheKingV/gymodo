@@ -182,7 +182,7 @@ struct GeraetErkanntView: View {
 /// es fuer den Geraete-Screen schon vormachen).
 ///
 /// `@State var modell` ist der eigentliche Punkt: TrainingRootView.ziel(_:)
-/// ruft `modell(machineId:exerciseId:token:)` bei JEDER Body-Auswertung neu
+/// ruft `modell(station:exerciseId:token:)` bei JEDER Body-Auswertung neu
 /// auf und erzeugt dabei ein frisches GeraetModel. Ohne dieses @State wuerde
 /// jede Neuzeichnung ein Modell verwerfen, dessen kontextLaden() gerade erst
 /// geladen hat -- SwiftUI uebernimmt den init-Parameter fuer @State nur beim

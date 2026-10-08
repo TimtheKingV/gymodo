@@ -72,22 +72,56 @@ struct ScanBeitrittTests {
                 == .oeffnen(Station(maschine: m)))
     }
 
+    // MARK: - fuer(station:ort:offeneEinheit:) -- Auswahl aus der Liste
+
+    /// Die Liste geht denselben Weg wie der Scan: "Auch in X suchen" darf
+    /// kein Geraet in X an der Pruefung vorbei oeffnen.
+    @Test func eineGewaehlteStationAmAktuellenOrtOeffnetSich() {
+        let s = Station.testGeraet("m1", studioId: "s1")
+        #expect(ScanEntscheidung.fuer(station: s, ort: .studio("s1"), offeneEinheit: nil) == .oeffnen(s))
+        let typ = Station.testTyp("t1", studioId: nil)
+        #expect(ScanEntscheidung.fuer(station: typ, ort: .freiesTraining,
+                                      offeneEinheit: einheit(ort: .freiesTraining)) == .oeffnen(typ))
+    }
+
+    @Test func eineGewaehlteStationInEinemAnderenStudioWechseltErst() {
+        let geraet = Station.testGeraet("m2", studioId: "s2")
+        #expect(ScanEntscheidung.fuer(station: geraet, ort: .studio("s1"), offeneEinheit: nil)
+                == .wechselnUndOeffnen(.studio("s2"), geraet))
+        // Der Typ unter "Auch in s2" behaelt s2: der Ort wird vor dem
+        // Oeffnen gewechselt, die Route traegt nur den Schluessel.
+        let typ = Station.testTyp("t1", studioId: "s2")
+        #expect(ScanEntscheidung.fuer(station: typ, ort: .studio("s1"), offeneEinheit: nil)
+                == .wechselnUndOeffnen(.studio("s2"), typ))
+    }
+
+    @Test func eineGewaehlteStationNebenEinerEinheitAnderswoFragtErst() {
+        let geraet = Station.testGeraet("m2", studioId: "s2")
+        #expect(ScanEntscheidung.fuer(station: geraet, ort: .studio("s1"),
+                                      offeneEinheit: einheit(ort: .studio("s1")))
+                == .erstBeenden(laufenderOrt: .studio("s1"), ziel: .studio("s2"), station: geraet))
+        let typ = Station.testTyp("t1", studioId: "s2")
+        #expect(ScanEntscheidung.fuer(station: typ, ort: .freiesTraining,
+                                      offeneEinheit: einheit(ort: .freiesTraining))
+                == .erstBeenden(laufenderOrt: .freiesTraining, ziel: .studio("s2"), station: typ))
+    }
+
     // MARK: - nachBeitritt
 
-    /// joinStudio hat den Ort schon gewechselt; `vorher` ist der Ort vor dem
-    /// Beitritt, an dem eine offene Einheit laufen kann.
+    /// joinStudio wechselt den Ort nicht mehr selbst: `ort` ist der Ort, an
+    /// dem das Mitglied steht und eine offene Einheit laufen kann.
     @Test func nachDemBeitrittOeffnetSichDasGeraet() {
         let m = maschine(studioId: "s2")
         let ergebnis = JoinResult(studioId: "s2", machineId: "m1", joined: true)
         #expect(ScanEntscheidung.nachBeitritt(ergebnis, bootstrap: bootstrap([m]),
-                                              vorher: .studio("s1"), offeneEinheit: nil)
+                                              ort: .studio("s1"), offeneEinheit: nil)
                 == .oeffnen(Station(maschine: m)))
     }
 
     @Test func einAushangZeigtDieListeDesStudios() {
         let ergebnis = JoinResult(studioId: "s2", machineId: nil, joined: true)
         #expect(ScanEntscheidung.nachBeitritt(ergebnis, bootstrap: bootstrap([]),
-                                              vorher: .freiesTraining, offeneEinheit: nil)
+                                              ort: .freiesTraining, offeneEinheit: nil)
                 == .listeZeigen)
     }
 
@@ -96,11 +130,11 @@ struct ScanBeitrittTests {
         let m = maschine(studioId: "s2")
         let mitGeraet = JoinResult(studioId: "s2", machineId: "m1", joined: true)
         #expect(ScanEntscheidung.nachBeitritt(mitGeraet, bootstrap: bootstrap([m]),
-                                              vorher: .studio("s1"), offeneEinheit: einheit(ort: .studio("s1")))
+                                              ort: .studio("s1"), offeneEinheit: einheit(ort: .studio("s1")))
                 == .erstBeenden(laufenderOrt: .studio("s1"), station: Station(maschine: m)))
         let aushang = JoinResult(studioId: "s2", machineId: nil, joined: true)
         #expect(ScanEntscheidung.nachBeitritt(aushang, bootstrap: bootstrap([]),
-                                              vorher: .studio("s1"), offeneEinheit: einheit(ort: .studio("s1")))
+                                              ort: .studio("s1"), offeneEinheit: einheit(ort: .studio("s1")))
                 == .erstBeenden(laufenderOrt: .studio("s1"), station: nil))
     }
 
@@ -109,7 +143,7 @@ struct ScanBeitrittTests {
     @Test func einUnbekanntesGeraetNachDemBeitrittZeigtDieListe() {
         let ergebnis = JoinResult(studioId: "s2", machineId: "m9", joined: false)
         #expect(ScanEntscheidung.nachBeitritt(ergebnis, bootstrap: nil,
-                                              vorher: .studio("s1"), offeneEinheit: nil)
+                                              ort: .studio("s1"), offeneEinheit: nil)
                 == .listeZeigen)
     }
 

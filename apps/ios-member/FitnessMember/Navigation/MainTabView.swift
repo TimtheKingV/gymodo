@@ -29,7 +29,8 @@ struct MainTabView: View {
 
             NavigationStack(path: $kursePfad) {
                 KurseWochenView(
-                    beiAuswahl: { sessionId in kursePfad.append(.detail(sessionId: sessionId)) }
+                    beiAuswahl: { sessionId in kursePfad.append(.detail(sessionId: sessionId)) },
+                    loader: apiClient
                 )
                 .navigationDestination(for: KursRoute.self) { route in
                     switch route {

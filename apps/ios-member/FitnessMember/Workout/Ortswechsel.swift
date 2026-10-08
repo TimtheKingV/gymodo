@@ -17,4 +17,15 @@ enum Ortswechsel {
         let laufend = offeneEinheit.ort ?? aktuell
         return laufend == ziel ? .sofort : .erstBeenden(laufenderOrt: laufend)
     }
+
+    /// Das Sicherheitsnetz dort, wo der Satz entsteht: ein Geraet nennt sein
+    /// Studio selbst, und der Server weist einen Satz ab, dessen Einheit an
+    /// einem anderen Ort liegt -- er landete sicher unter den verworfenen.
+    /// Liefert den Ort der laufenden Einheit, wenn das Geraet nicht dorthin
+    /// gehoert. Ein Typ nimmt den Ort der Einheit an und ist nie ein Konflikt.
+    static func satzKonflikt(station: Station, offeneEinheit: LokaleSession?) -> Ort? {
+        guard station.machineId != nil, let laufend = offeneEinheit?.ort else { return nil }
+        let geraeteOrt = station.studioId.map(Ort.studio) ?? .freiesTraining
+        return geraeteOrt == laufend ? nil : laufend
+    }
 }

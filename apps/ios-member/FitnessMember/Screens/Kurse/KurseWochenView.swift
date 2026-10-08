@@ -252,6 +252,8 @@ struct KurseWochenView: View {
     /// gespeicherten Buchungen, die Tagesliste den vollen `CourseWeekSession`
     /// -- beide sollen denselben Weg ins Kursdetail nehmen.
     let beiAuswahl: (String) -> Void
+    /// Meldet den Abschluss, wenn ein Beitritt die laufende Einheit beendet.
+    let loader: any GeraetLoading
 
     @Environment(KurseStore.self) private var kurse
     @Environment(CatalogStore.self) private var katalog
@@ -273,6 +275,8 @@ struct KurseWochenView: View {
     /// Daten unter der offenen App aendern.
     @State private var gewaehlteAnsicht: KurseAnsicht?
 
+    @State private var beitretenOffen = false
+
     /// 60-Sekunden-Kadenz statt einer einmalig beim Aufbau gelesenen
     /// Date() -- dasselbe Muster wie in KursDetailView und KurseMeineView,
     /// und aus demselben Grund: @Observable loest kein Neuzeichnen aus,
@@ -280,8 +284,6 @@ struct KurseWochenView: View {
     /// als buchbar samt Belegungszahl stehen (und widerspraeche dem
     /// Kursdetail, das die Uhr hat), und ueber Mitternacht markierte der
     /// Wochenstreifen weiter gestern als "heute".
-    @State private var beitretenOffen = false
-
     var body: some View {
         Group {
             switch KurseOrtZustand.fuer(ort: katalog.ort) {
@@ -312,7 +314,7 @@ struct KurseWochenView: View {
         .background(DesignSystem.Color.bg)
         .sheet(isPresented: $beitretenOffen) {
             NavigationStack {
-                StudioBeitretenView { beitretenOffen = false }
+                StudioBeitretenView(loader: loader) { beitretenOffen = false }
             }
         }
     }

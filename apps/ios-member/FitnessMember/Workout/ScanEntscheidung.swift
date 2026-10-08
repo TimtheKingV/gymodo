@@ -1,6 +1,7 @@
 import Foundation
 
-/// Was ein gescannter Geraetecode bewirkt, als reine Funktion.
+/// Was ein gescannter Geraetecode oder eine in der Liste gewaehlte Station
+/// bewirkt, als reine Funktion.
 /// TrainingRootView fuehrt nur aus; die Regeln stehen hier, damit sie
 /// ohne View testbar sind (Plan, Entscheidung 2).
 enum ScanEntscheidung: Equatable {
@@ -9,7 +10,8 @@ enum ScanEntscheidung: Equatable {
     /// Der Prefetch kennt den Code nicht: der Server entscheidet, ob er zu
     /// einem (fremden oder neuen) Geraet gehoert, und macht zum Mitglied.
     case beitreten
-    /// Das Geraet steht in einem anderen eigenen Studio: wechseln, oeffnen.
+    /// Die Station steht an einem anderen Ort (eigenes Studio oder Freies
+    /// Training), und keine Einheit haelt dagegen: wechseln, oeffnen.
     case wechselnUndOeffnen(Ort, Station)
     /// Eine Einheit laeuft an einem anderen Ort als dem des Geraets. Erst
     /// nach "Training beenden" wird gewechselt und geoeffnet.
@@ -19,8 +21,16 @@ enum ScanEntscheidung: Equatable {
                      offeneEinheit: LokaleSession?) -> ScanEntscheidung {
         guard let bootstrap, let maschine = MachineResolver.maschine(fuerToken: token, in: bootstrap)
         else { return .beitreten }
-        let station = Station(maschine: maschine)
-        let ziel = Ort.studio(maschine.studioId)
+        return fuer(station: Station(maschine: maschine), ort: ort, offeneEinheit: offeneEinheit)
+    }
+
+    /// Dieselbe Regel fuer eine Station aus der Liste: ueber "Auch in X
+    /// suchen" kann sie an einem anderen Ort stehen. Nie `.beitreten` --
+    /// die Liste kennt nur Stationen aus dem Bootstrap. Der Ort wird vor dem
+    /// Oeffnen gewechselt, weil die Route nur den Schluessel traegt und ein
+    /// Typ mit dem aktuellen Ort aufgeloest wird.
+    static func fuer(station: Station, ort: Ort, offeneEinheit: LokaleSession?) -> ScanEntscheidung {
+        let ziel = station.studioId.map(Ort.studio) ?? .freiesTraining
         switch Ortswechsel.pruefen(ziel: ziel, aktuell: ort, offeneEinheit: offeneEinheit) {
         case .erstBeenden(let laufenderOrt):
             return .erstBeenden(laufenderOrt: laufenderOrt, ziel: ziel, station: station)
@@ -29,25 +39,29 @@ enum ScanEntscheidung: Equatable {
         }
     }
 
-    /// Nach `joinStudio(byTag:)`: der Ort ist schon das Studio des Codes.
+    /// Nach `joinStudio(byTag:)`. Der Beitritt hat den Ort nicht gewechselt:
+    /// `.oeffnen` und `.listeZeigen` wechseln erst (CatalogStore.ortNachBeitritt),
+    /// dann zeigen sie.
     enum NachBeitritt: Equatable {
         case oeffnen(Station)
         /// Aushang (kein Geraet am Code) oder ein Geraet, das das frische
         /// Bootstrap nicht kennt: die Liste des Studios.
         case listeZeigen
-        /// Der Beitritt ist geschehen; das Geraet (oder die Liste, station
-        /// nil) erst nach "Training beenden". Abbrechen stellt `vorher` wieder her.
+        /// Der Beitritt ist geschehen; Wechsel und Geraet (oder die Liste,
+        /// station nil) erst nach "Training beenden". Abbrechen laesst den
+        /// Ort, wie er war -- Mitglied bleibt man trotzdem.
         case erstBeenden(laufenderOrt: Ort, station: Station?)
     }
 
-    /// `vorher` ist der Ort VOR dem Beitritt -- an ihm kann eine offene
-    /// Einheit ohne eigenen Ort laufen (Ortswechsel, Ruling 4).
-    static func nachBeitritt(_ ergebnis: JoinResult, bootstrap: BootstrapResponse?, vorher: Ort,
+    /// `ort` ist der Ort, an dem das Mitglied steht -- an ihm laeuft eine
+    /// offene Einheit ohne eigenen Ort (eine Datei von vor dem Katalog), und
+    /// fuer sie soll kein Dialog ohne Anlass kommen.
+    static func nachBeitritt(_ ergebnis: JoinResult, bootstrap: BootstrapResponse?, ort: Ort,
                              offeneEinheit: LokaleSession?) -> NachBeitritt {
         let station = ergebnis.machineId.flatMap { id in
             bootstrap?.station(schluessel: Station.schluessel(machineId: id), studioId: ergebnis.studioId)
         }
-        switch Ortswechsel.pruefen(ziel: .studio(ergebnis.studioId), aktuell: vorher,
+        switch Ortswechsel.pruefen(ziel: .studio(ergebnis.studioId), aktuell: ort,
                                    offeneEinheit: offeneEinheit) {
         case .erstBeenden(let laufenderOrt):
             return .erstBeenden(laufenderOrt: laufenderOrt, station: station)

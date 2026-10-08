@@ -25,3 +25,24 @@ extension Station {
         return Station(typ: GeraetTestdaten.dekodiere(json), studioId: studioId)
     }
 }
+
+extension LokalerBlock {
+    /// Der Block an einem Geraet, wenn nur dessen Kennung vorliegt -- so,
+    /// wie ihn eine Sessiondatei von vor dem Katalog traegt. Nur die Tests
+    /// brauchen ihn; ueber den Decoder, damit er genau dem Altbestand gleicht.
+    init(machineId: String, exerciseId: String,
+         einheiten: Blockeinheiten = .kilogrammWiederholungen, saetze: [LokalerSatz]) {
+        struct Altblock: Encodable {
+            let machineId: String
+            let exerciseId: String
+            let loadUnit: LoadUnit
+            let secondaryUnit: LoadUnit?
+            let volumeKind: VolumeKind
+            let saetze: [LokalerSatz]
+        }
+        let alt = Altblock(machineId: machineId, exerciseId: exerciseId,
+                           loadUnit: einheiten.loadUnit, secondaryUnit: einheiten.secondaryUnit,
+                           volumeKind: einheiten.volumeKind, saetze: saetze)
+        self = try! JSONDecoder().decode(LokalerBlock.self, from: JSONEncoder().encode(alt))
+    }
+}

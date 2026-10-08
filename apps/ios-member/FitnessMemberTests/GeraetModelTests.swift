@@ -175,6 +175,40 @@ struct GeraetModelTests {
         #expect(laufendeSession?.bloecke.first?.einheiten == .kilogrammWiederholungen)
     }
 
+    /// Sicherheitsnetz unter Ortswechsel: ein Geraet aus s1 in einer Einheit
+    /// in s2 wuerde der Server sicher abweisen -- es wird nicht geschrieben,
+    /// und der Screen sagt, warum.
+    @Test func einGeraetAusEinemAnderenStudioSchreibtNichtInDieEinheit() async {
+        let erfasser = Erfassungswarteschlange()
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        _ = sessions.satzSichern(station: .testGeraet("m9", studioId: "s2"), exerciseId: "e1",
+                                 einheiten: .kilogrammWiederholungen, load: 50, volume: 10,
+                                 problemFlag: false, problemReason: nil)
+        let vorher = sessions.aktiveSession()
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         sessions: sessions,
+                         enqueue: { erfasser.geschriebene.append($0) })
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(erfasser.geschriebene.isEmpty)
+        #expect(sessions.aktiveSession() == vorher)
+        #expect(sut.gesicherteSaetze == 0)
+        #expect(sut.phase == .eingabe)
+        #expect(sut.satzAbgelehnt != nil)
+    }
+
+    @Test func einGeraetImStudioDerEinheitSchreibtOhneHinweis() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.gesicherteSaetze == 1)
+        #expect(sut.satzAbgelehnt == nil)
+    }
+
     // MARK: - Phasen
 
     @Test func vorDemLetztenGeplantenSatzStartetDiePause() async {

@@ -42,6 +42,33 @@ struct OrtswechselTests {
                 == .erstBeenden(laufenderOrt: .studio("a")))
     }
 
+    // MARK: - Satzschutz: ein Geraet gehoert nicht in eine Einheit anderswo
+
+    @Test func einGeraetImStudioDerEinheitIstErlaubt() {
+        #expect(Ortswechsel.satzKonflikt(station: .testGeraet("m1", studioId: "a"),
+                                         offeneEinheit: einheit(ort: .studio("a"))) == nil)
+        // Ohne Einheit oder ohne Ort setzt der erste Satz den Ort.
+        #expect(Ortswechsel.satzKonflikt(station: .testGeraet("m1", studioId: "a"),
+                                         offeneEinheit: nil) == nil)
+        #expect(Ortswechsel.satzKonflikt(station: .testGeraet("m1", studioId: "a"),
+                                         offeneEinheit: einheit(ort: nil)) == nil)
+    }
+
+    /// Der Server weist den Satz sicher ab (die Einheit traegt ein anderes
+    /// Studio) -- er darf gar nicht erst geschrieben werden.
+    @Test func einGeraetAusEinemAnderenStudioIstEinKonflikt() {
+        #expect(Ortswechsel.satzKonflikt(station: .testGeraet("m1", studioId: "b"),
+                                         offeneEinheit: einheit(ort: .studio("a"))) == .studio("a"))
+        #expect(Ortswechsel.satzKonflikt(station: .testGeraet("m1", studioId: "b"),
+                                         offeneEinheit: einheit(ort: .freiesTraining)) == .freiesTraining)
+    }
+
+    /// Ein Typ nimmt den Ort der Einheit an; der Server nimmt ihn dort an.
+    @Test func einTypIstNieEinKonflikt() {
+        #expect(Ortswechsel.satzKonflikt(station: .testTyp("t1", studioId: "b"),
+                                         offeneEinheit: einheit(ort: .studio("a"))) == nil)
+    }
+
     @Test func alteSessionDateiOhneOrtDekodiert() throws {
         let json = """
         {"id":"\(UUID().uuidString)","startedAt":0,"bloecke":[]}

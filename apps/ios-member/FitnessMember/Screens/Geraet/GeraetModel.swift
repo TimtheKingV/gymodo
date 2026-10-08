@@ -124,6 +124,11 @@ final class GeraetModel {
     /// Kommt woertlich vom Server -- er kennt die Grenzen des Geraetemodells
     /// und formuliert, was gilt (designsystem.md SS5).
     private(set) var kalibrierungFehler: String?
+    /// Warum der letzte Satz nicht gesichert wurde: das Geraet steht an
+    /// einem anderen Ort als die laufende Einheit (Ortswechsel.satzKonflikt).
+    /// Ein Pfad, der die Ortspruefung umgeht, endet hier statt in den
+    /// verworfenen Schreibvorgaengen.
+    private(set) var satzAbgelehnt: String?
 
     private let token: String?
     private let bootstrap: BootstrapResponse
@@ -674,6 +679,12 @@ final class GeraetModel {
     }
 
     func satzSichern(problemFlag: Bool, problemReason: ProblemReason?) async {
+        if let laufend = Ortswechsel.satzKonflikt(station: station, offeneEinheit: sessions.aktiveSession()) {
+            let ort = StudiosListe.name(fuer: laufend, studios: bootstrap.studios)
+            satzAbgelehnt = "Dein Training läuft in \(ort). Beende es zuerst, dann sicherst du hier Sätze."
+            return
+        }
+        satzAbgelehnt = nil
         let geschrieben = sessions.satzSichern(
             station: station, exerciseId: uebungId,
             einheiten: einheiten,
@@ -686,10 +697,9 @@ final class GeraetModel {
         enqueue(PendingSetWrite(sessionId: geschrieben.sessionId,
                                 setId: geschrieben.setId,
                                 body: geschrieben.body))
-        // sessions.satzSichern() oben ist der einzige Fehlschlagpfad, und
-        // der wirft nicht -- lokal wird immer geschrieben, auch offline
-        // (Spec Abschnitt 8.2). Der Zaehler steigt deshalb hier, nicht
-        // hinter einem Erfolgs-Guard, den es nicht gibt.
+        // Nach der Ortspruefung oben wirft sessions.satzSichern() nicht --
+        // lokal wird immer geschrieben, auch offline (Spec Abschnitt 8.2).
+        // Der Zaehler steigt deshalb hier, nicht hinter einem Erfolgs-Guard.
         gesicherteSaetze += 1
         // Nach dem Schreiben, mit genau den geschriebenen Werten: das ist
         // das Label der Aufnahme. Wirft nicht, wartet nicht.

@@ -84,6 +84,11 @@ struct GeraetView: View {
                                 AbgelehnteKarte(anzahl: katalog.verworfeneWrites.count,
                                                 beiQuittieren: katalog.verworfeneQuittieren)
                             }
+                            // Nicht gesichert, weil das Geraet an einem anderen
+                            // Ort steht als die Einheit -- sagt, was gilt.
+                            if let abgelehnt = modell.satzAbgelehnt {
+                                InlineBanner(tone: .danger, message: abgelehnt)
+                            }
                         }
                         geraetUndUebung
                     }

@@ -72,8 +72,8 @@ struct TrainingRootView: View {
     @State private var hinweis: TabHinweis?
     /// Der Dialog "Pausieren / Training beenden" (Testnotiz 05.10., #7).
     @State private var steuerungOffen = false
-    /// "Training in {Ort} beenden?" nach einem Scan an einem anderen Ort
-    /// (Plan, Entscheidung 2) -- derselbe Dialog wie im Profil.
+    /// "Training in {Ort} beenden?" nach einem Scan oder einer Auswahl an
+    /// einem anderen Ort (Plan, Entscheidung 2) -- derselbe Dialog wie im Profil.
     @State private var scanRueckfrage: ScanRueckfrage?
     /// Was nach dem Beenden fuer den Ortswechsel geoeffnet wird. Wartet auf
     /// den onChange unten: der leert den Pfad, sobald die Einheit endet, und
@@ -257,7 +257,7 @@ struct TrainingRootView: View {
                     laufendeMitte(mitte, session: session)
                 }
             } beiAuswahl: { station in
-                pfad.append(.erkannt(station: station.schluessel, token: nil))
+                waehle(station)
             }
             // safeAreaInset statt overlay: die Liste bekommt unten so viel
             // Luft, dass ihr letztes Geraet ueber den Knoepfen landet, und
@@ -552,8 +552,10 @@ struct TrainingRootView: View {
     }
 
     private func modell(station schluessel: String, exerciseId: String?, token: String?) -> GeraetModel? {
-        // Ein Typ hat keinen eigenen Ort: er gilt am aktuellen (Ruling 5).
-        // Eine offene Einheit erzwingt ueber Ortswechsel denselben Ort.
+        // Ein Typ hat keinen eigenen Ort: die Route traegt nur den
+        // Schluessel, und er gilt am aktuellen Ort. Deshalb wechselt jeder Weg
+        // hierher (Scan, Liste) den Ort VOR dem Oeffnen, und eine offene
+        // Einheit erzwingt ueber Ortswechsel denselben Ort.
         guard let bootstrap = katalog.bootstrap,
               let station = bootstrap.station(schluessel: schluessel, studioId: katalog.activeStudioId)
         else { return nil }
@@ -615,7 +617,7 @@ struct TrainingRootView: View {
             navigiere(zu: station, token: token)
         case .erstBeenden(let laufenderOrt, let ziel, let station):
             scanRueckfrage = ScanRueckfrage(laufenderOrt: laufenderOrt, ziel: ziel,
-                                            folge: .oeffnen(station, token: token), zurueck: nil)
+                                            folge: .oeffnen(station, token: token), beitritt: nil)
         case .beitreten:
             // Auch ohne Prefetch (Kalteinstieg): joinStudio laedt danach neu,
             // und ein Geraet aus dem eigenen Studio, das erst nach dem letzten
@@ -625,10 +627,11 @@ struct TrainingRootView: View {
     }
 
     /// Ein Code, den der Prefetch nicht kennt, macht zum Mitglied seines
-    /// Studios -- der Beitritt passiert immer (Plan, Entscheidung 2) und
-    /// wechselt den Ort. Nur das Oeffnen wartet auf "Training beenden".
+    /// Studios -- der Beitritt passiert immer (Plan, Entscheidung 2). Den
+    /// Ort wechselt erst die Entscheidung danach: sofort, oder nach
+    /// "Training beenden". Bis dahin bleibt der alte Ort auch gespeichert --
+    /// wird die App waehrend der Rueckfrage beendet, gilt nichts Halbes.
     private func beitreten(_ token: String) {
-        let vorher = katalog.ort
         neuladeVersuch = Task {
             let ergebnis: JoinResult
             do throws(APIError) {
@@ -642,16 +645,18 @@ struct TrainingRootView: View {
                 return
             }
             guard !Task.isCancelled else { return }
-            switch ScanEntscheidung.nachBeitritt(ergebnis, bootstrap: katalog.bootstrap, vorher: vorher,
+            switch ScanEntscheidung.nachBeitritt(ergebnis, bootstrap: katalog.bootstrap, ort: katalog.ort,
                                                  offeneEinheit: sessions.aktiveSession()) {
             case .oeffnen(let station):
+                katalog.ortNachBeitritt(ergebnis)
                 navigiere(zu: station, token: token)
             case .listeZeigen:
+                katalog.ortNachBeitritt(ergebnis)
                 listeZeigen()
             case .erstBeenden(let laufenderOrt, let station):
                 scanRueckfrage = ScanRueckfrage(
                     laufenderOrt: laufenderOrt, ziel: .studio(ergebnis.studioId),
-                    folge: station.map { .oeffnen($0, token: token) } ?? .liste, zurueck: vorher)
+                    folge: station.map { .oeffnen($0, token: token) } ?? .liste, beitritt: ergebnis)
             }
         }
     }
@@ -663,21 +668,52 @@ struct TrainingRootView: View {
         beitrittZeigen = true
     }
 
+    /// Eine Station aus der Liste nimmt denselben Weg wie ein Scan: steht
+    /// sie an einem anderen Ort ("Auch in X suchen"), wird erst gewechselt
+    /// oder gefragt, dann geoeffnet.
+    private func waehle(_ station: Station) {
+        switch ScanEntscheidung.fuer(station: station, ort: katalog.ort,
+                                     offeneEinheit: sessions.aktiveSession()) {
+        case .oeffnen(let station):
+            oeffneAusListe(station)
+        case .wechselnUndOeffnen(let ziel, let station):
+            katalog.setOrt(ziel)
+            oeffneAusListe(station)
+        case .erstBeenden(let laufenderOrt, let ziel, let station):
+            scanRueckfrage = ScanRueckfrage(laufenderOrt: laufenderOrt, ziel: ziel,
+                                            folge: .auswahl(station), beitritt: nil)
+        case .beitreten:
+            // Kommt aus der Liste nicht vor: sie kennt nur Stationen aus dem
+            // Bootstrap.
+            break
+        }
+    }
+
+    private func oeffneAusListe(_ station: Station) {
+        pfad.append(.erkannt(station: station.schluessel, token: nil))
+    }
+
     private func ausfuehren(_ folge: ScanFolge) {
         switch folge {
         case .oeffnen(let station, let token): navigiere(zu: station, token: token)
+        case .auswahl(let station): oeffneAusListe(station)
         case .liste: listeZeigen()
         }
     }
 
-    /// Lokal sofort, Server im Hintergrund -- wie im Profil (Ruling 10).
+    /// Lokal sofort, Server im Hintergrund, kein Abschluss-Screen -- genau
+    /// wie der Ortswechsel in der Studioliste: das Mitglied wollte an den
+    /// neuen Ort, nicht auf einen Rueckblick.
     private func beendenUndOeffnen(_ rueckfrage: ScanRueckfrage) {
         scanRueckfrage = nil
         let lief = sessions.aktiveSession() != nil
         let ende = sessions.beendenFuerOrtswechsel()
-        // Ohne Meldung, wenn der Beitritt schon gewechselt hat: sonst
-        // ersetzte "ist jetzt aktiv" den Hinweis auf den Beitritt.
-        katalog.setOrt(rueckfrage.ziel, wechselMelden: rueckfrage.zurueck == nil)
+        // Nach einem Beitritt nennt der Hinweis den Beitritt, nicht den Wechsel.
+        if let beitritt = rueckfrage.beitritt {
+            katalog.ortNachBeitritt(beitritt)
+        } else {
+            katalog.setOrt(rueckfrage.ziel)
+        }
         let client = apiClient
         Task { await WorkoutSessionStore.melden(ende, loader: client) }
         // Lief die Einheit gar nicht mehr (in genau diesem Moment
@@ -685,13 +721,11 @@ struct TrainingRootView: View {
         if lief { nachOrtswechsel = rueckfrage.folge } else { ausfuehren(rueckfrage.folge) }
     }
 
-    /// Abbrechen laesst alles, wie es war -- bis auf die Mitgliedschaft:
-    /// hat der Scan schon beigetreten und gewechselt, geht der Ort still
-    /// zurueck, damit die laufende Einheit an ihrem Ort bleibt.
+    /// Abbrechen laesst alles, wie es war -- bis auf die Mitgliedschaft: der
+    /// Beitritt hat den Ort nicht gewechselt, also gibt es nichts
+    /// zurueckzunehmen.
     private func scanRueckfrageVerwerfen() {
-        guard let rueckfrage = scanRueckfrage else { return }
         scanRueckfrage = nil
-        if let zurueck = rueckfrage.zurueck { katalog.setOrt(zurueck, wechselMelden: false) }
     }
 
     private func navigiere(zu station: Station, token: String) {
@@ -786,21 +820,25 @@ struct TrainingRootView: View {
     }
 }
 
-/// Was nach "Training beenden" fuer einen Scan an einem anderen Ort folgt.
+/// Was nach "Training beenden" fuer einen Scan oder eine Auswahl an einem
+/// anderen Ort folgt.
 private enum ScanFolge: Equatable {
     case oeffnen(Station, token: String)
+    /// Aus der Liste gewaehlt: ohne Token, ohne Einstiegsregel des Scans.
+    case auswahl(Station)
     /// Aushang: kein Geraet, die Liste des Studios.
     case liste
 }
 
-/// Die offene Rueckfrage "Training in {Ort} beenden?" nach einem Scan.
+/// Die offene Rueckfrage "Training in {Ort} beenden?" nach einem Scan oder
+/// einer Auswahl.
 private struct ScanRueckfrage: Equatable {
     let laufenderOrt: Ort
     let ziel: Ort
     let folge: ScanFolge
-    /// Gesetzt, wenn der Beitritt den Ort schon gewechselt hat: Abbrechen
-    /// stellt diesen Ort wieder her.
-    let zurueck: Ort?
+    /// Gesetzt nach einem Beitritt per Scan: der Wechsel nennt dann den
+    /// Beitritt im Hinweis.
+    let beitritt: JoinResult?
 }
 
 /// Der Satz im Fuss ueber einer Einheit, die nicht mehr laeuft. Zwei
