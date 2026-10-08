@@ -37,9 +37,6 @@ struct RootView: View {
                 ladeschirm
             case .onboarding:
                 OnboardingFlow(apiClient: apiClient, alsSheet: false) { }
-            case .noStudio:
-                NavigationStack { MemberKeinStudioView() }
-                    .tint(DesignSystem.Color.accent)
             case .ladefehler:
                 NavigationStack { MemberLadefehlerView() }
                     .tint(DesignSystem.Color.accent)

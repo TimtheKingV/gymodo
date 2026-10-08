@@ -142,7 +142,7 @@ final class CatalogStore {
             let response = try await loader.bootstrap()
             letzterLadefehler = nil
             bootstrap = response
-            loadState = .loaded(hasStudio: !response.studios.isEmpty)
+            loadState = .loaded
             repariereOrt(studios: response.studios)
         } catch {
             letzterLadefehler = error

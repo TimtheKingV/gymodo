@@ -73,22 +73,22 @@ private func tempDirectory() -> URL {
 @Suite("CatalogStore")
 @MainActor
 struct CatalogStoreTests {
-    @Test("load() ohne Studios ergibt loaded(hasStudio: false)")
+    @Test("load() ohne Studios ergibt loaded")
     func loadWithoutStudio() async {
         let loader = FakeBootstrapLoader()
         await loader.setBootstrapResult(.success(emptyBootstrap()))
         let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
         await store.load()
-        #expect(store.loadState == .loaded(hasStudio: false))
+        #expect(store.loadState == .loaded)
     }
 
-    @Test("load() mit einem Studio ergibt loaded(hasStudio: true)")
+    @Test("load() mit einem Studio ergibt loaded")
     func loadWithStudio() async {
         let loader = FakeBootstrapLoader()
         await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s1", name: "Kraftwerk Nord", timezone: "Europe/Berlin")])))
         let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
         await store.load()
-        #expect(store.loadState == .loaded(hasStudio: true))
+        #expect(store.loadState == .loaded)
     }
 
     @Test("ein Netzwerkfehler ergibt .failed")
@@ -188,7 +188,7 @@ struct CatalogStoreTests {
         await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s1", name: "Kraftwerk Nord", timezone: "Europe/Berlin")])))
         let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
         _ = try? await store.joinStudio(byCode: "ABCD1234")
-        #expect(store.loadState == .loaded(hasStudio: true))
+        #expect(store.loadState == .loaded)
     }
 
     @Test("leaveStudio wirft weiter, wenn keine Mitgliedschaft besteht")
@@ -366,7 +366,7 @@ struct CatalogStoreTests {
 
         await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s1", name: "Kraftwerk Nord", timezone: "Europe/Berlin")])))
         await store.load()
-        #expect(store.loadState == .loaded(hasStudio: true))
+        #expect(store.loadState == .loaded)
     }
 
     // MARK: - Neuladen ueber einem geladenen Bootstrap
@@ -385,8 +385,8 @@ struct CatalogStoreTests {
 
         await store.load()
 
-        #expect(await loader.gesehen == [.loaded(hasStudio: true)])
-        #expect(store.loadState == .loaded(hasStudio: true))
+        #expect(await loader.gesehen == [.loaded])
+        #expect(store.loadState == .loaded)
     }
 
     @Test("ein gescheitertes Neuladen behaelt den vorigen Bootstrap und Zustand")
@@ -401,7 +401,7 @@ struct CatalogStoreTests {
         await store.load()
 
         #expect(store.bootstrap == vorher)
-        #expect(store.loadState == .loaded(hasStudio: true))
+        #expect(store.loadState == .loaded)
         #expect(store.activeStudioId == "s1")
     }
 
@@ -415,7 +415,7 @@ struct CatalogStoreTests {
         await store.load()
 
         #expect(await loader.gesehen == [.loading])
-        #expect(store.loadState == .loaded(hasStudio: true))
+        #expect(store.loadState == .loaded)
     }
 
     @Test("der erste Ladevorgang geht weiter ueber .loading nach .failed")
@@ -453,11 +453,11 @@ struct CatalogStoreTests {
         await loader.beobachte { store.loadState }
         await store.load()
 
-        #expect(await loader.gesehen == [.loaded(hasStudio: true)])
+        #expect(await loader.gesehen == [.loaded])
         #expect(ziel() == .main)
     }
 
-    @Test("ohne Studio fuehrt dasselbe Neuladen vom Onboarding nach noStudio")
+    @Test("ohne Studio fuehrt dasselbe Neuladen vom Onboarding nach main")
     func neuladenSchliesstDasOnboardingGateOhneStudio() async {
         let session = Session(accessToken: "t", userId: "u", email: "lena@example.de", expiresAt: .distantFuture)
         let loader = BeobachtenderBootstrapLoader()
@@ -474,7 +474,7 @@ struct CatalogStoreTests {
         await loader.setzeErgebnis(.success(bootstrap(onboardingCompletedAt: "2026-09-15T08:00:00Z", studios: [])))
         await store.load()
 
-        #expect(ziel() == .noStudio)
+        #expect(ziel() == .main)
     }
 
     private var kraftwerkNord: BootstrapResponse.Studio {

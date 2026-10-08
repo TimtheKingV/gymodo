@@ -15,7 +15,7 @@ struct MemberRegistrierenView: View {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("KONTO ANLEGEN").font(DesignSystem.Typography.screentitel)
-                    Text("Für dein Studio brauchst du ein Konto.").foregroundStyle(DesignSystem.Color.textMuted)
+                    Text("Mit einem Konto speichert Gymtavo dein Training.").foregroundStyle(DesignSystem.Color.textMuted)
                 }
 
                 LabeledField(label: "Vorname") {
