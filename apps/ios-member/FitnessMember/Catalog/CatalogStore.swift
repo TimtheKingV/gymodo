@@ -67,6 +67,11 @@ final class CatalogStore {
         let studioName: String
         /// true = neu beigetreten, false = stillschweigend gewechselt.
         let beigetreten: Bool
+
+        /// Home und der Training-Tab (nach einem Aushang-Scan) sagen dasselbe.
+        var text: String {
+            beigetreten ? "Du gehörst jetzt zu \(studioName)." : "\(studioName) ist jetzt aktiv."
+        }
     }
 
     /// Kein Wegraeum-Aufruf: der Hinweis lebt nur im Speicher und ist
@@ -257,13 +262,17 @@ final class CatalogStore {
 
     /// Wechseln ist reiner Client-Zustand -- "Tippen wechselt" (MemberStudios.dc.html)
     /// beschreibt keine Server-Aktion, sondern welcher Ort lokal gilt.
-    func setOrt(_ neu: Ort) {
+    ///
+    /// `wechselMelden: false` nimmt einen Wechsel still zurueck -- etwa wenn
+    /// das Mitglied nach einem Beitritt per Scan "Training beenden?"
+    /// abbricht: der Hinweis auf den Beitritt bleibt dann richtig stehen.
+    func setOrt(_ neu: Ort, wechselMelden: Bool = true) {
         let alt = ort
         ort = neu
         hatGewaehlt = true
         Self.speichere(neu, in: defaults)
 
-        if case .studio(let alteId) = alt, case .studio(let id) = neu, alteId != id,
+        if wechselMelden, case .studio(let alteId) = alt, case .studio(let id) = neu, alteId != id,
            let name = bootstrap?.studios.first(where: { $0.id == id })?.name {
             studiohinweis = Studiohinweis(studioName: name, beigetreten: false)
         }

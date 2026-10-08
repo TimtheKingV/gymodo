@@ -30,7 +30,7 @@ struct EinweisungSchritt: View {
                 kopf
 
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                    Text(modell.maschine.equipmentModel.name.uppercased())
+                    Text(modell.station.equipmentModel.name.uppercased())
                         .font(DesignSystem.Typography.geraetename)
                         .tracking(-0.8)
                         .foregroundStyle(DesignSystem.Color.text)

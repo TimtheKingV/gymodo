@@ -105,7 +105,7 @@ struct LokalerBlock: Codable, Equatable, Identifiable {
     /// der Tests und Dateien von vor dem Katalog).
     init(machineId: String, exerciseId: String,
          einheiten: Blockeinheiten = .kilogrammWiederholungen, saetze: [LokalerSatz]) {
-        stationSchluessel = "geraet:\(machineId)"
+        stationSchluessel = Station.schluessel(machineId: machineId)
         self.machineId = machineId
         equipmentModelId = nil
         self.exerciseId = exerciseId
@@ -131,7 +131,7 @@ struct LokalerBlock: Codable, Equatable, Identifiable {
         if let schluessel = try c.decodeIfPresent(String.self, forKey: .stationSchluessel) {
             stationSchluessel = schluessel
         } else if let machineId {
-            stationSchluessel = "geraet:\(machineId)"
+            stationSchluessel = Station.schluessel(machineId: machineId)
         } else {
             throw DecodingError.keyNotFound(
                 CodingKeys.stationSchluessel,

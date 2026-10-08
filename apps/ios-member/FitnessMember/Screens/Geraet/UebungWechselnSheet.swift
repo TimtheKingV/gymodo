@@ -14,7 +14,10 @@ struct UebungWechselnSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
-                    Text("\(modell.maschine.equipmentModel.name) · \(modell.maschine.label)")
+                    // Am Typ ist das Label der Typname -- er stuende sonst doppelt da.
+                    Text([modell.station.equipmentModel.name,
+                          modell.station.machineId == nil ? nil : modell.station.label]
+                        .compactMap { $0 }.joined(separator: " · "))
                         .font(.system(size: 13))
                         .foregroundStyle(DesignSystem.Color.textMuted)
 
@@ -47,7 +50,7 @@ struct UebungWechselnSheet: View {
             }
         }
         .presentationDragIndicator(.visible)
-        .testnotizScreen(kontext: ["machineId": modell.maschine.id])
+        .testnotizScreen(kontext: ["station": modell.station.schluessel])
     }
 
     /// Ohne Akzentbalken und ohne hervorgehobene Flaeche (Testnotiz 06.10.,

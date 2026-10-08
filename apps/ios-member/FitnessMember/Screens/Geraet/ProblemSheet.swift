@@ -62,12 +62,12 @@ struct ProblemSheet: View {
             }
         }
         .presentationDragIndicator(.visible)
-        .testnotizScreen(kontext: ["machineId": modell.maschine.id])
+        .testnotizScreen(kontext: ["station": modell.station.schluessel])
     }
 
     private var kopf: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text("\(modell.maschine.equipmentModel.name) · \(modell.aktiveUebung?.name ?? "")")
+            Text("\(modell.station.equipmentModel.name) · \(modell.aktiveUebung?.name ?? "")")
                 .font(.system(size: 13))
                 .foregroundStyle(DesignSystem.Color.textMuted)
             Spacer()

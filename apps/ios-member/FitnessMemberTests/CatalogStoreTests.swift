@@ -308,6 +308,23 @@ struct CatalogStoreTests {
         #expect(store.ort == .studio("s2"))
     }
 
+    /// Nach einem Beitritt per Scan bricht das Mitglied "Training beenden?"
+    /// ab: der Ort geht still zurueck, der Beitrittshinweis bleibt.
+    @Test("ein stiller Rueckwechsel laesst den Beitrittshinweis stehen")
+    func stillerRueckwechsel() async throws {
+        let (store, loader, _, _) = await ortStore(studios: ["s1", "s2"])
+        store.setOrt(.studio("s1"))
+        await loader.setJoinResult(.success(JoinResult(studioId: "s2", machineId: "m9", joined: true)))
+        try await store.joinStudio(byTag: "token")
+
+        store.setOrt(.studio("s1"), wechselMelden: false)
+
+        #expect(store.ort == .studio("s1"))
+        #expect(store.studiohinweis?.text == "Du gehörst jetzt zu Studio s2.")
+        store.setOrt(.studio("s2"))
+        #expect(store.studiohinweis?.text == "Studio s2 ist jetzt aktiv.")
+    }
+
     @Test("reset() loescht den Ort")
     func resetLoeschtOrt() async {
         let (store, _, defaults, directory) = await ortStore(studios: ["s1"])

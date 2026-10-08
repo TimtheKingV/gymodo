@@ -88,17 +88,16 @@ enum GeraetEinstiegRechner {
     /// den Typsaetzen, sonst zaehlte der Satz am Typ doppelt.
     private static func letzteSaetze(station: String, in bootstrap: BootstrapResponse)
         -> [(exerciseId: String, performedAt: String)] {
-        if station.hasPrefix("geraet:") {
-            let id = String(station.dropFirst("geraet:".count))
-            return bootstrap.lastSets.filter { $0.machineId == id }
+        switch Station.art(schluessel: station) {
+        case .geraet(let id)?:
+            bootstrap.lastSets.filter { $0.machineId == id }
                 .map { ($0.exerciseId, $0.performedAt) }
-        }
-        if station.hasPrefix("typ:") {
-            let id = String(station.dropFirst("typ:".count))
-            return bootstrap.lastTypeSets.filter { $0.equipmentModelId == id }
+        case .typ(let id)?:
+            bootstrap.lastTypeSets.filter { $0.equipmentModelId == id }
                 .map { ($0.exerciseId, $0.performedAt) }
+        case nil:
+            []
         }
-        return []
     }
 
     static func genutzteUebungen(station: String, in bootstrap: BootstrapResponse) -> Int {
@@ -117,8 +116,7 @@ enum GeraetEinstiegRechner {
 
     /// Kalibrierungen gibt es nur am Geraet; am Typ ist die Antwort immer nein.
     static func hatKalibrierung(station: String, exerciseId: String, in bootstrap: BootstrapResponse) -> Bool {
-        guard station.hasPrefix("geraet:") else { return false }
-        let id = String(station.dropFirst("geraet:".count))
+        guard case .geraet(let id)? = Station.art(schluessel: station) else { return false }
         return bootstrap.calibrations.contains { $0.machineId == id && $0.exerciseId == exerciseId }
     }
 

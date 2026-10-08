@@ -10,10 +10,13 @@ import Foundation
 /// Keine Methode wirft und keine ist async: der Satz darf an einem
 /// Mitschnitt weder scheitern noch auf ihn warten.
 struct SatzMitschnittKontext: Equatable, Sendable {
-    let machineId: String
-    let machineName: String
+    /// Geraet oder Geraetetyp -- die Befestigung des Sensors haengt an der
+    /// Station, und am Typ gibt es keine machineId.
+    let station: Station
     let exerciseId: String
     let exerciseName: String
+
+    var machineName: String { station.equipmentModel.name }
 }
 
 struct GesicherterSatz: Equatable, Sendable {

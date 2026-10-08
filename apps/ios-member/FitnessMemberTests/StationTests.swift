@@ -41,6 +41,16 @@ struct StationTests {
         #expect(Station(maschine: GeraetTestdaten.maschine).schluessel == "geraet:m1")
         #expect(Station(maschine: GeraetTestdaten.maschine).id == "geraet:m1")
         #expect(Station(typ: typ, studioId: "s1").schluessel == "typ:em1")
+        #expect(Station.schluessel(machineId: "m1") == "geraet:m1")
+        #expect(Station.schluessel(equipmentModelId: "em1") == "typ:em1")
+    }
+
+    /// Eine Stelle zerlegt den Schluessel -- Bootstrap-Suche, Einstieg und
+    /// Sensor lesen dieselbe Art.
+    @Test func schluesselLaesstSichZerlegen() {
+        #expect(Station.art(schluessel: "geraet:m1") == .geraet(machineId: "m1"))
+        #expect(Station.art(schluessel: "typ:em1") == .typ(equipmentModelId: "em1"))
+        #expect(Station.art(schluessel: "unbekannt:e1") == nil)
     }
 
     @Test func geraetGewinntUeberDenTyp() {

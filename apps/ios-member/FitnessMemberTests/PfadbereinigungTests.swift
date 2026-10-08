@@ -3,7 +3,7 @@ import Testing
 @testable import FitnessMember
 
 struct PfadbereinigungTests {
-    private let geraet = GeraetRoute.geraet(machineId: "m", exerciseId: "e", token: nil)
+    private let geraet = GeraetRoute.geraet(station: "geraet:m", exerciseId: "e", token: nil)
     @MainActor
     private var abschluss: GeraetRoute {
         let store = WorkoutSessionStore(fileStore: SessionFileStore(

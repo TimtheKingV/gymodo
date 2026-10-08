@@ -9,6 +9,7 @@ private actor MeldeLoader: GeraetLoading {
     func setzeFehler(_ e: APIError?) { fehler = e }
     func tagContext(token: String) async throws(APIError) -> TagContextResponse { throw .offline }
     func machineContext(machineId: String) async throws(APIError) -> TagContextResponse { throw .offline }
+    func equipmentModelContext(modelId: String, studio: String?) async throws(APIError) -> TagContextResponse { throw .offline }
     func recordCalibration(_ body: CalibrationWrite) async throws(APIError) -> RecordedCalibration { throw .offline }
     func completeSession(sessionId: UUID) async throws(APIError) -> CompletedSession {
         abgeschlossen.append(sessionId)

@@ -225,11 +225,11 @@ enum GeraeteAuswahl {
             juengste[schluessel] = Zuletzt(performedAt: datum, load: load, loadUnit: einheit)
         }
         for satz in bootstrap.lastSets {
-            merke(Station.schluessel(machineId: satz.machineId, equipmentModelId: ""),
+            merke(Station.schluessel(machineId: satz.machineId),
                   load: satz.load, performedAt: satz.performedAt)
         }
         for satz in bootstrap.lastTypeSets {
-            merke(Station.schluessel(machineId: nil, equipmentModelId: satz.equipmentModelId),
+            merke(Station.schluessel(equipmentModelId: satz.equipmentModelId),
                   load: satz.load, performedAt: satz.performedAt)
         }
         return juengste

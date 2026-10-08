@@ -52,7 +52,7 @@ struct TrainingStartView: View {
                 .testnotizElement("training.starten", typ: "PrimaryButton")
         }
         .navigationBarTitleDisplayMode(.inline)
-        .testnotizScreen(kontext: ["machineId": modell.maschine.id, "exerciseId": modell.uebungId])
+        .testnotizScreen(kontext: ["station": modell.station.schluessel, "exerciseId": modell.uebungId])
     }
 
     /// Dieselbe Zeile wie auf "Geraet erkannt": wer ueber den Scan kommt,
@@ -61,8 +61,7 @@ struct TrainingStartView: View {
     /// SS10).
     private var kopfzeile: some View {
         HStack {
-            Text([modell.maschine.label, modell.maschine.locationNote]
-                .compactMap { $0 }.joined(separator: " · ").uppercased())
+            Text(modell.ortsangabe.uppercased())
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textFaint)
@@ -98,7 +97,7 @@ struct TrainingStartView: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
             // Schrumpfen statt kuerzen, wie im Satzpfad (Schnitt 3): ein
             // abgeschnittener Name sagt nicht, an welchem Geraet man steht.
-            Text(modell.maschine.equipmentModel.name.uppercased())
+            Text(modell.station.equipmentModel.name.uppercased())
                 .font(DesignSystem.Typography.geraetename)
                 .tracking(-0.8)
                 .lineLimit(1)

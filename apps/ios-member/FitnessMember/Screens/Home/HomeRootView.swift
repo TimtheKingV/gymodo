@@ -277,11 +277,7 @@ private extension HomeRootView {
     }
 
     func hinweisZeile(_ hinweis: CatalogStore.Studiohinweis) -> some View {
-        Text(
-            hinweis.beigetreten
-                ? "Du gehörst jetzt zu \(hinweis.studioName)."
-                : "\(hinweis.studioName) ist jetzt aktiv."
-        )
+        Text(hinweis.text)
         .font(DesignSystem.Typography.fliesstext)
         .foregroundStyle(DesignSystem.Color.textMuted)
     }

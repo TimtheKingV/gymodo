@@ -168,7 +168,7 @@ struct GeraetView: View {
 
     private var testnotizKontext: [String: String] {
         var kontext = [
-            "machineId": modell.maschine.id,
+            "station": modell.station.schluessel,
             "exerciseId": modell.uebungId,
             // Nur der Fallname: .pause traegt einen Timer, dessen Text sich jede Sekunde aendert.
             "phase": String(String(describing: modell.phase).prefix { $0 != "(" }),
@@ -195,7 +195,7 @@ struct GeraetView: View {
                 .transition(.opacity)
         } else {
             #if DEBUG
-            SensorZeile(machineId: modell.maschine.id)
+            SensorZeile(station: modell.station.schluessel)
             #endif
             einstellung
             WertZeile(modell: modell)
@@ -206,8 +206,7 @@ struct GeraetView: View {
 
     private var kopfzeile: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text([modell.maschine.label, modell.maschine.locationNote]
-                .compactMap { $0 }.joined(separator: " · ").uppercased())
+            Text(modell.ortsangabe.uppercased())
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textFaint)
@@ -259,7 +258,7 @@ struct GeraetView: View {
             // genau das liess den Namen im Sichtcheck zu Schnitt 2 in der
             // Pause links abgeschnitten aufblitzen, waehrend die Breite
             // unter der Zustandsanimation interpolierte.
-            Text(modell.maschine.equipmentModel.name.uppercased())
+            Text(modell.station.equipmentModel.name.uppercased())
                 .font(DesignSystem.Typography.geraetename)
                 .tracking(-0.8)
                 .foregroundStyle(DesignSystem.Color.text)
@@ -289,7 +288,9 @@ struct GeraetView: View {
                     .foregroundStyle(DesignSystem.Color.textMuted)
                     .lineLimit(1)
                 Spacer()
-                aendernKnopf
+                // Am Typ bleiben die Werte Anzeige: ohne Geraet gibt es
+                // keinen Ort, an dem eine neue Einstellung gelten koennte.
+                if modell.kannKalibrieren { aendernKnopf }
             }
         }
     }

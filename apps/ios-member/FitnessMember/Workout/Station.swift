@@ -21,6 +21,8 @@ struct Station: Hashable, Sendable, Identifiable {
     let tokenHashes: [String]
     /// status != "active"; am Typ immer false.
     let gesperrt: Bool
+    /// Wo das Geraet im Studio steht; ein Typ steht nirgends.
+    let locationNote: String?
 
     var id: String { schluessel }
 
@@ -45,6 +47,7 @@ extension Station {
         exercises = maschine.exercises
         tokenHashes = maschine.tokenHashes
         gesperrt = maschine.status != "active"
+        locationNote = maschine.locationNote
     }
 
     /// Der Typ wird zum EquipmentModel umgebaut (ohne catalogModelId: der Typ
@@ -63,12 +66,24 @@ extension Station {
         exercises = typ.exercises
         tokenHashes = []
         gesperrt = false
+        locationNote = nil
     }
 
     /// Ein Geraet gewinnt immer ueber seinen Typ -- wie in station.ts.
     static func schluessel(machineId: String?, equipmentModelId: String) -> String {
-        if let machineId { return "geraet:\(machineId)" }
-        return "typ:\(equipmentModelId)"
+        if let machineId { return schluessel(machineId: machineId) }
+        return schluessel(equipmentModelId: equipmentModelId)
+    }
+
+    static func schluessel(machineId: String) -> String { "geraet:\(machineId)" }
+    static func schluessel(equipmentModelId: String) -> String { "typ:\(equipmentModelId)" }
+
+    /// Die eine Stelle, die einen Schluessel zerlegt -- sonst kennte jeder
+    /// Leser die Praefixe selbst. nil fuer alles andere ("unbekannt:").
+    static func art(schluessel: String) -> Art? {
+        if let id = schluessel.dropPrefix("geraet:") { return .geraet(machineId: id) }
+        if let id = schluessel.dropPrefix("typ:") { return .typ(equipmentModelId: id) }
+        return nil
     }
 }
 
@@ -76,14 +91,15 @@ extension BootstrapResponse {
     /// Das Geraet bringt seinen eigenen Ort mit; `studioId` gilt nur fuer
     /// "typ:"-Schluessel, weil ein Typ keinen eigenen Ort hat.
     func station(schluessel: String, studioId: String?) -> Station? {
-        if let id = schluessel.dropPrefix("geraet:") {
-            return machines.first { $0.id == id }.map(Station.init(maschine:))
-        }
-        if let id = schluessel.dropPrefix("typ:") {
-            return catalog?.equipmentTypes.first { $0.id == id }
+        switch Station.art(schluessel: schluessel) {
+        case .geraet(let id)?:
+            machines.first { $0.id == id }.map(Station.init(maschine:))
+        case .typ(let id)?:
+            catalog?.equipmentTypes.first { $0.id == id }
                 .map { Station(typ: $0, studioId: studioId) }
+        case nil:
+            nil
         }
-        return nil
     }
 }
 

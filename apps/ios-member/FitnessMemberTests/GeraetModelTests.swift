@@ -18,7 +18,7 @@ struct GeraetModelTests {
         let verzeichnis = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
         return GeraetModel(
-            maschine: maschine,
+            station: Station(maschine: maschine),
             uebungId: maschine.exercises.first?.id ?? "e1",
             token: nil,
             bootstrap: bootstrap,
@@ -906,6 +906,71 @@ struct GeraetModelTests {
         #expect(sut.nebenbelastung == 0)
     }
 
+    // MARK: - Am Geraetetyp
+
+    private func typModell(
+        bootstrap: BootstrapResponse,
+        loader: FakeGeraetLoader = FakeGeraetLoader(),
+        enqueue: @escaping (PendingSetWrite) -> Void = { _ in }
+    ) -> GeraetModel {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        return GeraetModel(
+            station: GeraetTestdaten.typ, uebungId: "e1", token: nil,
+            bootstrap: bootstrap, loader: loader,
+            sessions: WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis)),
+            enqueue: enqueue)
+    }
+
+    /// Kalibrierungen haengen am Geraet (Spec 5.4): am Typ gibt es keinen
+    /// Ort, an dem eine Sitzposition gelten koennte.
+    @Test func amTypGibtEsKeinKalibrieren() async {
+        let loader = FakeGeraetLoader()
+        let sut = typModell(bootstrap: GeraetTestdaten.bootstrap(lastSets: []), loader: loader)
+
+        #expect(!sut.kannKalibrieren)
+        // Der Typ hat Einstellparameter, der Erstkontakt fragt trotzdem nicht.
+        #expect(sut.hatEinstellparameter)
+        #expect(!sut.erstkontaktFragtEinstellung)
+        sut.kalibrierungOeffnen()
+        #expect(!sut.kalibrierungOffen)
+        #expect(await sut.kalibrierungSichern() == false)
+        #expect(await loader.kalibrierungen.isEmpty)
+    }
+
+    @Test func amGeraetBleibtDasKalibrieren() {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        #expect(sut.kannKalibrieren)
+        #expect(sut.erstkontaktFragtEinstellung)
+    }
+
+    @Test func amTypKommenDieStartwerteAusDenTypsaetzen() {
+        var bootstrap = GeraetTestdaten.bootstrap(lastSets: [("em7", "e1", 99.0, 3)])
+        bootstrap.lastTypeSets = [BootstrapResponse.LastTypeSet(
+            equipmentModelId: "em7", exerciseId: "e1", load: 42.5, secondaryLoad: nil,
+            volume: 9, rir: nil, performedAt: "2026-09-20T10:00:00Z")]
+        let sut = typModell(bootstrap: bootstrap)
+
+        #expect(sut.belastung == 42.5)
+        #expect(sut.umfang == 9)
+        #expect(sut.rueckblick?.zuletzt == "42,5 kg × 9")
+        #expect(sut.letzteBelastung(fuer: "e1") == 42.5)
+    }
+
+    @Test func amTypSchreibtDerSatzOhneMachineId() async throws {
+        var geschrieben: [PendingSetWrite] = []
+        let sut = typModell(bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                            enqueue: { geschrieben.append($0) })
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        let body = try #require(geschrieben.first).body
+        #expect(body.machineId == nil)
+        #expect(body.equipmentModelId == "em7")
+        #expect(body.studioId == "s1")
+    }
+
     // MARK: - Mitschnitt
 
     @Test func oeffnenMeldetDieEingabeMitGeraetUndUebung() {
@@ -914,7 +979,7 @@ struct GeraetModelTests {
                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []), mitschnitt: spion)
         sut.geraetGeoeffnet()
         #expect(spion.ereignisse == [.eingabe(SatzMitschnittKontext(
-            machineId: "m1", machineName: "Beinpresse", exerciseId: "e1", exerciseName: "Beidbeinig"))])
+            station: Station(maschine: GeraetTestdaten.maschine), exerciseId: "e1", exerciseName: "Beidbeinig"))])
     }
 
     @Test func sichernMeldetGenauDenGeschriebenenSatz() async throws {
@@ -951,7 +1016,8 @@ struct GeraetModelTests {
         sut.geraetGeoeffnet()
         sut.uebungWechseln(zu: "e2")
         #expect(spion.ereignisse.last == .eingabe(SatzMitschnittKontext(
-            machineId: "m1", machineName: "Beinpresse", exerciseId: "e2", exerciseName: "Einbeinig")))
+            station: Station(maschine: GeraetTestdaten.maschineMitZweiUebungen),
+            exerciseId: "e2", exerciseName: "Einbeinig")))
         #expect(spion.eingaben == 2)
     }
 
@@ -1024,6 +1090,8 @@ actor FakeGeraetLoader: GeraetLoading {
     /// ist die Wegwahl selbst pruefenswert, nicht nur das Ergebnis.
     private(set) var tagAufrufe: [String] = []
     private(set) var machineAufrufe: [String] = []
+    struct TypAufruf: Equatable { let modelId: String; let studio: String? }
+    private(set) var typAufrufe: [TypAufruf] = []
 
     func setKontext(_ value: Result<TagContextResponse, APIError>) { kontextResult = value }
     func setCalibration(_ value: Result<RecordedCalibration, APIError>) { calibrationResult = value }
@@ -1040,6 +1108,14 @@ actor FakeGeraetLoader: GeraetLoading {
     /// Wegen dieselbe Form, und geprueft wird hier der Weg, nicht der Inhalt.
     func machineContext(machineId: String) async throws(APIError) -> TagContextResponse {
         machineAufrufe.append(machineId)
+        switch kontextResult {
+        case .success(let value): return value
+        case .failure(let error): throw error
+        }
+    }
+
+    func equipmentModelContext(modelId: String, studio: String?) async throws(APIError) -> TagContextResponse {
+        typAufrufe.append(TypAufruf(modelId: modelId, studio: studio))
         switch kontextResult {
         case .success(let value): return value
         case .failure(let error): throw error
@@ -1066,6 +1142,18 @@ actor FakeGeraetLoader: GeraetLoading {
 enum GeraetTestdaten {
     static func dekodiere<T: Decodable>(_ json: String, as: T.Type = T.self) -> T {
         try! JSONDecoder().decode(T.self, from: Data(json.utf8))
+    }
+
+    /// Ein Geraetetyp ohne Geraet im Studio s1, mit Einstellparameter --
+    /// damit "kein Kalibrieren" nicht nur an fehlenden Parametern haengt.
+    static var typ: Station {
+        Station(typ: dekodiere("""
+        {"id":"em7","name":"Beinpresse","manufacturer":null,"photoPath":null,
+         "category":"kraft","loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,
+         "settingDefinitions":[{"key":"sitz","label":"Sitzposition","kind":"number",
+           "minValue":1,"maxValue":8,"stepValue":1,"unit":null,"allowedValues":null}],
+         "exercises":[{"id":"e1","name":"Beidbeinig","volumeKind":"reps","targetMin":8,"targetMax":12}]}
+        """), studioId: "s1")
     }
 
     static var maschine: BootstrapResponse.Machine { maschine(loadMax: "150.0") }

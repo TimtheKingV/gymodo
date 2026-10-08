@@ -6,7 +6,7 @@ import SwiftUI
 /// Debug-Build scrollt die Seite dort deshalb. Das ist hingenommen: die
 /// Zeile ist Werkzeug, kein Produkt.
 struct SensorZeile: View {
-    let machineId: String
+    let station: String
 
     @Environment(SensorAufnahmeKoordinator.self) private var koordinator
     @State private var diagnoseOffen = false
@@ -30,7 +30,7 @@ struct SensorZeile: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .sheet(isPresented: $diagnoseOffen) { SensorDiagnoseBlatt(machineId: machineId) }
+        .sheet(isPresented: $diagnoseOffen) { SensorDiagnoseBlatt(station: station) }
         .sheet(isPresented: .constant(auswahl != nil)) { auswahlBlatt }
     }
 
