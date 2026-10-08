@@ -127,4 +127,11 @@ struct KurseAbmeldefrageTests {
         #expect(warteliste.contains("Warteliste"))
         #expect(!warteliste.contains("Nächsten"))
     }
+
+    /// Ohne Studio gibt es keinen Kursplan: der Screen bietet das Beitreten an.
+    @Test func imFreienTrainingGiltDerBeitretenZustand() {
+        #expect(KurseOrtZustand.fuer(ort: .freiesTraining) == .beitreten)
+        #expect(KurseOrtZustand.fuer(ort: .studio("s1")) == .plan)
+        #expect(KurseOrtZustand.hinweis == "Kurse gibt es in deinem Studio. Tritt einem Studio bei, um sie zu sehen.")
+    }
 }

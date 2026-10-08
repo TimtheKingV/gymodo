@@ -280,11 +280,41 @@ struct KurseWochenView: View {
     /// als buchbar samt Belegungszahl stehen (und widerspraeche dem
     /// Kursdetail, das die Uhr hat), und ueber Mitternacht markierte der
     /// Wochenstreifen weiter gestern als "heute".
+    @State private var beitretenOffen = false
+
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            screenInhalt(jetzt: context.date)
+        Group {
+            switch KurseOrtZustand.fuer(ort: katalog.ort) {
+            case .plan:
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    screenInhalt(jetzt: context.date)
+                }
+            case .beitreten:
+                beitretenInhalt
+            }
         }
         .testnotizScreen()
+    }
+
+    /// Im Freien Training: kein Plan, kein Laden -- nur der Weg zu einem Studio.
+    private var beitretenInhalt: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
+            kopf
+            Text(KurseOrtZustand.hinweis)
+                .font(.system(size: 15))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+            SecondaryButton(title: "Studio beitreten") { beitretenOffen = true }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, DesignSystem.Spacing.s24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(DesignSystem.Color.bg)
+        .sheet(isPresented: $beitretenOffen) {
+            NavigationStack {
+                StudioBeitretenView { beitretenOffen = false }
+            }
+        }
     }
 
     private func screenInhalt(jetzt: Date) -> some View {

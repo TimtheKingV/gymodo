@@ -327,6 +327,16 @@ enum HomeZeilen {
         return (delta > 0 ? "+" : "-") + Zahlformat.belastung(abs(delta), einheit)
     }
 
+    /// Die Zeile unter der Begruessung: im Freien Training der Ort selbst,
+    /// weil es dort keinen Studionamen gibt; im Studio dessen Name (nil,
+    /// solange der Bootstrap ihn nicht kennt).
+    static func ortszeile(ort: Ort, studioName: String?) -> String? {
+        switch ort {
+        case .freiesTraining: "Freies Training"
+        case .studio: studioName
+        }
+    }
+
     /// Der erste Namensteil -- "Hallo Lena", nicht "Hallo Lena Wagner".
     static func vorname(_ displayName: String?) -> String? {
         geputzt(displayName)?.split(separator: " ").first.map(String.init)

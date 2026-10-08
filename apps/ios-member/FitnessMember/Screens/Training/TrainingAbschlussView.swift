@@ -226,13 +226,14 @@ struct TrainingAbschlussView: View {
     }
 
     private func blockZeile(_ zeile: AbschlussZeile) -> some View {
-        let maschine = katalog.bootstrap?.machines.first { $0.id == zeile.block.machineId }
-        let uebung = maschine?.exercises.first { $0.id == zeile.block.exerciseId }
+        // Ueber die Station: ein Typ-Block steht nicht in bootstrap.machines.
+        let station = katalog.bootstrap?.station(schluessel: zeile.block.stationSchluessel,
+                                                 studioId: katalog.activeStudioId)
+        let uebung = station?.exercises.first { $0.id == zeile.block.exerciseId }
         let gemeldet = zeile.block.problemGemeldet
         return HStack {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                Text([maschine?.equipmentModel.name, uebung?.name]
-                    .compactMap { $0 }.joined(separator: " · "))
+                Text(AbschlussZeile.titel(station: station, uebung: uebung))
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.text)
                 HStack(spacing: DesignSystem.Spacing.s8) {
@@ -387,6 +388,13 @@ struct AbschlussZeile: Equatable, Identifiable {
         let werte = Zahlformat.belastungMitNebenbelastung(
             belastung, block.loadUnit, neben: block.nebenbelastung, block.secondaryUnit)
         return "\(werte) · \(saetze)"
+    }
+
+    /// "Modell · Uebung"; fehlt die Station im Bootstrap (stillgelegt,
+    /// alter Cache), bleibt nur der Rest -- die Blockzeile selbst kennt
+    /// keinen Namen.
+    static func titel(station: Station?, uebung: BootstrapResponse.Exercise?) -> String {
+        [station?.equipmentModel.name, uebung?.name].compactMap { $0 }.joined(separator: " · ")
     }
 
     static func zeilen(bloecke: [Blockzeile], vorschlaege: [Blockvorschlag]) -> [AbschlussZeile] {

@@ -224,4 +224,26 @@ struct TrainingAbschlussZeilenTests {
 
         #expect(zeilen[0].id != zeilen[1].id)
     }
+
+    /// Ein Typ-Block hat keine machineId; sein Vorschlag auch nicht. Beide
+    /// finden ueber den Typ-Schluessel zueinander.
+    @Test func einVorschlagOhneGeraetGehoertZumTypBlock() {
+        let typBlock = Blockzeile(machineId: nil, equipmentModelId: "t1", exerciseId: "e1",
+                                  belastung: 40, nebenbelastung: nil, loadUnit: .kg, secondaryUnit: nil,
+                                  volumeKind: .reps, satzAnzahl: 3, problemGemeldet: false)
+        let typVorschlag = Blockvorschlag(machineId: nil, equipmentModelId: "t1", exerciseId: "e1",
+                                          resultLoad: nil, deltaLoad: 2.5, secondaryLoad: nil,
+                                          loadUnit: .kg, secondaryUnit: nil,
+                                          reasonCode: "korridor_oben_erreicht", algoVersion: "v1")
+        let zeilen = AbschlussZeile.zeilen(bloecke: [typBlock, block("m1")], vorschlaege: [typVorschlag])
+        #expect(zeilen[0].anzeige.text == "+2,5 kg")
+        #expect(zeilen[1].anzeige.text != "+2,5 kg")
+    }
+
+    /// Der Name kommt ueber die Station: ein Typ-Block steht nicht in
+    /// bootstrap.machines und bliebe sonst namenlos.
+    @Test func dieZeileNenntDenTypNamenUeberDieStation() {
+        #expect(AbschlussZeile.titel(station: .testTyp("t1", studioId: nil), uebung: nil) == "Typ t1")
+        #expect(AbschlussZeile.titel(station: nil, uebung: nil) == "")
+    }
 }
