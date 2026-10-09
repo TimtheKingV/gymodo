@@ -1,0 +1,42 @@
+{
+  "abschluss" : "abgebrochen",
+  "befestigung" : null,
+  "endedAt" : "2026-10-04T09:33:35+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "exerciseId" : "8c134778-2611-41c4-a9bc-d4075d0b04b1",
+    "exerciseName" : "Kabelzug seitlich",
+    "machineId" : "5fd9ce02-0d4f-478b-a0b2-bb472b84a21b",
+    "machineName" : "Kabelzug",
+    "sessionId" : null,
+    "setId" : null,
+    "setIndex" : null
+  },
+  "label" : {
+    "problemFlag" : null,
+    "reps" : null,
+    "weightKg" : null
+  },
+  "sensor" : {
+    "akkuProzent" : 0,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-04T09:12:02+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 89.88,
+      "median" : 0,
+      "p95" : 60.71
+    },
+    "luecken" : 1,
+    "pakete" : 2472,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  }
+}

@@ -10,6 +10,8 @@ final class AbspielSensorQuelle: SensorQuelle {
     enum Tempo { case sofort, echtzeit }
 
     private(set) var zustand: SensorZustand = .aus
+    /// Abspielen beginnt nur auf ausdruecklichen Wunsch.
+    let hatGemerktenSensor = false
     let rate: SensorRate
     let verworfeneBytes = 0
 

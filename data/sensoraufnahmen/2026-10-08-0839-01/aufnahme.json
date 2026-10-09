@@ -1,0 +1,42 @@
+{
+  "abschluss" : "abgebrochen",
+  "befestigung" : "Mit der Hand angehoben Fake",
+  "endedAt" : "2026-10-08T08:39:20+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "exerciseId" : "8d64e68f-5b22-44cb-93c4-494eda5d5656",
+    "exerciseName" : "Beinpresse",
+    "machineId" : "6ad184a8-d80f-4d83-89ce-3d370ca61d00",
+    "machineName" : "Beinpresse",
+    "sessionId" : null,
+    "setId" : null,
+    "setIndex" : null
+  },
+  "label" : {
+    "problemFlag" : null,
+    "reps" : null,
+    "weightKg" : null
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-08T08:39:17+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 0,
+      "median" : 0,
+      "p95" : 0
+    },
+    "luecken" : 0,
+    "pakete" : 0,
+    "rateIstHz" : 0,
+    "verworfeneBytes" : 0
+  }
+}

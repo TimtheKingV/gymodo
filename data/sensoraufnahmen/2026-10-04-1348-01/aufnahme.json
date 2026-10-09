@@ -1,0 +1,42 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "endedAt" : "2026-10-04T13:49:53+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "exerciseId" : "ef814e2d-9f0b-4db4-98ee-3fb9b4acd7f4",
+    "exerciseName" : "Rudern sitzend",
+    "machineId" : "7162f6d7-f565-4ad8-937d-d9c11839b6d4",
+    "machineName" : "Rudermaschine",
+    "sessionId" : "576989EB-7BBD-45F7-A986-17F0A0D24DED",
+    "setId" : "ACFD1781-F5ED-4E36-BB7F-C346FD1492B4",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 10,
+    "weightKg" : 20
+  },
+  "sensor" : {
+    "akkuProzent" : 0,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-04T13:48:21+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 90.41,
+      "median" : 0,
+      "p95" : 60.33
+    },
+    "luecken" : 1,
+    "pakete" : 428,
+    "rateIstHz" : 50.2,
+    "verworfeneBytes" : 0
+  }
+}

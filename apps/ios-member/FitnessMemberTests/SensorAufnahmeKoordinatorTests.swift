@@ -8,9 +8,11 @@ final class AttrappenQuelle: SensorQuelle {
     var zustand: SensorZustand = .aus
     var rate: SensorRate = .hz50
     var verworfeneBytes = 0
+    var hatGemerktenSensor = false
+    var verbindenAufrufe = 0
     let verteiler = SensorVerteiler()
     func ereignisse() -> AsyncStream<SensorEreignis> { verteiler.strom() }
-    func verbinden() {}
+    func verbinden() { verbindenAufrufe += 1 }
     func waehlen(_ fund: SensorFund) {}
     func trennen() {}
     func vergessen() {}
@@ -117,6 +119,49 @@ struct SensorAufnahmeKoordinatorTests {
         sut.rateSetzen(.hz20)
         #expect(quelle.rate == .hz20)
         #expect(ordner(in: wurzel).isEmpty)
+    }
+
+    private func protokoll(_ wurzel: URL) throws -> String {
+        try String(contentsOf: wurzel.appendingPathComponent("protokoll.log"), encoding: .utf8)
+    }
+
+    @Test func verbindetBeimStartMitDemGemerktenSensor() {
+        // Am 8. Oktober beendete iOS die App beim Wechsel zu den Notizen;
+        // danach stand "Sensor verbinden" da und ein Satz lief ohne Aufnahme.
+        let (sut, quelle, _, _) = aufbau(zustand: .aus)
+        quelle.hatGemerktenSensor = true
+        sut.starten()
+        #expect(quelle.verbindenAufrufe == 1)
+    }
+
+    @Test func ohneGemerktenSensorFragtDerStartNichtNachBluetooth() {
+        let (sut, quelle, _, _) = aufbau(zustand: .aus)
+        sut.starten()
+        #expect(quelle.verbindenAufrufe == 0)
+    }
+
+    @Test func protokolliertEineEingabeOhneSensor() throws {
+        // Am 8. Oktober fehlten zwei Saetze; hinterher war nicht mehr zu
+        // sagen, ob der Sensor schlicht nicht verbunden war.
+        let (sut, _, wurzel, _) = aufbau(zustand: .aus)
+        sut.eingabeBegonnen(Self.kontext)
+        #expect(try protokoll(wurzel).contains("eingabe Beinpresse / Beidbeinig ohne verbundenen sensor: keine aufnahme"))
+    }
+
+    @Test func protokolliertAufnahmeZustandUndAkku() throws {
+        let (sut, quelle, wurzel, _) = aufbau()
+        sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.akku(hundertstelVolt: 382))
+        quelle.zustand = .getrennt(wirdNeuVerbunden: true)
+        sut.empfangen(.zustand(quelle.zustand))
+        sut.satzGesichert(Self.satz)
+
+        let text = try protokoll(wurzel)
+        let ordner = ordner(in: wurzel)[0].lastPathComponent
+        #expect(text.contains("aufnahme \(ordner) begonnen (Beinpresse / Beidbeinig)"))
+        #expect(text.contains("akku 3.82 V (60 %)"))
+        #expect(text.contains("sensor getrennt, wird neu verbunden"))
+        #expect(text.contains("aufnahme \(ordner) gesichert"))
     }
 
     @Test func sichernSchliesstMitLabelsAb() throws {

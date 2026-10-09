@@ -175,7 +175,7 @@ Die genaue Form (ein Strom je Abonnent, `@MainActor`-Bindung des Zustands) legt 
 - Nach dem Verbinden: Service und Characteristics suchen, `FFE4` abonnieren, Rate setzen (Standard 50 Hz, **ohne** „Konfiguration speichern"; der Sensor behält die Rate trotzdem über einen Neustart, siehe 4.5, deshalb setzt die App sie bei jedem Verbinden neu), Akku lesen, danach alle 60 s erneut.
 - **Zeitstempel:** als Erstes im Delegate-Callback, aus einer monotonen Uhr, vor Parser und Weitergabe.
 - **Abriss:** Zustand `getrennt(wirdNeuVerbunden: true)`, sofort erneutes `connect`. Core Bluetooth kennt dafür kein Timeout; der Versuch steht, bis der Sensor wieder da ist oder `trennen()` gerufen wird.
-- **Berechtigung:** Der `CBCentralManager` entsteht erst beim ersten `verbinden()`, also nach einem Tipp. Der Start der App fragt nicht nach Bluetooth.
+- **Berechtigung:** Der `CBCentralManager` entsteht erst beim ersten `verbinden()`, also nach einem Tipp. Der Start der App fragt nicht nach Bluetooth. Ist schon ein Sensor gemerkt, verbindet die App beim Start selbst; die Berechtigung ist dann längst beantwortet. Nachgetragen am 9. Oktober 2026: iOS hatte die App beim Wechsel zu einer anderen App beendet, und nach dem Neustart lief ein Satz ohne Aufnahme, weil niemand „Sensor verbinden" getippt hatte.
 - **Bildschirm:** Solange `verbunden` und der Geräte-Screen sichtbar ist, gilt `UIApplication.shared.isIdleTimerDisabled = true`. Beim Verlassen des Screens und beim Trennen zurück auf `false`.
 - **Lebensdauer:** eine Instanz auf App-Ebene, weitergereicht per `.environment` wie die Stores. Die Verbindung überlebt den Wechsel zwischen Geräten.
 

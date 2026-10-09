@@ -1,0 +1,42 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "endedAt" : "2026-10-04T13:47:50+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "exerciseId" : "411fd835-ad57-4e94-9f75-70678e86b84c",
+    "exerciseName" : "Beincurler liegend",
+    "machineId" : "d09c79cc-c993-4d79-83bf-bdbfb826904f",
+    "machineName" : "Beincurler",
+    "sessionId" : "576989EB-7BBD-45F7-A986-17F0A0D24DED",
+    "setId" : "0317620C-71FA-42AF-9A59-2B4E73A9872B",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 10,
+    "weightKg" : 30
+  },
+  "sensor" : {
+    "akkuProzent" : 0,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-04T13:46:57+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 3715.81,
+      "median" : 0,
+      "p95" : 60.28
+    },
+    "luecken" : 1,
+    "pakete" : 2092,
+    "rateIstHz" : 45.7,
+    "verworfeneBytes" : 0
+  }
+}
