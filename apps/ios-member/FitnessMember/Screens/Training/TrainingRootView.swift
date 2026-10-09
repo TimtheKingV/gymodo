@@ -36,9 +36,9 @@ struct TrainingRootView: View {
     /// Ergebnis in dieselbe Aufloesung muendet wie der QR-Scan -- und weil
     /// eine laufende Sitzung einen zweiten Tap ueberstehen muss.
     @State private var nfcLeser = NFCTagLeser()
-    /// Der laufende Neulade-und-Retry-Versuch aus oeffneToken(_:), falls
-    /// gerade einer offen ist. Ohne dieses Handle wuerden zwei schnelle
-    /// Scans zwei nebenlaeufige Tasks erzeugen, die beide spaeter scanFehler
+    /// Der laufende Beitrittsversuch aus oeffneToken(_:) (joinStudio laedt
+    /// danach neu), falls gerade einer offen ist. Ohne dieses Handle
+    /// wuerden zwei schnelle Scans zwei nebenlaeufige Tasks erzeugen, die beide spaeter scanFehler
     /// schreiben -- der zuletzt FERTIGE gewinnt dann, nicht der zuletzt
     /// GESTARTETE, und ein alter Fehltreffer koennte so ueber einem
     /// zwischenzeitlich erfolgreichen Scan landen.
@@ -72,6 +72,16 @@ struct TrainingRootView: View {
     @State private var hinweis: TabHinweis?
     /// Der Dialog "Pausieren / Training beenden" (Testnotiz 05.10., #7).
     @State private var steuerungOffen = false
+    /// "Training in {Ort} beenden?" nach einem Scan oder einer Auswahl an
+    /// einem anderen Ort (Plan, Entscheidung 2) -- derselbe Dialog wie im Profil.
+    @State private var scanRueckfrage: ScanRueckfrage?
+    /// Was nach dem Beenden fuer den Ortswechsel geoeffnet wird. Wartet auf
+    /// den onChange unten: der leert den Pfad, sobald die Einheit endet, und
+    /// raeumte ein sofort geoeffnetes Geraet gleich wieder ab.
+    @State private var nachOrtswechsel: ScanFolge?
+    /// Nach einem Aushang-Scan steht der Studiohinweis auch hier, nicht nur
+    /// auf Home -- wer im Training scannt, schaut nicht auf Home.
+    @State private var beitrittZeigen = false
 
     var body: some View {
         NavigationStack(path: $pfad) {
@@ -140,7 +150,12 @@ struct TrainingRootView: View {
                 pausiert: sessions.aktiveSession()?.istPausiert ?? false,
                 beiPauseUmschalten: pauseUmschalten,
                 beiBeenden: beenden)
-            .navigationDestination(for: GeraetRoute.self, destination: ziel)
+            // .id(route): ersetzt navigiere(zu:) den Pfad in einem Zug, landet
+            // die neue Route an derselben Stelle wie die alte -- ohne eigene
+            // Identitaet behielte der Screen dort sein @State-Modell und zeigte
+            // weiter das alte Geraet (Sichtcheck Task 11, Scan auf dem
+            // Geraete-Screen eines anderen Orts).
+            .navigationDestination(for: GeraetRoute.self) { route in ziel(route).id(route) }
             .sheet(isPresented: $scannerOffen) {
                 ScannerSheet(
                     titel: "Gerät finden",
@@ -194,8 +209,18 @@ struct TrainingRootView: View {
             // abgelaufenen Einheit (M1): sobald wieder eine laufende Einheit
             // entsteht -- egal ob durch einen neuen Satz oder weil beenden()
             // ihn schon zurueckgesetzt hat --, gilt er nicht mehr.
-            .onChange(of: sessions.aktiveSession() != nil) { _, laeuft in
+            .onChange(of: sessions.aktiveSession() != nil) { vorher, laeuft in
                 if laeuft { hinweis = nil }
+                // Endet die Einheit von aussen (Ortswechsel im Profil), darf
+                // kein Geraete-Screen vom alten Ort stehen bleiben.
+                if Pfadbereinigung.leeren(laeuftVorher: vorher, laeuftJetzt: laeuft, pfad: pfad) {
+                    pfad.removeAll()
+                }
+                // Erst nach dem Leeren: das Geraet am neuen Ort bleibt stehen.
+                if !laeuft, let folge = nachOrtswechsel {
+                    nachOrtswechsel = nil
+                    ausfuehren(folge)
+                }
             }
             // Ein gescheiterter NFC-Scan landet im selben Banner wie ein
             // gescheiterter QR-Scan. Der Leser haelt seinen Fehler getrennt,
@@ -209,23 +234,40 @@ struct TrainingRootView: View {
             // in einen verschwundenen Zustand hinein schreiben.
             .onDisappear { neuladeVersuch?.cancel() }
         }
+        // Am Stack, nicht an der Wurzel: ein Aufkleber-Tap kommt auch, waehrend
+        // ein Geraete-Screen gepusht ist, und ein Dialog an der verdeckten
+        // Wurzel erschien erst nach dem Zuruecknavigieren (Sichtcheck Task 11).
+        // Der Titel muss sichtbar sein -- er nennt den Ort der laufenden Einheit.
+        .confirmationDialog(
+            "Training in \(StudiosListe.name(fuer: scanRueckfrage?.laufenderOrt ?? katalog.ort, studios: katalog.bootstrap?.studios ?? [])) beenden?",
+            isPresented: Binding(
+                get: { scanRueckfrage != nil },
+                set: { if !$0 { scanRueckfrageVerwerfen() } }
+            ),
+            titleVisibility: .visible,
+            presenting: scanRueckfrage
+        ) { rueckfrage in
+            Button("Training beenden", role: .destructive) { beendenUndOeffnen(rueckfrage) }
+            Button("Abbrechen", role: .cancel) { scanRueckfrageVerwerfen() }
+        } message: { _ in
+            Text("Danach wechselst du den Ort.")
+        }
     }
 
     // MARK: - Wurzel
 
-    /// Die Liste braucht den Prefetch und ein aktives Studio. Ohne beides
-    /// (etwa direkt nach dem Onboarding oder bei null Studios) liefert
-    /// GeraeteAuswahl.gruppen(studioId: nil) still leere Gruppen -- dann
+    /// Die Liste braucht den Prefetch; der Ort ist immer gesetzt, auch im
+    /// Freien Training. Ohne Prefetch (etwa direkt nach dem Onboarding)
     /// steht der Titel "TRAINING" mit den Scanwegen da, wie vor dem Umbau.
     @ViewBuilder
     private func wurzel(mitte: TrainingTab.Mitte?, session: LokaleSession?) -> some View {
-        if katalog.bootstrap != nil, katalog.activeStudioId != nil {
+        if katalog.bootstrap != nil {
             GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader) {
                 if let mitte, let session {
                     laufendeMitte(mitte, session: session)
                 }
-            } beiAuswahl: { machineId in
-                pfad.append(.erkannt(machineId: machineId, token: nil))
+            } beiAuswahl: { station in
+                waehle(station)
             }
             // safeAreaInset statt overlay: die Liste bekommt unten so viel
             // Luft, dass ihr letztes Geraet ueber den Knoepfen landet, und
@@ -281,6 +323,9 @@ struct TrainingRootView: View {
             }
             if let scanFehler {
                 InlineBanner(tone: .danger, message: scanFehler)
+            }
+            if beitrittZeigen, let studiohinweis = katalog.studiohinweis {
+                InlineBanner(tone: .muted, message: studiohinweis.text)
             }
             ScanWege(beiQR: { scannerOffen = true }, beiNFC: { nfcStarten() })
                 .testnotizElement("training.scanwege", typ: "ScanWege")
@@ -417,15 +462,18 @@ struct TrainingRootView: View {
     // MARK: - Kopf und Zeilen
 
     private func blockZeile(_ block: LokalerBlock) -> some View {
-        let maschine = katalog.bootstrap?.machines.first { $0.id == block.machineId }
-        let uebung = maschine?.exercises.first { $0.id == block.exerciseId }
+        // Ueber die Station statt nur die Geraete: ein Block am Typ traegt
+        // keine machineId und bliebe sonst ohne Namen.
+        let station = katalog.bootstrap?.station(schluessel: block.stationSchluessel,
+                                                 studioId: katalog.activeStudioId)
+        let uebung = station?.exercises.first { $0.id == block.exerciseId }
         let gemeldet = block.saetze.contains(where: \.problemFlag)
         return HStack(spacing: DesignSystem.Spacing.s12) {
             // Das Sinnbild der Uebung links vom Namen (Testnotiz 06.10.,
             // #14), derselbe Platzhalter wie in den Uebungslisten.
             Uebungsbild(kante: 48)
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                Text([maschine?.equipmentModel.name, uebung?.name]
+                Text([station?.equipmentModel.name, uebung?.name]
                     .compactMap { $0 }.joined(separator: " · "))
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.text)
@@ -471,14 +519,14 @@ struct TrainingRootView: View {
     @ViewBuilder
     private func ziel(_ route: GeraetRoute) -> some View {
         switch route {
-        case .erkannt(let machineId, let token):
-            if let modell = modell(machineId: machineId, exerciseId: nil, token: token) {
+        case .erkannt(let station, let token):
+            if let modell = modell(station: station, exerciseId: nil, token: token) {
                 GeraetErkanntScreen(modell: modell) { uebungId in
-                    pfad.append(zielNachUebungswahl(machineId: machineId, exerciseId: uebungId, token: token))
+                    pfad.append(zielNachUebungswahl(station: station, exerciseId: uebungId, token: token))
                 }
             }
-        case .start(let machineId, let exerciseId, let token):
-            if let modell = modell(machineId: machineId, exerciseId: exerciseId, token: token) {
+        case .start(let station, let exerciseId, let token):
+            if let modell = modell(station: station, exerciseId: exerciseId, token: token) {
                 TrainingStartView(modell: modell) {
                     sessions.trainingStarten()
                     // ERSETZEN, nicht stapeln: "Zurueck" vom Satzpfad soll auf
@@ -487,12 +535,12 @@ struct TrainingRootView: View {
                     // oberste Eintrag, wenn sein Knopf gedrueckt wird; der Guard
                     // schuetzt nur vor einem Tap waehrend einer laufenden
                     // Pop-Animation.
-                    let satzpfad = GeraetRoute.geraet(machineId: machineId, exerciseId: exerciseId, token: token)
+                    let satzpfad = GeraetRoute.geraet(station: station, exerciseId: exerciseId, token: token)
                     if case .start = pfad.last { pfad[pfad.count - 1] = satzpfad } else { pfad.append(satzpfad) }
                 }
             }
-        case .geraet(let machineId, let exerciseId, let token):
-            if let modell = modell(machineId: machineId, exerciseId: exerciseId, token: token) {
+        case .geraet(let station, let exerciseId, let token):
+            if let modell = modell(station: station, exerciseId: exerciseId, token: token) {
                 GeraetScreen(modell: modell, beiZurueckZumTraining: { pfad.removeAll() },
                              beiTrainingBeenden: beenden)
             }
@@ -513,14 +561,18 @@ struct TrainingRootView: View {
         }
     }
 
-    private func modell(machineId: String, exerciseId: String?, token: String?) -> GeraetModel? {
+    private func modell(station schluessel: String, exerciseId: String?, token: String?) -> GeraetModel? {
+        // Ein Typ hat keinen eigenen Ort: die Route traegt nur den
+        // Schluessel, und er gilt am aktuellen Ort. Deshalb wechselt jeder Weg
+        // hierher (Scan, Liste) den Ort VOR dem Oeffnen, und eine offene
+        // Einheit erzwingt ueber Ortswechsel denselben Ort.
         guard let bootstrap = katalog.bootstrap,
-              let maschine = bootstrap.machines.first(where: { $0.id == machineId })
+              let station = bootstrap.station(schluessel: schluessel, studioId: katalog.activeStudioId)
         else { return nil }
         // Vorauswahl: zuletzt genutzte Uebung, sonst die erste aus der vom
         // Studio gepflegten Reihenfolge (M1-Spec SS5.7).
-        let zuletzt = GeraetEinstiegRechner.letzteUebung(machineId: machineId, in: bootstrap)
-        let gewaehlt = exerciseId ?? zuletzt ?? maschine.exercises.first?.id
+        let zuletzt = GeraetEinstiegRechner.letzteUebung(station: schluessel, in: bootstrap)
+        let gewaehlt = exerciseId ?? zuletzt ?? station.exercises.first?.id
         guard let gewaehlt else { return nil }
         // Im Release gibt es keinen Mitschnitt; im Debug-Build ist es der
         // Sensor-Koordinator.
@@ -529,7 +581,7 @@ struct TrainingRootView: View {
         mitschnitt = sensorAufnahme
         #endif
         return GeraetModel(
-            maschine: maschine, uebungId: gewaehlt, token: token,
+            station: station, uebungId: gewaehlt, token: token,
             bootstrap: bootstrap, loader: apiClient, sessions: sessions,
             enqueue: { katalog.enqueue($0); Task { await katalog.flushPending() } },
             mitschnitt: mitschnitt
@@ -554,49 +606,139 @@ struct TrainingRootView: View {
     }
 
     /// Der Kalteinstieg: Token lokal hashen, Geraet im Prefetch finden,
-    /// sofort rendern (M1-Spec SS8.1 Schritt 3).
+    /// sofort rendern (M1-Spec SS8.1 Schritt 3). Was daraus folgt, steht in
+    /// ScanEntscheidung; hier wird nur ausgefuehrt.
     ///
-    /// Ein vorheriger Neulade-Versuch wird immer zuerst storniert: sonst
-    /// koennte ein noch laufender Retry aus einem AELTEREN Scan spaeter
+    /// Ein vorheriger Beitrittsversuch wird immer zuerst storniert: sonst
+    /// koennte ein noch laufender Versuch aus einem AELTEREN Scan spaeter
     /// fertig werden als dieser Aufruf und dessen Ergebnis -- Navigation
     /// oder Fehlermeldung -- ueberschreiben.
     private func oeffneToken(_ token: String) {
         scanFehler = nil
+        beitrittZeigen = false
         neuladeVersuch?.cancel()
         TagProtokoll.log.info("Token wird aufgeloest")
-        // Kein frueher `guard let bootstrap ... else { return }` mehr: der
-        // Token ist an dieser Stelle schon aus dem PendingTagStore
-        // verbraucht, ein stilles return haette ihn endgueltig verloren --
-        // genau dann, wenn der Katalog beim Kalteinstieg noch nicht im
-        // Speicher ist. Fehlt der Prefetch, geht der Aufruf stattdessen in
-        // denselben Neulade-und-Retry-Pfad wie ein Geraet, das erst nach
-        // dem letzten Prefetch dazukam.
-        guard let bootstrap = katalog.bootstrap,
-              let maschine = MachineResolver.maschine(fuerToken: token, in: bootstrap) else {
-            // Einmal neu laden, dann erneut versuchen -- sonst dieselbe
-            // neutrale Antwort wie serverseitig fuer unbekannt/gesperrt.
-            neuladeVersuch = Task {
-                await katalog.load()
-                // Ein Abbruch bedeutet: ein neuerer Scan oder das
-                // Verschwinden der View hat diesen Versuch bereits ersetzt.
-                // Dann darf dieser hier weder navigieren noch scanFehler
-                // setzen -- beides wuerde einen aktuelleren Zustand
-                // ueberschreiben.
-                guard !Task.isCancelled else { return }
-                guard let frisch = katalog.bootstrap,
-                      let maschine = MachineResolver.maschine(fuerToken: token, in: frisch) else {
-                    TagProtokoll.log.error("Token auch nach Neuladen keinem Geraet zugeordnet")
-                    scanFehler = "Dieser Code ist nicht aktiv. Frag im Studio nach."
-                    return
-                }
-                navigiere(zu: maschine, token: token, in: frisch)
-            }
-            return
+        switch ScanEntscheidung.fuer(token: token, bootstrap: katalog.bootstrap, ort: katalog.ort,
+                                     offeneEinheit: sessions.aktiveSession()) {
+        case .oeffnen(let station):
+            navigiere(zu: station, token: token)
+        case .wechselnUndOeffnen(let ziel, let station):
+            katalog.setOrt(ziel)
+            navigiere(zu: station, token: token)
+        case .erstBeenden(let laufenderOrt, let ziel, let station):
+            scanRueckfrage = ScanRueckfrage(laufenderOrt: laufenderOrt, ziel: ziel,
+                                            folge: .oeffnen(station, token: token), beitritt: nil)
+        case .beitreten:
+            // Auch ohne Prefetch (Kalteinstieg): joinStudio laedt danach neu,
+            // und ein Geraet aus dem eigenen Studio, das erst nach dem letzten
+            // Prefetch dazukam, kommt so ebenfalls an.
+            beitreten(token)
         }
-        navigiere(zu: maschine, token: token, in: bootstrap)
     }
 
-    private func navigiere(zu maschine: BootstrapResponse.Machine, token: String, in bootstrap: BootstrapResponse) {
+    /// Ein Code, den der Prefetch nicht kennt, macht zum Mitglied seines
+    /// Studios -- der Beitritt passiert immer (Plan, Entscheidung 2). Den
+    /// Ort wechselt erst die Entscheidung danach: sofort, oder nach
+    /// "Training beenden". Bis dahin bleibt der alte Ort auch gespeichert --
+    /// wird die App waehrend der Rueckfrage beendet, gilt nichts Halbes.
+    private func beitreten(_ token: String) {
+        neuladeVersuch = Task {
+            let ergebnis: JoinResult
+            do throws(APIError) {
+                ergebnis = try await katalog.joinStudio(byTag: token)
+            } catch {
+                // Ein Abbruch bedeutet: ein neuerer Scan oder das
+                // Verschwinden der View hat diesen Versuch bereits ersetzt.
+                guard !Task.isCancelled else { return }
+                TagProtokoll.log.error("Token keinem Geraet zugeordnet, kein Beitritt")
+                scanFehler = ScanEntscheidung.fehlertext(error)
+                return
+            }
+            guard !Task.isCancelled else { return }
+            switch ScanEntscheidung.nachBeitritt(ergebnis, bootstrap: katalog.bootstrap, ort: katalog.ort,
+                                                 offeneEinheit: sessions.aktiveSession()) {
+            case .oeffnen(let station):
+                katalog.ortNachBeitritt(ergebnis)
+                navigiere(zu: station, token: token)
+            case .listeZeigen:
+                katalog.ortNachBeitritt(ergebnis)
+                listeZeigen()
+            case .erstBeenden(let laufenderOrt, let station):
+                scanRueckfrage = ScanRueckfrage(
+                    laufenderOrt: laufenderOrt, ziel: .studio(ergebnis.studioId),
+                    folge: station.map { .oeffnen($0, token: token) } ?? .liste, beitritt: ergebnis)
+            }
+        }
+    }
+
+    /// Ein Aushang nennt kein Geraet: die Liste des neuen Studios ist die
+    /// Wurzel, dazu der Hinweis, wem man jetzt angehoert.
+    private func listeZeigen() {
+        pfad.removeAll()
+        beitrittZeigen = true
+    }
+
+    /// Eine Station aus der Liste nimmt denselben Weg wie ein Scan: steht
+    /// sie an einem anderen Ort ("Auch in X suchen"), wird erst gewechselt
+    /// oder gefragt, dann geoeffnet.
+    private func waehle(_ station: Station) {
+        switch ScanEntscheidung.fuer(station: station, ort: katalog.ort,
+                                     offeneEinheit: sessions.aktiveSession()) {
+        case .oeffnen(let station):
+            oeffneAusListe(station)
+        case .wechselnUndOeffnen(let ziel, let station):
+            katalog.setOrt(ziel)
+            oeffneAusListe(station)
+        case .erstBeenden(let laufenderOrt, let ziel, let station):
+            scanRueckfrage = ScanRueckfrage(laufenderOrt: laufenderOrt, ziel: ziel,
+                                            folge: .auswahl(station), beitritt: nil)
+        case .beitreten:
+            // Kommt aus der Liste nicht vor: sie kennt nur Stationen aus dem
+            // Bootstrap.
+            break
+        }
+    }
+
+    private func oeffneAusListe(_ station: Station) {
+        pfad.append(.erkannt(station: station.schluessel, token: nil))
+    }
+
+    private func ausfuehren(_ folge: ScanFolge) {
+        switch folge {
+        case .oeffnen(let station, let token): navigiere(zu: station, token: token)
+        case .auswahl(let station): oeffneAusListe(station)
+        case .liste: listeZeigen()
+        }
+    }
+
+    /// Lokal sofort, Server im Hintergrund, kein Abschluss-Screen -- genau
+    /// wie der Ortswechsel in der Studioliste: das Mitglied wollte an den
+    /// neuen Ort, nicht auf einen Rueckblick.
+    private func beendenUndOeffnen(_ rueckfrage: ScanRueckfrage) {
+        scanRueckfrage = nil
+        let lief = sessions.aktiveSession() != nil
+        let ende = sessions.beendenFuerOrtswechsel()
+        // Nach einem Beitritt nennt der Hinweis den Beitritt, nicht den Wechsel.
+        if let beitritt = rueckfrage.beitritt {
+            katalog.ortNachBeitritt(beitritt)
+        } else {
+            katalog.setOrt(rueckfrage.ziel)
+        }
+        let client = apiClient
+        Task { await WorkoutSessionStore.melden(ende, loader: client) }
+        // Lief die Einheit gar nicht mehr (in genau diesem Moment
+        // ausgelaufen), kommt kein onChange -- dann sofort.
+        if lief { nachOrtswechsel = rueckfrage.folge } else { ausfuehren(rueckfrage.folge) }
+    }
+
+    /// Abbrechen laesst alles, wie es war -- bis auf die Mitgliedschaft: der
+    /// Beitritt hat den Ort nicht gewechselt, also gibt es nichts
+    /// zurueckzunehmen.
+    private func scanRueckfrageVerwerfen() {
+        scanRueckfrage = nil
+    }
+
+    private func navigiere(zu station: Station, token: String) {
         // Ein neu gescannter Tag ERSETZT einen offenen Geraete-Screen, statt
         // sich davor zu stapeln -- M1-Spec SS5.1 will "ein Ort fuer alles,
         // was am Geraet passiert", keinen Turm aus Screens fuer nacheinander
@@ -604,32 +746,39 @@ struct TrainingRootView: View {
         // GeraetView bleibt unberuehrt: er haengt in ziel(_:) an derselben,
         // gerade erst geleerten Wurzel und wird hier nicht ausgeloest.
         pfad.removeAll()
+        guard let bootstrap = katalog.bootstrap else { return }
         TagProtokoll.log.info("Geraet aufgeloest, Navigation folgt")
-        let genutzte = GeraetEinstiegRechner.genutzteUebungen(machineId: maschine.id, in: bootstrap)
-        switch GeraetEinstiegRechner.einstieg(visitCount: maschine.visitCount,
-                                              genutzteUebungen: genutzte) {
+        // Besuche kennt nur das Geraet; ein Typ zaehlt wie ein erster Besuch.
+        let besuche = station.machineId.flatMap { id in
+            bootstrap.machines.first { $0.id == id }?.visitCount
+        } ?? 0
+        let genutzte = GeraetEinstiegRechner.genutzteUebungen(station: station.schluessel, in: bootstrap)
+        switch GeraetEinstiegRechner.einstieg(visitCount: besuche, genutzteUebungen: genutzte) {
         case .erkannt:
-            pfad.append(.erkannt(machineId: maschine.id, token: token))
+            pfad.append(.erkannt(station: station.schluessel, token: token))
         case .direktZumSatz:
-            let uebung = GeraetEinstiegRechner.letzteUebung(machineId: maschine.id, in: bootstrap)
-                ?? maschine.exercises.first?.id
+            let uebung = GeraetEinstiegRechner.letzteUebung(station: station.schluessel, in: bootstrap)
+                ?? station.exercises.first?.id
             guard let uebung else { return }
             // Auch der Direktweg beginnt ohne laufendes Training auf dem
             // Startscreen -- sonst entstuende die Einheit fuer Stammgaeste
             // weiter erst mit dem Satz.
-            pfad.append(zielNachUebungswahl(machineId: maschine.id, exerciseId: uebung, token: token))
+            pfad.append(zielNachUebungswahl(station: station.schluessel, exerciseId: uebung, token: token))
         }
     }
 
     /// Startscreen, Satzpfad oder Satzpfad mit Erstkontakt -- die Regel
     /// steht in TrainingStart.ziel, hier werden nur ihre Eingaben gelesen.
-    private func zielNachUebungswahl(machineId: String, exerciseId: String, token: String?) -> GeraetRoute {
-        let erstkontakt = katalog.bootstrap.map {
-            GeraetEinstiegRechner.brauchtErstkontakt(
-                machineId: machineId, exerciseId: exerciseId, in: $0,
-                naechsterSetIndex: sessions.naechsterSetIndex(machineId: machineId, exerciseId: exerciseId))
+    private func zielNachUebungswahl(station schluessel: String, exerciseId: String, token: String?) -> GeraetRoute {
+        let erstkontakt = katalog.bootstrap.map { bootstrap in
+            // Eine Station, die der Prefetch nicht (mehr) kennt, hat keine Saetze.
+            let index = bootstrap.station(schluessel: schluessel, studioId: katalog.activeStudioId)
+                .map { sessions.naechsterSetIndex(station: $0, exerciseId: exerciseId) } ?? 1
+            return GeraetEinstiegRechner.brauchtErstkontakt(
+                station: schluessel, exerciseId: exerciseId, in: bootstrap,
+                naechsterSetIndex: index)
         } ?? false
-        return TrainingStart.ziel(machineId: machineId, exerciseId: exerciseId, token: token,
+        return TrainingStart.ziel(station: schluessel, exerciseId: exerciseId, token: token,
                                   trainingLaeuft: sessions.aktiveSession() != nil,
                                   erstkontakt: erstkontakt)
     }
@@ -637,8 +786,10 @@ struct TrainingRootView: View {
     private func oeffne(_ block: LokalerBlock) {
         // Der Zirkelfall: ein Tap statt eines Scans (M1-Spec SS5.3).
         // Kein TrainingStart.ziel: die Blockliste gibt es nur, solange ein
-        // Training laeuft.
-        pfad.append(.geraet(machineId: block.machineId, exerciseId: block.exerciseId, token: nil))
+        // Training laeuft. Geraet und Typ nehmen denselben Weg; nur ein
+        // Block ohne beide Kennungen ("unbekannt:") hat kein Ziel.
+        guard Station.art(schluessel: block.stationSchluessel) != nil else { return }
+        pfad.append(.geraet(station: block.stationSchluessel, exerciseId: block.exerciseId, token: nil))
     }
 
     private func pauseUmschalten() {
@@ -677,6 +828,27 @@ struct TrainingRootView: View {
         sessions.beenden()
         pfad = [.abschluss(sessionId: session.id, zusammenfassung: zusammenfassung)]
     }
+}
+
+/// Was nach "Training beenden" fuer einen Scan oder eine Auswahl an einem
+/// anderen Ort folgt.
+private enum ScanFolge: Equatable {
+    case oeffnen(Station, token: String)
+    /// Aus der Liste gewaehlt: ohne Token, ohne Einstiegsregel des Scans.
+    case auswahl(Station)
+    /// Aushang: kein Geraet, die Liste des Studios.
+    case liste
+}
+
+/// Die offene Rueckfrage "Training in {Ort} beenden?" nach einem Scan oder
+/// einer Auswahl.
+private struct ScanRueckfrage: Equatable {
+    let laufenderOrt: Ort
+    let ziel: Ort
+    let folge: ScanFolge
+    /// Gesetzt nach einem Beitritt per Scan: der Wechsel nennt dann den
+    /// Beitritt im Hinweis.
+    let beitritt: JoinResult?
 }
 
 /// Der Satz im Fuss ueber einer Einheit, die nicht mehr laeuft. Zwei

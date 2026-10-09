@@ -152,4 +152,43 @@ struct APIClientTests {
             )
         }
     }
+
+    /// Der Typ-Kontext: dieselbe Form wie am Geraet, aber ohne Geraet.
+    private static let typKontext = #"""
+    {"machine":null,
+     "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":null,"photoUrl":null,
+       "loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0},
+     "settingDefinitions":[],"exercises":[],"selectedExerciseId":null,"calibration":null,"history":[],
+     "suggestion":{"algoVersion":"v1","resultLoad":null,"reasonCode":"keine_historie",
+       "inputs":{"targetMin":8,"targetMax":12,"loadStep":2.5,"loadMin":5.0,"loadMax":150.0,
+         "currentLoad":null,"consideredBlocks":0}}}
+    """#
+
+    @Test("fragt den Typ-Kontext mit dem Studio als Query und dekodiert machine: null")
+    func equipmentModelContextMitStudio() async throws {
+        final class Aufzeichnung: @unchecked Sendable { var url: URL? }
+        let gesehen = Aufzeichnung()
+        StubURLProtocol.handler = { request in
+            gesehen.url = request.url
+            return (200, Data(Self.typKontext.utf8))
+        }
+        let kontext = try await stubbedClient().equipmentModelContext(modelId: "em1", studio: "s1")
+
+        #expect(gesehen.url?.absoluteString == "https://example.test/api/v1/equipment-models/em1/context?studio=s1")
+        #expect(kontext.machine == nil)
+        #expect(kontext.equipmentModel.id == "em1")
+    }
+
+    @Test("fragt den Typ-Kontext im Freien Training ohne Query")
+    func equipmentModelContextOhneStudio() async throws {
+        final class Aufzeichnung: @unchecked Sendable { var url: URL? }
+        let gesehen = Aufzeichnung()
+        StubURLProtocol.handler = { request in
+            gesehen.url = request.url
+            return (200, Data(Self.typKontext.utf8))
+        }
+        _ = try await stubbedClient().equipmentModelContext(modelId: "em1", studio: nil)
+
+        #expect(gesehen.url?.absoluteString == "https://example.test/api/v1/equipment-models/em1/context")
+    }
 }

@@ -1,7 +1,8 @@
 import Foundation
 
-/// Liste und Suche der Geraete eines Studios -- der Weg zum Geraet, wenn
-/// kein Aufkleber daran klebt.
+/// Liste und Suche der Stationen eines Orts -- der Weg zum Geraet, wenn
+/// kein Aufkleber daran klebt. Stationen sind die Geraete des Studios oder,
+/// in einem Studio ohne Geraete und im Freien Training, die Gymtavo-Typen.
 ///
 /// Das Gegenstueck zu `MachineResolver`: der loest ein Geraet ueber den
 /// Token auf, dieser ueber die Suche. Beide rechnen auf demselben
@@ -22,8 +23,8 @@ enum GeraeteAuswahl {
     }
 
     struct Eintrag: Equatable, Identifiable {
-        var id: String { machineId }
-        let machineId: String
+        var id: String { station.schluessel }
+        let station: Station
         /// `equipmentModel.id` -- der Schluessel, unter dem der Server das
         /// Foto signiert.
         let modellId: String
@@ -34,7 +35,7 @@ enum GeraeteAuswahl {
         /// Laufband, egal unter welcher Ueberschrift es sonst stuende.
         let kategorie: Kategorie
         /// `label · locationNote`, dieselbe Fuegung wie die Kopfzeile auf
-        /// dem Geraete-Screen.
+        /// dem Geraete-Screen. Am Typ der Hersteller (oder leer).
         let ortsangabe: String
         let zuletzt: Zuletzt?
         /// Gesetzt, wenn der Treffer NUR ueber eine Uebung kam. Bei einem
@@ -44,7 +45,8 @@ enum GeraeteAuswahl {
         let gesperrt: Bool
         /// `tokenHashes.isEmpty` -- also kein AKTIVER Tag. getBootstrap
         /// liest machine_tags mit status = active, ein abgeschalteter
-        /// Aufkleber klebt also weiter am Geraet.
+        /// Aufkleber klebt also weiter am Geraet. Am Typ immer false: ein
+        /// Typ ist kein Geraet ohne Sticker.
         let nichtScannbar: Bool
     }
 
@@ -66,17 +68,52 @@ enum GeraeteAuswahl {
     /// Mehr, und die Gruppe verdraengt die Liste, die sie abkuerzen soll.
     private static let deckel = 3
 
-    /// `studioId: nil` liefert bewusst leere Gruppen -- keine Maschine hat
-    /// eine leere studioId, der Filter unten greift dann also nie. Das ist
-    /// der Ruhezustand, bevor der Bootstrap geladen ist, kein Bug.
+    /// Die Stationen des Orts (Spec 6): die Geraete des Studios; hat es
+    /// keine, alle Katalogtypen mit der studioId des Studios; im Freien
+    /// Training alle Katalogtypen ohne studioId. Ohne Katalog und ohne
+    /// Geraete ist die Liste leer -- der Ruhezustand vor dem Bootstrap,
+    /// kein Bug.
+    static func stationen(bootstrap: BootstrapResponse, ort: Ort) -> [Station] {
+        switch ort {
+        case .studio(let studioId):
+            let geraete = bootstrap.machines.filter { $0.studioId == studioId }
+            if !geraete.isEmpty { return geraete.map(Station.init(maschine:)) }
+            return typen(bootstrap, studioId: studioId)
+        case .freiesTraining:
+            return typen(bootstrap, studioId: nil)
+        }
+    }
+
+    private static func typen(_ bootstrap: BootstrapResponse, studioId: String?) -> [Station] {
+        (bootstrap.catalog?.equipmentTypes ?? []).map { Station(typ: $0, studioId: studioId) }
+    }
+
     static func gruppen(
         bootstrap: BootstrapResponse,
-        studioId: String?,
+        ort: Ort,
         suchtext: String
     ) -> Gruppen {
-        let maschinen = bootstrap.machines.filter { $0.studioId == studioId }
-        let letzteSaetze = juengsteSaetze(in: bootstrap)
+        let stationen = stationen(bootstrap: bootstrap, ort: ort)
+        let maschinen = Dictionary(bootstrap.machines.map { ($0.id, $0) }, uniquingKeysWith: { erste, _ in erste })
+        let besuche = maschinen.mapValues(\.visitCount)
+        func notiz(_ station: Station) -> String? {
+            station.machineId.flatMap { maschinen[$0]?.locationNote }
+        }
+        let letzteSaetze = juengsteSaetze(in: bootstrap, stationen: stationen)
         let gesucht = normalisiert(suchtext)
+
+        func eintrag(_ station: Station, trefferUebung: String?) -> Eintrag {
+            Eintrag(
+                station: station,
+                modellId: station.equipmentModel.id,
+                name: station.equipmentModel.name,
+                kategorie: station.equipmentModel.category,
+                ortsangabe: ortsangabe(station, notiz: notiz(station)),
+                zuletzt: letzteSaetze[station.schluessel],
+                trefferUebung: trefferUebung,
+                gesperrt: station.gesperrt,
+                nichtScannbar: station.machineId != nil && station.tokenHashes.isEmpty)
+        }
 
         guard !gesucht.isEmpty else {
             // Spec 5.1 nennt nur "visitCount > 0". Die zweite Bedingung ist
@@ -86,36 +123,41 @@ enum GeraeteAuswahl {
             // nicht parsen laesst: dann fehlt der Eintrag in letzteSaetze,
             // obwohl visitCount > 0 gilt. Genau das bewahrt die
             // Force-Unwraps in der naechsten Zeile davor abzustuerzen --
-            // ohne diese Bedingung nicht "vereinfachen".
-            let benutzt = maschinen
-                .filter { $0.visitCount > 0 && letzteSaetze[$0.id] != nil }
-                .sorted { letzteSaetze[$0.id]!.performedAt > letzteSaetze[$1.id]!.performedAt }
+            // ohne diese Bedingung nicht "vereinfachen". Ein Typ hat keinen
+            // visitCount: dort entscheidet allein der freie Satz.
+            let benutzt = stationen
+                .filter { station in
+                    guard letzteSaetze[station.schluessel] != nil else { return false }
+                    return station.machineId.map { (besuche[$0] ?? 0) > 0 } ?? true
+                }
+                .sorted { letzteSaetze[$0.schluessel]!.performedAt > letzteSaetze[$1.schluessel]!.performedAt }
                 .prefix(deckel)
-            let obenIds = Set(benutzt.map(\.id))
+            let obenIds = Set(benutzt.map(\.schluessel))
             // Was oben steht, steht unten nicht noch einmal.
-            let unten = maschinen
-                .filter { !obenIds.contains($0.id) }
-                .map { eintrag($0, zuletzt: letzteSaetze[$0.id], trefferUebung: nil) }
+            let unten = stationen
+                .filter { !obenIds.contains($0.schluessel) }
+                .map { eintrag($0, trefferUebung: nil) }
                 .sorted(by: alphabetischGesperrteAnsEnde)
 
             return Gruppen(
-                zuletzt: benutzt.map { eintrag($0, zuletzt: letzteSaetze[$0.id], trefferUebung: nil) },
+                zuletzt: benutzt.map { eintrag($0, trefferUebung: nil) },
                 kraft: unten.filter { $0.kategorie == .kraft },
                 cardio: unten.filter { $0.kategorie == .cardio },
                 treffer: []
             )
         }
 
-        let treffer = maschinen.compactMap { maschine -> Eintrag? in
-            let imGeraet = felder(maschine).contains { normalisiert($0).contains(gesucht) }
+        let treffer = stationen.compactMap { station -> Eintrag? in
+            let imGeraet = felder(station, notiz: notiz(station))
+                .contains { normalisiert($0).contains(gesucht) }
             // Die Uebungszeile nur setzen, wenn das Geraet selbst NICHT
             // trifft -- sonst bekaeme bei "bein" auch die Beinpresse eine,
             // und die Zeile verloere ihren Zweck.
-            let uebung = imGeraet ? nil : maschine.exercises.first {
+            let uebung = imGeraet ? nil : station.exercises.first {
                 normalisiert($0.name).contains(gesucht)
             }?.name
             guard imGeraet || uebung != nil else { return nil }
-            return eintrag(maschine, zuletzt: letzteSaetze[maschine.id], trefferUebung: uebung)
+            return eintrag(station, trefferUebung: uebung)
         }
 
         return Gruppen(zuletzt: [], kraft: [], cardio: [], treffer: treffer.sorted(by: trefferReihenfolge))
@@ -142,29 +184,20 @@ enum GeraeteAuswahl {
 
     // MARK: - Bausteine
 
-    private static func eintrag(
-        _ maschine: BootstrapResponse.Machine,
-        zuletzt: Zuletzt?,
-        trefferUebung: String?
-    ) -> Eintrag {
-        Eintrag(
-            machineId: maschine.id,
-            modellId: maschine.equipmentModel.id,
-            name: maschine.equipmentModel.name,
-            kategorie: maschine.equipmentModel.category,
-            ortsangabe: [maschine.label, maschine.locationNote]
-                .compactMap { $0 }
-                .joined(separator: " · "),
-            zuletzt: zuletzt,
-            trefferUebung: trefferUebung,
-            gesperrt: maschine.status != "active",
-            nichtScannbar: maschine.tokenHashes.isEmpty
-        )
+    /// `label · locationNote` am Geraet, der Hersteller am Typ. locationNote
+    /// steht nur an der Machine, nicht an der Station.
+    private static func ortsangabe(_ station: Station, notiz: String?) -> String {
+        if station.machineId != nil {
+            return [station.label, notiz].compactMap { $0 }.joined(separator: " · ")
+        }
+        return station.equipmentModel.manufacturer ?? ""
     }
 
-    private static func felder(_ maschine: BootstrapResponse.Machine) -> [String] {
-        [maschine.equipmentModel.name, maschine.label, maschine.locationNote]
-            .compactMap { $0 }
+    private static func felder(_ station: Station, notiz: String?) -> [String] {
+        if station.machineId != nil {
+            return [station.equipmentModel.name, station.label, notiz].compactMap { $0 }
+        }
+        return [station.equipmentModel.name, station.equipmentModel.manufacturer].compactMap { $0 }
     }
 
     /// Klein, ohne Diakritika, ohne Rand -- damit "RÜCKEN" und "rucken"
@@ -174,21 +207,30 @@ enum GeraeteAuswahl {
             .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
     }
 
-    /// Der juengste Satz je Geraet. Rechnet selbst, statt sich auf die
-    /// Serversortierung von `lastSets` zu verlassen -- dieselbe Vorsicht
-    /// wie in `GeraetEinstiegRechner.letzteUebung`.
-    private static func juengsteSaetze(in bootstrap: BootstrapResponse) -> [String: Zuletzt] {
+    /// Der juengste Satz je Station, unter ihrem Schluessel: am Geraet aus
+    /// lastSets, am Typ aus lastTypeSets. Rechnet selbst, statt sich auf die
+    /// Serversortierung zu verlassen -- dieselbe Vorsicht wie in
+    /// `GeraetEinstiegRechner.letzteUebung`.
+    private static func juengsteSaetze(in bootstrap: BootstrapResponse, stationen: [Station]) -> [String: Zuletzt] {
         var juengste: [String: Zuletzt] = [:]
+        // Ohne die Station keine Einheit -- und ohne Einheit keine Zahl.
+        // Zeigen koennte die Zeile sie ohnehin nicht.
         let einheiten = Dictionary(
-            bootstrap.machines.map { ($0.id, $0.equipmentModel.loadUnit) },
+            stationen.map { ($0.schluessel, $0.equipmentModel.loadUnit) },
             uniquingKeysWith: { erste, _ in erste })
+        func merke(_ schluessel: String, load: Double, performedAt: String) {
+            guard let einheit = einheiten[schluessel] else { return }
+            guard let datum = Zeitpunkt.parse(performedAt) else { return }
+            if let vorhanden = juengste[schluessel], vorhanden.performedAt >= datum { return }
+            juengste[schluessel] = Zuletzt(performedAt: datum, load: load, loadUnit: einheit)
+        }
         for satz in bootstrap.lastSets {
-            // Ohne das Geraet im Prefetch keine Einheit -- und ohne Einheit
-            // keine Zahl. Zeigen koennte die Zeile das Geraet ohnehin nicht.
-            guard let einheit = einheiten[satz.machineId] else { continue }
-            guard let datum = Zeitpunkt.parse(satz.performedAt) else { continue }
-            if let vorhanden = juengste[satz.machineId], vorhanden.performedAt >= datum { continue }
-            juengste[satz.machineId] = Zuletzt(performedAt: datum, load: satz.load, loadUnit: einheit)
+            merke(Station.schluessel(machineId: satz.machineId),
+                  load: satz.load, performedAt: satz.performedAt)
+        }
+        for satz in bootstrap.lastTypeSets {
+            merke(Station.schluessel(equipmentModelId: satz.equipmentModelId),
+                  load: satz.load, performedAt: satz.performedAt)
         }
         return juengste
     }

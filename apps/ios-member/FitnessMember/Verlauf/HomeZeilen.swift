@@ -275,7 +275,7 @@ enum HomeZeilen {
     }
 
     private static func verschiedeneGeraete(_ karte: Trainingskarte) -> Int {
-        Set(karte.teile.flatMap { $0.blocks.map(\.machineId) }).count
+        Set(karte.teile.flatMap { $0.blocks.map(\.stationSchluessel) }).count
     }
 
     /// Nach Beginn sortiert, nicht nach der Reihenfolge der Liste: die
@@ -325,6 +325,16 @@ enum HomeZeilen {
     static func veraenderung(_ delta: Double, einheit: LoadUnit) -> String {
         guard delta != 0 else { return "±0" }
         return (delta > 0 ? "+" : "-") + Zahlformat.belastung(abs(delta), einheit)
+    }
+
+    /// Die Zeile unter der Begruessung: im Freien Training der Ort selbst,
+    /// weil es dort keinen Studionamen gibt; im Studio dessen Name (nil,
+    /// solange der Bootstrap ihn nicht kennt).
+    static func ortszeile(ort: Ort, studioName: String?) -> String? {
+        switch ort {
+        case .freiesTraining: "Freies Training"
+        case .studio: studioName
+        }
     }
 
     /// Der erste Namensteil -- "Hallo Lena", nicht "Hallo Lena Wagner".

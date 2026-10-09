@@ -12,7 +12,12 @@ enum ProblemReason: String, Codable, Equatable, CaseIterable {
 /// sessionId/setId werden NICHT mitgeschickt -- sie stehen im Pfad und
 /// gewinnen serverseitig ohnehin gegen den Rumpf (workout.ts Kommentar).
 struct SetWrite: Codable, Equatable {
-    var machineId: String
+    /// Entweder machineId (Satz am Geraet) oder equipmentModelId (Satz am
+    /// Typ). Der Server-Zod weist null ab, deshalb wird nil weggelassen.
+    var machineId: String? = nil
+    var equipmentModelId: String? = nil
+    /// Nur am Typ: der Ort der Einheit. Im Freien Training nil.
+    var studioId: String? = nil
     var exerciseId: String
     var setIndex: Int
     var load: Double
@@ -34,7 +39,7 @@ struct SetWrite: Codable, Equatable {
 
 extension SetWrite {
     private enum CodingKeys: String, CodingKey {
-        case machineId, exerciseId, setIndex, load, volume, secondaryLoad, rir,
+        case machineId, equipmentModelId, studioId, exerciseId, setIndex, load, volume, secondaryLoad, rir,
              problemFlag, problemReason, performedAt, sessionStartedAt
     }
 
@@ -51,7 +56,9 @@ extension SetWrite {
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let alt = try decoder.container(keyedBy: AlteKeys.self)
-        machineId = try c.decode(String.self, forKey: .machineId)
+        machineId = try c.decodeIfPresent(String.self, forKey: .machineId)
+        equipmentModelId = try c.decodeIfPresent(String.self, forKey: .equipmentModelId)
+        studioId = try c.decodeIfPresent(String.self, forKey: .studioId)
         exerciseId = try c.decode(String.self, forKey: .exerciseId)
         setIndex = try c.decode(Int.self, forKey: .setIndex)
         load = try c.decodeIfPresent(Double.self, forKey: .load)
@@ -72,7 +79,8 @@ struct RecordedSet: Decodable, Equatable {
     let studioId: String
     let userId: String
     let sessionId: String
-    let machineId: String
+    let machineId: String?
+    var equipmentModelId: String? = nil
     let exerciseId: String
     let setIndex: Int
     let load: Double
@@ -90,7 +98,8 @@ struct RecordedSet: Decodable, Equatable {
 /// mit, damit der Abschluss "+0,5 km/h bei 6,0 %" schreiben kann, ohne das
 /// Modell nachzuschlagen -- der Prefetch kann aelter sein als die Einheit.
 struct Blockvorschlag: Decodable, Equatable {
-    let machineId: String
+    let machineId: String?
+    var equipmentModelId: String? = nil
     let exerciseId: String
     let resultLoad: Double?
     let deltaLoad: Double?

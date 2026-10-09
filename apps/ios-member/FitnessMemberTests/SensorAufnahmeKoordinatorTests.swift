@@ -23,20 +23,20 @@ final class AttrappenQuelle: SensorQuelle {
 @MainActor
 struct SensorAufnahmeKoordinatorTests {
     static let verbunden = SensorZustand.verbunden(name: "WT901BLE67", akkuProzent: 82)
-    static let kontext = SatzMitschnittKontext(machineId: "m1", machineName: "Beinpresse",
+    static let kontext = SatzMitschnittKontext(station: Station(maschine: GeraetTestdaten.maschine),
                                                exerciseId: "e1", exerciseName: "Beidbeinig")
     static let satz = GesicherterSatz(sessionId: UUID(), setId: UUID(), setIndex: 2,
                                       weightKg: 77.5, reps: 11, problemFlag: false)
 
     final class Uhr { var t: TimeInterval = 100 }
 
-    private func aufbau(zustand: SensorZustand = verbunden, wurzel: URL? = nil)
+    private func aufbau(zustand: SensorZustand = verbunden, wurzel: URL? = nil,
+                        einstellungen: UserDefaults = UserDefaults(suiteName: UUID().uuidString)!)
         -> (sut: SensorAufnahmeKoordinator, quelle: AttrappenQuelle, wurzel: URL, uhr: Uhr) {
         let quelle = AttrappenQuelle()
         quelle.zustand = zustand
         let wurzel = wurzel ?? FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let uhr = Uhr()
-        let einstellungen = UserDefaults(suiteName: UUID().uuidString)!
         let sut = SensorAufnahmeKoordinator(
             quelle: quelle, wurzel: wurzel, geraet: SensorAufnahmeTests.geraet,
             einstellungen: einstellungen, uhr: { uhr.t }, jetzt: { SensorAufnahmeTests.start })
@@ -208,7 +208,7 @@ struct SensorAufnahmeKoordinatorTests {
     @Test func neueEingabeBrichtEineLaufendeAufnahmeAb() throws {
         let (sut, _, wurzel, _) = aufbau()
         sut.eingabeBegonnen(Self.kontext)
-        sut.eingabeBegonnen(SatzMitschnittKontext(machineId: "m1", machineName: "Beinpresse",
+        sut.eingabeBegonnen(SatzMitschnittKontext(station: Station(maschine: GeraetTestdaten.maschine),
                                                   exerciseId: "e2", exerciseName: "Einbeinig"))
         let alle = ordner(in: wurzel)
         #expect(alle.count == 2)
@@ -262,14 +262,39 @@ struct SensorAufnahmeKoordinatorTests {
         #expect(sut.aufnahmeLaeuft)
     }
 
-    @Test func befestigungWirdJeGeraetGemerktUndLandetInDerAufnahme() throws {
+    @Test func befestigungWirdJeStationGemerktUndLandetInDerAufnahme() throws {
         let (sut, _, wurzel, _) = aufbau()
-        #expect(sut.befestigung(fuer: "m1") == "")
-        sut.befestigungSetzen("Gewichtsstapel oben", fuer: "m1")
-        #expect(sut.befestigung(fuer: "m1") == "Gewichtsstapel oben")
-        #expect(sut.befestigung(fuer: "m2") == "")
+        #expect(sut.befestigung(fuer: "geraet:m1") == "")
+        sut.befestigungSetzen("Gewichtsstapel oben", fuer: "geraet:m1")
+        #expect(sut.befestigung(fuer: "geraet:m1") == "Gewichtsstapel oben")
+        #expect(sut.befestigung(fuer: "geraet:m2") == "")
+        #expect(sut.befestigung(fuer: "typ:em1") == "")
         sut.eingabeBegonnen(Self.kontext)
         #expect(try datei(ordner(in: wurzel)[0]).befestigung == "Gewichtsstapel oben")
+    }
+
+    /// Vor den Stationen hiess der Schluessel "sensor.befestigung.<machineId>"
+    /// -- eine gemerkte Befestigung soll das Update ueberstehen.
+    @Test func eineAlteBefestigungJeGeraetBleibtLesbar() {
+        let einstellungen = UserDefaults(suiteName: UUID().uuidString)!
+        einstellungen.set("Hebelarm", forKey: "sensor.befestigung.m1")
+        let (sut, _, _, _) = aufbau(einstellungen: einstellungen)
+        #expect(sut.befestigung(fuer: "geraet:m1") == "Hebelarm")
+        // Ein neuer Wert gewinnt ueber den alten.
+        sut.befestigungSetzen("Stapel", fuer: "geraet:m1")
+        #expect(sut.befestigung(fuer: "geraet:m1") == "Stapel")
+    }
+
+    /// Am Typ gibt es keine machineId: die Aufnahme nennt das Modell.
+    @Test func eineAufnahmeAmTypNenntDasModell() throws {
+        let (sut, _, wurzel, _) = aufbau()
+        sut.befestigungSetzen("Griff", fuer: "typ:em7")
+        sut.eingabeBegonnen(SatzMitschnittKontext(station: GeraetTestdaten.typ,
+                                                  exerciseId: "e1", exerciseName: "Beidbeinig"))
+        let kopf = try datei(ordner(in: wurzel)[0])
+        #expect(kopf.kontext.machineId == nil)
+        #expect(kopf.kontext.equipmentModelId == "em7")
+        #expect(kopf.befestigung == "Griff")
     }
 
     @Test func anzeigeRateFolgtDenMesswerten() {

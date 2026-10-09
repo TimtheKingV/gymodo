@@ -20,7 +20,7 @@ struct KalibrierungSchritt: View {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopf
 
-                Text(modell.maschine.equipmentModel.name.uppercased())
+                Text(modell.station.equipmentModel.name.uppercased())
                     .font(DesignSystem.Typography.geraetename)
                     .tracking(-0.8)
                     .foregroundStyle(DesignSystem.Color.text)

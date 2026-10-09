@@ -27,7 +27,7 @@ enum TrainingTab {
         guard let session else { return nil }
         let saetze = session.bloecke.flatMap(\.saetze).count
         let zahlen = saetze == 0 ? nil : Zahlen(
-            geraete: Set(session.bloecke.map(\.machineId)).count,
+            geraete: Set(session.bloecke.map(\.stationSchluessel)).count,
             saetze: saetze
         )
         return Mitte(startedAt: session.startedAt, zahlen: zahlen)

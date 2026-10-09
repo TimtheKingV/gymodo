@@ -438,4 +438,47 @@ struct HomeZeilenTests {
         #expect(HomeZeilen.karte(fuer: "c", in: einheiten)?.teile.map(\.id) == ["c"])
         #expect(HomeZeilen.karte(fuer: "unbekannt", in: einheiten) == nil)
     }
+
+    @Test func kleineZeileZaehltTypenAlsStationen() {
+        // Bloecke am Typ haben kein machineId; sie zaehlen ueber den Typ, und
+        // ein Geraet gewinnt wie auf dem Server ueber seinen Typ.
+        func typBlock(_ id: String) -> SessionSummary.Block {
+            SessionSummary.Block(
+                machineId: nil, equipmentModelId: id, machineLabel: id, exerciseId: "e1",
+                exerciseName: "Übung", loadUnit: .kg, secondaryUnit: nil, volumeKind: .reps, sets: [])
+        }
+        let geraet = SessionSummary.Block(
+            machineId: "m1", equipmentModelId: "t1", machineLabel: "m1", exerciseId: "e1",
+            exerciseName: "Übung", loadUnit: .kg, secondaryUnit: nil, volumeKind: .reps, sets: [])
+        let session = SessionSummary(
+            id: "s", startedAt: "2026-09-08T16:04:00Z", completedAt: "2026-09-08T16:51:00Z",
+            completedReason: "manual", machineCount: 1, setCount: 3,
+            blocks: [typBlock("t1"), typBlock("t2"), typBlock("t2"), geraet])
+        #expect(HomeZeilen.kleineZeile(HomeZeilen.trainingskarten([session])[0]).hasSuffix("3 Geräte"))
+        #expect(geraet.stationSchluessel == "geraet:m1")
+        #expect(typBlock("t1").stationSchluessel == "typ:t1")
+    }
+
+    /// Eine Karte zaehlt Stationen, nicht nur Geraete: Bloecke an Typen
+    /// (machineId nil) zaehlen je Typ einmal mit.
+    @Test func dieKarteZaehltFreieStationenMit() {
+        let typ = SessionSummary.Block(
+            machineId: nil, equipmentModelId: "t1", machineLabel: "Beinpresse", exerciseId: "e1",
+            exerciseName: "Beinpresse", loadUnit: .kg, secondaryUnit: nil, volumeKind: .reps, sets: [])
+        let typ2 = SessionSummary.Block(
+            machineId: nil, equipmentModelId: "t1", machineLabel: "Beinpresse", exerciseId: "e2",
+            exerciseName: "Waden", loadUnit: .kg, secondaryUnit: nil, volumeKind: .reps, sets: [])
+        let einheit = SessionSummary(
+            id: "s1", startedAt: "2026-09-08T16:04:00Z", completedAt: "2026-09-08T16:51:00Z",
+            completedReason: "manual", machineCount: 2, setCount: 0,
+            blocks: [block("m1"), typ, typ2])
+        let karte = HomeZeilen.trainingskarten([einheit])[0]
+        #expect(HomeZeilen.kleineZeile(karte).hasSuffix("2 Geräte"))
+    }
+
+    @Test func derKopfNenntImFreienTrainingDenOrtStattDesStudios() {
+        #expect(HomeZeilen.ortszeile(ort: .freiesTraining, studioName: "Studio A") == "Freies Training")
+        #expect(HomeZeilen.ortszeile(ort: .studio("s1"), studioName: "Studio A") == "Studio A")
+        #expect(HomeZeilen.ortszeile(ort: .studio("s1"), studioName: nil) == nil)
+    }
 }

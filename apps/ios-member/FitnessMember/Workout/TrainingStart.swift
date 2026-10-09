@@ -13,10 +13,10 @@ enum TrainingStart {
     /// Beim Erstkontakt geht es ebenfalls direkt zum Satzpfad: dort laufen
     /// Einweisung und Einstellung, und "Training starten" kommt als ihr
     /// letzter Schritt -- die Uhr laeuft erst danach (Testnotiz 06.10., #5).
-    static func ziel(machineId: String, exerciseId: String, token: String?,
+    static func ziel(station: String, exerciseId: String, token: String?,
                      trainingLaeuft: Bool, erstkontakt: Bool) -> GeraetRoute {
         trainingLaeuft || erstkontakt
-            ? .geraet(machineId: machineId, exerciseId: exerciseId, token: token)
-            : .start(machineId: machineId, exerciseId: exerciseId, token: token)
+            ? .geraet(station: station, exerciseId: exerciseId, token: token)
+            : .start(station: station, exerciseId: exerciseId, token: token)
     }
 }

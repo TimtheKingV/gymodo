@@ -38,7 +38,7 @@ struct ErstkontaktFlow: View {
         self.beiAbschluss = beiAbschluss
         self.beiAbbruch = beiAbbruch
         _schritte = State(initialValue: GeraetEinstiegRechner.erstkontaktSchritte(
-            hatEinstellparameter: modell.hatEinstellparameter,
+            hatEinstellparameter: modell.erstkontaktFragtEinstellung,
             trainingLaeuft: modell.trainingLaeuft))
     }
 

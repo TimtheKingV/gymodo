@@ -26,7 +26,7 @@ struct GeraetErkanntView: View {
         }
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
-        .testnotizScreen(kontext: ["machineId": modell.maschine.id])
+        .testnotizScreen(kontext: ["station": modell.station.schluessel])
     }
 
     private var kopfzeile: some View {
@@ -46,10 +46,7 @@ struct GeraetErkanntView: View {
     }
 
     private var ortsangabe: String {
-        [modell.maschine.label, modell.maschine.locationNote]
-            .compactMap { $0 }
-            .joined(separator: " · ")
-            .uppercased()
+        modell.ortsangabe.uppercased()
     }
 
     /// Bestaetigt in einer Sekunde, dass man am richtigen Geraet steht --
@@ -74,7 +71,7 @@ struct GeraetErkanntView: View {
 
     private var geraetename: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-            Text(modell.maschine.equipmentModel.name.uppercased())
+            Text(modell.station.equipmentModel.name.uppercased())
                 .font(DesignSystem.Typography.geraetename)
                 .tracking(-0.8)
                 .foregroundStyle(DesignSystem.Color.text)
@@ -85,7 +82,7 @@ struct GeraetErkanntView: View {
     }
 
     private var hersteller: String {
-        [modell.maschine.equipmentModel.manufacturer, modell.maschine.locationNote]
+        [modell.station.equipmentModel.manufacturer, modell.station.locationNote]
             .compactMap { $0 }
             .joined(separator: " · ")
     }
@@ -185,7 +182,7 @@ struct GeraetErkanntView: View {
 /// es fuer den Geraete-Screen schon vormachen).
 ///
 /// `@State var modell` ist der eigentliche Punkt: TrainingRootView.ziel(_:)
-/// ruft `modell(machineId:exerciseId:token:)` bei JEDER Body-Auswertung neu
+/// ruft `modell(station:exerciseId:token:)` bei JEDER Body-Auswertung neu
 /// auf und erzeugt dabei ein frisches GeraetModel. Ohne dieses @State wuerde
 /// jede Neuzeichnung ein Modell verwerfen, dessen kontextLaden() gerade erst
 /// geladen hat -- SwiftUI uebernimmt den init-Parameter fuer @State nur beim

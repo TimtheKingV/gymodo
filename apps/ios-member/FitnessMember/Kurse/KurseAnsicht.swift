@@ -76,3 +76,20 @@ enum KurseAnsicht: Hashable, CaseIterable {
         return .alle
     }
 }
+
+/// Ob der Kurse-Tab einen Plan zeigen kann. Kurse gehoeren einem Studio; im
+/// Freien Training gibt es keines, und der Tab bietet stattdessen das
+/// Beitreten an.
+enum KurseOrtZustand: Equatable {
+    case plan
+    case beitreten
+
+    static let hinweis = "Kurse gibt es in deinem Studio. Tritt einem Studio bei, um sie zu sehen."
+
+    static func fuer(ort: Ort) -> KurseOrtZustand {
+        switch ort {
+        case .studio: .plan
+        case .freiesTraining: .beitreten
+        }
+    }
+}

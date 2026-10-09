@@ -22,7 +22,7 @@ struct TagContextResponse: Decodable, Equatable {
         let secondaryMax: Double?
     }
 
-    struct SettingDefinition: Decodable, Equatable, Identifiable {
+    struct SettingDefinition: Decodable, Hashable, Sendable, Identifiable {
         var id: String { key }
         let key: String
         let label: String
@@ -87,7 +87,9 @@ struct TagContextResponse: Decodable, Equatable {
         let inputs: Inputs
     }
 
-    let machine: Machine
+    /// nil im Typ-Kontext (equipment-models/{id}/context): dort steht kein
+    /// einzelnes Geraet.
+    let machine: Machine?
     let equipmentModel: EquipmentModel
     let settingDefinitions: [SettingDefinition]
     let exercises: [Exercise]

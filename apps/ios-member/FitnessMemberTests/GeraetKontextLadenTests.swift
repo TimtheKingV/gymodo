@@ -10,11 +10,12 @@ import Testing
 @MainActor
 struct GeraetKontextLadenTests {
 
-    private func modell(token: String?, loader: FakeGeraetLoader) -> GeraetModel {
+    private func modell(token: String?, loader: FakeGeraetLoader,
+                        station: Station = Station(maschine: GeraetTestdaten.maschine)) -> GeraetModel {
         let verzeichnis = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
         return GeraetModel(
-            maschine: GeraetTestdaten.maschine,
+            station: station,
             uebungId: "e1",
             token: token,
             bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
@@ -62,6 +63,29 @@ struct GeraetKontextLadenTests {
 
         #expect(await loader.machineAufrufe == ["m1"])
         #expect(await loader.tagAufrufe.isEmpty)
+    }
+
+    /// Am Typ gibt es weder Token noch Geraet: der Kontext kommt ueber das
+    /// Modell, mit dem Studio des Orts, damit der Server den Verlauf dort
+    /// zuordnet.
+    @Test func einTypGehtUeberDasModellMitStudio() async {
+        let loader = FakeGeraetLoader()
+        await loader.setKontext(.success(kontextMitFoto))
+
+        await modell(token: nil, loader: loader, station: .testTyp("em7", studioId: "s1")).kontextLaden()
+
+        #expect(await loader.typAufrufe == [FakeGeraetLoader.TypAufruf(modelId: "em7", studio: "s1")])
+        #expect(await loader.machineAufrufe.isEmpty)
+        #expect(await loader.tagAufrufe.isEmpty)
+    }
+
+    @Test func einTypImFreienTrainingFragtOhneStudio() async {
+        let loader = FakeGeraetLoader()
+        await loader.setKontext(.success(kontextMitFoto))
+
+        await modell(token: nil, loader: loader, station: .testTyp("em7", studioId: nil)).kontextLaden()
+
+        #expect(await loader.typAufrufe == [FakeGeraetLoader.TypAufruf(modelId: "em7", studio: nil)])
     }
 
     @Test func ohneTokenKommtDasFotoAn() async {

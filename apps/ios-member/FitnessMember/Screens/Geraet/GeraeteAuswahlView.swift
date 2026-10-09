@@ -22,11 +22,11 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     /// -- siehe der Kommentar an seinem @State dort.
     let vorschauLader: VorschauLader
     let kopfinhalt: Kopfinhalt
-    let beiAuswahl: (String) -> Void
+    let beiAuswahl: (Station) -> Void
 
     init(fotoLader: any GeraetefotosLoading, vorschauLader: VorschauLader,
          @ViewBuilder kopfinhalt: () -> Kopfinhalt,
-         beiAuswahl: @escaping (String) -> Void) {
+         beiAuswahl: @escaping (Station) -> Void) {
         self.fotoLader = fotoLader
         self.vorschauLader = vorschauLader
         self.kopfinhalt = kopfinhalt()
@@ -50,10 +50,17 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
 
     /// Abgeleitet statt in `.task` nachtraeglich befuellt: `.task` laeuft
     /// erst NACH dem ersten body-Durchlauf, und der Screen zeigte fuer
-    /// diesen einen Frame faelschlich den leeren Zustand ("kein Geraet
-    /// eingetragen"), bevor katalog.activeStudioId ankam.
+    /// diesen einen Frame faelschlich den leeren Zustand, bevor der Ort
+    /// ankam.
     private var aktivesStudioId: String? {
         studioId ?? katalog.activeStudioId
+    }
+
+    /// Der Ort dieser Liste: ein ausdruecklich gewaehltes anderes Studio
+    /// (nur dieser Screen), sonst der Ort des Katalogs -- auch das Freie
+    /// Training.
+    private var ort: Ort {
+        studioId.map(Ort.studio) ?? katalog.ort
     }
 
     /// **Zwei Aufbauten, einer je nach System.**
@@ -113,14 +120,15 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     }
 
     private var untertitel: String {
-        let anzahl = maschinenImStudio.count
+        let stationen = katalog.bootstrap.map { GeraeteAuswahl.stationen(bootstrap: $0, ort: ort) } ?? []
+        // Typen statt Geraete: Freies Training oder ein Studio ohne Geraete.
+        if ort == .freiesTraining || stationen.contains(where: { $0.machineId == nil }) {
+            return "Alle Gymtavo-Geräte"
+        }
+        let anzahl = stationen.count
         let name = katalog.bootstrap?.studios.first { $0.id == aktivesStudioId }?.name
         guard let name else { return "Alle \(anzahl) Geräte — auch die ohne Aufkleber." }
         return "Alle \(anzahl) Geräte in \(name) — auch die ohne Aufkleber."
-    }
-
-    private var maschinenImStudio: [BootstrapResponse.Machine] {
-        katalog.bootstrap?.machines.filter { $0.studioId == aktivesStudioId } ?? []
     }
 
     // MARK: - Suchfeld
@@ -177,7 +185,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
         guard let bootstrap = katalog.bootstrap else {
             return .leer
         }
-        return GeraeteAuswahl.gruppen(bootstrap: bootstrap, studioId: aktivesStudioId, suchtext: suchtext)
+        return GeraeteAuswahl.gruppen(bootstrap: bootstrap, ort: ort, suchtext: suchtext)
     }
 
     @ViewBuilder
@@ -235,7 +243,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                 if eintrag.gesperrt {
                     zeile(eintrag).opacity(0.55)
                 } else {
-                    Button { beiAuswahl(eintrag.machineId) } label: { zeile(eintrag) }
+                    Button { beiAuswahl(eintrag.station) } label: { zeile(eintrag) }
                         .buttonStyle(PressButtonStyle())
                 }
             }
@@ -260,9 +268,11 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                 Text(eintrag.name)
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(DesignSystem.Color.text)
-                Text(eintrag.ortsangabe)
-                    .font(.system(size: 12))
-                    .foregroundStyle(DesignSystem.Color.textFaint)
+                if !eintrag.ortsangabe.isEmpty {
+                    Text(eintrag.ortsangabe)
+                        .font(.system(size: 12))
+                        .foregroundStyle(DesignSystem.Color.textFaint)
+                }
                 if let uebung = eintrag.trefferUebung {
                     Text("Übung · \(uebung)")
                         .font(.system(size: 12))
@@ -429,7 +439,11 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
         VStack(spacing: DesignSystem.Spacing.s16) {
             Spacer()
             if suchtext.isEmpty {
-                Text("In diesem Studio ist noch kein Gerät eingetragen.")
+                // Ein Studio ohne Geraete zeigt den Katalog; leer bleibt die
+                // Liste nur, solange der Katalog fehlt.
+                Text(ort == .freiesTraining
+                     ? "Die Gymtavo-Geräte sind noch nicht geladen."
+                     : "In diesem Studio ist noch kein Gerät eingetragen.")
                     .font(DesignSystem.Typography.fliesstext)
                     .foregroundStyle(DesignSystem.Color.textMuted)
                     .multilineTextAlignment(.center)
@@ -476,7 +490,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
 
 extension GeraeteAuswahlView where Kopfinhalt == EmptyView {
     init(fotoLader: any GeraetefotosLoading, vorschauLader: VorschauLader,
-         beiAuswahl: @escaping (String) -> Void) {
+         beiAuswahl: @escaping (Station) -> Void) {
         self.init(fotoLader: fotoLader, vorschauLader: vorschauLader,
                   kopfinhalt: { EmptyView() }, beiAuswahl: beiAuswahl)
     }

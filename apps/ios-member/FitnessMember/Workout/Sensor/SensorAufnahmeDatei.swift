@@ -29,17 +29,22 @@ struct SensorAufnahmeDatei: Codable, Equatable {
     }
 
     struct Kontext: Codable, Equatable {
-        var machineId: String
+        /// nil am Geraetetyp ohne Geraet; dann nennt equipmentModelId die Station.
+        var machineId: String?
         var machineName: String
         var exerciseId: String
         var exerciseName: String
         var sessionId: String?
         var setId: String?
         var setIndex: Int?
+        /// Fehlt in Aufnahmen von vor den Stationen -- optional, damit sie
+        /// weiter dekodieren (synthetisiert: decodeIfPresent).
+        var equipmentModelId: String? = nil
 
         func encode(to encoder: Encoder) throws {
             var c = encoder.container(keyedBy: CodingKeys.self)
             try c.encode(machineId, forKey: .machineId)
+            try c.encode(equipmentModelId, forKey: .equipmentModelId)
             try c.encode(machineName, forKey: .machineName)
             try c.encode(exerciseId, forKey: .exerciseId)
             try c.encode(exerciseName, forKey: .exerciseName)

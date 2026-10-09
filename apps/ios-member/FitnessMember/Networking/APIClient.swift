@@ -36,6 +36,21 @@ actor APIClient {
         try await get("machines/\(machineId)/context")
     }
 
+    /// Derselbe Kontext an einem Gymtavo-Geraetetyp ohne Geraet (`machine`
+    /// ist dann null). Ohne Studio, im Freien Training, faellt die Query weg
+    /// -- der Server liest dann die Saetze ohne Studio.
+    func equipmentModelContext(modelId: String, studio: String?) async throws(APIError) -> TagContextResponse {
+        let pfad = "equipment-models/\(modelId)/context"
+        guard let studio else { return try await get(pfad) }
+        // Ueber URLComponents wie bei sessions(studio:): appendingPathComponent
+        // kodierte "?" mit.
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent(pfad), resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "studio", value: studio)]
+        guard let url = components.url else { throw APIError.encodingFailed }
+        return try await execute(url: url, method: "GET", bodyData: nil)
+    }
+
     /// Signierte Geraetefotos fuer die Liste. Eigener Abruf statt eines
     /// Bootstrap-Felds: die URLs leben 15 Minuten, der Prefetch Stunden.
     func machinePhotos() async throws(APIError) -> MachinePhotosResponse {

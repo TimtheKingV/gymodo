@@ -73,22 +73,22 @@ private func tempDirectory() -> URL {
 @Suite("CatalogStore")
 @MainActor
 struct CatalogStoreTests {
-    @Test("load() ohne Studios ergibt loaded(hasStudio: false)")
+    @Test("load() ohne Studios ergibt loaded")
     func loadWithoutStudio() async {
         let loader = FakeBootstrapLoader()
         await loader.setBootstrapResult(.success(emptyBootstrap()))
         let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
         await store.load()
-        #expect(store.loadState == .loaded(hasStudio: false))
+        #expect(store.loadState == .loaded)
     }
 
-    @Test("load() mit einem Studio ergibt loaded(hasStudio: true)")
+    @Test("load() mit einem Studio ergibt loaded")
     func loadWithStudio() async {
         let loader = FakeBootstrapLoader()
         await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s1", name: "Kraftwerk Nord", timezone: "Europe/Berlin")])))
         let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
         await store.load()
-        #expect(store.loadState == .loaded(hasStudio: true))
+        #expect(store.loadState == .loaded)
     }
 
     @Test("ein Netzwerkfehler ergibt .failed")
@@ -186,9 +186,12 @@ struct CatalogStoreTests {
         let loader = FakeBootstrapLoader()
         await loader.setJoinResult(.success(JoinResult(studioId: "s1", machineId: nil, joined: true)))
         await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s1", name: "Kraftwerk Nord", timezone: "Europe/Berlin")])))
-        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
-        try? await store.joinStudio(byCode: "ABCD1234")
-        #expect(store.loadState == .loaded(hasStudio: true))
+        // Eigene Defaults: der Beitritt schreibt den Ort fest, und in
+        // .standard saehen ihn spaetere Tests als gespeicherte Wahl.
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 defaults: UserDefaults(suiteName: "catalog-store-tests-\(UUID().uuidString)")!)
+        _ = try? await store.joinStudio(byCode: "ABCD1234")
+        #expect(store.loadState == .loaded)
     }
 
     @Test("leaveStudio wirft weiter, wenn keine Mitgliedschaft besteht")
@@ -201,11 +204,11 @@ struct CatalogStoreTests {
         }
     }
 
-    @Test("setActiveStudio setzt und uebersteht ein neues CatalogStore-Objekt (UserDefaults)")
-    func setActiveStudioPersists() {
+    @Test("setOrt setzt und uebersteht ein neues CatalogStore-Objekt (UserDefaults)")
+    func setOrtPersists() {
         let defaults = UserDefaults(suiteName: "catalog-store-tests-\(UUID().uuidString)")!
         let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: tempDirectory()), defaults: defaults)
-        store.setActiveStudio("s1")
+        store.setOrt(.studio("s1"))
         let secondStore = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: tempDirectory()), defaults: defaults)
         #expect(secondStore.activeStudioId == "s1")
     }
@@ -217,12 +220,178 @@ struct CatalogStoreTests {
         let loader = FakeBootstrapLoader()
         await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s2", name: "Kraftwerk Sued", timezone: "Europe/Berlin")])))
         let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: directory), defaults: defaults)
-        store.setActiveStudio("veraltet")
+        store.setOrt(.studio("veraltet"))
         await store.load()
         #expect(store.activeStudioId == "s2")
 
         let secondStore = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: directory), defaults: defaults)
         #expect(secondStore.activeStudioId == "s2")
+    }
+
+    private func ortStore(
+        studios: [String], defaults: UserDefaults = UserDefaults(suiteName: "catalog-store-tests-\(UUID().uuidString)")!,
+        directory: URL? = nil, loader: FakeBootstrapLoader = FakeBootstrapLoader()
+    ) async -> (CatalogStore, FakeBootstrapLoader, UserDefaults, URL) {
+        let directory = directory ?? tempDirectory()
+        await loader.setBootstrapResult(.success(emptyBootstrap(
+            studios: studios.map { .init(id: $0, name: "Studio \($0)", timezone: "Europe/Berlin") })))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: directory), defaults: defaults)
+        return (store, loader, defaults, directory)
+    }
+
+    @Test("ohne Studio faellt der Ort auf Freies Training")
+    func ohneStudioFreiesTraining() async {
+        let (store, _, _, _) = await ortStore(studios: [])
+        await store.load()
+        #expect(store.ort == .freiesTraining)
+        #expect(store.activeStudioId == nil)
+    }
+
+    @Test("erster Start mit Studios waehlt das erste Studio")
+    func ersterStartErstesStudio() async {
+        let (store, _, _, _) = await ortStore(studios: ["s1", "s2"])
+        await store.load()
+        #expect(store.ort == .studio("s1"))
+    }
+
+    @Test("die Wahl Freies Training uebersteht load() mit Studios und einen Neustart")
+    func freiesTrainingBleibt() async {
+        let (store, _, defaults, directory) = await ortStore(studios: ["s1"])
+        store.setOrt(.freiesTraining)
+        await store.load()
+        #expect(store.ort == .freiesTraining)
+        let zweiter = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: directory), defaults: defaults)
+        #expect(zweiter.ort == .freiesTraining)
+    }
+
+    @Test("ein verlassenes Studio faellt auf das erste Studio zurueck")
+    func verlassenesStudioFaelltZurueck() async {
+        let (store, _, _, _) = await ortStore(studios: ["s2", "s3"])
+        store.setOrt(.studio("s1"))
+        await store.load()
+        #expect(store.ort == .studio("s2"))
+    }
+
+    @Test("ein verlassenes einziges Studio faellt auf Freies Training")
+    func verlassenesStudioOhneRestFreiesTraining() async {
+        let (store, _, _, _) = await ortStore(studios: [])
+        store.setOrt(.studio("s1"))
+        await store.load()
+        #expect(store.ort == .freiesTraining)
+    }
+
+    @Test("ein alter Defaults-Eintrag activeStudioId wird einmalig uebernommen")
+    func altenEintragMigrieren() {
+        let defaults = UserDefaults(suiteName: "catalog-store-tests-\(UUID().uuidString)")!
+        defaults.set("s7", forKey: "activeStudioId")
+        let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: tempDirectory()), defaults: defaults)
+        #expect(store.ort == .studio("s7"))
+        #expect(defaults.string(forKey: "activeStudioId") == nil)
+        let zweiter = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: tempDirectory()), defaults: defaults)
+        #expect(zweiter.ort == .studio("s7"))
+    }
+
+    /// Der Beitritt wechselt den Ort nicht selbst: laeuft anderswo eine
+    /// Einheit, entscheidet erst Ortswechsel.pruefen beim Aufrufer.
+    @Test("joinStudio(byCode:) laesst den Ort stehen und merkt den Beitritt")
+    func joinByCodeLaesstOrtStehen() async throws {
+        let (store, loader, _, _) = await ortStore(studios: ["s1", "s2"])
+        store.setOrt(.freiesTraining)
+        await loader.setJoinResult(.success(JoinResult(studioId: "s2", machineId: nil, joined: true)))
+        let ergebnis = try await store.joinStudio(byCode: "ABCD1234")
+        #expect(ergebnis.studioId == "s2")
+        #expect(store.ort == .freiesTraining)
+        // "Du gehoerst jetzt zu" stimmt unabhaengig vom Ort.
+        #expect(store.studiohinweis == CatalogStore.Studiohinweis(studioName: "Studio s2", beigetreten: true))
+    }
+
+    @Test("joinStudio(byTag:) liefert die machineId durch und laesst den Ort stehen")
+    func joinByTagLiefertMachineId() async throws {
+        let (store, loader, _, _) = await ortStore(studios: ["s1", "s2"])
+        store.setOrt(.studio("s1"))
+        await loader.setJoinResult(.success(JoinResult(studioId: "s2", machineId: "m9", joined: false)))
+        let ergebnis = try await store.joinStudio(byTag: "token")
+        #expect(ergebnis.machineId == "m9")
+        #expect(store.ort == .studio("s1"))
+        // Schon Mitglied und nicht gewechselt: kein Satz, der s2 aktiv nennt.
+        #expect(store.studiohinweis == nil)
+    }
+
+    /// Erster Start ohne gespeicherte Wahl, das Freie Training laeuft: das
+    /// Nachladen nach dem Beitritt darf nicht still aufs neue Studio springen.
+    @Test("ein Beitritt beim ersten Start springt nicht still auf das neue Studio")
+    func beitrittBeimErstenStartSpringtNicht() async throws {
+        let (store, loader, _, _) = await ortStore(studios: ["s2"])
+        await loader.setJoinResult(.success(JoinResult(studioId: "s2", machineId: nil, joined: true)))
+        try await store.joinStudio(byCode: "ABCD1234")
+        #expect(store.ort == .freiesTraining)
+    }
+
+    @Test("ortNachBeitritt wechselt, speichert und nennt den Beitritt")
+    func ortNachBeitrittBeigetreten() async throws {
+        let (store, loader, defaults, directory) = await ortStore(studios: ["s1", "s2"])
+        store.setOrt(.studio("s1"))
+        let beitritt = JoinResult(studioId: "s2", machineId: nil, joined: true)
+        await loader.setJoinResult(.success(beitritt))
+        try await store.joinStudio(byCode: "ABCD1234")
+
+        store.ortNachBeitritt(beitritt)
+
+        #expect(store.ort == .studio("s2"))
+        // Nicht von "ist jetzt aktiv" ueberschrieben.
+        #expect(store.studiohinweis?.text == "Du gehörst jetzt zu Studio s2.")
+        let zweiter = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: directory), defaults: defaults)
+        #expect(zweiter.ort == .studio("s2"))
+    }
+
+    @Test("ortNachBeitritt als schon Mitglied nennt den Wechsel")
+    func ortNachBeitrittSchonMitglied() async throws {
+        let (store, loader, _, _) = await ortStore(studios: ["s1", "s2"])
+        await store.load()
+        store.setOrt(.freiesTraining)
+        let beitritt = JoinResult(studioId: "s2", machineId: "m9", joined: false)
+        await loader.setJoinResult(.success(beitritt))
+        try await store.joinStudio(byTag: "token")
+
+        store.ortNachBeitritt(beitritt)
+
+        #expect(store.ort == .studio("s2"))
+        #expect(store.studiohinweis?.text == "Studio s2 ist jetzt aktiv.")
+    }
+
+    /// Kein Hinweis darf einen Ort aktiv nennen, der es nicht mehr ist.
+    @Test("ein Ortswechsel raeumt einen veralteten Aktiv-Hinweis weg")
+    func veralteterAktivHinweisFaellt() async {
+        let (store, _, _, _) = await ortStore(studios: ["s1", "s2"])
+        await store.load()
+        store.setOrt(.studio("s1"))
+        store.setOrt(.studio("s2"))
+        #expect(store.studiohinweis?.text == "Studio s2 ist jetzt aktiv.")
+        store.setOrt(.freiesTraining)
+        #expect(store.studiohinweis == nil)
+    }
+
+    @Test("ein Ortswechsel laesst den Beitrittshinweis stehen")
+    func beitrittsHinweisBleibt() async throws {
+        let (store, loader, _, _) = await ortStore(studios: ["s1", "s2"])
+        store.setOrt(.studio("s1"))
+        await loader.setJoinResult(.success(JoinResult(studioId: "s2", machineId: nil, joined: true)))
+        try await store.joinStudio(byCode: "ABCD1234")
+        store.setOrt(.freiesTraining)
+        #expect(store.studiohinweis?.text == "Du gehörst jetzt zu Studio s2.")
+    }
+
+    @Test("reset() loescht den Ort")
+    func resetLoeschtOrt() async {
+        let (store, _, defaults, directory) = await ortStore(studios: ["s1"])
+        store.setOrt(.freiesTraining)
+        store.reset()
+        #expect(store.ort == .freiesTraining)
+        #expect(defaults.object(forKey: "aktiverOrt") == nil)
+        // Nach dem Abmelden gilt wieder "erster Start": das erste Studio.
+        let (dritter, _, _, _) = await ortStore(studios: ["s1"], defaults: defaults, directory: directory)
+        await dritter.load()
+        #expect(dritter.ort == .studio("s1"))
     }
 
     @Test("reset() raeumt Katalog, Ladezustand, aktives Studio, offene und verworfene Schreibvorgaenge")
@@ -270,7 +439,7 @@ struct CatalogStoreTests {
 
         await loader.setBootstrapResult(.success(emptyBootstrap(studios: [.init(id: "s1", name: "Kraftwerk Nord", timezone: "Europe/Berlin")])))
         await store.load()
-        #expect(store.loadState == .loaded(hasStudio: true))
+        #expect(store.loadState == .loaded)
     }
 
     // MARK: - Neuladen ueber einem geladenen Bootstrap
@@ -289,14 +458,17 @@ struct CatalogStoreTests {
 
         await store.load()
 
-        #expect(await loader.gesehen == [.loaded(hasStudio: true)])
-        #expect(store.loadState == .loaded(hasStudio: true))
+        #expect(await loader.gesehen == [.loaded])
+        #expect(store.loadState == .loaded)
     }
 
     @Test("ein gescheitertes Neuladen behaelt den vorigen Bootstrap und Zustand")
     func gescheitertesNeuladenBehaeltAltenStand() async {
         let loader = BeobachtenderBootstrapLoader()
-        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        // Eigene Defaults: der erste Start soll das erste Studio waehlen, und
+        // eine in .standard liegende Wahl eines anderen Tests verhinderte das.
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 defaults: UserDefaults(suiteName: "catalog-store-tests-\(UUID().uuidString)")!)
         let vorher = emptyBootstrap(studios: [kraftwerkNord])
         await loader.setzeErgebnis(.success(vorher))
         await store.load()
@@ -305,7 +477,7 @@ struct CatalogStoreTests {
         await store.load()
 
         #expect(store.bootstrap == vorher)
-        #expect(store.loadState == .loaded(hasStudio: true))
+        #expect(store.loadState == .loaded)
         #expect(store.activeStudioId == "s1")
     }
 
@@ -319,7 +491,7 @@ struct CatalogStoreTests {
         await store.load()
 
         #expect(await loader.gesehen == [.loading])
-        #expect(store.loadState == .loaded(hasStudio: true))
+        #expect(store.loadState == .loaded)
     }
 
     @Test("der erste Ladevorgang geht weiter ueber .loading nach .failed")
@@ -357,11 +529,11 @@ struct CatalogStoreTests {
         await loader.beobachte { store.loadState }
         await store.load()
 
-        #expect(await loader.gesehen == [.loaded(hasStudio: true)])
+        #expect(await loader.gesehen == [.loaded])
         #expect(ziel() == .main)
     }
 
-    @Test("ohne Studio fuehrt dasselbe Neuladen vom Onboarding nach noStudio")
+    @Test("ohne Studio fuehrt dasselbe Neuladen vom Onboarding nach main")
     func neuladenSchliesstDasOnboardingGateOhneStudio() async {
         let session = Session(accessToken: "t", userId: "u", email: "lena@example.de", expiresAt: .distantFuture)
         let loader = BeobachtenderBootstrapLoader()
@@ -378,7 +550,7 @@ struct CatalogStoreTests {
         await loader.setzeErgebnis(.success(bootstrap(onboardingCompletedAt: "2026-09-15T08:00:00Z", studios: [])))
         await store.load()
 
-        #expect(ziel() == .noStudio)
+        #expect(ziel() == .main)
     }
 
     private var kraftwerkNord: BootstrapResponse.Studio {

@@ -20,8 +20,8 @@ protocol KurseLoading: Sendable {
 extension APIClient: KurseLoading {}
 
 /// Ladezustand des Wochenplans -- eigener Typ statt CatalogLoadState
-/// wiederzuverwenden: dessen `loaded(hasStudio:)` traegt eine Nutzlast, die
-/// hier keinen Sinn ergibt, der Kurse-Bildschirm braucht eine andere.
+/// wiederzuverwenden: dessen Zustaende gehoeren zum Bootstrap, der Kurse-Bildschirm
+/// braucht andere.
 enum KurseLadeZustand: Equatable {
     case bereit
     case laedt

@@ -252,6 +252,8 @@ struct KurseWochenView: View {
     /// gespeicherten Buchungen, die Tagesliste den vollen `CourseWeekSession`
     /// -- beide sollen denselben Weg ins Kursdetail nehmen.
     let beiAuswahl: (String) -> Void
+    /// Meldet den Abschluss, wenn ein Beitritt die laufende Einheit beendet.
+    let loader: any GeraetLoading
 
     @Environment(KurseStore.self) private var kurse
     @Environment(CatalogStore.self) private var katalog
@@ -273,6 +275,8 @@ struct KurseWochenView: View {
     /// Daten unter der offenen App aendern.
     @State private var gewaehlteAnsicht: KurseAnsicht?
 
+    @State private var beitretenOffen = false
+
     /// 60-Sekunden-Kadenz statt einer einmalig beim Aufbau gelesenen
     /// Date() -- dasselbe Muster wie in KursDetailView und KurseMeineView,
     /// und aus demselben Grund: @Observable loest kein Neuzeichnen aus,
@@ -281,10 +285,38 @@ struct KurseWochenView: View {
     /// Kursdetail, das die Uhr hat), und ueber Mitternacht markierte der
     /// Wochenstreifen weiter gestern als "heute".
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            screenInhalt(jetzt: context.date)
+        Group {
+            switch KurseOrtZustand.fuer(ort: katalog.ort) {
+            case .plan:
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    screenInhalt(jetzt: context.date)
+                }
+            case .beitreten:
+                beitretenInhalt
+            }
         }
         .testnotizScreen()
+    }
+
+    /// Im Freien Training: kein Plan, kein Laden -- nur der Weg zu einem Studio.
+    private var beitretenInhalt: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
+            kopf
+            Text(KurseOrtZustand.hinweis)
+                .font(.system(size: 15))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+            SecondaryButton(title: "Studio beitreten") { beitretenOffen = true }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, DesignSystem.Spacing.s24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(DesignSystem.Color.bg)
+        .sheet(isPresented: $beitretenOffen) {
+            NavigationStack {
+                StudioBeitretenView(loader: loader) { beitretenOffen = false }
+            }
+        }
     }
 
     private func screenInhalt(jetzt: Date) -> some View {

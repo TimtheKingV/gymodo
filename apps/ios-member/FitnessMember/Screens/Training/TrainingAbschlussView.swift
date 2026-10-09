@@ -226,13 +226,11 @@ struct TrainingAbschlussView: View {
     }
 
     private func blockZeile(_ zeile: AbschlussZeile) -> some View {
-        let maschine = katalog.bootstrap?.machines.first { $0.id == zeile.block.machineId }
-        let uebung = maschine?.exercises.first { $0.id == zeile.block.exerciseId }
         let gemeldet = zeile.block.problemGemeldet
         return HStack {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                Text([maschine?.equipmentModel.name, uebung?.name]
-                    .compactMap { $0 }.joined(separator: " · "))
+                Text(AbschlussZeile.titel(block: zeile.block, bootstrap: katalog.bootstrap,
+                                          studioId: katalog.activeStudioId))
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.text)
                 HStack(spacing: DesignSystem.Spacing.s8) {
@@ -389,10 +387,30 @@ struct AbschlussZeile: Equatable, Identifiable {
         return "\(werte) · \(saetze)"
     }
 
+    /// "Modell · Uebung" einer Blockzeile. Zuerst ueber die Station (ein Typ-Block
+    /// steht nicht in bootstrap.machines); fehlt sie -- stillgelegtes
+    /// Geraet, ein Typ von einem anderen Ort --, werden Modell und Uebung im
+    /// ganzen Bootstrap gesucht. Die Blockzeile traegt selbst keinen Namen,
+    /// und eine leere Zeile sagt dem Mitglied nichts: zuletzt "Gerät".
+    static func titel(block: Blockzeile, bootstrap: BootstrapResponse?, studioId: String?) -> String {
+        let station = bootstrap?.station(schluessel: block.stationSchluessel, studioId: studioId)
+        let modelle = (bootstrap?.machines.map(\.equipmentModel) ?? [])
+        let typen = bootstrap?.catalog?.equipmentTypes ?? []
+        let modellName = station?.equipmentModel.name ?? block.equipmentModelId.flatMap { id in
+            modelle.first { $0.id == id }?.name ?? typen.first { $0.id == id }?.name
+        }
+        let alleUebungen = (station?.exercises ?? [])
+            + (bootstrap?.machines.flatMap(\.exercises) ?? [])
+            + typen.flatMap(\.exercises)
+        let uebungName = alleUebungen.first { $0.id == block.exerciseId }?.name
+        let titel = [modellName, uebungName].compactMap { $0 }.joined(separator: " · ")
+        return titel.isEmpty ? "Gerät" : titel
+    }
+
     static func zeilen(bloecke: [Blockzeile], vorschlaege: [Blockvorschlag]) -> [AbschlussZeile] {
         bloecke.map { block in
             let vorschlag = vorschlaege.first {
-                $0.machineId == block.machineId && $0.exerciseId == block.exerciseId
+                $0.stationSchluessel == block.stationSchluessel && $0.exerciseId == block.exerciseId
             }
             return AbschlussZeile(
                 block: block,

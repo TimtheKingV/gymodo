@@ -201,10 +201,11 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
                               rateSollHz: quelle.rate.rawValue,
                               akkuProzent: quelle.zustand.akkuProzent),
                 geraet: geraet,
-                kontext: .init(machineId: kontext.machineId, machineName: kontext.machineName,
+                kontext: .init(machineId: kontext.station.machineId, machineName: kontext.machineName,
                                exerciseId: kontext.exerciseId, exerciseName: kontext.exerciseName,
-                               sessionId: nil, setId: nil, setIndex: nil),
-                befestigung: gemerkteBefestigung(kontext.machineId))
+                               sessionId: nil, setId: nil, setIndex: nil,
+                               equipmentModelId: kontext.station.equipmentModelId),
+                befestigung: gemerkteBefestigung(kontext.station.schluessel))
             aufnahmeStatistik = SensorStatistik()
             verworfenBeiStart = quelle.verworfeneBytes
             aufnahmeLaeuft = true
@@ -257,17 +258,28 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
 
     // MARK: - Befestigung
 
-    private func schluessel(_ machineId: String) -> String { "sensor.befestigung.\(machineId)" }
+    // Je Station: am Typ gibt es keine machineId, und ein Typ ist eine
+    // andere Befestigung als ein konkretes Geraet desselben Modells.
+    private func schluessel(_ station: String) -> String { "sensor.befestigung.\(station)" }
 
-    private func gemerkteBefestigung(_ machineId: String) -> String? {
-        let text = einstellungen.string(forKey: schluessel(machineId)) ?? ""
+    /// Vor den Stationen hiess der Schluessel "sensor.befestigung.<machineId>";
+    /// am Geraet wird er weiter gelesen, bis ein neuer Wert ihn ersetzt.
+    private func alterSchluessel(_ station: String) -> String? {
+        guard case .geraet(let machineId)? = Station.art(schluessel: station) else { return nil }
+        return "sensor.befestigung.\(machineId)"
+    }
+
+    private func gemerkteBefestigung(_ station: String) -> String? {
+        let text = einstellungen.string(forKey: schluessel(station))
+            ?? alterSchluessel(station).flatMap { einstellungen.string(forKey: $0) }
+            ?? ""
         return text.isEmpty ? nil : text
     }
 
-    func befestigung(fuer machineId: String) -> String { gemerkteBefestigung(machineId) ?? "" }
+    func befestigung(fuer station: String) -> String { gemerkteBefestigung(station) ?? "" }
 
-    func befestigungSetzen(_ text: String, fuer machineId: String) {
-        einstellungen.set(text.trimmingCharacters(in: .whitespacesAndNewlines), forKey: schluessel(machineId))
+    func befestigungSetzen(_ text: String, fuer station: String) {
+        einstellungen.set(text.trimmingCharacters(in: .whitespacesAndNewlines), forKey: schluessel(station))
     }
 
     // MARK: - Rate

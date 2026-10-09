@@ -16,6 +16,13 @@ protocol BootstrapLoading: Sendable {
 
 extension APIClient: BootstrapLoading {}
 
+/// Wo die App gerade arbeitet: in einem Studio oder im Freien Training
+/// (ohne Studio, ohne feste Geraete).
+enum Ort: Equatable, Sendable, Codable {
+    case studio(String)
+    case freiesTraining
+}
+
 /// @MainActor, weil CatalogStore -- wie SessionStore seit Aufgabe 12 -- ueber
 /// @Environment direkt in SwiftUI-Views gelesen wird (ab Aufgabe 19); ohne
 /// diese Isolation flaggt Swift 6 beim Aufruf von z. B. load() aus einem View
@@ -26,7 +33,17 @@ final class CatalogStore {
     private(set) var bootstrap: BootstrapResponse?
     private(set) var loadState: CatalogLoadState = .idle
     private(set) var pendingWrites: [PendingSetWrite]
-    private(set) var activeStudioId: String?
+    /// Der gewaehlte Ort. Ohne gespeicherte Wahl `.freiesTraining` als
+    /// Platzhalter bis zum ersten `load()` -- `hatGewaehlt` unterscheidet das
+    /// von einer echten Wahl, damit der erste Start das erste Studio nimmt.
+    private(set) var ort: Ort
+    private var hatGewaehlt: Bool
+
+    /// Bleibt fuer alle Leser, die nur das Studio brauchen (Home, Kurse,
+    /// Training ...); im Freien Training gibt es keins.
+    var activeStudioId: String? {
+        if case .studio(let id) = ort { id } else { nil }
+    }
 
     /// Der Fehler des letzten gescheiterten Ladevorgangs, oder nil, solange
     /// der letzte gelungen ist.
@@ -50,6 +67,11 @@ final class CatalogStore {
         let studioName: String
         /// true = neu beigetreten, false = stillschweigend gewechselt.
         let beigetreten: Bool
+
+        /// Home und der Training-Tab (nach einem Aushang-Scan) sagen dasselbe.
+        var text: String {
+            beigetreten ? "Du gehörst jetzt zu \(studioName)." : "\(studioName) ist jetzt aktiv."
+        }
     }
 
     /// Kein Wegraeum-Aufruf: der Hinweis lebt nur im Speicher und ist
@@ -73,7 +95,9 @@ final class CatalogStore {
     private let pendingWriteStore: PendingWriteStore
     private let verworfeneWriteStore: PendingWriteStore
     private let defaults: UserDefaults
-    private static let activeStudioDefaultsKey = "activeStudioId"
+    private static let ortDefaultsKey = "aktiverOrt"
+    /// Nur noch zum einmaligen Uebernehmen alter Installationen gelesen.
+    private static let alterStudioDefaultsKey = "activeStudioId"
 
     init(loader: any BootstrapLoading, pendingWriteStore: PendingWriteStore, defaults: UserDefaults = .standard) {
         self.loader = loader
@@ -85,7 +109,26 @@ final class CatalogStore {
         self.defaults = defaults
         pendingWrites = pendingWriteStore.loadAll()
         verworfeneWrites = verworfeneWriteStore.loadAll()
-        activeStudioId = defaults.string(forKey: Self.activeStudioDefaultsKey)
+        if let data = defaults.data(forKey: Self.ortDefaultsKey),
+           let gespeichert = try? JSONDecoder().decode(Ort.self, from: data) {
+            ort = gespeichert
+            hatGewaehlt = true
+        } else if let alt = defaults.string(forKey: Self.alterStudioDefaultsKey) {
+            // Migration: vor dem Freien Training gab es nur das Studio.
+            ort = .studio(alt)
+            hatGewaehlt = true
+            defaults.removeObject(forKey: Self.alterStudioDefaultsKey)
+            Self.speichere(ort, in: defaults)
+        } else {
+            ort = .freiesTraining
+            hatGewaehlt = false
+        }
+    }
+
+    private static func speichere(_ ort: Ort, in defaults: UserDefaults) {
+        if let data = try? JSONEncoder().encode(ort) {
+            defaults.set(data, forKey: ortDefaultsKey)
+        }
     }
 
     /// `.loading` nur beim ersten Laden: RootView zeigt dafuer den
@@ -104,20 +147,31 @@ final class CatalogStore {
             let response = try await loader.bootstrap()
             letzterLadefehler = nil
             bootstrap = response
-            loadState = .loaded(hasStudio: !response.studios.isEmpty)
-            if activeStudioId == nil || !response.studios.contains(where: { $0.id == activeStudioId }) {
-                // Die Reparatur muss auch persistiert werden, sonst taucht der
-                // veraltete Wert beim naechsten Start wieder aus UserDefaults auf.
-                if let ersatz = response.studios.first?.id {
-                    setActiveStudio(ersatz)
-                } else {
-                    activeStudioId = nil
-                    defaults.removeObject(forKey: Self.activeStudioDefaultsKey)
-                }
-            }
+            loadState = .loaded
+            repariereOrt(studios: response.studios)
         } catch {
             letzterLadefehler = error
             if bootstrap == nil { loadState = .failed }
+        }
+    }
+
+    /// Ein Studio, das es nicht mehr gibt, faellt aufs erste Studio zurueck, ohne
+    /// Studio auf das Freie Training; das Freie Training bleibt immer stehen.
+    /// Ohne gespeicherte Wahl (erster Start) wird nichts festgeschrieben, wenn
+    /// es kein Studio gibt -- sonst klebte der Platzhalter, sobald eins dazukommt.
+    private func repariereOrt(studios: [BootstrapResponse.Studio]) {
+        switch ort {
+        case .freiesTraining:
+            if !hatGewaehlt, let erstes = studios.first?.id { setOrt(.studio(erstes)) }
+        case .studio(let id):
+            if studios.contains(where: { $0.id == id }) { return }
+            // Die Reparatur muss auch persistiert werden, sonst taucht der
+            // veraltete Wert beim naechsten Start wieder aus UserDefaults auf.
+            if let ersatz = studios.first?.id {
+                setOrt(.studio(ersatz))
+            } else {
+                setOrt(.freiesTraining)
+            }
         }
     }
 
@@ -132,8 +186,10 @@ final class CatalogStore {
         bootstrap = nil
         loadState = .idle
         letzterLadefehler = nil
-        activeStudioId = nil
-        defaults.removeObject(forKey: Self.activeStudioDefaultsKey)
+        ort = .freiesTraining
+        hatGewaehlt = false
+        defaults.removeObject(forKey: Self.ortDefaultsKey)
+        defaults.removeObject(forKey: Self.alterStudioDefaultsKey)
         pendingWrites = []
         pendingWriteStore.save([])
         verworfeneWrites = []
@@ -205,26 +261,58 @@ final class CatalogStore {
     }
 
     /// Wechseln ist reiner Client-Zustand -- "Tippen wechselt" (MemberStudios.dc.html)
-    /// beschreibt keine Server-Aktion, sondern welches Studio lokal angezeigt wird.
-    func setActiveStudio(_ id: String) {
-        let wechsel = activeStudioId != nil && activeStudioId != id
-        activeStudioId = id
-        defaults.set(id, forKey: Self.activeStudioDefaultsKey)
+    /// beschreibt keine Server-Aktion, sondern welcher Ort lokal gilt.
+    ///
+    /// `wechselMelden: false` wechselt ohne "ist jetzt aktiv" -- etwa nach
+    /// einem Beitritt, dessen eigener Hinweis stehen bleiben soll.
+    func setOrt(_ neu: Ort, wechselMelden: Bool = true) {
+        let alt = ort
+        ort = neu
+        hatGewaehlt = true
+        Self.speichere(neu, in: defaults)
 
-        if wechsel, let name = bootstrap?.studios.first(where: { $0.id == id })?.name {
+        // "X ist jetzt aktiv" stimmt nach jedem Wechsel nicht mehr; "Du
+        // gehoerst jetzt zu X" bleibt wahr, egal wo man trainiert.
+        if alt != neu, studiohinweis?.beigetreten == false { studiohinweis = nil }
+        if wechselMelden, case .studio(let alteId) = alt, case .studio(let id) = neu, alteId != id,
+           let name = bootstrap?.studios.first(where: { $0.id == id })?.name {
             studiohinweis = Studiohinweis(studioName: name, beigetreten: false)
         }
     }
 
-    func joinStudio(byCode code: String) async throws(APIError) {
+    /// Ein Beitritt macht zum Mitglied, wechselt aber nicht selbst den Ort:
+    /// laeuft anderswo eine Einheit, muss erst "Training in X beenden?"
+    /// kommen (Plan, Entscheidung 1 und 2). Den Wechsel macht der Aufrufer
+    /// ueber `ortNachBeitritt`, nachdem Ortswechsel.pruefen ihn erlaubt.
+    /// Die machineId reicht der Scanpfad weiter.
+    @discardableResult
+    func joinStudio(byCode code: String) async throws(APIError) -> JoinResult {
         let ergebnis = try await loader.joinStudioByCode(code)
-        await load()
-        merkeHinweis(fuer: ergebnis)
+        await nachBeitrittLaden(ergebnis)
+        return ergebnis
     }
 
-    func joinStudio(byTag token: String) async throws(APIError) {
+    @discardableResult
+    func joinStudio(byTag token: String) async throws(APIError) -> JoinResult {
         let ergebnis = try await loader.joinStudioByTag(token)
+        await nachBeitrittLaden(ergebnis)
+        return ergebnis
+    }
+
+    private func nachBeitrittLaden(_ ergebnis: JoinResult) async {
+        // Ohne gespeicherte Wahl naehme load() das erste Studio -- das waere
+        // genau der stille Wechsel, den der Aufrufer erst pruefen soll.
+        if !hatGewaehlt { setOrt(ort, wechselMelden: false) }
         await load()
+        // Nur der Beitritt selbst: "ist jetzt aktiv" gilt erst nach dem Wechsel.
+        if ergebnis.joined { merkeHinweis(fuer: ergebnis) }
+    }
+
+    /// Der Wechsel nach einem Beitritt, sobald er erlaubt ist (sofort oder
+    /// nach "Training beenden"). Der Hinweis nennt den Beitritt, sonst den
+    /// Wechsel.
+    func ortNachBeitritt(_ ergebnis: JoinResult) {
+        setOrt(.studio(ergebnis.studioId), wechselMelden: false)
         merkeHinweis(fuer: ergebnis)
     }
 

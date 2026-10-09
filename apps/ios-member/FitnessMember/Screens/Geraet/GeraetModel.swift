@@ -74,7 +74,9 @@ final class GeraetModel {
         }
     }
 
-    let maschine: BootstrapResponse.Machine
+    /// Geraet oder Gymtavo-Geraetetyp. Am Typ fehlen Token, Kalibrierung
+    /// und Geraetebesuche; alles andere laeuft gleich.
+    let station: Station
     private(set) var uebungId: String
     private(set) var kontext: TagContextResponse?
     private(set) var phase: Phase = .eingabe
@@ -122,6 +124,11 @@ final class GeraetModel {
     /// Kommt woertlich vom Server -- er kennt die Grenzen des Geraetemodells
     /// und formuliert, was gilt (designsystem.md SS5).
     private(set) var kalibrierungFehler: String?
+    /// Warum der letzte Satz nicht gesichert wurde: das Geraet steht an
+    /// einem anderen Ort als die laufende Einheit (Ortswechsel.satzKonflikt).
+    /// Ein Pfad, der die Ortspruefung umgeht, endet hier statt in den
+    /// verworfenen Schreibvorgaengen.
+    private(set) var satzAbgelehnt: String?
 
     private let token: String?
     private let bootstrap: BootstrapResponse
@@ -171,7 +178,7 @@ final class GeraetModel {
     var einstiegsart: Einstiegsart { Einstiegsart(token: token) }
 
     init(
-        maschine: BootstrapResponse.Machine,
+        station: Station,
         uebungId: String,
         token: String?,
         bootstrap: BootstrapResponse,
@@ -181,7 +188,7 @@ final class GeraetModel {
         satzZiel: @escaping () -> Int = { Einstellungen.satzZiel() },
         mitschnitt: (any SatzMitschnitt)? = nil
     ) {
-        self.maschine = maschine
+        self.station = station
         self.uebungId = uebungId
         self.token = token
         self.bootstrap = bootstrap
@@ -191,13 +198,11 @@ final class GeraetModel {
         satzZielLesen = satzZiel
         self.mitschnitt = mitschnitt
 
-        let letzter = bootstrap.lastSets.first {
-            $0.machineId == maschine.id && $0.exerciseId == uebungId
-        }
+        let letzter = Self.letzterSatz(an: station, uebungId: uebungId, in: bootstrap)
         // Ohne Historie startet das Rad am Geraetminimum -- ein Vorschlag
         // ohne Daten waere eine Trainingsempfehlung (designsystem.md SS8).
-        belastung = letzter?.load ?? maschine.equipmentModel.loadMin
-        umfang = letzter?.volume ?? maschine.exercises.first { $0.id == uebungId }?.targetMin ?? 10
+        belastung = letzter?.load ?? station.equipmentModel.loadMin
+        umfang = letzter?.volume ?? station.exercises.first { $0.id == uebungId }?.targetMin ?? 10
 
         // Snap erst, nachdem alle gespeicherten Eigenschaften stehen --
         // belastungsWerte und umfangsWerte sind berechnete Zugriffe, die
@@ -230,7 +235,7 @@ final class GeraetModel {
                              videoURL: $0.instructionVideoUrl.flatMap(URL.init(string:)))
             }
         }
-        return maschine.exercises.map {
+        return station.exercises.map {
             GeraetUebung(id: $0.id, name: $0.name, volumeKind: $0.volumeKind,
                          targetMin: $0.targetMin, targetMax: $0.targetMax,
                          videoURL: nil)
@@ -256,7 +261,7 @@ final class GeraetModel {
     /// Blockliste des Trainings (Testnotiz 06.10., #12).
     func blockInEinheit(fuer uebungId: String) -> LokalerBlock? {
         sessions.aktiveSession()?.bloecke.first {
-            $0.machineId == maschine.id && $0.exerciseId == uebungId && !$0.saetze.isEmpty
+            $0.stationSchluessel == station.schluessel && $0.exerciseId == uebungId && !$0.saetze.isEmpty
         }
     }
 
@@ -271,15 +276,15 @@ final class GeraetModel {
                     kontext.equipmentModel.loadMin,
                     kontext.equipmentModel.loadMax)
         }
-        return (maschine.equipmentModel.loadStep,
-                maschine.equipmentModel.loadMin,
-                maschine.equipmentModel.loadMax)
+        return (station.equipmentModel.loadStep,
+                station.equipmentModel.loadMin,
+                station.equipmentModel.loadMax)
     }
 
     /// Die Einheit der Belastung. Ein Wert, den Rad und Formatierer lesen
     /// -- keine Stelle im Modell verzweigt danach.
     var loadUnit: LoadUnit {
-        kontext?.equipmentModel.loadUnit ?? maschine.equipmentModel.loadUnit
+        kontext?.equipmentModel.loadUnit ?? station.equipmentModel.loadUnit
     }
 
     /// Die Umfangsart der aktiven Uebung. `.reps` nur, wenn es die Uebung
@@ -294,8 +299,8 @@ final class GeraetModel {
             if let modell = kontext?.equipmentModel {
                 (modell.secondaryUnit, modell.secondaryStep, modell.secondaryMin, modell.secondaryMax)
             } else {
-                (maschine.equipmentModel.secondaryUnit, maschine.equipmentModel.secondaryStep,
-                 maschine.equipmentModel.secondaryMin, maschine.equipmentModel.secondaryMax)
+                (station.equipmentModel.secondaryUnit, station.equipmentModel.secondaryStep,
+                 station.equipmentModel.secondaryMin, station.equipmentModel.secondaryMax)
             }
         guard let einheit = quelle.0, let schritt = quelle.1,
               let min = quelle.2, let max = quelle.3 else { return nil }
@@ -352,7 +357,7 @@ final class GeraetModel {
     }
 
     private var definitionen: [TagContextResponse.SettingDefinition] {
-        kontext?.settingDefinitions ?? maschine.equipmentModel.settingDefinitions
+        kontext?.settingDefinitions ?? station.equipmentModel.settingDefinitions
     }
 
     /// Fuer KalibrierungSchritt -- dieselben Definitionen, oeffentlich.
@@ -362,6 +367,22 @@ final class GeraetModel {
     /// dieselbe Quelle wie `einstellDefinitionen`, damit Dreischritt und
     /// Kalibrierungsschritt nie verschiedener Meinung sind.
     var hatEinstellparameter: Bool { !definitionen.isEmpty }
+
+    /// Kalibrierungen gelten je Geraet (Spec 5.4): am Typ gibt es kein
+    /// Geraet, an dem eine Sitzposition haengen koennte. Der Screen blendet
+    /// dort "aendern" und den Einstellungsschritt aus.
+    var kannKalibrieren: Bool { station.machineId != nil }
+
+    /// Ob der Erstkontakt nach der Einstellung fragt -- nur, wenn es etwas
+    /// einzustellen UND einen Ort fuer die Werte gibt.
+    var erstkontaktFragtEinstellung: Bool { kannKalibrieren && hatEinstellparameter }
+
+    /// "GERAET 7 - FENSTERSEITE" in den Kopfzeilen. Am Typ leer: sein Label
+    /// ist der Typname, und der steht ohnehin gross darunter.
+    var ortsangabe: String {
+        guard station.machineId != nil else { return "" }
+        return [station.label, station.locationNote].compactMap { $0 }.joined(separator: " · ")
+    }
 
     /// tag-context.ts berechnet calibration und suggestion serverseitig fuer
     /// genau eine Uebung (selectedExerciseId). Nach einem Uebungswechsel
@@ -376,8 +397,9 @@ final class GeraetModel {
         if kontextPasstZurUebung, let kalibrierung = kontext?.calibration {
             return kalibrierung.settingValues
         }
+        guard let machineId = station.machineId else { return nil }
         return bootstrap.calibrations.first {
-            $0.machineId == maschine.id && $0.exerciseId == uebungId
+            $0.machineId == machineId && $0.exerciseId == uebungId
         }?.settingValues
     }
 
@@ -402,7 +424,7 @@ final class GeraetModel {
     }
 
     var satzNummer: Int {
-        sessions.naechsterSetIndex(machineId: maschine.id, exerciseId: uebungId)
+        sessions.naechsterSetIndex(station: station, exerciseId: uebungId)
     }
 
     /// Wie viele Saetze an diesem Geraet geplant sind (Profil, Vorgabe 3).
@@ -444,9 +466,7 @@ final class GeraetModel {
     }
 
     var rueckblick: Rueckblick? {
-        guard let letzter = bootstrap.lastSets.first(where: {
-            $0.machineId == maschine.id && $0.exerciseId == uebungId
-        }) else { return nil }
+        guard let letzter = letzterSatz(fuer: uebungId) else { return nil }
         return Rueckblick(
             zuletzt: Zahlformat.satz(letzter.load, loadUnit,
                                      neben: letzter.secondaryLoad, secondaryUnit,
@@ -477,9 +497,7 @@ final class GeraetModel {
     }
 
     func letzteBelastung(fuer uebungId: String) -> Double? {
-        bootstrap.lastSets.first {
-            $0.machineId == maschine.id && $0.exerciseId == uebungId
-        }?.load
+        letzterSatz(fuer: uebungId)?.load
     }
 
     /// Ganze Tage seit dem letzten Satz -- "vor 8 Tagen" in der
@@ -487,9 +505,8 @@ final class GeraetModel {
     /// Scheiben auflegt. nil ohne Historie oder wenn performedAt sich nicht
     /// parsen laesst; die Zeile zeigt dann nur die Belastung.
     func letzteNutzungInTagen(fuer uebungId: String) -> Int? {
-        guard let letzter = bootstrap.lastSets.first(where: {
-            $0.machineId == maschine.id && $0.exerciseId == uebungId
-        }), let datum = ISO8601DateFormatter().date(from: letzter.performedAt) else { return nil }
+        guard let letzter = letzterSatz(fuer: uebungId),
+              let datum = ISO8601DateFormatter().date(from: letzter.performedAt) else { return nil }
         return Calendar.current.dateComponents([.day], from: datum, to: Date()).day
     }
 
@@ -514,8 +531,8 @@ final class GeraetModel {
     var istErstkontakt: Bool {
         !erledigt.contains(uebungId)
             && GeraetEinstiegRechner.brauchtErstkontakt(
-                machineId: maschine.id, exerciseId: uebungId, in: bootstrap,
-                naechsterSetIndex: sessions.naechsterSetIndex(machineId: maschine.id, exerciseId: uebungId))
+                station: station.schluessel, exerciseId: uebungId, in: bootstrap,
+                naechsterSetIndex: sessions.naechsterSetIndex(station: station, exerciseId: uebungId))
     }
 
     /// Ob gerade ein Training laeuft -- der Erstkontakt haengt
@@ -549,8 +566,11 @@ final class GeraetModel {
         let geladen: TagContextResponse? =
             if let token {
                 try? await loader.tagContext(token: token)
+            } else if let machineId = station.machineId {
+                try? await loader.machineContext(machineId: machineId)
             } else {
-                try? await loader.machineContext(machineId: maschine.id)
+                try? await loader.equipmentModelContext(
+                    modelId: station.equipmentModelId, studio: station.studioId)
             }
         guard let geladen else { return }
         kontextUebernehmen(geladen)
@@ -605,9 +625,32 @@ final class GeraetModel {
         nebenbelastungVomNutzer = true
     }
 
-    private func letzterSatz(fuer uebungId: String) -> BootstrapResponse.LastSet? {
-        bootstrap.lastSets.first {
-            $0.machineId == maschine.id && $0.exerciseId == uebungId
+    /// Was vom letzten eigenen Satz zaehlt -- am Geraet aus lastSets, am Typ
+    /// aus lastTypeSets. Eine Form fuer beide, damit Startwerte, Rueckblick
+    /// und Uebungsliste nicht je zwei Quellen kennen.
+    struct LetzterSatz {
+        let load: Double
+        let secondaryLoad: Double?
+        let volume: Int
+        let performedAt: String
+    }
+
+    private func letzterSatz(fuer uebungId: String) -> LetzterSatz? {
+        Self.letzterSatz(an: station, uebungId: uebungId, in: bootstrap)
+    }
+
+    /// Statisch, weil init sie braucht, bevor alle Eigenschaften stehen.
+    private static func letzterSatz(an station: Station, uebungId: String,
+                                    in bootstrap: BootstrapResponse) -> LetzterSatz? {
+        switch station.art {
+        case .geraet(let machineId):
+            bootstrap.lastSets.first { $0.machineId == machineId && $0.exerciseId == uebungId }
+                .map { LetzterSatz(load: $0.load, secondaryLoad: $0.secondaryLoad,
+                                   volume: $0.volume, performedAt: $0.performedAt) }
+        case .typ(let equipmentModelId):
+            bootstrap.lastTypeSets.first { $0.equipmentModelId == equipmentModelId && $0.exerciseId == uebungId }
+                .map { LetzterSatz(load: $0.load, secondaryLoad: $0.secondaryLoad,
+                                   volume: $0.volume, performedAt: $0.performedAt) }
         }
     }
 
@@ -636,8 +679,14 @@ final class GeraetModel {
     }
 
     func satzSichern(problemFlag: Bool, problemReason: ProblemReason?) async {
+        if let laufend = Ortswechsel.satzKonflikt(station: station, offeneEinheit: sessions.aktiveSession()) {
+            let ort = StudiosListe.name(fuer: laufend, studios: bootstrap.studios)
+            satzAbgelehnt = "Dein Training läuft in \(ort). Beende es zuerst, dann sicherst du hier Sätze."
+            return
+        }
+        satzAbgelehnt = nil
         let geschrieben = sessions.satzSichern(
-            machineId: maschine.id, exerciseId: uebungId,
+            station: station, exerciseId: uebungId,
             einheiten: einheiten,
             load: belastung, secondaryLoad: nebenbelastung, volume: umfang,
             problemFlag: problemFlag, problemReason: problemReason
@@ -648,10 +697,9 @@ final class GeraetModel {
         enqueue(PendingSetWrite(sessionId: geschrieben.sessionId,
                                 setId: geschrieben.setId,
                                 body: geschrieben.body))
-        // sessions.satzSichern() oben ist der einzige Fehlschlagpfad, und
-        // der wirft nicht -- lokal wird immer geschrieben, auch offline
-        // (Spec Abschnitt 8.2). Der Zaehler steigt deshalb hier, nicht
-        // hinter einem Erfolgs-Guard, den es nicht gibt.
+        // Nach der Ortspruefung oben wirft sessions.satzSichern() nicht --
+        // lokal wird immer geschrieben, auch offline (Spec Abschnitt 8.2).
+        // Der Zaehler steigt deshalb hier, nicht hinter einem Erfolgs-Guard.
         gesicherteSaetze += 1
         // Nach dem Schreiben, mit genau den geschriebenen Werten: das ist
         // das Label der Aufnahme. Wirft nicht, wartet nicht.
@@ -694,14 +742,16 @@ final class GeraetModel {
 
     private func mitschnittBeginnen() {
         mitschnitt?.eingabeBegonnen(SatzMitschnittKontext(
-            machineId: maschine.id, machineName: maschine.equipmentModel.name,
-            exerciseId: uebungId, exerciseName: aktiveUebung?.name ?? ""))
+            station: station, exerciseId: uebungId, exerciseName: aktiveUebung?.name ?? ""))
     }
 
     /// GeraetView ruft das aus onDisappear.
     func screenVerlassen() { mitschnitt?.screenVerlassen() }
 
-    func kalibrierungOeffnen() { kalibrierungOffen = true }
+    func kalibrierungOeffnen() {
+        guard kannKalibrieren else { return }
+        kalibrierungOffen = true
+    }
 
     /// Fuellt den Entwurf mit den bisherigen Werten, sonst mit dem Minimum
     /// bzw. dem ersten erlaubten Wert einer Auswahl.
@@ -735,6 +785,9 @@ final class GeraetModel {
     /// (designsystem.md SS5).
     func kalibrierungSichern() async -> Bool {
         kalibrierungFehler = nil
+        // Ohne Geraet gibt es nichts zu sichern; der Screen bietet es am Typ
+        // gar nicht an, und der Server verlangt eine machineId.
+        guard let machineId = station.machineId else { return false }
         // Zahlen als Zahl, Auswahlen als Text -- calibration.ts prueft die
         // Form je Definition (Testnotiz 06.10., #17).
         var werte = entwurfEinstellung.mapValues { JSONValue.number($0) }
@@ -742,7 +795,7 @@ final class GeraetModel {
         do {
             _ = try await loader.recordCalibration(
                 CalibrationWrite(
-                    machineId: maschine.id, exerciseId: uebungId,
+                    machineId: machineId, exerciseId: uebungId,
                     settingValues: werte, schemaVersion: 1,
                     source: trainerDabei ? "trainer_assisted" : "self"
                 )

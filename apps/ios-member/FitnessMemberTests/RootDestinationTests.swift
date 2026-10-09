@@ -9,7 +9,7 @@ struct RootDestinationLogicTests {
     @Test("ohne Session immer authFlow, unabhaengig vom Catalog-Zustand")
     func noSessionAlwaysAuthFlow() {
         #expect(RootDestinationLogic.destination(session: nil, catalogState: .idle, onboardingOffen: false) == .authFlow)
-        #expect(RootDestinationLogic.destination(session: nil, catalogState: .loaded(hasStudio: true), onboardingOffen: false) == .authFlow)
+        #expect(RootDestinationLogic.destination(session: nil, catalogState: .loaded, onboardingOffen: false) == .authFlow)
     }
 
     @Test("Session, Catalog laedt noch: loadingCatalog")
@@ -18,43 +18,30 @@ struct RootDestinationLogicTests {
         #expect(RootDestinationLogic.destination(session: session, catalogState: .idle, onboardingOffen: false) == .loadingCatalog)
     }
 
-    @Test("Session, geladen ohne Studio: noStudio")
-    func loadedWithoutStudio() {
-        #expect(RootDestinationLogic.destination(session: session, catalogState: .loaded(hasStudio: false), onboardingOffen: false) == .noStudio)
+    @Test("Session, geladen: immer main -- auch ohne Studio")
+    func loadedIsMain() {
+        #expect(RootDestinationLogic.destination(session: session, catalogState: .loaded, onboardingOffen: false) == .main)
     }
 
-    @Test("Session, geladen mit Studio: main")
-    func loadedWithStudio() {
-        #expect(RootDestinationLogic.destination(session: session, catalogState: .loaded(hasStudio: true), onboardingOffen: false) == .main)
-    }
-
-    @Test("ein fehlgeschlagenes Laden fuehrt auf den Ladefehler -- nicht auf main und nicht auf noStudio")
+    @Test("ein fehlgeschlagenes Laden fuehrt auf den Ladefehler -- nicht auf main")
     func failedGetsOwnScreen() {
         #expect(RootDestinationLogic.destination(session: session, catalogState: .failed, onboardingOffen: false) == .ladefehler)
     }
 
-    // Der Regressionstest zum Ausfall vom 18. September: .failed und
-    // "geladen, kein Studio" sind zwei verschiedene Aussagen und duerfen nie
-    // wieder auf denselben Bildschirm fallen. Solange diese beiden Werte
-    // sich unterscheiden, kann ein Serverausfall nicht mehr als
-    // Mitgliedschaftslage durchgehen.
-    @Test("Ladefehler und 'kein Studio' sind zwei verschiedene Ziele")
-    func failedIsNotNoStudio() {
+    // Regressionstest zum Ausfall vom 18. September: ein Serverausfall darf
+    // nie wie ein geladener Katalog aussehen.
+    @Test("Ladefehler und geladen sind zwei verschiedene Ziele")
+    func failedIsNotLoaded() {
         let beiFehler = RootDestinationLogic.destination(session: session, catalogState: .failed, onboardingOffen: false)
-        let ohneStudio = RootDestinationLogic.destination(session: session, catalogState: .loaded(hasStudio: false), onboardingOffen: false)
-        #expect(beiFehler != ohneStudio)
+        let geladen = RootDestinationLogic.destination(session: session, catalogState: .loaded, onboardingOffen: false)
+        #expect(beiFehler != geladen)
     }
 
     // MARK: - Onboarding-Gate (Aufgabe 6)
 
-    @Test("offenes Onboarding geht vor noStudio -- die Angaben gehoeren zur Person, nicht zum Studio")
-    func onboardingBeforeNoStudio() {
-        #expect(RootDestinationLogic.destination(session: session, catalogState: .loaded(hasStudio: false), onboardingOffen: true) == .onboarding)
-    }
-
     @Test("offenes Onboarding geht vor main")
     func onboardingBeforeMain() {
-        #expect(RootDestinationLogic.destination(session: session, catalogState: .loaded(hasStudio: true), onboardingOffen: true) == .onboarding)
+        #expect(RootDestinationLogic.destination(session: session, catalogState: .loaded, onboardingOffen: true) == .onboarding)
     }
 
     @Test("waehrend des Ladens zeigt onboardingOffen nichts -- ein gescheiterter Bootstrap darf es nicht raten")
@@ -70,7 +57,7 @@ struct RootDestinationLogicTests {
 
     @Test("ohne Session nie das Onboarding, egal was onboardingOffen sagt")
     func onboardingNeverWithoutSession() {
-        #expect(RootDestinationLogic.destination(session: nil, catalogState: .loaded(hasStudio: false), onboardingOffen: true) == .authFlow)
+        #expect(RootDestinationLogic.destination(session: nil, catalogState: .loaded, onboardingOffen: true) == .authFlow)
     }
 
     // MARK: - Der Kaltstart (Testnotiz 19. September, Eintrag 1)
@@ -98,7 +85,7 @@ struct RootDestinationLogicTests {
     @Test("ein nicht wiederhergestellter Start fuehrt in KEINEM Katalogzustand auf authFlow")
     func startNeverAuthFlow() {
         let zustaende: [CatalogLoadState] = [
-            .idle, .loading, .loaded(hasStudio: true), .loaded(hasStudio: false), .failed,
+            .idle, .loading, .loaded, .failed,
         ]
         for zustand in zustaende {
             #expect(
@@ -115,7 +102,7 @@ struct RootDestinationLogicTests {
     func freshSignInBeatsFlag() {
         #expect(
             RootDestinationLogic.destination(
-                session: session, catalogState: .loaded(hasStudio: true), onboardingOffen: false,
+                session: session, catalogState: .loaded, onboardingOffen: false,
                 wiederhergestellt: false) == .main)
     }
 }

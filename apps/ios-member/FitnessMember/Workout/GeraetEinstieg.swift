@@ -74,34 +74,53 @@ enum GeraetEinstiegRechner {
     /// dem Satzpfad bekannt, damit TrainingRootView "Training starten" nicht
     /// davor schiebt (Testnotiz 06.10., #5). `naechsterSetIndex` liest die
     /// lokale Einheit: ein Satz, den der Bootstrap noch nicht kennt, zaehlt.
-    static func brauchtErstkontakt(machineId: String, exerciseId: String,
+    static func brauchtErstkontakt(station: String, exerciseId: String,
                                    in bootstrap: BootstrapResponse, naechsterSetIndex: Int) -> Bool {
         naechsterSetIndex == 1
             && istErstkontakt(
-                hatKalibrierung: hatKalibrierung(machineId: machineId, exerciseId: exerciseId, in: bootstrap),
-                hatLetztenSatz: hatLetztenSatz(machineId: machineId, exerciseId: exerciseId, in: bootstrap))
+                hatKalibrierung: hatKalibrierung(station: station, exerciseId: exerciseId, in: bootstrap),
+                hatLetztenSatz: hatLetztenSatz(station: station, exerciseId: exerciseId, in: bootstrap))
     }
 
-    static func genutzteUebungen(machineId: String, in bootstrap: BootstrapResponse) -> Int {
-        Set(bootstrap.lastSets.filter { $0.machineId == machineId }.map(\.exerciseId)).count
+    /// Die letzten Saetze einer Station als (Uebung, Zeitpunkt): am Geraet
+    /// aus lastSets, am Typ aus lastTypeSets. Ein Schluessel, den der
+    /// Prefetch nicht kennt, hat keine -- auch ein "geraet:" nie welche aus
+    /// den Typsaetzen, sonst zaehlte der Satz am Typ doppelt.
+    private static func letzteSaetze(station: String, in bootstrap: BootstrapResponse)
+        -> [(exerciseId: String, performedAt: String)] {
+        switch Station.art(schluessel: station) {
+        case .geraet(let id)?:
+            bootstrap.lastSets.filter { $0.machineId == id }
+                .map { ($0.exerciseId, $0.performedAt) }
+        case .typ(let id)?:
+            bootstrap.lastTypeSets.filter { $0.equipmentModelId == id }
+                .map { ($0.exerciseId, $0.performedAt) }
+        case nil:
+            []
+        }
     }
 
-    /// Die zuletzt genutzte Uebung an einem Geraet -- EIN Ort statt zweier
+    static func genutzteUebungen(station: String, in bootstrap: BootstrapResponse) -> Int {
+        Set(letzteSaetze(station: station, in: bootstrap).map(\.exerciseId)).count
+    }
+
+    /// Die zuletzt genutzte Uebung an einer Station -- EIN Ort statt zweier
     /// Ableitungen in TrainingRootView (Review-Fund Schlusswelle), die beide
     /// nur funktionierten, weil der Server lastSets absteigend sortiert.
     /// `.max(by: performedAt)` liest das nicht voraus, sondern rechnet es
     /// selbst aus -- robust, falls die Server-Sortierung sich je aendert.
-    static func letzteUebung(machineId: String, in bootstrap: BootstrapResponse) -> String? {
-        bootstrap.lastSets
-            .filter { $0.machineId == machineId }
+    static func letzteUebung(station: String, in bootstrap: BootstrapResponse) -> String? {
+        letzteSaetze(station: station, in: bootstrap)
             .max { $0.performedAt < $1.performedAt }?.exerciseId
     }
 
-    static func hatKalibrierung(machineId: String, exerciseId: String, in bootstrap: BootstrapResponse) -> Bool {
-        bootstrap.calibrations.contains { $0.machineId == machineId && $0.exerciseId == exerciseId }
+    /// Kalibrierungen gibt es nur am Geraet; am Typ ist die Antwort immer nein.
+    static func hatKalibrierung(station: String, exerciseId: String, in bootstrap: BootstrapResponse) -> Bool {
+        guard case .geraet(let id)? = Station.art(schluessel: station) else { return false }
+        return bootstrap.calibrations.contains { $0.machineId == id && $0.exerciseId == exerciseId }
     }
 
-    static func hatLetztenSatz(machineId: String, exerciseId: String, in bootstrap: BootstrapResponse) -> Bool {
-        bootstrap.lastSets.contains { $0.machineId == machineId && $0.exerciseId == exerciseId }
+    static func hatLetztenSatz(station: String, exerciseId: String, in bootstrap: BootstrapResponse) -> Bool {
+        letzteSaetze(station: station, in: bootstrap).contains { $0.exerciseId == exerciseId }
     }
 }

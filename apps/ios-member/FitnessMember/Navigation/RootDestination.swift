@@ -7,21 +7,20 @@ enum RootDestination: Equatable {
     case authFlow
     case loadingCatalog
     case onboarding
-    case noStudio
     case ladefehler
     case main
 }
 
 enum RootDestinationLogic {
-    /// `onboarding` VOR `noStudio`: die Angaben gehoeren zur Person, nicht
-    /// zum Studio, und wer noch keinem beigetreten ist, soll nicht zwei
-    /// Einstiege hintereinander sehen. Nur bei .loaded -- ein gescheiterter
+    /// `onboarding` VOR `main`: die Angaben gehoeren zur Person, nicht zum
+    /// Studio. Ein Studio ist kein Zwang mehr -- .loaded fuehrt nach dem
+    /// Onboarding immer auf main. Nur bei .loaded -- ein gescheiterter
     /// Bootstrap weiss nicht, ob das Onboarding offen ist, und darf es nicht
     /// raten.
     ///
-    /// .failed bekommt einen EIGENEN Bildschirm und faellt nicht mehr auf
-    /// .noStudio zurueck. Der Rueckfall war als das vorsichtige Verhalten
-    /// gedacht -- .noStudio zeigt wenigstens eine Aktion statt einer
+    /// .failed bekommt einen EIGENEN Bildschirm und faellt nicht auf den
+    /// frueheren "kein Studio"-Schirm zurueck. Der Rueckfall war als das
+    /// vorsichtige Verhalten gedacht -- er zeigte wenigstens eine Aktion statt einer
     /// blockierenden Sackgasse --, war es aber nicht: er gibt einen Ausfall
     /// als Tatsache ueber die Mitgliedschaft aus. Am 18. September hat er
     /// genau das getan. Der Bootstrap antwortete tagelang mit 500, weil in
@@ -58,9 +57,8 @@ enum RootDestinationLogic {
         guard session != nil else { return wiederhergestellt ? .authFlow : .start }
         switch catalogState {
         case .idle, .loading: return .loadingCatalog
-        case .loaded(let hasStudio):
-            if onboardingOffen { return .onboarding }
-            return hasStudio ? .main : .noStudio
+        case .loaded:
+            return onboardingOffen ? .onboarding : .main
         case .failed: return .ladefehler
         }
     }

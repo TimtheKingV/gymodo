@@ -55,7 +55,9 @@ struct HomeRootView: View {
         katalog.bootstrap?.studios.first { $0.id == katalog.activeStudioId }
     }
 
-    private var studioName: String? { aktivesStudio?.name }
+    private var ortszeile: String? {
+        HomeZeilen.ortszeile(ort: katalog.ort, studioName: aktivesStudio?.name)
+    }
 
     /// Eine Einheit gehoert dem Studio, nicht dem Geraet -- sonst schoebe
     /// ein Mitglied im Urlaub seine Abendeinheit auf den Folgetag.
@@ -66,7 +68,9 @@ struct HomeRootView: View {
     /// vorigen Studios im Streifen (dieselbe Pruefung wie auf der
     /// Kurse-Seite, siehe `GespeicherteBuchungen.studioId`).
     private var eigeneKurse: GespeicherteBuchungen? {
-        guard let eigene = kurse.eigene, eigene.studioId == katalog.activeStudioId else { return nil }
+        // Im Freien Training gibt es keine Kurse, auch keine alten vom Cache.
+        guard let studioId = katalog.activeStudioId,
+              let eigene = kurse.eigene, eigene.studioId == studioId else { return nil }
         return eigene
     }
 
@@ -234,8 +238,8 @@ private extension HomeRootView {
                         .font(DesignSystem.Typography.screentitel)
                         .foregroundStyle(DesignSystem.Color.text)
                 }
-                if let studioName {
-                    Text(studioName)
+                if let ortszeile {
+                    Text(ortszeile)
                         .font(DesignSystem.Typography.label)
                         .kerning(1.5)
                         .foregroundStyle(DesignSystem.Color.textMuted)
@@ -277,11 +281,7 @@ private extension HomeRootView {
     }
 
     func hinweisZeile(_ hinweis: CatalogStore.Studiohinweis) -> some View {
-        Text(
-            hinweis.beigetreten
-                ? "Du gehörst jetzt zu \(hinweis.studioName)."
-                : "\(hinweis.studioName) ist jetzt aktiv."
-        )
+        Text(hinweis.text)
         .font(DesignSystem.Typography.fliesstext)
         .foregroundStyle(DesignSystem.Color.textMuted)
     }

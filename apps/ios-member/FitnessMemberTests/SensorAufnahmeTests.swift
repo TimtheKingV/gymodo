@@ -63,6 +63,14 @@ struct SensorAufnahmeTests {
         #expect(datei.statistik == .leer)
     }
 
+    /// Aufnahmen von vor den Stationen kennen kein equipmentModelId.
+    @Test func eineAlteAufnahmeOhneModellDekodiert() throws {
+        let json = #"{"machineId":"m1","machineName":"Beinpresse","exerciseId":"e1","exerciseName":"Beidbeinig","sessionId":null,"setId":null,"setIndex":null}"#
+        let kontext = try JSONDecoder().decode(SensorAufnahmeDatei.Kontext.self, from: Data(json.utf8))
+        #expect(kontext.machineId == "m1")
+        #expect(kontext.equipmentModelId == nil)
+    }
+
     @Test func jedesFeldStehtImmerDa() throws {
         let sut = try neu(wurzel())
         let text = try String(contentsOf: sut.ordner.appendingPathComponent("aufnahme.json"), encoding: .utf8)

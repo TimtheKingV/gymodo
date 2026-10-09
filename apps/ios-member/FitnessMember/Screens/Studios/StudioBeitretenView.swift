@@ -1,8 +1,17 @@
 import SwiftUI
 
-struct MemberKeinStudioView: View {
+/// Studio beitreten per Scan oder Code. Der Presenter schliesst den Screen
+/// in `beiErfolg`. Der Beitritt passiert immer; den Ort wechselt dieser
+/// Screen danach ueber dieselbe Pruefung wie die Studioliste im Profil --
+/// laeuft anderswo eine Einheit, fragt er erst "Training in X beenden?".
+struct StudioBeitretenView: View {
     @Environment(CatalogStore.self) private var catalogStore
-    @Environment(SessionStore.self) private var sessionStore
+    @Environment(WorkoutSessionStore.self) private var sessions
+    /// Meldet den Abschluss einer fuer den Wechsel beendeten Einheit.
+    let loader: any GeraetLoading
+    let beiErfolg: () -> Void
+    /// Der Beitritt, der auf "Training in X beenden?" wartet.
+    @State private var wechselPending: JoinResult?
     @State private var manualCode = ""
     @State private var showScanner = false
     @State private var errorMessage: String?
@@ -20,7 +29,7 @@ struct MemberKeinStudioView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                Text("NOCH KEIN STUDIO").font(DesignSystem.Typography.screentitel)
+                Text("STUDIO BEITRETEN").font(DesignSystem.Typography.screentitel)
 
                 SecondaryButton(title: "Code im Studio scannen") {
                     showScanner = true
@@ -47,21 +56,6 @@ struct MemberKeinStudioView: View {
                 PrimaryButton(title: "Beitreten", isEnabled: !manualCode.isEmpty, isLoading: isJoining) {
                     await joinByCode()
                 }
-
-                Spacer()
-
-                // .frame(minHeight: 44) INNERHALB des Labels, sonst
-                // bleibt die Trefferflaeche die Glyphenhoehe der Schrift
-                // (SS4). textMuted statt textFaint: 13pt liegt unter den
-                // 15pt, ab denen textFaint zulaessig waere, und "Abmelden"
-                // ist tragend (SS2).
-                Button { Task { await sessionStore.signOut() } } label: {
-                    Text("Abmelden")
-                        .font(.system(size: 13))
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .contentShape(Rectangle())
-                }
             }
             .padding(28)
         }
@@ -84,7 +78,28 @@ struct MemberKeinStudioView: View {
                 }
             )
         }
+        .confirmationDialog(
+            "Training in \(StudiosListe.name(fuer: laufenderOrt, studios: catalogStore.bootstrap?.studios ?? [])) beenden?",
+            isPresented: Binding(
+                get: { wechselPending != nil },
+                set: { if !$0 { wechselPending = nil } }
+            ),
+            // Ohne .visible blendet iOS den Titel aus -- und mit ihm den Ort
+            // der laufenden Einheit, um den es geht (Sichtcheck Task 11).
+            titleVisibility: .visible,
+            presenting: wechselPending
+        ) { ergebnis in
+            Button("Training beenden", role: .destructive) { beendenUndWechseln(ergebnis) }
+            // Mitglied bleibt man; der Ort bleibt, wo die Einheit laeuft.
+            Button("Abbrechen", role: .cancel) { wechselPending = nil; beiErfolg() }
+        } message: { _ in
+            Text("Danach wechselst du den Ort.")
+        }
         .testnotizScreen()
+    }
+
+    private var laufenderOrt: Ort {
+        sessions.aktiveSession()?.ort ?? catalogStore.ort
     }
 
     private func joinByCode() async {
@@ -93,13 +108,14 @@ struct MemberKeinStudioView: View {
         defer { isJoining = false }
         // `do throws(APIError)`, damit `error` im catch getippt ist -- derselbe
         // Griff wie in ProfilRootView und TrainingAbschlussView.
+        let ergebnis: JoinResult
         do throws(APIError) {
-            try await catalogStore.joinStudio(byCode: manualCode)
+            ergebnis = try await catalogStore.joinStudio(byCode: manualCode)
         } catch {
             errorMessage = beitrittsfehler(error, ungueltig: "Dieser Code ist ungültig.")
             return
         }
-        errorMessage = nachladefehler()
+        abschliessen(ergebnis)
     }
 
     /// Der QR-Code traegt den vollstaendigen Universal Link
@@ -111,13 +127,14 @@ struct MemberKeinStudioView: View {
         errorMessage = nil
         isJoining = true
         defer { isJoining = false }
+        let ergebnis: JoinResult
         do throws(APIError) {
-            try await catalogStore.joinStudio(byTag: token)
+            ergebnis = try await catalogStore.joinStudio(byTag: token)
         } catch {
             errorMessage = beitrittsfehler(error, ungueltig: "Dieser Code ist ungültig.")
             return
         }
-        errorMessage = nachladefehler()
+        abschliessen(ergebnis)
     }
 
     /// Ein Beitritt kann aus vier Gruenden scheitern, und nur einer davon
@@ -131,6 +148,34 @@ struct MemberKeinStudioView: View {
         case .offline: "Keine Verbindung. Der Code wurde nicht gesendet."
         default: fehler.servertext
         }
+    }
+
+    /// Schliesst nur, wenn das Neuladen gelang: sonst steht das Studio in der
+    /// Datenbank, aber nicht auf dem Bildschirm, und der Screen muss es sagen.
+    /// Gewechselt wird nur, wenn keine Einheit an einem anderen Ort laeuft
+    /// (Plan, Entscheidung 1) -- sonst erst nach der Rueckfrage.
+    private func abschliessen(_ ergebnis: JoinResult) {
+        errorMessage = nachladefehler()
+        guard errorMessage == nil else { return }
+        switch Ortswechsel.pruefen(ziel: .studio(ergebnis.studioId), aktuell: catalogStore.ort,
+                                   offeneEinheit: sessions.aktiveSession()) {
+        case .sofort:
+            catalogStore.ortNachBeitritt(ergebnis)
+            beiErfolg()
+        case .erstBeenden:
+            wechselPending = ergebnis
+        }
+    }
+
+    /// Wie in der Studioliste: lokal sofort beenden, den Abschluss im
+    /// Hintergrund melden, kein Abschluss-Screen.
+    private func beendenUndWechseln(_ ergebnis: JoinResult) {
+        wechselPending = nil
+        let ende = sessions.beendenFuerOrtswechsel()
+        catalogStore.ortNachBeitritt(ergebnis)
+        let client = loader
+        Task { await WorkoutSessionStore.melden(ende, loader: client) }
+        beiErfolg()
     }
 
     /// Der Beitritt kann gelingen und das anschliessende Neuladen trotzdem
@@ -150,75 +195,5 @@ struct MemberKeinStudioView: View {
         return fehler == .offline
             ? "Beigetreten. Die Daten deines Studios fehlen noch — keine Verbindung."
             : "Beigetreten. Die Daten deines Studios ließen sich nicht laden: \(fehler.servertext)"
-    }
-}
-
-/// Der Bootstrap ist gescheitert. Das ist etwas anderes als "kein Studio",
-/// und seit dem 18. September hat es einen eigenen Bildschirm -- die
-/// Begruendung steht bei `RootDestinationLogic.destination`.
-///
-/// Kein Beitrittsformular hier: ein Code hilft gegen einen Serverausfall
-/// nicht, und ihn trotzdem anzubieten war der Teil, der aus dem Ausfall
-/// eine Sackgasse gemacht hat. Was bleibt, sind die zwei Wege, die wirklich
-/// weiterfuehren: noch einmal versuchen, oder sich abmelden.
-struct MemberLadefehlerView: View {
-    @Environment(CatalogStore.self) private var catalogStore
-    @Environment(SessionStore.self) private var sessionStore
-    @State private var laedtNeu = false
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                Text("NICHT GELADEN").font(DesignSystem.Typography.screentitel)
-
-                InlineBanner(tone: .danger, message: meldung)
-
-                // Der Satz, der den Fehlgriff von damals ausschliesst: wer
-                // hier landet, soll nicht anfangen, seine Mitgliedschaft in
-                // Frage zu stellen.
-                Text("Das ist ein Ladefehler, keine Aussage über deine Mitgliedschaft. Dein Studio bleibt, wo es ist.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                PrimaryButton(title: "Erneut versuchen", isLoading: laedtNeu) {
-                    await erneutVersuchen()
-                }
-
-                Spacer()
-
-                // Dieselbe Trefferflaeche und dieselbe Farbstufe wie das
-                // "Abmelden" auf MemberKeinStudioView (SS2, SS4).
-                Button { Task { await sessionStore.signOut() } } label: {
-                    Text("Abmelden")
-                        .font(.system(size: 13))
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-            }
-            .padding(28)
-        }
-        .background(DesignSystem.Color.bg)
-        .testnotizScreen()
-    }
-
-    /// Dieselbe Form wie `joinByCode()` nebenan: die Arbeit in einer
-    /// Methode, der Knopf ruft sie nur.
-    private func erneutVersuchen() async {
-        laedtNeu = true
-        defer { laedtNeu = false }
-        await catalogStore.load()
-    }
-
-    /// `.offline` zuerst: APIError.servertext weist seinen eigenen
-    /// .offline-Zweig ausdruecklich als Notnagel aus, nicht als Antwort.
-    private var meldung: String {
-        guard let fehler = catalogStore.letzterLadefehler else {
-            return "Dein Studio ließ sich nicht laden."
-        }
-        return fehler == .offline
-            ? "Keine Verbindung. Gymtavo konnte dein Studio nicht abrufen."
-            : fehler.servertext
     }
 }
