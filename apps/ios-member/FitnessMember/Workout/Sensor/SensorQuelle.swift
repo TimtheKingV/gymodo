@@ -53,6 +53,10 @@ protocol SensorQuelle: AnyObject, Sendable {
     var zustand: SensorZustand { get }
     var rate: SensorRate { get }
     var verworfeneBytes: Int { get }
+    /// Wurde schon einmal ein Sensor gewaehlt? Dann ist die
+    /// Bluetooth-Berechtigung beantwortet, und ein verbinden() beim App-Start
+    /// loest keine Abfrage mehr aus.
+    var hatGemerktenSensor: Bool { get }
     /// Ein eigener Strom je Aufruf.
     func ereignisse() -> AsyncStream<SensorEreignis>
     func verbinden()

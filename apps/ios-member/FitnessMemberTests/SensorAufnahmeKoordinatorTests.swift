@@ -8,9 +8,11 @@ final class AttrappenQuelle: SensorQuelle {
     var zustand: SensorZustand = .aus
     var rate: SensorRate = .hz50
     var verworfeneBytes = 0
+    var hatGemerktenSensor = false
+    var verbindenAufrufe = 0
     let verteiler = SensorVerteiler()
     func ereignisse() -> AsyncStream<SensorEreignis> { verteiler.strom() }
-    func verbinden() {}
+    func verbinden() { verbindenAufrufe += 1 }
     func waehlen(_ fund: SensorFund) {}
     func trennen() {}
     func vergessen() {}
@@ -121,6 +123,21 @@ struct SensorAufnahmeKoordinatorTests {
 
     private func protokoll(_ wurzel: URL) throws -> String {
         try String(contentsOf: wurzel.appendingPathComponent("protokoll.log"), encoding: .utf8)
+    }
+
+    @Test func verbindetBeimStartMitDemGemerktenSensor() {
+        // Am 8. Oktober beendete iOS die App beim Wechsel zu den Notizen;
+        // danach stand "Sensor verbinden" da und ein Satz lief ohne Aufnahme.
+        let (sut, quelle, _, _) = aufbau(zustand: .aus)
+        quelle.hatGemerktenSensor = true
+        sut.starten()
+        #expect(quelle.verbindenAufrufe == 1)
+    }
+
+    @Test func ohneGemerktenSensorFragtDerStartNichtNachBluetooth() {
+        let (sut, quelle, _, _) = aufbau(zustand: .aus)
+        sut.starten()
+        #expect(quelle.verbindenAufrufe == 0)
     }
 
     @Test func protokolliertEineEingabeOhneSensor() throws {

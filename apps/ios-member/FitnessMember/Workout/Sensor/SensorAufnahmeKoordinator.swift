@@ -81,6 +81,12 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
         lauscher = Task { [weak self] in
             for await ereignis in strom { self?.empfangen(ereignis) }
         }
+        // Beendet iOS die App im Hintergrund, startet sie beim Zurueckkommen
+        // neu. Ohne das hier stuende dann "Sensor verbinden" da, und ein Satz
+        // liefe ohne Aufnahme, wenn niemand darauf achtet (8. Oktober).
+        // Nur mit gemerktem Sensor: der erste Start fragt weiter nicht nach
+        // Bluetooth (Spec 5.3).
+        if quelle.hatGemerktenSensor { quelle.verbinden() }
     }
 
     // MARK: - SatzMitschnitt

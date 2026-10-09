@@ -90,6 +90,8 @@ final class BluetoothSensorQuelle: NSObject, SensorQuelle {
 
     // MARK: - Ablauf
 
+    var hatGemerktenSensor: Bool { gemerkt != nil }
+
     private var gemerkt: UUID? {
         einstellungen.string(forKey: Self.merkSchluessel).flatMap(UUID.init(uuidString:))
     }
