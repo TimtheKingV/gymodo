@@ -107,7 +107,7 @@ machineId: String?
 equipmentModelId: String?              // decodeIfPresent: alte Caches haben ihn nicht
 ```
 
-- [ ] **Rote Tests in `DTOTests`:**
+- [x] **Rote Tests in `DTOTests`:**
   - Bootstrap ohne `catalog`/`lastTypeSets` (bisheriges JSON) dekodiert, Katalog `nil`, `[]`.
   - Bootstrap mit beiden Feldern dekodiert.
   - Typ-Kontext mit `"machine": null` dekodiert.
@@ -116,11 +116,11 @@ equipmentModelId: String?              // decodeIfPresent: alte Caches haben ihn
   - `SessionSummary` aus einem alten `verlauf.json`-Ausschnitt (ohne `equipmentModelId`) dekodiert.
   - Block mit `"machineId": null` dekodiert.
   - `CompletedSession` mit `vorschlaege[].machineId: null` dekodiert.
-- [ ] Umsetzen:
+- [x] Umsetzen:
   - `BootstrapResponse` bekommt ein eigenes `init(from:)`.
   - Der Memberwise-Init bleibt für die Tests erhalten, als ausdrücklicher Init mit Defaults für die neuen Felder.
   - `SetWrite.init(from:)` liest `machineId` mit `decodeIfPresent`.
-- [ ] Die Kompilierfehler in den Nutzern von `machineId` (Bestandsaufnahme Abschnitt 7) **nicht** hier lösen. Wo der Compiler einen String braucht, bis Task 6 ein `?? ""` mit `// TODO Task 6` setzen. Grün, Commit `feat(ios-member): DTOs lesen den Gymtavo-Katalog, machineId wird optional`.
+- [x] Die Kompilierfehler in den Nutzern von `machineId` (Bestandsaufnahme Abschnitt 7) **nicht** hier lösen. Wo der Compiler einen String braucht, bis Task 6 ein `?? ""` mit `// TODO Task 6` setzen. Grün, Commit `feat(ios-member): DTOs lesen den Gymtavo-Katalog, machineId wird optional`.
 
 ## Task 2: `Station` — Gerät oder Gerätetyp
 
@@ -151,12 +151,12 @@ extension BootstrapResponse {
     func station(schluessel: String, studioId: String?) -> Station?
 }
 ```
-- [ ] Rote Tests:
+- [x] Rote Tests:
   - Schlüssel wie auf dem Server.
   - Gerät gewinnt über den Typ.
   - Typ-Station ohne `machineId` und ohne Token.
   - `bootstrap.station(schluessel:)` findet Gerät und Typ und liefert für Unbekanntes `nil`.
-- [ ] Umsetzen, `xcodegen generate`, grün, Commit `feat(ios-member): Station als Spiegel von station.ts`.
+- [x] Umsetzen, `xcodegen generate`, grün, Commit `feat(ios-member): Station als Spiegel von station.ts`.
 
 ## Task 3: `CatalogStore` — Ort statt aktivem Studio, Beitritt wechselt
 
@@ -179,7 +179,7 @@ Regeln in `load()`:
 - `.freiesTraining` bleibt immer stehen.
 - Ohne gespeicherte Wahl (erster Start): das erste Studio, ohne Studio `.freiesTraining`.
 
-- [ ] Rote Tests:
+- [x] Rote Tests:
   - Ohne Studio wird `.freiesTraining` gesetzt.
   - Die gewählte Option „Freies Training“ übersteht ein `load()` mit Studios.
   - Ein verlassenes Studio fällt zurück.
@@ -187,8 +187,8 @@ Regeln in `load()`:
   - `joinStudio(byCode:)` wechselt auf das neue Studio und setzt `studiohinweis(beigetreten: true)`.
   - `joinStudio(byTag:)` liefert `machineId` durch.
   - `reset()` löscht den Ort.
-- [ ] Der Test :364 („ohne Studio … nach noStudio“) wird in Task 4 umgeschrieben, hier nur vorgemerkt.
-- [ ] Grün, Commit `feat(ios-member): Ort statt aktivem Studio, Beitritt wechselt das Studio`.
+- [x] Der Test :364 („ohne Studio … nach noStudio“) wird in Task 4 umgeschrieben, hier nur vorgemerkt.
+- [x] Grün, Commit `feat(ios-member): Ort statt aktivem Studio, Beitritt wechselt das Studio`.
 
 ## Task 4: Ortswechsel bei offener Einheit
 
@@ -204,12 +204,12 @@ enum Ortswechsel {
     static func pruefen(ziel: Ort, offeneEinheit: LokaleSession?) -> Ergebnis
 }
 ```
-- [ ] Rote Tests:
+- [x] Rote Tests:
   - Ohne offene Einheit gilt `.sofort`.
   - Bei offener Einheit am selben Ort gilt `.sofort`.
   - Bei offener Einheit an einem anderen Ort gilt `.erstBeenden`.
   - Eine alte `LokaleSession` ohne `ort` gilt als am aktuellen Ort.
-- [ ] Umsetzen. Den Dialog baut Task 7 (Profil) und Task 9 (Scan) ein. Grün, Commit.
+- [x] Umsetzen. Den Dialog baut Task 7 (Profil) und Task 9 (Scan) ein. Grün, Commit.
 
 ## Task 5: Routing ohne Studio-Zwang, „Studio beitreten“ als eigener Screen
 
@@ -223,14 +223,14 @@ enum Ortswechsel {
 - Delete `MemberKeinStudioView`. `MemberLadefehlerView` (:164) wandert in eine eigene Datei.
 - Tests: `RootDestinationTests`, `CatalogStoreTests` :364
 
-- [ ] Rote Tests:
+- [x] Rote Tests:
   - `.loaded` führt nach dem Onboarding immer zu `.main`.
   - Das Onboarding gewinnt weiterhin.
   - Es gibt kein `.noStudio` mehr.
-- [ ] `CatalogLoadState.loaded(hasStudio:)` wird `.loaded`. Die Zähler-Asserts in `CatalogStoreTests` (:76-91, 191, 273, 292-293, 308, 322, 360) ziehen nach.
-- [ ] `StudioBeitretenView(beiErfolg:)`: Nach einem Beitritt schließt der Screen und zeigt den vorhandenen `studiohinweis`. Die Texte bleiben wie bisher.
-- [ ] Registrierung: „Für dein Studio brauchst du ein Konto.“ → „Mit einem Konto speichert Gymtavo dein Training.“
-- [ ] Grün, Commit `feat(ios-member): App ohne Studio-Zwang, Studio beitreten als eigener Screen`.
+- [x] `CatalogLoadState.loaded(hasStudio:)` wird `.loaded`. Die Zähler-Asserts in `CatalogStoreTests` (:76-91, 191, 273, 292-293, 308, 322, 360) ziehen nach.
+- [x] `StudioBeitretenView(beiErfolg:)`: Nach einem Beitritt schließt der Screen und zeigt den vorhandenen `studiohinweis`. Die Texte bleiben wie bisher.
+- [x] Registrierung: „Für dein Studio brauchst du ein Konto.“ → „Mit einem Konto speichert Gymtavo dein Training.“
+- [x] Grün, Commit `feat(ios-member): App ohne Studio-Zwang, Studio beitreten als eigener Screen`.
 
 ## Task 6: Lokale Blöcke und Sätze über Stationen
 
@@ -252,13 +252,13 @@ func naechsterSetIndex(station: Station, exerciseId: String) -> Int
 ```
 `SetWrite` am Gerät: `machineId`. Am Typ: `equipmentModelId` plus `studioId` = Ort der Einheit, im Freien Training ohne.
 
-- [ ] Rote Tests:
+- [x] Rote Tests:
   - Eine alte `LokaleSession` (Blöcke nur mit `machineId`) dekodiert, und ihr Stationsschlüssel ist `geraet:<id>`.
   - Ein Satz am Typ in einer Studio-Einheit schreibt `equipmentModelId` und `studioId`, ohne `machineId`.
   - Im Freien Training schreibt er ohne `studioId`.
   - Zwei Typen ergeben zwei Blöcke.
   - Gerätezahlen (`geraeteAnzahl`, `verschiedeneGeraete`) zählen Stationen. Für Server-Blöcke gilt `machineId ?? "typ:" + equipmentModelId`.
-- [ ] Die `TODO Task 6` aus Task 1 auflösen. Grün, Commit `feat(ios-member): lokale Bloecke und Saetze ueber Stationen`.
+- [x] Die `TODO Task 6` aus Task 1 auflösen. Grün, Commit `feat(ios-member): lokale Bloecke und Saetze ueber Stationen`.
 
 ## Task 7: Profil → Studios — Freies Training, Beitreten, Wechsel mit Rückfrage
 
@@ -266,16 +266,16 @@ func naechsterSetIndex(station: Station, exerciseId: String) -> Int
 - Modify `Screens/Profil/MemberStudiosView.swift` (:8-67)
 - Tests: neue Ableitung `StudiosListe` mit Test (Zeilen, Häkchen, Fußtext)
 
-- [ ] Rote Tests (Ableitung):
+- [x] Rote Tests (Ableitung):
   - Die erste Zeile ist immer „Freies Training“.
   - Danach kommen die Studios alphabetisch.
   - Das Häkchen folgt dem `ort`.
   - „Verlassen“ gibt es nur bei Studios.
-- [ ] View:
+- [x] View:
   - Tap auf eine Zeile ruft `Ortswechsel.pruefen` auf. Bei `.erstBeenden` erscheint ein `confirmationDialog` „Training in {Ort} beenden?“; bestätigt wird über den Abschlusspfad aus `TrainingRootView.beenden()`, als Funktion in `WorkoutSessionStore` herausgezogen.
   - Darunter steht die Zeile „Studio beitreten“ → `StudioBeitretenView`.
   - Fußtext :43 neu: „Tippen wechselt. Ein Gerätecode aus einem anderen Studio macht dich dort zum Mitglied.“ Das stimmt nach Task 9 wirklich.
-- [ ] Grün, Commit.
+- [x] Grün, Commit.
 
 ## Task 8: Geräteliste über Stationen
 
@@ -299,7 +299,7 @@ struct Eintrag { let station: Station; ... }                       // id = stati
 - „Zuletzt“ liest `lastSets` (Gerät) und `lastTypeSets` (Typ) über den Stationsschlüssel.
 - `nichtScannbar` gilt nicht für Typen. Ein Typ ist kein Gerät ohne Sticker.
 
-- [ ] Rote Tests:
+- [x] Rote Tests:
   - Studio mit Geräten zeigt keine Katalogtypen.
   - Studio ohne Geräte zeigt alle Typen mit `studioId`.
   - Freies Training zeigt alle Typen ohne `studioId`.
@@ -307,12 +307,12 @@ struct Eintrag { let station: Station; ... }                       // id = stati
   - Die Suche findet einen Typ über eine Gymtavo-Übung.
   - Gymtavo-Übungen unter einem Studio-Gerät kommen aus `machines[].exercises`. Der Server mischt sie schon, die App mischt nichts.
   - `GeraetEinstiegRechner` zählt Besuche und letzte Übung je Station.
-- [ ] View:
+- [x] View:
   - `beiAuswahl: (Station) -> Void`.
   - Untertitel im Freien Training: „Alle Gymtavo-Geräte“.
   - Fotos über `equipmentModel.id` wie bisher. Katalogfotos liegen im Gymtavo-Ordner, der für alle lesbar ist (0047).
   - Der Leerzustand „In diesem Studio ist noch kein Gerät eingetragen“ entfällt für Studios ohne Geräte, weil dort jetzt der Katalog steht.
-- [ ] Grün, Commit.
+- [x] Grün, Commit.
 
 ## Task 9: Geräte-Screen, Route und Scan über Stationen
 
@@ -343,12 +343,12 @@ struct Eintrag { let station: Station; ... }                       // id = stati
 3. Gefunden, aber in einem anderen Studio als dem Ort: `Ortswechsel.pruefen`, dann `setOrt(.studio(maschine.studioId))` und öffnen. Die Fußzeile „Ein Scan … wechselt“ stimmt damit.
 4. `PendingTagStore`-Eingänge laufen über denselben Pfad (:169-183).
 
-- [ ] **Rote Tests:**
+- [x] **Rote Tests:**
   - `GeraetKontextLaden`: Ein Typ geht über `equipmentModelContext` mit `studio`, ein Gerät über `machineContext`, ein Token über `tagContext`.
   - `GeraetModel` am Typ: kein Kalibrieren, Startwerte aus `lastTypeSets`, `satzSichern` schreibt ohne `machineId`.
   - `APIClientTests`: Die URL lautet `equipment-models/<id>/context?studio=<id>` bzw. ohne Query im Freien Training. Ein `machine: null` dekodiert.
   - `ScanBeitritt`: Das Entscheiden ist als reine Funktion herausgezogen (`ScanEntscheidung.fuer(token:bootstrap:ort:offeneEinheit:)` → `.oeffnen(Station)`, `.beitreten`, `.wechselnUndOeffnen(Ort, Station)`, `.erstBeenden(...)`). Getestet werden alle vier Fälle.
-- [ ] Umsetzen, grün, Commit `feat(ios-member): Geraete-Screen, Route und Scan ueber Stationen, Beitritt per Geraetecode`.
+- [x] Umsetzen, grün, Commit `feat(ios-member): Geraete-Screen, Route und Scan ueber Stationen, Beitritt per Geraetecode`.
 
 ## Task 10: Abschluss, Verlauf, Home und Kurse
 
@@ -361,20 +361,37 @@ struct Eintrag { let station: Station; ... }                       // id = stati
   - `KurseWochenView` (:339-397, :741): Im Freien Training erscheint der Hinweis aus Entscheidung 4 mit Knopf → `StudioBeitretenView`.
 - Tests: `TrainingAbschlussZeilenTests`, `HomeZeilenTests`, `KurseAnsichtTests`
 
-- [ ] Rote Tests:
+- [x] Rote Tests:
   - Ein Abschluss mit einem Vorschlag `machineId: nil` ordnet ihn dem Typ-Block zu.
   - Eine Home-Karte zählt freie Stationen mit.
   - Die Kurse-Ansicht liefert im Freien Training den Beitreten-Zustand.
-- [ ] Umsetzen, grün, Commit.
+- [x] Umsetzen, grün, Commit.
 
 ## Task 11: Gesamtprüfung auf dem Mac
 
-- [ ] Ganze Suite grün, ohne neue Warnungen.
-- [ ] **Sichtcheck gegen das lokale Backend.** Fixtures per SQL: ein Gymtavo-Typ mit Übung und Video, ein Studio mit einem zugeordneten Gerät, ein Studio ohne Geräte. Durchspielen:
+- [x] Ganze Suite grün, ohne neue Warnungen.
+- [x] **Sichtcheck gegen das lokale Backend.** Fixtures per SQL: ein Gymtavo-Typ mit Übung und Video, ein Studio mit einem zugeordneten Gerät, ein Studio ohne Geräte. Durchspielen:
   1. Neues Konto ohne Studio: Nach dem Onboarding erscheint das Freie Training mit Gymtavo-Geräten. Satz am Typ, Training beenden, Vorschlag sichtbar, Verlauf mit Typname.
   2. Profil → Studio beitreten per Code. Das Studio wird aktiv, die Geräte des Studios mit ihren Gymtavo-Übungen erscheinen.
   3. Studio ohne Geräte: Die Gymtavo-Typen erscheinen. Ein Satz dort landet mit `studio_id` dieses Studios, das prüft man per SQL.
   4. Gerätecode eines fremden Studios scannen: Beitritt, Wechsel, Gerät offen.
   5. Bei offener Einheit auf Freies Training wechseln: Die Rückfrage kommt.
   6. App-Update über eine alte Installation mit offenen `pending-writes.json` und `verlauf.json`: Alles wird gelesen, nichts geht verloren.
-- [ ] Plan abhaken, Ergebnis notieren, Push, PR.
+- [x] Plan abhaken, Ergebnis notieren, Push, PR.
+
+## Ergebnis (9. Oktober 2026)
+
+- 13 Commits auf `claude/gymtavo-katalog-etappe4-ios`, jeder Task mit eigener Prüfung, dazu eine Gesamtprüfung über den ganzen Branch. Volle iOS-Suite: 1030 Tests grün, keine neuen Warnungen.
+- Die Gesamtprüfung fand einen Fehler, der Sätze gekostet hätte: Ein Beitritt (Profil, Kurse, Scan) und die Auswahl über „Auch in … suchen“ wechselten bei laufendem Training ohne Rückfrage den Ort. Danach hätte der Server die Sätze abgelehnt. Behoben in `b385e06`, zusätzlich mit einer Sperre beim Speichern eines Satzes.
+- Sichtcheck im Simulator gegen das lokale Backend: alle sechs Abläufe aus Task 11 plus Ablauf 7 (Beitritt mitten im Training) OK. Dabei wurden vier Fehler in der Bildschirmführung gefunden und behoben (`43b746b`): Der Beitreten-Screen schloss nicht, der Titel der Rückfrage fehlte, die Scan-Rückfrage lag hinter dem Geräte-Screen, und nach „Beenden“ öffnete der alte Gerätetyp statt des gescannten Geräts.
+- App-Update über eine Installation von `master` mit offenen `pending-writes.json`, `verlauf.json` und laufender Einheit: alles gelesen, nichts verloren.
+- Entscheidungen, die zusätzlich zum Plan getroffen wurden:
+  - „Training beenden“ über die Rückfrage (Profil, Kurse, Scan) beendet die Einheit im Hintergrund, ohne Abschluss-Screen. Die Vorschläge werden trotzdem festgehalten.
+  - Die Navigation trägt nur den Stationsschlüssel. Ein Gerätetyp bekommt das Studio des aktuellen Orts, abgesichert über die Ortsprüfung.
+- Offen und bewusst nicht in diesem Branch:
+  - Home zeigt im Freien Training keine Serie, weil der Server ohne Studio `streak: null` liefert.
+  - Gymtavo-Inhalte sagen in Einweisung und Abschluss noch „dein Studio“.
+  - „Alle 1 Geräte“ ohne Singular.
+  - Die Sensor-Spezifikation (`machineId` darf leer sein) ist nicht nachgezogen.
+  - Videos im Sichtcheck nicht getestet.
+  - Am Gerät fehlt eine Sperre im Store selbst; sie liegt nur im Geräte-Screen.
