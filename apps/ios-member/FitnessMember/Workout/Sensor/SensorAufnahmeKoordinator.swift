@@ -32,6 +32,7 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     @ObservationIgnored private let einstellungen: UserDefaults
     @ObservationIgnored private let uhr: () -> TimeInterval
     @ObservationIgnored private let jetzt: () -> Date
+    @ObservationIgnored private let protokoll: SensorProtokoll
 
     @ObservationIgnored private var aufnahme: SensorAufnahme?
     @ObservationIgnored private var aufnahmeStatistik = SensorStatistik()
@@ -61,6 +62,7 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
         self.einstellungen = einstellungen
         self.uhr = uhr
         self.jetzt = jetzt
+        self.protokoll = SensorProtokoll(wurzel: wurzel, jetzt: jetzt)
         // Ein Koordinator, der erst nach dem Verbinden entsteht (Tests bauen
         // ihn ueber aufbau(zustand: verbunden) so auf), muss die erste
         // Trennung noch als Kante erkennen -- sonst faellt sie unter den Tisch.
@@ -71,11 +73,20 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     /// direkt und in fester Reihenfolge rufen koennen.
     func starten() {
         guard lauscher == nil else { return }
+        // Ein App-Start erklaert ein "Sensor verbinden" mitten im Training:
+        // der Sensor verbindet sich erst nach einem Tipp (Spec 5.3).
+        protokoll.schreiben("app gestartet, sensor \(SensorProtokoll.text(quelle.zustand))")
         SensorAufnahme.verwaisteNachtragen(wurzel: wurzel)
         let strom = quelle.ereignisse()
         lauscher = Task { [weak self] in
             for await ereignis in strom { self?.empfangen(ereignis) }
         }
+        // Beendet iOS die App im Hintergrund, startet sie beim Zurueckkommen
+        // neu. Ohne das hier stuende dann "Sensor verbinden" da, und ein Satz
+        // liefe ohne Aufnahme, wenn niemand darauf achtet (8. Oktober).
+        // Nur mit gemerktem Sensor: der erste Start fragt weiter nicht nach
+        // Bluetooth (Spec 5.3).
+        if quelle.hatGemerktenSensor { quelle.verbinden() }
     }
 
     // MARK: - SatzMitschnitt
@@ -84,7 +95,11 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
         beenden(.abgebrochen, satz: nil)
         fehler = nil
         offenerKontext = kontext
-        if quelle.zustand.istVerbunden { aufnahmeBeginnen() }
+        if quelle.zustand.istVerbunden {
+            aufnahmeBeginnen()
+        } else {
+            protokoll.schreiben("eingabe \(kontext.machineName) / \(kontext.exerciseName) ohne verbundenen sensor: keine aufnahme")
+        }
     }
 
     func satzGesichert(_ satz: GesicherterSatz) {
@@ -102,7 +117,11 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     func empfangen(_ ereignis: SensorEreignis) {
         switch ereignis {
         case .messwert(let messwert): messwertVerarbeiten(messwert)
-        case .zustand(let zustand): zustandVerarbeiten(zustand)
+        case .zustand(let zustand):
+            protokoll.schreiben("sensor \(SensorProtokoll.text(zustand))")
+            zustandVerarbeiten(zustand)
+        case .akku(let hundertstelVolt):
+            protokoll.schreiben(SensorProtokoll.akkuText(hundertstelVolt: hundertstelVolt))
         }
     }
 
@@ -190,6 +209,9 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
             aufnahmeStatistik = SensorStatistik()
             verworfenBeiStart = quelle.verworfeneBytes
             aufnahmeLaeuft = true
+            if let aufnahme {
+                protokoll.schreiben("aufnahme \(aufnahme.ordner.lastPathComponent) begonnen (\(kontext.machineName) / \(kontext.exerciseName))")
+            }
         } catch {
             abbrechen(wegen: error)
         }
@@ -199,6 +221,7 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
         guard let aufnahme else { return }
         self.aufnahme = nil
         aufnahmeLaeuft = false
+        protokoll.schreiben("aufnahme \(aufnahme.ordner.lastPathComponent) \(abschluss.rawValue)")
         var kontext = aufnahme.datei.kontext
         kontext.sessionId = satz?.sessionId.uuidString
         kontext.setId = satz?.setId.uuidString
@@ -229,6 +252,7 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
 
     private func melden(_ error: Error) {
         fehler = "Aufnahme fehlgeschlagen: \(error.localizedDescription)"
+        protokoll.schreiben("fehler: \(error.localizedDescription)")
         Self.log.error("Sensoraufnahme: \(error.localizedDescription, privacy: .public)")
     }
 
@@ -265,6 +289,7 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     func rateSetzen(_ rate: SensorRate) {
         guard rate != quelle.rate else { return }
         quelle.rateSetzen(rate)
+        protokoll.schreiben("rate \(rate.rawValue) Hz")
         guard let aufnahme else { return }
         do { try aufnahme.rateGewechselt(rate, t: uhr()) } catch { abbrechen(wegen: error) }
     }

@@ -1,0 +1,26 @@
+{
+  "endedAt" : "2026-10-04T14:11:06+02:00",
+  "format" : "gymodo.sensorratentest/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "sensor" : {
+    "akkuProzent" : 75,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 100
+  },
+  "startedAt" : "2026-10-04T14:06:06+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 120.19,
+      "median" : 0,
+      "p95" : 60.1
+    },
+    "luecken" : 0,
+    "pakete" : 29789,
+    "rateIstHz" : 99.3,
+    "verworfeneBytes" : 0
+  }
+}

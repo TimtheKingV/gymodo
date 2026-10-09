@@ -1,0 +1,42 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "endedAt" : "2026-10-08T08:52:45+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "exerciseId" : "fff18f5b-d4dc-4147-84dd-c1db158a7ee0",
+    "exerciseName" : "Brust",
+    "machineId" : "4062a93a-23f3-414d-828e-3a85a70cd5e0",
+    "machineName" : "Butterfly",
+    "sessionId" : "8AAF7CDB-FCA4-4821-9A1A-9B8F4DA778F0",
+    "setId" : "4FC9B8C7-2DF6-4EDD-BD33-CDB38005BA43",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 10,
+    "weightKg" : 40
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-08T08:52:11+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 87.92,
+      "median" : 0,
+      "p95" : 60.23
+    },
+    "luecken" : 0,
+    "pakete" : 1702,
+    "rateIstHz" : 49.8,
+    "verworfeneBytes" : 0
+  }
+}

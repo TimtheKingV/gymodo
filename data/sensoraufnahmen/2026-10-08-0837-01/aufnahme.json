@@ -1,0 +1,42 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : "Mit der Hand angehoben Fake",
+  "endedAt" : "2026-10-08T08:38:39+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "exerciseId" : "8d64e68f-5b22-44cb-93c4-494eda5d5656",
+    "exerciseName" : "Beinpresse",
+    "machineId" : "6ad184a8-d80f-4d83-89ce-3d370ca61d00",
+    "machineName" : "Beinpresse",
+    "sessionId" : "8AAF7CDB-FCA4-4821-9A1A-9B8F4DA778F0",
+    "setId" : "A247B116-BEAA-4D77-9D45-1E58AA2681F2",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 12,
+    "weightKg" : 55
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-08T08:37:44+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 91.54,
+      "median" : 0,
+      "p95" : 60.1
+    },
+    "luecken" : 0,
+    "pakete" : 2718,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  }
+}

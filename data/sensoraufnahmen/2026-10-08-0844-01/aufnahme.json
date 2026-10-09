@@ -1,0 +1,42 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "endedAt" : "2026-10-08T08:44:51+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "exerciseId" : "5ab6e9ff-f490-4ef5-95f9-18cb54f87d6a",
+    "exerciseName" : "Latzug - neutral",
+    "machineId" : "8c902739-ac74-4064-b9ce-d1f458b23b75",
+    "machineName" : "Latzug",
+    "sessionId" : "8AAF7CDB-FCA4-4821-9A1A-9B8F4DA778F0",
+    "setId" : "FBCFD60A-B7EB-437B-9477-DEBB24FD946F",
+    "setIndex" : 3
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 8,
+    "weightKg" : 2.5
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-08T08:44:27+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 90.4,
+      "median" : 0,
+      "p95" : 60.24
+    },
+    "luecken" : 0,
+    "pakete" : 1192,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  }
+}
