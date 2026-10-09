@@ -150,20 +150,12 @@ struct TrainingRootView: View {
                 pausiert: sessions.aktiveSession()?.istPausiert ?? false,
                 beiPauseUmschalten: pauseUmschalten,
                 beiBeenden: beenden)
-            .confirmationDialog(
-                "Training in \(StudiosListe.name(fuer: scanRueckfrage?.laufenderOrt ?? katalog.ort, studios: katalog.bootstrap?.studios ?? [])) beenden?",
-                isPresented: Binding(
-                    get: { scanRueckfrage != nil },
-                    set: { if !$0 { scanRueckfrageVerwerfen() } }
-                ),
-                presenting: scanRueckfrage
-            ) { rueckfrage in
-                Button("Training beenden", role: .destructive) { beendenUndOeffnen(rueckfrage) }
-                Button("Abbrechen", role: .cancel) { scanRueckfrageVerwerfen() }
-            } message: { _ in
-                Text("Danach wechselst du den Ort.")
-            }
-            .navigationDestination(for: GeraetRoute.self, destination: ziel)
+            // .id(route): ersetzt navigiere(zu:) den Pfad in einem Zug, landet
+            // die neue Route an derselben Stelle wie die alte -- ohne eigene
+            // Identitaet behielte der Screen dort sein @State-Modell und zeigte
+            // weiter das alte Geraet (Sichtcheck Task 11, Scan auf dem
+            // Geraete-Screen eines anderen Orts).
+            .navigationDestination(for: GeraetRoute.self) { route in ziel(route).id(route) }
             .sheet(isPresented: $scannerOffen) {
                 ScannerSheet(
                     titel: "Gerät finden",
@@ -241,6 +233,24 @@ struct TrainingRootView: View {
             // gesamte Umgebung neu auf), soll ein noch laufender Retry nicht
             // in einen verschwundenen Zustand hinein schreiben.
             .onDisappear { neuladeVersuch?.cancel() }
+        }
+        // Am Stack, nicht an der Wurzel: ein Aufkleber-Tap kommt auch, waehrend
+        // ein Geraete-Screen gepusht ist, und ein Dialog an der verdeckten
+        // Wurzel erschien erst nach dem Zuruecknavigieren (Sichtcheck Task 11).
+        // Der Titel muss sichtbar sein -- er nennt den Ort der laufenden Einheit.
+        .confirmationDialog(
+            "Training in \(StudiosListe.name(fuer: scanRueckfrage?.laufenderOrt ?? katalog.ort, studios: katalog.bootstrap?.studios ?? [])) beenden?",
+            isPresented: Binding(
+                get: { scanRueckfrage != nil },
+                set: { if !$0 { scanRueckfrageVerwerfen() } }
+            ),
+            titleVisibility: .visible,
+            presenting: scanRueckfrage
+        ) { rueckfrage in
+            Button("Training beenden", role: .destructive) { beendenUndOeffnen(rueckfrage) }
+            Button("Abbrechen", role: .cancel) { scanRueckfrageVerwerfen() }
+        } message: { _ in
+            Text("Danach wechselst du den Ort.")
         }
     }
 

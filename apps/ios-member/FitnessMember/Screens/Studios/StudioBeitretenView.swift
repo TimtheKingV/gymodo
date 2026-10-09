@@ -84,6 +84,9 @@ struct StudioBeitretenView: View {
                 get: { wechselPending != nil },
                 set: { if !$0 { wechselPending = nil } }
             ),
+            // Ohne .visible blendet iOS den Titel aus -- und mit ihm den Ort
+            // der laufenden Einheit, um den es geht (Sichtcheck Task 11).
+            titleVisibility: .visible,
             presenting: wechselPending
         ) { ergebnis in
             Button("Training beenden", role: .destructive) { beendenUndWechseln(ergebnis) }

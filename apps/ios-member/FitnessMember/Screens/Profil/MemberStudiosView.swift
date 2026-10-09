@@ -4,7 +4,6 @@ struct MemberStudiosView: View {
     @Environment(CatalogStore.self) private var catalogStore
     @State private var studioPendingLeave: BootstrapResponse.Studio?
     @Environment(WorkoutSessionStore.self) private var sessions
-    @Environment(\.dismiss) private var dismiss
     @State private var errorMessage: String?
     @State private var wechselPending: Ort?
     let apiClient: APIClient
@@ -51,7 +50,7 @@ struct MemberStudiosView: View {
             }
 
             NavigationLink("Studio beitreten") {
-                StudioBeitretenView(loader: apiClient) { dismiss() }
+                BeitretenZiel(apiClient: apiClient)
             }
             .font(.system(size: 15, weight: .bold))
             .frame(minHeight: 44)
@@ -92,6 +91,9 @@ struct MemberStudiosView: View {
                 get: { wechselPending != nil },
                 set: { if !$0 { wechselPending = nil } }
             ),
+            // Ohne .visible blendet iOS den Titel aus -- und mit ihm den Ort
+            // der laufenden Einheit, um den es geht (Sichtcheck Task 11).
+            titleVisibility: .visible,
             presenting: wechselPending
         ) { ziel in
             Button("Training beenden", role: .destructive) { beendenUndWechseln(zu: ziel) }
@@ -130,5 +132,17 @@ struct MemberStudiosView: View {
         } catch {
             errorMessage = "Das hat nicht geklappt. Prüf deine Verbindung."
         }
+    }
+}
+
+/// Schliesst den gepushten Beitritt mit SEINEM dismiss. Das dismiss von
+/// MemberStudiosView, im Ziel-Closure eingefangen, liess den Screen nach
+/// dem Beitritt stehen (Sichtcheck Task 11).
+private struct BeitretenZiel: View {
+    @Environment(\.dismiss) private var dismiss
+    let apiClient: APIClient
+
+    var body: some View {
+        StudioBeitretenView(loader: apiClient) { dismiss() }
     }
 }
