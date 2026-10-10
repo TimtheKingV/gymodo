@@ -12,6 +12,8 @@ packages:
   Supabase:
     url: https://github.com/supabase/supabase-swift
     from: 2.0.0
+  Sensorik:
+    path: Packages/Sensorik
 
 targets:
   FitnessMember:
@@ -36,7 +38,7 @@ targets:
         # Gilt je Target und steht damit auch im Release-Build, obwohl der
         # Code dahinter nur im Debug-Build existiert. Ohne den Schluessel
         # beendet iOS die App beim ersten CBCentralManager.
-        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Gymtavo verbindet sich mit deinem Bewegungssensor, um Wiederholungen zu erfassen."
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Gymtavo verbindet sich mit deinem Bewegungssensor, um deine Wiederholungen zu zählen."
         # INFOPLIST_KEY_<Key> deckt bei GENERATE_INFOPLIST_FILE nur Apples
         # bekannte Info.plist-Schluessel ab (z.B. NSCameraUsageDescription).
         # Fuer eigene Schluessel (SUPABASE_URL etc.) wird laut Apple-Doku eine
@@ -50,6 +52,7 @@ targets:
     dependencies:
       - package: Supabase
         product: Auth
+      - package: Sensorik
     entitlements:
       path: FitnessMember/FitnessMember.entitlements
       properties:
@@ -83,6 +86,7 @@ targets:
         DEVELOPMENT_TEAM: ZJP24W38LQ
     dependencies:
       - target: FitnessMember
+      - package: Sensorik
 
 schemes:
   FitnessMember:

@@ -1,7 +1,6 @@
-#if DEBUG
 import Foundation
 import Testing
-@testable import FitnessMember
+@testable import Sensorik
 
 struct WitMotionPaketTests {
     /// ay = -2048 (-1 g), az = 2048 (1 g), gx = 16384 (1000 Grad/s), wx = -16384 (-90 Grad).
@@ -120,4 +119,3 @@ struct WitMotionPaketTests {
         #expect(sut.verworfeneBytes == 0)
     }
 }
-#endif

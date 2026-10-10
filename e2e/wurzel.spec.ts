@@ -62,7 +62,7 @@ test("Trainer kommen weiter zu Anmeldung und Konto", async ({ page }) => {
  */
 test("Die Produktgrenze steht im Fuss, in text-muted", async ({ page }) => {
   await page.goto("/");
-  const satz = page.getByRole("contentinfo").getByText(/Gymtavo misst nichts/);
+  const satz = page.getByRole("contentinfo").getByText(/Gymtavo speichert nur, was du bestätigst/);
   await satz.scrollIntoViewIfNeeded();
   await expect(satz).toBeVisible();
   expect(await satz.evaluate((el) => getComputedStyle(el).color)).toBe("rgb(155, 163, 175)");

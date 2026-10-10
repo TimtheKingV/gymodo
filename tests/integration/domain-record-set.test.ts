@@ -373,3 +373,73 @@ describe("recordSet", () => {
     ).rejects.toBeInstanceOf(DomainError);
   });
 });
+
+function ereignisse(n: number) {
+  return {
+    algo: "langhantel/1",
+    befestigungsart: "langhantel",
+    unsicher: null,
+    wiederholungen: Array.from({ length: n }, (_, i) => ({
+      beginn: i * 2, umkehr: i * 2 + 1, ende: i * 2 + 1.9, ausschlag: 110, sicherheit: 0.9,
+    })),
+  };
+}
+
+describe("recordSet -- Herkunft (Sensor-Spec B 6.3)", () => {
+  it("speichert eingegeben, wenn die App nichts dazu sagt", async () => {
+    const client = await userClient(memberAEmail);
+    const saved = await recordSet(client, payload());
+    expect(saved.volumeSource).toBe("eingegeben");
+    expect(saved.volumeCounted).toBeNull();
+  });
+
+  it("speichert einen gemessenen Satz samt Ereignissen", async () => {
+    const client = await userClient(memberAEmail);
+    const input = payload({ volumeSource: "gemessen", volumeCounted: 10, repEvents: ereignisse(10) });
+    const saved = await recordSet(client, input);
+    expect(saved.volumeSource).toBe("gemessen");
+    expect(saved.volumeCounted).toBe(10);
+    const { data } = await serviceClient().from("workout_sets").select("rep_events").eq("id", input.setId).single();
+    expect(data?.rep_events).toEqual(ereignisse(10));
+  });
+
+  it("speichert einen korrigierten Satz", async () => {
+    const client = await userClient(memberAEmail);
+    const saved = await recordSet(client, payload({ volume: 12, volumeSource: "korrigiert", volumeCounted: 10, repEvents: ereignisse(10) }));
+    expect(saved.volumeSource).toBe("korrigiert");
+    expect(saved.volumeCounted).toBe(10);
+  });
+
+  it("bleibt idempotent mit Herkunft", async () => {
+    const client = await userClient(memberAEmail);
+    const input = payload({ volumeSource: "gemessen", volumeCounted: 10, repEvents: ereignisse(10) });
+    expect(await recordSet(client, input)).toEqual(await recordSet(client, input));
+  });
+
+  it("weist eine gezaehlte Herkunft an einer Sekundenuebung ab", async () => {
+    const client = await userClient(memberAEmail);
+    await expect(
+      recordSet(client, payload({
+        machineId: laufband, exerciseId: dauerlauf, load: 8, secondaryLoad: 1, volume: 10,
+        volumeSource: "gemessen", volumeCounted: 10, repEvents: ereignisse(10),
+      })),
+    ).rejects.toMatchObject({ code: "validation_failed" });
+  });
+
+  it("weist einen inkonsistenten Satz ab", async () => {
+    const client = await userClient(memberAEmail);
+    await expect(recordSet(client, payload({ volumeSource: "gemessen", volumeCounted: 9, repEvents: ereignisse(9) })))
+      .rejects.toMatchObject({ code: "validation_failed" });
+  });
+
+  it("zeigt rep_events keinem anderen Mitglied", async () => {
+    const client = await userClient(memberAEmail);
+    const input = payload({ volumeSource: "gemessen", volumeCounted: 10, repEvents: ereignisse(10) });
+    await recordSet(client, input);
+    const fremdEmail = uniqueEmail("record-fremd");
+    await createTestUser(fremdEmail);
+    const fremd = await userClient(fremdEmail);
+    const { data } = await fremd.from("workout_sets").select("rep_events").eq("id", input.setId);
+    expect(data).toEqual([]);
+  });
+});

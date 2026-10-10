@@ -1,23 +1,24 @@
-#if DEBUG
 import Foundation
 
-enum WitMotionPaket: Sendable, Equatable {
+public enum WitMotionPaket: Sendable, Equatable {
     case messwert(beschleunigung: Vektor3, drehrate: Vektor3, winkel: Vektor3)
     /// Antwort auf einen Lesebefehl: acht Register ab `adresse`.
     case register(adresse: UInt16, werte: [Int16])
 
-    static let laenge = 20
+    public static let laenge = 20
 }
 
 /// Haelt einen Puffer ueber Aufrufe hinweg: Core Bluetooth garantiert nicht,
 /// dass eine Notification genau ein Paket traegt (Spec 5.1).
-struct WitMotionParser {
+public struct WitMotionParser: Sendable {
     private var puffer: [UInt8] = []
     /// Bytes, die zu keinem Paket gehoerten. Gezaehlt statt still verworfen,
     /// damit eine kaputte Verbindung in der Statistik sichtbar wird.
-    private(set) var verworfeneBytes = 0
+    public private(set) var verworfeneBytes = 0
 
-    mutating func lesen(_ daten: Data) -> [WitMotionPaket] {
+    public init() {}
+
+    public mutating func lesen(_ daten: Data) -> [WitMotionPaket] {
         puffer.append(contentsOf: daten)
         var pakete: [WitMotionPaket] = []
         var i = 0
@@ -60,4 +61,3 @@ struct WitMotionParser {
         return pakete
     }
 }
-#endif

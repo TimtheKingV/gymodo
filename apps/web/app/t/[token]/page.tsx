@@ -246,8 +246,10 @@ export default async function TagFallbackPage({
       </section>
 
       <p className={styles.grenze}>
-        Gymtavo misst nichts. Einweisungsvideos und Einstellhinweise sind Inhalte
-        deines Studios, keine Trainings- oder Gesundheitsempfehlung von Gymtavo.
+        Gymtavo speichert nur, was du bestätigst. Mit Sensor zählt Gymtavo deine
+        Wiederholungen mit — du siehst die Zahl und entscheidest. Einweisungsvideos
+        und Einstellhinweise sind Inhalte deines Studios, keine Trainings- oder
+        Gesundheitsempfehlung von Gymtavo.
       </p>
     </main>
   );

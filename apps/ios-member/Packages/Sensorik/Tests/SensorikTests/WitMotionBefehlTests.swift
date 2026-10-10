@@ -1,7 +1,6 @@
-#if DEBUG
 import Foundation
 import Testing
-@testable import FitnessMember
+@testable import Sensorik
 
 struct WitMotionBefehlTests {
     @Test func bytesDerVierBefehle() {
@@ -30,4 +29,3 @@ struct WitMotionBefehlTests {
         #expect(Akkustand.prozent(hundertstelVolt: 300) == 0)
     }
 }
-#endif

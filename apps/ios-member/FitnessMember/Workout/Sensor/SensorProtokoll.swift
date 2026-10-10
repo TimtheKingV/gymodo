@@ -1,5 +1,6 @@
 #if DEBUG
 import Foundation
+import Sensorik
 
 /// Zeilenweises Protokoll neben den Aufnahmen. Am 8. Oktober fehlten zwei
 /// Saetze, und hinterher liess sich nicht mehr sagen, ob der Sensor getrennt

@@ -275,16 +275,16 @@ struct ProfilRootView: View {
     private var deineDaten: some View {
         Section("DEINE DATEN") {
             Text(
-                "Gymtavo misst nichts. Gespeichert wird nur, was du selbst bestätigst — Einstellwerte, Sätze, ob ein Trainer dabei war."
+                "Gespeichert wird nur, was du selbst bestätigst — Einstellwerte, Sätze, ob ein Trainer dabei war. Vom Sensor gezählte Wiederholungen zählen erst, wenn du den Satz sicherst."
             )
             .font(DesignSystem.Typography.fliesstext)
             .foregroundStyle(DesignSystem.Color.textMuted)
 
             // Zweiter Satz seit Aufgabe 10 (Brief Step 2), woertlich aus
-            // dem Artboard: die Produktgrenze gilt jetzt auch fuer
-            // Koerperdaten und Ziele -- eine eigene Zeile, kein
-            // angehaengter Halbsatz an der Zeile ueber Einstellwerten und
-            // Saetzen, die etwas anderes meint.
+            // dem Artboard: Koerperdaten und Ziele bleiben reine Eingabe
+            // -- strenger als die Grenze fuer Saetze (Sensor-Spec B 3.2).
+            // Eine eigene Zeile, kein angehaengter Halbsatz an der Zeile
+            // ueber Einstellwerten und Saetzen, die etwas anderes meint.
             Text(
                 "Deine Körperdaten und Ziele sieht niemand außer dir — auch dein Studio nicht. Jede Angabe lässt sich einzeln entfernen."
             )

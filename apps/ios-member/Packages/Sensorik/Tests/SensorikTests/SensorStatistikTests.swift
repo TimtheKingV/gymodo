@@ -1,7 +1,6 @@
-#if DEBUG
 import Foundation
 import Testing
-@testable import FitnessMember
+@testable import Sensorik
 
 struct SensorStatistikTests {
     @Test func leerIstNull() {
@@ -48,4 +47,3 @@ struct SensorStatistikTests {
         #expect(sut.rateLetzteSekunde(bis: 4.5) == 0)
     }
 }
-#endif
