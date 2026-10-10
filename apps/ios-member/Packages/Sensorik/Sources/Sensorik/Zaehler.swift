@@ -34,6 +34,10 @@ public struct Zaehler: Sendable {
     /// laege sonst dauerhaft ausserhalb des Bands um null, und der Beginn der
     /// ersten Wiederholung rutschte in den Ruhevorlauf (Spec B 5.3).
     private var grundlinie: Double?
+    /// Ab der ersten Halbwelle ueber der Schwelle ist die Ruhe vorbei; die
+    /// Grundlinie darf danach nicht mehr folgen, auch nicht nach einem
+    /// verworfenen ersten Versuch, sonst wanderte sie mit der Bewegung.
+    private var hinwegBegonnen = false
 
     // Halbwellen
     private var zustand: Halbwelle = .wartet
@@ -113,9 +117,13 @@ public struct Zaehler: Sendable {
         // Die Achse erst festlegen, wenn die Bewegung angehalten hat: ein
         // kurzer Stoss im Vorlauf (Hantel angestossen) wuerde sonst eine
         // falsche Achse fuer den ganzen Satz waehlen, und der Satz bliebe
-        // stumm bei 0. Mehrheit statt "alle", weil eine Wiederholung um die
-        // Umkehr herum kurz unter die Bewegungsschwelle faellt.
-        guard bewegung.filter(bewegt).count * 2 > bewegung.count else {
+        // stumm bei 0. Gemessen wird gegen die Ruheschwelle, nicht gegen die
+        // Startschwelle der Suche: bei kleinem Ausschlag (Spitze knapp ueber
+        // 30 Grad/s) laege sonst die meiste Zeit unter der Startschwelle und
+        // die Achse wuerde nie gewaehlt. Mehrheit statt "alle", weil die
+        // Drehrate um die Umkehr herum durch null geht.
+        let nichtRuhig = bewegung.filter { Self.betrag($0.drehrate) > profil.ruheDrehrate }.count
+        guard nichtRuhig * 2 > bewegung.count else {
             bewegtSeit = bewegt(m) ? m.t : nil
             puffer.removeAll { m.t - $0.t > 1 }
             return []
@@ -164,16 +172,17 @@ public struct Zaehler: Sendable {
         // kein Einschwingen erzeugt, das wie Bewegung aussieht.
         let f = (gefiltert ?? roh) + alpha * (roh - (gefiltert ?? roh))
         gefiltert = f
-        let basis = grundlinie ?? f
-        if case .wartet = zustand, wiederholungen.isEmpty, ruhig(m) {
+        if !hinwegBegonnen, ruhig(m) {
+            // Nur aus ruhigen Messwerten: beginnt die Aufnahme mitten in der
+            // Bewegung, laege die Grundlinie sonst auf einem Bewegungswert.
             // Zeitkonstante rund 0,5 s: folgt dem Ruhewert, ohne dass die
             // kurzen ruhigen Momente zu Bewegungsbeginn ihn verschieben.
             let k = dt / (0.5 + dt)
-            grundlinie = basis + k * (f - basis)
-        } else {
-            grundlinie = basis
+            grundlinie = grundlinie.map { $0 + k * (f - $0) } ?? f
         }
-        let s = f - (grundlinie ?? f)
+        // Ohne Ruhe vor der ersten Halbwelle gibt es keinen Gleichanteil zu
+        // schaetzen; dann gilt null wie ohne Grundlinie.
+        let s = f - (grundlinie ?? 0)
         // "Nulldurchgang" ist der letzte Moment nahe null: ein echter
         // Vorzeichenwechsel oder ein Wert im Band um null. Ohne das Band
         // bliebe er in reiner Ruhe (s exakt 0) beim ersten Messwert stehen,
@@ -193,6 +202,7 @@ public struct Zaehler: Sendable {
             // genug aus, gilt das Ausholen als Hinweg und die Phasen der
             // Wiederholungen sind vertauscht.
             guard richtung == vorzeichen else { return [] }
+            hinwegBegonnen = true
             zustand = .erste(beginn: nulldurchgang ?? m.t, spitze: abs(s))
             return []
 

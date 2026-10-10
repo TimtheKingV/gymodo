@@ -158,4 +158,22 @@ struct ZaehlerTests {
         let erste = try #require(Self.ersteWiederholung(ereignisse))
         #expect(abs(erste.beginn - 3) <= 0.3)
     }
+
+    /// 0,18 der Grundamplitude sind 36 Grad/s Spitze: ueber der
+    /// Startschwelle (30), aber die meiste Zeit unter der Bewegungsschwelle
+    /// der Achsensuche (30). Der Satz muss trotzdem gezaehlt werden.
+    @Test(arguments: [Befestigungsart.langhantel, .kabelgriff])
+    func einKleinerAusschlagWirdGezaehlt(art: Befestigungsart) {
+        let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 10, amplitude: 0.18)])
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: art)) == 10)
+    }
+
+    /// Aufnahme beginnt mitten in der Bewegung, auf der Spitze der ersten
+    /// Halbwelle (kein Ruhevorlauf): die angeschnittene erste und neun
+    /// volle Wiederholungen.
+    @Test func ohneRuhevorlaufAufDerSpitzeZaehltAlle() {
+        let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 10)], ruheVorher: 0)
+            .filter { $0.t >= 0.5 }
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .langhantel)) == 10)
+    }
 }
