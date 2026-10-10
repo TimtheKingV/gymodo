@@ -96,6 +96,8 @@ export const equipmentModelInputSchema = z
       .positive("Der Schritt muss groesser als null sein."),
     loadMin: z.number().min(0).default(0),
     loadMax: z.number().positive().nullish(),
+    /** Gymtavo-Typ (Spec 5.3); Pflicht entscheidet das Portal, nicht hier. */
+    catalogModelId: uuid.nullish(),
     ...nebenbelastungFelder,
   })
   .superRefine((werte, ctx) => {
@@ -113,6 +115,19 @@ export const equipmentModelInputSchema = z
   });
 
 export type EquipmentModelInput = z.input<typeof equipmentModelInputSchema>;
+
+/**
+ * Der Trigger aus 0047 prueft die Zuordnung (Ziel im Gymtavo-Studio, Quelle
+ * nicht). Sein Fehler kommt als Postgres-Exception mit festem Text; ohne
+ * Uebersetzung landete er als "internal" beim Trainer, obwohl er nur einen
+ * falschen Typ gewaehlt hat.
+ */
+function zuordnungsFehler(error: { message?: string } | null): DomainError | null {
+  if (error?.message?.includes("gymtavo_zuordnung_ungueltig")) {
+    return new DomainError("validation_failed", "Diesen Gymtavo-Geraetetyp gibt es nicht.");
+  }
+  return null;
+}
 
 export async function createEquipmentModel(
   client: SupabaseClient,
@@ -137,12 +152,16 @@ export async function createEquipmentModel(
       secondary_step: werte.secondaryStep ?? null,
       secondary_min: werte.secondaryMin ?? null,
       secondary_max: werte.secondaryMax ?? null,
+      catalog_model_id: werte.catalogModelId ?? null,
     })
     .select("id")
     .single<{ id: string }>();
 
   if (error || !data) {
-    throw new DomainError("internal", error?.message ?? "Modell nicht angelegt.");
+    throw (
+      zuordnungsFehler(error) ??
+      new DomainError("internal", error?.message ?? "Modell nicht angelegt.")
+    );
   }
   return { id: data.id };
 }
@@ -156,6 +175,7 @@ export const equipmentModelPatchSchema = z
     loadStep: z.number().positive().optional(),
     loadMin: z.number().min(0).optional(),
     loadMax: z.number().positive().nullish(),
+    catalogModelId: uuid.nullish(),
     ...nebenbelastungFelder,
   })
   .superRefine(pruefeNebenbelastung);
@@ -178,6 +198,7 @@ export async function updateEquipmentModel(
   if (werte.loadStep !== undefined) zeile.load_step = werte.loadStep;
   if (werte.loadMin !== undefined) zeile.load_min = werte.loadMin;
   if (werte.loadMax !== undefined) zeile.load_max = werte.loadMax;
+  if (werte.catalogModelId !== undefined) zeile.catalog_model_id = werte.catalogModelId;
   // Die Nebenbelastung wird als Ganzes gesetzt oder als Ganzes geloescht
   // (null in allen vier Feldern) -- pruefeNebenbelastung laesst nichts
   // dazwischen durch, und der Constraint aus 0046 auch nicht.
@@ -193,7 +214,7 @@ export async function updateEquipmentModel(
     .from("equipment_models")
     .update(zeile)
     .eq("id", equipmentModelId);
-  if (error) throw new DomainError("internal", error.message);
+  if (error) throw zuordnungsFehler(error) ?? new DomainError("internal", error.message);
 }
 
 /** Studio eines Geraetemodells. RLS blendet fremde Modelle aus. */
@@ -754,6 +775,8 @@ export type CatalogExercise = {
   videoAssetId: string | null;
   videoStoragePath: string | null;
   videoDurationS: number | null;
+  /** Gymtavo-Uebung per Verweis (Spec E2), nicht eigene. */
+  fromCatalog: boolean;
 };
 
 export type CatalogMachine = {
@@ -778,6 +801,8 @@ export type CatalogModel = {
   secondaryStep: number | null;
   secondaryMin: number | null;
   secondaryMax: number | null;
+  /** Zugeordneter Gymtavo-Typ (Spec 5.3), null bei Altbestand. */
+  catalogModelId: string | null;
   settingDefinitions: CatalogSettingDefinition[];
   exercises: CatalogExercise[];
   machines: CatalogMachine[];
@@ -809,6 +834,8 @@ export type StudioCatalog = {
   studioName: string;
   /** studios.timezone (Designsystem 10: Zeitangaben in der Studio-Zeitzone). */
   studioTimezone: string;
+  /** Das Gymtavo-Studio selbst (Spec 5.1). */
+  isCatalog: boolean;
   models: CatalogModel[];
   tags: CatalogTag[];
   shipments: CatalogShipment[];
@@ -829,9 +856,9 @@ export async function getStudioCatalog(
 
   const { data: studio } = await client
     .from("studios")
-    .select("id, name, timezone")
+    .select("id, name, timezone, is_catalog")
     .eq("id", studioId)
-    .maybeSingle<{ id: string; name: string; timezone: string }>();
+    .maybeSingle<{ id: string; name: string; timezone: string; is_catalog: boolean }>();
   if (!studio) {
     throw new DomainError("not_found", "Dieses Studio gibt es nicht.");
   }
@@ -839,9 +866,9 @@ export async function getStudioCatalog(
   const { data: modelle, error } = await client
     .from("equipment_models")
     .select(
-      `id, name, manufacturer, photo_path, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max,
+      `id, name, manufacturer, photo_path, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id,
        equipment_setting_definitions (id, key, label, kind, min_value, max_value, step_value, unit, allowed_values, sort_order),
-       equipment_model_exercises (id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max), instruction_assets (id, storage_path, duration_s)),
+       equipment_model_exercises (id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max, studio_id), instruction_assets (id, storage_path, duration_s)),
        machines (id, label, location_note, status, machine_tags (id, status))`,
     )
     .eq("studio_id", studioId)
@@ -876,6 +903,7 @@ export async function getStudioCatalog(
     secondary_step: number | string | null;
     secondary_min: number | string | null;
     secondary_max: number | string | null;
+    catalog_model_id: string | null;
     equipment_setting_definitions: Array<{
       id: string;
       key: string;
@@ -898,6 +926,7 @@ export async function getStudioCatalog(
         volume_kind: VolumeKind;
         target_min: number;
         target_max: number;
+        studio_id: string;
       };
       instruction_assets: Array<{
         id: string;
@@ -949,6 +978,7 @@ export async function getStudioCatalog(
     secondaryStep: zahl(row.secondary_step),
     secondaryMin: zahl(row.secondary_min),
     secondaryMax: zahl(row.secondary_max),
+    catalogModelId: row.catalog_model_id,
     settingDefinitions: [...row.equipment_setting_definitions]
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((setting) => ({
@@ -981,6 +1011,9 @@ export async function getStudioCatalog(
           videoAssetId: video?.id ?? null,
           videoStoragePath: video?.storage_path ?? null,
           videoDurationS: video?.duration_s ?? null,
+          // Die Policy aus 0047 laesst nur eigene und Gymtavo-Uebungen zu --
+          // was nicht aus diesem Studio stammt, ist also eine Gymtavo-Uebung.
+          fromCatalog: link.exercises.studio_id !== studioId,
         };
       }),
     machines: [...row.machines]
@@ -1009,6 +1042,7 @@ export async function getStudioCatalog(
     studioId: studio.id,
     studioName: studio.name,
     studioTimezone: studio.timezone,
+    isCatalog: studio.is_catalog,
     models,
     tags: ((tags ?? []) as unknown as TagRow[]).map((tag) => ({
       id: tag.id,
