@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { erreichbarkeit, ladeKatalog, ladeTypen, railZahlen } from "../../catalog";
 import { gymtavoKontext, offenePunkte } from "../../offen";
+import { uebungenStand } from "./[modelId]/uebungen/gymtavo";
 import { Seite } from "../../../bausteine/Seite";
 import { Abschnitt } from "../../../bausteine/Abschnitt";
 import { Zeile, Zeilen } from "../../../bausteine/Zeile";
@@ -135,7 +136,8 @@ export default async function GeraetePage({
           <Zeilen>
             {modelle.map((modell) => {
               const stand = erreichbarkeit(modell);
-              const mitVideo = modell.exercises.filter((uebung) => uebung.hasVideo).length;
+              // Dieselbe Zaehlung wie im Modellkopf: eigene plus Gymtavo-Uebungen.
+              const { anzahl, mitVideo } = uebungenStand(modell, typen, katalog.isCatalog);
               const offen = offenePunkte(
                 studioId,
                 modell,
@@ -180,10 +182,10 @@ export default async function GeraetePage({
                           </>
                         )}
                         {" · "}
-                        {modell.exercises.length === 0 ? (
+                        {anzahl === 0 ? (
                           <span className={styles.absent}>keine Übung</span>
                         ) : (
-                          `${modell.exercises.length} ${modell.exercises.length === 1 ? "Übung" : "Übungen"}, ${mitVideo} mit Video`
+                          `${anzahl} ${anzahl === 1 ? "Übung" : "Übungen"}, ${mitVideo} mit Video`
                         )}
                       </span>
                       {/* Offenes zaehlt die Marke am Stift (Testnotiz

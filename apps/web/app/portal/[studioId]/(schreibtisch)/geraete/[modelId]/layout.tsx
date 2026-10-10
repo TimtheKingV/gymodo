@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ladeKatalog, ladeTypen } from "../../../catalog";
 import { gymtavoKontext, offenePunkte } from "../../../offen";
-import { eigeneUebungen, gymtavoZeilen } from "./uebungen/gymtavo";
+import { uebungenStand } from "./uebungen/gymtavo";
 import { Modellbild } from "../../../../bausteine/Modellbild";
 import { NochZuTun } from "../../../../bausteine/NochZuTun";
 import { ModellRahmen } from "./ModellRahmen";
@@ -38,12 +38,7 @@ export default async function ModellLayout({
   const fotoUrl = modell.photoPath ? katalog.photoUrls[modell.photoPath] : undefined;
   const typen = katalog.isCatalog ? [] : alleTypen;
   // Der Reiter zaehlt, was am Geraet steht: eigene und Gymtavo-Uebungen.
-  const eigen = katalog.isCatalog ? modell.exercises : eigeneUebungen(modell.exercises);
-  const gymtavo = katalog.isCatalog ? [] : gymtavoZeilen(modell, typen);
-  const uebungenAnzahl = eigen.length + gymtavo.length;
-  const mitVideo =
-    eigen.filter((uebung) => uebung.hasVideo).length +
-    gymtavo.filter((zeile) => zeile.eigenesVideo || zeile.katalogVideo).length;
+  const { anzahl: uebungenAnzahl, mitVideo } = uebungenStand(modell, typen, katalog.isCatalog);
   const punkte = offenePunkte(
     studioId,
     modell,

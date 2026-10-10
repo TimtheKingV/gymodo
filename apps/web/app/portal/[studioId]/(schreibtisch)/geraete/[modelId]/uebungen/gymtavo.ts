@@ -105,3 +105,29 @@ export function anhaengbareUebungen(
   }
   return [...angebot.values()].sort((a, b) => a.name.localeCompare(b.name, "de"));
 }
+
+/**
+ * Was am Geraet steht, als Zahlen -- fuer Modellkopf, Geraeteliste und
+ * Ueberblick. An einer Stelle, damit sie nicht wieder auseinanderlaufen.
+ * Fehlende Videos zaehlen nur bei eigenen Uebungen, wie in offenePunkte:
+ * eine Gymtavo-Uebung zeigt am Geraet das Katalogvideo.
+ */
+export function uebungenStand(
+  modell: Modell,
+  typen: CatalogType[],
+  istKatalog: boolean,
+): { anzahl: number; mitVideo: number; eigeneOhneVideo: number } {
+  // Im Gymtavo-Studio ist jede Uebung eine eigene; es gibt keinen Typ ueber
+  // dem Typ.
+  const eigen = istKatalog ? modell.exercises : eigeneUebungen(modell.exercises);
+  const gymtavo = istKatalog ? [] : gymtavoZeilen(modell, typen);
+  const eigeneOhneVideo = eigen.filter((uebung) => !uebung.hasVideo).length;
+  return {
+    anzahl: eigen.length + gymtavo.length,
+    mitVideo:
+      eigen.length -
+      eigeneOhneVideo +
+      gymtavo.filter((zeile) => zeile.eigenesVideo || zeile.katalogVideo).length,
+    eigeneOhneVideo,
+  };
+}

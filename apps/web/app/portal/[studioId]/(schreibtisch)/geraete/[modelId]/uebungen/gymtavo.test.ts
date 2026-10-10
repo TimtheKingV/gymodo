@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CatalogType } from "@fitretro/domain";
-import { anhaengbareUebungen, eigeneUebungen, gymtavoZeilen } from "./gymtavo";
+import { anhaengbareUebungen, eigeneUebungen, gymtavoZeilen, uebungenStand } from "./gymtavo";
 
 function uebung(id: string, video: string | null = null) {
   return {
@@ -105,3 +105,26 @@ describe("anhaengbareUebungen", () => {
     expect(angebot[0]!.typName).toBe("Kabelzug");
   });
 });
+
+describe("uebungenStand", () => {
+  // Liste, Modellkopf und Ueberblick muessen dasselbe zaehlen -- vorher
+  // stand in der Liste "keine Übung" neben einem Typ mit drei Uebungen.
+  it("zaehlt eigene und Gymtavo-Uebungen, Videos aus beiden Quellen", () => {
+    expect(
+      uebungenStand({ catalogModelId: "t1", exercises: [link("x", false, "st/x.mp4")] }, typen, false),
+    ).toEqual({ anzahl: 3, mitVideo: 2, eigeneOhneVideo: 0 });
+  });
+
+  it("nennt nur eigene Uebungen ohne Video als fehlend", () => {
+    expect(
+      uebungenStand({ catalogModelId: null, exercises: [link("x", false), link("e2", true)] }, typen, false),
+    ).toEqual({ anzahl: 2, mitVideo: 0, eigeneOhneVideo: 1 });
+  });
+
+  it("im Gymtavo-Studio sind alle Uebungen eigene", () => {
+    expect(
+      uebungenStand({ catalogModelId: null, exercises: [link("e1", false, "gy/e1.mp4")] }, typen, true),
+    ).toEqual({ anzahl: 1, mitVideo: 1, eigeneOhneVideo: 0 });
+  });
+});
+

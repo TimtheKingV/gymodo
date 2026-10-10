@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { DomainError, getStudioOverview, listCourseWeek } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { erreichbarkeit, ladeKatalog } from "../catalog";
+import { uebungenStand } from "./geraete/[modelId]/uebungen/gymtavo";
 import { uhrzeit, wochenFenster } from "./kurse/woche";
 import { geraeteName } from "./ueberblick";
 import { Seite } from "../../bausteine/Seite";
@@ -68,7 +69,9 @@ export default async function UeberblickPage({
   );
   const ohneTag = geraeteGesamt - erreichbarGesamt;
   const uebungenOhneVideo = katalog.models.reduce(
-    (summe, modell) => summe + modell.exercises.filter((u) => !u.hasVideo).length,
+    // Wie offenePunkte: nur eigene Uebungen; eine Gymtavo-Uebung zeigt am
+    // Geraet das Katalogvideo. Die Typliste braucht es dafuer nicht.
+    (summe, modell) => summe + uebungenStand(modell, [], katalog.isCatalog).eigeneOhneVideo,
     0,
   );
   const vorrat = katalog.tags.filter((tag) => tag.status === "unassigned").length;
