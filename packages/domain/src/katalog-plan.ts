@@ -82,6 +82,10 @@ export type ImportPlan = {
     videos: string[];
     ersetzteMedien: string[];
     ohneSchluessel: string[];
+    /** Geraetetypen, deren Foto aus dem Portal stammt und deshalb bleibt. */
+    fremdeFotos: string[];
+    /** Verknuepfungen mit Portalvideo, an die der Import kein zweites haengt. */
+    fremdeVideos: string[];
   };
 };
 
@@ -117,7 +121,9 @@ function vergleiche<Z extends Record<string, unknown>>(
 export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): ImportPlan {
   const gemeldet: ImportPlan["gemeldet"] = {
     geraetetypen: [], uebungen: [], einstellungen: [], verknuepfungen: [], videos: [], ersetzteMedien: [], ohneSchluessel: [],
+    fremdeFotos: [], fremdeVideos: [],
   };
+  const fremdesFotoBleibt = new Set<string>();
   const ersetzt = new Set<string>();
   const typNachKey = new Map(ist.geraetetypen.flatMap((g) => (g.catalog_key === null ? [] : [[g.catalog_key, g] as const])));
   const uebungNachKey = new Map(ist.uebungen.flatMap((u) => (u.catalog_key === null ? [] : [[u.catalog_key, u] as const])));
@@ -141,8 +147,15 @@ export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): Imp
       secondary_max: g.secondary?.max ?? null,
     };
     const istTyp = typNachKey.get(g.key);
-    const posten = vergleiche(g.key, zeile, istTyp, GERAETETYP_FELDER);
     const altesFoto = istTyp?.photo_path;
+    // Ein Foto ausserhalb des eigenen Praefixes hat jemand im Portal gesetzt.
+    // Der Import ersetzt es nicht -- wie bei Videos -- und meldet die Stelle.
+    if (altesFoto && !altesFoto.startsWith(fotoPraefix(g.key))) {
+      zeile.photo_path = altesFoto;
+      fremdesFotoBleibt.add(g.key);
+      gemeldet.fremdeFotos.push(g.key);
+    }
+    const posten = vergleiche(g.key, zeile, istTyp, GERAETETYP_FELDER);
     if (posten.felder.includes("photo_path") && altesFoto?.startsWith(fotoPraefix(g.key))) {
       ersetzt.add(`${PHOTO_BUCKET}/${altesFoto}`);
     }
@@ -206,6 +219,15 @@ export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): Imp
         if (eigene.length > 0) gemeldet.videos.push(schluessel);
         return;
       }
+      // Bekommt eine Verknuepfung mit Portalvideo ein zweites, zeigt die App
+      // ein zufaelliges der beiden (Leser nehmen instruction_assets[0]).
+      const fremde = istV
+        ? ist.videos.filter((x) => x.equipment_model_exercise_id === istV.id && !x.storage_path.startsWith(videoPraefix(uKey)))
+        : [];
+      if (eigene.length === 0 && fremde.length > 0) {
+        gemeldet.fremdeVideos.push(schluessel);
+        return;
+      }
       const posten = vergleiche(
         schluessel,
         { geraetetyp: g.key, uebung: uKey, storage_path: medium.storagePath, duration_s: video.duration_s },
@@ -236,7 +258,8 @@ export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): Imp
   }
   gemeldet.ersetzteMedien = [...ersetzt];
 
-  const uploads = [...medien.fotos.values(), ...medien.videos.values()].filter(
+  const fotos = [...medien.fotos].flatMap(([key, m]) => (fremdesFotoBleibt.has(key) ? [] : [m]));
+  const uploads = [...fotos, ...medien.videos.values()].filter(
     (m) => !ist.objekte.has(`${m.bucket}/${m.storagePath}`),
   );
 
@@ -282,5 +305,7 @@ export function berichtText(plan: ImportPlan): string {
   melden("Video in der Datei entfernt, in der Datenbank behalten", plan.gemeldet.videos);
   melden("Ersetzte Medienobjekte, nicht geloescht", plan.gemeldet.ersetzteMedien);
   melden("Katalogzeilen ohne Schluessel, nicht verwaltet", plan.gemeldet.ohneSchluessel);
+  melden("Foto aus dem Portal behalten, Katalogfoto nicht gesetzt", plan.gemeldet.fremdeFotos);
+  melden("Video aus dem Portal behalten, Katalogvideo nicht angehaengt", plan.gemeldet.fremdeVideos);
   return zeilen.join("\n");
 }

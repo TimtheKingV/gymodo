@@ -107,7 +107,25 @@ describe("planeImport", () => {
     const plan = plane(beispiel, ist);
     expect(plan.videos.filter((p) => p.art === "geaendert").map((p) => p.felder)).toEqual([["storage_path"], ["storage_path"]]);
     expect(plan.gemeldet.ersetzteMedien).toEqual([`instruction-videos/${altesVideo}`]);
-    expect(plan.uploads.map((m) => m.datei).sort()).toEqual(["media/photos/brustpresse.png", "media/videos/trizeps.mp4"]);
+    // Das Portalfoto bleibt, also wird das Katalogfoto gar nicht erst hochgeladen.
+    expect(plan.uploads.map((m) => m.datei)).toEqual(["media/videos/trizeps.mp4"]);
+  });
+
+  it("laesst ein Foto aus dem Portal stehen und meldet es", () => {
+    const beispiel = beispielKatalog();
+    const ist = istAus(plane(beispiel, LEER));
+    const portalFoto = `${GYMTAVO_STUDIO_ID}/portal-foto.png`;
+    ist.geraetetypen[0]!.photo_path = portalFoto;
+    ist.geraetetypen[1]!.photo_path = portalFoto;
+
+    const plan = plane(beispiel, ist);
+    // Auch "photo": null in der Datei nimmt dem Typ das Portalfoto nicht weg.
+    expect(plan.geraetetypen.slice(0, 2).map((p) => [p.art, p.zeile.photo_path])).toEqual([
+      ["unveraendert", portalFoto],
+      ["unveraendert", portalFoto],
+    ]);
+    expect(plan.gemeldet.fremdeFotos).toEqual(["brustpresse", "trizepsmaschine"]);
+    expect(berichtText(plan)).toContain("Foto aus dem Portal behalten, Katalogfoto nicht gesetzt: 2");
   });
 
   it("meldet, was nur noch in der Datenbank steht, und plant kein Loeschen", () => {
@@ -137,9 +155,12 @@ describe("planeImport", () => {
     ist.uebungen.push({ ...ist.uebungen[0]!, id: "hand-u", catalog_key: null, name: "Von Hand Uebung" });
 
     const plan = plane(beispiel, ist);
-    // Das fremde Video zaehlt nicht als eigenes: der Import legt seines daneben an.
-    expect(plan.videos[0]).toMatchObject({ art: "neu", id: null });
+    // Ein zweites Video daneben machte zufaellig, welches die App zeigt:
+    // der Import haengt seines nicht an, sondern meldet die Stelle.
+    expect(plan.videos.map((p) => p.schluessel)).not.toContain("brustpresse > brustpresse_neutral");
+    expect(plan.gemeldet.fremdeVideos).toEqual(["brustpresse > brustpresse_neutral"]);
     expect(plan.gemeldet.ersetzteMedien).toEqual([]);
+    expect(berichtText(plan)).toContain("Video aus dem Portal behalten, Katalogvideo nicht angehaengt: 1");
     expect(plan.gemeldet.ohneSchluessel).toEqual(['Geraetetyp "Von Hand"', 'Uebung "Von Hand Uebung"']);
   });
 });
