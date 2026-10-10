@@ -47,7 +47,7 @@ Designsystem §10 ist die eine Quelle; App und Web übernehmen wörtlich.
 
 | Ort | Heute | Neu |
 |---|---|---|
-| Kanonisch: Einweisung (`GeraetModel.produktgrenze`, gezeigt in `EinweisungSchritt`), `/t/[token]`, Landeseite Fuß (`PRODUKTGRENZE`), FAQ-Antwort „Was misst Gymtavo?“ | „Gymtavo misst nichts. Angezeigt wird ausschließlich, was du selbst bestätigt hast. Einweisungsvideos und Einstellhinweise sind Inhalte deines Studios, keine Trainings- oder Gesundheitsempfehlung von Gymtavo.“ | „Gymtavo speichert nur, was du bestätigst. Mit Sensor zählt Gymtavo deine Wiederholungen mit — du siehst die Zahl und entscheidest. Einweisungsvideos und Einstellhinweise sind Inhalte deines Studios, keine Trainings- oder Gesundheitsempfehlung von Gymtavo.“ |
+| Kanonisch: Einweisung (neu `Produktgrenze.kanonisch` im Designsystem, gelesen von `GeraetModel.produktgrenze`, gezeigt in `EinweisungSchritt`), `/t/[token]`, Landeseite Fuß (`PRODUKTGRENZE`), FAQ-Antwort „Was misst Gymtavo?“ | „Gymtavo misst nichts. Angezeigt wird ausschließlich, was du selbst bestätigt hast. Einweisungsvideos und Einstellhinweise sind Inhalte deines Studios, keine Trainings- oder Gesundheitsempfehlung von Gymtavo.“ | „Gymtavo speichert nur, was du bestätigst. Mit Sensor zählt Gymtavo deine Wiederholungen mit — du siehst die Zahl und entscheidest. Einweisungsvideos und Einstellhinweise sind Inhalte deines Studios, keine Trainings- oder Gesundheitsempfehlung von Gymtavo.“ |
 | `/t/[token]` (Kurzfassung ohne ersten Satz) | „Gymtavo misst nichts. Einweisungsvideos …“ | kanonischer Satz wie oben |
 | FAQ „Wann kommt der Sensor?“ | „Er ist in Entwicklung …“ | bleibt bis E5, dann angepasst |
 | Home leer (`HomeRootView`) | „Gymtavo misst nichts. Es zeigt, was du bestätigst.“ | „Gymtavo zeigt, was du bestätigst.“ |
@@ -119,7 +119,7 @@ Gesucht am 9. Oktober 2026 auf `master` (`64595c0`) nach „misst nichts“, „
 | `e2e/tag-fallback.spec.ts:253–255` | dito |
 | `e2e/schreibtisch.spec.ts:71–82` | prüft weiter das Fehlen im Portal-Überblick, neues Muster |
 | `FitnessMemberTests/GeraetEinstiegsartTests.swift:8–21` | Prüfung bleibt (ERKANNT/AUSGEWÄHLT behauptet keine Messung), Kommentar verweist auf neue Regel |
-| neu | iOS-Test: `GeraetModel.produktgrenze` ist der kanonische Satz aus 3.2 |
+| neu | iOS-Test: `Produktgrenze.kanonisch` ist der Satz aus 3.2 |
 
 **Nicht betroffen:** Körperdaten (`body_measurements`, iOS-DTO `Messwert`, `GewichtEintragenSheet` usw.) — reine Eingabe. „gemessen“ im Sinne von Layout oder Laufzeit (`next.config.mjs`, Kaufleiste, Portal-Seiten). Der Debug-Sensorcode aus A („Messwert“ für Rohdaten).
 
@@ -154,18 +154,18 @@ E1, E2 und E3 sind unabhängig und können sofort beginnen, jede in eigenem Work
 | Typ | Aufgabe |
 |---|---|
 | `Befestigungsart` | `stapel, langhantel, kurzhantel, hebelarm, kabelgriff, koerper`; `Codable`, Rohwerte wie hier geschrieben. `static let freigegeben: Set<Befestigungsart>` (anfangs leer, Abschnitt 7). |
-| `Wiederholung` | `nummer`, `beginn`, `umkehr`, `ende` (Messwertzeit in s), `ausschlag` (Spitzenwert im Profil-Signal), `sicherheit` 0…1; berechnet: `dauerKonzentrisch`, `dauerExzentrisch`, `pauseDavor` |
+| `Wiederholung` | `nummer`, `beginn`, `umkehr`, `ende` (Messwertzeit in s), `ausschlag` (Betrag des Spitzenwerts im Profil-Signal: °/s oder m/s), `sicherheit` 0…1; berechnet: `dauerKonzentrisch`, `dauerExzentrisch`, `pauseDavor` |
 | `UnsicherGrund` | `luecke`, `signalSchwach`, `taktUnregelmaessig` |
 | `ZaehlerEreignis` | `.wiederholung(Wiederholung)`, `.unsicher(UnsicherGrund)`, `.zuende` |
 | `ZaehlerProfil` | je Befestigungsart: `version` (Int), `eingefrorenAm` (Datum oder `nil`), Signalwahl, Filter- und Schwellenparameter als Konstanten. `algo`-Kennung `"<art>/<version>"`. |
-| `Zaehler` | `struct`; `init(profil:)`; `mutating func verarbeite(_: SensorMesswert) -> [ZaehlerEreignis]`; `mutating func luecke(von:bis:) -> [ZaehlerEreignis]`; `mutating func abschliessen() -> [ZaehlerEreignis]`. Rein: keine Uhr, keine Nebenläufigkeit, kein Zufall. Offline und live derselbe Code. |
+| `Zaehler` | `struct`; `init(profil:rateHz:)` — gefiltert wird mit der Sollrate statt mit Zeitstempel-Differenzen, weil gebündelte Messwerte denselben Zeitstempel tragen (Spec A §4.7); `mutating func verarbeite(_: SensorMesswert) -> [ZaehlerEreignis]`; `mutating func luecke(von:bis:) -> [ZaehlerEreignis]`; `mutating func abschliessen() -> [ZaehlerEreignis]`. Rein: keine Uhr, keine Nebenläufigkeit, kein Zufall. Offline und live derselbe Code. |
 | `RepEvents` | `Codable`-Abbild für Server und Aufnahme (6.2) mit `init(ereignisse:profil:satzbeginn:)` |
 
 ### 5.3 Erkennungskette
 
 1. **Ruhe und Achse.** Solange keine Bewegung über einer Ruheschwelle liegt, mittelt der Zähler die Beschleunigung zur Schwerkraftrichtung. Der Ruhevorlauf (Sensor anbringen, zum Telefon greifen; Spec A §6.4) zählt nie. Die Bewegungsachse ist die dominante Achse der ersten Bewegung im Profil-Signal.
-2. **Signal je Profil.** Drehrate für `langhantel`, `kurzhantel`, `hebelarm`, `kabelgriff`; Beschleunigung ohne Schwerkraft für `stapel` und `koerper`. Projektion auf die Bewegungsachse, dann Tiefpass.
-3. **Wellen mit Hysterese.** Eine Wiederholung braucht Hin- und Rückweg über eine obere und eine untere Schwelle und eine Mindestdauer. Die Schwellen setzen sich nach der ersten Wiederholung relativ zu deren Ausschlag. `beginn`, `umkehr`, `ende` sind Nulldurchgang, Extremwert, nächster Nulldurchgang.
+2. **Signal je Profil.** Drehrate für `langhantel`, `kurzhantel`, `hebelarm`, `kabelgriff` (Achse mit der größten Streuung im Achsenfenster); für `stapel` und `koerper` die Geschwindigkeit entlang der Schwerkraft, aus der Beschleunigung ohne Schwerkraft mit leckender Integration. Beides sind Geschwindigkeiten: eine Wiederholung ist eine volle Welle (hin positiv, zurück negativ). Dann Tiefpass.
+3. **Wellen mit Hysterese.** Eine Wiederholung braucht Hin- und Rückweg über eine obere und eine untere Schwelle und eine Mindestdauer. Die Schwellen setzen sich nach der ersten Wiederholung relativ zu deren Ausschlag. `beginn`, `umkehr`, `ende` sind die Nulldurchgänge vor der ersten Halbwelle, zwischen den Halbwellen (Geschwindigkeit null = Umkehrpunkt) und der Zeitpunkt, an dem die zweite Halbwelle abgeschlossen ist. Welche Halbwelle die konzentrische ist, legt die erste Wiederholung fest (vorzeichenunabhängig).
 4. **Unsicher.** Messwertabstand über 0,5 s oder ein expliziter `luecke`-Aufruf → `.unsicher(.luecke)`. Ausschlag unter dem Profil-Minimum → `.signalSchwach`. Dauer einer Wiederholung außerhalb eines Bandes um den Median der bisherigen → `.taktUnregelmaessig`. **Nach `.unsicher` liefert der Zähler in diesem Satz keine Wiederholungen mehr** (Entscheidung 4).
 5. **Bündelung.** Mehrere Messwerte mit gleichem Zeitstempel (30-ms-Raster, Spec A §4.7) sind normal und ändern das Ergebnis nicht.
 
@@ -221,7 +221,7 @@ Bestand und alte Clients landen über den Default bei `eingegeben`. `volume_coun
     { "beginn": 3.42, "umkehr": 4.61, "ende": 5.98, "ausschlag": 112.4, "sicherheit": 0.93 } ] }
 ```
 
-Zeiten in Sekunden seit Satzbeginn (Eintritt in `.eingabe`), zwei Nachkommastellen. Die Einheit von `ausschlag` folgt aus dem Profil (°/s oder g). Phasendauern und Pausen sind ableitbar und stehen nicht drin. `unsicher` ist der Grund oder `null`. Etwa 1 KB bei 15 Wiederholungen. Dasselbe Objekt steht in `aufnahme.json` (6.5).
+Zeiten in Sekunden seit Satzbeginn (Eintritt in `.eingabe`), zwei Nachkommastellen. Die Einheit von `ausschlag` folgt aus dem Profil (°/s oder m/s). Phasendauern und Pausen sind ableitbar und stehen nicht drin. `unsicher` ist der Grund oder `null`. Etwa 1 KB bei 15 Wiederholungen. Dasselbe Objekt steht in `aufnahme.json` (6.5).
 
 ### 6.3 Domäne, API, iOS-DTO (E3)
 
