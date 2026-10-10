@@ -11,7 +11,8 @@
     "smoke:aasa": "node scripts/smoke-aasa.mjs",
     "smoke:web": "node scripts/smoke-web.mjs",
     "smoke:migrations": "node scripts/smoke-migrations.mjs",
-    "tags": "tsx scripts/tags.ts"
+    "tags": "tsx scripts/tags.ts",
+    "catalog:import": "tsx scripts/catalog-import.ts"
   },
   "dependencies": {
     "@fitretro/domain": "workspace:*"
