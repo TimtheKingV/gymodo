@@ -18,7 +18,13 @@ struct SetWriteHerkunftTests {
         var s = satz()
         s.volumeSource = .gemessen
         s.volumeCounted = 10
-        s.repEvents = RepEvents(algo: "langhantel/1", befestigungsart: .langhantel, ereignisse: [], satzbeginn: 0)
+        // 10 Wiederholungen passen zu volumeCounted 10; der Server lehnt sonst ab.
+        let zehn = (1...10).map { n in
+            ZaehlerEreignis.wiederholung(Wiederholung(nummer: n, beginn: Double(n), umkehr: Double(n) + 0.5,
+                                                      ende: Double(n) + 1, ausschlag: 100, sicherheit: 0.9,
+                                                      pauseDavor: nil))
+        }
+        s.repEvents = RepEvents(algo: "langhantel/1", befestigungsart: .langhantel, ereignisse: zehn, satzbeginn: 0)
         let zurueck = try JSONDecoder().decode(SetWrite.self, from: JSONEncoder().encode(s))
         #expect(zurueck == s)
     }
