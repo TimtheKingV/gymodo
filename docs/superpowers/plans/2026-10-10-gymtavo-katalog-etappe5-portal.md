@@ -2021,3 +2021,12 @@ git commit -m "docs(plan): Etappe 5 umgesetzt und abgehakt
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
+
+## Ergebnis (umgesetzt am 10. Oktober 2026)
+
+- Alle Tasks abgehakt. Testläufe: `pnpm typecheck` grün; `pnpm test` 246 Domain + 275 Web grün; `pnpm test:integration` 748 von 749 (rot nur `api-workout-sets` „beendet die eigene Session“, auf sauberem `master` identisch rot, umgebungsbedingt); `pnpm test:e2e` gegen den Produktionsbau 126 von 126.
+- Abweichungen vom Plan, gefunden durch E2E:
+  - Der Gymtavo-Typ ist schon im Browser Pflicht (`Auswahl`-Prop `pflicht`). React 19 leert das Formular nach einer abgelehnten Server-Action; sonst wären Name, Hersteller und Belastung weg gewesen. Die Server-Regel bleibt als Netz.
+  - `Auswahl` meldet einen Wertwechsel als `input`-Ereignis (wie das Rad). Sonst blieb „Änderungen speichern“ nach einer Typwahl gesperrt.
+  - Typen je Anfrage über `ladeTypen()` (React-`cache`), im Modell-Layout parallel zum Studio-Katalog.
+- Für Etappe 6: Die Katalogpflege baut auf `isCatalog` in `getStudioCatalog` und den Sperren in `katalogStudio.ts` auf. Neue Typen und Übungen legt das Portal dort noch nicht an (`geraete/neu` ist im Gymtavo-Studio gesperrt).
