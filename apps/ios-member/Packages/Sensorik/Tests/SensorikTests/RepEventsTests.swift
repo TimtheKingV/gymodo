@@ -48,4 +48,31 @@ struct RepEventsTests {
         #expect(w.dauerKonzentrisch == 1.5)
         #expect(w.dauerExzentrisch == 1.5)
     }
+
+    /// Ein Ereignis kann durch die 30-ms-Buendelung knapp vor dem Satzbeginn
+    /// liegen; der Server lehnt negative Zeiten ab und der Satz waere nie speicherbar.
+    @Test func zeitenVorDemSatzbeginnWerdenNull() throws {
+        let events = RepEvents(algo: "langhantel/1", befestigungsart: .langhantel,
+                               ereignisse: [wdh(1, 99.99, 100.5, 101.5)], satzbeginn: 100)
+        #expect(events.wiederholungen[0].beginn == 0)
+        #expect(events.wiederholungen[0].umkehr == 0.5)
+        let json = try #require(String(data: SensorikJSON.encoder().encode(events), encoding: .utf8))
+        #expect(!json.contains("-"))
+    }
+
+    @Test func nanUndUnendlichWerdenNullUndLassenSichKodieren() throws {
+        let w = ZaehlerEreignis.wiederholung(Wiederholung(nummer: 1, beginn: 1, umkehr: 2, ende: 3,
+                                                          ausschlag: .nan, sicherheit: .infinity, pauseDavor: nil))
+        let events = RepEvents(algo: "stapel/1", befestigungsart: .stapel, ereignisse: [w], satzbeginn: 0)
+        #expect(events.wiederholungen[0].ausschlag == 0)
+        #expect(events.wiederholungen[0].sicherheit == 0)
+        _ = try SensorikJSON.encoder().encode(events)
+    }
+
+    @Test func sicherheitBleibtImBereichNullBisEins() {
+        let w = ZaehlerEreignis.wiederholung(Wiederholung(nummer: 1, beginn: 1, umkehr: 2, ende: 3,
+                                                          ausschlag: 5, sicherheit: 1.3, pauseDavor: nil))
+        let events = RepEvents(algo: "stapel/1", befestigungsart: .stapel, ereignisse: [w], satzbeginn: 0)
+        #expect(events.wiederholungen[0].sicherheit == 1)
+    }
 }

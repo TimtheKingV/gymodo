@@ -32,9 +32,9 @@ public struct RepEvents: Codable, Equatable, Sendable {
         for ereignis in ereignisse {
             switch ereignis {
             case .wiederholung(let w):
-                liste.append(Eintrag(beginn: Self.r(w.beginn - satzbeginn), umkehr: Self.r(w.umkehr - satzbeginn),
-                                     ende: Self.r(w.ende - satzbeginn), ausschlag: Self.r(w.ausschlag),
-                                     sicherheit: Self.r(w.sicherheit)))
+                liste.append(Eintrag(beginn: Self.zeit(w.beginn - satzbeginn), umkehr: Self.zeit(w.umkehr - satzbeginn),
+                                     ende: Self.zeit(w.ende - satzbeginn), ausschlag: Self.zeit(w.ausschlag),
+                                     sicherheit: Self.anteil(w.sicherheit)))
             case .unsicher(let grund):
                 unsicher = grund
             case .zuende:
@@ -46,7 +46,19 @@ public struct RepEvents: Codable, Equatable, Sendable {
     }
 
     /// Zwei Nachkommastellen: feiner als das 30-ms-Raster ist keine Zeit.
-    private static func r(_ wert: Double) -> Double { (wert * 100).rounded() / 100 }
+    private static func r(_ wert: Double) -> Double {
+        let gerundet = ((wert.isFinite ? wert : 0) * 100).rounded() / 100
+        // +0 statt -0, sonst steht "-0" im JSON.
+        return gerundet == 0 ? 0 : gerundet
+    }
+
+    /// Der Server lehnt Zeiten < 0 ab; ein Ereignis knapp vor dem Satzbeginn
+    /// (30-ms-Buendelung) oder NaN darf den Satz nie unspeicherbar machen.
+    /// Das Begrenzen ist monoton, beginn <= umkehr <= ende bleibt erhalten.
+    private static func zeit(_ wert: Double) -> Double { r(max(0, wert.isFinite ? wert : 0)) }
+
+    /// Sicherheit ist beim Server auf 0...1 begrenzt.
+    private static func anteil(_ wert: Double) -> Double { r(min(1, max(0, wert.isFinite ? wert : 0))) }
 
     private enum CodingKeys: String, CodingKey { case algo, befestigungsart, unsicher, wiederholungen }
 
