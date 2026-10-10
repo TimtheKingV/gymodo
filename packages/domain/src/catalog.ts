@@ -233,6 +233,25 @@ async function studioOfModel(
   return { studioId: data.studio_id };
 }
 
+/** studios_select laesst das Gymtavo-Studio fuer jeden Angemeldeten durch. */
+async function istKatalogStudio(client: SupabaseClient, studioId: string): Promise<boolean> {
+  const { data } = await client
+    .from("studios")
+    .select("is_catalog")
+    .eq("id", studioId)
+    .maybeSingle<{ is_catalog: boolean }>();
+  return data?.is_catalog === true;
+}
+
+async function katalogStudioId(client: SupabaseClient): Promise<string | null> {
+  const { data } = await client
+    .from("studios")
+    .select("id")
+    .eq("is_catalog", true)
+    .maybeSingle<{ id: string }>();
+  return data?.id ?? null;
+}
+
 export const settingDefinitionInputSchema = z
   .object({
     equipmentModelId: uuid,
@@ -435,8 +454,10 @@ export async function updateExercise(
 }
 
 /**
- * Uebung an ein Modell haengen. Die Policy aus 0005 erzwingt, dass beide
- * demselben Studio gehoeren -- eine fremde Uebung ist hier gar nicht sichtbar.
+ * Uebung an ein Modell haengen. Erlaubt sind eigene Uebungen und
+ * Gymtavo-Uebungen (Spec 5.3, Verweis statt Kopie). Die Uebung eines
+ * dritten Studios ist fuer den Trainer gar nicht sichtbar und faellt als
+ * not_found heraus -- dieselbe Antwort wie fuer eine erfundene id.
  */
 export async function attachExerciseToModel(
   client: SupabaseClient,
@@ -451,7 +472,10 @@ export async function attachExerciseToModel(
     .select("studio_id")
     .eq("id", input.exerciseId)
     .maybeSingle<{ studio_id: string }>();
-  if (!uebung || uebung.studio_id !== studioId) {
+  if (
+    !uebung ||
+    (uebung.studio_id !== studioId && !(await istKatalogStudio(client, uebung.studio_id)))
+  ) {
     throw new DomainError("not_found", "Diese Uebung gibt es nicht.");
   }
 
@@ -1056,4 +1080,110 @@ export async function getStudioCatalog(
     })),
     shipments,
   };
+}
+
+export type CatalogTypeExercise = {
+  exerciseId: string;
+  name: string;
+  description: string | null;
+  volumeKind: VolumeKind;
+  targetMin: number;
+  targetMax: number;
+  sortOrder: number;
+  videoStoragePath: string | null;
+  videoDurationS: number | null;
+};
+
+export type CatalogType = {
+  id: string;
+  name: string;
+  manufacturer: string | null;
+  category: Category;
+  exercises: CatalogTypeExercise[];
+};
+
+/**
+ * Alle Gymtavo-Geraetetypen mit ihren Uebungen -- fuer die Typauswahl am
+ * Modell und den Reiter Uebungen. Eigene Funktion statt eines Felds in
+ * getStudioCatalog: der Studio-Katalog haengt an jeder Portalseite, die
+ * Typliste brauchen nur wenige.
+ */
+export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogType[]> {
+  await requireUserId(client);
+  const katalogId = await katalogStudioId(client);
+  if (!katalogId) return [];
+
+  const { data, error } = await client
+    .from("equipment_models")
+    .select(
+      `id, name, manufacturer, category,
+       equipment_model_exercises (sort_order, exercises (id, name, description, volume_kind, target_min, target_max), instruction_assets (storage_path, duration_s))`,
+    )
+    .eq("studio_id", katalogId)
+    .order("name", { ascending: true });
+  if (error) throw new DomainError("internal", error.message);
+
+  type Row = {
+    id: string;
+    name: string;
+    manufacturer: string | null;
+    category: Category;
+    equipment_model_exercises: Array<{
+      sort_order: number;
+      exercises: {
+        id: string;
+        name: string;
+        description: string | null;
+        volume_kind: VolumeKind;
+        target_min: number;
+        target_max: number;
+      };
+      instruction_assets: Array<{ storage_path: string; duration_s: number }>;
+    }>;
+  };
+
+  return ((data ?? []) as unknown as Row[]).map((row) => ({
+    id: row.id,
+    name: row.name,
+    manufacturer: row.manufacturer,
+    category: row.category,
+    exercises: [...row.equipment_model_exercises]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((link) => {
+        const video = link.instruction_assets[0] ?? null;
+        return {
+          exerciseId: link.exercises.id,
+          name: link.exercises.name,
+          description: link.exercises.description,
+          volumeKind: link.exercises.volume_kind,
+          targetMin: link.exercises.target_min,
+          targetMax: link.exercises.target_max,
+          sortOrder: link.sort_order,
+          videoStoragePath: video?.storage_path ?? null,
+          videoDurationS: video?.duration_s ?? null,
+        };
+      }),
+  }));
+}
+
+/**
+ * Ob ein Modell dieses Studios einen Gymtavo-Typ braucht (Nachtrag 10.1).
+ * Steht hier und nicht in createEquipmentModel: eine Regel, die vom Inhalt
+ * des Katalogs abhaengt, braeche im geteilten lokalen Supabase jeden Test,
+ * der Modelle ohne Typ anlegt, sobald ein anderer Test Typen anlegt.
+ */
+export async function catalogTypeRequired(
+  client: SupabaseClient,
+  studioId: string,
+): Promise<boolean> {
+  await requireUserId(client);
+  const katalogId = await katalogStudioId(client);
+  if (!katalogId || katalogId === studioId) return false;
+
+  const { count, error } = await client
+    .from("equipment_models")
+    .select("id", { count: "exact", head: true })
+    .eq("studio_id", katalogId);
+  if (error) throw new DomainError("internal", error.message);
+  return (count ?? 0) > 0;
 }

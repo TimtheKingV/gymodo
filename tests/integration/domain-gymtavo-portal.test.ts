@@ -1,8 +1,13 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import {
   DomainError,
+  attachExerciseToModel,
+  catalogTypeRequired,
   createEquipmentModel,
+  createExercise,
   getStudioCatalog,
+  listCatalogTypes,
+  prepareInstructionVideoUpload,
   updateEquipmentModel,
 } from "@fitretro/domain";
 import {
@@ -138,5 +143,109 @@ describe("Zuordnung zum Gymtavo-Typ", () => {
     const katalog = await getStudioCatalog(client, GYMTAVO);
     expect(katalog.isCatalog).toBe(true);
     expect(katalog.models.map((m) => m.id)).toEqual(expect.arrayContaining([typ1, typ2]));
+  });
+});
+describe("Gymtavo-Uebung am Studio-Modell", () => {
+  it("positiv: eine Gymtavo-Uebung haengt am Studio-Modell und ist als Verweis markiert", async () => {
+    const client = await userClient(trainerA);
+    const { id } = await createEquipmentModel(client, {
+      studioId: studioA,
+      name: `Anhaengen ${kennung}`,
+      loadStep: 2.5,
+      catalogModelId: typ1,
+    });
+    const eigene = await createExercise(client, {
+      studioId: studioA,
+      name: `Hausuebung ${kennung}`,
+      targetMin: 8,
+      targetMax: 12,
+    });
+    await attachExerciseToModel(client, { equipmentModelId: id, exerciseId: eigene.id });
+    await attachExerciseToModel(client, { equipmentModelId: id, exerciseId: katalogUebung2 });
+
+    const katalog = await getStudioCatalog(client, studioA);
+    const uebungen = katalog.models.find((m) => m.id === id)!.exercises;
+    expect(uebungen.find((u) => u.exerciseId === eigene.id)?.fromCatalog).toBe(false);
+    expect(uebungen.find((u) => u.exerciseId === katalogUebung2)?.fromCatalog).toBe(true);
+  });
+
+  it("negativ: die Uebung eines dritten Studios bleibt unsichtbar", async () => {
+    const admin = serviceClient();
+    const { data: fremd, error } = await admin
+      .from("exercises")
+      .insert({ studio_id: studioB, name: `Fremduebung ${kennung}`, target_min: 8, target_max: 12 })
+      .select("id")
+      .single();
+    if (error) throw error;
+
+    const client = await userClient(trainerA);
+    const { id } = await createEquipmentModel(client, {
+      studioId: studioA,
+      name: `Fremd anhaengen ${kennung}`,
+      loadStep: 2.5,
+    });
+    await expect(
+      attachExerciseToModel(client, { equipmentModelId: id, exerciseId: fremd.id }),
+    ).rejects.toMatchObject({ code: "not_found" });
+  });
+
+  it("das eigene Video zu einer Gymtavo-Uebung liegt im Ordner des Studios", async () => {
+    const client = await userClient(trainerA);
+    const { id } = await createEquipmentModel(client, {
+      studioId: studioA,
+      name: `Video ${kennung}`,
+      loadStep: 2.5,
+      catalogModelId: typ1,
+    });
+    const link = await attachExerciseToModel(client, {
+      equipmentModelId: id,
+      exerciseId: katalogUebung1,
+    });
+    const ziel = await prepareInstructionVideoUpload(client, {
+      equipmentModelExerciseId: link.id,
+      sizeBytes: 1024,
+    });
+    expect(ziel.storagePath.startsWith(`${studioA}/exercises/${link.id}/`)).toBe(true);
+  });
+});
+
+describe("listCatalogTypes", () => {
+  it("liefert die Gymtavo-Typen mit ihren Uebungen und Katalogvideo, nach Namen", async () => {
+    const admin = serviceClient();
+    const { data: link } = await admin
+      .from("equipment_model_exercises")
+      .select("id")
+      .eq("equipment_model_id", typ1)
+      .eq("exercise_id", katalogUebung1)
+      .single();
+    const { error } = await admin.from("instruction_assets").insert({
+      equipment_model_exercise_id: link!.id,
+      kind: "video",
+      storage_path: `${GYMTAVO}/exercises/${link!.id}/${kennung}.mp4`,
+      duration_s: 20,
+    });
+    if (error) throw error;
+
+    const client = await userClient(trainerA);
+    const typen = await listCatalogTypes(client);
+    const eigene = typen.filter((t) => t.id === typ1 || t.id === typ2);
+    expect(eigene.map((t) => t.id)).toEqual([typ1, typ2]);
+    expect(eigene[0]!.exercises).toEqual([
+      expect.objectContaining({
+        exerciseId: katalogUebung1,
+        name: `Bankdruecken ${kennung}`,
+        videoStoragePath: `${GYMTAVO}/exercises/${link!.id}/${kennung}.mp4`,
+        videoDurationS: 20,
+      }),
+    ]);
+    expect(typen.some((t) => t.id === fremdesModell)).toBe(false);
+  });
+});
+
+describe("catalogTypeRequired", () => {
+  it("ist im Studio wahr, sobald es Typen gibt -- im Gymtavo-Studio nie", async () => {
+    const client = await userClient(trainerA);
+    expect(await catalogTypeRequired(client, studioA)).toBe(true);
+    expect(await catalogTypeRequired(client, GYMTAVO)).toBe(false);
   });
 });
