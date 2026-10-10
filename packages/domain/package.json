@@ -33,6 +33,7 @@
     "./tag-scan": "./src/tag-scan.ts",
     "./serie": "./src/serie.ts",
     "./belastung": "./src/belastung.ts",
-    "./sticker": "./src/sticker.ts"
+    "./sticker": "./src/sticker.ts",
+    "./katalog-testdaten": "./src/katalog-testdaten.ts"
   }
 }
