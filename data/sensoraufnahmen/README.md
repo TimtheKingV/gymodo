@@ -15,3 +15,12 @@ Noch **keine** Aufnahme ist Trainingsmaterial (`fuerZaehler: false` überall):
 Erste Beobachtungen aus dem 8. Oktober: Curls sind in der Drehrate um eine Achse sehr deutlich, eine Welle je Wiederholung. Squats und das Absetzen auf dem Stapel zeigen sich in der Beschleunigung. Frei geführte Stapel-Bewegung und der Sensor um den Hals sind kaum zu lesen.
 
 Ab Teilprojekt B gezählt werden nur echte Sätze mit eingetragener Befestigung und korrekt bestätigten Wiederholungen.
+
+## Felder in `korrekturen.json`
+
+- `befestigungsart`: einer von `stapel`, `langhantel`, `kurzhantel`, `hebelarm`, `kabelgriff`, `koerper` oder `null` (Sensor-Spec B 5.4). Der Zähler wählt danach sein Profil; ohne Art läuft die Aufnahme nicht in den Gütebericht.
+- `befestigung`: Freitext-Detail wie bisher („oben auf dem Stapel“).
+- `repsWahr`: was wirklich gemacht wurde — die Wahrheit für den Zähler.
+- `fuerZaehler`: `true` nur für echte Sätze mit eingetragener Art und korrekt bestätigten Wiederholungen. Nur sie zählen für das Gütetor, und nur, wenn sie nach dem `eingefrorenAm` des Profils aufgenommen wurden.
+
+Neue Aufnahmen: Ordner unverändert vom iPhone kopieren, Eintrag hier anlegen, `swift test --package-path apps/ios-member/Packages/Sensorik` laufen lassen und den neuen `guetebericht.md` mit committen.
