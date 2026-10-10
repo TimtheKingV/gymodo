@@ -64,8 +64,8 @@ export function ModellVorlageFelder({
       <ModellBelastungRad
         key={typ?.id ?? "ohne-typ"}
         gross={gross}
-        kategorie={kategorie}
-        start={typ ? belastungStart(typ) : undefined}
+        {...(kategorie ? { kategorie } : {})}
+        {...(typ ? { start: belastungStart(typ) } : {})}
       />
     </>
   );
