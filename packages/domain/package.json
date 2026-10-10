@@ -34,6 +34,7 @@
     "./serie": "./src/serie.ts",
     "./belastung": "./src/belastung.ts",
     "./sticker": "./src/sticker.ts",
+    "./katalog-import": "./src/katalog-import.ts",
     "./katalog-testdaten": "./src/katalog-testdaten.ts"
   }
 }
