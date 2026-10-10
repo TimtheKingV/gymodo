@@ -194,6 +194,29 @@ export function einheitenFuer(kategorie: Category): LoadUnit[] {
  * bei 2,5 kg. Ein Bestandsminimum bleibt, solange es ueber null und im
  * Takt liegt; sonst wuerde jedes Speichern der Stammdaten es verschieben.
  */
+/**
+ * Den naechstliegenden Wert der Liste, wenn `start` keiner ihrer Werte ist.
+ * Das Rad rastet einen krummen Startwert zwar selbst ein, meldet das aber
+ * nicht -- wer daraus Minimum und Maximum rechnet, braucht den
+ * eingerasteten Wert vorher (Gymtavo-Typen tragen 1 kg, das kg-Rad kennt
+ * erst 1,25).
+ */
+export function einrasten(liste: RadWert[], start: string): string {
+  if (liste.some((zeile) => zeile.wert === start)) return start;
+  const ziel = zahlAus(start);
+  if (!Number.isFinite(ziel)) return start;
+  let bester = start;
+  let abstand = Infinity;
+  for (const zeile of liste) {
+    const zahl = zahlAus(zeile.wert);
+    if (Number.isFinite(zahl) && Math.abs(zahl - ziel) < abstand) {
+      abstand = Math.abs(zahl - ziel);
+      bester = zeile.wert;
+    }
+  }
+  return bester;
+}
+
 export function belastungMinimum(schritt: string, bestand?: string): string {
   const takt = zahlAus(schritt);
   if (bestand === undefined || !Number.isFinite(takt) || takt <= 0) return schritt;

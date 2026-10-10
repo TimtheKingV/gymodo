@@ -50,7 +50,14 @@ describe("ModellVorlageFelder", () => {
     expect(feldwert("name")).toBe("Beinpresse");
     // Review Focus 1: 1 kg gibt es im kg-Rad nicht, es rastet auf 1,25.
     expect(feldwert("loadStep")).toBe("1,25");
+    // Minimum und Maximum im Takt des eingerasteten Schritts, nicht in 1 kg:
+    // sonst schluege die Progression Gewichte vor, die es am Geraet nicht gibt.
+    expect(feldwert("loadMin")).toBe("1,25");
     expect(feldwert("loadMax")).toBe("");
+    const maxima = [...screen.getByRole("listbox", { name: "Maximum" }).querySelectorAll('[role="option"]')]
+      .map((zeile) => zeile.textContent);
+    expect(maxima).toContain("2,5");
+    expect(maxima).not.toContain("2");
   });
 
   it("ein selbst getippter Name bleibt beim Typwechsel", async () => {
