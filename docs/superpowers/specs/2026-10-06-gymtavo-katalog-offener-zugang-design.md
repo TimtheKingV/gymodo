@@ -150,7 +150,7 @@ Die Sensor-Befestigung wird je `machineId` gemerkt, ohne Gerät je `equipmentMod
 **Ausgangslage:** Der Import (Etappe 2) ist verschoben, der Katalog ist lokal und in Produktion leer. Keine Migration nötig: 0047 trägt Spalte, Trigger, Verknüpfungs-Policy und Videoablage bereits.
 
 **Pflicht, sobald es Typen gibt:**
-- Hat der Katalog mindestens einen Gerätetyp, verlangt das Portal beim Anlegen eines Modells den Gymtavo-Typ; eine bestehende Zuordnung lässt sich ändern, aber nicht entfernen. Ist der Katalog leer, entfallen Feld und Hinweis, und nichts blockiert.
+- Hat der Katalog mindestens einen Gerätetyp, verlangt das Portal den Gymtavo-Typ beim Anlegen eines Modells und beim Speichern seiner Stammdaten; eine Zuordnung lässt sich ändern, aber nicht entfernen. Ist der Katalog leer, entfallen Feld und Hinweis, und nichts blockiert. Im Gymtavo-Studio selbst gilt die Regel nicht (`catalogTypeRequired`).
 - Die Regel steht in den Server-Actions des Portals, nicht in `createEquipmentModel`. Grund: Das lokale Supabase ist geteilt; eine Domain-Regel, die vom Inhalt des Katalogs abhängt, würde jeden bestehenden Integrationstest brechen, sobald ein anderer Test Gymtavo-Typen anlegt. Modelle legt nur das Portal an, die API nicht.
 - Für ein exotisches Gerät gibt es keinen Ausweg im Code. Der Katalog bekommt bei Bedarf einen allgemeinen Typ (z. B. „Sonstiges Gerät“) ohne Übungen.
 
@@ -159,13 +159,14 @@ Die Sensor-Befestigung wird je `machineId` gemerkt, ohne Gerät je `equipmentMod
 - `attachExerciseToModel` erlaubt Übungen aus dem Studio des Modells oder aus dem Gymtavo-Studio. Eine Übung aus einem dritten Studio bleibt `not_found`.
 - `getStudioCatalog` liefert zusätzlich `isCatalog` am Studio, `catalogModelId` am Modell und `fromCatalog` an jeder Übungsverknüpfung.
 - Neu: `listCatalogTypes(client)` liefert alle Gymtavo-Typen mit ihren Übungen samt Katalogvideo, nach Namen sortiert. Nur die Seiten, die es brauchen, rufen es auf; `ladeKatalog` hängt an jeder Portalseite und bleibt schlank.
+- Neu: `catalogTypeRequired(client, studioId)` – `false` im Gymtavo-Studio, sonst ob der Katalog Typen hat. Die Server-Actions fragen damit die Pflicht ab.
 
 **Portal:**
 - Modellformulare (Assistent `modell/neu`, `StammdatenFormular`): Feld „Gymtavo-Gerätetyp“ mit Textsuche über die Typliste.
 - Hinweis für Altbestände: neuer Punkt in `offenePunkte` – „Kein Gymtavo-Typ“, Grund „Mitglieder sehen an diesem Gerät keine Gymtavo-Übungen.“ Er erscheint damit im Band über den Modellreitern und in der Modellliste, nur solange der Katalog Typen hat.
 - Reiter Übungen in zwei Teilen:
-  1. **Gymtavo-Übungen:** die des zugeordneten Typs („vom Typ“) und angehängte anderer Typen („angehängt“). Schreibgeschützt; je Übung Katalog- oder eigenes Video mit „Eigenes Video ergänzen“, Ersetzen und Entfernen. „Lösen“ nur bei angehängten. Darüber „Gymtavo-Übung anhängen“ mit Suche über alle noch nicht gezeigten Gymtavo-Übungen.
-  2. **Eigene Übungen:** wie bisher, samt Reihenfolge-Dialog.
+  1. **Gymtavo-Übungen:** die des zugeordneten Typs („vom Typ“) und angehängte anderer Typen („angehängt“). Schreibgeschützt; je Übung Katalog- oder eigenes Video mit „Eigenes Video ergänzen“ und Ersetzen (Löschen eines Videos kennt das Portal auch für eigene Übungen nicht). „Lösen“ nur bei angehängten. Darüber „Gymtavo-Übung anhängen“ mit Suche über alle noch nicht gezeigten Gymtavo-Übungen.
+  2. **Eigene Übungen:** wie bisher, samt Reihenfolge-Dialog. Der Reihenfolge-Dialog ordnet nur eigene Übungen.
 - „Eigenes Video ergänzen“ an einer Typ-Übung ohne Verknüpfung legt erst die Verknüpfung an (`attachExerciseToModel`); das Video hängt daran und gehört damit dem Studio (5.3).
 - Übungsschritt im Assistenten (`einrichten/geraet/…/uebungen`): Die Übungen des Typs stehen schreibgeschützt als „kommen automatisch mit“ dabei, damit niemand Bankdrücken ein zweites Mal anlegt.
 
