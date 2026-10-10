@@ -25,6 +25,11 @@ export type AuswahlOption = { wert: string; anzeige: string };
  * Gymtavo-Typen (Nachtrag 10.1), in denen Pfeiltasten allein zu langsam
  * sind. Der Fokus wandert beim Oeffnen dorthin; Pfeile und Enter wirken
  * dort wie am Knopf.
+ *
+ * Mit `pflicht` (und `name`) haelt die Auswahl das Absenden an, solange
+ * nichts gewaehlt ist, und nennt den Satz darunter. Im Browser, nicht erst
+ * in der Server-Action: React 19 leert ein Formular nach jeder Action, auch
+ * nach einer abgelehnten -- der Trainer verloere sonst alle Eingaben.
  */
 export function Auswahl({
   id,
@@ -36,6 +41,7 @@ export function Auswahl({
   gross = false,
   ariaLabel,
   suche,
+  pflicht,
 }: {
   id?: string;
   name?: string;
@@ -47,6 +53,8 @@ export function Auswahl({
   ariaLabel?: string;
   /** Beschriftung des Suchfelds; ohne sie keine Suche. */
   suche?: string;
+  /** Satz, wenn ohne Wahl abgesendet wird; ohne ihn ist die Wahl frei. */
+  pflicht?: string;
 }) {
   const [offen, setOffen] = useState(false);
   const [hervorgehoben, setHervorgehoben] = useState(0);
@@ -54,6 +62,9 @@ export function Auswahl({
   const knopf = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const suchfeld = useRef<HTMLInputElement>(null);
+  const verborgen = useRef<HTMLInputElement>(null);
+  const ersterLauf = useRef(true);
+  const [fehlt, setFehlt] = useState(false);
   const [text, setText] = useState("");
   const generierteId = useId();
   const knopfId = id ?? generierteId;
@@ -87,6 +98,19 @@ export function Auswahl({
     if (offen && suche) suchfeld.current?.focus();
   }, [offen, suche]);
 
+  // Wie beim Rad (EinstellungRad.tsx): ein verstecktes Feld meldet keine
+  // Eingabe, wenn React seinen Wert setzt. AktionsFormular mit
+  // nurBeiAenderung sieht eine Wahl sonst nicht, und "Änderungen speichern"
+  // bliebe nach einer Typwahl gesperrt. Erst nach dem Rendern, damit der
+  // neue Wert schon im Feld steht.
+  useEffect(() => {
+    if (ersterLauf.current) {
+      ersterLauf.current = false;
+      return;
+    }
+    verborgen.current?.dispatchEvent(new Event("input", { bubbles: true }));
+  }, [value]);
+
   function oeffnen() {
     setText("");
     const index = optionen.findIndex((option) => option.wert === value);
@@ -98,6 +122,7 @@ export function Auswahl({
     const option = sichtbar[index];
     if (!option) return;
     onChange(option.wert);
+    setFehlt(false);
     setOffen(false);
     knopf.current?.focus();
   }
@@ -156,7 +181,33 @@ export function Auswahl({
           <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
-      {name ? <input type="hidden" name={name} value={value} /> : null}
+      {name && pflicht ? (
+        // Kein type="hidden": versteckte Felder sind von der
+        // Formularpruefung ausgenommen. Unsichtbar, nicht fokussierbar, und
+        // onInvalid lenkt auf den Knopf statt auf die Blase des Browsers.
+        <input
+          ref={verborgen}
+          className={styles.pflichtFeld}
+          name={name}
+          value={value}
+          required
+          tabIndex={-1}
+          aria-hidden
+          onChange={() => {}}
+          onInvalid={(ereignis) => {
+            ereignis.preventDefault();
+            setFehlt(true);
+            knopf.current?.focus();
+          }}
+        />
+      ) : name ? (
+        <input ref={verborgen} type="hidden" name={name} value={value} />
+      ) : null}
+      {fehlt && !value ? (
+        <p className={styles.pflichtSatz} role="alert">
+          {pflicht}
+        </p>
+      ) : null}
       {offen ? (
         <div className={styles.panel} ref={panel}>
           {suche ? (

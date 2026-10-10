@@ -93,3 +93,18 @@
   padding: var(--s12) var(--s16);
   color: var(--text-faint);
 }
+
+/* Traegt den Wert fuer die Formularpruefung (Prop `pflicht`). Sichtbar
+   waere es doppelt -- der Knopf zeigt die Wahl schon. */
+.pflichtFeld {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pflichtSatz {
+  margin: var(--s8) 0 0;
+  color: var(--danger);
+}

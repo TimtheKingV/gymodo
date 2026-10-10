@@ -28,13 +28,15 @@ export default async function ModellLayout({
   params: Promise<{ studioId: string; modelId: string }>;
 }) {
   const { studioId, modelId } = await params;
-  const katalog = await ladeKatalog(studioId);
+  // Parallel: die Typliste haengt nicht am Studio-Katalog, und jede
+  // Wartezeit hier haelt alle vier Reiter auf.
+  const [katalog, alleTypen] = await Promise.all([ladeKatalog(studioId), ladeTypen()]);
   const modell = katalog.models.find((eintrag) => eintrag.id === modelId);
   if (!modell) notFound();
 
   const ohneTag = modell.machines.filter((geraet) => geraet.activeTagCount === 0).length;
   const fotoUrl = modell.photoPath ? katalog.photoUrls[modell.photoPath] : undefined;
-  const typen = katalog.isCatalog ? [] : await ladeTypen();
+  const typen = katalog.isCatalog ? [] : alleTypen;
   // Der Reiter zaehlt, was am Geraet steht: eigene und Gymtavo-Uebungen.
   const eigen = katalog.isCatalog ? modell.exercises : eigeneUebungen(modell.exercises);
   const gymtavo = katalog.isCatalog ? [] : gymtavoZeilen(modell, typen);

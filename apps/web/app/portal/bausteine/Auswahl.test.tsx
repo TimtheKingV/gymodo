@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { useState } from "react";
 import { Auswahl } from "./Auswahl";
 
 afterEach(cleanup);
@@ -53,3 +54,79 @@ describe("Auswahl mit Suche", () => {
     expect(screen.getAllByRole("option")).toHaveLength(3);
   });
 });
+
+describe("Auswahl im Formular", () => {
+  // AktionsFormular mit nurBeiAenderung sieht nur input-Ereignisse; ein
+  // verstecktes Feld, dessen Wert React setzt, meldet keines. Ohne dieses
+  // Ereignis bliebe "Änderungen speichern" nach einer Typwahl gesperrt.
+  function ImFormular({ onInput }: { onInput: () => void }) {
+    const [wert, setWert] = useState("");
+    return (
+      <form onInput={onInput}>
+        <Auswahl name="typ" value={wert} onChange={setWert} optionen={optionen} ariaLabel="Typ" />
+      </form>
+    );
+  }
+
+  it("meldet eine Wahl als input-Ereignis an das Formular", () => {
+    const onInput = vi.fn();
+    render(<ImFormular onInput={onInput} />);
+    expect(onInput).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Typ" }));
+    fireEvent.click(screen.getByRole("option", { name: "Beinpresse" }));
+
+    expect(onInput).toHaveBeenCalledTimes(1);
+    expect((document.querySelector('input[name="typ"]') as HTMLInputElement).value).toBe("c");
+  });
+});
+
+describe("Auswahl als Pflichtfeld", () => {
+  // React 19 leert ein Formular nach jeder Server-Action, auch nach einer
+  // abgelehnten. Ohne Pruefung im Browser verloere der Trainer seine
+  // Eingaben, nur weil er den Gymtavo-Typ vergessen hat.
+  function Pflicht({ onSubmit }: { onSubmit: () => void }) {
+    const [wert, setWert] = useState("");
+    return (
+      <form
+        onSubmit={(ereignis) => {
+          ereignis.preventDefault();
+          onSubmit();
+        }}
+      >
+        <Auswahl
+          name="typ"
+          value={wert}
+          onChange={setWert}
+          optionen={optionen}
+          ariaLabel="Typ"
+          pflicht="Wähle den Typ."
+        />
+        <button type="submit">Weiter</button>
+      </form>
+    );
+  }
+
+  it("haelt das Absenden ohne Wahl an und sagt warum", () => {
+    const onSubmit = vi.fn();
+    render(<Pflicht onSubmit={onSubmit} />);
+
+    act(() => (document.querySelector("form") as HTMLFormElement).requestSubmit());
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText("Wähle den Typ.")).toBeTruthy();
+  });
+
+  it("laesst nach einer Wahl absenden", () => {
+    const onSubmit = vi.fn();
+    render(<Pflicht onSubmit={onSubmit} />);
+    fireEvent.click(screen.getByRole("button", { name: "Typ" }));
+    fireEvent.click(screen.getByRole("option", { name: "Kabelzug" }));
+
+    act(() => (document.querySelector("form") as HTMLFormElement).requestSubmit());
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Wähle den Typ.")).toBeNull();
+  });
+});
+
