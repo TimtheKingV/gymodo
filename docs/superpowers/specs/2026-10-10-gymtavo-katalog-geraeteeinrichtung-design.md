@@ -65,6 +65,7 @@ Keine Migration. iOS, Bootstrap und Satzlogik bleiben unverändert.
 - Wird ein Typ gewählt, setzt das Formular `ModellBelastungRad` auf die Werte des Typs (Einheit, Stufe, Min, Max, Nebenbelastung). Darunter steht: „Werte vom Typ {Name} übernommen – bitte ans Gerät anpassen.“ Ein Typwechsel überschreibt die Werte erneut.
 - Das Feld Name bekommt den Typnamen, solange es leer ist.
 - Der Kategorie-Schritt im Schreibtisch-Assistenten bleibt und filtert die Typliste auf die Kategorie. Die Kategorie des Modells ist damit immer die des Typs.
+- Hallen-Assistent: Das Foto ist heute Pflicht (Knopf gesperrt, Server-Action lehnt ab). Die Pflicht entfällt, wenn der gewählte Typ eine Illustration hat. Der Hinweis am Fotofeld sagt dann: „Ohne eigenes Foto zeigt das Gerät die Gymtavo-Zeichnung. Ein echtes Foto hilft Mitgliedern, das Gerät zu erkennen.“ Ohne Typ oder bei einem Typ ohne Illustration bleibt das Foto Pflicht.
 - Server-Action `modellAnlegen` (beide Assistenten): Modell wie heute mit den Formularwerten anlegen (der Trainer hat sie gesehen, also gelten sie), im Hallen-Assistenten ein eigenes Foto wie heute hochladen, danach `copyTypeDefaults`. Ein Fehler dort leitet trotzdem weiter und zeigt auf der Folgeseite, was fehlt.
 - Der nächste Assistentenschritt ist „Einstellungen“; dort stehen die kopierten Einstellungen und lassen sich anpassen oder löschen.
 - `StammdatenFormular`: Ein Typwechsel an einem bestehenden Modell ändert nur die Zuordnung, wie heute. Werte, Einstellungen und Foto bleiben. Altbestände bekommen nichts kopiert.
