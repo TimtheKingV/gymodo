@@ -139,6 +139,87 @@ Die Sensor-Befestigung wird je `machineId` gemerkt, ohne Gerät je `equipmentMod
 - Videos: Pfad in der Datei, Upload in den Medien-Bucket unter dem Gymtavo-Studio.
 - Inhalt der Datei je Gerätetyp: Name, Kategorie, Belastungseinheit und -stufen, Nebenbelastung, Einstellungen; je Übung: Name, Umfangsart, Zielkorridor, Gerätetypen, Video.
 
+### 9.1 Importformat (Nachtrag zur Etappe 2, 10. Oktober 2026)
+
+**Herkunft:** Der erste Bestand stammt aus dem GYMTAVO-Paket (Originalkatalog Schema 0.11.0: 55 trainierbare Gerätetypen, 162 Übungen, 162 Videos). Ein einmaliger Konverter, der nicht ins Repo kommt, erzeugt daraus `catalog/gymtavo.json` und `catalog/media/`. Ab dann ist diese Datei die gepflegte Quelle. Die Python- und SQL-Importskripte des Pakets werden nicht verwendet, weil sie nur einfügen und nie aktualisieren.
+
+**Schlüssel:** Die festen String-IDs des Pakets (`chest_press`, `chest_press_neutral`), Muster `^[a-z0-9_]+$`. Das Beispiel oben (`bankdruecken-langhantel`) ist damit überholt. Die Medien des Pakets heißen schon so, und der Abgleich mit Originalkatalog und Herstellerkandidaten bleibt eins zu eins.
+
+**Werte stehen ausdrücklich in der Datei.** Das Skript kennt keine Defaults. Der Konverter übernimmt die technischen Platzhalter des Pakets (Kraft 8–12 Wiederholungen und 1 kg Stufe, Laufband 0,1 km/h, andere Cardiotypen Stufe 1 und 60 s, keine Grenzen, keine Nebenbelastung). Korrekturen geschehen in der Datei und kommen per Upsert an.
+
+**Aufbau** (Feldnamen wie die Spalten, Medienpfade relativ zur Datei):
+
+```json
+{
+  "format": 1,
+  "muscles": [{ "key": "pectorals", "name": "Brust" }],
+  "sources": [{ "key": "nasm_chest", "title": "NASM – Chest Press Machine",
+                "url": "https://www.nasm.org/…", "accessed_at": "2026-09-13" }],
+  "equipment": [{
+    "key": "chest_press", "name": "Brustpresse", "category": "kraft",
+    "manufacturer": null, "photo": "media/photos/chest_press.png",
+    "load_unit": "kg", "load_step": 1, "load_min": 0, "load_max": null,
+    "secondary": null,
+    "settings": [
+      { "key": "seat_height", "label": "Sitzhöhe", "kind": "number",
+        "min": null, "max": null, "step": null, "unit": null },
+      { "key": "mode", "label": "Modus", "kind": "enum",
+        "allowed_values": ["a", "b"] }
+    ],
+    "exercises": ["chest_press_neutral"]
+  }],
+  "exercises": [{
+    "key": "chest_press_neutral", "name": "Brustpresse · neutraler Griff",
+    "description": "Einstellen:\n- …", "volume_kind": "reps",
+    "target_min": 8, "target_max": 12,
+    "video": { "file": "media/videos/chest_press_neutral.mp4", "duration_s": 6 },
+    "grip": "neutral",
+    "muscles": [{ "muscle": "pectorals", "role": "primary" }],
+    "review": "draft",
+    "sources": ["nasm_chest"]
+  }]
+}
+```
+
+**Regeln, die das Skript vor jedem Schreiben prüft.** Es sammelt alle Fehler und nennt jeweils den Ort, z. B. `equipment[3] "treadmill": secondary braucht unit, step, min und max (max fehlt)`.
+- `format` ist `1`. Namen, Bezeichnungen und Titel sind nicht leer. Schlüssel (auch die der Einstellungen) folgen dem Muster oben und sind je Liste (Gerätetypen, Übungen, Muskeln, Quellen, Einstellungen eines Typs) eindeutig.
+- Gerätetyp: `category` ist `kraft` oder `cardio`. `load_unit` ist eins von `kg`, `watt`, `level`, `kmh`, `pct`, `rpm`. `load_step > 0`, `load_min ≥ 0`, `load_max` ist `null` oder `≥ load_min`.
+- `secondary` ist `null` oder `{ unit, step, min, max }` vollständig, mit denselben Einheiten, `step > 0`, `0 ≤ min ≤ max`. Das Schema verlangt alle vier Werte.
+- Einstellung: `kind` ist `number` (ohne `allowed_values`; `min`, `max`, `step`, `unit` dürfen `null` sein, `min ≤ max`) oder `enum` (mindestens zwei verschiedene, nicht leere `allowed_values`). Die Reihenfolge in der Liste ergibt `sort_order`.
+- `photo` ist `null` oder ein vorhandenes PNG bzw. JPEG. Vorerst wird es die Startpose einer zugehörigen Übung. Herstellerfotos bleiben wegen ungeklärter Rechte (`permission_pending`) draußen.
+- `equipment[].exercises` ist die Zuordnung. Die Reihenfolge ergibt `sort_order` je Gerätetyp. Jeder Schlüssel muss eine Übung der Datei sein, eine Übung darf an mehreren Typen hängen. Jede Übung hängt an mindestens einem Typ.
+- Übung: `volume_kind` ist `reps`, `seconds` oder `meters`. `target_min` und `target_max` sind ganze Zahlen mit `0 < min ≤ max ≤` Obergrenze der Umfangsart aus `belastung.ts`. `description` ist `null` oder nicht leer.
+- `video` ist `null` oder ein vorhandenes MP4 mit `duration_s` als ganze Zahl von 1 bis 45. Die Dauer wird nicht nachgemessen. Das Video gilt für die Übung, der Import hängt es an jede ihrer Verknüpfungen.
+- Zusatzdaten, die die Datei pflegt und die Prüfung kontrolliert, der Import aber **noch nicht schreibt**:
+  - `grip` ist `null` oder eins von `neutral`, `pronated`, `supinated`, `semi_pronated`, `semi_supinated`, `rotating`, `front_rack`, `none`.
+  - `muscles`: mindestens ein `primary`, Rollen `primary` oder `secondary`, jeder Muskel aus `muscles[]` höchstens einmal.
+  - `review` ist `draft` oder `reviewed`.
+  - `sources`: Schlüssel aus `sources[]`, deren `url` mit `https://` beginnt.
+
+  Tabellen dafür und eine App-Anzeige sind eine eigene spätere Etappe. Der Beschreibungstext enthält deshalb keinen Abschnitt „Muskelgruppen“ mehr. Muskelkarten kommen nicht ins Repo, die App zeichnet sie später aus den Daten.
+
+**Migration `0048_catalog_key.sql`:** `catalog_key text` an `equipment_models` und `exercises`, Check auf das Muster, `unique (studio_id, catalog_key)` als Constraint (Upsert braucht einen echten Constraint, `NULL` kollidiert nicht).
+
+**Medien:**
+- Videos liegen in `instruction-videos`, Fotos in `equipment-photos`, unter `<Gymtavo-ID>/catalog/videos/<key>-<sha256, 8 Zeichen>.mp4` bzw. `…/catalog/photos/<key>-<hash>.<ext>`.
+- Ein vorhandener Pfad wird übersprungen. Eine geänderte Datei bekommt einen neuen Pfad, und der Datensatz zeigt per Upsert darauf. Das alte Objekt bleibt liegen und wird gemeldet.
+
+**Ablauf von `pnpm catalog:import [datei]`** (Vorgabe `catalog/gymtavo.json`):
+1. Datei prüfen. Bei Fehlern: Liste ausgeben, Exit-Code 1, nichts schreiben.
+2. Ziel aus `.env` (`SUPABASE_URL`, Service-Schlüssel) nennen. Außerhalb von `127.0.0.1` ist `--ja` Pflicht. Fehlt das Gymtavo-Studio, bricht das Skript ab.
+3. Ist-Stand lesen, Plan bilden: je Tabelle neu, geändert (mit Feldern), unverändert, nur in der Datenbank.
+4. `--dry-run` gibt den Plan aus und endet. Kein Upload, kein Schreiben, kein `--ja` nötig.
+5. Sonst: Medien hochladen, dann Gerätetypen, Einstellungen, Übungen, Verknüpfungen, Videos, jeweils als Upsert über `(studio_id, catalog_key)`, `(equipment_model_id, key)` bzw. `(equipment_model_id, exercise_id)`.
+   - Ein Video einer Verknüpfung gehört dem Import nur, wenn sein Pfad mit `<Gymtavo-ID>/catalog/videos/<key>-` beginnt. Andere Videos, etwa im Portal hochgeladene, fasst er nie an.
+   - Eine Transaktion über alles gibt es nicht. Nach einem Abbruch setzt ein zweiter Lauf sauber fort.
+
+**Nie löschen, nur melden:** Gerätetypen und Übungen mit Schlüssel, die die Datei nicht mehr nennt; Einstellungen und Verknüpfungen, die fehlen; ein Video, das auf `null` gesetzt wurde; ersetzte Medienobjekte; Katalogzeilen ohne Schlüssel. Der zweite Lauf hintereinander meldet nur „unverändert“ und schreibt nichts.
+
+**Tests:**
+- Unit-Tests für Prüfung und Planbildung im Domain-Paket.
+- Integrationstests gegen das geteilte lokale Supabase ohne Reset: Zufallsschlüssel `t_<zufall>_…` im Gymtavo-Studio, nur die eigenen Zeilen und Objekte werden abgeräumt. Abgedeckt sind Erstimport, idempotenter zweiter Lauf, Änderung, gemeldetes Entfernen, Trockenlauf ohne Schreiben und unberührtes fremdes Video.
+- Zum Schluss der volle Import lokal als Sichtprobe. Gegen Produktion läuft das Skript erst nach dem Merge und auf Freigabe.
+
 ## 10. Portal (Etappe 5)
 
 - Gerätemodell anlegen und bearbeiten: Pflichtfeld „Gymtavo-Gerätetyp“ mit Suche; bestehende Modelle zeigen einen Hinweis, bis sie zugeordnet sind.
@@ -148,7 +229,7 @@ Die Sensor-Befestigung wird je `machineId` gemerkt, ohne Gerät je `equipmentMod
 ## 11. Etappen
 
 1. **Datenbank:** Migration 0047 (5.1–5.5) mit Integrationstests für jede Policy. Dazu Leser absichern, damit sich die App noch nicht ändert: Bootstrap und Startseite blenden das Gymtavo-Studio aus; Verlauf und Fortschritt fallen bei fehlenden Namen auf `my_history_labels()` zurück.
-2. **Import:** `catalog_key`, Skript, Beispieldatei mit einer Handvoll Typen und Übungen.
+2. **Import:** `catalog_key`, Skript, `catalog/gymtavo.json` mit dem vollen Bestand aus dem GYMTAVO-Paket (siehe 9.1).
 3. **Domain/API:** Bootstrap, Satz ohne Gerät, Fortschritt je Übung, Verlaufsnamen.
 4. **iOS:** Studio-Zwang weg, Freies Training, Beitreten im Profil, Scan fremder Studios.
 5. **Portal:** Zuordnung zum Gymtavo-Typ, Gymtavo-Übungen anhängen und mit eigenem Video versehen.
