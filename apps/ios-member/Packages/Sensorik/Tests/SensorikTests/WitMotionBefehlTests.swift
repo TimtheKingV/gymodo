@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 import Testing
 @testable import Sensorik
@@ -30,4 +29,3 @@ struct WitMotionBefehlTests {
         #expect(Akkustand.prozent(hundertstelVolt: 300) == 0)
     }
 }
-#endif

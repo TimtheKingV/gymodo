@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 import Testing
 @testable import Sensorik
@@ -48,4 +47,3 @@ struct SensorStatistikTests {
         #expect(sut.rateLetzteSekunde(bis: 4.5) == 0)
     }
 }
-#endif

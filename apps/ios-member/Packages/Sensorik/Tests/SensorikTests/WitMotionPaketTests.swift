@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 import Testing
 @testable import Sensorik
@@ -120,4 +119,3 @@ struct WitMotionPaketTests {
         #expect(sut.verworfeneBytes == 0)
     }
 }
-#endif

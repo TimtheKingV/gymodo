@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 import Testing
 @testable import Sensorik
@@ -191,4 +190,3 @@ struct SensorAufnahmeTests {
         #expect(try json(fertig.ordner).abschluss == .gesichert)
     }
 }
-#endif
