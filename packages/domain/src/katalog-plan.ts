@@ -242,3 +242,45 @@ export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): Imp
 
   return { geraetetypen, einstellungen, uebungen, verknuepfungen, videos, uploads, gemeldet };
 }
+
+const HOECHSTENS = 20;
+
+/** Der Text fuer Trockenlauf und echten Lauf -- derselbe, damit man vergleichen kann. */
+export function berichtText(plan: ImportPlan): string {
+  const zeilen: string[] = [];
+  const liste = (eintraege: string[]) => {
+    for (const e of eintraege.slice(0, HOECHSTENS)) zeilen.push(`  ${e}`);
+    if (eintraege.length > HOECHSTENS) zeilen.push(`  ... und ${eintraege.length - HOECHSTENS} weitere`);
+  };
+  const tabelle = (titel: string, posten: Posten<unknown>[]) => {
+    const zahl = (art: Art) => posten.filter((p) => p.art === art).length;
+    zeilen.push(`${titel}: ${zahl("neu")} neu, ${zahl("geaendert")} geaendert, ${zahl("unveraendert")} unveraendert`);
+    liste(
+      posten.flatMap((p) =>
+        p.art === "neu" ? [`+ ${p.schluessel}`] : p.art === "geaendert" ? [`~ ${p.schluessel} (${p.felder.join(", ")})`] : [],
+      ),
+    );
+  };
+  const melden = (titel: string, eintraege: string[]) => {
+    if (eintraege.length === 0) return;
+    zeilen.push(`${titel}: ${eintraege.length}`);
+    liste(eintraege.map((e) => `- ${e}`));
+  };
+
+  tabelle("Geraetetypen", plan.geraetetypen);
+  tabelle("Einstellungen", plan.einstellungen);
+  tabelle("Uebungen", plan.uebungen);
+  tabelle("Verknuepfungen", plan.verknuepfungen);
+  tabelle("Videos", plan.videos);
+  const bytes = plan.uploads.reduce((summe, m) => summe + m.bytes.length, 0);
+  zeilen.push(`Uploads: ${plan.uploads.length} Dateien (${(bytes / 1024 / 1024).toFixed(1)} MB)`);
+
+  melden("Nur in der Datenbank, nicht geloescht -- Geraetetypen", plan.gemeldet.geraetetypen);
+  melden("Nur in der Datenbank, nicht geloescht -- Uebungen", plan.gemeldet.uebungen);
+  melden("Nur in der Datenbank, nicht geloescht -- Einstellungen", plan.gemeldet.einstellungen);
+  melden("Nur in der Datenbank, nicht geloescht -- Verknuepfungen", plan.gemeldet.verknuepfungen);
+  melden("Video in der Datei entfernt, in der Datenbank behalten", plan.gemeldet.videos);
+  melden("Ersetzte Medienobjekte, nicht geloescht", plan.gemeldet.ersetzteMedien);
+  melden("Katalogzeilen ohne Schluessel, nicht verwaltet", plan.gemeldet.ohneSchluessel);
+  return zeilen.join("\n");
+}

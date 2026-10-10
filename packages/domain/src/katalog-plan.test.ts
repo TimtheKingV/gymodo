@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { GYMTAVO_STUDIO_ID, pruefeKatalog } from "./katalog-datei.js";
 import { pruefeMedien } from "./katalog-medien.js";
-import { planeImport, type ImportPlan, type IstStand } from "./katalog-plan.js";
+import { berichtText, planeImport, type ImportPlan, type IstStand } from "./katalog-plan.js";
 import { beispielKatalog, mp4Bytes, pngBytes } from "./katalog-testdaten.js";
 
 const LEER: IstStand = { geraetetypen: [], einstellungen: [], uebungen: [], verknuepfungen: [], videos: [], objekte: new Set() };
@@ -141,5 +141,30 @@ describe("planeImport", () => {
     expect(plan.videos[0]).toMatchObject({ art: "neu", id: null });
     expect(plan.gemeldet.ersetzteMedien).toEqual([]);
     expect(plan.gemeldet.ohneSchluessel).toEqual(['Geraetetyp "Von Hand"', 'Uebung "Von Hand Uebung"']);
+  });
+});
+
+describe("berichtText", () => {
+  it("zaehlt je Tabelle, nennt Aenderungen und Gemeldetes", () => {
+    const beispiel = beispielKatalog();
+    const ist = istAus(plane(beispiel, LEER));
+    ist.geraetetypen.push({ ...ist.geraetetypen[0]!, id: "alt", catalog_key: "alte_bank" });
+    beispiel.roh.equipment[0]!.name = "Brustpresse neu";
+
+    const text = berichtText(plane(beispiel, ist));
+    expect(text).toContain("Geraetetypen: 0 neu, 1 geaendert, 2 unveraendert");
+    expect(text).toContain("  ~ brustpresse (name)");
+    expect(text).toContain("Uploads: 0 Dateien (0.0 MB)");
+    expect(text).toContain("Nur in der Datenbank, nicht geloescht -- Geraetetypen: 1");
+    expect(text).toContain("  - alte_bank");
+  });
+
+  it("kuerzt lange Listen auf 20 Eintraege", () => {
+    const beispiel = beispielKatalog();
+    const ist = istAus(plane(beispiel, LEER));
+    for (let i = 0; i < 25; i += 1) ist.uebungen.push({ ...ist.uebungen[0]!, id: `h${i}`, catalog_key: null, name: `Hand ${i}` });
+    const text = berichtText(plane(beispiel, ist));
+    expect(text).toContain("Katalogzeilen ohne Schluessel, nicht verwaltet: 25");
+    expect(text).toContain("  ... und 5 weitere");
   });
 });
