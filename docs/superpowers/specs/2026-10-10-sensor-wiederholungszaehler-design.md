@@ -2,6 +2,7 @@
 
 **Stand:** 10. Oktober 2026
 **Status:** Entschieden, bereit für den Umsetzungsplan. Abschnitt 6.6 (Hintergrund am iPhone) wird im ersten Schritt von E4 ausgefüllt.
+**Umgesetzt:** E1, E2, E3 auf Branch `claude/sensor-wiederholungszaehler-spec` (10. Oktober 2026). E4/E5: eigener Plan; Gymtavo-Katalog Etappe 4 ist inzwischen gemergt.
 **Vorbedingung:** Teilprojekt A ist auf `master` (`2026-09-19-sensor-anbindung-aufzeichnung-design.md`, im Folgenden „Spec A“). Für E4 zusätzlich: Gymtavo-Katalog Etappe 4 (iOS) ist gemergt, weil beide `GeraetModel` ändern.
 **Verhältnis zu anderen Dokumenten:** untergeordnet gegenüber `2026-08-28-fitness-retrofit-m1-design.md` und `2026-08-30-designsystem.md` — mit einer Ausnahme: **Diese Spec ändert die Produktgrenze** aus Blueprint §2.3, M1 §4.3 und Designsystem §10 (Abschnitt 3). Die Nachträge dort verweisen hierher.
 
@@ -359,3 +360,10 @@ struct ZaehlerErgebnis: Equatable, Sendable {
 3. **NFC-Bindung**, Studio-Sensoren, Befestigungsart am Gerät im Portal (Spec A §11.5).
 4. **Periodizität als Plausibilitätsprüfung** für `taktUnregelmaessig`, falls die Regelkette dort schwach ist.
 5. **Aufnahmen bei Mitgliedern** mit Einwilligung, falls die eigenen Aufnahmen für eine Art nicht reichen.
+
+---
+
+## Nachtrag vom 10. Oktober 2026 (Umsetzung E3)
+
+- Die Migration heißt `0049_satz_herkunft.sql`, nicht `0048` (Abschnitt 6.1: „heute wäre es `0048`“ — die Nummer war zur Umsetzung vergeben).
+- Die CHECK-Bedingung aus 6.1 enthält in beiden gezählten Zweigen (`gemessen`, `korrigiert`) zusätzlich `volume_counted is not null`, weil eine CHECK-Bedingung bei NULL besteht und `volume_counted = volume` bzw. `volume_counted <> volume` sonst mit NULL durchgehen würde.

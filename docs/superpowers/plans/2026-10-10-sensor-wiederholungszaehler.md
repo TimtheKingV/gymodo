@@ -1,6 +1,6 @@
 # Wiederholungszähler (Sensor Teilprojekt B), Etappen E1–E3 — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Die Produktgrenze „Gymtavo misst nichts“ ist überall herausgenommen (E1), der Wiederholungszähler existiert als reines Swift-Package mit Offline-Tests und Gütebericht über alle Aufnahmen (E2), und der Satz kann Herkunft, Zählerstand und Wiederholungs-Ereignisse speichern (E3).
 
@@ -60,7 +60,7 @@ E1 ist ein eigener PR (Branch z. B. `claude/sensor-b-e1-produktgrenze`).
 
 Zeilennummern stammen von `master` `64595c0`; vor dem Bearbeiten mit `grep -n "misst nichts\|Produktgrenze" <datei>` gegenprüfen.
 
-- [ ] **Step 1: Blueprint §2.3 ersetzen.** Den Absatz unter `### 2.3 Wichtigste Produktgrenze` so ändern:
+- [x] **Step 1: Blueprint §2.3 ersetzen.** Den Absatz unter `### 2.3 Wichtigste Produktgrenze` so ändern:
 
 ```markdown
 ### 2.3 Wichtigste Produktgrenze
@@ -74,7 +74,7 @@ Zeilennummern stammen von `master` `64595c0`; vor dem Bearbeiten mit `grep -n "m
 
 In der Risikotabelle (`:1254`) hinter „klare Produktgrenze“ ergänzen: `(seit 10.10.2026 in der Fassung aus §2.3)`.
 
-- [ ] **Step 2: M1-Spec.** In §4.2 `jede Form von Sensorik.` ersetzen durch `jede Form von Sensorik in M1 (der Bewegungssensor folgt mit Teilprojekt B, `2026-10-10-sensor-wiederholungszaehler-design.md`).` In §4.3 die Zeile `Unverändert aus Blueprint §2.3, und sie gilt uneingeschränkt:` und das Zitat ersetzen durch:
+- [x] **Step 2: M1-Spec.** In §4.2 `jede Form von Sensorik.` ersetzen durch `jede Form von Sensorik in M1 (der Bewegungssensor folgt mit Teilprojekt B, `2026-10-10-sensor-wiederholungszaehler-design.md`).` In §4.3 die Zeile `Unverändert aus Blueprint §2.3, und sie gilt uneingeschränkt:` und das Zitat ersetzen durch:
 
 ```markdown
 > **Nachtrag 10. Oktober 2026:** ersetzt durch die neue Fassung in Blueprint §2.3 (Teilprojekt B, `2026-10-10-sensor-wiederholungszaehler-design.md` §3):
@@ -86,7 +86,7 @@ In der Risikotabelle (`:1254`) hinter „klare Produktgrenze“ ergänzen: `(sei
 
 Der Absatz „Ergänzend: Die Einweisungsinhalte …“ bleibt unverändert. In der Risikotabelle (`:609`) hinter „Produktgrenze in der UI“ ergänzen: `(Wortlaut seit 10.10.2026: Designsystem §10)`.
 
-- [ ] **Step 3: Designsystem §10 und §13.** Das Zitat unter „Produktgrenze im Klartext“ ersetzen:
+- [x] **Step 3: Designsystem §10 und §13.** Das Zitat unter „Produktgrenze im Klartext“ ersetzen:
 
 ```markdown
 - **Produktgrenze im Klartext**, sichtbar auf Geräte-Screen und Profil (Wortlaut seit 10. Oktober 2026, Teilprojekt B §3.2; vorher „gymodo misst nichts. Angezeigt wird ausschließlich, was du selbst bestätigt hast. …“):
@@ -96,7 +96,7 @@ Der Absatz „Ergänzend: Die Einweisungsinhalte …“ bleibt unverändert. In 
 
 In §13 `sie muss nachprüfbar bleiben, weil die Plattform nichts misst.` ersetzen durch `sie muss nachprüfbar bleiben, weil nur Bestätigtes gespeichert wird.`
 
-- [ ] **Step 4: Specs mit Verweisen.** Je Fundstelle eine Nachtrag-Zeile direkt unter der Stelle, Form: `> **Nachtrag 10. Oktober 2026:** <Satz>. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.` Die Sätze:
+- [x] **Step 4: Specs mit Verweisen.** Je Fundstelle eine Nachtrag-Zeile direkt unter der Stelle, Form: `> **Nachtrag 10. Oktober 2026:** <Satz>. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.` Die Sätze:
   - Spec A `:6` und `:42`: „Die Grenze ist mit Teilprojekt B gefallen; es gilt die neue Fassung in Blueprint §2.3.“ — `:338` (§11.2): „Erledigt mit Teilprojekt B.“
   - Landeseite `:100`: „Der Wortlaut ist entschieden: der kanonische Satz aus Designsystem §10 statt des Vorschlags hier.“ — `:319` (Widerspruchstabelle): „Aufgelöst: die Grenze ist gefallen, App, Landeseite und `/t/[token]` tragen den neuen Satz.“ — `:333` und `:336`: „Mit E1 von Teilprojekt B zusammen umgezogen.“
   - Ziele `:21` und `:252`: „‚misst nichts‘ ist aufgehoben; für Körperdaten bleibt es strenger: keine Messung, kein HealthKit, nur Eingabe.“
@@ -104,9 +104,9 @@ In §13 `sie muss nachprüfbar bleiben, weil die Plattform nichts misst.` ersetz
   - Gerät ohne Scan `:236`: „Die Regel gilt sinngemäß weiter: kein Wort behauptet eine Messung, wo keine stattfand.“
   - Cardio `:433`: „Der Grund ist jetzt: der Sensor zählt nur Wiederholungen; Nebenwerte liest das Mitglied weiter von der Anzeige ab.“
 
-- [ ] **Step 5: Gegenprobe.** Run: `grep -rn "misst nichts" fitness-retrofit-technical-blueprint.md docs/superpowers/specs/ | grep -v "Nachtrag\|~~\|vorher „gymodo"` — Expected: nur noch Treffer in historischen Befund-Specs (`2026-09-03-portal-frontend-design.md`, `2026-09-07-member-app-design-challenge.md`, `2026-09-08-ios-training-kurse-design.md`) und in Spec B selbst.
+- [x] **Step 5: Gegenprobe.** Run: `grep -rn "misst nichts" fitness-retrofit-technical-blueprint.md docs/superpowers/specs/ | grep -v "Nachtrag\|~~\|vorher „gymodo"` — Expected: nur noch Treffer in historischen Befund-Specs (`2026-09-03-portal-frontend-design.md`, `2026-09-07-member-app-design-challenge.md`, `2026-09-08-ios-training-kurse-design.md`) und in Spec B selbst.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add fitness-retrofit-technical-blueprint.md docs/superpowers/specs/
@@ -134,7 +134,7 @@ git log -1 --format=%B
 **Interfaces:**
 - Produces: `enum Produktgrenze { static let kanonisch: String }` im App-Target.
 
-- [ ] **Step 1: Failing test schreiben** — `apps/ios-member/FitnessMemberTests/ProduktgrenzeTests.swift`:
+- [x] **Step 1: Failing test schreiben** — `apps/ios-member/FitnessMemberTests/ProduktgrenzeTests.swift`:
 
 ```swift
 import Testing
@@ -154,9 +154,9 @@ struct ProduktgrenzeTests {
 }
 ```
 
-- [ ] **Step 2: Test laufen lassen, er schlägt fehl.** `cd apps/ios-member && xcodegen generate && pgrep -lx xcodebuild; xcodebuild test -scheme FitnessMember -destination 'id=A2FB7461-E303-4CFE-AA08-9AC1B8C41707' -only-testing:FitnessMemberTests/ProduktgrenzeTests 2>&1 | tail -20` — Expected: Kompilierfehler `cannot find 'Produktgrenze' in scope`.
+- [x] **Step 2: Test laufen lassen, er schlägt fehl.** `cd apps/ios-member && xcodegen generate && pgrep -lx xcodebuild; xcodebuild test -scheme FitnessMember -destination 'id=A2FB7461-E303-4CFE-AA08-9AC1B8C41707' -only-testing:FitnessMemberTests/ProduktgrenzeTests 2>&1 | tail -20` — Expected: Kompilierfehler `cannot find 'Produktgrenze' in scope`.
 
-- [ ] **Step 3: Implementieren.** `apps/ios-member/FitnessMember/DesignSystem/Produktgrenze.swift`:
+- [x] **Step 3: Implementieren.** `apps/ios-member/FitnessMember/DesignSystem/Produktgrenze.swift`:
 
 ```swift
 import Foundation
@@ -203,9 +203,9 @@ Kommentare, jeweils nur die Begründung austauschen:
 - `WertZeile.swift:125`: `/// Minuten und Meter liest das Mitglied von der Anzeige des Geraets ab -- der Sensor zaehlt nur Wiederholungen --`
 - `GeraetEinstiegsartTests.swift:8-10`: `/// Auswahl hat jemand etwas angetippt. Ein Wort, das eine Messung behauptet, wo keine stattfand, bleibt auch nach Sensor-Spec B verboten: erkannt wird das Geraet, gemessen wird es nicht.`
 
-- [ ] **Step 4: Tests laufen lassen.** `cd apps/ios-member && xcodegen generate && pgrep -lx xcodebuild; xcodebuild test -scheme FitnessMember -destination 'id=A2FB7461-E303-4CFE-AA08-9AC1B8C41707' 2>&1 | tail -20` — Expected: `** TEST SUCCEEDED **`. Danach `grep -rn "misst nichts" apps/ios-member/FitnessMember apps/ios-member/FitnessMemberTests` — Expected: nur der zweite Test in `ProduktgrenzeTests.swift`.
+- [x] **Step 4: Tests laufen lassen.** `cd apps/ios-member && xcodegen generate && pgrep -lx xcodebuild; xcodebuild test -scheme FitnessMember -destination 'id=A2FB7461-E303-4CFE-AA08-9AC1B8C41707' 2>&1 | tail -20` — Expected: `** TEST SUCCEEDED **`. Danach `grep -rn "misst nichts" apps/ios-member/FitnessMember apps/ios-member/FitnessMemberTests` — Expected: nur der zweite Test in `ProduktgrenzeTests.swift`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/ios-member/
@@ -226,14 +226,14 @@ git log -1 --format=%B
 - Modify: `packages/domain/src/progression.ts:9`
 - Modify: `e2e/wurzel.spec.ts:64`, `e2e/tag-fallback.spec.ts:253`, `e2e/schreibtisch.spec.ts:81`
 
-- [ ] **Step 1: e2e-Tests auf den neuen Satz umstellen (schlagen danach fehl).**
+- [x] **Step 1: e2e-Tests auf den neuen Satz umstellen (schlagen danach fehl).**
   - `e2e/wurzel.spec.ts:64`: `const satz = page.getByRole("contentinfo").getByText(/Gymtavo speichert nur, was du bestätigst/);`
   - `e2e/tag-fallback.spec.ts:253`: `const grenze = page.getByText(/Gymtavo speichert nur, was du bestätigst/);`
   - `e2e/schreibtisch.spec.ts:81`: `await expect(page.getByText(/Gymtavo speichert nur|misst nichts/)).toHaveCount(0);`
 
-- [ ] **Step 2: Rot prüfen.** Produktions-Build wie CI (Dev-Server flakt bei langen Specs): `APPLE_TEAM_ID=ABCDE12345 APPLE_BUNDLE_ID=de.fitretro.member pnpm build`, dann alten Server auf dem Port beenden und `(set -a; . ./.env; set +a; pnpm --filter @fitretro/web start -p 3007 &)`; `E2E_PORT=3007 pnpm test:e2e e2e/wurzel.spec.ts e2e/tag-fallback.spec.ts` — Expected: die beiden Produktgrenze-Tests FAIL (Text nicht gefunden). Nach dem Build untracked `apps/web/AGENTS.md` / `apps/web/CLAUDE.md` löschen, falls entstanden.
+- [x] **Step 2: Rot prüfen.** Produktions-Build wie CI (Dev-Server flakt bei langen Specs): `APPLE_TEAM_ID=ABCDE12345 APPLE_BUNDLE_ID=de.fitretro.member pnpm build`, dann alten Server auf dem Port beenden und `(set -a; . ./.env; set +a; pnpm --filter @fitretro/web start -p 3007 &)`; `E2E_PORT=3007 pnpm test:e2e e2e/wurzel.spec.ts e2e/tag-fallback.spec.ts` — Expected: die beiden Produktgrenze-Tests FAIL (Text nicht gefunden). Nach dem Build untracked `apps/web/AGENTS.md` / `apps/web/CLAUDE.md` löschen, falls entstanden.
 
-- [ ] **Step 3: Texte ändern.**
+- [x] **Step 3: Texte ändern.**
 
 `apps/web/app/landung/texte.ts`:
 
@@ -257,9 +257,9 @@ Die FAQ-Einträge „Was misst Gymtavo?“ und „Wann kommt der Sensor?“ blei
 
 `packages/domain/src/progression.ts:9`: ` * das Mitglied -- die Regel rechnet nur auf bestaetigten Saetzen (Spec Abschnitt 4.3).`
 
-- [ ] **Step 4: Grün prüfen.** Neu bauen und starten wie in Step 2, dann `E2E_PORT=3007 pnpm test:e2e e2e/wurzel.spec.ts e2e/tag-fallback.spec.ts e2e/schreibtisch.spec.ts` — Expected: alle PASS. Zusätzlich `pnpm typecheck && pnpm test`. Gegenprobe: `grep -rn "misst nichts" apps/web packages e2e` — Expected: nur das Negativmuster in `schreibtisch.spec.ts` und der Fixture-Text in `apps/web/app/landung/Fragen.test.tsx` (prüft Escaping, nicht den Inhalt; bleibt).
+- [x] **Step 4: Grün prüfen.** Neu bauen und starten wie in Step 2, dann `E2E_PORT=3007 pnpm test:e2e e2e/wurzel.spec.ts e2e/tag-fallback.spec.ts e2e/schreibtisch.spec.ts` — Expected: alle PASS. Zusätzlich `pnpm typecheck && pnpm test`. Gegenprobe: `grep -rn "misst nichts" apps/web packages e2e` — Expected: nur das Negativmuster in `schreibtisch.spec.ts` und der Fixture-Text in `apps/web/app/landung/Fragen.test.tsx` (prüft Escaping, nicht den Inhalt; bleibt).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web packages/domain/src/progression.ts e2e
@@ -292,7 +292,7 @@ E2 ist ein eigener PR (Branch z. B. `claude/sensor-b-e2-zaehler`), unabhängig v
 - Produces (alle `public`, Verhalten unverändert): `Vektor3`, `SensorMesswert`, `WitMotionPaket`, `WitMotionParser`, `WitMotionBefehl`, `SensorRate`, `SensorStatistik` (+ `Ergebnis`, `Abstand`), `SensorAufnahmeDatei` (+ Untertypen), `SensorRatentestDatei`, `SensorAufnahmeLeser` (+ `Eintrag`, `Fehler`), `SensorAufnahme`; neu `SensorikJSON.encoder(zeitzone:)`, `SensorikJSON.decoder()`.
 - Produces (Testziel): `enum Pfade { static let repo: URL; static let aufnahmen: URL; static let beispiel: URL }`.
 
-- [ ] **Step 1: Package-Gerüst.** `apps/ios-member/Packages/Sensorik/Package.swift`:
+- [x] **Step 1: Package-Gerüst.** `apps/ios-member/Packages/Sensorik/Package.swift`:
 
 ```swift
 // swift-tools-version: 6.0
@@ -312,9 +312,9 @@ let package = Package(
 )
 ```
 
-- [ ] **Step 2: Dateien verschieben.** `git mv` für die sieben Quell- und vier Testdateien wie oben. In jeder verschobenen Quelldatei die Zeilen `#if DEBUG` und das zugehörige `#endif` entfernen (Grund: das Package liegt im Release ungenutzt bei, Spec B 5.1).
+- [x] **Step 2: Dateien verschieben.** `git mv` für die sieben Quell- und vier Testdateien wie oben. In jeder verschobenen Quelldatei die Zeilen `#if DEBUG` und das zugehörige `#endif` entfernen (Grund: das Package liegt im Release ungenutzt bei, Spec B 5.1).
 
-- [ ] **Step 3: Coder des Packages.** `Sources/Sensorik/SensorikJSON.swift`:
+- [x] **Step 3: Coder des Packages.** `Sources/Sensorik/SensorikJSON.swift`:
 
 ```swift
 import Foundation
@@ -355,9 +355,9 @@ In `SensorAufnahme.swift` und `SensorAufnahmeLeser.swift` `JSONEncoder.testnotiz
     }
 ```
 
-- [ ] **Step 4: `public` setzen.** Jeden Typ aus „Produces“ samt der Eigenschaften, Initialisierer, Methoden und Fälle, die App-Target oder Tests benutzen, `public` machen. Für Structs mit synthetisiertem memberwise-Init, die das App-Target konstruiert (`SensorMesswert`, `Vektor3`, `SensorAufnahmeDatei.Sensor`, `.Geraet`, `.Kontext`, `.Label`, `SensorStatistik.Ergebnis`, `.Abstand`, `SensorAufnahmeDatei`, `SensorRatentestDatei`), einen expliziten `public init(...)` mit denselben Parametern in derselben Reihenfolge schreiben (Grund: der synthetisierte Init ist `internal` und vom App-Target aus unsichtbar). Faustregel: kompilieren lassen und jede Meldung `'x' is inaccessible due to 'internal' protection level` durch `public` an der genannten Stelle beheben, nichts darüber hinaus.
+- [x] **Step 4: `public` setzen.** Jeden Typ aus „Produces“ samt der Eigenschaften, Initialisierer, Methoden und Fälle, die App-Target oder Tests benutzen, `public` machen. Für Structs mit synthetisiertem memberwise-Init, die das App-Target konstruiert (`SensorMesswert`, `Vektor3`, `SensorAufnahmeDatei.Sensor`, `.Geraet`, `.Kontext`, `.Label`, `SensorStatistik.Ergebnis`, `.Abstand`, `SensorAufnahmeDatei`, `SensorRatentestDatei`), einen expliziten `public init(...)` mit denselben Parametern in derselben Reihenfolge schreiben (Grund: der synthetisierte Init ist `internal` und vom App-Target aus unsichtbar). Faustregel: kompilieren lassen und jede Meldung `'x' is inaccessible due to 'internal' protection level` durch `public` an der genannten Stelle beheben, nichts darüber hinaus.
 
-- [ ] **Step 5: Pfade für Tests.** `Tests/SensorikTests/Pfade.swift`:
+- [x] **Step 5: Pfade für Tests.** `Tests/SensorikTests/Pfade.swift`:
 
 ```swift
 import Foundation
@@ -385,9 +385,9 @@ enum Pfade {
 }
 ```
 
-- [ ] **Step 6: Verschobene Tests umstellen.** In den vier verschobenen Testdateien `@testable import FitnessMember` → `@testable import Sensorik`. Nutzt ein Test App-Typen (z. B. `JSONDecoder.testnotiz()`), durch `SensorikJSON.decoder()` ersetzen.
+- [x] **Step 6: Verschobene Tests umstellen.** In den vier verschobenen Testdateien `@testable import FitnessMember` → `@testable import Sensorik`. Nutzt ein Test App-Typen (z. B. `JSONDecoder.testnotiz()`), durch `SensorikJSON.decoder()` ersetzen.
 
-- [ ] **Step 7: Failing test für den Leser** — `Tests/SensorikTests/SensorAufnahmeLeserTests.swift`:
+- [x] **Step 7: Failing test für den Leser** — `Tests/SensorikTests/SensorAufnahmeLeserTests.swift`:
 
 ```swift
 import Foundation
@@ -428,9 +428,9 @@ struct SensorAufnahmeLeserTests {
 }
 ```
 
-- [ ] **Step 8: Laufen lassen.** `swift test --package-path apps/ios-member/Packages/Sensorik 2>&1 | tail -30` — Expected: alle bisherigen Tests PASS; `leereZeilenUndCRLFWerdenUebersprungen` FAIL, falls der Leser bei `\r` oder Leerzeilen wirft (sonst PASS — dann ist Step 9 nur die Absicherung).
+- [x] **Step 8: Laufen lassen.** `swift test --package-path apps/ios-member/Packages/Sensorik 2>&1 | tail -30` — Expected: alle bisherigen Tests PASS; `leereZeilenUndCRLFWerdenUebersprungen` FAIL, falls der Leser bei `\r` oder Leerzeilen wirft (sonst PASS — dann ist Step 9 nur die Absicherung).
 
-- [ ] **Step 9: Leser robust machen** (nur falls Step 8 rot). In `SensorAufnahmeLeser.lesen` die Zeilenschleife so beginnen:
+- [x] **Step 9: Leser robust machen** (nur falls Step 8 rot). In `SensorAufnahmeLeser.lesen` die Zeilenschleife so beginnen:
 
 ```swift
         for rohzeile in csv.split(whereSeparator: \.isNewline).dropFirst() {
@@ -442,7 +442,7 @@ struct SensorAufnahmeLeserTests {
 
 (`split(whereSeparator: \.isNewline)` trennt auch an `\r\n`.) Danach Step 8 wiederholen — Expected: PASS.
 
-- [ ] **Step 10: App-Target einbinden.** `apps/ios-member/project.yml`:
+- [x] **Step 10: App-Target einbinden.** `apps/ios-member/project.yml`:
 
 ```yaml
 packages:
@@ -455,9 +455,9 @@ packages:
 
 Unter `targets.FitnessMember.dependencies` ergänzen `- package: Sensorik`, ebenso unter `targets.FitnessMemberTests.dependencies` (die App-Tests importieren `Sensorik` direkt). In jeder App- und App-Test-Datei, die einen verschobenen Typ benutzt, `import Sensorik` ergänzen (innerhalb des `#if DEBUG`-Blocks, nach `import Foundation`). `cd apps/ios-member && xcodegen generate`.
 
-- [ ] **Step 11: App bauen und testen.** `pgrep -lx xcodebuild; cd apps/ios-member && xcodebuild test -scheme FitnessMember -destination 'id=A2FB7461-E303-4CFE-AA08-9AC1B8C41707' 2>&1 | tail -20` — Expected: `** TEST SUCCEEDED **`. Zusätzlich Release kompilieren: `xcodebuild build -scheme FitnessMember -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO 2>&1 | tail -5` — Expected: `** BUILD SUCCEEDED **`.
+- [x] **Step 11: App bauen und testen.** `pgrep -lx xcodebuild; cd apps/ios-member && xcodebuild test -scheme FitnessMember -destination 'id=A2FB7461-E303-4CFE-AA08-9AC1B8C41707' 2>&1 | tail -20` — Expected: `** TEST SUCCEEDED **`. Zusätzlich Release kompilieren: `xcodebuild build -scheme FitnessMember -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO 2>&1 | tail -5` — Expected: `** BUILD SUCCEEDED **`.
 
-- [ ] **Step 12: CI-Job.** In `.github/workflows/ci.yml` unter `jobs:` ergänzen:
+- [x] **Step 12: CI-Job.** In `.github/workflows/ci.yml` unter `jobs:` ergänzen:
 
 ```yaml
   # Der Zaehler und das Aufnahmeformat sind reines Foundation (Sensor-Spec
@@ -472,7 +472,7 @@ Unter `targets.FitnessMember.dependencies` ergänzen `- package: Sensorik`, eben
 
 Lokal gegenprüfen, falls Docker läuft: `docker run --rm -v "$PWD":/w -w /w swift:6.2-noble swift test --package-path apps/ios-member/Packages/Sensorik 2>&1 | tail -5` — Expected: alle PASS. Schlägt es nur unter Linux fehl (eine Foundation-API fehlt dort), die Stelle mit einer Linux-tauglichen Alternative ersetzen; geht das nicht, den Job auf `runs-on: macos-15` ohne `container` umstellen und den Grund im Kommentar nennen.
 
-- [ ] **Step 13: Commit**
+- [x] **Step 13: Commit**
 
 ```bash
 git add apps/ios-member .github/workflows/ci.yml
@@ -501,7 +501,7 @@ git log -1 --format=%B
   - `public enum ZaehlerEreignis: Equatable, Sendable { case wiederholung(Wiederholung), unsicher(UnsicherGrund), zuende }`
   - `public struct RepEvents: Codable, Equatable, Sendable { algo: String; befestigungsart: Befestigungsart; unsicher: UnsicherGrund?; wiederholungen: [Eintrag]; init(algo:befestigungsart:ereignisse:satzbeginn:) }` mit `public struct Eintrag: Codable, Equatable, Sendable { beginn, umkehr, ende, ausschlag, sicherheit: Double }`
 
-- [ ] **Step 1: Failing test** — `Tests/SensorikTests/RepEventsTests.swift`:
+- [x] **Step 1: Failing test** — `Tests/SensorikTests/RepEventsTests.swift`:
 
 ```swift
 import Foundation
@@ -557,9 +557,9 @@ struct RepEventsTests {
 }
 ```
 
-- [ ] **Step 2: Rot prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter RepEventsTests 2>&1 | tail -10` — Expected: Kompilierfehler `cannot find 'RepEvents' in scope`.
+- [x] **Step 2: Rot prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter RepEventsTests 2>&1 | tail -10` — Expected: Kompilierfehler `cannot find 'RepEvents' in scope`.
 
-- [ ] **Step 3: Implementieren.** `Befestigungsart.swift`:
+- [x] **Step 3: Implementieren.** `Befestigungsart.swift`:
 
 ```swift
 /// Wie der Sensor haengt (Sensor-Spec B 6.7). Feste Liste statt Freitext,
@@ -681,9 +681,9 @@ public struct RepEvents: Codable, Equatable, Sendable {
 }
 ```
 
-- [ ] **Step 4: Grün prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter RepEventsTests 2>&1 | tail -10` — Expected: 5 Tests PASS.
+- [x] **Step 4: Grün prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter RepEventsTests 2>&1 | tail -10` — Expected: 5 Tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/ios-member/Packages/Sensorik
@@ -707,7 +707,7 @@ git log -1 --format=%B
   - `public struct ZaehlerProfil: Equatable, Sendable` mit `art`, `version: Int`, `eingefrorenAm: Date?`, `signal: Signal` (`.drehrate`, `.geschwindigkeitVertikal`), Parametern wie unten, `var algo: String`, `static func fuer(_ art: Befestigungsart) -> ZaehlerProfil`.
   - `public struct Zaehler: Sendable` mit `init(profil: ZaehlerProfil, rateHz: Double = 50)`, `mutating func verarbeite(_ m: SensorMesswert) -> [ZaehlerEreignis]`, `mutating func luecke(von: TimeInterval, bis: TimeInterval) -> [ZaehlerEreignis]`, `mutating func abschliessen() -> [ZaehlerEreignis]`, `var anzahl: Int`.
 
-- [ ] **Step 1: Synthetische Sätze** — `Tests/SensorikTests/Synthetik.swift`:
+- [x] **Step 1: Synthetische Sätze** — `Tests/SensorikTests/Synthetik.swift`:
 
 ```swift
 import Foundation
@@ -782,7 +782,7 @@ enum Synthetik {
 }
 ```
 
-- [ ] **Step 2: Failing tests** — `Tests/SensorikTests/ZaehlerTests.swift`:
+- [x] **Step 2: Failing tests** — `Tests/SensorikTests/ZaehlerTests.swift`:
 
 ```swift
 import Foundation
@@ -901,9 +901,9 @@ struct ZaehlerTests {
 }
 ```
 
-- [ ] **Step 3: Rot prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter ZaehlerTests 2>&1 | tail -10` — Expected: Kompilierfehler `cannot find 'Zaehler' in scope`.
+- [x] **Step 3: Rot prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter ZaehlerTests 2>&1 | tail -10` — Expected: Kompilierfehler `cannot find 'Zaehler' in scope`.
 
-- [ ] **Step 4: Profile.** `Sources/Sensorik/ZaehlerProfil.swift`:
+- [x] **Step 4: Profile.** `Sources/Sensorik/ZaehlerProfil.swift`:
 
 ```swift
 import Foundation
@@ -970,7 +970,7 @@ public struct ZaehlerProfil: Equatable, Sendable {
 }
 ```
 
-- [ ] **Step 5: Zähler.** `Sources/Sensorik/Zaehler.swift`:
+- [x] **Step 5: Zähler.** `Sources/Sensorik/Zaehler.swift`:
 
 ```swift
 import Foundation
@@ -1196,9 +1196,9 @@ public struct Zaehler: Sendable {
 
 Hinweis: `abschliessen()` liefert nach einem `stoppen` ebenfalls `.zuende`, weil `gestoppt` dort nur das Zählen beendet. Dafür `abschliessen` ohne `guard` lassen (wie oben) — der Test `eineLueckeImSatz…` prüft `ereignisse.last == .zuende`.
 
-- [ ] **Step 6: Grün prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter ZaehlerTests 2>&1 | tail -30` — Expected: alle PASS. Schlägt ein synthetischer Test wegen eines Startwerts fehl (z. B. Ruheschwelle, Schwelle der Geschwindigkeit), **den Parameter im Profil anpassen, nicht die Erwartung im Test**, und im Kommentar am Parameter den Grund nennen. Der Test „nurRuheZaehltNichts“ und die Stimmigkeitsprüfung dürfen nie gelockert werden.
+- [x] **Step 6: Grün prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter ZaehlerTests 2>&1 | tail -30` — Expected: alle PASS. Schlägt ein synthetischer Test wegen eines Startwerts fehl (z. B. Ruheschwelle, Schwelle der Geschwindigkeit), **den Parameter im Profil anpassen, nicht die Erwartung im Test**, und im Kommentar am Parameter den Grund nennen. Der Test „nurRuheZaehltNichts“ und die Stimmigkeitsprüfung dürfen nie gelockert werden.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/ios-member/Packages/Sensorik
@@ -1227,7 +1227,7 @@ git log -1 --format=%B
   - `struct AufnahmeErgebnis { ordner: String; startedAt: Date; art: Befestigungsart; repsWahr: Int; fuerZaehler: Bool; gezaehlt: Int; unsicher: UnsicherGrund?; ereignisse: [ZaehlerEreignis] }`
   - `enum AufnahmeLauf { static func ueberAlle() throws -> [AufnahmeErgebnis]; static func zaehlen(ordner: URL, art: Befestigungsart) throws -> [ZaehlerEreignis] }`
 
-- [ ] **Step 1: `korrekturen.json` ergänzen.** Bei jeder Aufnahme direkt unter `"befestigung"` den Schlüssel `"befestigungsart"` einfügen. Zuordnung aus dem Freitext:
+- [x] **Step 1: `korrekturen.json` ergänzen.** Bei jeder Aufnahme direkt unter `"befestigung"` den Schlüssel `"befestigungsart"` einfügen. Zuordnung aus dem Freitext:
 
 | Aufnahme | `befestigungsart` |
 |---|---|
@@ -1251,7 +1251,7 @@ git log -1 --format=%B
 Neue Aufnahmen: Ordner unverändert vom iPhone kopieren, Eintrag hier anlegen, `swift test --package-path apps/ios-member/Packages/Sensorik` laufen lassen und den neuen `guetebericht.md` mit committen.
 ```
 
-- [ ] **Step 2: Failing tests** — `Tests/SensorikTests/AufnahmenTests.swift`:
+- [x] **Step 2: Failing tests** — `Tests/SensorikTests/AufnahmenTests.swift`:
 
 ```swift
 import Foundation
@@ -1295,9 +1295,9 @@ struct AufnahmenTests {
 }
 ```
 
-- [ ] **Step 3: Rot prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter AufnahmenTests 2>&1 | tail -10` — Expected: Kompilierfehler `cannot find 'Korrekturen' in scope`.
+- [x] **Step 3: Rot prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter AufnahmenTests 2>&1 | tail -10` — Expected: Kompilierfehler `cannot find 'Korrekturen' in scope`.
 
-- [ ] **Step 4: Korrekturen-Leser.** `Tests/SensorikTests/Korrekturen.swift`:
+- [x] **Step 4: Korrekturen-Leser.** `Tests/SensorikTests/Korrekturen.swift`:
 
 ```swift
 import Foundation
@@ -1330,7 +1330,7 @@ struct Korrekturen: Decodable {
 }
 ```
 
-- [ ] **Step 5: Lauf über Aufnahmen.** `Tests/SensorikTests/AufnahmeLauf.swift`:
+- [x] **Step 5: Lauf über Aufnahmen.** `Tests/SensorikTests/AufnahmeLauf.swift`:
 
 ```swift
 import Foundation
@@ -1392,9 +1392,9 @@ enum AufnahmeLauf {
 }
 ```
 
-- [ ] **Step 6: Grün prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter AufnahmenTests 2>&1 | tail -20` — Expected: alle PASS (je Aufnahme mit Wahrheit ein Testfall).
+- [x] **Step 6: Grün prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter AufnahmenTests 2>&1 | tail -20` — Expected: alle PASS (je Aufnahme mit Wahrheit ein Testfall).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add data/sensoraufnahmen/korrekturen.json data/sensoraufnahmen/README.md apps/ios-member/Packages/Sensorik
@@ -1419,7 +1419,7 @@ git log -1 --format=%B
   - `struct Quoten: Equatable { saetze: Int; tage: Int; exakt: Double; plusMinusEins: Double; ruecknahmen: Double }`
   - `enum Guetebericht { static func quoten(_ ergebnisse: [AufnahmeErgebnis]) -> Quoten; static func torset(_ ergebnisse: [AufnahmeErgebnis], art: Befestigungsart) -> [AufnahmeErgebnis]; static func torErreicht(_ q: Quoten) -> Bool; static func markdown(_ ergebnisse: [AufnahmeErgebnis]) -> String }`
 
-- [ ] **Step 1: Failing tests** — `Tests/SensorikTests/GueteberichtTests.swift`:
+- [x] **Step 1: Failing tests** — `Tests/SensorikTests/GueteberichtTests.swift`:
 
 ```swift
 import Foundation
@@ -1483,9 +1483,9 @@ struct GueteberichtTests {
 }
 ```
 
-- [ ] **Step 2: Rot prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter GueteberichtTests 2>&1 | tail -10` — Expected: Kompilierfehler `cannot find 'Guetebericht' in scope`.
+- [x] **Step 2: Rot prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik --filter GueteberichtTests 2>&1 | tail -10` — Expected: Kompilierfehler `cannot find 'Guetebericht' in scope`.
 
-- [ ] **Step 3: Implementieren.** `Tests/SensorikTests/Guetebericht.swift`:
+- [x] **Step 3: Implementieren.** `Tests/SensorikTests/Guetebericht.swift`:
 
 ```swift
 import Foundation
@@ -1570,9 +1570,9 @@ enum Guetebericht {
 }
 ```
 
-- [ ] **Step 4: Grün prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik 2>&1 | tail -20` — Expected: alle Tests des Packages PASS, `data/sensoraufnahmen/guetebericht.md` existiert. `cat data/sensoraufnahmen/guetebericht.md` ansehen: eine Entwicklungszeile je vorhandener Art, alle Torsets „nicht eingefroren“, eine Zeile je Aufnahme mit Wahrheit.
+- [x] **Step 4: Grün prüfen.** `swift test --package-path apps/ios-member/Packages/Sensorik 2>&1 | tail -20` — Expected: alle Tests des Packages PASS, `data/sensoraufnahmen/guetebericht.md` existiert. `cat data/sensoraufnahmen/guetebericht.md` ansehen: eine Entwicklungszeile je vorhandener Art, alle Torsets „nicht eingefroren“, eine Zeile je Aufnahme mit Wahrheit.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/ios-member/Packages/Sensorik data/sensoraufnahmen/guetebericht.md
@@ -1582,7 +1582,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 git log -1 --format=%B
 ```
 
-- [ ] **Step 6: Erster Abstimmungsdurchgang (ohne Torwirkung).** Den Bericht lesen. Wo der Zähler bei den Wasserflaschen-Aufnahmen offensichtlich danebenliegt (z. B. Curls 12 wahr, 0 gezählt), die Ursache mit einem kurzen Wegwerf-Skript im Scratchpad ansehen (gefiltertes Signal gegen Zeit, Schwellen eingezeichnet) und **nur Profil-Parameter** anpassen, jeweils mit `version` + 1. Die synthetischen Tests aus Task 6 müssen grün bleiben. Ergebnis als eigener Commit mit dem neuen `guetebericht.md`:
+- [x] **Step 6: Erster Abstimmungsdurchgang (ohne Torwirkung).** Den Bericht lesen. Wo der Zähler bei den Wasserflaschen-Aufnahmen offensichtlich danebenliegt (z. B. Curls 12 wahr, 0 gezählt), die Ursache mit einem kurzen Wegwerf-Skript im Scratchpad ansehen (gefiltertes Signal gegen Zeit, Schwellen eingezeichnet) und **nur Profil-Parameter** anpassen, jeweils mit `version` + 1. Die synthetischen Tests aus Task 6 müssen grün bleiben. Ergebnis als eigener Commit mit dem neuen `guetebericht.md`:
 
 ```bash
 git add apps/ios-member/Packages/Sensorik/Sources/Sensorik/ZaehlerProfil.swift data/sensoraufnahmen/guetebericht.md
@@ -1609,7 +1609,7 @@ E3 ist ein eigener PR (Branch z. B. `claude/sensor-b-e3-herkunft`). Task 9 und 1
 **Interfaces:**
 - Produces: Spalten `workout_sets.volume_source text not null default 'eingegeben'`, `volume_counted int`, `rep_events jsonb`; Constraint `workout_sets_herkunft_consistent`.
 
-- [ ] **Step 1: Failing test** — `tests/integration/satz-herkunft-db.test.ts`:
+- [x] **Step 1: Failing test** — `tests/integration/satz-herkunft-db.test.ts`:
 
 ```ts
 import { beforeAll, describe, expect, it } from "vitest";
@@ -1693,9 +1693,9 @@ describe("workout_sets: Herkunft", () => {
 });
 ```
 
-- [ ] **Step 2: Rot prüfen.** `pnpm test:integration tests/integration/satz-herkunft-db.test.ts` — Expected: FAIL (`column "volume_source" … does not exist` bzw. PGRST204).
+- [x] **Step 2: Rot prüfen.** `pnpm test:integration tests/integration/satz-herkunft-db.test.ts` — Expected: FAIL (`column "volume_source" … does not exist` bzw. PGRST204).
 
-- [ ] **Step 3: Migration** — `supabase/migrations/0048_satz_herkunft.sql`:
+- [x] **Step 3: Migration** — `supabase/migrations/0048_satz_herkunft.sql`:
 
 ```sql
 -- Herkunft der Wiederholungszahl am Satz (Sensor-Spec B 6.1).
@@ -1727,9 +1727,9 @@ alter table public.workout_sets
     or (volume_source = 'korrigiert' and volume_counted <> volume and rep_events is not null));
 ```
 
-- [ ] **Step 4: Einspielen und grün prüfen.** `pnpm exec supabase migration up` (geteilte DB; additiv, schadet anderen Branches nicht), dann `pnpm test:integration tests/integration/satz-herkunft-db.test.ts` — Expected: alle PASS.
+- [x] **Step 4: Einspielen und grün prüfen.** `pnpm exec supabase migration up` (geteilte DB; additiv, schadet anderen Branches nicht), dann `pnpm test:integration tests/integration/satz-herkunft-db.test.ts` — Expected: alle PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations/0048_satz_herkunft.sql tests/integration/satz-herkunft-db.test.ts
@@ -1758,7 +1758,7 @@ git log -1 --format=%B
   - `recordSetInputSchema` mit `volumeSource` (Default `"eingegeben"`), `volumeCounted`, `repEvents`
   - `RecordedSet` mit `volumeSource: VolumeSource`, `volumeCounted: number | null`
 
-- [ ] **Step 1: Failing unit tests** — `packages/domain/src/herkunft.test.ts`:
+- [x] **Step 1: Failing unit tests** — `packages/domain/src/herkunft.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -1857,9 +1857,9 @@ describe("recordSetInputSchema -- Herkunft", () => {
 });
 ```
 
-- [ ] **Step 2: Rot prüfen.** `pnpm --filter @fitretro/domain test -- herkunft` — Expected: FAIL (`Cannot find module './herkunft.js'`).
+- [x] **Step 2: Rot prüfen.** `pnpm --filter @fitretro/domain test -- herkunft` — Expected: FAIL (`Cannot find module './herkunft.js'`).
 
-- [ ] **Step 3: `herkunft.ts`:**
+- [x] **Step 3: `herkunft.ts`:**
 
 ```ts
 import { z } from "zod";
@@ -1956,7 +1956,7 @@ export {
 } from "./herkunft.js";
 ```
 
-- [ ] **Step 4: Schema in `workout.ts`.** Import ergänzen: `import { herkunftPruefen, repEventsSchema, volumeSourceSchema, type VolumeSource } from "./herkunft.js";`. Im `z.object({...})` von `recordSetInputSchema` nach `problemReason`:
+- [x] **Step 4: Schema in `workout.ts`.** Import ergänzen: `import { herkunftPruefen, repEventsSchema, volumeSourceSchema, type VolumeSource } from "./herkunft.js";`. Im `z.object({...})` von `recordSetInputSchema` nach `problemReason`:
 
 ```ts
     // Herkunft der Wiederholungszahl (Sensor-Spec B 6.3). Alte App-Versionen
@@ -1977,9 +1977,9 @@ und nach dem letzten `.refine(...)` innerhalb von `z.preprocess` einen weiteren:
 
 (Ist die Kette mit `.refine` verschachtelt, `superRefine` als letztes Glied derselben Kette anhängen; das schließende `)` von `z.preprocess` bleibt dahinter.)
 
-- [ ] **Step 5: Unit-Tests grün.** `pnpm --filter @fitretro/domain test` — Expected: alle PASS, inklusive der bestehenden `workout.test.ts`.
+- [x] **Step 5: Unit-Tests grün.** `pnpm --filter @fitretro/domain test` — Expected: alle PASS, inklusive der bestehenden `workout.test.ts`.
 
-- [ ] **Step 6: Failing Integrationstests.** In `tests/integration/domain-record-set.test.ts` am Ende ergänzen (nutzt `payload`, `memberAEmail`, `dauerlauf`, `laufband` aus dem Dateikopf):
+- [x] **Step 6: Failing Integrationstests.** In `tests/integration/domain-record-set.test.ts` am Ende ergänzen (nutzt `payload`, `memberAEmail`, `dauerlauf`, `laufband` aus dem Dateikopf):
 
 ```ts
 function ereignisse(n: number) {
@@ -2055,9 +2055,9 @@ describe("recordSet -- Herkunft (Sensor-Spec B 6.3)", () => {
 
 In `tests/integration/api-workout-sets.test.ts` einen Fall neben „speichert den Satz und liefert ihn kanonisch zurueck“ ergänzen, nach dem Muster der vorhandenen PUT-Aufrufe der Datei (gleicher Helfer, gleiche Kopfzeilen), mit Rumpf ohne die neuen Felder: `expect(body.volumeSource).toBe("eingegeben")` und `expect(body.volumeCounted).toBeNull()`.
 
-- [ ] **Step 7: Rot prüfen.** `pnpm test:integration tests/integration/domain-record-set.test.ts tests/integration/api-workout-sets.test.ts` — Expected: die neuen Fälle FAIL (`volumeSource` ist `undefined`; die Sekundenübung wird angenommen).
+- [x] **Step 7: Rot prüfen.** `pnpm test:integration tests/integration/domain-record-set.test.ts tests/integration/api-workout-sets.test.ts` — Expected: die neuen Fälle FAIL (`volumeSource` ist `undefined`; die Sekundenübung wird angenommen).
 
-- [ ] **Step 8: `recordSet` erweitern.** In `workout.ts`:
+- [x] **Step 8: `recordSet` erweitern.** In `workout.ts`:
 
 `RecordedSet` ergänzen:
 
@@ -2092,9 +2092,9 @@ Im `upsert` nach `problem_reason`:
 
 Im `.select(...)`-String `, volume_source, volume_counted` vor `, performed_at` ergänzen.
 
-- [ ] **Step 9: Grün prüfen.** `pnpm typecheck && pnpm test && pnpm test:integration` — Expected: alles PASS (bekannte Umgebungsfehler in `completeSession` aus der Memory-Notiz gesondert nennen, falls sie auftreten).
+- [x] **Step 9: Grün prüfen.** `pnpm typecheck && pnpm test && pnpm test:integration` — Expected: alles PASS (bekannte Umgebungsfehler in `completeSession` aus der Memory-Notiz gesondert nennen, falls sie auftreten).
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add packages/domain tests/integration
@@ -2117,7 +2117,7 @@ git log -1 --format=%B
 - Consumes: `RepEvents` aus `Sensorik` (Task 5), Server-Felder aus Task 10.
 - Produces: `enum VolumeSource: String, Codable { case eingegeben, gemessen, korrigiert }`; `SetWrite.volumeSource: VolumeSource = .eingegeben`, `SetWrite.volumeCounted: Int? = nil`, `SetWrite.repEvents: RepEvents? = nil`; `RecordedSet.volumeSource: VolumeSource`, `RecordedSet.volumeCounted: Int?`.
 
-- [ ] **Step 1: Failing tests** — `apps/ios-member/FitnessMemberTests/SetWriteHerkunftTests.swift`:
+- [x] **Step 1: Failing tests** — `apps/ios-member/FitnessMemberTests/SetWriteHerkunftTests.swift`:
 
 ```swift
 import Foundation
@@ -2174,9 +2174,9 @@ struct SetWriteHerkunftTests {
 
 (Wenn `SetWrite`s memberwise-Init nach Gymtavo-Katalog Etappe 4 andere Pflichtparameter hat, `satz()` daran anpassen.)
 
-- [ ] **Step 2: Rot prüfen.** `cd apps/ios-member && xcodegen generate && pgrep -lx xcodebuild; xcodebuild test -scheme FitnessMember -destination 'id=A2FB7461-E303-4CFE-AA08-9AC1B8C41707' -only-testing:FitnessMemberTests/SetWriteHerkunftTests 2>&1 | tail -20` — Expected: Kompilierfehler `value of type 'SetWrite' has no member 'volumeSource'`.
+- [x] **Step 2: Rot prüfen.** `cd apps/ios-member && xcodegen generate && pgrep -lx xcodebuild; xcodebuild test -scheme FitnessMember -destination 'id=A2FB7461-E303-4CFE-AA08-9AC1B8C41707' -only-testing:FitnessMemberTests/SetWriteHerkunftTests 2>&1 | tail -20` — Expected: Kompilierfehler `value of type 'SetWrite' has no member 'volumeSource'`.
 
-- [ ] **Step 3: Implementieren.** In `WorkoutSet.swift` `import Sensorik` ergänzen und:
+- [x] **Step 3: Implementieren.** In `WorkoutSet.swift` `import Sensorik` ergänzen und:
 
 ```swift
 /// Herkunft der Wiederholungszahl -- exakt die drei Werte aus
@@ -2216,9 +2216,9 @@ Hat `SetWrite` keinen eigenen `encode(to:)`, lässt der synthetisierte Encoder `
 
 und — damit Antworten älterer Server-Stände während eines gestaffelten Deploys weiter dekodieren — einen `init(from:)` in einer Extension, der `volumeSource` mit `decodeIfPresent(...) ?? .eingegeben` liest und alle anderen Felder wie bisher mit `decode`/`decodeIfPresent` (bei Optionals). Danach Step 2 wiederholen.
 
-- [ ] **Step 4: Grün prüfen (volles App-Testset).** `pgrep -lx xcodebuild; cd apps/ios-member && xcodebuild test -scheme FitnessMember -destination 'id=A2FB7461-E303-4CFE-AA08-9AC1B8C41707' 2>&1 | tail -20` — Expected: `** TEST SUCCEEDED **`.
+- [x] **Step 4: Grün prüfen (volles App-Testset).** `pgrep -lx xcodebuild; cd apps/ios-member && xcodebuild test -scheme FitnessMember -destination 'id=A2FB7461-E303-4CFE-AA08-9AC1B8C41707' 2>&1 | tail -20` — Expected: `** TEST SUCCEEDED **`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/ios-member
@@ -2237,9 +2237,9 @@ git log -1 --format=%B
 - Modify: `docs/superpowers/specs/2026-10-10-sensor-wiederholungszaehler-design.md` (Status-Zeile)
 - Modify: `docs/superpowers/plans/2026-10-10-sensor-wiederholungszaehler.md` (Häkchen)
 
-- [ ] **Step 1: Volles Testset** (Global Constraints) und Ergebnis notieren; umgebungsbedingte Fehler gesondert benennen.
-- [ ] **Step 2: Spec-Status** je abgeschlossener Etappe ergänzen, z. B. `**Umgesetzt:** E1 (PR #…), E2 (PR #…), E3 (PR #…). E4/E5: eigener Plan nach Gymtavo-Katalog Etappe 4.`
-- [ ] **Step 3: Commit**
+- [x] **Step 1: Volles Testset** (Global Constraints) und Ergebnis notieren; umgebungsbedingte Fehler gesondert benennen.
+- [x] **Step 2: Spec-Status** je abgeschlossener Etappe ergänzen, z. B. `**Umgesetzt:** E1 (PR #…), E2 (PR #…), E3 (PR #…). E4/E5: eigener Plan nach Gymtavo-Katalog Etappe 4.`
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/superpowers
