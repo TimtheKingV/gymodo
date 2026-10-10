@@ -21,7 +21,11 @@ alter table public.workout_sets
   add column rep_events jsonb,
   -- Die einfache Konsistenz prueft die Datenbank selbst; was die Uebung
   -- wissen muss (nur bei volume_kind 'reps'), prueft recordSet.
+  -- "is not null" steht ausdruecklich da: ein CHECK laesst NULL durch, und
+  -- "NULL = volume" bzw. "NULL <> volume" ist NULL, nicht false.
   add constraint workout_sets_herkunft_consistent check (
     (volume_source = 'eingegeben' and volume_counted is null and rep_events is null)
-    or (volume_source = 'gemessen' and volume_counted = volume and rep_events is not null)
-    or (volume_source = 'korrigiert' and volume_counted <> volume and rep_events is not null));
+    or (volume_source = 'gemessen' and volume_counted is not null
+        and volume_counted = volume and rep_events is not null)
+    or (volume_source = 'korrigiert' and volume_counted is not null
+        and volume_counted <> volume and rep_events is not null));

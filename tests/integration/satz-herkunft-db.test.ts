@@ -72,6 +72,11 @@ describe("workout_sets: Herkunft", () => {
     ["korrigiert mit gleichem Stand", { volume_source: "korrigiert", volume_counted: 10, rep_events: ereignisse }],
     ["unbekannte Herkunft", { volume_source: "geschaetzt" }],
     ["Zaehlerstand null Wiederholungen", { volume_source: "korrigiert", volume_counted: 0, rep_events: ereignisse }],
+    ["gemessen mit Ereignissen ohne Zaehlerstand", { volume_source: "gemessen", rep_events: ereignisse }],
+    ["korrigiert mit Ereignissen ohne Zaehlerstand", { volume_source: "korrigiert", rep_events: ereignisse }],
+    ["korrigiert mit Zaehlerstand ohne Ereignisse", { volume_source: "korrigiert", volume_counted: 9 }],
+    ["eingegeben mit Ereignissen ohne Zaehlerstand", { volume_source: "eingegeben", rep_events: ereignisse }],
+    ["Zaehlerstand ueber der Grenze", { volume_source: "korrigiert", volume_counted: 1001, rep_events: ereignisse }],
   ])("weist ab: %s", async (_name, felder) => {
     const { error } = await einfuegen(felder);
     expect(error?.code).toBe("23514");
