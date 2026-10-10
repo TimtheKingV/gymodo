@@ -1269,3 +1269,23 @@ git commit -m "docs(plan): Etappe A der Geraeteeinrichtung umgesetzt"
 ```
 
 Nicht pushen. Tim entscheidet über Push, PR und Merge.
+
+## Ergebnis
+
+- Umgesetzt: Tasks 1–6, Commits `c98d836`..`656bfc6` (sieben `feat`, drei `fix`).
+- Abweichungen vom Plan:
+  - `zahl()` aus `getStudioCatalog` auf Modulebene gehoben statt eines neuen `zahlOderNull` – ein Helfer für beide Leser.
+  - `ModellVorlageFelder` reicht `kategorie` und `start` nur gesetzt weiter (`exactOptionalPropertyTypes`); fiel erst beim Typecheck in Task 5 auf, eigener Fix-Commit.
+  - Halle: Der Knopf sperrt zusätzlich bei einem Dateifehler, auch wenn kein Foto nötig wäre.
+  - Aus dem Review des ganzen Branches zwei Korrekturen:
+    1. Krummer Startschritt (1 kg vom Typ) rastet jetzt vor der Berechnung von Minimum und Maximum auf 1,25 ein (`einrasten` in `einstellungVorschlaege.ts`). Vorher wäre `loadMin = 1` und ein Maximum im 1-kg-Takt gespeichert worden. Behebt dasselbe beim Bearbeiten krummer Bestandsmodelle.
+    2. Scheitert in der Halle das eigene Foto, kopiert die Action die Typvorlage trotzdem.
+- Tests:
+  - `pnpm typecheck` grün; `pnpm test` 274 + 293 grün.
+  - `pnpm test:integration` 768/771: rot nur die drei bekannten `completeSession`-Fälle (`workout_sessions_completed_after_start`, auch auf master rot, Uhr geprüft, Branch fasst den Sitzungscode nicht an).
+  - `pnpm test:e2e` gegen Produktionsbau 129/130: rot nur `rail.spec.ts:128` (Akzentfläche der Geräteseite). Prüfung läuft direkt nach `goto` vor dem gestreamten Inhalt; mit 3 s Wartezeit grün; Seite vom Branch unberührt. Gegen den Dev-Server war der Lauf wegen HMR und paralleler Worker nicht aussagekräftig.
+  - Während Task 6 hing die Colima-VM (`docker.sock` fehlte); nach Neustart liefen die Tests grün.
+- Sichtprobe mit lokal importiertem Katalog: Schreibtisch „Brustpresse“ (Name, 1,25 kg, ∞, Hinweis), Einstellungen „Sitzhöhe“ und „Startposition“ kopiert, Zeichnung als Modellfoto; Halle „Beinstreckermaschine“ ohne eigenes Foto anlegbar.
+- Aufgefallen, vorbestehend und nicht Teil dieser Etappe: Die Kopfzeile des Modells zeigt 1,25 kg als „1,3 kg“; die Katalog-Einstellungen haben keine Grenzen („? bis ?“).
+- Zurückgestellt (Minor aus dem Review): `typHatFoto` lädt die ganze Typliste; React-19-Reset leert nach Serverfehler nur das Herstellerfeld; `copyTypeDefaults` bei gleichzeitigen Aufrufen nicht atomar.
+- Offen für Etappe B: Plan schreiben (Spec Abschnitt 6).
