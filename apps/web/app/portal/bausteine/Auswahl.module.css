@@ -78,3 +78,18 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* Suchfeld oben im Panel (Prop `suche`). Derselbe Kasten wie das Eingabefeld,
+   nur ohne eigenen Rand nach aussen -- es gehoert zum Panel. */
+.suche {
+  composes: input from "../portal.module.css";
+  display: block;
+  width: calc(100% - 2 * var(--s8));
+  margin: var(--s8);
+  font: inherit;
+}
+
+.leer {
+  padding: var(--s12) var(--s16);
+  color: var(--text-faint);
+}

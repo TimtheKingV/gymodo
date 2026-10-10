@@ -1,3 +1,5 @@
+import { listCatalogTypes } from "@fitretro/domain";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { exemplarAnlegen, modellAnlegen } from "../../../../actions";
 import { ladeKatalog, railZahlen } from "../../../catalog";
 import { Seite } from "../../../../bausteine/Seite";
@@ -155,6 +157,7 @@ export default async function GeraetNeuPage({
       </div>
       <section className={styles.section}>
         <ModellAnlegenFormular
+          typen={await listCatalogTypes(await createServerSupabaseClient())}
           action={modellAnlegen.bind(null, studioId)}
           kategorie={kategorie === "cardio" ? "cardio" : "kraft"}
         />

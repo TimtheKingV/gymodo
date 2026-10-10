@@ -20,6 +20,11 @@ export type AuswahlOption = { wert: string; anzeige: string };
  * Wert ins umgebende <form> (gleiches Muster wie beim Rad,
  * EinstellungRad.tsx), ohne `name` bleibt die Auswahl reiner Client-Zustand
  * (z. B. LeuteActions.tsx, TagBinden.tsx -- kein <form>, ein Knopf danach).
+ *
+ * Mit `suche` steht oben im Panel ein Suchfeld -- fuer lange Listen wie die
+ * Gymtavo-Typen (Nachtrag 10.1), in denen Pfeiltasten allein zu langsam
+ * sind. Der Fokus wandert beim Oeffnen dorthin; Pfeile und Enter wirken
+ * dort wie am Knopf.
  */
 export function Auswahl({
   id,
@@ -30,6 +35,7 @@ export function Auswahl({
   platzhalter,
   gross = false,
   ariaLabel,
+  suche,
 }: {
   id?: string;
   name?: string;
@@ -39,16 +45,24 @@ export function Auswahl({
   platzhalter?: string;
   gross?: boolean;
   ariaLabel?: string;
+  /** Beschriftung des Suchfelds; ohne sie keine Suche. */
+  suche?: string;
 }) {
   const [offen, setOffen] = useState(false);
   const [hervorgehoben, setHervorgehoben] = useState(0);
   const wurzel = useRef<HTMLDivElement>(null);
   const knopf = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
+  const suchfeld = useRef<HTMLInputElement>(null);
+  const [text, setText] = useState("");
   const generierteId = useId();
   const knopfId = id ?? generierteId;
 
   const gewaehlt = optionen.find((option) => option.wert === value);
+  const gesucht = text.trim().toLocaleLowerCase("de");
+  const sichtbar = suche
+    ? optionen.filter((option) => option.anzeige.toLocaleLowerCase("de").includes(gesucht))
+    : optionen;
 
   // Klick ausserhalb schliesst -- ein Klick auf eine Zeile bleibt innerhalb
   // von `wurzel` und schliesst hier nicht, das erledigt waehlen() selbst.
@@ -69,21 +83,26 @@ export function Auswahl({
     zeile?.scrollIntoView({ block: "nearest" });
   }, [offen, hervorgehoben]);
 
+  useEffect(() => {
+    if (offen && suche) suchfeld.current?.focus();
+  }, [offen, suche]);
+
   function oeffnen() {
+    setText("");
     const index = optionen.findIndex((option) => option.wert === value);
     setHervorgehoben(index === -1 ? 0 : index);
     setOffen(true);
   }
 
   function waehlen(index: number) {
-    const option = optionen[index];
+    const option = sichtbar[index];
     if (!option) return;
     onChange(option.wert);
     setOffen(false);
     knopf.current?.focus();
   }
 
-  function aufTaste(ereignis: React.KeyboardEvent<HTMLButtonElement>) {
+  function aufTaste(ereignis: React.KeyboardEvent<HTMLElement>) {
     if (!offen) {
       if (["ArrowDown", "ArrowUp", "Enter", " "].includes(ereignis.key)) {
         ereignis.preventDefault();
@@ -96,7 +115,7 @@ export function Auswahl({
       setOffen(false);
     } else if (ereignis.key === "ArrowDown") {
       ereignis.preventDefault();
-      setHervorgehoben((index) => Math.min(optionen.length - 1, index + 1));
+      setHervorgehoben((index) => Math.min(sichtbar.length - 1, index + 1));
     } else if (ereignis.key === "ArrowUp") {
       ereignis.preventDefault();
       setHervorgehoben((index) => Math.max(0, index - 1));
@@ -139,26 +158,44 @@ export function Auswahl({
       </button>
       {name ? <input type="hidden" name={name} value={value} /> : null}
       {offen ? (
-        <div className={styles.panel} ref={panel} role="listbox" aria-label={ariaLabel}>
-          {optionen.map((option, index) => (
-            <div
-              key={option.wert}
-              role="option"
-              aria-selected={option.wert === value}
-              data-hervorgehoben={index === hervorgehoben}
-              className={
-                option.wert === value
-                  ? styles.zeileAktiv
-                  : index === hervorgehoben
-                    ? styles.zeileHervorgehoben
-                    : styles.zeile
-              }
-              onMouseEnter={() => setHervorgehoben(index)}
-              onClick={() => waehlen(index)}
-            >
-              {option.anzeige}
-            </div>
-          ))}
+        <div className={styles.panel} ref={panel}>
+          {suche ? (
+            <input
+              ref={suchfeld}
+              type="search"
+              className={styles.suche}
+              aria-label={suche}
+              placeholder={suche}
+              value={text}
+              onChange={(ereignis) => {
+                setText(ereignis.target.value);
+                setHervorgehoben(0);
+              }}
+              onKeyDown={aufTaste}
+            />
+          ) : null}
+          {sichtbar.length === 0 ? <div className={styles.leer}>Kein Treffer.</div> : null}
+          <div role="listbox" aria-label={ariaLabel}>
+            {sichtbar.map((option, index) => (
+              <div
+                key={option.wert}
+                role="option"
+                aria-selected={option.wert === value}
+                data-hervorgehoben={index === hervorgehoben}
+                className={
+                  option.wert === value
+                    ? styles.zeileAktiv
+                    : index === hervorgehoben
+                      ? styles.zeileHervorgehoben
+                      : styles.zeile
+                }
+                onMouseEnter={() => setHervorgehoben(index)}
+                onClick={() => waehlen(index)}
+              >
+                {option.anzeige}
+              </div>
+            ))}
+          </div>
         </div>
       ) : null}
     </div>

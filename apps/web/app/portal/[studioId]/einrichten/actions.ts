@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import {
   DomainError,
   attachExerciseToModel,
+  catalogTypeRequired,
   createEquipmentModel,
   createExercise,
   createMachine,
@@ -16,6 +17,7 @@ import {
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { belastungAusFormular, umfangAusFormular } from "../../formfelder";
+import { typAusFormular } from "../../gymtavoTyp";
 import type { Befund } from "./befund";
 
 /**
@@ -89,6 +91,8 @@ export async function modellAnlegen(
 
   let modelId: string;
   try {
+    const typ = typAusFormular(formData, await catalogTypeRequired(client, studioId));
+    if (!typ.ok) return typ;
     const modell = await createEquipmentModel(client, {
       studioId,
       name: text(formData, "name"),
@@ -96,6 +100,7 @@ export async function modellAnlegen(
       ...belastungAusFormular(formData),
       loadStep: zahl(formData, "loadStep") ?? Number.NaN,
       loadMin: zahl(formData, "loadMin") ?? 0,
+      catalogModelId: typ.catalogModelId,
     });
     modelId = modell.id;
   } catch (fehler) {

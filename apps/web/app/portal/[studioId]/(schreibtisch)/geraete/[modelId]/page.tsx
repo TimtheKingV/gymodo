@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import { listCatalogTypes } from "@fitretro/domain";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { fotoHochladen, modellAendern, type ActionResult } from "../../../../actions";
 import { ladeKatalog } from "../../../catalog";
 import { StammdatenFormular } from "./StammdatenFormular";
@@ -47,6 +49,9 @@ export default async function ModellStammdatenPage({
   if (!modell) notFound();
 
   const fotoUrl = modell.photoPath ? katalog.photoUrls[modell.photoPath] : undefined;
+  const typen = katalog.isCatalog
+    ? []
+    : await listCatalogTypes(await createServerSupabaseClient());
 
   return (
     <section className={styles.section}>
@@ -54,6 +59,7 @@ export default async function ModellStammdatenPage({
         action={stammdatenUndFotoSpeichern.bind(null, studioId, modelId)}
         modell={modell}
         fotoUrl={fotoUrl}
+        typen={typen}
       />
     </section>
   );

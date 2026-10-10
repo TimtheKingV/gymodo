@@ -1,7 +1,9 @@
 "use client";
 
+import type { CatalogType } from "@fitretro/domain";
 import type { Category } from "@fitretro/domain/belastung";
 import { AktionsFormular, Feld } from "../../../Form";
+import { GymtavoTypFeld } from "../../../bausteine/GymtavoTypFeld";
 import { ModellBelastungRad } from "../../../bausteine/ModellBelastungRad";
 import type { ActionResult } from "../../../actions";
 import styles from "../../../portal.module.css";
@@ -23,9 +25,11 @@ import styles from "../../../portal.module.css";
 export function ModellAnlegenFormular({
   action,
   kategorie,
+  typen,
 }: {
   action: (prev: unknown, formData: FormData) => Promise<ActionResult>;
   kategorie: Category;
+  typen: Pick<CatalogType, "id" | "name" | "manufacturer">[];
 }) {
   return (
     <AktionsFormular action={action} submitLabel="Weiter">
@@ -33,6 +37,7 @@ export function ModellAnlegenFormular({
         <Feld name="name" label="Name" required placeholder="Latzug" />
         <Feld name="manufacturer" label="Hersteller" placeholder="Technogym" />
       </div>
+      <GymtavoTypFeld typen={typen} start={null} />
       <ModellBelastungRad kategorie={kategorie} />
     </AktionsFormular>
   );
