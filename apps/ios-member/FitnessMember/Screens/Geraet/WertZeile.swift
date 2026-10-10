@@ -122,8 +122,8 @@ struct WertZeile: View {
     /// -- die Belastung ist der Held der Zeile, der Umfang der zweite Wert.
     /// `RastRad.basisGroesse` traegt genau diesen Unterschied.
     ///
-    /// Die App misst nichts: auch Minuten und Meter liest das Mitglied von
-    /// der Anzeige des Geraets ab und stellt sie hier ein, wie das Gewicht
+    /// Minuten und Meter liest das Mitglied von der Anzeige des Geraets ab --
+    /// der Sensor zaehlt nur Wiederholungen -- und stellt sie hier ein, wie das Gewicht
     /// vom Stapel (Cardio-Spec Abschnitt 10, kein laufender Timer).
     private var umfangsrad: some View {
         let art = modell.volumeKind

@@ -41,6 +41,7 @@
 		1B9CF10D96ED6BE26D2D7742 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8D54275FD3C78205F883D9A0 /* PrivacyInfo.xcprivacy */; };
 		1C4527A7D5538B33563C6EC6 /* OnboardingAntworten.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9CDE09BB8F4123D3068E9D2 /* OnboardingAntworten.swift */; };
 		1CD0DCB2169CA69666C725FB /* GeraeteFotos.swift in Sources */ = {isa = PBXBuildFile; fileRef = 036DE820A26503345FF14BB0 /* GeraeteFotos.swift */; };
+		1D105998DF063382F4D4E09F /* ProduktgrenzeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F69C1C60CEF87C380D77222 /* ProduktgrenzeTests.swift */; };
 		1D2F4741B76193A412B5B0D8 /* Herkunftssatz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E67B77D484B574613C4314E /* Herkunftssatz.swift */; };
 		1EA236B8D47811FA647721C5 /* TrainingStartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 024E875EF3390D4641B65EDC /* TrainingStartView.swift */; };
 		206D113D8EEB2FF4D9BF05EB /* CatalogLoadState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C759C755CAAFA0F5ED7616 /* CatalogLoadState.swift */; };
@@ -270,6 +271,7 @@
 		E82A9E515726BBBF77B45AD2 /* BelastungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D659FEA5E712905994628D /* BelastungTests.swift */; };
 		E92FD5B9D61DEFE8156875D4 /* WitMotionBefehl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43AA2A6148C449A1B7D3102D /* WitMotionBefehl.swift */; };
 		E9F322710ED44F9FC30002B2 /* WorkoutSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C040CEC32DA51B93411E58C /* WorkoutSessionStoreTests.swift */; };
+		E9F883B378238A0C91352496 /* Produktgrenze.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AB1501004104FEAA91F19C1 /* Produktgrenze.swift */; };
 		EA568214BF5138F1363FB6D5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5B68C408348334AEBF697CDB /* Assets.xcassets */; };
 		EC0E21421C05D51C3F32E51D /* UebungWechselnSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FFF2CD62E84CDAE426125B5 /* UebungWechselnSheet.swift */; };
 		EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */; };
@@ -412,6 +414,7 @@
 		4C040CEC32DA51B93411E58C /* WorkoutSessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionStoreTests.swift; sourceTree = "<group>"; };
 		4C4E8B114BF9C48A1CD5DED0 /* Einstellungen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Einstellungen.swift; sourceTree = "<group>"; };
 		4CA9131802B15B415EE3362E /* KurseMeineEinteilungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseMeineEinteilungTests.swift; sourceTree = "<group>"; };
+		4F69C1C60CEF87C380D77222 /* ProduktgrenzeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProduktgrenzeTests.swift; sourceTree = "<group>"; };
 		4F772BB738D5F003DF895A42 /* HomeSerie.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeSerie.swift; sourceTree = "<group>"; };
 		4FE347CE02DFBA2ACD65350E /* GeraetModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetModel.swift; sourceTree = "<group>"; };
 		5154B94D2372BF17FF532E86 /* AccessibilityBaum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityBaum.swift; sourceTree = "<group>"; };
@@ -472,6 +475,7 @@
 		8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trainingszusammenfassung.swift; sourceTree = "<group>"; };
 		8986332EF5EB9BFBAD49056F /* TestnotizMarkdownTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizMarkdownTests.swift; sourceTree = "<group>"; };
 		8A0756570D91BAD9173DC82B /* TagContextResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagContextResponse.swift; sourceTree = "<group>"; };
+		8AB1501004104FEAA91F19C1 /* Produktgrenze.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Produktgrenze.swift; sourceTree = "<group>"; };
 		8D54275FD3C78205F883D9A0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		8D8E52BC8202E83D789FC2E5 /* DangerOutlineButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DangerOutlineButton.swift; sourceTree = "<group>"; };
 		8DC8A9787A915F4A7919CC1A /* KurseAbmeldefrage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseAbmeldefrage.swift; sourceTree = "<group>"; };
@@ -764,6 +768,7 @@
 				45FB518781BA996FB7400814 /* Color+Hex.swift */,
 				33E48EE365B2AEEBD3FCBC2E /* DesignSystem.swift */,
 				369CA01D0038C159ABDB374A /* Navigationsleiste.swift */,
+				8AB1501004104FEAA91F19C1 /* Produktgrenze.swift */,
 				00B25E595924E3D70A9F8C8F /* Zahlformat.swift */,
 				413B8EEC7637B74CCF75A59E /* Components */,
 			);
@@ -901,6 +906,7 @@
 				3083F4ABC58427C5FDB7D835 /* PendingTagStoreTests.swift */,
 				E07C7F4A13CB277BC11B8D77 /* PendingWriteStoreTests.swift */,
 				D88102EAEB9BC8D4E6FA9BC7 /* PfadbereinigungTests.swift */,
+				4F69C1C60CEF87C380D77222 /* ProduktgrenzeTests.swift */,
 				28729494126B3B466AEDB7C4 /* ProfilZeilenTests.swift */,
 				94AAB4EF55CE7557296B1A97 /* RastRadTests.swift */,
 				26B1A62413AE0C5835F9E9CA /* RastwerteTests.swift */,
@@ -1348,6 +1354,7 @@
 				05C4AB096D32DA3E6C4E62D7 /* PressButtonStyle.swift in Sources */,
 				309307436B8EE156A6673AA2 /* PrimaryButton.swift in Sources */,
 				4BE7020FEE8B695A9FDD3A75 /* ProblemSheet.swift in Sources */,
+				E9F883B378238A0C91352496 /* Produktgrenze.swift in Sources */,
 				EF061CDAF1B6712C17872C0A /* ProfilRootView.swift in Sources */,
 				252B2A2CF5B923A6E4C79DD0 /* ProfilWrite.swift in Sources */,
 				D4DC4C517F6EFFA9972C6864 /* ProfilZeilen.swift in Sources */,
@@ -1482,6 +1489,7 @@
 				382451921E71AB26611C0BA0 /* PendingTagStoreTests.swift in Sources */,
 				F1E9DFA75153BCFFEF5FDD62 /* PendingWriteStoreTests.swift in Sources */,
 				FA54FBB2AC37F7A7EA5FCA74 /* PfadbereinigungTests.swift in Sources */,
+				1D105998DF063382F4D4E09F /* ProduktgrenzeTests.swift in Sources */,
 				635B651CF96DE3A5916EB956 /* ProfilZeilenTests.swift in Sources */,
 				623391FEE484E105F85E2BFB /* RastRadTests.swift in Sources */,
 				AD152D48FC554F180FA72F58 /* RastwerteTests.swift in Sources */,
@@ -1545,7 +1553,7 @@
 				INFOPLIST_FILE = "FitnessMember/Info-Additions-Debug.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Gymtavo;
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Gymtavo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Gymtavo verbindet sich mit deinem Bewegungssensor, um Wiederholungen zu erfassen.";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Gymtavo verbindet sich mit deinem Bewegungssensor, um deine Wiederholungen zu zählen.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1656,7 +1664,7 @@
 				INFOPLIST_FILE = "FitnessMember/Info-Additions.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Gymtavo;
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Gymtavo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Gymtavo verbindet sich mit deinem Bewegungssensor, um Wiederholungen zu erfassen.";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Gymtavo verbindet sich mit deinem Bewegungssensor, um deine Wiederholungen zu zählen.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
