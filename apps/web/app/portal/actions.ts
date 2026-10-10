@@ -304,6 +304,22 @@ export async function uebungLoesen(
   }, "layout");
 }
 
+/**
+ * Gymtavo-Uebung per Verweis ans Modell (Spec 5.3). Zwei Wege fuehren
+ * hierher: "Gymtavo-Übung anhängen" fuer Uebungen anderer Typen und
+ * "Eigenes Video ergänzen" an einer Typ-Uebung -- das Video braucht die
+ * Verknuepfung, an der es haengt und durch die es dem Studio gehoert.
+ */
+export async function gymtavoUebungVerknuepfen(
+  studioId: string,
+  modelId: string,
+  exerciseId: string,
+): Promise<ActionResult> {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
+    await attachExerciseToModel(client, { equipmentModelId: modelId, exerciseId });
+  }, "layout");
+}
+
 export async function uebungVerschieben(
   studioId: string,
   modelId: string,

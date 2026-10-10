@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ladeKatalog, ladeTypen } from "../../../catalog";
 import { gymtavoKontext, offenePunkte } from "../../../offen";
+import { eigeneUebungen, gymtavoZeilen } from "./uebungen/gymtavo";
 import { Modellbild } from "../../../../bausteine/Modellbild";
 import { NochZuTun } from "../../../../bausteine/NochZuTun";
 import { ModellRahmen } from "./ModellRahmen";
@@ -31,10 +32,16 @@ export default async function ModellLayout({
   const modell = katalog.models.find((eintrag) => eintrag.id === modelId);
   if (!modell) notFound();
 
-  const mitVideo = modell.exercises.filter((uebung) => uebung.hasVideo).length;
   const ohneTag = modell.machines.filter((geraet) => geraet.activeTagCount === 0).length;
   const fotoUrl = modell.photoPath ? katalog.photoUrls[modell.photoPath] : undefined;
   const typen = katalog.isCatalog ? [] : await ladeTypen();
+  // Der Reiter zaehlt, was am Geraet steht: eigene und Gymtavo-Uebungen.
+  const eigen = katalog.isCatalog ? modell.exercises : eigeneUebungen(modell.exercises);
+  const gymtavo = katalog.isCatalog ? [] : gymtavoZeilen(modell, typen);
+  const uebungenAnzahl = eigen.length + gymtavo.length;
+  const mitVideo =
+    eigen.filter((uebung) => uebung.hasVideo).length +
+    gymtavo.filter((zeile) => zeile.eigenesVideo || zeile.katalogVideo).length;
   const punkte = offenePunkte(
     studioId,
     modell,
@@ -79,10 +86,10 @@ export default async function ModellLayout({
         studioId={studioId}
         modelId={modelId}
         einstellungenZusatz={`${modell.settingDefinitions.length} Einstellungen`}
-        uebungenZusatz={`${modell.exercises.length} · ${mitVideo} mit Video`}
+        uebungenZusatz={`${uebungenAnzahl} · ${mitVideo} mit Video`}
         instanzenZusatz={`${modell.machines.length} · ${ohneTag} ohne Tag`}
         einstellungenAnzahl={modell.settingDefinitions.length}
-        uebungenAnzahl={modell.exercises.length}
+        uebungenAnzahl={uebungenAnzahl}
         nochZuTun={<NochZuTun punkte={punkte} />}
       >
         {children}
