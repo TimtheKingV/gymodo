@@ -28,7 +28,12 @@ public struct Zaehler: Sendable {
     private var puffer: [SensorMesswert] = []
     private var bewegtSeit: TimeInterval?
     private var geschwindigkeit = 0.0
-    private var gefiltert = 0.0
+    private var gefiltert: Double?
+    /// Ruhewert des gefilterten Signals vor der ersten Wiederholung. Ein
+    /// Gleichanteil (Drehraten-Bias, Rest-Schraeglage in der Geschwindigkeit)
+    /// laege sonst dauerhaft ausserhalb des Bands um null, und der Beginn der
+    /// ersten Wiederholung rutschte in den Ruhevorlauf (Spec B 5.3).
+    private var grundlinie: Double?
 
     // Halbwellen
     private var zustand: Halbwelle = .wartet
@@ -97,8 +102,7 @@ public struct Zaehler: Sendable {
     /// Puffer nachspielen, damit die erste Wiederholung nicht verloren geht.
     private mutating func achseSuchen(_ m: SensorMesswert) -> [ZaehlerEreignis] {
         puffer.append(m)
-        let bewegt = Self.betrag(m.drehrate) > 3 * profil.ruheDrehrate
-        if bewegtSeit == nil, bewegt { bewegtSeit = m.t }
+        if bewegtSeit == nil, bewegt(m) { bewegtSeit = m.t }
         guard let seit = bewegtSeit else {
             // Ruhevorlauf: nur die letzte Sekunde behalten.
             puffer.removeAll { m.t - $0.t > 1 }
@@ -106,6 +110,16 @@ public struct Zaehler: Sendable {
         }
         guard m.t - seit >= profil.achsenFenster else { return [] }
         let bewegung = puffer.filter { $0.t >= seit }
+        // Die Achse erst festlegen, wenn die Bewegung angehalten hat: ein
+        // kurzer Stoss im Vorlauf (Hantel angestossen) wuerde sonst eine
+        // falsche Achse fuer den ganzen Satz waehlen, und der Satz bliebe
+        // stumm bei 0. Mehrheit statt "alle", weil eine Wiederholung um die
+        // Umkehr herum kurz unter die Bewegungsschwelle faellt.
+        guard bewegung.filter(bewegt).count * 2 > bewegung.count else {
+            bewegtSeit = bewegt(m) ? m.t : nil
+            puffer.removeAll { m.t - $0.t > 1 }
+            return []
+        }
         func streuung(_ wert: (SensorMesswert) -> Double) -> Double {
             let werte = bewegung.map(wert)
             let mittel = werte.reduce(0, +) / Double(werte.count)
@@ -118,6 +132,10 @@ public struct Zaehler: Sendable {
         var ereignisse: [ZaehlerEreignis] = []
         for alt in nachspielen { ereignisse += schritt(alt) }
         return ereignisse
+    }
+
+    private func bewegt(_ m: SensorMesswert) -> Bool {
+        Self.betrag(m.drehrate) > 3 * profil.ruheDrehrate
     }
 
     private mutating func rohsignal(_ m: SensorMesswert) -> Double {
@@ -141,8 +159,21 @@ public struct Zaehler: Sendable {
     // MARK: - Halbwellen
 
     private mutating func schritt(_ m: SensorMesswert) -> [ZaehlerEreignis] {
-        gefiltert += alpha * (rohsignal(m) - gefiltert)
-        let s = gefiltert
+        let roh = rohsignal(m)
+        // Mit dem ersten Wert starten statt mit 0, damit ein Gleichanteil
+        // kein Einschwingen erzeugt, das wie Bewegung aussieht.
+        let f = (gefiltert ?? roh) + alpha * (roh - (gefiltert ?? roh))
+        gefiltert = f
+        let basis = grundlinie ?? f
+        if case .wartet = zustand, wiederholungen.isEmpty, ruhig(m) {
+            // Zeitkonstante rund 0,5 s: folgt dem Ruhewert, ohne dass die
+            // kurzen ruhigen Momente zu Bewegungsbeginn ihn verschieben.
+            let k = dt / (0.5 + dt)
+            grundlinie = basis + k * (f - basis)
+        } else {
+            grundlinie = basis
+        }
+        let s = f - (grundlinie ?? f)
         // "Nulldurchgang" ist der letzte Moment nahe null: ein echter
         // Vorzeichenwechsel oder ein Wert im Band um null. Ohne das Band
         // bliebe er in reiner Ruhe (s exakt 0) beim ersten Messwert stehen,
@@ -156,7 +187,11 @@ public struct Zaehler: Sendable {
             guard abs(s) > schwelle else { return [] }
             let richtung: Double = s > 0 ? 1 : -1
             if vorzeichen == nil { vorzeichen = richtung }
-            // Eine Gegenbewegung vor dem ersten Hinweg (z. B. Ausholen) zaehlt nicht.
+            // Die erste Halbwelle ueber der Schwelle legt die Richtung fest,
+            // auch wenn sie ein Ausholen ist. Danach zaehlen nur Halbwellen in
+            // dieser Richtung als Hinweg. Grenze: holt der Sportler weit
+            // genug aus, gilt das Ausholen als Hinweg und die Phasen der
+            // Wiederholungen sind vertauscht.
             guard richtung == vorzeichen else { return [] }
             zustand = .erste(beginn: nulldurchgang ?? m.t, spitze: abs(s))
             return []

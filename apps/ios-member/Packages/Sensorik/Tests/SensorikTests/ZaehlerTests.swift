@@ -77,7 +77,7 @@ struct ZaehlerTests {
         #expect(ereignisse.contains(.unsicher(.signalSchwach)))
     }
 
-    @Test func eineViertZuLangsameWiederholungMachtUnsicher() {
+    @Test func eineVielZuLangsameWiederholungMachtUnsicher() {
         let werte = Synthetik.satz(signal: .drehrate,
                                    abschnitte: [A(perioden: 6), A(perioden: 1, periode: 7)])
         let ereignisse = Synthetik.zaehlen(werte, art: .langhantel)
@@ -110,5 +110,52 @@ struct ZaehlerTests {
         #expect(ZaehlerProfil.fuer(.langhantel).algo == "langhantel/1")
         #expect(ZaehlerProfil.fuer(.stapel).signal == .geschwindigkeitVertikal)
         #expect(ZaehlerProfil.fuer(.kurzhantel).signal == .drehrate)
+    }
+
+    /// Spec B 5.3 "Achse der ersten Bewegung": ein kurzer Stoss um eine
+    /// andere Achse im Ruhevorlauf darf die Achse nicht festlegen.
+    @Test func einKurzerStossImVorlaufAendertDieZahlNicht() {
+        let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 10)]).map { m in
+            guard m.t >= 1, m.t < 1.1 else { return m }
+            return SensorMesswert(t: m.t, beschleunigung: m.beschleunigung,
+                                  drehrate: Vektor3(x: 100, y: m.drehrate.y, z: m.drehrate.z), winkel: m.winkel)
+        }
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .langhantel)) == 10)
+    }
+
+    private static func ersteWiederholung(_ ereignisse: [ZaehlerEreignis]) -> Wiederholung? {
+        for e in ereignisse { if case .wiederholung(let w) = e { return w } }
+        return nil
+    }
+
+    /// Spec B 5.3 "der Ruhevorlauf zaehlt nie": ein Gleichanteil der
+    /// Drehrate (Sensor-Bias) darf den Beginn nicht in den Vorlauf ziehen.
+    @Test func einDrehratenBiasZiehtDenBeginnNichtInDenVorlauf() throws {
+        let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 10)]).map { m in
+            SensorMesswert(t: m.t, beschleunigung: m.beschleunigung,
+                           drehrate: Vektor3(x: m.drehrate.x, y: m.drehrate.y + 5, z: m.drehrate.z), winkel: m.winkel)
+        }
+        let ereignisse = Synthetik.zaehlen(werte, art: .langhantel)
+        #expect(Synthetik.anzahl(ereignisse) == 10)
+        let erste = try #require(Self.ersteWiederholung(ereignisse))
+        #expect(abs(erste.beginn - 3) <= 0.3)
+    }
+
+    /// Wie oben fuer das Geschwindigkeitssignal: ein kleiner konstanter
+    /// Versatz der Beschleunigung, der erst bei 1 s einsetzt (Sensor nach dem
+    /// Greifen leicht verkippt). Die Schwerkraftschaetzung holt ihn bis zum
+    /// Satzbeginn nur teilweise ein; der Rest wird zu einem Gleichanteil der
+    /// Geschwindigkeit. Ab Aufnahmebeginn waere er schon in der Schaetzung.
+    @Test func einBeschleunigungsVersatzZiehtDenBeginnNichtInDenVorlauf() throws {
+        let werte = Synthetik.satz(signal: .geschwindigkeitVertikal, abschnitte: [A(perioden: 10)]).map { m in
+            guard m.t >= 1 else { return m }
+            return SensorMesswert(t: m.t, beschleunigung: Vektor3(x: m.beschleunigung.x, y: m.beschleunigung.y,
+                                                                  z: m.beschleunigung.z + 0.015),
+                                  drehrate: m.drehrate, winkel: m.winkel)
+        }
+        let ereignisse = Synthetik.zaehlen(werte, art: .stapel)
+        #expect(Synthetik.anzahl(ereignisse) == 10)
+        let erste = try #require(Self.ersteWiederholung(ereignisse))
+        #expect(abs(erste.beginn - 3) <= 0.3)
     }
 }
