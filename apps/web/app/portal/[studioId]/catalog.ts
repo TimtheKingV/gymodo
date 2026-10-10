@@ -6,8 +6,10 @@ import {
   MEDIA_URL_TTL_SECONDS,
   getStudioCatalog,
   istAuthAusfall,
+  listCatalogTypes,
   listStudioMembers,
   signMediaUrls,
+  type CatalogType,
   type StudioCatalog,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -70,6 +72,15 @@ export const ladeKatalog = cache(async (studioId: string): Promise<PortalCatalog
   );
 
   return { ...katalog, photoUrls: Object.fromEntries(signiert) };
+});
+
+/**
+ * Die Gymtavo-Typen, je Anfrage einmal -- Layout und Reiter eines Modells
+ * brauchen sie beide (Nachtrag 10.1). Nicht in ladeKatalog: die meisten
+ * Portalseiten brauchen sie nicht.
+ */
+export const ladeTypen = cache(async (): Promise<CatalogType[]> => {
+  return listCatalogTypes(await createServerSupabaseClient());
 });
 
 /** Wie viele Geraete eines Modells fuer Mitglieder erreichbar sind. */

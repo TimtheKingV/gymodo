@@ -22,6 +22,28 @@ export type OffenerPunkt = {
   art: "blockiert" | "unvollstaendig";
 };
 
+export type GymtavoKontext = {
+  /** Das Gymtavo-Studio selbst: keine Geraete, keine Tags, keine Zuordnung. */
+  istKatalog: boolean;
+  /** Ob der Katalog Typen hat -- sonst gibt es nichts zuzuordnen. */
+  katalogHatTypen: boolean;
+  /** Uebungen des zugeordneten Typs; 0 ohne Zuordnung. */
+  typUebungen: number;
+};
+
+/** Der Kontext fuer ein Modell aus Studio-Katalog und Typliste. */
+export function gymtavoKontext(
+  istKatalog: boolean,
+  typen: { id: string; exercises: unknown[] }[],
+  catalogModelId: string | null,
+): GymtavoKontext {
+  return {
+    istKatalog,
+    katalogHatTypen: typen.length > 0,
+    typUebungen: typen.find((typ) => typ.id === catalogModelId)?.exercises.length ?? 0,
+  };
+}
+
 /**
  * Was an einem Modell noch fehlt, in der Reihenfolge, in der es
  * aufeinander aufbaut: ohne Foto kein Wiedererkennen, ohne Einstellung
@@ -33,10 +55,14 @@ export type OffenerPunkt = {
  * Modellliste und (spaeter) der Ueberblick. Die Halle zaehlt denselben
  * Mangel heute noch einmal selbst (einrichten/page.tsx, `mangel`) -- das
  * bleibt vorerst, weil sie ihn anders formuliert und anders sortiert.
+ *
+ * Der Gymtavo-Kontext ist optional, damit die reine Ableitung ohne Katalog
+ * pruefbar bleibt.
  */
 export function offenePunkte(
   studioId: string,
   modell: StudioCatalog["models"][number],
+  gymtavo?: GymtavoKontext,
 ): OffenerPunkt[] {
   const basis = `/portal/${studioId}/geraete/${modell.id}`;
   const punkte: OffenerPunkt[] = [];
@@ -62,7 +88,9 @@ export function offenePunkte(
     });
   }
 
-  if (modell.exercises.length === 0) {
+  // Ein Modell ohne eigene Uebung ist am Geraet benutzbar, wenn sein
+  // Gymtavo-Typ Uebungen mitbringt (Spec 6).
+  if (modell.exercises.length === 0 && (gymtavo?.typUebungen ?? 0) === 0) {
     punkte.push({
       titel: "Keine Übung",
       grund: "Der Geräte-Screen zeigt dann nur den Namen. Eine reicht zum Anfangen.",
@@ -75,7 +103,10 @@ export function offenePunkte(
   const aktive = modell.machines.filter((geraet) => geraet.status === "active");
   const ohneTag = aktive.filter((geraet) => geraet.activeTagCount === 0);
 
-  if (aktive.length === 0) {
+  // Der Katalog beschreibt Typen, keine Geraete im Raum (Spec 5.1).
+  const imRaum = !gymtavo?.istKatalog;
+
+  if (imRaum && aktive.length === 0) {
     punkte.push({
       titel: "Kein Gerät im Raum",
       grund: "Das Modell beschreibt einen Typ. Erst ein Gerät steht wirklich da.",
@@ -83,7 +114,7 @@ export function offenePunkte(
       label: "Gerät anlegen",
       art: "blockiert",
     });
-  } else if (ohneTag.length > 0) {
+  } else if (imRaum && ohneTag.length > 0) {
     punkte.push({
       titel:
         ohneTag.length === 1
@@ -101,7 +132,10 @@ export function offenePunkte(
     });
   }
 
-  const ohneVideo = modell.exercises.filter((uebung) => !uebung.hasVideo);
+  // Nur eigene: eine Gymtavo-Uebung zeigt am Geraet das Katalogvideo.
+  const ohneVideo = modell.exercises.filter(
+    (uebung) => !uebung.fromCatalog && !uebung.hasVideo,
+  );
   if (ohneVideo.length > 0) {
     punkte.push({
       titel:
@@ -111,6 +145,24 @@ export function offenePunkte(
       grund: "Nutzbar, nur ohne Anleitung.",
       href: `${basis}/uebungen`,
       label: "Video nachtragen",
+      art: "unvollstaendig",
+    });
+  }
+
+  // Zuletzt und nur "unvollstaendig": ohne Typ ist das Geraet voll nutzbar,
+  // nur ohne die Gymtavo-Uebungen (Nachtrag 10.1). Bei leerem Katalog gibt
+  // es nichts zuzuordnen, im Gymtavo-Studio ist das Modell selbst der Typ.
+  if (
+    gymtavo &&
+    !gymtavo.istKatalog &&
+    gymtavo.katalogHatTypen &&
+    modell.catalogModelId === null
+  ) {
+    punkte.push({
+      titel: "Kein Gymtavo-Typ",
+      grund: "Mitglieder sehen an diesem Gerät keine Gymtavo-Übungen.",
+      href: basis,
+      label: "Typ wählen",
       art: "unvollstaendig",
     });
   }

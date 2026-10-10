@@ -1,5 +1,4 @@
-import { listCatalogTypes } from "@fitretro/domain";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { ladeTypen } from "../../../catalog";
 import { Schrittleiste } from "../../../../bausteine/Schrittleiste";
 import { Seite } from "../../../../bausteine/Seite";
 import { ModellNeuFormular } from "./ModellNeuFormular";
@@ -11,7 +10,7 @@ export default async function ModellNeuPage({
   params: Promise<{ studioId: string }>;
 }) {
   const { studioId } = await params;
-  const typen = await listCatalogTypes(await createServerSupabaseClient());
+  const typen = await ladeTypen();
 
   return (
     <>

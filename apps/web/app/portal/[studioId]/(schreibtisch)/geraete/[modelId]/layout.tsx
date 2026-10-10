@@ -2,8 +2,8 @@ import { formatLoad } from "@fitretro/domain/belastung";
 import { EINHEIT_ANZEIGE, KATEGORIE_OPTIONEN } from "../../../../bausteine/einstellungVorschlaege";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ladeKatalog } from "../../../catalog";
-import { offenePunkte } from "../../../offen";
+import { ladeKatalog, ladeTypen } from "../../../catalog";
+import { gymtavoKontext, offenePunkte } from "../../../offen";
 import { Modellbild } from "../../../../bausteine/Modellbild";
 import { NochZuTun } from "../../../../bausteine/NochZuTun";
 import { ModellRahmen } from "./ModellRahmen";
@@ -34,7 +34,12 @@ export default async function ModellLayout({
   const mitVideo = modell.exercises.filter((uebung) => uebung.hasVideo).length;
   const ohneTag = modell.machines.filter((geraet) => geraet.activeTagCount === 0).length;
   const fotoUrl = modell.photoPath ? katalog.photoUrls[modell.photoPath] : undefined;
-  const punkte = offenePunkte(studioId, modell);
+  const typen = katalog.isCatalog ? [] : await ladeTypen();
+  const punkte = offenePunkte(
+    studioId,
+    modell,
+    gymtavoKontext(katalog.isCatalog, typen, modell.catalogModelId),
+  );
 
   return (
     <>

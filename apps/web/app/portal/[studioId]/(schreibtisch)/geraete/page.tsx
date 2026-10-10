@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { erreichbarkeit, ladeKatalog, railZahlen } from "../../catalog";
-import { offenePunkte } from "../../offen";
+import { erreichbarkeit, ladeKatalog, ladeTypen, railZahlen } from "../../catalog";
+import { gymtavoKontext, offenePunkte } from "../../offen";
 import { Seite } from "../../../bausteine/Seite";
 import { Abschnitt } from "../../../bausteine/Abschnitt";
 import { Zeile, Zeilen } from "../../../bausteine/Zeile";
@@ -31,7 +31,13 @@ export default async function GeraetePage({
 }) {
   const { studioId } = await params;
   const { kategorie } = await searchParams;
-  const [katalog, zahlen] = await Promise.all([ladeKatalog(studioId), railZahlen(studioId)]);
+  const [katalog, zahlen, alleTypen] = await Promise.all([
+    ladeKatalog(studioId),
+    railZahlen(studioId),
+    ladeTypen(),
+  ]);
+  // Im Gymtavo-Studio sind die Modelle selbst die Typen -- nichts zuzuordnen.
+  const typen = katalog.isCatalog ? [] : alleTypen;
 
   // Der Filter ist ein Anzeigefilter ueber equipment_models.category
   // (Cardio-Spec Abschnitt 3.5) -- ein unbekannter Wert heisst "Alle",
@@ -123,7 +129,11 @@ export default async function GeraetePage({
             {modelle.map((modell) => {
               const stand = erreichbarkeit(modell);
               const mitVideo = modell.exercises.filter((uebung) => uebung.hasVideo).length;
-              const offen = offenePunkte(studioId, modell);
+              const offen = offenePunkte(
+                studioId,
+                modell,
+                gymtavoKontext(katalog.isCatalog, typen, modell.catalogModelId),
+              );
 
               return (
                 <Zeile

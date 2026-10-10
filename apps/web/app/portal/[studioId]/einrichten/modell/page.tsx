@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ladeKatalog } from "../../catalog";
+import { ladeKatalog, ladeTypen } from "../../catalog";
 import { KATEGORIE_OPTIONEN } from "../../../bausteine/einstellungVorschlaege";
 import { Schrittleiste } from "../../../bausteine/Schrittleiste";
 import { Seite } from "../../../bausteine/Seite";
@@ -15,8 +15,14 @@ export default async function ModellWaehlenPage({
   params: Promise<{ studioId: string }>;
 }) {
   const { studioId } = await params;
-  const katalog = await ladeKatalog(studioId);
+  const [katalog, typen] = await Promise.all([ladeKatalog(studioId), ladeTypen()]);
   const basis = `/portal/${studioId}/einrichten`;
+
+  // Altbestand ohne Gymtavo-Typ faellt hier auf wie ein fehlendes Foto
+  // (Nachtrag 10.1) -- nur, solange es Typen zum Zuordnen gibt.
+  function ohneTyp(modell: (typeof katalog.models)[number]): boolean {
+    return typen.length > 0 && modell.catalogModelId === null;
+  }
 
   function meta(modell: (typeof katalog.models)[number]): string {
     const teile = [
@@ -27,6 +33,7 @@ export default async function ModellWaehlenPage({
       `${modell.settingDefinitions.length} Einstellungen`,
     ];
     if (modell.photoPath === null) teile.push("kein Foto");
+    if (ohneTyp(modell)) teile.push("kein Gymtavo-Typ");
     return teile.join(" · ");
   }
 
@@ -48,7 +55,7 @@ export default async function ModellWaehlenPage({
                   <div className={styles.zeileHaupt}>{modell.name}</div>
                   <div
                     className={
-                      modell.photoPath === null
+                      modell.photoPath === null || ohneTyp(modell)
                         ? styles.zeileMetaFaint
                         : styles.zeileMeta
                     }
