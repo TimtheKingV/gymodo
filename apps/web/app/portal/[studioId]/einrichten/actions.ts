@@ -5,12 +5,14 @@ import {
   DomainError,
   attachExerciseToModel,
   catalogTypeRequired,
+  copyTypeDefaults,
   createEquipmentModel,
   createExercise,
   createMachine,
   createSettingDefinition,
   deleteSettingDefinition,
   getStudioCatalog,
+  listCatalogTypes,
   reorderModelExercises,
   revokeTag,
   uploadEquipmentPhoto,
@@ -66,7 +68,9 @@ function zahl(formData: FormData, name: string): number | undefined {
 
 /**
  * Modell und Foto in einem Aufruf. Das Foto ist Pflicht (Entscheidung 10),
- * aber die Spalte bleibt nullable -- Altmodelle tragen keines.
+ * ausser der Gymtavo-Typ hat eine Zeichnung (Spec
+ * 2026-10-10-gymtavo-katalog-geraeteeinrichtung-design.md, 5.2). Die
+ * Spalte bleibt nullable -- Altmodelle tragen keines.
  *
  * Reihenfolge erzwungen: uploadEquipmentPhoto braucht eine Modell-ID, also
  * entsteht erst die Zeile. Schlaegt der Upload danach fehl, bleibt ein
@@ -79,20 +83,22 @@ export async function modellAnlegen(
   formData: FormData,
 ): Promise<Ergebnis<{ modelId: string }>> {
   const client = await createServerSupabaseClient();
-
   const datei = formData.get("photo");
-  if (!(datei instanceof File) || datei.size === 0) {
-    return {
-      ok: false,
-      error:
-        "Ohne Foto geht es nicht weiter — es ist der einzige Grund, warum jemand vor dem falschen Gerät merkt, dass er falsch steht.",
-    };
-  }
+  const eigenesFoto = datei instanceof File && datei.size > 0 ? datei : null;
 
   let modelId: string;
   try {
     const typ = typAusFormular(formData, await catalogTypeRequired(client, studioId));
     if (!typ.ok) return typ;
+    // Ohne eigenes Foto nur, wenn der Typ eine Zeichnung hat -- sonst
+    // stuende ein Geraet ohne jedes Bild in der Liste (Entscheidung 10).
+    if (!eigenesFoto && !(await typHatFoto(client, typ.catalogModelId))) {
+      return {
+        ok: false,
+        error:
+          "Ohne Foto geht es nicht weiter — es ist der einzige Grund, warum jemand vor dem falschen Gerät merkt, dass er falsch steht.",
+      };
+    }
     const modell = await createEquipmentModel(client, {
       studioId,
       name: text(formData, "name"),
@@ -107,23 +113,52 @@ export async function modellAnlegen(
     return fehlerAus(fehler, "Das Modell liess sich nicht anlegen.");
   }
 
-  try {
-    // Das Foto laeuft bewusst durch den Server: nur hier lassen sich die
-    // Aufnahmedaten entfernen, bevor die Datei im Bucket landet.
-    await uploadEquipmentPhoto(client, {
-      equipmentModelId: modelId,
-      bytes: new Uint8Array(await datei.arrayBuffer()),
-    });
-  } catch (fehler) {
-    const antwort = fehlerAus(fehler, "Das Foto liess sich nicht speichern.");
-    // Das Modell steht trotzdem -- der Gang geht weiter, Schritt 2 fragt das
-    // Foto nach. Ein Rollback waere hier der schlechtere Zustand.
-    revalidatePath(`/portal/${studioId}/einrichten`);
-    return antwort;
+  if (eigenesFoto) {
+    try {
+      // Das Foto laeuft bewusst durch den Server: nur hier lassen sich die
+      // Aufnahmedaten entfernen, bevor die Datei im Bucket landet.
+      await uploadEquipmentPhoto(client, {
+        equipmentModelId: modelId,
+        bytes: new Uint8Array(await eigenesFoto.arrayBuffer()),
+      });
+    } catch (fehler) {
+      const antwort = fehlerAus(fehler, "Das Foto liess sich nicht speichern.");
+      // Das Modell steht trotzdem -- und bekommt, was der Typ weiss, sonst
+      // fehlten ihm die Einstellungen fuer immer: niemand ruft die Kopie
+      // spaeter noch einmal auf. Ein Rollback waere der schlechtere Zustand.
+      await typVorlageKopieren(client, modelId);
+      revalidatePath(`/portal/${studioId}/einrichten`);
+      return antwort;
+    }
   }
+
+  // Nach dem eigenen Foto: copyTypeDefaults laesst ein vorhandenes Foto
+  // stehen und nimmt die Zeichnung nur, wenn keins da ist.
+  await typVorlageKopieren(client, modelId);
 
   revalidatePath(`/portal/${studioId}/einrichten`);
   return { ok: true, modelId };
+}
+
+/** Was fehlt, fragt Schritt 2 nach (Foto) oder zeigt es (Einstellungen). */
+async function typVorlageKopieren(
+  client: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  modelId: string,
+): Promise<void> {
+  try {
+    await copyTypeDefaults(client, modelId);
+  } catch (fehler) {
+    console.error("Typvorlage nicht vollstaendig kopiert:", fehler);
+  }
+}
+
+async function typHatFoto(
+  client: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  typId: string | undefined,
+): Promise<boolean> {
+  if (!typId) return false;
+  const typen = await listCatalogTypes(client);
+  return typen.find((typ) => typ.id === typId)?.photoPath != null;
 }
 
 /** Der Pfad, den Schritt 2 revalidiert. Drei Actions teilen ihn. */

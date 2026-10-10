@@ -6,6 +6,7 @@ import { nichtImKatalog } from "../../../katalogStudio";
 import { Seite } from "../../../../bausteine/Seite";
 import { Schrittleiste } from "../../../../bausteine/Schrittleiste";
 import { Zustand } from "../../../../bausteine/Zustand";
+import { typVorlagen } from "../../../../bausteine/typVorlage";
 import { ExemplarFormular } from "../ExemplarFormular";
 import { ModellAnlegenFormular } from "../ModellAnlegenFormular";
 import { ASSISTENT_SCHRITTE, neuAnsicht } from "../assistent";
@@ -160,7 +161,10 @@ export default async function GeraetNeuPage({
       </div>
       <section className={styles.section}>
         <ModellAnlegenFormular
-          typen={await listCatalogTypes(await createServerSupabaseClient())}
+          typen={typVorlagen(
+            await listCatalogTypes(await createServerSupabaseClient()),
+            kategorie === "cardio" ? "cardio" : "kraft",
+          )}
           action={modellAnlegen.bind(null, studioId)}
           kategorie={kategorie === "cardio" ? "cardio" : "kraft"}
         />

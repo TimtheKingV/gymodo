@@ -11,6 +11,7 @@ import {
   belastungsWerte,
   dezimal,
   einheitenFuer,
+  einrasten,
   istEinheit,
   istKategorie,
   maxAb,
@@ -86,7 +87,7 @@ export function ModellBelastungRad({
       ? {
           min: dezimal(start.loadMin),
           max: start.loadMax === null ? "" : dezimal(start.loadMax),
-          schritt: dezimal(start.loadStep),
+          schritt: einrasten(belastungsWerte(loadUnit).schritt, dezimal(start.loadStep)),
         }
       : belastungsWerte(loadUnit).start;
   // Der gewaehlte Schritt bestimmt den Takt von Minimum und Maximum
@@ -125,7 +126,7 @@ export function ModellBelastungRad({
       ? {
           min: dezimal(start.secondaryMin),
           max: start.secondaryMax === null ? "" : dezimal(start.secondaryMax),
-          schritt: dezimal(start.secondaryStep),
+          schritt: einrasten(belastungsWerte(secondaryUnit).schritt, dezimal(start.secondaryStep)),
         }
       : secondaryUnit
         ? belastungsWerte(secondaryUnit).start

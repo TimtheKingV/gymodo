@@ -27,6 +27,39 @@ test("Ein neues Modell bekommt seinen Gymtavo-Typ, ohne Typ geht es nicht weiter
   expect(data?.catalog_model_id).toBe(typId);
 });
 
+test("Der Gymtavo-Typ fuellt Name und Belastung vor, Einstellungen und Foto kommen beim Anlegen mit", async ({ page }) => {
+  const { admin, studioId } = await studioMitTrainer(page, "gymtavo-vorlage");
+  const { typName } = await gymtavoTyp(admin, "Brustpresse", [], {
+    werte: { load_step: 5, load_min: 0, load_max: 100 },
+    einstellungen: [
+      { key: "seat_height", label: "Sitzhöhe", kind: "number" },
+      { key: "grip", label: "Griff", kind: "enum", allowed_values: ["neutral", "pronated"] },
+    ],
+    foto: true,
+  });
+
+  await page.goto(`/portal/${studioId}/geraete/neu?art=typ&kategorie=kraft`);
+  await typWaehlen(page, typName);
+  await expect(page.getByLabel("Name")).toHaveValue(typName);
+  await expect(page.getByText(`Werte vom Typ ${typName} übernommen – bitte ans Gerät anpassen.`)).toBeVisible();
+  await expect(
+    page.getByRole("listbox", { name: "Schritt", exact: true }).getByRole("option", { name: "5", exact: true }),
+  ).toHaveAttribute("aria-selected", "true");
+
+  await page.getByRole("button", { name: "Weiter", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/portal/${studioId}/geraete/[0-9a-f-]+/einstellungen`));
+  await expect(page.getByText("Sitzhöhe")).toBeVisible();
+  await expect(page.getByText("Griff")).toBeVisible();
+
+  const { data } = await admin
+    .from("equipment_models")
+    .select("name, load_step, load_max, photo_path")
+    .eq("studio_id", studioId)
+    .single();
+  expect(data).toMatchObject({ name: typName, load_step: 5, load_max: 100 });
+  expect(data?.photo_path?.startsWith(`${studioId}/models/`)).toBe(true);
+});
+
 test("Ein altes Modell zeigt den Hinweis, bis es zugeordnet ist", async ({ page }) => {
   const { admin, studioId } = await studioMitTrainer(page, "gymtavo-altbestand");
   const { typName } = await gymtavoTyp(admin, "Beinpresse");

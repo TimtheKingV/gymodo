@@ -1,17 +1,16 @@
 "use client";
 
-import type { CatalogType } from "@fitretro/domain";
 import type { Category } from "@fitretro/domain/belastung";
-import { AktionsFormular, Feld } from "../../../Form";
-import { GymtavoTypFeld } from "../../../bausteine/GymtavoTypFeld";
-import { ModellBelastungRad } from "../../../bausteine/ModellBelastungRad";
+import { AktionsFormular } from "../../../Form";
+import { ModellVorlageFelder } from "../../../bausteine/ModellVorlageFelder";
+import type { TypVorlage } from "../../../bausteine/typVorlage";
 import type { ActionResult } from "../../../actions";
-import styles from "../../../portal.module.css";
 
 /**
  * Name/Hersteller bleiben getippt -- Kategorie, Belastung, Rastung und
  * Nebenbelastung kommen aus ModellBelastungRad, gleicher Stil wie bei den
- * Einstellungen. Eigene
+ * Einstellungen. Name und Belastung fuellt der Gymtavo-Typ vor
+ * (ModellVorlageFelder). Eigene
  * Datei, weil das Rad Client-Interaktion braucht und GeraetePage ein
  * Server-Component ist.
  *
@@ -20,7 +19,7 @@ import styles from "../../../portal.module.css";
  * Einstellungen, Uebungen und die einzelnen Geraete (Testnotiz 23.09., #7).
  *
  * Kraft oder Cardio ist vorher gefragt (Testnotiz 03.10., #1) und kommt
- * fest herein -- das Formular zeigt nur die passenden Einheiten.
+ * fest herein -- das Formular zeigt nur die passenden Einheiten und Typen.
  */
 export function ModellAnlegenFormular({
   action,
@@ -29,16 +28,11 @@ export function ModellAnlegenFormular({
 }: {
   action: (prev: unknown, formData: FormData) => Promise<ActionResult>;
   kategorie: Category;
-  typen: Pick<CatalogType, "id" | "name" | "manufacturer">[];
+  typen: TypVorlage[];
 }) {
   return (
     <AktionsFormular action={action} submitLabel="Weiter">
-      <div className={styles.grid}>
-        <Feld name="name" label="Name" required placeholder="Latzug" />
-        <Feld name="manufacturer" label="Hersteller" placeholder="Technogym" />
-      </div>
-      <GymtavoTypFeld typen={typen} start={null} />
-      <ModellBelastungRad kategorie={kategorie} />
+      <ModellVorlageFelder typen={typen} kategorie={kategorie} />
     </AktionsFormular>
   );
 }
