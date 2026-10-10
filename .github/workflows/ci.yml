@@ -14,6 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: swift test --package-path apps/ios-member/Packages/Sensorik
+      # Spec B 5.5: Jede Iteration muss im Diff sichtbar sein. Der Test
+      # schreibt den Guetebericht neu; weicht er vom eingecheckten ab, ist
+      # der eingecheckte veraltet und die CI faellt durch. safe.directory,
+      # weil der Container-Nutzer nicht der Besitzer des Workspace ist.
+      - run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git diff --exit-code data/sensoraufnahmen/guetebericht.md
 
   web:
     runs-on: ubuntu-latest
