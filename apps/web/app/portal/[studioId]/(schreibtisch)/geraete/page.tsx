@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { erreichbarkeit, ladeKatalog, railZahlen } from "../../catalog";
-import { offenePunkte } from "../../offen";
+import { erreichbarkeit, ladeKatalog, ladeTypen, railZahlen } from "../../catalog";
+import { gymtavoKontext, offenePunkte } from "../../offen";
+import { uebungenStand } from "./[modelId]/uebungen/gymtavo";
 import { Seite } from "../../../bausteine/Seite";
 import { Abschnitt } from "../../../bausteine/Abschnitt";
 import { Zeile, Zeilen } from "../../../bausteine/Zeile";
@@ -31,7 +32,13 @@ export default async function GeraetePage({
 }) {
   const { studioId } = await params;
   const { kategorie } = await searchParams;
-  const [katalog, zahlen] = await Promise.all([ladeKatalog(studioId), railZahlen(studioId)]);
+  const [katalog, zahlen, alleTypen] = await Promise.all([
+    ladeKatalog(studioId),
+    railZahlen(studioId),
+    ladeTypen(),
+  ]);
+  // Im Gymtavo-Studio sind die Modelle selbst die Typen -- nichts zuzuordnen.
+  const typen = katalog.isCatalog ? [] : alleTypen;
 
   // Der Filter ist ein Anzeigefilter ueber equipment_models.category
   // (Cardio-Spec Abschnitt 3.5) -- ein unbekannter Wert heisst "Alle",
@@ -74,8 +81,12 @@ export default async function GeraetePage({
 
   return (
     <Seite
-      titel="Geräte"
-      vorspann="Ein Modell beschreibt den Gerätetyp. Die einzelnen Geräte im Raum sind Instanzen davon — zwei Kabelzüge nebeneinander sind ein Modell und zwei Geräte."
+      titel={katalog.isCatalog ? "Gerätetypen" : "Geräte"}
+      vorspann={
+        katalog.isCatalog
+          ? "Die Gymtavo-Gerätetypen mit ihren Übungen. Studios ordnen ihre Modelle diesen Typen zu."
+          : "Ein Modell beschreibt den Gerätetyp. Die einzelnen Geräte im Raum sind Instanzen davon — zwei Kabelzüge nebeneinander sind ein Modell und zwei Geräte."
+      }
     >
       {/*
         Ein Link auf den eigenen Ablauf statt eines aufklappenden Formulars
@@ -83,11 +94,14 @@ export default async function GeraetePage({
         anderen Geraete nicht darunter stehen, und nach den Stammdaten
         geht es mit "Weiter" durch Einstellungen, Uebungen und Geraete.
       */}
-      <div className={bausteine.hinzufuegenLeiste}>
-        <Link href={`/portal/${studioId}/geraete/neu`} className={styles.primary}>
-          + Gerät hinzufügen
-        </Link>
-      </div>
+      {/* Typen anlegen ist Katalogpflege -- Etappe 6. */}
+      {katalog.isCatalog ? null : (
+        <div className={bausteine.hinzufuegenLeiste}>
+          <Link href={`/portal/${studioId}/geraete/neu`} className={styles.primary}>
+            + Gerät hinzufügen
+          </Link>
+        </div>
+      )}
 
       {katalog.models.length > 0 ? (
         <Reiter
@@ -122,8 +136,13 @@ export default async function GeraetePage({
           <Zeilen>
             {modelle.map((modell) => {
               const stand = erreichbarkeit(modell);
-              const mitVideo = modell.exercises.filter((uebung) => uebung.hasVideo).length;
-              const offen = offenePunkte(studioId, modell);
+              // Dieselbe Zaehlung wie im Modellkopf: eigene plus Gymtavo-Uebungen.
+              const { anzahl, mitVideo } = uebungenStand(modell, typen, katalog.isCatalog);
+              const offen = offenePunkte(
+                studioId,
+                modell,
+                gymtavoKontext(katalog.isCatalog, typen, modell.catalogModelId),
+              );
 
               return (
                 <Zeile
@@ -152,17 +171,21 @@ export default async function GeraetePage({
                         ) : (
                           <span className={styles.absent}>Ohne Hersteller</span>
                         )}
-                        {" · "}
-                        {stand.geraete === 0 ? (
-                          <span className={styles.absent}>noch kein Gerät</span>
-                        ) : (
-                          `${stand.geraete} ${stand.geraete === 1 ? "Gerät" : "Geräte"}, ${stand.erreichbar} erreichbar`
+                        {katalog.isCatalog ? null : (
+                          <>
+                            {" · "}
+                            {stand.geraete === 0 ? (
+                              <span className={styles.absent}>noch kein Gerät</span>
+                            ) : (
+                              `${stand.geraete} ${stand.geraete === 1 ? "Gerät" : "Geräte"}, ${stand.erreichbar} erreichbar`
+                            )}
+                          </>
                         )}
                         {" · "}
-                        {modell.exercises.length === 0 ? (
+                        {anzahl === 0 ? (
                           <span className={styles.absent}>keine Übung</span>
                         ) : (
-                          `${modell.exercises.length} ${modell.exercises.length === 1 ? "Übung" : "Übungen"}, ${mitVideo} mit Video`
+                          `${anzahl} ${anzahl === 1 ? "Übung" : "Übungen"}, ${mitVideo} mit Video`
                         )}
                       </span>
                       {/* Offenes zaehlt die Marke am Stift (Testnotiz

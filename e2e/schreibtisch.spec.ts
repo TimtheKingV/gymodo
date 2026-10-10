@@ -246,6 +246,9 @@ test("Jeder Modellreiter traegt genau eine Akzentflaeche -- ein Formular je Bild
 
   for (const reiter of ["", "/einstellungen", "/uebungen", "/instanzen"]) {
     await page.goto(`/portal/${studioId}/geraete/${modell.id}${reiter}`);
+    // Erst zaehlen, wenn der Reiter da ist: (schreibtisch)/loading.tsx steht
+    // sonst noch an seiner Stelle, und null Flaechen hiessen nur "laedt".
+    await expect(page.getByText("Lädt …")).toHaveCount(0);
     const flaechen = await akzentflaechen(page);
     expect(
       flaechen.length,

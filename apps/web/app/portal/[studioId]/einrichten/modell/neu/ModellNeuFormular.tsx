@@ -2,10 +2,12 @@
 
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { CatalogType } from "@fitretro/domain";
 import { MAX_PHOTO_BYTES } from "@fitretro/domain/media";
 import { modellAnlegen } from "../../actions";
 import { Feld } from "../../../../Form";
 import { FotoFeld } from "../../../../bausteine/FotoFeld";
+import { GymtavoTypFeld } from "../../../../bausteine/GymtavoTypFeld";
 import { ModellBelastungRad } from "../../../../bausteine/ModellBelastungRad";
 import styles from "../../halle.module.css";
 import portalStyles from "../../../../portal.module.css";
@@ -27,7 +29,13 @@ import portalStyles from "../../../../portal.module.css";
  * getUserMedia bleibt dem Tag-Sucher vorbehalten, wo es keine Alternative
  * gibt. Spec 5 nennt "Foto am Telefon" ausdruecklich vollstaendig vorhanden.
  */
-export function ModellNeuFormular({ studioId }: { studioId: string }) {
+export function ModellNeuFormular({
+  studioId,
+  typen,
+}: {
+  studioId: string;
+  typen: Pick<CatalogType, "id" | "name" | "manufacturer">[];
+}) {
   const router = useRouter();
   const [hatFoto, setHatFoto] = useState(false);
   const [dateiFehler, setDateiFehler] = useState<string | null>(null);
@@ -83,6 +91,7 @@ export function ModellNeuFormular({ studioId }: { studioId: string }) {
         label="Hersteller"
         placeholder="Technogym"
       />
+      <GymtavoTypFeld gross typen={typen} start={null} />
 
       <ModellBelastungRad gross />
       <p className={styles.notiz}>

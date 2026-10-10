@@ -1,5 +1,8 @@
+import { listCatalogTypes } from "@fitretro/domain";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { exemplarAnlegen, modellAnlegen } from "../../../../actions";
 import { ladeKatalog, railZahlen } from "../../../catalog";
+import { nichtImKatalog } from "../../../katalogStudio";
 import { Seite } from "../../../../bausteine/Seite";
 import { Schrittleiste } from "../../../../bausteine/Schrittleiste";
 import { Zustand } from "../../../../bausteine/Zustand";
@@ -37,6 +40,8 @@ export default async function GeraetNeuPage({
   searchParams: Promise<{ art?: string; kategorie?: string }>;
 }) {
   const { studioId } = await params;
+  // Typen anlegen ist Katalogpflege (Etappe 6), nicht dieser Ablauf.
+  await nichtImKatalog(studioId);
   const { art, kategorie } = await searchParams;
   const zahlen = await railZahlen(studioId);
 
@@ -155,6 +160,7 @@ export default async function GeraetNeuPage({
       </div>
       <section className={styles.section}>
         <ModellAnlegenFormular
+          typen={await listCatalogTypes(await createServerSupabaseClient())}
           action={modellAnlegen.bind(null, studioId)}
           kategorie={kategorie === "cardio" ? "cardio" : "kraft"}
         />

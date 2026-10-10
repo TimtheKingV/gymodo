@@ -6,13 +6,19 @@ import {
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
+  gymtavoUebungLoesen,
+  gymtavoUebungVerknuepfen,
   uebungAendern,
   uebungAnlegen,
   uebungLoesen,
   uebungVerschieben,
 } from "../../../../../actions";
+import { Abschnitt } from "../../../../../bausteine/Abschnitt";
 import { Hinzufuegen } from "../../../../../bausteine/Hinzufuegen";
-import { ladeKatalog } from "../../../../catalog";
+import { ladeKatalog, ladeTypen } from "../../../../catalog";
+import { anhaengbareUebungen, eigeneUebungen, gymtavoZeilen } from "./gymtavo";
+import { GymtavoAnhaengen } from "./GymtavoAnhaengen";
+import { GymtavoZeile } from "./GymtavoZeile";
 import { ReihenfolgeDialog } from "./ReihenfolgeDialog";
 import { UebungFormular } from "./UebungFormular";
 import { UebungZeile } from "./UebungZeile";
@@ -50,6 +56,11 @@ import eigene from "./uebungen.module.css";
  * 2. "Entfernen" traegt seine danger-Farbe erst, wenn es scharf ist
  *    (AktionsKnopf), und steht nur noch im aufgeklappten Teil einer Zeile.
  *
+ * Seit Etappe 5 (Nachtrag 10.1) zwei Teile: oben die Gymtavo-Uebungen des
+ * zugeordneten Typs und angehaengte anderer Typen, schreibgeschuetzt mit
+ * eigenem Video; darunter die eigenen wie bisher. Der Reihenfolge-Dialog
+ * ordnet nur die eigenen -- die App zeigt Gymtavo-Uebungen ohnehin danach.
+ *
  * Genau eine Akzentflaeche im Ruhezustand: "Übung hinzufügen". Der
  * Fortschrittsbalken in VideoUpload traegt waehrend eines laufenden
  * Uploads ebenfalls var(--accent) -- Befund 11, entschieden in Aufgabe 21.
@@ -64,17 +75,28 @@ export default async function ModellUebungenPage({
   const modell = katalog.models.find((eintrag) => eintrag.id === modelId);
   if (!modell) notFound();
 
+  // Im Gymtavo-Studio ist jede Uebung eine eigene; es gibt keinen Typ ueber
+  // dem Typ.
+  const typen = katalog.isCatalog ? [] : await ladeTypen();
+  const eigen = katalog.isCatalog ? modell.exercises : eigeneUebungen(modell.exercises);
+  const gymtavo = katalog.isCatalog ? [] : gymtavoZeilen(modell, typen);
+  const angebot = anhaengbareUebungen(modell, typen);
+
   const client = await createServerSupabaseClient();
   const videoUrls = await signMediaUrls(
     client,
     VIDEO_BUCKET,
-    modell.exercises
-      .map((uebung) => uebung.videoStoragePath)
-      .filter((pfad): pfad is string => Boolean(pfad)),
+    [
+      ...eigen.map((uebung) => uebung.videoStoragePath),
+      ...gymtavo.flatMap((zeile) => [
+        zeile.eigenesVideo?.storagePath,
+        zeile.katalogVideo?.storagePath,
+      ]),
+    ].filter((pfad): pfad is string => Boolean(pfad)),
     MEDIA_URL_TTL_SECONDS,
   );
 
-  const hatUebungen = modell.exercises.length > 0;
+  const hatUebungen = eigen.length > 0;
 
   return (
     <>
@@ -84,59 +106,109 @@ export default async function ModellUebungenPage({
         etwas fehlt.
       </p>
 
-      <Hinzufuegen
-        knopf="Übung hinzufügen"
-        titel="Übung anlegen"
-        notiz="Kommt ans Ende der Liste."
-        offen={!hatUebungen}
-      >
-        <UebungFormular
-          studioId={studioId}
-          modelId={modelId}
-          action={uebungAnlegen.bind(null, studioId, modelId)}
-        />
-      </Hinzufuegen>
-
-      {modell.exercises.length > 1 ? (
-        <div className={eigene.leiste}>
-          <ReihenfolgeDialog
-            uebungen={modell.exercises.map(({ linkId, name }) => ({ linkId, name }))}
-            speichern={uebungVerschieben.bind(null, studioId, modelId)}
-          />
-        </div>
+      {typen.length > 0 || gymtavo.length > 0 ? (
+        <Abschnitt
+          titel="Gymtavo-Übungen"
+          notiz={
+            modell.catalogModelId === null
+              ? "Ohne Gymtavo-Typ stehen hier nur angehängte Übungen."
+              : "Kommen mit dem Gymtavo-Typ. Name und Wiederholungen pflegt Gymtavo."
+          }
+        >
+          <Hinzufuegen neben knopf="Gymtavo-Übung anhängen" titel="Gymtavo-Übung anhängen">
+            <GymtavoAnhaengen
+              angebot={angebot}
+              anhaengen={gymtavoUebungVerknuepfen.bind(null, studioId, modelId)}
+            />
+          </Hinzufuegen>
+          {gymtavo.length > 0 ? (
+            <ul className={styles.rows} aria-label="Gymtavo-Übungen am Modell">
+              {gymtavo.map((zeile) => (
+                <GymtavoZeile
+                  key={zeile.exerciseId}
+                  studioId={studioId}
+                  modelId={modelId}
+                  zeile={zeile}
+                  eigeneVideoUrl={
+                    zeile.eigenesVideo ? videoUrls.get(zeile.eigenesVideo.storagePath) : undefined
+                  }
+                  katalogVideoUrl={
+                    zeile.katalogVideo ? videoUrls.get(zeile.katalogVideo.storagePath) : undefined
+                  }
+                  verknuepfen={gymtavoUebungVerknuepfen.bind(
+                    null,
+                    studioId,
+                    modelId,
+                    zeile.exerciseId,
+                  )}
+                  loesen={
+                    zeile.herkunft === "angehaengt" && zeile.linkId
+                      ? gymtavoUebungLoesen.bind(null, studioId, modelId, zeile.linkId)
+                      : null
+                  }
+                />
+              ))}
+            </ul>
+          ) : null}
+        </Abschnitt>
       ) : null}
 
-      <section className={styles.section}>
-        {!hatUebungen ? (
-          <div className={styles.empty}>
-            <p className={styles.emptyTitle}>Noch keine Übung.</p>
-            <p className={styles.emptyNext}>
-              Ohne Übung zeigt der Geräte-Screen nur den Namen. Eine reicht zum
-              Anfangen.
-            </p>
+      <Abschnitt titel="Eigene Übungen">
+        <Hinzufuegen
+          knopf="Übung hinzufügen"
+          titel="Übung anlegen"
+          notiz="Kommt ans Ende der Liste."
+          offen={!hatUebungen && gymtavo.length === 0}
+        >
+          <UebungFormular
+            studioId={studioId}
+            modelId={modelId}
+            action={uebungAnlegen.bind(null, studioId, modelId)}
+          />
+        </Hinzufuegen>
+
+        {eigen.length > 1 ? (
+          <div className={eigene.leiste}>
+            <ReihenfolgeDialog
+              uebungen={eigen.map(({ linkId, name }) => ({ linkId, name }))}
+              speichern={uebungVerschieben.bind(null, studioId, modelId)}
+            />
           </div>
-        ) : (
-          // Benannt, weil auf diesem Bildschirm mehrere Listen stehen --
-          // das Band "Noch zu tun" darueber ist auch eine. "Liste mit 3
-          // Eintraegen" ist ohne Namen keine Auskunft.
-          <ul className={styles.rows} aria-label="Übungen am Modell">
-            {modell.exercises.map((uebung, index) => (
-              <UebungZeile
-                key={uebung.linkId}
-                studioId={studioId}
-                modelId={modelId}
-                uebung={uebung}
-                nummer={index + 1}
-                videoUrl={
-                  uebung.videoStoragePath ? videoUrls.get(uebung.videoStoragePath) : undefined
-                }
-                aendern={uebungAendern.bind(null, studioId, modelId, uebung.exerciseId)}
-                loesen={uebungLoesen.bind(null, studioId, modelId, uebung.linkId)}
-              />
-            ))}
-          </ul>
-        )}
-      </section>
+        ) : null}
+
+        <section className={styles.section}>
+          {!hatUebungen ? (
+            <div className={styles.empty}>
+              <p className={styles.emptyTitle}>Noch keine Übung.</p>
+              <p className={styles.emptyNext}>
+                {gymtavo.length > 0
+                  ? "Die Gymtavo-Übungen oben reichen zum Anfangen."
+                  : "Ohne Übung zeigt der Geräte-Screen nur den Namen. Eine reicht zum Anfangen."}
+              </p>
+            </div>
+          ) : (
+            // Benannt, weil auf diesem Bildschirm mehrere Listen stehen --
+            // das Band "Noch zu tun" darueber ist auch eine. "Liste mit 3
+            // Eintraegen" ist ohne Namen keine Auskunft.
+            <ul className={styles.rows} aria-label="Übungen am Modell">
+              {eigen.map((uebung, index) => (
+                <UebungZeile
+                  key={uebung.linkId}
+                  studioId={studioId}
+                  modelId={modelId}
+                  uebung={uebung}
+                  nummer={index + 1}
+                  videoUrl={
+                    uebung.videoStoragePath ? videoUrls.get(uebung.videoStoragePath) : undefined
+                  }
+                  aendern={uebungAendern.bind(null, studioId, modelId, uebung.exerciseId)}
+                  loesen={uebungLoesen.bind(null, studioId, modelId, uebung.linkId)}
+                />
+              ))}
+            </ul>
+          )}
+        </section>
+      </Abschnitt>
     </>
   );
 }

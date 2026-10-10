@@ -1,4 +1,5 @@
 import { ladeKatalog, railZahlen } from "../catalog";
+import { nichtImKatalog } from "../katalogStudio";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { MobileNav } from "../MobileNav";
 import { UploadsMarke, UploadsProvider } from "./Uploads";
@@ -27,6 +28,8 @@ export default async function HalleLayout({
   params: Promise<{ studioId: string }>;
 }) {
   const { studioId } = await params;
+  // Der Gang richtet Geraete mit QR-Code ein -- die hat der Katalog nicht.
+  await nichtImKatalog(studioId);
   const [katalog, zahlen] = await Promise.all([
     ladeKatalog(studioId),
     railZahlen(studioId),
@@ -45,6 +48,7 @@ export default async function HalleLayout({
           studioName={katalog.studioName}
           email={user?.email ?? ""}
           zahlen={zahlen}
+          istKatalog={katalog.isCatalog}
           extra={<UploadsMarke studioId={studioId} />}
           nurMobil={false}
         />

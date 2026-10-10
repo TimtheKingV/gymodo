@@ -2,8 +2,9 @@ import { formatLoad } from "@fitretro/domain/belastung";
 import { EINHEIT_ANZEIGE, KATEGORIE_OPTIONEN } from "../../../../bausteine/einstellungVorschlaege";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ladeKatalog } from "../../../catalog";
-import { offenePunkte } from "../../../offen";
+import { ladeKatalog, ladeTypen } from "../../../catalog";
+import { gymtavoKontext, offenePunkte } from "../../../offen";
+import { uebungenStand } from "./uebungen/gymtavo";
 import { Modellbild } from "../../../../bausteine/Modellbild";
 import { NochZuTun } from "../../../../bausteine/NochZuTun";
 import { ModellRahmen } from "./ModellRahmen";
@@ -27,14 +28,22 @@ export default async function ModellLayout({
   params: Promise<{ studioId: string; modelId: string }>;
 }) {
   const { studioId, modelId } = await params;
-  const katalog = await ladeKatalog(studioId);
+  // Parallel: die Typliste haengt nicht am Studio-Katalog, und jede
+  // Wartezeit hier haelt alle vier Reiter auf.
+  const [katalog, alleTypen] = await Promise.all([ladeKatalog(studioId), ladeTypen()]);
   const modell = katalog.models.find((eintrag) => eintrag.id === modelId);
   if (!modell) notFound();
 
-  const mitVideo = modell.exercises.filter((uebung) => uebung.hasVideo).length;
   const ohneTag = modell.machines.filter((geraet) => geraet.activeTagCount === 0).length;
   const fotoUrl = modell.photoPath ? katalog.photoUrls[modell.photoPath] : undefined;
-  const punkte = offenePunkte(studioId, modell);
+  const typen = katalog.isCatalog ? [] : alleTypen;
+  // Der Reiter zaehlt, was am Geraet steht: eigene und Gymtavo-Uebungen.
+  const { anzahl: uebungenAnzahl, mitVideo } = uebungenStand(modell, typen, katalog.isCatalog);
+  const punkte = offenePunkte(
+    studioId,
+    modell,
+    gymtavoKontext(katalog.isCatalog, typen, modell.catalogModelId),
+  );
 
   return (
     <>
@@ -74,11 +83,12 @@ export default async function ModellLayout({
         studioId={studioId}
         modelId={modelId}
         einstellungenZusatz={`${modell.settingDefinitions.length} Einstellungen`}
-        uebungenZusatz={`${modell.exercises.length} · ${mitVideo} mit Video`}
+        uebungenZusatz={`${uebungenAnzahl} · ${mitVideo} mit Video`}
         instanzenZusatz={`${modell.machines.length} · ${ohneTag} ohne Tag`}
         einstellungenAnzahl={modell.settingDefinitions.length}
-        uebungenAnzahl={modell.exercises.length}
+        uebungenAnzahl={uebungenAnzahl}
         nochZuTun={<NochZuTun punkte={punkte} />}
+        mitInstanzen={!katalog.isCatalog}
       >
         {children}
       </ModellRahmen>

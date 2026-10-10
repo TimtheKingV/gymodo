@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { radWaehlen } from "./helpers/rad";
 import { studioMitTrainer } from "./helpers/studio";
+import { gymtavoTyp, typWaehlen } from "./helpers/gymtavo";
 import { tagAnlegen } from "../tests/helpers/tags";
 
 /**
@@ -54,7 +55,9 @@ test("Der Einstieg zaehlt den Bestand und fuehrt in den Gang", async ({
 test("Schritt 1 legt ein Modell mit Pflichtfoto an und geht zu den Einstellungen", async ({
   page,
 }) => {
-  const { studioId } = await studioMitTrainer(page, "einrichten-modell");
+  const { admin, studioId } = await studioMitTrainer(page, "einrichten-modell");
+  // Eigener Gymtavo-Typ: sobald es Typen gibt, ist er Pflicht (Nachtrag 10.1).
+  const { typName } = await gymtavoTyp(admin, "Kabelzug");
 
   await page.goto(`/portal/${studioId}/einrichten/modell`);
   await expect(page.getByText("Noch kein Modell im Studio")).toBeVisible();
@@ -62,6 +65,7 @@ test("Schritt 1 legt ein Modell mit Pflichtfoto an und geht zu den Einstellungen
 
   await page.getByLabel("Name").fill("Kabelzug");
   await page.getByLabel("Hersteller").fill("Technogym");
+  await typWaehlen(page, typName);
   // Schritt zuerst, ein Minimum gibt es nicht mehr (Testnotiz 03.10., #2).
   await radWaehlen(page, "Schritt", "5");
   await radWaehlen(page, "Maximum", "100");
@@ -402,10 +406,12 @@ test("Der ganze Gang: sechs Schritte, ein Geraet, und danach ist es auffindbar",
   await page.goto(`/portal/${studioId}/einrichten`);
   await page.getByRole("link", { name: "Gerät einrichten" }).click();
 
-  // 1 Modell, Foto Pflicht
+  // 1 Modell, Foto Pflicht, Gymtavo-Typ Pflicht (Nachtrag 10.1)
+  const { typName } = await gymtavoTyp(admin, "Kabelzug");
   await page.getByRole("link", { name: "Neues Modell anlegen" }).click();
   await page.getByLabel("Name").fill("Kabelzug");
   await page.getByLabel("Hersteller").fill("Technogym");
+  await typWaehlen(page, typName);
   await radWaehlen(page, "Maximum", "100");
   await page.getByLabel("Foto des Modells").setInputFiles({
     name: "kabelzug.jpg",

@@ -23,8 +23,9 @@ function modell(teile: Partial<Modell> = {}): Modell {
     loadStep: 2.5,
     loadMin: 5,
     loadMax: 100,
+    catalogModelId: "typ-1",
     settingDefinitions: [{ id: "s1" }],
-    exercises: [{ linkId: "l1", hasVideo: true }],
+    exercises: [{ linkId: "l1", hasVideo: true, fromCatalog: false }],
     machines: [{ id: "g1", label: "12", status: "active", activeTagCount: 1 }],
     ...teile,
   } as unknown as Modell;
@@ -124,5 +125,57 @@ describe("offenePunkte", () => {
       "1 Übung ohne Einweisungsvideo",
     ]);
     expect(punkte[1]!.art).toBe("unvollstaendig");
+  });
+});
+
+describe("offenePunkte mit Gymtavo-Katalog", () => {
+  const mitTypen = { istKatalog: false, katalogHatTypen: true, typUebungen: 0 };
+
+  it("nennt ein Modell ohne Typ, solange der Katalog Typen hat", () => {
+    const punkte = offenePunkte("st1", modell({ catalogModelId: null }), mitTypen);
+    expect(punkte).toContainEqual(
+      expect.objectContaining({
+        titel: "Kein Gymtavo-Typ",
+        grund: "Mitglieder sehen an diesem Gerät keine Gymtavo-Übungen.",
+        href: "/portal/st1/geraete/m1",
+        label: "Typ wählen",
+        art: "unvollstaendig",
+      }),
+    );
+  });
+
+  it("schweigt bei leerem Katalog und bei zugeordnetem Modell", () => {
+    expect(
+      offenePunkte("st1", modell({ catalogModelId: null }), { ...mitTypen, katalogHatTypen: false }),
+    ).toEqual([]);
+    expect(offenePunkte("st1", modell(), mitTypen)).toEqual([]);
+  });
+
+  it("ein Modell ohne eigene Uebung ist benutzbar, wenn sein Typ Uebungen hat", () => {
+    const punkte = offenePunkte("st1", modell({ exercises: [] }), { ...mitTypen, typUebungen: 3 });
+    expect(punkte.map((p) => p.titel)).not.toContain("Keine Übung");
+  });
+
+  it("zaehlt fehlende Videos nur bei eigenen Uebungen", () => {
+    const punkte = offenePunkte(
+      "st1",
+      modell({
+        exercises: [
+          { linkId: "l1", hasVideo: true, fromCatalog: false },
+          { linkId: "l2", hasVideo: false, fromCatalog: true },
+        ] as never,
+      }),
+      mitTypen,
+    );
+    expect(punkte.map((p) => p.titel)).toEqual([]);
+  });
+
+  it("im Gymtavo-Studio gibt es weder Geraete noch Tags noch Zuordnung", () => {
+    const punkte = offenePunkte("gy", modell({ catalogModelId: null, machines: [] }), {
+      istKatalog: true,
+      katalogHatTypen: true,
+      typUebungen: 0,
+    });
+    expect(punkte.map((p) => p.titel)).toEqual([]);
   });
 });

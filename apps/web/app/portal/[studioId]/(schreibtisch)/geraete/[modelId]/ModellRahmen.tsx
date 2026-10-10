@@ -39,6 +39,7 @@ export function ModellRahmen({
   einstellungenAnzahl,
   uebungenAnzahl,
   nochZuTun,
+  mitInstanzen = true,
   children,
 }: {
   studioId: string;
@@ -49,6 +50,7 @@ export function ModellRahmen({
   einstellungenAnzahl: number;
   uebungenAnzahl: number;
   nochZuTun: React.ReactNode;
+  mitInstanzen?: boolean;
   children: React.ReactNode;
 }) {
   const segment = useSelectedLayoutSegment();
@@ -65,6 +67,7 @@ export function ModellRahmen({
           einstellungenZusatz={einstellungenZusatz}
           uebungenZusatz={uebungenZusatz}
           instanzenZusatz={instanzenZusatz}
+          mitInstanzen={mitInstanzen}
         />
         {nochZuTun}
         {children}

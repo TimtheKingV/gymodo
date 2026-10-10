@@ -1,8 +1,10 @@
 "use client";
 
+import type { CatalogType } from "@fitretro/domain";
 import { MAX_PHOTO_BYTES } from "@fitretro/domain/media";
 import { AktionsFormular, Feld } from "../../../../Form";
 import { FotoFeld } from "../../../../bausteine/FotoFeld";
+import { GymtavoTypFeld } from "../../../../bausteine/GymtavoTypFeld";
 import { ModellBelastungRad, type ModellBelastungStart } from "../../../../bausteine/ModellBelastungRad";
 import type { ActionResult } from "../../../../actions";
 import styles from "../../../../portal.module.css";
@@ -21,10 +23,17 @@ export function StammdatenFormular({
   action,
   modell,
   fotoUrl,
+  typen,
 }: {
   action: (prev: unknown, formData: FormData) => Promise<ActionResult>;
-  modell: { name: string; manufacturer: string | null } & ModellBelastungStart;
+  modell: {
+    name: string;
+    manufacturer: string | null;
+    catalogModelId: string | null;
+  } & ModellBelastungStart;
   fotoUrl: string | undefined;
+  /** Leer im Gymtavo-Studio: ein Typ wird keinem Typ zugeordnet. */
+  typen: Pick<CatalogType, "id" | "name" | "manufacturer">[];
 }) {
   return (
     <AktionsFormular
@@ -41,6 +50,7 @@ export function StammdatenFormular({
           defaultValue={modell.manufacturer ?? ""}
         />
       </div>
+      <GymtavoTypFeld typen={typen} start={modell.catalogModelId} />
       <ModellBelastungRad start={modell} />
       <FotoFeld
         name="photo"

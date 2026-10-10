@@ -7,6 +7,7 @@ import {
   revokeStaffInvite,
   DomainError,
   attachExerciseToModel,
+  catalogTypeRequired,
   confirmInstructionVideo,
   createEquipmentModel,
   createExercise,
@@ -14,6 +15,7 @@ import {
   createSettingDefinition,
   deactivateMachine,
   deleteSettingDefinition,
+  detachCatalogExercise,
   detachExercise,
   prepareInstructionVideoUpload,
   reactivateMachine,
@@ -30,6 +32,7 @@ import {
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { belastungAusFormular, umfangAusFormular } from "./formfelder";
+import { typAusFormular } from "./gymtavoTyp";
 import { assistentStart } from "./[studioId]/(schreibtisch)/geraete/assistent";
 
 /**
@@ -140,6 +143,8 @@ export async function modellAnlegen(
   const client = await createServerSupabaseClient();
   let modelId: string;
   try {
+    const typ = typAusFormular(formData, await catalogTypeRequired(client, studioId));
+    if (!typ.ok) return typ;
     const modell = await createEquipmentModel(client, {
       studioId,
       name: text(formData, "name"),
@@ -147,6 +152,7 @@ export async function modellAnlegen(
       ...belastungAusFormular(formData),
       loadStep: zahl(formData, "loadStep") ?? Number.NaN,
       loadMin: zahl(formData, "loadMin") ?? 0,
+      catalogModelId: typ.catalogModelId,
     });
     modelId = modell.id;
   } catch (fehler) {
@@ -166,10 +172,15 @@ export async function modellAendern(
   formData: FormData,
 ): Promise<ActionResult> {
   return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
+    const typ = typAusFormular(formData, await catalogTypeRequired(client, studioId));
+    // Als DomainError geworfen, damit fehlerAus den Satz zeigt -- der Weg
+    // ueber fuehreAus kennt kein vorzeitiges Ergebnis.
+    if (!typ.ok) throw new DomainError("validation_failed", typ.error);
     await updateEquipmentModel(client, modelId, {
       name: text(formData, "name"),
       manufacturer: optionalerText(formData, "manufacturer"),
       ...belastungAusFormular(formData),
+      ...(typ.catalogModelId === undefined ? {} : { catalogModelId: typ.catalogModelId }),
     });
   }, "layout");
 }
@@ -291,6 +302,33 @@ export async function uebungLoesen(
 ): Promise<ActionResult> {
   return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
     await detachExercise(client, linkId);
+  }, "layout");
+}
+
+/**
+ * Gymtavo-Uebung per Verweis ans Modell (Spec 5.3). Zwei Wege fuehren
+ * hierher: "Gymtavo-Übung anhängen" fuer Uebungen anderer Typen und
+ * "Eigenes Video ergänzen" an einer Typ-Uebung -- das Video braucht die
+ * Verknuepfung, an der es haengt und durch die es dem Studio gehoert.
+ */
+export async function gymtavoUebungVerknuepfen(
+  studioId: string,
+  modelId: string,
+  exerciseId: string,
+): Promise<ActionResult> {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
+    await attachExerciseToModel(client, { equipmentModelId: modelId, exerciseId });
+  }, "layout");
+}
+
+/** Angehaengte Gymtavo-Uebung loesen, samt eigenem Video des Studios. */
+export async function gymtavoUebungLoesen(
+  studioId: string,
+  modelId: string,
+  linkId: string,
+): Promise<ActionResult> {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
+    await detachCatalogExercise(client, linkId);
   }, "layout");
 }
 

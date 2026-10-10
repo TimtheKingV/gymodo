@@ -34,6 +34,7 @@ export function Hinzufuegen({
   notiz,
   offen: offenAnfangs = false,
   abbrechenImFormular = false,
+  neben = false,
   children,
 }: {
   /** Text des Akzentknopfs, z. B. "Gerät hinzufügen". */
@@ -46,6 +47,9 @@ export function Hinzufuegen({
   /** Schliessen nicht im Kopf, sondern ueber das Formular (Abbrechen,
       nach Erfolg) -- siehe useHinzufuegen(). */
   abbrechenImFormular?: boolean;
+  /** Fuer eine zweite Hinzufuegen-Leiste auf demselben Bildschirm -- die
+      Akzentflaeche gehoert der Hauptaktion (eine je Bildschirm). */
+  neben?: boolean;
   children: React.ReactNode;
 }) {
   const [offen, setOffen] = useState(offenAnfangs);
@@ -87,7 +91,7 @@ export function Hinzufuegen({
         <button
           ref={knopfRef}
           type="button"
-          className={portalStyles.primary}
+          className={neben ? portalStyles.secondary : portalStyles.primary}
           aria-expanded={false}
           onClick={() => umschalten(true)}
         >

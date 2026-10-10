@@ -20,11 +20,13 @@ export function Rail({
   studioName,
   email,
   zahlen,
+  istKatalog = false,
 }: {
   studioId: string;
   studioName: string;
   email: string;
   zahlen: RailZahlen;
+  istKatalog?: boolean;
 }) {
   return (
     <>
@@ -33,6 +35,7 @@ export function Rail({
         studioName={studioName}
         email={email}
         zahlen={zahlen}
+        istKatalog={istKatalog}
       />
       <nav className={styles.rail} aria-label="Katalog">
         <NavInhalt
@@ -40,6 +43,7 @@ export function Rail({
           studioName={studioName}
           email={email}
           zahlen={zahlen}
+          istKatalog={istKatalog}
         />
       </nav>
     </>

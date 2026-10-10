@@ -3,7 +3,11 @@ import { notFound } from "next/navigation";
 import { listStudioExercises } from "@fitretro/domain";
 import { formatVolumeRange } from "@fitretro/domain/belastung";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { ladeKatalog } from "../../../../catalog";
+import { ladeKatalog, ladeTypen } from "../../../../catalog";
+import {
+  eigeneUebungen,
+  gymtavoZeilen,
+} from "../../../../(schreibtisch)/geraete/[modelId]/uebungen/gymtavo";
 import { Schrittleiste } from "../../../../../bausteine/Schrittleiste";
 import { Seite } from "../../../../../bausteine/Seite";
 import { VideoAufnehmen } from "../../../Uploads";
@@ -14,6 +18,10 @@ import styles from "../../../halle.module.css";
  * Schritt 5. Die Uebungen haengen am MODELL, nicht am Geraet -- zwei
  * baugleiche Kabelzuege teilen sie sich. Der Bildschirm sagt das, damit
  * niemand sie zweimal anlegt.
+ *
+ * Die Gymtavo-Uebungen des Typs stehen schreibgeschuetzt darueber
+ * (Nachtrag 10.1): sie kommen am Geraet ohnehin mit, und wer sie nicht
+ * sieht, legt Bankdruecken ein zweites Mal als eigene Uebung an.
  *
  * Der Akzent liegt auf dem Abschliessen, nicht auf dem Hinzufuegen: sonst
  * betont der Bildschirm das Sammeln und nicht das Fertigwerden.
@@ -33,21 +41,45 @@ export default async function UebungenPage({
 
   const { modell, geraet } = treffer;
   const client = await createServerSupabaseClient();
-  const studioUebungen = await listStudioExercises(client, studioId);
+  const [studioUebungen, typen] = await Promise.all([
+    listStudioExercises(client, studioId),
+    ladeTypen(),
+  ]);
+  const gymtavo = gymtavoZeilen(modell, typen);
+  const eigen = eigeneUebungen(modell.exercises);
 
   const schonDran = new Set(
     modell.exercises.map((uebung) => uebung.exerciseId),
   );
   const waehlbar = studioUebungen.filter((uebung) => !schonDran.has(uebung.id));
-  const reihenfolge = modell.exercises.map((uebung) => uebung.linkId);
+  const reihenfolge = eigen.map((uebung) => uebung.linkId);
 
   return (
     <>
       <Schrittleiste nummer={5} titel="Übungen" />
       <Seite titel="Übungen" vorspann={`${geraet.label} · ${modell.name}`}>
-        {modell.exercises.length > 0 ? (
+        {gymtavo.length > 0 ? (
           <section className={styles.abschnitt}>
-            {modell.exercises.map((uebung, index) => (
+            <div className={styles.abschnittKopf}>
+              <h2 className={styles.label}>Kommen automatisch mit</h2>
+            </div>
+            {gymtavo.map((zeile) => (
+              <div key={zeile.exerciseId} className={styles.zeile}>
+                <div style={{ minWidth: 0 }}>
+                  <div className={styles.zeileHaupt}>{zeile.name}</div>
+                  <div className={styles.zeileMeta}>
+                    {formatVolumeRange(zeile.targetMin, zeile.targetMax, zeile.volumeKind)} ·
+                    Gymtavo
+                  </div>
+                </div>
+              </div>
+            ))}
+          </section>
+        ) : null}
+
+        {eigen.length > 0 ? (
+          <section className={styles.abschnitt}>
+            {eigen.map((uebung, index) => (
               <div key={uebung.linkId} className={styles.zeile}>
                 <div
                   style={{
@@ -95,7 +127,7 @@ export default async function UebungenPage({
               </div>
             ))}
           </section>
-        ) : (
+        ) : gymtavo.length > 0 ? null : (
           <div className={styles.karte}>
             <div className={styles.karteTitel}>Noch keine Übung</div>
             <p className={styles.notiz}>
@@ -117,6 +149,13 @@ export default async function UebungenPage({
           Ein Gerät ohne Video ist vollständig nutzbar, nur ohne Anleitung. Die
           Uploads laufen weiter, während du zum nächsten Gerät gehst.
         </p>
+
+        {gymtavo.length > 0 ? (
+          <p className={styles.notiz}>
+            Gymtavo-Übungen kommen mit dem Gerätetyp. Ein eigenes Video dazu
+            ergänzt du am Schreibtisch.
+          </p>
+        ) : null}
 
         <p className={styles.notiz}>
           Die Reihenfolge zählt: Übung 1 ist am Gerät die Vorauswahl — die

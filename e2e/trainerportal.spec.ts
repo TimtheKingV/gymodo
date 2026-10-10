@@ -4,6 +4,7 @@ import { auswaehlen } from "./helpers/auswahl";
 import { seitenBefund } from "./helpers/befund";
 import { E2E_PASSWORD, anmelden } from "./helpers/login";
 import { radWaehlen } from "./helpers/rad";
+import { gymtavoTyp, typWaehlen } from "./helpers/gymtavo";
 import { tagAnlegen } from "../tests/helpers/tags";
 
 /**
@@ -146,6 +147,10 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   // 1. Geraetemodell -- ueber den Ablauf "Gerät hinzufügen" (Testnotiz
   // 23.09., #7): ein eigener Bildschirm nur mit den Stammdaten, ohne die
   // Geraeteliste darunter, und "Weiter" statt "Modell anlegen".
+  // Eigener Gymtavo-Typ ohne Uebungen, angelegt bevor das Formular laedt:
+  // Pflicht, sobald es Typen gibt (Nachtrag 10.1), und die offenen Punkte
+  // unten bleiben dieselben.
+  const { typName } = await gymtavoTyp(admin, "Latzug");
   await page.getByRole("link", { name: "+ Gerät hinzufügen" }).click();
   // Seit Testnotiz 03.10., #1 vorher Kraft oder Cardio -- ohne vorhandenen
   // Typ entfaellt nur die Frage nach "weiteres Geraet", diese nicht.
@@ -154,6 +159,7 @@ test("Trainer richtet ein Studio komplett ueber das Portal ein", async ({ page }
   await expect(page.getByRole("heading", { name: "Alle Gerätemodelle" })).toHaveCount(0);
   await page.getByLabel("Name").fill("Latzug");
   await page.getByLabel("Hersteller").fill("Technogym");
+  await typWaehlen(page, typName);
   // Kein Minimum mehr (Testnotiz 03.10., #2): es ist der Schritt. Schritt
   // 5 statt der Vorgabe 2,5, damit die Zeile unten zeigt, dass das Rad
   // getragen hat.

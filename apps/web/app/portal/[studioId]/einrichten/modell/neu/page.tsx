@@ -1,3 +1,4 @@
+import { ladeTypen } from "../../../catalog";
 import { Schrittleiste } from "../../../../bausteine/Schrittleiste";
 import { Seite } from "../../../../bausteine/Seite";
 import { ModellNeuFormular } from "./ModellNeuFormular";
@@ -9,6 +10,7 @@ export default async function ModellNeuPage({
   params: Promise<{ studioId: string }>;
 }) {
   const { studioId } = await params;
+  const typen = await ladeTypen();
 
   return (
     <>
@@ -20,7 +22,7 @@ export default async function ModellNeuPage({
           label: "Modell wählen",
         }}
       >
-        <ModellNeuFormular studioId={studioId} />
+        <ModellNeuFormular studioId={studioId} typen={typen} />
 
         <p className={styles.notiz}>
           Ohne Foto geht es nicht weiter — es ist der einzige Grund, warum
