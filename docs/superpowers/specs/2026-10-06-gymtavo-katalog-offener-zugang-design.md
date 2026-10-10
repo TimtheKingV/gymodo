@@ -189,7 +189,7 @@ Die Sensor-Befestigung wird je `machineId` gemerkt, ohne Gerät je `equipmentMod
 - `photo` ist `null` oder ein vorhandenes PNG bzw. JPEG. Vorerst wird es die Startpose einer zugehörigen Übung. Herstellerfotos bleiben wegen ungeklärter Rechte (`permission_pending`) draußen.
 - `equipment[].exercises` ist die Zuordnung. Die Reihenfolge ergibt `sort_order` je Gerätetyp. Jeder Schlüssel muss eine Übung der Datei sein, eine Übung darf an mehreren Typen hängen. Jede Übung hängt an mindestens einem Typ.
 - Übung: `volume_kind` ist `reps`, `seconds` oder `meters`. `target_min` und `target_max` sind ganze Zahlen mit `0 < min ≤ max ≤` Obergrenze der Umfangsart aus `belastung.ts`. `description` ist `null` oder nicht leer.
-- `video` ist `null` oder ein vorhandenes MP4 mit `duration_s` als ganze Zahl von 1 bis 45. Die Dauer wird nicht nachgemessen. Das Video gilt für die Übung, der Import hängt es an jede ihrer Verknüpfungen.
+- `video` ist `null` oder ein vorhandenes MP4 mit `duration_s` als ganze Zahl von 1 bis 45. Lässt sich die Dauer aus dem MP4 lesen, muss sie übereinstimmen. Das Video gilt für die Übung, der Import hängt es an jede ihrer Verknüpfungen.
 - Zusatzdaten, die die Datei pflegt und die Prüfung kontrolliert, der Import aber **noch nicht schreibt**:
   - `grip` ist `null` oder eins von `neutral`, `pronated`, `supinated`, `semi_pronated`, `semi_supinated`, `rotating`, `front_rack`, `none`.
   - `muscles`: mindestens ein `primary`, Rollen `primary` oder `secondary`, jeder Muskel aus `muscles[]` höchstens einmal.
