@@ -17,10 +17,13 @@ export function GymtavoTypFeld({
   typen,
   start,
   gross = false,
+  onChange,
 }: {
   typen: Pick<CatalogType, "id" | "name" | "manufacturer">[];
   start: string | null;
   gross?: boolean;
+  /** Das Modellformular fuellt damit vor (ModellVorlageFelder). */
+  onChange?: (typId: string) => void;
 }) {
   const [wert, setWert] = useState(start ?? "");
   const id = useId();
@@ -35,7 +38,10 @@ export function GymtavoTypFeld({
         id={id}
         name={TYP_FELD}
         value={wert}
-        onChange={setWert}
+        onChange={(neu) => {
+          setWert(neu);
+          onChange?.(neu);
+        }}
         optionen={typen.map((typ) => ({
           wert: typ.id,
           anzeige: typ.manufacturer ? `${typ.name} · ${typ.manufacturer}` : typ.name,
