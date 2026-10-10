@@ -85,6 +85,7 @@ public struct Zaehler: Sendable {
 
     private static func betrag(_ v: Vektor3) -> Double { (v.x * v.x + v.y * v.y + v.z * v.z).squareRoot() }
 
+    // Absoluter Betrag: setzt einen kleinen Gyro-Gleichanteil voraus, siehe ZaehlerProfil.ruheDrehrate.
     private func ruhig(_ m: SensorMesswert) -> Bool {
         Self.betrag(m.drehrate) < profil.ruheDrehrate
             && abs(Self.betrag(m.beschleunigung) - 1) < profil.ruheBeschleunigung

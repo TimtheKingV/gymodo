@@ -113,12 +113,15 @@ struct ZaehlerTests {
     }
 
     /// Spec B 5.3 "Achse der ersten Bewegung": ein kurzer Stoss um eine
-    /// andere Achse im Ruhevorlauf darf die Achse nicht festlegen.
-    @Test func einKurzerStossImVorlaufAendertDieZahlNicht() {
+    /// andere Achse im Ruhevorlauf darf die Achse nicht festlegen. 9 Grad/s
+    /// Bias auf der Bewegungsachse ist der Rand des unterstuetzten Bereichs
+    /// (Gleichanteil deutlich unter ruheDrehrate, siehe ZaehlerProfil).
+    @Test(arguments: [0.0, 9.0])
+    func einKurzerStossImVorlaufAendertDieZahlNicht(bias: Double) {
         let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 10)]).map { m in
-            guard m.t >= 1, m.t < 1.1 else { return m }
+            let x = m.t >= 1 && m.t < 1.1 ? 100 : m.drehrate.x
             return SensorMesswert(t: m.t, beschleunigung: m.beschleunigung,
-                                  drehrate: Vektor3(x: 100, y: m.drehrate.y, z: m.drehrate.z), winkel: m.winkel)
+                                  drehrate: Vektor3(x: x, y: m.drehrate.y + bias, z: m.drehrate.z), winkel: m.winkel)
         }
         #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .langhantel)) == 10)
     }
@@ -130,10 +133,12 @@ struct ZaehlerTests {
 
     /// Spec B 5.3 "der Ruhevorlauf zaehlt nie": ein Gleichanteil der
     /// Drehrate (Sensor-Bias) darf den Beginn nicht in den Vorlauf ziehen.
-    @Test func einDrehratenBiasZiehtDenBeginnNichtInDenVorlauf() throws {
+    /// 9 Grad/s ist der Rand des unterstuetzten Bereichs (siehe ZaehlerProfil).
+    @Test(arguments: [5.0, 9.0])
+    func einDrehratenBiasZiehtDenBeginnNichtInDenVorlauf(bias: Double) throws {
         let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 10)]).map { m in
             SensorMesswert(t: m.t, beschleunigung: m.beschleunigung,
-                           drehrate: Vektor3(x: m.drehrate.x, y: m.drehrate.y + 5, z: m.drehrate.z), winkel: m.winkel)
+                           drehrate: Vektor3(x: m.drehrate.x, y: m.drehrate.y + bias, z: m.drehrate.z), winkel: m.winkel)
         }
         let ereignisse = Synthetik.zaehlen(werte, art: .langhantel)
         #expect(Synthetik.anzahl(ereignisse) == 10)

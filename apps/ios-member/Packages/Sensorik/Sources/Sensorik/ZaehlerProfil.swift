@@ -32,6 +32,15 @@ public struct ZaehlerProfil: Equatable, Sendable {
     /// Messwertabstand, ab dem eine Luecke vorliegt (auch App im Hintergrund, Spec A 11.1).
     public let lueckeAb: TimeInterval
     /// Ruhe: Drehrate unter diesem Betrag (Grad/s) ...
+    ///
+    /// Verglichen wird der absolute Betrag. Das setzt einen Gyro-Gleichanteil
+    /// deutlich unter diesem Wert voraus: der werkskalibrierte Sensor zeigt in
+    /// Ruhe rund 0,1 Grad/s (Spec A 4), die Tests decken bis 9 Grad/s ab.
+    /// Liegt der Gleichanteil darueber, gilt kein Messwert als ruhig: die
+    /// Ruhe-Grundlinie wird nie gesetzt (Beginn der ersten Wiederholung
+    /// rutscht in den Vorlauf), und ein kurzer Stoss im Vorlauf kann die
+    /// Drehachse festlegen (Satz bleibt bei 0). Bewusst nicht abgefangen,
+    /// weil das ausserhalb der echten Eingaben liegt.
     public let ruheDrehrate: Double
     /// ... und Betrag der Beschleunigung so nah an 1 g.
     public let ruheBeschleunigung: Double
