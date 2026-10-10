@@ -9,6 +9,7 @@ import {
   type VolumeKind,
 } from "./belastung.js";
 import { DomainError } from "./errors.js";
+import { herkunftPruefen, repEventsSchema, volumeSourceSchema, type VolumeSource } from "./herkunft.js";
 import {
   gespeicherteVorschlaege,
   vorschlaegeFuerAbschluss,
@@ -79,6 +80,11 @@ export const recordSetInputSchema = z.preprocess(
     rir: z.number().min(0).max(10).nullish(),
     problemFlag: z.boolean().default(false),
     problemReason: problemReasonSchema.nullish(),
+    // Herkunft der Wiederholungszahl (Sensor-Spec B 6.3). Alte App-Versionen
+    // senden nichts davon und landen bei 'eingegeben'.
+    volumeSource: volumeSourceSchema.default("eingegeben"),
+    volumeCounted: z.number().int().min(1).max(1000).nullish(),
+    repEvents: repEventsSchema.nullish(),
     performedAt: z.string().datetime().optional(),
     // Der Beginn der Einheit, vom Client gesetzt ("Training starten",
     // Schnitt 4). Nur beim Anlegen der Session uebernommen, siehe recordSet.
@@ -98,7 +104,11 @@ export const recordSetInputSchema = z.preprocess(
       !value.performedAt ||
       Date.parse(value.sessionStartedAt) <= Date.parse(value.performedAt),
     { path: ["sessionStartedAt"], message: "Der Beginn der Einheit liegt nach dem Satz." },
-  ),
+  )
+  .superRefine((value, ctx) => {
+    const fehler = herkunftPruefen(value);
+    if (fehler) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["volumeSource"], message: fehler });
+  }),
 );
 
 export type RecordSetInput = z.infer<typeof recordSetInputSchema>;
@@ -119,6 +129,9 @@ export type RecordedSet = {
   rir: number | null;
   problemFlag: boolean;
   problemReason: ProblemReason | null;
+  volumeSource: VolumeSource;
+  /** Zaehlerstand beim Sichern; null bei 'eingegeben'. */
+  volumeCounted: number | null;
   performedAt: string;
 };
 
@@ -137,6 +150,8 @@ type SetRow = {
   rir: number | string | null;
   problem_flag: boolean;
   problem_reason: ProblemReason | null;
+  volume_source: VolumeSource;
+  volume_counted: number | null;
   performed_at: string;
 };
 
@@ -157,6 +172,8 @@ function toRecordedSet(row: SetRow): RecordedSet {
     rir: row.rir === null ? null : Number(row.rir),
     problemFlag: row.problem_flag,
     problemReason: row.problem_reason,
+    volumeSource: row.volume_source,
+    volumeCounted: row.volume_counted,
     performedAt: row.performed_at,
   };
 }
@@ -287,6 +304,15 @@ export async function recordSet(
     throw new DomainError("validation_failed", volumeZuGross(exercise.volume_kind));
   }
 
+  // Gezaehlt werden nur Wiederholungen (Sensor-Spec B 6.4). Eine
+  // "gemessene" Sekundenzahl waere eine Messung, die nie stattfand.
+  if (input.volumeSource !== "eingegeben" && exercise.volume_kind !== "reps") {
+    throw new DomainError(
+      "validation_failed",
+      "Nur Wiederholungen koennen gezaehlt sein.",
+    );
+  }
+
   // Nebenbelastung: Pflicht genau dann, wenn das Modell eine hat. Ein Satz
   // am Laufband ohne Neigung waere fuer die Regel eine andere Bedingung als
   // jeder Satz davor; ein Satz an der Beinpresse MIT Neigung ein Wert, den
@@ -356,12 +382,15 @@ export async function recordSet(
       rir: input.rir ?? null,
       problem_flag: input.problemFlag,
       problem_reason: input.problemReason ?? null,
+      volume_source: input.volumeSource,
+      volume_counted: input.volumeCounted ?? null,
+      rep_events: input.repEvents ?? null,
       // performed_at bleibt beim erneuten Senden unangetastet, weil es hier
       // nur mitgeschickt wird, wenn der Client es ausdruecklich setzt.
       ...(input.performedAt ? { performed_at: input.performedAt } : {}),
     })
     .select(
-      "id, studio_id, user_id, session_id, machine_id, equipment_model_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, performed_at",
+      "id, studio_id, user_id, session_id, machine_id, equipment_model_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, volume_source, volume_counted, performed_at",
     )
     .single<SetRow>();
 

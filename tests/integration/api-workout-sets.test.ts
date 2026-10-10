@@ -124,6 +124,21 @@ describe("PUT /api/v1/workout-sessions/{sessionId}/sets/{setId}", () => {
     expect(payload.load).toBe(80);
   });
 
+  it("liefert ohne Herkunftsangabe eingegeben und keinen Zaehlerstand", async () => {
+    const response = await PUT(
+      setRequest(body(), token),
+      params(newId(), newId()),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as {
+      volumeSource: string;
+      volumeCounted: number | null;
+    };
+    expect(payload.volumeSource).toBe("eingegeben");
+    expect(payload.volumeCounted).toBeNull();
+  });
+
   it("nimmt die Kennungen aus dem Pfad, nicht aus der Nutzlast", async () => {
     const sessionId = newId();
     const setId = newId();
