@@ -98,7 +98,11 @@ Versionsnummern werden nicht dauerhaft in diesem Dokument festgeschrieben. Bei P
 
 ### 2.3 Wichtigste Produktgrenze
 
-Ohne Sensorik kennt die Plattform nur Daten, die der Trainer vorgibt oder das Mitglied bestätigt. Sie darf nicht behaupten, die tatsächliche Ausführung, das eingestellte Gewicht oder die absolvierten Wiederholungen automatisch gemessen zu haben.
+> **Nachtrag 10. Oktober 2026** (Teilprojekt B, `docs/superpowers/specs/2026-10-10-sensor-wiederholungszaehler-design.md` §3): Die Grenze „die Plattform misst nichts“ ist aufgehoben. Es gilt:
+>
+> Die Plattform speichert nur, was das Mitglied bestätigt. Messen darf sie nur über den Bewegungssensor und nur, was ein Zähler mit nachgewiesener Güte erfasst — heute die Wiederholungen. Gewicht, Ausführungsqualität und Körperdaten misst sie nicht und behauptet es nicht. Jede gezählte Zahl trägt ihre Herkunft am Satz.
+
+~~Ohne Sensorik kennt die Plattform nur Daten, die der Trainer vorgibt oder das Mitglied bestätigt. Sie darf nicht behaupten, die tatsächliche Ausführung, das eingestellte Gewicht oder die absolvierten Wiederholungen automatisch gemessen zu haben.~~
 
 ---
 
@@ -1251,7 +1255,7 @@ Empfehlung: Die ersten vier Punkte in einem 90-minütigen Product-/Trainer-Works
 | App Review/TestFlight verzögert Pilot | Apple-Konten und Signierung in Woche 1, interner TestFlight-Pfad früh einrichten |
 | iOS-only schließt relevante Mitglieder aus | Pilot klar auf iPhone-Kohorte begrenzen und Android-Nachfrage separat messen |
 | Native App wächst um Studiofunktionen | harte Scope-Grenze: iOS enthält ausschließlich Member-Funktionen |
-| Progression wird als medizinische Empfehlung verstanden | klare Produktgrenze, konservative Regeln, Trainerkontrolle |
+| Progression wird als medizinische Empfehlung verstanden | klare Produktgrenze (seit 10.10.2026 in der Fassung aus §2.3), konservative Regeln, Trainerkontrolle |
 | Analytics erfasst sensible Daten | Allowlist-Events, Autocapture aus, PII-Scrubbing |
 | Frühzeitige technische Überkomplexität | modularer Backend-Monolith, nur ein nativer Member-Client, keine Microservices |
 | Abhängigkeit von Plattformanbietern | Standard-PostgreSQL, OpenAPI, Adapter und exportierbare Daten |

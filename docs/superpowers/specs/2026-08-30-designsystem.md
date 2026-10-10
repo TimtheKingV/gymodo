@@ -177,9 +177,9 @@ Daraus folgt direkt:
 - **Durchgehend Deutsch**, Du-Form, keine Ausrufezeichen, kein Motivationston. Die App ist ein Werkzeug am Gerät, kein Coach.
 - **Zeitangaben** in der Studio-Zeitzone (`studios.timezone`), Datum ausgeschrieben („Mi, 27. August").
 - **Kein Freitext zu Schmerzen, Verletzungen oder Gesundheit** — nirgendwo. Die Problemmeldung ist ein Boolean plus feste Liste (`schmerz`, `geraet_passt_nicht`, `zu_schwer`, `sonstiges`). Textfelder gibt es ausschließlich beim Login (E-Mail, Code).
-- **Produktgrenze im Klartext**, sichtbar auf Geräte-Screen und Profil:
+- **Produktgrenze im Klartext**, sichtbar auf Geräte-Screen und Profil (Wortlaut seit 10. Oktober 2026, Teilprojekt B §3.2; vorher „gymodo misst nichts. Angezeigt wird ausschließlich, was du selbst bestätigt hast. …“):
 
-  > gymodo misst nichts. Angezeigt wird ausschließlich, was du selbst bestätigt hast. Einweisungsvideos und Einstellhinweise sind Inhalte deines Studios, keine Trainings- oder Gesundheitsempfehlung von gymodo.
+  > Gymtavo speichert nur, was du bestätigst. Mit Sensor zählt Gymtavo deine Wiederholungen mit — du siehst die Zahl und entscheidest. Einweisungsvideos und Einstellhinweise sind Inhalte deines Studios, keine Trainings- oder Gesundheitsempfehlung von Gymtavo.
 
 - **Vorschläge sind eine Rechnung, keine Empfehlung.** Formulierung: „Vorschlag +2,5 kg", nie „Du solltest".
 - **Geräte werden stillgelegt, nie gelöscht.** Ein Gerät, das je einen Tag getragen hat, hat keinen Löschpfad — die Sprache muss das tragen.
@@ -225,7 +225,7 @@ Ein Diagramm in M1: der Gewichtsverlauf je Übung (Swift Charts, keine externe A
 - **Direkte Beschriftung nur an Anfang und Ende**, nie an jedem Punkt.
 - **Text trägt Textfarben, nie die Serienfarbe.**
 - Die Achse beginnt **nicht** bei null — Trainingsgewichte bewegen sich in einem schmalen Band; eine Nullachse macht jeden Fortschritt unsichtbar. Der Achsenbereich wird stattdessen sichtbar beschriftet.
-- **Unter dem Diagramm stehen die Rohwerte** der letzten Einheiten. Die Kurve ist eine Zusammenfassung; sie muss nachprüfbar bleiben, weil die Plattform nichts misst.
+- **Unter dem Diagramm stehen die Rohwerte** der letzten Einheiten. Die Kurve ist eine Zusammenfassung; sie muss nachprüfbar bleiben, weil nur Bestätigtes gespeichert wird.
 
 ---
 

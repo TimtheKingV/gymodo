@@ -432,6 +432,8 @@ Und die Gegenprobe: eine Beinpresse mit `kraft`, `kg`, 0–200, Schritt 2,5, ohn
 
 **Nebenwerte am Satz (Distanz, Puls, kcal).** Sie gehen nie in die Regel ein und das Gerät zeigt sie selbst; die Plattform misst nichts (Blueprint §2.3). Wenn sie ein Studio will, passt das Muster aus `member_machine_calibrations`: `observations jsonb` mit `schema_version`. Für v1 gestrichen.
 
+> **Nachtrag 10. Oktober 2026:** Der Grund ist jetzt: der Sensor zählt nur Wiederholungen; Nebenwerte liest das Mitglied weiter von der Anzeige ab. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.
+
 **Eine zweite Regel für Dauer-Progression.** Anfänger sollen erst länger, dann härter. Das löst der Trainer über den Korridor (15–20 min, dann eine neue Übung 25–30 min) oder über zwei Übungen, nicht über eine zweite Engine. Kommt allenfalls mit den Trainingsplänen (M3).
 
 **Laufender Timer im Geräte-Screen.** Nett, aber das Gerät hat eine Uhr, und das Mitglied liest die Endanzeige ab wie beim Gewicht. Verworfen für v1.

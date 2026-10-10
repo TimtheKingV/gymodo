@@ -156,6 +156,8 @@ Eine Kurve je Übung, Swift Charts, ohne externe Abhängigkeit. Umgesetzt nach �
 - **Die Achse beginnt nicht bei null**, der Bereich wird stattdessen sichtbar beschriftet — Trainingsgewichte bewegen sich in einem schmalen Band, eine Nullachse macht jeden Fortschritt unsichtbar
 - **Unter dem Diagramm stehen die Rohwerte** der letzten Einheiten. Die Plattform misst nichts; die Kurve ist eine Zusammenfassung und muss nachprüfbar bleiben
 
+> **Nachtrag 10. Oktober 2026:** Neue Texte: Home ‚Gymtavo zeigt, was du bestätigst.‘, Profil siehe Teilprojekt B §3.2. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.
+
 **Der Zeitraum-Umschalter (3 Monate · 6 Monate · Alles) filtert lokal** aus einem Abruf ohne `since`. Drei Umschaltungen wären sonst drei Netzabrufe — und ohne Netz wären zwei der drei Knöpfe tot. Der `since`-Parameter bleibt am Endpoint, ungenutzt vom Client; er kostet nichts und deckelt bei Bedarf den Serveraufwand.
 
 **VoiceOver** (§12): Beschriftung „Gewichtsverlauf Beinpresse, Beidbeinig", Audio Graph oder Wertetabelle als Alternative. Die Rohwerte unter dem Diagramm sind diese Tabelle — sie muss nicht zweimal gebaut werden.
@@ -195,6 +197,8 @@ Heute steht `@AppStorage("rirSichtbar")` mitten in `GeraetView` (Zeile 195). Ein
 Die Zeile öffnet eine Adresse, die der Betreiber liefert. Sie liegt als Wert in `AppConfig`; **ist der Wert leer, erscheint die Zeile nicht.** Damit kann sie nie ins Leere führen, und das Bauen wartet nicht auf einen Rechtstext.
 
 Der Produktgrenze-Satz darüber („gymodo misst nichts. Gespeichert wird nur, was du selbst bestätigst …") bleibt unabhängig davon stehen — er ist inhaltlich das Wichtigste an diesem Abschnitt und braucht kein Ziel.
+
+> **Nachtrag 10. Oktober 2026:** Neue Texte: Home ‚Gymtavo zeigt, was du bestätigst.‘, Profil siehe Teilprojekt B §3.2. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.
 
 ---
 

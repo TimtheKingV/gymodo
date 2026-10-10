@@ -235,6 +235,8 @@ Ein Tap auf eine Zeile hängt `.erkannt(machineId:, token: nil)` an den Pfad. Ge
 
 Der Grund steht auf Blatt 05 und ist keine Kosmetik: nach einem Scan war das Telefon nachweislich am Gerät, nach einer Auswahl hat jemand etwas angetippt. Ein Wort, das eine Messung behauptet, wo keine stattfand, verstößt gegen die Produktgrenze aus §10. Das Gerätefoto — das mit Abschnitt 3 nun auch auf diesem Weg da ist — übernimmt die Bestätigung ohne Worte.
 
+> **Nachtrag 10. Oktober 2026:** Die Regel gilt sinngemäß weiter: kein Wort behauptet eine Messung, wo keine stattfand. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.
+
 ### 6.4 Mehrere Studios
 
 Die Liste zeigt die Geräte eines Studios, vorbelegt mit `katalog.activeStudioId`. Nur wenn `bootstrap.studios.count > 1` **und** die Suche nichts gefunden hat, erscheint im leeren Zustand die Zeile „Auch in *anderes Studio* suchen" (Blatt 04).
