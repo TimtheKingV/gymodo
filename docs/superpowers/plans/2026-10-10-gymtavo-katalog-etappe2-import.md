@@ -64,7 +64,7 @@
 **Interfaces:**
 - Produces: Spalte `catalog_key text null` an `equipment_models` und `exercises`, Constraints `equipment_models_catalog_key_format`, `equipment_models_catalog_key_unique` (`unique (studio_id, catalog_key)`), entsprechend `exercises_catalog_key_format` und `exercises_catalog_key_unique`. Die Upserts in Task 6 nutzen `onConflict: "studio_id,catalog_key"`.
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 ```ts
 import { afterAll, describe, expect, it } from "vitest";
@@ -136,12 +136,12 @@ describe("catalog_key", () => {
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, er muss scheitern**
+- [x] **Step 2: Test laufen lassen, er muss scheitern**
 
 Run: `pnpm vitest run --config vitest.config.ts tests/integration/katalog-key.test.ts`
 Expected: FAIL. PostgREST meldet `PGRST204 Could not find the 'catalog_key' column`.
 
-- [ ] **Step 3: Migration schreiben**
+- [x] **Step 3: Migration schreiben**
 
 ```sql
 -- Gymtavo-Katalog Etappe 2: Import aus Datei, Spec
@@ -175,17 +175,17 @@ alter table public.exercises
     unique (studio_id, catalog_key);
 ```
 
-- [ ] **Step 4: Migration lokal anwenden, ohne Reset**
+- [x] **Step 4: Migration lokal anwenden, ohne Reset**
 
 Run: `pnpm exec supabase migration up`
 Expected: `Applying migration 0048_catalog_key.sql...`, danach `Local database is up to date.` Kein `db reset`, die Datenbank teilen sich mehrere Sitzungen.
 
-- [ ] **Step 5: Test laufen lassen, er muss bestehen**
+- [x] **Step 5: Test laufen lassen, er muss bestehen**
 
 Run: `pnpm vitest run --config vitest.config.ts tests/integration/katalog-key.test.ts`
 Expected: PASS (4 Tests).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/0048_catalog_key.sql tests/integration/katalog-key.test.ts
@@ -214,7 +214,7 @@ git log -1 --format=%B
   - `ort(roh: unknown, pfad: ReadonlyArray<string | number>): string`
   - Testdaten: `beispielKatalog(praefix?: string): { roh: BeispielRoh; dateien: Map<string, Uint8Array> }`, `pngBytes(rauschen?: number): Uint8Array`, `jpegBytes(rauschen?: number): Uint8Array`, `mp4Bytes(sekunden: number | null, rauschen?: number): Uint8Array`
 
-- [ ] **Step 1: Testdaten anlegen**
+- [x] **Step 1: Testdaten anlegen**
 
 `packages/domain/src/katalog-testdaten.ts`:
 
@@ -378,7 +378,7 @@ export type BeispielRoh = ReturnType<typeof beispielKatalog>["roh"];
 
 In `packages/domain/package.json` unter `exports` ergänzen: `"./katalog-testdaten": "./src/katalog-testdaten.ts"`. Den Unterpfad `./katalog-import` legt Task 6 an.
 
-- [ ] **Step 2: Die fehlschlagenden Tests schreiben**
+- [x] **Step 2: Die fehlschlagenden Tests schreiben**
 
 `packages/domain/src/katalog-datei.test.ts`:
 
@@ -511,12 +511,12 @@ describe("pruefeKatalog", () => {
 });
 ```
 
-- [ ] **Step 3: Tests laufen lassen, sie müssen scheitern**
+- [x] **Step 3: Tests laufen lassen, sie müssen scheitern**
 
 Run: `pnpm --filter @fitretro/domain exec vitest run src/katalog-datei.test.ts`
 Expected: FAIL mit `Failed to resolve import "./katalog-datei.js"`.
 
-- [ ] **Step 4: Umsetzung schreiben**
+- [x] **Step 4: Umsetzung schreiben**
 
 `packages/domain/src/katalog-datei.ts`:
 
@@ -795,12 +795,12 @@ export function pruefeKatalog(roh: unknown): Pruefung<KatalogDatei> {
 }
 ```
 
-- [ ] **Step 5: Tests laufen lassen, sie müssen bestehen**
+- [x] **Step 5: Tests laufen lassen, sie müssen bestehen**
 
 Run: `pnpm --filter @fitretro/domain exec vitest run src/katalog-datei.test.ts && pnpm --filter @fitretro/domain typecheck`
 Expected: PASS, Typecheck ohne Fehler. Weicht ein erwarteter Meldungstext ab, weil zod die Issue anders schneidet (etwa Pfad oder Code beim `discriminatedUnion`), dann den Test nur dann anpassen, wenn die neue Meldung Ort und Ursache weiterhin klar nennt.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/domain/src/katalog-datei.ts packages/domain/src/katalog-datei.test.ts packages/domain/src/katalog-testdaten.ts packages/domain/package.json
@@ -831,7 +831,7 @@ git log -1 --format=%B
 
 Eine Ergänzung zur Spec: Lässt sich die Dauer aus dem MP4 lesen (mvhd), muss sie mit `duration_s` übereinstimmen. `readVideoDurationSeconds` gibt es schon, eine ffprobe-Abhängigkeit kommt nicht dazu. Eine falsche Dauer würde in der App sonst eine falsche Länge anzeigen.
 
-- [ ] **Step 1: Die fehlschlagenden Tests schreiben**
+- [x] **Step 1: Die fehlschlagenden Tests schreiben**
 
 `packages/domain/src/katalog-medien.test.ts`:
 
@@ -947,12 +947,12 @@ describe("ladeKatalog", () => {
 });
 ```
 
-- [ ] **Step 2: Tests laufen lassen, sie müssen scheitern**
+- [x] **Step 2: Tests laufen lassen, sie müssen scheitern**
 
 Run: `pnpm --filter @fitretro/domain exec vitest run src/katalog-medien.test.ts src/katalog-laden.test.ts`
 Expected: FAIL. `./katalog-medien.js` und `./katalog-laden.js` lassen sich nicht auflösen.
 
-- [ ] **Step 3: Umsetzung schreiben**
+- [x] **Step 3: Umsetzung schreiben**
 
 `packages/domain/src/katalog-medien.ts`:
 
@@ -1104,12 +1104,12 @@ export function ladeKatalog(datei: string): Pruefung<GeladenerKatalog> {
 
 In Abschnitt 9.1 der Spec den Satz `Die Dauer wird nicht nachgemessen.` ersetzen durch: `Lässt sich die Dauer aus dem MP4 lesen, muss sie übereinstimmen.`
 
-- [ ] **Step 4: Tests laufen lassen, sie müssen bestehen**
+- [x] **Step 4: Tests laufen lassen, sie müssen bestehen**
 
 Run: `pnpm --filter @fitretro/domain exec vitest run src/katalog-medien.test.ts src/katalog-laden.test.ts && pnpm --filter @fitretro/domain typecheck`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/domain/src/katalog-medien.ts packages/domain/src/katalog-medien.test.ts packages/domain/src/katalog-laden.ts packages/domain/src/katalog-laden.test.ts docs/superpowers/specs/2026-10-06-gymtavo-katalog-offener-zugang-design.md
@@ -1155,7 +1155,7 @@ export type ImportPlan = {
 export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): ImportPlan;
 ```
 
-- [ ] **Step 1: Die fehlschlagenden Tests schreiben**
+- [x] **Step 1: Die fehlschlagenden Tests schreiben**
 
 `packages/domain/src/katalog-plan.test.ts`:
 
@@ -1307,12 +1307,12 @@ describe("planeImport", () => {
 });
 ```
 
-- [ ] **Step 2: Tests laufen lassen, sie müssen scheitern**
+- [x] **Step 2: Tests laufen lassen, sie müssen scheitern**
 
 Run: `pnpm --filter @fitretro/domain exec vitest run src/katalog-plan.test.ts`
 Expected: FAIL mit `Failed to resolve import "./katalog-plan.js"`.
 
-- [ ] **Step 3: Umsetzung schreiben**
+- [x] **Step 3: Umsetzung schreiben**
 
 `packages/domain/src/katalog-plan.ts`:
 
@@ -1563,12 +1563,12 @@ export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): Imp
 }
 ```
 
-- [ ] **Step 4: Tests laufen lassen, sie müssen bestehen**
+- [x] **Step 4: Tests laufen lassen, sie müssen bestehen**
 
 Run: `pnpm --filter @fitretro/domain exec vitest run src/katalog-plan.test.ts && pnpm --filter @fitretro/domain typecheck`
 Expected: PASS. Meckert der Typecheck, dass `IstGeraetetyp` nicht zu `Record<string, unknown>` passt, dann bekommt `vergleiche` als `ist`-Parameter den Typ `{ id: string } | undefined` und liest die Felder mit `(ist as Record<string, unknown>)[f]`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/domain/src/katalog-plan.ts packages/domain/src/katalog-plan.test.ts
@@ -1589,7 +1589,7 @@ git log -1 --format=%B
 **Interfaces:**
 - Produces: `berichtText(plan: ImportPlan): string`
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 An `katalog-plan.test.ts` anhängen (Import um `berichtText` ergänzen):
 
@@ -1620,12 +1620,12 @@ describe("berichtText", () => {
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, er muss scheitern**
+- [x] **Step 2: Test laufen lassen, er muss scheitern**
 
 Run: `pnpm --filter @fitretro/domain exec vitest run src/katalog-plan.test.ts`
 Expected: FAIL. `berichtText` wird nicht exportiert.
 
-- [ ] **Step 3: Umsetzung schreiben**
+- [x] **Step 3: Umsetzung schreiben**
 
 An `katalog-plan.ts` anhängen:
 
@@ -1673,12 +1673,12 @@ export function berichtText(plan: ImportPlan): string {
 }
 ```
 
-- [ ] **Step 4: Tests laufen lassen, sie müssen bestehen**
+- [x] **Step 4: Tests laufen lassen, sie müssen bestehen**
 
 Run: `pnpm --filter @fitretro/domain exec vitest run src/katalog-plan.test.ts && pnpm --filter @fitretro/domain typecheck`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/domain/src/katalog-plan.ts packages/domain/src/katalog-plan.test.ts
@@ -1706,7 +1706,7 @@ git log -1 --format=%B
   - `importiereKatalog(admin: SupabaseClient, katalog: KatalogDatei, medien: Medien, optionen: { trocken: boolean }): Promise<{ plan: ImportPlan; geschrieben: Geschrieben | null }>`
   - Re-Exporte: `GYMTAVO_STUDIO_ID`, `pruefeKatalog`, `pruefeMedien`, `ladeKatalog`, `planeImport`, `berichtText` sowie die Typen `KatalogDatei`, `Medien`, `Medium`, `ImportPlan`, `IstStand`, `Posten`.
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 `tests/integration/katalog-import.test.ts`:
 
@@ -1935,12 +1935,12 @@ describe("Fremdes, Abbrueche und vorhandene Objekte", () => {
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, er muss scheitern**
+- [x] **Step 2: Test laufen lassen, er muss scheitern**
 
 Run: `pnpm vitest run --config vitest.config.ts tests/integration/katalog-import.test.ts`
 Expected: FAIL, `@fitretro/domain/katalog-import` lässt sich nicht auflösen.
 
-- [ ] **Step 3: Umsetzung schreiben**
+- [x] **Step 3: Umsetzung schreiben**
 
 In `packages/domain/package.json` unter `exports` ergänzen: `"./katalog-import": "./src/katalog-import.ts"`.
 
@@ -2187,12 +2187,12 @@ export async function importiereKatalog(
 }
 ```
 
-- [ ] **Step 4: Test laufen lassen, er muss bestehen**
+- [x] **Step 4: Test laufen lassen, er muss bestehen**
 
 Run: `pnpm vitest run --config vitest.config.ts tests/integration/katalog-import.test.ts && pnpm typecheck`
 Expected: PASS (8 Tests). Scheitert ein Test mit PGRST204 zu einer Spalte, die es auf dem Branch gar nicht gibt, ist die geteilte Datenbank einer anderen Sitzung voraus (siehe Memory „Lokale Testumgebung: Fallen“). Dann vor jeder Fehlersuche `select max(version) from supabase_migrations.schema_migrations` prüfen.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/domain/src/katalog-import.ts packages/domain/package.json tests/integration/katalog-import.test.ts
@@ -2213,7 +2213,7 @@ git log -1 --format=%B
 **Interfaces:**
 - Consumes: `ladeKatalog`, `importiereKatalog`, `berichtText` aus `@fitretro/domain/katalog-import`, `DomainError` aus `@fitretro/domain`.
 
-- [ ] **Step 1: Skript schreiben**
+- [x] **Step 1: Skript schreiben**
 
 `scripts/catalog-import.ts`:
 
@@ -2302,7 +2302,7 @@ main().catch((fehler: unknown) => {
 
 In der Wurzel-`package.json` unter `scripts` nach `"tags"` ergänzen: `"catalog:import": "tsx scripts/catalog-import.ts"`.
 
-- [ ] **Step 2: Fehlerfall von Hand prüfen**
+- [x] **Step 2: Fehlerfall von Hand prüfen**
 
 ```bash
 D=/private/tmp/claude-501/-Users-timbuttner-Documents-fitness-app/f6409ea4-c1d0-4491-b2be-0d5f24836fc0/scratchpad/kaputt
@@ -2312,7 +2312,7 @@ pnpm catalog:import --hilfe
 ```
 Expected: `… Fehler in …, nichts geschrieben:`, darunter Zeilen wie `format: muss 1 sein` und `equipment[0] "Bank" key: darf nur a-z, 0-9 und _ enthalten`, danach `Exit: 1`. `--hilfe` gibt den Hilfetext aus.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add scripts/catalog-import.ts package.json
@@ -2332,7 +2332,7 @@ git log -1 --format=%B
 
 Das Paket gilt als nicht vertrauenswürdige Datenquelle. Das Python-Skript liegt deshalb in einem eigenen Ordner im Scratchpad, läuft mit `python3 -I` und bekommt die Paketpfade als Argumente. Keines der Skripte aus dem Paket wird ausgeführt.
 
-- [ ] **Step 1: Konverter schreiben**
+- [x] **Step 1: Konverter schreiben**
 
 `/private/tmp/claude-501/-Users-timbuttner-Documents-fitness-app/f6409ea4-c1d0-4491-b2be-0d5f24836fc0/scratchpad/konverter/gymtavo_konverter.py`:
 
@@ -2445,7 +2445,7 @@ print(f"{len(equipment)} Geraetetypen, {len(exercises)} Uebungen, "
       f"{sum(1 for e in exercises if e['video'])} Videos, {sum(1 for e in equipment if e['photo'])} Fotos")
 ```
 
-- [ ] **Step 2: Konverter laufen lassen**
+- [x] **Step 2: Konverter laufen lassen**
 
 ```bash
 python3 -I /private/tmp/claude-501/-Users-timbuttner-Documents-fitness-app/f6409ea4-c1d0-4491-b2be-0d5f24836fc0/scratchpad/konverter/gymtavo_konverter.py /Users/timbuttner/Downloads/GYMTAVO-Uebungsdatenbank "$PWD/catalog"
@@ -2453,7 +2453,7 @@ du -sh catalog/media; ls catalog/media/photos | wc -l; ls catalog/media/videos |
 ```
 Expected: `55 Geraetetypen, 162 Uebungen, 162 Videos, 55 Fotos`, Medien zusammen etwa 7 MB, 55 Fotos, 162 Videos.
 
-- [ ] **Step 3: Datei mit dem Trockenlauf prüfen**
+- [x] **Step 3: Datei mit dem Trockenlauf prüfen**
 
 Run: `pnpm catalog:import --dry-run`
 Expected:
@@ -2463,12 +2463,12 @@ Expected:
 
 Meldet die Prüfung Fehler, liegt das an den Paketdaten (etwa eine abweichende Videodauer). Den Fehler dann im Konverter oder in der Datei beheben, nicht in der Prüfung, und ihn im Ergebnis nennen.
 
-- [ ] **Step 4: Zielschutz gegenprüfen**
+- [x] **Step 4: Zielschutz gegenprüfen**
 
 Run: `SUPABASE_URL=https://beispiel.invalid pnpm catalog:import; echo "Exit: $?"`
 Expected: `Ziel: https://beispiel.invalid`, dann `validation_failed: Das ist kein lokales Ziel. …`, `Exit: 1`. Kein Netzwerkzugriff, weil der Schutz vor dem Client greift.
 
-- [ ] **Step 5: Lokal importieren, zweimal**
+- [x] **Step 5: Lokal importieren, zweimal**
 
 ```bash
 pnpm catalog:import
@@ -2480,14 +2480,14 @@ Expected:
 
 Der Bestand bleibt in der geteilten lokalen Datenbank. Das ist unschädlich, weil die Katalogtests anderer Sitzungen nach eigenen IDs filtern.
 
-- [ ] **Step 6: Sichtprobe der Daten**
+- [x] **Step 6: Sichtprobe der Daten**
 
 ```bash
 docker exec supabase_db_m0-fundament psql -U postgres -tAc "select catalog_key, name, load_unit, load_step from equipment_models where catalog_key in ('chest_press','treadmill') order by 1; select count(*) from exercises where catalog_key is not null and studio_id='00000000-0000-4000-8000-000000000001';"
 ```
 Expected: Brustpresse mit `kg|1`, Laufband mit `kmh|0.1`, 162 Übungen.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add catalog
@@ -2508,7 +2508,7 @@ git log -1 --format=%B
 **Files:**
 - Modify: `docs/superpowers/plans/2026-10-10-gymtavo-katalog-etappe2-import.md` (Häkchen, Abschnitt „Ergebnis“)
 
-- [ ] **Step 1: Alles laufen lassen**
+- [x] **Step 1: Alles laufen lassen**
 
 ```bash
 pnpm typecheck
@@ -2517,7 +2517,7 @@ pnpm test:integration
 ```
 Expected: alles grün. Rote Integrationstests vor der Fehlersuche gegen die bekannten Umgebungsfallen prüfen (geteilte Datenbank voraus, Docker-Uhr, `completeSession`-Flakes auf master) und im Ergebnis benennen. iOS ist nicht berührt, `xcodebuild test` entfällt.
 
-- [ ] **Step 2: Ergebnis eintragen und Häkchen setzen**
+- [x] **Step 2: Ergebnis eintragen und Häkchen setzen**
 
 Am Ende dieses Plans einen Abschnitt `## Ergebnis (<Datum>)` anlegen:
 - Testzahlen.
@@ -2526,7 +2526,7 @@ Am Ende dieses Plans einen Abschnitt `## Ergebnis (<Datum>)` anlegen:
 - Abweichungen vom Plan.
 - Was Tim vor dem Produktionsimport tun muss: Migration 0048 nach dem Merge auf sein Wort, danach `pnpm catalog:import --dry-run` gegen Produktion, dann mit `--ja`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/superpowers/plans/2026-10-10-gymtavo-katalog-etappe2-import.md
@@ -2537,3 +2537,28 @@ git log -1 --format=%B
 ```
 
 Nicht pushen. Auf Tims Ansage folgen Push, PR, CI, Merge und danach die Produktion.
+
+## Ergebnis (10. Oktober 2026)
+
+**Tests:**
+- `pnpm typecheck` grün.
+- `pnpm test` grün: Domain 273/273, Web 251/251.
+- `pnpm test:integration`: 742/751 im Gesamtlauf. Die 9 roten Tests liegen in `domain-catalog`, `equipment-setting-definitions-enum` und `studio-ueberblick` und scheiterten an `PGRST303 JWT issued at future` bzw. einem Timeout, also an der Umgebung. Beim zweiten Lauf derselben drei Dateien waren es 51/51.
+- Neu: `katalog-key` 4, `katalog-import` 8 Integrationstests; `katalog-datei` 10, `katalog-medien` 5, `katalog-laden` 3, `katalog-plan` 9 Unit-Tests.
+
+**Lokaler Import:**
+- Erster Lauf: 217 Uploads, 55 Geraetetypen, 89 Einstellungen, 162 Uebungen, 162 Verknuepfungen, 162 Videos.
+- Zweiter Lauf: alles `unveraendert`, 0 Schreibzugriffe.
+- `catalog/media` ist 6,0 MB gross (55 PNG, 162 MP4).
+
+**Abweichungen vom Plan:**
+- `meldung()` gibt fuer zods `int()`-Fehler (`invalid_type`, expected `integer`) die Meldung aus dem Schema zurueck.
+- `instruction_assets` verweist mit restrict, nicht per Kaskade, auf die Verknuepfung. Der Abbruch-Test und das Aufraeumen loeschen deshalb zuerst das Video.
+- Die Spec 9.1 verlangt jetzt, dass eine lesbare Videodauer mit `duration_s` uebereinstimmt.
+
+**Vor dem Produktionsimport (auf Tims Wort, nach dem Merge):**
+1. Migration 0048 auf Produktion anwenden.
+2. Mit Produktions-`SUPABASE_URL` und Service-Schluessel `pnpm catalog:import --dry-run` ausfuehren und den Plan lesen. Erwartet sind 55, 89, 162, 162 und 162 neu sowie Katalogzeilen ohne Schluessel, falls dort von Hand etwas angelegt wurde.
+3. Danach `pnpm catalog:import --ja`.
+
+Die Werte sind die technischen Platzhalter des Pakets (8-12 Wiederholungen, 1 kg Stufe, keine Grenzen) und vor produktivem Training in der Datei zu korrigieren.
