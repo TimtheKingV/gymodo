@@ -1,6 +1,7 @@
 #if DEBUG
 @preconcurrency import CoreBluetooth
 import Foundation
+import Sensorik
 import Observation
 
 /// Die einzige Datei mit Core Bluetooth (Spec 5.3).

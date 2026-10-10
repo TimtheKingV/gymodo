@@ -12,6 +12,8 @@ packages:
   Supabase:
     url: https://github.com/supabase/supabase-swift
     from: 2.0.0
+  Sensorik:
+    path: Packages/Sensorik
 
 targets:
   FitnessMember:
@@ -50,6 +52,7 @@ targets:
     dependencies:
       - package: Supabase
         product: Auth
+      - package: Sensorik
     entitlements:
       path: FitnessMember/FitnessMember.entitlements
       properties:
@@ -83,6 +86,7 @@ targets:
         DEVELOPMENT_TEAM: ZJP24W38LQ
     dependencies:
       - target: FitnessMember
+      - package: Sensorik
 
 schemes:
   FitnessMember:

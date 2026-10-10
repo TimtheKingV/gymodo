@@ -1,5 +1,6 @@
 #if DEBUG
 import Foundation
+import Sensorik
 import Observation
 
 /// Eine Aufnahme als Sensor. Dafuer gibt es das Protokoll: der Zaehler in B

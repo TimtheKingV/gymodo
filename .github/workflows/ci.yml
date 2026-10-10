@@ -6,6 +6,15 @@ on:
   pull_request:
 
 jobs:
+  # Der Zaehler und das Aufnahmeformat sind reines Foundation (Sensor-Spec
+  # B 5.1) -- Linux reicht und kostet einen Bruchteil eines macOS-Runners.
+  sensorik:
+    runs-on: ubuntu-latest
+    container: swift:6.2-noble
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test --package-path apps/ios-member/Packages/Sensorik
+
   web:
     runs-on: ubuntu-latest
     steps:

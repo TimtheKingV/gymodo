@@ -1,7 +1,7 @@
 #if DEBUG
 import Foundation
 import Testing
-@testable import FitnessMember
+@testable import Sensorik
 
 struct SensorStatistikTests {
     @Test func leerIstNull() {

@@ -1,4 +1,5 @@
 #if DEBUG
+import Sensorik
 import SwiftUI
 
 /// Diagnose und Ratentest (Spec 7.2). Bewusst eine schlichte Form aus

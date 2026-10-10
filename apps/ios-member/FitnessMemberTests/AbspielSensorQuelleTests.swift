@@ -1,5 +1,6 @@
 #if DEBUG
 import Foundation
+import Sensorik
 import Testing
 @testable import FitnessMember
 
