@@ -1,6 +1,7 @@
 import { ladeTypen } from "../../../catalog";
 import { Schrittleiste } from "../../../../bausteine/Schrittleiste";
 import { Seite } from "../../../../bausteine/Seite";
+import { typVorlagen } from "../../../../bausteine/typVorlage";
 import { ModellNeuFormular } from "./ModellNeuFormular";
 import styles from "../../halle.module.css";
 
@@ -22,13 +23,13 @@ export default async function ModellNeuPage({
           label: "Modell wählen",
         }}
       >
-        <ModellNeuFormular studioId={studioId} typen={typen} />
+        <ModellNeuFormular studioId={studioId} typen={typVorlagen(typen)} />
 
         <p className={styles.notiz}>
-          Ohne Foto geht es nicht weiter — es ist der einzige Grund, warum
-          jemand vor dem falschen Gerät merkt, dass er falsch steht.
-          Beschreibungen trägst du am Schreibtisch nach, die Einstellungen
-          kommen im nächsten Schritt.
+          Ein Foto hilft, das Gerät in der Halle wiederzufinden. Ohne eigenes
+          Foto zeigt das Gerät die Zeichnung seines Gymtavo-Typs, wenn es eine
+          gibt. Beschreibungen trägst du am Schreibtisch nach, die
+          Einstellungen kommen im nächsten Schritt.
         </p>
       </Seite>
     </>

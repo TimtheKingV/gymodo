@@ -103,6 +103,40 @@ test("Schritt 1 legt ein Modell mit Pflichtfoto an und geht zu den Einstellungen
   await expect(page.getByText("Foto · Steht")).toBeVisible();
 });
 
+test("Schritt 1 kommt ohne eigenes Foto aus, wenn der Typ eine Zeichnung hat", async ({ page }) => {
+  const { admin, studioId } = await studioMitTrainer(page, "einrichten-typfoto");
+  const { typName } = await gymtavoTyp(admin, "Beinstrecker", [], {
+    einstellungen: [{ key: "back_rest", label: "Lehne", kind: "number" }],
+    foto: true,
+  });
+
+  await page.goto(`/portal/${studioId}/einrichten/modell/neu`);
+  const weiter = page.getByRole("button", { name: "Weiter zu den Einstellungen" });
+  await expect(weiter).toBeDisabled();
+  await typWaehlen(page, typName);
+  await expect(page.getByText(
+    "Ohne eigenes Foto zeigt das Gerät die Gymtavo-Zeichnung. Ein echtes Foto hilft Mitgliedern, das Gerät zu erkennen.",
+  )).toBeVisible();
+  await expect(weiter).toBeEnabled();
+  await weiter.click();
+
+  await expect(page).toHaveURL(
+    new RegExp(`/portal/${studioId}/einrichten/modell/[0-9a-f-]+/einstellungen$`),
+    { timeout: 60_000 },
+  );
+  await expect(page.getByText("Foto · Steht")).toBeVisible();
+  await expect(page.getByText("Lehne")).toBeVisible();
+});
+
+test("Schritt 1 verlangt ein Foto, wenn der Typ keine Zeichnung hat", async ({ page }) => {
+  const { admin, studioId } = await studioMitTrainer(page, "einrichten-ohne-typfoto");
+  const { typName } = await gymtavoTyp(admin, "Sonstiges");
+
+  await page.goto(`/portal/${studioId}/einrichten/modell/neu`);
+  await typWaehlen(page, typName);
+  await expect(page.getByRole("button", { name: "Weiter zu den Einstellungen" })).toBeDisabled();
+});
+
 test("Schritt 2 fragt ein fehlendes Foto nach und nimmt Parameter auf", async ({
   page,
 }) => {
