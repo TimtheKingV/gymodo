@@ -20,12 +20,15 @@ export function ModellReiter({
   einstellungenZusatz,
   uebungenZusatz,
   instanzenZusatz,
+  mitInstanzen = true,
 }: {
   studioId: string;
   modelId: string;
   einstellungenZusatz: string;
   uebungenZusatz: string;
   instanzenZusatz: string;
+  /** false im Gymtavo-Studio: ein Typ hat keine Geraete im Raum. */
+  mitInstanzen?: boolean;
 }) {
   const segment = useSelectedLayoutSegment();
   const basis = `/portal/${studioId}/geraete/${modelId}`;
@@ -47,12 +50,16 @@ export function ModellReiter({
           zusatz: uebungenZusatz,
           aktiv: segment === "uebungen",
         },
-        {
-          href: `${basis}/instanzen`,
-          label: "Einzelne Geräte",
-          zusatz: instanzenZusatz,
-          aktiv: segment === "instanzen",
-        },
+        ...(mitInstanzen
+          ? [
+              {
+                href: `${basis}/instanzen`,
+                label: "Einzelne Geräte",
+                zusatz: instanzenZusatz,
+                aktiv: segment === "instanzen",
+              },
+            ]
+          : []),
       ]}
     />
   );

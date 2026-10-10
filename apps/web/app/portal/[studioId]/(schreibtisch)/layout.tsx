@@ -25,6 +25,7 @@ export default async function StudioLayout({
         studioName={katalog.studioName}
         email={user?.email ?? ""}
         zahlen={zahlen}
+        istKatalog={katalog.isCatalog}
       />
       <main className={styles.content}>{children}</main>
     </div>

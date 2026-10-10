@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { DomainError, getStudioOverview, listCourseWeek } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { erreichbarkeit, ladeKatalog } from "../catalog";
@@ -38,6 +39,9 @@ export default async function UeberblickPage({
 }) {
   const { studioId } = await params;
   const katalog = await ladeKatalog(studioId);
+  // Der Ueberblick zaehlt Mitglieder, Kurse und Geraete im Raum -- nichts
+  // davon gibt es im Gymtavo-Studio. Dort ist die Typliste der Anfang.
+  if (katalog.isCatalog) redirect(`/portal/${studioId}/geraete`);
   const client = await createServerSupabaseClient();
 
   // Wie in leute/page.tsx: der Fehler bleibt auf der Seite, statt sie

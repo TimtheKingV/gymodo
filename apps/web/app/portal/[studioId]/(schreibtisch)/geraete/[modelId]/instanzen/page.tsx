@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AktionsFormular, AktionsKnopf, Feld } from "../../../../../Form";
 import { geraetAnlegen, geraetStilllegen, geraetWiederInBetrieb } from "../../../../../actions";
 import { ladeKatalog } from "../../../../catalog";
+import { nichtImKatalog } from "../../../../katalogStudio";
 import styles from "../../../../../portal.module.css";
 
 /**
@@ -43,6 +44,7 @@ export default async function ModellInstanzenPage({
   params: Promise<{ studioId: string; modelId: string }>;
 }) {
   const { studioId, modelId } = await params;
+  await nichtImKatalog(studioId);
   const katalog = await ladeKatalog(studioId);
   const modell = katalog.models.find((eintrag) => eintrag.id === modelId);
   if (!modell) notFound();

@@ -61,4 +61,23 @@ describe("MobileNav", () => {
     fireEvent.click(screen.getByText("Trainerportal"));
     expect(schublade.hasAttribute("open")).toBe(true);
   });
+
+  it("zeigt im Gymtavo-Studio nur Geraetetypen und Einstellungen", () => {
+    render(
+      <MobileNav
+        studioId="s1"
+        studioName="Gymtavo"
+        email="team@example.org"
+        zahlen={{ geraete: 0, erreichbar: 0, vorrat: 0, mitglieder: 0, mitarbeiter: 1 }}
+        istKatalog
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Menü öffnen" }));
+
+    expect(screen.getByRole("link", { name: /Gerätetypen/ })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Einstellungen/ })).toBeTruthy();
+    for (const name of [/Überblick/, /Kurse/, /Tags/, /Leute/]) {
+      expect(screen.queryByRole("link", { name })).toBeNull();
+    }
+  });
 });

@@ -1,5 +1,6 @@
 import { DomainError, getStudioSettings } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { ladeKatalog } from "../../catalog";
 import { Reiter } from "../../../bausteine/Reiter";
 import { Seite } from "../../../bausteine/Seite";
 import styles from "../../../portal.module.css";
@@ -106,12 +107,15 @@ export default async function EinstellungenPage({
         stornofristStunden={einstellungen.cancellationDeadlineHours}
       />
 
-      <BeitrittscodeKarte
-        studioId={studioId}
-        pfad={pfad}
-        code={einstellungen.joinCode}
-        active={einstellungen.joinCodeActive}
-      />
+      {/* Dem Gymtavo-Studio tritt niemand bei (Waechter aus 0047). */}
+      {(await ladeKatalog(studioId)).isCatalog ? null : (
+        <BeitrittscodeKarte
+          studioId={studioId}
+          pfad={pfad}
+          code={einstellungen.joinCode}
+          active={einstellungen.joinCodeActive}
+        />
+      )}
     </Seite>
   );
 }

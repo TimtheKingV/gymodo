@@ -80,8 +80,12 @@ export default async function GeraetePage({
 
   return (
     <Seite
-      titel="Geräte"
-      vorspann="Ein Modell beschreibt den Gerätetyp. Die einzelnen Geräte im Raum sind Instanzen davon — zwei Kabelzüge nebeneinander sind ein Modell und zwei Geräte."
+      titel={katalog.isCatalog ? "Gerätetypen" : "Geräte"}
+      vorspann={
+        katalog.isCatalog
+          ? "Die Gymtavo-Gerätetypen mit ihren Übungen. Studios ordnen ihre Modelle diesen Typen zu."
+          : "Ein Modell beschreibt den Gerätetyp. Die einzelnen Geräte im Raum sind Instanzen davon — zwei Kabelzüge nebeneinander sind ein Modell und zwei Geräte."
+      }
     >
       {/*
         Ein Link auf den eigenen Ablauf statt eines aufklappenden Formulars
@@ -89,11 +93,14 @@ export default async function GeraetePage({
         anderen Geraete nicht darunter stehen, und nach den Stammdaten
         geht es mit "Weiter" durch Einstellungen, Uebungen und Geraete.
       */}
-      <div className={bausteine.hinzufuegenLeiste}>
-        <Link href={`/portal/${studioId}/geraete/neu`} className={styles.primary}>
-          + Gerät hinzufügen
-        </Link>
-      </div>
+      {/* Typen anlegen ist Katalogpflege -- Etappe 6. */}
+      {katalog.isCatalog ? null : (
+        <div className={bausteine.hinzufuegenLeiste}>
+          <Link href={`/portal/${studioId}/geraete/neu`} className={styles.primary}>
+            + Gerät hinzufügen
+          </Link>
+        </div>
+      )}
 
       {katalog.models.length > 0 ? (
         <Reiter
@@ -162,11 +169,15 @@ export default async function GeraetePage({
                         ) : (
                           <span className={styles.absent}>Ohne Hersteller</span>
                         )}
-                        {" · "}
-                        {stand.geraete === 0 ? (
-                          <span className={styles.absent}>noch kein Gerät</span>
-                        ) : (
-                          `${stand.geraete} ${stand.geraete === 1 ? "Gerät" : "Geräte"}, ${stand.erreichbar} erreichbar`
+                        {katalog.isCatalog ? null : (
+                          <>
+                            {" · "}
+                            {stand.geraete === 0 ? (
+                              <span className={styles.absent}>noch kein Gerät</span>
+                            ) : (
+                              `${stand.geraete} ${stand.geraete === 1 ? "Gerät" : "Geräte"}, ${stand.erreichbar} erreichbar`
+                            )}
+                          </>
                         )}
                         {" · "}
                         {modell.exercises.length === 0 ? (

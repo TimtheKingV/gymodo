@@ -33,6 +33,7 @@ export function MobileNav({
   zahlen,
   extra,
   nurMobil = true,
+  istKatalog = false,
 }: {
   studioId: string;
   studioName: string;
@@ -45,6 +46,7 @@ export function MobileNav({
       false in der Halle (einrichten/layout.tsx): dort gibt es keine
       Desktop-Ansicht, die die Kopfleiste ersetzen koennte. */
   nurMobil?: boolean;
+  istKatalog?: boolean;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const pfad = usePathname();
@@ -141,6 +143,7 @@ export function MobileNav({
               studioName={studioName}
               email={email}
               zahlen={zahlen}
+              istKatalog={istKatalog}
             />
           ) : null}
         </div>

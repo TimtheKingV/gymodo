@@ -91,6 +91,7 @@ export default async function ModellLayout({
         einstellungenAnzahl={modell.settingDefinitions.length}
         uebungenAnzahl={uebungenAnzahl}
         nochZuTun={<NochZuTun punkte={punkte} />}
+        mitInstanzen={!katalog.isCatalog}
       >
         {children}
       </ModellRahmen>
