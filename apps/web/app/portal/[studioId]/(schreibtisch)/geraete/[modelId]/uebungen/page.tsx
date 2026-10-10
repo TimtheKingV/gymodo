@@ -6,6 +6,7 @@ import {
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
+  gymtavoUebungLoesen,
   gymtavoUebungVerknuepfen,
   uebungAendern,
   uebungAnlegen,
@@ -142,7 +143,7 @@ export default async function ModellUebungenPage({
                   )}
                   loesen={
                     zeile.herkunft === "angehaengt" && zeile.linkId
-                      ? uebungLoesen.bind(null, studioId, modelId, zeile.linkId)
+                      ? gymtavoUebungLoesen.bind(null, studioId, modelId, zeile.linkId)
                       : null
                   }
                 />

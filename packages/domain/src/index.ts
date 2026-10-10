@@ -68,6 +68,7 @@ export {
   exerciseInputSchema,
   exercisePatchSchema,
   catalogTypeRequired,
+  detachCatalogExercise,
   getStudioCatalog,
   listCatalogTypes,
   listStudioExercises,

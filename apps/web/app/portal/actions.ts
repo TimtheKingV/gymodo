@@ -15,6 +15,7 @@ import {
   createSettingDefinition,
   deactivateMachine,
   deleteSettingDefinition,
+  detachCatalogExercise,
   detachExercise,
   prepareInstructionVideoUpload,
   reactivateMachine,
@@ -317,6 +318,17 @@ export async function gymtavoUebungVerknuepfen(
 ): Promise<ActionResult> {
   return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
     await attachExerciseToModel(client, { equipmentModelId: modelId, exerciseId });
+  }, "layout");
+}
+
+/** Angehaengte Gymtavo-Uebung loesen, samt eigenem Video des Studios. */
+export async function gymtavoUebungLoesen(
+  studioId: string,
+  modelId: string,
+  linkId: string,
+): Promise<ActionResult> {
+  return fuehreAus(`/portal/${studioId}/geraete/${modelId}`, async (client) => {
+    await detachCatalogExercise(client, linkId);
   }, "layout");
 }
 

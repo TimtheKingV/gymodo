@@ -98,7 +98,11 @@ export function GymtavoZeile({
               <AktionsKnopf
                 aktion={loesen}
                 label="Übung lösen"
-                bestaetigung="Wirklich lösen?"
+                bestaetigung={
+                  zeile.eigenesVideo
+                    ? "Das eigene Video wird mit gelöscht. Wirklich lösen?"
+                    : "Wirklich lösen?"
+                }
                 art="destructive"
               />
             </div>

@@ -10,6 +10,7 @@ import {
   type VolumeKind,
 } from "./belastung.js";
 import { DomainError } from "./errors.js";
+import { VIDEO_BUCKET } from "./media.js";
 import { requireStudioStaff } from "./studio.js";
 
 /**
@@ -573,6 +574,58 @@ export async function detachExercise(
       "An dieser Uebung haengt ein Einweisungsvideo. Erst das Video loeschen.",
     );
   }
+  if (error) throw new DomainError("internal", error.message);
+}
+
+/**
+ * Gymtavo-Uebung vom Studio-Modell loesen -- samt eigenem Video des Studios.
+ *
+ * detachExercise verweigert das bei einem Video (0019 haelt es fest), und
+ * fuer eigene Uebungen bleibt das so. Eine Gymtavo-Uebung aber wird nach
+ * einem Typwechsel ohne Zutun des Trainers zur "angehaengten"; ohne diesen
+ * Weg saehen Mitglieder sie fuer immer, denn ein eigenes Video-Loeschen
+ * kennt das Portal nicht (Nachtrag 10.1). Das Video haengt an dieser
+ * Verknuepfung und gehoert dem Studio -- mit ihr verliert es seinen Sinn.
+ */
+export async function detachCatalogExercise(
+  client: SupabaseClient,
+  linkId: string,
+): Promise<void> {
+  const userId = await requireUserId(client);
+  const { data } = await client
+    .from("equipment_model_exercises")
+    .select("equipment_model_id, exercises (studio_id), instruction_assets (id, storage_path)")
+    .eq("id", linkId)
+    .maybeSingle<{
+      equipment_model_id: string;
+      exercises: { studio_id: string };
+      instruction_assets: Array<{ id: string; storage_path: string }>;
+    }>();
+  if (!data) throw new DomainError("not_found", "Diese Zuordnung gibt es nicht.");
+
+  const { studioId } = await studioOfModel(client, data.equipment_model_id);
+  await requireStudioStaff(client, studioId, userId);
+  if (data.exercises.studio_id === studioId) {
+    throw new DomainError(
+      "validation_failed",
+      "Das ist eine eigene Uebung, keine Gymtavo-Uebung.",
+    );
+  }
+
+  if (data.instruction_assets.length > 0) {
+    const { error: videoError } = await client
+      .from("instruction_assets")
+      .delete()
+      .eq("equipment_model_exercise_id", linkId);
+    if (videoError) throw new DomainError("internal", videoError.message);
+    // Nach der Zeile, nicht davor: ein verwaister Eintrag ohne Datei waere
+    // ein kaputtes Video am Geraet, eine Datei ohne Eintrag nur Ballast.
+    await client.storage
+      .from(VIDEO_BUCKET)
+      .remove(data.instruction_assets.map((video) => video.storage_path));
+  }
+
+  const { error } = await client.from("equipment_model_exercises").delete().eq("id", linkId);
   if (error) throw new DomainError("internal", error.message);
 }
 

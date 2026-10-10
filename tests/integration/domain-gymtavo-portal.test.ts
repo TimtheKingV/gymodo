@@ -5,6 +5,7 @@ import {
   catalogTypeRequired,
   createEquipmentModel,
   createExercise,
+  detachCatalogExercise,
   getStudioCatalog,
   listCatalogTypes,
   prepareInstructionVideoUpload,
@@ -249,3 +250,63 @@ describe("catalogTypeRequired", () => {
     expect(await catalogTypeRequired(client, GYMTAVO)).toBe(false);
   });
 });
+
+describe("detachCatalogExercise", () => {
+  // Nach einem Typwechsel steht eine Gymtavo-Uebung mit eigenem Video als
+  // "angehaengt" da. Loesen muss gehen, sonst sehen Mitglieder sie fuer
+  // immer -- das Portal kennt kein eigenes Video-Loeschen (Nachtrag 10.1).
+  it("loest eine Gymtavo-Uebung samt eigenem Video", async () => {
+    const client = await userClient(trainerA);
+    const { id } = await createEquipmentModel(client, {
+      studioId: studioA,
+      name: `Loesen ${kennung}`,
+      loadStep: 2.5,
+      catalogModelId: typ2,
+    });
+    const link = await attachExerciseToModel(client, {
+      equipmentModelId: id,
+      exerciseId: katalogUebung1,
+    });
+    const admin = serviceClient();
+    const { error } = await admin.from("instruction_assets").insert({
+      equipment_model_exercise_id: link.id,
+      kind: "video",
+      storage_path: `${studioA}/exercises/${link.id}/${kennung}.mp4`,
+      duration_s: 12,
+    });
+    if (error) throw error;
+
+    await detachCatalogExercise(client, link.id);
+
+    const { data: links } = await admin
+      .from("equipment_model_exercises")
+      .select("id")
+      .eq("id", link.id);
+    const { data: videos } = await admin
+      .from("instruction_assets")
+      .select("id")
+      .eq("equipment_model_exercise_id", link.id);
+    expect(links).toEqual([]);
+    expect(videos).toEqual([]);
+  });
+
+  it("negativ: eine eigene Uebung bleibt beim bisherigen Weg", async () => {
+    const client = await userClient(trainerA);
+    const { id } = await createEquipmentModel(client, {
+      studioId: studioA,
+      name: `Eigene loesen ${kennung}`,
+      loadStep: 2.5,
+    });
+    const eigene = await createExercise(client, {
+      studioId: studioA,
+      name: `Eigene ${kennung}`,
+      targetMin: 8,
+      targetMax: 12,
+    });
+    const link = await attachExerciseToModel(client, { equipmentModelId: id, exerciseId: eigene.id });
+    await expect(detachCatalogExercise(client, link.id)).rejects.toMatchObject({
+      code: "validation_failed",
+    });
+  });
+});
+
