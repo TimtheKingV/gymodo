@@ -128,6 +128,34 @@ test("Schritt 1 kommt ohne eigenes Foto aus, wenn der Typ eine Zeichnung hat", a
   await expect(page.getByText("Lehne")).toBeVisible();
 });
 
+test("Schritt 1: scheitert das eigene Foto, kommen Einstellungen und Zeichnung trotzdem", async ({ page }) => {
+  const { admin, studioId } = await studioMitTrainer(page, "einrichten-foto-kaputt");
+  const { typName } = await gymtavoTyp(admin, "Butterfly", [], {
+    einstellungen: [{ key: "seat_height", label: "Sitzhöhe", kind: "number" }],
+    foto: true,
+  });
+
+  await page.goto(`/portal/${studioId}/einrichten/modell/neu`);
+  await typWaehlen(page, typName);
+  // Gibt sich als JPEG aus, ist aber keins -- der Server prueft den Inhalt.
+  await page.getByLabel("Foto des Modells").setInputFiles({
+    name: "kaputt.jpg",
+    mimeType: "image/jpeg",
+    buffer: Buffer.from("kein Bild"),
+  });
+  await page.getByRole("button", { name: "Weiter zu den Einstellungen" }).click();
+  await expect(page.getByText("Nur JPEG und PNG sind als Geraetefoto moeglich.")).toBeVisible();
+
+  const { data: modell, error } = await admin
+    .from("equipment_models")
+    .select("id, photo_path, equipment_setting_definitions (key)")
+    .eq("studio_id", studioId)
+    .single();
+  if (error) throw error;
+  expect(modell.equipment_setting_definitions.map((e: { key: string }) => e.key)).toEqual(["seat_height"]);
+  expect(modell.photo_path?.startsWith(`${studioId}/models/`)).toBe(true);
+});
+
 test("Schritt 1 verlangt ein Foto, wenn der Typ keine Zeichnung hat", async ({ page }) => {
   const { admin, studioId } = await studioMitTrainer(page, "einrichten-ohne-typfoto");
   const { typName } = await gymtavoTyp(admin, "Sonstiges");

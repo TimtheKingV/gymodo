@@ -123,24 +123,33 @@ export async function modellAnlegen(
       });
     } catch (fehler) {
       const antwort = fehlerAus(fehler, "Das Foto liess sich nicht speichern.");
-      // Das Modell steht trotzdem -- der Gang geht weiter, Schritt 2 fragt das
-      // Foto nach. Ein Rollback waere hier der schlechtere Zustand.
+      // Das Modell steht trotzdem -- und bekommt, was der Typ weiss, sonst
+      // fehlten ihm die Einstellungen fuer immer: niemand ruft die Kopie
+      // spaeter noch einmal auf. Ein Rollback waere der schlechtere Zustand.
+      await typVorlageKopieren(client, modelId);
       revalidatePath(`/portal/${studioId}/einrichten`);
       return antwort;
     }
   }
 
-  try {
-    // Nach dem eigenen Foto: copyTypeDefaults laesst ein vorhandenes Foto
-    // stehen und nimmt die Zeichnung nur, wenn keins da ist.
-    await copyTypeDefaults(client, modelId);
-  } catch (fehler) {
-    // Was fehlt, fragt Schritt 2 nach (Foto) oder zeigt es (Einstellungen).
-    console.error("Typvorlage nicht vollstaendig kopiert:", fehler);
-  }
+  // Nach dem eigenen Foto: copyTypeDefaults laesst ein vorhandenes Foto
+  // stehen und nimmt die Zeichnung nur, wenn keins da ist.
+  await typVorlageKopieren(client, modelId);
 
   revalidatePath(`/portal/${studioId}/einrichten`);
   return { ok: true, modelId };
+}
+
+/** Was fehlt, fragt Schritt 2 nach (Foto) oder zeigt es (Einstellungen). */
+async function typVorlageKopieren(
+  client: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  modelId: string,
+): Promise<void> {
+  try {
+    await copyTypeDefaults(client, modelId);
+  } catch (fehler) {
+    console.error("Typvorlage nicht vollstaendig kopiert:", fehler);
+  }
 }
 
 async function typHatFoto(
