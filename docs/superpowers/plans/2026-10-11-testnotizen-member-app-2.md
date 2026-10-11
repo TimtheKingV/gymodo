@@ -182,4 +182,32 @@ Der neue Ablauf beim Wählen einer Übung (Liste, Geräteseite, Scan, Direktweg)
 
 ## Geprüft
 
-(nach der Umsetzung ausfüllen)
+Etappen 1–7 umgesetzt in 9 Commits (`5bbcbaa` bis `17caca5`). Etappe 8 (#15) folgt als eigener PR.
+
+- **Rot vor Grün:** Etappen 1, 2, 4 und 5 liefen nachweislich zuerst rot (Kompilier- bzw. Assertion-Fehler).
+  - Etappe 3: Tests und Umsetzung entstanden in einem Zug, ein Rot-Lauf vor der Umsetzung fehlt.
+  - Etappe 6: ein Charakterisierungstest, weil `belastungGewaehlt` in der Pause schon richtig arbeitete.
+- **Domain/Web:**
+  - `pnpm typecheck` grün, `npx tsc --noEmit` (Wurzel, inkl. e2e) grün.
+  - `pnpm test` grün (domain 312, web 303).
+- **Integration:** `pnpm test:integration` mit 815 von 818 Tests grün.
+  - Rot sind `domain-complete-session` (2) und `api-workout-sets` „beendet die eigene Session“ (500).
+  - Beide sind in der Memory als umgebungsbedingt vermerkt (auch auf sauberem master rot) und berühren diesen Branch nicht.
+  - Ein vierter Fehler (`api-me` „liefert die Kopfzeile mit“) erwartete noch `thisWeekCount: null` ohne Studio. Er ist an die neue Regel angepasst (`17caca5`).
+- **iOS:** `xcodebuild test` mit dem ganzen Satz grün, 1045 Tests in 107 Suites.
+- **Sichtcheck im Simulator** (Wegwerf-UI-Test gegen das lokale Backend, Freies Training, frisches Mitglied):
+  - #1: Die Serie steht im Freien Training, vor dem ersten Satz mit 0 Wochen, danach mit 1 Woche und der Hantel am Sonntag.
+  - #2/#3/#4: Die Fortschrittszeile zeigt das Video links, den Namen ohne Nummer und rechts „0,0 kg“ mit grauem Trend „±0“. Bei einem Trainingstag gibt es keinen Graphen, wie geplant. Steigende und fallende Kurve wurden mangels Mehrtagesdaten nicht im Bild gesehen, nur per Test.
+  - #5: Geräteseite der Ab-/Adduktorenmaschine: Beide Zeilen zeigen das Video, nicht das Figuren-Icon.
+  - #16: „Weitere Übung“ zeigt in beiden Zeilen das Video.
+  - #6/#7: Der Drawer beginnt mit „Schritt 1 von 2 · Einweisung“, das Video steht sofort ohne Play-Knopf. „Weiter“ führt zu „Schritt 2 von 2 · Startwerte“.
+  - #10: „Übung starten“ öffnet die Satzseite mit dem Ring „GLEICH GEHT’S LOS · 3“, nach sechs Sekunden stehen die Räder. „Los!“ selbst fiel zwischen zwei Aufnahmen und ist nur per Test belegt.
+  - #12: In der Pause stehen „+30 s · Gewicht · Abschließen“ in einer Zeile. „Gewicht“ öffnet den Drawer mit dem Rad und „Übernehmen“.
+  - #13: Ein Tipp auf den Titel zeigt die Einweisung mit „Zurück zum Satz“.
+  - #8/#9: „Training beenden“ ohne Satz zeigt den Toast über dem QR-Knopf, vier Sekunden später ist er weg.
+  - Gefunden und behoben (`2c81806`): Die Geräteseite und der Home-Einstieg nannten noch „Training starten“.
+- **Am Gerät noch ansehen:**
+  - #5 auf dem iPhone mit den Prod-Daten: Die Screenshots der Testnotizen (`drawHierarchy`) erfassen Videoebenen nicht, daher bitte mit dem Auge prüfen.
+  - Die Trendfarben Lime/Gelb mit echten Verläufen.
+  - Wie sich der Countdown am Gerät anfühlt (fünf Sekunden plus „Los!“).
+  - Die Höhe des Drawers auf dem 13 mini (Startwerte allein ist gemessen; mit Einweisung volle Höhe, unten bleibt Luft).
