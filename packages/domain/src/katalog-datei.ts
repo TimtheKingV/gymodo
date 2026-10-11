@@ -69,6 +69,11 @@ const einstellungSchema = z.discriminatedUnion("kind", [
     .strict(),
 ]);
 
+// Alle vier oder keiner: so verlangt es equipment_models_secondary_all_or_none (0046).
+const nebenbelastungSchema = z
+  .object({ unit: z.enum(LOAD_UNITS), step: positiv, min: nichtNegativ, max: nichtNegativ })
+  .strict();
+
 const geraetetypSchema = z
   .object({
     key: schluessel,
@@ -80,11 +85,7 @@ const geraetetypSchema = z
     load_step: positiv,
     load_min: nichtNegativ,
     load_max: nichtNegativ.nullable(),
-    // Alle vier oder keiner: so verlangt es equipment_models_secondary_all_or_none (0046).
-    secondary: z
-      .object({ unit: z.enum(LOAD_UNITS), step: positiv, min: nichtNegativ, max: nichtNegativ })
-      .strict()
-      .nullable(),
+    secondary: nebenbelastungSchema.nullable(),
     settings: z.array(einstellungSchema),
     exercises: z.array(schluessel),
   })
@@ -116,6 +117,31 @@ const uebungSchema = z
   })
   .strict();
 
+const httpsAdresse = z.string().regex(/^https:\/\/\S+$/, "muss eine https-Adresse sein");
+
+// Spec 2026-10-10-gymtavo-katalog-geraeteeinrichtung-design.md, 6.2.
+// Die Belastung ist hier nullable und wird in querPruefen als Ganzes
+// geprueft -- zod kennt "alle vier oder keins" ueber Geschwisterfelder nicht.
+const produktSchema = z
+  .object({
+    key: schluessel,
+    manufacturer: text,
+    series: text.nullable(),
+    name: text,
+    model_code: text.nullable(),
+    product_url: httpsAdresse.nullable(),
+    types: z.array(schluessel).min(1, "braucht mindestens einen Geraetetyp"),
+    note: text.nullable(),
+    photo: medienPfad.nullable(),
+    photo_rights: z.enum(["pending", "cleared"]),
+    load_unit: z.enum(LOAD_UNITS).nullable(),
+    load_step: positiv.nullable(),
+    load_min: nichtNegativ.nullable(),
+    load_max: nichtNegativ.nullable(),
+    secondary: nebenbelastungSchema.nullable(),
+  })
+  .strict();
+
 const katalogSchema = z
   .object({
     format: z.literal(1),
@@ -125,13 +151,15 @@ const katalogSchema = z
         .object({
           key: schluessel,
           title: text,
-          url: z.string().regex(/^https:\/\/\S+$/, "muss eine https-Adresse sein"),
+          url: httpsAdresse,
           accessed_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "muss ein Datum JJJJ-MM-TT sein"),
         })
         .strict(),
     ),
     equipment: z.array(geraetetypSchema),
     exercises: z.array(uebungSchema),
+    // Optional (Plan-Entscheidung P2): Dateien von vor Etappe B bleiben gueltig.
+    products: z.array(produktSchema).default([]),
   })
   .strict();
 
@@ -139,6 +167,7 @@ export type KatalogDatei = z.infer<typeof katalogSchema>;
 export type Geraetetyp = KatalogDatei["equipment"][number];
 export type Uebung = KatalogDatei["exercises"][number];
 export type Einstellung = Geraetetyp["settings"][number];
+export type Produkt = KatalogDatei["products"][number];
 
 export type Pruefung<T> = { ok: true; wert: T } | { ok: false; fehler: string[] };
 
@@ -214,6 +243,7 @@ function querPruefen(k: KatalogDatei): string[] {
   eindeutig("sources", k.sources.map((q) => q.key));
   eindeutig("equipment", k.equipment.map((g) => g.key));
   eindeutig("exercises", k.exercises.map((u) => u.key));
+  eindeutig("products", k.products.map((p) => p.key));
 
   const uebungen = new Set(k.exercises.map((u) => u.key));
   const muskeln = new Set(k.muscles.map((m) => m.key));
@@ -260,6 +290,25 @@ function querPruefen(k: KatalogDatei): string[] {
     }
     for (const q of u.sources) {
       if (!quellen.has(q)) fehler.push(`${wo} sources: Quelle "${q}" gibt es in sources nicht`);
+    }
+  });
+  const typen = new Set(k.equipment.map((g) => g.key));
+  k.products.forEach((p, i) => {
+    const wo = `products[${i}] "${p.key}"`;
+    for (const d of doppelte(p.types)) fehler.push(`${wo} types: Geraetetyp "${d}" kommt mehrfach vor`);
+    for (const t of p.types) {
+      if (!typen.has(t)) fehler.push(`${wo} types: Geraetetyp "${t}" gibt es in equipment nicht`);
+    }
+    // Wie catalog_products_load_all_or_none (0050): ein halbes Raster ist keins.
+    const gesetzt = [p.load_unit, p.load_step, p.load_min, p.load_max].filter((w) => w !== null).length;
+    if (gesetzt !== 0 && gesetzt !== 4) {
+      fehler.push(`${wo}: load_unit, load_step, load_min und load_max nur alle zusammen oder keins`);
+    }
+    if (p.load_min !== null && p.load_max !== null && p.load_max < p.load_min) {
+      fehler.push(`${wo}: load_max ist kleiner als load_min`);
+    }
+    if (p.secondary !== null && p.secondary.max < p.secondary.min) {
+      fehler.push(`${wo}: secondary.max ist kleiner als secondary.min`);
     }
   });
   return fehler;
