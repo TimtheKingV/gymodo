@@ -123,4 +123,27 @@ struct VorschauLaderTests {
         #expect(bildZwei != nil)
         #expect(ZaehlendesURLProtocol.anzahl == 1)
     }
+    /// Nach einem Neustart ist der Speicher leer, die Platte nicht: das
+    /// Foto kommt ohne zweiten Abruf (Testnotiz 11.10., #14).
+    @Test func einNeuerLaderFindetDasFotoInDerAblage() async throws {
+        let ordner = FileManager.default.temporaryDirectory
+            .appendingPathComponent("fotoablage-\(UUID().uuidString)")
+        let daten = jpeg()
+        let abrufe = Abrufe()
+        let ablage = { Medienablage(ordner: ordner, endung: "bild") { _ in await abrufe.zaehlen(); return daten } }
+        let url = URL(string: "https://example.test/fotos/m1.jpg?token=a")!
+
+        let erstes = await VorschauLader(ablage: ablage()).bild(modellId: "m1", url: url, kantePixel: 168)
+        let nachNeustart = await VorschauLader(ablage: ablage())
+            .bild(modellId: "m1", url: URL(string: "https://example.test/fotos/m1.jpg?token=b")!, kantePixel: 168)
+
+        #expect(erstes != nil)
+        #expect(nachNeustart != nil)
+        #expect(await abrufe.anzahl == 1)
+    }
+
+    private actor Abrufe {
+        var anzahl = 0
+        func zaehlen() { anzahl += 1 }
+    }
 }

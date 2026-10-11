@@ -19,8 +19,9 @@ export const dynamic = "force-dynamic";
  * me/courses.
  *
  * Optional, anders als dort: der Verlauf gehoert dem Mitglied, nicht dem
- * Studio. Ohne den Parameter faellt nur die Wochenzahl weg -- wer sein
- * letztes Studio verlassen hat, behaelt Verlauf und Gesamtzahl.
+ * Studio. Ohne den Parameter zaehlt die Woche in der Zeitzone des
+ * Katalogs (Freies Training, Testnotiz 11.10., #1) -- wer sein letztes
+ * Studio verlassen hat, behaelt Verlauf, Gesamtzahl und Serie.
  */
 const parameterSchema = z.object({
   studio: z.string().uuid("Der Parameter studio ist keine gueltige UUID.").optional(),

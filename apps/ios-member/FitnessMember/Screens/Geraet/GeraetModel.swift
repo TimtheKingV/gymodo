@@ -57,6 +57,9 @@ final class GeraetModel {
     /// falsche Form: es kann nicht sagen, dass gerade KEINE Pause laeuft,
     /// WEIL nichts mehr geplant ist.
     enum Phase: Equatable {
+        /// Der Countdown nach "Übung starten" im Drawer (Testnotiz 11.10.,
+        /// #10): fuenf Sekunden und "Los!", dann die Raeder.
+        case bereit(Resttimer)
         /// Raeder und "Satz N sichern".
         case eingabe
         /// Nur Kopf und Pausenrad. Der Timer traegt seinen Endzeitpunkt
@@ -186,7 +189,8 @@ final class GeraetModel {
         sessions: WorkoutSessionStore,
         enqueue: @escaping (PendingSetWrite) -> Void,
         satzZiel: @escaping () -> Int = { Einstellungen.satzZiel() },
-        mitschnitt: (any SatzMitschnitt)? = nil
+        mitschnitt: (any SatzMitschnitt)? = nil,
+        startwerte: Startwerte? = nil
     ) {
         self.station = station
         self.uebungId = uebungId
@@ -214,6 +218,27 @@ final class GeraetModel {
         belastung = Rastwerte.naechster(zu: belastung, in: belastungsWerte)
         umfang = Rastwerte.naechster(zu: umfang, in: umfangsWerte)
         nebenbelastung = nebenbelastungVorbelegt(aus: letzter?.secondaryLoad)
+
+        // Aus dem Drawer (Testnotiz 11.10., #10, #11): die dort gewaehlten
+        // Werte gehoeren dem Mitglied, ein spaeter Vorschlag ersetzt sie
+        // nicht. Der Countdown laeuft nur nach diesem Start, nicht im
+        // Zirkel ueber die Blockliste.
+        if let startwerte {
+            belastung = Rastwerte.naechster(zu: startwerte.belastung, in: belastungsWerte)
+            umfang = Rastwerte.naechster(zu: startwerte.umfang, in: umfangsWerte)
+            if let neben = startwerte.nebenbelastung, nebenmodell != nil {
+                nebenbelastung = Rastwerte.naechster(zu: neben, in: nebenbelastungsWerte)
+                nebenbelastungVomNutzer = true
+            }
+            belastungVomNutzer = true
+            phase = .bereit(Resttimer(dauer: Startcountdown.dauer))
+        }
+    }
+
+    /// Was der Drawer an die Satzseite weitergibt: die Raeder, wie sie
+    /// gerade stehen.
+    var startwerte: Startwerte {
+        Startwerte(belastung: belastung, umfang: umfang, nebenbelastung: nebenbelastung)
     }
 
     /// Letzter Satz an diesem Geraet und dieser Uebung, sonst das Minimum
@@ -475,21 +500,10 @@ final class GeraetModel {
         )
     }
 
-    /// Die Regel "wann kommt der Drawer": nur vor dem ersten Satz DIESES
-    /// Geraeteblocks, und nur, wenn es einen Rueckblick gibt. satzNummer liest
-    /// live aus der lokalen Session -- im Zirkel zurueck am selben Geraet ist
-    /// der erste Satz laengst gesichert, auch wenn bootstrap ihn nicht kennt.
-    var rueckblickFaellig: Bool { satzNummer == 1 && rueckblick != nil }
-
-    /// Ob der Drawer gerade steht. GeraetScreen bindet sein Sheet daran.
-    var rueckblickOffen = false
-
-    /// Einmal beim Oeffnen des Screens -- nicht nach jedem Satz und nicht beim
-    /// Uebungswechsel. Der Drawer ist der Blick zurueck VOR dem ersten Satz;
-    /// danach waere er eine Karte, die den Satzpfad wieder hoeher macht
-    /// (Punkt 12).
+    /// Einmal beim Oeffnen des Screens. Der Blick zurueck auf den letzten
+    /// Satz steht seit der Testnotiz 11.10. (#10) im Drawer VOR der
+    /// Satzseite (Startwerte), nicht mehr als eigenes Sheet auf ihr.
     func geraetGeoeffnet() {
-        rueckblickOffen = rueckblickFaellig
         // Kommt das Mitglied per Zurueck wieder auf den Screen, laeuft .task
         // erneut und der Mitschnitt beginnt neu. In Pause und Abschluss
         // stehen keine Raeder da -- dort laeuft nichts.
@@ -535,12 +549,12 @@ final class GeraetModel {
                 naechsterSetIndex: sessions.naechsterSetIndex(station: station, exerciseId: uebungId))
     }
 
-    /// Ob gerade ein Training laeuft -- der Erstkontakt haengt
-    /// "Training starten" nur ohne an (Testnotiz 06.10., #5).
+    /// Ob gerade ein Training laeuft -- der Drawer nennt dann, dass "Übung
+    /// starten" die Uhr startet.
     var trainingLaeuft: Bool { sessions.aktiveSession() != nil }
 
-    /// Der letzte Schritt des Erstkontakts ohne laufendes Training. Derselbe
-    /// Store-Aufruf wie hinter TrainingStartView.
+    /// "Übung starten" im Drawer startet ein noch nicht laufendes Training
+    /// mit (Testnotiz 11.10., #11).
     func trainingStarten() { sessions.trainingStarten() }
 
     /// Pflichtort laut designsystem.md SS10.
@@ -713,6 +727,14 @@ final class GeraetModel {
         // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
         // eine Pause vor einem Satz, der nicht kommt, ist nur Wartezeit.
         phase = satzNummer > satzZiel ? .abschluss : .neuePause()
+    }
+
+    /// Ablauf oder Tipp auf den Ring: die Raeder kommen, und erst jetzt
+    /// beginnt der Mitschnitt -- waehrend des Countdowns wird nicht trainiert.
+    func countdownBeenden() {
+        guard case .bereit = phase else { return }
+        phase = .eingabe
+        mitschnittBeginnen()
     }
 
     func pauseVerlaengern() {

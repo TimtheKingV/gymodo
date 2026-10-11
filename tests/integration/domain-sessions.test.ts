@@ -362,11 +362,15 @@ describe("getSessions -- summary", () => {
     expect(summary.totalCount).toBe(51);
   });
 
-  it("laesst die Wochenzahl ohne Studio weg", async () => {
+  it("rechnet ohne Studio in der Zeitzone des Katalogs (Testnotiz 11.10., #1)", async () => {
     const client = await userClient(memberAEmail);
     const { summary } = await getSessions(client);
 
-    expect(summary.thisWeekCount).toBeNull();
+    // Freies Training hat kein aktives Studio. Die Serie zaehlt ohnehin
+    // alle Einheiten des Mitglieds; es fehlte nur die Zeitzone fuer die
+    // Wochengrenze, und der Streifen auf Home verschwand.
+    expect(summary.thisWeekCount).not.toBeNull();
+    expect(summary.streak).not.toBeNull();
     // Die Gesamtzahl bleibt: der Verlauf gehoert dem Mitglied, nicht dem
     // Studio -- wer sein letztes Studio verlaesst, behaelt ihn.
     expect(summary.totalCount).toBeGreaterThan(0);

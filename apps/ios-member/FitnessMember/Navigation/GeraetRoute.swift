@@ -13,12 +13,10 @@ enum GeraetRoute: Hashable {
     // ein Typ bekommt seinen Ort beim Aufloesen aus dem aktuellen Ort --
     // eine offene Einheit erzwingt ueber Ortswechsel ohnehin denselben.
     case erkannt(station: String, token: String?)
-    /// "Training starten" -- nur ohne laufendes Training (TrainingStart.ziel).
-    /// Mit dem Tap dort entsteht die Einheit; der Fall wird dann durch
-    /// `geraet` ERSETZT, damit "Zurueck" vom Satzpfad nicht auf einen
-    /// Startknopf fuer ein Training fuehrt, das schon laeuft.
-    case start(station: String, exerciseId: String, token: String?)
-    case geraet(station: String, exerciseId: String, token: String?)
+    /// Die Satzseite. `start` kommt aus dem Drawer vor der Uebung (Testnotiz
+    /// 11.10., #10) und laesst sie mit dem Countdown beginnen; ohne (Zirkel
+    /// ueber die Blockliste) stehen gleich die Raeder.
+    case geraet(station: String, exerciseId: String, token: String?, start: Startwerte? = nil)
     /// Der Abschluss-Screen (Aufgabe 6) braucht die Zahlen der beendeten
     /// Einheit -- sessionId dient nur der Nachverfolgung, die Anzeige
     /// selbst kommt vollstaendig aus zusammenfassung.

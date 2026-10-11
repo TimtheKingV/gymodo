@@ -45,9 +45,9 @@ final class WorkoutSessionStore {
     /// (Entschieden 2) ist Struktur, nicht Disziplin. Wer einen
     /// Start-Endpoint baut, verliert das.
     ///
-    /// Idempotent: laeuft schon eine Einheit, bleibt sie. Der Startscreen
-    /// kommt zwar nur ohne laufendes Training (TrainingStart.ziel), aber ein
-    /// zweiter Tap darf die Uhr nicht zuruecksetzen.
+    /// Idempotent: laeuft schon eine Einheit, bleibt sie. "Übung starten"
+    /// ruft das zwar nur ohne laufendes Training, aber ein zweiter Tap darf
+    /// die Uhr nicht zuruecksetzen.
     @discardableResult
     func trainingStarten(jetzt: Date = Date()) -> LokaleSession {
         if let laufende = aktiveSession(jetzt: jetzt) { return laufende }

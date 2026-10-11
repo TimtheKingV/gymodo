@@ -3,8 +3,8 @@ import SwiftUI
 /// "Was machst du heute?" -- die Uebungsliste eines erkannten Geraets.
 ///
 /// Ein Tap auf eine Uebung waehlt sie; es gibt keinen Bestaetigungsknopf
-/// (designsystem.md SS8). Ohne laufendes Training folgt "Training starten"
-/// (TrainingStart.ziel, Schnitt 4), sonst direkt der Satzpfad.
+/// (designsystem.md SS8). Darauf folgt der Drawer mit Einweisung und
+/// Startwerten ueber dieser Seite (Testnotiz 11.10., #6, #10).
 struct GeraetErkanntView: View {
     let modell: GeraetModel
     let beiAuswahl: (String) -> Void
@@ -53,20 +53,7 @@ struct GeraetErkanntView: View {
     /// bei zwei baugleichen Stationen der eigentliche Nutzen. Offline gibt
     /// es keine signierte URL, dann steht hier der Platzhalter.
     private var geraetefoto: some View {
-        AsyncImage(url: modell.kontext?.equipmentModel.photoUrl.flatMap(URL.init(string:))) { bild in
-            bild.resizable().aspectRatio(contentMode: .fill)
-        } placeholder: {
-            ZStack {
-                DesignSystem.Color.surfaceRaised
-                Image(systemName: "photo")
-                    .font(.system(size: 28))
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-            }
-        }
-        .frame(height: 180)
-        .frame(maxWidth: .infinity)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .accessibilityHidden(true)
+        Geraetefoto(url: modell.kontext?.equipmentModel.photoUrl.flatMap(URL.init(string:)), hoehe: 180)
     }
 
     private var geraetename: some View {
@@ -174,7 +161,7 @@ struct GeraetErkanntView: View {
     }
 
     private var hinweis: some View {
-        Text("Ein Tap wählt die Übung. Läuft noch kein Training, kommt vor dem ersten Satz „Training starten“. Trainierst du hier immer dasselbe, überspringt Gymtavo diese Liste künftig.")
+        Text("Ein Tap wählt die Übung, danach stellst du deine Startwerte ein. Trainierst du hier immer dasselbe, überspringt Gymtavo diese Liste künftig.")
             .font(.system(size: 12))
             .foregroundStyle(DesignSystem.Color.textFaint)
             .lineSpacing(3)
@@ -200,8 +187,8 @@ struct GeraetErkanntScreen: View {
             // Online zeigt das Geraetefoto den eigentlichen Nutzen bei zwei
             // baugleichen Stationen (designsystem.md SS8) -- der Offline-
             // Platzhalter in GeraetErkanntView bleibt unveraendert. Die
-            // Trainingsuhr laeuft hier NICHT los: seit Schnitt 4 beginnt die
-            // Einheit erst mit "Training starten" (TrainingStartView).
+            // Trainingsuhr laeuft hier NICHT los: die Einheit beginnt erst
+            // mit "Übung starten" im Drawer (Testnotiz 11.10., #11).
             .task { await modell.kontextLaden() }
     }
 }

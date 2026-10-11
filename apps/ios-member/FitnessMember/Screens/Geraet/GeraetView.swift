@@ -21,6 +21,11 @@ struct GeraetView: View {
     /// "Training beenden" aus dem Dialog an der Uhr (Testnotiz 05.10.,
     /// #11). Den Abschluss zeigt die Wurzel des Training-Tabs.
     var beiTrainingBeenden: () -> Void = {}
+    /// "Gewicht" in der Pause (Testnotiz 11.10., #12): ein Drawer mit dem
+    /// Rad, der Wert gilt ab dem naechsten Satz.
+    var beiGewichtAendern: () -> Void = {}
+    /// Tipp auf Titel oder Video: die Einweisung noch einmal (#13).
+    var beiEinweisung: () -> Void = {}
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(WorkoutSessionStore.self) private var sessions
@@ -105,11 +110,9 @@ struct GeraetView: View {
         }
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
-        // Seit Schnitt 4 startet die Trainingsuhr nicht mehr hier, sondern
-        // mit "Training starten" (WorkoutSessionStore.trainingStarten) --
-        // dieser Screen kommt erst danach. geraetGeoeffnet() bleibt im
-        // .task: der Drawer haengt am selben Moment wie zuvor, einmal beim
-        // Oeffnen, nicht nach jedem Satz.
+        // Die Trainingsuhr startet nicht hier, sondern mit "Übung starten"
+        // im Drawer davor (Testnotiz 11.10., #11). geraetGeoeffnet()
+        // beginnt einmal beim Oeffnen den Mitschnitt, nicht nach jedem Satz.
         .task { modell.geraetGeoeffnet(); await modell.kontextLaden() }
         // Die Pause muss sich selbst beenden. Vorher lief sie gegen einen
         // Zustand, den niemand zuruecksetzte: der Balken blieb auf 00:00
@@ -187,9 +190,13 @@ struct GeraetView: View {
     /// Die eine Stelle, an der der Screen entscheidet, was er ist.
     @ViewBuilder
     private var inhalt: some View {
-        if let pause = modell.laufendePause {
+        if case .bereit(let countdown) = modell.phase {
+            startcountdown(countdown)
+                .transition(.opacity)
+        } else if let pause = modell.laufendePause {
             PausenRad(timer: pause,
                       beiVerlaengern: modell.pauseVerlaengern,
+                      beiGewicht: beiGewichtAendern,
                       beiWeiter: modell.pauseBeenden,
                       // Derselbe Weg wie "Uebung abschliessen" unter den
                       // Raedern -- nur ohne den Umweg ueber "Weiter".
@@ -206,6 +213,32 @@ struct GeraetView: View {
             WertZeile(modell: modell)
             Spacer(minLength: 0)
             aktionen
+        }
+    }
+
+    /// Fuenf Sekunden und "Los!" im Ring der Pause, dann die Raeder
+    /// (Testnotiz 11.10., #10). Ein Tipp auf den Ring ueberspringt ihn --
+    /// wer schon in Position ist, wartet nicht.
+    private func startcountdown(_ countdown: Resttimer) -> some View {
+        VStack(spacing: DesignSystem.Spacing.s24) {
+            Spacer(minLength: 0)
+            Button(action: modell.countdownBeenden) {
+                Zeitring(timer: countdown, beschriftung: "GLEICH GEHT’S LOS") {
+                    Startcountdown.anzeige(restsekunden: $0)
+                }
+            }
+            .buttonStyle(PressButtonStyle())
+            .accessibilityLabel("Gleich geht’s los")
+            .accessibilityHint("Startet sofort")
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Wie der Ablauf der Pause: der Countdown beendet sich selbst.
+        .task(id: countdown.endetAm) {
+            let rest = countdown.endetAm.timeIntervalSinceNow
+            if rest > 0 { try? await Task.sleep(for: .seconds(rest)) }
+            guard !Task.isCancelled else { return }
+            modell.countdownBeenden()
         }
     }
 
@@ -253,11 +286,21 @@ struct GeraetView: View {
     /// #7) -- daneben statt darueber, weil das Hoehenbudget auf 667 pt
     /// keine eigene Zeile hergibt (siehe unten). Ohne Video faellt die
     /// Kachel samt Abstand weg, statt dem Namen Breite zu nehmen.
+    /// Ein Knopf fuer Video und Namen: wer mitten im Training nachsehen
+    /// will, wie die Uebung geht, tippt auf das, was er sieht (Testnotiz
+    /// 11.10., #13).
     private var geraetUndUebung: some View {
-        HStack(alignment: .center, spacing: 0) {
-            UebungsVideoKachel(exerciseId: modell.aktiveUebung?.id, kante: 56)
-            namen
+        Button(action: beiEinweisung) {
+            HStack(alignment: .center, spacing: 0) {
+                UebungsVideoKachel(exerciseId: modell.aktiveUebung?.id, kante: 56)
+                namen
+                Spacer(minLength: 0)
+            }
+            .contentShape(Rectangle())
         }
+        .buttonStyle(PressButtonStyle())
+        .accessibilityHint("Zeigt die Einweisung")
+        .testnotizElement("geraet.einweisung", typ: "Button")
     }
 
     private var namen: some View {
@@ -423,19 +466,17 @@ struct GeraetView: View {
     @AppStorage(Einstellungen.vibrationBeimSichernKey) private var vibrationBeimSichern = true
 }
 
-/// Bindet Sheets und den Erstkontakt an GeraetView. Getrennt, damit
+/// Bindet die Sheets an GeraetView. Getrennt, damit
 /// GeraetView selbst nur den Screen beschreibt und in der Preview ohne
 /// Umgebung lauffaehig bleibt.
 struct GeraetScreen: View {
     @State var modell: GeraetModel
     let beiZurueckZumTraining: () -> Void
-    /// Das Kreuz im Erstkontakt. Eigener Weg neben beiZurueckZumTraining,
-    /// weil "Gerät abschließen" weiter zur Liste fuehrt, der Abbruch der
-    /// Einweisung aber auf die Geraeteseite (Testnotiz 11.10., #6).
-    let beiErstkontaktAbbruch: () -> Void
     let beiTrainingBeenden: () -> Void
 
     @State private var uebungWechselnOffen = false
+    @State private var gewichtOffen = false
+    @State private var einweisungOffen = false
     @State private var problemOffen = false
     @State private var abschlussfrageOffen = false
     /// Was nach dem Schliessen der Abschlussfrage folgt. Zwei Sheets
@@ -454,8 +495,25 @@ struct GeraetScreen: View {
                     beiZurueckZumTraining()
                 }
             },
-            beiTrainingBeenden: beiTrainingBeenden
+            beiTrainingBeenden: beiTrainingBeenden,
+            beiGewichtAendern: { gewichtOffen = true },
+            beiEinweisung: { einweisungOffen = true }
         )
+        .sheet(isPresented: $gewichtOffen) {
+            GewichtAendernSheet(modell: modell) { gewichtOffen = false }
+        }
+        // Nur ansehen: kein Weiter in Einstellung oder Startwerte, die
+        // Uebung laeuft ja schon (Testnotiz 11.10., #13).
+        .sheet(isPresented: $einweisungOffen) {
+            EinweisungSchritt(
+                modell: modell, titel: "Einweisung",
+                hauptaktion: "Zurück zum Satz",
+                beiAbbruch: { einweisungOffen = false },
+                beiWeiter: { einweisungOffen = false },
+                beiUeberspringen: nil)
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
         .sheet(isPresented: $uebungWechselnOffen) {
             UebungWechselnSheet(modell: modell) { modell.uebungWechseln(zu: $0) }
         }
@@ -479,53 +537,74 @@ struct GeraetScreen: View {
         .sheet(isPresented: $problemOffen) {
             ProblemSheet(modell: modell) {}
         }
-        // Der Rueckblick vor dem ersten Satz. Das Sheet haengt an rueckblickOffen,
-        // die Regel dahinter am Modell (rueckblickFaellig) -- der View entscheidet
-        // nichts. Faellt der Rueckblick weg, waehrend das Sheet steht (kommt nicht
-        // vor: der Bootstrap aendert sich waehrend des Screens nicht), bleibt das
-        // Sheet leer statt zu stuerzen.
-        .sheet(isPresented: $modell.rueckblickOffen) {
-            if let rueckblick = modell.rueckblick {
-                RueckblickSheet(uebung: modell.aktiveUebung?.name ?? "",
-                                rueckblick: rueckblick) {
-                    modell.rueckblickOffen = false
-                }
+        // "Einstellung aendern" auf der Satzseite. Der Erstkontakt selbst
+        // laeuft seit der Testnotiz 11.10. (#6) im Drawer VOR der Seite.
+        .fullScreenCover(isPresented: $modell.kalibrierungOffen) {
+            // Ein eigenstaendiger Screen ohne vorherigen Schritt, deshalb
+            // schliessen sowohl der Zurueck-Chevron als auch "Einstellung
+            // speichern" das Cover -- KalibrierungSchritt verlangt beiZurueck
+            // immer, auch wenn es hier kein "davor" gibt.
+            KalibrierungSchritt(
+                modell: modell, titel: "Deine Einstellung",
+                beiZurueck: { modell.kalibrierungOffen = false }
+            ) {
+                modell.kalibrierungOffen = false
             }
         }
-        // Der Erstkontakt: fullScreenCover verdeckt die Tab-Leiste. Er steht
-        // hier auch ohne laufendes Training -- "Training starten" ist dann
-        // sein letzter Schritt (Testnotiz 06.10., #5).
-        .fullScreenCover(isPresented: Binding(
-            get: { modell.istErstkontakt || modell.kalibrierungOffen },
-            set: { if !$0 { modell.kalibrierungOffen = false } }
-        )) {
-            if modell.kalibrierungOffen && !modell.istErstkontakt {
-                // "aendern" ausserhalb des Erstkontakts: ein eigenstaendiger
-                // Screen ohne vorherigen Schritt, deshalb schliessen sowohl
-                // der Zurueck-Chevron als auch "Einstellung speichern" das
-                // Cover -- KalibrierungSchritt verlangt beiZurueck immer,
-                // auch wenn es hier kein "davor" gibt, zu dem er fuehren
-                // koennte.
-                KalibrierungSchritt(
-                    modell: modell, titel: "Deine Einstellung",
-                    beiZurueck: { modell.kalibrierungOffen = false }
-                ) {
-                    modell.kalibrierungOffen = false
-                }
-            } else {
-                // Der Abbruch nimmt den Satzpfad aus dem Stapel: ein
-                // fullScreenCover kennt kein Swipe-to-dismiss, und die
-                // GeraetScreen-Instanz (und mit ihr das Modell) verschwindet
-                // so ganz, statt dass hier zusaetzlich am Cover gedreht
-                // werden muesste. Wohin es geht, entscheidet die Wurzel --
-                // seit der Testnotiz 11.10. (#6) auf die Geraeteseite, nicht
-                // mehr zur Liste. erstkontaktAbschliessen() faellt bewusst
-                // weg: ein Abbruch ist kein Abschluss, sonst zeigte
-                // istErstkontakt beim naechsten Mal faelschlich "erledigt".
-                ErstkontaktFlow(modell: modell, beiAbschluss: { modell.erstkontaktAbschliessen() },
-                                beiAbbruch: beiErstkontaktAbbruch)
+    }
+}
+
+/// Das Gewicht fuer den naechsten Satz, waehrend die Pause weiterlaeuft
+/// (Testnotiz 11.10., #12) -- typischerweise steckt man in der Pause um.
+/// Gedreht wird ein Entwurf; erst "Übernehmen" schreibt ins Modell, damit
+/// ein weggewischter Drawer nichts veraendert.
+private struct GewichtAendernSheet: View {
+    @Bindable var modell: GeraetModel
+    let beiFertig: () -> Void
+
+    @State private var entwurf: Double
+
+    init(modell: GeraetModel, beiFertig: @escaping () -> Void) {
+        self.modell = modell
+        self.beiFertig = beiFertig
+        _entwurf = State(initialValue: modell.belastung)
+    }
+
+    var body: some View {
+        let einheit = modell.loadUnit
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+            Text("GEWICHT FÜR DEN NÄCHSTEN SATZ")
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textFaint)
+            HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.s4) {
+                RastRad(
+                    werte: modell.belastungsWerte,
+                    auswahl: $entwurf,
+                    unterstrich: .held,
+                    voLabel: "Belastung",
+                    voWert: { Zahlformat.belastungGesprochen($0, einheit) },
+                    anschlagText: modell.anschlagText,
+                    text: { Zahlformat.belastung($0, einheit) },
+                    sichtbareZeilen: 3
+                )
+                Text(einheit.kurz)
+                    .font(DesignSystem.Typography.uebungsname)
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .accessibilityHidden(true)
+            }
+            PrimaryButton(title: "Übernehmen") {
+                modell.belastungGewaehlt(entwurf)
+                beiFertig()
             }
         }
+        .padding(.horizontal, 20)
+        .padding(.top, DesignSystem.Spacing.s24)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(DesignSystem.Color.bg)
+        .presentationDetents([.height(340)])
+        .presentationDragIndicator(.visible)
+        .testnotizScreen()
     }
 }
 

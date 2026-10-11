@@ -109,11 +109,7 @@ private struct TrainingSteuerungSheet: View {
                     .tracking(1.5)
                     .foregroundStyle(DesignSystem.Color.textMuted)
             }
-            Text("Ohne neuen Satz endet das Training nach vier Stunden von selbst.")
-                .font(DesignSystem.Typography.fliesstext)
-                .foregroundStyle(DesignSystem.Color.text)
-                .lineSpacing(3)
-                .padding(.bottom, DesignSystem.Spacing.s8)
+            .padding(.bottom, DesignSystem.Spacing.s8)
             // Fortsetzen ist die Hauptaktion einer Pause; Pausieren ist nur
             // eine Wahl unter zweien und bleibt Kontur. Beenden ist
             // zerstoerend und traegt deshalb nie den Akzent.
@@ -131,7 +127,9 @@ private struct TrainingSteuerungSheet: View {
         .padding(.top, DesignSystem.Spacing.s24)
         .frame(maxHeight: .infinity, alignment: .top)
         .background(DesignSystem.Color.bg)
-        .presentationDetents([.height(300)])
+        // Ohne den Satz zum Vier-Stunden-Ende (Testnotiz 11.10., #9) ist
+        // das Blatt niedriger: das Ende passiert still im Hintergrund.
+        .presentationDetents([.height(260)])
         .presentationDragIndicator(.visible)
         .testnotizScreen()
     }

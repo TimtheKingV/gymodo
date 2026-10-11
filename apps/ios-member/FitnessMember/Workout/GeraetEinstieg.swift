@@ -8,21 +8,6 @@ enum GeraetEinstieg: Equatable {
     case direktZumSatz
 }
 
-/// Die Stationen des Erstkontakts (designsystem.md SS8). Welche davon ein
-/// Geraet wirklich zeigt, entscheidet `GeraetEinstiegRechner.erstkontaktSchritte`.
-///
-/// Bis zur Testnotiz 06.10. war der dritte Schritt "Erste Werte" -- ein
-/// eigener Screen mit Raedern, der dasselbe tat wie die Satzseite, nur ohne
-/// Sensor (#8, #18). Jetzt endet der Erstkontakt nach der Einstellung, und
-/// der erste Satz laeuft auf der Satzseite. Laeuft noch kein Training, steht
-/// "Training starten" am Ende -- damit die Uhr erst NACH Einweisung und
-/// Einstellung laeuft (#5).
-enum ErstkontaktSchritt: Equatable {
-    case einweisung
-    case einstellung
-    case trainingStarten
-}
-
 /// Die Tabelle aus designsystem.md SS8, als reine Funktionen.
 ///
 /// Sie faellt bewusst aus dem Prefetch und nicht aus tagContext: M1-Spec
@@ -46,37 +31,10 @@ enum GeraetEinstiegRechner {
         !hatKalibrierung && !hatLetztenSatz
     }
 
-    /// Ein Modell ohne Einstellparameter ist im Trainerportal ein regulaerer
-    /// Zustand ("das Mitglied hat nichts einzustellen"). Die Einstellung
-    /// faellt dann aus dem Dreischritt: der Schritt haette nur den
-    /// Trainer-Schalter und einen Knopf, der am Server mit 422 endet, weil
-    /// pruefeEinstellwerte einen leeren Satz zu Recht abweist -- eine
-    /// Kalibrierung ohne Werte ist keine. Das Mitglied kaeme nie zu
-    /// Schritt 3.
-    ///
-    /// Eine Kalibrierungszeile entsteht so nicht; istErstkontakt wird
-    /// stattdessen ueber den ersten gesicherten Satz falsch (hatLetztenSatz,
-    /// bis zum naechsten Bootstrap der lokale Session-Index). Bis dahin
-    /// traegt `GeraetModel.erledigt` den abgeschlossenen Erstkontakt.
-    static func erstkontaktSchritte(hatEinstellparameter: Bool, trainingLaeuft: Bool) -> [ErstkontaktSchritt] {
-        var schritte: [ErstkontaktSchritt] = [.einweisung]
-        if hatEinstellparameter { schritte.append(.einstellung) }
-        if !trainingLaeuft { schritte.append(.trainingStarten) }
-        return schritte
-    }
-
-    /// Wohin "Kenne ich schon" fuehrt: an Einweisung UND Einstellung vorbei
-    /// (Testnotiz 06.10., #16) -- vorher tat der Knopf dasselbe wie
-    /// "Einstellungen erfassen". Steht "Training starten" noch aus, dorthin;
-    /// nil heisst, der Erstkontakt ist damit vorbei.
-    static func positionNachUeberspringen(in schritte: [ErstkontaktSchritt]) -> Int? {
-        schritte.firstIndex(of: .trainingStarten)
-    }
-
-    /// Ob ein Geraet mit dieser Uebung den Erstkontakt zeigt -- schon VOR
-    /// dem Satzpfad bekannt, damit TrainingRootView "Training starten" nicht
-    /// davor schiebt (Testnotiz 06.10., #5). `naechsterSetIndex` liest die
-    /// lokale Einheit: ein Satz, den der Bootstrap noch nicht kennt, zaehlt.
+    /// Ob der Drawer vor der Uebung mit der Einweisung beginnt (Testnotiz
+    /// 11.10., #6) -- bekannt, bevor die Satzseite entsteht.
+    /// `naechsterSetIndex` liest die lokale Einheit: ein Satz, den der
+    /// Bootstrap noch nicht kennt, zaehlt.
     static func brauchtErstkontakt(station: String, exerciseId: String,
                                    in bootstrap: BootstrapResponse, naechsterSetIndex: Int) -> Bool {
         naechsterSetIndex == 1

@@ -31,11 +31,11 @@ struct TrainingRootView: View {
     /// eine andere. Ohne diesen einen Lader wuerde jedes erneute Oeffnen
     /// dieselben Originalfotos nochmal herunterladen, obwohl die
     /// dekodierten Vorschaubilder schon vorliegen.
-    @State private var vorschauLader = VorschauLader()
+    @State private var vorschauLader = VorschauLader(ablage: .fotos)
     /// Die Videoquellen fuer Liste, Geraeteseite und Satzseite (Testnotiz
-    /// 11.10., #1, #5, #7) -- aus demselben Grund an der Wurzel wie der
-    /// VorschauLader.
-    @State private var videoVorrat = UebungsVideoVorrat()
+    /// 11.10., #1, #5, #7). Lebt seit #2 der Sitzung 12:10 an der App,
+    /// weil auch Home sie zeigt.
+    @Environment(UebungsVideoVorrat.self) private var videoVorrat
     /// Der aktive NFC-Scan. Liegt hier und nicht in ScanWege, weil sein
     /// Ergebnis in dieselbe Aufloesung muendet wie der QR-Scan -- und weil
     /// eine laufende Sitzung einen zweiten Tap ueberstehen muss.
@@ -56,26 +56,20 @@ struct TrainingRootView: View {
     /// sofort neu ausgewertet werden, nicht erst bei der naechsten
     /// 60-Sekunden-Kadenz der TimelineView.
     @State private var neuAuswerten = false
-    /// Aus sessions.abgelaufeneSession() gelesen, BEVOR ausgelaufeneQuittieren()
-    /// die Einheit raeumt -- an drei Stellen, aber mit derselben Regel: erst
-    /// lesen, den Satz aus DIESEM Zustand zeigen, danach quittieren.
-    /// ausgelaufeneQuittieren() loescht seit einer Fehlerbehebung Speicher
-    /// und Datei, statt nur ein Bool zu setzen -- wuerde der Satz reaktiv aus
-    /// abgelaufeneSession() gerendert und im selben Atemzug quittiert,
-    /// verschwaende er, bevor das Mitglied ihn liest.
-    ///
-    /// Die drei Stellen: das .task(id: UmschaltTick(...)) in der
-    /// TimelineView unten (Kalteinstieg UND der selbsttaetige Ablauf
-    /// waehrend die App offen bleibt -- M2b), und die beiden Zweige von
-    /// beenden() (manuelles Beenden mit Satz setzt nil, ohne Satz
-    /// `.verworfen`). Er bleibt stehen, bis die Wurzel verlassen wird --
-    /// ODER bis er selbst nicht mehr gilt: beenden() setzt ihn beim
-    /// manuellen Beenden zurueck, der onChange unten zusaetzlich beim
-    /// Uebergang in einen neuen laufenden Zustand. Der Satz gehoert zu
-    /// GENAU EINER abgelaufenen Einheit, nicht zur View.
-    @State private var hinweis: TabHinweis?
+    /// Der kurze Hinweis ueber den Scan-Knoepfen: "Training beenden" ohne
+    /// Satz verwirft die Einheit, und der Tap soll eine lesbare Wirkung
+    /// haben (Entschieden 2). Seit der Testnotiz 11.10. (#8) ein Toast, der
+    /// von selbst geht, statt eines Banners bis zum Verlassen der Wurzel.
+    /// Den Satz "automatisch beendet" gibt es nicht mehr (#9): das Ende
+    /// nach vier Stunden passiert still im Hintergrund.
+    @State private var toast: Toastmeldung?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Der Dialog "Pausieren / Training beenden" (Testnotiz 05.10., #7).
     @State private var steuerungOffen = false
+    /// Die gewaehlte Uebung, fuer die der Drawer offen steht (Testnotiz
+    /// 11.10., #6, #10, #11). An der Wurzel, weil er ueber Liste UND
+    /// Geraeteseite liegen muss.
+    @State private var uebungsstart: UebungsstartAuftrag?
     /// "Training in {Ort} beenden?" nach einem Scan oder einer Auswahl an
     /// einem anderen Ort (Plan, Entscheidung 2) -- derselbe Dialog wie im Profil.
     @State private var scanRueckfrage: ScanRueckfrage?
@@ -140,10 +134,9 @@ struct TrainingRootView: View {
                 // Kalteinstieg -- und das gesonderte .task unten
                 // braucht die Pruefung deswegen nicht.
                 .task(id: UmschaltTick(datum: context.date, wach: neuAuswerten)) {
-                    // Mit Satz bekommt die ausgelaufene Einheit den Satz im Fuss; ohne
-                    // Satz liefert abgelaufeneSession() nichts, und sie wird still
-                    // geraeumt (Entschieden 2). ausgelaufeneQuittieren() raeumt beide.
-                    if sessions.abgelaufeneSession() != nil { hinweis = .ausgelaufen }
+                    // Eine ausgelaufene Einheit wird still geraeumt, mit oder
+                    // ohne Satz -- kein Hinweis im Nachhinein (Testnotiz
+                    // 11.10., #9).
                     sessions.ausgelaufeneQuittieren()
                 }
             }
@@ -166,6 +159,15 @@ struct TrainingRootView: View {
                 ziel(route).id(route).environment(videoVorrat)
             }
             .environment(videoVorrat)
+            .sheet(item: $uebungsstart) { auftrag in
+                if let modell = modell(station: auftrag.station, exerciseId: auftrag.exerciseId,
+                                       token: auftrag.token) {
+                    UebungsstartSheet(modell: modell, beiStart: { werte in
+                        uebungStarten(auftrag, mit: werte)
+                    }, beiSchliessen: { uebungsstart = nil })
+                    .environment(videoVorrat)
+                }
+            }
             .sheet(isPresented: $scannerOffen) {
                 ScannerSheet(
                     titel: "Gerät finden",
@@ -215,12 +217,10 @@ struct TrainingRootView: View {
                 guard neu == .active else { return }
                 neuAuswerten.toggle()
             }
-            // Der Satz zur ausgelaufenen Einheit gehoert zu GENAU EINER
-            // abgelaufenen Einheit (M1): sobald wieder eine laufende Einheit
-            // entsteht -- egal ob durch einen neuen Satz oder weil beenden()
-            // ihn schon zurueckgesetzt hat --, gilt er nicht mehr.
+            // Ein neues Training macht den Hinweis zum verworfenen alten
+            // gegenstandslos, auch wenn seine drei Sekunden noch laufen.
             .onChange(of: sessions.aktiveSession() != nil) { vorher, laeuft in
-                if laeuft { hinweis = nil }
+                if laeuft { toast = nil }
                 // Endet die Einheit von aussen (Ortswechsel im Profil), darf
                 // kein Geraete-Screen vom alten Ort stehen bleiben.
                 if Pfadbereinigung.leeren(laeuftVorher: vorher, laeuftJetzt: laeuft, pfad: pfad) {
@@ -328,8 +328,9 @@ struct TrainingRootView: View {
     /// jetzt ueber der Liste, nicht ueber den Knoepfen.
     private var fuss: some View {
         VStack(spacing: DesignSystem.Spacing.s12) {
-            if let hinweis {
-                InlineBanner(tone: .muted, message: hinweis.text)
+            if let toast {
+                Toast(meldung: toast) { self.toast = nil }
+                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
             }
             if let scanFehler {
                 InlineBanner(tone: .danger, message: scanFehler)
@@ -342,6 +343,7 @@ struct TrainingRootView: View {
         }
         .padding(.horizontal, 20)
         .padding(.bottom, DesignSystem.Spacing.s12)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: toast)
     }
 
     // MARK: - Laufende Mitte (TrainingLaeuft.dc.html)
@@ -535,30 +537,12 @@ struct TrainingRootView: View {
         case .erkannt(let station, let token):
             if let modell = modell(station: station, exerciseId: nil, token: token) {
                 GeraetErkanntScreen(modell: modell) { uebungId in
-                    pfad.append(zielNachUebungswahl(station: station, exerciseId: uebungId, token: token))
+                    uebungsstart = UebungsstartAuftrag(station: station, exerciseId: uebungId, token: token)
                 }
             }
-        case .start(let station, let exerciseId, let token):
-            if let modell = modell(station: station, exerciseId: exerciseId, token: token) {
-                TrainingStartView(modell: modell) {
-                    sessions.trainingStarten()
-                    // ERSETZEN, nicht stapeln: "Zurueck" vom Satzpfad soll auf
-                    // "Geraet erkannt" fuehren, nicht auf einen Startknopf fuer ein
-                    // Training, das schon laeuft. Der Startscreen ist immer der
-                    // oberste Eintrag, wenn sein Knopf gedrueckt wird; der Guard
-                    // schuetzt nur vor einem Tap waehrend einer laufenden
-                    // Pop-Animation.
-                    let satzpfad = GeraetRoute.geraet(station: station, exerciseId: exerciseId, token: token)
-                    if case .start = pfad.last { pfad[pfad.count - 1] = satzpfad } else { pfad.append(satzpfad) }
-                }
-            }
-        case .geraet(let station, let exerciseId, let token):
-            if let modell = modell(station: station, exerciseId: exerciseId, token: token) {
+        case .geraet(let station, let exerciseId, let token, let start):
+            if let modell = modell(station: station, exerciseId: exerciseId, token: token, startwerte: start) {
                 GeraetScreen(modell: modell, beiZurueckZumTraining: { pfad.removeAll() },
-                             beiErstkontaktAbbruch: {
-                                 pfad = Pfadregel.nachEinweisungAbbruch(
-                                     pfad: pfad, uebungsanzahl: modell.station.exercises.count)
-                             },
                              beiTrainingBeenden: beenden)
             }
         case .abschluss(let sessionId, let zusammenfassung):
@@ -578,7 +562,8 @@ struct TrainingRootView: View {
         }
     }
 
-    private func modell(station schluessel: String, exerciseId: String?, token: String?) -> GeraetModel? {
+    private func modell(station schluessel: String, exerciseId: String?, token: String?,
+                        startwerte: Startwerte? = nil) -> GeraetModel? {
         // Ein Typ hat keinen eigenen Ort: die Route traegt nur den
         // Schluessel, und er gilt am aktuellen Ort. Deshalb wechselt jeder Weg
         // hierher (Scan, Liste) den Ort VOR dem Oeffnen, und eine offene
@@ -601,7 +586,8 @@ struct TrainingRootView: View {
             station: station, uebungId: gewaehlt, token: token,
             bootstrap: bootstrap, loader: apiClient, sessions: sessions,
             enqueue: { katalog.enqueue($0); Task { await katalog.flushPending() } },
-            mitschnitt: mitschnitt
+            mitschnitt: mitschnitt,
+            startwerte: startwerte
         )
     }
 
@@ -788,32 +774,26 @@ struct TrainingRootView: View {
             let uebung = GeraetEinstiegRechner.letzteUebung(station: station.schluessel, in: bootstrap)
                 ?? station.exercises.first?.id
             guard let uebung else { return }
-            // Auch der Direktweg beginnt ohne laufendes Training auf dem
-            // Startscreen -- sonst entstuende die Einheit fuer Stammgaeste
-            // weiter erst mit dem Satz.
-            pfad.append(zielNachUebungswahl(station: station.schluessel, exerciseId: uebung, token: token))
+            // Auch der Direktweg geht ueber den Drawer: dort startet "Übung
+            // starten" ein noch nicht laufendes Training mit.
+            uebungsstart = UebungsstartAuftrag(station: station.schluessel, exerciseId: uebung, token: token)
         }
     }
 
-    /// Startscreen, Satzpfad oder Satzpfad mit Erstkontakt -- die Regel
-    /// steht in TrainingStart.ziel, hier werden nur ihre Eingaben gelesen.
-    private func zielNachUebungswahl(station schluessel: String, exerciseId: String, token: String?) -> GeraetRoute {
-        let erstkontakt = katalog.bootstrap.map { bootstrap in
-            // Eine Station, die der Prefetch nicht (mehr) kennt, hat keine Saetze.
-            let index = bootstrap.station(schluessel: schluessel, studioId: katalog.activeStudioId)
-                .map { sessions.naechsterSetIndex(station: $0, exerciseId: exerciseId) } ?? 1
-            return GeraetEinstiegRechner.brauchtErstkontakt(
-                station: schluessel, exerciseId: exerciseId, in: bootstrap,
-                naechsterSetIndex: index)
-        } ?? false
-        return TrainingStart.ziel(station: schluessel, exerciseId: exerciseId, token: token,
-                                  trainingLaeuft: sessions.aktiveSession() != nil,
-                                  erstkontakt: erstkontakt)
+    /// "Übung starten" im Drawer: ein noch nicht laufendes Training
+    /// beginnt jetzt, nicht schon mit der Einweisung (Testnotiz 06.10., #5;
+    /// 11.10., #11). Die Satzseite kommt mit den Startwerten und beginnt
+    /// mit dem Countdown.
+    private func uebungStarten(_ auftrag: UebungsstartAuftrag, mit werte: Startwerte) {
+        if sessions.aktiveSession() == nil { sessions.trainingStarten() }
+        uebungsstart = nil
+        pfad.append(.geraet(station: auftrag.station, exerciseId: auftrag.exerciseId,
+                            token: auftrag.token, start: werte))
     }
 
     private func oeffne(_ block: LokalerBlock) {
         // Der Zirkelfall: ein Tap statt eines Scans (M1-Spec SS5.3).
-        // Kein TrainingStart.ziel: die Blockliste gibt es nur, solange ein
+        // Kein Drawer: die Blockliste gibt es nur, solange ein
         // Training laeuft. Geraet und Typ nehmen denselben Weg; nur ein
         // Block ohne beide Kennungen ("unbekannt:") hat kein Ziel.
         guard Station.art(schluessel: block.stationSchluessel) != nil else { return }
@@ -842,15 +822,15 @@ struct TrainingRootView: View {
             // nicht" -- und weiterhin den seltenen, dass die Einheit zwischen
             // Neuzeichnen und Tap ausgelaufen ist. sessions.beenden() raeumt
             // unbedingt, anders als ausgelaufeneQuittieren().
-            hinweis = .verworfen
+            toast = Toastmeldung(text: "Kein Satz gesichert — das Training wurde verworfen.")
             sessions.beenden()
-            // Der Satz dazu steht im Fuss der Wurzel.
+            // Der Hinweis dazu steht im Fuss der Wurzel.
             pfad.removeAll()
             return
         }
-        // Der Satz im Fuss gehoert zu GENAU EINER frueheren Einheit (M1): mit
-        // dem manuellen Beenden hier gilt er nicht mehr.
-        hinweis = nil
+        // Ein noch stehender Hinweis zu einer frueheren Einheit gilt mit dem
+        // manuellen Beenden hier nicht mehr.
+        toast = nil
         // Erst festhalten, dann beenden -- andersherum sind die Zahlen weg,
         // bevor der Screen sie zeigt.
         sessions.beenden()
@@ -879,29 +859,9 @@ private struct ScanRueckfrage: Equatable {
     let beitritt: JoinResult?
 }
 
-/// Der Satz im Fuss ueber einer Einheit, die nicht mehr laeuft. Zwei
-/// Faelle, ein Zustand: gleichzeitig gelten sie nie, und ein zweites Bool
-/// haette zwei Banner uebereinander erlaubt.
-private enum TabHinweis {
-    /// Vier Stunden ohne neuen Satz -- die Einheit MIT Saetzen ist beim
-    /// Server (oder in der Warteschlange) und gilt als beendet.
-    case ausgelaufen
-    /// "Training beenden" ohne einen Satz: verworfen, nie gemeldet
-    /// (Sammelstelle, Entschieden 2). Nie stumm -- der Tap hatte eine
-    /// Wirkung, und die soll man lesen koennen.
-    case verworfen
-
-    var text: String {
-        switch self {
-        case .ausgelaufen: "Dein letztes Training wurde automatisch beendet."
-        case .verworfen: "Kein Satz gesichert — das Training wurde verworfen."
-        }
-    }
-}
-
 /// Die ID fuer .task(id:) an der Umschalt-TimelineView (siehe body oben):
 /// aendert sich sowohl bei jedem 60-Sekunden-Tick als auch bei jedem
-/// scenePhase-Ausloeser, damit die Erklaerung zur ausgelaufenen Einheit
+/// scenePhase-Ausloeser, damit das Raeumen der ausgelaufenen Einheit
 /// beide Wege erreicht, nicht nur den Tick.
 private struct UmschaltTick: Equatable {
     let datum: Date

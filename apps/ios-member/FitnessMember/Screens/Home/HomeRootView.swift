@@ -28,6 +28,7 @@ struct HomeRootView: View {
     @Environment(NetzwerkMonitor.self) private var netz
     @Environment(WorkoutSessionStore.self) private var sessions
     @Environment(KurseStore.self) private var kurse
+    @Environment(UebungsVideoVorrat.self) private var videos
     @Environment(\.scenePhase) private var scenePhase
     /// Reicht einen gescannten Geraete-Code an den Training-Tab weiter --
     /// derselbe Weg wie ein Universal Link (siehe MainTabView,
@@ -61,7 +62,7 @@ struct HomeRootView: View {
 
     /// Eine Einheit gehoert dem Studio, nicht dem Geraet -- sonst schoebe
     /// ein Mitglied im Urlaub seine Abendeinheit auf den Folgetag.
-    private var zeitzone: String { aktivesStudio?.timezone ?? "UTC" }
+    private var zeitzone: String { HomeSerie.zeitzone(studio: aktivesStudio?.timezone) }
 
     /// Die eigenen Kursbuchungen -- nur, wenn sie zum aktiven Studio
     /// gehoeren. Nach einem Studiowechsel ohne Netz laegen sonst die des
@@ -212,6 +213,9 @@ private extension HomeRootView {
     func neuLaden() async {
         await verlauf.laden(studioId: katalog.activeStudioId)
         await kurseLaden()
+        // Die Videos der Fortschrittszeilen (Testnotiz 11.10., #2); laedt
+        // sonst nur die Geraeteliste, und Home ist der erste Tab.
+        await videos.laden(von: apiClient)
     }
 
     /// Die Kurse laedt sonst nur der Kurse-Tab, und Tabs laden erst beim
@@ -313,26 +317,74 @@ private extension HomeRootView {
         }
     }
 
+    /// Video links, Name ohne Geraetenummer, rechts Last, Minikurve und
+    /// Veraenderung seit Start in der Trendfarbe (Testnotiz 11.10., #2, #3,
+    /// #4). Die Nummer fiel weg: im Freien Training stand dort ohnehin der
+    /// Typname, und neben dem Video sagte sie nichts mehr.
     func fortschrittsZeile(_ uebung: ExerciseProgress) -> some View {
-        HStack {
-            Text("\(uebung.machineLabel) · \(uebung.exerciseName)")
+        let trend = HomeZeilen.trend(uebung.changeLoad)
+        let werte = HomeZeilen.sparkWerte(uebung.points)
+        return HStack(spacing: DesignSystem.Spacing.s12) {
+            UebungsVideoKachel(exerciseId: uebung.id, kante: 48) {
+                Uebungsbild(kante: 48)
+            }
+            Text(uebung.exerciseName)
                 .font(DesignSystem.Typography.uebungsname)
                 .foregroundStyle(DesignSystem.Color.text)
-            Spacer()
-            Text(Zahlformat.belastungMitEinheit(uebung.currentLoad, uebung.loadUnit))
-                .font(DesignSystem.Typography.wertSekundaer)
-                .foregroundStyle(DesignSystem.Color.text)
-            Text(HomeZeilen.veraenderung(uebung.changeLoad, einheit: uebung.loadUnit))
-                .font(DesignSystem.Typography.fliesstext)
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .monospacedDigit()
+                .multilineTextAlignment(.leading)
+            Spacer(minLength: DesignSystem.Spacing.s8)
+            VStack(alignment: .trailing, spacing: DesignSystem.Spacing.s4) {
+                Text(Zahlformat.belastungMitEinheit(uebung.currentLoad, uebung.loadUnit))
+                    .font(DesignSystem.Typography.wertSekundaer)
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .monospacedDigit()
+                if !werte.isEmpty {
+                    Minikurve(werte: werte, farbe: Self.farbe(trend))
+                        .frame(width: 64, height: 20)
+                }
+                HStack(spacing: DesignSystem.Spacing.s4) {
+                    Image(systemName: Self.symbol(trend))
+                    Text(HomeZeilen.trendText(uebung.changeLoad, einheit: uebung.loadUnit))
+                        .monospacedDigit()
+                }
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Self.farbe(trend))
+            }
+            .fixedSize()
         }
-        .padding(DesignSystem.Spacing.s16)
+        .padding(DesignSystem.Spacing.s12)
         .background(DesignSystem.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "\(uebung.machineLabel), \(uebung.exerciseName), \(Zahlformat.belastungGesprochen(uebung.currentLoad, uebung.loadUnit))")
+            "\(uebung.exerciseName), \(Zahlformat.belastungGesprochen(uebung.currentLoad, uebung.loadUnit)), \(Self.trendGesprochen(trend))")
+    }
+
+    /// Bewusste Ausnahme von designsystem.md SS2/SS13, nur fuer diese Zeile
+    /// (Testnotiz 11.10., #4): steigend im Akzent, fallend in warn, gleich
+    /// in textFaint. warn bleibt Linie und Schrift, nie Flaeche.
+    static func farbe(_ trend: HomeZeilen.Trend) -> Color {
+        switch trend {
+        case .hoch: DesignSystem.Color.accent
+        case .runter: DesignSystem.Color.warn
+        case .gleich: DesignSystem.Color.textFaint
+        }
+    }
+
+    static func symbol(_ trend: HomeZeilen.Trend) -> String {
+        switch trend {
+        case .hoch: "chart.line.uptrend.xyaxis"
+        case .runter: "chart.line.downtrend.xyaxis"
+        case .gleich: "chart.line.flattrend.xyaxis"
+        }
+    }
+
+    static func trendGesprochen(_ trend: HomeZeilen.Trend) -> String {
+        switch trend {
+        case .hoch: "gestiegen seit Start"
+        case .runter: "gesunken seit Start"
+        case .gleich: "unverändert seit Start"
+        }
     }
 
     var leer: some View {
@@ -346,7 +398,7 @@ private extension HomeRootView {
 
             schritt(1, "iPhone an den Aufkleber halten", "Auf jedem Gerät klebt einer. QR-Code geht genauso.")
             schritt(2, "Einweisung ansehen, Gerät einstellen", "Einmal. Danach stehen deine Werte jedes Mal da.")
-            schritt(3, "Training starten, Sätze sichern", "Ein Tap startet die Uhr. Jeder Satz danach ist meistens nur ein Antippen.")
+            schritt(3, "Übung starten, Sätze sichern", "Ein Tap startet die Uhr. Jeder Satz danach ist meistens nur ein Antippen.")
 
             PrimaryButton(title: "Erstes Gerät") { scannerOffen = true }
                 .testnotizElement("home.erstes-geraet", typ: "PrimaryButton")

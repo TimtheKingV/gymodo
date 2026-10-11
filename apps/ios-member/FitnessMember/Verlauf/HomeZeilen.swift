@@ -326,6 +326,33 @@ enum HomeZeilen {
         return (delta > 0 ? "+" : "-") + Zahlformat.belastung(abs(delta), einheit)
     }
 
+    /// Richtung der Veraenderung seit Start -- traegt Farbe und Pfeil der
+    /// Fortschrittszeile (Testnotiz 11.10., #4).
+    enum Trend: Equatable {
+        case hoch, runter, gleich
+    }
+
+    /// Unter einem halben Hundertstel ist es Rundungsrest des Servers
+    /// (toFixed(2)), keine Bewegung.
+    static func trend(_ delta: Double) -> Trend {
+        if delta >= 0.005 { return .hoch }
+        if delta <= -0.005 { return .runter }
+        return .gleich
+    }
+
+    /// "+5,0 kg" / "−25,0 kg" / "±0": unter dem Graphen steht die Zahl
+    /// allein, ohne den Wert davor -- deshalb hier mit Einheit.
+    static func trendText(_ delta: Double, einheit: LoadUnit) -> String {
+        trend(delta) == .gleich ? "±0" : Zahlformat.belastungDelta(delta, einheit)
+    }
+
+    /// Die Hoechstlasten der juengsten Trainingstage fuer die Minikurve.
+    /// Ein Punkt ist keine Kurve -- dann gar keine.
+    static func sparkWerte(_ punkte: [ExerciseProgress.Point], maximal: Int = 12) -> [Double] {
+        guard punkte.count >= 2 else { return [] }
+        return punkte.suffix(maximal).map(\.topLoad)
+    }
+
     /// Die Zeile unter der Begruessung: im Freien Training der Ort selbst,
     /// weil es dort keinen Studionamen gibt; im Studio dessen Name (nil,
     /// solange der Bootstrap ihn nicht kennt).

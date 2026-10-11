@@ -76,32 +76,6 @@ struct GeraetEinstiegTests {
         #expect(!GeraetEinstiegRechner.istErstkontakt(hatKalibrierung: true, hatLetztenSatz: false))
     }
 
-    @Test func dreischrittMitEinstellparameternHatAlleDreiSchritte() {
-        // Seit der Testnotiz 06.10. (#5, #18): kein eigener Schritt "Erste
-        // Werte" mehr -- der erste Satz laeuft auf der Satzseite. Dafuer
-        // steht "Training starten" am Ende, damit die Uhr erst nach der
-        // Einstellung laeuft.
-        #expect(GeraetEinstiegRechner.erstkontaktSchritte(hatEinstellparameter: true, trainingLaeuft: false)
-                == [.einweisung, .einstellung, .trainingStarten])
-    }
-
-    @Test func mittenImTrainingEndetDerErstkontaktMitDerEinstellung() {
-        #expect(GeraetEinstiegRechner.erstkontaktSchritte(hatEinstellparameter: true, trainingLaeuft: true)
-                == [.einweisung, .einstellung])
-        #expect(GeraetEinstiegRechner.erstkontaktSchritte(hatEinstellparameter: false, trainingLaeuft: true)
-                == [.einweisung])
-    }
-
-    @Test func kenneIchSchonSpringtZumStartOderBeendetDenErstkontakt() {
-        // Testnotiz 06.10., #16: "Kenne ich schon" ueberspringt Einweisung
-        // UND Einstellung. Steht noch "Training starten" aus, landet es
-        // dort; sonst ist der Erstkontakt vorbei (nil).
-        #expect(GeraetEinstiegRechner.positionNachUeberspringen(
-            in: [.einweisung, .einstellung, .trainingStarten]) == 2)
-        #expect(GeraetEinstiegRechner.positionNachUeberspringen(in: [.einweisung, .einstellung]) == nil)
-        #expect(GeraetEinstiegRechner.positionNachUeberspringen(in: [.einweisung]) == nil)
-    }
-
     @Test func brauchtErstkontaktNurOhneKalibrierungOhneSatzUndVorDemErstenSatzDerEinheit() {
         let ohneAlles = bootstrapMitLetztenSaetzen([])
         #expect(GeraetEinstiegRechner.brauchtErstkontakt(
@@ -113,17 +87,6 @@ struct GeraetEinstiegTests {
         let mitSatz = bootstrapMitLetztenSaetzen([("m1", "e1")])
         #expect(!GeraetEinstiegRechner.brauchtErstkontakt(
             station: "geraet:m1", exerciseId: "e1", in: mitSatz, naechsterSetIndex: 1))
-    }
-
-    @Test func ohneEinstellparameterFaelltDieEinstellungAusDemDreischritt() {
-        // Ein Modell ohne Einstellparameter ist im Trainerportal ein
-        // regulaerer Zustand ("das Mitglied hat nichts einzustellen").
-        // Schritt 2 zeigte dann nur den Trainer-Schalter und einen Knopf,
-        // der am Server mit 422 scheitert -- pruefeEinstellwerte weist einen
-        // leeren Satz ab, und das zu Recht: eine Kalibrierung ohne Werte
-        // ist keine. Also faellt der Schritt weg, nicht die Regel.
-        #expect(GeraetEinstiegRechner.erstkontaktSchritte(hatEinstellparameter: false, trainingLaeuft: false)
-                == [.einweisung, .trainingStarten])
     }
 
     @Test func zaehltGenutzteUebungenAusDenLetztenSaetzen() {

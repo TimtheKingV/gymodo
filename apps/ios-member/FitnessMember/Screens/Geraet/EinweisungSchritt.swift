@@ -1,4 +1,3 @@
-import AVKit
 import SwiftUI
 
 /// Schritt 1 des Erstkontakts.
@@ -124,9 +123,13 @@ struct EinweisungSchritt: View {
     @ViewBuilder
     private var medien: some View {
         if let video = modell.aktiveUebung?.videoURL {
-            VideoPlayer(player: AVPlayer(url: video))
-                .frame(height: 200)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+            // Stumm in Schleife und sofort, ohne Tipp auf Play (Testnotiz
+            // 11.10., #7). VideoPlayer startete schwarz, streamte bei jedem
+            // Oeffnen neu und baute den Spieler bei jedem Rendern neu auf.
+            UebungsVideoKachel(exerciseId: modell.uebungId, hoehe: 200, ersatz: video) {
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                    .fill(DesignSystem.Color.surfaceRaised)
+            }
         } else if modell.kontext == nil {
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .fill(DesignSystem.Color.surfaceRaised)
@@ -147,19 +150,6 @@ struct EinweisungSchritt: View {
     }
 
     private var geraetefoto: some View {
-        AsyncImage(url: modell.kontext?.equipmentModel.photoUrl.flatMap(URL.init(string:))) { bild in
-            bild.resizable().aspectRatio(contentMode: .fill)
-        } placeholder: {
-            ZStack {
-                DesignSystem.Color.surfaceRaised
-                Image(systemName: "photo")
-                    .font(.system(size: 28))
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-            }
-        }
-        .frame(height: 200)
-        .frame(maxWidth: .infinity)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .accessibilityHidden(true)
+        Geraetefoto(url: modell.kontext?.equipmentModel.photoUrl.flatMap(URL.init(string:)), hoehe: 200)
     }
 }

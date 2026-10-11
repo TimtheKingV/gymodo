@@ -179,7 +179,9 @@ describe("GET /api/v1/me/sessions", () => {
       summary: { totalCount: number; thisWeekCount: number | null };
     };
     expect(payload.summary.totalCount).toBeGreaterThan(0);
-    expect(payload.summary.thisWeekCount).toBeNull();
+    // Ohne ?studio zaehlt die Woche in der Zeitzone des Katalogs (Freies
+    // Training, Testnotiz 11.10., #1) -- vorher fiel sie weg.
+    expect(payload.summary.thisWeekCount).not.toBeNull();
   });
 });
 
