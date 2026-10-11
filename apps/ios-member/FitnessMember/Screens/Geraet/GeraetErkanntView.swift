@@ -161,7 +161,7 @@ struct GeraetErkanntView: View {
     }
 
     private var hinweis: some View {
-        Text("Ein Tap wählt die Übung. Läuft noch kein Training, kommt vor dem ersten Satz „Training starten“. Trainierst du hier immer dasselbe, überspringt Gymtavo diese Liste künftig.")
+        Text("Ein Tap wählt die Übung, danach stellst du deine Startwerte ein. Trainierst du hier immer dasselbe, überspringt Gymtavo diese Liste künftig.")
             .font(.system(size: 12))
             .foregroundStyle(DesignSystem.Color.textFaint)
             .lineSpacing(3)
