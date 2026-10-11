@@ -475,7 +475,8 @@ struct KurseWochenView: View {
                         let neu = KurseFilter.umschalten(studio, ausgeblendet: ausgeblendet, alle: alleStudios)
                         ausgeblendetText = neu.sorted().joined(separator: ",")
                     } label: {
-                        Chip(text: name(vonStudio: studio), isActive: aktiv)
+                        Chip(text: name(vonStudio: studio), isActive: aktiv,
+                             innenabstand: DesignSystem.Spacing.s16)
                             .frame(minWidth: 96)
                             .fixedSize(horizontal: true, vertical: false)
                     }
