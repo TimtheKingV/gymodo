@@ -56,24 +56,14 @@ struct TrainingRootView: View {
     /// sofort neu ausgewertet werden, nicht erst bei der naechsten
     /// 60-Sekunden-Kadenz der TimelineView.
     @State private var neuAuswerten = false
-    /// Aus sessions.abgelaufeneSession() gelesen, BEVOR ausgelaufeneQuittieren()
-    /// die Einheit raeumt -- an drei Stellen, aber mit derselben Regel: erst
-    /// lesen, den Satz aus DIESEM Zustand zeigen, danach quittieren.
-    /// ausgelaufeneQuittieren() loescht seit einer Fehlerbehebung Speicher
-    /// und Datei, statt nur ein Bool zu setzen -- wuerde der Satz reaktiv aus
-    /// abgelaufeneSession() gerendert und im selben Atemzug quittiert,
-    /// verschwaende er, bevor das Mitglied ihn liest.
-    ///
-    /// Die drei Stellen: das .task(id: UmschaltTick(...)) in der
-    /// TimelineView unten (Kalteinstieg UND der selbsttaetige Ablauf
-    /// waehrend die App offen bleibt -- M2b), und die beiden Zweige von
-    /// beenden() (manuelles Beenden mit Satz setzt nil, ohne Satz
-    /// `.verworfen`). Er bleibt stehen, bis die Wurzel verlassen wird --
-    /// ODER bis er selbst nicht mehr gilt: beenden() setzt ihn beim
-    /// manuellen Beenden zurueck, der onChange unten zusaetzlich beim
-    /// Uebergang in einen neuen laufenden Zustand. Der Satz gehoert zu
-    /// GENAU EINER abgelaufenen Einheit, nicht zur View.
-    @State private var hinweis: TabHinweis?
+    /// Der kurze Hinweis ueber den Scan-Knoepfen: "Training beenden" ohne
+    /// Satz verwirft die Einheit, und der Tap soll eine lesbare Wirkung
+    /// haben (Entschieden 2). Seit der Testnotiz 11.10. (#8) ein Toast, der
+    /// von selbst geht, statt eines Banners bis zum Verlassen der Wurzel.
+    /// Den Satz "automatisch beendet" gibt es nicht mehr (#9): das Ende
+    /// nach vier Stunden passiert still im Hintergrund.
+    @State private var toast: Toastmeldung?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Der Dialog "Pausieren / Training beenden" (Testnotiz 05.10., #7).
     @State private var steuerungOffen = false
     /// "Training in {Ort} beenden?" nach einem Scan oder einer Auswahl an
@@ -140,10 +130,9 @@ struct TrainingRootView: View {
                 // Kalteinstieg -- und das gesonderte .task unten
                 // braucht die Pruefung deswegen nicht.
                 .task(id: UmschaltTick(datum: context.date, wach: neuAuswerten)) {
-                    // Mit Satz bekommt die ausgelaufene Einheit den Satz im Fuss; ohne
-                    // Satz liefert abgelaufeneSession() nichts, und sie wird still
-                    // geraeumt (Entschieden 2). ausgelaufeneQuittieren() raeumt beide.
-                    if sessions.abgelaufeneSession() != nil { hinweis = .ausgelaufen }
+                    // Eine ausgelaufene Einheit wird still geraeumt, mit oder
+                    // ohne Satz -- kein Hinweis im Nachhinein (Testnotiz
+                    // 11.10., #9).
                     sessions.ausgelaufeneQuittieren()
                 }
             }
@@ -215,12 +204,10 @@ struct TrainingRootView: View {
                 guard neu == .active else { return }
                 neuAuswerten.toggle()
             }
-            // Der Satz zur ausgelaufenen Einheit gehoert zu GENAU EINER
-            // abgelaufenen Einheit (M1): sobald wieder eine laufende Einheit
-            // entsteht -- egal ob durch einen neuen Satz oder weil beenden()
-            // ihn schon zurueckgesetzt hat --, gilt er nicht mehr.
+            // Ein neues Training macht den Hinweis zum verworfenen alten
+            // gegenstandslos, auch wenn seine drei Sekunden noch laufen.
             .onChange(of: sessions.aktiveSession() != nil) { vorher, laeuft in
-                if laeuft { hinweis = nil }
+                if laeuft { toast = nil }
                 // Endet die Einheit von aussen (Ortswechsel im Profil), darf
                 // kein Geraete-Screen vom alten Ort stehen bleiben.
                 if Pfadbereinigung.leeren(laeuftVorher: vorher, laeuftJetzt: laeuft, pfad: pfad) {
@@ -328,8 +315,9 @@ struct TrainingRootView: View {
     /// jetzt ueber der Liste, nicht ueber den Knoepfen.
     private var fuss: some View {
         VStack(spacing: DesignSystem.Spacing.s12) {
-            if let hinweis {
-                InlineBanner(tone: .muted, message: hinweis.text)
+            if let toast {
+                Toast(meldung: toast) { self.toast = nil }
+                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
             }
             if let scanFehler {
                 InlineBanner(tone: .danger, message: scanFehler)
@@ -342,6 +330,7 @@ struct TrainingRootView: View {
         }
         .padding(.horizontal, 20)
         .padding(.bottom, DesignSystem.Spacing.s12)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: toast)
     }
 
     // MARK: - Laufende Mitte (TrainingLaeuft.dc.html)
@@ -842,15 +831,15 @@ struct TrainingRootView: View {
             // nicht" -- und weiterhin den seltenen, dass die Einheit zwischen
             // Neuzeichnen und Tap ausgelaufen ist. sessions.beenden() raeumt
             // unbedingt, anders als ausgelaufeneQuittieren().
-            hinweis = .verworfen
+            toast = Toastmeldung(text: "Kein Satz gesichert — das Training wurde verworfen.")
             sessions.beenden()
-            // Der Satz dazu steht im Fuss der Wurzel.
+            // Der Hinweis dazu steht im Fuss der Wurzel.
             pfad.removeAll()
             return
         }
-        // Der Satz im Fuss gehoert zu GENAU EINER frueheren Einheit (M1): mit
-        // dem manuellen Beenden hier gilt er nicht mehr.
-        hinweis = nil
+        // Ein noch stehender Hinweis zu einer frueheren Einheit gilt mit dem
+        // manuellen Beenden hier nicht mehr.
+        toast = nil
         // Erst festhalten, dann beenden -- andersherum sind die Zahlen weg,
         // bevor der Screen sie zeigt.
         sessions.beenden()
@@ -879,29 +868,9 @@ private struct ScanRueckfrage: Equatable {
     let beitritt: JoinResult?
 }
 
-/// Der Satz im Fuss ueber einer Einheit, die nicht mehr laeuft. Zwei
-/// Faelle, ein Zustand: gleichzeitig gelten sie nie, und ein zweites Bool
-/// haette zwei Banner uebereinander erlaubt.
-private enum TabHinweis {
-    /// Vier Stunden ohne neuen Satz -- die Einheit MIT Saetzen ist beim
-    /// Server (oder in der Warteschlange) und gilt als beendet.
-    case ausgelaufen
-    /// "Training beenden" ohne einen Satz: verworfen, nie gemeldet
-    /// (Sammelstelle, Entschieden 2). Nie stumm -- der Tap hatte eine
-    /// Wirkung, und die soll man lesen koennen.
-    case verworfen
-
-    var text: String {
-        switch self {
-        case .ausgelaufen: "Dein letztes Training wurde automatisch beendet."
-        case .verworfen: "Kein Satz gesichert — das Training wurde verworfen."
-        }
-    }
-}
-
 /// Die ID fuer .task(id:) an der Umschalt-TimelineView (siehe body oben):
 /// aendert sich sowohl bei jedem 60-Sekunden-Tick als auch bei jedem
-/// scenePhase-Ausloeser, damit die Erklaerung zur ausgelaufenen Einheit
+/// scenePhase-Ausloeser, damit das Raeumen der ausgelaufenen Einheit
 /// beide Wege erreicht, nicht nur den Tick.
 private struct UmschaltTick: Equatable {
     let datum: Date
