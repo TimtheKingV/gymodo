@@ -235,3 +235,24 @@ enum GeraeteAuswahl {
         return juengste
     }
 }
+
+// MARK: - Kachel und Uebungszahl (Testnotiz 11.10., #2, #3)
+
+extension GeraeteAuswahl {
+    /// Die Uebung, deren Video die Kachel eines Geraets zeigt. Nur bei
+    /// genau einer Uebung steht ihr Video fuer das ganze Geraet; bei
+    /// mehreren bleibt es beim Foto, bis ein eigenes Geraetebild kommt.
+    static func videoUebung(uebungsIds: [String]) -> String? {
+        uebungsIds.count == 1 ? uebungsIds.first : nil
+    }
+
+    /// Die zweite Zeile unter dem Geraetenamen. Ohne Uebung gibt es nichts
+    /// zu zaehlen -- eine "0 Übungen" saehe aus wie ein Fehler.
+    static func uebungsanzahlText(_ anzahl: Int) -> String? {
+        switch anzahl {
+        case 0: nil
+        case 1: "1 Übung"
+        default: "\(anzahl) Übungen"
+        }
+    }
+}
