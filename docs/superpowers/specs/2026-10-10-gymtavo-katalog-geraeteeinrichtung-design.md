@@ -81,7 +81,9 @@ Keine Migration. iOS, Bootstrap und Satzlogik bleiben unverändert.
 
 ## 6. Etappe B: Herstellermodelle
 
-### 6.1 Datenmodell (Migration `0049_catalog_products.sql`)
+### 6.1 Datenmodell (Migration `0050_catalog_products.sql`)
+
+> Nummer 0050 statt 0049: 0049 ist mit `0049_satz_herkunft.sql` (Sensor B) vergeben.
 
 **`catalog_products`**
 
@@ -192,7 +194,7 @@ Beide Assistenten, aufbauend auf Etappe A:
 ## 7. Produktion
 
 - Etappe A braucht keine Migration und keinen Import; sie geht mit dem Merge live.
-- Etappe B: Migration 0049, dann `pnpm catalog:import --dry-run` (erwartet 114 neue Produkte, sonst unverändert), dann `--ja`. Beides erst nach dem Merge und auf ausdrückliche Freigabe.
+- Etappe B: Migration 0050, dann `pnpm catalog:import --dry-run` (erwartet 114 neue Produkte, sonst unverändert), dann `--ja`. Beides erst nach dem Merge und auf ausdrückliche Freigabe.
 
 ## 8. Offen, bewusst später
 
