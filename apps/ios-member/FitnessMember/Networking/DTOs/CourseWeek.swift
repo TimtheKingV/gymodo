@@ -26,6 +26,10 @@ struct CourseWeekSession: Codable, Equatable, Identifiable {
     let ownStatus: String?
     let ownBookingId: String?
     let ownWaitlistPosition: Int?
+    /// Zu welchem Studio der Termin gehoert. Kommt nicht vom Server -- der
+    /// liefert je Studio einen eigenen Plan --, sondern wird beim
+    /// Zusammenfuehren gesetzt (KursePlan, Testnotiz 11.10., #15).
+    var studioId: String? = nil
 }
 
 /// Der Wochenplan eines Studios (courses.ts CourseWeek). Codable statt nur

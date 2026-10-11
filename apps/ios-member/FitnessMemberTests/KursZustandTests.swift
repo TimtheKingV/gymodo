@@ -174,11 +174,15 @@ struct MeineKurseTests {
 }
 
 enum KursTestdaten {
-    static func woche(ownStatus: [String?]) -> CourseWeek {
+    /// `praefix`, `stunde` und `frist` unterscheiden die Plaene zweier
+    /// Studios (Testnotiz 11.10., #15): eigene Termin-IDs, eigene Uhrzeit,
+    /// eigene Abmeldefrist.
+    static func woche(ownStatus: [String?], praefix: String = "k", stunde: String = "18",
+                      frist: Int = 2, zeitzone: String = "Europe/Berlin") -> CourseWeek {
         let termine = ownStatus.enumerated().map { index, status in
             """
-            {"sessionId":"k\(index)","templateId":"t1","name":"Kurs \(index)",
-             "description":null,"startsAt":"2026-09-1\(index)T18:00:00Z",
+            {"sessionId":"\(praefix)\(index)","templateId":"t1","name":"Kurs \(index)",
+             "description":null,"startsAt":"2026-09-1\(index)T\(stunde):00:00Z",
              "localDay":"2026-09-1\(index)","durationMin":60,"capacity":16,
              "room":null,"instructorName":null,"status":"planned",
              "bookedCount":1,"waitlistCount":0,"freeSeats":15,
@@ -188,7 +192,7 @@ enum KursTestdaten {
         }.joined(separator: ",")
         let json = """
         {"from":"2026-09-10T00:00:00Z","to":"2026-09-17T00:00:00Z",
-         "timezone":"Europe/Berlin","cancellationDeadlineHours":2,
+         "timezone":"\(zeitzone)","cancellationDeadlineHours":\(frist),
          "sessions":[\(termine)]}
         """
         return try! JSONDecoder().decode(CourseWeek.self, from: Data(json.utf8))

@@ -14,6 +14,9 @@ actor FakeKurseLoader: KurseLoading {
     /// der einen Wochenplan braucht, programmiert ihn ueber lade(_:mit:)
     /// oder setWoche(_:) explizit.
     private var wocheResultat: WocheResultat = .failure(.offline)
+    /// Je Studio ein eigenes Ergebnis (Testnotiz 11.10., #15); ohne Eintrag
+    /// gilt `wocheResultat`.
+    private var wochenJeStudio: [String: WocheResultat] = [:]
     /// Buchen und Stornieren sind, anders als der Wochenplan, standardmaessig
     /// erfolgreich -- die Tests dieser Aufgabe pruefen die Store-Logik
     /// rund um das Neuladen, nicht den Fehlerfall des Buchens selbst.
@@ -22,6 +25,7 @@ actor FakeKurseLoader: KurseLoading {
     private var stornierenResultat: StornierenResultat = .success(CancelOutcome(promoted: false))
 
     func setWoche(_ resultat: WocheResultat) { wocheResultat = resultat }
+    func setWoche(_ resultat: WocheResultat, fuer studio: String) { wochenJeStudio[studio] = resultat }
     func setBuchen(_ resultat: BuchenResultat) { buchenResultat = resultat }
     func setStornieren(_ resultat: StornierenResultat) { stornierenResultat = resultat }
 
@@ -57,7 +61,7 @@ actor FakeKurseLoader: KurseLoading {
                 angekommenSignal = nil
             }
         }
-        switch wocheResultat {
+        switch wochenJeStudio[studio] ?? wocheResultat {
         case .success(let woche): return woche
         case .failure(let error): throw error
         }
@@ -322,6 +326,103 @@ struct KurseStoreTests {
         await sut.laden(studioId: "s1", von: Date(), bis: Date())
 
         #expect(sut.eigene?.termine.count == 1)
+    }
+
+    // MARK: - Mehrere Studios (Testnotiz 11.10., #15)
+
+    private func zweiStudios() async -> KurseStore? {
+        let (sut, _) = store()
+        guard let loader = sut.loader as? FakeKurseLoader else { return nil }
+        await loader.setWoche(.success(KursTestdaten.woche(ownStatus: ["booked", nil], praefix: "a", frist: 2)),
+                              fuer: "s1")
+        await loader.setWoche(.success(KursTestdaten.woche(ownStatus: [nil, "waitlisted"], praefix: "b",
+                                                            stunde: "07", frist: 24)),
+                              fuer: "s2")
+        await sut.laden(studioIds: ["s1", "s2"], von: Date(), bis: Date())
+        return sut
+    }
+
+    @Test func zweiStudiosLandenInEinemPlan() async {
+        guard let sut = await zweiStudios() else { Issue.record("kein Fake"); return }
+
+        #expect(sut.woche?.sessions.count == 4)
+        #expect(Set(sut.woche?.sessions.compactMap(\.studioId) ?? []) == ["s1", "s2"])
+        #expect(sut.ladeZustand == .geladen)
+    }
+
+    /// Frist und Zeitzone gehoeren dem Studio des Termins, nicht dem
+    /// aktiven -- sonst stuende bei einem Kurs aus Studio B die Frist von A.
+    @Test func eigeneTermineTragenIhrStudioUndIhreFrist() async {
+        guard let sut = await zweiStudios() else { Issue.record("kein Fake"); return }
+        let eigene = sut.eigene
+        let ausB = eigene?.termine.first { $0.sessionId == "b1" }
+
+        #expect(eigene?.termine.count == 2)
+        #expect(ausB?.studioId == "s2")
+        #expect(ausB.map { eigene?.frist(fuer: $0) } == 24)
+        #expect(sut.frist(fuer: "b1") == 24)
+        #expect(sut.frist(fuer: "a0") == 2)
+    }
+
+    /// Dieselbe Menge in anderer Reihenfolge (das aktive Studio steht
+    /// vorn) ist kein Wechsel und verwirft nichts.
+    @Test func dieselbeStudiomengeInAndererReihenfolgeVerwirftNichts() async {
+        guard let sut = await zweiStudios(), let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("kein Fake"); return
+        }
+        await loader.setWoche(.failure(.offline), fuer: "s1")
+
+        await sut.laden(studioIds: ["s2", "s1"], von: Date(), bis: Date())
+
+        #expect(sut.woche?.sessions.count == 4)
+        #expect(sut.eigene?.termine.count == 2)
+        #expect(sut.ladeZustand == .fehlgeschlagen(.offline))
+    }
+
+    /// Ein Beitritt aendert die Menge: der Plan ohne das neue Studio waere
+    /// unvollstaendig, nicht nur alt.
+    @Test func eineNeueStudiomengeVerwirftDenPlan() async {
+        guard let sut = await zweiStudios(), let loader = sut.loader as? FakeKurseLoader else {
+            Issue.record("kein Fake"); return
+        }
+        await loader.setWoche(.failure(.offline))
+        await loader.setWoche(.failure(.offline), fuer: "s1")
+
+        await sut.laden(studioIds: ["s1", "s2", "s3"], von: Date(), bis: Date())
+
+        #expect(sut.woche == nil)
+    }
+
+    /// Faellt ein Studio aus, zeigt der Screen keinen halben Plan: der
+    /// sahe vollstaendig aus, und das fehlende Studio waere still weg.
+    @Test func einAusfallendesStudioGiltAlsFehlschlagDesGanzenPlans() async {
+        let (sut, _) = store()
+        guard let loader = sut.loader as? FakeKurseLoader else { Issue.record("kein Fake"); return }
+        await loader.setWoche(.success(KursTestdaten.woche(ownStatus: [nil], praefix: "a")), fuer: "s1")
+        await loader.setWoche(.failure(.offline), fuer: "s2")
+
+        await sut.laden(studioIds: ["s1", "s2"], von: Date(), bis: Date())
+
+        #expect(sut.woche == nil)
+        #expect(sut.ladeZustand == .fehlgeschlagen(.offline))
+    }
+
+    /// Das Format vor #15 trug genau EIN Studio. Es laesst sich nicht mehr
+    /// decodieren und gilt als leerer Cache -- der naechste Abruf fuellt
+    /// ihn in Sekunden.
+    @Test func eineDateiMitEinzelnerStudiokennungGiltAlsLeererCache() {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        try? FileManager.default.createDirectory(at: verzeichnis, withIntermediateDirectories: true)
+        let alt = """
+        {"stand":0,"studioId":"s1","cancellationDeadlineHours":2,"timezone":"Europe/Berlin",
+         "termine":[{"sessionId":"k0","name":"Kurs","description":null,
+           "startsAt":"2026-09-10T18:00:00Z","localDay":"2026-09-10","durationMin":60,
+           "room":null,"instructorName":null,"status":"planned","ownStatus":"booked","ownBookingId":null}]}
+        """
+        try? Data(alt.utf8).write(to: verzeichnis.appendingPathComponent("eigene-kurse.json"))
+
+        #expect(KurseFileStore(directory: verzeichnis).load() == nil)
     }
 
     /// Ein Bestand aus der Zeit vor `studioId` laesst sich nicht mehr

@@ -109,7 +109,12 @@ final class KurseStore {
     /// entgegen und muessen trotzdem neu laden, damit der Screen danach
     /// nicht weiter "Anmelden" zeigt. `nil`, solange noch nie geladen
     /// wurde; dann bleibt ein Nachladen einfach aus.
-    private var letzteAbfrage: (studioId: String, von: Date, bis: Date)?
+    private var letzteAbfrage: (studioIds: [String], von: Date, bis: Date)?
+
+    /// Die Plaene je Studio, aus denen `woche` zusammengefuehrt ist. Frist
+    /// und Zeitzone eines Termins kommen von hier -- die von `woche` sind
+    /// nur die des ersten Studios (Testnotiz 11.10., #15).
+    private(set) var plaene: [String: CourseWeek] = [:]
 
     /// Steigt bei jedem laden(...)-Aufruf und bei reset(). Eine Antwort,
     /// die zurueckkommt, nachdem die Generation schon weitergezogen ist --
@@ -125,43 +130,44 @@ final class KurseStore {
         eigene = fileStore.load()
     }
 
-    /// Laedt den Wochenplan eines Studios fuer das gegebene Fenster.
+    /// Ein Studio -- der Fall vor der Testnotiz 11.10. (#15) und weiter
+    /// der eines Mitglieds mit genau einer Mitgliedschaft.
+    func laden(studioId: String, von: Date, bis: Date) async {
+        await laden(studioIds: [studioId], von: von, bis: bis)
+    }
+
+    /// Laedt die Wochenplaene aller Studios fuer das gegebene Fenster und
+    /// fuehrt sie zu EINEM Plan zusammen (Testnotiz 11.10., #15).
     ///
     /// Bei Erfolg werden die eigenen Buchungen aus der Antwort gebildet
     /// und persistiert. Bei Fehler bleiben `eigene` UND `woche`
     /// unangetastet -- der zuletzt geladene Stand traegt den Screen
     /// weiter, und `ladeZustand`/`wocheStand` sagen ihm, wie alt er ist
     /// (KurseHerkunft). Die Belegungszahlen blendet der Screen dann aus.
-    func laden(studioId: String, von: Date, bis: Date) async {
-        // Ein Wochenplan gehoert zu genau EINEM Studio. Wechselt es, ist
-        // der alte Plan nicht "veraltet", sondern FALSCH -- falsche
-        // Zeitzone, falsche Zuschreibung, und "Anmelden" buchte im alten
-        // Studio. Das ist ein anderer Fall als "von vorhin", und
-        // KurseHerkunft kann ihn nicht abfangen: sie datiert Daten, sie
-        // erkennt keine vertauschten.
-        //
-        // Deshalb hier, vor dem Abruf, und an genau EINER Stelle -- der
-        // Store ist der einzige Ort, der die vorige Studiokennung kennt.
-        // Scheitert der neue Abruf, steht der Screen ohne Plan da (Karte
-        // "Kein Empfang") statt mit dem des vorigen Studios. Auch das
-        // `.laedt`-Fenster ist damit sauber: sonst stuenden dort die
-        // Zahlen von Studio A unter dem Namen von Studio B.
-        if let letzteAbfrage, letzteAbfrage.studioId != studioId {
+    /// Faellt nur EIN Studio aus, gilt das als Fehlschlag des ganzen
+    /// Plans: ein Plan ohne dieses Studio saehe vollstaendig aus, und seine
+    /// Kurse waeren still verschwunden.
+    func laden(studioIds: [String], von: Date, bis: Date) async {
+        // Ein Plan gehoert zu genau EINER Menge von Studios. Aendert sie
+        // sich (Beitritt, Austritt), ist der alte Plan nicht "veraltet",
+        // sondern FALSCH -- ein Studio fehlt oder ist zu viel, und
+        // "Anmelden" buchte womoeglich in einem Studio, zu dem man nicht
+        // mehr gehoert. KurseHerkunft kann das nicht abfangen: sie datiert
+        // Daten, sie erkennt keine vertauschten. Die Reihenfolge zaehlt
+        // nicht -- das aktive Studio steht vorn, und ein Ortswechsel ist
+        // kein anderer Plan.
+        let menge = Set(studioIds)
+        if let letzteAbfrage, Set(letzteAbfrage.studioIds) != menge {
             woche = nil
             wocheStand = nil
+            plaene = [:]
         }
-        // Und dasselbe fuer die eigenen Buchungen -- nur haengt das nicht
-        // an `letzteAbfrage`, sondern an der mitgespeicherten Kennung:
-        // `letzteAbfrage` lebt nur so lange wie die App, `eigene` kommt
-        // beim Kaltstart von der Platte. Ohne diese Pruefung zeigte
-        // "Meine Kurse" nach einem Wechsel ohne Netz die Anmeldungen des
-        // vorigen Studios -- und das Mitglied fuehre an den falschen Ort.
-        //
-        // Die Datei geht gleich mit weg. Sie gehoert einem Studio, das
-        // hier nicht mehr gilt; sie fuer eine spaetere Rueckkehr
-        // aufzuheben hiesse, zwei Staende zu fuehren, von denen der Screen
-        // immer nur einen zeigen kann.
-        if let vorhandene = eigene, vorhandene.studioId != studioId {
+        // Dasselbe fuer die eigenen Buchungen -- nur haengt das an der
+        // mitgespeicherten Menge, nicht an `letzteAbfrage`: die lebt nur so
+        // lange wie die App, `eigene` kommt beim Kaltstart von der Platte.
+        // Die Datei geht gleich mit weg; zwei Staende zu fuehren hiesse,
+        // dass der Screen immer nur einen davon zeigen kann.
+        if let vorhandene = eigene, Set(vorhandene.studioIds) != menge {
             eigene = nil
             fileStore.save(nil)
         }
@@ -169,53 +175,85 @@ final class KurseStore {
         let eigeneGeneration = generation
         ladeZaehler += 1
         ladeZustand = .laedt
-        letzteAbfrage = (studioId, von, bis)
+        letzteAbfrage = (studioIds, von, bis)
         let formatter = ISO8601DateFormatter()
-        do {
-            let neueWoche = try await loader.courseWeek(
-                studio: studioId, from: formatter.string(from: von), to: formatter.string(from: bis))
-            // Ueberholt, waehrend die Anfrage unterwegs war -- ein
-            // juengerer Aufruf oder ein reset() ist inzwischen dran.
-            // Diese Antwort darf den aktuelleren Zustand nicht mehr
-            // ueberschreiben.
-            guard eigeneGeneration == generation else { return }
-            woche = neueWoche
-            wocheStand = Date()
-            // Nur die schmale, eigene Sicht darf auf Platte -- niemals die
-            // volle CourseWeekSession mit den Belegungszahlen fremder
-            // Termine (siehe GespeicherterTermin).
-            let meineTermine = KursZustandRechner.meineKurse(aus: neueWoche).map(GespeicherterTermin.init)
-            let neu = GespeicherteBuchungen(
-                stand: Date(), studioId: studioId, termine: meineTermine,
-                cancellationDeadlineHours: neueWoche.cancellationDeadlineHours,
-                timezone: neueWoche.timezone)
-            eigene = meineTermine.isEmpty ? nil : neu
-            fileStore.save(eigene)
-            ladeZustand = .geladen
-        } catch {
-            guard eigeneGeneration == generation else { return }
-            // `woche` BLEIBT stehen. Frueher wurde sie hier genullt, und
-            // der Wochenplan wich beim ersten Fehlversuch komplett der
-            // Offline-Karte -- auch dann, wenn er einen vollstaendigen
-            // Plan im Speicher hatte. Weggeworfen wurde damit auch, was
-            // weiter stimmt: Name, Uhrzeit und Raum eines Termins aendern
-            // sich nicht. Was nicht mehr stimmt, ist die Belegung, und die
-            // blendet der Screen ueber KurseHerkunft.zeigtBelegung aus.
-            //
-            // Die Cache-Grenze bleibt davon unberuehrt: `woche` lag immer
-            // schon fuer die Dauer der Sitzung im Speicher, auf die Platte
-            // kommt weiterhin ausschliesslich GespeicherterTermin.
-            //
-            // `wocheStand` bleibt ebenfalls stehen -- er ist jetzt die
-            // Altersangabe zu genau diesen Daten, nicht mehr bloss eine
-            // Frischemarke.
-            //
-            // `error` ist hier bereits als APIError getippt (typed throws
-            // von loader.courseWeek) -- durchreichen statt verwerfen, sonst
-            // kann der View Offline nicht mehr von einem Serverfehler
-            // unterscheiden (siehe KurseLadeZustand.fehlgeschlagen).
-            ladeZustand = .fehlgeschlagen(error)
+        let vonText = formatter.string(from: von)
+        let bisText = formatter.string(from: bis)
+        let loader = loader
+        // Parallel: drei Studios kosten so eine Antwortzeit, nicht drei.
+        let ergebnisse = await withTaskGroup(of: (String, Result<CourseWeek, APIError>).self) { gruppe in
+            for studio in studioIds {
+                gruppe.addTask {
+                    do throws(APIError) {
+                        return (studio, .success(try await loader.courseWeek(studio: studio, from: vonText, to: bisText)))
+                    } catch {
+                        return (studio, .failure(error))
+                    }
+                }
+            }
+            var gesammelt: [String: Result<CourseWeek, APIError>] = [:]
+            for await (studio, ergebnis) in gruppe { gesammelt[studio] = ergebnis }
+            return gesammelt
         }
+        // Ueberholt, waehrend die Anfragen unterwegs waren -- ein juengerer
+        // Aufruf oder ein reset() ist inzwischen dran.
+        guard eigeneGeneration == generation else { return }
+
+        var neuePlaene: [String: CourseWeek] = [:]
+        for studio in studioIds {
+            switch ergebnisse[studio] {
+            case .success(let teil)?:
+                neuePlaene[studio] = teil
+            case .failure(let error)?:
+                // `woche` und `wocheStand` BLEIBEN stehen -- Name, Uhrzeit und
+                // Raum eines Termins aendern sich nicht, nur die Belegung, und
+                // die blendet der Screen ueber KurseHerkunft.zeigtBelegung aus.
+                // Den gefangenen APIError durchreichen, nicht verwerfen: der
+                // View muss Offline von einem Serverfehler unterscheiden.
+                ladeZustand = .fehlgeschlagen(error)
+                return
+            case nil:
+                ladeZustand = .fehlgeschlagen(.offline)
+                return
+            }
+        }
+        let teile = studioIds.compactMap { studio in neuePlaene[studio].map { (studioId: studio, woche: $0) } }
+        guard let neueWoche = KursePlan.zusammenfuehren(teile) else {
+            ladeZustand = .geladen
+            return
+        }
+        plaene = neuePlaene
+        woche = neueWoche
+        wocheStand = Date()
+        // Nur die schmale, eigene Sicht darf auf Platte -- niemals die
+        // volle CourseWeekSession mit den Belegungszahlen fremder Termine
+        // (siehe GespeicherterTermin). Frist und Zeitzone je Termin, weil
+        // jedes Studio seine eigene hat.
+        let meineTermine = KursZustandRechner.meineKurse(aus: neueWoche).map { termin in
+            GespeicherterTermin(termin, frist: termin.studioId.flatMap { neuePlaene[$0]?.cancellationDeadlineHours },
+                                zeitzone: termin.studioId.flatMap { neuePlaene[$0]?.timezone })
+        }
+        let neu = GespeicherteBuchungen(
+            stand: Date(), studioIds: studioIds, termine: meineTermine,
+            cancellationDeadlineHours: neueWoche.cancellationDeadlineHours,
+            timezone: neueWoche.timezone)
+        eigene = meineTermine.isEmpty ? nil : neu
+        fileStore.save(eigene)
+        ladeZustand = .geladen
+    }
+
+    /// Die Abmeldefrist des Studios, zu dem der Termin gehoert.
+    func frist(fuer sessionId: String) -> Int? {
+        studioVon(sessionId).flatMap { plaene[$0]?.cancellationDeadlineHours }
+    }
+
+    /// Die Zeitzone des Studios, zu dem der Termin gehoert.
+    func zeitzone(fuer sessionId: String) -> String? {
+        studioVon(sessionId).flatMap { plaene[$0]?.timezone }
+    }
+
+    private func studioVon(_ sessionId: String) -> String? {
+        woche?.sessions.first { $0.sessionId == sessionId }?.studioId
     }
 
     /// Bucht einen Termin und laedt danach neu -- sonst zeigte der Screen
@@ -249,7 +287,7 @@ final class KurseStore {
         }
         buchungskennungen[sessionId] = nil
         if let letzteAbfrage {
-            await laden(studioId: letzteAbfrage.studioId, von: letzteAbfrage.von, bis: letzteAbfrage.bis)
+            await laden(studioIds: letzteAbfrage.studioIds, von: letzteAbfrage.von, bis: letzteAbfrage.bis)
         }
     }
 
@@ -296,7 +334,7 @@ final class KurseStore {
             // weiter, weil sie hier nicht behandelt werden.
         }
         if let letzteAbfrage {
-            await laden(studioId: letzteAbfrage.studioId, von: letzteAbfrage.von, bis: letzteAbfrage.bis)
+            await laden(studioIds: letzteAbfrage.studioIds, von: letzteAbfrage.von, bis: letzteAbfrage.bis)
         }
     }
 
@@ -311,6 +349,7 @@ final class KurseStore {
         wocheStand = nil
         ladeZustand = .bereit
         eigene = nil
+        plaene = [:]
         buchungskennungen = [:]
         letzteAbfrage = nil
         fileStore.save(nil)

@@ -370,8 +370,10 @@ struct KursDetailView: View {
             room: termin.room,
             instructorName: termin.instructorName,
             zustand: KursZustandRechner.zustand(fuer: termin, jetzt: jetzt),
-            zeitzone: woche.timezone,
-            fristStunden: woche.cancellationDeadlineHours,
+            // Die des Studios DIESES Termins, nicht die des Plans (Testnotiz
+            // 11.10., #15).
+            zeitzone: kurse.zeitzone(fuer: termin.sessionId) ?? woche.timezone,
+            fristStunden: kurse.frist(fuer: termin.sessionId) ?? woche.cancellationDeadlineHours,
             jetzt: jetzt,
             belegung: (belegt: termin.bookedCount, kapazitaet: termin.capacity),
             wartelistenplatz: termin.ownWaitlistPosition)
@@ -386,8 +388,8 @@ struct KursDetailView: View {
             room: termin.room,
             instructorName: termin.instructorName,
             zustand: KursDetailOfflineZustand.zustand(fuer: termin, jetzt: jetzt),
-            zeitzone: eigene.timezone,
-            fristStunden: eigene.cancellationDeadlineHours,
+            zeitzone: eigene.zeitzone(fuer: termin),
+            fristStunden: eigene.frist(fuer: termin),
             jetzt: jetzt,
             belegung: nil,
             wartelistenplatz: nil)
@@ -600,8 +602,13 @@ struct KursDetailView: View {
         }
     }
 
+    /// Das Studio des Termins, nicht das aktive: der Plan zeigt alle
+    /// Studios (Testnotiz 11.10., #15).
     private var studioName: String {
-        katalog.bootstrap?.studios.first { $0.id == katalog.activeStudioId }?.name ?? ""
+        let studio = kurse.woche?.sessions.first { $0.sessionId == sessionId }?.studioId
+            ?? kurse.eigene?.termine.first { $0.sessionId == sessionId }?.studioId
+            ?? katalog.activeStudioId
+        return katalog.bootstrap?.studios.first { $0.id == studio }?.name ?? ""
     }
 
     // MARK: - Hauptaktion + Fusstext -- die eine Akzentflaeche des Screens
