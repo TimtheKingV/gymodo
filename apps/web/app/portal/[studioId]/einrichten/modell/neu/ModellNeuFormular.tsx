@@ -2,13 +2,11 @@
 
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { CatalogType } from "@fitretro/domain";
 import { MAX_PHOTO_BYTES } from "@fitretro/domain/media";
 import { modellAnlegen } from "../../actions";
-import { Feld } from "../../../../Form";
 import { FotoFeld } from "../../../../bausteine/FotoFeld";
-import { GymtavoTypFeld } from "../../../../bausteine/GymtavoTypFeld";
-import { ModellBelastungRad } from "../../../../bausteine/ModellBelastungRad";
+import { ModellVorlageFelder } from "../../../../bausteine/ModellVorlageFelder";
+import type { TypVorlage } from "../../../../bausteine/typVorlage";
 import styles from "../../halle.module.css";
 import portalStyles from "../../../../portal.module.css";
 
@@ -28,16 +26,22 @@ import portalStyles from "../../../../portal.module.css";
  * Betriebssystem gestellt, und
  * getUserMedia bleibt dem Tag-Sucher vorbehalten, wo es keine Alternative
  * gibt. Spec 5 nennt "Foto am Telefon" ausdruecklich vollstaendig vorhanden.
+ *
+ * Ohne eigenes Foto geht es nur weiter, wenn der Gymtavo-Typ eine Zeichnung
+ * hat (Spec 2026-10-10-gymtavo-katalog-geraeteeinrichtung-design.md, 5.2);
+ * die kopiert copyTypeDefaults nach dem Anlegen.
  */
 export function ModellNeuFormular({
   studioId,
   typen,
 }: {
   studioId: string;
-  typen: Pick<CatalogType, "id" | "name" | "manufacturer">[];
+  typen: TypVorlage[];
 }) {
   const router = useRouter();
   const [hatFoto, setHatFoto] = useState(false);
+  const [typ, setTyp] = useState<TypVorlage | null>(null);
+  const fotoNoetig = !typ?.hatFoto;
   const [dateiFehler, setDateiFehler] = useState<string | null>(null);
 
   const [ergebnis, formAction, laeuft] = useActionState(
@@ -60,7 +64,11 @@ export function ModellNeuFormular({
         gross
         ausloeserText="Foto des Modells auswählen"
         ariaLabel="Foto des Modells"
-        hinweis="Das ganze Gerät ins Bild. Ein Foto je Modell, nicht je Gerät — zwei baugleiche Kabelzüge zeigen dasselbe Bild."
+        hinweis={
+          fotoNoetig
+            ? "Das ganze Gerät ins Bild. Ein Foto je Modell, nicht je Gerät — zwei baugleiche Kabelzüge zeigen dasselbe Bild."
+            : "Ohne eigenes Foto zeigt das Gerät die Gymtavo-Zeichnung. Ein echtes Foto hilft Mitgliedern, das Gerät zu erkennen."
+        }
         onDatei={(datei) => {
           if (!datei) {
             setHatFoto(false);
@@ -84,16 +92,7 @@ export function ModellNeuFormular({
         </p>
       ) : null}
 
-      <Feld gross name="name" label="Name" required placeholder="Kabelzug" />
-      <Feld
-        gross
-        name="manufacturer"
-        label="Hersteller"
-        placeholder="Technogym"
-      />
-      <GymtavoTypFeld gross typen={typen} start={null} />
-
-      <ModellBelastungRad gross />
+      <ModellVorlageFelder gross typen={typen} onTyp={setTyp} />
       <p className={styles.notiz}>
         Die Schrittweite kommt von den Platten am Gerät. Sie rastet später das
         Rad des Mitglieds — ein Wert, den das Gerät nicht kann, wird damit
@@ -109,7 +108,9 @@ export function ModellNeuFormular({
       <button
         type="submit"
         className={portalStyles.primaryGross}
-        disabled={!hatFoto || laeuft}
+        // Ein zu grosses Foto haelt auch dann zurueck, wenn keins noetig
+        // waere: hochgeladen wuerde es trotzdem und scheiterte am Server.
+        disabled={(fotoNoetig && !hatFoto) || laeuft || dateiFehler !== null}
       >
         {laeuft ? "Wird angelegt …" : "Weiter zu den Einstellungen"}
       </button>

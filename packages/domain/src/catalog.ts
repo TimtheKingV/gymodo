@@ -40,6 +40,11 @@ function parseOrThrow<T extends z.ZodTypeAny>(
 
 const uuid = z.string().uuid();
 
+/** numeric kommt aus PostgREST als Zahl oder Text -- Formulare rechnen. */
+function zahl(wert: number | string | null): number | null {
+  return wert === null ? null : Number(wert);
+}
+
 /**
  * Die Nebenbelastung eines Modells (Cardio-Spec 3.1b): alle vier Felder
  * oder keines -- dieselbe Regel wie der Constraint aus 0046, hier nur
@@ -1038,9 +1043,6 @@ export async function getStudioCatalog(
     tag_batches: { code: string; kind: "machine" | "studio" } | null;
   };
 
-  const zahl = (wert: number | string | null): number | null =>
-    wert === null ? null : Number(wert);
-
   const models = ((modelle ?? []) as unknown as ModelRow[]).map((row) => ({
     id: row.id,
     name: row.name,
@@ -1152,6 +1154,16 @@ export type CatalogType = {
   name: string;
   manufacturer: string | null;
   category: Category;
+  /** Vorlage fuer ein neues Studio-Modell (Spec 2026-10-10 ..., 5.1). */
+  loadUnit: LoadUnit;
+  loadStep: number;
+  loadMin: number;
+  loadMax: number | null;
+  secondaryUnit: LoadUnit | null;
+  secondaryStep: number | null;
+  secondaryMin: number | null;
+  secondaryMax: number | null;
+  photoPath: string | null;
   exercises: CatalogTypeExercise[];
 };
 
@@ -1169,7 +1181,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
   const { data, error } = await client
     .from("equipment_models")
     .select(
-      `id, name, manufacturer, category,
+      `id, name, manufacturer, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, photo_path,
        equipment_model_exercises (sort_order, exercises (id, name, description, volume_kind, target_min, target_max), instruction_assets (storage_path, duration_s))`,
     )
     .eq("studio_id", katalogId)
@@ -1181,6 +1193,15 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
     name: string;
     manufacturer: string | null;
     category: Category;
+    load_unit: LoadUnit;
+    load_step: number | string;
+    load_min: number | string;
+    load_max: number | string | null;
+    secondary_unit: LoadUnit | null;
+    secondary_step: number | string | null;
+    secondary_min: number | string | null;
+    secondary_max: number | string | null;
+    photo_path: string | null;
     equipment_model_exercises: Array<{
       sort_order: number;
       exercises: {
@@ -1200,6 +1221,15 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
     name: row.name,
     manufacturer: row.manufacturer,
     category: row.category,
+    loadUnit: row.load_unit,
+    loadStep: Number(row.load_step),
+    loadMin: Number(row.load_min),
+    loadMax: zahl(row.load_max),
+    secondaryUnit: row.secondary_unit,
+    secondaryStep: zahl(row.secondary_step),
+    secondaryMin: zahl(row.secondary_min),
+    secondaryMax: zahl(row.secondary_max),
+    photoPath: row.photo_path,
     exercises: [...row.equipment_model_exercises]
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((link) => {

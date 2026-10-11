@@ -292,3 +292,4 @@ Jede Etappe ist für sich lauffähig. Etappe 4 setzt 1–3 voraus, Etappe 5 nur 
 - Kalibrierung und gemerkte Einstellungen für Geräte ohne QR-Code.
 - `studio_overview` (0034) gibt dem Gymtavo-Owner Summen über Freies Training aus -- nur Summen, die Datenschutzgrenze bleibt. Falls unerwünscht, schließt Etappe 3 das Gymtavo-Studio dort aus.
 - Ob „Freies Training“ in der App so heißt oder z. B. „Ohne Studio“: Wortlaut bei der iOS-Etappe.
+- Typwerte beim Anlegen übernehmen und Herstellermodelle wählen: eigene Spec `2026-10-10-gymtavo-katalog-geraeteeinrichtung-design.md`.

@@ -17,8 +17,8 @@ function uebung(id: string, video: string | null = null) {
 }
 
 const typen: CatalogType[] = [
-  { id: "t1", name: "Kabelzug", manufacturer: null, category: "kraft", exercises: [uebung("e1", "gy/e1.mp4"), uebung("e2")] },
-  { id: "t2", name: "Langhantel", manufacturer: null, category: "kraft", exercises: [uebung("e3", "gy/e3.mp4"), uebung("e1", "gy/e1.mp4")] },
+  { id: "t1", name: "Kabelzug", manufacturer: null, category: "kraft", loadUnit: "kg", loadStep: 2.5, loadMin: 0, loadMax: null, secondaryUnit: null, secondaryStep: null, secondaryMin: null, secondaryMax: null, photoPath: null, exercises: [uebung("e1", "gy/e1.mp4"), uebung("e2")] },
+  { id: "t2", name: "Langhantel", manufacturer: null, category: "kraft", loadUnit: "kg", loadStep: 2.5, loadMin: 0, loadMax: null, secondaryUnit: null, secondaryStep: null, secondaryMin: null, secondaryMax: null, photoPath: null, exercises: [uebung("e3", "gy/e3.mp4"), uebung("e1", "gy/e1.mp4")] },
 ];
 
 function link(exerciseId: string, fromCatalog: boolean, video: string | null = null) {

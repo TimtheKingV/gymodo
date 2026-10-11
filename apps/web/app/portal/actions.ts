@@ -9,6 +9,7 @@ import {
   attachExerciseToModel,
   catalogTypeRequired,
   confirmInstructionVideo,
+  copyTypeDefaults,
   createEquipmentModel,
   createExercise,
   createMachine,
@@ -157,6 +158,14 @@ export async function modellAnlegen(
     modelId = modell.id;
   } catch (fehler) {
     return fehlerAus(fehler);
+  }
+  try {
+    await copyTypeDefaults(client, modelId);
+  } catch (fehler) {
+    // Das Modell steht; was fehlt, zeigen die naechsten Schritte (Foto,
+    // Einstellungen). Ein Abbruch hier liesse den Trainer vor einem
+    // angelegten Modell stehen, das er fuer nicht angelegt haelt.
+    console.error("Typvorlage nicht vollstaendig kopiert:", fehler);
   }
   revalidatePath(`/portal/${studioId}`, "layout");
   // Weiter im Ablauf "Gerät hinzufügen": Schritt 2, die Einstellungen
