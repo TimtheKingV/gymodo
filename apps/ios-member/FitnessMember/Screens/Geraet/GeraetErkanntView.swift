@@ -53,20 +53,7 @@ struct GeraetErkanntView: View {
     /// bei zwei baugleichen Stationen der eigentliche Nutzen. Offline gibt
     /// es keine signierte URL, dann steht hier der Platzhalter.
     private var geraetefoto: some View {
-        AsyncImage(url: modell.kontext?.equipmentModel.photoUrl.flatMap(URL.init(string:))) { bild in
-            bild.resizable().aspectRatio(contentMode: .fill)
-        } placeholder: {
-            ZStack {
-                DesignSystem.Color.surfaceRaised
-                Image(systemName: "photo")
-                    .font(.system(size: 28))
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-            }
-        }
-        .frame(height: 180)
-        .frame(maxWidth: .infinity)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .accessibilityHidden(true)
+        Geraetefoto(url: modell.kontext?.equipmentModel.photoUrl.flatMap(URL.init(string:)), hoehe: 180)
     }
 
     private var geraetename: some View {

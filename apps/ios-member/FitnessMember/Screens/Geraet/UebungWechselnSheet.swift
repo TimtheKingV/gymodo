@@ -60,7 +60,11 @@ struct UebungWechselnSheet: View {
     /// "Gerät erkannt" (#3).
     private func zeile(_ uebung: GeraetUebung) -> some View {
         HStack(spacing: DesignSystem.Spacing.s12) {
-            Uebungsbild()
+            // Das Video wie auf der Geraeteseite -- hier war es beim
+            // Einbau der Schleifen vergessen worden (Testnotiz 11.10., #16).
+            UebungsVideoKachel(exerciseId: uebung.id) {
+                Uebungsbild()
+            }
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                 Text(uebung.name)
                     .font(DesignSystem.Typography.uebungsname)

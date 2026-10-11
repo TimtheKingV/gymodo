@@ -1,7 +1,9 @@
 import CryptoKit
 import Foundation
 
-/// Uebungsvideos als Dateien in Caches (Testnotiz 11.10., #1).
+/// Uebungsvideos und Geraetefotos als Dateien in Caches (Testnotiz
+/// 11.10., #1; Fotos seit #14 der Sitzung 12:10). Eine Instanz je Art,
+/// jede mit eigenem Ordner.
 ///
 /// Nicht URLCache: die signierte URL traegt einen Token, der nach 15
 /// Minuten ablaeuft und bei jedem Abruf ein anderer ist -- ein Cache nach
@@ -11,12 +13,20 @@ import Foundation
 ///
 /// Die Dateien sind klein (Katalog: ca. 30 KB je Uebung) -- kein Aufraeumen
 /// noetig, Caches darf das System selbst leeren.
-actor VideoAblage {
+actor Medienablage {
+    /// Die Geraetefotos der Liste, der Geraeteseite und der Einweisung.
+    /// Geteilt, weil alle drei dieselben Fotos zeigen.
+    static let fotos = Medienablage(
+        ordner: FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("geraetefotos", isDirectory: true),
+        endung: "bild")
+
     typealias Laden = @Sendable (URL) async -> Data?
 
     private let ordner: URL
     private let laden: Laden
-    /// Uebung -> Dateiname der zuletzt abgelegten Fassung. Liegt neben den
+    private let endung: String
+    /// Schluessel (Uebung, Modell) -> Dateiname der zuletzt abgelegten Fassung. Liegt neben den
     /// Dateien auf der Platte: nach einem Neustart ohne Netz kennt der
     /// Vorrat keine Quellen, die Datei soll trotzdem laufen.
     private var index: [String: String]
@@ -25,8 +35,10 @@ actor VideoAblage {
     /// `laufend` im VorschauLader.
     private var laufend: [String: Task<URL?, Never>] = [:]
 
-    init(ordner: URL = VideoAblage.standardOrdner, laden: @escaping Laden = VideoAblage.netz) {
+    init(ordner: URL = Medienablage.standardOrdner, endung: String = "mp4",
+         laden: @escaping Laden = Medienablage.netz) {
         self.ordner = ordner
+        self.endung = endung
         self.laden = laden
         let gelesen = try? Data(contentsOf: ordner.appendingPathComponent("index.json"))
         self.index = gelesen.flatMap { try? JSONDecoder().decode([String: String].self, from: $0) } ?? [:]
@@ -48,11 +60,11 @@ actor VideoAblage {
 
     /// Die lokale Datei fuer die Uebung. Mit Quelle wird sie bei Bedarf
     /// geladen, ohne Quelle nur die zuletzt abgelegte gesucht.
-    func datei(exerciseId: String, quelle: UebungsVideo?) async -> URL? {
+    func datei(schluessel: String, quelle: Medienquelle?) async -> URL? {
         guard let quelle else {
-            return index[exerciseId].map(ziel).flatMap(vorhanden)
+            return index[schluessel].map(ziel).flatMap(vorhanden)
         }
-        let name = Self.dateiname(quelle.pfad)
+        let name = Self.dateiname(quelle.pfad, endung: endung)
         let datei: URL?
         if let fertig = vorhanden(ziel(name)) {
             datei = fertig
@@ -76,8 +88,8 @@ actor VideoAblage {
             datei = await download.value
             laufend[name] = nil
         }
-        if datei != nil, index[exerciseId] != name {
-            index[exerciseId] = name
+        if datei != nil, index[schluessel] != name {
+            index[schluessel] = name
             speichereIndex()
         }
         return datei
@@ -99,7 +111,7 @@ actor VideoAblage {
 
     /// Der Pfad enthaelt Schraegstriche und Studio-IDs -- als Dateiname
     /// taugt nur sein Hash.
-    private static func dateiname(_ pfad: String) -> String {
-        SHA256.hash(data: Data(pfad.utf8)).map { String(format: "%02x", $0) }.joined() + ".mp4"
+    private static func dateiname(_ pfad: String, endung: String) -> String {
+        SHA256.hash(data: Data(pfad.utf8)).map { String(format: "%02x", $0) }.joined() + "." + endung
     }
 }

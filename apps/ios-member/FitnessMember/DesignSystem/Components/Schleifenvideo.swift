@@ -16,6 +16,12 @@ struct UebungsVideoKachel<Platzhalter: View>: View {
     /// Ohne Video gar keine Kachel statt des Platzhalters -- fuer den Kopf
     /// der Satzseite, wo ein leerer Kasten nur dem Namen Breite naehme.
     var nurMitVideo = false
+    /// Gesetzt fuellt die Kachel die Breite in dieser Hoehe -- das grosse
+    /// Video der Einweisung (Testnotiz 11.10., #7). Sonst quadratisch.
+    var hoehe: CGFloat?
+    /// Die Video-URL aus dem Geraetekontext, falls der Vorrat die Uebung
+    /// (noch) nicht kennt.
+    var ersatz: URL?
     @ViewBuilder let platzhalter: Platzhalter
 
     @State private var asset: AVAsset?
@@ -37,9 +43,9 @@ struct UebungsVideoKachel<Platzhalter: View>: View {
         }
         // Der Pfad gehoert zur ID: kommt der Vorrat erst nach der Kachel
         // an (erste Oeffnung der Liste), laeuft die Suche neu.
-        .task(id: [exerciseId, exerciseId.flatMap { vorrat.quellen[$0]?.pfad }]) {
+        .task(id: [exerciseId, exerciseId.flatMap { vorrat.quellen[$0]?.pfad }, ersatz?.path]) {
             guard let exerciseId,
-                  let datei = await vorrat.datei(exerciseId: exerciseId)
+                  let datei = await vorrat.datei(exerciseId: exerciseId, ersatz: ersatz)
             else { return }
             asset = await Schleifenvideo.nurBild(datei)
         }
@@ -50,12 +56,12 @@ struct UebungsVideoKachel<Platzhalter: View>: View {
     // und das Video gleich mit.
     private var kachel: some View {
         Color.clear
-            .frame(width: kante, height: kante)
+            .frame(width: hoehe == nil ? kante : nil, height: hoehe ?? kante)
+            .frame(maxWidth: hoehe == nil ? nil : .infinity)
             .background { platzhalter }
             .overlay {
                 if let asset {
                     Schleifenvideo(asset: asset)
-                        .frame(width: kante, height: kante)
                         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
                 }
             }

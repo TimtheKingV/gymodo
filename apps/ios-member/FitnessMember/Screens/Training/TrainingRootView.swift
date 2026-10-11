@@ -31,7 +31,7 @@ struct TrainingRootView: View {
     /// eine andere. Ohne diesen einen Lader wuerde jedes erneute Oeffnen
     /// dieselben Originalfotos nochmal herunterladen, obwohl die
     /// dekodierten Vorschaubilder schon vorliegen.
-    @State private var vorschauLader = VorschauLader()
+    @State private var vorschauLader = VorschauLader(ablage: .fotos)
     /// Die Videoquellen fuer Liste, Geraeteseite und Satzseite (Testnotiz
     /// 11.10., #1, #5, #7). Lebt seit #2 der Sitzung 12:10 an der App,
     /// weil auch Home sie zeigt.

@@ -66,8 +66,14 @@ actor VorschauLader {
     // Minuten gilt und bei jedem Oeffnen der Liste ein anderer ist -- eine
     // im URLCache abgelegte Antwort wuerde nie wieder treffen und dort nur
     // Platz belegen.
-    init(session: URLSession = URLSession(configuration: .ephemeral)) {
+    /// Mit Ablage landet jedes Original auf der Platte und ueberlebt den
+    /// Neustart (Testnotiz 11.10., #14); vorher lud jeder Start alle Fotos
+    /// der Liste neu.
+    private let ablage: Medienablage?
+
+    init(session: URLSession = URLSession(configuration: .ephemeral), ablage: Medienablage? = nil) {
         self.session = session
+        self.ablage = ablage
     }
 
     func bild(modellId: String, url: URL, kantePixel: Int) async -> UIImage? {
@@ -79,10 +85,21 @@ actor VorschauLader {
         // dazwischen: eine gleichzeitige zweite Zeile desselben Modells
         // sieht den Eintrag deshalb garantiert, bevor sie selbst einen
         // Download anstossen koennte.
-        let download = Task<UIImage?, Never> { [session] in
-            guard let geladen = try? await session.data(from: url),
-                  (geladen.1 as? HTTPURLResponse)?.statusCode == 200,
-                  let verkleinert = Vorschau.verkleinert(geladen.0, kantePixel: kantePixel)
+        let download = Task<UIImage?, Never> { [session, ablage] in
+            let daten: Data?
+            if let ablage {
+                // Schluessel ist der Pfad ohne Token: er bleibt ueber
+                // Signaturen hinweg derselbe.
+                let datei = await ablage.datei(schluessel: modellId,
+                                               quelle: Medienquelle(url: url, pfad: url.path))
+                daten = datei.flatMap { try? Data(contentsOf: $0) }
+            } else if let geladen = try? await session.data(from: url),
+                      (geladen.1 as? HTTPURLResponse)?.statusCode == 200 {
+                daten = geladen.0
+            } else {
+                daten = nil
+            }
+            guard let daten, let verkleinert = Vorschau.verkleinert(daten, kantePixel: kantePixel)
             else { return nil }
             return UIImage(cgImage: verkleinert)
         }
@@ -128,5 +145,42 @@ struct Uebungsbild: View {
                     .stroke(DesignSystem.Color.line, lineWidth: 1)
             )
             .accessibilityHidden(true)
+    }
+}
+
+/// Das grosse Geraetefoto oben auf Geraeteseite und Einweisung, aus der
+/// Fotoablage statt per AsyncImage (Testnotiz 11.10., #14): AsyncImage
+/// lud es bei jedem Oeffnen neu, die Ablage einmal je Foto.
+struct Geraetefoto: View {
+    let url: URL?
+    let hoehe: CGFloat
+
+    @State private var bild: UIImage?
+
+    var body: some View {
+        ZStack {
+            DesignSystem.Color.surfaceRaised
+            if let bild {
+                Image(uiImage: bild).resizable().aspectRatio(contentMode: .fill)
+            } else {
+                Image(systemName: "photo")
+                    .font(.system(size: 28))
+                    .foregroundStyle(DesignSystem.Color.textFaint)
+            }
+        }
+        .frame(height: hoehe)
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .accessibilityHidden(true)
+        // Der Pfad als id, nicht die URL: die Signatur wechselt bei jedem
+        // Laden des Kontexts, das Foto nicht.
+        .task(id: url?.path) {
+            guard let url,
+                  let datei = await Medienablage.fotos.datei(
+                      schluessel: url.path, quelle: Medienquelle(url: url, pfad: url.path)),
+                  let geladen = UIImage(contentsOfFile: datei.path)
+            else { return }
+            bild = geladen
+        }
     }
 }
