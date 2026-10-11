@@ -132,14 +132,19 @@ struct KurseBandView: View {
     /// aus getesteten Ableitungen.
     private func karte(_ zeile: KurseMeineZeile, eigene: GespeicherteBuchungen) -> some View {
         let zustand = KursDetailOfflineZustand.zustand(fuer: zeile.termin, jetzt: jetzt)
+        // Frist und Zeitzone des Studios DIESES Termins: seit der Plan alle
+        // Studios zeigt, kann jede Zeile eine andere haben (Testnotiz
+        // 11.10., #15).
+        let frist = eigene.frist(fuer: zeile.termin)
+        let zeitzone = eigene.zeitzone(fuer: zeile.termin)
         let verstrichen = KursDetailInhalt.abmeldefristVerstrichen(
             startsAt: zeile.termin.startsAt,
-            fristStunden: eigene.cancellationDeadlineHours, jetzt: jetzt)
+            fristStunden: frist, jetzt: jetzt)
         let hinweis = KurseWochenInhalt.abmeldehinweis(
             fuer: zustand,
             abmeldenBisUhrzeit: abmeldenBisUhrzeit(
-                zeile.termin, fristStunden: eigene.cancellationDeadlineHours,
-                zeitzone: eigene.timezone),
+                zeile.termin, fristStunden: frist,
+                zeitzone: zeitzone),
             abmeldefristVerstrichen: verstrichen)
         let zeigtKnopf = KurseWochenInhalt.zeigtAbmeldenKnopf(
             fuer: zustand, abmeldefristVerstrichen: verstrichen)
@@ -150,12 +155,12 @@ struct KurseBandView: View {
                 beiAuswahl(zeile.termin.sessionId)
             } label: {
                 HStack(alignment: .top, spacing: DesignSystem.Spacing.s12) {
-                    datumsblock(zeile, zeitzone: eigene.timezone, farbe: farbe)
+                    datumsblock(zeile, zeitzone: zeitzone, farbe: farbe)
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                         Text(zeile.termin.name)
                             .font(.system(size: 18, weight: .heavy))
                             .foregroundStyle(DesignSystem.Color.text)
-                        Text(zeitraumUndRaum(zeile, zeitzone: eigene.timezone))
+                        Text(zeitraumUndRaum(zeile, zeitzone: zeitzone))
                             .font(.system(size: 13, weight: .bold).monospacedDigit())
                             .foregroundStyle(DesignSystem.Color.textMuted)
                         if let trainer = zeile.termin.instructorName {

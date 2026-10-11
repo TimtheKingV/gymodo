@@ -277,6 +277,11 @@ struct KurseWochenView: View {
 
     @State private var beitretenOffen = false
 
+    /// Die abgewaehlten Studios des Filters (Testnotiz 11.10., #15), als
+    /// durch Komma getrennte IDs. Gemerkt werden die AUSGEBLENDETEN: ein
+    /// neues Studio ist damit von selbst sichtbar.
+    @AppStorage("kurseAusgeblendeteStudios") private var ausgeblendetText = ""
+
     /// 60-Sekunden-Kadenz statt einer einmalig beim Aufbau gelesenen
     /// Date() -- dasselbe Muster wie in KursDetailView und KurseMeineView,
     /// und aus demselben Grund: @Observable loest kein Neuzeichnen aus,
@@ -286,7 +291,7 @@ struct KurseWochenView: View {
     /// Wochenstreifen weiter gestern als "heute".
     var body: some View {
         Group {
-            switch KurseOrtZustand.fuer(ort: katalog.ort) {
+            switch KurseOrtZustand.fuer(studios: alleStudios.count) {
             case .plan:
                 TimelineView(.periodic(from: .now, by: 60)) { context in
                     screenInhalt(jetzt: context.date)
@@ -298,7 +303,8 @@ struct KurseWochenView: View {
         .testnotizScreen()
     }
 
-    /// Im Freien Training: kein Plan, kein Laden -- nur der Weg zu einem Studio.
+    /// Ohne jede Mitgliedschaft: kein Plan, kein Laden -- nur der Weg zu
+    /// einem Studio.
     private var beitretenInhalt: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
             kopf
@@ -326,7 +332,9 @@ struct KurseWochenView: View {
         // koennten die drei auseinanderlaufen.
         let eigene = kurse.eigene
         let einteilung = eigene.map {
-            KurseMeineEinteilung.bilden(aus: $0.termine, jetzt: jetzt, zeitzone: $0.timezone)
+            KurseMeineEinteilung.bilden(
+                aus: KurseFilter.sichtbar($0.termine, ausgeblendet: ausgeblendet),
+                jetzt: jetzt, zeitzone: $0.timezone)
         }
         let hatAnmeldungen = !(einteilung?.istLeer ?? true)
         let ansicht = KurseAnsicht.geltend(
@@ -335,6 +343,9 @@ struct KurseWochenView: View {
         return ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopf
+                if KurseFilter.zeigtAuswahl(studios: alleStudios.count) {
+                    studioAuswahl
+                }
                 kalender(jetzt: jetzt, hatAnmeldungen: hatAnmeldungen, ansicht: ansicht)
                 if ansicht == .angemeldet, let eigene, let einteilung {
                     KurseBandView(
@@ -368,7 +379,10 @@ struct KurseWochenView: View {
         // Anleitung findet, und der einzige, der auch dann noch da ist,
         // wenn der Plan steht und bloss alt ist.
         .refreshable { await neuLaden() }
-        .task(id: katalog.activeStudioId) { await neuLaden() }
+        // An der Studioliste statt am aktiven Ort: der Plan zeigt alle
+        // Studios, ein Ortswechsel aendert nur die Reihenfolge (Testnotiz
+        // 11.10., #15).
+        .task(id: alleStudios) { await neuLaden() }
         // Ein Reconnect-Ausloeser. Ohne ihn blieb "Kein Empfang" stehen,
         // bis das Mitglied den Tab verliess und zurueckkam -- und der
         // Screen sagte auch nicht, dass es das tun soll.
@@ -389,7 +403,8 @@ struct KurseWochenView: View {
     /// Ziehen, Reconnect, Rueckkehr aus dem Hintergrund) gehen hier durch,
     /// damit das Anfragefenster nicht an vier Stellen berechnet wird.
     private func neuLaden() async {
-        guard let studioId = katalog.activeStudioId else { return }
+        let studios = alleStudios
+        guard !studios.isEmpty else { return }
         let jetzt = Date()
         let von = KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zeitzoneFuerAnfrage)
         // Bis "jetzt plus 14 Tage", nicht bis zum naechsten Montag: das
@@ -397,7 +412,7 @@ struct KurseWochenView: View {
         // Dieser Screen zeigt davon weiterhin nur den gewaehlten Tag --
         // termineDesTages filtert ueber localDay.
         let bis = KurseWochenBerechnung.fensterEnde(ab: jetzt, zeitzone: zeitzoneFuerAnfrage)
-        await kurse.laden(studioId: studioId, von: von, bis: bis)
+        await kurse.laden(studioIds: studios, von: von, bis: bis)
     }
 
     /// Die eine Ableitung, die alle drei Kurse-Screens teilen -- sie
@@ -424,8 +439,61 @@ struct KurseWochenView: View {
         }
     }
 
+    /// Bei einem sichtbaren Studio sein Name, sonst wie viele es sind.
     private var studioName: String {
-        katalog.bootstrap?.studios.first { $0.id == katalog.activeStudioId }?.name ?? ""
+        let sichtbar = KurseFilter.sichtbareStudios(alle: alleStudios, ausgeblendet: ausgeblendet)
+        if sichtbar.count == 1, let einziges = sichtbar.first { return name(vonStudio: einziges) }
+        return "\(sichtbar.count) Studios"
+    }
+
+    // MARK: - Studios (Testnotiz 11.10., #15)
+
+    /// Alle Studios des Mitglieds, das aktive vorn -- dieselbe Regel wie
+    /// auf Home, damit beide dieselbe Menge laden.
+    private var alleStudios: [String] {
+        KurseStudios.reihenfolge(
+            alle: katalog.bootstrap?.studios.map(\.id) ?? [], aktiv: katalog.activeStudioId)
+    }
+
+    private var ausgeblendet: Set<String> {
+        Set(ausgeblendetText.split(separator: ",").map(String.init))
+    }
+
+    private func name(vonStudio id: String) -> String {
+        katalog.bootstrap?.studios.first { $0.id == id }?.name ?? ""
+    }
+
+    /// Ein Chip je Studio; ein Tipp blendet es aus oder wieder ein. Das
+    /// letzte sichtbare bleibt (KurseFilter.umschalten). Gleich breit bis
+    /// drei Studios, darueber scrollbar.
+    private var studioAuswahl: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: DesignSystem.Spacing.s8) {
+                ForEach(alleStudios, id: \.self) { studio in
+                    let aktiv = !ausgeblendet.contains(studio)
+                    Button {
+                        let neu = KurseFilter.umschalten(studio, ausgeblendet: ausgeblendet, alle: alleStudios)
+                        ausgeblendetText = neu.sorted().joined(separator: ",")
+                    } label: {
+                        Chip(text: name(vonStudio: studio), isActive: aktiv,
+                             innenabstand: DesignSystem.Spacing.s16)
+                            .frame(minWidth: 96)
+                            .fixedSize(horizontal: true, vertical: false)
+                    }
+                    .buttonStyle(PressButtonStyle())
+                    .accessibilityAddTraits(aktiv ? .isSelected : [])
+                    .accessibilityHint(aktiv ? "Blendet die Kurse dieses Studios aus" : "Zeigt die Kurse dieses Studios")
+                }
+            }
+        }
+        .scrollClipDisabled()
+        .testnotizElement("kurse.studioauswahl", typ: "ScrollView")
+    }
+
+    /// Die Termine der sichtbaren Studios -- Tagesliste und Indikator lesen
+    /// beide hier, damit kein Punkt auf einen ausgeblendeten Kurs zeigt.
+    private var sichtbareTermine: [CourseWeekSession] {
+        KurseFilter.sichtbar(kurse.woche?.sessions ?? [], ausgeblendet: ausgeblendet)
     }
 
     /// Die Zeitzone fuer den Wochenstreifen und das Anfragefenster, BEVOR
@@ -435,7 +503,7 @@ struct KurseWochenView: View {
     /// hier dient nur der Woche-Berechnung selbst und dem Ladefenster.
     private var zeitzoneFuerAnfrage: String {
         kurse.woche?.timezone
-            ?? katalog.bootstrap?.studios.first { $0.id == katalog.activeStudioId }?.timezone
+            ?? alleStudios.first.flatMap { erstes in katalog.bootstrap?.studios.first { $0.id == erstes }?.timezone }
             ?? "UTC"
     }
 
@@ -591,7 +659,7 @@ struct KurseWochenView: View {
             ForEach(tage) { tag in
                 let ausgewaehlt = tag.id == gewaehlterTag(jetzt: jetzt)
                 let indikator = KurseTagesindikator.fuer(
-                    tagId: tag.id, termine: kurse.woche?.sessions ?? [], jetzt: jetzt)
+                    tagId: tag.id, termine: sichtbareTermine, jetzt: jetzt)
                 Button {
                     gewaehlterTagId = tag.id
                     // Ein Tag ohne eigenen Platz hat in der
@@ -742,7 +810,7 @@ struct KurseWochenView: View {
 
     private func termineDesTages(jetzt: Date) -> [CourseWeekSession] {
         let gewaehlt = gewaehlterTag(jetzt: jetzt)
-        return (kurse.woche?.sessions ?? [])
+        return sichtbareTermine
             .filter { $0.localDay == gewaehlt }
             .sorted {
                 (Zeitpunkt.parse($0.startsAt) ?? .distantPast)
@@ -979,8 +1047,12 @@ struct KurseWochenView: View {
         }
     }
 
+    /// Mit dem Studio, sobald mehr als eines sichtbar ist -- sonst saehe
+    /// man nicht, wohin man faehrt (Testnotiz 11.10., #15).
     private func trainerUndRaum(_ termin: CourseWeekSession) -> String? {
-        let teile = [termin.instructorName, termin.room].compactMap { $0 }
+        let mitStudio = KurseFilter.sichtbareStudios(alle: alleStudios, ausgeblendet: ausgeblendet).count > 1
+        let studio = mitStudio ? termin.studioId.map { name(vonStudio: $0) } : nil
+        let teile = [termin.instructorName, termin.room, studio].compactMap { $0 }
         return teile.isEmpty ? nil : teile.joined(separator: " · ")
     }
 
@@ -1009,7 +1081,9 @@ struct KurseWochenView: View {
         // dem Studio, nicht dem Geraet (KursZeit-Kommentar). `kurse.woche`
         // ist hier garantiert nicht nil -- diese Zeile wird ausschliesslich
         // aus termineDesTages gebaut, das nur bei geladenem Plan existiert.
-        let zeitzone = kurse.woche?.timezone ?? zeitzoneFuerAnfrage
+        // Die Zeitzone des Studios DIESES Termins, nicht die des Plans --
+        // der traegt die des ersten Studios (Testnotiz 11.10., #15).
+        let zeitzone = kurse.zeitzone(fuer: termin.sessionId) ?? kurse.woche?.timezone ?? zeitzoneFuerAnfrage
         let beginn = Zeitpunkt.parse(termin.startsAt)
         let istVorbei = zustand == .vorbei
 

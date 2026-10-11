@@ -10,6 +10,10 @@ import SwiftUI
 struct Chip: View {
     let text: String
     var isActive: Bool = false
+    /// Abstand zwischen Text und Rand, wenn der Chip so breit wird wie sein
+    /// Text (Studiofilter der Kurse, Testnotiz 11.10., #15). Im Onboarding
+    /// fuellt er die Spalte und braucht keinen.
+    var innenabstand: CGFloat = 0
 
     var body: some View {
         Text(text)
@@ -17,6 +21,7 @@ struct Chip: View {
             .lineLimit(1)
             .minimumScaleFactor(0.7)
             .foregroundStyle(isActive ? DesignSystem.Color.text : DesignSystem.Color.textMuted)
+            .padding(.horizontal, innenabstand)
             .frame(maxWidth: .infinity)
             .frame(height: 44)
             .background(isActive ? DesignSystem.Color.surface : Color.clear)

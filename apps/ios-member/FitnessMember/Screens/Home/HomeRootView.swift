@@ -64,15 +64,23 @@ struct HomeRootView: View {
     /// ein Mitglied im Urlaub seine Abendeinheit auf den Folgetag.
     private var zeitzone: String { HomeSerie.zeitzone(studio: aktivesStudio?.timezone) }
 
-    /// Die eigenen Kursbuchungen -- nur, wenn sie zum aktiven Studio
-    /// gehoeren. Nach einem Studiowechsel ohne Netz laegen sonst die des
-    /// vorigen Studios im Streifen (dieselbe Pruefung wie auf der
-    /// Kurse-Seite, siehe `GespeicherteBuchungen.studioId`).
+    /// Die eigenen Kursbuchungen aller Studios, auch im Freien Training
+    /// (Testnotiz 11.10., #15) -- aber nur, wenn sie zu den Studios
+    /// gehoeren, in denen das Mitglied heute ist. Nach einem Austritt ohne
+    /// Netz laegen sonst Buchungen eines fremden Studios im Streifen
+    /// (dieselbe Pruefung wie im KurseStore, siehe
+    /// `GespeicherteBuchungen.studioIds`).
     private var eigeneKurse: GespeicherteBuchungen? {
-        // Im Freien Training gibt es keine Kurse, auch keine alten vom Cache.
-        guard let studioId = katalog.activeStudioId,
-              let eigene = kurse.eigene, eigene.studioId == studioId else { return nil }
+        guard let eigene = kurse.eigene,
+              Set(eigene.studioIds) == Set(kurseStudios) else { return nil }
         return eigene
+    }
+
+    /// Die Studios, deren Kurse Home und Kurse-Tab laden -- das aktive
+    /// vorn, weil der Plan Zeitzone und Wochenstreifen vom ersten nimmt.
+    private var kurseStudios: [String] {
+        KurseStudios.reihenfolge(
+            alle: katalog.bootstrap?.studios.map(\.id) ?? [], aktiv: katalog.activeStudioId)
     }
 
     var body: some View {
@@ -225,11 +233,12 @@ private extension HomeRootView {
     /// `eigene` mit genau dem, was im Fenster liegt, ein zweites Fenster
     /// beschnitte der Kurse-Seite den Cache.
     func kurseLaden() async {
-        guard let studioId = katalog.activeStudioId else { return }
+        let studios = kurseStudios
+        guard !studios.isEmpty else { return }
         let jetzt = Date()
         let zone = kurse.woche?.timezone ?? zeitzone
         await kurse.laden(
-            studioId: studioId,
+            studioIds: studios,
             von: KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zone),
             bis: KurseWochenBerechnung.fensterEnde(ab: jetzt, zeitzone: zone))
     }

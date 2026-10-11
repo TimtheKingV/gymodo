@@ -45,10 +45,17 @@ struct GespeicherterTermin: Codable, Equatable, Identifiable {
     /// Termine mit einem eigenen Status ablegt.
     let ownStatus: String?
     let ownBookingId: String?
+    /// Studio, Frist und Zeitzone je Termin (Testnotiz 11.10., #15): seit
+    /// der Plan alle Studios zeigt, gilt fuer jede Buchung die Frist IHRES
+    /// Studios. Optional, damit `frist(fuer:)` sauber auf die Werte der
+    /// Datei zurueckfaellt.
+    let studioId: String?
+    let cancellationDeadlineHours: Int?
+    let timezone: String?
 
     /// Der einzige Weg, wie diese Struktur entsteht: aus einem Termin mit
     /// eigenem Status, alles Fremde bleibt beim Erzeugen aussen vor.
-    init(_ termin: CourseWeekSession) {
+    init(_ termin: CourseWeekSession, frist: Int? = nil, zeitzone: String? = nil) {
         sessionId = termin.sessionId
         name = termin.name
         description = termin.description
@@ -60,6 +67,9 @@ struct GespeicherterTermin: Codable, Equatable, Identifiable {
         status = termin.status
         ownStatus = termin.ownStatus
         ownBookingId = termin.ownBookingId
+        studioId = termin.studioId
+        cancellationDeadlineHours = frist
+        timezone = zeitzone
     }
 }
 
@@ -70,9 +80,10 @@ struct GespeicherterTermin: Codable, Equatable, Identifiable {
 /// braucht und beide je Studio verschieden sind -- ohne Netz gaebe es
 /// sonst keine Quelle mehr dafuer.
 ///
-/// `studioId` sagt, WESSEN Buchungen das sind. Ohne sie zeigte "Meine
-/// Kurse" nach einem Studiowechsel ohne Netz die Anmeldungen des vorigen
-/// Studios -- das Mitglied koennte an den falschen Ort fahren. Das ist
+/// `studioIds` sagt, WESSEN Buchungen das sind. Ohne sie zeigte "Meine
+/// Kurse" nach einem Austritt ohne Netz die Anmeldungen eines Studios, zu
+/// dem das Mitglied nicht mehr gehoert -- es koennte an den falschen Ort
+/// fahren. Das ist
 /// nicht einmal "veraltet", sondern schlicht das falsche Studio, und
 /// `stand` kann es nicht abfangen: ein Datum sagt, wie ALT etwas ist,
 /// nicht, WOZU es gehoert.
@@ -84,11 +95,25 @@ struct GespeicherterTermin: Codable, Equatable, Identifiable {
 /// `UserDefaults` traegt `activeStudioId` ohnehin schon (SP1).
 struct GespeicherteBuchungen: Codable {
     let stand: Date
-    /// Zu welchem Studio diese Buchungen gehoeren.
-    let studioId: String
+    /// Zu welchen Studios diese Buchungen gehoeren -- seit der Plan alle
+    /// Studios zeigt, eine Menge statt einer Kennung (Testnotiz 11.10.,
+    /// #15). Eine Datei im alten Format (`studioId`) scheitert am Decoder
+    /// und gilt als leerer Cache, aus demselben Grund wie unten bei
+    /// `load()` beschrieben.
+    let studioIds: [String]
     let termine: [GespeicherterTermin]
+    /// Frist und Zeitzone des ersten Studios: Rueckfall fuer Termine ohne
+    /// eigene Angabe und Grundlage des Wochenstreifens.
     let cancellationDeadlineHours: Int
     let timezone: String
+
+    func frist(fuer termin: GespeicherterTermin) -> Int {
+        termin.cancellationDeadlineHours ?? cancellationDeadlineHours
+    }
+
+    func zeitzone(fuer termin: GespeicherterTermin) -> String {
+        termin.timezone ?? timezone
+    }
 }
 
 /// Die eigenen Kursbuchungen auf Platte -- wie SessionFileStore und
