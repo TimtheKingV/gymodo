@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import { GYMTAVO_STUDIO_ID, pruefeKatalog } from "./katalog-datei.js";
 import { pruefeMedien } from "./katalog-medien.js";
 import { berichtText, planeImport, type ImportPlan, type IstStand } from "./katalog-plan.js";
-import { beispielKatalog, mp4Bytes, pngBytes } from "./katalog-testdaten.js";
+import { beispielKatalog, mitProdukten, mp4Bytes, pngBytes } from "./katalog-testdaten.js";
 
-const LEER: IstStand = { geraetetypen: [], einstellungen: [], uebungen: [], verknuepfungen: [], videos: [], objekte: new Set() };
+const LEER: IstStand = {
+  geraetetypen: [], einstellungen: [], uebungen: [], verknuepfungen: [], videos: [], produkte: [], produktTypen: [], objekte: new Set(),
+};
 
 function plane(beispiel: ReturnType<typeof beispielKatalog>, ist: IstStand): ImportPlan {
   const k = pruefeKatalog(beispiel.roh);
@@ -38,6 +40,8 @@ function istAus(plan: ImportPlan): IstStand {
       storage_path: p.zeile.storage_path,
       duration_s: p.zeile.duration_s,
     })),
+    produkte: plan.produkte.map((p) => ({ id: `prod-${p.schluessel}`, ...p.zeile })),
+    produktTypen: plan.produktTypen.map((p) => ({ product_id: `prod-${p.zeile.produkt}`, equipment_model_id: typId(p.zeile.geraetetyp) })),
     objekte: new Set(plan.uploads.map((m) => `${m.bucket}/${m.storagePath}`)),
   };
 }
@@ -187,5 +191,70 @@ describe("berichtText", () => {
     const text = berichtText(plane(beispiel, ist));
     expect(text).toContain("Katalogzeilen ohne Schluessel, nicht verwaltet: 25");
     expect(text).toContain("  ... und 5 weitere");
+  });
+});
+
+describe("planeImport Produkte", () => {
+  it("legt Produkte und ihre Typzuordnungen neu an", () => {
+    const plan = plane(mitProdukten(beispielKatalog()), LEER);
+    expect(plan.produkte.map((p) => [p.schluessel, p.art])).toEqual([
+      ["gym80_pure_kraft_4345", "neu"],
+      ["precor_trm_885", "neu"],
+    ]);
+    expect(plan.produktTypen.map((p) => p.schluessel)).toEqual([
+      "gym80_pure_kraft_4345 > brustpresse",
+      "gym80_pure_kraft_4345 > trizepsmaschine",
+      "precor_trm_885 > laufband",
+    ]);
+    const precor = plan.produkte[1]!.zeile;
+    expect(precor).toMatchObject({ photo_rights: "cleared", load_unit: "kmh", load_min: 0.8, secondary_unit: "pct", secondary_max: 15 });
+    expect(precor.photo_path).toMatch(/\/catalog\/products\/precor_trm_885-[0-9a-f]{8}\.jpg$/);
+    expect(plan.uploads.map((m) => m.datei)).toContain("media/products/precor_trm_885.jpg");
+  });
+
+  it("aendert beim zweiten Lauf nichts", () => {
+    const beispiel = mitProdukten(beispielKatalog());
+    const plan = plane(beispiel, istAus(plane(beispiel, LEER)));
+    expect(arten(plan.produkte)).toEqual(["unveraendert", "unveraendert"]);
+    expect(arten(plan.produktTypen)).toEqual(["unveraendert", "unveraendert", "unveraendert"]);
+    expect(plan.uploads).toEqual([]);
+  });
+
+  it("haelt ein Foto ohne geklaerte Rechte zurueck und meldet es", () => {
+    const beispiel = mitProdukten(beispielKatalog());
+    beispiel.roh.products[1]!.photo_rights = "pending";
+    const plan = plane(beispiel, LEER);
+    expect(plan.produkte[1]!.zeile.photo_path).toBeNull();
+    expect(plan.uploads.map((m) => m.datei)).not.toContain("media/products/precor_trm_885.jpg");
+    expect(plan.gemeldet.zurueckgehalteneFotos).toEqual(["precor_trm_885"]);
+  });
+
+  it("nimmt bei Rechteentzug das Foto weg und meldet das Objekt", () => {
+    const beispiel = mitProdukten(beispielKatalog());
+    const vorher = plane(beispiel, LEER);
+    const altesFoto = vorher.produkte[1]!.zeile.photo_path;
+    beispiel.roh.products[1]!.photo_rights = "pending";
+    const plan = plane(beispiel, istAus(vorher));
+    expect(plan.produkte[1]).toMatchObject({ art: "geaendert", felder: ["photo_path", "photo_rights"] });
+    expect(plan.produkte[1]!.zeile.photo_path).toBeNull();
+    expect(plan.gemeldet.entzogeneFotos).toEqual([`precor_trm_885: equipment-photos/${altesFoto}`]);
+    expect(plan.gemeldet.ersetzteMedien).toEqual([]);
+  });
+
+  it("meldet Produkte und Zuordnungen, die nur in der Datenbank stehen", () => {
+    const beispiel = mitProdukten(beispielKatalog());
+    const ist = istAus(plane(beispiel, LEER));
+    beispiel.roh.products[0]!.types = ["brustpresse"];
+    beispiel.roh.products.pop();
+    const plan = plane(beispiel, ist);
+    expect(plan.gemeldet.produkte).toEqual(["precor_trm_885"]);
+    expect(plan.gemeldet.produktTypen).toEqual(["gym80_pure_kraft_4345 > trizepsmaschine"]);
+  });
+
+  it("zeigt Produkte im Bericht, auch ohne products in der Datei", () => {
+    expect(berichtText(plane(beispielKatalog(), LEER))).toContain("Produkte: 0 neu, 0 geaendert, 0 unveraendert");
+    const text = berichtText(plane(mitProdukten(beispielKatalog()), LEER));
+    expect(text).toContain("Produkte: 2 neu, 0 geaendert, 0 unveraendert");
+    expect(text).toContain("Produkt-Typen: 3 neu, 0 geaendert, 0 unveraendert");
   });
 });

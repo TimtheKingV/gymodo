@@ -48,6 +48,29 @@ export type UebungZeile = {
   target_max: number;
 };
 
+export type ProduktZeile = {
+  catalog_key: string;
+  manufacturer: string;
+  series: string | null;
+  name: string;
+  model_code: string | null;
+  product_url: string | null;
+  note: string | null;
+  photo_path: string | null;
+  photo_rights: "pending" | "cleared";
+  load_unit: string | null;
+  load_step: number | null;
+  load_min: number | null;
+  load_max: number | null;
+  secondary_unit: string | null;
+  secondary_step: number | null;
+  secondary_min: number | null;
+  secondary_max: number | null;
+};
+
+export type IstProdukt = ProduktZeile & { id: string };
+export type IstProduktTyp = { product_id: string; equipment_model_id: string };
+
 export type IstGeraetetyp = Omit<GeraetetypZeile, "catalog_key"> & { id: string; catalog_key: string | null };
 export type IstEinstellung = EinstellungZeile & { id: string; equipment_model_id: string };
 export type IstUebung = Omit<UebungZeile, "catalog_key"> & { id: string; catalog_key: string | null };
@@ -60,7 +83,9 @@ export type IstStand = {
   uebungen: IstUebung[];
   verknuepfungen: IstVerknuepfung[];
   videos: IstVideo[];
-  /** "<bucket>/<pfad>" aller Objekte unter <Gymtavo-ID>/catalog/. */
+  produkte: IstProdukt[];
+  produktTypen: IstProduktTyp[];
+  /** "<bucket>/<pfad>" aller Objekte unter <Gymtavo-ID>/catalog/ (photos, videos, products). */
   objekte: ReadonlySet<string>;
 };
 
@@ -73,6 +98,8 @@ export type ImportPlan = {
   uebungen: Posten<UebungZeile>[];
   verknuepfungen: Posten<{ geraetetyp: string; uebung: string; sort_order: number }>[];
   videos: Posten<{ geraetetyp: string; uebung: string; storage_path: string; duration_s: number }>[];
+  produkte: Posten<ProduktZeile>[];
+  produktTypen: Posten<{ produkt: string; geraetetyp: string }>[];
   uploads: Medium[];
   gemeldet: {
     geraetetypen: string[];
@@ -86,6 +113,12 @@ export type ImportPlan = {
     fremdeFotos: string[];
     /** Verknuepfungen mit Portalvideo, an die der Import kein zweites haengt. */
     fremdeVideos: string[];
+    produkte: string[];
+    produktTypen: string[];
+    /** Produktfotos in der Datei, deren Rechte offen sind -- nicht hochgeladen. */
+    zurueckgehalteneFotos: string[];
+    /** "<key>: <bucket>/<pfad>" -- Rechte entzogen, photo_path geleert, Objekt bleibt. */
+    entzogeneFotos: string[];
   };
 };
 
@@ -97,6 +130,10 @@ const EINSTELLUNG_FELDER = [
   "label", "kind", "min_value", "max_value", "step_value", "unit", "allowed_values", "sort_order",
 ] as const;
 const UEBUNG_FELDER = ["name", "description", "volume_kind", "target_min", "target_max"] as const;
+const PRODUKT_FELDER = [
+  "manufacturer", "series", "name", "model_code", "product_url", "note", "photo_path", "photo_rights",
+  "load_unit", "load_step", "load_min", "load_max", "secondary_unit", "secondary_step", "secondary_min", "secondary_max",
+] as const;
 
 // PostgREST liefert numeric je nach Groesse als Zahl oder als Text. Ohne
 // diesen Vergleich meldete jeder zweite Lauf das Laufband (0.1) als geaendert.
@@ -121,7 +158,7 @@ function vergleiche<Z extends Record<string, unknown>>(
 export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): ImportPlan {
   const gemeldet: ImportPlan["gemeldet"] = {
     geraetetypen: [], uebungen: [], einstellungen: [], verknuepfungen: [], videos: [], ersetzteMedien: [], ohneSchluessel: [],
-    fremdeFotos: [], fremdeVideos: [],
+    fremdeFotos: [], fremdeVideos: [], produkte: [], produktTypen: [], zurueckgehalteneFotos: [], entzogeneFotos: [],
   };
   const fremdesFotoBleibt = new Set<string>();
   const ersetzt = new Set<string>();
@@ -246,6 +283,75 @@ export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): Imp
     }
   }
 
+  // Produkte (Spec 2026-10-10 ..., 6.2). Ein Foto kommt nur mit geklaerten
+  // Rechten in die Zeile und in den Upload; ein ungeklaertes bleibt in der
+  // Datei und wird gemeldet (G3).
+  const produktNachKey = new Map(ist.produkte.map((x) => [x.catalog_key, x]));
+  const typKeyNachId = new Map(ist.geraetetypen.flatMap((g) => (g.catalog_key === null ? [] : [[g.id, g.catalog_key] as const])));
+  const produktFotos: Medium[] = [];
+  const produkte = k.products.map((p) => {
+    const medium = medien.produktFotos.get(p.key);
+    const geklaert = p.photo_rights === "cleared";
+    if (medium && geklaert) produktFotos.push(medium);
+    if (medium && !geklaert) gemeldet.zurueckgehalteneFotos.push(p.key);
+    const zeile: ProduktZeile = {
+      catalog_key: p.key,
+      manufacturer: p.manufacturer,
+      series: p.series,
+      name: p.name,
+      model_code: p.model_code,
+      product_url: p.product_url,
+      note: p.note,
+      photo_path: geklaert ? (medium?.storagePath ?? null) : null,
+      photo_rights: p.photo_rights,
+      load_unit: p.load_unit,
+      load_step: p.load_step,
+      load_min: p.load_min,
+      load_max: p.load_max,
+      secondary_unit: p.secondary?.unit ?? null,
+      secondary_step: p.secondary?.step ?? null,
+      secondary_min: p.secondary?.min ?? null,
+      secondary_max: p.secondary?.max ?? null,
+    };
+    const istP = produktNachKey.get(p.key);
+    const posten = vergleiche(p.key, zeile, istP, PRODUKT_FELDER);
+    if (istP?.photo_path && posten.felder.includes("photo_path")) {
+      // Die einzige Stelle, an der der Import etwas wegnimmt (Spec 6.2):
+      // ein Rechteentzug muss sofort wirken. Das Objekt bleibt liegen.
+      if (!geklaert) gemeldet.entzogeneFotos.push(`${p.key}: ${PHOTO_BUCKET}/${istP.photo_path}`);
+      else ersetzt.add(`${PHOTO_BUCKET}/${istP.photo_path}`);
+    }
+    return posten;
+  });
+
+  const produktTypen = k.products.flatMap((p) => {
+    const istP = produktNachKey.get(p.key);
+    const soll = new Set(p.types);
+    if (istP) {
+      for (const l of ist.produktTypen) {
+        const typKey = typKeyNachId.get(l.equipment_model_id) ?? l.equipment_model_id;
+        if (l.product_id === istP.id && !soll.has(typKey)) gemeldet.produktTypen.push(`${p.key} > ${typKey}`);
+      }
+    }
+    return p.types.map((t) => {
+      const istTyp = typNachKey.get(t);
+      const istL =
+        istP && istTyp
+          ? ist.produktTypen.find((l) => l.product_id === istP.id && l.equipment_model_id === istTyp.id)
+          : undefined;
+      // Die Verknuepfung hat keine eigenen Felder: neu oder unveraendert.
+      return vergleiche(
+        `${p.key} > ${t}`,
+        { produkt: p.key, geraetetyp: t },
+        istL ? { ...istL, id: `${istL.product_id}|${istL.equipment_model_id}` } : undefined,
+        [],
+      );
+    });
+  });
+
+  const produktKeys = new Set(k.products.map((p) => p.key));
+  for (const x of ist.produkte) if (!produktKeys.has(x.catalog_key)) gemeldet.produkte.push(x.catalog_key);
+
   const typKeys = new Set(k.equipment.map((g) => g.key));
   const uebungKeys = new Set(k.exercises.map((u) => u.key));
   for (const g of ist.geraetetypen) {
@@ -259,11 +365,11 @@ export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): Imp
   gemeldet.ersetzteMedien = [...ersetzt];
 
   const fotos = [...medien.fotos].flatMap(([key, m]) => (fremdesFotoBleibt.has(key) ? [] : [m]));
-  const uploads = [...fotos, ...medien.videos.values()].filter(
+  const uploads = [...fotos, ...medien.videos.values(), ...produktFotos].filter(
     (m) => !ist.objekte.has(`${m.bucket}/${m.storagePath}`),
   );
 
-  return { geraetetypen, einstellungen, uebungen, verknuepfungen, videos, uploads, gemeldet };
+  return { geraetetypen, einstellungen, uebungen, verknuepfungen, videos, produkte, produktTypen, uploads, gemeldet };
 }
 
 const HOECHSTENS = 20;
@@ -295,6 +401,8 @@ export function berichtText(plan: ImportPlan): string {
   tabelle("Uebungen", plan.uebungen);
   tabelle("Verknuepfungen", plan.verknuepfungen);
   tabelle("Videos", plan.videos);
+  tabelle("Produkte", plan.produkte);
+  tabelle("Produkt-Typen", plan.produktTypen);
   const bytes = plan.uploads.reduce((summe, m) => summe + m.bytes.length, 0);
   zeilen.push(`Uploads: ${plan.uploads.length} Dateien (${(bytes / 1024 / 1024).toFixed(1)} MB)`);
 
@@ -307,5 +415,9 @@ export function berichtText(plan: ImportPlan): string {
   melden("Katalogzeilen ohne Schluessel, nicht verwaltet", plan.gemeldet.ohneSchluessel);
   melden("Foto aus dem Portal behalten, Katalogfoto nicht gesetzt", plan.gemeldet.fremdeFotos);
   melden("Video aus dem Portal behalten, Katalogvideo nicht angehaengt", plan.gemeldet.fremdeVideos);
+  melden("Nur in der Datenbank, nicht geloescht -- Produkte", plan.gemeldet.produkte);
+  melden("Nur in der Datenbank, nicht geloescht -- Produkt-Typen", plan.gemeldet.produktTypen);
+  melden("Produktfoto ohne geklaerte Rechte, nicht hochgeladen", plan.gemeldet.zurueckgehalteneFotos);
+  melden("Produktfoto nach Rechteentzug entfernt, Objekt bleibt liegen", plan.gemeldet.entzogeneFotos);
   return zeilen.join("\n");
 }
