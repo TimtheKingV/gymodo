@@ -154,6 +154,7 @@ export async function modellAnlegen(
       loadStep: zahl(formData, "loadStep") ?? Number.NaN,
       loadMin: zahl(formData, "loadMin") ?? 0,
       catalogModelId: typ.catalogModelId,
+      catalogProductId: optionalerText(formData, "catalogProductId"),
     });
     modelId = modell.id;
   } catch (fehler) {

@@ -10,6 +10,7 @@
 }
 
 .karte {
+  position: relative;
   display: grid;
   gap: 6px;
   padding: 8px;
@@ -23,10 +24,14 @@
   box-shadow: 0 0 0 1px var(--accent);
 }
 
+/* Unsichtbar, aber ueber der ganzen Karte: so trifft jeder Klick das
+   Radio selbst, und Tastatur wie Screenreader sehen ein normales Radio. */
 .karte input {
   position: absolute;
+  inset: 0;
+  margin: 0;
   opacity: 0;
-  pointer-events: none;
+  cursor: pointer;
 }
 
 .karte:has(input:focus-visible) {
