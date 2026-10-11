@@ -229,6 +229,8 @@ Ein Diagramm in M1: der Gewichtsverlauf je Übung (Swift Charts, keine externe A
 - Die Achse beginnt **nicht** bei null — Trainingsgewichte bewegen sich in einem schmalen Band; eine Nullachse macht jeden Fortschritt unsichtbar. Der Achsenbereich wird stattdessen sichtbar beschriftet.
 - **Unter dem Diagramm stehen die Rohwerte** der letzten Einheiten. Die Kurve ist eine Zusammenfassung; sie muss nachprüfbar bleiben, weil nur Bestätigtes gespeichert wird.
 
+**Ausnahme: Trendzeile „Übungsfortschritt“ auf Home** (Testnotiz 11.10., #4). Jede Zeile trägt rechts eine Minikurve ohne Achsen (64 × 20 pt) und darunter die Veränderung seit Start mit Pfeil. Kurve, Pfeil und Zahl tragen die Farbe des Trends: steigend `accent`, fallend `warn`, unverändert `text-faint`. Das weicht bewusst von §2 (ein Akzent je Screen, `warn` nur für Probleme) und von „Text trägt nie die Serienfarbe“ ab, auf ausdrücklichen Wunsch. `warn` bleibt auch hier Linie und Schrift, nie Fläche. Die Ausnahme gilt nur für diese Zeile.
+
 ---
 
 ## 14. Offen

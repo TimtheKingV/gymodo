@@ -33,9 +33,9 @@ struct TrainingRootView: View {
     /// dekodierten Vorschaubilder schon vorliegen.
     @State private var vorschauLader = VorschauLader()
     /// Die Videoquellen fuer Liste, Geraeteseite und Satzseite (Testnotiz
-    /// 11.10., #1, #5, #7) -- aus demselben Grund an der Wurzel wie der
-    /// VorschauLader.
-    @State private var videoVorrat = UebungsVideoVorrat()
+    /// 11.10., #1, #5, #7). Lebt seit #2 der Sitzung 12:10 an der App,
+    /// weil auch Home sie zeigt.
+    @Environment(UebungsVideoVorrat.self) private var videoVorrat
     /// Der aktive NFC-Scan. Liegt hier und nicht in ScanWege, weil sein
     /// Ergebnis in dieselbe Aufloesung muendet wie der QR-Scan -- und weil
     /// eine laufende Sitzung einen zweiten Tap ueberstehen muss.

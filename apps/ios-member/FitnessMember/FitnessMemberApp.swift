@@ -9,6 +9,10 @@ struct FitnessMemberApp: App {
     @State private var verlaufStore: VerlaufStore
     @State private var netzwerkMonitor = NetzwerkMonitor()
     @State private var pendingTagStore = PendingTagStore()
+    /// Die Uebungsvideos fuer Training UND Home: die Fortschrittszeilen auf
+    /// Home zeigen sie seit der Testnotiz 11.10. (#2) ebenfalls. Ein Vorrat
+    /// fuer beide, damit ein Video nicht zweimal geladen wird.
+    @State private var videoVorrat = UebungsVideoVorrat()
     #if DEBUG
     /// Eine Instanz fuer die ganze App: die Verbindung ueberlebt den Wechsel
     /// zwischen Geraeten (Spec Sensor-Anbindung 5.3). Der CBCentralManager
@@ -48,6 +52,7 @@ struct FitnessMemberApp: App {
                 .environment(verlaufStore)
                 .environment(netzwerkMonitor)
                 .environment(pendingTagStore)
+                .environment(videoVorrat)
                 #if DEBUG
                 .sensorInstallieren(sensorAufnahme)
                 #endif

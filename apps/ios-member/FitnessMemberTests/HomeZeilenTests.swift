@@ -148,6 +148,47 @@ struct HomeZeilenTests {
         #expect(HomeZeilen.veraenderung(-1, einheit: .level) == "-1")
     }
 
+    // MARK: - Trend in der Fortschrittszeile (Testnotiz 11.10., #4)
+
+    @Test func trendFolgtDemVorzeichen() {
+        #expect(HomeZeilen.trend(5) == .hoch)
+        #expect(HomeZeilen.trend(-25) == .runter)
+        #expect(HomeZeilen.trend(0) == .gleich)
+    }
+
+    /// Der Server rundet auf zwei Stellen; ein Rest unter der kleinsten
+    /// Stufe ist keine Bewegung und darf weder gruen noch gelb sein.
+    @Test func trendIgnoriertRundungsreste() {
+        #expect(HomeZeilen.trend(0.004) == .gleich)
+        #expect(HomeZeilen.trend(-0.004) == .gleich)
+    }
+
+    @Test func trendTextTraegtVorzeichenUndEinheit() {
+        #expect(HomeZeilen.trendText(5, einheit: .kg) == "+5,0 kg")
+        #expect(HomeZeilen.trendText(-25, einheit: .kg) == "−25,0 kg")
+        #expect(HomeZeilen.trendText(0, einheit: .kg) == "±0")
+    }
+
+    private func punkte(_ lasten: [Double]) -> [ExerciseProgress.Point] {
+        lasten.enumerated().map { index, last in
+            ExerciseProgress.Point(performedOn: "2026-09-\(String(format: "%02d", index + 1))",
+                                   topLoad: last, volume: 10)
+        }
+    }
+
+    @Test func sparkWerteBrauchenZweiPunkte() {
+        #expect(HomeZeilen.sparkWerte(punkte([])).isEmpty)
+        #expect(HomeZeilen.sparkWerte(punkte([40])).isEmpty)
+        #expect(HomeZeilen.sparkWerte(punkte([40, 45])) == [40, 45])
+    }
+
+    /// Nur die juengsten Tage: die Kurve ist 64 pt breit, und eine lange
+    /// Historie zoege die letzte Bewegung zur Unkenntlichkeit zusammen.
+    @Test func sparkWerteNehmenDieJuengstenPunkte() {
+        let werte = HomeZeilen.sparkWerte(punkte([1, 2, 3, 4, 5]), maximal: 3)
+        #expect(werte == [3, 4, 5])
+    }
+
     @Test func tageHerLabelIstNurBeiGenauEinemTagEinzahl() {
         #expect(HomeZeilen.tageHerLabel(1) == "Tag her")
         #expect(HomeZeilen.tageHerLabel(0) == "Tage her")
