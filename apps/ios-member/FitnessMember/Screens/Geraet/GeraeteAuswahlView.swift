@@ -14,8 +14,9 @@ import UIKit
 /// Uhr und die schon gemachten Uebungen.
 struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     @Environment(CatalogStore.self) private var katalog
+    @Environment(UebungsVideoVorrat.self) private var videos
 
-    let fotoLader: any GeraetefotosLoading
+    let fotoLader: any GeraetefotosLoading & UebungsvideosLoading
     /// Kommt von der Wurzel (TrainingRootView), nicht als eigenes @State
     /// hier: dieser Screen selbst lebt nur, waehrend er offen ist, der
     /// Lader dagegen soll ueber mehrere Oeffnungen hinweg gemerkt bleiben
@@ -24,7 +25,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     let kopfinhalt: Kopfinhalt
     let beiAuswahl: (Station) -> Void
 
-    init(fotoLader: any GeraetefotosLoading, vorschauLader: VorschauLader,
+    init(fotoLader: any GeraetefotosLoading & UebungsvideosLoading, vorschauLader: VorschauLader,
          @ViewBuilder kopfinhalt: () -> Kopfinhalt,
          beiAuswahl: @escaping (Station) -> Void) {
         self.fotoLader = fotoLader
@@ -96,7 +97,13 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
         }
         .background(DesignSystem.Color.bg)
         .testnotizScreen()
-        .task { fotos = await GeraeteFotos.laden(von: fotoLader) }
+        .task {
+            // Nebeneinander: die Videos brauchen die Fotos nicht, und jede
+            // Oeffnung holt frische Signaturen fuer beide.
+            async let geladeneFotos = GeraeteFotos.laden(von: fotoLader)
+            await videos.laden(von: fotoLader)
+            fotos = await geladeneFotos
+        }
     }
 
     // MARK: - Kopf
@@ -268,6 +275,13 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                 Text(eintrag.name)
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(DesignSystem.Color.text)
+                if let anzahl = GeraeteAuswahl.uebungsanzahlText(eintrag.station.exercises.count) {
+                    // Testnotiz 11.10., #3: vor dem Tipp sehen, ob das
+                    // Geraet eine Auswahl bietet oder gleich losgeht.
+                    Text(anzahl)
+                        .font(.system(size: 12))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                }
                 if !eintrag.ortsangabe.isEmpty {
                     Text(eintrag.ortsangabe)
                         .font(.system(size: 12))
@@ -348,7 +362,18 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     /// Die Hantel ist dabei ein Sinnbild, keine Aussage ueber DIESES
     /// Geraet -- sie steht in `textFaint`, damit sie als Platzhalter
     /// lesbar bleibt und nicht als Symbol eines Geraetetyps.
+    ///
+    /// Seit der Testnotiz 11.10. (#1, #2) laeuft darueber das Video, wenn
+    /// das Geraet genau eine Uebung hat -- das Foto bleibt als Platzhalter
+    /// darunter, bis die Datei da ist.
     private func vorschau(_ eintrag: GeraeteAuswahl.Eintrag) -> some View {
+        UebungsVideoKachel(exerciseId: GeraeteAuswahl.videoUebung(
+            uebungsIds: eintrag.station.exercises.map(\.id))) {
+            foto(eintrag)
+        }
+    }
+
+    private func foto(_ eintrag: GeraeteAuswahl.Eintrag) -> some View {
         RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
             .fill(DesignSystem.Color.surfaceRaised)
             .frame(width: 56, height: 56)
@@ -366,15 +391,10 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
                 }
             }
-            // clipShape VOR overlay (Vorlage: InlineBanner). Die Kontur
-            // haelt die Kante eines dunklen Fotos auf surface sichtbar --
-            // und zeichnet den leeren Platzhalter als Flaeche, nicht als
-            // Loch.
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                    .stroke(DesignSystem.Color.line, lineWidth: 1)
-            )
-            .accessibilityHidden(true)
+            // Die Kontur zeichnet die Kachel darueber (UebungsVideoKachel):
+            // sie haelt die Kante eines dunklen Fotos auf surface sichtbar
+            // -- und zeichnet den leeren Platzhalter als Flaeche, nicht
+            // als Loch.
     }
 
     private func zuletztText(_ zuletzt: GeraeteAuswahl.Zuletzt) -> String {
@@ -489,7 +509,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
 }
 
 extension GeraeteAuswahlView where Kopfinhalt == EmptyView {
-    init(fotoLader: any GeraetefotosLoading, vorschauLader: VorschauLader,
+    init(fotoLader: any GeraetefotosLoading & UebungsvideosLoading, vorschauLader: VorschauLader,
          beiAuswahl: @escaping (Station) -> Void) {
         self.init(fotoLader: fotoLader, vorschauLader: vorschauLader,
                   kopfinhalt: { EmptyView() }, beiAuswahl: beiAuswahl)

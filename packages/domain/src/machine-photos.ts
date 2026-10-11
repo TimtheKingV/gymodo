@@ -7,6 +7,32 @@ export type MachinePhotos = {
   photos: Array<{ equipmentModelId: string; url: string }>;
 };
 
+type ModellMitFoto = { id: string; photo_path: string | null };
+
+/**
+ * Fotopfad je Modell, wie die Liste es zeigt: Gymtavo-Typen mit ihrem
+ * eigenen Foto, Studio-Modelle mit ihrem -- und ohne eigenes mit dem Foto
+ * ihres Typs (Testnotiz 11.10., #2). Vorher gingen Typen leer aus, weil nur
+ * `machines` gelesen wurde; im freien Training zeigte die Liste deshalb
+ * nur Platzhalter.
+ */
+export function fotoPfadJeModell(
+  geraeteModelle: Array<ModellMitFoto & { catalog_model_id: string | null }>,
+  katalogTypen: ModellMitFoto[],
+): Map<string, string> {
+  const typFoto = new Map<string, string>();
+  for (const typ of katalogTypen) {
+    if (typ.photo_path) typFoto.set(typ.id, typ.photo_path);
+  }
+  const pfadJeModell = new Map(typFoto);
+  for (const modell of geraeteModelle) {
+    const pfad =
+      modell.photo_path ?? (modell.catalog_model_id ? typFoto.get(modell.catalog_model_id) : undefined);
+    if (pfad) pfadJeModell.set(modell.id, pfad);
+  }
+  return pfadJeModell;
+}
+
 /**
  * Signierte Geraetefotos fuer die Geraeteliste der App.
  *
@@ -27,14 +53,29 @@ export async function getMachinePhotos(
   // eigenen Studios, gesperrte Geraete stehen in der Liste mit.
   const { data: rows } = await client
     .from("machines")
-    .select("equipment_models (id, photo_path)");
+    .select("equipment_models (id, photo_path, catalog_model_id)");
 
-  type Row = { equipment_models: { id: string; photo_path: string | null } };
-  const pfadJeModell = new Map<string, string>();
-  for (const row of (rows ?? []) as unknown as Row[]) {
-    const pfad = row.equipment_models.photo_path;
-    if (pfad) pfadJeModell.set(row.equipment_models.id, pfad);
-  }
+  // Und dieselben Typen wie dessen Block catalog: alle Modelle des
+  // Katalog-Studios, fuer jeden Angemeldeten lesbar (0047).
+  const { data: katalogRow } = await client
+    .from("studios")
+    .select("id")
+    .eq("is_catalog", true)
+    .maybeSingle<{ id: string }>();
+  const { data: typRows } = katalogRow
+    ? await client
+        .from("equipment_models")
+        .select("id, photo_path")
+        .eq("studio_id", katalogRow.id)
+    : { data: [] };
+
+  type Row = {
+    equipment_models: ModellMitFoto & { catalog_model_id: string | null };
+  };
+  const pfadJeModell = fotoPfadJeModell(
+    ((rows ?? []) as unknown as Row[]).map((row) => row.equipment_models),
+    (typRows ?? []) as ModellMitFoto[],
+  );
 
   const signiert = await signMediaUrls(
     client,

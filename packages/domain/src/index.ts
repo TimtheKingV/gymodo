@@ -153,6 +153,8 @@ export { getEquipmentModelContext, getMachineContext } from "./machine-context.j
 export type { MachineContext } from "./machine-context.js";
 export { getMachinePhotos } from "./machine-photos.js";
 export type { MachinePhotos } from "./machine-photos.js";
+export { getExerciseVideos } from "./exercise-videos.js";
+export type { ExerciseVideos } from "./exercise-videos.js";
 export type { DomainErrorCode } from "./errors.js";
 export {
   completeSession,

@@ -32,6 +32,10 @@ struct TrainingRootView: View {
     /// dieselben Originalfotos nochmal herunterladen, obwohl die
     /// dekodierten Vorschaubilder schon vorliegen.
     @State private var vorschauLader = VorschauLader()
+    /// Die Videoquellen fuer Liste, Geraeteseite und Satzseite (Testnotiz
+    /// 11.10., #1, #5, #7) -- aus demselben Grund an der Wurzel wie der
+    /// VorschauLader.
+    @State private var videoVorrat = UebungsVideoVorrat()
     /// Der aktive NFC-Scan. Liegt hier und nicht in ScanWege, weil sein
     /// Ergebnis in dieselbe Aufloesung muendet wie der QR-Scan -- und weil
     /// eine laufende Sitzung einen zweiten Tap ueberstehen muss.
@@ -155,7 +159,13 @@ struct TrainingRootView: View {
             // Identitaet behielte der Screen dort sein @State-Modell und zeigte
             // weiter das alte Geraet (Sichtcheck Task 11, Scan auf dem
             // Geraete-Screen eines anderen Orts).
-            .navigationDestination(for: GeraetRoute.self) { route in ziel(route).id(route) }
+            // Der Vorrat zweimal: einmal fuer die Wurzel selbst, einmal je
+            // Ziel -- gepushte Screens erben die Umgebung des
+            // NavigationStack, nicht die seines Wurzelinhalts.
+            .navigationDestination(for: GeraetRoute.self) { route in
+                ziel(route).id(route).environment(videoVorrat)
+            }
+            .environment(videoVorrat)
             .sheet(isPresented: $scannerOffen) {
                 ScannerSheet(
                     titel: "Gerät finden",
@@ -470,8 +480,11 @@ struct TrainingRootView: View {
         let gemeldet = block.saetze.contains(where: \.problemFlag)
         return HStack(spacing: DesignSystem.Spacing.s12) {
             // Das Sinnbild der Uebung links vom Namen (Testnotiz 06.10.,
-            // #14), derselbe Platzhalter wie in den Uebungslisten.
-            Uebungsbild(kante: 48)
+            // #14) -- seit 11.10. (#1) ihr Video in Schleife, der
+            // Platzhalter bleibt darunter, bis es da ist.
+            UebungsVideoKachel(exerciseId: block.exerciseId, kante: 48) {
+                Uebungsbild(kante: 48)
+            }
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                 Text([station?.equipmentModel.name, uebung?.name]
                     .compactMap { $0 }.joined(separator: " · "))
@@ -542,6 +555,10 @@ struct TrainingRootView: View {
         case .geraet(let station, let exerciseId, let token):
             if let modell = modell(station: station, exerciseId: exerciseId, token: token) {
                 GeraetScreen(modell: modell, beiZurueckZumTraining: { pfad.removeAll() },
+                             beiErstkontaktAbbruch: {
+                                 pfad = Pfadregel.nachEinweisungAbbruch(
+                                     pfad: pfad, uebungsanzahl: modell.station.exercises.count)
+                             },
                              beiTrainingBeenden: beenden)
             }
         case .abschluss(let sessionId, let zusammenfassung):
@@ -700,7 +717,10 @@ struct TrainingRootView: View {
     }
 
     private func oeffneAusListe(_ station: Station) {
-        pfad.append(.erkannt(station: station.schluessel, token: nil))
+        // Besuche 0: aus der Liste bleibt die Uebungswahl wie bisher
+        // sichtbar -- nur ein Geraet mit einer einzigen Uebung springt
+        // direkt, wie beim Scan (Testnotiz 11.10., #4).
+        oeffne(station, token: nil, besuche: 0)
     }
 
     private func ausfuehren(_ folge: ScanFolge) {
@@ -752,8 +772,16 @@ struct TrainingRootView: View {
         let besuche = station.machineId.flatMap { id in
             bootstrap.machines.first { $0.id == id }?.visitCount
         } ?? 0
+        oeffne(station, token: token, besuche: besuche)
+    }
+
+    /// Geraeteseite oder Direktsprung -- ein Weg fuer Liste und Scan, damit
+    /// beide fuer dasselbe Geraet dasselbe tun.
+    private func oeffne(_ station: Station, token: String?, besuche: Int) {
+        guard let bootstrap = katalog.bootstrap else { return }
         let genutzte = GeraetEinstiegRechner.genutzteUebungen(station: station.schluessel, in: bootstrap)
-        switch GeraetEinstiegRechner.einstieg(visitCount: besuche, genutzteUebungen: genutzte) {
+        switch GeraetEinstiegRechner.einstieg(visitCount: besuche, genutzteUebungen: genutzte,
+                                              uebungsanzahl: station.exercises.count) {
         case .erkannt:
             pfad.append(.erkannt(station: station.schluessel, token: token))
         case .direktZumSatz:

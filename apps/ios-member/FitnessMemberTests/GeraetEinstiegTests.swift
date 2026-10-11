@@ -29,26 +29,37 @@ struct GeraetEinstiegTests {
 
     @Test func ohneBesuchKommtDerErkennungsScreen() {
         // "0 -- Erstkontakt: Geraet erkannt -> Einweisung -> ..."
-        #expect(GeraetEinstiegRechner.einstieg(visitCount: 0, genutzteUebungen: 0) == .erkannt)
+        #expect(GeraetEinstiegRechner.einstieg(visitCount: 0, genutzteUebungen: 0, uebungsanzahl: 3) == .erkannt)
     }
 
     @Test func nachGenauEinemBesuchBleibenDieOptionenSichtbar() {
-        #expect(GeraetEinstiegRechner.einstieg(visitCount: 1, genutzteUebungen: 1) == .erkannt)
+        #expect(GeraetEinstiegRechner.einstieg(visitCount: 1, genutzteUebungen: 1, uebungsanzahl: 3) == .erkannt)
     }
 
     @Test func abZweiBesuchenMitMehrerenUebungenBleibtDieListe() {
-        #expect(GeraetEinstiegRechner.einstieg(visitCount: 2, genutzteUebungen: 2) == .erkannt)
+        #expect(GeraetEinstiegRechner.einstieg(visitCount: 2, genutzteUebungen: 2, uebungsanzahl: 3) == .erkannt)
     }
 
     @Test func abZweiBesuchenMitImmerDerselbenUebungGehtEsDirektZumSatz() {
-        #expect(GeraetEinstiegRechner.einstieg(visitCount: 2, genutzteUebungen: 1) == .direktZumSatz)
-        #expect(GeraetEinstiegRechner.einstieg(visitCount: 9, genutzteUebungen: 1) == .direktZumSatz)
+        #expect(GeraetEinstiegRechner.einstieg(visitCount: 2, genutzteUebungen: 1, uebungsanzahl: 3) == .direktZumSatz)
+        #expect(GeraetEinstiegRechner.einstieg(visitCount: 9, genutzteUebungen: 1, uebungsanzahl: 3) == .direktZumSatz)
     }
 
     @Test func ohneBekannteUebungFaelltEsSicherAufDieListeZurueck() {
         // Ohne genau eine genutzte Uebung fehlt die Zielgroesse fuer den
         // Direktsprung -- die Liste ist der sichere Fallback, kein stummer Tap.
-        #expect(GeraetEinstiegRechner.einstieg(visitCount: 2, genutzteUebungen: 0) == .erkannt)
+        #expect(GeraetEinstiegRechner.einstieg(visitCount: 2, genutzteUebungen: 0, uebungsanzahl: 3) == .erkannt)
+    }
+
+    @Test func einGeraetMitNurEinerUebungSpringtSchonBeimErstenMalDirekt() {
+        // Testnotiz 11.10., #4: es gibt nichts zu waehlen -- die
+        // Uebungsliste waere ein Tipp ohne Entscheidung.
+        #expect(GeraetEinstiegRechner.einstieg(visitCount: 0, genutzteUebungen: 0, uebungsanzahl: 1) == .direktZumSatz)
+        #expect(GeraetEinstiegRechner.einstieg(visitCount: 1, genutzteUebungen: 1, uebungsanzahl: 1) == .direktZumSatz)
+    }
+
+    @Test func einGeraetOhneUebungBleibtBeimErkennungsScreen() {
+        #expect(GeraetEinstiegRechner.einstieg(visitCount: 0, genutzteUebungen: 0, uebungsanzahl: 0) == .erkannt)
     }
 
     @Test func erstkontaktBrauchtWederKalibrierungNochSatz() {

@@ -249,7 +249,18 @@ struct GeraetView: View {
         }
     }
 
+    /// Links das Video der aktiven Uebung in Schleife (Testnotiz 11.10.,
+    /// #7) -- daneben statt darueber, weil das Hoehenbudget auf 667 pt
+    /// keine eigene Zeile hergibt (siehe unten). Ohne Video faellt die
+    /// Kachel samt Abstand weg, statt dem Namen Breite zu nehmen.
     private var geraetUndUebung: some View {
+        HStack(alignment: .center, spacing: 0) {
+            UebungsVideoKachel(exerciseId: modell.aktiveUebung?.id, kante: 56)
+            namen
+        }
+    }
+
+    private var namen: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
             // Eine Zeile: ein zweizeiliger Name (BEINPRESSE SITZEND misst
             // rund 380 pt bei 32 pt Black) kostete 38 pt, die das
@@ -268,7 +279,10 @@ struct GeraetView: View {
                 .tracking(-0.8)
                 .foregroundStyle(DesignSystem.Color.text)
                 .lineLimit(1)
-                .minimumScaleFactor(0.75)
+                // 0.6 statt 0.75, seit das Video links 68 pt nimmt
+                // (Testnotiz 11.10., #7): 45-GRAD-SCHLITTENPRESSE brach
+                // mit 0.75 sonst zu "SCHLITTENP..." ab.
+                .minimumScaleFactor(0.6)
             // "andere Übung" stand bis zur Testnotiz 06.10. (#11) rechts
             // daneben. Gewechselt wird jetzt nach "Übung abschließen" --
             // dann, wenn die eine Uebung fertig ist (#12).
@@ -415,6 +429,10 @@ struct GeraetView: View {
 struct GeraetScreen: View {
     @State var modell: GeraetModel
     let beiZurueckZumTraining: () -> Void
+    /// Das Kreuz im Erstkontakt. Eigener Weg neben beiZurueckZumTraining,
+    /// weil "Gerät abschließen" weiter zur Liste fuehrt, der Abbruch der
+    /// Einweisung aber auf die Geraeteseite (Testnotiz 11.10., #6).
+    let beiErstkontaktAbbruch: () -> Void
     let beiTrainingBeenden: () -> Void
 
     @State private var uebungWechselnOffen = false
@@ -495,17 +513,17 @@ struct GeraetScreen: View {
                     modell.kalibrierungOffen = false
                 }
             } else {
-                // beiAbbruch teilt sich bewusst beiZurueckZumTraining: ein
-                // fullScreenCover kennt kein Swipe-to-dismiss, und ein
-                // Ausstieg aus dem Erstkontakt soll denselben Weg zurueck
-                // nehmen wie ein regulaeres "Zurueck zum Training" -- die
+                // Der Abbruch nimmt den Satzpfad aus dem Stapel: ein
+                // fullScreenCover kennt kein Swipe-to-dismiss, und die
                 // GeraetScreen-Instanz (und mit ihr das Modell) verschwindet
-                // dabei ganz, statt dass hier zusaetzlich am Cover gedreht
-                // werden muesste. erstkontaktAbschliessen() faellt bewusst
+                // so ganz, statt dass hier zusaetzlich am Cover gedreht
+                // werden muesste. Wohin es geht, entscheidet die Wurzel --
+                // seit der Testnotiz 11.10. (#6) auf die Geraeteseite, nicht
+                // mehr zur Liste. erstkontaktAbschliessen() faellt bewusst
                 // weg: ein Abbruch ist kein Abschluss, sonst zeigte
                 // istErstkontakt beim naechsten Mal faelschlich "erledigt".
                 ErstkontaktFlow(modell: modell, beiAbschluss: { modell.erstkontaktAbschliessen() },
-                                beiAbbruch: beiZurueckZumTraining)
+                                beiAbbruch: beiErstkontaktAbbruch)
             }
         }
     }
