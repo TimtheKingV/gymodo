@@ -13,11 +13,36 @@ struct UebungsVideoKachel<Platzhalter: View>: View {
 
     let exerciseId: String?
     var kante: CGFloat = 56
+    /// Ohne Video gar keine Kachel statt des Platzhalters -- fuer den Kopf
+    /// der Satzseite, wo ein leerer Kasten nur dem Namen Breite naehme.
+    var nurMitVideo = false
     @ViewBuilder let platzhalter: Platzhalter
 
     @State private var asset: AVAsset?
 
     var body: some View {
+        Group {
+            if nurMitVideo && asset == nil {
+                Color.clear.frame(width: 0, height: 0)
+            } else if nurMitVideo {
+                // Der Abstand zum Nachbarn gehoert hier zur Kachel: als
+                // Spacing des HStack bliebe er auch ohne Video stehen.
+                kachel.padding(.trailing, DesignSystem.Spacing.s12)
+            } else {
+                kachel
+            }
+        }
+        // Der Pfad gehoert zur ID: kommt der Vorrat erst nach der Kachel
+        // an (erste Oeffnung der Liste), laeuft die Suche neu.
+        .task(id: [exerciseId, exerciseId.flatMap { vorrat.quellen[$0]?.pfad }]) {
+            guard let exerciseId,
+                  let datei = await vorrat.datei(exerciseId: exerciseId)
+            else { return }
+            asset = await Schleifenvideo.nurBild(datei)
+        }
+    }
+
+    private var kachel: some View {
         platzhalter
             .frame(width: kante, height: kante)
             .overlay {
@@ -32,14 +57,6 @@ struct UebungsVideoKachel<Platzhalter: View>: View {
                     .stroke(DesignSystem.Color.line, lineWidth: 1)
             )
             .accessibilityHidden(true)
-            // Der Pfad gehoert zur ID: kommt der Vorrat erst nach der
-            // Kachel an (erste Oeffnung der Liste), laeuft die Suche neu.
-            .task(id: [exerciseId, exerciseId.flatMap { vorrat.quellen[$0]?.pfad }]) {
-                guard let exerciseId,
-                      let datei = await vorrat.datei(exerciseId: exerciseId)
-                else { return }
-                asset = await Schleifenvideo.nurBild(datei)
-            }
     }
 }
 
@@ -126,5 +143,13 @@ final class SchleifenAnsicht: UIView {
 
     private func aktualisieren() {
         if abspielen, window != nil { spieler?.play() } else { spieler?.pause() }
+    }
+}
+
+extension UebungsVideoKachel where Platzhalter == EmptyView {
+    /// Nur das Video, ohne Platzhalter und ohne Platz, solange keins da ist.
+    /// Bringt den Abstand nach rechts selbst mit -- im HStack mit Spacing 0.
+    init(exerciseId: String?, kante: CGFloat) {
+        self.init(exerciseId: exerciseId, kante: kante, nurMitVideo: true) { EmptyView() }
     }
 }

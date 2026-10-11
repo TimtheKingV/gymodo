@@ -249,7 +249,18 @@ struct GeraetView: View {
         }
     }
 
+    /// Links das Video der aktiven Uebung in Schleife (Testnotiz 11.10.,
+    /// #7) -- daneben statt darueber, weil das Hoehenbudget auf 667 pt
+    /// keine eigene Zeile hergibt (siehe unten). Ohne Video faellt die
+    /// Kachel samt Abstand weg, statt dem Namen Breite zu nehmen.
     private var geraetUndUebung: some View {
+        HStack(alignment: .center, spacing: 0) {
+            UebungsVideoKachel(exerciseId: modell.aktiveUebung?.id, kante: 56)
+            namen
+        }
+    }
+
+    private var namen: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
             // Eine Zeile: ein zweizeiliger Name (BEINPRESSE SITZEND misst
             // rund 380 pt bei 32 pt Black) kostete 38 pt, die das

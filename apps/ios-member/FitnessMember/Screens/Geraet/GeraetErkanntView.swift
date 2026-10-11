@@ -122,7 +122,11 @@ struct GeraetErkanntView: View {
     /// Untertitel. Links der Platz fuer das Sinnbild der Uebung.
     private func zeile(_ uebung: GeraetUebung) -> some View {
         HStack(spacing: DesignSystem.Spacing.s12) {
-            Uebungsbild()
+            // Das Video der Uebung in Schleife (Testnotiz 11.10., #5); bis
+            // es da ist, und ohne Video, das Sinnbild.
+            UebungsVideoKachel(exerciseId: uebung.id) {
+                Uebungsbild()
+            }
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                 Text(uebung.name)
                     .font(DesignSystem.Typography.uebungsname)
