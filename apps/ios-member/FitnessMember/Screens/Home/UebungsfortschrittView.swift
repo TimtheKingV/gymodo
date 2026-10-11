@@ -142,8 +142,8 @@ struct UebungsfortschrittView: View {
         .accessibilityLabel("Verlauf \(uebung.machineLabel), \(uebung.exerciseName)")
     }
 
-    /// Die Plattform misst nichts -- die Kurve ist eine Zusammenfassung
-    /// und muss nachpruefbar bleiben (SS13). Diese Liste ist zugleich die
+    /// Die Kurve fasst bestaetigte Saetze zusammen und muss nachpruefbar
+    /// bleiben (SS13). Diese Liste ist zugleich die
     /// Wertetabelle, die VoiceOver als Alternative zur Kurve braucht
     /// (SS12).
     private func rohwerte(_ punkte: [ExerciseProgress.Point], uebung: ExerciseProgress) -> some View {

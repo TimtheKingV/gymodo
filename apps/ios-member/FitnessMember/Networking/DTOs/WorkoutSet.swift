@@ -1,4 +1,5 @@
 import Foundation
+import Sensorik
 
 /// Exakt die vier Werte aus packages/domain/src/workout.ts problemReasonSchema.
 enum ProblemReason: String, Codable, Equatable, CaseIterable {
@@ -6,6 +7,12 @@ enum ProblemReason: String, Codable, Equatable, CaseIterable {
     case geraetePasstNicht = "geraet_passt_nicht"
     case zuSchwer = "zu_schwer"
     case sonstiges
+}
+
+/// Herkunft der Wiederholungszahl -- exakt die drei Werte aus
+/// packages/domain/src/herkunft.ts volumeSourceSchema (Sensor-Spec B 6.3).
+enum VolumeSource: String, Codable, Equatable {
+    case eingegeben, gemessen, korrigiert
 }
 
 /// Anfrage-Rumpf fuer PUT /workout-sessions/{sessionId}/sets/{setId}.
@@ -35,12 +42,18 @@ struct SetWrite: Codable, Equatable {
     /// staende dort die Ankunft des ersten PUT, nach einem Offline-Training
     /// Stunden nach dem Start (Sammelstelle Punkt 10).
     var sessionStartedAt: String? = nil
+    /// Bis der Zaehler im Satzpfad laeuft (Sensor-Spec B E4) immer
+    /// eingegeben. Zaehlerstand und Ereignisse nur bei gemessen/korrigiert;
+    /// nil wird nicht mitgeschickt.
+    var volumeSource: VolumeSource = .eingegeben
+    var volumeCounted: Int? = nil
+    var repEvents: RepEvents? = nil
 }
 
 extension SetWrite {
     private enum CodingKeys: String, CodingKey {
         case machineId, equipmentModelId, studioId, exerciseId, setIndex, load, volume, secondaryLoad, rir,
-             problemFlag, problemReason, performedAt, sessionStartedAt
+             problemFlag, problemReason, performedAt, sessionStartedAt, volumeSource, volumeCounted, repEvents
     }
 
     /// Die Feldnamen von vor Migration 0046.
@@ -71,6 +84,11 @@ extension SetWrite {
         problemReason = try c.decodeIfPresent(ProblemReason.self, forKey: .problemReason)
         performedAt = try c.decodeIfPresent(String.self, forKey: .performedAt)
         sessionStartedAt = try c.decodeIfPresent(String.self, forKey: .sessionStartedAt)
+        // Fehlt in Warteschlangen-Eintraegen aelterer Builds -- dann war es
+        // eine Eingabe von Hand.
+        volumeSource = try c.decodeIfPresent(VolumeSource.self, forKey: .volumeSource) ?? .eingegeben
+        volumeCounted = try c.decodeIfPresent(Int.self, forKey: .volumeCounted)
+        repEvents = try c.decodeIfPresent(RepEvents.self, forKey: .repEvents)
     }
 }
 
@@ -90,6 +108,40 @@ struct RecordedSet: Decodable, Equatable {
     let problemFlag: Bool
     let problemReason: ProblemReason?
     let performedAt: String
+    /// var mit Vorgabe, damit bestehende memberwise-Aufrufe (Tests) weiter
+    /// uebersetzen; der Server liefert beides ab Task 10.
+    var volumeSource: VolumeSource = .eingegeben
+    var volumeCounted: Int? = nil
+}
+
+extension RecordedSet {
+    private enum CodingKeys: String, CodingKey {
+        case id, studioId, userId, sessionId, machineId, equipmentModelId, exerciseId, setIndex, load,
+             secondaryLoad, volume, rir, problemFlag, problemReason, performedAt, volumeSource, volumeCounted
+    }
+
+    /// Eigener Dekoder, weil bei einem gestaffelten Deploy noch Antworten
+    /// ohne volumeSource eintreffen; sie gelten als eingegeben.
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        studioId = try c.decode(String.self, forKey: .studioId)
+        userId = try c.decode(String.self, forKey: .userId)
+        sessionId = try c.decode(String.self, forKey: .sessionId)
+        machineId = try c.decodeIfPresent(String.self, forKey: .machineId)
+        equipmentModelId = try c.decodeIfPresent(String.self, forKey: .equipmentModelId)
+        exerciseId = try c.decode(String.self, forKey: .exerciseId)
+        setIndex = try c.decode(Int.self, forKey: .setIndex)
+        load = try c.decode(Double.self, forKey: .load)
+        secondaryLoad = try c.decodeIfPresent(Double.self, forKey: .secondaryLoad)
+        volume = try c.decode(Int.self, forKey: .volume)
+        rir = try c.decodeIfPresent(Double.self, forKey: .rir)
+        problemFlag = try c.decode(Bool.self, forKey: .problemFlag)
+        problemReason = try c.decodeIfPresent(ProblemReason.self, forKey: .problemReason)
+        performedAt = try c.decode(String.self, forKey: .performedAt)
+        volumeSource = try c.decodeIfPresent(VolumeSource.self, forKey: .volumeSource) ?? .eingegeben
+        volumeCounted = try c.decodeIfPresent(Int.self, forKey: .volumeCounted)
+    }
 }
 
 /// Was beim naechsten Mal an einem Geraet dieser Einheit ansteht.

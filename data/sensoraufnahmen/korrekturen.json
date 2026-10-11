@@ -4,6 +4,7 @@
     "2026-10-04-0850-01": {
       "was": "Schnelltest: Gerät mit der Hand gehoben",
       "befestigung": "Sensor in der Hand bewegt",
+      "befestigungsart": null,
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "Wiederholungen nur ungefähr (10–12); ca. 68–90 s mit 100 Hz statt 50 (Wechsel in der Diagnose, vor der # rate-Zeile)"
@@ -11,6 +12,7 @@
     "2026-10-04-0852-01": {
       "was": "Schnelltest: Gerät mit der Hand gehoben",
       "befestigung": "Sensor in der Hand bewegt",
+      "befestigungsart": null,
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "Wiederholungen nur ungefähr (10–12)"
@@ -18,6 +20,7 @@
     "2026-10-04-0853-01": {
       "was": "Schnelltest: Gerät mit der Hand gehoben",
       "befestigung": "Sensor in der Hand bewegt",
+      "befestigungsart": null,
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "Wiederholungen nur ungefähr (10–12); 4 s App im Hintergrund ohne Lücken-Zeile"
@@ -25,6 +28,7 @@
     "2026-10-04-0912-01": {
       "was": "Geräte-Screen offen gelassen",
       "befestigung": null,
+      "befestigungsart": null,
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "kein Satz"
@@ -32,6 +36,7 @@
     "2026-10-04-1346-01": {
       "was": "Geräte-Checkliste Punkt 4: Screen ohne Sichern verlassen",
       "befestigung": null,
+      "befestigungsart": null,
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "kein Satz"
@@ -39,6 +44,7 @@
     "2026-10-04-1346-02": {
       "was": "Geräte-Checkliste Punkt 5: Sensor im Satz aus und an",
       "befestigung": "Sensor in der Hand bewegt",
+      "befestigungsart": null,
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "Lücke 31–36 s mit Absicht"
@@ -46,6 +52,7 @@
     "2026-10-04-1348-01": {
       "was": "Geräte-Checkliste Punkt 6: Bluetooth am iPhone aus",
       "befestigung": "Sensor in der Hand bewegt",
+      "befestigungsart": null,
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "ab 8,5 s keine Daten (Lücke bis zum Ende)"
@@ -53,6 +60,7 @@
     "2026-10-04-1350-01": {
       "was": "Geräte-Screen offen während der Ratentests",
       "befestigung": "Sensor liegt",
+      "befestigungsart": null,
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "kein Satz; App um 14:11 beendet, beim nächsten Start nachgetragen (Statistik leer)"
@@ -60,6 +68,7 @@
     "2026-10-05-0909-01": {
       "was": "Prüfung des Bluetooth-Fixes (aus und an)",
       "befestigung": null,
+      "befestigungsart": null,
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "kein Satz"
@@ -67,6 +76,7 @@
     "2026-10-08-0836-01": {
       "was": "Langhantel Curls",
       "befestigung": "Wasserflasche als Langhantel, Sensor mittig",
+      "befestigungsart": "langhantel",
       "repsWahr": 12,
       "fuerZaehler": false,
       "grund": "Wasserflasche statt Stange; letzte Wiederholung nur halb hoch"
@@ -74,6 +84,7 @@
     "2026-10-08-0837-01": {
       "was": "Langhantel Squats",
       "befestigung": "Wasserflasche als Langhantel, Sensor mittig",
+      "befestigungsart": "langhantel",
       "repsWahr": 15,
       "weightKgWahr": null,
       "fuerZaehler": false,
@@ -82,6 +93,7 @@
     "2026-10-08-0839-01": {
       "was": "Geräte-Screen kurz geöffnet",
       "befestigung": null,
+      "befestigungsart": null,
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "kein Satz; 3 s ohne ein einziges Paket"
@@ -89,6 +101,7 @@
     "2026-10-08-0841-01": {
       "was": "Gewichtsstapel, teils abgesetzt",
       "befestigung": "Wasserflasche frei geführt, teils auf der Tischplatte abgesetzt",
+      "befestigungsart": "stapel",
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "nicht mitgezählt; frei geführt statt auf Stangen"
@@ -96,6 +109,7 @@
     "2026-10-08-0844-01": {
       "was": "Gewichtsstapel, nur letzte Wiederholung abgesetzt",
       "befestigung": "Wasserflasche frei geführt",
+      "befestigungsart": "stapel",
       "repsWahr": 9,
       "weightKgWahr": 20,
       "fuerZaehler": false,
@@ -104,6 +118,7 @@
     "2026-10-08-0846-01": {
       "was": "Gewichtsstapel, nach jeder Wiederholung abgesetzt",
       "befestigung": "Wasserflasche frei geführt, auf der Tischplatte abgesetzt",
+      "befestigungsart": "stapel",
       "repsWahr": 10,
       "fuerZaehler": false,
       "grund": "Label 8, laut Notiz 10; frei geführt statt auf Stangen"
@@ -111,6 +126,7 @@
     "2026-10-08-0846-02": {
       "was": "Kurzhantel Curls, gerade, links",
       "befestigung": "Wasserflasche als Kurzhantel, Griffende",
+      "befestigungsart": "kurzhantel",
       "repsWahr": 10,
       "fuerZaehler": false,
       "grund": "Wasserflasche statt Hantel"
@@ -118,6 +134,7 @@
     "2026-10-08-0852-01": {
       "was": "Liegestütze",
       "befestigung": "Sensor um den Hals",
+      "befestigungsart": "koerper",
       "repsWahr": 10,
       "fuerZaehler": false,
       "grund": "am Anfang hinlegen, am Ende aufstehen; Gewicht im Label ist bedeutungslos (Butterfly als Platzhalter)"
@@ -125,6 +142,7 @@
     "2026-10-08-0853-01": {
       "was": "Geräte-Screen kurz geöffnet",
       "befestigung": null,
+      "befestigungsart": null,
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "kein Satz"

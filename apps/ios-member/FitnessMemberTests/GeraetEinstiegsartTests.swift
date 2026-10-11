@@ -6,8 +6,8 @@ import Testing
 ///
 /// Nach einem Scan war das Telefon nachweislich am Geraet. Nach einer
 /// Auswahl hat jemand etwas angetippt. Ein Wort, das eine Messung
-/// behauptet, wo keine stattfand, verstoesst gegen die Produktgrenze
-/// (designsystem.md SS10).
+/// behauptet, wo keine stattfand, bleibt auch nach Sensor-Spec B
+/// verboten: erkannt wird das Geraet, gemessen wird es nicht.
 struct GeraetEinstiegsartTests {
 
     @Test func mitTokenHeisstEsErkannt() {

@@ -20,6 +20,8 @@ Dieser Bauabschnitt fügt drei Dinge hinzu:
 
 **Was es nicht ist:** kein Trainingsplan (M3, M1-Spec §5.5 und Zeile 490), keine Ernährungs- oder Gesundheitsberatung, keine Sensorik. Alles, was hier gespeichert wird, gibt das Mitglied selbst ein — die Produktgrenze aus M1 §4.3 („gymodo misst nichts") gilt unverändert und wird für Körperdaten sogar strenger (Abschnitt 6).
 
+> **Nachtrag 10. Oktober 2026:** ‚misst nichts‘ ist aufgehoben; für Körperdaten bleibt es strenger: keine Messung, kein HealthKit, nur Eingabe. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.
+
 ---
 
 ## 2. Scope
@@ -250,6 +252,8 @@ Neue DTOs: `MemberProfile` (statt `member: { displayName }`), `MeasurementsRespo
 ---
 
 ## 6. Datenschutz und Produktgrenze
+
+> **Nachtrag 10. Oktober 2026:** ‚misst nichts‘ ist aufgehoben; für Körperdaten bleibt es strenger: keine Messung, kein HealthKit, nur Eingabe. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.
 
 Dieser Bauabschnitt ist der erste, der **Gesundheitsdaten im Sinn von Art. 9 DSGVO** speichert: Gewicht, Größe, Geschlecht. Das ändert drei Dinge gegenüber allem, was bisher gebaut wurde:
 

@@ -1,23 +1,31 @@
-#if DEBUG
 import Foundation
 
 /// Was am iPhone ankommt, nicht was am Sensor eingestellt ist (Spec 4.7).
 /// Rein: bekommt Zeitstempel, kennt weder Bluetooth noch Dateien.
-struct SensorStatistik: Sendable {
-    struct Abstand: Codable, Equatable, Sendable {
-        var median: Double
-        var p95: Double
-        var max: Double
+public struct SensorStatistik: Sendable {
+    public struct Abstand: Codable, Equatable, Sendable {
+        public var median: Double
+        public var p95: Double
+        public var max: Double
+
+        public init(median: Double, p95: Double, max: Double) {
+            self.median = median; self.p95 = p95; self.max = max
+        }
     }
 
-    struct Ergebnis: Codable, Equatable, Sendable {
-        var pakete: Int
-        var rateIstHz: Double
-        var abstandMs: Abstand
-        var luecken: Int
-        var verworfeneBytes: Int
+    public struct Ergebnis: Codable, Equatable, Sendable {
+        public var pakete: Int
+        public var rateIstHz: Double
+        public var abstandMs: Abstand
+        public var luecken: Int
+        public var verworfeneBytes: Int
 
-        static let leer = Ergebnis(pakete: 0, rateIstHz: 0,
+        public init(pakete: Int, rateIstHz: Double, abstandMs: Abstand, luecken: Int, verworfeneBytes: Int) {
+            self.pakete = pakete; self.rateIstHz = rateIstHz; self.abstandMs = abstandMs
+            self.luecken = luecken; self.verworfeneBytes = verworfeneBytes
+        }
+
+        public static let leer = Ergebnis(pakete: 0, rateIstHz: 0,
                                    abstandMs: Abstand(median: 0, p95: 0, max: 0),
                                    luecken: 0, verworfeneBytes: 0)
     }
@@ -32,7 +40,9 @@ struct SensorStatistik: Sendable {
     /// Nur das letzte Stueck, fuer die Anzeige in der Sensor-Zeile.
     private var juengste: [TimeInterval] = []
 
-    mutating func erfassen(t: TimeInterval) {
+    public init() {}
+
+    public mutating func erfassen(t: TimeInterval) {
         pakete += 1
         if let letzter, !nachLuecke { abstaende.append(t - letzter) }
         letzter = t
@@ -45,16 +55,16 @@ struct SensorStatistik: Sendable {
 
     /// Der Abstand ueber eine getrennte Verbindung hinweg ist keine
     /// Eigenschaft der Funkstrecke und verdirbt sonst Maximum und Rate.
-    mutating func lueckeBegonnen() {
+    public mutating func lueckeBegonnen() {
         luecken += 1
         nachLuecke = true
     }
 
-    func rateLetzteSekunde(bis jetzt: TimeInterval) -> Double {
+    public func rateLetzteSekunde(bis jetzt: TimeInterval) -> Double {
         Double(juengste.filter { $0 <= jetzt && jetzt - $0 < 1 }.count)
     }
 
-    func ergebnis(verworfeneBytes: Int) -> Ergebnis {
+    public func ergebnis(verworfeneBytes: Int) -> Ergebnis {
         guard !abstaende.isEmpty else {
             var leer = Ergebnis.leer
             leer.pakete = pakete; leer.luecken = luecken; leer.verworfeneBytes = verworfeneBytes
@@ -75,4 +85,3 @@ struct SensorStatistik: Sendable {
         )
     }
 }
-#endif

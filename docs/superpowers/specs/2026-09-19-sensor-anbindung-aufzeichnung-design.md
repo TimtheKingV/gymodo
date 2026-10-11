@@ -5,6 +5,8 @@
 **Vorbedingung:** Der Satzpfad nach Schnitt 3 steht (`GeraetModel`, `GeraetView`, `WertZeile`, `WorkoutSessionStore`). Das Testnotiz-Modul ist drin; der Debug-Build zeigt den Dokumente-Ordner in der Dateien-App (`Info-Additions-Debug.plist`).
 **Verhältnis zu anderen Dokumenten:** untergeordnet gegenüber `2026-08-28-fitness-retrofit-m1-design.md` und `2026-08-30-designsystem.md`. Die Grenze „gymodo misst nichts" (M1-Spec, Zeile 112 und 118; `2026-09-13-ziele-und-fortschritt-design.md`, Zeile 21) bleibt in diesem Teilprojekt unberührt, siehe Abschnitt 2.
 
+> **Nachtrag 10. Oktober 2026:** Die Grenze ist mit Teilprojekt B gefallen; es gilt die neue Fassung in Blueprint §2.3. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.
+
 ---
 
 ## 1. Warum
@@ -44,6 +46,8 @@ A kommt zuerst, weil der Zähler mehrere Iterationen brauchen wird. Offline gege
 - Magnetfeld-Kalibrierung und Nutzung des Yaw-Winkels. Am Gewichtsstapel ist der vom Datenblatt verlangte Abstand von 20 cm zu Stahl und Magneten nicht einzuhalten. Der Winkel wird mitgeschrieben, aber B darf sich auf Yaw nicht stützen.
 - Hintergrundmodus `bluetooth-central`. In A bleibt der Bildschirm wach (Abschnitt 5.3); ob Mitglieder das Telefon beim Satz in die Tasche stecken, entscheidet B.
 - Bindung Sensor ↔ Gerät über den NFC-Tag, mehrere Sensoren gleichzeitig, Live-Graph, Sichtbarkeit im Release-Build
+
+> **Nachtrag 10. Oktober 2026:** Die Grenze ist mit Teilprojekt B gefallen; es gilt die neue Fassung in Blueprint §2.3. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.
 
 ## 3. Protokoll (am 30. September 2026 am Sensor verifiziert)
 
@@ -339,3 +343,5 @@ Vor dem Melden das volle Set: `pnpm typecheck`, `pnpm test`, `pnpm test:integrat
 3. **Eigenes Swift-Package** für Parser, Format und Zähler (B): lohnt sich, sobald die Zähler-Iterationen am Simulator hängen. Die Schichten aus Abschnitt 5 sind dafür schon getrennt.
 4. **Einrichtung ohne Herstellerapp** (nach B): Kalibrieren und Speichern aus der App, sobald Studios selbst Sensoren einrichten.
 5. **Bindung Sensor ↔ Gerät** über den NFC-Tag: die Nummer im Anzeigenamen wäre der Schlüssel.
+
+> **Nachtrag 10. Oktober 2026:** Erledigt mit Teilprojekt B. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.

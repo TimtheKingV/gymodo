@@ -8,7 +8,7 @@ import SwiftUI
 /// Kein Geraetefoto: es steht auf "Geraet erkannt" davor, und hier kostete
 /// es 204 pt von 510 auf einem 667-pt-iPhone (Plan Schnitt 4, Task 3).
 /// Kein Rueckblick, kein Vorschlag, keine Raeder: die gehoeren zum
-/// Satzpfad, und "die App misst nichts" beginnt erst mit einem Satz.
+/// Satzpfad, und Zahlen gibt es erst mit einem bestaetigten Satz.
 ///
 /// Seit der Testnotiz 06.10. (#5) auch der letzte Schritt des
 /// Erstkontakts: dort steht er im fullScreenCover ohne Navigationsleiste

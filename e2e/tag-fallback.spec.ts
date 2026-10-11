@@ -232,7 +232,12 @@ test("aktiver Tag zeigt Geraet, Foto und Einweisungsvideo vor dem Installationsh
 
   // Und niemals persoenliche Daten. Geprueft wird der sichtbare Text, nicht
   // das Rohdokument: dort steht "kg" schon im Base64 der signierten URL.
-  const sichtbar = await page.locator("body").innerText();
+  // Die Produktgrenze nennt "Wiederholungen" als Satz des Produkts, nicht als
+  // Personendaten; sie wird deshalb vor der Pruefung herausgenommen.
+  const sichtbar = (await page.locator("body").innerText()).replace(
+    /Gymtavo speichert nur, was du bestätigst[\s\S]*?Gesundheitsempfehlung von Gymtavo\./,
+    "",
+  );
   // "Verlauf" steht im Installationshinweis selbst -- das ist die
   // Formulierung der Spec, keine Personendaten.
   for (const verboten of ["kg", "Satz", "Wiederholung"]) {
@@ -252,7 +257,7 @@ test("aktiver Tag zeigt Geraet, Foto und Einweisungsvideo vor dem Installationsh
 
   // Befund 19, zweite Stelle: die Produktgrenze stand in text-faint
   // (3,6 : 1). Designsystem 10 verlangt sie verbindlich UND sichtbar.
-  const grenze = page.getByText(/Gymtavo misst nichts/);
+  const grenze = page.getByText(/Gymtavo speichert nur, was du bestätigst/);
   expect(await grenze.evaluate((el) => getComputedStyle(el).color)).toBe(
     "rgb(155, 163, 175)",
   );

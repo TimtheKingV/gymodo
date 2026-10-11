@@ -237,8 +237,7 @@ enum HomeZeilen {
     /// "64 min · 8 Sätze" -- die grosse Zeile einer Karte: die SUMMIERTE
     /// Trainingszeit ihrer Teile, nicht die Spanne. 08:32-09:06 und
     /// 09:20-09:50 sind 64 Minuten Training, nicht 78 -- die Pause
-    /// dazwischen ist keine (designsystem.md SS10: die App misst nichts,
-    /// was nicht aus bestaetigten Saetzen kommt).
+    /// dazwischen ist keine (keine Zahl, die nicht aus bestaetigten Saetzen kommt).
     ///
     /// Summiert wird ueber die je Teil gerundeten Minuten, damit eine
     /// Karte aus einem Teil genau dieselbe Zahl zeigt wie `dauerText`.

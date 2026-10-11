@@ -109,13 +109,15 @@ Ein Solo-Projekt ohne externen Termin scheitert nicht an Überziehung, sondern d
 
 ### 4.2 Nicht enthalten
 
-Trainingspläne, Planversionierung, Trainerfreigaben, Trainer-Mitglied-Zuordnung, globaler Gerätekatalog über Studiogrenzen hinweg, Trainerhinweise, Push-Benachrichtigungen, asynchrone Jobs und Worker, Betreiber-Dashboard (M2), DSGVO-Selbstbedienung (M3), Android, Abrechnung, jede Form von Sensorik.
+Trainingspläne, Planversionierung, Trainerfreigaben, Trainer-Mitglied-Zuordnung, globaler Gerätekatalog über Studiogrenzen hinweg, Trainerhinweise, Push-Benachrichtigungen, asynchrone Jobs und Worker, Betreiber-Dashboard (M2), DSGVO-Selbstbedienung (M3), Android, Abrechnung, jede Form von Sensorik in M1 (der Bewegungssensor folgt mit Teilprojekt B, `2026-10-10-sensor-wiederholungszaehler-design.md`).
 
 ### 4.3 Produktgrenze
 
-Unverändert aus Blueprint §2.3, und sie gilt uneingeschränkt:
+> **Nachtrag 10. Oktober 2026:** ersetzt durch die neue Fassung in Blueprint §2.3 (Teilprojekt B, `2026-10-10-sensor-wiederholungszaehler-design.md` §3):
+>
+> Die Plattform speichert nur, was das Mitglied bestätigt. Messen darf sie nur über den Bewegungssensor und nur, was ein Zähler mit nachgewiesener Güte erfasst — heute die Wiederholungen. Gewicht, Ausführungsqualität und Körperdaten misst sie nicht und behauptet es nicht. Jede gezählte Zahl trägt ihre Herkunft am Satz.
 
-> Ohne Sensorik kennt die Plattform nur Daten, die das Mitglied bestätigt. Sie darf nicht behaupten, die tatsächliche Ausführung, das eingestellte Gewicht oder die absolvierten Wiederholungen gemessen zu haben.
+~~Unverändert aus Blueprint §2.3, und sie gilt uneingeschränkt: „Ohne Sensorik kennt die Plattform nur Daten, die das Mitglied bestätigt. Sie darf nicht behaupten, die tatsächliche Ausführung, das eingestellte Gewicht oder die absolvierten Wiederholungen gemessen zu haben.“~~
 
 Ergänzend: Die Einweisungsinhalte („worauf du achten musst") sind **Inhalte des Studios**, nicht der Plattform. Die Plattform gibt keine Trainings- oder Gesundheitsempfehlungen ab. Das gehört sichtbar in die UI und in den Vertrag — es stützt zugleich die Rollenverteilung aus Blueprint §10.7 (Studio ist Verantwortlicher, Plattform ist Auftragsverarbeiter).
 
@@ -606,7 +608,7 @@ Blockieren M1 nicht, müssen aber vor M2 beziehungsweise vor dem Pitch entschied
 | Betreiber fragt nach Android-Mitgliedern | Web-Fallback mit Einweisung deckt alle ab; Personalisierung iPhone-only, offen benannt |
 | Install-Moment am Gerät verliert das Mitglied | Installation am Studioeingang, Prozessvorgabe im Pitch |
 | Zwei Codebasen verdoppeln jedes Feature | Feature-Zahl klein halten; Web ohne HTTP-Vertragsfläche |
-| Progression wird als medizinische Empfehlung gelesen | konservative Regeln, Produktgrenze in der UI, Inhalte gehören dem Studio |
+| Progression wird als medizinische Empfehlung gelesen | konservative Regeln, Produktgrenze in der UI (Wortlaut seit 10.10.2026: Designsystem §10), Inhalte gehören dem Studio |
 | Kein Empfang im Gerätebereich | Prefetch beim App-Start |
 
 ---

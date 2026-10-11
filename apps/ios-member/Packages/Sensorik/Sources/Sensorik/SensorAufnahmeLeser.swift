@@ -1,17 +1,16 @@
-#if DEBUG
 import Foundation
 
-enum SensorAufnahmeLeser {
-    enum Fehler: Error { case unbekanntesFormat(String), kaputteZeile(String) }
+public enum SensorAufnahmeLeser {
+    public enum Fehler: Error, Sendable { case unbekanntesFormat(String), kaputteZeile(String) }
 
-    enum Eintrag: Equatable {
+    public enum Eintrag: Equatable, Sendable {
         case messwert(SensorMesswert)
         case luecke(von: TimeInterval, bis: TimeInterval)
         case rate(SensorRate, ab: TimeInterval)
     }
 
-    static func lesen(ordner: URL) throws -> (datei: SensorAufnahmeDatei, eintraege: [Eintrag]) {
-        let datei = try JSONDecoder.testnotiz().decode(
+    public static func lesen(ordner: URL) throws -> (datei: SensorAufnahmeDatei, eintraege: [Eintrag]) {
+        let datei = try SensorikJSON.decoder().decode(
             SensorAufnahmeDatei.self, from: Data(contentsOf: ordner.appendingPathComponent("aufnahme.json")))
         // Unbekanntes ablehnen statt raten (Spec 6.3).
         guard datei.format == SensorAufnahmeDatei.formatkennung else {
@@ -19,7 +18,11 @@ enum SensorAufnahmeLeser {
         }
         let csv = try String(contentsOf: ordner.appendingPathComponent("messwerte.csv"), encoding: .utf8)
         var eintraege: [Eintrag] = []
-        for zeile in csv.split(separator: "\n").dropFirst() {
+        for rohzeile in csv.split(whereSeparator: \.isNewline).dropFirst() {
+            // Leerzeilen am Ende kommen vom iPhone, \r von Editoren -- beides
+            // ist kein Messwert und kein Fehler.
+            let zeile = rohzeile.trimmingCharacters(in: .whitespaces)
+            if zeile.isEmpty { continue }
             if zeile.hasPrefix("# luecke ") {
                 let grenzen = zeile.dropFirst("# luecke ".count).split(separator: "-").compactMap { Double($0) }
                 guard grenzen.count == 2 else { throw Fehler.kaputteZeile(String(zeile)) }
@@ -46,4 +49,3 @@ enum SensorAufnahmeLeser {
         return (datei, eintraege)
     }
 }
-#endif

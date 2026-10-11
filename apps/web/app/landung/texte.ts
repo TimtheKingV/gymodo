@@ -98,7 +98,7 @@ export const VERLAUF = {
 } as const;
 
 export const PRODUKTGRENZE =
-  "Gymtavo misst nichts. Angezeigt wird ausschließlich, was du selbst bestätigt hast. Einweisungsvideos und Einstellhinweise sind Inhalte deines Studios, keine Trainings- oder Gesundheitsempfehlung von Gymtavo.";
+  "Gymtavo speichert nur, was du bestätigst. Mit Sensor zählt Gymtavo deine Wiederholungen mit — du siehst die Zahl und entscheidest. Einweisungsvideos und Einstellhinweise sind Inhalte deines Studios, keine Trainings- oder Gesundheitsempfehlung von Gymtavo.";
 
 // "Wo liegen meine Daten?" fehlt bewusst, bis die Antwort belegt ist (Spec 5, [pruefen]).
 export const FRAGEN: readonly Frage[] = [

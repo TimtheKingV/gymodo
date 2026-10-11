@@ -124,6 +124,56 @@ describe("PUT /api/v1/workout-sessions/{sessionId}/sets/{setId}", () => {
     expect(payload.load).toBe(80);
   });
 
+  it("liefert ohne Herkunftsangabe eingegeben und keinen Zaehlerstand", async () => {
+    const response = await PUT(
+      setRequest(body(), token),
+      params(newId(), newId()),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as {
+      volumeSource: string;
+      volumeCounted: number | null;
+    };
+    expect(payload.volumeSource).toBe("eingegeben");
+    expect(payload.volumeCounted).toBeNull();
+  });
+
+  it("speichert einen gemessenen Satz mit Zaehlerstand und Ereignissen", async () => {
+    const wiederholungen = Array.from({ length: 10 }, (_, i) => ({
+      beginn: i * 3,
+      umkehr: i * 3 + 1.2,
+      ende: i * 3 + 2.5,
+      ausschlag: 100,
+      sicherheit: 0.9,
+    }));
+
+    const response = await PUT(
+      setRequest(
+        body({
+          volumeSource: "gemessen",
+          volumeCounted: 10,
+          repEvents: {
+            algo: "langhantel/1",
+            befestigungsart: "langhantel",
+            unsicher: null,
+            wiederholungen,
+          },
+        }),
+        token,
+      ),
+      params(newId(), newId()),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as {
+      volumeSource: string;
+      volumeCounted: number | null;
+    };
+    expect(payload.volumeSource).toBe("gemessen");
+    expect(payload.volumeCounted).toBe(10);
+  });
+
   it("nimmt die Kennungen aus dem Pfad, nicht aus der Nutzlast", async () => {
     const sessionId = newId();
     const setId = newId();

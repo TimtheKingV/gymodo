@@ -102,6 +102,8 @@ Einheit dort: `html { font-size: 62.5% }`, 1 rem = 10 px. Breakpoints 480 · 750
 6. **Kein Popup, kein Countdown.** Warteliste/Newsletter nur als Section mit Checkbox und Double-Opt-in.
 7. **Android:** Die App gibt es nur für iOS; der Web-Fallback `/t/[token]` trägt Android. Wir versprechen nicht „iOS and Android".
 
+> **Nachtrag 10. Oktober 2026:** Der Wortlaut ist entschieden: der kanonische Satz aus Designsystem §10 statt des Vorschlags hier. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.
+
 ---
 
 ## 5. Übertragung — `/` (Mitglieder und Endnutzer)
@@ -322,6 +324,8 @@ Mails: anfangs die **Stripe-Belege** (Kaufbeleg, Rechnung); eigene Versandmail e
 | `wurzel.spec.ts`: eine Akzentfläche je Seite | lange Seite, mehrere CTAs | je Viewport (§4.2 oben) |
 | `landeseite.module.css`: „92 pt, eigener Satz, kein Baustein" | wird ein Satz Bausteine | Kommentar dort entsprechend fortschreiben |
 
+> **Nachtrag 10. Oktober 2026:** Aufgelöst: die Grenze ist gefallen, App, Landeseite und `/t/[token]` tragen den neuen Satz. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.
+
 ---
 
 ## 9. Entscheidungen (getroffen am 3. Oktober 2026)
@@ -335,3 +339,5 @@ Mails: anfangs die **Stripe-Belege** (Kaufbeleg, Rechnung); eigene Versandmail e
 - **E7 — Zahlen im Laufband.** → **Fakten ohne Zahlen, ruhend.** Drei geprüfte Fakten als statische, umbrechende Zeile (= der reduced-motion-Zweig des Bausteins). Das Laufen schaltet eine Prop `laufend` erst in Etappe 3 mit Live-Zahlen frei. Begründung: Ein Laufband trägt den „so viele schon"-Effekt; mit Sätzen ist es Bewegung ohne Zweck und konkurriert mit der einen Inszenierung (Ohne/Mit, §3 Schluss). Jeder Fakt wird vor dem Bau gegen den Code geprüft.
 - **E8 — Marke** (nachgetragen). → **GYMTAVO.** Die Landeseite nutzt den Baustein `app/branding/GymtavoWordmark.tsx` aus `feat/gymtavo-branding`; dieser Branch setzt auf dessen Spitze auf. Sichtbare Texte heißen „Gymtavo" (Versalien nur in der Wortmarke); Domain, Bundle-ID und Formatkennungen bleiben (README `assets/branding`). Wo diese Spec „gymodo" schreibt, ist für sichtbare Texte „Gymtavo" gemeint. Die Produktgrenze wird **nicht** auf der Landeseite allein umbenannt — sie zieht mit App, Portal und `/t/[token]` zusammen um (Befund 19: ein Satz, eine Quelle).
 - **E9 — Ohne/Mit-Interaktionsmodell** (nachgetragen, aus der Prüfung von Abschnitt 7). → **„Schwelle“** wie Gpath, Tippen übersteuert bis zum Verlassen des Viewports. Details 7.2.2.
+
+> **Nachtrag 10. Oktober 2026:** Mit E1 von Teilprojekt B zusammen umgezogen. Siehe `2026-10-10-sensor-wiederholungszaehler-design.md` §3.

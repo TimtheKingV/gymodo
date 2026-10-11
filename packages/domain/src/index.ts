@@ -30,6 +30,15 @@ export {
   volumeZuGross,
 } from "./belastung.js";
 export type { Category, LoadUnit, VolumeKind } from "./belastung.js";
+export {
+  befestigungsartSchema,
+  herkunftPruefen,
+  repEventsSchema,
+  unsicherGrundSchema,
+  volumeSourceSchema,
+  type RepEvents,
+  type VolumeSource,
+} from "./herkunft.js";
 export { DomainError } from "./errors.js";
 export { istAuthAusfall } from "./auth.js";
 export {

@@ -544,11 +544,7 @@ final class GeraetModel {
     func trainingStarten() { sessions.trainingStarten() }
 
     /// Pflichtort laut designsystem.md SS10.
-    let produktgrenze = """
-        Gymtavo misst nichts. Angezeigt wird ausschließlich, was du selbst \
-        bestätigt hast. Einweisungsvideos und Einstellhinweise sind Inhalte \
-        deines Studios, keine Trainings- oder Gesundheitsempfehlung von Gymtavo.
-        """
+    let produktgrenze = Produktgrenze.kanonisch
 
     // MARK: - Aktionen
 

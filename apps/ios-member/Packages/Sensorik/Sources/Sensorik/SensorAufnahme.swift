@@ -1,29 +1,36 @@
-#if DEBUG
 import Foundation
 
 /// Ein Aufnahme-Ordner auf der Platte (Spec 6). Kennt kein Bluetooth: bekommt
 /// Messwerte und schreibt sie weg. Keine Nebenlaeufigkeit -- der Koordinator
 /// ruft vom MainActor, und 100 Zeilen zu 70 Byte je Sekunde sind fuer einen
 /// offenen FileHandle keine Last.
-final class SensorAufnahme {
-    enum Fehler: Error { case abgeschlossen }
+public final class SensorAufnahme {
+    public enum Fehler: Error { case abgeschlossen }
 
-    static let csvKopf = "t,ax,ay,az,gx,gy,gz,wx,wy,wz"
+    public static let csvKopf = "t,ax,ay,az,gx,gy,gz,wx,wy,wz"
 
-    let ordner: URL
-    private(set) var datei: SensorAufnahmeDatei
-    let startT: TimeInterval
+    public let ordner: URL
+    public private(set) var datei: SensorAufnahmeDatei
+    public let startT: TimeInterval
     private let zeitzone: TimeZone
     private var griff: FileHandle?
     private var lueckeSeit: TimeInterval?
     private var zeilenSeitSync = 0
 
-    init(wurzel: URL, start: Date, startT: TimeInterval, sensor: SensorAufnahmeDatei.Sensor,
+    /// yyyy-MM-dd-HHmm wie Zeitformat.ordnername im App-Target (Spec A 6.1).
+    private static func ordnername(_ datum: Date, zeitzone: TimeZone) -> String {
+        var kalender = Calendar(identifier: .gregorian)
+        kalender.timeZone = zeitzone
+        let t = kalender.dateComponents([.year, .month, .day, .hour, .minute], from: datum)
+        return String(format: "%04d-%02d-%02d-%02d%02d", t.year!, t.month!, t.day!, t.hour!, t.minute!)
+    }
+
+    public init(wurzel: URL, start: Date, startT: TimeInterval, sensor: SensorAufnahmeDatei.Sensor,
          geraet: SensorAufnahmeDatei.Geraet, kontext: SensorAufnahmeDatei.Kontext,
          befestigung: String?, zeitzone: TimeZone = .current) throws {
         let fm = FileManager.default
         try fm.createDirectory(at: wurzel, withIntermediateDirectories: true)
-        let basis = Zeitformat.ordnername(start, zeitzone: zeitzone)
+        let basis = Self.ordnername(start, zeitzone: zeitzone)
         var nummer = 1
         var ordner = wurzel.appendingPathComponent(String(format: "%@-%02d", basis, nummer))
         while fm.fileExists(atPath: ordner.path) {
@@ -49,15 +56,15 @@ final class SensorAufnahme {
 
     deinit { try? griff?.close() }
 
-    func schreiben(_ messwert: SensorMesswert) throws {
+    public func schreiben(_ messwert: SensorMesswert) throws {
         try anhaengen(Self.zeile(messwert, startT: startT))
     }
 
-    func lueckeBeginnt(t: TimeInterval) {
+    public func lueckeBeginnt(t: TimeInterval) {
         if lueckeSeit == nil { lueckeSeit = t }
     }
 
-    func lueckeEndet(t: TimeInterval) throws {
+    public func lueckeEndet(t: TimeInterval) throws {
         guard let von = lueckeSeit else { return }
         lueckeSeit = nil
         try anhaengen("# luecke \(Self.zahl(von - startT, stellen: 6))-\(Self.zahl(t - startT, stellen: 6))")
@@ -66,11 +73,11 @@ final class SensorAufnahme {
     /// Ab `t` sendet der Sensor mit `rate`. `rateSollHz` in aufnahme.json
     /// bleibt die Rate vom Start; ohne diese Zeile laege ein Wechsel mitten
     /// im Satz unsichtbar in den Daten.
-    func rateGewechselt(_ rate: SensorRate, t: TimeInterval) throws {
+    public func rateGewechselt(_ rate: SensorRate, t: TimeInterval) throws {
         try anhaengen("# rate \(rate.rawValue) ab \(Self.zahl(t - startT, stellen: 6))")
     }
 
-    func abschliessen(_ abschluss: SensorAufnahmeDatei.Abschluss, kontext: SensorAufnahmeDatei.Kontext,
+    public func abschliessen(_ abschluss: SensorAufnahmeDatei.Abschluss, kontext: SensorAufnahmeDatei.Kontext,
                       label: SensorAufnahmeDatei.Label, akkuProzent: Int?,
                       statistik: SensorStatistik.Ergebnis, ende: Date, endeT: TimeInterval) throws {
         // Ein abgeschlossener Datensatz ist die Wahrheit fuer den spaeteren
@@ -90,7 +97,7 @@ final class SensorAufnahme {
         try kopfSchreiben()
     }
 
-    static func zeile(_ m: SensorMesswert, startT: TimeInterval) -> String {
+    public static func zeile(_ m: SensorMesswert, startT: TimeInterval) -> String {
         [zahl(m.t - startT, stellen: 6),
          zahl(m.beschleunigung.x, stellen: 4), zahl(m.beschleunigung.y, stellen: 4), zahl(m.beschleunigung.z, stellen: 4),
          zahl(m.drehrate.x, stellen: 2), zahl(m.drehrate.y, stellen: 2), zahl(m.drehrate.z, stellen: 2),
@@ -120,20 +127,20 @@ final class SensorAufnahme {
     }
 
     private func kopfSchreiben() throws {
-        let json = try JSONEncoder.testnotiz(zeitzone: zeitzone).encode(datei)
+        let json = try SensorikJSON.encoder(zeitzone: zeitzone).encode(datei)
         try json.write(to: ordner.appendingPathComponent("aufnahme.json"), options: .atomic)
     }
 
     /// Beim App-Start: Ordner, die noch "laeuft" sagen, stammen aus einem
     /// Lauf, den es nicht mehr gibt. Ohne Nachtrag saehe B eine Aufnahme ohne
     /// Ende und muesste raten, ob sie vollstaendig ist.
-    static func verwaisteNachtragen(wurzel: URL, zeitzone: TimeZone = .current) {
+    public static func verwaisteNachtragen(wurzel: URL, zeitzone: TimeZone = .current) {
         let fm = FileManager.default
         guard let ordnerListe = try? fm.contentsOfDirectory(at: wurzel, includingPropertiesForKeys: nil) else { return }
         for ordner in ordnerListe {
             let kopf = ordner.appendingPathComponent("aufnahme.json")
             guard let daten = try? Data(contentsOf: kopf),
-                  var datei = try? JSONDecoder.testnotiz().decode(SensorAufnahmeDatei.self, from: daten),
+                  var datei = try? SensorikJSON.decoder().decode(SensorAufnahmeDatei.self, from: daten),
                   datei.abschluss == .laeuft
             else { continue }
             let csv = (try? String(contentsOf: ordner.appendingPathComponent("messwerte.csv"), encoding: .utf8)) ?? ""
@@ -143,10 +150,9 @@ final class SensorAufnahme {
                 .flatMap { Double($0) } ?? 0
             datei.abschluss = .abgebrochen
             datei.endedAt = datei.startedAt.addingTimeInterval(letzteT.rounded(.down))
-            if let json = try? JSONEncoder.testnotiz(zeitzone: zeitzone).encode(datei) {
+            if let json = try? SensorikJSON.encoder(zeitzone: zeitzone).encode(datei) {
                 try? json.write(to: kopf, options: .atomic)
             }
         }
     }
 }
-#endif

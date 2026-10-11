@@ -398,7 +398,7 @@ struct TrainingRootView: View {
                 // verschluckte ihn sonst (wie in Sub-Projekt 2).
                 .accessibilityElement(children: .combine)
                 Spacer()
-                // Ohne Satz zeigt "die App misst nichts" (SS10) auch keine
+                // Ohne Satz gibt es keine bestaetigte Zahl -- also auch keine
                 // Geraete- und Satzzahl -- mitte.zahlen ist dann nil, und die
                 // rechte Spalte entfaellt ganz statt eine Null zu zeigen.
                 if let zahlen = mitte.zahlen {

@@ -6,7 +6,7 @@
  * Eingabe, gleiches Ergebnis, keine Uhr, kein Zufall, kein Datenbankzugriff.
  *
  * Sie gibt eine Rechnung aus, keine Empfehlung. Was daraus wird, entscheidet
- * das Mitglied -- die Plattform misst nichts (Spec Abschnitt 4.3).
+ * das Mitglied -- die Regel rechnet nur auf bestaetigten Saetzen (Spec Abschnitt 4.3).
  *
  * Version 2.0.0 (Cardio-Spec 2026-09-21, Abschnitt 5.2): Die Regel rechnet
  * mit "Belastung" und "Umfang" statt mit Kilogramm und Wiederholungen. Was

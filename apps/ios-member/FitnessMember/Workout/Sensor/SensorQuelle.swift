@@ -1,5 +1,6 @@
 #if DEBUG
 import Foundation
+import Sensorik
 
 struct SensorFund: Identifiable, Equatable, Sendable {
     let id: UUID
