@@ -57,6 +57,12 @@ actor APIClient {
         try await get("me/machine-photos")
     }
 
+    /// Signierte Uebungsvideos fuer Liste und Uebungszeilen -- aus demselben
+    /// Grund ein eigener Abruf wie die Fotos.
+    func exerciseVideos() async throws(APIError) -> ExerciseVideosResponse {
+        try await get("me/exercise-videos")
+    }
+
     /// Liefert die volle Antwort statt nur der Liste: die Kopfzeile von
     /// Home braucht `summary`, und ein zweiter Abruf dafuer waere
     /// derselbe Abruf.
