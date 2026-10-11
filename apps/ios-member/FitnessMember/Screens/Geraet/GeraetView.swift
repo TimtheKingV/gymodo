@@ -105,11 +105,9 @@ struct GeraetView: View {
         }
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
-        // Seit Schnitt 4 startet die Trainingsuhr nicht mehr hier, sondern
-        // mit "Training starten" (WorkoutSessionStore.trainingStarten) --
-        // dieser Screen kommt erst danach. geraetGeoeffnet() bleibt im
-        // .task: der Drawer haengt am selben Moment wie zuvor, einmal beim
-        // Oeffnen, nicht nach jedem Satz.
+        // Die Trainingsuhr startet nicht hier, sondern mit "Übung starten"
+        // im Drawer davor (Testnotiz 11.10., #11). geraetGeoeffnet()
+        // beginnt einmal beim Oeffnen den Mitschnitt, nicht nach jedem Satz.
         .task { modell.geraetGeoeffnet(); await modell.kontextLaden() }
         // Die Pause muss sich selbst beenden. Vorher lief sie gegen einen
         // Zustand, den niemand zuruecksetzte: der Balken blieb auf 00:00
@@ -187,7 +185,10 @@ struct GeraetView: View {
     /// Die eine Stelle, an der der Screen entscheidet, was er ist.
     @ViewBuilder
     private var inhalt: some View {
-        if let pause = modell.laufendePause {
+        if case .bereit(let countdown) = modell.phase {
+            startcountdown(countdown)
+                .transition(.opacity)
+        } else if let pause = modell.laufendePause {
             PausenRad(timer: pause,
                       beiVerlaengern: modell.pauseVerlaengern,
                       beiWeiter: modell.pauseBeenden,
@@ -206,6 +207,32 @@ struct GeraetView: View {
             WertZeile(modell: modell)
             Spacer(minLength: 0)
             aktionen
+        }
+    }
+
+    /// Fuenf Sekunden und "Los!" im Ring der Pause, dann die Raeder
+    /// (Testnotiz 11.10., #10). Ein Tipp auf den Ring ueberspringt ihn --
+    /// wer schon in Position ist, wartet nicht.
+    private func startcountdown(_ countdown: Resttimer) -> some View {
+        VStack(spacing: DesignSystem.Spacing.s24) {
+            Spacer(minLength: 0)
+            Button(action: modell.countdownBeenden) {
+                Zeitring(timer: countdown, beschriftung: "GLEICH GEHT’S LOS") {
+                    Startcountdown.anzeige(restsekunden: $0)
+                }
+            }
+            .buttonStyle(PressButtonStyle())
+            .accessibilityLabel("Gleich geht’s los")
+            .accessibilityHint("Startet sofort")
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Wie der Ablauf der Pause: der Countdown beendet sich selbst.
+        .task(id: countdown.endetAm) {
+            let rest = countdown.endetAm.timeIntervalSinceNow
+            if rest > 0 { try? await Task.sleep(for: .seconds(rest)) }
+            guard !Task.isCancelled else { return }
+            modell.countdownBeenden()
         }
     }
 
@@ -423,16 +450,12 @@ struct GeraetView: View {
     @AppStorage(Einstellungen.vibrationBeimSichernKey) private var vibrationBeimSichern = true
 }
 
-/// Bindet Sheets und den Erstkontakt an GeraetView. Getrennt, damit
+/// Bindet die Sheets an GeraetView. Getrennt, damit
 /// GeraetView selbst nur den Screen beschreibt und in der Preview ohne
 /// Umgebung lauffaehig bleibt.
 struct GeraetScreen: View {
     @State var modell: GeraetModel
     let beiZurueckZumTraining: () -> Void
-    /// Das Kreuz im Erstkontakt. Eigener Weg neben beiZurueckZumTraining,
-    /// weil "Gerät abschließen" weiter zur Liste fuehrt, der Abbruch der
-    /// Einweisung aber auf die Geraeteseite (Testnotiz 11.10., #6).
-    let beiErstkontaktAbbruch: () -> Void
     let beiTrainingBeenden: () -> Void
 
     @State private var uebungWechselnOffen = false
@@ -479,51 +502,18 @@ struct GeraetScreen: View {
         .sheet(isPresented: $problemOffen) {
             ProblemSheet(modell: modell) {}
         }
-        // Der Rueckblick vor dem ersten Satz. Das Sheet haengt an rueckblickOffen,
-        // die Regel dahinter am Modell (rueckblickFaellig) -- der View entscheidet
-        // nichts. Faellt der Rueckblick weg, waehrend das Sheet steht (kommt nicht
-        // vor: der Bootstrap aendert sich waehrend des Screens nicht), bleibt das
-        // Sheet leer statt zu stuerzen.
-        .sheet(isPresented: $modell.rueckblickOffen) {
-            if let rueckblick = modell.rueckblick {
-                RueckblickSheet(uebung: modell.aktiveUebung?.name ?? "",
-                                rueckblick: rueckblick) {
-                    modell.rueckblickOffen = false
-                }
-            }
-        }
-        // Der Erstkontakt: fullScreenCover verdeckt die Tab-Leiste. Er steht
-        // hier auch ohne laufendes Training -- "Training starten" ist dann
-        // sein letzter Schritt (Testnotiz 06.10., #5).
-        .fullScreenCover(isPresented: Binding(
-            get: { modell.istErstkontakt || modell.kalibrierungOffen },
-            set: { if !$0 { modell.kalibrierungOffen = false } }
-        )) {
-            if modell.kalibrierungOffen && !modell.istErstkontakt {
-                // "aendern" ausserhalb des Erstkontakts: ein eigenstaendiger
-                // Screen ohne vorherigen Schritt, deshalb schliessen sowohl
-                // der Zurueck-Chevron als auch "Einstellung speichern" das
-                // Cover -- KalibrierungSchritt verlangt beiZurueck immer,
-                // auch wenn es hier kein "davor" gibt, zu dem er fuehren
-                // koennte.
-                KalibrierungSchritt(
-                    modell: modell, titel: "Deine Einstellung",
-                    beiZurueck: { modell.kalibrierungOffen = false }
-                ) {
-                    modell.kalibrierungOffen = false
-                }
-            } else {
-                // Der Abbruch nimmt den Satzpfad aus dem Stapel: ein
-                // fullScreenCover kennt kein Swipe-to-dismiss, und die
-                // GeraetScreen-Instanz (und mit ihr das Modell) verschwindet
-                // so ganz, statt dass hier zusaetzlich am Cover gedreht
-                // werden muesste. Wohin es geht, entscheidet die Wurzel --
-                // seit der Testnotiz 11.10. (#6) auf die Geraeteseite, nicht
-                // mehr zur Liste. erstkontaktAbschliessen() faellt bewusst
-                // weg: ein Abbruch ist kein Abschluss, sonst zeigte
-                // istErstkontakt beim naechsten Mal faelschlich "erledigt".
-                ErstkontaktFlow(modell: modell, beiAbschluss: { modell.erstkontaktAbschliessen() },
-                                beiAbbruch: beiErstkontaktAbbruch)
+        // "Einstellung aendern" auf der Satzseite. Der Erstkontakt selbst
+        // laeuft seit der Testnotiz 11.10. (#6) im Drawer VOR der Seite.
+        .fullScreenCover(isPresented: $modell.kalibrierungOffen) {
+            // Ein eigenstaendiger Screen ohne vorherigen Schritt, deshalb
+            // schliessen sowohl der Zurueck-Chevron als auch "Einstellung
+            // speichern" das Cover -- KalibrierungSchritt verlangt beiZurueck
+            // immer, auch wenn es hier kein "davor" gibt.
+            KalibrierungSchritt(
+                modell: modell, titel: "Deine Einstellung",
+                beiZurueck: { modell.kalibrierungOffen = false }
+            ) {
+                modell.kalibrierungOffen = false
             }
         }
     }

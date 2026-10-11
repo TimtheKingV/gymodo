@@ -3,8 +3,8 @@ import SwiftUI
 /// "Was machst du heute?" -- die Uebungsliste eines erkannten Geraets.
 ///
 /// Ein Tap auf eine Uebung waehlt sie; es gibt keinen Bestaetigungsknopf
-/// (designsystem.md SS8). Ohne laufendes Training folgt "Training starten"
-/// (TrainingStart.ziel, Schnitt 4), sonst direkt der Satzpfad.
+/// (designsystem.md SS8). Darauf folgt der Drawer mit Einweisung und
+/// Startwerten ueber dieser Seite (Testnotiz 11.10., #6, #10).
 struct GeraetErkanntView: View {
     let modell: GeraetModel
     let beiAuswahl: (String) -> Void
@@ -187,8 +187,8 @@ struct GeraetErkanntScreen: View {
             // Online zeigt das Geraetefoto den eigentlichen Nutzen bei zwei
             // baugleichen Stationen (designsystem.md SS8) -- der Offline-
             // Platzhalter in GeraetErkanntView bleibt unveraendert. Die
-            // Trainingsuhr laeuft hier NICHT los: seit Schnitt 4 beginnt die
-            // Einheit erst mit "Training starten" (TrainingStartView).
+            // Trainingsuhr laeuft hier NICHT los: die Einheit beginnt erst
+            // mit "Übung starten" im Drawer (Testnotiz 11.10., #11).
             .task { await modell.kontextLaden() }
     }
 }

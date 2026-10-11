@@ -66,6 +66,10 @@ struct TrainingRootView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Der Dialog "Pausieren / Training beenden" (Testnotiz 05.10., #7).
     @State private var steuerungOffen = false
+    /// Die gewaehlte Uebung, fuer die der Drawer offen steht (Testnotiz
+    /// 11.10., #6, #10, #11). An der Wurzel, weil er ueber Liste UND
+    /// Geraeteseite liegen muss.
+    @State private var uebungsstart: UebungsstartAuftrag?
     /// "Training in {Ort} beenden?" nach einem Scan oder einer Auswahl an
     /// einem anderen Ort (Plan, Entscheidung 2) -- derselbe Dialog wie im Profil.
     @State private var scanRueckfrage: ScanRueckfrage?
@@ -155,6 +159,15 @@ struct TrainingRootView: View {
                 ziel(route).id(route).environment(videoVorrat)
             }
             .environment(videoVorrat)
+            .sheet(item: $uebungsstart) { auftrag in
+                if let modell = modell(station: auftrag.station, exerciseId: auftrag.exerciseId,
+                                       token: auftrag.token) {
+                    UebungsstartSheet(modell: modell, beiStart: { werte in
+                        uebungStarten(auftrag, mit: werte)
+                    }, beiSchliessen: { uebungsstart = nil })
+                    .environment(videoVorrat)
+                }
+            }
             .sheet(isPresented: $scannerOffen) {
                 ScannerSheet(
                     titel: "Gerät finden",
@@ -524,30 +537,12 @@ struct TrainingRootView: View {
         case .erkannt(let station, let token):
             if let modell = modell(station: station, exerciseId: nil, token: token) {
                 GeraetErkanntScreen(modell: modell) { uebungId in
-                    pfad.append(zielNachUebungswahl(station: station, exerciseId: uebungId, token: token))
+                    uebungsstart = UebungsstartAuftrag(station: station, exerciseId: uebungId, token: token)
                 }
             }
-        case .start(let station, let exerciseId, let token):
-            if let modell = modell(station: station, exerciseId: exerciseId, token: token) {
-                TrainingStartView(modell: modell) {
-                    sessions.trainingStarten()
-                    // ERSETZEN, nicht stapeln: "Zurueck" vom Satzpfad soll auf
-                    // "Geraet erkannt" fuehren, nicht auf einen Startknopf fuer ein
-                    // Training, das schon laeuft. Der Startscreen ist immer der
-                    // oberste Eintrag, wenn sein Knopf gedrueckt wird; der Guard
-                    // schuetzt nur vor einem Tap waehrend einer laufenden
-                    // Pop-Animation.
-                    let satzpfad = GeraetRoute.geraet(station: station, exerciseId: exerciseId, token: token)
-                    if case .start = pfad.last { pfad[pfad.count - 1] = satzpfad } else { pfad.append(satzpfad) }
-                }
-            }
-        case .geraet(let station, let exerciseId, let token):
-            if let modell = modell(station: station, exerciseId: exerciseId, token: token) {
+        case .geraet(let station, let exerciseId, let token, let start):
+            if let modell = modell(station: station, exerciseId: exerciseId, token: token, startwerte: start) {
                 GeraetScreen(modell: modell, beiZurueckZumTraining: { pfad.removeAll() },
-                             beiErstkontaktAbbruch: {
-                                 pfad = Pfadregel.nachEinweisungAbbruch(
-                                     pfad: pfad, uebungsanzahl: modell.station.exercises.count)
-                             },
                              beiTrainingBeenden: beenden)
             }
         case .abschluss(let sessionId, let zusammenfassung):
@@ -567,7 +562,8 @@ struct TrainingRootView: View {
         }
     }
 
-    private func modell(station schluessel: String, exerciseId: String?, token: String?) -> GeraetModel? {
+    private func modell(station schluessel: String, exerciseId: String?, token: String?,
+                        startwerte: Startwerte? = nil) -> GeraetModel? {
         // Ein Typ hat keinen eigenen Ort: die Route traegt nur den
         // Schluessel, und er gilt am aktuellen Ort. Deshalb wechselt jeder Weg
         // hierher (Scan, Liste) den Ort VOR dem Oeffnen, und eine offene
@@ -590,7 +586,8 @@ struct TrainingRootView: View {
             station: station, uebungId: gewaehlt, token: token,
             bootstrap: bootstrap, loader: apiClient, sessions: sessions,
             enqueue: { katalog.enqueue($0); Task { await katalog.flushPending() } },
-            mitschnitt: mitschnitt
+            mitschnitt: mitschnitt,
+            startwerte: startwerte
         )
     }
 
@@ -777,32 +774,26 @@ struct TrainingRootView: View {
             let uebung = GeraetEinstiegRechner.letzteUebung(station: station.schluessel, in: bootstrap)
                 ?? station.exercises.first?.id
             guard let uebung else { return }
-            // Auch der Direktweg beginnt ohne laufendes Training auf dem
-            // Startscreen -- sonst entstuende die Einheit fuer Stammgaeste
-            // weiter erst mit dem Satz.
-            pfad.append(zielNachUebungswahl(station: station.schluessel, exerciseId: uebung, token: token))
+            // Auch der Direktweg geht ueber den Drawer: dort startet "Übung
+            // starten" ein noch nicht laufendes Training mit.
+            uebungsstart = UebungsstartAuftrag(station: station.schluessel, exerciseId: uebung, token: token)
         }
     }
 
-    /// Startscreen, Satzpfad oder Satzpfad mit Erstkontakt -- die Regel
-    /// steht in TrainingStart.ziel, hier werden nur ihre Eingaben gelesen.
-    private func zielNachUebungswahl(station schluessel: String, exerciseId: String, token: String?) -> GeraetRoute {
-        let erstkontakt = katalog.bootstrap.map { bootstrap in
-            // Eine Station, die der Prefetch nicht (mehr) kennt, hat keine Saetze.
-            let index = bootstrap.station(schluessel: schluessel, studioId: katalog.activeStudioId)
-                .map { sessions.naechsterSetIndex(station: $0, exerciseId: exerciseId) } ?? 1
-            return GeraetEinstiegRechner.brauchtErstkontakt(
-                station: schluessel, exerciseId: exerciseId, in: bootstrap,
-                naechsterSetIndex: index)
-        } ?? false
-        return TrainingStart.ziel(station: schluessel, exerciseId: exerciseId, token: token,
-                                  trainingLaeuft: sessions.aktiveSession() != nil,
-                                  erstkontakt: erstkontakt)
+    /// "Übung starten" im Drawer: ein noch nicht laufendes Training
+    /// beginnt jetzt, nicht schon mit der Einweisung (Testnotiz 06.10., #5;
+    /// 11.10., #11). Die Satzseite kommt mit den Startwerten und beginnt
+    /// mit dem Countdown.
+    private func uebungStarten(_ auftrag: UebungsstartAuftrag, mit werte: Startwerte) {
+        if sessions.aktiveSession() == nil { sessions.trainingStarten() }
+        uebungsstart = nil
+        pfad.append(.geraet(station: auftrag.station, exerciseId: auftrag.exerciseId,
+                            token: auftrag.token, start: werte))
     }
 
     private func oeffne(_ block: LokalerBlock) {
         // Der Zirkelfall: ein Tap statt eines Scans (M1-Spec SS5.3).
-        // Kein TrainingStart.ziel: die Blockliste gibt es nur, solange ein
+        // Kein Drawer: die Blockliste gibt es nur, solange ein
         // Training laeuft. Geraet und Typ nehmen denselben Weg; nur ein
         // Block ohne beide Kennungen ("unbekannt:") hat kein Ziel.
         guard Station.art(schluessel: block.stationSchluessel) != nil else { return }

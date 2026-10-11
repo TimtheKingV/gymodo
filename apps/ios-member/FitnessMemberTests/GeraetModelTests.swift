@@ -13,7 +13,8 @@ struct GeraetModelTests {
         loader: FakeGeraetLoader = FakeGeraetLoader(),
         enqueue: @escaping (PendingSetWrite) -> Void = { _ in },
         satzZiel: Int = Einstellungen.satzZielVorgabe,
-        mitschnitt: (any SatzMitschnitt)? = nil
+        mitschnitt: (any SatzMitschnitt)? = nil,
+        startwerte: Startwerte? = nil
     ) -> GeraetModel {
         let verzeichnis = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
@@ -26,7 +27,8 @@ struct GeraetModelTests {
             sessions: sessions ?? WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis)),
             enqueue: enqueue,
             satzZiel: { satzZiel },
-            mitschnitt: mitschnitt
+            mitschnitt: mitschnitt,
+            startwerte: startwerte
         )
     }
 
@@ -207,6 +209,59 @@ struct GeraetModelTests {
         await sut.satzSichern(problemFlag: false, problemReason: nil)
         #expect(sut.gesicherteSaetze == 1)
         #expect(sut.satzAbgelehnt == nil)
+    }
+
+    // MARK: - Start aus dem Drawer (Testnotiz 11.10., #10, #11)
+
+    @Test func mitStartwertenBeginntDieSatzseiteMitDemCountdown() {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)]),
+                         startwerte: Startwerte(belastung: 82.5, umfang: 8, nebenbelastung: nil))
+
+        guard case .bereit = sut.phase else {
+            Issue.record("Erwartet .bereit, war \(sut.phase)")
+            return
+        }
+        // Die Werte aus dem Drawer, nicht die vom letzten Mal.
+        #expect(sut.belastung == 82.5)
+        #expect(sut.umfang == 8)
+    }
+
+    @Test func nachDemCountdownStehenDieRaeder() {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         startwerte: Startwerte(belastung: 10, umfang: 10, nebenbelastung: nil))
+
+        sut.countdownBeenden()
+
+        #expect(sut.phase == .eingabe)
+    }
+
+    /// Ein spaet eintreffender Vorschlag ueberschreibt nicht, was im Drawer
+    /// gewaehlt wurde.
+    @Test func startwerteGeltenAlsVomMitgliedGewaehlt() {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)]),
+                         startwerte: Startwerte(belastung: 82.5, umfang: 8, nebenbelastung: nil))
+
+        sut.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 90.0))
+
+        #expect(sut.belastung == 82.5)
+    }
+
+    /// Zirkel ueber die Blockliste und "Weitere Uebung": ohne Drawer,
+    /// ohne Countdown, gleich die Raeder.
+    @Test func ohneStartwerteBeginntDieSatzseiteBeiDenRaedern() {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        #expect(sut.phase == .eingabe)
+    }
+
+    @Test func startwerteAusDemModellUebernehmenDieRaeder() {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)]))
+        sut.belastungGewaehlt(80)
+        #expect(sut.startwerte == Startwerte(belastung: 80, umfang: 11, nebenbelastung: nil))
     }
 
     // MARK: - Phasen
@@ -546,9 +601,8 @@ struct GeraetModelTests {
 
         #expect(sut.istErstkontakt == false)
 
-        // Der Fluchtweg (ErstkontaktFlow.beiAbbruch, in GeraetScreen auf
-        // beiZurueckZumTraining verdrahtet) ruft erstkontaktAbschliessen()
-        // NIE auf -- sonst zeigte istErstkontakt beim naechsten Scan
+        // Der Fluchtweg (Schliessen des Uebungsstart-Drawers) ruft
+        // erstkontaktAbschliessen() NIE auf -- sonst zeigte istErstkontakt beim naechsten Scan
         // faelschlich "erledigt", obwohl das Mitglied den Dreischritt nie zu
         // Ende gebracht hat. Ein frisches Modell im selben Ausgangszustand,
         // ohne den Aufruf, steht dafuer: istErstkontakt bleibt wahr.
@@ -637,51 +691,6 @@ struct GeraetModelTests {
         let sut = modell(maschine: GeraetTestdaten.maschine,
                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
         #expect(sut.rueckblick == nil)
-        #expect(sut.rueckblickFaellig == false)
-
-        sut.geraetGeoeffnet()
-
-        #expect(sut.rueckblickOffen == false)
-    }
-
-    @Test func rueckblickKommtNurVorDemErstenSatzDesBlocks() async {
-        let sut = modell(maschine: GeraetTestdaten.maschine,
-                         bootstrap: GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)]),
-                         satzZiel: 3)
-        #expect(sut.rueckblickFaellig == true)
-        sut.geraetGeoeffnet()
-        #expect(sut.rueckblickOffen == true)
-        sut.rueckblickOffen = false
-
-        await sut.satzSichern(problemFlag: false, problemReason: nil)
-        sut.pauseBeenden()
-
-        // Vor Satz 2 ist der Rueckblick da, aber nicht mehr faellig -- und ein
-        // erneutes "Oeffnen" (das im View nicht vorkommt) holte ihn nicht zurueck.
-        #expect(sut.rueckblick != nil)
-        #expect(sut.rueckblickFaellig == false)
-        sut.geraetGeoeffnet()
-        #expect(sut.rueckblickOffen == false)
-    }
-
-    @Test func imZirkelZurueckAmGeraetKommtDerRueckblickNichtNochEinmal() {
-        // Ueber die Blockliste entsteht ein FRISCHES GeraetModel
-        // (TrainingRootView.modell(...)); bootstrap ist die alte Momentaufnahme
-        // mit dem letzten Satz von gestern, nur die lokale Session weiss vom
-        // ersten Satz von heute. satzNummer liest aus der Session -- deshalb
-        // ist sie die tragende Bedingung, nicht bootstrap.
-        let verzeichnis = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString)
-        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
-        _ = sessions.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
-                                  einheiten: .kilogrammWiederholungen, load: 77.5, volume: 11,
-                                  problemFlag: false, problemReason: nil)
-        let sut = modell(maschine: GeraetTestdaten.maschine,
-                         bootstrap: GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)]),
-                         sessions: sessions)
-
-        #expect(sut.rueckblick != nil)
-        #expect(sut.rueckblickFaellig == false)
     }
 
     @Test func rueckblickGehoertZurAngezeigtenUebung() {

@@ -22,17 +22,10 @@ struct PausenRad: View {
     /// erst, wenn die Raeder wieder dastehen.
     let beiAbschliessen: () -> Void
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Der gedrosselte Ansagetext (SS12). Ein eigener Task-Takt statt einer
     /// zweiten TimelineView, damit der Sekundentakt der sichtbaren Anzeige
     /// unangetastet bleibt.
     @State private var ansage: String
-
-    /// Skaliert mit der Schriftgroesse: das Rad traegt Ziffern, und ein
-    /// fester Durchmesser liesse sie bei grossen Dynamic-Type-Stufen aus
-    /// dem Kreis laufen.
-    @ScaledMetric(relativeTo: .body) private var durchmesser: CGFloat = 240
-    @ScaledMetric(relativeTo: .body) private var strichstaerke: CGFloat = 12
 
     init(timer: Resttimer,
          beiVerlaengern: @escaping () -> Void,
@@ -80,10 +73,52 @@ struct PausenRad: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    /// Eine einzige, ungeschachtelte TimelineView treibt Bogen UND Ziffern
-    /// -- zwei Takte fuer denselben Sekundenwechsel liefen unweigerlich
-    /// auseinander.
     private var rad: some View {
+        Zeitring(timer: timer, beschriftung: "PAUSE") { uhrzeit($0) }
+            .accessibilityElement(children: .ignore)
+            // designsystem.md SS12: der ganze Satz ist das Label, nicht Label
+            // plus Value -- eine Value-Kopplung neben "gesprochen" (das selbst
+            // schon mit "Pause" beginnt) wuerde die Ansage verdoppeln.
+            .accessibilityLabel(ansage)
+            .accessibilityAddTraits(.updatesFrequently)
+            // Auf 15 s gedrosselt (SS12): eine 1:1-Kopplung an die sekuendliche
+            // Anzeige waere fuer VoiceOver unbenutzbar. Neu ab dem jeweiligen
+            // Endzeitpunkt gekeyed, damit "+30 s" die Ansage neu startet statt
+            // den alten Countdown fortzufuehren.
+            .task(id: timer.endetAm) {
+                while !Task.isCancelled {
+                    ansage = timer.gesprochen()
+                    guard timer.laeuft() else { break }
+                    try? await Task.sleep(for: .seconds(15))
+                }
+            }
+    }
+
+    private func uhrzeit(_ sekunden: Int) -> String {
+        String(format: "%02d:%02d", sekunden / 60, sekunden % 60)
+    }
+}
+
+/// Der Bogen mit Beschriftung und Zahl in der Mitte -- fuer die Pause und
+/// den Countdown vor dem ersten Satz (Testnotiz 11.10., #10: "gleich wie
+/// der Pausen-Timer").
+///
+/// Eine einzige, ungeschachtelte TimelineView treibt Bogen UND Ziffern --
+/// zwei Takte fuer denselben Sekundenwechsel liefen unweigerlich
+/// auseinander.
+struct Zeitring: View {
+    let timer: Resttimer
+    let beschriftung: String
+    let mitte: (Int) -> String
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Skaliert mit der Schriftgroesse: das Rad traegt Ziffern, und ein
+    /// fester Durchmesser liesse sie bei grossen Dynamic-Type-Stufen aus
+    /// dem Kreis laufen.
+    @ScaledMetric(relativeTo: .body) private var durchmesser: CGFloat = 240
+    @ScaledMetric(relativeTo: .body) private var strichstaerke: CGFloat = 12
+
+    var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { zeit in
             let fortschritt = timer.fortschritt(jetzt: zeit.date)
             ZStack {
@@ -99,11 +134,11 @@ struct PausenRad: View {
                     .animation(reduceMotion ? nil : .linear(duration: 1), value: fortschritt)
 
                 VStack(spacing: DesignSystem.Spacing.s4) {
-                    Text("PAUSE")
+                    Text(beschriftung)
                         .font(DesignSystem.Typography.label)
                         .tracking(1.5)
                         .foregroundStyle(DesignSystem.Color.textFaint)
-                    Text(uhrzeit(timer.restsekunden(jetzt: zeit.date)))
+                    Text(mitte(timer.restsekunden(jetzt: zeit.date)))
                         .font(.system(size: 48, weight: .black).monospacedDigit())
                         .foregroundStyle(DesignSystem.Color.text)
                         .lineLimit(1)
@@ -113,27 +148,6 @@ struct PausenRad: View {
             }
         }
         .frame(width: durchmesser, height: durchmesser)
-        .accessibilityElement(children: .ignore)
-        // designsystem.md SS12: der ganze Satz ist das Label, nicht Label
-        // plus Value -- eine Value-Kopplung neben "gesprochen" (das selbst
-        // schon mit "Pause" beginnt) wuerde die Ansage verdoppeln.
-        .accessibilityLabel(ansage)
-        .accessibilityAddTraits(.updatesFrequently)
-        // Auf 15 s gedrosselt (SS12): eine 1:1-Kopplung an die sekuendliche
-        // Anzeige waere fuer VoiceOver unbenutzbar. Neu ab dem jeweiligen
-        // Endzeitpunkt gekeyed, damit "+30 s" die Ansage neu startet statt
-        // den alten Countdown fortzufuehren.
-        .task(id: timer.endetAm) {
-            while !Task.isCancelled {
-                ansage = timer.gesprochen()
-                guard timer.laeuft() else { break }
-                try? await Task.sleep(for: .seconds(15))
-            }
-        }
-    }
-
-    private func uhrzeit(_ sekunden: Int) -> String {
-        String(format: "%02d:%02d", sekunden / 60, sekunden % 60)
     }
 }
 
