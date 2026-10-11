@@ -29,12 +29,15 @@ enum ErstkontaktSchritt: Equatable {
 /// SS8.1 Schritt 3 verlangt, dass der Screen sofort rendert, bevor das Netz
 /// antwortet.
 enum GeraetEinstiegRechner {
-    static func einstieg(visitCount: Int, genutzteUebungen: Int) -> GeraetEinstieg {
+    static func einstieg(visitCount: Int, genutzteUebungen: Int, uebungsanzahl: Int) -> GeraetEinstieg {
+        // Ein Geraet mit genau einer Uebung bietet keine Wahl -- die
+        // Uebungsliste waere ein Tipp ohne Entscheidung (Testnotiz 11.10., #4).
+        if uebungsanzahl == 1 { return .direktZumSatz }
         // Zeile 4 der Tabelle verlangt genau eine genutzte Uebung. Jeder
         // andere Wert faellt zurueck auf die Liste: ein Screen mit Optionen
         // ist immer nutzbar, ein Sprung zum Satz ohne bekannte Uebung waere
         // ein Tap, der stumm ins Leere laeuft.
-        visitCount >= 2 && genutzteUebungen == 1 ? .direktZumSatz : .erkannt
+        return visitCount >= 2 && genutzteUebungen == 1 ? .direktZumSatz : .erkannt
     }
 
     /// Erstkontakt gilt je (Geraet, Uebung) -- der Dreischritt laeuft genau

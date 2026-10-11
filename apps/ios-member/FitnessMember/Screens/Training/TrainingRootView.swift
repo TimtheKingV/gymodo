@@ -555,6 +555,10 @@ struct TrainingRootView: View {
         case .geraet(let station, let exerciseId, let token):
             if let modell = modell(station: station, exerciseId: exerciseId, token: token) {
                 GeraetScreen(modell: modell, beiZurueckZumTraining: { pfad.removeAll() },
+                             beiErstkontaktAbbruch: {
+                                 pfad = Pfadregel.nachEinweisungAbbruch(
+                                     pfad: pfad, uebungsanzahl: modell.station.exercises.count)
+                             },
                              beiTrainingBeenden: beenden)
             }
         case .abschluss(let sessionId, let zusammenfassung):
@@ -713,7 +717,10 @@ struct TrainingRootView: View {
     }
 
     private func oeffneAusListe(_ station: Station) {
-        pfad.append(.erkannt(station: station.schluessel, token: nil))
+        // Besuche 0: aus der Liste bleibt die Uebungswahl wie bisher
+        // sichtbar -- nur ein Geraet mit einer einzigen Uebung springt
+        // direkt, wie beim Scan (Testnotiz 11.10., #4).
+        oeffne(station, token: nil, besuche: 0)
     }
 
     private func ausfuehren(_ folge: ScanFolge) {
@@ -765,8 +772,16 @@ struct TrainingRootView: View {
         let besuche = station.machineId.flatMap { id in
             bootstrap.machines.first { $0.id == id }?.visitCount
         } ?? 0
+        oeffne(station, token: token, besuche: besuche)
+    }
+
+    /// Geraeteseite oder Direktsprung -- ein Weg fuer Liste und Scan, damit
+    /// beide fuer dasselbe Geraet dasselbe tun.
+    private func oeffne(_ station: Station, token: String?, besuche: Int) {
+        guard let bootstrap = katalog.bootstrap else { return }
         let genutzte = GeraetEinstiegRechner.genutzteUebungen(station: station.schluessel, in: bootstrap)
-        switch GeraetEinstiegRechner.einstieg(visitCount: besuche, genutzteUebungen: genutzte) {
+        switch GeraetEinstiegRechner.einstieg(visitCount: besuche, genutzteUebungen: genutzte,
+                                              uebungsanzahl: station.exercises.count) {
         case .erkannt:
             pfad.append(.erkannt(station: station.schluessel, token: token))
         case .direktZumSatz:

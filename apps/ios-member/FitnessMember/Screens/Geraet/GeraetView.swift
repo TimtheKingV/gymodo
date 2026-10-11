@@ -415,6 +415,10 @@ struct GeraetView: View {
 struct GeraetScreen: View {
     @State var modell: GeraetModel
     let beiZurueckZumTraining: () -> Void
+    /// Das Kreuz im Erstkontakt. Eigener Weg neben beiZurueckZumTraining,
+    /// weil "Gerät abschließen" weiter zur Liste fuehrt, der Abbruch der
+    /// Einweisung aber auf die Geraeteseite (Testnotiz 11.10., #6).
+    let beiErstkontaktAbbruch: () -> Void
     let beiTrainingBeenden: () -> Void
 
     @State private var uebungWechselnOffen = false
@@ -495,17 +499,17 @@ struct GeraetScreen: View {
                     modell.kalibrierungOffen = false
                 }
             } else {
-                // beiAbbruch teilt sich bewusst beiZurueckZumTraining: ein
-                // fullScreenCover kennt kein Swipe-to-dismiss, und ein
-                // Ausstieg aus dem Erstkontakt soll denselben Weg zurueck
-                // nehmen wie ein regulaeres "Zurueck zum Training" -- die
+                // Der Abbruch nimmt den Satzpfad aus dem Stapel: ein
+                // fullScreenCover kennt kein Swipe-to-dismiss, und die
                 // GeraetScreen-Instanz (und mit ihr das Modell) verschwindet
-                // dabei ganz, statt dass hier zusaetzlich am Cover gedreht
-                // werden muesste. erstkontaktAbschliessen() faellt bewusst
+                // so ganz, statt dass hier zusaetzlich am Cover gedreht
+                // werden muesste. Wohin es geht, entscheidet die Wurzel --
+                // seit der Testnotiz 11.10. (#6) auf die Geraeteseite, nicht
+                // mehr zur Liste. erstkontaktAbschliessen() faellt bewusst
                 // weg: ein Abbruch ist kein Abschluss, sonst zeigte
                 // istErstkontakt beim naechsten Mal faelschlich "erledigt".
                 ErstkontaktFlow(modell: modell, beiAbschluss: { modell.erstkontaktAbschliessen() },
-                                beiAbbruch: beiZurueckZumTraining)
+                                beiAbbruch: beiErstkontaktAbbruch)
             }
         }
     }
