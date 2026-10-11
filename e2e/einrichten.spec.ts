@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { radWaehlen } from "./helpers/rad";
 import { studioMitTrainer } from "./helpers/studio";
-import { gymtavoTyp, typWaehlen } from "./helpers/gymtavo";
+import { gymtavoTyp, herstellerProdukt, herstellerWaehlen, typWaehlen } from "./helpers/gymtavo";
 import { tagAnlegen } from "../tests/helpers/tags";
 
 /**
@@ -154,6 +154,26 @@ test("Schritt 1: scheitert das eigene Foto, kommen Einstellungen und Zeichnung t
   if (error) throw error;
   expect(modell.equipment_setting_definitions.map((e: { key: string }) => e.key)).toEqual(["seat_height"]);
   expect(modell.photo_path?.startsWith(`${studioId}/models/`)).toBe(true);
+});
+
+test("Halle: ein Herstellermodell mit geklaertem Foto ersetzt das eigene Foto", async ({ page }) => {
+  const { admin, studioId } = await studioMitTrainer(page, "halle-produktfoto");
+  const { typId, typName } = await gymtavoTyp(admin, "Brustpresse");
+  const { produktId } = await herstellerProdukt(admin, typId, { foto: true });
+
+  await page.goto(`/portal/${studioId}/einrichten/modell/neu`);
+  await typWaehlen(page, typName);
+  const weiter = page.getByRole("button", { name: "Weiter zu den Einstellungen" });
+  await expect(weiter).toBeDisabled();
+  await herstellerWaehlen(page, "gym80 (1)");
+  await page.getByRole("radio", { name: /Pure Kraft Brustpresse 4345/ }).check();
+  await expect(weiter).toBeEnabled();
+  await weiter.click();
+  await expect(page).toHaveURL(new RegExp(`/portal/${studioId}/einrichten/modell/[0-9a-f-]+/einstellungen`));
+
+  const { data } = await admin.from("equipment_models").select("catalog_product_id, photo_path").eq("studio_id", studioId).single();
+  expect(data?.catalog_product_id).toBe(produktId);
+  expect(data?.photo_path).toMatch(new RegExp(`^${studioId}/`));
 });
 
 test("Schritt 1 verlangt ein Foto, wenn der Typ keine Zeichnung hat", async ({ page }) => {

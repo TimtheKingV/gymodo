@@ -5,6 +5,7 @@ import { MAX_PHOTO_BYTES } from "@fitretro/domain/media";
 import { AktionsFormular, Feld } from "../../../../Form";
 import { FotoFeld } from "../../../../bausteine/FotoFeld";
 import { GymtavoTypFeld } from "../../../../bausteine/GymtavoTypFeld";
+import { vorlageText } from "../../../../bausteine/herstellerWahl";
 import { ModellBelastungRad, type ModellBelastungStart } from "../../../../bausteine/ModellBelastungRad";
 import type { ActionResult } from "../../../../actions";
 import styles from "../../../../portal.module.css";
@@ -30,6 +31,7 @@ export function StammdatenFormular({
     name: string;
     manufacturer: string | null;
     catalogModelId: string | null;
+    catalogProduct: { manufacturer: string; series: string | null; name: string; modelCode: string | null } | null;
   } & ModellBelastungStart;
   fotoUrl: string | undefined;
   /** Leer im Gymtavo-Studio: ein Typ wird keinem Typ zugeordnet. */
@@ -51,6 +53,11 @@ export function StammdatenFormular({
         />
       </div>
       <GymtavoTypFeld typen={typen} start={modell.catalogModelId} />
+      {modell.catalogProduct ? (
+        // Nur Herkunft (G1): die Werte sind beim Anlegen kopiert und hier
+        // frei aenderbar; ein Produkt nachtraeglich zuweisen kommt spaeter.
+        <p className={styles.hint}>{vorlageText(modell.catalogProduct)}</p>
+      ) : null}
       <ModellBelastungRad start={modell} />
       <FotoFeld
         name="photo"

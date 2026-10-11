@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   PHOTO_BUCKET,
-  copyTypeDefaults,
+  copyCatalogDefaults,
   createEquipmentModel,
   listCatalogTypes,
   uploadEquipmentPhoto,
@@ -142,10 +142,10 @@ async function fotoPfad(modelId: string): Promise<string | null> {
   return data.photo_path;
 }
 
-describe("copyTypeDefaults", () => {
+describe("copyCatalogDefaults", () => {
   it("kopiert die Einstellungen des Typs samt Werteliste und Reihenfolge", async () => {
     const modelId = await modellMitTyp(typKraft, "Brustpresse");
-    const ergebnis = await copyTypeDefaults(await userClient(trainerA), modelId);
+    const ergebnis = await copyCatalogDefaults(await userClient(trainerA), modelId);
     expect(ergebnis.settingsCopied).toBe(2);
     eigeneObjekte.push((await fotoPfad(modelId))!);
     const zeilen = await einstellungen(modelId);
@@ -161,7 +161,7 @@ describe("copyTypeDefaults", () => {
 
   it("kopiert die Typillustration in den Studioordner, nicht als Verweis", async () => {
     const modelId = await modellMitTyp(typKraft, "Brustpresse Foto");
-    const ergebnis = await copyTypeDefaults(await userClient(trainerA), modelId);
+    const ergebnis = await copyCatalogDefaults(await userClient(trainerA), modelId);
     expect(ergebnis.photoCopied).toBe(true);
     const pfad = await fotoPfad(modelId);
     expect(pfad?.startsWith(`${studioA}/models/${modelId}/`)).toBe(true);
@@ -175,7 +175,7 @@ describe("copyTypeDefaults", () => {
       equipmentModelId: modelId, bytes: PNG_1X1,
     });
     eigeneObjekte.push(storagePath);
-    const ergebnis = await copyTypeDefaults(client, modelId);
+    const ergebnis = await copyCatalogDefaults(client, modelId);
     expect(ergebnis.photoCopied).toBe(false);
     expect(await fotoPfad(modelId)).toBe(storagePath);
   });
@@ -183,9 +183,9 @@ describe("copyTypeDefaults", () => {
   it("ein zweiter Aufruf legt nichts doppelt an und meldet keinen Konflikt", async () => {
     const modelId = await modellMitTyp(typKraft, "Brustpresse doppelt");
     const client = await userClient(trainerA);
-    const erster = await copyTypeDefaults(client, modelId);
+    const erster = await copyCatalogDefaults(client, modelId);
     eigeneObjekte.push((await fotoPfad(modelId))!);
-    const zweiter = await copyTypeDefaults(client, modelId);
+    const zweiter = await copyCatalogDefaults(client, modelId);
     expect(erster.settingsCopied).toBe(2);
     expect(zweiter).toEqual({ settingsCopied: 0, photoCopied: false });
     expect(await einstellungen(modelId)).toHaveLength(2);
@@ -193,7 +193,7 @@ describe("copyTypeDefaults", () => {
 
   it("ein Modell ohne Typ bleibt unveraendert", async () => {
     const modelId = await modellMitTyp(undefined, "Ohne Typ");
-    const ergebnis = await copyTypeDefaults(await userClient(trainerA), modelId);
+    const ergebnis = await copyCatalogDefaults(await userClient(trainerA), modelId);
     expect(ergebnis).toEqual({ settingsCopied: 0, photoCopied: false });
     expect(await einstellungen(modelId)).toHaveLength(0);
     expect(await fotoPfad(modelId)).toBeNull();
@@ -201,7 +201,7 @@ describe("copyTypeDefaults", () => {
 
   it("negativ: ein Mitglied darf nicht kopieren", async () => {
     const modelId = await modellMitTyp(typKraft, "Mitglied");
-    await expect(copyTypeDefaults(await userClient(mitgliedA), modelId)).rejects.toMatchObject({
+    await expect(copyCatalogDefaults(await userClient(mitgliedA), modelId)).rejects.toMatchObject({
       code: "unauthorized",
     });
     expect(await einstellungen(modelId)).toHaveLength(0);
@@ -209,7 +209,7 @@ describe("copyTypeDefaults", () => {
 
   it("ein fehlendes Typfoto ist ein Fehler, die Einstellungen sind trotzdem da", async () => {
     const modelId = await modellMitTyp(typKaputt, "Kaputt");
-    await expect(copyTypeDefaults(await userClient(trainerA), modelId)).rejects.toMatchObject({
+    await expect(copyCatalogDefaults(await userClient(trainerA), modelId)).rejects.toMatchObject({
       code: "internal",
     });
     expect(await einstellungen(modelId)).toEqual([expect.objectContaining({ key: "back_rest" })]);

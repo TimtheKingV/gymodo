@@ -10,7 +10,7 @@ import {
   pruefeMedien,
   type Posten,
 } from "@fitretro/domain/katalog-import";
-import { beispielKatalog, mp4Bytes, pngBytes } from "@fitretro/domain/katalog-testdaten";
+import { beispielKatalog, mitProdukten, mp4Bytes, pngBytes } from "@fitretro/domain/katalog-testdaten";
 
 // Spec 2026-10-06-gymtavo-katalog-offener-zugang-design.md, Abschnitt 9.1.
 // Die lokale Datenbank teilen sich mehrere Sitzungen: jeder Block arbeitet
@@ -77,6 +77,8 @@ async function objektDa(bucketUndPfad: string): Promise<boolean> {
 afterAll(async () => {
   for (const p of praefixe) {
     const muster = `${p.replaceAll("_", "\\_")}%`;
+    // Produkte zuerst: ihre Typzuordnung haelt den Typ mit restrict.
+    await admin.from("catalog_products").delete().like("catalog_key", muster);
     // Einstellungen und Verknuepfungen haengen per Kaskade an Typ und Uebung,
     // Videos verweisen mit restrict auf die Verknuepfung: sie gehen zuerst.
     const typen = await admin.from("equipment_models").select("id").eq("studio_id", GYMTAVO_STUDIO_ID).like("catalog_key", muster);
@@ -106,7 +108,7 @@ describe("Katalogimport", () => {
     const { plan, geschrieben } = await importiere(beispiel);
 
     expect(eigene(plan.geraetetypen, p).map((x) => x.art)).toEqual(["neu", "neu", "neu"]);
-    expect(geschrieben).toEqual({ uploads: 3, geraetetypen: 3, einstellungen: 2, uebungen: 3, verknuepfungen: 4, videos: 3 });
+    expect(geschrieben).toEqual({ uploads: 3, geraetetypen: 3, einstellungen: 2, uebungen: 3, verknuepfungen: 4, videos: 3, produkte: 0, produktTypen: 0 });
 
     const laufband = await modell(`${p}laufband`);
     expect(laufband).toMatchObject({ category: "cardio", load_unit: "kmh", manufacturer: "Precor", secondary_unit: "pct" });
@@ -130,7 +132,7 @@ describe("Katalogimport", () => {
     for (const liste of [plan.geraetetypen, plan.einstellungen, plan.uebungen, plan.verknuepfungen, plan.videos]) {
       expect(eigene<unknown>(liste, p).every((x) => x.art === "unveraendert")).toBe(true);
     }
-    expect(geschrieben).toEqual({ uploads: 0, geraetetypen: 0, einstellungen: 0, uebungen: 0, verknuepfungen: 0, videos: 0 });
+    expect(geschrieben).toEqual({ uploads: 0, geraetetypen: 0, einstellungen: 0, uebungen: 0, verknuepfungen: 0, videos: 0, produkte: 0, produktTypen: 0 });
     expect((await modell(`${p}laufband`)).updated_at).toBe(vorher.updated_at);
   });
 
@@ -229,5 +231,65 @@ describe("Fremdes, Abbrueche und vorhandene Objekte", () => {
     await fuehreAus(admin, plan);
 
     expect((await modell(`${p}brustpresse`)).photo_path).toBe(foto.storagePath);
+  });
+});
+
+describe("Katalogimport Produkte", () => {
+  const p = neuerPraefix();
+  const beispiel = mitProdukten(beispielKatalog(p), p);
+
+  async function produkt(key: string) {
+    const { data, error } = await admin
+      .from("catalog_products")
+      .select("*, catalog_product_types(equipment_models(catalog_key))")
+      .eq("catalog_key", key)
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  it("legt Produkte mit Typzuordnung an und laedt nur geklaerte Fotos hoch", async () => {
+    const { plan, geschrieben } = await importiere(beispiel);
+    expect(eigene(plan.produkte, p).map((x) => x.art)).toEqual(["neu", "neu"]);
+    expect(geschrieben).toMatchObject({ produkte: 2, produktTypen: 3 });
+
+    const gym80 = await produkt(`${p}gym80_pure_kraft_4345`);
+    expect(gym80).toMatchObject({ manufacturer: "gym80", series: "Pure Kraft", model_code: "4345", photo_path: null, photo_rights: "pending", load_unit: null });
+    expect(gym80.catalog_product_types.map((l: { equipment_models: { catalog_key: string } }) => l.equipment_models.catalog_key).sort()).toEqual(
+      [`${p}brustpresse`, `${p}trizepsmaschine`],
+    );
+
+    const precor = await produkt(`${p}precor_trm_885`);
+    expect(precor.photo_rights).toBe("cleared");
+    expect(Number(precor.load_min)).toBe(0.8);
+    expect(await objektDa(`equipment-photos/${precor.photo_path}`)).toBe(true);
+  });
+
+  it("aendert beim zweiten Lauf nichts", async () => {
+    const { plan, geschrieben } = await importiere(beispiel);
+    expect(eigene(plan.produkte, p).map((x) => x.art)).toEqual(["unveraendert", "unveraendert"]);
+    expect(eigene(plan.produktTypen, p).every((x) => x.art === "unveraendert")).toBe(true);
+    expect(geschrieben).toMatchObject({ uploads: 0, produkte: 0, produktTypen: 0 });
+  });
+
+  it("nimmt bei Rechteentzug das Foto weg, das Objekt bleibt", async () => {
+    const altesFoto = (await produkt(`${p}precor_trm_885`)).photo_path as string;
+    const entzogen = mitProdukten(beispielKatalog(p), p);
+    entzogen.roh.products[1]!.photo_rights = "pending";
+
+    const { plan } = await importiere(entzogen);
+    expect(plan.gemeldet.entzogeneFotos).toContain(`${p}precor_trm_885: equipment-photos/${altesFoto}`);
+    expect((await produkt(`${p}precor_trm_885`)).photo_path).toBeNull();
+    expect(await objektDa(`equipment-photos/${altesFoto}`)).toBe(true);
+    objekte.add(`equipment-photos/${altesFoto}`);
+  });
+
+  it("schreibt im Trockenlauf keine Produkte", async () => {
+    const q = neuerPraefix();
+    const { plan, geschrieben } = await importiere(mitProdukten(beispielKatalog(q), q), true);
+    expect(geschrieben).toBeNull();
+    expect(eigene(plan.produkte, q)).toHaveLength(2);
+    const { data } = await admin.from("catalog_products").select("id").like("catalog_key", `${q.replaceAll("_", "\\_")}%`);
+    expect(data).toEqual([]);
   });
 });

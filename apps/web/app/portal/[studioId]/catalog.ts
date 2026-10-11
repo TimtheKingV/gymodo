@@ -12,7 +12,9 @@ import {
   type CatalogType,
   type StudioCatalog,
 } from "@fitretro/domain";
+import type { Category } from "@fitretro/domain/belastung";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { typVorlagen, type TypVorlage } from "../bausteine/typVorlage";
 
 /**
  * Der Katalog wird je Anfrage einmal geladen -- die Rail und der Inhalt
@@ -81,6 +83,22 @@ export const ladeKatalog = cache(async (studioId: string): Promise<PortalCatalog
  */
 export const ladeTypen = cache(async (): Promise<CatalogType[]> => {
   return listCatalogTypes(await createServerSupabaseClient());
+});
+
+/**
+ * Die Typliste fuer die Modellformulare, mit signierten URLs fuer Typ- und
+ * Produktbilder (Modellkarten, Spec 2026-10-10 ..., 6.5). Gefiltert wird vor
+ * dem Signieren: am Schreibtisch braucht nur eine Kategorie Bilder.
+ */
+export const ladeTypVorlagen = cache(async (kategorie?: Category): Promise<TypVorlage[]> => {
+  const typen = (await ladeTypen()).filter((typ) => kategorie === undefined || typ.category === kategorie);
+  const pfade = [
+    ...new Set(
+      typen.flatMap((typ) => [typ.photoPath, ...typ.products.map((p) => p.photoPath)]).filter((pfad): pfad is string => pfad !== null),
+    ),
+  ];
+  const urls = await signMediaUrls(await createServerSupabaseClient(), PHOTO_BUCKET, pfade, MEDIA_URL_TTL_SECONDS);
+  return typVorlagen(typen, undefined, Object.fromEntries(urls));
 });
 
 /** Wie viele Geraete eines Modells fuer Mitglieder erreichbar sind. */

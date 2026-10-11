@@ -1,0 +1,57 @@
+/* Modellkarten der Herstellerwahl (Spec 2026-10-10 ..., 6.5): Bild oben,
+   Name darunter, die ganze Karte ist die Klickflaeche des Radios. */
+.karten {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.karte {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  cursor: pointer;
+}
+
+.karte:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Unsichtbar, aber ueber der ganzen Karte: so trifft jeder Klick das
+   Radio selbst, und Tastatur wie Screenreader sehen ein normales Radio. */
+.karte input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.karte:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.bild {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  border-radius: var(--r-control);
+  background: var(--well);
+}
+
+.symbol {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.titel {
+  font-weight: 600;
+}

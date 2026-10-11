@@ -94,3 +94,50 @@ export async function typWaehlen(page: Page, typName: string): Promise<void> {
   await page.getByRole("searchbox", { name: "Typ suchen" }).fill(typName);
   await page.getByRole("option", { name: typName }).click();
 }
+
+/**
+ * Ein Herstellermodell an genau diesem Typ (Spec 2026-10-10 ..., 6.5). Der
+ * Typ ist je Test eigen, also auch die Herstellerliste -- "gym80 (1)"
+ * bleibt eindeutig, egal was der geteilte Katalog sonst traegt.
+ */
+export async function herstellerProdukt(
+  admin: SupabaseClient,
+  typId: string,
+  werte: { manufacturer?: string; series?: string | null; name?: string; model_code?: string | null; note?: string | null; foto?: boolean } = {},
+): Promise<{ produktId: string; key: string }> {
+  const key = `e2e_${crypto.randomUUID().replaceAll("-", "").slice(0, 12)}`;
+  let photo_path: string | null = null;
+  if (werte.foto) {
+    photo_path = `${GYMTAVO}/catalog/products/${key}-00000000.png`;
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      "base64",
+    );
+    const { error } = await admin.storage.from("equipment-photos").upload(photo_path, png, { contentType: "image/png" });
+    if (error) throw error;
+  }
+  const { data, error } = await admin
+    .from("catalog_products")
+    .insert({
+      catalog_key: key,
+      manufacturer: werte.manufacturer ?? "gym80",
+      series: werte.series === undefined ? "Pure Kraft" : werte.series,
+      name: werte.name ?? "Brustpresse",
+      model_code: werte.model_code === undefined ? "4345" : werte.model_code,
+      note: werte.note ?? null,
+      photo_path,
+      photo_rights: photo_path ? "cleared" : "pending",
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  const link = await admin.from("catalog_product_types").insert({ product_id: data.id, equipment_model_id: typId });
+  if (link.error) throw link.error;
+  return { produktId: data.id, key };
+}
+
+/** Hersteller ueber die Suche waehlen, wie typWaehlen. */
+export async function herstellerWaehlen(page: Page, anzeige: string): Promise<void> {
+  await page.getByRole("button", { name: "Hersteller", exact: true }).click();
+  await page.getByRole("option", { name: anzeige, exact: true }).click();
+}

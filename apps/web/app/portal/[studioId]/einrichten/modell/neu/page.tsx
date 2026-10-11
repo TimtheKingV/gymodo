@@ -1,7 +1,6 @@
-import { ladeTypen } from "../../../catalog";
+import { ladeTypVorlagen } from "../../../catalog";
 import { Schrittleiste } from "../../../../bausteine/Schrittleiste";
 import { Seite } from "../../../../bausteine/Seite";
-import { typVorlagen } from "../../../../bausteine/typVorlage";
 import { ModellNeuFormular } from "./ModellNeuFormular";
 import styles from "../../halle.module.css";
 
@@ -11,7 +10,7 @@ export default async function ModellNeuPage({
   params: Promise<{ studioId: string }>;
 }) {
   const { studioId } = await params;
-  const typen = await ladeTypen();
+  const typen = await ladeTypVorlagen();
 
   return (
     <>
@@ -23,7 +22,7 @@ export default async function ModellNeuPage({
           label: "Modell wählen",
         }}
       >
-        <ModellNeuFormular studioId={studioId} typen={typVorlagen(typen)} />
+        <ModellNeuFormular studioId={studioId} typen={typen} />
 
         <p className={styles.notiz}>
           Ein Foto hilft, das Gerät in der Halle wiederzufinden. Ohne eigenes

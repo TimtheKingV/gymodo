@@ -104,6 +104,8 @@ export const equipmentModelInputSchema = z
     loadMax: z.number().positive().nullish(),
     /** Gymtavo-Typ (Spec 5.3); Pflicht entscheidet das Portal, nicht hier. */
     catalogModelId: uuid.nullish(),
+    /** Herstellermodell (Spec 2026-10-10 ..., 6.4); nur mit passendem Typ. */
+    catalogProductId: uuid.nullish(),
     ...nebenbelastungFelder,
   })
   .superRefine((werte, ctx) => {
@@ -132,7 +134,31 @@ function zuordnungsFehler(error: { message?: string } | null): DomainError | nul
   if (error?.message?.includes("gymtavo_zuordnung_ungueltig")) {
     return new DomainError("validation_failed", "Diesen Gymtavo-Geraetetyp gibt es nicht.");
   }
+  if (error?.message?.includes("gymtavo_herkunft_ungueltig")) {
+    return new DomainError("validation_failed", "Ein Gymtavo-Typ hat kein Herstellermodell als Vorlage.");
+  }
   return null;
+}
+
+const PRODUKT_PASST_NICHT = "Dieses Herstellermodell passt nicht zum Gymtavo-Typ.";
+
+/**
+ * Plan-Entscheidung P1: das Produkt muss am gewaehlten Typ haengen. Sonst
+ * kaeme bei einem veralteten Formular das Foto eines fremden Geraets ins
+ * Modell. Der Trigger aus 0050 prueft das bewusst nicht (spaeterer
+ * Typwechsel), deshalb hier und nur beim Anlegen. Ein unbekanntes Produkt
+ * hat keine Zuordnung und faellt damit ebenfalls hierher.
+ */
+async function produktPasstZumTyp(client: SupabaseClient, produktId: string, typId: string | null): Promise<void> {
+  if (!typId) throw new DomainError("validation_failed", PRODUKT_PASST_NICHT);
+  const { data, error } = await client
+    .from("catalog_product_types")
+    .select("product_id")
+    .eq("product_id", produktId)
+    .eq("equipment_model_id", typId)
+    .maybeSingle();
+  if (error) throw new DomainError("internal", error.message);
+  if (!data) throw new DomainError("validation_failed", PRODUKT_PASST_NICHT);
 }
 
 export async function createEquipmentModel(
@@ -142,6 +168,9 @@ export async function createEquipmentModel(
   const werte = parseOrThrow(equipmentModelInputSchema, input);
   const userId = await requireUserId(client);
   await requireStudioStaff(client, werte.studioId, userId);
+  if (werte.catalogProductId) {
+    await produktPasstZumTyp(client, werte.catalogProductId, werte.catalogModelId ?? null);
+  }
 
   const { data, error } = await client
     .from("equipment_models")
@@ -159,6 +188,7 @@ export async function createEquipmentModel(
       secondary_min: werte.secondaryMin ?? null,
       secondary_max: werte.secondaryMax ?? null,
       catalog_model_id: werte.catalogModelId ?? null,
+      catalog_product_id: werte.catalogProductId ?? null,
     })
     .select("id")
     .single<{ id: string }>();
@@ -885,6 +915,8 @@ export type CatalogModel = {
   secondaryMax: number | null;
   /** Zugeordneter Gymtavo-Typ (Spec 5.3), null bei Altbestand. */
   catalogModelId: string | null;
+  /** Herstellermodell, aus dem das Modell entstand -- nur Herkunft (G1). */
+  catalogProduct: { manufacturer: string; series: string | null; name: string; modelCode: string | null } | null;
   settingDefinitions: CatalogSettingDefinition[];
   exercises: CatalogExercise[];
   machines: CatalogMachine[];
@@ -948,7 +980,7 @@ export async function getStudioCatalog(
   const { data: modelle, error } = await client
     .from("equipment_models")
     .select(
-      `id, name, manufacturer, photo_path, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id,
+      `id, name, manufacturer, photo_path, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id, catalog_products!equipment_models_catalog_product_id_fkey (manufacturer, series, name, model_code),
        equipment_setting_definitions (id, key, label, kind, min_value, max_value, step_value, unit, allowed_values, sort_order),
        equipment_model_exercises (id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max, studio_id), instruction_assets (id, storage_path, duration_s)),
        machines (id, label, location_note, status, machine_tags (id, status))`,
@@ -986,6 +1018,7 @@ export async function getStudioCatalog(
     secondary_min: number | string | null;
     secondary_max: number | string | null;
     catalog_model_id: string | null;
+    catalog_products: { manufacturer: string; series: string | null; name: string; model_code: string | null } | null;
     equipment_setting_definitions: Array<{
       id: string;
       key: string;
@@ -1058,6 +1091,14 @@ export async function getStudioCatalog(
     secondaryMin: zahl(row.secondary_min),
     secondaryMax: zahl(row.secondary_max),
     catalogModelId: row.catalog_model_id,
+    catalogProduct: row.catalog_products
+      ? {
+          manufacturer: row.catalog_products.manufacturer,
+          series: row.catalog_products.series,
+          name: row.catalog_products.name,
+          modelCode: row.catalog_products.model_code,
+        }
+      : null,
     settingDefinitions: [...row.equipment_setting_definitions]
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((setting) => ({
@@ -1149,6 +1190,21 @@ export type CatalogTypeExercise = {
   videoDurationS: number | null;
 };
 
+export type CatalogProduct = {
+  id: string;
+  key: string;
+  manufacturer: string;
+  series: string | null;
+  name: string;
+  modelCode: string | null;
+  note: string | null;
+  /** Ganz oder gar nicht (0050); null heisst: die Werte des Typs gelten. */
+  load: { unit: LoadUnit; step: number; min: number; max: number } | null;
+  secondary: { unit: LoadUnit; step: number; min: number; max: number } | null;
+  /** Nur bei geklaerten Rechten (G3). */
+  photoPath: string | null;
+};
+
 export type CatalogType = {
   id: string;
   name: string;
@@ -1164,8 +1220,65 @@ export type CatalogType = {
   secondaryMin: number | null;
   secondaryMax: number | null;
   photoPath: string | null;
+  products: CatalogProduct[];
   exercises: CatalogTypeExercise[];
 };
+
+type ProduktRow = {
+  id: string;
+  catalog_key: string;
+  manufacturer: string;
+  series: string | null;
+  name: string;
+  model_code: string | null;
+  note: string | null;
+  photo_path: string | null;
+  photo_rights: "pending" | "cleared";
+  load_unit: LoadUnit | null;
+  load_step: number | string | null;
+  load_min: number | string | null;
+  load_max: number | string | null;
+  secondary_unit: LoadUnit | null;
+  secondary_step: number | string | null;
+  secondary_min: number | string | null;
+  secondary_max: number | string | null;
+};
+
+function raster(
+  unit: LoadUnit | null,
+  step: number | string | null,
+  min: number | string | null,
+  max: number | string | null,
+): CatalogProduct["load"] {
+  return unit === null || step === null || min === null || max === null
+    ? null
+    : { unit, step: Number(step), min: Number(min), max: Number(max) };
+}
+
+function produktAus(row: ProduktRow): CatalogProduct {
+  return {
+    id: row.id,
+    key: row.catalog_key,
+    manufacturer: row.manufacturer,
+    series: row.series,
+    name: row.name,
+    modelCode: row.model_code,
+    note: row.note,
+    load: raster(row.load_unit, row.load_step, row.load_min, row.load_max),
+    secondary: raster(row.secondary_unit, row.secondary_step, row.secondary_min, row.secondary_max),
+    // Doppelt gesichert: der Check aus 0050 laesst ohnehin kein
+    // ungeklaertes Foto mit Pfad zu.
+    photoPath: row.photo_rights === "cleared" ? row.photo_path : null,
+  };
+}
+
+function produktReihenfolge(a: CatalogProduct, b: CatalogProduct): number {
+  return (
+    a.manufacturer.localeCompare(b.manufacturer, "de") ||
+    (a.series ?? "").localeCompare(b.series ?? "", "de") ||
+    a.name.localeCompare(b.name, "de")
+  );
+}
 
 /**
  * Alle Gymtavo-Geraetetypen mit ihren Uebungen -- fuer die Typauswahl am
@@ -1182,7 +1295,8 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
     .from("equipment_models")
     .select(
       `id, name, manufacturer, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, photo_path,
-       equipment_model_exercises (sort_order, exercises (id, name, description, volume_kind, target_min, target_max), instruction_assets (storage_path, duration_s))`,
+       equipment_model_exercises (sort_order, exercises (id, name, description, volume_kind, target_min, target_max), instruction_assets (storage_path, duration_s)),
+       catalog_product_types (catalog_products (id, catalog_key, manufacturer, series, name, model_code, note, photo_path, photo_rights, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max))`,
     )
     .eq("studio_id", katalogId)
     .order("name", { ascending: true });
@@ -1214,6 +1328,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
       };
       instruction_assets: Array<{ storage_path: string; duration_s: number }>;
     }>;
+    catalog_product_types: Array<{ catalog_products: ProduktRow }>;
   };
 
   return ((data ?? []) as unknown as Row[]).map((row) => ({
@@ -1230,6 +1345,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
     secondaryMin: zahl(row.secondary_min),
     secondaryMax: zahl(row.secondary_max),
     photoPath: row.photo_path,
+    products: row.catalog_product_types.map((link) => produktAus(link.catalog_products)).sort(produktReihenfolge),
     exercises: [...row.equipment_model_exercises]
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((link) => {

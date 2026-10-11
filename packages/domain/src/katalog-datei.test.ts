@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { pruefeKatalog } from "./katalog-datei.js";
-import { beispielKatalog } from "./katalog-testdaten.js";
+import { beispielKatalog, mitProdukten } from "./katalog-testdaten.js";
 
 function fehlerVon(aendern: (roh: ReturnType<typeof beispielKatalog>["roh"]) => void): string[] {
   const { roh } = beispielKatalog();
@@ -121,6 +121,60 @@ describe("pruefeKatalog", () => {
     ]);
     expect(fehlerVon((roh) => (roh.sources[0]!.url = "http://example.org"))).toEqual([
       'sources[0] "quelle_a" url: muss eine https-Adresse sein',
+    ]);
+  });
+});
+
+function produktFehler(aendern: (roh: ReturnType<typeof mitProdukten>["roh"]) => void): string[] {
+  const { roh } = mitProdukten(beispielKatalog());
+  aendern(roh);
+  const pruefung = pruefeKatalog(roh);
+  if (pruefung.ok) throw new Error("Pruefung haette scheitern muessen");
+  return pruefung.fehler;
+}
+
+describe("pruefeKatalog products", () => {
+  it("nimmt eine Datei ohne products als leere Liste", () => {
+    const pruefung = pruefeKatalog(beispielKatalog().roh);
+    expect(pruefung.ok && pruefung.wert.products).toEqual([]);
+  });
+
+  it("laesst Produkte mit und ohne Belastung durch", () => {
+    const pruefung = pruefeKatalog(mitProdukten(beispielKatalog()).roh);
+    if (!pruefung.ok) throw new Error(pruefung.fehler.join("\n"));
+    expect(pruefung.wert.products.map((x) => x.key)).toEqual(["gym80_pure_kraft_4345", "precor_trm_885"]);
+  });
+
+  it("meldet Formfehler mit Ort", () => {
+    expect(
+      produktFehler((roh) => {
+        roh.products[0]!.product_url = "http://gym80.de";
+        roh.products[0]!.photo_rights = "unklar";
+        roh.products[1]!.types = [];
+        roh.products[1]!.series = " ";
+      }),
+    ).toEqual([
+      'products[0] "gym80_pure_kraft_4345" product_url: muss eine https-Adresse sein',
+      'products[0] "gym80_pure_kraft_4345" photo_rights: ist "unklar", erlaubt: pending, cleared',
+      'products[1] "precor_trm_885" series: darf nicht leer sein',
+      'products[1] "precor_trm_885" types: braucht mindestens einen Geraetetyp',
+    ]);
+  });
+
+  it("meldet Verweise, Doppelte und halbe Belastung", () => {
+    expect(
+      produktFehler((roh) => {
+        roh.products[0]!.types = ["brustpresse", "brustpresse", "rudergeraet"];
+        roh.products[0]!.load_unit = "kg";
+        roh.products[1]!.load_max = 0.5;
+        roh.products.push({ ...roh.products[1]!, load_max: 25 });
+      }),
+    ).toEqual([
+      'products: Schluessel "precor_trm_885" kommt mehrfach vor',
+      'products[0] "gym80_pure_kraft_4345" types: Geraetetyp "brustpresse" kommt mehrfach vor',
+      'products[0] "gym80_pure_kraft_4345" types: Geraetetyp "rudergeraet" gibt es in equipment nicht',
+      'products[0] "gym80_pure_kraft_4345": load_unit, load_step, load_min und load_max nur alle zusammen oder keins',
+      'products[1] "precor_trm_885": load_max ist kleiner als load_min',
     ]);
   });
 });

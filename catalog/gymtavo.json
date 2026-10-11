@@ -6969,5 +6969,2189 @@
         "lf_insignia"
       ]
     }
+  ],
+  "products": [
+    {
+      "key": "assault_fitness_assaultbike_elite",
+      "manufacturer": "Assault Fitness",
+      "series": "AssaultBike",
+      "name": "Elite",
+      "model_code": "AS-ABE",
+      "product_url": "https://www.assaultfitness.com/bikes/assault-bike-elite/",
+      "types": [
+        "airbike"
+      ],
+      "note": "Lüfterrad plus bewegliche Armgriffe; Nutzung nur der Beine oder Arme als Varianten separat modellieren.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "concept2_rowerg_standard",
+      "manufacturer": "Concept2",
+      "series": "RowErg",
+      "name": "RowErg Standard Legs",
+      "model_code": "RowErg Standard",
+      "product_url": "https://www.concept2.com/ergs/rowerg",
+      "types": [
+        "rowing_ergometer"
+      ],
+      "note": "Standardhöhe des Rollsitzes; Tall-Legs-Ausführung als andere Konfiguration behandeln.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "concept2_skierg",
+      "manufacturer": "Concept2",
+      "series": "SkiErg",
+      "name": "SkiErg Wall Mount",
+      "model_code": "SkiErg",
+      "product_url": "https://www.concept2.com/ergs/skierg",
+      "types": [
+        "ski_ergometer"
+      ],
+      "note": "Wandmontage abgebildet; Standfuß ist eine andere Konfiguration. Direkter Bildabruf derzeit nicht verifiziert.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4023",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "45 Degrees Linear Leg Press",
+      "model_code": "4023",
+      "product_url": "https://gym80.de/en/product/4023/",
+      "types": [
+        "leg_press_45",
+        "calf_leg_press"
+      ],
+      "note": "45°-Schlittenpresse, nicht die horizontale Beinpresse; Wadenvariante und Gerätebedienung separat prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4383",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "55 Degree Rowing Machine",
+      "model_code": "4383",
+      "product_url": "https://gym80.de/en/product/4383/",
+      "types": [
+        "supported_row"
+      ],
+      "note": "Stehplattform mit Brustpolster statt Sitz; derzeit keine passende Übung im Katalog, daher keine Übungszuordnung.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4345",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "55 Degrees Standing Calf Raise",
+      "model_code": "4345",
+      "product_url": "https://gym80.de/en/product/4345/",
+      "types": [
+        "standing_calf"
+      ],
+      "note": "55°-Hüftschlitten statt Schulterpolster; keine passende bestehende Übung zugeordnet.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4360",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "Belt Squat",
+      "model_code": "4360",
+      "product_url": "https://gym80.de/en/product/4360/",
+      "types": [
+        "belt_squat"
+      ],
+      "note": "Scheibenbeladen; Gurtverlauf und Standposition modellspezifisch prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4338n",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "Biceps Curl",
+      "model_code": "4338N",
+      "product_url": "https://gym80.de/en/product/4338n/",
+      "types": [
+        "preacher_curl"
+      ],
+      "note": "Oberarmauflage und Ellenbogenachse in Seitenansicht prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4159n",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "Hack Squat",
+      "model_code": "4159N",
+      "product_url": "https://gym80.de/en/product/4159n/",
+      "types": [
+        "hack_squat"
+      ],
+      "note": "Schulterpolster und Fußplattenwinkel sind modellbezogen; Entriegelung separat prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4340",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "High Row Dual",
+      "model_code": "4340",
+      "product_url": "https://gym80.de/en/product/4340/",
+      "types": [
+        "high_row"
+      ],
+      "note": "Eigenständiges High-Row-Modell; Griffe und Bewegungsbahn separat vergleichen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4382",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "High Row with Movable Handles",
+      "model_code": "4382",
+      "product_url": "https://gym80.de/en/product/4382/",
+      "types": [
+        "high_row"
+      ],
+      "note": "Drehbare Griffe und Oberschenkelpolster; Griffbewegung nicht mit starrem Griff gleichsetzen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4329n",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "Incline Chest Press Dual",
+      "model_code": "4329N",
+      "product_url": "https://gym80.de/en/product/4329n/",
+      "types": [
+        "incline_press"
+      ],
+      "note": "Zwei unabhängige Hebel; Scheibenlast statt Gewichtsstapel.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4336n",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "Leg Extension",
+      "model_code": "4336N",
+      "product_url": "https://gym80.de/en/product/4336n/",
+      "types": [
+        "leg_extension"
+      ],
+      "note": "Scheibenbeladener Beinstrecker mit eigenem Lastprofil; nicht die Gewichtsstapel-Skala übernehmen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4337n",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "Lying Leg Curl",
+      "model_code": "4337N",
+      "product_url": "https://gym80.de/en/product/4337n/",
+      "types": [
+        "prone_curl"
+      ],
+      "note": "Scheibenbeladener liegender Beinbeuger; Polsterposition und Lastsemantik je Seite prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4327",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "Power Row Dual",
+      "model_code": "4327",
+      "product_url": "https://gym80.de/en/product/4327/",
+      "types": [
+        "supported_row",
+        "row_pronated",
+        "independent_row"
+      ],
+      "note": "Brustpolster und unabhängige Arme bestätigt; Griffvarianten und Last je Arm prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4350n",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "Pullover",
+      "model_code": "4350N",
+      "product_url": "https://gym80.de/en/product/4350n/",
+      "types": [
+        "pullover"
+      ],
+      "note": "Einstiegshilfe und Griff-/Armkontakte der konkreten Ausführung prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4026",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "Seated Calf Raise",
+      "model_code": "4026",
+      "product_url": "https://gym80.de/en/product/4026/",
+      "types": [
+        "seated_calf"
+      ],
+      "note": "Verstellbares Kniepolster und Entriegelung; Fußkontakt und Weg der Ferse prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4314",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "Seated Leg Press Dual",
+      "model_code": "4314",
+      "product_url": "https://gym80.de/en/product/4314/",
+      "types": [
+        "horizontal_leg_press",
+        "single_leg_press"
+      ],
+      "note": "Unilaterales Training laut Hersteller möglich; Sitz-/Fußteller-Bewegung vor Animationsfreigabe prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4322",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "Seated Row Dual",
+      "model_code": "4322",
+      "product_url": "https://gym80.de/en/product/4322/",
+      "types": [
+        "supported_row",
+        "independent_row"
+      ],
+      "note": "Brustpolster und drehbare Griffe; neutraler Griff separat prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_pure_kraft_4373",
+      "manufacturer": "gym80",
+      "series": "Pure Kraft",
+      "name": "Standing Leg Curl",
+      "model_code": "4373",
+      "product_url": "https://gym80.de/en/product/4373/",
+      "types": [
+        "standing_curl"
+      ],
+      "note": "Stehender einbeiniger Beinbeuger mit einstellbarem Bewegungsradius und Fußpolster.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_sygnum_3023n",
+      "manufacturer": "gym80",
+      "series": "Sygnum",
+      "name": "Incline Chest Press",
+      "model_code": "3023N",
+      "product_url": "https://gym80.de/en/product/3023n/",
+      "types": [
+        "incline_press"
+      ],
+      "note": "Gewichtsstapel und Einsteigehilfe; nicht mit 4329N gleichsetzen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_sygnum_3002",
+      "manufacturer": "gym80",
+      "series": "Sygnum",
+      "name": "Lying Leg Curl",
+      "model_code": "3002",
+      "product_url": "https://gym80.de/en/product/3002/",
+      "types": [
+        "prone_curl"
+      ],
+      "note": "Liegender Beinbeuger, Fußpolster und Bewegungsradius verstellbar; Details vor Ort prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_sygnum_3027",
+      "manufacturer": "gym80",
+      "series": "Sygnum",
+      "name": "Seated Calf Press",
+      "model_code": "3027",
+      "product_url": "https://gym80.de/en/product/3027/",
+      "types": [
+        "seated_calf"
+      ],
+      "note": "Sitzender Wadendruck gegen Fußplatte statt Oberschenkelpolster; keine Zuordnung zur bestehenden Wadenheben-Übung.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_sygnum_3003",
+      "manufacturer": "gym80",
+      "series": "Sygnum",
+      "name": "Seated Leg Curl",
+      "model_code": "3003",
+      "product_url": "https://gym80.de/en/product/3003/",
+      "types": [
+        "seated_leg_curl"
+      ],
+      "note": "Oberschenkel- und Fußpolster verstellbar; Einstellung vor Ort prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_sygnum_3018",
+      "manufacturer": "gym80",
+      "series": "Sygnum",
+      "name": "Standing Calf Raise Machine",
+      "model_code": "3018",
+      "product_url": "https://gym80.de/en/product/3018/",
+      "types": [
+        "standing_calf"
+      ],
+      "note": "Schulterpolster und Vorfußplattform laut Hersteller; Geräteeinstellung vor Ort prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_sygnum_3013",
+      "manufacturer": "gym80",
+      "series": "Sygnum",
+      "name": "Standing Leg Curl",
+      "model_code": "3013",
+      "product_url": "https://gym80.de/en/product/3013/",
+      "types": [
+        "standing_curl"
+      ],
+      "note": "Einbeinige Bewegung und Plattformhöhe vor Ort prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_sygnum_4012",
+      "manufacturer": "gym80",
+      "series": "Sygnum Stations",
+      "name": "Adjustable Cable Crossover Station",
+      "model_code": "4012",
+      "product_url": "https://gym80.de/en/product/4012/",
+      "types": [
+        "dual_cable",
+        "dual_cable_station"
+      ],
+      "note": "Breite Crossover-Station; Pfostenabstand nicht von der kompakten 4034 übernehmen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_sygnum_4034",
+      "manufacturer": "gym80",
+      "series": "Sygnum Stations",
+      "name": "Dual Adjustable Pulley",
+      "model_code": "4034",
+      "product_url": "https://gym80.de/en/product/4034/",
+      "types": [
+        "dual_cable",
+        "dual_cable_station"
+      ],
+      "note": "Zwei verstellbare Rollen und zwei Gewichtsblöcke; Pfostenabstand und Griffanhänge je Übung prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "gym80_sygnum_4134",
+      "manufacturer": "gym80",
+      "series": "Sygnum Stations",
+      "name": "Pulley Universal",
+      "model_code": "4134",
+      "product_url": "https://gym80.de/en/product/4134/",
+      "types": [
+        "cable_adjustable"
+      ],
+      "note": "Zwei mehrfach verstellbare Arme; Griff- und Rollenposition je Übung gesondert prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "hammer_strength_plate_loaded_pl_bsq",
+      "manufacturer": "Hammer Strength",
+      "series": "Plate Loaded",
+      "name": "Belt Squat",
+      "model_code": "PL-BSQ",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/plate-loaded/hammer-strength-plate-loaded-belt-squat",
+      "types": [
+        "belt_squat"
+      ],
+      "note": "Freier Bewegungspfad und optionaler Dip-Anbau; nur Belt-Squat-Grundgerät zuordnen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "hammer_strength_pl_hsq2",
+      "manufacturer": "Hammer Strength",
+      "series": "Plate Loaded",
+      "name": "Hack Squat",
+      "model_code": "PL-HSQ2",
+      "product_url": "https://shop.lifefitness.com/products/hammer-strength-plate-loaded-hack-squat",
+      "types": [
+        "hack_squat"
+      ],
+      "note": "Lineare geführte Hack-Squat-Bewegung; Winkel und Anschläge mit Animation abgleichen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "hammer_strength_il_hr",
+      "manufacturer": "Hammer Strength",
+      "series": "Plate Loaded",
+      "name": "Iso-Lateral High Row",
+      "model_code": "IL-HR",
+      "product_url": "https://shop.lifefitness.com/products/hammer-strength-iso-lateral-high-row",
+      "types": [
+        "high_row"
+      ],
+      "note": "Unabhängige Hebelarme mit Obergriff laut Hersteller; Verlauf der hohen Zugbewegung prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "hammer_strength_plate_loaded_il_ip",
+      "manufacturer": "Hammer Strength",
+      "series": "Plate Loaded",
+      "name": "Iso-Lateral Incline Press",
+      "model_code": "IL-IP",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/plate-loaded/plate-loaded-iso-lateral-incline-press",
+      "types": [
+        "incline_press"
+      ],
+      "note": "Iso-laterale Hebel; Griff- und Sitzgeometrie mit Übungsanimation prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "hammer_strength_il_row",
+      "manufacturer": "Hammer Strength",
+      "series": "Plate Loaded",
+      "name": "Iso-Lateral Row",
+      "model_code": "IL-ROW",
+      "product_url": "https://shop.lifefitness.com/products/hammer-strength-plate-loaded-iso-lateral-row",
+      "types": [
+        "supported_row",
+        "independent_row"
+      ],
+      "note": "Unabhängige Hebelarme und Brustpolster; neutralen Griff am konkreten Gerät prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "hammer_strength_pl_llp",
+      "manufacturer": "Hammer Strength",
+      "series": "Plate Loaded",
+      "name": "Linear Leg Press",
+      "model_code": "PL-LLP",
+      "product_url": "https://shop.lifefitness.com/products/hammer-strength-plate-loaded-linear-leg-press",
+      "types": [
+        "leg_press_45",
+        "calf_leg_press"
+      ],
+      "note": "45°-Linearführung; Wadenpressen laut Hersteller mit geänderter Fußposition möglich.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "hammer_strength_pl_po",
+      "manufacturer": "Hammer Strength",
+      "series": "Plate Loaded",
+      "name": "Pullover",
+      "model_code": "PL-PO",
+      "product_url": "https://shop.lifefitness.com/products/hammer-strength-plate-loaded-pullover",
+      "types": [
+        "pullover"
+      ],
+      "note": "Ellbogenpolster statt Handgriffe und Gurtantrieb; Bewegungspfad mit Animation prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "hammer_strength_pl_calf",
+      "manufacturer": "Hammer Strength",
+      "series": "Plate Loaded",
+      "name": "Seated Calf Raise",
+      "model_code": "PL-CALF",
+      "product_url": "https://shop.lifefitness.com/products/hammer-strength-plate-loaded-seated-calf-raise",
+      "types": [
+        "seated_calf"
+      ],
+      "note": "Verstellbares Oberschenkelpolster, Vorfußplattform und Auslösehebel; Setup prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "hammer_strength_select_hs_cp",
+      "manufacturer": "Hammer Strength",
+      "series": "Select",
+      "name": "Chest Press",
+      "model_code": "HS-CP",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/hammer-strength-select-chest-press",
+      "types": [
+        "chest_press"
+      ],
+      "note": "Verstellbarer Druckarm; Griff und Bewegungsweg vor Variantenfreigabe prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "hammer_strength_select_hs_sp",
+      "manufacturer": "Hammer Strength",
+      "series": "Select",
+      "name": "Shoulder Press",
+      "model_code": "HS-SP",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/hammer-strength-select-shoulder-press",
+      "types": [
+        "shoulder_press"
+      ],
+      "note": "Griffposition und geführte Druckbahn am konkreten Gerät prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "hammer_strength_select_hs_sc",
+      "manufacturer": "Hammer Strength",
+      "series": "Select",
+      "name": "Standing Calf",
+      "model_code": "HS-SC",
+      "product_url": "https://www.lifefitness.com/en-eu/catalog/strength-training/selectorized/hammer-strength-select-standing-calf",
+      "types": [
+        "standing_calf"
+      ],
+      "note": "Neun Schulterpolsterpositionen und Fußplatten laut Hersteller; direkter Bildlink nicht verlässlich extrahiert.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_axiom_op_le",
+      "manufacturer": "Life Fitness",
+      "series": "Axiom",
+      "name": "Leg Extension",
+      "model_code": "OP-LE",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/axiom-series-leg-extension",
+      "types": [
+        "leg_extension"
+      ],
+      "note": "Eigenes Modell der Axiom-Reihe; nicht mit Insignia-Einstellungen gleichsetzen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_ic7",
+      "manufacturer": "Life Fitness",
+      "series": "ICG",
+      "name": "IC7 Indoor Cycle",
+      "model_code": "IC7",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/cardio/bikes-indoor-cycling/ic7-indoor-cycle",
+      "types": [
+        "indoor_bike"
+      ],
+      "note": "Indoor Cycle mit Sportlenker; kein Liege- oder aufrechtes Ergometer.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_ab",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Abdominal",
+      "model_code": "SS-AB",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/insignia-series-abdominal",
+      "types": [
+        "ab_crunch"
+      ],
+      "note": "Bauchbeugebewegung mit Kataloganimation abgleichen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_adc",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Assist Dip Chin",
+      "model_code": "SS-ADC",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/insignia-series-assist-dip-chin",
+      "types": [
+        "assist_dip_chin"
+      ],
+      "note": "Assistenzplattform und Griffe am konkreten Gerät prüfen; Gewichtsangabe als Unterstützung behandeln.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_be",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Back Extension",
+      "model_code": "SS-BE",
+      "product_url": "https://www.lifefitness.com/en-eu/catalog/strength-training/selectorized/insignia-series-back-extension",
+      "types": [
+        "back_extension"
+      ],
+      "note": "Geführte Rückenstreckung; Bewegungsachse modellspezifisch.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_bcd",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Biceps Curl - Dependent",
+      "model_code": "SS-BCD",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/insignia-series-biceps-curl-dependent",
+      "types": [
+        "preacher_curl"
+      ],
+      "note": "Gekoppelte Armbewegung; keine einseitige Variante ohne Prüfung.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_cp",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Chest Press",
+      "model_code": "SS-CP",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/insignia-series-chest-press",
+      "types": [
+        "chest_press",
+        "independent_chest_press"
+      ],
+      "note": "Konvergierende unabhängige Arme sind bestätigt; konkrete Griffausführung und einarmige Nutzung vor Zuordnung jeder Variante prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_gl",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Glute",
+      "model_code": "SS-GL",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/insignia-series-glute",
+      "types": [
+        "hip_extension"
+      ],
+      "note": "Hüftstreckung und Körperauflage vor Animationsfreigabe prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_glb",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Glute Bridge",
+      "model_code": "SS-GLB",
+      "product_url": "https://www.lifefitness.com/en-eu/catalog/strength-training/selectorized/insignia-series-glute-bridge",
+      "types": [
+        "hip_thrust"
+      ],
+      "note": "Geführte Glute Bridge; Beckenkontakt und Startposition mit Hip-Thrust-Animation vergleichen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_haa",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Hip Abduction / Adduction",
+      "model_code": "SS-HAA",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/insignia-series-hip-abductor-adductor",
+      "types": [
+        "hip_ab_adduction"
+      ],
+      "note": "Umschaltmechanik für beide Richtungen; Polsterposition getrennt prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_lr",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Lateral Raise",
+      "model_code": "SS-LR",
+      "product_url": "https://www.lifefitness.com/en-eu/catalog/strength-training/selectorized/insignia-series-lateral-raise",
+      "types": [
+        "lateral_raise"
+      ],
+      "note": "Armführung und Kontaktpunkt vor Animationsabgleich prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_le",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Leg Extension",
+      "model_code": "SS-LE",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/insignia-series-leg-extension",
+      "types": [
+        "leg_extension"
+      ],
+      "note": "Sitz-/Lehnenwinkel und Knieachse mit Animation vergleichen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_fly",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Pectoral Fly/Rear Deltoid",
+      "model_code": "SS-FLY",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/insignia-series-pectoral-fly-rear-deltoid",
+      "types": [
+        "pec_deck",
+        "reverse_fly"
+      ],
+      "note": "Zwei Übungsrichtungen am Kombigerät; Sitzrichtung, Griff und Kontaktpunkte getrennt prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_pd",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Pulldown",
+      "model_code": "SS-PD",
+      "product_url": "https://www.lifefitness.com/en-eu/catalog/strength-training/selectorized/insignia-series-pulldown",
+      "types": [
+        "lever_lat"
+      ],
+      "note": "Unabhängige divergierende Arme; Obergriffstellung noch prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_rw",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Row",
+      "model_code": "SS-RW",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/insignia-series-row",
+      "types": [
+        "supported_row",
+        "independent_row"
+      ],
+      "note": "Unabhängige divergierende Arme belegt; genaue Griffart prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_slc",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Seated Leg Curl",
+      "model_code": "SS-SLC",
+      "product_url": "https://www.lifefitness.com/en-us/catalog/strength-training/selectorized/insignia-series-seated-leg-curl",
+      "types": [
+        "seated_leg_curl"
+      ],
+      "note": "Sitzender Beinbeuger; nicht mit dem liegenden Insignia Leg Curl SS-LC verwechseln.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_sp",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Shoulder Press",
+      "model_code": "SS-SP",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/insignia-series-shoulder-press",
+      "types": [
+        "shoulder_press"
+      ],
+      "note": "Unabhängige konvergierende Arme; Griff- und Startgeometrie gegen die Animation prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_tr",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Torso Rotation",
+      "model_code": "SS-TR",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/insignia-series-torso-rotation",
+      "types": [
+        "torso_rotation"
+      ],
+      "note": "Drehachse und Bewegungsrichtung beim realen Gerät prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_te",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Triceps Extension",
+      "model_code": "SS-TE",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/insignia-series-triceps-extension",
+      "types": [
+        "triceps_extension"
+      ],
+      "note": "Schwenkgriffe und geneigte Auflage modellspezifisch prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "life_fitness_insignia_ss_tp",
+      "manufacturer": "Life Fitness",
+      "series": "Insignia",
+      "name": "Triceps Press",
+      "model_code": "SS-TP",
+      "product_url": "https://www.lifefitness.com/en-gb/catalog/strength-training/selectorized/insignia-series-triceps-press",
+      "types": [
+        "seated_dip"
+      ],
+      "note": "Dip-artige Griffe verfügbar; Bewegungsvergleich vor Freigabe nötig.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "matrix_ultra_g7_s71",
+      "manufacturer": "Matrix Fitness",
+      "series": "Ultra",
+      "name": "Leg Extension",
+      "model_code": "G7-S71",
+      "product_url": "https://world.matrixfitness.com/eng/strength/single-station/g7-s71-leg-extension",
+      "types": [
+        "leg_extension",
+        "single_leg_extension"
+      ],
+      "note": "Einbeinige Variante und genaue Kontaktgeometrie nicht aus dem Foto ableiten.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_trm781",
+      "manufacturer": "Precor",
+      "series": "700 Line",
+      "name": "Treadmill",
+      "model_code": "TRM781",
+      "product_url": "https://www.precor.com/en-US/products/TRM781",
+      "types": [
+        "treadmill"
+      ],
+      "note": "700er Produktabbildung; Konsole/Detailausstattung des konkreten TRM781 vor Bildfreigabe abgleichen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_efx835",
+      "manufacturer": "Precor",
+      "series": "800 Line",
+      "name": "Elliptical Fitness Crosstrainer",
+      "model_code": "EFX835",
+      "product_url": "https://www.precor.com/en-US/products/EFX835",
+      "types": [
+        "elliptical"
+      ],
+      "note": "Bewegliche Armhebel auf dem Produktbild sichtbar; Schrittlänge/Griffhub modellspezifisch prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_rbk835",
+      "manufacturer": "Precor",
+      "series": "800 Line",
+      "name": "Recumbent Bike",
+      "model_code": "RBK835",
+      "product_url": "https://www.precor.com/en-US/products/RBK835",
+      "types": [
+        "recumbent_bike"
+      ],
+      "note": "Liegeergometer mit Lehne; nicht dem aufrechten Bike zuordnen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_scl835",
+      "manufacturer": "Precor",
+      "series": "800 Line",
+      "name": "StairClimber",
+      "model_code": "SCL835",
+      "product_url": "https://www.precor.com/en-US/products/SCL835",
+      "types": [
+        "stair_climber"
+      ],
+      "note": "Rotierende Stufen; nicht einem Stepper mit zwei Trittflächen gleichsetzen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_trm835",
+      "manufacturer": "Precor",
+      "series": "800 Line",
+      "name": "Treadmill",
+      "model_code": "TRM835",
+      "product_url": "https://www.precor.com/en-US/products/TRM835",
+      "types": [
+        "treadmill"
+      ],
+      "note": "Gehen und Laufen am selben Laufband; Produktabbildung zeigt Konfiguration der 800er-Reihe.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_ubk835",
+      "manufacturer": "Precor",
+      "series": "800 Line",
+      "name": "Upright Bike",
+      "model_code": "UBK835",
+      "product_url": "https://www.precor.com/en-US/products/UBK835",
+      "types": [
+        "upright_bike"
+      ],
+      "note": "Aufrechtes Ergometer mit Sattel; Konsolenvariante beim Studiogerät abgleichen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_discovery_dpl0616",
+      "manufacturer": "Precor",
+      "series": "Discovery",
+      "name": "Calf Raise",
+      "model_code": "DPL0616",
+      "product_url": "https://www.precor.com/en-US/products/DPL0616",
+      "types": [
+        "seated_calf"
+      ],
+      "note": "Sitzende Wadenmaschine mit verstellbarem Oberschenkelpolster, Fußplatte und Auffangsicherung; Setup prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_discovery_dpl0603",
+      "manufacturer": "Precor",
+      "series": "Discovery",
+      "name": "Hack Squat",
+      "model_code": "DPL0603",
+      "product_url": "https://www.precor.com/en-US/products/DPL0603",
+      "types": [
+        "hack_squat"
+      ],
+      "note": "Aufrechte Hüftschlitten-Konstruktion; bestehende Hackenschmidt-Übung verwendet möglicherweise andere Schulterlast, daher keine Übungszuordnung.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_glutebuilder_gpl0585",
+      "manufacturer": "Precor",
+      "series": "Glutebuilder",
+      "name": "Belt Squat / Step-Up",
+      "model_code": "GPL0585",
+      "product_url": "https://www.precor.com/en-US/products/GPL0585",
+      "types": [
+        "belt_squat"
+      ],
+      "note": "Belt Squat mit zwei Hakenhöhen; Step-up-Funktion nicht der Kurzhantel-Step-up-Übung zugeordnet.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_glutebuilder_gpl0612",
+      "manufacturer": "Precor",
+      "series": "Glutebuilder",
+      "name": "Hip Thrust Elite",
+      "model_code": "GPL0612",
+      "product_url": "https://www.precor.com/en-US/products/GPL0612",
+      "types": [
+        "hip_thrust"
+      ],
+      "note": "Geführte Hantel mit zweiachsiger Schlittenbewegung; Kinematik mit bestehender Animation vergleichen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0714",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Abdominal",
+      "model_code": "RSL0714",
+      "product_url": "https://www.precor.com/en-GB/products/RSL0714",
+      "types": [
+        "ab_crunch"
+      ],
+      "note": "Fixe Fußplatte; Druckkontakt und tatsächliche Beugeachse prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0313",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Back Extension",
+      "model_code": "RSL0313",
+      "product_url": "https://www.precor.com/en-GB/products/RSL0313",
+      "types": [
+        "back_extension"
+      ],
+      "note": "Beckenfixierung und Bewegungsumfang mit animierter Variante abgleichen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0204",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Biceps Curl",
+      "model_code": "RSL0204",
+      "product_url": "https://www.precor.com/en-GB/products/RSL0204",
+      "types": [
+        "preacher_curl"
+      ],
+      "note": "Oberarmauflage und Griffgeometrie für die Seitenansicht prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0414",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Converging Chest Press",
+      "model_code": "RSL0414",
+      "product_url": "https://www.precor.com/en-GB/products/RSL0414",
+      "types": [
+        "chest_press"
+      ],
+      "note": "Konvergierende Arme; konkrete Griffvariante anhand der Griffe prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0515",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Converging Shoulder Press",
+      "model_code": "RSL0515",
+      "product_url": "https://www.precor.com/en-GB/products/RSL0515",
+      "types": [
+        "shoulder_press"
+      ],
+      "note": "Druckarm und Sitzposition gegen vorhandene Bewegungsgrafik prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0314",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Diverging Lat Pulldown",
+      "model_code": "RSL0314",
+      "product_url": "https://www.precor.com/en-GB/products/RSL0314",
+      "types": [
+        "lever_lat"
+      ],
+      "note": "Geführte Einzelarme und drehbare Griffe; nicht mit einem Kabel-Latzug gleichsetzen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0310",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Diverging Seated Row",
+      "model_code": "RSL0310",
+      "product_url": "https://www.precor.com/en-GB/products/RSL0310",
+      "types": [
+        "supported_row",
+        "row_pronated"
+      ],
+      "note": "Verstellbares Brustpolster und divergierende Arme; Griffvarianten separat bestätigen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rud0915",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Dual Adjustable Pulley",
+      "model_code": "RUD0915",
+      "product_url": "https://www.precor.com/en-US/products/RUD0915",
+      "types": [
+        "dual_cable_station",
+        "cable_adjustable"
+      ],
+      "note": "Zwei einstellbare Rollen; Griffe/Aufsätze und konkrete Position der jeweiligen Übung prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0618",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Glute Extension",
+      "model_code": "RSL0618",
+      "product_url": "https://www.precor.com/en-US/products/RSL0618",
+      "types": [
+        "hip_extension"
+      ],
+      "note": "Stehendes Hüftstrecken mit Arm- und Ellbogenstütze; Bewegungspfad vor Ort prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0626",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Inner / Outer Thigh",
+      "model_code": "RSL0626",
+      "product_url": "https://www.precor.com/en-GB/products/RSL0626",
+      "types": [
+        "hip_ab_adduction"
+      ],
+      "note": "Kombigerät für zwei Richtungen; Umstellung, Polsterkontakt und Startweite je Übung prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0504",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Lateral Raise",
+      "model_code": "RSL0504",
+      "product_url": "https://www.precor.com/en-GB/products/RSL0504",
+      "types": [
+        "lateral_raise"
+      ],
+      "note": "Auflageart (Polster/Griff) und Armführung prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0605",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Leg Extension",
+      "model_code": "RSL0605",
+      "product_url": "https://www.precor.com/en-US/products/RSL0605",
+      "types": [
+        "leg_extension"
+      ],
+      "note": "Sprunggelenkpolster und Knieachse modellspezifisch prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0602",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Leg Press",
+      "model_code": "RSL0602",
+      "product_url": "https://www.precor.com/en-US/products/RSL0602",
+      "types": [
+        "horizontal_leg_press"
+      ],
+      "note": "Sitzende Presse; nicht die 45-Grad-Schlittenmechanik übernehmen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0606",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Prone Leg Curl",
+      "model_code": "RSL0606",
+      "product_url": "https://www.precor.com/en-GB/products/RSL0606",
+      "types": [
+        "prone_curl"
+      ],
+      "note": "Liegende Körperauflage und Beinrolle prüfen; andere Mechanik als sitzender Beinbeuger.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0505",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Rear Delt / Pec Fly",
+      "model_code": "RSL0505",
+      "product_url": "https://www.precor.com/en-US/products/RSL0505",
+      "types": [
+        "pec_deck",
+        "reverse_fly"
+      ],
+      "note": "Zwei Übungen am selben Gerät; Sitzrichtung und Armstellung separat prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0315",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Rotary Torso",
+      "model_code": "RSL0315",
+      "product_url": "https://www.precor.com/en-GB/products/RSL0315",
+      "types": [
+        "torso_rotation"
+      ],
+      "note": "Rotationsrichtung und fixiertes Segment je Seite prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0623",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Seated Calf Extension",
+      "model_code": "RSL0623",
+      "product_url": "https://www.precor.com/en-US/products/RSL0623",
+      "types": [
+        "seated_calf"
+      ],
+      "note": "Sitzender Wadendruck über Fußplatte und Hüfte ohne Oberschenkelpolster; bestehende Wadenheben-Übung nicht passend.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0215",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Seated Dip",
+      "model_code": "RSL0215",
+      "product_url": "https://www.precor.com/en-GB/products/RSL0215",
+      "types": [
+        "seated_dip"
+      ],
+      "note": "Sitz bleibt fix; nicht die Körperbewegung eines freien Dips animieren.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0619",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Seated Leg Curl",
+      "model_code": "RSL0619",
+      "product_url": "https://www.precor.com/en-GB/products/RSL0619",
+      "types": [
+        "seated_leg_curl"
+      ],
+      "note": "Sitz- und Oberschenkelpolster prüfen; sitzende Ausführung getrennt von RSL0606.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "precor_resolute_rsl0208",
+      "manufacturer": "Precor",
+      "series": "Resolute",
+      "name": "Triceps Extension",
+      "model_code": "RSL0208",
+      "product_url": "https://www.precor.com/en-US/products/RSL0208",
+      "types": [
+        "triceps_extension"
+      ],
+      "note": "Sitzende Trizepsstreckung mit Oberarmauflage; Ellenbogenachse prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "schnell_target_10300",
+      "manufacturer": "SCHNELL Trainingsgeräte",
+      "series": "ALL NEW TARGET Line",
+      "name": "3D Brustdrück",
+      "model_code": "10300",
+      "product_url": "https://schnell-training.com/target-line/",
+      "types": [
+        "chest_press"
+      ],
+      "note": "Mehrdimensionale Hebelkinematik; Griff- und Bewegungsweg vor Zuordnung prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "schnell_target_10100",
+      "manufacturer": "SCHNELL Trainingsgeräte",
+      "series": "ALL NEW TARGET Line",
+      "name": "3D Ruder",
+      "model_code": "10100",
+      "product_url": "https://schnell-training.com/target-line/",
+      "types": [
+        "supported_row"
+      ],
+      "note": "Mehrdimensionale Hebelkinematik; Griff- und Bewegungsweg vor Zuordnung prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "schnell_target_13000",
+      "manufacturer": "SCHNELL Trainingsgeräte",
+      "series": "ALL NEW TARGET Line",
+      "name": "Abduktion & Adduktion",
+      "model_code": "13000",
+      "product_url": "https://schnell-training.com/target-line/",
+      "types": [
+        "hip_ab_adduction"
+      ],
+      "note": "Kombinationsgerät laut Datenblatt mit zwei Kraftkurven; Einstellungen beider Übungen prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "schnell_target_19300",
+      "manufacturer": "SCHNELL Trainingsgeräte",
+      "series": "ALL NEW TARGET Line",
+      "name": "Beinbeuger",
+      "model_code": "19300",
+      "product_url": "https://schnell-training.com/target-line/",
+      "types": [
+        "seated_leg_curl"
+      ],
+      "note": "Sitzender Beinbeuger; Unterschenkel- und Oberschenkelpolster einstellen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "schnell_target_19400",
+      "manufacturer": "SCHNELL Trainingsgeräte",
+      "series": "ALL NEW TARGET Line",
+      "name": "Beinbeuger liegend",
+      "model_code": "19400",
+      "product_url": "https://schnell-training.com/target-line/",
+      "types": [
+        "prone_curl"
+      ],
+      "note": "Liegender Beinbeuger mit einstellbarem Unterschenkelpolster.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "schnell_target_13800",
+      "manufacturer": "SCHNELL Trainingsgeräte",
+      "series": "ALL NEW TARGET Line",
+      "name": "Beinpresse V4",
+      "model_code": "13800",
+      "product_url": "https://schnell-training.com/target-line/",
+      "types": [
+        "horizontal_leg_press"
+      ],
+      "note": "Trapezkinematik und Schulterfixierung; keine automatische Zuordnung zur horizontalen Beinpresse.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "schnell_target_19100",
+      "manufacturer": "SCHNELL Trainingsgeräte",
+      "series": "ALL NEW TARGET Line",
+      "name": "Beinstrecker",
+      "model_code": "19100",
+      "product_url": "https://schnell-training.com/target-line/",
+      "types": [
+        "leg_extension"
+      ],
+      "note": "Stufenloses Unterschenkelpolster, verstellbare Rückenlehne; Kraftkurve vor Ort prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "schnell_target_13300",
+      "manufacturer": "SCHNELL Trainingsgeräte",
+      "series": "ALL NEW TARGET Line",
+      "name": "Glutaeus",
+      "model_code": "13300",
+      "product_url": "https://schnell-training.com/target-line/",
+      "types": [
+        "hip_extension"
+      ],
+      "note": "Gerätebauform und Bewegungsbahn vor Übungszuordnung prüfen.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "schnell_target_14100",
+      "manufacturer": "SCHNELL Trainingsgeräte",
+      "series": "ALL NEW TARGET Line",
+      "name": "Waden",
+      "model_code": "14100",
+      "product_url": "https://schnell-training.com/target-line/",
+      "types": [
+        "seated_calf"
+      ],
+      "note": "Wadenpresse mit Sitz und Trainingsarm; keine klassische Oberschenkelpolster-Wadenheben-Übung.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_mg8500",
+      "manufacturer": "Technogym",
+      "series": "Pure Strength",
+      "name": "Hack Squat",
+      "model_code": "MG8500",
+      "product_url": "https://www.technogym.com/en-INT/product/pure-strength-hack-squat_MG8500-NBGJV0.html",
+      "types": [
+        "hack_squat"
+      ],
+      "note": "Große Fußplatte und einbeinige Variante laut Hersteller; direkter Bildlink nicht verlässlich extrahiert.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_mg8000",
+      "manufacturer": "Technogym",
+      "series": "Pure Strength",
+      "name": "Hip Thrust",
+      "model_code": "MG8000",
+      "product_url": "https://www.technogym.com/en-INT/product/pure-strength-hip-thrust_MG8000-NBGJV0.html",
+      "types": [
+        "hip_thrust"
+      ],
+      "note": "Modell und Code auf offizieller Produktseite; direkter Bildlink nicht verlässlich extrahiert.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_mg9000",
+      "manufacturer": "Technogym",
+      "series": "Pure Strength",
+      "name": "Pullover",
+      "model_code": "MG9000",
+      "product_url": "https://www.technogym.com/en-INT/product/pure-strength-pullover_MG9000-NBGJV0.html",
+      "types": [
+        "pullover"
+      ],
+      "note": "Physiocam und Starthebel laut Hersteller; direkter Bildlink nicht verlässlich extrahiert.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_mg4600",
+      "manufacturer": "Technogym",
+      "series": "Pure Strength",
+      "name": "Seated Calf",
+      "model_code": "MG4600",
+      "product_url": "https://www.technogym.com/en-INT/product/pure-strength-seated-calf_MG4600-NBGJV0.html",
+      "types": [
+        "seated_calf"
+      ],
+      "note": "Sitzendes Wadenheben mit Kniepolster laut Hersteller; direkter Bildlink nicht verlässlich extrahiert.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_mg7000",
+      "manufacturer": "Technogym",
+      "series": "Pure Strength",
+      "name": "Standing Leg Curl",
+      "model_code": "MG7000",
+      "product_url": "https://www.technogym.com/en-GB/product/pure-strength-standing-leg-curl_MG7000-NBGJV0.html",
+      "types": [
+        "standing_curl"
+      ],
+      "note": "Modell und Code auf offizieller Produktseite; direkter Bildlink nicht verlässlich extrahiert.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_selection900_chest_press",
+      "manufacturer": "Technogym",
+      "series": "Selection 900",
+      "name": "Chest Press",
+      "model_code": null,
+      "product_url": "https://technogym.com.ua/selection-900-chest-press/",
+      "types": [
+        "chest_press"
+      ],
+      "note": "Griffvarianten als Kandidaten; reale Einstellbereiche und Übungskompatibilität noch zu prüfen. Modellcode auf dieser Quelle nicht belegt und daher nicht geraten.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_selection900_delts_machine",
+      "manufacturer": "Technogym",
+      "series": "Selection 900",
+      "name": "Delts Machine",
+      "model_code": null,
+      "product_url": "https://technogym.com.ua/selection-900-delts-machine/",
+      "types": [
+        "lateral_raise"
+      ],
+      "note": "Polstergestütztes Seitheben als Kandidat, nicht Schulterdrücken. Modellcode auf dieser Quelle nicht belegt und daher nicht geraten.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_selection900_leg_curl",
+      "manufacturer": "Technogym",
+      "series": "Selection 900",
+      "name": "Leg Curl",
+      "model_code": null,
+      "product_url": "https://technogym.com.ua/selection-900-leg-curl/",
+      "types": [
+        "seated_leg_curl"
+      ],
+      "note": "Sitzende Variante ausdrücklich von Prone Leg Curl getrennt. Modellcode auf dieser Quelle nicht belegt und daher nicht geraten.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_selection900_leg_extension",
+      "manufacturer": "Technogym",
+      "series": "Selection 900",
+      "name": "Leg Extension",
+      "model_code": null,
+      "product_url": "https://technogym.com.ua/selection-900-leg-extension/",
+      "types": [
+        "leg_extension"
+      ],
+      "note": "Sitzender Beinstrecker; keine automatische Freigabe für ein konkretes Studioexemplar. Modellcode auf dieser Quelle nicht belegt und daher nicht geraten.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_selection900_leg_press",
+      "manufacturer": "Technogym",
+      "series": "Selection 900",
+      "name": "Leg Press",
+      "model_code": null,
+      "product_url": "https://technogym.com.ua/selection-900-leg-press/",
+      "types": [
+        "horizontal_leg_press"
+      ],
+      "note": "Keine Zuordnung zu leg_press_horizontal: Produktseite beschreibt beweglichen Sitz; bestehende Anleitung beschreibt bewegliche Platte. Nicht mit 45-Grad-Scheibenmaschine verwechseln. Modellcode auf dieser Quelle nicht belegt und daher nicht geraten.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_selection900_low_row",
+      "manufacturer": "Technogym",
+      "series": "Selection 900",
+      "name": "Low Row",
+      "model_code": null,
+      "product_url": "https://technogym.com.ua/selection-900-low-row/",
+      "types": [
+        "supported_row"
+      ],
+      "note": "Brustgestütztes Rudern als Kandidat; exakte Griff- und Hebelbahn noch ungeprüft. Modellcode auf dieser Quelle nicht belegt und daher nicht geraten.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_selection900_prone_leg_curl",
+      "manufacturer": "Technogym",
+      "series": "Selection 900",
+      "name": "Prone Leg Curl",
+      "model_code": null,
+      "product_url": "https://technogym.com.ua/selection-900-prone-leg-curl/",
+      "types": [
+        "prone_curl"
+      ],
+      "note": "Liegende Variante ausdrücklich von Leg Curl im Sitzen getrennt. Modellcode auf dieser Quelle nicht belegt und daher nicht geraten.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_selection900_reverse_fly",
+      "manufacturer": "Technogym",
+      "series": "Selection 900",
+      "name": "Reverse Fly",
+      "model_code": null,
+      "product_url": "https://technogym.com.ua/selection-900-reverse-fly/",
+      "types": [
+        "reverse_fly"
+      ],
+      "note": "Keine Zuordnung zu reverse_fly_machine: vorhandene Übung verlangt Neutralgriffe, dieses Gerät arbeitet mit Armpolstern. Eigene Variante erforderlich. Modellcode auf dieser Quelle nicht belegt und daher nicht geraten.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    },
+    {
+      "key": "technogym_selection900_total_abdominal",
+      "manufacturer": "Technogym",
+      "series": "Selection 900",
+      "name": "Total Abdominal",
+      "model_code": null,
+      "product_url": "https://technogym.com.ua/selection-900-total-abdominal/",
+      "types": [
+        "ab_crunch"
+      ],
+      "note": "Keine direkte Zuordnung zu ab_crunch_machine: Produktseite nennt zusätzlich Hüftbeuger, Bild zeigt unteren Beinhebel. Gekoppelte Unterkörperbewegung separat prüfen. Modellcode auf dieser Quelle nicht belegt und daher nicht geraten.",
+      "photo": null,
+      "photo_rights": "pending",
+      "load_unit": null,
+      "load_step": null,
+      "load_min": null,
+      "load_max": null,
+      "secondary": null
+    }
   ]
 }

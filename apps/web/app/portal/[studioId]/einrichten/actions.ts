@@ -5,7 +5,7 @@ import {
   DomainError,
   attachExerciseToModel,
   catalogTypeRequired,
-  copyTypeDefaults,
+  copyCatalogDefaults,
   createEquipmentModel,
   createExercise,
   createMachine,
@@ -92,7 +92,8 @@ export async function modellAnlegen(
     if (!typ.ok) return typ;
     // Ohne eigenes Foto nur, wenn der Typ eine Zeichnung hat -- sonst
     // stuende ein Geraet ohne jedes Bild in der Liste (Entscheidung 10).
-    if (!eigenesFoto && !(await typHatFoto(client, typ.catalogModelId))) {
+    const produktId = optionalerText(formData, "catalogProductId");
+    if (!eigenesFoto && !(await vorlageHatFoto(client, typ.catalogModelId, produktId))) {
       return {
         ok: false,
         error:
@@ -107,6 +108,7 @@ export async function modellAnlegen(
       loadStep: zahl(formData, "loadStep") ?? Number.NaN,
       loadMin: zahl(formData, "loadMin") ?? 0,
       catalogModelId: typ.catalogModelId,
+      catalogProductId: produktId,
     });
     modelId = modell.id;
   } catch (fehler) {
@@ -132,7 +134,7 @@ export async function modellAnlegen(
     }
   }
 
-  // Nach dem eigenen Foto: copyTypeDefaults laesst ein vorhandenes Foto
+  // Nach dem eigenen Foto: copyCatalogDefaults laesst ein vorhandenes Foto
   // stehen und nimmt die Zeichnung nur, wenn keins da ist.
   await typVorlageKopieren(client, modelId);
 
@@ -146,19 +148,22 @@ async function typVorlageKopieren(
   modelId: string,
 ): Promise<void> {
   try {
-    await copyTypeDefaults(client, modelId);
+    await copyCatalogDefaults(client, modelId);
   } catch (fehler) {
     console.error("Typvorlage nicht vollstaendig kopiert:", fehler);
   }
 }
 
-async function typHatFoto(
+/** Typzeichnung oder geklaertes Produktfoto (Spec 5.2, Plan-Entscheidung P4). */
+async function vorlageHatFoto(
   client: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   typId: string | undefined,
+  produktId: string | null,
 ): Promise<boolean> {
   if (!typId) return false;
-  const typen = await listCatalogTypes(client);
-  return typen.find((typ) => typ.id === typId)?.photoPath != null;
+  const typ = (await listCatalogTypes(client)).find((t) => t.id === typId);
+  if (!typ) return false;
+  return typ.photoPath !== null || typ.products.some((p) => p.id === produktId && p.photoPath !== null);
 }
 
 /** Der Pfad, den Schritt 2 revalidiert. Drei Actions teilen ihn. */

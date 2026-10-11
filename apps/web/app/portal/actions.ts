@@ -9,7 +9,7 @@ import {
   attachExerciseToModel,
   catalogTypeRequired,
   confirmInstructionVideo,
-  copyTypeDefaults,
+  copyCatalogDefaults,
   createEquipmentModel,
   createExercise,
   createMachine,
@@ -154,13 +154,14 @@ export async function modellAnlegen(
       loadStep: zahl(formData, "loadStep") ?? Number.NaN,
       loadMin: zahl(formData, "loadMin") ?? 0,
       catalogModelId: typ.catalogModelId,
+      catalogProductId: optionalerText(formData, "catalogProductId"),
     });
     modelId = modell.id;
   } catch (fehler) {
     return fehlerAus(fehler);
   }
   try {
-    await copyTypeDefaults(client, modelId);
+    await copyCatalogDefaults(client, modelId);
   } catch (fehler) {
     // Das Modell steht; was fehlt, zeigen die naechsten Schritte (Foto,
     // Einstellungen). Ein Abbruch hier liesse den Trainer vor einem

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { MAX_PHOTO_BYTES } from "@fitretro/domain/media";
 import { modellAnlegen } from "../../actions";
 import { FotoFeld } from "../../../../bausteine/FotoFeld";
-import { ModellVorlageFelder } from "../../../../bausteine/ModellVorlageFelder";
+import { ModellVorlageFelder, type VorlageWahl } from "../../../../bausteine/ModellVorlageFelder";
 import type { TypVorlage } from "../../../../bausteine/typVorlage";
 import styles from "../../halle.module.css";
 import portalStyles from "../../../../portal.module.css";
@@ -28,8 +28,9 @@ import portalStyles from "../../../../portal.module.css";
  * gibt. Spec 5 nennt "Foto am Telefon" ausdruecklich vollstaendig vorhanden.
  *
  * Ohne eigenes Foto geht es nur weiter, wenn der Gymtavo-Typ eine Zeichnung
- * hat (Spec 2026-10-10-gymtavo-katalog-geraeteeinrichtung-design.md, 5.2);
- * die kopiert copyTypeDefaults nach dem Anlegen.
+ * hat oder das Herstellermodell ein geklaertes Foto (Spec
+ * 2026-10-10-gymtavo-katalog-geraeteeinrichtung-design.md, 5.2); das
+ * kopiert copyCatalogDefaults nach dem Anlegen.
  */
 export function ModellNeuFormular({
   studioId,
@@ -40,8 +41,11 @@ export function ModellNeuFormular({
 }) {
   const router = useRouter();
   const [hatFoto, setHatFoto] = useState(false);
-  const [typ, setTyp] = useState<TypVorlage | null>(null);
-  const fotoNoetig = !typ?.hatFoto;
+  const [vorlage, setVorlage] = useState<VorlageWahl>({ typ: null, produkt: null });
+  // Ohne eigenes Foto geht es weiter, wenn die Vorlage ein Bild mitbringt:
+  // geklaertes Produktfoto oder Typzeichnung (Spec 5.2, Plan-Entscheidung P4).
+  const produktFoto = vorlage.produkt?.fotoUrl != null;
+  const fotoNoetig = !(produktFoto || vorlage.typ?.hatFoto);
   const [dateiFehler, setDateiFehler] = useState<string | null>(null);
 
   const [ergebnis, formAction, laeuft] = useActionState(
@@ -67,7 +71,9 @@ export function ModellNeuFormular({
         hinweis={
           fotoNoetig
             ? "Das ganze Gerät ins Bild. Ein Foto je Modell, nicht je Gerät — zwei baugleiche Kabelzüge zeigen dasselbe Bild."
-            : "Ohne eigenes Foto zeigt das Gerät die Gymtavo-Zeichnung. Ein echtes Foto hilft Mitgliedern, das Gerät zu erkennen."
+            : produktFoto
+              ? "Ohne eigenes Foto zeigt das Gerät das Herstellerfoto. Ein echtes Foto hilft Mitgliedern, das Gerät zu erkennen."
+              : "Ohne eigenes Foto zeigt das Gerät die Gymtavo-Zeichnung. Ein echtes Foto hilft Mitgliedern, das Gerät zu erkennen."
         }
         onDatei={(datei) => {
           if (!datei) {
@@ -92,7 +98,7 @@ export function ModellNeuFormular({
         </p>
       ) : null}
 
-      <ModellVorlageFelder gross typen={typen} onTyp={setTyp} />
+      <ModellVorlageFelder gross typen={typen} onVorlage={setVorlage} />
       <p className={styles.notiz}>
         Die Schrittweite kommt von den Platten am Gerät. Sie rastet später das
         Rad des Mitglieds — ein Wert, den das Gerät nicht kann, wird damit

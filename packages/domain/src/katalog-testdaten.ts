@@ -153,3 +153,70 @@ export function beispielKatalog(p = "") {
 }
 
 export type BeispielRoh = ReturnType<typeof beispielKatalog>["roh"];
+
+export type ProduktRoh = {
+  key: string;
+  manufacturer: string;
+  series: string | null;
+  name: string;
+  model_code: string | null;
+  product_url: string | null;
+  types: string[];
+  note: string | null;
+  photo: string | null;
+  photo_rights: string;
+  load_unit: string | null;
+  load_step: number | null;
+  load_min: number | null;
+  load_max: number | null;
+  secondary: { unit: string; step: number; min: number; max: number } | null;
+};
+
+/**
+ * Der Beispielkatalog mit zwei Herstellermodellen (Spec 2026-10-10 ...,
+ * 6.2): eines an zwei Typen, ohne Foto und ohne Belastung -- so sieht der
+ * Erstbestand aus --, eines mit geklaertem Foto und vollem Raster.
+ * Getrennt von beispielKatalog, damit dessen Zaehlungen in den
+ * Bestandstests gleich bleiben.
+ */
+export function mitProdukten(beispiel: ReturnType<typeof beispielKatalog>, p = "") {
+  const products: ProduktRoh[] = [
+    {
+      key: `${p}gym80_pure_kraft_4345`,
+      manufacturer: "gym80",
+      series: "Pure Kraft",
+      name: "Brustpresse",
+      model_code: "4345",
+      product_url: "https://example.org/gym80/4345",
+      types: [`${p}brustpresse`, `${p}trizepsmaschine`],
+      note: "Scheibenbeladen, eigenes Lastprofil.",
+      photo: null,
+      photo_rights: "pending",
+      load_unit: null,
+      load_step: null,
+      load_min: null,
+      load_max: null,
+      secondary: null,
+    },
+    {
+      key: `${p}precor_trm_885`,
+      manufacturer: "Precor",
+      series: null,
+      name: "Laufband",
+      model_code: "TRM 885",
+      product_url: null,
+      types: [`${p}laufband`],
+      note: null,
+      photo: "media/products/precor_trm_885.jpg",
+      photo_rights: "cleared",
+      load_unit: "kmh",
+      load_step: 0.1,
+      load_min: 0.8,
+      load_max: 25,
+      secondary: { unit: "pct", step: 0.5, min: 0, max: 15 },
+    },
+  ];
+  const dateien = new Map(beispiel.dateien);
+  dateien.set("media/products/precor_trm_885.jpg", jpegBytes(4));
+  return { roh: { ...beispiel.roh, products }, dateien };
+}

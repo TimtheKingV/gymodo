@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { studioMitTrainer } from "./helpers/studio";
 import { anmelden, E2E_PASSWORD } from "./helpers/login";
-import { GYMTAVO, gymtavoTyp, typWaehlen } from "./helpers/gymtavo";
+import { GYMTAVO, gymtavoTyp, herstellerProdukt, herstellerWaehlen, typWaehlen } from "./helpers/gymtavo";
 import { radWaehlen } from "./helpers/rad";
 
 // Spec 2026-10-06-gymtavo-katalog-offener-zugang-design.md, Nachtrag 10.1.
@@ -177,4 +177,71 @@ test("Das Gymtavo-Studio zeigt keine Mitglieder, keine Geraete im Raum und keine
     await page.goto(`/portal/${GYMTAVO}/${pfad}`);
     await expect(page.getByText("Diese Seite gibt es nicht."), pfad).toBeVisible();
   }
+});
+
+// Spec 2026-10-10-gymtavo-katalog-geraeteeinrichtung-design.md, 6.5 und 6.6.
+
+test("Brustpresse, gym80, Modell: Name, Hersteller und Hinweis kommen vom Herstellermodell", async ({ page }) => {
+  const { admin, studioId } = await studioMitTrainer(page, "gymtavo-produkt");
+  const { typId, typName } = await gymtavoTyp(admin, "Brustpresse", [], {
+    werte: { load_step: 5, load_min: 0, load_max: 100 },
+    einstellungen: [{ key: "seat_height", label: "Sitzhöhe", kind: "number" }],
+    foto: true,
+  });
+  const { produktId } = await herstellerProdukt(admin, typId, { note: "Scheibenbeladen, eigenes Lastprofil." });
+
+  await page.goto(`/portal/${studioId}/geraete/neu?art=typ&kategorie=kraft`);
+  await typWaehlen(page, typName);
+  await herstellerWaehlen(page, "gym80 (1)");
+  await page.getByRole("radio", { name: /Pure Kraft Brustpresse 4345/ }).check();
+  await expect(page.getByLabel("Name")).toHaveValue("Pure Kraft Brustpresse 4345");
+  await expect(page.getByText("Scheibenbeladen, eigenes Lastprofil.")).toBeVisible();
+  await expect(page.getByText("Symbolbild")).toBeVisible();
+  await page.getByRole("button", { name: "Weiter", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/portal/${studioId}/geraete/[0-9a-f-]+/einstellungen`));
+
+  const { data: modell } = await admin
+    .from("equipment_models")
+    .select("id, name, manufacturer, catalog_product_id, photo_path, equipment_setting_definitions(key)")
+    .eq("studio_id", studioId)
+    .single();
+  expect(modell).toMatchObject({ name: "Pure Kraft Brustpresse 4345", manufacturer: "gym80", catalog_product_id: produktId });
+  expect(modell?.photo_path).toMatch(new RegExp(`^${studioId}/`));
+  expect(modell?.equipment_setting_definitions).toEqual([{ key: "seat_height" }]);
+
+  await page.goto(`/portal/${studioId}/geraete/${modell!.id}`);
+  await expect(page.getByText("Vorlage: gym80 Pure Kraft Brustpresse 4345")).toBeVisible();
+});
+
+test("Mein Modell ist nicht dabei: Typwerte bleiben, Hersteller ist gesetzt", async ({ page }) => {
+  const { admin, studioId } = await studioMitTrainer(page, "gymtavo-nicht-dabei");
+  const { typId, typName } = await gymtavoTyp(admin, "Brustpresse");
+  await herstellerProdukt(admin, typId);
+
+  await page.goto(`/portal/${studioId}/geraete/neu?art=typ&kategorie=kraft`);
+  await typWaehlen(page, typName);
+  await herstellerWaehlen(page, "gym80 (1)");
+  await page.getByRole("radio", { name: "Mein Modell ist nicht dabei" }).check();
+  await expect(page.getByLabel("Name")).toHaveValue(typName);
+  await page.getByRole("button", { name: "Weiter", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/portal/${studioId}/geraete/[0-9a-f-]+/einstellungen`));
+
+  const { data } = await admin.from("equipment_models").select("name, manufacturer, catalog_product_id").eq("studio_id", studioId).single();
+  expect(data).toEqual({ name: typName, manufacturer: "gym80", catalog_product_id: null });
+});
+
+test("Anderer Hersteller ergibt freien Text", async ({ page }) => {
+  const { admin, studioId } = await studioMitTrainer(page, "gymtavo-anderer");
+  const { typId, typName } = await gymtavoTyp(admin, "Brustpresse");
+  await herstellerProdukt(admin, typId);
+
+  await page.goto(`/portal/${studioId}/geraete/neu?art=typ&kategorie=kraft`);
+  await typWaehlen(page, typName);
+  await herstellerWaehlen(page, "Anderer Hersteller");
+  await page.getByLabel("Herstellername").fill("Eigenbau");
+  await page.getByRole("button", { name: "Weiter", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/portal/${studioId}/geraete/[0-9a-f-]+/einstellungen`));
+
+  const { data } = await admin.from("equipment_models").select("manufacturer, catalog_product_id").eq("studio_id", studioId).single();
+  expect(data).toEqual({ manufacturer: "Eigenbau", catalog_product_id: null });
 });
