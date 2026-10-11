@@ -16,6 +16,9 @@ import SwiftUI
 struct PausenRad: View {
     let timer: Resttimer
     let beiVerlaengern: () -> Void
+    /// Das Gewicht fuer den naechsten Satz -- in der Pause wird
+    /// umgesteckt (Testnotiz 11.10., #12).
+    let beiGewicht: () -> Void
     let beiWeiter: () -> Void
     /// Der Weg zurueck zum Training, ohne den Umweg ueber den naechsten
     /// Satz. Wer am Geraet fertig ist, merkt das in der Pause -- nicht
@@ -29,10 +32,12 @@ struct PausenRad: View {
 
     init(timer: Resttimer,
          beiVerlaengern: @escaping () -> Void,
+         beiGewicht: @escaping () -> Void,
          beiWeiter: @escaping () -> Void,
          beiAbschliessen: @escaping () -> Void) {
         self.timer = timer
         self.beiVerlaengern = beiVerlaengern
+        self.beiGewicht = beiGewicht
         self.beiWeiter = beiWeiter
         self.beiAbschliessen = beiAbschliessen
         _ansage = State(initialValue: timer.gesprochen())
@@ -56,10 +61,16 @@ struct PausenRad: View {
                 // Nebeneinander, weil beide dasselbe beantworten: was
                 // passiert nach dieser Pause? Noch etwas laenger -- oder
                 // nicht mehr an dieser Uebung.
-                HStack(spacing: DesignSystem.Spacing.s12) {
+                // Drei gleich breite Knoepfe mit kurzer Beschriftung -- "Übung
+                // abschließen" passte zu dritt nicht mehr in eine Zeile; die
+                // volle Bedeutung traegt das Accessibility-Label.
+                HStack(spacing: DesignSystem.Spacing.s8) {
                     SecondaryButton(title: "+30 s", action: beiVerlaengern)
                         .accessibilityLabel("Pause um 30 Sekunden verlängern")
-                    SecondaryButton(title: "Übung abschließen", action: beiAbschliessen)
+                    SecondaryButton(title: "Gewicht", action: beiGewicht)
+                        .accessibilityLabel("Gewicht für den nächsten Satz ändern")
+                    SecondaryButton(title: "Abschließen", action: beiAbschliessen)
+                        .accessibilityLabel("Übung abschließen")
                 }
                 // "Weiter" ist die Hauptaktion dieses Zustands und damit die
                 // eine Akzentflaeche des Screens (SS2) -- solange die Pause
@@ -152,7 +163,7 @@ struct Zeitring: View {
 }
 
 #Preview {
-    PausenRad(timer: Resttimer(), beiVerlaengern: {}, beiWeiter: {}, beiAbschliessen: {})
+    PausenRad(timer: Resttimer(), beiVerlaengern: {}, beiGewicht: {}, beiWeiter: {}, beiAbschliessen: {})
         .padding(20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DesignSystem.Color.bg)

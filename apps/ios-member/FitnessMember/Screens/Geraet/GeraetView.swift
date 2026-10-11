@@ -21,6 +21,11 @@ struct GeraetView: View {
     /// "Training beenden" aus dem Dialog an der Uhr (Testnotiz 05.10.,
     /// #11). Den Abschluss zeigt die Wurzel des Training-Tabs.
     var beiTrainingBeenden: () -> Void = {}
+    /// "Gewicht" in der Pause (Testnotiz 11.10., #12): ein Drawer mit dem
+    /// Rad, der Wert gilt ab dem naechsten Satz.
+    var beiGewichtAendern: () -> Void = {}
+    /// Tipp auf Titel oder Video: die Einweisung noch einmal (#13).
+    var beiEinweisung: () -> Void = {}
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(WorkoutSessionStore.self) private var sessions
@@ -191,6 +196,7 @@ struct GeraetView: View {
         } else if let pause = modell.laufendePause {
             PausenRad(timer: pause,
                       beiVerlaengern: modell.pauseVerlaengern,
+                      beiGewicht: beiGewichtAendern,
                       beiWeiter: modell.pauseBeenden,
                       // Derselbe Weg wie "Uebung abschliessen" unter den
                       // Raedern -- nur ohne den Umweg ueber "Weiter".
@@ -280,11 +286,21 @@ struct GeraetView: View {
     /// #7) -- daneben statt darueber, weil das Hoehenbudget auf 667 pt
     /// keine eigene Zeile hergibt (siehe unten). Ohne Video faellt die
     /// Kachel samt Abstand weg, statt dem Namen Breite zu nehmen.
+    /// Ein Knopf fuer Video und Namen: wer mitten im Training nachsehen
+    /// will, wie die Uebung geht, tippt auf das, was er sieht (Testnotiz
+    /// 11.10., #13).
     private var geraetUndUebung: some View {
-        HStack(alignment: .center, spacing: 0) {
-            UebungsVideoKachel(exerciseId: modell.aktiveUebung?.id, kante: 56)
-            namen
+        Button(action: beiEinweisung) {
+            HStack(alignment: .center, spacing: 0) {
+                UebungsVideoKachel(exerciseId: modell.aktiveUebung?.id, kante: 56)
+                namen
+                Spacer(minLength: 0)
+            }
+            .contentShape(Rectangle())
         }
+        .buttonStyle(PressButtonStyle())
+        .accessibilityHint("Zeigt die Einweisung")
+        .testnotizElement("geraet.einweisung", typ: "Button")
     }
 
     private var namen: some View {
@@ -459,6 +475,8 @@ struct GeraetScreen: View {
     let beiTrainingBeenden: () -> Void
 
     @State private var uebungWechselnOffen = false
+    @State private var gewichtOffen = false
+    @State private var einweisungOffen = false
     @State private var problemOffen = false
     @State private var abschlussfrageOffen = false
     /// Was nach dem Schliessen der Abschlussfrage folgt. Zwei Sheets
@@ -477,8 +495,25 @@ struct GeraetScreen: View {
                     beiZurueckZumTraining()
                 }
             },
-            beiTrainingBeenden: beiTrainingBeenden
+            beiTrainingBeenden: beiTrainingBeenden,
+            beiGewichtAendern: { gewichtOffen = true },
+            beiEinweisung: { einweisungOffen = true }
         )
+        .sheet(isPresented: $gewichtOffen) {
+            GewichtAendernSheet(modell: modell) { gewichtOffen = false }
+        }
+        // Nur ansehen: kein Weiter in Einstellung oder Startwerte, die
+        // Uebung laeuft ja schon (Testnotiz 11.10., #13).
+        .sheet(isPresented: $einweisungOffen) {
+            EinweisungSchritt(
+                modell: modell, titel: "Einweisung",
+                hauptaktion: "Zurück zum Satz",
+                beiAbbruch: { einweisungOffen = false },
+                beiWeiter: { einweisungOffen = false },
+                beiUeberspringen: nil)
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
         .sheet(isPresented: $uebungWechselnOffen) {
             UebungWechselnSheet(modell: modell) { modell.uebungWechseln(zu: $0) }
         }
@@ -516,6 +551,60 @@ struct GeraetScreen: View {
                 modell.kalibrierungOffen = false
             }
         }
+    }
+}
+
+/// Das Gewicht fuer den naechsten Satz, waehrend die Pause weiterlaeuft
+/// (Testnotiz 11.10., #12) -- typischerweise steckt man in der Pause um.
+/// Gedreht wird ein Entwurf; erst "Übernehmen" schreibt ins Modell, damit
+/// ein weggewischter Drawer nichts veraendert.
+private struct GewichtAendernSheet: View {
+    @Bindable var modell: GeraetModel
+    let beiFertig: () -> Void
+
+    @State private var entwurf: Double
+
+    init(modell: GeraetModel, beiFertig: @escaping () -> Void) {
+        self.modell = modell
+        self.beiFertig = beiFertig
+        _entwurf = State(initialValue: modell.belastung)
+    }
+
+    var body: some View {
+        let einheit = modell.loadUnit
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+            Text("GEWICHT FÜR DEN NÄCHSTEN SATZ")
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textFaint)
+            HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.s4) {
+                RastRad(
+                    werte: modell.belastungsWerte,
+                    auswahl: $entwurf,
+                    unterstrich: .held,
+                    voLabel: "Belastung",
+                    voWert: { Zahlformat.belastungGesprochen($0, einheit) },
+                    anschlagText: modell.anschlagText,
+                    text: { Zahlformat.belastung($0, einheit) },
+                    sichtbareZeilen: 3
+                )
+                Text(einheit.kurz)
+                    .font(DesignSystem.Typography.uebungsname)
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .accessibilityHidden(true)
+            }
+            PrimaryButton(title: "Übernehmen") {
+                modell.belastungGewaehlt(entwurf)
+                beiFertig()
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, DesignSystem.Spacing.s24)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(DesignSystem.Color.bg)
+        .presentationDetents([.height(340)])
+        .presentationDragIndicator(.visible)
+        .testnotizScreen()
     }
 }
 

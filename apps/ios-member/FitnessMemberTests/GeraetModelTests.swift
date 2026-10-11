@@ -264,6 +264,32 @@ struct GeraetModelTests {
         #expect(sut.startwerte == Startwerte(belastung: 80, umfang: 11, nebenbelastung: nil))
     }
 
+    // MARK: - Gewicht in der Pause (Testnotiz 11.10., #12)
+
+    /// Charakterisierung: belastungGewaehlt tut in der Pause schon das
+    /// Richtige -- der Drawer "Gewicht" ruft genau das auf. Die Pause laeuft
+    /// weiter, und der naechste Satz traegt das neue Gewicht.
+    @Test func einInDerPauseGewaehltesGewichtGiltFuerDenNaechstenSatz() async {
+        let erfasser = Erfassungswarteschlange()
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)]),
+                         sessions: sessions,
+                         enqueue: { erfasser.geschriebene.append($0) },
+                         satzZiel: 3)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.laufendePause != nil)
+
+        sut.belastungGewaehlt(82.5)
+        #expect(sut.laufendePause != nil)
+
+        sut.pauseBeenden()
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(erfasser.geschriebene.last?.body.load == 82.5)
+    }
+
     // MARK: - Phasen
 
     @Test func vorDemLetztenGeplantenSatzStartetDiePause() async {
