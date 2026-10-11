@@ -91,4 +91,21 @@ Aus Teil 1 dieser Sitzung (PR #51) ausgelagert. Stand: `a00f62c`.
 
 ## Geprüft
 
-(nach der Umsetzung ausfüllen)
+Umgesetzt in zwei Commits (`d17c200`, `0e2985b`).
+- Etappe 1 und 2 liefen zuerst rot: `KursePlanTests` fehlte, die Store-Tests riefen `laden(studioIds:)` auf.
+- Etappe 3 lief in denselben Commit, weil die Ansichten ohne sie nicht kompilierten (`KurseOrtZustand.fuer(ort:)` entfiel).
+- Den Test zu `KurseStudios.reihenfolge` schrieb ich erst nach der Funktion.
+
+- **Tests:**
+  - `pnpm typecheck` und `pnpm test` grün (domain 312, web 303). Am Server änderte sich nichts.
+  - `xcodebuild test`: 1060 Tests in 108 Suites grün.
+- **Sichtcheck im Simulator:**
+  - Aufbau: Lokales Mitglied mit aktivem Freiem Training, in zwei Studios „Sichtcheck Nord“ (Frist 2 h) und „Sichtcheck Süd“ (Frist 24 h), je ein Kurs am Montag, 12.10.
+  - Der Kurse-Tab zeigt im Freien Training beide Kurse. Darüber stehen die Chips, im Kopf „2 STUDIOS“, in der Zeile der Studioname.
+  - Wird Süd abgewählt, steht nur noch Rücken Fit da und im Kopf „SICHTCHECK NORD“. Nord lässt sich danach nicht abwählen, es ist das letzte sichtbare Studio.
+  - Spinning (Süd) lässt sich buchen. Die Detailseite nennt „Abmeldefrist verstrichen“, also die 24-h-Frist von Süd und nicht die 2 h des ersten Studios.
+  - Gefunden und behoben (`0e2985b`): Der Chip-Text stieß an die Kontur.
+- **Nicht im Bild geprüft:**
+  - Ein Mitglied mit genau einem Studio (keine Chips) und eines ohne Studio („Beitreten“). Beides ist nur über `KurseFilter.zeigtAuswahl` und `KurseOrtZustand.fuer(studios:)` getestet.
+  - Die Kursleiste auf Home mit Buchungen aus zwei Studios.
+- **Lokale Daten:** Die beiden Sichtcheck-Studios liegen in der geteilten lokalen DB. Sie stören keine Tests, die Namen sind eindeutig.
