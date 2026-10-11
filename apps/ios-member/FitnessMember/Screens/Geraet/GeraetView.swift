@@ -279,7 +279,10 @@ struct GeraetView: View {
                 .tracking(-0.8)
                 .foregroundStyle(DesignSystem.Color.text)
                 .lineLimit(1)
-                .minimumScaleFactor(0.75)
+                // 0.6 statt 0.75, seit das Video links 68 pt nimmt
+                // (Testnotiz 11.10., #7): 45-GRAD-SCHLITTENPRESSE brach
+                // mit 0.75 sonst zu "SCHLITTENP..." ab.
+                .minimumScaleFactor(0.6)
             // "andere Übung" stand bis zur Testnotiz 06.10. (#11) rechts
             // daneben. Gewechselt wird jetzt nach "Übung abschließen" --
             // dann, wenn die eine Uebung fertig ist (#12).

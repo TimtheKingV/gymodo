@@ -21,9 +21,12 @@ struct UebungsVideoKachel<Platzhalter: View>: View {
     @State private var asset: AVAsset?
 
     var body: some View {
-        Group {
+        // ZStack statt Group: Modifier an einer Group landen an jedem Kind
+        // einzeln, die Suche haengte dann am leeren Platzhalter und lief
+        // nicht verlaesslich an.
+        ZStack {
             if nurMitVideo && asset == nil {
-                Color.clear.frame(width: 0, height: 0)
+                Color.clear.frame(width: 1, height: 1)
             } else if nurMitVideo {
                 // Der Abstand zum Nachbarn gehoert hier zur Kachel: als
                 // Spacing des HStack bliebe er auch ohne Video stehen.
@@ -42,9 +45,13 @@ struct UebungsVideoKachel<Platzhalter: View>: View {
         }
     }
 
+    // Color.clear als Traeger statt des Platzhalters selbst: ohne
+    // Platzhalter (EmptyView) verschwaenden frame und overlay mit ihm --
+    // und das Video gleich mit.
     private var kachel: some View {
-        platzhalter
+        Color.clear
             .frame(width: kante, height: kante)
+            .background { platzhalter }
             .overlay {
                 if let asset {
                     Schleifenvideo(asset: asset)
