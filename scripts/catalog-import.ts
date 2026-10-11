@@ -66,7 +66,7 @@ async function main(): Promise<void> {
   console.log(
     geschrieben === null
       ? "Trockenlauf: nichts hochgeladen, nichts geschrieben."
-      : `Geschrieben: ${geschrieben.uploads} Uploads, ${geschrieben.geraetetypen} Geraetetypen, ${geschrieben.einstellungen} Einstellungen, ${geschrieben.uebungen} Uebungen, ${geschrieben.verknuepfungen} Verknuepfungen, ${geschrieben.videos} Videos.`,
+      : `Geschrieben: ${geschrieben.uploads} Uploads, ${geschrieben.geraetetypen} Geraetetypen, ${geschrieben.einstellungen} Einstellungen, ${geschrieben.uebungen} Uebungen, ${geschrieben.verknuepfungen} Verknuepfungen, ${geschrieben.videos} Videos, ${geschrieben.produkte} Produkte, ${geschrieben.produktTypen} Produkt-Typen.`,
   );
 }
 

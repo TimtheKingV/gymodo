@@ -7,6 +7,8 @@ import {
   type ImportPlan,
   type IstEinstellung,
   type IstGeraetetyp,
+  type IstProdukt,
+  type IstProduktTyp,
   type IstStand,
   type IstUebung,
   type IstVerknuepfung,
@@ -27,7 +29,7 @@ import { PHOTO_BUCKET, VIDEO_BUCKET } from "./media.js";
  */
 
 export { GYMTAVO_STUDIO_ID, pruefeKatalog, type KatalogDatei } from "./katalog-datei.js";
-export { pruefeMedien, type Medien, type Medium } from "./katalog-medien.js";
+export { produktFotoPraefix, pruefeMedien, type Medien, type Medium } from "./katalog-medien.js";
 export { ladeKatalog } from "./katalog-laden.js";
 export { berichtText, planeImport, type ImportPlan, type IstStand, type Posten } from "./katalog-plan.js";
 
@@ -62,7 +64,7 @@ export async function leseIstStand(admin: SupabaseClient): Promise<IstStand> {
   const studio = await admin.from("studios").select("id").eq("id", GYMTAVO_STUDIO_ID).eq("is_catalog", true).maybeSingle();
   if (studio.error) throw new DomainError("internal", studio.error.message);
   if (studio.data === null) {
-    throw new DomainError("not_found", "Das Gymtavo-Studio fehlt. Zuerst die Migrationen bis 0048 anwenden.");
+    throw new DomainError("not_found", "Das Gymtavo-Studio fehlt. Zuerst die Migrationen bis 0050 anwenden.");
   }
 
   const geraetetypen = await alleZeilen<IstGeraetetyp>((von, bis) =>
@@ -107,11 +109,27 @@ export async function leseIstStand(admin: SupabaseClient): Promise<IstStand> {
       .order("id")
       .range(von, bis),
   );
+  const produkte = await alleZeilen<IstProdukt>((von, bis) =>
+    admin
+      .from("catalog_products")
+      .select("id, catalog_key, manufacturer, series, name, model_code, product_url, note, photo_path, photo_rights, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max")
+      .order("id")
+      .range(von, bis),
+  );
+  const produktTypen = await alleZeilen<IstProduktTyp>((von, bis) =>
+    admin
+      .from("catalog_product_types")
+      .select("product_id, equipment_model_id")
+      .order("product_id")
+      .order("equipment_model_id")
+      .range(von, bis),
+  );
   const objekte = new Set([
     ...(await objekteUnter(admin, PHOTO_BUCKET, `${GYMTAVO_STUDIO_ID}/catalog/photos`)),
     ...(await objekteUnter(admin, VIDEO_BUCKET, `${GYMTAVO_STUDIO_ID}/catalog/videos`)),
+    ...(await objekteUnter(admin, PHOTO_BUCKET, `${GYMTAVO_STUDIO_ID}/catalog/products`)),
   ]);
-  return { geraetetypen, einstellungen, uebungen, verknuepfungen, videos, objekte };
+  return { geraetetypen, einstellungen, uebungen, verknuepfungen, videos, produkte, produktTypen, objekte };
 }
 
 export type Geschrieben = {
@@ -121,6 +139,8 @@ export type Geschrieben = {
   uebungen: number;
   verknuepfungen: number;
   videos: number;
+  produkte: number;
+  produktTypen: number;
 };
 
 function zuSchreiben<Z>(liste: Posten<Z>[]): Posten<Z>[] {
@@ -216,6 +236,27 @@ export async function fuehreAus(admin: SupabaseClient, plan: ImportPlan): Promis
     if (error) throw new DomainError("internal", `Video ${p.schluessel}: ${error.message}`);
   }
 
+  // Produkte nach den Typen: ihre Zuordnung braucht die Typ-ids.
+  const produktIds = new Map(plan.produkte.flatMap((p) => (p.id ? [[p.schluessel, p.id] as const] : [])));
+  const produkte = zuSchreiben(plan.produkte);
+  for (const block of bloecke(produkte)) {
+    const { data, error } = await admin
+      .from("catalog_products")
+      .upsert(block.map((p) => p.zeile), { onConflict: "catalog_key" })
+      .select("id, catalog_key");
+    if (error) throw new DomainError("internal", `Produkte: ${error.message}`);
+    for (const z of data) produktIds.set(z.catalog_key, z.id);
+  }
+
+  const produktTypen = zuSchreiben(plan.produktTypen);
+  for (const block of bloecke(produktTypen)) {
+    const { error } = await admin.from("catalog_product_types").upsert(
+      block.map((p) => ({ product_id: idVon(produktIds, p.zeile.produkt), equipment_model_id: idVon(typIds, p.zeile.geraetetyp) })),
+      { onConflict: "product_id,equipment_model_id", ignoreDuplicates: true },
+    );
+    if (error) throw new DomainError("internal", `Produkt-Typen: ${error.message}`);
+  }
+
   return {
     uploads: plan.uploads.length,
     geraetetypen: type.length,
@@ -223,6 +264,8 @@ export async function fuehreAus(admin: SupabaseClient, plan: ImportPlan): Promis
     uebungen: uebungen.length,
     verknuepfungen: verknuepfungen.length,
     videos: videos.length,
+    produkte: produkte.length,
+    produktTypen: produktTypen.length,
   };
 }
 
