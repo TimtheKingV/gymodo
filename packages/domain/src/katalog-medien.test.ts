@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { GYMTAVO_STUDIO_ID, pruefeKatalog, type KatalogDatei } from "./katalog-datei.js";
-import { pruefeMedien } from "./katalog-medien.js";
-import { beispielKatalog, jpegBytes, mp4Bytes } from "./katalog-testdaten.js";
+import { produktFotoPraefix, pruefeMedien } from "./katalog-medien.js";
+import { beispielKatalog, jpegBytes, mitProdukten, mp4Bytes } from "./katalog-testdaten.js";
 
 function katalog(roh: unknown): KatalogDatei {
   const pruefung = pruefeKatalog(roh);
@@ -63,5 +63,40 @@ describe("pruefeMedien", () => {
     const { roh, dateien } = beispielKatalog();
     dateien.set("media/videos/trizeps.mp4", mp4Bytes(null));
     expect(pruefeMedien(katalog(roh), (d) => dateien.get(d) ?? null).ok).toBe(true);
+  });
+});
+
+describe("pruefeMedien Produktfotos", () => {
+  function medienVon(beispiel: ReturnType<typeof mitProdukten>) {
+    const k = pruefeKatalog(beispiel.roh);
+    if (!k.ok) throw new Error(k.fehler.join("\n"));
+    return pruefeMedien(k.wert, (d) => beispiel.dateien.get(d) ?? null);
+  }
+
+  it("legt das Produktfoto unter den eigenen Praefix mit Inhaltshash", () => {
+    const m = medienVon(mitProdukten(beispielKatalog()));
+    if (!m.ok) throw new Error(m.fehler.join("\n"));
+    const foto = m.wert.produktFotos.get("precor_trm_885");
+    expect(foto?.storagePath).toMatch(new RegExp(`^${produktFotoPraefix("precor_trm_885")}[0-9a-f]{8}\\.jpg$`));
+    expect(foto?.contentType).toBe("image/jpeg");
+    expect(m.wert.produktFotos.has("gym80_pure_kraft_4345")).toBe(false);
+  });
+
+  it("prueft auch ein Foto ohne geklaerte Rechte", () => {
+    const beispiel = mitProdukten(beispielKatalog());
+    beispiel.roh.products[0]!.photo = "media/products/fehlt.png";
+    const m = medienVon(beispiel);
+    expect(m.ok ? [] : m.fehler).toEqual([
+      'products[0] "gym80_pure_kraft_4345" photo "media/products/fehlt.png": Datei fehlt',
+    ]);
+  });
+
+  it("verlangt PNG oder JPEG", () => {
+    const beispiel = mitProdukten(beispielKatalog());
+    beispiel.dateien.set("media/products/precor_trm_885.jpg", mp4Bytes(3));
+    const m = medienVon(beispiel);
+    expect(m.ok ? [] : m.fehler).toEqual([
+      'products[1] "precor_trm_885" photo "media/products/precor_trm_885.jpg": ist kein PNG oder JPEG',
+    ]);
   });
 });
