@@ -61,7 +61,7 @@ struct HomeRootView: View {
 
     /// Eine Einheit gehoert dem Studio, nicht dem Geraet -- sonst schoebe
     /// ein Mitglied im Urlaub seine Abendeinheit auf den Folgetag.
-    private var zeitzone: String { aktivesStudio?.timezone ?? "UTC" }
+    private var zeitzone: String { HomeSerie.zeitzone(studio: aktivesStudio?.timezone) }
 
     /// Die eigenen Kursbuchungen -- nur, wenn sie zum aktiven Studio
     /// gehoeren. Nach einem Studiowechsel ohne Netz laegen sonst die des

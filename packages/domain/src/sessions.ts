@@ -420,24 +420,24 @@ export async function getSessions(
 /**
  * Die Zeitzone des Studios, aus dessen Sicht die Woche gezaehlt wird.
  *
- * `null` statt einer Vorgabe: eine erfundene Zeitzone ergaebe eine Zahl,
- * die aussieht wie eine Auskunft. Ohne Studio faellt die Wochenzahl weg,
- * und der Screen zeigt sie nicht an.
+ * Ohne Studio (Freies Training) gilt die des Gymtavo-Katalogs: dort liegen
+ * die Einheiten des Freien Trainings, und die Serie zaehlt ohnehin alle
+ * Einheiten des Mitglieds. Vorher fiel sie hier auf `null`, und der
+ * Streifen auf Home verschwand (Testnotiz 11.10., #1).
  *
  * RLS entscheidet mit: wer nicht Mitglied ist, sieht die Zeile nicht und
- * bekommt damit ebenfalls `null`.
+ * bekommt `null` -- eine erfundene Zeitzone ergaebe eine Zahl, die
+ * aussieht wie eine Auskunft.
  */
 async function zeitzoneDesStudios(
   client: SupabaseClient,
   studioId: string | undefined,
 ): Promise<string | null> {
-  if (!studioId) return null;
-
-  const { data } = await client
-    .from("studios")
-    .select("timezone")
-    .eq("id", studioId)
-    .maybeSingle();
+  const abfrage = client.from("studios").select("timezone");
+  const { data } = await (studioId
+    ? abfrage.eq("id", studioId)
+    : abfrage.eq("is_catalog", true)
+  ).maybeSingle();
 
   return (data as { timezone: string } | null)?.timezone ?? null;
 }

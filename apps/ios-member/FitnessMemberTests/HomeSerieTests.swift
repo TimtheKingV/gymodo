@@ -18,6 +18,21 @@ struct HomeSerieTests {
         Serienstand(weeks: weeks, weekStart: weekStart, today: today, trainedDays: trainedDays)
     }
 
+    // MARK: - Zeitzone
+
+    /// Im Freien Training gibt es kein aktives Studio. UTC schob die
+    /// Abendeinheit eines Mitglieds in Berlin auf den Folgetag; die Zeitzone
+    /// des Geraets trifft dort, wo trainiert wird (Testnotiz 11.10., #1).
+    @Test func ohneStudioGiltDieZeitzoneDesGeraets() {
+        let geraet = TimeZone(identifier: "Europe/Berlin")!
+        #expect(HomeSerie.zeitzone(studio: nil, geraet: geraet) == "Europe/Berlin")
+    }
+
+    @Test func mitStudioGiltDessenZeitzone() {
+        let geraet = TimeZone(identifier: "America/New_York")!
+        #expect(HomeSerie.zeitzone(studio: "Europe/Vienna", geraet: geraet) == "Europe/Vienna")
+    }
+
     // MARK: - Die sieben Tagesboxen
 
     @Test func siebenTageVonMontagBisSonntag() {

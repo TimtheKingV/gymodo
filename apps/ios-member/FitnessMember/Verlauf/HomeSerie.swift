@@ -46,6 +46,14 @@ struct HomeSerieTag: Identifiable, Equatable {
 /// darin. Faellt ein Tag doch heraus, fehlt seine Hantel -- eine
 /// erfundene waere schlimmer.
 enum HomeSerie {
+    /// In welcher Zeitzone Einheiten zu Tagen gebuendelt werden. Ohne
+    /// aktives Studio (Freies Training) die des Geraets statt UTC: UTC
+    /// schob eine Abendeinheit in Berlin auf den Folgetag (Testnotiz
+    /// 11.10., #1).
+    static func zeitzone(studio: String?, geraet: TimeZone = .current) -> String {
+        studio ?? geraet.identifier
+    }
+
     /// Die Tage mit mindestens einer Einheit, aus beiden Quellen.
     ///
     /// Die laufende Woche gewinnt aus `trainedDays` auch die Tage, an
