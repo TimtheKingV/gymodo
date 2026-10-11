@@ -1,6 +1,12 @@
-import type { CatalogType } from "@fitretro/domain";
+import type { CatalogProduct, CatalogType } from "@fitretro/domain";
 import type { Category } from "@fitretro/domain/belastung";
 import type { ModellBelastungStart } from "./ModellBelastungRad";
+
+/** Ein Herstellermodell, wie das Formular es braucht -- Bild als URL, nie als Pfad. */
+export type ProduktVorlage = Pick<
+  CatalogProduct,
+  "id" | "manufacturer" | "series" | "name" | "modelCode" | "note" | "load" | "secondary"
+> & { fotoUrl: string | null };
 
 /**
  * Was das Modellformular vom Gymtavo-Typ braucht, um vorzubefuellen
@@ -25,9 +31,17 @@ export type TypVorlage = Pick<
 > & {
   /** Der Pfad bleibt auf dem Server; das Formular muss nur wissen, ob. */
   hatFoto: boolean;
+  /** Signiert auf dem Server (ladeTypVorlagen); Symbolbild der Modellkarten. */
+  fotoUrl: string | null;
+  produkte: ProduktVorlage[];
 };
 
-export function typVorlagen(typen: CatalogType[], kategorie?: Category): TypVorlage[] {
+export function typVorlagen(
+  typen: CatalogType[],
+  kategorie?: Category,
+  fotoUrls: Record<string, string> = {},
+): TypVorlage[] {
+  const url = (pfad: string | null) => (pfad ? (fotoUrls[pfad] ?? null) : null);
   return typen
     .filter((typ) => kategorie === undefined || typ.category === kategorie)
     .map((typ) => ({
@@ -44,6 +58,18 @@ export function typVorlagen(typen: CatalogType[], kategorie?: Category): TypVorl
       secondaryMin: typ.secondaryMin,
       secondaryMax: typ.secondaryMax,
       hatFoto: typ.photoPath !== null,
+      fotoUrl: url(typ.photoPath),
+      produkte: typ.products.map((p) => ({
+        id: p.id,
+        manufacturer: p.manufacturer,
+        series: p.series,
+        name: p.name,
+        modelCode: p.modelCode,
+        note: p.note,
+        load: p.load,
+        secondary: p.secondary,
+        fotoUrl: url(p.photoPath),
+      })),
     }));
 }
 
@@ -59,20 +85,4 @@ export function belastungStart(typ: TypVorlage): ModellBelastungStart {
     secondaryMax: typ.secondaryMax,
     secondaryStep: typ.secondaryStep,
   };
-}
-
-/**
- * Der Typname ist ein Vorschlag, kein Ueberschreiben: was der Trainer
- * selbst getippt hat, bleibt. Erkannt wird der Vorschlag daran, dass der
- * Name noch genau der des vorigen Typs ist.
- */
-export function nameNachTypwahl(
-  aktuell: string,
-  vorigerTyp: TypVorlage | null,
-  neuerTyp: TypVorlage | null,
-): string {
-  if (!neuerTyp) return aktuell;
-  const leer = aktuell.trim().length === 0;
-  const vomTyp = vorigerTyp !== null && aktuell === vorigerTyp.name;
-  return leer || vomTyp ? neuerTyp.name : aktuell;
 }

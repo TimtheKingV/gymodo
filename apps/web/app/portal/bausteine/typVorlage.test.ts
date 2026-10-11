@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CatalogType } from "@fitretro/domain";
-import { belastungStart, nameNachTypwahl, typVorlagen, type TypVorlage } from "./typVorlage";
+import { belastungStart, typVorlagen } from "./typVorlage";
 
 const basis: CatalogType = {
   id: "t1", name: "Brustpresse", manufacturer: null, category: "kraft",
@@ -17,6 +17,12 @@ const laufband: CatalogType = {
   photoPath: null, exercises: [],
 };
 
+const typMitProdukt: CatalogType = {
+  ...basis,
+  photoPath: "gymtavo/t1.png",
+  products: [{ id: "p1", key: "k", manufacturer: "gym80", series: null, name: "Brustpresse", modelCode: null, note: null, load: null, secondary: null, photoPath: "gymtavo/p1.png" }],
+};
+
 describe("typVorlagen", () => {
   it("laesst Uebungen und Pfad weg und merkt nur, ob es ein Foto gibt", () => {
     const [vorlage] = typVorlagen([basis]);
@@ -24,8 +30,17 @@ describe("typVorlagen", () => {
       id: "t1", name: "Brustpresse", manufacturer: null, category: "kraft",
       loadUnit: "kg", loadStep: 1, loadMin: 0, loadMax: null,
       secondaryUnit: null, secondaryStep: null, secondaryMin: null, secondaryMax: null,
-      hatFoto: true,
+      hatFoto: true, fotoUrl: null, produkte: [],
     });
+  });
+
+  it("haengt signierte Bild-URLs an Typ und Produkt, ohne Pfade herauszugeben", () => {
+    const [vorlage] = typVorlagen([typMitProdukt], undefined, { "gymtavo/t1.png": "https://bild/t1", "gymtavo/p1.png": "https://bild/p1" });
+    expect(vorlage).toMatchObject({ hatFoto: true, fotoUrl: "https://bild/t1" });
+    expect(vorlage!.produkte).toEqual([
+      { id: "p1", manufacturer: "gym80", series: null, name: "Brustpresse", modelCode: null, note: null, load: null, secondary: null, fotoUrl: "https://bild/p1" },
+    ]);
+    expect(JSON.stringify(vorlage)).not.toContain("gymtavo/");
   });
 
   it("filtert nach Kategorie, wenn eine vorgegeben ist", () => {
@@ -47,27 +62,5 @@ describe("belastungStart", () => {
       category: "cardio", loadUnit: "kmh", loadMin: 0, loadMax: null, loadStep: 0.1,
       secondaryUnit: "pct", secondaryMin: 0, secondaryMax: 15, secondaryStep: 0.5,
     });
-  });
-});
-
-describe("nameNachTypwahl", () => {
-  const [brust, band] = typVorlagen([basis, laufband]) as [TypVorlage, TypVorlage];
-
-  it("ein leerer Name bekommt den Typnamen", () => {
-    expect(nameNachTypwahl("", null, brust)).toBe("Brustpresse");
-    expect(nameNachTypwahl("   ", null, brust)).toBe("Brustpresse");
-  });
-
-  it("ein vom vorigen Typ gesetzter Name folgt dem neuen Typ", () => {
-    expect(nameNachTypwahl("Brustpresse", brust, band)).toBe("Laufband");
-  });
-
-  it("ein selbst getippter Name bleibt", () => {
-    expect(nameNachTypwahl("Brustpresse links", brust, band)).toBe("Brustpresse links");
-    expect(nameNachTypwahl("Kabelturm", null, brust)).toBe("Kabelturm");
-  });
-
-  it("ohne neuen Typ bleibt der Name", () => {
-    expect(nameNachTypwahl("Brustpresse", brust, null)).toBe("Brustpresse");
   });
 });
