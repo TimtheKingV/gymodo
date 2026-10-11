@@ -7,6 +7,7 @@ const basis: CatalogType = {
   loadUnit: "kg", loadStep: 1, loadMin: 0, loadMax: null,
   secondaryUnit: null, secondaryStep: null, secondaryMin: null, secondaryMax: null,
   photoPath: "gymtavo/catalog/photos/chest_press-abcd1234.png",
+  products: [],
   exercises: [{ exerciseId: "u1", name: "Brustpresse neutral", description: "lang", volumeKind: "reps",
     targetMin: 8, targetMax: 12, sortOrder: 1, videoStoragePath: null, videoDurationS: null }],
 };

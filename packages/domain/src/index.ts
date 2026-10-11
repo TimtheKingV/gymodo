@@ -60,7 +60,7 @@ export {
   signMediaUrls,
   uploadEquipmentPhoto,
 } from "./media-store.js";
-export { copyTypeDefaults } from "./typ-vorlage.js";
+export { copyCatalogDefaults } from "./typ-vorlage.js";
 export { getStudioSettings, requireStudioStaff, updateStudioSettings } from "./studio.js";
 export type { StudioSettings, StudioSettingsInput } from "./studio.js";
 export {
@@ -96,6 +96,7 @@ export type {
   CatalogSettingDefinition,
   CatalogShipment,
   CatalogTag,
+  CatalogProduct,
   CatalogType,
   CatalogTypeExercise,
   EquipmentModelInput,

@@ -12,18 +12,24 @@ import { requireStudioStaff } from "./studio.js";
  * Studio-Geraet eigene Stufen und eine eigene Historie hat und
  * Katalogkorrekturen laufende Geraete nicht still aendern sollen. Die
  * Belastung kommt nicht von hier -- sie stand im Formular, der Trainer hat
- * sie gesehen.
+ * sie gesehen. Das Foto kommt vom Herstellermodell, wenn es eines mit
+ * geklaerten Rechten gibt, sonst vom Typ (Spec 6.4, G5).
  */
-export async function copyTypeDefaults(
+export async function copyCatalogDefaults(
   client: SupabaseClient,
   equipmentModelId: string,
 ): Promise<{ settingsCopied: number; photoCopied: boolean }> {
   const userId = await requireUserId(client);
   const { data: modell } = await client
     .from("equipment_models")
-    .select("studio_id, photo_path, catalog_model_id")
+    .select("studio_id, photo_path, catalog_model_id, catalog_product_id")
     .eq("id", equipmentModelId)
-    .maybeSingle<{ studio_id: string; photo_path: string | null; catalog_model_id: string | null }>();
+    .maybeSingle<{
+      studio_id: string;
+      photo_path: string | null;
+      catalog_model_id: string | null;
+      catalog_product_id: string | null;
+    }>();
   if (!modell) throw new DomainError("not_found", "Dieses Geraetemodell gibt es nicht.");
   await requireStudioStaff(client, modell.studio_id, userId);
   // Im Gymtavo-Studio verbietet der Trigger aus 0047 eine Zuordnung --
@@ -39,7 +45,7 @@ export async function copyTypeDefaults(
   // die Einstellungen sollen dann trotzdem da sein.
   const photoCopied = modell.photo_path
     ? false
-    : await fotoKopieren(client, modell.catalog_model_id, equipmentModelId);
+    : await fotoKopieren(client, await vorlageFoto(client, modell.catalog_model_id, modell.catalog_product_id), equipmentModelId);
   return { settingsCopied, photoCopied };
 }
 
@@ -84,21 +90,29 @@ async function einstellungenKopieren(
   return neu.length;
 }
 
-async function fotoKopieren(
-  client: SupabaseClient,
-  typId: string,
-  modelId: string,
-): Promise<boolean> {
+/** Produktfoto vor Typillustration (G5). Ein offenes Produktfoto hat keinen Pfad (0050). */
+async function vorlageFoto(client: SupabaseClient, typId: string, produktId: string | null): Promise<string | null> {
+  if (produktId) {
+    const { data: produkt } = await client
+      .from("catalog_products")
+      .select("photo_path, photo_rights")
+      .eq("id", produktId)
+      .maybeSingle<{ photo_path: string | null; photo_rights: string }>();
+    if (produkt?.photo_path && produkt.photo_rights === "cleared") return produkt.photo_path;
+  }
   const { data: typ } = await client
     .from("equipment_models")
     .select("photo_path")
     .eq("id", typId)
     .maybeSingle<{ photo_path: string | null }>();
-  if (!typ?.photo_path) return false;
+  return typ?.photo_path ?? null;
+}
 
-  const { data: datei, error } = await client.storage.from(PHOTO_BUCKET).download(typ.photo_path);
+async function fotoKopieren(client: SupabaseClient, pfad: string | null, modelId: string): Promise<boolean> {
+  if (!pfad) return false;
+  const { data: datei, error } = await client.storage.from(PHOTO_BUCKET).download(pfad);
   if (error || !datei) {
-    throw new DomainError("internal", "Das Foto des Gymtavo-Typs liess sich nicht laden.");
+    throw new DomainError("internal", "Das Vorlagefoto aus dem Gymtavo-Katalog liess sich nicht laden.");
   }
   // Eigene Datei im Studioordner statt Pfad in den Gymtavo-Ordner (G5):
   // uploadEquipmentPhoto loescht beim Ersetzen das bisherige Objekt, und

@@ -5,7 +5,7 @@ import {
   DomainError,
   attachExerciseToModel,
   catalogTypeRequired,
-  copyTypeDefaults,
+  copyCatalogDefaults,
   createEquipmentModel,
   createExercise,
   createMachine,
@@ -132,7 +132,7 @@ export async function modellAnlegen(
     }
   }
 
-  // Nach dem eigenen Foto: copyTypeDefaults laesst ein vorhandenes Foto
+  // Nach dem eigenen Foto: copyCatalogDefaults laesst ein vorhandenes Foto
   // stehen und nimmt die Zeichnung nur, wenn keins da ist.
   await typVorlageKopieren(client, modelId);
 
@@ -146,7 +146,7 @@ async function typVorlageKopieren(
   modelId: string,
 ): Promise<void> {
   try {
-    await copyTypeDefaults(client, modelId);
+    await copyCatalogDefaults(client, modelId);
   } catch (fehler) {
     console.error("Typvorlage nicht vollstaendig kopiert:", fehler);
   }

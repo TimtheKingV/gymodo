@@ -29,7 +29,7 @@ import portalStyles from "../../../../portal.module.css";
  *
  * Ohne eigenes Foto geht es nur weiter, wenn der Gymtavo-Typ eine Zeichnung
  * hat (Spec 2026-10-10-gymtavo-katalog-geraeteeinrichtung-design.md, 5.2);
- * die kopiert copyTypeDefaults nach dem Anlegen.
+ * die kopiert copyCatalogDefaults nach dem Anlegen.
  */
 export function ModellNeuFormular({
   studioId,

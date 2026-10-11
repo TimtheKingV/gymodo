@@ -9,7 +9,7 @@ import {
   attachExerciseToModel,
   catalogTypeRequired,
   confirmInstructionVideo,
-  copyTypeDefaults,
+  copyCatalogDefaults,
   createEquipmentModel,
   createExercise,
   createMachine,
@@ -160,7 +160,7 @@ export async function modellAnlegen(
     return fehlerAus(fehler);
   }
   try {
-    await copyTypeDefaults(client, modelId);
+    await copyCatalogDefaults(client, modelId);
   } catch (fehler) {
     // Das Modell steht; was fehlt, zeigen die naechsten Schritte (Foto,
     // Einstellungen). Ein Abbruch hier liesse den Trainer vor einem
