@@ -110,18 +110,18 @@
       "was": "Gewichtsstapel, nur letzte Wiederholung abgesetzt",
       "befestigung": "Wasserflasche frei geführt",
       "befestigungsart": "stapel",
-      "repsWahr": 9,
+      "repsWahr": null,
       "weightKgWahr": 20,
       "fuerZaehler": false,
-      "grund": "Label 2,5 kg × 8, laut Notiz 20 kg × 9; frei geführt statt auf Stangen"
+      "grund": "Wiederholungen unbekannt: Label 8, Notiz 9, Signal zeigt 8 Wellen, Tim weiß es nicht mehr (2026-10-11); frei geführt statt auf Stangen"
     },
     "2026-10-08-0846-01": {
       "was": "Gewichtsstapel, nach jeder Wiederholung abgesetzt",
       "befestigung": "Wasserflasche frei geführt, auf der Tischplatte abgesetzt",
       "befestigungsart": "stapel",
-      "repsWahr": 10,
+      "repsWahr": null,
       "fuerZaehler": false,
-      "grund": "Label 8, laut Notiz 10; frei geführt statt auf Stangen"
+      "grund": "Wiederholungen unbekannt: Label 8, Notiz 10, Signal zeigt 8 Wellen, Tim weiß es nicht mehr (2026-10-11); frei geführt statt auf Stangen"
     },
     "2026-10-08-0846-02": {
       "was": "Kurzhantel Curls, gerade, links",
