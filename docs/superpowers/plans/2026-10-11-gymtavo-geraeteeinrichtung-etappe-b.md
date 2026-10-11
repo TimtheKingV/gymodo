@@ -102,7 +102,7 @@
   - Spalte `equipment_models.catalog_product_id`, FK-Name `equipment_models_catalog_product_id_fkey`.
   - Fehlertexte `gymtavo_produkttyp_ungueltig` und `gymtavo_herkunft_ungueltig`.
 
-- [ ] **Step 1: Failing test schreiben**
+- [x] **Step 1: Failing test schreiben**
 
 `tests/integration/katalog-produkte-db.test.ts`:
 
@@ -245,12 +245,12 @@ describe("RLS", () => {
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, er muss scheitern**
+- [x] **Step 2: Test laufen lassen, er muss scheitern**
 
 Run: `pnpm test:integration -- katalog-produkte-db`
 Expected: FAIL. Alle Fälle scheitern mit `relation "public.catalog_products" does not exist` bzw. `Could not find the table 'public.catalog_products'`.
 
-- [ ] **Step 3: Migration schreiben**
+- [x] **Step 3: Migration schreiben**
 
 `supabase/migrations/0050_catalog_products.sql`:
 
@@ -403,17 +403,17 @@ revoke all on public.catalog_product_types from anon;
 -- aus 0047 (is_catalog_studio) deckt den Pfad schon ab.
 ```
 
-- [ ] **Step 4: Migration lokal anwenden**
+- [x] **Step 4: Migration lokal anwenden**
 
 Run: `pnpm exec supabase migration up --local`
 Expected: `Applying migration 0050_catalog_products.sql...`, danach `Local database is up to date.` Kein `db reset`.
 
-- [ ] **Step 5: Test laufen lassen, er muss grün sein**
+- [x] **Step 5: Test laufen lassen, er muss grün sein**
 
 Run: `pnpm test:integration -- katalog-produkte-db`
 Expected: PASS, 9 Tests.
 
-- [ ] **Step 6: Spec auf 0050 korrigieren**
+- [x] **Step 6: Spec auf 0050 korrigieren**
 
 In `docs/superpowers/specs/2026-10-10-gymtavo-katalog-geraeteeinrichtung-design.md` jedes `0049` durch `0050` ersetzen (Überschrift 6.1 und Abschnitt 7). Unter die Überschrift 6.1 kommt die Zeile:
 
@@ -424,7 +424,7 @@ In `docs/superpowers/specs/2026-10-10-gymtavo-katalog-geraeteeinrichtung-design.
 Run: `grep -n "0049\|0050" docs/superpowers/specs/2026-10-10-gymtavo-katalog-geraeteeinrichtung-design.md`
 Expected: `0049` taucht nur noch im Hinweis auf.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add supabase/migrations/0050_catalog_products.sql tests/integration/katalog-produkte-db.test.ts docs/superpowers/specs/2026-10-10-gymtavo-katalog-geraeteeinrichtung-design.md
@@ -451,7 +451,7 @@ git log -1 --format=%B
     - `${p}gym80_pure_kraft_4345`: pending, ohne Foto, ohne Belastung, Typen `${p}brustpresse` und `${p}trizepsmaschine`.
     - `${p}precor_trm_885`: cleared, Foto `media/products/precor_trm_885.jpg`, Belastung kmh, Typ `${p}laufband`.
 
-- [ ] **Step 1: Failing tests schreiben**
+- [x] **Step 1: Failing tests schreiben**
 
 Am Ende von `packages/domain/src/katalog-datei.test.ts` anfügen (Import oben um `mitProdukten` ergänzen: `import { beispielKatalog, mitProdukten } from "./katalog-testdaten.js";`):
 
@@ -513,12 +513,12 @@ describe("pruefeKatalog products", () => {
 
 Die Reihenfolge der zod-Meldungen folgt der Feldreihenfolge im Schema (Step 3). Weicht sie ab, ist das Schema in der falschen Reihenfolge und wird angepasst, nicht der Test.
 
-- [ ] **Step 2: Tests laufen lassen, sie müssen scheitern**
+- [x] **Step 2: Tests laufen lassen, sie müssen scheitern**
 
 Run: `pnpm --filter @fitretro/domain test -- katalog-datei`
 Expected: FAIL. `mitProdukten` ist nicht exportiert (`SyntaxError`/`is not a function`).
 
-- [ ] **Step 3: Testdaten ergänzen**
+- [x] **Step 3: Testdaten ergänzen**
 
 Am Ende von `packages/domain/src/katalog-testdaten.ts`:
 
@@ -591,7 +591,7 @@ export function mitProdukten(beispiel: ReturnType<typeof beispielKatalog>, p = "
 }
 ```
 
-- [ ] **Step 4: Schema und Querprüfung ergänzen**
+- [x] **Step 4: Schema und Querprüfung ergänzen**
 
 In `packages/domain/src/katalog-datei.ts`:
 
@@ -682,12 +682,12 @@ und vor `return fehler;`:
   });
 ```
 
-- [ ] **Step 5: Tests laufen lassen, sie müssen grün sein**
+- [x] **Step 5: Tests laufen lassen, sie müssen grün sein**
 
 Run: `pnpm --filter @fitretro/domain test -- katalog-datei`
 Expected: PASS. Die bisherigen Tests bleiben grün, 4 neue kommen dazu.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/domain/src/katalog-datei.ts packages/domain/src/katalog-datei.test.ts packages/domain/src/katalog-testdaten.ts
@@ -711,7 +711,7 @@ git log -1 --format=%B
   - `Medien` = `{ fotos; videos; produktFotos: Map<string, Medium> }`. `produktFotos` enthält auch Fotos mit `pending`, denn geprüft wird jedes. Was davon hochgeladen wird, entscheidet der Plan.
   - `produktFotoPraefix(key: string): string` liefert `${GYMTAVO_STUDIO_ID}/catalog/products/${key}-`.
 
-- [ ] **Step 1: Failing tests schreiben**
+- [x] **Step 1: Failing tests schreiben**
 
 In `packages/domain/src/katalog-medien.test.ts` den Import um `produktFotoPraefix` und `mitProdukten` ergänzen und anfügen:
 
@@ -754,12 +754,12 @@ describe("pruefeMedien Produktfotos", () => {
 
 Benötigte Importe oben in der Datei: `pruefeKatalog` aus `./katalog-datei.js`; `pruefeMedien` und `produktFotoPraefix` aus `./katalog-medien.js`; `beispielKatalog`, `mitProdukten` und `mp4Bytes` aus `./katalog-testdaten.js`. Was schon importiert ist, nicht doppeln.
 
-- [ ] **Step 2: Tests laufen lassen, sie müssen scheitern**
+- [x] **Step 2: Tests laufen lassen, sie müssen scheitern**
 
 Run: `pnpm --filter @fitretro/domain test -- katalog-medien`
 Expected: FAIL. `produktFotoPraefix is not a function` bzw. `produktFotos` ist `undefined`.
 
-- [ ] **Step 3: Implementieren**
+- [x] **Step 3: Implementieren**
 
 In `packages/domain/src/katalog-medien.ts`:
 
@@ -823,12 +823,12 @@ und das Ergebnis:
   return fehler.length > 0 ? { ok: false, fehler } : { ok: true, wert: { fotos, videos, produktFotos } };
 ```
 
-- [ ] **Step 4: Tests laufen lassen, sie müssen grün sein**
+- [x] **Step 4: Tests laufen lassen, sie müssen grün sein**
 
 Run: `pnpm --filter @fitretro/domain test -- katalog-medien katalog-laden`
 Expected: PASS, auch die bestehenden Fälle.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/domain/src/katalog-medien.ts packages/domain/src/katalog-medien.test.ts
@@ -855,7 +855,7 @@ git log -1 --format=%B
   - `gemeldet` bekommt zusätzlich `produkte: string[]`, `produktTypen: string[]`, `zurueckgehalteneFotos: string[]` und `entzogeneFotos: string[]`.
   - Der Schlüssel einer Verknüpfung lautet `"<produkt> > <typ>"`.
 
-- [ ] **Step 1: Failing tests schreiben**
+- [x] **Step 1: Failing tests schreiben**
 
 In `packages/domain/src/katalog-plan.test.ts`:
 
@@ -943,12 +943,12 @@ describe("planeImport Produkte", () => {
 });
 ```
 
-- [ ] **Step 2: Tests laufen lassen, sie müssen scheitern**
+- [x] **Step 2: Tests laufen lassen, sie müssen scheitern**
 
 Run: `pnpm --filter @fitretro/domain test -- katalog-plan`
 Expected: FAIL. `plan.produkte` ist `undefined`; die Typprüfung von `LEER` meckert erst bei `pnpm typecheck`.
 
-- [ ] **Step 3: Implementieren**
+- [x] **Step 3: Implementieren**
 
 In `packages/domain/src/katalog-plan.ts`:
 
@@ -1114,12 +1114,12 @@ und nach dem letzten `melden(…)`:
   melden("Produktfoto nach Rechteentzug entfernt, Objekt bleibt liegen", plan.gemeldet.entzogeneFotos);
 ```
 
-- [ ] **Step 4: Tests und Typprüfung laufen lassen**
+- [x] **Step 4: Tests und Typprüfung laufen lassen**
 
 Run: `pnpm --filter @fitretro/domain test -- katalog-plan && pnpm --filter @fitretro/domain typecheck`
 Expected: PASS. Meldet `typecheck` `katalog-import.ts` (fehlende `produkte` im `IstStand`), wird das in Task 5 behoben. Dann reicht hier der Unit-Lauf. Die Meldung steht im Ledger als erwartete Lücke bis Task 5.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/domain/src/katalog-plan.ts packages/domain/src/katalog-plan.test.ts
@@ -1142,7 +1142,7 @@ git log -1 --format=%B
 - Consumes: `ImportPlan.produkte`, `ImportPlan.produktTypen`, `IstStand.produkte` und `IstStand.produktTypen` (Task 4).
 - Produces: `Geschrieben` bekommt zusätzlich `produkte: number` und `produktTypen: number`.
 
-- [ ] **Step 1: Failing tests schreiben**
+- [x] **Step 1: Failing tests schreiben**
 
 In `tests/integration/katalog-import.test.ts`:
 
@@ -1221,12 +1221,12 @@ describe("Katalogimport Produkte", () => {
 });
 ```
 
-- [ ] **Step 2: Tests laufen lassen, sie müssen scheitern**
+- [x] **Step 2: Tests laufen lassen, sie müssen scheitern**
 
 Run: `pnpm test:integration -- katalog-import`
 Expected: FAIL. Die alten Fälle scheitern an den fehlenden `produkte`/`produktTypen` in `geschrieben`, die neuen an `geschrieben.produkte` `undefined`.
 
-- [ ] **Step 3: Implementieren**
+- [x] **Step 3: Implementieren**
 
 In `packages/domain/src/katalog-import.ts`:
 
@@ -1293,12 +1293,12 @@ und im Rückgabeobjekt `produkte: produkte.length, produktTypen: produktTypen.le
 
 (e) `scripts/catalog-import.ts`: die Ausgabezeile ergänzen um `, ${geschrieben.produkte} Produkte, ${geschrieben.produktTypen} Produkt-Typen` vor dem abschließenden Punkt.
 
-- [ ] **Step 4: Tests und Typprüfung laufen lassen**
+- [x] **Step 4: Tests und Typprüfung laufen lassen**
 
 Run: `pnpm --filter @fitretro/domain typecheck && pnpm test:integration -- katalog-import katalog-key`
 Expected: PASS. Bestehende und neue Fälle sind grün.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/domain/src/katalog-import.ts scripts/catalog-import.ts tests/integration/katalog-import.test.ts
@@ -1330,7 +1330,7 @@ git log -1 --format=%B
   - `EquipmentModelInput.catalogProductId?: string | null`.
   - `copyCatalogDefaults(client, equipmentModelId): Promise<{ settingsCopied: number; photoCopied: boolean }>` ersetzt `copyTypeDefaults`.
 
-- [ ] **Step 1: Failing test schreiben**
+- [x] **Step 1: Failing test schreiben**
 
 `tests/integration/domain-katalog-produkte.test.ts`:
 
@@ -1500,12 +1500,12 @@ describe("copyCatalogDefaults", () => {
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, er muss scheitern**
+- [x] **Step 2: Test laufen lassen, er muss scheitern**
 
 Run: `pnpm test:integration -- domain-katalog-produkte`
 Expected: FAIL. `copyCatalogDefaults` ist kein Export (`is not a function`), und `products` ist `undefined`.
 
-- [ ] **Step 3: `catalog.ts` erweitern**
+- [x] **Step 3: `catalog.ts` erweitern**
 
 (a) In `equipmentModelInputSchema` nach `catalogModelId`:
 
@@ -1683,7 +1683,7 @@ Im Mapping nach `photoPath: row.photo_path,`:
     products: row.catalog_product_types.map((link) => produktAus(link.catalog_products)).sort(produktReihenfolge),
 ```
 
-- [ ] **Step 4: `copyCatalogDefaults`**
+- [x] **Step 4: `copyCatalogDefaults`**
 
 In `packages/domain/src/typ-vorlage.ts`:
 - Die Funktion `copyTypeDefaults` in `copyCatalogDefaults` umbenennen.
@@ -1736,7 +1736,7 @@ async function fotoKopieren(client: SupabaseClient, pfad: string | null, modelId
 }
 ```
 
-- [ ] **Step 5: Umbenennung nachziehen**
+- [x] **Step 5: Umbenennung nachziehen**
 
 Run:
 
@@ -1747,7 +1747,7 @@ grep -rn "copyTypeDefaults" packages tests apps/web/app e2e
 
 Expected: keine Treffer mehr. `index.ts` exportiert `copyCatalogDefaults`. Zusätzlich `export type CatalogProduct` in `index.ts` ergänzen, wo `CatalogType` exportiert wird.
 
-- [ ] **Step 6: Fixtures nachziehen und Typprüfung**
+- [x] **Step 6: Fixtures nachziehen und Typprüfung**
 
 Run: `pnpm typecheck`
 Expected: Fehler nur in Testfixtures, denen `products` (bei `CatalogType`) oder `catalogProduct` (bei `CatalogModel`) fehlt. Bekannte Kandidaten:
@@ -1757,12 +1757,12 @@ Expected: Fehler nur in Testfixtures, denen `products` (bei `CatalogType`) oder 
 
 Jedem gemeldeten Objekt `products: []` bzw. `catalogProduct: null` hinzufügen und neu prüfen, bis `pnpm typecheck` grün ist.
 
-- [ ] **Step 7: Tests laufen lassen**
+- [x] **Step 7: Tests laufen lassen**
 
 Run: `pnpm test:integration -- domain-katalog-produkte domain-typ-vorlage domain-catalog && pnpm test`
 Expected: PASS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add packages/domain/src tests/integration/domain-katalog-produkte.test.ts tests/integration/domain-typ-vorlage.test.ts apps/web/app
@@ -1797,7 +1797,7 @@ git log -1 --format=%B
     - `nameNachVorschlag(aktuell, voriger: string | null, neuer: string | null): string`
   - `nameNachTypwahl` entfällt und wird durch `nameNachVorschlag` ersetzt.
 
-- [ ] **Step 1: Failing tests schreiben**
+- [x] **Step 1: Failing tests schreiben**
 
 `apps/web/app/portal/bausteine/herstellerWahl.test.ts`:
 
@@ -1910,12 +1910,12 @@ In `typVorlage.test.ts`:
 
 `typMitProdukt` ist der so erweiterte Fixture. Gibt es in der Datei schon einen `CatalogType`-Fixture, wird dieser erweitert, statt einen zweiten anzulegen.
 
-- [ ] **Step 2: Tests laufen lassen, sie müssen scheitern**
+- [x] **Step 2: Tests laufen lassen, sie müssen scheitern**
 
 Run: `pnpm --filter @fitretro/web test -- herstellerWahl typVorlage`
 Expected: FAIL. `./herstellerWahl` existiert nicht.
 
-- [ ] **Step 3: `typVorlage.ts` erweitern**
+- [x] **Step 3: `typVorlage.ts` erweitern**
 
 - `nameNachTypwahl` samt Kommentar löschen.
 - Den Import `import type { CatalogProduct, CatalogType } from "@fitretro/domain";` ergänzen.
@@ -1969,7 +1969,7 @@ export function typVorlagen(
 
 („bisherige Felder unveraendert“ heißt: `id` bis `secondaryMax` wie heute ausschreiben.)
 
-- [ ] **Step 4: `herstellerWahl.ts` schreiben**
+- [x] **Step 4: `herstellerWahl.ts` schreiben**
 
 ```ts
 import type { AuswahlOption } from "./Auswahl";
@@ -2046,12 +2046,12 @@ export function nameNachVorschlag(aktuell: string, voriger: string | null, neuer
 }
 ```
 
-- [ ] **Step 5: Tests laufen lassen, sie müssen grün sein**
+- [x] **Step 5: Tests laufen lassen, sie müssen grün sein**
 
 Run: `pnpm --filter @fitretro/web test -- herstellerWahl typVorlage`
 Expected: PASS. `pnpm typecheck` darf noch in `ModellVorlageFelder.tsx` (Import von `nameNachTypwahl`) und in den Fixtures von `ModellVorlageFelder.test.tsx` (fehlende `fotoUrl`/`produkte`) scheitern; das behebt Task 8.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/app/portal/bausteine/typVorlage.ts apps/web/app/portal/bausteine/typVorlage.test.ts apps/web/app/portal/bausteine/herstellerWahl.ts apps/web/app/portal/bausteine/herstellerWahl.test.ts
@@ -2077,7 +2077,7 @@ git log -1 --format=%B
   - `export type VorlageWahl = { typ: TypVorlage | null; produkt: ProduktVorlage | null }`.
   - Formularfelder: `name`, `manufacturer` (Textfeld oder verstecktes Feld), `catalogModelId` (aus `GymtavoTypFeld`), `catalogProductId` (versteckt, nur bei gewähltem Produkt) und die Felder des Belastungsrads.
 
-- [ ] **Step 1: Failing tests schreiben**
+- [x] **Step 1: Failing tests schreiben**
 
 In `ModellVorlageFelder.test.tsx`:
 
@@ -2168,12 +2168,12 @@ describe("ModellVorlageFelder Herstellermodelle", () => {
 
 `feldwert` liest `input[name=…]`, also auch versteckte Felder. Bei zwei Feldern gleichen Namens nimmt `querySelector` das erste. Die Komponente rendert deshalb nie zwei `manufacturer`-Felder gleichzeitig.
 
-- [ ] **Step 2: Tests laufen lassen, sie müssen scheitern**
+- [x] **Step 2: Tests laufen lassen, sie müssen scheitern**
 
 Run: `pnpm --filter @fitretro/web test -- ModellVorlageFelder`
 Expected: FAIL. Der Knopf „Hersteller“ fehlt, die Radios fehlen, `onVorlage` wird nicht aufgerufen.
 
-- [ ] **Step 3: CSS schreiben**
+- [x] **Step 3: CSS schreiben**
 
 `apps/web/app/portal/bausteine/ModellVorlageFelder.module.css`:
 
@@ -2234,7 +2234,7 @@ Expected: FAIL. Der Knopf „Hersteller“ fehlt, die Radios fehlen, `onVorlage`
 
 Die Variablen (`--line`, `--accent`, `--well`, `--text-muted`, `--r-card`, `--r-control`) sind dieselben wie in `portal.module.css`.
 
-- [ ] **Step 4: Komponente umbauen**
+- [x] **Step 4: Komponente umbauen**
 
 `apps/web/app/portal/bausteine/ModellVorlageFelder.tsx` vollständig:
 
@@ -2421,12 +2421,12 @@ export function ModellVorlageFelder({
 }
 ```
 
-- [ ] **Step 5: Tests laufen lassen, sie müssen grün sein**
+- [x] **Step 5: Tests laufen lassen, sie müssen grün sein**
 
 Run: `pnpm --filter @fitretro/web test -- ModellVorlageFelder herstellerWahl typVorlage`
 Expected: PASS. Die Tests aus Etappe A bleiben grün: Vorbefüllen, Typwechsel, getippter Name, Halle mit Kategorie.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/app/portal/bausteine/ModellVorlageFelder.tsx apps/web/app/portal/bausteine/ModellVorlageFelder.module.css apps/web/app/portal/bausteine/ModellVorlageFelder.test.tsx
@@ -2458,7 +2458,7 @@ git log -1 --format=%B
   - `ladeTypVorlagen(kategorie?: Category): Promise<TypVorlage[]>` (React `cache`).
   - E2E-Helfer `herstellerProdukt(admin, typId, werte?)` liefert `{ produktId, key }`.
 
-- [ ] **Step 1: Failing E2E-Tests schreiben**
+- [x] **Step 1: Failing E2E-Tests schreiben**
 
 (a) `e2e/helpers/gymtavo.ts` am Ende:
 
@@ -2608,12 +2608,12 @@ test("Halle: ein Herstellermodell mit geklaertem Foto ersetzt das eigene Foto", 
 
 Heißen `studioMitTrainer` und die Imports in `einrichten.spec.ts` anders, werden sie von dort übernommen. Die Prüfungen bleiben, wie sie hier stehen.
 
-- [ ] **Step 2: E2E laufen lassen, sie müssen scheitern**
+- [x] **Step 2: E2E laufen lassen, sie müssen scheitern**
 
 Run: `pnpm test:e2e -- gymtavo.spec.ts einrichten.spec.ts`
 Expected: FAIL. Die vier neuen Tests finden den Knopf „Hersteller“ nicht, weil die Seiten die Produkte noch nicht laden; die alten Tests bleiben grün. Bei einem Lauf gegen einen wiederverwendeten Dev-Server: erst die Fallen aus der Memory „Lokale Testumgebung“ prüfen.
 
-- [ ] **Step 3: `ladeTypVorlagen`**
+- [x] **Step 3: `ladeTypVorlagen`**
 
 In `apps/web/app/portal/[studioId]/catalog.ts` die Importe ergänzen (`type Category` aus `@fitretro/domain/belastung`, `typVorlagen` und `type TypVorlage` aus `../bausteine/typVorlage`) und nach `ladeTypen` anfügen:
 
@@ -2635,7 +2635,7 @@ export const ladeTypVorlagen = cache(async (kategorie?: Category): Promise<TypVo
 });
 ```
 
-- [ ] **Step 4: Schreibtisch verdrahten**
+- [x] **Step 4: Schreibtisch verdrahten**
 
 - `geraete/neu/page.tsx`: Die Prop `typen={typVorlagen(await listCatalogTypes(...), …)}` wird zu `typen={katalog.isCatalog ? [] : await ladeTypVorlagen(kategorie === "cardio" ? "cardio" : "kraft")}`. `katalog` kommt aus `await ladeKatalog(studioId)` (cache, die Rail laedt ihn ohnehin). Im Gymtavo-Studio zeigt das Portal weder Typen noch Produkte (Spec 6.5); der Trigger aus 0047 verbietet dort eine Typzuordnung ohnehin, das Feld führte bisher nur in einen Fehler. Die nicht mehr gebrauchten Importe (`listCatalogTypes`, `typVorlagen`, gegebenenfalls `createServerSupabaseClient`) entfernen und `ladeTypVorlagen` aus `../../../catalog` importieren.
 - `apps/web/app/portal/actions.ts`, `modellAnlegen`: im Aufruf von `createEquipmentModel` nach `catalogModelId: typ.catalogModelId,` ergänzen:
@@ -2659,7 +2659,7 @@ export const ladeTypVorlagen = cache(async (kategorie?: Category): Promise<TypVo
 
 `[modelId]/page.tsx` reicht `modell` schon ganz durch, dort ändert sich nichts.
 
-- [ ] **Step 5: Halle verdrahten**
+- [x] **Step 5: Halle verdrahten**
 
 - `einrichten/modell/neu/page.tsx`: `ladeTypen` und `typVorlagen` durch `ladeTypVorlagen` ersetzen: `const katalog = await ladeKatalog(studioId);`, `const typen = katalog.isCatalog ? [] : await ladeTypVorlagen();` und `typen={typen}`. Grund wie am Schreibtisch.
 - `ModellNeuFormular.tsx`:
@@ -2708,12 +2708,12 @@ async function vorlageHatFoto(
 
   `vorlageHatFoto` liest das Produkt am Typ. Ein Produkt, das nicht zum Typ passt, bringt deshalb kein Foto mit, und `createEquipmentModel` lehnt es ohnehin ab (P1).
 
-- [ ] **Step 6: Typprüfung und Unit-Tests**
+- [x] **Step 6: Typprüfung und Unit-Tests**
 
 Run: `pnpm typecheck && pnpm test`
 Expected: PASS.
 
-- [ ] **Step 7: E2E gegen den Produktionsbau**
+- [x] **Step 7: E2E gegen den Produktionsbau**
 
 Run, wie in der Memory „Lokale Testumgebung“ beschrieben:
 
@@ -2726,7 +2726,7 @@ pnpm test:e2e -- gymtavo.spec.ts einrichten.spec.ts
 
 Expected: PASS, auch die Tests aus Etappe A. Danach den Server beenden (`pkill -f next-server`) und `apps/web/AGENTS.md` sowie `apps/web/CLAUDE.md` löschen, falls der Build sie angelegt hat.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add apps/web/app e2e
@@ -2746,7 +2746,7 @@ git log -1 --format=%B
 
 Das Paket gilt als nicht vertrauenswürdige Datenquelle. Das Skript liegt in einem eigenen Ordner im Scratchpad, läuft mit `python3 -I` und bekommt die Pfade als Argumente. Nichts aus dem Paket wird ausgeführt. Die Herstellerfotos kommen nicht ins Repo (Spec 6.3).
 
-- [ ] **Step 1: Konverter schreiben**
+- [x] **Step 1: Konverter schreiben**
 
 `<scratchpad>/konverter-produkte/produkte_konverter.py`:
 
@@ -2817,7 +2817,7 @@ if __name__ == "__main__":
     main(sys.argv[1], sys.argv[2])
 ```
 
-- [ ] **Step 2: Konverter ausführen**
+- [x] **Step 2: Konverter ausführen**
 
 Run:
 
@@ -2830,7 +2830,7 @@ Expected:
 - `114 Produkte geschrieben, 5 ausgelassen:`. Die fünf Ausgelassenen zeigen auf `flat_bench`, `adjustable_bench`, `decline_bench`, `preacher_bench` oder `upright_bench`.
 - `git diff` zeigt nur hinzugefügte Zeilen am Dateiende (`products`). Ändern sich andere Zeilen, stimmt die Formatierung nicht (Einrückung, `ensure_ascii`). Dann den Diff ansehen und den Konverter anpassen.
 
-- [ ] **Step 3: Datei prüfen und lokal importieren**
+- [x] **Step 3: Datei prüfen und lokal importieren**
 
 Run:
 
@@ -2853,7 +2853,7 @@ pnpm catalog:import --dry-run | grep -E "^Produkt"
 
 Expected: Der erste Lauf meldet `… 114 Produkte, 130 Produkt-Typen.` Der zweite Trockenlauf meldet `Produkte: 0 neu, 0 geaendert, 114 unveraendert`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add catalog/gymtavo.json
@@ -2873,7 +2873,7 @@ git log -1 --format=%B
 **Files:**
 - Modify: `docs/superpowers/plans/2026-10-11-gymtavo-geraeteeinrichtung-etappe-b.md` (Abschnitt „Ergebnis“, Häkchen)
 
-- [ ] **Step 1: Voller Testsatz**
+- [x] **Step 1: Voller Testsatz**
 
 Run:
 
@@ -2888,7 +2888,7 @@ Expected:
 - Integration grün bis auf bekannte Umgebungsfehler (`completeSession`, Uhrversatz). Jeder rote Test wird benannt und gegen `master` geprüft.
 - E2E grün bis auf vorbestehende Timingfälle, die ebenfalls benannt werden.
 
-- [ ] **Step 2: Sichtprobe im Browser**
+- [x] **Step 2: Sichtprobe im Browser**
 
 Gegen den Produktionsbau mit dem echten lokalen Katalog:
 - Schreibtisch, „Gerät hinzufügen“, Kraft, Typ „Brustpresse“ (`chest_press`): Herstellerliste mit Anzahlen, Modellkarten mit „Symbolbild“, Name nach Modellwahl, Notiz über dem Rad.
@@ -2897,7 +2897,7 @@ Gegen den Produktionsbau mit dem echten lokalen Katalog:
 
 Screenshots in den Scratchpad, nicht ins Repo.
 
-- [ ] **Step 3: Ergebnis eintragen und committen**
+- [x] **Step 3: Ergebnis eintragen und committen**
 
 Am Planende einen Abschnitt `## Ergebnis` anlegen mit:
 - Testzahlen und benannten Umgebungsfehlern.
@@ -2914,3 +2914,30 @@ git commit -m "docs(plan): Etappe B der Geraeteeinrichtung umgesetzt
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 git log -1 --format=%B
 ```
+
+---
+
+## Ergebnis
+
+Umgesetzt am 11.10.2026 auf `claude/gymtavo-katalog-etappe-b`, je Task ein Commit (Task 1–10), dazu dieser Abschluss.
+
+**Tests (lokal, gegen das geteilte Supabase):**
+- `pnpm typecheck` grün, `pnpm test` 304 + 303 grün.
+- `pnpm test:integration` 812/812 grün.
+- `pnpm test:e2e` gegen den Produktionsbau 133/134. Rot ist nur `rail.spec.ts:128` („genau eine Akzentflaeche“). Der Fehler ist vorbestehend: Auf `master` @ `fa7c475` scheitert der Test im Produktionsbau ebenfalls 3/3.
+- Die Verdrahtung in Task 9 ist gezielt gegengeprüft: Ohne `catalogProductId` in den beiden Actions werden 2 E2E-Tests rot, mit `catalogProductId` sind alle 24 grün.
+
+**Erstbestand:** 114 Herstellermodelle mit 130 Typzuordnungen. Fünf Bank-Modelle sind ausgelassen, weil ihre Typen im Katalog fehlen (Spec 8). Lokal importiert; ein zweiter Trockenlauf meldet alles unverändert.
+
+**Entscheidungen beim Umsetzen:**
+- Integrationsfilter ohne `--` aufrufen, weil `pnpm test:integration -- x` die ganze Suite startet.
+- Im Testfixture von Task 6 steht `photo_rights` ausdrücklich, weil ein Sammel-Insert fehlende Schlüssel auf `null` setzt.
+- Die Modellkarte nutzt ein unsichtbares Radio über der ganzen Karte statt `pointer-events: none`, damit jeder direkte Klick das Radio trifft.
+- Es gibt keine eigene `isCatalog`-Weiche auf den Anlegeseiten: Beide enden im Gymtavo-Studio schon auf 404 (`nichtImKatalog`).
+
+**Sichtprobe:** Schreibtisch, Brustpresse → Life Fitness → Insignia Chest Press SS-CP. Sichtbar sind die Herstellerliste mit Anzahlen, die Karte mit „Symbolbild“, der Name vom Modell, die Paketnotiz über dem Rad und in den Stammdaten „Vorlage: Life Fitness Insignia Chest Press SS-CP“.
+
+**Für Produktion, erst nach dem Merge und auf Tims Wort:**
+1. Migration `0050_catalog_products.sql` anwenden.
+2. `pnpm catalog:import --dry-run` gegen Produktion. Erwartet: `Produkte: 114 neu`, `Produkt-Typen: 130 neu`, alles andere unverändert.
+3. `pnpm catalog:import --ja`.
