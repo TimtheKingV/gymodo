@@ -44,7 +44,7 @@ beforeAll(async () => {
 
   const { data: typRow, error: typError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: GYMTAVO, name: `Kabelzug ${kennung}`, load_step: 2.5, load_min: 2.5, equipment_group: "kabelzug" })
+    .insert({ studio_id: GYMTAVO, name: `Kabelzug ${kennung}`, load_step: 2.5, load_min: 2.5, equipment_group: "kabelzug", retired: true })
     .select("id")
     .single();
   if (typError) throw typError;
@@ -176,7 +176,9 @@ describe("getBootstrap -- Gymtavo-Katalog", () => {
 
   // Testnotiz 12.10., #1/#3: die App gruppiert nach equipmentGroup und
   // blendet abgeloeste Typen selbst aus -- der Server liefert sie weiter,
-  // damit alte Bloecke aufloesbar bleiben.
+  // damit alte Bloecke aufloesbar bleiben. Der Typ ist abgeloest angelegt:
+  // diese Suite raeumt nicht auf, und ein aktiver Rest stuende sonst in
+  // der geteilten lokalen DB als zweites Geraet in der Kabelzug-Kachel.
   it("liefert Gruppe und Abloesung, am Studio-Modell geerbt vom Gymtavo-Typ", async () => {
     const client = await userClient(mitgliedEmail);
 
@@ -184,7 +186,7 @@ describe("getBootstrap -- Gymtavo-Katalog", () => {
 
     expect(bootstrap.catalog?.equipmentTypes.find((t) => t.id === typ)).toMatchObject({
       equipmentGroup: "kabelzug",
-      retired: false,
+      retired: true,
     });
     const geraet = bootstrap.machines.find((m) => m.id === maschine);
     expect(geraet?.equipmentModel).toMatchObject({ equipmentGroup: "kabelzug", retired: false });
