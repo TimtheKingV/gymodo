@@ -31,6 +31,9 @@ struct FitnessMemberApp: App {
         // Vor allem anderen: UINavigationBar.appearance() wirkt nur auf
         // Leisten, die danach entstehen.
         Navigationsleiste.einrichten()
+        // Vor dem ersten Video: die Kategorie gilt erst fuer Spieler, die
+        // danach anlaufen. Scheitert sie, bleibt die App benutzbar.
+        try? AudioSitzung.einrichten()
 
         let session = SessionStore(backend: SupabaseAuthBackend())
         let client = APIClient(baseURL: AppConfig.apiBaseURL) { await session.currentAccessToken() }
