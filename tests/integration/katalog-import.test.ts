@@ -111,7 +111,7 @@ describe("Katalogimport", () => {
     expect(geschrieben).toEqual({ uploads: 3, geraetetypen: 3, einstellungen: 2, uebungen: 3, verknuepfungen: 4, videos: 3, produkte: 0, produktTypen: 0 });
 
     const laufband = await modell(`${p}laufband`);
-    expect(laufband).toMatchObject({ category: "cardio", load_unit: "kmh", manufacturer: "Precor", secondary_unit: "pct" });
+    expect(laufband).toMatchObject({ category: "cardio", equipment_group: "cardio", retired: false, load_unit: "kmh", manufacturer: "Precor", secondary_unit: "pct" });
     expect(Number(laufband.load_step)).toBe(0.1);
 
     const brustpresse = await modell(`${p}brustpresse`);
@@ -150,6 +150,18 @@ describe("Katalogimport", () => {
     expect(a?.instruction_assets[0]?.storage_path).not.toBe(erstesTrizepsVideo);
     expect(b?.instruction_assets[0]?.storage_path).toBe(a?.instruction_assets[0]?.storage_path);
     expect(await objektDa(`instruction-videos/${erstesTrizepsVideo}`)).toBe(true);
+  });
+
+  // Testnotiz 12.10., #1: so verschwindet ein zusammengelegter Typ aus der
+  // App, ohne dass der Import loeschen muss.
+  it("loest einen Typ ab und aendert seine Gruppe", async () => {
+    (beispiel.roh.equipment[1] as Record<string, unknown>).retired = true;
+    beispiel.roh.equipment[1]!.group = "kabelzug";
+
+    const { plan } = await importiere(beispiel);
+
+    expect(eigene(plan.geraetetypen, p).map((x) => x.felder)).toEqual([[], ["equipment_group", "retired"], []]);
+    expect(await modell(`${p}trizepsmaschine`)).toMatchObject({ equipment_group: "kabelzug", retired: true });
   });
 
   it("meldet Entferntes nur und loescht nichts", async () => {

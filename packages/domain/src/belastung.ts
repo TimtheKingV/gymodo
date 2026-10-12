@@ -30,6 +30,18 @@ export type Category = (typeof CATEGORIES)[number];
 export const categorySchema = z.enum(CATEGORIES);
 
 /**
+ * Die Kacheln in "Geraet waehlen" der Member-App (Testnotiz 12.10., #3-#5),
+ * in Anzeigereihenfolge. Wie die Kategorie nur Anzeige -- aber feiner und
+ * unabhaengig von ihr, weil `category` die Einheiten im Portal traegt
+ * (einheitenFuer) und eine Hantel dort weiter "kraft" bleiben muss.
+ * Eigengewicht, Kettlebell und Gummiband sind vorgemerkt (#5); die App
+ * zeigt eine Gruppe erst, wenn ein Geraet in ihr steht.
+ */
+export const GROUPS = ["geraete", "freihantel", "kabelzug", "cardio", "eigengewicht", "kettlebell", "gummiband"] as const;
+export type Group = (typeof GROUPS)[number];
+export const groupSchema = z.enum(GROUPS);
+
+/**
  * Obergrenze je Umfangsart. Die Datenbank kennt nur die Schranke gegen
  * Unsinn (100000, Migration 0046); die fachliche Grenze prueft recordSet
  * gegen die Uebung. Vier Stunden sind kein Satz, und 1000 Wiederholungen

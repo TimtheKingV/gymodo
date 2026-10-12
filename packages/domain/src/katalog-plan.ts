@@ -15,6 +15,8 @@ export type GeraetetypZeile = {
   catalog_key: string;
   name: string;
   category: string;
+  equipment_group: string;
+  retired: boolean;
   manufacturer: string | null;
   photo_path: string | null;
   load_unit: string;
@@ -123,7 +125,7 @@ export type ImportPlan = {
 };
 
 const GERAETETYP_FELDER = [
-  "name", "category", "manufacturer", "photo_path", "load_unit", "load_step", "load_min", "load_max",
+  "name", "category", "equipment_group", "retired", "manufacturer", "photo_path", "load_unit", "load_step", "load_min", "load_max",
   "secondary_unit", "secondary_step", "secondary_min", "secondary_max",
 ] as const;
 const EINSTELLUNG_FELDER = [
@@ -172,6 +174,8 @@ export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): Imp
       catalog_key: g.key,
       name: g.name,
       category: g.category,
+      equipment_group: g.group,
+      retired: g.retired,
       manufacturer: g.manufacturer,
       photo_path: medien.fotos.get(g.key)?.storagePath ?? null,
       load_unit: g.load_unit,

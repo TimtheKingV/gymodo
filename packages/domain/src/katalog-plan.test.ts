@@ -99,6 +99,20 @@ describe("planeImport", () => {
     expect(plan.verknuepfungen.filter((p) => p.art === "geaendert").map((p) => p.felder)).toEqual([["sort_order"], ["sort_order"]]);
   });
 
+  // Testnotiz 12.10., #1-#5: ohne die beiden Felder im Vergleich sahe ein
+  // zweiter Lauf das Abloesen nie -- und die App zeigte den Typ weiter.
+  it("schreibt Gruppe und Abloesung und nennt sie als geaendert", () => {
+    const beispiel = beispielKatalog();
+    const neu = plane(beispiel, LEER);
+    expect(neu.geraetetypen[0]?.zeile).toMatchObject({ equipment_group: "geraete", retired: false });
+    const ist = istAus(neu);
+    beispiel.roh.equipment[0]!.group = "freihantel";
+    (beispiel.roh.equipment[1] as Record<string, unknown>).retired = true;
+    beispiel.roh.equipment[0]!.exercises.push(...beispiel.roh.equipment[1]!.exercises.filter((u) => !beispiel.roh.equipment[0]!.exercises.includes(u)));
+    const plan = plane(beispiel, ist);
+    expect(plan.geraetetypen.map((p) => p.felder)).toEqual([["equipment_group"], ["retired"], []]);
+  });
+
   it("meldet ersetzte eigene Medien, aber keine fremden", () => {
     const beispiel = beispielKatalog();
     const ist = istAus(plane(beispiel, LEER));

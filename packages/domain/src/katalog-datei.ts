@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CATEGORIES, LOAD_UNITS, MAX_VOLUME, VOLUME_KINDS } from "./belastung.js";
+import { CATEGORIES, GROUPS, LOAD_UNITS, MAX_VOLUME, VOLUME_KINDS } from "./belastung.js";
 import { MAX_VIDEO_SECONDS } from "./media.js";
 
 /**
@@ -79,6 +79,11 @@ const geraetetypSchema = z
     key: schluessel,
     name: text,
     category: z.enum(CATEGORIES),
+    group: z.enum(GROUPS),
+    // Testnotiz 12.10., #1: der Import loescht nie (Spec 9.1). Ein Typ, der
+    // in einem anderen aufgeht, bleibt deshalb stehen und wird abgeloest --
+    // ausgeblendet in Listen, aber aufloesbar fuer alte Saetze und Bloecke.
+    retired: z.boolean().default(false),
     manufacturer: text.nullable(),
     photo: medienPfad.nullable(),
     load_unit: z.enum(LOAD_UNITS),
@@ -266,10 +271,20 @@ function querPruefen(k: KatalogDatei): string[] {
         for (const d of doppelte(e.allowed_values)) fehler.push(`${woE}: allowed_values enthaelt "${d}" mehrfach`);
       }
     });
+    // Die Cardio-Kachel muss genau die Cardio-Geraete zeigen: sonst stuende
+    // ein Laufband unter "Geraete" mit kg-Logik im Kopf des Mitglieds.
+    if (g.group === "cardio" && g.category !== "cardio") {
+      fehler.push(`${wo}: group "cardio" passt nur zu category "cardio"`);
+    }
+    if (g.category === "cardio" && g.group !== "cardio") {
+      fehler.push(`${wo}: category "cardio" verlangt group "cardio"`);
+    }
     eindeutig(`${wo} exercises`, g.exercises);
     for (const u of g.exercises) {
       if (!uebungen.has(u)) fehler.push(`${wo} exercises: Uebung "${u}" gibt es in exercises nicht`);
-      zugeordnet.add(u);
+      // Ein abgeloester Typ steht in keiner Liste -- eine Uebung nur dort
+      // waere genauso unerreichbar wie eine ohne Typ.
+      if (!g.retired) zugeordnet.add(u);
     }
   });
 
@@ -293,11 +308,15 @@ function querPruefen(k: KatalogDatei): string[] {
     }
   });
   const typen = new Set(k.equipment.map((g) => g.key));
+  const abgeloest = new Set(k.equipment.filter((g) => g.retired).map((g) => g.key));
   k.products.forEach((p, i) => {
     const wo = `products[${i}] "${p.key}"`;
     for (const d of doppelte(p.types)) fehler.push(`${wo} types: Geraetetyp "${d}" kommt mehrfach vor`);
     for (const t of p.types) {
       if (!typen.has(t)) fehler.push(`${wo} types: Geraetetyp "${t}" gibt es in equipment nicht`);
+      // Das Portal bietet abgeloeste Typen nicht mehr an; ein Produkt dort
+      // waere eine Vorlage, die niemand findet.
+      if (abgeloest.has(t)) fehler.push(`${wo} types: Geraetetyp "${t}" ist abgeloest`);
     }
     // Wie catalog_products_load_all_or_none (0050): ein halbes Raster ist keins.
     const gesetzt = [p.load_unit, p.load_step, p.load_min, p.load_max].filter((w) => w !== null).length;
