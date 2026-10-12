@@ -3,7 +3,7 @@ import type { CatalogType } from "@fitretro/domain";
 import { belastungStart, typVorlagen } from "./typVorlage";
 
 const basis: CatalogType = {
-  id: "t1", name: "Brustpresse", manufacturer: null, category: "kraft",
+  id: "t1", name: "Brustpresse", manufacturer: null, category: "kraft", retired: false,
   loadUnit: "kg", loadStep: 1, loadMin: 0, loadMax: null,
   secondaryUnit: null, secondaryStep: null, secondaryMin: null, secondaryMax: null,
   photoPath: "gymtavo/catalog/photos/chest_press-abcd1234.png",
@@ -24,6 +24,12 @@ const typMitProdukt: CatalogType = {
 };
 
 describe("typVorlagen", () => {
+  // Testnotiz 12.10., #1: ein im Kabelzug aufgegangener Typ ist keine
+  // Vorlage mehr fuer ein neues Modell.
+  it("laesst abgeloeste Typen weg", () => {
+    expect(typVorlagen([basis, { ...basis, id: "t9", retired: true }]).map((v) => v.id)).toEqual(["t1"]);
+  });
+
   it("laesst Uebungen und Pfad weg und merkt nur, ob es ein Foto gibt", () => {
     const [vorlage] = typVorlagen([basis]);
     expect(vorlage).toEqual({

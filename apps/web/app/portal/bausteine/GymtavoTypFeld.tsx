@@ -19,7 +19,8 @@ export function GymtavoTypFeld({
   gross = false,
   onChange,
 }: {
-  typen: Pick<CatalogType, "id" | "name" | "manufacturer">[];
+  /** `retired` fehlt bei den Vorlagen: typVorlagen hat sie schon gefiltert. */
+  typen: (Pick<CatalogType, "id" | "name" | "manufacturer"> & { retired?: boolean })[];
   start: string | null;
   gross?: boolean;
   /** Das Modellformular fuellt damit vor (ModellVorlageFelder). */
@@ -27,7 +28,11 @@ export function GymtavoTypFeld({
 }) {
   const [wert, setWert] = useState(start ?? "");
   const id = useId();
-  if (typen.length === 0) return null;
+  // Abgeloeste Typen nicht mehr anbieten (Testnotiz 12.10., #1) -- den schon
+  // zugeordneten aber stehen lassen, sonst verloere das Formular still die
+  // Zuordnung beim naechsten Speichern.
+  const angeboten = typen.filter((typ) => !typ.retired || typ.id === start);
+  if (angeboten.length === 0) return null;
 
   return (
     <div className={styles.field}>
@@ -42,7 +47,7 @@ export function GymtavoTypFeld({
           setWert(neu);
           onChange?.(neu);
         }}
-        optionen={typen.map((typ) => ({
+        optionen={angeboten.map((typ) => ({
           wert: typ.id,
           anzeige: typ.manufacturer ? `${typ.name} · ${typ.manufacturer}` : typ.name,
         }))}

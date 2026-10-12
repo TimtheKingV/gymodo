@@ -13,6 +13,10 @@ enum GeraetRoute: Hashable {
     // ein Typ bekommt seinen Ort beim Aufloesen aus dem aktuellen Ort --
     // eine offene Einheit erzwingt ueber Ortswechsel ohnehin denselben.
     case erkannt(station: String, token: String?)
+    /// Die Liste einer Kachel mit mehreren Geraeten (Testnotiz 12.10., #3,
+    /// #4) -- Freihantel, Geraete, Cardio. Eine Kachel mit einem Geraet
+    /// fuehrt gleich zu `.erkannt`.
+    case kategorie(Geraetegruppe)
     /// Die Satzseite. `start` kommt aus dem Drawer vor der Uebung (Testnotiz
     /// 11.10., #10) und laesst sie mit dem Countdown beginnen; ohne (Zirkel
     /// ueber die Blockliste) stehen gleich die Raeder.

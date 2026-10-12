@@ -62,7 +62,8 @@ extension Station {
             loadStep: typ.loadStep, loadMin: typ.loadMin, loadMax: typ.loadMax,
             secondaryUnit: typ.secondaryUnit, secondaryStep: typ.secondaryStep,
             secondaryMin: typ.secondaryMin, secondaryMax: typ.secondaryMax,
-            settingDefinitions: typ.settingDefinitions, catalogModelId: nil)
+            settingDefinitions: typ.settingDefinitions, catalogModelId: nil,
+            equipmentGroup: typ.equipmentGroup, retired: typ.retired)
         exercises = typ.exercises
         tokenHashes = []
         gesperrt = false

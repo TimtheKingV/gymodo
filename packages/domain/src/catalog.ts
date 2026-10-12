@@ -1210,6 +1210,11 @@ export type CatalogType = {
   name: string;
   manufacturer: string | null;
   category: Category;
+  /**
+   * In einem anderen Typ aufgegangen (Testnotiz 12.10., #1). Das Portal
+   * bietet ihn nicht mehr an; Lookups per id finden ihn weiter.
+   */
+  retired: boolean;
   /** Vorlage fuer ein neues Studio-Modell (Spec 2026-10-10 ..., 5.1). */
   loadUnit: LoadUnit;
   loadStep: number;
@@ -1294,7 +1299,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
   const { data, error } = await client
     .from("equipment_models")
     .select(
-      `id, name, manufacturer, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, photo_path,
+      `id, name, manufacturer, category, retired, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, photo_path,
        equipment_model_exercises (sort_order, exercises (id, name, description, volume_kind, target_min, target_max), instruction_assets (storage_path, duration_s)),
        catalog_product_types (catalog_products (id, catalog_key, manufacturer, series, name, model_code, note, photo_path, photo_rights, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max))`,
     )
@@ -1307,6 +1312,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
     name: string;
     manufacturer: string | null;
     category: Category;
+    retired: boolean;
     load_unit: LoadUnit;
     load_step: number | string;
     load_min: number | string;
@@ -1336,6 +1342,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
     name: row.name,
     manufacturer: row.manufacturer,
     category: row.category,
+    retired: row.retired,
     loadUnit: row.load_unit,
     loadStep: Number(row.load_step),
     loadMin: Number(row.load_min),

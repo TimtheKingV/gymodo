@@ -178,3 +178,48 @@ describe("pruefeKatalog products", () => {
     ]);
   });
 });
+
+// Testnotiz 12.10., #1-#5: die Kategorie-Kacheln der App und das Abloesen
+// zusammengelegter Kabelzug-Typen.
+describe("pruefeKatalog group und retired", () => {
+  it("verlangt die Gruppe und setzt retired ohne Angabe auf false", () => {
+    expect(fehlerVon((roh) => delete (roh.equipment[0] as Record<string, unknown>).group)).toEqual([
+      'equipment[0] "brustpresse" group: fehlt',
+    ]);
+    const pruefung = pruefeKatalog(beispielKatalog().roh);
+    expect(pruefung.ok && pruefung.wert.equipment.map((g) => [g.group, g.retired])).toEqual([
+      ["geraete", false],
+      ["geraete", false],
+      ["cardio", false],
+    ]);
+  });
+
+  it("haelt Cardio-Gruppe und Cardio-Kategorie zusammen", () => {
+    expect(
+      fehlerVon((roh) => {
+        roh.equipment[0]!.group = "cardio";
+        roh.equipment[2]!.group = "geraete";
+      }),
+    ).toEqual([
+      'equipment[0] "brustpresse": group "cardio" passt nur zu category "cardio"',
+      'equipment[2] "laufband": category "cardio" verlangt group "cardio"',
+    ]);
+  });
+
+  it("zaehlt einen abgeloesten Typ nicht als Heimat einer Uebung", () => {
+    expect(fehlerVon((roh) => ((roh.equipment[2] as Record<string, unknown>).retired = true))).toEqual([
+      'exercises[2] "gehen": haengt an keinem Geraetetyp',
+    ]);
+  });
+
+  it("verbietet Produkte an einem abgeloesten Typ", () => {
+    expect(
+      produktFehler((roh) => {
+        (roh.equipment[1] as Record<string, unknown>).retired = true;
+        roh.products[0]!.types = ["trizepsmaschine"];
+      }),
+    ).toEqual([
+      'products[0] "gym80_pure_kraft_4345" types: Geraetetyp "trizepsmaschine" ist abgeloest',
+    ]);
+  });
+});

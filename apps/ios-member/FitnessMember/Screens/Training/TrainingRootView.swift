@@ -278,6 +278,11 @@ struct TrainingRootView: View {
                 }
             } beiAuswahl: { station in
                 waehle(station)
+            } beiKachel: { kachel in
+                switch GeraeteAuswahl.ziel(kachel) {
+                case .station(let station): waehle(station)
+                case .liste(let gruppe): pfad.append(.kategorie(gruppe))
+                }
             }
             // safeAreaInset statt overlay: die Liste bekommt unten so viel
             // Luft, dass ihr letztes Geraet ueber den Knoepfen landet, und
@@ -534,6 +539,10 @@ struct TrainingRootView: View {
     @ViewBuilder
     private func ziel(_ route: GeraetRoute) -> some View {
         switch route {
+        case .kategorie(let gruppe):
+            GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader, gruppe: gruppe) { station in
+                waehle(station)
+            }
         case .erkannt(let station, let token):
             if let modell = modell(station: station, exerciseId: nil, token: token) {
                 GeraetErkanntScreen(modell: modell) { uebungId in
