@@ -24,9 +24,10 @@ struct GeraeteAuswahlTests {
         id: String, name: String, label: String, ort: String?,
         studio: String = "s1", status: String = "active",
         tags: [String] = ["hash"], besuche: Int = 0,
-        kategorie: String = "kraft", einheit: String = "kg",
+        kategorie: String = "kraft", einheit: String = "kg", gruppe: String? = nil,
         uebungen: [(String, String)] = [("u1", "Latzug breit")]
     ) -> String {
+        let gruppeJSON = gruppe.map { ", \"equipmentGroup\": \"\($0)\"" } ?? ""
         let ortJSON = ort.map { "\"\($0)\"" } ?? "null"
         let tagsJSON = tags.map { "\"\($0)\"" }.joined(separator: ", ")
         let uebungenJSON = uebungen.map {
@@ -42,7 +43,7 @@ struct GeraeteAuswahlTests {
           "equipmentModel": {
             "id": "em-\(id)", "name": "\(name)", "manufacturer": "Technogym",
             "category":"\(kategorie)","photoPath": null, "loadUnit":"\(einheit)","loadStep":2.5, "loadMin":5,
-            "loadMax":100, "settingDefinitions": []
+            "loadMax":100, "settingDefinitions": []\(gruppeJSON)
           },
           "exercises": [\(uebungenJSON)]
         }
@@ -50,7 +51,9 @@ struct GeraeteAuswahlTests {
     }
 
     private func typJSON(id: String, name: String, kategorie: String = "kraft",
+                         gruppe: String? = nil, abgeloest: Bool = false,
                          uebungen: [(String, String)] = [("gu1", "Gymtavo-Uebung")]) -> String {
+        let gruppeJSON = gruppe.map { "\"equipmentGroup\": \"\($0)\", " } ?? ""
         let uebungenJSON = uebungen.map {
             """
             { "id": "\($0.0)", "name": "\($0.1)", "volumeKind":"reps","targetMin":8, "targetMax":12 }
@@ -59,7 +62,8 @@ struct GeraeteAuswahlTests {
         return """
         { "id": "\(id)", "name": "\(name)", "manufacturer": "Gymtavo", "photoPath": null,
           "category": "\(kategorie)", "loadUnit": "kg", "loadStep": 2.5, "loadMin": 5,
-          "loadMax": 100, "settingDefinitions": [], "exercises": [\(uebungenJSON)] }
+          "loadMax": 100, \(gruppeJSON)"retired": \(abgeloest),
+          "settingDefinitions": [], "exercises": [\(uebungenJSON)] }
         """
     }
 
@@ -101,12 +105,13 @@ struct GeraeteAuswahlTests {
         """)
     }
 
-    // MARK: - Zwei Gruppen ohne Suchtext
+    // MARK: - Zuletzt und Kacheln ohne Suchtext
 
-    /// Der Kern der Gruppierung: benutzte Geraete oben, alles andere
-    /// darunter -- und was oben steht, steht unten NICHT noch einmal.
-    /// Ohne diese Regel an einem Ort baut sie jemand spaeter andersherum.
-    @Test func benutzteGeraeteStehenObenUndNichtNochmalUnten() {
+    /// Benutzte Geraete stehen oben -- und bleiben in ihrer Kachel. Bis zur
+    /// Testnotiz 12.10. stand darunter eine Liste, die sie wegliess; eine
+    /// Kachel dagegen zaehlt und oeffnet ihre ganze Gruppe (#3), sonst
+    /// fehlte das zuletzt benutzte Geraet genau dort, wo man es sucht.
+    @Test func benutzteGeraeteStehenObenUndInIhrerKachel() {
         let daten = bootstrap(
             maschinen: [
                 maschineJSON(id: "m1", name: "Latzug", label: "14", ort: "Rueckwand", besuche: 3),
@@ -117,7 +122,7 @@ struct GeraeteAuswahlTests {
         let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
 
         #expect(gruppen.zuletzt.map(\.id) == ["geraet:m1"])
-        #expect(gruppen.kraft.map(\.id) == ["geraet:m2"])
+        #expect(gruppen.kachel(.geraete).map(\.id) == ["geraet:m2", "geraet:m1"])
     }
 
     /// Mehr als drei, und die Gruppe verdraengt die Liste, die sie
@@ -134,7 +139,7 @@ struct GeraeteAuswahlTests {
         let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
 
         #expect(gruppen.zuletzt.count == 3)
-        #expect(gruppen.kraft.count == 2)
+        #expect(gruppen.kachel(.geraete).count == 5)
     }
 
     @Test func zuletztIstNachJuengstemSatzSortiert() {
@@ -163,7 +168,7 @@ struct GeraeteAuswahlTests {
 
         let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
 
-        #expect(gruppen.kraft.map(\.name) == ["Bauchtrainer", "Latzug", "Rudern sitzend"])
+        #expect(gruppen.kachel(.geraete).map(\.name) == ["Bauchtrainer", "Latzug", "Rudern sitzend"])
     }
 
     /// Sichtbar, aber ans Ende. Auszublenden hiesse, das Mitglied sucht am
@@ -176,8 +181,8 @@ struct GeraeteAuswahlTests {
 
         let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
 
-        #expect(gruppen.kraft.map(\.name) == ["Zzz", "Aaa"])
-        #expect(gruppen.kraft.last?.gesperrt == true)
+        #expect(gruppen.kachel(.geraete).map(\.name) == ["Zzz", "Aaa"])
+        #expect(gruppen.kachel(.geraete).last?.gesperrt == true)
     }
 
     /// Leere tokenHashes heissen "kein AKTIVER Tag" -- getBootstrap liest
@@ -191,8 +196,8 @@ struct GeraeteAuswahlTests {
 
         let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
 
-        #expect(gruppen.kraft.first(where: { $0.name == "Beinbeuger" })?.nichtScannbar == true)
-        #expect(gruppen.kraft.first(where: { $0.name == "Latzug" })?.nichtScannbar == false)
+        #expect(gruppen.kachel(.geraete).first(where: { $0.name == "Beinbeuger" })?.nichtScannbar == true)
+        #expect(gruppen.kachel(.geraete).first(where: { $0.name == "Latzug" })?.nichtScannbar == false)
     }
 
     @Test func dieOrtsangabeIstLabelUndPlatz() {
@@ -203,8 +208,8 @@ struct GeraeteAuswahlTests {
 
         let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
 
-        #expect(gruppen.kraft[0].ortsangabe == "Gerät 21")
-        #expect(gruppen.kraft[1].ortsangabe == "Gerät 14 · Rückwand rechts")
+        #expect(gruppen.kachel(.geraete)[0].ortsangabe == "Gerät 21")
+        #expect(gruppen.kachel(.geraete)[1].ortsangabe == "Gerät 14 · Rückwand rechts")
     }
 
     /// `maschineJSON` baut die Modell-ID als `"em-\(id)"` -- der Schluessel,
@@ -216,7 +221,7 @@ struct GeraeteAuswahlTests {
 
         let g = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
 
-        #expect(g.kraft.first?.modellId == "em-m1")
+        #expect(g.kachel(.geraete).first?.modellId == "em-m1")
     }
 
     @Test func geraeteFremderStudiosFehlen() {
@@ -227,7 +232,7 @@ struct GeraeteAuswahlTests {
 
         let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
 
-        #expect(gruppen.kraft.map(\.name) == ["Latzug"])
+        #expect(gruppen.kachel(.geraete).map(\.name) == ["Latzug"])
     }
 
     // MARK: - Suche
@@ -348,7 +353,7 @@ struct GeraeteAuswahlTests {
         #expect(gruppen.istLeer)
     }
 
-    // MARK: - Kraft und Cardio (Cardio Schnitt 3)
+    // MARK: - Kraft und Cardio (Cardio Schnitt 3, seit 12.10. als Kacheln)
 
     @Test func ohneSuchtextStehenKraftUndCardioGetrennt() {
         let daten = bootstrap(maschinen: [
@@ -360,8 +365,8 @@ struct GeraeteAuswahlTests {
 
         let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
 
-        #expect(gruppen.kraft.map(\.name) == ["Beinpresse", "Latzug"])
-        #expect(gruppen.cardio.map(\.name) == ["Laufband", "Rudergerät"])
+        #expect(gruppen.kachel(.geraete).map(\.name) == ["Beinpresse", "Latzug"])
+        #expect(gruppen.kachel(.cardio).map(\.name) == ["Laufband", "Rudergerät"])
         #expect(gruppen.treffer.isEmpty)
     }
 
@@ -374,11 +379,11 @@ struct GeraeteAuswahlTests {
 
         let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
 
-        #expect(gruppen.kraft.count == 1)
-        #expect(gruppen.cardio.isEmpty)
+        #expect(gruppen.kachel(.geraete).count == 1)
+        #expect(gruppen.kategorien.map(\.gruppe) == [.geraete])
     }
 
-    @Test func zuletztStehtUeberDenKategorienUndNichtNochmalDarin() {
+    @Test func zuletztStehtUeberDenKachelnUndBleibtDarin() {
         let daten = bootstrap(
             maschinen: [
                 maschineJSON(id: "m1", name: "Laufband", label: "2", ort: nil, besuche: 2,
@@ -390,13 +395,13 @@ struct GeraeteAuswahlTests {
         let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
 
         #expect(gruppen.zuletzt.map(\.name) == ["Laufband"])
-        #expect(gruppen.cardio.map(\.name) == ["Ergometer"])
+        #expect(gruppen.kachel(.cardio).map(\.name) == ["Ergometer", "Laufband"])
         // Die Zeile schreibt die Belastung in der Einheit des Geraets.
         #expect(gruppen.zuletzt.first?.zuletzt == GeraeteAuswahl.Zuletzt(
             performedAt: zeit("2026-09-07T10:00:00Z"), load: 8.5, loadUnit: .kmh))
     }
 
-    @Test func mitSuchtextIstDieListeFlachUeberBeideKategorien() {
+    @Test func mitSuchtextIstDieListeFlachUeberAlleKacheln() {
         let daten = bootstrap(maschinen: [
             maschineJSON(id: "m1", name: "Laufband", label: "2", ort: "Lauf-Ecke", kategorie: "cardio", einheit: "kmh"),
             maschineJSON(id: "m2", name: "Latzug", label: "14", ort: "Lauf-Ecke"),
@@ -405,8 +410,7 @@ struct GeraeteAuswahlTests {
         let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "lauf")
 
         #expect(gruppen.treffer.map(\.name) == ["Latzug", "Laufband"])
-        #expect(gruppen.kraft.isEmpty)
-        #expect(gruppen.cardio.isEmpty)
+        #expect(gruppen.kategorien.isEmpty)
     }
 
     // MARK: - Stationen (Spec 6)
@@ -419,23 +423,23 @@ struct GeraeteAuswahlTests {
 
     @Test func studioMitGeraetenZeigtKeineKatalogtypen() {
         let g = GeraeteAuswahl.gruppen(bootstrap: zweiMaschinenUndTypen, ort: .studio("s1"), suchtext: "")
-        #expect((g.zuletzt + g.kraft + g.cardio).map(\.id) == ["geraet:m1"])
+        #expect(g.kategorien.flatMap(\.eintraege).map(\.id) == ["geraet:m1"])
     }
 
     @Test func studioOhneGeraeteZeigtAlleTypenMitStudioId() {
         let daten = bootstrap(maschinen: [], typen: [typJSON(id: "t1", name: "Beinpresse"),
                                                      typJSON(id: "t2", name: "Kabelzug")])
         let g = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
-        #expect(g.kraft.map(\.id) == ["typ:t1", "typ:t2"])
-        #expect(g.kraft.allSatisfy { $0.station.studioId == "s1" })
+        #expect(g.kachel(.geraete).map(\.id) == ["typ:t1", "typ:t2"])
+        #expect(g.kachel(.geraete).allSatisfy { $0.station.studioId == "s1" })
         // Ein Typ ist kein Geraet ohne Sticker.
-        #expect(g.kraft.allSatisfy { !$0.nichtScannbar && !$0.gesperrt })
+        #expect(g.kachel(.geraete).allSatisfy { !$0.nichtScannbar && !$0.gesperrt })
     }
 
     @Test func freiesTrainingZeigtAlleTypenOhneStudioId() {
         let g = GeraeteAuswahl.gruppen(bootstrap: zweiMaschinenUndTypen, ort: .freiesTraining, suchtext: "")
-        #expect(g.kraft.map(\.id) == ["typ:t1", "typ:t2"])
-        #expect(g.kraft.allSatisfy { $0.station.studioId == nil })
+        #expect(g.kachel(.geraete).map(\.id) == ["typ:t1", "typ:t2"])
+        #expect(g.kachel(.geraete).allSatisfy { $0.station.studioId == nil })
     }
 
     @Test func zuletztEnthaeltEinenFreienSatzAmTyp() {
@@ -445,7 +449,7 @@ struct GeraeteAuswahlTests {
             typSaetze: [(modell: "t2", uebung: "gu1", kg: 30, wann: "2026-09-07T10:00:00Z")])
         let g = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .freiesTraining, suchtext: "")
         #expect(g.zuletzt.map(\.id) == ["typ:t2"])
-        #expect(g.kraft.map(\.id) == ["typ:t1"])
+        #expect(g.kachel(.geraete).map(\.id) == ["typ:t1", "typ:t2"])
         #expect(g.zuletzt.first?.zuletzt == GeraeteAuswahl.Zuletzt(
             performedAt: zeit("2026-09-07T10:00:00Z"), load: 30, loadUnit: .kg))
     }
@@ -470,6 +474,97 @@ struct GeraeteAuswahlTests {
         let g = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "nacken")
         #expect(g.treffer.isEmpty)
         let alle = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
-        #expect(alle.kraft.first?.station.exercises.map(\.id) == ["u1"])
+        #expect(alle.kachel(.geraete).first?.station.exercises.map(\.id) == ["u1"])
+    }
+    // MARK: - Kacheln und Abloesung (Testnotiz 12.10., #1-#5)
+
+    private var katalogMitGruppen: BootstrapResponse {
+        bootstrap(maschinen: [], typen: [
+            typJSON(id: "t5", name: "Laufband", kategorie: "cardio", gruppe: "cardio"),
+            typJSON(id: "t2", name: "Kabelzug", gruppe: "kabelzug",
+                    uebungen: [("k1", "Face Pull"), ("k2", "Kabel-Flys")]),
+            typJSON(id: "t3", name: "Langhantel", gruppe: "freihantel"),
+            typJSON(id: "t4", name: "Kurzhantel", gruppe: "freihantel"),
+            typJSON(id: "t1", name: "Beinpresse", gruppe: "geraete"),
+            typJSON(id: "t9", name: "Hoher Kabelzug + Seil", gruppe: "kabelzug", abgeloest: true,
+                    uebungen: [("k1", "Face Pull")]),
+        ])
+    }
+
+    /// #3/#5: feste Reihenfolge, und eine Gruppe ohne Geraet (Eigengewicht,
+    /// Kettlebell, Gummiband) erscheint gar nicht.
+    @Test func kachelnInFesterReihenfolgeOhneLeere() {
+        let g = GeraeteAuswahl.gruppen(bootstrap: katalogMitGruppen, ort: .freiesTraining, suchtext: "")
+        #expect(g.kategorien.map(\.gruppe) == [.geraete, .freihantel, .kabelzug, .cardio])
+        #expect(g.kachel(.freihantel).map(\.name) == ["Kurzhantel", "Langhantel"])
+    }
+
+    /// #1: der abgeloeste Typ steht in keiner Kachel und keinem Treffer --
+    /// ein alter Block auf ihn laesst sich aber weiter oeffnen.
+    @Test func einAbgeloesterTypFehltInListeUndSucheBleibtAberAufloesbar() {
+        let daten = katalogMitGruppen
+        let g = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .freiesTraining, suchtext: "")
+        #expect(g.kachel(.kabelzug).map(\.id) == ["typ:t2"])
+        let suche = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .freiesTraining, suchtext: "kabelzug")
+        #expect(suche.treffer.map(\.id) == ["typ:t2"])
+        #expect(daten.station(schluessel: "typ:t9", studioId: nil)?.equipmentModel.name == "Hoher Kabelzug + Seil")
+    }
+
+    /// #3: Kabelzug ist ein Geraet -- der Tipp oeffnet gleich die Uebungen.
+    /// Freihantel hat drei -- der Tipp zeigt die Liste.
+    @Test func eineKachelMitEinemGeraetOeffnetEsDirekt() throws {
+        let g = GeraeteAuswahl.gruppen(bootstrap: katalogMitGruppen, ort: .freiesTraining, suchtext: "")
+        let kabel = try #require(g.kategorien.first { $0.gruppe == .kabelzug })
+        let hantel = try #require(g.kategorien.first { $0.gruppe == .freihantel })
+        #expect(GeraeteAuswahl.ziel(kabel) == .station(kabel.eintraege[0].station))
+        #expect(GeraeteAuswahl.ziel(hantel) == .liste(.freihantel))
+    }
+
+    /// Ein gesperrtes Einzelgeraet oeffnet nichts -- die Liste zeigt dann
+    /// wenigstens, warum.
+    @Test func eineKachelMitGesperrtemEinzelgeraetZeigtDieListe() throws {
+        let daten = bootstrap(maschinen: [
+            maschineJSON(id: "m1", name: "Kabelzug", label: "3", ort: nil, status: "inactive", gruppe: "kabelzug"),
+        ])
+        let g = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
+        let kabel = try #require(g.kategorien.first)
+        #expect(GeraeteAuswahl.ziel(kabel) == .liste(.kabelzug))
+    }
+
+    @Test func dieKachelZaehltGeraeteOderBeiEinemGeraetDessenUebungen() throws {
+        let g = GeraeteAuswahl.gruppen(bootstrap: katalogMitGruppen, ort: .freiesTraining, suchtext: "")
+        #expect(GeraeteAuswahl.kachelText(try #require(g.kategorien.first { $0.gruppe == .kabelzug })) == "2 Übungen")
+        #expect(GeraeteAuswahl.kachelText(try #require(g.kategorien.first { $0.gruppe == .freihantel })) == "2 Geräte")
+        #expect(GeraeteAuswahl.kachelText(try #require(g.kategorien.first { $0.gruppe == .geraete })) == "1 Übung")
+    }
+
+    /// Die Kategorieliste: nur die Gruppe, alphabetisch, ohne Zuletzt und
+    /// ohne Kacheln -- und ihre Suche bleibt in der Gruppe.
+    @Test func dieKategorielisteZeigtNurIhreGruppe() {
+        let daten = katalogMitGruppen
+        let liste = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .freiesTraining, suchtext: "", gruppe: .freihantel)
+        #expect(liste.liste.map(\.name) == ["Kurzhantel", "Langhantel"])
+        #expect(liste.zuletzt.isEmpty)
+        #expect(liste.kategorien.isEmpty)
+        let suche = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .freiesTraining, suchtext: "e", gruppe: .freihantel)
+        #expect(suche.treffer.map(\.name) == ["Kurzhantel", "Langhantel"])
+    }
+
+    /// Ein Studiogeraet ohne Gruppe vom Server (Server vor 0051) landet
+    /// nach seiner Kategorie.
+    @Test func einStudiogeraetOhneGruppeLandetNachKategorie() {
+        let daten = bootstrap(maschinen: [
+            maschineJSON(id: "m1", name: "Laufband", label: "2", ort: nil, kategorie: "cardio", einheit: "kmh"),
+            maschineJSON(id: "m2", name: "Kabelturm", label: "5", ort: nil, gruppe: "kabelzug"),
+        ])
+        let g = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
+        #expect(g.kategorien.map(\.gruppe) == [.kabelzug, .cardio])
+    }
+}
+
+private extension GeraeteAuswahl.Gruppen {
+    /// Die Eintraege einer Kachel -- leer, wenn es sie nicht gibt.
+    func kachel(_ gruppe: Geraetegruppe) -> [GeraeteAuswahl.Eintrag] {
+        kategorien.first { $0.gruppe == gruppe }?.eintraege ?? []
     }
 }

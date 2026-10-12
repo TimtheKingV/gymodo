@@ -24,6 +24,7 @@
 		0CC624443C0CFE0C0A80A543 /* MarkenAssetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2544360B27EEB7C56A35775 /* MarkenAssetTests.swift */; };
 		0D0B75F5C030106C7CB21F85 /* ScannerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55093183C1B476C12C44B469 /* ScannerSheet.swift */; };
 		0E2C85C013DB621DEC90286E /* MemberLadefehlerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1749C422D74C910CA03FCA /* MemberLadefehlerView.swift */; };
+		0E9F219ADEE737580E75D93A /* Geraetegruppe.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC32FC76BF907811DC7EFA7C /* Geraetegruppe.swift */; };
 		0F23761D47A8B1CAFDAA582B /* TestnotizEintrag.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BC48D13AE6028E26E09E52 /* TestnotizEintrag.swift */; };
 		11BA7A3A80B08733F442CDFE /* KursRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */; };
 		13225DB0A049D674C72CE73D /* CourseWeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AC1E765B0B287F9AC69A3B8 /* CourseWeek.swift */; };
@@ -280,6 +281,7 @@
 		EF061CDAF1B6712C17872C0A /* ProfilRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0DEE6D2287369CE3EBBECBC /* ProfilRootView.swift */; };
 		F07AE5A3A14A74A3532C4A3A /* KurseFileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 962343020926813A08DE01CA /* KurseFileStore.swift */; };
 		F1E9DFA75153BCFFEF5FDD62 /* PendingWriteStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E07C7F4A13CB277BC11B8D77 /* PendingWriteStoreTests.swift */; };
+		F317A9B9C5941A16B69CC0E9 /* GeraetegruppeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50DEE042EBB405268BB2F09 /* GeraetegruppeTests.swift */; };
 		F3EC6BE2F4C7D29CB4039D48 /* VerlaufStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFADB880946E0F424CFDAB8 /* VerlaufStoreTests.swift */; };
 		F7EE8A3131BCD293674276A2 /* WorkoutSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACA345A636C594A2D95A59FD /* WorkoutSet.swift */; };
 		F8A612A78D2961610EE47839 /* PendingSetWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = D382CA0B325C07B61F776A1D /* PendingSetWrite.swift */; };
@@ -521,6 +523,7 @@
 		B35373D3C51509959FCF6FB0 /* MachinePhotosResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MachinePhotosResponse.swift; sourceTree = "<group>"; };
 		B3B500073898DAD86823CE2A /* Uebungsstart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Uebungsstart.swift; sourceTree = "<group>"; };
 		B4F343E35EB2C94664395961 /* Zielkachel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zielkachel.swift; sourceTree = "<group>"; };
+		B50DEE042EBB405268BB2F09 /* GeraetegruppeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetegruppeTests.swift; sourceTree = "<group>"; };
 		B577EC22237E86AA0F3755B7 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		B6BC48D13AE6028E26E09E52 /* TestnotizEintrag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizEintrag.swift; sourceTree = "<group>"; };
 		B76232D487FC8D48B6D08EE1 /* OrtswechselBeendenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrtswechselBeendenTests.swift; sourceTree = "<group>"; };
@@ -557,6 +560,7 @@
 		D922539BB579EDDA0F7747CD /* ErrorEnvelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorEnvelope.swift; sourceTree = "<group>"; };
 		D98716595032172974F2CAB3 /* Station.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Station.swift; sourceTree = "<group>"; };
 		DB8CC4AA1ADA4ED3E6D39207 /* CatalogStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogStoreTests.swift; sourceTree = "<group>"; };
+		DC32FC76BF907811DC7EFA7C /* Geraetegruppe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Geraetegruppe.swift; sourceTree = "<group>"; };
 		DC4D984EF1252BC49392F988 /* TrainingTabTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingTabTests.swift; sourceTree = "<group>"; };
 		DCB083ACE9E51B4E98A6065F /* BelegungsleisteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BelegungsleisteView.swift; sourceTree = "<group>"; };
 		DCD60366B3F0C3C43DF73AA9 /* ZielSchreiben.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZielSchreiben.swift; sourceTree = "<group>"; };
@@ -885,6 +889,7 @@
 				1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */,
 				F7540F5EE9A274DBB75E9219 /* GeraeteAuswahlTests.swift */,
 				5ABCE1755F5D30B517E1502E /* GeraeteFotosTests.swift */,
+				B50DEE042EBB405268BB2F09 /* GeraetegruppeTests.swift */,
 				3079E05EA80F06693AFB7C9D /* GeraetEinstiegsartTests.swift */,
 				61EBAF697D264131A8B819C9 /* GeraetEinstiegTests.swift */,
 				96D6F218F01CA038480D1DD4 /* GeraeteKachelTests.swift */,
@@ -1001,6 +1006,7 @@
 				AB20D0098C4EAC5A32B4EA0E /* EinheitVerwerfen.swift */,
 				6CBC9B358BECD950CD5B0381 /* GeraeteAuswahl.swift */,
 				036DE820A26503345FF14BB0 /* GeraeteFotos.swift */,
+				DC32FC76BF907811DC7EFA7C /* Geraetegruppe.swift */,
 				9356660F927DE0AEC1C66C5D /* GeraetEinstieg.swift */,
 				1B800AB907E579F778EA2656 /* GeraetLoading.swift */,
 				87DEDAB723DC8FE55CB2FFA1 /* LokaleSession.swift */,
@@ -1311,6 +1317,7 @@
 				CBC840D3961E54257CE0525F /* GeraeteAuswahl.swift in Sources */,
 				C66A33A99ED6C64115E52EED /* GeraeteAuswahlView.swift in Sources */,
 				1CD0DCB2169CA69666C725FB /* GeraeteFotos.swift in Sources */,
+				0E9F219ADEE737580E75D93A /* Geraetegruppe.swift in Sources */,
 				BC882EF4EABB4D6AC287BE0C /* GewichtEintragenSheet.swift in Sources */,
 				47D979DCC3CDB3ACE62E9FB9 /* GewichtsverlaufView.swift in Sources */,
 				B24C8C319FE4F622FE13EF8E /* GroesseSheet.swift in Sources */,
@@ -1486,6 +1493,7 @@
 				E083161F5526B66B7D721901 /* GeraeteAuswahlTests.swift in Sources */,
 				6F40C74FE72F58BD66FE5FAD /* GeraeteFotosTests.swift in Sources */,
 				781823B637261F5876D48B6A /* GeraeteKachelTests.swift in Sources */,
+				F317A9B9C5941A16B69CC0E9 /* GeraetegruppeTests.swift in Sources */,
 				64DE54AADAEF254C04697CD4 /* GewichtEintragenHilfenTests.swift in Sources */,
 				013D40E89B567A7C02B5A99A /* GewichtsverlaufHilfenTests.swift in Sources */,
 				2521FD94ACF38940E2EAF8AC /* HomeKurseTests.swift in Sources */,

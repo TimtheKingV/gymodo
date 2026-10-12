@@ -23,15 +23,26 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     /// -- siehe der Kommentar an seinem @State dort.
     let vorschauLader: VorschauLader
     let kopfinhalt: Kopfinhalt
+    /// Gesetzt: die Kategorieliste dieser Gruppe statt der Wurzel
+    /// (Testnotiz 12.10., #3) -- derselbe Screen, damit Zeilen, Fotos und
+    /// Suche nicht ein zweites Mal entstehen.
+    let gruppe: Geraetegruppe?
     let beiAuswahl: (Station) -> Void
+    /// Ein Tipp auf eine Kachel. Wohin er fuehrt, entscheidet die Wurzel
+    /// (`GeraeteAuswahl.ziel`) -- sie haelt den Pfad.
+    let beiKachel: (GeraeteAuswahl.Kachel) -> Void
 
     init(fotoLader: any GeraetefotosLoading & UebungsvideosLoading, vorschauLader: VorschauLader,
+         gruppe: Geraetegruppe? = nil,
          @ViewBuilder kopfinhalt: () -> Kopfinhalt,
-         beiAuswahl: @escaping (Station) -> Void) {
+         beiAuswahl: @escaping (Station) -> Void,
+         beiKachel: @escaping (GeraeteAuswahl.Kachel) -> Void = { _ in }) {
         self.fotoLader = fotoLader
         self.vorschauLader = vorschauLader
+        self.gruppe = gruppe
         self.kopfinhalt = kopfinhalt()
         self.beiAuswahl = beiAuswahl
+        self.beiKachel = beiKachel
     }
 
     @State private var suchtext = ""
@@ -83,9 +94,9 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
         Group {
             if #available(iOS 26.0, *) {
                 inhalt
-                    .navigationTitle("GERÄT WÄHLEN")
+                    .navigationTitle(titel)
                     .navigationBarTitleDisplayMode(.large)
-                    .modifier(SystemkopfAbIOS26(untertitel: untertitel, suchtext: $suchtext))
+                    .modifier(SystemkopfAbIOS26(untertitel: untertitel, suchtext: $suchtext, prompt: suchprompt))
             } else {
                 VStack(spacing: 0) {
                     kopf
@@ -112,7 +123,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     /// Untertitel die Navigationsleiste (siehe `body`).
     private var kopf: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-            Text("GERÄT WÄHLEN")
+            Text(titel)
                 .font(DesignSystem.Typography.screentitel)
                 .tracking(-1)
                 .foregroundStyle(DesignSystem.Color.text)
@@ -126,7 +137,19 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
         .padding(.top, DesignSystem.Spacing.s16)
     }
 
+    private var titel: String {
+        gruppe.map { $0.titel.uppercased() } ?? "GERÄT WÄHLEN"
+    }
+
+    private var suchprompt: String {
+        gruppe.map { "In \($0.titel) suchen" } ?? "Gerät, Übung oder Platz"
+    }
+
     private var untertitel: String {
+        if gruppe != nil {
+            let anzahl = gruppen.liste.count
+            return anzahl == 1 ? "1 Gerät" : "\(anzahl) Geräte"
+        }
         let stationen = katalog.bootstrap.map { GeraeteAuswahl.stationen(bootstrap: $0, ort: ort) } ?? []
         // Typen statt Geraete: Freies Training oder ein Studio ohne Geraete.
         if ort == .freiesTraining || stationen.contains(where: { $0.machineId == nil }) {
@@ -153,7 +176,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(feldAktiv ? DesignSystem.Color.accent : DesignSystem.Color.textFaint)
-            TextField("", text: $suchtext, prompt: Text("Gerät, Übung oder Platz")
+            TextField("", text: $suchtext, prompt: Text(suchprompt)
                 .foregroundColor(DesignSystem.Color.textFaint))
                 .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Color.text)
@@ -192,7 +215,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
         guard let bootstrap = katalog.bootstrap else {
             return .leer
         }
-        return GeraeteAuswahl.gruppen(bootstrap: bootstrap, ort: ort, suchtext: suchtext)
+        return GeraeteAuswahl.gruppen(bootstrap: bootstrap, ort: ort, suchtext: suchtext, gruppe: gruppe)
     }
 
     @ViewBuilder
@@ -224,14 +247,14 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                     if !g.zuletzt.isEmpty {
                         gruppe("ZULETZT BEI DIR", g.zuletzt, ersteGruppe: true)
                     }
-                    // Ohne Suchtext Kraft und Cardio getrennt (Cardio-Spec
-                    // 3.5) -- die Kategorie traegt nur diese Ueberschrift,
-                    // keine Regel. Mit Suchtext eine flache Liste.
-                    if !g.kraft.isEmpty {
-                        gruppe("KRAFT · A–Z", g.kraft, ersteGruppe: g.zuletzt.isEmpty)
+                    // Ohne Suchtext Kacheln statt der langen Liste (Testnotiz
+                    // 12.10., #3) -- die Gruppe traegt nur die Kachel, keine
+                    // Regel. Mit Suchtext eine flache Liste.
+                    if !g.kategorien.isEmpty {
+                        kacheln(g.kategorien, ersteGruppe: g.zuletzt.isEmpty)
                     }
-                    if !g.cardio.isEmpty {
-                        gruppe("CARDIO · A–Z", g.cardio, ersteGruppe: g.zuletzt.isEmpty && g.kraft.isEmpty)
+                    if !g.liste.isEmpty {
+                        gruppe("A–Z", g.liste, ersteGruppe: true)
                     }
                     if !g.treffer.isEmpty {
                         gruppe("\(g.treffer.count) TREFFER", g.treffer, ersteGruppe: true)
@@ -266,6 +289,59 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                 // Zeile und Zeile-zu-Zeile innerhalb der Gruppe treffen.
                 .padding(.top, ersteGruppe ? 0 : DesignSystem.Spacing.s4)
         }
+    }
+
+    // MARK: - Kacheln (Testnotiz 12.10., #3-#5)
+
+    /// Zwei Spalten: sieben Gruppen passen so ohne Scrollen unter "Zuletzt".
+    /// Flaeche und Rand wie die Zeilen, kein Akzent -- die Hauptaktion des
+    /// Screens bleiben QR und NFC im Fuss.
+    private func kacheln(_ kacheln: [GeraeteAuswahl.Kachel], ersteGruppe: Bool) -> some View {
+        Section {
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: DesignSystem.Spacing.s8),
+                                GridItem(.flexible(), spacing: DesignSystem.Spacing.s8)],
+                      spacing: DesignSystem.Spacing.s8) {
+                ForEach(kacheln) { kachel in
+                    Button { beiKachel(kachel) } label: { kachelInhalt(kachel) }
+                        .buttonStyle(PressButtonStyle())
+                }
+            }
+        } header: {
+            Text("KATEGORIEN")
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .padding(.top, ersteGruppe ? 0 : DesignSystem.Spacing.s4)
+        }
+    }
+
+    private func kachelInhalt(_ kachel: GeraeteAuswahl.Kachel) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
+            Image(systemName: kachel.gruppe.symbol)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .frame(height: 26)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(kachel.gruppe.titel)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(DesignSystem.Color.text)
+                Text(GeraeteAuswahl.kachelText(kachel))
+                    .font(.system(size: 12))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
+        .padding(DesignSystem.Spacing.s16)
+        .background(DesignSystem.Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.neben))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.neben)
+                .stroke(DesignSystem.Color.line, lineWidth: 1)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.neben))
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
     }
 
     private func zeile(_ eintrag: GeraeteAuswahl.Eintrag) -> some View {
@@ -420,13 +496,14 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     private struct SystemkopfAbIOS26: ViewModifier {
         let untertitel: String
         @Binding var suchtext: String
+        let prompt: String
 
         func body(content: Content) -> some View {
             content
                 .navigationSubtitle(untertitel)
                 .searchable(
                     text: $suchtext,
-                    prompt: Text("Gerät, Übung oder Platz"))
+                    prompt: Text(prompt))
                 .searchToolbarBehavior(.minimize)
         }
     }
@@ -510,8 +587,9 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
 
 extension GeraeteAuswahlView where Kopfinhalt == EmptyView {
     init(fotoLader: any GeraetefotosLoading & UebungsvideosLoading, vorschauLader: VorschauLader,
+         gruppe: Geraetegruppe? = nil,
          beiAuswahl: @escaping (Station) -> Void) {
-        self.init(fotoLader: fotoLader, vorschauLader: vorschauLader,
+        self.init(fotoLader: fotoLader, vorschauLader: vorschauLader, gruppe: gruppe,
                   kopfinhalt: { EmptyView() }, beiAuswahl: beiAuswahl)
     }
 }

@@ -30,10 +30,11 @@ enum GeraeteAuswahl {
         let modellId: String
         /// `equipmentModel.name` -- das Wort, das am Geraet steht.
         let name: String
-        /// Nur fuer die Gruppierung ohne Suchtext (Cardio-Spec 3.5). Die
-        /// Suche selbst kennt sie nicht: wer "lauf" tippt, will das
-        /// Laufband, egal unter welcher Ueberschrift es sonst stuende.
-        let kategorie: Kategorie
+        /// Nur fuer die Kacheln ohne Suchtext (Testnotiz 12.10., #3; vorher
+        /// Kraft/Cardio nach Cardio-Spec 3.5). Die Suche an der Wurzel kennt
+        /// sie nicht: wer "lauf" tippt, will das Laufband, egal unter
+        /// welcher Kachel es sonst stuende.
+        let gruppe: Geraetegruppe
         /// `label · locationNote`, dieselbe Fuegung wie die Kopfzeile auf
         /// dem Geraete-Screen. Am Typ der Hersteller (oder leer).
         let ortsangabe: String
@@ -50,19 +51,40 @@ enum GeraeteAuswahl {
         let nichtScannbar: Bool
     }
 
-    /// Ohne Suchtext: zuletzt, dann Kraft und Cardio je alphabetisch. Mit
-    /// Suchtext: nur `treffer`, flach wie vor der Kategorie -- die drei
-    /// anderen sind dann leer. Eine leere Gruppe zeigt die Ansicht nicht.
+    /// Eine Kachel (Testnotiz 12.10., #3): ihre Gruppe mit ALLEN Geraeten
+    /// darin, alphabetisch -- auch denen, die oben unter "Zuletzt" stehen.
+    /// Sie zaehlt und oeffnet ihre ganze Gruppe; fehlte das zuletzt
+    /// benutzte Geraet darin, suchte man es genau dort vergeblich.
+    struct Kachel: Equatable, Identifiable {
+        var id: Geraetegruppe { gruppe }
+        let gruppe: Geraetegruppe
+        let eintraege: [Eintrag]
+    }
+
+    /// An der Wurzel ohne Suchtext: `zuletzt` und `kategorien`. In einer
+    /// Kategorie ohne Suchtext: nur `liste`. Mit Suchtext: nur `treffer`,
+    /// flach -- die anderen sind dann leer. Leere Teile zeigt die Ansicht
+    /// nicht.
     struct Gruppen: Equatable {
-        /// Hoechstens drei; bei aktiver Suche leer.
+        /// Hoechstens drei; nur an der Wurzel ohne Suche.
         let zuletzt: [Eintrag]
-        let kraft: [Eintrag]
-        let cardio: [Eintrag]
+        /// In fester Reihenfolge, ohne leere Gruppen (#5).
+        let kategorien: [Kachel]
+        /// Die Geraete einer Kategorie, alphabetisch.
+        let liste: [Eintrag]
         let treffer: [Eintrag]
 
-        static let leer = Gruppen(zuletzt: [], kraft: [], cardio: [], treffer: [])
+        static let leer = Gruppen(zuletzt: [], kategorien: [], liste: [], treffer: [])
 
-        var istLeer: Bool { zuletzt.isEmpty && kraft.isEmpty && cardio.isEmpty && treffer.isEmpty }
+        var istLeer: Bool { zuletzt.isEmpty && kategorien.isEmpty && liste.isEmpty && treffer.isEmpty }
+    }
+
+    /// Wohin ein Tipp auf eine Kachel fuehrt (Rueckfrage D).
+    enum Ziel: Equatable {
+        /// Genau ein Geraet: gleich dessen Uebungen -- der Kabelzug (#3).
+        case station(Station)
+        /// Sonst die Liste der Gruppe -- Freihantel mit drei Hanteln (#4).
+        case liste(Geraetegruppe)
     }
 
     /// Mehr, und die Gruppe verdraengt die Liste, die sie abkuerzen soll.
@@ -84,16 +106,25 @@ enum GeraeteAuswahl {
         }
     }
 
+    /// Ohne abgeloeste Typen (Testnotiz 12.10., #1): sie sind in einem
+    /// anderen aufgegangen. `BootstrapResponse.station(schluessel:)` loest
+    /// sie weiter auf, damit alte Bloecke und Saetze sich oeffnen lassen.
     private static func typen(_ bootstrap: BootstrapResponse, studioId: String?) -> [Station] {
-        (bootstrap.catalog?.equipmentTypes ?? []).map { Station(typ: $0, studioId: studioId) }
+        (bootstrap.catalog?.equipmentTypes ?? [])
+            .filter { $0.retired != true }
+            .map { Station(typ: $0, studioId: studioId) }
     }
 
+    /// `gruppe` gesetzt: die Kategorieliste dieser Gruppe -- ohne Zuletzt
+    /// und ohne Kacheln, und die Suche bleibt in der Gruppe.
     static func gruppen(
         bootstrap: BootstrapResponse,
         ort: Ort,
-        suchtext: String
+        suchtext: String,
+        gruppe: Geraetegruppe? = nil
     ) -> Gruppen {
         let stationen = stationen(bootstrap: bootstrap, ort: ort)
+            .filter { gruppe == nil || Geraetegruppe.fuer($0.equipmentModel) == gruppe }
         let maschinen = Dictionary(bootstrap.machines.map { ($0.id, $0) }, uniquingKeysWith: { erste, _ in erste })
         let besuche = maschinen.mapValues(\.visitCount)
         func notiz(_ station: Station) -> String? {
@@ -107,12 +138,19 @@ enum GeraeteAuswahl {
                 station: station,
                 modellId: station.equipmentModel.id,
                 name: station.equipmentModel.name,
-                kategorie: station.equipmentModel.category,
+                gruppe: Geraetegruppe.fuer(station.equipmentModel),
                 ortsangabe: ortsangabe(station, notiz: notiz(station)),
                 zuletzt: letzteSaetze[station.schluessel],
                 trefferUebung: trefferUebung,
                 gesperrt: station.gesperrt,
                 nichtScannbar: station.machineId != nil && station.tokenHashes.isEmpty)
+        }
+
+        if gesucht.isEmpty, gruppe != nil {
+            let liste = stationen
+                .map { eintrag($0, trefferUebung: nil) }
+                .sorted(by: alphabetischGesperrteAnsEnde)
+            return Gruppen(zuletzt: [], kategorien: [], liste: liste, treffer: [])
         }
 
         guard !gesucht.isEmpty else {
@@ -132,17 +170,18 @@ enum GeraeteAuswahl {
                 }
                 .sorted { letzteSaetze[$0.schluessel]!.performedAt > letzteSaetze[$1.schluessel]!.performedAt }
                 .prefix(deckel)
-            let obenIds = Set(benutzt.map(\.schluessel))
-            // Was oben steht, steht unten nicht noch einmal.
-            let unten = stationen
-                .filter { !obenIds.contains($0.schluessel) }
+            let alle = stationen
                 .map { eintrag($0, trefferUebung: nil) }
                 .sorted(by: alphabetischGesperrteAnsEnde)
+            let kacheln = Geraetegruppe.allCases.compactMap { g -> Kachel? in
+                let darin = alle.filter { $0.gruppe == g }
+                return darin.isEmpty ? nil : Kachel(gruppe: g, eintraege: darin)
+            }
 
             return Gruppen(
                 zuletzt: benutzt.map { eintrag($0, trefferUebung: nil) },
-                kraft: unten.filter { $0.kategorie == .kraft },
-                cardio: unten.filter { $0.kategorie == .cardio },
+                kategorien: kacheln,
+                liste: [],
                 treffer: []
             )
         }
@@ -160,7 +199,7 @@ enum GeraeteAuswahl {
             return eintrag(station, trefferUebung: uebung)
         }
 
-        return Gruppen(zuletzt: [], kraft: [], cardio: [], treffer: treffer.sorted(by: trefferReihenfolge))
+        return Gruppen(zuletzt: [], kategorien: [], liste: [], treffer: treffer.sorted(by: trefferReihenfolge))
     }
 
     // MARK: - Reihenfolgen
@@ -254,5 +293,27 @@ extension GeraeteAuswahl {
         case 1: "1 Übung"
         default: "\(anzahl) Übungen"
         }
+    }
+}
+
+// MARK: - Kacheln (Testnotiz 12.10., #3, #4)
+
+extension GeraeteAuswahl {
+    /// Ein einzelnes gesperrtes Geraet oeffnet nichts -- dann zeigt die
+    /// Liste wenigstens, warum.
+    static func ziel(_ kachel: Kachel) -> Ziel {
+        if kachel.eintraege.count == 1, let einziges = kachel.eintraege.first, !einziges.gesperrt {
+            return .station(einziges.station)
+        }
+        return .liste(kachel.gruppe)
+    }
+
+    /// Die Zahl unter dem Kacheltitel: bei einem Geraet seine Uebungen --
+    /// dorthin fuehrt der Tipp --, sonst die Geraete.
+    static func kachelText(_ kachel: Kachel) -> String {
+        if kachel.eintraege.count == 1, let einziges = kachel.eintraege.first {
+            return uebungsanzahlText(einziges.station.exercises.count) ?? "1 Gerät"
+        }
+        return "\(kachel.eintraege.count) Geräte"
     }
 }

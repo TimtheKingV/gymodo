@@ -80,6 +80,16 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         /// ohne Katalogbezug. Als var mit Vorgabe, damit bestehende Aufrufer
         /// des Memberwise-Inits kompilieren.
         var catalogModelId: String? = nil
+        /// Die Kachel in "Geraet waehlen" (Testnotiz 12.10., #3), vom Server
+        /// aufgeloest. Text statt `Geraetegruppe`: eine Gruppe, die erst ein
+        /// spaeterer Server kennt, machte sonst den ganzen Bootstrap
+        /// unlesbar. Optional fuer Server vor Migration 0051 und alte Caches.
+        var equipmentGroup: String? = nil
+        /// In einem anderen Typ aufgegangen (Testnotiz 12.10., #1).
+        /// Optional aus denselben Gruenden; gelesen wird `abgeloest`.
+        var retired: Bool? = nil
+
+        var abgeloest: Bool { retired == true }
     }
 
     /// Der Gymtavo-Katalog des Studios: Geraetetypen mit ihren Uebungen,
@@ -101,6 +111,9 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
             let secondaryMax: Double?
             let settingDefinitions: [TagContextResponse.SettingDefinition]
             let exercises: [Exercise]
+            /// Siehe `EquipmentModel.equipmentGroup` und `.retired`.
+            var equipmentGroup: String? = nil
+            var retired: Bool? = nil
         }
         let studioId: String
         let equipmentTypes: [EquipmentType]
