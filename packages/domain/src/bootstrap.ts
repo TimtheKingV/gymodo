@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
-import type { Category, LoadUnit, VolumeKind } from "./belastung.js";
+import type { Category, Group, LoadUnit, VolumeKind } from "./belastung.js";
 import { aktiveZiele } from "./goals.js";
 import type { AktiveZiele } from "./goals.js";
 import type { Messpunkt } from "./measurements.js";
@@ -110,6 +110,16 @@ type Geraetemodell = {
   photoPath: string | null;
   /** Nur Anzeige: Gruppierung in der Geraetesuche (Cardio-Spec 3.5). */
   category: Category;
+  /**
+   * Die Kachel in "Geraet waehlen" (Testnotiz 12.10., #3). Immer gesetzt:
+   * am Studio-Modell aufgeloest nach `gruppeDesModells`.
+   */
+  equipmentGroup: Group;
+  /**
+   * Abgeloest (Testnotiz 12.10., #1): in Listen ausblenden, aber weiter
+   * aufloesen -- alte Bloecke und Saetze zeigen noch auf den Typ.
+   */
+  retired: boolean;
   loadUnit: LoadUnit;
   loadStep: number;
   loadMin: number;
@@ -145,7 +155,7 @@ type Uebung = {
 };
 
 const MODELL_SPALTEN =
-  "id, name, manufacturer, photo_path, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id";
+  "id, name, manufacturer, photo_path, category, equipment_group, retired, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id";
 
 type ModellZeile = {
   id: string;
@@ -153,6 +163,8 @@ type ModellZeile = {
   manufacturer: string | null;
   photo_path: string | null;
   category: Category;
+  equipment_group: Group | null;
+  retired: boolean;
   load_unit: LoadUnit;
   load_step: number | string;
   load_min: number | string;
@@ -171,6 +183,16 @@ type ModellZeile = {
 export function uebungenMitKatalog(eigene: Uebung[], katalog: Uebung[]): Uebung[] {
   const gesehen = new Set(eigene.map((uebung) => uebung.id));
   return [...eigene, ...katalog.filter((uebung) => !gesehen.has(uebung.id))];
+}
+
+/**
+ * Unter welcher Kachel ein Modell steht (Testnotiz 12.10., #3). Ein
+ * Studio-Modell traegt keine eigene Gruppe und erbt die seines Gymtavo-Typs;
+ * ohne Zuordnung entscheidet die Kategorie. Der Server loest das auf, wie
+ * er auch die Uebungen mischt -- die App soll die Regel nicht kennen.
+ */
+export function gruppeDesModells(m: { eigene: Group | null; katalog: Group | null; category: Category }): Group {
+  return m.eigene ?? m.katalog ?? (m.category === "cardio" ? "cardio" : "geraete");
 }
 
 function key(machineId: string, exerciseId: string): string {
@@ -424,12 +446,21 @@ export async function getBootstrap(
     einstellungenJeModell.set(row.equipment_model_id, liste);
   }
 
+  const katalogGruppen = new Map(
+    ((katalogModellRows ?? []) as unknown as ModellZeile[]).map((row) => [row.id, row.equipment_group]),
+  );
   const zuModell = (row: ModellZeile): Geraetemodell => ({
     id: row.id,
     name: row.name,
     manufacturer: row.manufacturer,
     photoPath: row.photo_path,
     category: row.category,
+    equipmentGroup: gruppeDesModells({
+      eigene: row.equipment_group,
+      katalog: row.catalog_model_id ? katalogGruppen.get(row.catalog_model_id) ?? null : null,
+      category: row.category,
+    }),
+    retired: row.retired,
     loadUnit: row.load_unit,
     loadStep: Number(row.load_step),
     loadMin: Number(row.load_min),

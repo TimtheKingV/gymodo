@@ -43,6 +43,8 @@ export function typVorlagen(
 ): TypVorlage[] {
   const url = (pfad: string | null) => (pfad ? (fotoUrls[pfad] ?? null) : null);
   return typen
+    // Ein neues Modell bekommt nie einen abgeloesten Typ (Testnotiz 12.10., #1).
+    .filter((typ) => !typ.retired)
     .filter((typ) => kategorie === undefined || typ.category === kategorie)
     .map((typ) => ({
       id: typ.id,

@@ -29,7 +29,7 @@ export {
   volumeKindSchema,
   volumeZuGross,
 } from "./belastung.js";
-export type { Category, LoadUnit, VolumeKind } from "./belastung.js";
+export type { Category, Group, LoadUnit, VolumeKind } from "./belastung.js";
 export {
   befestigungsartSchema,
   herkunftPruefen,

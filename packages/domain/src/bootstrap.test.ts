@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { zaehleBesucheJeGeraet } from "./bootstrap.js";
+import { gruppeDesModells, zaehleBesucheJeGeraet } from "./bootstrap.js";
 
 describe("zaehleBesucheJeGeraet", () => {
   it("zaehlt zwei Saetze derselben Session als einen Besuch", () => {
@@ -35,5 +35,21 @@ describe("zaehleBesucheJeGeraet", () => {
     const besuche = zaehleBesucheJeGeraet([]);
 
     expect(besuche.get("m1")).toBeUndefined();
+  });
+});
+
+// Testnotiz 12.10., #3: unter welcher Kachel ein Geraet in der App steht.
+describe("gruppeDesModells", () => {
+  it("nimmt die eigene Gruppe vor der des Gymtavo-Typs", () => {
+    expect(gruppeDesModells({ eigene: "freihantel", katalog: "kabelzug", category: "kraft" })).toBe("freihantel");
+  });
+
+  it("erbt die Gruppe des zugeordneten Gymtavo-Typs", () => {
+    expect(gruppeDesModells({ eigene: null, katalog: "kabelzug", category: "kraft" })).toBe("kabelzug");
+  });
+
+  it("faellt ohne Zuordnung auf die Kategorie zurueck", () => {
+    expect(gruppeDesModells({ eigene: null, katalog: null, category: "cardio" })).toBe("cardio");
+    expect(gruppeDesModells({ eigene: null, katalog: null, category: "kraft" })).toBe("geraete");
   });
 });
