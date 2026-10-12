@@ -75,7 +75,9 @@
   - `listCatalogTypes` liefert `retired` und `group` mit.
   - Die Auswahlfelder für einen Gymtavo-Typ blenden abgelöste Typen aus. Ein schon zugeordneter abgelöster Typ bleibt sichtbar.
   - Lookups per id (`einrichten/actions.ts:164`) bleiben ungefiltert.
+- **Abweichung bei der Umsetzung:** Die Gruppe eines Studiogeräts löst der Server auf (`gruppeDesModells` in `bootstrap.ts`), nicht die App. So mischt er schon die Übungen, und die App muss die Regel nicht kennen. Die App fällt nur ohne oder bei unbekannter Gruppe auf die Kategorie zurück.
 - **Test zuerst:**
+  - `bootstrap.test.ts`: `gruppeDesModells` (eigene vor geerbter Gruppe, Rückfall über die Kategorie).
   - `domain-bootstrap-katalog.test.ts`: Ein Typ liefert `equipmentGroup` und `retired`.
   - Vitest am Typ-Auswahlfeld: Ein abgelöster Typ fehlt in der Auswahl, außer er ist der aktuelle.
 
@@ -144,4 +146,33 @@
 
 ## Geprüft
 
-_nach der Umsetzung ausfüllen_
+Etappen 1–5 umgesetzt in 5 Commits (`1f5b0ee` bis `5474564`).
+- Etappe 1 enthält schon die Gruppen aller 55 Typen, sonst wäre `gymtavo.json` zwischen den Commits ungültig.
+- Etappe 4 und 5 sind ein Commit, weil die Ansicht ohne die neue Logik nicht kompiliert.
+
+- **Rot vor Grün:**
+  - Schema, Plan, `gruppeDesModells`, Portal (`typVorlagen`, `GymtavoTypFeld`), Katalogtest und die iOS-Suites liefen nachweislich zuerst rot.
+  - Die beiden Integrationsfälle (Import, Bootstrap) entstanden mit der Umsetzung, ein Rot-Lauf fehlt.
+- **Domain/Web:**
+  - `pnpm typecheck` grün, `npx tsc --noEmit` (Wurzel, inkl. e2e) grün.
+  - Vitest: domain 324, web 306 grün.
+  - Produktionsbau grün.
+- **Integration:** Der Gesamtlauf von `pnpm test:integration` meldete 18 Fehler in 12 Dateien, darunter Kurse und Einladungen, die dieser Branch nicht berührt. Alle 12 Dateien laufen einzeln grün (190 Tests): Umgebung, geteilte lokale DB.
+- **iOS:** `xcodebuild test` mit dem ganzen Satz grün, 1072 Tests in 109 Suites.
+- **E2E:** Lokal nicht gelaufen, das übernimmt die CI. Die E2E-Tests legen eigene Typen an und kennen die alten Kabelzug-Namen nicht.
+- **Lokaler Import:** aus einer Kopie ohne Produkte, damit die lokalen Testfotos bleiben. Ergebnis: 55 Typen, 2 Einstellungen, 45 Übungen, 39 Verknüpfungen, 39 Videos. Der Kabelzug hat 44 Übungen, die Latzugstation 3.
+- **Sichtcheck im Simulator** (Wegwerf-UI-Test gegen das lokale Backend, Freies Training, frisches Mitglied):
+  - #3: Unter „KATEGORIEN“ stehen vier Kacheln im Raster: Geräte, Freihantel, Kabelzug, Cardio. Eigengewicht, Kettlebell und Gummiband fehlen, wie geplant (#5).
+  - #4: Freihantel zeigt Kurzhantel, Langhantel und SZ-Hantel.
+  - #1/#2: Die Kachel Kabelzug zeigt „44 Übungen“ und öffnet gleich die Geräteseite „KABELZUG“ mit allen Übungen samt Video.
+  - Die Suche „Kabel“ zeigt keinen der abgelösten Typen.
+  - Die lokalen Zahlen (407 Geräte, 22 Cardio) kommen von Testresten anderer Suites in der geteilten DB.
+  - Ein Rest des neuen Bootstrap-Integrationstests stand als zweites Gerät im Kabelzug. Behoben: Der Test legt seinen Typ jetzt abgelöst an (`5474564`).
+- **Am Gerät noch ansehen:**
+  - Die Kacheln auf dem 13 mini, besonders die Höhe von 88 pt und die Symbole.
+  - Die Kabelzug-Seite mit 44 Übungen: Lässt sie sich gut scrollen, oder braucht sie eine Unterteilung (z. B. nach Muskel)?
+
+## Für Prod offen (nur auf Freigabe)
+
+- Migration 0051 mit `db push --linked`, danach `pnpm catalog:import --dry-run` gegen Prod.
+- **Achtung Fotos:** Die Repo-Datei setzt die 69 Herstellerfotos, die in Prod nur testweise auf `cleared` stehen, beim Import auf `pending` zurück (Rechteentzug). Ein Import nur für den Kabelzug geht ohne diesen Nebeneffekt aus einer Kopie ohne `products`, wie beim lokalen Import. Die vier Produkt-Typ-Zuordnungen auf abgelöste Typen blieben dann bestehen. Sie sind unschädlich, weil das Portal abgelöste Typen nicht anbietet.
