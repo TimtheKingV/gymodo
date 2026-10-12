@@ -423,6 +423,7 @@
       "name": "Hoher Kabelzug",
       "category": "kraft",
       "group": "kabelzug",
+      "retired": true,
       "manufacturer": null,
       "photo": "media/photos/high_cable.png",
       "load_unit": "kg",
@@ -1499,11 +1500,21 @@
           "max": null,
           "step": null,
           "unit": null
+        },
+        {
+          "key": "thigh_pad",
+          "label": "Oberschenkelpolster",
+          "kind": "number",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
         }
       ],
       "exercises": [
         "lat_pulldown_neutral",
-        "lat_pulldown_supinated"
+        "lat_pulldown_supinated",
+        "lat_pulldown_pronated"
       ]
     },
     {
@@ -1540,6 +1551,7 @@
       "name": "Hoher Kabelzug + Seil",
       "category": "kraft",
       "group": "kabelzug",
+      "retired": true,
       "manufacturer": null,
       "photo": "media/photos/cable_adjustable.png",
       "load_unit": "kg",
@@ -1599,6 +1611,7 @@
       "name": "Doppel-Kabelzug + zwei Einzelgriffe",
       "category": "kraft",
       "group": "kabelzug",
+      "retired": true,
       "manufacturer": null,
       "photo": "media/photos/dual_cable.png",
       "load_unit": "kg",
@@ -1842,7 +1855,7 @@
     },
     {
       "key": "dual_cable_station",
-      "name": "Doppelkabelzug mit zwei unabhängig belastbaren Rollen",
+      "name": "Kabelzug",
       "category": "kraft",
       "group": "kabelzug",
       "manufacturer": null,
@@ -1852,14 +1865,62 @@
       "load_min": 0,
       "load_max": null,
       "secondary": null,
-      "settings": [],
+      "settings": [
+        {
+          "key": "pulley_height",
+          "label": "Rollenhöhe",
+          "kind": "number",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        }
+      ],
       "exercises": [
         "cable_decline_fly",
         "cable_low_fly",
         "cable_incline_fly",
         "cable_bench_press",
         "cable_incline_press",
-        "cable_shoulder_press"
+        "cable_shoulder_press",
+        "cable_fly_mid",
+        "cable_chest_press_standing",
+        "cable_reverse_fly_standing",
+        "cable_high_curl",
+        "cable_face_pull",
+        "cable_straight_arm_pulldown",
+        "triceps_pushdown_bar",
+        "cable_triceps_overhead",
+        "cable_curl_bar",
+        "cable_hammer_curl",
+        "cable_lateral_raise",
+        "cable_hip_extension",
+        "cable_pallof_press",
+        "cable_crunch_kneeling",
+        "cable_chest_press_single",
+        "cable_lat_single_kneeling",
+        "cable_front_raise_bar",
+        "cable_pull_through",
+        "cable_hip_abduction",
+        "cable_hip_adduction",
+        "cable_shoulder_external_rotation",
+        "cable_shoulder_internal_rotation",
+        "cable_triceps_overhead_single",
+        "cable_incline_row",
+        "cable_high_row_kneeling",
+        "cable_row_standing_v",
+        "cable_row_rope",
+        "cable_preacher_curl",
+        "cable_concentration_curl",
+        "cable_reverse_curl",
+        "cable_pushdown_supinated",
+        "cable_pushdown_vbar",
+        "cable_kickback",
+        "cable_shrug",
+        "cable_rotation",
+        "cable_chop_high_low",
+        "cable_lift_low_high",
+        "triceps_pushdown_rope"
       ]
     },
     {
@@ -3108,7 +3169,7 @@
     {
       "key": "lat_pulldown_pronated",
       "name": "Latzug · Obergriff",
-      "description": "Einstellen:\n- Oberschenkelpolster passend einstellen und Füße aufstellen.\n- Die Stange etwas breiter als schulterbreit im Obergriff fassen.\n\nBewegung:\n- Die Stange vor dem Kopf zur oberen Brust ziehen.\n- Ellenbogen nach unten führen; den Oberkörper ruhig halten.\n- Die Stange kontrolliert nach oben zurückführen.\n\nHinweise:\n- Nicht hinter den Nacken ziehen.\n- Nur leicht zurücklehnen.\n\nHäufige Fehler:\n- Starkes Zurückschwingen des Oberkörpers.\n- Die Stange hinter den Kopf ziehen.\n\nPositionen:\nStart: Arme über dem Kopf, Oberschenkel unter dem Polster.\nEnde: Stange vor der oberen Brust, Ellenbogen abgesenkt.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug",
+      "description": "Einstellen:\n- Oberschenkelpolster passend einstellen und Füße aufstellen.\n- Die Stange etwas breiter als schulterbreit im Obergriff fassen.\n\nBewegung:\n- Die Stange vor dem Kopf zur oberen Brust ziehen.\n- Ellenbogen nach unten führen; den Oberkörper ruhig halten.\n- Die Stange kontrolliert nach oben zurückführen.\n\nHinweise:\n- Nicht hinter den Nacken ziehen.\n- Nur leicht zurücklehnen.\n\nHäufige Fehler:\n- Starkes Zurückschwingen des Oberkörpers.\n- Die Stange hinter den Kopf ziehen.\n\nPositionen:\nStart: Arme über dem Kopf, Oberschenkel unter dem Polster.\nEnde: Stange vor der oberen Brust, Ellenbogen abgesenkt.\n\nBenötigte Ausstattung: 1 × Latzugstation + V-Griff",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3306,7 +3367,7 @@
     {
       "key": "cable_face_pull",
       "name": "Face Pull am Seil",
-      "description": "Einstellen:\n- Seil ungefähr auf Augenhöhe befestigen. Zur Station schauen, Seilenden greifen und mit leicht gebeugten Knien einen stabilen Stand einnehmen.\n\nBewegung:\n- Seil zum Gesicht ziehen und die Enden auseinander zu den Schläfen führen.\n- Arme langsam nach vorne führen.\n\nHinweise:\n- Ellenbogen seitlich führen; Hals bleibt lang.\n\nHäufige Fehler:\n- Das Seil tief zur Brust rudern oder den Kopf vorstrecken.\n\nPositionen:\nStart: Arme nach vorne auf Augenhöhe.\nEnde: Hände neben den Schläfen, Ellenbogen seitlich.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Seil ungefähr auf Augenhöhe befestigen. Zur Station schauen, Seilenden greifen und mit leicht gebeugten Knien einen stabilen Stand einnehmen.\n\nBewegung:\n- Seil zum Gesicht ziehen und die Enden auseinander zu den Schläfen führen.\n- Arme langsam nach vorne führen.\n\nHinweise:\n- Ellenbogen seitlich führen; Hals bleibt lang.\n\nHäufige Fehler:\n- Das Seil tief zur Brust rudern oder den Kopf vorstrecken.\n\nPositionen:\nStart: Arme nach vorne auf Augenhöhe.\nEnde: Hände neben den Schläfen, Ellenbogen seitlich.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3338,7 +3399,7 @@
     {
       "key": "cable_straight_arm_pulldown",
       "name": "Gestrecktes Armziehen am Kabel",
-      "description": "Einstellen:\n- Stange am hohen Kabel befestigen. Etwas zurücktreten, Knie leicht beugen und den Oberkörper gering nach vorne neigen.\n\nBewegung:\n- Die annähernd gestreckten Arme im Bogen zu den Oberschenkeln führen.\n- Arme kontrolliert wieder anheben.\n\nHinweise:\n- Ellenbogenwinkel bleibt fast gleich.\n\nHäufige Fehler:\n- Die Arme stark beugen und daraus einen Latzug machen.\n\nPositionen:\nStart: Arme schräg nach vorne oben.\nEnde: Hände vor den Oberschenkeln.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Stange am hohen Kabel befestigen. Etwas zurücktreten, Knie leicht beugen und den Oberkörper gering nach vorne neigen.\n\nBewegung:\n- Die annähernd gestreckten Arme im Bogen zu den Oberschenkeln führen.\n- Arme kontrolliert wieder anheben.\n\nHinweise:\n- Ellenbogenwinkel bleibt fast gleich.\n\nHäufige Fehler:\n- Die Arme stark beugen und daraus einen Latzug machen.\n\nPositionen:\nStart: Arme schräg nach vorne oben.\nEnde: Hände vor den Oberschenkeln.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3365,7 +3426,7 @@
     {
       "key": "triceps_pushdown_rope",
       "name": "Trizepsdrücken · Seil",
-      "description": "Einstellen:\n- Seil am hohen Kabelzug befestigen.\n- Stabil stehen, die Seilenden greifen und Ellenbogen neben dem Körper halten.\n\nBewegung:\n- Die Hände durch Strecken der Ellenbogen nach unten führen.\n- Den Oberkörper ruhig halten.\n- Das Seil langsam zurückführen und die Ellenbogen wieder beugen.\n\nHinweise:\n- Oberarme bleiben weitgehend am Körper.\n- Handgelenke gerade halten.\n\nHäufige Fehler:\n- Mit dem Körpergewicht nach unten drücken.\n- Oberarme stark vor und zurück bewegen.\n\nPositionen:\nStart: Ellenbogen gebeugt, Hände vor dem Oberkörper.\nEnde: Arme neben dem Körper gestreckt.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug",
+      "description": "Einstellen:\n- Seil am hohen Kabelzug befestigen.\n- Stabil stehen, die Seilenden greifen und Ellenbogen neben dem Körper halten.\n\nBewegung:\n- Die Hände durch Strecken der Ellenbogen nach unten führen.\n- Den Oberkörper ruhig halten.\n- Das Seil langsam zurückführen und die Ellenbogen wieder beugen.\n\nHinweise:\n- Oberarme bleiben weitgehend am Körper.\n- Handgelenke gerade halten.\n\nHäufige Fehler:\n- Mit dem Körpergewicht nach unten drücken.\n- Oberarme stark vor und zurück bewegen.\n\nPositionen:\nStart: Ellenbogen gebeugt, Hände vor dem Oberkörper.\nEnde: Arme neben dem Körper gestreckt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3388,7 +3449,7 @@
     {
       "key": "triceps_pushdown_bar",
       "name": "Trizepsdrücken – Stange",
-      "description": "Einstellen:\n- Kurze Stange am oberen Kabel befestigen und im Obergriff fassen. Stabil stehen, Ellenbogen neben den Rumpf bringen.\n\nBewegung:\n- Die Ellenbogen strecken und die Stange nach unten führen.\n- Unterarme kontrolliert wieder anheben.\n\nHinweise:\n- Oberarme bleiben neben dem Körper.\n\nHäufige Fehler:\n- Mit dem Körpergewicht auf die Stange drücken.\n\nPositionen:\nStart: Ellenbogen gebeugt, Stange vor dem Bauch.\nEnde: Arme weitgehend gestreckt, Stange vor den Oberschenkeln.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Kurze Stange am oberen Kabel befestigen und im Obergriff fassen. Stabil stehen, Ellenbogen neben den Rumpf bringen.\n\nBewegung:\n- Die Ellenbogen strecken und die Stange nach unten führen.\n- Unterarme kontrolliert wieder anheben.\n\nHinweise:\n- Oberarme bleiben neben dem Körper.\n\nHäufige Fehler:\n- Mit dem Körpergewicht auf die Stange drücken.\n\nPositionen:\nStart: Ellenbogen gebeugt, Stange vor dem Bauch.\nEnde: Arme weitgehend gestreckt, Stange vor den Oberschenkeln.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3411,7 +3472,7 @@
     {
       "key": "cable_triceps_overhead",
       "name": "Trizepsstrecken über Kopf – Seil",
-      "description": "Einstellen:\n- Seil am tiefen Kabel befestigen und mit dem Rücken zur Station in Schrittstellung stehen. Oberarme über Kopf anheben; Kabelbahn hinter dem Körper freihalten.\n\nBewegung:\n- Die Ellenbogen strecken und das Seil nach oben vorne führen.\n- Hände hinter den Kopf zurückführen.\n\nHinweise:\n- Oberarme bleiben annähernd ausgerichtet; Rippen nicht aufschieben.\n\nHäufige Fehler:\n- Ins Hohlkreuz ausweichen oder die Schultern stark mitbewegen.\n\nPositionen:\nStart: Oberarme über Kopf, Ellenbogen gebeugt.\nEnde: Arme über Kopf weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Seil am tiefen Kabel befestigen und mit dem Rücken zur Station in Schrittstellung stehen. Oberarme über Kopf anheben; Kabelbahn hinter dem Körper freihalten.\n\nBewegung:\n- Die Ellenbogen strecken und das Seil nach oben vorne führen.\n- Hände hinter den Kopf zurückführen.\n\nHinweise:\n- Oberarme bleiben annähernd ausgerichtet; Rippen nicht aufschieben.\n\nHäufige Fehler:\n- Ins Hohlkreuz ausweichen oder die Schultern stark mitbewegen.\n\nPositionen:\nStart: Oberarme über Kopf, Ellenbogen gebeugt.\nEnde: Arme über Kopf weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3434,7 +3495,7 @@
     {
       "key": "cable_curl_bar",
       "name": "Bizepscurl am Kabel – Stange",
-      "description": "Einstellen:\n- Kurze Stange am tiefen Kabel befestigen und im Untergriff fassen. Zur Station schauen, stabil stehen und Oberarme neben dem Rumpf halten.\n\nBewegung:\n- Ellenbogen beugen und die Stange zum Oberkörper anheben.\n- Stange kontrolliert absenken.\n\nHinweise:\n- Seitliche Ansicht: Ellenbogen bleiben ortsfest.\n\nHäufige Fehler:\n- Den Rumpf nach hinten werfen oder die Handgelenke einknicken.\n\nPositionen:\nStart: Arme fast gestreckt, Stange vorne unten.\nEnde: Ellenbogen gebeugt, Stange vor dem Oberkörper.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Kurze Stange am tiefen Kabel befestigen und im Untergriff fassen. Zur Station schauen, stabil stehen und Oberarme neben dem Rumpf halten.\n\nBewegung:\n- Ellenbogen beugen und die Stange zum Oberkörper anheben.\n- Stange kontrolliert absenken.\n\nHinweise:\n- Seitliche Ansicht: Ellenbogen bleiben ortsfest.\n\nHäufige Fehler:\n- Den Rumpf nach hinten werfen oder die Handgelenke einknicken.\n\nPositionen:\nStart: Arme fast gestreckt, Stange vorne unten.\nEnde: Ellenbogen gebeugt, Stange vor dem Oberkörper.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3461,7 +3522,7 @@
     {
       "key": "cable_hammer_curl",
       "name": "Hammercurl am Kabel – Seil",
-      "description": "Einstellen:\n- Seil am tiefen Kabel befestigen. Seilenden im Neutralgriff mit Daumen nach oben fassen und stabil zur Station stehen.\n\nBewegung:\n- Unterarme anheben, ohne die Oberarme nach vorne zu schieben.\n- Seilenden langsam wieder absenken.\n\nHinweise:\n- Neutralgriff beibehalten; Ellenbogen neben dem Rumpf.\n\nHäufige Fehler:\n- Unterarme während des Curls stark eindrehen oder Schwung holen.\n\nPositionen:\nStart: Seilenden unten, Handflächen zueinander.\nEnde: Seilenden angehoben, Ellenbogen gebeugt.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Seil am tiefen Kabel befestigen. Seilenden im Neutralgriff mit Daumen nach oben fassen und stabil zur Station stehen.\n\nBewegung:\n- Unterarme anheben, ohne die Oberarme nach vorne zu schieben.\n- Seilenden langsam wieder absenken.\n\nHinweise:\n- Neutralgriff beibehalten; Ellenbogen neben dem Rumpf.\n\nHäufige Fehler:\n- Unterarme während des Curls stark eindrehen oder Schwung holen.\n\nPositionen:\nStart: Seilenden unten, Handflächen zueinander.\nEnde: Seilenden angehoben, Ellenbogen gebeugt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3488,7 +3549,7 @@
     {
       "key": "cable_lateral_raise",
       "name": "Seitheben am Kabel – einarmig",
-      "description": "Einstellen:\n- Einzelgriff am tiefen Kabel befestigen. Seitlich zur Station stehen und den Griff mit der äußeren Hand vor dem Körper fassen.\n\nBewegung:\n- Den Arbeitsarm seitlich bis etwa Schulterhöhe anheben.\n- Arm kontrolliert wieder vor den Körper absenken; anschließend Seite wechseln.\n\nHinweise:\n- Ellenbogen leicht gebeugt und Oberkörper ruhig halten.\n\nHäufige Fehler:\n- Den Arm über Schulterhöhe ziehen oder seitlich mitkippen.\n\nPositionen:\nStart: Arbeitsarm unten vor dem Körper.\nEnde: Arbeitsarm seitlich etwa auf Schulterhöhe.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Einzelgriff am tiefen Kabel befestigen. Seitlich zur Station stehen und den Griff mit der äußeren Hand vor dem Körper fassen.\n\nBewegung:\n- Den Arbeitsarm seitlich bis etwa Schulterhöhe anheben.\n- Arm kontrolliert wieder vor den Körper absenken; anschließend Seite wechseln.\n\nHinweise:\n- Ellenbogen leicht gebeugt und Oberkörper ruhig halten.\n\nHäufige Fehler:\n- Den Arm über Schulterhöhe ziehen oder seitlich mitkippen.\n\nPositionen:\nStart: Arbeitsarm unten vor dem Körper.\nEnde: Arbeitsarm seitlich etwa auf Schulterhöhe.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3515,7 +3576,7 @@
     {
       "key": "cable_fly_mid",
       "name": "Butterfly am Kabel – Brusthöhe",
-      "description": "Einstellen:\n- Zwei Einzelgriffe ungefähr auf Brusthöhe einstellen. Mittig in Schrittstellung stehen und die Arme mit leicht gebeugten Ellenbogen öffnen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Die Hände in einem Bogen vor der Brust zusammenführen.\n- Arme kontrolliert wieder öffnen.\n\nHinweise:\n- Der Ellenbogenwinkel bleibt annähernd gleich.\n\nHäufige Fehler:\n- Aus dem Butterfly ein Drücken mit starkem Beugen und Strecken machen.\n\nPositionen:\nStart: Arme seitlich geöffnet, Kabel auf Brusthöhe.\nEnde: Hände vor der Brust angenähert.\n\nBenötigte Ausstattung: 1 × Doppel-Kabelzug + zwei Einzelgriffe",
+      "description": "Einstellen:\n- Zwei Einzelgriffe ungefähr auf Brusthöhe einstellen. Mittig in Schrittstellung stehen und die Arme mit leicht gebeugten Ellenbogen öffnen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Die Hände in einem Bogen vor der Brust zusammenführen.\n- Arme kontrolliert wieder öffnen.\n\nHinweise:\n- Der Ellenbogenwinkel bleibt annähernd gleich.\n\nHäufige Fehler:\n- Aus dem Butterfly ein Drücken mit starkem Beugen und Strecken machen.\n\nPositionen:\nStart: Arme seitlich geöffnet, Kabel auf Brusthöhe.\nEnde: Hände vor der Brust angenähert.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3542,7 +3603,7 @@
     {
       "key": "cable_hip_extension",
       "name": "Hüftstrecken am Kabel – einbeinig",
-      "description": "Einstellen:\n- Fußmanschette am tiefen Kabel befestigen. Zur Station schauen, am festen Rahmen festhalten und Standbein leicht beugen.\n\nBewegung:\n- Das Arbeitsbein mit annähernd gleichbleibendem Kniewinkel etwas nach hinten führen.\n- Bein kontrolliert zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Becken bleibt nach vorne und Rumpf ruhig.\n\nHäufige Fehler:\n- Die Hüfte aufdrehen oder ins Hohlkreuz ausweichen.\n\nPositionen:\nStart: Arbeitsfuß knapp über dem Boden nahe dem Standbein.\nEnde: Arbeitsbein leicht nach hinten geführt.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Fußmanschette am tiefen Kabel befestigen. Zur Station schauen, am festen Rahmen festhalten und Standbein leicht beugen.\n\nBewegung:\n- Das Arbeitsbein mit annähernd gleichbleibendem Kniewinkel etwas nach hinten führen.\n- Bein kontrolliert zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Becken bleibt nach vorne und Rumpf ruhig.\n\nHäufige Fehler:\n- Die Hüfte aufdrehen oder ins Hohlkreuz ausweichen.\n\nPositionen:\nStart: Arbeitsfuß knapp über dem Boden nahe dem Standbein.\nEnde: Arbeitsbein leicht nach hinten geführt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3569,7 +3630,7 @@
     {
       "key": "cable_pallof_press",
       "name": "Pallof Press – stehend",
-      "description": "Einstellen:\n- Einzelgriff auf Brusthöhe einstellen. Seitlich zur Station hüftbreit stehen und den Griff mit beiden Händen vor der Brust halten.\n\nBewegung:\n- Hände gerade nach vorne strecken und den seitlichen Kabelzug abfangen, ohne den Rumpf zu drehen.\n- Hände zur Brust zurückführen; anschließend mit der anderen Seite zur Station stehen.\n\nHinweise:\n- Brust und Becken bleiben in derselben Richtung.\n\nHäufige Fehler:\n- Zum Kabel hin rotieren oder seitlich ausweichen.\n\nPositionen:\nStart: Hände vor der Brust, Kabel zieht von der Seite.\nEnde: Arme nach vorne gestreckt, Rumpf unverändert.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Einzelgriff auf Brusthöhe einstellen. Seitlich zur Station hüftbreit stehen und den Griff mit beiden Händen vor der Brust halten.\n\nBewegung:\n- Hände gerade nach vorne strecken und den seitlichen Kabelzug abfangen, ohne den Rumpf zu drehen.\n- Hände zur Brust zurückführen; anschließend mit der anderen Seite zur Station stehen.\n\nHinweise:\n- Brust und Becken bleiben in derselben Richtung.\n\nHäufige Fehler:\n- Zum Kabel hin rotieren oder seitlich ausweichen.\n\nPositionen:\nStart: Hände vor der Brust, Kabel zieht von der Seite.\nEnde: Arme nach vorne gestreckt, Rumpf unverändert.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3596,7 +3657,7 @@
     {
       "key": "cable_crunch_kneeling",
       "name": "Bauchbeugen am Kabel – kniend",
-      "description": "Einstellen:\n- Seil am hohen Kabel befestigen. Nahe unter der oberen Umlenkrolle hinknien, Knie und Unterschenkel auflegen. Oberkörper leicht vorgebeugt und Seilenden neben dem Kopf halten; der Zug kommt steil von oben.\n\nBewegung:\n- Den Rumpf einrollen und Brustkorb zum Becken führen.\n- Den Rumpf langsam wieder aufrichten.\n\nHinweise:\n- Arme halten das Seil; Hüfte bewegt sich wenig.\n- Beim Einrollen wird Kabel gegen den Widerstand herausgezogen; das Aufrichten ist die kontrollierte Rückführung.\n\nHäufige Fehler:\n- Nur in der Hüfte abknicken oder das Seil mit den Armen herunterziehen.\n\nPositionen:\nStart: Kniend, Oberkörper leicht vorgebeugt, Seil neben dem Kopf, Zug steil von oben.\nEnde: Rumpf eingerollt, Brustkorb näher am Becken.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Seil am hohen Kabel befestigen. Nahe unter der oberen Umlenkrolle hinknien, Knie und Unterschenkel auflegen. Oberkörper leicht vorgebeugt und Seilenden neben dem Kopf halten; der Zug kommt steil von oben.\n\nBewegung:\n- Den Rumpf einrollen und Brustkorb zum Becken führen.\n- Den Rumpf langsam wieder aufrichten.\n\nHinweise:\n- Arme halten das Seil; Hüfte bewegt sich wenig.\n- Beim Einrollen wird Kabel gegen den Widerstand herausgezogen; das Aufrichten ist die kontrollierte Rückführung.\n\nHäufige Fehler:\n- Nur in der Hüfte abknicken oder das Seil mit den Armen herunterziehen.\n\nPositionen:\nStart: Kniend, Oberkörper leicht vorgebeugt, Seil neben dem Kopf, Zug steil von oben.\nEnde: Rumpf eingerollt, Brustkorb näher am Becken.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3851,7 +3912,7 @@
     {
       "key": "cable_chest_press_standing",
       "name": "Brustdrücken am Kabel – stehend",
-      "description": "Einstellen:\n- Zwei Einzelgriffe etwa auf Brusthöhe einstellen. Mit dem Rücken zur Station in Schrittstellung stehen und die Griffe neben die Brust bringen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Beide Hände nach vorne drücken und die Ellenbogen strecken.\n- Hände kontrolliert neben die Brust zurückführen.\n\nHinweise:\n- Rumpf bleibt ruhig; Kabel verlaufen außen an den Armen vorbei.\n\nHäufige Fehler:\n- Ins Hohlkreuz ausweichen oder die Schulter nach oben ziehen.\n\nPositionen:\nStart: Griffe neben der Brust, Ellenbogen gebeugt.\nEnde: Hände vor dem Körper, Arme lang.\n\nBenötigte Ausstattung: 1 × Doppel-Kabelzug + zwei Einzelgriffe",
+      "description": "Einstellen:\n- Zwei Einzelgriffe etwa auf Brusthöhe einstellen. Mit dem Rücken zur Station in Schrittstellung stehen und die Griffe neben die Brust bringen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Beide Hände nach vorne drücken und die Ellenbogen strecken.\n- Hände kontrolliert neben die Brust zurückführen.\n\nHinweise:\n- Rumpf bleibt ruhig; Kabel verlaufen außen an den Armen vorbei.\n\nHäufige Fehler:\n- Ins Hohlkreuz ausweichen oder die Schulter nach oben ziehen.\n\nPositionen:\nStart: Griffe neben der Brust, Ellenbogen gebeugt.\nEnde: Hände vor dem Körper, Arme lang.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3882,7 +3943,7 @@
     {
       "key": "cable_chest_press_single",
       "name": "Brustdrücken am Kabel – einarmig",
-      "description": "Einstellen:\n- Einzelgriff auf Brusthöhe einstellen. Mit dem Rücken zum Kabel in stabile Schrittstellung gehen; Griff neben der Brust halten.\n\nBewegung:\n- Mit einem Arm nach vorne drücken, ohne den Rumpf zu drehen.\n- Hand zurückführen; danach Seite wechseln.\n\nHinweise:\n- Brust und Becken bleiben nach vorne ausgerichtet.\n\nHäufige Fehler:\n- Den Oberkörper mit dem Griff mitdrehen.\n\nPositionen:\nStart: Arbeitsarm gebeugt, freie Hand an der Hüfte.\nEnde: Arbeitsarm nach vorne gestreckt, Rumpf unverändert.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Einzelgriff auf Brusthöhe einstellen. Mit dem Rücken zum Kabel in stabile Schrittstellung gehen; Griff neben der Brust halten.\n\nBewegung:\n- Mit einem Arm nach vorne drücken, ohne den Rumpf zu drehen.\n- Hand zurückführen; danach Seite wechseln.\n\nHinweise:\n- Brust und Becken bleiben nach vorne ausgerichtet.\n\nHäufige Fehler:\n- Den Oberkörper mit dem Griff mitdrehen.\n\nPositionen:\nStart: Arbeitsarm gebeugt, freie Hand an der Hüfte.\nEnde: Arbeitsarm nach vorne gestreckt, Rumpf unverändert.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3913,7 +3974,7 @@
     {
       "key": "cable_lat_single_kneeling",
       "name": "Latzug am Kabel – einarmig, kniend",
-      "description": "Einstellen:\n- Einzelgriff am hohen Kabel befestigen. Im Halbkniestand zur Station ausrichten: Knie der Arbeitsseite unten, anderer Fuß vorne aufgestellt.\n\nBewegung:\n- Arbeitsellenbogen nach unten zur Rumpfseite ziehen.\n- Arm langsam nach vorne oben strecken; anschließend Seite wechseln.\n\nHinweise:\n- Nicht ins Hohlkreuz gehen oder mit der Hüfte nach hinten rutschen.\n\nHäufige Fehler:\n- Das Körpergewicht zum Herunterziehen nutzen.\n\nPositionen:\nStart: Arbeitsarm schräg oben, ein Knie auf dem Boden.\nEnde: Arbeitsgriff an der Schulter, Ellenbogen unten.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Einzelgriff am hohen Kabel befestigen. Im Halbkniestand zur Station ausrichten: Knie der Arbeitsseite unten, anderer Fuß vorne aufgestellt.\n\nBewegung:\n- Arbeitsellenbogen nach unten zur Rumpfseite ziehen.\n- Arm langsam nach vorne oben strecken; anschließend Seite wechseln.\n\nHinweise:\n- Nicht ins Hohlkreuz gehen oder mit der Hüfte nach hinten rutschen.\n\nHäufige Fehler:\n- Das Körpergewicht zum Herunterziehen nutzen.\n\nPositionen:\nStart: Arbeitsarm schräg oben, ein Knie auf dem Boden.\nEnde: Arbeitsgriff an der Schulter, Ellenbogen unten.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3944,7 +4005,7 @@
     {
       "key": "cable_reverse_fly_standing",
       "name": "Reverse Fly am Kabel – stehend",
-      "description": "Einstellen:\n- Zwei Rollen ungefähr auf Schulterhöhe einstellen. Zur Station stehen und die jeweils gegenüberliegenden Einzelgriffe fassen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Arme mit leicht gebeugten Ellenbogen seitlich öffnen.\n- Hände kontrolliert vor dem Körper zusammenführen.\n\nHinweise:\n- Die Ellenbogenbeugung bleibt annähernd gleich.\n\nHäufige Fehler:\n- Mit starkem Beugen der Ellenbogen daraus ein Rudern machen.\n\nPositionen:\nStart: Arme vor dem Körper, Kabel gekreuzt.\nEnde: Arme seitlich geöffnet, Rumpf ruhig.\n\nBenötigte Ausstattung: 1 × Doppel-Kabelzug + zwei Einzelgriffe",
+      "description": "Einstellen:\n- Zwei Rollen ungefähr auf Schulterhöhe einstellen. Zur Station stehen und die jeweils gegenüberliegenden Einzelgriffe fassen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Arme mit leicht gebeugten Ellenbogen seitlich öffnen.\n- Hände kontrolliert vor dem Körper zusammenführen.\n\nHinweise:\n- Die Ellenbogenbeugung bleibt annähernd gleich.\n\nHäufige Fehler:\n- Mit starkem Beugen der Ellenbogen daraus ein Rudern machen.\n\nPositionen:\nStart: Arme vor dem Körper, Kabel gekreuzt.\nEnde: Arme seitlich geöffnet, Rumpf ruhig.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3971,7 +4032,7 @@
     {
       "key": "cable_front_raise_bar",
       "name": "Frontheben am Kabel – Stange",
-      "description": "Einstellen:\n- Kurze Stange am tiefen Kabel im Obergriff fassen. Mit dem Rücken zur Station stehen; Kabel zwischen den Beinen frei führen.\n- Ein einzelner tiefer Kabelzug mit Stangenaufsatz genügt; beide Hände greifen dieselbe Stange.\n\nBewegung:\n- Arme bei geringer Ellenbogenbeugung bis etwa Schulterhöhe nach vorne anheben.\n- Stange langsam zu den Oberschenkeln absenken.\n\nHinweise:\n- Oberkörper aufrecht lassen, Schultern nicht hochziehen.\n\nHäufige Fehler:\n- Mit den Hüften Schwung holen oder höher als kontrollierbar heben.\n\nPositionen:\nStart: Stange vor den Oberschenkeln.\nEnde: Stange vor den Schultern, Arme annähernd waagerecht.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Kurze Stange am tiefen Kabel im Obergriff fassen. Mit dem Rücken zur Station stehen; Kabel zwischen den Beinen frei führen.\n- Ein einzelner tiefer Kabelzug mit Stangenaufsatz genügt; beide Hände greifen dieselbe Stange.\n\nBewegung:\n- Arme bei geringer Ellenbogenbeugung bis etwa Schulterhöhe nach vorne anheben.\n- Stange langsam zu den Oberschenkeln absenken.\n\nHinweise:\n- Oberkörper aufrecht lassen, Schultern nicht hochziehen.\n\nHäufige Fehler:\n- Mit den Hüften Schwung holen oder höher als kontrollierbar heben.\n\nPositionen:\nStart: Stange vor den Oberschenkeln.\nEnde: Stange vor den Schultern, Arme annähernd waagerecht.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3998,7 +4059,7 @@
     {
       "key": "cable_pull_through",
       "name": "Pull-through am Kabel – Seil",
-      "description": "Einstellen:\n- Seil am tiefen Kabel befestigen. Mit dem Rücken zur Station stehen, Seil zwischen den Beinen greifen und etwas nach vorne treten.\n\nBewegung:\n- Aus der Hüftbeuge die Hüfte strecken und aufrichten; die Arme bleiben lang.\n- Hüfte nach hinten schieben und den Oberkörper aus dem Hüftgelenk vorbeugen.\n\nHinweise:\n- Knie leicht gebeugt; Rücken bleibt kontrolliert in seiner Form.\n- Hüftstreckung für Gesäß und hintere Oberschenkel: Die Arme bleiben lang und halten nur das Seil. Kein aktiver Armzug.\n\nHäufige Fehler:\n- Aus der Bewegung eine tiefe Kniebeuge oder ein Ziehen mit den Armen machen.\n\nPositionen:\nStart: Hüfte hinten, Rumpf vorgebeugt, Seil zwischen den Beinen.\nEnde: Hüfte gestreckt, Hände vorne unten.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Seil am tiefen Kabel befestigen. Mit dem Rücken zur Station stehen, Seil zwischen den Beinen greifen und etwas nach vorne treten.\n\nBewegung:\n- Aus der Hüftbeuge die Hüfte strecken und aufrichten; die Arme bleiben lang.\n- Hüfte nach hinten schieben und den Oberkörper aus dem Hüftgelenk vorbeugen.\n\nHinweise:\n- Knie leicht gebeugt; Rücken bleibt kontrolliert in seiner Form.\n- Hüftstreckung für Gesäß und hintere Oberschenkel: Die Arme bleiben lang und halten nur das Seil. Kein aktiver Armzug.\n\nHäufige Fehler:\n- Aus der Bewegung eine tiefe Kniebeuge oder ein Ziehen mit den Armen machen.\n\nPositionen:\nStart: Hüfte hinten, Rumpf vorgebeugt, Seil zwischen den Beinen.\nEnde: Hüfte gestreckt, Hände vorne unten.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4025,7 +4086,7 @@
     {
       "key": "cable_hip_abduction",
       "name": "Hüftabduktion am Kabel – einbeinig",
-      "description": "Einstellen:\n- Fußmanschette am tiefen Kabel befestigen. Seitlich zur Station stehen, Manschette am äußeren Bein befestigen und mit einer Hand am Rahmen halten.\n\nBewegung:\n- Arbeitsbein seitlich von der Station wegführen.\n- Bein langsam zurückführen; danach Seite wechseln.\n\nHinweise:\n- Becken bleibt waagerecht, Standbein leicht gebeugt.\n\nHäufige Fehler:\n- Seitlich mit dem Oberkörper kippen oder den Fuß stark nach außen drehen.\n\nPositionen:\nStart: Arbeitsfuß nahe am Standbein, knapp über dem Boden.\nEnde: Arbeitsbein seitlich abgespreizt.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Fußmanschette am tiefen Kabel befestigen. Seitlich zur Station stehen, Manschette am äußeren Bein befestigen und mit einer Hand am Rahmen halten.\n\nBewegung:\n- Arbeitsbein seitlich von der Station wegführen.\n- Bein langsam zurückführen; danach Seite wechseln.\n\nHinweise:\n- Becken bleibt waagerecht, Standbein leicht gebeugt.\n\nHäufige Fehler:\n- Seitlich mit dem Oberkörper kippen oder den Fuß stark nach außen drehen.\n\nPositionen:\nStart: Arbeitsfuß nahe am Standbein, knapp über dem Boden.\nEnde: Arbeitsbein seitlich abgespreizt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4048,7 +4109,7 @@
     {
       "key": "cable_hip_adduction",
       "name": "Hüftadduktion am Kabel – einbeinig",
-      "description": "Einstellen:\n- Fußmanschette am stationsnahen Bein befestigen. Seitlich zum tiefen Kabel stehen und am Rahmen festhalten.\n\nBewegung:\n- Das seitlich geöffnete Arbeitsbein zur Körpermitte führen.\n- Bein langsam nach außen zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Becken ruhig halten; Fuß bleibt knapp über dem Boden.\n\nHäufige Fehler:\n- Schwung holen oder mit dem Standbein ausweichen.\n\nPositionen:\nStart: Arbeitsbein zur Station hin geöffnet.\nEnde: Arbeitsbein zur Mitte geführt.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Fußmanschette am stationsnahen Bein befestigen. Seitlich zum tiefen Kabel stehen und am Rahmen festhalten.\n\nBewegung:\n- Das seitlich geöffnete Arbeitsbein zur Körpermitte führen.\n- Bein langsam nach außen zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Becken ruhig halten; Fuß bleibt knapp über dem Boden.\n\nHäufige Fehler:\n- Schwung holen oder mit dem Standbein ausweichen.\n\nPositionen:\nStart: Arbeitsbein zur Station hin geöffnet.\nEnde: Arbeitsbein zur Mitte geführt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4071,7 +4132,7 @@
     {
       "key": "cable_shoulder_external_rotation",
       "name": "Schulter-Außenrotation am Kabel",
-      "description": "Einstellen:\n- Einzelgriff auf Ellenbogenhöhe einstellen. Seitlich zur Station stehen und Griff in der äußeren Hand halten; Ellenbogen etwa 90° beugen und am Rumpf lassen.\n\nBewegung:\n- Unterarm nach außen drehen, während der Oberarm an derselben Stelle bleibt.\n- Langsam nach innen zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Bewegung bleibt klein und kontrolliert; bei Schmerzen stoppen.\n\nHäufige Fehler:\n- Den Ellenbogen abheben oder den ganzen Rumpf mitdrehen.\n\nPositionen:\nStart: Unterarm schräg vor dem Bauch.\nEnde: Unterarm nach außen gedreht, Ellenbogen weiterhin am Rumpf.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Einzelgriff auf Ellenbogenhöhe einstellen. Seitlich zur Station stehen und Griff in der äußeren Hand halten; Ellenbogen etwa 90° beugen und am Rumpf lassen.\n\nBewegung:\n- Unterarm nach außen drehen, während der Oberarm an derselben Stelle bleibt.\n- Langsam nach innen zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Bewegung bleibt klein und kontrolliert; bei Schmerzen stoppen.\n\nHäufige Fehler:\n- Den Ellenbogen abheben oder den ganzen Rumpf mitdrehen.\n\nPositionen:\nStart: Unterarm schräg vor dem Bauch.\nEnde: Unterarm nach außen gedreht, Ellenbogen weiterhin am Rumpf.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4099,7 +4160,7 @@
     {
       "key": "cable_shoulder_internal_rotation",
       "name": "Schulter-Innenrotation am Kabel",
-      "description": "Einstellen:\n- Einzelgriff auf Ellenbogenhöhe einstellen. Stationsnahe Hand verwenden, Ellenbogen etwa 90° beugen und am Rumpf halten.\n\nBewegung:\n- Unterarm nach innen vor den Bauch drehen.\n- Kontrolliert nach außen zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Oberarm bleibt ruhig; bei Schmerzen stoppen.\n\nHäufige Fehler:\n- Den Ellenbogen nach vorne schieben oder das Handgelenk einknicken.\n\nPositionen:\nStart: Unterarm seitlich nach außen ausgerichtet.\nEnde: Unterarm vor dem Bauch, Ellenbogen unverändert.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Einzelgriff auf Ellenbogenhöhe einstellen. Stationsnahe Hand verwenden, Ellenbogen etwa 90° beugen und am Rumpf halten.\n\nBewegung:\n- Unterarm nach innen vor den Bauch drehen.\n- Kontrolliert nach außen zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Oberarm bleibt ruhig; bei Schmerzen stoppen.\n\nHäufige Fehler:\n- Den Ellenbogen nach vorne schieben oder das Handgelenk einknicken.\n\nPositionen:\nStart: Unterarm seitlich nach außen ausgerichtet.\nEnde: Unterarm vor dem Bauch, Ellenbogen unverändert.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4131,7 +4192,7 @@
     {
       "key": "cable_high_curl",
       "name": "Hoher Bizepscurl am Kabel – beidarmig",
-      "description": "Einstellen:\n- Zwei Einzelgriffe auf Schulterhöhe einstellen. Mittig stehen, Oberarme seitlich halten und Griffe im Untergriff fassen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Ellenbogen beugen und die Hände zu den Schläfen führen.\n- Unterarme langsam wieder nach außen strecken.\n\nHinweise:\n- Oberarme bleiben auf gleicher Höhe; die schräge Ansicht zeigt beide angehobenen Arme.\n\nHäufige Fehler:\n- Oberarme absenken oder die Handgelenke einknicken.\n\nPositionen:\nStart: Oberarme seitlich, Unterarme nach außen.\nEnde: Ellenbogen gebeugt, Hände nahe den Schläfen.\n\nBenötigte Ausstattung: 1 × Doppel-Kabelzug + zwei Einzelgriffe",
+      "description": "Einstellen:\n- Zwei Einzelgriffe auf Schulterhöhe einstellen. Mittig stehen, Oberarme seitlich halten und Griffe im Untergriff fassen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Ellenbogen beugen und die Hände zu den Schläfen führen.\n- Unterarme langsam wieder nach außen strecken.\n\nHinweise:\n- Oberarme bleiben auf gleicher Höhe; die schräge Ansicht zeigt beide angehobenen Arme.\n\nHäufige Fehler:\n- Oberarme absenken oder die Handgelenke einknicken.\n\nPositionen:\nStart: Oberarme seitlich, Unterarme nach außen.\nEnde: Ellenbogen gebeugt, Hände nahe den Schläfen.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4158,7 +4219,7 @@
     {
       "key": "cable_triceps_overhead_single",
       "name": "Trizepsstrecken über Kopf am Kabel – einarmig",
-      "description": "Einstellen:\n- Einzelgriff am tiefen Kabel befestigen. Mit dem Rücken zur Station in Schrittstellung stehen; Arbeitsoberarm über Kopf anheben, freie Hand an der Hüfte.\n\nBewegung:\n- Arbeitsellenbogen strecken und die Hand nach oben vorne führen.\n- Hand kontrolliert hinter den Kopf zurückführen; danach Seite wechseln.\n\nHinweise:\n- Oberarm bleibt ausgerichtet; Kabel verläuft frei neben dem Körper.\n\nHäufige Fehler:\n- Den unteren Rücken überstrecken oder die Schulter stark mitbewegen.\n\nPositionen:\nStart: Arbeitsellenbogen über Kopf gebeugt.\nEnde: Arbeitsarm über Kopf weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Einzelgriff am tiefen Kabel befestigen. Mit dem Rücken zur Station in Schrittstellung stehen; Arbeitsoberarm über Kopf anheben, freie Hand an der Hüfte.\n\nBewegung:\n- Arbeitsellenbogen strecken und die Hand nach oben vorne führen.\n- Hand kontrolliert hinter den Kopf zurückführen; danach Seite wechseln.\n\nHinweise:\n- Oberarm bleibt ausgerichtet; Kabel verläuft frei neben dem Körper.\n\nHäufige Fehler:\n- Den unteren Rücken überstrecken oder die Schulter stark mitbewegen.\n\nPositionen:\nStart: Arbeitsellenbogen über Kopf gebeugt.\nEnde: Arbeitsarm über Kopf weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4745,7 +4806,7 @@
     {
       "key": "cable_decline_fly",
       "name": "Kabel-Flys – Negativbank",
-      "description": "Einstellen:\n- Geeignete Negativbank mit Beinsicherung zwischen zwei tiefe Rollen stellen und verriegeln. Je einen Einzelgriff fassen; Kopf und Rücken auflegen, Beine sichern.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Arme aus der geöffneten Position in einem Bogen über der Brust zusammenführen.\n- Langsam wieder öffnen, nur bis zur kontrollierbaren Schulterposition.\n\nHinweise:\n- Ellenbogen leicht gebeugt lassen; Griffwege folgen dem geneigten Oberkörper.\n\nHäufige Fehler:\n- Ohne Beinsicherung abrutschen oder zu tief öffnen.\n\nPositionen:\nStart: Arme seitlich geöffnet, Rücken auf der Negativbank.\nEnde: Griffe über der Brust angenähert.\n\nBenötigte Ausstattung: 1 × Doppelkabelzug mit zwei unabhängig belastbaren Rollen + 1 × Negativbank mit Beinsicherung\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
+      "description": "Einstellen:\n- Geeignete Negativbank mit Beinsicherung zwischen zwei tiefe Rollen stellen und verriegeln. Je einen Einzelgriff fassen; Kopf und Rücken auflegen, Beine sichern.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Arme aus der geöffneten Position in einem Bogen über der Brust zusammenführen.\n- Langsam wieder öffnen, nur bis zur kontrollierbaren Schulterposition.\n\nHinweise:\n- Ellenbogen leicht gebeugt lassen; Griffwege folgen dem geneigten Oberkörper.\n\nHäufige Fehler:\n- Ohne Beinsicherung abrutschen oder zu tief öffnen.\n\nPositionen:\nStart: Arme seitlich geöffnet, Rücken auf der Negativbank.\nEnde: Griffe über der Brust angenähert.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Negativbank mit Beinsicherung\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4772,7 +4833,7 @@
     {
       "key": "cable_low_fly",
       "name": "Kabel-Flys – von unten nach oben",
-      "description": "Einstellen:\n- Zwei Einzelgriffe an tiefen Rollen fassen und zwischen den Stationen stabil stehen. Handflächen nach vorne/oben, Ellenbogen leicht gebeugt.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Griffe schräg nach vorne oben vor die obere Brust zusammenführen.\n- Kontrolliert nach außen unten zurückführen.\n\nHinweise:\n- Kein Überkreuzen nötig; Rumpf bleibt ruhig.\n\nHäufige Fehler:\n- Die Griffe mit Schwung über Kopfhöhe werfen.\n\nPositionen:\nStart: Arme seitlich unten geöffnet.\nEnde: Griffe vor der oberen Brust nahe beieinander.\n\nBenötigte Ausstattung: 1 × Doppelkabelzug mit zwei unabhängig belastbaren Rollen\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
+      "description": "Einstellen:\n- Zwei Einzelgriffe an tiefen Rollen fassen und zwischen den Stationen stabil stehen. Handflächen nach vorne/oben, Ellenbogen leicht gebeugt.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Griffe schräg nach vorne oben vor die obere Brust zusammenführen.\n- Kontrolliert nach außen unten zurückführen.\n\nHinweise:\n- Kein Überkreuzen nötig; Rumpf bleibt ruhig.\n\nHäufige Fehler:\n- Die Griffe mit Schwung über Kopfhöhe werfen.\n\nPositionen:\nStart: Arme seitlich unten geöffnet.\nEnde: Griffe vor der oberen Brust nahe beieinander.\n\nBenötigte Ausstattung: 1 × Kabelzug\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4799,7 +4860,7 @@
     {
       "key": "cable_incline_fly",
       "name": "Kabel-Flys – Schrägbank",
-      "description": "Einstellen:\n- Schrägbank zwischen zwei tiefe Rollen stellen und verriegeln. Rücken und Kopf anlehnen, Füße aufstellen; zwei Einzelgriffe halten.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Arme bogenförmig vor dem oberen Brustbereich zusammenführen.\n- Mit annähernd gleichem Ellenbogenwinkel wieder öffnen.\n\nHinweise:\n- Schulterbewegung kontrollieren, Bankkontakt halten.\n\nHäufige Fehler:\n- Aus dem Fly eine Druckbewegung machen.\n\nPositionen:\nStart: Arme seitlich geöffnet.\nEnde: Griffe vor dem oberen Brustbereich angenähert.\n\nBenötigte Ausstattung: 1 × Doppelkabelzug mit zwei unabhängig belastbaren Rollen + 1 × Verstellbare Hantelbank\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
+      "description": "Einstellen:\n- Schrägbank zwischen zwei tiefe Rollen stellen und verriegeln. Rücken und Kopf anlehnen, Füße aufstellen; zwei Einzelgriffe halten.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Arme bogenförmig vor dem oberen Brustbereich zusammenführen.\n- Mit annähernd gleichem Ellenbogenwinkel wieder öffnen.\n\nHinweise:\n- Schulterbewegung kontrollieren, Bankkontakt halten.\n\nHäufige Fehler:\n- Aus dem Fly eine Druckbewegung machen.\n\nPositionen:\nStart: Arme seitlich geöffnet.\nEnde: Griffe vor dem oberen Brustbereich angenähert.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Verstellbare Hantelbank\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4826,7 +4887,7 @@
     {
       "key": "cable_bench_press",
       "name": "Kabel-Bankdrücken – Flachbank",
-      "description": "Einstellen:\n- Flachbank zwischen zwei tiefe Kabelrollen stellen. Je einen Einzelgriff fassen, in Rückenlage gehen und beide Füße voll aufstellen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Griffe aus Brustnähe senkrecht über die Brust drücken.\n- Langsam neben die Brust zurückführen.\n\nHinweise:\n- Handgelenke über den Unterarmen halten.\n\nHäufige Fehler:\n- Rücken oder Becken von der Bank abheben.\n\nPositionen:\nStart: Ellenbogen gebeugt, Griffe neben der Brust.\nEnde: Arme über der Brust weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Doppelkabelzug mit zwei unabhängig belastbaren Rollen + 1 × Flachbank\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
+      "description": "Einstellen:\n- Flachbank zwischen zwei tiefe Kabelrollen stellen. Je einen Einzelgriff fassen, in Rückenlage gehen und beide Füße voll aufstellen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Griffe aus Brustnähe senkrecht über die Brust drücken.\n- Langsam neben die Brust zurückführen.\n\nHinweise:\n- Handgelenke über den Unterarmen halten.\n\nHäufige Fehler:\n- Rücken oder Becken von der Bank abheben.\n\nPositionen:\nStart: Ellenbogen gebeugt, Griffe neben der Brust.\nEnde: Arme über der Brust weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Flachbank\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4857,7 +4918,7 @@
     {
       "key": "cable_incline_press",
       "name": "Kabel-Schrägbankdrücken",
-      "description": "Einstellen:\n- Schrägbank zwischen zwei tiefe Rollen stellen und verriegeln. Mit zwei Einzelgriffen anlehnen, Füße fest aufstellen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Griffe über den oberen Brustbereich nach oben drücken.\n- Kontrolliert neben die obere Brust absenken.\n\nHinweise:\n- Bankwinkel nicht durch ein starkes Hohlkreuz ausgleichen.\n\nHäufige Fehler:\n- Von hohen Rollen nach oben drücken und dadurch eine andere Zugrichtung erzeugen.\n\nPositionen:\nStart: Griffe neben der oberen Brust.\nEnde: Arme über dem oberen Brustbereich lang.\n\nBenötigte Ausstattung: 1 × Doppelkabelzug mit zwei unabhängig belastbaren Rollen + 1 × Verstellbare Hantelbank\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
+      "description": "Einstellen:\n- Schrägbank zwischen zwei tiefe Rollen stellen und verriegeln. Mit zwei Einzelgriffen anlehnen, Füße fest aufstellen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Griffe über den oberen Brustbereich nach oben drücken.\n- Kontrolliert neben die obere Brust absenken.\n\nHinweise:\n- Bankwinkel nicht durch ein starkes Hohlkreuz ausgleichen.\n\nHäufige Fehler:\n- Von hohen Rollen nach oben drücken und dadurch eine andere Zugrichtung erzeugen.\n\nPositionen:\nStart: Griffe neben der oberen Brust.\nEnde: Arme über dem oberen Brustbereich lang.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Verstellbare Hantelbank\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4888,7 +4949,7 @@
     {
       "key": "cable_incline_row",
       "name": "Kabelrudern – brustgestützt auf Schrägbank",
-      "description": "Einstellen:\n- Schrägbank mit dem Kopfende zur tiefen Rolle ausrichten. Brust auflegen, Füße aufstellen und engen Parallelgriff fassen; Kabel muss frei an der Bank vorbeilaufen.\n\nBewegung:\n- Ellenbogen zurückführen und Griff zum unteren Brustkorb ziehen.\n- Arme kontrolliert wieder verlängern.\n\nHinweise:\n- Brust bleibt am Polster.\n\nHäufige Fehler:\n- Zum Zug den Rumpf vom Polster abheben.\n\nPositionen:\nStart: Arme zur vorderen tiefen Rolle verlängert.\nEnde: Griff vor dem unteren Brustkorb.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil + 1 × Verstellbare Hantelbank",
+      "description": "Einstellen:\n- Schrägbank mit dem Kopfende zur tiefen Rolle ausrichten. Brust auflegen, Füße aufstellen und engen Parallelgriff fassen; Kabel muss frei an der Bank vorbeilaufen.\n\nBewegung:\n- Ellenbogen zurückführen und Griff zum unteren Brustkorb ziehen.\n- Arme kontrolliert wieder verlängern.\n\nHinweise:\n- Brust bleibt am Polster.\n\nHäufige Fehler:\n- Zum Zug den Rumpf vom Polster abheben.\n\nPositionen:\nStart: Arme zur vorderen tiefen Rolle verlängert.\nEnde: Griff vor dem unteren Brustkorb.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Verstellbare Hantelbank",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4923,7 +4984,7 @@
     {
       "key": "cable_high_row_kneeling",
       "name": "Kabel-High-Row – kniend",
-      "description": "Einstellen:\n- Vor einer hohen Rolle knien. Knie unter den Hüften, kurze Stange im Obergriff fassen; bei Bedarf eine Matte verwenden.\n\nBewegung:\n- Stange schräg nach unten zum oberen Bauch ziehen.\n- Arme kontrolliert zur Rolle verlängern.\n\nHinweise:\n- Hüfte bleibt über den Knien; nicht auf die Fersen zurücksetzen.\n\nHäufige Fehler:\n- Mit dem gesamten Körper nach hinten reißen.\n\nPositionen:\nStart: Arme schräg nach vorne oben verlängert.\nEnde: Stange vor dem oberen Bauch.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Vor einer hohen Rolle knien. Knie unter den Hüften, kurze Stange im Obergriff fassen; bei Bedarf eine Matte verwenden.\n\nBewegung:\n- Stange schräg nach unten zum oberen Bauch ziehen.\n- Arme kontrolliert zur Rolle verlängern.\n\nHinweise:\n- Hüfte bleibt über den Knien; nicht auf die Fersen zurücksetzen.\n\nHäufige Fehler:\n- Mit dem gesamten Körper nach hinten reißen.\n\nPositionen:\nStart: Arme schräg nach vorne oben verlängert.\nEnde: Stange vor dem oberen Bauch.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4958,7 +5019,7 @@
     {
       "key": "cable_row_standing_v",
       "name": "Kabelrudern – stehend mit V-Griff",
-      "description": "Einstellen:\n- Rolle auf Bauchhöhe stellen. Engen Parallelgriff fassen und mit leicht gebeugten Knien stabil zur Station stehen.\n\nBewegung:\n- Griff zum Bauch ziehen und Ellenbogen nach hinten führen.\n- Arme langsam wieder nach vorne verlängern.\n\nHinweise:\n- Brust und Becken bleiben über den Füßen.\n\nHäufige Fehler:\n- Den Oberkörper als Gegengewicht weit zurücklehnen.\n\nPositionen:\nStart: Arme nach vorne verlängert.\nEnde: Griff am Bauch, Ellenbogen zurück.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Rolle auf Bauchhöhe stellen. Engen Parallelgriff fassen und mit leicht gebeugten Knien stabil zur Station stehen.\n\nBewegung:\n- Griff zum Bauch ziehen und Ellenbogen nach hinten führen.\n- Arme langsam wieder nach vorne verlängern.\n\nHinweise:\n- Brust und Becken bleiben über den Füßen.\n\nHäufige Fehler:\n- Den Oberkörper als Gegengewicht weit zurücklehnen.\n\nPositionen:\nStart: Arme nach vorne verlängert.\nEnde: Griff am Bauch, Ellenbogen zurück.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4993,7 +5054,7 @@
     {
       "key": "cable_row_rope",
       "name": "Kabelrudern – sitzend mit Seil",
-      "description": "Einstellen:\n- An einer niedrigen Ruderstation sitzen. Beide Füße auf die Stützen setzen, Knie leicht beugen und beide Seilenden im Neutralgriff fassen.\n\nBewegung:\n- Seilenden zum Rumpf ziehen und dabei etwas auseinanderführen.\n- Arme kontrolliert wieder verlängern.\n\nHinweise:\n- Rumpf bleibt annähernd aufrecht.\n\nHäufige Fehler:\n- Mit starkem Vor- und Zurückschwingen rudern.\n\nPositionen:\nStart: Arme nach vorne verlängert, Füße auf den Stützen.\nEnde: Seilenden neben dem Bauch.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil + 1 × Ruderbank mit Fußstützen",
+      "description": "Einstellen:\n- An einer niedrigen Ruderstation sitzen. Beide Füße auf die Stützen setzen, Knie leicht beugen und beide Seilenden im Neutralgriff fassen.\n\nBewegung:\n- Seilenden zum Rumpf ziehen und dabei etwas auseinanderführen.\n- Arme kontrolliert wieder verlängern.\n\nHinweise:\n- Rumpf bleibt annähernd aufrecht.\n\nHäufige Fehler:\n- Mit starkem Vor- und Zurückschwingen rudern.\n\nPositionen:\nStart: Arme nach vorne verlängert, Füße auf den Stützen.\nEnde: Seilenden neben dem Bauch.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Ruderbank mit Fußstützen",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5028,7 +5089,7 @@
     {
       "key": "cable_preacher_curl",
       "name": "Scottcurl am Kabel",
-      "description": "Einstellen:\n- Scottbank vor eine tiefe Rolle stellen. Oberarme auf das Polster legen und kurze Stange im Untergriff halten; Sitzhöhe passend einstellen.\n\nBewegung:\n- Ellenbogen beugen und Stange nach oben führen.\n- Kontrolliert absenken, ohne die Ellenbogen ruckartig durchzustrecken.\n\nHinweise:\n- Oberarme bleiben auf der Auflage.\n\nHäufige Fehler:\n- Vom Polster abheben oder am unteren Punkt federn.\n\nPositionen:\nStart: Unterarme nach vorne unten verlängert.\nEnde: Unterarme angehoben, Oberarme weiter gestützt.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil + 1 × Scottbank / Oberarmauflage",
+      "description": "Einstellen:\n- Scottbank vor eine tiefe Rolle stellen. Oberarme auf das Polster legen und kurze Stange im Untergriff halten; Sitzhöhe passend einstellen.\n\nBewegung:\n- Ellenbogen beugen und Stange nach oben führen.\n- Kontrolliert absenken, ohne die Ellenbogen ruckartig durchzustrecken.\n\nHinweise:\n- Oberarme bleiben auf der Auflage.\n\nHäufige Fehler:\n- Vom Polster abheben oder am unteren Punkt federn.\n\nPositionen:\nStart: Unterarme nach vorne unten verlängert.\nEnde: Unterarme angehoben, Oberarme weiter gestützt.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Scottbank / Oberarmauflage",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5055,7 +5116,7 @@
     {
       "key": "cable_concentration_curl",
       "name": "Konzentrationscurl am Kabel",
-      "description": "Einstellen:\n- Seitlich vor der tiefen Rolle auf eine Bank setzen. Beine öffnen, Arbeitsoberarm an der Innenseite des gleichseitigen Oberschenkels abstützen und Einzelgriff im Untergriff fassen.\n\nBewegung:\n- Ellenbogen beugen und Griff zum Oberkörper führen.\n- Langsam absenken; nach dem Satz die Seite wechseln.\n\nHinweise:\n- Abstützpunkt bleibt ruhig.\n\nHäufige Fehler:\n- Mit Schulter oder Oberkörper nachhelfen.\n\nPositionen:\nStart: Arbeitsarm nach vorne unten verlängert.\nEnde: Arbeitsellenbogen gebeugt.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil + 1 × Flachbank",
+      "description": "Einstellen:\n- Seitlich vor der tiefen Rolle auf eine Bank setzen. Beine öffnen, Arbeitsoberarm an der Innenseite des gleichseitigen Oberschenkels abstützen und Einzelgriff im Untergriff fassen.\n\nBewegung:\n- Ellenbogen beugen und Griff zum Oberkörper führen.\n- Langsam absenken; nach dem Satz die Seite wechseln.\n\nHinweise:\n- Abstützpunkt bleibt ruhig.\n\nHäufige Fehler:\n- Mit Schulter oder Oberkörper nachhelfen.\n\nPositionen:\nStart: Arbeitsarm nach vorne unten verlängert.\nEnde: Arbeitsellenbogen gebeugt.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Flachbank",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5082,7 +5143,7 @@
     {
       "key": "cable_reverse_curl",
       "name": "Reverse Curl am Kabel",
-      "description": "Einstellen:\n- Kurze Stange an tiefer Rolle im Obergriff fassen. Aufrecht stehen, Handrücken nach vorne und Ellenbogen neben dem Rumpf.\n\nBewegung:\n- Stange durch Beugen der Ellenbogen anheben.\n- Kontrolliert wieder absenken.\n\nHinweise:\n- Obergriff beibehalten und Handgelenke neutral halten.\n\nHäufige Fehler:\n- In den Untergriff drehen oder die Handgelenke einrollen.\n\nPositionen:\nStart: Arme fast gestreckt, Stange unten.\nEnde: Unterarme angehoben, Oberarme ruhig.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Kurze Stange an tiefer Rolle im Obergriff fassen. Aufrecht stehen, Handrücken nach vorne und Ellenbogen neben dem Rumpf.\n\nBewegung:\n- Stange durch Beugen der Ellenbogen anheben.\n- Kontrolliert wieder absenken.\n\nHinweise:\n- Obergriff beibehalten und Handgelenke neutral halten.\n\nHäufige Fehler:\n- In den Untergriff drehen oder die Handgelenke einrollen.\n\nPositionen:\nStart: Arme fast gestreckt, Stange unten.\nEnde: Unterarme angehoben, Oberarme ruhig.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5109,7 +5170,7 @@
     {
       "key": "cable_pushdown_supinated",
       "name": "Trizepsdrücken am Kabel – Untergriff",
-      "description": "Einstellen:\n- Kurze Stange an hoher Rolle im Untergriff fassen. Zur Station stehen und Oberarme neben dem Rumpf halten.\n\nBewegung:\n- Stange durch Strecken der Ellenbogen nach unten führen.\n- Kontrolliert zurück bis zur gebeugten Ausgangsposition.\n\nHinweise:\n- Handflächen bleiben nach oben; Griff sicher halten.\n\nHäufige Fehler:\n- Mit Schultern und Körpergewicht auf die Stange drücken.\n\nPositionen:\nStart: Ellenbogen gebeugt, Stange vor dem Bauch.\nEnde: Ellenbogen weitgehend gestreckt, Stange unten.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Kurze Stange an hoher Rolle im Untergriff fassen. Zur Station stehen und Oberarme neben dem Rumpf halten.\n\nBewegung:\n- Stange durch Strecken der Ellenbogen nach unten führen.\n- Kontrolliert zurück bis zur gebeugten Ausgangsposition.\n\nHinweise:\n- Handflächen bleiben nach oben; Griff sicher halten.\n\nHäufige Fehler:\n- Mit Schultern und Körpergewicht auf die Stange drücken.\n\nPositionen:\nStart: Ellenbogen gebeugt, Stange vor dem Bauch.\nEnde: Ellenbogen weitgehend gestreckt, Stange unten.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5132,7 +5193,7 @@
     {
       "key": "cable_pushdown_vbar",
       "name": "Trizepsdrücken am Kabel – V-Stange",
-      "description": "Einstellen:\n- V-förmige Trizepsstange an hoher Rolle befestigen; nicht mit dem engen Ruder-Parallelgriff verwechseln. Beide schrägen Griffstücke fassen.\n\nBewegung:\n- Ellenbogen strecken und die V-Stange nach unten drücken.\n- Unterarme langsam wieder anheben.\n\nHinweise:\n- Oberarme bleiben neben dem Rumpf.\n\nHäufige Fehler:\n- Die Ellenbogen nach hinten reißen oder das Handgelenk abknicken.\n\nPositionen:\nStart: V-Stange vor dem Bauch.\nEnde: V-Stange vor den Oberschenkeln.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- V-förmige Trizepsstange an hoher Rolle befestigen; nicht mit dem engen Ruder-Parallelgriff verwechseln. Beide schrägen Griffstücke fassen.\n\nBewegung:\n- Ellenbogen strecken und die V-Stange nach unten drücken.\n- Unterarme langsam wieder anheben.\n\nHinweise:\n- Oberarme bleiben neben dem Rumpf.\n\nHäufige Fehler:\n- Die Ellenbogen nach hinten reißen oder das Handgelenk abknicken.\n\nPositionen:\nStart: V-Stange vor dem Bauch.\nEnde: V-Stange vor den Oberschenkeln.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5155,7 +5216,7 @@
     {
       "key": "cable_kickback",
       "name": "Trizeps-Kickback am Kabel – einarmig",
-      "description": "Einstellen:\n- Einzelgriff an tiefer Rolle fassen. Zur Station stehen, Hüfte beugen und den freien Unterarm am Oberschenkel abstützen. Arbeitsoberarm neben dem Rumpf nach hinten anheben.\n\nBewegung:\n- Arbeitsellenbogen strecken und Griff nach hinten führen.\n- Unterarm kontrolliert zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Oberarm bleibt ruhig, Kabel hat freien Weg.\n\nHäufige Fehler:\n- Mit dem ganzen Arm pendeln oder den Rücken aufrichten.\n\nPositionen:\nStart: Arbeitsellenbogen gebeugt, Unterarm hängt.\nEnde: Arbeitsarm nach hinten weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Einzelgriff an tiefer Rolle fassen. Zur Station stehen, Hüfte beugen und den freien Unterarm am Oberschenkel abstützen. Arbeitsoberarm neben dem Rumpf nach hinten anheben.\n\nBewegung:\n- Arbeitsellenbogen strecken und Griff nach hinten führen.\n- Unterarm kontrolliert zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Oberarm bleibt ruhig, Kabel hat freien Weg.\n\nHäufige Fehler:\n- Mit dem ganzen Arm pendeln oder den Rücken aufrichten.\n\nPositionen:\nStart: Arbeitsellenbogen gebeugt, Unterarm hängt.\nEnde: Arbeitsarm nach hinten weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5178,7 +5239,7 @@
     {
       "key": "cable_shoulder_press",
       "name": "Schulterdrücken am Kabel – stehend",
-      "description": "Einstellen:\n- Zwischen zwei tiefen Rollen stehen und zwei Einzelgriffe auf Schulterhöhe bringen. Stabil stehen, Bauchspannung halten.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Beide Griffe kontrolliert nach oben drücken.\n- Griffe langsam wieder auf Schulterhöhe absenken.\n\nHinweise:\n- Unterarme unter den Griffen halten.\n\nHäufige Fehler:\n- Ins Hohlkreuz ausweichen oder die Griffe hinter den Kopf führen.\n\nPositionen:\nStart: Griffe neben den Schultern.\nEnde: Arme über Kopf weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Doppelkabelzug mit zwei unabhängig belastbaren Rollen\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
+      "description": "Einstellen:\n- Zwischen zwei tiefen Rollen stehen und zwei Einzelgriffe auf Schulterhöhe bringen. Stabil stehen, Bauchspannung halten.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Beide Griffe kontrolliert nach oben drücken.\n- Griffe langsam wieder auf Schulterhöhe absenken.\n\nHinweise:\n- Unterarme unter den Griffen halten.\n\nHäufige Fehler:\n- Ins Hohlkreuz ausweichen oder die Griffe hinter den Kopf führen.\n\nPositionen:\nStart: Griffe neben den Schultern.\nEnde: Arme über Kopf weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Kabelzug\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5209,7 +5270,7 @@
     {
       "key": "cable_shrug",
       "name": "Schulterheben am Kabel",
-      "description": "Einstellen:\n- Kurze Stange an tiefer Rolle im Obergriff fassen. Aufrecht stehen, Arme lang und Kopf neutral halten.\n\nBewegung:\n- Schultern kontrolliert nach oben heben.\n- Schultern langsam wieder absenken.\n\nHinweise:\n- Arme bleiben lang; Schultern nicht kreisen.\n\nHäufige Fehler:\n- Ellenbogen beugen und aus dem Schulterheben ein Rudern machen.\n\nPositionen:\nStart: Schultern entspannt unten, Stange vor den Oberschenkeln.\nEnde: Schultern angehoben, Arme unverändert lang.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Kurze Stange an tiefer Rolle im Obergriff fassen. Aufrecht stehen, Arme lang und Kopf neutral halten.\n\nBewegung:\n- Schultern kontrolliert nach oben heben.\n- Schultern langsam wieder absenken.\n\nHinweise:\n- Arme bleiben lang; Schultern nicht kreisen.\n\nHäufige Fehler:\n- Ellenbogen beugen und aus dem Schulterheben ein Rudern machen.\n\nPositionen:\nStart: Schultern entspannt unten, Stange vor den Oberschenkeln.\nEnde: Schultern angehoben, Arme unverändert lang.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5236,7 +5297,7 @@
     {
       "key": "cable_rotation",
       "name": "Rumpfrotation am Kabel – Brusthöhe",
-      "description": "Einstellen:\n- Seitlich zur Rolle auf Brusthöhe stehen. Einen Einzelgriff mit beiden Händen halten, Arme leicht gebeugt vor der Brust.\n\nBewegung:\n- Oberkörper in einem kleinen kontrollierten Bogen von der Station wegdrehen.\n- Langsam zur Ausgangsseite zurückkehren; nach dem Satz Seite wechseln.\n\nHinweise:\n- Nur im kontrollierbaren Bereich drehen; Knie bleiben locker.\n\nHäufige Fehler:\n- Nur die Arme schwenken oder die Rotation ruckartig erzwingen.\n\nPositionen:\nStart: Griff zur Kabelseite ausgerichtet.\nEnde: Griff zur Gegenseite geführt, Rumpf moderat gedreht.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Seitlich zur Rolle auf Brusthöhe stehen. Einen Einzelgriff mit beiden Händen halten, Arme leicht gebeugt vor der Brust.\n\nBewegung:\n- Oberkörper in einem kleinen kontrollierten Bogen von der Station wegdrehen.\n- Langsam zur Ausgangsseite zurückkehren; nach dem Satz Seite wechseln.\n\nHinweise:\n- Nur im kontrollierbaren Bereich drehen; Knie bleiben locker.\n\nHäufige Fehler:\n- Nur die Arme schwenken oder die Rotation ruckartig erzwingen.\n\nPositionen:\nStart: Griff zur Kabelseite ausgerichtet.\nEnde: Griff zur Gegenseite geführt, Rumpf moderat gedreht.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5267,7 +5328,7 @@
     {
       "key": "cable_chop_high_low",
       "name": "Kabel-Holzhacken – oben nach unten",
-      "description": "Einstellen:\n- Seitlich zur hohen Rolle stehen und einen Einzelgriff mit beiden Händen halten. Griff zunächst auf der Kabelseite oberhalb der Brust führen.\n\nBewegung:\n- Griff diagonal vor dem Körper zur gegenüberliegenden Hüftseite ziehen und den Oberkörper moderat mitdrehen.\n- Langsam diagonal zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Arme leicht gebeugt halten, Bewegung kontrolliert führen.\n\nHäufige Fehler:\n- Mit Schwung reißen oder nur die Ellenbogen beugen.\n\nPositionen:\nStart: Griff auf der Kabelseite oben.\nEnde: Griff vor der gegenüberliegenden Hüfte unten.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Seitlich zur hohen Rolle stehen und einen Einzelgriff mit beiden Händen halten. Griff zunächst auf der Kabelseite oberhalb der Brust führen.\n\nBewegung:\n- Griff diagonal vor dem Körper zur gegenüberliegenden Hüftseite ziehen und den Oberkörper moderat mitdrehen.\n- Langsam diagonal zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Arme leicht gebeugt halten, Bewegung kontrolliert führen.\n\nHäufige Fehler:\n- Mit Schwung reißen oder nur die Ellenbogen beugen.\n\nPositionen:\nStart: Griff auf der Kabelseite oben.\nEnde: Griff vor der gegenüberliegenden Hüfte unten.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5298,7 +5359,7 @@
     {
       "key": "cable_lift_low_high",
       "name": "Diagonales Kabelheben – unten nach oben",
-      "description": "Einstellen:\n- Seitlich zur tiefen Rolle stehen und einen Einzelgriff mit beiden Händen auf der Kabelseite unten halten. Knie leicht lösen.\n\nBewegung:\n- Griff diagonal vor dem Körper in Richtung gegenüberliegende Schulter anheben und moderat mitdrehen.\n- Kontrolliert nach unten zurückführen; danach Seite wechseln.\n\nHinweise:\n- Nicht ins Hohlkreuz ausweichen; oberhalb der Schulter nicht weiter erzwingen.\n\nHäufige Fehler:\n- Ruckartig aus Beinen oder Rücken beschleunigen.\n\nPositionen:\nStart: Griff auf der Kabelseite unten.\nEnde: Griff auf der Gegenseite etwa auf Schulterhöhe.\n\nBenötigte Ausstattung: 1 × Hoher Kabelzug + Seil",
+      "description": "Einstellen:\n- Seitlich zur tiefen Rolle stehen und einen Einzelgriff mit beiden Händen auf der Kabelseite unten halten. Knie leicht lösen.\n\nBewegung:\n- Griff diagonal vor dem Körper in Richtung gegenüberliegende Schulter anheben und moderat mitdrehen.\n- Kontrolliert nach unten zurückführen; danach Seite wechseln.\n\nHinweise:\n- Nicht ins Hohlkreuz ausweichen; oberhalb der Schulter nicht weiter erzwingen.\n\nHäufige Fehler:\n- Ruckartig aus Beinen oder Rücken beschleunigen.\n\nPositionen:\nStart: Griff auf der Kabelseite unten.\nEnde: Griff auf der Gegenseite etwa auf Schulterhöhe.\n\nBenötigte Ausstattung: 1 × Kabelzug",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7533,7 +7594,6 @@
       "model_code": "4012",
       "product_url": "https://gym80.de/en/product/4012/",
       "types": [
-        "dual_cable",
         "dual_cable_station"
       ],
       "note": "Breite Crossover-Station; Pfostenabstand nicht von der kompakten 4034 übernehmen.",
@@ -7553,7 +7613,6 @@
       "model_code": "4034",
       "product_url": "https://gym80.de/en/product/4034/",
       "types": [
-        "dual_cable",
         "dual_cable_station"
       ],
       "note": "Zwei verstellbare Rollen und zwei Gewichtsblöcke; Pfostenabstand und Griffanhänge je Übung prüfen.",
@@ -7573,7 +7632,7 @@
       "model_code": "4134",
       "product_url": "https://gym80.de/en/product/4134/",
       "types": [
-        "cable_adjustable"
+        "dual_cable_station"
       ],
       "note": "Zwei mehrfach verstellbare Arme; Griff- und Rollenposition je Übung gesondert prüfen.",
       "photo": null,
@@ -8530,8 +8589,7 @@
       "model_code": "RUD0915",
       "product_url": "https://www.precor.com/en-US/products/RUD0915",
       "types": [
-        "dual_cable_station",
-        "cable_adjustable"
+        "dual_cable_station"
       ],
       "note": "Zwei einstellbare Rollen; Griffe/Aufsätze und konkrete Position der jeweiligen Übung prüfen.",
       "photo": null,
