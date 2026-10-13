@@ -624,19 +624,12 @@ struct GeraetScreen: View {
 
 /// Das Gewicht fuer den naechsten Satz, waehrend die Pause weiterlaeuft
 /// (Testnotiz 11.10., #12) -- typischerweise steckt man in der Pause um.
-/// Gedreht wird ein Entwurf; erst "Übernehmen" schreibt ins Modell, damit
-/// ein weggewischter Drawer nichts veraendert.
+/// Das Rad schreibt direkt ins Modell: wer den Drawer wegwischt, erwartet
+/// das gedrehte Gewicht (Testnotiz 13.10., #1). Bis dahin galt es erst mit
+/// "Übernehmen".
 private struct GewichtAendernSheet: View {
     @Bindable var modell: GeraetModel
     let beiFertig: () -> Void
-
-    @State private var entwurf: Double
-
-    init(modell: GeraetModel, beiFertig: @escaping () -> Void) {
-        self.modell = modell
-        self.beiFertig = beiFertig
-        _entwurf = State(initialValue: modell.belastung)
-    }
 
     var body: some View {
         let einheit = modell.loadUnit
@@ -648,7 +641,12 @@ private struct GewichtAendernSheet: View {
             HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.s4) {
                 RastRad(
                     werte: modell.belastungsWerte,
-                    auswahl: $entwurf,
+                    // Ueber belastungGewaehlt wie in WertZeile: ein spaeter
+                    // Vorschlag ersetzt den gedrehten Wert nicht.
+                    auswahl: Binding(
+                        get: { modell.belastung },
+                        set: { modell.belastungGewaehlt($0) }
+                    ),
                     unterstrich: .held,
                     voLabel: "Belastung",
                     voWert: { Zahlformat.belastungGesprochen($0, einheit) },
@@ -661,10 +659,9 @@ private struct GewichtAendernSheet: View {
                     .foregroundStyle(DesignSystem.Color.textMuted)
                     .accessibilityHidden(true)
             }
-            PrimaryButton(title: "Übernehmen") {
-                modell.belastungGewaehlt(entwurf)
-                beiFertig()
-            }
+            // Schliesst nur noch; uebernommen ist schon beim Drehen.
+            PrimaryButton(title: "Fertig") { beiFertig() }
+                .testnotizElement("geraet.gewicht-fertig", typ: "PrimaryButton")
         }
         .padding(.horizontal, 20)
         .padding(.top, DesignSystem.Spacing.s24)
