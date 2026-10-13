@@ -113,7 +113,7 @@ struct PausenRad: View {
 
     /// "± kg" statt "Gewicht" (Testnotiz 12.10. abends, #4): kurz genug
     /// fuer die halbe Zeile, und am Laufband steht "± km/h".
-    static func gewichtTitel(_ einheit: LoadUnit) -> String {
+    nonisolated static func gewichtTitel(_ einheit: LoadUnit) -> String {
         "± \(einheit.kurz)"
     }
 
