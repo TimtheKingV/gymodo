@@ -124,6 +124,11 @@ type Geraetemodell = {
   loadStep: number;
   loadMin: number;
   loadMax: number | null;
+  /**
+   * Wo das Rad ohne Historie steht (Testnotiz 12.10. abends, #3). Am
+   * Studio-Modell aufgeloest nach `startDesModells`; null heisst Minimum.
+   */
+  loadStart: number | null;
   /** Nebenbelastung, alle vier null bei Kraftgeraeten (Cardio-Spec 3.1b). */
   secondaryUnit: LoadUnit | null;
   secondaryStep: number | null;
@@ -155,7 +160,7 @@ type Uebung = {
 };
 
 const MODELL_SPALTEN =
-  "id, name, manufacturer, photo_path, category, equipment_group, retired, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id";
+  "id, name, manufacturer, photo_path, category, equipment_group, retired, load_unit, load_step, load_min, load_max, load_start, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id";
 
 type ModellZeile = {
   id: string;
@@ -168,6 +173,7 @@ type ModellZeile = {
   load_unit: LoadUnit;
   load_step: number | string;
   load_min: number | string;
+  load_start: number | string | null;
   load_max: number | string | null;
   secondary_unit: LoadUnit | null;
   secondary_step: number | string | null;
@@ -193,6 +199,22 @@ export function uebungenMitKatalog(eigene: Uebung[], katalog: Uebung[]): Uebung[
  */
 export function gruppeDesModells(m: { eigene: Group | null; katalog: Group | null; category: Category }): Group {
   return m.eigene ?? m.katalog ?? (m.category === "cardio" ? "cardio" : "geraete");
+}
+
+/**
+ * Wo das Rad eines Modells ohne Historie steht (Testnotiz 12.10. abends,
+ * #3). Ein Studio-Modell traegt keinen eigenen Startwert und erbt den
+ * seines Gymtavo-Typs -- aber nur bei gleicher Einheit: 20 kg sind an
+ * einem Geraet in Level kein Startwert. null heisst: das Minimum.
+ */
+export function startDesModells(m: {
+  eigener: number | null;
+  katalog: { start: number | null; einheit: LoadUnit } | null;
+  einheit: LoadUnit;
+}): number | null {
+  if (m.eigener !== null) return m.eigener;
+  if (m.katalog && m.katalog.einheit === m.einheit) return m.katalog.start;
+  return null;
 }
 
 function key(machineId: string, exerciseId: string): string {
@@ -449,6 +471,12 @@ export async function getBootstrap(
   const katalogGruppen = new Map(
     ((katalogModellRows ?? []) as unknown as ModellZeile[]).map((row) => [row.id, row.equipment_group]),
   );
+  const katalogStarts = new Map(
+    ((katalogModellRows ?? []) as unknown as ModellZeile[]).map((row) => [
+      row.id,
+      { start: zahlOderNull(row.load_start), einheit: row.load_unit },
+    ]),
+  );
   const zuModell = (row: ModellZeile): Geraetemodell => ({
     id: row.id,
     name: row.name,
@@ -465,6 +493,11 @@ export async function getBootstrap(
     loadStep: Number(row.load_step),
     loadMin: Number(row.load_min),
     loadMax: zahlOderNull(row.load_max),
+    loadStart: startDesModells({
+      eigener: zahlOderNull(row.load_start),
+      katalog: row.catalog_model_id ? katalogStarts.get(row.catalog_model_id) ?? null : null,
+      einheit: row.load_unit,
+    }),
     secondaryUnit: row.secondary_unit,
     secondaryStep: zahlOderNull(row.secondary_step),
     secondaryMin: zahlOderNull(row.secondary_min),

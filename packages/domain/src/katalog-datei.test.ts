@@ -223,3 +223,25 @@ describe("pruefeKatalog group und retired", () => {
     ]);
   });
 });
+
+// Testnotiz 12.10. abends, #3: ein realistischer Startwert je Typ statt 0.
+describe("pruefeKatalog load_start", () => {
+  it("ist ohne Angabe null", () => {
+    const pruefung = pruefeKatalog(beispielKatalog().roh);
+    expect(pruefung.ok && pruefung.wert.equipment.map((g) => g.load_start)).toEqual([null, null, null]);
+  });
+
+  it("verlangt einen Startwert im Bereich und auf dem Raster", () => {
+    expect(
+      fehlerVon((roh) => {
+        const g = roh.equipment as Record<string, unknown>[];
+        g[0]!.load_start = 121; // ueber load_max 120
+        g[1]!.load_start = 12; // Raster 5
+        g[2]!.load_start = 6; // passt: 0,1er-Raster
+      }),
+    ).toEqual([
+      'equipment[0] "brustpresse": load_start liegt ausserhalb von load_min bis load_max',
+      'equipment[1] "trizepsmaschine": load_start liegt nicht auf dem Raster von load_step',
+    ]);
+  });
+});

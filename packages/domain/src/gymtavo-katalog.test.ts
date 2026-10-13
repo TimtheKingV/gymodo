@@ -53,3 +53,19 @@ describe("catalog/gymtavo.json", () => {
     }
   });
 });
+
+// Testnotiz 12.10. abends, #3: kein aktiver Typ startet bei 0.
+describe("catalog/gymtavo.json Startwerte", () => {
+  it("gibt jedem aktiven Typ einen Startwert ueber dem Minimum", () => {
+    const ohne = katalog()
+      .equipment.filter((g) => !g.retired)
+      .filter((g) => g.load_start === null || g.load_start <= g.load_min)
+      .map((g) => g.key);
+    expect(ohne).toEqual([]);
+  });
+
+  it("startet die Beinpresse hoeher als den Bizepscurl", () => {
+    const start = (key: string) => katalog().equipment.find((g) => g.key === key)?.load_start ?? 0;
+    expect(start("leg_press_45")).toBeGreaterThan(start("preacher_curl"));
+  });
+});
