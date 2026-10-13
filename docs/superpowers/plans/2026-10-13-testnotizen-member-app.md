@@ -96,4 +96,19 @@
 
 ## Geprüft
 
-_nach der Umsetzung ausfüllen_
+- **Vitest:** Domain 332 Tests in 30 Dateien grün, Web 306 Tests in 49 Dateien grün. Die neuen Domain-Tests waren vor der Umsetzung rot: `load_start` war ein unbekanntes Feld, und `startDesModells` gab es nicht.
+- **Typecheck** (Domain, Web, Wurzel mit e2e) grün. **Produktionsbau** grün.
+- **Swift:** nicht gelaufen. In der Cloud-Session gibt es weder Swift noch Xcode. Die Tests sind geschrieben, aber weder rot noch grün gesehen:
+  - `UebungsstartTests`: Ring voll bei „Los!“, „± kg“.
+  - `GeraetModelTests`: Satzfrage nur in der Eingabe, Speichern meldet Erfolg und Ablehnung, Startwert, letzter Satz vor Startwert, Startwert beim Übungswechsel.
+  - Der Swift-Diff ist von Hand auf Compile-Fehler gelesen. `gewichtTitel` ist `nonisolated`, wie `SensorZeile.text`, damit der Test ohne MainActor aufrufen kann.
+  - **Vor dem Merge auf dem Mac `xcodebuild test` laufen lassen.**
+- **Integration:** zwei neue Fälle geschrieben (`katalog-import`: Startwert beim zweiten Lauf; `domain-bootstrap-katalog`: Startwert geerbt am Studiomodell). Lokal nicht gelaufen, weil kein Docker-Daemon da ist. Die CI übernimmt.
+- **E2E:** nicht berührt. Lokal nicht gelaufen, Grund wie oben.
+- **Am Gerät ansehen:**
+  - #7: Passen in der Pause zwei grüne Knöpfe plus die Zeile „+30 s / ± kg“ unter den Ring auf dem 13 mini, ohne dass der Ring gedrückt wird?
+  - #2: Läuft der Ring flüssig und ist er genau bei „Los!“ voll?
+  - #1: Sitzt „Übung starten“ mit Einweisung unten in der Daumenzone?
+  - #5: Den Drawer „Satz N ist noch offen“ mit „Satz speichern“ und „Satz verwerfen“ ansehen. Danach muss bei mehreren Übungen die Abschlussfrage kommen.
+  - #3: Erst nach Migration und Import sichtbar. Dann zeigt eine neue Übung an der Beinpresse 40 kg in 2,5er-Schritten.
+- **Nebenwirkung #3:** Im Freien Training rasten alte Sätze jetzt auf 2,5 kg. Ein gespeicherter Satz mit 7 kg zeigt beim nächsten Mal 7,5 kg auf dem Rad (`Rastwerte.naechster`). Die Historie selbst bleibt unverändert. Studiomodelle behalten ihren Schritt. Nur neue Modelle aus der Vorlage bekommen 2,5.
