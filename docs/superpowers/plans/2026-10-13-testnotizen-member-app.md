@@ -98,11 +98,10 @@
 
 - **Vitest:** Domain 332 Tests in 30 Dateien grün, Web 306 Tests in 49 Dateien grün. Die neuen Domain-Tests waren vor der Umsetzung rot: `load_start` war ein unbekanntes Feld, und `startDesModells` gab es nicht.
 - **Typecheck** (Domain, Web, Wurzel mit e2e) grün. **Produktionsbau** grün.
-- **Swift:** nicht gelaufen. In der Cloud-Session gibt es weder Swift noch Xcode. Die Tests sind geschrieben, aber weder rot noch grün gesehen:
+- **Swift:** geschrieben in der Cloud-Session ohne Xcode, danach auf dem Mac gelaufen: `xcodebuild test` grün, 1081 Tests in 110 Suites (vorher 1072). Rot vorab haben die Swift-Tests nicht gesehen.
   - `UebungsstartTests`: Ring voll bei „Los!“, „± kg“.
   - `GeraetModelTests`: Satzfrage nur in der Eingabe, Speichern meldet Erfolg und Ablehnung, Startwert, letzter Satz vor Startwert, Startwert beim Übungswechsel.
-  - Der Swift-Diff ist von Hand auf Compile-Fehler gelesen. `gewichtTitel` ist `nonisolated`, wie `SensorZeile.text`, damit der Test ohne MainActor aufrufen kann.
-  - **Vor dem Merge auf dem Mac `xcodebuild test` laufen lassen.**
+- **Prod:** Migration 0052 am 13.10. mit `db push --linked` eingespielt, `pnpm smoke:migrations` bestanden (52 von 52). Der Katalogimport steht noch aus, bis dahin ist `load_start` überall null und die App startet wie bisher am Minimum.
 - **Integration:** zwei neue Fälle geschrieben (`katalog-import`: Startwert beim zweiten Lauf; `domain-bootstrap-katalog`: Startwert geerbt am Studiomodell). Lokal nicht gelaufen, weil kein Docker-Daemon da ist. Die CI übernimmt.
 - **E2E:** nicht berührt. Lokal nicht gelaufen, Grund wie oben.
 - **Am Gerät ansehen:**
