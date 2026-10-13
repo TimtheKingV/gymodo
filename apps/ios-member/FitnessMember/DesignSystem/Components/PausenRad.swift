@@ -76,15 +76,17 @@ struct PausenRad: View {
                 // Fuer ihn ist "Nächste Übung" so oft der naechste Schritt wie
                 // "Nächster Satz" und darf kein kleiner Nebenknopf sein. Es ist
                 // derselbe Weg wie "Übung abschließen" unter den Raedern.
-                PrimaryButton(title: "Nächste Übung") { beiAbschliessen() }
-                    .accessibilityHint("Schließt diese Übung ab")
-                    .testnotizElement("geraet.naechste-uebung", typ: "PrimaryButton")
-                // Ganz unten, an derselben Stelle wie "Satz N sichern" auf
-                // den Raedern: der Daumen bleibt, wo er war (Testnotiz
-                // 06.10., #7). Bis 12.10. hiess er "Weiter".
+                //
+                // Erst der Satz, dann die Uebung (Testnotiz 13.10., #2): so
+                // gelesen, wie es im Training kommt. Bis dahin stand "Nächster
+                // Satz" unten, wo der Daumen vom Sichern lag (06.10., #7).
+                // Bis 12.10. hiess er "Weiter".
                 PrimaryButton(title: "Nächster Satz") { beiWeiter() }
                     .accessibilityHint("Beendet die Pause und zeigt wieder die Räder")
                     .testnotizElement("geraet.naechster-satz", typ: "PrimaryButton")
+                PrimaryButton(title: "Nächste Übung") { beiAbschliessen() }
+                    .accessibilityHint("Schließt diese Übung ab")
+                    .testnotizElement("geraet.naechste-uebung", typ: "PrimaryButton")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

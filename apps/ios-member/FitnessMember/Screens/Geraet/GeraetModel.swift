@@ -226,16 +226,22 @@ final class GeraetModel {
         // Werte gehoeren dem Mitglied, ein spaeter Vorschlag ersetzt sie
         // nicht. Der Countdown laeuft nur nach diesem Start, nicht im
         // Zirkel ueber die Blockliste.
-        if let startwerte {
-            belastung = Rastwerte.naechster(zu: startwerte.belastung, in: belastungsWerte)
-            umfang = Rastwerte.naechster(zu: startwerte.umfang, in: umfangsWerte)
-            if let neben = startwerte.nebenbelastung, nebenmodell != nil {
-                nebenbelastung = Rastwerte.naechster(zu: neben, in: nebenbelastungsWerte)
-                nebenbelastungVomNutzer = true
-            }
-            belastungVomNutzer = true
-            phase = .bereit(Resttimer(dauer: Startcountdown.dauer))
+        if let startwerte { uebungStarten(mit: startwerte) }
+    }
+
+    /// "Übung starten" im Drawer: aus der Liste ueber init, nach "Weitere
+    /// Übung an dem Gerät" auf dem bestehenden Modell (Testnotiz 13.10.,
+    /// #3). Ein Weg fuer beide, damit der zweite Start nicht anders
+    /// beginnt als der erste.
+    func uebungStarten(mit startwerte: Startwerte) {
+        belastung = Rastwerte.naechster(zu: startwerte.belastung, in: belastungsWerte)
+        umfang = Rastwerte.naechster(zu: startwerte.umfang, in: umfangsWerte)
+        if let neben = startwerte.nebenbelastung, nebenmodell != nil {
+            nebenbelastung = Rastwerte.naechster(zu: neben, in: nebenbelastungsWerte)
+            nebenbelastungVomNutzer = true
         }
+        belastungVomNutzer = true
+        phase = .bereit(Resttimer(dauer: Startcountdown.dauer))
     }
 
     /// Was der Drawer an die Satzseite weitergibt: die Raeder, wie sie
