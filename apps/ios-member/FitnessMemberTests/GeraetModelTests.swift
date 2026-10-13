@@ -42,6 +42,42 @@ struct GeraetModelTests {
         #expect(sut.vorschlagText == nil)
     }
 
+    /// Testnotiz 12.10. abends, #3: mit einem Startwert am Modell steht das
+    /// Rad dort statt am Minimum -- gerastet auf die Schritte des Geraets.
+    @Test func startetOhneHistorieAmStartwertDesModells() {
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [])
+        let sut = modell(maschine: GeraetTestdaten.maschine(loadMax: "150.0", loadStart: "41.0"),
+                         bootstrap: bootstrap)
+
+        #expect(sut.belastung == 40.0)
+    }
+
+    @Test func derLetzteSatzGehtVorDemStartwert() {
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)])
+        let sut = modell(maschine: GeraetTestdaten.maschine(loadMax: "150.0", loadStart: "40.0"),
+                         bootstrap: bootstrap)
+
+        #expect(sut.belastung == 77.5)
+    }
+
+    @Test func eineNeueUebungStartetAmStartwert() {
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)])
+        let maschine: BootstrapResponse.Machine = GeraetTestdaten.dekodiere("""
+        {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":null,
+         "status":"active","tokenHashes":[],"visitCount":2,
+         "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":null,
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,
+           "loadStart":40.0,"settingDefinitions":[]},
+         "exercises":[{"id":"e1","name":"Beidbeinig","volumeKind":"reps","targetMin":8,"targetMax":12},
+                      {"id":"e2","name":"Einbeinig","volumeKind":"reps","targetMin":6,"targetMax":10}]}
+        """)
+        let sut = modell(maschine: maschine, bootstrap: bootstrap)
+
+        sut.uebungWechseln(zu: "e2")
+
+        #expect(sut.belastung == 40.0)
+    }
+
     @Test func uebernimmtDenLetztenEigenenWertOhneNetz() {
         let bootstrap = GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)])
         let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrap)
@@ -1317,12 +1353,13 @@ enum GeraetTestdaten {
         """)
     }
 
-    static func maschine(loadMax: String) -> BootstrapResponse.Machine {
+    static func maschine(loadMax: String, loadStart: String = "null") -> BootstrapResponse.Machine {
         dekodiere("""
         {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":"Fensterseite",
          "status":"active","tokenHashes":[],"visitCount":2,
          "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":"Technogym",
            "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":\(loadMax),
+           "loadStart":\(loadStart),
            "settingDefinitions":[{"key":"sitz","label":"Sitzposition","kind":"number",
              "minValue":1,"maxValue":8,"stepValue":1,"unit":null,"allowedValues":null}]},
          "exercises":[{"id":"e1","name":"Beidbeinig","volumeKind":"reps","targetMin":8,"targetMax":12}]}

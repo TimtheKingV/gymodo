@@ -203,9 +203,12 @@ final class GeraetModel {
         self.mitschnitt = mitschnitt
 
         let letzter = Self.letzterSatz(an: station, uebungId: uebungId, in: bootstrap)
-        // Ohne Historie startet das Rad am Geraetminimum -- ein Vorschlag
-        // ohne Daten waere eine Trainingsempfehlung (designsystem.md SS8).
-        belastung = letzter?.load ?? station.equipmentModel.loadMin
+        // Ohne Historie startet das Rad am Startwert des Geraets, sonst am
+        // Minimum (Testnotiz 12.10. abends, #3). Bewusste Ausnahme von
+        // designsystem.md SS8: der Startwert gilt je Geraet, nicht je Person
+        // -- eine Beinpresse beginnt hoeher als ein Bizepscurl, und 0 kg
+        // stellt niemand ein.
+        belastung = letzter?.load ?? station.equipmentModel.loadStart ?? station.equipmentModel.loadMin
         umfang = letzter?.volume ?? station.exercises.first { $0.id == uebungId }?.targetMin ?? 10
 
         // Snap erst, nachdem alle gespeicherten Eigenschaften stehen --
@@ -675,7 +678,7 @@ final class GeraetModel {
         uebungId = neue
         let letzter = letzterSatz(fuer: neue)
         belastung = Rastwerte.naechster(
-            zu: letzter?.load ?? modell.min, in: belastungsWerte)
+            zu: letzter?.load ?? station.equipmentModel.loadStart ?? modell.min, in: belastungsWerte)
         // umfangsWerte liest die Umfangsart der NEUEN Uebung: von
         // "Dauerlauf" (Sekunden) auf "Intervall 400 m" (Meter) wechselt
         // damit auch die Liste, auf die der Wert rastet.
