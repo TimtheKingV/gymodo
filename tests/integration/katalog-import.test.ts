@@ -164,6 +164,16 @@ describe("Katalogimport", () => {
     expect(await modell(`${p}trizepsmaschine`)).toMatchObject({ equipment_group: "kabelzug", retired: true });
   });
 
+  // Testnotiz 12.10. abends, #3: der Startwert kommt beim zweiten Lauf an.
+  it("schreibt einen neuen Startwert", async () => {
+    (beispiel.roh.equipment[0] as Record<string, unknown>).load_start = 20;
+
+    const { plan } = await importiere(beispiel);
+
+    expect(eigene(plan.geraetetypen, p).map((x) => x.felder)).toEqual([["load_start"], [], []]);
+    expect(Number((await modell(`${p}brustpresse`)).load_start)).toBe(20);
+  });
+
   it("meldet Entferntes nur und loescht nichts", async () => {
     beispiel.roh.equipment[0]!.settings.pop();
     beispiel.roh.equipment[2]!.exercises = [];

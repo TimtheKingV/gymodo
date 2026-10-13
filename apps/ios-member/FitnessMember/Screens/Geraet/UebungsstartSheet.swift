@@ -166,6 +166,13 @@ struct StartwerteSchritt: View {
 
             WertZeile(modell: modell)
 
+            // Mit Einweisung hat der Drawer volle Hoehe; ohne Spacer hing
+            // "Übung starten" mitten darin statt in der Daumenzone
+            // (Testnotiz 12.10. abends, #1). Allein (titel == nil) nicht:
+            // dort misst der Drawer seinen Inhalt, ein Spacer liesse ihn
+            // auf die angebotene Hoehe wachsen.
+            if titel != nil { Spacer(minLength: 0) }
+
             VStack(spacing: DesignSystem.Spacing.s8) {
                 // Die Uhr laeuft erst mit diesem Tipp, nicht schon waehrend
                 // der Einweisung (Testnotiz 06.10., #5) -- gesagt wird es,

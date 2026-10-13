@@ -42,6 +42,42 @@ struct GeraetModelTests {
         #expect(sut.vorschlagText == nil)
     }
 
+    /// Testnotiz 12.10. abends, #3: mit einem Startwert am Modell steht das
+    /// Rad dort statt am Minimum -- gerastet auf die Schritte des Geraets.
+    @Test func startetOhneHistorieAmStartwertDesModells() {
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [])
+        let sut = modell(maschine: GeraetTestdaten.maschine(loadMax: "150.0", loadStart: "41.0"),
+                         bootstrap: bootstrap)
+
+        #expect(sut.belastung == 40.0)
+    }
+
+    @Test func derLetzteSatzGehtVorDemStartwert() {
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)])
+        let sut = modell(maschine: GeraetTestdaten.maschine(loadMax: "150.0", loadStart: "40.0"),
+                         bootstrap: bootstrap)
+
+        #expect(sut.belastung == 77.5)
+    }
+
+    @Test func eineNeueUebungStartetAmStartwert() {
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)])
+        let maschine: BootstrapResponse.Machine = GeraetTestdaten.dekodiere("""
+        {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":null,
+         "status":"active","tokenHashes":[],"visitCount":2,
+         "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":null,
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,
+           "loadStart":40.0,"settingDefinitions":[]},
+         "exercises":[{"id":"e1","name":"Beidbeinig","volumeKind":"reps","targetMin":8,"targetMax":12},
+                      {"id":"e2","name":"Einbeinig","volumeKind":"reps","targetMin":6,"targetMax":10}]}
+        """)
+        let sut = modell(maschine: maschine, bootstrap: bootstrap)
+
+        sut.uebungWechseln(zu: "e2")
+
+        #expect(sut.belastung == 40.0)
+    }
+
     @Test func uebernimmtDenLetztenEigenenWertOhneNetz() {
         let bootstrap = GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)])
         let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrap)
@@ -589,6 +625,53 @@ struct GeraetModelTests {
         let zwei = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
                           bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
         #expect(zwei.abschlussFragtNach == true)
+    }
+
+    // MARK: - Offener Satz vor dem Abschluss (Testnotiz 12.10. abends, #5)
+
+    /// Nur unter den Raedern steht ein Satz offen. In der Pause und nach
+    /// dem Satzziel ist der letzte schon gesichert, im Countdown hat noch
+    /// keiner begonnen.
+    @Test func nurDieEingabeFragtVorDemAbschlussNachDemSatz() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        #expect(sut.abschlussFragtNachSatz == true)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.abschlussFragtNachSatz == false)
+
+        let imCountdown = modell(maschine: GeraetTestdaten.maschine,
+                                 bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                                 startwerte: Startwerte(belastung: 20, umfang: 10, nebenbelastung: nil))
+        #expect(imCountdown.abschlussFragtNachSatz == false)
+    }
+
+    /// "Satz speichern" sichert wie der Hauptknopf und sagt, ob es geklappt
+    /// hat -- nur dann geht es weiter aus der Uebung heraus.
+    @Test func satzSpeichernVorDemAbschlussMeldetDenErfolg() async {
+        let erfasser = Erfassungswarteschlange()
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         enqueue: { erfasser.geschriebene.append($0) })
+
+        #expect(await sut.satzSichernVorAbschluss() == true)
+        #expect(erfasser.geschriebene.count == 1)
+        #expect(sut.gesicherteSaetze == 1)
+    }
+
+    @Test func einAbgelehnterSatzHaeltDenAbschlussAuf() async {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        _ = sessions.satzSichern(station: .testGeraet("m9", studioId: "s2"), exerciseId: "e1",
+                                 einheiten: .kilogrammWiederholungen, load: 50, volume: 10,
+                                 problemFlag: false, problemReason: nil)
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         sessions: sessions)
+
+        #expect(await sut.satzSichernVorAbschluss() == false)
+        #expect(sut.satzAbgelehnt != nil)
     }
 
     @Test func blockInEinheitNenntDieSaetzeJederUebungDiesesGeraets() {
@@ -1270,12 +1353,13 @@ enum GeraetTestdaten {
         """)
     }
 
-    static func maschine(loadMax: String) -> BootstrapResponse.Machine {
+    static func maschine(loadMax: String, loadStart: String = "null") -> BootstrapResponse.Machine {
         dekodiere("""
         {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":"Fensterseite",
          "status":"active","tokenHashes":[],"visitCount":2,
          "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":"Technogym",
            "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":\(loadMax),
+           "loadStart":\(loadStart),
            "settingDefinitions":[{"key":"sitz","label":"Sitzposition","kind":"number",
              "minValue":1,"maxValue":8,"stepValue":1,"unit":null,"allowedValues":null}]},
          "exercises":[{"id":"e1","name":"Beidbeinig","volumeKind":"reps","targetMin":8,"targetMax":12}]}

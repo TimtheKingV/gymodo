@@ -44,7 +44,7 @@ beforeAll(async () => {
 
   const { data: typRow, error: typError } = await admin
     .from("equipment_models")
-    .insert({ studio_id: GYMTAVO, name: `Kabelzug ${kennung}`, load_step: 2.5, load_min: 2.5, equipment_group: "kabelzug", retired: true })
+    .insert({ studio_id: GYMTAVO, name: `Kabelzug ${kennung}`, load_step: 2.5, load_min: 2.5, load_start: 10, equipment_group: "kabelzug", retired: true })
     .select("id")
     .single();
   if (typError) throw typError;
@@ -190,6 +190,17 @@ describe("getBootstrap -- Gymtavo-Katalog", () => {
     });
     const geraet = bootstrap.machines.find((m) => m.id === maschine);
     expect(geraet?.equipmentModel).toMatchObject({ equipmentGroup: "kabelzug", retired: false });
+  });
+
+  // Testnotiz 12.10. abends, #3: das Studio-Modell (kg wie sein Typ) erbt
+  // den Startwert; das Rad rastet ihn auf seine eigenen 5er-Schritte.
+  it("liefert den Startwert, am Studio-Modell geerbt vom Gymtavo-Typ", async () => {
+    const client = await userClient(mitgliedEmail);
+
+    const bootstrap = await getBootstrap(client);
+
+    expect(bootstrap.catalog?.equipmentTypes.find((t) => t.id === typ)?.loadStart).toBe(10);
+    expect(bootstrap.machines.find((m) => m.id === maschine)?.equipmentModel.loadStart).toBe(10);
   });
 
   it("zeigt unter dem Geraet erst die eigenen, dann die Gymtavo-Uebungen -- jede einmal", async () => {

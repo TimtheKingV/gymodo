@@ -113,6 +113,19 @@ describe("planeImport", () => {
     expect(plan.geraetetypen.map((p) => p.felder)).toEqual([["equipment_group"], ["retired"], []]);
   });
 
+  // Testnotiz 12.10. abends, #3: ein neuer Startwert muss beim zweiten
+  // Lauf ankommen, sonst startet das Rad in Prod weiter bei 0.
+  it("schreibt den Startwert und nennt ihn als geaendert", () => {
+    const beispiel = beispielKatalog();
+    const neu = plane(beispiel, LEER);
+    expect(neu.geraetetypen[0]?.zeile).toMatchObject({ load_start: null });
+    const ist = istAus(neu);
+    (beispiel.roh.equipment[0] as Record<string, unknown>).load_start = 20;
+    const plan = plane(beispiel, ist);
+    expect(plan.geraetetypen.map((p) => p.felder)).toEqual([["load_start"], [], []]);
+    expect(plan.geraetetypen[0]?.zeile).toMatchObject({ load_start: 20 });
+  });
+
   it("meldet ersetzte eigene Medien, aber keine fremden", () => {
     const beispiel = beispielKatalog();
     const ist = istAus(plane(beispiel, LEER));

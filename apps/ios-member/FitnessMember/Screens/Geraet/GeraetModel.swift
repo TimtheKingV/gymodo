@@ -203,9 +203,12 @@ final class GeraetModel {
         self.mitschnitt = mitschnitt
 
         let letzter = Self.letzterSatz(an: station, uebungId: uebungId, in: bootstrap)
-        // Ohne Historie startet das Rad am Geraetminimum -- ein Vorschlag
-        // ohne Daten waere eine Trainingsempfehlung (designsystem.md SS8).
-        belastung = letzter?.load ?? station.equipmentModel.loadMin
+        // Ohne Historie startet das Rad am Startwert des Geraets, sonst am
+        // Minimum (Testnotiz 12.10. abends, #3). Bewusste Ausnahme von
+        // designsystem.md SS8: der Startwert gilt je Geraet, nicht je Person
+        // -- eine Beinpresse beginnt hoeher als ein Bizepscurl, und 0 kg
+        // stellt niemand ein.
+        belastung = letzter?.load ?? station.equipmentModel.loadStart ?? station.equipmentModel.loadMin
         umfang = letzter?.volume ?? station.exercises.first { $0.id == uebungId }?.targetMin ?? 10
 
         // Snap erst, nachdem alle gespeicherten Eigenschaften stehen --
@@ -280,6 +283,13 @@ final class GeraetModel {
     /// immer, sobald das Geraet mehr als eine Uebung kennt -- auch wenn
     /// alle schon dran waren; die Liste zeigt dann, wie viele Saetze.
     var abschlussFragtNach: Bool { hatWeitereUebungen }
+
+    /// Ob "Uebung abschliessen" zuerst nach dem offenen Satz fragt:
+    /// speichern oder verwerfen (Testnotiz 12.10. abends, #5). Nur unter den
+    /// Raedern steht einer offen -- wer dort abschliesst, kann erwarten, dass
+    /// der eingestellte Satz gespeichert wird. In Pause und Abschluss ist der
+    /// letzte Satz schon gesichert, im Countdown hat keiner begonnen.
+    var abschlussFragtNachSatz: Bool { phase == .eingabe }
 
     /// Der Block dieser Uebung an DIESEM Geraet in der laufenden Einheit,
     /// sonst nil. Fuer die Uebungsliste: "2 Sätze · 7,5 kg" wie in der
@@ -668,7 +678,7 @@ final class GeraetModel {
         uebungId = neue
         let letzter = letzterSatz(fuer: neue)
         belastung = Rastwerte.naechster(
-            zu: letzter?.load ?? modell.min, in: belastungsWerte)
+            zu: letzter?.load ?? station.equipmentModel.loadStart ?? modell.min, in: belastungsWerte)
         // umfangsWerte liest die Umfangsart der NEUEN Uebung: von
         // "Dauerlauf" (Sekunden) auf "Intervall 400 m" (Meter) wechselt
         // damit auch die Liste, auf die der Wert rastet.
@@ -727,6 +737,14 @@ final class GeraetModel {
         // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
         // eine Pause vor einem Satz, der nicht kommt, ist nur Wartezeit.
         phase = satzNummer > satzZiel ? .abschluss : .neuePause()
+    }
+
+    /// "Satz speichern" vor dem Abschluss (#5): derselbe Weg wie der
+    /// Hauptknopf. false, wenn der Satz abgelehnt wurde -- dann bleibt das
+    /// Mitglied auf der Satzseite und liest dort den Grund.
+    func satzSichernVorAbschluss() async -> Bool {
+        await satzSichern(problemFlag: false, problemReason: nil)
+        return satzAbgelehnt == nil
     }
 
     /// Ablauf oder Tipp auf den Ring: die Raeder kommen, und erst jetzt

@@ -88,6 +88,10 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         /// In einem anderen Typ aufgegangen (Testnotiz 12.10., #1).
         /// Optional aus denselben Gruenden; gelesen wird `abgeloest`.
         var retired: Bool? = nil
+        /// Wo das Rad ohne Historie steht (Testnotiz 12.10. abends, #3), vom
+        /// Server aufgeloest. nil: das Minimum -- auch fuer Server vor
+        /// Migration 0052 und alte Caches.
+        var loadStart: Double? = nil
 
         var abgeloest: Bool { retired == true }
     }
@@ -111,9 +115,10 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
             let secondaryMax: Double?
             let settingDefinitions: [TagContextResponse.SettingDefinition]
             let exercises: [Exercise]
-            /// Siehe `EquipmentModel.equipmentGroup` und `.retired`.
+            /// Siehe `EquipmentModel.equipmentGroup`, `.retired` und `.loadStart`.
             var equipmentGroup: String? = nil
             var retired: Bool? = nil
+            var loadStart: Double? = nil
         }
         let studioId: String
         let equipmentTypes: [EquipmentType]

@@ -42,4 +42,27 @@ struct UebungsstartTests {
     @Test func derCountdownDauertFuenfSekundenUndDasLos() {
         #expect(Startcountdown.dauer == 6)
     }
+
+    // MARK: - Ring voll bei "Los!" (Testnotiz 12.10. abends, #2)
+
+    /// Der Ring fuellt sich ueber die fuenf Zaehlsekunden, nicht ueber die
+    /// ganze Dauer samt "Los!" -- sonst ist er beim Wechsel zu den Raedern
+    /// nie voll.
+    @Test func derRingIstBeiLosVoll() {
+        let start = Date(timeIntervalSinceReferenceDate: 1_000)
+        #expect(Startcountdown.zaehldauer == 5)
+        #expect(Startcountdown.fortschritt(start: start, jetzt: start) == 0)
+        #expect(Startcountdown.fortschritt(start: start, jetzt: start.addingTimeInterval(2.5)) == 0.5)
+        #expect(Startcountdown.fortschritt(start: start, jetzt: start.addingTimeInterval(5)) == 1)
+        #expect(Startcountdown.fortschritt(start: start, jetzt: start.addingTimeInterval(6)) == 1)
+        #expect(Startcountdown.fortschritt(start: start, jetzt: start.addingTimeInterval(-1)) == 0)
+    }
+
+    // MARK: - Pause (Testnotiz 12.10. abends, #4)
+
+    /// "± kg" statt "Gewicht" -- die Einheit kommt vom Geraet.
+    @Test func derGewichtsknopfDerPauseTraegtDieEinheit() {
+        #expect(PausenRad.gewichtTitel(.kg) == "± kg")
+        #expect(PausenRad.gewichtTitel(.kmh) == "± km/h")
+    }
 }

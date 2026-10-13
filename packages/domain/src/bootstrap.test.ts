@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gruppeDesModells, zaehleBesucheJeGeraet } from "./bootstrap.js";
+import { gruppeDesModells, startDesModells, zaehleBesucheJeGeraet } from "./bootstrap.js";
 
 describe("zaehleBesucheJeGeraet", () => {
   it("zaehlt zwei Saetze derselben Session als einen Besuch", () => {
@@ -51,5 +51,21 @@ describe("gruppeDesModells", () => {
   it("faellt ohne Zuordnung auf die Kategorie zurueck", () => {
     expect(gruppeDesModells({ eigene: null, katalog: null, category: "cardio" })).toBe("cardio");
     expect(gruppeDesModells({ eigene: null, katalog: null, category: "kraft" })).toBe("geraete");
+  });
+});
+
+// Testnotiz 12.10. abends, #3: wo das Rad ohne Historie steht.
+describe("startDesModells", () => {
+  it("nimmt den eigenen Startwert vor dem des Gymtavo-Typs", () => {
+    expect(startDesModells({ eigener: 30, katalog: { start: 20, einheit: "kg" }, einheit: "kg" })).toBe(30);
+  });
+
+  it("erbt den Startwert des Gymtavo-Typs bei gleicher Einheit", () => {
+    expect(startDesModells({ eigener: null, katalog: { start: 20, einheit: "kg" }, einheit: "kg" })).toBe(20);
+  });
+
+  it("erbt nicht ueber verschiedene Einheiten und ohne Zuordnung", () => {
+    expect(startDesModells({ eigener: null, katalog: { start: 20, einheit: "kg" }, einheit: "level" })).toBeNull();
+    expect(startDesModells({ eigener: null, katalog: null, einheit: "kg" })).toBeNull();
   });
 });

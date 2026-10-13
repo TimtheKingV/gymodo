@@ -90,6 +90,10 @@ const geraetetypSchema = z
     load_step: positiv,
     load_min: nichtNegativ,
     load_max: nichtNegativ.nullable(),
+    // Testnotiz 12.10. abends, #3: wo das Rad ohne Historie steht. Ein
+    // Ausgangspunkt je Geraet, keine Empfehlung je Person -- eine
+    // Beinpresse beginnt hoeher als ein Bizepscurl.
+    load_start: nichtNegativ.nullable().default(null),
     secondary: nebenbelastungSchema.nullable(),
     settings: z.array(einstellungSchema),
     exercises: z.array(schluessel),
@@ -239,6 +243,12 @@ function doppelte(werte: readonly string[]): string[] {
 }
 
 /** Was zod nicht sieht: Verweise zwischen Listen, Doppelte, Grenzen untereinander. */
+/** Ganzzahliges Vielfaches, tolerant gegen 0,1-Rundungsfehler. */
+function aufRaster(abstand: number, schritt: number): boolean {
+  const n = abstand / schritt;
+  return Math.abs(n - Math.round(n)) < 1e-6;
+}
+
 function querPruefen(k: KatalogDatei): string[] {
   const fehler: string[] = [];
   const eindeutig = (wo: string, schluessel: string[]) => {
@@ -258,6 +268,15 @@ function querPruefen(k: KatalogDatei): string[] {
   k.equipment.forEach((g, i) => {
     const wo = `equipment[${i}] "${g.key}"`;
     if (g.load_max !== null && g.load_max < g.load_min) fehler.push(`${wo}: load_max ist kleiner als load_min`);
+    if (g.load_start !== null) {
+      // Die App rastet den Startwert ohnehin ein; ein Wert daneben waere
+      // still ein anderer, als in der Datei steht.
+      if (g.load_start < g.load_min || (g.load_max !== null && g.load_start > g.load_max)) {
+        fehler.push(`${wo}: load_start liegt ausserhalb von load_min bis load_max`);
+      } else if (!aufRaster(g.load_start - g.load_min, g.load_step)) {
+        fehler.push(`${wo}: load_start liegt nicht auf dem Raster von load_step`);
+      }
+    }
     if (g.secondary !== null && g.secondary.max < g.secondary.min) {
       fehler.push(`${wo}: secondary.max ist kleiner als secondary.min`);
     }
