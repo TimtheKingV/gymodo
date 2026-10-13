@@ -486,6 +486,12 @@ struct GeraetScreen: View {
     @State private var einweisungOffen = false
     @State private var problemOffen = false
     @State private var abschlussfrageOffen = false
+    /// "Satz speichern / Satz verwerfen" vor dem Abschluss (Testnotiz
+    /// 12.10. abends, #5).
+    @State private var satzfrageOffen = false
+    /// Wie weitereUebungNachFrage: was nach dem Schliessen der Satzfrage
+    /// folgt, erst in onDismiss.
+    @State private var abschlussNachSatzfrage = false
     /// Was nach dem Schliessen der Abschlussfrage folgt. Zwei Sheets
     /// nacheinander gehen nur ueber onDismiss: solange das eine noch
     /// verschwindet, praesentiert SwiftUI das naechste nicht.
@@ -496,10 +502,10 @@ struct GeraetScreen: View {
             modell: modell,
             beiProblem: { problemOffen = true },
             beiUebungAbschliessen: {
-                if modell.abschlussFragtNach {
-                    abschlussfrageOffen = true
+                if modell.abschlussFragtNachSatz {
+                    satzfrageOffen = true
                 } else {
-                    beiZurueckZumTraining()
+                    uebungAbschliessen()
                 }
             },
             beiTrainingBeenden: beiTrainingBeenden,
@@ -523,6 +529,27 @@ struct GeraetScreen: View {
         }
         .sheet(isPresented: $uebungWechselnOffen) {
             UebungWechselnSheet(modell: modell) { modell.uebungWechseln(zu: $0) }
+        }
+        // Vor dem Abschluss unter den Raedern: der offene Satz (Testnotiz
+        // 12.10. abends, #5). Wegwischen bricht ab, die Raeder bleiben.
+        .sheet(isPresented: $satzfrageOffen, onDismiss: {
+            if abschlussNachSatzfrage {
+                abschlussNachSatzfrage = false
+                uebungAbschliessen()
+            }
+        }) {
+            SatzOffenSheet(
+                satzNummer: modell.satzNummer,
+                beiSpeichern: {
+                    // Abgelehnt (anderes Studio): zurueck auf die Satzseite,
+                    // die den Grund zeigt -- nicht still aus der Uebung.
+                    abschlussNachSatzfrage = await modell.satzSichernVorAbschluss()
+                    satzfrageOffen = false
+                },
+                beiVerwerfen: {
+                    abschlussNachSatzfrage = true
+                    satzfrageOffen = false
+                })
         }
         // Der Drawer nach "Übung abschließen" (Testnotiz 06.10., #12).
         .sheet(isPresented: $abschlussfrageOffen, onDismiss: {
@@ -557,6 +584,16 @@ struct GeraetScreen: View {
             ) {
                 modell.kalibrierungOffen = false
             }
+        }
+    }
+
+    /// Der Weg aus der Uebung, wenn kein Satz mehr offen ist: bei mehreren
+    /// Uebungen die Frage, sonst zurueck zum Training.
+    private func uebungAbschliessen() {
+        if modell.abschlussFragtNach {
+            abschlussfrageOffen = true
+        } else {
+            beiZurueckZumTraining()
         }
     }
 }
@@ -643,6 +680,41 @@ private struct UebungAbschliessenSheet: View {
         .frame(maxHeight: .infinity, alignment: .top)
         .background(DesignSystem.Color.bg)
         .presentationDetents([.height(280)])
+        .presentationDragIndicator(.visible)
+        .testnotizScreen()
+    }
+}
+
+/// Die Frage nach dem offenen Satz, wenn unter den Raedern "Übung
+/// abschließen" getippt wird (Testnotiz 12.10. abends, #5): wer dort
+/// abschliesst, kann erwarten, dass der eingestellte Satz gespeichert wird.
+/// Ein Drawer wie die Abschlussfrage darunter.
+private struct SatzOffenSheet: View {
+    let satzNummer: Int
+    let beiSpeichern: () async -> Void
+    let beiVerwerfen: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            Text("SATZ \(satzNummer) IST NOCH OFFEN")
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+            Text("Speichern, was auf den Rädern steht, oder ohne diesen Satz abschließen?")
+                .font(DesignSystem.Typography.fliesstext)
+                .foregroundStyle(DesignSystem.Color.text)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.bottom, DesignSystem.Spacing.s8)
+            PrimaryButton(title: "Satz speichern") { await beiSpeichern() }
+                .testnotizElement("geraet.satz-speichern", typ: "PrimaryButton")
+            SecondaryButton(title: "Satz verwerfen", action: beiVerwerfen)
+                .testnotizElement("geraet.satz-verwerfen", typ: "SecondaryButton")
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, DesignSystem.Spacing.s24)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(DesignSystem.Color.bg)
+        .presentationDetents([.height(300)])
         .presentationDragIndicator(.visible)
         .testnotizScreen()
     }

@@ -591,6 +591,53 @@ struct GeraetModelTests {
         #expect(zwei.abschlussFragtNach == true)
     }
 
+    // MARK: - Offener Satz vor dem Abschluss (Testnotiz 12.10. abends, #5)
+
+    /// Nur unter den Raedern steht ein Satz offen. In der Pause und nach
+    /// dem Satzziel ist der letzte schon gesichert, im Countdown hat noch
+    /// keiner begonnen.
+    @Test func nurDieEingabeFragtVorDemAbschlussNachDemSatz() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        #expect(sut.abschlussFragtNachSatz == true)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.abschlussFragtNachSatz == false)
+
+        let imCountdown = modell(maschine: GeraetTestdaten.maschine,
+                                 bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                                 startwerte: Startwerte(belastung: 20, umfang: 10, nebenbelastung: nil))
+        #expect(imCountdown.abschlussFragtNachSatz == false)
+    }
+
+    /// "Satz speichern" sichert wie der Hauptknopf und sagt, ob es geklappt
+    /// hat -- nur dann geht es weiter aus der Uebung heraus.
+    @Test func satzSpeichernVorDemAbschlussMeldetDenErfolg() async {
+        let erfasser = Erfassungswarteschlange()
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         enqueue: { erfasser.geschriebene.append($0) })
+
+        #expect(await sut.satzSichernVorAbschluss() == true)
+        #expect(erfasser.geschriebene.count == 1)
+        #expect(sut.gesicherteSaetze == 1)
+    }
+
+    @Test func einAbgelehnterSatzHaeltDenAbschlussAuf() async {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        _ = sessions.satzSichern(station: .testGeraet("m9", studioId: "s2"), exerciseId: "e1",
+                                 einheiten: .kilogrammWiederholungen, load: 50, volume: 10,
+                                 problemFlag: false, problemReason: nil)
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         sessions: sessions)
+
+        #expect(await sut.satzSichernVorAbschluss() == false)
+        #expect(sut.satzAbgelehnt != nil)
+    }
+
     @Test func blockInEinheitNenntDieSaetzeJederUebungDiesesGeraets() {
         // Die Uebungsliste zeigt bei schon gemachten Uebungen die Saetze der
         // laufenden Einheit, wie die Blockliste im Training-Tab.
