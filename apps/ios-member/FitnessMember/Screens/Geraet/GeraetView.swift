@@ -197,9 +197,12 @@ struct GeraetView: View {
             PausenRad(timer: pause,
                       beiVerlaengern: modell.pauseVerlaengern,
                       beiGewicht: beiGewichtAendern,
+                      einheit: modell.loadUnit,
                       beiWeiter: modell.pauseBeenden,
                       // Derselbe Weg wie "Uebung abschliessen" unter den
-                      // Raedern -- nur ohne den Umweg ueber "Weiter".
+                      // Raedern -- nur ohne den Umweg ueber den naechsten
+                      // Satz. Der letzte Satz ist schon gesichert, deshalb
+                      // ohne die Frage nach dem offenen Satz (#5).
                       beiAbschliessen: beiUebungAbschliessen)
                 .transition(.opacity)
         } else if modell.phase == .abschluss {
@@ -223,7 +226,8 @@ struct GeraetView: View {
         VStack(spacing: DesignSystem.Spacing.s24) {
             Spacer(minLength: 0)
             Button(action: modell.countdownBeenden) {
-                Zeitring(timer: countdown, beschriftung: "GLEICH GEHT’S LOS") {
+                Zeitring(timer: countdown, beschriftung: "GLEICH GEHT’S LOS",
+                         fortschritt: { Startcountdown.fortschritt(start: countdown.start, jetzt: $0) }) {
                     Startcountdown.anzeige(restsekunden: $0)
                 }
             }
@@ -431,8 +435,11 @@ struct GeraetView: View {
             // Die Knoepfe unten, wie im Eingabezustand (Testnotiz 05.10., #13).
             Spacer(minLength: 0)
 
-            PrimaryButton(title: "Übung abschließen") { beiUebungAbschliessen() }
-                .testnotizElement("geraet.abschliessen", typ: "PrimaryButton")
+            // Wie in der Pause "Nächste Übung" (Testnotiz 12.10. abends,
+            // #6, #7): dieselbe Aktion soll nicht an zwei Stellen zwei Namen
+            // tragen.
+            PrimaryButton(title: "Nächste Übung") { beiUebungAbschliessen() }
+                .testnotizElement("geraet.naechste-uebung", typ: "PrimaryButton")
             // Dieselbe Zeile wie unter den Raedern (Sammelstelle Punkt 12).
             HStack(spacing: DesignSystem.Spacing.s12) {
                 SecondaryButton(title: "Weiterer Satz") { modell.weitererSatz() }

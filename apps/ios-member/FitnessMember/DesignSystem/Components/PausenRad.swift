@@ -19,6 +19,8 @@ struct PausenRad: View {
     /// Das Gewicht fuer den naechsten Satz -- in der Pause wird
     /// umgesteckt (Testnotiz 11.10., #12).
     let beiGewicht: () -> Void
+    /// Die Einheit fuer "± kg" (Testnotiz 12.10. abends, #4).
+    let einheit: LoadUnit
     let beiWeiter: () -> Void
     /// Der Weg zurueck zum Training, ohne den Umweg ueber den naechsten
     /// Satz. Wer am Geraet fertig ist, merkt das in der Pause -- nicht
@@ -33,11 +35,13 @@ struct PausenRad: View {
     init(timer: Resttimer,
          beiVerlaengern: @escaping () -> Void,
          beiGewicht: @escaping () -> Void,
+         einheit: LoadUnit = .kg,
          beiWeiter: @escaping () -> Void,
          beiAbschliessen: @escaping () -> Void) {
         self.timer = timer
         self.beiVerlaengern = beiVerlaengern
         self.beiGewicht = beiGewicht
+        self.einheit = einheit
         self.beiWeiter = beiWeiter
         self.beiAbschliessen = beiAbschliessen
         _ansage = State(initialValue: timer.gesprochen())
@@ -58,27 +62,29 @@ struct PausenRad: View {
             rad
             Spacer(minLength: 0)
             VStack(spacing: DesignSystem.Spacing.s12) {
-                // Nebeneinander, weil beide dasselbe beantworten: was
-                // passiert nach dieser Pause? Noch etwas laenger -- oder
-                // nicht mehr an dieser Uebung.
-                // Drei gleich breite Knoepfe mit kurzer Beschriftung -- "Übung
-                // abschließen" passte zu dritt nicht mehr in eine Zeile; die
-                // volle Bedeutung traegt das Accessibility-Label.
+                // Nebeneinander, weil beide die Pause selbst betreffen: noch
+                // etwas laenger, oder fuer den naechsten Satz umstecken.
                 HStack(spacing: DesignSystem.Spacing.s8) {
                     SecondaryButton(title: "+30 s", action: beiVerlaengern)
                         .accessibilityLabel("Pause um 30 Sekunden verlängern")
-                    SecondaryButton(title: "Gewicht", action: beiGewicht)
+                    SecondaryButton(title: Self.gewichtTitel(einheit), action: beiGewicht)
                         .accessibilityLabel("Gewicht für den nächsten Satz ändern")
-                    SecondaryButton(title: "Abschließen", action: beiAbschliessen)
-                        .accessibilityLabel("Übung abschließen")
                 }
-                // "Weiter" ist die Hauptaktion dieses Zustands und damit die
-                // eine Akzentflaeche des Screens (SS2) -- solange die Pause
-                // laeuft, gibt es keine zweite. Ganz unten, an derselben
-                // Stelle wie "Satz N sichern" auf den Raedern: der Daumen
-                // bleibt, wo er war (Testnotiz 06.10., #7).
-                PrimaryButton(title: "Weiter") { beiWeiter() }
+                // Zwei Akzentflaechen -- bewusst gegen SS2 (Testnotiz 12.10.
+                // abends, #6, #7): wer im Zirkel trainiert, wechselt nach
+                // jedem Satz die Uebung und macht spaeter eine zweite Runde.
+                // Fuer ihn ist "Nächste Übung" so oft der naechste Schritt wie
+                // "Nächster Satz" und darf kein kleiner Nebenknopf sein. Es ist
+                // derselbe Weg wie "Übung abschließen" unter den Raedern.
+                PrimaryButton(title: "Nächste Übung") { beiAbschliessen() }
+                    .accessibilityHint("Schließt diese Übung ab")
+                    .testnotizElement("geraet.naechste-uebung", typ: "PrimaryButton")
+                // Ganz unten, an derselben Stelle wie "Satz N sichern" auf
+                // den Raedern: der Daumen bleibt, wo er war (Testnotiz
+                // 06.10., #7). Bis 12.10. hiess er "Weiter".
+                PrimaryButton(title: "Nächster Satz") { beiWeiter() }
                     .accessibilityHint("Beendet die Pause und zeigt wieder die Räder")
+                    .testnotizElement("geraet.naechster-satz", typ: "PrimaryButton")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -105,6 +111,12 @@ struct PausenRad: View {
             }
     }
 
+    /// "± kg" statt "Gewicht" (Testnotiz 12.10. abends, #4): kurz genug
+    /// fuer die halbe Zeile, und am Laufband steht "± km/h".
+    static func gewichtTitel(_ einheit: LoadUnit) -> String {
+        "± \(einheit.kurz)"
+    }
+
     private func uhrzeit(_ sekunden: Int) -> String {
         String(format: "%02d:%02d", sekunden / 60, sekunden % 60)
     }
@@ -116,10 +128,15 @@ struct PausenRad: View {
 ///
 /// Eine einzige, ungeschachtelte TimelineView treibt Bogen UND Ziffern --
 /// zwei Takte fuer denselben Sekundenwechsel liefen unweigerlich
-/// auseinander.
+/// auseinander. Welche, haengt nur davon ab, ob ein eigener Verlauf
+/// gesetzt ist.
 struct Zeitring: View {
     let timer: Resttimer
     let beschriftung: String
+    /// Ein eigener Verlauf fuer den Bogen. nil: der Bogen folgt dem Timer
+    /// in Sekundenschritten (Pause). Gesetzt: der Bogen laeuft fliessend im
+    /// Animationstakt (Countdown, Testnotiz 12.10. abends, #2).
+    var fortschritt: ((Date) -> Double)? = nil
     let mitte: (Int) -> String
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -130,35 +147,50 @@ struct Zeitring: View {
     @ScaledMetric(relativeTo: .body) private var strichstaerke: CGFloat = 12
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { zeit in
-            let fortschritt = timer.fortschritt(jetzt: zeit.date)
-            ZStack {
-                Circle()
-                    .stroke(DesignSystem.Color.line, lineWidth: strichstaerke)
-                Circle()
-                    .trim(from: 0, to: fortschritt)
-                    .stroke(DesignSystem.Color.accent,
-                            style: StrokeStyle(lineWidth: strichstaerke, lineCap: .round))
-                    // Bogenanfang oben statt rechts -- die Zwoelf ist die
-                    // Stelle, an der eine Uhr anfaengt.
-                    .rotationEffect(.degrees(-90))
-                    .animation(reduceMotion ? nil : .linear(duration: 1), value: fortschritt)
-
-                VStack(spacing: DesignSystem.Spacing.s4) {
-                    Text(beschriftung)
-                        .font(DesignSystem.Typography.label)
-                        .tracking(1.5)
-                        .foregroundStyle(DesignSystem.Color.textFaint)
-                    Text(mitte(timer.restsekunden(jetzt: zeit.date)))
-                        .font(.system(size: 48, weight: .black).monospacedDigit())
-                        .foregroundStyle(DesignSystem.Color.text)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
+        Group {
+            if let fortschritt, !reduceMotion {
+                // Jeder Frame rechnet Bogen und Ziffer aus demselben Datum:
+                // keine Animation, die hinterherlaeuft. Der Countdown dauert
+                // sechs Sekunden, der Takt kostet dabei nichts Merkliches.
+                TimelineView(.animation) { zeit in
+                    ring(fortschritt: fortschritt(zeit.date), jetzt: zeit.date, animiert: false)
                 }
-                .padding(.horizontal, strichstaerke * 2)
+            } else {
+                TimelineView(.periodic(from: .now, by: 1)) { zeit in
+                    ring(fortschritt: fortschritt?(zeit.date) ?? timer.fortschritt(jetzt: zeit.date),
+                         jetzt: zeit.date, animiert: !reduceMotion)
+                }
             }
         }
         .frame(width: durchmesser, height: durchmesser)
+    }
+
+    private func ring(fortschritt: Double, jetzt: Date, animiert: Bool) -> some View {
+        ZStack {
+            Circle()
+                .stroke(DesignSystem.Color.line, lineWidth: strichstaerke)
+            Circle()
+                .trim(from: 0, to: fortschritt)
+                .stroke(DesignSystem.Color.accent,
+                        style: StrokeStyle(lineWidth: strichstaerke, lineCap: .round))
+                // Bogenanfang oben statt rechts -- die Zwoelf ist die
+                // Stelle, an der eine Uhr anfaengt.
+                .rotationEffect(.degrees(-90))
+                .animation(animiert ? .linear(duration: 1) : nil, value: fortschritt)
+
+            VStack(spacing: DesignSystem.Spacing.s4) {
+                Text(beschriftung)
+                    .font(DesignSystem.Typography.label)
+                    .tracking(1.5)
+                    .foregroundStyle(DesignSystem.Color.textFaint)
+                Text(mitte(timer.restsekunden(jetzt: jetzt)))
+                    .font(.system(size: 48, weight: .black).monospacedDigit())
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+            }
+            .padding(.horizontal, strichstaerke * 2)
+        }
     }
 }
 

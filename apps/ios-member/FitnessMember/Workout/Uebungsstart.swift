@@ -52,6 +52,18 @@ enum Uebungsstart {
 enum Startcountdown {
     static let dauer: TimeInterval = 6
 
+    /// Die Sekunden mit Ziffern. Ueber sie fuellt sich der Ring, damit er
+    /// bei "Los!" voll ist (Testnotiz 12.10. abends, #2) -- vorher lief er
+    /// ueber alle sechs und stand beim Wechsel zu den Raedern bei 5/6.
+    static let zaehldauer: TimeInterval = 5
+
+    /// Fliessend statt in ganzen Sekunden: `Resttimer.fortschritt` rundet
+    /// auf volle Sekunden, und die Animation dazwischen lief dem Wert eine
+    /// Sekunde hinterher.
+    static func fortschritt(start: Date, jetzt: Date) -> Double {
+        min(1, max(0, jetzt.timeIntervalSince(start) / zaehldauer))
+    }
+
     static func anzeige(restsekunden: Int) -> String {
         restsekunden > 1 ? "\(restsekunden - 1)" : "Los!"
     }
