@@ -285,12 +285,33 @@ struct GeraetModelTests {
         #expect(sut.belastung == 82.5)
     }
 
-    /// Zirkel ueber die Blockliste und "Weitere Uebung": ohne Drawer,
-    /// ohne Countdown, gleich die Raeder.
+    /// Zirkel ueber die Blockliste: ohne Drawer, ohne Countdown, gleich die
+    /// Raeder.
     @Test func ohneStartwerteBeginntDieSatzseiteBeiDenRaedern() {
         let sut = modell(maschine: GeraetTestdaten.maschine,
                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
         #expect(sut.phase == .eingabe)
+    }
+
+    /// "Weitere Übung an dem Gerät" fuehrt durch denselben Drawer wie die
+    /// Liste (Testnotiz 13.10., #3): seine Startwerte gelten, der Countdown
+    /// laeuft, und ein spaeter Vorschlag ersetzt sie nicht.
+    @Test func nachDemWechselStartetDerDrawerMitCountdown() {
+        let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        sut.uebungWechseln(zu: "e2")
+
+        sut.uebungStarten(mit: Startwerte(belastung: 40, umfang: 12, nebenbelastung: nil))
+
+        guard case .bereit = sut.phase else {
+            Issue.record("Erwartet .bereit, war \(sut.phase)")
+            return
+        }
+        #expect(sut.uebungId == "e2")
+        #expect(sut.belastung == 40)
+        #expect(sut.umfang == 12)
+        sut.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 80.0))
+        #expect(sut.belastung == 40)
     }
 
     @Test func startwerteAusDemModellUebernehmenDieRaeder() {

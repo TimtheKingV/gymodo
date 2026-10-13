@@ -496,6 +496,10 @@ struct GeraetScreen: View {
     /// nacheinander gehen nur ueber onDismiss: solange das eine noch
     /// verschwindet, praesentiert SwiftUI das naechste nicht.
     @State private var weitereUebungNachFrage = false
+    /// Nach der Wahl einer weiteren Uebung der Start-Drawer wie aus der
+    /// Liste (Testnotiz 13.10., #3) -- auch er erst in onDismiss.
+    @State private var startNachWechsel = false
+    @State private var uebungsstartOffen = false
 
     var body: some View {
         GeraetView(
@@ -527,8 +531,28 @@ struct GeraetScreen: View {
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
         }
-        .sheet(isPresented: $uebungWechselnOffen) {
-            UebungWechselnSheet(modell: modell) { modell.uebungWechseln(zu: $0) }
+        .sheet(isPresented: $uebungWechselnOffen, onDismiss: {
+            if startNachWechsel {
+                startNachWechsel = false
+                uebungsstartOffen = true
+            }
+        }) {
+            UebungWechselnSheet(modell: modell) {
+                modell.uebungWechseln(zu: $0)
+                startNachWechsel = true
+            }
+        }
+        // Ohne ihn fehlte bei einer neuen Uebung die Einweisung (Testnotiz
+        // 13.10., #3). Schliessen laesst die Raeder der neuen Uebung stehen;
+        // der Erstkontakt bleibt offen und kommt beim naechsten Mal wieder.
+        .sheet(isPresented: $uebungsstartOffen) {
+            UebungsstartSheet(modell: modell, beiStart: { werte in
+                // Wie uebungStarten in TrainingRootView: der Drawer sagt
+                // ohne laufendes Training, dass dieser Tipp die Uhr startet.
+                if !modell.trainingLaeuft { modell.trainingStarten() }
+                modell.uebungStarten(mit: werte)
+                uebungsstartOffen = false
+            }, beiSchliessen: { uebungsstartOffen = false })
         }
         // Vor dem Abschluss unter den Raedern: der offene Satz (Testnotiz
         // 12.10. abends, #5). Wegwischen bricht ab, die Raeder bleiben.
