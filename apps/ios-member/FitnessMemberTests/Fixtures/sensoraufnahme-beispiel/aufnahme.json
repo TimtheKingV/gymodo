@@ -1,6 +1,15 @@
 {
   "abschluss" : "gesichert",
   "befestigung" : "Gewichtsstapel oben",
+  "befestigungsart" : "stapel",
+  "befestigungsartQuelle" : "gewaehlt",
+  "zaehler" : {
+    "algo" : "stapel/2", "gezaehlt" : 1, "herkunft" : "korrigiert",
+    "ereignisse" : {
+      "algo" : "stapel/2", "befestigungsart" : "stapel", "unsicher" : null,
+      "wiederholungen" : [ { "beginn" : 0.02, "umkehr" : 0.04, "ende" : 0.06, "ausschlag" : 0.31, "sicherheit" : 0.5 } ]
+    }
+  },
   "endedAt" : "2026-09-19T14:12:45+02:00",
   "format" : "gymodo.sensoraufnahme/1",
   "geraet" : { "appBuild" : "1", "model" : "iPhone17,1", "os" : "iOS 26.0" },
