@@ -40,8 +40,10 @@ enum GeraeteAuswahl {
         let ortsangabe: String
         let zuletzt: Zuletzt?
         /// Gesetzt, wenn der Treffer NUR ueber eine Uebung kam. Bei einem
-        /// Geraetetreffer erklaert die Zeile nichts und bleibt leer.
-        let trefferUebung: String?
+        /// Geraetetreffer erklaert die Zeile nichts und bleibt leer. Die
+        /// ganze Uebung, nicht nur der Name: ein Tipp oeffnet genau sie
+        /// (Testnotiz 14.10., 18:45 #2).
+        let trefferUebung: BootstrapResponse.Exercise?
         /// `status != "active"`.
         let gesperrt: Bool
         /// `tokenHashes.isEmpty` -- also kein AKTIVER Tag. getBootstrap
@@ -115,6 +117,14 @@ enum GeraeteAuswahl {
             .map { Station(typ: $0, studioId: studioId) }
     }
 
+    /// Ob `kopfinhalt` (im laufenden Training Uhr und Bloecke) ueber der
+    /// Liste steht. Mit Suchtext nicht: sonst stehen die Treffer unter dem
+    /// Training, und es sieht aus, als filtere die Suche nicht (Testnotiz
+    /// 14.10., 18:45 #1).
+    static func zeigtKopf(suchtext: String) -> Bool {
+        normalisiert(suchtext).isEmpty
+    }
+
     /// `gruppe` gesetzt: die Kategorieliste dieser Gruppe -- ohne Zuletzt
     /// und ohne Kacheln, und die Suche bleibt in der Gruppe.
     static func gruppen(
@@ -133,7 +143,7 @@ enum GeraeteAuswahl {
         let letzteSaetze = juengsteSaetze(in: bootstrap, stationen: stationen)
         let gesucht = normalisiert(suchtext)
 
-        func eintrag(_ station: Station, trefferUebung: String?) -> Eintrag {
+        func eintrag(_ station: Station, trefferUebung: BootstrapResponse.Exercise?) -> Eintrag {
             Eintrag(
                 station: station,
                 modellId: station.equipmentModel.id,
@@ -194,7 +204,7 @@ enum GeraeteAuswahl {
             // und die Zeile verloere ihren Zweck.
             let uebung = imGeraet ? nil : station.exercises.first {
                 normalisiert($0.name).contains(gesucht)
-            }?.name
+            }
             guard imGeraet || uebung != nil else { return nil }
             return eintrag(station, trefferUebung: uebung)
         }

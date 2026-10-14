@@ -304,7 +304,30 @@ struct GeraeteAuswahlTests {
         let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "bein")
 
         #expect(gruppen.treffer.first(where: { $0.name == "Beinpresse" })?.trefferUebung == nil)
-        #expect(gruppen.treffer.first(where: { $0.name == "Bauchtrainer" })?.trefferUebung == "Beinheben hängend")
+        #expect(gruppen.treffer.first(where: { $0.name == "Bauchtrainer" })?.trefferUebung?.name == "Beinheben hängend")
+    }
+
+    /// Ein Tipp auf einen Uebungstreffer oeffnet genau diese Uebung
+    /// (Testnotiz 14.10., 18:45 #2) -- dafuer braucht der Treffer ihre ID,
+    /// nicht nur den Namen fuer die Zeile.
+    @Test func derUebungstrefferTraegtDieIdDerUebung() {
+        let daten = bootstrap(maschinen: [
+            maschineJSON(id: "m2", name: "Kabelzug", label: "21", ort: nil,
+                         uebungen: [("u1", "Trizepsdrücken"), ("u9", "Hoher Bizepscurl")]),
+        ])
+
+        let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "bizeps")
+
+        #expect(gruppen.treffer.first?.trefferUebung?.id == "u9")
+    }
+
+    /// Mit Suchtext stehen die Treffer oben, nicht unter dem laufenden
+    /// Training (Testnotiz 14.10., 18:45 #1). Nur Leerzeichen zaehlen wie
+    /// kein Suchtext -- wie in gruppen(...).
+    @Test func derKopfFehltNurMitSuchtext() {
+        #expect(GeraeteAuswahl.zeigtKopf(suchtext: ""))
+        #expect(GeraeteAuswahl.zeigtKopf(suchtext: "  "))
+        #expect(!GeraeteAuswahl.zeigtKopf(suchtext: "bauch"))
     }
 
     @Test func gesuchtWirdAuchInNummerUndPlatz() {
@@ -461,7 +484,7 @@ struct GeraeteAuswahlTests {
         ])
         let g = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .freiesTraining, suchtext: "waden")
         #expect(g.treffer.map(\.id) == ["typ:t1"])
-        #expect(g.treffer.first?.trefferUebung == "Wadenheben")
+        #expect(g.treffer.first?.trefferUebung?.name == "Wadenheben")
     }
 
     @Test func uebungenEinesStudioGeraetsKommenUnveraendertAusMachines() {
