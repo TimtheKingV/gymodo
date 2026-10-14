@@ -278,6 +278,22 @@ final class GeraetModel {
 
     var aktiveUebung: GeraetUebung? { uebungen.first { $0.id == uebungId } }
 
+    /// Die Uebungsliste in der Reihenfolge, in der das Mitglied sie sucht
+    /// (Testnotiz 14.10., 18:25): erst dieses Training, dann nach
+    /// Haeufigkeit, dann der Rest. Fuer "Weitere Übung" und die
+    /// Geraeteseite -- `uebungen` selbst bleibt in der Studioreihenfolge.
+    var sortierteUebungen: [GeraetUebung] {
+        let heute = Dictionary(
+            (sessions.aktiveSession()?.bloecke ?? [])
+                .filter { $0.stationSchluessel == station.schluessel }
+                .compactMap { block in block.saetze.map(\.performedAt).max().map { (block.exerciseId, $0) } },
+            uniquingKeysWith: max)
+        let einheiten = GeraetEinstiegRechner.einheitenJeUebung(station: station.schluessel, in: bootstrap)
+        let alle = Dictionary(uebungen.map { ($0.id, $0) }, uniquingKeysWith: { erste, _ in erste })
+        return GeraetEinstiegRechner.uebungsreihenfolge(uebungen.map(\.id), heute: heute, einheiten: einheiten)
+            .compactMap { alle[$0] }
+    }
+
     /// Ob es an diesem Geraet ueberhaupt etwas zu wechseln gibt. Ein
     /// Geraet mit genau einer Uebung bekommt kein "andere Übung" -- ein
     /// Knopf, der eine Liste mit einem Eintrag oeffnet, verspricht eine

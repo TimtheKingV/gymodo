@@ -21,7 +21,8 @@ struct UebungWechselnSheet: View {
                         .font(.system(size: 13))
                         .foregroundStyle(DesignSystem.Color.textMuted)
 
-                    ForEach(modell.uebungen) { uebung in
+                    // Dieses Training, dann Haeufigkeit (Testnotiz 14.10., 18:25).
+                    ForEach(modell.sortierteUebungen) { uebung in
                         Button {
                             beiWechsel(uebung.id)
                             dismiss()

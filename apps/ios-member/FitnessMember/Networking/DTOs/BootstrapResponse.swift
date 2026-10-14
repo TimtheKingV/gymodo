@@ -134,6 +134,9 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         let volume: Int
         let rir: Double?
         let performedAt: String
+        /// In wie vielen Einheiten die Uebung hier vorkam. Fehlt bei einem
+        /// Server von vor dem 14.10. -- dann zaehlt der Satz als eine.
+        var sessionCount: Int? = nil
     }
 
     struct Exercise: Decodable, Hashable, Sendable, Identifiable {
@@ -179,6 +182,9 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         let volume: Int
         let rir: Double?
         let performedAt: String
+        /// In wie vielen Einheiten die Uebung hier vorkam. Fehlt bei einem
+        /// Server von vor dem 14.10. -- dann zaehlt der Satz als eine.
+        var sessionCount: Int? = nil
     }
 
     let member: Member

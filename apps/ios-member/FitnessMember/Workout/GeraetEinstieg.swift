@@ -75,6 +75,47 @@ enum GeraetEinstiegRechner {
             .max { $0.performedAt < $1.performedAt }?.exerciseId
     }
 
+    /// Wie viele Einheiten je Uebung an dieser Station -- fuer die
+    /// Haeufigkeit in `uebungsreihenfolge`. Ohne `sessionCount` (alter
+    /// Server) zaehlt ein letzter Satz als eine Einheit.
+    static func einheitenJeUebung(station: String, in bootstrap: BootstrapResponse) -> [String: Int] {
+        let paare: [(String, Int)]
+        switch Station.art(schluessel: station) {
+        case .geraet(let id)?:
+            paare = bootstrap.lastSets.filter { $0.machineId == id }
+                .map { ($0.exerciseId, $0.sessionCount ?? 1) }
+        case .typ(let id)?:
+            paare = bootstrap.lastTypeSets.filter { $0.equipmentModelId == id }
+                .map { ($0.exerciseId, $0.sessionCount ?? 1) }
+        case nil:
+            paare = []
+        }
+        return Dictionary(paare, uniquingKeysWith: max)
+    }
+
+    /// Die Uebungsliste am Geraet (Testnotiz 14.10., 18:25): zuerst die
+    /// Uebungen dieses Trainings, juengste zuerst; dann die frueher
+    /// gemachten, haeufigste zuerst; dann der Rest. Bei Gleichstand bleibt
+    /// die Reihenfolge des Studios (`ids`).
+    ///
+    /// - heute: Uebung -> letzter Satz in der laufenden Einheit.
+    /// - einheiten: Uebung -> Einheiten aus `einheitenJeUebung`.
+    static func uebungsreihenfolge(_ ids: [String], heute: [String: Date],
+                                   einheiten: [String: Int]) -> [String] {
+        let studio = Dictionary(ids.enumerated().map { ($1, $0) }, uniquingKeysWith: { erste, _ in erste })
+        return ids.sorted { a, b in
+            switch (heute[a], heute[b]) {
+            case let (x?, y?) where x != y: return x > y
+            case (_?, nil): return true
+            case (nil, _?): return false
+            default: break
+            }
+            let ea = einheiten[a] ?? 0, eb = einheiten[b] ?? 0
+            if ea != eb { return ea > eb }
+            return studio[a]! < studio[b]!
+        }
+    }
+
     /// Kalibrierungen gibt es nur am Geraet; am Typ ist die Antwort immer nein.
     static func hatKalibrierung(station: String, exerciseId: String, in bootstrap: BootstrapResponse) -> Bool {
         guard case .geraet(let id)? = Station.art(schluessel: station) else { return false }
