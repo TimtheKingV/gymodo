@@ -2,7 +2,7 @@
 
 **Stand:** 10. Oktober 2026
 **Status:** Entschieden, bereit für den Umsetzungsplan. Abschnitt 6.6 (Hintergrund am iPhone) wird im ersten Schritt von E4 ausgefüllt.
-**Umgesetzt:** E1, E2, E3 auf Branch `claude/sensor-wiederholungszaehler-spec` (10. Oktober 2026). E4/E5: eigener Plan; Gymtavo-Katalog Etappe 4 ist inzwischen gemergt. Für E4 gilt der Nachtrag vom 14. Oktober 2026.
+**Umgesetzt:** E1, E2, E3 auf Branch `claude/sensor-wiederholungszaehler-spec` (10. Oktober 2026). E4/E5: eigener Plan; Gymtavo-Katalog Etappe 4 ist inzwischen gemergt. Für E4 gilt der Nachtrag vom 14. Oktober 2026. E4 auf Branch `claude/sensor-e4` (14. Oktober 2026), Abschnitt 6.6 wartet auf die Messung am iPhone.
 **Vorbedingung:** Teilprojekt A ist auf `master` (`2026-09-19-sensor-anbindung-aufzeichnung-design.md`, im Folgenden „Spec A“). Für E4 zusätzlich: Gymtavo-Katalog Etappe 4 (iOS) ist gemergt, weil beide `GeraetModel` ändern.
 **Verhältnis zu anderen Dokumenten:** untergeordnet gegenüber `2026-08-28-fitness-retrofit-m1-design.md` und `2026-08-30-designsystem.md` — mit einer Ausnahme: **Diese Spec ändert die Produktgrenze** aus Blueprint §2.3, M1 §4.3 und Designsystem §10 (Abschnitt 3). Die Nachträge dort verweisen hierher.
 
