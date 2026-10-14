@@ -489,17 +489,25 @@ struct GeraetScreen: View {
     /// "Satz speichern / Satz verwerfen" vor dem Abschluss (Testnotiz
     /// 12.10. abends, #5).
     @State private var satzfrageOffen = false
-    /// Wie weitereUebungNachFrage: was nach dem Schliessen der Satzfrage
+    /// Wie nachAbschlussfrage: was nach dem Schliessen der Satzfrage
     /// folgt, erst in onDismiss.
     @State private var abschlussNachSatzfrage = false
     /// Was nach dem Schliessen der Abschlussfrage folgt. Zwei Sheets
     /// nacheinander gehen nur ueber onDismiss: solange das eine noch
-    /// verschwindet, praesentiert SwiftUI das naechste nicht.
-    @State private var weitereUebungNachFrage = false
+    /// verschwindet, praesentiert SwiftUI das naechste nicht. Dasselbe gilt
+    /// fuer den Weg zurueck: ein Pop waehrend der Dismiss-Animation verwirft
+    /// UIKit, der Pfad ist leer, der Screen bleibt stehen (Testnotiz 14.10.,
+    /// 18:41 #1/#2: haengen, dann schwarzer Screen beim Zurueck).
+    @State private var nachAbschlussfrage: AbschlussFolge?
     /// Nach der Wahl einer weiteren Uebung der Start-Drawer wie aus der
     /// Liste (Testnotiz 13.10., #3) -- auch er erst in onDismiss.
     @State private var startNachWechsel = false
     @State private var uebungsstartOffen = false
+
+    private enum AbschlussFolge {
+        case weitereUebung
+        case zurueckZumTraining
+    }
 
     var body: some View {
         GeraetView(
@@ -577,19 +585,22 @@ struct GeraetScreen: View {
         }
         // Der Drawer nach "Übung abschließen" (Testnotiz 06.10., #12).
         .sheet(isPresented: $abschlussfrageOffen, onDismiss: {
-            if weitereUebungNachFrage {
-                weitereUebungNachFrage = false
-                uebungWechselnOffen = true
+            let folge = nachAbschlussfrage
+            nachAbschlussfrage = nil
+            switch folge {
+            case .weitereUebung: uebungWechselnOffen = true
+            case .zurueckZumTraining: beiZurueckZumTraining()
+            case nil: break
             }
         }) {
             UebungAbschliessenSheet(
                 beiWeitereUebung: {
-                    weitereUebungNachFrage = true
+                    nachAbschlussfrage = .weitereUebung
                     abschlussfrageOffen = false
                 },
                 beiGeraetAbschliessen: {
+                    nachAbschlussfrage = .zurueckZumTraining
                     abschlussfrageOffen = false
-                    beiZurueckZumTraining()
                 })
         }
         .sheet(isPresented: $problemOffen) {
