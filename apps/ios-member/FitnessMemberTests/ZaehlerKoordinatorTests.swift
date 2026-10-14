@@ -71,6 +71,7 @@ struct ZaehlerKoordinatorTests {
         let satz = Self.stapelSatz(wiederholungen: 6, ab: uhr.t)
         for w in satz.prefix(400) { sut.empfangen(.messwert(w)) }
         let vorher = m.liste.last
+        quelle.zustand = .getrennt(wirdNeuVerbunden: true)
         sut.empfangen(.zustand(.getrennt(wirdNeuVerbunden: true)))
         guard case .stand(let n)? = vorher else { Issue.record("kein Stand vor der Luecke"); return }
         #expect(m.liste.last == .pruefen(n, .luecke))
@@ -78,6 +79,31 @@ struct ZaehlerKoordinatorTests {
         sut.empfangen(.zustand(Self.verbunden))
         for w in satz.dropFirst(400) { sut.empfangen(.messwert(w)) }
         #expect(m.liste.last == .pruefen(n, .luecke))
+    }
+
+    /// Review I1: reisst die Verbindung vor der ersten Wiederholung ab, gibt
+    /// es nichts zu schuetzen -- nach dem Wiederverbinden zaehlt der Satz.
+    @Test func trennungVorDerErstenWiederholungZaehltNachDemVerbinden() {
+        let (sut, quelle, uhr, m) = aufbau()
+        beginnen(sut, m)
+        quelle.zustand = .getrennt(wirdNeuVerbunden: true)
+        sut.empfangen(.zustand(.getrennt(wirdNeuVerbunden: true)))
+        #expect(m.liste == [.bereit, .zaehltNicht(.keinSensor)])
+        uhr.t = 110
+        quelle.zustand = Self.verbunden
+        sut.empfangen(.zustand(Self.verbunden))
+        for w in Self.stapelSatz(wiederholungen: 3, ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        #expect(m.liste.last == .stand(3))
+    }
+
+    /// Review M4: ein Trennungs-Ereignis, das erst ankommt, wenn die Quelle
+    /// schon wieder verbunden ist, darf den neuen Satz nicht anhalten.
+    @Test func eineVerspaeteteTrennungHaeltDenSatzNichtAn() {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.empfangen(.zustand(.getrennt(wirdNeuVerbunden: true)))
+        for w in Self.stapelSatz(wiederholungen: 2, ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        #expect(m.liste == [.bereit, .stand(1), .stand(2)])
     }
 
     @Test func sekundenuebungZaehltNicht() {

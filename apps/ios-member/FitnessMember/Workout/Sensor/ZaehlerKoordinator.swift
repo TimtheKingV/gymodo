@@ -92,6 +92,18 @@ final class ZaehlerKoordinator: SatzZaehler {
                 // Nach einer Luecke wird nicht weitergezaehlt.
                 if zaehler == nil, kontext != nil, meldung == .zaehltNicht(.keinSensor) { neuStarten() }
             } else if var zaehler {
+                // Der Strom liefert Zustaende verspaetet: ist die Quelle schon
+                // wieder verbunden, gehoert die Trennung zu einem frueheren
+                // Moment und haelt diesen Satz nicht an.
+                guard !quelle.zustand.istVerbunden else { return }
+                guard zaehler.anzahl > 0 else {
+                    // Vor der ersten Wiederholung gibt es nichts zu schuetzen:
+                    // wie ohne Sensor, beim Wiederverbinden beginnt der Satz
+                    // in bereit (Spec B 9, erste Zeile).
+                    self.zaehler = nil
+                    ereignisse = []
+                    return senden(.zaehltNicht(.keinSensor))
+                }
                 let jetzt = uhr()
                 let neu = zaehler.luecke(von: jetzt, bis: jetzt)
                 self.zaehler = zaehler
