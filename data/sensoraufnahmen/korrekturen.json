@@ -146,6 +146,268 @@
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "kein Satz"
+    },
+    "2026-10-14-1747-01": {
+      "was": "Schulterpresse, Satz 1",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 10,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1749-01": {
+      "was": "Schulterpresse, Satz 2",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 10,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1751-01": {
+      "was": "Schulterpresse, Satz 3",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 12,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1753-01": {
+      "was": "Latziehen an der Hebelmaschine, Latmaschine mit geführten Hebeln, Satz 1",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 15,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1755-01": {
+      "was": "Latziehen an der Hebelmaschine, Latmaschine mit geführten Hebeln, Satz 2",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 15,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1756-01": {
+      "was": "Latziehen an der Hebelmaschine, Latmaschine mit geführten Hebeln, Satz 3",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 15,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1758-01": {
+      "was": "Trizepsstrecken am Gerät, Trizepsmaschine, Satz 1",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 10,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1759-01": {
+      "was": "Trizepsstrecken am Gerät, Trizepsmaschine, Satz 2",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 20,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1801-01": {
+      "was": "Trizepsstrecken am Gerät, Trizepsmaschine, Satz 3",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 15,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1803-01": {
+      "was": "Brustpresse – Obergriff, Brustpresse, Satz 1",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 12,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1805-01": {
+      "was": "Brustpresse – Obergriff, Brustpresse, Satz 2",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 10,
+      "fuerZaehler": false,
+      "grund": "Pause mitten im Satz, um das Gewicht zu reduzieren (Notiz in 1807-01)"
+    },
+    "2026-10-14-1807-01": {
+      "was": "Brustpresse – Obergriff, Brustpresse, Satz 3",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 8,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1810-01": {
+      "was": "Butterfly – Handgriffe, Butterfly / Reverse-Fly-Kombigerät, Satz 1",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 17,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1812-01": {
+      "was": "Butterfly – Handgriffe, Butterfly / Reverse-Fly-Kombigerät, Satz 2",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 15,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1814-01": {
+      "was": "Butterfly – Handgriffe, Butterfly / Reverse-Fly-Kombigerät, Satz 3",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 15,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1818-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend, Kurzhantel, Satz 1",
+      "befestigung": "an der Griffstange einer Kurzhantel, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 15,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1819-01": {
+      "was": "Kurzhantelrudern – einarmig, abgestützt, Kurzhantel",
+      "befestigung": "an der Griffstange einer Kurzhantel, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-14-1819-02": {
+      "was": "Kurzhantelrudern – einarmig, abgestützt, Kurzhantel, Satz 1",
+      "befestigung": "an der Griffstange einer Kurzhantel, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 8,
+      "fuerZaehler": false,
+      "grund": "einarmig: Seite des Sensors und Zählweise unklar, Signal zeigt eher 16 Bewegungen"
+    },
+    "2026-10-14-1820-01": {
+      "was": "Kurzhantelrudern – einarmig, abgestützt, Kurzhantel, Satz 2",
+      "befestigung": "an der Griffstange einer Kurzhantel, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 15,
+      "fuerZaehler": false,
+      "grund": "einarmig: Seite des Sensors und Zählweise unklar, nach ca. 33 s fast keine Bewegung"
+    },
+    "2026-10-14-1822-01": {
+      "was": "Kurzhantel-Seitheben, Kurzhantel",
+      "befestigung": "an der Griffstange einer Kurzhantel, beide Arme gleichzeitig; Satz 1 links, Satz 2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-14-1822-02": {
+      "was": "Kurzhantel-Seitheben, Kurzhantel, Satz 1",
+      "befestigung": "an der Griffstange einer Kurzhantel, beide Arme gleichzeitig; Satz 1 links, Satz 2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1823-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend, Kurzhantel, Satz 2",
+      "befestigung": "an der Griffstange einer Kurzhantel, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 17,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1825-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend, Kurzhantel",
+      "befestigung": "an der Griffstange einer Kurzhantel, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-14-1826-01": {
+      "was": "Kurzhantel-Seitheben, Kurzhantel",
+      "befestigung": "an der Griffstange einer Kurzhantel, beide Arme gleichzeitig; Satz 1 links, Satz 2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-14-1826-02": {
+      "was": "Kurzhantel-Seitheben, Kurzhantel, Satz 2",
+      "befestigung": "an der Griffstange einer Kurzhantel, beide Arme gleichzeitig; Satz 1 links, Satz 2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1827-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend, Kurzhantel",
+      "befestigung": "an der Griffstange einer Kurzhantel, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-14-1827-02": {
+      "was": "Kurzhantel-Bizepscurl – stehend, Kurzhantel, Satz 3",
+      "befestigung": "an der Griffstange einer Kurzhantel, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 12,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1830-01": {
+      "was": "High-Bar-Kniebeuge, Langhantel, Satz 1",
+      "befestigung": "an der Langhantel (Stange oder Scheibe, nicht notiert)",
+      "befestigungsart": "langhantel",
+      "repsWahr": 25,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1832-01": {
+      "was": "High-Bar-Kniebeuge, Langhantel, Satz 2",
+      "befestigung": "an der Langhantel (Stange oder Scheibe, nicht notiert)",
+      "befestigungsart": "langhantel",
+      "repsWahr": 20,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1837-01": {
+      "was": "Latzug · Obergriff, Latzugstation + V-Griff, Satz 1",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 8,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1838-01": {
+      "was": "Latzug · Obergriff, Latzugstation + V-Griff, Satz 2",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 10,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1840-01": {
+      "was": "Latzug · Obergriff, Latzugstation + V-Griff, Satz 3",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 10,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1844-01": {
+      "was": "Latzug · Obergriff, Latzugstation + V-Griff",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-14-1846-01": {
+      "was": "Bauchbeugen am Gerät, Bauchmaschine, Satz 1",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 25,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1848-01": {
+      "was": "Bauchbeugen am Gerät, Bauchmaschine, Satz 2",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 40,
+      "fuerZaehler": true
+    },
+    "2026-10-14-1850-01": {
+      "was": "Latziehen an der Hebelmaschine, Latmaschine mit geführten Hebeln",
+      "befestigung": "oben auf dem Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
     }
   }
 }

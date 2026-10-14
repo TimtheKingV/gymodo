@@ -5,9 +5,11 @@ Tor je Art (Sensor-Spec B 5.5): ≥ 20 Sätze aus ≥ 3 Tagen, exakt ≥ 90 %, �
 
 | Art · Set | Sätze | Tage | exakt | ±1 | Rücknahmen |
 |---|---|---|---|---|---|
-| langhantel (langhantel/1) · Entwicklung | 2 | 1 | 0 % | 0 % | 50 % |
+| stapel (stapel/1) · Entwicklung | 20 | 1 | 79 % | 84 % | 5 % |
+| stapel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
+| langhantel (langhantel/1) · Entwicklung | 4 | 2 | 0 % | 0 % | 50 % |
 | langhantel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
-| kurzhantel (kurzhantel/1) · Entwicklung | 1 | 1 | 0 % | 0 % | 0 % |
+| kurzhantel (kurzhantel/1) · Entwicklung | 8 | 2 | 60 % | 60 % | 38 % |
 | kurzhantel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
 | koerper (koerper/1) · Entwicklung | 1 | 1 | 0 % | 0 % | 0 % |
 | koerper · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
@@ -20,3 +22,32 @@ Tor je Art (Sensor-Spec B 5.5): ≥ 20 Sätze aus ≥ 3 Tagen, exakt ≥ 90 %, �
 | 2026-10-08-0837-01 | langhantel | 15 | 2 | taktUnregelmaessig |
 | 2026-10-08-0846-02 | kurzhantel | 10 | 1 | – |
 | 2026-10-08-0852-01 | koerper | 10 | 0 | – |
+| 2026-10-14-1747-01 | stapel | 10 | 10 | – |
+| 2026-10-14-1749-01 | stapel | 10 | 10 | – |
+| 2026-10-14-1751-01 | stapel | 12 | 12 | – |
+| 2026-10-14-1753-01 | stapel | 15 | 15 | – |
+| 2026-10-14-1755-01 | stapel | 15 | 15 | – |
+| 2026-10-14-1756-01 | stapel | 15 | 15 | – |
+| 2026-10-14-1758-01 | stapel | 10 | 9 | – |
+| 2026-10-14-1759-01 | stapel | 20 | 14 | – |
+| 2026-10-14-1801-01 | stapel | 15 | 0 | – |
+| 2026-10-14-1803-01 | stapel | 12 | 8 | – |
+| 2026-10-14-1805-01 | stapel | 10 | 8 | luecke |
+| 2026-10-14-1807-01 | stapel | 8 | 8 | – |
+| 2026-10-14-1810-01 | stapel | 17 | 17 | – |
+| 2026-10-14-1812-01 | stapel | 15 | 15 | – |
+| 2026-10-14-1814-01 | stapel | 15 | 15 | – |
+| 2026-10-14-1818-01 | kurzhantel | 15 | 15 | – |
+| 2026-10-14-1819-02 | kurzhantel | 8 | 2 | taktUnregelmaessig |
+| 2026-10-14-1820-01 | kurzhantel | 15 | 3 | taktUnregelmaessig |
+| 2026-10-14-1822-02 | kurzhantel | 10 | 1 | – |
+| 2026-10-14-1823-01 | kurzhantel | 17 | 2 | signalSchwach |
+| 2026-10-14-1826-02 | kurzhantel | 10 | 10 | – |
+| 2026-10-14-1827-02 | kurzhantel | 12 | 12 | – |
+| 2026-10-14-1830-01 | langhantel | 25 | 0 | – |
+| 2026-10-14-1832-01 | langhantel | 20 | 2 | taktUnregelmaessig |
+| 2026-10-14-1837-01 | stapel | 8 | 8 | – |
+| 2026-10-14-1838-01 | stapel | 10 | 10 | – |
+| 2026-10-14-1840-01 | stapel | 10 | 10 | – |
+| 2026-10-14-1846-01 | stapel | 25 | 25 | – |
+| 2026-10-14-1848-01 | stapel | 40 | 40 | – |
