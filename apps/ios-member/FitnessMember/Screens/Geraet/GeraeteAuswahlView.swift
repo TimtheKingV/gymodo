@@ -27,7 +27,9 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     /// (Testnotiz 12.10., #3) -- derselbe Screen, damit Zeilen, Fotos und
     /// Suche nicht ein zweites Mal entstehen.
     let gruppe: Geraetegruppe?
-    let beiAuswahl: (Station) -> Void
+    /// Die Station und, bei einem reinen Uebungstreffer der Suche, die
+    /// gefundene Uebung (Testnotiz 14.10., 18:45 #2).
+    let beiAuswahl: (Station, _ uebungId: String?) -> Void
     /// Ein Tipp auf eine Kachel. Wohin er fuehrt, entscheidet die Wurzel
     /// (`GeraeteAuswahl.ziel`) -- sie haelt den Pfad.
     let beiKachel: (GeraeteAuswahl.Kachel) -> Void
@@ -35,7 +37,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     init(fotoLader: any GeraetefotosLoading & UebungsvideosLoading, vorschauLader: VorschauLader,
          gruppe: Geraetegruppe? = nil,
          @ViewBuilder kopfinhalt: () -> Kopfinhalt,
-         beiAuswahl: @escaping (Station) -> Void,
+         beiAuswahl: @escaping (Station, _ uebungId: String?) -> Void,
          beiKachel: @escaping (GeraeteAuswahl.Kachel) -> Void = { _ in }) {
         self.fotoLader = fotoLader
         self.vorschauLader = vorschauLader
@@ -223,9 +225,11 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
         let g = gruppen
         if g.istLeer {
             VStack(spacing: 0) {
-                kopfinhalt
-                    .padding(.horizontal, 20)
-                    .padding(.top, DesignSystem.Spacing.s16)
+                if GeraeteAuswahl.zeigtKopf(suchtext: suchtext) {
+                    kopfinhalt
+                        .padding(.horizontal, 20)
+                        .padding(.top, DesignSystem.Spacing.s16)
+                }
                 leerZustand
             }
         } else {
@@ -242,8 +246,10 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                 // aus dem Spacing hier, sondern als Top-Padding auf jedem
                 // Gruppenkopf ausser dem ersten (siehe gruppe).
                 LazyVStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-                    kopfinhalt
-                        .padding(.bottom, DesignSystem.Spacing.s16)
+                    if GeraeteAuswahl.zeigtKopf(suchtext: suchtext) {
+                        kopfinhalt
+                            .padding(.bottom, DesignSystem.Spacing.s16)
+                    }
                     if !g.zuletzt.isEmpty {
                         gruppe("ZULETZT BEI DIR", g.zuletzt, ersteGruppe: true)
                     }
@@ -273,7 +279,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                 if eintrag.gesperrt {
                     zeile(eintrag).opacity(0.55)
                 } else {
-                    Button { beiAuswahl(eintrag.station) } label: { zeile(eintrag) }
+                    Button { beiAuswahl(eintrag.station, eintrag.trefferUebung?.id) } label: { zeile(eintrag) }
                         .buttonStyle(PressButtonStyle())
                 }
             }
@@ -364,7 +370,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                         .foregroundStyle(DesignSystem.Color.textFaint)
                 }
                 if let uebung = eintrag.trefferUebung {
-                    Text("Übung · \(uebung)")
+                    Text("Übung · \(uebung.name)")
                         .font(.system(size: 12))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                 }
@@ -588,7 +594,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
 extension GeraeteAuswahlView where Kopfinhalt == EmptyView {
     init(fotoLader: any GeraetefotosLoading & UebungsvideosLoading, vorschauLader: VorschauLader,
          gruppe: Geraetegruppe? = nil,
-         beiAuswahl: @escaping (Station) -> Void) {
+         beiAuswahl: @escaping (Station, _ uebungId: String?) -> Void) {
         self.init(fotoLader: fotoLader, vorschauLader: vorschauLader, gruppe: gruppe,
                   kopfinhalt: { EmptyView() }, beiAuswahl: beiAuswahl)
     }

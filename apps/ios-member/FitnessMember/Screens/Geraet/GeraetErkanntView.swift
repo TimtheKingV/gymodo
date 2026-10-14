@@ -87,19 +87,10 @@ struct GeraetErkanntView: View {
         }
     }
 
-    /// Ab zwei Besuchen steht die zuletzt genutzte Uebung oben
-    /// (designsystem.md SS8).
-    ///
-    /// sorted(by:) verlangt Irreflexivitaet: fuer gleiche Elemente muss der
-    /// Vergleich false liefern. "a == Ziel" verletzt das (ein Treffer mit
-    /// sich selbst verglichen liefert true) -- funktioniert nur zufaellig,
-    /// weil es genau einen Treffer gibt und sortieren stabil ist. Diese
-    /// Form ist fuer jede Eingabe eine gueltige schwache Ordnung.
-    private var sortierteUebungen: [GeraetUebung] {
-        modell.uebungen.sorted { a, b in
-            a.id == modell.uebungId && b.id != modell.uebungId
-        }
-    }
+    /// Dieselbe Reihenfolge wie "Weitere Übung" (Testnotiz 14.10., 18:25):
+    /// dieses Training, dann Haeufigkeit, dann der Rest. Loest "die zuletzt
+    /// genutzte oben" (designsystem.md SS8) ab.
+    private var sortierteUebungen: [GeraetUebung] { modell.sortierteUebungen }
 
     /// Alle Zeilen gleich (Testnotiz 06.10., #3): bis dahin trug die erste
     /// einen Akzentbalken und eine hellere Flaeche. Die erste ist aber nur

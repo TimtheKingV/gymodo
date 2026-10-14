@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gruppeDesModells, startDesModells, zaehleBesucheJeGeraet } from "./bootstrap.js";
+import { gruppeDesModells, letzteSaetze, startDesModells, zaehleBesucheJeGeraet } from "./bootstrap.js";
 
 describe("zaehleBesucheJeGeraet", () => {
   it("zaehlt zwei Saetze derselben Session als einen Besuch", () => {
@@ -67,5 +67,53 @@ describe("startDesModells", () => {
   it("erbt nicht ueber verschiedene Einheiten und ohne Zuordnung", () => {
     expect(startDesModells({ eigener: null, katalog: { start: 20, einheit: "kg" }, einheit: "level" })).toBeNull();
     expect(startDesModells({ eigener: null, katalog: null, einheit: "kg" })).toBeNull();
+  });
+});
+
+describe("letzteSaetze", () => {
+  const satz = (o: {
+    machine_id: string | null;
+    equipment_model_id?: string;
+    exercise_id: string;
+    session_id: string;
+    performed_at: string;
+    load?: number;
+  }) => ({
+    equipment_model_id: "em1",
+    load: 10,
+    secondary_load: null,
+    volume: 10,
+    rir: null,
+    ...o,
+  });
+
+  // Testnotiz 14.10., 18:25: die Uebungsliste am Geraet sortiert nach
+  // Haeufigkeit -- gezaehlt in Einheiten, nicht in Saetzen.
+  it("zaehlt je Geraet und Uebung die Einheiten, nicht die Saetze", () => {
+    const { lastSets } = letzteSaetze([
+      satz({ machine_id: "m1", exercise_id: "u1", session_id: "s2", performed_at: "2026-10-14T10:02:00Z", load: 30 }),
+      satz({ machine_id: "m1", exercise_id: "u1", session_id: "s2", performed_at: "2026-10-14T10:01:00Z" }),
+      satz({ machine_id: "m1", exercise_id: "u1", session_id: "s1", performed_at: "2026-10-10T10:00:00Z" }),
+      satz({ machine_id: "m1", exercise_id: "u2", session_id: "s1", performed_at: "2026-10-10T09:00:00Z" }),
+    ]);
+
+    expect(lastSets).toEqual([
+      expect.objectContaining({ machineId: "m1", exerciseId: "u1", load: 30, sessionCount: 2 }),
+      expect.objectContaining({ machineId: "m1", exerciseId: "u2", sessionCount: 1 }),
+    ]);
+  });
+
+  it("zaehlt am Typ getrennt vom Geraet", () => {
+    const { lastSets, lastTypeSets } = letzteSaetze([
+      satz({ machine_id: null, equipment_model_id: "t1", exercise_id: "u1", session_id: "s1", performed_at: "2026-10-14T10:00:00Z" }),
+      satz({ machine_id: "m1", equipment_model_id: "t1", exercise_id: "u1", session_id: "s2", performed_at: "2026-10-13T10:00:00Z" }),
+    ]);
+
+    expect(lastTypeSets).toEqual([
+      expect.objectContaining({ equipmentModelId: "t1", exerciseId: "u1", sessionCount: 1 }),
+    ]);
+    expect(lastSets).toEqual([
+      expect.objectContaining({ machineId: "m1", exerciseId: "u1", sessionCount: 1 }),
+    ]);
   });
 });

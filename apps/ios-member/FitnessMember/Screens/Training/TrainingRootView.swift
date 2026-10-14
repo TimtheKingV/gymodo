@@ -277,8 +277,8 @@ struct TrainingRootView: View {
                 if let mitte, let session {
                     laufendeMitte(mitte, session: session)
                 }
-            } beiAuswahl: { station in
-                waehle(station)
+            } beiAuswahl: { station, uebungId in
+                waehle(station, uebungId: uebungId)
             } beiKachel: { kachel in
                 switch GeraeteAuswahl.ziel(kachel) {
                 case .station(let station): waehle(station)
@@ -541,8 +541,8 @@ struct TrainingRootView: View {
     private func ziel(_ route: GeraetRoute) -> some View {
         switch route {
         case .kategorie(let gruppe):
-            GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader, gruppe: gruppe) { station in
-                waehle(station)
+            GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader, gruppe: gruppe) { station, uebungId in
+                waehle(station, uebungId: uebungId)
             }
         case .erkannt(let station, let token):
             if let modell = modell(station: station, exerciseId: nil, token: token) {
@@ -697,17 +697,18 @@ struct TrainingRootView: View {
     /// Eine Station aus der Liste nimmt denselben Weg wie ein Scan: steht
     /// sie an einem anderen Ort ("Auch in X suchen"), wird erst gewechselt
     /// oder gefragt, dann geoeffnet.
-    private func waehle(_ station: Station) {
+    /// `uebungId`: ein Uebungstreffer der Suche -- dann direkt diese Uebung.
+    private func waehle(_ station: Station, uebungId: String? = nil) {
         switch ScanEntscheidung.fuer(station: station, ort: katalog.ort,
                                      offeneEinheit: sessions.aktiveSession()) {
         case .oeffnen(let station):
-            oeffneAusListe(station)
+            oeffneAusListe(station, uebungId: uebungId)
         case .wechselnUndOeffnen(let ziel, let station):
             katalog.setOrt(ziel)
-            oeffneAusListe(station)
+            oeffneAusListe(station, uebungId: uebungId)
         case .erstBeenden(let laufenderOrt, let ziel, let station):
             scanRueckfrage = ScanRueckfrage(laufenderOrt: laufenderOrt, ziel: ziel,
-                                            folge: .auswahl(station), beitritt: nil)
+                                            folge: .auswahl(station, uebungId: uebungId), beitritt: nil)
         case .beitreten:
             // Kommt aus der Liste nicht vor: sie kennt nur Stationen aus dem
             // Bootstrap.
@@ -715,7 +716,14 @@ struct TrainingRootView: View {
         }
     }
 
-    private func oeffneAusListe(_ station: Station) {
+    private func oeffneAusListe(_ station: Station, uebungId: String? = nil) {
+        // Ein Uebungstreffer der Suche oeffnet genau diese Uebung, ueber den
+        // Drawer wie jeder Direktweg -- die Geraeteseite haette nur noch
+        // einmal gefragt, was schon gesucht war (Testnotiz 14.10., 18:45 #2).
+        if let uebungId {
+            uebungsstart = UebungsstartAuftrag(station: station.schluessel, exerciseId: uebungId, token: nil)
+            return
+        }
         // Besuche 0: aus der Liste bleibt die Uebungswahl wie bisher
         // sichtbar -- nur ein Geraet mit einer einzigen Uebung springt
         // direkt, wie beim Scan (Testnotiz 11.10., #4).
@@ -725,7 +733,7 @@ struct TrainingRootView: View {
     private func ausfuehren(_ folge: ScanFolge) {
         switch folge {
         case .oeffnen(let station, let token): navigiere(zu: station, token: token)
-        case .auswahl(let station): oeffneAusListe(station)
+        case .auswahl(let station, let uebungId): oeffneAusListe(station, uebungId: uebungId)
         case .liste: listeZeigen()
         }
     }
@@ -856,7 +864,7 @@ struct TrainingRootView: View {
 private enum ScanFolge: Equatable {
     case oeffnen(Station, token: String)
     /// Aus der Liste gewaehlt: ohne Token, ohne Einstiegsregel des Scans.
-    case auswahl(Station)
+    case auswahl(Station, uebungId: String?)
     /// Aushang: kein Geraet, die Liste des Studios.
     case liste
 }

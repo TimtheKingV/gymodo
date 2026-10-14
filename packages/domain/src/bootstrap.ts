@@ -85,6 +85,12 @@ export type Bootstrap = {
     volume: number;
     rir: number | null;
     performedAt: string;
+    /**
+     * In wie vielen Einheiten die Uebung an dieser Station vorkommt (im
+     * Fenster der letzten SET_SCAN_LIMIT Saetze). Die App sortiert danach
+     * die Uebungsliste am Geraet (Testnotiz 14.10., 18:25).
+     */
+    sessionCount: number;
   }>;
   /**
    * Letzte Saetze ohne Geraet, je Gymtavo-Typ und Uebung. Ein eigenes Feld
@@ -99,6 +105,12 @@ export type Bootstrap = {
     volume: number;
     rir: number | null;
     performedAt: string;
+    /**
+     * In wie vielen Einheiten die Uebung an dieser Station vorkommt (im
+     * Fenster der letzten SET_SCAN_LIMIT Saetze). Die App sortiert danach
+     * die Uebungsliste am Geraet (Testnotiz 14.10., 18:25).
+     */
+    sessionCount: number;
   }>;
 };
 
@@ -245,6 +257,57 @@ export function zaehleBesucheJeGeraet(
   return new Map(
     [...sessionsJeGeraet].map(([machineId, menge]) => [machineId, menge.size]),
   );
+}
+
+type SatzZeile = {
+  machine_id: string | null;
+  equipment_model_id: string;
+  exercise_id: string;
+  session_id: string;
+  load: number | string;
+  secondary_load: number | string | null;
+  volume: number;
+  rir: number | string | null;
+  performed_at: string;
+};
+
+/**
+ * Der juengste Satz je Station und Uebung, dazu die Zahl der Einheiten mit
+ * dieser Uebung dort. `saetze` kommt absteigend nach performed_at, der
+ * erste Satz je Paar ist also der juengste.
+ */
+export function letzteSaetze(saetze: SatzZeile[]): Pick<Bootstrap, "lastSets" | "lastTypeSets"> {
+  const einheiten = new Map<string, Set<string>>();
+  for (const row of saetze) {
+    const id = key(stationsSchluessel(row), row.exercise_id);
+    const menge = einheiten.get(id) ?? new Set<string>();
+    menge.add(row.session_id);
+    einheiten.set(id, menge);
+  }
+  const werte = (row: SatzZeile, id: string) => ({
+    exerciseId: row.exercise_id,
+    load: Number(row.load),
+    secondaryLoad: row.secondary_load === null ? null : Number(row.secondary_load),
+    volume: row.volume,
+    rir: row.rir === null ? null : Number(row.rir),
+    performedAt: row.performed_at,
+    sessionCount: einheiten.get(id)?.size ?? 0,
+  });
+
+  const seenSet = new Set<string>();
+  const lastSets: Bootstrap["lastSets"] = [];
+  const lastTypeSets: Bootstrap["lastTypeSets"] = [];
+  for (const row of saetze) {
+    const id = key(stationsSchluessel(row), row.exercise_id);
+    if (seenSet.has(id)) continue;
+    seenSet.add(id);
+    if (row.machine_id !== null) {
+      lastSets.push({ machineId: row.machine_id, ...werte(row, id) });
+    } else {
+      lastTypeSets.push({ equipmentModelId: row.equipment_model_id, ...werte(row, id) });
+    }
+  }
+  return { lastSets, lastTypeSets };
 }
 
 /**
@@ -398,40 +461,8 @@ export async function getBootstrap(
     });
   }
 
-  type SatzZeile = {
-    machine_id: string | null;
-    equipment_model_id: string;
-    exercise_id: string;
-    session_id: string;
-    load: number | string;
-    secondary_load: number | string | null;
-    volume: number;
-    rir: number | string | null;
-    performed_at: string;
-  };
   const saetze = (setRows ?? []) as SatzZeile[];
-  const werte = (row: SatzZeile) => ({
-    exerciseId: row.exercise_id,
-    load: Number(row.load),
-    secondaryLoad: row.secondary_load === null ? null : Number(row.secondary_load),
-    volume: row.volume,
-    rir: row.rir === null ? null : Number(row.rir),
-    performedAt: row.performed_at,
-  });
-
-  const seenSet = new Set<string>();
-  const lastSets: Bootstrap["lastSets"] = [];
-  const lastTypeSets: Bootstrap["lastTypeSets"] = [];
-  for (const row of saetze) {
-    const id = key(stationsSchluessel(row), row.exercise_id);
-    if (seenSet.has(id)) continue;
-    seenSet.add(id);
-    if (row.machine_id !== null) {
-      lastSets.push({ machineId: row.machine_id, ...werte(row) });
-    } else {
-      lastTypeSets.push({ equipmentModelId: row.equipment_model_id, ...werte(row) });
-    }
-  }
+  const { lastSets, lastTypeSets } = letzteSaetze(saetze);
 
   const besucheJeGeraet = zaehleBesucheJeGeraet(
     saetze.filter(

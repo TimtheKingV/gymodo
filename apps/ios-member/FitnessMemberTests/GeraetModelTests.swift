@@ -721,6 +721,22 @@ struct GeraetModelTests {
         #expect(sut.blockInEinheit(fuer: "e2") == nil)
     }
 
+    /// Testnotiz 14.10., 18:25: was in diesem Training am Geraet schon dran
+    /// war, steht in der Uebungsliste oben -- hier e2 vor e1, obwohl das
+    /// Studio e1 zuerst fuehrt.
+    @Test func sortierteUebungenBeginnenMitDenenDiesesTrainings() {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []), sessions: sessions)
+        _ = sessions.satzSichern(station: .testGeraet("m1"), exerciseId: "e2",
+                                  einheiten: .kilogrammWiederholungen, load: 20, volume: 12,
+                                  problemFlag: false, problemReason: nil)
+
+        #expect(sut.sortierteUebungen.map(\.id) == ["e2", "e1"])
+    }
+
     @Test func erstkontaktLaeuftGenauEinmalJeGeraetUndUebung() {
         // "Der Dreischritt laeuft genau einmal je Geraet und Uebung" --
         // erstkontaktAbschliessen() ist die einzige Stelle, die istErstkontakt

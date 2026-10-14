@@ -150,6 +150,62 @@ private func bootstrapMitTokenHash(_ hash: String) -> BootstrapResponse {
     )
 }
 
+/// Die Uebungsliste am Geraet (Testnotiz 14.10., 18:25): zuerst was in
+/// diesem Training schon dran war, dann was frueher dran war nach Haeufigkeit,
+/// dann der Rest in der Reihenfolge des Studios.
+struct UebungsreihenfolgeTests {
+    private let t0 = Date(timeIntervalSince1970: 1_000)
+
+    @Test func heuteGemachteStehenOben_juengsteZuerst() {
+        let ids = GeraetEinstiegRechner.uebungsreihenfolge(
+            ["a", "b", "c", "d"],
+            heute: ["c": t0, "d": t0.addingTimeInterval(60)],
+            einheiten: [:])
+        #expect(ids == ["d", "c", "a", "b"])
+    }
+
+    @Test func frueherGemachteNachHaeufigkeit_vorDemRest() {
+        let ids = GeraetEinstiegRechner.uebungsreihenfolge(
+            ["a", "b", "c", "d"],
+            heute: [:],
+            einheiten: ["b": 2, "d": 7])
+        #expect(ids == ["d", "b", "a", "c"])
+    }
+
+    @Test func heuteSchlaegtHaeufigkeit() {
+        let ids = GeraetEinstiegRechner.uebungsreihenfolge(
+            ["a", "b", "c"],
+            heute: ["a": t0],
+            einheiten: ["a": 1, "c": 9])
+        #expect(ids == ["a", "c", "b"])
+    }
+
+    /// Gleich haeufig oder nie gemacht: die Reihenfolge des Studios bleibt.
+    @Test func gleichstandBehaeltDieStudioreihenfolge() {
+        let ids = GeraetEinstiegRechner.uebungsreihenfolge(
+            ["a", "b", "c", "d"],
+            heute: [:],
+            einheiten: ["c": 3, "b": 3])
+        #expect(ids == ["b", "c", "a", "d"])
+    }
+
+    @Test func einheitenKommenAusDenLetztenSaetzenDerStation() {
+        let bootstrap = BootstrapResponse(
+            member: .init(displayName: nil), studios: [], machines: [], calibrations: [],
+            lastSets: [
+                .init(machineId: "m1", exerciseId: "e1", load: 80, secondaryLoad: nil, volume: 10,
+                      rir: nil, performedAt: "2026-09-01T10:00:00Z", sessionCount: 4),
+                .init(machineId: "m2", exerciseId: "e2", load: 80, secondaryLoad: nil, volume: 10,
+                      rir: nil, performedAt: "2026-09-01T10:00:00Z", sessionCount: 9),
+                // Alter Server ohne sessionCount: einmal gemacht ist einmal.
+                .init(machineId: "m1", exerciseId: "e3", load: 80, secondaryLoad: nil, volume: 10,
+                      rir: nil, performedAt: "2026-09-01T10:00:00Z"),
+            ])
+        #expect(GeraetEinstiegRechner.einheitenJeUebung(station: "geraet:m1", in: bootstrap)
+                == ["e1": 4, "e3": 1])
+    }
+}
+
 private func bootstrapMitLetztenSaetzen(_ paare: [(String, String)]) -> BootstrapResponse {
     BootstrapResponse(
         member: .init(displayName: nil),
