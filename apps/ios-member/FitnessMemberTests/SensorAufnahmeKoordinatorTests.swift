@@ -53,6 +53,33 @@ struct SensorAufnahmeKoordinatorTests {
         try SensorAufnahmeLeser.lesen(ordner: ordner).datei
     }
 
+    @Test func gesicherterSatzSchreibtArtUndZaehlerblock() throws {
+        let (sut, _, wurzel, _) = aufbau()
+        sut.eingabeBegonnen(Self.kontext)
+        var satz = Self.satz
+        let ereignisse = RepEvents(algo: "stapel/2", befestigungsart: .stapel, ereignisse: [], satzbeginn: 0)
+        satz.volumeSource = .korrigiert
+        satz.zaehler = ZaehlerErgebnis(gezaehlt: 10, repEvents: ereignisse)
+        satz.befestigung = BefestigungsWahl(art: .stapel, quelle: .gewaehlt)
+        sut.satzGesichert(satz)
+        let datei = try datei(ordner(in: wurzel)[0])
+        #expect(datei.befestigungsart == .stapel)
+        #expect(datei.befestigungsartQuelle == .gewaehlt)
+        #expect(datei.zaehler == .init(algo: "stapel/2", gezaehlt: 10, herkunft: "korrigiert", ereignisse: ereignisse))
+    }
+
+    /// Ohne Zaehlung (0 Wiederholungen) steht die Art trotzdem drin, der Block ist null.
+    @Test func ohneZaehlungNurDieArt() throws {
+        let (sut, _, wurzel, _) = aufbau()
+        sut.eingabeBegonnen(Self.kontext)
+        var satz = Self.satz
+        satz.befestigung = BefestigungsWahl(art: .kurzhantel, quelle: .vorschlag)
+        sut.satzGesichert(satz)
+        let datei = try datei(ordner(in: wurzel)[0])
+        #expect(datei.befestigungsart == .kurzhantel)
+        #expect(datei.zaehler == nil)
+    }
+
     @Test func startetMitDerEingabeWennVerbunden() throws {
         let (sut, _, wurzel, _) = aufbau()
         sut.eingabeBegonnen(Self.kontext)
