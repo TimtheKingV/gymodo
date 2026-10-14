@@ -28,6 +28,12 @@ struct GesicherterSatz: Equatable, Sendable {
     /// nil, wenn der Umfang keine Wiederholungen sind (Sekunden, Meter).
     let reps: Int?
     let problemFlag: Bool
+    /// Spec B 6.5: damit die Aufnahme Herkunft und Zaehlerblock schreiben
+    /// kann, ohne die Koordinatoren zu koppeln. Defaults fuer alle Aufrufer
+    /// ohne Zaehler.
+    var volumeSource: VolumeSource = .eingegeben
+    var zaehler: ZaehlerErgebnis? = nil
+    var befestigung: BefestigungsWahl? = nil
 }
 
 @MainActor

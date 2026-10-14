@@ -148,6 +148,15 @@ final class GeraetModel {
     /// Modell weiss davon nichts ausser diesen drei Aufrufen (Spec
     /// Sensor-Anbindung 7.3).
     private let mitschnitt: (any SatzMitschnitt)?
+    /// Im Release (bis E5) immer nil, im Debug der ZaehlerKoordinator
+    /// (Sensor-Spec B 6.5).
+    private let zaehler: (any SatzZaehler)?
+
+    /// Spec B 6.5. vonHand traegt den Zaehlerstand nur zur Anzeige mit.
+    enum ZaehlerZustand: Equatable {
+        case aus, bereit, zaehlt(Int), pruefen(Int), vonHand(Int)
+    }
+    private(set) var zaehlerZustand: ZaehlerZustand = .aus
 
     /// Wie das Mitglied an diesem Geraet gelandet ist.
     ///
@@ -190,6 +199,7 @@ final class GeraetModel {
         enqueue: @escaping (PendingSetWrite) -> Void,
         satzZiel: @escaping () -> Int = { Einstellungen.satzZiel() },
         mitschnitt: (any SatzMitschnitt)? = nil,
+        zaehler: (any SatzZaehler)? = nil,
         startwerte: Startwerte? = nil
     ) {
         self.station = station
@@ -201,6 +211,7 @@ final class GeraetModel {
         self.enqueue = enqueue
         satzZielLesen = satzZiel
         self.mitschnitt = mitschnitt
+        self.zaehler = zaehler
 
         let letzter = Self.letzterSatz(an: station, uebungId: uebungId, in: bootstrap)
         // Ohne Historie startet das Rad am Startwert des Geraets, sonst am
@@ -701,6 +712,8 @@ final class GeraetModel {
         nebenbelastungVomNutzer = false
         // Ein laufender Mitschnitt gehoert zur alten Uebung;
         // eingabeBegonnen bricht ihn ab und beginnt mit dem neuen Kontext.
+        // Die Zaehlung der alten Uebung gilt nicht fuer die neue.
+        zaehler?.satzVerworfen()
         mitschnittBeginnen()
     }
 
@@ -711,12 +724,27 @@ final class GeraetModel {
             return
         }
         satzAbgelehnt = nil
-        let geschrieben = sessions.satzSichern(
+        // Erst nach der Ortspruefung: ein abgelehnter Satz laeuft weiter und
+        // behaelt seine Zaehlung. Die Art vor ergebnis() lesen, das den Satz beendet.
+        let befestigung = zaehler?.befestigung
+        // Herkunft nur bei Wiederholungen: der Server lehnt sie sonst ab (Spec B 6.3).
+        let ergebnis: ZaehlerErgebnis?
+        if volumeKind == .reps {
+            ergebnis = zaehler?.ergebnis()
+        } else {
+            zaehler?.satzVerworfen()
+            ergebnis = nil
+        }
+        let herkunft = Self.herkunft(umfang: umfang, ergebnis: ergebnis)
+        var geschrieben = sessions.satzSichern(
             station: station, exerciseId: uebungId,
             einheiten: einheiten,
             load: belastung, secondaryLoad: nebenbelastung, volume: umfang,
             problemFlag: problemFlag, problemReason: problemReason
         )
+        geschrieben.body.volumeSource = herkunft
+        geschrieben.body.volumeCounted = ergebnis?.gezaehlt
+        geschrieben.body.repEvents = ergebnis?.repEvents
         // Immer ueber die Warteschlange, nie direkt: so ist "gespeichert,
         // wird gesendet" nie gelogen, und der Offline-Pfad ist derselbe, der
         // jeden Tag laeuft (Spec Abschnitt 8.2).
@@ -737,7 +765,9 @@ final class GeraetModel {
             // bleiben dort leer statt eine Watt- oder Meterzahl zu tragen.
             weightKg: loadUnit == .kg ? belastung : nil,
             reps: volumeKind == .reps ? umfang : nil,
-            problemFlag: problemFlag))
+            problemFlag: problemFlag,
+            volumeSource: herkunft, zaehler: ergebnis, befestigung: befestigung))
+        zaehlerZustand = .aus
         // satzNummer liest live aus der Session und ist nach dem Schreiben
         // oben schon die NAECHSTE Nummer: bei Ziel 3 steht nach dem dritten
         // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
@@ -782,13 +812,55 @@ final class GeraetModel {
     /// nur ausserhalb des Ziels.
     func weitererSatz() { phase = .neuePause() }
 
+    /// Alle vier Aufrufer sind genau die Satzanfaenge: Mitschnitt und
+    /// Zaehler beginnen deshalb hier gemeinsam.
     private func mitschnittBeginnen() {
         mitschnitt?.eingabeBegonnen(SatzMitschnittKontext(
             station: station, exerciseId: uebungId, exerciseName: aktiveUebung?.name ?? ""))
+        zaehlerZustand = .aus
+        zaehler?.satzBeginnt(SatzZaehlerKontext(station: station, exerciseId: uebungId, volumeKind: volumeKind)) {
+            [weak self] meldung in self?.zaehlerMeldung(meldung)
+        }
+    }
+
+    private func zaehlerMeldung(_ meldung: ZaehlerMeldung) {
+        // Nach dem Drehen gehoert das Rad der Hand: keine Spruenge mehr.
+        if case .vonHand = zaehlerZustand { return }
+        switch meldung {
+        case .zaehltNicht: zaehlerZustand = .aus
+        case .bereit: zaehlerZustand = .bereit
+        case .stand(let n):
+            zaehlerZustand = .zaehlt(n)
+            // Eigener Weg statt umfangGedreht: das ist keine Korrektur.
+            umfang = Rastwerte.naechster(zu: n, in: umfangsWerte)
+        case .pruefen(let n, _): zaehlerZustand = .pruefen(n)
+        }
+    }
+
+    /// Der einzige Weg der Oberflaeche ans Umfangsrad (Spec B 6.5): nach der
+    /// ersten Zaehlung schaltet Drehen auf vonHand. In bereit ist Drehen
+    /// keine Korrektur, die erste Zaehlung ueberschreibt den Wert.
+    func umfangGedreht(_ wert: Int) {
+        umfang = wert
+        switch zaehlerZustand {
+        case .zaehlt(let n), .pruefen(let n): zaehlerZustand = .vonHand(n)
+        case .aus, .bereit, .vonHand: break
+        }
+    }
+
+    /// Spec B 6.5: ohne Ergebnis eingegeben; zurueckgedreht auf den
+    /// Zaehlerstand ist gemessen.
+    static func herkunft(umfang: Int, ergebnis: ZaehlerErgebnis?) -> VolumeSource {
+        guard let ergebnis else { return .eingegeben }
+        return umfang == ergebnis.gezaehlt ? .gemessen : .korrigiert
     }
 
     /// GeraetView ruft das aus onDisappear.
-    func screenVerlassen() { mitschnitt?.screenVerlassen() }
+    func screenVerlassen() {
+        mitschnitt?.screenVerlassen()
+        zaehler?.satzVerworfen()
+        zaehlerZustand = .aus
+    }
 
     func kalibrierungOeffnen() {
         guard kannKalibrieren else { return }

@@ -1,4 +1,5 @@
 import Foundation
+import Sensorik
 import Testing
 @testable import FitnessMember
 
@@ -14,6 +15,7 @@ struct GeraetModelTests {
         enqueue: @escaping (PendingSetWrite) -> Void = { _ in },
         satzZiel: Int = Einstellungen.satzZielVorgabe,
         mitschnitt: (any SatzMitschnitt)? = nil,
+        zaehler: (any SatzZaehler)? = nil,
         startwerte: Startwerte? = nil
     ) -> GeraetModel {
         let verzeichnis = FileManager.default.temporaryDirectory
@@ -28,6 +30,7 @@ struct GeraetModelTests {
             enqueue: enqueue,
             satzZiel: { satzZiel },
             mitschnitt: mitschnitt,
+            zaehler: zaehler,
             startwerte: startwerte
         )
     }
@@ -1144,6 +1147,169 @@ struct GeraetModelTests {
         #expect(body.studioId == "s1")
     }
 
+    // MARK: - Zaehler
+
+    private func mitZaehler(_ double: ZaehlerDouble = ZaehlerDouble(),
+                            enqueue: @escaping (PendingSetWrite) -> Void = { _ in },
+                            mitschnitt: (any SatzMitschnitt)? = nil,
+                            maschine: BootstrapResponse.Machine = GeraetTestdaten.maschine) -> GeraetModel {
+        let sut = modell(maschine: maschine, bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         enqueue: enqueue, mitschnitt: mitschnitt, zaehler: double)
+        sut.geraetGeoeffnet()
+        return sut
+    }
+
+    @Test func dasRadFolgtDemZaehler() {
+        let double = ZaehlerDouble()
+        let sut = mitZaehler(double)
+        #expect(double.kontexte.count == 1)
+        #expect(double.kontexte.first?.volumeKind == .reps)
+        double.melde?(.bereit)
+        #expect(sut.zaehlerZustand == .bereit)
+        double.melde?(.stand(3))
+        #expect(sut.umfang == 3)
+        #expect(sut.zaehlerZustand == .zaehlt(3))
+    }
+
+    @Test func drehenInBereitIstKeineKorrektur() {
+        let double = ZaehlerDouble()
+        let sut = mitZaehler(double)
+        double.melde?(.bereit)
+        sut.umfangGedreht(12)
+        #expect(sut.zaehlerZustand == .bereit)
+        double.melde?(.stand(1))
+        #expect(sut.umfang == 1)
+    }
+
+    @Test func drehenNachDerZaehlungGehoertDerHand() {
+        let double = ZaehlerDouble()
+        let sut = mitZaehler(double)
+        double.melde?(.stand(5))
+        sut.umfangGedreht(6)
+        #expect(sut.zaehlerZustand == .vonHand(5))
+        double.melde?(.stand(6))
+        double.melde?(.stand(7))
+        #expect(sut.umfang == 6)
+    }
+
+    @Test func pruefenHaeltDieZahl() {
+        let double = ZaehlerDouble()
+        let sut = mitZaehler(double)
+        double.melde?(.stand(4))
+        double.melde?(.pruefen(4, .luecke))
+        #expect(sut.zaehlerZustand == .pruefen(4))
+        #expect(sut.umfang == 4)
+        sut.umfangGedreht(5)
+        #expect(sut.zaehlerZustand == .vonHand(4))
+    }
+
+    @Test(arguments: [(nil as Int?, 8, VolumeSource.eingegeben), (8, 8, .gemessen), (8, 9, .korrigiert)])
+    func herkunftBeimSichern(gezaehlt: Int?, umfang: Int, erwartet: VolumeSource) async {
+        let double = ZaehlerDouble()
+        double.ergebnisWert = gezaehlt.map(ZaehlerDouble.ergebnis)
+        var geschrieben: [PendingSetWrite] = []
+        let sut = mitZaehler(double, enqueue: { geschrieben.append($0) })
+        if let gezaehlt { double.melde?(.stand(gezaehlt)) }
+        if umfang != gezaehlt { sut.umfangGedreht(umfang) }
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        let body = geschrieben.first?.body
+        #expect(body?.volume == umfang)
+        #expect(body?.volumeSource == erwartet)
+        #expect(body?.volumeCounted == gezaehlt)
+        #expect(body?.repEvents?.wiederholungen.count == gezaehlt)
+        #expect(sut.zaehlerZustand == .aus)
+    }
+
+    @Test func zurueckGedrehtIstGemessen() async {
+        let double = ZaehlerDouble()
+        double.ergebnisWert = ZaehlerDouble.ergebnis(5)
+        var geschrieben: [PendingSetWrite] = []
+        let sut = mitZaehler(double, enqueue: { geschrieben.append($0) })
+        double.melde?(.stand(5))
+        sut.umfangGedreht(6)
+        sut.umfangGedreht(5)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(geschrieben.first?.body.volumeSource == .gemessen)
+    }
+
+    /// Review Focus 3: mehr Wiederholungen als das Rad hat (1...40).
+    @Test func ueberDemRadmaximumWirdKorrigiert() async {
+        let double = ZaehlerDouble()
+        double.ergebnisWert = ZaehlerDouble.ergebnis(43)
+        var geschrieben: [PendingSetWrite] = []
+        let sut = mitZaehler(double, enqueue: { geschrieben.append($0) })
+        double.melde?(.stand(43))
+        #expect(sut.umfang == 40)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(geschrieben.first?.body.volumeSource == .korrigiert)
+        #expect(geschrieben.first?.body.volumeCounted == 43)
+    }
+
+    @Test func uebungswechselVerwirftUndBeginntNeu() {
+        let double = ZaehlerDouble()
+        let sut = mitZaehler(double, maschine: GeraetTestdaten.maschineMitZweiUebungen)
+        double.melde?(.stand(2))
+        sut.uebungWechseln(zu: "e2")
+        #expect(double.verworfen == 1)
+        #expect(double.kontexte.last?.exerciseId == "e2")
+        #expect(sut.zaehlerZustand == .aus)
+    }
+
+    @Test func screenVerlassenVerwirft() {
+        let double = ZaehlerDouble()
+        let sut = mitZaehler(double)
+        sut.screenVerlassen()
+        #expect(double.verworfen == 1)
+    }
+
+    @Test func derMitschnittBekommtHerkunftErgebnisUndArt() async {
+        let double = ZaehlerDouble()
+        double.ergebnisWert = ZaehlerDouble.ergebnis(8)
+        let spion = MitschnittSpion()
+        let sut = mitZaehler(double, mitschnitt: spion)
+        double.melde?(.stand(8))
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        guard case .gesichert(let satz)? = spion.ereignisse.last else { Issue.record("nichts gesichert"); return }
+        #expect(satz.volumeSource == .gemessen)
+        #expect(satz.zaehler?.gezaehlt == 8)
+        #expect(satz.befestigung == BefestigungsWahl(art: .stapel, quelle: .vorschlag))
+    }
+
+    /// Review Focus 4: ein abgelehnter Satz holt kein Ergebnis ab, die
+    /// Zaehlung laeuft weiter. Aufbau wie der Ortskonflikt-Test oben
+    /// (laufende Einheit in einem anderen Studio).
+    @Test func abgelehnterSatzHoltKeinErgebnis() async {
+        let verzeichnis = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        _ = sessions.satzSichern(station: .testGeraet("m9", studioId: "s2"), exerciseId: "e1",
+                                 einheiten: .kilogrammWiederholungen, load: 50, volume: 10,
+                                 problemFlag: false, problemReason: nil)
+        let double = ZaehlerDouble()
+        double.ergebnisWert = ZaehlerDouble.ergebnis(4)
+        let spion = MitschnittSpion()
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         sessions: sessions, mitschnitt: spion, zaehler: double)
+        sut.geraetGeoeffnet()
+        double.melde?(.stand(4))
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.satzAbgelehnt != nil)
+        #expect(double.ergebnisAufrufe == 0)
+        #expect(sut.zaehlerZustand == .zaehlt(4))
+        #expect(!spion.ereignisse.contains { if case .gesichert = $0 { true } else { false } })
+    }
+
+    /// Review Focus 5: Herkunft nur bei Wiederholungen -- der Server lehnt
+    /// sie sonst ab (Spec 6.3).
+    @Test func sekundenuebungBleibtEingegeben() async {
+        let double = ZaehlerDouble()
+        double.ergebnisWert = ZaehlerDouble.ergebnis(3)
+        var geschrieben: [PendingSetWrite] = []
+        let sut = mitZaehler(double, enqueue: { geschrieben.append($0) }, maschine: GeraetTestdaten.maschineSekunden)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(geschrieben.first?.body.volumeSource == .eingegeben)
+        #expect(geschrieben.first?.body.repEvents == nil)
+    }
+
     // MARK: - Mitschnitt
 
     @Test func oeffnenMeldetDieEingabeMitGeraetUndUebung() {
@@ -1227,6 +1393,32 @@ struct GeraetModelTests {
         sut.geraetGeoeffnet()
         sut.screenVerlassen()
         #expect(spion.ereignisse.last == .verlassen)
+    }
+}
+
+@MainActor
+final class ZaehlerDouble: SatzZaehler {
+    var kontexte: [SatzZaehlerKontext] = []
+    var melde: (@MainActor (ZaehlerMeldung) -> Void)?
+    var verworfen = 0
+    var ergebnisAufrufe = 0
+    var ergebnisWert: ZaehlerErgebnis?
+    var befestigung: BefestigungsWahl? = BefestigungsWahl(art: .stapel, quelle: .vorschlag)
+
+    func satzBeginnt(_ kontext: SatzZaehlerKontext, melde: @escaping @MainActor (ZaehlerMeldung) -> Void) {
+        kontexte.append(kontext)
+        self.melde = melde
+    }
+    func ergebnis() -> ZaehlerErgebnis? { ergebnisAufrufe += 1; return ergebnisWert }
+    func satzVerworfen() { verworfen += 1 }
+
+    static func ergebnis(_ n: Int) -> ZaehlerErgebnis {
+        let w = (0..<n).map { i in
+            Wiederholung(nummer: i + 1, beginn: Double(i) * 2, umkehr: Double(i) * 2 + 1, ende: Double(i) * 2 + 2,
+                         ausschlag: 0.4, sicherheit: 1, pauseDavor: nil)
+        }
+        return ZaehlerErgebnis(gezaehlt: n, repEvents: RepEvents(
+            algo: "stapel/2", befestigungsart: .stapel, ereignisse: w.map(ZaehlerEreignis.wiederholung), satzbeginn: 0))
     }
 }
 
@@ -1341,6 +1533,19 @@ enum GeraetTestdaten {
     }
 
     static var maschine: BootstrapResponse.Machine { maschine(loadMax: "150.0") }
+
+    /// Eine Uebung in Sekunden (Plank-artig) am selben Geraet: Herkunft
+    /// bleibt dort eingegeben (Sensor-Spec B 6.3).
+    static var maschineSekunden: BootstrapResponse.Machine {
+        dekodiere("""
+        {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":null,
+         "status":"active","tokenHashes":[],"visitCount":0,
+         "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":null,
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,
+           "settingDefinitions":[]},
+         "exercises":[{"id":"e1","name":"Halten","volumeKind":"seconds","targetMin":60,"targetMax":90}]}
+        """)
+    }
     static var maschineOhneMaximum: BootstrapResponse.Machine { maschine(loadMax: "null") }
 
     /// Ein Modell ohne Einstellparameter -- laut Trainerportal ein

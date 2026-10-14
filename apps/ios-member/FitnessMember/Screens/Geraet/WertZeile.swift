@@ -133,7 +133,7 @@ struct WertZeile: View {
                     werte: modell.umfangsWerte.map(Double.init),
                     auswahl: Binding(
                         get: { Double(modell.umfang) },
-                        set: { modell.umfang = Int($0) }
+                        set: { modell.umfangGedreht(Int($0)) }
                     ),
                     // Dieselbe accent-Linie wie bei der Belastung, nur
                     // duenner (siehe UnterstrichStil): die Linie sagt "hier
