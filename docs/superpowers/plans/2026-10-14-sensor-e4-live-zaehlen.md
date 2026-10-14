@@ -62,7 +62,7 @@
 **Interfaces:**
 - Produces: `public enum BefestigungsartQuelle: String, Codable, Sendable { case vorschlag, gewaehlt }`; `public static func Befestigungsart.vorschlag(geraetename: String, istKraft: Bool) -> Befestigungsart?`
 
-- [ ] **Step 1: Failing test schreiben**
+- [x] **Step 1: Failing test schreiben**
 
 ```swift
 import Testing
@@ -93,12 +93,12 @@ struct BefestigungsartTests {
 }
 ```
 
-- [ ] **Step 2: Test laufen lassen, er scheitert**
+- [x] **Step 2: Test laufen lassen, er scheitert**
 
 Run: `swift test --package-path apps/ios-member/Packages/Sensorik --filter BefestigungsartTests`
 Expected: Compile-Fehler „type 'Befestigungsart' has no member 'vorschlag'“.
 
-- [ ] **Step 3: Umsetzen** — ans Ende von `Befestigungsart.swift`:
+- [x] **Step 3: Umsetzen** — ans Ende von `Befestigungsart.swift`:
 
 ```swift
 /// Ob die Art eines Satzes vorgeschlagen oder vom Nutzer gewaehlt ist
@@ -123,12 +123,12 @@ extension Befestigungsart {
 }
 ```
 
-- [ ] **Step 4: Tests laufen lassen**
+- [x] **Step 4: Tests laufen lassen**
 
 Run: `swift test --package-path apps/ios-member/Packages/Sensorik`
 Expected: alle grün, `guetebericht.md` unverändert (`git status` zeigt ihn nicht).
 
-- [ ] **Step 5: Commit** — `feat(sensorik): Befestigungsart wird aus dem Geraetetyp vorgeschlagen`
+- [x] **Step 5: Commit** — `feat(sensorik): Befestigungsart wird aus dem Geraetetyp vorgeschlagen`
 
 ---
 
@@ -147,7 +147,7 @@ Expected: alle grün, `guetebericht.md` unverändert (`git status` zeigt ihn nic
   - `SensorAufnahmeDatei.befestigungsart: Befestigungsart?`, `.befestigungsartQuelle: BefestigungsartQuelle?`, `.zaehler: Zaehler?` (alle Default `nil`)
   - `SensorAufnahme.abschliessen(_:kontext:label:akkuProzent:statistik:ende:endeT:befestigungsart:befestigungsartQuelle:zaehler:)` — die drei neuen Parameter mit Default `nil`
 
-- [ ] **Step 1: Failing tests schreiben** — in `SensorAufnahmeTests.swift` (Package) ergänzen. Den vorhandenen Aufbau einer Aufnahme in dieser Datei als Vorlage nehmen (eine `SensorAufnahme` in einem Temp-Ordner anlegen und abschließen):
+- [x] **Step 1: Failing tests schreiben** — in `SensorAufnahmeTests.swift` (Package) ergänzen. Den vorhandenen Aufbau einer Aufnahme in dieser Datei als Vorlage nehmen (eine `SensorAufnahme` in einem Temp-Ordner anlegen und abschließen):
 
 ```swift
     /// Spec B 6.7 und Nachtrag 14.10. Punkt 3: Art, Quelle und Zaehlerblock
@@ -194,12 +194,12 @@ Expected: alle grün, `guetebericht.md` unverändert (`git status` zeigt ihn nic
 
 Passen die Namen der Initialisierer in deiner Version der Datei nicht exakt (z. B. `SensorAufnahme.init`-Parameter), richte dich nach `SensorAufnahme.swift:28-30` — die Prüfungen bleiben dieselben.
 
-- [ ] **Step 2: Tests laufen lassen, sie scheitern**
+- [x] **Step 2: Tests laufen lassen, sie scheitern**
 
 Run: `swift test --package-path apps/ios-member/Packages/Sensorik --filter SensorAufnahmeTests`
 Expected: Compile-Fehler „extra arguments … befestigungsart“.
 
-- [ ] **Step 3: Umsetzen** — in `SensorAufnahmeDatei` nach `Label`:
+- [x] **Step 3: Umsetzen** — in `SensorAufnahmeDatei` nach `Label`:
 
 ```swift
     /// Spec B 6.7: was der Zaehler im Satz gesehen hat. herkunft als Rohwert
@@ -264,12 +264,12 @@ Fixture `FitnessMemberTests/Fixtures/sensoraufnahme-beispiel/aufnahme.json`: nac
 
 (Das Beispiel hat nur fünf Pakete; ein gezählter Wert 1 gegen das Label 11 ist darum `korrigiert` — so steht beides im Beispiel.)
 
-- [ ] **Step 4: Tests laufen lassen**
+- [x] **Step 4: Tests laufen lassen**
 
 Run: `swift test --package-path apps/ios-member/Packages/Sensorik`
 Expected: alle grün, auch `dasVerbindlicheBeispielIstLesbar` und `alleEchtenAufnahmenSindLesbar`; `guetebericht.md` unverändert.
 
-- [ ] **Step 5: Commit** — `feat(sensorik): aufnahme.json kennt Befestigungsart, Quelle und Zaehlerblock`
+- [x] **Step 5: Commit** — `feat(sensorik): aufnahme.json kennt Befestigungsart, Quelle und Zaehlerblock`
 
 ---
 
@@ -299,7 +299,7 @@ struct ZaehlerErgebnis: Equatable, Sendable { let gezaehlt: Int; let repEvents: 
 struct Befestigungsspeicher { init(einstellungen: UserDefaults); func wahl(fuer: SatzZaehlerKontext) -> BefestigungsWahl?; func merken(_: Befestigungsart, fuer: SatzZaehlerKontext) }  // DEBUG
 ```
 
-- [ ] **Step 1: Failing test schreiben** — `FitnessMemberTests/BefestigungsspeicherTests.swift`:
+- [x] **Step 1: Failing test schreiben** — `FitnessMemberTests/BefestigungsspeicherTests.swift`:
 
 ```swift
 #if DEBUG
@@ -342,12 +342,12 @@ struct BefestigungsspeicherTests {
 
 `GeraetTestdaten.cardioTyp` gibt es noch nicht: in `GeraetModelTests.swift` neben `static var typ: Station` (um Zeile 1322) eine Kopie von `typ` anlegen mit `"id":"em9","name":"Ruderergometer"`, `"category":"cardio"` und einer Übung `{"id":"e9","name":"Rudern","volumeKind":"meters","targetMin":null,"targetMax":null}`. Wie `typ` aufgebaut ist, dort ablesen; die übrigen Felder unverändert übernehmen.
 
-- [ ] **Step 2: Test laufen lassen, er scheitert**
+- [x] **Step 2: Test laufen lassen, er scheitert**
 
 Run (aus `apps/ios-member`, nach `pgrep -lx xcodebuild` und `xcodegen generate`): `xcodebuild test -scheme FitnessMember -destination 'id=A2FB7461-E303-4CFE-AA08-9AC1B8C41707' -only-testing:FitnessMemberTests/BefestigungsspeicherTests -quiet`
 Expected: Compile-Fehler „cannot find 'Befestigungsspeicher'“.
 
-- [ ] **Step 3: Umsetzen** — `Workout/SatzZaehler.swift` (ohne `#if DEBUG`):
+- [x] **Step 3: Umsetzen** — `Workout/SatzZaehler.swift` (ohne `#if DEBUG`):
 
 ```swift
 import Foundation
@@ -441,12 +441,12 @@ struct Befestigungsspeicher {
 #endif
 ```
 
-- [ ] **Step 4: `xcodegen generate`, Tests laufen lassen**
+- [x] **Step 4: `xcodegen generate`, Tests laufen lassen**
 
 Run: wie Step 2.
 Expected: 3 Tests grün.
 
-- [ ] **Step 5: Commit** (inkl. `project.pbxproj`) — `feat(geraet): Naht SatzZaehler und gemerkte Befestigungsart je Station und Uebung`
+- [x] **Step 5: Commit** (inkl. `project.pbxproj`) — `feat(geraet): Naht SatzZaehler und gemerkte Befestigungsart je Station und Uebung`
 
 ---
 
@@ -473,7 +473,7 @@ Expected: 3 Tests grün.
 }
 ```
 
-- [ ] **Step 1: Failing tests schreiben** — `FitnessMemberTests/ZaehlerKoordinatorTests.swift`. `AttrappenQuelle` steht in `SensorAufnahmeKoordinatorTests.swift` und ist im Testziel sichtbar.
+- [x] **Step 1: Failing tests schreiben** — `FitnessMemberTests/ZaehlerKoordinatorTests.swift`. `AttrappenQuelle` steht in `SensorAufnahmeKoordinatorTests.swift` und ist im Testziel sichtbar.
 
 ```swift
 #if DEBUG
@@ -619,12 +619,12 @@ struct ZaehlerKoordinatorTests {
 #endif
 ```
 
-- [ ] **Step 2: Tests laufen lassen, sie scheitern**
+- [x] **Step 2: Tests laufen lassen, sie scheitern**
 
 Run: `xcodegen generate`, dann `xcodebuild test … -only-testing:FitnessMemberTests/ZaehlerKoordinatorTests -quiet`
 Expected: Compile-Fehler „cannot find 'ZaehlerKoordinator'“.
 
-- [ ] **Step 3: Umsetzen** — `Workout/Sensor/ZaehlerKoordinator.swift`:
+- [x] **Step 3: Umsetzen** — `Workout/Sensor/ZaehlerKoordinator.swift`:
 
 ```swift
 #if DEBUG
@@ -776,12 +776,12 @@ final class ZaehlerKoordinator: SatzZaehler {
 
 `Zaehler.anzahl` und `Zaehler.profil` sind `public` (`Zaehler.swift`); `SensorRate.rawValue` ist `Int` (so nutzt es `SensorAufnahmeKoordinator`).
 
-- [ ] **Step 4: Tests laufen lassen**
+- [x] **Step 4: Tests laufen lassen**
 
 Run: wie Step 2.
 Expected: 9 Tests grün. Scheitert `bereitDannStandJeWiederholung` an der Zahl, zuerst prüfen, ob `stapelSatz` die gleiche Form hat wie `Synthetik.satz(signal: .geschwindigkeitVertikal…)` im Package (`Packages/Sensorik/Tests/SensorikTests/Synthetik.swift:44-51`); der Koordinator darf für den Test nicht angepasst werden.
 
-- [ ] **Step 5: Commit** — `feat(geraet): ZaehlerKoordinator zaehlt live aus dem Sensorstrom (Debug)`
+- [x] **Step 5: Commit** — `feat(geraet): ZaehlerKoordinator zaehlt live aus dem Sensorstrom (Debug)`
 
 ---
 
@@ -802,7 +802,7 @@ Expected: 9 Tests grün. Scheitert `bereitDannStandJeWiederholung` an der Zahl, 
   - `static func herkunft(umfang: Int, ergebnis: ZaehlerErgebnis?) -> VolumeSource`
   - `GesicherterSatz` bekommt `var volumeSource: VolumeSource = .eingegeben`, `var zaehler: ZaehlerErgebnis? = nil`, `var befestigung: BefestigungsWahl? = nil`
 
-- [ ] **Step 1: Failing tests schreiben** — in `GeraetModelTests.swift`: den Helfer `modell(…)` um `zaehler: (any SatzZaehler)? = nil` ergänzen (nach `mitschnitt`, an `GeraetModel(…)` durchreichen), am Dateiende das Double, und einen neuen Abschnitt `// MARK: - Zaehler`:
+- [x] **Step 1: Failing tests schreiben** — in `GeraetModelTests.swift`: den Helfer `modell(…)` um `zaehler: (any SatzZaehler)? = nil` ergänzen (nach `mitschnitt`, an `GeraetModel(…)` durchreichen), am Dateiende das Double, und einen neuen Abschnitt `// MARK: - Zaehler`:
 
 ```swift
 final class ZaehlerDouble: SatzZaehler {
@@ -1006,12 +1006,12 @@ Dazu die Review-Focus-Tests 4 und 5:
 
 `GeraetTestdaten.maschineMitZweiUebungen` und `GeraetTestdaten.maschineSekunden`: prüfen, ob es Gleichwertiges schon gibt (`grep -n "static var maschine" FitnessMemberTests/GeraetModelTests.swift`); sonst nach dem Muster von `maschine(loadMax:)` anlegen — zwei Übungen `e1`/`e2` mit `volumeKind` `reps`, bzw. eine Übung `e1` mit `"volumeKind":"seconds","targetMin":60,"targetMax":90`.
 
-- [ ] **Step 2: Tests laufen lassen, sie scheitern**
+- [x] **Step 2: Tests laufen lassen, sie scheitern**
 
 Run: `xcodebuild test … -only-testing:FitnessMemberTests/GeraetModelTests -quiet`
 Expected: Compile-Fehler „extra argument 'zaehler'“.
 
-- [ ] **Step 3: Umsetzen**
+- [x] **Step 3: Umsetzen**
 
 `SatzMitschnitt.swift`, in `GesicherterSatz` nach `problemFlag`:
 
@@ -1130,12 +1130,12 @@ Im `GesicherterSatz(…)`-Aufruf an den Mitschnitt anhängen: `volumeSource: her
 
 `WertZeile.swift:136`: `set: { modell.umfang = Int($0) }` → `set: { modell.umfangGedreht(Int($0)) }`.
 
-- [ ] **Step 4: Tests laufen lassen**
+- [x] **Step 4: Tests laufen lassen**
 
 Run: `xcodebuild test -scheme FitnessMember -destination 'id=A2FB7461-E303-4CFE-AA08-9AC1B8C41707' -quiet`
 Expected: alle grün, auch die bestehenden Mitschnitt-Tests (sie vergleichen `GesicherterSatz` mit Defaults).
 
-- [ ] **Step 5: Commit** — `feat(geraet): Rad folgt dem Zaehler, Herkunft geht mit dem Satz`
+- [x] **Step 5: Commit** — `feat(geraet): Rad folgt dem Zaehler, Herkunft geht mit dem Satz`
 
 ---
 
@@ -1148,7 +1148,7 @@ Expected: alle grün, auch die bestehenden Mitschnitt-Tests (sie vergleichen `Ge
 **Interfaces:**
 - Consumes: `GesicherterSatz.volumeSource/.zaehler/.befestigung` (Task 5), `SensorAufnahme.abschliessen(…befestigungsart:befestigungsartQuelle:zaehler:)` (Task 2)
 
-- [ ] **Step 1: Failing tests schreiben**
+- [x] **Step 1: Failing tests schreiben**
 
 ```swift
     @Test func gesicherterSatzSchreibtArtUndZaehlerblock() throws {
@@ -1181,9 +1181,9 @@ Expected: alle grün, auch die bestehenden Mitschnitt-Tests (sie vergleichen `Ge
 
 `static let satz` ist ein `let` vom Typ `GesicherterSatz`; `var satz = Self.satz` kopiert ihn, die neuen Felder sind `var`.
 
-- [ ] **Step 2: Tests laufen lassen, sie scheitern** — Run: `… -only-testing:FitnessMemberTests/SensorAufnahmeKoordinatorTests -quiet`. Expected: FAIL, `befestigungsart` ist `nil`.
+- [x] **Step 2: Tests laufen lassen, sie scheitern** — Run: `… -only-testing:FitnessMemberTests/SensorAufnahmeKoordinatorTests -quiet`. Expected: FAIL, `befestigungsart` ist `nil`.
 
-- [ ] **Step 3: Umsetzen** — in `beenden(_:satz:)` den `abschliessen`-Aufruf ergänzen:
+- [x] **Step 3: Umsetzen** — in `beenden(_:satz:)` den `abschliessen`-Aufruf ergänzen:
 
 ```swift
             try aufnahme.abschliessen(
@@ -1200,9 +1200,9 @@ Expected: alle grün, auch die bestehenden Mitschnitt-Tests (sie vergleichen `Ge
                 })
 ```
 
-- [ ] **Step 4: Tests laufen lassen** — volle iOS-Tests wie in Task 5. Expected: grün.
+- [x] **Step 4: Tests laufen lassen** — volle iOS-Tests wie in Task 5. Expected: grün.
 
-- [ ] **Step 5: Commit** — `feat(sensorik): Aufnahme haelt Befestigungsart und Zaehlerblock fest`
+- [x] **Step 5: Commit** — `feat(sensorik): Aufnahme haelt Befestigungsart und Zaehlerblock fest`
 
 ---
 
@@ -1221,7 +1221,7 @@ Expected: alle grün, auch die bestehenden Mitschnitt-Tests (sie vergleichen `Ge
 - Consumes: `ZaehlerKoordinator` (Task 4), `GeraetModel.zaehlerZustand` (Task 5)
 - Produces: `SensorZeile.zaehlerText(meldung: ZaehlerMeldung?) -> String?`, `SensorZeile.artName(_: Befestigungsart) -> String`, `SensorZeile.befestigungText(_: BefestigungsWahl?) -> String`
 
-- [ ] **Step 1: Failing test für die Texte**
+- [x] **Step 1: Failing test für die Texte**
 
 ```swift
 #if DEBUG
@@ -1251,9 +1251,9 @@ struct SensorZeileTextTests {
 #endif
 ```
 
-- [ ] **Step 2: Test scheitert** — `… -only-testing:FitnessMemberTests/SensorZeileTextTests -quiet` → „has no member 'zaehlerText'“.
+- [x] **Step 2: Test scheitert** — `… -only-testing:FitnessMemberTests/SensorZeileTextTests -quiet` → „has no member 'zaehlerText'“.
 
-- [ ] **Step 3: Umsetzen**
+- [x] **Step 3: Umsetzen**
 
 `FitnessMemberApp.swift`: eine Quelle für beide Koordinatoren.
 
@@ -1428,7 +1428,7 @@ Ableitungen (`nonisolated static`, wie `text(zustand:rateHz:)`):
 	</array>
 ```
 
-- [ ] **Step 4: `xcodegen generate`, volle Tests, Release-Build, Sichtprüfung**
+- [x] **Step 4: `xcodegen generate`, volle Tests, Release-Build, Sichtprüfung**
 
 Run (aus `apps/ios-member`, nach `pgrep -lx xcodebuild` und `df -h /`):
 1. `xcodebuild test -scheme FitnessMember -destination 'id=A2FB7461-E303-4CFE-AA08-9AC1B8C41707' -quiet` → grün.
@@ -1436,7 +1436,7 @@ Run (aus `apps/ios-member`, nach `pgrep -lx xcodebuild` und `df -h /`):
 3. `plutil -p` auf die gebaute Debug-`Info.plist` → enthält `UIBackgroundModes`; die Release-`Info.plist` nicht.
 4. Sichtprüfung im Simulator per ID: Gerät öffnen, Sensor-Zeile zeigt „Sensor verbinden“; ohne Sensor erscheint die zweite Zeile erst mit einem offenen Satz und zeigt „Stapel (Vorschlag)“ und „zählt nicht: kein Sensor“; das Menü listet die sechs Arten. Screenshot ablegen.
 
-- [ ] **Step 5: Commit** (inkl. `project.pbxproj`) — `feat(geraet): Sensor-Zeile zeigt Befestigung und Zaehlerstand, Rad mit Haptik (Debug)`
+- [x] **Step 5: Commit** (inkl. `project.pbxproj`) — `feat(geraet): Sensor-Zeile zeigt Befestigung und Zaehlerstand, Rad mit Haptik (Debug)`
 
 ---
 
@@ -1447,17 +1447,17 @@ Run (aus `apps/ios-member`, nach `pgrep -lx xcodebuild` und `df -h /`):
 - Modify: `data/sensoraufnahmen/README.md` (neue Felder beim Einlesen)
 - Modify: dieser Plan (Häkchen)
 
-- [ ] **Step 1: README ergänzen** — unter „Felder in `korrekturen.json`“ einen Absatz:
+- [x] **Step 1: README ergänzen** — unter „Felder in `korrekturen.json`“ einen Absatz:
 
 ```markdown
 Ab E4 (14. Oktober 2026) schreibt die App `befestigungsart`, `befestigungsartQuelle` (`vorschlag` oder `gewaehlt`) und den `zaehler`-Block (live gezählt, Herkunft, Ereignisse) in `aufnahme.json`. Beim Einlesen: eine gewählte Art gilt; eine vorgeschlagene nur, wenn Notiz und Signal nicht widersprechen, sonst Tim fragen. `zaehler.gezaehlt` gegen das Label zeigt, wie der Live-Zähler mit dem Profil seines Builds lag; der Gütebericht rechnet trotzdem immer mit dem aktuellen Profil neu.
 ```
 
-- [ ] **Step 2: Spec-Kopf** — `**Umgesetzt:**`-Zeile um „E4 auf Branch `claude/sensor-e4` (14. Oktober 2026), Abschnitt 6.6 wartet auf die Messung am iPhone.“ ergänzen.
+- [x] **Step 2: Spec-Kopf** — `**Umgesetzt:**`-Zeile um „E4 auf Branch `claude/sensor-e4` (14. Oktober 2026), Abschnitt 6.6 wartet auf die Messung am iPhone.“ ergänzen.
 
-- [ ] **Step 3: Volles Testset** — `pnpm typecheck`, `pnpm test`, `pnpm test:integration`, `swift test --package-path apps/ios-member/Packages/Sensorik` (Gütebericht unverändert), `xcodebuild test …`. Alle grün, Ausgaben im Bericht nennen.
+- [x] **Step 3: Volles Testset** — `pnpm typecheck`, `pnpm test`, `pnpm test:integration`, `swift test --package-path apps/ios-member/Packages/Sensorik` (Gütebericht unverändert), `xcodebuild test …`. Alle grün, Ausgaben im Bericht nennen.
 
-- [ ] **Step 4: Gerätebuild auf Just4Us** (nach `pgrep -lx xcodebuild`):
+- [x] **Step 4: Gerätebuild auf Just4Us** (nach `pgrep -lx xcodebuild`):
 
 ```bash
 cd apps/ios-member
@@ -1467,9 +1467,9 @@ xcrun devicectl device install app --device 9945091B-EC2C-5649-8159-54D2547F99EF
 
 Expected: „App installed“. `derivedDataPath` danach wieder löschen (`rm -rf /tmp/claude-e4-dd`), der Platz ist knapp.
 
-- [ ] **Step 5: Commit** — `docs(sensorik): E4 umgesetzt, Einlesen kennt Befestigungsquelle und Zaehlerblock`
+- [x] **Step 5: Commit** — `docs(sensorik): E4 umgesetzt, Einlesen kennt Befestigungsquelle und Zaehlerblock`
 
-- [ ] **Step 6: Geräte-Checkliste für Tim** (Spec 6.8) in den Bericht, nicht abhaken — Tim prüft am iPhone:
+- [x] **Step 6: Geräte-Checkliste für Tim** (Spec 6.8) in den Bericht, nicht abhaken — Tim prüft am iPhone:
   1. Befestigung wählen bzw. Vorschlag prüfen, Sätze je verfügbarer Art; Rad folgt, Haptik je Wiederholung
   2. Drehen nach der ersten Zählung → keine Sprünge mehr; gesicherter Satz hat `korrigiert`
   3. Handy in der Tasche (gesperrt) während des Satzes; Zahl beim Zurückkommen — dabei die 60-s-Messungen aus 6.6 (gesperrt, Tasche) als Aufnahmen
