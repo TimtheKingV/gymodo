@@ -16,14 +16,10 @@ struct FitnessMemberApp: App {
     #if DEBUG
     /// Eine Instanz fuer die ganze App: die Verbindung ueberlebt den Wechsel
     /// zwischen Geraeten (Spec Sensor-Anbindung 5.3). Der CBCentralManager
-    /// entsteht erst beim Tap auf "Sensor verbinden".
-    @State private var sensorAufnahme = SensorAufnahmeKoordinator(
-        quelle: BluetoothSensorQuelle(),
-        wurzel: URL.documentsDirectory.appendingPathComponent("Sensoraufnahmen"),
-        geraet: .init(
-            model: Laufzeitkontext.modellkennung(),
-            os: "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)",
-            appBuild: Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""))
+    /// entsteht erst beim Tap auf "Sensor verbinden". Aufnahme und Zaehler
+    /// hoeren auf dieselbe Quelle, jeder mit eigenem Strom.
+    @State private var sensorAufnahme: SensorAufnahmeKoordinator
+    @State private var satzZaehler: ZaehlerKoordinator
     #endif
     private let apiClient: APIClient
 
@@ -34,6 +30,18 @@ struct FitnessMemberApp: App {
         // Vor dem ersten Video: die Kategorie gilt erst fuer Spieler, die
         // danach anlaufen. Scheitert sie, bleibt die App benutzbar.
         try? AudioSitzung.einrichten()
+
+        #if DEBUG
+        let quelle = BluetoothSensorQuelle()
+        _sensorAufnahme = State(initialValue: SensorAufnahmeKoordinator(
+            quelle: quelle,
+            wurzel: URL.documentsDirectory.appendingPathComponent("Sensoraufnahmen"),
+            geraet: .init(
+                model: Laufzeitkontext.modellkennung(),
+                os: "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)",
+                appBuild: Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "")))
+        _satzZaehler = State(initialValue: ZaehlerKoordinator(quelle: quelle))
+        #endif
 
         let session = SessionStore(backend: SupabaseAuthBackend())
         let client = APIClient(baseURL: AppConfig.apiBaseURL) { await session.currentAccessToken() }
@@ -57,7 +65,7 @@ struct FitnessMemberApp: App {
                 .environment(pendingTagStore)
                 .environment(videoVorrat)
                 #if DEBUG
-                .sensorInstallieren(sensorAufnahme)
+                .sensorInstallieren(sensorAufnahme, zaehler: satzZaehler)
                 #endif
                 .task {
                     await sessionStore.restoreSession()
@@ -87,8 +95,13 @@ struct FitnessMemberApp: App {
 
 private extension View {
     #if DEBUG
-    func sensorInstallieren(_ koordinator: SensorAufnahmeKoordinator) -> some View {
-        environment(koordinator).task { koordinator.starten() }
+    func sensorInstallieren(_ koordinator: SensorAufnahmeKoordinator, zaehler: ZaehlerKoordinator) -> some View {
+        environment(koordinator).environment(zaehler).task {
+            // Zaehler zuerst: verbindet der Aufnahme-Koordinator beim Start
+            // den gemerkten Sensor, soll der Zaehler die Kante schon hoeren.
+            zaehler.starten()
+            koordinator.starten()
+        }
     }
     #endif
 }

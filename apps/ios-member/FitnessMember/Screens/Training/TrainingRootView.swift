@@ -17,6 +17,7 @@ struct TrainingRootView: View {
     @Environment(PendingTagStore.self) private var pendingTag
     #if DEBUG
     @Environment(SensorAufnahmeKoordinator.self) private var sensorAufnahme
+    @Environment(ZaehlerKoordinator.self) private var satzZaehler
     #endif
     @Environment(\.scenePhase) private var scenePhase
 
@@ -588,14 +589,17 @@ struct TrainingRootView: View {
         // Im Release gibt es keinen Mitschnitt; im Debug-Build ist es der
         // Sensor-Koordinator.
         var mitschnitt: (any SatzMitschnitt)?
+        var zaehler: (any SatzZaehler)?
         #if DEBUG
         mitschnitt = sensorAufnahme
+        zaehler = satzZaehler
         #endif
         return GeraetModel(
             station: station, uebungId: gewaehlt, token: token,
             bootstrap: bootstrap, loader: apiClient, sessions: sessions,
             enqueue: { katalog.enqueue($0); Task { await katalog.flushPending() } },
             mitschnitt: mitschnitt,
+            zaehler: zaehler,
             startwerte: startwerte
         )
     }
