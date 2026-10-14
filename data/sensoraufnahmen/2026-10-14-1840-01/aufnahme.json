@@ -1,0 +1,43 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "endedAt" : "2026-10-14T18:40:45+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "dc9ef23c-381b-458e-b1d7-c1507fade957",
+    "exerciseId" : "bc4fd151-5498-49dc-9e90-abf7fe6c9a34",
+    "exerciseName" : "Latzug · Obergriff",
+    "machineId" : null,
+    "machineName" : "Latzugstation + V-Griff",
+    "sessionId" : "72D27863-2AD2-42AA-B7AB-243A75BE20C8",
+    "setId" : "06C379BA-A955-4E47-9B50-85CF87725D7E",
+    "setIndex" : 3
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 10,
+    "weightKg" : 40
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-14T18:40:12+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 122.34,
+      "median" : 0,
+      "p95" : 61.52
+    },
+    "luecken" : 0,
+    "pakete" : 1636,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  }
+}

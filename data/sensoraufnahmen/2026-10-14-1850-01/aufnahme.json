@@ -1,0 +1,43 @@
+{
+  "abschluss" : "abgebrochen",
+  "befestigung" : null,
+  "endedAt" : "2026-10-14T18:50:33+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "d85056b7-89b3-4a9d-8a31-404d03e836a9",
+    "exerciseId" : "55da3aa2-28ad-4872-b328-871751c5fc2b",
+    "exerciseName" : "Latziehen an der Hebelmaschine",
+    "machineId" : null,
+    "machineName" : "Latmaschine mit geführten Hebeln",
+    "sessionId" : null,
+    "setId" : null,
+    "setIndex" : null
+  },
+  "label" : {
+    "problemFlag" : null,
+    "reps" : null,
+    "weightKg" : null
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-14T18:50:31+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 146.52,
+      "median" : 0,
+      "p95" : 61.31
+    },
+    "luecken" : 0,
+    "pakete" : 94,
+    "rateIstHz" : 50.9,
+    "verworfeneBytes" : 0
+  }
+}

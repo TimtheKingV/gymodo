@@ -1,0 +1,43 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "endedAt" : "2026-10-14T18:32:58+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "e5a65502-e459-41fd-b370-3dc2954b0a28",
+    "exerciseId" : "c98c7185-30ec-4968-9e83-803392756c6e",
+    "exerciseName" : "High-Bar-Kniebeuge",
+    "machineId" : null,
+    "machineName" : "Langhantel",
+    "sessionId" : "72D27863-2AD2-42AA-B7AB-243A75BE20C8",
+    "setId" : "C22846C1-13EE-4D10-A30C-3B753AE1FBAE",
+    "setIndex" : 2
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 20,
+    "weightKg" : 7.5
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-14T18:32:04+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 123.07,
+      "median" : 0,
+      "p95" : 60.73
+    },
+    "luecken" : 0,
+    "pakete" : 2648,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  }
+}

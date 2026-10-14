@@ -1,0 +1,43 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : "Gewichtsstapel",
+  "endedAt" : "2026-10-14T17:51:58+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "1fe8305c-ec8d-424a-9a45-2f0f27e787ee",
+    "exerciseId" : "7cbbab6f-f532-4283-9573-855f5d7bbb06",
+    "exerciseName" : "Schulterpresse",
+    "machineId" : null,
+    "machineName" : "Schulterpresse",
+    "sessionId" : "72D27863-2AD2-42AA-B7AB-243A75BE20C8",
+    "setId" : "78AA3D29-6622-4BD0-8921-D66014954EFF",
+    "setIndex" : 3
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 12,
+    "weightKg" : 15
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-14T17:51:18+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 120.08,
+      "median" : 0,
+      "p95" : 60.67
+    },
+    "luecken" : 0,
+    "pakete" : 1994,
+    "rateIstHz" : 49.8,
+    "verworfeneBytes" : 0
+  }
+}
