@@ -2,7 +2,7 @@
 
 **Stand:** 10. Oktober 2026
 **Status:** Entschieden, bereit für den Umsetzungsplan. Abschnitt 6.6 (Hintergrund am iPhone) wird im ersten Schritt von E4 ausgefüllt.
-**Umgesetzt:** E1, E2, E3 auf Branch `claude/sensor-wiederholungszaehler-spec` (10. Oktober 2026). E4/E5: eigener Plan; Gymtavo-Katalog Etappe 4 ist inzwischen gemergt.
+**Umgesetzt:** E1, E2, E3 auf Branch `claude/sensor-wiederholungszaehler-spec` (10. Oktober 2026). E4/E5: eigener Plan; Gymtavo-Katalog Etappe 4 ist inzwischen gemergt. Für E4 gilt der Nachtrag vom 14. Oktober 2026.
 **Vorbedingung:** Teilprojekt A ist auf `master` (`2026-09-19-sensor-anbindung-aufzeichnung-design.md`, im Folgenden „Spec A“). Für E4 zusätzlich: Gymtavo-Katalog Etappe 4 (iOS) ist gemergt, weil beide `GeraetModel` ändern.
 **Verhältnis zu anderen Dokumenten:** untergeordnet gegenüber `2026-08-28-fitness-retrofit-m1-design.md` und `2026-08-30-designsystem.md` — mit einer Ausnahme: **Diese Spec ändert die Produktgrenze** aus Blueprint §2.3, M1 §4.3 und Designsystem §10 (Abschnitt 3). Die Nachträge dort verweisen hierher.
 
@@ -367,3 +367,20 @@ struct ZaehlerErgebnis: Equatable, Sendable {
 
 - Die Migration heißt `0049_satz_herkunft.sql`, nicht `0048` (Abschnitt 6.1: „heute wäre es `0048`“ — die Nummer war zur Umsetzung vergeben).
 - Die CHECK-Bedingung aus 6.1 enthält in beiden gezählten Zweigen (`gemessen`, `korrigiert`) zusätzlich `volume_counted is not null`, weil eine CHECK-Bedingung bei NULL besteht und `volume_counted = volume` bzw. `volume_counted <> volume` sonst mit NULL durchgehen würde.
+
+## Nachtrag vom 14. Oktober 2026 (vor dem Plan für E4)
+
+Am 14. Oktober gab es die ersten echten Sätze (Gütebericht: Stapel nach Profil 2 auf dem Entwicklungsset 19 von 19 exakt, Kurz- und Langhantel weit vom Tor). Tim will den Zähler trotzdem sofort live im Debug-Build sehen, um beim Training direkt Rückmeldung geben zu können. E4 kommt komplett nach 6.4–6.8, mit diesen Abweichungen:
+
+1. **Kontext an der Station.** Seit Gymtavo-Katalog Etappe 4 hängt der Satz an einer `Station` (Gerät oder Gerätetyp); am Typ gibt es keine `machineId`. `SatzZaehlerKontext` trägt deshalb `station: Station` statt `machineId` (wie `SatzMitschnittKontext`). Die Befestigungsart wird je `station.schluessel` + `exerciseId` gemerkt, nicht je `machineId + exerciseId` (6.7).
+2. **Vorschlag statt Pflichtauswahl.** Ist für den Kontext keine Art gemerkt, schlägt die App eine aus dem Gerätetyp vor, statt „Befestigung wählen“ zu zeigen (6.7). Regel nach `equipmentModel.name`, in dieser Reihenfolge:
+   - enthält „Kurzhantel“ → `kurzhantel`
+   - enthält „Langhantel“ oder das Wort „SZ“ → `langhantel`
+   - sonst, bei Kategorie `kraft` → `stapel`
+   - sonst (Cardio) kein Vorschlag; dort ist der Umfang ohnehin keine Wiederholung.
+
+   Der Zähler zählt mit dem Vorschlag sofort. Die Sensor-Zeile zeigt ihn als solchen, z. B. „Stapel (Vorschlag) · zählt“; ein Tipp öffnet die sechs Arten, die Wahl wird gemerkt, „(Vorschlag)“ fällt weg. `zaehltNicht(.keineBefestigung)` bleibt für den Fall ohne Vorschlag. Begründung: weniger Tippen beim Testen; der Fall „falscher Vorschlag“ fällt beim Zählen auf und wird mit einem Tipp behoben.
+3. **Herkunft der Art in der Aufnahme.** `aufnahme.json` bekommt neben `befestigungsart` das Feld `befestigungsartQuelle`: `"vorschlag"`, `"gewaehlt"` oder `null` (keine Art). Beim Einlesen in `korrekturen.json` gilt eine vorgeschlagene Art erst als bestätigt, wenn Tims Notiz oder das Signal nicht widerspricht. Das Präfix im Freitext (`kurzhantel: …`) entfällt.
+4. **Debug zählt jede Art**, auch nicht freigegebene (wie Abschnitt 7 für den Debug-Build ohnehin vorsieht). Mitglieder sehen nichts; alles bleibt `#if DEBUG` bis E5.
+5. **Hintergrund (6.6) blockiert nicht.** `UIBackgroundModes: [bluetooth-central]` kommt mit E4. Die 60-s-Messungen (gesperrt, in der Tasche) macht Tim beim ersten Training mit dem E4-Build; das Ergebnis wird danach in 6.6 eingetragen. Bis dahin schützt die 0,5-s-Lücke aus 5.3: drosselt iOS, steht der Zähler auf „Zahl prüfen“.
+6. **Herkunft beim Sichern geht nach Prod.** Sätze aus dem Debug-Build tragen `gemessen` bzw. `korrigiert` mit `volumeCounted` und `repEvents` (Migration 0049 ist auf Prod). Das sind Tims eigene Testsätze; Anzeige der Herkunft bleibt ausgeschlossen (Abschnitt 8).
