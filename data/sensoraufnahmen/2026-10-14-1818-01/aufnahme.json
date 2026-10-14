@@ -1,0 +1,43 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "endedAt" : "2026-10-14T18:18:51+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "7ef892a2-0e86-424b-b357-ce4186547437",
+    "exerciseId" : "df2f2ae5-c60a-4ffd-9ece-e9b6e2dadea0",
+    "exerciseName" : "Kurzhantel-Bizepscurl – stehend",
+    "machineId" : null,
+    "machineName" : "Kurzhantel",
+    "sessionId" : "72D27863-2AD2-42AA-B7AB-243A75BE20C8",
+    "setId" : "E6A85C36-137F-437D-BE3B-D5FFA6F61F14",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 15,
+    "weightKg" : 8
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-14T18:18:02+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 149.84,
+      "median" : 0,
+      "p95" : 62.6
+    },
+    "luecken" : 0,
+    "pakete" : 2472,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  }
+}

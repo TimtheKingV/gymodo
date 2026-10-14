@@ -1,0 +1,43 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "endedAt" : "2026-10-14T18:07:15+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "1d0a19d4-cc54-42b0-89ef-6901938dcf83",
+    "exerciseId" : "8f73e7b5-132a-4fb9-a1f3-418d1ce9adfb",
+    "exerciseName" : "Brustpresse – Obergriff",
+    "machineId" : null,
+    "machineName" : "Brustpresse",
+    "sessionId" : "72D27863-2AD2-42AA-B7AB-243A75BE20C8",
+    "setId" : "3D3E6CBE-95EB-4DAA-B45D-34652416E79D",
+    "setIndex" : 2
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 10,
+    "weightKg" : 30
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-14T18:05:30+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 542.54,
+      "median" : 0,
+      "p95" : 61.66
+    },
+    "luecken" : 0,
+    "pakete" : 5210,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  }
+}

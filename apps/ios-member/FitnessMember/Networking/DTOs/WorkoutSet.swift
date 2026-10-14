@@ -42,8 +42,9 @@ struct SetWrite: Codable, Equatable {
     /// staende dort die Ankunft des ersten PUT, nach einem Offline-Training
     /// Stunden nach dem Start (Sammelstelle Punkt 10).
     var sessionStartedAt: String? = nil
-    /// Bis der Zaehler im Satzpfad laeuft (Sensor-Spec B E4) immer
-    /// eingegeben. Zaehlerstand und Ereignisse nur bei gemessen/korrigiert;
+    /// Im Debug-Build setzt GeraetModel die Herkunft aus dem Zaehler
+    /// (Sensor-Spec B E4), sonst eingegeben. Zaehlerstand und Ereignisse
+    /// nur bei gemessen/korrigiert;
     /// nil wird nicht mitgeschickt.
     var volumeSource: VolumeSource = .eingegeben
     var volumeCounted: Int? = nil

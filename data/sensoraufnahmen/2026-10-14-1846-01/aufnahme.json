@@ -1,0 +1,43 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "endedAt" : "2026-10-14T18:47:47+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "6c6eaa53-c4ff-45c0-8a02-b22b2ac24e3d",
+    "exerciseId" : "a0f7b5fe-8383-4500-ab35-9d5fb5f23b9c",
+    "exerciseName" : "Bauchbeugen am Gerät",
+    "machineId" : null,
+    "machineName" : "Bauchmaschine",
+    "sessionId" : "72D27863-2AD2-42AA-B7AB-243A75BE20C8",
+    "setId" : "5005859A-A991-44E5-A578-D4DE6FC7380B",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 25,
+    "weightKg" : 40
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-14T18:46:49+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 119.14,
+      "median" : 0,
+      "p95" : 60.5
+    },
+    "luecken" : 0,
+    "pakete" : 2854,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  }
+}

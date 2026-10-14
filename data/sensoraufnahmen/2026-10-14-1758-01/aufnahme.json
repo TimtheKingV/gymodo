@@ -1,0 +1,43 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "endedAt" : "2026-10-14T17:59:18+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "44cf0bb6-ee84-41dc-bc1d-21ebe2d99012",
+    "exerciseId" : "50436abc-a484-4001-a07f-f4e9557afcd3",
+    "exerciseName" : "Trizepsstrecken am Gerät",
+    "machineId" : null,
+    "machineName" : "Trizepsmaschine",
+    "sessionId" : "72D27863-2AD2-42AA-B7AB-243A75BE20C8",
+    "setId" : "05F7C16F-C7AA-4A96-9FB0-7B1E631EEA58",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 10,
+    "weightKg" : 20
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-14T17:58:50+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 150.36,
+      "median" : 0,
+      "p95" : 61.58
+    },
+    "luecken" : 0,
+    "pakete" : 1378,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  }
+}

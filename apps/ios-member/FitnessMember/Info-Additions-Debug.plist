@@ -17,5 +17,11 @@
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<!-- Sensor-Spec B 6.6: der Zaehler hoert weiter, wenn der Bildschirm
+	     sperrt oder das Handy in der Tasche steckt. Nur Debug bis E5. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+	</array>
 </dict>
 </plist>

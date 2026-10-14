@@ -233,7 +233,13 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
                 label: .init(weightKg: satz?.weightKg, reps: satz?.reps, problemFlag: satz?.problemFlag),
                 akkuProzent: quelle.zustand.akkuProzent,
                 statistik: aufnahmeStatistik.ergebnis(verworfeneBytes: quelle.verworfeneBytes - verworfenBeiStart),
-                ende: jetzt(), endeT: uhr())
+                ende: jetzt(), endeT: uhr(),
+                befestigungsart: satz?.befestigung?.art,
+                befestigungsartQuelle: satz?.befestigung?.quelle,
+                zaehler: satz.flatMap { satz in
+                    satz.zaehler.map { .init(algo: $0.repEvents.algo, gezaehlt: $0.gezaehlt,
+                                             herkunft: satz.volumeSource.rawValue, ereignisse: $0.repEvents) }
+                })
         } catch {
             melden(error)
         }

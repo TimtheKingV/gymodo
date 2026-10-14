@@ -160,6 +160,12 @@ struct GeraetView: View {
         }
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
         #endif
+        // Spec B 6.5: ein kurzes Signal je gezaehlter Wiederholung, nicht
+        // beim Wechsel nach bereit, pruefen oder vonHand.
+        .sensoryFeedback(trigger: modell.zaehlerZustand) { _, neu in
+            if case .zaehlt = neu { return .increase }
+            return nil
+        }
         .testnotizScreen(kontext: testnotizKontext)
         .trainingSteuerung(
             istOffen: $steuerungOffen,
@@ -183,6 +189,7 @@ struct GeraetView: View {
         ]
         #if DEBUG
         kontext["sensor"] = sensorAufnahme.quelle.zustand.istVerbunden ? "verbunden" : "aus"
+        kontext["zaehler"] = String(describing: modell.zaehlerZustand)
         #endif
         return kontext
     }

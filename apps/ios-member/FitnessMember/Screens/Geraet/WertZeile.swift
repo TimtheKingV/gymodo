@@ -133,7 +133,7 @@ struct WertZeile: View {
                     werte: modell.umfangsWerte.map(Double.init),
                     auswahl: Binding(
                         get: { Double(modell.umfang) },
-                        set: { modell.umfang = Int($0) }
+                        set: { modell.umfangGedreht(Int($0)) }
                     ),
                     // Dieselbe accent-Linie wie bei der Belastung, nur
                     // duenner (siehe UnterstrichStil): die Linie sagt "hier
@@ -159,6 +159,13 @@ struct WertZeile: View {
                 .font(.system(size: 12))
                 .foregroundStyle(DesignSystem.Color.textFaint)
                 .accessibilityHidden(true)
+            // Spec B 6.5: Luecke oder Unsicherheit -- die Zahl steht, das
+            // Mitglied soll sie ansehen, bevor es sichert.
+            if case .pruefen = modell.zaehlerZustand {
+                Text("Zahl prüfen")
+                    .font(.system(size: 13).weight(.semibold))
+                    .foregroundStyle(DesignSystem.Color.danger)
+            }
         }
     }
 

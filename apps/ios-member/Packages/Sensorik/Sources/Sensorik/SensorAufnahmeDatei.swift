@@ -88,6 +88,19 @@ public struct SensorAufnahmeDatei: Codable, Equatable, Sendable {
         }
     }
 
+    /// Spec B 6.7: was der Zaehler im Satz gesehen hat. herkunft als Rohwert
+    /// (eingegeben/gemessen/korrigiert), weil der Typ dazu im App-Target liegt.
+    public struct Zaehler: Codable, Equatable, Sendable {
+        public var algo: String
+        public var gezaehlt: Int
+        public var herkunft: String
+        public var ereignisse: RepEvents
+
+        public init(algo: String, gezaehlt: Int, herkunft: String, ereignisse: RepEvents) {
+            self.algo = algo; self.gezaehlt = gezaehlt; self.herkunft = herkunft; self.ereignisse = ereignisse
+        }
+    }
+
     public var format: String
     public var startedAt: Date
     public var endedAt: Date?
@@ -96,6 +109,11 @@ public struct SensorAufnahmeDatei: Codable, Equatable, Sendable {
     public var kontext: Kontext
     public var label: Label
     public var befestigung: String?
+    // Optional mit Default: aeltere Aufnahmen dekodieren weiter (synthetisiert:
+    // decodeIfPresent). Die Formatkennung bleibt /1 (Spec B 6.7).
+    public var befestigungsart: Befestigungsart? = nil
+    public var befestigungsartQuelle: BefestigungsartQuelle? = nil
+    public var zaehler: Zaehler? = nil
     public var statistik: SensorStatistik.Ergebnis
     public var abschluss: Abschluss
 
@@ -117,6 +135,9 @@ public struct SensorAufnahmeDatei: Codable, Equatable, Sendable {
         try c.encode(kontext, forKey: .kontext)
         try c.encode(label, forKey: .label)
         try c.encode(befestigung, forKey: .befestigung)
+        try c.encode(befestigungsart, forKey: .befestigungsart)
+        try c.encode(befestigungsartQuelle, forKey: .befestigungsartQuelle)
+        try c.encode(zaehler, forKey: .zaehler)
         try c.encode(statistik, forKey: .statistik)
         try c.encode(abschluss, forKey: .abschluss)
     }

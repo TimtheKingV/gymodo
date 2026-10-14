@@ -79,7 +79,10 @@ public final class SensorAufnahme {
 
     public func abschliessen(_ abschluss: SensorAufnahmeDatei.Abschluss, kontext: SensorAufnahmeDatei.Kontext,
                       label: SensorAufnahmeDatei.Label, akkuProzent: Int?,
-                      statistik: SensorStatistik.Ergebnis, ende: Date, endeT: TimeInterval) throws {
+                      statistik: SensorStatistik.Ergebnis, ende: Date, endeT: TimeInterval,
+                      befestigungsart: Befestigungsart? = nil,
+                      befestigungsartQuelle: BefestigungsartQuelle? = nil,
+                      zaehler: SensorAufnahmeDatei.Zaehler? = nil) throws {
         // Ein abgeschlossener Datensatz ist die Wahrheit fuer den spaeteren
         // Zaehler und darf durch einen zweiten Aufruf nicht ueberschrieben werden.
         guard griff != nil else { throw Fehler.abgeschlossen }
@@ -94,6 +97,9 @@ public final class SensorAufnahme {
         datei.sensor.akkuProzent = akkuProzent ?? datei.sensor.akkuProzent
         datei.statistik = statistik
         datei.endedAt = ende
+        datei.befestigungsart = befestigungsart
+        datei.befestigungsartQuelle = befestigungsartQuelle
+        datei.zaehler = zaehler
         try kopfSchreiben()
     }
 

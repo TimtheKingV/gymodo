@@ -1,0 +1,43 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "endedAt" : "2026-10-14T18:13:16+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "d799051a-cd13-4cdf-adb9-5392a2adac8e",
+    "exerciseId" : "6efc9a3a-6462-480f-aa41-edf271d15861",
+    "exerciseName" : "Butterfly – Handgriffe",
+    "machineId" : null,
+    "machineName" : "Butterfly / Reverse-Fly-Kombigerät",
+    "sessionId" : "72D27863-2AD2-42AA-B7AB-243A75BE20C8",
+    "setId" : "56C3853D-7AE4-458B-8BA8-D5A1C0C007E2",
+    "setIndex" : 2
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 15,
+    "weightKg" : 52.5
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-14T18:12:32+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 120.79,
+      "median" : 0,
+      "p95" : 61.99
+    },
+    "luecken" : 0,
+    "pakete" : 2204,
+    "rateIstHz" : 49.8,
+    "verworfeneBytes" : 0
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+  "endedAt" : "2026-10-14T18:24:54+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "7ef892a2-0e86-424b-b357-ce4186547437",
+    "exerciseId" : "df2f2ae5-c60a-4ffd-9ece-e9b6e2dadea0",
+    "exerciseName" : "Kurzhantel-Bizepscurl – stehend",
+    "machineId" : null,
+    "machineName" : "Kurzhantel",
+    "sessionId" : "72D27863-2AD2-42AA-B7AB-243A75BE20C8",
+    "setId" : "E4C7AA58-4D21-4D7B-95D8-D3294DD03E8F",
+    "setIndex" : 2
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 17,
+    "weightKg" : 8
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-14T18:23:53+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 164.86,
+      "median" : 0,
+      "p95" : 61.47
+    },
+    "luecken" : 0,
+    "pakete" : 3040,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  }
+}

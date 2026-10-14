@@ -189,4 +189,38 @@ struct SensorAufnahmeTests {
         SensorAufnahme.verwaisteNachtragen(wurzel: w, zeitzone: Self.berlin)
         #expect(try json(fertig.ordner).abschluss == .gesichert)
     }
+
+    /// Spec B 6.7 und Nachtrag 14.10. Punkt 3: Art, Quelle und Zaehlerblock
+    /// stehen in aufnahme.json und kommen beim Lesen unveraendert zurueck.
+    @Test func befestigungsartUndZaehlerblockKommenZurueck() throws {
+        let aufnahme = try neu(wurzel())
+        let ereignisse = RepEvents(algo: "stapel/2", befestigungsart: .stapel, ereignisse: [], satzbeginn: 0)
+        try aufnahme.abschliessen(.gesichert, kontext: aufnahme.datei.kontext, label: .init(reps: 0),
+                                  akkuProzent: nil, statistik: .leer, ende: Self.start, endeT: 110,
+                                  befestigungsart: .stapel, befestigungsartQuelle: .vorschlag,
+                                  zaehler: .init(algo: "stapel/2", gezaehlt: 0, herkunft: "eingegeben",
+                                                 ereignisse: ereignisse))
+        let gelesen = try SensorAufnahmeLeser.lesen(ordner: aufnahme.ordner).datei
+        #expect(gelesen.befestigungsart == .stapel)
+        #expect(gelesen.befestigungsartQuelle == .vorschlag)
+        #expect(gelesen.zaehler?.algo == "stapel/2")
+        #expect(gelesen.zaehler?.ereignisse == ereignisse)
+    }
+
+    /// Aeltere Aufnahmen (alle bis 14.10.) haben die Felder nicht.
+    @Test func ohneDieNeuenFelderBleibtEineAufnahmeLesbar() throws {
+        let alt = Pfade.aufnahmen.appendingPathComponent("2026-10-14-1747-01")
+        let gelesen = try SensorAufnahmeLeser.lesen(ordner: alt).datei
+        #expect(gelesen.befestigungsart == nil)
+        #expect(gelesen.zaehler == nil)
+    }
+
+    /// Die Schluessel stehen immer da, auch als null -- wie befestigung.
+    @Test func dieNeuenSchluesselStehenAuchAlsNull() throws {
+        let datei = try SensorAufnahmeLeser.lesen(ordner: Pfade.aufnahmen.appendingPathComponent("2026-10-14-1747-01")).datei
+        let json = String(decoding: try JSONEncoder().encode(datei), as: UTF8.self)
+        #expect(json.contains("\"befestigungsart\":null"))
+        #expect(json.contains("\"befestigungsartQuelle\":null"))
+        #expect(json.contains("\"zaehler\":null"))
+    }
 }

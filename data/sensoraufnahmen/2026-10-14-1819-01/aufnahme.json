@@ -1,0 +1,43 @@
+{
+  "abschluss" : "abgebrochen",
+  "befestigung" : null,
+  "endedAt" : "2026-10-14T18:19:46+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "7ef892a2-0e86-424b-b357-ce4186547437",
+    "exerciseId" : "394bcd0e-54b8-4028-ad67-d28272b77bc2",
+    "exerciseName" : "Kurzhantelrudern – einarmig, abgestützt",
+    "machineId" : null,
+    "machineName" : "Kurzhantel",
+    "sessionId" : null,
+    "setId" : null,
+    "setIndex" : null
+  },
+  "label" : {
+    "problemFlag" : null,
+    "reps" : null,
+    "weightKg" : null
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-14T18:19:24+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 165.93,
+      "median" : 0,
+      "p95" : 61.72
+    },
+    "luecken" : 0,
+    "pakete" : 1119,
+    "rateIstHz" : 49.8,
+    "verworfeneBytes" : 0
+  }
+}

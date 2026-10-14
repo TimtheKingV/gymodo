@@ -8,8 +8,15 @@ public struct ZaehlerProfil: Equatable, Sendable {
     public enum Signal: Equatable, Sendable {
         /// Drehrate um die Achse mit der groessten Streuung: Hantel, Hebel, Kabelgriff.
         case drehrate
-        /// Geschwindigkeit entlang der Schwerkraft: Stapel, Koerper.
+        /// Geschwindigkeit entlang der Schwerkraft: Koerper.
         case geschwindigkeitVertikal
+        /// Geschwindigkeit aus dem Betrag der Beschleunigung minus 1 g: Stapel.
+        /// Der Betrag haengt nicht von der Lage ab; eine Verkippung in der
+        /// Bewegung, in der die Schwerkraft nicht nachgefuehrt wird, erzeugt
+        /// so keinen Versatz. Der Stapel faehrt senkrecht, quer kommt nichts
+        /// dazu. Setzt einen kalibrierten Betrag voraus: am 14.10. lag er in
+        /// Ruhe bei 0,997 g, das sind 0,03 m/s Versatz bei 0,12 Startschwelle.
+        case geschwindigkeitBetrag
     }
 
     public let art: Befestigungsart
@@ -60,7 +67,14 @@ public struct ZaehlerProfil: Equatable, Sendable {
                           mindestDauer: 0.6, hoechstDauer: 10, schwachAnteil: 0.4, taktBand: 2.5,
                           lueckeAb: 0.5, ruheDrehrate: 10, ruheBeschleunigung: 0.05,
                           achsenFenster: 1.0, leckZeit: 1.0)
-        case .stapel, .koerper:
+        case .stapel:
+            // Version 2 (14.10.): Betrag statt Projektion, siehe Signal.
+            ZaehlerProfil(art: art, version: 2, eingefrorenAm: nil, signal: .geschwindigkeitBetrag,
+                          tiefpassHz: 3, startSchwelle: 0.12, schwellenAnteil: 0.35,
+                          mindestDauer: 0.6, hoechstDauer: 10, schwachAnteil: 0.4, taktBand: 2.5,
+                          lueckeAb: 0.5, ruheDrehrate: 10, ruheBeschleunigung: 0.05,
+                          achsenFenster: 1.0, leckZeit: 1.0)
+        case .koerper:
             ZaehlerProfil(art: art, version: 1, eingefrorenAm: nil, signal: .geschwindigkeitVertikal,
                           tiefpassHz: 3, startSchwelle: 0.12, schwellenAnteil: 0.35,
                           mindestDauer: 0.6, hoechstDauer: 10, schwachAnteil: 0.4, taktBand: 2.5,
