@@ -28,7 +28,7 @@ enum Synthetik {
                 werte.append(SensorMesswert(
                     t: bundleT, beschleunigung: Vektor3(x: 0, y: 0, z: 1),
                     drehrate: Vektor3(x: 0, y: 200 * wert + stoerung, z: 0), winkel: Vektor3(x: 0, y: 0, z: 0)))
-            case .geschwindigkeitVertikal:
+            case .geschwindigkeitVertikal, .geschwindigkeitBetrag:
                 // wert ist hier die Beschleunigung in m/s^2 entlang z.
                 werte.append(SensorMesswert(
                     t: bundleT, beschleunigung: Vektor3(x: 0, y: 0, z: 1 + wert / 9.81),
@@ -45,7 +45,7 @@ enum Synthetik {
                 switch signal {
                 case .drehrate:
                     ablegen(abschnitt.amplitude * sin(phase))
-                case .geschwindigkeitVertikal:
+                case .geschwindigkeitVertikal, .geschwindigkeitBetrag:
                     // v = 0,4 m/s * sin -> a = dv/dt
                     let v0 = 0.4 * abschnitt.amplitude
                     ablegen(v0 * 2 * .pi / abschnitt.periode * cos(phase))

@@ -5,7 +5,7 @@ Tor je Art (Sensor-Spec B 5.5): ≥ 20 Sätze aus ≥ 3 Tagen, exakt ≥ 90 %, �
 
 | Art · Set | Sätze | Tage | exakt | ±1 | Rücknahmen |
 |---|---|---|---|---|---|
-| stapel (stapel/1) · Entwicklung | 20 | 1 | 79 % | 84 % | 5 % |
+| stapel (stapel/2) · Entwicklung | 20 | 1 | 100 % | 100 % | 5 % |
 | stapel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
 | langhantel (langhantel/1) · Entwicklung | 4 | 2 | 0 % | 0 % | 50 % |
 | langhantel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
@@ -28,10 +28,10 @@ Tor je Art (Sensor-Spec B 5.5): ≥ 20 Sätze aus ≥ 3 Tagen, exakt ≥ 90 %, �
 | 2026-10-14-1753-01 | stapel | 15 | 15 | – |
 | 2026-10-14-1755-01 | stapel | 15 | 15 | – |
 | 2026-10-14-1756-01 | stapel | 15 | 15 | – |
-| 2026-10-14-1758-01 | stapel | 10 | 9 | – |
-| 2026-10-14-1759-01 | stapel | 20 | 14 | – |
-| 2026-10-14-1801-01 | stapel | 15 | 0 | – |
-| 2026-10-14-1803-01 | stapel | 12 | 8 | – |
+| 2026-10-14-1758-01 | stapel | 10 | 10 | – |
+| 2026-10-14-1759-01 | stapel | 20 | 20 | – |
+| 2026-10-14-1801-01 | stapel | 15 | 15 | – |
+| 2026-10-14-1803-01 | stapel | 12 | 12 | – |
 | 2026-10-14-1805-01 | stapel | 10 | 8 | luecke |
 | 2026-10-14-1807-01 | stapel | 8 | 8 | – |
 | 2026-10-14-1810-01 | stapel | 17 | 17 | – |

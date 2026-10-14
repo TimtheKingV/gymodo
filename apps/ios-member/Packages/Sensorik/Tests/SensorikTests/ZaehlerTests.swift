@@ -108,7 +108,9 @@ struct ZaehlerTests {
 
     @Test func dasProfilKenntSeineAlgoKennung() {
         #expect(ZaehlerProfil.fuer(.langhantel).algo == "langhantel/1")
-        #expect(ZaehlerProfil.fuer(.stapel).signal == .geschwindigkeitVertikal)
+        #expect(ZaehlerProfil.fuer(.stapel).algo == "stapel/2")
+        #expect(ZaehlerProfil.fuer(.stapel).signal == .geschwindigkeitBetrag)
+        #expect(ZaehlerProfil.fuer(.koerper).signal == .geschwindigkeitVertikal)
         #expect(ZaehlerProfil.fuer(.kurzhantel).signal == .drehrate)
     }
 
@@ -151,6 +153,8 @@ struct ZaehlerTests {
     /// Greifen leicht verkippt). Die Schwerkraftschaetzung holt ihn bis zum
     /// Satzbeginn nur teilweise ein; der Rest wird zu einem Gleichanteil der
     /// Geschwindigkeit. Ab Aufnahmebeginn waere er schon in der Schaetzung.
+    /// Nur koerper: der Stapel nimmt den Betrag, den eine Verkippung nicht
+    /// aendert (siehe eineVerkippungImSatzAendertDieStapelZahlNicht).
     @Test func einBeschleunigungsVersatzZiehtDenBeginnNichtInDenVorlauf() throws {
         let werte = Synthetik.satz(signal: .geschwindigkeitVertikal, abschnitte: [A(perioden: 10)]).map { m in
             guard m.t >= 1 else { return m }
@@ -158,7 +162,7 @@ struct ZaehlerTests {
                                                                   z: m.beschleunigung.z + 0.015),
                                   drehrate: m.drehrate, winkel: m.winkel)
         }
-        let ereignisse = Synthetik.zaehlen(werte, art: .stapel)
+        let ereignisse = Synthetik.zaehlen(werte, art: .koerper)
         #expect(Synthetik.anzahl(ereignisse) == 10)
         let erste = try #require(Self.ersteWiederholung(ereignisse))
         #expect(abs(erste.beginn - 3) <= 0.3)
@@ -180,5 +184,50 @@ struct ZaehlerTests {
         let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 10)], ruheVorher: 0)
             .filter { $0.t >= 0.5 }
         #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .langhantel)) == 10)
+    }
+
+    /// Stapel wie am 14.10. (Trizeps, Brustpresse): langsamer Hub, schnelles
+    /// Absenken. Der Hub bleibt unter 0,05 g und sieht damit fuer die
+    /// Ruhepruefung wie Ruhe aus; er darf weder als Ruhe-Grundlinie enden
+    /// noch die Wiederholungen gegeneinander verschieben.
+    @Test(arguments: [10, 15])
+    func stapelZaehltBeiLangsamemHub(wiederholungen: Int) {
+        let werte = Self.stapelSatz(wiederholungen: wiederholungen) { _ in Vektor3(x: 0, y: 0, z: 1) }
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .stapel)) == wiederholungen)
+    }
+
+    /// Die Scheibe kippt nach der ersten Wiederholung um 10 Grad (Sensor
+    /// rutscht, Stapel schlaegt an). In Bewegung wird die Schwerkraft nicht
+    /// nachgefuehrt; eine Projektion auf die alte Richtung saehe einen
+    /// Versatz von 1,5 Prozent g und liefe davon. Der Betrag sieht ihn nicht.
+    @Test func eineVerkippungImSatzAendertDieStapelZahlNicht() {
+        let kipp = 10 * Double.pi / 180
+        let werte = Self.stapelSatz(wiederholungen: 10) { t in
+            t < 5 ? Vektor3(x: 0, y: 0, z: 1) : Vektor3(x: sin(kipp), y: 0, z: cos(kipp))
+        }
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .stapel)) == 10)
+    }
+
+    /// Je Wiederholung 1,4 s Hub mit 0,2 m/s Spitze und 0,6 s Absenken mit
+    /// 0,47 m/s Spitze (gleicher Weg), 3 s Ruhe davor, 2 s danach. `richtung`
+    /// gibt die Lage der Schwerkraft im Sensor je Zeitpunkt.
+    private static func stapelSatz(wiederholungen: Int,
+                                   richtung: (Double) -> Vektor3) -> [SensorMesswert] {
+        let dt = 1.0 / 50
+        let hub = 1.4, ab = 0.6
+        let vHub = 0.2, vAb = vHub * hub / ab
+        var a: [Double] = Array(repeating: 0, count: 150)
+        for _ in 0..<wiederholungen {
+            for k in 0..<Int(hub / dt) { a.append(vHub * .pi / hub * cos(.pi * Double(k) * dt / hub)) }
+            for k in 0..<Int(ab / dt) { a.append(-vAb * .pi / ab * cos(.pi * Double(k) * dt / ab)) }
+        }
+        a += Array(repeating: 0, count: 100)
+        return a.enumerated().map { i, wert in
+            let t = Double(i / 2 * 2) * dt
+            let g = richtung(t)
+            let betrag = 1 + wert / 9.81
+            return SensorMesswert(t: t, beschleunigung: Vektor3(x: g.x * betrag, y: g.y * betrag, z: g.z * betrag),
+                                  drehrate: Vektor3(x: 0, y: 0, z: 0), winkel: Vektor3(x: 0, y: 0, z: 0))
+        }
     }
 }

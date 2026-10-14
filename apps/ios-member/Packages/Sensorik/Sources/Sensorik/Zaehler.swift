@@ -52,7 +52,7 @@ public struct Zaehler: Sendable {
         let rc = 1 / (2 * .pi * profil.tiefpassHz)
         alpha = dt / (rc + dt)
         schwelle = profil.startSchwelle
-        if profil.signal == .geschwindigkeitVertikal { achse = -1 } // braucht keine Achsensuche
+        if profil.signal != .drehrate { achse = -1 } // braucht keine Achsensuche
     }
 
     public var anzahl: Int { wiederholungen.count }
@@ -159,10 +159,18 @@ public struct Zaehler: Sendable {
             let g = schwerkraft ?? Vektor3(x: 0, y: 0, z: 1)
             let gBetrag = max(Self.betrag(g), 0.0001)
             let entlang = (m.beschleunigung.x * g.x + m.beschleunigung.y * g.y + m.beschleunigung.z * g.z) / gBetrag
-            let linear = (entlang - gBetrag) * 9.81
-            geschwindigkeit = geschwindigkeit * (1 - dt / profil.leckZeit) + linear * dt
-            return geschwindigkeit
+            return integrieren((entlang - gBetrag) * 9.81)
+        case .geschwindigkeitBetrag:
+            // Gegen 1 g statt gegen die geschaetzte Schwerkraft: die
+            // Schaetzung folgt auch einem langsamen Hub (er gilt als ruhig)
+            // und wuerde ihn sonst teilweise abziehen.
+            return integrieren((Self.betrag(m.beschleunigung) - 1) * 9.81)
         }
+    }
+
+    private mutating func integrieren(_ linear: Double) -> Double {
+        geschwindigkeit = geschwindigkeit * (1 - dt / profil.leckZeit) + linear * dt
+        return geschwindigkeit
     }
 
     // MARK: - Halbwellen
@@ -173,7 +181,11 @@ public struct Zaehler: Sendable {
         // kein Einschwingen erzeugt, das wie Bewegung aussieht.
         let f = (gefiltert ?? roh) + alpha * (roh - (gefiltert ?? roh))
         gefiltert = f
-        if !hinwegBegonnen, ruhig(m) {
+        // Beim Betrag keine Grundlinie: die leckende Integration hat keinen
+        // Gleichanteil, und ein langsamer Hub zu Satzbeginn gilt als ruhig.
+        // Die Grundlinie nahm ihn am 14.10. mit 0,1 bis 0,2 m/s auf, danach
+        // erreichten die Hubphasen die Schwelle nicht mehr.
+        if profil.signal != .geschwindigkeitBetrag, !hinwegBegonnen, ruhig(m) {
             // Nur aus ruhigen Messwerten: beginnt die Aufnahme mitten in der
             // Bewegung, laege die Grundlinie sonst auf einem Bewegungswert.
             // Zeitkonstante rund 0,5 s: folgt dem Ruhewert, ohne dass die
