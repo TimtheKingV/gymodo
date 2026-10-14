@@ -1329,6 +1329,17 @@ enum GeraetTestdaten {
         """), studioId: "s1")
     }
 
+    /// Cardio-Typ ohne Wiederholungen: der Zaehler hat hier keinen Vorschlag
+    /// fuer die Befestigung (Sensor-Spec B, Nachtrag 14.10. Punkt 2).
+    static var cardioTyp: Station {
+        Station(typ: dekodiere("""
+        {"id":"em9","name":"Ruderergometer","manufacturer":null,"photoPath":null,
+         "category":"cardio","loadUnit":"level","loadStep":1,"loadMin":1.0,"loadMax":10.0,
+         "settingDefinitions":[],
+         "exercises":[{"id":"e9","name":"Rudern","volumeKind":"meters","targetMin":500,"targetMax":2000}]}
+        """), studioId: "s1")
+    }
+
     static var maschine: BootstrapResponse.Machine { maschine(loadMax: "150.0") }
     static var maschineOhneMaximum: BootstrapResponse.Machine { maschine(loadMax: "null") }
 
