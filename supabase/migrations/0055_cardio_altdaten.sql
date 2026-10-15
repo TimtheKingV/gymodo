@@ -2,13 +2,23 @@
 -- Cardio-Saetze tragen load/volume. Erst NACH der App mit Cardio-Werten
 -- einspielen -- eine aeltere App liest load/volume als Pflichtfelder.
 --
+-- Seit Final-Review A speichert der Server Saetze einer alten App an einem
+-- Cardio-Geraet weiter wie vor E2 (load/volume), und die Lesewege leiten
+-- die Cardio-Werte daraus ab (cardioDesSatzes). Diese Funktion schreibt
+-- genau diese Saetze um: Zeilen mit load an einem Geraet mit nicht-leerer,
+-- vom Typ geerbter Liste. Sie ist wiederholbar und laesst sich nach dem
+-- Auslaufen der alten App erneut aufrufen.
+--
 -- Regel wie altEingabeUmwandeln (cardio.ts): Sekunden -> dauer_s, Meter ->
--- strecke_m, die Belastung je Einheit in ihre Spalte. Werte ausserhalb der
--- vererbten Liste des Geraets fallen weg. Jeder Wert wird in den Bereich
--- seiner Spalte gekappt, damit krumme Altdaten keinen CHECK reissen. Bleibt
--- nichts, bleibt der Satz unveraendert (er verletzte sonst workout_sets_art).
+-- strecke_m, die Belastung je Einheit in ihre Spalte, die Nebenbelastung
+-- nur, wenn die Belastung die Spalte nicht schon belegt. Werte ausserhalb
+-- der vererbten Liste des Geraets fallen weg. Jeder Wert wird gerundet und
+-- in den Bereich seiner Spalte gekappt, damit krumme Altdaten keinen CHECK
+-- reissen -- die Kappung steht IN jedem Zweig: GREATEST/LEAST ueberspringen
+-- NULL und machten sonst aus "kein Wert" -10 % bzw. 0 /min. Bleibt nichts,
+-- bleibt der Satz unveraendert (er verletzte sonst workout_sets_art).
 
-create function public.cardio_altdaten_umschreiben() returns void
+create or replace function public.cardio_altdaten_umschreiben() returns void
   language sql
   set search_path = ''
   as $$
@@ -30,14 +40,16 @@ create function public.cardio_altdaten_umschreiben() returns void
         then least(greatest(round(s.load)::int, 0), 100) end as stufe,
       case when l.load_unit = 'kmh' and 'kmh' = any(l.werte)
         then least(greatest(round(s.load, 1), 0), 50) end as kmh,
-      least(greatest(coalesce(
-        case when l.load_unit = 'pct' and 'steigung' = any(l.werte) then round(s.load, 1) end,
-        case when l.secondary_unit = 'pct' and 'steigung' = any(l.werte) then round(s.secondary_load, 1) end), -10), 40) as steigung_pct,
+      case when 'steigung' = any(l.werte) and l.load_unit = 'pct'
+             then least(greatest(round(s.load, 1), -10), 40)
+           when 'steigung' = any(l.werte) and l.secondary_unit = 'pct' and s.secondary_load is not null
+             then least(greatest(round(s.secondary_load, 1), -10), 40) end as steigung_pct,
       case when l.load_unit = 'watt' and 'watt' = any(l.werte)
         then least(greatest(round(s.load)::int, 0), 3000) end as watt,
-      least(greatest(coalesce(
-        case when l.load_unit = 'rpm' and 'frequenz' = any(l.werte) then round(s.load)::int end,
-        case when l.secondary_unit = 'rpm' and 'frequenz' = any(l.werte) then round(s.secondary_load)::int end), 0), 300) as frequenz
+      case when 'frequenz' = any(l.werte) and l.load_unit = 'rpm'
+             then least(greatest(round(s.load)::int, 0), 300)
+           when 'frequenz' = any(l.werte) and l.secondary_unit = 'rpm' and s.secondary_load is not null
+             then least(greatest(round(s.secondary_load)::int, 0), 300) end as frequenz
     from public.workout_sets s
     join liste l on l.id = s.equipment_model_id
     join public.exercises e on e.id = s.exercise_id

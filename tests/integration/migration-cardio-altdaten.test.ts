@@ -2,12 +2,32 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { createTestUser, serviceClient, uniqueEmail, userClient } from "./helpers/clients.js";
 
 // Testnotiz 14.10., 18:45 #7: Migration 0055 schreibt alte Cardio-Saetze um.
+// Jeder Test ruft die Funktion selbst auf (sie ist wiederholbar) und prueft
+// alle acht Cardio-Spalten -- ein NULL, das zu -10 % oder 0 /min wird, faellt
+// nur so auf (Final-Review G).
 const GYMTAVO = "00000000-0000-4000-8000-000000000001";
 const kennung = crypto.randomUUID();
+const SPALTEN = "load, volume, secondary_load, volume_source, volume_counted, rep_events, dauer_s, strecke_m, stufe, kmh, steigung_pct, watt, kcal, frequenz";
+const LEER = { dauer_s: null, strecke_m: null, stufe: null, kmh: null, steigung_pct: null, watt: null, kcal: null, frequenz: null };
+const UMGESCHRIEBEN = { load: null, volume: null, secondary_load: null, volume_source: "eingegeben", volume_counted: null, rep_events: null };
 
-let alterCardioSatz: string;
-let zuHoherSatz: string;
-let kraftSatz: string;
+const satz: Record<string, string> = {};
+
+async function umschreiben() {
+  const { error } = await serviceClient().rpc("cardio_altdaten_umschreiben");
+  expect(error).toBeNull();
+}
+
+async function zeile(id: string) {
+  const { data, error } = await serviceClient().from("workout_sets").select(SPALTEN).eq("id", id).single();
+  if (error) throw error;
+  // numeric kommt als Zahl oder Zeichenkette; fuer den Vergleich als Zahl.
+  const z = data as Record<string, unknown>;
+  for (const k of ["load", "secondary_load", "kmh", "steigung_pct"]) {
+    if (z[k] !== null) z[k] = Number(z[k]);
+  }
+  return z;
+}
 
 beforeAll(async () => {
   const admin = serviceClient();
@@ -27,69 +47,135 @@ beforeAll(async () => {
     .select("id").single();
   if (typError) throw typError;
 
+  const modellBasis = { studio_id: studio.id, category: "cardio", load_step: 1, load_min: 0 };
+  // Eine Sammel-Einfuegung setzt fehlende Spalten auf NULL statt auf den
+  // Default -- deshalb nennt jede Zeile cardio_werte.
   const { data: modelle, error: modellError } = await admin
     .from("equipment_models")
     .insert([
-      { studio_id: studio.id, name: `Cardio ${kennung}`, category: "cardio", load_unit: "level", load_step: 1, load_min: 0, catalog_model_id: typ.id },
-      { studio_id: studio.id, name: `Kraft ${kennung}`, category: "kraft", load_unit: "kg", load_step: 2.5, load_min: 0 },
+      // 0: Stufe, Liste vom Typ geerbt (zeit, stufe) -- ohne Steigung und Frequenz.
+      { ...modellBasis, name: `Cardio ${kennung}`, load_unit: "level", catalog_model_id: typ.id, cardio_werte: [] },
+      // 1: Kraft.
+      { studio_id: studio.id, name: `Kraft ${kennung}`, category: "kraft", load_unit: "kg", load_step: 2.5, load_min: 0, cardio_werte: [] },
+      // 2: Laufband mit Neigung als Nebenbelastung, Liste mit Steigung.
+      {
+        ...modellBasis, name: `Laufband ${kennung}`, load_unit: "kmh", load_step: 0.1,
+        secondary_unit: "pct", secondary_step: 0.5, secondary_min: 0, secondary_max: 15,
+        cardio_werte: ["zeit", "strecke", "kmh", "steigung"],
+      },
+      // 3: Laufband mit Neigung, Liste OHNE Steigung.
+      {
+        ...modellBasis, name: `Laufband ohne Neigung ${kennung}`, load_unit: "kmh", load_step: 0.1,
+        secondary_unit: "pct", secondary_step: 0.5, secondary_min: 0, secondary_max: 15,
+        cardio_werte: ["zeit", "kmh"],
+      },
+      // 4: Watt.
+      { ...modellBasis, name: `Ruder ${kennung}`, load_unit: "watt", load_step: 5, cardio_werte: ["zeit", "watt"] },
+      // 5: nur kcal -- aus load/volume laesst sich nichts davon ableiten.
+      { ...modellBasis, name: `Nur kcal ${kennung}`, load_unit: "level", cardio_werte: ["kcal"] },
     ])
     .select("id");
   if (modellError) throw modellError;
-
-  const { data: maschinen, error: maschineError } = await admin
-    .from("machines")
-    .insert([
-      { studio_id: studio.id, equipment_model_id: modelle![0]!.id, label: "C1" },
-      { studio_id: studio.id, equipment_model_id: modelle![1]!.id, label: "K1" },
-    ])
-    .select("id");
-  if (maschineError) throw maschineError;
+  const m = modelle!.map((x) => x.id);
 
   const { data: uebungen, error: uebungError } = await admin
     .from("exercises")
     .insert([
       { studio_id: studio.id, name: `Rudern ${kennung}`, volume_kind: "seconds", target_min: 60, target_max: 600 },
       { studio_id: studio.id, name: `Curl ${kennung}`, volume_kind: "reps", target_min: 8, target_max: 12 },
+      { studio_id: studio.id, name: `Laufen ${kennung}`, volume_kind: "meters", target_min: 100, target_max: 10000 },
     ])
     .select("id");
   if (uebungError) throw uebungError;
+  const [sekunden, wiederholungen, meter] = uebungen!.map((x) => x.id);
 
   const sessionId = crypto.randomUUID();
   const { error: sessionError } = await admin
     .from("workout_sessions").insert({ id: sessionId, studio_id: studio.id, user_id: userId });
   if (sessionError) throw sessionError;
 
-  alterCardioSatz = crypto.randomUUID();
-  zuHoherSatz = crypto.randomUUID();
-  kraftSatz = crypto.randomUUID();
   const basis = { studio_id: studio.id, user_id: userId, session_id: sessionId };
-  const { error: satzError } = await admin.from("workout_sets").insert([
-    { ...basis, id: alterCardioSatz, machine_id: maschinen![0]!.id, equipment_model_id: modelle![0]!.id, exercise_id: uebungen![0]!.id, set_index: 1, load: 5, volume: 1200 },
-    { ...basis, id: zuHoherSatz, machine_id: maschinen![0]!.id, equipment_model_id: modelle![0]!.id, exercise_id: uebungen![0]!.id, set_index: 2, load: 150, volume: 1200 },
-    { ...basis, id: kraftSatz, machine_id: maschinen![1]!.id, equipment_model_id: modelle![1]!.id, exercise_id: uebungen![1]!.id, set_index: 1, load: 40, volume: 10 },
-  ]);
-  if (satzError) throw satzError;
+  const zeilen: Array<[string, Record<string, unknown>]> = [
+    ["stufe", { equipment_model_id: m[0], exercise_id: sekunden, load: 5, volume: 1200 }],
+    ["zuHoch", { equipment_model_id: m[0], exercise_id: sekunden, load: 150, volume: 1200 }],
+    ["kraft", { equipment_model_id: m[1], exercise_id: wiederholungen, load: 40, volume: 10 }],
+    ["neigung", { equipment_model_id: m[2], exercise_id: sekunden, load: 8.46, secondary_load: 2.34, volume: 900 }],
+    ["meter", { equipment_model_id: m[2], exercise_id: meter, load: 10, secondary_load: 0, volume: 2000 }],
+    ["ohneNeigung", { equipment_model_id: m[3], exercise_id: sekunden, load: 9, secondary_load: 3, volume: 600 }],
+    ["nichts", { equipment_model_id: m[5], exercise_id: wiederholungen, load: 5, volume: 10 }],
+    [
+      "gemessen",
+      {
+        equipment_model_id: m[4], exercise_id: wiederholungen, load: 150, volume: 1,
+        volume_source: "gemessen", volume_counted: 1,
+        rep_events: {
+          algo: "test", befestigungsart: "langhantel", unsicher: null,
+          wiederholungen: [{ beginn: 0, umkehr: 1, ende: 2, ausschlag: 1, sicherheit: 1 }],
+        },
+      },
+    ],
+  ];
+  // Einzeln: eine Sammel-Einfuegung setzt fehlende Spalten auf NULL statt
+  // auf ihren Default.
+  for (const [i, [name, werte]] of zeilen.entries()) {
+    satz[name] = crypto.randomUUID();
+    const { error: satzError } = await admin
+      .from("workout_sets").insert({ ...basis, id: satz[name], set_index: i + 1, ...werte });
+    if (satzError) throw satzError;
+  }
 });
 
 describe("cardio_altdaten_umschreiben", () => {
-  it("schreibt alte Cardio-Saetze um und laesst Kraft stehen", async () => {
-    const admin = serviceClient();
-    const { error } = await admin.rpc("cardio_altdaten_umschreiben");
-    expect(error).toBeNull();
-    const { data: cardio } = await admin.from("workout_sets").select("load, volume, dauer_s, stufe").eq("id", alterCardioSatz).single();
-    expect(cardio).toEqual({ load: null, volume: null, dauer_s: 1200, stufe: 5 });
-    const { data: kraft } = await admin.from("workout_sets").select("load, volume, dauer_s").eq("id", kraftSatz).single();
-    expect(kraft).toEqual({ load: 40, volume: 10, dauer_s: null });
+  it("schreibt einen alten Satz um und setzt nur die Spalten der Liste", async () => {
+    await umschreiben();
+    expect(await zeile(satz.stufe!)).toEqual({ ...UMGESCHRIEBEN, ...LEER, dauer_s: 1200, stufe: 5 });
+  });
+
+  it("laesst Kraft stehen", async () => {
+    await umschreiben();
+    expect(await zeile(satz.kraft!)).toEqual({
+      load: 40, volume: 10, secondary_load: null, volume_source: "eingegeben", volume_counted: null, rep_events: null, ...LEER,
+    });
   });
 
   it("kappt Altwerte ausserhalb des Spaltenbereichs", async () => {
-    const { data } = await serviceClient().from("workout_sets").select("load, volume, dauer_s, stufe").eq("id", zuHoherSatz).single();
-    expect(data).toEqual({ load: null, volume: null, dauer_s: 1200, stufe: 100 });
+    await umschreiben();
+    expect(await zeile(satz.zuHoch!)).toEqual({ ...UMGESCHRIEBEN, ...LEER, dauer_s: 1200, stufe: 100 });
   });
 
-  it("ist wiederholbar", async () => {
-    const { error } = await serviceClient().rpc("cardio_altdaten_umschreiben");
-    expect(error).toBeNull();
+  it("die Nebenbelastung in Prozent wird die Steigung, gerundet auf ein Zehntel", async () => {
+    await umschreiben();
+    expect(await zeile(satz.neigung!)).toEqual({ ...UMGESCHRIEBEN, ...LEER, dauer_s: 900, kmh: 8.5, steigung_pct: 2.3 });
+  });
+
+  it("Meter werden die Strecke", async () => {
+    await umschreiben();
+    expect(await zeile(satz.meter!)).toEqual({ ...UMGESCHRIEBEN, ...LEER, strecke_m: 2000, kmh: 10, steigung_pct: 0 });
+  });
+
+  it("ohne Steigung und Frequenz in der Liste bleiben beide leer", async () => {
+    await umschreiben();
+    expect(await zeile(satz.ohneNeigung!)).toEqual({ ...UMGESCHRIEBEN, ...LEER, dauer_s: 600, kmh: 9 });
+  });
+
+  it("laesst einen Satz unveraendert, von dem nichts umzuschreiben ist", async () => {
+    await umschreiben();
+    expect(await zeile(satz.nichts!)).toEqual({
+      load: 5, volume: 10, secondary_load: null, volume_source: "eingegeben", volume_counted: null, rep_events: null, ...LEER,
+    });
+  });
+
+  it("setzt die Herkunft eines gezaehlten Altsatzes zurueck", async () => {
+    await umschreiben();
+    expect(await zeile(satz.gemessen!)).toEqual({ ...UMGESCHRIEBEN, ...LEER, watt: 150 });
+  });
+
+  it("ist wiederholbar: ein zweiter Lauf aendert nichts", async () => {
+    await umschreiben();
+    const vorher = await zeile(satz.neigung!);
+    await umschreiben();
+    expect(await zeile(satz.neigung!)).toEqual(vorher);
+    expect(vorher).toEqual({ ...UMGESCHRIEBEN, ...LEER, dauer_s: 900, kmh: 8.5, steigung_pct: 2.3 });
   });
 
   it("ist fuer angemeldete Nutzer gesperrt", async () => {
@@ -97,6 +183,6 @@ describe("cardio_altdaten_umschreiben", () => {
     await createTestUser(email);
     const client = await userClient(email);
     const { error } = await client.rpc("cardio_altdaten_umschreiben");
-    expect(error).not.toBeNull();
+    expect(error?.code).toBe("42501");
   });
 });
