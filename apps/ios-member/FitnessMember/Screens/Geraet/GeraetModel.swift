@@ -757,6 +757,13 @@ final class GeraetModel {
             satzAbgelehnt = "Dein Training läuft in \(ort). Beende es zuerst, dann sicherst du hier Sätze."
             return
         }
+        // Auch ueber "Melden und Satz sichern" und den Abschluss erreichbar,
+        // die am Knopf vorbeigehen: ein leerer Cardio-Satz wuerde der Server
+        // ablehnen und die Warteschlange still verwerfen.
+        guard kannSichern else {
+            satzAbgelehnt = "Trag mindestens einen Wert ein."
+            return
+        }
         satzAbgelehnt = nil
         // Erst nach der Ortspruefung: ein abgelehnter Satz laeuft weiter und
         // behaelt seine Zaehlung. Die Art vor ergebnis() lesen, das den Satz beendet.
@@ -847,7 +854,17 @@ final class GeraetModel {
     /// "Weiterer Satz" aus der Abschlussentscheidung heraus. Auch der
     /// Zusatzsatz bekommt seine Pause -- er ist ein Satz wie jeder andere,
     /// nur ausserhalb des Ziels.
-    func weitererSatz() { phase = .neuePause() }
+    ///
+    /// Am Cardio-Geraet ohne Pause: sie boete nur die Belastungsaenderung an,
+    /// und eine Belastung wird dort nie gesendet.
+    func weitererSatz() {
+        if istCardio {
+            phase = .eingabe
+            mitschnittBeginnen()
+        } else {
+            phase = .neuePause()
+        }
+    }
 
     /// Alle vier Aufrufer sind genau die Satzanfaenge: Mitschnitt und
     /// Zaehler beginnen deshalb hier gemeinsam.

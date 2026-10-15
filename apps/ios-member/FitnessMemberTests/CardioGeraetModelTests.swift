@@ -13,15 +13,18 @@ struct CardioGeraetModelTests {
            "cardio":{"zeit":600,"strecke":2100,"stufe":7}}]}
         """)
         return GeraetModel(
-            station: Station.testCardio("m1", werte: [.zeit, .strecke, .watt]),
+            station: Station.testCardio("m1", werte: [.zeit, .strecke, .watt], uebungen: Self.rudern),
             uebungId: "e1", token: nil, bootstrap: bootstrap, loader: FakeGeraetLoader(),
             sessions: WorkoutSessionStore(fileStore: SessionFileStore(
                 directory: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))),
-            enqueue: enqueue,
-            // Die Testmaschine hat keine Uebung, also gaelte .reps; ein echtes
-            // Cardio-Geraet hat Sekunden oder Meter und damit Satzziel 1.
-            satzZiel: { 1 })
+            enqueue: enqueue)
     }
+
+    /// Wie am echten Cardio-Geraet: Sekunden, damit Satzziel 1 gilt.
+    private static let rudern = """
+    {"id":"e1","name":"Rudern","volumeKind":"seconds","targetMin":600,"targetMax":1200},
+    {"id":"e2","name":"Intervall","volumeKind":"meters","targetMin":500,"targetMax":2000}
+    """
 
     private func kraftModell() -> GeraetModel {
         GeraetModel(
@@ -70,5 +73,43 @@ struct CardioGeraetModelTests {
         let modell = kraftModell()
         #expect(!modell.istCardio)
         #expect(modell.kannSichern)
+    }
+
+    @Test func leereWerteWerdenAuchOhneKnopfNichtGesichert() async {
+        var gesendet: [PendingSetWrite] = []
+        let modell = cardioModell(enqueue: { gesendet.append($0) })
+        for wert in modell.cardioListe { modell.cardioSetzen(wert, nil) }
+        await modell.satzSichern(problemFlag: true, problemReason: nil)
+        #expect(gesendet.isEmpty)
+        #expect(modell.satzAbgelehnt != nil)
+        #expect(await modell.satzSichernVorAbschluss() == false)
+        #expect(gesendet.isEmpty)
+    }
+
+    @Test func weitererSatzAmCardioGeraetOhnePause() async {
+        let modell = cardioModell()
+        await modell.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(modell.phase == .abschluss)
+        modell.weitererSatz()
+        #expect(modell.phase == .eingabe)
+    }
+
+    @Test func uebungWechselnBelegtCardioNeuVor() {
+        let modell = cardioModell()
+        modell.cardioSetzen(.zeit, 900)
+        modell.uebungWechseln(zu: "e2")
+        // e2 hat keinen letzten Satz: leer statt der Werte der Vorgaengeruebung.
+        #expect(modell.cardio == CardioWerte())
+        modell.uebungWechseln(zu: "e1")
+        #expect(modell.cardio == CardioWerte(zeit: 600, strecke: 2100))
+    }
+
+    @Test func zeitHinweise() {
+        let leer = CardioEingabe.zeit(stunden: 0, minuten: 0, sekunden: 0)
+        #expect(CardioWertSheet.hinweis(wert: .zeit, ergebnis: leer, teile: (0, 0, 0)) == nil)
+        let zuGross = CardioEingabe.zeit(stunden: 0, minuten: 75, sekunden: 0)
+        #expect(CardioWertSheet.hinweis(wert: .zeit, ergebnis: zuGross, teile: (0, 75, 0))?.contains("59") == true)
+        let watt = CardioEingabe.zahl("99999", fuer: .watt)
+        #expect(CardioWertSheet.hinweis(wert: .watt, ergebnis: watt, teile: (0, 0, 0)) != nil)
     }
 }

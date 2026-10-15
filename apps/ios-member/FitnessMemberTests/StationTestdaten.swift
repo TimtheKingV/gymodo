@@ -16,7 +16,8 @@ extension Station {
     }
 
     /// Ein Cardiogeraet mit den angebotenen Werten.
-    static func testCardio(_ id: String, werte: [CardioWert], studioId: String = "s1") -> Station {
+    static func testCardio(_ id: String, werte: [CardioWert], studioId: String = "s1",
+                           uebungen: String = "") -> Station {
         let liste = werte.map { "\"\($0.rawValue)\"" }.joined(separator: ",")
         let json = """
         {"id":"\(id)","studioId":"\(studioId)","label":"Gerät \(id)",
@@ -24,7 +25,7 @@ extension Station {
          "equipmentModel":{"id":"em-\(id)","name":"Modell","manufacturer":null,
            "category":"cardio","photoPath":null,"loadUnit":"level","loadStep":1,"loadMin":1,"loadMax":null,
            "settingDefinitions":[],"cardioWerte":[\(liste)]},
-         "exercises":[]}
+         "exercises":[\(uebungen)]}
         """
         return Station(maschine: GeraetTestdaten.dekodiere(json))
     }
