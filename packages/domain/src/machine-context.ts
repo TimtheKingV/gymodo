@@ -343,16 +343,16 @@ async function kontextAufbauen(
   const selectedExerciseId = lastUsed?.exercise_id ?? exercises[0]?.id ?? null;
 
   // Die Liste des Modells, vom Katalogtyp geerbt, wenn das Studio keine hat.
-  const katalogCardio =
-    model.cardio_werte.length === 0 && model.catalog_model_id
-      ? (
-          await client
-            .from("equipment_models")
-            .select("cardio_werte")
-            .eq("id", model.catalog_model_id)
-            .maybeSingle<{ cardio_werte: string[] }>()
-        ).data?.cardio_werte ?? null
-      : null;
+  let katalogCardio: string[] | null = null;
+  if (model.cardio_werte.length === 0 && model.catalog_model_id) {
+    const { data, error } = await client
+      .from("equipment_models")
+      .select("cardio_werte")
+      .eq("id", model.catalog_model_id)
+      .maybeSingle<{ cardio_werte: string[] }>();
+    if (error) throw new DomainError("internal", error.message);
+    katalogCardio = data?.cardio_werte ?? null;
+  }
   const cardioWerte = cardioListeDesModells({ eigene: model.cardio_werte, katalog: katalogCardio });
   const istCardio = cardioWerte.length > 0;
 
@@ -410,7 +410,13 @@ async function kontextAufbauen(
       // bleibt beim "kein Verlauf" von oben (Testnotiz 14.10., 18:45 #7).
       historie = cardioHistorie(zeilen);
     } else {
-      blocks = toBlocks(zeilen as Array<SetRow & { load: number | string; volume: number }>);
+      // Zweite Absicherung: Saetze ohne Belastung (Cardio) nie in die Regel.
+      blocks = toBlocks(
+        zeilen.filter(
+          (zeile): zeile is SetRow & { load: number | string; volume: number } =>
+            zeile.load !== null && zeile.volume !== null,
+        ),
+      );
       historie = blocks.map((block) => ({
         performedOn: block.performedOn,
         load: block.sets[0]?.load ?? null,

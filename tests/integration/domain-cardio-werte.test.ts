@@ -194,9 +194,13 @@ describe("Lesewege -- Cardio", () => {
     const client = await userClient(mitgliedEmail);
     const k = await getMachineContext(client, cardioMaschine);
     expect(k.equipmentModel.cardioWerte).toEqual(["zeit", "strecke", "watt"]);
-    expect(k.history[0]).toMatchObject({ load: null, volume: [], cardio: expect.any(Object) });
+    // Erster Satz des Tages: der aus dem recordSet-Test oben (zeit 510, strecke 2000).
+    expect(k.history[0]).toMatchObject({ load: null, volume: [], cardio: { zeit: 510, strecke: 2000 } });
     // Wie ohne Historie: kein Wert, Grund "kein_verlauf".
     expect(k.suggestion).toMatchObject({ resultLoad: null, reasonCode: "kein_verlauf" });
+    const { data: vorschlaege } = await serviceClient()
+      .from("progression_suggestions").select("id").eq("machine_id", cardioMaschine);
+    expect(vorschlaege).toEqual([]);
   });
 
   it("Fortschritt laesst Cardio aus dem Bestlast-Diagramm", async () => {
