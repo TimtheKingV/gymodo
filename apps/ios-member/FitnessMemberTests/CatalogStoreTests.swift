@@ -19,6 +19,17 @@ actor FakeBootstrapLoader: BootstrapLoading {
     func setJoinResult(_ value: Result3) { joinResult = value }
     func setLeaveResult(_ value: Result4) { leaveResult = value }
 
+    var rohdaten: Data?
+    func setRohdaten(_ daten: Data?) { rohdaten = daten }
+
+    func bootstrapMitRohdaten() async throws(APIError) -> GeladenerBootstrap {
+        if let rohdaten, case .success = bootstrapResult {
+            return GeladenerBootstrap(antwort: try! JSONDecoder().decode(BootstrapResponse.self, from: rohdaten),
+                                      rohdaten: rohdaten)
+        }
+        return GeladenerBootstrap(antwort: try await bootstrap(), rohdaten: nil)
+    }
+
     func bootstrap() async throws(APIError) -> BootstrapResponse {
         switch bootstrapResult {
         case .success(let response): return response
@@ -66,6 +77,8 @@ private func tempDirectory() -> URL {
     try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     return directory
 }
+
+private let bootstrapJSON = #"{"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null}},"studios":[{"id":"s1","name":"Keller-Gym","timezone":"Europe/Berlin"}],"machines":[],"calibrations":[],"lastSets":[]}"#
 
 /// @MainActor, weil CatalogStore seit dieser Aufgabe selbst @MainActor ist
 /// (siehe Kommentar dort) -- die Suite laeuft deshalb auf demselben Actor wie
@@ -572,6 +585,73 @@ struct CatalogStoreTests {
         BootstrapResponse(
             member: .init(displayName: nil, onboardingCompletedAt: onboardingCompletedAt),
             studios: studios, machines: [], calibrations: [], lastSets: [])
+    }
+
+    @Test("offline-Start zeigt den gespeicherten Bootstrap")
+    func offlineStartAusCache() async {
+        let verzeichnis = tempDirectory()
+        let online = FakeBootstrapLoader()
+        await online.setBootstrapResult(.success(emptyBootstrap()))
+        await online.setRohdaten(Data(bootstrapJSON.utf8))
+        let erster = CatalogStore(loader: online, pendingWriteStore: PendingWriteStore(directory: verzeichnis),
+                                  bootstrapFileStore: BootstrapFileStore(directory: verzeichnis))
+        _ = erster.anmelden(userId: "u1")
+        await erster.load()
+
+        let offline = FakeBootstrapLoader() // scheitert mit .offline
+        let zweiter = CatalogStore(loader: offline, pendingWriteStore: PendingWriteStore(directory: verzeichnis),
+                                   bootstrapFileStore: BootstrapFileStore(directory: verzeichnis))
+        #expect(zweiter.anmelden(userId: "u1") == true)
+        #expect(zweiter.loadState == .loaded)
+        await zweiter.load()
+        #expect(zweiter.loadState == .loaded)
+        #expect(zweiter.bootstrap?.studios.first?.name == "Keller-Gym")
+    }
+
+    @Test("fremder User sieht keinen Cache")
+    func fremderUserSiehtKeinenCache() {
+        let verzeichnis = tempDirectory()
+        let ablage = BootstrapFileStore(directory: verzeichnis)
+        ablage.save(Data(bootstrapJSON.utf8), userId: "u1")
+        let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: verzeichnis),
+                                 bootstrapFileStore: ablage)
+        #expect(store.anmelden(userId: "u2") == false)
+        #expect(store.bootstrap == nil)
+    }
+
+    @Test("kaputte Datei wird verworfen")
+    func kaputteDateiWirdVerworfen() {
+        let verzeichnis = tempDirectory()
+        let ablage = BootstrapFileStore(directory: verzeichnis)
+        ablage.save(Data("{\"alt\":true}".utf8), userId: "u1")
+        #expect(ablage.load(userId: "u1") == nil)
+        #expect(!FileManager.default.fileExists(atPath: verzeichnis.appendingPathComponent("bootstrap-u1.json").path))
+    }
+
+    @Test("anmelden meldet Cache-Nutzung nur ohne Bootstrap im Speicher")
+    func anmeldenMeldetCacheNutzung() async {
+        let verzeichnis = tempDirectory()
+        let ablage = BootstrapFileStore(directory: verzeichnis)
+        ablage.save(Data(bootstrapJSON.utf8), userId: "u1")
+        let loader = FakeBootstrapLoader()
+        await loader.setBootstrapResult(.success(emptyBootstrap()))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: verzeichnis),
+                                 bootstrapFileStore: ablage)
+        #expect(store.anmelden(userId: "u1") == true)
+        await store.load()
+        // Neue Session desselben Users (Passwortwechsel): kein erneuter Cache.
+        #expect(store.anmelden(userId: "u1") == false)
+    }
+
+    @Test("reset loescht den gespeicherten Bootstrap")
+    func resetLoeschtCache() {
+        let verzeichnis = tempDirectory()
+        let ablage = BootstrapFileStore(directory: verzeichnis)
+        ablage.save(Data(bootstrapJSON.utf8), userId: "u1")
+        let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: verzeichnis),
+                                 bootstrapFileStore: ablage)
+        store.reset()
+        #expect(ablage.load(userId: "u1") == nil)
     }
 }
 

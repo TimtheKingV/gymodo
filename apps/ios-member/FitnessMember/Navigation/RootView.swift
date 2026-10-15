@@ -14,6 +14,8 @@ struct RootView: View {
     /// noch nil, restoreSession() laeuft parallel -- den persistierten
     /// Katalogzustand faelschlich als "Abmeldung" verwerfen.
     @State private var hatteSession = false
+    /// Wird nach 3 s im Ladeschirm wahr (Offline-Spec 2).
+    @State private var verbindungLangsam = false
 
     var body: some View {
         // Nur aussagekraeftig bei geladenem Bootstrap -- destination(...)
@@ -49,15 +51,19 @@ struct RootView: View {
         // SessionStore, das sonst eine neue Abhaengigkeit auf CatalogStore
         // bekaeme.
         .task(id: sessionStore.session) {
-            if sessionStore.session != nil {
+            if let session = sessionStore.session {
                 hatteSession = true
+                // Erst anmelden: ohne Bootstrap im Speicher steht der
+                // gespeicherte sofort da (Offline-Spec 3a). Kam er aus dem
+                // Cache, wird trotzdem nachgeladen -- er kann Stunden alt sein.
+                let ausCache = catalogStore.anmelden(userId: session.userId)
                 // Nicht nur .idle: auch nach .failed muss ein neuer Anlauf
                 // moeglich sein. Aber auch nicht mehr als das: ein
                 // Passwortwechsel liefert eine neue Session (neuer
                 // Access-Token) fuer denselben Nutzer und wuerde sonst bei
                 // bereits geladenem Katalog (.loaded) einen unnoetigen
                 // Neuladevorgang ausloesen.
-                if catalogStore.loadState == .idle || catalogStore.loadState == .failed {
+                if ausCache || catalogStore.loadState == .idle || catalogStore.loadState == .failed {
                     await catalogStore.load()
                 }
             } else if hatteSession {
@@ -79,10 +85,23 @@ struct RootView: View {
     }
 
     private var ladeschirm: some View {
-        ProgressView()
-            .tint(DesignSystem.Color.accent)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(DesignSystem.Color.bg)
-            .testnotizScreen()
+        VStack(spacing: DesignSystem.Spacing.s16) {
+            ProgressView()
+                .tint(DesignSystem.Color.accent)
+            // Nach 3 s ein ehrlicher Satz statt eines stummen Spinners
+            // (Offline-Spec 2).
+            if verbindungLangsam {
+                Text("Verbindung ist langsam …")
+                    .font(.system(size: 13))
+                    .foregroundStyle(DesignSystem.Color.textFaint)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(DesignSystem.Color.bg)
+        .task {
+            try? await Task.sleep(for: .seconds(3))
+            verbindungLangsam = true
+        }
+        .testnotizScreen()
     }
 }

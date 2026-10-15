@@ -8,10 +8,24 @@ import Observation
 /// weil spaetere Aufgaben sie ebenfalls erweitern muessen.
 protocol BootstrapLoading: Sendable {
     func bootstrap() async throws(APIError) -> BootstrapResponse
+    func bootstrapMitRohdaten() async throws(APIError) -> GeladenerBootstrap
     func putSet(sessionId: UUID, setId: UUID, _ body: SetWrite) async throws(APIError) -> RecordedSet
     func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult
     func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult
     func leaveStudioMembership(studioId: String) async throws(APIError)
+}
+
+extension BootstrapLoading {
+    func bootstrapMitRohdaten() async throws(APIError) -> GeladenerBootstrap {
+        GeladenerBootstrap(antwort: try await bootstrap(), rohdaten: nil)
+    }
+}
+
+/// Der Bootstrap samt der Bytes, aus denen er kam -- die Bytes landen im
+/// BootstrapFileStore (Offline-Spec 3a). nil bei Fakes ohne Netz.
+struct GeladenerBootstrap: Sendable {
+    let antwort: BootstrapResponse
+    let rohdaten: Data?
 }
 
 extension APIClient: BootstrapLoading {}
@@ -100,13 +114,19 @@ final class CatalogStore {
     private let loader: any BootstrapLoading
     private let pendingWriteStore: PendingWriteStore
     private let verworfeneWriteStore: PendingWriteStore
+    private let bootstrapFileStore: BootstrapFileStore?
     private let defaults: UserDefaults
+    /// Wer angemeldet ist -- Schluessel fuer den Bootstrap-Cache und Besitzer
+    /// der Warteschlange (Offline-Spec 3a, 4c).
+    private(set) var userId: String?
     private static let ortDefaultsKey = "aktiverOrt"
     /// Nur noch zum einmaligen Uebernehmen alter Installationen gelesen.
     private static let alterStudioDefaultsKey = "activeStudioId"
 
-    init(loader: any BootstrapLoading, pendingWriteStore: PendingWriteStore, defaults: UserDefaults = .standard) {
+    init(loader: any BootstrapLoading, pendingWriteStore: PendingWriteStore,
+         bootstrapFileStore: BootstrapFileStore? = nil, defaults: UserDefaults = .standard) {
         self.loader = loader
+        self.bootstrapFileStore = bootstrapFileStore
         self.pendingWriteStore = pendingWriteStore
         // Gleiches Verzeichnis wie pendingWriteStore, eigene Datei -- die
         // beiden Listen haben unterschiedliche Lebenszyklen (siehe
@@ -137,6 +157,21 @@ final class CatalogStore {
         }
     }
 
+    /// Die Wurzel meldet hier, wer angemeldet ist -- vor dem ersten load().
+    /// Ohne Bootstrap im Speicher kommt der gespeicherte sofort: die App
+    /// startet im Keller nicht auf "NICHT GELADEN" (Offline-Spec 3a).
+    /// Gibt zurueck, ob der Cache genutzt wurde -- dann laedt die Wurzel
+    /// trotzdem frisch nach.
+    @discardableResult
+    func anmelden(userId: String) -> Bool {
+        self.userId = userId
+        guard bootstrap == nil, let gespeichert = bootstrapFileStore?.load(userId: userId) else { return false }
+        bootstrap = gespeichert
+        loadState = .loaded
+        repariereOrt(studios: gespeichert.studios)
+        return true
+    }
+
     /// `.loading` nur beim ersten Laden: RootView zeigt dafuer den
     /// Ladebildschirm und baut danach `MainTabView` neu -- Tab zurueck auf
     /// Home, gepushte Screens weg. Seit Profilfelder, Ziele und die
@@ -150,7 +185,11 @@ final class CatalogStore {
         // abgeleitet, und `letzterLadefehler` haengt daran. Derselbe Griff
         // wie in ProfilRootView, dort mit derselben Begruendung.
         do throws(APIError) {
-            let response = try await loader.bootstrap()
+            let geladen = try await loader.bootstrapMitRohdaten()
+            let response = geladen.antwort
+            if let rohdaten = geladen.rohdaten, let userId {
+                bootstrapFileStore?.save(rohdaten, userId: userId)
+            }
             letzterLadefehler = nil
             bootstrap = response
             loadState = .loaded
@@ -189,6 +228,8 @@ final class CatalogStore {
     /// Session- und Set-IDs, die zum abgemeldeten Konto gehoeren und nach einem
     /// Kontowechsel serverseitig ohnehin abgelehnt wuerden.
     func reset() {
+        bootstrapFileStore?.loeschen()
+        userId = nil
         bootstrap = nil
         loadState = .idle
         letzterLadefehler = nil

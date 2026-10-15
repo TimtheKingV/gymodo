@@ -50,7 +50,7 @@ struct FitnessMemberApp: App {
             await session.currentAccessToken()
         }
         _sessionStore = State(initialValue: session)
-        _catalogStore = State(initialValue: CatalogStore(loader: client, pendingWriteStore: PendingWriteStore()))
+        _catalogStore = State(initialValue: CatalogStore(loader: client, pendingWriteStore: PendingWriteStore(), bootstrapFileStore: BootstrapFileStore()))
         _kurseStore = State(initialValue: KurseStore(loader: client, fileStore: KurseFileStore()))
         _verlaufStore = State(initialValue: VerlaufStore(loader: client, fileStore: VerlaufFileStore()))
         apiClient = client

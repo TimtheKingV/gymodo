@@ -220,4 +220,13 @@ struct APIClientTests {
 
         #expect(gesehen.url?.absoluteString == "https://example.test/api/v1/equipment-models/em1/context")
     }
+
+    @Test("bootstrapMitRohdaten liefert die Bytes der Antwort")
+    func bootstrapRohdaten() async throws {
+        let json = #"{"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null}},"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#
+        StubURLProtocol.handler = { _ in (200, Data(json.utf8)) }
+        let geladen = try await stubbedClient().bootstrapMitRohdaten()
+        #expect(geladen.rohdaten == Data(json.utf8))
+        #expect(geladen.antwort.studios.isEmpty)
+    }
 }

@@ -35,6 +35,14 @@ actor APIClient {
         try await get("me/bootstrap")
     }
 
+    /// Wie `bootstrap()`, aber mit den Bytes der Antwort -- sie landen im
+    /// BootstrapFileStore (Offline-Spec 3a).
+    func bootstrapMitRohdaten() async throws(APIError) -> GeladenerBootstrap {
+        let rohdaten = try await executeRoh(url: baseURL.appendingPathComponent("me/bootstrap"), method: "GET", bodyData: nil)
+        do { return GeladenerBootstrap(antwort: try decoder.decode(BootstrapResponse.self, from: rohdaten), rohdaten: rohdaten) }
+        catch { throw APIError.decodingFailed }
+    }
+
     func tagContext(token: String) async throws(APIError) -> TagContextResponse {
         try await get("tags/\(token)/context")
     }
@@ -237,6 +245,13 @@ actor APIClient {
     }
 
     private func execute<T: Decodable>(url: URL, method: String, bodyData: Data?) async throws(APIError) -> T {
+        let data = try await executeRoh(url: url, method: method, bodyData: bodyData)
+        do { return try decoder.decode(T.self, from: data) }
+        catch { throw APIError.decodingFailed }
+    }
+
+    /// Der Request bis zur 2xx-Antwort, ohne Dekodieren.
+    private func executeRoh(url: URL, method: String, bodyData: Data?) async throws(APIError) -> Data {
         var request = try await anfrage(url: url, method: method)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if let bodyData {
@@ -253,10 +268,7 @@ actor APIClient {
 
         guard let http = response as? HTTPURLResponse else { throw APIError.server(message: "Unerwartete Antwort.") }
 
-        if (200..<300).contains(http.statusCode) {
-            do { return try decoder.decode(T.self, from: data) }
-            catch { throw APIError.decodingFailed }
-        }
+        if (200..<300).contains(http.statusCode) { return data }
 
         if let envelope = try? decoder.decode(ErrorEnvelope.self, from: data) {
             throw APIError.map(code: envelope.error.code, message: envelope.error.message)

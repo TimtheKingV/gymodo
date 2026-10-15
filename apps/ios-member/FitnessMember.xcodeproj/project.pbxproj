@@ -212,6 +212,7 @@
 		B5B7A351BB87D823FD163DF1 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5CA620D337B41A12B5D8A33 /* MainTabView.swift */; };
 		B6342F2803AFA48AEEC73B7C /* WorkoutSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35466DCA1BAC23049D7DCB30 /* WorkoutSessionStore.swift */; };
 		B68C2AD5B96D1812B2F124A0 /* PasswordPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F85DB74C44633BFB4BAAB94 /* PasswordPolicy.swift */; };
+		B75DBE9A4610A66C9A455DE1 /* BootstrapFileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8AB9FA9643F21A13395FA66 /* BootstrapFileStore.swift */; };
 		B80028575BDB46C9F540C677 /* sensoraufnahme-beispiel in Resources */ = {isa = PBXBuildFile; fileRef = 39D3B597FB0FCE1455A04ADF /* sensoraufnahme-beispiel */; };
 		B8218DBF6B9B3168086F00E6 /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82F1E9C17FC9A2A3742B15D /* JSONValue.swift */; };
 		B854BF7F3EC5F92A64658311 /* KurseWochenBerechnungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0D97A63F51670FD637DCAFE /* KurseWochenBerechnungTests.swift */; };
@@ -575,6 +576,7 @@
 		D78C8636341914B90296B220 /* AppConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigTests.swift; sourceTree = "<group>"; };
 		D79138C4B32315198E734356 /* EmailValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailValidator.swift; sourceTree = "<group>"; };
 		D88102EAEB9BC8D4E6FA9BC7 /* PfadbereinigungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PfadbereinigungTests.swift; sourceTree = "<group>"; };
+		D8AB9FA9643F21A13395FA66 /* BootstrapFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootstrapFileStore.swift; sourceTree = "<group>"; };
 		D8B181EA25F1AE0F34024FB1 /* TestnotizAblaufTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizAblaufTests.swift; sourceTree = "<group>"; };
 		D922539BB579EDDA0F7747CD /* ErrorEnvelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorEnvelope.swift; sourceTree = "<group>"; };
 		D98716595032172974F2CAB3 /* Station.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Station.swift; sourceTree = "<group>"; };
@@ -831,6 +833,7 @@
 		3FC355A317C8C2CD39C6F424 /* Catalog */ = {
 			isa = PBXGroup;
 			children = (
+				D8AB9FA9643F21A13395FA66 /* BootstrapFileStore.swift */,
 				44C759C755CAAFA0F5ED7616 /* CatalogLoadState.swift */,
 				1E651ABDF81EA57E18D7363D /* CatalogStore.swift */,
 				D382CA0B325C07B61F776A1D /* PendingSetWrite.swift */,
@@ -1321,6 +1324,7 @@
 				E77B229BFB49822EB132B48A /* BelegungsleisteView.swift in Sources */,
 				99C6072F04520557A7E34EDC /* Bildschirmfoto.swift in Sources */,
 				A53325E109EED91CB9834B54 /* BluetoothSensorQuelle.swift in Sources */,
+				B75DBE9A4610A66C9A455DE1 /* BootstrapFileStore.swift in Sources */,
 				4E515B6705D782738E6250A1 /* BootstrapResponse.swift in Sources */,
 				9DE8EE325C831E9049A8BABE /* CalibrationWrite.swift in Sources */,
 				B588B97987FD269D81E3CCED /* Card.swift in Sources */,
