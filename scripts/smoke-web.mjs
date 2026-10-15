@@ -74,11 +74,12 @@ const proben = [
     // angeboten (fehlende Umgebungsvariable), obwohl /  mit 200 antwortete
     // und die uebrigen Client-Routen sauber waren.
     //
-    // "Als Trainer anmelden" ist der Ersatz und ein besserer Zeuge: die
-    // Wurzelseite verzweigt auf auth.getUser(), und dieser Text steht nur
-    // im Zweig OHNE Sitzung. Er beweist damit beides -- der Client wurde
-    // gebaut, und der Server hat die Sitzungsfrage wirklich gestellt.
-    enthaelt: "Als Trainer anmelden",
+    // "Trainer-Anmeldung" (Fusszeile der Landeseite, seit 3. Oktober; vorher
+    // "Als Trainer anmelden") ist der Zeuge: die Wurzelseite verzweigt auf
+    // auth.getUser(), und die Landeseite steht nur im Zweig OHNE Sitzung.
+    // Er beweist damit beides -- der Client wurde gebaut, und der Server
+    // hat die Sitzungsfrage wirklich gestellt.
+    enthaelt: "Trainer-Anmeldung",
   },
   {
     name: "/t/<unbekannter Token>",

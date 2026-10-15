@@ -118,7 +118,10 @@ export function altEingabeUmwandeln(
   const werte: Partial<Record<CardioWert, number>> = {};
   const setze = (wert: CardioWert | undefined, zahl: number | null | undefined) => {
     if (!wert || zahl === null || zahl === undefined || !liste.includes(wert) || werte[wert] !== undefined) return;
-    const gerundet = ZEHNTEL.includes(wert) ? Math.round(zahl * 10) / 10 : Math.round(zahl);
+    // Halbe Werte weg von der Null, wie round() in Postgres (Migration 0055):
+    // Math.round runde -2,25 sonst auf -2,2 statt -2,3.
+    const weg = (x: number) => Math.sign(x) * Math.round(Math.abs(x));
+    const gerundet = ZEHNTEL.includes(wert) ? weg(zahl * 10) / 10 : weg(zahl);
     const [min, max] = GRENZEN[wert];
     werte[wert] = Math.min(Math.max(gerundet, min), max);
   };
