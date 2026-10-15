@@ -1678,3 +1678,15 @@ git commit -m "feat(ios): Uebungsvideos im Hintergrund vorladen"
 git add docs/superpowers/plans/2026-10-15-offline-stabilitaet.md
 git commit -m "docs(plan): Abnahme Offline-Stabilitaet"
 ```
+
+## Anhang: Messung und Abnahme (15.10., iPhone 13 mini, Stand 12ca83a)
+
+Task 1 (Messung) und die Abnahme liefen zusammen am Geraet mit dem Network Link Conditioner. Instruments wurde nicht angehaengt: In keinem Ablauf trat ein spuerbares Haengen auf, also gab es nichts zu messen.
+
+| # | Ablauf | Profil | Ergebnis |
+|---|---|---|---|
+| 1 | Kaltstart, App aus dem Switcher beendet | 100% Loss | bestanden: Home nach 1–2 s, kein Login, kein „NICHT GELADEN“. Token-Alter unbekannt, den Fall „abgelaufener Token“ (> 1 h) noch einmal pruefen |
+| 2 | Suche „bein“/„ruder“, Einweisung einer neuen Uebung, Scrollen durch Videokacheln | 100% Loss, Very Bad Network | bestanden: alles fluessig |
+| 3 | Drei Saetze offline loggen, Netz an | 100% Loss → aus | bestanden: alle drei innerhalb von 30 s auf dem Server |
+
+Offen: Test 1 mit sicher abgelaufenem Token wiederholen.
