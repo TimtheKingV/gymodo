@@ -511,6 +511,74 @@ export async function completeSession(
   };
 }
 
+/** Wie lange nach "Training beenden" ein Fortsetzen geht (Testnotiz 14.10., 18:45 #3). */
+export const REOPEN_FENSTER_MS = 30 * 60 * 1000;
+
+export const reopenSessionInputSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+/**
+ * Die Regel hinter reopenSession, ohne Datenbank pruefbar. "offen" ist kein
+ * Fehler: ein Doppeltipp oder ein Wiederholer nach Netzabbruch trifft eine
+ * schon geoeffnete Einheit und soll trotzdem gelingen.
+ */
+export function wiederoeffnenEntscheidung(
+  row: Pick<SessionRow, "completed_at" | "completed_reason">,
+  jetzt: Date,
+): "offen" | "oeffnen" | { fehler: string } {
+  if (row.completed_at === null) return "offen";
+  if (row.completed_reason === "auto") {
+    return { fehler: "Dieses Training wurde automatisch beendet." };
+  }
+  if (jetzt.getTime() - Date.parse(row.completed_at) > REOPEN_FENSTER_MS) {
+    return { fehler: "Zu spät zum Fortsetzen." };
+  }
+  return "oeffnen";
+}
+
+/**
+ * Oeffnet eine von Hand beendete Einheit wieder (Testnotiz 14.10., 18:45
+ * #3/#4). paused_seconds bleibt stehen: der naechste Abschluss schreibt die
+ * neue Gesamtsumme. Die Vorschlaege des ersten Abschlusses bleiben als
+ * Protokoll; beim zweiten Abschluss gilt je Block die juengere Zeile
+ * (ausGespeichertenZeilen nimmt die aelteste AB completed_at).
+ */
+export async function reopenSession(
+  client: SupabaseClient,
+  rawInput: unknown,
+  jetzt: Date = new Date(),
+): Promise<{ id: string; startedAt: string }> {
+  const parsed = reopenSessionInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    throw new DomainError("validation_failed", parsed.error.issues[0]!.message);
+  }
+  const userId = await requireUserId(client);
+
+  const { data: existing } = await client
+    .from("workout_sessions")
+    .select("id, started_at, completed_at, completed_reason")
+    .eq("id", parsed.data.sessionId)
+    .eq("user_id", userId)
+    .maybeSingle<SessionRow>();
+  if (!existing) {
+    throw new DomainError("not_found", "Training nicht gefunden.");
+  }
+
+  const entscheidung = wiederoeffnenEntscheidung(existing, jetzt);
+  if (typeof entscheidung === "object") {
+    throw new DomainError("conflict", entscheidung.fehler);
+  }
+  if (entscheidung === "oeffnen") {
+    const { error } = await client
+      .from("workout_sessions")
+      .update({ completed_at: null, completed_reason: null })
+      .eq("id", existing.id);
+    if (error) throw new DomainError("internal", error.message);
+  }
+  return { id: existing.id, startedAt: existing.started_at };
+}
+
 export const deleteSessionInputSchema = z.object({
   sessionId: z.string().uuid("Die Kennung der Einheit ist keine gueltige UUID."),
 });

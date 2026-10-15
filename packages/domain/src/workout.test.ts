@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { completeSessionInputSchema, recordSetInputSchema } from "./workout.js";
+import {
+  completeSessionInputSchema,
+  recordSetInputSchema,
+  REOPEN_FENSTER_MS,
+  wiederoeffnenEntscheidung,
+} from "./workout.js";
 
 const basis = {
   sessionId: "11111111-1111-4111-8111-111111111111",
@@ -111,5 +116,34 @@ describe("completeSessionInputSchema", () => {
   it("weist eine negative oder gebrochene Pausensumme ab", () => {
     expect(completeSessionInputSchema.safeParse({ sessionId, pausedSeconds: -1 }).success).toBe(false);
     expect(completeSessionInputSchema.safeParse({ sessionId, pausedSeconds: 1.5 }).success).toBe(false);
+  });
+});
+
+describe("wiederoeffnenEntscheidung", () => {
+  const ende = "2026-10-14T18:52:00.000Z";
+  const nach = (min: number) => new Date(Date.parse(ende) + min * 60_000);
+
+  it("oeffnet 29 Minuten nach dem Beenden", () => {
+    expect(wiederoeffnenEntscheidung({ completed_at: ende, completed_reason: "manual" }, nach(29))).toBe("oeffnen");
+  });
+
+  it("oeffnet genau an der Grenze", () => {
+    expect(REOPEN_FENSTER_MS).toBe(30 * 60 * 1000);
+    expect(wiederoeffnenEntscheidung({ completed_at: ende, completed_reason: "manual" }, nach(30))).toBe("oeffnen");
+  });
+
+  it("lehnt nach 31 Minuten ab", () => {
+    expect(wiederoeffnenEntscheidung({ completed_at: ende, completed_reason: "manual" }, nach(31)))
+      .toEqual({ fehler: "Zu spät zum Fortsetzen." });
+  });
+
+  it("lehnt eine selbsttaetig beendete Einheit ab", () => {
+    expect(wiederoeffnenEntscheidung({ completed_at: ende, completed_reason: "auto" }, nach(1)))
+      .toEqual({ fehler: "Dieses Training wurde automatisch beendet." });
+  });
+
+  // Doppeltipp oder Wiederholer: schon offen ist kein Fehler.
+  it("laesst eine offene Einheit offen", () => {
+    expect(wiederoeffnenEntscheidung({ completed_at: null, completed_reason: null }, nach(0))).toBe("offen");
   });
 });
