@@ -61,7 +61,7 @@ extension CardioWert: Identifiable { var id: String { rawValue } }
 /// (Testnotiz 15.10., #2 #3).
 private enum CardioFeld: Hashable { case einzel, h, m, s, km, meter }
 
-/// Die Zahleneingabe zu einem Knopf. "Leeren" nimmt den Wert aus dem Satz.
+/// Die Zahleneingabe zu einem Knopf. "Löschen" nimmt den Wert aus dem Satz.
 ///
 /// Jedes Feld traegt seine Einheit ueber der Zahl, eine einzelne Eingabe
 /// steht zentriert (Testnotiz 15.10., #1 #3 #4). Im Feld mit dem Cursor
@@ -129,7 +129,12 @@ struct CardioWertSheet: View {
                 get: { id == .einzel ? text : (felder[id] ?? "") },
                 set: { neu in
                     if id == .einzel { text = neu; return }
-                    let ziffern = String(neu.filter(\.isNumber).prefix(maxZiffern ?? 6))
+                    let max = maxZiffern ?? 6
+                    var ziffern = neu.filter(\.isNumber)
+                    // Eine Ziffer in ein volles Feld ersetzt dessen Inhalt, statt
+                    // zu verpuffen und den Cursor weiterzuschicken (#2).
+                    if ziffern.count > max, let letzte = ziffern.last { ziffern = String(letzte) }
+                    guard ziffern != (felder[id] ?? "") else { return }
                     felder[id] = ziffern
                     weiter(von: id, text: ziffern)
                 }))
@@ -147,6 +152,10 @@ struct CardioWertSheet: View {
     /// Cursor-Sprung der Zeit (Testnotiz 15.10., #2); die Regel steht in
     /// `CardioEingabe.springt`.
     private func weiter(von id: CardioFeld, text: String) {
+        if wert == .strecke, id == .km {
+            if CardioEingabe.streckeSpringt(text: text) { fokus = .meter }
+            return
+        }
         let zeitfeld: CardioEingabe.ZeitFeld
         switch id {
         case .h: zeitfeld = .stunden
@@ -177,8 +186,8 @@ struct CardioWertSheet: View {
                 Text(hinweis).foregroundStyle(DesignSystem.Color.danger)
             }
             HStack(spacing: DesignSystem.Spacing.s12) {
-                SecondaryButton(title: "Leeren") { beiFertig(nil); dismiss() }
-                PrimaryButton(title: "Übernehmen", isEnabled: uebernehmbar) {
+                SecondaryButton(title: "Löschen", hoehe: 64) { beiFertig(nil); dismiss() }
+                PrimaryButton(title: "Speichern", isEnabled: uebernehmbar) {
                     if case .success(let zahl) = ergebnis { beiFertig(zahl); dismiss() }
                 }
             }

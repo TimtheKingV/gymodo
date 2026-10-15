@@ -152,6 +152,8 @@ struct CardioTests {
         #expect(!CardioEingabe.springt(von: .minuten, text: "1"))
         #expect(CardioEingabe.springt(von: .minuten, text: "12"))
         #expect(!CardioEingabe.springt(von: .sekunden, text: "59"))
+        #expect(!CardioEingabe.streckeSpringt(text: "5"))
+        #expect(CardioEingabe.streckeSpringt(text: "12"))
     }
 
     /// Testnotiz 15.10., #3: Kilometer und Meter.

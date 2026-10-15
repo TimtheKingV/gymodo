@@ -164,6 +164,12 @@ enum CardioEingabe {
         return ziffern >= (feld == .stunden ? 1 : 2)
     }
 
+    /// Springt der Cursor nach den Kilometern zu den Metern? Nach zwei
+    /// Ziffern (Testnotiz 15.10., #3).
+    static func streckeSpringt(text: String) -> Bool {
+        text.filter(\.isNumber).count >= 2
+    }
+
     /// Die zwei Felder der Streckeneingabe (Testnotiz 15.10., #3).
     enum StreckeFeld: CaseIterable { case kilometer, meter
         var einheit: String { self == .kilometer ? "km" : "m" }

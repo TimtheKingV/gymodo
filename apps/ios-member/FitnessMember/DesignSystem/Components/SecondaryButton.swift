@@ -4,6 +4,8 @@ import SwiftUI
 /// Akzentflaeche des Screens (designsystem.md SS2).
 struct SecondaryButton: View {
     let title: String
+    /// 48 pt als Nebenaktion; 64 pt, wo er neben einem PrimaryButton steht.
+    var hoehe: CGFloat = 48
     let action: () async -> Void
 
     var body: some View {
@@ -19,7 +21,7 @@ struct SecondaryButton: View {
                 .minimumScaleFactor(0.8)
                 .padding(.horizontal, DesignSystem.Spacing.s8)
                 .frame(maxWidth: .infinity)
-                .frame(height: 48)
+                .frame(height: hoehe)
         }
         .foregroundStyle(DesignSystem.Color.text)
         .overlay(

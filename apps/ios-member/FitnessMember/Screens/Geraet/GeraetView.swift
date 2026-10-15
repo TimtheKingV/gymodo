@@ -431,7 +431,8 @@ struct GeraetView: View {
     }
 
     private var hauptaktion: String {
-        "Satz \(modell.satzNummer) sichern"
+        // Cardio kennt keine Saetze (Testnotiz 15.10., #1).
+        modell.istCardio ? "Sichern" : "Satz \(modell.satzNummer) sichern"
     }
 
     /// Nach dem letzten geplanten Satz. Eine Pause vor einem Satz, der nicht

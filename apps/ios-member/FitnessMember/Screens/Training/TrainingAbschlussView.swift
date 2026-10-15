@@ -387,7 +387,8 @@ struct AbschlussZeile: Equatable, Identifiable {
     /// Belastung nichts mehr beschreibt.
     static func untertitel(_ block: Blockzeile) -> String {
         let saetze = "\(block.satzAnzahl) \(block.satzAnzahl == 1 ? "Satz" : "Sätze")"
-        if let cardio = block.cardio { return "\(Zahlformat.cardio(cardio)) · \(saetze)" }
+        // Cardio zaehlt keine Saetze (Testnotiz 15.10., #1).
+        if let cardio = block.cardio { return Zahlformat.cardio(cardio) }
         guard let belastung = block.belastung else { return saetze }
         let werte = Zahlformat.belastungMitNebenbelastung(
             belastung, block.loadUnit, neben: block.nebenbelastung, block.secondaryUnit)
