@@ -116,6 +116,21 @@ final class CatalogStore {
     private let verworfeneWriteStore: PendingWriteStore
     private let bootstrapFileStore: BootstrapFileStore?
     private let defaults: UserDefaults
+    private let wiederholungsAbstand: Duration
+    private var flushLaeuft = false
+    private var wiederholung: Task<Void, Never>?
+    private let besitzerDatei: URL
+
+    /// Wem die Warteschlange gehoert. Auf Platte neben ihr, weil sie ein
+    /// Abmelden ueberlebt (Offline-Spec 4c): erst ein anderes Konto loescht sie.
+    @ObservationIgnored
+    private var warteschlangenBesitzer: String? {
+        get { (try? String(contentsOf: besitzerDatei, encoding: .utf8)).flatMap { $0.isEmpty ? nil : $0 } }
+        set {
+            if let newValue { try? Data(newValue.utf8).write(to: besitzerDatei, options: .atomic) }
+            else { try? FileManager.default.removeItem(at: besitzerDatei) }
+        }
+    }
     /// Wer angemeldet ist -- Schluessel fuer den Bootstrap-Cache und Besitzer
     /// der Warteschlange (Offline-Spec 3a, 4c).
     private(set) var userId: String?
@@ -124,7 +139,8 @@ final class CatalogStore {
     private static let alterStudioDefaultsKey = "activeStudioId"
 
     init(loader: any BootstrapLoading, pendingWriteStore: PendingWriteStore,
-         bootstrapFileStore: BootstrapFileStore? = nil, defaults: UserDefaults = .standard) {
+         bootstrapFileStore: BootstrapFileStore? = nil, defaults: UserDefaults = .standard,
+         wiederholungsAbstand: Duration = .seconds(30)) {
         self.loader = loader
         self.bootstrapFileStore = bootstrapFileStore
         self.pendingWriteStore = pendingWriteStore
@@ -133,6 +149,8 @@ final class CatalogStore {
         // PendingWriteStore-Kommentar).
         self.verworfeneWriteStore = PendingWriteStore(directory: pendingWriteStore.directory, filename: "verworfene-writes.json")
         self.defaults = defaults
+        self.wiederholungsAbstand = wiederholungsAbstand
+        self.besitzerDatei = pendingWriteStore.directory.appendingPathComponent("warteschlange-besitzer.txt")
         pendingWrites = pendingWriteStore.loadAll()
         verworfeneWrites = verworfeneWriteStore.loadAll()
         if let data = defaults.data(forKey: Self.ortDefaultsKey),
@@ -164,6 +182,14 @@ final class CatalogStore {
     /// trotzdem frisch nach.
     @discardableResult
     func anmelden(userId: String) -> Bool {
+        if let besitzer = warteschlangenBesitzer, besitzer != userId {
+            // Saetze eines anderen Kontos -- mit diesem Token abgelehnt.
+            pendingWrites = []
+            pendingWriteStore.save([])
+            verworfeneWrites = []
+            verworfeneWriteStore.save([])
+        }
+        warteschlangenBesitzer = userId
         self.userId = userId
         guard bootstrap == nil, let gespeichert = bootstrapFileStore?.load(userId: userId) else { return false }
         bootstrap = gespeichert
@@ -229,9 +255,9 @@ final class CatalogStore {
     /// das naechste Konto auf demselben Geraet noch die Studios des vorigen,
     /// weil der Ladezustand nie wieder auf .idle zurueckfaellt.
     ///
-    /// Die offenen Schreibvorgaenge werden bewusst mitgeloescht -- sie tragen
-    /// Session- und Set-IDs, die zum abgemeldeten Konto gehoeren und nach einem
-    /// Kontowechsel serverseitig ohnehin abgelehnt wuerden.
+    /// Die offenen Schreibvorgaenge bleiben -- sie gehoeren dem Konto (Besitzer)
+    /// und gehen nach erneutem Anmelden desselben Kontos raus; ein anderes
+    /// Konto loescht sie in `anmelden` (Offline-Spec 4c).
     func reset() {
         bootstrapFileStore?.loeschen()
         userId = nil
@@ -242,10 +268,8 @@ final class CatalogStore {
         hatGewaehlt = false
         defaults.removeObject(forKey: Self.ortDefaultsKey)
         defaults.removeObject(forKey: Self.alterStudioDefaultsKey)
-        pendingWrites = []
-        pendingWriteStore.save([])
-        verworfeneWrites = []
-        verworfeneWriteStore.save([])
+        wiederholung?.cancel()
+        wiederholung = nil
         // Sonst saehe das naechste Konto in derselben laufenden App noch
         // den Scan-Hinweis des vorigen Kontos -- derselbe Grund wie oben.
         studiohinweis = nil
@@ -257,6 +281,14 @@ final class CatalogStore {
     }
 
     func flushPending() async {
+        // Nach dem Abmelden oder vor dem Anmelden: nicht mit fremdem Token senden.
+        if let besitzer = warteschlangenBesitzer, besitzer != userId { return }
+        guard !flushLaeuft else { return }
+        flushLaeuft = true
+        defer {
+            flushLaeuft = false
+            wiederholungPlanen()
+        }
         for write in pendingWrites {
             // Erneut pruefen: schreibvorgaengeVerwerfen() kann waehrend eines
             // await hier dazwischengekommen sein -- die Schleife laeuft ueber
@@ -267,7 +299,9 @@ final class CatalogStore {
                 _ = try await loader.putSet(sessionId: write.sessionId, setId: write.setId, write.body)
                 entferneAusPendingWrites(write)
             } catch {
-                if error.istDauerhaft {
+                // 401 ist hier voruebergehend: offline ohne gueltigen Token
+                // (Offline-Spec 4c).
+                if error.istDauerhaft && !error.istAnmeldefehler {
                     // Beide Listen sofort sichern, nicht erst am Schleifenende:
                     // flushPending() laeuft oft auf einen Hintergrund-Reconnect
                     // hin, und ein Kill der App mittendrin darf den Eintrag
@@ -281,6 +315,25 @@ final class CatalogStore {
                 // Voruebergehende Fehler: der Eintrag bleibt fuer den
                 // naechsten Versuch in pendingWrites/pendingWriteStore stehen.
             }
+        }
+    }
+
+    /// Bei halbem Netz meldet der Monitor "online", und der naechste Wechsel
+    /// kommt vielleicht nie -- deshalb ein eigener Versuch nach
+    /// `wiederholungsAbstand`, solange etwas offen ist (Offline-Spec 2).
+    /// Hoechstens ein schlafender Task: ein laufender wird nicht ersetzt.
+    private func wiederholungPlanen() {
+        guard !pendingWrites.isEmpty else {
+            wiederholung?.cancel()
+            wiederholung = nil
+            return
+        }
+        guard wiederholung == nil else { return }
+        wiederholung = Task { [weak self, wiederholungsAbstand] in
+            try? await Task.sleep(for: wiederholungsAbstand)
+            guard !Task.isCancelled, let self else { return }
+            self.wiederholung = nil
+            await self.flushPending()
         }
     }
 

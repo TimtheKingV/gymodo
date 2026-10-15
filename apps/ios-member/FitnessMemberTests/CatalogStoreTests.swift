@@ -72,6 +72,10 @@ private func emptyBootstrap(studios: [BootstrapResponse.Studio] = []) -> Bootstr
         member: .init(displayName: nil), studios: studios, machines: [], calibrations: [], lastSets: [])
 }
 
+private func testWrite() -> PendingSetWrite {
+    PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10, rir: nil))
+}
+
 private func tempDirectory() -> URL {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent("catalog-tests-\(UUID().uuidString)")
     try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -418,7 +422,7 @@ struct CatalogStoreTests {
         #expect(dritter.ort == .studio("s1"))
     }
 
-    @Test("reset() raeumt Katalog, Ladezustand, aktives Studio, offene und verworfene Schreibvorgaenge")
+    @Test("reset() raeumt Katalog, Ladezustand und aktives Studio, laesst die Warteschlange stehen")
     func resetClearsEverything() async {
         let defaults = UserDefaults(suiteName: "catalog-store-tests-\(UUID().uuidString)")!
         let directory = tempDirectory()
@@ -442,15 +446,89 @@ struct CatalogStoreTests {
         #expect(store.bootstrap == nil)
         #expect(store.loadState == .idle)
         #expect(store.activeStudioId == nil)
-        #expect(store.pendingWrites.isEmpty)
-        #expect(store.verworfeneWrites.isEmpty)
         #expect(defaults.string(forKey: "activeStudioId") == nil)
-        // Auch auf Platte, sonst holt der naechste Start alles zurueck.
-        #expect(PendingWriteStore(directory: directory).loadAll().isEmpty)
-        #expect(PendingWriteStore(directory: directory, filename: "verworfene-writes.json").loadAll().isEmpty)
+        // Die Warteschlange gehoert dem Konto und ueberlebt das Abmelden
+        // (Offline-Spec 4c) -- auch auf Platte.
+        #expect(store.pendingWrites.count == 1)
+        #expect(store.verworfeneWrites.count == 1)
+        #expect(PendingWriteStore(directory: directory).loadAll().count == 1)
         let secondStore = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: directory), defaults: defaults)
         #expect(secondStore.activeStudioId == nil)
-        #expect(secondStore.verworfeneWrites.isEmpty)
+    }
+
+    @Test("reset behaelt die Warteschlange, ein anderer User loescht sie")
+    func warteschlangeUeberlebtAbmelden() async {
+        let verzeichnis = tempDirectory()
+        let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: verzeichnis))
+        store.anmelden(userId: "u1")
+        store.enqueue(testWrite())
+        store.reset()
+        #expect(store.pendingWrites.count == 1)
+        store.anmelden(userId: "u1")
+        #expect(store.pendingWrites.count == 1)
+        store.anmelden(userId: "u2")
+        #expect(store.pendingWrites.isEmpty)
+    }
+
+    @Test("401 laesst den Satz in der Warteschlange")
+    func unauthorizedBleibt() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.unauthorized(message: "x")))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 wiederholungsAbstand: .seconds(60))
+        store.enqueue(testWrite())
+        await store.flushPending()
+        #expect(store.pendingWrites.count == 1)
+        #expect(store.verworfeneWrites.isEmpty)
+    }
+
+    @Test("422, 404 und 409 verwerfen weiterhin",
+          arguments: [APIError.validation(message: "v"), .notFound(message: "n"), .conflict(message: "c")])
+    func echteDatenfehlerVerwerfen(_ fehler: APIError) async {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(fehler))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        store.enqueue(testWrite())
+        await store.flushPending()
+        #expect(store.pendingWrites.isEmpty)
+        #expect(store.verworfeneWrites.count == 1)
+    }
+
+    @Test("nach dem Abmelden sendet die Warteschlange nichts")
+    func nachAbmeldenSendetNichts() async {
+        let loader = FakeBootstrapLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        store.anmelden(userId: "u1")
+        store.enqueue(testWrite())
+        store.reset()
+        await store.flushPending()
+        #expect(await loader.putSetCalls.isEmpty)
+    }
+
+    @Test("zwei gleichzeitige Flushs senden einmal")
+    func keinDoppelterFlush() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.offline))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 wiederholungsAbstand: .seconds(60))
+        store.enqueue(testWrite())
+        async let a: Void = store.flushPending()
+        async let b: Void = store.flushPending()
+        _ = await (a, b)
+        #expect(await loader.putSetCalls.count == 1)
+    }
+
+    @Test("offene Eintraege werden nach dem Abstand erneut gesendet")
+    func wiederholtNachAbstand() async throws {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.offline))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 wiederholungsAbstand: .milliseconds(50))
+        store.enqueue(testWrite())
+        await store.flushPending()
+        #expect(await loader.putSetCalls.count == 1)
+        try await Task.sleep(for: .milliseconds(300))
+        #expect(await loader.putSetCalls.count >= 2)
     }
 
     @Test("nach .failed fuehrt ein erneutes load() wieder zu .loaded")

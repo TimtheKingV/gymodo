@@ -66,6 +66,9 @@ struct RootView: View {
                 if ausCache || catalogStore.loadState == .idle || catalogStore.loadState == .failed {
                     await catalogStore.load()
                 }
+                // Der Besitzer der Warteschlange steht erst jetzt fest -- der
+                // Flush beim App-Start lief davor ins Leere (Offline-Spec 4c).
+                await catalogStore.flushPending()
             } else if hatteSession {
                 hatteSession = false
                 catalogStore.reset()
