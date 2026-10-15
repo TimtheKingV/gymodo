@@ -25,8 +25,11 @@ import SwiftUI
 struct SessionDetailView: View {
     let sessionId: String
     let apiClient: APIClient
+    /// Nach erfolgreichem Fortsetzen: Home-Pfad leeren, auf den Training-Tab.
+    var beiFortgesetzt: () -> Void = {}
 
     @Environment(VerlaufStore.self) private var verlauf
+    @Environment(WorkoutSessionStore.self) private var sessions
     @Environment(CatalogStore.self) private var katalog
     @Environment(\.dismiss) private var dismiss
 
@@ -34,6 +37,8 @@ struct SessionDetailView: View {
     /// MemberStudiosView.studioPendingLeave.
     @State private var zuLoeschen: SessionSummary?
     @State private var loeschFehler: String?
+    @State private var fortsetzenLaeuft = false
+    @State private var fortsetzenFehler: String?
 
     private var karte: Trainingskarte? {
         HomeZeilen.karte(fuer: sessionId, in: verlauf.sessions)
@@ -46,6 +51,9 @@ struct SessionDetailView: View {
                     kopf(karte)
                     if let loeschFehler {
                         InlineBanner(tone: .danger, message: loeschFehler)
+                    }
+                    if let fortsetzenFehler {
+                        InlineBanner(tone: .danger, message: fortsetzenFehler)
                     }
                     ForEach(karte.teile) { teil in
                         teilAbschnitt(teil, mitUeberschrift: karte.teile.count > 1)
@@ -66,6 +74,26 @@ struct SessionDetailView: View {
         .background(DesignSystem.Color.bg)
         .scrollContentBackground(.hidden)
         .navigationBarTitleDisplayMode(.inline)
+        // Play oben rechts (Testnotiz 14.10., 18:45 #4). TimelineView prueft
+        // jede Minute neu, damit der Button nach 30 min auch auf einer
+        // offenen Seite verschwindet.
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                TimelineView(.everyMinute) { kontext in
+                    if let karte,
+                       let teilId = Fortsetzbarkeit.fortsetzbarerTeil(karte, darf: {
+                           sessions.kannWiederaufnehmen(sessionId: $0, jetzt: kontext.date)
+                       }) {
+                        Button { Task { await fortsetzen(teilId) } } label: {
+                            if fortsetzenLaeuft { ProgressView() } else { Image(systemName: "play.fill") }
+                        }
+                        .disabled(fortsetzenLaeuft)
+                        .accessibilityLabel("Training fortsetzen")
+                        .testnotizElement("session.fortsetzen", typ: "Button")
+                    }
+                }
+            }
+        }
         .confirmationDialog(
             "Dieses Training löschen?",
             isPresented: Binding(get: { zuLoeschen != nil }, set: { if !$0 { zuLoeschen = nil } }),
@@ -285,6 +313,23 @@ struct SessionDetailView: View {
                 .foregroundStyle(DesignSystem.Color.textMuted)
         case .gleich:
             EmptyView()
+        }
+    }
+
+    /// Erst der Server, dann lokal: ohne reopen haengten neue Saetze an
+    /// einer beendeten Einheit, und das zweite Beenden aenderte nichts.
+    private func fortsetzen(_ teilId: String) async {
+        fortsetzenLaeuft = true
+        defer { fortsetzenLaeuft = false }
+        do throws(APIError) {
+            try await apiClient.reopenSession(sessionId: teilId)
+            sessions.wiederaufnehmen()
+            fortsetzenFehler = nil
+            beiFortgesetzt()
+        } catch {
+            let folge = Fortsetzbarkeit.folgeNachFehler(error)
+            fortsetzenFehler = folge.text
+            if folge.ablageVerwerfen { sessions.ablageVerwerfen() }
         }
     }
 

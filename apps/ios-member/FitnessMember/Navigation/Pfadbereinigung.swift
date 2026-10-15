@@ -10,4 +10,13 @@ enum Pfadbereinigung {
         guard laeuftVorher, !laeuftJetzt else { return false }
         return !pfad.contains { if case .abschluss = $0 { true } else { false } }
     }
+
+    /// Training fortsetzen (Testnotiz 14.10., 18:45 #3): wird die Einheit
+    /// des stehenden Abschlusses wieder aktiv, geht es zur Wurzel -- dort
+    /// steht "Training laeuft". Nur genau diese Einheit: ein anderes Training
+    /// setzt seinen Pfad selbst.
+    static func nachFortsetzenLeeren(aktiveId: UUID?, pfad: [GeraetRoute]) -> Bool {
+        guard let aktiveId, case .abschluss(let id, _)? = pfad.last else { return false }
+        return id == aktiveId
+    }
 }

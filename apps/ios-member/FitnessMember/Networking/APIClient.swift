@@ -92,6 +92,13 @@ actor APIClient {
                        body: ["pausedSeconds": pausedSeconds])
     }
 
+    /// Oeffnet eine von Hand beendete Einheit wieder (Testnotiz 14.10.,
+    /// 18:45 #3/#4). Die Antwort traegt nichts, was die App braucht.
+    func reopenSession(sessionId: String) async throws(APIError) {
+        struct Antwort: Decodable { let id: String }
+        let _: Antwort = try await postNoBody("workout-sessions/\(sessionId)/reopen")
+    }
+
     /// Eine Einheit, die es nicht (mehr) gibt, ist danach genau das -- kein
     /// Fehler, auch beim zweiten Aufruf (204, siehe Server-Route).
     func deleteSession(sessionId: String) async throws(APIError) {

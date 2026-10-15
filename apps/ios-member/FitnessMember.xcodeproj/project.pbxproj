@@ -89,6 +89,7 @@
 		44520832FCC324FD2A42E9A3 /* TestnotizProtokollTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 056DF9A32E77D8CCCB5DEB7D /* TestnotizProtokollTests.swift */; };
 		446F01DC2B037EBD87014F20 /* VerlaufStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F549FAB0B22E1E37C716899 /* VerlaufStore.swift */; };
 		44EA0E9CBF440F567DCD049C /* ResttimerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707F099CE279C3111DDD2149 /* ResttimerTests.swift */; };
+		452A79E6EED9352C444F5A90 /* Fortsetzbarkeit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1A5E3036C702D35974F098 /* Fortsetzbarkeit.swift */; };
 		465B5D2B577283F081B21B34 /* StationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9600E3544B452BECB058708 /* StationTests.swift */; };
 		47D979DCC3CDB3ACE62E9FB9 /* GewichtsverlaufView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0633B715B2A8144B8F54ABB6 /* GewichtsverlaufView.swift */; };
 		48FFCA86209C664A9A0E6964 /* GeraetModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FE347CE02DFBA2ACD65350E /* GeraetModel.swift */; };
@@ -131,6 +132,7 @@
 		6EDD58339563E0206F11CC48 /* Medienablage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD2C414143359BA7CE04FAD3 /* Medienablage.swift */; };
 		6F3003FCB4FCB68E265AC28E /* TrainingTabTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC4D984EF1252BC49392F988 /* TrainingTabTests.swift */; };
 		6F40C74FE72F58BD66FE5FAD /* GeraeteFotosTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ABCE1755F5D30B517E1502E /* GeraeteFotosTests.swift */; };
+		7154595728E9914007ACDBCD /* FortsetzbarkeitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08AD532CE7BC4878C4686DD0 /* FortsetzbarkeitTests.swift */; };
 		7187684ABD8BFA3964363E1A /* ZaehlerKoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E45FE04BD0F8EF4BCAFD99B7 /* ZaehlerKoordinatorTests.swift */; };
 		72E7D4549F672199CE5DE950 /* Belegungsleiste.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF593B1FA0A81491726D24E0 /* Belegungsleiste.swift */; };
 		74330F94DB89B468FB230AB0 /* RootDestinationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0753010E9ACC09DF6D948170 /* RootDestinationTests.swift */; };
@@ -333,8 +335,10 @@
 		07D0CE6DE62F683A513080FC /* TestnotizScreenStapelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizScreenStapelTests.swift; sourceTree = "<group>"; };
 		07D94941E7A9D2E6DF47512A /* TestnotizProtokoll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizProtokoll.swift; sourceTree = "<group>"; };
 		0891F265EBB3E05C805211B8 /* TrainingTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingTab.swift; sourceTree = "<group>"; };
+		08AD532CE7BC4878C4686DD0 /* FortsetzbarkeitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FortsetzbarkeitTests.swift; sourceTree = "<group>"; };
 		0922864C7B289CC11400B5CB /* TestnotizScreenModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizScreenModifier.swift; sourceTree = "<group>"; };
 		093AF1E26DA1B50273353878 /* PausenRad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PausenRad.swift; sourceTree = "<group>"; };
+		0A1A5E3036C702D35974F098 /* Fortsetzbarkeit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fortsetzbarkeit.swift; sourceTree = "<group>"; };
 		0C1F25DDB964E2DB96CC488C /* OnboardingSchritte.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingSchritte.swift; sourceTree = "<group>"; };
 		0DE16B16CA9E4D25698A02C0 /* KurseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseStore.swift; sourceTree = "<group>"; };
 		0F4F2DAEB38D14F84C2ECC1B /* OnboardingAntwortenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingAntwortenTests.swift; sourceTree = "<group>"; };
@@ -810,6 +814,7 @@
 			isa = PBXGroup;
 			children = (
 				941088E8ADF755FB4FCC5B33 /* Fortschrittsfenster.swift */,
+				0A1A5E3036C702D35974F098 /* Fortsetzbarkeit.swift */,
 				4F772BB738D5F003DF895A42 /* HomeSerie.swift */,
 				9465205BEFD3A3A8588D48D2 /* HomeZeilen.swift */,
 				E14DFB2ABD1F2AB50BB6C680 /* HomeZiele.swift */,
@@ -910,6 +915,7 @@
 				2178B549D47187CBB06809D8 /* EinheitVerwerfenTests.swift */,
 				E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */,
 				1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */,
+				08AD532CE7BC4878C4686DD0 /* FortsetzbarkeitTests.swift */,
 				F7540F5EE9A274DBB75E9219 /* GeraeteAuswahlTests.swift */,
 				5ABCE1755F5D30B517E1502E /* GeraeteFotosTests.swift */,
 				B50DEE042EBB405268BB2F09 /* GeraetegruppeTests.swift */,
@@ -1337,6 +1343,7 @@
 				18E5DDB042457723094DC266 /* FensterUmschalter.swift in Sources */,
 				EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */,
 				BCCED66A72ECB12C420D30B9 /* Fortschrittsfenster.swift in Sources */,
+				452A79E6EED9352C444F5A90 /* Fortsetzbarkeit.swift in Sources */,
 				207B8D6F6D17D7C2F5BA2FA5 /* GeraetEinstieg.swift in Sources */,
 				80BDCB40CB6953255B669BB5 /* GeraetErkanntView.swift in Sources */,
 				356B55A3EC5DF1C40CF07351 /* GeraetLoading.swift in Sources */,
@@ -1519,6 +1526,7 @@
 				23E350E22AA8410C99DF73CA /* EinheitVerwerfenTests.swift in Sources */,
 				0B8F8186023C8395BE77A351 /* EinstellungenTests.swift in Sources */,
 				67CB5A92D5A22F772F336E2F /* FortschrittsfensterTests.swift in Sources */,
+				7154595728E9914007ACDBCD /* FortsetzbarkeitTests.swift in Sources */,
 				49188A7C28036BA6E75E3C6E /* GeraetEinstiegTests.swift in Sources */,
 				4EFF9FE217AD707A64430569 /* GeraetEinstiegsartTests.swift in Sources */,
 				FDA54C34231DE3E958EF06D9 /* GeraetKontextLadenTests.swift in Sources */,

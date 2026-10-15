@@ -233,6 +233,14 @@ struct TrainingRootView: View {
                     ausfuehren(folge)
                 }
             }
+            // Fortsetzen (Testnotiz 14.10., 18:45 #3): wird ein Training wieder
+            // aktiv, waehrend der Tab noch seine Zusammenfassung zeigt, geht
+            // es zur Wurzel -- dort steht "Training laeuft".
+            .onChange(of: sessions.aktiveSession()?.id) { _, neu in
+                if Pfadbereinigung.nachFortsetzenLeeren(aktiveId: neu, pfad: pfad) {
+                    pfad.removeAll()
+                }
+            }
             // Ein gescheiterter NFC-Scan landet im selben Banner wie ein
             // gescheiterter QR-Scan. Der Leser haelt seinen Fehler getrennt,
             // weil er auch aus dem Scanner-Sheet heraus benutzt wird -- hier

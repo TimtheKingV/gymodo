@@ -149,7 +149,10 @@ struct HomeRootView: View {
             .navigationDestination(for: HomeRoute.self) { route in
                 switch route {
                 case .sessionDetail(let id):
-                    SessionDetailView(sessionId: id, apiClient: apiClient)
+                    SessionDetailView(sessionId: id, apiClient: apiClient, beiFortgesetzt: {
+                        pfad.removeAll()
+                        beiTrainingZeigen()
+                    })
                 case .uebungsfortschritt(let exerciseId):
                     UebungsfortschrittView(exerciseId: exerciseId)
                 case .gewichtsverlauf:
