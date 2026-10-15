@@ -101,6 +101,19 @@ final class GeraetModel {
     /// gesetzt, wenn das Modell eine Nebenbelastung hat -- der Server
     /// verlangt sie dann im Satz und weist sie sonst ab (Cardio-Spec 5.1).
     private(set) var nebenbelastung: Double?
+
+    /// Am Cardio-Geraet statt der Raeder (Testnotiz 14.10., 18:45 #7): was
+    /// gerade in den Knoepfen steht. Vorbelegt vom letzten Mal, nach einem
+    /// Satz mit dessen Werten.
+    private(set) var cardio = CardioWerte()
+
+    var cardioListe: [CardioWert] { station.equipmentModel.cardioWerte }
+    var istCardio: Bool { !cardioListe.isEmpty }
+    var kannSichern: Bool { !istCardio || !cardio.istLeer }
+
+    func cardioSetzen(_ wert: CardioWert, _ zahl: Double?) {
+        cardio[wert] = zahl
+    }
     /// Sobald das Mitglied am Rad gedreht hat, gehoert `belastung` ihm --
     /// ein spaeter eintreffender tagContext (die Anfrage lief seit .task
     /// auf GeraetView, kann in einem Keller zehn Sekunden brauchen) darf
@@ -232,6 +245,7 @@ final class GeraetModel {
         belastung = Rastwerte.naechster(zu: belastung, in: belastungsWerte)
         umfang = Rastwerte.naechster(zu: umfang, in: umfangsWerte)
         nebenbelastung = nebenbelastungVorbelegt(aus: letzter?.secondaryLoad)
+        cardio = letzter?.cardio?.nur(station.equipmentModel.cardioWerte) ?? CardioWerte()
 
         // Aus dem Drawer (Testnotiz 11.10., #10, #11): die dort gewaehlten
         // Werte gehoeren dem Mitglied, ein spaeter Vorschlag ersetzt sie
@@ -687,6 +701,7 @@ final class GeraetModel {
         let load: Double?
         let secondaryLoad: Double?
         let volume: Int?
+        let cardio: CardioWerte?
         let performedAt: String
     }
 
@@ -701,11 +716,11 @@ final class GeraetModel {
         case .geraet(let machineId):
             bootstrap.lastSets.first { $0.machineId == machineId && $0.exerciseId == uebungId }
                 .map { LetzterSatz(load: $0.load, secondaryLoad: $0.secondaryLoad,
-                                   volume: $0.volume, performedAt: $0.performedAt) }
+                                   volume: $0.volume, cardio: $0.cardio, performedAt: $0.performedAt) }
         case .typ(let equipmentModelId):
             bootstrap.lastTypeSets.first { $0.equipmentModelId == equipmentModelId && $0.exerciseId == uebungId }
                 .map { LetzterSatz(load: $0.load, secondaryLoad: $0.secondaryLoad,
-                                   volume: $0.volume, performedAt: $0.performedAt) }
+                                   volume: $0.volume, cardio: $0.cardio, performedAt: $0.performedAt) }
         }
     }
 
@@ -720,6 +735,7 @@ final class GeraetModel {
         umfang = Rastwerte.naechster(
             zu: letzter?.volume ?? aktiveUebung?.targetMin ?? 10, in: umfangsWerte)
         nebenbelastung = nebenbelastungVorbelegt(aus: letzter?.secondaryLoad)
+        cardio = letzter?.cardio?.nur(cardioListe) ?? CardioWerte()
         // Eine andere Uebung hat ihren eigenen Satzzaehler -- eine Pause
         // oder eine Abschlussentscheidung, die zur vorherigen gehoerte,
         // gilt hier nicht mehr.
@@ -747,7 +763,7 @@ final class GeraetModel {
         let befestigung = zaehler?.befestigung
         // Herkunft nur bei Wiederholungen: der Server lehnt sie sonst ab (Spec B 6.3).
         let ergebnis: ZaehlerErgebnis?
-        if volumeKind == .reps {
+        if volumeKind == .reps && !istCardio {
             ergebnis = zaehler?.ergebnis()
         } else {
             zaehler?.satzVerworfen()
@@ -757,7 +773,10 @@ final class GeraetModel {
         var geschrieben = sessions.satzSichern(
             station: station, exerciseId: uebungId,
             einheiten: einheiten,
-            load: belastung, secondaryLoad: nebenbelastung, volume: umfang,
+            load: istCardio ? nil : belastung,
+            secondaryLoad: istCardio ? nil : nebenbelastung,
+            volume: istCardio ? nil : umfang,
+            cardio: istCardio ? cardio : nil,
             problemFlag: problemFlag, problemReason: problemReason
         )
         geschrieben.body.volumeSource = herkunft
@@ -781,8 +800,8 @@ final class GeraetModel {
             // Das Label ist fuer den Wiederholungszaehler: an einem Cardio-
             // Geraet gibt es weder Kilogramm noch Wiederholungen, die Felder
             // bleiben dort leer statt eine Watt- oder Meterzahl zu tragen.
-            weightKg: loadUnit == .kg ? belastung : nil,
-            reps: volumeKind == .reps ? umfang : nil,
+            weightKg: !istCardio && loadUnit == .kg ? belastung : nil,
+            reps: !istCardio && volumeKind == .reps ? umfang : nil,
             problemFlag: problemFlag,
             volumeSource: herkunft, zaehler: ergebnis, befestigung: befestigung))
         zaehlerZustand = .aus

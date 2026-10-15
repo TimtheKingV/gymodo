@@ -220,7 +220,11 @@ struct GeraetView: View {
             SensorZeile(station: modell.station.schluessel)
             #endif
             einstellung
-            WertZeile(modell: modell)
+            if modell.istCardio {
+                CardioRaster(modell: modell)
+            } else {
+                WertZeile(modell: modell)
+            }
             Spacer(minLength: 0)
             aktionen
         }
@@ -387,11 +391,13 @@ struct GeraetView: View {
             // Sichert direkt aus dem Rad heraus: scrollen, dann sichern --
             // zwei Interaktionen, kein Tap dazwischen
             // (Interaktionsbudget SS9).
-            PrimaryButton(title: hauptaktion) {
+            PrimaryButton(title: hauptaktion, isEnabled: modell.kannSichern) {
                 await modell.satzSichern(problemFlag: false, problemReason: nil)
             }
             .testnotizElement("geraet.satz-sichern", typ: "PrimaryButton")
-            .accessibilityLabel("\(hauptaktion), \(Zahlformat.belastungGesprochen(modell.belastung, modell.loadUnit))")
+            .accessibilityLabel(modell.istCardio
+                ? hauptaktion
+                : "\(hauptaktion), \(Zahlformat.belastungGesprochen(modell.belastung, modell.loadUnit))")
 
             // Abschliessen und Problem melden in EINER Zeile (Sammelstelle
             // Punkt 12): als dritte Zeile kostete "Problem melden" 56 pt, die

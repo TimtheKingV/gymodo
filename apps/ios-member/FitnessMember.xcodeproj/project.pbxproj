@@ -69,6 +69,7 @@
 		314FA2F843E86E287D170A14 /* SatzZaehler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F7551BF185923696CE8280A /* SatzZaehler.swift */; };
 		343BDE4F7305D850B853023F /* TestnotizElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F7BD850EC9E2582E3D0D95 /* TestnotizElement.swift */; };
 		34BB24849CEDAC72879940FF /* KurseHerkunft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316F6201B7E6E5D63EAEAE84 /* KurseHerkunft.swift */; };
+		351BEEF8A9521F1FC0F46296 /* CardioGeraetModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D63A4690C06EAE94032AB45E /* CardioGeraetModelTests.swift */; };
 		356B55A3EC5DF1C40CF07351 /* GeraetLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B800AB907E579F778EA2656 /* GeraetLoading.swift */; };
 		38240F3DF60D68312F9CBCE4 /* AuthCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DC3378D45751B2BE6267611 /* AuthCopy.swift */; };
 		382451921E71AB26611C0BA0 /* PendingTagStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083F4ABC58427C5FDB7D835 /* PendingTagStoreTests.swift */; };
@@ -127,6 +128,7 @@
 		67CB5A92D5A22F772F336E2F /* FortschrittsfensterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */; };
 		6812F175D0293265578050F9 /* NFCTagLeser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33916355F38A81716A43C018 /* NFCTagLeser.swift */; };
 		69707264A68EBA2FC3D1FD67 /* MemberPasswortNeuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6331BCAA9F1DFF57341B82E /* MemberPasswortNeuView.swift */; };
+		6A1B6C63F3A7BB4D29C3320B /* CardioRaster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2680F7C1EDB171506672B7F1 /* CardioRaster.swift */; };
 		6A59A84F41992865C3BDFF92 /* HomeZieleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30FF5A6BBD8F56D126611CB8 /* HomeZieleView.swift */; };
 		6A76BD1CA4324AA4D5E12AE6 /* Minikurve.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38DF496B3317F9A17CF267BE /* Minikurve.swift */; };
 		6C1C7736AAA82B6C3372EEA1 /* AusschnittTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF4AD6F764733094933FC52 /* AusschnittTests.swift */; };
@@ -372,6 +374,7 @@
 		252C3FD021F6C5CB033A8E7D /* Zeitpunkt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zeitpunkt.swift; sourceTree = "<group>"; };
 		256B9DE3CD0E562482D52FD8 /* AudioSitzungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSitzungTests.swift; sourceTree = "<group>"; };
 		25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeDigitsView.swift; sourceTree = "<group>"; };
+		2680F7C1EDB171506672B7F1 /* CardioRaster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardioRaster.swift; sourceTree = "<group>"; };
 		26938FABB4BBFFF4A17B5D63 /* GewichtEintragenHilfenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GewichtEintragenHilfenTests.swift; sourceTree = "<group>"; };
 		26B1A62413AE0C5835F9E9CA /* RastwerteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RastwerteTests.swift; sourceTree = "<group>"; };
 		26B414241FEB56BDD45194AA /* PendingTagStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingTagStore.swift; sourceTree = "<group>"; };
@@ -578,6 +581,7 @@
 		D5DB91C9C99E1790C7FBBC98 /* AbspielSensorQuelleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbspielSensorQuelleTests.swift; sourceTree = "<group>"; };
 		D5EDFCF55AFA4CDCD53104DC /* TrainingAbschlussView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAbschlussView.swift; sourceTree = "<group>"; };
 		D6331BCAA9F1DFF57341B82E /* MemberPasswortNeuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortNeuView.swift; sourceTree = "<group>"; };
+		D63A4690C06EAE94032AB45E /* CardioGeraetModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardioGeraetModelTests.swift; sourceTree = "<group>"; };
 		D78C8636341914B90296B220 /* AppConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigTests.swift; sourceTree = "<group>"; };
 		D79138C4B32315198E734356 /* EmailValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailValidator.swift; sourceTree = "<group>"; };
 		D88102EAEB9BC8D4E6FA9BC7 /* PfadbereinigungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PfadbereinigungTests.swift; sourceTree = "<group>"; };
@@ -784,6 +788,7 @@
 		3C464E869CE4E7B44B00F6AF /* Geraet */ = {
 			isa = PBXGroup;
 			children = (
+				2680F7C1EDB171506672B7F1 /* CardioRaster.swift */,
 				3A3BA42E747095E74D6BF83A /* EinweisungSchritt.swift */,
 				9ABF3C0BB5050A962881A269 /* GeraeteAuswahlView.swift */,
 				4A055AE066E95BA635068E45 /* GeraetErkanntView.swift */,
@@ -913,6 +918,7 @@
 				032095E4600D97C96AB8E038 /* BefestigungsspeicherTests.swift */,
 				82D659FEA5E712905994628D /* BelastungTests.swift */,
 				A611FB701374C11335D844E4 /* BelegungsleisteTests.swift */,
+				D63A4690C06EAE94032AB45E /* CardioGeraetModelTests.swift */,
 				3EC5DE4F4A42F0296CF0BA5B /* CardioTests.swift */,
 				DB8CC4AA1ADA4ED3E6D39207 /* CatalogStoreTests.swift */,
 				CF7B9170FFCF2B3FBDF4A2F0 /* ColorHexTests.swift */,
@@ -1331,6 +1337,7 @@
 				9DE8EE325C831E9049A8BABE /* CalibrationWrite.swift in Sources */,
 				B588B97987FD269D81E3CCED /* Card.swift in Sources */,
 				46A801925575715402AB9D10 /* Cardio.swift in Sources */,
+				6A1B6C63F3A7BB4D29C3320B /* CardioRaster.swift in Sources */,
 				206D113D8EEB2FF4D9BF05EB /* CatalogLoadState.swift in Sources */,
 				39876DCABA0D4C90A172BF11 /* CatalogStore.swift in Sources */,
 				F9DAC3407A000DEDA7092660 /* Chip.swift in Sources */,
@@ -1527,6 +1534,7 @@
 				987BD1C06D3455370CA7C2DD /* BefestigungsspeicherTests.swift in Sources */,
 				E82A9E515726BBBF77B45AD2 /* BelastungTests.swift in Sources */,
 				2E8C9C369514B0119183FF90 /* BelegungsleisteTests.swift in Sources */,
+				351BEEF8A9521F1FC0F46296 /* CardioGeraetModelTests.swift in Sources */,
 				825B9525085F6AA96418C5BA /* CardioTests.swift in Sources */,
 				A536169303BCBE5ED5385A9A /* CatalogStoreTests.swift in Sources */,
 				4FF2547C2EF53854366AC3A1 /* ColorHexTests.swift in Sources */,
