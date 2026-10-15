@@ -227,9 +227,16 @@ final class WorkoutSessionStore {
     @discardableResult
     func beenden(jetzt: Date = Date(), ablegen: Bool = true) -> UUID? {
         let session = gespeicherteSession
-        if ablegen, let session, session.hatSaetze {
-            zuletztBeendet = BeendeteSession(session: session, beendetAm: jetzt)
-            fileStore.saveBeendet(zuletztBeendet)
+        if let session, session.hatSaetze {
+            if ablegen {
+                zuletztBeendet = BeendeteSession(session: session, beendetAm: jetzt)
+                fileStore.saveBeendet(zuletztBeendet)
+            } else {
+                // Eine neuere Einheit mit Saetzen loest die aeltere Ablage
+                // ab: sonst liesse sich ein aelteres Training nach einem
+                // neueren fortsetzen.
+                ablageVerwerfen()
+            }
         }
         gespeicherteSession = nil
         fileStore.save(nil)
@@ -251,18 +258,42 @@ final class WorkoutSessionStore {
     /// NACH einem erfolgreichen reopen am Server rufen. Eine beim Beenden
     /// offene Pause endet beim Beenden; die Luecke bis jetzt kommt als
     /// Pause dazu. Nicht `fortsetzen`: das heisst hier "Pause beenden".
+    ///
+    /// Ohne Fensterpruefung: hat der Server ja gesagt, zaehlt nicht mehr die
+    /// Uhr des Geraets. Nur ein laufendes Training sperrt.
     @discardableResult
     func wiederaufnehmen(jetzt: Date = Date()) -> LokaleSession? {
-        guard let beendet = zuletztBeendet,
-              kannWiederaufnehmen(sessionId: beendet.session.id.uuidString, jetzt: jetzt)
-        else { return nil }
+        guard let beendet = zuletztBeendet, aktiveSession(jetzt: jetzt) == nil else { return nil }
         var session = beendet.session
         session.fortsetzen(jetzt: beendet.beendetAm)
         session.pausenDauer += max(0, jetzt.timeIntervalSince(beendet.beendetAm))
+        session.wiederaufgenommenAm = jetzt
         gespeicherteSession = session
         fileStore.save(session)
         ablageVerwerfen()
         return session
+    }
+
+    /// Vor dem reopen-Aufruf: haelt fest, dass der Server die Einheit
+    /// gleich wieder oeffnen koennte -- auch wenn die App die Antwort nie
+    /// erfaehrt.
+    func fortsetzenAnfragen() {
+        guard var beendet = zuletztBeendet else { return }
+        beendet.fortsetzenAngefragt = true
+        zuletztBeendet = beendet
+        fileStore.saveBeendet(beendet)
+    }
+
+    /// Nach einem erfolgreich geladenen Verlauf: zeigt der Server die
+    /// angefragte Einheit offen, ging reopen durch, nur die Antwort nicht.
+    /// Dann gilt das Fortsetzen -- sonst waere die Einheit am Server offen,
+    /// ihre Karte weg und kein Weg zurueck.
+    @discardableResult
+    func abgleichen(offeneIds: [String], jetzt: Date = Date()) -> LokaleSession? {
+        guard let beendet = zuletztBeendet, beendet.fortsetzenAngefragt,
+              offeneIds.contains(where: { $0.lowercased() == beendet.session.id.uuidString.lowercased() })
+        else { return nil }
+        return wiederaufnehmen(jetzt: jetzt)
     }
 
     /// Nach "zu spaet" vom Server (oder beim Abmelden): kein Button mehr.

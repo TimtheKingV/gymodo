@@ -148,6 +148,11 @@ struct LokaleSession: Codable, Equatable {
     /// Der Ort der Einheit, gesetzt mit dem ersten Satz mit bekanntem Ort;
     /// nil bei Dateien von vor dem Katalog.
     var ort: Ort? = nil
+    /// Wann die Einheit zuletzt fortgesetzt wurde (Testnotiz 14.10., 18:45
+    /// #3/#4). Die Luecke davor steckt in `pausenDauer` und liegt HINTER dem
+    /// letzten Satz vor dem Beenden -- der Abschluss rechnet deshalb
+    /// mindestens bis hierher, sonst fehlte sie zweimal.
+    var wiederaufgenommenAm: Date? = nil
 
     var letzterSatzAm: Date? {
         bloecke.flatMap(\.saetze).map(\.performedAt).max()
@@ -192,7 +197,7 @@ struct LokaleSession: Codable, Equatable {
 
 extension LokaleSession {
     private enum CodingKeys: String, CodingKey {
-        case id, startedAt, bloecke, pausiertSeit, pausenDauer, ort
+        case id, startedAt, bloecke, pausiertSeit, pausenDauer, ort, wiederaufgenommenAm
     }
 
     /// Eine Sessiondatei von vor der Pause kennt beide Felder nicht. Ohne
@@ -207,5 +212,6 @@ extension LokaleSession {
         pausiertSeit = try c.decodeIfPresent(Date.self, forKey: .pausiertSeit)
         pausenDauer = try c.decodeIfPresent(TimeInterval.self, forKey: .pausenDauer) ?? 0
         ort = try c.decodeIfPresent(Ort.self, forKey: .ort)
+        wiederaufgenommenAm = try c.decodeIfPresent(Date.self, forKey: .wiederaufgenommenAm)
     }
 }

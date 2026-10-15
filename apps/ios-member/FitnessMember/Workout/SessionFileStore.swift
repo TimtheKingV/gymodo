@@ -54,4 +54,9 @@ final class SessionFileStore {
 struct BeendeteSession: Codable, Equatable {
     let session: LokaleSession
     let beendetAm: Date
+    /// Gesetzt, bevor reopen an den Server geht. Kommt die Antwort nie an,
+    /// holt der naechste Verlauf-Abgleich das Training zurueck, sobald der
+    /// Server die Einheit offen zeigt (`WorkoutSessionStore.abgleichen`).
+    /// Ohne die Marke hiesse "offen" auch: Beenden ging offline nie raus.
+    var fortsetzenAngefragt = false
 }

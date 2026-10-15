@@ -57,7 +57,11 @@ struct Trainingszusammenfassung: Equatable, Hashable {
         bis = letzter
         // Ohne Pausen (Testnotiz 05.10., #7): die Uhr stand in der Pause,
         // und der Abschluss nennt dieselbe Zeit wie zuletzt die Uhr.
-        dauerMinuten = Int(session.trainiert(bis: letzter) / 60)
+        //
+        // Nach dem Fortsetzen ohne neuen Satz liegt die Luecke hinter dem
+        // letzten Satz: dann bis zum Fortsetzen rechnen, sonst zoege die
+        // Pausensumme sie von einer Spanne ab, die sie nicht enthaelt.
+        dauerMinuten = Int(session.trainiert(bis: max(letzter, session.wiederaufgenommenAm ?? letzter)) / 60)
         // Fuer den Abschluss am Server (Testnotiz 14.10., 18:45 #3/#4): bis
         // zum Tipp auf "Beenden", nicht bis zum letzten Satz -- der Server
         // setzt completed_at auf jetzt.

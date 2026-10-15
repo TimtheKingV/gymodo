@@ -321,11 +321,11 @@ struct SessionDetailView: View {
     private func fortsetzen(_ teilId: String) async {
         fortsetzenLaeuft = true
         defer { fortsetzenLaeuft = false }
+        sessions.fortsetzenAnfragen()
         do throws(APIError) {
             try await apiClient.reopenSession(sessionId: teilId)
-            sessions.wiederaufnehmen()
             fortsetzenFehler = nil
-            beiFortgesetzt()
+            if sessions.wiederaufnehmen() != nil { beiFortgesetzt() }
         } catch {
             let folge = Fortsetzbarkeit.folgeNachFehler(error)
             fortsetzenFehler = folge.text

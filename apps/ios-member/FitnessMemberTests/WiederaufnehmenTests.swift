@@ -112,4 +112,59 @@ struct WiederaufnehmenTests {
         let id = beendet(store(verzeichnis))
         #expect(store(verzeichnis).zuletztBeendet?.session.id == id)
     }
+
+    /// Review: reopen ging am Server durch, die Antwort kam nie an (oder die
+    /// App wurde beendet). Der Verlauf zeigt die Einheit dann offen, die
+    /// Karte ist weg -- der Abgleich holt das Training zurueck.
+    @Test func nachVerlorenerAntwortHoltDerAbgleichDasTrainingZurueck() {
+        let sessions = store()
+        let id = beendet(sessions)
+        sessions.fortsetzenAnfragen()
+        let wieder = sessions.abgleichen(offeneIds: [id.uuidString.lowercased()],
+                                         jetzt: t0.addingTimeInterval(1200 + 2400))
+        #expect(wieder?.id == id)
+        #expect(wieder?.pausenDauer == 2400)
+    }
+
+    /// Ohne Anfrage ist eine offene Einheit am Server ein gescheitertes
+    /// Beenden (offline), kein Fortsetzen -- das Training bleibt beendet.
+    @Test func ohneAnfrageHoltDerAbgleichNichts() {
+        let sessions = store()
+        let id = beendet(sessions)
+        #expect(sessions.abgleichen(offeneIds: [id.uuidString.lowercased()],
+                                    jetzt: t0.addingTimeInterval(1300)) == nil)
+        #expect(sessions.aktiveSession(jetzt: t0.addingTimeInterval(1300)) == nil)
+    }
+
+    @Test func dieAnfrageUeberstehtEinenNeustart() {
+        let verzeichnis = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let erster = store(verzeichnis)
+        let id = beendet(erster)
+        erster.fortsetzenAnfragen()
+        let wieder = store(verzeichnis).abgleichen(offeneIds: [id.uuidString.lowercased()],
+                                                   jetzt: t0.addingTimeInterval(1300))
+        #expect(wieder?.id == id)
+    }
+
+    /// Review: hat der Server ja gesagt, entscheidet nicht mehr die Uhr des
+    /// Geraets -- auch wenn sie zwischen Tipp und Antwort ueber 30 min springt.
+    @Test func nachDerZusageDesServersZaehltDasFensterNicht() {
+        let sessions = store()
+        let id = beendet(sessions)
+        #expect(sessions.wiederaufnehmen(jetzt: t0.addingTimeInterval(1200 + 1801))?.id == id)
+    }
+
+    /// Review: eine neuere Einheit mit Saetzen, beendet beim Ortswechsel,
+    /// loest die aeltere Ablage ab -- sonst liesse sich ein aelteres
+    /// Training nach einem neueren fortsetzen.
+    @Test func einOrtswechselVerwirftEineAeltereAblage() {
+        let sessions = store()
+        _ = beendet(sessions)
+        sessions.trainingStarten()
+        _ = sessions.satzSichern(station: .testGeraet("m2"), exerciseId: "e2",
+                                  einheiten: .kilogrammWiederholungen, load: 30, volume: 10,
+                                  problemFlag: false, problemReason: nil)
+        _ = sessions.beendenFuerOrtswechsel()
+        #expect(sessions.zuletztBeendet == nil)
+    }
 }
