@@ -105,4 +105,22 @@ struct CardioTests {
         let t = CardioEingabe.zeitTeile(3900)
         #expect(t.h == 1 && t.m == 5 && t.s == 0)
     }
+
+    @Test func minusZeichenUndRundreise() {
+        #expect(CardioEingabe.zahl("−2,5", fuer: .steigung) == .success(-2.5))
+        #expect(CardioEingabe.zahl("-2,5", fuer: .steigung) == .success(-2.5))
+        #expect(CardioEingabe.zahl("–2,5", fuer: .steigung) == .success(-2.5))
+        for (w, x) in [(CardioWert.steigung, -2.0), (.steigung, 7.5), (.kmh, 10.5), (.watt, 142), (.kcal, 1500), (.strecke, 2000)] {
+            #expect(CardioEingabe.zahl(Zahlformat.cardioZahl(w, x), fuer: w) == .success(x))
+        }
+    }
+
+    @Test func tausenderpunktUndFremdzeichen() {
+        #expect(CardioEingabe.zahl("1.000", fuer: .watt) == .success(1000))
+        #expect(CardioEingabe.zahl("12.345", fuer: .strecke) == .success(12345))
+        #expect(CardioEingabe.zahl("1.000", fuer: .kmh) == .success(1))
+        #expect(CardioEingabe.zahl("1e3", fuer: .watt) == .failure(.keineZahl))
+        #expect(CardioEingabe.zahl("0x10", fuer: .watt) == .failure(.keineZahl))
+        #expect(CardioEingabe.zahl("1-2", fuer: .watt) == .failure(.keineZahl))
+    }
 }

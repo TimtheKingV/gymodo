@@ -98,8 +98,18 @@ enum CardioEingabe {
 
     /// Komma oder Punkt als Dezimaltrenner; ganzzahlige Werte duerfen keinen Rest haben.
     static func zahl(_ text: String, fuer wert: CardioWert) -> Result<Double, Fehler> {
-        let roh = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        var roh = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\u{2212}", with: "-")
+            .replacingOccurrences(of: "\u{2013}", with: "-")
         if roh.isEmpty { return .failure(.leer) }
+        // Nur Ziffern, ein Vorzeichen vorn, Punkt und Komma: "1e3", "0x10" fallen raus.
+        guard roh.range(of: #"^[+-]?[0-9.,]+$"#, options: .regularExpression) != nil else {
+            return .failure(.keineZahl)
+        }
+        // Ganze Zahl mit Tausenderpunkten: "1.000" ist 1000, nicht 1.
+        if wert.ganzzahlig, roh.range(of: #"^[0-9]{1,3}(\.[0-9]{3})+$"#, options: .regularExpression) != nil {
+            roh = roh.replacingOccurrences(of: ".", with: "")
+        }
         guard let zahl = Double(roh.replacingOccurrences(of: ",", with: ".")), zahl.isFinite else {
             return .failure(.keineZahl)
         }
