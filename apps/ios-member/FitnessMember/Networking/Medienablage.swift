@@ -50,9 +50,18 @@ actor Medienablage {
     }
 
     // Ephemeral aus demselben Grund wie im VorschauLader: eine Antwort im
-    // URLCache traefe mit der naechsten Signatur nie wieder.
+    // URLCache traefe mit der naechsten Signatur nie wieder. EINE Session
+    // statt einer je Download, und 20 s statt 60 s: im Keller soll ein
+    // haengender Download die Kachel nicht eine Minute blockieren
+    // (Offline-Spec 2).
+    static let netzSession: URLSession = {
+        let konfiguration = URLSessionConfiguration.ephemeral
+        konfiguration.timeoutIntervalForRequest = 20
+        return URLSession(configuration: konfiguration)
+    }()
+
     static let netz: Laden = { url in
-        guard let (daten, antwort) = try? await URLSession(configuration: .ephemeral).data(from: url),
+        guard let (daten, antwort) = try? await netzSession.data(from: url),
               (antwort as? HTTPURLResponse)?.statusCode == 200
         else { return nil }
         return daten

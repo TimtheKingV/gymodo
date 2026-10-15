@@ -144,4 +144,9 @@ struct MedienablageTests {
         #expect(ergebnisse[0] == ergebnisse[1])
         #expect(await zaehler.abrufe.count == 1)
     }
+
+    @Test func eineSessionMitKurzemTimeout() {
+        #expect(Medienablage.netzSession === Medienablage.netzSession)
+        #expect(Medienablage.netzSession.configuration.timeoutIntervalForRequest == 20)
+    }
 }
