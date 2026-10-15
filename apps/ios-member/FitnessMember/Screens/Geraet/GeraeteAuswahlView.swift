@@ -53,7 +53,12 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     /// Katalog auf dem Main-Thread. nil bis zur ersten Berechnung --
     /// `gruppen` rechnet dann einmal direkt, damit der erste Frame stimmt.
     @State private var ergebnis: GeraeteAuswahl.Gruppen?
-    @State private var stationen: [Station] = []
+    /// Wie `ergebnis`: nil bis zur ersten Berechnung, `stationen` rechnet
+    /// dann direkt (sonst zeigte der Untertitel im ersten Frame "0 Geraete").
+    @State private var stationenCache: [Station]?
+    /// Der zuletzt berechnete Schluessel -- damit nur reine Textaenderungen
+    /// entprellt werden, Bootstrap-/Ort-/Gruppenwechsel aber sofort rechnen.
+    @State private var letzterSchluessel: Suchschluessel?
 
     private struct Suchschluessel: Equatable {
         let text: String
@@ -131,13 +136,18 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
             fotos = await geladeneFotos
         }
         .task(id: Suchschluessel(text: suchtext, ort: ort, gruppe: gruppe, stand: katalog.bootstrapStand)) {
-            // Leeren und erster Durchlauf sofort, Tippen entprellt.
-            if !suchtext.isEmpty && ergebnis != nil {
+            let schluessel = Suchschluessel(text: suchtext, ort: ort, gruppe: gruppe, stand: katalog.bootstrapStand)
+            let restGleich = letzterSchluessel.map {
+                $0.ort == schluessel.ort && $0.gruppe == schluessel.gruppe && $0.stand == schluessel.stand
+            } ?? false
+            if GeraeteAuswahl.entprellt(textVorher: letzterSchluessel?.text, textJetzt: schluessel.text,
+                                        restGleich: restGleich) {
                 try? await Task.sleep(for: .milliseconds(150))
                 guard !Task.isCancelled else { return }
             }
-            ergebnis = berechneGruppen(suchtext)
-            stationen = katalog.bootstrap.map { GeraeteAuswahl.stationen(bootstrap: $0, ort: ort) } ?? []
+            ergebnis = berechneGruppen(schluessel.text)
+            stationenCache = berechneStationen()
+            letzterSchluessel = schluessel
         }
     }
 
@@ -236,6 +246,14 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
 
     private var gruppen: GeraeteAuswahl.Gruppen {
         ergebnis ?? berechneGruppen(suchtext)
+    }
+
+    private var stationen: [Station] {
+        stationenCache ?? berechneStationen()
+    }
+
+    private func berechneStationen() -> [Station] {
+        katalog.bootstrap.map { GeraeteAuswahl.stationen(bootstrap: $0, ort: ort) } ?? []
     }
 
     private func berechneGruppen(_ text: String) -> GeraeteAuswahl.Gruppen {

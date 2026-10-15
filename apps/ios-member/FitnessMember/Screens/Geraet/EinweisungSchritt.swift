@@ -150,6 +150,6 @@ struct EinweisungSchritt: View {
     }
 
     private var geraetefoto: some View {
-        Geraetefoto(url: modell.kontext?.equipmentModel.photoUrl.flatMap(URL.init(string:)), hoehe: 200)
+        Geraetefoto(modellId: modell.station.equipmentModelId, url: modell.kontext?.equipmentModel.photoUrl.flatMap(URL.init(string:)), hoehe: 200)
     }
 }
