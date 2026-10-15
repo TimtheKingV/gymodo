@@ -7,9 +7,9 @@ Tor je Art (Sensor-Spec B 5.5): ≥ 20 Sätze aus ≥ 3 Tagen, exakt ≥ 90 %, �
 |---|---|---|---|---|---|
 | stapel (stapel/2) · Entwicklung | 20 | 1 | 100 % | 100 % | 5 % |
 | stapel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
-| langhantel (langhantel/1) · Entwicklung | 4 | 2 | 0 % | 0 % | 50 % |
+| langhantel (langhantel/2) · Entwicklung | 4 | 2 | 100 % | 100 % | 25 % |
 | langhantel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
-| kurzhantel (kurzhantel/1) · Entwicklung | 17 | 3 | 38 % | 54 % | 24 % |
+| kurzhantel (kurzhantel/2) · Entwicklung | 17 | 3 | 69 % | 88 % | 6 % |
 | kurzhantel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
 | koerper (koerper/1) · Entwicklung | 1 | 1 | 0 % | 0 % | 0 % |
 | koerper · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
@@ -18,9 +18,9 @@ Tor je Art (Sensor-Spec B 5.5): ≥ 20 Sätze aus ≥ 3 Tagen, exakt ≥ 90 %, �
 
 | Aufnahme | Art | wahr | gezählt | Rücknahme |
 |---|---|---|---|---|
-| 2026-10-08-0836-01 | langhantel | 12 | 14 | – |
-| 2026-10-08-0837-01 | langhantel | 15 | 2 | taktUnregelmaessig |
-| 2026-10-08-0846-02 | kurzhantel | 10 | 1 | – |
+| 2026-10-08-0836-01 | langhantel | 12 | 2 | taktUnregelmaessig |
+| 2026-10-08-0837-01 | langhantel | 15 | 15 | – |
+| 2026-10-08-0846-02 | kurzhantel | 10 | 10 | – |
 | 2026-10-08-0852-01 | koerper | 10 | 0 | – |
 | 2026-10-14-1747-01 | stapel | 10 | 10 | – |
 | 2026-10-14-1749-01 | stapel | 10 | 10 | – |
@@ -38,25 +38,25 @@ Tor je Art (Sensor-Spec B 5.5): ≥ 20 Sätze aus ≥ 3 Tagen, exakt ≥ 90 %, �
 | 2026-10-14-1812-01 | stapel | 15 | 15 | – |
 | 2026-10-14-1814-01 | stapel | 15 | 15 | – |
 | 2026-10-14-1818-01 | kurzhantel | 15 | 15 | – |
-| 2026-10-14-1819-02 | kurzhantel | 8 | 2 | taktUnregelmaessig |
-| 2026-10-14-1820-01 | kurzhantel | 15 | 3 | taktUnregelmaessig |
+| 2026-10-14-1819-02 | kurzhantel | 8 | 3 | – |
+| 2026-10-14-1820-01 | kurzhantel | 15 | 3 | luecke |
 | 2026-10-14-1822-02 | kurzhantel | 10 | 1 | – |
-| 2026-10-14-1823-01 | kurzhantel | 17 | 2 | signalSchwach |
+| 2026-10-14-1823-01 | kurzhantel | 17 | 17 | – |
 | 2026-10-14-1826-02 | kurzhantel | 10 | 10 | – |
 | 2026-10-14-1827-02 | kurzhantel | 12 | 12 | – |
-| 2026-10-14-1830-01 | langhantel | 25 | 0 | – |
-| 2026-10-14-1832-01 | langhantel | 20 | 2 | taktUnregelmaessig |
+| 2026-10-14-1830-01 | langhantel | 25 | 25 | – |
+| 2026-10-14-1832-01 | langhantel | 20 | 20 | – |
 | 2026-10-14-1837-01 | stapel | 8 | 8 | – |
 | 2026-10-14-1838-01 | stapel | 10 | 10 | – |
 | 2026-10-14-1840-01 | stapel | 10 | 10 | – |
 | 2026-10-14-1846-01 | stapel | 25 | 25 | – |
 | 2026-10-14-1848-01 | stapel | 40 | 40 | – |
 | 2026-10-15-1652-01 | kurzhantel | 9 | 9 | – |
-| 2026-10-15-1652-02 | kurzhantel | 8 | 2 | – |
-| 2026-10-15-1653-01 | kurzhantel | 8 | 0 | – |
+| 2026-10-15-1652-02 | kurzhantel | 8 | 8 | – |
+| 2026-10-15-1653-01 | kurzhantel | 8 | 8 | – |
 | 2026-10-15-1654-02 | kurzhantel | 8 | 7 | – |
-| 2026-10-15-1655-01 | kurzhantel | 8 | 1 | – |
-| 2026-10-15-1655-02 | kurzhantel | 8 | 3 | taktUnregelmaessig |
+| 2026-10-15-1655-01 | kurzhantel | 8 | 7 | – |
+| 2026-10-15-1655-02 | kurzhantel | 8 | 8 | – |
 | 2026-10-15-1657-02 | kurzhantel | 8 | 8 | – |
-| 2026-10-15-1657-03 | kurzhantel | 8 | 10 | – |
+| 2026-10-15-1657-03 | kurzhantel | 8 | 8 | – |
 | 2026-10-15-1658-01 | kurzhantel | 10 | 11 | – |

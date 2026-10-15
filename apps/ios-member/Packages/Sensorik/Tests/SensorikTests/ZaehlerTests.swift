@@ -5,7 +5,7 @@ import Testing
 struct ZaehlerTests {
     typealias A = Synthetik.Abschnitt
 
-    @Test(arguments: [Befestigungsart.langhantel, .kurzhantel, .hebelarm, .kabelgriff])
+    @Test(arguments: [Befestigungsart.kurzhantel, .hebelarm, .kabelgriff])
     func drehrateZaehltJedePeriode(art: Befestigungsart) {
         let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 10)])
         #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: art)) == 10)
@@ -19,7 +19,7 @@ struct ZaehlerTests {
 
     @Test func nurRuheZaehltNichts() {
         let werte = Synthetik.satz(signal: .drehrate, abschnitte: [], ruheVorher: 20)
-        let ereignisse = Synthetik.zaehlen(werte, art: .langhantel)
+        let ereignisse = Synthetik.zaehlen(werte, art: .hebelarm)
         #expect(ereignisse == [.zuende])
     }
 
@@ -27,25 +27,25 @@ struct ZaehlerTests {
     @Test(arguments: [1, 2, 4])
     func buendelungAendertDieZahlNicht(buendel: Int) {
         let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 8)], buendel: buendel)
-        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .langhantel)) == 8)
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .hebelarm)) == 8)
     }
 
     @Test func zwanzigUndHundertHzZaehlenGleich() {
         for rate in [20.0, 100.0] {
             let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 8)], rate: rate, buendel: 1)
-            #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .langhantel, rate: rate)) == 8)
+            #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .hebelarm, rate: rate)) == 8)
         }
     }
 
     @Test func leichtesRauschenZaehltNichtMit() {
         let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 10)], rauschenGradProS: 8)
-        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .langhantel)) == 10)
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .hebelarm)) == 10)
     }
 
     @Test func eineLueckeImSatzMachtUnsicherUndDanachKommtNichtsMehr() {
         // Ruhe 3 s, dann Perioden zu 2 s: die Luecke bei 10 s liegt in der vierten.
         let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 10)], luecke: (ab: 10, dauer: 1))
-        let ereignisse = Synthetik.zaehlen(werte, art: .langhantel)
+        let ereignisse = Synthetik.zaehlen(werte, art: .hebelarm)
         let index = ereignisse.firstIndex(of: .unsicher(.luecke))
         #expect(index != nil)
         if let index {
@@ -57,7 +57,7 @@ struct ZaehlerTests {
 
     @Test func eineExpliziteLueckeWirktWieEineImplizite() {
         let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 6)])
-        var zaehler = Zaehler(profil: .fuer(.langhantel))
+        var zaehler = Zaehler(profil: .fuer(.hebelarm))
         var ereignisse: [ZaehlerEreignis] = []
         for m in werte.prefix(werte.count / 2) { ereignisse += zaehler.verarbeite(m) }
         ereignisse += zaehler.luecke(von: 7, bis: 7.2)
@@ -72,7 +72,7 @@ struct ZaehlerTests {
     @Test func eineSchwacheWiederholungAmEndeMachtUnsicher() {
         let werte = Synthetik.satz(signal: .drehrate,
                                    abschnitte: [A(perioden: 8), A(perioden: 1, amplitude: 0.38)])
-        let ereignisse = Synthetik.zaehlen(werte, art: .langhantel)
+        let ereignisse = Synthetik.zaehlen(werte, art: .hebelarm)
         #expect(Synthetik.anzahl(ereignisse) == 8)
         #expect(ereignisse.contains(.unsicher(.signalSchwach)))
     }
@@ -80,7 +80,7 @@ struct ZaehlerTests {
     @Test func eineVielZuLangsameWiederholungMachtUnsicher() {
         let werte = Synthetik.satz(signal: .drehrate,
                                    abschnitte: [A(perioden: 6), A(perioden: 1, periode: 7)])
-        let ereignisse = Synthetik.zaehlen(werte, art: .langhantel)
+        let ereignisse = Synthetik.zaehlen(werte, art: .hebelarm)
         #expect(Synthetik.anzahl(ereignisse) == 6)
         #expect(ereignisse.contains(.unsicher(.taktUnregelmaessig)))
     }
@@ -92,7 +92,7 @@ struct ZaehlerTests {
 
     @Test func ereignisseSindInSichStimmig() {
         let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 10)])
-        let wiederholungen = Synthetik.zaehlen(werte, art: .langhantel).compactMap {
+        let wiederholungen = Synthetik.zaehlen(werte, art: .hebelarm).compactMap {
             if case .wiederholung(let w) = $0 { w } else { nil }
         }
         #expect(wiederholungen.map(\.nummer) == Array(1...10))
@@ -107,11 +107,70 @@ struct ZaehlerTests {
     }
 
     @Test func dasProfilKenntSeineAlgoKennung() {
-        #expect(ZaehlerProfil.fuer(.langhantel).algo == "langhantel/1")
+        #expect(ZaehlerProfil.fuer(.langhantel).algo == "langhantel/2")
+        #expect(ZaehlerProfil.fuer(.kurzhantel).algo == "kurzhantel/2")
+        #expect(ZaehlerProfil.fuer(.hebelarm).algo == "hebelarm/1")
+        #expect(ZaehlerProfil.fuer(.kabelgriff).algo == "kabelgriff/1")
         #expect(ZaehlerProfil.fuer(.stapel).algo == "stapel/2")
         #expect(ZaehlerProfil.fuer(.stapel).signal == .geschwindigkeitBetrag)
+        #expect(ZaehlerProfil.fuer(.langhantel).signal == .geschwindigkeitBetrag)
         #expect(ZaehlerProfil.fuer(.koerper).signal == .geschwindigkeitVertikal)
         #expect(ZaehlerProfil.fuer(.kurzhantel).signal == .drehrate)
+    }
+
+    // MARK: - Aufnehmen und Ablegen (15.10.)
+
+    /// Das Aufnehmen der Hantel um eine andere Achse legt die Achse nicht
+    /// fest: es endet in einer anderen Lage, als es begann, und ist darum
+    /// keine Wiederholung.
+    @Test func kurzhantelAufnehmenUmEineAndereAchseLegtDieAchseNichtFest() {
+        let werte = Synthetik.folge([.ruhe(3), .lagewechsel(achse: 2), .ruhe(0.5), .curls(8), .ruhe(2)])
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .kurzhantel)) == 8)
+    }
+
+    /// Um dieselbe Achse wie die Curls: das Aufnehmen zaehlt nicht als
+    /// erste Wiederholung und legt die Richtung nicht fest.
+    @Test func kurzhantelAufnehmenUmDieCurlAchseZaehltNicht() {
+        let werte = Synthetik.folge([.ruhe(3), .lagewechsel(achse: 1), .ruhe(0.5), .curls(8), .ruhe(2)])
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .kurzhantel)) == 8)
+    }
+
+    @Test func kurzhantelAblegenNachDemSatzZaehltNicht() {
+        let werte = Synthetik.folge([.ruhe(3), .curls(8), .lagewechsel(achse: 1), .ruhe(2)])
+        let ereignisse = Synthetik.zaehlen(werte, art: .kurzhantel)
+        #expect(Synthetik.anzahl(ereignisse) == 8)
+        #expect(!ereignisse.contains { if case .unsicher = $0 { true } else { false } })
+    }
+
+    /// Ein Schwung hin und zurueck in die Ausgangslage mit einem Stoss ueber
+    /// 3 g (Hantel aus der Ablage gerissen) ist vor der ersten Wiederholung
+    /// keine Wiederholung und legt keine Achse fest.
+    @Test func kurzhantelEinStossVorDerErstenWiederholungLegtNichtsFest() {
+        let schwung = Synthetik.Stueck(
+            dauer: 1.2,
+            drehrate: { u in Vektor3(x: 300 * sin(2 * .pi * u / 1.2), y: 0, z: 0) },
+            beschleunigung: { u in Vektor3(x: 0, y: 0, z: u >= 0.2 && u < 0.3 ? 3.5 : 1) })
+        let werte = Synthetik.folge([.ruhe(3), schwung, .ruhe(0.5), .curls(8), .ruhe(2)])
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .kurzhantel)) == 8)
+    }
+
+    /// Spec B: eine Wiederholung dauert ueber eine Sekunde. Ein kurzes
+    /// Hin und Her beim Greifen zaehlt nicht.
+    @Test func kurzhantelEinKurzesHinUndHerZaehltNicht() {
+        let werte = Synthetik.folge([.ruhe(3), .curls(1, periode: 0.7), .ruhe(1), .curls(8), .ruhe(2)])
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .kurzhantel)) == 8)
+    }
+
+    /// Langhantel ueber den Betrag wie der Stapel; das Einhaengen der
+    /// Stange am Ende dreht sie um 120 Grad und zaehlt nicht mit.
+    @Test func langhantelEinhaengenNachDemSatzZaehltNicht() {
+        let werte = Synthetik.satz(signal: .geschwindigkeitBetrag,
+                                   abschnitte: [A(perioden: 10), A(perioden: 1)]).map { m in
+            guard m.t >= 23, m.t < 25 else { return m }
+            return SensorMesswert(t: m.t, beschleunigung: m.beschleunigung,
+                                  drehrate: Vektor3(x: 60, y: 0, z: 0), winkel: m.winkel)
+        }
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .langhantel)) == 10)
     }
 
     /// Spec B 5.3 "Achse der ersten Bewegung": ein kurzer Stoss um eine
@@ -125,7 +184,7 @@ struct ZaehlerTests {
             return SensorMesswert(t: m.t, beschleunigung: m.beschleunigung,
                                   drehrate: Vektor3(x: x, y: m.drehrate.y + bias, z: m.drehrate.z), winkel: m.winkel)
         }
-        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .langhantel)) == 10)
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .hebelarm)) == 10)
     }
 
     private static func ersteWiederholung(_ ereignisse: [ZaehlerEreignis]) -> Wiederholung? {
@@ -142,7 +201,7 @@ struct ZaehlerTests {
             SensorMesswert(t: m.t, beschleunigung: m.beschleunigung,
                            drehrate: Vektor3(x: m.drehrate.x, y: m.drehrate.y + bias, z: m.drehrate.z), winkel: m.winkel)
         }
-        let ereignisse = Synthetik.zaehlen(werte, art: .langhantel)
+        let ereignisse = Synthetik.zaehlen(werte, art: .hebelarm)
         #expect(Synthetik.anzahl(ereignisse) == 10)
         let erste = try #require(Self.ersteWiederholung(ereignisse))
         #expect(abs(erste.beginn - 3) <= 0.3)
@@ -171,7 +230,7 @@ struct ZaehlerTests {
     /// 0,18 der Grundamplitude sind 36 Grad/s Spitze: ueber der
     /// Startschwelle (30), aber die meiste Zeit unter der Bewegungsschwelle
     /// der Achsensuche (30). Der Satz muss trotzdem gezaehlt werden.
-    @Test(arguments: [Befestigungsart.langhantel, .kabelgriff])
+    @Test(arguments: [Befestigungsart.hebelarm, .kabelgriff])
     func einKleinerAusschlagWirdGezaehlt(art: Befestigungsart) {
         let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 10, amplitude: 0.18)])
         #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: art)) == 10)
@@ -183,7 +242,7 @@ struct ZaehlerTests {
     @Test func ohneRuhevorlaufAufDerSpitzeZaehltAlle() {
         let werte = Synthetik.satz(signal: .drehrate, abschnitte: [A(perioden: 10)], ruheVorher: 0)
             .filter { $0.t >= 0.5 }
-        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .langhantel)) == 10)
+        #expect(Synthetik.anzahl(Synthetik.zaehlen(werte, art: .hebelarm)) == 10)
     }
 
     /// Stapel wie am 14.10. (Trizeps, Brustpresse): langsamer Hub, schnelles

@@ -56,6 +56,51 @@ enum Synthetik {
         return werte
     }
 
+    /// Ein Stueck eines frei gebauten Verlaufs; die Funktionen bekommen die
+    /// Zeit seit Beginn des Stuecks. Fuer Aufnehmen, Ablegen und Stoesse, die
+    /// `satz` nicht abbilden kann.
+    struct Stueck {
+        var dauer: Double
+        var drehrate: (Double) -> Vektor3 = { _ in Vektor3(x: 0, y: 0, z: 0) }
+        var beschleunigung: (Double) -> Vektor3 = { _ in Vektor3(x: 0, y: 0, z: 1) }
+
+        static func ruhe(_ dauer: Double) -> Stueck { Stueck(dauer: dauer) }
+
+        /// Curls um y: volle Sinuswellen mit 200 Grad/s Spitze, je Welle
+        /// zurueck in die Ausgangslage.
+        static func curls(_ anzahl: Int, periode: Double = 2) -> Stueck {
+            Stueck(dauer: Double(anzahl) * periode,
+                   drehrate: { u in Vektor3(x: 0, y: 200 * sin(2 * .pi * u / periode), z: 0) })
+        }
+
+        /// Schwung, der die Lage aendert wie Aufnehmen oder Ablegen: 0,8 s
+        /// hin mit 400 Grad/s Spitze, 0,5 s zurueck mit 150 Grad/s. Netto
+        /// bleiben rund 156 Grad Drehung um die Achse (0 = x, 1 = y, 2 = z).
+        static func lagewechsel(achse: Int) -> Stueck {
+            Stueck(dauer: 1.3, drehrate: { u in
+                let w = u < 0.8 ? 400 * sin(.pi * u / 0.8) : -150 * sin(.pi * (u - 0.8) / 0.5)
+                return Vektor3(x: achse == 0 ? w : 0, y: achse == 1 ? w : 0, z: achse == 2 ? w : 0)
+            })
+        }
+    }
+
+    static func folge(_ stuecke: [Stueck], rate: Double = 50, buendel: Int = 2) -> [SensorMesswert] {
+        let dt = 1 / rate
+        var werte: [SensorMesswert] = []
+        var i = 0
+        for stueck in stuecke {
+            let n = Int((stueck.dauer * rate).rounded())
+            for k in 0..<n {
+                let u = Double(k) * dt
+                werte.append(SensorMesswert(t: Double(i / buendel * buendel) * dt,
+                                            beschleunigung: stueck.beschleunigung(u),
+                                            drehrate: stueck.drehrate(u), winkel: Vektor3(x: 0, y: 0, z: 0)))
+                i += 1
+            }
+        }
+        return werte
+    }
+
     static func zaehlen(_ werte: [SensorMesswert], art: Befestigungsart, rate: Double = 50) -> [ZaehlerEreignis] {
         var zaehler = Zaehler(profil: .fuer(art), rateHz: rate)
         var ereignisse: [ZaehlerEreignis] = []

@@ -56,30 +56,69 @@ public struct ZaehlerProfil: Equatable, Sendable {
     /// Zeitkonstante der leckenden Integration; haelt die Drift der
     /// Geschwindigkeit klein, ohne eine Wiederholung zu verschlucken.
     public let leckZeit: TimeInterval
+    /// Hoechste Drehung in Grad zwischen Beginn und Ende einer Wiederholung,
+    /// aus der Drehrate aufintegriert; nil = keine Pruefung. Eine
+    /// Wiederholung endet in der Lage, in der sie begann. Aufnehmen,
+    /// Ablegen und Einhaengen enden woanders: am 15.10. drehten sie die
+    /// Kurzhantel um 85 bis 156 Grad, echte Wiederholungen hoechstens 54.
+    public let lageHoechstens: Double?
+    /// Nur Drehrate: die Achse nicht aus der ersten Bewegung waehlen,
+    /// sondern aus der ersten Wiederholung, die die Lagepruefung besteht.
+    /// Bis dahin laufen alle drei Achsen nebeneinander. Am 15.10. legte das
+    /// Aufnehmen sonst in vier von neun Saetzen die falsche Achse fest.
+    public let achseAusErsterWiederholung: Bool
+    /// Vor der ersten Wiederholung: ein Kandidat mit einem Stoss ueber
+    /// diesem Betrag (g) ist Aufnehmen, keine Wiederholung; nil = aus.
+    public let stossAb: Double?
 
     public var algo: String { "\(art.rawValue)/\(version)" }
 
     public static func fuer(_ art: Befestigungsart) -> ZaehlerProfil {
         switch art {
-        case .langhantel, .kurzhantel, .hebelarm, .kabelgriff:
+        case .kurzhantel:
+            // Version 2 (15.10.): Lagepruefung, Achse aus der ersten
+            // Wiederholung, Stoss vor dem Satz, Mindestdauer 1 s (Spec B 5.3:
+            // eine Wiederholung dauert ueber eine Sekunde; kuerzere Schwuenge
+            // kamen am 15.10. nur beim Aufnehmen und Ablegen vor).
+            ZaehlerProfil(art: art, version: 2, eingefrorenAm: nil, signal: .drehrate,
+                          tiefpassHz: 3, startSchwelle: 30, schwellenAnteil: 0.35,
+                          mindestDauer: 1.0, hoechstDauer: 10, schwachAnteil: 0.4, taktBand: 2.5,
+                          lueckeAb: 0.5, ruheDrehrate: 10, ruheBeschleunigung: 0.05,
+                          achsenFenster: 1.0, leckZeit: 1.0,
+                          lageHoechstens: 80, achseAusErsterWiederholung: true, stossAb: 3)
+        case .langhantel:
+            // Version 2 (15.10.): die Stange dreht bei der Kniebeuge kaum
+            // (30 bis 50 Grad/s), darum wie der Stapel ueber den Betrag. Das
+            // Einhaengen am Satzende drehte sie um 81 und 178 Grad und zaehlte
+            // sonst als Wiederholung mit.
+            ZaehlerProfil(art: art, version: 2, eingefrorenAm: nil, signal: .geschwindigkeitBetrag,
+                          tiefpassHz: 3, startSchwelle: 0.12, schwellenAnteil: 0.35,
+                          mindestDauer: 0.6, hoechstDauer: 10, schwachAnteil: 0.4, taktBand: 2.5,
+                          lueckeAb: 0.5, ruheDrehrate: 10, ruheBeschleunigung: 0.05,
+                          achsenFenster: 1.0, leckZeit: 1.0,
+                          lageHoechstens: 45, achseAusErsterWiederholung: false, stossAb: nil)
+        case .hebelarm, .kabelgriff:
             ZaehlerProfil(art: art, version: 1, eingefrorenAm: nil, signal: .drehrate,
                           tiefpassHz: 3, startSchwelle: 30, schwellenAnteil: 0.35,
                           mindestDauer: 0.6, hoechstDauer: 10, schwachAnteil: 0.4, taktBand: 2.5,
                           lueckeAb: 0.5, ruheDrehrate: 10, ruheBeschleunigung: 0.05,
-                          achsenFenster: 1.0, leckZeit: 1.0)
+                          achsenFenster: 1.0, leckZeit: 1.0,
+                          lageHoechstens: nil, achseAusErsterWiederholung: false, stossAb: nil)
         case .stapel:
             // Version 2 (14.10.): Betrag statt Projektion, siehe Signal.
             ZaehlerProfil(art: art, version: 2, eingefrorenAm: nil, signal: .geschwindigkeitBetrag,
                           tiefpassHz: 3, startSchwelle: 0.12, schwellenAnteil: 0.35,
                           mindestDauer: 0.6, hoechstDauer: 10, schwachAnteil: 0.4, taktBand: 2.5,
                           lueckeAb: 0.5, ruheDrehrate: 10, ruheBeschleunigung: 0.05,
-                          achsenFenster: 1.0, leckZeit: 1.0)
+                          achsenFenster: 1.0, leckZeit: 1.0,
+                          lageHoechstens: nil, achseAusErsterWiederholung: false, stossAb: nil)
         case .koerper:
             ZaehlerProfil(art: art, version: 1, eingefrorenAm: nil, signal: .geschwindigkeitVertikal,
                           tiefpassHz: 3, startSchwelle: 0.12, schwellenAnteil: 0.35,
                           mindestDauer: 0.6, hoechstDauer: 10, schwachAnteil: 0.4, taktBand: 2.5,
                           lueckeAb: 0.5, ruheDrehrate: 10, ruheBeschleunigung: 0.05,
-                          achsenFenster: 1.0, leckZeit: 1.0)
+                          achsenFenster: 1.0, leckZeit: 1.0,
+                          lageHoechstens: nil, achseAusErsterWiederholung: false, stossAb: nil)
         }
     }
 }
