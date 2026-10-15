@@ -55,15 +55,44 @@ final class UebungsVideoVorrat {
     private(set) var quellen: [String: Medienquelle] = [:]
     @ObservationIgnored let ablage: Medienablage
 
-    init(ablage: Medienablage = Medienablage()) {
+    @ObservationIgnored private let istOnline: @MainActor () -> Bool
+    @ObservationIgnored private var vorladen: Task<Void, Never>?
+
+    init(ablage: Medienablage = Medienablage(), istOnline: @escaping @MainActor () -> Bool = { true }) {
         self.ablage = ablage
+        self.istOnline = istOnline
     }
 
     /// Ein leeres Ergebnis (offline) laesst die alten Quellen stehen: die
     /// Dateien liegen schon auf der Platte, nur die Signaturen sind alt.
     func laden(von loader: any UebungsvideosLoading) async {
         let neu = await UebungsVideos.laden(von: loader)
-        if !neu.isEmpty { quellen = neu }
+        if !neu.isEmpty {
+            quellen = neu
+            vorladenStarten()
+        }
+    }
+
+    /// Holt alle Schleifen, die noch nicht auf der Platte liegen -- die erste
+    /// Einweisung an einem Geraet ist sonst genau die, die im Keller kein
+    /// Video hat (Offline-Spec 3d). Nacheinander, niedrige Prioritaet, auch
+    /// ueber Mobilfunk (~35 KB je Video). Offline bricht es ab; der naechste
+    /// erfolgreiche Abruf der Quellen startet es neu.
+    private func vorladenStarten() {
+        guard vorladen == nil else { return }
+        let liste = quellen.sorted { $0.key < $1.key }
+        vorladen = Task(priority: .background) { @MainActor [weak self] in
+            for (exerciseId, quelle) in liste {
+                guard let self, !Task.isCancelled, self.istOnline() else { break }
+                _ = await self.ablage.datei(schluessel: exerciseId, quelle: quelle)
+            }
+            self?.vorladen = nil
+        }
+    }
+
+    /// Nur fuer Tests: wartet, bis das Vorladen durch ist.
+    func vorladenAbwarten() async {
+        await vorladen?.value
     }
 
     func datei(exerciseId: String, ersatz: URL? = nil) async -> URL? {

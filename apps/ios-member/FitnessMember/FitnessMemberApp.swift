@@ -12,7 +12,7 @@ struct FitnessMemberApp: App {
     /// Die Uebungsvideos fuer Training UND Home: die Fortschrittszeilen auf
     /// Home zeigen sie seit der Testnotiz 11.10. (#2) ebenfalls. Ein Vorrat
     /// fuer beide, damit ein Video nicht zweimal geladen wird.
-    @State private var videoVorrat = UebungsVideoVorrat()
+    @State private var videoVorrat: UebungsVideoVorrat
     #if DEBUG
     /// Eine Instanz fuer die ganze App: die Verbindung ueberlebt den Wechsel
     /// zwischen Geraeten (Spec Sensor-Anbindung 5.3). Der CBCentralManager
@@ -45,6 +45,7 @@ struct FitnessMemberApp: App {
 
         let netz = NetzwerkMonitor()
         _netzwerkMonitor = State(initialValue: netz)
+        _videoVorrat = State(initialValue: UebungsVideoVorrat(istOnline: { netz.istOnline }))
         let session = SessionStore(backend: SupabaseAuthBackend())
         let client = APIClient(baseURL: AppConfig.apiBaseURL, istOnline: { await netz.istOnline }) {
             await session.currentAccessToken()

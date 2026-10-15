@@ -150,3 +150,49 @@ struct MedienablageTests {
         #expect(Medienablage.netzSession.configuration.timeoutIntervalForRequest == 20)
     }
 }
+
+/// Vorladen aller fehlenden Schleifen nach dem Abruf der Quellen
+/// (Offline-Spec 3d): nacheinander, offline gar nicht.
+@MainActor
+struct VideoVorladenTests {
+    private actor Zaehler {
+        var abrufe: [URL] = []
+        func laden(_ url: URL) -> Data? { abrufe.append(url); return Data("v".utf8) }
+    }
+
+    private struct Fake: UebungsvideosLoading {
+        let antwort: ExerciseVideosResponse
+        func exerciseVideos() async throws(APIError) -> ExerciseVideosResponse { antwort }
+    }
+
+    private func antwort(_ ids: [String]) -> ExerciseVideosResponse {
+        ExerciseVideosResponse(videos: ids.map {
+            .init(exerciseId: $0, url: "https://example.test/\($0).mp4?token=a", pfad: "gymtavo/\($0).mp4")
+        })
+    }
+
+    private func ablage(_ zaehler: Zaehler) -> Medienablage {
+        Medienablage(ordner: FileManager.default.temporaryDirectory
+                        .appendingPathComponent("vorladen-\(UUID().uuidString)")) { await zaehler.laden($0) }
+    }
+
+    @Test func laedtAlleFehlendenEinmal() async {
+        let zaehler = Zaehler()
+        let vorrat = UebungsVideoVorrat(ablage: ablage(zaehler))
+        await vorrat.laden(von: Fake(antwort: antwort(["u1", "u2"])))
+        await vorrat.vorladenAbwarten()
+        #expect(await zaehler.abrufe.count == 2)
+
+        await vorrat.laden(von: Fake(antwort: antwort(["u1", "u2"])))
+        await vorrat.vorladenAbwarten()
+        #expect(await zaehler.abrufe.count == 2)
+    }
+
+    @Test func offlineLaedtNichts() async {
+        let zaehler = Zaehler()
+        let vorrat = UebungsVideoVorrat(ablage: ablage(zaehler), istOnline: { false })
+        await vorrat.laden(von: Fake(antwort: antwort(["u1"])))
+        await vorrat.vorladenAbwarten()
+        #expect(await zaehler.abrufe.isEmpty)
+    }
+}
