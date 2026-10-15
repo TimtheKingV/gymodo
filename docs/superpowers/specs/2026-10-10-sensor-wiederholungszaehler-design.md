@@ -384,3 +384,15 @@ Am 14. Oktober gab es die ersten echten Sätze (Gütebericht: Stapel nach Profil
 4. **Debug zählt jede Art**, auch nicht freigegebene (wie Abschnitt 7 für den Debug-Build ohnehin vorsieht). Mitglieder sehen nichts; alles bleibt `#if DEBUG` bis E5.
 5. **Hintergrund (6.6) blockiert nicht.** `UIBackgroundModes: [bluetooth-central]` kommt mit E4. Die 60-s-Messungen (gesperrt, in der Tasche) macht Tim beim ersten Training mit dem E4-Build; das Ergebnis wird danach in 6.6 eingetragen. Bis dahin schützt die 0,5-s-Lücke aus 5.3: drosselt iOS, steht der Zähler auf „Zahl prüfen“.
 6. **Herkunft beim Sichern geht nach Prod.** Sätze aus dem Debug-Build tragen `gemessen` bzw. `korrigiert` mit `volumeCounted` und `repEvents` (Migration 0049 ist auf Prod). Das sind Tims eigene Testsätze; Anzeige der Herkunft bleibt ausgeschlossen (Abschnitt 8).
+
+## Nachtrag vom 15. Oktober 2026 (Hanteln abgestimmt)
+
+Am 15. Oktober kamen neun Kurzhantel-Sätze dazu (Hammercurl, Trizepsstrecken über Kopf, Bizepscurl, Sensor an der Griffstange, Ausrichtung wechselnd). Aufnehmen und Ablegen liegen im echten Training immer im Satz; Tim muss die Hantel ablegen, bevor er den Satz beendet. Der Zähler scheiterte fast nur daran. 5.3 gilt mit diesen Ergänzungen:
+
+1. **Lageprüfung (Kurzhantel, Langhantel).** Eine Wiederholung endet in der Lage, in der sie begann. Die Lage kommt aus der Drehrate, integriert mit der Sollrate. Ein Kandidat, der sich dabei weiter dreht als das Profil erlaubt (Kurzhantel 80°, Langhantel 45°), wird still verworfen. Vor der ersten Wiederholung legt er weder Richtung noch Schwelle fest. Gemessen: echte Wiederholungen höchstens 54°, Aufnehmen, Ablegen und Einhängen 81 bis 178°.
+2. **Achse aus der ersten Wiederholung (Kurzhantel).** Statt der ersten Sekunde Bewegung laufen bis zur ersten Wiederholung alle drei Drehachsen nebeneinander. Der erste Kandidat, der die Prüfungen besteht, gilt als Wiederholung 1; die Achse ist die mit der größten Streuung in seinem Intervall.
+3. **Stoß vor dem Satz (Kurzhantel).** Vor der ersten Wiederholung wird ein Kandidat mit einem Stoß über 3 g verworfen (Hantel aus der Ablage gerissen).
+4. **Mindestdauer 1 s (Kurzhantel)**, wie oben schon begründet: eine Wiederholung dauert über eine Sekunde.
+5. **Langhantel über den Betrag.** Die Stange dreht bei der Kniebeuge kaum; sie zählt wie der Stapel (Betrag minus 1 g, ohne Grundlinie). Langhantel-Curls sind damit nicht abgedeckt; dafür fehlen echte Daten.
+
+Hebelarm und Kabelgriff bleiben auf Version 1. Entwicklungsset danach: Kurzhantel 69 % exakt, 88 % ±1 (vorher 38 / 54); Langhantel beide Kniebeugen exakt. Offen: Aufnahmen, die mitten im Aufnehmen beginnen, und eine letzte Wiederholung, die direkt ins Ablegen übergeht.
