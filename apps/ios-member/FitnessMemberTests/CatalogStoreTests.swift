@@ -19,6 +19,17 @@ actor FakeBootstrapLoader: BootstrapLoading {
     func setJoinResult(_ value: Result3) { joinResult = value }
     func setLeaveResult(_ value: Result4) { leaveResult = value }
 
+    var rohdaten: Data?
+    func setRohdaten(_ daten: Data?) { rohdaten = daten }
+
+    func bootstrapMitRohdaten() async throws(APIError) -> GeladenerBootstrap {
+        if let rohdaten, case .success = bootstrapResult {
+            return GeladenerBootstrap(antwort: try! JSONDecoder().decode(BootstrapResponse.self, from: rohdaten),
+                                      rohdaten: rohdaten)
+        }
+        return GeladenerBootstrap(antwort: try await bootstrap(), rohdaten: nil)
+    }
+
     func bootstrap() async throws(APIError) -> BootstrapResponse {
         switch bootstrapResult {
         case .success(let response): return response
@@ -61,11 +72,17 @@ private func emptyBootstrap(studios: [BootstrapResponse.Studio] = []) -> Bootstr
         member: .init(displayName: nil), studios: studios, machines: [], calibrations: [], lastSets: [])
 }
 
+private func testWrite() -> PendingSetWrite {
+    PendingSetWrite(sessionId: UUID(), setId: UUID(), body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10, rir: nil))
+}
+
 private func tempDirectory() -> URL {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent("catalog-tests-\(UUID().uuidString)")
     try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     return directory
 }
+
+private let bootstrapJSON = #"{"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null}},"studios":[{"id":"s1","name":"Keller-Gym","timezone":"Europe/Berlin"}],"machines":[],"calibrations":[],"lastSets":[]}"#
 
 /// @MainActor, weil CatalogStore seit dieser Aufgabe selbst @MainActor ist
 /// (siehe Kommentar dort) -- die Suite laeuft deshalb auf demselben Actor wie
@@ -73,6 +90,17 @@ private func tempDirectory() -> URL {
 @Suite("CatalogStore")
 @MainActor
 struct CatalogStoreTests {
+    @Test("bootstrapStand zaehlt jede neue Fassung")
+    func bootstrapStandZaehlt() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setBootstrapResult(.success(emptyBootstrap()))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        #expect(store.bootstrapStand == 0)
+        await store.load()
+        await store.load()
+        #expect(store.bootstrapStand == 2)
+    }
+
     @Test("load() ohne Studios ergibt loaded")
     func loadWithoutStudio() async {
         let loader = FakeBootstrapLoader()
@@ -394,7 +422,7 @@ struct CatalogStoreTests {
         #expect(dritter.ort == .studio("s1"))
     }
 
-    @Test("reset() raeumt Katalog, Ladezustand, aktives Studio, offene und verworfene Schreibvorgaenge")
+    @Test("reset() raeumt Katalog, Ladezustand und aktives Studio, laesst die Warteschlange stehen")
     func resetClearsEverything() async {
         let defaults = UserDefaults(suiteName: "catalog-store-tests-\(UUID().uuidString)")!
         let directory = tempDirectory()
@@ -418,15 +446,150 @@ struct CatalogStoreTests {
         #expect(store.bootstrap == nil)
         #expect(store.loadState == .idle)
         #expect(store.activeStudioId == nil)
-        #expect(store.pendingWrites.isEmpty)
-        #expect(store.verworfeneWrites.isEmpty)
         #expect(defaults.string(forKey: "activeStudioId") == nil)
-        // Auch auf Platte, sonst holt der naechste Start alles zurueck.
-        #expect(PendingWriteStore(directory: directory).loadAll().isEmpty)
-        #expect(PendingWriteStore(directory: directory, filename: "verworfene-writes.json").loadAll().isEmpty)
+        // Die Warteschlange gehoert dem Konto und ueberlebt das Abmelden
+        // (Offline-Spec 4c) -- auch auf Platte.
+        #expect(store.pendingWrites.count == 1)
+        #expect(store.verworfeneWrites.count == 1)
+        #expect(PendingWriteStore(directory: directory).loadAll().count == 1)
         let secondStore = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: directory), defaults: defaults)
         #expect(secondStore.activeStudioId == nil)
-        #expect(secondStore.verworfeneWrites.isEmpty)
+    }
+
+    @Test("reset behaelt die Warteschlange, ein anderer User loescht sie")
+    func warteschlangeUeberlebtAbmelden() async {
+        let verzeichnis = tempDirectory()
+        let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: verzeichnis))
+        store.anmelden(userId: "u1")
+        store.enqueue(testWrite())
+        store.reset()
+        #expect(store.pendingWrites.count == 1)
+        store.anmelden(userId: "u1")
+        #expect(store.pendingWrites.count == 1)
+        store.anmelden(userId: "u2")
+        #expect(store.pendingWrites.isEmpty)
+    }
+
+    @Test("401 laesst den Satz in der Warteschlange")
+    func unauthorizedBleibt() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.unauthorized(message: "x")))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 wiederholungsAbstand: .seconds(60))
+        store.enqueue(testWrite())
+        await store.flushPending()
+        #expect(store.pendingWrites.count == 1)
+        #expect(store.verworfeneWrites.isEmpty)
+    }
+
+    @Test("422, 404 und 409 verwerfen weiterhin",
+          arguments: [APIError.validation(message: "v"), .notFound(message: "n"), .conflict(message: "c")])
+    func echteDatenfehlerVerwerfen(_ fehler: APIError) async {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(fehler))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        store.enqueue(testWrite())
+        await store.flushPending()
+        #expect(store.pendingWrites.isEmpty)
+        #expect(store.verworfeneWrites.count == 1)
+    }
+
+    @Test("nach dem Abmelden sendet die Warteschlange nichts")
+    func nachAbmeldenSendetNichts() async {
+        let loader = FakeBootstrapLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        store.anmelden(userId: "u1")
+        store.enqueue(testWrite())
+        store.reset()
+        await store.flushPending()
+        #expect(await loader.putSetCalls.isEmpty)
+    }
+
+    @Test("zwei gleichzeitige Flushs senden einmal")
+    func keinDoppelterFlush() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.offline))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 wiederholungsAbstand: .seconds(60))
+        store.enqueue(testWrite())
+        async let a: Void = store.flushPending()
+        async let b: Void = store.flushPending()
+        _ = await (a, b)
+        #expect(await loader.putSetCalls.count == 1)
+    }
+
+    /// TrainingRootView reiht jeden Satz ein und ruft flushPending() --
+    /// laeuft gerade ein Flush, darf der neue Satz nicht 30 s auf die
+    /// Wiederholung warten (Offline-Spec 4c).
+    @Test("ein Satz waehrend eines laufenden Flushs geht im selben Flush raus", .timeLimit(.minutes(1)))
+    func satzWaehrendFlushGehtMit() async {
+        let loader = ErsterPutHaengtLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 wiederholungsAbstand: .seconds(60))
+        let a = testWrite()
+        let b = testWrite()
+        store.enqueue(a)
+        let flush = Task { await store.flushPending() }
+        while await loader.aufrufe.isEmpty { await Task.yield() }
+
+        store.enqueue(b)
+        await store.flushPending()
+        await loader.freigeben()
+        await flush.value
+
+        #expect(await loader.aufrufe == [a.setId, b.setId])
+        #expect(store.pendingWrites.isEmpty)
+    }
+
+    /// Ein Transportfehler gilt fuer alle: nicht jeden offenen Satz einzeln
+    /// in seinen 10-s-Timeout laufen lassen.
+    @Test("offline beim ersten Satz bricht den Flush ab")
+    func offlineBrichtFlushAb() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.offline))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 wiederholungsAbstand: .seconds(60))
+        store.enqueue(testWrite())
+        store.enqueue(testWrite())
+        await store.flushPending()
+        #expect(await loader.putSetCalls.count == 1)
+        #expect(store.pendingWrites.count == 2)
+    }
+
+    @Test("offene Eintraege werden nach dem Abstand erneut gesendet")
+    func wiederholtNachAbstand() async throws {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.offline))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 wiederholungsAbstand: .milliseconds(50))
+        store.enqueue(testWrite())
+        await store.flushPending()
+        #expect(await loader.putSetCalls.count == 1)
+        // Bis zur Frist abfragen statt fest zu schlafen (CI-Takt schwankt).
+        let frist = ContinuousClock.now + .seconds(2)
+        while await loader.putSetCalls.count < 2, ContinuousClock.now < frist {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        #expect(await loader.putSetCalls.count >= 2)
+    }
+
+    @Test("ein laufender Flush hoert auf, wenn der Besitzer nicht mehr passt", .timeLimit(.minutes(1)))
+    func flushStopptBeiBesitzerwechsel() async {
+        let loader = HaengenderPutLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 wiederholungsAbstand: .seconds(60))
+        store.anmelden(userId: "u1")
+        store.enqueue(testWrite())
+        store.enqueue(testWrite())
+        let flush = Task { await store.flushPending() }
+        while await !loader.angefragt { await Task.yield() }
+        // Ohne anmelden(u2): die Schlange haelt den zweiten Satz noch, nur
+        // der Besitzer passt nicht mehr -- sonst griffe der contains-Guard.
+        store.reset()
+        await loader.freigeben()
+        await flush.value
+        #expect(store.pendingWrites.count == 2)
+        #expect(await loader.aufrufe == 1)
     }
 
     @Test("nach .failed fuehrt ein erneutes load() wieder zu .loaded")
@@ -561,6 +724,109 @@ struct CatalogStoreTests {
         BootstrapResponse(
             member: .init(displayName: nil, onboardingCompletedAt: onboardingCompletedAt),
             studios: studios, machines: [], calibrations: [], lastSets: [])
+    }
+
+    @Test("offline-Start zeigt den gespeicherten Bootstrap")
+    func offlineStartAusCache() async {
+        let verzeichnis = tempDirectory()
+        let online = FakeBootstrapLoader()
+        await online.setBootstrapResult(.success(emptyBootstrap()))
+        await online.setRohdaten(Data(bootstrapJSON.utf8))
+        let erster = CatalogStore(loader: online, pendingWriteStore: PendingWriteStore(directory: verzeichnis),
+                                  bootstrapFileStore: BootstrapFileStore(directory: verzeichnis))
+        _ = erster.anmelden(userId: "u1")
+        await erster.load()
+
+        let offline = FakeBootstrapLoader() // scheitert mit .offline
+        let zweiter = CatalogStore(loader: offline, pendingWriteStore: PendingWriteStore(directory: verzeichnis),
+                                   bootstrapFileStore: BootstrapFileStore(directory: verzeichnis))
+        #expect(zweiter.anmelden(userId: "u1") == true)
+        #expect(zweiter.loadState == .loaded)
+        await zweiter.load()
+        #expect(zweiter.loadState == .loaded)
+        #expect(zweiter.bootstrap?.studios.first?.name == "Keller-Gym")
+    }
+
+    @Test("fremder User sieht keinen Cache")
+    func fremderUserSiehtKeinenCache() {
+        let verzeichnis = tempDirectory()
+        let ablage = BootstrapFileStore(directory: verzeichnis)
+        ablage.save(Data(bootstrapJSON.utf8), userId: "u1")
+        let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: verzeichnis),
+                                 bootstrapFileStore: ablage)
+        #expect(store.anmelden(userId: "u2") == false)
+        #expect(store.bootstrap == nil)
+    }
+
+    @Test("kaputte Datei wird verworfen")
+    func kaputteDateiWirdVerworfen() {
+        let verzeichnis = tempDirectory()
+        let ablage = BootstrapFileStore(directory: verzeichnis)
+        ablage.save(Data("{\"alt\":true}".utf8), userId: "u1")
+        #expect(ablage.load(userId: "u1") == nil)
+        #expect(!FileManager.default.fileExists(atPath: verzeichnis.appendingPathComponent("bootstrap-u1.json").path))
+    }
+
+    @Test("anmelden meldet Cache-Nutzung nur ohne Bootstrap im Speicher")
+    func anmeldenMeldetCacheNutzung() async {
+        let verzeichnis = tempDirectory()
+        let ablage = BootstrapFileStore(directory: verzeichnis)
+        ablage.save(Data(bootstrapJSON.utf8), userId: "u1")
+        let loader = FakeBootstrapLoader()
+        await loader.setBootstrapResult(.success(emptyBootstrap()))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: verzeichnis),
+                                 bootstrapFileStore: ablage)
+        #expect(store.anmelden(userId: "u1") == true)
+        await store.load()
+        // Neue Session desselben Users (Passwortwechsel): kein erneuter Cache.
+        #expect(store.anmelden(userId: "u1") == false)
+    }
+
+    @Test("verspaetete Antwort eines abgemeldeten Users wird verworfen", .timeLimit(.minutes(1)))
+    func verspaetereAntwortWirdVerworfen() async {
+        let verzeichnis = tempDirectory()
+        let loader = HaengenderBootstrapLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: verzeichnis),
+                                 bootstrapFileStore: BootstrapFileStore(directory: verzeichnis))
+        store.anmelden(userId: "u1")
+        let laden = Task { await store.load() }
+        while await !loader.angefragt { await Task.yield() }
+
+        store.reset()
+        store.anmelden(userId: "u2")
+        await loader.freigeben()
+        await laden.value
+
+        #expect(store.bootstrap == nil)
+        #expect(store.loadState == .idle)
+        #expect(!FileManager.default.fileExists(atPath: verzeichnis.appendingPathComponent("bootstrap-u2.json").path))
+    }
+
+    /// save schreibt zuerst und raeumt danach auf -- die eigene, gerade
+    /// geschriebene Datei darf dabei nicht mit verschwinden.
+    @Test("save behaelt nur die Datei des aktuellen Users")
+    func saveBehaeltNurAktuelleDatei() throws {
+        let verzeichnis = tempDirectory()
+        let ablage = BootstrapFileStore(directory: verzeichnis)
+        ablage.save(Data(bootstrapJSON.utf8), userId: "u1")
+        ablage.save(Data(bootstrapJSON.utf8), userId: "u1")
+        #expect(ablage.load(userId: "u1") != nil)
+        ablage.save(Data(bootstrapJSON.utf8), userId: "u2")
+        #expect(ablage.load(userId: "u2") != nil)
+        let dateien = try FileManager.default.contentsOfDirectory(atPath: verzeichnis.path)
+            .filter { $0.hasPrefix("bootstrap-") }
+        #expect(dateien == ["bootstrap-u2.json"])
+    }
+
+    @Test("reset loescht den gespeicherten Bootstrap")
+    func resetLoeschtCache() {
+        let verzeichnis = tempDirectory()
+        let ablage = BootstrapFileStore(directory: verzeichnis)
+        ablage.save(Data(bootstrapJSON.utf8), userId: "u1")
+        let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: verzeichnis),
+                                 bootstrapFileStore: ablage)
+        store.reset()
+        #expect(ablage.load(userId: "u1") == nil)
     }
 }
 
@@ -747,7 +1013,7 @@ struct FlushPendingTests {
     // Die Schleife laeuft ueber eine Kopie von pendingWrites -- ohne die
     // erneute Pruefung vor jedem Eintrag wuerde b trotzdem gesendet und die
     // gerade verworfene Einheit beim Server wieder angelegt.
-    @Test func flushPendingUebergehtEinenWaehrendDesLaufsVerworfenenEintrag() async {
+    @Test(.timeLimit(.minutes(1))) func flushPendingUebergehtEinenWaehrendDesLaufsVerworfenenEintrag() async {
         let loader = PausableBootstrapLoader()
         let catalog = store(loader: loader)
         let a = PendingSetWrite(
@@ -826,6 +1092,69 @@ private actor ZweiterAufrufPrueftPlatteLoader: BootstrapLoading {
         throw APIError.notFound(message: "Geraet nicht gefunden.")
     }
 
+    func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
+    func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
+    func leaveStudioMembership(studioId: String) async throws(APIError) { throw .offline }
+}
+
+/// Haengt in bootstrapMitRohdaten, bis der Test freigeben() ruft.
+private actor HaengenderBootstrapLoader: BootstrapLoading {
+    private(set) var angefragt = false
+    private var wartend: CheckedContinuation<Void, Never>?
+
+    func bootstrap() async throws(APIError) -> BootstrapResponse { throw .offline }
+
+    func bootstrapMitRohdaten() async throws(APIError) -> GeladenerBootstrap {
+        angefragt = true
+        await withCheckedContinuation { wartend = $0 }
+        let json = Data(#"{"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null}},"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#.utf8)
+        return GeladenerBootstrap(antwort: try! JSONDecoder().decode(BootstrapResponse.self, from: json), rohdaten: json)
+    }
+
+    func freigeben() { wartend?.resume(); wartend = nil }
+
+    func putSet(sessionId: UUID, setId: UUID, _ body: SetWrite) async throws(APIError) -> RecordedSet { throw .offline }
+    func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
+    func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
+    func leaveStudioMembership(studioId: String) async throws(APIError) { throw .offline }
+}
+
+/// putSet haengt, bis `freigeben()` kommt, und scheitert dann offline.
+private actor HaengenderPutLoader: BootstrapLoading {
+    private(set) var angefragt = false
+    private(set) var aufrufe = 0
+    private var wartend: CheckedContinuation<Void, Never>?
+
+    func bootstrap() async throws(APIError) -> BootstrapResponse { throw .offline }
+    func freigeben() { wartend?.resume(); wartend = nil }
+
+    func putSet(sessionId: UUID, setId: UUID, _ body: SetWrite) async throws(APIError) -> RecordedSet {
+        aufrufe += 1
+        angefragt = true
+        await withCheckedContinuation { wartend = $0 }
+        throw .offline
+    }
+    func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
+    func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
+    func leaveStudioMembership(studioId: String) async throws(APIError) { throw .offline }
+}
+
+/// Der erste putSet haengt bis `freigeben()`, danach gelingt jeder Aufruf.
+private actor ErsterPutHaengtLoader: BootstrapLoading {
+    private(set) var aufrufe: [UUID] = []
+    private var wartend: CheckedContinuation<Void, Never>?
+
+    func bootstrap() async throws(APIError) -> BootstrapResponse { throw .offline }
+    func freigeben() { wartend?.resume(); wartend = nil }
+
+    func putSet(sessionId: UUID, setId: UUID, _ body: SetWrite) async throws(APIError) -> RecordedSet {
+        aufrufe.append(setId)
+        if aufrufe.count == 1 { await withCheckedContinuation { wartend = $0 } }
+        return RecordedSet(
+            id: "r1", studioId: "s1", userId: "u1", sessionId: sessionId.uuidString,
+            machineId: "m1", exerciseId: "e1", setIndex: 1, load: 80, secondaryLoad: nil, volume: 10, rir: nil,
+            problemFlag: false, problemReason: nil, performedAt: "2026-09-01T10:00:00Z")
+    }
     func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
     func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
     func leaveStudioMembership(studioId: String) async throws(APIError) { throw .offline }

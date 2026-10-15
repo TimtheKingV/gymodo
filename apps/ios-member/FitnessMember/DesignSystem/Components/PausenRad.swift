@@ -196,6 +196,31 @@ struct Zeitring: View {
     }
 }
 
+/// Der volle Ring nach dem letzten vorgeschlagenen Satz (Testnotiz 14.10.,
+/// 18:45 #5): an der Stelle, an der sonst die Pause laeuft, steht "Fertig"
+/// -- bei Cardio nach dem einen Satz, sonst nach der Satzzahl. Dieselben
+/// Masse wie der Zeitring, damit der Uebergang aus der Pause nicht springt.
+struct FertigRing: View {
+    @ScaledMetric(relativeTo: .body) private var durchmesser: CGFloat = 240
+    @ScaledMetric(relativeTo: .body) private var strichstaerke: CGFloat = 12
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(DesignSystem.Color.accent, lineWidth: strichstaerke)
+            Text("Fertig")
+                .font(.system(size: 48, weight: .black))
+                .foregroundStyle(DesignSystem.Color.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .padding(.horizontal, strichstaerke * 2)
+        }
+        .frame(width: durchmesser, height: durchmesser)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Fertig")
+    }
+}
+
 #Preview {
     PausenRad(timer: Resttimer(), beiVerlaengern: {}, beiGewicht: {}, beiWeiter: {}, beiAbschliessen: {})
         .padding(20)

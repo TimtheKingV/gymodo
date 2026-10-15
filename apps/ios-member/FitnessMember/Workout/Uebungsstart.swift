@@ -33,16 +33,33 @@ enum Uebungsstart {
     /// Die Einweisung nur beim Erstkontakt je Geraet und Uebung, die
     /// Einstellung nur, wenn das Modell Einstellparameter hat und ein
     /// echtes Geraet ist (GeraetModel.erstkontaktFragtEinstellung).
-    static func schritte(erstkontakt: Bool, fragtEinstellung: Bool) -> [UebungsstartSchritt] {
-        guard erstkontakt else { return [.startwerte] }
-        return fragtEinstellung ? [.einweisung, .einstellung, .startwerte] : [.einweisung, .startwerte]
+    ///
+    /// Bei Zeit oder Metern (Cardio) keine Startwerte (Testnotiz 14.10.,
+    /// 18:45 #6): dort startet man einfach, die Werte kommen am Ende. Eine
+    /// bekannte Cardio-Uebung hat damit gar keinen Schritt -- der Aufrufer
+    /// startet sie ohne Drawer (`direktStart`).
+    static func schritte(erstkontakt: Bool, fragtEinstellung: Bool,
+                         volumeKind: VolumeKind = .reps) -> [UebungsstartSchritt] {
+        var schritte: [UebungsstartSchritt] = []
+        if erstkontakt {
+            schritte.append(.einweisung)
+            if fragtEinstellung { schritte.append(.einstellung) }
+        }
+        if volumeKind == .reps { schritte.append(.startwerte) }
+        return schritte
+    }
+
+    /// Kein Schritt uebrig: die Uebung startet ohne Drawer.
+    static func direktStart(erstkontakt: Bool, fragtEinstellung: Bool, volumeKind: VolumeKind) -> Bool {
+        schritte(erstkontakt: erstkontakt, fragtEinstellung: fragtEinstellung, volumeKind: volumeKind).isEmpty
     }
 
     /// "Kenne ich schon" fuehrt an Einweisung und Einstellung vorbei
     /// (Testnotiz 06.10., #16) -- seit dem Drawer zu den Startwerten statt
-    /// zu "Training starten".
-    static func positionNachUeberspringen(in schritte: [UebungsstartSchritt]) -> Int {
-        schritte.firstIndex(of: .startwerte) ?? max(schritte.count - 1, 0)
+    /// zu "Training starten". nil: es gibt keine (Cardio), die Uebung
+    /// startet sofort.
+    static func positionNachUeberspringen(in schritte: [UebungsstartSchritt]) -> Int? {
+        schritte.firstIndex(of: .startwerte)
     }
 }
 

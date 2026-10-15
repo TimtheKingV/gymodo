@@ -9,6 +9,15 @@ import Testing
 /// der Treffer. Beide waeren sonst beim naechsten Anfassen weg.
 struct GeraeteAuswahlTests {
 
+    @Test("entprellt nur, wenn allein der nicht leere Text sich aendert")
+    func entprelltNurBeiTextaenderung() {
+        #expect(GeraeteAuswahl.entprellt(textVorher: "bank", textJetzt: "bankd", restGleich: true))
+        #expect(!GeraeteAuswahl.entprellt(textVorher: nil, textJetzt: "bank", restGleich: true))
+        #expect(!GeraeteAuswahl.entprellt(textVorher: "bank", textJetzt: "", restGleich: true))
+        #expect(!GeraeteAuswahl.entprellt(textVorher: "bank", textJetzt: "bank", restGleich: false))
+        #expect(!GeraeteAuswahl.entprellt(textVorher: "bank", textJetzt: "bankd", restGleich: false))
+    }
+
     // MARK: - Bausteine
 
     private func zeit(_ iso: String) -> Date {

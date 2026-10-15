@@ -45,6 +45,13 @@ enum APIError: Error, Equatable {
         }
     }
 
+    /// 401 -- in der Warteschlange voruebergehend: offline gibt es keinen
+    /// gueltigen Token, und der Satz darf deshalb nicht verloren gehen
+    /// (Offline-Spec 4c). `istDauerhaft` bleibt fuer andere Aufrufer gleich.
+    var istAnmeldefehler: Bool {
+        if case .unauthorized = self { true } else { false }
+    }
+
     /// Der Satz, den ein Screen zeigt -- der Servertext WOERTLICH, wo es
     /// einen gibt.
     ///

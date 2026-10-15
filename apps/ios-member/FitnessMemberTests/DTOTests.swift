@@ -26,6 +26,13 @@ struct JSONValueTests {
 
 @Suite("DTOs")
 struct DTOTests {
+    @Test func uebungMitUndOhneBeschreibung() throws {
+        let mit = #"{"id":"e1","name":"A","description":"Ellbogen hoch.","volumeKind":"reps","targetMin":8,"targetMax":12}"#
+        let ohne = #"{"id":"e1","name":"A","volumeKind":"reps","targetMin":8,"targetMax":12}"#
+        #expect(try JSONDecoder().decode(BootstrapResponse.Exercise.self, from: Data(mit.utf8)).description == "Ellbogen hoch.")
+        #expect(try JSONDecoder().decode(BootstrapResponse.Exercise.self, from: Data(ohne.utf8)).description == nil)
+    }
+
     @Test("dekodiert eine minimale BootstrapResponse")
     func decodesBootstrap() throws {
         let json = """

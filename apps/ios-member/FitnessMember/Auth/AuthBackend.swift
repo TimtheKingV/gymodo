@@ -2,6 +2,9 @@ import Foundation
 
 protocol AuthBackend: Sendable {
     func currentSession() async -> Session?
+    /// Die Session aus dem lokalen Speicher, ohne Netz und ohne Refresh --
+    /// auch abgelaufen (Offline-Spec 4a).
+    func gespeicherteSession() async -> Session?
     func signIn(email: String, password: String) async throws -> Session
     /// nil, wenn Bestaetigungspflicht aktiv ist (Cloud-Standard) und noch
     /// keine Session entsteht -- siehe apps/web/app/registrieren/actions.ts.
