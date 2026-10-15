@@ -527,8 +527,31 @@ struct CatalogStoreTests {
         store.enqueue(testWrite())
         await store.flushPending()
         #expect(await loader.putSetCalls.count == 1)
-        try await Task.sleep(for: .milliseconds(300))
+        // Bis zur Frist abfragen statt fest zu schlafen (CI-Takt schwankt).
+        let frist = ContinuousClock.now + .seconds(2)
+        while await loader.putSetCalls.count < 2, ContinuousClock.now < frist {
+            try await Task.sleep(for: .milliseconds(20))
+        }
         #expect(await loader.putSetCalls.count >= 2)
+    }
+
+    @Test("ein laufender Flush hoert auf, wenn der Besitzer nicht mehr passt")
+    func flushStopptBeiBesitzerwechsel() async {
+        let loader = HaengenderPutLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 wiederholungsAbstand: .seconds(60))
+        store.anmelden(userId: "u1")
+        store.enqueue(testWrite())
+        store.enqueue(testWrite())
+        let flush = Task { await store.flushPending() }
+        while await !loader.angefragt { await Task.yield() }
+        // Ohne anmelden(u2): die Schlange haelt den zweiten Satz noch, nur
+        // der Besitzer passt nicht mehr -- sonst griffe der contains-Guard.
+        store.reset()
+        await loader.freigeben()
+        await flush.value
+        #expect(store.pendingWrites.count == 2)
+        #expect(await loader.aufrufe == 1)
     }
 
     @Test("nach .failed fuehrt ein erneutes load() wieder zu .loaded")
@@ -1037,6 +1060,26 @@ private actor HaengenderBootstrapLoader: BootstrapLoading {
     func freigeben() { wartend?.resume(); wartend = nil }
 
     func putSet(sessionId: UUID, setId: UUID, _ body: SetWrite) async throws(APIError) -> RecordedSet { throw .offline }
+    func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
+    func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
+    func leaveStudioMembership(studioId: String) async throws(APIError) { throw .offline }
+}
+
+/// putSet haengt, bis `freigeben()` kommt, und scheitert dann offline.
+private actor HaengenderPutLoader: BootstrapLoading {
+    private(set) var angefragt = false
+    private(set) var aufrufe = 0
+    private var wartend: CheckedContinuation<Void, Never>?
+
+    func bootstrap() async throws(APIError) -> BootstrapResponse { throw .offline }
+    func freigeben() { wartend?.resume(); wartend = nil }
+
+    func putSet(sessionId: UUID, setId: UUID, _ body: SetWrite) async throws(APIError) -> RecordedSet {
+        aufrufe += 1
+        angefragt = true
+        await withCheckedContinuation { wartend = $0 }
+        throw .offline
+    }
     func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
     func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
     func leaveStudioMembership(studioId: String) async throws(APIError) { throw .offline }

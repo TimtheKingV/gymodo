@@ -295,6 +295,10 @@ final class CatalogStore {
             // eine Kopie von pendingWrites, sonst sendet sie eine gerade
             // verworfene oder geloeschte Einheit doch noch an den Server.
             guard pendingWrites.contains(where: { $0.id == write.id }) else { continue }
+            // Auch der Besitzer kann sich waehrend eines await geaendert haben
+            // (Abmelden, Kontowechsel): dann nicht mit dem Token des anderen
+            // Kontos weitersenden.
+            if let besitzer = warteschlangenBesitzer, besitzer != userId { break }
             do {
                 _ = try await loader.putSet(sessionId: write.sessionId, setId: write.setId, write.body)
                 entferneAusPendingWrites(write)
@@ -323,7 +327,9 @@ final class CatalogStore {
     /// `wiederholungsAbstand`, solange etwas offen ist (Offline-Spec 2).
     /// Hoechstens ein schlafender Task: ein laufender wird nicht ersetzt.
     private func wiederholungPlanen() {
-        guard !pendingWrites.isEmpty else {
+        // Abgemeldet (Besitzer da, userId nil): kein Versuch ohne Token.
+        let abgemeldet = userId == nil && warteschlangenBesitzer != nil
+        guard !pendingWrites.isEmpty, !abgemeldet else {
             wiederholung?.cancel()
             wiederholung = nil
             return
