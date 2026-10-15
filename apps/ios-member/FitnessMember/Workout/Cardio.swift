@@ -86,3 +86,48 @@ struct CardioWerte: Codable, Hashable, Sendable {
         return ergebnis
     }
 }
+
+/// Eingabe und Pruefung eines Cardio-Werts (Testnotiz 14.10., 18:45 #7).
+enum CardioEingabe {
+    enum Fehler: Error, Equatable {
+        case leer
+        case keineZahl
+        /// Fertiger Text: "Höchstens 50 km/h."
+        case ausserhalb(String)
+    }
+
+    /// Komma oder Punkt als Dezimaltrenner; ganzzahlige Werte duerfen keinen Rest haben.
+    static func zahl(_ text: String, fuer wert: CardioWert) -> Result<Double, Fehler> {
+        let roh = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if roh.isEmpty { return .failure(.leer) }
+        guard let zahl = Double(roh.replacingOccurrences(of: ",", with: ".")), zahl.isFinite else {
+            return .failure(.keineZahl)
+        }
+        if wert.ganzzahlig, zahl.rounded() != zahl { return .failure(.keineZahl) }
+        return pruefen(zahl, wert)
+    }
+
+    /// Minuten und Sekunden 0-59; die Summe muss in den Zeitbereich passen.
+    static func zeit(stunden: Int, minuten: Int, sekunden: Int) -> Result<Double, Fehler> {
+        guard stunden >= 0, (0...59).contains(minuten), (0...59).contains(sekunden) else {
+            return .failure(.keineZahl)
+        }
+        return pruefen(Double(stunden * 3600 + minuten * 60 + sekunden), .zeit)
+    }
+
+    static func zeitTeile(_ sekunden: Int) -> (h: Int, m: Int, s: Int) {
+        (sekunden / 3600, (sekunden % 3600) / 60, sekunden % 60)
+    }
+
+    private static func pruefen(_ zahl: Double, _ wert: CardioWert) -> Result<Double, Fehler> {
+        let bereich = wert.bereich
+        if zahl > bereich.upperBound {
+            return .failure(.ausserhalb("Höchstens \(Zahlformat.cardioGrenze(wert, bereich.upperBound))."))
+        }
+        if zahl < bereich.lowerBound {
+            if wert == .zeit { return .failure(.ausserhalb("Mindestens 1 Sekunde.")) }
+            return .failure(.ausserhalb("Mindestens \(Zahlformat.cardioGrenze(wert, bereich.lowerBound))."))
+        }
+        return .success(zahl)
+    }
+}

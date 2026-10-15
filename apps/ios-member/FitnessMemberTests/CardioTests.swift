@@ -63,4 +63,46 @@ struct CardioTests {
         #expect(body.load == 5)
         #expect(body.cardio == nil)
     }
+
+    @Test func dieZeileFolgtDerFestenReihenfolge() {
+        let w = CardioWerte(zeit: 510, strecke: 2000, stufe: 5, watt: 142)
+        #expect(Zahlformat.cardio(w) == "8:30 · 2,0 km · Stufe 5 · 142 W")
+        #expect(Zahlformat.cardioGesprochen(w) == "8 Minuten 30 Sekunden, 2,0 Kilometer, Stufe 5, 142 Watt")
+    }
+
+    @Test func einzelneWerte() {
+        #expect(Zahlformat.cardioWert(.zeit, 3900) == "1:05:00")
+        #expect(Zahlformat.cardioWert(.strecke, 850) == "850 m")
+        #expect(Zahlformat.cardioWert(.strecke, 12_340) == "12,3 km")
+        #expect(Zahlformat.cardioWert(.kmh, 10.5) == "10,5 km/h")
+        #expect(Zahlformat.cardioWert(.steigung, -2) == "−2,0 %")
+        #expect(Zahlformat.cardioWert(.frequenz, 85) == "85 /min")
+        #expect(Zahlformat.cardioWert(.kcal, 310) == "310 kcal")
+    }
+
+    @Test func zahlOhneEinheitFuerDasEingabefeld() {
+        #expect(Zahlformat.cardioZahl(.kmh, 10.5) == "10,5")
+        #expect(Zahlformat.cardioZahl(.steigung, -2) == "−2,0")
+        #expect(Zahlformat.cardioZahl(.watt, 142) == "142")
+    }
+
+    /// Review Focus 4.
+    @Test func eingabeMitKommaPunktUndGrenzen() {
+        #expect(CardioEingabe.zahl("10,5", fuer: .kmh) == .success(10.5))
+        #expect(CardioEingabe.zahl("10.5", fuer: .kmh) == .success(10.5))
+        #expect(CardioEingabe.zahl("", fuer: .kmh) == .failure(.leer))
+        #expect(CardioEingabe.zahl("abc", fuer: .watt) == .failure(.keineZahl))
+        #expect(CardioEingabe.zahl("51", fuer: .kmh) == .failure(.ausserhalb("Höchstens 50 km/h.")))
+        #expect(CardioEingabe.zahl("142,5", fuer: .watt) == .failure(.keineZahl))
+        #expect(CardioEingabe.zahl("-11", fuer: .steigung) == .failure(.ausserhalb("Mindestens −10 %.")))
+        #expect(CardioEingabe.zahl("nan", fuer: .kmh) == .failure(.keineZahl))
+    }
+
+    @Test func zeitHinUndZurueck() {
+        #expect(CardioEingabe.zeit(stunden: 0, minuten: 8, sekunden: 30) == .success(510))
+        #expect(CardioEingabe.zeit(stunden: 0, minuten: 0, sekunden: 0) == .failure(.ausserhalb("Mindestens 1 Sekunde.")))
+        #expect(CardioEingabe.zeit(stunden: 0, minuten: 8, sekunden: 60) == .failure(.keineZahl))
+        let t = CardioEingabe.zeitTeile(3900)
+        #expect(t.h == 1 && t.m == 5 && t.s == 0)
+    }
 }

@@ -361,4 +361,77 @@ enum Zahlformat {
         let minutenteil = restminuten == 1 ? "1 Minute" : "\(restminuten) Minuten"
         return "\(stundenteil) \(minutenteil) trainiert"
     }
+
+    // MARK: - Cardio-Werte (Testnotiz 14.10., 18:45 #7)
+
+    /// Eine Nachkommastelle mit U+2212 statt Bindestrich-Minus.
+    private static func eineStelle(_ wert: Double) -> String {
+        let text = gewicht(abs(wert))
+        return wert < 0 && text != "0,0" ? "−\(text)" : text
+    }
+
+    /// "8:30", ab einer Stunde "1:05:00".
+    private static func cardioZeit(_ sekunden: Int) -> String {
+        let t = CardioEingabe.zeitTeile(sekunden)
+        return t.h > 0
+            ? String(format: "%d:%02d:%02d", t.h, t.m, t.s)
+            : String(format: "%d:%02d", t.m, t.s)
+    }
+
+    /// "142", "10,5" -- die Zahl ohne Einheit, zum Vorbelegen des Eingabefelds.
+    static func cardioZahl(_ wert: CardioWert, _ zahl: Double) -> String {
+        wert.ganzzahlig ? ganzzahl(zahl) : eineStelle(zahl)
+    }
+
+    /// "8:30", "850 m", "12,3 km", "10,5 km/h", "−2,0 %", "142 W".
+    static func cardioWert(_ wert: CardioWert, _ zahl: Double) -> String {
+        switch wert {
+        case .zeit: return cardioZeit(Int(zahl.rounded()))
+        case .strecke:
+            return zahl < 1000 ? "\(ganzzahl(zahl)) m" : "\(eineStelle(zahl / 1000)) km"
+        case .stufe: return "Stufe \(ganzzahl(zahl))"
+        case .kmh: return "\(eineStelle(zahl)) km/h"
+        case .steigung: return "\(eineStelle(zahl)) %"
+        case .watt: return "\(ganzzahl(zahl)) W"
+        case .frequenz: return "\(ganzzahl(zahl)) /min"
+        case .kcal: return "\(ganzzahl(zahl)) kcal"
+        }
+    }
+
+    /// Wie `cardioWert`, aber ganze Zahlen ohne ",0" -- fuer Grenzen in
+    /// Fehlertexten ("Höchstens 50 km/h.").
+    static func cardioGrenze(_ wert: CardioWert, _ zahl: Double) -> String {
+        cardioWert(wert, zahl).replacingOccurrences(of: ",0 ", with: " ")
+    }
+
+    /// "8:30 · 2,0 km · Stufe 5 · 142 W" -- gesetzte Werte in fester Reihenfolge.
+    static func cardio(_ w: CardioWerte) -> String {
+        CardioWert.allCases
+            .compactMap { art in w[art].map { cardioWert(art, $0) } }
+            .joined(separator: " · ")
+    }
+
+    /// "8 Minuten 30 Sekunden, 2,0 Kilometer, Stufe 5, 142 Watt".
+    static func cardioGesprochen(_ w: CardioWerte) -> String {
+        CardioWert.allCases.compactMap { art -> String? in
+            guard let zahl = w[art] else { return nil }
+            switch art {
+            case .zeit:
+                let t = CardioEingabe.zeitTeile(Int(zahl))
+                var teile: [String] = []
+                if t.h > 0 { teile.append(t.h == 1 ? "1 Stunde" : "\(t.h) Stunden") }
+                if t.m > 0 { teile.append(t.m == 1 ? "1 Minute" : "\(t.m) Minuten") }
+                if t.s > 0 { teile.append(t.s == 1 ? "1 Sekunde" : "\(t.s) Sekunden") }
+                return teile.joined(separator: " ")
+            case .strecke:
+                return zahl < 1000 ? (zahl == 1 ? "1 Meter" : "\(ganzzahl(zahl)) Meter") : "\(eineStelle(zahl / 1000)) Kilometer"
+            case .stufe: return "Stufe \(ganzzahl(zahl))"
+            case .kmh: return "\(eineStelle(zahl)) Kilometer pro Stunde"
+            case .steigung: return "\(eineStelle(zahl)) Prozent"
+            case .watt: return "\(ganzzahl(zahl)) Watt"
+            case .frequenz: return "\(ganzzahl(zahl)) Schläge pro Minute"
+            case .kcal: return "\(ganzzahl(zahl)) Kilokalorien"
+            }
+        }.joined(separator: ", ")
+    }
 }
