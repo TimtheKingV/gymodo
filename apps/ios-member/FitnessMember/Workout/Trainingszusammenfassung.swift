@@ -43,6 +43,9 @@ struct Trainingszusammenfassung: Equatable, Hashable {
     let geraeteAnzahl: Int
     let satzAnzahl: Int
     let bloecke: [Blockzeile]
+    /// Die Bloecke, fuer die der Server einen Vorschlag rechnet: Cardio
+    /// hat keinen (Cardio-Spec 5.2).
+    var vorschlagsbloecke: [Blockzeile] { bloecke.filter { $0.cardio == nil } }
     /// Geht mit dem Abschluss an den Server (Testnotiz 14.10., 18:45 #3/#4).
     let pausedSeconds: Int
 

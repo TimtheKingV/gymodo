@@ -571,6 +571,15 @@ final class GeraetModel {
         if phase == .eingabe { mitschnittBeginnen() }
     }
 
+    /// Der letzte Satz dieser Uebung als Zeile fuer die Uebungsliste: die
+    /// Cardio-Werte oder die Belastung mit Einheit. nil nur ohne Historie
+    /// (ein Cardio-Satz hat keine Belastung, ist aber keine "Noch nie").
+    func letzterSatzText(fuer uebungId: String) -> String? {
+        guard let letzter = letzterSatz(fuer: uebungId) else { return nil }
+        if let cardio = letzter.cardio { return Zahlformat.cardio(cardio) }
+        return letzter.load.map { Zahlformat.belastungMitEinheit($0, loadUnit) }
+    }
+
     func letzteBelastung(fuer uebungId: String) -> Double? {
         letzterSatz(fuer: uebungId)?.load
     }

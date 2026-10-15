@@ -88,6 +88,8 @@ struct GeraetModelTests {
         #expect(sut.belastung == 77.5)
         #expect(sut.umfang == 11)
         #expect(sut.rueckblick?.zuletzt == "77,5 kg × 11")
+        // Kraft unveraendert: die Belastung mit Einheit.
+        #expect(sut.letzterSatzText(fuer: "e1") == "77,5 kg")
     }
 
     @Test func rastetEinenVorschlagAufDieSchrittweite() {

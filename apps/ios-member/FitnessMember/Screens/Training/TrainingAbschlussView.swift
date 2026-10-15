@@ -72,7 +72,11 @@ struct TrainingAbschlussView: View {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopf
                 zahlen
-                beimNaechstenMal
+                // Nur Cardio trainiert: nichts vorzuschlagen, also auch keine
+                // Ueberschrift ueber leerem Raum.
+                if !zusammenfassung.vorschlagsbloecke.isEmpty {
+                    beimNaechstenMal
+                }
             }
             .padding(.horizontal, 20)
             .padding(.top, DesignSystem.Spacing.s24)
@@ -213,8 +217,7 @@ struct TrainingAbschlussView: View {
                 // auf TrainingLaeuft, nicht anders", und dort traegt jeder
                 // Block seine eigene Kontur (warn bei gemeldet, sonst line).
                 VStack(spacing: DesignSystem.Spacing.s12) {
-                    // Cardio-Bloecke haben keinen Vorschlag (Cardio-Spec 5.2).
-                    ForEach(AbschlussZeile.zeilen(bloecke: zusammenfassung.bloecke.filter { $0.cardio == nil },
+                    ForEach(AbschlussZeile.zeilen(bloecke: zusammenfassung.vorschlagsbloecke,
                                                   vorschlaege: vorschlaege)) { zeile in
                         blockZeile(zeile)
                     }

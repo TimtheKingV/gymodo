@@ -43,6 +43,22 @@ struct TrainingszusammenfassungTests {
         #expect(z.bloecke.first?.satzAnzahl == 1)
     }
 
+    @Test func vorschlagsbloeckeLassenCardioWeg() throws {
+        let rudern = LokalerSatz(id: UUID(), setIndex: 1, load: nil, volume: nil,
+                                 cardio: CardioWerte(zeit: 510),
+                                 problemFlag: false, problemReason: nil, performedAt: start)
+        let nurCardio = LokaleSession(id: UUID(), startedAt: start, bloecke: [
+            LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [rudern]),
+        ])
+        #expect(try #require(Trainingszusammenfassung(nurCardio)).vorschlagsbloecke.isEmpty)
+
+        let gemischt = LokaleSession(id: UUID(), startedAt: start, bloecke: [
+            LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [rudern]),
+            LokalerBlock(machineId: "m2", exerciseId: "e2", saetze: [satz(1, 80, 5)]),
+        ])
+        #expect(try #require(Trainingszusammenfassung(gemischt)).vorschlagsbloecke.map(\.exerciseId) == ["e2"])
+    }
+
     @Test func einKraftBlockHatKeineCardioWerte() throws {
         let session = LokaleSession(id: UUID(), startedAt: start, bloecke: [
             LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [satz(1, 80, 0)]),

@@ -93,9 +93,9 @@ struct UebungWechselnSheet: View {
         if let block = modell.blockInEinheit(fuer: uebung.id) {
             return "Heute · \(TrainingTab.blockzeile(block))"
         }
-        if let belastung = modell.letzteBelastung(fuer: uebung.id) {
+        if let werte = modell.letzterSatzText(fuer: uebung.id) {
             let zuletzt = altersangabe(fuer: uebung.id).map { "zuletzt \($0)" } ?? "zuletzt"
-            return "\(Zahlformat.belastungMitEinheit(belastung, modell.loadUnit)) · \(zuletzt)"
+            return "\(werte) · \(zuletzt)"
         }
         return "Noch nie trainiert · Ziel \(Zahlformat.korridorMitEinheit(uebung.targetMin, uebung.targetMax, uebung.volumeKind))"
     }

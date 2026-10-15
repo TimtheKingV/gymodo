@@ -41,6 +41,12 @@ struct CardioVerlaufTests {
         #expect(v.einheiten.first?.werte == CardioWerte(zeit: 720))
     }
 
+    @Test func eineUebungMitKraftUndCardioSaetzenBleibtBeimDiagramm() {
+        let gemischt = [einheit("a", tag: 1, saetze: [satz(1, cardio: CardioWerte(zeit: 300)),
+                                                      satz(2, cardio: nil)])]
+        #expect(CardioVerlauf.fuer(exerciseId: "e1", sessions: gemischt) == nil)
+    }
+
     @Test func eineKraftUebungOderEineUnbekannteHatKeinenCardioVerlauf() {
         let kraft = [einheit("a", tag: 1, saetze: [satz(1, cardio: nil)])]
         #expect(CardioVerlauf.fuer(exerciseId: "e1", sessions: kraft) == nil)

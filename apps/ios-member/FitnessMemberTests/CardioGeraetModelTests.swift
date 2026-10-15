@@ -36,6 +36,13 @@ struct CardioGeraetModelTests {
             enqueue: { _ in })
     }
 
+    @Test func derLetzteSatzTextNenntCardioWerteOderNichts() {
+        let modell = cardioModell()
+        #expect(modell.letzterSatzText(fuer: "e1") == "10:00 · 2,1 km · Stufe 7")
+        // Keine Historie an e2: nil, nicht "Noch nie" mit falscher Zahl.
+        #expect(modell.letzterSatzText(fuer: "e2") == nil)
+    }
+
     @Test func derRueckblickNenntDieCardioWerteDesLetztenSatzes() {
         #expect(cardioModell().rueckblick?.zuletzt == "10:00 · 2,1 km · Stufe 7")
     }
