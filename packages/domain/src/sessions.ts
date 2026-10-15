@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
 import type { LoadUnit, VolumeKind } from "./belastung.js";
-import { CARDIO_SELECT, cardioAusZeile, type CardioWerte, type CardioZeile } from "./cardio.js";
+import { CARDIO_SELECT, cardioDesSatzes, type CardioWerte, type CardioZeile } from "./cardio.js";
+import { cardioGeraeteLaden } from "./cardio-geraete.js";
 import { aktiveZiele } from "./goals.js";
 import { ortszeitTeile } from "./serie.js";
 import { stationsSchluessel } from "./station.js";
@@ -331,6 +332,13 @@ export async function getSessions(
     typAlsGeraet((setRows ?? []) as unknown as SetRow[]),
   );
 
+  // Alte Saetze (load/volume) an Cardio-Geraeten bekommen ihre Cardio-Werte
+  // abgeleitet (Final-Review A).
+  const cardioGeraete = await cardioGeraeteLaden(
+    client,
+    benannteSaetze.filter((row) => row.load !== null).map((row) => row.equipment_model_id),
+  );
+
   const setsBySession = new Map<string, Array<MitNamen<SetRow>>>();
   for (const row of benannteSaetze) {
     const list = setsBySession.get(row.session_id) ?? [];
@@ -372,7 +380,7 @@ export async function getSessions(
         load: row.load === null ? null : Number(row.load),
         secondaryLoad: row.secondary_load === null ? null : Number(row.secondary_load),
         volume: row.volume,
-        cardio: cardioAusZeile(row),
+        cardio: cardioDesSatzes(row, cardioGeraete.get(row.equipment_model_id), row.exercises.volume_kind),
         rir: row.rir === null ? null : Number(row.rir),
         problemFlag: row.problem_flag,
         problemReason: row.problem_reason,

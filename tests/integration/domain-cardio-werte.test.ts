@@ -1,10 +1,12 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { getBootstrap, getMachineContext, getProgress, getSessions, recordSet } from "@fitretro/domain";
+import { completeSession, getBootstrap, getMachineContext, getProgress, getSessions, recordSet } from "@fitretro/domain";
 import { createTestUser, serviceClient, uniqueEmail, userClient } from "./helpers/clients.js";
 
 // Testnotiz 14.10., 18:45 #7: Cardio-Werte (Spec 2026-10-15-cardio-werte-design).
 const GYMTAVO = "00000000-0000-4000-8000-000000000001";
 const kennung = crypto.randomUUID();
+const SPALTEN = "dauer_s, strecke_m, stufe, kmh, steigung_pct, watt, kcal, frequenz";
+const OHNE_CARDIO = { dauer_s: null, strecke_m: null, stufe: null, kmh: null, steigung_pct: null, watt: null, kcal: null, frequenz: null };
 
 let mitgliedEmail: string;
 let mitgliedId: string;
@@ -115,26 +117,46 @@ describe("recordSet -- Cardio (Testnotiz 14.10., 18:45 #7)", () => {
       .rejects.toMatchObject({ message: "Mindestens ein Wert fehlt." });
   });
 
-  // Review Focus 1: Satz einer alten App, vielleicht aus der Warteschlange.
-  it("wandelt load/volume einer alten App um", async () => {
+  // Final-Review A: eine App von vor E2 (vielleicht aus der Warteschlange)
+  // schickt load/volume. Der Server speichert den Satz wie vor E2 -- die
+  // alte App liest load/volume als Pflichtfelder (Spec 8).
+  it("speichert load/volume einer alten App wie vor E2", async () => {
     const client = await userClient(mitgliedEmail);
-    const satz = await recordSet(client, { ...basis(), machineId: cardioMaschine, exerciseId: cardioUebung, load: 5, volume: 1200 });
-    // level -> stufe steht nicht in der Liste und faellt weg, Sekunden -> zeit.
-    expect(satz).toMatchObject({ load: null, volume: null, cardio: { zeit: 1200 } });
+    const satz = await recordSet(client, { ...basis(), machineId: wattMaschine, exerciseId: cardioUebung, load: 150, volume: 1200 });
+    expect(satz).toMatchObject({ load: 150, volume: 1200, secondaryLoad: null, cardio: null });
+    const { data: zeile } = await serviceClient()
+      .from("workout_sets").select(`load, volume, ${SPALTEN}`).eq("id", satz.id).single();
+    expect(zeile).toEqual({ load: 150, volume: 1200, ...OHNE_CARDIO });
   });
 
-  it("verwirft bei einer alten App nur den ungueltigen Wert", async () => {
+  it("prueft den alten Satz wie vor E2: Umfang ueber der Grenze der Uebung", async () => {
     const client = await userClient(mitgliedEmail);
-    // Umfang 99999 s liegt ueber 86400 (zeit) und faellt weg; die Watt bleiben.
-    const satz = await recordSet(client, { ...basis(), machineId: wattMaschine, exerciseId: cardioUebung, load: 150, volume: 99999 });
-    expect(satz).toMatchObject({ load: null, volume: null, cardio: { watt: 150 } });
-    expect(satz.cardio).not.toHaveProperty("zeit");
+    await expect(recordSet(client, { ...basis(), machineId: wattMaschine, exerciseId: cardioUebung, load: 150, volume: 99999 }))
+      .rejects.toMatchObject({ code: "validation_failed", message: "Mehr als vier Stunden sind kein Satz." });
   });
 
-  it("lehnt einen alten Satz ab, von dem nichts gueltig bleibt", async () => {
+  it("prueft den alten Satz wie vor E2: Nebenbelastung an einem Geraet ohne", async () => {
     const client = await userClient(mitgliedEmail);
-    await expect(recordSet(client, { ...basis(), machineId: cardioMaschine, exerciseId: cardioUebung, load: 5, volume: 99999 }))
-      .rejects.toMatchObject({ message: "Mindestens ein Wert fehlt." });
+    await expect(recordSet(client, { ...basis(), machineId: cardioMaschine, exerciseId: cardioUebung, load: 5, volume: 600, secondaryLoad: 2 }))
+      .rejects.toMatchObject({ code: "validation_failed", message: "Dieses Geraet hat keine Nebenbelastung." });
+  });
+
+  // Final-Review C: ein fehlerhafter Client schickt Zaehlerdaten mit. Ein
+  // 500 liesse die Warteschlange den Satz ewig wiederholen.
+  it("speichert einen Cardio-Satz ohne Zaehlerstand und Ereignisse, auch wenn der Client sie schickt", async () => {
+    const client = await userClient(mitgliedEmail);
+    const satz = await recordSet(client, {
+      ...basis(), machineId: wattMaschine, exerciseId: cardioUebung, cardio: { zeit: 300 },
+      volumeSource: "korrigiert", volumeCounted: 1,
+      repEvents: {
+        algo: "test", befestigungsart: "langhantel", unsicher: null,
+        wiederholungen: [{ beginn: 0, umkehr: 1, ende: 2, ausschlag: 1, sicherheit: 1 }],
+      },
+    });
+    expect(satz).toMatchObject({ cardio: { zeit: 300 }, volumeSource: "eingegeben", volumeCounted: null });
+    const { data: zeile } = await serviceClient()
+      .from("workout_sets").select("volume_source, volume_counted, rep_events").eq("id", satz.id).single();
+    expect(zeile).toEqual({ volume_source: "eingegeben", volume_counted: null, rep_events: null });
   });
 
   it("lehnt cardio an einem Kraftgeraet ab", async () => {
@@ -206,6 +228,75 @@ describe("Lesewege -- Cardio", () => {
   it("Fortschritt laesst Cardio aus dem Bestlast-Diagramm", async () => {
     const client = await userClient(mitgliedEmail);
     const p = await getProgress(client);
+    expect(p.exercises.find((x) => x.exerciseId === cardioUebung)).toBeUndefined();
+  });
+});
+
+// Final-Review A: Saetze einer alten App an Cardio-Geraeten bleiben lesbar
+// fuer die alte App (load/volume als Zahl) und zeigen in der neuen App ihre
+// Cardio-Werte -- aber nie eine Progression oder einen Bestlast-Punkt.
+describe("Alte App an einem Cardio-Geraet (Spec 8)", () => {
+  let altEmail: string;
+  let altSession: string;
+
+  beforeAll(async () => {
+    altEmail = uniqueEmail("cardio-alt");
+    const altId = await createTestUser(altEmail);
+    const { error } = await serviceClient()
+      .from("studio_memberships").insert({ studio_id: studio, user_id: altId, role: "member" });
+    if (error) throw error;
+    const client = await userClient(altEmail);
+    altSession = crypto.randomUUID();
+    await recordSet(client, {
+      sessionId: altSession, setId: crypto.randomUUID(), setIndex: 1,
+      machineId: cardioMaschine, exerciseId: cardioUebung, load: 5, volume: 1200,
+    });
+    await recordSet(client, {
+      sessionId: altSession, setId: crypto.randomUUID(), setIndex: 1,
+      machineId: wattMaschine, exerciseId: cardioUebung, load: 150, volume: 1500,
+    });
+  });
+
+  it("Bootstrap: load/volume als Zahl, dazu die abgeleiteten Cardio-Werte", async () => {
+    const b = await getBootstrap(await userClient(altEmail));
+    // level -> stufe steht nicht in der Liste und faellt weg, Sekunden -> zeit.
+    expect(b.lastSets.find((s) => s.machineId === cardioMaschine)).toMatchObject({
+      load: 5, volume: 1200, cardio: { zeit: 1200 },
+    });
+    expect(b.lastSets.find((s) => s.machineId === wattMaschine)).toMatchObject({
+      load: 150, volume: 1500, cardio: { zeit: 1500, watt: 150 },
+    });
+  });
+
+  it("Sessions: load/volume als Zahl, dazu die abgeleiteten Cardio-Werte", async () => {
+    const { sessions } = await getSessions(await userClient(altEmail));
+    const satz = sessions.find((s) => s.id === altSession)?.blocks.find((b) => b.machineId === wattMaschine)?.sets[0];
+    expect(satz).toMatchObject({ load: 150, volume: 1500, cardio: { zeit: 1500, watt: 150 } });
+  });
+
+  it("Geraetekontext: Historie mit Zahlen und Cardio-Werten, kein Vorschlag", async () => {
+    const client = await userClient(altEmail);
+    const k = await getMachineContext(client, wattMaschine);
+    expect(k.history[0]).toMatchObject({ load: 150, volume: [1500], cardio: { zeit: 1500, watt: 150 } });
+    expect(k.suggestion).toMatchObject({ resultLoad: null, reasonCode: "kein_verlauf" });
+    const { data: vorschlaege } = await serviceClient()
+      .from("progression_suggestions").select("id").eq("machine_id", wattMaschine)
+      .eq("user_id", (await client.auth.getUser()).data.user!.id);
+    expect(vorschlaege).toEqual([]);
+  });
+
+  it("Abschluss: kein Vorschlag und keine Nachweiszeile fuer den alten Satz", async () => {
+    const client = await userClient(altEmail);
+    const fertig = await completeSession(client, { sessionId: altSession });
+    expect(fertig.vorschlaege).toEqual([]);
+    const { data: vorschlaege } = await serviceClient()
+      .from("progression_suggestions").select("id")
+      .eq("user_id", (await client.auth.getUser()).data.user!.id);
+    expect(vorschlaege).toEqual([]);
+  });
+
+  it("Fortschritt: kein Bestlast-Punkt fuer den alten Satz", async () => {
+    const p = await getProgress(await userClient(altEmail));
     expect(p.exercises.find((x) => x.exerciseId === cardioUebung)).toBeUndefined();
   });
 });

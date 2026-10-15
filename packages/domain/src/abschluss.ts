@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { DomainError } from "./errors.js";
+import { cardioGeraeteLaden, istCardioModell } from "./cardio-geraete.js";
 import type { LoadUnit } from "./belastung.js";
 import { stationsSchluessel } from "./station.js";
 import {
@@ -313,7 +314,11 @@ async function bloeckeDerSession(
       equipment_models: { load_unit: LoadUnit; secondary_unit: LoadUnit | null } | null;
     }
   >;
-  const paare = blockPaare(zeilen);
+  // Kein Block an einem Cardio-Geraet -- auch nicht mit Saetzen einer alten
+  // App, die noch load/volume tragen (Final-Review A). Entscheidend ist das
+  // Geraet, nicht die Zeile.
+  const cardioGeraete = await cardioGeraeteLaden(client, zeilen.map((zeile) => zeile.equipment_model_id));
+  const paare = blockPaare(zeilen.filter((zeile) => !istCardioModell(cardioGeraete, zeile.equipment_model_id)));
   const einheitenJeStation = new Map<string, Blockeinheiten>();
   for (const zeile of zeilen) {
     const modell = zeile.equipment_models;

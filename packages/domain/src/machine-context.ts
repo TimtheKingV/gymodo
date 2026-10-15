@@ -8,7 +8,7 @@ import {
 } from "./media.js";
 import { signMediaUrl, signMediaUrls } from "./media-store.js";
 import type { LoadUnit, VolumeKind } from "./belastung.js";
-import { CARDIO_SELECT, cardioAusZeile, cardioListeDesModells, type CardioWert, type CardioWerte, type CardioZeile } from "./cardio.js";
+import { CARDIO_SELECT, cardioDesSatzes, cardioListeDesModells, type CardioGeraet, type CardioWert, type CardioWerte, type CardioZeile } from "./cardio.js";
 import { stationAufloesen } from "./workout.js";
 import {
   PROGRESSION_ALGO_VERSION,
@@ -408,7 +408,13 @@ async function kontextAufbauen(
     if (istCardio) {
       // Cardio rechnet keine Progression und schreibt keinen Vorschlag: es
       // bleibt beim "kein Verlauf" von oben (Testnotiz 14.10., 18:45 #7).
-      historie = cardioHistorie(zeilen);
+      // Alte Saetze (load/volume) behalten ihre Zahlen fuer die alte App und
+      // bekommen die Cardio-Werte abgeleitet (Final-Review A).
+      historie = cardioHistorie(
+        zeilen,
+        { liste: cardioWerte, loadUnit: model.load_unit, secondaryUnit: model.secondary_unit },
+        await umfangsartDerUebung(client, selectedExerciseId, selected?.volumeKind),
+      );
     } else {
       // Zweite Absicherung: Saetze ohne Belastung (Cardio) nie in die Regel.
       blocks = toBlocks(
@@ -498,22 +504,48 @@ async function kontextAufbauen(
 
 /**
  * Die Historie eines Cardio-Geraets: Saetze je Trainingstag, chronologisch.
- * Die Zeilen kommen absteigend nach performed_at, wie bei toBlocks.
+ * Die Zeilen kommen absteigend nach performed_at, wie bei toBlocks. Die
+ * Cardio-Werte sind die des ersten Satzes des Tages; load/volume stehen wie
+ * vor E2 da, solange der Tag Saetze einer alten App hat -- die alte App liest
+ * sie als Pflichtfelder (Final-Review A).
  */
-function cardioHistorie(zeilen: SetRow[]): MachineContext["history"] {
+function cardioHistorie(
+  zeilen: SetRow[],
+  geraet: CardioGeraet,
+  volumeKind: VolumeKind | null,
+): MachineContext["history"] {
   const jeTag = new Map<string, SetRow[]>();
   for (const zeile of zeilen) {
     const tag = zeile.performed_at.slice(0, 10);
     jeTag.set(tag, [...(jeTag.get(tag) ?? []), zeile]);
   }
   return [...jeTag].map(([tag, saetze]) => {
-    const erster = [...saetze].reverse()[0];
+    const chronologisch = [...saetze].reverse();
+    const erster = chronologisch[0];
+    const alterErster = chronologisch.find((satz) => satz.load !== null);
     return {
       performedOn: tag,
-      load: null,
-      secondaryLoad: null,
-      volume: [],
-      cardio: erster ? cardioAusZeile(erster) : null,
+      load: alterErster ? Number(alterErster.load) : null,
+      secondaryLoad:
+        alterErster && alterErster.secondary_load !== null ? Number(alterErster.secondary_load) : null,
+      volume: chronologisch.flatMap((satz) => (satz.volume === null ? [] : [satz.volume])),
+      cardio: erster ? cardioDesSatzes(erster, geraet, volumeKind) : null,
     };
   });
+}
+
+/** Die Umfangsart der gewaehlten Uebung; null, wenn sie nicht mehr lesbar ist. */
+async function umfangsartDerUebung(
+  client: SupabaseClient,
+  exerciseId: string,
+  bekannt: VolumeKind | undefined,
+): Promise<VolumeKind | null> {
+  if (bekannt) return bekannt;
+  const { data, error } = await client
+    .from("exercises")
+    .select("volume_kind")
+    .eq("id", exerciseId)
+    .maybeSingle<{ volume_kind: VolumeKind }>();
+  if (error) throw new DomainError("internal", error.message);
+  return data?.volume_kind ?? null;
 }

@@ -3,6 +3,7 @@ import {
   CARDIO_WERTE,
   altEingabeUmwandeln,
   cardioAusZeile,
+  cardioDesSatzes,
   cardioListeDesModells,
   cardioPruefen,
   cardioWerteSchema,
@@ -86,6 +87,62 @@ describe("altEingabeUmwandeln", () => {
         [...rad],
       ),
     ).toEqual({});
+  });
+});
+
+describe("altEingabeUmwandeln -- Regel wie Migration 0055 (Final-Review A/G)", () => {
+  it("kappt jeden Wert in den Bereich seiner Spalte", () => {
+    expect(
+      altEingabeUmwandeln(
+        { load: 150, secondaryLoad: null, volume: 99999, loadUnit: "level", secondaryUnit: null, volumeKind: "seconds" },
+        ["zeit", "stufe"],
+      ),
+    ).toEqual({ zeit: 86_400, stufe: 100 });
+  });
+
+  it("rundet Zehntel auf eine Nachkommastelle", () => {
+    expect(
+      altEingabeUmwandeln(
+        { load: 8.46, secondaryLoad: 2.34, volume: null, loadUnit: "kmh", secondaryUnit: "pct", volumeKind: "reps" },
+        ["kmh", "steigung"],
+      ),
+    ).toEqual({ kmh: 8.5, steigung: 2.3 });
+  });
+
+  it("die Belastung geht vor der Nebenbelastung, wenn beide in dieselbe Spalte fallen", () => {
+    expect(
+      altEingabeUmwandeln(
+        { load: 80, secondaryLoad: 90, volume: null, loadUnit: "rpm", secondaryUnit: "rpm", volumeKind: "reps" },
+        ["frequenz"],
+      ),
+    ).toEqual({ frequenz: 80 });
+  });
+});
+
+describe("cardioDesSatzes (Final-Review A)", () => {
+  const leer = { dauer_s: null, strecke_m: null, stufe: null, kmh: null, steigung_pct: null, watt: null, kcal: null, frequenz: null };
+  const rad = { liste: ["zeit", "watt"] as const, loadUnit: "watt" as const, secondaryUnit: null };
+
+  it("nimmt die Spalten, wenn der Satz Cardio-Werte traegt", () => {
+    expect(cardioDesSatzes({ ...leer, dauer_s: 600, load: null, secondary_load: null, volume: null }, { ...rad, liste: [...rad.liste] }, "seconds"))
+      .toEqual({ zeit: 600 });
+  });
+
+  it("leitet die Werte eines alten Satzes am Cardio-Geraet ab", () => {
+    expect(cardioDesSatzes({ ...leer, load: "150", secondary_load: null, volume: 1500 }, { ...rad, liste: [...rad.liste] }, "seconds"))
+      .toEqual({ zeit: 1500, watt: 150 });
+  });
+
+  it("ohne Uebung nur die Belastung", () => {
+    expect(cardioDesSatzes({ ...leer, load: 150, secondary_load: null, volume: 1500 }, { ...rad, liste: [...rad.liste] }, null))
+      .toEqual({ watt: 150 });
+  });
+
+  it("null an einem Kraftgeraet, an einem unbekannten Geraet und wenn nichts bleibt", () => {
+    const satz = { ...leer, load: 40, secondary_load: null, volume: 10 };
+    expect(cardioDesSatzes(satz, { liste: [], loadUnit: "kg", secondaryUnit: null }, "reps")).toBeNull();
+    expect(cardioDesSatzes(satz, undefined, "reps")).toBeNull();
+    expect(cardioDesSatzes(satz, { liste: ["zeit"], loadUnit: "kg", secondaryUnit: null }, "reps")).toBeNull();
   });
 });
 

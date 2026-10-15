@@ -83,10 +83,26 @@ const WERT_JE_EINHEIT: Partial<Record<LoadUnit, CardioWert>> = {
   rpm: "frequenz",
 };
 
+/** Der Bereich jeder Spalte (cardioWerteSchema, Migration 0054). */
+const GRENZEN: Record<CardioWert, readonly [number, number]> = {
+  zeit: [1, 86_400],
+  strecke: [1, 200_000],
+  stufe: [0, 100],
+  kmh: [0, 50],
+  steigung: [-10, 40],
+  watt: [0, 3_000],
+  frequenz: [0, 300],
+  kcal: [0, 10_000],
+};
+const ZEHNTEL: readonly CardioWert[] = ["kmh", "steigung"];
+
 /**
- * Ein Satz einer App von vor E2 an einem Cardio-Geraet: load/volume statt
- * cardio (Spec 3.1). Was das Geraet nicht anbietet, faellt weg, statt den
- * Satz abzulehnen -- er liegt vielleicht seit Tagen in einer Warteschlange.
+ * Die Cardio-Werte eines Satzes einer App von vor E2: load/volume an einem
+ * Cardio-Geraet (Final-Review A; Spec 3.1). Dieselbe Regel wie Migration
+ * 0055: Sekunden -> zeit, Meter -> strecke, die Belastung je Einheit in
+ * ihren Wert, die Nebenbelastung nur, wenn die Belastung den Wert nicht
+ * schon belegt. Was das Geraet nicht anbietet, faellt weg; jeder Wert wird
+ * gerundet und in den Bereich seiner Spalte gekappt.
  */
 export function altEingabeUmwandeln(
   e: {
@@ -101,14 +117,54 @@ export function altEingabeUmwandeln(
 ): CardioWerte {
   const werte: Partial<Record<CardioWert, number>> = {};
   const setze = (wert: CardioWert | undefined, zahl: number | null | undefined) => {
-    if (wert && zahl !== null && zahl !== undefined && liste.includes(wert)) werte[wert] = zahl;
+    if (!wert || zahl === null || zahl === undefined || !liste.includes(wert) || werte[wert] !== undefined) return;
+    const gerundet = ZEHNTEL.includes(wert) ? Math.round(zahl * 10) / 10 : Math.round(zahl);
+    const [min, max] = GRENZEN[wert];
+    werte[wert] = Math.min(Math.max(gerundet, min), max);
   };
   setze(e.volumeKind === "seconds" ? "zeit" : e.volumeKind === "meters" ? "strecke" : undefined, e.volume);
   setze(WERT_JE_EINHEIT[e.loadUnit], e.load);
   setze(e.secondaryUnit ? WERT_JE_EINHEIT[e.secondaryUnit] : undefined, e.secondaryLoad);
-  // Ganzzahlige Spalten runden: eine alte Stufe 5.0 bleibt 5.
-  for (const w of ["zeit", "strecke", "stufe", "watt", "frequenz", "kcal"] as const) {
-    if (werte[w] !== undefined) werte[w] = Math.round(werte[w]!);
-  }
   return werte as CardioWerte;
+}
+
+/** Was ein Leseweg vom Geraet eines Satzes wissen muss, um ihn zu deuten. */
+export type CardioGeraet = {
+  /** Die geerbte Liste; leer bei Kraft. */
+  liste: CardioWert[];
+  loadUnit: LoadUnit;
+  secondaryUnit: LoadUnit | null;
+};
+
+/**
+ * Die Cardio-Werte eines gelesenen Satzes (Final-Review A). Ein Satz mit
+ * Cardio-Spalten liefert sie; ein Satz einer alten App (load/volume) an
+ * einem Cardio-Geraet liefert die daraus abgeleiteten Werte, damit die neue
+ * App "20:00 · Stufe 5" zeigt. load/volume bleiben daneben stehen -- die
+ * alte App liest sie als Pflichtfelder. `volumeKind` null: die Uebung ist
+ * nicht mehr lesbar, dann zaehlt nur die Belastung.
+ */
+export function cardioDesSatzes(
+  row: CardioZeile & {
+    load: number | string | null;
+    secondary_load: number | string | null;
+    volume: number | null;
+  },
+  geraet: CardioGeraet | undefined,
+  volumeKind: VolumeKind | null,
+): CardioWerte | null {
+  const eigene = cardioAusZeile(row);
+  if (eigene || !geraet || geraet.liste.length === 0 || row.load === null) return eigene;
+  const werte = altEingabeUmwandeln(
+    {
+      load: Number(row.load),
+      secondaryLoad: row.secondary_load === null ? null : Number(row.secondary_load),
+      volume: volumeKind ? row.volume : null,
+      loadUnit: geraet.loadUnit,
+      secondaryUnit: geraet.secondaryUnit,
+      volumeKind: volumeKind ?? "reps",
+    },
+    geraet.liste,
+  );
+  return Object.keys(werte).length === 0 ? null : werte;
 }

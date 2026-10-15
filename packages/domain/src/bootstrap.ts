@@ -1,9 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
+import { cardioGeraeteLaden } from "./cardio-geraete.js";
 import {
   CARDIO_SELECT,
-  cardioAusZeile,
+  cardioDesSatzes,
   cardioListeDesModells,
+  type CardioGeraet,
   type CardioWert,
   type CardioWerte,
   type CardioZeile,
@@ -287,6 +289,8 @@ type SatzZeile = CardioZeile & {
   volume: number | null;
   rir: number | string | null;
   performed_at: string;
+  /** Fuer die Umfangsart eines alten Cardio-Satzes; null nach einem Austritt. */
+  exercises?: { volume_kind: VolumeKind } | null;
 };
 
 /**
@@ -294,7 +298,10 @@ type SatzZeile = CardioZeile & {
  * dieser Uebung dort. `saetze` kommt absteigend nach performed_at, der
  * erste Satz je Paar ist also der juengste.
  */
-export function letzteSaetze(saetze: SatzZeile[]): Pick<Bootstrap, "lastSets" | "lastTypeSets"> {
+export function letzteSaetze(
+  saetze: SatzZeile[],
+  geraete: Map<string, CardioGeraet> = new Map(),
+): Pick<Bootstrap, "lastSets" | "lastTypeSets"> {
   const einheiten = new Map<string, Set<string>>();
   for (const row of saetze) {
     const id = key(stationsSchluessel(row), row.exercise_id);
@@ -307,7 +314,9 @@ export function letzteSaetze(saetze: SatzZeile[]): Pick<Bootstrap, "lastSets" | 
     load: row.load === null ? null : Number(row.load),
     secondaryLoad: row.secondary_load === null ? null : Number(row.secondary_load),
     volume: row.volume,
-    cardio: cardioAusZeile(row),
+    // Ein alter Satz an einem Cardio-Geraet traegt load/volume UND die daraus
+    // abgeleiteten Werte (Final-Review A).
+    cardio: cardioDesSatzes(row, geraete.get(row.equipment_model_id), row.exercises?.volume_kind ?? null),
     rir: row.rir === null ? null : Number(row.rir),
     performedAt: row.performed_at,
     sessionCount: einheiten.get(id)?.size ?? 0,
@@ -397,7 +406,7 @@ export async function getBootstrap(
   const { data: setRows } = await client
     .from("workout_sets")
     .select(
-      `machine_id, equipment_model_id, exercise_id, session_id, load, secondary_load, volume, rir, performed_at, ${CARDIO_SELECT}`,
+      `machine_id, equipment_model_id, exercise_id, session_id, load, secondary_load, volume, rir, performed_at, ${CARDIO_SELECT}, exercises (volume_kind)`,
     )
     .eq("user_id", userId)
     .order("performed_at", { ascending: false })
@@ -481,7 +490,13 @@ export async function getBootstrap(
   }
 
   const saetze = (setRows ?? []) as unknown as SatzZeile[];
-  const { lastSets, lastTypeSets } = letzteSaetze(saetze);
+  const { lastSets, lastTypeSets } = letzteSaetze(
+    saetze,
+    await cardioGeraeteLaden(
+      client,
+      saetze.filter((row) => row.load !== null).map((row) => row.equipment_model_id),
+    ),
+  );
 
   const besucheJeGeraet = zaehleBesucheJeGeraet(
     saetze.filter(

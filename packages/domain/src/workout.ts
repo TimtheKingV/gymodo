@@ -11,7 +11,6 @@ import {
 import { DomainError } from "./errors.js";
 import {
   CARDIO_SELECT,
-  altEingabeUmwandeln,
   cardioAusZeile,
   cardioListeDesModells,
   cardioPruefen,
@@ -338,33 +337,21 @@ export async function recordSet(
   }
 
   // Cardio (Testnotiz 14.10., 18:45 #7): eine nicht-leere Liste am Geraet.
+  // Schickt eine App von vor E2 load/volume an ein Cardio-Geraet, speichert
+  // der Satz wie vor E2 und wird genauso geprueft (Final-Review A; Spec 8:
+  // die alte App liest load/volume als Pflichtfelder). Die Lesewege leiten
+  // die Cardio-Werte daraus ab (cardioDesSatzes), 0055 schreibt sie spaeter um.
   let cardio: CardioWerte | null = null;
-  if (station.cardioWerte.length > 0) {
-    if (input.cardio !== undefined) {
-      if (input.load !== undefined || input.volume !== undefined || (input.secondaryLoad ?? null) !== null) {
-        throw new DomainError("validation_failed", "Ein Cardio-Gerät hat keine Belastung.");
-      }
-      cardio = input.cardio;
-    } else {
-      // Eine App von vor E2 (Spec 3.1). Was nicht in den Grenzen liegt, faellt
-      // einzeln weg, statt den Satz abzulehnen -- er liegt vielleicht seit Tagen
-      // in einer Warteschlange.
-      const umgewandelt = altEingabeUmwandeln(
-        {
-          load: input.load, secondaryLoad: input.secondaryLoad, volume: input.volume,
-          loadUnit: modell.load_unit, secondaryUnit: modell.secondary_unit, volumeKind: exercise.volume_kind,
-        },
-        station.cardioWerte,
-      );
-      cardio = {};
-      for (const [wert, zahl] of Object.entries(umgewandelt) as [CardioWert, number][]) {
-        if (cardioWerteSchema.shape[wert].safeParse(zahl).success) cardio[wert] = zahl;
-      }
+  if (input.cardio !== undefined) {
+    if (station.cardioWerte.length === 0) {
+      throw new DomainError("validation_failed", "Dieses Gerät hat keine Cardio-Werte.");
     }
-    const fehler = cardioPruefen(cardio, station.cardioWerte);
+    if (input.load !== undefined || input.volume !== undefined || (input.secondaryLoad ?? null) !== null) {
+      throw new DomainError("validation_failed", "Ein Cardio-Gerät hat keine Belastung.");
+    }
+    const fehler = cardioPruefen(input.cardio, station.cardioWerte);
     if (fehler) throw new DomainError("validation_failed", fehler);
-  } else if (input.cardio !== undefined) {
-    throw new DomainError("validation_failed", "Dieses Gerät hat keine Cardio-Werte.");
+    cardio = input.cardio;
   }
 
   let secondaryLoad: number | null = null;
@@ -455,9 +442,12 @@ export async function recordSet(
       rir: input.rir ?? null,
       problem_flag: input.problemFlag,
       problem_reason: input.problemReason ?? null,
+      // Ein Cardio-Satz zaehlt nichts: Zaehlerdaten eines fehlerhaften Clients
+      // fallen weg, statt die Herkunfts-Check zu reissen -- ein 500 liesse die
+      // Warteschlange den Satz ewig wiederholen (Final-Review C).
       volume_source: cardio ? "eingegeben" : input.volumeSource,
-      volume_counted: input.volumeCounted ?? null,
-      rep_events: input.repEvents ?? null,
+      volume_counted: cardio ? null : input.volumeCounted ?? null,
+      rep_events: cardio ? null : input.repEvents ?? null,
       // performed_at bleibt beim erneuten Senden unangetastet, weil es hier
       // nur mitgeschickt wird, wenn der Client es ausdruecklich setzt.
       ...(input.performedAt ? { performed_at: input.performedAt } : {}),
