@@ -247,9 +247,10 @@ struct SessionDetailView: View {
     /// zu vergleichen gibt: Pfeil, kg- und Wdh.-Unterschied.
     private func satzZeile(_ satz: SessionSummary.Block.Set, block: SessionSummary.Block,
                            vergleich: Satzvergleich.Satz?) -> some View {
-        // Ein Cardio-Satz hat weder Belastung noch Umfang, die diese Zeile zeigen koennte.
         var label = "Satz \(satz.setIndex)"
-        if let load = satz.load, let volume = satz.volume {
+        if let cardio = satz.cardio {
+            label += ", " + Zahlformat.cardioGesprochen(cardio)
+        } else if let load = satz.load, let volume = satz.volume {
             label += ", " + Zahlformat.satzGesprochen(
                 load, block.loadUnit, neben: satz.secondaryLoad, block.secondaryUnit,
                 umfang: volume, block.volumeKind)
@@ -267,7 +268,12 @@ struct SessionDetailView: View {
                 .foregroundStyle(DesignSystem.Color.textFaint)
                 .frame(width: 16, alignment: .leading)
 
-            if let load = satz.load, let volume = satz.volume {
+            if let cardio = satz.cardio {
+                Text(Zahlformat.cardio(cardio))
+                    .font(DesignSystem.Typography.fliesstext)
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .monospacedDigit()
+            } else if let load = satz.load, let volume = satz.volume {
                 Text(Zahlformat.belastungMitNebenbelastung(
                     load, block.loadUnit, neben: satz.secondaryLoad, block.secondaryUnit))
                     .font(DesignSystem.Typography.fliesstext)

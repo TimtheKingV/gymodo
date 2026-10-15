@@ -484,7 +484,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
         formatter.locale = Locale(identifier: "de_DE")
         formatter.unitsStyle = .full
         let wann = formatter.localizedString(for: zuletzt.performedAt, relativeTo: .now)
-        return "\(wann) · \(Zahlformat.belastungMitEinheit(zuletzt.load, zuletzt.loadUnit))"
+        return "\(wann) · \(zuletzt.werte)"
     }
 
     /// Die drei Modifier, die es erst ab iOS 26 gibt -- in einem eigenen

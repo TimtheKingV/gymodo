@@ -18,8 +18,17 @@ enum GeraeteAuswahl {
     /// Einheit, damit die Zeile "vor 2 Tagen · 8,5 km/h" schreiben kann.
     struct Zuletzt: Equatable {
         let performedAt: Date
-        let load: Double
+        /// nil bei einem Cardio-Satz.
+        let load: Double?
         let loadUnit: LoadUnit
+        var cardio: CardioWerte? = nil
+
+        /// Was hinter "vor 2 Tagen" steht: die Cardio-Werte oder die Belastung.
+        var werte: String {
+            if let cardio { return Zahlformat.cardio(cardio) }
+            guard let load else { return "" }
+            return Zahlformat.belastungMitEinheit(load, loadUnit)
+        }
     }
 
     struct Eintrag: Equatable, Identifiable {
@@ -267,22 +276,21 @@ enum GeraeteAuswahl {
         let einheiten = Dictionary(
             stationen.map { ($0.schluessel, $0.equipmentModel.loadUnit) },
             uniquingKeysWith: { erste, _ in erste })
-        func merke(_ schluessel: String, load: Double, performedAt: String) {
+        func merke(_ schluessel: String, load: Double?, cardio: CardioWerte?, performedAt: String) {
+            // Weder Belastung noch Cardio-Werte: nichts, was die Zeile zeigen koennte.
+            guard load != nil || cardio != nil else { return }
             guard let einheit = einheiten[schluessel] else { return }
             guard let datum = Zeitpunkt.parse(performedAt) else { return }
             if let vorhanden = juengste[schluessel], vorhanden.performedAt >= datum { return }
-            juengste[schluessel] = Zuletzt(performedAt: datum, load: load, loadUnit: einheit)
+            juengste[schluessel] = Zuletzt(performedAt: datum, load: load, loadUnit: einheit, cardio: cardio)
         }
-        // Ein Cardio-Satz hat keine Belastung, die die Zeile zeigen koennte.
         for satz in bootstrap.lastSets {
-            guard let load = satz.load else { continue }
             merke(Station.schluessel(machineId: satz.machineId),
-                  load: load, performedAt: satz.performedAt)
+                  load: satz.load, cardio: satz.cardio, performedAt: satz.performedAt)
         }
         for satz in bootstrap.lastTypeSets {
-            guard let load = satz.load else { continue }
             merke(Station.schluessel(equipmentModelId: satz.equipmentModelId),
-                  load: load, performedAt: satz.performedAt)
+                  load: satz.load, cardio: satz.cardio, performedAt: satz.performedAt)
         }
         return juengste
     }

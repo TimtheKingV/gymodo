@@ -24,6 +24,9 @@ struct Blockzeile: Equatable, Hashable, Identifiable, StationsBezug {
     let volumeKind: VolumeKind
     let satzAnzahl: Int
     let problemGemeldet: Bool
+    /// Die Werte des letzten Satzes an einem Cardio-Geraet; dort gibt es
+    /// keine Belastung (Testnotiz 14.10., 18:45 #7).
+    var cardio: CardioWerte? = nil
 }
 
 /// Die Zahlen von TrainingAbschluss.
@@ -86,7 +89,8 @@ struct Trainingszusammenfassung: Equatable, Hashable {
                 secondaryUnit: block.secondaryUnit,
                 volumeKind: block.volumeKind,
                 satzAnzahl: block.saetze.count,
-                problemGemeldet: block.saetze.contains(where: \.problemFlag)
+                problemGemeldet: block.saetze.contains(where: \.problemFlag),
+                cardio: block.saetze.last?.cardio
             )
         }
     }

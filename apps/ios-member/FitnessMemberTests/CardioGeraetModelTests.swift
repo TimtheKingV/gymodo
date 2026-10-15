@@ -36,6 +36,10 @@ struct CardioGeraetModelTests {
             enqueue: { _ in })
     }
 
+    @Test func derRueckblickNenntDieCardioWerteDesLetztenSatzes() {
+        #expect(cardioModell().rueckblick?.zuletzt == "10:00 · 2,1 km · Stufe 7")
+    }
+
     @Test func vorbelegtMitDemLetztenMalNurMitWertenDesGeraets() {
         let modell = cardioModell()
         #expect(modell.istCardio)

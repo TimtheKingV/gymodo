@@ -213,7 +213,9 @@ struct TrainingAbschlussView: View {
                 // auf TrainingLaeuft, nicht anders", und dort traegt jeder
                 // Block seine eigene Kontur (warn bei gemeldet, sonst line).
                 VStack(spacing: DesignSystem.Spacing.s12) {
-                    ForEach(AbschlussZeile.zeilen(bloecke: zusammenfassung.bloecke, vorschlaege: vorschlaege)) { zeile in
+                    // Cardio-Bloecke haben keinen Vorschlag (Cardio-Spec 5.2).
+                    ForEach(AbschlussZeile.zeilen(bloecke: zusammenfassung.bloecke.filter { $0.cardio == nil },
+                                                  vorschlaege: vorschlaege)) { zeile in
                         blockZeile(zeile)
                     }
                 }
@@ -382,6 +384,7 @@ struct AbschlussZeile: Equatable, Identifiable {
     /// Belastung nichts mehr beschreibt.
     static func untertitel(_ block: Blockzeile) -> String {
         let saetze = "\(block.satzAnzahl) \(block.satzAnzahl == 1 ? "Satz" : "Sätze")"
+        if let cardio = block.cardio { return "\(Zahlformat.cardio(cardio)) · \(saetze)" }
         guard let belastung = block.belastung else { return saetze }
         let werte = Zahlformat.belastungMitNebenbelastung(
             belastung, block.loadUnit, neben: block.nebenbelastung, block.secondaryUnit)

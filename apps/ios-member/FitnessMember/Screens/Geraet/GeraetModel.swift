@@ -548,9 +548,11 @@ final class GeraetModel {
     }
 
     var rueckblick: Rueckblick? {
-        // Ein Cardio-Satz hat weder Belastung noch Umfang, die diese Zeile zeigen koennte.
-        guard let letzter = letzterSatz(fuer: uebungId),
-              let load = letzter.load, let volume = letzter.volume else { return nil }
+        guard let letzter = letzterSatz(fuer: uebungId) else { return nil }
+        if let cardio = letzter.cardio {
+            return Rueckblick(zuletzt: Zahlformat.cardio(cardio), vorschlag: vorschlagText)
+        }
+        guard let load = letzter.load, let volume = letzter.volume else { return nil }
         return Rueckblick(
             zuletzt: Zahlformat.satz(load, loadUnit,
                                      neben: letzter.secondaryLoad, secondaryUnit,

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		002194F6704F72BE06B95E76 /* CardioVerlaufTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB12AC4B9078522360F6C20 /* CardioVerlaufTests.swift */; };
 		0075B0E3CF0E786F9D22AFFF /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC66ACF7FB394ECB319166C3 /* APIClient.swift */; };
 		013D40E89B567A7C02B5A99A /* GewichtsverlaufHilfenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA471448D3B4B628A0BD6D5 /* GewichtsverlaufHilfenTests.swift */; };
 		016753249B5CB49B03D514B4 /* Trainingsuhr.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECD3248CAD211A17B23D8826 /* Trainingsuhr.swift */; };
@@ -122,6 +123,7 @@
 		60550E206CC7C6325A9F3F1A /* ZielSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A8B71893CB0948BB6A7FE6 /* ZielSheet.swift */; };
 		60D24FEA40C280F061776F34 /* Stammdaten.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A7C08B1E55D753C748A62B /* Stammdaten.swift */; };
 		623391FEE484E105F85E2BFB /* RastRadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AAB4EF55CE7557296B1A97 /* RastRadTests.swift */; };
+		62C6B489E82778C1D27485E5 /* CardioVerlauf.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A1A233044A937DD2DB034E /* CardioVerlauf.swift */; };
 		6352ABE4AFC814927C7F9813 /* ExerciseVideosResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7363EEF3A82BFEA08F81E493 /* ExerciseVideosResponse.swift */; };
 		635B651CF96DE3A5916EB956 /* ProfilZeilenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28729494126B3B466AEDB7C4 /* ProfilZeilenTests.swift */; };
 		64DE54AADAEF254C04697CD4 /* GewichtEintragenHilfenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26938FABB4BBFFF4A17B5D63 /* GewichtEintragenHilfenTests.swift */; };
@@ -520,6 +522,7 @@
 		96D6F218F01CA038480D1DD4 /* GeraeteKachelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteKachelTests.swift; sourceTree = "<group>"; };
 		99F4FCF4F273CAB328BF77EE /* SetWriteHerkunftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetWriteHerkunftTests.swift; sourceTree = "<group>"; };
 		99F9C4FE5EBE0649AEA36AAF /* SensorZeileTextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorZeileTextTests.swift; sourceTree = "<group>"; };
+		9AB12AC4B9078522360F6C20 /* CardioVerlaufTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardioVerlaufTests.swift; sourceTree = "<group>"; };
 		9ABF3C0BB5050A962881A269 /* GeraeteAuswahlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteAuswahlView.swift; sourceTree = "<group>"; };
 		9AC1E765B0B287F9AC69A3B8 /* CourseWeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseWeek.swift; sourceTree = "<group>"; };
 		9AF7AC0FF4D60C0CA0FA03A2 /* StammdatenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StammdatenTests.swift; sourceTree = "<group>"; };
@@ -627,6 +630,7 @@
 		F2544360B27EEB7C56A35775 /* MarkenAssetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkenAssetTests.swift; sourceTree = "<group>"; };
 		F3F970AC02F39C7E9D8ABCBF /* TagLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLink.swift; sourceTree = "<group>"; };
 		F433CFBFAAF0BB5791D28FC9 /* VerlaufHerkunftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerlaufHerkunftTests.swift; sourceTree = "<group>"; };
+		F4A1A233044A937DD2DB034E /* CardioVerlauf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardioVerlauf.swift; sourceTree = "<group>"; };
 		F7540F5EE9A274DBB75E9219 /* GeraeteAuswahlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteAuswahlTests.swift; sourceTree = "<group>"; };
 		F7BE170B46B4E45F1FF5E26C /* ProfilZeilen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilZeilen.swift; sourceTree = "<group>"; };
 		F86C22F308C4A9EB76B53C19 /* SupabaseAuthBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthBackend.swift; sourceTree = "<group>"; };
@@ -822,6 +826,7 @@
 		3EC6E8F2F1E551011A08F76C /* Verlauf */ = {
 			isa = PBXGroup;
 			children = (
+				F4A1A233044A937DD2DB034E /* CardioVerlauf.swift */,
 				941088E8ADF755FB4FCC5B33 /* Fortschrittsfenster.swift */,
 				0A1A5E3036C702D35974F098 /* Fortsetzbarkeit.swift */,
 				4F772BB738D5F003DF895A42 /* HomeSerie.swift */,
@@ -920,6 +925,7 @@
 				A611FB701374C11335D844E4 /* BelegungsleisteTests.swift */,
 				D63A4690C06EAE94032AB45E /* CardioGeraetModelTests.swift */,
 				3EC5DE4F4A42F0296CF0BA5B /* CardioTests.swift */,
+				9AB12AC4B9078522360F6C20 /* CardioVerlaufTests.swift */,
 				DB8CC4AA1ADA4ED3E6D39207 /* CatalogStoreTests.swift */,
 				CF7B9170FFCF2B3FBDF4A2F0 /* ColorHexTests.swift */,
 				FD55A1626F478A9D5D1A0861 /* DTOTests.swift */,
@@ -1338,6 +1344,7 @@
 				B588B97987FD269D81E3CCED /* Card.swift in Sources */,
 				46A801925575715402AB9D10 /* Cardio.swift in Sources */,
 				6A1B6C63F3A7BB4D29C3320B /* CardioRaster.swift in Sources */,
+				62C6B489E82778C1D27485E5 /* CardioVerlauf.swift in Sources */,
 				206D113D8EEB2FF4D9BF05EB /* CatalogLoadState.swift in Sources */,
 				39876DCABA0D4C90A172BF11 /* CatalogStore.swift in Sources */,
 				F9DAC3407A000DEDA7092660 /* Chip.swift in Sources */,
@@ -1536,6 +1543,7 @@
 				2E8C9C369514B0119183FF90 /* BelegungsleisteTests.swift in Sources */,
 				351BEEF8A9521F1FC0F46296 /* CardioGeraetModelTests.swift in Sources */,
 				825B9525085F6AA96418C5BA /* CardioTests.swift in Sources */,
+				002194F6704F72BE06B95E76 /* CardioVerlaufTests.swift in Sources */,
 				A536169303BCBE5ED5385A9A /* CatalogStoreTests.swift in Sources */,
 				4FF2547C2EF53854366AC3A1 /* ColorHexTests.swift in Sources */,
 				1938BBAFBE0B05D0BB9E7471 /* DTOTests.swift in Sources */,

@@ -15,7 +15,13 @@ struct UebungsfortschrittView: View {
 
     var body: some View {
         ScrollView {
-            if let uebung {
+            // Cardio zuerst: der Server fuehrt dafuer keine Kurve, `uebung`
+            // waere nil (Testnotiz 14.10., 18:45 #7).
+            if let cardio = CardioVerlauf.fuer(exerciseId: exerciseId, sessions: verlauf.sessions) {
+                cardioListe(cardio)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, DesignSystem.Spacing.s24)
+            } else if let uebung {
                 let punkte = fenster.punkte(uebung.points, jetzt: Date())
 
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
@@ -38,6 +44,43 @@ struct UebungsfortschrittView: View {
         .scrollContentBackground(.hidden)
         .navigationBarTitleDisplayMode(.inline)
         .testnotizScreen(kontext: ["exerciseId": exerciseId])
+    }
+
+    /// Statt des Diagramms: die letzten Einheiten, je mit den Werten ihres
+    /// letzten Satzes.
+    private func cardioListe(_ cardio: CardioVerlauf) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                Text(cardio.machineLabel)
+                    .font(DesignSystem.Typography.detailScreentitel)
+                    .foregroundStyle(DesignSystem.Color.text)
+                Text(cardio.exerciseName)
+                    .font(DesignSystem.Typography.uebungsname)
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+            }
+
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+                Text("LETZTE EINHEITEN")
+                    .font(DesignSystem.Typography.label)
+                    .kerning(1.5)
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+
+                ForEach(cardio.einheiten, id: \.start) { einheit in
+                    HStack {
+                        Text(Zahlformat.wochentagDatum(einheit.start))
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                        Spacer()
+                        Text(Zahlformat.cardio(einheit.werte))
+                            .foregroundStyle(DesignSystem.Color.text)
+                    }
+                    .font(DesignSystem.Typography.fliesstext)
+                    .monospacedDigit()
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel(
+                        "\(Zahlformat.wochentagDatum(einheit.start)), \(Zahlformat.cardioGesprochen(einheit.werte))")
+                }
+            }
+        }
     }
 
     private func kopf(_ uebung: ExerciseProgress) -> some View {
