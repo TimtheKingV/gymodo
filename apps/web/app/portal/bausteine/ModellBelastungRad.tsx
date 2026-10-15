@@ -224,7 +224,7 @@ export function ModellBelastungRad({
               </label>
             ))}
             {typCardioWerte ? (
-              <span className={styles.hint}>Nichts angekreuzt: wie der Gerätetyp.</span>
+              <span className={styles.hint}>Wie der Gerätetyp, solange seine Werte angekreuzt sind.</span>
             ) : null}
           </fieldset>
           <input type="hidden" name="loadMin" value={minimum} />

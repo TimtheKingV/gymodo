@@ -109,6 +109,31 @@ describe("cardioAusFormular", () => {
     expect(cardioAusFormular(new FormData(), "cardio")).toEqual({ cardioWerte: [] });
   });
 
+  // Final-Review B: das Formular hakt die Werte des Typs vor. Wer sie so
+  // speichert, soll weiter erben statt eine Kopie festzuschreiben.
+  it("dieselben Werte wie der Typ heisst erben, auch in anderer Reihenfolge", () => {
+    const f = new FormData();
+    f.append("cardioWert", "kcal");
+    f.append("cardioWert", "zeit");
+    expect(cardioAusFormular(f, "cardio", ["zeit", "kcal"])).toEqual({ cardioWerte: [] });
+  });
+
+  it("andere Werte als der Typ werden die eigene Liste", () => {
+    const f = new FormData();
+    f.append("cardioWert", "zeit");
+    expect(cardioAusFormular(f, "cardio", ["zeit", "kcal"])).toEqual({ cardioWerte: ["zeit"] });
+    const g = new FormData();
+    for (const w of ["zeit", "kcal", "watt"]) g.append("cardioWert", w);
+    expect(cardioAusFormular(g, "cardio", ["zeit", "kcal"])).toEqual({ cardioWerte: ["zeit", "watt", "kcal"] });
+  });
+
+  it("ohne Typ-Liste bleibt die Auswahl die eigene Liste", () => {
+    const f = new FormData();
+    f.append("cardioWert", "zeit");
+    expect(cardioAusFormular(f, "cardio", [])).toEqual({ cardioWerte: ["zeit"] });
+    expect(cardioAusFormular(f, "cardio", null)).toEqual({ cardioWerte: ["zeit"] });
+  });
+
   it("Kraft hat nie Cardio-Werte", () => {
     const f = new FormData();
     f.append("cardioWert", "zeit");

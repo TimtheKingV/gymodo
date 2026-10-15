@@ -62,12 +62,21 @@ export function belastungAusFormular(formData: FormData): BelastungsFelder {
 /**
  * Die angekreuzten Cardio-Werte eines Modells, in der festen Reihenfolge
  * der Liste (Testnotiz 14.10., 18:45 #7). Leer heisst "wie der Geraetetyp";
- * Kraft hat nie welche.
+ * Kraft hat nie welche. Das Formular hakt die Werte des Typs vor -- wer
+ * genau sie speichert, erbt weiter, statt eine Kopie festzuschreiben, die
+ * spaetere Aenderungen am Typ nicht mehr sieht (Final-Review B).
  */
-export function cardioAusFormular(formData: FormData, kategorie: Category): { cardioWerte: CardioWert[] } {
+export function cardioAusFormular(
+  formData: FormData,
+  kategorie: Category,
+  typListe: readonly string[] | null = null,
+): { cardioWerte: CardioWert[] } {
   if (kategorie !== "cardio") return { cardioWerte: [] };
   const gewaehlt = formData.getAll("cardioWert").map(String);
-  return { cardioWerte: CARDIO_WERTE.filter((w) => gewaehlt.includes(w)) };
+  const liste = CARDIO_WERTE.filter((w) => gewaehlt.includes(w));
+  const typ = CARDIO_WERTE.filter((w) => (typListe ?? []).includes(w));
+  const wieDerTyp = typ.length > 0 && typ.length === liste.length && typ.every((w) => liste.includes(w));
+  return { cardioWerte: wieDerTyp ? [] : liste };
 }
 
 export type UmfangsFelder = {

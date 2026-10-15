@@ -141,12 +141,12 @@ describe("ModellBelastungRad", () => {
     render(<ModellBelastungRad kategorie="cardio" cardioWerte={[]} typCardioWerte={["zeit", "kcal"]} />);
     expect((screen.getByRole("checkbox", { name: "Kalorien" }) as HTMLInputElement).checked).toBe(true);
     expect((screen.getByRole("checkbox", { name: "Watt" }) as HTMLInputElement).checked).toBe(false);
-    expect(screen.getByText("Nichts angekreuzt: wie der Gerätetyp.")).toBeTruthy();
+    expect(screen.getByText("Wie der Gerätetyp, solange seine Werte angekreuzt sind.")).toBeTruthy();
   });
 
   it("zeigt ohne Typ keinen Erbe-Hinweis und fuer Kraft keine Cardio-Werte", () => {
     const { unmount } = render(<ModellBelastungRad kategorie="cardio" />);
-    expect(screen.queryByText("Nichts angekreuzt: wie der Gerätetyp.")).toBeNull();
+    expect(screen.queryByText("Wie der Gerätetyp, solange seine Werte angekreuzt sind.")).toBeNull();
     unmount();
 
     render(<ModellBelastungRad kategorie="kraft" />);

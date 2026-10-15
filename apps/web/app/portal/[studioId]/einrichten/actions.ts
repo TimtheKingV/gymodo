@@ -20,6 +20,7 @@ import {
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { belastungAusFormular, cardioAusFormular, umfangAusFormular } from "../../formfelder";
 import { typAusFormular } from "../../gymtavoTyp";
+import { typCardioListe } from "../../typCardio";
 import type { Befund } from "./befund";
 
 /**
@@ -105,7 +106,11 @@ export async function modellAnlegen(
       name: text(formData, "name"),
       manufacturer: optionalerText(formData, "manufacturer"),
       ...belastungAusFormular(formData),
-      ...cardioAusFormular(formData, belastungAusFormular(formData).category),
+      ...cardioAusFormular(
+        formData,
+        belastungAusFormular(formData).category,
+        await typCardioListe(client, { typId: typ.catalogModelId }),
+      ),
       loadStep: zahl(formData, "loadStep") ?? Number.NaN,
       loadMin: zahl(formData, "loadMin") ?? 0,
       catalogModelId: typ.catalogModelId,
