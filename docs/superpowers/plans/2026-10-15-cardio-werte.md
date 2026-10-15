@@ -1463,3 +1463,32 @@ select public.cardio_altdaten_umschreiben();
   4. PR mit 0055 mergen, `supabase db push --linked`, `pnpm smoke:migrations`.
 
   **Deshalb kommt Task 10 auf einen eigenen Branch** `claude/cardio-altdaten` (von diesem abgezweigt), mit eigenem PR.
+
+## Ergebnis
+
+Umgesetzt am 15.10. mit Subagenten (je Aufgabe ein Implementierer und ein Review, am Ende ein Review des ganzen Branches und eine Korrekturrunde).
+
+**Tests (Stand nach der Korrekturrunde):**
+- Domain-Vitest: 357 grün; `sticker.test.ts` lädt lokal nicht (fehlende Pakete), wie bisher.
+- Portal-Vitest: 311 grün.
+- Integration: 864 von 865 grün. Der eine Ausfall (`api-workout-sets` „beendet die eigene Session“) liegt an der Uhr der Docker-VM und tritt genauso auf `master` auf.
+- Swift: 1187 grün.
+
+**Abweichungen vom Plan und von der Spec:**
+- **Spec §3.1 geändert:** Sätze einer alten App (ohne `cardio`) an Cardio-Geräten werden im alten Format gespeichert, nicht sofort umgewandelt. Sonst könnte eine alte App ihren Bootstrap nicht mehr lesen (Spec §8). Leser leiten `cardio` für solche Zeilen per `altEingabeUmwandeln` ab; der Ausschluss aus der Progression hängt an der Geräteliste. Migration 0055 schreibt die Zeilen später um.
+- Portal: Entspricht die angekreuzte Liste der des Typs, wird `[]` gespeichert (erben), damit die Vererbung nicht beim ersten Speichern verloren geht.
+- Eingabe: „1.000“ gilt bei ganzzahligen Werten als Tausenderpunkt; „−“ (U+2212) wird beim Einlesen akzeptiert.
+- Am Cardio-Gerät startet „Weiterer Satz“ ohne Pause; ein leerer Cardio-Satz lässt sich auf keinem Weg sichern.
+- „Noch nie“ in Geräteseite und Übungswechsel berücksichtigt Cardio-Sätze; „Beim nächsten Mal“ entfällt bei reinen Cardio-Einheiten.
+- Migration 0055 liegt auf eigenem Branch `claude/cardio-altdaten`.
+
+**Offen:**
+- Vor dem 0055-PR: 0055 setzt Nebenbelastungen nur für Steigung und Frequenz um, `altEingabeUmwandeln` für alle Einheiten (Stufe, km/h, Watt als Nebenbelastung). Kein Katalog-Typ hat so eine Nebenbelastung, ein Studio-Modell könnte sie haben.
+- Sichtprüfung auf dem Gerät (Raster, Eingabe-Sheet, Zeitfelder) und im Portal (Checkboxen).
+- 0055 hat kein Versions-Gate: Eine nicht aktualisierte App mit Cardio-Verlauf startet danach nicht mehr. Deshalb 0055 erst ausliefern, wenn alle Apps aktualisiert sind.
+
+**Auslieferung (jeder Schritt nur auf Freigabe):**
+1. Migration 0054 auf Prod, `pnpm smoke:migrations`. Danach `pnpm catalog:import --dry-run` gegen Prod zeigen: lokal zeigt der Trockenlauf auch fremde offene Unterschiede (Startwerte bei 52 Typen, 69 Produkte).
+2. PR `claude/cardio-werte` mergen → Vercel.
+3. App-Build aufs Gerät.
+4. Später: PR `claude/cardio-altdaten` (0055) mergen, `supabase db push --linked`, `pnpm smoke:migrations`.
