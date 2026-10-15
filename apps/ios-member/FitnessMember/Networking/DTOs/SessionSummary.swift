@@ -63,13 +63,15 @@ struct SessionSummary: Codable, Equatable, Identifiable {
     struct Block: Codable, Equatable {
         struct Set: Codable, Equatable {
             let setIndex: Int
-            let load: Double
+            let load: Double?
             let secondaryLoad: Double?
-            let volume: Int
+            let volume: Int?
             let rir: Double?
             let problemFlag: Bool
             let problemReason: ProblemReason?
             let performedAt: String
+            /// Nur bei einem Cardio-Satz; fehlt in einem Cache von vor dieser Fassung.
+            var cardio: CardioWerte? = nil
         }
         let machineId: String?
         /// decodeIfPresent (synthetisiert, da optional): alte verlauf.json hat ihn nicht.

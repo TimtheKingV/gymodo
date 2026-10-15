@@ -49,14 +49,14 @@ enum Satzvergleich {
         guard block.loadUnit == .kg, block.volumeKind == .reps,
               let beginn = Zeitpunkt.parse(teil.startedAt) else { return nil }
 
-        let vorherige: [[SessionSummary.Block.Set]] = verlauf
-            .compactMap { einheit -> (Date, [SessionSummary.Block.Set])? in
+        let vorherige: [[Kraftsatz]] = verlauf
+            .compactMap { einheit -> (Date, [Kraftsatz])? in
                 guard einheit.id != teil.id,
                       let start = Zeitpunkt.parse(einheit.startedAt), start < beginn,
-                      let gleich = einheit.blocks.first(where: { $0.exerciseId == block.exerciseId }),
-                      !gleich.sets.isEmpty
+                      let gleich = einheit.blocks.first(where: { $0.exerciseId == block.exerciseId })
                 else { return nil }
-                return (start, sortiert(gleich.sets))
+                let saetze = sortiert(gleich.sets)
+                return saetze.isEmpty ? nil : (start, saetze)
             }
             .sorted { $0.0 > $1.0 }
             .prefix(hoechstensVorherige)
@@ -102,11 +102,24 @@ enum Satzvergleich {
         return "\(vorzeichen)\(zahl) Wdh."
     }
 
-    private static func sortiert(_ saetze: [SessionSummary.Block.Set]) -> [SessionSummary.Block.Set] {
-        saetze.sorted { $0.setIndex < $1.setIndex }
+    /// Was der Vergleich von einem Satz braucht. Ein Cardio-Satz hat keine
+    /// Belastung und keine Wiederholungen und faellt heraus.
+    private struct Kraftsatz {
+        let setIndex: Int
+        let load: Double
+        let volume: Int
     }
 
-    private static func volumen(_ satz: SessionSummary.Block.Set) -> Double {
+    private static func sortiert(_ saetze: [SessionSummary.Block.Set]) -> [Kraftsatz] {
+        saetze
+            .compactMap { satz -> Kraftsatz? in
+                guard let load = satz.load, let volume = satz.volume else { return nil }
+                return Kraftsatz(setIndex: satz.setIndex, load: load, volume: volume)
+            }
+            .sorted { $0.setIndex < $1.setIndex }
+    }
+
+    private static func volumen(_ satz: Kraftsatz) -> Double {
         satz.load * Double(satz.volume)
     }
 

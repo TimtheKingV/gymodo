@@ -27,8 +27,11 @@ struct SetWrite: Codable, Equatable {
     var studioId: String? = nil
     var exerciseId: String
     var setIndex: Int
-    var load: Double
-    var volume: Int
+    /// Bei einem Cardio-Satz nil: dort stehen die Werte in `cardio`.
+    var load: Double?
+    var volume: Int?
+    /// Nur bei einem Cardio-Satz (Testnotiz 14.10., 18:45 #7); nil wird nicht mitgeschickt.
+    var cardio: CardioWerte? = nil
     /// Pflicht genau dann, wenn das Geraetemodell eine Nebenbelastung hat
     /// -- der Server weist beides andere als validation_failed ab
     /// (Cardio-Spec 5.1). nil wird nicht mitgeschickt.
@@ -54,7 +57,7 @@ struct SetWrite: Codable, Equatable {
 extension SetWrite {
     private enum CodingKeys: String, CodingKey {
         case machineId, equipmentModelId, studioId, exerciseId, setIndex, load, volume, secondaryLoad, rir,
-             problemFlag, problemReason, performedAt, sessionStartedAt, volumeSource, volumeCounted, repEvents
+             problemFlag, problemReason, performedAt, sessionStartedAt, volumeSource, volumeCounted, repEvents, cardio
     }
 
     /// Die Feldnamen von vor Migration 0046.
@@ -76,9 +79,10 @@ extension SetWrite {
         exerciseId = try c.decode(String.self, forKey: .exerciseId)
         setIndex = try c.decode(Int.self, forKey: .setIndex)
         load = try c.decodeIfPresent(Double.self, forKey: .load)
-            ?? alt.decode(Double.self, forKey: .weightKg)
+            ?? alt.decodeIfPresent(Double.self, forKey: .weightKg)
         volume = try c.decodeIfPresent(Int.self, forKey: .volume)
-            ?? alt.decode(Int.self, forKey: .reps)
+            ?? alt.decodeIfPresent(Int.self, forKey: .reps)
+        cardio = try c.decodeIfPresent(CardioWerte.self, forKey: .cardio)
         secondaryLoad = try c.decodeIfPresent(Double.self, forKey: .secondaryLoad)
         rir = try c.decodeIfPresent(Double.self, forKey: .rir)
         problemFlag = try c.decodeIfPresent(Bool.self, forKey: .problemFlag) ?? false
@@ -102,13 +106,14 @@ struct RecordedSet: Decodable, Equatable {
     var equipmentModelId: String? = nil
     let exerciseId: String
     let setIndex: Int
-    let load: Double
+    let load: Double?
     let secondaryLoad: Double?
-    let volume: Int
+    let volume: Int?
     let rir: Double?
     let problemFlag: Bool
     let problemReason: ProblemReason?
     let performedAt: String
+    var cardio: CardioWerte? = nil
     /// var mit Vorgabe, damit bestehende memberwise-Aufrufe (Tests) weiter
     /// uebersetzen; der Server liefert beides ab Task 10.
     var volumeSource: VolumeSource = .eingegeben
@@ -118,7 +123,7 @@ struct RecordedSet: Decodable, Equatable {
 extension RecordedSet {
     private enum CodingKeys: String, CodingKey {
         case id, studioId, userId, sessionId, machineId, equipmentModelId, exerciseId, setIndex, load,
-             secondaryLoad, volume, rir, problemFlag, problemReason, performedAt, volumeSource, volumeCounted
+             secondaryLoad, volume, rir, problemFlag, problemReason, performedAt, volumeSource, volumeCounted, cardio
     }
 
     /// Eigener Dekoder, weil bei einem gestaffelten Deploy noch Antworten
@@ -133,15 +138,16 @@ extension RecordedSet {
         equipmentModelId = try c.decodeIfPresent(String.self, forKey: .equipmentModelId)
         exerciseId = try c.decode(String.self, forKey: .exerciseId)
         setIndex = try c.decode(Int.self, forKey: .setIndex)
-        load = try c.decode(Double.self, forKey: .load)
+        load = try c.decodeIfPresent(Double.self, forKey: .load)
         secondaryLoad = try c.decodeIfPresent(Double.self, forKey: .secondaryLoad)
-        volume = try c.decode(Int.self, forKey: .volume)
+        volume = try c.decodeIfPresent(Int.self, forKey: .volume)
         rir = try c.decodeIfPresent(Double.self, forKey: .rir)
         problemFlag = try c.decode(Bool.self, forKey: .problemFlag)
         problemReason = try c.decodeIfPresent(ProblemReason.self, forKey: .problemReason)
         performedAt = try c.decode(String.self, forKey: .performedAt)
         volumeSource = try c.decodeIfPresent(VolumeSource.self, forKey: .volumeSource) ?? .eingegeben
         volumeCounted = try c.decodeIfPresent(Int.self, forKey: .volumeCounted)
+        cardio = try c.decodeIfPresent(CardioWerte.self, forKey: .cardio)
     }
 }
 

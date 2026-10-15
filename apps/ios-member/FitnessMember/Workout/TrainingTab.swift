@@ -40,8 +40,10 @@ enum TrainingTab {
     static func blockzeile(_ block: LokalerBlock) -> String {
         let saetze = "\(block.saetze.count) \(block.saetze.count == 1 ? "Satz" : "Sätze")"
         guard let letzter = block.saetze.last else { return saetze }
+        // Ein Cardio-Satz hat keine Belastung, die diese Zeile zeigen koennte.
+        guard let load = letzter.load else { return saetze }
         let werte = Zahlformat.belastungMitNebenbelastung(
-            letzter.load, block.loadUnit, neben: letzter.secondaryLoad, block.secondaryUnit)
+            load, block.loadUnit, neben: letzter.secondaryLoad, block.secondaryUnit)
         return "\(saetze) · \(werte)"
     }
 

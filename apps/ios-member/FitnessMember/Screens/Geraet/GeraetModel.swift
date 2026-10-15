@@ -534,11 +534,13 @@ final class GeraetModel {
     }
 
     var rueckblick: Rueckblick? {
-        guard let letzter = letzterSatz(fuer: uebungId) else { return nil }
+        // Ein Cardio-Satz hat weder Belastung noch Umfang, die diese Zeile zeigen koennte.
+        guard let letzter = letzterSatz(fuer: uebungId),
+              let load = letzter.load, let volume = letzter.volume else { return nil }
         return Rueckblick(
-            zuletzt: Zahlformat.satz(letzter.load, loadUnit,
+            zuletzt: Zahlformat.satz(load, loadUnit,
                                      neben: letzter.secondaryLoad, secondaryUnit,
-                                     umfang: letzter.volume, volumeKind),
+                                     umfang: volume, volumeKind),
             vorschlag: vorschlagText
         )
     }
@@ -682,9 +684,9 @@ final class GeraetModel {
     /// aus lastTypeSets. Eine Form fuer beide, damit Startwerte, Rueckblick
     /// und Uebungsliste nicht je zwei Quellen kennen.
     struct LetzterSatz {
-        let load: Double
+        let load: Double?
         let secondaryLoad: Double?
-        let volume: Int
+        let volume: Int?
         let performedAt: String
     }
 

@@ -9,11 +9,14 @@ import Foundation
 struct LokalerSatz: Codable, Equatable, Identifiable {
     let id: UUID
     var setIndex: Int
-    var load: Double
+    /// Bei einem Cardio-Satz nil: dort stehen die Werte in `cardio`.
+    var load: Double?
     /// Die Nebenbelastung (Neigung am Laufband). nil an jedem Geraet, das
     /// keine hat -- also an jedem Kraftgeraet.
     var secondaryLoad: Double?
-    var volume: Int
+    var volume: Int?
+    /// Nur bei einem Cardio-Satz (Testnotiz 14.10., 18:45 #7).
+    var cardio: CardioWerte? = nil
     var rir: Double?
     var problemFlag: Bool
     var problemReason: ProblemReason?
@@ -22,7 +25,7 @@ struct LokalerSatz: Codable, Equatable, Identifiable {
 
 extension LokalerSatz {
     private enum CodingKeys: String, CodingKey {
-        case id, setIndex, load, secondaryLoad, volume, rir, problemFlag, problemReason, performedAt
+        case id, setIndex, load, secondaryLoad, volume, rir, problemFlag, problemReason, performedAt, cardio
     }
 
     /// Die Feldnamen von vor Migration 0046.
@@ -39,10 +42,11 @@ extension LokalerSatz {
         id = try c.decode(UUID.self, forKey: .id)
         setIndex = try c.decode(Int.self, forKey: .setIndex)
         load = try c.decodeIfPresent(Double.self, forKey: .load)
-            ?? alt.decode(Double.self, forKey: .weightKg)
+            ?? alt.decodeIfPresent(Double.self, forKey: .weightKg)
         secondaryLoad = try c.decodeIfPresent(Double.self, forKey: .secondaryLoad)
         volume = try c.decodeIfPresent(Int.self, forKey: .volume)
-            ?? alt.decode(Int.self, forKey: .reps)
+            ?? alt.decodeIfPresent(Int.self, forKey: .reps)
+        cardio = try c.decodeIfPresent(CardioWerte.self, forKey: .cardio)
         rir = try c.decodeIfPresent(Double.self, forKey: .rir)
         problemFlag = try c.decode(Bool.self, forKey: .problemFlag)
         problemReason = try c.decodeIfPresent(ProblemReason.self, forKey: .problemReason)

@@ -72,7 +72,7 @@ struct Trainingszusammenfassung: Equatable, Hashable {
         geraeteAnzahl = Set(session.bloecke.map(\.stationSchluessel)).count
         satzAnzahl = alle.count
         bloecke = session.bloecke.map { block in
-            let belastungen = Set(block.saetze.map(\.load))
+            let belastungen = Set(block.saetze.compactMap(\.load))
             let nebenbelastungen = Set(block.saetze.map(\.secondaryLoad))
             return Blockzeile(
                 machineId: block.machineId,

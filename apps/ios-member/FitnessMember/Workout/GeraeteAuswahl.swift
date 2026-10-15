@@ -273,13 +273,16 @@ enum GeraeteAuswahl {
             if let vorhanden = juengste[schluessel], vorhanden.performedAt >= datum { return }
             juengste[schluessel] = Zuletzt(performedAt: datum, load: load, loadUnit: einheit)
         }
+        // Ein Cardio-Satz hat keine Belastung, die die Zeile zeigen koennte.
         for satz in bootstrap.lastSets {
+            guard let load = satz.load else { continue }
             merke(Station.schluessel(machineId: satz.machineId),
-                  load: satz.load, performedAt: satz.performedAt)
+                  load: load, performedAt: satz.performedAt)
         }
         for satz in bootstrap.lastTypeSets {
+            guard let load = satz.load else { continue }
             merke(Station.schluessel(equipmentModelId: satz.equipmentModelId),
-                  load: satz.load, performedAt: satz.performedAt)
+                  load: load, performedAt: satz.performedAt)
         }
         return juengste
     }
