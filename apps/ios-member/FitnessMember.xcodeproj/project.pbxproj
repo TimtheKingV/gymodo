@@ -251,6 +251,7 @@
 		CFADE9B7B1518A3F6DF0E7E7 /* ExerciseProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E2DF311877D3BA39FFA5D5 /* ExerciseProgress.swift */; };
 		D0068DB5B484876E3D0083E7 /* EmailValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D79138C4B32315198E734356 /* EmailValidator.swift */; };
 		D01D94E7A2F60053538B9452 /* ScanEntscheidung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 461B344D14EFC379471C6BC1 /* ScanEntscheidung.swift */; };
+		D132DD312AC9766E7A398090 /* ZeitpunktParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFDF781E9D2DB3F233B672FA /* ZeitpunktParserTests.swift */; };
 		D3188785E04F588B5CAB9B24 /* TestnotizMarkdownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8986332EF5EB9BFBAD49056F /* TestnotizMarkdownTests.swift */; };
 		D4DC4C517F6EFFA9972C6864 /* ProfilZeilen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BE170B46B4E45F1FF5E26C /* ProfilZeilen.swift */; };
 		D4FE376F4BBB40802B3FD999 /* Testnotiz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D036BE10720B20565F673DA /* Testnotiz.swift */; };
@@ -622,6 +623,7 @@
 		FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursRoute.swift; sourceTree = "<group>"; };
 		FD55A1626F478A9D5D1A0861 /* DTOTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DTOTests.swift; sourceTree = "<group>"; };
 		FEAB5E8D33541765AD0B109B /* Info-Additions-Debug.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info-Additions-Debug.plist"; sourceTree = "<group>"; };
+		FFDF781E9D2DB3F233B672FA /* ZeitpunktParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZeitpunktParserTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -984,6 +986,7 @@
 				E45FE04BD0F8EF4BCAFD99B7 /* ZaehlerKoordinatorTests.swift */,
 				A40546FF017FE78E2A6823CE /* ZahlformatTests.swift */,
 				5DFA0BACC339F4B9F8299206 /* ZeitachseTests.swift */,
+				FFDF781E9D2DB3F233B672FA /* ZeitpunktParserTests.swift */,
 				38CC4282A43C30DF8CA3821D /* Fixtures */,
 			);
 			path = FitnessMemberTests;
@@ -1592,6 +1595,7 @@
 				7187684ABD8BFA3964363E1A /* ZaehlerKoordinatorTests.swift in Sources */,
 				ADF2407DE862FD940232AAE5 /* ZahlformatTests.swift in Sources */,
 				9F9C2DD14DE85363DE57FD09 /* ZeitachseTests.swift in Sources */,
+				D132DD312AC9766E7A398090 /* ZeitpunktParserTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
