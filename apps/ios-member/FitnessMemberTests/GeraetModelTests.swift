@@ -1515,7 +1515,7 @@ actor FakeGeraetLoader: GeraetLoading {
         }
     }
 
-    func completeSession(sessionId: UUID) async throws(APIError) -> CompletedSession {
+    func completeSession(sessionId: UUID, pausedSeconds: Int) async throws(APIError) -> CompletedSession {
         throw APIError.offline
     }
 }

@@ -50,7 +50,10 @@ enum HomeZeilen {
               let ende = gueltigesEnde(session)
         else { return nil }
 
-        return Int((ende.timeIntervalSince(start) / 60).rounded())
+        // Ohne Pausen (Testnotiz 14.10., 18:45 #3/#4): auch die Luecke bis
+        // zum Fortsetzen ist eine.
+        let pause = TimeInterval(session.pausedSeconds ?? 0)
+        return Int((max(0, ende.timeIntervalSince(start) - pause) / 60).rounded())
     }
 
     /// Kalendertage, nicht 24-Stunden-Schritte: "gestern" ist gestern,

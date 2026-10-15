@@ -122,7 +122,8 @@ struct TrainingAbschlussView: View {
             // zurueck, und die Fallunterscheidung unten waere nicht
             // moeglich.
             do throws(APIError) {
-                vorschlaege = try await apiClient.completeSession(sessionId: sessionId).vorschlaege
+                vorschlaege = try await apiClient.completeSession(
+                    sessionId: sessionId, pausedSeconds: zusammenfassung.pausedSeconds).vorschlaege
             } catch {
                 // Kein Fehlerzustand: die Zahlen stehen bereits, nur der
                 // Blick nach vorn fehlt. Welcher Satz das sagt, haengt am

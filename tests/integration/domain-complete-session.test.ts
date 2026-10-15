@@ -45,7 +45,16 @@ async function seedSession(userId: string): Promise<string> {
   const id = newId();
   const { error } = await serviceClient()
     .from("workout_sessions")
-    .insert({ id, studio_id: studioA, user_id: userId });
+    // Beginn eine Minute zurueck: started_at kaeme sonst aus der Uhr der
+    // Datenbank, completed_at aus der von Node. Die Docker-VM geht lokal
+    // um einige Millisekunden anders, und der Check "Ende nach Beginn"
+    // schlug dann zufaellig fehl.
+    .insert({
+      id,
+      studio_id: studioA,
+      user_id: userId,
+      started_at: new Date(Date.now() - 60_000).toISOString(),
+    });
   if (error) throw error;
   return id;
 }
@@ -109,5 +118,28 @@ describe("completeSession", () => {
     await expect(
       completeSession(client, { sessionId: "keine-uuid" }),
     ).rejects.toMatchObject({ code: "validation_failed" });
+  });
+
+  it("haelt die Pausensumme fest, ein Wiederholer aendert sie nicht", async () => {
+    const client = await userClient(memberAEmail);
+    const sessionId = await seedSession(memberAId);
+
+    await completeSession(client, { sessionId, pausedSeconds: 600 });
+    await completeSession(client, { sessionId, pausedSeconds: 9999 });
+
+    const { data } = await serviceClient()
+      .from("workout_sessions").select("paused_seconds").eq("id", sessionId).single();
+    expect(data?.paused_seconds).toBe(600);
+  });
+
+  it("laesst die Pausensumme ohne Angabe bei 0", async () => {
+    const client = await userClient(memberAEmail);
+    const sessionId = await seedSession(memberAId);
+
+    await completeSession(client, { sessionId });
+
+    const { data } = await serviceClient()
+      .from("workout_sessions").select("paused_seconds").eq("id", sessionId).single();
+    expect(data?.paused_seconds).toBe(0);
   });
 });

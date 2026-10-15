@@ -32,4 +32,15 @@ struct LokaleSessionTests {
             try JSONDecoder().decode(LokalerBlock.self, from: Data(json.utf8))
         }
     }
+
+    /// Was beim Beenden an den Server geht (Testnotiz 14.10., 18:45 #3/#4):
+    /// abgeschlossene Pausen plus eine noch laufende, in ganzen Sekunden.
+    @Test func pausenSekundenZaehltDieLaufendePauseMit() {
+        let start = Date(timeIntervalSince1970: 0)
+        var session = LokaleSession(id: UUID(), startedAt: start, bloecke: [])
+        session.pausieren(jetzt: start.addingTimeInterval(60))
+        session.fortsetzen(jetzt: start.addingTimeInterval(160))       // 100 s
+        session.pausieren(jetzt: start.addingTimeInterval(300))
+        #expect(session.pausenSekunden(jetzt: start.addingTimeInterval(350.6)) == 150)  // 100 + 50,6 abgerundet
+    }
 }

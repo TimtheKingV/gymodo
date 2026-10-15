@@ -140,6 +140,22 @@ struct TrainingszusammenfassungTests {
         #expect(z.bloecke.map(\.id) == ["typ:t1:e1", "typ:t2:e1", "geraet:m1:e1"])
         #expect(z.bloecke[0].machineId == nil)
     }
+
+    /// Review: nach dem Fortsetzen ohne neuen Satz liegt die Luecke hinter
+    /// dem letzten Satz. Sie darf von der Dauer bis zum letzten Satz nicht
+    /// abgezogen werden -- sonst fehlte sie zweimal.
+    @Test func eineLueckeNachDemLetztenSatzZaehltNichtDoppelt() throws {
+        var session = LokaleSession(id: UUID(), startedAt: start, bloecke: [
+            LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [satz(1, 80, 40)]),
+        ])
+        // Beendet bei 42 min, fortgesetzt bei 70 min: 28 min Luecke.
+        session.pausenDauer += 28 * 60
+        session.wiederaufgenommenAm = start.addingTimeInterval(70 * 60)
+
+        let z = try #require(Trainingszusammenfassung(session))
+
+        #expect(z.dauerMinuten == 42)
+    }
 }
 
 @MainActor

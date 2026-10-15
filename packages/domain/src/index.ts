@@ -164,6 +164,7 @@ export {
   problemReasonSchema,
   recordSet,
   recordSetInputSchema,
+  reopenSession,
 } from "./workout.js";
 export type {
   CompletedSession,

@@ -14,13 +14,25 @@ struct HomeZeilenTests {
         completedReason: String? = "manual",
         machineCount: Int = 3,
         setCount: Int = 8,
-        machineIds: [String]? = nil
+        machineIds: [String]? = nil,
+        pausedSeconds: Int? = nil
     ) -> SessionSummary {
         let geraete = machineIds ?? (0..<machineCount).map { "m\($0 + 1)" }
         return SessionSummary(
             id: id, startedAt: startedAt, completedAt: completedAt,
             completedReason: completedReason, machineCount: machineCount, setCount: setCount,
-            blocks: geraete.map(block))
+            blocks: geraete.map(block), pausedSeconds: pausedSeconds)
+    }
+
+    /// Training fortsetzen (Testnotiz 14.10., 18:45 #3/#4): die Pausen,
+    /// darunter die Luecke bis zum Fortsetzen, zaehlen nicht zur Dauer.
+    @Test func dieDauerZaehltDiePausenNicht() {
+        // 16:04 bis 16:51 sind 47 min, davon 12 min Pause.
+        #expect(HomeZeilen.dauerText(einheit(pausedSeconds: 720)) == "35 min")
+    }
+
+    @Test func ohnePausensummeBleibtDieDauer() {
+        #expect(HomeZeilen.dauerText(einheit(pausedSeconds: nil)) == "47 min")
     }
 
     private func block(_ machineId: String) -> SessionSummary.Block {

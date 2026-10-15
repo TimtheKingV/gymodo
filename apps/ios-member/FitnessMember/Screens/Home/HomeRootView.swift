@@ -149,7 +149,10 @@ struct HomeRootView: View {
             .navigationDestination(for: HomeRoute.self) { route in
                 switch route {
                 case .sessionDetail(let id):
-                    SessionDetailView(sessionId: id, apiClient: apiClient)
+                    SessionDetailView(sessionId: id, apiClient: apiClient, beiFortgesetzt: {
+                        pfad.removeAll()
+                        beiTrainingZeigen()
+                    })
                 case .uebungsfortschritt(let exerciseId):
                     UebungsfortschrittView(exerciseId: exerciseId)
                 case .gewichtsverlauf:
@@ -220,6 +223,12 @@ private extension HomeRootView {
     /// damit `studioId` nicht an vier Stellen gelesen wird.
     func neuLaden() async {
         await verlauf.laden(studioId: katalog.activeStudioId)
+        // Fortsetzen, dessen Antwort verloren ging (Testnotiz 14.10., 18:45
+        // #3/#4): nur gegen frisch geladene Daten, nie gegen den Cache --
+        // der zeigt eine Einheit von vor dem Beenden noch offen.
+        if case .geladen = verlauf.ladeZustand {
+            sessions.abgleichen(offeneIds: verlauf.sessions.filter { $0.completedAt == nil }.map(\.id))
+        }
         await kurseLaden()
         // Die Videos der Fortschrittszeilen (Testnotiz 11.10., #2); laedt
         // sonst nur die Geraeteliste, und Home ist der erste Tab.

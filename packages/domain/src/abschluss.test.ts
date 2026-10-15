@@ -185,6 +185,24 @@ describe("ausGespeichertenZeilen", () => {
     ]);
   });
 
+  // Training fortsetzen (Testnotiz 14.10., 18:45 #3/#4): nach dem zweiten
+  // Abschluss liegen zwei Generationen Vorschlaege im Fenster. Es gilt die
+  // des zweiten Abschlusses -- sie ist die aelteste AB completed_at.
+  it("nimmt nach einem zweiten Abschluss dessen Vorschlag, nicht den des ersten", () => {
+    const zweiterAbschluss = "2026-09-08T18:08:00.000Z";
+    const vorschlaege = ausGespeichertenZeilen(
+      [paare[0]!],
+      [
+        zeile({ created_at: "2026-09-08T18:00:01.000Z", result_load: 82.5 }),
+        zeile({ created_at: "2026-09-08T18:08:01.000Z", result_load: 85 }),
+      ],
+      zweiterAbschluss,
+      einheiten,
+    );
+
+    expect(vorschlaege[0]?.resultLoad).toBe(85);
+  });
+
   it("liest die Nebenbelastung aus der festgehaltenen Eingabe zurueck", () => {
     const vorschlaege = ausGespeichertenZeilen(
       [paare[0]!],

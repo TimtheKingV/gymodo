@@ -28,4 +28,20 @@ struct PfadbereinigungTests {
     @Test func derAbschlussScreenBleibtStehen() {
         #expect(!Pfadbereinigung.leeren(laeuftVorher: true, laeuftJetzt: false, pfad: [abschluss]))
     }
+
+    /// Training fortsetzen (Testnotiz 14.10., 18:45 #3): wird genau die
+    /// Einheit des stehenden Abschlusses wieder aktiv, geht es zur Wurzel.
+    @MainActor
+    @Test func fortgesetzteEinheitRaeumtDenAbschluss() {
+        let route = abschluss
+        guard case .abschluss(let id, _) = route else { Issue.record("kein Abschluss"); return }
+        #expect(Pfadbereinigung.nachFortsetzenLeeren(aktiveId: id, pfad: [route]))
+    }
+
+    @MainActor
+    @Test func einAnderesTrainingRaeumtDenAbschlussNicht() {
+        #expect(!Pfadbereinigung.nachFortsetzenLeeren(aktiveId: UUID(), pfad: [abschluss]))
+        #expect(!Pfadbereinigung.nachFortsetzenLeeren(aktiveId: nil, pfad: [abschluss]))
+        #expect(!Pfadbereinigung.nachFortsetzenLeeren(aktiveId: UUID(), pfad: [geraet]))
+    }
 }

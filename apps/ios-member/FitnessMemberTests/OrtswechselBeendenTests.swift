@@ -4,6 +4,7 @@ import Testing
 
 private actor MeldeLoader: GeraetLoading {
     private(set) var abgeschlossen: [UUID] = []
+    private(set) var pausen: [Int] = []
     var fehler: APIError?
 
     func setzeFehler(_ e: APIError?) { fehler = e }
@@ -11,8 +12,9 @@ private actor MeldeLoader: GeraetLoading {
     func machineContext(machineId: String) async throws(APIError) -> TagContextResponse { throw .offline }
     func equipmentModelContext(modelId: String, studio: String?) async throws(APIError) -> TagContextResponse { throw .offline }
     func recordCalibration(_ body: CalibrationWrite) async throws(APIError) -> RecordedCalibration { throw .offline }
-    func completeSession(sessionId: UUID) async throws(APIError) -> CompletedSession {
+    func completeSession(sessionId: UUID, pausedSeconds: Int) async throws(APIError) -> CompletedSession {
         abgeschlossen.append(sessionId)
+        pausen.append(pausedSeconds)
         if let fehler { throw fehler }
         throw .offline
     }
@@ -49,7 +51,7 @@ struct OrtswechselBeendenTests {
         let ausgang = sessions.beendenFuerOrtswechsel()
         await WorkoutSessionStore.melden(ausgang, loader: loader)
 
-        #expect(ausgang == .abgeschlossen(satz.sessionId))
+        #expect(ausgang == .abgeschlossen(satz.sessionId, pausedSeconds: 0))
         #expect(sessions.aktiveSession() == nil)
         #expect(await loader.abgeschlossen == [satz.sessionId])
     }
@@ -57,7 +59,13 @@ struct OrtswechselBeendenTests {
     @Test func serverfehlerWirdGeschluckt() async {
         let loader = MeldeLoader()
         await loader.setzeFehler(.offline)
-        await WorkoutSessionStore.melden(.abgeschlossen(UUID()), loader: loader)
+        await WorkoutSessionStore.melden(.abgeschlossen(UUID(), pausedSeconds: 0), loader: loader)
         #expect(await loader.abgeschlossen.count == 1)
+    }
+
+    @Test func meldenSchicktDiePausensumme() async {
+        let loader = MeldeLoader()
+        await WorkoutSessionStore.melden(.abgeschlossen(UUID(), pausedSeconds: 90), loader: loader)
+        #expect(await loader.pausen == [90])
     }
 }
