@@ -47,6 +47,17 @@ describe("blockPaare", () => {
   it("liefert fuer eine Session ohne Saetze nichts", () => {
     expect(blockPaare([])).toEqual([]);
   });
+
+  // Testnotiz 14.10., 18:45 #7: Cardio hat keine Progression.
+  it("laesst Bloecke nur mit Cardio-Saetzen aus", () => {
+    const paare = blockPaare([
+      { machine_id: "m1", equipment_model_id: "t1", exercise_id: "e1", load: null },
+      { machine_id: "m1", equipment_model_id: "t1", exercise_id: "e1", load: null },
+      { machine_id: "m2", equipment_model_id: "t2", exercise_id: "e2", load: "40" },
+    ]);
+
+    expect(paare).toEqual([{ machineId: "m2", equipmentModelId: "t2", exerciseId: "e2" }]);
+  });
 });
 
 describe("zuVorschlag", () => {

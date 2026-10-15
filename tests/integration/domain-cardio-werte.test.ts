@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { recordSet } from "@fitretro/domain";
+import { getBootstrap, getMachineContext, getProgress, getSessions, recordSet } from "@fitretro/domain";
 import { createTestUser, serviceClient, uniqueEmail, userClient } from "./helpers/clients.js";
 
 // Testnotiz 14.10., 18:45 #7: Cardio-Werte (Spec 2026-10-15-cardio-werte-design).
@@ -161,5 +161,47 @@ describe("recordSet -- Cardio (Testnotiz 14.10., 18:45 #7)", () => {
       equipment_model_id: kraftModell, exercise_id: kraftUebung, set_index: 9, load: 40, volume: 10, dauer_s: 60,
     });
     expect(error?.message).toMatch(/workout_sets_art/);
+  });
+});
+
+describe("Lesewege -- Cardio", () => {
+  it("Bootstrap: Liste am Studio-Modell vom Typ geerbt, letzter Satz mit cardio", async () => {
+    const client = await userClient(mitgliedEmail);
+    await recordSet(client, {
+      sessionId: crypto.randomUUID(), setId: crypto.randomUUID(), setIndex: 1,
+      machineId: cardioMaschine, exerciseId: cardioUebung, cardio: { zeit: 600, watt: 150 },
+    });
+    const b = await getBootstrap(client);
+    const m = b.machines.find((x) => x.id === cardioMaschine)!;
+    expect(m.equipmentModel.cardioWerte).toEqual(["zeit", "strecke", "watt"]);
+    expect(b.lastSets.find((s) => s.machineId === cardioMaschine)).toMatchObject({
+      load: null, volume: null, cardio: { zeit: 600, watt: 150 },
+    });
+    const kraft = b.machines.find((x) => x.id === kraftMaschine)!;
+    expect(kraft.equipmentModel.cardioWerte).toEqual([]);
+  });
+
+  it("Sessions liefern cardio am Satz", async () => {
+    const client = await userClient(mitgliedEmail);
+    const { sessions } = await getSessions(client);
+    const satz = sessions.flatMap((s) => s.blocks).find((b) => b.machineId === cardioMaschine)?.sets[0];
+    expect(satz?.cardio).toBeTruthy();
+    expect(satz?.load).toBeNull();
+    expect(satz?.volume).toBeNull();
+  });
+
+  it("Geraetekontext: Liste, Historie mit cardio, kein Vorschlag", async () => {
+    const client = await userClient(mitgliedEmail);
+    const k = await getMachineContext(client, cardioMaschine);
+    expect(k.equipmentModel.cardioWerte).toEqual(["zeit", "strecke", "watt"]);
+    expect(k.history[0]).toMatchObject({ load: null, volume: [], cardio: expect.any(Object) });
+    // Wie ohne Historie: kein Wert, Grund "kein_verlauf".
+    expect(k.suggestion).toMatchObject({ resultLoad: null, reasonCode: "kein_verlauf" });
+  });
+
+  it("Fortschritt laesst Cardio aus dem Bestlast-Diagramm", async () => {
+    const client = await userClient(mitgliedEmail);
+    const p = await getProgress(client);
+    expect(p.exercises.find((x) => x.exerciseId === cardioUebung)).toBeUndefined();
   });
 });

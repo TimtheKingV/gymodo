@@ -54,6 +54,8 @@ type Stationszeile = {
   machine_id: string | null;
   equipment_model_id: string;
   exercise_id: string;
+  /** Fehlt oder null bei Cardio-Saetzen (Testnotiz 14.10., 18:45 #7). */
+  load?: number | string | null;
 };
 
 /** Station und Uebung in einem Schluessel -- fuer Zeilen wie fuer Paare. */
@@ -78,13 +80,18 @@ function stationVon(paar: Blockpaar): string {
  * dieselbe Blockdefinition wie im Training selbst (M1-Spec SS5.3). Seit 0047
  * ist ein Block eine Station plus eine Uebung: zwei freie Saetze an
  * verschiedenen Typen sind zwei Bloecke, nicht einer "ohne Geraet".
+ * Ein Block, dessen Saetze alle ohne Belastung sind (Cardio), bekommt keinen
+ * Vorschlag und faellt hier heraus.
  */
 export function blockPaare(rows: Stationszeile[]): Blockpaar[] {
   const gesehen = new Set<string>();
+  const mitBelastung = new Set(
+    rows.filter((row) => row.load !== null).map((row) => blockSchluessel(row)),
+  );
   const paare: Blockpaar[] = [];
   for (const row of rows) {
     const schluessel = blockSchluessel(row);
-    if (gesehen.has(schluessel)) continue;
+    if (gesehen.has(schluessel) || !mitBelastung.has(schluessel)) continue;
     gesehen.add(schluessel);
     paare.push({
       machineId: row.machine_id,
@@ -293,7 +300,7 @@ async function bloeckeDerSession(
   const { data: sessionSaetze, error } = await client
     .from("workout_sets")
     .select(
-      "machine_id, equipment_model_id, exercise_id, studio_id, equipment_models (load_unit, secondary_unit)",
+      "machine_id, equipment_model_id, exercise_id, studio_id, load, equipment_models (load_unit, secondary_unit)",
     )
     .eq("session_id", sessionId)
     .eq("user_id", userId)
@@ -442,6 +449,7 @@ export async function vorschlaegeFuerAbschluss(
     .select(
       "machine_id, equipment_model_id, exercise_id, performed_at, load, secondary_load, volume, rir, problem_flag",
     )
+    .not("load", "is", null)
     .eq("user_id", userId)
     .in("equipment_model_id", modellIds)
     .order("performed_at", { ascending: false })

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
 import type { LoadUnit, VolumeKind } from "./belastung.js";
+import { CARDIO_SELECT, cardioAusZeile, type CardioWerte, type CardioZeile } from "./cardio.js";
 import { aktiveZiele } from "./goals.js";
 import { ortszeitTeile } from "./serie.js";
 import { stationsSchluessel } from "./station.js";
@@ -154,9 +155,11 @@ export type SessionBlock = {
   volumeKind: VolumeKind;
   sets: Array<{
     setIndex: number;
-    load: number;
+    load: number | null;
     secondaryLoad: number | null;
-    volume: number;
+    volume: number | null;
+    /** Cardio-Werte des Satzes; null bei Kraft (Testnotiz 14.10., 18:45 #7). */
+    cardio: CardioWerte | null;
     rir: number | null;
     problemFlag: boolean;
     problemReason: ProblemReason | null;
@@ -198,15 +201,15 @@ type SessionRow = {
   paused_seconds: number;
 };
 
-type SetRow = {
+type SetRow = CardioZeile & {
   session_id: string;
   machine_id: string | null;
   equipment_model_id: string;
   exercise_id: string;
   set_index: number;
-  load: number | string;
+  load: number | string | null;
   secondary_load: number | string | null;
-  volume: number;
+  volume: number | null;
   rir: number | string | null;
   problem_flag: boolean;
   problem_reason: ProblemReason | null;
@@ -314,7 +317,7 @@ export async function getSessions(
   const { data: setRows } = await client
     .from("workout_sets")
     .select(
-      "session_id, machine_id, equipment_model_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, performed_at, machines (label, equipment_models (load_unit, secondary_unit)), exercises (name, volume_kind), equipment_models (name, load_unit, secondary_unit)",
+      `session_id, machine_id, equipment_model_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, performed_at, ${CARDIO_SELECT}, machines (label, equipment_models (load_unit, secondary_unit)), exercises (name, volume_kind), equipment_models (name, load_unit, secondary_unit)`,
     )
     .eq("user_id", userId)
     .in(
@@ -366,9 +369,10 @@ export async function getSessions(
       }
       block.sets.push({
         setIndex: row.set_index,
-        load: Number(row.load),
+        load: row.load === null ? null : Number(row.load),
         secondaryLoad: row.secondary_load === null ? null : Number(row.secondary_load),
         volume: row.volume,
+        cardio: cardioAusZeile(row),
         rir: row.rir === null ? null : Number(row.rir),
         problemFlag: row.problem_flag,
         problemReason: row.problem_reason,

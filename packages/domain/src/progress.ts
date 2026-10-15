@@ -89,6 +89,8 @@ export async function getProgress(
       "machine_id, equipment_model_id, exercise_id, load, volume, performed_at, exercises (name, volume_kind), machines (label, equipment_models (load_unit, secondary_unit)), equipment_models (name, load_unit, secondary_unit)",
     )
     .eq("user_id", userId)
+    // Cardio-Saetze haben keine Belastung und gehoeren nicht ins Diagramm.
+    .not("load", "is", null)
     .order("performed_at", { ascending: true })
     .limit(SET_SCAN_LIMIT);
 
