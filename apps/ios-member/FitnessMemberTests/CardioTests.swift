@@ -35,6 +35,43 @@ struct CardioTests {
         #expect(s.cardio == nil)
     }
 
+    /// Final-Review D: jede Antwort, die einen Cardio-Satz traegt, dekodiert "load":null.
+    @Test func recordedSetMitLoadNullDekodiert() throws {
+        let json = #"{"id":"s","studioId":"st","userId":"u","sessionId":"se","machineId":"m","equipmentModelId":"em","exerciseId":"e","setIndex":1,"load":null,"secondaryLoad":null,"volume":null,"cardio":{"zeit":510,"watt":150},"rir":null,"problemFlag":false,"problemReason":null,"volumeSource":"eingegeben","volumeCounted":null,"performedAt":"2026-10-15T10:00:00Z"}"#
+        let s = try JSONDecoder().decode(RecordedSet.self, from: Data(json.utf8))
+        #expect(s.load == nil)
+        #expect(s.volume == nil)
+        #expect(s.cardio == CardioWerte(zeit: 510, watt: 150))
+    }
+
+    @Test func historienEintragMitLoadNullDekodiert() throws {
+        let json = #"{"performedOn":"2026-10-15","load":null,"secondaryLoad":null,"volume":[],"cardio":{"zeit":510,"strecke":2000}}"#
+        let h = try JSONDecoder().decode(TagContextResponse.HistoryEntry.self, from: Data(json.utf8))
+        #expect(h.load == nil)
+        #expect(h.volume.isEmpty)
+        #expect(h.cardio == CardioWerte(zeit: 510, strecke: 2000))
+    }
+
+    @Test func verlaufssatzMitLoadNullDekodiert() throws {
+        let json = #"{"setIndex":1,"load":null,"secondaryLoad":null,"volume":null,"cardio":{"zeit":600,"kmh":10.5},"rir":null,"problemFlag":false,"problemReason":null,"performedAt":"2026-10-15T10:00:00Z"}"#
+        let s = try JSONDecoder().decode(SessionSummary.Block.Set.self, from: Data(json.utf8))
+        #expect(s.load == nil)
+        #expect(s.volume == nil)
+        #expect(s.cardio == CardioWerte(zeit: 600, kmh: 10.5))
+    }
+
+    @Test func lokalerCardioSatzUebersteht() throws {
+        let satz = LokalerSatz(
+            id: UUID(), setIndex: 1, load: nil, secondaryLoad: nil, volume: nil,
+            cardio: CardioWerte(zeit: 510, strecke: 2000), rir: nil, problemFlag: false,
+            problemReason: nil, performedAt: Date(timeIntervalSince1970: 1_792_000_000))
+        let daten = try JSONEncoder().encode(satz)
+        let zurueck = try JSONDecoder().decode(LokalerSatz.self, from: daten)
+        #expect(zurueck == satz)
+        #expect(zurueck.load == nil)
+        #expect(zurueck.cardio?.strecke == 2000)
+    }
+
     @Test func modellOhneCardioWerteIstKraft() throws {
         // Ein Server von vor E2 schickt das Feld nicht.
         #expect(Station.testGeraet("m").equipmentModel.cardioWerte.isEmpty)
@@ -104,6 +141,16 @@ struct CardioTests {
         #expect(CardioEingabe.zeit(stunden: 0, minuten: 8, sekunden: 60) == .failure(.keineZahl))
         let t = CardioEingabe.zeitTeile(3900)
         #expect(t.h == 1 && t.m == 5 && t.s == 0)
+    }
+
+    /// Final-Review E: riesige Stunden duerfen nicht ueberlaufen (Trap).
+    @Test func zeitMitRiesigenStundenIstAusserhalb() {
+        #expect(CardioEingabe.zeit(stunden: 24, minuten: 0, sekunden: 0) == .success(86_400))
+        #expect(CardioEingabe.zeit(stunden: 25, minuten: 0, sekunden: 0) == CardioEingabe.zeit(stunden: 24, minuten: 0, sekunden: 1))
+        #expect(CardioEingabe.zeit(stunden: Int.max, minuten: 59, sekunden: 59) == CardioEingabe.zeit(stunden: 24, minuten: 0, sekunden: 1))
+        if case .failure(.ausserhalb) = CardioEingabe.zeit(stunden: Int.max, minuten: 0, sekunden: 0) {} else {
+            Issue.record("Erwartet: ausserhalb")
+        }
     }
 
     @Test func minusZeichenUndRundreise() {

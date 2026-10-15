@@ -122,6 +122,10 @@ enum CardioEingabe {
         guard stunden >= 0, (0...59).contains(minuten), (0...59).contains(sekunden) else {
             return .failure(.keineZahl)
         }
+        // Mehr als 24 Stunden liegen ohnehin ausserhalb; ohne diese Schranke
+        // liefe `stunden * 3600` bei riesigen Eingaben ueber und brach ab
+        // (Final-Review E).
+        if stunden > 24 { return pruefen(CardioWert.zeit.bereich.upperBound + 1, .zeit) }
         return pruefen(Double(stunden * 3600 + minuten * 60 + sekunden), .zeit)
     }
 
