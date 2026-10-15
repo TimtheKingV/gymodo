@@ -1,0 +1,78 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+  "befestigungsart" : "kurzhantel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-10-15T16:56:09+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "7ef892a2-0e86-424b-b357-ce4186547437",
+    "exerciseId" : "f57da95f-5186-4739-87e4-755c8d21e4e5",
+    "exerciseName" : "Trizepsstrecken über Kopf – eine Kurzhantel",
+    "machineId" : null,
+    "machineName" : "Kurzhantel",
+    "sessionId" : "7E3F0D65-C5D8-4ABA-8EEE-87CB3A559264",
+    "setId" : "E037AA37-F2A1-4487-96DF-01B17616AC24",
+    "setIndex" : 3
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 8,
+    "weightKg" : 8
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-15T16:55:39+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 94.1,
+      "median" : 0,
+      "p95" : 60.51
+    },
+    "luecken" : 0,
+    "pakete" : 1482,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "kurzhantel/1",
+    "ereignisse" : {
+      "algo" : "kurzhantel/1",
+      "befestigungsart" : "kurzhantel",
+      "unsicher" : "taktUnregelmaessig",
+      "wiederholungen" : [
+        {
+          "ausschlag" : 48.97,
+          "beginn" : 2.73,
+          "ende" : 5.16,
+          "sicherheit" : 0.63,
+          "umkehr" : 4.5
+        },
+        {
+          "ausschlag" : 37.27,
+          "beginn" : 5.47,
+          "ende" : 9.93,
+          "sicherheit" : 0.24,
+          "umkehr" : 9.27
+        },
+        {
+          "ausschlag" : 36.79,
+          "beginn" : 10.11,
+          "ende" : 12.27,
+          "sicherheit" : 0.23,
+          "umkehr" : 11.91
+        }
+      ]
+    },
+    "gezaehlt" : 3,
+    "herkunft" : "korrigiert"
+  }
+}

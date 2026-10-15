@@ -408,6 +408,93 @@
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-15-1652-01": {
+      "was": "Kurzhantel-Hammercurl, Kurzhantel, Satz 1",
+      "befestigung": "an der Griffstange einer Kurzhantel, Ausrichtung wechselnd, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 9,
+      "fuerZaehler": true
+    },
+    "2026-10-15-1652-02": {
+      "was": "Kurzhantel-Hammercurl, Kurzhantel, Satz 2",
+      "befestigung": "an der Griffstange einer Kurzhantel, Ausrichtung wechselnd, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 8,
+      "fuerZaehler": true
+    },
+    "2026-10-15-1653-01": {
+      "was": "Kurzhantel-Hammercurl, Kurzhantel, Satz 3",
+      "befestigung": "an der Griffstange einer Kurzhantel, Ausrichtung wechselnd, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 8,
+      "fuerZaehler": true
+    },
+    "2026-10-15-1654-01": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel, Kurzhantel",
+      "befestigung": "an der Griffstange einer Kurzhantel, Ausrichtung wechselnd",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-15-1654-02": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel, Kurzhantel, Satz 1",
+      "befestigung": "an der Griffstange einer Kurzhantel, Ausrichtung wechselnd",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 8,
+      "fuerZaehler": true
+    },
+    "2026-10-15-1655-01": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel, Kurzhantel, Satz 2",
+      "befestigung": "an der Griffstange einer Kurzhantel, Ausrichtung wechselnd",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 8,
+      "fuerZaehler": true
+    },
+    "2026-10-15-1655-02": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel, Kurzhantel, Satz 3",
+      "befestigung": "an der Griffstange einer Kurzhantel, Ausrichtung wechselnd",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 8,
+      "fuerZaehler": true
+    },
+    "2026-10-15-1656-01": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel, Kurzhantel",
+      "befestigung": "an der Griffstange einer Kurzhantel, Ausrichtung wechselnd",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-15-1657-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend, Kurzhantel",
+      "befestigung": "an der Griffstange einer Kurzhantel, Ausrichtung wechselnd",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-15-1657-02": {
+      "was": "Kurzhantel-Bizepscurl – stehend, Kurzhantel, Satz 1",
+      "befestigung": "an der Griffstange einer Kurzhantel, Ausrichtung wechselnd, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 8,
+      "fuerZaehler": true
+    },
+    "2026-10-15-1657-03": {
+      "was": "Kurzhantel-Bizepscurl – stehend, Kurzhantel, Satz 2",
+      "befestigung": "an der Griffstange einer Kurzhantel, Ausrichtung wechselnd, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 8,
+      "fuerZaehler": true
+    },
+    "2026-10-15-1658-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend, Kurzhantel, Satz 3",
+      "befestigung": "an der Griffstange einer Kurzhantel, Ausrichtung wechselnd, beide Arme gleichzeitig",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true
     }
   }
 }
