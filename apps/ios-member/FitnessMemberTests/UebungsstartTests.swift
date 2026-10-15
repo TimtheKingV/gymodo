@@ -29,6 +29,32 @@ struct UebungsstartTests {
         #expect(Uebungsstart.positionNachUeberspringen(in: schritte) == 2)
     }
 
+    // MARK: - Cardio (Testnotiz 14.10., 18:45 #6)
+
+    /// Bei Zeit oder Metern fragt der Drawer keine Startwerte -- da startet
+    /// man einfach. Eine bekannte Cardio-Uebung braucht ihn gar nicht.
+    @Test func eineBekannteCardioUebungStartetOhneDrawer() {
+        #expect(Uebungsstart.schritte(erstkontakt: false, fragtEinstellung: false, volumeKind: .seconds) == [])
+        #expect(Uebungsstart.schritte(erstkontakt: false, fragtEinstellung: true, volumeKind: .meters) == [])
+    }
+
+    @Test func beimErstkontaktBleibenEinweisungUndEinstellung() {
+        #expect(Uebungsstart.schritte(erstkontakt: true, fragtEinstellung: true, volumeKind: .seconds)
+                == [.einweisung, .einstellung])
+        #expect(Uebungsstart.schritte(erstkontakt: true, fragtEinstellung: false, volumeKind: .seconds)
+                == [.einweisung])
+    }
+
+    @Test func wiederholungenFragenWeiterNachStartwerten() {
+        #expect(Uebungsstart.schritte(erstkontakt: false, fragtEinstellung: false, volumeKind: .reps) == [.startwerte])
+    }
+
+    /// Ohne Startwerte heisst "Kenne ich schon": gleich los.
+    @Test func ueberspringenOhneStartwerteStartetSofort() {
+        let schritte = Uebungsstart.schritte(erstkontakt: true, fragtEinstellung: true, volumeKind: .seconds)
+        #expect(Uebungsstart.positionNachUeberspringen(in: schritte) == nil)
+    }
+
     // MARK: - Countdown (#10)
 
     /// Fuenf Sekunden zaehlen, dann eine Sekunde "Los!" in der Mitte.

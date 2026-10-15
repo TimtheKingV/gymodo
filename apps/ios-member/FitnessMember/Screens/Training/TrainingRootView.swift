@@ -555,7 +555,7 @@ struct TrainingRootView: View {
         case .erkannt(let station, let token):
             if let modell = modell(station: station, exerciseId: nil, token: token) {
                 GeraetErkanntScreen(modell: modell) { uebungId in
-                    uebungsstart = UebungsstartAuftrag(station: station, exerciseId: uebungId, token: token)
+                    uebungsstartOeffnen(UebungsstartAuftrag(station: station, exerciseId: uebungId, token: token))
                 }
             }
         case .geraet(let station, let exerciseId, let token, let start):
@@ -729,7 +729,7 @@ struct TrainingRootView: View {
         // Drawer wie jeder Direktweg -- die Geraeteseite haette nur noch
         // einmal gefragt, was schon gesucht war (Testnotiz 14.10., 18:45 #2).
         if let uebungId {
-            uebungsstart = UebungsstartAuftrag(station: station.schluessel, exerciseId: uebungId, token: nil)
+            uebungsstartOeffnen(UebungsstartAuftrag(station: station.schluessel, exerciseId: uebungId, token: nil))
             return
         }
         // Besuche 0: aus der Liste bleibt die Uebungswahl wie bisher
@@ -805,7 +805,7 @@ struct TrainingRootView: View {
             guard let uebung else { return }
             // Auch der Direktweg geht ueber den Drawer: dort startet "Übung
             // starten" ein noch nicht laufendes Training mit.
-            uebungsstart = UebungsstartAuftrag(station: station.schluessel, exerciseId: uebung, token: token)
+            uebungsstartOeffnen(UebungsstartAuftrag(station: station.schluessel, exerciseId: uebung, token: token))
         }
     }
 
@@ -813,6 +813,20 @@ struct TrainingRootView: View {
     /// beginnt jetzt, nicht schon mit der Einweisung (Testnotiz 06.10., #5;
     /// 11.10., #11). Die Satzseite kommt mit den Startwerten und beginnt
     /// mit dem Countdown.
+    /// Eine bekannte Cardio-Uebung hat keinen Schritt im Drawer (Testnotiz
+    /// 14.10., 18:45 #6): sie startet gleich, mit den Werten, die der Drawer
+    /// vorgeschlagen haette. Alles andere geht ueber den Drawer.
+    private func uebungsstartOeffnen(_ auftrag: UebungsstartAuftrag) {
+        if let modell = modell(station: auftrag.station, exerciseId: auftrag.exerciseId, token: auftrag.token),
+           Uebungsstart.direktStart(erstkontakt: modell.istErstkontakt,
+                                    fragtEinstellung: modell.erstkontaktFragtEinstellung,
+                                    volumeKind: modell.volumeKind) {
+            uebungStarten(auftrag, mit: modell.startwerte)
+        } else {
+            uebungsstart = auftrag
+        }
+    }
+
     private func uebungStarten(_ auftrag: UebungsstartAuftrag, mit werte: Startwerte) {
         if sessions.aktiveSession() == nil { sessions.trainingStarten() }
         uebungsstart = nil

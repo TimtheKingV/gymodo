@@ -88,6 +88,16 @@ describe("altEingabeUmwandeln", () => {
       ),
     ).toEqual({});
   });
+
+  // Wie round() in Postgres (0055): halbe Werte weg von der Null.
+  it("rundet eine negative halbe Steigung weg von der Null", () => {
+    expect(
+      altEingabeUmwandeln(
+        { load: 8, secondaryLoad: -2.25, volume: null, loadUnit: "kmh", secondaryUnit: "pct", volumeKind: "reps" },
+        ["kmh", "steigung"],
+      ),
+    ).toEqual({ kmh: 8, steigung: -2.3 });
+  });
 });
 
 describe("altEingabeUmwandeln -- Regel wie Migration 0055 (Final-Review A/G)", () => {
