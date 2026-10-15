@@ -118,6 +118,8 @@ final class CatalogStore {
     private let defaults: UserDefaults
     private let wiederholungsAbstand: Duration
     private var flushLaeuft = false
+    /// Ein flushPending()-Aufruf kam, waehrend ein Flush lief.
+    private var nochmal = false
     private var wiederholung: Task<Void, Never>?
     private let besitzerDatei: URL
 
@@ -283,12 +285,28 @@ final class CatalogStore {
     func flushPending() async {
         // Nach dem Abmelden oder vor dem Anmelden: nicht mit fremdem Token senden.
         if let besitzer = warteschlangenBesitzer, besitzer != userId { return }
-        guard !flushLaeuft else { return }
+        // Laeuft schon ein Flush, nimmt er den neuen Satz in einem weiteren
+        // Durchgang mit -- sonst wartete der Satz, den TrainingRootView
+        // gerade eingereiht hat, bis zur 30-s-Wiederholung (Offline-Spec 4c).
+        guard !flushLaeuft else { nochmal = true; return }
         flushLaeuft = true
         defer {
             flushLaeuft = false
+            nochmal = false
             wiederholungPlanen()
         }
+        while true {
+            nochmal = false
+            guard await flushDurchgang(), nochmal else { break }
+        }
+    }
+
+    /// Ein Durchgang ueber eine frische Kopie von pendingWrites. false heisst:
+    /// der ganze Flush hoert auf. Das gilt bei `.offline` -- ein
+    /// Transportfehler trifft alle offenen Saetze, die sonst jeder einzeln in
+    /// ihren 10-s-Timeout liefen; Wiederholung und Reconnect uebernehmen
+    /// (Offline-Spec 2) -- und wenn der Besitzer nicht mehr passt.
+    private func flushDurchgang() async -> Bool {
         for write in pendingWrites {
             // Erneut pruefen: schreibvorgaengeVerwerfen() kann waehrend eines
             // await hier dazwischengekommen sein -- die Schleife laeuft ueber
@@ -298,11 +316,12 @@ final class CatalogStore {
             // Auch der Besitzer kann sich waehrend eines await geaendert haben
             // (Abmelden, Kontowechsel): dann nicht mit dem Token des anderen
             // Kontos weitersenden.
-            if let besitzer = warteschlangenBesitzer, besitzer != userId { break }
+            if let besitzer = warteschlangenBesitzer, besitzer != userId { return false }
             do {
                 _ = try await loader.putSet(sessionId: write.sessionId, setId: write.setId, write.body)
                 entferneAusPendingWrites(write)
             } catch {
+                if error == .offline { return false }
                 // 401 ist hier voruebergehend: offline ohne gueltigen Token
                 // (Offline-Spec 4c).
                 if error.istDauerhaft && !error.istAnmeldefehler {
@@ -320,6 +339,7 @@ final class CatalogStore {
                 // naechsten Versuch in pendingWrites/pendingWriteStore stehen.
             }
         }
+        return true
     }
 
     /// Bei halbem Netz meldet der Monitor "online", und der naechste Wechsel

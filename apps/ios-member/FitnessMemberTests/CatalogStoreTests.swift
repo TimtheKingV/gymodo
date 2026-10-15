@@ -518,6 +518,44 @@ struct CatalogStoreTests {
         #expect(await loader.putSetCalls.count == 1)
     }
 
+    /// TrainingRootView reiht jeden Satz ein und ruft flushPending() --
+    /// laeuft gerade ein Flush, darf der neue Satz nicht 30 s auf die
+    /// Wiederholung warten (Offline-Spec 4c).
+    @Test("ein Satz waehrend eines laufenden Flushs geht im selben Flush raus", .timeLimit(.minutes(1)))
+    func satzWaehrendFlushGehtMit() async {
+        let loader = ErsterPutHaengtLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 wiederholungsAbstand: .seconds(60))
+        let a = testWrite()
+        let b = testWrite()
+        store.enqueue(a)
+        let flush = Task { await store.flushPending() }
+        while await loader.aufrufe.isEmpty { await Task.yield() }
+
+        store.enqueue(b)
+        await store.flushPending()
+        await loader.freigeben()
+        await flush.value
+
+        #expect(await loader.aufrufe == [a.setId, b.setId])
+        #expect(store.pendingWrites.isEmpty)
+    }
+
+    /// Ein Transportfehler gilt fuer alle: nicht jeden offenen Satz einzeln
+    /// in seinen 10-s-Timeout laufen lassen.
+    @Test("offline beim ersten Satz bricht den Flush ab")
+    func offlineBrichtFlushAb() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setPutSetResult(.failure(.offline))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
+                                 wiederholungsAbstand: .seconds(60))
+        store.enqueue(testWrite())
+        store.enqueue(testWrite())
+        await store.flushPending()
+        #expect(await loader.putSetCalls.count == 1)
+        #expect(store.pendingWrites.count == 2)
+    }
+
     @Test("offene Eintraege werden nach dem Abstand erneut gesendet")
     func wiederholtNachAbstand() async throws {
         let loader = FakeBootstrapLoader()
@@ -535,7 +573,7 @@ struct CatalogStoreTests {
         #expect(await loader.putSetCalls.count >= 2)
     }
 
-    @Test("ein laufender Flush hoert auf, wenn der Besitzer nicht mehr passt")
+    @Test("ein laufender Flush hoert auf, wenn der Besitzer nicht mehr passt", .timeLimit(.minutes(1)))
     func flushStopptBeiBesitzerwechsel() async {
         let loader = HaengenderPutLoader()
         let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()),
@@ -744,7 +782,7 @@ struct CatalogStoreTests {
         #expect(store.anmelden(userId: "u1") == false)
     }
 
-    @Test("verspaetete Antwort eines abgemeldeten Users wird verworfen")
+    @Test("verspaetete Antwort eines abgemeldeten Users wird verworfen", .timeLimit(.minutes(1)))
     func verspaetereAntwortWirdVerworfen() async {
         let verzeichnis = tempDirectory()
         let loader = HaengenderBootstrapLoader()
@@ -959,7 +997,7 @@ struct FlushPendingTests {
     // Die Schleife laeuft ueber eine Kopie von pendingWrites -- ohne die
     // erneute Pruefung vor jedem Eintrag wuerde b trotzdem gesendet und die
     // gerade verworfene Einheit beim Server wieder angelegt.
-    @Test func flushPendingUebergehtEinenWaehrendDesLaufsVerworfenenEintrag() async {
+    @Test(.timeLimit(.minutes(1))) func flushPendingUebergehtEinenWaehrendDesLaufsVerworfenenEintrag() async {
         let loader = PausableBootstrapLoader()
         let catalog = store(loader: loader)
         let a = PendingSetWrite(
@@ -1079,6 +1117,27 @@ private actor HaengenderPutLoader: BootstrapLoading {
         angefragt = true
         await withCheckedContinuation { wartend = $0 }
         throw .offline
+    }
+    func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
+    func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
+    func leaveStudioMembership(studioId: String) async throws(APIError) { throw .offline }
+}
+
+/// Der erste putSet haengt bis `freigeben()`, danach gelingt jeder Aufruf.
+private actor ErsterPutHaengtLoader: BootstrapLoading {
+    private(set) var aufrufe: [UUID] = []
+    private var wartend: CheckedContinuation<Void, Never>?
+
+    func bootstrap() async throws(APIError) -> BootstrapResponse { throw .offline }
+    func freigeben() { wartend?.resume(); wartend = nil }
+
+    func putSet(sessionId: UUID, setId: UUID, _ body: SetWrite) async throws(APIError) -> RecordedSet {
+        aufrufe.append(setId)
+        if aufrufe.count == 1 { await withCheckedContinuation { wartend = $0 } }
+        return RecordedSet(
+            id: "r1", studioId: "s1", userId: "u1", sessionId: sessionId.uuidString,
+            machineId: "m1", exerciseId: "e1", setIndex: 1, load: 80, secondaryLoad: nil, volume: 10, rir: nil,
+            problemFlag: false, problemReason: nil, performedAt: "2026-09-01T10:00:00Z")
     }
     func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
     func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
