@@ -90,6 +90,8 @@ function pruefeNebenbelastung(werte: Nebenbelastung, ctx: z.RefinementCtx): void
   }
 }
 
+const CARDIO_OHNE_TYP = "Ein Cardio-Gerät ohne Typ braucht mindestens einen Wert.";
+
 export const equipmentModelInputSchema = z
   .object({
     studioId: uuid,
@@ -117,7 +119,7 @@ export const equipmentModelInputSchema = z
     if (werte.category === "cardio" && !werte.catalogModelId && werte.cardioWerte.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Ein Cardio-Gerät ohne Typ braucht mindestens einen Wert.",
+        message: CARDIO_OHNE_TYP,
       });
     }
     if (
@@ -238,6 +240,30 @@ export async function updateEquipmentModel(
   const userId = await requireUserId(client);
   const { studioId } = await studioOfModel(client, equipmentModelId);
   await requireStudioStaff(client, studioId, userId);
+
+  // Dieselbe Regel wie beim Anlegen, auf den Stand nach dem Patch: sonst
+  // machte das Abwaehlen aller Haken, der Wechsel auf Cardio oder das
+  // Loesen des Typs aus einem Cardio-Geraet still ein Kraftgeraet ohne Werte.
+  if (
+    werte.cardioWerte !== undefined ||
+    werte.category !== undefined ||
+    werte.catalogModelId !== undefined
+  ) {
+    const { data: aktuell, error: leseFehler } = await client
+      .from("equipment_models")
+      .select("category, catalog_model_id, cardio_werte")
+      .eq("id", equipmentModelId)
+      .single<{ category: Category; catalog_model_id: string | null; cardio_werte: CardioWert[] }>();
+    if (leseFehler || !aktuell) {
+      throw new DomainError("internal", leseFehler?.message ?? "Modell nicht gelesen.");
+    }
+    const category = werte.category ?? aktuell.category;
+    const typId = werte.catalogModelId !== undefined ? werte.catalogModelId : aktuell.catalog_model_id;
+    const liste = werte.cardioWerte ?? aktuell.cardio_werte ?? [];
+    if (category === "cardio" && !typId && liste.length === 0) {
+      throw new DomainError("validation_failed", CARDIO_OHNE_TYP);
+    }
+  }
 
   const zeile: Record<string, unknown> = {};
   if (werte.name !== undefined) zeile.name = werte.name;
