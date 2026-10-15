@@ -36,16 +36,23 @@ struct UebungsstartSheet: View {
         self.beiSchliessen = beiSchliessen
         _schritte = State(initialValue: Uebungsstart.schritte(
             erstkontakt: modell.istErstkontakt,
-            fragtEinstellung: modell.erstkontaktFragtEinstellung))
+            fragtEinstellung: modell.erstkontaktFragtEinstellung,
+            volumeKind: modell.volumeKind))
     }
 
     var body: some View {
         Group {
+            if schritte.isEmpty {
+                // Sollte der Aufrufer abfangen (`Uebungsstart.direktStart`);
+                // ohne Schritt gibt es nichts zu zeigen.
+                Color.clear.onAppear { starten() }
+            } else {
             switch schritte[position] {
             case .einweisung:
                 EinweisungSchritt(
                     modell: modell, titel: titel("Einweisung"),
-                    hauptaktion: schritte.contains(.einstellung) ? "Einstellungen erfassen" : "Weiter",
+                    hauptaktion: schritte.contains(.einstellung) ? "Einstellungen erfassen"
+                        : (istLetzter ? "Übung starten" : "Weiter"),
                     beiAbbruch: beiSchliessen,
                     beiWeiter: { weiter() },
                     beiUeberspringen: { ueberspringen() })
@@ -57,13 +64,7 @@ struct UebungsstartSheet: View {
                     modell: modell,
                     titel: schritte.count > 1 ? titel("Startwerte") : nil,
                     beiZurueck: position > 0 ? { zurueck() } : nil
-                ) {
-                    // Erst jetzt ist der Erstkontakt durch: wer vorher
-                    // schliesst, bekommt die Einweisung beim naechsten Mal
-                    // wieder.
-                    modell.erstkontaktAbschliessen()
-                    beiStart(modell.startwerte)
-                }
+                ) { starten() }
                 .onGeometryChange(for: CGFloat.self) { proxy in
                     // Die untere Safe Area gehoert zum Detent, nicht zum
                     // Inhalt -- sonst sitzt der Knopf hinter dem
@@ -73,6 +74,7 @@ struct UebungsstartSheet: View {
                 // Nach der Messung: gemessen wird der Inhalt, oben buendig
                 // steht er in jeder Hoehe.
                 .frame(maxHeight: .infinity, alignment: .top)
+            }
             }
         }
         .background(DesignSystem.Color.bg)
@@ -97,8 +99,19 @@ struct UebungsstartSheet: View {
         "Schritt \(position + 1) von \(schritte.count) · \(name)"
     }
 
+    private var istLetzter: Bool { position == schritte.count - 1 }
+
+    /// Ohne Startwerte (Cardio, Testnotiz 14.10., 18:45 #6) startet der
+    /// letzte Schritt die Uebung selbst.
     private func weiter() {
-        position = min(position + 1, schritte.count - 1)
+        if istLetzter { starten() } else { position += 1 }
+    }
+
+    /// Erst jetzt ist der Erstkontakt durch: wer vorher schliesst, bekommt
+    /// die Einweisung beim naechsten Mal wieder.
+    private func starten() {
+        modell.erstkontaktAbschliessen()
+        beiStart(modell.startwerte)
     }
 
     private func zurueck() {
@@ -111,8 +124,12 @@ struct UebungsstartSheet: View {
     }
 
     private func ueberspringen() {
+        guard let ziel = Uebungsstart.positionNachUeberspringen(in: schritte) else {
+            starten()
+            return
+        }
         ruecksprung = position
-        position = Uebungsstart.positionNachUeberspringen(in: schritte)
+        position = ziel
     }
 }
 

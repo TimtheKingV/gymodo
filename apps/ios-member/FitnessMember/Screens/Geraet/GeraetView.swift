@@ -439,7 +439,12 @@ struct GeraetView: View {
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Die Knoepfe unten, wie im Eingabezustand (Testnotiz 05.10., #13).
+            // Wo sonst die Pause laeuft, ein voller Ring (Testnotiz 14.10.,
+            // 18:45 #5). Die Knoepfe bleiben unten, wie im Eingabezustand
+            // (Testnotiz 05.10., #13).
+            Spacer(minLength: 0)
+            FertigRing()
+                .testnotizElement("geraet.fertig", typ: "FertigRing")
             Spacer(minLength: 0)
 
             // Wie in der Pause "Nächste Übung" (Testnotiz 12.10. abends,
@@ -549,7 +554,15 @@ struct GeraetScreen: View {
         .sheet(isPresented: $uebungWechselnOffen, onDismiss: {
             if startNachWechsel {
                 startNachWechsel = false
-                uebungsstartOffen = true
+                // Bekannte Cardio-Uebung: ohne Drawer (Testnotiz 14.10., 18:45 #6).
+                if Uebungsstart.direktStart(erstkontakt: modell.istErstkontakt,
+                                            fragtEinstellung: modell.erstkontaktFragtEinstellung,
+                                            volumeKind: modell.volumeKind) {
+                    if !modell.trainingLaeuft { modell.trainingStarten() }
+                    modell.uebungStarten(mit: modell.startwerte)
+                } else {
+                    uebungsstartOffen = true
+                }
             }
         }) {
             UebungWechselnSheet(modell: modell) {
