@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gruppeDesModells, letzteSaetze, startDesModells, zaehleBesucheJeGeraet } from "./bootstrap.js";
+import { gruppeDesModells, letzteSaetze, startDesModells, uebungAusZeile, zaehleBesucheJeGeraet } from "./bootstrap.js";
 
 describe("zaehleBesucheJeGeraet", () => {
   it("zaehlt zwei Saetze derselben Session als einen Besuch", () => {
@@ -115,5 +115,19 @@ describe("letzteSaetze", () => {
     expect(lastSets).toEqual([
       expect.objectContaining({ machineId: "m1", exerciseId: "u1", sessionCount: 1 }),
     ]);
+  });
+});
+
+describe("uebungAusZeile", () => {
+  it("reicht die Beschreibung fuer die Einweisung offline durch", () => {
+    expect(
+      uebungAusZeile({ id: "e1", name: "Face Pull", description: "Ellbogen hoch.", volume_kind: "reps", target_min: 12, target_max: 15 }),
+    ).toEqual({ id: "e1", name: "Face Pull", description: "Ellbogen hoch.", volumeKind: "reps", targetMin: 12, targetMax: 15 });
+  });
+
+  it("liefert null ohne gepflegte Beschreibung", () => {
+    expect(
+      uebungAusZeile({ id: "e2", name: "X", description: null, volume_kind: "reps", target_min: 8, target_max: 12 }).description,
+    ).toBeNull();
   });
 });

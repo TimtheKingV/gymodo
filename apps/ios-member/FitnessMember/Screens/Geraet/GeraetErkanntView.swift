@@ -53,7 +53,7 @@ struct GeraetErkanntView: View {
     /// bei zwei baugleichen Stationen der eigentliche Nutzen. Offline gibt
     /// es keine signierte URL, dann steht hier der Platzhalter.
     private var geraetefoto: some View {
-        Geraetefoto(url: modell.kontext?.equipmentModel.photoUrl.flatMap(URL.init(string:)), hoehe: 180)
+        Geraetefoto(modellId: modell.station.equipmentModelId, url: modell.kontext?.equipmentModel.photoUrl.flatMap(URL.init(string:)), hoehe: 180)
     }
 
     private var geraetename: some View {

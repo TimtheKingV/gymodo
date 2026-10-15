@@ -289,6 +289,13 @@ final class GeraetModel {
 
     var aktiveUebung: GeraetUebung? { uebungen.first { $0.id == uebungId } }
 
+    /// Der Text der Einweisung: aus dem Kontext, sonst aus dem Bootstrap --
+    /// offline gibt es keinen Kontext (Offline-Spec 3b).
+    var beschreibung: String? {
+        if let text = kontext?.exercises.first(where: { $0.id == uebungId })?.description { return text }
+        return station.exercises.first { $0.id == uebungId }?.description
+    }
+
     /// Die Uebungsliste in der Reihenfolge, in der das Mitglied sie sucht
     /// (Testnotiz 14.10., 18:25): erst dieses Training, dann nach
     /// Haeufigkeit, dann der Rest. Fuer "Weitere Übung" und die
