@@ -501,6 +501,15 @@ struct DTOTests {
         #expect(s.blocks[0].equipmentModelId == nil)
     }
 
+    @Test func sessionSummaryLiestDiePausensumme() throws {
+        let json = """
+        {"id":"s1","startedAt":"2026-10-14T17:47:00Z","completedAt":"2026-10-14T18:52:00Z",
+         "completedReason":"manual","machineCount":0,"setCount":0,"blocks":[],"pausedSeconds":1080}
+        """
+        let summary = try JSONDecoder().decode(SessionSummary.self, from: Data(json.utf8))
+        #expect(summary.pausedSeconds == 1080)
+    }
+
     @Test("Block mit machineId null und equipmentModelId dekodiert")
     func blockOhneGeraet() throws {
         let json = #"{"id":"sess1","startedAt":"2026-09-01T10:00:00Z","completedAt":null,"completedReason":null,"machineCount":0,"setCount":1,"blocks":[{"machineId":null,"equipmentModelId":"t1","machineLabel":"Beinpresse","exerciseId":"ex1","exerciseName":"Beidbeinig","loadUnit":"kg","secondaryUnit":null,"volumeKind":"reps","sets":[]}]}"#

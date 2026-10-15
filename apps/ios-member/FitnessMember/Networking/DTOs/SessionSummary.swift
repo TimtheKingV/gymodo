@@ -93,4 +93,7 @@ struct SessionSummary: Codable, Equatable, Identifiable {
     let machineCount: Int
     let setCount: Int
     let blocks: [Block]
+    /// Summe der Pausen in Sekunden (Testnotiz 14.10., 18:45 #3/#4). Fehlt
+    /// in einem Cache von vor dieser Fassung und bei einem alten Server.
+    var pausedSeconds: Int? = nil
 }
