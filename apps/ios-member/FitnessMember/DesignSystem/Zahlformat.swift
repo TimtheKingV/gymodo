@@ -383,6 +383,26 @@ enum Zahlformat {
         wert.ganzzahlig ? ganzzahl(zahl) : eineStelle(zahl)
     }
 
+    /// Zahl und Einheit getrennt, damit die Kachel die Einheit klein neben
+    /// die grosse Zahl setzen kann (Testnotiz 15.10., #4). Leer: nur die
+    /// Einheit, die ein neuer Wert haette. Stufe traegt ihre Einheit schon
+    /// im Namen der Kachel.
+    static func cardioTeile(_ wert: CardioWert, _ zahl: Double?) -> (zahl: String, einheit: String) {
+        guard let zahl else {
+            return ("–", wert == .strecke ? "km" : wert == .stufe ? "" : wert.einheit)
+        }
+        switch wert {
+        case .zeit:
+            let t = CardioEingabe.zeitTeile(Int(zahl.rounded()))
+            return t.h > 0 ? (String(format: "%d:%02d:%02d", t.h, t.m, t.s), "h")
+                           : (String(format: "%d:%02d", t.m, t.s), "min")
+        case .strecke:
+            return zahl < 1000 ? (ganzzahl(zahl), "m") : (eineStelle(zahl / 1000), "km")
+        case .stufe: return (ganzzahl(zahl), "")
+        default: return (cardioZahl(wert, zahl), wert.einheit)
+        }
+    }
+
     /// "8:30", "850 m", "12,3 km", "10,5 km/h", "−2,0 %", "142 W".
     static func cardioWert(_ wert: CardioWert, _ zahl: Double) -> String {
         switch wert {

@@ -18,6 +18,22 @@ enum CardioWert: String, CaseIterable, Codable, Hashable, Sendable {
         }
     }
 
+    /// Die Einheit, die ueber bzw. neben der Zahl steht (Testnotiz 15.10.,
+    /// #4). Zeit und Strecke haben je Feld eine eigene (siehe `ZeitFeld`,
+    /// `StreckeFeld`); hier steht, was ein einzelnes Feld traegt.
+    var einheit: String {
+        switch self {
+        case .zeit: "min"
+        case .strecke: "m"
+        case .stufe: "Stufe"
+        case .kmh: "km/h"
+        case .steigung: "%"
+        case .watt: "W"
+        case .frequenz: "/min"
+        case .kcal: "kcal"
+        }
+    }
+
     /// Ganzzahlig in der Datenbank -- alle ausser km/h und Steigung.
     var ganzzahlig: Bool { self != .kmh && self != .steigung }
 
@@ -128,6 +144,40 @@ enum CardioEingabe {
         if stunden > 24 { return pruefen(CardioWert.zeit.bereich.upperBound + 1, .zeit) }
         return pruefen(Double(stunden * 3600 + minuten * 60 + sekunden), .zeit)
     }
+
+    /// Die Felder der Zeiteingabe, in Tipp-Reihenfolge (Testnotiz 15.10., #2).
+    enum ZeitFeld: CaseIterable { case stunden, minuten, sekunden
+        var einheit: String {
+            switch self { case .stunden: "Stunden"; case .minuten: "Minuten"; case .sekunden: "Sekunden" }
+        }
+        var folgender: ZeitFeld? {
+            switch self { case .stunden: .minuten; case .minuten: .sekunden; case .sekunden: nil }
+        }
+    }
+
+    /// Springt der Cursor nach diesem Text ins naechste Feld? Stunden nach
+    /// einer Ziffer (0 bis 9 Stunden reichen am Geraet), Minuten nach zwei,
+    /// Sekunden sind das letzte Feld (Testnotiz 15.10., #2).
+    static func springt(von feld: ZeitFeld, text: String) -> Bool {
+        guard feld.folgender != nil else { return false }
+        let ziffern = text.filter(\.isNumber).count
+        return ziffern >= (feld == .stunden ? 1 : 2)
+    }
+
+    /// Die zwei Felder der Streckeneingabe (Testnotiz 15.10., #3).
+    enum StreckeFeld: CaseIterable { case kilometer, meter
+        var einheit: String { self == .kilometer ? "km" : "m" }
+    }
+
+    /// Kilometer und Meter, Meter 0-999; die Summe muss in den Bereich passen.
+    static func strecke(kilometer: Int, meter: Int) -> Result<Double, Fehler> {
+        guard kilometer >= 0, (0...999).contains(meter) else { return .failure(.keineZahl) }
+        // Wie bei der Zeit: ohne Schranke liefe die Multiplikation bei riesigen Eingaben ueber.
+        if kilometer > 200 { return pruefen(CardioWert.strecke.bereich.upperBound + 1, .strecke) }
+        return pruefen(Double(kilometer * 1000 + meter), .strecke)
+    }
+
+    static func streckeTeile(_ meter: Int) -> (km: Int, m: Int) { (meter / 1000, meter % 1000) }
 
     static func zeitTeile(_ sekunden: Int) -> (h: Int, m: Int, s: Int) {
         (sekunden / 3600, (sekunden % 3600) / 60, sekunden % 60)

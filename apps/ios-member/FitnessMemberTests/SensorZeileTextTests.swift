@@ -22,4 +22,20 @@ struct SensorZeileTextTests {
         #expect(SensorZeile.befestigungText(nil) == "Befestigung wählen")
     }
 }
+
+/// Testnotiz 15.10., #5: die Karte zeigt Name, Akku, Zustand -- keine Hz.
+struct SensorKarteAnzeigeTests {
+    @Test func verbundenZeigtNameUndAkku() {
+        let a = SensorKarte.anzeige(zustand: .verbunden(name: "WT901BLE67", akkuProzent: 82))
+        #expect(a == .init(titel: "WT901BLE67", untertitel: "Verbunden", akku: 82, ton: .verbunden))
+        #expect(!a.untertitel.contains("Hz"))
+    }
+
+    @Test func nichtVerbundenUndFehler() {
+        #expect(SensorKarte.anzeige(zustand: .aus).untertitel == "Nicht verbunden · Tippen zum Verbinden")
+        #expect(SensorKarte.anzeige(zustand: .sucht).untertitel == "Wird gesucht …")
+        #expect(SensorKarte.anzeige(zustand: .bluetoothNichtBereit(.ausgeschaltet)).ton == .warnung)
+        #expect(SensorKarte.anzeige(zustand: .aus, fehler: "Boom") == .init(titel: "Sensor", untertitel: "Boom", akku: nil, ton: .warnung))
+    }
+}
 #endif

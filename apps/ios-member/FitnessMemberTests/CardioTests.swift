@@ -143,6 +143,40 @@ struct CardioTests {
         #expect(t.h == 1 && t.m == 5 && t.s == 0)
     }
 
+    /// Testnotiz 15.10., #2: Stunden springen nach einer Ziffer (auch bei 0),
+    /// Minuten nach zwei, Sekunden nie.
+    @Test func cursorSpringtNachDerRegel() {
+        #expect(!CardioEingabe.springt(von: .stunden, text: ""))
+        #expect(CardioEingabe.springt(von: .stunden, text: "0"))
+        #expect(CardioEingabe.springt(von: .stunden, text: "1"))
+        #expect(!CardioEingabe.springt(von: .minuten, text: "1"))
+        #expect(CardioEingabe.springt(von: .minuten, text: "12"))
+        #expect(!CardioEingabe.springt(von: .sekunden, text: "59"))
+    }
+
+    /// Testnotiz 15.10., #3: Kilometer und Meter.
+    @Test func streckeAusKilometerUndMeter() {
+        #expect(CardioEingabe.strecke(kilometer: 2, meter: 500) == .success(2500))
+        #expect(CardioEingabe.strecke(kilometer: 0, meter: 850) == .success(850))
+        #expect(CardioEingabe.strecke(kilometer: 0, meter: 0) == .failure(.ausserhalb("Mindestens 1 m.")))
+        #expect(CardioEingabe.strecke(kilometer: 1, meter: 1000) == .failure(.keineZahl))
+        #expect(CardioEingabe.strecke(kilometer: 201, meter: 0) == .failure(.ausserhalb("Höchstens 200 km.")))
+        #expect(CardioEingabe.strecke(kilometer: Int.max, meter: 0) == .failure(.ausserhalb("Höchstens 200 km.")))
+        let t = CardioEingabe.streckeTeile(12_300)
+        #expect(t.km == 12 && t.m == 300)
+    }
+
+    /// Testnotiz 15.10., #4: Zahl und Einheit getrennt, auch leer.
+    @Test func kachelTeileTragenDieEinheit() {
+        #expect(Zahlformat.cardioTeile(.zeit, 510) == ("8:30", "min"))
+        #expect(Zahlformat.cardioTeile(.zeit, 3900) == ("1:05:00", "h"))
+        #expect(Zahlformat.cardioTeile(.zeit, nil) == ("–", "min"))
+        #expect(Zahlformat.cardioTeile(.strecke, 850) == ("850", "m"))
+        #expect(Zahlformat.cardioTeile(.strecke, 2500) == ("2,5", "km"))
+        #expect(Zahlformat.cardioTeile(.kmh, 10.5) == ("10,5", "km/h"))
+        #expect(Zahlformat.cardioTeile(.watt, nil) == ("–", "W"))
+    }
+
     /// Final-Review E: riesige Stunden duerfen nicht ueberlaufen (Trap).
     @Test func zeitMitRiesigenStundenIstAusserhalb() {
         #expect(CardioEingabe.zeit(stunden: 24, minuten: 0, sekunden: 0) == .success(86_400))
