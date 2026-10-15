@@ -168,6 +168,15 @@ struct LokaleSession: Codable, Equatable {
         return max(0, ende.timeIntervalSince(startedAt) - pausenDauer)
     }
 
+    /// Die Pausensumme fuer den Abschluss (Testnotiz 14.10., 18:45 #3/#4):
+    /// abgeschlossene Pausen plus eine laufende bis `jetzt`. Der Server
+    /// rechnet die Dauer bis zum Tipp auf "Beenden", deshalb zaehlt eine
+    /// offene Pause bis dahin mit.
+    func pausenSekunden(jetzt: Date) -> Int {
+        let laufend = pausiertSeit.map { max(0, jetzt.timeIntervalSince($0)) } ?? 0
+        return Int((pausenDauer + laufend).rounded(.down))
+    }
+
     /// Idempotent: ein zweiter Tap verschiebt den Pausenbeginn nicht.
     mutating func pausieren(jetzt: Date) {
         guard pausiertSeit == nil else { return }

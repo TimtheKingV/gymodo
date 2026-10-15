@@ -12,7 +12,7 @@ protocol GeraetLoading: Sendable {
     /// Am Geraetetyp: `studio` ist der Ort der Station, nil im Freien Training.
     func equipmentModelContext(modelId: String, studio: String?) async throws(APIError) -> TagContextResponse
     func recordCalibration(_ body: CalibrationWrite) async throws(APIError) -> RecordedCalibration
-    func completeSession(sessionId: UUID) async throws(APIError) -> CompletedSession
+    func completeSession(sessionId: UUID, pausedSeconds: Int) async throws(APIError) -> CompletedSession
 }
 
 extension APIClient: GeraetLoading {}

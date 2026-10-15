@@ -3,7 +3,7 @@ import Foundation
 extension WorkoutSessionStore {
     enum Ortswechselende: Equatable {
         case verworfen
-        case abgeschlossen(UUID)
+        case abgeschlossen(UUID, pausedSeconds: Int)
     }
 
     /// Beendet die Einheit lokal, sofort und ohne Netz: der Ortswechsel darf
@@ -14,15 +14,16 @@ extension WorkoutSessionStore {
             beenden()
             return .verworfen
         }
+        let pausen = session.pausenSekunden(jetzt: Date())
         beenden()
-        return .abgeschlossen(session.id)
+        return .abgeschlossen(session.id, pausedSeconds: pausen)
     }
 
     /// Meldet den Abschluss im Hintergrund. Fehler bleiben stumm: der Server
     /// beendet die Einheit nach vier Stunden ohne Satz selbst, und der
     /// Abschluss-Screen mit den Vorschlaegen entfaellt in diesem Pfad.
     static func melden(_ ende: Ortswechselende, loader: any GeraetLoading) async {
-        guard case .abgeschlossen(let id) = ende else { return }
-        _ = try? await loader.completeSession(sessionId: id)
+        guard case .abgeschlossen(let id, let pausen) = ende else { return }
+        _ = try? await loader.completeSession(sessionId: id, pausedSeconds: pausen)
     }
 }

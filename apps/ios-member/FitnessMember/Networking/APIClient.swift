@@ -87,8 +87,9 @@ actor APIClient {
         try await send("workout-sessions/\(sessionId.uuidString)/sets/\(setId.uuidString)", method: "PUT", body: body)
     }
 
-    func completeSession(sessionId: UUID) async throws(APIError) -> CompletedSession {
-        try await postNoBody("workout-sessions/\(sessionId.uuidString)/complete")
+    func completeSession(sessionId: UUID, pausedSeconds: Int) async throws(APIError) -> CompletedSession {
+        try await send("workout-sessions/\(sessionId.uuidString)/complete", method: "POST",
+                       body: ["pausedSeconds": pausedSeconds])
     }
 
     /// Eine Einheit, die es nicht (mehr) gibt, ist danach genau das -- kein
@@ -212,9 +213,8 @@ actor APIClient {
     }
 
     /// Schwesterliche Hilfsmethode zu postNoBody statt dessen
-    /// Verallgemeinerung: postNoBody(_:) bleibt fuer completeSession
-    /// unveraendert aufrufbar (keine bestehende Aufrufstelle aendert
-    /// sich), und postNoBody delegiert jetzt hierher statt die Anfrage
+    /// Verallgemeinerung: postNoBody(_:) bleibt fuer reopenSession
+    /// aufrufbar, und postNoBody delegiert hierher statt die Anfrage
     /// selbst zu bauen -- kein doppelter Code, kleinster Eingriff.
     private func sendNoBody<T: Decodable>(_ path: String, method: String) async throws(APIError) -> T {
         try await execute(path: path, method: method, bodyData: nil)
