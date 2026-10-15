@@ -30,7 +30,13 @@ enum Ort: Equatable, Sendable, Codable {
 @MainActor
 @Observable
 final class CatalogStore {
-    private(set) var bootstrap: BootstrapResponse?
+    private(set) var bootstrap: BootstrapResponse? {
+        didSet { bootstrapStand += 1 }
+    }
+    /// Zaehlt jede Zuweisung an `bootstrap` -- ein billiger Schluessel fuer
+    /// Views, die daraus teuer ableiten (Geraetesuche, Offline-Spec 1b), statt
+    /// den ganzen Bootstrap bei jedem Durchlauf auf Gleichheit zu pruefen.
+    private(set) var bootstrapStand = 0
     private(set) var loadState: CatalogLoadState = .idle
     private(set) var pendingWrites: [PendingSetWrite]
     /// Der gewaehlte Ort. Ohne gespeicherte Wahl `.freiesTraining` als

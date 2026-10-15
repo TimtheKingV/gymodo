@@ -73,6 +73,17 @@ private func tempDirectory() -> URL {
 @Suite("CatalogStore")
 @MainActor
 struct CatalogStoreTests {
+    @Test("bootstrapStand zaehlt jede neue Fassung")
+    func bootstrapStandZaehlt() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setBootstrapResult(.success(emptyBootstrap()))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        #expect(store.bootstrapStand == 0)
+        await store.load()
+        await store.load()
+        #expect(store.bootstrapStand == 2)
+    }
+
     @Test("load() ohne Studios ergibt loaded")
     func loadWithoutStudio() async {
         let loader = FakeBootstrapLoader()

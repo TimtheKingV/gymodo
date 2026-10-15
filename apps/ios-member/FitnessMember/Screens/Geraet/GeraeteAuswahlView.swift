@@ -48,6 +48,19 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     }
 
     @State private var suchtext = ""
+    /// Das Suchergebnis, entprellt berechnet statt in jedem body-Durchlauf
+    /// (Offline-Spec 1b): vorher filterte jeder Tastendruck den ganzen
+    /// Katalog auf dem Main-Thread. nil bis zur ersten Berechnung --
+    /// `gruppen` rechnet dann einmal direkt, damit der erste Frame stimmt.
+    @State private var ergebnis: GeraeteAuswahl.Gruppen?
+    @State private var stationen: [Station] = []
+
+    private struct Suchschluessel: Equatable {
+        let text: String
+        let ort: Ort
+        let gruppe: Geraetegruppe?
+        let stand: Int
+    }
     /// Nur fuer diesen Screen, nicht `katalog.activeStudioId`: sonst
     /// wechselte eine Suche stillschweigend das aktive Studio, und das
     /// Mitglied faende danach auf Home ein anderes vor. Bleibt nil, bis das
@@ -117,6 +130,15 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
             await videos.laden(von: fotoLader)
             fotos = await geladeneFotos
         }
+        .task(id: Suchschluessel(text: suchtext, ort: ort, gruppe: gruppe, stand: katalog.bootstrapStand)) {
+            // Leeren und erster Durchlauf sofort, Tippen entprellt.
+            if !suchtext.isEmpty && ergebnis != nil {
+                try? await Task.sleep(for: .milliseconds(150))
+                guard !Task.isCancelled else { return }
+            }
+            ergebnis = berechneGruppen(suchtext)
+            stationen = katalog.bootstrap.map { GeraeteAuswahl.stationen(bootstrap: $0, ort: ort) } ?? []
+        }
     }
 
     // MARK: - Kopf
@@ -152,7 +174,6 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
             let anzahl = gruppen.liste.count
             return anzahl == 1 ? "1 Gerät" : "\(anzahl) Geräte"
         }
-        let stationen = katalog.bootstrap.map { GeraeteAuswahl.stationen(bootstrap: $0, ort: ort) } ?? []
         // Typen statt Geraete: Freies Training oder ein Studio ohne Geraete.
         if ort == .freiesTraining || stationen.contains(where: { $0.machineId == nil }) {
             return "Alle Gymtavo-Geräte"
@@ -214,10 +235,12 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     // MARK: - Inhalt
 
     private var gruppen: GeraeteAuswahl.Gruppen {
-        guard let bootstrap = katalog.bootstrap else {
-            return .leer
-        }
-        return GeraeteAuswahl.gruppen(bootstrap: bootstrap, ort: ort, suchtext: suchtext, gruppe: gruppe)
+        ergebnis ?? berechneGruppen(suchtext)
+    }
+
+    private func berechneGruppen(_ text: String) -> GeraeteAuswahl.Gruppen {
+        guard let bootstrap = katalog.bootstrap else { return .leer }
+        return GeraeteAuswahl.gruppen(bootstrap: bootstrap, ort: ort, suchtext: text, gruppe: gruppe)
     }
 
     @ViewBuilder
