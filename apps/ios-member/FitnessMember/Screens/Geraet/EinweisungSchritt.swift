@@ -10,6 +10,7 @@ import SwiftUI
 /// weiter, weil es keine Historie gibt. Es gibt eine Variante ohne Video,
 /// die als Artboard fehlt: ein Geraet ohne Video ist nutzbar (M1-Spec SS8.2).
 struct EinweisungSchritt: View {
+    @Environment(UebungsVideoVorrat.self) private var vorrat
     let modell: GeraetModel
     let titel: String
     /// "Einstellungen erfassen", ohne Einstellparameter "Weiter".
@@ -119,25 +120,29 @@ struct EinweisungSchritt: View {
     /// M1-Spec SS7.3: "Fehlt ein Einweisungsvideo ... ist das kein
     /// Fehlerzustand: der Schritt zeigt Foto und Einstellhinweise ohne
     /// Player." Dasselbe AsyncImage/photoUrl-Muster wie GeraetErkanntView.
+    ///
+    /// Offline läuft das Video aus der Ablage (Offline-Spec 3c).
     @ViewBuilder
     private var medien: some View {
-        if let video = modell.aktiveUebung?.videoURL {
+        let video = modell.aktiveUebung?.videoURL
+        if EinweisungMedien.zeigtVideokachel(kontextGeladen: modell.kontext != nil,
+                                             kontextVideo: video,
+                                             vorratKennt: vorrat.quellen[modell.uebungId] != nil) {
             // Stumm in Schleife und sofort, ohne Tipp auf Play (Testnotiz
-            // 11.10., #7). VideoPlayer startete schwarz, streamte bei jedem
-            // Oeffnen neu und baute den Spieler bei jedem Rendern neu auf.
+            // 11.10., #7). Ohne URL findet die Kachel die zuletzt abgelegte
+            // Datei; der Hinweis liegt darunter und bleibt nur sichtbar,
+            // wenn keine da ist.
             UebungsVideoKachel(exerciseId: modell.uebungId, hoehe: 200, ersatz: video) {
                 RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                     .fill(DesignSystem.Color.surfaceRaised)
+                    .overlay {
+                        if modell.kontext == nil {
+                            Text("Einweisungsvideo braucht Empfang.")
+                                .font(.system(size: 13))
+                                .foregroundStyle(DesignSystem.Color.textFaint)
+                        }
+                    }
             }
-        } else if modell.kontext == nil {
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .fill(DesignSystem.Color.surfaceRaised)
-                .frame(height: 200)
-                .overlay(
-                    Text("Einweisungsvideo braucht Empfang.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(DesignSystem.Color.textFaint)
-                )
         } else {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
                 geraetefoto
