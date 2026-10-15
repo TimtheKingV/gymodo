@@ -24,9 +24,15 @@ final class SessionStore {
 
     private let jetzt: () -> Date
 
-    init(backend: AuthBackend, jetzt: @escaping () -> Date = Date.init) {
+    /// Wie lange `restoreSession()` auf den Token-Refresh wartet, bevor es
+    /// die gespeicherte Session nimmt (Offline-Spec 4a, Abnahme 1).
+    private let restoreFrist: Duration
+
+    init(backend: AuthBackend, jetzt: @escaping () -> Date = Date.init,
+         restoreFrist: Duration = .seconds(2)) {
         self.backend = backend
         self.jetzt = jetzt
+        self.restoreFrist = restoreFrist
     }
 
     /// false, bis `restoreSession()` einmal gelaufen ist -- und zwar
@@ -42,11 +48,47 @@ final class SessionStore {
     /// war (Testnotiz vom 19. September, Eintrag 1).
     private(set) var wiederhergestellt = false
 
+    /// Wartet hoechstens `restoreFrist` auf den Token-Refresh. Bei 100 %
+    /// Paketverlust haengt der sonst ~30 s (drei 10-s-Timeouts samt
+    /// Wiederholungen in supabase-swift), und so lange stuende der
+    /// Ladeschirm -- Abnahme 1 verlangt aber "sofort da" (Offline-Spec 4a).
+    /// Nach der Frist gilt die gespeicherte Session, auch abgelaufen; der
+    /// Refresh laeuft im Hintergrund weiter und hat das letzte Wort.
     func restoreSession() async {
-        session = await backend.currentSession()
+        let backend = self.backend
+        let refresh = Task { await backend.currentSession() }
+        let (strom, eingang) = AsyncStream.makeStream(of: ErsteAntwort.self)
+        Task { eingang.yield(.backend(await refresh.value)) }
+        let frist = Task { [restoreFrist] in
+            try? await Task.sleep(for: restoreFrist)
+            eingang.yield(.frist)
+        }
+        let erste = await strom.first { @Sendable _ in true }
+        eingang.finish()
+        frist.cancel()
+
+        if case .backend(let ergebnis)? = erste {
+            session = ergebnis
+        } else {
+            let gespeichert = await backend.gespeicherteSession()
+            session = gespeichert
+            Task { [weak self] in
+                let frisch = await refresh.value
+                // Hat sich in der Zwischenzeit jemand an- oder abgemeldet,
+                // gilt das, nicht der verspaetete Refresh. nil heisst echter
+                // Auth-Fehler: zurueck zum Login.
+                guard let self, self.session == gespeichert else { return }
+                self.session = frisch
+            }
+        }
         // Auch wenn nichts zurueckkam: der Versuch ist gelaufen, und ab
         // jetzt heisst `session == nil` wirklich "nicht angemeldet".
         wiederhergestellt = true
+    }
+
+    private enum ErsteAntwort: Sendable {
+        case backend(Session?)
+        case frist
     }
 
     /// Fuer den tokenProvider des APIClient: fragt immer das Backend, nie die

@@ -55,6 +55,10 @@ final class SupabaseAuthBackend: AuthBackend {
         }
     }
 
+    func gespeicherteSession() async -> Session? {
+        client.currentSession.map(map)
+    }
+
     /// nil = keine Antwort. Andere Auth-Fehler (keine Session, kaputter JWT)
     /// zaehlen wie ein 401: dauerhaft.
     private static func status(_ fehler: any Error) -> Int? {

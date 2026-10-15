@@ -18,7 +18,28 @@ actor FakeAuthBackend: AuthBackend {
 
     enum TestError: Error { case notConfigured, invalidCredentials }
 
-    func currentSession() async -> Session? { storedSession }
+    func currentSession() async -> Session? {
+        angefragt = true
+        guard haengt else { return storedSession }
+        return await withCheckedContinuation { wartend = $0 }
+    }
+
+    func gespeicherteSession() async -> Session? { storedSession }
+
+    /// Haengender Refresh (Offline-Spec 4a, Abnahme 1): `currentSession()`
+    /// kehrt erst mit `freigeben(mit:)` zurueck -- wie supabase-swift bei
+    /// 100 % Paketverlust mit seinen Timeouts und Wiederholungen.
+    private(set) var haengt = false
+    private(set) var angefragt = false
+    private var wartend: CheckedContinuation<Session?, Never>?
+
+    func setHaengt(_ wert: Bool) { haengt = wert }
+
+    func freigeben(mit session: Session?) {
+        haengt = false
+        wartend?.resume(returning: session)
+        wartend = nil
+    }
 
     func signIn(email: String, password: String) async throws -> Session {
         signInCalls.append((email, password))
@@ -274,6 +295,63 @@ struct SessionStoreTests {
         let store = SessionStore(backend: backend)
         await store.restoreSession()
         #expect(store.session == alt)
+    }
+
+    /// Abnahme 1 (Offline-Spec 4a): abgelaufener Token bei 100 % Verlust --
+    /// der Refresh haengt bis zu ~30 s, die gespeicherte Session muss nach
+    /// der kurzen Frist trotzdem da sein.
+    @Test("restoreSession nimmt nach der Frist die gespeicherte Session, ein spaeteres nil meldet ab",
+          .timeLimit(.minutes(1)))
+    func restoreNachFristMitGespeicherterSession() async throws {
+        let backend = FakeAuthBackend()
+        let alt = Session(accessToken: "alt", userId: "u1", email: "a@b.de", expiresAt: .distantPast)
+        await backend.setStoredSession(alt)
+        await backend.setHaengt(true)
+        let store = SessionStore(backend: backend, restoreFrist: .milliseconds(50))
+        await store.restoreSession()
+        #expect(store.session == alt)
+        #expect(store.wiederhergestellt)
+
+        // Der Refresh laeuft weiter und endet mit echtem Auth-Fehler.
+        while await !backend.angefragt { await Task.yield() }
+        await backend.freigeben(mit: nil)
+        let frist = ContinuousClock.now + .seconds(2)
+        while store.session != nil, ContinuousClock.now < frist {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(store.session == nil)
+    }
+
+    @Test("restoreSession uebernimmt einen spaeten frischen Token", .timeLimit(.minutes(1)))
+    func restoreNachFristMitSpaeterFrischerSession() async throws {
+        let backend = FakeAuthBackend()
+        let alt = Session(accessToken: "alt", userId: "u1", email: "a@b.de", expiresAt: .distantPast)
+        let frisch = Session(accessToken: "frisch", userId: "u1", email: "a@b.de", expiresAt: .distantFuture)
+        await backend.setStoredSession(alt)
+        await backend.setHaengt(true)
+        let store = SessionStore(backend: backend, restoreFrist: .milliseconds(50))
+        await store.restoreSession()
+        #expect(store.session == alt)
+
+        while await !backend.angefragt { await Task.yield() }
+        await backend.freigeben(mit: frisch)
+        let frist = ContinuousClock.now + .seconds(2)
+        while store.session != frisch, ContinuousClock.now < frist {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(store.session == frisch)
+    }
+
+    @Test("restoreSession wartet nicht auf die Frist, wenn das Backend sofort antwortet",
+          .timeLimit(.minutes(1)))
+    func restoreOhneWartenAufFrist() async {
+        let backend = FakeAuthBackend()
+        let store = SessionStore(backend: backend, restoreFrist: .seconds(30))
+        let start = ContinuousClock.now
+        await store.restoreSession()
+        #expect(ContinuousClock.now - start < .seconds(5))
+        #expect(store.session == nil)
+        #expect(store.wiederhergestellt)
     }
 
     @Test("Refresh: keine Antwort und 5xx sind voruebergehend, 4xx nicht",
