@@ -22,8 +22,11 @@ final class SessionStore {
     /// deshalb liest die Wurzel sie nicht -- genau das ist der Punkt.
     private var offeneWiederherstellung: Session?
 
-    init(backend: AuthBackend) {
+    private let jetzt: () -> Date
+
+    init(backend: AuthBackend, jetzt: @escaping () -> Date = Date.init) {
         self.backend = backend
+        self.jetzt = jetzt
     }
 
     /// false, bis `restoreSession()` einmal gelaufen ist -- und zwar
@@ -50,8 +53,13 @@ final class SessionStore {
     /// zwischengespeicherte `session`-Property. Letztere wird nur beim Start
     /// und bei expliziten Anmeldungen geschrieben und waere nach einem
     /// automatischen Token-Refresh im Keychain-Backend veraltet.
+    ///
+    /// Ein abgelaufener Token kommt nie zurueck: offline liefert das Backend
+    /// die gespeicherte, abgelaufene Session (Offline-Spec 4a), und ihr Token
+    /// waere beim Server ein 401 (Offline-Spec 4b).
     func currentAccessToken() async -> String? {
-        await backend.currentSession()?.accessToken
+        guard let session = await backend.currentSession(), session.expiresAt > jetzt() else { return nil }
+        return session.accessToken
     }
 
     func signIn(email: String, password: String) async throws(AuthError) {

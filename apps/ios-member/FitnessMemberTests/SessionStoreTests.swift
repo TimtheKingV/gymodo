@@ -243,8 +243,47 @@ struct SessionStoreTests {
             try await store.changePassword(currentPassword: "falsch", newPassword: "neuesPasswort1")
         }
     }
+    @Test("abgelaufener Token wird nicht verwendet")
+    func abgelaufenerTokenWirdNichtVerwendet() async {
+        let backend = FakeAuthBackend()
+        let jetzt = Date(timeIntervalSince1970: 1_000_000)
+        await backend.setStoredSession(Session(accessToken: "alt", userId: "u1", email: "a@b.de",
+                                               expiresAt: jetzt.addingTimeInterval(-1)))
+        let store = SessionStore(backend: backend, jetzt: { jetzt })
+        #expect(await store.currentAccessToken() == nil)
+    }
+
+    @Test("gueltiger Token wird verwendet")
+    func gueltigerTokenWirdVerwendet() async {
+        let backend = FakeAuthBackend()
+        let jetzt = Date(timeIntervalSince1970: 1_000_000)
+        await backend.setStoredSession(Session(accessToken: "neu", userId: "u1", email: "a@b.de",
+                                               expiresAt: jetzt.addingTimeInterval(600)))
+        let store = SessionStore(backend: backend, jetzt: { jetzt })
+        #expect(await store.currentAccessToken() == "neu")
+    }
+
+    /// Offline-Start (Offline-Spec 4a): eine abgelaufene Session aus der
+    /// Keychain meldet trotzdem an -- der Login-Screen kommt nur bei echtem
+    /// Auth-Fehler.
+    @Test("restoreSession uebernimmt auch eine abgelaufene Session")
+    func restoreMitAbgelaufenerSession() async {
+        let backend = FakeAuthBackend()
+        let alt = Session(accessToken: "alt", userId: "u1", email: "a@b.de", expiresAt: .distantPast)
+        await backend.setStoredSession(alt)
+        let store = SessionStore(backend: backend)
+        await store.restoreSession()
+        #expect(store.session == alt)
+    }
+
+    @Test("Refresh: keine Antwort und 5xx sind voruebergehend, 4xx nicht",
+          arguments: [(Int?.none, true), (503, true), (500, true), (400, false), (401, false)])
+    func refreshFehler(_ fall: (Int?, Bool)) {
+        #expect(RefreshFehler.istVoruebergehend(status: fall.0) == fall.1)
+    }
 }
 
 private extension FakeAuthBackend {
     func setBehavior(_ value: Behavior) { behavior = value }
+    func setStoredSession(_ session: Session?) { storedSession = session }
 }

@@ -1,8 +1,25 @@
 import Foundation
 import Auth
 
+/// Ob ein gescheiterter Token-Refresh voruebergehend war (Offline-Spec 4a).
+/// `status` ist der HTTP-Status der Antwort des Auth-Servers, nil heisst:
+/// keine Antwort -- Funkloch, Timeout.
+enum RefreshFehler {
+    static func istVoruebergehend(status: Int?) -> Bool {
+        guard let status else { return true }
+        return status >= 500
+    }
+}
+
 final class SupabaseAuthBackend: AuthBackend {
     private let client: AuthClient
+
+    /// 10 s statt 60 s auch fuer den Token-Refresh (Offline-Spec 2).
+    private static let netz: URLSession = {
+        let konfiguration = URLSessionConfiguration.default
+        konfiguration.timeoutIntervalForRequest = 10
+        return URLSession(configuration: konfiguration)
+    }()
 
     /// Kein eigener authLocalStorage-Parameter, der etwas Eigenes ueber
     /// UserDefaults/SwiftData baut: KeychainLocalStorage ist die Keychain-
@@ -20,13 +37,30 @@ final class SupabaseAuthBackend: AuthBackend {
                 "apikey": AppConfig.supabaseAnonKey,
                 "Authorization": "Bearer \(AppConfig.supabaseAnonKey)",
             ],
-            localStorage: KeychainLocalStorage()
+            localStorage: KeychainLocalStorage(),
+            fetch: { try await SupabaseAuthBackend.netz.data(for: $0) }
         )
     }
 
+    /// Scheitert der Refresh am Netz, gilt die gespeicherte Session weiter --
+    /// auch abgelaufen. Sonst landete, wer im Keller die App oeffnet, auf dem
+    /// Login-Screen (Offline-Spec 4a). Den abgelaufenen Token gibt
+    /// SessionStore.currentAccessToken() nie an den Server weiter.
     func currentSession() async -> Session? {
-        guard let session = try? await client.session else { return nil }
-        return map(session)
+        do {
+            return map(try await client.session)
+        } catch {
+            guard RefreshFehler.istVoruebergehend(status: Self.status(error)) else { return nil }
+            return client.currentSession.map(map)
+        }
+    }
+
+    /// nil = keine Antwort. Andere Auth-Fehler (keine Session, kaputter JWT)
+    /// zaehlen wie ein 401: dauerhaft.
+    private static func status(_ fehler: any Error) -> Int? {
+        guard let auth = fehler as? Auth.AuthError else { return nil }
+        if case .api(_, _, _, let antwort) = auth { return antwort.statusCode }
+        return 401
     }
 
     func signIn(email: String, password: String) async throws -> Session {
