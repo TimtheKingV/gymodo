@@ -7,7 +7,7 @@ struct FitnessMemberApp: App {
     @State private var workoutStore = WorkoutSessionStore()
     @State private var kurseStore: KurseStore
     @State private var verlaufStore: VerlaufStore
-    @State private var netzwerkMonitor = NetzwerkMonitor()
+    @State private var netzwerkMonitor: NetzwerkMonitor
     @State private var pendingTagStore = PendingTagStore()
     /// Die Uebungsvideos fuer Training UND Home: die Fortschrittszeilen auf
     /// Home zeigen sie seit der Testnotiz 11.10. (#2) ebenfalls. Ein Vorrat
@@ -43,8 +43,12 @@ struct FitnessMemberApp: App {
         _satzZaehler = State(initialValue: ZaehlerKoordinator(quelle: quelle))
         #endif
 
+        let netz = NetzwerkMonitor()
+        _netzwerkMonitor = State(initialValue: netz)
         let session = SessionStore(backend: SupabaseAuthBackend())
-        let client = APIClient(baseURL: AppConfig.apiBaseURL) { await session.currentAccessToken() }
+        let client = APIClient(baseURL: AppConfig.apiBaseURL, istOnline: { await netz.istOnline }) {
+            await session.currentAccessToken()
+        }
         _sessionStore = State(initialValue: session)
         _catalogStore = State(initialValue: CatalogStore(loader: client, pendingWriteStore: PendingWriteStore()))
         _kurseStore = State(initialValue: KurseStore(loader: client, fileStore: KurseFileStore()))

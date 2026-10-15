@@ -25,11 +25,13 @@ final class StubURLProtocol: URLProtocol {
     override func stopLoading() {}
 }
 
-func stubbedClient(tokenProvider: @escaping @Sendable () async -> String? = { "test-token" }) -> APIClient {
+func stubbedClient(istOnline: @escaping @Sendable () async -> Bool = { true },
+                   tokenProvider: @escaping @Sendable () async -> String? = { "test-token" }) -> APIClient {
     let configuration = URLSessionConfiguration.ephemeral
     configuration.protocolClasses = [StubURLProtocol.self]
     let session = URLSession(configuration: configuration)
-    return APIClient(baseURL: URL(string: "https://example.test/api/v1")!, session: session, tokenProvider: tokenProvider)
+    return APIClient(baseURL: URL(string: "https://example.test/api/v1")!, session: session,
+                     istOnline: istOnline, tokenProvider: tokenProvider)
 }
 
 /// .serialized ist Pflicht: alle Tests hier schreiben denselben statischen
@@ -71,6 +73,33 @@ struct APIClientTests {
         await #expect(throws: APIError.validation(message: "Eine Problemursache setzt das Problemkennzeichen voraus.")) {
             try await client.bootstrap()
         }
+    }
+
+    final class Zaehler: @unchecked Sendable { var anfragen = 0 }
+
+    @Test("offline laut Monitor: sofort .offline, kein Request")
+    func offlineOhneRequest() async {
+        let zaehler = Zaehler()
+        StubURLProtocol.handler = { _ in zaehler.anfragen += 1; return (200, Data("{}".utf8)) }
+        let client = stubbedClient(istOnline: { false })
+        await #expect(throws: APIError.offline) { try await client.bootstrap() }
+        #expect(zaehler.anfragen == 0)
+    }
+
+    @Test("ohne Token: .offline, kein Request ohne Authorization")
+    func ohneTokenKeinRequest() async {
+        let zaehler = Zaehler()
+        StubURLProtocol.handler = { _ in zaehler.anfragen += 1; return (401, Data("{}".utf8)) }
+        let client = stubbedClient(tokenProvider: { nil })
+        await #expect(throws: APIError.offline) { try await client.bootstrap() }
+        await #expect(throws: APIError.offline) { try await client.deleteSession(sessionId: "x") }
+        #expect(zaehler.anfragen == 0)
+    }
+
+    @Test("Standard-Session wartet hoechstens 10 s")
+    func standardTimeout() {
+        #expect(APIClient.standardSession.configuration.timeoutIntervalForRequest == 10)
+        #expect(APIClient.standardSession.configuration.waitsForConnectivity == false)
     }
 
     @Test("sendet den Bearer-Token aus dem tokenProvider")

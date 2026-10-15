@@ -4,16 +4,28 @@ actor APIClient {
     private let baseURL: URL
     private let session: URLSession
     private let tokenProvider: @Sendable () async -> String?
+    private let istOnline: @Sendable () async -> Bool
     private let decoder = JSONDecoder()
     private let encoder = JSONEncoder()
 
+    /// 10 s statt der 60 s von URLSession.shared: im Keller mit halbem Netz
+    /// lief jeder Spinner eine Minute ins Leere (Offline-Spec 2).
+    static let standardSession: URLSession = {
+        let konfiguration = URLSessionConfiguration.default
+        konfiguration.timeoutIntervalForRequest = 10
+        konfiguration.waitsForConnectivity = false
+        return URLSession(configuration: konfiguration)
+    }()
+
     init(
         baseURL: URL,
-        session: URLSession = .shared,
+        session: URLSession = APIClient.standardSession,
+        istOnline: @escaping @Sendable () async -> Bool = { true },
         tokenProvider: @escaping @Sendable () async -> String?
     ) {
         self.baseURL = baseURL
         self.session = session
+        self.istOnline = istOnline
         self.tokenProvider = tokenProvider
     }
 
@@ -225,12 +237,8 @@ actor APIClient {
     }
 
     private func execute<T: Decodable>(url: URL, method: String, bodyData: Data?) async throws(APIError) -> T {
-        var request = URLRequest(url: url)
-        request.httpMethod = method
+        var request = try await anfrage(url: url, method: method)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        if let token = await tokenProvider() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
         if let bodyData {
             request.httpBody = bodyData
         }
@@ -256,12 +264,21 @@ actor APIClient {
         throw APIError.server(message: "Unerwarteter Fehler.")
     }
 
-    private func executeNoContent(path: String, method: String) async throws(APIError) {
-        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+    /// Meldet der Monitor offline, gibt es keinen Versuch -- er endete erst
+    /// nach dem Timeout. Ohne Token auch nicht: ein Request ohne
+    /// Authorization kaeme als 401 zurueck, und die Warteschlange hielt das
+    /// fuer endgueltig (Offline-Spec 4b).
+    private func anfrage(url: URL, method: String) async throws(APIError) -> URLRequest {
+        guard await istOnline() else { throw APIError.offline }
+        guard let token = await tokenProvider() else { throw APIError.offline }
+        var request = URLRequest(url: url)
         request.httpMethod = method
-        if let token = await tokenProvider() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        return request
+    }
+
+    private func executeNoContent(path: String, method: String) async throws(APIError) {
+        let request = try await anfrage(url: baseURL.appendingPathComponent(path), method: method)
 
         let data: Data
         let response: URLResponse
