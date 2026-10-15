@@ -80,7 +80,8 @@ struct GeraeteAuswahlTests {
         maschinen: [String],
         saetze: [(machine: String, uebung: String, kg: Double, wann: String)] = [],
         typen: [String] = [],
-        typSaetze: [(modell: String, uebung: String, kg: Double, wann: String)] = []
+        typSaetze: [(modell: String, uebung: String, kg: Double, wann: String)] = [],
+        cardioSatzJSON: String? = nil
     ) -> BootstrapResponse {
         let typSaetzeJSON = typSaetze.map {
             """
@@ -98,6 +99,7 @@ struct GeraeteAuswahlTests {
               "performedAt": "\($0.wann)" }
             """
         }.joined(separator: ", ")
+        let alleSaetzeJSON = [saetzeJSON, cardioSatzJSON].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", ")
         return GeraetTestdaten.dekodiere("""
         {
           "member": { "displayName": "Tim", "goals": {"weeklyDays": null, "targetWeight": null} },
@@ -107,7 +109,7 @@ struct GeraeteAuswahlTests {
           ],
           "machines": [\(maschinen.joined(separator: ", "))],
           "calibrations": [],
-          "lastSets": [\(saetzeJSON)],
+          "lastSets": [\(alleSaetzeJSON)],
           "catalog": \(katalogJSON),
           "lastTypeSets": [\(typSaetzeJSON)]
         }
@@ -431,6 +433,27 @@ struct GeraeteAuswahlTests {
         // Die Zeile schreibt die Belastung in der Einheit des Geraets.
         #expect(gruppen.zuletzt.first?.zuletzt == GeraeteAuswahl.Zuletzt(
             performedAt: zeit("2026-09-07T10:00:00Z"), load: 8.5, loadUnit: .kmh))
+    }
+
+    @Test func zuletztEinesCardioSatzesNenntDieCardioWerte() {
+        let daten = bootstrap(
+            maschinen: [maschineJSON(id: "m1", name: "Rudergerät", label: "4", ort: nil, besuche: 2,
+                                     kategorie: "cardio", einheit: "level")],
+            cardioSatzJSON: """
+            { "machineId": "m1", "exerciseId": "u1", "load": null, "volume": null, "rir": null,
+              "performedAt": "2026-09-07T10:00:00Z", "cardio": { "zeit": 510, "strecke": 2000 } }
+            """)
+
+        let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
+
+        let zuletzt = gruppen.zuletzt.first?.zuletzt
+        #expect(zuletzt?.cardio == CardioWerte(zeit: 510, strecke: 2000))
+        #expect(zuletzt?.werte == "8:30 · 2,0 km")
+    }
+
+    @Test func zuletztEinesKraftSatzesNenntDieBelastungMitEinheit() {
+        let z = GeraeteAuswahl.Zuletzt(performedAt: Date(), load: 8.5, loadUnit: .kmh)
+        #expect(z.werte == "8,5 km/h")
     }
 
     @Test func mitSuchtextIstDieListeFlachUeberAlleKacheln() {

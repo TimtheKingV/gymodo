@@ -9,6 +9,7 @@ import {
   type LoadUnit,
   type VolumeKind,
 } from "./belastung.js";
+import { cardioListeSchema, type CardioWert } from "./cardio.js";
 import { DomainError } from "./errors.js";
 import { VIDEO_BUCKET } from "./media.js";
 import { requireStudioStaff } from "./studio.js";
@@ -89,6 +90,8 @@ function pruefeNebenbelastung(werte: Nebenbelastung, ctx: z.RefinementCtx): void
   }
 }
 
+const CARDIO_OHNE_TYP = "Ein Cardio-Gerät ohne Typ braucht mindestens einen Wert.";
+
 export const equipmentModelInputSchema = z
   .object({
     studioId: uuid,
@@ -106,9 +109,19 @@ export const equipmentModelInputSchema = z
     catalogModelId: uuid.nullish(),
     /** Herstellermodell (Spec 2026-10-10 ..., 6.4); nur mit passendem Typ. */
     catalogProductId: uuid.nullish(),
+    /** Leer = wie der Gymtavo-Typ (Testnotiz 14.10., 18:45 #7). */
+    cardioWerte: cardioListeSchema.default([]),
     ...nebenbelastungFelder,
   })
   .superRefine((werte, ctx) => {
+    // Ohne Typ gibt es nichts zu erben: ein eigenes Cardio-Geraet muss
+    // seine Werte selbst nennen.
+    if (werte.category === "cardio" && !werte.catalogModelId && werte.cardioWerte.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: CARDIO_OHNE_TYP,
+      });
+    }
     if (
       werte.loadMax !== null &&
       werte.loadMax !== undefined &&
@@ -189,6 +202,7 @@ export async function createEquipmentModel(
       secondary_max: werte.secondaryMax ?? null,
       catalog_model_id: werte.catalogModelId ?? null,
       catalog_product_id: werte.catalogProductId ?? null,
+      cardio_werte: werte.cardioWerte,
     })
     .select("id")
     .single<{ id: string }>();
@@ -212,6 +226,7 @@ export const equipmentModelPatchSchema = z
     loadMin: z.number().min(0).optional(),
     loadMax: z.number().positive().nullish(),
     catalogModelId: uuid.nullish(),
+    cardioWerte: cardioListeSchema.optional(),
     ...nebenbelastungFelder,
   })
   .superRefine(pruefeNebenbelastung);
@@ -226,6 +241,30 @@ export async function updateEquipmentModel(
   const { studioId } = await studioOfModel(client, equipmentModelId);
   await requireStudioStaff(client, studioId, userId);
 
+  // Dieselbe Regel wie beim Anlegen, auf den Stand nach dem Patch: sonst
+  // machte das Abwaehlen aller Haken, der Wechsel auf Cardio oder das
+  // Loesen des Typs aus einem Cardio-Geraet still ein Kraftgeraet ohne Werte.
+  if (
+    werte.cardioWerte !== undefined ||
+    werte.category !== undefined ||
+    werte.catalogModelId !== undefined
+  ) {
+    const { data: aktuell, error: leseFehler } = await client
+      .from("equipment_models")
+      .select("category, catalog_model_id, cardio_werte")
+      .eq("id", equipmentModelId)
+      .single<{ category: Category; catalog_model_id: string | null; cardio_werte: CardioWert[] }>();
+    if (leseFehler || !aktuell) {
+      throw new DomainError("internal", leseFehler?.message ?? "Modell nicht gelesen.");
+    }
+    const category = werte.category ?? aktuell.category;
+    const typId = werte.catalogModelId !== undefined ? werte.catalogModelId : aktuell.catalog_model_id;
+    const liste = werte.cardioWerte ?? aktuell.cardio_werte ?? [];
+    if (category === "cardio" && !typId && liste.length === 0) {
+      throw new DomainError("validation_failed", CARDIO_OHNE_TYP);
+    }
+  }
+
   const zeile: Record<string, unknown> = {};
   if (werte.name !== undefined) zeile.name = werte.name;
   if (werte.manufacturer !== undefined) zeile.manufacturer = werte.manufacturer;
@@ -235,6 +274,7 @@ export async function updateEquipmentModel(
   if (werte.loadMin !== undefined) zeile.load_min = werte.loadMin;
   if (werte.loadMax !== undefined) zeile.load_max = werte.loadMax;
   if (werte.catalogModelId !== undefined) zeile.catalog_model_id = werte.catalogModelId;
+  if (werte.cardioWerte !== undefined) zeile.cardio_werte = werte.cardioWerte;
   // Die Nebenbelastung wird als Ganzes gesetzt oder als Ganzes geloescht
   // (null in allen vier Feldern) -- pruefeNebenbelastung laesst nichts
   // dazwischen durch, und der Constraint aus 0046 auch nicht.
@@ -913,6 +953,8 @@ export type CatalogModel = {
   secondaryStep: number | null;
   secondaryMin: number | null;
   secondaryMax: number | null;
+  /** Eigene Cardio-Werte; leer = wie der Typ (Testnotiz 14.10., 18:45 #7). */
+  cardioWerte: CardioWert[];
   /** Zugeordneter Gymtavo-Typ (Spec 5.3), null bei Altbestand. */
   catalogModelId: string | null;
   /** Herstellermodell, aus dem das Modell entstand -- nur Herkunft (G1). */
@@ -980,7 +1022,7 @@ export async function getStudioCatalog(
   const { data: modelle, error } = await client
     .from("equipment_models")
     .select(
-      `id, name, manufacturer, photo_path, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id, catalog_products!equipment_models_catalog_product_id_fkey (manufacturer, series, name, model_code),
+      `id, name, manufacturer, photo_path, category, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, cardio_werte, catalog_model_id, catalog_products!equipment_models_catalog_product_id_fkey (manufacturer, series, name, model_code),
        equipment_setting_definitions (id, key, label, kind, min_value, max_value, step_value, unit, allowed_values, sort_order),
        equipment_model_exercises (id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max, studio_id), instruction_assets (id, storage_path, duration_s)),
        machines (id, label, location_note, status, machine_tags (id, status))`,
@@ -1017,6 +1059,7 @@ export async function getStudioCatalog(
     secondary_step: number | string | null;
     secondary_min: number | string | null;
     secondary_max: number | string | null;
+    cardio_werte: CardioWert[];
     catalog_model_id: string | null;
     catalog_products: { manufacturer: string; series: string | null; name: string; model_code: string | null } | null;
     equipment_setting_definitions: Array<{
@@ -1090,6 +1133,7 @@ export async function getStudioCatalog(
     secondaryStep: zahl(row.secondary_step),
     secondaryMin: zahl(row.secondary_min),
     secondaryMax: zahl(row.secondary_max),
+    cardioWerte: row.cardio_werte ?? [],
     catalogModelId: row.catalog_model_id,
     catalogProduct: row.catalog_products
       ? {
@@ -1224,6 +1268,8 @@ export type CatalogType = {
   secondaryStep: number | null;
   secondaryMin: number | null;
   secondaryMax: number | null;
+  /** Cardio-Werte des Typs; Studio-Modelle ohne eigene Liste erben sie. */
+  cardioWerte: CardioWert[];
   photoPath: string | null;
   products: CatalogProduct[];
   exercises: CatalogTypeExercise[];
@@ -1299,7 +1345,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
   const { data, error } = await client
     .from("equipment_models")
     .select(
-      `id, name, manufacturer, category, retired, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, photo_path,
+      `id, name, manufacturer, category, retired, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, cardio_werte, photo_path,
        equipment_model_exercises (sort_order, exercises (id, name, description, volume_kind, target_min, target_max), instruction_assets (storage_path, duration_s)),
        catalog_product_types (catalog_products (id, catalog_key, manufacturer, series, name, model_code, note, photo_path, photo_rights, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max))`,
     )
@@ -1321,6 +1367,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
     secondary_step: number | string | null;
     secondary_min: number | string | null;
     secondary_max: number | string | null;
+    cardio_werte: CardioWert[];
     photo_path: string | null;
     equipment_model_exercises: Array<{
       sort_order: number;
@@ -1351,6 +1398,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
     secondaryStep: zahl(row.secondary_step),
     secondaryMin: zahl(row.secondary_min),
     secondaryMax: zahl(row.secondary_max),
+    cardioWerte: row.cardio_werte ?? [],
     photoPath: row.photo_path,
     products: row.catalog_product_types.map((link) => produktAus(link.catalog_products)).sort(produktReihenfolge),
     exercises: [...row.equipment_model_exercises]

@@ -130,10 +130,9 @@ struct GeraetErkanntView: View {
     /// Alter ("vor 8 Tagen") sagt, wie verlaesslich die Zahl noch ist,
     /// bevor man das Geraet danach einstellt.
     private func untertitel(_ uebung: GeraetUebung) -> String {
-        guard let letzteBelastung = modell.letzteBelastung(fuer: uebung.id) else {
+        guard let belastungText = modell.letzterSatzText(fuer: uebung.id) else {
             return "Noch nie · Ziel \(Zahlformat.korridorMitEinheit(uebung.targetMin, uebung.targetMax, uebung.volumeKind))"
         }
-        let belastungText = Zahlformat.belastungMitEinheit(letzteBelastung, modell.loadUnit)
         let alter = altersangabe(fuer: uebung.id)
         if uebung.id == modell.uebungId {
             return ["zuletzt · \(belastungText)", alter].compactMap { $0 }.joined(separator: " ")

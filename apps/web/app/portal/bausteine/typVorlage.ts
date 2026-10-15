@@ -28,6 +28,7 @@ export type TypVorlage = Pick<
   | "secondaryStep"
   | "secondaryMin"
   | "secondaryMax"
+  | "cardioWerte"
 > & {
   /** Der Pfad bleibt auf dem Server; das Formular muss nur wissen, ob. */
   hatFoto: boolean;
@@ -59,6 +60,7 @@ export function typVorlagen(
       secondaryStep: typ.secondaryStep,
       secondaryMin: typ.secondaryMin,
       secondaryMax: typ.secondaryMax,
+      cardioWerte: typ.cardioWerte,
       hatFoto: typ.photoPath !== null,
       fotoUrl: url(typ.photoPath),
       produkte: typ.products.map((p) => ({

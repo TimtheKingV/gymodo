@@ -24,6 +24,9 @@ struct Blockzeile: Equatable, Hashable, Identifiable, StationsBezug {
     let volumeKind: VolumeKind
     let satzAnzahl: Int
     let problemGemeldet: Bool
+    /// Die Werte des letzten Satzes an einem Cardio-Geraet; dort gibt es
+    /// keine Belastung (Testnotiz 14.10., 18:45 #7).
+    var cardio: CardioWerte? = nil
 }
 
 /// Die Zahlen von TrainingAbschluss.
@@ -40,6 +43,9 @@ struct Trainingszusammenfassung: Equatable, Hashable {
     let geraeteAnzahl: Int
     let satzAnzahl: Int
     let bloecke: [Blockzeile]
+    /// Die Bloecke, fuer die der Server einen Vorschlag rechnet: Cardio
+    /// hat keinen (Cardio-Spec 5.2).
+    var vorschlagsbloecke: [Blockzeile] { bloecke.filter { $0.cardio == nil } }
     /// Geht mit dem Abschluss an den Server (Testnotiz 14.10., 18:45 #3/#4).
     let pausedSeconds: Int
 
@@ -72,7 +78,7 @@ struct Trainingszusammenfassung: Equatable, Hashable {
         geraeteAnzahl = Set(session.bloecke.map(\.stationSchluessel)).count
         satzAnzahl = alle.count
         bloecke = session.bloecke.map { block in
-            let belastungen = Set(block.saetze.map(\.load))
+            let belastungen = Set(block.saetze.compactMap(\.load))
             let nebenbelastungen = Set(block.saetze.map(\.secondaryLoad))
             return Blockzeile(
                 machineId: block.machineId,
@@ -86,7 +92,8 @@ struct Trainingszusammenfassung: Equatable, Hashable {
                 secondaryUnit: block.secondaryUnit,
                 volumeKind: block.volumeKind,
                 satzAnzahl: block.saetze.count,
-                problemGemeldet: block.saetze.contains(where: \.problemFlag)
+                problemGemeldet: block.saetze.contains(where: \.problemFlag),
+                cardio: block.saetze.last?.cardio
             )
         }
     }

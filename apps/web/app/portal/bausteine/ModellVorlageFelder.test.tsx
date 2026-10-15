@@ -15,7 +15,7 @@ beforeAll(() => {
 const brust: TypVorlage = {
   id: "t1", name: "Brustpresse", manufacturer: null, category: "kraft",
   loadUnit: "kg", loadStep: 5, loadMin: 0, loadMax: 100,
-  secondaryUnit: null, secondaryStep: null, secondaryMin: null, secondaryMax: null, hatFoto: true,
+  secondaryUnit: null, secondaryStep: null, secondaryMin: null, secondaryMax: null, cardioWerte: [], hatFoto: true,
   fotoUrl: null, produkte: [],
 };
 const platzhalter: TypVorlage = { ...brust, id: "t2", name: "Beinpresse", loadStep: 1, loadMax: null, hatFoto: false };

@@ -262,3 +262,9 @@ export {
   zonenVersatzMs,
 } from "./serie.js";
 export type { Ortszeit } from "./serie.js";
+export {
+  CARDIO_WERTE,
+  cardioListeSchema,
+  cardioWerteSchema,
+} from "./cardio.js";
+export type { CardioWert, CardioWerte } from "./cardio.js";

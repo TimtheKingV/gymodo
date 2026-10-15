@@ -247,9 +247,14 @@ struct SessionDetailView: View {
     /// zu vergleichen gibt: Pfeil, kg- und Wdh.-Unterschied.
     private func satzZeile(_ satz: SessionSummary.Block.Set, block: SessionSummary.Block,
                            vergleich: Satzvergleich.Satz?) -> some View {
-        var label = "Satz \(satz.setIndex), " + Zahlformat.satzGesprochen(
-            satz.load, block.loadUnit, neben: satz.secondaryLoad, block.secondaryUnit,
-            umfang: satz.volume, block.volumeKind)
+        var label = "Satz \(satz.setIndex)"
+        if let cardio = satz.cardio {
+            label += ", " + Zahlformat.cardioGesprochen(cardio)
+        } else if let load = satz.load, let volume = satz.volume {
+            label += ", " + Zahlformat.satzGesprochen(
+                load, block.loadUnit, neben: satz.secondaryLoad, block.secondaryUnit,
+                umfang: volume, block.volumeKind)
+        }
         if satz.problemFlag {
             label.append(", Problem gemeldet")
         }
@@ -263,16 +268,23 @@ struct SessionDetailView: View {
                 .foregroundStyle(DesignSystem.Color.textFaint)
                 .frame(width: 16, alignment: .leading)
 
-            Text(Zahlformat.belastungMitNebenbelastung(
-                satz.load, block.loadUnit, neben: satz.secondaryLoad, block.secondaryUnit))
-                .font(DesignSystem.Typography.fliesstext)
-                .foregroundStyle(DesignSystem.Color.text)
-                .monospacedDigit()
+            if let cardio = satz.cardio {
+                Text(Zahlformat.cardio(cardio))
+                    .font(DesignSystem.Typography.fliesstext)
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .monospacedDigit()
+            } else if let load = satz.load, let volume = satz.volume {
+                Text(Zahlformat.belastungMitNebenbelastung(
+                    load, block.loadUnit, neben: satz.secondaryLoad, block.secondaryUnit))
+                    .font(DesignSystem.Typography.fliesstext)
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .monospacedDigit()
 
-            Text(Zahlformat.malUmfang(satz.volume, block.volumeKind))
-                .font(DesignSystem.Typography.fliesstext)
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .monospacedDigit()
+                Text(Zahlformat.malUmfang(volume, block.volumeKind))
+                    .font(DesignSystem.Typography.fliesstext)
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .monospacedDigit()
+            }
 
             if satz.problemFlag {
                 Image(systemName: "exclamationmark.triangle")

@@ -9,6 +9,17 @@ import {
   type VolumeKind,
 } from "./belastung.js";
 import { DomainError } from "./errors.js";
+import {
+  CARDIO_SELECT,
+  cardioAusZeile,
+  cardioListeDesModells,
+  cardioPruefen,
+  cardioWerteSchema,
+  cardioZuSpalten,
+  type CardioWert,
+  type CardioWerte,
+  type CardioZeile,
+} from "./cardio.js";
 import { herkunftPruefen, repEventsSchema, volumeSourceSchema, type VolumeSource } from "./herkunft.js";
 import {
   gespeicherteVorschlaege,
@@ -74,8 +85,10 @@ export const recordSetInputSchema = z.preprocess(
     studioId: z.string().uuid().optional(),
     exerciseId: z.string().uuid(),
     setIndex: z.number().int().min(1),
-    load: z.number().min(0).max(9999),
-    volume: z.number().int().min(1).max(100000),
+    load: z.number().min(0).max(9999).optional(),
+    volume: z.number().int().min(1).max(100000).optional(),
+    // Cardio-Werte (Testnotiz 14.10., 18:45 #7); ersetzen load/volume.
+    cardio: cardioWerteSchema.optional(),
     secondaryLoad: z.number().min(0).max(9999).nullish(),
     rir: z.number().min(0).max(10).nullish(),
     problemFlag: z.boolean().default(false),
@@ -94,6 +107,10 @@ export const recordSetInputSchema = z.preprocess(
     path: ["machineId"],
     message: "Ein Satz braucht entweder ein Geraet oder einen Geraetetyp.",
   })
+  .refine((v) => v.cardio !== undefined || (v.load !== undefined && v.volume !== undefined), {
+    path: ["load"],
+    message: "Ein Satz braucht Belastung und Umfang oder Cardio-Werte.",
+  })
   .refine((value) => !value.problemReason || value.problemFlag, {
     path: ["problemReason"],
     message: "Eine Problemursache setzt das Problemkennzeichen voraus.",
@@ -106,7 +123,7 @@ export const recordSetInputSchema = z.preprocess(
     { path: ["sessionStartedAt"], message: "Der Beginn der Einheit liegt nach dem Satz." },
   )
   .superRefine((value, ctx) => {
-    const fehler = herkunftPruefen(value);
+    const fehler = herkunftPruefen({ ...value, volume: value.volume ?? 0 });
     if (fehler) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["volumeSource"], message: fehler });
   }),
 );
@@ -123,9 +140,11 @@ export type RecordedSet = {
   equipmentModelId: string;
   exerciseId: string;
   setIndex: number;
-  load: number;
+  load: number | null;
   secondaryLoad: number | null;
-  volume: number;
+  volume: number | null;
+  /** null bei einem Kraftsatz. */
+  cardio: CardioWerte | null;
   rir: number | null;
   problemFlag: boolean;
   problemReason: ProblemReason | null;
@@ -135,7 +154,7 @@ export type RecordedSet = {
   performedAt: string;
 };
 
-type SetRow = {
+type SetRow = CardioZeile & {
   id: string;
   studio_id: string;
   user_id: string;
@@ -144,9 +163,9 @@ type SetRow = {
   equipment_model_id: string;
   exercise_id: string;
   set_index: number;
-  load: number | string;
+  load: number | string | null;
   secondary_load: number | string | null;
-  volume: number;
+  volume: number | null;
   rir: number | string | null;
   problem_flag: boolean;
   problem_reason: ProblemReason | null;
@@ -166,9 +185,10 @@ function toRecordedSet(row: SetRow): RecordedSet {
     exerciseId: row.exercise_id,
     setIndex: row.set_index,
     // numeric kommt je nach Treiber als Zeichenkette zurueck.
-    load: Number(row.load),
+    load: row.load === null ? null : Number(row.load),
     secondaryLoad: row.secondary_load === null ? null : Number(row.secondary_load),
     volume: row.volume,
+    cardio: cardioAusZeile(row),
     rir: row.rir === null ? null : Number(row.rir),
     problemFlag: row.problem_flag,
     problemReason: row.problem_reason,
@@ -183,9 +203,26 @@ type Nebenbelastung = {
   secondary_step: number | string | null;
   secondary_min: number | string | null;
   secondary_max: number | string | null;
+  load_unit: LoadUnit;
+  cardio_werte: string[];
+  catalog_model_id: string | null;
 };
 
-const NEBEN_SPALTEN = "secondary_unit, secondary_step, secondary_min, secondary_max";
+const NEBEN_SPALTEN = "secondary_unit, secondary_step, secondary_min, secondary_max, load_unit, cardio_werte, catalog_model_id";
+
+/** Die Cardio-Liste des Modells, vom Katalog-Typ geerbt, wenn es keine eigene hat. */
+async function cardioListe(client: SupabaseClient, modell: Nebenbelastung): Promise<CardioWert[]> {
+  if (modell.cardio_werte.length > 0 || !modell.catalog_model_id) {
+    return cardioListeDesModells({ eigene: modell.cardio_werte, katalog: null });
+  }
+  const { data, error } = await client
+    .from("equipment_models")
+    .select("cardio_werte")
+    .eq("id", modell.catalog_model_id)
+    .maybeSingle<{ cardio_werte: string[] }>();
+  if (error) throw new DomainError("internal", error.message);
+  return cardioListeDesModells({ eigene: [], katalog: data?.cardio_werte ?? [] });
+}
 
 /**
  * Studio und Modell eines Satzes, serverseitig bestimmt.
@@ -202,6 +239,7 @@ export async function stationAufloesen(
   equipmentModelId: string;
   katalogStudioId: string | null;
   modell: Nebenbelastung;
+  cardioWerte: CardioWert[];
 }> {
   const { data: katalog } = await client
     .from("studios")
@@ -226,6 +264,7 @@ export async function stationAufloesen(
       equipmentModelId: machine.equipment_model_id,
       katalogStudioId,
       modell: machine.equipment_models,
+      cardioWerte: await cardioListe(client, machine.equipment_models),
     };
   }
 
@@ -255,7 +294,7 @@ export async function stationAufloesen(
   if (!modell || (modell.studio_id !== studioId && modell.studio_id !== katalogStudioId)) {
     throw new DomainError("not_found", "Geraet nicht gefunden.");
   }
-  return { studioId, equipmentModelId: modell.id, katalogStudioId, modell };
+  return { studioId, equipmentModelId: modell.id, katalogStudioId, modell, cardioWerte: await cardioListe(client, modell) };
 }
 
 /**
@@ -297,47 +336,67 @@ export async function recordSet(
     throw new DomainError("not_found", "Uebung nicht gefunden.");
   }
 
-  // Die fachliche Obergrenze kennt nur die Uebung: 1000 Wiederholungen,
-  // vier Stunden, 100 km. Die Datenbank prueft nur die Schranke gegen
-  // Unsinn (Migration 0046).
-  if (input.volume > MAX_VOLUME[exercise.volume_kind]) {
-    throw new DomainError("validation_failed", volumeZuGross(exercise.volume_kind));
+  // Cardio (Testnotiz 14.10., 18:45 #7): eine nicht-leere Liste am Geraet.
+  // Schickt eine App von vor E2 load/volume an ein Cardio-Geraet, speichert
+  // der Satz wie vor E2 und wird genauso geprueft (Final-Review A; Spec 8:
+  // die alte App liest load/volume als Pflichtfelder). Die Lesewege leiten
+  // die Cardio-Werte daraus ab (cardioDesSatzes), 0055 schreibt sie spaeter um.
+  let cardio: CardioWerte | null = null;
+  if (input.cardio !== undefined) {
+    if (station.cardioWerte.length === 0) {
+      throw new DomainError("validation_failed", "Dieses Gerät hat keine Cardio-Werte.");
+    }
+    if (input.load !== undefined || input.volume !== undefined || (input.secondaryLoad ?? null) !== null) {
+      throw new DomainError("validation_failed", "Ein Cardio-Gerät hat keine Belastung.");
+    }
+    const fehler = cardioPruefen(input.cardio, station.cardioWerte);
+    if (fehler) throw new DomainError("validation_failed", fehler);
+    cardio = input.cardio;
   }
 
-  // Gezaehlt werden nur Wiederholungen (Sensor-Spec B 6.4). Eine
-  // "gemessene" Sekundenzahl waere eine Messung, die nie stattfand.
-  if (input.volumeSource !== "eingegeben" && exercise.volume_kind !== "reps") {
-    throw new DomainError(
-      "validation_failed",
-      "Nur Wiederholungen koennen gezaehlt sein.",
-    );
-  }
-
-  // Nebenbelastung: Pflicht genau dann, wenn das Modell eine hat. Ein Satz
-  // am Laufband ohne Neigung waere fuer die Regel eine andere Bedingung als
-  // jeder Satz davor; ein Satz an der Beinpresse MIT Neigung ein Wert, den
-  // niemand je liest.
   let secondaryLoad: number | null = null;
-  if (modell.secondary_unit !== null) {
-    if (input.secondaryLoad === null || input.secondaryLoad === undefined) {
+  if (cardio === null) {
+    // Die fachliche Obergrenze kennt nur die Uebung: 1000 Wiederholungen,
+    // vier Stunden, 100 km. Die Datenbank prueft nur die Schranke gegen
+    // Unsinn (Migration 0046).
+    if (input.volume! > MAX_VOLUME[exercise.volume_kind]) {
+      throw new DomainError("validation_failed", volumeZuGross(exercise.volume_kind));
+    }
+
+    // Gezaehlt werden nur Wiederholungen (Sensor-Spec B 6.4). Eine
+    // "gemessene" Sekundenzahl waere eine Messung, die nie stattfand.
+    if (input.volumeSource !== "eingegeben" && exercise.volume_kind !== "reps") {
       throw new DomainError(
         "validation_failed",
-        "Dieses Geraet braucht einen Wert fuer die Nebenbelastung.",
+        "Nur Wiederholungen koennen gezaehlt sein.",
       );
     }
-    // Auf die Rastung des Modells, damit "82 U/min" und "85 U/min" dieselbe
-    // Bedingung sind (Cardio-Spec Abschnitt 5.1).
-    secondaryLoad = snapToStep(
-      input.secondaryLoad,
-      Number(modell.secondary_min ?? 0),
-      modell.secondary_max === null ? null : Number(modell.secondary_max),
-      Number(modell.secondary_step ?? 0),
-    );
-  } else if (input.secondaryLoad !== null && input.secondaryLoad !== undefined) {
-    throw new DomainError(
-      "validation_failed",
-      "Dieses Geraet hat keine Nebenbelastung.",
-    );
+
+    // Nebenbelastung: Pflicht genau dann, wenn das Modell eine hat. Ein Satz
+    // am Laufband ohne Neigung waere fuer die Regel eine andere Bedingung als
+    // jeder Satz davor; ein Satz an der Beinpresse MIT Neigung ein Wert, den
+    // niemand je liest.
+    if (modell.secondary_unit !== null) {
+      if (input.secondaryLoad === null || input.secondaryLoad === undefined) {
+        throw new DomainError(
+          "validation_failed",
+          "Dieses Geraet braucht einen Wert fuer die Nebenbelastung.",
+        );
+      }
+      // Auf die Rastung des Modells, damit "82 U/min" und "85 U/min" dieselbe
+      // Bedingung sind (Cardio-Spec Abschnitt 5.1).
+      secondaryLoad = snapToStep(
+        input.secondaryLoad,
+        Number(modell.secondary_min ?? 0),
+        modell.secondary_max === null ? null : Number(modell.secondary_max),
+        Number(modell.secondary_step ?? 0),
+      );
+    } else if (input.secondaryLoad !== null && input.secondaryLoad !== undefined) {
+      throw new DomainError(
+        "validation_failed",
+        "Dieses Geraet hat keine Nebenbelastung.",
+      );
+    }
   }
 
   // `ignoreDuplicates` macht daraus ON CONFLICT DO NOTHING: ein zweiter Satz
@@ -376,21 +435,25 @@ export async function recordSet(
       equipment_model_id: station.equipmentModelId,
       exercise_id: input.exerciseId,
       set_index: input.setIndex,
-      load: input.load,
-      secondary_load: secondaryLoad,
-      volume: input.volume,
+      load: cardio ? null : input.load,
+      secondary_load: cardio ? null : secondaryLoad,
+      volume: cardio ? null : input.volume,
+      ...cardioZuSpalten(cardio ?? {}),
       rir: input.rir ?? null,
       problem_flag: input.problemFlag,
       problem_reason: input.problemReason ?? null,
-      volume_source: input.volumeSource,
-      volume_counted: input.volumeCounted ?? null,
-      rep_events: input.repEvents ?? null,
+      // Ein Cardio-Satz zaehlt nichts: Zaehlerdaten eines fehlerhaften Clients
+      // fallen weg, statt die Herkunfts-Check zu reissen -- ein 500 liesse die
+      // Warteschlange den Satz ewig wiederholen (Final-Review C).
+      volume_source: cardio ? "eingegeben" : input.volumeSource,
+      volume_counted: cardio ? null : input.volumeCounted ?? null,
+      rep_events: cardio ? null : input.repEvents ?? null,
       // performed_at bleibt beim erneuten Senden unangetastet, weil es hier
       // nur mitgeschickt wird, wenn der Client es ausdruecklich setzt.
       ...(input.performedAt ? { performed_at: input.performedAt } : {}),
     })
     .select(
-      "id, studio_id, user_id, session_id, machine_id, equipment_model_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, volume_source, volume_counted, performed_at",
+      `id, studio_id, user_id, session_id, machine_id, equipment_model_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, volume_source, volume_counted, performed_at, ${CARDIO_SELECT}`,
     )
     .single<SetRow>();
 

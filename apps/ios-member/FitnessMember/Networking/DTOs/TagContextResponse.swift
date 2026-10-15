@@ -20,6 +20,15 @@ struct TagContextResponse: Decodable, Equatable {
         let secondaryStep: Double?
         let secondaryMin: Double?
         let secondaryMax: Double?
+        /// Roh als Text, damit ein kuenftiger Schluessel nichts bricht; fehlt bei einem Server von vor E2.
+        var cardioWerteRoh: [String]? = nil
+        var cardioWerte: [CardioWert] { (cardioWerteRoh ?? []).compactMap(CardioWert.init(rawValue:)) }
+
+        private enum CodingKeys: String, CodingKey {
+            case id, name, manufacturer, photoUrl, loadUnit, loadStep, loadMin, loadMax,
+                 secondaryUnit, secondaryStep, secondaryMin, secondaryMax
+            case cardioWerteRoh = "cardioWerte"
+        }
     }
 
     struct SettingDefinition: Decodable, Hashable, Sendable, Identifiable {
@@ -61,10 +70,11 @@ struct TagContextResponse: Decodable, Equatable {
 
     struct HistoryEntry: Decodable, Equatable {
         let performedOn: String
-        let load: Double
+        let load: Double?
         let secondaryLoad: Double?
         /// Der Umfang je Satz dieses Tages, in der Umfangsart der Uebung.
         let volume: [Int]
+        var cardio: CardioWerte? = nil
     }
 
     struct Suggestion: Decodable, Equatable {

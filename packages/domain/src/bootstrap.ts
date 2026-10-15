@@ -1,5 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
+import { cardioGeraeteLaden } from "./cardio-geraete.js";
+import {
+  CARDIO_SELECT,
+  cardioDesSatzes,
+  cardioListeDesModells,
+  type CardioGeraet,
+  type CardioWert,
+  type CardioWerte,
+  type CardioZeile,
+} from "./cardio.js";
 import type { Category, Group, LoadUnit, VolumeKind } from "./belastung.js";
 import { aktiveZiele } from "./goals.js";
 import type { AktiveZiele } from "./goals.js";
@@ -80,9 +90,11 @@ export type Bootstrap = {
   lastSets: Array<{
     machineId: string;
     exerciseId: string;
-    load: number;
+    load: number | null;
     secondaryLoad: number | null;
-    volume: number;
+    volume: number | null;
+    /** Cardio-Werte des Satzes; null bei Kraft (Testnotiz 14.10., 18:45 #7). */
+    cardio: CardioWerte | null;
     rir: number | null;
     performedAt: string;
     /**
@@ -100,9 +112,11 @@ export type Bootstrap = {
   lastTypeSets: Array<{
     equipmentModelId: string;
     exerciseId: string;
-    load: number;
+    load: number | null;
     secondaryLoad: number | null;
-    volume: number;
+    volume: number | null;
+    /** Cardio-Werte des Satzes; null bei Kraft (Testnotiz 14.10., 18:45 #7). */
+    cardio: CardioWerte | null;
     rir: number | null;
     performedAt: string;
     /**
@@ -132,6 +146,11 @@ type Geraetemodell = {
    * aufloesen -- alte Bloecke und Saetze zeigen noch auf den Typ.
    */
   retired: boolean;
+  /**
+   * Welche Cardio-Werte das Geraet anbietet; leer bei Kraft. Am Studio-Modell
+   * vom Typ geerbt (Testnotiz 14.10., 18:45 #7).
+   */
+  cardioWerte: CardioWert[];
   loadUnit: LoadUnit;
   loadStep: number;
   loadMin: number;
@@ -194,7 +213,7 @@ export function uebungAusZeile(z: UebungZeile): Uebung {
 }
 
 const MODELL_SPALTEN =
-  "id, name, manufacturer, photo_path, category, equipment_group, retired, load_unit, load_step, load_min, load_max, load_start, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id";
+  "id, name, manufacturer, photo_path, category, equipment_group, retired, load_unit, load_step, load_min, load_max, load_start, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id, cardio_werte";
 
 type ModellZeile = {
   id: string;
@@ -214,6 +233,7 @@ type ModellZeile = {
   secondary_min: number | string | null;
   secondary_max: number | string | null;
   catalog_model_id: string | null;
+  cardio_werte: string[];
 };
 
 /**
@@ -281,16 +301,18 @@ export function zaehleBesucheJeGeraet(
   );
 }
 
-type SatzZeile = {
+type SatzZeile = CardioZeile & {
   machine_id: string | null;
   equipment_model_id: string;
   exercise_id: string;
   session_id: string;
-  load: number | string;
+  load: number | string | null;
   secondary_load: number | string | null;
-  volume: number;
+  volume: number | null;
   rir: number | string | null;
   performed_at: string;
+  /** Fuer die Umfangsart eines alten Cardio-Satzes; null nach einem Austritt. */
+  exercises?: { volume_kind: VolumeKind } | null;
 };
 
 /**
@@ -298,7 +320,10 @@ type SatzZeile = {
  * dieser Uebung dort. `saetze` kommt absteigend nach performed_at, der
  * erste Satz je Paar ist also der juengste.
  */
-export function letzteSaetze(saetze: SatzZeile[]): Pick<Bootstrap, "lastSets" | "lastTypeSets"> {
+export function letzteSaetze(
+  saetze: SatzZeile[],
+  geraete: Map<string, CardioGeraet> = new Map(),
+): Pick<Bootstrap, "lastSets" | "lastTypeSets"> {
   const einheiten = new Map<string, Set<string>>();
   for (const row of saetze) {
     const id = key(stationsSchluessel(row), row.exercise_id);
@@ -308,9 +333,12 @@ export function letzteSaetze(saetze: SatzZeile[]): Pick<Bootstrap, "lastSets" | 
   }
   const werte = (row: SatzZeile, id: string) => ({
     exerciseId: row.exercise_id,
-    load: Number(row.load),
+    load: row.load === null ? null : Number(row.load),
     secondaryLoad: row.secondary_load === null ? null : Number(row.secondary_load),
     volume: row.volume,
+    // Ein alter Satz an einem Cardio-Geraet traegt load/volume UND die daraus
+    // abgeleiteten Werte (Final-Review A).
+    cardio: cardioDesSatzes(row, geraete.get(row.equipment_model_id), row.exercises?.volume_kind ?? null),
     rir: row.rir === null ? null : Number(row.rir),
     performedAt: row.performed_at,
     sessionCount: einheiten.get(id)?.size ?? 0,
@@ -400,7 +428,7 @@ export async function getBootstrap(
   const { data: setRows } = await client
     .from("workout_sets")
     .select(
-      "machine_id, equipment_model_id, exercise_id, session_id, load, secondary_load, volume, rir, performed_at",
+      `machine_id, equipment_model_id, exercise_id, session_id, load, secondary_load, volume, rir, performed_at, ${CARDIO_SELECT}, exercises (volume_kind)`,
     )
     .eq("user_id", userId)
     .order("performed_at", { ascending: false })
@@ -471,8 +499,14 @@ export async function getBootstrap(
     });
   }
 
-  const saetze = (setRows ?? []) as SatzZeile[];
-  const { lastSets, lastTypeSets } = letzteSaetze(saetze);
+  const saetze = (setRows ?? []) as unknown as SatzZeile[];
+  const { lastSets, lastTypeSets } = letzteSaetze(
+    saetze,
+    await cardioGeraeteLaden(
+      client,
+      saetze.filter((row) => row.load !== null).map((row) => row.equipment_model_id),
+    ),
+  );
 
   const besucheJeGeraet = zaehleBesucheJeGeraet(
     saetze.filter(
@@ -512,6 +546,9 @@ export async function getBootstrap(
   const katalogGruppen = new Map(
     ((katalogModellRows ?? []) as unknown as ModellZeile[]).map((row) => [row.id, row.equipment_group]),
   );
+  const katalogCardio = new Map(
+    ((katalogModellRows ?? []) as unknown as ModellZeile[]).map((row) => [row.id, row.cardio_werte]),
+  );
   const katalogStarts = new Map(
     ((katalogModellRows ?? []) as unknown as ModellZeile[]).map((row) => [
       row.id,
@@ -530,6 +567,10 @@ export async function getBootstrap(
       category: row.category,
     }),
     retired: row.retired,
+    cardioWerte: cardioListeDesModells({
+      eigene: row.cardio_werte,
+      katalog: row.catalog_model_id ? katalogCardio.get(row.catalog_model_id) ?? null : null,
+    }),
     loadUnit: row.load_unit,
     loadStep: Number(row.load_step),
     loadMin: Number(row.load_min),

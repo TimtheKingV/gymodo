@@ -77,14 +77,34 @@ describe("letzteSaetze", () => {
     exercise_id: string;
     session_id: string;
     performed_at: string;
-    load?: number;
+    load?: number | null;
+    volume?: number | null;
+    dauer_s?: number | null;
+    strecke_m?: number | null;
   }) => ({
     equipment_model_id: "em1",
-    load: 10,
+    load: 10 as number | null,
     secondary_load: null,
-    volume: 10,
+    volume: 10 as number | null,
     rir: null,
+    dauer_s: null,
+    strecke_m: null,
+    stufe: null,
+    kmh: null,
+    steigung_pct: null,
+    watt: null,
+    kcal: null,
+    frequenz: null,
     ...o,
+  });
+
+  it("liefert Cardio-Werte am letzten Satz und null bei Kraft", () => {
+    const { lastSets } = letzteSaetze([
+      satz({ machine_id: "m1", exercise_id: "c1", session_id: "s1", performed_at: "2026-10-14T10:00:00Z", load: null, volume: null, dauer_s: 510, strecke_m: 2000 }),
+      satz({ machine_id: "m2", exercise_id: "u1", session_id: "s1", performed_at: "2026-10-14T09:00:00Z" }),
+    ]);
+    expect(lastSets[0]).toMatchObject({ load: null, volume: null, cardio: { zeit: 510, strecke: 2000 } });
+    expect(lastSets[1]).toMatchObject({ load: 10, cardio: null });
   });
 
   // Testnotiz 14.10., 18:25: die Uebungsliste am Geraet sortiert nach

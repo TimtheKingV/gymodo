@@ -27,6 +27,45 @@ struct TrainingszusammenfassungTests {
         #expect(z.bis == start.addingTimeInterval(47 * 60))
     }
 
+    @Test func einCardioBlockTraegtDieWerteDesLetztenSatzesStattEinerBelastung() throws {
+        // (Testnotiz 14.10., 18:45 #7)
+        let rudern = LokalerSatz(id: UUID(), setIndex: 1, load: nil, volume: nil,
+                                 cardio: CardioWerte(zeit: 510),
+                                 problemFlag: false, problemReason: nil, performedAt: start)
+        let session = LokaleSession(id: UUID(), startedAt: start, bloecke: [
+            LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [rudern]),
+        ])
+
+        let z = try #require(Trainingszusammenfassung(session))
+
+        #expect(z.bloecke.first?.cardio == CardioWerte(zeit: 510))
+        #expect(z.bloecke.first?.belastung == nil)
+        #expect(z.bloecke.first?.satzAnzahl == 1)
+    }
+
+    @Test func vorschlagsbloeckeLassenCardioWeg() throws {
+        let rudern = LokalerSatz(id: UUID(), setIndex: 1, load: nil, volume: nil,
+                                 cardio: CardioWerte(zeit: 510),
+                                 problemFlag: false, problemReason: nil, performedAt: start)
+        let nurCardio = LokaleSession(id: UUID(), startedAt: start, bloecke: [
+            LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [rudern]),
+        ])
+        #expect(try #require(Trainingszusammenfassung(nurCardio)).vorschlagsbloecke.isEmpty)
+
+        let gemischt = LokaleSession(id: UUID(), startedAt: start, bloecke: [
+            LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [rudern]),
+            LokalerBlock(machineId: "m2", exerciseId: "e2", saetze: [satz(1, 80, 5)]),
+        ])
+        #expect(try #require(Trainingszusammenfassung(gemischt)).vorschlagsbloecke.map(\.exerciseId) == ["e2"])
+    }
+
+    @Test func einKraftBlockHatKeineCardioWerte() throws {
+        let session = LokaleSession(id: UUID(), startedAt: start, bloecke: [
+            LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [satz(1, 80, 0)]),
+        ])
+        #expect(try #require(Trainingszusammenfassung(session)).bloecke.first?.cardio == nil)
+    }
+
     @Test func zaehltGeraeteUndSaetze() throws {
         let session = LokaleSession(id: UUID(), startedAt: start, bloecke: [
             LokalerBlock(machineId: "m1", exerciseId: "e1",

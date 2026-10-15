@@ -139,9 +139,10 @@ final class WorkoutSessionStore {
         station: Station,
         exerciseId: String,
         einheiten: Blockeinheiten,
-        load: Double,
+        load: Double?,
         secondaryLoad: Double? = nil,
-        volume: Int,
+        volume: Int?,
+        cardio: CardioWerte? = nil,
         problemFlag: Bool,
         problemReason: ProblemReason?,
         jetzt: Date = Date()
@@ -175,7 +176,7 @@ final class WorkoutSessionStore {
         // Einheiten nicht mehr dekodieren zu koennen.
         let satz = LokalerSatz(
             id: UUID(), setIndex: setIndex, load: load, secondaryLoad: secondaryLoad,
-            volume: volume, rir: nil, problemFlag: problemFlag, problemReason: problemReason,
+            volume: volume, cardio: cardio, rir: nil, problemFlag: problemFlag, problemReason: problemReason,
             performedAt: jetzt
         )
 
@@ -209,7 +210,7 @@ final class WorkoutSessionStore {
             equipmentModelId: amTyp ? station.equipmentModelId : nil,
             studioId: studioId,
             exerciseId: exerciseId, setIndex: setIndex,
-            load: load, volume: volume, secondaryLoad: secondaryLoad, rir: nil,
+            load: load, volume: volume, cardio: cardio, secondaryLoad: secondaryLoad, rir: nil,
             problemFlag: problemFlag, problemReason: problemReason,
             performedAt: formatter.string(from: jetzt),
             sessionStartedAt: formatter.string(from: session.startedAt)

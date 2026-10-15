@@ -1,6 +1,6 @@
 "use client";
 
-import type { CatalogType } from "@fitretro/domain";
+import type { CardioWert, CatalogType } from "@fitretro/domain";
 import { MAX_PHOTO_BYTES } from "@fitretro/domain/media";
 import { AktionsFormular, Feld } from "../../../../Form";
 import { FotoFeld } from "../../../../bausteine/FotoFeld";
@@ -31,12 +31,16 @@ export function StammdatenFormular({
     name: string;
     manufacturer: string | null;
     catalogModelId: string | null;
+    cardioWerte: CardioWert[];
     catalogProduct: { manufacturer: string; series: string | null; name: string; modelCode: string | null } | null;
   } & ModellBelastungStart;
   fotoUrl: string | undefined;
   /** Leer im Gymtavo-Studio: ein Typ wird keinem Typ zugeordnet. */
-  typen: Pick<CatalogType, "id" | "name" | "manufacturer">[];
+  typen: Pick<CatalogType, "id" | "name" | "manufacturer" | "cardioWerte">[];
 }) {
+  // Der Typ, dem das Modell gerade zugeordnet ist -- ohne Typ gibt es
+  // nichts zu erben, dann auch keinen Hinweis.
+  const typCardioWerte = typen.find((typ) => typ.id === modell.catalogModelId)?.cardioWerte;
   return (
     <AktionsFormular
       action={action}
@@ -58,7 +62,11 @@ export function StammdatenFormular({
         // frei aenderbar; ein Produkt nachtraeglich zuweisen kommt spaeter.
         <p className={styles.hint}>{vorlageText(modell.catalogProduct)}</p>
       ) : null}
-      <ModellBelastungRad start={modell} />
+      <ModellBelastungRad
+        start={modell}
+        cardioWerte={modell.cardioWerte}
+        {...(typCardioWerte ? { typCardioWerte } : {})}
+      />
       <FotoFeld
         name="photo"
         ariaLabel="Bilddatei"

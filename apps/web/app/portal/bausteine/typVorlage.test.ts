@@ -5,7 +5,7 @@ import { belastungStart, typVorlagen } from "./typVorlage";
 const basis: CatalogType = {
   id: "t1", name: "Brustpresse", manufacturer: null, category: "kraft", retired: false,
   loadUnit: "kg", loadStep: 1, loadMin: 0, loadMax: null,
-  secondaryUnit: null, secondaryStep: null, secondaryMin: null, secondaryMax: null,
+  secondaryUnit: null, secondaryStep: null, secondaryMin: null, secondaryMax: null, cardioWerte: [],
   photoPath: "gymtavo/catalog/photos/chest_press-abcd1234.png",
   products: [],
   exercises: [{ exerciseId: "u1", name: "Brustpresse neutral", description: "lang", volumeKind: "reps",
@@ -36,7 +36,7 @@ describe("typVorlagen", () => {
       id: "t1", name: "Brustpresse", manufacturer: null, category: "kraft",
       loadUnit: "kg", loadStep: 1, loadMin: 0, loadMax: null,
       secondaryUnit: null, secondaryStep: null, secondaryMin: null, secondaryMax: null,
-      hatFoto: true, fotoUrl: null, produkte: [],
+      cardioWerte: [], hatFoto: true, fotoUrl: null, produkte: [],
     });
   });
 

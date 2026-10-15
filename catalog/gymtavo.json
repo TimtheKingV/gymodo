@@ -2031,6 +2031,7 @@
       "load_max": null,
       "load_start": 6,
       "secondary": null,
+      "cardio_values": ["zeit", "strecke", "kmh", "steigung", "kcal"],
       "settings": [],
       "exercises": [
         "cardio_treadmill_walk",
@@ -2050,6 +2051,7 @@
       "load_max": null,
       "load_start": 5,
       "secondary": null,
+      "cardio_values": ["zeit", "strecke", "stufe", "watt", "frequenz", "kcal"],
       "settings": [
         {
           "key": "seat_height",
@@ -2078,6 +2080,7 @@
       "load_max": null,
       "load_start": 5,
       "secondary": null,
+      "cardio_values": ["zeit", "strecke", "stufe", "watt", "frequenz", "kcal"],
       "settings": [
         {
           "key": "seat_distance",
@@ -2106,6 +2109,7 @@
       "load_max": null,
       "load_start": 5,
       "secondary": null,
+      "cardio_values": ["zeit", "strecke", "stufe", "watt", "frequenz", "kcal"],
       "settings": [
         {
           "key": "seat_height",
@@ -2152,6 +2156,7 @@
       "load_max": null,
       "load_start": 5,
       "secondary": null,
+      "cardio_values": ["zeit", "strecke", "watt", "kcal"],
       "settings": [
         {
           "key": "seat_height",
@@ -2189,6 +2194,7 @@
       "load_max": null,
       "load_start": 5,
       "secondary": null,
+      "cardio_values": ["zeit", "strecke", "stufe", "frequenz", "kcal"],
       "settings": [
         {
           "key": "resistance",
@@ -2217,6 +2223,7 @@
       "load_max": null,
       "load_start": 5,
       "secondary": null,
+      "cardio_values": ["zeit", "strecke", "watt", "frequenz", "kcal"],
       "settings": [
         {
           "key": "footplate",
@@ -2254,6 +2261,7 @@
       "load_max": null,
       "load_start": 5,
       "secondary": null,
+      "cardio_values": ["zeit", "stufe", "kcal"],
       "settings": [
         {
           "key": "step_rate",
@@ -2282,6 +2290,7 @@
       "load_max": null,
       "load_start": 5,
       "secondary": null,
+      "cardio_values": ["zeit", "strecke", "watt", "kcal"],
       "settings": [
         {
           "key": "damper",

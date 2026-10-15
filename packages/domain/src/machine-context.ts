@@ -8,6 +8,7 @@ import {
 } from "./media.js";
 import { signMediaUrl, signMediaUrls } from "./media-store.js";
 import type { LoadUnit, VolumeKind } from "./belastung.js";
+import { CARDIO_SELECT, cardioDesSatzes, cardioListeDesModells, type CardioGeraet, type CardioWert, type CardioWerte, type CardioZeile } from "./cardio.js";
 import { stationAufloesen } from "./workout.js";
 import {
   PROGRESSION_ALGO_VERSION,
@@ -37,6 +38,11 @@ export type MachineContext = {
     loadStep: number;
     loadMin: number;
     loadMax: number | null;
+    /**
+     * Welche Cardio-Werte das Geraet anbietet; leer bei Kraft. Am Studio-Modell
+     * vom Typ geerbt (Testnotiz 14.10., 18:45 #7).
+     */
+    cardioWerte: CardioWert[];
     /**
      * Der zweite Intensitaetsregler, wenn das Modell einen hat (Cardio-Spec
      * 3.1b). Alle vier null bei Kraftgeraeten -- dann gibt es kein drittes
@@ -78,9 +84,12 @@ export type MachineContext = {
   } | null;
   history: Array<{
     performedOn: string;
-    load: number;
+    /** null bei Cardio: dort stehen die Werte in `cardio`. */
+    load: number | null;
     secondaryLoad: number | null;
+    /** Ohne null; bei Cardio leer. */
     volume: number[];
+    cardio: CardioWerte | null;
   }>;
   suggestion: ProgressionSuggestion;
 };
@@ -90,11 +99,11 @@ export type GeraeteKontext = MachineContext & {
   machine: NonNullable<MachineContext["machine"]>;
 };
 
-type SetRow = {
+type SetRow = CardioZeile & {
   exercise_id: string;
-  load: number | string;
+  load: number | string | null;
   secondary_load: number | string | null;
-  volume: number;
+  volume: number | null;
   rir: number | string | null;
   problem_flag: boolean;
   performed_at: string;
@@ -194,7 +203,7 @@ export async function getEquipmentModelContext(
 }
 
 const MODELL_SPALTEN =
-  "id, name, manufacturer, photo_path, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id";
+  "id, name, manufacturer, photo_path, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id, cardio_werte";
 
 type ModellZeile = {
   id: string;
@@ -210,6 +219,7 @@ type ModellZeile = {
   secondary_min: number | string | null;
   secondary_max: number | string | null;
   catalog_model_id: string | null;
+  cardio_werte: string[];
 };
 
 type LinkRow = {
@@ -332,8 +342,23 @@ async function kontextAufbauen(
 
   const selectedExerciseId = lastUsed?.exercise_id ?? exercises[0]?.id ?? null;
 
+  // Die Liste des Modells, vom Katalogtyp geerbt, wenn das Studio keine hat.
+  let katalogCardio: string[] | null = null;
+  if (model.cardio_werte.length === 0 && model.catalog_model_id) {
+    const { data, error } = await client
+      .from("equipment_models")
+      .select("cardio_werte")
+      .eq("id", model.catalog_model_id)
+      .maybeSingle<{ cardio_werte: string[] }>();
+    if (error) throw new DomainError("internal", error.message);
+    katalogCardio = data?.cardio_werte ?? null;
+  }
+  const cardioWerte = cardioListeDesModells({ eigene: model.cardio_werte, katalog: katalogCardio });
+  const istCardio = cardioWerte.length > 0;
+
   let calibration: MachineContext["calibration"] = null;
   let blocks: BlockInput[] = [];
+  let historie: MachineContext["history"] = [];
   let suggestion: ProgressionSuggestion = suggestNextLoad({
     targetMin: 0,
     targetMax: 0,
@@ -373,35 +398,61 @@ async function kontextAufbauen(
     }
 
     const { data: setRows } = await saetzeDerStation(
-      "exercise_id, load, secondary_load, volume, rir, problem_flag, performed_at",
+      `exercise_id, load, secondary_load, volume, rir, problem_flag, performed_at, ${CARDIO_SELECT}`,
     )
       .eq("exercise_id", selectedExerciseId)
       .order("performed_at", { ascending: false })
       .limit(HISTORY_DAYS * 6);
 
-    blocks = toBlocks((setRows ?? []) as unknown as SetRow[]);
+    const zeilen = (setRows ?? []) as unknown as SetRow[];
+    if (istCardio) {
+      // Cardio rechnet keine Progression und schreibt keinen Vorschlag: es
+      // bleibt beim "kein Verlauf" von oben (Testnotiz 14.10., 18:45 #7).
+      // Alte Saetze (load/volume) behalten ihre Zahlen fuer die alte App und
+      // bekommen die Cardio-Werte abgeleitet (Final-Review A).
+      historie = cardioHistorie(
+        zeilen,
+        { liste: cardioWerte, loadUnit: model.load_unit, secondaryUnit: model.secondary_unit },
+        await umfangsartDerUebung(client, selectedExerciseId, selected?.volumeKind),
+      );
+    } else {
+      // Zweite Absicherung: Saetze ohne Belastung (Cardio) nie in die Regel.
+      blocks = toBlocks(
+        zeilen.filter(
+          (zeile): zeile is SetRow & { load: number | string; volume: number } =>
+            zeile.load !== null && zeile.volume !== null,
+        ),
+      );
+      historie = blocks.map((block) => ({
+        performedOn: block.performedOn,
+        load: block.sets[0]?.load ?? null,
+        secondaryLoad: block.sets[0]?.secondaryLoad ?? null,
+        volume: block.sets.flatMap((set) => (set.volume === null ? [] : [set.volume])),
+        cardio: null,
+      }));
 
-    suggestion = suggestNextLoad({
-      targetMin: selected?.targetMin ?? 8,
-      targetMax: selected?.targetMax ?? 12,
-      loadStep: Number(model.load_step),
-      loadMin: Number(model.load_min),
-      loadMax: Number(model.load_max ?? 9999),
-      history: blocks,
-    });
+      suggestion = suggestNextLoad({
+        targetMin: selected?.targetMin ?? 8,
+        targetMax: selected?.targetMax ?? 12,
+        loadStep: Number(model.load_step),
+        loadMin: Number(model.load_min),
+        loadMax: Number(model.load_max ?? 9999),
+        history: blocks,
+      });
 
-    // In derselben Anfrage festhalten -- Nachvollziehbarkeit ohne Queue.
-    await client.from("progression_suggestions").insert({
-      studio_id: ort.studioId,
-      user_id: userId,
-      machine_id: ort.machine?.id ?? null,
-      equipment_model_id: model.id,
-      exercise_id: selectedExerciseId,
-      algo_version: PROGRESSION_ALGO_VERSION,
-      inputs: suggestion.inputs,
-      result_load: suggestion.resultLoad,
-      reason_code: suggestion.reasonCode,
-    });
+      // In derselben Anfrage festhalten -- Nachvollziehbarkeit ohne Queue.
+      await client.from("progression_suggestions").insert({
+        studio_id: ort.studioId,
+        user_id: userId,
+        machine_id: ort.machine?.id ?? null,
+        equipment_model_id: model.id,
+        exercise_id: selectedExerciseId,
+        algo_version: PROGRESSION_ALGO_VERSION,
+        inputs: suggestion.inputs,
+        result_load: suggestion.resultLoad,
+        reason_code: suggestion.reasonCode,
+      });
+    }
   }
 
   return {
@@ -415,6 +466,7 @@ async function kontextAufbauen(
       loadStep: Number(model.load_step),
       loadMin: Number(model.load_min),
       loadMax: model.load_max === null ? null : Number(model.load_max),
+      cardioWerte,
       secondaryUnit: model.secondary_unit,
       secondaryStep: model.secondary_step === null ? null : Number(model.secondary_step),
       secondaryMin: model.secondary_min === null ? null : Number(model.secondary_min),
@@ -445,12 +497,55 @@ async function kontextAufbauen(
     exercises,
     selectedExerciseId,
     calibration,
-    history: blocks.map((block) => ({
-      performedOn: block.performedOn,
-      load: block.sets[0]?.load ?? 0,
-      secondaryLoad: block.sets[0]?.secondaryLoad ?? null,
-      volume: block.sets.map((set) => set.volume),
-    })),
+    history: historie,
     suggestion,
   };
+}
+
+/**
+ * Die Historie eines Cardio-Geraets: Saetze je Trainingstag, chronologisch.
+ * Die Zeilen kommen absteigend nach performed_at, wie bei toBlocks. Die
+ * Cardio-Werte sind die des ersten Satzes des Tages; load/volume stehen wie
+ * vor E2 da, solange der Tag Saetze einer alten App hat -- die alte App liest
+ * sie als Pflichtfelder (Final-Review A).
+ */
+function cardioHistorie(
+  zeilen: SetRow[],
+  geraet: CardioGeraet,
+  volumeKind: VolumeKind | null,
+): MachineContext["history"] {
+  const jeTag = new Map<string, SetRow[]>();
+  for (const zeile of zeilen) {
+    const tag = zeile.performed_at.slice(0, 10);
+    jeTag.set(tag, [...(jeTag.get(tag) ?? []), zeile]);
+  }
+  return [...jeTag].map(([tag, saetze]) => {
+    const chronologisch = [...saetze].reverse();
+    const erster = chronologisch[0];
+    const alterErster = chronologisch.find((satz) => satz.load !== null);
+    return {
+      performedOn: tag,
+      load: alterErster ? Number(alterErster.load) : null,
+      secondaryLoad:
+        alterErster && alterErster.secondary_load !== null ? Number(alterErster.secondary_load) : null,
+      volume: chronologisch.flatMap((satz) => (satz.volume === null ? [] : [satz.volume])),
+      cardio: erster ? cardioDesSatzes(erster, geraet, volumeKind) : null,
+    };
+  });
+}
+
+/** Die Umfangsart der gewaehlten Uebung; null, wenn sie nicht mehr lesbar ist. */
+async function umfangsartDerUebung(
+  client: SupabaseClient,
+  exerciseId: string,
+  bekannt: VolumeKind | undefined,
+): Promise<VolumeKind | null> {
+  if (bekannt) return bekannt;
+  const { data, error } = await client
+    .from("exercises")
+    .select("volume_kind")
+    .eq("id", exerciseId)
+    .maybeSingle<{ volume_kind: VolumeKind }>();
+  if (error) throw new DomainError("internal", error.message);
+  return data?.volume_kind ?? null;
 }

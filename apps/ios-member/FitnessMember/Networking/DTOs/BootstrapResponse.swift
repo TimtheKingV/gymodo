@@ -92,8 +92,18 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         /// Server aufgeloest. nil: das Minimum -- auch fuer Server vor
         /// Migration 0052 und alte Caches.
         var loadStart: Double? = nil
+        /// Roh als Text, damit ein kuenftiger Schluessel nichts bricht; fehlt bei einem Server von vor E2.
+        var cardioWerteRoh: [String]? = nil
+        var cardioWerte: [CardioWert] { (cardioWerteRoh ?? []).compactMap(CardioWert.init(rawValue:)) }
 
         var abgeloest: Bool { retired == true }
+
+        private enum CodingKeys: String, CodingKey {
+            case id, name, manufacturer, photoPath, category, loadUnit, loadStep, loadMin, loadMax,
+                 secondaryUnit, secondaryStep, secondaryMin, secondaryMax, settingDefinitions,
+                 catalogModelId, equipmentGroup, retired, loadStart
+            case cardioWerteRoh = "cardioWerte"
+        }
     }
 
     /// Der Gymtavo-Katalog des Studios: Geraetetypen mit ihren Uebungen,
@@ -119,6 +129,16 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
             var equipmentGroup: String? = nil
             var retired: Bool? = nil
             var loadStart: Double? = nil
+            /// Roh als Text, damit ein kuenftiger Schluessel nichts bricht; fehlt bei einem Server von vor E2.
+            var cardioWerteRoh: [String]? = nil
+            var cardioWerte: [CardioWert] { (cardioWerteRoh ?? []).compactMap(CardioWert.init(rawValue:)) }
+
+            private enum CodingKeys: String, CodingKey {
+                case id, name, manufacturer, photoPath, category, loadUnit, loadStep, loadMin, loadMax,
+                     secondaryUnit, secondaryStep, secondaryMin, secondaryMax, settingDefinitions,
+                     exercises, equipmentGroup, retired, loadStart
+                case cardioWerteRoh = "cardioWerte"
+            }
         }
         let studioId: String
         let equipmentTypes: [EquipmentType]
@@ -129,11 +149,12 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
     struct LastTypeSet: Decodable, Equatable, Sendable {
         let equipmentModelId: String
         let exerciseId: String
-        let load: Double
+        let load: Double?
         let secondaryLoad: Double?
-        let volume: Int
+        let volume: Int?
         let rir: Double?
         let performedAt: String
+        var cardio: CardioWerte? = nil
         /// In wie vielen Einheiten die Uebung hier vorkam. Fehlt bei einem
         /// Server von vor dem 14.10. -- dann zaehlt der Satz als eine.
         var sessionCount: Int? = nil
@@ -182,11 +203,12 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         let exerciseId: String
         /// Zahlen ohne Einheit: was sie bedeuten, sagen loadUnit am Modell
         /// und volumeKind an der Uebung.
-        let load: Double
+        let load: Double?
         let secondaryLoad: Double?
-        let volume: Int
+        let volume: Int?
         let rir: Double?
         let performedAt: String
+        var cardio: CardioWerte? = nil
         /// In wie vielen Einheiten die Uebung hier vorkam. Fehlt bei einem
         /// Server von vor dem 14.10. -- dann zaehlt der Satz als eine.
         var sessionCount: Int? = nil

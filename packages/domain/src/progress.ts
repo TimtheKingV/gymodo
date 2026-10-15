@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireUserId } from "./auth.js";
 import type { LoadUnit, VolumeKind } from "./belastung.js";
 import { DomainError } from "./errors.js";
+import { cardioGeraeteLaden, istCardioModell } from "./cardio-geraete.js";
 import { mitVerlaufsnamen, typAlsGeraet } from "./verlaufsnamen.js";
 
 /**
@@ -89,6 +90,8 @@ export async function getProgress(
       "machine_id, equipment_model_id, exercise_id, load, volume, performed_at, exercises (name, volume_kind), machines (label, equipment_models (load_unit, secondary_unit)), equipment_models (name, load_unit, secondary_unit)",
     )
     .eq("user_id", userId)
+    // Cardio-Saetze haben keine Belastung und gehoeren nicht ins Diagramm.
+    .not("load", "is", null)
     .order("performed_at", { ascending: true })
     .limit(SET_SCAN_LIMIT);
 
@@ -97,6 +100,10 @@ export async function getProgress(
   }
 
   const { data: setRows } = await query;
+  // Auch alte Saetze (mit load) an einem Cardio-Geraet bleiben draussen:
+  // entscheidend ist das Geraet, nicht die Zeile (Final-Review A).
+  const zeilen = (setRows ?? []) as unknown as SetRow[];
+  const cardioGeraete = await cardioGeraeteLaden(client, zeilen.map((row) => row.equipment_model_id));
 
   // Je (Uebung, Tag) den Satz mit der hoechsten Belastung behalten.
   const byExercise = new Map<
@@ -111,7 +118,7 @@ export async function getProgress(
   >();
   for (const row of await mitVerlaufsnamen(
     client,
-    typAlsGeraet((setRows ?? []) as unknown as SetRow[]),
+    typAlsGeraet(zeilen.filter((row) => !istCardioModell(cardioGeraete, row.equipment_model_id))),
   )) {
     const entry = byExercise.get(row.exercise_id) ?? {
       name: row.exercises.name,

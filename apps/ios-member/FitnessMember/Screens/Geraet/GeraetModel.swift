@@ -101,6 +101,19 @@ final class GeraetModel {
     /// gesetzt, wenn das Modell eine Nebenbelastung hat -- der Server
     /// verlangt sie dann im Satz und weist sie sonst ab (Cardio-Spec 5.1).
     private(set) var nebenbelastung: Double?
+
+    /// Am Cardio-Geraet statt der Raeder (Testnotiz 14.10., 18:45 #7): was
+    /// gerade in den Knoepfen steht. Vorbelegt vom letzten Mal, nach einem
+    /// Satz mit dessen Werten.
+    private(set) var cardio = CardioWerte()
+
+    var cardioListe: [CardioWert] { station.equipmentModel.cardioWerte }
+    var istCardio: Bool { !cardioListe.isEmpty }
+    var kannSichern: Bool { !istCardio || !cardio.istLeer }
+
+    func cardioSetzen(_ wert: CardioWert, _ zahl: Double?) {
+        cardio[wert] = zahl
+    }
     /// Sobald das Mitglied am Rad gedreht hat, gehoert `belastung` ihm --
     /// ein spaeter eintreffender tagContext (die Anfrage lief seit .task
     /// auf GeraetView, kann in einem Keller zehn Sekunden brauchen) darf
@@ -232,6 +245,7 @@ final class GeraetModel {
         belastung = Rastwerte.naechster(zu: belastung, in: belastungsWerte)
         umfang = Rastwerte.naechster(zu: umfang, in: umfangsWerte)
         nebenbelastung = nebenbelastungVorbelegt(aus: letzter?.secondaryLoad)
+        cardio = letzter?.cardio?.nur(station.equipmentModel.cardioWerte) ?? CardioWerte()
 
         // Aus dem Drawer (Testnotiz 11.10., #10, #11): die dort gewaehlten
         // Werte gehoeren dem Mitglied, ein spaeter Vorschlag ersetzt sie
@@ -542,10 +556,14 @@ final class GeraetModel {
 
     var rueckblick: Rueckblick? {
         guard let letzter = letzterSatz(fuer: uebungId) else { return nil }
+        if let cardio = letzter.cardio {
+            return Rueckblick(zuletzt: Zahlformat.cardio(cardio), vorschlag: vorschlagText)
+        }
+        guard let load = letzter.load, let volume = letzter.volume else { return nil }
         return Rueckblick(
-            zuletzt: Zahlformat.satz(letzter.load, loadUnit,
+            zuletzt: Zahlformat.satz(load, loadUnit,
                                      neben: letzter.secondaryLoad, secondaryUnit,
-                                     umfang: letzter.volume, volumeKind),
+                                     umfang: volume, volumeKind),
             vorschlag: vorschlagText
         )
     }
@@ -558,6 +576,15 @@ final class GeraetModel {
         // erneut und der Mitschnitt beginnt neu. In Pause und Abschluss
         // stehen keine Raeder da -- dort laeuft nichts.
         if phase == .eingabe { mitschnittBeginnen() }
+    }
+
+    /// Der letzte Satz dieser Uebung als Zeile fuer die Uebungsliste: die
+    /// Cardio-Werte oder die Belastung mit Einheit. nil nur ohne Historie
+    /// (ein Cardio-Satz hat keine Belastung, ist aber keine "Noch nie").
+    func letzterSatzText(fuer uebungId: String) -> String? {
+        guard let letzter = letzterSatz(fuer: uebungId) else { return nil }
+        if let cardio = letzter.cardio { return Zahlformat.cardio(cardio) }
+        return letzter.load.map { Zahlformat.belastungMitEinheit($0, loadUnit) }
     }
 
     func letzteBelastung(fuer uebungId: String) -> Double? {
@@ -689,9 +716,10 @@ final class GeraetModel {
     /// aus lastTypeSets. Eine Form fuer beide, damit Startwerte, Rueckblick
     /// und Uebungsliste nicht je zwei Quellen kennen.
     struct LetzterSatz {
-        let load: Double
+        let load: Double?
         let secondaryLoad: Double?
-        let volume: Int
+        let volume: Int?
+        let cardio: CardioWerte?
         let performedAt: String
     }
 
@@ -706,11 +734,11 @@ final class GeraetModel {
         case .geraet(let machineId):
             bootstrap.lastSets.first { $0.machineId == machineId && $0.exerciseId == uebungId }
                 .map { LetzterSatz(load: $0.load, secondaryLoad: $0.secondaryLoad,
-                                   volume: $0.volume, performedAt: $0.performedAt) }
+                                   volume: $0.volume, cardio: $0.cardio, performedAt: $0.performedAt) }
         case .typ(let equipmentModelId):
             bootstrap.lastTypeSets.first { $0.equipmentModelId == equipmentModelId && $0.exerciseId == uebungId }
                 .map { LetzterSatz(load: $0.load, secondaryLoad: $0.secondaryLoad,
-                                   volume: $0.volume, performedAt: $0.performedAt) }
+                                   volume: $0.volume, cardio: $0.cardio, performedAt: $0.performedAt) }
         }
     }
 
@@ -725,6 +753,7 @@ final class GeraetModel {
         umfang = Rastwerte.naechster(
             zu: letzter?.volume ?? aktiveUebung?.targetMin ?? 10, in: umfangsWerte)
         nebenbelastung = nebenbelastungVorbelegt(aus: letzter?.secondaryLoad)
+        cardio = letzter?.cardio?.nur(cardioListe) ?? CardioWerte()
         // Eine andere Uebung hat ihren eigenen Satzzaehler -- eine Pause
         // oder eine Abschlussentscheidung, die zur vorherigen gehoerte,
         // gilt hier nicht mehr.
@@ -746,13 +775,20 @@ final class GeraetModel {
             satzAbgelehnt = "Dein Training läuft in \(ort). Beende es zuerst, dann sicherst du hier Sätze."
             return
         }
+        // Auch ueber "Melden und Satz sichern" und den Abschluss erreichbar,
+        // die am Knopf vorbeigehen: ein leerer Cardio-Satz wuerde der Server
+        // ablehnen und die Warteschlange still verwerfen.
+        guard kannSichern else {
+            satzAbgelehnt = "Trag mindestens einen Wert ein."
+            return
+        }
         satzAbgelehnt = nil
         // Erst nach der Ortspruefung: ein abgelehnter Satz laeuft weiter und
         // behaelt seine Zaehlung. Die Art vor ergebnis() lesen, das den Satz beendet.
         let befestigung = zaehler?.befestigung
         // Herkunft nur bei Wiederholungen: der Server lehnt sie sonst ab (Spec B 6.3).
         let ergebnis: ZaehlerErgebnis?
-        if volumeKind == .reps {
+        if volumeKind == .reps && !istCardio {
             ergebnis = zaehler?.ergebnis()
         } else {
             zaehler?.satzVerworfen()
@@ -762,7 +798,10 @@ final class GeraetModel {
         var geschrieben = sessions.satzSichern(
             station: station, exerciseId: uebungId,
             einheiten: einheiten,
-            load: belastung, secondaryLoad: nebenbelastung, volume: umfang,
+            load: istCardio ? nil : belastung,
+            secondaryLoad: istCardio ? nil : nebenbelastung,
+            volume: istCardio ? nil : umfang,
+            cardio: istCardio ? cardio : nil,
             problemFlag: problemFlag, problemReason: problemReason
         )
         geschrieben.body.volumeSource = herkunft
@@ -786,8 +825,8 @@ final class GeraetModel {
             // Das Label ist fuer den Wiederholungszaehler: an einem Cardio-
             // Geraet gibt es weder Kilogramm noch Wiederholungen, die Felder
             // bleiben dort leer statt eine Watt- oder Meterzahl zu tragen.
-            weightKg: loadUnit == .kg ? belastung : nil,
-            reps: volumeKind == .reps ? umfang : nil,
+            weightKg: !istCardio && loadUnit == .kg ? belastung : nil,
+            reps: !istCardio && volumeKind == .reps ? umfang : nil,
             problemFlag: problemFlag,
             volumeSource: herkunft, zaehler: ergebnis, befestigung: befestigung))
         zaehlerZustand = .aus
@@ -833,7 +872,17 @@ final class GeraetModel {
     /// "Weiterer Satz" aus der Abschlussentscheidung heraus. Auch der
     /// Zusatzsatz bekommt seine Pause -- er ist ein Satz wie jeder andere,
     /// nur ausserhalb des Ziels.
-    func weitererSatz() { phase = .neuePause() }
+    ///
+    /// Am Cardio-Geraet ohne Pause: sie boete nur die Belastungsaenderung an,
+    /// und eine Belastung wird dort nie gesendet.
+    func weitererSatz() {
+        if istCardio {
+            phase = .eingabe
+            mitschnittBeginnen()
+        } else {
+            phase = .neuePause()
+        }
+    }
 
     /// Alle vier Aufrufer sind genau die Satzanfaenge: Mitschnitt und
     /// Zaehler beginnen deshalb hier gemeinsam.

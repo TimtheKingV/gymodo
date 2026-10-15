@@ -15,6 +15,21 @@ extension Station {
         return Station(maschine: GeraetTestdaten.dekodiere(json))
     }
 
+    /// Ein Cardiogeraet mit den angebotenen Werten.
+    static func testCardio(_ id: String, werte: [CardioWert], studioId: String = "s1",
+                           uebungen: String = "") -> Station {
+        let liste = werte.map { "\"\($0.rawValue)\"" }.joined(separator: ",")
+        let json = """
+        {"id":"\(id)","studioId":"\(studioId)","label":"Gerät \(id)",
+         "locationNote":null,"status":"active","tokenHashes":["h-\(id)"],"visitCount":0,
+         "equipmentModel":{"id":"em-\(id)","name":"Modell","manufacturer":null,
+           "category":"cardio","photoPath":null,"loadUnit":"level","loadStep":1,"loadMin":1,"loadMax":null,
+           "settingDefinitions":[],"cardioWerte":[\(liste)]},
+         "exercises":[\(uebungen)]}
+        """
+        return Station(maschine: GeraetTestdaten.dekodiere(json))
+    }
+
     /// Ein Geraetetyp ohne Geraet an einem Ort (nil = Freies Training).
     static func testTyp(_ id: String, studioId: String? = "s1") -> Station {
         let json = """

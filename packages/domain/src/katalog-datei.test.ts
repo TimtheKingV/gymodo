@@ -206,6 +206,22 @@ describe("pruefeKatalog group und retired", () => {
     ]);
   });
 
+  it("verlangt Cardio-Werte beim Cardio-Typ und verbietet sie sonst", () => {
+    expect(fehlerVon((roh) => delete (roh.equipment[2] as Record<string, unknown>).cardio_values)).toEqual([
+      'equipment[2] "laufband": category "cardio" verlangt cardio_values',
+    ]);
+    expect(fehlerVon((roh) => ((roh.equipment[0] as Record<string, unknown>).cardio_values = ["zeit"]))).toEqual([
+      'equipment[0] "brustpresse": cardio_values nur bei category "cardio"',
+    ]);
+    expect(fehlerVon((roh) => ((roh.equipment[2] as Record<string, unknown>).cardio_values = ["zeit", "zeit"]))).toEqual([
+      'equipment[2] "laufband": cardio_values enthaelt "zeit" mehrfach',
+    ]);
+  });
+
+  it("lehnt einen unbekannten Cardio-Wert am Schema ab", () => {
+    expect(fehlerVon((roh) => ((roh.equipment[2] as Record<string, unknown>).cardio_values = ["puls"])).length).toBeGreaterThan(0);
+  });
+
   it("zaehlt einen abgeloesten Typ nicht als Heimat einer Uebung", () => {
     expect(fehlerVon((roh) => ((roh.equipment[2] as Record<string, unknown>).retired = true))).toEqual([
       'exercises[2] "gehen": haengt an keinem Geraetetyp',

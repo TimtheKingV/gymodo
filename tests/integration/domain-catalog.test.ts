@@ -156,6 +156,105 @@ describe("createEquipmentModel", () => {
     expect(data?.manufacturer).toBe("Gym80");
     expect(Number(data?.load_max)).toBe(120);
   });
+
+  it("negativ: ein Cardio-Geraet ohne Typ und ohne Werte wird abgewiesen", async () => {
+    const client = await userClient(trainerA);
+
+    await expect(
+      createEquipmentModel(client, {
+        studioId: studioA,
+        name: "Cardio ohne Werte",
+        category: "cardio",
+        loadUnit: "kmh",
+        loadStep: 0.5,
+      }),
+    ).rejects.toMatchObject({
+      code: "validation_failed",
+      message: "Ein Cardio-Gerät ohne Typ braucht mindestens einen Wert.",
+    });
+  });
+
+  it("positiv: Cardio-Werte werden beim Anlegen und per Patch geschrieben", async () => {
+    const client = await userClient(trainerA);
+    const { id } = await createEquipmentModel(client, {
+      studioId: studioA,
+      name: `Cardio ${crypto.randomUUID().slice(0, 8)}`,
+      category: "cardio",
+      loadUnit: "kmh",
+      loadStep: 0.5,
+      cardioWerte: ["zeit", "kmh"],
+    });
+
+    const admin = serviceClient();
+    const lies = async () =>
+      (await admin.from("equipment_models").select("cardio_werte").eq("id", id).single()).data
+        ?.cardio_werte;
+    expect(await lies()).toEqual(["zeit", "kmh"]);
+
+    await updateEquipmentModel(client, id, { cardioWerte: ["zeit", "strecke", "kcal"] });
+    expect(await lies()).toEqual(["zeit", "strecke", "kcal"]);
+  });
+
+  describe("Patch und die Cardio-Regel", () => {
+    const cardio = (client: Awaited<ReturnType<typeof userClient>>, extra: object = {}) =>
+      createEquipmentModel(client, {
+        studioId: studioA,
+        name: `Cardio-Patch ${crypto.randomUUID().slice(0, 8)}`,
+        category: "cardio",
+        loadUnit: "kmh",
+        loadStep: 0.5,
+        cardioWerte: ["zeit"],
+        ...extra,
+      });
+    const abgelehnt = { code: "validation_failed", message: "Ein Cardio-Gerät ohne Typ braucht mindestens einen Wert." };
+
+    async function typAnlegen(): Promise<string> {
+      const { data, error } = await serviceClient()
+        .from("equipment_models")
+        .insert({
+          studio_id: "00000000-0000-4000-8000-000000000001",
+          name: `Cardio-Typ ${crypto.randomUUID().slice(0, 8)}`,
+          category: "cardio",
+          load_unit: "kmh",
+          load_step: 0.5,
+          cardio_werte: ["zeit", "kcal"],
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id;
+    }
+
+    it("negativ: alle Haken weg bei einem Cardio-Geraet ohne Typ", async () => {
+      const client = await userClient(trainerA);
+      const { id } = await cardio(client);
+      await expect(updateEquipmentModel(client, id, { cardioWerte: [] })).rejects.toMatchObject(abgelehnt);
+    });
+
+    it("negativ: Wechsel eines typlosen Kraftgeraets auf Cardio ohne Haken", async () => {
+      const client = await userClient(trainerA);
+      const id = await modell();
+      await expect(
+        updateEquipmentModel(client, id, { category: "cardio", loadUnit: "kmh", cardioWerte: [] }),
+      ).rejects.toMatchObject(abgelehnt);
+    });
+
+    it("negativ: Typ loesen bei leerer eigener Liste", async () => {
+      const client = await userClient(trainerA);
+      const typId = await typAnlegen();
+      const { id } = await cardio(client, { cardioWerte: [], catalogModelId: typId });
+      await expect(updateEquipmentModel(client, id, { catalogModelId: null })).rejects.toMatchObject(abgelehnt);
+    });
+
+    it("positiv: mit Typ darf die eigene Liste leer sein (erbt)", async () => {
+      const client = await userClient(trainerA);
+      const typId = await typAnlegen();
+      const { id } = await cardio(client, { catalogModelId: typId });
+      await updateEquipmentModel(client, id, { cardioWerte: [] });
+      const { data } = await serviceClient().from("equipment_models").select("cardio_werte").eq("id", id).single();
+      expect(data?.cardio_werte).toEqual([]);
+    });
+  });
 });
 
 describe("createSettingDefinition", () => {
