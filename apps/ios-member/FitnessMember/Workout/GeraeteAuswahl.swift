@@ -126,6 +126,14 @@ enum GeraeteAuswahl {
             .map { Station(typ: $0, studioId: studioId) }
     }
 
+    /// Ob die Suchberechnung warten soll (Offline-Spec 1b): nur wenn sich
+    /// allein der Text geaendert hat und er nicht leer ist. Erster Durchlauf,
+    /// Leeren und Aenderungen an Bootstrap, Ort oder Gruppe rechnen sofort.
+    static func entprellt(textVorher: String?, textJetzt: String, restGleich: Bool) -> Bool {
+        guard let textVorher, restGleich else { return false }
+        return !textJetzt.isEmpty && textJetzt != textVorher
+    }
+
     /// Ob `kopfinhalt` (im laufenden Training Uhr und Bloecke) ueber der
     /// Liste steht. Mit Suchtext nicht: sonst stehen die Treffer unter dem
     /// Training, und es sieht aus, als filtere die Suche nicht (Testnotiz

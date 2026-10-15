@@ -149,13 +149,22 @@ struct Uebungsbild: View {
 }
 
 /// Das grosse Geraetefoto oben auf Geraeteseite und Einweisung, aus der
-/// Fotoablage statt per AsyncImage (Testnotiz 11.10., #14): AsyncImage
-/// lud es bei jedem Oeffnen neu, die Ablage einmal je Foto.
+/// Fotoablage statt per AsyncImage (Testnotiz 11.10., #14).
+///
+/// Schluessel ist die Modell-ID wie im VorschauLader der Liste: offline
+/// (ohne signierte URL) findet die Seite so das Foto, das die Liste schon
+/// abgelegt hat. Dekodiert und verkleinert wird abseits des Main-Threads
+/// -- die Originale sind bis 10 MB gross, und die Dekodierung beim
+/// Zeichnen liess die Seite haengen (Offline-Spec 1b).
 struct Geraetefoto: View {
+    let modellId: String
     let url: URL?
     let hoehe: CGFloat
 
     @State private var bild: UIImage?
+
+    /// Kurze Kante in Pixeln: reicht fuer die volle Breite bei 3x.
+    private static let kantePixel = 1200
 
     var body: some View {
         ZStack {
@@ -172,15 +181,24 @@ struct Geraetefoto: View {
         .frame(maxWidth: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityHidden(true)
-        // Der Pfad als id, nicht die URL: die Signatur wechselt bei jedem
-        // Laden des Kontexts, das Foto nicht.
-        .task(id: url?.path) {
-            guard let url,
-                  let datei = await Medienablage.fotos.datei(
-                      schluessel: url.path, quelle: Medienquelle(url: url, pfad: url.path)),
-                  let geladen = UIImage(contentsOfFile: datei.path)
-            else { return }
-            bild = geladen
+        // Der Pfad gehoert zur id, nicht die URL: die Signatur wechselt bei
+        // jedem Laden des Kontexts, das Foto nicht.
+        .task(id: [modellId, url?.path]) {
+            if let geladen = await Self.laden(modellId: modellId, url: url,
+                                              kantePixel: Self.kantePixel, ablage: .fotos) {
+                bild = geladen
+            }
         }
+    }
+
+    nonisolated static func laden(modellId: String, url: URL?, kantePixel: Int,
+                                  ablage: Medienablage) async -> UIImage? {
+        let quelle = url.map { Medienquelle(url: $0, pfad: $0.path) }
+        guard let datei = await ablage.datei(schluessel: modellId, quelle: quelle) else { return nil }
+        let verkleinert = await Task.detached(priority: .userInitiated) { () -> CGImage? in
+            guard let daten = try? Data(contentsOf: datei) else { return nil }
+            return Vorschau.verkleinert(daten, kantePixel: kantePixel)
+        }.value
+        return verkleinert.map { UIImage(cgImage: $0) }
     }
 }

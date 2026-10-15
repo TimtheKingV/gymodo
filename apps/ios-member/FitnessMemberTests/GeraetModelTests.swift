@@ -35,6 +35,22 @@ struct GeraetModelTests {
         )
     }
 
+    /// Offline-Spec 3b: ohne Kontext (kein Netz) kommt der Text aus dem Bootstrap.
+    @Test func beschreibungOhneKontextAusDemBootstrap() {
+        let maschine: BootstrapResponse.Machine = GeraetTestdaten.dekodiere("""
+        {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":null,
+         "status":"active","tokenHashes":[],"visitCount":0,
+         "equipmentModel":{"id":"em1","name":"Beinpresse","manufacturer":null,
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,
+           "settingDefinitions":[]},
+         "exercises":[{"id":"e1","name":"Beidbeinig","description":"Knie nicht durchdruecken.",
+                       "volumeKind":"reps","targetMin":8,"targetMax":12}]}
+        """)
+        let sut = modell(maschine: maschine, bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        #expect(sut.kontext == nil)
+        #expect(sut.beschreibung == "Knie nicht durchdruecken.")
+    }
+
     @Test func startetOhneHistorieAmGeraeteminimum() {
         // designsystem.md SS8: "Beim ersten Mal schlaegt gymodo kein Gewicht
         // vor. Das Rad startet am Geraetminimum."

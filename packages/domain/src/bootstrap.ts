@@ -185,10 +185,32 @@ type Geraetemodell = {
 type Uebung = {
   id: string;
   name: string;
+  /** "Worauf du achten musst" -- im Bootstrap, damit die Einweisung offline lesbar ist (Offline-Spec 3b). */
+  description: string | null;
   volumeKind: VolumeKind;
   targetMin: number;
   targetMax: number;
 };
+
+type UebungZeile = {
+  id: string;
+  name: string;
+  description: string | null;
+  volume_kind: VolumeKind;
+  target_min: number;
+  target_max: number;
+};
+
+export function uebungAusZeile(z: UebungZeile): Uebung {
+  return {
+    id: z.id,
+    name: z.name,
+    description: z.description,
+    volumeKind: z.volume_kind,
+    targetMin: z.target_min,
+    targetMax: z.target_max,
+  };
+}
 
 const MODELL_SPALTEN =
   "id, name, manufacturer, photo_path, category, equipment_group, retired, load_unit, load_step, load_min, load_max, load_start, secondary_unit, secondary_step, secondary_min, secondary_max, catalog_model_id, cardio_werte";
@@ -393,7 +415,7 @@ export async function getBootstrap(
   const { data: linkRows } = await client
     .from("equipment_model_exercises")
     .select(
-      "equipment_model_id, sort_order, exercises (id, name, volume_kind, target_min, target_max)",
+      "equipment_model_id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max)",
     )
     .order("sort_order", { ascending: true });
 
@@ -447,22 +469,10 @@ export async function getBootstrap(
   const exercisesByModel = new Map<string, Uebung[]>();
   for (const row of (linkRows ?? []) as unknown as Array<{
     equipment_model_id: string;
-    exercises: {
-      id: string;
-      name: string;
-      volume_kind: VolumeKind;
-      target_min: number;
-      target_max: number;
-    };
+    exercises: UebungZeile;
   }>) {
     const list = exercisesByModel.get(row.equipment_model_id) ?? [];
-    list.push({
-      id: row.exercises.id,
-      name: row.exercises.name,
-      volumeKind: row.exercises.volume_kind,
-      targetMin: row.exercises.target_min,
-      targetMax: row.exercises.target_max,
-    });
+    list.push(uebungAusZeile(row.exercises));
     exercisesByModel.set(row.equipment_model_id, list);
   }
 

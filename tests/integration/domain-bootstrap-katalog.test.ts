@@ -72,7 +72,7 @@ beforeAll(async () => {
   const { data: uebungen, error: uebungError } = await admin
     .from("exercises")
     .insert([
-      { studio_id: GYMTAVO, name: `Face Pull ${kennung}`, target_min: 12, target_max: 15 },
+      { studio_id: GYMTAVO, name: `Face Pull ${kennung}`, description: "Ellbogen hoch.", target_min: 12, target_max: 15 },
       { studio_id: GYMTAVO, name: `Trizepsdruecken ${kennung}`, target_min: 10, target_max: 12 },
       { studio_id: studio.id, name: `Hausuebung ${kennung}`, target_min: 8, target_max: 12 },
     ])
@@ -155,6 +155,8 @@ describe("getBootstrap -- Gymtavo-Katalog", () => {
       settingDefinitions: [expect.objectContaining({ key: "hoehe", label: "Höhe" })],
     });
     expect(kabelzug?.exercises.map((u) => u.id)).toEqual([katalogUebung1, katalogUebung2]);
+    expect(kabelzug?.exercises[0]?.description).toBe("Ellbogen hoch.");
+    expect(kabelzug?.exercises[1]?.description).toBeNull();
   });
 
   it("fuehrt Studio-Modelle nicht als Gymtavo-Typen", async () => {

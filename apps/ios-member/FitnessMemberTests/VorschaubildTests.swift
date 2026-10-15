@@ -147,3 +147,40 @@ struct VorschauLaderTests {
         func zaehlen() { anzahl += 1 }
     }
 }
+
+struct GeraetefotoTests {
+    private func png(_ groesse: CGSize) -> Data {
+        UIGraphicsImageRenderer(size: groesse).image { kontext in
+            UIColor.red.setFill(); kontext.fill(CGRect(origin: .zero, size: groesse))
+        }.pngData()!
+    }
+
+    private func ablage(_ daten: Data) -> Medienablage {
+        Medienablage(ordner: FileManager.default.temporaryDirectory
+                        .appendingPathComponent("fotos-\(UUID().uuidString)"),
+                     endung: "bild") { _ in daten }
+    }
+
+    /// Offline (ohne URL) kommt das Foto, das die Liste unter derselben
+    /// Modell-ID abgelegt hat (Offline-Spec 3c).
+    @Test func findetDasFotoOhneURLUeberDieModellId() async {
+        let ablage = ablage(png(CGSize(width: 40, height: 20)))
+        let url = URL(string: "https://example.test/geraete/em1.png?token=a")!
+        _ = await ablage.datei(schluessel: "em1", quelle: Medienquelle(url: url, pfad: url.path))
+
+        let bild = await Geraetefoto.laden(modellId: "em1", url: nil, kantePixel: 10, ablage: ablage)
+        #expect(bild != nil)
+    }
+
+    @Test func verkleinertAufDieZielkante() async throws {
+        let ablage = ablage(png(CGSize(width: 400, height: 200)))
+        let url = URL(string: "https://example.test/geraete/em2.png")!
+        let bild = try #require(await Geraetefoto.laden(modellId: "em2", url: url, kantePixel: 50, ablage: ablage))
+        #expect(bild.cgImage!.height == 50)
+    }
+
+    @Test func ohneDateiUndOhneURLKeinBild() async {
+        let bild = await Geraetefoto.laden(modellId: "fehlt", url: nil, kantePixel: 10, ablage: ablage(Data()))
+        #expect(bild == nil)
+    }
+}
