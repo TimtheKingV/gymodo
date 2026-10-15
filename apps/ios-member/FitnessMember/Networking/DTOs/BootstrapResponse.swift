@@ -142,6 +142,11 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
     struct Exercise: Decodable, Hashable, Sendable, Identifiable {
         let id: String
         let name: String
+        /// "Worauf du achten musst" -- im Bootstrap, damit die Einweisung offline
+        /// lesbar ist (Offline-Spec 3b). Optional mit Default: alte Server und
+        /// gespeicherte Bootstraps kennen das Feld nicht, und bestehende
+        /// memberwise-Aufrufe bleiben gueltig.
+        var description: String? = nil
         /// Was der Korridor zaehlt: Wiederholungen, Sekunden oder Meter.
         /// targetMin/targetMax stehen in genau dieser Einheit.
         let volumeKind: VolumeKind

@@ -40,8 +40,7 @@ struct EinweisungSchritt: View {
 
                 medien
 
-                if let beschreibung = modell.kontext?.exercises
-                    .first(where: { $0.id == modell.uebungId })?.description {
+                if let beschreibung = modell.beschreibung {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
                         Text("Worauf du achten musst")
                             .font(DesignSystem.Typography.uebungsname)
