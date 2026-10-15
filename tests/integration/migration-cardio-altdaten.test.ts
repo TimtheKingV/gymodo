@@ -73,6 +73,13 @@ beforeAll(async () => {
       { ...modellBasis, name: `Ruder ${kennung}`, load_unit: "watt", load_step: 5, cardio_werte: ["zeit", "watt"] },
       // 5: nur kcal -- aus load/volume laesst sich nichts davon ableiten.
       { ...modellBasis, name: `Nur kcal ${kennung}`, load_unit: "level", cardio_werte: ["kcal"] },
+      // 6: Watt mit Stufe als Nebenbelastung -- wie altEingabeUmwandeln
+      // wird auch eine Nebenbelastung in Stufe/km/h/Watt umgeschrieben.
+      {
+        ...modellBasis, name: `Ergometer ${kennung}`, load_unit: "watt", load_step: 5,
+        secondary_unit: "level", secondary_step: 1, secondary_min: 1, secondary_max: 20,
+        cardio_werte: ["zeit", "stufe", "watt"],
+      },
     ])
     .select("id");
   if (modellError) throw modellError;
@@ -103,6 +110,7 @@ beforeAll(async () => {
     ["meter", { equipment_model_id: m[2], exercise_id: meter, load: 10, secondary_load: 0, volume: 2000 }],
     ["ohneNeigung", { equipment_model_id: m[3], exercise_id: sekunden, load: 9, secondary_load: 3, volume: 600 }],
     ["nichts", { equipment_model_id: m[5], exercise_id: wiederholungen, load: 5, volume: 10 }],
+    ["nebenStufe", { equipment_model_id: m[6], exercise_id: sekunden, load: 150, secondary_load: 8, volume: 600 }],
     [
       "gemessen",
       {
@@ -151,6 +159,11 @@ describe("cardio_altdaten_umschreiben", () => {
   it("Meter werden die Strecke", async () => {
     await umschreiben();
     expect(await zeile(satz.meter!)).toEqual({ ...UMGESCHRIEBEN, ...LEER, strecke_m: 2000, kmh: 10, steigung_pct: 0 });
+  });
+
+  it("eine Nebenbelastung in Stufe wird die Stufe", async () => {
+    await umschreiben();
+    expect(await zeile(satz.nebenStufe!)).toEqual({ ...UMGESCHRIEBEN, ...LEER, dauer_s: 600, watt: 150, stufe: 8 });
   });
 
   it("ohne Steigung und Frequenz in der Liste bleiben beide leer", async () => {

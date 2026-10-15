@@ -36,16 +36,22 @@ create or replace function public.cardio_altdaten_umschreiben() returns void
         then least(greatest(round(s.volume)::int, 1), 86400) end as dauer_s,
       case when e.volume_kind = 'meters' and 'strecke' = any(l.werte)
         then least(greatest(round(s.volume)::int, 1), 200000) end as strecke_m,
-      case when l.load_unit = 'level' and 'stufe' = any(l.werte)
-        then least(greatest(round(s.load)::int, 0), 100) end as stufe,
-      case when l.load_unit = 'kmh' and 'kmh' = any(l.werte)
-        then least(greatest(round(s.load, 1), 0), 50) end as kmh,
+      case when 'stufe' = any(l.werte) and l.load_unit = 'level'
+             then least(greatest(round(s.load)::int, 0), 100)
+           when 'stufe' = any(l.werte) and l.secondary_unit = 'level' and s.secondary_load is not null
+             then least(greatest(round(s.secondary_load)::int, 0), 100) end as stufe,
+      case when 'kmh' = any(l.werte) and l.load_unit = 'kmh'
+             then least(greatest(round(s.load, 1), 0), 50)
+           when 'kmh' = any(l.werte) and l.secondary_unit = 'kmh' and s.secondary_load is not null
+             then least(greatest(round(s.secondary_load, 1), 0), 50) end as kmh,
       case when 'steigung' = any(l.werte) and l.load_unit = 'pct'
              then least(greatest(round(s.load, 1), -10), 40)
            when 'steigung' = any(l.werte) and l.secondary_unit = 'pct' and s.secondary_load is not null
              then least(greatest(round(s.secondary_load, 1), -10), 40) end as steigung_pct,
-      case when l.load_unit = 'watt' and 'watt' = any(l.werte)
-        then least(greatest(round(s.load)::int, 0), 3000) end as watt,
+      case when 'watt' = any(l.werte) and l.load_unit = 'watt'
+             then least(greatest(round(s.load)::int, 0), 3000)
+           when 'watt' = any(l.werte) and l.secondary_unit = 'watt' and s.secondary_load is not null
+             then least(greatest(round(s.secondary_load)::int, 0), 3000) end as watt,
       case when 'frequenz' = any(l.werte) and l.load_unit = 'rpm'
              then least(greatest(round(s.load)::int, 0), 300)
            when 'frequenz' = any(l.werte) and l.secondary_unit = 'rpm' and s.secondary_load is not null
