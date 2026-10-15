@@ -184,8 +184,12 @@ final class CatalogStore {
         // `do throws(APIError)` statt `do`: der Typ im catch ist sonst nur
         // abgeleitet, und `letzterLadefehler` haengt daran. Derselbe Griff
         // wie in ProfilRootView, dort mit derselben Begruendung.
+        // Wer fragt: eine Antwort, die nach Abmelden/Kontowechsel eintrifft,
+        // gehoert einem anderen User und wird verworfen.
+        let anfragendeUserId = userId
         do throws(APIError) {
             let geladen = try await loader.bootstrapMitRohdaten()
+            guard userId == anfragendeUserId else { return }
             let response = geladen.antwort
             if let rohdaten = geladen.rohdaten, let userId {
                 bootstrapFileStore?.save(rohdaten, userId: userId)
@@ -195,6 +199,7 @@ final class CatalogStore {
             loadState = .loaded
             repariereOrt(studios: response.studios)
         } catch {
+            guard userId == anfragendeUserId else { return }
             letzterLadefehler = error
             if bootstrap == nil { loadState = .failed }
         }

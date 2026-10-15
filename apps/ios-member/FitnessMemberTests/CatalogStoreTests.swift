@@ -643,6 +643,26 @@ struct CatalogStoreTests {
         #expect(store.anmelden(userId: "u1") == false)
     }
 
+    @Test("verspaetete Antwort eines abgemeldeten Users wird verworfen")
+    func verspaetereAntwortWirdVerworfen() async {
+        let verzeichnis = tempDirectory()
+        let loader = HaengenderBootstrapLoader()
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: verzeichnis),
+                                 bootstrapFileStore: BootstrapFileStore(directory: verzeichnis))
+        store.anmelden(userId: "u1")
+        let laden = Task { await store.load() }
+        while await !loader.angefragt { await Task.yield() }
+
+        store.reset()
+        store.anmelden(userId: "u2")
+        await loader.freigeben()
+        await laden.value
+
+        #expect(store.bootstrap == nil)
+        #expect(store.loadState == .idle)
+        #expect(!FileManager.default.fileExists(atPath: verzeichnis.appendingPathComponent("bootstrap-u2.json").path))
+    }
+
     @Test("reset loescht den gespeicherten Bootstrap")
     func resetLoeschtCache() {
         let verzeichnis = tempDirectory()
@@ -917,6 +937,28 @@ private actor ZweiterAufrufPrueftPlatteLoader: BootstrapLoading {
         throw APIError.notFound(message: "Geraet nicht gefunden.")
     }
 
+    func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
+    func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
+    func leaveStudioMembership(studioId: String) async throws(APIError) { throw .offline }
+}
+
+/// Haengt in bootstrapMitRohdaten, bis der Test freigeben() ruft.
+private actor HaengenderBootstrapLoader: BootstrapLoading {
+    private(set) var angefragt = false
+    private var wartend: CheckedContinuation<Void, Never>?
+
+    func bootstrap() async throws(APIError) -> BootstrapResponse { throw .offline }
+
+    func bootstrapMitRohdaten() async throws(APIError) -> GeladenerBootstrap {
+        angefragt = true
+        await withCheckedContinuation { wartend = $0 }
+        let json = Data(#"{"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null}},"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#.utf8)
+        return GeladenerBootstrap(antwort: try! JSONDecoder().decode(BootstrapResponse.self, from: json), rohdaten: json)
+    }
+
+    func freigeben() { wartend?.resume(); wartend = nil }
+
+    func putSet(sessionId: UUID, setId: UUID, _ body: SetWrite) async throws(APIError) -> RecordedSet { throw .offline }
     func joinStudioByCode(_ code: String) async throws(APIError) -> JoinResult { throw .offline }
     func joinStudioByTag(_ token: String) async throws(APIError) -> JoinResult { throw .offline }
     func leaveStudioMembership(studioId: String) async throws(APIError) { throw .offline }

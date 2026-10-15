@@ -99,6 +99,7 @@ struct RootView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DesignSystem.Color.bg)
         .task {
+            verbindungLangsam = false
             try? await Task.sleep(for: .seconds(3))
             verbindungLangsam = true
         }
