@@ -1323,3 +1323,33 @@ git commit -m "feat(home): Play in der Zusammenfassung setzt ein Training fort"
   1. `supabase db push --linked` (Migration 0053) und `pnpm smoke:migrations`.
   2. PR mergen. Vercel baut die Web-App.
   3. App-Build aufs Gerät.
+
+## Ergebnis
+
+Umgesetzt am 15.10. auf `claude/training-fortsetzen`, alle 8 Tasks direkt (ohne Subagenten je Task), danach ein Review des ganzen Branches.
+
+**Tests:**
+- Vitest Domain: 333/333. `sticker.test.ts` lädt lokal nicht (fehlende Pakete), wie vorher.
+- Integration (`pnpm test:integration`, lokales Supabase): 829/829.
+- Swift: 1147/1147.
+
+**Abweichungen vom Plan:**
+- `domain-complete-session.test.ts`: `seedSession` setzt `started_at` eine Minute zurück. Der Check „Ende nach Beginn“ schlug lokal zufällig fehl (Uhr der Docker-VM gegen Node), auch schon vor der Änderung.
+- `pausenSekunden`-Test erwartet 150 statt 151: die Implementierung rundet ab.
+- Pfad leeren nach Fortsetzen: als `Pfadbereinigung.nachFortsetzenLeeren(aktiveId:pfad:)` mit Tests; greift nur, wenn die wieder aktive Einheit die des stehenden Abschlusses ist.
+- Aus dem Review:
+  - Marke `fortsetzenAngefragt` vor dem reopen-Aufruf. Geht die Antwort verloren, holt `abgleichen` nach dem nächsten erfolgreichen Laden des Verlaufs das Training zurück, sobald der Server die Einheit offen zeigt.
+  - `wiederaufnehmen` prüft das Fenster nicht mehr: nach der Zusage des Servers zählt die Uhr des Geräts nicht.
+  - `LokaleSession.wiederaufgenommenAm`: die Abschlussdauer zog die Lücke sonst doppelt ab, wenn nach dem Fortsetzen kein Satz mehr kam.
+  - Ortswechsel mit Satz verwirft eine ältere Ablage.
+
+**Zurückgestellt (aus dem Review):**
+- `TrainingAbschlussView.task` ruft `completeSession` bei jedem Erscheinen.
+- `reopenSession` prüft nicht, ob das Update eine Zeile traf.
+- `pausedSeconds` ohne Obergrenze.
+- Auto-Abschluss einer fortgesetzten, nie wieder beendeten Einheit behält die alte Pausensumme.
+
+**Offen:**
+- Migration 0053 auf Prod (`supabase db push --linked`, `pnpm smoke:migrations`).
+- Web-Deploy (Merge).
+- Prüfung auf dem Gerät nach Spec „Auf dem Gerät“.
