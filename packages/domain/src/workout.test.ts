@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recordSetInputSchema } from "./workout.js";
+import { completeSessionInputSchema, recordSetInputSchema } from "./workout.js";
 
 const basis = {
   sessionId: "11111111-1111-4111-8111-111111111111",
@@ -93,5 +93,23 @@ describe("recordSetInputSchema -- Station", () => {
   it("laesst ein Studio neben einem Geraet zu -- recordSet nimmt dann das des Geraets", () => {
     const ergebnis = recordSetInputSchema.safeParse({ ...basis, studioId: studio });
     expect(ergebnis.success).toBe(true);
+  });
+});
+
+describe("completeSessionInputSchema", () => {
+  const sessionId = "6f1c2b9e-3c1a-4a51-9a4e-1d2f3a4b5c6d";
+
+  // Testnotiz 14.10., 18:45 #3/#4: die Pausensumme kommt mit dem Abschluss.
+  it("nimmt eine Pausensumme an", () => {
+    expect(completeSessionInputSchema.parse({ sessionId, pausedSeconds: 1080 }).pausedSeconds).toBe(1080);
+  });
+
+  it("laesst die Pausensumme weg, wie eine alte App", () => {
+    expect(completeSessionInputSchema.parse({ sessionId }).pausedSeconds).toBeUndefined();
+  });
+
+  it("weist eine negative oder gebrochene Pausensumme ab", () => {
+    expect(completeSessionInputSchema.safeParse({ sessionId, pausedSeconds: -1 }).success).toBe(false);
+    expect(completeSessionInputSchema.safeParse({ sessionId, pausedSeconds: 1.5 }).success).toBe(false);
   });
 });

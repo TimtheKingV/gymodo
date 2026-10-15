@@ -405,6 +405,8 @@ export async function recordSet(
 
 export const completeSessionInputSchema = z.object({
   sessionId: z.string().uuid(),
+  /** Summe aller Pausen in Sekunden (Testnotiz 14.10., 18:45 #3/#4). Fehlt bei alten Apps. */
+  pausedSeconds: z.number().int().min(0).optional(),
 });
 
 export type CompletedSession = {
@@ -482,6 +484,9 @@ export async function completeSession(
     .update({
       completed_at: new Date().toISOString(),
       completed_reason: "manual",
+      ...(parsed.data.pausedSeconds !== undefined
+        ? { paused_seconds: parsed.data.pausedSeconds }
+        : {}),
     })
     .eq("id", parsed.data.sessionId)
     .select("id, started_at, completed_at, completed_reason")
