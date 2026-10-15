@@ -17,7 +17,7 @@ function produkt(werte: Partial<ProduktVorlage> & Pick<ProduktVorlage, "id" | "m
 const typ: TypVorlage = {
   id: "t1", name: "Brustpresse", manufacturer: null, category: "kraft",
   loadUnit: "kg", loadStep: 1.25, loadMin: 0, loadMax: null,
-  secondaryUnit: null, secondaryStep: null, secondaryMin: null, secondaryMax: null,
+  secondaryUnit: null, secondaryStep: null, secondaryMin: null, secondaryMax: null, cardioWerte: [],
   hatFoto: true, fotoUrl: "https://bild/typ",
   produkte: [
     produkt({ id: "p1", manufacturer: "gym80", series: "Pure Kraft", name: "Brustpresse", modelCode: "4345" }),

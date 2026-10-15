@@ -156,6 +156,44 @@ describe("createEquipmentModel", () => {
     expect(data?.manufacturer).toBe("Gym80");
     expect(Number(data?.load_max)).toBe(120);
   });
+
+  it("negativ: ein Cardio-Geraet ohne Typ und ohne Werte wird abgewiesen", async () => {
+    const client = await userClient(trainerA);
+
+    await expect(
+      createEquipmentModel(client, {
+        studioId: studioA,
+        name: "Cardio ohne Werte",
+        category: "cardio",
+        loadUnit: "kmh",
+        loadStep: 0.5,
+      }),
+    ).rejects.toMatchObject({
+      code: "validation_failed",
+      message: "Ein Cardio-Gerät ohne Typ braucht mindestens einen Wert.",
+    });
+  });
+
+  it("positiv: Cardio-Werte werden beim Anlegen und per Patch geschrieben", async () => {
+    const client = await userClient(trainerA);
+    const { id } = await createEquipmentModel(client, {
+      studioId: studioA,
+      name: `Cardio ${crypto.randomUUID().slice(0, 8)}`,
+      category: "cardio",
+      loadUnit: "kmh",
+      loadStep: 0.5,
+      cardioWerte: ["zeit", "kmh"],
+    });
+
+    const admin = serviceClient();
+    const lies = async () =>
+      (await admin.from("equipment_models").select("cardio_werte").eq("id", id).single()).data
+        ?.cardio_werte;
+    expect(await lies()).toEqual(["zeit", "kmh"]);
+
+    await updateEquipmentModel(client, id, { cardioWerte: ["zeit", "strecke", "kcal"] });
+    expect(await lies()).toEqual(["zeit", "strecke", "kcal"]);
+  });
 });
 
 describe("createSettingDefinition", () => {

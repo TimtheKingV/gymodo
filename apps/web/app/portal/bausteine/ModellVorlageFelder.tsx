@@ -173,7 +173,7 @@ export function ModellVorlageFelder({
         key={`${typ?.id ?? "ohne-typ"}:${produkt?.id ?? ""}`}
         gross={gross}
         {...(kategorie ? { kategorie } : {})}
-        {...(typ ? { start: vorlageStart(typ, produkt) } : {})}
+        {...(typ ? { start: vorlageStart(typ, produkt), typCardioWerte: typ.cardioWerte } : {})}
       />
     </>
   );

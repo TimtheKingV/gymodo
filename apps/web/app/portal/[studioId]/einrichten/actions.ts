@@ -18,7 +18,7 @@ import {
   uploadEquipmentPhoto,
 } from "@fitretro/domain";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { belastungAusFormular, umfangAusFormular } from "../../formfelder";
+import { belastungAusFormular, cardioAusFormular, umfangAusFormular } from "../../formfelder";
 import { typAusFormular } from "../../gymtavoTyp";
 import type { Befund } from "./befund";
 
@@ -105,6 +105,7 @@ export async function modellAnlegen(
       name: text(formData, "name"),
       manufacturer: optionalerText(formData, "manufacturer"),
       ...belastungAusFormular(formData),
+      ...cardioAusFormular(formData, belastungAusFormular(formData).category),
       loadStep: zahl(formData, "loadStep") ?? Number.NaN,
       loadMin: zahl(formData, "loadMin") ?? 0,
       catalogModelId: typ.catalogModelId,

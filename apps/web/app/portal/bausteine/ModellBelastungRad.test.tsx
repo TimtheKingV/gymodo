@@ -45,33 +45,6 @@ describe("ModellBelastungRad", () => {
     expect(screen.queryByRole("listbox", { name: "Nebenbelastung ab" })).toBeNull();
   });
 
-  it("laedt nach einem Einheitenwechsel die Rastung der neuen Einheit", async () => {
-    render(<ModellBelastungRad />);
-
-    await auswaehlen("Kategorie", "Cardio");
-    await auswaehlen("Belastung", "km/h");
-
-    expect(feldwert("loadUnit")).toBe("kmh");
-    expect(feldwert("loadStep")).toBe("0,5");
-    expect(feldwert("loadMin")).toBe("0,5");
-    expect(feldwert("loadMax")).toBe("20");
-  });
-
-  it("zeigt das zweite Rad erst mit einer Nebenbelastung, mit eigenen Spaltennamen", async () => {
-    render(<ModellBelastungRad />);
-
-    await auswaehlen("Kategorie", "Cardio");
-    await auswaehlen("Nebenbelastung", "%");
-
-    expect(feldwert("secondaryUnit")).toBe("pct");
-    expect(screen.getByRole("listbox", { name: "Nebenbelastung ab" })).toBeTruthy();
-    expect(feldwert("secondaryMin")).toBe("0");
-    expect(feldwert("secondaryMax")).toBe("15");
-    expect(feldwert("secondaryStep")).toBe("0,5");
-    // Die Hauptspalten bleiben eindeutig.
-    expect(screen.getAllByRole("listbox", { name: "Schritt" })).toHaveLength(1);
-  });
-
   it("nimmt Bestandswerte als Start und behaelt sie bei gleicher Einheit", () => {
     render(
       <ModellBelastungRad
@@ -132,15 +105,6 @@ describe("ModellBelastungRad", () => {
     expect(feldwert("loadMin")).toBe("10");
   });
 
-  it("zaehlt auch am Laufband im Takt des Schritts", async () => {
-    render(<ModellBelastungRad kategorie="cardio" />);
-
-    await auswaehlen("Belastung", "km/h");
-
-    expect(zeilen("Maximum").slice(0, 3)).toEqual(["0,5", "1", "1,5"]);
-    expect(zeilen("Maximum").at(-1)).toBe("∞");
-  });
-
   // Testnotiz 03.10., #2: wer links anfaengt, stellt zuerst den Takt ein.
   it("steht mit dem Schritt links, vor dem Maximum", () => {
     render(<ModellBelastungRad />);
@@ -150,17 +114,43 @@ describe("ModellBelastungRad", () => {
   });
 
   // Testnotiz 03.10., #1: Kraft oder Cardio ist vorher gefragt.
-  it("fest auf Cardio: kein Kategoriefeld und kein kg", async () => {
+  it("fest auf Cardio: kein Kategoriefeld, keine Belastungsfelder, aber die Werte zum Ankreuzen", () => {
     render(<ModellBelastungRad kategorie="cardio" />);
 
     expect(screen.queryByRole("button", { name: "Kategorie" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Belastung" })).toBeNull();
+    expect(screen.queryByRole("listbox", { name: "Maximum" })).toBeNull();
     expect(feldwert("category")).toBe("cardio");
+    // Die Belastung bleibt unsichtbar im Formular (belastungAusFormular).
     expect(feldwert("loadUnit")).toBe("watt");
+    expect(feldwert("loadStep")).toBe("5");
+    expect(feldwert("loadMin")).toBe("5");
+    expect(screen.getAllByRole("checkbox")).toHaveLength(8);
+    expect(screen.getByRole("checkbox", { name: "Geschwindigkeit (km/h)" })).toBeTruthy();
+    expect(screen.getByRole("checkbox", { name: "Trittfrequenz / Schlagzahl" })).toBeTruthy();
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: "Belastung" }));
-    const optionen = (await screen.findAllByRole("option")).map((zeile) => zeile.textContent);
-    expect(optionen).not.toContain("kg");
-    expect(optionen).toContain("km/h");
+  it("belegt die Cardio-Werte mit den eigenen vor, sonst mit denen des Typs", () => {
+    const { unmount } = render(
+      <ModellBelastungRad kategorie="cardio" cardioWerte={["zeit"]} typCardioWerte={["zeit", "kcal"]} />,
+    );
+    expect((screen.getByRole("checkbox", { name: "Zeit" }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole("checkbox", { name: "Kalorien" }) as HTMLInputElement).checked).toBe(false);
+    unmount();
+
+    render(<ModellBelastungRad kategorie="cardio" cardioWerte={[]} typCardioWerte={["zeit", "kcal"]} />);
+    expect((screen.getByRole("checkbox", { name: "Kalorien" }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole("checkbox", { name: "Watt" }) as HTMLInputElement).checked).toBe(false);
+    expect(screen.getByText("Nichts angekreuzt: wie der Gerätetyp.")).toBeTruthy();
+  });
+
+  it("zeigt ohne Typ keinen Erbe-Hinweis und fuer Kraft keine Cardio-Werte", () => {
+    const { unmount } = render(<ModellBelastungRad kategorie="cardio" />);
+    expect(screen.queryByText("Nichts angekreuzt: wie der Gerätetyp.")).toBeNull();
+    unmount();
+
+    render(<ModellBelastungRad kategorie="kraft" />);
+    expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
   });
 
   it("fest auf Kraft: kg ohne Belastungs- und Nebenbelastungsfeld", () => {
@@ -180,5 +170,6 @@ describe("ModellBelastungRad", () => {
 
     expect(feldwert("loadUnit")).toBe("watt");
     expect(feldwert("loadStep")).toBe("5");
+    expect(screen.getAllByRole("checkbox")).toHaveLength(8);
   });
 });

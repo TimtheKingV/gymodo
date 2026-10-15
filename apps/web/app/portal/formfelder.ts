@@ -1,4 +1,5 @@
 import type { Category, LoadUnit, VolumeKind } from "@fitretro/domain/belastung";
+import { CARDIO_WERTE, type CardioWert } from "@fitretro/domain";
 import { istEinheit, istKategorie, istUmfangsart } from "./bausteine/einstellungVorschlaege";
 
 /**
@@ -56,6 +57,17 @@ export function belastungAusFormular(formData: FormData): BelastungsFelder {
     secondaryMin: secondaryUnit ? (zahl(formData, "secondaryMin") ?? null) : null,
     secondaryMax: secondaryUnit ? (zahl(formData, "secondaryMax") ?? null) : null,
   };
+}
+
+/**
+ * Die angekreuzten Cardio-Werte eines Modells, in der festen Reihenfolge
+ * der Liste (Testnotiz 14.10., 18:45 #7). Leer heisst "wie der Geraetetyp";
+ * Kraft hat nie welche.
+ */
+export function cardioAusFormular(formData: FormData, kategorie: Category): { cardioWerte: CardioWert[] } {
+  if (kategorie !== "cardio") return { cardioWerte: [] };
+  const gewaehlt = formData.getAll("cardioWert").map(String);
+  return { cardioWerte: CARDIO_WERTE.filter((w) => gewaehlt.includes(w)) };
 }
 
 export type UmfangsFelder = {

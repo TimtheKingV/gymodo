@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { belastungAusFormular, umfangAusFormular } from "./formfelder";
+import { belastungAusFormular, cardioAusFormular, umfangAusFormular } from "./formfelder";
 
 function form(felder: Record<string, string>): FormData {
   const daten = new FormData();
@@ -93,5 +93,25 @@ describe("umfangAusFormular", () => {
 
   it("laesst ein leeres Feld als NaN durch, damit die Domain die Meldung liefert", () => {
     expect(umfangAusFormular(form({ targetMax: "12" })).targetMin).toBeNaN();
+  });
+});
+
+describe("cardioAusFormular", () => {
+  it("liest die angekreuzten Werte in fester Reihenfolge", () => {
+    const f = new FormData();
+    f.append("cardioWert", "kcal");
+    f.append("cardioWert", "zeit");
+    f.append("cardioWert", "puls");
+    expect(cardioAusFormular(f, "cardio")).toEqual({ cardioWerte: ["zeit", "kcal"] });
+  });
+
+  it("leer heisst erben", () => {
+    expect(cardioAusFormular(new FormData(), "cardio")).toEqual({ cardioWerte: [] });
+  });
+
+  it("Kraft hat nie Cardio-Werte", () => {
+    const f = new FormData();
+    f.append("cardioWert", "zeit");
+    expect(cardioAusFormular(f, "kraft")).toEqual({ cardioWerte: [] });
   });
 });

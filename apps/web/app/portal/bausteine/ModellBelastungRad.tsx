@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import type { CardioWert } from "@fitretro/domain";
 import type { Category, LoadUnit } from "@fitretro/domain/belastung";
 import { Auswahl } from "./Auswahl";
 import { Rad } from "./EinstellungRad";
@@ -17,6 +18,19 @@ import {
   maxAb,
 } from "./einstellungVorschlaege";
 import styles from "../portal.module.css";
+
+/** Beschriftung der Cardio-Werte, in der Reihenfolge von CARDIO_WERTE. */
+const CARDIO_BESCHRIFTUNG: Record<CardioWert, string> = {
+  zeit: "Zeit",
+  strecke: "Strecke",
+  stufe: "Stufe",
+  kmh: "Geschwindigkeit (km/h)",
+  steigung: "Steigung (%)",
+  watt: "Watt",
+  frequenz: "Trittfrequenz / Schlagzahl",
+  kcal: "Kalorien",
+};
+const CARDIO_REIHE = Object.keys(CARDIO_BESCHRIFTUNG) as CardioWert[];
 
 export type ModellBelastungStart = {
   category: Category;
@@ -42,6 +56,11 @@ export type ModellBelastungStart = {
  * Schritt). Ohne Neuaufbau bliebe das Rad auf einer Zeile stehen, die es
  * in der neuen Liste nicht gibt.
  *
+ * Cardio (Testnotiz 14.10., 18:45 #7): statt der Belastungsfelder kreuzt
+ * der Trainer an, welche Werte das Geraet anbietet. Die Belastungsfelder
+ * bleiben als versteckte Felder im Formular -- sonst bricht
+ * belastungAusFormular, und die DB-Spalten behielten nicht ihren Wert.
+ *
  * Die Nebenbelastung ist zugeklappt, solange sie "keine" ist -- ihr Rad
  * erscheint erst mit einer Einheit. Seine Spalten heissen anders als die
  * des Hauptrads ("Nebenbelastung ab" statt "Minimum"): zwei Raeder mit
@@ -61,12 +80,18 @@ export function ModellBelastungRad({
   gross = false,
   start,
   kategorie,
+  cardioWerte,
+  typCardioWerte,
 }: {
   gross?: boolean;
   /** Bestandswerte beim Bearbeiten; ohne sie gelten die Kraft-Vorgaben. */
   start?: ModellBelastungStart;
   /** Vorher gefragt (geraete/neu): kein Kategoriefeld, nur diese Einheiten. */
   kategorie?: Category;
+  /** Eigene Cardio-Werte des Modells; leer = wie der Typ. */
+  cardioWerte?: CardioWert[];
+  /** Cardio-Werte des zugeordneten Gymtavo-Typs; nur gesetzt, wenn es einen Typ gibt. */
+  typCardioWerte?: CardioWert[];
 }) {
   const startKategorie = start?.category ?? kategorie ?? "kraft";
   const [category, setCategory] = useState<Category>(startKategorie);
@@ -142,6 +167,8 @@ export function ModellBelastungRad({
       )
     : null;
 
+  const cardioVorbelegt = cardioWerte && cardioWerte.length > 0 ? cardioWerte : (typCardioWerte ?? []);
+
   return (
     <>
       <div className={styles.grid}>
@@ -162,7 +189,7 @@ export function ModellBelastungRad({
             />
           </div>
         )}
-        {einheiten.length > 1 ? (
+        {einheiten.length > 1 && category !== "cardio" ? (
           <div className={styles.field}>
             <label className={styles.label} htmlFor={einheitId}>
               Belastung
@@ -181,75 +208,110 @@ export function ModellBelastungRad({
         )}
       </div>
 
-      <input type="hidden" name="loadMin" value={minimum} />
-      <Rad
-        key={loadUnit}
-        gross={gross}
-        spalten={[
-          {
-            name: "loadStep",
-            label: "Schritt",
-            werte: haupt.schritt,
-            start: hauptStart.schritt,
-            onWahl: (wert) => setHauptSchritt({ einheit: loadUnit, wert }),
-          },
-          {
-            name: "loadMax",
-            label: "Maximum",
-            werte: maxAb(haupt.max, minimum),
-            start: hauptStart.max,
-          },
-        ]}
-      />
-
-      {zeigeNeben ? (
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor={nebenId}>
-            Nebenbelastung
-          </label>
-          <Auswahl
-            id={nebenId}
-            name="secondaryUnit"
+      {category === "cardio" ? (
+        <>
+          <fieldset className={styles.field}>
+            <legend className={styles.label}>Werte des Geräts</legend>
+            {CARDIO_REIHE.map((wert) => (
+              <label key={wert} className={styles.hint}>
+                <input
+                  type="checkbox"
+                  name="cardioWert"
+                  value={wert}
+                  defaultChecked={cardioVorbelegt.includes(wert)}
+                />{" "}
+                {CARDIO_BESCHRIFTUNG[wert]}
+              </label>
+            ))}
+            {typCardioWerte ? (
+              <span className={styles.hint}>Nichts angekreuzt: wie der Gerätetyp.</span>
+            ) : null}
+          </fieldset>
+          <input type="hidden" name="loadMin" value={minimum} />
+          <input type="hidden" name="loadStep" value={schritt} />
+          <input type="hidden" name="loadMax" value={hauptStart.max} />
+          {secondaryUnit && nebenStart ? (
+            <>
+              <input type="hidden" name="secondaryUnit" value={secondaryUnit} />
+              <input type="hidden" name="secondaryStep" value={nebenStart.schritt} />
+              <input type="hidden" name="secondaryMin" value={nebenStart.min} />
+              <input type="hidden" name="secondaryMax" value={nebenStart.max} />
+            </>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <input type="hidden" name="loadMin" value={minimum} />
+          <Rad
+            key={loadUnit}
             gross={gross}
-            value={secondaryUnit}
-            onChange={(wert) => setSecondaryUnit(istEinheit(wert) ? wert : "")}
-            optionen={[{ wert: "", anzeige: "keine" }, ...optionen(nebenEinheiten)]}
+            spalten={[
+              {
+                name: "loadStep",
+                label: "Schritt",
+                werte: haupt.schritt,
+                start: hauptStart.schritt,
+                onWahl: (wert) => setHauptSchritt({ einheit: loadUnit, wert }),
+              },
+              {
+                name: "loadMax",
+                label: "Maximum",
+                werte: maxAb(haupt.max, minimum),
+                start: hauptStart.max,
+              },
+            ]}
           />
-          <span className={styles.hint}>
-            Ein zweiter Regler, der die Intensität verändert — die Neigung am
-            Laufband, die Trittfrequenz am Ergometer. Das Mitglied trägt ihn
-            je Satz ein; die Steigerung betrifft nur die Belastung.
-          </span>
-        </div>
-      ) : null}
 
-      {neben && nebenStart ? (
-        <Rad
-          key={`neben-${secondaryUnit}`}
-          gross={gross}
-          spalten={[
-            {
-              name: "secondaryStep",
-              label: "Nebenbelastung Schritt",
-              werte: neben.schritt,
-              start: nebenStart.schritt,
-              onWahl: (wert) => setNebenSchritt({ einheit: secondaryUnit, wert }),
-            },
-            {
-              name: "secondaryMin",
-              label: "Nebenbelastung ab",
-              werte: neben.min,
-              start: nebenStart.min,
-            },
-            {
-              name: "secondaryMax",
-              label: "Nebenbelastung bis",
-              werte: neben.max,
-              start: nebenStart.max,
-            },
-          ]}
-        />
-      ) : null}
+          {zeigeNeben ? (
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor={nebenId}>
+                Nebenbelastung
+              </label>
+              <Auswahl
+                id={nebenId}
+                name="secondaryUnit"
+                gross={gross}
+                value={secondaryUnit}
+                onChange={(wert) => setSecondaryUnit(istEinheit(wert) ? wert : "")}
+                optionen={[{ wert: "", anzeige: "keine" }, ...optionen(nebenEinheiten)]}
+              />
+              <span className={styles.hint}>
+                Ein zweiter Regler, der die Intensität verändert — die Neigung am
+                Laufband, die Trittfrequenz am Ergometer. Das Mitglied trägt ihn
+                je Satz ein; die Steigerung betrifft nur die Belastung.
+              </span>
+            </div>
+          ) : null}
+
+          {neben && nebenStart ? (
+            <Rad
+              key={`neben-${secondaryUnit}`}
+              gross={gross}
+              spalten={[
+                {
+                  name: "secondaryStep",
+                  label: "Nebenbelastung Schritt",
+                  werte: neben.schritt,
+                  start: nebenStart.schritt,
+                  onWahl: (wert) => setNebenSchritt({ einheit: secondaryUnit, wert }),
+                },
+                {
+                  name: "secondaryMin",
+                  label: "Nebenbelastung ab",
+                  werte: neben.min,
+                  start: nebenStart.min,
+                },
+                {
+                  name: "secondaryMax",
+                  label: "Nebenbelastung bis",
+                  werte: neben.max,
+                  start: nebenStart.max,
+                },
+              ]}
+            />
+          ) : null}
+        </>
+      )}
     </>
   );
 }
