@@ -169,6 +169,8 @@ export type SessionSummary = {
   startedAt: string;
   completedAt: string | null;
   completedReason: "manual" | "auto" | null;
+  /** Summe der Pausen in Sekunden (0 bei Einheiten von vor 0053). Home zieht sie von der Dauer ab. */
+  pausedSeconds: number;
   machineCount: number;
   setCount: number;
   blocks: SessionBlock[];
@@ -193,6 +195,7 @@ type SessionRow = {
   started_at: string;
   completed_at: string | null;
   completed_reason: "manual" | "auto" | null;
+  paused_seconds: number;
 };
 
 type SetRow = {
@@ -279,7 +282,7 @@ export async function getSessions(
 
   const { data: sessionRows } = await client
     .from("workout_sessions")
-    .select("id, started_at, completed_at, completed_reason")
+    .select("id, started_at, completed_at, completed_reason, paused_seconds")
     .eq("user_id", userId)
     .order("started_at", { ascending: false })
     .limit(SESSION_LIMIT);
@@ -397,6 +400,7 @@ export async function getSessions(
       startedAt: session.started_at,
       completedAt,
       completedReason,
+      pausedSeconds: session.paused_seconds ?? 0,
       // Zaehlt Stationen: die Langhantel ohne Sticker ist so ein "Geraet" wie
       // die Beinpresse mit.
       machineCount: new Set(sets.map((row) => stationsSchluessel(row))).size,
