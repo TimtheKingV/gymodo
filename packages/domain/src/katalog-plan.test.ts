@@ -126,6 +126,17 @@ describe("planeImport", () => {
     expect(plan.geraetetypen[0]?.zeile).toMatchObject({ load_start: 20 });
   });
 
+  it("schreibt die Cardio-Werte und nennt einen Unterschied als geaendert", () => {
+    const beispiel = beispielKatalog();
+    const neu = plane(beispiel, LEER);
+    expect(neu.geraetetypen[0]?.zeile).toMatchObject({ cardio_werte: [] });
+    expect(neu.geraetetypen[2]?.zeile).toMatchObject({ cardio_werte: ["zeit", "strecke"] });
+    const ist = istAus(neu);
+    (beispiel.roh.equipment[2] as Record<string, unknown>).cardio_values = ["strecke", "zeit"];
+    const plan = plane(beispiel, ist);
+    expect(plan.geraetetypen.map((p) => p.felder)).toEqual([[], [], ["cardio_werte"]]);
+  });
+
   it("meldet ersetzte eigene Medien, aber keine fremden", () => {
     const beispiel = beispielKatalog();
     const ist = istAus(plane(beispiel, LEER));

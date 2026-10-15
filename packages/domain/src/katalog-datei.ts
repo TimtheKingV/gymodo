@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CATEGORIES, GROUPS, LOAD_UNITS, MAX_VOLUME, VOLUME_KINDS } from "./belastung.js";
+import { cardioWertSchema } from "./cardio.js";
 import { MAX_VIDEO_SECONDS } from "./media.js";
 
 /**
@@ -95,6 +96,8 @@ const geraetetypSchema = z
     // Beinpresse beginnt hoeher als ein Bizepscurl.
     load_start: nichtNegativ.nullable().default(null),
     secondary: nebenbelastungSchema.nullable(),
+    // Welche Werte ein Cardio-Geraet erfasst (Testnotiz 14.10., 18:45 #7).
+    cardio_values: z.array(cardioWertSchema).default([]),
     settings: z.array(einstellungSchema),
     exercises: z.array(schluessel),
   })
@@ -298,6 +301,13 @@ function querPruefen(k: KatalogDatei): string[] {
     if (g.category === "cardio" && g.group !== "cardio") {
       fehler.push(`${wo}: category "cardio" verlangt group "cardio"`);
     }
+    if (g.category === "cardio" && g.cardio_values.length === 0) {
+      fehler.push(`${wo}: category "cardio" verlangt cardio_values`);
+    }
+    if (g.category !== "cardio" && g.cardio_values.length > 0) {
+      fehler.push(`${wo}: cardio_values nur bei category "cardio"`);
+    }
+    for (const d of doppelte(g.cardio_values)) fehler.push(`${wo}: cardio_values enthaelt "${d}" mehrfach`);
     eindeutig(`${wo} exercises`, g.exercises);
     for (const u of g.exercises) {
       if (!uebungen.has(u)) fehler.push(`${wo} exercises: Uebung "${u}" gibt es in exercises nicht`);

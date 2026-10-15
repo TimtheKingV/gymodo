@@ -98,6 +98,7 @@ export function beispielKatalog(p = "") {
         load_min: 0,
         load_max: 25 as number | null,
         secondary: { unit: "pct", step: 0.5, min: 0, max: 15 } as { unit: string; step: number; min: number; max: number } | null,
+        cardio_values: ["zeit", "strecke"],
         settings: [] as Record<string, unknown>[],
         exercises: [`${p}gehen`],
       },

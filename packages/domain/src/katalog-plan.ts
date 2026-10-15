@@ -28,6 +28,7 @@ export type GeraetetypZeile = {
   secondary_step: number | null;
   secondary_min: number | null;
   secondary_max: number | null;
+  cardio_werte: string[];
 };
 
 export type EinstellungZeile = {
@@ -127,7 +128,7 @@ export type ImportPlan = {
 
 const GERAETETYP_FELDER = [
   "name", "category", "equipment_group", "retired", "manufacturer", "photo_path", "load_unit", "load_step", "load_min", "load_max", "load_start",
-  "secondary_unit", "secondary_step", "secondary_min", "secondary_max",
+  "secondary_unit", "secondary_step", "secondary_min", "secondary_max", "cardio_werte",
 ] as const;
 const EINSTELLUNG_FELDER = [
   "label", "kind", "min_value", "max_value", "step_value", "unit", "allowed_values", "sort_order",
@@ -188,6 +189,7 @@ export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): Imp
       secondary_step: g.secondary?.step ?? null,
       secondary_min: g.secondary?.min ?? null,
       secondary_max: g.secondary?.max ?? null,
+      cardio_werte: g.cardio_values,
     };
     const istTyp = typNachKey.get(g.key);
     const altesFoto = istTyp?.photo_path;
