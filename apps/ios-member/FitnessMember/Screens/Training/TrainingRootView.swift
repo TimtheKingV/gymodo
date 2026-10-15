@@ -282,8 +282,11 @@ struct TrainingRootView: View {
     private func wurzel(mitte: TrainingTab.Mitte?, session: LokaleSession?) -> some View {
         if katalog.bootstrap != nil {
             GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader) {
-                if let mitte, let session {
-                    laufendeMitte(mitte, session: session)
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+                    sensorKarte
+                    if let mitte, let session {
+                        laufendeMitte(mitte, session: session)
+                    }
                 }
             } beiAuswahl: { station, uebungId in
                 waehle(station, uebungId: uebungId)
@@ -302,6 +305,9 @@ struct TrainingRootView: View {
                 titel
                     .padding(.horizontal, 20)
                     .padding(.top, DesignSystem.Spacing.s24)
+                sensorKarte
+                    .padding(.horizontal, 20)
+                    .padding(.top, DesignSystem.Spacing.s16)
                 if let mitte, let session {
                     laufendeMitte(mitte, session: session)
                         .padding(.horizontal, 20)
@@ -312,6 +318,15 @@ struct TrainingRootView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
+    }
+
+    /// Die Sensor-Karte vor dem ersten Satz (Testnotiz 15.10., #5). Nur mit
+    /// eingeschaltetem Schalter (`Funktionen.sensorKarte`).
+    @ViewBuilder
+    private var sensorKarte: some View {
+        #if DEBUG
+        if Funktionen.sensorKarte { SensorKarte(station: nil) }
+        #endif
     }
 
     private var titel: some View {

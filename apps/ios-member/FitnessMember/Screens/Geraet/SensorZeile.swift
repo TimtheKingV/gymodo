@@ -9,13 +9,12 @@ import Sensorik
 struct SensorZeile: View {
     let station: String
 
-    @Environment(SensorAufnahmeKoordinator.self) private var koordinator
     @Environment(ZaehlerKoordinator.self) private var zaehler
-    @State private var diagnoseOffen = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sensorZeile
+            // Debug-Zeile "Sensor verbinden" wurde zur SensorKarte (Testnotiz 15.10., #5).
+            if Funktionen.sensorKarte { SensorKarte(station: station) }
             // Nur mit offenem Satz: in Pause und Abschluss gibt es nichts zu zaehlen.
             if let text = Self.zaehlerText(meldung: zaehler.meldung) { zaehlerZeile(text) }
         }
@@ -45,57 +44,6 @@ struct SensorZeile: View {
             Spacer()
         }
         .frame(minHeight: 44)
-    }
-
-    private var sensorZeile: some View {
-        let zustand = koordinator.quelle.zustand
-        return Button(action: tippen) {
-            HStack(spacing: DesignSystem.Spacing.s8) {
-                if koordinator.aufnahmeLaeuft {
-                    Circle().fill(DesignSystem.Color.danger).frame(width: 8, height: 8)
-                        .accessibilityLabel("Aufnahme läuft")
-                }
-                Text(koordinator.fehler ?? Self.text(zustand: zustand, rateHz: koordinator.anzeigeRateHz))
-                    .font(.system(size: 13).monospacedDigit())
-                    .foregroundStyle(koordinator.fehler == nil
-                        ? DesignSystem.Color.textMuted : DesignSystem.Color.danger)
-                    .lineLimit(1)
-                Spacer()
-            }
-            .frame(minHeight: 44)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .sheet(isPresented: $diagnoseOffen) { SensorDiagnoseBlatt(station: station) }
-        .sheet(isPresented: .constant(auswahl != nil)) { auswahlBlatt }
-    }
-
-    private var auswahl: [SensorFund]? {
-        if case .mehrereGefunden(let funde) = koordinator.quelle.zustand { return funde }
-        return nil
-    }
-
-    private var auswahlBlatt: some View {
-        NavigationStack {
-            List(auswahl ?? []) { fund in
-                Button("\(fund.name) · \(fund.rssi) dBm") { koordinator.quelle.waehlen(fund) }
-            }
-            .navigationTitle("Sensor wählen")
-            .toolbar { Button("Abbrechen") { koordinator.quelle.trennen() } }
-        }
-        .presentationDetents([.medium])
-    }
-
-    private func tippen() {
-        switch koordinator.quelle.zustand {
-        case .aus: koordinator.quelle.verbinden()
-        case .sucht, .verbindet: koordinator.quelle.trennen()
-        case .bluetoothNichtBereit(.verweigert):
-            if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
-        case .bluetoothNichtBereit: koordinator.quelle.verbinden()
-        case .verbunden, .getrennt: diagnoseOffen = true
-        case .mehrereGefunden: break
-        }
     }
 
     nonisolated static func artName(_ art: Befestigungsart) -> String {
