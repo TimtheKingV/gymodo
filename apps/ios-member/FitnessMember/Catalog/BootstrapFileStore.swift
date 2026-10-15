@@ -31,14 +31,22 @@ final class BootstrapFileStore {
         return antwort
     }
 
+    /// Erst schreiben, dann die uebrigen Dateien loeschen: ein Absturz
+    /// dazwischen laesst hoechstens eine Datei zu viel liegen statt gar
+    /// keinen Cache.
     func save(_ rohdaten: Data, userId: String) {
-        loeschen()
-        try? rohdaten.write(to: datei(userId), options: .atomic)
+        let ziel = datei(userId)
+        guard (try? rohdaten.write(to: ziel, options: .atomic)) != nil else { return }
+        loeschen(ausser: ziel.lastPathComponent)
     }
 
     func loeschen() {
+        loeschen(ausser: nil)
+    }
+
+    private func loeschen(ausser behalten: String?) {
         let dateien = (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []
-        for name in dateien where name.hasPrefix(Self.praefix) && name.hasSuffix(".json") {
+        for name in dateien where name.hasPrefix(Self.praefix) && name.hasSuffix(".json") && name != behalten {
             try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
         }
     }

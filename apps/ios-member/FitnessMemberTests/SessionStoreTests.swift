@@ -354,8 +354,9 @@ struct SessionStoreTests {
         #expect(store.wiederhergestellt)
     }
 
-    @Test("Refresh: keine Antwort und 5xx sind voruebergehend, 4xx nicht",
-          arguments: [(Int?.none, true), (503, true), (500, true), (400, false), (401, false)])
+    @Test("Refresh: keine Antwort, 5xx, 408 und 429 sind voruebergehend, andere 4xx nicht",
+          arguments: [(Int?.none, true), (503, true), (500, true), (408, true), (429, true),
+                      (400, false), (401, false)])
     func refreshFehler(_ fall: (Int?, Bool)) {
         #expect(RefreshFehler.istVoruebergehend(status: fall.0) == fall.1)
     }

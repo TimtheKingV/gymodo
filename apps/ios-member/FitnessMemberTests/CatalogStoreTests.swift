@@ -802,6 +802,22 @@ struct CatalogStoreTests {
         #expect(!FileManager.default.fileExists(atPath: verzeichnis.appendingPathComponent("bootstrap-u2.json").path))
     }
 
+    /// save schreibt zuerst und raeumt danach auf -- die eigene, gerade
+    /// geschriebene Datei darf dabei nicht mit verschwinden.
+    @Test("save behaelt nur die Datei des aktuellen Users")
+    func saveBehaeltNurAktuelleDatei() throws {
+        let verzeichnis = tempDirectory()
+        let ablage = BootstrapFileStore(directory: verzeichnis)
+        ablage.save(Data(bootstrapJSON.utf8), userId: "u1")
+        ablage.save(Data(bootstrapJSON.utf8), userId: "u1")
+        #expect(ablage.load(userId: "u1") != nil)
+        ablage.save(Data(bootstrapJSON.utf8), userId: "u2")
+        #expect(ablage.load(userId: "u2") != nil)
+        let dateien = try FileManager.default.contentsOfDirectory(atPath: verzeichnis.path)
+            .filter { $0.hasPrefix("bootstrap-") }
+        #expect(dateien == ["bootstrap-u2.json"])
+    }
+
     @Test("reset loescht den gespeicherten Bootstrap")
     func resetLoeschtCache() {
         let verzeichnis = tempDirectory()
