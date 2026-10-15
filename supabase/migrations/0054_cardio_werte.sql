@@ -7,6 +7,7 @@
 
 create function public.ohne_dubletten(liste text[]) returns boolean
   language sql immutable
+  set search_path = ''
   as $$ select cardinality(liste) = (select count(distinct x) from unnest(liste) as x) $$;
 
 alter table public.equipment_models

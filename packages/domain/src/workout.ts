@@ -216,11 +216,12 @@ async function cardioListe(client: SupabaseClient, modell: Nebenbelastung): Prom
   if (modell.cardio_werte.length > 0 || !modell.catalog_model_id) {
     return cardioListeDesModells({ eigene: modell.cardio_werte, katalog: null });
   }
-  const { data } = await client
+  const { data, error } = await client
     .from("equipment_models")
     .select("cardio_werte")
     .eq("id", modell.catalog_model_id)
     .maybeSingle<{ cardio_werte: string[] }>();
+  if (error) throw new DomainError("internal", error.message);
   return cardioListeDesModells({ eigene: [], katalog: data?.cardio_werte ?? [] });
 }
 
