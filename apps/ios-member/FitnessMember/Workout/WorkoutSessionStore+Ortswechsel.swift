@@ -11,11 +11,11 @@ extension WorkoutSessionStore {
     /// TrainingRootView.beenden (Entschieden 2) -- der Server kennt sie nie.
     func beendenFuerOrtswechsel() -> Ortswechselende {
         guard let session = aktiveSession(), session.hatSaetze else {
-            beenden()
+            beenden(ablegen: false)
             return .verworfen
         }
         let pausen = session.pausenSekunden(jetzt: Date())
-        beenden()
+        beenden(ablegen: false)
         return .abgeschlossen(session.id, pausedSeconds: pausen)
     }
 

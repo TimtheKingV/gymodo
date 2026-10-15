@@ -14,12 +14,18 @@ final class WorkoutSessionStore {
     /// Server laengst als abgeschlossen liest.
     static let sessionPause: TimeInterval = 4 * 60 * 60
 
+    /// Wie lange "Fortsetzen" angeboten wird (Testnotiz 14.10., 18:45 #3).
+    /// Der Server prueft dasselbe Fenster (REOPEN_FENSTER_MS).
+    static let wiederaufnahmeFenster: TimeInterval = 30 * 60
+
     private var gespeicherteSession: LokaleSession?
+    private(set) var zuletztBeendet: BeendeteSession?
     private let fileStore: SessionFileStore
 
     init(fileStore: SessionFileStore = SessionFileStore()) {
         self.fileStore = fileStore
         gespeicherteSession = fileStore.load()
+        zuletztBeendet = fileStore.loadBeendet()
     }
 
     /// Die Session, sofern sie noch laeuft. Ohne Argument gegen die aktuelle
@@ -214,15 +220,61 @@ final class WorkoutSessionStore {
     /// Gibt die Kennung zurueck, damit der Aufrufer POST .../complete
     /// schicken kann -- oder, ohne Satz, gar nichts (TrainingRootView.beenden
     /// verwirft dann).
+    ///
+    /// `ablegen`: die Einheit bleibt als `zuletztBeendet` 30 Minuten
+    /// fortsetzbar (Testnotiz 14.10., 18:45 #3/#4) -- nur mit Satz, und nicht
+    /// beim Ortswechsel (dort beginnt ein neues Training).
     @discardableResult
-    func beenden() -> UUID? {
-        let id = gespeicherteSession?.id
+    func beenden(jetzt: Date = Date(), ablegen: Bool = true) -> UUID? {
+        let session = gespeicherteSession
+        if ablegen, let session, session.hatSaetze {
+            zuletztBeendet = BeendeteSession(session: session, beendetAm: jetzt)
+            fileStore.saveBeendet(zuletztBeendet)
+        }
         gespeicherteSession = nil
         fileStore.save(nil)
-        return id
+        return session?.id
+    }
+
+    /// Kleingeschrieben verglichen: der Server liefert Kennungen klein,
+    /// `UUID.uuidString` ist gross.
+    func kannWiederaufnehmen(sessionId: String, jetzt: Date = Date()) -> Bool {
+        guard let beendet = zuletztBeendet,
+              beendet.session.id.uuidString.lowercased() == sessionId.lowercased(),
+              jetzt.timeIntervalSince(beendet.beendetAm) <= Self.wiederaufnahmeFenster,
+              aktiveSession(jetzt: jetzt) == nil
+        else { return false }
+        return true
+    }
+
+    /// Macht die zuletzt beendete Einheit wieder zur laufenden -- erst
+    /// NACH einem erfolgreichen reopen am Server rufen. Eine beim Beenden
+    /// offene Pause endet beim Beenden; die Luecke bis jetzt kommt als
+    /// Pause dazu. Nicht `fortsetzen`: das heisst hier "Pause beenden".
+    @discardableResult
+    func wiederaufnehmen(jetzt: Date = Date()) -> LokaleSession? {
+        guard let beendet = zuletztBeendet,
+              kannWiederaufnehmen(sessionId: beendet.session.id.uuidString, jetzt: jetzt)
+        else { return nil }
+        var session = beendet.session
+        session.fortsetzen(jetzt: beendet.beendetAm)
+        session.pausenDauer += max(0, jetzt.timeIntervalSince(beendet.beendetAm))
+        gespeicherteSession = session
+        fileStore.save(session)
+        ablageVerwerfen()
+        return session
+    }
+
+    /// Nach "zu spaet" vom Server (oder beim Abmelden): kein Button mehr.
+    func ablageVerwerfen() {
+        zuletztBeendet = nil
+        fileStore.saveBeendet(nil)
     }
 
     /// Nach dem Abmelden faellt die laufende Einheit -- ihre Kennungen
-    /// gehoeren zum abgemeldeten Konto.
-    func reset() { beenden() }
+    /// gehoeren zum abgemeldeten Konto. Die Ablage ebenso.
+    func reset() {
+        beenden(ablegen: false)
+        ablageVerwerfen()
+    }
 }

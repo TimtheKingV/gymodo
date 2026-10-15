@@ -304,6 +304,7 @@
 		FADF14B2B619137687F2E1FD /* VerlaufHerkunft.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF53764E89CC9198F52E049 /* VerlaufHerkunft.swift */; };
 		FAFEECC2A710C4BF9D601BD2 /* TagContextResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0756570D91BAD9173DC82B /* TagContextResponse.swift */; };
 		FD45B7AE6C6405B0C6799772 /* KurseMeineEinteilungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA9131802B15B415EE3362E /* KurseMeineEinteilungTests.swift */; };
+		FD62234F40FA6EC5536A4261 /* WiederaufnehmenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF69A2B9BA45645C30560CDC /* WiederaufnehmenTests.swift */; };
 		FDA54C34231DE3E958EF06D9 /* GeraetKontextLadenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C98822FA4FAF85142CC27A3F /* GeraetKontextLadenTests.swift */; };
 		FF660231717EEF021CAE16EF /* KursZustand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186F9A8308C2902F45F6E10E /* KursZustand.swift */; };
 /* End PBXBuildFile section */
@@ -557,6 +558,7 @@
 		CB59D56AD33C31AE1F0089FF /* TagProtokoll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagProtokoll.swift; sourceTree = "<group>"; };
 		CB9F06768F0BD680121ACAB5 /* SatzvergleichTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatzvergleichTests.swift; sourceTree = "<group>"; };
 		CD2C414143359BA7CE04FAD3 /* Medienablage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Medienablage.swift; sourceTree = "<group>"; };
+		CF69A2B9BA45645C30560CDC /* WiederaufnehmenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiederaufnehmenTests.swift; sourceTree = "<group>"; };
 		CF7B9170FFCF2B3FBDF4A2F0 /* ColorHexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHexTests.swift; sourceTree = "<group>"; };
 		CFA471448D3B4B628A0BD6D5 /* GewichtsverlaufHilfenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GewichtsverlaufHilfenTests.swift; sourceTree = "<group>"; };
 		CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStoreTests.swift; sourceTree = "<group>"; };
@@ -980,6 +982,7 @@
 				F433CFBFAAF0BB5791D28FC9 /* VerlaufHerkunftTests.swift */,
 				DFFADB880946E0F424CFDAB8 /* VerlaufStoreTests.swift */,
 				691D7A55E93218DCF36E3CF3 /* VorschaubildTests.swift */,
+				CF69A2B9BA45645C30560CDC /* WiederaufnehmenTests.swift */,
 				4C040CEC32DA51B93411E58C /* WorkoutSessionStoreTests.swift */,
 				E45FE04BD0F8EF4BCAFD99B7 /* ZaehlerKoordinatorTests.swift */,
 				A40546FF017FE78E2A6823CE /* ZahlformatTests.swift */,
@@ -1588,6 +1591,7 @@
 				BB4049269A55E59A041A3AC8 /* VerlaufHerkunftTests.swift in Sources */,
 				F3EC6BE2F4C7D29CB4039D48 /* VerlaufStoreTests.swift in Sources */,
 				5B7545790836B8F1AF77031F /* VorschaubildTests.swift in Sources */,
+				FD62234F40FA6EC5536A4261 /* WiederaufnehmenTests.swift in Sources */,
 				E9F322710ED44F9FC30002B2 /* WorkoutSessionStoreTests.swift in Sources */,
 				7187684ABD8BFA3964363E1A /* ZaehlerKoordinatorTests.swift in Sources */,
 				ADF2407DE862FD940232AAE5 /* ZahlformatTests.swift in Sources */,
