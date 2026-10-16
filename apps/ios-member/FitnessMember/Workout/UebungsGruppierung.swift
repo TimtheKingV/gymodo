@@ -3,13 +3,14 @@ import Foundation
 /// Die Hauptgruppen der Uebungsliste am Geraet in der Ansicht "Muskel".
 /// Die Reihenfolge der Faelle ist die Reihenfolge auf dem Bildschirm.
 enum MuskelHauptgruppe: Int, CaseIterable, Sendable {
+    /// Nur fuer Geraete: mehrere Hauptmuskelgruppen unter ihren Uebungen.
+    /// Ganz oben und eigener Abschnitt, weil ein solches Geraet sonst unter
+    /// jeder seiner Gruppen stuende.
+    case mehrere
     case brust, ruecken, schultern, arme, beine, rumpf
     /// Uebungen ohne darstellbaren Muskel (alter Server, Offline-Bootstrap,
     /// nur Muskeln, die das Modell nicht kennt).
     case weitere
-    /// Nur fuer Geraete: mehrere Hauptmuskelgruppen unter ihren Uebungen.
-    /// Ganz unten, weil ein vielseitiges Geraet sonst unter jeder Gruppe stuende.
-    case vielseitig
 
     var titel: String {
         switch self {
@@ -20,7 +21,7 @@ enum MuskelHauptgruppe: Int, CaseIterable, Sendable {
         case .beine: "Beine"
         case .rumpf: "Rumpf"
         case .weitere: "Weitere"
-        case .vielseitig: "Vielseitig"
+        case .mehrere: "Mehrere"
         }
     }
 
@@ -35,7 +36,7 @@ enum MuskelHauptgruppe: Int, CaseIterable, Sendable {
         case .arme: ["biceps", "triceps", "forearms"]
         case .beine: ["quads", "hamstrings", "glutes", "adductors", "abductors", "calves", "tibialis", "fibularis"]
         case .rumpf: ["abs", "obliques"]
-        case .weitere, .vielseitig: []
+        case .weitere, .mehrere: []
         }
     }
 }

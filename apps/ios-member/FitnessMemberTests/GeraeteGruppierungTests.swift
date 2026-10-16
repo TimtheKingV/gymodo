@@ -36,17 +36,17 @@ struct GeraeteGruppierungTests {
         #expect(GeraeteGruppierung.heimat(von: presse.station) == .brust)
     }
 
-    @Test func mehrereHauptgruppenMachenEsVielseitig() throws {
+    @Test func mehrereHauptgruppenMachenEsMehrere() throws {
         let kabel = try eintrag("kabel", uebungen: [("a", "pectorals"), ("b", "lats"), ("c", "abs")])
-        #expect(GeraeteGruppierung.heimat(von: kabel.station) == .vielseitig)
+        #expect(GeraeteGruppierung.heimat(von: kabel.station) == .mehrere)
         #expect(GeraeteGruppierung.gruppen(von: kabel.station) == [.brust, .ruecken, .rumpf])
     }
 
-    @Test func eineUebungMitHauptmuskelnInMehrerenGruppenMachtDasGeraetVielseitig() throws {
+    @Test func eineUebungMitHauptmuskelnInMehrerenGruppenMachtDasGeraetMehrere() throws {
         // Skiergometer: Latissimus, Trizeps und Bauch sind Hauptmuskeln einer einzigen Uebung.
         let ski = try eintrag("ski", uebungen: [("skierg", "lats,triceps,abs")])
         #expect(GeraeteGruppierung.gruppen(von: ski.station) == [.ruecken, .arme, .rumpf])
-        #expect(GeraeteGruppierung.heimat(von: ski.station) == .vielseitig)
+        #expect(GeraeteGruppierung.heimat(von: ski.station) == .mehrere)
         // Ruderergometer: Beine und Ruecken.
         let rudern = try eintrag("rower", uebungen: [("rower", "quads,glutes,lats,upper_back")])
         #expect(GeraeteGruppierung.gruppen(von: rudern.station) == [.beine, .ruecken])
@@ -69,16 +69,16 @@ struct GeraeteGruppierungTests {
         #expect(GeraeteGruppierung.heimat(von: band.station) == .weitere)
     }
 
-    @Test func alleZeigtJedesGeraetEinmalVielseitigZuletzt() throws {
+    @Test func alleZeigtJedesGeraetEinmalMehrereZuerst() throws {
         let brust = try eintrag("brust", uebungen: [("a", "pectorals")])
         let kabel = try eintrag("kabel", uebungen: [("a", "pectorals"), ("b", "abs")])
         let bauch = try eintrag("bauch", uebungen: [("a", "abs")])
         let abschnitte = GeraeteGruppierung.gruppieren([kabel, brust, bauch])
-        #expect(abschnitte.map(\.gruppe) == [.brust, .rumpf, .vielseitig])
-        #expect(abschnitte.flatMap(\.eintraege).map(\.name) == ["brust", "bauch", "kabel"])
+        #expect(abschnitte.map(\.gruppe) == [.mehrere, .brust, .rumpf])
+        #expect(abschnitte.flatMap(\.eintraege).map(\.name) == ["kabel", "brust", "bauch"])
     }
 
-    @Test func einFilterZeigtAuchDieVielseitigenGeraeteDieDieGruppeBedienen() throws {
+    @Test func einFilterZeigtAuchDieMehrereenGeraeteDieDieGruppeBedienen() throws {
         let brust = try eintrag("brust", uebungen: [("a", "pectorals")])
         let kabel = try eintrag("kabel", uebungen: [("a", "pectorals"), ("b", "abs")])
         let bauch = try eintrag("bauch", uebungen: [("a", "abs")])
@@ -87,17 +87,17 @@ struct GeraeteGruppierungTests {
         #expect(rumpf[0].eintraege.map(\.name) == ["kabel", "bauch"])
     }
 
-    @Test func derFilterVielseitigZeigtNurDieVielseitigen() throws {
+    @Test func derFilterMehrereZeigtNurDieMehrereen() throws {
         let brust = try eintrag("brust", uebungen: [("a", "pectorals")])
         let kabel = try eintrag("kabel", uebungen: [("a", "pectorals"), ("b", "abs")])
-        let abschnitte = GeraeteGruppierung.gruppieren([brust, kabel], nur: .vielseitig)
+        let abschnitte = GeraeteGruppierung.gruppieren([brust, kabel], nur: .mehrere)
         #expect(abschnitte.flatMap(\.eintraege).map(\.name) == ["kabel"])
     }
 
     @Test func dieBulletsSindDieGruppenMitGeraeten() throws {
         let brust = try eintrag("brust", uebungen: [("a", "pectorals")])
         let kabel = try eintrag("kabel", uebungen: [("a", "pectorals"), ("b", "abs")])
-        #expect(GeraeteGruppierung.vorhandeneGruppen([brust, kabel]) == [.brust, .rumpf, .vielseitig])
+        #expect(GeraeteGruppierung.vorhandeneGruppen([brust, kabel]) == [.mehrere, .brust, .rumpf])
         #expect(GeraeteGruppierung.vorhandeneGruppen([]).isEmpty)
     }
 

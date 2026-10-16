@@ -4,8 +4,8 @@ import Foundation
 ///
 /// Ein Geraet gehoert zu den Hauptgruppen all seiner Uebungen. In der Ansicht
 /// "Alle" steht es genau einmal: bei seiner einzigen Gruppe, sonst unter
-/// "Vielseitig". Filtert man ausdruecklich nach einer Gruppe, erscheint es
-/// dort trotzdem -- auch ein vielseitiges Geraet.
+/// "Mehrere". Filtert man ausdruecklich nach einer Gruppe, erscheint es
+/// dort trotzdem -- auch ein Geraet unter "Mehrere".
 enum GeraeteGruppierung {
     struct Abschnitt: Equatable {
         let gruppe: MuskelHauptgruppe
@@ -23,7 +23,7 @@ enum GeraeteGruppierung {
     /// Wo das Geraet in "Alle" steht.
     static func heimat(von station: Station) -> MuskelHauptgruppe {
         let gruppen = gruppen(von: station)
-        return gruppen.count == 1 ? gruppen.first! : .vielseitig
+        return gruppen.count == 1 ? gruppen.first! : .mehrere
     }
 
     /// `eintraege` kommt schon in der Reihenfolge, die innerhalb einer
@@ -33,7 +33,7 @@ enum GeraeteGruppierung {
         if let filter {
             let treffer = eintraege.filter { eintrag in
                 switch filter {
-                case .vielseitig, .weitere: heimat(von: eintrag.station) == filter
+                case .mehrere, .weitere: heimat(von: eintrag.station) == filter
                 default: gruppen(von: eintrag.station).contains(filter)
                 }
             }

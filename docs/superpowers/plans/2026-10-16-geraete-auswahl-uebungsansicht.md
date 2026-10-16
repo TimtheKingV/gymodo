@@ -36,9 +36,11 @@
 
 ## Dritte Änderung (nach Test auf dem Gerät) – gilt vor allem Obigen
 
-- **Übungsliste auf „Gerät wählen“ entfällt**, ebenso der Schalter Übungen|Geräte. In **jeder** Kategorie zeigt die Seite nur Geräte, mit dem großen Schalter **Muskeln | Favoriten** (Muskeln vorgewählt, nicht gemerkt) und darunter den Bullets **Alle · Brust · … · Vielseitig** (ohne „Zuletzt“).
+- **Übungsliste auf „Gerät wählen“ entfällt**, ebenso der Schalter Übungen|Geräte. In **jeder** Kategorie zeigt die Seite nur Geräte, mit dem großen Schalter **Muskeln | Favoriten** (Muskeln vorgewählt, nicht gemerkt) und darunter den Bullets **Alle · Mehrere · Brust · …** (ohne „Zuletzt“).
 - **Favoriten:** nur Geräte, an denen schon trainiert wurde, das jüngste zuerst.
-- **Muskeln:** Ein Gerät gehört zu den Hauptgruppen all seiner Übungen. In „Alle“ steht es genau einmal: bei seiner einzigen Gruppe, sonst unter **Vielseitig** (ganz unten). Filtert man ausdrücklich nach einer Gruppe, erscheint es dort trotzdem, auch ein vielseitiges Gerät.
+- **Muskeln:** Ein Gerät gehört zu den Hauptgruppen all seiner Übungen. In „Alle“ steht es genau einmal: bei seiner einzigen Gruppe, sonst unter **Mehrere** (ganz oben, vor Brust). Filtert man ausdrücklich nach einer Gruppe, erscheint es dort trotzdem, auch ein Gerät unter „Mehrere“.
 - **Übungsseite eines Geräts:** großer Schalter **Muskelgruppe | Favorit** (Muskelgruppe vorgewählt, gemerkt) und Bullets ohne „Zuletzt“. Favorit zeigt nur Übungen mit Historie. Bis 5 Übungen ohne Schalter.
 - **Übungskarten:** Die Zeile „vor 2 Tagen · 73,0 kg“ steht in Akzentfarbe, wie bei den Geräten.
-- Meine Entscheidungen dazu: „Weitere“ (Geräte ganz ohne Muskeldaten, z. B. Cardio) steht vor „Vielseitig“; die Favoriten der Geräte sind nach letztem Satz sortiert, die der Übungen nach der Geräte-Reihenfolge (dieses Training, Häufigkeit).
+- Meine Entscheidungen dazu: „Weitere“ (Geräte ganz ohne Muskeldaten, z. B. Cardio) steht ganz unten; die Favoriten der Geräte sind nach letztem Satz sortiert, die der Übungen nach der Geräte-Reihenfolge (dieses Training, Häufigkeit).
+
+- **Umbenannt:** „Vielseitig“ heißt jetzt **Mehrere** und steht ganz oben.
