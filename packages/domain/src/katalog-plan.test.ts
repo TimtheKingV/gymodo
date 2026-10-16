@@ -89,6 +89,36 @@ describe("planeImport", () => {
     expect(plane(beispiel, ist).geraetetypen[2]?.art).toBe("unveraendert");
   });
 
+  it("schreibt die Muskeln je Uebung mit Namen in Dateireihenfolge", () => {
+    const plan = plane(beispielKatalog(), LEER);
+    expect(plan.uebungen[0]?.zeile.muscles).toEqual([
+      { key: "brust", name: "Brust", role: "primary" },
+      { key: "trizeps", name: "Trizeps", role: "secondary" },
+    ]);
+  });
+
+  it("nennt fehlende Muskeln im Ist-Stand als geaendert (Feld muscles)", () => {
+    const beispiel = beispielKatalog();
+    const ist = istAus(plane(beispiel, LEER));
+    ist.uebungen = ist.uebungen.map((u) => ({ ...u, muscles: [] }));
+    const plan = plane(beispiel, ist);
+    expect(plan.uebungen.map((p) => p.art)).toEqual(["geaendert", "geaendert", "geaendert"]);
+    expect(plan.uebungen.every((p) => p.felder.length === 1 && p.felder[0] === "muscles")).toBe(true);
+  });
+
+  it("vergleicht Muskeln nach Inhalt, nicht nach Schluesselreihenfolge", () => {
+    const beispiel = beispielKatalog();
+    const ist = istAus(plane(beispiel, LEER));
+    ist.uebungen = ist.uebungen.map((u) => ({
+      ...u,
+      muscles: u.muscles.map((m) => ({ role: m.role, name: m.name, key: m.key })),
+    }));
+    expect(plane(beispiel, ist).uebungen.map((p) => p.art)).toEqual(["unveraendert", "unveraendert", "unveraendert"]);
+    // Die Reihenfolge der Muskeln selbst ist dagegen bedeutsam.
+    ist.uebungen = ist.uebungen.map((u) => ({ ...u, muscles: [...u.muscles].reverse() }));
+    expect(plane(beispiel, ist).uebungen[0]?.art).toBe("geaendert");
+  });
+
   it("nennt geaenderte Felder", () => {
     const beispiel = beispielKatalog();
     const ist = istAus(plane(beispiel, LEER));

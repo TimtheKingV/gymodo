@@ -50,6 +50,8 @@ export type UebungZeile = {
   volume_kind: string;
   target_min: number;
   target_max: number;
+  /** In Reihenfolge der Katalogdatei; Name aus dem Muskelverzeichnis der Datei. */
+  muscles: { key: string; name: string; role: "primary" | "secondary" }[];
 };
 
 export type ProduktZeile = {
@@ -133,7 +135,7 @@ const GERAETETYP_FELDER = [
 const EINSTELLUNG_FELDER = [
   "label", "kind", "min_value", "max_value", "step_value", "unit", "allowed_values", "sort_order",
 ] as const;
-const UEBUNG_FELDER = ["name", "description", "volume_kind", "target_min", "target_max"] as const;
+const UEBUNG_FELDER = ["name", "description", "volume_kind", "target_min", "target_max", "muscles"] as const;
 const PRODUKT_FELDER = [
   "manufacturer", "series", "name", "model_code", "product_url", "note", "photo_path", "photo_rights",
   "load_unit", "load_step", "load_min", "load_max", "secondary_unit", "secondary_step", "secondary_min", "secondary_max",
@@ -141,10 +143,23 @@ const PRODUKT_FELDER = [
 
 // PostgREST liefert numeric je nach Groesse als Zahl oder als Text. Ohne
 // diesen Vergleich meldete jeder zweite Lauf das Laufband (0.1) als geaendert.
+// Tiefer Vergleich nach Inhalt: Postgres liefert jsonb-Schluessel in anderer
+// Reihenfolge als geschrieben; die Reihenfolge von Listenelementen zaehlt.
+function inhaltGleich(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => inhaltGleich(x, b[i]));
+  }
+  if (typeof a === "object" && a !== null && typeof b === "object" && b !== null) {
+    const ka = Object.keys(a);
+    return ka.length === Object.keys(b).length && ka.every((k) => k in b && inhaltGleich((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
+  }
+  return a === b;
+}
+
 function gleich(a: unknown, b: unknown): boolean {
   if (a === null || a === undefined || b === null || b === undefined) return (a ?? null) === (b ?? null);
   if (typeof a === "number" || typeof b === "number") return Number(a) === Number(b);
-  if (Array.isArray(a) || Array.isArray(b)) return JSON.stringify(a) === JSON.stringify(b);
+  if (Array.isArray(a) || Array.isArray(b)) return inhaltGleich(a, b);
   return a === b;
 }
 
@@ -229,10 +244,19 @@ export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): Imp
     });
   });
 
+  const muskelName = new Map(k.muscles.map((m) => [m.key, m.name]));
   const uebungen = k.exercises.map((u) =>
     vergleiche(
       u.key,
-      { catalog_key: u.key, name: u.name, description: u.description, volume_kind: u.volume_kind, target_min: u.target_min, target_max: u.target_max },
+      {
+        catalog_key: u.key,
+        name: u.name,
+        description: u.description,
+        volume_kind: u.volume_kind,
+        target_min: u.target_min,
+        target_max: u.target_max,
+        muscles: u.muscles.map((m) => ({ key: m.muscle, name: muskelName.get(m.muscle) ?? m.muscle, role: m.role })),
+      },
       uebungNachKey.get(u.key),
       UEBUNG_FELDER,
     ),
