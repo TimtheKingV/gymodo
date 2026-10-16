@@ -11,6 +11,9 @@ import SwiftUI
 /// die als Artboard fehlt: ein Geraet ohne Video ist nutzbar (M1-Spec SS8.2).
 struct EinweisungSchritt: View {
     @Environment(UebungsVideoVorrat.self) private var vorrat
+    /// Nur fuer das Geschlecht aus dem gespeicherten Bootstrap -- kein
+    /// Netzaufruf, die Karte bleibt offline gleich.
+    @Environment(CatalogStore.self) private var katalog
     let modell: GeraetModel
     let titel: String
     /// "Einstellungen erfassen", ohne Einstellparameter "Weiter".
@@ -40,6 +43,10 @@ struct EinweisungSchritt: View {
                 }
 
                 medien
+
+                MuskelKarte(
+                    muskeln: modell.muskeln,
+                    geschlecht: katalog.bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:)))
 
                 if let beschreibung = modell.beschreibung {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {

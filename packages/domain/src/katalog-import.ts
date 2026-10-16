@@ -88,7 +88,7 @@ export async function leseIstStand(admin: SupabaseClient): Promise<IstStand> {
   const uebungen = await alleZeilen<IstUebung>((von, bis) =>
     admin
       .from("exercises")
-      .select("id, catalog_key, name, description, volume_kind, target_min, target_max")
+      .select("id, catalog_key, name, description, volume_kind, target_min, target_max, muscles")
       .eq("studio_id", GYMTAVO_STUDIO_ID)
       .order("id")
       .range(von, bis),

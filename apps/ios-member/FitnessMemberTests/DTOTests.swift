@@ -33,6 +33,44 @@ struct DTOTests {
         #expect(try JSONDecoder().decode(BootstrapResponse.Exercise.self, from: Data(ohne.utf8)).description == nil)
     }
 
+    @Test func uebungMitMuskelnUndOhne() throws {
+        let mit = #"{"id":"e1","name":"A","volumeKind":"reps","targetMin":8,"targetMax":12,"muscles":[{"key":"chest","name":"Brust","role":"primary"},{"key":"triceps","name":"Trizeps","role":"secondary"}]}"#
+        let ohne = #"{"id":"e1","name":"A","volumeKind":"reps","targetMin":8,"targetMax":12}"#
+        let erwartet = [GeraetMuskel(key: "chest", name: "Brust", role: .primary),
+                        GeraetMuskel(key: "triceps", name: "Trizeps", role: .secondary)]
+        #expect(try JSONDecoder().decode(BootstrapResponse.Exercise.self, from: Data(mit.utf8)).muscles == erwartet)
+        // Alter Server, gespeicherter Bootstrap: kein Feld heisst keine Muskeln.
+        #expect(try JSONDecoder().decode(BootstrapResponse.Exercise.self, from: Data(ohne.utf8)).muscles == [])
+    }
+
+    @Test func kontextUebungMitMuskelnUndOhne() throws {
+        let mit = #"{"id":"e1","name":"A","description":null,"volumeKind":"reps","targetMin":8,"targetMax":12,"instructionVideoUrl":null,"muscles":[{"key":"chest","name":"Brust","role":"primary"}]}"#
+        let ohne = #"{"id":"e1","name":"A","description":null,"volumeKind":"reps","targetMin":8,"targetMax":12,"instructionVideoUrl":null}"#
+        #expect(try JSONDecoder().decode(TagContextResponse.Exercise.self, from: Data(mit.utf8)).muscles
+                == [GeraetMuskel(key: "chest", name: "Brust", role: .primary)])
+        #expect(try JSONDecoder().decode(TagContextResponse.Exercise.self, from: Data(ohne.utf8)).muscles == [])
+    }
+
+    private static let gemischteMuskeln = #"[{"key":"a","name":"A","role":"stabilizer"},{"key":"pectorals","name":"Brust","role":"primary"},{"key":"b","role":"primary"},{"key":"triceps","name":"Trizeps","role":"secondary"}]"#
+    private static let nurKaputteMuskeln = #"[{"key":"a","name":"A","role":"stabilizer"},{"key":"b","role":"primary"},42]"#
+
+    @Test func unbrauchbareMuskelnWerdenVerworfenOhneDieUebungZuKippen() throws {
+        func bootstrap(_ muskeln: String) throws -> [GeraetMuskel] {
+            let json = #"{"id":"e1","name":"A","volumeKind":"reps","targetMin":8,"targetMax":12,"muscles":\#(muskeln)}"#
+            return try JSONDecoder().decode(BootstrapResponse.Exercise.self, from: Data(json.utf8)).muscles
+        }
+        func kontext(_ muskeln: String) throws -> [GeraetMuskel] {
+            let json = #"{"id":"e1","name":"A","description":null,"volumeKind":"reps","targetMin":8,"targetMax":12,"instructionVideoUrl":null,"muscles":\#(muskeln)}"#
+            return try JSONDecoder().decode(TagContextResponse.Exercise.self, from: Data(json.utf8)).muscles
+        }
+        let heil = [GeraetMuskel(key: "pectorals", name: "Brust", role: .primary),
+                    GeraetMuskel(key: "triceps", name: "Trizeps", role: .secondary)]
+        #expect(try bootstrap(Self.gemischteMuskeln) == heil)
+        #expect(try kontext(Self.gemischteMuskeln) == heil)
+        #expect(try bootstrap(Self.nurKaputteMuskeln) == [])
+        #expect(try kontext(Self.nurKaputteMuskeln) == [])
+    }
+
     @Test("dekodiert eine minimale BootstrapResponse")
     func decodesBootstrap() throws {
         let json = """
