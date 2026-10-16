@@ -71,10 +71,12 @@ beforeAll(async () => {
 
   const { data: uebungen, error: uebungError } = await admin
     .from("exercises")
+    // Sammel-Insert: PostgREST fuellt fehlende Spalten mit NULL statt mit dem
+    // Default, daher steht muscles in jeder Zeile.
     .insert([
       { studio_id: GYMTAVO, name: `Face Pull ${kennung}`, description: "Ellbogen hoch.", muscles: [{ key: "rear-delt", name: "Hintere Schulter", role: "primary" }], target_min: 12, target_max: 15 },
-      { studio_id: GYMTAVO, name: `Trizepsdruecken ${kennung}`, target_min: 10, target_max: 12 },
-      { studio_id: studio.id, name: `Hausuebung ${kennung}`, target_min: 8, target_max: 12 },
+      { studio_id: GYMTAVO, name: `Trizepsdruecken ${kennung}`, muscles: [], target_min: 10, target_max: 12 },
+      { studio_id: studio.id, name: `Hausuebung ${kennung}`, muscles: [], target_min: 8, target_max: 12 },
     ])
     .select("id");
   if (uebungError) throw uebungError;
