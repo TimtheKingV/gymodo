@@ -28,6 +28,24 @@ enum DesignSystem {
         static let accentDim = SwiftUI.Color(hex: 0x819B2A)
         static let warn = SwiftUI.Color(hex: 0xFFB020)
         static let danger = SwiftUI.Color(hex: 0xFF5A4E)
+
+        // Muskelkarte der Einweisung, designsystem.md SS13.1. Der
+        // Hauptmuskel nimmt `accent`, hier steht nur, was dazukommt.
+        /// Unterstuetzende Muskeln nach Reihenfolge in der Uebung; ab dem
+        /// vierten bleibt es beim letzten Ton (SS13.1).
+        static let muskelNachrangig: [SwiftUI.Color] = [
+            SwiftUI.Color(hex: 0xA8CC2A),
+            SwiftUI.Color(hex: 0x819B2A),
+            SwiftUI.Color(hex: 0x5E7220),
+        ]
+        /// Muskeln, die die Uebung nicht beansprucht (SS13.1).
+        static let muskelInaktiv = SwiftUI.Color(hex: 0x383D47)
+        /// Koerperflaeche der Silhouette (SS13.1).
+        static let muskelHaut = SwiftUI.Color(hex: 0x1A1D22)
+        /// Koerperumriss und Binnenzeichnung (SS13.1).
+        static let muskelLinie = SwiftUI.Color(hex: 0x3A404A)
+        /// Trennlinie zwischen Muskeln (SS13.1).
+        static let muskelKante = SwiftUI.Color(hex: 0x14161A)
     }
 
     enum Spacing {
