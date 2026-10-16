@@ -10,6 +10,7 @@ struct SensorZeile: View {
     let station: String
 
     @Environment(ZaehlerKoordinator.self) private var zaehler
+    @Environment(SensorAufnahmeKoordinator.self) private var aufnahme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -17,6 +18,7 @@ struct SensorZeile: View {
             if Funktionen.sensorKarte { SensorKarte(station: station) }
             // Nur mit offenem Satz: in Pause und Abschluss gibt es nichts zu zaehlen.
             if let text = Self.zaehlerText(meldung: zaehler.meldung) { zaehlerZeile(text) }
+            if aufnahme.aufnahmeLaeuft { markenZeile }
         }
     }
 
@@ -44,6 +46,36 @@ struct SensorZeile: View {
             Spacer()
         }
         .frame(minHeight: 44)
+    }
+
+    /// Satzgrenzen fuer die Auswertung: nach dem Aufheben "Start", vor dem
+    /// Ablegen "Ende". Ohne Tipp bleibt die Aufnahme wie bisher gueltig.
+    private var markenZeile: some View {
+        HStack(spacing: DesignSystem.Spacing.s8) {
+            ForEach(SatzMarke.allCases, id: \.self) { marke in
+                let gesetzt = aufnahme.marken.contains(marke)
+                Button { aufnahme.markeSetzen(marke) } label: {
+                    Text(Self.markeText(marke, gesetzt: gesetzt))
+                        .font(.system(size: 13).weight(.semibold))
+                        .foregroundStyle(gesetzt ? DesignSystem.Color.textMuted : DesignSystem.Color.text)
+                        .padding(.horizontal, DesignSystem.Spacing.s12)
+                        .frame(minHeight: 36)
+                        .overlay(Capsule().stroke(DesignSystem.Color.textMuted, lineWidth: 1))
+                }
+                .disabled(gesetzt)
+            }
+            Spacer()
+        }
+        .frame(minHeight: 44)
+    }
+
+    nonisolated static func markeText(_ marke: SatzMarke, gesetzt: Bool) -> String {
+        switch (marke, gesetzt) {
+        case (.satzbeginn, false): "Satz Start"
+        case (.satzbeginn, true): "Start ✓"
+        case (.satzende, false): "Satz Ende"
+        case (.satzende, true): "Ende ✓"
+        }
     }
 
     nonisolated static func artName(_ art: Befestigungsart) -> String {

@@ -25,7 +25,7 @@ enum AufnahmeLauf {
             switch eintrag {
             case .messwert(let m): ereignisse += zaehler.verarbeite(m)
             case .luecke(let von, let bis): ereignisse += zaehler.luecke(von: von, bis: bis)
-            case .rate: break
+            case .rate, .marke: break
             }
         }
         ereignisse += zaehler.abschliessen()
