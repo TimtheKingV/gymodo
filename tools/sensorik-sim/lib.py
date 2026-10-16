@@ -78,7 +78,7 @@ def laden():
     for d in sorted(glob.glob(R+'2026-10-16-*')):
         a=json.load(open(d+'/aufnahme.json')); soll=(a.get('label') or {}).get('reps')
         if not soll: continue
-        rows=[list(map(float,r)) for r in list(csv.reader(open(d+'/messwerte.csv')))[1:]]
+        rows=[list(map(float,r)) for r in list(csv.reader(open(d+'/messwerte.csv')))[1:] if r and not r[0].startswith('#')]
         sets.append({'id':d[-7:],'name':a['kontext']['exerciseName'],'fam':fam(a['kontext']['exerciseName']),'soll':soll,
                      'acc':[(r[1],r[2],r[3]) for r in rows],'block':'A' if d[-7:]<'1100' else 'B'})
     return sets

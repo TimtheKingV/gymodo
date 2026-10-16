@@ -1,0 +1,71 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+  "befestigungsart" : "kurzhantel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-10-16T13:27:48+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "7ef892a2-0e86-424b-b357-ce4186547437",
+    "exerciseId" : "03327f94-e3ba-4459-aedd-49308a3646e8",
+    "exerciseName" : "Kurzhantel-Schulterdrücken – stehend",
+    "machineId" : null,
+    "machineName" : "Kurzhantel",
+    "sessionId" : "0B92A023-6BA1-4F02-81D4-0D4761C33742",
+    "setId" : "59BB99EC-9980-4BC1-9721-728D2441D9F0",
+    "setIndex" : 2
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 5,
+    "weightKg" : 8
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-16T13:27:32+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 93.48,
+      "median" : 0,
+      "p95" : 60.41
+    },
+    "luecken" : 0,
+    "pakete" : 820,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "kurzhantel/takt1",
+    "ereignisse" : {
+      "algo" : "kurzhantel/takt1",
+      "befestigungsart" : "kurzhantel",
+      "unsicher" : null,
+      "wiederholungen" : [
+        {
+          "ausschlag" : 0.3,
+          "beginn" : 12.08,
+          "ende" : 14.18,
+          "sicherheit" : 0.15,
+          "umkehr" : 13.13
+        },
+        {
+          "ausschlag" : 0.3,
+          "beginn" : 14.18,
+          "ende" : 16.28,
+          "sicherheit" : 0.15,
+          "umkehr" : 15.23
+        }
+      ]
+    },
+    "gezaehlt" : 2,
+    "herkunft" : "korrigiert"
+  }
+}

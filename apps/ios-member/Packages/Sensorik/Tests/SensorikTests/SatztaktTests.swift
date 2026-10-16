@@ -63,4 +63,17 @@ struct SatztaktTests {
         let e = try #require(Satztakt.auswerten(werte, rateHz: Double(datei.sensor.rateSollHz)))
         #expect(abs(e.anzahl - wahr) <= 1)
     }
+
+    /// Schulterdruecken: Aufheben und Ablegen sind staerker als die Wiederholungen
+    /// und verschieben Takt und Huellkurve, wenn sie nicht gekappt werden.
+    @Test(arguments: [
+        ("2026-10-16-1149-02", 5), ("2026-10-16-1149-04", 6),
+        ("2026-10-16-1327-02", 5), ("2026-10-16-1327-03", 5), ("2026-10-16-1327-04", 6),
+    ])
+    func schulterdrueckenExakt(name: String, wahr: Int) throws {
+        let (datei, eintraege) = try SensorAufnahmeLeser.lesen(ordner: Pfade.aufnahmen.appendingPathComponent(name))
+        let werte = eintraege.compactMap { if case .messwert(let m) = $0 { m } else { nil } }
+        let e = try #require(Satztakt.auswerten(werte, rateHz: Double(datei.sensor.rateSollHz)))
+        #expect(e.anzahl == wahr)
+    }
 }

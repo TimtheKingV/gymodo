@@ -50,7 +50,13 @@ public enum Satztakt {
     /// Ablegen, Schraeglage) aus dem Signal nimmt.
     private static let langsamS = 3.0
     private static let taktMin = 1.2
-    private static let taktMax = 4.0
+    /// Laengere Takte waren an allen Aufnahmen Verdopplungen (Druecken:
+    /// 3,1 bis 3,4 s statt 1,6 s); die langsamste echte Wiederholung lag bei 2,5 s.
+    private static let taktMax = 3.0
+    /// Aufheben und Ablegen sind beim Druecken staerker als die Wiederholungen
+    /// selbst und ziehen Takt und Huellkurve zu sich. Das Signal wird auf das
+    /// 1,5-fache des typischen Ausschlags gekappt (an 1,2 bis 1,5 gleich gut).
+    private static let kappFaktor = 1.5
     /// Ein Oberton (Druecken hat zwei Hoecker je Wiederholung) ist kuerzer
     /// als der Takt: der kleinste Kandidat mit fast bester Korrelation gewinnt.
     private static let kandidatAnteil = 0.85
@@ -97,7 +103,21 @@ public enum Satztakt {
             let mittel = gleitenderMittelwert(tief, fenster: fenster)
             return zip(tief, mittel).map { $0 - $1 }
         }
-        return hauptachse(achsen)
+        return kappen(hauptachse(achsen), dt: dt)
+    }
+
+    /// Kappt bei `kappFaktor` mal dem typischen Sekunden-Effektivwert
+    /// (Median der oberen Haelfte, also der aktiven Sekunden).
+    private static func kappen(_ x: [Double], dt: Double) -> [Double] {
+        let sek = max(1, Int(1 / dt))
+        guard x.count >= sek else { return x }
+        let rms = stride(from: 0, through: x.count - sek, by: sek).map { i in
+            (x[i..<(i + sek)].reduce(0) { $0 + $1 * $1 } / Double(sek)).squareRoot()
+        }.sorted()
+        let obere = rms[(rms.count / 2)...]
+        let grenze = kappFaktor * obere[obere.startIndex + obere.count / 2]
+        guard grenze > 0 else { return x }
+        return x.map { min(grenze, max(-grenze, $0)) }
     }
 
     private static func gleitenderMittelwert(_ x: [Double], fenster: Int) -> [Double] {

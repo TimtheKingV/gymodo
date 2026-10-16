@@ -9,7 +9,7 @@ Tor je Art (Sensor-Spec B 5.5): ≥ 20 Sätze aus ≥ 3 Tagen, exakt ≥ 90 %, �
 | stapel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
 | langhantel (langhantel/1) · Entwicklung | 4 | 2 | 0 % | 0 % | 50 % |
 | langhantel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
-| kurzhantel (kurzhantel/1) · Entwicklung | 35 | 3 | 17 % | 57 % | 14 % |
+| kurzhantel (kurzhantel/1) · Entwicklung | 43 | 3 | 19 % | 53 % | 16 % |
 | kurzhantel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
 | koerper (koerper/1) · Entwicklung | 1 | 1 | 0 % | 0 % | 0 % |
 | koerper · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
@@ -78,3 +78,11 @@ Tor je Art (Sensor-Spec B 5.5): ≥ 20 Sätze aus ≥ 3 Tagen, exakt ≥ 90 %, �
 | 2026-10-16-1149-02 | kurzhantel | 5 | 4 | – |
 | 2026-10-16-1149-03 | kurzhantel | 5 | 2 | – |
 | 2026-10-16-1149-04 | kurzhantel | 6 | 2 | – |
+| 2026-10-16-1324-01 | kurzhantel | 8 | 8 | – |
+| 2026-10-16-1324-02 | kurzhantel | 9 | 9 | – |
+| 2026-10-16-1325-02 | kurzhantel | 7 | 1 | – |
+| 2026-10-16-1325-03 | kurzhantel | 6 | 2 | signalSchwach |
+| 2026-10-16-1326-01 | kurzhantel | 6 | 6 | taktUnregelmaessig |
+| 2026-10-16-1327-02 | kurzhantel | 5 | 2 | – |
+| 2026-10-16-1327-03 | kurzhantel | 5 | 1 | – |
+| 2026-10-16-1327-04 | kurzhantel | 6 | 0 | – |
