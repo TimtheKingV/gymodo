@@ -7,6 +7,7 @@ public enum SensorAufnahmeLeser {
         case messwert(SensorMesswert)
         case luecke(von: TimeInterval, bis: TimeInterval)
         case rate(SensorRate, ab: TimeInterval)
+        case marke(SatzMarke, bei: TimeInterval)
     }
 
     public static func lesen(ordner: URL) throws -> (datei: SensorAufnahmeDatei, eintraege: [Eintrag]) {
@@ -34,6 +35,12 @@ public enum SensorAufnahmeLeser {
                       let ab = Double(teile[2])
                 else { throw Fehler.kaputteZeile(String(zeile)) }
                 eintraege.append(.rate(rate, ab: ab))
+            } else if zeile.hasPrefix("# marke ") {
+                let teile = zeile.dropFirst("# marke ".count).split(separator: " ")
+                guard teile.count == 2, let marke = SatzMarke(rawValue: String(teile[0])),
+                      let bei = Double(teile[1])
+                else { throw Fehler.kaputteZeile(String(zeile)) }
+                eintraege.append(.marke(marke, bei: bei))
             } else if zeile.hasPrefix("#") {
                 continue
             } else {

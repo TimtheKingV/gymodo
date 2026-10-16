@@ -4,6 +4,8 @@ import Foundation
 /// Messwerte und schreibt sie weg. Keine Nebenlaeufigkeit -- der Koordinator
 /// ruft vom MainActor, und 100 Zeilen zu 70 Byte je Sekunde sind fuer einen
 /// offenen FileHandle keine Last.
+public enum SatzMarke: String, Sendable, CaseIterable { case satzbeginn, satzende }
+
 public final class SensorAufnahme {
     public enum Fehler: Error { case abgeschlossen }
 
@@ -68,6 +70,13 @@ public final class SensorAufnahme {
         guard let von = lueckeSeit else { return }
         lueckeSeit = nil
         try anhaengen("# luecke \(Self.zahl(von - startT, stellen: 6))-\(Self.zahl(t - startT, stellen: 6))")
+    }
+
+    /// Vom Tester gesetzte Satzgrenze (Debug): `# marke satzbeginn 3.2` nach dem
+    /// Aufheben, `satzende` vor dem Ablegen. Gibt dem Zaehler-Test die
+    /// Wahrheit, wo der Satz anfaengt und aufhoert.
+    public func marke(_ marke: SatzMarke, t: TimeInterval) throws {
+        try anhaengen("# marke \(marke.rawValue) \(Self.zahl(t - startT, stellen: 6))")
     }
 
     /// Ab `t` sendet der Sensor mit `rate`. `rateSollHz` in aufnahme.json

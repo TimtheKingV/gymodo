@@ -19,6 +19,8 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
 
     let quelle: any SensorQuelle
     private(set) var aufnahmeLaeuft = false
+    /// Marken des laufenden Satzes, fuer die Knoepfe in der Sensor-Zeile.
+    private(set) var marken: Set<SatzMarke> = []
     private(set) var fehler: String?
     /// Einmal je Sekunde aktualisiert, nicht je Messwert: bei 50 Hz wuerde
     /// die Zeile sonst fuenfzigmal je Sekunde neu gezeichnet.
@@ -111,6 +113,15 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     func screenVerlassen() {
         beenden(.abgebrochen, satz: nil)
         offenerKontext = nil
+    }
+
+    /// Satzgrenze vom Tester (Debug). Schreibt nur in eine laufende Aufnahme.
+    func markeSetzen(_ marke: SatzMarke) {
+        guard let aufnahme, !marken.contains(marke) else { return }
+        do {
+            try aufnahme.marke(marke, t: uhr())
+            marken.insert(marke)
+        } catch { abbrechen(wegen: error) }
     }
 
     // MARK: - Eingang
@@ -210,6 +221,7 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
             aufnahmeStatistik = SensorStatistik()
             verworfenBeiStart = quelle.verworfeneBytes
             aufnahmeLaeuft = true
+            marken = []
             if let aufnahme {
                 protokoll.schreiben("aufnahme \(aufnahme.ordner.lastPathComponent) begonnen (\(kontext.machineName) / \(kontext.exerciseName))")
             }

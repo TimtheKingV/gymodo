@@ -113,6 +113,24 @@ struct SensorAufnahmeTests {
         #expect(gelesen.eintraege.last == .rate(.hz20, ab: 1.5))
     }
 
+    @Test func schreibtSatzmarkenAlsKommentarUndDerLeserLiestSie() throws {
+        let sut = try neu(wurzel())
+        try sut.schreiben(Self.messwert(t: 100.00))
+        try sut.marke(.satzbeginn, t: 102.5)
+        try sut.schreiben(Self.messwert(t: 102.52))
+        try sut.marke(.satzende, t: 120)
+        let zeilen = try csv(sut)
+        #expect(zeilen[2] == "# marke satzbeginn 2.500000")
+        #expect(zeilen.last == "# marke satzende 20.000000")
+        try sut.abschliessen(.abgebrochen, kontext: Self.kontext, label: .init(), akkuProzent: nil,
+                             statistik: .leer, ende: Self.start, endeT: 121)
+        let marken = try SensorAufnahmeLeser.lesen(ordner: sut.ordner).eintraege.compactMap {
+            if case .marke(let m, let t) = $0 { (m, t) } else { nil }
+        }
+        #expect(marken.map(\.0) == [.satzbeginn, .satzende])
+        #expect(marken.map(\.1) == [2.5, 20])
+    }
+
     @Test func abschlussGesichertTraegtLabelsEin() throws {
         let sut = try neu(wurzel())
         try sut.schreiben(Self.messwert(t: 100.00))

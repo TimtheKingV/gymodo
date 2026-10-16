@@ -87,6 +87,23 @@ struct SensorAufnahmeKoordinatorTests {
         #expect(try datei(ordner(in: wurzel)[0]).kontext.exerciseName == "Beidbeinig")
     }
 
+    @Test func markenLandenInDerCsvUndGeltenJeSatzEinmal() throws {
+        let (sut, _, wurzel, _) = aufbau()
+        sut.markeSetzen(.satzbeginn) // ohne Aufnahme: nichts
+        #expect(sut.marken.isEmpty)
+        sut.eingabeBegonnen(Self.kontext)
+        sut.markeSetzen(.satzbeginn)
+        sut.markeSetzen(.satzbeginn)
+        sut.markeSetzen(.satzende)
+        #expect(sut.marken == [.satzbeginn, .satzende])
+        sut.satzGesichert(Self.satz)
+        let csv = try String(contentsOf: ordner(in: wurzel)[0].appendingPathComponent("messwerte.csv"), encoding: .utf8)
+        #expect(csv.components(separatedBy: "# marke satzbeginn").count == 2)
+        #expect(csv.contains("# marke satzende"))
+        sut.eingabeBegonnen(Self.kontext)
+        #expect(sut.marken.isEmpty)
+    }
+
     @Test func ohneVerbundenenSensorKeineAufnahme() {
         let (sut, _, wurzel, _) = aufbau(zustand: .aus)
         sut.eingabeBegonnen(Self.kontext)

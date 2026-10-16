@@ -66,7 +66,7 @@ final class AbspielSensorQuelle: SensorQuelle {
                     }
                     zuletzt = bis
                     self.setze(verbunden)
-                case .rate:
+                case .rate, .marke:
                     // Die Zeitstempel tragen den Wechsel schon; die Quelle
                     // spielt ab, was aufgenommen wurde, statt eine Rate zu setzen.
                     continue

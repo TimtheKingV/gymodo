@@ -1,0 +1,99 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+  "befestigungsart" : "kurzhantel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-10-16T13:26:30+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "7ef892a2-0e86-424b-b357-ce4186547437",
+    "exerciseId" : "f57da95f-5186-4739-87e4-755c8d21e4e5",
+    "exerciseName" : "Trizepsstrecken über Kopf – eine Kurzhantel",
+    "machineId" : null,
+    "machineName" : "Kurzhantel",
+    "sessionId" : "0B92A023-6BA1-4F02-81D4-0D4761C33742",
+    "setId" : "695190DE-F88B-4E80-ABF0-7FCA3FCBF30A",
+    "setIndex" : 3
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 6,
+    "weightKg" : 8
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-16T13:26:07+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 95.95,
+      "median" : 0,
+      "p95" : 60.37
+    },
+    "luecken" : 0,
+    "pakete" : 1126,
+    "rateIstHz" : 49.8,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "kurzhantel/takt1",
+    "ereignisse" : {
+      "algo" : "kurzhantel/takt1",
+      "befestigungsart" : "kurzhantel",
+      "unsicher" : null,
+      "wiederholungen" : [
+        {
+          "ausschlag" : 0.65,
+          "beginn" : 4.4,
+          "ende" : 6.14,
+          "sicherheit" : 0.69,
+          "umkehr" : 5.27
+        },
+        {
+          "ausschlag" : 0.65,
+          "beginn" : 6.14,
+          "ende" : 7.88,
+          "sicherheit" : 0.69,
+          "umkehr" : 7.01
+        },
+        {
+          "ausschlag" : 0.65,
+          "beginn" : 7.88,
+          "ende" : 9.61,
+          "sicherheit" : 0.69,
+          "umkehr" : 8.74
+        },
+        {
+          "ausschlag" : 0.65,
+          "beginn" : 9.61,
+          "ende" : 11.35,
+          "sicherheit" : 0.69,
+          "umkehr" : 10.48
+        },
+        {
+          "ausschlag" : 0.65,
+          "beginn" : 11.35,
+          "ende" : 13.09,
+          "sicherheit" : 0.69,
+          "umkehr" : 12.22
+        },
+        {
+          "ausschlag" : 0.65,
+          "beginn" : 13.09,
+          "ende" : 14.82,
+          "sicherheit" : 0.69,
+          "umkehr" : 13.96
+        }
+      ]
+    },
+    "gezaehlt" : 6,
+    "herkunft" : "gemessen"
+  }
+}

@@ -55,6 +55,31 @@ struct ZaehlerKoordinatorTests {
         #expect(sut.meldung == nil)
     }
 
+    /// Kurzhantel: Satz mit Aufheben, 8 Wiederholungen der Beschleunigung
+    /// (Hantel dreht sich nicht, wie beim Druecken) und Ablegen. Die
+    /// Live-Zahl kennt das nicht; am Satzende zaehlt die Takt-Auswertung.
+    @Test func kurzhantelZaehltAmSatzendeNachDemTakt() throws {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.kurzhantel)
+        let dt = 1.0 / 50
+        let takt = 1.9, vorlauf = 2.0, n = 8
+        let gesamt = vorlauf + Double(n) * takt + 3
+        for i in 0..<Int(gesamt * 50) {
+            let t = Double(i) * dt
+            var y = 1.0
+            if t < vorlauf { y += 0.8 * sin(t * .pi / vorlauf) }
+            else if t < vorlauf + Double(n) * takt { y += 0.3 * sin((t - vorlauf) * 2 * .pi / takt) }
+            sut.empfangen(.messwert(SensorMesswert(
+                t: uhr.t + t, beschleunigung: Vektor3(x: 0, y: y, z: 0.05),
+                drehrate: Vektor3(x: 0, y: 0, z: 0), winkel: Vektor3(x: 0, y: 0, z: 0))))
+        }
+        let ergebnis = try #require(sut.ergebnis())
+        #expect(abs(ergebnis.gezaehlt - n) <= 1)
+        #expect(ergebnis.repEvents.algo == Satztakt.algo)
+        #expect(ergebnis.repEvents.wiederholungen.count == ergebnis.gezaehlt)
+    }
+
     @Test func messwerteVorDemSatzbeginnZaehlenNicht() {
         let (sut, _, uhr, m) = aufbau()
         let frueh = Self.stapelSatz(wiederholungen: 3, ab: uhr.t - 20)
