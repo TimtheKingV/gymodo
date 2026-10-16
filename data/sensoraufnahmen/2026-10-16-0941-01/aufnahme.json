@@ -1,0 +1,71 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+  "befestigungsart" : "kurzhantel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-10-16T09:41:39+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "7ef892a2-0e86-424b-b357-ce4186547437",
+    "exerciseId" : "f57da95f-5186-4739-87e4-755c8d21e4e5",
+    "exerciseName" : "Trizepsstrecken über Kopf – eine Kurzhantel",
+    "machineId" : null,
+    "machineName" : "Kurzhantel",
+    "sessionId" : "24AE4BA4-BFC2-4E4D-B989-A61A52A19A09",
+    "setId" : "784D22E1-B739-47A7-8747-1B1C91AE2550",
+    "setIndex" : 3
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 6,
+    "weightKg" : 8
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-16T09:41:11+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 91.19,
+      "median" : 0,
+      "p95" : 60.38
+    },
+    "luecken" : 0,
+    "pakete" : 1370,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "kurzhantel/1",
+    "ereignisse" : {
+      "algo" : "kurzhantel/1",
+      "befestigungsart" : "kurzhantel",
+      "unsicher" : "taktUnregelmaessig",
+      "wiederholungen" : [
+        {
+          "ausschlag" : 149.06,
+          "beginn" : 2.23,
+          "ende" : 3.34,
+          "sicherheit" : 1,
+          "umkehr" : 2.56
+        },
+        {
+          "ausschlag" : 59.13,
+          "beginn" : 5.44,
+          "ende" : 7.06,
+          "sicherheit" : 0.13,
+          "umkehr" : 6.49
+        }
+      ]
+    },
+    "gezaehlt" : 2,
+    "herkunft" : "korrigiert"
+  }
+}

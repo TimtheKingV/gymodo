@@ -24,6 +24,9 @@ final class ZaehlerKoordinator: SatzZaehler {
     @ObservationIgnored private var zaehler: Zaehler?
     @ObservationIgnored private var satzbeginn: TimeInterval = 0
     @ObservationIgnored private var ereignisse: [ZaehlerEreignis] = []
+    /// Alle Messwerte des Satzes, nur an der Kurzhantel: dort zaehlt am
+    /// Satzende die Takt-Auswertung (Satztakt) und ersetzt die Live-Zahl.
+    @ObservationIgnored private var satzMesswerte: [SensorMesswert] = []
     @ObservationIgnored private var lauscher: Task<Void, Never>?
 
     init(quelle: any SensorQuelle, einstellungen: UserDefaults = .standard,
@@ -56,6 +59,13 @@ final class ZaehlerKoordinator: SatzZaehler {
         defer { beenden() }
         guard var zaehler, let art = befestigung?.art else { return nil }
         ereignisse += zaehler.abschliessen()
+        if art == .kurzhantel, let takt = Satztakt.auswerten(satzMesswerte, rateHz: Double(quelle.rate.rawValue)) {
+            let wiederholungen = Satztakt.wiederholungen(takt).map { ZaehlerEreignis.wiederholung($0) }
+            return ZaehlerErgebnis(
+                gezaehlt: takt.anzahl,
+                repEvents: RepEvents(algo: Satztakt.algo, befestigungsart: art,
+                                     ereignisse: wiederholungen + [.zuende], satzbeginn: satzbeginn))
+        }
         let gezaehlt = zaehler.anzahl
         guard gezaehlt > 0 else { return nil }
         return ZaehlerErgebnis(
@@ -83,6 +93,7 @@ final class ZaehlerKoordinator: SatzZaehler {
             // Ein Paket von vor dem Satzbeginn kann noch im Strom stecken;
             // es gehoert nicht zum Satz.
             guard var zaehler, messwert.t >= satzbeginn else { return }
+            if befestigung?.art == .kurzhantel { satzMesswerte.append(messwert) }
             let neu = zaehler.verarbeite(messwert)
             self.zaehler = zaehler
             weitergeben(neu)
@@ -119,6 +130,7 @@ final class ZaehlerKoordinator: SatzZaehler {
     private func neuStarten() {
         zaehler = nil
         ereignisse = []
+        satzMesswerte = []
         guard let kontext else { return }
         guard kontext.volumeKind == .reps else { return senden(.zaehltNicht(.keineWiederholungen)) }
         guard let art = befestigung?.art else { return senden(.zaehltNicht(.keineBefestigung)) }
@@ -152,6 +164,7 @@ final class ZaehlerKoordinator: SatzZaehler {
         melde = nil
         meldung = nil
         ereignisse = []
+        satzMesswerte = []
     }
 }
 #endif
