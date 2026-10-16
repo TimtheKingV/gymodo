@@ -14,6 +14,25 @@ struct GeraetMuskel: Decodable, Hashable, Sendable {
     }
 }
 
+/// Ein Listenelement, das beim Dekodieren scheitern darf: `wert` ist dann nil.
+private struct VerlustfreiesElement<T: Decodable>: Decodable {
+    let wert: T?
+    init(from decoder: Decoder) throws {
+        wert = try? decoder.singleValueContainer().decode(T.self)
+    }
+}
+
+extension KeyedDecodingContainer {
+    /// Die Muskelliste einer Uebung, verlustfrei: ein Eintrag, den die App
+    /// nicht versteht (unbekannte Rolle, fehlender Name), faellt weg -- er
+    /// darf weder die Uebung noch den ganzen Bootstrap kippen. Fehlt das Feld
+    /// oder ist es keine Liste, ist das Ergebnis `[]`.
+    func decodeMuskeln(forKey key: Key) -> [GeraetMuskel] {
+        ((try? decodeIfPresent([VerlustfreiesElement<GeraetMuskel>].self, forKey: key)) ?? nil)?
+            .compactMap(\.wert) ?? []
+    }
+}
+
 /// Pfaddaten aus `muskelmodell.json`, erzeugt von
 /// scripts/muskelmodell-json.mjs aus assets/muskelmodell (Revision 4,
 /// MIT-Lizenz, Copyright (c) 2022 ELABBASSI Hicham -- `lizenz`). Die Pfade
@@ -94,6 +113,14 @@ enum MuskelModell {
               let daten = try? Data(contentsOf: url) else { return nil }
         return try? JSONDecoder().decode(MuskelGeometrie.self, from: daten)
     }()
+
+    /// Stoesst das Dekodieren der Geometrie abseits des Main-Threads an
+    /// (428 KB, ~0,13 s Debug). Beim App-Start aufgerufen, damit die erste
+    /// Karte fertige Daten findet; `static let` initialisiert thread-sicher
+    /// und genau einmal, ein gleichzeitiger Zugriff wartet nur.
+    static func vorwaermen() {
+        Task.detached(priority: .utility) { _ = MuskelModell.geometrie }
+    }
 
     /// Liest SVG-Pfaddaten mit den absoluten Befehlen `M`, `L`, `C`, `Z`
     /// (mehr kommen in den Quellen nicht vor; das Skript prueft das).

@@ -294,6 +294,6 @@ extension BootstrapResponse.Exercise {
         volumeKind = try c.decode(VolumeKind.self, forKey: .volumeKind)
         targetMin = try c.decode(Int.self, forKey: .targetMin)
         targetMax = try c.decode(Int.self, forKey: .targetMax)
-        muscles = try c.decodeIfPresent([GeraetMuskel].self, forKey: .muscles) ?? []
+        muscles = c.decodeMuskeln(forKey: .muscles)
     }
 }

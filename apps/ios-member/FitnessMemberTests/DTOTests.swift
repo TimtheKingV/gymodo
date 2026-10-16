@@ -51,6 +51,26 @@ struct DTOTests {
         #expect(try JSONDecoder().decode(TagContextResponse.Exercise.self, from: Data(ohne.utf8)).muscles == [])
     }
 
+    private static let gemischteMuskeln = #"[{"key":"a","name":"A","role":"stabilizer"},{"key":"pectorals","name":"Brust","role":"primary"},{"key":"b","role":"primary"},{"key":"triceps","name":"Trizeps","role":"secondary"}]"#
+    private static let nurKaputteMuskeln = #"[{"key":"a","name":"A","role":"stabilizer"},{"key":"b","role":"primary"},42]"#
+
+    @Test func unbrauchbareMuskelnWerdenVerworfenOhneDieUebungZuKippen() throws {
+        func bootstrap(_ muskeln: String) throws -> [GeraetMuskel] {
+            let json = #"{"id":"e1","name":"A","volumeKind":"reps","targetMin":8,"targetMax":12,"muscles":\#(muskeln)}"#
+            return try JSONDecoder().decode(BootstrapResponse.Exercise.self, from: Data(json.utf8)).muscles
+        }
+        func kontext(_ muskeln: String) throws -> [GeraetMuskel] {
+            let json = #"{"id":"e1","name":"A","description":null,"volumeKind":"reps","targetMin":8,"targetMax":12,"instructionVideoUrl":null,"muscles":\#(muskeln)}"#
+            return try JSONDecoder().decode(TagContextResponse.Exercise.self, from: Data(json.utf8)).muscles
+        }
+        let heil = [GeraetMuskel(key: "pectorals", name: "Brust", role: .primary),
+                    GeraetMuskel(key: "triceps", name: "Trizeps", role: .secondary)]
+        #expect(try bootstrap(Self.gemischteMuskeln) == heil)
+        #expect(try kontext(Self.gemischteMuskeln) == heil)
+        #expect(try bootstrap(Self.nurKaputteMuskeln) == [])
+        #expect(try kontext(Self.nurKaputteMuskeln) == [])
+    }
+
     @Test("dekodiert eine minimale BootstrapResponse")
     func decodesBootstrap() throws {
         let json = """

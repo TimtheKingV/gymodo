@@ -126,6 +126,6 @@ extension TagContextResponse.Exercise {
         targetMin = try c.decode(Int.self, forKey: .targetMin)
         targetMax = try c.decode(Int.self, forKey: .targetMax)
         instructionVideoUrl = try c.decodeIfPresent(String.self, forKey: .instructionVideoUrl)
-        muscles = try c.decodeIfPresent([GeraetMuskel].self, forKey: .muscles) ?? []
+        muscles = c.decodeMuskeln(forKey: .muscles)
     }
 }
