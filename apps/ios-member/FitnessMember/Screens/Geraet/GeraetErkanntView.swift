@@ -22,14 +22,8 @@ struct GeraetErkanntView: View {
                 kopfzeile
                 geraetefoto
                 geraetename
-                HStack {
-                    Text("Was machst du heute?")
-                        .font(DesignSystem.Typography.uebungsname)
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                    Spacer()
-                    if UebungsGruppierung.bietetSchalterAn(uebungsanzahl: sortierteUebungen.count) {
-                        UebungsAnsichtSchalter(ansicht: ansicht)
-                    }
+                if UebungsGruppierung.bietetSchalterAn(uebungsanzahl: sortierteUebungen.count) {
+                    PillenLeiste(werte: Uebungsansicht.allCases, auswahl: ansicht, titel: \.titel)
                 }
                 uebungsliste
                 hinweis
@@ -87,8 +81,12 @@ struct GeraetErkanntView: View {
             .joined(separator: " · ")
     }
 
+    private var gruppiert: Bool {
+        ansicht.wrappedValue == .muskel && UebungsGruppierung.bietetSchalterAn(uebungsanzahl: sortierteUebungen.count)
+    }
+
     private var uebungsliste: some View {
-        UebungsAbschnitte(uebungen: sortierteUebungen, ansicht: ansicht.wrappedValue) { uebung in
+        UebungsAbschnitte(uebungen: sortierteUebungen, gruppiert: gruppiert) { uebung in
             Button { beiAuswahl(uebung.id) } label: {
                 zeile(uebung)
             }

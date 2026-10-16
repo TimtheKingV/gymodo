@@ -53,7 +53,8 @@ enum UebungsGruppierung {
 
     /// `uebungen` kommt schon in der "Zuletzt"-Reihenfolge; sie bleibt
     /// innerhalb gleicher Muskeln erhalten (stabil). Leere Gruppen entfallen.
-    static func gruppieren(_ uebungen: [GeraetUebung]) -> [Abschnitt] {
+    /// - nur: zeigt allein diese Gruppe (der Filter der Uebungsansicht).
+    static func gruppieren(_ uebungen: [GeraetUebung], nur filter: MuskelHauptgruppe? = nil) -> [Abschnitt] {
         let eingeordnet = uebungen.enumerated().map { index, uebung in
             (index: index, uebung: uebung, platz: platz(uebung))
         }
@@ -63,9 +64,15 @@ enum UebungsGruppierung {
             return a.index < b.index
         }
         return MuskelHauptgruppe.allCases.compactMap { gruppe in
+            if let filter, filter != gruppe { return nil }
             let treffer = sortiert.filter { $0.platz.gruppe == gruppe }.map(\.uebung)
             return treffer.isEmpty ? nil : Abschnitt(gruppe: gruppe, uebungen: treffer)
         }
+    }
+
+    /// Die Gruppen, in denen mindestens eine Uebung steht -- die Chips des Filters.
+    static func vorhandeneGruppen(_ uebungen: [GeraetUebung]) -> [MuskelHauptgruppe] {
+        gruppieren(uebungen).map(\.gruppe)
     }
 
     /// Der erste darstellbare Hauptmuskel; gibt es keinen, der erste

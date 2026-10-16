@@ -28,15 +28,17 @@ struct UebungWechselnSheet: View {
                             .font(.system(size: 13))
                             .foregroundStyle(DesignSystem.Color.textMuted)
                         Spacer()
-                        if UebungsGruppierung.bietetSchalterAn(uebungsanzahl: modell.uebungen.count) {
-                            UebungsAnsichtSchalter(ansicht: ansicht)
-                        }
+                    }
+                    if UebungsGruppierung.bietetSchalterAn(uebungsanzahl: modell.uebungen.count) {
+                        PillenLeiste(werte: Uebungsansicht.allCases, auswahl: ansicht, titel: \.titel)
                     }
 
                     // Dieses Training, dann Haeufigkeit (Testnotiz 14.10., 18:25);
                     // in der Ansicht "Muskel" gruppiert, innerhalb gleicher Muskeln
                     // in derselben Reihenfolge.
-                    UebungsAbschnitte(uebungen: modell.sortierteUebungen, ansicht: ansicht.wrappedValue) { uebung in
+                    UebungsAbschnitte(uebungen: modell.sortierteUebungen,
+                                      gruppiert: ansicht.wrappedValue == .muskel
+                                          && UebungsGruppierung.bietetSchalterAn(uebungsanzahl: modell.uebungen.count)) { uebung in
                         Button {
                             beiWechsel(uebung.id)
                             dismiss()

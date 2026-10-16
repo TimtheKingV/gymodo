@@ -18,6 +18,7 @@ enum Einstellungen {
 
     static let satzZielKey = "satzZiel"
     static let uebungsansichtKey = "uebungsansicht"
+    static let auswahlmodusKey = "auswahlmodus"
 
     static let resttimerVorgabe = 90
     static let resttimerStufen = [45, 60, 90, 120, 180]
@@ -53,10 +54,26 @@ enum Einstellungen {
         defaults.object(forKey: vibrationBeimSichernKey) as? Bool ?? true
     }
 
+    /// Ob "Gerät wählen" Uebungen oder Geraete zeigt.
+    static func auswahlmodus(_ defaults: UserDefaults = .standard) -> Auswahlmodus {
+        defaults.string(forKey: auswahlmodusKey).flatMap(Auswahlmodus.init(rawValue:)) ?? .uebungen
+    }
+
     /// Wie die Uebungsliste am Geraet geordnet ist. Ein unbekannter
     /// gespeicherter Wert faellt auf die Vorgabe zurueck.
     static func uebungsansicht(_ defaults: UserDefaults = .standard) -> Uebungsansicht {
         defaults.string(forKey: uebungsansichtKey).flatMap(Uebungsansicht.init(rawValue:)) ?? .muskel
+    }
+}
+
+enum Auswahlmodus: String, CaseIterable, Sendable {
+    case uebungen, geraete
+
+    var titel: String {
+        switch self {
+        case .uebungen: "Übungen"
+        case .geraete: "Geräte"
+        }
     }
 }
 
