@@ -79,7 +79,8 @@ enum GeraeteAuswahl {
     struct Gruppen: Equatable {
         /// Hoechstens drei; nur an der Wurzel ohne Suche.
         let zuletzt: [Eintrag]
-        /// In fester Reihenfolge, ohne leere Gruppen (#5).
+        /// Zuletzt benutzte zuerst (16.10., #2), unbenutzte in fester
+        /// Reihenfolge; ohne leere Gruppen (#5).
         let kategorien: [Kachel]
         /// Die Geraete einer Kategorie, alphabetisch.
         let liste: [Eintrag]
@@ -204,10 +205,25 @@ enum GeraeteAuswahl {
                 let darin = alle.filter { $0.gruppe == g }
                 return darin.isEmpty ? nil : Kachel(gruppe: g, eintraege: darin)
             }
+            // Testnotiz 16.10., #2: zuletzt benutzte Kategorie vorn. Der
+            // Sortierschluessel ist der juengste Satz darin; unbenutzte
+            // behalten untereinander die feste Reihenfolge (stabil ueber
+            // den Index, sorted ist es nicht).
+            func juengster(_ kachel: Kachel) -> Date? {
+                kachel.eintraege.compactMap { $0.zuletzt?.performedAt }.max()
+            }
+            let sortiert = kacheln.enumerated().sorted { a, b in
+                switch (juengster(a.element), juengster(b.element)) {
+                case let (x?, y?) where x != y: x > y
+                case (_?, nil): true
+                case (nil, _?): false
+                default: a.offset < b.offset
+                }
+            }.map(\.element)
 
             return Gruppen(
                 zuletzt: benutzt.map { eintrag($0, trefferUebung: nil) },
-                kategorien: kacheln,
+                kategorien: sortiert,
                 liste: [],
                 treffer: []
             )
