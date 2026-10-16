@@ -29,16 +29,13 @@ struct UebungWechselnSheet: View {
                             .foregroundStyle(DesignSystem.Color.textMuted)
                         Spacer()
                     }
-                    if UebungsGruppierung.bietetSchalterAn(uebungsanzahl: modell.uebungen.count) {
-                        PillenLeiste(werte: Uebungsansicht.allCases, auswahl: ansicht, titel: \.titel)
-                    }
 
                     // Dieses Training, dann Haeufigkeit (Testnotiz 14.10., 18:25);
-                    // in der Ansicht "Muskel" gruppiert, innerhalb gleicher Muskeln
-                    // in derselben Reihenfolge.
-                    UebungsAbschnitte(uebungen: modell.sortierteUebungen,
-                                      gruppiert: ansicht.wrappedValue == .muskel
-                                          && UebungsGruppierung.bietetSchalterAn(uebungsanzahl: modell.uebungen.count)) { uebung in
+                    // darueber Muskelgruppe | Favorit.
+                    UebungsAnsichtBereich(uebungen: modell.sortierteUebungen,
+                                          hatHistorie: { modell.letzterSatzText(fuer: $0.id) != nil
+                                                          || modell.blockInEinheit(fuer: $0.id) != nil },
+                                          ansicht: ansicht) { uebung in
                         Button {
                             beiWechsel(uebung.id)
                             dismiss()
@@ -86,9 +83,7 @@ struct UebungWechselnSheet: View {
                 Text(uebung.name)
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.text)
-                Text(untertitel(uebung))
-                    .font(.system(size: 13))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
+                UebungsUntertitel(text: untertitel(uebung).text, hatHistorie: untertitel(uebung).hatHistorie)
             }
             Spacer()
         }
@@ -105,15 +100,14 @@ struct UebungWechselnSheet: View {
     /// damit erkennbar ist, wie verlaesslich die Zahl noch ist, bevor man
     /// das Geraet danach einstellt (GeraetUebungWechseln.dc.html). Ohne
     /// Historie steht der Korridor in der Umfangsart der Uebung.
-    private func untertitel(_ uebung: GeraetUebung) -> String {
+    private func untertitel(_ uebung: GeraetUebung) -> (text: String, hatHistorie: Bool) {
         if let block = modell.blockInEinheit(fuer: uebung.id) {
-            return "Heute · \(TrainingTab.blockzeile(block))"
+            return ("Heute · \(TrainingTab.blockzeile(block))", true)
         }
         if let werte = modell.letzterSatzText(fuer: uebung.id) {
-            let zuletzt = altersangabe(fuer: uebung.id).map { "zuletzt \($0)" } ?? "zuletzt"
-            return "\(werte) · \(zuletzt)"
+            return ([altersangabe(fuer: uebung.id), werte].compactMap { $0 }.joined(separator: " · "), true)
         }
-        return "Noch nie trainiert · Ziel \(Zahlformat.korridorMitEinheit(uebung.targetMin, uebung.targetMax, uebung.volumeKind))"
+        return ("Noch nie trainiert · Ziel \(Zahlformat.korridorMitEinheit(uebung.targetMin, uebung.targetMax, uebung.volumeKind))", false)
     }
 
     /// "heute" statt "vor 0 Tagen" -- Letzteres liest sich wie ein

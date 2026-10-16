@@ -7,6 +7,9 @@ enum MuskelHauptgruppe: Int, CaseIterable, Sendable {
     /// Uebungen ohne darstellbaren Muskel (alter Server, Offline-Bootstrap,
     /// nur Muskeln, die das Modell nicht kennt).
     case weitere
+    /// Nur fuer Geraete: mehrere Hauptmuskelgruppen unter ihren Uebungen.
+    /// Ganz unten, weil ein vielseitiges Geraet sonst unter jeder Gruppe stuende.
+    case vielseitig
 
     var titel: String {
         switch self {
@@ -17,6 +20,7 @@ enum MuskelHauptgruppe: Int, CaseIterable, Sendable {
         case .beine: "Beine"
         case .rumpf: "Rumpf"
         case .weitere: "Weitere"
+        case .vielseitig: "Vielseitig"
         }
     }
 
@@ -31,7 +35,7 @@ enum MuskelHauptgruppe: Int, CaseIterable, Sendable {
         case .arme: ["biceps", "triceps", "forearms"]
         case .beine: ["quads", "hamstrings", "glutes", "adductors", "abductors", "calves", "tibialis", "fibularis"]
         case .rumpf: ["abs", "obliques"]
-        case .weitere: []
+        case .weitere, .vielseitig: []
         }
     }
 }
@@ -78,8 +82,17 @@ enum UebungsGruppierung {
     /// Der erste darstellbare Hauptmuskel; gibt es keinen, der erste
     /// darstellbare Muskel ueberhaupt.
     private static func platz(_ uebung: GeraetUebung) -> (gruppe: MuskelHauptgruppe, muskel: Int) {
-        let hauptmuskeln = uebung.muscles.filter { $0.role == .primary }
-        for muskel in hauptmuskeln + uebung.muscles {
+        platz(muskeln: uebung.muscles)
+    }
+
+    /// Die Hauptgruppe einer Uebung mit diesen Muskeln.
+    static func hauptgruppe(muskeln: [GeraetMuskel]) -> MuskelHauptgruppe {
+        platz(muskeln: muskeln).gruppe
+    }
+
+    private static func platz(muskeln: [GeraetMuskel]) -> (gruppe: MuskelHauptgruppe, muskel: Int) {
+        let hauptmuskeln = muskeln.filter { $0.role == .primary }
+        for muskel in hauptmuskeln + muskeln {
             if let treffer = einordnen(muskel.key) { return treffer }
         }
         return (.weitere, 0)
@@ -93,37 +106,3 @@ enum UebungsGruppierung {
     }
 }
 
-/// Der Filter der Uebungsansicht auf "Gerät wählen": ein einziger Streifen
-/// statt zweier Schalter. `alle` gruppiert nach Muskel, `zuletzt` zeigt die
-/// flache Liste nach "Zuletzt", eine Gruppe zeigt nur sie.
-enum Uebungsfilter: Hashable, Sendable {
-    case alle
-    case zuletzt
-    case gruppe(MuskelHauptgruppe)
-
-    var titel: String {
-        switch self {
-        case .alle: "Alle"
-        case .zuletzt: "Zuletzt"
-        case .gruppe(let gruppe): gruppe.titel
-        }
-    }
-
-    /// Die Chips: Alle, Zuletzt, dann die Gruppen, in denen Uebungen stehen.
-    static func angebot(gruppen: [MuskelHauptgruppe]) -> [Uebungsfilter] {
-        [.alle, .zuletzt] + gruppen.map { .gruppe($0) }
-    }
-
-    /// Eine Gruppe, die es nicht (mehr) gibt, verhaelt sich wie "Alle".
-    func wirksam(gruppen: [MuskelHauptgruppe]) -> Uebungsfilter {
-        if case .gruppe(let gruppe) = self, !gruppen.contains(gruppe) { return .alle }
-        return self
-    }
-
-    var gruppiert: Bool { self != .zuletzt }
-
-    var nurGruppe: MuskelHauptgruppe? {
-        if case .gruppe(let gruppe) = self { return gruppe }
-        return nil
-    }
-}

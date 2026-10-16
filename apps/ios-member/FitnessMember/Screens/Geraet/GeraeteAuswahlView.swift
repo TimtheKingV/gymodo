@@ -49,11 +49,11 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     }
 
     @State private var suchtext = ""
-    @AppStorage(Einstellungen.auswahlmodusKey) private var modusRoh = Auswahlmodus.uebungen.rawValue
-    /// Der Filter der Uebungsansicht (Alle, Zuletzt, eine Muskelgruppe). Wird nicht gemerkt.
-    @State private var uebungsfilter: Uebungsfilter = .alle
-    /// Die Uebung, zu der gerade nach dem Geraet gefragt wird.
-    @State private var geraeteFrage: UebungsAuswahl.Eintrag?
+    /// Muskeln oder Favoriten in der Geraeteliste einer Kategorie; Muskeln ist
+    /// die Vorgabe und wird nicht gemerkt.
+    @State private var ansicht: Uebungsansicht = .muskel
+    /// Das gewaehlte Bullet; nil = Alle.
+    @State private var gruppenfilter: MuskelHauptgruppe?
     /// Das Suchergebnis, entprellt berechnet statt in jedem body-Durchlauf
     /// (Offline-Spec 1b): vorher filterte jeder Tastendruck den ganzen
     /// Katalog auf dem Main-Thread. nil bis zur ersten Berechnung --
@@ -134,14 +134,6 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
         }
         .background(DesignSystem.Color.bg)
         .testnotizScreen()
-        .confirmationDialog("An welchem Gerät?", isPresented: geraeteFrageOffen, titleVisibility: .visible,
-                            presenting: geraeteFrage) { eintrag in
-            ForEach(eintrag.stationen) { station in
-                Button(Self.beschriftung(station)) { beiAuswahl(station, eintrag.id) }
-            }
-        } message: { eintrag in
-            Text(eintrag.uebung.name)
-        }
         .task {
             // Nebeneinander: die Videos brauchen die Fotos nicht, und jede
             // Oeffnung holt frische Signaturen fuer beide.
@@ -278,9 +270,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     @ViewBuilder
     private var inhalt: some View {
         let g = gruppen
-        let uebungsModus = zeigtUebungen
-        let eintraege = uebungsModus ? uebungsEintraege : []
-        if uebungsModus ? eintraege.isEmpty : g.istLeer {
+        if g.istLeer {
             VStack(spacing: 0) {
                 if GeraeteAuswahl.zeigtKopf(suchtext: suchtext) {
                     kopfinhalt
@@ -307,23 +297,17 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                         kopfinhalt
                             .padding(.bottom, DesignSystem.Spacing.s16)
                     }
-                    if gruppe != nil && suchtext.isEmpty {
-                        SegmentSchalter(werte: Auswahlmodus.allCases, auswahl: modus, titel: \.titel)
-                    }
-                    if uebungsModus {
-                        uebungsbereich(eintraege)
-                    }
                     // Ohne Suchtext Kacheln statt der langen Liste (Testnotiz
                     // 12.10., #3) -- die Gruppe traegt nur die Kachel, keine
                     // Regel. Mit Suchtext eine flache Liste.
-                    if !uebungsModus && !g.kategorien.isEmpty {
+                    if !g.kategorien.isEmpty {
                         kacheln(g.kategorien, ersteGruppe: true)
                     }
-                    if !uebungsModus && !g.zuletzt.isEmpty {
+                    if !g.zuletzt.isEmpty {
                         gruppe("ZULETZT BEI DIR", g.zuletzt, ersteGruppe: g.kategorien.isEmpty)
                     }
-                    if !uebungsModus && !g.liste.isEmpty {
-                        gruppe("A–Z", g.liste, ersteGruppe: true)
+                    if !g.liste.isEmpty {
+                        kategorieListe(g.liste)
                     }
                     if !g.treffer.isEmpty {
                         gruppe("\(g.treffer.count) TREFFER", g.treffer, ersteGruppe: true)
@@ -335,99 +319,43 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
         }
     }
 
-    // MARK: - Uebungsansicht
+    // MARK: - Kategorie: Muskeln und Favoriten
 
-    private var modus: Binding<Auswahlmodus> {
-        Binding(get: { Auswahlmodus(rawValue: modusRoh) ?? .uebungen },
-                set: { modusRoh = $0.rawValue })
-    }
-
-    /// Nur in einer Kategorie und ohne Suche; mit Suchtext stehen die
-    /// Treffer da, an der Wurzel die Kacheln.
-    private var zeigtUebungen: Bool {
-        gruppe != nil && suchtext.isEmpty && modus.wrappedValue == .uebungen
-    }
-
-    private var uebungsEintraege: [UebungsAuswahl.Eintrag] {
-        let kategorie = gruppe
-        return UebungsAuswahl.eintraege(stationen: stationen.filter { station in
-            kategorie.map { Geraetegruppe.fuer(station.equipmentModel) == $0 } ?? true
-        })
-    }
-
-    private var geraeteFrageOffen: Binding<Bool> {
-        Binding(get: { geraeteFrage != nil }, set: { if !$0 { geraeteFrage = nil } })
-    }
-
-    private static func beschriftung(_ station: Station) -> String {
-        var teile = [station.equipmentModel.name]
-        if station.machineId != nil, station.label != station.equipmentModel.name { teile.append(station.label) }
-        if let ort = station.locationNote, !ort.isEmpty { teile.append(ort) }
-        return teile.joined(separator: " · ")
-    }
-
+    /// Die Geraete einer Kategorie. Ab sechs Geraeten mit dem grossen
+    /// Schalter Muskeln | Favoriten und den Bullets; darunter wie bisher A-Z.
     @ViewBuilder
-    private func uebungsbereich(_ eintraege: [UebungsAuswahl.Eintrag]) -> some View {
-        let sortiert = UebungsAuswahl.zuletzt(eintraege, heute: heuteGemacht(), einheiten: gesamteEinheiten())
-        let uebungen = sortiert.map(\.uebung)
-        let nachId = Dictionary(sortiert.map { ($0.id, $0) }, uniquingKeysWith: { erste, _ in erste })
-        let gruppenImAngebot = UebungsGruppierung.vorhandeneGruppen(uebungen)
-        let filter = uebungsfilter.wirksam(gruppen: gruppenImAngebot)
-        UebungsFilterLeiste(gruppen: gruppenImAngebot, auswahl: $uebungsfilter)
-        UebungsAbschnitte(uebungen: uebungen, gruppiert: filter.gruppiert, filter: filter.nurGruppe) { uebung in
-            if let eintrag = nachId[uebung.id] {
-                Button { uebungTippen(eintrag) } label: { uebungszeile(eintrag) }
-                    .buttonStyle(PressButtonStyle())
-                    .accessibilityLabel("\(eintrag.uebung.name), \(eintrag.geraeteText)")
+    private func kategorieListe(_ liste: [GeraeteAuswahl.Eintrag]) -> some View {
+        if UebungsGruppierung.bietetSchalterAn(uebungsanzahl: liste.count) {
+            let angebot = GeraeteGruppierung.vorhandeneGruppen(liste)
+            let filter = gruppenfilter.flatMap { angebot.contains($0) ? $0 : nil }
+            SegmentSchalter(werte: Uebungsansicht.allCases, auswahl: $ansicht, titel: \.listenTitel)
+            if ansicht == .muskel {
+                GruppenLeiste(gruppen: angebot, auswahl: $gruppenfilter)
+                    .padding(.vertical, DesignSystem.Spacing.s4)
+                ForEach(GeraeteGruppierung.gruppieren(liste, nur: filter), id: \.gruppe) { abschnitt in
+                    gruppe(abschnittsTitel(abschnitt, gefiltert: filter != nil), abschnitt.eintraege, ersteGruppe: false)
+                }
+            } else {
+                let favoriten = GeraeteGruppierung.favoriten(liste)
+                if favoriten.isEmpty {
+                    Text("Hier erscheinen Geräte, an denen du schon trainiert hast.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .padding(.vertical, DesignSystem.Spacing.s8)
+                } else {
+                    gruppe("ZULETZT BENUTZT", favoriten, ersteGruppe: false)
+                }
             }
-        }
-        .padding(.top, DesignSystem.Spacing.s8)
-    }
-
-    private func uebungszeile(_ eintrag: UebungsAuswahl.Eintrag) -> some View {
-        HStack(spacing: DesignSystem.Spacing.s12) {
-            UebungsVideoKachel(exerciseId: eintrag.id) { Uebungsbild() }
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                Text(eintrag.uebung.name)
-                    .font(DesignSystem.Typography.uebungsname)
-                    .foregroundStyle(DesignSystem.Color.text)
-                Text(eintrag.geraeteText)
-                    .font(.system(size: 13))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(DesignSystem.Color.textFaint)
-        }
-        .padding(DesignSystem.Spacing.s12)
-        .frame(minHeight: 44)
-        .background(DesignSystem.Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-    }
-
-    private func uebungTippen(_ eintrag: UebungsAuswahl.Eintrag) {
-        guard let bootstrap = katalog.bootstrap else { return }
-        let einheiten = Dictionary(uniqueKeysWithValues: eintrag.stationen.map { station in
-            (station.schluessel,
-             GeraetEinstiegRechner.einheitenJeUebung(station: station.schluessel, in: bootstrap)[eintrag.id] ?? 0)
-        })
-        switch UebungsAuswahl.ziel(fuer: eintrag, einheiten: einheiten) {
-        case .direkt(let station): beiAuswahl(station, eintrag.id)
-        case .fragen: geraeteFrage = eintrag
+        } else {
+            gruppe("A–Z", liste, ersteGruppe: true)
         }
     }
 
-    /// Uebung -> letzter Satz in der laufenden Einheit, an welchem Geraet auch immer.
-    private func heuteGemacht() -> [String: Date] {
-        Dictionary(
-            (sessions.aktiveSession()?.bloecke ?? [])
-                .compactMap { block in block.saetze.map(\.performedAt).max().map { (block.exerciseId, $0) } },
-            uniquingKeysWith: max)
-    }
-
-    private func gesamteEinheiten() -> [String: Int] {
-        katalog.bootstrap.map { UebungsAuswahl.einheiten(stationen: stationen, bootstrap: $0) } ?? [:]
+    private func abschnittsTitel(_ abschnitt: GeraeteGruppierung.Abschnitt, gefiltert: Bool) -> String {
+        let titel = abschnitt.gruppe.titel.uppercased()
+        guard gefiltert else { return titel }
+        let anzahl = abschnitt.eintraege.count
+        return "\(titel) · \(anzahl) \(anzahl == 1 ? "GERÄT" : "GERÄTE")"
     }
 
     @ViewBuilder

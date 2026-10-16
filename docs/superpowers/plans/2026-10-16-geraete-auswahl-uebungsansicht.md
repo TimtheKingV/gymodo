@@ -33,3 +33,12 @@
 - Übung nur an gesperrten Geräten erscheint nicht.
 - Gewählter Filter, dessen Gruppe es nicht mehr gibt → verhält sich wie „Alle“.
 - Leerer Zustand ohne Geräte/Katalog bleibt wie bisher.
+
+## Dritte Änderung (nach Test auf dem Gerät) – gilt vor allem Obigen
+
+- **Übungsliste auf „Gerät wählen“ entfällt**, ebenso der Schalter Übungen|Geräte. In **jeder** Kategorie zeigt die Seite nur Geräte, mit dem großen Schalter **Muskeln | Favoriten** (Muskeln vorgewählt, nicht gemerkt) und darunter den Bullets **Alle · Brust · … · Vielseitig** (ohne „Zuletzt“).
+- **Favoriten:** nur Geräte, an denen schon trainiert wurde, das jüngste zuerst.
+- **Muskeln:** Ein Gerät gehört zu den Hauptgruppen all seiner Übungen. In „Alle“ steht es genau einmal: bei seiner einzigen Gruppe, sonst unter **Vielseitig** (ganz unten). Filtert man ausdrücklich nach einer Gruppe, erscheint es dort trotzdem, auch ein vielseitiges Gerät.
+- **Übungsseite eines Geräts:** großer Schalter **Muskelgruppe | Favorit** (Muskelgruppe vorgewählt, gemerkt) und Bullets ohne „Zuletzt“. Favorit zeigt nur Übungen mit Historie. Bis 5 Übungen ohne Schalter.
+- **Übungskarten:** Die Zeile „vor 2 Tagen · 73,0 kg“ steht in Akzentfarbe, wie bei den Geräten.
+- Meine Entscheidungen dazu: „Weitere“ (Geräte ganz ohne Muskeldaten, z. B. Cardio) steht vor „Vielseitig“; die Favoriten der Geräte sind nach letztem Satz sortiert, die der Übungen nach der Geräte-Reihenfolge (dieses Training, Häufigkeit).
