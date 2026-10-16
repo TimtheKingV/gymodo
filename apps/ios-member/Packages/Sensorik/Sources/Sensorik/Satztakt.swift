@@ -1,9 +1,11 @@
 import Foundation
 
 /// Auswertung eines ganzen Satzes nach dem Satzende: Takt der Bewegung
-/// bestimmen und messen, wie lange er gleichmaessig anliegt. Aufheben und
-/// Ablegen der Kurzhantel haben keinen Takt und fallen damit heraus, ohne
-/// dass eine Schwelle sie abschneiden muesste. Rein wie `Zaehler`: keine
+/// bestimmen, dann die laengste Kette von Abschnitten einer Taktlaenge, in
+/// der jeder Abschnitt seinem Vorgaenger nach Form und Groesse gleicht. Die
+/// Zahl der Abschnitte ist die Zahl der Wiederholungen. Aufheben und Ablegen
+/// gleichen keiner Wiederholung und fallen heraus, ohne dass eine Schwelle
+/// auf der Signalstaerke sie abschneiden muesste. Rein wie `Zaehler`: keine
 /// Uhr, kein Zufall, derselbe Code live und offline gegen Aufnahmen.
 ///
 /// Warum nicht der Drehraten-Zaehler: Beim Druecken und Strecken ueber Kopf
@@ -26,7 +28,7 @@ public enum Satztakt {
     }
 
     /// Kennung fuer rep_events und aufnahme.json (`ZaehlerProfil.algo` fuer die Takt-Auswertung).
-    public static let algo = "kurzhantel/takt1"
+    public static let algo = "kurzhantel/takt2"
 
     /// Die Wiederholungen als gleich lange Abschnitte des Takts. Einzelne
     /// Zeiten kennt die Auswertung nicht, nur Beginn, Ende und Takt; die
@@ -42,9 +44,6 @@ public enum Satztakt {
         }
     }
 
-    // Startwerte, an den Aufnahmen vom 16.10. abgestimmt (27 Saetze,
-    // Kurzhantel): 16 exakt, 24 auf +-1. Mit 0,3 statt 0,5 lagen kurze
-    // Saetze (5 bis 7) regelmaessig um eine halbe Wiederholung zu niedrig.
     private static let tiefpassHz = 3.0
     /// Gleitender Mittelwert, der die langsame Lageaenderung (Aufheben,
     /// Ablegen, Schraeglage) aus dem Signal nimmt.
@@ -60,10 +59,14 @@ public enum Satztakt {
     /// Ein Oberton (Druecken hat zwei Hoecker je Wiederholung) ist kuerzer
     /// als der Takt: der kleinste Kandidat mit fast bester Korrelation gewinnt.
     private static let kandidatAnteil = 0.85
-    /// Die Hanning-Fensterung der Huellkurve macht die gemessene Breite
-    /// etwa ein Drittel Zyklus kleiner als die Bewegung.
-    private static let randAnteil = 0.6
-    private static let rundungsZuschlag = 0.5
+    /// Mindestgleichheit zweier aufeinanderfolgender Wiederholungen. An den
+    /// Aufnahmen vom 16.10. (Block 9 und 11 Uhr, 27 Saetze) abgestimmt: 21
+    /// exakt statt 17, gleich gut von 0,88 bis 0,93; geprueft an den 8 Saetzen
+    /// von 13 Uhr: 7 exakt statt 6.
+    private static let gleichheitMin = 0.9
+    /// Abstand zur naechsten Wiederholung in Takten: das Tempo schwankt im Satz.
+    private static let abstandMin = 0.75
+    private static let abstandMax = 1.3
     private static let mindestDauer = 5.0
 
     public static func auswerten(_ messwerte: [SensorMesswert], rateHz: Double = 50) -> Ergebnis? {
@@ -72,17 +75,59 @@ public enum Satztakt {
         guard n > Int(mindestDauer * rateHz) else { return nil }
         let s = signal(messwerte, dt: dt)
         guard let (takt, guete) = takt(s, dt: dt) else { return nil }
-        let (huelle, ausschlag) = huellkurve(s, takt: takt, dt: dt)
+        let (_, ausschlag) = huellkurve(s, takt: takt, dt: dt)
         guard ausschlag > 0 else { return nil }
-        let spitze = huelle.indices.max { huelle[$0] < huelle[$1] }!
-        var a = spitze, b = spitze
-        while a > 0, huelle[a - 1] >= randAnteil * ausschlag { a -= 1 }
-        while b < n - 1, huelle[b + 1] >= randAnteil * ausschlag { b += 1 }
-        let breite = Double(b - a) * dt
-        let anzahl = Int(breite / takt + 0.5 + rundungsZuschlag)
-        guard anzahl >= 1 else { return nil }
-        return Ergebnis(anzahl: anzahl, takt: takt, beginn: messwerte[a].t, ende: messwerte[b].t,
-                        guete: guete, ausschlag: ausschlag)
+        let laenge = Int((takt / dt).rounded())
+        let kette = laengsteKette(s, laenge: laenge)
+        guard let erster = kette.first, let letzter = kette.last else { return nil }
+        return Ergebnis(anzahl: kette.count, takt: takt, beginn: messwerte[erster].t,
+                        ende: messwerte[min(n - 1, letzter + laenge)].t, guete: guete, ausschlag: ausschlag)
+    }
+
+    // MARK: - Kette
+
+    /// Gleichheit nach Form und Groesse, 2<a,b>/(|a|^2+|b|^2) ohne Mittelwert:
+    /// wie die normierte Korrelation bei gleicher Energie, aber klein, wenn ein
+    /// Abschnitt viel schwaecher ist (Ausklingen nach dem Ablegen).
+    private static func gleichheit(_ x: [Double], _ a: Int, _ b: Int, laenge: Int) -> Double {
+        var ma = 0.0, mb = 0.0
+        for k in 0..<laenge { ma += x[a + k]; mb += x[b + k] }
+        ma /= Double(laenge); mb /= Double(laenge)
+        var ab = 0.0, aa = 0.0, bb = 0.0
+        for k in 0..<laenge {
+            let u = x[a + k] - ma, v = x[b + k] - mb
+            ab += u * v; aa += u * u; bb += v * v
+        }
+        return aa + bb > 0 ? 2 * ab / (aa + bb) : 0
+    }
+
+    /// Beginn des Abschnitts nach (`richtung` 1) bzw. vor (-1) `start`, der ihm
+    /// am meisten gleicht, sofern die Gleichheit reicht.
+    private static func naechster(_ x: [Double], nach start: Int, richtung: Int, laenge: Int) -> Int? {
+        var beste = -2.0, bester: Int?
+        for d in Int(abstandMin * Double(laenge))...Int(abstandMax * Double(laenge)) {
+            let s = start + richtung * d
+            guard s >= 0, s + laenge <= x.count else { continue }
+            let g = gleichheit(x, start, s, laenge: laenge)
+            if g > beste { beste = g; bester = s }
+        }
+        return beste >= gleichheitMin ? bester : nil
+    }
+
+    /// Beginne der laengsten Kette sich gleichender Abschnitte. Startpunkte im
+    /// Viertel-Takt-Raster, von jedem aus waechst die Kette in beide Richtungen.
+    private static func laengsteKette(_ x: [Double], laenge: Int) -> [Int] {
+        guard laenge > 0, x.count > laenge else { return [] }
+        var beste: [Int] = []
+        for saat in stride(from: 0, to: x.count - laenge, by: max(1, laenge / 4)) {
+            var kette = [saat]
+            var cur = saat
+            while let s = naechster(x, nach: cur, richtung: 1, laenge: laenge) { kette.append(s); cur = s }
+            cur = saat
+            while let s = naechster(x, nach: cur, richtung: -1, laenge: laenge) { kette.insert(s, at: 0); cur = s }
+            if kette.count > beste.count { beste = kette }
+        }
+        return beste
     }
 
     // MARK: - Signal

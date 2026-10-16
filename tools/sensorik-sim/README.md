@@ -25,3 +25,13 @@ Aufruf: `cd tools/sensorik-sim && python3 ev2.py 40 && python3 cmp.py`
 - Übernommen in `Satztakt`: Signal auf das 1,5-fache des typischen Sekunden-Effektivwerts kappen, Takt höchstens 3 s. Alt (27 Sätze) 15 → 17 exakt, ±1 unverändert 24; neu (8 Sätze) 3 → 6 exakt, ±1 5 → 8. Stabil für Kappfaktor 1,2–1,5 und Taktgrenze 2,6–3,0; ab Kappfaktor 1,6 kippt es.
 - Nicht klar besser: Rand aus der Aktivität mit Takt nur im Fenster (`rand2.py`): 16/27 alt, 5/8 neu bei der besten Einstellung aus einem Gitter von 240 Kombinationen, also eher angepasst.
 - Offen: Schulterdrücken morgens (0943-02 und 0945-01 je 12 statt 10, 0944-01 8 richtig; 1149-03 7 statt 5) zählt teils zu viel. Die neuen Sätze wurden beim Suchen der Ursache angesehen, sind also keine saubere Prüfmenge.
+
+## Stand 16.10. später Nachmittag: Rand aus der Kette (`kette.py`)
+
+- Statt einer Schwelle auf der Hüllkurve: Abschnitte einer Taktlänge, jeder dem Vorgänger nach Form und Größe gleich (`2<a,b>/(|a|²+|b|²)`, ohne Mittelwert), nächster Abschnitt 0,75–1,3 Takte weiter, Startpunkte im Vierteltakt-Raster. Gezählt wird die längste Kette.
+- Normierte Korrelation allein reicht nicht: Das Ausklingen nach dem Ablegen gleicht in der Form (0,8–0,86) und hängt 2–4 Abschnitte an. Erst das Größenmaß schneidet es ab.
+- Erste Wiederholung: Die Kette beginnt 0,1–0,5 s nach der Marke `satzbeginn`, die erste Wiederholung ist also schon drin. Kette + 1 trifft 1/8.
+- Abgestimmt an Block A + B (27 Sätze): Schwelle (1 Wert, aus 12 probiert), Wahl des Größenmaßes nach dem ersten Lauf, +0/+1. Fest ohne Abstimmen: Abstand 0,75–1,3, Raster ¼ Takt; übernommen: Kappen 1,5 und Takt ≤ 3 s (bei deren Wahl waren die 13-Uhr-Sätze schon angesehen). Schwelle 0,88–0,93 gleich gut, gewählt 0,9.
+- Ergebnis in Swift (`kurzhantel/takt2`): Abstimmung 17 → 21 exakt, ±1 24 → 27; Prüfung (13 Uhr, einmal gelaufen) 6 → 7 exakt, ±1 8 → 8. Python liefert dieselben Summen, einzelne Sätze unterscheiden sich wegen des Tiefpasses.
+- Schwächer als vorher: kurze Sätze, bei denen die erste Wiederholung der zweiten zu wenig gleicht (1147-03, 1148-01, 1149-02, 1149-04: je eine zu wenig). Weiter falsch: 1324-02 (8 statt 9), Trizeps 1146-02 und 1147-01 (8 statt 7).
+- Hinweis: `rand.py` sucht den Takt bis 4 s, Swift bis 3 s; die Baseline in `rand.py` ist daher für Schulterdrücken schlechter als die App (13 Uhr 5/8 statt 6/8).

@@ -56,6 +56,9 @@ struct SatztaktTests {
         ("2026-10-16-0938-02", 10), ("2026-10-16-0940-02", 10), ("2026-10-16-0942-01", 9),
         ("2026-10-16-0944-01", 8), ("2026-10-16-1144-01", 7), ("2026-10-16-1145-02", 8),
         ("2026-10-16-1146-03", 7), ("2026-10-16-1148-01", 6),
+        // Kurze Saetze, die Kette findet eine zu wenig: die erste Wiederholung
+        // gleicht der zweiten zu wenig.
+        ("2026-10-16-1149-02", 5), ("2026-10-16-1149-04", 6),
     ])
     func echteSaetzeAufEinsGenau(name: String, wahr: Int) throws {
         let (datei, eintraege) = try SensorAufnahmeLeser.lesen(ordner: Pfade.aufnahmen.appendingPathComponent(name))
@@ -64,10 +67,23 @@ struct SatztaktTests {
         #expect(abs(e.anzahl - wahr) <= 1)
     }
 
+    /// Saetze, deren Rand die Schwelle auf der Huellkurve verfehlte (Schulterdruecken
+    /// 12 statt 10, Trizeps 8 statt 7 und 7 statt 6): die Kette sich gleichender
+    /// Wiederholungen laesst Aufheben und Ablegen heraus.
+    @Test(arguments: [
+        ("2026-10-16-0943-02", 10), ("2026-10-16-0945-01", 10), ("2026-10-16-1149-03", 5),
+        ("2026-10-16-1146-03", 7), ("2026-10-16-1325-03", 6),
+    ])
+    func randAusDerKetteExakt(name: String, wahr: Int) throws {
+        let (datei, eintraege) = try SensorAufnahmeLeser.lesen(ordner: Pfade.aufnahmen.appendingPathComponent(name))
+        let werte = eintraege.compactMap { if case .messwert(let m) = $0 { m } else { nil } }
+        let e = try #require(Satztakt.auswerten(werte, rateHz: Double(datei.sensor.rateSollHz)))
+        #expect(e.anzahl == wahr)
+    }
+
     /// Schulterdruecken: Aufheben und Ablegen sind staerker als die Wiederholungen
     /// und verschieben Takt und Huellkurve, wenn sie nicht gekappt werden.
     @Test(arguments: [
-        ("2026-10-16-1149-02", 5), ("2026-10-16-1149-04", 6),
         ("2026-10-16-1327-02", 5), ("2026-10-16-1327-03", 5), ("2026-10-16-1327-04", 6),
     ])
     func schulterdrueckenExakt(name: String, wahr: Int) throws {
