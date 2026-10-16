@@ -231,6 +231,26 @@ Ein Diagramm in M1: der Gewichtsverlauf je Übung (Swift Charts, keine externe A
 
 **Ausnahme: Trendzeile „Übungsfortschritt“ auf Home** (Testnotiz 11.10., #4). Jede Zeile trägt rechts eine Minikurve ohne Achsen (64 × 20 pt) und darunter die Veränderung seit Start mit Pfeil. Kurve, Pfeil und Zahl tragen die Farbe des Trends: steigend `accent`, fallend `warn`, unverändert `text-faint`. Das weicht bewusst von §2 (ein Akzent je Screen, `warn` nur für Probleme) und von „Text trägt nie die Serienfarbe“ ab, auf ausdrücklichen Wunsch. `warn` bleibt auch hier Linie und Schrift, nie Fläche. Die Ausnahme gilt nur für diese Zeile.
 
+### 13.1 Muskelkarte (Einweisung)
+
+Schematische Körperfigur, Vorder- und Rückseite, in der Einweisung unter „Beanspruchte Muskeln“. Sie zeigt weder Aktivierungsstärke noch EMG, nur welche Muskeln eine Übung beansprucht und in welcher Rolle. Die Werte sind aus dem abgenommenen Entwurf übernommen.
+
+| Token | Hex | Verwendung |
+|---|---|---|
+| Hauptmuskel | `#D4FF3F` | = `DesignSystem.Color.accent` |
+| Unterstützend 1 | `#A8CC2A` | erster unterstützender Muskel der Übung |
+| Unterstützend 2 | `#819B2A` | zweiter |
+| Unterstützend 3 | `#5E7220` | dritter; ab dem vierten bleibt es `#5E7220` |
+| Nicht angesprochen | `#383D47` | alle übrigen Muskeln |
+| Körperfläche | `#1A1D22` | Silhouette |
+| Körper- und Detaillinie | `#3A404A` | Umriss und Binnenzeichnung |
+| Muskelkante | `#14161A` | Trennlinie zwischen Muskeln |
+
+- **Rollenstufen:** `primary` nimmt `accent`. `secondary` läuft nach Reihenfolge in der Übung durch die drei Töne und bleibt am letzten stehen.
+- **Linienstärken** (SVG-Einheiten, skalieren mit der Karte): Körper 2,3 · Detail 1,1 · Muskelkante 3,2.
+- **Texte:** Überschrift „Beanspruchte Muskeln“ im Label-Stil (11 pt, Heavy, Versalien, Tracking 1,5). Rollen „Hauptmuskel“ und „Unterstützend“. Unter dem Modell „Vorderseite“ und „Rückseite“.
+- **Kein Modell ohne Hervorhebung.** Sind alle Muskeln einer Übung nicht darstellbar, entfällt das Bild; unbekannte Schlüssel bleiben in der Legende, nur ohne Fläche.
+
 ---
 
 ## 14. Offen

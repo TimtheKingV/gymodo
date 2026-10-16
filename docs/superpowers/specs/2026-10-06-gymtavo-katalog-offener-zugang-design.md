@@ -196,7 +196,7 @@ Die Sensor-Befestigung wird je `machineId` gemerkt, ohne Gerät je `equipmentMod
   - `review` ist `draft` oder `reviewed`.
   - `sources`: Schlüssel aus `sources[]`, deren `url` mit `https://` beginnt.
 
-  Tabellen dafür und eine App-Anzeige sind eine eigene spätere Etappe. Der Beschreibungstext enthält deshalb keinen Abschnitt „Muskelgruppen“ mehr. Muskelkarten kommen nicht ins Repo, die App zeichnet sie später aus den Daten.
+  Der Import schreibt die Muskeln nach `exercises.muscles` (jsonb, `[{key,name,role}]`, Rolle `primary` oder `secondary`). Bootstrap und Kontext liefern das Feld aus, die App zeigt es in der Einweisung als Muskelkarte (Vorder- und Rückseite). Fehlt das Feld (alter Server, gespeicherter Bootstrap), gilt `[]` und die Karte entfällt. Der Beschreibungstext enthält deshalb keinen Abschnitt „Muskelgruppen“ mehr. Die Vektorquellen der Muskelkarten liegen unter `assets/muskelmodell/`, die App zeichnet daraus nativ; Farben und Linien stehen im Designsystem (§13.1).
 
 **Migration `0048_catalog_key.sql`:** `catalog_key text` an `equipment_models` und `exercises`, Check auf das Muster, `unique (studio_id, catalog_key)` als Constraint (Upsert braucht einen echten Constraint, `NULL` kollidiert nicht).
 
