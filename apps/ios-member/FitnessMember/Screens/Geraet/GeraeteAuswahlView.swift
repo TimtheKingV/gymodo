@@ -307,20 +307,20 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                         kopfinhalt
                             .padding(.bottom, DesignSystem.Spacing.s16)
                     }
-                    if gruppe == nil && suchtext.isEmpty {
+                    if gruppe != nil && suchtext.isEmpty {
                         SegmentSchalter(werte: Auswahlmodus.allCases, auswahl: modus, titel: \.titel)
                     }
                     if uebungsModus {
                         uebungsbereich(eintraege)
                     }
-                    if !uebungsModus && !g.zuletzt.isEmpty {
-                        gruppe("ZULETZT BEI DIR", g.zuletzt, ersteGruppe: true)
-                    }
                     // Ohne Suchtext Kacheln statt der langen Liste (Testnotiz
                     // 12.10., #3) -- die Gruppe traegt nur die Kachel, keine
                     // Regel. Mit Suchtext eine flache Liste.
                     if !uebungsModus && !g.kategorien.isEmpty {
-                        kacheln(g.kategorien, ersteGruppe: g.zuletzt.isEmpty)
+                        kacheln(g.kategorien, ersteGruppe: true)
+                    }
+                    if !uebungsModus && !g.zuletzt.isEmpty {
+                        gruppe("ZULETZT BEI DIR", g.zuletzt, ersteGruppe: g.kategorien.isEmpty)
                     }
                     if !uebungsModus && !g.liste.isEmpty {
                         gruppe("A–Z", g.liste, ersteGruppe: true)
@@ -342,14 +342,17 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                 set: { modusRoh = $0.rawValue })
     }
 
-    /// Nur an der Wurzel und ohne Suche; mit Suchtext stehen die Treffer da,
-    /// in einer Kategorie die Geraete der Gruppe.
+    /// Nur in einer Kategorie und ohne Suche; mit Suchtext stehen die
+    /// Treffer da, an der Wurzel die Kacheln.
     private var zeigtUebungen: Bool {
-        gruppe == nil && suchtext.isEmpty && modus.wrappedValue == .uebungen
+        gruppe != nil && suchtext.isEmpty && modus.wrappedValue == .uebungen
     }
 
     private var uebungsEintraege: [UebungsAuswahl.Eintrag] {
-        UebungsAuswahl.eintraege(stationen: stationen)
+        let kategorie = gruppe
+        return UebungsAuswahl.eintraege(stationen: stationen.filter { station in
+            kategorie.map { Geraetegruppe.fuer(station.equipmentModel) == $0 } ?? true
+        })
     }
 
     private var geraeteFrageOffen: Binding<Bool> {
