@@ -65,6 +65,15 @@ struct GeraetView: View {
                     // eine Einheit und stehen deshalb 8 auseinander, nicht 16.
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
                         kopfzeile
+                        // Unter der Trainingsuhr statt ueber den Raedern
+                        // (Testnotiz 16.10., #3): Karte, Zaehlerstand und
+                        // Marken gehoeren zum Sensor, nicht zum Satzwert.
+                        // Sichtbar wie zuvor nur, solange die Raeder stehen.
+                        #if DEBUG
+                        if zeigtRaeder {
+                            SensorZeile(station: modell.station.schluessel)
+                        }
+                        #endif
                         // Sichtbarkeit hier entschieden, nicht in den Komponenten
                         // selbst -- damit kein VStack einen leer rendernden
                         // Kindzustand umschliesst (Review-Fund Task 15).
@@ -194,6 +203,13 @@ struct GeraetView: View {
         return kontext
     }
 
+    /// Der letzte Zweig von `inhalt`: kein Countdown, keine Pause, kein
+    /// Abschluss -- die Satzeingabe.
+    private var zeigtRaeder: Bool {
+        if case .bereit = modell.phase { return false }
+        return modell.laufendePause == nil && modell.phase != .abschluss
+    }
+
     /// Die eine Stelle, an der der Screen entscheidet, was er ist.
     @ViewBuilder
     private var inhalt: some View {
@@ -216,9 +232,6 @@ struct GeraetView: View {
             abschlussEntscheidung
                 .transition(.opacity)
         } else {
-            #if DEBUG
-            SensorZeile(station: modell.station.schluessel)
-            #endif
             einstellung
             if modell.istCardio {
                 CardioRaster(modell: modell)
