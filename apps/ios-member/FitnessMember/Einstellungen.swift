@@ -61,12 +61,21 @@ enum Einstellungen {
 }
 
 enum Uebungsansicht: String, CaseIterable, Sendable {
-    case muskel, zuletzt
+    case muskel, favorit
 
+    /// Auf der Uebungsseite eines Geraets.
     var titel: String {
         switch self {
-        case .muskel: "Muskel"
-        case .zuletzt: "Zuletzt"
+        case .muskel: "Muskelgruppe"
+        case .favorit: "Favorit"
+        }
+    }
+
+    /// In der Geraeteliste einer Kategorie.
+    var listenTitel: String {
+        switch self {
+        case .muskel: "Muskeln"
+        case .favorit: "Favoriten"
         }
     }
 }

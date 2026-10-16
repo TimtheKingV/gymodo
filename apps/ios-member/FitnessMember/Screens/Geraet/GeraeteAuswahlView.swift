@@ -15,6 +15,7 @@ import UIKit
 struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     @Environment(CatalogStore.self) private var katalog
     @Environment(UebungsVideoVorrat.self) private var videos
+    @Environment(WorkoutSessionStore.self) private var sessions
 
     let fotoLader: any GeraetefotosLoading & UebungsvideosLoading
     /// Kommt von der Wurzel (TrainingRootView), nicht als eigenes @State
@@ -48,6 +49,11 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     }
 
     @State private var suchtext = ""
+    /// Muskeln oder Favoriten in der Geraeteliste einer Kategorie; Muskeln ist
+    /// die Vorgabe und wird nicht gemerkt.
+    @State private var ansicht: Uebungsansicht = .muskel
+    /// Das gewaehlte Bullet; nil = Alle.
+    @State private var gruppenfilter: MuskelHauptgruppe?
     /// Das Suchergebnis, entprellt berechnet statt in jedem body-Durchlauf
     /// (Offline-Spec 1b): vorher filterte jeder Tastendruck den ganzen
     /// Katalog auf dem Main-Thread. nil bis zur ersten Berechnung --
@@ -291,17 +297,17 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                         kopfinhalt
                             .padding(.bottom, DesignSystem.Spacing.s16)
                     }
-                    if !g.zuletzt.isEmpty {
-                        gruppe("ZULETZT BEI DIR", g.zuletzt, ersteGruppe: true)
-                    }
                     // Ohne Suchtext Kacheln statt der langen Liste (Testnotiz
                     // 12.10., #3) -- die Gruppe traegt nur die Kachel, keine
                     // Regel. Mit Suchtext eine flache Liste.
                     if !g.kategorien.isEmpty {
-                        kacheln(g.kategorien, ersteGruppe: g.zuletzt.isEmpty)
+                        kacheln(g.kategorien, ersteGruppe: true)
+                    }
+                    if !g.zuletzt.isEmpty {
+                        gruppe("ZULETZT BEI DIR", g.zuletzt, ersteGruppe: g.kategorien.isEmpty)
                     }
                     if !g.liste.isEmpty {
-                        gruppe("A–Z", g.liste, ersteGruppe: true)
+                        kategorieListe(g.liste)
                     }
                     if !g.treffer.isEmpty {
                         gruppe("\(g.treffer.count) TREFFER", g.treffer, ersteGruppe: true)
@@ -311,6 +317,45 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                 .padding(.vertical, DesignSystem.Spacing.s24)
             }
         }
+    }
+
+    // MARK: - Kategorie: Muskeln und Favoriten
+
+    /// Die Geraete einer Kategorie. Ab sechs Geraeten mit dem grossen
+    /// Schalter Muskeln | Favoriten und den Bullets; darunter wie bisher A-Z.
+    @ViewBuilder
+    private func kategorieListe(_ liste: [GeraeteAuswahl.Eintrag]) -> some View {
+        if UebungsGruppierung.bietetSchalterAn(uebungsanzahl: liste.count) {
+            let angebot = GeraeteGruppierung.vorhandeneGruppen(liste)
+            let filter = gruppenfilter.flatMap { angebot.contains($0) ? $0 : nil }
+            SegmentSchalter(werte: Uebungsansicht.allCases, auswahl: $ansicht, titel: \.listenTitel)
+            if ansicht == .muskel {
+                GruppenLeiste(gruppen: angebot, auswahl: $gruppenfilter)
+                    .padding(.vertical, DesignSystem.Spacing.s4)
+                ForEach(GeraeteGruppierung.gruppieren(liste, nur: filter), id: \.gruppe) { abschnitt in
+                    gruppe(abschnittsTitel(abschnitt, gefiltert: filter != nil), abschnitt.eintraege, ersteGruppe: false)
+                }
+            } else {
+                let favoriten = GeraeteGruppierung.favoriten(liste)
+                if favoriten.isEmpty {
+                    Text("Hier erscheinen Geräte, an denen du schon trainiert hast.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .padding(.vertical, DesignSystem.Spacing.s8)
+                } else {
+                    gruppe("ZULETZT BENUTZT", favoriten, ersteGruppe: false)
+                }
+            }
+        } else {
+            gruppe("A–Z", liste, ersteGruppe: true)
+        }
+    }
+
+    private func abschnittsTitel(_ abschnitt: GeraeteGruppierung.Abschnitt, gefiltert: Bool) -> String {
+        let titel = abschnitt.gruppe.titel.uppercased()
+        guard gefiltert else { return titel }
+        let anzahl = abschnitt.eintraege.count
+        return "\(titel) · \(anzahl) \(anzahl == 1 ? "GERÄT" : "GERÄTE")"
     }
 
     @ViewBuilder

@@ -45,8 +45,8 @@ struct UebungsansichtEinstellungTests {
 
     @Test func gespeicherteWahlGiltUnbekanntesFaelltZurueck() {
         let defaults = UserDefaults(suiteName: UUID().uuidString)!
-        defaults.set("zuletzt", forKey: Einstellungen.uebungsansichtKey)
-        #expect(Einstellungen.uebungsansicht(defaults) == .zuletzt)
+        defaults.set("favorit", forKey: Einstellungen.uebungsansichtKey)
+        #expect(Einstellungen.uebungsansicht(defaults) == .favorit)
         defaults.set("quatsch", forKey: Einstellungen.uebungsansichtKey)
         #expect(Einstellungen.uebungsansicht(defaults) == .muskel)
     }

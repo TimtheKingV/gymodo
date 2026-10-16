@@ -22,15 +22,6 @@ struct GeraetErkanntView: View {
                 kopfzeile
                 geraetefoto
                 geraetename
-                HStack {
-                    Text("Was machst du heute?")
-                        .font(DesignSystem.Typography.uebungsname)
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                    Spacer()
-                    if UebungsGruppierung.bietetSchalterAn(uebungsanzahl: sortierteUebungen.count) {
-                        UebungsAnsichtSchalter(ansicht: ansicht)
-                    }
-                }
                 uebungsliste
                 hinweis
             }
@@ -88,12 +79,14 @@ struct GeraetErkanntView: View {
     }
 
     private var uebungsliste: some View {
-        UebungsAbschnitte(uebungen: sortierteUebungen, ansicht: ansicht.wrappedValue) { uebung in
+        UebungsAnsichtBereich(uebungen: sortierteUebungen,
+                              hatHistorie: { modell.letzterSatzText(fuer: $0.id) != nil },
+                              ansicht: ansicht) { uebung in
             Button { beiAuswahl(uebung.id) } label: {
                 zeile(uebung)
             }
             .buttonStyle(PressButtonStyle())
-            .accessibilityLabel("\(uebung.name), \(untertitel(uebung))")
+            .accessibilityLabel("\(uebung.name), \(untertitel(uebung).text)")
             .accessibilityHint("Öffnet das Gerät")
         }
     }
@@ -120,9 +113,7 @@ struct GeraetErkanntView: View {
                 Text(uebung.name)
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.text)
-                Text(untertitel(uebung))
-                    .font(.system(size: 13))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
+                UebungsUntertitel(text: untertitel(uebung).text, hatHistorie: untertitel(uebung).hatHistorie)
             }
             Spacer()
             Image(systemName: "chevron.right")
@@ -135,20 +126,14 @@ struct GeraetErkanntView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
 
-    /// Drei Zustaende, nicht zwei: die aktive Zeile mit Historie traegt das
-    /// Wort "zuletzt", jede andere Zeile mit Historie nicht -- sonst stuende
-    /// "zuletzt" auf zwei Zeilen gleichzeitig und waere bedeutungslos. Das
-    /// Alter ("vor 8 Tagen") sagt, wie verlaesslich die Zahl noch ist,
-    /// bevor man das Geraet danach einstellt.
-    private func untertitel(_ uebung: GeraetUebung) -> String {
+    /// Mit Historie "vor 8 Tagen · 73,0 kg" in der Akzentfarbe, wie die
+    /// Geraete; das Alter sagt, wie verlaesslich die Zahl noch ist, bevor man
+    /// das Geraet danach einstellt. Ohne Historie das Ziel.
+    private func untertitel(_ uebung: GeraetUebung) -> (text: String, hatHistorie: Bool) {
         guard let belastungText = modell.letzterSatzText(fuer: uebung.id) else {
-            return "Noch nie · Ziel \(Zahlformat.korridorMitEinheit(uebung.targetMin, uebung.targetMax, uebung.volumeKind))"
+            return ("Noch nie · Ziel \(Zahlformat.korridorMitEinheit(uebung.targetMin, uebung.targetMax, uebung.volumeKind))", false)
         }
-        let alter = altersangabe(fuer: uebung.id)
-        if uebung.id == modell.uebungId {
-            return ["zuletzt · \(belastungText)", alter].compactMap { $0 }.joined(separator: " ")
-        }
-        return [belastungText, alter].compactMap { $0 }.joined(separator: " · ")
+        return ([altersangabe(fuer: uebung.id), belastungText].compactMap { $0 }.joined(separator: " · "), true)
     }
 
     /// "heute" statt "vor 0 Tagen" -- Letzteres liest sich wie ein
