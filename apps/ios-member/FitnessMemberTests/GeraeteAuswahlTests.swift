@@ -554,6 +554,27 @@ struct GeraeteAuswahlTests {
         #expect(g.kachel(.freihantel).map(\.name) == ["Kurzhantel", "Langhantel"])
     }
 
+    /// Testnotiz 16.10., #2: benutzte Kategorien vorn, die juengste zuerst
+    /// -- maassgeblich ist der juengste Satz an irgendeinem Geraet darin.
+    /// Unbenutzte folgen in der festen Reihenfolge von oben.
+    @Test func kachelnNachZuletztBenutzt() {
+        let daten = bootstrap(maschinen: [], typen: [
+            typJSON(id: "t5", name: "Laufband", kategorie: "cardio", gruppe: "cardio"),
+            typJSON(id: "t2", name: "Kabelzug", gruppe: "kabelzug"),
+            typJSON(id: "t3", name: "Langhantel", gruppe: "freihantel"),
+            typJSON(id: "t4", name: "Kurzhantel", gruppe: "freihantel"),
+            typJSON(id: "t1", name: "Beinpresse", gruppe: "geraete"),
+        ], typSaetze: [
+            (modell: "t2", uebung: "gu1", kg: 30, wann: "2026-10-14T10:00:00Z"),
+            (modell: "t3", uebung: "gu1", kg: 40, wann: "2026-10-10T10:00:00Z"),
+            (modell: "t4", uebung: "gu1", kg: 8, wann: "2026-10-16T10:00:00Z"),
+        ])
+        let g = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .freiesTraining, suchtext: "")
+        #expect(g.kategorien.map(\.gruppe) == [.freihantel, .kabelzug, .geraete, .cardio])
+        // In der Kachel bleibt es alphabetisch.
+        #expect(g.kachel(.freihantel).map(\.name) == ["Kurzhantel", "Langhantel"])
+    }
+
     /// #1: der abgeloeste Typ steht in keiner Kachel und keinem Treffer --
     /// ein alter Block auf ihn laesst sich aber weiter oeffnen.
     @Test func einAbgeloesterTypFehltInListeUndSucheBleibtAberAufloesbar() {

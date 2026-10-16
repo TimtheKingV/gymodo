@@ -27,6 +27,16 @@ final class ZaehlerKoordinator: SatzZaehler {
     /// Alle Messwerte des Satzes, nur an der Kurzhantel: dort zaehlt am
     /// Satzende die Takt-Auswertung (Satztakt) und ersetzt die Live-Zahl.
     @ObservationIgnored private var satzMesswerte: [SensorMesswert] = []
+    /// Testnotiz 16.10., #4: das Rad folgte der Live-Zahl (in 1421-03 eine
+    /// 1), gespeichert wurde sie neben der Takt-Zahl 8 als "korrigiert".
+    /// Seither zaehlt der Takt auch waehrend des Satzes. Er kostet im
+    /// Debug-Build rund 0,8 s je Auswertung (37-s-Satz, Mac) und laeuft
+    /// deshalb abseits des Main Actors, nie zwei auf einmal.
+    @ObservationIgnored private var taktStand: Int?
+    @ObservationIgnored private var taktLaeuft = false
+    @ObservationIgnored private var taktBis: TimeInterval = 0
+    /// Steigt mit jedem Satz: ein spaetes Ergebnis gehoert sonst zum falschen.
+    @ObservationIgnored private var satzKennung = 0
     @ObservationIgnored private var lauscher: Task<Void, Never>?
 
     init(quelle: any SensorQuelle, einstellungen: UserDefaults = .standard,
@@ -97,6 +107,7 @@ final class ZaehlerKoordinator: SatzZaehler {
             let neu = zaehler.verarbeite(messwert)
             self.zaehler = zaehler
             weitergeben(neu)
+            taktAnstossen()
         case .zustand(let zustand):
             if zustand.istVerbunden {
                 // Nur wenn der Satz mangels Sensor noch nicht zaehlte (Spec 9).
@@ -131,6 +142,7 @@ final class ZaehlerKoordinator: SatzZaehler {
         zaehler = nil
         ereignisse = []
         satzMesswerte = []
+        taktZuruecksetzen()
         guard let kontext else { return }
         guard kontext.volumeKind == .reps else { return senden(.zaehltNicht(.keineWiederholungen)) }
         guard let art = befestigung?.art else { return senden(.zaehltNicht(.keineBefestigung)) }
@@ -141,12 +153,39 @@ final class ZaehlerKoordinator: SatzZaehler {
         senden(.bereit)
     }
 
+    /// Hoechstens einmal je Sekunde Messzeit und nie neben einer laufenden
+    /// Auswertung; wer waehrenddessen kam, ist bei der naechsten dabei.
+    private func taktAnstossen() {
+        guard befestigung?.art == .kurzhantel, !taktLaeuft,
+              let letzter = satzMesswerte.last, letzter.t - taktBis >= 1 else { return }
+        taktLaeuft = true
+        taktBis = letzter.t
+        let kopie = satzMesswerte, rate = Double(quelle.rate.rawValue), kennung = satzKennung
+        Task { [weak self] in
+            let anzahl = await Task.detached(priority: .userInitiated) {
+                Satztakt.auswerten(kopie, rateHz: rate)?.anzahl
+            }.value
+            self?.taktFertig(anzahl, kennung: kennung)
+        }
+    }
+
+    private func taktFertig(_ anzahl: Int?, kennung: Int) {
+        guard kennung == satzKennung else { return }
+        taktLaeuft = false
+        if let anzahl, anzahl > 0, anzahl != taktStand {
+            taktStand = anzahl
+            senden(.stand(anzahl))
+        }
+        taktAnstossen()
+    }
+
     private func weitergeben(_ neu: [ZaehlerEreignis]) {
         for ereignis in neu {
             ereignisse.append(ereignis)
             switch ereignis {
-            case .wiederholung(let w): senden(.stand(w.nummer))
-            case .unsicher(let grund): senden(.pruefen(zaehler?.anzahl ?? 0, grund))
+            // Sobald der Takt zaehlt, fuehrt er das Rad; vorher die Live-Zahl.
+            case .wiederholung(let w): if taktStand == nil { senden(.stand(w.nummer)) }
+            case .unsicher(let grund): senden(.pruefen(taktStand ?? zaehler?.anzahl ?? 0, grund))
             case .zuende: break
             }
         }
@@ -165,6 +204,14 @@ final class ZaehlerKoordinator: SatzZaehler {
         meldung = nil
         ereignisse = []
         satzMesswerte = []
+        taktZuruecksetzen()
+    }
+
+    private func taktZuruecksetzen() {
+        satzKennung += 1
+        taktStand = nil
+        taktLaeuft = false
+        taktBis = 0
     }
 }
 #endif

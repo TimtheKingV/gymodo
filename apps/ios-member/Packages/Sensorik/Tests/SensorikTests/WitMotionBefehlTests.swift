@@ -28,4 +28,12 @@ struct WitMotionBefehlTests {
         #expect(Akkustand.prozent(hundertstelVolt: 369) == 15)
         #expect(Akkustand.prozent(hundertstelVolt: 300) == 0)
     }
+
+    @Test func nullVoltIstKeinMesswert() {
+        // Die erste Antwort nach jedem Verbinden ist 0,00 V (Protokoll vom
+        // 14. bis 16.10., 12 von 12 Verbindungen). Bei 0 V antwortete der
+        // Sensor gar nicht -- das ist ein leeres Register, kein leerer Akku.
+        #expect(Akkustand.prozent(hundertstelVolt: 0) == nil)
+        #expect(Akkustand.prozent(hundertstelVolt: 299) == nil)
+    }
 }

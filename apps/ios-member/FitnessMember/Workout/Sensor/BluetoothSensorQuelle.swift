@@ -41,6 +41,10 @@ final class BluetoothSensorQuelle: NSObject, SensorQuelle {
     @ObservationIgnored private var sammelfrist: Task<Void, Never>?
     @ObservationIgnored private var akkuTakt: Task<Void, Never>?
     @ObservationIgnored private var akku: Int?
+    /// Ob in dieser Verbindung schon ein echter Akkuwert kam. Bis dahin
+    /// fragt der Takt alle 2 s statt jede Minute: die erste Antwort nach dem
+    /// Verbinden ist leer, und eine Minute "Akku –" fiel im Test auf.
+    @ObservationIgnored private var akkuFrisch = false
     @ObservationIgnored private var gewollt = false
 
     init(einstellungen: UserDefaults = .standard) {
@@ -154,6 +158,9 @@ final class BluetoothSensorQuelle: NSObject, SensorQuelle {
     private func verbindeMit(_ ziel: CBPeripheral) {
         sammelfristBeenden()
         zentrale?.stopScan()
+        // Der Wert eines anderen Sensors gilt hier nicht. Beim automatischen
+        // Wiederverbinden (wiederVerbinden) bleibt er stehen: derselbe Akku.
+        if peripheral?.identifier != ziel.identifier { akku = nil }
         peripheral = ziel
         ziel.delegate = self
         setze(.verbindet)
@@ -177,6 +184,7 @@ final class BluetoothSensorQuelle: NSObject, SensorQuelle {
 
     private func nachDemAbonnieren(_ peripheral: CBPeripheral) {
         setze(.verbunden(name: peripheral.name ?? "WT901BLE", akkuProzent: akku))
+        akkuFrisch = false
         akkuTakt?.cancel()
         akkuTakt = Task { [weak self] in
             // Der Sensor verschluckt Befehle, die zu dicht aufeinander folgen.
@@ -189,7 +197,7 @@ final class BluetoothSensorQuelle: NSObject, SensorQuelle {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(200))
                 self.senden(.akkuLesen)
-                try? await Task.sleep(for: .seconds(60))
+                try? await Task.sleep(for: self.akkuFrisch ? .seconds(60) : .seconds(2))
             }
         }
     }
@@ -283,7 +291,9 @@ extension BluetoothSensorQuelle: @preconcurrency CBPeripheralDelegate {
             case .register(let adresse, let werte):
                 guard adresse == Akkustand.register, let roh = werte.first else { continue }
                 verteiler.senden(.akku(hundertstelVolt: Int(roh)))
-                akku = Akkustand.prozent(hundertstelVolt: Int(roh))
+                guard let prozent = Akkustand.prozent(hundertstelVolt: Int(roh)) else { continue }
+                akku = prozent
+                akkuFrisch = true
                 if case .verbunden(let name, _) = zustand { setze(.verbunden(name: name, akkuProzent: akku)) }
             }
         }

@@ -168,6 +168,11 @@ final class GeraetModel {
     /// Spec B 6.5. vonHand traegt den Zaehlerstand nur zur Anzeige mit.
     enum ZaehlerZustand: Equatable {
         case aus, bereit, zaehlt(Int), pruefen(Int), vonHand(Int)
+
+        var istVonHand: Bool {
+            if case .vonHand = self { return true }
+            return false
+        }
     }
     private(set) var zaehlerZustand: ZaehlerZustand = .aus
 
@@ -803,6 +808,13 @@ final class GeraetModel {
         } else {
             zaehler?.satzVerworfen()
             ergebnis = nil
+        }
+        // Ungedreht gilt die Endzahl (Testnotiz 16.10., #4): an der
+        // Kurzhantel zaehlt der Takt am Satzende ueber alle Messwerte und
+        // kann von dem abweichen, was das Rad zuletzt zeigte. Gedreht
+        // bleibt die Hand.
+        if let ergebnis, !zaehlerZustand.istVonHand {
+            umfang = Rastwerte.naechster(zu: ergebnis.gezaehlt, in: umfangsWerte)
         }
         let herkunft = Self.herkunft(umfang: umfang, ergebnis: ergebnis)
         var geschrieben = sessions.satzSichern(
