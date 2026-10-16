@@ -17,6 +17,7 @@ enum Einstellungen {
     static let vibrationBeimSichernKey = "vibrationBeimSichern"
 
     static let satzZielKey = "satzZiel"
+    static let uebungsansichtKey = "uebungsansicht"
 
     static let resttimerVorgabe = 90
     static let resttimerStufen = [45, 60, 90, 120, 180]
@@ -50,5 +51,22 @@ enum Einstellungen {
     /// gesetzten Schluessel, deshalb die Umkehrung ueber object(forKey:).
     static func vibriertBeimSichern(_ defaults: UserDefaults = .standard) -> Bool {
         defaults.object(forKey: vibrationBeimSichernKey) as? Bool ?? true
+    }
+
+    /// Wie die Uebungsliste am Geraet geordnet ist. Ein unbekannter
+    /// gespeicherter Wert faellt auf die Vorgabe zurueck.
+    static func uebungsansicht(_ defaults: UserDefaults = .standard) -> Uebungsansicht {
+        defaults.string(forKey: uebungsansichtKey).flatMap(Uebungsansicht.init(rawValue:)) ?? .muskel
+    }
+}
+
+enum Uebungsansicht: String, CaseIterable, Sendable {
+    case muskel, zuletzt
+
+    var titel: String {
+        switch self {
+        case .muskel: "Muskel"
+        case .zuletzt: "Zuletzt"
+        }
     }
 }
