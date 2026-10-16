@@ -21,13 +21,17 @@ public enum SensorRate: Int, Sendable, CaseIterable, Codable {
 public enum WitMotionBefehl: Sendable, Equatable {
     case rate(SensorRate)
     case akkuLesen
+    /// Register SLEEP (0x22). Der Sensor schweigt danach und zieht kaum Strom;
+    /// kein "Konfiguration speichern", ein Neustart weckt ihn.
+    case schlafen
 
-    public static var alle: [WitMotionBefehl] { SensorRate.allCases.map(WitMotionBefehl.rate) + [.akkuLesen] }
+    public static var alle: [WitMotionBefehl] { SensorRate.allCases.map(WitMotionBefehl.rate) + [.akkuLesen, .schlafen] }
 
     public var bytes: Data {
         switch self {
         case .rate(let rate): Data([0xFF, 0xAA, 0x03, rate.registerwert, 0x00])
         case .akkuLesen: Data([0xFF, 0xAA, 0x27, 0x64, 0x00])
+        case .schlafen: Data([0xFF, 0xAA, 0x22, 0x01, 0x00])
         }
     }
 }

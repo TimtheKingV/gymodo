@@ -3,11 +3,12 @@ import Testing
 @testable import Sensorik
 
 struct WitMotionBefehlTests {
-    @Test func bytesDerVierBefehle() {
+    @Test func bytesDerBefehle() {
         #expect(WitMotionBefehl.rate(.hz20).bytes == Data([0xFF, 0xAA, 0x03, 0x07, 0x00]))
         #expect(WitMotionBefehl.rate(.hz50).bytes == Data([0xFF, 0xAA, 0x03, 0x08, 0x00]))
         #expect(WitMotionBefehl.rate(.hz100).bytes == Data([0xFF, 0xAA, 0x03, 0x09, 0x00]))
         #expect(WitMotionBefehl.akkuLesen.bytes == Data([0xFF, 0xAA, 0x27, 0x64, 0x00]))
+        #expect(WitMotionBefehl.schlafen.bytes == Data([0xFF, 0xAA, 0x22, 0x01, 0x00]))
     }
 
     @Test func kenntWederKalibrierenNochSpeichern() {
@@ -18,7 +19,7 @@ struct WitMotionBefehlTests {
         for befehl in WitMotionBefehl.alle {
             #expect(!verboten.contains(befehl.bytes))
         }
-        #expect(WitMotionBefehl.alle.count == 4)
+        #expect(WitMotionBefehl.alle.count == 5)
     }
 
     @Test func akkuInProzent() {
