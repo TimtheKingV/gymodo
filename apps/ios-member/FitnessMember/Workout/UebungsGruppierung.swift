@@ -92,3 +92,38 @@ enum UebungsGruppierung {
         return nil
     }
 }
+
+/// Der Filter der Uebungsansicht auf "Gerät wählen": ein einziger Streifen
+/// statt zweier Schalter. `alle` gruppiert nach Muskel, `zuletzt` zeigt die
+/// flache Liste nach "Zuletzt", eine Gruppe zeigt nur sie.
+enum Uebungsfilter: Hashable, Sendable {
+    case alle
+    case zuletzt
+    case gruppe(MuskelHauptgruppe)
+
+    var titel: String {
+        switch self {
+        case .alle: "Alle"
+        case .zuletzt: "Zuletzt"
+        case .gruppe(let gruppe): gruppe.titel
+        }
+    }
+
+    /// Die Chips: Alle, Zuletzt, dann die Gruppen, in denen Uebungen stehen.
+    static func angebot(gruppen: [MuskelHauptgruppe]) -> [Uebungsfilter] {
+        [.alle, .zuletzt] + gruppen.map { .gruppe($0) }
+    }
+
+    /// Eine Gruppe, die es nicht (mehr) gibt, verhaelt sich wie "Alle".
+    func wirksam(gruppen: [MuskelHauptgruppe]) -> Uebungsfilter {
+        if case .gruppe(let gruppe) = self, !gruppen.contains(gruppe) { return .alle }
+        return self
+    }
+
+    var gruppiert: Bool { self != .zuletzt }
+
+    var nurGruppe: MuskelHauptgruppe? {
+        if case .gruppe(let gruppe) = self { return gruppe }
+        return nil
+    }
+}

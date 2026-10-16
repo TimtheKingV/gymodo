@@ -135,3 +135,25 @@ struct AuswahlmodusEinstellungTests {
         #expect(Einstellungen.auswahlmodus(defaults) == .uebungen)
     }
 }
+
+struct UebungsfilterTests {
+    @Test func dasAngebotIstAlleZuletztUndDieGruppen() {
+        #expect(Uebungsfilter.angebot(gruppen: [.brust, .arme])
+                == [.alle, .zuletzt, .gruppe(.brust), .gruppe(.arme)])
+        #expect(Uebungsfilter.angebot(gruppen: []) == [.alle, .zuletzt])
+    }
+
+    @Test func eineVerschwundeneGruppeWirdZuAlle() {
+        #expect(Uebungsfilter.gruppe(.beine).wirksam(gruppen: [.brust]) == .alle)
+        #expect(Uebungsfilter.gruppe(.brust).wirksam(gruppen: [.brust]) == .gruppe(.brust))
+        #expect(Uebungsfilter.zuletzt.wirksam(gruppen: []) == .zuletzt)
+    }
+
+    @Test func nurZuletztIstFlach() {
+        #expect(Uebungsfilter.alle.gruppiert)
+        #expect(Uebungsfilter.gruppe(.rumpf).gruppiert)
+        #expect(!Uebungsfilter.zuletzt.gruppiert)
+        #expect(Uebungsfilter.gruppe(.rumpf).nurGruppe == .rumpf)
+        #expect(Uebungsfilter.alle.nurGruppe == nil)
+    }
+}

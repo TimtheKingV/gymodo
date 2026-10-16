@@ -10,6 +10,7 @@
 - „Übungen“: alle Übungen des Studios in einer Liste. Darunter **Muskel | Zuletzt**. Bei „Muskel“ eine Filterleiste **Alle** (Standard), Brust, Rücken, Schultern, Arme, Beine, Rumpf; ein Tipp blendet die anderen Gruppen aus.
 - Gewählte Schalter und Filter sind in der **Akzentfarbe** (nicht Weiß), alle linksbündig.
 - Tipp auf eine Übung: ein Gerät → direkt dorthin. Mehrere Geräte → beim ersten Mal „An welchem Gerät?“; danach das Gerät, an dem die Übung schon gemacht wurde (aus der Historie, ohne eigenen Speicher).
+- **Änderung nach Test auf dem Gerät (Entwurf A „Ein Streifen“):** Statt zweier Schalter gibt es auf „Gerät wählen“ einen Segment-Schalter **Übungen | Geräte** in voller Breite und darunter einen einzigen Chip-Streifen **Alle · Zuletzt | Brust · Rücken · …**. Alle = nach Muskel gruppiert, Zuletzt = flache Liste, eine Gruppe = nur sie (Kopf „BRUST · 6 ÜBUNGEN“). „Muskel | Zuletzt“ bleibt nur auf der Übungsseite am Gerät und im Sheet „Weitere Übung“.
 - Auf der Übungsseite am Gerät entfällt „Was machst du heute?“; dort sind die Schalter ebenfalls linksbündig und in Akzentfarbe.
 
 ## Annahmen (Claude, von Tim bestätigt durch „passt“)

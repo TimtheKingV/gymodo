@@ -50,9 +50,8 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
 
     @State private var suchtext = ""
     @AppStorage(Einstellungen.auswahlmodusKey) private var modusRoh = Auswahlmodus.uebungen.rawValue
-    @AppStorage(Einstellungen.uebungsansichtKey) private var ansichtRoh = Uebungsansicht.muskel.rawValue
-    /// Der Muskelfilter der Uebungsansicht; nil = Alle. Wird nicht gemerkt.
-    @State private var muskelFilter: MuskelHauptgruppe?
+    /// Der Filter der Uebungsansicht (Alle, Zuletzt, eine Muskelgruppe). Wird nicht gemerkt.
+    @State private var uebungsfilter: Uebungsfilter = .alle
     /// Die Uebung, zu der gerade nach dem Geraet gefragt wird.
     @State private var geraeteFrage: UebungsAuswahl.Eintrag?
     /// Das Suchergebnis, entprellt berechnet statt in jedem body-Durchlauf
@@ -309,8 +308,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                             .padding(.bottom, DesignSystem.Spacing.s16)
                     }
                     if gruppe == nil && suchtext.isEmpty {
-                        PillenLeiste(werte: Auswahlmodus.allCases, auswahl: modus, titel: \.titel)
-                            .padding(.bottom, DesignSystem.Spacing.s4)
+                        SegmentSchalter(werte: Auswahlmodus.allCases, auswahl: modus, titel: \.titel)
                     }
                     if uebungsModus {
                         uebungsbereich(eintraege)
@@ -344,11 +342,6 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                 set: { modusRoh = $0.rawValue })
     }
 
-    private var ansicht: Binding<Uebungsansicht> {
-        Binding(get: { Uebungsansicht(rawValue: ansichtRoh) ?? .muskel },
-                set: { ansichtRoh = $0.rawValue })
-    }
-
     /// Nur an der Wurzel und ohne Suche; mit Suchtext stehen die Treffer da,
     /// in einer Kategorie die Geraete der Gruppe.
     private var zeigtUebungen: Bool {
@@ -372,18 +365,13 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
 
     @ViewBuilder
     private func uebungsbereich(_ eintraege: [UebungsAuswahl.Eintrag]) -> some View {
-        let muskel = ansicht.wrappedValue == .muskel
         let sortiert = UebungsAuswahl.zuletzt(eintraege, heute: heuteGemacht(), einheiten: gesamteEinheiten())
         let uebungen = sortiert.map(\.uebung)
         let nachId = Dictionary(sortiert.map { ($0.id, $0) }, uniquingKeysWith: { erste, _ in erste })
         let gruppenImAngebot = UebungsGruppierung.vorhandeneGruppen(uebungen)
-        let filter = muskelFilter.flatMap { gruppenImAngebot.contains($0) ? $0 : nil }
-        PillenLeiste(werte: Uebungsansicht.allCases, auswahl: ansicht, titel: \.titel)
-        if muskel {
-            PillenLeiste(werte: [nil] + gruppenImAngebot.map { Optional($0) },
-                         auswahl: $muskelFilter, titel: { $0?.titel ?? "Alle" })
-        }
-        UebungsAbschnitte(uebungen: uebungen, gruppiert: muskel, filter: filter) { uebung in
+        let filter = uebungsfilter.wirksam(gruppen: gruppenImAngebot)
+        UebungsFilterLeiste(gruppen: gruppenImAngebot, auswahl: $uebungsfilter)
+        UebungsAbschnitte(uebungen: uebungen, gruppiert: filter.gruppiert, filter: filter.nurGruppe) { uebung in
             if let eintrag = nachId[uebung.id] {
                 Button { uebungTippen(eintrag) } label: { uebungszeile(eintrag) }
                     .buttonStyle(PressButtonStyle())
