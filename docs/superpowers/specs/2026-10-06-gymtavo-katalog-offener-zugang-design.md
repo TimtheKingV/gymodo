@@ -190,13 +190,14 @@ Die Sensor-Befestigung wird je `machineId` gemerkt, ohne Gerät je `equipmentMod
 - `equipment[].exercises` ist die Zuordnung. Die Reihenfolge ergibt `sort_order` je Gerätetyp. Jeder Schlüssel muss eine Übung der Datei sein, eine Übung darf an mehreren Typen hängen. Jede Übung hängt an mindestens einem Typ.
 - Übung: `volume_kind` ist `reps`, `seconds` oder `meters`. `target_min` und `target_max` sind ganze Zahlen mit `0 < min ≤ max ≤` Obergrenze der Umfangsart aus `belastung.ts`. `description` ist `null` oder nicht leer.
 - `video` ist `null` oder ein vorhandenes MP4 mit `duration_s` als ganze Zahl von 1 bis 45. Lässt sich die Dauer aus dem MP4 lesen, muss sie übereinstimmen. Das Video gilt für die Übung, der Import hängt es an jede ihrer Verknüpfungen.
+- `muscles`: mindestens ein `primary`, Rollen `primary` oder `secondary`, jeder Muskel aus `muscles[]` höchstens einmal. Der Import schreibt sie (siehe unten).
 - Zusatzdaten, die die Datei pflegt und die Prüfung kontrolliert, der Import aber **noch nicht schreibt**:
   - `grip` ist `null` oder eins von `neutral`, `pronated`, `supinated`, `semi_pronated`, `semi_supinated`, `rotating`, `front_rack`, `none`.
-  - `muscles`: mindestens ein `primary`, Rollen `primary` oder `secondary`, jeder Muskel aus `muscles[]` höchstens einmal.
   - `review` ist `draft` oder `reviewed`.
   - `sources`: Schlüssel aus `sources[]`, deren `url` mit `https://` beginnt.
 
   Der Import schreibt die Muskeln nach `exercises.muscles` (jsonb, `[{key,name,role}]`, Rolle `primary` oder `secondary`). Bootstrap und Kontext liefern das Feld aus, die App zeigt es in der Einweisung als Muskelkarte (Vorder- und Rückseite). Fehlt das Feld (alter Server, gespeicherter Bootstrap), gilt `[]` und die Karte entfällt. Der Beschreibungstext enthält deshalb keinen Abschnitt „Muskelgruppen“ mehr. Die Vektorquellen der Muskelkarten liegen unter `assets/muskelmodell/`, die App zeichnet daraus nativ; Farben und Linien stehen im Designsystem (§13.1).
+  Die Vektorbasis steht unter MIT-Lizenz (Copyright (c) 2022 ELABBASSI Hicham); `LICENSE.txt` liegt neben den Quellen unter `assets/muskelmodell/`.
 
 **Migration `0048_catalog_key.sql`:** `catalog_key text` an `equipment_models` und `exercises`, Check auf das Muster, `unique (studio_id, catalog_key)` als Constraint (Upsert braucht einen echten Constraint, `NULL` kollidiert nicht).
 
