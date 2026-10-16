@@ -35,3 +35,35 @@ Aufruf: `cd tools/sensorik-sim && python3 ev2.py 40 && python3 cmp.py`
 - Ergebnis in Swift (`kurzhantel/takt2`): Abstimmung 17 → 21 exakt, ±1 24 → 27; Prüfung (13 Uhr, einmal gelaufen) 6 → 7 exakt, ±1 8 → 8. Python liefert dieselben Summen, einzelne Sätze unterscheiden sich wegen des Tiefpasses.
 - Schwächer als vorher: kurze Sätze, bei denen die erste Wiederholung der zweiten zu wenig gleicht (1147-03, 1148-01, 1149-02, 1149-04: je eine zu wenig). Weiter falsch: 1324-02 (8 statt 9), Trizeps 1146-02 und 1147-01 (8 statt 7).
 - Hinweis: `rand.py` sucht den Takt bis 4 s, Swift bis 3 s; die Baseline in `rand.py` ist daher für Schulterdrücken schlechter als die App (13 Uhr 5/8 statt 6/8).
+
+## Rennen der Zähler (`rennen.py`), Festlegung vor der Blindprüfung
+
+Entwicklung an den 35 Sätzen vom 16.10. (Signal wie Swift, Tiefpass 3 Hz). Probiert (gesamt ca. 35 Einstellungen gegen 35 Sätze):
+Kette mit Randschwelle beidseitig/vorn (0,7–0,85), mit Vorlage, mit flexibler Länge (±5–15 %); Phase (Anteil 0,35–0,7 × Breite 0,3/0,5);
+Motiv (Matrix-Profil, Schwelle 0,6–0,9); Gipfel mit Hysterese (0,4–1,2).
+
+| Zähler | exakt | ±1 | zu viel | zu wenig |
+|---|---|---|---|---|
+| kette (Swift takt2) | 28/35 | 35 | 2 | 5 |
+| phase (Anteil 0,6, Breite 0,3) | 26/35 | 31 | 5 | 4 |
+| motiv (0,8) | 20/35 | 32 | 9 | 6 |
+| takt1 (alt) | 23/35 | 32 | 6 | 6 |
+
+Keine Ketten-Variante schlägt die einfache Kette. Paar „Kette & Phase einig → zeigen, sonst nachfragen“: 21 richtig gezeigt, 1 still falsch, 13 Nachfragen; bei Uneinigkeit liegt die Wahrheit in 12 von 13 Fällen bei einer der beiden Zahlen.
+
+**Festgelegt für die Blindprüfung** (`data/sensoraufnahmen-blind`, 12 Sätze mit Wahrheit vom 16.10. 14:20–14:25): Kandidaten `kette`, `phase(0,6/0,3)`, `motiv(0,8)`, `takt1`, und das Paar Kette & Phase. Nichts wird danach nachgestellt.
+
+**Ergebnis Blindprüfung** (einmal gelaufen, 11 Sätze; 1421-03 mit Wahrheit 1 verworfen, alle Zähler sagten 8 – vermutlich Eingabefehler):
+
+| Zähler | exakt (ohne 1421-03) | ±1 |
+|---|---|---|
+| kette | 10/11 | 11/11 |
+| takt1 (alt) | 8/11 | 10/11 |
+| phase | 7/11 | 10/11 |
+| motiv | 7/11 | 9/11 |
+
+Einziger Ketten-Fehler: 1425-02 Schulterdrücken 9 statt 10, die Phase sagt ebenfalls 9. Das Paar Kette & Phase fängt ihn also nicht und fragt bei 3 von 11 Sätzen nach, obwohl die Kette dort jedes Mal recht hatte. Folgerung: Kette allein live, Phase als Zweitzähler bringt auf diesen Daten nichts.
+
+**Zweite Blindrunde** (14:32–14:34, 5 Sätze: 3 × Schulterdrücken, 3 × Goblet Squat, eine Übung ohne jede Abstimmung; 1433-01 mit Wahrheit 1 verworfen): Kette 5/5 exakt, Phase 2/5, alt 2/5. Die App zählte live dieselben Zahlen wie der Simulator.
+Über beide Runden: Kette 15/16 exakt, 16/16 auf ±1; alt 10/16. Die Sätze liegen jetzt in `data/sensoraufnahmen` und sind damit keine Prüfmenge mehr.
+Offen: Zwei Korrekturen in der App ergaben Wahrheit 1 (1421-03, 1433-01), Ursache unklar (Bedienfehler oder Korrektur-Dialog).
