@@ -46,6 +46,10 @@ final class BluetoothSensorQuelle: NSObject, SensorQuelle {
     /// Verbinden ist leer, und eine Minute "Akku –" fiel im Test auf.
     @ObservationIgnored private var akkuFrisch = false
     @ObservationIgnored private var gewollt = false
+    /// Ein Sensor, der nur herumliegt, wird schlafen gelegt, damit der Akku
+    /// nicht leerlaeuft, wenn das Mitglied das Ausschalten vergisst.
+    @ObservationIgnored private var ruhewaechter = Ruhewaechter()
+    @ObservationIgnored private var schlafen: Task<Void, Never>?
 
     init(einstellungen: UserDefaults = .standard) {
         self.einstellungen = einstellungen
@@ -92,6 +96,20 @@ final class BluetoothSensorQuelle: NSObject, SensorQuelle {
     }
 
     func akkuLesen() { senden(.akkuLesen) }
+
+    /// Sleep-Befehl, danach trennen: ein schlafender Sensor sendet nichts
+    /// mehr, und `gewollt` bliebe sonst bei einer toten Verbindung stehen.
+    /// Der Sensor sagt nichts zurueck; die kurze Frist laesst den Befehl raus.
+    private func einschlafen() {
+        guard schlafen == nil else { return }
+        senden(.schlafen)
+        schlafen = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(300))
+            guard let self else { return }
+            self.schlafen = nil
+            self.trennen()
+        }
+    }
 
     // MARK: - Ablauf
 
@@ -240,6 +258,7 @@ extension BluetoothSensorQuelle: @preconcurrency CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         verworfenFrueher += parser.verworfeneBytes
         parser = WitMotionParser()
+        ruhewaechter.zuruecksetzen()
         peripheral.discoverServices([Self.dienst])
     }
 
@@ -286,8 +305,10 @@ extension BluetoothSensorQuelle: @preconcurrency CBPeripheralDelegate {
         for paket in parser.lesen(wert) {
             switch paket {
             case .messwert(let beschleunigung, let drehrate, let winkel):
-                verteiler.senden(.messwert(SensorMesswert(
-                    t: t, beschleunigung: beschleunigung, drehrate: drehrate, winkel: winkel)))
+                let messwert = SensorMesswert(
+                    t: t, beschleunigung: beschleunigung, drehrate: drehrate, winkel: winkel)
+                verteiler.senden(.messwert(messwert))
+                if gewollt, ruhewaechter.pruefen(messwert) { einschlafen() }
             case .register(let adresse, let werte):
                 guard adresse == Akkustand.register, let roh = werte.first else { continue }
                 verteiler.senden(.akku(hundertstelVolt: Int(roh)))
