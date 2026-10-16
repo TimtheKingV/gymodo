@@ -9,15 +9,28 @@ struct GeraetErkanntView: View {
     let modell: GeraetModel
     let beiAuswahl: (String) -> Void
 
+    @AppStorage(Einstellungen.uebungsansichtKey) private var ansichtRoh = Uebungsansicht.muskel.rawValue
+
+    private var ansicht: Binding<Uebungsansicht> {
+        Binding(get: { Uebungsansicht(rawValue: ansichtRoh) ?? .muskel },
+                set: { ansichtRoh = $0.rawValue })
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopfzeile
                 geraetefoto
                 geraetename
-                Text("Was machst du heute?")
-                    .font(DesignSystem.Typography.uebungsname)
-                    .foregroundStyle(DesignSystem.Color.textMuted)
+                HStack {
+                    Text("Was machst du heute?")
+                        .font(DesignSystem.Typography.uebungsname)
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                    Spacer()
+                    if UebungsGruppierung.bietetSchalterAn(uebungsanzahl: sortierteUebungen.count) {
+                        UebungsAnsichtSchalter(ansicht: ansicht)
+                    }
+                }
                 uebungsliste
                 hinweis
             }
@@ -75,15 +88,13 @@ struct GeraetErkanntView: View {
     }
 
     private var uebungsliste: some View {
-        VStack(spacing: DesignSystem.Spacing.s8) {
-            ForEach(sortierteUebungen) { uebung in
-                Button { beiAuswahl(uebung.id) } label: {
-                    zeile(uebung)
-                }
-                .buttonStyle(PressButtonStyle())
-                .accessibilityLabel("\(uebung.name), \(untertitel(uebung))")
-                .accessibilityHint("Öffnet das Gerät")
+        UebungsAbschnitte(uebungen: sortierteUebungen, ansicht: ansicht.wrappedValue) { uebung in
+            Button { beiAuswahl(uebung.id) } label: {
+                zeile(uebung)
             }
+            .buttonStyle(PressButtonStyle())
+            .accessibilityLabel("\(uebung.name), \(untertitel(uebung))")
+            .accessibilityHint("Öffnet das Gerät")
         }
     }
 

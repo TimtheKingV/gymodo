@@ -35,3 +35,19 @@ struct EinstellungenTests {
         #expect(Einstellungen.satzZielStufen.contains(Einstellungen.satzZielVorgabe))
     }
 }
+
+struct UebungsansichtEinstellungTests {
+    @Test func vorgabeIstMuskelUndDerSchluesselBleibt() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        #expect(Einstellungen.uebungsansichtKey == "uebungsansicht")
+        #expect(Einstellungen.uebungsansicht(defaults) == .muskel)
+    }
+
+    @Test func gespeicherteWahlGiltUnbekanntesFaelltZurueck() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        defaults.set("zuletzt", forKey: Einstellungen.uebungsansichtKey)
+        #expect(Einstellungen.uebungsansicht(defaults) == .zuletzt)
+        defaults.set("quatsch", forKey: Einstellungen.uebungsansichtKey)
+        #expect(Einstellungen.uebungsansicht(defaults) == .muskel)
+    }
+}

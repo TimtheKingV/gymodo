@@ -14,6 +14,8 @@ struct GeraetUebung: Identifiable, Equatable {
     let targetMin: Int
     let targetMax: Int
     let videoURL: URL?
+    /// Beanspruchte Muskeln -- Grundlage der Ansicht "Muskel" in der Liste.
+    var muscles: [GeraetMuskel] = []
 }
 
 /// Ein eigener Einstellwert, fertig zum Anzeigen.
@@ -296,13 +298,14 @@ final class GeraetModel {
             return kontext.exercises.map {
                 GeraetUebung(id: $0.id, name: $0.name, volumeKind: $0.volumeKind,
                              targetMin: $0.targetMin, targetMax: $0.targetMax,
-                             videoURL: $0.instructionVideoUrl.flatMap(URL.init(string:)))
+                             videoURL: $0.instructionVideoUrl.flatMap(URL.init(string:)),
+                             muscles: $0.muscles)
             }
         }
         return station.exercises.map {
             GeraetUebung(id: $0.id, name: $0.name, volumeKind: $0.volumeKind,
                          targetMin: $0.targetMin, targetMax: $0.targetMax,
-                         videoURL: nil)
+                         videoURL: nil, muscles: $0.muscles)
         }
     }
 

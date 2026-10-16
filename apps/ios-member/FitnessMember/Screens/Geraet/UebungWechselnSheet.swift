@@ -9,20 +9,34 @@ struct UebungWechselnSheet: View {
     let beiWechsel: (String) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(Einstellungen.uebungsansichtKey) private var ansichtRoh = Uebungsansicht.muskel.rawValue
+
+    private var ansicht: Binding<Uebungsansicht> {
+        Binding(get: { Uebungsansicht(rawValue: ansichtRoh) ?? .muskel },
+                set: { ansichtRoh = $0.rawValue })
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
-                    // Am Typ ist das Label der Typname -- er stuende sonst doppelt da.
-                    Text([modell.station.equipmentModel.name,
-                          modell.station.machineId == nil ? nil : modell.station.label]
-                        .compactMap { $0 }.joined(separator: " · "))
-                        .font(.system(size: 13))
-                        .foregroundStyle(DesignSystem.Color.textMuted)
+                    HStack {
+                        // Am Typ ist das Label der Typname -- er stuende sonst doppelt da.
+                        Text([modell.station.equipmentModel.name,
+                              modell.station.machineId == nil ? nil : modell.station.label]
+                            .compactMap { $0 }.joined(separator: " · "))
+                            .font(.system(size: 13))
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                        Spacer()
+                        if UebungsGruppierung.bietetSchalterAn(uebungsanzahl: modell.uebungen.count) {
+                            UebungsAnsichtSchalter(ansicht: ansicht)
+                        }
+                    }
 
-                    // Dieses Training, dann Haeufigkeit (Testnotiz 14.10., 18:25).
-                    ForEach(modell.sortierteUebungen) { uebung in
+                    // Dieses Training, dann Haeufigkeit (Testnotiz 14.10., 18:25);
+                    // in der Ansicht "Muskel" gruppiert, innerhalb gleicher Muskeln
+                    // in derselben Reihenfolge.
+                    UebungsAbschnitte(uebungen: modell.sortierteUebungen, ansicht: ansicht.wrappedValue) { uebung in
                         Button {
                             beiWechsel(uebung.id)
                             dismiss()
