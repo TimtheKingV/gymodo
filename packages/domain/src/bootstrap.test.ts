@@ -142,7 +142,23 @@ describe("uebungAusZeile", () => {
   it("reicht die Beschreibung fuer die Einweisung offline durch", () => {
     expect(
       uebungAusZeile({ id: "e1", name: "Face Pull", description: "Ellbogen hoch.", volume_kind: "reps", target_min: 12, target_max: 15 }),
-    ).toEqual({ id: "e1", name: "Face Pull", description: "Ellbogen hoch.", volumeKind: "reps", targetMin: 12, targetMax: 15 });
+    ).toEqual({ id: "e1", name: "Face Pull", description: "Ellbogen hoch.", volumeKind: "reps", targetMin: 12, targetMax: 15, muscles: [] });
+  });
+
+  it("reicht die Muskeln unveraendert durch", () => {
+    const muscles = [
+      { key: "rear-delt", name: "Hintere Schulter", role: "primary" as const },
+      { key: "trapezius", name: "Trapezmuskel", role: "secondary" as const },
+    ];
+    expect(
+      uebungAusZeile({ id: "e1", name: "Face Pull", description: null, volume_kind: "reps", target_min: 12, target_max: 15, muscles }).muscles,
+    ).toEqual(muscles);
+  });
+
+  it("liefert [] statt null, wenn die Spalte fehlt oder null ist", () => {
+    const basis = { id: "e2", name: "X", description: null, volume_kind: "reps" as const, target_min: 8, target_max: 12 };
+    expect(uebungAusZeile(basis).muscles).toEqual([]);
+    expect(uebungAusZeile({ ...basis, muscles: null }).muscles).toEqual([]);
   });
 
   it("liefert null ohne gepflegte Beschreibung", () => {

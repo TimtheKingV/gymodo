@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireUserId } from "./auth.js";
+import { muskelnAusSpalte, type UebungsMuskel } from "./muskeln.js";
 import { cardioGeraeteLaden } from "./cardio-geraete.js";
 import {
   CARDIO_SELECT,
@@ -190,6 +191,8 @@ type Uebung = {
   volumeKind: VolumeKind;
   targetMin: number;
   targetMax: number;
+  /** Muskeln fuer das Muskelmodell der Einweisung; nie null, ohne Pflege []. */
+  muscles: UebungsMuskel[];
 };
 
 type UebungZeile = {
@@ -199,6 +202,7 @@ type UebungZeile = {
   volume_kind: VolumeKind;
   target_min: number;
   target_max: number;
+  muscles?: UebungsMuskel[] | null;
 };
 
 export function uebungAusZeile(z: UebungZeile): Uebung {
@@ -209,6 +213,7 @@ export function uebungAusZeile(z: UebungZeile): Uebung {
     volumeKind: z.volume_kind,
     targetMin: z.target_min,
     targetMax: z.target_max,
+    muscles: muskelnAusSpalte(z.muscles),
   };
 }
 
@@ -415,7 +420,7 @@ export async function getBootstrap(
   const { data: linkRows } = await client
     .from("equipment_model_exercises")
     .select(
-      "equipment_model_id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max)",
+      "equipment_model_id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max, muscles)",
     )
     .order("sort_order", { ascending: true });
 
