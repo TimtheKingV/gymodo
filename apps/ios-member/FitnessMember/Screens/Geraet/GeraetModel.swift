@@ -310,6 +310,16 @@ final class GeraetModel {
         return station.exercises.first { $0.id == uebungId }?.description
     }
 
+    /// Die Muskeln der Uebung: aus dem Kontext, sonst aus dem Bootstrap --
+    /// wie `beschreibung`. Offline gibt es keinen Kontext, die Karte bleibt
+    /// dank Bootstrap trotzdem.
+    var muskeln: [GeraetMuskel] {
+        if let liste = kontext?.exercises.first(where: { $0.id == uebungId })?.muscles, !liste.isEmpty {
+            return liste
+        }
+        return station.exercises.first { $0.id == uebungId }?.muscles ?? []
+    }
+
     /// Die Uebungsliste in der Reihenfolge, in der das Mitglied sie sucht
     /// (Testnotiz 14.10., 18:25): erst dieses Training, dann nach
     /// Haeufigkeit, dann der Rest. Fuer "Weitere Übung" und die

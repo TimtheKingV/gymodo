@@ -59,6 +59,8 @@ struct TagContextResponse: Decodable, Equatable {
         let targetMin: Int
         let targetMax: Int
         let instructionVideoUrl: String?
+        /// Beanspruchte Muskeln; leer, wenn das Feld fehlt (alter Server).
+        var muscles: [GeraetMuskel] = []
     }
 
     struct Calibration: Decodable, Equatable {
@@ -107,4 +109,23 @@ struct TagContextResponse: Decodable, Equatable {
     let calibration: Calibration?
     let history: [HistoryEntry]
     let suggestion: Suggestion
+}
+
+extension TagContextResponse.Exercise {
+    private enum CodingKeys: String, CodingKey {
+        case id, name, description, volumeKind, targetMin, targetMax, instructionVideoUrl, muscles
+    }
+
+    /// Wie bei `BootstrapResponse.Exercise`: fehlendes `muscles` wird `[]`.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        description = try c.decodeIfPresent(String.self, forKey: .description)
+        volumeKind = try c.decode(VolumeKind.self, forKey: .volumeKind)
+        targetMin = try c.decode(Int.self, forKey: .targetMin)
+        targetMax = try c.decode(Int.self, forKey: .targetMax)
+        instructionVideoUrl = try c.decodeIfPresent(String.self, forKey: .instructionVideoUrl)
+        muscles = try c.decodeIfPresent([GeraetMuskel].self, forKey: .muscles) ?? []
+    }
 }

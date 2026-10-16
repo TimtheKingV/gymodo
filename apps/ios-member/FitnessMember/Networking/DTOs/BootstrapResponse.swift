@@ -173,6 +173,10 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         let volumeKind: VolumeKind
         let targetMin: Int
         let targetMax: Int
+        /// Beanspruchte Muskeln fuer die Muskelkarte. Fehlt das Feld (alter
+        /// Server, gespeicherter Bootstrap), ist die Liste leer -- siehe
+        /// `init(from:)` unten.
+        var muscles: [GeraetMuskel] = []
     }
 
     struct Machine: Decodable, Equatable, Identifiable {
@@ -272,4 +276,24 @@ struct ProfilAntwort: Decodable, Equatable, Sendable {
     let heightCm: Int?
     let trainingGoal: String?
     let onboardingCompletedAt: String?
+}
+
+extension BootstrapResponse.Exercise {
+    private enum CodingKeys: String, CodingKey {
+        case id, name, description, volumeKind, targetMin, targetMax, muscles
+    }
+
+    /// Eigener Decoder, weil die synthetisierte Variante ein fehlendes
+    /// nicht-optionales `muscles` ablehnt, auch mit Default. In einer
+    /// Extension, damit die memberwise-Initialisierung erhalten bleibt.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        description = try c.decodeIfPresent(String.self, forKey: .description)
+        volumeKind = try c.decode(VolumeKind.self, forKey: .volumeKind)
+        targetMin = try c.decode(Int.self, forKey: .targetMin)
+        targetMax = try c.decode(Int.self, forKey: .targetMax)
+        muscles = try c.decodeIfPresent([GeraetMuskel].self, forKey: .muscles) ?? []
+    }
 }

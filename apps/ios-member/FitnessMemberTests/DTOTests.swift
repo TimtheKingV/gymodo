@@ -33,6 +33,24 @@ struct DTOTests {
         #expect(try JSONDecoder().decode(BootstrapResponse.Exercise.self, from: Data(ohne.utf8)).description == nil)
     }
 
+    @Test func uebungMitMuskelnUndOhne() throws {
+        let mit = #"{"id":"e1","name":"A","volumeKind":"reps","targetMin":8,"targetMax":12,"muscles":[{"key":"chest","name":"Brust","role":"primary"},{"key":"triceps","name":"Trizeps","role":"secondary"}]}"#
+        let ohne = #"{"id":"e1","name":"A","volumeKind":"reps","targetMin":8,"targetMax":12}"#
+        let erwartet = [GeraetMuskel(key: "chest", name: "Brust", role: .primary),
+                        GeraetMuskel(key: "triceps", name: "Trizeps", role: .secondary)]
+        #expect(try JSONDecoder().decode(BootstrapResponse.Exercise.self, from: Data(mit.utf8)).muscles == erwartet)
+        // Alter Server, gespeicherter Bootstrap: kein Feld heisst keine Muskeln.
+        #expect(try JSONDecoder().decode(BootstrapResponse.Exercise.self, from: Data(ohne.utf8)).muscles == [])
+    }
+
+    @Test func kontextUebungMitMuskelnUndOhne() throws {
+        let mit = #"{"id":"e1","name":"A","description":null,"volumeKind":"reps","targetMin":8,"targetMax":12,"instructionVideoUrl":null,"muscles":[{"key":"chest","name":"Brust","role":"primary"}]}"#
+        let ohne = #"{"id":"e1","name":"A","description":null,"volumeKind":"reps","targetMin":8,"targetMax":12,"instructionVideoUrl":null}"#
+        #expect(try JSONDecoder().decode(TagContextResponse.Exercise.self, from: Data(mit.utf8)).muscles
+                == [GeraetMuskel(key: "chest", name: "Brust", role: .primary)])
+        #expect(try JSONDecoder().decode(TagContextResponse.Exercise.self, from: Data(ohne.utf8)).muscles == [])
+    }
+
     @Test("dekodiert eine minimale BootstrapResponse")
     func decodesBootstrap() throws {
         let json = """

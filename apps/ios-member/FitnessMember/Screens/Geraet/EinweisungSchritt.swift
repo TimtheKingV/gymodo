@@ -11,6 +11,9 @@ import SwiftUI
 /// die als Artboard fehlt: ein Geraet ohne Video ist nutzbar (M1-Spec SS8.2).
 struct EinweisungSchritt: View {
     @Environment(UebungsVideoVorrat.self) private var vorrat
+    /// Nur fuer das Geschlecht aus dem gespeicherten Bootstrap -- kein
+    /// Netzaufruf, die Karte bleibt offline gleich.
+    @Environment(CatalogStore.self) private var katalog
     let modell: GeraetModel
     let titel: String
     /// "Einstellungen erfassen", ohne Einstellparameter "Weiter".
@@ -41,6 +44,10 @@ struct EinweisungSchritt: View {
 
                 medien
 
+                MuskelKarte(
+                    muskeln: modell.muskeln,
+                    geschlecht: katalog.bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:)))
+
                 if let beschreibung = modell.beschreibung {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
                         Text("Worauf du achten musst")
@@ -63,6 +70,14 @@ struct EinweisungSchritt: View {
         }
         .scrollBounceBehavior(.basedOnSize)
         .background(DesignSystem.Color.bg)
+        // Die 428-KB-Geometrie wird beim ersten Zugriff synchron dekodiert
+        // (~0,13 s Debug). Abseits des Main-Threads vorwaermen, damit das
+        // erste Zeichnen der Karte nicht ruckelt; `geometrie` ist eine
+        // nonisolated static let und damit thread-sicher initialisiert.
+        .task(priority: .utility) {
+            guard !modell.muskeln.isEmpty else { return }
+            await Task.detached(priority: .utility) { _ = MuskelModell.geometrie }.value
+        }
         // Unten buendig in der Daumenzone, wie auf "Training starten"
         // (Testnotiz 06.10., #15). Vorher standen beide Knoepfe direkt
         // unter dem Text, auf grossen iPhones mitten auf dem Screen.

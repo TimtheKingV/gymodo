@@ -51,6 +51,49 @@ struct GeraetModelTests {
         #expect(sut.beschreibung == "Knie nicht durchdruecken.")
     }
 
+    private static let brustMuskeln = #"[{"key":"chest","name":"Brust","role":"primary"},{"key":"triceps","name":"Trizeps","role":"secondary"}]"#
+
+    private func maschineMitMuskeln(_ muskeln: String) -> BootstrapResponse.Machine {
+        GeraetTestdaten.dekodiere("""
+        {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":null,
+         "status":"active","tokenHashes":[],"visitCount":0,
+         "equipmentModel":{"id":"em1","name":"Brustpresse","manufacturer":null,
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,
+           "settingDefinitions":[]},
+         "exercises":[{"id":"e1","name":"Brustpresse","volumeKind":"reps","targetMin":8,"targetMax":12,
+                       "muscles":\(muskeln)}]}
+        """)
+    }
+
+    /// Flugmodus: ohne Kontext kommen die Muskeln aus dem Bootstrap.
+    @Test func muskelnOhneKontextAusDemBootstrap() {
+        let sut = modell(maschine: maschineMitMuskeln(Self.brustMuskeln),
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        #expect(sut.kontext == nil)
+        #expect(sut.muskeln == [GeraetMuskel(key: "chest", name: "Brust", role: .primary),
+                                GeraetMuskel(key: "triceps", name: "Trizeps", role: .secondary)])
+    }
+
+    @Test func muskelnAusDemKontextGehenVor() {
+        let sut = modell(maschine: maschineMitMuskeln(Self.brustMuskeln),
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        sut.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 80.0, muskeln: #"[{"key":"quads","name":"Quadrizeps","role":"primary"}]"#))
+        #expect(sut.muskeln == [GeraetMuskel(key: "quads", name: "Quadrizeps", role: .primary)])
+    }
+
+    @Test func leereKontextMuskelnFallenAufDenBootstrapZurueck() {
+        let sut = modell(maschine: maschineMitMuskeln(Self.brustMuskeln),
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        sut.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 80.0))
+        #expect(sut.muskeln.map(\.key) == ["chest", "triceps"])
+    }
+
+    @Test func ohneMuskelnAmBootstrapIstDieListeLeer() {
+        let sut = modell(maschine: maschineMitMuskeln("[]"),
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        #expect(sut.muskeln.isEmpty)
+    }
+
     @Test func startetOhneHistorieAmGeraeteminimum() {
         // designsystem.md SS8: "Beim ersten Mal schlaegt gymodo kein Gewicht
         // vor. Das Rad startet am Geraetminimum."
@@ -1748,7 +1791,7 @@ enum GeraetTestdaten {
         """)
     }
 
-    static func kontext(vorschlag: Double, kalibrierungSitzWert: Int? = nil) -> TagContextResponse {
+    static func kontext(vorschlag: Double, kalibrierungSitzWert: Int? = nil, muskeln: String? = nil) -> TagContextResponse {
         let kalibrierung = kalibrierungSitzWert.map {
             #"{"settingValues":{"sitz":\#($0)},"schemaVersion":1,"source":"self","createdAt":"2026-09-01T10:00:00Z"}"#
         } ?? "null"
@@ -1759,7 +1802,7 @@ enum GeraetTestdaten {
          "settingDefinitions":[{"key":"sitz","label":"Sitzposition","kind":"number",
            "minValue":1,"maxValue":8,"stepValue":1,"unit":null,"allowedValues":null}],
          "exercises":[{"id":"e1","name":"Beidbeinig","description":null,
-           "volumeKind":"reps","targetMin":8,"targetMax":12,"instructionVideoUrl":null},
+           "volumeKind":"reps","targetMin":8,"targetMax":12,"instructionVideoUrl":null\(muskeln.map { #","muscles":\#($0)"# } ?? "")},
            {"id":"e2","name":"Einbeinig","description":null,
            "volumeKind":"reps","targetMin":6,"targetMax":10,"instructionVideoUrl":null}],
          "selectedExerciseId":"e1","calibration":\(kalibrierung),
