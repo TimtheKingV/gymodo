@@ -70,14 +70,6 @@ struct EinweisungSchritt: View {
         }
         .scrollBounceBehavior(.basedOnSize)
         .background(DesignSystem.Color.bg)
-        // Die 428-KB-Geometrie wird beim ersten Zugriff synchron dekodiert
-        // (~0,13 s Debug). Abseits des Main-Threads vorwaermen, damit das
-        // erste Zeichnen der Karte nicht ruckelt; `geometrie` ist eine
-        // nonisolated static let und damit thread-sicher initialisiert.
-        .task(priority: .utility) {
-            guard !modell.muskeln.isEmpty else { return }
-            await Task.detached(priority: .utility) { _ = MuskelModell.geometrie }.value
-        }
         // Unten buendig in der Daumenzone, wie auf "Training starten"
         // (Testnotiz 06.10., #15). Vorher standen beide Knoepfe direkt
         // unter dem Text, auf grossen iPhones mitten auf dem Screen.

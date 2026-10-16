@@ -55,6 +55,9 @@ struct FitnessMemberApp: App {
         _kurseStore = State(initialValue: KurseStore(loader: client, fileStore: KurseFileStore()))
         _verlaufStore = State(initialValue: VerlaufStore(loader: client, fileStore: VerlaufFileStore()))
         apiClient = client
+        // Vor der ersten View: so ist die Muskelgeometrie fertig dekodiert,
+        // bevor eine Einweisung sie braucht.
+        MuskelModell.vorwaermen()
     }
 
     var body: some Scene {
