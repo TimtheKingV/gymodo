@@ -1297,6 +1297,35 @@ struct GeraetModelTests {
         #expect(sut.zaehlerZustand == .aus)
     }
 
+    /// Testnotiz 16.10., #4 (Aufnahmen 1421-03, 1433-01): live stand das
+    /// Rad auf 1, die Takt-Auswertung am Satzende zaehlte 8. Gespeichert
+    /// wurden 1 und "korrigiert", obwohl niemand gedreht hatte. Ungedreht
+    /// gilt die Endzahl des Zaehlers.
+    @Test func ungedrehtGiltDieEndzahlDesZaehlers() async {
+        let double = ZaehlerDouble()
+        double.ergebnisWert = ZaehlerDouble.ergebnis(8)
+        var geschrieben: [PendingSetWrite] = []
+        let sut = mitZaehler(double, enqueue: { geschrieben.append($0) })
+        double.melde?(.stand(1))
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(geschrieben.first?.body.volume == 8)
+        #expect(geschrieben.first?.body.volumeSource == .gemessen)
+        #expect(geschrieben.first?.body.volumeCounted == 8)
+    }
+
+    /// Von Hand gedreht bleibt die Hand, auch wenn die Endzahl anders ist.
+    @Test func gedrehtBleibtDerHandwert() async {
+        let double = ZaehlerDouble()
+        double.ergebnisWert = ZaehlerDouble.ergebnis(8)
+        var geschrieben: [PendingSetWrite] = []
+        let sut = mitZaehler(double, enqueue: { geschrieben.append($0) })
+        double.melde?(.stand(1))
+        sut.umfangGedreht(9)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(geschrieben.first?.body.volume == 9)
+        #expect(geschrieben.first?.body.volumeSource == .korrigiert)
+    }
+
     @Test func zurueckGedrehtIstGemessen() async {
         let double = ZaehlerDouble()
         double.ergebnisWert = ZaehlerDouble.ergebnis(5)

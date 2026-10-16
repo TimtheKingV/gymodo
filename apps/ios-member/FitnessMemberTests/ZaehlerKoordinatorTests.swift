@@ -40,6 +40,22 @@ struct ZaehlerKoordinatorTests {
         }
     }
 
+    /// Kurzhantel-Satz: Aufheben, Wiederholungen der Beschleunigung im Takt
+    /// 1,9 s (Hantel dreht sich nicht, wie beim Druecken), 3 s Ablegen.
+    static func kurzhantelSatz(wiederholungen n: Int, ab: TimeInterval) -> [SensorMesswert] {
+        let dt = 1.0 / 50
+        let takt = 1.9, vorlauf = 2.0
+        let gesamt = vorlauf + Double(n) * takt + 3
+        return (0..<Int(gesamt * 50)).map { i in
+            let t = Double(i) * dt
+            var y = 1.0
+            if t < vorlauf { y += 0.8 * sin(t * .pi / vorlauf) }
+            else if t < vorlauf + Double(n) * takt { y += 0.3 * sin((t - vorlauf) * 2 * .pi / takt) }
+            return SensorMesswert(t: ab + t, beschleunigung: Vektor3(x: 0, y: y, z: 0.05),
+                                  drehrate: Vektor3(x: 0, y: 0, z: 0), winkel: Vektor3(x: 0, y: 0, z: 0))
+        }
+    }
+
     @Test func bereitDannStandJeWiederholung() throws {
         let (sut, _, uhr, m) = aufbau()
         beginnen(sut, m)
@@ -62,22 +78,44 @@ struct ZaehlerKoordinatorTests {
         let (sut, _, uhr, m) = aufbau()
         beginnen(sut, m)
         sut.befestigungWaehlen(.kurzhantel)
-        let dt = 1.0 / 50
-        let takt = 1.9, vorlauf = 2.0, n = 8
-        let gesamt = vorlauf + Double(n) * takt + 3
-        for i in 0..<Int(gesamt * 50) {
-            let t = Double(i) * dt
-            var y = 1.0
-            if t < vorlauf { y += 0.8 * sin(t * .pi / vorlauf) }
-            else if t < vorlauf + Double(n) * takt { y += 0.3 * sin((t - vorlauf) * 2 * .pi / takt) }
-            sut.empfangen(.messwert(SensorMesswert(
-                t: uhr.t + t, beschleunigung: Vektor3(x: 0, y: y, z: 0.05),
-                drehrate: Vektor3(x: 0, y: 0, z: 0), winkel: Vektor3(x: 0, y: 0, z: 0))))
-        }
+        let n = 8
+        for w in Self.kurzhantelSatz(wiederholungen: n, ab: uhr.t) { sut.empfangen(.messwert(w)) }
         let ergebnis = try #require(sut.ergebnis())
         #expect(abs(ergebnis.gezaehlt - n) <= 1)
         #expect(ergebnis.repEvents.algo == Satztakt.algo)
         #expect(ergebnis.repEvents.wiederholungen.count == ergebnis.gezaehlt)
+    }
+
+    /// Testnotiz 16.10., #4: das Rad folgt an der Kurzhantel der
+    /// Takt-Auswertung, nicht der Live-Zahl -- die letzte Meldung ist die
+    /// Zahl, die gespeichert wird.
+    @Test func kurzhantelMeldetLiveDieTaktzahl() async throws {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.kurzhantel)
+        for w in Self.kurzhantelSatz(wiederholungen: 8, ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        // Der Takt rechnet abseits des Main Actors; warten, bis er die
+        // Endzahl meldet (Debug-Build: rund eine Sekunde je Auswertung).
+        func letzterStand() -> Int? { m.liste.compactMap { if case .stand(let n) = $0 { n } else { nil } }.last }
+        for _ in 0..<300 where letzterStand() != 8 { try await Task.sleep(for: .milliseconds(50)) }
+        let gemeldet = letzterStand()
+        let ergebnis = try #require(sut.ergebnis())
+        #expect(gemeldet == ergebnis.gezaehlt)
+    }
+
+    /// Ein Ergebnis, das nach dem Satzende eintrifft, meldet nichts mehr.
+    @Test func einSpaeterTaktNachDemSatzSchweigt() async throws {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.kurzhantel)
+        for w in Self.kurzhantelSatz(wiederholungen: 8, ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        // Die erste Auswertung (nach 1 s Messzeit, zu kurz fuer den Takt)
+        // endet sofort und stoesst die mit dem ganzen Satz an -- die laeuft
+        // rund eine Sekunde und kommt erst nach dem Verwerfen zurueck.
+        try await Task.sleep(for: .milliseconds(100))
+        sut.satzVerworfen()
+        try await Task.sleep(for: .seconds(3))
+        #expect(sut.meldung == nil)
     }
 
     @Test func messwerteVorDemSatzbeginnZaehlenNicht() {
