@@ -12,9 +12,10 @@ enum GeraeteGruppierung {
         let eintraege: [GeraeteAuswahl.Eintrag]
     }
 
-    /// Die Hauptgruppen der Uebungen; ohne darstellbaren Muskel `weitere`.
+    /// Die Hauptgruppen aller Hauptmuskeln aller Uebungen; ohne darstellbaren Muskel `weitere`.
     static func gruppen(von station: Station) -> Set<MuskelHauptgruppe> {
-        let gruppen = Set(station.exercises.map { UebungsGruppierung.hauptgruppe(muskeln: $0.muscles) })
+        let gruppen = station.exercises
+            .reduce(into: Set<MuskelHauptgruppe>()) { $0.formUnion(UebungsGruppierung.hauptgruppen(muskeln: $1.muscles)) }
             .subtracting([.weitere])
         return gruppen.isEmpty ? [.weitere] : gruppen
     }

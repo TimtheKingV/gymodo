@@ -90,6 +90,14 @@ enum UebungsGruppierung {
         platz(muskeln: muskeln).gruppe
     }
 
+    /// Alle Gruppen, in denen die Hauptmuskeln der Uebung liegen (Geraete:
+    /// ein Ruderergometer beansprucht Beine UND Ruecken). Ohne Hauptmuskel
+    /// zaehlt der erste darstellbare Muskel, sonst `weitere`.
+    static func hauptgruppen(muskeln: [GeraetMuskel]) -> Set<MuskelHauptgruppe> {
+        let gruppen = Set(muskeln.filter { $0.role == .primary }.compactMap { einordnen($0.key)?.gruppe })
+        return gruppen.isEmpty ? [hauptgruppe(muskeln: muskeln)] : gruppen
+    }
+
     private static func platz(muskeln: [GeraetMuskel]) -> (gruppe: MuskelHauptgruppe, muskel: Int) {
         let hauptmuskeln = muskeln.filter { $0.role == .primary }
         for muskel in hauptmuskeln + muskeln {

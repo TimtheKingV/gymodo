@@ -5,11 +5,15 @@ import Testing
 struct GeraeteGruppierungTests {
     /// Eine Station aus JSON -- `BootstrapResponse.Machine` hat keinen Memberwise-Init.
     /// `uebungen`: (id, [Hauptmuskel]).
+    /// Je Uebung (id, Hauptmuskel); mehrere Hauptmuskeln einer Uebung mit Komma in einem String.
     private func eintrag(_ id: String, uebungen: [(String, String)], zuletzt: Date? = nil) throws -> GeraeteAuswahl.Eintrag {
         let uebungenJSON = uebungen.map { u in
-            """
+            let muskeln = u.1.split(separator: ",").map {
+                "{ \"key\": \"\($0)\", \"name\": \"\($0)\", \"role\": \"primary\" }"
+            }.joined(separator: ", ")
+            return """
             { "id": "\(u.0)", "name": "\(u.0)", "volumeKind": "reps", "targetMin": 8, "targetMax": 12,
-              "muscles": [{ "key": "\(u.1)", "name": "\(u.1)", "role": "primary" }] }
+              "muscles": [\(muskeln)] }
             """
         }.joined(separator: ", ")
         let json = """
@@ -36,6 +40,23 @@ struct GeraeteGruppierungTests {
         let kabel = try eintrag("kabel", uebungen: [("a", "pectorals"), ("b", "lats"), ("c", "abs")])
         #expect(GeraeteGruppierung.heimat(von: kabel.station) == .vielseitig)
         #expect(GeraeteGruppierung.gruppen(von: kabel.station) == [.brust, .ruecken, .rumpf])
+    }
+
+    @Test func eineUebungMitHauptmuskelnInMehrerenGruppenMachtDasGeraetVielseitig() throws {
+        // Skiergometer: Latissimus, Trizeps und Bauch sind Hauptmuskeln einer einzigen Uebung.
+        let ski = try eintrag("ski", uebungen: [("skierg", "lats,triceps,abs")])
+        #expect(GeraeteGruppierung.gruppen(von: ski.station) == [.ruecken, .arme, .rumpf])
+        #expect(GeraeteGruppierung.heimat(von: ski.station) == .vielseitig)
+        // Ruderergometer: Beine und Ruecken.
+        let rudern = try eintrag("rower", uebungen: [("rower", "quads,glutes,lats,upper_back")])
+        #expect(GeraeteGruppierung.gruppen(von: rudern.station) == [.beine, .ruecken])
+        #expect(GeraeteGruppierung.gruppieren([ski, rudern], nur: .ruecken).flatMap(\.eintraege).map(\.name) == ["ski", "rower"])
+        #expect(GeraeteGruppierung.gruppieren([ski, rudern], nur: .beine).flatMap(\.eintraege).map(\.name) == ["rower"])
+    }
+
+    @Test func mehrereHauptmuskelnDerselbenGruppeBleibenEineGruppe() throws {
+        let laufband = try eintrag("laufband", uebungen: [("lauf", "quads,glutes,calves")])
+        #expect(GeraeteGruppierung.heimat(von: laufband.station) == .beine)
     }
 
     @Test func zweiUebungenDerselbenGruppeBleibenInDerGruppe() throws {
