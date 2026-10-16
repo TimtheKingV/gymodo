@@ -41,7 +41,7 @@ struct SensorProtokollTests {
 
     @Test func spannungMitPunktUndZweiStellen() {
         #expect(SensorProtokoll.akkuText(hundertstelVolt: 382) == "akku 3.82 V (60 %)")
-        #expect(SensorProtokoll.akkuText(hundertstelVolt: 0) == "akku 0.00 V (0 %)")
+        #expect(SensorProtokoll.akkuText(hundertstelVolt: 0) == "akku 0.00 V (kein Messwert)")
     }
 }
 #endif

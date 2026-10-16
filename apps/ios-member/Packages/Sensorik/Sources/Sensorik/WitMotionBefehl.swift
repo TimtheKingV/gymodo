@@ -38,7 +38,12 @@ public enum Akkustand {
     /// Der Sensor meldet die Zellspannung in Hundertstel Volt. Die Stufen
     /// stammen aus der Herstellertabelle; eine LiPo-Kurve ist nicht linear,
     /// eine Geradengleichung wuerde bei 3,7 V "50 %" behaupten.
-    public static func prozent(hundertstelVolt wert: Int) -> Int {
+    ///
+    /// Unter 3,00 V antwortet der Sensor nicht mehr; was darunter ankommt,
+    /// ist kein Messwert. Die erste Antwort nach jedem Verbinden ist 0,00 V
+    /// (Protokoll 14. bis 16.10., 12 von 12), die naechste stimmt.
+    public static func prozent(hundertstelVolt wert: Int) -> Int? {
+        guard wert >= 300 else { return nil }
         let stufen: [(ab: Int, prozent: Int)] = [
             (397, 100), (393, 90), (387, 75), (382, 60), (379, 50), (377, 40),
             (373, 30), (370, 20), (368, 15), (350, 10), (340, 5),

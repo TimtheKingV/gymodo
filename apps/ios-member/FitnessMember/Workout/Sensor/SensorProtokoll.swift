@@ -60,8 +60,9 @@ final class SensorProtokoll {
     /// Die Spannung bleibt hier intern: Prozent sieht das Mitglied, die
     /// Rohwerte braucht nur, wer einen falschen Prozentwert erklaeren muss.
     static func akkuText(hundertstelVolt wert: Int) -> String {
-        String(format: "akku %.2f V (%d %%)", locale: Locale(identifier: "en_US_POSIX"),
-               Double(wert) / 100, Akkustand.prozent(hundertstelVolt: wert))
+        let prozent = Akkustand.prozent(hundertstelVolt: wert).map { "\($0) %" } ?? "kein Messwert"
+        return String(format: "akku %.2f V (%@)", locale: Locale(identifier: "en_US_POSIX"),
+                      Double(wert) / 100, prozent)
     }
 }
 #endif
