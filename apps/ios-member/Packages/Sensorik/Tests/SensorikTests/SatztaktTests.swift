@@ -54,7 +54,8 @@ struct SatztaktTests {
 
     @Test(arguments: [
         ("2026-10-16-0938-02", 10), ("2026-10-16-0940-02", 10), ("2026-10-16-0942-01", 9),
-        ("2026-10-16-0944-01", 8),
+        ("2026-10-16-0944-01", 8), ("2026-10-16-1144-01", 7), ("2026-10-16-1145-02", 8),
+        ("2026-10-16-1146-03", 7), ("2026-10-16-1148-01", 6),
     ])
     func echteSaetzeAufEinsGenau(name: String, wahr: Int) throws {
         let (datei, eintraege) = try SensorAufnahmeLeser.lesen(ordner: Pfade.aufnahmen.appendingPathComponent(name))

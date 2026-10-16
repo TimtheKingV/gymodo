@@ -577,6 +577,114 @@
       "befestigungsart": "kurzhantel",
       "repsWahr": 10,
       "fuerZaehler": true
+    },
+    "2026-10-16-1144-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend, Kurzhantel, Satz 1",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 7,
+      "fuerZaehler": true
+    },
+    "2026-10-16-1145-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend, Kurzhantel, Satz 2",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 6,
+      "fuerZaehler": true
+    },
+    "2026-10-16-1145-02": {
+      "was": "Kurzhantel-Bizepscurl – stehend, Kurzhantel, Satz 3",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 8,
+      "fuerZaehler": true
+    },
+    "2026-10-16-1146-01": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel, Kurzhantel, Satz None",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-16-1146-02": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel, Kurzhantel, Satz 1",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 7,
+      "fuerZaehler": true
+    },
+    "2026-10-16-1146-03": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel, Kurzhantel, Satz 2",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 7,
+      "fuerZaehler": true
+    },
+    "2026-10-16-1147-01": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel, Kurzhantel, Satz 3",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 7,
+      "fuerZaehler": true
+    },
+    "2026-10-16-1147-02": {
+      "was": "Kurzhantel-Seitheben, Kurzhantel, Satz None",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-16-1147-03": {
+      "was": "Kurzhantel-Seitheben, Kurzhantel, Satz 1",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 6,
+      "fuerZaehler": true
+    },
+    "2026-10-16-1148-01": {
+      "was": "Kurzhantel-Seitheben, Kurzhantel, Satz 2",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 6,
+      "fuerZaehler": true
+    },
+    "2026-10-16-1148-02": {
+      "was": "Kurzhantel-Seitheben, Kurzhantel, Satz 3",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 5,
+      "fuerZaehler": true
+    },
+    "2026-10-16-1149-01": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend, Kurzhantel, Satz None",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-16-1149-02": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend, Kurzhantel, Satz 1",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 5,
+      "fuerZaehler": true
+    },
+    "2026-10-16-1149-03": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend, Kurzhantel, Satz 2",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 5,
+      "fuerZaehler": true
+    },
+    "2026-10-16-1149-04": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend, Kurzhantel, Satz 3",
+      "befestigung": "an der Kurzhantel",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 6,
+      "fuerZaehler": true
     }
   }
 }

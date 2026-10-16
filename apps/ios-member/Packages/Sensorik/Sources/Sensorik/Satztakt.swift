@@ -42,8 +42,9 @@ public enum Satztakt {
         }
     }
 
-    // Startwerte, an den Aufnahmen vom 16.10. abgestimmt (15 Saetze,
-    // Kurzhantel): 10 exakt, 13 auf +-1.
+    // Startwerte, an den Aufnahmen vom 16.10. abgestimmt (27 Saetze,
+    // Kurzhantel): 16 exakt, 24 auf +-1. Mit 0,3 statt 0,5 lagen kurze
+    // Saetze (5 bis 7) regelmaessig um eine halbe Wiederholung zu niedrig.
     private static let tiefpassHz = 3.0
     /// Gleitender Mittelwert, der die langsame Lageaenderung (Aufheben,
     /// Ablegen, Schraeglage) aus dem Signal nimmt.
@@ -56,7 +57,7 @@ public enum Satztakt {
     /// Die Hanning-Fensterung der Huellkurve macht die gemessene Breite
     /// etwa ein Drittel Zyklus kleiner als die Bewegung.
     private static let randAnteil = 0.6
-    private static let rundungsZuschlag = 0.3
+    private static let rundungsZuschlag = 0.5
     private static let mindestDauer = 5.0
 
     public static func auswerten(_ messwerte: [SensorMesswert], rateHz: Double = 50) -> Ergebnis? {
