@@ -200,6 +200,7 @@
 		9F9C2DD14DE85363DE57FD09 /* ZeitachseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DFA0BACC339F4B9F8299206 /* ZeitachseTests.swift */; };
 		9FD2A7E63039D26A96C9948F /* HomeZiele.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14DFB2ABD1F2AB50BB6C680 /* HomeZiele.swift */; };
 		A016CCA5F901B3110C3F0361 /* SensorZeileTextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99F9C4FE5EBE0649AEA36AAF /* SensorZeileTextTests.swift */; };
+		A0C914A14EC835E76790F385 /* HaeufigkeitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14BF1CD97585C27C23C7C12 /* HaeufigkeitTests.swift */; };
 		A20E9991662F803A7FE958CD /* Messwert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6766A553FCAE9B7C6CF68440 /* Messwert.swift */; };
 		A2AE0D99C71F00965EE68BF3 /* HomeSerie.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F772BB738D5F003DF895A42 /* HomeSerie.swift */; };
 		A2F067EE32F1B07AA7C5F02F /* DangerOutlineButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8E52BC8202E83D789FC2E5 /* DangerOutlineButton.swift */; };
@@ -270,6 +271,7 @@
 		CFADE9B7B1518A3F6DF0E7E7 /* ExerciseProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E2DF311877D3BA39FFA5D5 /* ExerciseProgress.swift */; };
 		D0068DB5B484876E3D0083E7 /* EmailValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D79138C4B32315198E734356 /* EmailValidator.swift */; };
 		D01D94E7A2F60053538B9452 /* ScanEntscheidung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 461B344D14EFC379471C6BC1 /* ScanEntscheidung.swift */; };
+		D11C9D78F9554DB15CE15516 /* Haeufigkeit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C393A29144DBA03B05E97E18 /* Haeufigkeit.swift */; };
 		D132DD312AC9766E7A398090 /* ZeitpunktParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFDF781E9D2DB3F233B672FA /* ZeitpunktParserTests.swift */; };
 		D3188785E04F588B5CAB9B24 /* TestnotizMarkdownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8986332EF5EB9BFBAD49056F /* TestnotizMarkdownTests.swift */; };
 		D4DC4C517F6EFFA9972C6864 /* ProfilZeilen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BE170B46B4E45F1FF5E26C /* ProfilZeilen.swift */; };
@@ -555,6 +557,7 @@
 		9CEB043A2F6633F4B756357E /* PressButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressButtonStyle.swift; sourceTree = "<group>"; };
 		9DBCB339999903CCAC2AE5DB /* NotizBlatt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotizBlatt.swift; sourceTree = "<group>"; };
 		A0A1ECDFB1937B39B38E3EA2 /* TestnotizKnopf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizKnopf.swift; sourceTree = "<group>"; };
+		A14BF1CD97585C27C23C7C12 /* HaeufigkeitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HaeufigkeitTests.swift; sourceTree = "<group>"; };
 		A2D588E7E4F6611509CF03B1 /* KursZustandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursZustandTests.swift; sourceTree = "<group>"; };
 		A345B4FFB60F21B4B9322675 /* UebungsstartSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UebungsstartSheet.swift; sourceTree = "<group>"; };
 		A34961E54EBC121CA386A136 /* Toast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Toast.swift; sourceTree = "<group>"; };
@@ -590,6 +593,7 @@
 		BA2A6BDB5767BEB528FEE947 /* HomeRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeRootView.swift; sourceTree = "<group>"; };
 		BC66ACF7FB394ECB319166C3 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		BDD0B70AC6B9D5C40460B59C /* HomeRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeRoute.swift; sourceTree = "<group>"; };
+		C393A29144DBA03B05E97E18 /* Haeufigkeit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haeufigkeit.swift; sourceTree = "<group>"; };
 		C4DDD9F8FCC3E699F6E4F79C /* AuthBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthBackend.swift; sourceTree = "<group>"; };
 		C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryButton.swift; sourceTree = "<group>"; };
 		C696DD1314C884FF6A54B333 /* StudiosListeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudiosListeTests.swift; sourceTree = "<group>"; };
@@ -748,6 +752,7 @@
 				3FC355A317C8C2CD39C6F424 /* Catalog */,
 				3D587B3467DABB2C3AEB6B79 /* DesignSystem */,
 				D156DC67F39C1073F205A9DA /* Kurse */,
+				673A73AFA552F177B2C5E7DB /* Muskelauswertung */,
 				95D686C8B6F41D167021CB91 /* Navigation */,
 				241523A827CF62B9D90609CA /* Networking */,
 				2767B99B496D6D2F2005116E /* Onboarding */,
@@ -991,6 +996,7 @@
 				28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */,
 				26938FABB4BBFFF4A17B5D63 /* GewichtEintragenHilfenTests.swift */,
 				CFA471448D3B4B628A0BD6D5 /* GewichtsverlaufHilfenTests.swift */,
+				A14BF1CD97585C27C23C7C12 /* HaeufigkeitTests.swift */,
 				D1A00954754396E772B78770 /* HomeKurseTests.swift */,
 				35520B42726A403ECBA04A24 /* HomeSerieTests.swift */,
 				EC41D34D6C45ECA67DC8B7D5 /* HomeZeilenTests.swift */,
@@ -1072,6 +1078,14 @@
 				234AEB0C3D9DAD8514164B68 /* Sensorik */,
 			);
 			path = Packages;
+			sourceTree = "<group>";
+		};
+		673A73AFA552F177B2C5E7DB /* Muskelauswertung */ = {
+			isa = PBXGroup;
+			children = (
+				C393A29144DBA03B05E97E18 /* Haeufigkeit.swift */,
+			);
+			path = Muskelauswertung;
 			sourceTree = "<group>";
 		};
 		69238F42946841D9633CE265 /* Auth */ = {
@@ -1437,6 +1451,7 @@
 				BC882EF4EABB4D6AC287BE0C /* GewichtEintragenSheet.swift in Sources */,
 				47D979DCC3CDB3ACE62E9FB9 /* GewichtsverlaufView.swift in Sources */,
 				B24C8C319FE4F622FE13EF8E /* GroesseSheet.swift in Sources */,
+				D11C9D78F9554DB15CE15516 /* Haeufigkeit.swift in Sources */,
 				1D2F4741B76193A412B5B0D8 /* Herkunftssatz.swift in Sources */,
 				C9C1FB87A7FDC1EB8B223CE7 /* HomeKurse.swift in Sources */,
 				7BFFB3F7F67F86F6F6B72F59 /* HomeRootView.swift in Sources */,
@@ -1626,6 +1641,7 @@
 				F317A9B9C5941A16B69CC0E9 /* GeraetegruppeTests.swift in Sources */,
 				64DE54AADAEF254C04697CD4 /* GewichtEintragenHilfenTests.swift in Sources */,
 				013D40E89B567A7C02B5A99A /* GewichtsverlaufHilfenTests.swift in Sources */,
+				A0C914A14EC835E76790F385 /* HaeufigkeitTests.swift in Sources */,
 				2521FD94ACF38940E2EAF8AC /* HomeKurseTests.swift in Sources */,
 				3FC052B589C402381A71036E /* HomeSerieTests.swift in Sources */,
 				223F8FDD1BA1AFE59AF71D8C /* HomeZeilenTests.swift in Sources */,
