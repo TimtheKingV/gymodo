@@ -105,8 +105,27 @@ struct MuskelKarte: View {
 /// Seitenverhaeltnis haengt nur am Modell (maennlich 1860:1310, weiblich
 /// 1860:1538), nie an den Muskeln -- die Karte springt nicht.
 struct MuskelFigur: View {
-    let muskeln: [GeraetMuskel]
+    enum Ansicht { case vorne, hinten }
+
+    let farben: [String: Color]
     let geschlecht: Geschlecht?
+    let ansichten: Set<Ansicht>
+
+    init(farben: [String: Color], geschlecht: Geschlecht?, ansichten: Set<Ansicht> = [.vorne, .hinten]) {
+        self.farben = farben
+        self.geschlecht = geschlecht
+        self.ansichten = ansichten
+    }
+
+    /// Die Karte der Einweisung: Farben aus den Rollen der Uebung.
+    init(muskeln: [GeraetMuskel], geschlecht: Geschlecht?) {
+        self.init(
+            farben: Dictionary(
+                muskeln.map { ($0.key, MuskelModell.fuellung(fuer: $0.key, in: muskeln)) },
+                uniquingKeysWith: { erste, _ in erste }
+            ).compactMapValues { $0 },
+            geschlecht: geschlecht)
+    }
 
     /// Abstand zwischen Vorder- und Rueckseite in SVG-Einheiten.
     nonisolated static let abstand: CGFloat = 60
@@ -114,18 +133,23 @@ struct MuskelFigur: View {
     var body: some View {
         if let geometrie = MuskelModell.geometrie {
             let modell = geschlecht == .weiblich ? geometrie.weiblich : geometrie.maennlich
-            let breite = modell.vorne.viewBox.width + Self.abstand + modell.hinten.viewBox.width
-            let hoehe = max(modell.vorne.viewBox.height, modell.hinten.viewBox.height)
-            let farben = Dictionary(
-                muskeln.map { ($0.key, MuskelModell.fuellung(fuer: $0.key, in: muskeln)) },
-                uniquingKeysWith: { erste, _ in erste }
-            ).compactMapValues { $0 }
+            // Nur die gewaehlten Ansichten, in fester Reihenfolge; ein
+            // Abstand nur zwischen zweien.
+            let gewaehlt: [MuskelGeometrie.Ansicht] =
+                (ansichten.contains(.vorne) ? [modell.vorne] : [])
+                + (ansichten.contains(.hinten) ? [modell.hinten] : [])
+            let breite = gewaehlt.map(\.viewBox.width).reduce(0, +) + Self.abstand * CGFloat(max(0, gewaehlt.count - 1))
+            let hoehe = gewaehlt.map(\.viewBox.height).max() ?? 1
+            let farben = farben
 
             Canvas { kontext, groesse in
                 let massstab = groesse.width / breite
                 kontext.scaleBy(x: massstab, y: massstab)
-                Self.zeichne(modell.vorne, versatz: 0, farben: farben, in: kontext)
-                Self.zeichne(modell.hinten, versatz: modell.vorne.viewBox.width + Self.abstand, farben: farben, in: kontext)
+                var versatz: CGFloat = 0
+                for ansicht in gewaehlt {
+                    Self.zeichne(ansicht, versatz: versatz, farben: farben, in: kontext)
+                    versatz += ansicht.viewBox.width + Self.abstand
+                }
             }
             .aspectRatio(breite / hoehe, contentMode: .fit)
             .accessibilityHidden(true)
