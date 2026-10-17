@@ -18,6 +18,7 @@ enum Einstellungen {
 
     static let satzZielKey = "satzZiel"
     static let uebungsansichtKey = "uebungsansicht"
+    static let fortschrittsansichtKey = "fortschrittsansicht"
 
     static let resttimerVorgabe = 90
     /// 10/20/30 s ergaenzt (Testnotiz 16.10., #1).
@@ -59,6 +60,12 @@ enum Einstellungen {
     static func uebungsansicht(_ defaults: UserDefaults = .standard) -> Uebungsansicht {
         defaults.string(forKey: uebungsansichtKey).flatMap(Uebungsansicht.init(rawValue:)) ?? .muskel
     }
+
+    /// Welche Sicht der Uebungsfortschritt auf Home zeigt. Ein unbekannter
+    /// gespeicherter Wert faellt auf die Vorgabe zurueck.
+    static func fortschrittsansicht(_ defaults: UserDefaults = .standard) -> Fortschrittsansicht {
+        defaults.string(forKey: fortschrittsansichtKey).flatMap(Fortschrittsansicht.init(rawValue:)) ?? .muskelgruppen
+    }
 }
 
 enum Uebungsansicht: String, CaseIterable, Sendable {
@@ -77,6 +84,18 @@ enum Uebungsansicht: String, CaseIterable, Sendable {
         switch self {
         case .muskel: "Muskeln"
         case .favorit: "Favoriten"
+        }
+    }
+}
+
+/// Der Schalter oben im Uebungsfortschritt auf Home.
+enum Fortschrittsansicht: String, CaseIterable, Sendable {
+    case muskelgruppen, uebungen
+
+    var titel: String {
+        switch self {
+        case .muskelgruppen: "Muskelgruppen"
+        case .uebungen: "Übungen"
         }
     }
 }
