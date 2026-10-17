@@ -3,7 +3,9 @@ import Foundation
 /// Wie oft wurde ein Muskel bzw. eine Gruppe in den letzten 28 Tagen
 /// trainiert -- gezaehlt in Einheiten (Sessions), nicht in Saetzen.
 struct Haeufigkeit: Equatable {
-    /// Alle Einheiten im Fenster, auch solche ohne darstellbaren Muskel.
+    /// Alle Einheiten im Fenster, auch solche ohne darstellbaren Muskel --
+    /// ausser reinen Cardio-Einheiten: sie liefern keine Muskeldaten und
+    /// sollen keine Datenreife vortaeuschen.
     let einheiten: Int
     /// Einheiten je Muskelschluessel; nur Schluessel der sechs Gruppen.
     let jeMuskel: [String: Int]
@@ -29,15 +31,20 @@ extension Haeufigkeit {
 
         for session in sessions {
             guard let start = Zeitpunkt.parse(session.startedAt), start >= grenze, start <= jetzt else { continue }
+            // Cardio-Saetze zaehlen nicht (Spec), auch wenn die Uebung Muskeln traegt.
+            let alleSaetze = session.blocks.flatMap(\.sets)
+            if !alleSaetze.isEmpty && alleSaetze.allSatisfy({ $0.cardio != nil }) { continue }
             einheiten += 1
 
             var haupt: [String: Int] = [:]
             var neben: [String: Int] = [:]
             for block in session.blocks {
+                let saetze = block.sets.filter { $0.cardio == nil }.count
+                guard saetze > 0 else { continue }
                 for muskel in muskeln[block.exerciseId] ?? [] where bekannt.contains(muskel.key) {
                     switch muskel.role {
-                    case .primary: haupt[muskel.key, default: 0] += block.sets.count
-                    case .secondary: neben[muskel.key, default: 0] += block.sets.count
+                    case .primary: haupt[muskel.key, default: 0] += saetze
+                    case .secondary: neben[muskel.key, default: 0] += saetze
                     }
                 }
             }
