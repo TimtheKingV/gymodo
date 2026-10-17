@@ -20,7 +20,8 @@ enum Einstellungen {
     static let uebungsansichtKey = "uebungsansicht"
 
     static let resttimerVorgabe = 90
-    static let resttimerStufen = [45, 60, 90, 120, 180]
+    /// 10/20/30 s ergaenzt (Testnotiz 16.10., #1).
+    static let resttimerStufen = [10, 20, 30, 45, 60, 90, 120, 180]
 
     /// Wie viele Saetze an einem Geraet geplant sind. Es gibt (noch) keinen
     /// Trainingsplan in den Daten -- `exercises` kennt nur einen

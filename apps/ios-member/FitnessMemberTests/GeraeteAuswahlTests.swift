@@ -138,7 +138,7 @@ struct GeraeteAuswahlTests {
 
     /// Mehr als drei, und die Gruppe verdraengt die Liste, die sie
     /// abkuerzen soll.
-    @Test func hoechstensDreiStehenUnterZuletzt() {
+    @Test func alleBenutztenStehenInZuletzt() {
         let daten = bootstrap(
             maschinen: (1...5).map {
                 maschineJSON(id: "m\($0)", name: "Geraet \($0)", label: "\($0)", ort: nil, besuche: 1)
@@ -149,7 +149,9 @@ struct GeraeteAuswahlTests {
 
         let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "")
 
-        #expect(gruppen.zuletzt.count == 3)
+        // Testnotiz 17.10., #3: die View kappt bei zuletztSichtbar (10).
+        #expect(gruppen.zuletzt.count == 5)
+        #expect(GeraeteAuswahl.zuletztSichtbar == 10)
         #expect(gruppen.kachel(.geraete).count == 5)
     }
 

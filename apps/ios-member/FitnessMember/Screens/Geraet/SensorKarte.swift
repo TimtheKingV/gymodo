@@ -17,6 +17,11 @@ struct SensorKarte: View {
 
     @Environment(SensorAufnahmeKoordinator.self) private var koordinator
     @State private var diagnoseOffen = false
+    /// Kurz nach dem Tipp zeigt die Karte "Wird gesucht" (Testnotiz 17.10.,
+    /// #1); sonst steht dort dauerhaft "Nicht verbunden", obwohl im
+    /// Hintergrund weiter gesucht und automatisch verbunden wird.
+    @State private var suchtKurz = false
+    nonisolated static let suchAnzeigeDauer: Duration = .seconds(3)
 
     /// Was die Karte sagt, ohne Hz. Pur, damit pruefbar.
     struct Anzeige: Equatable {
@@ -27,11 +32,13 @@ struct SensorKarte: View {
         var ton: Ton
     }
 
-    nonisolated static func anzeige(zustand: SensorZustand, fehler: String? = nil) -> Anzeige {
+    nonisolated static func anzeige(zustand: SensorZustand, fehler: String? = nil, suchtKurz: Bool = false) -> Anzeige {
         if let fehler { return Anzeige(titel: "Sensor", untertitel: fehler, akku: nil, ton: .warnung) }
         switch zustand {
         case .aus:
             return Anzeige(titel: "Sensor", untertitel: "Nicht verbunden · Tippen zum Verbinden", akku: nil, ton: .ruhig)
+        case .sucht where !suchtKurz:
+            return Anzeige(titel: "Sensor", untertitel: "Nicht verbunden", akku: nil, ton: .ruhig)
         case .sucht, .verbindet, .mehrereGefunden:
             return Anzeige(titel: "Sensor", untertitel: "Wird gesucht …", akku: nil, ton: .ruhig)
         case .verbunden(let name, let akku):
@@ -49,7 +56,7 @@ struct SensorKarte: View {
 
     var body: some View {
         let zustand = koordinator.quelle.zustand
-        let a = Self.anzeige(zustand: zustand, fehler: koordinator.fehler)
+        let a = Self.anzeige(zustand: zustand, fehler: koordinator.fehler, suchtKurz: suchtKurz)
         Button(action: tippen) {
             HStack(spacing: DesignSystem.Spacing.s12) {
                 Image(systemName: "sensor.tag.radiowaves.forward")
@@ -115,7 +122,14 @@ struct SensorKarte: View {
     private func tippen() {
         switch koordinator.quelle.zustand {
         case .aus: koordinator.quelle.verbinden()
-        case .sucht, .verbindet: koordinator.quelle.trennen()
+        case .sucht:
+            // Nur die Anzeige wechselt kurz; die Suche laeuft weiter.
+            suchtKurz = true
+            Task {
+                try? await Task.sleep(for: Self.suchAnzeigeDauer)
+                suchtKurz = false
+            }
+        case .verbindet: koordinator.quelle.trennen()
         case .bluetoothNichtBereit(.verweigert):
             if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
         case .bluetoothNichtBereit: koordinator.quelle.verbinden()

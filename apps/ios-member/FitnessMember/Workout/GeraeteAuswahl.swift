@@ -99,8 +99,9 @@ enum GeraeteAuswahl {
         case liste(Geraetegruppe)
     }
 
-    /// Mehr, und die Gruppe verdraengt die Liste, die sie abkuerzen soll.
-    private static let deckel = 3
+    /// So viele stehen unter "Zuletzt bei dir", der Rest hinter "Mehr
+    /// anzeigen" (Testnotiz 17.10., #3). `Gruppen.zuletzt` traegt alle.
+    static let zuletztSichtbar = 10
 
     /// Die Stationen des Orts (Spec 6): die Geraete des Studios; hat es
     /// keine, alle Katalogtypen mit der studioId des Studios; im Freien
@@ -197,7 +198,6 @@ enum GeraeteAuswahl {
                     return station.machineId.map { (besuche[$0] ?? 0) > 0 } ?? true
                 }
                 .sorted { letzteSaetze[$0.schluessel]!.performedAt > letzteSaetze[$1.schluessel]!.performedAt }
-                .prefix(deckel)
             let alle = stationen
                 .map { eintrag($0, trefferUebung: nil) }
                 .sorted(by: alphabetischGesperrteAnsEnde)
