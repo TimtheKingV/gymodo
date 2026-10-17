@@ -81,6 +81,7 @@
 		39876DCABA0D4C90A172BF11 /* CatalogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E651ABDF81EA57E18D7363D /* CatalogStore.swift */; };
 		3B26567CF080FB300019E7A8 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = B1DA3D9245AAF15DFFD8CA8F /* Auth */; };
 		3B67A99D89AA7431D240196B /* TestnotizScreenStapelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07D0CE6DE62F683A513080FC /* TestnotizScreenStapelTests.swift */; };
+		3BFC7E42856070DC113345B1 /* Ausgewogenheit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33390D3B1F76175CEE039764 /* Ausgewogenheit.swift */; };
 		3CD1164921DFFE2CEB9E5177 /* TestnotizMenue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124682B7B2E451091CD871EE /* TestnotizMenue.swift */; };
 		3D434A9FDCC360100D327428 /* WorkoutSessionStore+Ortswechsel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFE33B9185B90C6212243F73 /* WorkoutSessionStore+Ortswechsel.swift */; };
 		3D61BC9B4ACB30A4AB753B39 /* Funktionen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A2D02E4D28E39A0B02C8AA0 /* Funktionen.swift */; };
@@ -204,6 +205,7 @@
 		A20E9991662F803A7FE958CD /* Messwert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6766A553FCAE9B7C6CF68440 /* Messwert.swift */; };
 		A2AE0D99C71F00965EE68BF3 /* HomeSerie.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F772BB738D5F003DF895A42 /* HomeSerie.swift */; };
 		A2F067EE32F1B07AA7C5F02F /* DangerOutlineButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8E52BC8202E83D789FC2E5 /* DangerOutlineButton.swift */; };
+		A4C02ED91D8F3DB6B476D078 /* MuskelHinweiseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBF507D7058BF51E38744D65 /* MuskelHinweiseTests.swift */; };
 		A4F50DFBB0D7894E7A7E8FC9 /* OfflineLeiste.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60D9445D803C7BFB4FE0E3B0 /* OfflineLeiste.swift */; };
 		A53325E109EED91CB9834B54 /* BluetoothSensorQuelle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7081B9EFC9138973A8C0D06D /* BluetoothSensorQuelle.swift */; };
 		A536169303BCBE5ED5385A9A /* CatalogStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8CC4AA1ADA4ED3E6D39207 /* CatalogStoreTests.swift */; };
@@ -219,6 +221,7 @@
 		AF566FE84D48CEC5755E4F5D /* Zeitachse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C6741D2E03280491212701 /* Zeitachse.swift */; };
 		AF91775CE064CF7328A2D20D /* UebungsVideos.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC659FC505DCC5B68E33AD7D /* UebungsVideos.swift */; };
 		B03BD4D0AA820DCA7677811A /* SensorAufnahmeKoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66B745D0188C1156F97EE5B /* SensorAufnahmeKoordinator.swift */; };
+		B1AD6E0E95C319469D1F6D52 /* AusgewogenheitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C7F985D94669B331CD23AE0 /* AusgewogenheitTests.swift */; };
 		B24C8C319FE4F622FE13EF8E /* GroesseSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B3AC509274F6574606B6E0 /* GroesseSheet.swift */; };
 		B2A40BD3FEE73206CB01DC39 /* OrtswechselBeendenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B76232D487FC8D48B6D08EE1 /* OrtswechselBeendenTests.swift */; };
 		B3410F91BF63957604BF8340 /* SessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */; };
@@ -239,6 +242,7 @@
 		BCCED66A72ECB12C420D30B9 /* Fortschrittsfenster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 941088E8ADF755FB4FCC5B33 /* Fortschrittsfenster.swift */; };
 		BD2FAC079B2E5818EF787FA5 /* TestnotizAblaufTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B181EA25F1AE0F34024FB1 /* TestnotizAblaufTests.swift */; };
 		BE586D44AE4DD5FEA6C125AF /* AbspielSensorQuelleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5DB91C9C99E1790C7FBBC98 /* AbspielSensorQuelleTests.swift */; };
+		BE9D2B1D34A309D6EA5ACDF7 /* Hinweise.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C435A5F4E6D684CE1C9BA42 /* Hinweise.swift */; };
 		BEEACF828D37DC6D09B01A06 /* OrtswechselTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A56404F29881EBAC2E63E04 /* OrtswechselTests.swift */; };
 		BF43021ADD4CB5DCE73DC6E4 /* TestnotizOberflaeche.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF49095F47C56BEDA79CE3F0 /* TestnotizOberflaeche.swift */; };
 		C01062BE7395A2DAD05A3EE4 /* AuthLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D6E6743BDCF6E58E971D0CE /* AuthLogicTests.swift */; };
@@ -380,6 +384,7 @@
 		1B227508179FE62A4DAA06A0 /* Chip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chip.swift; sourceTree = "<group>"; };
 		1B800AB907E579F778EA2656 /* GeraetLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetLoading.swift; sourceTree = "<group>"; };
 		1B992AC22F100D1FF9BE1737 /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
+		1C435A5F4E6D684CE1C9BA42 /* Hinweise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hinweise.swift; sourceTree = "<group>"; };
 		1E651ABDF81EA57E18D7363D /* CatalogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogStore.swift; sourceTree = "<group>"; };
 		1EACD17EBDD11DD861E371D3 /* GeraetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetView.swift; sourceTree = "<group>"; };
 		1F21C7D80571408B3CF415E1 /* FensterUmschalter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FensterUmschalter.swift; sourceTree = "<group>"; };
@@ -415,6 +420,7 @@
 		316F6201B7E6E5D63EAEAE84 /* KurseHerkunft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseHerkunft.swift; sourceTree = "<group>"; };
 		31BDB535E7D98C969B8C5F58 /* OnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlow.swift; sourceTree = "<group>"; };
 		32F3B0CC650812BA5EF42DDE /* Ortswechsel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ortswechsel.swift; sourceTree = "<group>"; };
+		33390D3B1F76175CEE039764 /* Ausgewogenheit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ausgewogenheit.swift; sourceTree = "<group>"; };
 		33916355F38A81716A43C018 /* NFCTagLeser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NFCTagLeser.swift; sourceTree = "<group>"; };
 		33E48EE365B2AEEBD3FCBC2E /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		33EBC4692A4BFF21FC0FCA28 /* BootstrapResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootstrapResponse.swift; sourceTree = "<group>"; };
@@ -491,6 +497,7 @@
 		67C6741D2E03280491212701 /* Zeitachse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zeitachse.swift; sourceTree = "<group>"; };
 		691D7A55E93218DCF36E3CF3 /* VorschaubildTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VorschaubildTests.swift; sourceTree = "<group>"; };
 		6A4AC12659D2E513D2EDC2FE /* StudiosListe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudiosListe.swift; sourceTree = "<group>"; };
+		6C7F985D94669B331CD23AE0 /* AusgewogenheitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AusgewogenheitTests.swift; sourceTree = "<group>"; };
 		6CBC9B358BECD950CD5B0381 /* GeraeteAuswahl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteAuswahl.swift; sourceTree = "<group>"; };
 		6CDEA4E4113A2333A539F030 /* KursDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursDetailView.swift; sourceTree = "<group>"; };
 		6D1E0584D2A5A467D86C1715 /* AuswahlSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuswahlSheet.swift; sourceTree = "<group>"; };
@@ -669,6 +676,7 @@
 		F86C22F308C4A9EB76B53C19 /* SupabaseAuthBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthBackend.swift; sourceTree = "<group>"; };
 		F9CDE09BB8F4123D3068E9D2 /* OnboardingAntworten.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingAntworten.swift; sourceTree = "<group>"; };
 		FAF53764E89CC9198F52E049 /* VerlaufHerkunft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerlaufHerkunft.swift; sourceTree = "<group>"; };
+		FBF507D7058BF51E38744D65 /* MuskelHinweiseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuskelHinweiseTests.swift; sourceTree = "<group>"; };
 		FC1749C422D74C910CA03FCA /* MemberLadefehlerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberLadefehlerView.swift; sourceTree = "<group>"; };
 		FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursRoute.swift; sourceTree = "<group>"; };
 		FD55A1626F478A9D5D1A0861 /* DTOTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DTOTests.swift; sourceTree = "<group>"; };
@@ -969,6 +977,7 @@
 				7D79A89B3E91A0F18C9E8DBC /* APIClientTests.swift */,
 				D78C8636341914B90296B220 /* AppConfigTests.swift */,
 				256B9DE3CD0E562482D52FD8 /* AudioSitzungTests.swift */,
+				6C7F985D94669B331CD23AE0 /* AusgewogenheitTests.swift */,
 				0FF4AD6F764733094933FC52 /* AusschnittTests.swift */,
 				6D6E6743BDCF6E58E971D0CE /* AuthLogicTests.swift */,
 				032095E4600D97C96AB8E038 /* BefestigungsspeicherTests.swift */,
@@ -1015,6 +1024,7 @@
 				A2D588E7E4F6611509CF03B1 /* KursZustandTests.swift */,
 				EBD729F0FF6DCF906AA1C920 /* LokaleSessionTests.swift */,
 				F2544360B27EEB7C56A35775 /* MarkenAssetTests.swift */,
+				FBF507D7058BF51E38744D65 /* MuskelHinweiseTests.swift */,
 				96654D646EF71D44A91FCDF5 /* MuskelModellTests.swift */,
 				0F4F2DAEB38D14F84C2ECC1B /* OnboardingAntwortenTests.swift */,
 				E25BD6B14373C1068B24705E /* OnboardingHinweisTests.swift */,
@@ -1083,7 +1093,9 @@
 		673A73AFA552F177B2C5E7DB /* Muskelauswertung */ = {
 			isa = PBXGroup;
 			children = (
+				33390D3B1F76175CEE039764 /* Ausgewogenheit.swift */,
 				C393A29144DBA03B05E97E18 /* Haeufigkeit.swift */,
+				1C435A5F4E6D684CE1C9BA42 /* Hinweise.swift */,
 			);
 			path = Muskelauswertung;
 			sourceTree = "<group>";
@@ -1394,6 +1406,7 @@
 				D73848050F680755E93B0CEB /* AccessibilityBaum.swift in Sources */,
 				8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */,
 				1885199152297CA6E9277348 /* AudioSitzung.swift in Sources */,
+				3BFC7E42856070DC113345B1 /* Ausgewogenheit.swift in Sources */,
 				CCCF27D0544C08BABCEE5F51 /* AuswahlOverlay.swift in Sources */,
 				4A1E535AF26BAC9D7F757B82 /* AuswahlSheet.swift in Sources */,
 				FA390275F72119D9F7870B0E /* AuthBackend.swift in Sources */,
@@ -1453,6 +1466,7 @@
 				B24C8C319FE4F622FE13EF8E /* GroesseSheet.swift in Sources */,
 				D11C9D78F9554DB15CE15516 /* Haeufigkeit.swift in Sources */,
 				1D2F4741B76193A412B5B0D8 /* Herkunftssatz.swift in Sources */,
+				BE9D2B1D34A309D6EA5ACDF7 /* Hinweise.swift in Sources */,
 				C9C1FB87A7FDC1EB8B223CE7 /* HomeKurse.swift in Sources */,
 				7BFFB3F7F67F86F6F6B72F59 /* HomeRootView.swift in Sources */,
 				15230A9868C0F909306DACBD /* HomeRoute.swift in Sources */,
@@ -1614,6 +1628,7 @@
 				87EEB80060292F83431092AC /* AccessibilityBaumTests.swift in Sources */,
 				D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */,
 				C64C2D7DA69BE8039F9BAD1F /* AudioSitzungTests.swift in Sources */,
+				B1AD6E0E95C319469D1F6D52 /* AusgewogenheitTests.swift in Sources */,
 				6C1C7736AAA82B6C3372EEA1 /* AusschnittTests.swift in Sources */,
 				C01062BE7395A2DAD05A3EE4 /* AuthLogicTests.swift in Sources */,
 				987BD1C06D3455370CA7C2DD /* BefestigungsspeicherTests.swift in Sources */,
@@ -1660,6 +1675,7 @@
 				FA9F18E9FD57D18F60D1D587 /* KurseWochenPagingTests.swift in Sources */,
 				C8CDA41EEA7DB3A151511528 /* LokaleSessionTests.swift in Sources */,
 				0CC624443C0CFE0C0A80A543 /* MarkenAssetTests.swift in Sources */,
+				A4C02ED91D8F3DB6B476D078 /* MuskelHinweiseTests.swift in Sources */,
 				F2B07A22DDA47AC16486472F /* MuskelModellTests.swift in Sources */,
 				28DB21D330D60931AE02D035 /* OnboardingAntwortenTests.swift in Sources */,
 				535788FB463D3843006BCB3A /* OnboardingHinweisTests.swift in Sources */,
