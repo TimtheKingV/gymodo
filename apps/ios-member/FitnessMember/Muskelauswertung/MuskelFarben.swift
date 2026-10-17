@@ -11,8 +11,8 @@ enum MuskelFarben {
         }
     }
 
-    /// Mit `nurGruppe` stehen alle Muskeln ausserhalb der Gruppe in `line`;
-    /// sonst bekommt jeder Muskel die Statusfarbe aus seiner eigenen Gruppe.
+    /// Detail: jeder Muskel im Vergleich mit dem Mittel seiner eigenen Gruppe.
+    /// Mit `nurGruppe` stehen alle Muskeln ausserhalb der Gruppe in `line`.
     static func farben(gruppe: MuskelHauptgruppe, h: Haeufigkeit, nurGruppe: Bool) -> [String: Color] {
         var farben: [String: Color] = [:]
         for andere in MuskelHauptgruppe.angezeigt {
@@ -27,9 +27,18 @@ enum MuskelFarben {
         return farben
     }
 
-    /// Startansicht: jeder Muskel nach seiner eigenen Gruppe.
+    /// Startansicht: jeder Muskel im Status seiner Gruppe gegenueber allen
+    /// sechs -- dieselbe Aussage wie Liste und Satz. Seltene Muskeln grau.
+    /// Der Vergleich der Muskeln innerhalb der Gruppe bleibt dem Detail.
     static func farbenAlle(_ h: Haeufigkeit) -> [String: Color] {
-        farben(gruppe: .brust, h: h, nurGruppe: false)
+        var farben: [String: Color] = [:]
+        for gruppe in MuskelHauptgruppe.angezeigt {
+            let gruppenfarbe = farbe(Ausgewogenheit.status(gruppe: gruppe, in: h))
+            for muskel in gruppe.muskelSchluessel {
+                farben[muskel] = Ausgewogenheit.seltene.contains(muskel) ? DesignSystem.Color.muskelInaktiv : gruppenfarbe
+            }
+        }
+        return farben
     }
 }
 
