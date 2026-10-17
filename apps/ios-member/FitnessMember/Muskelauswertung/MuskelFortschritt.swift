@@ -13,7 +13,8 @@ struct MuskelFortschritt: Equatable {
 
     /// Zwischen erstem und letztem Messpunkt mindestens so viele Tage.
     static let mindestAbstandTage = 14
-    /// Start = beste Last der ersten, Ende = beste Last der letzten so vielen Tage.
+    /// Start = beste Last der ersten, Ende = beste Last der letzten so vielen
+    /// Tage; hoechstens aber die halbe Spanne zwischen erstem und letztem Punkt.
     static let endfensterTage = 30
     /// Innerhalb dieser Prozent gilt ein Muskel als stabil.
     private static let stabilGrenze = 3.0
@@ -55,8 +56,12 @@ struct MuskelFortschritt: Equatable {
               letzter.0.timeIntervalSince(erster.0) >= Double(mindestAbstandTage) * tag
         else { return nil }
 
-        let startGrenze = erster.0.addingTimeInterval(Double(endfensterTage) * tag)
-        let endGrenze = jetzt.addingTimeInterval(-Double(endfensterTage) * tag)
+        // Bei Spannen unter 60 Tagen wuerden sich zwei 30-Tage-Fenster
+        // ueberlappen; dann ist jedes Fenster die halbe Spanne.
+        let spanne = letzter.0.timeIntervalSince(erster.0)
+        let fenster = min(Double(endfensterTage) * tag, spanne / 2)
+        let startGrenze = erster.0.addingTimeInterval(fenster)
+        let endGrenze = jetzt.addingTimeInterval(-fenster)
         guard let start = punkte.filter({ $0.0 <= startGrenze }).map(\.1).max(),
               let ende = punkte.filter({ $0.0 >= endGrenze }).map(\.1).max(),
               start > 0

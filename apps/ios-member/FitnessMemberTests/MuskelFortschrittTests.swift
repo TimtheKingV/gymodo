@@ -79,6 +79,24 @@ struct MuskelFortschrittTests {
         #expect(abs((r.jeMuskel["lats"] ?? 0) - 20) < 0.0001)
     }
 
+    @Test func jungeUebungTeiltDieSpanneInZweiFenster() {
+        // Spanne 33 Tage -> Fenster je 16,5 Tage: Start 50 (vor 35/30 Tagen),
+        // Ende 60 (vor 10/2 Tagen) = +20 %. Mit ueberlappenden 30-Tage-Fenstern
+        // waere der Start 58 und das Ergebnis nur ~+3 %.
+        let r = MuskelFortschritt.berechne(
+            fortschritt: [uebung("a", [(35, 50), (30, 50), (10, 58), (2, 60)])],
+            muskeln: ["a": haupt("lats")], jetzt: jetzt)
+        #expect(abs((r.jeMuskel["lats"] ?? 0) - 20) < 0.0001)
+    }
+
+    @Test func rueckgangWirdNegativBerechnet() {
+        let r = MuskelFortschritt.berechne(
+            fortschritt: [uebung("a", [(90, 60), (50, 55), (2, 48)])],
+            muskeln: ["a": haupt("lats")], jetzt: jetzt)
+        #expect(abs((r.jeMuskel["lats"] ?? 0) - -20) < 0.0001)
+        #expect(MuskelFortschritt.anzeige(r.jeMuskel["lats"]) == .wert(-20))
+    }
+
     @Test func anzeige() {
         #expect(MuskelFortschritt.anzeige(nil) == .keinWert)
         #expect(MuskelFortschritt.anzeige(2.9) == .stabil)
