@@ -18,7 +18,13 @@ struct Haeufigkeit: Equatable {
     /// Ein unterstuetzender Muskel zaehlt erst ab so vielen Saetzen je Einheit.
     static let mindestNebensaetze = 2
 
-    var istAuswertbar: Bool { einheiten >= Self.mindestEinheiten }
+    /// Mindestens eine Gruppe hat eine Einheit bekommen.
+    var hatMuskeldaten: Bool { jeGruppe.values.contains { $0 > 0 } }
+
+    /// Die eine Stelle fuer "genug Daten": genug Einheiten UND ueberhaupt
+    /// Muskeldaten. Ohne Zuordnung (Katalog fehlt, nur unbekannte Uebungen)
+    /// waere sonst jede Gruppe Nachholbedarf.
+    var istAuswertbar: Bool { einheiten >= Self.mindestEinheiten && hatMuskeldaten }
 }
 
 extension Haeufigkeit {

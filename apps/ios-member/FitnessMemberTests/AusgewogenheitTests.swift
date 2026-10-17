@@ -77,4 +77,20 @@ struct AusgewogenheitTests {
         #expect(Ausgewogenheit.status(muskel: "fibularis", gruppe: .beine, in: h) == .kaumUebungen)
         #expect(Ausgewogenheit.status(muskel: "serratus_anterior", gruppe: .brust, in: h) == .kaumUebungen)
     }
+
+    @Test func ohneMuskeldatenKeineAuswertungTrotzGenugEinheiten() {
+        // Fuenf Einheiten, aber nichts zugeordnet (Katalog offline, unbekannte Uebungen).
+        let h = Haeufigkeit(einheiten: 5, jeMuskel: [:], jeGruppe: [:])
+        #expect(h.hatMuskeldaten == false)
+        #expect(h.istAuswertbar == false)
+        #expect(Ausgewogenheit.prozent(h) == nil)
+        for gruppe in MuskelHauptgruppe.angezeigt {
+            #expect(Ausgewogenheit.status(gruppe: gruppe, in: h) == .keineAuswertung)
+            for muskel in gruppe.muskelSchluessel {
+                #expect(Ausgewogenheit.status(muskel: muskel, gruppe: gruppe, in: h) == .keineAuswertung)
+            }
+        }
+        #expect(MuskelHinweise.startsatz(h) == "Für die Analyse braucht es noch ein paar Trainings.")
+        #expect(MuskelHinweise.gruppenhinweis(gruppe: .ruecken, in: h, namen: [:]) == nil)
+    }
 }
