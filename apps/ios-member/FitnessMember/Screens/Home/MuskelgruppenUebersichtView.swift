@@ -94,7 +94,10 @@ struct MuskelgruppenUebersichtView: View {
                     .frame(minWidth: 84, alignment: .leading)
                     .layoutPriority(1)
                 if h.istAuswertbar {
-                    HaeufigkeitsBalken(anteil: Self.anteil(h.jeGruppe[gruppe] ?? 0, von: groesste), status: status)
+                    HaeufigkeitsBalken(
+                        anteil: Self.anteil(h.jeGruppe[gruppe] ?? 0, von: groesste),
+                        status: status,
+                        zaehl: h.jeGruppe[gruppe] ?? 0)
                 } else {
                     Spacer(minLength: 0)
                 }
@@ -169,17 +172,29 @@ struct MuskelKartenTitel: View {
 struct HaeufigkeitsBalken: View {
     let anteil: Double
     let status: MuskelStatus
+    /// Anzahl Einheiten, die der Balken zeigt; daneben als Zahl.
+    var zaehl: Int? = nil
 
     var body: some View {
-        GeometryReader { geo in
-            let breite = max(status == .nachholbedarf ? 6 : 0, geo.size.width * min(1, max(0, anteil)))
-            ZStack(alignment: .leading) {
-                Capsule().fill(DesignSystem.Color.surfaceRaised)
-                Capsule().fill(MuskelFarben.farbe(status)).frame(width: breite)
+        HStack(spacing: DesignSystem.Spacing.s8) {
+            GeometryReader { geo in
+                let breite = max(status == .nachholbedarf ? 6 : 0, geo.size.width * min(1, max(0, anteil)))
+                ZStack(alignment: .leading) {
+                    Capsule().fill(DesignSystem.Color.surfaceRaised)
+                    Capsule().fill(MuskelFarben.farbe(status)).frame(width: breite)
+                }
+            }
+            .frame(height: 6)
+            .frame(maxWidth: .infinity)
+            if let zaehl {
+                Text("\(zaehl)")
+                    .font(.system(size: 13, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .frame(minWidth: 20, alignment: .trailing)
+                    .fixedSize()
             }
         }
-        .frame(height: 6)
-        .frame(maxWidth: .infinity)
         .accessibilityHidden(true)
     }
 }
@@ -201,7 +216,7 @@ struct FortschrittsText: View {
     nonisolated static func text(_ wert: FortschrittsWert) -> String {
         switch wert {
         case .wert(let p): p > 0 ? "+\(p) %" : "\(p) %".replacingOccurrences(of: "-", with: "−")
-        case .stabil: "stabil"
+        case .stabil: "±0 %"
         case .keinWert: "–"
         }
     }
@@ -237,7 +252,7 @@ struct FortschrittsText: View {
     nonisolated static func gesprochen(_ wert: FortschrittsWert) -> String {
         switch wert {
         case .wert(let p): p > 0 ? "plus \(p) Prozent" : "minus \(abs(p)) Prozent"
-        case .stabil: "stabil"
+        case .stabil: "plus minus null Prozent"
         case .keinWert: "noch kein Wert"
         }
     }

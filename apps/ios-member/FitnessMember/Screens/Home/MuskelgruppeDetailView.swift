@@ -171,7 +171,8 @@ struct MuskelgruppeDetailView: View {
             } else if h.istAuswertbar {
                 HaeufigkeitsBalken(
                     anteil: MuskelgruppenUebersichtView.anteil(h.jeMuskel[muskel] ?? 0, von: groesste),
-                    status: status)
+                    status: status,
+                    zaehl: h.jeMuskel[muskel] ?? 0)
             }
         }
         .padding(.horizontal, DesignSystem.Spacing.s16)
