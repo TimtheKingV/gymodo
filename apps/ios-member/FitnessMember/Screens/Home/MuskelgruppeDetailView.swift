@@ -152,12 +152,16 @@ struct MuskelgruppeDetailView: View {
         let wert = MuskelFortschritt.anzeige(auswertung.fortschritt.jeMuskel[muskel])
         let status = Ausgewogenheit.status(muskel: muskel, gruppe: gruppe, in: h)
         let selten = Ausgewogenheit.seltene.contains(muskel)
+        let brauchtTrainings = FortschrittsText.brauchtTrainings(wert, auswertbar: h.istAuswertbar, selten: selten)
         return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-            HStack(spacing: DesignSystem.Spacing.s12) {
+            HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.s12) {
                 Text(name)
                     .font(DesignSystem.Typography.fliesstext)
                     .foregroundStyle(DesignSystem.Color.text)
                 Spacer(minLength: DesignSystem.Spacing.s8)
+                if brauchtTrainings {
+                    FortschrittsText.BrauchtTrainings()
+                }
                 FortschrittsText(wert: wert, font: .system(size: 15, weight: .bold))
             }
             if selten {
@@ -174,7 +178,7 @@ struct MuskelgruppeDetailView: View {
         .padding(.vertical, DesignSystem.Spacing.s12)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(name), Fortschritt \(FortschrittsText.gesprochen(wert)), \(MuskelStatusText.gesprochen(selten ? .kaumUebungen : status))")
+            "\(name), Fortschritt \(FortschrittsText.gesprochen(wert))\(brauchtTrainings ? ", \(FortschrittsText.brauchtTrainingsText)" : ""), \(MuskelStatusText.gesprochen(selten ? .kaumUebungen : status))")
     }
 }
 

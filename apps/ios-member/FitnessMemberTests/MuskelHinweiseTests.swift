@@ -61,6 +61,15 @@ struct MuskelHinweiseTests {
         ])
         #expect(MuskelHinweise.gruppenhinweis(gruppe: .beine, in: h, namen: [:]) == nil)
     }
+
+    @Test func brauchtTrainingsNurBeiAuswertbarerHaeufigkeitOhneFortschritt() {
+        #expect(FortschrittsText.brauchtTrainings(.keinWert, auswertbar: true) == true)
+        #expect(FortschrittsText.brauchtTrainings(.keinWert, auswertbar: false) == false)
+        #expect(FortschrittsText.brauchtTrainings(.keinWert, auswertbar: true, selten: true) == false)
+        #expect(FortschrittsText.brauchtTrainings(.stabil, auswertbar: true) == false)
+        #expect(FortschrittsText.brauchtTrainings(.wert(5), auswertbar: true) == false)
+        #expect(FortschrittsText.brauchtTrainingsText == "braucht noch Trainings")
+    }
 }
 
 private extension Haeufigkeit {

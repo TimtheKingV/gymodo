@@ -83,6 +83,7 @@ struct MuskelgruppenUebersichtView: View {
     private func gruppenZeile(_ gruppe: MuskelHauptgruppe, groesste: Int) -> some View {
         let status = Ausgewogenheit.status(gruppe: gruppe, in: h)
         let wert = MuskelFortschritt.anzeige(auswertung.fortschritt.jeGruppe[gruppe])
+        let brauchtTrainings = FortschrittsText.brauchtTrainings(wert, auswertbar: h.istAuswertbar)
         return Button {
             onGruppe(gruppe)
         } label: {
@@ -98,22 +99,29 @@ struct MuskelgruppenUebersichtView: View {
                     Spacer(minLength: 0)
                 }
                 // Feste Spalte, damit die Balken aller Zeilen gleich lang sind.
-                FortschrittsText(wert: wert)
-                    .frame(minWidth: 76, alignment: .trailing)
-                    .layoutPriority(1)
+                VStack(alignment: .trailing, spacing: 2) {
+                    FortschrittsText(wert: wert)
+                    if brauchtTrainings {
+                        FortschrittsText.BrauchtTrainings()
+                    }
+                }
+                .frame(width: 76, alignment: .trailing)
+                .layoutPriority(1)
                 Image(systemName: "chevron.right")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(DesignSystem.Color.textFaint)
                     .accessibilityHidden(true)
             }
             .padding(.horizontal, DesignSystem.Spacing.s16)
+            // Platz fuer den zweizeiligen Hinweis unter dem Strich.
+            .padding(.vertical, DesignSystem.Spacing.s8)
             .frame(minHeight: 52)
             .contentShape(Rectangle())
         }
         .buttonStyle(PressButtonStyle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(gruppe.titel), Fortschritt \(FortschrittsText.gesprochen(wert)), \(MuskelStatusText.gesprochen(status))")
+            "\(gruppe.titel), Fortschritt \(FortschrittsText.gesprochen(wert))\(brauchtTrainings ? ", \(FortschrittsText.brauchtTrainingsText)" : ""), \(MuskelStatusText.gesprochen(status))")
         .accessibilityAddTraits(.isButton)
     }
 
@@ -203,6 +211,26 @@ struct FortschrittsText: View {
         case .wert(let p) where p > 0: DesignSystem.Color.accent
         case .wert, .stabil: DesignSystem.Color.textMuted
         case .keinWert: DesignSystem.Color.textFaint
+        }
+    }
+
+    nonisolated static let brauchtTrainingsText = "braucht noch Trainings"
+
+    /// Strich mit Hinweis nur, wenn die Haeufigkeit schon auswertbar ist und
+    /// nur der Fortschritt fehlt; seltene Muskeln zeigen "kaum Übungen".
+    nonisolated static func brauchtTrainings(_ wert: FortschrittsWert, auswertbar: Bool, selten: Bool = false) -> Bool {
+        wert == .keinWert && auswertbar && !selten
+    }
+
+    /// Kleiner Hinweis unter bzw. neben dem Strich.
+    struct BrauchtTrainings: View {
+        var body: some View {
+            Text(FortschrittsText.brauchtTrainingsText)
+                .font(.system(size: 11, weight: .regular))
+                .foregroundStyle(DesignSystem.Color.textFaint)
+                .multilineTextAlignment(.trailing)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
