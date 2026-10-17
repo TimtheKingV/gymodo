@@ -132,6 +132,14 @@ struct MuskelFigur: View {
         }
     }
 
+    /// Kopf, Hals, Haende, Fuesse und Knie sind die `detail`-Pfade und nie
+    /// Muskeln. Sie stehen im hellen Grau der nicht beanspruchten Muskeln
+    /// statt im Dunkel der Haut -- sonst sah die Figur kopflos aus (Testnotiz
+    /// 17.10., #5). Sie werden nie gruen. Das Modell fuehrt keinen Nacken-
+    /// muskel (README Rev. 4: Sehnen und Gelenke bleiben neutral), also
+    /// auch die Straenge am Hals.
+    nonisolated static let detailFuellung = DesignSystem.Color.muskelInaktiv
+
     /// Linienstaerken in SVG-Einheiten (SS13.1), skalieren mit der Karte.
     nonisolated private static let koerperLinie: CGFloat = 2.3
     nonisolated private static let detailLinie: CGFloat = 1.1
@@ -148,13 +156,14 @@ struct MuskelFigur: View {
         kontext.clip(to: Path(ansicht.viewBox))
 
         let haut = GraphicsContext.Shading.color(DesignSystem.Color.muskelHaut)
+        let neutral = GraphicsContext.Shading.color(detailFuellung)
         let linie = GraphicsContext.Shading.color(DesignSystem.Color.muskelLinie)
         for pfad in ansicht.body {
             kontext.fill(pfad, with: haut)
             kontext.stroke(pfad, with: linie, lineWidth: koerperLinie)
         }
         for pfad in ansicht.detail {
-            kontext.fill(pfad, with: haut)
+            kontext.fill(pfad, with: neutral)
             kontext.stroke(pfad, with: linie, lineWidth: detailLinie)
         }
 

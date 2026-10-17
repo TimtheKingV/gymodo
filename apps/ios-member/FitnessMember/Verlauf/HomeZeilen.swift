@@ -350,10 +350,26 @@ enum HomeZeilen {
     }
 
     /// Die Hoechstlasten der juengsten Trainingstage fuer die Minikurve.
-    /// Ein Punkt ist keine Kurve -- dann gar keine.
+    /// Auch ein einzelner Tag liefert seinen Wert: die Minikurve zeigt dann
+    /// nur den Punkt, und jede Zeile hat sie (Testnotiz 17.10., #1) -- vorher
+    /// stand dort bei Uebungen mit einem Tag nur das Trendsymbol.
     static func sparkWerte(_ punkte: [ExerciseProgress.Point], maximal: Int = 12) -> [Double] {
-        guard punkte.count >= 2 else { return [] }
-        return punkte.suffix(maximal).map(\.topLoad)
+        punkte.suffix(maximal).map(\.topLoad)
+    }
+
+    /// Die Muskeln jeder Uebung, die der Bootstrap kennt -- Geraete und
+    /// Katalog des Studios. Der Uebungsfortschritt (Server) fuehrt keine
+    /// Muskeln, Home gruppiert ihn damit (Testnotiz 17.10., #2). Die erste
+    /// nicht leere Liste je Uebung gilt; eine Uebung ohne Muskeln fehlt.
+    static func muskelnJeUebung(_ bootstrap: BootstrapResponse?) -> [String: [GeraetMuskel]] {
+        guard let bootstrap else { return [:] }
+        let uebungen = bootstrap.machines.flatMap(\.exercises)
+            + (bootstrap.catalog?.equipmentTypes.flatMap(\.exercises) ?? [])
+        var jeUebung: [String: [GeraetMuskel]] = [:]
+        for uebung in uebungen where !uebung.muscles.isEmpty && jeUebung[uebung.id] == nil {
+            jeUebung[uebung.id] = uebung.muscles
+        }
+        return jeUebung
     }
 
     /// Die Zeile unter der Begruessung: im Freien Training der Ort selbst,

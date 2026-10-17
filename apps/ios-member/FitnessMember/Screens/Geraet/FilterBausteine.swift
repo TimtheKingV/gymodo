@@ -152,30 +152,45 @@ struct UebungsAbschnitte<Zeile: View>: View {
     var filter: MuskelHauptgruppe? = nil
     @ViewBuilder let zeile: (GeraetUebung) -> Zeile
 
-    private func kopf(_ abschnitt: UebungsGruppierung.Abschnitt) -> String {
-        let titel = abschnitt.gruppe.titel.uppercased()
-        guard filter != nil else { return titel }
-        let anzahl = abschnitt.uebungen.count
+    var body: some View {
+        if gruppiert {
+            MuskelAbschnitte(
+                abschnitte: UebungsGruppierung.abschnitte(uebungen, muskeln: \.muscles, nur: filter),
+                gefiltert: filter != nil, zeile: zeile)
+        } else {
+            LazyVStack(spacing: DesignSystem.Spacing.s8) {
+                ForEach(uebungen) { zeile($0) }
+            }
+        }
+    }
+}
+
+/// Die Abschnitte der Ansicht "Muskel" mit ihren Ueberschriften -- fuer die
+/// Uebungsliste am Geraet und den Uebungsfortschritt auf Home (Testnotiz
+/// 17.10., #2), damit beide gleich aussehen.
+struct MuskelAbschnitte<Eintrag: Identifiable, Zeile: View>: View {
+    let abschnitte: [MuskelAbschnitt<Eintrag>]
+    /// Mit Filter nennt die Ueberschrift zusaetzlich die Anzahl.
+    let gefiltert: Bool
+    @ViewBuilder let zeile: (Eintrag) -> Zeile
+
+    nonisolated static func kopf(gruppe: MuskelHauptgruppe, anzahl: Int, gefiltert: Bool) -> String {
+        let titel = gruppe.titel.uppercased()
+        guard gefiltert else { return titel }
         return "\(titel) · \(anzahl) \(anzahl == 1 ? "ÜBUNG" : "ÜBUNGEN")"
     }
 
     var body: some View {
-        if gruppiert {
-            LazyVStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
-                ForEach(UebungsGruppierung.gruppieren(uebungen, nur: filter), id: \.gruppe) { abschnitt in
-                    LazyVStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-                        Text(kopf(abschnitt))
-                            .font(DesignSystem.Typography.label)
-                            .tracking(1.5)
-                            .foregroundStyle(DesignSystem.Color.textFaint)
-                            .accessibilityAddTraits(.isHeader)
-                        ForEach(abschnitt.uebungen) { zeile($0) }
-                    }
+        LazyVStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+            ForEach(abschnitte, id: \.gruppe) { abschnitt in
+                LazyVStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
+                    Text(Self.kopf(gruppe: abschnitt.gruppe, anzahl: abschnitt.eintraege.count, gefiltert: gefiltert))
+                        .font(DesignSystem.Typography.label)
+                        .tracking(1.5)
+                        .foregroundStyle(DesignSystem.Color.textFaint)
+                        .accessibilityAddTraits(.isHeader)
+                    ForEach(abschnitt.eintraege) { zeile($0) }
                 }
-            }
-        } else {
-            LazyVStack(spacing: DesignSystem.Spacing.s8) {
-                ForEach(uebungen) { zeile($0) }
             }
         }
     }

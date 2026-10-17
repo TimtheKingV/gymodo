@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Testing
 @testable import FitnessMember
 
@@ -84,5 +85,32 @@ struct UebungsGruppierungTests {
     @Test func nurAbSechsUebungenGibtEsDenSchalter() {
         #expect(UebungsGruppierung.bietetSchalterAn(uebungsanzahl: 5) == false)
         #expect(UebungsGruppierung.bietetSchalterAn(uebungsanzahl: 6) == true)
+    }
+
+    // MARK: - Beliebige Eintraege (Testnotiz 17.10., #2)
+
+    /// Der Uebungsfortschritt auf Home hat selbst keine Muskeln; die
+    /// Gruppierung ordnet ueber eine Nachschlagefunktion.
+    @Test func eintraegeOhneEigeneMuskelnGruppierenUeberDieNachschlagefunktion() {
+        struct Zeile: Identifiable { let id: String }
+        let muskeln: [String: [GeraetMuskel]] = [
+            "squat": [GeraetMuskel(key: "quads", name: "Quads", role: .primary)],
+            "bank": [GeraetMuskel(key: "pectorals", name: "Brust", role: .primary)],
+            "squat2": [GeraetMuskel(key: "glutes", name: "Gluteus", role: .primary)],
+        ]
+        let zeilen = ["squat", "bank", "squat2", "fremd"].map(Zeile.init)
+        let abschnitte = UebungsGruppierung.abschnitte(zeilen, muskeln: { muskeln[$0.id] ?? [] })
+        #expect(abschnitte.map(\.gruppe) == [.brust, .beine, .weitere])
+        #expect(abschnitte[1].eintraege.map(\.id) == ["squat", "squat2"])
+        #expect(UebungsGruppierung.vorhandeneGruppen(zeilen, muskeln: { muskeln[$0.id] ?? [] })
+                == [.brust, .beine, .weitere])
+        let nurBeine = UebungsGruppierung.abschnitte(zeilen, muskeln: { muskeln[$0.id] ?? [] }, nur: .beine)
+        #expect(nurBeine.map(\.gruppe) == [.beine])
+    }
+
+    @Test func dieUeberschriftNenntMitFilterAuchDieAnzahl() {
+        #expect(MuskelAbschnitte<GeraetUebung, EmptyView>.kopf(gruppe: .beine, anzahl: 3, gefiltert: false) == "BEINE")
+        #expect(MuskelAbschnitte<GeraetUebung, EmptyView>.kopf(gruppe: .beine, anzahl: 1, gefiltert: true) == "BEINE · 1 ÜBUNG")
+        #expect(MuskelAbschnitte<GeraetUebung, EmptyView>.kopf(gruppe: .beine, anzahl: 3, gefiltert: true) == "BEINE · 3 ÜBUNGEN")
     }
 }

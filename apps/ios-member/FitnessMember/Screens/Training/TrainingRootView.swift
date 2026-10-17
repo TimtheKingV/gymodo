@@ -163,7 +163,7 @@ struct TrainingRootView: View {
             .sheet(item: $uebungsstart) { auftrag in
                 if let modell = modell(station: auftrag.station, exerciseId: auftrag.exerciseId,
                                        token: auftrag.token) {
-                    UebungsstartSheet(modell: modell, beiStart: { werte in
+                    UebungsstartSheet(modell: modell, mitUebersicht: true, beiStart: { werte in
                         uebungStarten(auftrag, mit: werte)
                     }, beiSchliessen: { uebungsstart = nil })
                     .environment(videoVorrat)
@@ -828,18 +828,13 @@ struct TrainingRootView: View {
     /// beginnt jetzt, nicht schon mit der Einweisung (Testnotiz 06.10., #5;
     /// 11.10., #11). Die Satzseite kommt mit den Startwerten und beginnt
     /// mit dem Countdown.
-    /// Eine bekannte Cardio-Uebung hat keinen Schritt im Drawer (Testnotiz
-    /// 14.10., 18:45 #6): sie startet gleich, mit den Werten, die der Drawer
-    /// vorgeschlagen haette. Alles andere geht ueber den Drawer.
+    /// Jede gewaehlte Uebung oeffnet den Drawer, auch eine bekannte und auch
+    /// Cardio (Testnotiz 17.10., #4): er beginnt mit der Uebersicht (Muskeln,
+    /// Beschreibung), von der man weiter oder wieder heraus kommt. Vorher
+    /// startete eine bekannte Cardio-Uebung gleich (Testnotiz 14.10., 18:45
+    /// #6) -- ohne dass man sich ansehen konnte, was sie beansprucht.
     private func uebungsstartOeffnen(_ auftrag: UebungsstartAuftrag) {
-        if let modell = modell(station: auftrag.station, exerciseId: auftrag.exerciseId, token: auftrag.token),
-           Uebungsstart.direktStart(erstkontakt: modell.istErstkontakt,
-                                    fragtEinstellung: modell.erstkontaktFragtEinstellung,
-                                    volumeKind: modell.volumeKind) {
-            uebungStarten(auftrag, mit: modell.startwerte)
-        } else {
-            uebungsstart = auftrag
-        }
+        uebungsstart = auftrag
     }
 
     private func uebungStarten(_ auftrag: UebungsstartAuftrag, mit werte: Startwerte) {
