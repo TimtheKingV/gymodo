@@ -8,8 +8,12 @@ enum MuskelStatus: Equatable {
 /// Bewertet die Verteilung des Trainings auf die sechs Gruppen und die
 /// Muskeln innerhalb einer Gruppe.
 enum Ausgewogenheit {
-    /// Muskeln, die kaum jemand gezielt trainiert -- nie ein Hinweis.
-    static let seltene: Set<String> = ["erectors", "adductors", "abductors", "rotator_cuff"]
+    /// Muskeln, die Hauptmuskel in hoechstens zwei Kataloguebungen sind
+    /// (teils in keiner) -- nie ein Hinweis.
+    static let seltene: Set<String> = [
+        "erectors", "adductors", "abductors", "rotator_cuff",
+        "serratus_anterior", "tibialis", "fibularis"
+    ]
 
     /// Darunter gilt etwas als zu wenig, darueber als viel (Vielfaches des Mittels).
     private static let untereGrenze = 0.5

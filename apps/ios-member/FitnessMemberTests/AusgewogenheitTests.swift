@@ -70,4 +70,11 @@ struct AusgewogenheitTests {
         let h = haeufigkeit(gruppen: [6, 6, 6, 6, 6, 6], muskeln: ["lats": 6, "upper_back": 6])
         #expect(Ausgewogenheit.status(muskel: "erectors", gruppe: .ruecken, in: h) == .kaumUebungen)
     }
+
+    @Test func muskelnOhneHauptuebungSindSelten() {
+        let h = haeufigkeit(gruppen: [6, 6, 6, 6, 6, 6], muskeln: ["pectorals": 6, "quads": 6])
+        #expect(Ausgewogenheit.status(muskel: "tibialis", gruppe: .beine, in: h) == .kaumUebungen)
+        #expect(Ausgewogenheit.status(muskel: "fibularis", gruppe: .beine, in: h) == .kaumUebungen)
+        #expect(Ausgewogenheit.status(muskel: "serratus_anterior", gruppe: .brust, in: h) == .kaumUebungen)
+    }
 }

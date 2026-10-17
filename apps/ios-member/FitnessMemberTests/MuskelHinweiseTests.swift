@@ -54,6 +54,13 @@ struct MuskelHinweiseTests {
         let h = mit([:]).mitMuskeln(["lats": 6, "upper_back": 6, "erectors": 0])
         #expect(MuskelHinweise.gruppenhinweis(gruppe: .ruecken, in: h, namen: [:]) == nil)
     }
+
+    @Test func gruppenhinweisNilWennNurTibialisUndFibularisFehlen() {
+        let h = mit([:]).mitMuskeln([
+            "quads": 6, "hamstrings": 6, "glutes": 6, "calves": 6, "tibialis": 0, "fibularis": 0
+        ])
+        #expect(MuskelHinweise.gruppenhinweis(gruppe: .beine, in: h, namen: [:]) == nil)
+    }
 }
 
 private extension Haeufigkeit {
