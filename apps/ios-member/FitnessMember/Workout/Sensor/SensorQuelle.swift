@@ -8,6 +8,18 @@ struct SensorFund: Identifiable, Equatable, Sendable {
     let rssi: Int
 }
 
+/// Wie der Sensor dem Mitglied heisst (Testnotiz 17.10., #3): der
+/// Bluetooth-Name des Bausteins ("WT901BLE67") ist ein Herstellername, nichts,
+/// womit man ihn erkennt. Nur die Anzeige; Aufnahme und Diagnose behalten den
+/// echten Namen.
+enum SensorName {
+    static let trackerName = "Gymtavo Tracker"
+
+    static func anzeige(_ bluetoothName: String) -> String {
+        bluetoothName.uppercased().hasPrefix("WT901") ? trackerName : bluetoothName
+    }
+}
+
 enum SensorZustand: Equatable, Sendable {
     enum Grund: Equatable, Sendable { case ausgeschaltet, verweigert, nichtUnterstuetzt }
 

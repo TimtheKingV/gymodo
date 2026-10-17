@@ -48,6 +48,9 @@ struct HomeRootView: View {
     /// Zielgewicht erreicht ist (`HomeZiele.Zustand.karte.erreichtText`),
     /// oeffnet dasselbe `ZielSheet` wie das Profil.
     @State private var neuesZielOffen = false
+    /// Die gewaehlte Muskelgruppe im Uebungsfortschritt; nil = Alle
+    /// (Testnotiz 17.10., #2).
+    @State private var fortschrittGruppe: MuskelHauptgruppe?
 
     /// Einmal aufgeloest, zweimal gelesen: Name fuer den Kopf, Zeitzone
     /// fuer die Buendelung der Einheiten. Dieselbe Ableitung wie
@@ -317,14 +320,28 @@ private extension HomeRootView {
         .foregroundStyle(DesignSystem.Color.textMuted)
     }
 
+    /// Wie die Uebungsliste am Geraet: Bullets "Alle" und die Muskelgruppen,
+    /// darunter die Zeilen nach Gruppe geordnet (Testnotiz 17.10., #2). Die
+    /// Bullets erst ab zwei Gruppen -- mit einer waere "Alle" dasselbe.
     var fortschritt: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+        let muskeln = HomeZeilen.muskelnJeUebung(katalog.bootstrap)
+        let jeUebung = { (uebung: ExerciseProgress) in muskeln[uebung.id] ?? [] }
+        let angebot = UebungsGruppierung.vorhandeneGruppen(verlauf.fortschritt, muskeln: jeUebung)
+        let filter = fortschrittGruppe.flatMap { angebot.contains($0) ? $0 : nil }
+        return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             Text("ÜBUNGSFORTSCHRITT")
                 .font(DesignSystem.Typography.label)
                 .kerning(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
 
-            ForEach(verlauf.fortschritt) { uebung in
+            if angebot.count > 1 {
+                GruppenLeiste(gruppen: angebot, auswahl: $fortschrittGruppe)
+            }
+
+            MuskelAbschnitte(
+                abschnitte: UebungsGruppierung.abschnitte(verlauf.fortschritt, muskeln: jeUebung, nur: filter),
+                gefiltert: filter != nil
+            ) { uebung in
                 Button {
                     pfad.append(.uebungsfortschritt(exerciseId: uebung.id))
                 } label: {
@@ -337,7 +354,8 @@ private extension HomeRootView {
 
     /// Video links, Name ohne Geraetenummer, rechts Last, Minikurve und
     /// Veraenderung seit Start in der Trendfarbe (Testnotiz 11.10., #2, #3,
-    /// #4). Die Nummer fiel weg: im Freien Training stand dort ohnehin der
+    /// #4). Das Trendsymbol fiel weg: die Minikurve steht jetzt in jeder Zeile
+    /// (Testnotiz 17.10., #1). Die Nummer fiel weg: im Freien Training stand dort ohnehin der
     /// Typname, und neben dem Video sagte sie nichts mehr.
     func fortschrittsZeile(_ uebung: ExerciseProgress) -> some View {
         let trend = HomeZeilen.trend(uebung.changeLoad)
@@ -360,13 +378,10 @@ private extension HomeRootView {
                     Minikurve(werte: werte, farbe: Self.farbe(trend))
                         .frame(width: 64, height: 20)
                 }
-                HStack(spacing: DesignSystem.Spacing.s4) {
-                    Image(systemName: Self.symbol(trend))
-                    Text(HomeZeilen.trendText(uebung.changeLoad, einheit: uebung.loadUnit))
-                        .monospacedDigit()
-                }
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Self.farbe(trend))
+                Text(HomeZeilen.trendText(uebung.changeLoad, einheit: uebung.loadUnit))
+                    .monospacedDigit()
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Self.farbe(trend))
             }
             .fixedSize()
         }
@@ -386,14 +401,6 @@ private extension HomeRootView {
         case .hoch: DesignSystem.Color.accent
         case .runter: DesignSystem.Color.warn
         case .gleich: DesignSystem.Color.textFaint
-        }
-    }
-
-    static func symbol(_ trend: HomeZeilen.Trend) -> String {
-        switch trend {
-        case .hoch: "chart.line.uptrend.xyaxis"
-        case .runter: "chart.line.downtrend.xyaxis"
-        case .gleich: "chart.line.flattrend.xyaxis"
         }
     }
 

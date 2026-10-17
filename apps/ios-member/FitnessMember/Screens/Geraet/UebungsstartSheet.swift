@@ -26,10 +26,15 @@ struct UebungsstartSheet: View {
     /// Wohin "Zurueck" nach "Kenne ich schon" fuehrt: an den Schritt, von
     /// dem aus uebersprungen wurde, nicht in die uebersprungene Einstellung.
     @State private var ruecksprung: Int?
+    /// Einmal beim Oeffnen: "Kenne ich schon" gibt es nur beim Erstkontakt;
+    /// bei der Uebersicht einer bekannten Uebung fuehrt "Weiter" dorthin.
+    @State private var erstkontakt: Bool
     /// Gemessen fuer die Startwerte allein, siehe `detents`.
     @State private var hoehe: CGFloat = 520
 
-    init(modell: GeraetModel, beiStart: @escaping (Startwerte) -> Void,
+    /// - mitUebersicht: auch eine bekannte Uebung zeigt erst die Einweisung
+    ///   (Testnotiz 17.10., #4); siehe `Uebungsstart.schritte`.
+    init(modell: GeraetModel, mitUebersicht: Bool = false, beiStart: @escaping (Startwerte) -> Void,
          beiSchliessen: @escaping () -> Void) {
         _modell = State(initialValue: modell)
         self.beiStart = beiStart
@@ -37,7 +42,9 @@ struct UebungsstartSheet: View {
         _schritte = State(initialValue: Uebungsstart.schritte(
             erstkontakt: modell.istErstkontakt,
             fragtEinstellung: modell.erstkontaktFragtEinstellung,
-            volumeKind: modell.volumeKind))
+            volumeKind: modell.volumeKind,
+            uebersicht: mitUebersicht))
+        _erstkontakt = State(initialValue: modell.istErstkontakt)
     }
 
     var body: some View {
@@ -55,7 +62,7 @@ struct UebungsstartSheet: View {
                         : (istLetzter ? "Übung starten" : "Weiter"),
                     beiAbbruch: beiSchliessen,
                     beiWeiter: { weiter() },
-                    beiUeberspringen: { ueberspringen() })
+                    beiUeberspringen: erstkontakt ? { ueberspringen() } : nil)
             case .einstellung:
                 KalibrierungSchritt(modell: modell, titel: titel("Deine Einstellung"),
                                     beiZurueck: { zurueck() }) { weiter() }

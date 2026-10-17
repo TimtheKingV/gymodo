@@ -160,6 +160,9 @@ struct Geraetefoto: View {
     let modellId: String
     let url: URL?
     let hoehe: CGFloat
+    /// Mit Breite ein kleines Bild neben dem Namen (Testnotiz 17.10., #6);
+    /// ohne füllt es die Breite wie oben auf der Seite.
+    var breite: CGFloat? = nil
 
     @State private var bild: UIImage?
 
@@ -173,12 +176,12 @@ struct Geraetefoto: View {
                 Image(uiImage: bild).resizable().aspectRatio(contentMode: .fill)
             } else {
                 Image(systemName: "photo")
-                    .font(.system(size: 28))
+                    .font(.system(size: breite == nil ? 28 : 20))
                     .foregroundStyle(DesignSystem.Color.textFaint)
             }
         }
-        .frame(height: hoehe)
-        .frame(maxWidth: .infinity)
+        .frame(width: breite, height: hoehe)
+        .frame(maxWidth: breite == nil ? .infinity : nil)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityHidden(true)
         // Der Pfad gehoert zur id, nicht die URL: die Signatur wechselt bei

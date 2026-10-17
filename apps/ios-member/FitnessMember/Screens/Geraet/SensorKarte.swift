@@ -42,7 +42,7 @@ struct SensorKarte: View {
         case .sucht, .verbindet, .mehrereGefunden:
             return Anzeige(titel: "Sensor", untertitel: "Wird gesucht …", akku: nil, ton: .ruhig)
         case .verbunden(let name, let akku):
-            return Anzeige(titel: name, untertitel: "Verbunden", akku: akku, ton: .verbunden)
+            return Anzeige(titel: SensorName.anzeige(name), untertitel: "Verbunden", akku: akku, ton: .verbunden)
         case .getrennt:
             return Anzeige(titel: "Sensor", untertitel: "Getrennt · wird neu verbunden …", akku: nil, ton: .warnung)
         case .bluetoothNichtBereit(.ausgeschaltet):
@@ -111,7 +111,7 @@ struct SensorKarte: View {
     private var auswahlBlatt: some View {
         NavigationStack {
             List(auswahl ?? []) { fund in
-                Button("\(fund.name) · \(fund.rssi) dBm") { koordinator.quelle.waehlen(fund) }
+                Button("\(SensorName.anzeige(fund.name)) · \(fund.rssi) dBm") { koordinator.quelle.waehlen(fund) }
             }
             .navigationTitle("Sensor wählen")
             .toolbar { Button("Abbrechen") { koordinator.quelle.trennen() } }

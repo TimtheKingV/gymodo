@@ -38,20 +38,31 @@ enum Uebungsstart {
     /// 18:45 #6): dort startet man einfach, die Werte kommen am Ende. Eine
     /// bekannte Cardio-Uebung hat damit gar keinen Schritt -- der Aufrufer
     /// startet sie ohne Drawer (`direktStart`).
+    ///
+    /// - uebersicht: auch eine bekannte Uebung beginnt mit der Einweisung, die
+    ///   Muskeln und Beschreibung zeigt (Testnotiz 17.10., #4) -- wer aus der
+    ///   Liste oder per Scan kommt, will sie sich manchmal noch einmal ansehen,
+    ///   und ein Tipp mehr tut nicht weh. Dann gibt es auch bei Cardio einen
+    ///   Schritt, `direktStart` ist nie wahr.
     static func schritte(erstkontakt: Bool, fragtEinstellung: Bool,
-                         volumeKind: VolumeKind = .reps) -> [UebungsstartSchritt] {
+                         volumeKind: VolumeKind = .reps,
+                         uebersicht: Bool = false) -> [UebungsstartSchritt] {
         var schritte: [UebungsstartSchritt] = []
         if erstkontakt {
             schritte.append(.einweisung)
             if fragtEinstellung { schritte.append(.einstellung) }
+        } else if uebersicht {
+            schritte.append(.einweisung)
         }
         if volumeKind == .reps { schritte.append(.startwerte) }
         return schritte
     }
 
     /// Kein Schritt uebrig: die Uebung startet ohne Drawer.
-    static func direktStart(erstkontakt: Bool, fragtEinstellung: Bool, volumeKind: VolumeKind) -> Bool {
-        schritte(erstkontakt: erstkontakt, fragtEinstellung: fragtEinstellung, volumeKind: volumeKind).isEmpty
+    static func direktStart(erstkontakt: Bool, fragtEinstellung: Bool, volumeKind: VolumeKind,
+                            uebersicht: Bool = false) -> Bool {
+        schritte(erstkontakt: erstkontakt, fragtEinstellung: fragtEinstellung, volumeKind: volumeKind,
+                 uebersicht: uebersicht).isEmpty
     }
 
     /// "Kenne ich schon" fuehrt an Einweisung und Einstellung vorbei

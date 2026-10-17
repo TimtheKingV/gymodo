@@ -41,6 +41,15 @@ enum MuskelHauptgruppe: Int, CaseIterable, Sendable {
     }
 }
 
+/// Ein Abschnitt der Ansicht "Muskel", fuer jede Art von Eintrag (Uebungen
+/// am Geraet, Zeilen des Uebungsfortschritts auf Home -- Testnotiz 17.10., #2).
+struct MuskelAbschnitt<Eintrag> {
+    let gruppe: MuskelHauptgruppe
+    let eintraege: [Eintrag]
+}
+
+extension MuskelAbschnitt: Equatable where Eintrag: Equatable {}
+
 /// Gruppiert die Uebungen eines Geraets nach Hauptmuskel -- nur Anzeige.
 enum UebungsGruppierung {
     struct Abschnitt: Equatable {
@@ -60,8 +69,18 @@ enum UebungsGruppierung {
     /// innerhalb gleicher Muskeln erhalten (stabil). Leere Gruppen entfallen.
     /// - nur: zeigt allein diese Gruppe (der Filter der Uebungsansicht).
     static func gruppieren(_ uebungen: [GeraetUebung], nur filter: MuskelHauptgruppe? = nil) -> [Abschnitt] {
-        let eingeordnet = uebungen.enumerated().map { index, uebung in
-            (index: index, uebung: uebung, platz: platz(uebung))
+        abschnitte(uebungen, muskeln: \.muscles, nur: filter)
+            .map { Abschnitt(gruppe: $0.gruppe, uebungen: $0.eintraege) }
+    }
+
+    /// Wie `gruppieren`, fuer jeden Eintrag, dessen Muskeln `muskeln` nennt
+    /// (Testnotiz 17.10., #2: der Uebungsfortschritt auf Home hat selbst keine
+    /// Muskeln, sie kommen aus dem Bootstrap).
+    static func abschnitte<Eintrag>(
+        _ eintraege: [Eintrag], muskeln: (Eintrag) -> [GeraetMuskel], nur filter: MuskelHauptgruppe? = nil
+    ) -> [MuskelAbschnitt<Eintrag>] {
+        let eingeordnet = eintraege.enumerated().map { index, eintrag in
+            (index: index, eintrag: eintrag, platz: platz(muskeln: muskeln(eintrag)))
         }
         let sortiert = eingeordnet.sorted { a, b in
             if a.platz.gruppe != b.platz.gruppe { return a.platz.gruppe.rawValue < b.platz.gruppe.rawValue }
@@ -70,20 +89,20 @@ enum UebungsGruppierung {
         }
         return MuskelHauptgruppe.allCases.compactMap { gruppe in
             if let filter, filter != gruppe { return nil }
-            let treffer = sortiert.filter { $0.platz.gruppe == gruppe }.map(\.uebung)
-            return treffer.isEmpty ? nil : Abschnitt(gruppe: gruppe, uebungen: treffer)
+            let treffer = sortiert.filter { $0.platz.gruppe == gruppe }.map(\.eintrag)
+            return treffer.isEmpty ? nil : MuskelAbschnitt(gruppe: gruppe, eintraege: treffer)
         }
     }
 
     /// Die Gruppen, in denen mindestens eine Uebung steht -- die Chips des Filters.
     static func vorhandeneGruppen(_ uebungen: [GeraetUebung]) -> [MuskelHauptgruppe] {
-        gruppieren(uebungen).map(\.gruppe)
+        vorhandeneGruppen(uebungen, muskeln: \.muscles)
     }
 
-    /// Der erste darstellbare Hauptmuskel; gibt es keinen, der erste
-    /// darstellbare Muskel ueberhaupt.
-    private static func platz(_ uebung: GeraetUebung) -> (gruppe: MuskelHauptgruppe, muskel: Int) {
-        platz(muskeln: uebung.muscles)
+    static func vorhandeneGruppen<Eintrag>(
+        _ eintraege: [Eintrag], muskeln: (Eintrag) -> [GeraetMuskel]
+    ) -> [MuskelHauptgruppe] {
+        abschnitte(eintraege, muskeln: muskeln).map(\.gruppe)
     }
 
     /// Die Hauptgruppe einer Uebung mit diesen Muskeln.
@@ -99,6 +118,8 @@ enum UebungsGruppierung {
         return gruppen.isEmpty ? [hauptgruppe(muskeln: muskeln)] : gruppen
     }
 
+    /// Der erste darstellbare Hauptmuskel; gibt es keinen, der erste
+    /// darstellbare Muskel ueberhaupt.
     private static func platz(muskeln: [GeraetMuskel]) -> (gruppe: MuskelHauptgruppe, muskel: Int) {
         let hauptmuskeln = muskeln.filter { $0.role == .primary }
         for muskel in hauptmuskeln + muskeln {

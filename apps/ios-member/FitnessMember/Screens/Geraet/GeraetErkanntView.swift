@@ -20,8 +20,7 @@ struct GeraetErkanntView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopfzeile
-                geraetefoto
-                geraetename
+                geraetekopf
                 uebungsliste
                 hinweis
             }
@@ -53,11 +52,20 @@ struct GeraetErkanntView: View {
         modell.ortsangabe.uppercased()
     }
 
-    /// Bestaetigt in einer Sekunde, dass man am richtigen Geraet steht --
-    /// bei zwei baugleichen Stationen der eigentliche Nutzen. Offline gibt
-    /// es keine signierte URL, dann steht hier der Platzhalter.
-    private var geraetefoto: some View {
-        Geraetefoto(modellId: modell.station.equipmentModelId, url: modell.kontext?.equipmentModel.photoUrl.flatMap(URL.init(string:)), hoehe: 180)
+    /// Das Foto klein links neben dem Namen, wie das Video in der Uebung
+    /// (Testnotiz 17.10., #6) -- vorher stand es 180 pt hoch ueber dem Namen
+    /// und schob die Uebungsliste nach unten. Es bestaetigt weiter, dass man
+    /// am richtigen Geraet steht, bei zwei baugleichen Stationen der
+    /// eigentliche Nutzen. Offline gibt es keine signierte URL, dann steht
+    /// hier der Platzhalter.
+    private var geraetekopf: some View {
+        HStack(alignment: .center, spacing: DesignSystem.Spacing.s12) {
+            Geraetefoto(modellId: modell.station.equipmentModelId,
+                        url: modell.kontext?.equipmentModel.photoUrl.flatMap(URL.init(string:)),
+                        hoehe: 56, breite: 56)
+            geraetename
+            Spacer(minLength: 0)
+        }
     }
 
     private var geraetename: some View {

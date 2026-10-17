@@ -154,6 +154,14 @@ struct MuskelModellTests {
         #expect(voll.cgImage != nil)
     }
 
+    /// Testnotiz 17.10., #5: Kopf, Haende, Fuesse und Hals stehen im hellen
+    /// Grau der unbeanspruchten Muskeln, nicht im Dunkel der Haut.
+    @Test("Kopf, Hände und Füße sind hell statt dunkel")
+    func detailpfadeSindHell() {
+        #expect(MuskelFigur.detailFuellung == DesignSystem.Color.muskelInaktiv)
+        #expect(MuskelFigur.detailFuellung != DesignSystem.Color.muskelHaut)
+    }
+
     /// Zaehlt Pixel nahe #D4FF3F.
     private static func akzentPixel(in bild: CGImage) -> Int {
         let breite = bild.width, hoehe = bild.height

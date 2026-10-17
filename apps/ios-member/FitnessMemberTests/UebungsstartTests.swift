@@ -55,6 +55,25 @@ struct UebungsstartTests {
         #expect(Uebungsstart.positionNachUeberspringen(in: schritte) == nil)
     }
 
+    // MARK: - Uebersicht (Testnotiz 17.10., #4)
+
+    /// Aus Liste und Scan oeffnet auch eine bekannte Uebung zuerst die
+    /// Einweisung mit den Muskeln, nie gleich die Session.
+    @Test func mitUebersichtBeginntAuchEineBekannteUebungMitDerEinweisung() {
+        #expect(Uebungsstart.schritte(erstkontakt: false, fragtEinstellung: true, uebersicht: true)
+                == [.einweisung, .startwerte])
+        #expect(Uebungsstart.schritte(erstkontakt: false, fragtEinstellung: false, volumeKind: .seconds,
+                                      uebersicht: true) == [.einweisung])
+        #expect(!Uebungsstart.direktStart(erstkontakt: false, fragtEinstellung: false, volumeKind: .meters,
+                                          uebersicht: true))
+    }
+
+    /// Der Erstkontakt bleibt, wie er war: die Einweisung steht nur einmal.
+    @Test func mitUebersichtAendertDenErstkontaktNicht() {
+        #expect(Uebungsstart.schritte(erstkontakt: true, fragtEinstellung: true, uebersicht: true)
+                == [.einweisung, .einstellung, .startwerte])
+    }
+
     // MARK: - Countdown (#10)
 
     /// Fuenf Sekunden zaehlen, dann eine Sekunde "Los!" in der Mitte.

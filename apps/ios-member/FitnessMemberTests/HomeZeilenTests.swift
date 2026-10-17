@@ -188,10 +188,40 @@ struct HomeZeilenTests {
         }
     }
 
-    @Test func sparkWerteBrauchenZweiPunkte() {
+    /// Testnotiz 17.10., #1: auch ein einzelner Tag hat seine Minikurve (nur
+    /// den Punkt), damit keine Zeile stattdessen das Trendsymbol zeigt.
+    @Test func sparkWerteGibtEsAbEinemPunkt() {
         #expect(HomeZeilen.sparkWerte(punkte([])).isEmpty)
-        #expect(HomeZeilen.sparkWerte(punkte([40])).isEmpty)
+        #expect(HomeZeilen.sparkWerte(punkte([40])) == [40])
         #expect(HomeZeilen.sparkWerte(punkte([40, 45])) == [40, 45])
+    }
+
+    /// Testnotiz 17.10., #2: die Muskeln fuer die Gruppierung des
+    /// Uebungsfortschritts kommen aus dem Bootstrap; die erste nicht leere
+    /// Liste je Uebung gilt, eine Uebung ohne Muskeln fehlt.
+    @Test func muskelnJeUebungKommenAusDenGeraetenDesBootstraps() {
+        func maschine(_ id: String, _ exercises: String) -> BootstrapResponse.Machine {
+            GeraetTestdaten.dekodiere("""
+            {"id":"\(id)","studioId":"s1","label":"G","locationNote":null,"status":"active",
+             "tokenHashes":[],"visitCount":1,
+             "equipmentModel":{"id":"em\(id)","name":"M","manufacturer":null,"category":"kraft","photoPath":null,
+               "loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,"settingDefinitions":[]},
+             "exercises":[\(exercises)]}
+            """)
+        }
+        let brust = #"{"key":"pectorals","name":"Brust","role":"primary"}"#
+        let bootstrap = BootstrapResponse(
+            member: .init(displayName: nil), studios: [],
+            machines: [
+                maschine("m1", #"{"id":"e1","name":"A","volumeKind":"reps","targetMin":8,"targetMax":12,"muscles":[\#(brust)]},{"id":"e2","name":"B","volumeKind":"reps","targetMin":8,"targetMax":12}"#),
+                maschine("m2", #"{"id":"e2","name":"B","volumeKind":"reps","targetMin":8,"targetMax":12,"muscles":[{"key":"lats","name":"Latissimus","role":"primary"}]}"#),
+            ],
+            calibrations: [], lastSets: [])
+        let muskeln = HomeZeilen.muskelnJeUebung(bootstrap)
+        #expect(muskeln["e1"]?.map(\.key) == ["pectorals"])
+        #expect(muskeln["e2"]?.map(\.key) == ["lats"])
+        #expect(muskeln["e3"] == nil)
+        #expect(HomeZeilen.muskelnJeUebung(nil).isEmpty)
     }
 
     /// Nur die juengsten Tage: die Kurve ist 64 pt breit, und eine lange
