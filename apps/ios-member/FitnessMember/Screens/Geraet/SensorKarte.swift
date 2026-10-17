@@ -59,9 +59,13 @@ struct SensorKarte: View {
         let a = Self.anzeige(zustand: zustand, fehler: koordinator.fehler, suchtKurz: suchtKurz)
         Button(action: tippen) {
             HStack(spacing: DesignSystem.Spacing.s12) {
-                Image(systemName: "sensor.tag.radiowaves.forward")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(a.ton == .verbunden ? DesignSystem.Color.accent : DesignSystem.Color.textMuted)
+                // Das Produktbild behaelt seine Farben; der Zustand steht
+                // in der Deckkraft (verbunden voll, sonst gedaempft).
+                Image("SensorGeraet")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 36, height: 33)
+                    .opacity(a.ton == .verbunden ? 1 : 0.45)
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                     Text(a.titel)
                         .font(DesignSystem.Typography.uebungsname)
