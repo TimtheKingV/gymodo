@@ -53,7 +53,7 @@ Tim hat „ausgewogen“ so festgelegt: **Muskelgruppen werden ähnlich oft trai
 - Eine Gruppe zählt eine Einheit, wenn irgendein Muskel der Gruppe sie bekommt. Zuordnung der Schlüssel zu Gruppen wie in `UebungsGruppierung`. Unbekannte Schlüssel wie `deep_core` zählen nicht.
 - **Ausgewogenheit** = wie ähnlich die sechs Gruppen in ihrer Häufigkeit untereinander sind (Abstand zum Mittel). Gleiche Gewichtung für alle sechs, keine Richtgrößen. Formel: Builder, erklärbar und mit festgeschriebenen Testbeispielen.
 - **Zu wenig** = deutlich unter dem Mittel der Gruppen (Startwert: unter der Hälfte). Teilmuskeln vergleicht man mit dem Mittel ihrer eigenen Gruppe. **Auch null Einheiten gelten als Nachholbedarf (orange), sobald genug Daten für eine Auswertung da sind.**
-- **Seltene Muskeln** (als Hauptmuskel in höchstens zwei Katalogübungen: Rückenstrecker, Adduktoren, Abduktoren, Rotatorenmanschette) werden grau mit „kaum Übungen“ angezeigt und lösen nie Hinweissatz oder Hinweiskarte aus. Sie zählen weiter zur Gruppe.
+- **Seltene Muskeln** (als Hauptmuskel in höchstens zwei Katalogübungen: Rückenstrecker, Adduktoren, Abduktoren, Rotatorenmanschette, vorderer Sägemuskel, Schienbeinmuskel, Fibularis; kein Hauptmuskel einer Katalogübung bzw. höchstens zwei) werden grau mit „kaum Übungen“ angezeigt und lösen nie Hinweissatz oder Hinweiskarte aus. Sie zählen weiter zur Gruppe.
 - Cardio-Sätze zählen nicht.
 - Legende der Figur: Nachholbedarf (orange) · ok · viel (Lime-Skala, mehr = heller) · keine Auswertung (grau).
 
@@ -69,7 +69,7 @@ Tim hat „ausgewogen“ so festgelegt: **Muskelgruppen werden ähnlich oft trai
 
 Aus dem Designsystem (§13.1 Muskelkarte) und `MuskelFigur`:
 - Lime-Skala (`#5E7220` bis `#D4FF3F`) = trainiert, mehr Menge heller.
-- **Orange** (Entwurf: `#E8A33D`) = Nachholbedarf. Das ist ein neuer Farbwert; Builder legt ihn als Token im Designsystem an.
+- **Orange** = Nachholbedarf. Nachholbedarf nimmt das vorhandene `DesignSystem.Color.warn` (`#FFB020`); kein neuer Farbwert.
 - Grau (`#383D47`) = nicht angesprochen oder noch keine Auswertung.
 - Legende unter der Figur: Nachholbedarf · ok · viel · nicht trainiert.
 - Sprache Deutsch, ruhiger Ton, wie in den bestehenden Texten der App. Beispiele aus dem Entwurf: „Gut dabei“, „Eher viel“, „Hinten zu wenig“.
