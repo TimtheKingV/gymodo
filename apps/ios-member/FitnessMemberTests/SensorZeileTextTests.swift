@@ -33,7 +33,9 @@ struct SensorKarteAnzeigeTests {
 
     @Test func nichtVerbundenUndFehler() {
         #expect(SensorKarte.anzeige(zustand: .aus).untertitel == "Nicht verbunden · Tippen zum Verbinden")
-        #expect(SensorKarte.anzeige(zustand: .sucht).untertitel == "Wird gesucht …")
+        // Testnotiz 17.10., #1: dauerhaft "Nicht verbunden", nur nach dem Tipp "Wird gesucht".
+        #expect(SensorKarte.anzeige(zustand: .sucht).untertitel == "Nicht verbunden")
+        #expect(SensorKarte.anzeige(zustand: .sucht, suchtKurz: true).untertitel == "Wird gesucht …")
         #expect(SensorKarte.anzeige(zustand: .bluetoothNichtBereit(.ausgeschaltet)).ton == .warnung)
         #expect(SensorKarte.anzeige(zustand: .aus, fehler: "Boom") == .init(titel: "Sensor", untertitel: "Boom", akku: nil, ton: .warnung))
     }

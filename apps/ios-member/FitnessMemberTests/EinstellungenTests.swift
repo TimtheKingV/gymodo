@@ -30,6 +30,10 @@ struct EinstellungenTests {
         #expect(Einstellungen.vibriertBeimSichern(defaults) == false)
     }
 
+    @Test func diePauseBietetAuchKurzeStufen() {
+        #expect(Einstellungen.resttimerStufen.starts(with: [10, 20, 30]))
+    }
+
     @Test func dieVorgabeStehtUnterDenStufen() {
         #expect(Einstellungen.resttimerStufen.contains(Einstellungen.resttimerVorgabe))
         #expect(Einstellungen.satzZielStufen.contains(Einstellungen.satzZielVorgabe))

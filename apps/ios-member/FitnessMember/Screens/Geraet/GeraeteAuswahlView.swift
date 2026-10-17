@@ -49,6 +49,8 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     }
 
     @State private var suchtext = ""
+    /// "Mehr anzeigen" unter "Zuletzt bei dir" (Testnotiz 17.10., #3).
+    @State private var zuletztAlle = false
     /// Muskeln oder Favoriten in der Geraeteliste einer Kategorie; Muskeln ist
     /// die Vorgabe und wird nicht gemerkt.
     @State private var ansicht: Uebungsansicht = .muskel
@@ -304,7 +306,17 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                         kacheln(g.kategorien, ersteGruppe: true)
                     }
                     if !g.zuletzt.isEmpty {
-                        gruppe("ZULETZT BEI DIR", g.zuletzt, ersteGruppe: g.kategorien.isEmpty)
+                        gruppe("ZULETZT BEI DIR",
+                               zuletztAlle ? g.zuletzt : Array(g.zuletzt.prefix(GeraeteAuswahl.zuletztSichtbar)),
+                               ersteGruppe: g.kategorien.isEmpty)
+                        if g.zuletzt.count > GeraeteAuswahl.zuletztSichtbar {
+                            Button(zuletztAlle ? "Weniger anzeigen" : "Mehr anzeigen") {
+                                zuletztAlle.toggle()
+                            }
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                        }
                     }
                     if !g.liste.isEmpty {
                         kategorieListe(g.liste)
