@@ -138,6 +138,7 @@
 		67CB5A92D5A22F772F336E2F /* FortschrittsfensterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */; };
 		6812F175D0293265578050F9 /* NFCTagLeser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33916355F38A81716A43C018 /* NFCTagLeser.swift */; };
 		69707264A68EBA2FC3D1FD67 /* MemberPasswortNeuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6331BCAA9F1DFF57341B82E /* MemberPasswortNeuView.swift */; };
+		6A0D570C3CFDF7FB97365F58 /* MuskelFortschrittTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE5F3B85850F4C319026E25 /* MuskelFortschrittTests.swift */; };
 		6A1B6C63F3A7BB4D29C3320B /* CardioRaster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2680F7C1EDB171506672B7F1 /* CardioRaster.swift */; };
 		6A59A84F41992865C3BDFF92 /* HomeZieleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30FF5A6BBD8F56D126611CB8 /* HomeZieleView.swift */; };
 		6A76BD1CA4324AA4D5E12AE6 /* Minikurve.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38DF496B3317F9A17CF267BE /* Minikurve.swift */; };
@@ -182,6 +183,7 @@
 		8FC7A533B3262AA6723ED9C1 /* Rastwerte.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE7999237F8B3E7635E236AE /* Rastwerte.swift */; };
 		9145F7245C5D69AA90AD9B7A /* GeraetRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF6476398D0D632AA4C97E66 /* GeraetRoute.swift */; };
 		91C74D33160FE23B01B7CF08 /* Schleifenvideo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27C91AE37A6CC0AA3627BD49 /* Schleifenvideo.swift */; };
+		923910EF670A80DF997575DE /* MuskelFortschritt.swift in Sources */ = {isa = PBXBuildFile; fileRef = D913DCD1F4AB2EF93FA750A9 /* MuskelFortschritt.swift */; };
 		95794FEE5EC5FFA101C74C3D /* MemberPasswortAendernView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 213A5216BA472EAE4240C049 /* MemberPasswortAendernView.swift */; };
 		95A75D03EB1CB2035C1F6987 /* SitzungBlatt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3485543C6E0CF68AD35F7E /* SitzungBlatt.swift */; };
 		95B29E199599A515EDFF60C5 /* SetWriteHerkunftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99F4FCF4F273CAB328BF77EE /* SetWriteHerkunftTests.swift */; };
@@ -615,6 +617,7 @@
 		CFA471448D3B4B628A0BD6D5 /* GewichtsverlaufHilfenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GewichtsverlaufHilfenTests.swift; sourceTree = "<group>"; };
 		CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStoreTests.swift; sourceTree = "<group>"; };
 		CFBC22CBF40859396B6DD869 /* testnotiz-beispiel.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "testnotiz-beispiel.json"; sourceTree = "<group>"; };
+		CFE5F3B85850F4C319026E25 /* MuskelFortschrittTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuskelFortschrittTests.swift; sourceTree = "<group>"; };
 		D1A00954754396E772B78770 /* HomeKurseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeKurseTests.swift; sourceTree = "<group>"; };
 		D33AEE94B0EDB5593285596C /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		D382CA0B325C07B61F776A1D /* PendingSetWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingSetWrite.swift; sourceTree = "<group>"; };
@@ -628,6 +631,7 @@
 		D88102EAEB9BC8D4E6FA9BC7 /* PfadbereinigungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PfadbereinigungTests.swift; sourceTree = "<group>"; };
 		D8AB9FA9643F21A13395FA66 /* BootstrapFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootstrapFileStore.swift; sourceTree = "<group>"; };
 		D8B181EA25F1AE0F34024FB1 /* TestnotizAblaufTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizAblaufTests.swift; sourceTree = "<group>"; };
+		D913DCD1F4AB2EF93FA750A9 /* MuskelFortschritt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuskelFortschritt.swift; sourceTree = "<group>"; };
 		D922539BB579EDDA0F7747CD /* ErrorEnvelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorEnvelope.swift; sourceTree = "<group>"; };
 		D98716595032172974F2CAB3 /* Station.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Station.swift; sourceTree = "<group>"; };
 		DB8CC4AA1ADA4ED3E6D39207 /* CatalogStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogStoreTests.swift; sourceTree = "<group>"; };
@@ -1024,6 +1028,7 @@
 				A2D588E7E4F6611509CF03B1 /* KursZustandTests.swift */,
 				EBD729F0FF6DCF906AA1C920 /* LokaleSessionTests.swift */,
 				F2544360B27EEB7C56A35775 /* MarkenAssetTests.swift */,
+				CFE5F3B85850F4C319026E25 /* MuskelFortschrittTests.swift */,
 				FBF507D7058BF51E38744D65 /* MuskelHinweiseTests.swift */,
 				96654D646EF71D44A91FCDF5 /* MuskelModellTests.swift */,
 				0F4F2DAEB38D14F84C2ECC1B /* OnboardingAntwortenTests.swift */,
@@ -1096,6 +1101,7 @@
 				33390D3B1F76175CEE039764 /* Ausgewogenheit.swift */,
 				C393A29144DBA03B05E97E18 /* Haeufigkeit.swift */,
 				1C435A5F4E6D684CE1C9BA42 /* Hinweise.swift */,
+				D913DCD1F4AB2EF93FA750A9 /* MuskelFortschritt.swift */,
 			);
 			path = Muskelauswertung;
 			sourceTree = "<group>";
@@ -1512,6 +1518,7 @@
 				B43F29AF4430526E932E3952 /* MemberStudiosView.swift in Sources */,
 				A20E9991662F803A7FE958CD /* Messwert.swift in Sources */,
 				6A76BD1CA4324AA4D5E12AE6 /* Minikurve.swift in Sources */,
+				923910EF670A80DF997575DE /* MuskelFortschritt.swift in Sources */,
 				DCA1550314C99EB1B12154AD /* MuskelKarte.swift in Sources */,
 				6710FD66A97A901737C9964D /* MuskelModell.swift in Sources */,
 				6812F175D0293265578050F9 /* NFCTagLeser.swift in Sources */,
@@ -1675,6 +1682,7 @@
 				FA9F18E9FD57D18F60D1D587 /* KurseWochenPagingTests.swift in Sources */,
 				C8CDA41EEA7DB3A151511528 /* LokaleSessionTests.swift in Sources */,
 				0CC624443C0CFE0C0A80A543 /* MarkenAssetTests.swift in Sources */,
+				6A0D570C3CFDF7FB97365F58 /* MuskelFortschrittTests.swift in Sources */,
 				A4C02ED91D8F3DB6B476D078 /* MuskelHinweiseTests.swift in Sources */,
 				F2B07A22DDA47AC16486472F /* MuskelModellTests.swift in Sources */,
 				28DB21D330D60931AE02D035 /* OnboardingAntwortenTests.swift in Sources */,
