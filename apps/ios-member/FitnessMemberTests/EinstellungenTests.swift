@@ -55,3 +55,19 @@ struct UebungsansichtEinstellungTests {
         #expect(Einstellungen.uebungsansicht(defaults) == .muskel)
     }
 }
+
+struct FortschrittsansichtEinstellungTests {
+    @Test func vorgabeIstMuskelgruppenUndDerSchluesselBleibt() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        #expect(Einstellungen.fortschrittsansichtKey == "fortschrittsansicht")
+        #expect(Einstellungen.fortschrittsansicht(defaults) == .muskelgruppen)
+    }
+
+    @Test func gespeicherteWahlGiltUnbekanntesFaelltZurueck() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        defaults.set("uebungen", forKey: Einstellungen.fortschrittsansichtKey)
+        #expect(Einstellungen.fortschrittsansicht(defaults) == .uebungen)
+        defaults.set("quatsch", forKey: Einstellungen.fortschrittsansichtKey)
+        #expect(Einstellungen.fortschrittsansicht(defaults) == .muskelgruppen)
+    }
+}
