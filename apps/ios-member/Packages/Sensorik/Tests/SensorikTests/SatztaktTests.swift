@@ -49,6 +49,60 @@ struct SatztaktTests {
         #expect(abs(a.takt - b.takt) < 0.1)
     }
 
+    private func werte(_ name: String) throws -> (messwerte: [SensorMesswert], rate: Double) {
+        let (datei, eintraege) = try SensorAufnahmeLeser.lesen(ordner: Pfade.aufnahmen.appendingPathComponent(name))
+        return (eintraege.compactMap { if case .messwert(let m) = $0 { m } else { nil } }, Double(datei.sensor.rateSollHz))
+    }
+
+    /// Bankdruecken 18.10.: die Kette findet 4 von 8, die Aktivdauer der Huellkurve 7.
+    @Test func ketteZuKurzSchaetztAusDerAktivdauer() throws {
+        let (m, rate) = try werte("2026-10-18-1619-01")
+        let e = try #require(Satztakt.auswerten(m, rateHz: rate))
+        #expect(abs(e.anzahl - 8) <= 1)
+        #expect(e.guete < 0.5)
+    }
+
+    /// Latzug/Beinpresse mit Stapel-Profil: die Kette riss bei 14 von 30 ab.
+    @Test func rissInDerKetteWirdUeberbruecktMitStapelProfil() throws {
+        let (m, rate) = try werte("2026-10-18-1646-01")
+        let stapel = TaktProfil(taktMin: 1.0, taktMax: 4.0, kappFaktor: 1.5, kandidatAnteil: 0.85,
+                                gleichheitMin: 0.8, abstandMin: 0.75, abstandMax: 1.3, mindestDauer: 5)
+        let e = try #require(Satztakt.auswerten(m, rateHz: rate, profil: stapel))
+        #expect(abs(e.anzahl - 30) <= 1)
+    }
+
+    /// Takt ausserhalb der Profilgrenzen (3,2 s bei taktMax 3): trotzdem eine
+    /// Zahl, aber als unsicher gekennzeichnet.
+    @Test func taktAusserhalbDerGrenzenGibtEineUnsichereZahl() throws {
+        let (m, rate) = try werte("2026-10-14-1747-01")
+        let e = try #require(Satztakt.auswerten(m, rateHz: rate))
+        #expect(abs(e.anzahl - 10) <= 1)
+        #expect(e.guete < 0.5)
+    }
+
+    /// Zwei Haelften mit acht Sekunden Pause (Unterhaltung): beide zaehlen.
+    @Test func pauseImSatzZaehltBeideHaelften() throws {
+        let rate = 50.0, takt = 2.0
+        let dt = 1 / rate
+        func y(_ t: Double) -> Double {
+            if t < 2 { return 1 + 0.8 * sin(t * .pi / 2) }
+            if (2..<14).contains(t) || (22..<34).contains(t) {
+                let lokal = t < 14 ? t - 2 : t - 22
+                return 1 + 0.3 * sin(lokal * 2 * .pi / takt)
+            }
+            return 1
+        }
+        let m = (0..<Int(37 * rate)).map { i -> SensorMesswert in
+            let t = Double(i) * dt
+            return SensorMesswert(t: 100 + t, beschleunigung: Vektor3(x: 0, y: y(t), z: 0.05),
+                                  drehrate: Vektor3(x: 0, y: 0, z: 0), winkel: Vektor3(x: 0, y: 0, z: 0))
+        }
+        let e = try #require(Satztakt.auswerten(m, rateHz: rate))
+        // Die Huellkurve verlaengert jeden Lauf an den Raendern um rund einen Takt; mit zwei
+        // Laeufen sind das +2. Wichtig ist, dass beide Haelften zaehlen (sonst 6).
+        #expect(abs(e.anzahl - 12) <= 2)
+    }
+
     @Test func ruheGibtNichts() {
         let still = (0..<500).map { i in
             SensorMesswert(t: Double(i) / 50, beschleunigung: Vektor3(x: 0, y: 1, z: 0),

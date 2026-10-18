@@ -6,10 +6,10 @@ Ziel: höchstens ±1 neben der Wahrheit. Erzeugt von `TaktBerichtTests.berichtSc
 
 | Art | Sätze | exakt | ±1 |
 |---|---|---|---|
-| stapel | 19 | 42 % | 68 % |
-| langhantel | 6 | 33 % | 50 % |
+| stapel | 19 | 63 % | 89 % |
+| langhantel | 6 | 33 % | 83 % |
 | kurzhantel | 7 | 86 % | 86 % |
-| **gepoolt** | 32 | 50 % | 69 % |
+| **gepoolt** | 32 | 62 % | 88 % |
 
 ### Blindprüfung (nur Arten mit eingefrorenen Parametern: keine)
 
@@ -28,13 +28,7 @@ Ziel: höchstens ±1 neben der Wahrheit. Erzeugt von `TaktBerichtTests.berichtSc
 
 | Ordner | Art | Gruppe | wahr | gezählt |
 |---|---|---|---|---|
-| 2026-10-14-1747-01 | stapel | abstimmen | 10 | – |
-| 2026-10-14-1837-01 | stapel | abstimmen | 8 | – |
 | 2026-10-18-1643-01 | stapel | abstimmen | 17 | 12 |
-| 2026-10-18-1646-01 | stapel | abstimmen | 30 | 7 |
 | 2026-10-18-1649-02 | stapel | abstimmen | 25 | – |
-| 2026-10-18-1652-01 | stapel | abstimmen | 25 | 17 |
-| 2026-10-18-1619-01 | langhantel | abstimmen | 8 | 4 |
 | 2026-10-18-1623-01 | langhantel | abstimmen | 12 | 7 |
-| 2026-10-18-1656-02 | langhantel | abstimmen | 30 | 20 |
 | 2026-10-18-1611-02 | kurzhantel | abstimmen | 12 | 8 |

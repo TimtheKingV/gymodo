@@ -53,20 +53,72 @@ public enum Satztakt {
     /// Gleitender Mittelwert, der die langsame Lageaenderung (Aufheben,
     /// Ablegen, Schraeglage) aus dem Signal nimmt.
     private static let langsamS = 3.0
+
+    /// Kette zu kurz gegen die Aktivdauer: unter diesem Anteil der Schaetzung
+    /// gilt die Schaetzung. An den Abstimmungssaetzen vom 18.10. greift das nur
+    /// dort, wo die Kette bei 14 von 30 oder 4 von 8 abriss; die 35 Kurzhantel-
+    /// Saetze vom 16.10. bleiben unberuehrt.
+    private static let kettenAnteil = 0.7
+    /// Anteil der Spitze der Takt-Huellkurve, ab dem ein Moment als aktiv gilt.
+    private static let huellSchwelle = 0.4
+    /// Eine Zahl aus Schaetzung oder erweitertem Takt ist unsicher (`Ergebnis.guete`).
+    static let unsicherGrenze = 0.49
+
     public static func auswerten(_ messwerte: [SensorMesswert], rateHz: Double = 50,
                                  profil: TaktProfil = .kurzhantel) -> Ergebnis? {
+        if let e = auswertenEinmal(messwerte, rateHz: rateHz, profil: profil) { return e }
+        // Kein Takt im Profilbereich: noch einmal mit weiterer Obergrenze, aber unsicher.
+        let weit = TaktProfil(taktMin: profil.taktMin, taktMax: profil.taktMax * 1.5, kappFaktor: profil.kappFaktor,
+                              kandidatAnteil: profil.kandidatAnteil, gleichheitMin: profil.gleichheitMin,
+                              abstandMin: profil.abstandMin, abstandMax: profil.abstandMax,
+                              mindestDauer: profil.mindestDauer)
+        guard let e = auswertenEinmal(messwerte, rateHz: rateHz, profil: weit) else { return nil }
+        return Ergebnis(anzahl: e.anzahl, takt: e.takt, beginn: e.beginn, ende: e.ende,
+                        guete: min(e.guete, unsicherGrenze), ausschlag: e.ausschlag)
+    }
+
+    private static func auswertenEinmal(_ messwerte: [SensorMesswert], rateHz: Double,
+                                        profil: TaktProfil) -> Ergebnis? {
         let n = messwerte.count
         let dt = 1 / rateHz
         guard n > Int(profil.mindestDauer * rateHz) else { return nil }
         let s = signal(messwerte, dt: dt, profil: profil)
         guard let (takt, guete) = takt(s, dt: dt, profil: profil) else { return nil }
-        let (_, ausschlag) = huellkurve(s, takt: takt, dt: dt)
+        let (huelle, ausschlag) = huellkurve(s, takt: takt, dt: dt)
         guard ausschlag > 0 else { return nil }
         let laenge = Int((takt / dt).rounded())
         let kette = laengsteKette(s, laenge: laenge, profil: profil)
-        guard let erster = kette.first, let letzter = kette.last else { return nil }
-        return Ergebnis(anzahl: kette.count, takt: takt, beginn: messwerte[erster].t,
-                        ende: messwerte[min(n - 1, letzter + laenge)].t, guete: guete, ausschlag: ausschlag)
+        // Die Schaetzung zaehlt zusammenhaengende aktive Laeufe ab `laufMin` Takten:
+        // beide Haelften eines Satzes mit Pause, aber keine verstreuten Ausschlaege
+        // eines schwachen Signals.
+        let laeufe = aktiveLaeufe(huelle, schwelle: huellSchwelle * ausschlag, mindestens: Int(laufMin * Double(laenge)))
+        let schaetzung = Int((Double(laeufe.reduce(0) { $0 + $1.count }) * dt / takt).rounded())
+        let aktiv = laeufe.flatMap { $0 }
+        if let erster = kette.first, let letzter = kette.last, Double(kette.count) >= kettenAnteil * Double(schaetzung) {
+            return Ergebnis(anzahl: kette.count, takt: takt, beginn: messwerte[erster].t,
+                            ende: messwerte[min(n - 1, letzter + laenge)].t, guete: guete, ausschlag: ausschlag)
+        }
+        guard schaetzung > 0, let von = aktiv.first, let bis = aktiv.last else { return nil }
+        return Ergebnis(anzahl: schaetzung, takt: takt, beginn: messwerte[von].t, ende: messwerte[bis].t,
+                        guete: min(guete, unsicherGrenze), ausschlag: ausschlag)
+    }
+
+    /// Anzahl Takte, die ein aktiver Lauf mindestens dauern muss.
+    private static let laufMin = 2.5
+
+    /// Indexlaeufe, in denen die Huellkurve `schwelle` erreicht, ohne
+    /// Unterbrechung und mit mindestens `mindestens` Werten.
+    private static func aktiveLaeufe(_ huelle: [Double], schwelle: Double, mindestens: Int) -> [[Int]] {
+        var laeufe: [[Int]] = []
+        var lauf: [Int] = []
+        for i in huelle.indices {
+            if huelle[i] >= schwelle { lauf.append(i) } else {
+                if lauf.count >= mindestens { laeufe.append(lauf) }
+                lauf = []
+            }
+        }
+        if lauf.count >= mindestens { laeufe.append(lauf) }
+        return laeufe
     }
 
     // MARK: - Kette
