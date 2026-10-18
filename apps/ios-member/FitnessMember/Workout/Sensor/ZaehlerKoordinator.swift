@@ -24,9 +24,20 @@ final class ZaehlerKoordinator: SatzZaehler {
     @ObservationIgnored private var zaehler: Zaehler?
     @ObservationIgnored private var satzbeginn: TimeInterval = 0
     @ObservationIgnored private var ereignisse: [ZaehlerEreignis] = []
-    /// Alle Messwerte des Satzes, nur an der Kurzhantel: dort zaehlt am
+    /// Messwerte des Satzes, nur fuer Arten mit Takt-Profil: dort zaehlt am
     /// Satzende die Takt-Auswertung (Satztakt) und ersetzt die Live-Zahl.
+    /// Hoechstens `fensterS` Sekunden: die Auswertung waechst quadratisch mit
+    /// der Satzlaenge (Mac, Release: 4 min = 0,5 s, Debug rund das 70-Fache).
+    /// Ein laengerer Satz zaehlt wieder mit der Live-Zahl.
     @ObservationIgnored private var satzMesswerte: [SensorMesswert] = []
+    @ObservationIgnored private var satzZuLang = false
+    private static let fensterS = 150.0
+    var satzMesswerteAnzahl: Int { satzMesswerte.count }
+    /// Wie oft ergebnis() selbst rechnen musste statt die fertige Live-Auswertung zu nehmen (Tests).
+    @ObservationIgnored private(set) var syncAuswertungen = 0
+    /// Neueste fertige Auswertung und die Zahl der Messwerte, auf denen sie beruht.
+    @ObservationIgnored private var taktErgebnis: Satztakt.Ergebnis?
+    @ObservationIgnored private var taktWerte = 0
     /// Testnotiz 16.10., #4: das Rad folgte der Live-Zahl (in 1421-03 eine
     /// 1), gespeichert wurde sie neben der Takt-Zahl 8 als "korrigiert".
     /// Seither zaehlt der Takt auch waehrend des Satzes. Er kostet im
@@ -69,11 +80,11 @@ final class ZaehlerKoordinator: SatzZaehler {
         defer { beenden() }
         guard var zaehler, let art = befestigung?.art else { return nil }
         ereignisse += zaehler.abschliessen()
-        if art == .kurzhantel, let takt = Satztakt.auswerten(satzMesswerte, rateHz: Double(quelle.rate.rawValue)) {
+        if let takt = taktAmSatzende(art: art) {
             let wiederholungen = Satztakt.wiederholungen(takt).map { ZaehlerEreignis.wiederholung($0) }
             return ZaehlerErgebnis(
                 gezaehlt: takt.anzahl,
-                repEvents: RepEvents(algo: Satztakt.algo, befestigungsart: art,
+                repEvents: RepEvents(algo: Satztakt.algo(fuer: art), befestigungsart: art,
                                      ereignisse: wiederholungen + [.zuende], satzbeginn: satzbeginn))
         }
         let gezaehlt = zaehler.anzahl
@@ -82,6 +93,16 @@ final class ZaehlerKoordinator: SatzZaehler {
             gezaehlt: gezaehlt,
             repEvents: RepEvents(algo: zaehler.profil.algo, befestigungsart: art,
                                  ereignisse: ereignisse, satzbeginn: satzbeginn))
+    }
+
+    /// Die fertige Live-Auswertung, wenn sie den Satz bis auf drei Sekunden
+    /// gesehen hat; sonst rechnet das Satzende selbst (Main Actor).
+    private func taktAmSatzende(art: Befestigungsart) -> Satztakt.Ergebnis? {
+        guard let profil = TaktProfil.fuer(art), !satzZuLang else { return nil }
+        let rate = Double(quelle.rate.rawValue)
+        if let taktErgebnis, satzMesswerte.count - taktWerte <= Int(3 * rate) { return taktErgebnis }
+        syncAuswertungen += 1
+        return Satztakt.auswerten(satzMesswerte, rateHz: rate, profil: profil)
     }
 
     func satzVerworfen() { beenden() }
@@ -103,7 +124,10 @@ final class ZaehlerKoordinator: SatzZaehler {
             // Ein Paket von vor dem Satzbeginn kann noch im Strom stecken;
             // es gehoert nicht zum Satz.
             guard var zaehler, messwert.t >= satzbeginn else { return }
-            if befestigung?.art == .kurzhantel { satzMesswerte.append(messwert) }
+            if let art = befestigung?.art, TaktProfil.fuer(art) != nil, !satzZuLang {
+                satzMesswerte.append(messwert)
+                begrenzen()
+            }
             let neu = zaehler.verarbeite(messwert)
             self.zaehler = zaehler
             weitergeben(neu)
@@ -142,6 +166,8 @@ final class ZaehlerKoordinator: SatzZaehler {
         zaehler = nil
         ereignisse = []
         satzMesswerte = []
+        satzZuLang = false
+        syncAuswertungen = 0
         taktZuruecksetzen()
         guard let kontext else { return }
         guard kontext.volumeKind == .reps else { return senden(.zaehltNicht(.keineWiederholungen)) }
@@ -153,26 +179,37 @@ final class ZaehlerKoordinator: SatzZaehler {
         senden(.bereit)
     }
 
+    /// Altes vom Anfang abschneiden, in Schritten, damit nicht jeder Messwert
+    /// das ganze Feld verschiebt. Danach gilt der Satz als zu lang fuer den Takt.
+    private func begrenzen() {
+        let grenze = Int(Self.fensterS * Double(quelle.rate.rawValue))
+        guard satzMesswerte.count > grenze + 250 else { return }
+        satzMesswerte.removeFirst(satzMesswerte.count - grenze)
+        satzZuLang = true
+        taktErgebnis = nil
+    }
+
     /// Hoechstens einmal je Sekunde Messzeit und nie neben einer laufenden
     /// Auswertung; wer waehrenddessen kam, ist bei der naechsten dabei.
     private func taktAnstossen() {
-        guard befestigung?.art == .kurzhantel, !taktLaeuft,
+        guard let art = befestigung?.art, let profil = TaktProfil.fuer(art), !taktLaeuft, !satzZuLang,
               let letzter = satzMesswerte.last, letzter.t - taktBis >= 1 else { return }
         taktLaeuft = true
         taktBis = letzter.t
         let kopie = satzMesswerte, rate = Double(quelle.rate.rawValue), kennung = satzKennung
         Task { [weak self] in
-            let anzahl = await Task.detached(priority: .userInitiated) {
-                Satztakt.auswerten(kopie, rateHz: rate)?.anzahl
+            let ergebnis = await Task.detached(priority: .userInitiated) {
+                Satztakt.auswerten(kopie, rateHz: rate, profil: profil)
             }.value
-            self?.taktFertig(anzahl, kennung: kennung)
+            self?.taktFertig(ergebnis, werte: kopie.count, kennung: kennung)
         }
     }
 
-    private func taktFertig(_ anzahl: Int?, kennung: Int) {
+    private func taktFertig(_ ergebnis: Satztakt.Ergebnis?, werte: Int, kennung: Int) {
         guard kennung == satzKennung else { return }
         taktLaeuft = false
-        if let anzahl, anzahl > 0, anzahl != taktStand {
+        if !satzZuLang { taktErgebnis = ergebnis; taktWerte = werte }
+        if let anzahl = ergebnis?.anzahl, anzahl > 0, anzahl != taktStand {
             taktStand = anzahl
             senden(.stand(anzahl))
         }
@@ -210,6 +247,8 @@ final class ZaehlerKoordinator: SatzZaehler {
     private func taktZuruecksetzen() {
         satzKennung += 1
         taktStand = nil
+        taktErgebnis = nil
+        taktWerte = 0
         taktLaeuft = false
         taktBis = 0
     }

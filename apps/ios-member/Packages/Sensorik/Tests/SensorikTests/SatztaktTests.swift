@@ -103,6 +103,17 @@ struct SatztaktTests {
         #expect(abs(e.anzahl - 12) <= 2)
     }
 
+    /// Latzug 18.10. mit der App im Hintergrund: iOS liefert die Pakete nur etwa
+    /// alle 0,6 s (je rund 30 Werte). Der Live-Zaehler wertet das als Luecke
+    /// (Schwelle 0,5 s) und zaehlt nicht; die Takt-Auswertung rechnet in
+    /// Abtastwerten und trifft beide Saetze.
+    @Test(arguments: [("2026-10-18-1628-01", 12), ("2026-10-18-1630-01", 14)])
+    func hintergrundSaetzeZaehltDerTaktTrotzPaketluecken(name: String, wahr: Int) throws {
+        let (m, rate) = try werte(name)
+        let e = try #require(Satztakt.auswerten(m, rateHz: rate, profil: .stapel))
+        #expect(abs(e.anzahl - wahr) <= 1)
+    }
+
     @Test func ruheGibtNichts() {
         let still = (0..<500).map { i in
             SensorMesswert(t: Double(i) / 50, beschleunigung: Vektor3(x: 0, y: 1, z: 0),
