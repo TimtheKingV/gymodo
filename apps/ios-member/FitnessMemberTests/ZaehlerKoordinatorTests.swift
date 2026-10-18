@@ -121,15 +121,52 @@ struct ZaehlerKoordinatorTests {
         #expect(sut.ergebnis()?.repEvents.algo != "hebelarm/takt1")
     }
 
-    /// Ein Satz ueber 150 s waechst nicht unbegrenzt im Speicher; er zaehlt
-    /// danach wieder mit der Live-Zahl (die Takt-Auswertung wird quadratisch teuer).
+    /// Ein Satz ueber 150 s waechst nicht unbegrenzt im Speicher (die
+    /// Takt-Auswertung wird quadratisch teuer); was danach gespeichert wird,
+    /// prueft `satzUeberDemFensterSpeichertDieZahlDesRads`.
     @Test func langerSatzBegrenztDenPuffer() {
         let (sut, _, uhr, m) = aufbau()
         beginnen(sut, m)
         sut.befestigungWaehlen(.stapel)
         for w in Self.kurzhantelSatz(wiederholungen: 100, ab: uhr.t) { sut.empfangen(.messwert(w)) }
         #expect(sut.satzMesswerteAnzahl > 7000 && sut.satzMesswerteAnzahl <= 7500 + 250)
-        #expect(sut.ergebnis()?.repEvents.algo != "stapel/takt1")
+    }
+
+    /// Review 18.10.: ueber dem Fenster endet die Takt-Auswertung; gespeichert
+    /// wird trotzdem die Zahl, die das Rad zuletzt zeigte, nicht die (viel zu
+    /// kleine) Live-Zahl.
+    @Test func satzUeberDemFensterSpeichertDieZahlDesRads() async throws {
+        let quelle = AttrappenQuelle()
+        quelle.zustand = Self.verbunden
+        let uhr = Uhr()
+        let sut = ZaehlerKoordinator(quelle: quelle, einstellungen: UserDefaults(suiteName: UUID().uuidString)!,
+                                     uhr: { uhr.t }, fensterS: 10)
+        let m = Meldungen()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.kurzhantel)
+        let alle = Self.kurzhantelSatz(wiederholungen: 8, ab: uhr.t)
+        func letzterStand() -> Int? { m.liste.compactMap { if case .stand(let n) = $0 { n } else { nil } }.last }
+        for w in alle.prefix(700) { sut.empfangen(.messwert(w)) }
+        for _ in 0..<300 where letzterStand() == nil { try await Task.sleep(for: .milliseconds(50)) }
+        #expect(letzterStand() != nil)
+        for w in alle.dropFirst(700) { sut.empfangen(.messwert(w)) }
+        try await Task.sleep(for: .seconds(2))
+        let gezeigt = try #require(letzterStand())
+        let ergebnis = try #require(sut.ergebnis())
+        #expect(ergebnis.gezaehlt == gezeigt)
+        #expect(ergebnis.repEvents.algo == "kurzhantel/takt2")
+    }
+
+    /// Eine Takt-Zahl aus Schaetzung oder erweitertem Takt ist unsicher und
+    /// wird so gespeichert (Spec: `signalSchwach`).
+    @Test func unsichereTaktZahlWirdAlsSignalSchwachGespeichert() throws {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.stapel)
+        for w in try Self.aufnahme("2026-10-14-1747-01", ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        let ergebnis = try #require(sut.ergebnis())
+        #expect(abs(ergebnis.gezaehlt - 10) <= 1)
+        #expect(ergebnis.repEvents.unsicher == .signalSchwach)
     }
 
     /// Hat die Live-Auswertung den ganzen Satz schon gesehen, rechnet das

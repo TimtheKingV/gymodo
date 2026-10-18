@@ -62,7 +62,7 @@ public enum Satztakt {
     /// Anteil der Spitze der Takt-Huellkurve, ab dem ein Moment als aktiv gilt.
     private static let huellSchwelle = 0.4
     /// Eine Zahl aus Schaetzung oder erweitertem Takt ist unsicher (`Ergebnis.guete`).
-    static let unsicherGrenze = 0.49
+    public static let unsicherGrenze = 0.49
 
     public static func auswerten(_ messwerte: [SensorMesswert], rateHz: Double = 50,
                                  profil: TaktProfil = .kurzhantel) -> Ergebnis? {

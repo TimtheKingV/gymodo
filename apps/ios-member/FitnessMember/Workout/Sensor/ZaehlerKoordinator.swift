@@ -28,10 +28,11 @@ final class ZaehlerKoordinator: SatzZaehler {
     /// Satzende die Takt-Auswertung (Satztakt) und ersetzt die Live-Zahl.
     /// Hoechstens `fensterS` Sekunden: die Auswertung waechst quadratisch mit
     /// der Satzlaenge (Mac, Release: 4 min = 0,5 s, Debug rund das 70-Fache).
-    /// Ein laengerer Satz zaehlt wieder mit der Live-Zahl.
+    /// Danach rechnet der Takt nicht mehr; gespeichert wird seine letzte fertige
+    /// Zahl (die das Rad zeigt), nicht die Live-Zahl.
     @ObservationIgnored private var satzMesswerte: [SensorMesswert] = []
     @ObservationIgnored private var satzZuLang = false
-    private static let fensterS = 150.0
+    private let fensterS: TimeInterval
     var satzMesswerteAnzahl: Int { satzMesswerte.count }
     /// Wie oft ergebnis() selbst rechnen musste statt die fertige Live-Auswertung zu nehmen (Tests).
     @ObservationIgnored private(set) var syncAuswertungen = 0
@@ -51,7 +52,9 @@ final class ZaehlerKoordinator: SatzZaehler {
     @ObservationIgnored private var lauscher: Task<Void, Never>?
 
     init(quelle: any SensorQuelle, einstellungen: UserDefaults = .standard,
-         uhr: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
+         uhr: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime },
+         fensterS: TimeInterval = 150) {
+        self.fensterS = fensterS
         self.quelle = quelle
         self.speicher = Befestigungsspeicher(einstellungen: einstellungen)
         self.uhr = uhr
@@ -82,10 +85,11 @@ final class ZaehlerKoordinator: SatzZaehler {
         ereignisse += zaehler.abschliessen()
         if let takt = taktAmSatzende(art: art) {
             let wiederholungen = Satztakt.wiederholungen(takt).map { ZaehlerEreignis.wiederholung($0) }
+            let unsicher: [ZaehlerEreignis] = takt.guete <= Satztakt.unsicherGrenze ? [.unsicher(.signalSchwach)] : []
             return ZaehlerErgebnis(
                 gezaehlt: takt.anzahl,
                 repEvents: RepEvents(algo: Satztakt.algo(fuer: art), befestigungsart: art,
-                                     ereignisse: wiederholungen + [.zuende], satzbeginn: satzbeginn))
+                                     ereignisse: wiederholungen + unsicher + [.zuende], satzbeginn: satzbeginn))
         }
         let gezaehlt = zaehler.anzahl
         guard gezaehlt > 0 else { return nil }
@@ -98,7 +102,8 @@ final class ZaehlerKoordinator: SatzZaehler {
     /// Die fertige Live-Auswertung, wenn sie den Satz bis auf drei Sekunden
     /// gesehen hat; sonst rechnet das Satzende selbst (Main Actor).
     private func taktAmSatzende(art: Befestigungsart) -> Satztakt.Ergebnis? {
-        guard let profil = TaktProfil.fuer(art), !satzZuLang else { return nil }
+        guard let profil = TaktProfil.fuer(art) else { return nil }
+        if satzZuLang { return taktErgebnis }
         let rate = Double(quelle.rate.rawValue)
         if let taktErgebnis, satzMesswerte.count - taktWerte <= Int(3 * rate) { return taktErgebnis }
         syncAuswertungen += 1
@@ -182,11 +187,10 @@ final class ZaehlerKoordinator: SatzZaehler {
     /// Altes vom Anfang abschneiden, in Schritten, damit nicht jeder Messwert
     /// das ganze Feld verschiebt. Danach gilt der Satz als zu lang fuer den Takt.
     private func begrenzen() {
-        let grenze = Int(Self.fensterS * Double(quelle.rate.rawValue))
+        let grenze = Int(fensterS * Double(quelle.rate.rawValue))
         guard satzMesswerte.count > grenze + 250 else { return }
         satzMesswerte.removeFirst(satzMesswerte.count - grenze)
         satzZuLang = true
-        taktErgebnis = nil
     }
 
     /// Hoechstens einmal je Sekunde Messzeit und nie neben einer laufenden
@@ -208,7 +212,7 @@ final class ZaehlerKoordinator: SatzZaehler {
     private func taktFertig(_ ergebnis: Satztakt.Ergebnis?, werte: Int, kennung: Int) {
         guard kennung == satzKennung else { return }
         taktLaeuft = false
-        if !satzZuLang { taktErgebnis = ergebnis; taktWerte = werte }
+        if let ergebnis { taktErgebnis = ergebnis; taktWerte = werte } else if !satzZuLang { taktErgebnis = nil }
         if let anzahl = ergebnis?.anzahl, anzahl > 0, anzahl != taktStand {
             taktStand = anzahl
             senden(.stand(anzahl))
