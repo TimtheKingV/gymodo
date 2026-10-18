@@ -110,11 +110,18 @@ struct MuskelFigur: View {
     let farben: [String: Color]
     let geschlecht: Geschlecht?
     let ansichten: Set<Ansicht>
+    /// Duenne Linien fuer die Figur im Kleinformat (Trainingskarte): bei
+    /// 36 pt Breite waeren die Linien der Karte (SS13.1) ein Klumpen.
+    let kompakt: Bool
 
-    init(farben: [String: Color], geschlecht: Geschlecht?, ansichten: Set<Ansicht> = [.vorne, .hinten]) {
+    init(
+        farben: [String: Color], geschlecht: Geschlecht?,
+        ansichten: Set<Ansicht> = [.vorne, .hinten], kompakt: Bool = false
+    ) {
         self.farben = farben
         self.geschlecht = geschlecht
         self.ansichten = ansichten
+        self.kompakt = kompakt
     }
 
     /// Die Karte der Einweisung: Farben aus den Rollen der Uebung.
@@ -141,13 +148,14 @@ struct MuskelFigur: View {
             let breite = gewaehlt.map(\.viewBox.width).reduce(0, +) + Self.abstand * CGFloat(max(0, gewaehlt.count - 1))
             let hoehe = gewaehlt.map(\.viewBox.height).max() ?? 1
             let farben = farben
+            let kompakt = kompakt
 
             Canvas { kontext, groesse in
                 let massstab = groesse.width / breite
                 kontext.scaleBy(x: massstab, y: massstab)
                 var versatz: CGFloat = 0
                 for ansicht in gewaehlt {
-                    Self.zeichne(ansicht, versatz: versatz, farben: farben, in: kontext)
+                    Self.zeichne(ansicht, versatz: versatz, farben: farben, kompakt: kompakt, in: kontext)
                     versatz += ansicht.viewBox.width + Self.abstand
                 }
             }
@@ -168,11 +176,13 @@ struct MuskelFigur: View {
     nonisolated private static let koerperLinie: CGFloat = 2.3
     nonisolated private static let detailLinie: CGFloat = 1.1
     nonisolated private static let muskelKante: CGFloat = 3.2
+    nonisolated private static let kompaktFaktor: CGFloat = 0.5
 
     nonisolated private static func zeichne(
         _ ansicht: MuskelGeometrie.Ansicht,
         versatz: CGFloat,
         farben: [String: Color],
+        kompakt: Bool,
         in basis: GraphicsContext
     ) {
         var kontext = basis
@@ -182,17 +192,19 @@ struct MuskelFigur: View {
         let haut = GraphicsContext.Shading.color(DesignSystem.Color.muskelHaut)
         let neutral = GraphicsContext.Shading.color(detailFuellung)
         let linie = GraphicsContext.Shading.color(DesignSystem.Color.muskelLinie)
+        // Im Kleinformat mal 0,5: dieselbe Wirkung bei einem Zehntel der Breite.
+        let faktor: CGFloat = kompakt ? kompaktFaktor : 1
         for pfad in ansicht.body {
             kontext.fill(pfad, with: haut)
-            kontext.stroke(pfad, with: linie, lineWidth: koerperLinie)
+            kontext.stroke(pfad, with: linie, lineWidth: koerperLinie * faktor)
         }
         for pfad in ansicht.detail {
             kontext.fill(pfad, with: neutral)
-            kontext.stroke(pfad, with: linie, lineWidth: detailLinie)
+            kontext.stroke(pfad, with: linie, lineWidth: detailLinie * faktor)
         }
 
         let kante = GraphicsContext.Shading.color(DesignSystem.Color.muskelKante)
-        let kantenstil = StrokeStyle(lineWidth: muskelKante, lineJoin: .round)
+        let kantenstil = StrokeStyle(lineWidth: muskelKante * faktor, lineJoin: .round)
         for flaeche in ansicht.muskeln {
             // Wie clip-path im SVG: der Ausschnitt schneidet Flaeche und
             // Kante, damit an der Schnittkante keine zusaetzliche Linie entsteht.

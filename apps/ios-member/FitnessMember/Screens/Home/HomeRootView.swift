@@ -119,6 +119,8 @@ struct HomeRootView: View {
                             kurseJeTag: HomeKurse.termineJeTag(
                                 eigeneKurse?.termine ?? [], jetzt: Date()),
                             kurseBuchungen: eigeneKurse,
+                            muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap),
+                            geschlecht: geschlecht,
                             beiKursAuswahl: { id in pfad.append(.kursDetail(sessionId: id)) })
                     }
 

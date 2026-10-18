@@ -25,6 +25,17 @@ struct MuskelFarbenTests {
         #expect(farben["erectors"] == DesignSystem.Color.muskelInaktiv)
     }
 
+    @Test func trainingskarteFaerbtStarkSchwachUndLaesstDenRestWeg() {
+        let farben = MuskelFarben.farben(
+            profil: TrainingsProfil(
+                titel: "Brust", stufen: ["pectorals": .stark, "triceps": .schwach]))
+
+        #expect(farben["pectorals"] == DesignSystem.Color.accent)
+        #expect(farben["triceps"] == DesignSystem.Color.accentPressed)
+        // Fehlt: MuskelFigur malt den Muskel dann in muskelInaktiv.
+        #expect(farben["quads"] == nil)
+    }
+
     @Test func startansichtFaerbtJedenMuskelNachDemStatusSeinerGruppe() {
         // Mittel 25/6 ~ 4,2: Brust 1 = Nachholbedarf, Ruecken 8 = viel, Rest ok.
         // Innerhalb des Rumpfs liegt abs weit vor obliques -- auf der Startansicht egal.

@@ -27,6 +27,18 @@ enum MuskelFarben {
         return farben
     }
 
+    /// Trainingskarte auf Home: stark = Akzent, schwach = gedrueckter
+    /// Akzent. Wer nicht beansprucht wurde, fehlt -- `MuskelFigur` malt ihn
+    /// dann grau.
+    static func farben(profil: TrainingsProfil) -> [String: Color] {
+        profil.stufen.mapValues { stufe in
+            switch stufe {
+            case .stark: DesignSystem.Color.accent
+            case .schwach: DesignSystem.Color.accentPressed
+            }
+        }
+    }
+
     /// Startansicht: jeder Muskel im Status seiner Gruppe gegenueber allen
     /// sechs -- dieselbe Aussage wie Liste und Satz. Seltene Muskeln grau.
     /// Der Vergleich der Muskeln innerhalb der Gruppe bleibt dem Detail.
