@@ -59,6 +59,11 @@ struct HomeSerieView: View {
     /// Frist und Zeitzone fuer die Kurskarte -- nil, solange keine
     /// Buchungen geladen sind; dann gibt es auch keine Kurse anzuzeigen.
     var kurseBuchungen: GespeicherteBuchungen? = nil
+    /// Muskeln je Uebung (`HomeZeilen.muskelnJeUebung`) und Geschlecht der
+    /// Figur: daraus entstehen Name und Mini-Figur der Trainingskarte.
+    /// Ohne Katalog heisst die Karte "Training" und die Figur ist grau.
+    var muskeln: [String: [GeraetMuskel]] = [:]
+    var geschlecht: Geschlecht? = nil
     var beiKursAuswahl: (String) -> Void = { _ in }
 
     @State private var auswahl: HomeSerieAuswahl = .vorgabe
@@ -445,7 +450,37 @@ private extension HomeSerieView {
     }
 
     func tageskarte(_ karte: Trainingskarte) -> some View {
+        let profil = TrainingsProfil.berechne(karte: karte, muskeln: muskeln)
+        return HStack(spacing: DesignSystem.Spacing.s12) {
+            // Beide Seiten: im Kleinformat ist schwer zu sehen, ob eine
+            // Figur Vorder- oder Rueckseite zeigt -- darum die Beschriftung.
+            VStack(spacing: DesignSystem.Spacing.s4) {
+                MuskelFigur(
+                    farben: MuskelFarben.farben(profil: profil), geschlecht: geschlecht,
+                    kompakt: true)
+                HStack {
+                    Text("vorne")
+                    Spacer(minLength: 0)
+                    Text("hinten")
+                }
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(DesignSystem.Color.textFaint)
+            }
+            .frame(width: 76)
+            tageskartenText(karte, titel: profil.titel)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(DesignSystem.Spacing.s16)
+        .background(DesignSystem.Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+    }
+
+    func tageskartenText(_ karte: Trainingskarte, titel: String) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+            Text(titel)
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+
             Text(HomeZeilen.grosseZeile(karte))
                 .font(DesignSystem.Typography.wertSekundaer)
                 .foregroundStyle(DesignSystem.Color.text)
@@ -464,9 +499,6 @@ private extension HomeSerieView {
                 .monospacedDigit()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(DesignSystem.Spacing.s16)
-        .background(DesignSystem.Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
 }
 
@@ -542,7 +574,8 @@ private extension HomeSerieView {
     /// machen als das Auge. Wer es genau wissen will, oeffnet die Einheit
     /// -- dort liest VoiceOver den Hinweis samt Erklaerung.
     func kartenLabel(_ karte: Trainingskarte) -> String {
-        "\(HomeZeilen.grosseZeile(karte)). \(HomeZeilen.kleineZeile(karte))."
+        let titel = TrainingsProfil.berechne(karte: karte, muskeln: muskeln).titel
+        return "\(titel). \(HomeZeilen.grosseZeile(karte)). \(HomeZeilen.kleineZeile(karte))."
     }
 }
 
