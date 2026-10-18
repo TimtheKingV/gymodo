@@ -30,6 +30,11 @@ public enum Satztakt {
     /// Kennung fuer rep_events und aufnahme.json (`ZaehlerProfil.algo` fuer die Takt-Auswertung).
     public static let algo = "kurzhantel/takt2"
 
+    /// Kennung je Art: Kurzhantel behaelt `takt2`, die anderen Arten starten bei `takt1`.
+    public static func algo(fuer art: Befestigungsart) -> String {
+        art == .kurzhantel ? algo : "\(art.rawValue)/takt1"
+    }
+
     /// Die Wiederholungen als gleich lange Abschnitte des Takts. Einzelne
     /// Zeiten kennt die Auswertung nicht, nur Beginn, Ende und Takt; die
     /// Umkehr liegt in der Mitte. Ehrlicher als zehn erfundene Spitzen und
@@ -48,37 +53,17 @@ public enum Satztakt {
     /// Gleitender Mittelwert, der die langsame Lageaenderung (Aufheben,
     /// Ablegen, Schraeglage) aus dem Signal nimmt.
     private static let langsamS = 3.0
-    private static let taktMin = 1.2
-    /// Laengere Takte waren an allen Aufnahmen Verdopplungen (Druecken:
-    /// 3,1 bis 3,4 s statt 1,6 s); die langsamste echte Wiederholung lag bei 2,5 s.
-    private static let taktMax = 3.0
-    /// Aufheben und Ablegen sind beim Druecken staerker als die Wiederholungen
-    /// selbst und ziehen Takt und Huellkurve zu sich. Das Signal wird auf das
-    /// 1,5-fache des typischen Ausschlags gekappt (an 1,2 bis 1,5 gleich gut).
-    private static let kappFaktor = 1.5
-    /// Ein Oberton (Druecken hat zwei Hoecker je Wiederholung) ist kuerzer
-    /// als der Takt: der kleinste Kandidat mit fast bester Korrelation gewinnt.
-    private static let kandidatAnteil = 0.85
-    /// Mindestgleichheit zweier aufeinanderfolgender Wiederholungen. An den
-    /// Aufnahmen vom 16.10. (Block 9 und 11 Uhr, 27 Saetze) abgestimmt: 21
-    /// exakt statt 17, gleich gut von 0,88 bis 0,93; geprueft an den 8 Saetzen
-    /// von 13 Uhr: 7 exakt statt 6.
-    private static let gleichheitMin = 0.9
-    /// Abstand zur naechsten Wiederholung in Takten: das Tempo schwankt im Satz.
-    private static let abstandMin = 0.75
-    private static let abstandMax = 1.3
-    private static let mindestDauer = 5.0
-
-    public static func auswerten(_ messwerte: [SensorMesswert], rateHz: Double = 50) -> Ergebnis? {
+    public static func auswerten(_ messwerte: [SensorMesswert], rateHz: Double = 50,
+                                 profil: TaktProfil = .kurzhantel) -> Ergebnis? {
         let n = messwerte.count
         let dt = 1 / rateHz
-        guard n > Int(mindestDauer * rateHz) else { return nil }
-        let s = signal(messwerte, dt: dt)
-        guard let (takt, guete) = takt(s, dt: dt) else { return nil }
+        guard n > Int(profil.mindestDauer * rateHz) else { return nil }
+        let s = signal(messwerte, dt: dt, profil: profil)
+        guard let (takt, guete) = takt(s, dt: dt, profil: profil) else { return nil }
         let (_, ausschlag) = huellkurve(s, takt: takt, dt: dt)
         guard ausschlag > 0 else { return nil }
         let laenge = Int((takt / dt).rounded())
-        let kette = laengsteKette(s, laenge: laenge)
+        let kette = laengsteKette(s, laenge: laenge, profil: profil)
         guard let erster = kette.first, let letzter = kette.last else { return nil }
         return Ergebnis(anzahl: kette.count, takt: takt, beginn: messwerte[erster].t,
                         ende: messwerte[min(n - 1, letzter + laenge)].t, guete: guete, ausschlag: ausschlag)
@@ -103,28 +88,29 @@ public enum Satztakt {
 
     /// Beginn des Abschnitts nach (`richtung` 1) bzw. vor (-1) `start`, der ihm
     /// am meisten gleicht, sofern die Gleichheit reicht.
-    private static func naechster(_ x: [Double], nach start: Int, richtung: Int, laenge: Int) -> Int? {
+    private static func naechster(_ x: [Double], nach start: Int, richtung: Int, laenge: Int,
+                                  profil: TaktProfil) -> Int? {
         var beste = -2.0, bester: Int?
-        for d in Int(abstandMin * Double(laenge))...Int(abstandMax * Double(laenge)) {
+        for d in Int(profil.abstandMin * Double(laenge))...Int(profil.abstandMax * Double(laenge)) {
             let s = start + richtung * d
             guard s >= 0, s + laenge <= x.count else { continue }
             let g = gleichheit(x, start, s, laenge: laenge)
             if g > beste { beste = g; bester = s }
         }
-        return beste >= gleichheitMin ? bester : nil
+        return beste >= profil.gleichheitMin ? bester : nil
     }
 
     /// Beginne der laengsten Kette sich gleichender Abschnitte. Startpunkte im
     /// Viertel-Takt-Raster, von jedem aus waechst die Kette in beide Richtungen.
-    private static func laengsteKette(_ x: [Double], laenge: Int) -> [Int] {
+    private static func laengsteKette(_ x: [Double], laenge: Int, profil: TaktProfil) -> [Int] {
         guard laenge > 0, x.count > laenge else { return [] }
         var beste: [Int] = []
         for saat in stride(from: 0, to: x.count - laenge, by: max(1, laenge / 4)) {
             var kette = [saat]
             var cur = saat
-            while let s = naechster(x, nach: cur, richtung: 1, laenge: laenge) { kette.append(s); cur = s }
+            while let s = naechster(x, nach: cur, richtung: 1, laenge: laenge, profil: profil) { kette.append(s); cur = s }
             cur = saat
-            while let s = naechster(x, nach: cur, richtung: -1, laenge: laenge) { kette.insert(s, at: 0); cur = s }
+            while let s = naechster(x, nach: cur, richtung: -1, laenge: laenge, profil: profil) { kette.insert(s, at: 0); cur = s }
             if kette.count > beste.count { beste = kette }
         }
         return beste
@@ -134,7 +120,7 @@ public enum Satztakt {
 
     /// Beschleunigung auf der Achse der groessten Streuung, tiefpassgefiltert
     /// und von der langsamen Lage befreit.
-    private static func signal(_ m: [SensorMesswert], dt: Double) -> [Double] {
+    private static func signal(_ m: [SensorMesswert], dt: Double, profil: TaktProfil) -> [Double] {
         let rc = 1 / (2 * .pi * tiefpassHz)
         let alpha = dt / (rc + dt)
         let fenster = max(1, Int(langsamS / dt))
@@ -148,19 +134,19 @@ public enum Satztakt {
             let mittel = gleitenderMittelwert(tief, fenster: fenster)
             return zip(tief, mittel).map { $0 - $1 }
         }
-        return kappen(hauptachse(achsen), dt: dt)
+        return kappen(hauptachse(achsen), dt: dt, faktor: profil.kappFaktor)
     }
 
-    /// Kappt bei `kappFaktor` mal dem typischen Sekunden-Effektivwert
+    /// Kappt bei `faktor` (Profil) mal dem typischen Sekunden-Effektivwert
     /// (Median der oberen Haelfte, also der aktiven Sekunden).
-    private static func kappen(_ x: [Double], dt: Double) -> [Double] {
+    private static func kappen(_ x: [Double], dt: Double, faktor: Double) -> [Double] {
         let sek = max(1, Int(1 / dt))
         guard x.count >= sek else { return x }
         let rms = stride(from: 0, through: x.count - sek, by: sek).map { i in
             (x[i..<(i + sek)].reduce(0) { $0 + $1 * $1 } / Double(sek)).squareRoot()
         }.sorted()
         let obere = rms[(rms.count / 2)...]
-        let grenze = kappFaktor * obere[obere.startIndex + obere.count / 2]
+        let grenze = faktor * obere[obere.startIndex + obere.count / 2]
         guard grenze > 0 else { return x }
         return x.map { min(grenze, max(-grenze, $0)) }
     }
@@ -206,18 +192,18 @@ public enum Satztakt {
 
     /// Takt aus der Autokorrelation und der Anteil der Schwingung, der in
     /// ihm liegt (Korrelation beim Takt geteilt durch die Varianz).
-    private static func takt(_ s: [Double], dt: Double) -> (TimeInterval, Double)? {
+    private static func takt(_ s: [Double], dt: Double, profil: TaktProfil) -> (TimeInterval, Double)? {
         let mittel = s.reduce(0, +) / Double(s.count)
         let x = s.map { $0 - mittel }
         let varianz = x.reduce(0) { $0 + $1 * $1 } / Double(x.count)
         guard varianz > 1e-9 else { return nil }
-        let von = Int(taktMin / 2 / dt), bis = min(Int(taktMax / dt), x.count / 2)
+        let von = Int(profil.taktMin / 2 / dt), bis = min(Int(profil.taktMax / dt), x.count / 2)
         guard bis > von + 2 else { return nil }
         var c: [Int: Double] = [:]
         for l in von...bis { c[l] = autokorrelation(x, lag: l) }
         let spitzen = ((von + 1)..<bis).filter { c[$0]! > c[$0 - 1]! && c[$0]! >= c[$0 + 1]! && c[$0]! > 0 }
         guard let beste = spitzen.map({ c[$0]! }).max() else { return nil }
-        guard let lag = spitzen.first(where: { Double($0) * dt >= taktMin && c[$0]! >= kandidatAnteil * beste })
+        guard let lag = spitzen.first(where: { Double($0) * dt >= profil.taktMin && c[$0]! >= profil.kandidatAnteil * beste })
         else { return nil }
         return (Double(lag) * dt, c[lag]! / varianz)
     }

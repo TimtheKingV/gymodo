@@ -27,6 +27,28 @@ struct SatztaktTests {
         #expect(abs(e.takt - 1.9) < 0.1)
     }
 
+    @Test func kurzhantelProfilHatDieHeutigenWerte() throws {
+        let p = try #require(TaktProfil.fuer(.kurzhantel))
+        #expect(p.taktMin == 1.2 && p.taktMax == 3.0)
+        #expect(p.kappFaktor == 1.5 && p.kandidatAnteil == 0.85)
+        #expect(p.gleichheitMin == 0.9 && p.abstandMin == 0.75 && p.abstandMax == 1.3)
+        #expect(p.mindestDauer == 5.0)
+        #expect(Satztakt.algo(fuer: .kurzhantel) == "kurzhantel/takt2")
+        #expect(Satztakt.algo(fuer: .stapel) == "stapel/takt1")
+    }
+
+    @Test func artenOhneProfilHabenKeins() {
+        for art in [Befestigungsart.hebelarm, .kabelgriff, .koerper] { #expect(TaktProfil.fuer(art) == nil) }
+        for art in [Befestigungsart.stapel, .langhantel, .kurzhantel] { #expect(TaktProfil.fuer(art) != nil) }
+    }
+
+    @Test func profilgrenzenRechnenInSekundenNichtInAbtastwerten() throws {
+        let a = try #require(Satztakt.auswerten(synthetisch(wiederholungen: 8, rate: 50), rateHz: 50))
+        let b = try #require(Satztakt.auswerten(synthetisch(wiederholungen: 8, rate: 100), rateHz: 100))
+        #expect(abs(a.anzahl - b.anzahl) <= 1)
+        #expect(abs(a.takt - b.takt) < 0.1)
+    }
+
     @Test func ruheGibtNichts() {
         let still = (0..<500).map { i in
             SensorMesswert(t: Double(i) / 50, beschleunigung: Vektor3(x: 0, y: 1, z: 0),

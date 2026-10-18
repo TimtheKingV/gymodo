@@ -37,7 +37,8 @@ enum AufnahmeLauf {
     static func takt(ordner: URL, art: Befestigungsart) throws -> Int? {
         let (datei, eintraege) = try SensorAufnahmeLeser.lesen(ordner: ordner)
         let werte = eintraege.compactMap { if case .messwert(let m) = $0 { m } else { nil } }
-        return Satztakt.auswerten(werte, rateHz: Double(datei.sensor.rateSollHz))?.anzahl
+        guard let profil = TaktProfil.fuer(art) else { return nil }
+        return Satztakt.auswerten(werte, rateHz: Double(datei.sensor.rateSollHz), profil: profil)?.anzahl
     }
 
     /// Alle Ordner mit Korrektur-Eintrag, Art und Wahrheit. Ordner ohne
