@@ -1,0 +1,78 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "befestigungsart" : "langhantel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-10-18T16:57:42+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "e5a65502-e459-41fd-b370-3dc2954b0a28",
+    "exerciseId" : "994e756a-6973-4d85-b764-597b842a283f",
+    "exerciseName" : "Langhantelrudern – Obergriff",
+    "machineId" : null,
+    "machineName" : "Langhantel",
+    "sessionId" : "6D210D2A-0710-4E62-9492-504970D89200",
+    "setId" : "F08456EA-3FB7-49FF-9B75-431759C9FD43",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 30,
+    "weightKg" : 25
+  },
+  "sensor" : {
+    "akkuProzent" : 60,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-18T16:56:38+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 192.22,
+      "median" : 0,
+      "p95" : 60.99
+    },
+    "luecken" : 0,
+    "pakete" : 3142,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "langhantel/1",
+    "ereignisse" : {
+      "algo" : "langhantel/1",
+      "befestigungsart" : "langhantel",
+      "unsicher" : "taktUnregelmaessig",
+      "wiederholungen" : [
+        {
+          "ausschlag" : 50.6,
+          "beginn" : 0.16,
+          "ende" : 1.51,
+          "sicherheit" : 0.69,
+          "umkehr" : 1.21
+        },
+        {
+          "ausschlag" : 49.31,
+          "beginn" : 1.51,
+          "ende" : 2.53,
+          "sicherheit" : 0.64,
+          "umkehr" : 2.23
+        },
+        {
+          "ausschlag" : 67.94,
+          "beginn" : 2.58,
+          "ende" : 4.1,
+          "sicherheit" : 1,
+          "umkehr" : 3.73
+        }
+      ]
+    },
+    "gezaehlt" : 3,
+    "herkunft" : "korrigiert"
+  }
+}

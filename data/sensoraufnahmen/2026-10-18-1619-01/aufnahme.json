@@ -1,0 +1,85 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "befestigungsart" : "langhantel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-10-18T16:19:46+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "e5a65502-e459-41fd-b370-3dc2954b0a28",
+    "exerciseId" : "82d64114-79af-4a7d-bb76-049cfc21f58b",
+    "exerciseName" : "Langhantel-Bankdrücken",
+    "machineId" : null,
+    "machineName" : "Langhantel",
+    "sessionId" : "6D210D2A-0710-4E62-9492-504970D89200",
+    "setId" : "C442FC2B-3E82-43AC-B9D4-0A6181443E23",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 8,
+    "weightKg" : 40
+  },
+  "sensor" : {
+    "akkuProzent" : 60,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-18T16:19:02+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 149.08,
+      "median" : 0,
+      "p95" : 62.29
+    },
+    "luecken" : 0,
+    "pakete" : 2178,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "langhantel/1",
+    "ereignisse" : {
+      "algo" : "langhantel/1",
+      "befestigungsart" : "langhantel",
+      "unsicher" : null,
+      "wiederholungen" : [
+        {
+          "ausschlag" : 33.86,
+          "beginn" : 2.92,
+          "ende" : 5.05,
+          "sicherheit" : 0.13,
+          "umkehr" : 4.81
+        },
+        {
+          "ausschlag" : 40.84,
+          "beginn" : 14.8,
+          "ende" : 15.7,
+          "sicherheit" : 0.36,
+          "umkehr" : 15.28
+        },
+        {
+          "ausschlag" : 39.05,
+          "beginn" : 20.38,
+          "ende" : 25.21,
+          "sicherheit" : 0.3,
+          "umkehr" : 24.68
+        },
+        {
+          "ausschlag" : 41.21,
+          "beginn" : 27.73,
+          "ende" : 32.93,
+          "sicherheit" : 0.37,
+          "umkehr" : 32.62
+        }
+      ]
+    },
+    "gezaehlt" : 4,
+    "herkunft" : "korrigiert"
+  }
+}

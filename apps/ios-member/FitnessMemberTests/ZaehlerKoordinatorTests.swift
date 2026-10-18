@@ -64,10 +64,12 @@ struct ZaehlerKoordinatorTests {
         #expect(m.liste == [.bereit, .stand(1), .stand(2), .stand(3), .stand(4), .stand(5)])
         let ergebnis = try #require(sut.ergebnis())
         #expect(ergebnis.gezaehlt == 5)
-        #expect(ergebnis.repEvents.algo == "stapel/2")
+        #expect(ergebnis.repEvents.algo == "stapel/takt1")
         #expect(ergebnis.repEvents.befestigungsart == .stapel)
-        // Zeiten relativ zum Satzbeginn: die erste Wiederholung beginnt nach 3 s Ruhe.
-        #expect(abs(try #require(ergebnis.repEvents.wiederholungen.first).beginn - 3) <= 0.3)
+        // Zeiten relativ zum Satzbeginn: die erste Wiederholung beginnt nach 3 s Ruhe;
+        // der Takt legt Abschnitte im Viertel-Takt-Raster, daher +-1 s statt +-0,3 s.
+        let erste = try #require(ergebnis.repEvents.wiederholungen.first)
+        #expect(abs(erste.beginn - 3) <= 1)
         #expect(sut.meldung == nil)
     }
 
@@ -84,6 +86,101 @@ struct ZaehlerKoordinatorTests {
         #expect(abs(ergebnis.gezaehlt - n) <= 1)
         #expect(ergebnis.repEvents.algo == Satztakt.algo)
         #expect(ergebnis.repEvents.wiederholungen.count == ergebnis.gezaehlt)
+    }
+
+    /// Aufnahme vom 18.10. (Repo-Wurzel ueber den Pfad dieser Datei) als Messwert-Strom ab `ab`.
+    private static func aufnahme(_ name: String, ab: TimeInterval) throws -> [SensorMesswert] {
+        let wurzel = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let (_, eintraege) = try SensorAufnahmeLeser.lesen(
+            ordner: wurzel.appendingPathComponent("data/sensoraufnahmen/\(name)"))
+        return eintraege.compactMap { eintrag in
+            guard case .messwert(let m) = eintrag else { return nil }
+            return SensorMesswert(t: ab + m.t, beschleunigung: m.beschleunigung, drehrate: m.drehrate, winkel: m.winkel)
+        }
+    }
+
+    /// Wadenheben am Stapel, 20 Wiederholungen: die Live-Zahl lag bei 2.
+    @Test func stapelZaehltAmSatzendeNachDemTakt() throws {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.stapel)
+        for w in try Self.aufnahme("2026-10-18-1642-01", ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        let ergebnis = try #require(sut.ergebnis())
+        #expect(abs(ergebnis.gezaehlt - 20) <= 1)
+        #expect(ergebnis.repEvents.algo == "stapel/takt1")
+    }
+
+    /// Hebelarm hat kein Takt-Profil: die Live-Zahl bleibt.
+    @Test func hebelarmBleibtBeiDerLiveZahl() {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.hebelarm)
+        for w in Self.kurzhantelSatz(wiederholungen: 8, ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        #expect(sut.satzMesswerteAnzahl == 0)
+        #expect(sut.ergebnis()?.repEvents.algo != "hebelarm/takt1")
+    }
+
+    /// Ein Satz ueber 150 s waechst nicht unbegrenzt im Speicher (die
+    /// Takt-Auswertung wird quadratisch teuer); was danach gespeichert wird,
+    /// prueft `satzUeberDemFensterSpeichertDieZahlDesRads`.
+    @Test func langerSatzBegrenztDenPuffer() {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.stapel)
+        for w in Self.kurzhantelSatz(wiederholungen: 100, ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        #expect(sut.satzMesswerteAnzahl > 7000 && sut.satzMesswerteAnzahl <= 7500 + 250)
+    }
+
+    /// Review 18.10.: ueber dem Fenster endet die Takt-Auswertung; gespeichert
+    /// wird trotzdem die Zahl, die das Rad zuletzt zeigte, nicht die (viel zu
+    /// kleine) Live-Zahl.
+    @Test func satzUeberDemFensterSpeichertDieZahlDesRads() async throws {
+        let quelle = AttrappenQuelle()
+        quelle.zustand = Self.verbunden
+        let uhr = Uhr()
+        let sut = ZaehlerKoordinator(quelle: quelle, einstellungen: UserDefaults(suiteName: UUID().uuidString)!,
+                                     uhr: { uhr.t }, fensterS: 10)
+        let m = Meldungen()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.kurzhantel)
+        let alle = Self.kurzhantelSatz(wiederholungen: 8, ab: uhr.t)
+        func letzterStand() -> Int? { m.liste.compactMap { if case .stand(let n) = $0 { n } else { nil } }.last }
+        for w in alle.prefix(700) { sut.empfangen(.messwert(w)) }
+        for _ in 0..<300 where letzterStand() == nil { try await Task.sleep(for: .milliseconds(50)) }
+        #expect(letzterStand() != nil)
+        for w in alle.dropFirst(700) { sut.empfangen(.messwert(w)) }
+        try await Task.sleep(for: .seconds(2))
+        let gezeigt = try #require(letzterStand())
+        let ergebnis = try #require(sut.ergebnis())
+        #expect(ergebnis.gezaehlt == gezeigt)
+        #expect(ergebnis.repEvents.algo == "kurzhantel/takt2")
+    }
+
+    /// Eine Takt-Zahl aus Schaetzung oder erweitertem Takt ist unsicher und
+    /// wird so gespeichert (Spec: `signalSchwach`).
+    @Test func unsichereTaktZahlWirdAlsSignalSchwachGespeichert() throws {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.stapel)
+        for w in try Self.aufnahme("2026-10-14-1747-01", ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        let ergebnis = try #require(sut.ergebnis())
+        #expect(abs(ergebnis.gezaehlt - 10) <= 1)
+        #expect(ergebnis.repEvents.unsicher == .signalSchwach)
+    }
+
+    /// Hat die Live-Auswertung den ganzen Satz schon gesehen, rechnet das
+    /// Satzende nicht noch einmal (Debug-Build: Sekunden auf dem Main Actor).
+    @Test func satzendeNutztDieFertigeLiveAuswertung() async throws {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.kurzhantel)
+        for w in Self.kurzhantelSatz(wiederholungen: 8, ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        func letzterStand() -> Int? { m.liste.compactMap { if case .stand(let n) = $0 { n } else { nil } }.last }
+        for _ in 0..<300 where letzterStand() != 8 { try await Task.sleep(for: .milliseconds(50)) }
+        let ergebnis = try #require(sut.ergebnis())
+        #expect(abs(ergebnis.gezaehlt - 8) <= 1)
+        #expect(sut.syncAuswertungen == 0)
     }
 
     /// Testnotiz 16.10., #4: das Rad folgt an der Kurzhantel der

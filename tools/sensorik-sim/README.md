@@ -7,6 +7,7 @@ Werkzeug zum Abstimmen der Satzauswertung (`Satztakt`) ohne neue Aufnahmen. Stan
 - `ev2.py [N]` – vergleicht alle Verfahren auf N simulierten Sätzen je Übungsart und auf den echten Sätzen; Vorlagen aus Block A (morgens) werden gegen die echten Sätze von Block B (mittags) geprüft und umgekehrt.
 - `cmp.py` – Genauigkeit simuliert gegen echt je Verfahren und Korrelation.
 
+- `eintragen.py <Tag> <csv>` – trägt die Aufnahmen eines Tages mit Wahrheit aus einer CSV (`set_id`, `reps_wahr`) in `data/sensoraufnahmen/korrekturen.json` ein.
 - `marken.py` – lädt Sätze samt `# marke`-Zeilen; `rand.py` – Kappen von Ausreißern (Aufheben/Ablegen) vor Takt und Hüllkurve; `rand2.py` – Gegenprobe: Rand aus der Aktivität, Takt nur im Randfenster.
 
 Aufruf: `cd tools/sensorik-sim && python3 ev2.py 40 && python3 cmp.py`

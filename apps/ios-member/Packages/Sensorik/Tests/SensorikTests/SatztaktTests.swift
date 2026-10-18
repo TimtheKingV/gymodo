@@ -27,6 +27,93 @@ struct SatztaktTests {
         #expect(abs(e.takt - 1.9) < 0.1)
     }
 
+    @Test func kurzhantelProfilHatDieHeutigenWerte() throws {
+        let p = try #require(TaktProfil.fuer(.kurzhantel))
+        #expect(p.taktMin == 1.2 && p.taktMax == 3.0)
+        #expect(p.kappFaktor == 1.5 && p.kandidatAnteil == 0.85)
+        #expect(p.gleichheitMin == 0.9 && p.abstandMin == 0.75 && p.abstandMax == 1.3)
+        #expect(p.mindestDauer == 5.0)
+        #expect(Satztakt.algo(fuer: .kurzhantel) == "kurzhantel/takt2")
+        #expect(Satztakt.algo(fuer: .stapel) == "stapel/takt1")
+    }
+
+    @Test func artenOhneProfilHabenKeins() {
+        for art in [Befestigungsart.hebelarm, .kabelgriff, .koerper] { #expect(TaktProfil.fuer(art) == nil) }
+        for art in [Befestigungsart.stapel, .langhantel, .kurzhantel] { #expect(TaktProfil.fuer(art) != nil) }
+    }
+
+    @Test func profilgrenzenRechnenInSekundenNichtInAbtastwerten() throws {
+        let a = try #require(Satztakt.auswerten(synthetisch(wiederholungen: 8, rate: 50), rateHz: 50))
+        let b = try #require(Satztakt.auswerten(synthetisch(wiederholungen: 8, rate: 100), rateHz: 100))
+        #expect(abs(a.anzahl - b.anzahl) <= 1)
+        #expect(abs(a.takt - b.takt) < 0.1)
+    }
+
+    private func werte(_ name: String) throws -> (messwerte: [SensorMesswert], rate: Double) {
+        let (datei, eintraege) = try SensorAufnahmeLeser.lesen(ordner: Pfade.aufnahmen.appendingPathComponent(name))
+        return (eintraege.compactMap { if case .messwert(let m) = $0 { m } else { nil } }, Double(datei.sensor.rateSollHz))
+    }
+
+    /// Bankdruecken 18.10.: die Kette findet 4 von 8, die Aktivdauer der Huellkurve 7.
+    @Test func ketteZuKurzSchaetztAusDerAktivdauer() throws {
+        let (m, rate) = try werte("2026-10-18-1619-01")
+        let e = try #require(Satztakt.auswerten(m, rateHz: rate))
+        #expect(abs(e.anzahl - 8) <= 1)
+        #expect(e.guete < 0.5)
+    }
+
+    /// Latzug/Beinpresse mit Stapel-Profil: die Kette riss bei 14 von 30 ab.
+    @Test func rissInDerKetteWirdUeberbruecktMitStapelProfil() throws {
+        let (m, rate) = try werte("2026-10-18-1646-01")
+        let stapel = TaktProfil(taktMin: 1.0, taktMax: 4.0, kappFaktor: 1.5, kandidatAnteil: 0.85,
+                                gleichheitMin: 0.8, abstandMin: 0.75, abstandMax: 1.3, mindestDauer: 5)
+        let e = try #require(Satztakt.auswerten(m, rateHz: rate, profil: stapel))
+        #expect(abs(e.anzahl - 30) <= 1)
+    }
+
+    /// Takt ausserhalb der Profilgrenzen (3,2 s bei taktMax 3): trotzdem eine
+    /// Zahl, aber als unsicher gekennzeichnet.
+    @Test func taktAusserhalbDerGrenzenGibtEineUnsichereZahl() throws {
+        let (m, rate) = try werte("2026-10-14-1747-01")
+        let e = try #require(Satztakt.auswerten(m, rateHz: rate))
+        #expect(abs(e.anzahl - 10) <= 1)
+        #expect(e.guete < 0.5)
+    }
+
+    /// Zwei Haelften mit acht Sekunden Pause (Unterhaltung): beide zaehlen.
+    @Test func pauseImSatzZaehltBeideHaelften() throws {
+        let rate = 50.0, takt = 2.0
+        let dt = 1 / rate
+        func y(_ t: Double) -> Double {
+            if t < 2 { return 1 + 0.8 * sin(t * .pi / 2) }
+            if (2..<14).contains(t) || (22..<34).contains(t) {
+                let lokal = t < 14 ? t - 2 : t - 22
+                return 1 + 0.3 * sin(lokal * 2 * .pi / takt)
+            }
+            return 1
+        }
+        let m = (0..<Int(37 * rate)).map { i -> SensorMesswert in
+            let t = Double(i) * dt
+            return SensorMesswert(t: 100 + t, beschleunigung: Vektor3(x: 0, y: y(t), z: 0.05),
+                                  drehrate: Vektor3(x: 0, y: 0, z: 0), winkel: Vektor3(x: 0, y: 0, z: 0))
+        }
+        let e = try #require(Satztakt.auswerten(m, rateHz: rate))
+        // Die Huellkurve verlaengert jeden Lauf an den Raendern um rund einen Takt; mit zwei
+        // Laeufen sind das +2. Wichtig ist, dass beide Haelften zaehlen (sonst 6).
+        #expect(abs(e.anzahl - 12) <= 2)
+    }
+
+    /// Latzug 18.10. mit der App im Hintergrund: iOS liefert die Pakete nur etwa
+    /// alle 0,6 s (je rund 30 Werte). Der Live-Zaehler wertet das als Luecke
+    /// (Schwelle 0,5 s) und zaehlt nicht; die Takt-Auswertung rechnet in
+    /// Abtastwerten und trifft beide Saetze.
+    @Test(arguments: [("2026-10-18-1628-01", 12), ("2026-10-18-1630-01", 14)])
+    func hintergrundSaetzeZaehltDerTaktTrotzPaketluecken(name: String, wahr: Int) throws {
+        let (m, rate) = try werte(name)
+        let e = try #require(Satztakt.auswerten(m, rateHz: rate, profil: .stapel))
+        #expect(abs(e.anzahl - wahr) <= 1)
+    }
+
     @Test func ruheGibtNichts() {
         let still = (0..<500).map { i in
             SensorMesswert(t: Double(i) / 50, beschleunigung: Vektor3(x: 0, y: 1, z: 0),

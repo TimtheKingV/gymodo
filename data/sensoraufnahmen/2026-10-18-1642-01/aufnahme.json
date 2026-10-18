@@ -1,0 +1,71 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "befestigungsart" : "stapel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-10-18T16:43:00+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "58c4e58c-7b32-4b17-9a6b-a91db57ba6ab",
+    "exerciseId" : "a8adf3c6-efaa-4d0b-ad08-589e26c7ce1b",
+    "exerciseName" : "Wadenheben – stehend",
+    "machineId" : null,
+    "machineName" : "Stehende Wadenmaschine",
+    "sessionId" : "6D210D2A-0710-4E62-9492-504970D89200",
+    "setId" : "6BA350DE-8067-4C2A-97B5-332D080890FB",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 20,
+    "weightKg" : 65
+  },
+  "sensor" : {
+    "akkuProzent" : 60,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-18T16:42:19+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 196.44,
+      "median" : 0,
+      "p95" : 61.11
+    },
+    "luecken" : 0,
+    "pakete" : 2014,
+    "rateIstHz" : 49.9,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "stapel/2",
+    "ereignisse" : {
+      "algo" : "stapel/2",
+      "befestigungsart" : "stapel",
+      "unsicher" : "taktUnregelmaessig",
+      "wiederholungen" : [
+        {
+          "ausschlag" : 0.3,
+          "beginn" : 0.17,
+          "ende" : 4.54,
+          "sicherheit" : 1,
+          "umkehr" : 4.06
+        },
+        {
+          "ausschlag" : 0.27,
+          "beginn" : 4.93,
+          "ende" : 8.11,
+          "sicherheit" : 1,
+          "umkehr" : 7.51
+        }
+      ]
+    },
+    "gezaehlt" : 2,
+    "herkunft" : "korrigiert"
+  }
+}

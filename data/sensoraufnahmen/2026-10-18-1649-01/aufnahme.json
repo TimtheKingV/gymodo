@@ -1,0 +1,46 @@
+{
+  "abschluss" : "abgebrochen",
+  "befestigung" : null,
+  "befestigungsart" : null,
+  "befestigungsartQuelle" : null,
+  "endedAt" : "2026-10-18T16:49:44+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "9ad1368c-8d04-4cab-b06c-ccc47cd230d5",
+    "exerciseId" : "3e846491-325d-48f2-bf46-b609c49e2e31",
+    "exerciseName" : "Abduktorenmaschine",
+    "machineId" : null,
+    "machineName" : "Ab-/Adduktorenmaschine",
+    "sessionId" : null,
+    "setId" : null,
+    "setIndex" : null
+  },
+  "label" : {
+    "problemFlag" : null,
+    "reps" : null,
+    "weightKg" : null
+  },
+  "sensor" : {
+    "akkuProzent" : 60,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-18T16:49:25+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 183.35,
+      "median" : 0,
+      "p95" : 61.31
+    },
+    "luecken" : 0,
+    "pakete" : 962,
+    "rateIstHz" : 50,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : null
+}

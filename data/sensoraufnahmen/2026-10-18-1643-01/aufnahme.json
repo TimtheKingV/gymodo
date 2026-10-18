@@ -1,0 +1,92 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "befestigungsart" : "stapel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-10-18T16:44:11+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "58c4e58c-7b32-4b17-9a6b-a91db57ba6ab",
+    "exerciseId" : "a8adf3c6-efaa-4d0b-ad08-589e26c7ce1b",
+    "exerciseName" : "Wadenheben – stehend",
+    "machineId" : null,
+    "machineName" : "Stehende Wadenmaschine",
+    "sessionId" : "6D210D2A-0710-4E62-9492-504970D89200",
+    "setId" : "C7C11050-C9D8-4F20-AB23-3CCFDCF4B736",
+    "setIndex" : 2
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 17,
+    "weightKg" : 65
+  },
+  "sensor" : {
+    "akkuProzent" : 60,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-18T16:43:30+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 195.18,
+      "median" : 0,
+      "p95" : 61.19
+    },
+    "luecken" : 0,
+    "pakete" : 2014,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "stapel/2",
+    "ereignisse" : {
+      "algo" : "stapel/2",
+      "befestigungsart" : "stapel",
+      "unsicher" : "taktUnregelmaessig",
+      "wiederholungen" : [
+        {
+          "ausschlag" : 0.23,
+          "beginn" : 10.63,
+          "ende" : 11.77,
+          "sicherheit" : 0.88,
+          "umkehr" : 11.26
+        },
+        {
+          "ausschlag" : 0.31,
+          "beginn" : 11.94,
+          "ende" : 13.05,
+          "sicherheit" : 1,
+          "umkehr" : 12.51
+        },
+        {
+          "ausschlag" : 0.26,
+          "beginn" : 13.14,
+          "ende" : 14.37,
+          "sicherheit" : 1,
+          "umkehr" : 13.89
+        },
+        {
+          "ausschlag" : 0.26,
+          "beginn" : 14.49,
+          "ende" : 15.81,
+          "sicherheit" : 1,
+          "umkehr" : 15.37
+        },
+        {
+          "ausschlag" : 0.25,
+          "beginn" : 15.91,
+          "ende" : 17.16,
+          "sicherheit" : 1,
+          "umkehr" : 16.71
+        }
+      ]
+    },
+    "gezaehlt" : 5,
+    "herkunft" : "korrigiert"
+  }
+}

@@ -1,0 +1,37 @@
+set_id,zeit,uebung,set_index,kg,reps_wahr,quelle,reps_app_live
+E23157CB-FE17-41D3-9D98-81F57AFC435A,16:05:56,Kurzhantel-Bizepscurl,1,8,20,gemessen,20
+7B73CFDB-E26D-4721-9B16-221B3CB8E234,16:07:29,Kurzhantel-Seitheben sitzend,1,8,14,gemessen,14
+1236BED1-89C7-4908-851B-088A7E6DDA00,16:08:57,Kurzhantel-Schraegbankdruecken,1,12,15,korrigiert,14
+BBAEDE5C-BA83-430A-B13F-6307BC385C5B,16:10:37,Kurzhantel-Bizepscurl,2,8,15,gemessen,15
+550EA39A-3D38-4B60-BBE0-8EFA33181A07,16:11:30,Kurzhantel-Seitheben sitzend,2,8,12,gemessen,12
+A8590FF9-1608-4E0B-9F91-285C2D01DBC0,16:12:36,Kurzhantel-Schraegbankdruecken,2,12,12,korrigiert,8
+D4863D38-B21F-47E7-A08A-3126B6E7D2D7,16:13:41,Kurzhantel-Bizepscurl,3,8,12,gemessen,12
+ABB07201-3EE0-412E-AF66-FB94DD81B2B2,16:14:27,Kurzhantel-Seitheben sitzend,3,8,9,gemessen,9
+CE42D08C-258A-47AB-8A9A-AC8AC6A9D292,16:15:21,Kurzhantel-Schraegbankdruecken,3,12,9,korrigiert,3
+C442FC2B-3E82-43AC-B9D4-0A6181443E23,16:19:46,Langhantel-Bankdruecken,1,40,8,korrigiert,4
+DB0D2B53-AC2B-4505-8464-CFC5CB2BC398,16:21:44,Langhantel-Bankdruecken,2,40,5,eingegeben,
+0BB69C0C-DDB6-45B9-B92C-07457B2770F7,16:23:57,Langhantel-Bankdruecken,3,30,12,korrigiert,3
+F87328E4-C499-44DA-AE93-BAECF9887050,16:27:26,Latzug Obergriff,1,45,15,gemessen,15
+022D97AB-287F-4D68-9DE3-9653DA840867,16:29:56,Latzug Obergriff (App im Hintergrund),2,45,12,eingegeben,
+42051F68-F304-451B-B969-117CA2588933,16:31:20,Latzug Obergriff (App im Hintergrund),3,45,14,eingegeben,
+AD36A752-EB1D-40FE-AF9A-CD77E32EFA76,16:33:45,Bauchbeugen am Geraet,1,65,30,gemessen,30
+207A6F18-15E7-4704-99E6-E3EE816B3CEA,16:35:24,Bauchbeugen am Geraet,2,65,30,gemessen,30
+EEE25B6F-D646-47E6-89A1-DA3B6CA8382D,16:36:48,Bauchbeugen am Geraet,3,65,30,gemessen,30
+8DEF0FBC-4B54-4940-BBAA-E2656A756AD8,16:39:09,Beinpresse 45 Grad,1,117.5,20,korrigiert,3
+D86E5A74-C8CF-4445-902A-0002D3896231,16:40:49,Beinpresse 45 Grad,2,117.5,17,korrigiert,2
+6BA350DE-8067-4C2A-97B5-332D080890FB,16:43:00,Wadenheben stehend,1,65,20,korrigiert,2
+C7C11050-C9D8-4F20-AB23-3CCFDCF4B736,16:44:11,Wadenheben stehend,2,65,17,korrigiert,5
+340D0976-041F-4302-B697-5D84DCD468F3,16:46:04,Adduktorenmaschine,1,25,15,korrigiert,2
+2BE1509F-0BD6-4BC6-9B3D-D538C68EBB83,16:47:34,Abduktorenmaschine,1,75,30,korrigiert,2
+A8A957E7-7274-4AF2-9F2A-91486066B4A0,16:49:03,Adduktorenmaschine,2,75,40,korrigiert,32
+C243D948-5AFD-4352-ACE3-76AF6A87FA3C,16:50:20,Abduktorenmaschine,2,75,25,gemessen,25
+B30D21DE-C6E6-4161-A300-4C5C06716A1E,16:51:31,Adduktorenmaschine,3,75,30,korrigiert,13
+F830592E-5A43-47A3-A355-89D6459FDFBA,16:52:44,Abduktorenmaschine,3,75,25,gemessen,25
+A24C9ACC-2D53-463E-A37B-90B7DC19FAB3,16:55:58,High-Bar-Kniebeuge,1,25,28,korrigiert,2
+F08456EA-3FB7-49FF-9B75-431759C9FD43,16:57:42,Langhantelrudern Obergriff,1,25,30,korrigiert,3
+910FF742-B4CC-4038-83FD-615DCDAAB89E,17:00:03,High-Bar-Kniebeuge (kurze Pause im Satz),2,25,30,korrigiert,2
+9C42EDA1-2976-4BB1-9608-E76394481576,17:01:36,Langhantelrudern Obergriff,2,25,30,korrigiert,4
+1C0DD9A1-45AE-48D9-9AF8-6CBD6117F3C2,17:03:35,"in der App Langhantelrudern 3, laut Notiz High-Bar-Kniebeuge Satz 3",3,25,25,korrigiert,4
+F8DB827B-44A7-4309-8A0C-4C2965CE7579,17:04:59,Langhantelrudern Obergriff,4,25,25,korrigiert,4
+2F0CE74A-4BD7-4AE6-94C7-5775131082C6,17:08:58,Kabelrudern enger Neutralgriff,1,40,20,gemessen,20
+07786DC7-3B29-479D-9F51-4A3495908771,17:10:39,Kabelrudern enger Neutralgriff,2,40,15,korrigiert,14

@@ -1,0 +1,78 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "befestigungsart" : "langhantel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-10-18T16:23:57+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "e5a65502-e459-41fd-b370-3dc2954b0a28",
+    "exerciseId" : "82d64114-79af-4a7d-bb76-049cfc21f58b",
+    "exerciseName" : "Langhantel-Bankdrücken",
+    "machineId" : null,
+    "machineName" : "Langhantel",
+    "sessionId" : "6D210D2A-0710-4E62-9492-504970D89200",
+    "setId" : "0BB69C0C-DDB6-45B9-B92C-07457B2770F7",
+    "setIndex" : 3
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 12,
+    "weightKg" : 30
+  },
+  "sensor" : {
+    "akkuProzent" : 60,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-18T16:23:14+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 123.6,
+      "median" : 0,
+      "p95" : 61.89
+    },
+    "luecken" : 0,
+    "pakete" : 2118,
+    "rateIstHz" : 49.8,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "langhantel/1",
+    "ereignisse" : {
+      "algo" : "langhantel/1",
+      "befestigungsart" : "langhantel",
+      "unsicher" : "taktUnregelmaessig",
+      "wiederholungen" : [
+        {
+          "ausschlag" : 56.21,
+          "beginn" : 5.37,
+          "ende" : 6.18,
+          "sicherheit" : 0.87,
+          "umkehr" : 5.58
+        },
+        {
+          "ausschlag" : 103.79,
+          "beginn" : 15.06,
+          "ende" : 15.69,
+          "sicherheit" : 1,
+          "umkehr" : 15.21
+        },
+        {
+          "ausschlag" : 50.7,
+          "beginn" : 19.71,
+          "ende" : 20.88,
+          "sicherheit" : 0.69,
+          "umkehr" : 20.49
+        }
+      ]
+    },
+    "gezaehlt" : 3,
+    "herkunft" : "korrigiert"
+  }
+}

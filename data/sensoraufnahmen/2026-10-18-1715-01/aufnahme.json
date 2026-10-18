@@ -1,0 +1,46 @@
+{
+  "abschluss" : "abgebrochen",
+  "befestigung" : null,
+  "befestigungsart" : null,
+  "befestigungsartQuelle" : null,
+  "endedAt" : "2026-10-18T17:34:19+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "0a75d2b2-4e2c-43f9-b52b-779b828445a2",
+    "exerciseId" : "afb7d345-322f-4da9-bae9-064cc9f30829",
+    "exerciseName" : "Stair Climber – Treppensteigen",
+    "machineId" : null,
+    "machineName" : "Rotierende Treppenmaschine",
+    "sessionId" : null,
+    "setId" : null,
+    "setIndex" : null
+  },
+  "label" : {
+    "problemFlag" : null,
+    "reps" : null,
+    "weightKg" : null
+  },
+  "sensor" : {
+    "akkuProzent" : 60,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-18T17:15:58+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 121.39,
+      "median" : 0,
+      "p95" : 60.44
+    },
+    "luecken" : 1,
+    "pakete" : 17604,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : null
+}

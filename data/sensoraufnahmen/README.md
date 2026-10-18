@@ -26,3 +26,23 @@ Ab Teilprojekt B gezählt werden nur echte Sätze mit eingetragener Befestigung 
 Ab E4 (14. Oktober 2026) schreibt die App `befestigungsart`, `befestigungsartQuelle` (`vorschlag` oder `gewaehlt`) und den `zaehler`-Block (live gezählt, Herkunft, Ereignisse) in `aufnahme.json`. Beim Einlesen: eine gewählte Art gilt; eine vorgeschlagene nur, wenn Notiz und Signal nicht widersprechen, sonst Tim fragen. `zaehler.gezaehlt` gegen das Label zeigt, wie der Live-Zähler mit dem Profil seines Builds lag; der Gütebericht rechnet trotzdem immer mit dem aktuellen Profil neu.
 
 Neue Aufnahmen: Ordner unverändert vom iPhone kopieren, Eintrag hier anlegen, `swift test --package-path apps/ios-member/Packages/Sensorik` laufen lassen und den neuen `guetebericht.md` mit committen.
+
+## Stand 18. Oktober 2026
+
+36 echte Sätze von 16:05 bis 17:10 (iPhone 13 mini, Sensor WT901BLE67, 50 Hz), dazu 21 abgebrochene Aufnahmen ohne Satz. Wahrheit pro Satz steht in `saetze-2026-10-18.csv` (aus `workout_sets.volume`, Zuordnung über `set_id` = `kontext.setId`); `korrekturen.json` ist daraus mit `tools/sensorik-sim/eintragen.py` gefüllt.
+
+- **Kurzhantel** (Curl, Seitheben, Schrägbankdrücken), **Langhantel** (Bankdrücken, High-Bar-Kniebeuge, Rudern), **Stapel** (Latzug, Bauchbeugen, Beinpresse, Waden, Adduktoren/Abduktoren, Kabelrudern).
+- Latzug Satz 2 und 3: App im Hintergrund, kein Live-Zähler; die Pakete sind da (Lücken höchstens 0,7 s).
+- High-Bar-Kniebeuge Satz 2: kurze Pause im Satz wegen eines Gesprächs.
+- `2026-10-18-1702-01` heißt in der App Langhantelrudern Satz 3, ist laut Testnotiz aber High-Bar-Kniebeuge Satz 3.
+- Live-Zahl gegen Wahrheit: Kurzhantel-Curl/Seitheben, Bauchbeugen, Kabelrudern, Latzug 1 stimmen; Langhantel, Beinpresse, Waden, Adduktoren 1/3 und Abduktoren 1 liegen bei 2–13 statt 15–30 (siehe `docs/superpowers/specs/2026-10-18-satztakt-alle-befestigungsarten-design.md`).
+
+### Ergebnis: Satztakt für alle Befestigungsarten (18.10.)
+
+Messlatte und Zahlen: `taktbericht.md` (erzeugt von `TaktBerichtTests.berichtSchreiben`), Design und Plan unter `docs/superpowers/specs|plans/2026-10-18-satztakt-alle-befestigungsarten*`.
+
+- Satzende-Zahl aus `Satztakt` jetzt für `stapel`, `langhantel` und `kurzhantel` (`stapel/takt1`, `langhantel/takt1`, `kurzhantel/takt2`); `hebelarm`, `kabelgriff`, `koerper` bleiben bei der Live-Zahl. Rückfall: Ist die Kette kürzer als 70 % der Aktivdauer der Hüllkurve, zählt die Aktivdauer, markiert als unsicher (`signalSchwach` in `rep_events`). Liegt der Takt außerhalb der Profilgrenzen, läuft die Kette noch einmal mit 1,5-facher Obergrenze, ebenfalls als unsicher markiert. Sätze über 150 s: gespeichert wird die letzte fertige Takt-Zahl.
+- Stapel-Profil: Takt ab 1,0 s und Gleichheit 0,8. Langhantel unverändert auf den Kurzhantel-Werten (an den 6 Abstimmungssätzen traf kein Profil aus 96 alle).
+- **±1-Quote:** Abstimmung 94 % gepoolt (32 Sätze), **Blindprüfung 83 % gepoolt (30 Sätze, Baseline vor dem Abstimmen 67 %, aus dem ersten Messlauf, nicht eingecheckt)**. Das Ziel von 90 % ist nicht erreicht. Stapel blind 15/18, Langhantel blind 4/5, Kurzhantel blind 6/7, die 35 Sätze vom 16.10. weiter 100 %.
+- Offen: Stapel-Sätze verlieren am Rand 2 bis 3 Wiederholungen (Beinpresse 17 von 20, Adduktoren 12 von 15), Bankdrücken Satz 3 (12 Wiederholungen) liegt bei 7, eine Kniebeuge mit Pause bei 33 statt 30. Mit mehr Aufnahmen je Art (Beinpresse, Waden, Kniebeuge haben 2 bis 4 Sätze) lässt sich das erst belastbar angehen; neue Sätze sind frische Blindprüfung.
+- Latzug Satz 2 und 3 (App im Hintergrund): iOS liefert die Pakete nur alle ~0,6 s (je ~30 Werte). Der Live-Zähler wertet >0,5 s als Lücke und zählt nicht (wie in Spec B 9); die Satzende-Zahl trifft beide Sätze (12 und 14).
