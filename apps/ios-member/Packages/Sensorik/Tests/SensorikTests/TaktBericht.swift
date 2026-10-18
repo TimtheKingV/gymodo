@@ -62,7 +62,7 @@ enum TaktBericht {
 
     /// Arten, deren Parameter eingefroren sind. Nur fuer sie zeigt der Bericht
     /// die Blindsaetze; vorher wuerde jeder Blick darauf zum Abstimmen.
-    static let blindFrei: Set<Befestigungsart> = []
+    static let blindFrei: Set<Befestigungsart> = [.stapel]
 
     static func markdown(_ zeilen: [TaktZeile], blindFuer: Set<Befestigungsart> = blindFrei) -> String {
         let zeilen = zeilen.filter { $0.gruppe != .blind || blindFuer.contains($0.art) }
