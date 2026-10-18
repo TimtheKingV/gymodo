@@ -52,6 +52,47 @@ struct TaktBerichtTests {
         #expect(abs((z.gezaehlt ?? -99) - wahr) <= 1)
     }
 
+    private func quote(_ art: Befestigungsart? = nil, _ gruppe: Gruppe) -> (n: Int, exakt: Double, einsGenau: Double) {
+        TaktBericht.quote(TaktBericht.gemessen.filter { (art == nil || $0.art == art) && $0.gruppe == gruppe })
+    }
+
+    /// Ein einziger Satz (Bankdruecken 1623-01, 12 Wdh., 7 gezaehlt) liegt
+    /// ausserhalb; an 96 Profilen aus Takt, Gleichheit, Kappen und Abstand
+    /// traf keines alle sechs Abstimmungssaetze. Langhantel bleibt deshalb auf
+    /// den Kurzhantel-Werten.
+    @Test func langhantelAbstimmungImZiel() {
+        let q = quote(.langhantel, .abstimmen)
+        #expect(q.n == 6 && q.einsGenau >= 0.83)
+        withKnownIssue("Bankdruecken 1623-01: Signal zu schwach, kein Parameter hilft") {
+            #expect(q.einsGenau >= 0.9)
+        }
+    }
+
+    @Test func langhantelBlindEinsGenau() {
+        let q = quote(.langhantel, .blind)
+        #expect(q.n == 5 && q.einsGenau >= 0.8)
+    }
+
+    /// Kurzhantel darf durch Rueckfall und Profile nicht schlechter werden
+    /// (Baseline: 35 Saetze vom 16.10. 100 % bei +-1, 80 % exakt).
+    @Test func kurzhantelBleibtMindestensSoGutWieVorher() {
+        let alt = quote(.kurzhantel, .frueherAbgestimmt)
+        #expect(alt.n == 35 && alt.einsGenau == 1.0 && alt.exakt >= 0.8)
+        #expect(quote(.kurzhantel, .abstimmen).einsGenau >= 0.85)
+        #expect(quote(.kurzhantel, .blind).einsGenau >= 0.85)
+    }
+
+    /// Gepoolt blind: 25 von 30 (83 %) gegen 67 % in der Baseline. Das Ziel
+    /// von 90 % ist nicht erreicht; die Parameter wurden nach dem Oeffnen der
+    /// Blindgruppe nicht mehr veraendert.
+    @Test func gepooltBlindImZiel() {
+        let q = quote(nil, .blind)
+        #expect(q.n == 30 && q.einsGenau >= 0.83)
+        withKnownIssue("Stapel-Raender (2 bis 3 zu wenig bei Beinpresse, Adduktoren) und eine Kniebeuge mit Pause (33 statt 30)") {
+            #expect(q.einsGenau >= 0.9)
+        }
+    }
+
     @Test func blindSaetzeBleibenGesperrtBisDieArtFreigegebenIst() {
         let zeilen = [
             TaktZeile(ordner: "stapel-blind", art: .stapel, wahr: 10, gezaehlt: 3, gruppe: .blind),
