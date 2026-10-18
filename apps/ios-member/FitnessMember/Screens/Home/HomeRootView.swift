@@ -51,6 +51,10 @@ struct HomeRootView: View {
     /// Die gewaehlte Muskelgruppe im Uebungsfortschritt; nil = Alle
     /// (Testnotiz 17.10., #2).
     @State private var fortschrittGruppe: MuskelHauptgruppe?
+    /// Muskelgruppen | Übungen oben im Uebungsfortschritt; gemerkt wie die
+    /// Uebungsansicht am Geraet.
+    @AppStorage(Einstellungen.fortschrittsansichtKey)
+    private var fortschrittsansicht: Fortschrittsansicht = .muskelgruppen
 
     /// Einmal aufgeloest, zweimal gelesen: Name fuer den Kopf, Zeitzone
     /// fuer die Buendelung der Einheiten. Dieselbe Ableitung wie
@@ -162,6 +166,9 @@ struct HomeRootView: View {
                     GewichtsverlaufView(apiClient: apiClient)
                 case .kursDetail(let sessionId):
                     KursDetailView(sessionId: sessionId)
+                case .muskelgruppe(let gruppe):
+                    MuskelgruppeDetailView(
+                        gruppe: gruppe, auswertung: muskelAuswertung, namen: muskelNamen, geschlecht: geschlecht)
                 }
             }
             .sheet(isPresented: $eintragenOffen) {
@@ -320,10 +327,48 @@ private extension HomeRootView {
         .foregroundStyle(DesignSystem.Color.textMuted)
     }
 
+    /// Oben der Schalter Muskelgruppen | Übungen; "Übungen" ist die
+    /// bisherige Liste unveraendert.
+    var fortschritt: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+            SegmentSchalter(werte: Fortschrittsansicht.allCases, auswahl: $fortschrittsansicht, titel: \.titel)
+            switch fortschrittsansicht {
+            case .muskelgruppen:
+                MuskelgruppenUebersichtView(
+                    auswertung: muskelAuswertung, geschlecht: geschlecht,
+                    onGruppe: { pfad.append(.muskelgruppe($0)) })
+            case .uebungen:
+                uebungsfortschritt
+            }
+        }
+    }
+
+    /// Haeufigkeit (28 Tage) und Fortschritt (3 Monate) je Muskel, aus dem
+    /// Verlauf und den Muskeln der Uebungen im Bootstrap.
+    var muskelAuswertung: MuskelAuswertung {
+        MuskelAuswertung.berechne(
+            sessions: verlauf.sessions, fortschritt: verlauf.fortschritt,
+            muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap), jetzt: Date())
+    }
+
+    /// Muskelschluessel -> Name aus dem Katalog, fuer das Detail.
+    var muskelNamen: [String: String] {
+        var namen: [String: String] = [:]
+        for muskel in HomeZeilen.muskelnJeUebung(katalog.bootstrap).values.joined() where namen[muskel.key] == nil {
+            namen[muskel.key] = muskel.name
+        }
+        return namen
+    }
+
+    /// Wie in der Einweisung: das Modell folgt dem Geschlecht im Profil.
+    var geschlecht: Geschlecht? {
+        katalog.bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:))
+    }
+
     /// Wie die Uebungsliste am Geraet: Bullets "Alle" und die Muskelgruppen,
     /// darunter die Zeilen nach Gruppe geordnet (Testnotiz 17.10., #2). Die
     /// Bullets erst ab zwei Gruppen -- mit einer waere "Alle" dasselbe.
-    var fortschritt: some View {
+    var uebungsfortschritt: some View {
         let muskeln = HomeZeilen.muskelnJeUebung(katalog.bootstrap)
         let jeUebung = { (uebung: ExerciseProgress) in muskeln[uebung.id] ?? [] }
         let angebot = UebungsGruppierung.vorhandeneGruppen(verlauf.fortschritt, muskeln: jeUebung)

@@ -28,7 +28,7 @@ enum MuskelHauptgruppe: Int, CaseIterable, Sendable {
     /// Schluessel eines Muskels in der Reihenfolge, in der gleiche Muskeln
     /// innerhalb der Gruppe zusammenstehen. Der Nacken hat im Muskelmodell
     /// keinen eigenen Schluessel und laeuft unter `upper_back`.
-    fileprivate var muskeln: [String] {
+    var muskelSchluessel: [String] {
         switch self {
         case .brust: ["pectorals", "serratus_anterior"]
         case .ruecken: ["lats", "upper_back", "erectors"]
@@ -39,6 +39,11 @@ enum MuskelHauptgruppe: Int, CaseIterable, Sendable {
         case .weitere, .mehrere: []
         }
     }
+}
+
+extension MuskelHauptgruppe {
+    /// Die sechs Gruppen, die Home auswertet und zeigt, in Anzeigereihenfolge.
+    static let angezeigt: [MuskelHauptgruppe] = [.brust, .ruecken, .schultern, .arme, .beine, .rumpf]
 }
 
 /// Ein Abschnitt der Ansicht "Muskel", fuer jede Art von Eintrag (Uebungen
@@ -130,7 +135,7 @@ enum UebungsGruppierung {
 
     private static func einordnen(_ key: String) -> (gruppe: MuskelHauptgruppe, muskel: Int)? {
         for gruppe in MuskelHauptgruppe.allCases {
-            if let stelle = gruppe.muskeln.firstIndex(of: key) { return (gruppe, stelle) }
+            if let stelle = gruppe.muskelSchluessel.firstIndex(of: key) { return (gruppe, stelle) }
         }
         return nil
     }

@@ -11,4 +11,7 @@ enum HomeRoute: Hashable {
     /// Ein eigener Kurs aus dem Wochenstreifen (Testnotiz 06.10., #1) --
     /// derselbe Screen wie auf der Kurse-Seite.
     case kursDetail(sessionId: String)
+    /// Detail einer Muskelgruppe aus dem Uebungsfortschritt (Sicht
+    /// "Muskelgruppen").
+    case muskelgruppe(MuskelHauptgruppe)
 }
