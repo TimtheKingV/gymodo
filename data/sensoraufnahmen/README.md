@@ -36,3 +36,13 @@ Neue Aufnahmen: Ordner unverändert vom iPhone kopieren, Eintrag hier anlegen, `
 - High-Bar-Kniebeuge Satz 2: kurze Pause im Satz wegen eines Gesprächs.
 - `2026-10-18-1702-01` heißt in der App Langhantelrudern Satz 3, ist laut Testnotiz aber High-Bar-Kniebeuge Satz 3.
 - Live-Zahl gegen Wahrheit: Kurzhantel-Curl/Seitheben, Bauchbeugen, Kabelrudern, Latzug 1 stimmen; Langhantel, Beinpresse, Waden, Adduktoren 1/3 und Abduktoren 1 liegen bei 2–13 statt 15–30 (siehe `docs/superpowers/specs/2026-10-18-satztakt-alle-befestigungsarten-design.md`).
+
+### Ergebnis: Satztakt für alle Befestigungsarten (18.10.)
+
+Messlatte und Zahlen: `taktbericht.md` (erzeugt von `TaktBerichtTests.berichtSchreiben`), Design und Plan unter `docs/superpowers/specs|plans/2026-10-18-satztakt-alle-befestigungsarten*`.
+
+- Satzende-Zahl aus `Satztakt` jetzt für `stapel`, `langhantel` und `kurzhantel` (`stapel/takt1`, `langhantel/takt1`, `kurzhantel/takt2`); `hebelarm`, `kabelgriff`, `koerper` bleiben bei der Live-Zahl. Rückfall: Ist die Kette zu kurz (unter 70 % der Aktivdauer) oder liegt der Takt außerhalb der Profilgrenzen, zählt die Aktivdauer der Hüllkurve, markiert als unsicher.
+- Stapel-Profil: Takt ab 1,0 s und Gleichheit 0,8. Langhantel unverändert auf den Kurzhantel-Werten (an den 6 Abstimmungssätzen traf kein Profil aus 96 alle).
+- **±1-Quote:** Abstimmung 94 % gepoolt (32 Sätze), **Blindprüfung 83 % gepoolt (30 Sätze, Baseline 67 %)**. Das Ziel von 90 % ist nicht erreicht. Stapel blind 15/18, Langhantel blind 4/5, Kurzhantel blind 6/7, die 35 Sätze vom 16.10. weiter 100 %.
+- Offen: Stapel-Sätze verlieren am Rand 2 bis 3 Wiederholungen (Beinpresse 17 von 20, Adduktoren 12 von 15), Bankdrücken Satz 3 (12 Wiederholungen) liegt bei 7, eine Kniebeuge mit Pause bei 33 statt 30. Mit mehr Aufnahmen je Art (Beinpresse, Waden, Kniebeuge haben 2 bis 4 Sätze) lässt sich das erst belastbar angehen; neue Sätze sind frische Blindprüfung.
+- Latzug Satz 2 und 3 (App im Hintergrund): iOS liefert die Pakete nur alle ~0,6 s (je ~30 Werte). Der Live-Zähler wertet >0,5 s als Lücke und zählt nicht (wie in Spec B 9); die Satzende-Zahl trifft beide Sätze (12 und 14).

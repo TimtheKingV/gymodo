@@ -80,6 +80,10 @@ enum TaktBericht {
             return text
         }
         var text = "# Takt-Bericht (Satztakt, ganzer Satz)\n\nZiel: höchstens ±1 neben der Wahrheit. Erzeugt von `TaktBerichtTests.berichtSchreiben`.\n\n"
+        text += "**Grenzen:** Alle Sätze stammen von einer Person, ihren Geräten und drei Trainingstagen (14., 16. und 18.10.); die Aussage gilt nur dafür. "
+        text += "Beinpresse, Waden und Kniebeuge haben 2 bis 4 Sätze, die Blindprüfung ist dort nur ein Hinweis. "
+        text += "Aufteilung: je Art jeder zweite Satz (nach Ordnername) zum Abstimmen, der Rest blind. "
+        text += "Die Blindsätze wurden erst nach dem Einfrieren der Parameter gelesen; eine Ausnahme: Der erste Bericht vor jedem Abstimmen zeigte schon die Baseline der Blindsätze (Stapel 56 % bei ±1).\n\n"
         text += tabelle("Abstimmung", zeilen.filter { $0.gruppe == .abstimmen })
         text += tabelle("Blindprüfung (nur Arten mit eingefrorenen Parametern: \(blindFuer.map(\.rawValue).sorted().joined(separator: ", ").isEmpty ? "keine" : blindFuer.map(\.rawValue).sorted().joined(separator: ", ")))", zeilen.filter { $0.gruppe == .blind })
         text += tabelle("Früher abgestimmt (Kurzhantel 16.10., nur Regressionsschutz)", zeilen.filter { $0.gruppe == .frueherAbgestimmt })

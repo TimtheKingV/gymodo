@@ -2,6 +2,8 @@
 
 Ziel: höchstens ±1 neben der Wahrheit. Erzeugt von `TaktBerichtTests.berichtSchreiben`.
 
+**Grenzen:** Alle Sätze stammen von einer Person, ihren Geräten und drei Trainingstagen (14., 16. und 18.10.); die Aussage gilt nur dafür. Beinpresse, Waden und Kniebeuge haben 2 bis 4 Sätze, die Blindprüfung ist dort nur ein Hinweis. Aufteilung: je Art jeder zweite Satz (nach Ordnername) zum Abstimmen, der Rest blind. Die Blindsätze wurden erst nach dem Einfrieren der Parameter gelesen; eine Ausnahme: Der erste Bericht vor jedem Abstimmen zeigte schon die Baseline der Blindsätze (Stapel 56 % bei ±1).
+
 ### Abstimmung
 
 | Art | Sätze | exakt | ±1 |
