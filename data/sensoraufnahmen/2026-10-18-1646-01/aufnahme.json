@@ -1,0 +1,71 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "befestigungsart" : "stapel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-10-18T16:47:34+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "9ad1368c-8d04-4cab-b06c-ccc47cd230d5",
+    "exerciseId" : "3e846491-325d-48f2-bf46-b609c49e2e31",
+    "exerciseName" : "Abduktorenmaschine",
+    "machineId" : null,
+    "machineName" : "Ab-/Adduktorenmaschine",
+    "sessionId" : "6D210D2A-0710-4E62-9492-504970D89200",
+    "setId" : "2BE1509F-0BD6-4BC6-9B3D-D538C68EBB83",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 30,
+    "weightKg" : 75
+  },
+  "sensor" : {
+    "akkuProzent" : 60,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-18T16:46:15+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 220.14,
+      "median" : 0,
+      "p95" : 60.83
+    },
+    "luecken" : 0,
+    "pakete" : 3930,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "stapel/2",
+    "ereignisse" : {
+      "algo" : "stapel/2",
+      "befestigungsart" : "stapel",
+      "unsicher" : "taktUnregelmaessig",
+      "wiederholungen" : [
+        {
+          "ausschlag" : 0.16,
+          "beginn" : 22.01,
+          "ende" : 31.79,
+          "sicherheit" : 0.32,
+          "umkehr" : 31.31
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 31.85,
+          "ende" : 33.29,
+          "sicherheit" : 0.64,
+          "umkehr" : 32.84
+        }
+      ]
+    },
+    "gezaehlt" : 2,
+    "herkunft" : "korrigiert"
+  }
+}

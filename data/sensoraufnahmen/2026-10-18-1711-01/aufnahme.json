@@ -1,0 +1,46 @@
+{
+  "abschluss" : "abgebrochen",
+  "befestigung" : null,
+  "befestigungsart" : null,
+  "befestigungsartQuelle" : null,
+  "endedAt" : "2026-10-18T17:11:16+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "321afb1b-9d5f-4839-a12c-5f2911df92aa",
+    "exerciseId" : "89013f5a-abc4-4e65-b0d1-8aaeb44aa3bc",
+    "exerciseName" : "Kabelrudern – enger Neutralgriff",
+    "machineId" : null,
+    "machineName" : "Tiefe Ruderstation + V-Griff",
+    "sessionId" : null,
+    "setId" : null,
+    "setIndex" : null
+  },
+  "label" : {
+    "problemFlag" : null,
+    "reps" : null,
+    "weightKg" : null
+  },
+  "sensor" : {
+    "akkuProzent" : 60,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-18T17:11:09+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 358.89,
+      "median" : 0,
+      "p95" : 62.58
+    },
+    "luecken" : 0,
+    "pakete" : 349,
+    "rateIstHz" : 48.9,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : null
+}

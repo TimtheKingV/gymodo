@@ -18,6 +18,20 @@ struct AufnahmenTests {
         #expect(k.aufnahmen["2026-10-04-0912-01"]?.befestigungsart == nil)
     }
 
+    @Test func heute18OktoberIstEingetragen() throws {
+        let k = try Korrekturen.laden()
+        let fm = FileManager.default
+        let ordner = try fm.contentsOfDirectory(atPath: Pfade.aufnahmen.path)
+            .filter { $0.hasPrefix("2026-10-18-") }
+            .filter { fm.fileExists(atPath: Pfade.aufnahmen.appendingPathComponent($0).appendingPathComponent("messwerte.csv").path) }
+        #expect(!ordner.isEmpty)
+        for name in ordner { #expect(k.aufnahmen[name] != nil, "\(name) fehlt in korrekturen.json") }
+        let echt = ordner.compactMap { k.aufnahmen[$0] }.filter(\.fuerZaehler)
+        #expect(echt.count == 36)
+        #expect(k.aufnahmen["2026-10-18-1702-01"]?.repsWahr == 25)
+        #expect(k.aufnahmen["2026-10-18-1702-01"]?.befestigungsart == .langhantel)
+    }
+
     @Test(arguments: mitWahrheit)
     func aufnahmeLaeuftDeterministischUndStimmig(name: String) throws {
         let k = try Korrekturen.laden()

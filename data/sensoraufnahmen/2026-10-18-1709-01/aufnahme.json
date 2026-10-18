@@ -1,0 +1,155 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "befestigungsart" : "stapel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-10-18T17:10:39+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "321afb1b-9d5f-4839-a12c-5f2911df92aa",
+    "exerciseId" : "89013f5a-abc4-4e65-b0d1-8aaeb44aa3bc",
+    "exerciseName" : "Kabelrudern – enger Neutralgriff",
+    "machineId" : null,
+    "machineName" : "Tiefe Ruderstation + V-Griff",
+    "sessionId" : "6D210D2A-0710-4E62-9492-504970D89200",
+    "setId" : "07786DC7-3B29-479D-9F51-4A3495908771",
+    "setIndex" : 2
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 15,
+    "weightKg" : 40
+  },
+  "sensor" : {
+    "akkuProzent" : 60,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-18T17:09:58+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 265.36,
+      "median" : 0,
+      "p95" : 61.19
+    },
+    "luecken" : 0,
+    "pakete" : 1996,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "stapel/2",
+    "ereignisse" : {
+      "algo" : "stapel/2",
+      "befestigungsart" : "stapel",
+      "unsicher" : null,
+      "wiederholungen" : [
+        {
+          "ausschlag" : 0.77,
+          "beginn" : 0.1,
+          "ende" : 2.41,
+          "sicherheit" : 1,
+          "umkehr" : 1.37
+        },
+        {
+          "ausschlag" : 0.84,
+          "beginn" : 2.41,
+          "ende" : 4.66,
+          "sicherheit" : 1,
+          "umkehr" : 3.58
+        },
+        {
+          "ausschlag" : 0.89,
+          "beginn" : 4.72,
+          "ende" : 6.88,
+          "sicherheit" : 1,
+          "umkehr" : 5.83
+        },
+        {
+          "ausschlag" : 0.79,
+          "beginn" : 6.92,
+          "ende" : 9.07,
+          "sicherheit" : 1,
+          "umkehr" : 8.14
+        },
+        {
+          "ausschlag" : 0.84,
+          "beginn" : 9.11,
+          "ende" : 11.38,
+          "sicherheit" : 1,
+          "umkehr" : 10.3
+        },
+        {
+          "ausschlag" : 0.86,
+          "beginn" : 11.38,
+          "ende" : 13.68,
+          "sicherheit" : 1,
+          "umkehr" : 12.65
+        },
+        {
+          "ausschlag" : 0.91,
+          "beginn" : 13.68,
+          "ende" : 15.82,
+          "sicherheit" : 1,
+          "umkehr" : 14.83
+        },
+        {
+          "ausschlag" : 0.92,
+          "beginn" : 15.85,
+          "ende" : 18.01,
+          "sicherheit" : 1,
+          "umkehr" : 17.02
+        },
+        {
+          "ausschlag" : 0.84,
+          "beginn" : 18.04,
+          "ende" : 20.26,
+          "sicherheit" : 1,
+          "umkehr" : 19.24
+        },
+        {
+          "ausschlag" : 0.92,
+          "beginn" : 20.32,
+          "ende" : 22.64,
+          "sicherheit" : 1,
+          "umkehr" : 21.46
+        },
+        {
+          "ausschlag" : 0.85,
+          "beginn" : 22.69,
+          "ende" : 25.02,
+          "sicherheit" : 1,
+          "umkehr" : 23.97
+        },
+        {
+          "ausschlag" : 0.82,
+          "beginn" : 25.02,
+          "ende" : 27.28,
+          "sicherheit" : 1,
+          "umkehr" : 26.23
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 27.34,
+          "ende" : 29.68,
+          "sicherheit" : 1,
+          "umkehr" : 28.63
+        },
+        {
+          "ausschlag" : 0.91,
+          "beginn" : 29.72,
+          "ende" : 32.24,
+          "sicherheit" : 1,
+          "umkehr" : 31.2
+        }
+      ]
+    },
+    "gezaehlt" : 14,
+    "herkunft" : "korrigiert"
+  }
+}

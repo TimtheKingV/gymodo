@@ -1,0 +1,46 @@
+{
+  "abschluss" : "abgebrochen",
+  "befestigung" : "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+  "befestigungsart" : null,
+  "befestigungsartQuelle" : null,
+  "endedAt" : "2026-10-18T16:10:52+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "7ef892a2-0e86-424b-b357-ce4186547437",
+    "exerciseId" : "a97f2908-c13b-42b3-ad70-c33c0915c53f",
+    "exerciseName" : "Kurzhantel-Seitheben – sitzend",
+    "machineId" : null,
+    "machineName" : "Kurzhantel",
+    "sessionId" : null,
+    "setId" : null,
+    "setIndex" : null
+  },
+  "label" : {
+    "problemFlag" : null,
+    "reps" : null,
+    "weightKg" : null
+  },
+  "sensor" : {
+    "akkuProzent" : 75,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-18T16:10:43+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 139.89,
+      "median" : 0,
+      "p95" : 61.12
+    },
+    "luecken" : 0,
+    "pakete" : 450,
+    "rateIstHz" : 50.3,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : null
+}

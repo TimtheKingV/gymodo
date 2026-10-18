@@ -26,3 +26,13 @@ Ab Teilprojekt B gezählt werden nur echte Sätze mit eingetragener Befestigung 
 Ab E4 (14. Oktober 2026) schreibt die App `befestigungsart`, `befestigungsartQuelle` (`vorschlag` oder `gewaehlt`) und den `zaehler`-Block (live gezählt, Herkunft, Ereignisse) in `aufnahme.json`. Beim Einlesen: eine gewählte Art gilt; eine vorgeschlagene nur, wenn Notiz und Signal nicht widersprechen, sonst Tim fragen. `zaehler.gezaehlt` gegen das Label zeigt, wie der Live-Zähler mit dem Profil seines Builds lag; der Gütebericht rechnet trotzdem immer mit dem aktuellen Profil neu.
 
 Neue Aufnahmen: Ordner unverändert vom iPhone kopieren, Eintrag hier anlegen, `swift test --package-path apps/ios-member/Packages/Sensorik` laufen lassen und den neuen `guetebericht.md` mit committen.
+
+## Stand 18. Oktober 2026
+
+36 echte Sätze von 16:05 bis 17:10 (iPhone 13 mini, Sensor WT901BLE67, 50 Hz), dazu 21 abgebrochene Aufnahmen ohne Satz. Wahrheit pro Satz steht in `saetze-2026-10-18.csv` (aus `workout_sets.volume`, Zuordnung über `set_id` = `kontext.setId`); `korrekturen.json` ist daraus mit `tools/sensorik-sim/eintragen.py` gefüllt.
+
+- **Kurzhantel** (Curl, Seitheben, Schrägbankdrücken), **Langhantel** (Bankdrücken, High-Bar-Kniebeuge, Rudern), **Stapel** (Latzug, Bauchbeugen, Beinpresse, Waden, Adduktoren/Abduktoren, Kabelrudern).
+- Latzug Satz 2 und 3: App im Hintergrund, kein Live-Zähler; die Pakete sind da (Lücken höchstens 0,7 s).
+- High-Bar-Kniebeuge Satz 2: kurze Pause im Satz wegen eines Gesprächs.
+- `2026-10-18-1702-01` heißt in der App Langhantelrudern Satz 3, ist laut Testnotiz aber High-Bar-Kniebeuge Satz 3.
+- Live-Zahl gegen Wahrheit: Kurzhantel-Curl/Seitheben, Bauchbeugen, Kabelrudern, Latzug 1 stimmen; Langhantel, Beinpresse, Waden, Adduktoren 1/3 und Abduktoren 1 liegen bei 2–13 statt 15–30 (siehe `docs/superpowers/specs/2026-10-18-satztakt-alle-befestigungsarten-design.md`).

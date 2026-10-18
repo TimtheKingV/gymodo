@@ -5,11 +5,11 @@ Tor je Art (Sensor-Spec B 5.5): ≥ 20 Sätze aus ≥ 3 Tagen, exakt ≥ 90 %, �
 
 | Art · Set | Sätze | Tage | exakt | ±1 | Rücknahmen |
 |---|---|---|---|---|---|
-| stapel (stapel/2) · Entwicklung | 20 | 1 | 100 % | 100 % | 5 % |
+| stapel (stapel/2) · Entwicklung | 38 | 2 | 96 % | 100 % | 29 % |
 | stapel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
-| langhantel (langhantel/1) · Entwicklung | 4 | 2 | 0 % | 0 % | 50 % |
+| langhantel (langhantel/1) · Entwicklung | 13 | 3 | 0 % | 0 % | 54 % |
 | langhantel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
-| kurzhantel (kurzhantel/1) · Entwicklung | 43 | 3 | 19 % | 53 % | 16 % |
+| kurzhantel (kurzhantel/1) · Entwicklung | 52 | 4 | 28 % | 56 % | 17 % |
 | kurzhantel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
 | koerper (koerper/1) · Entwicklung | 1 | 1 | 0 % | 0 % | 0 % |
 | koerper · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
@@ -86,3 +86,39 @@ Tor je Art (Sensor-Spec B 5.5): ≥ 20 Sätze aus ≥ 3 Tagen, exakt ≥ 90 %, �
 | 2026-10-16-1327-02 | kurzhantel | 5 | 2 | – |
 | 2026-10-16-1327-03 | kurzhantel | 5 | 1 | – |
 | 2026-10-16-1327-04 | kurzhantel | 6 | 0 | – |
+| 2026-10-18-1605-01 | kurzhantel | 20 | 20 | – |
+| 2026-10-18-1606-02 | kurzhantel | 14 | 14 | – |
+| 2026-10-18-1608-01 | kurzhantel | 15 | 5 | taktUnregelmaessig |
+| 2026-10-18-1609-03 | kurzhantel | 15 | 15 | – |
+| 2026-10-18-1610-02 | kurzhantel | 12 | 12 | – |
+| 2026-10-18-1611-02 | kurzhantel | 12 | 14 | – |
+| 2026-10-18-1613-01 | kurzhantel | 12 | 4 | taktUnregelmaessig |
+| 2026-10-18-1613-03 | kurzhantel | 9 | 9 | – |
+| 2026-10-18-1614-02 | kurzhantel | 9 | 7 | – |
+| 2026-10-18-1619-01 | langhantel | 8 | 4 | – |
+| 2026-10-18-1621-01 | langhantel | 5 | 0 | – |
+| 2026-10-18-1623-01 | langhantel | 12 | 3 | taktUnregelmaessig |
+| 2026-10-18-1626-01 | stapel | 15 | 15 | – |
+| 2026-10-18-1628-01 | stapel | 12 | 0 | luecke |
+| 2026-10-18-1630-01 | stapel | 14 | 0 | luecke |
+| 2026-10-18-1632-01 | stapel | 30 | 30 | – |
+| 2026-10-18-1634-01 | stapel | 30 | 30 | – |
+| 2026-10-18-1635-01 | stapel | 30 | 30 | – |
+| 2026-10-18-1638-01 | stapel | 20 | 3 | taktUnregelmaessig |
+| 2026-10-18-1640-01 | stapel | 17 | 2 | taktUnregelmaessig |
+| 2026-10-18-1642-01 | stapel | 20 | 2 | taktUnregelmaessig |
+| 2026-10-18-1643-01 | stapel | 17 | 5 | taktUnregelmaessig |
+| 2026-10-18-1645-01 | stapel | 15 | 2 | taktUnregelmaessig |
+| 2026-10-18-1646-01 | stapel | 30 | 2 | taktUnregelmaessig |
+| 2026-10-18-1648-01 | stapel | 40 | 32 | taktUnregelmaessig |
+| 2026-10-18-1649-02 | stapel | 25 | 25 | – |
+| 2026-10-18-1650-02 | stapel | 30 | 13 | taktUnregelmaessig |
+| 2026-10-18-1652-01 | stapel | 25 | 25 | – |
+| 2026-10-18-1654-01 | langhantel | 28 | 2 | – |
+| 2026-10-18-1656-02 | langhantel | 30 | 3 | taktUnregelmaessig |
+| 2026-10-18-1658-03 | langhantel | 30 | 2 | taktUnregelmaessig |
+| 2026-10-18-1700-02 | langhantel | 30 | 4 | taktUnregelmaessig |
+| 2026-10-18-1702-01 | langhantel | 25 | 4 | – |
+| 2026-10-18-1704-01 | langhantel | 25 | 4 | taktUnregelmaessig |
+| 2026-10-18-1708-01 | stapel | 20 | 20 | – |
+| 2026-10-18-1709-01 | stapel | 15 | 14 | – |

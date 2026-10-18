@@ -1,0 +1,71 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "befestigungsart" : "stapel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-10-18T16:40:50+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "d0414bb0-bae0-4bd3-ba57-f102330756ae",
+    "exerciseId" : "8a9dc79a-dcef-4180-8e77-9a418bd18e6e",
+    "exerciseName" : "Beinpresse – 45 Grad",
+    "machineId" : null,
+    "machineName" : "45-Grad-Schlittenpresse",
+    "sessionId" : "6D210D2A-0710-4E62-9492-504970D89200",
+    "setId" : "D86E5A74-C8CF-4445-902A-0002D3896231",
+    "setIndex" : 2
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 17,
+    "weightKg" : 117.5
+  },
+  "sensor" : {
+    "akkuProzent" : 60,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-18T16:40:09+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 172.87,
+      "median" : 0,
+      "p95" : 61.15
+    },
+    "luecken" : 0,
+    "pakete" : 2000,
+    "rateIstHz" : 49.8,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "stapel/2",
+    "ereignisse" : {
+      "algo" : "stapel/2",
+      "befestigungsart" : "stapel",
+      "unsicher" : "taktUnregelmaessig",
+      "wiederholungen" : [
+        {
+          "ausschlag" : 0.38,
+          "beginn" : 0.31,
+          "ende" : 5.47,
+          "sicherheit" : 1,
+          "umkehr" : 4.44
+        },
+        {
+          "ausschlag" : 0.61,
+          "beginn" : 5.47,
+          "ende" : 6.82,
+          "sicherheit" : 1,
+          "umkehr" : 6.13
+        }
+      ]
+    },
+    "gezaehlt" : 2,
+    "herkunft" : "korrigiert"
+  }
+}

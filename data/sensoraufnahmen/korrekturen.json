@@ -766,6 +766,462 @@
       "befestigungsart": "kurzhantel",
       "repsWahr": 6,
       "fuerZaehler": true
+    },
+    "2026-10-18-1605-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1605-02": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1606-01": {
+      "was": "Kurzhantel-Seitheben – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1606-02": {
+      "was": "Kurzhantel-Seitheben – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 14,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1607-01": {
+      "was": "Kurzhantel-Schrägbankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1608-01": {
+      "was": "Kurzhantel-Schrägbankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 15,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1609-01": {
+      "was": "Kurzhantel-Schrägbankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1609-02": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1609-03": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 15,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1610-01": {
+      "was": "Kurzhantel-Seitheben – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1610-02": {
+      "was": "Kurzhantel-Seitheben – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1611-01": {
+      "was": "Kurzhantel-Schrägbankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1611-02": {
+      "was": "Kurzhantel-Schrägbankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1612-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1613-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1613-02": {
+      "was": "Kurzhantel-Seitheben – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1613-03": {
+      "was": "Kurzhantel-Seitheben – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 9,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1614-01": {
+      "was": "Kurzhantel-Schrägbankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1614-02": {
+      "was": "Kurzhantel-Schrägbankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 9,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1619-01": {
+      "was": "Langhantel-Bankdrücken",
+      "befestigung": null,
+      "befestigungsart": "langhantel",
+      "repsWahr": 8,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1621-01": {
+      "was": "Langhantel-Bankdrücken",
+      "befestigung": null,
+      "befestigungsart": "langhantel",
+      "repsWahr": 5,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1623-01": {
+      "was": "Langhantel-Bankdrücken",
+      "befestigung": null,
+      "befestigungsart": "langhantel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1626-01": {
+      "was": "Latzug · Obergriff",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 15,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1628-01": {
+      "was": "Latzug · Obergriff",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1630-01": {
+      "was": "Latzug · Obergriff",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 14,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1632-01": {
+      "was": "Bauchbeugen am Gerät",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 30,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1634-01": {
+      "was": "Bauchbeugen am Gerät",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 30,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1635-01": {
+      "was": "Bauchbeugen am Gerät",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 30,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1638-01": {
+      "was": "Beinpresse – 45 Grad",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1640-01": {
+      "was": "Beinpresse – 45 Grad",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 17,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1642-01": {
+      "was": "Wadenheben – stehend",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1643-01": {
+      "was": "Wadenheben – stehend",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 17,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1645-01": {
+      "was": "Adduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 15,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1646-01": {
+      "was": "Abduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 30,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1647-01": {
+      "was": "Adduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1648-01": {
+      "was": "Adduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 40,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1649-01": {
+      "was": "Abduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1649-02": {
+      "was": "Abduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 25,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1650-01": {
+      "was": "Adduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1650-02": {
+      "was": "Adduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 30,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1651-01": {
+      "was": "Abduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1652-01": {
+      "was": "Abduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 25,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1654-01": {
+      "was": "High-Bar-Kniebeuge",
+      "befestigung": null,
+      "befestigungsart": "langhantel",
+      "repsWahr": 28,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1656-01": {
+      "was": "Langhantelrudern – Obergriff",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1656-02": {
+      "was": "Langhantelrudern – Obergriff",
+      "befestigung": null,
+      "befestigungsart": "langhantel",
+      "repsWahr": 30,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1658-01": {
+      "was": "Langhantelrudern – Obergriff",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1658-02": {
+      "was": "High-Bar-Kniebeuge",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1658-03": {
+      "was": "High-Bar-Kniebeuge",
+      "befestigung": null,
+      "befestigungsart": "langhantel",
+      "repsWahr": 30,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1700-01": {
+      "was": "Langhantelrudern – Obergriff",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1700-02": {
+      "was": "Langhantelrudern – Obergriff",
+      "befestigung": null,
+      "befestigungsart": "langhantel",
+      "repsWahr": 30,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1702-01": {
+      "was": "Langhantelrudern – Obergriff",
+      "befestigung": null,
+      "befestigungsart": "langhantel",
+      "repsWahr": 25,
+      "fuerZaehler": true,
+      "grund": "in der App als Langhantelrudern Satz 3 gefuehrt, laut Testnotiz 18.10. High-Bar-Kniebeuge Satz 3"
+    },
+    "2026-10-18-1703-01": {
+      "was": "Langhantelrudern – Obergriff",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1704-01": {
+      "was": "Langhantelrudern – Obergriff",
+      "befestigung": null,
+      "befestigungsart": "langhantel",
+      "repsWahr": 25,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1708-01": {
+      "was": "Kabelrudern – enger Neutralgriff",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1709-01": {
+      "was": "Kabelrudern – enger Neutralgriff",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 15,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-10-18-1711-01": {
+      "was": "Kabelrudern – enger Neutralgriff",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-18-1715-01": {
+      "was": "Stair Climber – Treppensteigen",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
     }
   }
 }

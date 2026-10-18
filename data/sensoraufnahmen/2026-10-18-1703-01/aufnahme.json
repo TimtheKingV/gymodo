@@ -1,0 +1,46 @@
+{
+  "abschluss" : "abgebrochen",
+  "befestigung" : null,
+  "befestigungsart" : null,
+  "befestigungsartQuelle" : null,
+  "endedAt" : "2026-10-18T17:04:08+02:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "e5a65502-e459-41fd-b370-3dc2954b0a28",
+    "exerciseId" : "994e756a-6973-4d85-b764-597b842a283f",
+    "exerciseName" : "Langhantelrudern – Obergriff",
+    "machineId" : null,
+    "machineName" : "Langhantel",
+    "sessionId" : null,
+    "setId" : null,
+    "setIndex" : null
+  },
+  "label" : {
+    "problemFlag" : null,
+    "reps" : null,
+    "weightKg" : null
+  },
+  "sensor" : {
+    "akkuProzent" : 60,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-18T17:03:54+02:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 248.54,
+      "median" : 0,
+      "p95" : 61.97
+    },
+    "luecken" : 0,
+    "pakete" : 652,
+    "rateIstHz" : 50.1,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : null
+}
