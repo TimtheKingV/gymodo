@@ -32,7 +32,8 @@ public enum Satztakt {
 
     /// Kennung je Art: Kurzhantel behaelt `takt2`, die anderen Arten starten bei `takt1`.
     public static func algo(fuer art: Befestigungsart) -> String {
-        art == .kurzhantel ? algo : "\(art.rawValue)/takt1"
+        if TaktProfil.fuer(art)?.verfahren == .phasen { return "\(art.rawValue)/phasen1" }
+        return art == .kurzhantel ? algo : "\(art.rawValue)/takt1"
     }
 
     /// Die Wiederholungen als gleich lange Abschnitte des Takts. Einzelne
@@ -66,12 +67,13 @@ public enum Satztakt {
 
     public static func auswerten(_ messwerte: [SensorMesswert], rateHz: Double = 50,
                                  profil: TaktProfil = .kurzhantel) -> Ergebnis? {
+        if profil.verfahren == .phasen { return Phasenzaehler.auswerten(messwerte, rateHz: rateHz) }
         if let e = auswertenEinmal(messwerte, rateHz: rateHz, profil: profil) { return e }
         // Kein Takt im Profilbereich: noch einmal mit weiterer Obergrenze, aber unsicher.
         let weit = TaktProfil(taktMin: profil.taktMin, taktMax: profil.taktMax * 1.5, kappFaktor: profil.kappFaktor,
                               kandidatAnteil: profil.kandidatAnteil, gleichheitMin: profil.gleichheitMin,
                               abstandMin: profil.abstandMin, abstandMax: profil.abstandMax,
-                              mindestDauer: profil.mindestDauer)
+                              mindestDauer: profil.mindestDauer, verfahren: profil.verfahren)
         guard let e = auswertenEinmal(messwerte, rateHz: rateHz, profil: weit) else { return nil }
         return Ergebnis(anzahl: e.anzahl, takt: e.takt, beginn: e.beginn, ende: e.ende,
                         guete: min(e.guete, unsicherGrenze), ausschlag: e.ausschlag)
@@ -214,7 +216,7 @@ public enum Satztakt {
     }
 
     /// Projektion auf die erste Hauptkomponente (Potenzverfahren, 3x3).
-    private static func hauptachse(_ spalten: [[Double]]) -> [Double] {
+    static func hauptachse(_ spalten: [[Double]]) -> [Double] {
         let n = spalten[0].count
         let mittel = spalten.map { $0.reduce(0, +) / Double(n) }
         let x = spalten.enumerated().map { k, c in c.map { $0 - mittel[k] } }

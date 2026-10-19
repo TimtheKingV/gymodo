@@ -22,10 +22,35 @@ public struct TaktProfil: Sendable, Equatable {
     public let abstandMax: Double
     /// Kuerzere Saetze werden nicht ausgewertet.
     public let mindestDauer: TimeInterval
+    /// Womit der Satz am Ende gezaehlt wird. Bei `.phasen` gelten die Werte
+    /// oben nicht: der Phasenzaehler hat seine eigenen, festen Schwellen.
+    public let verfahren: Verfahren
+
+    public enum Verfahren: Sendable, Equatable { case kette, phasen }
+
+    public init(taktMin: TimeInterval, taktMax: TimeInterval, kappFaktor: Double, kandidatAnteil: Double,
+                gleichheitMin: Double, abstandMin: Double, abstandMax: Double, mindestDauer: TimeInterval,
+                verfahren: Verfahren = .kette) {
+        self.taktMin = taktMin; self.taktMax = taktMax; self.kappFaktor = kappFaktor
+        self.kandidatAnteil = kandidatAnteil; self.gleichheitMin = gleichheitMin
+        self.abstandMin = abstandMin; self.abstandMax = abstandMax
+        self.mindestDauer = mindestDauer; self.verfahren = verfahren
+    }
 
     public static let kurzhantel = TaktProfil(
         taktMin: 1.2, taktMax: 3.0, kappFaktor: 1.5, kandidatAnteil: 0.85,
         gleichheitMin: 0.9, abstandMin: 0.75, abstandMax: 1.3, mindestDauer: 5.0)
+
+    /// Stapel (19.10.): Phasenzaehler statt Kette. Die Werte der Kette unten
+    /// bleiben als Vergleich erhalten (`stapelKette`); der Zaehler nutzt sie nicht.
+    /// Auf den 37 Stapelsaetzen 33 exakt und 37 innerhalb +-1 gegen 32 und 34 der
+    /// Kette. Der Versuch wurde nach Ansicht der Ergebnisse ausgewaehlt, ist also
+    /// keine unabhaengige Pruefung: neue Stapelsaetze nachpruefen.
+    public static let stapel = TaktProfil(
+        taktMin: stapelKette.taktMin, taktMax: stapelKette.taktMax, kappFaktor: stapelKette.kappFaktor,
+        kandidatAnteil: stapelKette.kandidatAnteil, gleichheitMin: stapelKette.gleichheitMin,
+        abstandMin: stapelKette.abstandMin, abstandMax: stapelKette.abstandMax,
+        mindestDauer: stapelKette.mindestDauer, verfahren: .phasen)
 
     /// Stapel (18.10.): Maschinenbewegungen wiederholen sich in der Form weniger
     /// genau als Hanteln (Gleichheit 0,8 statt 0,9) und laufen teils schneller
@@ -33,7 +58,7 @@ public struct TaktProfil: Sendable, Equatable {
     /// 19 Abstimmungssaetzen (19/19 exakt; Gleichheit 0,75 und 0,85 je einen
     /// weniger, Takt-Untergrenze 0,8 bis 1,0 und Kappen 1,2 bis 1,5 gleich gut).
     /// Die Blindsaetze waren dabei nicht angesehen.
-    public static let stapel = TaktProfil(
+    public static let stapelKette = TaktProfil(
         taktMin: 1.0, taktMax: 3.0, kappFaktor: 1.5, kandidatAnteil: 0.85,
         gleichheitMin: 0.8, abstandMin: 0.75, abstandMax: 1.3, mindestDauer: 5.0)
 

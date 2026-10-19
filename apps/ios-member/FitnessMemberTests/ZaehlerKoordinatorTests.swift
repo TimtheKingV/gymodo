@@ -64,7 +64,7 @@ struct ZaehlerKoordinatorTests {
         #expect(m.liste == [.bereit, .stand(1), .stand(2), .stand(3), .stand(4), .stand(5)])
         let ergebnis = try #require(sut.ergebnis())
         #expect(ergebnis.gezaehlt == 5)
-        #expect(ergebnis.repEvents.algo == "stapel/takt1")
+        #expect(ergebnis.repEvents.algo == "stapel/phasen1")
         #expect(ergebnis.repEvents.befestigungsart == .stapel)
         // Zeiten relativ zum Satzbeginn: die erste Wiederholung beginnt nach 3 s Ruhe;
         // der Takt legt Abschnitte im Viertel-Takt-Raster, daher +-1 s statt +-0,3 s.
@@ -108,7 +108,7 @@ struct ZaehlerKoordinatorTests {
         for w in try Self.aufnahme("2026-10-18-1642-01", ab: uhr.t) { sut.empfangen(.messwert(w)) }
         let ergebnis = try #require(sut.ergebnis())
         #expect(abs(ergebnis.gezaehlt - 20) <= 1)
-        #expect(ergebnis.repEvents.algo == "stapel/takt1")
+        #expect(ergebnis.repEvents.algo == "stapel/phasen1")
     }
 
     /// Hebelarm hat kein Takt-Profil: die Live-Zahl bleibt.
@@ -158,11 +158,13 @@ struct ZaehlerKoordinatorTests {
     }
 
     /// Eine Takt-Zahl aus Schaetzung oder erweitertem Takt ist unsicher und
-    /// wird so gespeichert (Spec: `signalSchwach`).
+    /// wird so gespeichert (Spec: `signalSchwach`). Mit dem Kurzhantel-Profil
+    /// (Kette): Takt 3,2 s liegt ausserhalb von `taktMax`. Der Phasenzaehler
+    /// fuer Stapel kennt diese Unsicherheit nicht und zaehlt den Satz exakt.
     @Test func unsichereTaktZahlWirdAlsSignalSchwachGespeichert() throws {
         let (sut, _, uhr, m) = aufbau()
         beginnen(sut, m)
-        sut.befestigungWaehlen(.stapel)
+        sut.befestigungWaehlen(.kurzhantel)
         for w in try Self.aufnahme("2026-10-14-1747-01", ab: uhr.t) { sut.empfangen(.messwert(w)) }
         let ergebnis = try #require(sut.ergebnis())
         #expect(abs(ergebnis.gezaehlt - 10) <= 1)

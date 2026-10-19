@@ -34,7 +34,7 @@ struct SatztaktTests {
         #expect(p.gleichheitMin == 0.9 && p.abstandMin == 0.75 && p.abstandMax == 1.3)
         #expect(p.mindestDauer == 5.0)
         #expect(Satztakt.algo(fuer: .kurzhantel) == "kurzhantel/takt2")
-        #expect(Satztakt.algo(fuer: .stapel) == "stapel/takt1")
+        #expect(Satztakt.algo(fuer: .stapel) == "stapel/phasen1")
     }
 
     @Test func artenOhneProfilHabenKeins() {
