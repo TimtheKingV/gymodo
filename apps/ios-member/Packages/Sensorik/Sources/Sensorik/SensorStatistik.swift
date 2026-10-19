@@ -30,11 +30,23 @@ public struct SensorStatistik: Sendable {
                                    luecken: 0, verworfeneBytes: 0)
     }
 
+    /// Wie viele Abstaende Median, p95 und Rate hoechstens beruecksichtigen:
+    /// die juengsten fuenf Minuten bei 100 Hz. Ein Ratentest (300 s) und jeder
+    /// Satz liegen darunter und bleiben exakt. Ohne Grenze wuchs `gesamt` im
+    /// Koordinator mit der Verbindungsdauer und wurde jede Sekunde komplett
+    /// sortiert -- nach gut einer Stunde stand der Hauptthread (Testnotiz
+    /// 18.10., #7).
+    static let fenster = 30_000
+    /// Gekappt wird blockweise, nicht je Paket: `removeFirst` ist linear.
+    static let zuschlag = 3_000
+
     private var pakete = 0
     private var letzter: TimeInterval?
-    /// In Sekunden. Fuenf Minuten bei 100 Hz sind 30 000 Doubles -- das
-    /// darf im Speicher liegen, dafuer stimmen Median und p95 exakt.
+    /// In Sekunden, hoechstens `fenster` + `zuschlag` Stueck.
     private var abstaende: [Double] = []
+    /// Das Maximum ueber alle Abstaende, nicht nur ueber das Fenster: ein
+    /// Ausreisser vor einer Stunde bleibt in der Aufnahme sichtbar.
+    private var groessterAbstand: Double = 0
     private var luecken = 0
     private var nachLuecke = false
     /// Nur das letzte Stueck, fuer die Anzeige in der Sensor-Zeile.
@@ -44,7 +56,14 @@ public struct SensorStatistik: Sendable {
 
     public mutating func erfassen(t: TimeInterval) {
         pakete += 1
-        if let letzter, !nachLuecke { abstaende.append(t - letzter) }
+        if let letzter, !nachLuecke {
+            let abstand = t - letzter
+            abstaende.append(abstand)
+            groessterAbstand = Swift.max(groessterAbstand, abstand)
+            if abstaende.count > Self.fenster + Self.zuschlag {
+                abstaende.removeFirst(abstaende.count - Self.fenster)
+            }
+        }
         letzter = t
         nachLuecke = false
         juengste.append(t)
@@ -59,6 +78,9 @@ public struct SensorStatistik: Sendable {
         luecken += 1
         nachLuecke = true
     }
+
+    /// Nur fuer den Test der Obergrenze.
+    var gespeicherteAbstaende: Int { abstaende.count }
 
     public func rateLetzteSekunde(bis jetzt: TimeInterval) -> Double {
         Double(juengste.filter { $0 <= jetzt && jetzt - $0 < 1 }.count)
@@ -79,7 +101,7 @@ public struct SensorStatistik: Sendable {
         return Ergebnis(
             pakete: pakete,
             rateIstHz: summe > 0 ? (Double(n) / summe * 10).rounded() / 10 : 0,
-            abstandMs: Abstand(median: ms(median), p95: ms(p95), max: ms(sortiert[n - 1])),
+            abstandMs: Abstand(median: ms(median), p95: ms(p95), max: ms(groessterAbstand)),
             luecken: luecken,
             verworfeneBytes: verworfeneBytes
         )

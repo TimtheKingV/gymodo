@@ -7,8 +7,8 @@ import { createTestUser, serviceClient, uniqueEmail, userClient } from "./helper
 // nur so auf (Final-Review G).
 const GYMTAVO = "00000000-0000-4000-8000-000000000001";
 const kennung = crypto.randomUUID();
-const SPALTEN = "load, volume, secondary_load, volume_source, volume_counted, rep_events, dauer_s, strecke_m, stufe, kmh, steigung_pct, watt, kcal, frequenz";
-const LEER = { dauer_s: null, strecke_m: null, stufe: null, kmh: null, steigung_pct: null, watt: null, kcal: null, frequenz: null };
+const SPALTEN = "load, volume, secondary_load, volume_source, volume_counted, rep_events, dauer_s, strecke_m, stufe, stufenanzahl, kmh, steigung_pct, watt, kcal, frequenz";
+const LEER = { dauer_s: null, strecke_m: null, stufe: null, stufenanzahl: null, kmh: null, steigung_pct: null, watt: null, kcal: null, frequenz: null };
 const UMGESCHRIEBEN = { load: null, volume: null, secondary_load: null, volume_source: "eingegeben", volume_counted: null, rep_events: null };
 
 const satz: Record<string, string> = {};

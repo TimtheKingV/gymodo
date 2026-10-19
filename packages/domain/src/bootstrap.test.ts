@@ -90,6 +90,7 @@ describe("letzteSaetze", () => {
     dauer_s: null,
     strecke_m: null,
     stufe: null,
+    stufenanzahl: null,
     kmh: null,
     steigung_pct: null,
     watt: null,

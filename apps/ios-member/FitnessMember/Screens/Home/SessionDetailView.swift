@@ -211,19 +211,32 @@ struct SessionDetailView: View {
         let vergleich = Satzvergleich.fuer(block: block, in: teil, verlauf: verlauf.sessions)
         let saetze = block.sets.sorted { $0.setIndex < $1.setIndex }
         return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            HStack {
-                Text("\(block.machineLabel) · \(block.exerciseName)")
-                    .font(DesignSystem.Typography.uebungsname)
-                    .foregroundStyle(DesignSystem.Color.text)
-                Spacer()
-                Text("\(block.sets.count) \(block.sets.count == 1 ? "SATZ" : "SÄTZE")")
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                if let vergleich {
-                    trendSymbol(vergleich.gesamt, groesse: 17)
-                        .accessibilityLabel(gesamtGesprochen(vergleich.gesamt))
+            // Ein Tipp auf den Kopf oeffnet den Uebungsfortschritt dieser
+            // Uebung (Testnotiz 18.10., #6).
+            NavigationLink(value: HomeRoute.uebungsfortschritt(exerciseId: block.exerciseId)) {
+                HStack {
+                    Text("\(block.machineLabel) · \(block.exerciseName)")
+                        .font(DesignSystem.Typography.uebungsname)
+                        .foregroundStyle(DesignSystem.Color.text)
+                        .multilineTextAlignment(.leading)
+                    Spacer()
+                    Text("\(block.sets.count) \(block.sets.count == 1 ? "SATZ" : "SÄTZE")")
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                    if let vergleich {
+                        trendSymbol(vergleich.gesamt, groesse: 17)
+                            .accessibilityLabel(gesamtGesprochen(vergleich.gesamt))
+                    }
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Color.textFaint)
+                        .accessibilityHidden(true)
                 }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(PressButtonStyle())
+            .accessibilityHint("Öffnet den Übungsfortschritt")
 
             ForEach(Array(saetze.enumerated()), id: \.element.setIndex) { position, satz in
                 satzZeile(satz, block: block, vergleich: vergleich?.saetze[position])

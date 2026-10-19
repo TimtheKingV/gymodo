@@ -46,4 +46,26 @@ struct SensorStatistikTests {
         // Nach einer Sekunde Stille steht 0 da, nicht der alte Wert.
         #expect(sut.rateLetzteSekunde(bis: 4.5) == 0)
     }
+
+    /// Testnotiz 18.10., #7: die App haengte sich nach gut einer Stunde auf.
+    /// `gesamt` im Koordinator lebt, solange der Sensor verbunden ist, und
+    /// sammelte jeden Paketabstand -- und sortierte sie einmal je Sekunde auf
+    /// dem Hauptthread.
+    @Test func derSpeicherWaechstNichtMitDerVerbindungsdauer() {
+        var sut = SensorStatistik()
+        // Zwanzig Minuten bei 100 Hz.
+        for i in 0..<120_000 { sut.erfassen(t: Double(i) * 0.01) }
+        #expect(sut.gespeicherteAbstaende <= SensorStatistik.fenster + SensorStatistik.zuschlag)
+        let e = sut.ergebnis(verworfeneBytes: 0)
+        #expect(e.pakete == 120_000)
+        #expect(e.rateIstHz == 100)
+        #expect(e.abstandMs.median == 10)
+    }
+
+    @Test func dasMaximumBleibtUeberDasFensterHinausExakt() {
+        var sut = SensorStatistik()
+        sut.erfassen(t: 0); sut.erfassen(t: 0.5)   // frueher Ausreisser: 500 ms
+        for i in 1..<80_000 { sut.erfassen(t: 0.5 + Double(i) * 0.01) }
+        #expect(sut.ergebnis(verworfeneBytes: 0).abstandMs.max == 500)
+    }
 }

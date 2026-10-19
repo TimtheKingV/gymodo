@@ -3,13 +3,15 @@ import Foundation
 /// Die Werte eines Cardio-Satzes (Testnotiz 14.10., 18:45 #7). Reihenfolge
 /// und Schluessel wie CARDIO_WERTE in packages/domain/src/cardio.ts.
 enum CardioWert: String, CaseIterable, Codable, Hashable, Sendable {
-    case zeit, strecke, stufe, kmh, steigung, watt, frequenz, kcal
+    case zeit, strecke, stufe, stufenanzahl, kmh, steigung, watt, frequenz, kcal
 
     var name: String {
         switch self {
         case .zeit: "Zeit"
         case .strecke: "Strecke"
         case .stufe: "Stufe"
+        // Treppenstufen, nicht das Widerstandslevel (Testnotiz 18.10., #5).
+        case .stufenanzahl: "Anzahl Stufen"
         case .kmh: "Tempo"
         case .steigung: "Steigung"
         case .watt: "Watt"
@@ -26,6 +28,7 @@ enum CardioWert: String, CaseIterable, Codable, Hashable, Sendable {
         case .zeit: "min"
         case .strecke: "m"
         case .stufe: "Stufe"
+        case .stufenanzahl: "Stufen"
         case .kmh: "km/h"
         case .steigung: "%"
         case .watt: "W"
@@ -43,6 +46,7 @@ enum CardioWert: String, CaseIterable, Codable, Hashable, Sendable {
         case .zeit: 1...86_400
         case .strecke: 1...200_000
         case .stufe: 0...100
+        case .stufenanzahl: 1...10_000
         case .kmh: 0...50
         case .steigung: -10...40
         case .watt: 0...3_000
@@ -58,6 +62,7 @@ struct CardioWerte: Codable, Hashable, Sendable {
     var zeit: Int? = nil
     var strecke: Int? = nil
     var stufe: Int? = nil
+    var stufenanzahl: Int? = nil
     var kmh: Double? = nil
     var steigung: Double? = nil
     var watt: Int? = nil
@@ -72,6 +77,7 @@ struct CardioWerte: Codable, Hashable, Sendable {
             case .zeit: zeit.map(Double.init)
             case .strecke: strecke.map(Double.init)
             case .stufe: stufe.map(Double.init)
+            case .stufenanzahl: stufenanzahl.map(Double.init)
             case .kmh: kmh
             case .steigung: steigung
             case .watt: watt.map(Double.init)
@@ -85,6 +91,7 @@ struct CardioWerte: Codable, Hashable, Sendable {
             case .zeit: zeit = ganz
             case .strecke: strecke = ganz
             case .stufe: stufe = ganz
+            case .stufenanzahl: stufenanzahl = ganz
             case .kmh: kmh = newValue
             case .steigung: steigung = newValue
             case .watt: watt = ganz

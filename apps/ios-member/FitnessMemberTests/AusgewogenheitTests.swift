@@ -48,15 +48,25 @@ struct AusgewogenheitTests {
         #expect(Ausgewogenheit.status(gruppe: .brust, in: h) == .nachholbedarf)
     }
 
-    @Test func statusMuskelVergleichtMitDerEigenenGruppe() {
-        // Nicht selten im Ruecken: lats, upper_back -> Mittel 5, Schwellen 2,5 / 7,5.
-        let h = haeufigkeit(gruppen: [6, 6, 6, 6, 6, 6], muskeln: ["lats": 8, "upper_back": 2])
+    @Test func statusMuskelVergleichtMitDemMittelAllerGruppen() {
+        // Gemeinsamer Massstab (Testnotiz 18.10., #2): Mittel der sechs Gruppen 6,
+        // Schwellen 3 / 9 -- unabhaengig davon, wie die Muskeln der eigenen Gruppe stehen.
+        let h = haeufigkeit(gruppen: [6, 6, 6, 6, 6, 6], muskeln: ["lats": 10, "upper_back": 2])
         #expect(Ausgewogenheit.status(muskel: "upper_back", gruppe: .ruecken, in: h) == .nachholbedarf)
         #expect(Ausgewogenheit.status(muskel: "lats", gruppe: .ruecken, in: h) == .viel)
     }
 
+    @Test func schwacheGruppeFaerbtIhreMuskelnNichtGruen() {
+        // Rumpf: 2 von 6-ish Einheiten ist als Gruppe zu wenig. Beide Teilmuskeln
+        // standen frueher "ok", weil sie nur untereinander verglichen wurden.
+        let h = haeufigkeit(gruppen: [8, 8, 8, 8, 8, 2], muskeln: ["abs": 2, "obliques": 2])
+        #expect(Ausgewogenheit.status(gruppe: .rumpf, in: h) == .nachholbedarf)
+        #expect(Ausgewogenheit.status(muskel: "abs", gruppe: .rumpf, in: h) == .nachholbedarf)
+        #expect(Ausgewogenheit.status(muskel: "obliques", gruppe: .rumpf, in: h) == .nachholbedarf)
+    }
+
     @Test func statusMuskelInGruppeMitDreiMuskeln() {
-        // Schultern ohne rotator_cuff: 4, 4, 1 -> Mittel 3, Schwellen 1,5 / 4,5.
+        // Mittel der Gruppen 6, Schwellen 3 / 9.
         let h = haeufigkeit(
             gruppen: [6, 6, 6, 6, 6, 6],
             muskeln: ["deltoid_anterior": 4, "deltoid_lateral": 4, "deltoid_posterior": 1]

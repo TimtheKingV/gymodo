@@ -399,6 +399,7 @@ enum Zahlformat {
         case .strecke:
             return zahl < 1000 ? (ganzzahl(zahl), "m") : (eineStelle(zahl / 1000), "km")
         case .stufe: return (ganzzahl(zahl), "")
+        case .stufenanzahl: return (ganzzahl(zahl), "Stufen")
         default: return (cardioZahl(wert, zahl), wert.einheit)
         }
     }
@@ -410,6 +411,7 @@ enum Zahlformat {
         case .strecke:
             return zahl < 1000 ? "\(ganzzahl(zahl)) m" : "\(eineStelle(zahl / 1000)) km"
         case .stufe: return "Stufe \(ganzzahl(zahl))"
+        case .stufenanzahl: return "\(ganzzahl(zahl)) Stufen"
         case .kmh: return "\(eineStelle(zahl)) km/h"
         case .steigung: return "\(eineStelle(zahl)) %"
         case .watt: return "\(ganzzahl(zahl)) W"
@@ -446,6 +448,7 @@ enum Zahlformat {
             case .strecke:
                 return zahl < 1000 ? (zahl == 1 ? "1 Meter" : "\(ganzzahl(zahl)) Meter") : "\(eineStelle(zahl / 1000)) Kilometer"
             case .stufe: return "Stufe \(ganzzahl(zahl))"
+            case .stufenanzahl: return "\(ganzzahl(zahl)) Stufen"
             case .kmh: return "\(eineStelle(zahl)) Kilometer pro Stunde"
             case .steigung: return "\(eineStelle(zahl)) Prozent"
             case .watt: return "\(ganzzahl(zahl)) Watt"

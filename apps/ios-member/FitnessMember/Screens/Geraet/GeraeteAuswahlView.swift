@@ -12,7 +12,7 @@ import UIKit
 /// Training-Tabs, nicht mehr ein Schritt hinter "Suchen". `kopfinhalt`
 /// steht ueber den Geraeten und scrollt mit ihnen: im laufenden Training
 /// Uhr und die schon gemachten Uebungen.
-struct GeraeteAuswahlView<Kopfinhalt: View>: View {
+struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
     @Environment(CatalogStore.self) private var katalog
     @Environment(UebungsVideoVorrat.self) private var videos
     @Environment(WorkoutSessionStore.self) private var sessions
@@ -24,6 +24,10 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     /// -- siehe der Kommentar an seinem @State dort.
     let vorschauLader: VorschauLader
     let kopfinhalt: Kopfinhalt
+    /// Im laufenden Training die schon gemachten Uebungen. Steht unter den
+    /// Kategorien, nicht ueber ihnen (Testnotiz 18.10., #4): sonst rutschen
+    /// die Kategorien mit jedem Geraet weiter aus dem Bild.
+    let trainingsinhalt: Trainingsinhalt
     /// Gesetzt: die Kategorieliste dieser Gruppe statt der Wurzel
     /// (Testnotiz 12.10., #3) -- derselbe Screen, damit Zeilen, Fotos und
     /// Suche nicht ein zweites Mal entstehen.
@@ -38,12 +42,14 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     init(fotoLader: any GeraetefotosLoading & UebungsvideosLoading, vorschauLader: VorschauLader,
          gruppe: Geraetegruppe? = nil,
          @ViewBuilder kopfinhalt: () -> Kopfinhalt,
+         @ViewBuilder trainingsinhalt: () -> Trainingsinhalt,
          beiAuswahl: @escaping (Station, _ uebungId: String?) -> Void,
          beiKachel: @escaping (GeraeteAuswahl.Kachel) -> Void = { _ in }) {
         self.fotoLader = fotoLader
         self.vorschauLader = vorschauLader
         self.gruppe = gruppe
         self.kopfinhalt = kopfinhalt()
+        self.trainingsinhalt = trainingsinhalt()
         self.beiAuswahl = beiAuswahl
         self.beiKachel = beiKachel
     }
@@ -275,9 +281,12 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
         if g.istLeer {
             VStack(spacing: 0) {
                 if GeraeteAuswahl.zeigtKopf(suchtext: suchtext) {
-                    kopfinhalt
-                        .padding(.horizontal, 20)
-                        .padding(.top, DesignSystem.Spacing.s16)
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+                        kopfinhalt
+                        trainingsinhalt
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, DesignSystem.Spacing.s16)
                 }
                 leerZustand
             }
@@ -304,6 +313,10 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
                     // Regel. Mit Suchtext eine flache Liste.
                     if !g.kategorien.isEmpty {
                         kacheln(g.kategorien, ersteGruppe: true)
+                    }
+                    if GeraeteAuswahl.zeigtKopf(suchtext: suchtext) {
+                        trainingsinhalt
+                            .padding(.top, g.kategorien.isEmpty ? 0 : DesignSystem.Spacing.s16)
                     }
                     if !g.zuletzt.isEmpty {
                         gruppe("ZULETZT BEI DIR",
@@ -689,11 +702,12 @@ struct GeraeteAuswahlView<Kopfinhalt: View>: View {
     }
 }
 
-extension GeraeteAuswahlView where Kopfinhalt == EmptyView {
+extension GeraeteAuswahlView where Kopfinhalt == EmptyView, Trainingsinhalt == EmptyView {
     init(fotoLader: any GeraetefotosLoading & UebungsvideosLoading, vorschauLader: VorschauLader,
          gruppe: Geraetegruppe? = nil,
          beiAuswahl: @escaping (Station, _ uebungId: String?) -> Void) {
         self.init(fotoLader: fotoLader, vorschauLader: vorschauLader, gruppe: gruppe,
-                  kopfinhalt: { EmptyView() }, beiAuswahl: beiAuswahl)
+                  kopfinhalt: { EmptyView() }, trainingsinhalt: { EmptyView() },
+                  beiAuswahl: beiAuswahl)
     }
 }

@@ -2,11 +2,12 @@ import { z } from "zod";
 import type { LoadUnit, VolumeKind } from "./belastung.js";
 
 /**
- * Die Werte eines Cardio-Satzes (Testnotiz 14.10., 18:45 #7; Spec
+ * Die Werte eines Cardio-Satzes (Testnotiz 14.10., 18:45 #7; "Anzahl Stufen"
+ * am Treppensteiger: Testnotiz 18.10., #5; Spec
  * 2026-10-15-cardio-werte-design). Die Reihenfolge ist die der Knoepfe und
  * der Satzzeile -- in der App steht dieselbe Liste (CardioWert.swift).
  */
-export const CARDIO_WERTE = ["zeit", "strecke", "stufe", "kmh", "steigung", "watt", "frequenz", "kcal"] as const;
+export const CARDIO_WERTE = ["zeit", "strecke", "stufe", "stufenanzahl", "kmh", "steigung", "watt", "frequenz", "kcal"] as const;
 export type CardioWert = (typeof CARDIO_WERTE)[number];
 export const cardioWertSchema = z.enum(CARDIO_WERTE);
 
@@ -19,6 +20,7 @@ export const cardioWerteSchema = z
     zeit: ganz(1, 86_400),
     strecke: ganz(1, 200_000),
     stufe: ganz(0, 100),
+    stufenanzahl: ganz(1, 10_000),
     kmh: zehntel(0, 50),
     steigung: zehntel(-10, 40),
     watt: ganz(0, 3_000),
@@ -37,6 +39,7 @@ export const CARDIO_SPALTEN: Record<CardioWert, string> = {
   zeit: "dauer_s",
   strecke: "strecke_m",
   stufe: "stufe",
+  stufenanzahl: "stufenanzahl",
   kmh: "kmh",
   steigung: "steigung_pct",
   watt: "watt",
@@ -46,7 +49,7 @@ export const CARDIO_SPALTEN: Record<CardioWert, string> = {
 
 export const CARDIO_SELECT = CARDIO_WERTE.map((w) => CARDIO_SPALTEN[w]).join(", ");
 
-export type CardioZeile = Record<"dauer_s" | "strecke_m" | "stufe" | "kmh" | "steigung_pct" | "watt" | "kcal" | "frequenz", number | string | null>;
+export type CardioZeile = Record<"dauer_s" | "strecke_m" | "stufe" | "stufenanzahl" | "kmh" | "steigung_pct" | "watt" | "kcal" | "frequenz", number | string | null>;
 
 /** null, wenn kein Wert gesetzt ist -- dann ist es ein Kraftsatz. numeric kommt als Zeichenkette. */
 export function cardioAusZeile(row: CardioZeile): CardioWerte | null {
@@ -88,6 +91,7 @@ const GRENZEN: Record<CardioWert, readonly [number, number]> = {
   zeit: [1, 86_400],
   strecke: [1, 200_000],
   stufe: [0, 100],
+  stufenanzahl: [1, 10_000],
   kmh: [0, 50],
   steigung: [-10, 40],
   watt: [0, 3_000],

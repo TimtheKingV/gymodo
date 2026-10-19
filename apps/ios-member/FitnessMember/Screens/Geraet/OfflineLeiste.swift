@@ -44,26 +44,22 @@ struct OfflineLeiste: View {
 /// nie "fehlgeschlagen" (designsystem.md SS5). Der Satz ist lokal sicher;
 /// das muss die Sprache tragen.
 ///
-/// `geradeGesendet` ist der Reconnect-Moment, der als Artboard fehlt: zwei
-/// Sekunden "Gesendet", dann aus. Kein Toast, kein Haekchen-Jubel -- SS10
-/// verbietet den Motivationston, und ein erfolgreicher Normalfall braucht
-/// keine Feier.
+/// Sie steht nur, solange etwas wartet. Den Moment "Gesendet" nach dem
+/// Leerlaufen gibt es nicht mehr (Testnotiz 18.10., #1): ein erfolgreicher
+/// Normalfall braucht keine Meldung.
 struct WarteschlangeKarte: View {
     let offen: Int
-    let geradeGesendet: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-            Text(geradeGesendet ? "GESENDET" : "WARTET AUF EMPFANG · \(offen) \(offen == 1 ? "SATZ" : "SÄTZE")")
+            Text("WARTET AUF EMPFANG · \(offen) \(offen == 1 ? "SATZ" : "SÄTZE")")
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
-            if !geradeGesendet {
-                Text("Sicher gespeichert. Sie gehen automatisch raus, sobald du wieder Netz hast — auch wenn du die App schließt.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-                    .lineSpacing(3)
-            }
+            Text("Sicher gespeichert. Sie gehen automatisch raus, sobald du wieder Netz hast — auch wenn du die App schließt.")
+                .font(.system(size: 13))
+                .foregroundStyle(DesignSystem.Color.textFaint)
+                .lineSpacing(3)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(DesignSystem.Spacing.s16)

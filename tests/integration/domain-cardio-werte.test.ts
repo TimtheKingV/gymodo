@@ -5,8 +5,8 @@ import { createTestUser, serviceClient, uniqueEmail, userClient } from "./helper
 // Testnotiz 14.10., 18:45 #7: Cardio-Werte (Spec 2026-10-15-cardio-werte-design).
 const GYMTAVO = "00000000-0000-4000-8000-000000000001";
 const kennung = crypto.randomUUID();
-const SPALTEN = "dauer_s, strecke_m, stufe, kmh, steigung_pct, watt, kcal, frequenz";
-const OHNE_CARDIO = { dauer_s: null, strecke_m: null, stufe: null, kmh: null, steigung_pct: null, watt: null, kcal: null, frequenz: null };
+const SPALTEN = "dauer_s, strecke_m, stufe, stufenanzahl, kmh, steigung_pct, watt, kcal, frequenz";
+const OHNE_CARDIO = { dauer_s: null, strecke_m: null, stufe: null, stufenanzahl: null, kmh: null, steigung_pct: null, watt: null, kcal: null, frequenz: null };
 
 let mitgliedEmail: string;
 let mitgliedId: string;

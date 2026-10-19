@@ -285,8 +285,12 @@ struct TrainingRootView: View {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
                     sensorKarte
                     if let mitte, let session {
-                        laufendeMitte(mitte, session: session)
+                        laufendKopf(mitte, session: session)
                     }
+                }
+            } trainingsinhalt: {
+                if let session {
+                    laufendeUebungen(session: session)
                 }
             } beiAuswahl: { station, uebungId in
                 waehle(station, uebungId: uebungId)
@@ -309,8 +313,11 @@ struct TrainingRootView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, DesignSystem.Spacing.s16)
                 if let mitte, let session {
-                    laufendeMitte(mitte, session: session)
-                        .padding(.horizontal, 20)
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+                        laufendKopf(mitte, session: session)
+                        laufendeUebungen(session: session)
+                    }
+                    .padding(.horizontal, 20)
                         .padding(.top, DesignSystem.Spacing.s16)
                 }
                 Spacer(minLength: 0)
@@ -382,11 +389,10 @@ struct TrainingRootView: View {
     /// laufende Mitte eine eigene ScrollView zwischen festem Kopf und
     /// festem Fuss; jetzt traegt die Liste darunter das Scrollen, und die
     /// Scanwege schweben ohnehin immer in der Daumenzone.
-    private func laufendeMitte(_ mitte: TrainingTab.Mitte, session: LokaleSession) -> some View {
+    /// Die gemachten Uebungen unter den Kategorien (Testnotiz 18.10., #4);
+    /// Uhr und Zahlen stehen oben im Kopf (`laufendKopf`).
+    private func laufendeUebungen(session: LokaleSession) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            laufendKopf(mitte, session: session)
-                .padding(.bottom, DesignSystem.Spacing.s8)
-
             ForEach(TrainingTab.zuletztZuerst(session.bloecke)) { block in
                 Button { oeffne(block) } label: { blockZeile(block) }
                     .buttonStyle(PressButtonStyle())
