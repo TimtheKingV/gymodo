@@ -125,7 +125,8 @@ describe("ModellBelastungRad", () => {
     expect(feldwert("loadUnit")).toBe("watt");
     expect(feldwert("loadStep")).toBe("5");
     expect(feldwert("loadMin")).toBe("5");
-    expect(screen.getAllByRole("checkbox")).toHaveLength(8);
+    expect(screen.getAllByRole("checkbox")).toHaveLength(9);
+    expect(screen.getByRole("checkbox", { name: "Anzahl Stufen" })).toBeTruthy();
     expect(screen.getByRole("checkbox", { name: "Geschwindigkeit (km/h)" })).toBeTruthy();
     expect(screen.getByRole("checkbox", { name: "Trittfrequenz / Schlagzahl" })).toBeTruthy();
   });
@@ -170,6 +171,6 @@ describe("ModellBelastungRad", () => {
 
     expect(feldwert("loadUnit")).toBe("watt");
     expect(feldwert("loadStep")).toBe("5");
-    expect(screen.getAllByRole("checkbox")).toHaveLength(8);
+    expect(screen.getAllByRole("checkbox")).toHaveLength(9);
   });
 });
