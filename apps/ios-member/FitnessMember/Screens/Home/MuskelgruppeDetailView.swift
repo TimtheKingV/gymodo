@@ -133,8 +133,8 @@ struct MuskelgruppeDetailView: View {
 
     private var muskelListe: some View {
         let schluessel = gruppe.muskelSchluessel
-        let groesste = schluessel.filter { !Ausgewogenheit.seltene.contains($0) }
-            .map { h.jeMuskel[$0] ?? 0 }.max() ?? 0
+        // Wie die Uebersicht: Balken relativ zur groessten Gruppe (Testnotiz 18.10., #2).
+        let groesste = Ausgewogenheit.groessteGruppe(h)
         return MuskelKartenRahmen(innen: 0) {
             VStack(spacing: 0) {
                 ForEach(Array(schluessel.enumerated()), id: \.element) { index, muskel in

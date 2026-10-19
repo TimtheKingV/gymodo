@@ -70,4 +70,9 @@ struct FortschrittsansichtEinstellungTests {
         defaults.set("quatsch", forKey: Einstellungen.fortschrittsansichtKey)
         #expect(Einstellungen.fortschrittsansicht(defaults) == .muskelgruppen)
     }
+
+    @Test func schalterTitelHeissenMuskulaturUndUebungen() {
+        // Testnotiz 18.10., #1: "Muskelgruppen" -> "Muskulatur"; der Schluessel bleibt.
+        #expect(Fortschrittsansicht.allCases.map(\.titel) == ["Muskulatur", "Übungen"])
+    }
 }

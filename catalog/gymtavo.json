@@ -2261,7 +2261,7 @@
       "load_max": null,
       "load_start": 5,
       "secondary": null,
-      "cardio_values": ["zeit", "stufe", "kcal"],
+      "cardio_values": ["zeit", "stufe", "stufenanzahl", "kcal"],
       "settings": [
         {
           "key": "step_rate",

@@ -24,6 +24,7 @@ const CARDIO_BESCHRIFTUNG: Record<CardioWert, string> = {
   zeit: "Zeit",
   strecke: "Strecke",
   stufe: "Stufe",
+  stufenanzahl: "Anzahl Stufen",
   kmh: "Geschwindigkeit (km/h)",
   steigung: "Steigung (%)",
   watt: "Watt",

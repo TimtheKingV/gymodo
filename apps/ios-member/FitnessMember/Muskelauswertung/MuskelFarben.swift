@@ -11,7 +11,7 @@ enum MuskelFarben {
         }
     }
 
-    /// Detail: jeder Muskel im Vergleich mit dem Mittel seiner eigenen Gruppe.
+    /// Detail: jeder Muskel im Vergleich mit dem Mittel aller Gruppen.
     /// Mit `nurGruppe` stehen alle Muskeln ausserhalb der Gruppe in `line`.
     static func farben(gruppe: MuskelHauptgruppe, h: Haeufigkeit, nurGruppe: Bool) -> [String: Color] {
         var farben: [String: Color] = [:]

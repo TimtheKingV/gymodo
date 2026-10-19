@@ -36,14 +36,28 @@ enum Ausgewogenheit {
         return bewerte(Double(h.jeGruppe[gruppe] ?? 0), mittel: mittel)
     }
 
+    /// Mittel der Einheiten ueber die sechs Gruppen: der eine Massstab fuer
+    /// Gruppen und Muskeln (Testnotiz 18.10., #2).
+    static func gruppenmittel(_ h: Haeufigkeit) -> Double {
+        let zahlen = MuskelHauptgruppe.angezeigt.map { Double(h.jeGruppe[$0] ?? 0) }
+        return zahlen.reduce(0, +) / Double(zahlen.count)
+    }
+
+    /// Hoechste Gruppenzahl: die Balkenlaenge von Gruppen und Muskeln bezieht
+    /// sich darauf, damit ein Balken in Uebersicht und Detail gleich lang ist.
+    static func groessteGruppe(_ h: Haeufigkeit) -> Int {
+        MuskelHauptgruppe.angezeigt.map { h.jeGruppe[$0] ?? 0 }.max() ?? 0
+    }
+
+    /// Ein Muskel wird wie seine Gruppe am Mittel aller Gruppen gemessen, nicht
+    /// am Mittel der eigenen Gruppe. Sonst stand der Rumpf in der Uebersicht
+    /// auf "zu wenig", seine Muskeln im Detail aber gruen. `gruppe` bleibt im
+    /// Aufruf, um Seltene unabhaengig davon zu erkennen.
     static func status(muskel: String, gruppe: MuskelHauptgruppe, in h: Haeufigkeit) -> MuskelStatus {
         guard h.istAuswertbar else { return .keineAuswertung }
         if seltene.contains(muskel) { return .kaumUebungen }
-        let referenz = gruppe.muskelSchluessel.filter { !seltene.contains($0) }
-        guard !referenz.isEmpty else { return .kaumUebungen }
-        let summe = referenz.reduce(0) { $0 + (h.jeMuskel[$1] ?? 0) }
-        let mittel = Double(summe) / Double(referenz.count)
-        return bewerte(Double(h.jeMuskel[muskel] ?? 0), mittel: mittel)
+        guard gruppe.muskelSchluessel.contains(where: { !seltene.contains($0) }) else { return .kaumUebungen }
+        return bewerte(Double(h.jeMuskel[muskel] ?? 0), mittel: gruppenmittel(h))
     }
 
     /// Null Einheiten bei vorhandener Datenreife ist immer Nachholbedarf.

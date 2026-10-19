@@ -5,7 +5,7 @@ import Testing
 /// Testnotiz 14.10., 18:45 #7: Cardio-Werte in der App.
 struct CardioTests {
     @Test func dieReihenfolgeIstDieDesServers() {
-        #expect(CardioWert.allCases.map(\.rawValue) == ["zeit", "strecke", "stufe", "kmh", "steigung", "watt", "frequenz", "kcal"])
+        #expect(CardioWert.allCases.map(\.rawValue) == ["zeit", "strecke", "stufe", "stufenanzahl", "kmh", "steigung", "watt", "frequenz", "kcal"])
     }
 
     @Test func werteLassenSichJeSchluesselSetzen() {
@@ -115,6 +115,24 @@ struct CardioTests {
         #expect(Zahlformat.cardioWert(.steigung, -2) == "−2,0 %")
         #expect(Zahlformat.cardioWert(.frequenz, 85) == "85 /min")
         #expect(Zahlformat.cardioWert(.kcal, 310) == "310 kcal")
+    }
+
+    /// Testnotiz 18.10., #5: Anzahl Stufen am Treppensteiger.
+    @Test func anzahlStufenAmTreppensteiger() throws {
+        var w = CardioWerte()
+        w[.stufenanzahl] = 120
+        #expect(w.stufenanzahl == 120)
+        #expect(Zahlformat.cardioWert(.stufenanzahl, 120) == "120 Stufen")
+        #expect(Zahlformat.cardioGesprochen(w) == "120 Stufen")
+        #expect(Zahlformat.cardioTeile(.stufenanzahl, 120).einheit == "Stufen")
+        #expect(CardioWert.stufenanzahl.name == "Anzahl Stufen")
+        #expect(CardioWert.stufenanzahl.bereich == 1...10_000)
+        // Der Schluessel auf dem Draht ist der des Servers.
+        let json = try JSONEncoder().encode(w)
+        #expect(String(decoding: json, as: UTF8.self).contains("\"stufenanzahl\":120"))
+        if case .failure = CardioEingabe.zahl("0", fuer: .stufenanzahl) {} else { Issue.record("0 Stufen muessen abgelehnt werden") }
+        if case .failure = CardioEingabe.zahl("12,5", fuer: .stufenanzahl) {} else { Issue.record("halbe Stufen muessen abgelehnt werden") }
+        #expect((try CardioEingabe.zahl("120", fuer: .stufenanzahl).get()) == 120)
     }
 
     @Test func zahlOhneEinheitFuerDasEingabefeld() {

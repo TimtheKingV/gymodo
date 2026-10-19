@@ -94,7 +94,7 @@ enum Fortschrittsansicht: String, CaseIterable, Sendable {
 
     var titel: String {
         switch self {
-        case .muskelgruppen: "Muskelgruppen"
+        case .muskelgruppen: "Muskulatur"
         case .uebungen: "Übungen"
         }
     }

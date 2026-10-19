@@ -329,10 +329,16 @@ private extension HomeRootView {
         .foregroundStyle(DesignSystem.Color.textMuted)
     }
 
-    /// Oben der Schalter Muskelgruppen | Übungen; "Übungen" ist die
-    /// bisherige Liste unveraendert.
+    /// Oben die Ueberschrift "FORTSCHRITT" (in beiden Ansichten sichtbar,
+    /// Testnotiz 18.10., #1), darunter der Schalter Muskulatur | Übungen;
+    /// "Übungen" ist die bisherige Liste.
     var fortschritt: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+            Text("FORTSCHRITT")
+                .font(DesignSystem.Typography.label)
+                .kerning(1.5)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .accessibilityAddTraits(.isHeader)
             SegmentSchalter(werte: Fortschrittsansicht.allCases, auswahl: $fortschrittsansicht, titel: \.titel)
             switch fortschrittsansicht {
             case .muskelgruppen:
@@ -376,11 +382,6 @@ private extension HomeRootView {
         let angebot = UebungsGruppierung.vorhandeneGruppen(verlauf.fortschritt, muskeln: jeUebung)
         let filter = fortschrittGruppe.flatMap { angebot.contains($0) ? $0 : nil }
         return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            Text("ÜBUNGSFORTSCHRITT")
-                .font(DesignSystem.Typography.label)
-                .kerning(1.5)
-                .foregroundStyle(DesignSystem.Color.textMuted)
-
             if angebot.count > 1 {
                 GruppenLeiste(gruppen: angebot, auswahl: $fortschrittGruppe)
             }

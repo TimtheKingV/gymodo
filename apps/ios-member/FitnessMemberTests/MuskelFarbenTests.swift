@@ -19,9 +19,11 @@ struct MuskelFarbenTests {
     @Test func detailZeigtNurDieGruppeHervorgehoben() {
         let farben = MuskelFarben.farben(gruppe: .ruecken, h: h, nurGruppe: true)
         #expect(farben["pectorals"] == DesignSystem.Color.line)
-        // Im Ruecken: lats 8, upper_back 8 -> Mittel 8, beide ok; erectors selten.
-        #expect(farben["lats"] == DesignSystem.Color.accentPressed)
-        #expect(farben["upper_back"] == DesignSystem.Color.accentPressed)
+        // Gemeinsamer Massstab (Testnotiz 18.10., #2): Mittel der Gruppen 25/6 ~ 4,2,
+        // lats und upper_back mit 8 liegen darueber -> viel, wie die Gruppe Ruecken.
+        // erectors ist selten.
+        #expect(farben["lats"] == DesignSystem.Color.accent)
+        #expect(farben["upper_back"] == DesignSystem.Color.accent)
         #expect(farben["erectors"] == DesignSystem.Color.muskelInaktiv)
     }
 

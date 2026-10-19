@@ -12,7 +12,7 @@ import {
 
 describe("CARDIO_WERTE", () => {
   it("hat die feste Reihenfolge der Spec", () => {
-    expect(CARDIO_WERTE).toEqual(["zeit", "strecke", "stufe", "kmh", "steigung", "watt", "frequenz", "kcal"]);
+    expect(CARDIO_WERTE).toEqual(["zeit", "strecke", "stufe", "stufenanzahl", "kmh", "steigung", "watt", "frequenz", "kcal"]);
   });
 });
 
@@ -20,6 +20,15 @@ describe("cardioWerteSchema", () => {
   it("nimmt gueltige Werte, auch einzeln", () => {
     expect(cardioWerteSchema.parse({ zeit: 510, strecke: 2000 })).toEqual({ zeit: 510, strecke: 2000 });
     expect(cardioWerteSchema.parse({ kmh: 10.5, steigung: -2.5 })).toEqual({ kmh: 10.5, steigung: -2.5 });
+  });
+
+  it("kennt die Anzahl Stufen (Testnotiz 18.10., #5): ganz, 1 bis 10000, eigene Spalte", () => {
+    expect(cardioWerteSchema.parse({ stufenanzahl: 120 })).toEqual({ stufenanzahl: 120 });
+    expect(cardioWerteSchema.safeParse({ stufenanzahl: 0 }).success).toBe(false);
+    expect(cardioWerteSchema.safeParse({ stufenanzahl: 10_001 }).success).toBe(false);
+    expect(cardioWerteSchema.safeParse({ stufenanzahl: 12.5 }).success).toBe(false);
+    expect(cardioZuSpalten({ stufenanzahl: 120 }).stufenanzahl).toBe(120);
+    expect(cardioZuSpalten({ stufe: 6 }).stufenanzahl).toBeNull();
   });
 
   it("weist Werte ausserhalb der Grenzen und gebrochene Ganzzahlen ab", () => {
@@ -130,7 +139,7 @@ describe("altEingabeUmwandeln -- Regel wie Migration 0055 (Final-Review A/G)", (
 });
 
 describe("cardioDesSatzes (Final-Review A)", () => {
-  const leer = { dauer_s: null, strecke_m: null, stufe: null, kmh: null, steigung_pct: null, watt: null, kcal: null, frequenz: null };
+  const leer = { dauer_s: null, strecke_m: null, stufe: null, stufenanzahl: null, kmh: null, steigung_pct: null, watt: null, kcal: null, frequenz: null };
   const rad = { liste: ["zeit", "watt"] as const, loadUnit: "watt" as const, secondaryUnit: null };
 
   it("nimmt die Spalten, wenn der Satz Cardio-Werte traegt", () => {
@@ -158,12 +167,12 @@ describe("cardioDesSatzes (Final-Review A)", () => {
 
 describe("Zeilen-Mapping", () => {
   it("liest nur gesetzte Spalten und schreibt alle acht", () => {
-    expect(cardioAusZeile({ dauer_s: 510, strecke_m: null, stufe: null, kmh: "10.5", steigung_pct: null, watt: null, kcal: null, frequenz: null }))
+    expect(cardioAusZeile({ dauer_s: 510, strecke_m: null, stufe: null, stufenanzahl: null, kmh: "10.5", steigung_pct: null, watt: null, kcal: null, frequenz: null }))
       .toEqual({ zeit: 510, kmh: 10.5 });
-    expect(cardioAusZeile({ dauer_s: null, strecke_m: null, stufe: null, kmh: null, steigung_pct: null, watt: null, kcal: null, frequenz: null }))
+    expect(cardioAusZeile({ dauer_s: null, strecke_m: null, stufe: null, stufenanzahl: null, kmh: null, steigung_pct: null, watt: null, kcal: null, frequenz: null }))
       .toBeNull();
     expect(cardioZuSpalten({ zeit: 510 })).toEqual({
-      dauer_s: 510, strecke_m: null, stufe: null, kmh: null, steigung_pct: null, watt: null, kcal: null, frequenz: null,
+      dauer_s: 510, strecke_m: null, stufe: null, stufenanzahl: null, kmh: null, steigung_pct: null, watt: null, kcal: null, frequenz: null,
     });
   });
 });

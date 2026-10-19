@@ -34,14 +34,6 @@ struct GeraetView: View {
     #if DEBUG
     @Environment(SensorAufnahmeKoordinator.self) private var sensorAufnahme
     #endif
-    @State private var geradeGesendet = false
-    // Zaehlt jede Runde "Warteschlange leergelaufen" hoch. .task(id:) bindet
-    // den Zwei-Sekunden-Timer daran statt an einen freilaufenden Task: laeuft
-    // die Schlange waehrend der zwei Sekunden erneut leer, bricht SwiftUI den
-    // alten Timer beim id-Wechsel selbst ab, statt dass zwei Timer um die
-    // Anzeige konkurrieren -- und verlaesst die Ansicht die Buehne, endet der
-    // Timer mit ihr statt auf einen verschwundenen Zustand zu schreiben.
-    @State private var gesendetRunde = 0
     @State private var steuerungOffen = false
 
     var body: some View {
@@ -90,9 +82,10 @@ struct GeraetView: View {
                             if !netz.istOnline {
                                 OfflineLeiste(istOnline: netz.istOnline)
                             }
-                            if !katalog.pendingWrites.isEmpty || geradeGesendet {
-                                WarteschlangeKarte(offen: katalog.pendingWrites.count,
-                                                   geradeGesendet: geradeGesendet)
+                            // Kein "Gesendet" nach dem Leerlaufen: der Normalfall braucht
+                            // keine Meldung (Testnotiz 18.10., #1).
+                            if !katalog.pendingWrites.isEmpty {
+                                WarteschlangeKarte(offen: katalog.pendingWrites.count)
                             }
                             if !katalog.verworfeneWrites.isEmpty {
                                 AbgelehnteKarte(anzahl: katalog.verworfeneWrites.count,
@@ -135,27 +128,6 @@ struct GeraetView: View {
             if rest > 0 { try? await Task.sleep(for: .seconds(rest)) }
             guard !Task.isCancelled else { return }
             modell.pauseBeenden()
-        }
-        // Der Reconnect-Moment: laeuft die Schlange leer, steht zwei
-        // Sekunden "Gesendet". Der eigentliche Timer sitzt im .task(id:)
-        // unten -- hier wird nur die naechste Runde ausgeloest.
-        .onChange(of: katalog.pendingWrites.count) { alt, neu in
-            guard alt > 0, neu == 0 else { return }
-            geradeGesendet = true
-            gesendetRunde += 1
-        }
-        // An gesendetRunde gebunden statt an einen freilaufenden Task: ein
-        // erneutes Leerlaufen waehrend der zwei Sekunden (Nachschub kommt
-        // rein und geht sofort wieder raus) hebt die Runde an, SwiftUI
-        // bricht den alten Timer ab und die neuen zwei Sekunden zaehlen ab
-        // dem zweiten Ereignis -- ohne dieses Bindung wuerde der erste Timer
-        // "Gesendet" abschalten, waehrend die zweite Runde noch laufen soll.
-        // Verlaesst die View die Buehne, cancelt SwiftUI den Task automatisch.
-        .task(id: gesendetRunde) {
-            guard gesendetRunde > 0 else { return }
-            try? await Task.sleep(for: .seconds(2))
-            guard !Task.isCancelled else { return }
-            geradeGesendet = false
         }
         // Ein verlassener Screen ohne gesicherten Satz ist ein abgebrochener
         // Mitschnitt. Im Release ist das ein Aufruf auf nil.
