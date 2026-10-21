@@ -311,6 +311,109 @@ struct GeraetModelTests {
         #expect(sut.satzAbgelehnt == nil)
     }
 
+    // MARK: - Zirkel (Spec Mini-Zirkel 21.10.)
+
+    /// Im Zirkel entscheidet die Zirkel-Ebene, was nach dem Satz kommt --
+    /// die Pause der Uebung oder die Abschlussfrage waeren dort falsch.
+    @Test func imZirkelRuftSichernDenHookStattPauseOderAbschluss() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 1)
+        var aufrufe = 0
+        sut.beiZirkelSatzGesichert = { aufrufe += 1 }
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(aufrufe == 1)
+        #expect(sut.phase == .eingabe)
+        #expect(sut.gesicherteSaetze == 1)
+    }
+
+    /// Review Focus: ein abgelehnter Satz darf den Zirkel nicht weiterruecken.
+    @Test func einAbgelehnterSatzRuftDenHookNicht() async {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        _ = sessions.satzSichern(station: .testGeraet("m9", studioId: "s2"), exerciseId: "e1",
+                                 einheiten: .kilogrammWiederholungen, load: 50, volume: 10,
+                                 problemFlag: false, problemReason: nil)
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         sessions: sessions)
+        var aufrufe = 0
+        sut.beiZirkelSatzGesichert = { aufrufe += 1 }
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(sut.satzAbgelehnt != nil)
+        #expect(aufrufe == 0)
+    }
+
+    @Test func ohneHookBleibtDasVerhaltenUnveraendert() async {
+        let mitPause = modell(maschine: GeraetTestdaten.maschine,
+                              bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                              satzZiel: 3)
+        await mitPause.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(mitPause.laufendePause != nil)
+
+        let amZiel = modell(maschine: GeraetTestdaten.maschine,
+                            bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                            satzZiel: 1)
+        await amZiel.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(amZiel.phase == .abschluss)
+    }
+
+    /// Runde 2+: kein Drawer, kein Countdown -- gleich die Raeder, und der
+    /// Mitschnitt beginnt sofort, nicht erst nach einem Countdown, der nie
+    /// endet.
+    @Test func startOhneCountdownGehtGleichInDieEingabe() {
+        let mitschnitt = MitschnittSpion()
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         mitschnitt: mitschnitt)
+
+        sut.uebungStarten(mit: Startwerte(belastung: 40, umfang: 12, nebenbelastung: nil),
+                          mitCountdown: false)
+
+        #expect(sut.phase == .eingabe)
+        #expect(sut.belastung == 40)
+        #expect(sut.umfang == 12)
+        #expect(mitschnitt.eingaben == 1)
+    }
+
+    /// Runde 2 entsteht als neues Modell derselben Station und Uebung ohne
+    /// Startwerte. Das Gewicht muss aus dem Satz der Vorrunde kommen, nicht
+    /// aus dem Bootstrap -- der kennt die laufende Einheit nicht.
+    @Test func dasGewichtDerVorrundeIstInRunde2Vorbelegt() async {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        // Schrittweite 1 kg, damit 14 auf dem Raster liegt.
+        let kurzhantel: BootstrapResponse.Machine = GeraetTestdaten.dekodiere("""
+        {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":null,
+         "status":"active","tokenHashes":[],"visitCount":2,
+         "equipmentModel":{"id":"em1","name":"Kurzhantel","manufacturer":null,
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":1,"loadMin":1.0,"loadMax":50.0,
+           "settingDefinitions":[]},
+         "exercises":[{"id":"e1","name":"Bizepscurl","volumeKind":"reps","targetMin":8,"targetMax":12}]}
+        """)
+        // Das letzte Training vor Wochen: 10 kg x 12 -- darf nicht gewinnen.
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 10, 12)])
+        let runde1 = modell(maschine: kurzhantel, bootstrap: bootstrap, sessions: sessions)
+        runde1.belastungGewaehlt(14)
+        runde1.umfangGedreht(9)
+        await runde1.satzSichern(problemFlag: false, problemReason: nil)
+
+        let runde2 = modell(maschine: kurzhantel, bootstrap: bootstrap, sessions: sessions)
+
+        #expect(runde2.belastung == 14)
+        #expect(runde2.umfang == 9)
+        // GeraetView laedt den Kontext auch in Runde 2: sein Vorschlag
+        // rechnet aus der Historie und darf die Vorrunde nicht ersetzen.
+        runde2.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 90.0))
+        #expect(runde2.belastung == 14)
+    }
+
     // MARK: - Start aus dem Drawer (Testnotiz 11.10., #10, #11)
 
     @Test func mitStartwertenBeginntDieSatzseiteMitDemCountdown() {

@@ -147,6 +147,13 @@ final class GeraetModel {
     /// Ein Pfad, der die Ortspruefung umgeht, endet hier statt in den
     /// verworfenen Schreibvorgaengen.
     private(set) var satzAbgelehnt: String?
+    /// Gesetzt, solange dieses Geraet Teil eines Zirkels ist (Spec
+    /// Mini-Zirkel 21.10.). Nach einem gesicherten Satz entscheidet dann die
+    /// Zirkel-Ebene, was kommt -- die naechste Uebung, die Rundenpause --,
+    /// nicht die Satzpause oder die Abschlussfrage DIESER Uebung. Ein
+    /// abgelehnter Satz ruft den Hook nicht: der Zirkel darf nur nach einem
+    /// Satz weiterruecken, der wirklich in der Einheit steht.
+    var beiZirkelSatzGesichert: (() -> Void)?
 
     private let token: String?
     private let bootstrap: BootstrapResponse
@@ -233,7 +240,14 @@ final class GeraetModel {
         self.mitschnitt = mitschnitt
         self.zaehler = zaehler
 
-        let letzter = Self.letzterSatz(an: station, uebungId: uebungId, in: bootstrap)
+        // Zuerst der Satz von heute: im Zirkel entsteht Runde 2 als neues
+        // Modell, und `bootstrap` ist eine Momentaufnahme vom Prefetch, die
+        // die Vorrunde nicht kennt -- ohne diesen Blick stuende dort das
+        // Gewicht vom letzten Training statt das von vor drei Minuten.
+        // Dasselbe gilt fuer jede Rueckkehr an ein Geraet ueber die
+        // Blockliste.
+        let heute = Self.letzterSatzHeute(an: station, uebungId: uebungId, in: sessions)
+        let letzter = heute ?? Self.letzterSatz(an: station, uebungId: uebungId, in: bootstrap)
         // Ohne Historie startet das Rad am Startwert des Geraets, sonst am
         // Minimum (Testnotiz 12.10. abends, #3). Bewusste Ausnahme von
         // designsystem.md SS8: der Startwert gilt je Geraet, nicht je Person
@@ -253,6 +267,14 @@ final class GeraetModel {
         umfang = Rastwerte.naechster(zu: umfang, in: umfangsWerte)
         nebenbelastung = nebenbelastungVorbelegt(aus: letzter?.secondaryLoad)
         cardio = letzter?.cardio?.nur(station.equipmentModel.cardioWerte) ?? CardioWerte()
+        // Was heute schon gelaufen ist, hat das Mitglied selbst eingestellt.
+        // Ein spaeter tagContext-Vorschlag rechnet aus der Historie und darf
+        // das vorbelegte Gewicht der Vorrunde nicht unter dem Daumen
+        // ersetzen -- dieselbe Regel wie fuer die Startwerte aus dem Drawer.
+        if heute != nil {
+            belastungVomNutzer = true
+            nebenbelastungVomNutzer = true
+        }
 
         // Aus dem Drawer (Testnotiz 11.10., #10, #11): die dort gewaehlten
         // Werte gehoeren dem Mitglied, ein spaeter Vorschlag ersetzt sie
@@ -265,7 +287,11 @@ final class GeraetModel {
     /// Übung an dem Gerät" auf dem bestehenden Modell (Testnotiz 13.10.,
     /// #3). Ein Weg fuer beide, damit der zweite Start nicht anders
     /// beginnt als der erste.
-    func uebungStarten(mit startwerte: Startwerte) {
+    ///
+    /// Ohne Countdown im Zirkel ab Runde 2 (Spec Mini-Zirkel 21.10.): kein
+    /// Drawer, das Mitglied steht schon am Geraet -- gleich die Raeder, und
+    /// der Mitschnitt beginnt sofort, wie sonst nach `countdownBeenden()`.
+    func uebungStarten(mit startwerte: Startwerte, mitCountdown: Bool = true) {
         belastung = Rastwerte.naechster(zu: startwerte.belastung, in: belastungsWerte)
         umfang = Rastwerte.naechster(zu: startwerte.umfang, in: umfangsWerte)
         if let neben = startwerte.nebenbelastung, nebenmodell != nil {
@@ -273,7 +299,12 @@ final class GeraetModel {
             nebenbelastungVomNutzer = true
         }
         belastungVomNutzer = true
-        phase = .bereit(Resttimer(dauer: Startcountdown.dauer))
+        if mitCountdown {
+            phase = .bereit(Resttimer(dauer: Startcountdown.dauer))
+        } else {
+            phase = .eingabe
+            mitschnittBeginnen()
+        }
     }
 
     /// Was der Drawer an die Satzseite weitergibt: die Raeder, wie sie
@@ -770,6 +801,19 @@ final class GeraetModel {
         }
     }
 
+    /// Der juengste Satz dieser Uebung an DIESER Station in der laufenden
+    /// Einheit, sonst nil. Nur fuer init -- Rueckblick und Uebungsliste
+    /// zeigen bewusst weiter das letzte Training aus dem Prefetch.
+    private static func letzterSatzHeute(an station: Station, uebungId: String,
+                                         in sessions: WorkoutSessionStore) -> LetzterSatz? {
+        sessions.aktiveSession()?.bloecke
+            .first { $0.stationSchluessel == station.schluessel && $0.exerciseId == uebungId }?
+            .saetze.max { $0.performedAt < $1.performedAt }
+            .map { LetzterSatz(load: $0.load, secondaryLoad: $0.secondaryLoad, volume: $0.volume,
+                               cardio: $0.cardio,
+                               performedAt: ISO8601DateFormatter().string(from: $0.performedAt)) }
+    }
+
     func uebungWechseln(zu neue: String) {
         uebungId = neue
         let letzter = letzterSatz(fuer: neue)
@@ -865,6 +909,13 @@ final class GeraetModel {
             problemFlag: problemFlag,
             volumeSource: herkunft, zaehler: ergebnis, befestigung: befestigung))
         zaehlerZustand = .aus
+        // Im Zirkel bleibt die Phase stehen: die Zirkel-Ebene fuehrt weiter.
+        // Erst nach dem Schreiben, dem Einreihen und dem Mitschnitt -- der
+        // Hook darf den Screen wechseln, und dann muss alles schon stehen.
+        if let beiZirkelSatzGesichert {
+            beiZirkelSatzGesichert()
+            return
+        }
         // satzNummer liest live aus der Session und ist nach dem Schreiben
         // oben schon die NAECHSTE Nummer: bei Ziel 3 steht nach dem dritten
         // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
