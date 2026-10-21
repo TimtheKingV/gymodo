@@ -193,6 +193,7 @@ struct GeraetView: View {
                       beiVerlaengern: modell.pauseVerlaengern,
                       beiGewicht: beiGewichtAendern,
                       einheit: modell.loadUnit,
+                      naechsterSatz: modell.satzNummer,
                       beiWeiter: modell.pauseBeenden,
                       // Derselbe Weg wie "Uebung abschliessen" unter den
                       // Raedern -- nur ohne den Umweg ueber den naechsten

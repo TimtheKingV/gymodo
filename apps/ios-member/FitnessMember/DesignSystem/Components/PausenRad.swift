@@ -21,6 +21,8 @@ struct PausenRad: View {
     let beiGewicht: () -> Void
     /// Die Einheit fuer "± kg" (Testnotiz 12.10. abends, #4).
     let einheit: LoadUnit
+    /// Nummer des Satzes, den der Knopf startet.
+    let naechsterSatz: Int
     let beiWeiter: () -> Void
     /// Der Weg zurueck zum Training, ohne den Umweg ueber den naechsten
     /// Satz. Wer am Geraet fertig ist, merkt das in der Pause -- nicht
@@ -36,12 +38,14 @@ struct PausenRad: View {
          beiVerlaengern: @escaping () -> Void,
          beiGewicht: @escaping () -> Void,
          einheit: LoadUnit = .kg,
+         naechsterSatz: Int,
          beiWeiter: @escaping () -> Void,
          beiAbschliessen: @escaping () -> Void) {
         self.timer = timer
         self.beiVerlaengern = beiVerlaengern
         self.beiGewicht = beiGewicht
         self.einheit = einheit
+        self.naechsterSatz = naechsterSatz
         self.beiWeiter = beiWeiter
         self.beiAbschliessen = beiAbschliessen
         _ansage = State(initialValue: timer.gesprochen())
@@ -81,7 +85,7 @@ struct PausenRad: View {
                 // gelesen, wie es im Training kommt. Bis dahin stand "Nächster
                 // Satz" unten, wo der Daumen vom Sichern lag (06.10., #7).
                 // Bis 12.10. hiess er "Weiter".
-                PrimaryButton(title: "Nächster Satz") { beiWeiter() }
+                PrimaryButton(title: "Satz \(naechsterSatz) starten") { beiWeiter() }
                     .accessibilityHint("Beendet die Pause und zeigt wieder die Räder")
                     .testnotizElement("geraet.naechster-satz", typ: "PrimaryButton")
                 PrimaryButton(title: "Nächste Übung") { beiAbschliessen() }
@@ -222,7 +226,7 @@ struct FertigRing: View {
 }
 
 #Preview {
-    PausenRad(timer: Resttimer(), beiVerlaengern: {}, beiGewicht: {}, beiWeiter: {}, beiAbschliessen: {})
+    PausenRad(timer: Resttimer(), beiVerlaengern: {}, beiGewicht: {}, naechsterSatz: 2, beiWeiter: {}, beiAbschliessen: {})
         .padding(20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DesignSystem.Color.bg)
