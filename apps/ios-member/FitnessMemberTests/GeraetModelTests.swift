@@ -915,6 +915,23 @@ struct GeraetModelTests {
         #expect(sut.rueckblick?.zuletzt == "40,0 kg × 10")
     }
 
+    // MARK: - Markierungen im Wiederholungsrad
+
+    @Test func umfangsradMarkiertDenLetztenWertUndDieZielspanne() {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 77.5, 11)]))
+
+        #expect(sut.letzterUmfang == 11)
+        #expect(sut.zielspanne == 8...12)
+    }
+
+    @Test func beimErstenMalGibtEsKeinenLetztenUmfang() {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+
+        #expect(sut.letzterUmfang == nil)
+    }
+
     // MARK: - Belastung und Umfang in der Einheit des Geraets (Cardio Schnitt 3)
 
     @Test func dieBeinpresseNenntSchrittBereichUndZielWieBisher() {

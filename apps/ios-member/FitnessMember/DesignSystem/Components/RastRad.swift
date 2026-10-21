@@ -69,6 +69,12 @@ struct RastRad: View {
     /// (Sammelstelle Punkt 12) und ein Nachbar fuer die Aussage des Rads
     /// reicht: wer 80,0 sieht, sieht auch, dass der naechste Schritt 82,5 ist.
     var sichtbareZeilen = 5
+    /// Der Wert vom letzten Mal: ein Punkt vor der Zahl, auch wenn das Rad
+    /// woanders steht.
+    var markiert: Double?
+    /// Zahlen innerhalb stehen in voller Farbe, die ausserhalb gedaempft.
+    /// nil: keine Spanne, alle gleich.
+    var bereich: ClosedRange<Double>?
 
     @ScaledMetric(relativeTo: .body) private var zeilenhoehe: CGFloat = 44
     @State private var scrollPosition: Double?
@@ -173,7 +179,8 @@ struct RastRad: View {
                     // der Scrollphase.
                     Text(text(wert))
                         .font(.system(size: basisGroesse, weight: .black).monospacedDigit())
-                        .foregroundStyle(DesignSystem.Color.text)
+                        .foregroundStyle(bereich.map { $0.contains(wert) } ?? true
+                                         ? DesignSystem.Color.text : DesignSystem.Color.textMuted)
                         // Ohne diese drei Zeilen kuerzte SwiftUI "100,5" zu
                         // "1..." -- ein Rad, das seinen eigenen Wert nicht
                         // zeigt, ist schlimmer als eine kleinere Ziffer.
@@ -185,6 +192,13 @@ struct RastRad: View {
                         .allowsTightening(true)
                         .frame(height: zeilenhoehe)
                         .frame(maxWidth: .infinity)
+                        .overlay(alignment: .leading) {
+                            if wert == markiert {
+                                Circle()
+                                    .fill(DesignSystem.Color.accent)
+                                    .frame(width: 8, height: 8)
+                            }
+                        }
                         .scrollTransition(.interactive, axis: .vertical) { inhalt, phase in
                             let stufe = Self.nachbarstufe(phase: phase.value, sichtbareZeilen: zeilen)
                             return inhalt

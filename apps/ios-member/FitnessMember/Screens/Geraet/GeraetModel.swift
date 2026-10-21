@@ -463,6 +463,16 @@ final class GeraetModel {
         return "Ziel \(Zahlformat.korridor(uebung.targetMin, uebung.targetMax, uebung.volumeKind))"
     }
 
+    /// Die Zahl vom letzten Mal, im Umfangsrad markiert. nil beim ersten
+    /// Mal und bei Cardio-Saetzen ohne volume.
+    var letzterUmfang: Int? { letzterSatz(fuer: uebungId)?.volume }
+
+    /// Das Ziel der Uebung als Spanne, im Umfangsrad hervorgehoben.
+    var zielspanne: ClosedRange<Int>? {
+        guard let uebung = aktiveUebung, uebung.targetMin <= uebung.targetMax else { return nil }
+        return uebung.targetMin...uebung.targetMax
+    }
+
     private var definitionen: [TagContextResponse.SettingDefinition] {
         kontext?.settingDefinitions ?? station.equipmentModel.settingDefinitions
     }

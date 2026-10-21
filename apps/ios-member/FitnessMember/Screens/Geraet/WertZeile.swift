@@ -13,6 +13,9 @@ import SwiftUI
 /// die von vor dem Umbau.
 struct WertZeile: View {
     @Bindable var modell: GeraetModel
+    /// Der Drawer vor der Uebung fragt nur das Gewicht; die Wiederholungen
+    /// kommen erst in der Uebung.
+    var mitUmfang = true
 
     /// Die Umfangsspalte bekommt feste Breite, die Belastung den Rest.
     ///
@@ -47,8 +50,10 @@ struct WertZeile: View {
             HStack(alignment: .top, spacing: DesignSystem.Spacing.s24) {
                 belastungsrad
                     .frame(maxWidth: .infinity, alignment: .leading)
-                umfangsrad
-                    .frame(width: umfangsspalte, alignment: .leading)
+                if mitUmfang {
+                    umfangsrad
+                        .frame(width: umfangsspalte, alignment: .leading)
+                }
             }
             nebenbelastung
         }
@@ -148,7 +153,9 @@ struct WertZeile: View {
                     // Wert -- gespeichert bleibt die ganze Zahl.
                     text: { Zahlformat.umfang(Int($0), art) },
                     basisGroesse: 44,
-                    sichtbareZeilen: 3
+                    sichtbareZeilen: 3,
+                    markiert: modell.letzterUmfang.map(Double.init),
+                    bereich: modell.zielspanne.map { Double($0.lowerBound)...Double($0.upperBound) }
                 )
                 Text(art.kurz)
                     .font(DesignSystem.Typography.uebungsname)

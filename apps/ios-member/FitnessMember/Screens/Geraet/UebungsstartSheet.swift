@@ -188,7 +188,9 @@ struct StartwerteSchritt: View {
                 .accessibilityElement(children: .combine)
             }
 
-            WertZeile(modell: modell)
+            // Nur das Gewicht: wie viele Wiederholungen es werden, weiss man
+            // vor dem Satz oft noch nicht -- das Rad kommt in der Uebung.
+            WertZeile(modell: modell, mitUmfang: false)
 
             // Mit Einweisung hat der Drawer volle Hoehe; ohne Spacer hing
             // "Übung starten" mitten darin statt in der Daumenzone
