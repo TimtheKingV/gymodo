@@ -111,7 +111,7 @@ final class GeraetModel {
 
     var cardioListe: [CardioWert] { station.equipmentModel.cardioWerte }
     var istCardio: Bool { !cardioListe.isEmpty }
-    var kannSichern: Bool { !istCardio || !cardio.istLeer }
+    var kannSichern: Bool { !zirkelSatzAbgegeben && (!istCardio || !cardio.istLeer) }
 
     func cardioSetzen(_ wert: CardioWert, _ zahl: Double?) {
         cardio[wert] = zahl
@@ -158,6 +158,19 @@ final class GeraetModel {
     /// Woran der Screen den Zirkelmodus erkennt: am Hook selbst, nicht an
     /// einem zweiten Merker, der ihm widersprechen koennte.
     var imZirkel: Bool { beiZirkelSatzGesichert != nil }
+    /// Im Zirkel bleibt die Phase nach dem Satz .eingabe -- anders als
+    /// sonst, wo Pause oder Abschluss den Knopf verdraengen. Ohne diese
+    /// Sperre schriebe ein zweiter Tipp, waehrend die Pause hereinschiebt,
+    /// einen Satz, den der Zirkel nicht zaehlt. Zurueckgesetzt wird nie:
+    /// jede Zirkel-Uebung bekommt ein neues Modell, und der alte Screen
+    /// faellt beim Wechsel aus dem Pfad.
+    private(set) var zirkelSatzAbgegeben = false
+    /// Gesetzt, solange ein Sheet ueber dem Screen liegt, aus dem heraus
+    /// gesichert wird (Problem melden): der Hook navigiert, und einen Push
+    /// waehrend der Sheet-Animation verwirft UIKit. Die Meldung wartet dann
+    /// auf zirkelMeldungNachholen() aus dem onDismiss.
+    var zirkelMeldungAufschieben = false
+    private var zirkelMeldungAusstehend = false
 
     private let token: String?
     private let bootstrap: BootstrapResponse
@@ -866,6 +879,9 @@ final class GeraetModel {
     }
 
     func satzSichern(problemFlag: Bool, problemReason: ProblemReason?) async {
+        // Still, ohne satzAbgelehnt: der Satz dieser Zirkel-Uebung steht
+        // schon, das ist kein Fehler des Mitglieds.
+        guard !zirkelSatzAbgegeben else { return }
         if let laufend = Ortswechsel.satzKonflikt(station: station, offeneEinheit: sessions.aktiveSession()) {
             let ort = StudiosListe.name(fuer: laufend, studios: bootstrap.studios)
             satzAbgelehnt = "Dein Training läuft in \(ort). Beende es zuerst, dann sicherst du hier Sätze."
@@ -937,7 +953,12 @@ final class GeraetModel {
         // Erst nach dem Schreiben, dem Einreihen und dem Mitschnitt -- der
         // Hook darf den Screen wechseln, und dann muss alles schon stehen.
         if let beiZirkelSatzGesichert {
-            beiZirkelSatzGesichert()
+            zirkelSatzAbgegeben = true
+            if zirkelMeldungAufschieben {
+                zirkelMeldungAusstehend = true
+            } else {
+                beiZirkelSatzGesichert()
+            }
             return
         }
         // satzNummer liest live aus der Session und ist nach dem Schreiben
@@ -945,6 +966,16 @@ final class GeraetModel {
         // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
         // eine Pause vor einem Satz, der nicht kommt, ist nur Wartezeit.
         phase = satzNummer > satzZiel ? .abschluss : .neuePause()
+    }
+
+    /// Aus dem onDismiss des Sheets: die aufgeschobene Meldung an den
+    /// Zirkel, hoechstens einmal. Ohne gesicherten Satz hebt es nur das
+    /// Aufschieben auf.
+    func zirkelMeldungNachholen() {
+        zirkelMeldungAufschieben = false
+        guard zirkelMeldungAusstehend else { return }
+        zirkelMeldungAusstehend = false
+        beiZirkelSatzGesichert?()
     }
 
     /// "Satz speichern" vor dem Abschluss (#5): derselbe Weg wie der

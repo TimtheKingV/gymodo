@@ -62,6 +62,16 @@ struct ZirkelAblaufTests {
         #expect(ablauf.pause == nil)
     }
 
+    /// Fix-Runde 1 (Minor 3): mit dem Wechsel zur naechsten Uebung endet die
+    /// Pause -- wer danach fragt, ob eine laeuft (Task 7), bekommt nil.
+    @Test func pauseVerlassenRaeumtNurDiePause() {
+        let ablauf = gestartet()
+        ablauf.satzGesichert(jetzt: t0)
+        ablauf.pauseVerlassen()
+        #expect(ablauf.pause == nil)
+        #expect(ablauf.zirkel?.schritt == 1)
+    }
+
     @Test func ueberspringenRuecktWeiterWieEinSatz() {
         let ablauf = gestartet(n: 2)
         ablauf.ueberspringen(jetzt: t0)

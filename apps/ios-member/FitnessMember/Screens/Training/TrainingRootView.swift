@@ -896,6 +896,7 @@ struct TrainingRootView: View {
         // Geraete-Screen; die erste Zirkel-Uebung (Planung, Task 6) und jeder
         // normale Start haengen an.
         if auftrag.zirkel, let neu = ZirkelPfad.ausPause(pfad, zu: ziel) {
+            zirkelAblauf.pauseVerlassen()
             pfad = neu
         } else {
             pfad.append(ziel)
@@ -905,8 +906,9 @@ struct TrainingRootView: View {
     // MARK: - Mini-Zirkel
 
     /// Der Hook eines Zirkel-Geraets nach einem gesicherten Satz. Nur vom
-    /// obersten Geraete-Screen: ein zweiter Satz desselben Screens, waehrend
-    /// die Pause schon steht, rueckt den Zirkel nicht nochmal weiter.
+    /// obersten Geraete-Screen. Einen zweiten Satz desselben Screens sperrt
+    /// schon das Modell (zirkelSatzAbgegeben); der Guard hier ist nur das
+    /// Netz darunter, damit der Zirkel nie zweimal weiterrueckt.
     ///
     /// Der Push der Pause verdeckt den Geraete-Screen, dessen onDisappear
     /// (screenVerlassen) laeuft also JETZT -- bevor das naechste Modell
@@ -938,7 +940,10 @@ struct TrainingRootView: View {
                                                token: naechste.token, zirkel: true)
             return
         }
-        if let neu = ZirkelPfad.ausPause(pfad, zu: ohneStartwerte) { pfad = neu }
+        if let neu = ZirkelPfad.ausPause(pfad, zu: ohneStartwerte) {
+            zirkelAblauf.pauseVerlassen()
+            pfad = neu
+        }
     }
 
     /// Eine bekannte Cardio-Uebung hat keinen Drawer-Schritt

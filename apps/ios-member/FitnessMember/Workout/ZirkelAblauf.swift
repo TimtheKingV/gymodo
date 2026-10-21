@@ -39,6 +39,13 @@ final class ZirkelAblauf {
         pause = pause?.verlaengert()
     }
 
+    /// Beim Wechsel zur naechsten Uebung: die Pause ist vorbei, auch wenn
+    /// ihre Uhr noch liefe ("Weiter" vor dem Ablauf). Wer fragt, ob gerade
+    /// eine Pause laeuft, bekommt danach nil.
+    func pauseVerlassen() {
+        pause = nil
+    }
+
     /// Haengt eine Uebung an, solange Runde 1 gerade komplett ist. Die
     /// laufende Pause bleibt unberuehrt: waehrend das Mitglied waehlt, soll
     /// die Uhr nicht neu anfangen.

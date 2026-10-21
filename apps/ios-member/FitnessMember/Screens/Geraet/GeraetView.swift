@@ -523,7 +523,12 @@ struct GeraetScreen: View {
     var body: some View {
         GeraetView(
             modell: modell,
-            beiProblem: { problemOffen = true },
+            beiProblem: {
+                // Im Zirkel wartet die Meldung "Satz gesichert" aufs
+                // Schliessen des Sheets (siehe onDismiss unten).
+                modell.zirkelMeldungAufschieben = modell.imZirkel
+                problemOffen = true
+            },
             beiUebungAbschliessen: {
                 if modell.abschlussFragtNachSatz {
                     satzfrageOffen = true
@@ -622,7 +627,11 @@ struct GeraetScreen: View {
                     abschlussfrageOffen = false
                 })
         }
-        .sheet(isPresented: $problemOffen) {
+        // Erst nach dem Schliessen navigiert der Zirkel weiter: ein Push
+        // waehrend der Dismiss-Animation ginge verloren (wie oben bei der
+        // Abschlussfrage), und der Zirkel stuende dann schon in der Pause,
+        // waehrend der Screen noch die Raeder zeigt.
+        .sheet(isPresented: $problemOffen, onDismiss: { modell.zirkelMeldungNachholen() }) {
             ProblemSheet(modell: modell) {}
         }
         // "Einstellung aendern" auf der Satzseite. Der Erstkontakt selbst

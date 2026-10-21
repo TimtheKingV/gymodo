@@ -415,6 +415,79 @@ struct GeraetModelTests {
         #expect(sut.imZirkel)
     }
 
+    /// Fix-Runde 1 (Important 2): im Zirkel bleibt die Phase .eingabe, der
+    /// Knopf steht also noch da, waehrend die Pause hereinschiebt. Ein
+    /// zweiter Tipp darf keinen Phantomsatz schreiben, den der Zirkel nicht
+    /// zaehlt.
+    @Test func imZirkelSperrtDerGesicherteSatzEinenZweiten() async {
+        var eingereiht = 0
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         enqueue: { _ in eingereiht += 1 })
+        var aufrufe = 0
+        sut.beiZirkelSatzGesichert = { aufrufe += 1 }
+        #expect(sut.kannSichern)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(aufrufe == 1)
+        #expect(sut.gesicherteSaetze == 1)
+        #expect(eingereiht == 1)
+        #expect(!sut.kannSichern)
+        // Kein Ablehnungstext: die Sperre ist kein Fehler des Mitglieds.
+        #expect(sut.satzAbgelehnt == nil)
+    }
+
+    @Test func ohneZirkelBleibtSichernNachEinemSatzMoeglich() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 3)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        sut.pauseBeenden()
+        #expect(sut.kannSichern)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.gesicherteSaetze == 2)
+    }
+
+    /// Fix-Runde 1 (Important 1): aus dem Problem-Sheet heraus wartet die
+    /// Meldung an den Zirkel, bis das Sheet zu ist -- ein Push waehrend der
+    /// Sheet-Animation verwirft UIKit, und dann waere der Zirkel weiter als
+    /// der Screen.
+    @Test func eineAufgeschobeneZirkelMeldungKommtErstBeimNachholen() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        var aufrufe = 0
+        sut.beiZirkelSatzGesichert = { aufrufe += 1 }
+        sut.zirkelMeldungAufschieben = true
+
+        await sut.satzSichern(problemFlag: true, problemReason: ProblemReason.allCases.first)
+        #expect(sut.gesicherteSaetze == 1)
+        #expect(aufrufe == 0)
+
+        sut.zirkelMeldungNachholen()
+        #expect(aufrufe == 1)
+        sut.zirkelMeldungNachholen()
+        #expect(aufrufe == 1)
+    }
+
+    /// Sheet ohne Satz geschlossen: nichts zu melden, und der naechste Satz
+    /// geht wieder sofort an den Zirkel.
+    @Test func nachholenOhneSatzMeldetNichtsUndHebtDasAufschiebenAuf() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        var aufrufe = 0
+        sut.beiZirkelSatzGesichert = { aufrufe += 1 }
+        sut.zirkelMeldungAufschieben = true
+
+        sut.zirkelMeldungNachholen()
+        #expect(aufrufe == 0)
+        #expect(!sut.zirkelMeldungAufschieben)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(aufrufe == 1)
+    }
+
     /// Runde 2 entsteht als neues Modell derselben Station und Uebung ohne
     /// Startwerte. Das Gewicht muss aus dem Satz der Vorrunde kommen, nicht
     /// aus dem Bootstrap -- der kennt die laufende Einheit nicht.
