@@ -85,6 +85,23 @@ struct TrainingRootView: View {
     /// Zirkel-Uebung ihren eigenen Geraete-Screen mit eigenem Modell
     /// bekommt -- Zirkel und Pause muessen den Wechsel ueberleben.
     @State private var zirkelAblauf = ZirkelAblauf()
+    /// Der Zirkel in der Planung, samt der Uebung aus dem Drawer, mit der
+    /// er beginnt. Hier und nicht im Planungs-Sheet: das Auswahl-Sheet
+    /// liegt darueber, und der Entwurf muss dessen Kommen und Gehen
+    /// ueberleben.
+    @State private var zirkelPlanung: ZirkelPlanung?
+    /// "Mini-Zirkel anlegen" schliesst erst den Drawer; die Planung geht
+    /// in dessen onDismiss auf. Zwei Sheets am selben Ort in einem Zug
+    /// verschluckt SwiftUI (das zweite kommt nie).
+    @State private var zirkelPlanungWartet: ZirkelPlanung?
+    @State private var zirkelAuswahlOffen = false
+    /// Der eigene Pfad des Auswahl-Sheets -- nur fuer die Kategorielisten.
+    @State private var zirkelAuswahlPfad: [GeraetRoute] = []
+    @State private var zirkelPlanungHinweis: String?
+    /// Der Drawer fuer Uebung 1, wenn sie in der Planung nach vorne
+    /// geschoben wurde -- er geht wie die Planung selbst erst im onDismiss
+    /// des vorigen Sheets auf.
+    @State private var zirkelDrawerWartet: UebungsstartAuftrag?
 
     var body: some View {
         NavigationStack(path: $pfad) {
@@ -164,16 +181,37 @@ struct TrainingRootView: View {
                 ziel(route).id(route).environment(videoVorrat)
             }
             .environment(videoVorrat)
-            .sheet(item: $uebungsstart) { auftrag in
+            .sheet(item: $uebungsstart, onDismiss: zirkelPlanungOeffnen) { auftrag in
                 if let modell = modell(station: auftrag.station, exerciseId: auftrag.exerciseId,
                                        token: auftrag.token) {
                     // Im Zirkel steht man schon am naechsten Geraet: gleich
                     // die Startwerte, ohne den Umweg ueber die Uebersicht.
+                    // Kein "Mini-Zirkel anlegen" im Drawer eines Zirkels. Ein
+                    // liegengebliebener Ablauf (zurueck aus dem Zirkel) sperrt
+                    // dagegen nicht: ein neuer Zirkel ersetzt ihn.
                     UebungsstartSheet(modell: modell, mitUebersicht: !auftrag.zirkel, beiStart: { werte in
                         uebungStarten(auftrag, mit: werte)
+                    }, beiZirkel: auftrag.zirkel ? nil : { werte in
+                        zirkelPlanen(auftrag, mit: werte)
                     }, beiSchliessen: { uebungsstart = nil })
                     .environment(videoVorrat)
                 }
+            }
+            .sheet(isPresented: Binding(get: { zirkelPlanung != nil },
+                                        set: { if !$0 { zirkelPlanung = nil } }),
+                   onDismiss: zirkelDrawerNachPlanung) {
+                ZirkelPlanungSheet(entwurf: zirkelEntwurf, name: zirkelUebungsname,
+                                   hinweis: zirkelPlanungHinweis,
+                                   beiHinzufuegen: {
+                                       zirkelPlanungHinweis = nil
+                                       zirkelAuswahlPfad = []
+                                       zirkelAuswahlOffen = true
+                                   },
+                                   beiStart: zirkelStarten)
+                .environment(videoVorrat)
+                // Am Planungs-Sheet, nicht an der Wurzel: ein Sheet ueber
+                // einem Sheet muss vom oberen aus aufgehen.
+                .sheet(isPresented: $zirkelAuswahlOffen) { zirkelAuswahl }
             }
             .sheet(isPresented: $scannerOffen) {
                 ScannerSheet(
@@ -899,6 +937,119 @@ struct TrainingRootView: View {
 
     // MARK: - Mini-Zirkel
 
+    /// Die Geraeteliste im Auswahl-Sheet: dieselbe Initialisierung wie an
+    /// der Wurzel (wurzel(mitte:session:)), ohne Kopf und ohne die Uebungen
+    /// der Einheit. Eine Kachel mit mehreren Geraeten oeffnet ihre
+    /// Kategorie im EIGENEN Pfad des Sheets -- der der Wurzel liegt
+    /// darunter und waere hier unsichtbar.
+    private var zirkelAuswahl: some View {
+        NavigationStack(path: $zirkelAuswahlPfad) {
+            GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader) {
+                EmptyView()
+            } trainingsinhalt: {
+                EmptyView()
+            } beiAuswahl: { station, uebungId in
+                zirkelHinzufuegen(station, uebungId: uebungId)
+            } beiKachel: { kachel in
+                switch GeraeteAuswahl.ziel(kachel) {
+                case .station(let station): zirkelHinzufuegen(station, uebungId: nil)
+                case .liste(let gruppe): zirkelAuswahlPfad.append(.kategorie(gruppe))
+                }
+            }
+            // Nur .kategorie: alle anderen Routen gehoeren an die Wurzel.
+            .navigationDestination(for: GeraetRoute.self) { route in
+                if case .kategorie(let gruppe) = route {
+                    GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader, gruppe: gruppe) { station, uebungId in
+                        zirkelHinzufuegen(station, uebungId: uebungId)
+                    }
+                    .environment(videoVorrat)
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Abbrechen") { zirkelAuswahlOffen = false }
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .testnotizElement("zirkel.auswahl.abbrechen", typ: "Button")
+                }
+            }
+        }
+        .environment(videoVorrat)
+        .presentationDragIndicator(.visible)
+    }
+
+    private var zirkelEntwurf: Binding<ZirkelEntwurf> {
+        Binding(get: { zirkelPlanung?.entwurf ?? ZirkelEntwurf(uebungen: []) },
+                set: { zirkelPlanung?.entwurf = $0 })
+    }
+
+    /// "Mini-Zirkel anlegen" im Drawer: die gewaehlte Uebung wird Uebung 1,
+    /// ihre Startwerte gelten fuer sie. Der Drawer geht zu, die Planung
+    /// folgt in dessen onDismiss.
+    private func zirkelPlanen(_ auftrag: UebungsstartAuftrag, mit werte: Startwerte) {
+        let erste = ZirkelUebung(station: auftrag.station, exerciseId: auftrag.exerciseId, token: auftrag.token)
+        zirkelPlanungHinweis = nil
+        zirkelPlanungWartet = ZirkelPlanung(entwurf: ZirkelEntwurf(uebungen: [erste]),
+                                            ersterAuftrag: auftrag, startwerte: werte)
+        uebungsstart = nil
+    }
+
+    /// onDismiss des Drawers. Ohne wartende Planung (der Normalfall,
+    /// "Übung starten" oder Schliessen) tut es nichts.
+    private func zirkelPlanungOeffnen() {
+        guard let wartet = zirkelPlanungWartet else { return }
+        zirkelPlanungWartet = nil
+        zirkelPlanung = wartet
+    }
+
+    /// Ein Geraet aus dem Auswahl-Sheet. Nur vom Ort der Planung: die
+    /// Zirkel-Uebungen oeffnen spaeter ueber modell(...), das am aktiven
+    /// Studio sucht -- ein Geraet aus "Auch in ... suchen" liesse sich
+    /// dort nicht finden, und einen Ortswechsel mitten im Zirkel gibt es
+    /// nicht.
+    private func zirkelHinzufuegen(_ station: Station, uebungId: String?) {
+        zirkelAuswahlOffen = false
+        guard let bootstrap = katalog.bootstrap else { return }
+        guard (station.studioId.map(Ort.studio) ?? .freiesTraining) == katalog.ort else {
+            zirkelPlanungHinweis = "Im Zirkel gehen nur Geräte an deinem jetzigen Ort."
+            return
+        }
+        guard let uebung = ZirkelAuswahl.uebung(station: station, uebungId: uebungId, bootstrap: bootstrap)
+        else { return }
+        if zirkelPlanung?.entwurf.hinzufuegen(uebung) == false {
+            zirkelPlanungHinweis = "Diese Übung ist schon im Zirkel."
+        }
+    }
+
+    /// "Zirkel starten": Uebung 1 mit den Startwerten aus dem Drawer, ueber
+    /// denselben Weg wie "Übung starten". Die weiteren Uebungen fragen ihr
+    /// Gewicht in Runde 1 im Drawer ab (zirkelWeiter).
+    private func zirkelStarten() {
+        guard let planung = zirkelPlanung, planung.entwurf.istGueltig else { return }
+        zirkelPlanung = nil
+        zirkelAblauf.starten(planung.entwurf.zirkel())
+        var auftrag = planung.ersterAuftrag
+        auftrag.zirkel = true
+        // Die erste Uebung des Entwurfs kann nach dem Umsortieren eine
+        // andere sein als die aus dem Drawer. Die Startwerte gehoeren aber
+        // zu der aus dem Drawer -- deshalb beginnt der Zirkel mit dem
+        // Entwurf, wie er jetzt steht, und nimmt die Startwerte nur, wenn
+        // vorne noch dieselbe Uebung steht.
+        let erste = planung.entwurf.uebungen[0]
+        if erste.station == auftrag.station, erste.exerciseId == auftrag.exerciseId {
+            uebungStarten(auftrag, mit: planung.startwerte)
+        } else {
+            zirkelDrawerWartet = UebungsstartAuftrag(station: erste.station, exerciseId: erste.exerciseId,
+                                                     token: erste.token, zirkel: true)
+        }
+    }
+
+    /// onDismiss der Planung; nur nach einem umsortierten Start wartet etwas.
+    private func zirkelDrawerNachPlanung() {
+        guard let wartet = zirkelDrawerWartet else { return }
+        zirkelDrawerWartet = nil
+        uebungsstart = wartet
+    }
+
     /// Der Hook eines Zirkel-Geraets nach einem gesicherten Satz. Nur vom
     /// obersten Geraete-Screen. Einen zweiten Satz desselben Screens sperrt
     /// schon das Modell (zirkelSatzAbgegeben); der Guard hier ist nur das
@@ -1033,6 +1184,14 @@ struct TrainingRootView: View {
         sessions.beenden()
         pfad = [.abschluss(sessionId: session.id, zusammenfassung: zusammenfassung)]
     }
+}
+
+/// Ein Mini-Zirkel in der Planung (Task 6): der Entwurf und die Uebung aus
+/// dem Drawer, mit der "Mini-Zirkel anlegen" begann.
+private struct ZirkelPlanung {
+    var entwurf: ZirkelEntwurf
+    let ersterAuftrag: UebungsstartAuftrag
+    let startwerte: Startwerte
 }
 
 /// Was nach "Training beenden" fuer einen Scan oder eine Auswahl an einem

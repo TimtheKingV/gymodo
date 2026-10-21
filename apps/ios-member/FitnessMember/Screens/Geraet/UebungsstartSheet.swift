@@ -15,6 +15,10 @@ struct UebungsstartSheet: View {
     /// seinen Wert beim naechsten Neuzeichnen (wie GeraetErkanntScreen).
     @State private var modell: GeraetModel
     let beiStart: (Startwerte) -> Void
+    /// "Mini-Zirkel anlegen" (Spec 21.10., Entscheidung 1): die Startwerte
+    /// gelten fuer Uebung 1 des Zirkels. nil = kein Knopf, etwa im Zirkel
+    /// selbst oder auf der Satzseite.
+    let beiZirkel: ((Startwerte) -> Void)?
     let beiSchliessen: () -> Void
 
     /// Einmal beim Oeffnen bestimmt, nicht bei jedem Rendern: ein spaeter
@@ -35,9 +39,11 @@ struct UebungsstartSheet: View {
     /// - mitUebersicht: auch eine bekannte Uebung zeigt erst die Einweisung
     ///   (Testnotiz 17.10., #4); siehe `Uebungsstart.schritte`.
     init(modell: GeraetModel, mitUebersicht: Bool = false, beiStart: @escaping (Startwerte) -> Void,
+         beiZirkel: ((Startwerte) -> Void)? = nil,
          beiSchliessen: @escaping () -> Void) {
         _modell = State(initialValue: modell)
         self.beiStart = beiStart
+        self.beiZirkel = beiZirkel
         self.beiSchliessen = beiSchliessen
         _schritte = State(initialValue: Uebungsstart.schritte(
             erstkontakt: modell.istErstkontakt,
@@ -70,7 +76,8 @@ struct UebungsstartSheet: View {
                 StartwerteSchritt(
                     modell: modell,
                     titel: schritte.count > 1 ? titel("Startwerte") : nil,
-                    beiZurueck: position > 0 ? { zurueck() } : nil
+                    beiZurueck: position > 0 ? { zurueck() } : nil,
+                    beiZirkel: beiZirkel.map { _ in { zirkelAnlegen() } }
                 ) { starten() }
                 .onGeometryChange(for: CGFloat.self) { proxy in
                     // Die untere Safe Area gehoert zum Detent, nicht zum
@@ -121,6 +128,13 @@ struct UebungsstartSheet: View {
         beiStart(modell.startwerte)
     }
 
+    /// Wie `starten()`: wer bis zu den Startwerten kam, hat die Einweisung
+    /// gesehen -- auch wenn die Uebung erst als Teil des Zirkels beginnt.
+    private func zirkelAnlegen() {
+        modell.erstkontaktAbschliessen()
+        beiZirkel?(modell.startwerte)
+    }
+
     private func zurueck() {
         if let ziel = ruecksprung {
             ruecksprung = nil
@@ -149,6 +163,8 @@ struct StartwerteSchritt: View {
     /// "Schritt 1 von 1".
     let titel: String?
     let beiZurueck: (() -> Void)?
+    /// nil = kein "Mini-Zirkel anlegen".
+    var beiZirkel: (() -> Void)? = nil
     let beiStart: () -> Void
 
     var body: some View {
@@ -211,6 +227,13 @@ struct StartwerteSchritt: View {
                 }
                 PrimaryButton(title: "Übung starten") { beiStart() }
                     .testnotizElement("uebungsstart.starten", typ: "PrimaryButton")
+                // Unter dem Hauptweg und als Umriss: "Übung starten" bleibt
+                // die eine Akzentflaeche und an seiner Stelle (Anti-Ziel:
+                // der Zirkel darf "Direkt starten" nicht verkomplizieren).
+                if let beiZirkel {
+                    SecondaryButton(title: "Mini-Zirkel anlegen") { beiZirkel() }
+                        .testnotizElement("uebungsstart.zirkel", typ: "SecondaryButton")
+                }
             }
         }
         .padding(.horizontal, 20)

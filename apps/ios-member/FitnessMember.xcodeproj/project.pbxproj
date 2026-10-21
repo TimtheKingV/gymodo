@@ -74,6 +74,7 @@
 		309307436B8EE156A6673AA2 /* PrimaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F5420FC0962C00F11FFCD65 /* PrimaryButton.swift */; };
 		314FA2F843E86E287D170A14 /* SatzZaehler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F7551BF185923696CE8280A /* SatzZaehler.swift */; };
 		31ABF99542691ACBCC68BAC5 /* MuskelgruppenUebersichtView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 437F4E7734CF62C835867649 /* MuskelgruppenUebersichtView.swift */; };
+		323B2BD2E758C07982B45BEE /* ZirkelPlanungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0FACA9B4C8E761A61D93D1 /* ZirkelPlanungTests.swift */; };
 		343BDE4F7305D850B853023F /* TestnotizElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F7BD850EC9E2582E3D0D95 /* TestnotizElement.swift */; };
 		34BB24849CEDAC72879940FF /* KurseHerkunft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316F6201B7E6E5D63EAEAE84 /* KurseHerkunft.swift */; };
 		351BEEF8A9521F1FC0F46296 /* CardioGeraetModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D63A4690C06EAE94032AB45E /* CardioGeraetModelTests.swift */; };
@@ -291,6 +292,7 @@
 		D01D94E7A2F60053538B9452 /* ScanEntscheidung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 461B344D14EFC379471C6BC1 /* ScanEntscheidung.swift */; };
 		D11C9D78F9554DB15CE15516 /* Haeufigkeit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C393A29144DBA03B05E97E18 /* Haeufigkeit.swift */; };
 		D132DD312AC9766E7A398090 /* ZeitpunktParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFDF781E9D2DB3F233B672FA /* ZeitpunktParserTests.swift */; };
+		D1417A6BC2600F1A7EDE6A02 /* ZirkelPlanungSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8433F2A81458999E962B706 /* ZirkelPlanungSheet.swift */; };
 		D3188785E04F588B5CAB9B24 /* TestnotizMarkdownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8986332EF5EB9BFBAD49056F /* TestnotizMarkdownTests.swift */; };
 		D4DC4C517F6EFFA9972C6864 /* ProfilZeilen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BE170B46B4E45F1FF5E26C /* ProfilZeilen.swift */; };
 		D4FE376F4BBB40802B3FD999 /* Testnotiz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D036BE10720B20565F673DA /* Testnotiz.swift */; };
@@ -632,6 +634,7 @@
 		C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagLinkTests.swift; sourceTree = "<group>"; };
 		C98822FA4FAF85142CC27A3F /* GeraetKontextLadenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetKontextLadenTests.swift; sourceTree = "<group>"; };
 		C9BB75027970B636BE5BC23C /* NameSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameSheet.swift; sourceTree = "<group>"; };
+		CA0FACA9B4C8E761A61D93D1 /* ZirkelPlanungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelPlanungTests.swift; sourceTree = "<group>"; };
 		CB59D56AD33C31AE1F0089FF /* TagProtokoll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagProtokoll.swift; sourceTree = "<group>"; };
 		CB9F06768F0BD680121ACAB5 /* SatzvergleichTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatzvergleichTests.swift; sourceTree = "<group>"; };
 		CD2C414143359BA7CE04FAD3 /* Medienablage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Medienablage.swift; sourceTree = "<group>"; };
@@ -704,6 +707,7 @@
 		F4A1A233044A937DD2DB034E /* CardioVerlauf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardioVerlauf.swift; sourceTree = "<group>"; };
 		F7540F5EE9A274DBB75E9219 /* GeraeteAuswahlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteAuswahlTests.swift; sourceTree = "<group>"; };
 		F7BE170B46B4E45F1FF5E26C /* ProfilZeilen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilZeilen.swift; sourceTree = "<group>"; };
+		F8433F2A81458999E962B706 /* ZirkelPlanungSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelPlanungSheet.swift; sourceTree = "<group>"; };
 		F86C22F308C4A9EB76B53C19 /* SupabaseAuthBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthBackend.swift; sourceTree = "<group>"; };
 		F9CDE09BB8F4123D3068E9D2 /* OnboardingAntworten.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingAntworten.swift; sourceTree = "<group>"; };
 		FAF53764E89CC9198F52E049 /* VerlaufHerkunft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerlaufHerkunft.swift; sourceTree = "<group>"; };
@@ -1006,6 +1010,7 @@
 			isa = PBXGroup;
 			children = (
 				997E6C8C1241617E7FCB0B8F /* ZirkelPauseView.swift */,
+				F8433F2A81458999E962B706 /* ZirkelPlanungSheet.swift */,
 			);
 			path = Zirkel;
 			sourceTree = "<group>";
@@ -1124,6 +1129,7 @@
 				FFDF781E9D2DB3F233B672FA /* ZeitpunktParserTests.swift */,
 				523DAE16D81C14FAC37ADF4D /* ZirkelAblaufTests.swift */,
 				ADEC4D743F8A02918ED5EA45 /* ZirkelPauseTextTests.swift */,
+				CA0FACA9B4C8E761A61D93D1 /* ZirkelPlanungTests.swift */,
 				28720DEB9E5541AA9C876E1D /* ZirkelTests.swift */,
 				38CC4282A43C30DF8CA3821D /* Fixtures */,
 			);
@@ -1681,6 +1687,7 @@
 				0F9FCD176416DC8CCC796D68 /* Zirkel.swift in Sources */,
 				3FE258C3FB0CE6005D2E1765 /* ZirkelAblauf.swift in Sources */,
 				0898ECC2787988858B560FF0 /* ZirkelPauseView.swift in Sources */,
+				D1417A6BC2600F1A7EDE6A02 /* ZirkelPlanungSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1799,6 +1806,7 @@
 				D132DD312AC9766E7A398090 /* ZeitpunktParserTests.swift in Sources */,
 				DA715B9ABEC67ABE3A22617A /* ZirkelAblaufTests.swift in Sources */,
 				942F12BEDF8972A948F509F3 /* ZirkelPauseTextTests.swift in Sources */,
+				323B2BD2E758C07982B45BEE /* ZirkelPlanungTests.swift in Sources */,
 				9665FA7B023AC16E31AA7EAE /* ZirkelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

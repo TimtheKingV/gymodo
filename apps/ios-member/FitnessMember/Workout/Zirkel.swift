@@ -84,3 +84,80 @@ struct Zirkel: Equatable, Sendable {
         Zirkel(uebungen: [erste, zweite], runden: runden, uebungspause: uebungspause, rundenpause: rundenpause, schritt: 1)
     }
 }
+
+// MARK: - Planung (Spec 21.10., Entscheidungen 1-4)
+
+/// Der Zirkel, solange er noch geplant wird. Eigener Typ statt eines
+/// halbfertigen Zirkels: der verlangt zwei Uebungen schon beim Bauen, die
+/// Planung beginnt aber mit einer (dem gewaehlten Geraet).
+struct ZirkelEntwurf: Equatable {
+    var uebungen: [ZirkelUebung]
+    var runden: Int = 3
+    var uebungspause: Int
+    var rundenpause: Int
+
+    /// Die Pausen kommen aus den Einstellungen: zwischen Uebungen die kurze
+    /// Zirkelpause, zwischen Runden der normale Satz-Resttimer -- die
+    /// Rundenpause ist eine Pause wie zwischen zwei Saetzen.
+    init(uebungen: [ZirkelUebung], runden: Int = 3, defaults: UserDefaults = .standard) {
+        self.init(uebungen: uebungen, runden: runden,
+                  uebungspause: Einstellungen.zirkelPauseSekunden(defaults),
+                  rundenpause: Einstellungen.resttimerSekunden(defaults))
+    }
+
+    init(uebungen: [ZirkelUebung], runden: Int = 3, uebungspause: Int, rundenpause: Int) {
+        self.uebungen = uebungen
+        self.runden = runden
+        self.uebungspause = uebungspause
+        self.rundenpause = rundenpause
+    }
+
+    /// Dieselben Grenzen wie Zirkel.init -- der klemmt die Runden still, die
+    /// Planung soll dagegen gar nicht erst starten lassen.
+    var istGueltig: Bool {
+        uebungen.count >= Zirkel.mindestUebungen && Zirkel.rundenBereich.contains(runden)
+    }
+
+    /// Dieselbe Uebung zweimal haette zwei Slots, aber nur einen Block in
+    /// der Einheit -- Rundenzusammenfassung und "Letztes Mal" koennten die
+    /// beiden nicht auseinanderhalten. Die Liste traegt ausserdem die Uebung
+    /// selbst als Identitaet.
+    @discardableResult
+    mutating func hinzufuegen(_ uebung: ZirkelUebung) -> Bool {
+        guard !uebungen.contains(where: { $0.station == uebung.station && $0.exerciseId == uebung.exerciseId })
+        else { return false }
+        uebungen.append(uebung)
+        return true
+    }
+
+    /// Wie List.onMove: `nach` zaehlt vor dem Entfernen.
+    mutating func verschiebe(von quelle: IndexSet, nach ziel: Int) {
+        uebungen.move(fromOffsets: quelle, toOffset: ziel)
+    }
+
+    mutating func entferne(at stellen: IndexSet) {
+        uebungen.remove(atOffsets: stellen)
+    }
+
+    /// Nur fuer einen gueltigen Entwurf (Zirkel.init prueft die
+    /// Mindestzahl hart); der Knopf "Zirkel starten" ist sonst gesperrt.
+    func zirkel() -> Zirkel {
+        Zirkel(uebungen: uebungen, runden: runden, uebungspause: uebungspause, rundenpause: rundenpause)
+    }
+}
+
+/// Welche Uebung ein Geraet beitraegt, das in der Planung dazukommt. Kein
+/// Drawer an dieser Stelle (Anti-Ziel: Zirkel darf nicht umstaendlicher
+/// werden): dieselbe Vorauswahl wie beim Oeffnen eines Geraets
+/// (TrainingRootView.modell), das Gewicht fragt der Drawer in Runde 1.
+enum ZirkelAuswahl {
+    /// `uebungId`: ein Uebungstreffer der Suche. Aus der Liste gibt es
+    /// keinen Token -- der kommt nur mit einem Scan.
+    static func uebung(station: Station, uebungId: String?, bootstrap: BootstrapResponse) -> ZirkelUebung? {
+        let gewaehlt = uebungId
+            ?? GeraetEinstiegRechner.letzteUebung(station: station.schluessel, in: bootstrap)
+            ?? station.exercises.first?.id
+        guard let gewaehlt else { return nil }
+        return ZirkelUebung(station: station.schluessel, exerciseId: gewaehlt, token: nil)
+    }
+}
