@@ -74,8 +74,8 @@ struct ZirkelPauseView: View {
                     if let pause = ablauf.pause {
                         uhr(pause)
                     }
-                    if zirkel.naechsterSchrittIstRundenwechsel {
-                        rundenzusammenfassung(zirkel)
+                    if zirkel.naechsterSchrittIstRundenwechsel, let runde = ablauf.geschaffteRunde {
+                        rundenzusammenfassung(zirkel, runde: runde)
                     }
                     alsNaechstes(naechste, danach: ZirkelPauseText.danach(zirkel))
                     Spacer(minLength: 0)
@@ -103,9 +103,9 @@ struct ZirkelPauseView: View {
     /// Entscheidung 6: in der Rundenpause, was die Runde gebracht hat --
     /// knapp, je Uebung eine Zeile.
     @ViewBuilder
-    private func rundenzusammenfassung(_ zirkel: Zirkel) -> some View {
+    private func rundenzusammenfassung(_ zirkel: Zirkel, runde: DateInterval) -> some View {
         let zeilen = ZirkelPauseText.rundenzeilen(zirkel, bloecke: sessions.aktiveSession()?.bloecke ?? [],
-                                                  name: uebungsname)
+                                                  in: runde, name: uebungsname)
         if !zeilen.isEmpty {
             Card {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
@@ -177,10 +177,14 @@ struct ZirkelPauseView: View {
                 // Gilt nur fuer diese Runde und sichert keinen Satz (Spec-
                 // Annahme). Danach derselbe Weg wie am Ende der Pause: zur
                 // dann naechsten Uebung bzw. zur Uebersicht, wenn keine mehr
-                // kommt.
+                // kommt. Schloss der Slot die Runde, bleibt der Screen
+                // stehen und wird zur Rundenpause; deren Uhr setzt der Task
+                // ueber das neue endetAm auf.
                 SecondaryButton(title: "Überspringen") {
                     ablauf.ueberspringen()
-                    beiStarten()
+                    if let zirkel = ablauf.zirkel, ZirkelPfad.nachUeberspringenWeiter(zirkel) {
+                        beiStarten()
+                    }
                 }
                 .accessibilityLabel("\(uebungsname(naechste)) in dieser Runde überspringen")
                 .testnotizElement("zirkel.pause.ueberspringen", typ: "SecondaryButton")
@@ -235,15 +239,18 @@ enum ZirkelPauseText {
         return zirkel.uebungen[folgend % anzahl]
     }
 
-    /// Je Zirkel-Uebung "Name 12,5 kg × 10" aus dem letzten Satz ihres Blocks
-    /// in der Einheit -- ein Block je Uebung, ein Satz je Runde, also ist der
-    /// letzte der dieser Runde. Ohne Satz faellt die Uebung weg.
-    static func rundenzeilen(_ zirkel: Zirkel, bloecke: [LokalerBlock],
+    /// Je Zirkel-Uebung "Name 12,5 kg × 10" aus ihrem Satz in der eben
+    /// geschafften Runde (`runde`, ZirkelAblauf.geschaffteRunde). Nur das
+    /// Fenster zaehlt: der Block traegt auch Saetze der Vorrunden und von
+    /// vor dem Zirkel, und eine in dieser Runde uebersprungene Uebung zeigte
+    /// sonst einen alten Satz. Ohne Satz im Fenster faellt sie weg.
+    static func rundenzeilen(_ zirkel: Zirkel, bloecke: [LokalerBlock], in runde: DateInterval,
                              name: (ZirkelUebung) -> String) -> [String] {
         zirkel.uebungen.compactMap { uebung in
             guard let block = bloecke.first(where: {
                 $0.stationSchluessel == uebung.station && $0.exerciseId == uebung.exerciseId
-            }), let werte = satzwerte(block) else { return nil }
+            }), let satz = block.saetze.last(where: { runde.contains($0.performedAt) }),
+                  let werte = satzwerte(satz, block) else { return nil }
             return "\(name(uebung)) \(werte)"
         }
     }
@@ -252,6 +259,10 @@ enum ZirkelPauseText {
     /// Cardio die Cardio-Werte. nil ohne Satz oder ohne Werte.
     static func satzwerte(_ block: LokalerBlock) -> String? {
         guard let letzter = block.saetze.last else { return nil }
+        return satzwerte(letzter, block)
+    }
+
+    private static func satzwerte(_ letzter: LokalerSatz, _ block: LokalerBlock) -> String? {
         if let cardio = letzter.cardio { return Zahlformat.cardio(cardio) }
         guard let load = letzter.load, let volume = letzter.volume else { return nil }
         return Zahlformat.satz(load, block.loadUnit, neben: letzter.secondaryLoad, block.secondaryUnit,

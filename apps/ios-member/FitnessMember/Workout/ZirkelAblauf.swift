@@ -15,10 +15,23 @@ import Observation
 final class ZirkelAblauf {
     private(set) var zirkel: Zirkel?
     private(set) var pause: Resttimer?
+    /// Von wann bis wann die zuletzt geschaffte Runde lief -- fuer die
+    /// Zusammenfassung in der Rundenpause, die nur deren Saetze zeigen darf.
+    /// Ein Zeitfenster statt einer Liste uebersprungener Slots: die Saetze
+    /// stehen ohnehin mit performedAt in der Einheit, und was in diesem
+    /// Fenster nicht gesichert wurde, wurde uebersprungen. Der Zirkel selbst
+    /// bleibt davon unberuehrt (die Uebersicht in Task 8 zeigt alle Runden).
+    private(set) var geschaffteRunde: DateInterval?
+    /// Beginn der laufenden Runde.
+    private var rundenbeginn: Date?
 
-    func starten(_ zirkel: Zirkel) {
+    /// `rundeBegann`: wann Runde 1 anfing, falls frueher als jetzt -- beim
+    /// Zirkel aus einem Einzelsatz (Task 7) liegt dessen Satz vor dem Start.
+    func starten(_ zirkel: Zirkel, jetzt: Date = Date(), rundeBegann: Date? = nil) {
         self.zirkel = zirkel
         pause = nil
+        geschaffteRunde = nil
+        rundenbeginn = rundeBegann ?? jetzt
     }
 
     /// Nach jedem gesicherten Satz einer Zirkel-Uebung: ein Slot weiter, dann
@@ -59,12 +72,20 @@ final class ZirkelAblauf {
     func beenden() {
         zirkel = nil
         pause = nil
+        geschaffteRunde = nil
+        rundenbeginn = nil
     }
 
     private func weiterruecken(jetzt: Date, _ schritt: (inout Zirkel) -> Void) {
         guard var zirkel else { return }
         schritt(&zirkel)
         self.zirkel = zirkel
+        // Dieser Slot schloss eine Runde: ihr Fenster festhalten, die
+        // naechste beginnt jetzt.
+        if zirkel.schritt % zirkel.uebungen.count == 0, let rundenbeginn {
+            geschaffteRunde = DateInterval(start: rundenbeginn, end: max(jetzt, rundenbeginn))
+            self.rundenbeginn = jetzt
+        }
         pause = zirkel.istFertig
             ? nil
             : Resttimer(start: jetzt, dauer: TimeInterval(zirkel.pausenSekunden))
@@ -87,5 +108,13 @@ enum ZirkelPfad {
         var neu = pfad.dropLast()
         if case .geraet = neu.last { neu = neu.dropLast() }
         return Array(neu) + [ziel]
+    }
+
+    /// Nach "Überspringen" in der Pause: gleich weiter zur naechsten Uebung
+    /// (bzw. zur Uebersicht, wenn nichts mehr kommt) -- ausser der
+    /// uebersprungene Slot schloss die Runde. Dann steht jetzt die
+    /// Rundenpause an, und die gehoert gezeigt statt uebergangen.
+    static func nachUeberspringenWeiter(_ zirkel: Zirkel) -> Bool {
+        zirkel.istFertig || !zirkel.naechsterSchrittIstRundenwechsel
     }
 }

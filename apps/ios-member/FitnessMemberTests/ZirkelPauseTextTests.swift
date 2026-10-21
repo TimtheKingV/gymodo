@@ -56,16 +56,25 @@ struct ZirkelPauseTextTests {
         #expect(ZirkelPauseText.danach(zirkel) == uebung(2))
     }
 
-    /// Je Uebung der letzte Satz der Einheit; eine Uebung ohne Satz (in
-    /// dieser Einheit uebersprungen) faellt weg statt "0 kg" zu zeigen.
-    @Test func rundenzeilenNennenJeUebungDenLetztenSatz() {
+    /// Je Uebung der Satz der geschafften Runde. Eine in dieser Runde
+    /// uebersprungene Uebung faellt weg, auch wenn ihr Block aeltere Saetze
+    /// (Vorrunde, vor dem Zirkel) traegt.
+    @Test func rundenzeilenNennenNurSaetzeDerGeschafftenRunde() {
         let zirkel = Zirkel(uebungen: [uebung(1), uebung(2), uebung(3)], runden: 3, uebungspause: 20, rundenpause: 90)
+        func satz(_ index: Int, load: Double, volume: Int, minuten: Double) -> LokalerSatz {
+            LokalerSatz(id: UUID(), setIndex: index, load: load, volume: volume, rir: nil,
+                        problemFlag: false, problemReason: nil, performedAt: start.addingTimeInterval(minuten * 60))
+        }
         let bloecke = [
-            LokalerBlock(machineId: "m2", exerciseId: "e2", saetze: [satz(1, load: 8, volume: 15)]),
-            LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [satz(1, load: 10, volume: 12), satz(2, load: 12.5, volume: 10)]),
+            // Seitheben: nur ein Satz aus der Vorrunde -> diesmal uebersprungen.
+            LokalerBlock(machineId: "m2", exerciseId: "e2", saetze: [satz(1, load: 8, volume: 15, minuten: 1)]),
+            LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [satz(1, load: 10, volume: 12, minuten: 0),
+                                                                    satz(2, load: 12.5, volume: 10, minuten: 11)]),
+            LokalerBlock(machineId: "m3", exerciseId: "e3", saetze: [satz(1, load: 30, volume: 8, minuten: 13)]),
         ]
+        let runde = DateInterval(start: start.addingTimeInterval(10 * 60), end: start.addingTimeInterval(14 * 60))
         let namen = ["e1": "Bizeps-Curls", "e2": "Seitheben", "e3": "Schrägbankdrücken"]
-        let zeilen = ZirkelPauseText.rundenzeilen(zirkel, bloecke: bloecke) { namen[$0.exerciseId] ?? "" }
-        #expect(zeilen == ["Bizeps-Curls 12,5 kg × 10", "Seitheben 8,0 kg × 15"])
+        let zeilen = ZirkelPauseText.rundenzeilen(zirkel, bloecke: bloecke, in: runde) { namen[$0.exerciseId] ?? "" }
+        #expect(zeilen == ["Bizeps-Curls 12,5 kg × 10", "Schrägbankdrücken 30,0 kg × 8"])
     }
 }
