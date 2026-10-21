@@ -27,6 +27,7 @@
 		0E2C85C013DB621DEC90286E /* MemberLadefehlerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC1749C422D74C910CA03FCA /* MemberLadefehlerView.swift */; };
 		0E9F219ADEE737580E75D93A /* Geraetegruppe.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC32FC76BF907811DC7EFA7C /* Geraetegruppe.swift */; };
 		0F23761D47A8B1CAFDAA582B /* TestnotizEintrag.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BC48D13AE6028E26E09E52 /* TestnotizEintrag.swift */; };
+		0F9FCD176416DC8CCC796D68 /* Zirkel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6159FD3FE8D6C00C65AA16 /* Zirkel.swift */; };
 		11BA7A3A80B08733F442CDFE /* KursRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */; };
 		13225DB0A049D674C72CE73D /* CourseWeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AC1E765B0B287F9AC69A3B8 /* CourseWeek.swift */; };
 		14BE1A62DADBD13DA29327F8 /* OnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31BDB535E7D98C969B8C5F58 /* OnboardingFlow.swift */; };
@@ -195,6 +196,7 @@
 		95B92D907A187FD9ECF4A012 /* StudiosListe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A4AC12659D2E513D2EDC2FE /* StudiosListe.swift */; };
 		960836418C9B465A01922B0B /* KursePlanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7E4BF6A41BDD5F5547CFB4C /* KursePlanTests.swift */; };
 		9658183FB704B5244DD0C883 /* testnotiz-beispiel.json in Resources */ = {isa = PBXBuildFile; fileRef = CFBC22CBF40859396B6DD869 /* testnotiz-beispiel.json */; };
+		9665FA7B023AC16E31AA7EAE /* ZirkelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28720DEB9E5541AA9C876E1D /* ZirkelTests.swift */; };
 		96F1E25945DAC2FCF7461EE7 /* EinweisungMedienTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9080FBAAFE2BA83283AA40F5 /* EinweisungMedienTests.swift */; };
 		9793B3801AD0CD565B3DF666 /* TagProtokoll.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB59D56AD33C31AE1F0089FF /* TagProtokoll.swift */; };
 		987BD1C06D3455370CA7C2DD /* BefestigungsspeicherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 032095E4600D97C96AB8E038 /* BefestigungsspeicherTests.swift */; };
@@ -415,6 +417,7 @@
 		26B414241FEB56BDD45194AA /* PendingTagStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingTagStore.swift; sourceTree = "<group>"; };
 		27C292EFD7E692D12EAD9B3A /* PlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderView.swift; sourceTree = "<group>"; };
 		27C91AE37A6CC0AA3627BD49 /* Schleifenvideo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Schleifenvideo.swift; sourceTree = "<group>"; };
+		28720DEB9E5541AA9C876E1D /* ZirkelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelTests.swift; sourceTree = "<group>"; };
 		28729494126B3B466AEDB7C4 /* ProfilZeilenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilZeilenTests.swift; sourceTree = "<group>"; };
 		28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetModelTests.swift; sourceTree = "<group>"; };
 		2A4773C0A268BE47D48C1059 /* OnboardingSchreiberTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingSchreiberTests.swift; sourceTree = "<group>"; };
@@ -450,6 +453,7 @@
 		39D3B597FB0FCE1455A04ADF /* sensoraufnahme-beispiel */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "sensoraufnahme-beispiel"; path = "FitnessMemberTests/Fixtures/sensoraufnahme-beispiel"; sourceTree = SOURCE_ROOT; };
 		3A2D02E4D28E39A0B02C8AA0 /* Funktionen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Funktionen.swift; sourceTree = "<group>"; };
 		3A3BA42E747095E74D6BF83A /* EinweisungSchritt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EinweisungSchritt.swift; sourceTree = "<group>"; };
+		3A6159FD3FE8D6C00C65AA16 /* Zirkel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zirkel.swift; sourceTree = "<group>"; };
 		3B16A62990D2DCAE39041199 /* FitnessMemberTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FitnessMemberTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C280F3A3938A1A778116681 /* SensorDiagnoseBlatt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorDiagnoseBlatt.swift; sourceTree = "<group>"; };
 		3C3D6DF5C1CF76DEAC63015E /* MemberStudiosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberStudiosView.swift; sourceTree = "<group>"; };
@@ -1102,6 +1106,7 @@
 				A40546FF017FE78E2A6823CE /* ZahlformatTests.swift */,
 				5DFA0BACC339F4B9F8299206 /* ZeitachseTests.swift */,
 				FFDF781E9D2DB3F233B672FA /* ZeitpunktParserTests.swift */,
+				28720DEB9E5541AA9C876E1D /* ZirkelTests.swift */,
 				38CC4282A43C30DF8CA3821D /* Fixtures */,
 			);
 			path = FitnessMemberTests;
@@ -1182,6 +1187,7 @@
 				EC659FC505DCC5B68E33AD7D /* UebungsVideos.swift */,
 				35466DCA1BAC23049D7DCB30 /* WorkoutSessionStore.swift */,
 				DFE33B9185B90C6212243F73 /* WorkoutSessionStore+Ortswechsel.swift */,
+				3A6159FD3FE8D6C00C65AA16 /* Zirkel.swift */,
 				34A92A9DFB60840CCAEB4F1F /* Sensor */,
 			);
 			path = Workout;
@@ -1652,6 +1658,7 @@
 				DBE1828F2838539DDF39B615 /* ZielSchreiben.swift in Sources */,
 				60550E206CC7C6325A9F3F1A /* ZielSheet.swift in Sources */,
 				E15B191B9059D4BB0F811C8C /* Zielkachel.swift in Sources */,
+				0F9FCD176416DC8CCC796D68 /* Zirkel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1768,6 +1775,7 @@
 				ADF2407DE862FD940232AAE5 /* ZahlformatTests.swift in Sources */,
 				9F9C2DD14DE85363DE57FD09 /* ZeitachseTests.swift in Sources */,
 				D132DD312AC9766E7A398090 /* ZeitpunktParserTests.swift in Sources */,
+				9665FA7B023AC16E31AA7EAE /* ZirkelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
