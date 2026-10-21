@@ -595,21 +595,15 @@ struct TrainingRootView: View {
                              beiTrainingBeenden: beenden)
             }
         case .zirkelPause:
-            // Platzhalter bis Task 5 (ZirkelPauseView). Er traegt schon den
-            // Vertrag: Ablauf der Pause und "Weiter" nehmen denselben Weg,
-            // und zirkelWeiter() vertraegt den doppelten Aufruf. Der
-            // Endzeitpunkt ist die id, damit "+30 s" den Task neu aufsetzt.
-            VStack(spacing: DesignSystem.Spacing.s16) {
-                Text("Zirkel-Pause")
-                Button("Weiter") { zirkelWeiter() }
-            }
-            .task(id: zirkelAblauf.pause?.endetAm) {
-                guard let ende = zirkelAblauf.pause?.endetAm else { return }
-                let rest = ende.timeIntervalSinceNow
-                if rest > 0 { try? await Task.sleep(for: .seconds(rest)) }
-                guard !Task.isCancelled else { return }
-                zirkelWeiter()
-            }
+            // Der Ablauf-Task der Pause sitzt in der View, und zwar nur
+            // dort: Uhr, "<Name> starten" und "Überspringen" enden alle in
+            // zirkelWeiter(), das den doppelten Aufruf vertraegt.
+            ZirkelPauseView(ablauf: zirkelAblauf,
+                            uebungsname: zirkelUebungsname,
+                            letztesMal: zirkelLetztesMal,
+                            beiStarten: { zirkelWeiter() },
+                            beiErweitern: nil,
+                            beiBeenden: { zirkelBeenden() })
         case .zirkelUebersicht:
             // Platzhalter bis Task 8 (ZirkelUebersichtView).
             VStack(spacing: DesignSystem.Spacing.s16) {
@@ -931,8 +925,17 @@ struct TrainingRootView: View {
     /// Drawer ist schon offen.
     private func zirkelWeiter() {
         guard pfad.last == .zirkelPause, uebungsstart == nil,
-              let zirkel = zirkelAblauf.zirkel, let naechste = zirkel.naechste
+              let zirkel = zirkelAblauf.zirkel
         else { return }
+        // Nach "Überspringen" des letzten offenen Slots kommt keine Uebung
+        // mehr: dann wie nach dem letzten Satz die Uebersicht.
+        guard let naechste = zirkel.naechste else {
+            if let neu = ZirkelPfad.ausPause(pfad, zu: .zirkelUebersicht) {
+                zirkelAblauf.pauseVerlassen()
+                pfad = neu
+            }
+            return
+        }
         let ohneStartwerte = GeraetRoute.geraet(station: naechste.station, exerciseId: naechste.exerciseId,
                                                 token: naechste.token, zirkel: true)
         if zirkel.runde == 1, !zirkelDirektStart(naechste) {
@@ -944,6 +947,35 @@ struct TrainingRootView: View {
             zirkelAblauf.pauseVerlassen()
             pfad = neu
         }
+    }
+
+    /// "Zirkel beenden" in der Pause: zur Uebersicht mit dem bisherigen
+    /// Stand. Die Saetze stehen schon in der Einheit; beendet wird nur der
+    /// Ablauf (Spec: Beenden behaelt alle gesicherten Saetze). Die
+    /// eigentliche Zirkel-Uebersicht kommt mit Task 8.
+    private func zirkelBeenden() {
+        guard let neu = ZirkelPfad.ausPause(pfad, zu: .zirkelUebersicht) else { return }
+        pfad = neu
+        zirkelAblauf.beenden()
+    }
+
+    private func zirkelUebungsname(_ uebung: ZirkelUebung) -> String {
+        katalog.bootstrap?.station(schluessel: uebung.station, studioId: katalog.activeStudioId)?
+            .exercises.first { $0.id == uebung.exerciseId }?.name ?? "Übung"
+    }
+
+    /// Dieselbe Quelle wie die Startwerte: ab Runde 2 belegt GeraetModel
+    /// das Gewicht aus dem Satz dieser Einheit vor, also steht dann auch
+    /// der hier. Vorher der letzte Satz aus dem Prefetch, wie im Drawer
+    /// (Rueckblick).
+    private func zirkelLetztesMal(_ uebung: ZirkelUebung) -> String? {
+        if let block = sessions.aktiveSession()?.bloecke.first(where: {
+            $0.stationSchluessel == uebung.station && $0.exerciseId == uebung.exerciseId
+        }), let heute = ZirkelPauseText.satzwerte(block) {
+            return heute
+        }
+        return modell(station: uebung.station, exerciseId: uebung.exerciseId, token: uebung.token)?
+            .rueckblick?.zuletzt
     }
 
     /// Eine bekannte Cardio-Uebung hat keinen Drawer-Schritt
