@@ -395,8 +395,15 @@ struct GeraetView: View {
             // 06.10. (#10) hiess er "Gerät abschließen" -- abgeschlossen
             // wird aber die Uebung, das Geraet kann noch eine zweite haben.
             HStack(spacing: DesignSystem.Spacing.s12) {
-                SecondaryButton(title: "Übung abschließen", action: beiUebungAbschliessen)
-                    .testnotizElement("geraet.abschliessen", typ: "SecondaryButton")
+                // Im Zirkel nicht: "Satz speichern" in der Satzfrage ginge
+                // ueber satzSichern, der Hook fuehrte schon in die Pause, und
+                // danach schloesse onDismiss noch die Uebung dieses Screens
+                // ab -- zwei Wege auf einmal. Wie es weitergeht, entscheidet
+                // im Zirkel die Pause (Ueberspringen, Zirkel beenden).
+                if !modell.imZirkel {
+                    SecondaryButton(title: "Übung abschließen", action: beiUebungAbschliessen)
+                        .testnotizElement("geraet.abschliessen", typ: "SecondaryButton")
+                }
                 problemMelden
             }
         }

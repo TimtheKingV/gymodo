@@ -81,6 +81,10 @@ struct TrainingRootView: View {
     /// Nach einem Aushang-Scan steht der Studiohinweis auch hier, nicht nur
     /// auf Home -- wer im Training scannt, schaut nicht auf Home.
     @State private var beitrittZeigen = false
+    /// Der laufende Mini-Zirkel (Spec 21.10.). An der Wurzel, weil jede
+    /// Zirkel-Uebung ihren eigenen Geraete-Screen mit eigenem Modell
+    /// bekommt -- Zirkel und Pause muessen den Wechsel ueberleben.
+    @State private var zirkelAblauf = ZirkelAblauf()
 
     var body: some View {
         NavigationStack(path: $pfad) {
@@ -163,7 +167,9 @@ struct TrainingRootView: View {
             .sheet(item: $uebungsstart) { auftrag in
                 if let modell = modell(station: auftrag.station, exerciseId: auftrag.exerciseId,
                                        token: auftrag.token) {
-                    UebungsstartSheet(modell: modell, mitUebersicht: true, beiStart: { werte in
+                    // Im Zirkel steht man schon am naechsten Geraet: gleich
+                    // die Startwerte, ohne den Umweg ueber die Uebersicht.
+                    UebungsstartSheet(modell: modell, mitUebersicht: !auftrag.zirkel, beiStart: { werte in
                         uebungStarten(auftrag, mit: werte)
                     }, beiSchliessen: { uebungsstart = nil })
                     .environment(videoVorrat)
@@ -228,6 +234,9 @@ struct TrainingRootView: View {
                     pfad.removeAll()
                 }
                 // Erst nach dem Leeren: das Geraet am neuen Ort bleibt stehen.
+                // Ein Zirkel lebt nur in der laufenden Einheit (Spec,
+                // Nicht-Ziele): endet sie, ist auch er vorbei.
+                if !laeuft { zirkelAblauf.beenden() }
                 if !laeuft, let folge = nachOrtswechsel {
                     nachOrtswechsel = nil
                     ausfuehren(folge)
@@ -579,10 +588,36 @@ struct TrainingRootView: View {
                     uebungsstartOeffnen(UebungsstartAuftrag(station: station, exerciseId: uebungId, token: token))
                 }
             }
-        case .geraet(let station, let exerciseId, let token, let start):
-            if let modell = modell(station: station, exerciseId: exerciseId, token: token, startwerte: start) {
+        case .geraet(let station, let exerciseId, let token, let start, let zirkel):
+            if let modell = modell(station: station, exerciseId: exerciseId, token: token,
+                                   startwerte: start, zirkel: zirkel) {
                 GeraetScreen(modell: modell, beiZurueckZumTraining: { pfad.removeAll() },
                              beiTrainingBeenden: beenden)
+            }
+        case .zirkelPause:
+            // Platzhalter bis Task 5 (ZirkelPauseView). Er traegt schon den
+            // Vertrag: Ablauf der Pause und "Weiter" nehmen denselben Weg,
+            // und zirkelWeiter() vertraegt den doppelten Aufruf. Der
+            // Endzeitpunkt ist die id, damit "+30 s" den Task neu aufsetzt.
+            VStack(spacing: DesignSystem.Spacing.s16) {
+                Text("Zirkel-Pause")
+                Button("Weiter") { zirkelWeiter() }
+            }
+            .task(id: zirkelAblauf.pause?.endetAm) {
+                guard let ende = zirkelAblauf.pause?.endetAm else { return }
+                let rest = ende.timeIntervalSinceNow
+                if rest > 0 { try? await Task.sleep(for: .seconds(rest)) }
+                guard !Task.isCancelled else { return }
+                zirkelWeiter()
+            }
+        case .zirkelUebersicht:
+            // Platzhalter bis Task 8 (ZirkelUebersichtView).
+            VStack(spacing: DesignSystem.Spacing.s16) {
+                Text("Zirkel geschafft")
+                Button("Weiter") {
+                    zirkelAblauf.beenden()
+                    pfad.removeAll()
+                }
             }
         case .abschluss(let sessionId, let zusammenfassung):
             // "Fertig" nimmt den Pfad zur Wurzel zurueck (Aufgabenbrief):
@@ -601,8 +636,12 @@ struct TrainingRootView: View {
         }
     }
 
+    /// `zirkel`: das Modell meldet gesicherte Saetze an den ZirkelAblauf,
+    /// statt selbst in Pause oder Abschluss zu gehen, und Startwerte beginnen
+    /// ohne Countdown (der Mitschnitt startet dann mit dem Erscheinen des
+    /// Screens, siehe GeraetModel.init).
     private func modell(station schluessel: String, exerciseId: String?, token: String?,
-                        startwerte: Startwerte? = nil) -> GeraetModel? {
+                        startwerte: Startwerte? = nil, zirkel: Bool = false) -> GeraetModel? {
         // Ein Typ hat keinen eigenen Ort: die Route traegt nur den
         // Schluessel, und er gilt am aktuellen Ort. Deshalb wechselt jeder Weg
         // hierher (Scan, Liste) den Ort VOR dem Oeffnen, und eine offene
@@ -623,14 +662,19 @@ struct TrainingRootView: View {
         mitschnitt = sensorAufnahme
         zaehler = satzZaehler
         #endif
-        return GeraetModel(
+        let modell = GeraetModel(
             station: station, uebungId: gewaehlt, token: token,
             bootstrap: bootstrap, loader: apiClient, sessions: sessions,
             enqueue: { katalog.enqueue($0); Task { await katalog.flushPending() } },
             mitschnitt: mitschnitt,
             zaehler: zaehler,
-            startwerte: startwerte
+            startwerte: startwerte,
+            mitCountdown: !zirkel
         )
+        if zirkel {
+            modell.beiZirkelSatzGesichert = { zirkelSatzGesichert() }
+        }
+        return modell
     }
 
     /// Was aus PendingTagStore herauskommt, an einer Stelle beantwortet.
@@ -846,8 +890,65 @@ struct TrainingRootView: View {
     private func uebungStarten(_ auftrag: UebungsstartAuftrag, mit werte: Startwerte) {
         if sessions.aktiveSession() == nil { sessions.trainingStarten() }
         uebungsstart = nil
-        pfad.append(.geraet(station: auftrag.station, exerciseId: auftrag.exerciseId,
-                            token: auftrag.token, start: werte))
+        let ziel = GeraetRoute.geraet(station: auftrag.station, exerciseId: auftrag.exerciseId,
+                                      token: auftrag.token, start: werte, zirkel: auftrag.zirkel)
+        // Aus der Zirkel-Pause (Runde 1) ersetzt die Uebung Pause und alten
+        // Geraete-Screen; die erste Zirkel-Uebung (Planung, Task 6) und jeder
+        // normale Start haengen an.
+        if auftrag.zirkel, let neu = ZirkelPfad.ausPause(pfad, zu: ziel) {
+            pfad = neu
+        } else {
+            pfad.append(ziel)
+        }
+    }
+
+    // MARK: - Mini-Zirkel
+
+    /// Der Hook eines Zirkel-Geraets nach einem gesicherten Satz. Nur vom
+    /// obersten Geraete-Screen: ein zweiter Satz desselben Screens, waehrend
+    /// die Pause schon steht, rueckt den Zirkel nicht nochmal weiter.
+    ///
+    /// Der Push der Pause verdeckt den Geraete-Screen, dessen onDisappear
+    /// (screenVerlassen) laeuft also JETZT -- bevor das naechste Modell
+    /// seinen Mitschnitt beginnt. Sensor und Zaehler sind app-weit; liefe
+    /// das Verlassen erst nach dem Start der naechsten Uebung, braeche es
+    /// deren Aufnahme ab.
+    private func zirkelSatzGesichert() {
+        guard case .geraet = pfad.last else { return }
+        zirkelAblauf.satzGesichert()
+        pfad.append(zirkelAblauf.zirkel?.istFertig == true ? .zirkelUebersicht : .zirkelPause)
+    }
+
+    /// Ende der Pause oder "Weiter": zur naechsten Zirkel-Uebung. In Runde 1
+    /// erst der Drawer fuer das Gewicht (der Wechsel folgt in
+    /// uebungStarten), ab Runde 2 gleich die Raeder -- das Gewicht der
+    /// Vorrunde belegt das neue Modell selbst vor.
+    ///
+    /// Doppelt aufgerufen (Ablauf und Tipp im selben Moment) tut der zweite
+    /// Aufruf nichts: der Pfad steht nicht mehr auf der Pause, oder der
+    /// Drawer ist schon offen.
+    private func zirkelWeiter() {
+        guard pfad.last == .zirkelPause, uebungsstart == nil,
+              let zirkel = zirkelAblauf.zirkel, let naechste = zirkel.naechste
+        else { return }
+        let ohneStartwerte = GeraetRoute.geraet(station: naechste.station, exerciseId: naechste.exerciseId,
+                                                token: naechste.token, zirkel: true)
+        if zirkel.runde == 1, !zirkelDirektStart(naechste) {
+            uebungsstart = UebungsstartAuftrag(station: naechste.station, exerciseId: naechste.exerciseId,
+                                               token: naechste.token, zirkel: true)
+            return
+        }
+        if let neu = ZirkelPfad.ausPause(pfad, zu: ohneStartwerte) { pfad = neu }
+    }
+
+    /// Eine bekannte Cardio-Uebung hat keinen Drawer-Schritt
+    /// (Uebungsstart.direktStart) -- dann auch in Runde 1 gleich die Seite.
+    private func zirkelDirektStart(_ uebung: ZirkelUebung) -> Bool {
+        guard let modell = modell(station: uebung.station, exerciseId: uebung.exerciseId, token: uebung.token)
+        else { return false }
+        return Uebungsstart.direktStart(erstkontakt: modell.istErstkontakt,
+                                        fragtEinstellung: modell.erstkontaktFragtEinstellung,
+                                        volumeKind: modell.volumeKind)
     }
 
     private func oeffne(_ block: LokalerBlock) {

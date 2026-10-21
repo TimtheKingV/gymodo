@@ -155,6 +155,10 @@ final class GeraetModel {
     /// Satz weiterruecken, der wirklich in der Einheit steht.
     var beiZirkelSatzGesichert: (() -> Void)?
 
+    /// Woran der Screen den Zirkelmodus erkennt: am Hook selbst, nicht an
+    /// einem zweiten Merker, der ihm widersprechen koennte.
+    var imZirkel: Bool { beiZirkelSatzGesichert != nil }
+
     private let token: String?
     private let bootstrap: BootstrapResponse
     private let loader: any GeraetLoading
@@ -227,7 +231,8 @@ final class GeraetModel {
         satzZiel: @escaping () -> Int = { Einstellungen.satzZiel() },
         mitschnitt: (any SatzMitschnitt)? = nil,
         zaehler: (any SatzZaehler)? = nil,
-        startwerte: Startwerte? = nil
+        startwerte: Startwerte? = nil,
+        mitCountdown: Bool = true
     ) {
         self.station = station
         self.uebungId = uebungId
@@ -280,7 +285,20 @@ final class GeraetModel {
         // Werte gehoeren dem Mitglied, ein spaeter Vorschlag ersetzt sie
         // nicht. Der Countdown laeuft nur nach diesem Start, nicht im
         // Zirkel ueber die Blockliste.
-        if let startwerte { uebungStarten(mit: startwerte) }
+        //
+        // Ohne Countdown (Zirkel, Runde 1) nur die Werte: phase bleibt
+        // .eingabe, und den Mitschnitt startet erst geraetGeoeffnet() beim
+        // Erscheinen. init laeuft im ViewBuilder von TrainingRootView.ziel(_:)
+        // bei jedem Neuaufbau, der Screen behaelt aber nur das erste Modell
+        // -- ein Mitschnitt von hier haengte den app-weiten Zaehler an ein
+        // verworfenes Modell.
+        if let startwerte {
+            if mitCountdown {
+                uebungStarten(mit: startwerte)
+            } else {
+                startwerteUebernehmen(startwerte)
+            }
+        }
     }
 
     /// "Übung starten" im Drawer: aus der Liste ueber init, nach "Weitere
@@ -292,6 +310,18 @@ final class GeraetModel {
     /// Drawer, das Mitglied steht schon am Geraet -- gleich die Raeder, und
     /// der Mitschnitt beginnt sofort, wie sonst nach `countdownBeenden()`.
     func uebungStarten(mit startwerte: Startwerte, mitCountdown: Bool = true) {
+        startwerteUebernehmen(startwerte)
+        if mitCountdown {
+            phase = .bereit(Resttimer(dauer: Startcountdown.dauer))
+        } else {
+            phase = .eingabe
+            mitschnittBeginnen()
+        }
+    }
+
+    /// Die Werte aus dem Drawer gehoeren dem Mitglied: ein spaeter
+    /// Vorschlag ersetzt sie nicht.
+    private func startwerteUebernehmen(_ startwerte: Startwerte) {
         belastung = Rastwerte.naechster(zu: startwerte.belastung, in: belastungsWerte)
         umfang = Rastwerte.naechster(zu: startwerte.umfang, in: umfangsWerte)
         if let neben = startwerte.nebenbelastung, nebenmodell != nil {
@@ -299,12 +329,6 @@ final class GeraetModel {
             nebenbelastungVomNutzer = true
         }
         belastungVomNutzer = true
-        if mitCountdown {
-            phase = .bereit(Resttimer(dauer: Startcountdown.dauer))
-        } else {
-            phase = .eingabe
-            mitschnittBeginnen()
-        }
     }
 
     /// Was der Drawer an die Satzseite weitergibt: die Raeder, wie sie

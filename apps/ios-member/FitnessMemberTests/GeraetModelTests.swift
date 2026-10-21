@@ -381,6 +381,40 @@ struct GeraetModelTests {
         #expect(mitschnitt.eingaben == 1)
     }
 
+    /// Der Zirkel in Runde 1: Startwerte aus dem Drawer, aber kein Countdown.
+    /// Das Modell entsteht im ViewBuilder von TrainingRootView.ziel(_:) und
+    /// wird dort bei jedem Neuaufbau neu gebaut und verworfen (der Screen
+    /// haelt nur das erste ueber @State). Ein Mitschnitt aus init heraus
+    /// haengte den app-weiten Zaehler an ein verworfenes Modell -- erst das
+    /// Erscheinen des Screens (geraetGeoeffnet) startet ihn.
+    @Test func startwerteOhneCountdownImInitStartenKeinenMitschnitt() {
+        let mitschnitt = MitschnittSpion()
+        let sut = GeraetModel(
+            station: Station(maschine: GeraetTestdaten.maschine), uebungId: "e1", token: nil,
+            bootstrap: GeraetTestdaten.bootstrap(lastSets: []), loader: FakeGeraetLoader(),
+            sessions: WorkoutSessionStore(fileStore: SessionFileStore(
+                directory: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))),
+            enqueue: { _ in }, mitschnitt: mitschnitt,
+            startwerte: Startwerte(belastung: 40, umfang: 12, nebenbelastung: nil),
+            mitCountdown: false)
+
+        #expect(sut.phase == .eingabe)
+        #expect(sut.belastung == 40)
+        #expect(sut.umfang == 12)
+        #expect(mitschnitt.eingaben == 0)
+
+        sut.geraetGeoeffnet()
+        #expect(mitschnitt.eingaben == 1)
+    }
+
+    @Test func imZirkelFolgtDemHook() {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []))
+        #expect(!sut.imZirkel)
+        sut.beiZirkelSatzGesichert = {}
+        #expect(sut.imZirkel)
+    }
+
     /// Runde 2 entsteht als neues Modell derselben Station und Uebung ohne
     /// Startwerte. Das Gewicht muss aus dem Satz der Vorrunde kommen, nicht
     /// aus dem Bootstrap -- der kennt die laufende Einheit nicht.

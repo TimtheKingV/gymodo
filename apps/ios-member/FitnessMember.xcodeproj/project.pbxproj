@@ -90,6 +90,7 @@
 		3D61BC9B4ACB30A4AB753B39 /* Funktionen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A2D02E4D28E39A0B02C8AA0 /* Funktionen.swift */; };
 		3D88489EE677ECE6088E4860 /* OnboardingSchreiber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DCD40386E60DD37CDA35015 /* OnboardingSchreiber.swift */; };
 		3FC052B589C402381A71036E /* HomeSerieTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35520B42726A403ECBA04A24 /* HomeSerieTests.swift */; };
+		3FE258C3FB0CE6005D2E1765 /* ZirkelAblauf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E221D17E89C85ED62A2190 /* ZirkelAblauf.swift */; };
 		3FEB8C480E33977A36B75C37 /* EinweisungSchritt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A3BA42E747095E74D6BF83A /* EinweisungSchritt.swift */; };
 		4196455285CC682E9475A449 /* WertZeile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8B00715694B1D3131EDABCE /* WertZeile.swift */; };
 		42306793BB6C4D03FC384B86 /* HomeSerieView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138ED9C458C59851090DA3F5 /* HomeSerieView.swift */; };
@@ -299,6 +300,7 @@
 		D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78C8636341914B90296B220 /* AppConfigTests.swift */; };
 		D85F1EF7AA87F03089F8F73D /* KurseHerkunftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10A0239BC8D0EA913F1574D8 /* KurseHerkunftTests.swift */; };
 		D9003B708636A8AF96E1D2AA /* UebungsVideosTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46DBACD8FF94DEE90B68EE25 /* UebungsVideosTests.swift */; };
+		DA715B9ABEC67ABE3A22617A /* ZirkelAblaufTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 523DAE16D81C14FAC37ADF4D /* ZirkelAblaufTests.swift */; };
 		DB3955D030762B13093FA54C /* GeraetModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */; };
 		DB641A2801D4875409F434F5 /* UebungsfortschrittView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44D56AF5BB1CD13DC7356452 /* UebungsfortschrittView.swift */; };
 		DBE1828F2838539DDF39B615 /* ZielSchreiben.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCD60366B3F0C3C43DF73AA9 /* ZielSchreiben.swift */; };
@@ -487,6 +489,7 @@
 		4FE347CE02DFBA2ACD65350E /* GeraetModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetModel.swift; sourceTree = "<group>"; };
 		4FF15B0272BC7FFA565035F4 /* UebungsstartTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UebungsstartTests.swift; sourceTree = "<group>"; };
 		5154B94D2372BF17FF532E86 /* AccessibilityBaum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityBaum.swift; sourceTree = "<group>"; };
+		523DAE16D81C14FAC37ADF4D /* ZirkelAblaufTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelAblaufTests.swift; sourceTree = "<group>"; };
 		52AEEDE047FBD3EAFC7C992E /* ZaehlerKoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZaehlerKoordinator.swift; sourceTree = "<group>"; };
 		54F72606A30A2CE5C9E3E128 /* KurseTagesindikatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseTagesindikatorTests.swift; sourceTree = "<group>"; };
 		55093183C1B476C12C44B469 /* ScannerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerSheet.swift; sourceTree = "<group>"; };
@@ -546,6 +549,7 @@
 		83A7C08B1E55D753C748A62B /* Stammdaten.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stammdaten.swift; sourceTree = "<group>"; };
 		83A8B71893CB0948BB6A7FE6 /* ZielSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZielSheet.swift; sourceTree = "<group>"; };
 		860C70249404ED6DB23710D3 /* Laufzeitkontext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Laufzeitkontext.swift; sourceTree = "<group>"; };
+		86E221D17E89C85ED62A2190 /* ZirkelAblauf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelAblauf.swift; sourceTree = "<group>"; };
 		87DEDAB723DC8FE55CB2FFA1 /* LokaleSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LokaleSession.swift; sourceTree = "<group>"; };
 		890AC5A850DA5BE826DDA087 /* MemberPasswortCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortCodeView.swift; sourceTree = "<group>"; };
 		8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trainingszusammenfassung.swift; sourceTree = "<group>"; };
@@ -1106,6 +1110,7 @@
 				A40546FF017FE78E2A6823CE /* ZahlformatTests.swift */,
 				5DFA0BACC339F4B9F8299206 /* ZeitachseTests.swift */,
 				FFDF781E9D2DB3F233B672FA /* ZeitpunktParserTests.swift */,
+				523DAE16D81C14FAC37ADF4D /* ZirkelAblaufTests.swift */,
 				28720DEB9E5541AA9C876E1D /* ZirkelTests.swift */,
 				38CC4282A43C30DF8CA3821D /* Fixtures */,
 			);
@@ -1188,6 +1193,7 @@
 				35466DCA1BAC23049D7DCB30 /* WorkoutSessionStore.swift */,
 				DFE33B9185B90C6212243F73 /* WorkoutSessionStore+Ortswechsel.swift */,
 				3A6159FD3FE8D6C00C65AA16 /* Zirkel.swift */,
+				86E221D17E89C85ED62A2190 /* ZirkelAblauf.swift */,
 				34A92A9DFB60840CCAEB4F1F /* Sensor */,
 			);
 			path = Workout;
@@ -1659,6 +1665,7 @@
 				60550E206CC7C6325A9F3F1A /* ZielSheet.swift in Sources */,
 				E15B191B9059D4BB0F811C8C /* Zielkachel.swift in Sources */,
 				0F9FCD176416DC8CCC796D68 /* Zirkel.swift in Sources */,
+				3FE258C3FB0CE6005D2E1765 /* ZirkelAblauf.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1775,6 +1782,7 @@
 				ADF2407DE862FD940232AAE5 /* ZahlformatTests.swift in Sources */,
 				9F9C2DD14DE85363DE57FD09 /* ZeitachseTests.swift in Sources */,
 				D132DD312AC9766E7A398090 /* ZeitpunktParserTests.swift in Sources */,
+				DA715B9ABEC67ABE3A22617A /* ZirkelAblaufTests.swift in Sources */,
 				9665FA7B023AC16E31AA7EAE /* ZirkelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
