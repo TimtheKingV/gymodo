@@ -659,12 +659,12 @@ struct TrainingRootView: View {
             }
         case .geraet(let station, let exerciseId, let token, let start, let zirkel):
             if let modell = modell(station: station, exerciseId: exerciseId, token: token,
-                                   startwerte: start, zirkel: zirkel) {
+                                   startwerte: start, zirkel: zirkel != nil) {
                 GeraetScreen(modell: modell, beiZurueckZumTraining: { pfad.removeAll() },
                              beiTrainingBeenden: beenden,
                              // Ein Zirkel-Geraet erweitert ueber die Pause des
                              // Zirkels, nicht ueber sein eigenes Rad.
-                             beiZirkelBeginnen: zirkel ? nil : { zirkelAusEinzelsatz($0, token: token) })
+                             beiZirkelBeginnen: zirkel != nil ? nil : { zirkelAusEinzelsatz($0, token: token) })
             }
         case .zirkelPause:
             // Der Ablauf-Task der Pause sitzt in der View, und zwar nur
@@ -969,8 +969,10 @@ struct TrainingRootView: View {
             zirkelWartetAufStart = nil
             zirkelAblauf.starten(geplant)
         }
+        // Eine Zirkel-Uebung traegt ihren Slot in der Route (Finding C-1).
         let ziel = GeraetRoute.geraet(station: auftrag.station, exerciseId: auftrag.exerciseId,
-                                      token: auftrag.token, start: werte, zirkel: auftrag.zirkel)
+                                      token: auftrag.token, start: werte,
+                                      zirkel: auftrag.zirkel ? (zirkelAblauf.zirkel?.schritt ?? 0) : nil)
         // Aus der Zirkel-Pause (Runde 1) ersetzt die Uebung Pause und alten
         // Geraete-Screen; die erste Zirkel-Uebung (Planung, Task 6) und jeder
         // normale Start haengen an.
@@ -1164,16 +1166,17 @@ struct TrainingRootView: View {
         // Startwerte gelten jetzt, ohne zweiten Drawer -- auch eine, die
         // sonst direkt starten wuerde, bekommt so das gewaehlte Gewicht.
         if let werte = zirkelVormerkung.entnehmen(naechste, runde: zirkel.runde) {
-            let mitStartwerten = GeraetRoute.geraet(station: naechste.station, exerciseId: naechste.exerciseId,
-                                                    token: naechste.token, start: werte, zirkel: true)
+            let mitStartwerten = ZirkelPfad.route(naechste, start: werte, in: zirkel)
             if let neu = ZirkelPfad.ausPause(pfad, zu: mitStartwerten) {
                 zirkelAblauf.pauseVerlassen()
                 pfad = neu
             }
             return
         }
-        let ohneStartwerte = GeraetRoute.geraet(station: naechste.station, exerciseId: naechste.exerciseId,
-                                                token: naechste.token, zirkel: true)
+        // Eigener Slot in der Route: ist `naechste` dieselbe Uebung wie die
+        // unter der Pause (alle anderen uebersprungen), waere der Wechsel
+        // sonst ein Pop zurueck auf den gesperrten Screen (Finding C-1).
+        let ohneStartwerte = ZirkelPfad.route(naechste, in: zirkel)
         if zirkel.runde == 1, !zirkelDirektStart(naechste) {
             uebungsstart = UebungsstartAuftrag(station: naechste.station, exerciseId: naechste.exerciseId,
                                                token: naechste.token, zirkel: true)
@@ -1268,15 +1271,15 @@ struct TrainingRootView: View {
                                           mit werte: Startwerte) {
         zirkelErweiterung = nil
         let neueUebung = ZirkelUebung(station: auftrag.station, exerciseId: auftrag.exerciseId, token: auftrag.token)
-        let ziel = GeraetRoute.geraet(station: auftrag.station, exerciseId: auftrag.exerciseId,
-                                      token: auftrag.token, start: werte, zirkel: true)
         switch erweiterung.art {
         case .ausEinzelsatz(let erste, let rundeBegann):
             // Der Einzelsatz ist Slot 1; die neue Uebung ersetzt seinen
             // Screen. Hat sich der Pfad inzwischen geaendert, startet
             // nichts -- ein Zirkel ohne Screen waere verwaist. Der alte
             // Screen bleibt dann einfach stehen, wie er ist.
-            guard let neu = ZirkelPfad.ausEinzeluebung(pfad, zu: ziel) else {
+            let zirkel = Zirkel.ausEinzelsatz(erste, zweite: neueUebung)
+            guard let neu = ZirkelPfad.ausEinzeluebung(pfad, zu: ZirkelPfad.route(neueUebung, start: werte, in: zirkel))
+            else {
                 zirkelErweiterungVerwerfen()
                 return
             }
@@ -1284,7 +1287,7 @@ struct TrainingRootView: View {
             // onDisappear kaeme womoeglich erst nach dem Start der neuen
             // Aufnahme (siehe GeraetModel.anZirkelUebergeben).
             erweiterung.vorgaenger?.anZirkelUebergeben()
-            zirkelAblauf.starten(Zirkel.ausEinzelsatz(erste, zweite: neueUebung), rundeBegann: rundeBegann)
+            zirkelAblauf.starten(zirkel, rundeBegann: rundeBegann)
             pfad = neu
         case .imZirkel:
             // Nur aus der Pause nach Runde 1, und erweitern(um:) navigiert
@@ -1292,7 +1295,8 @@ struct TrainingRootView: View {
             // die oeffnet der Wechsel aus der Pause.
             guard ZirkelPfad.kannErweitern(pfad, zirkel: zirkelAblauf.zirkel),
                   zirkelAblauf.erweitern(um: neueUebung),
-                  let neu = ZirkelPfad.ausPause(pfad, zu: ziel)
+                  let erweitert = zirkelAblauf.zirkel,
+                  let neu = ZirkelPfad.ausPause(pfad, zu: ZirkelPfad.route(neueUebung, start: werte, in: erweitert))
             else {
                 // Nicht erweitert: weiter wie ohne Erweitern, damit keine
                 // abgelaufene Pause auf 00:00 stehen bleibt.

@@ -92,8 +92,8 @@ struct ZirkelAblaufTests {
 
     // MARK: - Pfad zwischen den Uebungen
 
-    private let alt = GeraetRoute.geraet(station: "geraet:g1", exerciseId: "e1", token: nil, zirkel: true)
-    private let neu = GeraetRoute.geraet(station: "geraet:g2", exerciseId: "e2", token: nil, zirkel: true)
+    private let alt = GeraetRoute.geraet(station: "geraet:g1", exerciseId: "e1", token: nil, zirkel: 0)
+    private let neu = GeraetRoute.geraet(station: "geraet:g2", exerciseId: "e2", token: nil, zirkel: 1)
 
     @Test func ausDerPauseErsetztDieNaechsteUebungPauseUndGeraet() {
         let pfad: [GeraetRoute] = [.kategorie(.freihantel), alt, .zirkelPause]
@@ -108,6 +108,31 @@ struct ZirkelAblaufTests {
         let einmal = ZirkelPfad.ausPause(pfad, zu: neu)
         #expect(einmal == [neu])
         #expect(ZirkelPfad.ausPause(einmal ?? [], zu: neu) == nil)
+    }
+
+    /// Finding C-1 der Gesamtpruefung: Zirkel [A, B], Runde 2. A gesichert,
+    /// in der Pause B uebersprungen -- die naechste Route ist wieder A ohne
+    /// Startwerte. Waere sie gleich der Route unter der Pause, machte der
+    /// NavigationStack aus [A, Pause] -> [A] ein Pop: der alte Screen mit
+    /// seinem gesperrten Modell kaeme zurueck, "Satz sichern" bliebe tot.
+    @Test func jederSlotBekommtEineEigeneRoute() {
+        let ablauf = gestartet(n: 2)
+        ablauf.satzGesichert(jetzt: t0)
+        ablauf.satzGesichert(jetzt: t0)
+        guard let runde2 = ablauf.zirkel, let a = runde2.naechste else {
+            Issue.record("Zirkel fehlt"); return
+        }
+        let unterDerPause = ZirkelPfad.route(a, in: runde2)
+        ablauf.satzGesichert(jetzt: t0)
+        ablauf.ueberspringen(jetzt: t0)
+        guard let runde3 = ablauf.zirkel, let wiederA = runde3.naechste else {
+            Issue.record("Zirkel fehlt"); return
+        }
+        #expect(wiederA == a)
+        let naechste = ZirkelPfad.route(wiederA, in: runde3)
+        #expect(naechste != unterDerPause)
+        let pfad = ZirkelPfad.ausPause([unterDerPause, .zirkelPause], zu: naechste)
+        #expect(pfad == [naechste])
     }
 
     @Test func ohneGeraetUnterDerPauseFaelltNurDiePause() {

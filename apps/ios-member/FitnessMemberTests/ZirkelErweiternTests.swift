@@ -99,7 +99,7 @@ struct ZirkelErweiternTests {
     /// Platz -- aber nur er, kein Zirkel-Screen und keine Pause.
     @Test func ausDerEinzeluebungErsetztDieNeueUebungDenGeraeteScreen() {
         let einzel = GeraetRoute.geraet(station: "geraet:g1", exerciseId: "e1", token: nil)
-        let neu = GeraetRoute.geraet(station: "geraet:g2", exerciseId: "e2", token: nil, zirkel: true)
+        let neu = GeraetRoute.geraet(station: "geraet:g2", exerciseId: "e2", token: nil, zirkel: 1)
         #expect(ZirkelPfad.ausEinzeluebung([.kategorie(.freihantel), einzel], zu: neu) == [.kategorie(.freihantel), neu])
         // Schon im Zirkel, oder oben liegt etwas anderes: nichts.
         #expect(ZirkelPfad.ausEinzeluebung([neu], zu: neu) == nil)
@@ -185,7 +185,7 @@ struct ZirkelErweiternTests {
     @Test func erweitertWirdNurAusDerPauseHeraus() {
         let ablauf = nachRundeEins()
         let zirkel = ablauf.zirkel
-        let geraet = GeraetRoute.geraet(station: "geraet:g1", exerciseId: "e1", token: nil, zirkel: true)
+        let geraet = GeraetRoute.geraet(station: "geraet:g1", exerciseId: "e1", token: nil, zirkel: 0)
         #expect(ZirkelPfad.kannErweitern([geraet, .zirkelPause], zirkel: zirkel))
         #expect(!ZirkelPfad.kannErweitern([geraet], zirkel: zirkel))
         #expect(!ZirkelPfad.kannErweitern([geraet, .zirkelPause], zirkel: nil))

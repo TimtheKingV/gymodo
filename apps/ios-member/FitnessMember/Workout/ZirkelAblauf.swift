@@ -124,6 +124,14 @@ struct ZirkelAbschluss: Equatable {
 /// Der Pfad beim Wechsel zur naechsten Zirkel-Uebung, als reine Rechnung,
 /// damit die Regel ohne NavigationStack pruefbar ist.
 enum ZirkelPfad {
+    /// Die Route fuer den naechsten Slot des Zirkels. Sie traegt den Slot
+    /// (`schritt`), damit zwei Slots derselben Uebung nie dieselbe Route
+    /// sind -- sonst wird der Wechsel aus der Pause zum Pop (Finding C-1).
+    static func route(_ uebung: ZirkelUebung, start: Startwerte? = nil, in zirkel: Zirkel) -> GeraetRoute {
+        .geraet(station: uebung.station, exerciseId: uebung.exerciseId, token: uebung.token,
+                start: start, zirkel: zirkel.schritt)
+    }
+
     /// Ersetzt Pause UND alten Geraete-Screen durch die naechste Uebung:
     /// sonst wuechse der Stapel mit jedem Satz, und "Zurueck" fuehrte durch
     /// alle Uebungen der Runde.
@@ -147,7 +155,7 @@ enum ZirkelPfad {
     /// nil, wenn oben kein Geraete-Screen einer Einzeluebung liegt (schon
     /// im Zirkel, oder der Pfad hat sich waehrend der Wahl geaendert).
     static func ausEinzeluebung(_ pfad: [GeraetRoute], zu ziel: GeraetRoute) -> [GeraetRoute]? {
-        guard case .geraet(_, _, _, _, let zirkel) = pfad.last, !zirkel else { return nil }
+        guard case .geraet(_, _, _, _, nil) = pfad.last else { return nil }
         return pfad.dropLast() + [ziel]
     }
 

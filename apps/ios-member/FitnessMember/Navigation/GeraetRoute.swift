@@ -22,9 +22,13 @@ enum GeraetRoute: Hashable {
     /// ueber die Blockliste) stehen gleich die Raeder.
     /// `zirkel`: der Screen gehoert zu einem laufenden Mini-Zirkel (Spec
     /// 21.10.) -- nach einem gesicherten Satz fuehrt dann die Zirkel-Ebene
-    /// weiter, und Startwerte beginnen ohne Countdown.
+    /// weiter, und Startwerte beginnen ohne Countdown. Der Wert ist der Slot
+    /// (Zirkel.schritt beim Oeffnen), nicht nur ein Schalter: dieselbe
+    /// Uebung kommt in jeder Runde wieder, und ohne eigene Identitaet je
+    /// Slot behandelte der NavigationStack [A, Pause] -> [A] als Pop und
+    /// holte den alten, schon gesperrten Screen zurueck (Finding C-1).
     case geraet(station: String, exerciseId: String, token: String?, start: Startwerte? = nil,
-                zirkel: Bool = false)
+                zirkel: Int? = nil)
     /// Die Pause zwischen zwei Zirkel-Uebungen. Traegt keine Daten: Zirkel
     /// und Pause liegen im ZirkelAblauf an der Wurzel.
     case zirkelPause
