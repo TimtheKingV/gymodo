@@ -643,6 +643,21 @@ final class GeraetModel {
         !imZirkel && satzNummer == 2 && volumeKind == .reps && laufendePause != nil
     }
 
+    /// Gesetzt von anZirkelUebergeben(); danach ist das Modell stumm.
+    private(set) var anZirkelAbgegeben = false
+
+    /// "Zirkel mit weiterem Gerät": die neue Zirkel-Uebung ersetzt diesen
+    /// Screen, der dabei noch sichtbar ist. Sein onDisappear kaeme womoeglich
+    /// erst, NACHDEM der neue Screen seinen Mitschnitt begonnen hat, und
+    /// braeche ihn ab. Deshalb gibt das Modell Sensor und Zaehler hier frei,
+    /// synchron VOR dem Pfadwechsel, und tut danach nichts mehr -- weder
+    /// Freigeben noch Beginnen (ein noch feuernder Pausen-Task).
+    func anZirkelUebergeben() {
+        guard !anZirkelAbgegeben else { return }
+        screenVerlassen()
+        anZirkelAbgegeben = true
+    }
+
     /// Wann der letzte Satz dieser Uebung in der laufenden Einheit fiel.
     /// Beim Zirkel aus dem Einzelsatz beginnt Runde 1 damit (Carry-over
     /// Task 5), sonst fehlte er in der Rundenzusammenfassung.
@@ -1046,6 +1061,9 @@ final class GeraetModel {
     /// Alle vier Aufrufer sind genau die Satzanfaenge: Mitschnitt und
     /// Zaehler beginnen deshalb hier gemeinsam.
     private func mitschnittBeginnen() {
+        // Abgegeben an die naechste Zirkel-Uebung: Sensor und Zaehler
+        // gehoeren jetzt deren Modell.
+        guard !anZirkelAbgegeben else { return }
         mitschnitt?.eingabeBegonnen(SatzMitschnittKontext(
             station: station, exerciseId: uebungId, exerciseName: aktiveUebung?.name ?? ""))
         zaehlerZustand = .aus
@@ -1088,6 +1106,11 @@ final class GeraetModel {
 
     /// GeraetView ruft das aus onDisappear.
     func screenVerlassen() {
+        // Nach der Uebergabe ist schon freigegeben. Ein zweites Mal traefe
+        // die Aufnahme der neuen Uebung: Sensor und Zaehler sind app-weit,
+        // und ob dieses onDisappear vor oder nach deren Start kommt,
+        // entscheidet der NavigationStack.
+        guard !anZirkelAbgegeben else { return }
         mitschnitt?.screenVerlassen()
         zaehler?.satzVerworfen()
         zaehlerZustand = .aus

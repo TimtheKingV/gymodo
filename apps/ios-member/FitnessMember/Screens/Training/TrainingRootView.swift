@@ -1182,7 +1182,8 @@ struct TrainingRootView: View {
     private func zirkelAusEinzelsatz(_ modell: GeraetModel, token: String?) {
         guard modell.kannZirkelBeginnen, zirkelErweiterung == nil, uebungsstart == nil else { return }
         let erste = ZirkelUebung(station: modell.station.schluessel, exerciseId: modell.uebungId, token: token)
-        zirkelErweiterung = ZirkelErweiterung(art: .ausEinzelsatz(erste: erste, rundeBegann: modell.letzterSatzAm))
+        zirkelErweiterung = ZirkelErweiterung(art: .ausEinzelsatz(erste: erste, rundeBegann: modell.letzterSatzAm),
+                                              vorgaenger: modell)
         zirkelAuswahlOeffnen()
     }
 
@@ -1261,8 +1262,16 @@ struct TrainingRootView: View {
         case .ausEinzelsatz(let erste, let rundeBegann):
             // Der Einzelsatz ist Slot 1; die neue Uebung ersetzt seinen
             // Screen. Hat sich der Pfad inzwischen geaendert, startet
-            // nichts -- ein Zirkel ohne Screen waere verwaist.
-            guard let neu = ZirkelPfad.ausEinzeluebung(pfad, zu: ziel) else { return }
+            // nichts -- ein Zirkel ohne Screen waere verwaist. Der alte
+            // Screen bleibt dann einfach stehen, wie er ist.
+            guard let neu = ZirkelPfad.ausEinzeluebung(pfad, zu: ziel) else {
+                zirkelErweiterungVerwerfen()
+                return
+            }
+            // Vor dem Pfadwechsel: der alte Screen ist noch sichtbar, sein
+            // onDisappear kaeme womoeglich erst nach dem Start der neuen
+            // Aufnahme (siehe GeraetModel.anZirkelUebergeben).
+            erweiterung.vorgaenger?.anZirkelUebergeben()
             zirkelAblauf.starten(Zirkel.ausEinzelsatz(erste, zweite: neueUebung), rundeBegann: rundeBegann)
             pfad = neu
         case .imZirkel:
@@ -1272,7 +1281,12 @@ struct TrainingRootView: View {
             guard ZirkelPfad.kannErweitern(pfad, zirkel: zirkelAblauf.zirkel),
                   zirkelAblauf.erweitern(um: neueUebung),
                   let neu = ZirkelPfad.ausPause(pfad, zu: ziel)
-            else { return }
+            else {
+                // Nicht erweitert: weiter wie ohne Erweitern, damit keine
+                // abgelaufene Pause auf 00:00 stehen bleibt.
+                zirkelErweiterungVerwerfen()
+                return
+            }
             zirkelAblauf.pauseVerlassen()
             pfad = neu
         }
@@ -1397,6 +1411,15 @@ private struct ZirkelErweiterung {
 
     let art: Art
     var neu: UebungsstartAuftrag?
+    /// Das Modell des Einzel-Screens, das beim Start Sensor und Zaehler
+    /// abgibt. Schwach: verschwindet der Screen vorher, gibt es nichts
+    /// abzugeben.
+    weak var vorgaenger: GeraetModel?
+
+    init(art: Art, vorgaenger: GeraetModel? = nil) {
+        self.art = art
+        self.vorgaenger = vorgaenger
+    }
 }
 
 /// Was nach "Training beenden" fuer einen Scan oder eine Auswahl an einem

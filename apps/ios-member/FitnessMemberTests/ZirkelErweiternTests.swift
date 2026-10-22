@@ -14,7 +14,8 @@ struct ZirkelErweiternTests {
         ZirkelUebung(station: "geraet:g\(i)", exerciseId: "e\(i)", token: nil)
     }
 
-    private func modell(satzZiel: Int = 3) -> GeraetModel {
+    private func modell(satzZiel: Int = 3, mitschnitt: (any SatzMitschnitt)? = nil,
+                        zaehler: (any SatzZaehler)? = nil) -> GeraetModel {
         let verzeichnis = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
         let maschine = GeraetTestdaten.maschine
@@ -26,7 +27,9 @@ struct ZirkelErweiternTests {
             loader: FakeGeraetLoader(),
             sessions: WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis)),
             enqueue: { _ in },
-            satzZiel: { satzZiel }
+            satzZiel: { satzZiel },
+            mitschnitt: mitschnitt,
+            zaehler: zaehler
         )
     }
 
@@ -197,5 +200,59 @@ struct ZirkelErweiternTests {
         let zirkel = Zirkel(uebungen: [uebung(1), uebung(2)], uebungspause: 20, rundenpause: 90)
         #expect(zirkel.enthaelt(ZirkelUebung(station: "geraet:g1", exerciseId: "e1", token: "t")))
         #expect(!zirkel.enthaelt(uebung(3)))
+    }
+    // MARK: - Fix-Runde 1: Uebergabe an die neue Zirkel-Uebung
+
+    /// Sensor und Zaehler sind app-weit. Der ersetzte Einzel-Screen gibt sie
+    /// VOR dem Pfadwechsel frei; sein spaeteres onDisappear darf die
+    /// Aufnahme der neuen Uebung nicht mehr abbrechen -- egal, ob es vor
+    /// oder nach deren Start kommt.
+    @Test func nachDerUebergabeGibtDasAlteModellNichtsMehrFrei() async {
+        let mitschnitt = MitschnittSpion()
+        let zaehler = ZaehlerDouble()
+        let sut = modell(mitschnitt: mitschnitt, zaehler: zaehler)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        let verlassenVorher = mitschnitt.ereignisse.filter { $0 == .verlassen }.count
+        let verworfenVorher = zaehler.verworfen
+
+        sut.anZirkelUebergeben()
+        #expect(mitschnitt.ereignisse.filter { $0 == .verlassen }.count == verlassenVorher + 1)
+        #expect(zaehler.verworfen == verworfenVorher + 1)
+
+        // Das onDisappear des alten Screens, nachdem die neue Uebung schon
+        // aufnimmt: nichts.
+        sut.screenVerlassen()
+        #expect(mitschnitt.ereignisse.filter { $0 == .verlassen }.count == verlassenVorher + 1)
+        #expect(zaehler.verworfen == verworfenVorher + 1)
+    }
+
+    /// Der Ablauf-Task der alten Pause koennte noch feuern, bevor der Screen
+    /// weg ist -- er darf keinen neuen Mitschnitt fuer die alte Uebung
+    /// beginnen.
+    @Test func nachDerUebergabeBeginntDasAlteModellKeinenSatzMehr() async {
+        let mitschnitt = MitschnittSpion()
+        let zaehler = ZaehlerDouble()
+        let sut = modell(mitschnitt: mitschnitt, zaehler: zaehler)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        let eingaben = mitschnitt.eingaben
+        let kontexte = zaehler.kontexte.count
+
+        sut.anZirkelUebergeben()
+        sut.pauseBeenden()
+        sut.geraetGeoeffnet()
+
+        #expect(mitschnitt.eingaben == eingaben)
+        #expect(zaehler.kontexte.count == kontexte)
+    }
+
+    /// Normale Screens: unveraendert, jedes Verlassen gibt frei.
+    @Test func ohneUebergabeGibtJedesVerlassenFrei() {
+        let mitschnitt = MitschnittSpion()
+        let zaehler = ZaehlerDouble()
+        let sut = modell(mitschnitt: mitschnitt, zaehler: zaehler)
+        sut.screenVerlassen()
+        sut.screenVerlassen()
+        #expect(mitschnitt.ereignisse.filter { $0 == .verlassen }.count == 2)
+        #expect(zaehler.verworfen == 2)
     }
 }
