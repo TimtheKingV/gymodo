@@ -156,6 +156,47 @@ describe("recordSet", () => {
     expect(saved.setIndex).toBe(1);
   });
 
+  it("speichert setRole aufwaermen", async () => {
+    const client = await userClient(memberAEmail);
+    const input = payload({ setRole: "aufwaermen", load: 40 });
+
+    const saved = await recordSet(client, input);
+
+    expect(saved.setRole).toBe("aufwaermen");
+    const { data } = await serviceClient()
+      .from("workout_sets").select("set_role").eq("id", input.setId).single();
+    expect(data!.set_role).toBe("aufwaermen");
+  });
+
+  it("ohne setRole ist der Satz ein Arbeitssatz", async () => {
+    const client = await userClient(memberAEmail);
+
+    const saved = await recordSet(client, payload());
+
+    expect(saved.setRole).toBe("arbeit");
+  });
+
+  it("ein erneuter PUT ohne setRole setzt die Rolle zurueck auf arbeit", async () => {
+    // Der PUT ersetzt den ganzen Satz (wie bei rir): wer die Rolle behalten
+    // will, schickt sie mit.
+    const client = await userClient(memberAEmail);
+    const input = payload({ setRole: "aufwaermen" });
+    await recordSet(client, input);
+
+    const { setRole: _weg, ...ohneRolle } = input;
+    const saved = await recordSet(client, ohneRolle);
+
+    expect(saved.setRole).toBe("arbeit");
+  });
+
+  it("weist eine unbekannte Satzrolle zurueck", async () => {
+    const client = await userClient(memberAEmail);
+
+    await expect(
+      recordSet(client, payload({ setRole: "kuehl" })),
+    ).rejects.toMatchObject({ code: "validation_failed" });
+  });
+
   it("legt die Session mit dem ersten Satz an -- einen Start-Endpoint gibt es nicht", async () => {
     const client = await userClient(memberAEmail);
     const input = payload();

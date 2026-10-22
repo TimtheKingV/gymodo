@@ -74,6 +74,10 @@ function aliasAufloesen(roh: unknown): unknown {
  * dann, wenn das Modell eine Nebenbelastung hat -- auch das weiss erst
  * recordSet.
  */
+/** Arbeitssatz oder Aufwaermsatz (Migration 0058). */
+export const setRoleSchema = z.enum(["arbeit", "aufwaermen"]);
+export type SetRole = z.infer<typeof setRoleSchema>;
+
 export const recordSetInputSchema = z.preprocess(
   aliasAufloesen,
   z
@@ -91,6 +95,10 @@ export const recordSetInputSchema = z.preprocess(
     cardio: cardioWerteSchema.optional(),
     secondaryLoad: z.number().min(0).max(9999).nullish(),
     rir: z.number().min(0).max(10).nullish(),
+    // Aufwaermsaetze zaehlen fuer keine Regel (Trainingsplan-Spec 7). Fehlt
+    // das Feld, ist es ein Arbeitssatz -- auch beim erneuten Senden: der PUT
+    // ersetzt den ganzen Satz.
+    setRole: setRoleSchema.default("arbeit"),
     problemFlag: z.boolean().default(false),
     problemReason: problemReasonSchema.nullish(),
     // Herkunft der Wiederholungszahl (Sensor-Spec B 6.3). Alte App-Versionen
@@ -146,6 +154,7 @@ export type RecordedSet = {
   /** null bei einem Kraftsatz. */
   cardio: CardioWerte | null;
   rir: number | null;
+  setRole: SetRole;
   problemFlag: boolean;
   problemReason: ProblemReason | null;
   volumeSource: VolumeSource;
@@ -167,6 +176,7 @@ type SetRow = CardioZeile & {
   secondary_load: number | string | null;
   volume: number | null;
   rir: number | string | null;
+  set_role: SetRole;
   problem_flag: boolean;
   problem_reason: ProblemReason | null;
   volume_source: VolumeSource;
@@ -190,6 +200,7 @@ function toRecordedSet(row: SetRow): RecordedSet {
     volume: row.volume,
     cardio: cardioAusZeile(row),
     rir: row.rir === null ? null : Number(row.rir),
+    setRole: row.set_role,
     problemFlag: row.problem_flag,
     problemReason: row.problem_reason,
     volumeSource: row.volume_source,
@@ -440,6 +451,7 @@ export async function recordSet(
       volume: cardio ? null : input.volume,
       ...cardioZuSpalten(cardio ?? {}),
       rir: input.rir ?? null,
+      set_role: input.setRole,
       problem_flag: input.problemFlag,
       problem_reason: input.problemReason ?? null,
       // Ein Cardio-Satz zaehlt nichts: Zaehlerdaten eines fehlerhaften Clients
@@ -453,7 +465,7 @@ export async function recordSet(
       ...(input.performedAt ? { performed_at: input.performedAt } : {}),
     })
     .select(
-      `id, studio_id, user_id, session_id, machine_id, equipment_model_id, exercise_id, set_index, load, secondary_load, volume, rir, problem_flag, problem_reason, volume_source, volume_counted, performed_at, ${CARDIO_SELECT}`,
+      `id, studio_id, user_id, session_id, machine_id, equipment_model_id, exercise_id, set_index, load, secondary_load, volume, rir, set_role, problem_flag, problem_reason, volume_source, volume_counted, performed_at, ${CARDIO_SELECT}`,
     )
     .single<SetRow>();
 
