@@ -499,8 +499,13 @@ struct GeraetScreen: View {
     /// baut bei jedem Neuaufbau ein neues, von denen @State nur das erste
     /// behaelt -- Pause und Satz stehen nur in diesem.
     var beiZirkelBeginnen: ((GeraetModel) -> Void)?
+    /// Nur auf dem Screen einer Zirkel-Uebung (Finding I-1): statt Zurueck
+    /// "Zirkel beenden". Zurueck fuehrte zur Wurzel und liess den Zirkel
+    /// unerreichbar liegen -- ohne Fortsetzen und ohne Hinweis.
+    var beiZirkelBeenden: (() -> Void)?
 
     @State private var uebungWechselnOffen = false
+    @State private var zirkelBeendenFrage = false
     @State private var gewichtOffen = false
     @State private var einweisungOffen = false
     @State private var problemOffen = false
@@ -549,6 +554,28 @@ struct GeraetScreen: View {
             beiEinweisung: { einweisungOffen = true },
             beiZirkelBeginnen: beiZirkelBeginnen.map { beginnen in { beginnen(modell) } }
         )
+        // Ohne Zurueck-Knopf auch ohne Wisch-Geste zurueck: beides verwarf den
+        // Zirkel stumm. Beenden geht ueber die Uebersicht, die gesicherten
+        // Saetze bleiben in der Einheit.
+        .navigationBarBackButtonHidden(beiZirkelBeenden != nil)
+        .toolbar {
+            if beiZirkelBeenden != nil {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Zirkel beenden") { zirkelBeendenFrage = true }
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .testnotizElement("geraet.zirkel.beenden", typ: "Button")
+                }
+            }
+        }
+        // Ein Dialog, kein Sheet: der Pfadwechsel zur Uebersicht laeuft erst
+        // nach der Wahl. Gefragt wird, weil hier -- anders als in der Pause --
+        // ein angefangener Satz verloren ginge.
+        .confirmationDialog("Zirkel beenden?", isPresented: $zirkelBeendenFrage, titleVisibility: .visible) {
+            Button("Zirkel beenden", role: .destructive) { beiZirkelBeenden?() }
+            Button("Weitermachen", role: .cancel) {}
+        } message: {
+            Text("Gesicherte Sätze bleiben. Der offene Satz wird nicht gesichert.")
+        }
         .sheet(isPresented: $gewichtOffen) {
             GewichtAendernSheet(modell: modell) { gewichtOffen = false }
         }

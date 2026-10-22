@@ -139,6 +139,21 @@ struct ZirkelAblaufTests {
         #expect(ZirkelPfad.ausPause([.zirkelPause], zu: neu) == [neu])
     }
 
+    /// Finding I-1: "Zirkel beenden" gibt es in der Pause UND auf dem
+    /// Geraete-Screen einer Zirkel-Uebung (dort ohne Zurueck). Die Uebersicht
+    /// ersetzt Pause samt Geraet bzw. den Geraete-Screen.
+    @Test func zirkelBeendenFuehrtAusPauseUndGeraetZurUebersicht() {
+        let einzel = GeraetRoute.geraet(station: "geraet:g1", exerciseId: "e1", token: nil)
+        #expect(ZirkelPfad.zurUebersicht([.kategorie(.freihantel), alt, .zirkelPause])
+                == [.kategorie(.freihantel), .zirkelUebersicht])
+        #expect(ZirkelPfad.zurUebersicht([.kategorie(.freihantel), alt])
+                == [.kategorie(.freihantel), .zirkelUebersicht])
+        // Kein Zirkel-Screen oben: nichts (Einzeluebung, schon in der Uebersicht).
+        #expect(ZirkelPfad.zurUebersicht([einzel]) == nil)
+        #expect(ZirkelPfad.zurUebersicht([alt, .zirkelUebersicht]) == nil)
+        #expect(ZirkelPfad.zurUebersicht([]) == nil)
+    }
+
     // MARK: - Fix-Runde Task 5
 
     /// Die Rundenpause fasst nur Saetze der eben geschafften Runde

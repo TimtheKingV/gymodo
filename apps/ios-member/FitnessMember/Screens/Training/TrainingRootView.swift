@@ -664,7 +664,8 @@ struct TrainingRootView: View {
                              beiTrainingBeenden: beenden,
                              // Ein Zirkel-Geraet erweitert ueber die Pause des
                              // Zirkels, nicht ueber sein eigenes Rad.
-                             beiZirkelBeginnen: zirkel != nil ? nil : { zirkelAusEinzelsatz($0, token: token) })
+                             beiZirkelBeginnen: zirkel != nil ? nil : { zirkelAusEinzelsatz($0, token: token) },
+                             beiZirkelBeenden: zirkel != nil ? { zirkelBeenden() } : nil)
             }
         case .zirkelPause:
             // Der Ablauf-Task der Pause sitzt in der View, und zwar nur
@@ -1320,13 +1321,15 @@ struct TrainingRootView: View {
         }
     }
 
-    /// "Zirkel beenden" in der Pause: zur Uebersicht mit dem bisherigen
-    /// Stand. Die Saetze stehen schon in der Einheit; beendet wird nur der
-    /// Ablauf (Spec: Beenden behaelt alle gesicherten Saetze). Der Stand
-    /// fuer die Uebersicht wird VOR beenden() festgehalten, das den Zirkel
-    /// auf nil setzt.
+    /// "Zirkel beenden" in der Pause oder auf dem Geraete-Screen einer
+    /// Zirkel-Uebung (Finding I-1, dort statt Zurueck): zur Uebersicht mit
+    /// dem bisherigen Stand. Die Saetze stehen schon in der Einheit; beendet
+    /// wird nur der Ablauf (Spec: Beenden behaelt alle gesicherten Saetze).
+    /// Der Stand fuer die Uebersicht wird VOR beenden() festgehalten, das
+    /// den Zirkel auf nil setzt. Die Vormerkung leert erst "Weiter" auf der
+    /// Uebersicht (zirkelUebersichtWeiter).
     private func zirkelBeenden() {
-        guard let neu = ZirkelPfad.ausPause(pfad, zu: .zirkelUebersicht) else { return }
+        guard let neu = ZirkelPfad.zurUebersicht(pfad) else { return }
         zirkelAbschluss = zirkelAblauf.abschluss
         pfad = neu
         zirkelAblauf.beenden()

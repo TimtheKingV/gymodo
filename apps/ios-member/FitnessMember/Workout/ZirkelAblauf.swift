@@ -147,6 +147,16 @@ enum ZirkelPfad {
         return Array(neu) + [ziel]
     }
 
+    /// "Zirkel beenden": aus der Pause (wie ausPause) oder vom Geraete-Screen
+    /// einer Zirkel-Uebung, der dafuer kein Zurueck hat (Finding I-1) -- dort
+    /// ersetzt die Uebersicht den Screen. nil, wenn oben weder das eine noch
+    /// das andere liegt: dann laeuft kein Zirkel mehr, den man beenden koennte.
+    static func zurUebersicht(_ pfad: [GeraetRoute]) -> [GeraetRoute]? {
+        if let neu = ausPause(pfad, zu: .zirkelUebersicht) { return neu }
+        guard case .geraet(_, _, _, _, .some) = pfad.last else { return nil }
+        return pfad.dropLast() + [.zirkelUebersicht]
+    }
+
     /// "Zirkel mit weiterem Gerät" aus der Pause einer Einzeluebung: die
     /// neue Zirkel-Uebung ersetzt deren Geraete-Screen, statt sich
     /// davorzulegen -- "Zurueck" fuehrte sonst in eine Uebung, die jetzt
