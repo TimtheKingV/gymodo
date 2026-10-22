@@ -92,6 +92,8 @@ export async function getProgress(
     .eq("user_id", userId)
     // Cardio-Saetze haben keine Belastung und gehoeren nicht ins Diagramm.
     .not("load", "is", null)
+    // Aufwaermsaetze sind keine Leistung (Migration 0058).
+    .eq("set_role", "arbeit")
     .order("performed_at", { ascending: true })
     .limit(SET_SCAN_LIMIT);
 

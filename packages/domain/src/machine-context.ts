@@ -407,6 +407,9 @@ async function kontextAufbauen(
       `session_id, exercise_id, load, secondary_load, volume, rir, problem_flag, performed_at, ${CARDIO_SELECT}`,
     )
       .eq("exercise_id", selectedExerciseId)
+      // Aufwaermsaetze machten den Block uneinheitlich und den Vorschlag
+      // unmoeglich (Migration 0058).
+      .eq("set_role", "arbeit")
       .order("performed_at", { ascending: false })
       .limit(HISTORY_DAYS * 6);
 

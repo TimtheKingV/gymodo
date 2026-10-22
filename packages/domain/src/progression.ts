@@ -257,8 +257,9 @@ export function suggestNextLoad(input: ProgressionInput): ProgressionSuggestion 
   const lastSet = latest.sets[latest.sets.length - 1];
   const previous = input.history[1];
 
-  // "Oberes Ende mit Reserve erreicht": entweder belegt durch RIR (Altdaten;
-  // die App erfasst seit dem 11. September keine Reserve mehr), oder durch
+  // "Oberes Ende mit Reserve erreicht": entweder belegt durch RIR (die App
+  // fragt sie seit der Trainingsplan-Spec 2026-10-21 einmal je Uebung am
+  // letzten Satz ab; davor gab es nur Altdaten), oder durch
   // zwei Einheiten in Folge -- unter denselben Bedingungen, also mit
   // demselben Paar aus Belastung und Nebenbelastung.
   const withReserve =

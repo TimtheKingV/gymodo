@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import {
+  completeSession,
   createTagToken,
   getMachineContext,
   getTagContext,
@@ -292,6 +293,64 @@ describe("getMachineContext", () => {
     expect(kontext.history[0]?.load).toBe(45);
     expect(kontext.history[1]?.load).toBe(40);
     expect(kontext.suggestion?.reasonCode).not.toBe("daten_uneindeutig");
+  });
+
+  describe("mit Aufwaermsatz", () => {
+    let email: string;
+    let aktuelle: string;
+
+    beforeAll(async () => {
+      const admin = serviceClient();
+      email = uniqueEmail("mc-aufwaermen");
+      const userId = await createTestUser(email);
+      const { error: mErr } = await admin
+        .from("studio_memberships")
+        .insert({ studio_id: studioA, user_id: userId, role: "member" });
+      if (mErr) throw mErr;
+      const { data: geraet } = await admin
+        .from("machines").select("equipment_model_id").eq("id", machineA).single();
+
+      const vorige = crypto.randomUUID();
+      aktuelle = crypto.randomUUID();
+      const { error: sErr } = await admin.from("workout_sessions").insert([
+        { id: vorige, studio_id: studioA, user_id: userId, started_at: "2026-10-18T17:55:00Z" },
+        // Beginn in der Vergangenheit: completed_at kommt spaeter aus der
+        // Node-Uhr, und "Ende nach Beginn" darf nicht an der VM-Uhr haengen.
+        { id: aktuelle, studio_id: studioA, user_id: userId, started_at: "2026-10-21T17:55:00Z" },
+      ]);
+      if (sErr) throw sErr;
+      const satz = (session_id: string, set_index: number, load: number, performed_at: string, set_role = "arbeit") => ({
+        id: crypto.randomUUID(), studio_id: studioA, user_id: userId, session_id,
+        machine_id: machineA, equipment_model_id: geraet!.equipment_model_id,
+        exercise_id: breitId, set_index, load, volume: 12, performed_at, set_role,
+      });
+      const { error: setErr } = await admin.from("workout_sets").insert([
+        satz(vorige, 1, 40, "2026-10-18T18:00:00Z"),
+        satz(vorige, 2, 40, "2026-10-18T18:03:00Z"),
+        satz(vorige, 3, 40, "2026-10-18T18:06:00Z"),
+        satz(aktuelle, 1, 20, "2026-10-21T17:58:00Z", "aufwaermen"),
+        satz(aktuelle, 2, 40, "2026-10-21T18:00:00Z"),
+        satz(aktuelle, 3, 40, "2026-10-21T18:03:00Z"),
+        satz(aktuelle, 4, 40, "2026-10-21T18:06:00Z"),
+      ]);
+      if (setErr) throw setErr;
+    });
+
+    it("ignoriert Aufwaermsaetze im Vorschlag", async () => {
+      const kontext = await getMachineContext(await userClient(email), machineA);
+
+      expect(kontext.suggestion?.reasonCode).not.toBe("daten_uneindeutig");
+      expect(kontext.suggestion?.inputs.currentLoad).toBe(40);
+      expect(kontext.history[0]?.volume).toHaveLength(3);
+    });
+
+    it("Abschlussvorschlag ignoriert Aufwaermsaetze", async () => {
+      const { vorschlaege } = await completeSession(await userClient(email), { sessionId: aktuelle });
+
+      expect(vorschlaege).toEqual([
+        expect.objectContaining({ exerciseId: breitId, reasonCode: "korridor_oben_erreicht", resultLoad: 42.5 }),
+      ]);
+    });
   });
 
   it("haelt den Vorschlag in progression_suggestions fest", async () => {
