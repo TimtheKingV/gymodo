@@ -180,10 +180,9 @@ describe("recordSet", () => {
     // Der PUT ersetzt den ganzen Satz (wie bei rir): wer die Rolle behalten
     // will, schickt sie mit.
     const client = await userClient(memberAEmail);
-    const input = payload({ setRole: "aufwaermen" });
-    await recordSet(client, input);
+    const ohneRolle = payload();
+    await recordSet(client, { ...ohneRolle, setRole: "aufwaermen" });
 
-    const { setRole: _weg, ...ohneRolle } = input;
     const saved = await recordSet(client, ohneRolle);
 
     expect(saved.setRole).toBe("arbeit");
