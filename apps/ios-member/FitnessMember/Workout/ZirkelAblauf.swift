@@ -61,10 +61,19 @@ final class ZirkelAblauf {
 
     /// Haengt eine Uebung an, solange Runde 1 gerade komplett ist. Die
     /// laufende Pause bleibt unberuehrt: waehrend das Mitglied waehlt, soll
-    /// die Uhr nicht neu anfangen.
+    /// die Uhr nicht neu anfangen. Navigiert wird hier nie -- das macht der
+    /// Pfad (TrainingRootView), und nur, solange die Pause oben liegt.
+    ///
+    /// Der letzte Slot hatte Runde 1 schon abgeschlossen (geschaffteRunde,
+    /// neuer Rundenbeginn). Mit der neuen Uebung laeuft sie weiter: das
+    /// Fenster beginnt wieder beim alten Rundenbeginn, sonst fehlten der
+    /// Rundenpause alle Saetze vor dem Erweitern.
     @discardableResult
     func erweitern(um uebung: ZirkelUebung) -> Bool {
-        zirkel?.erweitern(um: uebung) ?? false
+        guard zirkel?.erweitern(um: uebung) == true else { return false }
+        if let geschaffteRunde { rundenbeginn = geschaffteRunde.start }
+        geschaffteRunde = nil
+        return true
     }
 
     /// Gesicherte Saetze stehen in der Einheit, nicht hier -- Beenden
@@ -108,6 +117,27 @@ enum ZirkelPfad {
         var neu = pfad.dropLast()
         if case .geraet = neu.last { neu = neu.dropLast() }
         return Array(neu) + [ziel]
+    }
+
+    /// "Zirkel mit weiterem Gerät" aus der Pause einer Einzeluebung: die
+    /// neue Zirkel-Uebung ersetzt deren Geraete-Screen, statt sich
+    /// davorzulegen -- "Zurueck" fuehrte sonst in eine Uebung, die jetzt
+    /// Slot 1 des Zirkels ist und nichts mehr davon weiss.
+    ///
+    /// nil, wenn oben kein Geraete-Screen einer Einzeluebung liegt (schon
+    /// im Zirkel, oder der Pfad hat sich waehrend der Wahl geaendert).
+    static func ausEinzeluebung(_ pfad: [GeraetRoute], zu ziel: GeraetRoute) -> [GeraetRoute]? {
+        guard case .geraet(_, _, _, _, let zirkel) = pfad.last, !zirkel else { return nil }
+        return pfad.dropLast() + [ziel]
+    }
+
+    /// "+ Übung zum Zirkel" gilt nur in der Pause nach der letzten Uebung
+    /// von Runde 1. Der Zirkel allein reicht nicht: ist die Pause abgelaufen
+    /// und die erste Uebung von Runde 2 schon offen, zaehlt er bis zu deren
+    /// Satz noch "Runde 1 komplett" -- die neue Uebung landete dann im
+    /// falschen Slot.
+    static func kannErweitern(_ pfad: [GeraetRoute], zirkel: Zirkel?) -> Bool {
+        pfad.last == .zirkelPause && zirkel?.kannErweitern == true
     }
 
     /// Nach "Überspringen" in der Pause: gleich weiter zur naechsten Uebung

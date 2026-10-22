@@ -28,6 +28,10 @@ struct PausenRad: View {
     /// Satz. Wer am Geraet fertig ist, merkt das in der Pause -- nicht
     /// erst, wenn die Raeder wieder dastehen.
     let beiAbschliessen: () -> Void
+    /// "Zirkel mit weiterem Gerät" (Spec Mini-Zirkel, Task 7). nil: kein
+    /// Knopf -- der Aufrufer entscheidet, ob aus dieser Pause ein Zirkel
+    /// werden kann (GeraetModel.kannZirkelBeginnen).
+    let beiZirkel: (() -> Void)?
 
     /// Der gedrosselte Ansagetext (SS12). Ein eigener Task-Takt statt einer
     /// zweiten TimelineView, damit der Sekundentakt der sichtbaren Anzeige
@@ -40,7 +44,8 @@ struct PausenRad: View {
          einheit: LoadUnit = .kg,
          naechsterSatz: Int,
          beiWeiter: @escaping () -> Void,
-         beiAbschliessen: @escaping () -> Void) {
+         beiAbschliessen: @escaping () -> Void,
+         beiZirkel: (() -> Void)? = nil) {
         self.timer = timer
         self.beiVerlaengern = beiVerlaengern
         self.beiGewicht = beiGewicht
@@ -48,6 +53,7 @@ struct PausenRad: View {
         self.naechsterSatz = naechsterSatz
         self.beiWeiter = beiWeiter
         self.beiAbschliessen = beiAbschliessen
+        self.beiZirkel = beiZirkel
         _ansage = State(initialValue: timer.gesprochen())
     }
 
@@ -91,6 +97,14 @@ struct PausenRad: View {
                 PrimaryButton(title: "Nächste Übung") { beiAbschliessen() }
                     .accessibilityHint("Schließt diese Übung ab")
                     .testnotizElement("geraet.naechste-uebung", typ: "PrimaryButton")
+                // Unter den beiden Hauptwegen und als Kontur: ein Zirkel ist
+                // die Ausnahme, nicht der naechste Schritt. Nur nach Satz 1,
+                // also hoechstens einmal je Uebung sichtbar.
+                if let beiZirkel {
+                    SecondaryButton(title: "Zirkel mit weiterem Gerät", action: beiZirkel)
+                        .accessibilityHint("Wählt ein zweites Gerät, die Pause läuft weiter")
+                        .testnotizElement("geraet.zirkel-beginnen", typ: "SecondaryButton")
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

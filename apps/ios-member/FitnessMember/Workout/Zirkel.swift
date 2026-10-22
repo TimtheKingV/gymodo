@@ -83,6 +83,21 @@ struct Zirkel: Equatable, Sendable {
     static func ausEinzelsatz(_ erste: ZirkelUebung, zweite: ZirkelUebung, runden: Int, uebungspause: Int, rundenpause: Int) -> Zirkel {
         Zirkel(uebungen: [erste, zweite], runden: runden, uebungspause: uebungspause, rundenpause: rundenpause, schritt: 1)
     }
+
+    /// "Zirkel mit weiterem Gerät" (Task 7): ohne Planungs-Screen, also drei
+    /// Runden und die Pausen aus dem Profil -- dieselben Vorgaben wie
+    /// ZirkelEntwurf (Spec, Meine Annahmen zum Erweitern).
+    static func ausEinzelsatz(_ erste: ZirkelUebung, zweite: ZirkelUebung, defaults: UserDefaults = .standard) -> Zirkel {
+        ausEinzelsatz(erste, zweite: zweite, runden: 3,
+                      uebungspause: Einstellungen.zirkelPauseSekunden(defaults),
+                      rundenpause: Einstellungen.resttimerSekunden(defaults))
+    }
+
+    /// Station und Uebung, nicht der Token: dieselbe Uebung zweimal haette
+    /// nur einen Block in der Einheit (siehe ZirkelEntwurf.hinzufuegen).
+    func enthaelt(_ uebung: ZirkelUebung) -> Bool {
+        uebungen.contains { $0.station == uebung.station && $0.exerciseId == uebung.exerciseId }
+    }
 }
 
 // MARK: - Planung (Spec 21.10., Entscheidungen 1-4)

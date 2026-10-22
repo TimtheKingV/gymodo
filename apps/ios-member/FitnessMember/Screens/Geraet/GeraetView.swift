@@ -26,6 +26,9 @@ struct GeraetView: View {
     var beiGewichtAendern: () -> Void = {}
     /// Tipp auf Titel oder Video: die Einweisung noch einmal (#13).
     var beiEinweisung: () -> Void = {}
+    /// "Zirkel mit weiterem Gerät" in der Pause nach Satz 1 (Task 7). nil,
+    /// wo es keinen Zirkel-Einstieg gibt (Preview, Zirkel-Geraet).
+    var beiZirkelBeginnen: (() -> Void)?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(WorkoutSessionStore.self) private var sessions
@@ -199,7 +202,8 @@ struct GeraetView: View {
                       // Raedern -- nur ohne den Umweg ueber den naechsten
                       // Satz. Der letzte Satz ist schon gesichert, deshalb
                       // ohne die Frage nach dem offenen Satz (#5).
-                      beiAbschliessen: beiUebungAbschliessen)
+                      beiAbschliessen: beiUebungAbschliessen,
+                      beiZirkel: modell.kannZirkelBeginnen ? beiZirkelBeginnen : nil)
                 .transition(.opacity)
         } else if modell.phase == .abschluss {
             abschlussEntscheidung
@@ -491,6 +495,10 @@ struct GeraetScreen: View {
     @State var modell: GeraetModel
     let beiZurueckZumTraining: () -> Void
     let beiTrainingBeenden: () -> Void
+    /// Bekommt das Modell, das dieser Screen WIRKLICH haelt: TrainingRootView
+    /// baut bei jedem Neuaufbau ein neues, von denen @State nur das erste
+    /// behaelt -- Pause und Satz stehen nur in diesem.
+    var beiZirkelBeginnen: ((GeraetModel) -> Void)?
 
     @State private var uebungWechselnOffen = false
     @State private var gewichtOffen = false
@@ -538,7 +546,8 @@ struct GeraetScreen: View {
             },
             beiTrainingBeenden: beiTrainingBeenden,
             beiGewichtAendern: { gewichtOffen = true },
-            beiEinweisung: { einweisungOffen = true }
+            beiEinweisung: { einweisungOffen = true },
+            beiZirkelBeginnen: beiZirkelBeginnen.map { beginnen in { beginnen(modell) } }
         )
         .sheet(isPresented: $gewichtOffen) {
             GewichtAendernSheet(modell: modell) { gewichtOffen = false }

@@ -634,6 +634,24 @@ final class GeraetModel {
         return timer
     }
 
+    /// "Zirkel mit weiterem Gerät" in der Pause (Spec Mini-Zirkel, Task 7):
+    /// nur nach genau einem Satz einer Wiederholungsuebung -- dann ist der
+    /// Satz Slot 1 von Runde 1. Nach zwei Saetzen waere schon eine zweite
+    /// Runde derselben Uebung gemacht, die der Zirkel nicht abbilden kann.
+    /// Ein Zirkel-Geraet erweitert ueber die Zirkel-Pause, nicht hier.
+    var kannZirkelBeginnen: Bool {
+        !imZirkel && satzNummer == 2 && volumeKind == .reps && laufendePause != nil
+    }
+
+    /// Wann der letzte Satz dieser Uebung in der laufenden Einheit fiel.
+    /// Beim Zirkel aus dem Einzelsatz beginnt Runde 1 damit (Carry-over
+    /// Task 5), sonst fehlte er in der Rundenzusammenfassung.
+    var letzterSatzAm: Date? {
+        sessions.aktiveSession()?.bloecke
+            .first { $0.stationSchluessel == station.schluessel && $0.exerciseId == uebungId }?
+            .saetze.map(\.performedAt).max()
+    }
+
     /// "Vorschlag · +2,5 kg", "Vorschlag · +0,5 km/h" -- eine Rechnung,
     /// keine Empfehlung (designsystem.md SS10). Fehlt offline und beim
     /// Erstkontakt. Mit Einheit: an einem Geraet mit zwei Reglern sagte

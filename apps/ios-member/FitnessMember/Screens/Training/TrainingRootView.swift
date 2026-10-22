@@ -109,6 +109,14 @@ struct TrainingRootView: View {
     /// Die Startwerte aus dem ersten Drawer, an ihrer Uebung (nicht an
     /// Platz 1) -- siehe ZirkelVormerkung.
     @State private var zirkelVormerkung = ZirkelVormerkung.leer
+    /// "Zirkel mit weiterem Gerät" bzw. "+ Übung zum Zirkel" (Task 7), von
+    /// der Wahl des Geraets bis "Übung starten" im Drawer. Solange sie
+    /// laeuft, geht der Zirkel nicht von selbst weiter (zirkelWeiter): die
+    /// Pause laeuft weiter, aber ein Wechsel unter den Sheets risse dem
+    /// Mitglied die Wahl unter den Fingern weg.
+    @State private var zirkelErweiterung: ZirkelErweiterung?
+    @State private var zirkelErweiternOffen = false
+    @State private var zirkelErweiternHinweis: String?
 
     var body: some View {
         NavigationStack(path: $pfad) {
@@ -218,7 +226,18 @@ struct TrainingRootView: View {
                 .environment(videoVorrat)
                 // Am Planungs-Sheet, nicht an der Wurzel: ein Sheet ueber
                 // einem Sheet muss vom oberen aus aufgehen.
-                .sheet(isPresented: $zirkelAuswahlOffen) { zirkelAuswahl }
+                .sheet(isPresented: $zirkelAuswahlOffen) {
+                    zirkelAuswahl(hinweis: nil, beiWahl: zirkelHinzufuegen,
+                                  beiAbbrechen: { zirkelAuswahlOffen = false })
+                }
+            }
+            // An der Wurzel, nicht am Pausen- oder Geraete-Screen: der Drawer
+            // der neuen Uebung haengt hier, und der folgt erst im onDismiss
+            // dieses Sheets.
+            .sheet(isPresented: $zirkelErweiternOffen, onDismiss: zirkelErweiternNachAuswahl) {
+                zirkelAuswahl(hinweis: zirkelErweiternHinweis,
+                              beiWahl: zirkelErweiternWahl,
+                              beiAbbrechen: { zirkelErweiternOffen = false })
             }
             .sheet(isPresented: $scannerOffen) {
                 ScannerSheet(
@@ -637,7 +656,10 @@ struct TrainingRootView: View {
             if let modell = modell(station: station, exerciseId: exerciseId, token: token,
                                    startwerte: start, zirkel: zirkel) {
                 GeraetScreen(modell: modell, beiZurueckZumTraining: { pfad.removeAll() },
-                             beiTrainingBeenden: beenden)
+                             beiTrainingBeenden: beenden,
+                             // Ein Zirkel-Geraet erweitert ueber die Pause des
+                             // Zirkels, nicht ueber sein eigenes Rad.
+                             beiZirkelBeginnen: zirkel ? nil : { zirkelAusEinzelsatz($0, token: token) })
             }
         case .zirkelPause:
             // Der Ablauf-Task der Pause sitzt in der View, und zwar nur
@@ -647,7 +669,10 @@ struct TrainingRootView: View {
                             uebungsname: zirkelUebungsname,
                             letztesMal: zirkelLetztesMal,
                             beiStarten: { zirkelWeiter() },
-                            beiErweitern: nil,
+                            // Nur nach der letzten Uebung von Runde 1: danach
+                            // haetten die Runden verschieden viele Uebungen.
+                            beiErweitern: ZirkelPfad.kannErweitern(pfad, zirkel: zirkelAblauf.zirkel)
+                                ? { zirkelErweiternBeginnen() } : nil,
                             beiBeenden: { zirkelBeenden() })
         case .zirkelUebersicht:
             // Platzhalter bis Task 8 (ZirkelUebersichtView).
@@ -929,6 +954,10 @@ struct TrainingRootView: View {
     private func uebungStarten(_ auftrag: UebungsstartAuftrag, mit werte: Startwerte) {
         if sessions.aktiveSession() == nil { sessions.trainingStarten() }
         uebungsstart = nil
+        if let erweiterung = zirkelErweiterung, erweiterung.neu == auftrag {
+            zirkelErweiterungStarten(erweiterung, auftrag, mit: werte)
+            return
+        }
         // Uebung 1 nach dem Umsortieren: erst jetzt beginnt der Zirkel.
         if auftrag.zirkel, let geplant = zirkelWartetAufStart {
             zirkelWartetAufStart = nil
@@ -954,17 +983,25 @@ struct TrainingRootView: View {
     /// der Einheit. Eine Kachel mit mehreren Geraeten oeffnet ihre
     /// Kategorie im EIGENEN Pfad des Sheets -- der der Wurzel liegt
     /// darunter und waere hier unsichtbar.
-    private var zirkelAuswahl: some View {
+    /// Planung (Task 6) und Erweitern (Task 7) teilen sich diese Liste;
+    /// nie beide zugleich offen, deshalb auch ein gemeinsamer Pfad.
+    /// `hinweis`: warum die letzte Wahl nicht ging -- beim Erweitern bleibt
+    /// das Sheet dafuer offen, in der Planung zeigt ihn deren Sheet.
+    private func zirkelAuswahl(hinweis: String?, beiWahl: @escaping (Station, String?) -> Void,
+                               beiAbbrechen: @escaping () -> Void) -> some View {
         NavigationStack(path: $zirkelAuswahlPfad) {
             GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader) {
-                EmptyView()
+                if let hinweis {
+                    InlineBanner(tone: .muted, message: hinweis)
+                        .testnotizElement("zirkel.auswahl.hinweis", typ: "InlineBanner")
+                }
             } trainingsinhalt: {
                 EmptyView()
             } beiAuswahl: { station, uebungId in
-                zirkelHinzufuegen(station, uebungId: uebungId)
+                beiWahl(station, uebungId)
             } beiKachel: { kachel in
                 switch GeraeteAuswahl.ziel(kachel) {
-                case .station(let station): zirkelHinzufuegen(station, uebungId: nil)
+                case .station(let station): beiWahl(station, nil)
                 case .liste(let gruppe): zirkelAuswahlPfad.append(.kategorie(gruppe))
                 }
             }
@@ -972,14 +1009,14 @@ struct TrainingRootView: View {
             .navigationDestination(for: GeraetRoute.self) { route in
                 if case .kategorie(let gruppe) = route {
                     GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader, gruppe: gruppe) { station, uebungId in
-                        zirkelHinzufuegen(station, uebungId: uebungId)
+                        beiWahl(station, uebungId)
                     }
                     .environment(videoVorrat)
                 }
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { zirkelAuswahlOffen = false }
+                    Button("Abbrechen", action: beiAbbrechen)
                         .foregroundStyle(DesignSystem.Color.textMuted)
                         .testnotizElement("zirkel.auswahl.abbrechen", typ: "Button")
                 }
@@ -1008,6 +1045,9 @@ struct TrainingRootView: View {
     /// onDismiss des Drawers. Ohne wartende Planung (der Normalfall,
     /// "Übung starten" oder Schliessen) tut es nichts.
     private func zirkelPlanungOeffnen() {
+        // Der Drawer der neuen Uebung ging ohne "Übung starten" zu: nichts
+        // wird erweitert, die Pause geht weiter wie vorher.
+        if zirkelErweiterung?.neu != nil { zirkelErweiterungVerwerfen() }
         // Der Drawer fuer Uebung 1 ging ohne Start zu: der Zirkel beginnt
         // nicht, und seine Startwerte verfallen mit ihm.
         if zirkelWartetAufStart != nil {
@@ -1096,7 +1136,7 @@ struct TrainingRootView: View {
     /// Aufruf nichts: der Pfad steht nicht mehr auf der Pause, oder der
     /// Drawer ist schon offen.
     private func zirkelWeiter() {
-        guard pfad.last == .zirkelPause, uebungsstart == nil,
+        guard pfad.last == .zirkelPause, uebungsstart == nil, zirkelErweiterung == nil,
               let zirkel = zirkelAblauf.zirkel
         else { return }
         // Nach "Überspringen" des letzten offenen Slots kommt keine Uebung
@@ -1130,6 +1170,123 @@ struct TrainingRootView: View {
         if let neu = ZirkelPfad.ausPause(pfad, zu: ohneStartwerte) {
             zirkelAblauf.pauseVerlassen()
             pfad = neu
+        }
+    }
+
+    // MARK: - Zirkel erweitern (Task 7)
+
+    /// "Zirkel mit weiterem Gerät" in der Pause nach Satz 1 einer
+    /// Einzeluebung. `modell`: das, das der Screen haelt -- nur dort stehen
+    /// Pause und Satz. Die Pause laeuft auf dem Geraete-Screen unter dem
+    /// Sheet weiter; laeuft sie ab, kommen dort wie sonst die Raeder.
+    private func zirkelAusEinzelsatz(_ modell: GeraetModel, token: String?) {
+        guard modell.kannZirkelBeginnen, zirkelErweiterung == nil, uebungsstart == nil else { return }
+        let erste = ZirkelUebung(station: modell.station.schluessel, exerciseId: modell.uebungId, token: token)
+        zirkelErweiterung = ZirkelErweiterung(art: .ausEinzelsatz(erste: erste, rundeBegann: modell.letzterSatzAm))
+        zirkelAuswahlOeffnen()
+    }
+
+    /// "+ Übung zum Zirkel" in der Pause nach der letzten Uebung von Runde 1.
+    private func zirkelErweiternBeginnen() {
+        guard ZirkelPfad.kannErweitern(pfad, zirkel: zirkelAblauf.zirkel),
+              zirkelErweiterung == nil, uebungsstart == nil
+        else { return }
+        zirkelErweiterung = ZirkelErweiterung(art: .imZirkel)
+        zirkelAuswahlOeffnen()
+    }
+
+    private func zirkelAuswahlOeffnen() {
+        zirkelErweiternHinweis = nil
+        zirkelAuswahlPfad = []
+        zirkelErweiternOffen = true
+    }
+
+    /// Ein Geraet aus der Liste. Was nicht geht (anderer Ort, schon im
+    /// Zirkel), sagt der Hinweis oben in der Liste, die dafuer offen bleibt
+    /// -- ein Tipp ohne Wirkung waere ein Raetsel. Sonst merkt sie sich die
+    /// Uebung und geht zu; deren Drawer folgt im onDismiss.
+    private func zirkelErweiternWahl(_ station: Station, uebungId: String?) {
+        guard var erweiterung = zirkelErweiterung, let bootstrap = katalog.bootstrap else { return }
+        // Wie in der Planung: modell(...) sucht am aktiven Studio.
+        guard (station.studioId.map(Ort.studio) ?? .freiesTraining) == katalog.ort else {
+            zirkelErweiternAblehnen("Im Zirkel gehen nur Geräte an deinem jetzigen Ort.")
+            return
+        }
+        guard let uebung = ZirkelAuswahl.uebung(station: station, uebungId: uebungId, bootstrap: bootstrap)
+        else { return }
+        let schonDabei: Bool = switch erweiterung.art {
+        case .ausEinzelsatz(let erste, _):
+            erste.station == uebung.station && erste.exerciseId == uebung.exerciseId
+        case .imZirkel:
+            zirkelAblauf.zirkel?.enthaelt(uebung) ?? true
+        }
+        guard !schonDabei else {
+            zirkelErweiternAblehnen("Diese Übung ist schon im Zirkel.")
+            return
+        }
+        erweiterung.neu = UebungsstartAuftrag(station: uebung.station, exerciseId: uebung.exerciseId,
+                                              token: uebung.token, zirkel: true)
+        zirkelErweiterung = erweiterung
+        zirkelErweiternOffen = false
+    }
+
+    /// Zurueck an den Anfang der Liste, wo der Hinweis steht -- eine
+    /// Kategorieliste hat keinen Kopf dafuer.
+    private func zirkelErweiternAblehnen(_ hinweis: String) {
+        zirkelErweiternHinweis = hinweis
+        zirkelAuswahlPfad = []
+    }
+
+    /// onDismiss der Liste: erst jetzt der Drawer der neuen Uebung (zwei
+    /// Sheets in einem Zug verschluckt SwiftUI). Ohne Wahl abgebrochen:
+    /// nichts aendert sich.
+    private func zirkelErweiternNachAuswahl() {
+        guard let neu = zirkelErweiterung?.neu else {
+            zirkelErweiterungVerwerfen()
+            return
+        }
+        uebungsstart = neu
+    }
+
+    /// "Übung starten" im Drawer der neuen Uebung: sie beginnt jetzt, wie
+    /// jede Zirkel-Uebung in Runde 1 mit "Übung starten" im Drawer
+    /// beginnt. Die Pause endet damit -- bis hierhin lief sie weiter.
+    private func zirkelErweiterungStarten(_ erweiterung: ZirkelErweiterung, _ auftrag: UebungsstartAuftrag,
+                                          mit werte: Startwerte) {
+        zirkelErweiterung = nil
+        let neueUebung = ZirkelUebung(station: auftrag.station, exerciseId: auftrag.exerciseId, token: auftrag.token)
+        let ziel = GeraetRoute.geraet(station: auftrag.station, exerciseId: auftrag.exerciseId,
+                                      token: auftrag.token, start: werte, zirkel: true)
+        switch erweiterung.art {
+        case .ausEinzelsatz(let erste, let rundeBegann):
+            // Der Einzelsatz ist Slot 1; die neue Uebung ersetzt seinen
+            // Screen. Hat sich der Pfad inzwischen geaendert, startet
+            // nichts -- ein Zirkel ohne Screen waere verwaist.
+            guard let neu = ZirkelPfad.ausEinzeluebung(pfad, zu: ziel) else { return }
+            zirkelAblauf.starten(Zirkel.ausEinzelsatz(erste, zweite: neueUebung), rundeBegann: rundeBegann)
+            pfad = neu
+        case .imZirkel:
+            // Nur aus der Pause nach Runde 1, und erweitern(um:) navigiert
+            // nicht selbst: die neue Uebung ist jetzt `naechste`, und genau
+            // die oeffnet der Wechsel aus der Pause.
+            guard ZirkelPfad.kannErweitern(pfad, zirkel: zirkelAblauf.zirkel),
+                  zirkelAblauf.erweitern(um: neueUebung),
+                  let neu = ZirkelPfad.ausPause(pfad, zu: ziel)
+            else { return }
+            zirkelAblauf.pauseVerlassen()
+            pfad = neu
+        }
+    }
+
+    /// Abgebrochen. Ist die Zirkel-Pause waehrenddessen abgelaufen, hat ihr
+    /// Ablauf-Task schon gefeuert und nichts getan (zirkelWeiter wartete) --
+    /// dann geht es jetzt weiter. Laeuft aus onDismiss, also nach der
+    /// Sheet-Animation.
+    private func zirkelErweiterungVerwerfen() {
+        zirkelErweiterung = nil
+        zirkelErweiternHinweis = nil
+        if pfad.last == .zirkelPause, zirkelAblauf.pause?.laeuft() != true {
+            zirkelWeiter()
         }
     }
 
@@ -1225,6 +1382,21 @@ private struct ZirkelPlanung {
     var entwurf: ZirkelEntwurf
     let ersterAuftrag: UebungsstartAuftrag
     let startwerte: Startwerte
+}
+
+/// Ein Zirkel, der gerade waechst (Task 7): woher die Erweiterung kommt,
+/// und -- sobald gewaehlt -- der Drawer der neuen Uebung.
+private struct ZirkelErweiterung {
+    enum Art {
+        /// Aus der Pause nach Satz 1 einer Einzeluebung; `rundeBegann` ist
+        /// die Zeit dieses Satzes (Beginn von Runde 1).
+        case ausEinzelsatz(erste: ZirkelUebung, rundeBegann: Date?)
+        /// Aus der Zirkel-Pause nach der letzten Uebung von Runde 1.
+        case imZirkel
+    }
+
+    let art: Art
+    var neu: UebungsstartAuftrag?
 }
 
 /// Was nach "Training beenden" fuer einen Scan oder eine Auswahl an einem
