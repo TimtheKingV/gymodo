@@ -24,6 +24,16 @@ final class ZirkelAblauf {
     private(set) var geschaffteRunde: DateInterval?
     /// Beginn der laufenden Runde.
     private var rundenbeginn: Date?
+    /// Beginn des ganzen Zirkels -- die Uebersicht zaehlt nur Saetze ab
+    /// hier, aeltere Saetze im selben Block stammen aus einer Einzeluebung.
+    private var begann: Date?
+
+    /// Was die Zirkel-Uebersicht braucht, als Wert. "Zirkel beenden" ruft
+    /// beenden() und setzt damit `zirkel` auf nil, die Uebersicht kommt aber
+    /// erst danach -- sie liest deshalb diesen vorher festgehaltenen Stand.
+    var abschluss: ZirkelAbschluss? {
+        zirkel.map { ZirkelAbschluss(zirkel: $0, begann: begann) }
+    }
 
     /// `rundeBegann`: wann Runde 1 anfing, falls frueher als jetzt -- beim
     /// Zirkel aus einem Einzelsatz (Task 7) liegt dessen Satz vor dem Start.
@@ -32,6 +42,7 @@ final class ZirkelAblauf {
         pause = nil
         geschaffteRunde = nil
         rundenbeginn = rundeBegann ?? jetzt
+        begann = rundenbeginn
     }
 
     /// Nach jedem gesicherten Satz einer Zirkel-Uebung: ein Slot weiter, dann
@@ -83,6 +94,7 @@ final class ZirkelAblauf {
         pause = nil
         geschaffteRunde = nil
         rundenbeginn = nil
+        begann = nil
     }
 
     private func weiterruecken(jetzt: Date, _ schritt: (inout Zirkel) -> Void) {
@@ -99,6 +111,14 @@ final class ZirkelAblauf {
             ? nil
             : Resttimer(start: jetzt, dauer: TimeInterval(zirkel.pausenSekunden))
     }
+}
+
+/// Der Stand eines Zirkels fuer seine Uebersicht, festgehalten vor dem
+/// Beenden (siehe ZirkelAblauf.abschluss). Die Saetze selbst stehen nicht
+/// darin: die liest die Uebersicht aus der Einheit.
+struct ZirkelAbschluss: Equatable {
+    let zirkel: Zirkel
+    let begann: Date?
 }
 
 /// Der Pfad beim Wechsel zur naechsten Zirkel-Uebung, als reine Rechnung,

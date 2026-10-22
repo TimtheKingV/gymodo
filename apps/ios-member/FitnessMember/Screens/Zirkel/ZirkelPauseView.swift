@@ -262,7 +262,9 @@ enum ZirkelPauseText {
         return satzwerte(letzter, block)
     }
 
-    private static func satzwerte(_ letzter: LokalerSatz, _ block: LokalerBlock) -> String? {
+    /// Ein bestimmter Satz eines Blocks; die Zirkel-Uebersicht schreibt
+    /// damit jeden Satz, nicht nur den letzten.
+    static func satzwerte(_ letzter: LokalerSatz, _ block: LokalerBlock) -> String? {
         if let cardio = letzter.cardio { return Zahlformat.cardio(cardio) }
         guard let load = letzter.load, let volume = letzter.volume else { return nil }
         return Zahlformat.satz(load, block.loadUnit, neben: letzter.secondaryLoad, block.secondaryUnit,

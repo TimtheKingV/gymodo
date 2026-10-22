@@ -83,6 +83,7 @@
 		382451921E71AB26611C0BA0 /* PendingTagStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3083F4ABC58427C5FDB7D835 /* PendingTagStoreTests.swift */; };
 		3860154F0E5C17CE14445DCF /* ScanWege.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C465BC565F5CCD8965C8F8 /* ScanWege.swift */; };
 		39876DCABA0D4C90A172BF11 /* CatalogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E651ABDF81EA57E18D7363D /* CatalogStore.swift */; };
+		3A10665AA6A48B0A3B16601C /* ZirkelUebersichtView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CE6C5527BBADDC86E07046 /* ZirkelUebersichtView.swift */; };
 		3B26567CF080FB300019E7A8 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = B1DA3D9245AAF15DFFD8CA8F /* Auth */; };
 		3B67A99D89AA7431D240196B /* TestnotizScreenStapelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07D0CE6DE62F683A513080FC /* TestnotizScreenStapelTests.swift */; };
 		3BB26040CDA58C70571F12BC /* MuskelgruppeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30AB0C3E19E8F0DAB7EB4DF /* MuskelgruppeDetailView.swift */; };
@@ -179,6 +180,7 @@
 		854C3D3EFF5944BE57FE4684 /* Pfadbereinigung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D1E2849DF1B81F506595B3A /* Pfadbereinigung.swift */; };
 		85D677DEC1CC8E3688FF5248 /* Ziel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B76CEB6D3CEED5662117CF5E /* Ziel.swift */; };
 		8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B577EC22237E86AA0F3755B7 /* AppConfig.swift */; };
+		86BCB428A6BCA2BBB11B8BB0 /* ZirkelUebersichtTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7024929DBFAD95EF98F3916C /* ZirkelUebersichtTests.swift */; };
 		876C68594995FB10C4C5F383 /* HomeZieleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 178A941D7DAEF42B0D12FC59 /* HomeZieleTests.swift */; };
 		87865E436B888BE06D25F6F7 /* AbspielSensorQuelle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96B76A61BE1E25C178C185D6 /* AbspielSensorQuelle.swift */; };
 		87EEB80060292F83431092AC /* AccessibilityBaumTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 758481038BBBDDBB2647CA79 /* AccessibilityBaumTests.swift */; };
@@ -390,6 +392,7 @@
 		0F4F2DAEB38D14F84C2ECC1B /* OnboardingAntwortenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingAntwortenTests.swift; sourceTree = "<group>"; };
 		0FF4AD6F764733094933FC52 /* AusschnittTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AusschnittTests.swift; sourceTree = "<group>"; };
 		10A0239BC8D0EA913F1574D8 /* KurseHerkunftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseHerkunftTests.swift; sourceTree = "<group>"; };
+		10CE6C5527BBADDC86E07046 /* ZirkelUebersichtView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelUebersichtView.swift; sourceTree = "<group>"; };
 		124682B7B2E451091CD871EE /* TestnotizMenue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizMenue.swift; sourceTree = "<group>"; };
 		138ED9C458C59851090DA3F5 /* HomeSerieView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeSerieView.swift; sourceTree = "<group>"; };
 		13D645B979771FD6347DA4AA /* SensorKarte.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorKarte.swift; sourceTree = "<group>"; };
@@ -530,6 +533,7 @@
 		6DCD40386E60DD37CDA35015 /* OnboardingSchreiber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingSchreiber.swift; sourceTree = "<group>"; };
 		6DEFFFD2670D7A8FAE9624F1 /* muskelmodell.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = muskelmodell.json; sourceTree = "<group>"; };
 		6FFF2CD62E84CDAE426125B5 /* UebungWechselnSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UebungWechselnSheet.swift; sourceTree = "<group>"; };
+		7024929DBFAD95EF98F3916C /* ZirkelUebersichtTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelUebersichtTests.swift; sourceTree = "<group>"; };
 		707F099CE279C3111DDD2149 /* ResttimerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResttimerTests.swift; sourceTree = "<group>"; };
 		7081B9EFC9138973A8C0D06D /* BluetoothSensorQuelle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothSensorQuelle.swift; sourceTree = "<group>"; };
 		70EDCD91DBF3DA79135DC7C5 /* KurseAnsicht.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseAnsicht.swift; sourceTree = "<group>"; };
@@ -1013,6 +1017,7 @@
 			children = (
 				997E6C8C1241617E7FCB0B8F /* ZirkelPauseView.swift */,
 				F8433F2A81458999E962B706 /* ZirkelPlanungSheet.swift */,
+				10CE6C5527BBADDC86E07046 /* ZirkelUebersichtView.swift */,
 			);
 			path = Zirkel;
 			sourceTree = "<group>";
@@ -1134,6 +1139,7 @@
 				ADEC4D743F8A02918ED5EA45 /* ZirkelPauseTextTests.swift */,
 				CA0FACA9B4C8E761A61D93D1 /* ZirkelPlanungTests.swift */,
 				28720DEB9E5541AA9C876E1D /* ZirkelTests.swift */,
+				7024929DBFAD95EF98F3916C /* ZirkelUebersichtTests.swift */,
 				38CC4282A43C30DF8CA3821D /* Fixtures */,
 			);
 			path = FitnessMemberTests;
@@ -1691,6 +1697,7 @@
 				3FE258C3FB0CE6005D2E1765 /* ZirkelAblauf.swift in Sources */,
 				0898ECC2787988858B560FF0 /* ZirkelPauseView.swift in Sources */,
 				D1417A6BC2600F1A7EDE6A02 /* ZirkelPlanungSheet.swift in Sources */,
+				3A10665AA6A48B0A3B16601C /* ZirkelUebersichtView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1812,6 +1819,7 @@
 				942F12BEDF8972A948F509F3 /* ZirkelPauseTextTests.swift in Sources */,
 				323B2BD2E758C07982B45BEE /* ZirkelPlanungTests.swift in Sources */,
 				9665FA7B023AC16E31AA7EAE /* ZirkelTests.swift in Sources */,
+				86BCB428A6BCA2BBB11B8BB0 /* ZirkelUebersichtTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

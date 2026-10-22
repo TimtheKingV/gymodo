@@ -117,6 +117,11 @@ struct TrainingRootView: View {
     @State private var zirkelErweiterung: ZirkelErweiterung?
     @State private var zirkelErweiternOffen = false
     @State private var zirkelErweiternHinweis: String?
+    /// Der Stand fuer die Zirkel-Uebersicht, festgehalten beim Wechsel
+    /// dorthin. "Zirkel beenden" ruft zirkelAblauf.beenden() sofort, der
+    /// Ablauf kennt den Zirkel danach nicht mehr -- die Uebersicht liest
+    /// deshalb nur diesen Wert, auf allen drei Wegen gleich.
+    @State private var zirkelAbschluss: ZirkelAbschluss?
 
     var body: some View {
         NavigationStack(path: $pfad) {
@@ -675,14 +680,15 @@ struct TrainingRootView: View {
                                 ? { zirkelErweiternBeginnen() } : nil,
                             beiBeenden: { zirkelBeenden() })
         case .zirkelUebersicht:
-            // Platzhalter bis Task 8 (ZirkelUebersichtView).
-            VStack(spacing: DesignSystem.Spacing.s16) {
-                Text("Zirkel geschafft")
-                Button("Weiter") {
-                    zirkelAblauf.beenden()
-                    pfad.removeAll()
-                }
-            }
+            // Die Saetze aus der Einheit, die Uebungen aus dem festgehaltenen
+            // Abschluss. Fehlt der (nicht vorgesehen), bleibt nur "Weiter".
+            ZirkelUebersichtView(
+                kopf: zirkelAbschluss.map { ZirkelUebersicht.kopf($0.zirkel) } ?? "Zirkel beendet",
+                zeilen: zirkelAbschluss.map {
+                    ZirkelUebersicht.zeilen(zirkel: $0.zirkel, bloecke: sessions.aktiveSession()?.bloecke ?? [],
+                                            seit: $0.begann, name: zirkelUebungsname)
+                } ?? [],
+                beiWeiter: zirkelUebersichtWeiter)
         case .abschluss(let sessionId, let zusammenfassung):
             // "Fertig" nimmt den Pfad zur Wurzel zurueck (Aufgabenbrief):
             // pfad.removeAll() statt eines einzelnen pop, weil ein Zirkel-
@@ -1124,7 +1130,12 @@ struct TrainingRootView: View {
     private func zirkelSatzGesichert() {
         guard case .geraet = pfad.last else { return }
         zirkelAblauf.satzGesichert()
-        pfad.append(zirkelAblauf.zirkel?.istFertig == true ? .zirkelUebersicht : .zirkelPause)
+        if zirkelAblauf.zirkel?.istFertig == true {
+            zirkelAbschluss = zirkelAblauf.abschluss
+            pfad.append(.zirkelUebersicht)
+        } else {
+            pfad.append(.zirkelPause)
+        }
     }
 
     /// Ende der Pause oder "Weiter": zur naechsten Zirkel-Uebung. In Runde 1
@@ -1144,6 +1155,7 @@ struct TrainingRootView: View {
         guard let naechste = zirkel.naechste else {
             if let neu = ZirkelPfad.ausPause(pfad, zu: .zirkelUebersicht) {
                 zirkelAblauf.pauseVerlassen()
+                zirkelAbschluss = zirkelAblauf.abschluss
                 pfad = neu
             }
             return
@@ -1306,12 +1318,26 @@ struct TrainingRootView: View {
 
     /// "Zirkel beenden" in der Pause: zur Uebersicht mit dem bisherigen
     /// Stand. Die Saetze stehen schon in der Einheit; beendet wird nur der
-    /// Ablauf (Spec: Beenden behaelt alle gesicherten Saetze). Die
-    /// eigentliche Zirkel-Uebersicht kommt mit Task 8.
+    /// Ablauf (Spec: Beenden behaelt alle gesicherten Saetze). Der Stand
+    /// fuer die Uebersicht wird VOR beenden() festgehalten, das den Zirkel
+    /// auf nil setzt.
     private func zirkelBeenden() {
         guard let neu = ZirkelPfad.ausPause(pfad, zu: .zirkelUebersicht) else { return }
+        zirkelAbschluss = zirkelAblauf.abschluss
         pfad = neu
         zirkelAblauf.beenden()
+    }
+
+    /// "Weiter" auf der Zirkel-Uebersicht: zurueck zur Wurzel des Tabs, die
+    /// Einheit laeuft weiter. beenden() ist nach "Zirkel beenden" schon
+    /// gelaufen und vertraegt den zweiten Aufruf. Die Vormerkung leert mit,
+    /// sonst gaelte ein nie abgerufener Eintrag (Uebung in Runde 1
+    /// uebersprungen) im naechsten Zirkel.
+    private func zirkelUebersichtWeiter() {
+        zirkelAblauf.beenden()
+        zirkelAbschluss = nil
+        zirkelVormerkung = .leer
+        pfad.removeAll()
     }
 
     private func zirkelUebungsname(_ uebung: ZirkelUebung) -> String {
