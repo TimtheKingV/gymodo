@@ -17,8 +17,34 @@ let fremdEmail: string;
 let vorlageId: string;
 let terminId: string;
 
-const VON = "2026-10-19T00:00:00Z";
-const BIS = "2026-11-02T00:00:00Z";
+/**
+ * Die Termine liegen immer um die NÄCHSTE Zeitumstellung im Herbst (letzter
+ * Sonntag im Oktober, Europe/Berlin). Feste Daten laufen ab: book_course_session
+ * lehnt Termine in der Vergangenheit ab, die Tests brachen am 22.10.2026, dem
+ * Tag des ersten festen Termins.
+ */
+function naechsteUmstellung(jetzt: Date): Date {
+  for (let jahr = jetzt.getUTCFullYear(); ; jahr++) {
+    const sonntag = new Date(Date.UTC(jahr, 9, 31));
+    sonntag.setUTCDate(31 - sonntag.getUTCDay());
+    // Reichweite: der Donnerstag davor muss noch gut in der Zukunft liegen.
+    if (sonntag.getTime() - jetzt.getTime() > 10 * 86_400_000) return sonntag;
+  }
+}
+
+const tagVerschoben = (basis: Date, tage: number): Date => {
+  const d = new Date(basis);
+  d.setUTCDate(d.getUTCDate() + tage);
+  return d;
+};
+const tag = (d: Date): string => d.toISOString().slice(0, 10);
+const utc = (d: Date, uhrzeit: string): string => `${tag(d)}T${uhrzeit}:00Z`;
+
+const UMSTELLUNG = naechsteUmstellung(new Date());
+const TERMIN_VOR = tagVerschoben(UMSTELLUNG, -3); // Donnerstag davor, Sommerzeit
+const TERMIN_NACH = tagVerschoben(UMSTELLUNG, 4); // Donnerstag danach, Winterzeit
+const VON = utc(tagVerschoben(UMSTELLUNG, -6), "00:00");
+const BIS = utc(tagVerschoben(UMSTELLUNG, 8), "00:00");
 
 beforeAll(async () => {
   const admin = serviceClient();
@@ -69,7 +95,7 @@ beforeAll(async () => {
   vorlageId = vorlage!.id;
 
   // Zwei Termine, beide 18:00 Ortszeit Berlin -- einer VOR, einer NACH
-  // der Zeitumstellung am 25. Oktober 2026. In UTC sind das 16:00 und
+  // der nächsten Zeitumstellung im Herbst. In UTC sind das 16:00 und
   // 17:00; in local_day muss jeder auf seinem eigenen Tag liegen.
   const { data: termine } = await admin
     .from("course_sessions")
@@ -77,7 +103,7 @@ beforeAll(async () => {
       {
         studio_id: studioId,
         course_template_id: vorlageId,
-        starts_at: "2026-10-22T16:00:00Z",
+        starts_at: utc(TERMIN_VOR, "16:00"),
         duration_min: 60,
         capacity: 2,
         room: "Kursraum 2",
@@ -86,7 +112,7 @@ beforeAll(async () => {
       {
         studio_id: studioId,
         course_template_id: vorlageId,
-        starts_at: "2026-10-29T17:00:00Z",
+        starts_at: utc(TERMIN_NACH, "17:00"),
         duration_min: 60,
         capacity: 16,
         room: "Kursraum 2",
@@ -127,11 +153,11 @@ describe("course_week", () => {
       p_from: VON,
       p_to: BIS,
     });
-    // 22.10. ist Sommerzeit (16:00 UTC = 18:00 MESZ),
-    // 29.10. ist Winterzeit (17:00 UTC = 18:00 MEZ).
+    // Vor der Umstellung ist Sommerzeit (16:00 UTC = 18:00 MESZ),
+    // danach Winterzeit (17:00 UTC = 18:00 MEZ).
     expect(data.sessions.map((s: { local_day: string }) => s.local_day)).toEqual([
-      "2026-10-22",
-      "2026-10-29",
+      tag(TERMIN_VOR),
+      tag(TERMIN_NACH),
     ]);
   });
 
