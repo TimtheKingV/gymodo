@@ -117,6 +117,11 @@ struct TrainingRootView: View {
     @State private var zirkelErweiterung: ZirkelErweiterung?
     @State private var zirkelErweiternOffen = false
     @State private var zirkelErweiternHinweis: String?
+    /// "Welche Übung?" im Auswahl-Sheet (Finding I-2): eine Kachel mit
+    /// mehreren Uebungen fragt nach, statt still die zuletzt genutzte zu
+    /// nehmen. Ein Dialog im Sheet, kein weiteres Sheet -- das Auswahl-Sheet
+    /// bleibt dafuer offen.
+    @State private var zirkelUebungswahl: ZirkelUebungswahl?
     /// Der Stand fuer die Zirkel-Uebersicht, festgehalten beim Wechsel
     /// dorthin. "Zirkel beenden" ruft zirkelAblauf.beenden() sofort, der
     /// Ablauf kennt den Zirkel danach nicht mehr -- die Uebersicht liest
@@ -1030,6 +1035,23 @@ struct TrainingRootView: View {
                         .testnotizElement("zirkel.auswahl.abbrechen", typ: "Button")
                 }
             }
+            // Die Wahl geht ueber denselben beiWahl-Weg zurueck, jetzt mit
+            // Uebung -- ZirkelAuswahl.angebot fragt dann nicht noch einmal.
+            .confirmationDialog("Welche Übung?",
+                                isPresented: Binding(get: { zirkelUebungswahl != nil },
+                                                     set: { if !$0 { zirkelUebungswahl = nil } }),
+                                titleVisibility: .visible,
+                                presenting: zirkelUebungswahl) { wahl in
+                ForEach(wahl.offen, id: \.self) { uebung in
+                    Button(wahl.name(uebung)) {
+                        zirkelUebungswahl = nil
+                        beiWahl(wahl.station, uebung.exerciseId)
+                    }
+                }
+                Button("Abbrechen", role: .cancel) { zirkelUebungswahl = nil }
+            } message: { wahl in
+                if let hinweis = wahl.hinweis { Text(hinweis) }
+            }
         }
         .environment(videoVorrat)
         .presentationDragIndicator(.visible)
@@ -1073,18 +1095,37 @@ struct TrainingRootView: View {
     /// Studio sucht -- ein Geraet aus "Auch in ... suchen" liesse sich
     /// dort nicht finden, und einen Ortswechsel mitten im Zirkel gibt es
     /// nicht.
+    /// Mehrere Uebungen an der Station: das Sheet bleibt offen, der Dialog
+    /// "Welche Übung?" fragt (Finding I-2); die Wahl kommt hierher zurueck.
     private func zirkelHinzufuegen(_ station: Station, uebungId: String?) {
-        zirkelAuswahlOffen = false
-        guard let bootstrap = katalog.bootstrap else { return }
+        guard let bootstrap = katalog.bootstrap, let planung = zirkelPlanung else {
+            zirkelAuswahlOffen = false
+            return
+        }
         guard (station.studioId.map(Ort.studio) ?? .freiesTraining) == katalog.ort else {
+            zirkelAuswahlOffen = false
             zirkelPlanungHinweis = "Im Zirkel gehen nur Geräte an deinem jetzigen Ort."
             return
         }
-        guard let uebung = ZirkelAuswahl.uebung(station: station, uebungId: uebungId, bootstrap: bootstrap)
-        else { return }
-        if zirkelPlanung?.entwurf.hinzufuegen(uebung) == false {
-            zirkelPlanungHinweis = "Diese Übung ist schon im Zirkel."
+        switch ZirkelAuswahl.angebot(station: station, uebungId: uebungId, bootstrap: bootstrap,
+                                     imZirkel: planung.entwurf.uebungen) {
+        case .auswahl(let offen, let schonDabei):
+            zirkelUebungswahl = ZirkelUebungswahl(station: station, offen: offen, schonDabei: schonDabei)
+        case .uebung(let uebung):
+            zirkelAuswahlOffen = false
+            zirkelPlanung?.entwurf.hinzufuegen(uebung)
+        case .schonDabei:
+            zirkelAuswahlOffen = false
+            zirkelPlanungHinweis = Self.schonDabeiHinweis(station, uebungId: uebungId)
+        case .keine:
+            zirkelAuswahlOffen = false
         }
+    }
+
+    private static func schonDabeiHinweis(_ station: Station, uebungId: String?) -> String {
+        uebungId == nil && station.exercises.count > 1
+            ? "Alle Übungen dieses Geräts sind schon im Zirkel."
+            : "Diese Übung ist schon im Zirkel."
     }
 
     /// "Zirkel starten": Uebung 1 ueber denselben Weg wie "Übung starten".
@@ -1229,16 +1270,26 @@ struct TrainingRootView: View {
             zirkelErweiternAblehnen("Im Zirkel gehen nur Geräte an deinem jetzigen Ort.")
             return
         }
-        guard let uebung = ZirkelAuswahl.uebung(station: station, uebungId: uebungId, bootstrap: bootstrap)
-        else { return }
-        let schonDabei: Bool = switch erweiterung.art {
-        case .ausEinzelsatz(let erste, _):
-            erste.station == uebung.station && erste.exerciseId == uebung.exerciseId
+        let imZirkel: [ZirkelUebung]
+        switch erweiterung.art {
+        case .ausEinzelsatz(let erste, _): imZirkel = [erste]
         case .imZirkel:
-            zirkelAblauf.zirkel?.enthaelt(uebung) ?? true
+            guard let zirkel = zirkelAblauf.zirkel else { return }
+            imZirkel = zirkel.uebungen
         }
-        guard !schonDabei else {
-            zirkelErweiternAblehnen("Diese Übung ist schon im Zirkel.")
+        let uebung: ZirkelUebung
+        switch ZirkelAuswahl.angebot(station: station, uebungId: uebungId, bootstrap: bootstrap,
+                                     imZirkel: imZirkel) {
+        case .auswahl(let offen, let schonDabei):
+            // Das Sheet bleibt offen; die Wahl im Dialog kommt hierher zurueck.
+            zirkelUebungswahl = ZirkelUebungswahl(station: station, offen: offen, schonDabei: schonDabei)
+            return
+        case .uebung(let gewaehlt):
+            uebung = gewaehlt
+        case .schonDabei:
+            zirkelErweiternAblehnen(Self.schonDabeiHinweis(station, uebungId: uebungId))
+            return
+        case .keine:
             return
         }
         erweiterung.neu = UebungsstartAuftrag(station: uebung.station, exerciseId: uebung.exerciseId,
@@ -1429,6 +1480,22 @@ private struct ZirkelPlanung {
     var entwurf: ZirkelEntwurf
     let ersterAuftrag: UebungsstartAuftrag
     let startwerte: Startwerte
+}
+
+/// Die offene Frage "Welche Übung?" einer Station mit mehreren Uebungen
+/// (Finding I-2): `offen` steht zur Wahl, `schonDabei` nur im Hinweis.
+private struct ZirkelUebungswahl {
+    let station: Station
+    let offen: [ZirkelUebung]
+    let schonDabei: [ZirkelUebung]
+
+    func name(_ uebung: ZirkelUebung) -> String {
+        station.exercises.first { $0.id == uebung.exerciseId }?.name ?? "Übung"
+    }
+
+    var hinweis: String? {
+        schonDabei.isEmpty ? nil : "Schon im Zirkel: " + schonDabei.map(name).joined(separator: ", ")
+    }
 }
 
 /// Ein Zirkel, der gerade waechst (Task 7): woher die Erweiterung kommt,

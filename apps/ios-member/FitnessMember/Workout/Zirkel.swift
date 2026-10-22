@@ -175,6 +175,40 @@ enum ZirkelAuswahl {
         guard let gewaehlt else { return nil }
         return ZirkelUebung(station: station.schluessel, exerciseId: gewaehlt, token: nil)
     }
+
+    /// Was ein gewaehltes Geraet in Planung oder Erweitern beitraegt.
+    enum Angebot: Equatable {
+        /// Steht fest -- in den Zirkel damit.
+        case uebung(ZirkelUebung)
+        /// Mehrere Uebungen an einer Station: das Mitglied waehlt. `offen`
+        /// steht zur Wahl, `schonDabei` nur im Hinweis.
+        case auswahl(offen: [ZirkelUebung], schonDabei: [ZirkelUebung])
+        case schonDabei
+        /// Ein Geraet ohne Uebung.
+        case keine
+    }
+
+    /// Finding I-2: eine Station mit mehreren Uebungen (Spec-Beispiel: drei
+    /// Kurzhantel-Uebungen) loeste vorher still auf die zuletzt genutzte
+    /// auf -- war die schon im Zirkel, kam man an die anderen nur ueber die
+    /// Suche. Jetzt fragt sie nach. Eine schon gewaehlte Uebung (Suchtreffer,
+    /// Wahl im Dialog) und eine Station mit einer Uebung bleiben ohne Frage.
+    /// Vergleich ueber Station und Uebung, nicht den Token (wie Zirkel.enthaelt).
+    static func angebot(station: Station, uebungId: String?, bootstrap: BootstrapResponse,
+                        imZirkel: [ZirkelUebung]) -> Angebot {
+        func dabei(_ u: ZirkelUebung) -> Bool {
+            imZirkel.contains { $0.station == u.station && $0.exerciseId == u.exerciseId }
+        }
+        if uebungId == nil, station.exercises.count > 1 {
+            let alle = station.exercises.map {
+                ZirkelUebung(station: station.schluessel, exerciseId: $0.id, token: nil)
+            }
+            let offen = alle.filter { !dabei($0) }
+            return offen.isEmpty ? .schonDabei : .auswahl(offen: offen, schonDabei: alle.filter(dabei))
+        }
+        guard let u = uebung(station: station, uebungId: uebungId, bootstrap: bootstrap) else { return .keine }
+        return dabei(u) ? .schonDabei : .uebung(u)
+    }
 }
 
 /// Die Startwerte aus dem Drawer gehoeren zu der Uebung, fuer die sie

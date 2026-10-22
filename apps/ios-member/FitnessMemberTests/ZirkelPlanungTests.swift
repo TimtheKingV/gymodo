@@ -112,6 +112,60 @@ struct ZirkelPlanungTests {
                                      bootstrap: Self.bootstrap(letzte: nil)) == nil)
     }
 
+    // MARK: - Angebot einer Kachel (Finding I-2)
+
+    private func zu(_ id: String) -> ZirkelUebung {
+        ZirkelUebung(station: "geraet:m1", exerciseId: id, token: nil)
+    }
+
+    /// Spec-Beispiel: drei Kurzhantel-Uebungen an einer Station. Die Kachel
+    /// darf nicht still auf die zuletzt genutzte aufloesen -- sonst kaemen
+    /// die anderen beiden nur ueber die Suche in den Zirkel.
+    @Test func eineKachelMitMehrerenUebungenFragtNach() {
+        let station = Self.station(uebungen: ["e1", "e2", "e3"])
+        let angebot = ZirkelAuswahl.angebot(station: station, uebungId: nil,
+                                            bootstrap: Self.bootstrap(letzte: "e2"), imZirkel: [])
+        #expect(angebot == .auswahl(offen: [zu("e1"), zu("e2"), zu("e3")], schonDabei: []))
+    }
+
+    @Test func schonEnthalteneUebungenStehenNichtZurWahl() {
+        let station = Self.station(uebungen: ["e1", "e2", "e3"])
+        let angebot = ZirkelAuswahl.angebot(station: station, uebungId: nil,
+                                            bootstrap: Self.bootstrap(letzte: "e2"),
+                                            imZirkel: [zu("e2"), uebung(9)])
+        #expect(angebot == .auswahl(offen: [zu("e1"), zu("e3")], schonDabei: [zu("e2")]))
+    }
+
+    @Test func sindAlleUebungenSchonDabeiGibtEsNichtsZuWaehlen() {
+        let station = Self.station(uebungen: ["e1", "e2"])
+        let angebot = ZirkelAuswahl.angebot(station: station, uebungId: nil,
+                                            bootstrap: Self.bootstrap(letzte: nil),
+                                            imZirkel: [zu("e1"), zu("e2")])
+        #expect(angebot == .schonDabei)
+    }
+
+    /// Ein Uebungstreffer der Suche (oder die Wahl im Dialog) ist schon
+    /// entschieden -- keine zweite Frage.
+    @Test func eineGewaehlteUebungKommtDirekt() {
+        let station = Self.station(uebungen: ["e1", "e2", "e3"])
+        let bootstrap = Self.bootstrap(letzte: nil)
+        #expect(ZirkelAuswahl.angebot(station: station, uebungId: "e3", bootstrap: bootstrap, imZirkel: [])
+                == .uebung(zu("e3")))
+        #expect(ZirkelAuswahl.angebot(station: station, uebungId: "e3", bootstrap: bootstrap, imZirkel: [zu("e3")])
+                == .schonDabei)
+    }
+
+    @Test func eineEinzigeUebungKommtOhneFrage() {
+        let station = Self.station(uebungen: ["e1"])
+        let bootstrap = Self.bootstrap(letzte: nil)
+        #expect(ZirkelAuswahl.angebot(station: station, uebungId: nil, bootstrap: bootstrap, imZirkel: [])
+                == .uebung(zu("e1")))
+        #expect(ZirkelAuswahl.angebot(station: station, uebungId: nil, bootstrap: bootstrap, imZirkel: [zu("e1")])
+                == .schonDabei)
+        #expect(ZirkelAuswahl.angebot(station: Self.station(uebungen: []), uebungId: nil,
+                                      bootstrap: bootstrap, imZirkel: []) == .keine)
+    }
+
     // MARK: - Vorgemerkte Startwerte (Fix-Runde 1)
 
     private let werte = Startwerte(belastung: 12.5, umfang: 10, nebenbelastung: nil)
