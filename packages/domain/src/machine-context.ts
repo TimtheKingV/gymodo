@@ -103,6 +103,7 @@ export type GeraeteKontext = MachineContext & {
 };
 
 type SetRow = CardioZeile & {
+  session_id: string;
   exercise_id: string;
   load: number | string | null;
   secondary_load: number | string | null;
@@ -403,7 +404,7 @@ async function kontextAufbauen(
     }
 
     const { data: setRows } = await saetzeDerStation(
-      `exercise_id, load, secondary_load, volume, rir, problem_flag, performed_at, ${CARDIO_SELECT}`,
+      `session_id, exercise_id, load, secondary_load, volume, rir, problem_flag, performed_at, ${CARDIO_SELECT}`,
     )
       .eq("exercise_id", selectedExerciseId)
       .order("performed_at", { ascending: false })
@@ -508,10 +509,11 @@ async function kontextAufbauen(
 }
 
 /**
- * Die Historie eines Cardio-Geraets: Saetze je Trainingstag, chronologisch.
+ * Die Historie eines Cardio-Geraets: Saetze je Einheit (wie toBlocks, nicht
+ * je Kalendertag), chronologisch.
  * Die Zeilen kommen absteigend nach performed_at, wie bei toBlocks. Die
- * Cardio-Werte sind die des ersten Satzes des Tages; load/volume stehen wie
- * vor E2 da, solange der Tag Saetze einer alten App hat -- die alte App liest
+ * Cardio-Werte sind die des ersten Satzes der Einheit; load/volume stehen wie
+ * vor E2 da, solange die Einheit Saetze einer alten App hat -- die alte App liest
  * sie als Pflichtfelder (Final-Review A).
  */
 function cardioHistorie(
@@ -519,14 +521,14 @@ function cardioHistorie(
   geraet: CardioGeraet,
   volumeKind: VolumeKind | null,
 ): MachineContext["history"] {
-  const jeTag = new Map<string, SetRow[]>();
+  const jeEinheit = new Map<string, SetRow[]>();
   for (const zeile of zeilen) {
-    const tag = zeile.performed_at.slice(0, 10);
-    jeTag.set(tag, [...(jeTag.get(tag) ?? []), zeile]);
+    jeEinheit.set(zeile.session_id, [...(jeEinheit.get(zeile.session_id) ?? []), zeile]);
   }
-  return [...jeTag].map(([tag, saetze]) => {
+  return [...jeEinheit.values()].map((saetze) => {
     const chronologisch = [...saetze].reverse();
     const erster = chronologisch[0];
+    const tag = erster?.performed_at.slice(0, 10) ?? "";
     const alterErster = chronologisch.find((satz) => satz.load !== null);
     return {
       performedOn: tag,

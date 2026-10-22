@@ -41,12 +41,19 @@ export type WorkoutSetInput = {
 
 /** Ein Block: alle Saetze einer Einheit an einem Geraet mit einer Uebung. */
 export type BlockInput = {
+  /**
+   * Die Einheit, aus der der Block stammt. Optional nur, damit von Hand
+   * gebaute Verlaeufe (Tests) ohne Kennung auskommen; toBlocks setzt sie immer.
+   */
+  sessionId?: string;
+  /** UTC-Datum des ersten Satzes -- nur fuer die Anzeige, nicht zum Gruppieren. */
   performedOn: string;
   sets: WorkoutSetInput[];
 };
 
 /** Die Satzzeile, so wie beide Aufrufer sie aus der Datenbank lesen. */
 export type SatzZeile = {
+  session_id: string;
   performed_at: string;
   load: number | string;
   secondary_load: number | string | null;
@@ -56,19 +63,26 @@ export type SatzZeile = {
 };
 
 /**
- * Saetze zu Bloecken je Trainingstag. Liegt hier statt beim Aufrufer, weil
+ * Saetze zu Bloecken je Einheit (Session), nicht je Kalendertag: zwei
+ * Trainings am selben Tag sind zwei Bloecke, und ein Training ueber
+ * Mitternacht UTC bleibt einer. Frueher wurde nach dem UTC-Datum
+ * gruppiert -- zwei Einheiten mit verschiedenen Gewichten verschmolzen
+ * dann zu einem uneinheitlichen Block ohne Vorschlag. Liegt hier statt beim Aufrufer, weil
  * seit dem Abschluss-Screen zwei Stellen dieselbe Gruppierung brauchen --
  * und weil sie den Typ baut, der hier wohnt.
  */
 export function toBlocks(rows: SatzZeile[]): BlockInput[] {
-  const byDay = new Map<string, BlockInput>();
+  // Map haelt die Einfuegereihenfolge: die Zeilen kommen absteigend, also
+  // steht der neueste Block vorn.
+  const bySession = new Map<string, BlockInput>();
   for (const row of rows) {
-    const day = row.performed_at.slice(0, 10);
-    let block = byDay.get(day);
+    let block = bySession.get(row.session_id);
     if (!block) {
-      block = { performedOn: day, sets: [] };
-      byDay.set(day, block);
+      block = { sessionId: row.session_id, performedOn: row.performed_at.slice(0, 10), sets: [] };
+      bySession.set(row.session_id, block);
     }
+    // Absteigend gelesen ist die letzte Zeile der erste Satz der Einheit.
+    block.performedOn = row.performed_at.slice(0, 10);
     block.sets.push({
       load: Number(row.load),
       secondaryLoad:
@@ -80,9 +94,9 @@ export function toBlocks(rows: SatzZeile[]): BlockInput[] {
       problemFlag: row.problem_flag,
     });
   }
-  // Innerhalb eines Tages chronologisch, damit "letzter Satz" stimmt.
-  for (const block of byDay.values()) block.sets.reverse();
-  return [...byDay.values()];
+  // Innerhalb einer Einheit chronologisch, damit "letzter Satz" stimmt.
+  for (const block of bySession.values()) block.sets.reverse();
+  return [...bySession.values()];
 }
 
 export type ProgressionInput = {

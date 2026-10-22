@@ -417,11 +417,52 @@ describe("suggestNextLoad -- Nebenbelastung", () => {
 describe("toBlocks", () => {
   it("liest secondary_load mit und laesst null null", () => {
     const blocks = toBlocks([
-      { performed_at: "2026-08-27T10:00:00Z", load: "8.50", secondary_load: "6.00", volume: 1200, rir: null, problem_flag: false },
-      { performed_at: "2026-08-20T10:00:00Z", load: 80, secondary_load: null, volume: 10, rir: "1.0", problem_flag: false },
+      { session_id: "s2", performed_at: "2026-08-27T10:00:00Z", load: "8.50", secondary_load: "6.00", volume: 1200, rir: null, problem_flag: false },
+      { session_id: "s1", performed_at: "2026-08-20T10:00:00Z", load: 80, secondary_load: null, volume: 10, rir: "1.0", problem_flag: false },
     ]);
 
     expect(blocks[0]?.sets[0]).toEqual({ load: 8.5, secondaryLoad: 6, volume: 1200, rir: null, problemFlag: false });
     expect(blocks[1]?.sets[0]).toEqual({ load: 80, secondaryLoad: null, volume: 10, rir: 1, problemFlag: false });
+  });
+
+  const zeile = (session_id: string, performed_at: string, load: number) => ({
+    session_id, performed_at, load, secondary_load: null, volume: 12, rir: null, problem_flag: false,
+  });
+
+  it("trennt zwei Sessions am selben Tag", () => {
+    const blocks = toBlocks([
+      zeile("s2", "2026-10-21T18:00:00Z", 45),
+      zeile("s2", "2026-10-21T17:58:00Z", 45),
+      zeile("s1", "2026-10-21T08:00:00Z", 40),
+    ]);
+
+    expect(blocks).toHaveLength(2);
+    expect(blocks[0]?.sessionId).toBe("s2");
+    expect(blocks[0]?.sets).toHaveLength(2);
+    expect(blocks[1]?.sessionId).toBe("s1");
+  });
+
+  it("haelt eine Session ueber Mitternacht UTC zusammen", () => {
+    const blocks = toBlocks([
+      zeile("s1", "2026-10-22T00:20:00Z", 40),
+      zeile("s1", "2026-10-21T23:50:00Z", 40),
+    ]);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]?.performedOn).toBe("2026-10-21");
+  });
+
+  it("suggestNextLoad nimmt den juengeren Block desselben Tages", () => {
+    const rows = [
+      ...[3, 2, 1].map((i) => zeile("s2", `2026-10-21T18:0${i}:00Z`, 45)),
+      ...[3, 2, 1].map((i) => zeile("s1", `2026-10-21T08:0${i}:00Z`, 40)),
+    ];
+    const suggestion = suggestNextLoad({
+      targetMin: 8, targetMax: 12, loadStep: 2.5, loadMin: 5, loadMax: 150,
+      history: toBlocks(rows),
+    });
+
+    expect(suggestion.reasonCode).not.toBe("daten_uneindeutig");
+    expect(suggestion.inputs.currentLoad).toBe(45);
   });
 });

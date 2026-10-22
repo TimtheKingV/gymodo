@@ -452,7 +452,7 @@ export async function vorschlaegeFuerAbschluss(
   const { data: historie, error: historieFehler } = await client
     .from("workout_sets")
     .select(
-      "machine_id, equipment_model_id, exercise_id, performed_at, load, secondary_load, volume, rir, problem_flag",
+      "session_id, machine_id, equipment_model_id, exercise_id, performed_at, load, secondary_load, volume, rir, problem_flag",
     )
     .not("load", "is", null)
     .eq("user_id", userId)

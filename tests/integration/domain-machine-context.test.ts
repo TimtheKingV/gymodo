@@ -255,6 +255,45 @@ describe("getMachineContext", () => {
     });
   });
 
+  it("zwei Trainings am selben Tag sind zwei Eintraege im Verlauf", async () => {
+    const admin = serviceClient();
+    const email = uniqueEmail("mc-zwei-sessions");
+    const userId = await createTestUser(email);
+    const { error: mErr } = await admin
+      .from("studio_memberships")
+      .insert({ studio_id: studioA, user_id: userId, role: "member" });
+    if (mErr) throw mErr;
+    const { data: geraet } = await admin
+      .from("machines").select("equipment_model_id").eq("id", machineA).single();
+
+    const morgens = crypto.randomUUID();
+    const abends = crypto.randomUUID();
+    const { error: sErr } = await admin.from("workout_sessions").insert([
+      { id: morgens, studio_id: studioA, user_id: userId, started_at: "2026-10-21T07:55:00Z" },
+      { id: abends, studio_id: studioA, user_id: userId, started_at: "2026-10-21T17:55:00Z" },
+    ]);
+    if (sErr) throw sErr;
+    const satz = (session_id: string, set_index: number, load: number, performed_at: string) => ({
+      id: crypto.randomUUID(), studio_id: studioA, user_id: userId, session_id,
+      machine_id: machineA, equipment_model_id: geraet!.equipment_model_id,
+      exercise_id: breitId, set_index, load, volume: 10, performed_at,
+    });
+    const { error: setErr } = await admin.from("workout_sets").insert([
+      satz(morgens, 1, 40, "2026-10-21T08:00:00Z"),
+      satz(morgens, 2, 40, "2026-10-21T08:03:00Z"),
+      satz(abends, 1, 45, "2026-10-21T18:00:00Z"),
+      satz(abends, 2, 45, "2026-10-21T18:03:00Z"),
+    ]);
+    if (setErr) throw setErr;
+
+    const kontext = await getMachineContext(await userClient(email), machineA);
+
+    expect(kontext.history).toHaveLength(2);
+    expect(kontext.history[0]?.load).toBe(45);
+    expect(kontext.history[1]?.load).toBe(40);
+    expect(kontext.suggestion?.reasonCode).not.toBe("daten_uneindeutig");
+  });
+
   it("haelt den Vorschlag in progression_suggestions fest", async () => {
     const client = await userClient(memberAEmail);
     const admin = serviceClient();
