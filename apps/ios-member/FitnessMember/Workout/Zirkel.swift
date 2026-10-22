@@ -161,3 +161,35 @@ enum ZirkelAuswahl {
         return ZirkelUebung(station: station.schluessel, exerciseId: gewaehlt, token: nil)
     }
 }
+
+/// Die Startwerte aus dem Drawer gehoeren zu der Uebung, fuer die sie
+/// eingegeben wurden -- nicht zu Platz 1 des Zirkels. Wird umsortiert,
+/// gelten sie, sobald diese Uebung in Runde 1 drankommt; ohne sie liefe
+/// eine einfache Uebung ueber den Direktstart ohne das gewaehlte Gewicht.
+struct ZirkelVormerkung: Equatable {
+    private var werte: [ZirkelUebung: Startwerte]
+
+    init(_ uebung: ZirkelUebung, werte: Startwerte) {
+        self.werte = [uebung: werte]
+    }
+
+    private init(werte: [ZirkelUebung: Startwerte]) {
+        self.werte = werte
+    }
+
+    static let leer = ZirkelVormerkung(werte: [:])
+
+    /// Beim Start: nur, was noch im Entwurf steht. Eine entfernte Uebung
+    /// nimmt ihre Werte mit.
+    func behalten(nur uebungen: [ZirkelUebung]) -> ZirkelVormerkung {
+        ZirkelVormerkung(werte: werte.filter { uebungen.contains($0.key) })
+    }
+
+    /// Einmal und nur in Runde 1: ab Runde 2 belegt GeraetModel das Gewicht
+    /// aus der Vorrunde vor. Auch eine Frage aus Runde 2 raeumt den Eintrag
+    /// (wurde die Uebung in Runde 1 uebersprungen, waere er sonst veraltet).
+    mutating func entnehmen(_ uebung: ZirkelUebung, runde: Int) -> Startwerte? {
+        let gemerkt = werte.removeValue(forKey: uebung)
+        return runde == 1 ? gemerkt : nil
+    }
+}

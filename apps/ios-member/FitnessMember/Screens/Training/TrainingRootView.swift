@@ -102,6 +102,13 @@ struct TrainingRootView: View {
     /// geschoben wurde -- er geht wie die Planung selbst erst im onDismiss
     /// des vorigen Sheets auf.
     @State private var zirkelDrawerWartet: UebungsstartAuftrag?
+    /// Der geplante Zirkel, solange dieser Drawer fuer Uebung 1 offen ist:
+    /// der Ablauf beginnt erst mit "Übung starten" darin. Wird der Drawer
+    /// geschlossen, bleibt so kein Ablauf ohne Screen zurueck.
+    @State private var zirkelWartetAufStart: Zirkel?
+    /// Die Startwerte aus dem ersten Drawer, an ihrer Uebung (nicht an
+    /// Platz 1) -- siehe ZirkelVormerkung.
+    @State private var zirkelVormerkung = ZirkelVormerkung.leer
 
     var body: some View {
         NavigationStack(path: $pfad) {
@@ -922,6 +929,11 @@ struct TrainingRootView: View {
     private func uebungStarten(_ auftrag: UebungsstartAuftrag, mit werte: Startwerte) {
         if sessions.aktiveSession() == nil { sessions.trainingStarten() }
         uebungsstart = nil
+        // Uebung 1 nach dem Umsortieren: erst jetzt beginnt der Zirkel.
+        if auftrag.zirkel, let geplant = zirkelWartetAufStart {
+            zirkelWartetAufStart = nil
+            zirkelAblauf.starten(geplant)
+        }
         let ziel = GeraetRoute.geraet(station: auftrag.station, exerciseId: auftrag.exerciseId,
                                       token: auftrag.token, start: werte, zirkel: auftrag.zirkel)
         // Aus der Zirkel-Pause (Runde 1) ersetzt die Uebung Pause und alten
@@ -996,6 +1008,12 @@ struct TrainingRootView: View {
     /// onDismiss des Drawers. Ohne wartende Planung (der Normalfall,
     /// "Übung starten" oder Schliessen) tut es nichts.
     private func zirkelPlanungOeffnen() {
+        // Der Drawer fuer Uebung 1 ging ohne Start zu: der Zirkel beginnt
+        // nicht, und seine Startwerte verfallen mit ihm.
+        if zirkelWartetAufStart != nil {
+            zirkelWartetAufStart = nil
+            zirkelVormerkung = .leer
+        }
         guard let wartet = zirkelPlanungWartet else { return }
         zirkelPlanungWartet = nil
         zirkelPlanung = wartet
@@ -1020,26 +1038,29 @@ struct TrainingRootView: View {
         }
     }
 
-    /// "Zirkel starten": Uebung 1 mit den Startwerten aus dem Drawer, ueber
-    /// denselben Weg wie "Übung starten". Die weiteren Uebungen fragen ihr
-    /// Gewicht in Runde 1 im Drawer ab (zirkelWeiter).
+    /// "Zirkel starten": Uebung 1 ueber denselben Weg wie "Übung starten".
+    /// Die Startwerte aus dem Drawer gehoeren zu SEINER Uebung, nicht zu
+    /// Platz 1: steht sie nach dem Umsortieren weiter hinten, gelten sie,
+    /// sobald sie in Runde 1 drankommt (zirkelWeiter). Die uebrigen
+    /// Uebungen fragen ihr Gewicht in Runde 1 im Drawer ab.
     private func zirkelStarten() {
         guard let planung = zirkelPlanung, planung.entwurf.istGueltig else { return }
         zirkelPlanung = nil
-        zirkelAblauf.starten(planung.entwurf.zirkel())
-        var auftrag = planung.ersterAuftrag
-        auftrag.zirkel = true
-        // Die erste Uebung des Entwurfs kann nach dem Umsortieren eine
-        // andere sein als die aus dem Drawer. Die Startwerte gehoeren aber
-        // zu der aus dem Drawer -- deshalb beginnt der Zirkel mit dem
-        // Entwurf, wie er jetzt steht, und nimmt die Startwerte nur, wenn
-        // vorne noch dieselbe Uebung steht.
+        let aus = planung.ersterAuftrag
+        let ausDrawer = ZirkelUebung(station: aus.station, exerciseId: aus.exerciseId, token: aus.token)
+        zirkelVormerkung = ZirkelVormerkung(ausDrawer, werte: planung.startwerte)
+            .behalten(nur: planung.entwurf.uebungen)
         let erste = planung.entwurf.uebungen[0]
-        if erste.station == auftrag.station, erste.exerciseId == auftrag.exerciseId {
-            uebungStarten(auftrag, mit: planung.startwerte)
+        let auftrag = UebungsstartAuftrag(station: erste.station, exerciseId: erste.exerciseId,
+                                          token: erste.token, zirkel: true)
+        if let werte = zirkelVormerkung.entnehmen(erste, runde: 1) {
+            zirkelAblauf.starten(planung.entwurf.zirkel())
+            uebungStarten(auftrag, mit: werte)
         } else {
-            zirkelDrawerWartet = UebungsstartAuftrag(station: erste.station, exerciseId: erste.exerciseId,
-                                                     token: erste.token, zirkel: true)
+            // Erst der Drawer fuer die neue Uebung 1; der Ablauf beginnt mit
+            // dessen "Übung starten" (uebungStarten).
+            zirkelWartetAufStart = planung.entwurf.zirkel()
+            zirkelDrawerWartet = auftrag
         }
     }
 
@@ -1082,6 +1103,18 @@ struct TrainingRootView: View {
         // mehr: dann wie nach dem letzten Satz die Uebersicht.
         guard let naechste = zirkel.naechste else {
             if let neu = ZirkelPfad.ausPause(pfad, zu: .zirkelUebersicht) {
+                zirkelAblauf.pauseVerlassen()
+                pfad = neu
+            }
+            return
+        }
+        // Die Uebung aus dem ersten Drawer, nach hinten sortiert: ihre
+        // Startwerte gelten jetzt, ohne zweiten Drawer -- auch eine, die
+        // sonst direkt starten wuerde, bekommt so das gewaehlte Gewicht.
+        if let werte = zirkelVormerkung.entnehmen(naechste, runde: zirkel.runde) {
+            let mitStartwerten = GeraetRoute.geraet(station: naechste.station, exerciseId: naechste.exerciseId,
+                                                    token: naechste.token, start: werte, zirkel: true)
+            if let neu = ZirkelPfad.ausPause(pfad, zu: mitStartwerten) {
                 zirkelAblauf.pauseVerlassen()
                 pfad = neu
             }

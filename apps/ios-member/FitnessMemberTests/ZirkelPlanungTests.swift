@@ -112,6 +112,38 @@ struct ZirkelPlanungTests {
                                      bootstrap: Self.bootstrap(letzte: nil)) == nil)
     }
 
+    // MARK: - Vorgemerkte Startwerte (Fix-Runde 1)
+
+    private let werte = Startwerte(belastung: 12.5, umfang: 10, nebenbelastung: nil)
+
+    @Test func nachDemUmsortierenGeltenDieStartwerteWeiterFuerIhreUebung() {
+        var e = entwurf(n: 3)
+        e.verschiebe(von: IndexSet(integer: 0), nach: 3)
+        var vormerkung = ZirkelVormerkung(uebung(1), werte: werte).behalten(nur: e.uebungen)
+        #expect(vormerkung.entnehmen(uebung(2), runde: 1) == nil)
+        #expect(vormerkung.entnehmen(uebung(1), runde: 1) == werte)
+    }
+
+    @Test func eineEntfernteUebungVerliertIhreStartwerte() {
+        var e = entwurf(n: 3)
+        e.entferne(at: IndexSet(integer: 0))
+        var vormerkung = ZirkelVormerkung(uebung(1), werte: werte).behalten(nur: e.uebungen)
+        #expect(vormerkung.entnehmen(uebung(1), runde: 1) == nil)
+    }
+
+    @Test func vorgemerkteStartwerteGeltenNurEinmal() {
+        var vormerkung = ZirkelVormerkung(uebung(1), werte: werte)
+        #expect(vormerkung.entnehmen(uebung(1), runde: 1) == werte)
+        #expect(vormerkung.entnehmen(uebung(1), runde: 1) == nil)
+    }
+
+    @Test func abRundeZweiGeltenKeineVorgemerktenStartwerte() {
+        // Ab Runde 2 kommt das Gewicht aus der Vorrunde (GeraetModel).
+        var vormerkung = ZirkelVormerkung(uebung(1), werte: werte)
+        #expect(vormerkung.entnehmen(uebung(1), runde: 2) == nil)
+        #expect(vormerkung.entnehmen(uebung(1), runde: 1) == nil)
+    }
+
     // MARK: - Testdaten
 
     private static func station(uebungen: [String]) -> Station {
