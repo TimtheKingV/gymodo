@@ -70,6 +70,32 @@ struct ZirkelErweiternTests {
         #expect(!sut.kannZirkelBeginnen)
     }
 
+    /// Eine Zeit-Uebung an einem Kraftgeraet (Plank): Satzziel 1, aber
+    /// "Weiterer Satz" startet trotzdem eine Pause bei Satz 2. Der Zirkel
+    /// ist nur fuer Wiederholungs-Uebungen gedacht -- dort also nicht.
+    @Test func beiEinerUebungOhneWiederholungenNicht() async {
+        let maschine: BootstrapResponse.Machine = GeraetTestdaten.dekodiere("""
+        {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":null,
+         "status":"active","tokenHashes":[],"visitCount":2,
+         "equipmentModel":{"id":"em1","name":"Matte","manufacturer":null,
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":1,"loadMin":0.0,"loadMax":50.0,
+           "settingDefinitions":[]},
+         "exercises":[{"id":"e1","name":"Plank","volumeKind":"seconds","targetMin":30,"targetMax":90}]}
+        """)
+        let sut = GeraetModel(
+            station: Station(maschine: maschine), uebungId: "e1", token: nil,
+            bootstrap: GeraetTestdaten.bootstrap(lastSets: []), loader: FakeGeraetLoader(),
+            sessions: WorkoutSessionStore(fileStore: SessionFileStore(
+                directory: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))),
+            enqueue: { _ in }, satzZiel: { 3 })
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        sut.weitererSatz()
+        #expect(sut.volumeKind != .reps)
+        #expect(sut.satzNummer == 2)
+        #expect(sut.laufendePause != nil)
+        #expect(!sut.kannZirkelBeginnen)
+    }
+
     /// Carry-over Task 5: Runde 1 beginnt mit dem Einzelsatz, nicht mit dem
     /// Start des Zirkels -- sonst fehlte er in der Rundenzusammenfassung.
     @Test func derEinzelsatzNenntSeinenZeitpunkt() async {
@@ -135,6 +161,25 @@ struct ZirkelErweiternTests {
         #expect(pause != nil)
         ablauf.erweitern(um: uebung(9))
         #expect(ablauf.pause == pause)
+    }
+
+    /// Task 8: die Uebersicht zaehlt Saetze ab abschluss.begann. Erweitern
+    /// darf diesen Beginn nicht verschieben -- sonst fehlten in der
+    /// Uebersicht die Saetze von vor dem Erweitern, beim Zirkel aus dem
+    /// Einzelsatz auch dieser selbst.
+    @Test func erweiternLaesstDenBeginnDerUebersichtStehen() {
+        let ablauf = nachRundeEins()
+        #expect(ablauf.abschluss?.begann == t0)
+        ablauf.erweitern(um: uebung(9))
+        #expect(ablauf.abschluss?.begann == t0)
+
+        let ausEinzelsatz = ZirkelAblauf()
+        ausEinzelsatz.starten(Zirkel.ausEinzelsatz(uebung(1), zweite: uebung(2), runden: 3,
+                                                   uebungspause: 20, rundenpause: 90),
+                              jetzt: t0.addingTimeInterval(30), rundeBegann: t0)
+        ausEinzelsatz.satzGesichert(jetzt: t0.addingTimeInterval(120))
+        #expect(ausEinzelsatz.erweitern(um: uebung(3)))
+        #expect(ausEinzelsatz.abschluss?.begann == t0)
     }
 
     @Test func nachRundeEinsLiefertErweiternFalse() {

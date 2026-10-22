@@ -521,6 +521,41 @@ struct GeraetModelTests {
         #expect(runde2.belastung == 14)
     }
 
+    /// Der Rueckkehr-Fall ohne Zirkel (Kommentar im init): ueber die
+    /// Blockliste zurueck an ein Geraet, nachdem dazwischen ein anderes
+    /// lief. Es zaehlt der heutige Satz DIESES Geraets -- weder der des
+    /// Geraets dazwischen noch der aus dem Bootstrap.
+    @Test func nachDerRueckkehrUeberDieBlocklisteGiltDerHeutigeSatzDesGeraets() async {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        func kurzhantel(_ id: String) -> BootstrapResponse.Machine {
+            GeraetTestdaten.dekodiere("""
+            {"id":"\(id)","studioId":"s1","label":"Gerät \(id)","locationNote":null,
+             "status":"active","tokenHashes":[],"visitCount":2,
+             "equipmentModel":{"id":"em1","name":"Kurzhantel","manufacturer":null,
+               "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":1,"loadMin":1.0,"loadMax":50.0,
+               "settingDefinitions":[]},
+             "exercises":[{"id":"e1","name":"Bizepscurl","volumeKind":"reps","targetMin":8,"targetMax":12}]}
+            """)
+        }
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", 10, 12), ("m2", "e1", 30, 8)])
+        let hin = modell(maschine: kurzhantel("m1"), bootstrap: bootstrap, sessions: sessions)
+        hin.belastungGewaehlt(14)
+        hin.umfangGedreht(9)
+        await hin.satzSichern(problemFlag: false, problemReason: nil)
+
+        let dazwischen = modell(maschine: kurzhantel("m2"), bootstrap: bootstrap, sessions: sessions)
+        // Am anderen Geraet zaehlt dessen Bootstrap, nicht der Satz an m1.
+        #expect(dazwischen.belastung == 30)
+        dazwischen.belastungGewaehlt(40)
+        await dazwischen.satzSichern(problemFlag: false, problemReason: nil)
+
+        let zurueck = modell(maschine: kurzhantel("m1"), bootstrap: bootstrap, sessions: sessions)
+        #expect(zurueck.belastung == 14)
+        #expect(zurueck.umfang == 9)
+    }
+
     // MARK: - Start aus dem Drawer (Testnotiz 11.10., #10, #11)
 
     @Test func mitStartwertenBeginntDieSatzseiteMitDemCountdown() {
