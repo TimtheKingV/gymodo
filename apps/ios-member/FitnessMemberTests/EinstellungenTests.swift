@@ -40,6 +40,29 @@ struct EinstellungenTests {
     }
 }
 
+struct ZirkelPauseEinstellungTests {
+    @Test func dieZirkelPauseHatEinenFestenSchluessel() {
+        #expect(Einstellungen.zirkelPauseSekundenKey == "zirkelPauseSekunden")
+    }
+
+    @Test func ohneGesetztenWertGiltDieZirkelVorgabe() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+
+        #expect(Einstellungen.zirkelPauseSekunden(defaults) == 20)
+    }
+
+    @Test func gesetzterZirkelWertSchlaegtDieVorgabe() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        defaults.set(30, forKey: Einstellungen.zirkelPauseSekundenKey)
+
+        #expect(Einstellungen.zirkelPauseSekunden(defaults) == 30)
+    }
+
+    @Test func dieZirkelVorgabeStehtUnterDenStufen() {
+        #expect(Einstellungen.resttimerStufen.contains(Einstellungen.zirkelPauseVorgabe))
+    }
+}
+
 struct UebungsansichtEinstellungTests {
     @Test func vorgabeIstMuskelUndDerSchluesselBleibt() {
         let defaults = UserDefaults(suiteName: UUID().uuidString)!

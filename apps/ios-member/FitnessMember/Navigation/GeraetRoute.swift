@@ -20,7 +20,20 @@ enum GeraetRoute: Hashable {
     /// Die Satzseite. `start` kommt aus dem Drawer vor der Uebung (Testnotiz
     /// 11.10., #10) und laesst sie mit dem Countdown beginnen; ohne (Zirkel
     /// ueber die Blockliste) stehen gleich die Raeder.
-    case geraet(station: String, exerciseId: String, token: String?, start: Startwerte? = nil)
+    /// `zirkel`: der Screen gehoert zu einem laufenden Mini-Zirkel (Spec
+    /// 21.10.) -- nach einem gesicherten Satz fuehrt dann die Zirkel-Ebene
+    /// weiter, und Startwerte beginnen ohne Countdown. Der Wert ist der Slot
+    /// (Zirkel.schritt beim Oeffnen), nicht nur ein Schalter: dieselbe
+    /// Uebung kommt in jeder Runde wieder, und ohne eigene Identitaet je
+    /// Slot behandelte der NavigationStack [A, Pause] -> [A] als Pop und
+    /// holte den alten, schon gesperrten Screen zurueck (Finding C-1).
+    case geraet(station: String, exerciseId: String, token: String?, start: Startwerte? = nil,
+                zirkel: Int? = nil)
+    /// Die Pause zwischen zwei Zirkel-Uebungen. Traegt keine Daten: Zirkel
+    /// und Pause liegen im ZirkelAblauf an der Wurzel.
+    case zirkelPause
+    /// Nach dem letzten Slot (oder "Zirkel beenden"): alle Uebungen und Runden.
+    case zirkelUebersicht
     /// Der Abschluss-Screen (Aufgabe 6) braucht die Zahlen der beendeten
     /// Einheit -- sessionId dient nur der Nachverfolgung, die Anzeige
     /// selbst kommt vollstaendig aus zusammenfassung.

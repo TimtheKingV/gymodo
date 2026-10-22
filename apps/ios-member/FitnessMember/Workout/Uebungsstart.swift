@@ -25,6 +25,9 @@ struct UebungsstartAuftrag: Identifiable, Equatable {
     let station: String
     let exerciseId: String
     let token: String?
+    /// Die Uebung gehoert zu einem Mini-Zirkel (Runde 1): der Drawer beginnt
+    /// gleich bei den Startwerten, und die Satzseite startet ohne Countdown.
+    var zirkel: Bool = false
 
     var id: String { "\(station)|\(exerciseId)" }
 }
