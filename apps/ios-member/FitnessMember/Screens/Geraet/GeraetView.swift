@@ -35,6 +35,8 @@ struct GeraetView: View {
     @Environment(SensorAufnahmeKoordinator.self) private var sensorAufnahme
     #endif
     @State private var steuerungOffen = false
+    /// Beim Erscheinen der Reserve-Frage einmal aus den Einstellungen gelesen.
+    @State private var reserveErklaerungZeigen = false
 
     var body: some View {
         // Die Hoehe des sichtbaren Bereichs, damit der Inhalt sie mindestens
@@ -435,8 +437,22 @@ struct GeraetView: View {
             // 18:45 #5). Die Knoepfe bleiben unten, wie im Eingabezustand
             // (Testnotiz 05.10., #13).
             Spacer(minLength: 0)
-            FertigRing()
-                .testnotizElement("geraet.fertig", typ: "FertigRing")
+            // An Kraftgeraeten steht hier die Reserve-Frage statt des Rings
+            // (Trainingsplan-Spec Abschnitt 6): der Screen wartet ohnehin,
+            // und die Antwort macht den naechsten Vorschlag besser.
+            if modell.zeigtReserveFrage {
+                ReserveSkala(auswahl: modell.reserve, mitErklaerung: reserveErklaerungZeigen) {
+                    modell.reserveSetzen($0)
+                }
+                .testnotizElement("geraet.reserve", typ: "ReserveSkala")
+                .onAppear {
+                    reserveErklaerungZeigen = !UserDefaults.standard.bool(forKey: Einstellungen.reserveErklaertKey)
+                    UserDefaults.standard.set(true, forKey: Einstellungen.reserveErklaertKey)
+                }
+            } else {
+                FertigRing()
+                    .testnotizElement("geraet.fertig", typ: "FertigRing")
+            }
             Spacer(minLength: 0)
 
             // Wie in der Pause "Nächste Übung" (Testnotiz 12.10. abends,

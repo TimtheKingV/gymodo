@@ -277,8 +277,15 @@ final class CatalogStore {
         studiohinweis = nil
     }
 
+    /// Ein offener Eintrag mit derselben Satzkennung wird ersetzt, nicht
+    /// ergaenzt: die Reserve-Frage schickt den letzten Satz erneut, und der
+    /// PUT ersetzt ohnehin den ganzen Satz -- die neuere Fassung gilt.
     func enqueue(_ write: PendingSetWrite) {
-        pendingWrites.append(write)
+        if let index = pendingWrites.firstIndex(where: { $0.id == write.id }) {
+            pendingWrites[index] = write
+        } else {
+            pendingWrites.append(write)
+        }
         pendingWriteStore.save(pendingWrites)
     }
 
@@ -365,8 +372,12 @@ final class CatalogStore {
 
     /// Nimmt einen einzelnen Eintrag aus pendingWrites -- Speicher und Platte
     /// zusammen, damit die beiden nie auseinanderlaufen (siehe flushPending).
+    ///
+    /// Nur genau die gesendete Fassung: hat enqueue sie waehrend des PUT
+    /// durch eine neuere ersetzt (Reserve beantwortet, Satz noch offen),
+    /// bleibt die neuere fuer den naechsten Durchgang stehen.
     private func entferneAusPendingWrites(_ write: PendingSetWrite) {
-        pendingWrites.removeAll { $0.id == write.id }
+        pendingWrites.removeAll { $0 == write }
         pendingWriteStore.save(pendingWrites)
     }
 

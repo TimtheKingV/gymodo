@@ -111,6 +111,32 @@ final class GeraetModel {
 
     var cardioListe: [CardioWert] { station.equipmentModel.cardioWerte }
     var istCardio: Bool { !cardioListe.isEmpty }
+
+    /// Die Antwort auf die Reserve-Frage dieser Uebung; nil = noch keine.
+    private(set) var reserve: Reserve?
+    /// Der zuletzt eingereihte Satz -- die Reserve-Frage schickt ihn mit
+    /// rir erneut, mit allen anderen Feldern unveraendert (der PUT ersetzt
+    /// den ganzen Satz, auch Herkunft und Zaehlerereignisse).
+    private var letzterWrite: PendingSetWrite?
+
+    /// Nur nach dem Satzziel und nur bei Wiederholungen: an Cardio und
+    /// Zeitsaetzen gibt es keine Wiederholungen in Reserve.
+    var zeigtReserveFrage: Bool {
+        phase == .abschluss && !istCardio && volumeKind == .reps && letzterWrite != nil
+    }
+
+    func reserveSetzen(_ neu: Reserve) {
+        guard let letzter = letzterWrite else { return }
+        let vorher = reserve?.rir
+        reserve = neu
+        // "Weiss nicht" ohne vorherige Zahl aendert am Satz nichts, und
+        // dieselbe Zahl zweimal braucht keinen zweiten PUT.
+        guard neu.rir != (vorher ?? nil) else { return }
+        var body = letzter.body
+        body.rir = neu.rir
+        sessions.reserveSetzen(setId: letzter.setId, rir: neu.rir)
+        enqueue(PendingSetWrite(sessionId: letzter.sessionId, setId: letzter.setId, body: body))
+    }
     var kannSichern: Bool { !istCardio || !cardio.istLeer }
 
     func cardioSetzen(_ wert: CardioWert, _ zahl: Double?) {
@@ -784,8 +810,10 @@ final class GeraetModel {
         cardio = letzter?.cardio?.nur(cardioListe) ?? CardioWerte()
         // Eine andere Uebung hat ihren eigenen Satzzaehler -- eine Pause
         // oder eine Abschlussentscheidung, die zur vorherigen gehoerte,
-        // gilt hier nicht mehr.
+        // gilt hier nicht mehr. Ebenso die Reserve-Frage.
         phase = .eingabe
+        reserve = nil
+        letzterWrite = nil
         // Neue Uebung, neuer Wert -- ein spaeter fuer diese Uebung
         // eintreffender Vorschlag darf wieder greifen.
         belastungVomNutzer = false
@@ -845,9 +873,13 @@ final class GeraetModel {
         // Immer ueber die Warteschlange, nie direkt: so ist "gespeichert,
         // wird gesendet" nie gelogen, und der Offline-Pfad ist derselbe, der
         // jeden Tag laeuft (Spec Abschnitt 8.2).
-        enqueue(PendingSetWrite(sessionId: geschrieben.sessionId,
-                                setId: geschrieben.setId,
-                                body: geschrieben.body))
+        let write = PendingSetWrite(sessionId: geschrieben.sessionId,
+                                    setId: geschrieben.setId,
+                                    body: geschrieben.body)
+        enqueue(write)
+        letzterWrite = write
+        // Ein neuer Satz ist der neue letzte: die Antwort galt dem vorigen.
+        reserve = nil
         // Nach der Ortspruefung oben wirft sessions.satzSichern() nicht --
         // lokal wird immer geschrieben, auch offline (Spec Abschnitt 8.2).
         // Der Zaehler steigt deshalb hier, nicht hinter einem Erfolgs-Guard.

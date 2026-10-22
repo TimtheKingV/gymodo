@@ -65,6 +65,15 @@ struct CardioGeraetModelTests {
         #expect(modell.phase == .abschluss)
     }
 
+    @Test func keineReserveFrageAmCardio() async {
+        let modell = cardioModell()
+        modell.cardioSetzen(.watt, 150)
+        await modell.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(modell.phase == .abschluss)
+        #expect(!modell.zeigtReserveFrage)
+    }
+
     /// Review Focus 3.
     @Test func weitererSatzBehaeltDieEbenGesichertenWerte() async {
         let modell = cardioModell()
