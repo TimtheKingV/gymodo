@@ -208,6 +208,26 @@ struct ZirkelPlanungTests {
                                       bootstrap: bootstrap, imZirkel: []) == .keine)
     }
 
+    // MARK: - Naechster Schritt im Hinzufuegen-Sheet
+
+    @Test func bekannteCardioUebungWirdDirektAngehaengt() {
+        #expect(ZirkelAuswahl.schritt(nach: .uebung(zu("e1")), direkt: { _ in true }) == .direkt(zu("e1")))
+    }
+
+    @Test func uebungMitWertenFuehrtZuDenStartwerten() {
+        #expect(ZirkelAuswahl.schritt(nach: .uebung(zu("e1")), direkt: { _ in false }) == .werte(zu("e1")))
+    }
+
+    @Test func mehrereUebungenFragenNach() {
+        let angebot = ZirkelAuswahl.Angebot.auswahl(offen: [zu("e1"), zu("e2")], schonDabei: [])
+        #expect(ZirkelAuswahl.schritt(nach: angebot, direkt: { _ in true }) == .fragen)
+    }
+
+    @Test func schonDabeiUndKeineLiefernKeinenSchritt() {
+        #expect(ZirkelAuswahl.schritt(nach: .schonDabei, direkt: { _ in false }) == .schonDabei)
+        #expect(ZirkelAuswahl.schritt(nach: .keine, direkt: { _ in false }) == .nichts)
+    }
+
     // MARK: - Vorgemerkte Startwerte (Fix-Runde 1)
 
     private let werte = Startwerte(belastung: 12.5, umfang: 10, nebenbelastung: nil)
