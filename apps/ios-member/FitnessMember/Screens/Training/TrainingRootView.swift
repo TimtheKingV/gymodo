@@ -1120,6 +1120,14 @@ struct TrainingRootView: View {
         case .auswahl(let offen, let schonDabei):
             zirkelUebungswahl = ZirkelUebungswahl(station: station, offen: offen, schonDabei: schonDabei)
         case .uebung(let uebung):
+            // Eine bekannte Cardio-Uebung hat keinen Drawer-Schritt: ein leeres
+            // Sheet wuerde aufgehen und sich selbst schliessen. Sie kommt
+            // ohne Werte direkt in die Liste.
+            if zirkelDirektStart(uebung) {
+                zirkelAuswahlOffen = false
+                zirkelPlanung?.entwurf.hinzufuegen(uebung)
+                return
+            }
             // Erst Gewicht und Wiederholungen im Drawer; angehaengt wird
             // die Uebung erst mit "Zur Planung" (zirkelPlanungWerte).
             zirkelPlanungDrawerWartet = UebungsstartAuftrag(station: uebung.station, exerciseId: uebung.exerciseId,
@@ -1203,6 +1211,12 @@ struct TrainingRootView: View {
         if let werte = zirkelVormerkung.entnehmen(erste, runde: 1) {
             zirkelAblauf.starten(planung.entwurf.zirkel())
             uebungStarten(auftrag, mit: werte)
+        } else if zirkelDirektStart(erste) {
+            // Bekannte Cardio-Uebung zuerst: kein Drawer-Schritt, also gleich los.
+            if sessions.aktiveSession() == nil { sessions.trainingStarten() }
+            let zirkel = planung.entwurf.zirkel()
+            zirkelAblauf.starten(zirkel)
+            pfad.append(ZirkelPfad.route(erste, in: zirkel))
         } else {
             // Erst der Drawer fuer die neue Uebung 1; der Ablauf beginnt mit
             // dessen "Übung starten" (uebungStarten).
