@@ -11,6 +11,12 @@ import SwiftUI
 /// "Zurueck zum Training" haette sonst ins Leere gefuehrt, und der
 /// Zirkelfall aus M1-Spec SS5.3 waere nicht baubar gewesen. Hier bekommt sie
 /// ihre Gestalt.
+/// Seiten im Stack des Auswahl-Sheets neben den Kategorielisten (GeraetRoute).
+private enum ZirkelAuswahlZiel: Hashable {
+    case uebungswahl
+    case start(ZirkelUebung)
+}
+
 struct TrainingRootView: View {
     @Environment(CatalogStore.self) private var katalog
     @Environment(WorkoutSessionStore.self) private var sessions
@@ -95,15 +101,13 @@ struct TrainingRootView: View {
     /// verschluckt SwiftUI (das zweite kommt nie).
     @State private var zirkelPlanungWartet: ZirkelPlanung?
     @State private var zirkelAuswahlOffen = false
-    /// Der eigene Pfad des Auswahl-Sheets -- nur fuer die Kategorielisten.
-    @State private var zirkelAuswahlPfad: [GeraetRoute] = []
+    /// Der eigene Pfad des Auswahl-Sheets: Kategorielisten, in der Planung
+    /// auch "Welche Übung?" und die Startwerte (ZirkelAuswahlZiel).
+    @State private var zirkelAuswahlPfad = NavigationPath()
     @State private var zirkelPlanungHinweis: String?
     /// Der Drawer fuer Gewicht und Wiederholungen einer Uebung in der
     /// Planung (neu oder zum Aendern). Haengt am Planungs-Sheet.
     @State private var zirkelPlanungDrawer: UebungsstartAuftrag?
-    /// Die gewaehlte Uebung, bis das Auswahl-Sheet zu ist: erst dann geht
-    /// der Drawer auf (zwei Sheets in einem Zug verschluckt SwiftUI).
-    @State private var zirkelPlanungDrawerWartet: UebungsstartAuftrag?
     /// Der Drawer fuer Uebung 1, wenn sie in der Planung nach vorne
     /// geschoben wurde -- er geht wie die Planung selbst erst im onDismiss
     /// des vorigen Sheets auf.
@@ -125,8 +129,8 @@ struct TrainingRootView: View {
     @State private var zirkelErweiternHinweis: String?
     /// "Welche Übung?" im Auswahl-Sheet (Finding I-2): eine Kachel mit
     /// mehreren Uebungen fragt nach, statt still die zuletzt genutzte zu
-    /// nehmen. Ein Dialog im Sheet, kein weiteres Sheet -- das Auswahl-Sheet
-    /// bleibt dafuer offen.
+    /// nehmen. In der Planung eine Seite im Stack des Auswahl-Sheets, beim
+    /// Erweitern ein Blatt darueber -- das Auswahl-Sheet bleibt offen.
     @State private var zirkelUebungswahl: ZirkelUebungswahl?
     /// Der Stand fuer die Zirkel-Uebersicht, festgehalten beim Wechsel
     /// dorthin. "Zirkel beenden" ruft zirkelAblauf.beenden() sofort, der
@@ -237,15 +241,17 @@ struct TrainingRootView: View {
                                    beiBearbeiten: zirkelWerteBearbeiten,
                                    beiHinzufuegen: {
                                        zirkelPlanungHinweis = nil
-                                       zirkelAuswahlPfad = []
+                                       zirkelAuswahlPfad = NavigationPath()
+                                       zirkelUebungswahl = nil
                                        zirkelAuswahlOffen = true
                                    },
                                    beiStart: zirkelStarten)
                 .environment(videoVorrat)
                 // Am Planungs-Sheet, nicht an der Wurzel: ein Sheet ueber
                 // einem Sheet muss vom oberen aus aufgehen.
-                .sheet(isPresented: $zirkelAuswahlOffen, onDismiss: zirkelPlanungDrawerOeffnen) {
-                    zirkelAuswahl(hinweis: nil, beiWahl: zirkelHinzufuegen,
+                // Gerät, Übung, Einweisung und Startwerte in diesem einen Sheet.
+                .sheet(isPresented: $zirkelAuswahlOffen) {
+                    zirkelAuswahl(hinweis: nil, inStapel: true, beiWahl: zirkelHinzufuegen,
                                   beiAbbrechen: { zirkelAuswahlOffen = false })
                 }
                 .sheet(item: $zirkelPlanungDrawer) { auftrag in
@@ -256,7 +262,7 @@ struct TrainingRootView: View {
             // der neuen Uebung haengt hier, und der folgt erst im onDismiss
             // dieses Sheets.
             .sheet(isPresented: $zirkelErweiternOffen, onDismiss: zirkelErweiternNachAuswahl) {
-                zirkelAuswahl(hinweis: zirkelErweiternHinweis,
+                zirkelAuswahl(hinweis: zirkelErweiternHinweis, inStapel: false,
                               beiWahl: zirkelErweiternWahl,
                               beiAbbrechen: { zirkelErweiternOffen = false })
             }
@@ -1012,7 +1018,11 @@ struct TrainingRootView: View {
     /// nie beide zugleich offen, deshalb auch ein gemeinsamer Pfad.
     /// `hinweis`: warum die letzte Wahl nicht ging -- beim Erweitern bleibt
     /// das Sheet dafuer offen, in der Planung zeigt ihn deren Sheet.
-    private func zirkelAuswahl(hinweis: String?, beiWahl: @escaping (Station, String?) -> Void,
+    /// `inStapel`: "Welche Übung?" und die Startwerte sind Seiten im Stack
+    /// dieses Sheets (Planung); sonst fragt ein Blatt darueber (Erweitern),
+    /// dessen Drawer erst im onDismiss folgt.
+    private func zirkelAuswahl(hinweis: String?, inStapel: Bool,
+                               beiWahl: @escaping (Station, String?) -> Void,
                                beiAbbrechen: @escaping () -> Void) -> some View {
         NavigationStack(path: $zirkelAuswahlPfad) {
             GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader) {
@@ -1027,7 +1037,7 @@ struct TrainingRootView: View {
             } beiKachel: { kachel in
                 switch GeraeteAuswahl.ziel(kachel) {
                 case .station(let station): beiWahl(station, nil)
-                case .liste(let gruppe): zirkelAuswahlPfad.append(.kategorie(gruppe))
+                case .liste(let gruppe): zirkelAuswahlPfad.append(GeraetRoute.kategorie(gruppe))
                 }
             }
             // Nur .kategorie: alle anderen Routen gehoeren an die Wurzel.
@@ -1037,6 +1047,19 @@ struct TrainingRootView: View {
                         beiWahl(station, uebungId)
                     }
                     .environment(videoVorrat)
+                }
+            }
+            .navigationDestination(for: ZirkelAuswahlZiel.self) { ziel in
+                switch ziel {
+                case .uebungswahl:
+                    if let wahl = zirkelUebungswahl {
+                        ZirkelUebungswahlSheet(wahl: wahl, eingebettet: true) { uebung in
+                            beiWahl(wahl.station, uebung.exerciseId)
+                        }
+                        .environment(videoVorrat)
+                    }
+                case .start(let uebung):
+                    zirkelStartwerteSeite(uebung)
                 }
             }
             .toolbar {
@@ -1051,7 +1074,7 @@ struct TrainingRootView: View {
         // der Wurzel, ein dort haengendes Blatt erschiene erst nach dem
         // Zurueck. Die Wahl geht ueber denselben beiWahl-Weg zurueck, jetzt
         // mit Uebung -- ZirkelAuswahl.angebot fragt dann nicht noch einmal.
-        .sheet(item: $zirkelUebungswahl) { wahl in
+        .sheet(item: inStapel ? Binding<ZirkelUebungswahl?>.constant(nil) : $zirkelUebungswahl) { wahl in
             ZirkelUebungswahlSheet(wahl: wahl) { uebung in
                 zirkelUebungswahl = nil
                 beiWahl(wahl.station, uebung.exerciseId)
@@ -1115,28 +1138,26 @@ struct TrainingRootView: View {
             zirkelPlanungHinweis = "Im Zirkel gehen nur Geräte an deinem jetzigen Ort."
             return
         }
-        switch ZirkelAuswahl.angebot(station: station, uebungId: uebungId, bootstrap: bootstrap,
-                                     imZirkel: planung.entwurf.uebungen) {
-        case .auswahl(let offen, let schonDabei):
+        let angebot = ZirkelAuswahl.angebot(station: station, uebungId: uebungId, bootstrap: bootstrap,
+                                            imZirkel: planung.entwurf.uebungen)
+        switch ZirkelAuswahl.schritt(nach: angebot, direkt: zirkelDirektStart) {
+        case .fragen:
+            guard case .auswahl(let offen, let schonDabei) = angebot else { return }
             zirkelUebungswahl = ZirkelUebungswahl(station: station, offen: offen, schonDabei: schonDabei)
-        case .uebung(let uebung):
-            // Eine bekannte Cardio-Uebung hat keinen Drawer-Schritt: ein leeres
-            // Sheet wuerde aufgehen und sich selbst schliessen. Sie kommt
-            // ohne Werte direkt in die Liste.
-            if zirkelDirektStart(uebung) {
-                zirkelAuswahlOffen = false
-                zirkelPlanung?.entwurf.hinzufuegen(uebung)
-                return
-            }
-            // Erst Gewicht und Wiederholungen im Drawer; angehaengt wird
-            // die Uebung erst mit "Zur Planung" (zirkelPlanungWerte).
-            zirkelPlanungDrawerWartet = UebungsstartAuftrag(station: uebung.station, exerciseId: uebung.exerciseId,
-                                                            token: uebung.token, zirkel: true, planung: true)
+            zirkelAuswahlPfad.append(ZirkelAuswahlZiel.uebungswahl)
+        case .werte(let uebung):
+            // Gewicht und Wiederholungen als naechste Seite im selben Sheet;
+            // angehaengt wird die Uebung erst mit "Zur Planung".
+            zirkelAuswahlPfad.append(ZirkelAuswahlZiel.start(uebung))
+        case .direkt(let uebung):
+            // Eine bekannte Cardio-Uebung hat keinen Drawer-Schritt: sie
+            // kommt ohne Werte direkt in die Liste.
             zirkelAuswahlOffen = false
+            zirkelPlanung?.entwurf.hinzufuegen(uebung)
         case .schonDabei:
             zirkelAuswahlOffen = false
             zirkelPlanungHinweis = Self.schonDabeiHinweis(station, uebungId: uebungId)
-        case .keine:
+        case .nichts:
             zirkelAuswahlOffen = false
         }
     }
@@ -1145,14 +1166,6 @@ struct TrainingRootView: View {
         uebungId == nil && station.exercises.count > 1
             ? "Alle Übungen dieses Geräts sind schon im Zirkel."
             : "Diese Übung ist schon im Zirkel."
-    }
-
-    /// onDismiss des Auswahl-Sheets: jetzt darf der Drawer der gewaehlten
-    /// Uebung aufgehen. Ohne Wahl (Abbrechen) tut es nichts.
-    private func zirkelPlanungDrawerOeffnen() {
-        guard let wartet = zirkelPlanungDrawerWartet else { return }
-        zirkelPlanungDrawerWartet = nil
-        zirkelPlanungDrawer = wartet
     }
 
     /// Tipp auf eine Zeile der Planung: derselbe Drawer, mit den Werten.
@@ -1175,11 +1188,29 @@ struct TrainingRootView: View {
         }
     }
 
+    /// Die letzte Seite im Auswahl-Sheet: Einweisung (neue Uebung) und
+    /// Startwerte. "Zurück" fuehrt zur Liste bzw. "Welche Übung?", nicht
+    /// aus dem Sheet.
+    @ViewBuilder
+    private func zirkelStartwerteSeite(_ uebung: ZirkelUebung) -> some View {
+        if let modell = modell(station: uebung.station, exerciseId: uebung.exerciseId, token: uebung.token,
+                               startwerte: zirkelPlanung?.entwurf.werte[uebung], zirkel: true) {
+            UebungsstartSheet(modell: modell, startTitel: "Zur Planung", mitUmfang: true, eingebettet: true,
+                              beiStart: { werte in
+                zirkelPlanungWerte(uebung, werte, mitWerten: modell.volumeKind == .reps)
+            }, beiSchliessen: { if !zirkelAuswahlPfad.isEmpty { zirkelAuswahlPfad.removeLast() } })
+            .navigationBarTitleDisplayMode(.inline)
+            .environment(videoVorrat)
+        }
+    }
+
     /// "Zur Planung": die Uebung kommt in den Entwurf (falls neu) und
     /// bekommt ihre Werte. Cardio hat keine: sie bleibt ohne Eintrag und
-    /// fragt spaeter wie bisher.
+    /// fragt spaeter wie bisher. Schliesst Drawer (Werte aendern) bzw.
+    /// Auswahl-Sheet (neue Uebung).
     private func zirkelPlanungWerte(_ uebung: ZirkelUebung, _ werte: Startwerte, mitWerten: Bool) {
         zirkelPlanungDrawer = nil
+        zirkelAuswahlOffen = false
         zirkelPlanung?.entwurf.hinzufuegen(uebung)
         zirkelPlanung?.entwurf.setzeWerte(mitWerten ? werte : nil, fuer: uebung)
     }
@@ -1326,7 +1357,7 @@ struct TrainingRootView: View {
 
     private func zirkelAuswahlOeffnen() {
         zirkelErweiternHinweis = nil
-        zirkelAuswahlPfad = []
+        zirkelAuswahlPfad = NavigationPath()
         zirkelErweiternOffen = true
     }
 
@@ -1373,7 +1404,7 @@ struct TrainingRootView: View {
     /// Kategorieliste hat keinen Kopf dafuer.
     private func zirkelErweiternAblehnen(_ hinweis: String) {
         zirkelErweiternHinweis = hinweis
-        zirkelAuswahlPfad = []
+        zirkelAuswahlPfad = NavigationPath()
     }
 
     /// onDismiss der Liste: erst jetzt der Drawer der neuen Uebung (zwei

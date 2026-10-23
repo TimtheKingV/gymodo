@@ -25,6 +25,8 @@ struct UebungsstartSheet: View {
     /// Auch das Wiederholungs-Rad: in der Planung werden beide Werte
     /// festgelegt, im normalen Drawer erst in der Uebung.
     let mitUmfang: Bool
+    /// Als Seite in einem Sheet-Stack: Detents und Griff gehoeren dem Sheet.
+    let eingebettet: Bool
 
     /// Einmal beim Oeffnen bestimmt, nicht bei jedem Rendern: ein spaeter
     /// eintreffender Kontext darf dem Mitglied nicht unter derselben
@@ -45,11 +47,13 @@ struct UebungsstartSheet: View {
     ///   (Testnotiz 17.10., #4); siehe `Uebungsstart.schritte`.
     init(modell: GeraetModel, mitUebersicht: Bool = false,
          startTitel: String = "Übung starten", mitUmfang: Bool = false,
+         eingebettet: Bool = false,
          beiStart: @escaping (Startwerte) -> Void,
          beiZirkel: ((Startwerte) -> Void)? = nil,
          beiSchliessen: @escaping () -> Void) {
         self.startTitel = startTitel
         self.mitUmfang = mitUmfang
+        self.eingebettet = eingebettet
         _modell = State(initialValue: modell)
         self.beiStart = beiStart
         self.beiZirkel = beiZirkel
@@ -105,8 +109,7 @@ struct UebungsstartSheet: View {
         // Kontext fuer Video, Beschreibung und Vorschlag. Kommt er nicht
         // (offline), steht alles aus dem Prefetch.
         .task { await modell.kontextLaden() }
-        .presentationDetents(detents)
-        .presentationDragIndicator(.visible)
+        .modifier(EigeneDetents(aktiv: !eingebettet, detents: detents))
     }
 
     /// Nur die Startwerte (bekannte Uebung): so hoch wie der Inhalt, die
@@ -272,6 +275,22 @@ struct StartwerteSchritt: View {
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textFaint)
+        }
+    }
+}
+
+/// Detents und Griff nur, wenn der Drawer selbst das Sheet ist.
+private struct EigeneDetents: ViewModifier {
+    let aktiv: Bool
+    let detents: Set<PresentationDetent>
+
+    func body(content: Content) -> some View {
+        if aktiv {
+            content
+                .presentationDetents(detents)
+                .presentationDragIndicator(.visible)
+        } else {
+            content
         }
     }
 }

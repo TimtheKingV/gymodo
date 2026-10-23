@@ -22,39 +22,49 @@ struct ZirkelUebungswahl: Identifiable {
 /// Stacks und blieb unter der Kategorie-Seite unsichtbar.
 struct ZirkelUebungswahlSheet: View {
     let wahl: ZirkelUebungswahl
+    /// Als Seite im Stack des Auswahl-Sheets: dessen Leiste und Detents gelten.
+    var eingebettet = false
     let beiWahl: (ZirkelUebung) -> Void
 
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-                    ForEach(wahl.offen, id: \.self) { uebung in
-                        Button { beiWahl(uebung) } label: { zeile(uebung) }
-                            .buttonStyle(PressButtonStyle())
+        if eingebettet {
+            liste
+        } else {
+            NavigationStack {
+                liste
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Abbrechen") { dismiss() }
+                                .foregroundStyle(DesignSystem.Color.textMuted)
+                        }
                     }
-                    if let hinweis = wahl.hinweis {
-                        Text(hinweis)
-                            .font(.system(size: 12))
-                            .foregroundStyle(DesignSystem.Color.textFaint)
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, DesignSystem.Spacing.s24)
             }
-            .background(DesignSystem.Color.bg)
-            .navigationTitle("Welche Übung?")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                }
-            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
+    }
+
+    private var liste: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+                ForEach(wahl.offen, id: \.self) { uebung in
+                    Button { beiWahl(uebung) } label: { zeile(uebung) }
+                        .buttonStyle(PressButtonStyle())
+                }
+                if let hinweis = wahl.hinweis {
+                    Text(hinweis)
+                        .font(.system(size: 12))
+                        .foregroundStyle(DesignSystem.Color.textFaint)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, DesignSystem.Spacing.s24)
+        }
+        .background(DesignSystem.Color.bg)
+        .navigationTitle("Welche Übung?")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func zeile(_ uebung: ZirkelUebung) -> some View {
