@@ -1035,23 +1035,17 @@ struct TrainingRootView: View {
                         .testnotizElement("zirkel.auswahl.abbrechen", typ: "Button")
                 }
             }
-            // Die Wahl geht ueber denselben beiWahl-Weg zurueck, jetzt mit
-            // Uebung -- ZirkelAuswahl.angebot fragt dann nicht noch einmal.
-            .confirmationDialog("Welche Übung?",
-                                isPresented: Binding(get: { zirkelUebungswahl != nil },
-                                                     set: { if !$0 { zirkelUebungswahl = nil } }),
-                                titleVisibility: .visible,
-                                presenting: zirkelUebungswahl) { wahl in
-                ForEach(wahl.offen, id: \.self) { uebung in
-                    Button(wahl.name(uebung)) {
-                        zirkelUebungswahl = nil
-                        beiWahl(wahl.station, uebung.exerciseId)
-                    }
-                }
-                Button("Abbrechen", role: .cancel) { zirkelUebungswahl = nil }
-            } message: { wahl in
-                if let hinweis = wahl.hinweis { Text(hinweis) }
+        }
+        // Am Stack, nicht an seiner Wurzel: die Kategorie-Seite liegt ueber
+        // der Wurzel, ein dort haengendes Blatt erschiene erst nach dem
+        // Zurueck. Die Wahl geht ueber denselben beiWahl-Weg zurueck, jetzt
+        // mit Uebung -- ZirkelAuswahl.angebot fragt dann nicht noch einmal.
+        .sheet(item: $zirkelUebungswahl) { wahl in
+            ZirkelUebungswahlSheet(wahl: wahl) { uebung in
+                zirkelUebungswahl = nil
+                beiWahl(wahl.station, uebung.exerciseId)
             }
+            .environment(videoVorrat)
         }
         .environment(videoVorrat)
         .presentationDragIndicator(.visible)
@@ -1480,22 +1474,6 @@ private struct ZirkelPlanung {
     var entwurf: ZirkelEntwurf
     let ersterAuftrag: UebungsstartAuftrag
     let startwerte: Startwerte
-}
-
-/// Die offene Frage "Welche Übung?" einer Station mit mehreren Uebungen
-/// (Finding I-2): `offen` steht zur Wahl, `schonDabei` nur im Hinweis.
-private struct ZirkelUebungswahl {
-    let station: Station
-    let offen: [ZirkelUebung]
-    let schonDabei: [ZirkelUebung]
-
-    func name(_ uebung: ZirkelUebung) -> String {
-        station.exercises.first { $0.id == uebung.exerciseId }?.name ?? "Übung"
-    }
-
-    var hinweis: String? {
-        schonDabei.isEmpty ? nil : "Schon im Zirkel: " + schonDabei.map(name).joined(separator: ", ")
-    }
 }
 
 /// Ein Zirkel, der gerade waechst (Task 7): woher die Erweiterung kommt,
