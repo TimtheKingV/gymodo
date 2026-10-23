@@ -13,7 +13,7 @@ import SwiftUI
 /// ihre Gestalt.
 /// Seiten im Stack des Auswahl-Sheets neben den Kategorielisten (GeraetRoute).
 private enum ZirkelAuswahlZiel: Hashable {
-    case uebungswahl
+    case uebungswahl(ZirkelUebungswahl)
     case start(ZirkelUebung)
 }
 
@@ -242,7 +242,6 @@ struct TrainingRootView: View {
                                    beiHinzufuegen: {
                                        zirkelPlanungHinweis = nil
                                        zirkelAuswahlPfad = NavigationPath()
-                                       zirkelUebungswahl = nil
                                        zirkelAuswahlOffen = true
                                    },
                                    beiStart: zirkelStarten)
@@ -1051,13 +1050,13 @@ struct TrainingRootView: View {
             }
             .navigationDestination(for: ZirkelAuswahlZiel.self) { ziel in
                 switch ziel {
-                case .uebungswahl:
-                    if let wahl = zirkelUebungswahl {
-                        ZirkelUebungswahlSheet(wahl: wahl, eingebettet: true) { uebung in
-                            beiWahl(wahl.station, uebung.exerciseId)
-                        }
-                        .environment(videoVorrat)
+                case .uebungswahl(let wahl):
+                    // Die Wahl reist im Pfad: die Closure hier haelt den State
+                    // vom Aufbau des Sheets und sah zirkelUebungswahl noch leer.
+                    ZirkelUebungswahlSheet(wahl: wahl, eingebettet: true) { uebung in
+                        beiWahl(wahl.station, uebung.exerciseId)
                     }
+                    .environment(videoVorrat)
                 case .start(let uebung):
                     zirkelStartwerteSeite(uebung)
                 }
@@ -1143,8 +1142,8 @@ struct TrainingRootView: View {
         switch ZirkelAuswahl.schritt(nach: angebot, direkt: zirkelDirektStart) {
         case .fragen:
             guard case .auswahl(let offen, let schonDabei) = angebot else { return }
-            zirkelUebungswahl = ZirkelUebungswahl(station: station, offen: offen, schonDabei: schonDabei)
-            zirkelAuswahlPfad.append(ZirkelAuswahlZiel.uebungswahl)
+            let wahl = ZirkelUebungswahl(station: station, offen: offen, schonDabei: schonDabei)
+            zirkelAuswahlPfad.append(ZirkelAuswahlZiel.uebungswahl(wahl))
         case .werte(let uebung):
             // Gewicht und Wiederholungen als naechste Seite im selben Sheet;
             // angehaengt wird die Uebung erst mit "Zur Planung".

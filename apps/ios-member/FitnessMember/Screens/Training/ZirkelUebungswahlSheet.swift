@@ -2,12 +2,24 @@ import SwiftUI
 
 /// Die offene Frage "Welche Übung?" einer Station mit mehreren Uebungen
 /// (Finding I-2): `offen` steht zur Wahl, `schonDabei` nur im Hinweis.
-struct ZirkelUebungswahl: Identifiable {
+struct ZirkelUebungswahl: Identifiable, Hashable {
     let station: Station
     let offen: [ZirkelUebung]
     let schonDabei: [ZirkelUebung]
 
     var id: String { station.schluessel }
+
+    // Station selbst ist nicht Hashable; Schluessel und Listen genuegen, damit
+    // die Wahl als Wert im Navigationspfad reisen kann.
+    static func == (a: Self, b: Self) -> Bool {
+        a.station.schluessel == b.station.schluessel && a.offen == b.offen && a.schonDabei == b.schonDabei
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(station.schluessel)
+        hasher.combine(offen)
+        hasher.combine(schonDabei)
+    }
 
     func name(_ uebung: ZirkelUebung) -> String {
         station.exercises.first { $0.id == uebung.exerciseId }?.name ?? "Übung"
