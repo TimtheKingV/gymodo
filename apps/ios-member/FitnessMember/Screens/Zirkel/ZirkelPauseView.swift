@@ -77,7 +77,7 @@ struct ZirkelPauseView: View {
                     if zirkel.naechsterSchrittIstRundenwechsel, let runde = ablauf.geschaffteRunde {
                         rundenzusammenfassung(zirkel, runde: runde)
                     }
-                    alsNaechstes(naechste, danach: ZirkelPauseText.danach(zirkel))
+                    reihenfolge(zirkel, naechste: naechste)
                     Spacer(minLength: 0)
                     knoepfe(naechste)
                 }
@@ -124,44 +124,74 @@ struct ZirkelPauseView: View {
         }
     }
 
-    private func alsNaechstes(_ uebung: ZirkelUebung, danach: ZirkelUebung?) -> some View {
+    /// Die ganze Reihenfolge im Stil des Katalogs, rechts je Uebung der
+    /// Fortschritt. Das Video steht in der Kachel; nur die naechste Zeile
+    /// traegt "Letztes Mal" und den Akzentrand (Anti-Ziel: nicht ueberladen).
+    private func reihenfolge(_ zirkel: Zirkel, naechste: ZirkelUebung) -> some View {
         Card {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-                Text("ALS NÄCHSTES")
-                    .font(DesignSystem.Typography.label)
-                    .tracking(1.5)
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-                // Ohne Video der Platzhalter in voller Hoehe: die Karte
-                // springt nicht, wenn das Video nachkommt (Spec-Annahme:
-                // fehlt das Video, ein Platzhalter-Symbol).
-                UebungsVideoKachel(exerciseId: uebung.exerciseId, hoehe: 160, ersatz: nil) {
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                        .fill(DesignSystem.Color.surfaceRaised)
-                        .overlay {
-                            Image(systemName: "figure.strengthtraining.functional")
-                                .font(.system(size: 40, weight: .semibold))
-                                .foregroundStyle(DesignSystem.Color.textFaint)
-                        }
-                }
-                Text(uebungsname(uebung))
-                    .font(DesignSystem.Typography.uebungsname)
-                    .foregroundStyle(DesignSystem.Color.text)
-                if let zuletzt = letztesMal(uebung) {
-                    Text("Letztes Mal \(zuletzt)")
-                        .font(DesignSystem.Typography.fliesstext)
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                        .monospacedDigit()
-                }
-                if let danach {
-                    Text("Danach: \(uebungsname(danach))")
-                        .font(.system(size: 13))
-                        .foregroundStyle(DesignSystem.Color.textMuted)
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+                ForEach(Array(zirkel.uebungen.enumerated()), id: \.element) { index, uebung in
+                    zeile(uebung, stand: zirkel.stand(an: index), istNaechste: uebung == naechste)
                 }
             }
             .padding(DesignSystem.Spacing.s12)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .testnotizElement("zirkel.pause.als-naechstes", typ: "Card")
+        .testnotizElement("zirkel.pause.reihenfolge", typ: "Card")
+    }
+
+    private func zeile(_ uebung: ZirkelUebung, stand: ZirkelStand, istNaechste: Bool) -> some View {
+        HStack(spacing: DesignSystem.Spacing.s12) {
+            UebungsVideoKachel(exerciseId: uebung.exerciseId, kante: 56) { Uebungsbild(kante: 56) }
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                Text(uebungsname(uebung))
+                    .font(DesignSystem.Typography.uebungsname)
+                    .foregroundStyle(DesignSystem.Color.text)
+                if istNaechste, let zuletzt = letztesMal(uebung) {
+                    Text("Letztes Mal \(zuletzt)")
+                        .font(.system(size: 13))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .monospacedDigit()
+                }
+            }
+            Spacer(minLength: 0)
+            standAnzeige(stand)
+        }
+        .padding(DesignSystem.Spacing.s8)
+        .overlay {
+            if istNaechste {
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                    .strokeBorder(DesignSystem.Color.accent, lineWidth: 2)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(uebungsname(uebung)), \(ZirkelPauseText.standSprache(stand))")
+    }
+
+    /// Das Gruen der App ist der Akzent; ein zweites Gruen gibt es nicht.
+    @ViewBuilder
+    private func standAnzeige(_ stand: ZirkelStand) -> some View {
+        switch stand {
+        case .abgeschlossen:
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 22))
+                .foregroundStyle(DesignSystem.Color.accent)
+        case .naechste:
+            Text("Nächste")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(DesignSystem.Color.onAccent)
+                .padding(.horizontal, DesignSystem.Spacing.s8)
+                .padding(.vertical, DesignSystem.Spacing.s4)
+                .background(DesignSystem.Color.accent, in: Capsule())
+        case .dran:
+            Text(ZirkelPauseText.standText(stand) ?? "")
+                .font(.system(size: 15, weight: .bold).monospacedDigit())
+                .foregroundStyle(DesignSystem.Color.accent)
+        case .offen:
+            Text(ZirkelPauseText.standText(stand) ?? "")
+                .font(.system(size: 15, weight: .semibold).monospacedDigit())
+                .foregroundStyle(DesignSystem.Color.textMuted)
+        }
     }
 
     private func knoepfe(_ naechste: ZirkelUebung) -> some View {
@@ -229,14 +259,21 @@ enum ZirkelPauseText {
         "\(uebungsname) starten"
     }
 
-    /// Die Uebung nach der naechsten, aber nur innerhalb derselben Runde:
-    /// danach kaeme erst die Rundenpause, und ein Name dahinter laese sich,
-    /// als ginge es ohne Pause weiter.
-    static func danach(_ zirkel: Zirkel) -> ZirkelUebung? {
-        let anzahl = zirkel.uebungen.count
-        let folgend = zirkel.schritt + 1
-        guard !zirkel.istFertig, folgend % anzahl != 0, folgend < zirkel.runden * anzahl else { return nil }
-        return zirkel.uebungen[folgend % anzahl]
+    /// Rechts in der Zeile: "1/3", "Nächste"; beim Haekchen steht ein Bild.
+    static func standText(_ stand: ZirkelStand) -> String? {
+        switch stand {
+        case .abgeschlossen: nil
+        case .naechste: "Nächste"
+        case .dran(let k, let r), .offen(let k, let r): "\(k)/\(r)"
+        }
+    }
+
+    static func standSprache(_ stand: ZirkelStand) -> String {
+        switch stand {
+        case .abgeschlossen: "Abgeschlossen"
+        case .naechste: "Nächste Übung"
+        case .dran(let k, let r), .offen(let k, let r): "\(k) von \(r) Runden gemacht"
+        }
     }
 
     /// Je Zirkel-Uebung "Name 12,5 kg × 10" aus ihrem Satz in der eben
