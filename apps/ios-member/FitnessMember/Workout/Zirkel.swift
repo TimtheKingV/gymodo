@@ -110,6 +110,10 @@ struct ZirkelEntwurf: Equatable {
     var runden: Int = 3
     var uebungspause: Int
     var rundenpause: Int
+    /// Gewicht und Wiederholungen je Uebung, beim Anlegen festgelegt: im
+    /// Zirkel entfaellt so der Drawer vor jeder Uebung. Uebungen ohne
+    /// Eintrag (Cardio) gehen den bisherigen Weg.
+    private(set) var werte: [ZirkelUebung: Startwerte] = [:]
 
     /// Die Pausen kommen aus den Einstellungen: zwischen Uebungen die kurze
     /// Zirkelpause, zwischen Runden der normale Satz-Resttimer -- die
@@ -151,7 +155,13 @@ struct ZirkelEntwurf: Equatable {
     }
 
     mutating func entferne(at stellen: IndexSet) {
+        for stelle in stellen { werte[uebungen[stelle]] = nil }
         uebungen.remove(atOffsets: stellen)
+    }
+
+    /// nil loescht den Eintrag.
+    mutating func setzeWerte(_ werte: Startwerte?, fuer uebung: ZirkelUebung) {
+        self.werte[uebung] = werte
     }
 
     /// Nur fuer einen gueltigen Entwurf (Zirkel.init prueft die
@@ -220,6 +230,10 @@ struct ZirkelVormerkung: Equatable {
 
     init(_ uebung: ZirkelUebung, werte: Startwerte) {
         self.werte = [uebung: werte]
+    }
+
+    init(_ werte: [ZirkelUebung: Startwerte]) {
+        self.werte = werte
     }
 
     private init(werte: [ZirkelUebung: Startwerte]) {

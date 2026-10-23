@@ -87,4 +87,15 @@ struct ZirkelTests {
         let z = Zirkel(uebungen: [uebung(1), uebung(2)], runden: 3, uebungspause: 30, rundenpause: 90, schritt: -4)
         #expect(z.schritt == 0)
     }
+
+    @Test func vormerkungAusMehrerenWertenEntnimmtJedeEinmalInRundeEins() {
+        let a = Startwerte(belastung: 10, umfang: 8, nebenbelastung: nil)
+        let b = Startwerte(belastung: 20, umfang: 12, nebenbelastung: nil)
+        var v = ZirkelVormerkung([uebung(1): a, uebung(2): b])
+        #expect(v.entnehmen(uebung(1), runde: 1) == a)
+        #expect(v.entnehmen(uebung(1), runde: 1) == nil)
+        // Runde 2 liefert nichts und raeumt den Eintrag trotzdem.
+        #expect(v.entnehmen(uebung(2), runde: 2) == nil)
+        #expect(v.entnehmen(uebung(2), runde: 1) == nil)
+    }
 }
