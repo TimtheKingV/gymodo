@@ -17,7 +17,7 @@ Ziel: Den Zirkel einmal anlegen, danach das Handy zur Seite legen und nur noch W
 - Nachträglich erweitern, nur in Runde 1:
   - In der Pause nach der **letzten Zirkel-Übung** gibt es „+ Übung zum Zirkel".
   - In der Pause nach **Satz 1 einer Einzelübung** gibt es „Zirkel mit weiterem Gerät". Die aktuelle Übung wird Übung 1 des Zirkels.
-- Das Startgewicht wird nur in Runde 1 abgefragt (Startwerte-Drawer je neuer Übung). In Runde 2 und 3 wird das Gewicht aus Runde 1 übernommen, es werden nur Wiederholungen eingetragen. Ändern bleibt möglich.
+- Gewicht und Wiederholungen werden beim Anlegen des Zirkels je Übung festgelegt (Stand 23.10.). Im Zirkel entfällt der Startwerte-Drawer; nur nachträglich hinzugefügte Übungen (Erweitern) fragen ihn noch. In Runde 2 und 3 werden die Werte aus der Vorrunde übernommen. Ändern bleibt möglich.
 - Eingetragen wird nach jeder Übung, nicht gesammelt am Rundenende. In Runde 1 erscheint je Übung erst der Startwerte-Drawer (Gewicht), dann das Wiederholungs-Rad. In Runde 2+ entfällt der Drawer: das Wiederholungs-Rad erscheint sofort, das Gewicht ist aus der Vorrunde vorbelegt und über eine kleine Zeile änderbar. Wenn die Sensorerkennung sauber läuft, zählt sie automatisch; das ist ein späterer Schritt und nicht Teil dieses Projekts.
 
 ## Nicht-Ziele
@@ -43,7 +43,7 @@ Ziel: Den Zirkel einmal anlegen, danach das Handy zur Seite legen und nur noch W
 6. Rundenpause: eigene Pause mit Zusammenfassung der Runde und Thumbnail der ersten Übung der nächsten Runde.
 7. Nach der letzten Runde: dieselbe Übersicht wie nach dem letzten Satz einer Übung, Tim klickt auf „Weiter".
 8. Eintragen nach jeder Übung (nicht gesammelt am Rundenende).
-9. Startwerte-Drawer nur in Runde 1.
+9. Gewicht und Wiederholungen je Übung werden beim Anlegen des Zirkels festgelegt (Drawer in der Planung). Im Zirkel gibt es keinen Startwerte-Drawer mehr; Runde 2+ übernimmt die Werte der Vorrunde. (Geändert 23.10.; vorher: Drawer je Übung in Runde 1.)
 
 ## Meine Annahmen (bitte prüfen)
 

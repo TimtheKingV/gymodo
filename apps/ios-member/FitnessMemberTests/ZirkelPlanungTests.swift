@@ -68,6 +68,12 @@ struct ZirkelPlanungTests {
         #expect(e.werte[b] == w2)
     }
 
+    @Test func werteTextNenntGewichtUndWiederholungen() {
+        let text = ZirkelPlanungText.werte(Startwerte(belastung: 12.5, umfang: 10, nebenbelastung: nil),
+                                           einheit: .kg, nebeneinheit: nil, art: .reps)
+        #expect(text == "12,5 kg × 10")
+    }
+
     @Test func verschiebeAendertDieReihenfolge() {
         var e = entwurf(n: 3)
         // Wie List.onMove: die erste ans Ende.
