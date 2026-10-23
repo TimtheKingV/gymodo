@@ -247,6 +247,30 @@ enum ZirkelAuswahl {
     }
 }
 
+/// Wohin das Hinzufuegen-Sheet nach der Wahl eines Geraets weitergeht. Alles
+/// bleibt in einem Sheet: `fragen` und `werte` sind Seiten im Stack, `direkt`
+/// haengt an und schliesst.
+enum ZirkelHinzufuegenSchritt: Equatable {
+    case fragen
+    case werte(ZirkelUebung)
+    case direkt(ZirkelUebung)
+    case schonDabei
+    case nichts
+}
+
+extension ZirkelAuswahl {
+    /// `direkt`: bekannte Cardio-Uebung ohne Drawer-Schritt -- ein leerer
+    /// Schritt wuerde aufgehen und sich selbst schliessen.
+    static func schritt(nach angebot: Angebot, direkt: (ZirkelUebung) -> Bool) -> ZirkelHinzufuegenSchritt {
+        switch angebot {
+        case .auswahl: .fragen
+        case .uebung(let u): direkt(u) ? .direkt(u) : .werte(u)
+        case .schonDabei: .schonDabei
+        case .keine: .nichts
+        }
+    }
+}
+
 /// Die Startwerte aus dem Drawer gehoeren zu der Uebung, fuer die sie
 /// eingegeben wurden -- nicht zu Platz 1 des Zirkels. Wird umsortiert,
 /// gelten sie, sobald diese Uebung in Runde 1 drankommt; ohne sie liefe
