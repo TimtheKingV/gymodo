@@ -32,6 +32,48 @@ struct ZirkelPlanungTests {
         #expect(entwurf(n: 3, runden: 6).istGueltig)
     }
 
+    private let w1 = Startwerte(belastung: 12.5, umfang: 10, nebenbelastung: nil)
+    private let w2 = Startwerte(belastung: 20, umfang: 8, nebenbelastung: nil)
+
+    @Test func werteBleibenBeiDerUebungWennUmsortiert() {
+        var e = entwurf(n: 3)
+        e.setzeWerte(w1, fuer: uebung(1))
+        e.verschiebe(von: IndexSet(integer: 0), nach: 3)
+        #expect(e.werte[uebung(1)] == w1)
+    }
+
+    @Test func entfernenLoeschtDieWerteDerUebung() {
+        var e = entwurf(n: 3)
+        e.setzeWerte(w1, fuer: uebung(1))
+        e.setzeWerte(w2, fuer: uebung(2))
+        e.entferne(at: IndexSet(integer: 0))
+        #expect(e.werte[uebung(1)] == nil)
+        #expect(e.werte[uebung(2)] == w2)
+    }
+
+    @Test func setzeWerteMitNilLoeschtDenEintrag() {
+        var e = entwurf(n: 2)
+        e.setzeWerte(w1, fuer: uebung(1))
+        e.setzeWerte(nil, fuer: uebung(1))
+        #expect(e.werte.isEmpty)
+    }
+
+    @Test func zweiUebungenDerselbenStationHabenEigeneWerte() {
+        let a = ZirkelUebung(station: "geraet:g1", exerciseId: "e1", token: nil)
+        let b = ZirkelUebung(station: "geraet:g1", exerciseId: "e2", token: nil)
+        var e = ZirkelEntwurf(uebungen: [a, b], uebungspause: 20, rundenpause: 90)
+        e.setzeWerte(w1, fuer: a)
+        e.setzeWerte(w2, fuer: b)
+        #expect(e.werte[a] == w1)
+        #expect(e.werte[b] == w2)
+    }
+
+    @Test func werteTextNenntGewichtUndWiederholungen() {
+        let text = ZirkelPlanungText.werte(Startwerte(belastung: 12.5, umfang: 10, nebenbelastung: nil),
+                                           einheit: .kg, nebeneinheit: nil, art: .reps)
+        #expect(text == "12,5 kg × 10")
+    }
+
     @Test func verschiebeAendertDieReihenfolge() {
         var e = entwurf(n: 3)
         // Wie List.onMove: die erste ans Ende.

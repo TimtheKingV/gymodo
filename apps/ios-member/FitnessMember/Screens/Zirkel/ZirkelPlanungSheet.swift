@@ -14,6 +14,10 @@ struct ZirkelPlanungSheet: View {
     /// Ein Satz unter der Liste, etwa wenn ein gewaehltes Geraet nicht
     /// dazukommen konnte. nil = keiner.
     var hinweis: String?
+    /// "12,5 kg × 10" unter dem Namen; nil bei Uebungen ohne Werte (Cardio).
+    let werteText: (ZirkelUebung) -> String?
+    /// Tipp auf eine Zeile mit Werten: Gewicht und Wiederholungen aendern.
+    let beiBearbeiten: (ZirkelUebung) -> Void
     let beiHinzufuegen: () -> Void
     let beiStart: () -> Void
 
@@ -52,6 +56,8 @@ struct ZirkelPlanungSheet: View {
             // zweimal auf (ZirkelEntwurf.hinzufuegen).
             ForEach(Array(entwurf.uebungen.enumerated()), id: \.element) { index, uebung in
                 zeile(index: index, uebung: uebung)
+                    .contentShape(Rectangle())
+                    .onTapGesture { if werteText(uebung) != nil { beiBearbeiten(uebung) } }
                     .listRowBackground(DesignSystem.Color.surface)
             }
             .onMove { entwurf.verschiebe(von: $0, nach: $1) }
@@ -74,7 +80,7 @@ struct ZirkelPlanungSheet: View {
                 }
                 // Ohne Bearbeiten-Knopf: Ziehen und Wischen gehen in der
                 // Liste direkt, nur sieht man es ihr nicht an.
-                Text("Halten und ziehen zum Umsortieren, nach links wischen zum Entfernen.")
+                Text("Tippen, um Gewicht und Wiederholungen zu ändern. Halten und ziehen zum Umsortieren, nach links wischen zum Entfernen.")
                     .font(.system(size: 12))
                     .foregroundStyle(DesignSystem.Color.textMuted)
             }
@@ -91,9 +97,17 @@ struct ZirkelPlanungSheet: View {
             UebungsVideoKachel(exerciseId: uebung.exerciseId, kante: 40) {
                 Uebungsbild(kante: 40)
             }
-            Text(name(uebung))
-                .font(DesignSystem.Typography.uebungsname)
-                .foregroundStyle(DesignSystem.Color.text)
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                Text(name(uebung))
+                    .font(DesignSystem.Typography.uebungsname)
+                    .foregroundStyle(DesignSystem.Color.text)
+                if let werte = werteText(uebung) {
+                    Text(werte)
+                        .font(DesignSystem.Typography.fliesstext)
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .monospacedDigit()
+                }
+            }
             Spacer(minLength: 0)
         }
         .frame(minHeight: 44)
@@ -153,5 +167,13 @@ struct ZirkelPlanungSheet: View {
         .padding(.horizontal, 20)
         .padding(.vertical, DesignSystem.Spacing.s12)
         .background(DesignSystem.Color.bg)
+    }
+}
+
+/// Der Text unter dem Namen in der Planung, als reine Funktion.
+enum ZirkelPlanungText {
+    static func werte(_ werte: Startwerte, einheit: LoadUnit, nebeneinheit: LoadUnit?, art: VolumeKind) -> String {
+        Zahlformat.satz(werte.belastung, einheit, neben: werte.nebenbelastung, nebeneinheit,
+                        umfang: werte.umfang, art)
     }
 }

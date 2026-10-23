@@ -100,6 +100,32 @@ struct Zirkel: Equatable, Sendable {
     }
 }
 
+// MARK: - Fortschritt je Uebung
+
+/// Wo eine Uebung im laufenden Zirkel steht -- die Zeilen der Pausenliste.
+enum ZirkelStand: Equatable {
+    /// Alle Runden dran gewesen: Haekchen.
+    case abgeschlossen
+    /// Die Uebung, die jetzt kommt.
+    case naechste
+    /// In der laufenden Runde schon dran (gruen): "1/3".
+    case dran(Int, von: Int)
+    /// In der laufenden Runde noch nicht dran: "0/3".
+    case offen(Int, von: Int)
+}
+
+extension Zirkel {
+    /// Ein Slot gilt als gemacht, sobald er erledigt ist -- auch uebersprungen,
+    /// denn der Zirkel kennt nur `schritt`.
+    func stand(an index: Int) -> ZirkelStand {
+        let anzahl = uebungen.count
+        let gemacht = schritt / anzahl + (index < schritt % anzahl ? 1 : 0)
+        if gemacht >= runden { return .abgeschlossen }
+        if index == position { return .naechste }
+        return index < schritt % anzahl ? .dran(gemacht, von: runden) : .offen(gemacht, von: runden)
+    }
+}
+
 // MARK: - Planung (Spec 21.10., Entscheidungen 1-4)
 
 /// Der Zirkel, solange er noch geplant wird. Eigener Typ statt eines
@@ -110,6 +136,10 @@ struct ZirkelEntwurf: Equatable {
     var runden: Int = 3
     var uebungspause: Int
     var rundenpause: Int
+    /// Gewicht und Wiederholungen je Uebung, beim Anlegen festgelegt: im
+    /// Zirkel entfaellt so der Drawer vor jeder Uebung. Uebungen ohne
+    /// Eintrag (Cardio) gehen den bisherigen Weg.
+    private(set) var werte: [ZirkelUebung: Startwerte] = [:]
 
     /// Die Pausen kommen aus den Einstellungen: zwischen Uebungen die kurze
     /// Zirkelpause, zwischen Runden der normale Satz-Resttimer -- die
@@ -151,7 +181,13 @@ struct ZirkelEntwurf: Equatable {
     }
 
     mutating func entferne(at stellen: IndexSet) {
+        for stelle in stellen { werte[uebungen[stelle]] = nil }
         uebungen.remove(atOffsets: stellen)
+    }
+
+    /// nil loescht den Eintrag.
+    mutating func setzeWerte(_ werte: Startwerte?, fuer uebung: ZirkelUebung) {
+        self.werte[uebung] = werte
     }
 
     /// Nur fuer einen gueltigen Entwurf (Zirkel.init prueft die
@@ -220,6 +256,10 @@ struct ZirkelVormerkung: Equatable {
 
     init(_ uebung: ZirkelUebung, werte: Startwerte) {
         self.werte = [uebung: werte]
+    }
+
+    init(_ werte: [ZirkelUebung: Startwerte]) {
+        self.werte = werte
     }
 
     private init(werte: [ZirkelUebung: Startwerte]) {

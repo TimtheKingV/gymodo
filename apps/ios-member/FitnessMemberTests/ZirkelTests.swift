@@ -87,4 +87,53 @@ struct ZirkelTests {
         let z = Zirkel(uebungen: [uebung(1), uebung(2)], runden: 3, uebungspause: 30, rundenpause: 90, schritt: -4)
         #expect(z.schritt == 0)
     }
+
+    @Test func vormerkungAusMehrerenWertenEntnimmtJedeEinmalInRundeEins() {
+        let a = Startwerte(belastung: 10, umfang: 8, nebenbelastung: nil)
+        let b = Startwerte(belastung: 20, umfang: 12, nebenbelastung: nil)
+        var v = ZirkelVormerkung([uebung(1): a, uebung(2): b])
+        #expect(v.entnehmen(uebung(1), runde: 1) == a)
+        #expect(v.entnehmen(uebung(1), runde: 1) == nil)
+        // Runde 2 liefert nichts und raeumt den Eintrag trotzdem.
+        #expect(v.entnehmen(uebung(2), runde: 2) == nil)
+        #expect(v.entnehmen(uebung(2), runde: 1) == nil)
+    }
+
+    private func staende(_ z: Zirkel) -> [ZirkelStand] {
+        z.uebungen.indices.map { z.stand(an: $0) }
+    }
+
+    private func nach(_ schritte: Int, ueberspringen: Bool = false) -> Zirkel {
+        var z = zirkel(n: 3)
+        for _ in 0..<schritte { ueberspringen ? z.ueberspringen() : z.weiter() }
+        return z
+    }
+
+    @Test func standAmAnfang() {
+        #expect(staende(nach(0)) == [.naechste, .offen(0, von: 3), .offen(0, von: 3)])
+    }
+
+    @Test func standNachDemErstenSatz() {
+        #expect(staende(nach(1)) == [.dran(1, von: 3), .naechste, .offen(0, von: 3)])
+    }
+
+    @Test func standInDerRundenpause() {
+        #expect(staende(nach(3)) == [.naechste, .offen(1, von: 3), .offen(1, von: 3)])
+    }
+
+    @Test func standInRundeZweiNachDerErstenUebung() {
+        #expect(staende(nach(4)) == [.dran(2, von: 3), .naechste, .offen(1, von: 3)])
+    }
+
+    @Test func standInDerLetztenRundeHatHaekchen() {
+        #expect(staende(nach(8)) == [.abgeschlossen, .abgeschlossen, .naechste])
+    }
+
+    @Test func standNachDemEndeAllesAbgeschlossen() {
+        #expect(staende(nach(9)) == [.abgeschlossen, .abgeschlossen, .abgeschlossen])
+    }
+
+    @Test func uebersprungeneUebungZaehltAlsDran() {
+        #expect(staende(nach(1, ueberspringen: true)).first == .dran(1, von: 3))
+    }
 }

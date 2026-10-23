@@ -41,19 +41,18 @@ struct ZirkelPauseTextTests {
         #expect(ZirkelPauseText.kopf(zirkel) == "Runde 2 von 3")
     }
 
-    /// "Danach: …" nur innerhalb der Runde: vor der Rundenpause kommt keine
-    /// Uebung mehr, und die erste der naechsten Runde steht dann selbst
-    /// unter "Als Nächstes".
-    @Test func danachNurInnerhalbDerRunde() {
-        var zirkel = Zirkel(uebungen: [uebung(1), uebung(2), uebung(3)], runden: 2, uebungspause: 20, rundenpause: 90)
-        zirkel.weiter()
-        #expect(zirkel.naechste == uebung(2))
-        #expect(ZirkelPauseText.danach(zirkel) == uebung(3))
-        zirkel.weiter()
-        #expect(ZirkelPauseText.danach(zirkel) == nil)
-        zirkel.weiter()
-        // Rundenpause: als Naechstes Uebung 1, danach Uebung 2.
-        #expect(ZirkelPauseText.danach(zirkel) == uebung(2))
+    @Test func standTextFormat() {
+        #expect(ZirkelPauseText.standText(.dran(1, von: 3)) == "1/3")
+        #expect(ZirkelPauseText.standText(.offen(0, von: 3)) == "0/3")
+        #expect(ZirkelPauseText.standText(.naechste) == "Nächste")
+        #expect(ZirkelPauseText.standText(.abgeschlossen) == nil)
+    }
+
+    @Test func standSpracheFuerVoiceOver() {
+        #expect(ZirkelPauseText.standSprache(.abgeschlossen) == "Abgeschlossen")
+        #expect(ZirkelPauseText.standSprache(.naechste) == "Nächste Übung")
+        #expect(ZirkelPauseText.standSprache(.dran(1, von: 3)) == "1 von 3 Runden gemacht")
+        #expect(ZirkelPauseText.standSprache(.offen(0, von: 3)) == "0 von 3 Runden gemacht")
     }
 
     /// Je Uebung der Satz der geschafften Runde. Eine in dieser Runde

@@ -20,6 +20,11 @@ struct UebungsstartSheet: View {
     /// selbst oder auf der Satzseite.
     let beiZirkel: ((Startwerte) -> Void)?
     let beiSchliessen: () -> Void
+    /// Knopf des letzten Schritts; in der Zirkel-Planung "Zur Planung".
+    let startTitel: String
+    /// Auch das Wiederholungs-Rad: in der Planung werden beide Werte
+    /// festgelegt, im normalen Drawer erst in der Uebung.
+    let mitUmfang: Bool
 
     /// Einmal beim Oeffnen bestimmt, nicht bei jedem Rendern: ein spaeter
     /// eintreffender Kontext darf dem Mitglied nicht unter derselben
@@ -38,9 +43,13 @@ struct UebungsstartSheet: View {
 
     /// - mitUebersicht: auch eine bekannte Uebung zeigt erst die Einweisung
     ///   (Testnotiz 17.10., #4); siehe `Uebungsstart.schritte`.
-    init(modell: GeraetModel, mitUebersicht: Bool = false, beiStart: @escaping (Startwerte) -> Void,
+    init(modell: GeraetModel, mitUebersicht: Bool = false,
+         startTitel: String = "Übung starten", mitUmfang: Bool = false,
+         beiStart: @escaping (Startwerte) -> Void,
          beiZirkel: ((Startwerte) -> Void)? = nil,
          beiSchliessen: @escaping () -> Void) {
+        self.startTitel = startTitel
+        self.mitUmfang = mitUmfang
         _modell = State(initialValue: modell)
         self.beiStart = beiStart
         self.beiZirkel = beiZirkel
@@ -77,6 +86,7 @@ struct UebungsstartSheet: View {
                     modell: modell,
                     titel: schritte.count > 1 ? titel("Startwerte") : nil,
                     beiZurueck: position > 0 ? { zurueck() } : nil,
+                    startTitel: startTitel, mitUmfang: mitUmfang,
                     beiZirkel: beiZirkel.map { _ in { zirkelAnlegen() } }
                 ) { starten() }
                 .onGeometryChange(for: CGFloat.self) { proxy in
@@ -163,6 +173,8 @@ struct StartwerteSchritt: View {
     /// "Schritt 1 von 1".
     let titel: String?
     let beiZurueck: (() -> Void)?
+    var startTitel = "Übung starten"
+    var mitUmfang = false
     /// nil = kein "Mini-Zirkel anlegen".
     var beiZirkel: (() -> Void)? = nil
     let beiStart: () -> Void
@@ -206,7 +218,7 @@ struct StartwerteSchritt: View {
 
             // Nur das Gewicht: wie viele Wiederholungen es werden, weiss man
             // vor dem Satz oft noch nicht -- das Rad kommt in der Uebung.
-            WertZeile(modell: modell, mitUmfang: false)
+            WertZeile(modell: modell, mitUmfang: mitUmfang)
 
             // Mit Einweisung hat der Drawer volle Hoehe; ohne Spacer hing
             // "Übung starten" mitten darin statt in der Daumenzone
@@ -219,13 +231,15 @@ struct StartwerteSchritt: View {
                 // Die Uhr laeuft erst mit diesem Tipp, nicht schon waehrend
                 // der Einweisung (Testnotiz 06.10., #5) -- gesagt wird es,
                 // weil es keinen eigenen Startscreen mehr gibt.
-                if !modell.trainingLaeuft {
+                // Nicht in der Zirkel-Planung (mitUmfang): dort beginnt die
+                // Uebung nicht, die Uhr laeuft erst im Zirkel.
+                if !modell.trainingLaeuft, !mitUmfang {
                     Text("Mit „Übung starten“ läuft deine Trainingsuhr.")
                         .font(.system(size: 13))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                PrimaryButton(title: "Übung starten") { beiStart() }
+                PrimaryButton(title: startTitel) { beiStart() }
                     .testnotizElement("uebungsstart.starten", typ: "PrimaryButton")
                 // Unter dem Hauptweg und als Umriss: "Übung starten" bleibt
                 // die eine Akzentflaeche und an seiner Stelle (Anti-Ziel:

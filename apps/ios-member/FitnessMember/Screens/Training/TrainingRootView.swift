@@ -98,6 +98,12 @@ struct TrainingRootView: View {
     /// Der eigene Pfad des Auswahl-Sheets -- nur fuer die Kategorielisten.
     @State private var zirkelAuswahlPfad: [GeraetRoute] = []
     @State private var zirkelPlanungHinweis: String?
+    /// Der Drawer fuer Gewicht und Wiederholungen einer Uebung in der
+    /// Planung (neu oder zum Aendern). Haengt am Planungs-Sheet.
+    @State private var zirkelPlanungDrawer: UebungsstartAuftrag?
+    /// Die gewaehlte Uebung, bis das Auswahl-Sheet zu ist: erst dann geht
+    /// der Drawer auf (zwei Sheets in einem Zug verschluckt SwiftUI).
+    @State private var zirkelPlanungDrawerWartet: UebungsstartAuftrag?
     /// Der Drawer fuer Uebung 1, wenn sie in der Planung nach vorne
     /// geschoben wurde -- er geht wie die Planung selbst erst im onDismiss
     /// des vorigen Sheets auf.
@@ -227,6 +233,8 @@ struct TrainingRootView: View {
                    onDismiss: zirkelDrawerNachPlanung) {
                 ZirkelPlanungSheet(entwurf: zirkelEntwurf, name: zirkelUebungsname,
                                    hinweis: zirkelPlanungHinweis,
+                                   werteText: zirkelWerteText,
+                                   beiBearbeiten: zirkelWerteBearbeiten,
                                    beiHinzufuegen: {
                                        zirkelPlanungHinweis = nil
                                        zirkelAuswahlPfad = []
@@ -236,9 +244,12 @@ struct TrainingRootView: View {
                 .environment(videoVorrat)
                 // Am Planungs-Sheet, nicht an der Wurzel: ein Sheet ueber
                 // einem Sheet muss vom oberen aus aufgehen.
-                .sheet(isPresented: $zirkelAuswahlOffen) {
+                .sheet(isPresented: $zirkelAuswahlOffen, onDismiss: zirkelPlanungDrawerOeffnen) {
                     zirkelAuswahl(hinweis: nil, beiWahl: zirkelHinzufuegen,
                                   beiAbbrechen: { zirkelAuswahlOffen = false })
+                }
+                .sheet(item: $zirkelPlanungDrawer) { auftrag in
+                    zirkelPlanungDrawerInhalt(auftrag)
                 }
             }
             // An der Wurzel, nicht am Pausen- oder Geraete-Screen: der Drawer
@@ -1035,23 +1046,17 @@ struct TrainingRootView: View {
                         .testnotizElement("zirkel.auswahl.abbrechen", typ: "Button")
                 }
             }
-            // Die Wahl geht ueber denselben beiWahl-Weg zurueck, jetzt mit
-            // Uebung -- ZirkelAuswahl.angebot fragt dann nicht noch einmal.
-            .confirmationDialog("Welche Übung?",
-                                isPresented: Binding(get: { zirkelUebungswahl != nil },
-                                                     set: { if !$0 { zirkelUebungswahl = nil } }),
-                                titleVisibility: .visible,
-                                presenting: zirkelUebungswahl) { wahl in
-                ForEach(wahl.offen, id: \.self) { uebung in
-                    Button(wahl.name(uebung)) {
-                        zirkelUebungswahl = nil
-                        beiWahl(wahl.station, uebung.exerciseId)
-                    }
-                }
-                Button("Abbrechen", role: .cancel) { zirkelUebungswahl = nil }
-            } message: { wahl in
-                if let hinweis = wahl.hinweis { Text(hinweis) }
+        }
+        // Am Stack, nicht an seiner Wurzel: die Kategorie-Seite liegt ueber
+        // der Wurzel, ein dort haengendes Blatt erschiene erst nach dem
+        // Zurueck. Die Wahl geht ueber denselben beiWahl-Weg zurueck, jetzt
+        // mit Uebung -- ZirkelAuswahl.angebot fragt dann nicht noch einmal.
+        .sheet(item: $zirkelUebungswahl) { wahl in
+            ZirkelUebungswahlSheet(wahl: wahl) { uebung in
+                zirkelUebungswahl = nil
+                beiWahl(wahl.station, uebung.exerciseId)
             }
+            .environment(videoVorrat)
         }
         .environment(videoVorrat)
         .presentationDragIndicator(.visible)
@@ -1068,8 +1073,11 @@ struct TrainingRootView: View {
     private func zirkelPlanen(_ auftrag: UebungsstartAuftrag, mit werte: Startwerte) {
         let erste = ZirkelUebung(station: auftrag.station, exerciseId: auftrag.exerciseId, token: auftrag.token)
         zirkelPlanungHinweis = nil
-        zirkelPlanungWartet = ZirkelPlanung(entwurf: ZirkelEntwurf(uebungen: [erste]),
-                                            ersterAuftrag: auftrag, startwerte: werte)
+        // "Mini-Zirkel anlegen" gibt es nur im Startwerte-Schritt, also nur
+        // fuer Uebungen mit Wiederholungen: die Werte gehoeren zu Uebung 1.
+        var entwurf = ZirkelEntwurf(uebungen: [erste])
+        entwurf.setzeWerte(werte, fuer: erste)
+        zirkelPlanungWartet = ZirkelPlanung(entwurf: entwurf)
         uebungsstart = nil
     }
 
@@ -1112,8 +1120,19 @@ struct TrainingRootView: View {
         case .auswahl(let offen, let schonDabei):
             zirkelUebungswahl = ZirkelUebungswahl(station: station, offen: offen, schonDabei: schonDabei)
         case .uebung(let uebung):
+            // Eine bekannte Cardio-Uebung hat keinen Drawer-Schritt: ein leeres
+            // Sheet wuerde aufgehen und sich selbst schliessen. Sie kommt
+            // ohne Werte direkt in die Liste.
+            if zirkelDirektStart(uebung) {
+                zirkelAuswahlOffen = false
+                zirkelPlanung?.entwurf.hinzufuegen(uebung)
+                return
+            }
+            // Erst Gewicht und Wiederholungen im Drawer; angehaengt wird
+            // die Uebung erst mit "Zur Planung" (zirkelPlanungWerte).
+            zirkelPlanungDrawerWartet = UebungsstartAuftrag(station: uebung.station, exerciseId: uebung.exerciseId,
+                                                            token: uebung.token, zirkel: true, planung: true)
             zirkelAuswahlOffen = false
-            zirkelPlanung?.entwurf.hinzufuegen(uebung)
         case .schonDabei:
             zirkelAuswahlOffen = false
             zirkelPlanungHinweis = Self.schonDabeiHinweis(station, uebungId: uebungId)
@@ -1128,6 +1147,52 @@ struct TrainingRootView: View {
             : "Diese Übung ist schon im Zirkel."
     }
 
+    /// onDismiss des Auswahl-Sheets: jetzt darf der Drawer der gewaehlten
+    /// Uebung aufgehen. Ohne Wahl (Abbrechen) tut es nichts.
+    private func zirkelPlanungDrawerOeffnen() {
+        guard let wartet = zirkelPlanungDrawerWartet else { return }
+        zirkelPlanungDrawerWartet = nil
+        zirkelPlanungDrawer = wartet
+    }
+
+    /// Tipp auf eine Zeile der Planung: derselbe Drawer, mit den Werten.
+    private func zirkelWerteBearbeiten(_ uebung: ZirkelUebung) {
+        zirkelPlanungDrawer = UebungsstartAuftrag(station: uebung.station, exerciseId: uebung.exerciseId,
+                                                  token: uebung.token, zirkel: true, planung: true)
+    }
+
+    @ViewBuilder
+    private func zirkelPlanungDrawerInhalt(_ auftrag: UebungsstartAuftrag) -> some View {
+        let uebung = ZirkelUebung(station: auftrag.station, exerciseId: auftrag.exerciseId, token: auftrag.token)
+        // Mit den gemerkten Werten vorbelegt; zirkel: true nur, damit das
+        // Modell ohne Countdown und mit diesen Werten beginnt.
+        if let modell = modell(station: auftrag.station, exerciseId: auftrag.exerciseId, token: auftrag.token,
+                               startwerte: zirkelPlanung?.entwurf.werte[uebung], zirkel: true) {
+            UebungsstartSheet(modell: modell, startTitel: "Zur Planung", mitUmfang: true, beiStart: { werte in
+                zirkelPlanungWerte(uebung, werte, mitWerten: modell.volumeKind == .reps)
+            }, beiSchliessen: { zirkelPlanungDrawer = nil })
+            .environment(videoVorrat)
+        }
+    }
+
+    /// "Zur Planung": die Uebung kommt in den Entwurf (falls neu) und
+    /// bekommt ihre Werte. Cardio hat keine: sie bleibt ohne Eintrag und
+    /// fragt spaeter wie bisher.
+    private func zirkelPlanungWerte(_ uebung: ZirkelUebung, _ werte: Startwerte, mitWerten: Bool) {
+        zirkelPlanungDrawer = nil
+        zirkelPlanung?.entwurf.hinzufuegen(uebung)
+        zirkelPlanung?.entwurf.setzeWerte(mitWerten ? werte : nil, fuer: uebung)
+    }
+
+    private func zirkelWerteText(_ uebung: ZirkelUebung) -> String? {
+        guard let werte = zirkelPlanung?.entwurf.werte[uebung],
+              let station = katalog.bootstrap?.station(schluessel: uebung.station, studioId: katalog.activeStudioId),
+              let art = station.exercises.first(where: { $0.id == uebung.exerciseId })?.volumeKind
+        else { return nil }
+        return ZirkelPlanungText.werte(werte, einheit: station.equipmentModel.loadUnit,
+                                       nebeneinheit: station.equipmentModel.secondaryUnit, art: art)
+    }
+
     /// "Zirkel starten": Uebung 1 ueber denselben Weg wie "Übung starten".
     /// Die Startwerte aus dem Drawer gehoeren zu SEINER Uebung, nicht zu
     /// Platz 1: steht sie nach dem Umsortieren weiter hinten, gelten sie,
@@ -1136,9 +1201,9 @@ struct TrainingRootView: View {
     private func zirkelStarten() {
         guard let planung = zirkelPlanung, planung.entwurf.istGueltig else { return }
         zirkelPlanung = nil
-        let aus = planung.ersterAuftrag
-        let ausDrawer = ZirkelUebung(station: aus.station, exerciseId: aus.exerciseId, token: aus.token)
-        zirkelVormerkung = ZirkelVormerkung(ausDrawer, werte: planung.startwerte)
+        // Die Werte gehoeren je Uebung zum Entwurf; eine entfernte nimmt ihre
+        // mit. Uebungen ohne Werte (Cardio) fragen im Drawer wie bisher.
+        zirkelVormerkung = ZirkelVormerkung(planung.entwurf.werte)
             .behalten(nur: planung.entwurf.uebungen)
         let erste = planung.entwurf.uebungen[0]
         let auftrag = UebungsstartAuftrag(station: erste.station, exerciseId: erste.exerciseId,
@@ -1146,6 +1211,12 @@ struct TrainingRootView: View {
         if let werte = zirkelVormerkung.entnehmen(erste, runde: 1) {
             zirkelAblauf.starten(planung.entwurf.zirkel())
             uebungStarten(auftrag, mit: werte)
+        } else if zirkelDirektStart(erste) {
+            // Bekannte Cardio-Uebung zuerst: kein Drawer-Schritt, also gleich los.
+            if sessions.aktiveSession() == nil { sessions.trainingStarten() }
+            let zirkel = planung.entwurf.zirkel()
+            zirkelAblauf.starten(zirkel)
+            pfad.append(ZirkelPfad.route(erste, in: zirkel))
         } else {
             // Erst der Drawer fuer die neue Uebung 1; der Ablauf beginnt mit
             // dessen "Übung starten" (uebungStarten).
@@ -1478,24 +1549,6 @@ struct TrainingRootView: View {
 /// dem Drawer, mit der "Mini-Zirkel anlegen" begann.
 private struct ZirkelPlanung {
     var entwurf: ZirkelEntwurf
-    let ersterAuftrag: UebungsstartAuftrag
-    let startwerte: Startwerte
-}
-
-/// Die offene Frage "Welche Übung?" einer Station mit mehreren Uebungen
-/// (Finding I-2): `offen` steht zur Wahl, `schonDabei` nur im Hinweis.
-private struct ZirkelUebungswahl {
-    let station: Station
-    let offen: [ZirkelUebung]
-    let schonDabei: [ZirkelUebung]
-
-    func name(_ uebung: ZirkelUebung) -> String {
-        station.exercises.first { $0.id == uebung.exerciseId }?.name ?? "Übung"
-    }
-
-    var hinweis: String? {
-        schonDabei.isEmpty ? nil : "Schon im Zirkel: " + schonDabei.map(name).joined(separator: ", ")
-    }
 }
 
 /// Ein Zirkel, der gerade waechst (Task 7): woher die Erweiterung kommt,
