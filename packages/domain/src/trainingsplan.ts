@@ -193,6 +193,46 @@ export async function acceptPlan(client: SupabaseClient, userId: string, planId:
   return zuPlan(zeile);
 }
 
+export type PlanTausch = { einheitKey: string; positionKey: string; exerciseId: string; machineId: string };
+
+/**
+ * Tauscht eine Position dauerhaft: swap_training_plan_position legt sofort eine neue
+ * aktive Version an (0062). Fremd, nicht aktiv oder ausgetreten ist ein Konflikt
+ * (plan_nicht_annehmbar), alles andere Ungueltige validation_failed.
+ */
+export async function tauschePlanPosition(
+  client: SupabaseClient,
+  userId: string,
+  planId: string,
+  input: PlanTausch,
+): Promise<TrainingPlan> {
+  const { data, error } = await client
+    .rpc("swap_training_plan_position", {
+      p_plan_id: planId,
+      p_einheit_key: input.einheitKey,
+      p_position_key: input.positionKey,
+      p_exercise_id: input.exerciseId,
+      p_machine_id: input.machineId,
+    })
+    .single();
+  if (error?.code === "P0001" && error.message === "plan_nicht_annehmbar") {
+    throw new DomainError("conflict", "Dieser Plan kann nicht mehr geändert werden.");
+  }
+  if (error?.code === "P0001" && error.message === "plan_ungueltig") {
+    throw new DomainError("validation_failed", "Diese Übung passt nicht an diese Stelle im Plan.");
+  }
+  // Absichtlich nicht ueber den Code 42501: der steht auch fuer ein verlorenes
+  // EXECUTE-Recht ("permission denied for function"), und das ist ein Fehler
+  // des Servers, kein "nicht gefunden". 23505: gleichzeitige Anfrage war schneller.
+  if (istUniqueVerstoss(error)) {
+    throw new DomainError("conflict", "Der Plan wurde gerade geändert. Bitte noch einmal versuchen.");
+  }
+  if (error || !data) throw new DomainError("internal", "Die Übung konnte nicht getauscht werden.");
+  const zeile = data as PlanZeile & { user_id: string };
+  if (zeile.user_id !== userId) throw new DomainError("internal", "Der Plan gehoert nicht zum Aufrufer.");
+  return zuPlan(zeile);
+}
+
 /** Alle Versionen des Paars, neueste zuerst. Liest nur, berechnet nie neu (F14). */
 export async function listPlaene(client: SupabaseClient, userId: string, studioId: string): Promise<TrainingPlan[]> {
   const { data, error } = await client

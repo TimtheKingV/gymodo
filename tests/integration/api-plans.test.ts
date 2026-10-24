@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { GET, POST } from "@/app/api/v1/me/plans/route";
 import { POST as acceptPOST } from "@/app/api/v1/me/plans/[id]/accept/route";
+import { POST as swapPOST } from "@/app/api/v1/me/plans/[id]/swap/route";
 import { fromDomainError } from "@/lib/api/respond";
 import { DomainError } from "@fitretro/domain";
 import { accessTokenFor } from "./helpers/clients.js";
@@ -14,6 +15,11 @@ const get = (auth: string | undefined, studioId?: string) =>
   GET(new Request(studioId ? `${BASIS}?studioId=${studioId}` : BASIS, { headers: kopf(auth) }));
 const accept = (auth: string | undefined, id: string) =>
   acceptPOST(new Request(`${BASIS}/${id}/accept`, { method: "POST", headers: kopf(auth) }), {
+    params: Promise.resolve({ id }),
+  });
+
+const swap = (auth: string | undefined, id: string, rumpf: unknown) =>
+  swapPOST(new Request(`${BASIS}/${id}/swap`, { method: "POST", headers: kopf(auth), body: JSON.stringify(rumpf) }), {
     params: Promise.resolve({ id }),
   });
 
@@ -102,5 +108,63 @@ describe("fromDomainError", () => {
     const antwort = fromDomainError(new DomainError("conflict", "Nein."));
     expect(antwort.status).toBe(409);
     expect(await antwort.json()).toEqual({ error: { code: "conflict", message: "Nein." } });
+  });
+});
+
+describe("/me/plans/[id]/swap", () => {
+  async function aktiverPlan() {
+    const plan = (await (await post(bearer, { studioId: s.voll })).json()) as { id: string };
+    const angenommen = await accept(bearer, plan.id);
+    return (await angenommen.json()) as {
+      id: string;
+      version: number;
+      einheiten: Array<{ key: string; positionen: Array<{ key: string; exerciseId: string; machineId: string }> }>;
+    };
+  }
+
+  it("401 ohne Token", async () => {
+    expect((await swap(undefined, crypto.randomUUID(), {})).status).toBe(401);
+  });
+
+  it("200 mit status aktiv und version +1", async () => {
+    const plan = await aktiverPlan();
+    const pos = plan.einheiten[0]!.positionen[0]!;
+    const antwort = await swap(bearer, plan.id, {
+      einheitKey: plan.einheiten[0]!.key,
+      positionKey: pos.key,
+      exerciseId: pos.exerciseId,
+      machineId: pos.machineId,
+    });
+    expect(antwort.status).toBe(200);
+    const neu = (await antwort.json()) as { id: string; status: string; version: number };
+    expect(neu).toMatchObject({ status: "aktiv", version: plan.version + 1 });
+    expect(neu.id).not.toBe(plan.id);
+  });
+
+  it("422 bei unbekanntem positionKey und bei kaputtem Rumpf", async () => {
+    const plan = await aktiverPlan();
+    const pos = plan.einheiten[0]!.positionen[0]!;
+    const antwort = await swap(bearer, plan.id, {
+      einheitKey: plan.einheiten[0]!.key,
+      positionKey: "gibt-es-nicht",
+      exerciseId: pos.exerciseId,
+      machineId: pos.machineId,
+    });
+    expect(antwort.status).toBe(422);
+    expect(((await antwort.json()) as Fehler).error.code).toBe("validation_failed");
+    expect((await swap(bearer, plan.id, { einheitKey: "A" })).status).toBe(422);
+    expect((await swap(bearer, "abc", {})).status).toBe(422);
+  });
+
+  it("409 fuer fremden Plan", async () => {
+    const plan = await aktiverPlan();
+    const pos = plan.einheiten[0]!.positionen[0]!;
+    const antwort = await swap(fremd, plan.id, {
+      einheitKey: plan.einheiten[0]!.key,
+      positionKey: pos.key,
+      exerciseId: pos.exerciseId,
+      machineId: pos.machineId,
+    });
+    expect(antwort.status).toBe(409);
   });
 });

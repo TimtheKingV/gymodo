@@ -214,3 +214,135 @@ revoke all on function public.training_limits_widerruf_bereinigen()
 create trigger training_limits_widerruf
   after delete on public.training_limits
   for each row execute function public.training_limits_widerruf_bereinigen();
+
+-- Dauerhafter Tausch einer Planposition (Etappe 3, Task 3; Entscheidung Tim
+-- 24.10.: sofort eine neue aktive Version, ohne Bestaetigungsschritt).
+-- Nur fuer den eigenen AKTIVEN Plan und nur fuer Studio-Mitglieder; fremd,
+-- nicht aktiv und ausgetreten antworten gleich (plan_nicht_annehmbar), damit
+-- die Antwort nichts verraet. Die Uebung muss denselben plan_baustein haben
+-- wie die Position, Geraet und Uebung muessen training_plan_pruefen bestehen,
+-- und kein plan_bereiche-Eintrag darf in training_limits.areas "meiden" sein.
+-- Kopiert wird der ganze Plan; nur exerciseId, machineId und hauptmuskeln
+-- (primaere Muskeln der neuen Uebung) der einen Position aendern sich.
+-- Sperrreihenfolge wie create_training_plan: erst Advisory-Sperre je (Nutzer,
+-- Studio), dann FOR UPDATE auf die Zeile -- sonst Deadlock-Gefahr gegen eine
+-- gleichzeitige Erzeugung. Die studio_id fuer die Sperre kommt aus einer
+-- ungesperrten Vorab-Abfrage; der Besitz wird danach unter Sperre geprueft.
+create function public.swap_training_plan_position(
+  p_plan_id      uuid,
+  p_einheit_key  text,
+  p_position_key text,
+  p_exercise_id  uuid,
+  p_machine_id   uuid
+)
+returns public.training_plans
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_user      uuid := auth.uid();
+  v_studio    uuid;
+  v_plan      public.training_plans;
+  v_pos       jsonb;
+  v_baustein  text;
+  v_bereiche  text[];
+  v_muscles   jsonb;
+  v_areas     jsonb;
+  v_einheiten jsonb;
+  v_version   int;
+begin
+  if v_user is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select studio_id into v_studio
+    from public.training_plans
+   where id = p_plan_id and user_id = v_user;
+  if not found then
+    raise exception 'plan_nicht_annehmbar' using errcode = 'P0001';
+  end if;
+
+  perform pg_advisory_xact_lock(hashtextextended('training_plans:' || v_user::text || ':' || v_studio::text, 0));
+
+  select * into v_plan
+    from public.training_plans
+   where id = p_plan_id and user_id = v_user
+     for update;
+
+  if not found or v_plan.status <> 'aktiv' or not public.is_studio_member(v_plan.studio_id) then
+    raise exception 'plan_nicht_annehmbar' using errcode = 'P0001';
+  end if;
+
+  select p.value into v_pos
+    from jsonb_array_elements(v_plan.einheiten) e(value),
+         jsonb_array_elements(e.value -> 'positionen') p(value)
+   where e.value ->> 'key' = p_einheit_key
+     and p.value ->> 'key' = p_position_key
+   limit 1;
+  if v_pos is null then
+    raise exception 'plan_ungueltig' using errcode = 'P0001';
+  end if;
+
+  select plan_baustein, plan_bereiche, muscles
+    into v_baustein, v_bereiche, v_muscles
+    from public.exercises
+   where id = p_exercise_id;
+  if not found or v_baustein is distinct from (v_pos ->> 'baustein') then
+    raise exception 'plan_ungueltig' using errcode = 'P0001';
+  end if;
+
+  -- Geraet aktiv im Studio und Uebung daran (auch fuer fremde Studios abgelehnt).
+  perform public.training_plan_pruefen(
+    v_plan.studio_id,
+    jsonb_build_array(jsonb_build_object('positionen', jsonb_build_array(
+      jsonb_build_object('machineId', p_machine_id, 'exerciseId', p_exercise_id)))));
+
+  select areas into v_areas from public.training_limits where user_id = v_user;
+  if v_areas is not null and exists (
+    select 1 from unnest(v_bereiche) b(bereich) where v_areas ->> b.bereich = 'meiden'
+  ) then
+    raise exception 'plan_ungueltig' using errcode = 'P0001';
+  end if;
+
+  -- Reihenfolge der Einheiten und Positionen bleibt durch with ordinality erhalten.
+  select jsonb_agg(
+           case when e.value ->> 'key' = p_einheit_key then
+             jsonb_set(e.value, '{positionen}', (
+               select jsonb_agg(
+                        case when p.value ->> 'key' = p_position_key then
+                          p.value || jsonb_build_object(
+                            'exerciseId', p_exercise_id,
+                            'machineId', p_machine_id,
+                            'hauptmuskeln', coalesce((
+                              select jsonb_agg(m.value ->> 'key' order by m.nr)
+                                from jsonb_array_elements(v_muscles) with ordinality m(value, nr)
+                               where m.value ->> 'role' = 'primary'), '[]'::jsonb))
+                        else p.value end
+                        order by p.nr)
+                 from jsonb_array_elements(e.value -> 'positionen') with ordinality p(value, nr)))
+           else e.value end
+           order by e.nr)
+    into v_einheiten
+    from jsonb_array_elements(v_plan.einheiten) with ordinality e(value, nr);
+
+  select coalesce(max(version), 0) + 1 into v_version
+    from public.training_plans
+   where user_id = v_user and studio_id = v_plan.studio_id;
+
+  update public.training_plans set status = 'ersetzt' where id = v_plan.id;
+
+  insert into public.training_plans
+    (user_id, studio_id, version, status, regel_version, eingabe, struktur, einheiten, gruende, accepted_at)
+  values
+    (v_user, v_plan.studio_id, v_version, 'aktiv', v_plan.regel_version, v_plan.eingabe,
+     v_plan.struktur, v_einheiten, v_plan.gruende, now())
+  returning * into v_plan;
+
+  return v_plan;
+end;
+$$;
+
+revoke all on function public.swap_training_plan_position(uuid, text, text, uuid, uuid)
+  from public, anon, authenticated, service_role;
+grant execute on function public.swap_training_plan_position(uuid, text, text, uuid, uuid) to authenticated;

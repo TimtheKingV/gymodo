@@ -5,6 +5,7 @@ import {
   acceptPlan,
   deleteTrainingLimits,
   erzeugePlanVorschlag,
+  tauschePlanPosition,
   type TrainingPlan,
 } from "@fitretro/domain";
 import { anonClient, serviceClient } from "./helpers/clients.js";
@@ -255,5 +256,163 @@ describe("Widerruf der Beschwerden", () => {
     expect(error).toBeNull();
     const { data } = await admin.from("training_plans").select("id").eq("user_id", m.userId);
     expect(data).toEqual([]);
+  });
+});
+
+describe("swap_training_plan_position", () => {
+  /** Mitglied mit aktivem Plan im Studio voll. */
+  async function mitAktivemPlan(prefix: string, limits?: Record<string, "meiden" | "vorsichtig">) {
+    const m = await legeMitgliedAn(prefix, { studios: [s.voll], ...(limits ? { limits } : {}) });
+    const vorschlag = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    const plan = await acceptPlan(m.client, m.userId, vorschlag.id);
+    return { m, plan };
+  }
+
+  /** Neue Uebung im selben Baustein, am Geraetetyp des Studios verfuegbar. */
+  async function ersatzUebung(baustein: string, bereiche: string[] = []): Promise<string> {
+    const geraet = await machineVon(s.voll);
+    const { data, error } = await admin
+      .from("exercises")
+      .insert({
+        studio_id: GYMTAVO,
+        name: `Tausch ${crypto.randomUUID()}`,
+        muscles: [
+          { key: "quadrizeps", role: "primary" },
+          { key: "gluteus", role: "secondary" },
+        ],
+        target_min: 8,
+        target_max: 12,
+        plan_baustein: baustein,
+        plan_typ: "isolation",
+        plan_bereiche: bereiche,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    const { error: e2 } = await admin
+      .from("equipment_model_exercises")
+      .insert({ equipment_model_id: geraet.equipment_model_id, exercise_id: data!.id, sort_order: 99 });
+    if (e2) throw e2;
+    return data!.id as string;
+  }
+
+  function ersteStelle(plan: TrainingPlan) {
+    const einheit = plan.einheiten[0]!;
+    return { einheitKey: einheit.key, position: einheit.positionen[0]! };
+  }
+
+  it("Tausch erzeugt Version +1, aktiv, alter Plan ersetzt, nur die gewaehlte Position aendert sich", async () => {
+    const { m, plan } = await mitAktivemPlan("swap-ok");
+    const { einheitKey, position } = ersteStelle(plan);
+    const exerciseId = await ersatzUebung(position.baustein);
+    const geraet = await machineVon(s.voll);
+
+    const neu = await tauschePlanPosition(m.client, m.userId, plan.id, {
+      einheitKey,
+      positionKey: position.key,
+      exerciseId,
+      machineId: geraet.id,
+    });
+
+    expect(neu).toMatchObject({ version: plan.version + 1, status: "aktiv", studioId: s.voll });
+    expect(neu.id).not.toBe(plan.id);
+    expect(neu.acceptedAt).not.toBeNull();
+    expect(neu.eingabe).toEqual(plan.eingabe);
+    expect(neu.gruende).toEqual(plan.gruende);
+    expect(neu.struktur).toBe(plan.struktur);
+    expect(neu.regelVersion).toBe(plan.regelVersion);
+    expect((await zeile(plan.id)).status).toBe("ersetzt");
+
+    const erwartet = structuredClone(plan.einheiten);
+    Object.assign(erwartet[0]!.positionen[0]!, { exerciseId, machineId: geraet.id, hauptmuskeln: ["quadrizeps"] });
+    expect(neu.einheiten).toEqual(erwartet);
+    const { data } = await admin
+      .from("training_plans")
+      .select("status")
+      .eq("user_id", m.userId)
+      .eq("status", "aktiv");
+    expect(data).toHaveLength(1);
+  });
+
+  it("anderer Baustein wird abgelehnt", async () => {
+    const { m, plan } = await mitAktivemPlan("swap-baustein");
+    const { einheitKey, position } = ersteStelle(plan);
+    const exerciseId = await ersatzUebung(position.baustein === "ziehen" ? "druecken" : "ziehen");
+    const geraet = await machineVon(s.voll);
+    const e = await fehlerVon(
+      tauschePlanPosition(m.client, m.userId, plan.id, { einheitKey, positionKey: position.key, exerciseId, machineId: geraet.id }),
+    );
+    expect(e.code).toBe("validation_failed");
+    expect((await zeile(plan.id)).status).toBe("aktiv");
+  });
+
+  it("Uebung mit gemiedenem Bereich wird abgelehnt", async () => {
+    const { m, plan } = await mitAktivemPlan("swap-meiden", { knie: "meiden" });
+    const { einheitKey, position } = ersteStelle(plan);
+    const exerciseId = await ersatzUebung(position.baustein, ["knie"]);
+    const geraet = await machineVon(s.voll);
+    const e = await fehlerVon(
+      tauschePlanPosition(m.client, m.userId, plan.id, { einheitKey, positionKey: position.key, exerciseId, machineId: geraet.id }),
+    );
+    expect(e.code).toBe("validation_failed");
+    // vorsichtig statt meiden waere erlaubt: Kontrolle, dass nur "meiden" sperrt.
+    const ok = await ersatzUebung(position.baustein, ["schulter"]);
+    await expect(
+      tauschePlanPosition(m.client, m.userId, plan.id, { einheitKey, positionKey: position.key, exerciseId: ok, machineId: geraet.id }),
+    ).resolves.toMatchObject({ status: "aktiv" });
+  });
+
+  it("Geraet eines fremden Studios wird abgelehnt", async () => {
+    const { m, plan } = await mitAktivemPlan("swap-fremd");
+    const { einheitKey, position } = ersteStelle(plan);
+    const exerciseId = await ersatzUebung(position.baustein);
+    const fremd = await machineVon(s.voll2);
+    const e = await fehlerVon(
+      tauschePlanPosition(m.client, m.userId, plan.id, { einheitKey, positionKey: position.key, exerciseId, machineId: fremd.id }),
+    );
+    expect(e.code).toBe("validation_failed");
+  });
+
+  it("Tausch auf nicht aktiven Plan: Konflikt", async () => {
+    const m = await legeMitgliedAn("swap-vorschlag", { studios: [s.voll] });
+    const vorschlag = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    const { einheitKey, position } = ersteStelle(vorschlag);
+    const geraet = await machineVon(s.voll);
+    const e = await fehlerVon(
+      tauschePlanPosition(m.client, m.userId, vorschlag.id, {
+        einheitKey,
+        positionKey: position.key,
+        exerciseId: position.exerciseId,
+        machineId: geraet.id,
+      }),
+    );
+    expect(e.code).toBe("conflict");
+  });
+
+  it("fremder Plan, ausgetretenes Mitglied und unbekannte Position", async () => {
+    const { m, plan } = await mitAktivemPlan("swap-grenzen");
+    const { einheitKey, position } = ersteStelle(plan);
+    const geraet = await machineVon(s.voll);
+    const eingabe = { einheitKey, positionKey: position.key, exerciseId: position.exerciseId, machineId: geraet.id };
+    const anderer = await legeMitgliedAn("swap-anderer", { studios: [s.voll] });
+    expect((await fehlerVon(tauschePlanPosition(anderer.client, anderer.userId, plan.id, eingabe))).code).toBe("conflict");
+    expect(
+      (await fehlerVon(tauschePlanPosition(m.client, m.userId, plan.id, { ...eingabe, positionKey: "gibt-es-nicht" }))).code,
+    ).toBe("validation_failed");
+    const { error } = await admin.from("studio_memberships").delete().eq("user_id", m.userId).eq("studio_id", s.voll);
+    if (error) throw error;
+    expect((await fehlerVon(tauschePlanPosition(m.client, m.userId, plan.id, eingabe))).code).toBe("conflict");
+    expect((await zeile(plan.id)).status).toBe("aktiv");
+  });
+
+  it("ohne Anmeldung nicht aufrufbar", async () => {
+    const { error } = await anonClient().rpc("swap_training_plan_position", {
+      p_plan_id: crypto.randomUUID(),
+      p_einheit_key: "A",
+      p_position_key: "x",
+      p_exercise_id: crypto.randomUUID(),
+      p_machine_id: crypto.randomUUID(),
+    });
+    expect(error).not.toBeNull();
   });
 });
