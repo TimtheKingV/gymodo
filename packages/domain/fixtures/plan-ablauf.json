@@ -1,0 +1,831 @@
+{
+  "statusFaelle": [
+    {
+      "name": "Satz an geplanter Uebung hakt ab",
+      "positionen": [
+        {
+          "key": "bank",
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "exerciseId": "rudern",
+          "hauptmuskeln": [
+            "ruecken",
+            "bizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ],
+      "ungeplanteGesehen": [],
+      "saetze": [
+        {
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false
+        }
+      ],
+      "tausche": [],
+      "erwartet": [
+        {
+          "key": "bank",
+          "status": "erledigt",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ]
+    },
+    {
+      "name": "Reihenfolge ist egal",
+      "positionen": [
+        {
+          "key": "bank",
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "exerciseId": "rudern",
+          "hauptmuskeln": [
+            "ruecken",
+            "bizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "knie",
+          "exerciseId": "kniebeuge",
+          "hauptmuskeln": [
+            "beine",
+            "gluteus"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ],
+      "ungeplanteGesehen": [],
+      "saetze": [
+        {
+          "exerciseId": "kniebeuge",
+          "hauptmuskeln": [
+            "beine",
+            "gluteus"
+          ],
+          "cardio": false
+        },
+        {
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false
+        }
+      ],
+      "tausche": [],
+      "erwartet": [
+        {
+          "key": "bank",
+          "status": "erledigt",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "knie",
+          "status": "erledigt",
+          "ersatzExerciseId": null
+        }
+      ]
+    },
+    {
+      "name": "ungeplante Uebung macht genau die Position mit den meisten gemeinsamen Hauptmuskeln optional",
+      "positionen": [
+        {
+          "key": "rudern",
+          "exerciseId": "rudern",
+          "hauptmuskeln": [
+            "ruecken",
+            "bizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "schulter",
+          "exerciseId": "schulterdruecken",
+          "hauptmuskeln": [
+            "schulter",
+            "trizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "bank",
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ],
+      "ungeplanteGesehen": [],
+      "saetze": [
+        {
+          "exerciseId": "dips",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false
+        }
+      ],
+      "tausche": [],
+      "erwartet": [
+        {
+          "key": "rudern",
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "schulter",
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "bank",
+          "status": "optional",
+          "ersatzExerciseId": null
+        }
+      ]
+    },
+    {
+      "name": "Gleichstand: die zuerst im Plan",
+      "positionen": [
+        {
+          "key": "a",
+          "exerciseId": "flys",
+          "hauptmuskeln": [
+            "brust"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "b",
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "exerciseId": "rudern",
+          "hauptmuskeln": [
+            "ruecken",
+            "bizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ],
+      "ungeplanteGesehen": [],
+      "saetze": [
+        {
+          "exerciseId": "negativ-fliegende",
+          "hauptmuskeln": [
+            "brust"
+          ],
+          "cardio": false
+        }
+      ],
+      "tausche": [],
+      "erwartet": [
+        {
+          "key": "a",
+          "status": "optional",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "b",
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ]
+    },
+    {
+      "name": "ohne gemeinsamen Hauptmuskel bleibt alles offen",
+      "positionen": [
+        {
+          "key": "bank",
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "exerciseId": "rudern",
+          "hauptmuskeln": [
+            "ruecken",
+            "bizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ],
+      "ungeplanteGesehen": [],
+      "saetze": [
+        {
+          "exerciseId": "wadenheben",
+          "hauptmuskeln": [
+            "waden"
+          ],
+          "cardio": false
+        }
+      ],
+      "tausche": [],
+      "erwartet": [
+        {
+          "key": "bank",
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ]
+    },
+    {
+      "name": "zweiter Satz derselben ungeplanten Uebung macht keine weitere optional",
+      "positionen": [
+        {
+          "key": "bank",
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "schulter",
+          "exerciseId": "schulterdruecken",
+          "hauptmuskeln": [
+            "schulter",
+            "trizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "exerciseId": "rudern",
+          "hauptmuskeln": [
+            "ruecken",
+            "bizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ],
+      "ungeplanteGesehen": [],
+      "saetze": [
+        {
+          "exerciseId": "dips",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false
+        },
+        {
+          "exerciseId": "dips",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false
+        }
+      ],
+      "tausche": [],
+      "erwartet": [
+        {
+          "key": "bank",
+          "status": "optional",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "schulter",
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ]
+    },
+    {
+      "name": "optionale Position, danach doch gemacht, wird erledigt",
+      "positionen": [
+        {
+          "key": "bank",
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false,
+          "status": "optional",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "exerciseId": "rudern",
+          "hauptmuskeln": [
+            "ruecken",
+            "bizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ],
+      "ungeplanteGesehen": [
+        "dips"
+      ],
+      "saetze": [
+        {
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false
+        }
+      ],
+      "tausche": [],
+      "erwartet": [
+        {
+          "key": "bank",
+          "status": "erledigt",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ]
+    },
+    {
+      "name": "Cardio-Satz an anderem Cardiogeraet erfuellt die Cardio-Position und laesst Kraft unberuehrt",
+      "positionen": [
+        {
+          "key": "bank",
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "lauf",
+          "exerciseId": "laufband",
+          "hauptmuskeln": [],
+          "cardio": true,
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ],
+      "ungeplanteGesehen": [],
+      "saetze": [
+        {
+          "exerciseId": "crosstrainer",
+          "hauptmuskeln": [],
+          "cardio": true
+        }
+      ],
+      "tausche": [],
+      "erwartet": [
+        {
+          "key": "bank",
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "lauf",
+          "status": "erledigt",
+          "ersatzExerciseId": null
+        }
+      ]
+    },
+    {
+      "name": "Kraftsatz macht Cardio nie optional",
+      "positionen": [
+        {
+          "key": "lauf",
+          "exerciseId": "laufband",
+          "hauptmuskeln": [
+            "beine"
+          ],
+          "cardio": true,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "exerciseId": "rudern",
+          "hauptmuskeln": [
+            "ruecken",
+            "bizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ],
+      "ungeplanteGesehen": [],
+      "saetze": [
+        {
+          "exerciseId": "kniebeuge",
+          "hauptmuskeln": [
+            "beine",
+            "gluteus"
+          ],
+          "cardio": false
+        }
+      ],
+      "tausche": [],
+      "erwartet": [
+        {
+          "key": "lauf",
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ]
+    },
+    {
+      "name": "Tausch: Satz mit Ersatzuebung erledigt die Position, Ersatz bleibt vermerkt",
+      "positionen": [
+        {
+          "key": "bank",
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "exerciseId": "rudern",
+          "hauptmuskeln": [
+            "ruecken",
+            "bizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ],
+      "ungeplanteGesehen": [],
+      "saetze": [
+        {
+          "exerciseId": "dips",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false
+        }
+      ],
+      "tausche": [
+        {
+          "positionKey": "bank",
+          "exerciseId": "dips",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ]
+        }
+      ],
+      "erwartet": [
+        {
+          "key": "bank",
+          "status": "erledigt",
+          "ersatzExerciseId": "dips"
+        },
+        {
+          "key": "rudern",
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ]
+    },
+    {
+      "name": "nach Tausch gilt die urspruengliche Uebung als ungeplant",
+      "positionen": [
+        {
+          "key": "bank",
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "schulter",
+          "exerciseId": "schulterdruecken",
+          "hauptmuskeln": [
+            "schulter",
+            "trizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ],
+      "ungeplanteGesehen": [],
+      "saetze": [
+        {
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false
+        }
+      ],
+      "tausche": [
+        {
+          "positionKey": "bank",
+          "exerciseId": "dips",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ]
+        }
+      ],
+      "erwartet": [
+        {
+          "key": "bank",
+          "status": "optional",
+          "ersatzExerciseId": "dips"
+        },
+        {
+          "key": "schulter",
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ]
+    },
+    {
+      "name": "bereits erledigte Position bleibt bei weiteren Saetzen erledigt",
+      "positionen": [
+        {
+          "key": "bank",
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false,
+          "status": "erledigt",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "exerciseId": "rudern",
+          "hauptmuskeln": [
+            "ruecken",
+            "bizeps"
+          ],
+          "cardio": false,
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ],
+      "ungeplanteGesehen": [],
+      "saetze": [
+        {
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false
+        },
+        {
+          "exerciseId": "bankdruecken",
+          "hauptmuskeln": [
+            "brust",
+            "trizeps"
+          ],
+          "cardio": false
+        }
+      ],
+      "tausche": [],
+      "erwartet": [
+        {
+          "key": "bank",
+          "status": "erledigt",
+          "ersatzExerciseId": null
+        },
+        {
+          "key": "rudern",
+          "status": "offen",
+          "ersatzExerciseId": null
+        }
+      ]
+    }
+  ],
+  "folgeFaelle": [
+    {
+      "name": "A -> B",
+      "einheitKeys": [
+        "A",
+        "B"
+      ],
+      "zuletzt": "A",
+      "erwartet": "B"
+    },
+    {
+      "name": "B -> A",
+      "einheitKeys": [
+        "A",
+        "B"
+      ],
+      "zuletzt": "B",
+      "erwartet": "A"
+    },
+    {
+      "name": "null -> A",
+      "einheitKeys": [
+        "A",
+        "B"
+      ],
+      "zuletzt": null,
+      "erwartet": "A"
+    },
+    {
+      "name": "unbekannt -> A",
+      "einheitKeys": [
+        "A",
+        "B"
+      ],
+      "zuletzt": "X",
+      "erwartet": "A"
+    },
+    {
+      "name": "OK_A -> UK_A",
+      "einheitKeys": [
+        "OK_A",
+        "UK_A",
+        "OK_B",
+        "UK_B"
+      ],
+      "zuletzt": "OK_A",
+      "erwartet": "UK_A"
+    },
+    {
+      "name": "UK_A -> OK_B",
+      "einheitKeys": [
+        "OK_A",
+        "UK_A",
+        "OK_B",
+        "UK_B"
+      ],
+      "zuletzt": "UK_A",
+      "erwartet": "OK_B"
+    },
+    {
+      "name": "OK_B -> UK_B",
+      "einheitKeys": [
+        "OK_A",
+        "UK_A",
+        "OK_B",
+        "UK_B"
+      ],
+      "zuletzt": "OK_B",
+      "erwartet": "UK_B"
+    },
+    {
+      "name": "UK_B -> OK_A",
+      "einheitKeys": [
+        "OK_A",
+        "UK_A",
+        "OK_B",
+        "UK_B"
+      ],
+      "zuletzt": "UK_B",
+      "erwartet": "OK_A"
+    },
+    {
+      "name": "einzelne Einheit A -> A",
+      "einheitKeys": [
+        "A"
+      ],
+      "zuletzt": "A",
+      "erwartet": "A"
+    }
+  ],
+  "zaehlFaelle": [
+    {
+      "name": "nur offen und getauscht zaehlt nicht",
+      "stati": [
+        "offen",
+        "getauscht",
+        "offen"
+      ],
+      "erwartet": false
+    },
+    {
+      "name": "ein optional zaehlt",
+      "stati": [
+        "offen",
+        "optional"
+      ],
+      "erwartet": true
+    },
+    {
+      "name": "ein erledigt zaehlt",
+      "stati": [
+        "offen",
+        "erledigt",
+        "getauscht"
+      ],
+      "erwartet": true
+    }
+  ]
+}

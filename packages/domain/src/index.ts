@@ -311,3 +311,5 @@ export type {
 export { ladeKandidaten } from "./trainingsplan-kandidaten.js";
 export { acceptPlan, erzeugePlanVorschlag, listPlaene, tauschePlanPosition } from "./trainingsplan.js";
 export type { PlanEingabe, PlanStatus, PlanTausch, TrainingPlan } from "./trainingsplan.js";
+export { ablaufNachSatz, ablaufTauschen, einheitZaehlt, naechsteEinheitKey } from "./trainingsplan-ablauf.js";
+export type { AblaufPosition, AblaufSatz, AblaufZustand, PositionStatus } from "./trainingsplan-ablauf.js";
