@@ -6,8 +6,8 @@ Spec: `docs/superpowers/specs/2026-10-21-trainingsplan-design.md` (Etappe 2 = Ab
 
 ## Rahmen
 
-- Branch `claude/trainingsplan-etappe2` (Worktree `.claude/worktrees/trainingsplan-e2`), abgezweigt von `claude/trainingsplan-design` (PR #83, Etappe 1, **noch nicht gemergt**). Nach dem Merge von #83 auf master rebasen.
-- Migration `0058` (Etappe 1) ist **nicht** auf Prod; Prod-Migrationen nur mit Tims ausdrücklicher Freigabe. Etappe 2 beginnt bei `0059`.
+- Branch `claude/trainingsplan-etappe2` (Worktree `.claude/worktrees/trainingsplan-e2`), auf Stand master inkl. Etappe 1 (PR #83, gemergt 24.10.).
+- Migration `0058` ist auf Prod (24.10., mit Tims Freigabe). Weitere Prod-Migrationen nur mit Tims ausdrücklicher Freigabe **und vor** dem Merge des Codes. Etappe 2 beginnt bei `0059`.
 - Lokale Integrationstests: siehe Abschnitt „Lokale Testumgebung“ unten.
 
 ## Code-Karte (geprüft 23.10.)
