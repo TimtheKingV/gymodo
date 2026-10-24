@@ -13,7 +13,8 @@ struct TrainingsplanAblaufStoreTests {
 
     /// Zwei Einheiten: A mit Brust (e1), Ruecken (e2) und Cardio; B mit Beinen (e3).
     static func plan(planId: String = "p1", studioId: String = "s1", version: Int = 1,
-                     naechste: String? = "A", positionA0: String = "e1") -> Trainingsplan {
+                     naechste: String? = "A", positionA0: String = "e1",
+                     zuletzt: String? = nil, erledigt: Int = 0) -> Trainingsplan {
         func position(_ key: String, _ baustein: String, _ exerciseId: String, _ muskeln: [String]) -> String {
             let liste = muskeln.map { "\"\($0)\"" }.joined(separator: ",")
             return """
@@ -24,10 +25,11 @@ struct TrainingsplanAblaufStoreTests {
             """
         }
         let naechsteJSON = naechste.map { "\"\($0)\"" } ?? "null"
+        let zuletztJSON = zuletzt.map { "\"\($0)\"" } ?? "null"
         let json = """
         {"planId":"\(planId)","studioId":"\(studioId)","version":\(version),"regelVersion":"1.2.0",
-         "struktur":"gk_ab","gruende":[],"naechsteEinheitKey":\(naechsteJSON),"zuletztEinheitKey":null,
-         "einheitenErledigt":0,"anfaengerUebergang":false,"alternativen":{},
+         "struktur":"gk_ab","gruende":[],"naechsteEinheitKey":\(naechsteJSON),"zuletztEinheitKey":\(zuletztJSON),
+         "einheitenErledigt":\(erledigt),"anfaengerUebergang":false,"alternativen":{},
          "einheiten":[
            {"key":"A","geschaetzteMinuten":45,"positionen":[
              \(position("A0", "brust", positionA0, ["chest"])),
@@ -67,23 +69,115 @@ struct TrainingsplanAblaufStoreTests {
         #expect(sut.zustand?.positionen.allSatisfy { $0.status == .offen && $0.ersatzExerciseId == nil } == true)
     }
 
-    @Test func lokalZuletztHatVorrangBisNachBootstrapBeiLeererWarteschlange() {
+    /// Der Server hat die Einheit gezaehlt: er nennt sie als zuletzt, und sein
+    /// Zaehler ist hoeher als beim Beenden.
+    static let gezaehltA = plan(naechste: "B", zuletzt: "A", erledigt: 1)
+
+    @Test func lokalZuletztHatVorrangBisDerServerDieEinheitGezaehltHat() {
         let sut = Self.store()
         sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
         _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
-        sut.einheitBeendet()
+        sut.einheitBeendet(jetzt: Self.jetzt)
 
         // Der Server weiss noch nichts vom Ende: er nennt weiter A.
         sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
         #expect(sut.einheitKey == "B")
 
-        // Noch ein Satz in der Warteschlange: der Bootstrap kann veraltet sein.
-        sut.nachBootstrap(offeneSchreibvorgaenge: 1)
+        // Noch ein Satz in der Warteschlange: der Bootstrap kann veraltet sein,
+        // auch wenn er die Einheit schon zu kennen scheint.
+        sut.nachBootstrap(offeneSchreibvorgaenge: 1, plaene: [Self.gezaehltA], jetzt: Self.jetzt)
         sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
         #expect(sut.einheitKey == "B")
 
-        // Leere Warteschlange: jetzt gilt wieder der Server.
-        sut.nachBootstrap(offeneSchreibvorgaenge: 0)
+        // Leere Warteschlange und der Server hat sie gezaehlt: jetzt gilt
+        // wieder der Server (hier ein spaeterer Bootstrap, der A nennt).
+        sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.gezaehltA], jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        #expect(sut.einheitKey == "A")
+    }
+
+    /// completeSession kann noch unterwegs sein (Ortswechsel meldet im
+    /// Hintergrund) oder mit 5xx gescheitert: ein frischer Bootstrap bei
+    /// leerer Warteschlange kennt die Einheit dann noch nicht.
+    @Test func lokalZuletztBleibtWennDerServerDieEinheitNochNichtGezaehltHat() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        sut.einheitBeendet(jetzt: Self.jetzt)
+
+        let spaeter = Self.jetzt.addingTimeInterval(10 * 60)
+        sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.plan(naechste: "A")], jetzt: spaeter)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: spaeter)
+        #expect(sut.einheitKey == "B")
+
+        // Ein Plan eines anderen Studios, der A als zuletzt nennt, zaehlt nicht.
+        let fremd = Self.plan(studioId: "s2", naechste: "B", zuletzt: "A", erledigt: 1)
+        sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [fremd, Self.plan(naechste: "A")], jetzt: spaeter)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: spaeter)
+        #expect(sut.einheitKey == "B")
+    }
+
+    /// Dieselbe Einheit war schon vorher die zuletzt gezaehlte (z. B. ein Plan
+    /// mit nur einer Einheit): erst ein hoeherer Zaehler zeigt die neue.
+    @Test func lokalZuletztBleibtBeiGleichemZuletztOhneHoeherenZaehler() {
+        let sut = Self.store()
+        // Der Server nennt A als naechste UND als zuletzt -- die Testdaten
+        // erzwingen A, damit die lokale Zaehlung dieselbe Einheit betrifft.
+        sut.vorbereiten(plan: Self.plan(naechste: "A", zuletzt: "A", erledigt: 3), studioId: "s1", jetzt: Self.jetzt)
+        #expect(sut.einheitKey == "A")
+        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        sut.einheitBeendet(jetzt: Self.jetzt)
+
+        sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.plan(naechste: "A", zuletzt: "A", erledigt: 3)],
+                          jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A", zuletzt: "A", erledigt: 3), studioId: "s1", jetzt: Self.jetzt)
+        #expect(sut.einheitKey == "B")
+
+        sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.plan(naechste: "B", zuletzt: "A", erledigt: 4)],
+                          jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A", zuletzt: "A", erledigt: 4), studioId: "s1", jetzt: Self.jetzt)
+        #expect(sut.einheitKey == "A")
+    }
+
+    /// Nach vier Stunden hat der Server die Einheit auch ohne completeSession
+    /// abgeschlossen (Auto-Abschluss): die lokale Zaehlung darf nicht ewig
+    /// gelten, falls er sie nie meldet.
+    @Test func lokalZuletztFaelltNachVierStundenWeg() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        sut.einheitBeendet(jetzt: Self.jetzt)
+
+        let knapp = Self.jetzt.addingTimeInterval(WorkoutSessionStore.sessionPause - 60)
+        sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.plan(naechste: "A")], jetzt: knapp)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: knapp)
+        #expect(sut.einheitKey == "B")
+
+        // Mit offenen Saetzen bleibt sie auch nach vier Stunden.
+        let danach = Self.jetzt.addingTimeInterval(WorkoutSessionStore.sessionPause + 60)
+        sut.nachBootstrap(offeneSchreibvorgaenge: 1, plaene: [Self.plan(naechste: "A")], jetzt: danach)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: danach)
+        #expect(sut.einheitKey == "B")
+
+        sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.plan(naechste: "A")], jetzt: danach)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: danach)
+        #expect(sut.einheitKey == "A")
+    }
+
+    /// Eine plan-ablauf.json von vor `beendetAm` muss weiter lesbar sein. Ohne
+    /// Zeitpunkt gilt die Zaehlung als alt: sie wirkt bis zum naechsten
+    /// frischen Bootstrap, haelt sich aber nicht ewig.
+    @Test func alteDateiOhneBeendetAmBleibtLesbar() throws {
+        let verzeichnis = Self.verzeichnis()
+        try FileManager.default.createDirectory(at: verzeichnis, withIntermediateDirectories: true)
+        let alt = #"{"lokalZuletzt":{"studioId":"s1","einheitKey":"A"}}"#
+        try Data(alt.utf8).write(to: verzeichnis.appendingPathComponent("plan-ablauf.json"))
+
+        let sut = Self.store(verzeichnis)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        #expect(sut.einheitKey == "B")
+
+        sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.plan(naechste: "A")], jetzt: Self.jetzt)
         sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
         #expect(sut.einheitKey == "A")
     }

@@ -57,8 +57,10 @@ struct FitnessMemberApp: App {
         let ablauf = TrainingsplanAblaufStore()
         // Nur nach einem frisch geladenen Bootstrap, nie nach dem aus dem
         // Cache: nur der frische kann eine eben beendete Einheit schon kennen.
-        katalog.nachFrischemBootstrap = { [weak ablauf] offene in
-            ablauf?.nachBootstrap(offeneSchreibvorgaenge: offene)
+        // Seine Plaene zeigen, ob der Server sie schon gezaehlt hat; der
+        // Katalog setzt `bootstrap` vor dem Aufruf.
+        katalog.nachFrischemBootstrap = { [weak ablauf, weak katalog] offene in
+            ablauf?.nachBootstrap(offeneSchreibvorgaenge: offene, plaene: katalog?.bootstrap?.member.plans ?? [])
         }
         _catalogStore = State(initialValue: katalog)
         _planAblauf = State(initialValue: ablauf)
