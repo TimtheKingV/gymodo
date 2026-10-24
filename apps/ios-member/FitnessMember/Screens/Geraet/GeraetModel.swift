@@ -137,7 +137,8 @@ final class GeraetModel {
         sessions.reserveSetzen(setId: letzter.setId, rir: neu.rir)
         enqueue(PendingSetWrite(sessionId: letzter.sessionId, setId: letzter.setId, body: body))
     }
-    var kannSichern: Bool { !istCardio || !cardio.istLeer }
+
+    var kannSichern: Bool { !zirkelSatzAbgegeben && (!istCardio || !cardio.istLeer) }
 
     func cardioSetzen(_ wert: CardioWert, _ zahl: Double?) {
         cardio[wert] = zahl
@@ -173,6 +174,30 @@ final class GeraetModel {
     /// Ein Pfad, der die Ortspruefung umgeht, endet hier statt in den
     /// verworfenen Schreibvorgaengen.
     private(set) var satzAbgelehnt: String?
+    /// Gesetzt, solange dieses Geraet Teil eines Zirkels ist (Spec
+    /// Mini-Zirkel 21.10.). Nach einem gesicherten Satz entscheidet dann die
+    /// Zirkel-Ebene, was kommt -- die naechste Uebung, die Rundenpause --,
+    /// nicht die Satzpause oder die Abschlussfrage DIESER Uebung. Ein
+    /// abgelehnter Satz ruft den Hook nicht: der Zirkel darf nur nach einem
+    /// Satz weiterruecken, der wirklich in der Einheit steht.
+    var beiZirkelSatzGesichert: (() -> Void)?
+
+    /// Woran der Screen den Zirkelmodus erkennt: am Hook selbst, nicht an
+    /// einem zweiten Merker, der ihm widersprechen koennte.
+    var imZirkel: Bool { beiZirkelSatzGesichert != nil }
+    /// Im Zirkel bleibt die Phase nach dem Satz .eingabe -- anders als
+    /// sonst, wo Pause oder Abschluss den Knopf verdraengen. Ohne diese
+    /// Sperre schriebe ein zweiter Tipp, waehrend die Pause hereinschiebt,
+    /// einen Satz, den der Zirkel nicht zaehlt. Zurueckgesetzt wird nie:
+    /// jede Zirkel-Uebung bekommt ein neues Modell, und der alte Screen
+    /// faellt beim Wechsel aus dem Pfad.
+    private(set) var zirkelSatzAbgegeben = false
+    /// Gesetzt, solange ein Sheet ueber dem Screen liegt, aus dem heraus
+    /// gesichert wird (Problem melden): der Hook navigiert, und einen Push
+    /// waehrend der Sheet-Animation verwirft UIKit. Die Meldung wartet dann
+    /// auf zirkelMeldungNachholen() aus dem onDismiss.
+    var zirkelMeldungAufschieben = false
+    private var zirkelMeldungAusstehend = false
 
     private let token: String?
     private let bootstrap: BootstrapResponse
@@ -246,7 +271,8 @@ final class GeraetModel {
         satzZiel: @escaping () -> Int = { Einstellungen.satzZiel() },
         mitschnitt: (any SatzMitschnitt)? = nil,
         zaehler: (any SatzZaehler)? = nil,
-        startwerte: Startwerte? = nil
+        startwerte: Startwerte? = nil,
+        mitCountdown: Bool = true
     ) {
         self.station = station
         self.uebungId = uebungId
@@ -259,7 +285,14 @@ final class GeraetModel {
         self.mitschnitt = mitschnitt
         self.zaehler = zaehler
 
-        let letzter = Self.letzterSatz(an: station, uebungId: uebungId, in: bootstrap)
+        // Zuerst der Satz von heute: im Zirkel entsteht Runde 2 als neues
+        // Modell, und `bootstrap` ist eine Momentaufnahme vom Prefetch, die
+        // die Vorrunde nicht kennt -- ohne diesen Blick stuende dort das
+        // Gewicht vom letzten Training statt das von vor drei Minuten.
+        // Dasselbe gilt fuer jede Rueckkehr an ein Geraet ueber die
+        // Blockliste.
+        let heute = Self.letzterSatzHeute(an: station, uebungId: uebungId, in: sessions)
+        let letzter = heute ?? Self.letzterSatz(an: station, uebungId: uebungId, in: bootstrap)
         // Ohne Historie startet das Rad am Startwert des Geraets, sonst am
         // Minimum (Testnotiz 12.10. abends, #3). Bewusste Ausnahme von
         // designsystem.md SS8: der Startwert gilt je Geraet, nicht je Person
@@ -279,19 +312,56 @@ final class GeraetModel {
         umfang = Rastwerte.naechster(zu: umfang, in: umfangsWerte)
         nebenbelastung = nebenbelastungVorbelegt(aus: letzter?.secondaryLoad)
         cardio = letzter?.cardio?.nur(station.equipmentModel.cardioWerte) ?? CardioWerte()
+        // Was heute schon gelaufen ist, hat das Mitglied selbst eingestellt.
+        // Ein spaeter tagContext-Vorschlag rechnet aus der Historie und darf
+        // das vorbelegte Gewicht der Vorrunde nicht unter dem Daumen
+        // ersetzen -- dieselbe Regel wie fuer die Startwerte aus dem Drawer.
+        if heute != nil {
+            belastungVomNutzer = true
+            nebenbelastungVomNutzer = true
+        }
 
         // Aus dem Drawer (Testnotiz 11.10., #10, #11): die dort gewaehlten
         // Werte gehoeren dem Mitglied, ein spaeter Vorschlag ersetzt sie
         // nicht. Der Countdown laeuft nur nach diesem Start, nicht im
         // Zirkel ueber die Blockliste.
-        if let startwerte { uebungStarten(mit: startwerte) }
+        //
+        // Ohne Countdown (Zirkel, Runde 1) nur die Werte: phase bleibt
+        // .eingabe, und den Mitschnitt startet erst geraetGeoeffnet() beim
+        // Erscheinen. init laeuft im ViewBuilder von TrainingRootView.ziel(_:)
+        // bei jedem Neuaufbau, der Screen behaelt aber nur das erste Modell
+        // -- ein Mitschnitt von hier haengte den app-weiten Zaehler an ein
+        // verworfenes Modell.
+        if let startwerte {
+            if mitCountdown {
+                uebungStarten(mit: startwerte)
+            } else {
+                startwerteUebernehmen(startwerte)
+            }
+        }
     }
 
     /// "Übung starten" im Drawer: aus der Liste ueber init, nach "Weitere
     /// Übung an dem Gerät" auf dem bestehenden Modell (Testnotiz 13.10.,
     /// #3). Ein Weg fuer beide, damit der zweite Start nicht anders
     /// beginnt als der erste.
-    func uebungStarten(mit startwerte: Startwerte) {
+    ///
+    /// Ohne Countdown im Zirkel ab Runde 2 (Spec Mini-Zirkel 21.10.): kein
+    /// Drawer, das Mitglied steht schon am Geraet -- gleich die Raeder, und
+    /// der Mitschnitt beginnt sofort, wie sonst nach `countdownBeenden()`.
+    func uebungStarten(mit startwerte: Startwerte, mitCountdown: Bool = true) {
+        startwerteUebernehmen(startwerte)
+        if mitCountdown {
+            phase = .bereit(Resttimer(dauer: Startcountdown.dauer))
+        } else {
+            phase = .eingabe
+            mitschnittBeginnen()
+        }
+    }
+
+    /// Die Werte aus dem Drawer gehoeren dem Mitglied: ein spaeter
+    /// Vorschlag ersetzt sie nicht.
+    private func startwerteUebernehmen(_ startwerte: Startwerte) {
         belastung = Rastwerte.naechster(zu: startwerte.belastung, in: belastungsWerte)
         umfang = Rastwerte.naechster(zu: startwerte.umfang, in: umfangsWerte)
         if let neben = startwerte.nebenbelastung, nebenmodell != nil {
@@ -299,7 +369,6 @@ final class GeraetModel {
             nebenbelastungVomNutzer = true
         }
         belastungVomNutzer = true
-        phase = .bereit(Resttimer(dauer: Startcountdown.dauer))
     }
 
     /// Was der Drawer an die Satzseite weitergibt: die Raeder, wie sie
@@ -592,6 +661,39 @@ final class GeraetModel {
         return timer
     }
 
+    /// "Zirkel mit weiterem Gerät" in der Pause (Spec Mini-Zirkel, Task 7):
+    /// nur nach genau einem Satz einer Wiederholungsuebung -- dann ist der
+    /// Satz Slot 1 von Runde 1. Nach zwei Saetzen waere schon eine zweite
+    /// Runde derselben Uebung gemacht, die der Zirkel nicht abbilden kann.
+    /// Ein Zirkel-Geraet erweitert ueber die Zirkel-Pause, nicht hier.
+    var kannZirkelBeginnen: Bool {
+        !imZirkel && satzNummer == 2 && volumeKind == .reps && laufendePause != nil
+    }
+
+    /// Gesetzt von anZirkelUebergeben(); danach ist das Modell stumm.
+    private(set) var anZirkelAbgegeben = false
+
+    /// "Zirkel mit weiterem Gerät": die neue Zirkel-Uebung ersetzt diesen
+    /// Screen, der dabei noch sichtbar ist. Sein onDisappear kaeme womoeglich
+    /// erst, NACHDEM der neue Screen seinen Mitschnitt begonnen hat, und
+    /// braeche ihn ab. Deshalb gibt das Modell Sensor und Zaehler hier frei,
+    /// synchron VOR dem Pfadwechsel, und tut danach nichts mehr -- weder
+    /// Freigeben noch Beginnen (ein noch feuernder Pausen-Task).
+    func anZirkelUebergeben() {
+        guard !anZirkelAbgegeben else { return }
+        screenVerlassen()
+        anZirkelAbgegeben = true
+    }
+
+    /// Wann der letzte Satz dieser Uebung in der laufenden Einheit fiel.
+    /// Beim Zirkel aus dem Einzelsatz beginnt Runde 1 damit (Carry-over
+    /// Task 5), sonst fehlte er in der Rundenzusammenfassung.
+    var letzterSatzAm: Date? {
+        sessions.aktiveSession()?.bloecke
+            .first { $0.stationSchluessel == station.schluessel && $0.exerciseId == uebungId }?
+            .saetze.map(\.performedAt).max()
+    }
+
     /// "Vorschlag · +2,5 kg", "Vorschlag · +0,5 km/h" -- eine Rechnung,
     /// keine Empfehlung (designsystem.md SS10). Fehlt offline und beim
     /// Erstkontakt. Mit Einheit: an einem Geraet mit zwei Reglern sagte
@@ -796,6 +898,19 @@ final class GeraetModel {
         }
     }
 
+    /// Der juengste Satz dieser Uebung an DIESER Station in der laufenden
+    /// Einheit, sonst nil. Nur fuer init -- Rueckblick und Uebungsliste
+    /// zeigen bewusst weiter das letzte Training aus dem Prefetch.
+    private static func letzterSatzHeute(an station: Station, uebungId: String,
+                                         in sessions: WorkoutSessionStore) -> LetzterSatz? {
+        sessions.aktiveSession()?.bloecke
+            .first { $0.stationSchluessel == station.schluessel && $0.exerciseId == uebungId }?
+            .saetze.max { $0.performedAt < $1.performedAt }
+            .map { LetzterSatz(load: $0.load, secondaryLoad: $0.secondaryLoad, volume: $0.volume,
+                               cardio: $0.cardio,
+                               performedAt: ISO8601DateFormatter().string(from: $0.performedAt)) }
+    }
+
     func uebungWechseln(zu neue: String) {
         uebungId = neue
         let letzter = letzterSatz(fuer: neue)
@@ -826,6 +941,9 @@ final class GeraetModel {
     }
 
     func satzSichern(problemFlag: Bool, problemReason: ProblemReason?) async {
+        // Still, ohne satzAbgelehnt: der Satz dieser Zirkel-Uebung steht
+        // schon, das ist kein Fehler des Mitglieds.
+        guard !zirkelSatzAbgegeben else { return }
         if let laufend = Ortswechsel.satzKonflikt(station: station, offeneEinheit: sessions.aktiveSession()) {
             let ort = StudiosListe.name(fuer: laufend, studios: bootstrap.studios)
             satzAbgelehnt = "Dein Training läuft in \(ort). Beende es zuerst, dann sicherst du hier Sätze."
@@ -897,11 +1015,33 @@ final class GeraetModel {
             problemFlag: problemFlag,
             volumeSource: herkunft, zaehler: ergebnis, befestigung: befestigung))
         zaehlerZustand = .aus
+        // Im Zirkel bleibt die Phase stehen: die Zirkel-Ebene fuehrt weiter.
+        // Erst nach dem Schreiben, dem Einreihen und dem Mitschnitt -- der
+        // Hook darf den Screen wechseln, und dann muss alles schon stehen.
+        if let beiZirkelSatzGesichert {
+            zirkelSatzAbgegeben = true
+            if zirkelMeldungAufschieben {
+                zirkelMeldungAusstehend = true
+            } else {
+                beiZirkelSatzGesichert()
+            }
+            return
+        }
         // satzNummer liest live aus der Session und ist nach dem Schreiben
         // oben schon die NAECHSTE Nummer: bei Ziel 3 steht nach dem dritten
         // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
         // eine Pause vor einem Satz, der nicht kommt, ist nur Wartezeit.
         phase = satzNummer > satzZiel ? .abschluss : .neuePause()
+    }
+
+    /// Aus dem onDismiss des Sheets: die aufgeschobene Meldung an den
+    /// Zirkel, hoechstens einmal. Ohne gesicherten Satz hebt es nur das
+    /// Aufschieben auf.
+    func zirkelMeldungNachholen() {
+        zirkelMeldungAufschieben = false
+        guard zirkelMeldungAusstehend else { return }
+        zirkelMeldungAusstehend = false
+        beiZirkelSatzGesichert?()
     }
 
     /// "Satz speichern" vor dem Abschluss (#5): derselbe Weg wie der
@@ -954,6 +1094,9 @@ final class GeraetModel {
     /// Alle vier Aufrufer sind genau die Satzanfaenge: Mitschnitt und
     /// Zaehler beginnen deshalb hier gemeinsam.
     private func mitschnittBeginnen() {
+        // Abgegeben an die naechste Zirkel-Uebung: Sensor und Zaehler
+        // gehoeren jetzt deren Modell.
+        guard !anZirkelAbgegeben else { return }
         mitschnitt?.eingabeBegonnen(SatzMitschnittKontext(
             station: station, exerciseId: uebungId, exerciseName: aktiveUebung?.name ?? ""))
         zaehlerZustand = .aus
@@ -996,6 +1139,11 @@ final class GeraetModel {
 
     /// GeraetView ruft das aus onDisappear.
     func screenVerlassen() {
+        // Nach der Uebergabe ist schon freigegeben. Ein zweites Mal traefe
+        // die Aufnahme der neuen Uebung: Sensor und Zaehler sind app-weit,
+        // und ob dieses onDisappear vor oder nach deren Start kommt,
+        // entscheidet der NavigationStack.
+        guard !anZirkelAbgegeben else { return }
         mitschnitt?.screenVerlassen()
         zaehler?.satzVerworfen()
         zaehlerZustand = .aus

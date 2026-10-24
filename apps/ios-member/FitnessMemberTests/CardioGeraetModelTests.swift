@@ -114,6 +114,17 @@ struct CardioGeraetModelTests {
         #expect(modell.phase == .eingabe)
     }
 
+    /// Im Zirkel rueckt auch ein Cardio-Geraet weiter: statt der
+    /// Abschlussfrage meldet es den Satz an die Zirkel-Ebene.
+    @Test func imZirkelMeldetAuchDasCardioGeraetDenSatz() async {
+        let modell = cardioModell()
+        var aufrufe = 0
+        modell.beiZirkelSatzGesichert = { aufrufe += 1 }
+        await modell.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(aufrufe == 1)
+        #expect(modell.phase == .eingabe)
+    }
+
     @Test func uebungWechselnBelegtCardioNeuVor() {
         let modell = cardioModell()
         modell.cardioSetzen(.zeit, 900)
