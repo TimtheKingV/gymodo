@@ -28,6 +28,10 @@ struct PausenRad: View {
     /// Satz. Wer am Geraet fertig ist, merkt das in der Pause -- nicht
     /// erst, wenn die Raeder wieder dastehen.
     let beiAbschliessen: () -> Void
+    /// "Zirkel mit weiterem Gerät" (Spec Mini-Zirkel, Task 7). nil: kein
+    /// Knopf -- der Aufrufer entscheidet, ob aus dieser Pause ein Zirkel
+    /// werden kann (GeraetModel.kannZirkelBeginnen).
+    let beiZirkel: (() -> Void)?
 
     /// Der gedrosselte Ansagetext (SS12). Ein eigener Task-Takt statt einer
     /// zweiten TimelineView, damit der Sekundentakt der sichtbaren Anzeige
@@ -40,7 +44,8 @@ struct PausenRad: View {
          einheit: LoadUnit = .kg,
          naechsterSatz: Int,
          beiWeiter: @escaping () -> Void,
-         beiAbschliessen: @escaping () -> Void) {
+         beiAbschliessen: @escaping () -> Void,
+         beiZirkel: (() -> Void)? = nil) {
         self.timer = timer
         self.beiVerlaengern = beiVerlaengern
         self.beiGewicht = beiGewicht
@@ -48,6 +53,7 @@ struct PausenRad: View {
         self.naechsterSatz = naechsterSatz
         self.beiWeiter = beiWeiter
         self.beiAbschliessen = beiAbschliessen
+        self.beiZirkel = beiZirkel
         _ansage = State(initialValue: timer.gesprochen())
     }
 
@@ -91,6 +97,14 @@ struct PausenRad: View {
                 PrimaryButton(title: "Nächste Übung") { beiAbschliessen() }
                     .accessibilityHint("Schließt diese Übung ab")
                     .testnotizElement("geraet.naechste-uebung", typ: "PrimaryButton")
+                // Unter den beiden Hauptwegen und als Kontur: ein Zirkel ist
+                // die Ausnahme, nicht der naechste Schritt. Nur nach Satz 1,
+                // also hoechstens einmal je Uebung sichtbar.
+                if let beiZirkel {
+                    SecondaryButton(title: "Zirkel mit weiterem Gerät", action: beiZirkel)
+                        .accessibilityHint("Wählt ein zweites Gerät, die Pause läuft weiter")
+                        .testnotizElement("geraet.zirkel-beginnen", typ: "SecondaryButton")
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -142,7 +156,7 @@ struct Zeitring: View {
     /// Ein eigener Verlauf fuer den Bogen. nil: der Bogen folgt dem Timer
     /// in Sekundenschritten (Pause). Gesetzt: der Bogen laeuft fliessend im
     /// Animationstakt (Countdown, Testnotiz 12.10. abends, #2).
-    var fortschritt: ((Date) -> Double)? = nil
+    let fortschritt: ((Date) -> Double)?
     let mitte: (Int) -> String
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -151,6 +165,25 @@ struct Zeitring: View {
     /// dem Kreis laufen.
     @ScaledMetric(relativeTo: .body) private var durchmesser: CGFloat = 240
     @ScaledMetric(relativeTo: .body) private var strichstaerke: CGFloat = 12
+    /// Die Ziffern wachsen und schrumpfen mit dem Ring: 48 pt in einem
+    /// kleinen Ring liefen sonst an den Bogen.
+    private let ziffernGroesse: CGFloat
+
+    /// `kante`: der Durchmesser ohne Dynamic Type. 240 fuer Pause und
+    /// Countdown am Geraet; kleiner im Zirkel, wo die naechste Uebung das
+    /// Wichtigste auf dem Screen ist und die Uhr nur Nebensache (Spec
+    /// Mini-Zirkel, Anti-Ziel "Pausenscreen nicht ueberladen").
+    init(timer: Resttimer, beschriftung: String, kante: CGFloat = 240,
+         fortschritt: ((Date) -> Double)? = nil, mitte: @escaping (Int) -> String) {
+        self.timer = timer
+        self.beschriftung = beschriftung
+        self.fortschritt = fortschritt
+        self.mitte = mitte
+        let massstab = kante / 240
+        _durchmesser = ScaledMetric(wrappedValue: kante, relativeTo: .body)
+        _strichstaerke = ScaledMetric(wrappedValue: max(6, 12 * massstab), relativeTo: .body)
+        ziffernGroesse = 48 * massstab
+    }
 
     var body: some View {
         Group {
@@ -190,7 +223,7 @@ struct Zeitring: View {
                     .tracking(1.5)
                     .foregroundStyle(DesignSystem.Color.textFaint)
                 Text(mitte(timer.restsekunden(jetzt: jetzt)))
-                    .font(.system(size: 48, weight: .black).monospacedDigit())
+                    .font(.system(size: ziffernGroesse, weight: .black).monospacedDigit())
                     .foregroundStyle(DesignSystem.Color.text)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)

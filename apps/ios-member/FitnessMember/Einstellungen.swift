@@ -15,6 +15,7 @@ enum Einstellungen {
     /// Bestandsinstallation ihre Einstellung verliert.
     static let resttimerSekundenKey = "resttimerSekunden"
     static let vibrationBeimSichernKey = "vibrationBeimSichern"
+    static let zirkelPauseSekundenKey = "zirkelPauseSekunden"
 
     static let satzZielKey = "satzZiel"
     /// Die Reserve-Frage erklaert sich einmal, beim allerersten Mal.
@@ -25,6 +26,11 @@ enum Einstellungen {
     static let resttimerVorgabe = 90
     /// 10/20/30 s ergaenzt (Testnotiz 16.10., #1).
     static let resttimerStufen = [10, 20, 30, 45, 60, 90, 120, 180]
+
+    /// Im Zirkel wechselt man zur naechsten Uebung statt zu rasten; die Pause
+    /// ist nur der Weg zum Geraet und deshalb deutlich kuerzer als zwischen
+    /// Saetzen. Die Stufen teilt sie sich mit dem Satz-Resttimer.
+    static let zirkelPauseVorgabe = 20
 
     /// Wie viele Saetze an einem Geraet geplant sind. Es gibt (noch) keinen
     /// Trainingsplan in den Daten -- `exercises` kennt nur einen
@@ -39,6 +45,12 @@ enum Einstellungen {
     static func resttimerSekunden(_ defaults: UserDefaults = .standard) -> Int {
         let gesetzt = defaults.integer(forKey: resttimerSekundenKey)
         return gesetzt > 0 ? gesetzt : resttimerVorgabe
+    }
+
+    /// Wie `resttimerSekunden`: 0 heisst nie gesetzt, dann gilt die Vorgabe.
+    static func zirkelPauseSekunden(_ defaults: UserDefaults = .standard) -> Int {
+        let gesetzt = defaults.integer(forKey: zirkelPauseSekundenKey)
+        return gesetzt > 0 ? gesetzt : zirkelPauseVorgabe
     }
 
     /// Gilt je Geraet UND Uebung -- also je Block, den WorkoutSessionStore

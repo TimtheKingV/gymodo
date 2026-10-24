@@ -15,7 +15,18 @@ struct UebungsstartSheet: View {
     /// seinen Wert beim naechsten Neuzeichnen (wie GeraetErkanntScreen).
     @State private var modell: GeraetModel
     let beiStart: (Startwerte) -> Void
+    /// "Mini-Zirkel anlegen" (Spec 21.10., Entscheidung 1): die Startwerte
+    /// gelten fuer Uebung 1 des Zirkels. nil = kein Knopf, etwa im Zirkel
+    /// selbst oder auf der Satzseite.
+    let beiZirkel: ((Startwerte) -> Void)?
     let beiSchliessen: () -> Void
+    /// Knopf des letzten Schritts; in der Zirkel-Planung "Zur Planung".
+    let startTitel: String
+    /// Auch das Wiederholungs-Rad: in der Planung werden beide Werte
+    /// festgelegt, im normalen Drawer erst in der Uebung.
+    let mitUmfang: Bool
+    /// Als Seite in einem Sheet-Stack: Detents und Griff gehoeren dem Sheet.
+    let eingebettet: Bool
 
     /// Einmal beim Oeffnen bestimmt, nicht bei jedem Rendern: ein spaeter
     /// eintreffender Kontext darf dem Mitglied nicht unter derselben
@@ -34,10 +45,18 @@ struct UebungsstartSheet: View {
 
     /// - mitUebersicht: auch eine bekannte Uebung zeigt erst die Einweisung
     ///   (Testnotiz 17.10., #4); siehe `Uebungsstart.schritte`.
-    init(modell: GeraetModel, mitUebersicht: Bool = false, beiStart: @escaping (Startwerte) -> Void,
+    init(modell: GeraetModel, mitUebersicht: Bool = false,
+         startTitel: String = "Übung starten", mitUmfang: Bool = false,
+         eingebettet: Bool = false,
+         beiStart: @escaping (Startwerte) -> Void,
+         beiZirkel: ((Startwerte) -> Void)? = nil,
          beiSchliessen: @escaping () -> Void) {
+        self.startTitel = startTitel
+        self.mitUmfang = mitUmfang
+        self.eingebettet = eingebettet
         _modell = State(initialValue: modell)
         self.beiStart = beiStart
+        self.beiZirkel = beiZirkel
         self.beiSchliessen = beiSchliessen
         _schritte = State(initialValue: Uebungsstart.schritte(
             erstkontakt: modell.istErstkontakt,
@@ -70,7 +89,9 @@ struct UebungsstartSheet: View {
                 StartwerteSchritt(
                     modell: modell,
                     titel: schritte.count > 1 ? titel("Startwerte") : nil,
-                    beiZurueck: position > 0 ? { zurueck() } : nil
+                    beiZurueck: position > 0 ? { zurueck() } : nil,
+                    startTitel: startTitel, mitUmfang: mitUmfang,
+                    beiZirkel: beiZirkel.map { _ in { zirkelAnlegen() } }
                 ) { starten() }
                 .onGeometryChange(for: CGFloat.self) { proxy in
                     // Die untere Safe Area gehoert zum Detent, nicht zum
@@ -88,8 +109,7 @@ struct UebungsstartSheet: View {
         // Kontext fuer Video, Beschreibung und Vorschlag. Kommt er nicht
         // (offline), steht alles aus dem Prefetch.
         .task { await modell.kontextLaden() }
-        .presentationDetents(detents)
-        .presentationDragIndicator(.visible)
+        .modifier(EigeneDetents(aktiv: !eingebettet, detents: detents))
     }
 
     /// Nur die Startwerte (bekannte Uebung): so hoch wie der Inhalt, die
@@ -121,6 +141,13 @@ struct UebungsstartSheet: View {
         beiStart(modell.startwerte)
     }
 
+    /// Wie `starten()`: wer bis zu den Startwerten kam, hat die Einweisung
+    /// gesehen -- auch wenn die Uebung erst als Teil des Zirkels beginnt.
+    private func zirkelAnlegen() {
+        modell.erstkontaktAbschliessen()
+        beiZirkel?(modell.startwerte)
+    }
+
     private func zurueck() {
         if let ziel = ruecksprung {
             ruecksprung = nil
@@ -149,6 +176,10 @@ struct StartwerteSchritt: View {
     /// "Schritt 1 von 1".
     let titel: String?
     let beiZurueck: (() -> Void)?
+    var startTitel = "Übung starten"
+    var mitUmfang = false
+    /// nil = kein "Mini-Zirkel anlegen".
+    var beiZirkel: (() -> Void)? = nil
     let beiStart: () -> Void
 
     var body: some View {
@@ -190,7 +221,7 @@ struct StartwerteSchritt: View {
 
             // Nur das Gewicht: wie viele Wiederholungen es werden, weiss man
             // vor dem Satz oft noch nicht -- das Rad kommt in der Uebung.
-            WertZeile(modell: modell, mitUmfang: false)
+            WertZeile(modell: modell, mitUmfang: mitUmfang)
 
             // Mit Einweisung hat der Drawer volle Hoehe; ohne Spacer hing
             // "Übung starten" mitten darin statt in der Daumenzone
@@ -203,14 +234,23 @@ struct StartwerteSchritt: View {
                 // Die Uhr laeuft erst mit diesem Tipp, nicht schon waehrend
                 // der Einweisung (Testnotiz 06.10., #5) -- gesagt wird es,
                 // weil es keinen eigenen Startscreen mehr gibt.
-                if !modell.trainingLaeuft {
+                // Nicht in der Zirkel-Planung (mitUmfang): dort beginnt die
+                // Uebung nicht, die Uhr laeuft erst im Zirkel.
+                if !modell.trainingLaeuft, !mitUmfang {
                     Text("Mit „Übung starten“ läuft deine Trainingsuhr.")
                         .font(.system(size: 13))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                PrimaryButton(title: "Übung starten") { beiStart() }
+                PrimaryButton(title: startTitel) { beiStart() }
                     .testnotizElement("uebungsstart.starten", typ: "PrimaryButton")
+                // Unter dem Hauptweg und als Umriss: "Übung starten" bleibt
+                // die eine Akzentflaeche und an seiner Stelle (Anti-Ziel:
+                // der Zirkel darf "Direkt starten" nicht verkomplizieren).
+                if let beiZirkel {
+                    SecondaryButton(title: "Mini-Zirkel anlegen") { beiZirkel() }
+                        .testnotizElement("uebungsstart.zirkel", typ: "SecondaryButton")
+                }
             }
         }
         .padding(.horizontal, 20)
@@ -235,6 +275,22 @@ struct StartwerteSchritt: View {
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textFaint)
+        }
+    }
+}
+
+/// Detents und Griff nur, wenn der Drawer selbst das Sheet ist.
+private struct EigeneDetents: ViewModifier {
+    let aktiv: Bool
+    let detents: Set<PresentationDetent>
+
+    func body(content: Content) -> some View {
+        if aktiv {
+            content
+                .presentationDetents(detents)
+                .presentationDragIndicator(.visible)
+        } else {
+            content
         }
     }
 }

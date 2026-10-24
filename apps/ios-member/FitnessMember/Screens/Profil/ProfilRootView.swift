@@ -11,6 +11,8 @@ struct ProfilRootView: View {
     @AppStorage(Einstellungen.vibrationBeimSichernKey) private var vibrationBeimSichern = true
     @AppStorage(Einstellungen.resttimerSekundenKey) private var resttimerSekunden =
         Einstellungen.resttimerVorgabe
+    @AppStorage(Einstellungen.zirkelPauseSekundenKey) private var zirkelPauseSekunden =
+        Einstellungen.zirkelPauseVorgabe
     @AppStorage(Einstellungen.satzZielKey) private var satzZiel = Einstellungen.satzZielVorgabe
 
     @State private var nameOffen = false
@@ -257,6 +259,12 @@ struct ProfilRootView: View {
                     Text("\(stufe) s").tag(stufe)
                 }
             }
+            Picker("Pause zwischen Übungen im Zirkel", selection: $zirkelPauseSekunden) {
+                ForEach(Einstellungen.resttimerStufen, id: \.self) { stufe in
+                    Text("\(stufe) s").tag(stufe)
+                }
+            }
+            .testnotizElement("profil.zirkelpause", typ: "Picker")
             Picker("Sätze pro Gerät", selection: $satzZiel) {
                 ForEach(Einstellungen.satzZielStufen, id: \.self) { stufe in
                     Text("\(stufe)").tag(stufe)
