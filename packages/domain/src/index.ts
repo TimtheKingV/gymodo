@@ -297,3 +297,6 @@ export {
   saveTrainingProfile,
 } from "./trainingsprofil.js";
 export type { LimitStufe, TrainingLimits, TrainingProfile } from "./trainingsprofil.js";
+export { PLAN_REGEL_VERSION, FOKUS_MUSKELN, strukturFuerTage, zielAusTrainingGoal, zielprofil } from "./trainingsplan-regeln.js";
+export type { Struktur, Ziel as PlanZiel, Zielprofil } from "./trainingsplan-regeln.js";
+export { ZEIT, aufwaermenMinuten, cardioMinuten, pauseSekunden, uebungMinuten } from "./trainingsplan-zeit.js";
