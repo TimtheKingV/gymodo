@@ -31,6 +31,13 @@ describe("zielprofil", () => {
     expect(p.reserve).toEqual([3, 4]);
     expect(p.wdh.mehrgelenk).toEqual([10, 15]);
   });
+  it("Fitness plant immer 2 Saetze", () => {
+    for (const e of ["regelmaessig", "unregelmaessig"] as const) {
+      const p = zielprofil("fitness", e);
+      expect(p.saetze).toBe(2);
+      expect(p.reserve).toEqual([2, 3]);
+    }
+  });
   it("Abnehmen unregelmaessig", () => {
     const p = zielprofil("abnehmen", "unregelmaessig");
     expect(p.saetze).toBe(3);

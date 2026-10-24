@@ -35,7 +35,8 @@ export function zielprofil(ziel: Ziel, erfahrung: Erfahrung): Zielprofil {
       : { mehrgelenk: [10, 15], isolation: [10, 15] };
   // Anfaenger starten mit weniger Saetzen und mehr Reserve, um Technik vor Belastung zu stellen.
   if (erfahrung === "neu") return { saetze: 2, wdh, reserve: [3, 4] };
-  return { saetze: 3, wdh, reserve: ziel === "muskelaufbau" ? [1, 3] : [2, 3] };
+  // Fitness: lieber eine Uebung mehr als ein Satz mehr (Spec Abschnitt 3), daher 2 Saetze.
+  return { saetze: ziel === "fitness" ? 2 : 3, wdh, reserve: ziel === "muskelaufbau" ? [1, 3] : [2, 3] };
 }
 
 export type Struktur = {
@@ -71,7 +72,7 @@ export function strukturFuerTage(tage: number): Struktur {
 }
 
 /** Katalog-Muskelkeys je Fokusbereich; die Uebung muss einen davon als Hauptmuskel haben. */
-export const FOKUS_MUSKELN: Record<FokusBereich, string[]> = {
+export const FOKUS_MUSKELN: Record<FokusBereich, readonly string[]> = {
   brust: ["pectorals"],
   ruecken: ["lats", "upper_back"],
   schultern: ["deltoid_lateral", "deltoid_anterior", "deltoid_posterior"],
