@@ -238,25 +238,33 @@ describe("generierePlan: Fokus", () => {
     expect(plan.gruende).toContain("fokus_po");
   });
 
-  it("90 und 75 min: Fokus ersetzt eine Ergaenzung, gleiche Positionszahl wie ohne Fokus (F9)", () => {
+  it("90 und 75 min: Fokus ersetzt eine Ergaenzung, nie eine zusaetzliche Position (F9)", () => {
+    // Seit dem Auffuellen bis zum Budget (1.1.0) ist exakte Gleichheit nicht mehr garantiert:
+    // der Fokus verbraucht einen Kandidaten, der sonst beim Auffuellen genommen wuerde. Zugesagt
+    // bleibt: Fokus vorhanden, Zeit im Rahmen, nie mehr Positionen als ohne Fokus.
     for (const minuten of [90, 75] as const) {
-      const basis = generierePlan(eingabe({ minuten, kandidaten: mitKickback }));
-      const plan = generierePlan(eingabe({ minuten, kandidaten: mitKickback, fokus: ["po"] }));
-      plan.einheiten.forEach((e, i) => {
-        expect(rollen(e).filter((r) => r === "fokus")).toHaveLength(1);
-        expect(e.positionen).toHaveLength(basis.einheiten[i]!.positionen.length);
-      });
+      for (const katalog of [mitKickback, VOLL]) {
+        const basis = generierePlan(eingabe({ minuten, kandidaten: katalog }));
+        const plan = generierePlan(eingabe({ minuten, kandidaten: katalog, fokus: ["po"] }));
+        plan.einheiten.forEach((e, i) => {
+          expect(rollen(e).filter((r) => r === "fokus")).toHaveLength(1);
+          expect(e.positionen.length).toBeLessThanOrEqual(basis.einheiten[i]!.positionen.length);
+          expect(e.geschaetzteMinuten).toBeLessThanOrEqual(minuten * 1.05 + 1e-9);
+        });
+      }
     }
   });
 
   it("Fokus aus beine_ergaenzung erzeugt keine zusaetzliche beine_ergaenzung-Position", () => {
     // Einheit B: hip_thrust ist Pflicht, also wird glute_kickback (beine_ergaenzung) der Fokus.
-    const plan = generierePlan(eingabe({ minuten: 90, kandidaten: mitKickback, fokus: ["po"] }));
+    // 75 min: Platz fuer alle Ergaenzungen und eine Auffuellrunde, aber nicht fuer eine
+    // weitere beine_ergaenzung (die waere erst nach schulter in der Runde dran).
+    const plan = generierePlan(eingabe({ minuten: 75, kandidaten: mitKickback, fokus: ["po"] }));
     const b = plan.einheiten[1]!;
     const beinErg = b.positionen.filter((p) => p.baustein === "beine_ergaenzung");
     expect(beinErg).toHaveLength(1);
     expect(beinErg[0]).toMatchObject({ rolle: "fokus", exerciseId: "glute_kickback" });
-    expect(b.positionen.map((p) => p.baustein)).toEqual([
+    expect(b.positionen.map((p) => p.baustein).slice(0, 8)).toEqual([
       "beine_knie", "beine_huefte", "druecken", "ziehen", "beine_ergaenzung", "schulter", "rumpf", "arme",
     ]);
   });
@@ -305,8 +313,10 @@ describe("generierePlan: Beschwerden", () => {
 
     // leg_curl (knie) steht im Katalog vorn, wird bei "vorsichtig" aber nach hinten sortiert.
     const sortiert = generierePlan(eingabe({ beschwerden: { knie: "vorsichtig" } }));
+    // Die A/B-Rotation laeuft nur ueber unbedenkliche Uebungen, solange es welche gibt:
+    // sonst bekaeme B bei zwei Kandidaten immer die vorsichtige.
     expect(sortiert.einheiten[0]!.positionen[1]!.exerciseId).toBe("hip_thrust");
-    expect(sortiert.einheiten[1]!.positionen[1]!.exerciseId).toBe("leg_curl");
+    expect(sortiert.einheiten[1]!.positionen[1]!.exerciseId).toBe("hip_thrust");
   });
 
   it("Pflichtbaustein ohne Kandidat wirft PlanNichtMoeglichError(kein_geraet)", () => {
@@ -374,5 +384,88 @@ describe("generierePlan: Determinismus und Eingabe", () => {
   it("Gruende ohne Duplikate", () => {
     const plan = generierePlan(eingabe({ ziel: "abnehmen", minuten: 45, fokus: ["bauch", "po"], erfahrung: "neu" }));
     expect(new Set(plan.gruende).size).toBe(plan.gruende.length);
+  });
+});
+
+// Realistischer Katalog: mindestens 3 Uebungen je Baustein (auch Cardio), damit die
+// Auffuellung genug Auswahl hat wie in einem echten Studio.
+const VOLL: Kandidat[] = [
+  k("leg_press", "beine_knie", "mehrgelenk", ["quads"], ["knie"]),
+  k("hack_squat", "beine_knie", "mehrgelenk", ["quads", "glutes"], ["knie"]),
+  k("belt_squat", "beine_knie", "mehrgelenk", ["quads", "glutes"], ["huefte"]),
+  k("hip_thrust", "beine_huefte", "mehrgelenk", ["glutes"], ["huefte"]),
+  k("leg_curl_seated", "beine_huefte", "isolation", ["hamstrings"], ["knie"]),
+  k("leg_curl_prone", "beine_huefte", "isolation", ["hamstrings"], ["knie"]),
+  k("chest_press", "druecken", "mehrgelenk", ["pectorals"], ["schulter"]),
+  k("incline_press", "druecken", "mehrgelenk", ["pectorals"], ["schulter"]),
+  k("shoulder_press", "druecken", "mehrgelenk", ["deltoid_anterior"], ["schulter"]),
+  k("row", "ziehen", "mehrgelenk", ["upper_back"]),
+  k("lat_pulldown", "ziehen", "mehrgelenk", ["lats"], ["schulter"]),
+  k("high_row", "ziehen", "mehrgelenk", ["upper_back", "lats"]),
+  k("lateral_raise", "schulter", "isolation", ["deltoid_lateral"], ["schulter"]),
+  k("cable_lateral", "schulter", "isolation", ["deltoid_lateral"], ["schulter"]),
+  k("reverse_fly", "schulter", "isolation", ["deltoid_posterior"]),
+  k("ab_crunch", "rumpf", "isolation", ["abs"]),
+  k("cable_crunch", "rumpf", "isolation", ["abs", "obliques"]),
+  k("back_extension", "rumpf", "isolation", ["lower_back"], ["unterer_ruecken"]),
+  k("curl", "arme", "isolation", ["biceps"], ["ellenbogen_handgelenk"]),
+  k("triceps_ext", "arme", "isolation", ["triceps"], ["ellenbogen_handgelenk"]),
+  k("cable_curl", "arme", "isolation", ["biceps"], ["ellenbogen_handgelenk"]),
+  k("leg_extension", "beine_ergaenzung", "isolation", ["quads"], ["knie"]),
+  k("calf_raise", "beine_ergaenzung", "isolation", ["calves"]),
+  k("abductor", "beine_ergaenzung", "isolation", ["glutes"], ["huefte"]),
+  k("bike", "cardio", "isolation", []),
+  k("treadmill", "cardio", "isolation", [], ["knie"]),
+  k("crosstrainer", "cardio", "isolation", []),
+];
+
+describe("generierePlan: Zeitbudget ausschoepfen", () => {
+  it("Ober/Unter 60 min Muskelaufbau fuellt mit weiteren Uebungen auf, statt nach 4 Uebungen aufzuhoeren", () => {
+    const plan = generierePlan(eingabe({ tage: 4, kandidaten: VOLL }));
+    for (const e of plan.einheiten) {
+      expect(e.geschaetzteMinuten).toBeGreaterThanOrEqual(0.9 * 60);
+      expect(e.geschaetzteMinuten).toBeLessThanOrEqual(63 + 1e-9);
+      const ids = e.positionen.map((p) => p.exerciseId);
+      expect(new Set(ids).size).toBe(ids.length);
+      // Auffuellung bleibt in den Bausteinen der Einheit (Oberkoerper bleibt Oberkoerper).
+      if (e.key.startsWith("OK")) {
+        for (const p of e.positionen) expect(["druecken", "ziehen", "schulter", "arme"]).toContain(p.baustein);
+      }
+    }
+    expect(plan.gruende).not.toContain("zeit_budget_nicht_ausgeschoepft");
+    expect(plan.regelVersion).toBe("1.1.0");
+  });
+
+  it("zu wenig Uebungen fuer das Budget: Code zeit_budget_nicht_ausgeschoepft", () => {
+    const plan = generierePlan(eingabe({ tage: 4, minuten: 90, ziel: "fitness" }));
+    expect(plan.einheiten.some((e) => e.geschaetzteMinuten < 0.9 * 90)).toBe(true);
+    expect(plan.gruende).toContain("zeit_budget_nicht_ausgeschoepft");
+  });
+
+  it("Auffuellung meidet gemiedene und nimmt vorsichtige zuletzt", () => {
+    const plan = generierePlan(eingabe({ tage: 4, minuten: 90, kandidaten: VOLL, beschwerden: { knie: "meiden", schulter: "vorsichtig" } }));
+    for (const p of plan.einheiten.flatMap((e) => e.positionen)) {
+      expect(VOLL.find((c) => c.exerciseId === p.exerciseId)!.bereiche).not.toContain("knie");
+    }
+    // OK_A: Ziehen ohne Schulterbezug (row, high_row) kommt vor lat_pulldown.
+    const okA = plan.einheiten[0]!.positionen.filter((p) => p.baustein === "ziehen").map((p) => p.exerciseId);
+    expect(okA.slice(0, 2).sort()).toEqual(["high_row", "row"]);
+  });
+
+  it("Eigenschaft: ueber Strukturen, Minuten, Ziele und Erfahrung ausgeschoepft oder begruendet, nie ueber 105 %", () => {
+    for (const tage of [1, 3, 4, 5])
+      for (const minuten of [30, 45, 60, 75, 90] as const)
+        for (const ziel of ["muskelaufbau", "fitness", "abnehmen"] as const)
+          for (const erfahrung of ["neu", "unregelmaessig", "regelmaessig"] as const) {
+            const plan = generierePlan(eingabe({ tage, minuten, ziel, erfahrung, kandidaten: VOLL }));
+            for (const e of plan.einheiten) {
+              const fall = `${tage}T ${minuten}min ${ziel} ${erfahrung} ${e.key}: ${e.geschaetzteMinuten}`;
+              expect(e.geschaetzteMinuten, fall).toBeLessThanOrEqual(minuten * 1.05 + 1e-9);
+              const imRahmen = e.geschaetzteMinuten >= 0.85 * minuten;
+              expect(imRahmen || plan.gruende.includes("zeit_budget_nicht_ausgeschoepft"), fall).toBe(true);
+              const ids = e.positionen.map((p) => p.exerciseId);
+              expect(new Set(ids).size, fall).toBe(ids.length);
+            }
+          }
   });
 });

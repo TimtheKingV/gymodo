@@ -5,6 +5,7 @@ import { PlanNichtMoeglichError } from "./errors.js";
 import type { Beschwerden, Kandidat } from "./trainingsplan-auswahl.js";
 import {
   filtereKandidaten,
+  istVorsichtig,
   nachBaustein,
   pruefePflicht,
   waehleFokus,
@@ -103,11 +104,13 @@ type EinheitKontext = {
   profil: Zielprofil;
   fokus: FokusBereich[];
   kraftBudget: number;
+  vorsichtig: (k: Kandidat) => boolean;
 };
 
 /** Belegt eine Einheit nach dem Ablauf der Spec: Pflicht, Saetze kuerzen, Fokus, Ergaenzungen. */
 function baueKraftteil(ctx: EinheitKontext, flags: Flags): { positionen: Entwurf[]; minuten: number } {
   const { einheit, kandidaten, variation, profil } = ctx;
+  const waehle = (b: Baustein) => waehleKandidat(nachBaustein(kandidaten, b), variation.get(b) ?? 0, belegt, ctx.vorsichtig);
   const grenze = ctx.kraftBudget * (1 + ZEIT.toleranz) + EPSILON;
   const belegt = new Set<string>();
   const nimm = (k: Kandidat) => belegt.add(k.exerciseId);
@@ -115,7 +118,7 @@ function baueKraftteil(ctx: EinheitKontext, flags: Flags): { positionen: Entwurf
   const pflicht: Kandidat[] = einheit.bausteine.pflicht.map((b) => {
     // Trotz pruefePflicht kann die einzige Uebung schon in einem anderen Pflichtbaustein stehen;
     // dann lieber ein klarer Fehler als ein Plan ohne Pflichtbaustein.
-    const k = waehleKandidat(nachBaustein(kandidaten, b), variation.get(b) ?? 0, belegt);
+    const k = waehle(b);
     if (!k) throw new PlanNichtMoeglichError(b, "kein_geraet");
     nimm(k);
     return k;
@@ -156,7 +159,7 @@ function baueKraftteil(ctx: EinheitKontext, flags: Flags): { positionen: Entwurf
   });
 
   for (const b of ergaenzungen) {
-    const k = waehleKandidat(nachBaustein(kandidaten, b), variation.get(b) ?? 0, belegt);
+    const k = waehle(b);
     if (!k) continue;
     if (!passt(k)) {
       flags.ergaenzungEntfallen = true;
@@ -165,6 +168,23 @@ function baueKraftteil(ctx: EinheitKontext, flags: Flags): { positionen: Entwurf
     nimm(k);
     summe += uebungMinuten(k.typ, saetze);
     positionen.push(position(k, "ergaenzung", saetze, profil));
+  }
+
+  // Auffuellen bis zum Budget (Spec: "Der Generator fuellt bis zum Budget"): weitere Runden
+  // ueber die Bausteine der Einheit, Pflicht vor Ergaenzung, je Runde die naechste noch freie
+  // Uebung -- bis eine ganze Runde nichts mehr hinzufuegt. Sonst endet z. B. Ober/Unter mit
+  // 4 Uebungen weit unter der gewaehlten Zeit.
+  const runde = [...einheit.bausteine.pflicht, ...einheit.bausteine.ergaenzung];
+  for (let neu = true; neu; ) {
+    neu = false;
+    for (const b of runde) {
+      const k = waehle(b);
+      if (!k || !passt(k)) continue;
+      nimm(k);
+      summe += uebungMinuten(k.typ, saetze);
+      positionen.push(position(k, "ergaenzung", saetze, profil));
+      neu = true;
+    }
   }
   return { positionen, minuten: summe };
 }
@@ -190,6 +210,7 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
   const aufwaermen = aufwaermenMinuten(eingabe.minuten);
   const kraftBudget = eingabe.minuten - aufwaermen - cardio;
   const fokus = [...new Set(eingabe.fokus)].slice(0, 2);
+  const vorsichtig = (k: Kandidat) => istVorsichtig(k, eingabe.beschwerden);
 
   const flags: Flags = {
     saetzeReduziert: false,
@@ -206,7 +227,7 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
     for (const b of [...einheit.bausteine.pflicht, ...einheit.bausteine.ergaenzung]) {
       zaehler.set(b, (zaehler.get(b) ?? 0) + 1);
     }
-    const kraft = baueKraftteil({ einheit, kandidaten, variation, profil, fokus, kraftBudget }, flags);
+    const kraft = baueKraftteil({ einheit, kandidaten, variation, profil, fokus, kraftBudget, vorsichtig }, flags);
     const entwuerfe: Entwurf[] = [...kraft.positionen];
     if (cardio > 0 && cardioKandidat) {
       entwuerfe.push({
@@ -242,6 +263,12 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
   wenn(flags.saetzeReduziert, "zeit_saetze_reduziert");
   wenn(flags.ergaenzungEntfallen, "zeit_ergaenzung_entfallen");
   wenn(aufwaermen === 0, "zeit_aufwaermen_entfallen");
+  // Ehrlich sagen, wenn das Studio zu wenig Uebungen fuer die gewaehlte Zeit hat (Anti-Ziel:
+  // Einheit regelmaessig deutlich kuerzer als angegeben); 10 % Abstand gelten als deutlich.
+  wenn(
+    einheiten.some((e) => e.geschaetzteMinuten < 0.9 * eingabe.minuten - EPSILON),
+    "zeit_budget_nicht_ausgeschoepft",
+  );
   for (const f of fokus) wenn(flags.fokus.has(f), `fokus_${f}`);
   wenn(flags.zweiterFokusEntfallen, "fokus_zweiter_entfallen");
   wenn(cardio > 0, "abnehmen_cardio_zone");

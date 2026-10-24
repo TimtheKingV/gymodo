@@ -4,7 +4,8 @@ import type { Baustein, Erfahrung, FokusBereich } from "./trainingsplan-typen.js
 import { PFLICHT_BAUSTEINE } from "./trainingsplan-typen.js";
 
 /** Aendert sich eine Regel, steigt die Version, damit alte Plaene erkennbar bleiben. */
-export const PLAN_REGEL_VERSION = "1.0.0";
+// 1.1.0: Auffuellen bis zum Zeitbudget, A/B-Rotation nur ueber unbedenkliche Uebungen.
+export const PLAN_REGEL_VERSION = "1.1.0";
 
 export type Ziel = "muskelaufbau" | "fitness" | "abnehmen";
 
