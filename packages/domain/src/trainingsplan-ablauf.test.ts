@@ -18,7 +18,14 @@ type Fixture = {
     ungeplanteGesehen: string[];
     saetze: AblaufSatz[];
     tausche: { positionKey: string; exerciseId: string; hauptmuskeln: string[] }[];
+    // Optional und geordnet: ersetzt tausche+saetze, damit ein Tausch mitten im Ablauf moeglich ist.
+    schritte?: (
+      | { satz: AblaufSatz }
+      | { tausch: { positionKey: string; exerciseId: string; hauptmuskeln: string[] } }
+    )[];
     erwartet: { key: string; status: PositionStatus; ersatzExerciseId: string | null }[];
+    // Optional: erwartete ungeplanteGesehen (Reihenfolge = Reihenfolge des Vermerks) am Ende.
+    erwartetUngeplant?: string[];
   }[];
   folgeFaelle: { name: string; einheitKeys: string[]; zuletzt: string | null; erwartet: string }[];
   zaehlFaelle: { name: string; stati: PositionStatus[]; erwartet: boolean }[];
@@ -32,10 +39,21 @@ describe("Ablaufstatus", () => {
   for (const fall of fixture.statusFaelle) {
     it(fall.name, () => {
       let z = { positionen: fall.positionen, ungeplanteGesehen: fall.ungeplanteGesehen };
-      for (const t of fall.tausche) {
-        z = ablaufTauschen(z, t.positionKey, { exerciseId: t.exerciseId, hauptmuskeln: t.hauptmuskeln });
+      const schritte =
+        fall.schritte ??
+        [
+          ...fall.tausche.map((tausch) => ({ tausch })),
+          ...fall.saetze.map((satz) => ({ satz })),
+        ];
+      for (const schritt of schritte) {
+        if ("tausch" in schritt) {
+          const t = schritt.tausch;
+          z = ablaufTauschen(z, t.positionKey, { exerciseId: t.exerciseId, hauptmuskeln: t.hauptmuskeln });
+        } else {
+          z = ablaufNachSatz(z, schritt.satz);
+        }
       }
-      for (const satz of fall.saetze) z = ablaufNachSatz(z, satz);
+      if (fall.erwartetUngeplant) expect(z.ungeplanteGesehen).toEqual(fall.erwartetUngeplant);
       expect(
         z.positionen.map((p) => ({ key: p.key, status: p.status, ersatzExerciseId: p.ersatzExerciseId })),
       ).toEqual(fall.erwartet);

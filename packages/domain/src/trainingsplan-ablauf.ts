@@ -99,7 +99,10 @@ export function einheitZaehlt(z: AblaufZustand): boolean {
   return z.positionen.some((p) => p.status === "erledigt" || p.status === "optional");
 }
 
-/** Nachfolger in der Folge; nach der letzten wieder die erste, unbekannt oder null gibt die erste. */
+/**
+ * Nachfolger in der Folge; nach der letzten wieder die erste, unbekannt oder null gibt die erste.
+ * Leere einheitKeys sind nicht definiert (Aufrufer garantieren mindestens eine Einheit).
+ */
 export function naechsteEinheitKey(einheitKeys: string[], zuletztGezaehlt: string | null): string {
   const idx = zuletztGezaehlt === null ? -1 : einheitKeys.indexOf(zuletztGezaehlt);
   return einheitKeys[(idx + 1) % einheitKeys.length]!;
