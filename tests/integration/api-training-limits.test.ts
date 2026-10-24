@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { DELETE, GET, PUT } from "@/app/api/v1/me/training-limits/route";
-import { accessTokenFor, createTestUser, uniqueEmail } from "./helpers/clients.js";
+import { accessTokenFor, createTestUser, serviceClient, uniqueEmail } from "./helpers/clients.js";
 
 const URL_ = "http://localhost/api/v1/me/training-limits";
 const req = (method: string, auth?: string, rumpf?: unknown): Request =>
@@ -73,5 +73,22 @@ describe("/me/training-limits", () => {
     expect((await DELETE(req("DELETE", d))).status).toBe(204);
     expect((await GET(req("GET", d))).status).toBe(404);
     expect((await DELETE(req("DELETE", d))).status).toBe(204);
+  });
+});
+
+describe("training_limits: Datenbank-Check auf areas", () => {
+  // Netz unter der Fachschicht: auch ein direkter Service-Role-Schreibzugriff darf keine
+  // fremden Schluessel oder Stufen ablegen (Gesundheitsdaten nur in festen Feldern).
+  it("lehnt unbekannte Bereiche und Stufen ab, nimmt gueltige an", async () => {
+    const admin = serviceClient();
+    const userId = await createTestUser(uniqueEmail("tl-check"));
+    const schreibe = (areas: unknown) =>
+      admin.from("training_limits").upsert({ user_id: userId, consent_at: new Date().toISOString(), areas });
+    for (const ungueltig of [{ foo: "meiden" }, { knie: "x" }, { knie: 1 }, { knie: { a: "meiden" } }]) {
+      const { error } = await schreibe(ungueltig);
+      expect(error?.code, JSON.stringify(ungueltig)).toBe("23514");
+    }
+    expect((await schreibe({})).error).toBeNull();
+    expect((await schreibe({ knie: "meiden", ellenbogen_handgelenk: "vorsichtig" })).error).toBeNull();
   });
 });
