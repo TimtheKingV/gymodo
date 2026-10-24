@@ -1,3 +1,5 @@
+import type { Baustein } from "./trainingsplan-typen.js";
+
 /**
  * Fehler der Fachschicht. Der Code ist die stabile Zusage nach aussen --
  * die HTTP-Route und die Server Action bilden ihn auf ihren Kanal ab, die
@@ -12,6 +14,7 @@ export type DomainErrorCode =
   | "unauthorized"
   | "not_found"
   | "conflict"
+  | "plan_nicht_moeglich"
   | "internal";
 
 export class DomainError extends Error {
@@ -21,5 +24,27 @@ export class DomainError extends Error {
     super(message);
     this.name = "DomainError";
     this.code = code;
+  }
+}
+
+/**
+ * Der Generator findet fuer einen Pflichtbaustein keine Uebung. Lieber ein klarer
+ * Fehler als ein stiller Plan ohne Pflichtbaustein (Review-Fokus 1 und 2).
+ * Der Name bleibt "DomainError", damit fromDomainError ihn ohne Sonderfall abbildet.
+ */
+export class PlanNichtMoeglichError extends DomainError {
+  readonly baustein: Baustein;
+  /** kein_geraet: im Studio gibt es keinen Kandidaten; beschwerden: alle gemieden. */
+  readonly grund: "kein_geraet" | "beschwerden";
+
+  constructor(baustein: Baustein, grund: "kein_geraet" | "beschwerden") {
+    super(
+      "plan_nicht_moeglich",
+      grund === "kein_geraet"
+        ? `Für den Baustein ${baustein} gibt es im Studio kein passendes Gerät.`
+        : `Für den Baustein ${baustein} passt wegen deiner Beschwerden keine Übung.`,
+    );
+    this.baustein = baustein;
+    this.grund = grund;
   }
 }

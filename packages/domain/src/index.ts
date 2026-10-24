@@ -39,7 +39,7 @@ export {
   type RepEvents,
   type VolumeSource,
 } from "./herkunft.js";
-export { DomainError } from "./errors.js";
+export { DomainError, PlanNichtMoeglichError } from "./errors.js";
 export { istAuthAusfall } from "./auth.js";
 export {
   MAX_PHOTO_BYTES,
@@ -300,3 +300,11 @@ export type { LimitStufe, TrainingLimits, TrainingProfile } from "./trainingspro
 export { PLAN_REGEL_VERSION, FOKUS_MUSKELN, strukturFuerTage, zielAusTrainingGoal, zielprofil } from "./trainingsplan-regeln.js";
 export type { Struktur, Ziel as PlanZiel, Zielprofil } from "./trainingsplan-regeln.js";
 export { ZEIT, aufwaermenMinuten, cardioMinuten, pauseSekunden, uebungMinuten } from "./trainingsplan-zeit.js";
+export { generierePlan } from "./trainingsplan-generator.js";
+export type {
+  GeneratorEingabe,
+  GeneratorErgebnis,
+  Kandidat,
+  PlanEinheit,
+  PlanPosition,
+} from "./trainingsplan-generator.js";

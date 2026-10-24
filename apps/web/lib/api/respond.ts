@@ -10,6 +10,7 @@ const STATUS_BY_CODE: Record<DomainErrorCode, number> = {
   unauthorized: 401,
   not_found: 404,
   conflict: 409,
+  plan_nicht_moeglich: 422,
   internal: 500,
 };
 
