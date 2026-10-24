@@ -240,6 +240,17 @@ describe("PUT /api/v1/workout-sessions/{sessionId}/sets/{setId}", () => {
     expect(payload.error.code).toBe("validation_failed");
   });
 
+  it("antwortet auf eine unbekannte Satzrolle mit 422", async () => {
+    const response = await PUT(
+      setRequest(body({ setRole: "kuehl" }), token),
+      params(newId(), newId()),
+    );
+
+    expect(response.status).toBe(422);
+    const payload = (await response.json()) as { error: { code: string } };
+    expect(payload.error.code).toBe("validation_failed");
+  });
+
   it("antwortet auf kaputtes JSON mit 422", async () => {
     const request = new Request("http://localhost/x", {
       method: "PUT",

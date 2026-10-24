@@ -452,9 +452,12 @@ export async function vorschlaegeFuerAbschluss(
   const { data: historie, error: historieFehler } = await client
     .from("workout_sets")
     .select(
-      "machine_id, equipment_model_id, exercise_id, performed_at, load, secondary_load, volume, rir, problem_flag",
+      "session_id, machine_id, equipment_model_id, exercise_id, performed_at, load, secondary_load, volume, rir, problem_flag",
     )
     .not("load", "is", null)
+    // Nur Arbeitssaetze: ein Aufwaermsatz macht den Block uneinheitlich
+    // (Migration 0058) und zaehlt auch nicht zu den 60 Zeilen je Block.
+    .eq("set_role", "arbeit")
     .eq("user_id", userId)
     .in("equipment_model_id", modellIds)
     .order("performed_at", { ascending: false })

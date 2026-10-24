@@ -18,6 +18,8 @@ enum Einstellungen {
     static let zirkelPauseSekundenKey = "zirkelPauseSekunden"
 
     static let satzZielKey = "satzZiel"
+    /// Die Reserve-Frage erklaert sich einmal, beim allerersten Mal.
+    static let reserveErklaertKey = "reserveErklaert"
     static let uebungsansichtKey = "uebungsansicht"
     static let fortschrittsansichtKey = "fortschrittsansicht"
 

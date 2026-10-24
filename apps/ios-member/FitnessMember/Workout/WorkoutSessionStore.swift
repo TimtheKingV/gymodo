@@ -169,11 +169,9 @@ final class WorkoutSessionStore {
         }
         let setIndex = (index.map { session.bloecke[$0].saetze.count } ?? 0) + 1
 
-        // rir bleibt am Satz und im Schreibvorgang erhalten, wird aber
-        // nicht mehr erfasst: die Reserve-Abfrage ist aus dem Satzpfad
-        // verschwunden. Das Feld traegt weiterhin Altdaten aus der
-        // Sessiondatei und aus der Datenbank -- es zu loeschen hiesse, alte
-        // Einheiten nicht mehr dekodieren zu koennen.
+        // rir ist beim Sichern immer nil: gefragt wird die Reserve erst
+        // einmal am Ende der Uebung, dann setzt reserveSetzen sie am
+        // letzten Satz (Trainingsplan-Spec Abschnitt 6).
         let satz = LokalerSatz(
             id: UUID(), setIndex: setIndex, load: load, secondaryLoad: secondaryLoad,
             volume: volume, cardio: cardio, rir: nil, problemFlag: problemFlag, problemReason: problemReason,
@@ -216,6 +214,20 @@ final class WorkoutSessionStore {
             sessionStartedAt: formatter.string(from: session.startedAt)
         )
         return (session.id, satz.id, body)
+    }
+
+    /// Setzt die Reserve am Satz der laufenden Einheit (Reserve-Frage am
+    /// Ende einer Uebung). Nur lokal: den erneuten PUT schickt der Aufrufer.
+    func reserveSetzen(setId: UUID, rir: Double?) {
+        guard var session = gespeicherteSession else { return }
+        for b in session.bloecke.indices {
+            if let s = session.bloecke[b].saetze.firstIndex(where: { $0.id == setId }) {
+                session.bloecke[b].saetze[s].rir = rir
+                gespeicherteSession = session
+                fileStore.save(session)
+                return
+            }
+        }
     }
 
     /// Gibt die Kennung zurueck, damit der Aufrufer POST .../complete

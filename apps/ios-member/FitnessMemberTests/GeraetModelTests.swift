@@ -277,6 +277,93 @@ struct GeraetModelTests {
         #expect(laufendeSession?.bloecke.first?.einheiten == .kilogrammWiederholungen)
     }
 
+    /// Drei Saetze bis zur Abschlussentscheidung, alles Geschriebene im Erfasser.
+    private func bisZumAbschluss(_ erfasser: Erfassungswarteschlange) async -> GeraetModel {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         enqueue: { erfasser.geschriebene.append($0) },
+                         satzZiel: 3)
+        for _ in 1...3 {
+            await sut.satzSichern(problemFlag: false, problemReason: nil)
+            if sut.phase != .abschluss { sut.pauseBeenden() }
+        }
+        return sut
+    }
+
+    @Test func reserveSchicktLetztenSatzMitRirErneut() async {
+        let erfasser = Erfassungswarteschlange()
+        let sut = await bisZumAbschluss(erfasser)
+        #expect(sut.phase == .abschluss)
+        #expect(sut.zeigtReserveFrage)
+        let dritter = try! #require(erfasser.geschriebene.last)
+
+        sut.reserveSetzen(.wert(2))
+
+        #expect(erfasser.geschriebene.count == 4)
+        let neu = try! #require(erfasser.geschriebene.last)
+        #expect(neu.setId == dritter.setId)
+        #expect(neu.sessionId == dritter.sessionId)
+        #expect(neu.body.rir == 2)
+        var ohneRir = neu.body
+        ohneRir.rir = nil
+        #expect(ohneRir == dritter.body)
+        #expect(sut.reserve == .wert(2))
+    }
+
+    @Test func fuenfPlusWirdFuenf() async {
+        let erfasser = Erfassungswarteschlange()
+        let sut = await bisZumAbschluss(erfasser)
+
+        sut.reserveSetzen(.wert(5))
+
+        #expect(erfasser.geschriebene.last?.body.rir == 5)
+    }
+
+    @Test func unbekanntNachZahlSetztNull() async {
+        let erfasser = Erfassungswarteschlange()
+        let sut = await bisZumAbschluss(erfasser)
+
+        sut.reserveSetzen(.unbekannt)
+        #expect(erfasser.geschriebene.count == 3)
+
+        sut.reserveSetzen(.wert(3))
+        sut.reserveSetzen(.unbekannt)
+
+        #expect(erfasser.geschriebene.count == 5)
+        #expect(erfasser.geschriebene.last?.body.rir == nil)
+    }
+
+    @Test func gleicheAntwortSchicktNichtsErneut() async {
+        let erfasser = Erfassungswarteschlange()
+        let sut = await bisZumAbschluss(erfasser)
+
+        sut.reserveSetzen(.wert(2))
+        sut.reserveSetzen(.wert(2))
+
+        #expect(erfasser.geschriebene.count == 4)
+    }
+
+    @Test func reserveWirdBeiNeuemSatzZurueckgesetzt() async {
+        let erfasser = Erfassungswarteschlange()
+        let sut = await bisZumAbschluss(erfasser)
+        sut.reserveSetzen(.wert(2))
+
+        sut.weitererSatz()
+        sut.pauseBeenden()
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(sut.reserve == nil)
+    }
+
+    @Test func vorDemSatzzielKeineReserveFrage() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 3)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(!sut.zeigtReserveFrage)
+    }
+
     /// Sicherheitsnetz unter Ortswechsel: ein Geraet aus s1 in einer Einheit
     /// in s2 wuerde der Server sicher abweisen -- es wird nicht geschrieben,
     /// und der Screen sagt, warum.

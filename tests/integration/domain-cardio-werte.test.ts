@@ -216,8 +216,13 @@ describe("Lesewege -- Cardio", () => {
     const client = await userClient(mitgliedEmail);
     const k = await getMachineContext(client, cardioMaschine);
     expect(k.equipmentModel.cardioWerte).toEqual(["zeit", "strecke", "watt"]);
-    // Erster Satz des Tages: der aus dem recordSet-Test oben (zeit 510, strecke 2000).
-    expect(k.history[0]).toMatchObject({ load: null, volume: [], cardio: { zeit: 510, strecke: 2000 } });
+    // Je Einheit ein Eintrag, die neueste zuerst -- auch am selben Tag: der
+    // Bootstrap-Test oben (zeit 600, watt 150) vor dem recordSet-Test
+    // (zeit 510, strecke 2000), beide in eigenen Sessions.
+    expect(k.history[0]).toMatchObject({ load: null, volume: [], cardio: { zeit: 600, watt: 150 } });
+    expect(k.history).toContainEqual(
+      expect.objectContaining({ load: null, volume: [], cardio: { zeit: 510, strecke: 2000 } }),
+    );
     // Wie ohne Historie: kein Wert, Grund "kein_verlauf".
     expect(k.suggestion).toMatchObject({ resultLoad: null, reasonCode: "kein_verlauf" });
     const { data: vorschlaege } = await serviceClient()

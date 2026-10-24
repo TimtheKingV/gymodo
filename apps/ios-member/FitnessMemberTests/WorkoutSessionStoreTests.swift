@@ -32,6 +32,18 @@ struct WorkoutSessionStoreTests {
         #expect(geschrieben.body.setIndex == 1)
     }
 
+    @Test func reserveSetzenSchreibtInDieSessiondatei() {
+        let (sut, verzeichnis) = store()
+        let geschrieben = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
+                                          einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
+                                          problemFlag: false, problemReason: nil, jetzt: start)
+
+        sut.reserveSetzen(setId: geschrieben.setId, rir: 2)
+
+        let neu = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        #expect(neu.aktiveSession()?.bloecke.first?.saetze.first?.rir == 2)
+    }
+
     @Test func setIndexLaeuftInnerhalbDesBlocks() {
         let (sut, _) = store()
         _ = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",

@@ -164,6 +164,23 @@ struct CatalogStoreTests {
         #expect(PendingWriteStore(directory: directory).loadAll() == [write])
     }
 
+    @Test("enqueue ersetzt einen offenen Eintrag mit derselben Satzkennung")
+    func enqueueErsetztGleicheKennung() {
+        // Die Reserve-Frage schickt den letzten Satz mit derselben Kennung
+        // erneut. Laege das Original noch offline in der Schlange, entfernte
+        // sein erfolgreicher PUT sonst auch die neuere Fassung.
+        let store = CatalogStore(loader: FakeBootstrapLoader(), pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        let original = testWrite()
+        var mitReserve = original.body
+        mitReserve.rir = 2
+        let neu = PendingSetWrite(sessionId: original.sessionId, setId: original.setId, body: mitReserve)
+
+        store.enqueue(original)
+        store.enqueue(neu)
+
+        #expect(store.pendingWrites == [neu])
+    }
+
     @Test("flushPending entfernt erfolgreich gesendete Eintraege")
     func flushRemovesSucceeded() async {
         let directory = tempDirectory()
