@@ -2477,8 +2477,8 @@
         }
       ],
       "plan": {
-        "baustein": "schulter",
-        "typ": "isolation",
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
         "bereiche": [
           "schulter"
         ]
@@ -3219,7 +3219,8 @@
         "baustein": "beine_huefte",
         "typ": "isolation",
         "bereiche": [
-          "huefte"
+          "huefte",
+          "unterer_ruecken"
         ]
       },
       "review": "draft",
@@ -4019,8 +4020,7 @@
         "baustein": "beine_knie",
         "typ": "mehrgelenk",
         "bereiche": [
-          "knie",
-          "huefte"
+          "knie"
         ]
       },
       "review": "draft",
@@ -4996,15 +4996,6 @@
           "role": "secondary"
         }
       ],
-      "plan": {
-        "baustein": "beine_knie",
-        "typ": "mehrgelenk",
-        "bereiche": [
-          "knie",
-          "huefte",
-          "unterer_ruecken"
-        ]
-      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5032,14 +5023,6 @@
           "role": "primary"
         }
       ],
-      "plan": {
-        "baustein": "beine_huefte",
-        "typ": "mehrgelenk",
-        "bereiche": [
-          "huefte",
-          "unterer_ruecken"
-        ]
-      },
       "review": "draft",
       "sources": [
         "github_dataset"
