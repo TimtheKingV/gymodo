@@ -78,6 +78,32 @@ function aliasAufloesen(roh: unknown): unknown {
 export const setRoleSchema = z.enum(["arbeit", "aufwaermen"]);
 export type SetRole = z.infer<typeof setRoleSchema>;
 
+/** Status einer Planposition in der laufenden Einheit (Migration 0063). */
+export const planPositionStatusSchema = z.enum(["offen", "erledigt", "optional", "getauscht"]);
+export type PlanPositionStatus = z.infer<typeof planPositionStatusSchema>;
+
+/**
+ * Momentaufnahme des Plans der laufenden Einheit, die die App mit jedem
+ * Satz schickt (Etappe 3, Task 4). `stand` zaehlt in der App monoton hoch;
+ * der Server uebernimmt nur einen hoeheren als den gespeicherten, weil die
+ * App aeltere Rumpfe erneut sendet. `exerciseId` ist die Ersatzuebung der
+ * Position, null ohne Tausch. Was davon zum Plan passt, prueft erst
+ * record_session_plan.
+ */
+export const sessionPlanSchema = z.object({
+  planId: z.string().uuid(),
+  einheitKey: z.string().min(1),
+  stand: z.number().int().min(1).max(2147483647),
+  positionen: z.array(
+    z.object({
+      key: z.string().min(1),
+      status: planPositionStatusSchema,
+      exerciseId: z.string().uuid().nullish(),
+    }),
+  ).max(100),
+});
+export type SessionPlan = z.infer<typeof sessionPlanSchema>;
+
 export const recordSetInputSchema = z.preprocess(
   aliasAufloesen,
   z
@@ -110,6 +136,8 @@ export const recordSetInputSchema = z.preprocess(
     // Der Beginn der Einheit, vom Client gesetzt ("Training starten",
     // Schnitt 4). Nur beim Anlegen der Session uebernommen, siehe recordSet.
     sessionStartedAt: z.string().datetime().optional(),
+    // Alte App-Versionen senden kein plan; ihr Satz laeuft wie bisher.
+    plan: sessionPlanSchema.optional(),
   })
   .refine((value) => (value.machineId === undefined) !== (value.equipmentModelId === undefined), {
     path: ["machineId"],
@@ -474,6 +502,27 @@ export async function recordSet(
       "internal",
       error?.message ?? "Satz konnte nicht gespeichert werden.",
     );
+  }
+
+  // Erst nach dem Satz: scheitert die Momentaufnahme, bleibt der Satz
+  // gespeichert -- er ist die eigentliche Leistung, der Planstatus nur eine
+  // Ableitung, die der naechste PUT mit hoeherem stand nachholt. 422 statt
+  // 500, damit die Warteschlange der App den Satz nicht ewig wiederholt.
+  if (input.plan) {
+    const { error: planError } = await client.rpc("record_session_plan", {
+      p_session_id: input.sessionId,
+      p_plan_id: input.plan.planId,
+      p_einheit_key: input.plan.einheitKey,
+      p_stand: input.plan.stand,
+      p_positionen: input.plan.positionen.map((p) => ({
+        key: p.key,
+        status: p.status,
+        exerciseId: p.exerciseId ?? null,
+      })),
+    });
+    if (planError) {
+      throw new DomainError("validation_failed", "Der Planstand passt nicht zur Einheit.");
+    }
   }
   return toRecordedSet(row);
 }

@@ -101,6 +101,39 @@ describe("recordSetInputSchema -- Station", () => {
   });
 });
 
+describe("recordSetInputSchema -- plan (0063)", () => {
+  const plan = {
+    planId: "55555555-5555-4555-8555-555555555555",
+    einheitKey: "A",
+    stand: 1,
+    positionen: [
+      { key: "A1", status: "erledigt" },
+      { key: "A2", status: "getauscht", exerciseId: "44444444-4444-4444-8444-444444444444" },
+      { key: "A3", status: "offen", exerciseId: null },
+    ],
+  };
+
+  it("nimmt eine Momentaufnahme an und laesst sie sonst weg wie eine alte App", () => {
+    const mit = recordSetInputSchema.safeParse({ ...basis, plan });
+    const ohne = recordSetInputSchema.safeParse(basis);
+    expect(mit.success && mit.data.plan?.positionen).toHaveLength(3);
+    expect(ohne.success && ohne.data.plan).toBeUndefined();
+  });
+
+  it("weist stand 0, unbekannten Status und kaputte Ersatzuebung ab", () => {
+    expect(recordSetInputSchema.safeParse({ ...basis, plan: { ...plan, stand: 0 } }).success).toBe(false);
+    expect(
+      recordSetInputSchema.safeParse({ ...basis, plan: { ...plan, positionen: [{ key: "A1", status: "fertig" }] } }).success,
+    ).toBe(false);
+    expect(
+      recordSetInputSchema.safeParse({
+        ...basis,
+        plan: { ...plan, positionen: [{ key: "A1", status: "getauscht", exerciseId: "x" }] },
+      }).success,
+    ).toBe(false);
+  });
+});
+
 describe("completeSessionInputSchema", () => {
   const sessionId = "6f1c2b9e-3c1a-4a51-9a4e-1d2f3a4b5c6d";
 
