@@ -73,6 +73,8 @@ struct TrainingAbschlussView: View {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopf
                 zahlen
+                // Entwurf 2.3: was vom Plan erledigt ist; ohne Plan nichts.
+                PlanAbschlussBereich(sessionId: sessionId, apiClient: apiClient)
                 // Nur Cardio trainiert: nichts vorzuschlagen, also auch keine
                 // Ueberschrift ueber leerem Raum.
                 if !zusammenfassung.vorschlagsbloecke.isEmpty {
@@ -363,6 +365,9 @@ extension TrainingAbschlussView {
         // Tab-Wechsel nicht neu (HomeRootView), deshalb hier anstossen -- sonst
         // zeigt die Kopfzeile eine gerade verworfene Einheit noch mit.
         Task { await verlauf.laden(studioId: katalog.activeStudioId) }
+        // Die naechste Einheit des Servers kann die verworfene schon mitzaehlen
+        // (completeSession lief): erst ein frischer Bootstrap stimmt wieder.
+        Task { await katalog.load() }
         beiFertig()
     }
 }

@@ -73,9 +73,10 @@ final class GeraetModel {
 
         /// Eine Pause in der eingestellten Laenge. Drei Aufrufer, eine
         /// Stelle -- die Dauer aus dem Profil zu lesen ist sonst genau die
-        /// Zeile, die beim vierten Aufrufer vergessen wird.
-        static func neuePause() -> Phase {
-            .pause(Resttimer(dauer: TimeInterval(Einstellungen.resttimerSekunden())))
+        /// Zeile, die beim vierten Aufrufer vergessen wird. Eine Planuebung
+        /// gibt ihre eigene Dauer mit (`GeraetModel.pauseSekunden`, F6).
+        static func neuePause(sekunden: Int = Einstellungen.resttimerSekunden()) -> Phase {
+            .pause(Resttimer(dauer: TimeInterval(sekunden)))
         }
     }
 
@@ -1041,7 +1042,18 @@ final class GeraetModel {
         // oben schon die NAECHSTE Nummer: bei Ziel 3 steht nach dem dritten
         // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
         // eine Pause vor einem Satz, der nicht kommt, ist nur Wartezeit.
-        phase = satzNummer > satzZiel ? .abschluss : .neuePause()
+        phase = satzNummer > satzZiel ? .abschluss : .neuePause(sekunden: pauseSekunden)
+    }
+
+    /// Die Satzpause (F6): bei einer Planuebung die der Planposition, sonst
+    /// genau die Profilpause wie bisher. Nur fuer den Plan des Studios der
+    /// Einheit -- im Freien Training und anderswo gilt kein Plan.
+    var pauseSekunden: Int {
+        let profil = Einstellungen.resttimerSekunden()
+        guard let ablauf, case .studio(let studioId)? = sessions.aktiveSession()?.ort else { return profil }
+        let plan = bootstrap.member.plans.first { $0.planId == ablauf.planId && $0.studioId == studioId }
+        return PlanAnzeige.pauseSek(fuer: uebungId, plan: plan, einheitKey: ablauf.einheitKey,
+                                    zustand: ablauf.zustand, profil: profil)
     }
 
     /// Hakt den Satz im Planablauf ab. Der Ort ist der der Einheit (vom
@@ -1114,7 +1126,7 @@ final class GeraetModel {
             phase = .eingabe
             mitschnittBeginnen()
         } else {
-            phase = .neuePause()
+            phase = .neuePause(sekunden: pauseSekunden)
         }
     }
 

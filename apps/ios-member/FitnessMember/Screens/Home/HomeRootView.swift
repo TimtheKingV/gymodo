@@ -128,6 +128,13 @@ struct HomeRootView: View {
                             beiKursAuswahl: { id in pfad.append(.kursDetail(sessionId: id)) })
                     }
 
+                    // Entwurf 2: die Einheit von heute; Tippen fuehrt zur
+                    // Plankarte im Training-Tab. Schliesst Karte 1.5 aus
+                    // (die gibt es nur ohne Plan).
+                    if let heute = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf) {
+                        HeuteDranZeile(heute: heute, beiTippen: beiTrainingZeigen)
+                    }
+
                     // Entwurf 1.5: ueber den Zielen, weil sie der naechste
                     // Schritt ist, den das Mitglied noch nicht getan hat.
                     if let member = katalog.bootstrap?.member,

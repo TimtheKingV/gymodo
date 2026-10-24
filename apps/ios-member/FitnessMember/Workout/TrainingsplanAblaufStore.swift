@@ -39,6 +39,11 @@ final class TrainingsplanAblaufStore {
     /// Der Stand der letzten Momentaufnahme; 0 vor dem ersten Satz.
     var stand: Int { datei.lauf?.stand ?? 0 }
 
+    /// Die zuletzt beendete Einheit samt Ablauf -- fuer den Abschluss-Screen
+    /// (Entwurf 2.3), der erst nach `einheitBeendet()` erscheint, wenn
+    /// `zustand` schon leer ist. Bleibt bis zur naechsten beendeten Einheit.
+    var zuletztBeendeterLauf: PlanLauf? { datei.zuletztBeendet?.lauf }
+
     /// Die Einheit, die als naechste vorbereitet wuerde -- fuer "Nächstes Mal
     /// ist Einheit B dran", wenn der Ablauf nach dem Beenden leer ist.
     var naechsteEinheitKey: String? { datei.vorlage.map(gewaehlteEinheit) }

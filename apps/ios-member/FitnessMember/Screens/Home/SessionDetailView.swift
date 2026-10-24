@@ -401,6 +401,9 @@ private extension SessionDetailView {
         }
         verlauf.einheitEntfernen(id: teil.id)
         Task { await verlauf.laden(studioId: katalog.activeStudioId) }
+        // Die naechste Planeinheit des Servers zaehlte die geloeschte Einheit
+        // mit; erst ein frischer Bootstrap stimmt wieder.
+        Task { await katalog.load() }
         dismiss()
     }
 }

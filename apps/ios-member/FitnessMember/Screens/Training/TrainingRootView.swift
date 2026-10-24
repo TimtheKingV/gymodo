@@ -387,6 +387,8 @@ struct TrainingRootView: View {
                     if let mitte, let session {
                         laufendKopf(mitte, session: session)
                     }
+                    // Entwurf 2.1/2.2; ohne Plan im aktiven Studio nichts.
+                    PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader)
                 }
             } trainingsinhalt: {
                 if let session {

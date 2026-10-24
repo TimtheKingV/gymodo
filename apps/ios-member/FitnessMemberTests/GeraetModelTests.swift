@@ -430,6 +430,24 @@ struct GeraetModelTests {
         #expect(ablauf.gebundeneSessionId == write.sessionId)
     }
 
+    /// F6: nach einem Satz einer Planuebung laeuft die Pause der Position
+    /// (120 s im Testplan), ohne Plan im Bootstrap die Profilpause.
+    @Test func pauseNachEinemPlansatzKommtAusDerPosition() async throws {
+        let plan = TrainingsplanAblaufStoreTests.plan()
+        let mitPlan = BootstrapResponse(member: .init(displayName: nil, plans: [plan]), studios: [],
+                                        machines: [GeraetTestdaten.maschine], calibrations: [], lastSets: [])
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: mitPlan, ablauf: ablaufMitPlan())
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        guard case .pause(let timer) = sut.phase else { Issue.record("keine Pause: \(sut.phase)"); return }
+        #expect(timer.gesamtdauer == 120)
+
+        let ohnePlan = modell(maschine: GeraetTestdaten.maschine, bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                              ablauf: ablaufMitPlan())
+        await ohnePlan.satzSichern(problemFlag: false, problemReason: nil)
+        guard case .pause(let profilTimer) = ohnePlan.phase else { Issue.record("keine Pause"); return }
+        #expect(profilTimer.gesamtdauer == TimeInterval(Einstellungen.resttimerSekunden()))
+    }
+
     /// Nur die Hauptmuskeln (role primary) der Uebung entscheiden, welche
     /// Position eine ungeplante Uebung optional macht -- wie am Server.
     @Test func eineUngeplanteUebungZaehltNurMitIhrenHauptmuskeln() async throws {

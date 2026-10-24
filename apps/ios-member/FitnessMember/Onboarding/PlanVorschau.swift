@@ -142,7 +142,7 @@ struct PlanVorschauSchritt: View {
                 Card {
                     VStack(spacing: 0) {
                         ForEach(Array(einheit.positionen.enumerated()), id: \.element.key) { index, position in
-                            let zeile = PlanZeilenModell.aus(position, bootstrap: katalog.bootstrap)
+                            let zeile = PlanZeilenModell.aus(position, studioId: plan.studioId, bootstrap: katalog.bootstrap)
                             if index > 0 {
                                 Rectangle().fill(DesignSystem.Color.line).frame(height: 1)
                             }
@@ -155,7 +155,7 @@ struct PlanVorschauSchritt: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, DesignSystem.Spacing.s4)
                 }
-                Text(metaText(einheit))
+                Text(PlanAnzeige.metaText(einheit))
                     .font(.system(size: 13))
                     .monospacedDigit()
                     .foregroundStyle(DesignSystem.Color.textMuted)
@@ -183,13 +183,6 @@ struct PlanVorschauSchritt: View {
                 }
             }
         }
-    }
-
-    /// "7 Übungen · ca. 63 Min"; ohne Schaetzung nur die Zahl.
-    private func metaText(_ einheit: TrainingsplanEinheit) -> String {
-        let anzahl = einheit.positionen.count == 1 ? "1 Übung" : "\(einheit.positionen.count) Übungen"
-        guard let minuten = einheit.geschaetzteMinuten else { return anzahl }
-        return "\(anzahl) · ca. \(Int(minuten.rounded())) Min"
     }
 
     // MARK: - Ablauf

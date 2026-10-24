@@ -14,14 +14,25 @@ struct PlanZeilenModell: Equatable, Identifiable {
     /// Fuer das Uebungsvideo in der Kachel.
     let exerciseId: String
     /// Das Geraetemodell, dessen Foto als Platzhalter unter dem Video steht;
-    /// nil = kein Foto (Geraet unbekannt).
+    /// nil = kein Foto (kein aktives Geraet mit dieser Uebung im Studio).
     let vorschaubildModell: String?
+    /// Der Ablaufstatus rechts (Plankarte 2.1/2.2); nil = keine Marke, so in
+    /// der Vorschau 1.4, wo noch nichts trainiert ist.
+    var status: PlanMomentaufnahme.Status? = nil
+    /// "Zusätzlich gemacht" (2.2): erledigt mit Haken, aber nicht
+    /// durchgestrichen -- die Uebung stand nie auf dem Plan.
+    var zusatz = false
 }
 
 extension PlanZeilenModell {
     /// Die Zeile einer Planposition, Name und Geraet aus dem Bootstrap.
-    static func aus(_ position: TrainingsplanPosition, bootstrap: BootstrapResponse?) -> PlanZeilenModell {
-        let maschine = bootstrap?.machines.first { $0.id == position.machineId }
+    /// Das Foto kommt vom Geraet der Position oder, ist es stillgelegt oder
+    /// entfernt, von einem anderen aktiven Geraet mit derselben Uebung
+    /// (`PlanAnzeige.bildmaschine`).
+    static func aus(_ position: TrainingsplanPosition, studioId: String,
+                    bootstrap: BootstrapResponse?) -> PlanZeilenModell {
+        let maschine = PlanAnzeige.bildmaschine(exerciseId: position.exerciseId, machineId: position.machineId,
+                                                studioId: studioId, bootstrap: bootstrap)
         return PlanZeilenModell(
             id: position.key,
             name: uebungsname(exerciseId: position.exerciseId, maschine: maschine, bootstrap: bootstrap),
@@ -42,7 +53,8 @@ extension PlanZeilenModell {
 
     /// Erst das Geraet der Position, dann der Studiokatalog: eine Uebung,
     /// deren Geraet (noch) nicht im Bootstrap steht, behaelt ihren Namen.
-    private static func uebungsname(exerciseId: String, maschine: BootstrapResponse.Machine?,
+    /// Nicht privat: die Plankarte loest Ersatz- und Zusatzuebungen genauso auf.
+    static func uebungsname(exerciseId: String, maschine: BootstrapResponse.Machine?,
                                     bootstrap: BootstrapResponse?) -> String {
         if let name = maschine?.exercises.first(where: { $0.id == exerciseId })?.name { return name }
         for maschine in bootstrap?.machines ?? [] {
@@ -57,8 +69,9 @@ extension PlanZeilenModell {
 
 /// Eine Planzeile: Vorschaubild links (56 x 56, Video ueber dem Geraetefoto
 /// wie in der Geraeteliste), Name und Vorgabe, rechts optional die
-/// Statusmarke (Entwurf 2.x-Legende). Ohne `status` keine Marke -- so in der
-/// Vorschau 1.4, wo noch nichts trainiert ist.
+/// Statusmarke (Entwurf 2.x-Legende). Ohne Status keine Marke -- so in der
+/// Vorschau 1.4, wo noch nichts trainiert ist. Der Status kommt aus dem
+/// Modell; `status` hier ueberschreibt ihn (Aufrufer von Task 10).
 ///
 /// Kein eigener Hintergrund und keine Trennlinie: der Behaelter (Karte)
 /// zeichnet die Linien zwischen den Zeilen, wie `.pos + .pos` im Entwurf.
@@ -69,7 +82,11 @@ struct PlanZeile: View {
     /// er kennt die signierten URLs und haelt den Lader ueber die Zeilen.
     var foto: UIImage?
 
+    private var wirksamerStatus: PlanMomentaufnahme.Status? { status ?? modell.status }
+
     var body: some View {
+        let status = wirksamerStatus
+        let abgehakt = status == .erledigt && !modell.zusatz
         HStack(spacing: DesignSystem.Spacing.s12) {
             UebungsVideoKachel(exerciseId: modell.exerciseId) {
                 PlanZeilenFoto(foto: foto)
@@ -77,8 +94,12 @@ struct PlanZeile: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(modell.name)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(status == .erledigt ? DesignSystem.Color.textMuted : DesignSystem.Color.text)
-                    .strikethrough(status == .erledigt, color: DesignSystem.Color.textFaint)
+                    // Erledigt durchgestrichen, optional gedaempft (`.pos.dim`
+                    // im Entwurf 2.2): beide sind fuer heute nicht mehr noetig,
+                    // optional bleibt aber antippbar und lesbar.
+                    .foregroundStyle(abgehakt || status == .optional
+                                     ? DesignSystem.Color.textMuted : DesignSystem.Color.text)
+                    .strikethrough(abgehakt, color: DesignSystem.Color.textFaint)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(modell.untertitel)
                     .font(.system(size: 12.5))
@@ -98,7 +119,7 @@ struct PlanZeile: View {
     /// "<Übung>, <Status>, <Vorgabe>" (Task 11, VoiceOver); ohne Status nur
     /// Name und Vorgabe.
     private var voLabel: String {
-        guard let status else { return "\(modell.name), \(modell.untertitel)" }
+        guard let status = wirksamerStatus else { return "\(modell.name), \(modell.untertitel)" }
         return "\(modell.name), \(PlanStatusMarke.gesprochen(status)), \(modell.untertitel)"
     }
 }
