@@ -1,7 +1,7 @@
 import SwiftUI
 
 // Die Schritte 1.1-1.3 des Blocks "Dein Trainingsplan" (freigegebene
-// Entwuerfe, Etappe 3). Die Huelle (Kopfzeile, Titel, Weiter, Später) ist
+// Entwuerfe, Etappe 3). Die Huelle (Kopfzeile, Titel, Weiter, Spaeter) ist
 // `OnboardingScreen`; hier steht nur der Inhalt. Die Vorschau 1.4 mit den
 // Sonderfaellen 4.1/4.2 steht in PlanVorschau.swift.
 
@@ -216,7 +216,7 @@ struct PlanBeschwerdenSchritt: View {
     @Binding var plan: PlanAntworten
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
             ForEach(PlanAuswahl.bereiche, id: \.code) { bereich in
                 bereichsZeile(code: bereich.code, name: bereich.text)
             }
@@ -244,11 +244,17 @@ struct PlanBeschwerdenSchritt: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityHidden(true)
+            // Gezeichnet 34 pt hoch, getroffen 44 pt (globale Regel): die
+            // Flaeche jeder Stufe sitzt mittig in einem hoeheren Knopf, der
+            // Rand liegt als Overlay nur um die gezeichneten 34 pt. So passen
+            // fuenf Bereiche, Einwilligung und Weiter ohne Scrollen auf ein
+            // normales iPhone (Review Task 10, m4).
             HStack(spacing: 0) {
                 ForEach(Array(PlanAuswahl.stufen.enumerated()), id: \.element.code) { index, stufe in
                     let istAktiv = plan.stufe(fuer: code) == stufe.code
+                    let letzte = index == PlanAuswahl.stufen.count - 1
                     if index > 0 {
-                        Rectangle().fill(DesignSystem.Color.line).frame(width: 1)
+                        Rectangle().fill(DesignSystem.Color.line).frame(width: 1, height: Self.segmentHoehe)
                     }
                     Button {
                         plan.setzeStufe(stufe.code, fuer: code)
@@ -258,8 +264,18 @@ struct PlanBeschwerdenSchritt: View {
                             .lineLimit(1)
                             .foregroundStyle(istAktiv ? DesignSystem.Color.onAccent : DesignSystem.Color.textFaint)
                             .padding(.horizontal, 10)
+                            .frame(height: Self.segmentHoehe)
+                            .background {
+                                if istAktiv {
+                                    UnevenRoundedRectangle(
+                                        topLeadingRadius: index == 0 ? 10 : 0,
+                                        bottomLeadingRadius: index == 0 ? 10 : 0,
+                                        bottomTrailingRadius: letzte ? 10 : 0,
+                                        topTrailingRadius: letzte ? 10 : 0)
+                                    .fill(DesignSystem.Color.text)
+                                }
+                            }
                             .frame(minHeight: 44)
-                            .background(istAktiv ? DesignSystem.Color.text : Color.clear)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(PressButtonStyle())
@@ -268,15 +284,14 @@ struct PlanBeschwerdenSchritt: View {
                 }
             }
             .fixedSize()
-            .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
                     .stroke(DesignSystem.Color.line, lineWidth: 1)
+                    .frame(height: Self.segmentHoehe)
             )
         }
         .padding(.leading, 14)
-        .padding(.trailing, 10)
-        .padding(.vertical, 8)
+        .padding(.trailing, 6)
         .background(DesignSystem.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.neben))
         .overlay(
@@ -317,6 +332,8 @@ struct PlanBeschwerdenSchritt: View {
         .accessibilityValue(plan.einwilligung ? "eingewilligt" : "nicht eingewilligt")
         .accessibilityAddTraits(.isToggle)
     }
+
+    private static let segmentHoehe: CGFloat = 34
 
     static let einwilligungsText = "Ich willige ausdrücklich ein, dass meine Angaben zu Beschwerden gespeichert werden, um meinen Plan anzupassen. Widerruf jederzeit im Profil."
 }

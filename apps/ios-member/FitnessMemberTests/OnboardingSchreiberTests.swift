@@ -163,6 +163,21 @@ struct OnboardingSchreiberPlanTests {
         #expect(await fake.aufrufe == ["putTrainingProfile", "putTrainingProfile", "putTrainingLimits"])
     }
 
+    @Test("nurBeschwerden schreibt nur die Beschwerden, nie das Trainingsprofil")
+    func nurBeschwerdenSchreibtNurLimits() async {
+        #expect(OnboardingSchreiber.vorgaenge(umfang: .nurBeschwerden) == [.beschwerden])
+        #expect(OnboardingSchreiber.vorgaenge(umfang: .nurPlan) == nil)
+
+        var plan = vollerPlan
+        plan.beschwerdenUebernehmen(["knie": "meiden"])
+        plan.einwilligung = false
+        let fake = FakeProfilSchreibend()
+        _ = await OnboardingSchreiber.schreiben(
+            OnboardingAntworten(), plan: plan, mit: fake, mitAbschluss: false,
+            offen: OnboardingSchreiber.vorgaenge(umfang: .nurBeschwerden))
+        #expect(await fake.aufrufe == ["deleteTrainingLimits"])
+    }
+
     @Test("ohne Plan-Block (nil) bleibt alles wie vor Etappe 3")
     func ohnePlanBlock() async {
         let fake = FakeProfilSchreibend()

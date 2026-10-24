@@ -124,6 +124,38 @@ struct PlanAntwortenTests {
         #expect(antworten.beschwerdenAktion == .keine)
     }
 
+    @Test("Haken weg mit gewaehlten Bereichen: Weiter aktiv und DELETE")
+    func abwaehlenMitBereichenWiderruft() {
+        var antworten = PlanAntworten(profil: nil)
+        antworten.beschwerdenUebernehmen(["knie": "meiden", "schulter": "vorsichtig"])
+        antworten.einwilligung = false
+        // Ohne Einwilligung darf keine Auswahl stehen bleiben -- sie liesse
+        // sich ohnehin nicht senden und sperrte nur Weiter.
+        #expect(antworten.beschwerden.isEmpty)
+        #expect(antworten.kannWeiter(.planBeschwerden))
+        #expect(antworten.beschwerdenAktion == .widerrufen)
+    }
+
+    @Test("Haken weg ohne gespeicherte Einwilligung: nichts wird gesendet")
+    func abwaehlenOhneFruehereEinwilligung() {
+        var antworten = PlanAntworten(profil: nil)
+        antworten.setzeStufe("meiden", fuer: "knie")
+        antworten.einwilligung = true
+        antworten.einwilligung = false
+        #expect(antworten.beschwerden.isEmpty)
+        #expect(antworten.kannWeiter(.planBeschwerden))
+        #expect(antworten.beschwerdenAktion == .keine)
+    }
+
+    @Test("Ueberspringen nach dem Abwaehlen sendet nichts und laesst den gespeicherten Stand")
+    func ueberspringenNachAbwaehlen() {
+        var antworten = PlanAntworten(profil: nil)
+        antworten.beschwerdenUebernehmen(["knie": "meiden"])
+        antworten.einwilligung = false
+        antworten.beschwerdenVerwerfen()
+        #expect(antworten.beschwerdenAktion == .keine)
+    }
+
     @Test("Trainingsprofil nur mit Minuten und Erfahrung")
     func trainingsprofilNurVollstaendig() {
         var antworten = PlanAntworten(profil: nil)

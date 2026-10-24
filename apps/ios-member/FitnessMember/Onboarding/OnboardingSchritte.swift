@@ -30,9 +30,6 @@ struct OnboardingScreen<Inhalt: View>: View {
     /// Block "Dein Trainingsplan": Kopfzeile und Fuss wie in den Entwuerfen
     /// 1.x (siehe oben). nil = die Bestandsschritte.
     var bereich: String? = nil
-    /// Ohne Zeile, wenn der Flow nur diesen einen Schritt zeigt (reine
-    /// Vorschau 1.4): "Schritt 1 von 1" zaehlt nichts.
-    var zeigtSchrittzeile: Bool = true
     /// "Überspringen" auf 1.3 statt "Später" (Entwurf).
     var spaeterTitel: String = "Später"
     /// Eine zweite stille Aktion unter der Hauptaktion ("Zeit oder
@@ -69,15 +66,17 @@ struct OnboardingScreen<Inhalt: View>: View {
 
     private var kopfzeile: some View {
         HStack(alignment: .center) {
-            Text("SCHRITT \(schrittNummer) VON \(gesamtSchritte)")
-                .font(DesignSystem.Typography.label)
-                .tracking(1.5)
-                .monospacedDigit()
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                // Ein Element statt drei (Eyebrow + fuenf Segmente): die
-                // sichtbare Grossschreibung bleibt, VoiceOver hoert die
-                // natuerliche Form (Brief, VoiceOver-Abschnitt).
-                .accessibilityLabel("Schritt \(schrittNummer) von \(gesamtSchritte)")
+            if let schrittzeile {
+                Text(schrittzeile.uppercased())
+                    .font(DesignSystem.Typography.label)
+                    .tracking(1.5)
+                    .monospacedDigit()
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    // Ein Element statt drei (Eyebrow + fuenf Segmente): die
+                    // sichtbare Grossschreibung bleibt, VoiceOver hoert die
+                    // natuerliche Form (Brief, VoiceOver-Abschnitt).
+                    .accessibilityLabel(schrittzeile)
+            }
 
             Spacer()
 
@@ -90,16 +89,22 @@ struct OnboardingScreen<Inhalt: View>: View {
         }
     }
 
+    /// "Schritt n von m", ohne Zeile bei nur einem Schritt (reine Vorschau
+    /// 1.4, Profilzeile "Beschwerden"): "Schritt 1 von 1" zaehlt nichts.
+    private var schrittzeile: String? {
+        OnboardingSchrittzeile.text(nummer: schrittNummer, gesamt: gesamtSchritte)
+    }
+
     /// "DEIN TRAININGSPLAN ... SCHRITT 1 VON 4" (Entwurf 1.x, `.step`).
     private func bereichsKopf(_ bereich: String) -> some View {
         HStack(alignment: .center) {
             Text(bereich.uppercased())
                 .accessibilityAddTraits(.isHeader)
             Spacer()
-            if zeigtSchrittzeile {
-                Text("SCHRITT \(schrittNummer) VON \(gesamtSchritte)")
+            if let schrittzeile {
+                Text(schrittzeile.uppercased())
                     .monospacedDigit()
-                    .accessibilityLabel("Schritt \(schrittNummer) von \(gesamtSchritte)")
+                    .accessibilityLabel(schrittzeile)
             }
         }
         .font(DesignSystem.Typography.label)

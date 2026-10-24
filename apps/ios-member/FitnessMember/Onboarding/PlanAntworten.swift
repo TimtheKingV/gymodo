@@ -18,7 +18,15 @@ struct PlanAntworten: Equatable {
     private(set) var beschwerden: [String: String]
     /// Die ausdrueckliche, getrennte Einwilligung (DSGVO Art. 9). Ohne sie
     /// verlassen Beschwerden das Geraet nie.
-    var einwilligung: Bool
+    ///
+    /// Den Haken entfernen leert die Auswahl: ohne Einwilligung liesse sie
+    /// sich ohnehin nicht senden, und stehen gebliebene Bereiche sperrten
+    /// Weiter -- der Widerruf (DELETE) waere dann nur ueber "alles auf
+    /// Nichts, dann Haken weg" erreichbar, und das sagt dem Mitglied niemand
+    /// (Review Task 10).
+    var einwilligung: Bool {
+        didSet { if !einwilligung { beschwerden = [:] } }
+    }
     /// Was der Server zuletzt bestaetigt hat: nil = keine Einwilligung
     /// (404 oder nie gefragt). Nur damit laesst sich ein Widerruf von
     /// "nie eingewilligt" unterscheiden.
@@ -66,9 +74,10 @@ struct PlanAntworten: Equatable {
         einwilligung = areas != nil
     }
 
-    /// "Überspringen" auf Schritt 1.3: zurueck auf den Stand vom Server, damit
+    /// "Ueberspringen" auf Schritt 1.3: zurueck auf den Stand vom Server, damit
     /// ein uebersprungener Schritt nichts schreibt -- weder ein PUT noch ein
-    /// versehentlicher Widerruf.
+    /// versehentlicher Widerruf. Der Widerruf geht bewusst nur ueber
+    /// Haken weg und Weiter.
     mutating func beschwerdenVerwerfen() {
         beschwerdenUebernehmen(beschwerdenVorher)
     }

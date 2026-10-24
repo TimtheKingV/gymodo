@@ -102,7 +102,6 @@ struct PlanVorschauSchritt: View {
             primaryDisabledHint: nil,
             spaeterEnabled: !uebernimmt,
             bereich: "Dein Trainingsplan",
-            zeigtSchrittzeile: gesamtSchritte > 1,
             nebenaktion: (titel: "Zeit oder Schwerpunkt ändern", aktion: beiZeitOderSchwerpunkt),
             beiSpaeter: { Task { await beiSpaeter() } },
             beiWeiter: { await primaryAktion() }

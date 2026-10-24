@@ -55,7 +55,7 @@ extension PlanZeilenModell {
     }
 }
 
-/// Eine Planzeile: Vorschaubild links (56 × 56, Video ueber dem Geraetefoto
+/// Eine Planzeile: Vorschaubild links (56 x 56, Video ueber dem Geraetefoto
 /// wie in der Geraeteliste), Name und Vorgabe, rechts optional die
 /// Statusmarke (Entwurf 2.x-Legende). Ohne `status` keine Marke -- so in der
 /// Vorschau 1.4, wo noch nichts trainiert ist.
@@ -131,7 +131,7 @@ private struct PlanZeilenFoto: View {
 }
 
 /// Die Marke rechts (Legende der Entwuerfe 2.x): offen Kreis, erledigt
-/// Haken, optional gestrichelter Kreis, getauscht ⇄. Grau und weiss, nie
+/// Haken, optional gestrichelter Kreis, getauscht Doppelpfeil. Grau und weiss, nie
 /// Akzent -- die Akzentflaeche des Screens bleibt "Gerät scannen".
 struct PlanStatusMarke: View {
     let status: PlanMomentaufnahme.Status

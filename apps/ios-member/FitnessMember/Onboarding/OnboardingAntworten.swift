@@ -23,16 +23,19 @@ enum OnboardingSchritt: Hashable, CaseIterable {
 /// - `nurPlan`: die Home-Karte 1.5 ohne Trainingsprofil -- nur der Block.
 /// - `nurVorschau`: Home-Karte mit Profil, spaeter das Anfaengerangebot
 ///   (Task 11) -- nur 1.4, ohne Schrittzeile.
+/// - `nurBeschwerden`: die Zeile "Beschwerden" im Profil -- nur 1.3, damit
+///   der Satz "Widerruf jederzeit im Profil" stimmt. Schreibt nur die
+///   Beschwerden (`OnboardingSchreiber.vorgaenge(umfang:)`), keinen Plan.
 enum OnboardingUmfang: Equatable {
-    case komplett, nurPlan, nurVorschau
+    case komplett, nurPlan, nurVorschau, nurBeschwerden
 }
 
 /// "Schritt n von m" -- gezaehlt wird, was der Flow wirklich zeigt; bei nur
 /// einem Schritt gibt es nichts zu zaehlen und keine Zeile.
 enum OnboardingSchrittzeile {
-    static func text(index: Int, schritte: [OnboardingSchritt]) -> String? {
-        guard schritte.count > 1 else { return nil }
-        return "Schritt \(min(index, schritte.count - 1) + 1) von \(schritte.count)"
+    static func text(nummer: Int, gesamt: Int) -> String? {
+        guard gesamt > 1 else { return nil }
+        return "Schritt \(min(nummer, gesamt)) von \(gesamt)"
     }
 }
 
@@ -81,8 +84,9 @@ struct OnboardingAntworten: Equatable {
         case .komplett: basis = schritte + [.planZeit, .planSchwerpunkt, .planBeschwerden]
         case .nurPlan: basis = [.planZeit, .planSchwerpunkt, .planBeschwerden]
         case .nurVorschau: basis = []
+        case .nurBeschwerden: basis = [.planBeschwerden]
         }
-        if hatStudio || umfang == .nurVorschau { basis.append(.planVorschau) }
+        if (hatStudio && umfang != .nurBeschwerden) || umfang == .nurVorschau { basis.append(.planVorschau) }
         // Zielgewicht nur mit Gewicht, auch als Ergaenzung (Spec 5.2).
         let zusatz = ergaenzt.filter { $0 != .zielgewicht || gewichtKg != nil }
         let alle = Set(basis).union(zusatz)

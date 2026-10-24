@@ -126,8 +126,7 @@ struct OnboardingFlow: View {
                 : (kannWeiter ? nil : "Erst die Einwilligung bestätigen — oder überspringen."),
             spaeterEnabled: !schreibtGerade,
             bereich: schritt.gehoertZumPlan ? "Dein Trainingsplan" : nil,
-            zeigtSchrittzeile: schritte.count > 1,
-            spaeterTitel: schritt == .planBeschwerden ? "Überspringen" : "Später",
+            spaeterTitel: schritt != .planBeschwerden ? "Später" : (umfang == .nurBeschwerden ? "Abbrechen" : "Überspringen"),
             beiSpaeter: {
                 Task {
                     if schritt == .planBeschwerden {
@@ -173,6 +172,8 @@ struct OnboardingFlow: View {
 
     private func primaryTitle(istLetzter: Bool) -> String {
         guard case .teilweise = ergebnis else {
+            // Aus dem Profil geht es um eine Einstellung, nicht um einen Start.
+            if umfang == .nurBeschwerden { return "Speichern" }
             return istLetzter ? "Los geht’s" : "Weiter"
         }
         return "Erneut versuchen"
@@ -264,6 +265,11 @@ struct OnboardingFlow: View {
             // idempotente Aufrufe (PUT/DELETE).
             offen = offenNachFehler + [.trainingsprofil, .beschwerden]
         }
+        // Die Profilzeile "Beschwerden" schreibt nur die Beschwerden, auch
+        // wenn das vorbelegte Trainingsprofil eine Antwort traegt.
+        if let nur = OnboardingSchreiber.vorgaenge(umfang: umfang) {
+            offen = nur
+        }
         let neuesErgebnis = await OnboardingSchreiber.schreiben(
             antworten, plan: plan, mit: apiClient, mitAbschluss: !alsSheet, offen: offen
         )
@@ -331,11 +337,13 @@ struct OnboardingFlow: View {
         guard !planVorbelegt else { return }
         planVorbelegt = true
         plan = PlanAntworten(profil: catalogStore.bootstrap?.member.trainingProfile)
-        let vorher = plan
+        let vorher = (plan.beschwerden, plan.einwilligung)
         guard let areas = try? await apiClient.trainingLimits() else { return }
-        // Hat das Mitglied waehrend des Abrufs schon gewaehlt, gewinnt seine
-        // Wahl -- der Abruf darf sie nicht ueberschreiben.
-        guard plan == vorher else { return }
+        // Hat das Mitglied waehrend des Abrufs schon Beschwerden oder den
+        // Haken gesetzt, gewinnt seine Wahl. Nur diese zwei zaehlen: ein
+        // Tipp auf Minuten oder Schwerpunkt verwarf sonst den Abruf, und
+        // ein spaeterer Widerruf liefe ins Leere (Review Task 10, m1).
+        guard plan.beschwerden == vorher.0, plan.einwilligung == vorher.1 else { return }
         plan.beschwerdenUebernehmen(areas)
     }
 

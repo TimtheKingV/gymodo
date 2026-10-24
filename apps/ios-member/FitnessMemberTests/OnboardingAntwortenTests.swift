@@ -81,10 +81,17 @@ struct OnboardingAntwortenTests {
         ])
     }
 
+    @Test("schritte nurBeschwerden ist nur 1.3, mit und ohne Studio")
+    func schritteNurBeschwerden() {
+        #expect(OnboardingAntworten().schritte(umfang: .nurBeschwerden, hatStudio: true) == [.planBeschwerden])
+        #expect(OnboardingAntworten().schritte(umfang: .nurBeschwerden, hatStudio: false) == [.planBeschwerden])
+    }
+
     @Test("die Schrittzeile zaehlt nur, was der Flow zeigt, und fehlt bei nur einem Schritt")
     func schrittzeile() {
-        #expect(OnboardingSchrittzeile.text(index: 5, schritte: OnboardingAntworten().schritte(umfang: .komplett, hatStudio: true)) == "Schritt 6 von 8")
-        #expect(OnboardingSchrittzeile.text(index: 0, schritte: [.planVorschau]) == nil)
+        let schritte = OnboardingAntworten().schritte(umfang: .komplett, hatStudio: true)
+        #expect(OnboardingSchrittzeile.text(nummer: 6, gesamt: schritte.count) == "Schritt 6 von 8")
+        #expect(OnboardingSchrittzeile.text(nummer: 1, gesamt: 1) == nil)
     }
 
     @Test("istLeer ist wahr, wenn nichts gesetzt ist")

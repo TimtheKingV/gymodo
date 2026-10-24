@@ -143,6 +143,14 @@ enum OnboardingSchreiber {
         return .fertig
     }
 
+    /// Die Vorgaenge, auf die ein Umfang beschraenkt ist; nil = alle mit
+    /// einer Antwort. Die Profilzeile "Beschwerden" (`nurBeschwerden`)
+    /// schreibt nur die Beschwerden -- ein vorbelegtes Trainingsprofil ginge
+    /// sonst ungefragt mit.
+    static func vorgaenge(umfang: OnboardingUmfang) -> [OnboardingSchreibvorgang]? {
+        umfang == .nurBeschwerden ? [.beschwerden] : nil
+    }
+
     /// Was nach einem GELUNGENEN Versuch noch einmal laufen muss, wenn der
     /// Flow erneut schreibt (etwa nach "Zeit oder Schwerpunkt ändern" aus
     /// der Vorschau): nur, was sich seitdem geaendert hat. Sonst setzte
