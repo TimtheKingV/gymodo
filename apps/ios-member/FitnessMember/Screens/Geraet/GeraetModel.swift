@@ -1207,7 +1207,8 @@ final class GeraetModel {
             kalibrierungFehler = switch error {
             case .offline: "Ohne Empfang lässt sich die Einstellung nicht speichern. Deine Sätze gehen trotzdem raus."
             case .validation(let text), .server(let text), .notFound(let text),
-                 .conflict(let text), .unauthorized(let text): text
+                 .conflict(let text), .unauthorized(let text),
+                 .profilUnvollstaendig(let text, _), .planNichtMoeglich(let text, _, _): text
             case .encodingFailed: "Die Einstellung ließ sich nicht senden. Deine Sätze gehen trotzdem raus."
             case .decodingFailed: "Unerwartete Antwort vom Server."
             }

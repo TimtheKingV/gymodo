@@ -570,4 +570,94 @@ struct DTOTests {
         #expect(c.vorschlaege[0].machineId == nil)
         #expect(c.vorschlaege[0].equipmentModelId == "t1")
     }
+
+    // MARK: - Trainingsplan (Etappe 3)
+
+    private static let planJSON = #"""
+    {"planId":"13568e9e-3b00-4972-a3f3-2943a207311b","studioId":"5146617d-ee1b-4b2e-a538-81b4ab5c8117",
+     "version":1,"regelVersion":"1.2.0","struktur":"gk_ab",
+     "einheiten":[{"key":"A","positionen":[{"key":"0","typ":"mehrgelenk","rolle":"pflicht","saetze":2,
+       "wdhBis":12,"wdhVon":8,"baustein":"beine_knie","dauerMin":null,"pauseSek":150,
+       "machineId":"ff132ad9-1410-4016-a068-44efb73ab688","exerciseId":"265d30f2-ac59-4a2b-8c46-a9eb954b3448",
+       "reserveBis":4,"reserveVon":3,"aufwaermsatz":true,"hauptmuskeln":[]}],"geschaetzteMinuten":46.5}],
+     "gruende":["struktur_ganzkoerper_ab","anfaenger_reserve"],
+     "naechsteEinheitKey":"B","zuletztEinheitKey":"A","einheitenErledigt":1,"anfaengerUebergang":false,
+     "alternativen":{"beine_knie":[{"exerciseId":"265d30f2-ac59-4a2b-8c46-a9eb954b3448","machineId":"ff132ad9-1410-4016-a068-44efb73ab688"}],
+       "rumpf":[{"exerciseId":"2b53ce45-773b-4178-85ef-3d80ba8f44bf","machineId":"ff132ad9-1410-4016-a068-44efb73ab688"}]}}
+    """#
+
+    @Test("Bootstrap ohne trainingProfile/plans dekodiert (alte Antwort)")
+    func bootstrapOhnePlanFelder() throws {
+        let json = #"{"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null}},"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#
+        let r = try JSONDecoder().decode(BootstrapResponse.self, from: Data(json.utf8))
+        #expect(r.member.plans.isEmpty)
+        #expect(r.member.trainingProfile == nil)
+    }
+
+    @Test("Bootstrap mit plans dekodiert Positionen und Alternativen")
+    func bootstrapMitPlans() throws {
+        let json = #"{"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null},"trainingProfile":{"minutes":60,"experience":"neu","focus":["brust"]},"plans":["#+Self.planJSON+#"]},"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#
+        let r = try JSONDecoder().decode(BootstrapResponse.self, from: Data(json.utf8))
+        #expect(r.member.trainingProfile == TrainingsplanProfil(minutes: 60, experience: "neu", focus: ["brust"]))
+        let plan = try #require(r.member.plans.first)
+        #expect(plan.planId == "13568e9e-3b00-4972-a3f3-2943a207311b")
+        #expect(plan.naechsteEinheitKey == "B")
+        #expect(plan.zuletztEinheitKey == "A")
+        #expect(plan.einheitenErledigt == 1)
+        #expect(plan.einheiten[0].geschaetzteMinuten == 46.5)
+        let pos = plan.einheiten[0].positionen[0]
+        #expect(pos.baustein == "beine_knie")
+        #expect(pos.wdhVon == 8 && pos.wdhBis == 12 && pos.dauerMin == nil)
+        #expect(pos.aufwaermsatz)
+        #expect(plan.alternativen["rumpf"]?.first?.exerciseId == "2b53ce45-773b-4178-85ef-3d80ba8f44bf")
+        #expect(plan.alternativen["beine_ergaenzung"] == nil)
+    }
+
+    @Test("Trainingsplan aus createPlan (id statt planId, ohne App-Felder) dekodiert")
+    func planAusSchreibweg() throws {
+        let json = #"{"id":"p1","studioId":"s1","version":2,"status":"vorschlag","regelVersion":"1.2.0","eingabe":{},"struktur":"gk_ab","einheiten":[],"gruende":[],"createdAt":"x","acceptedAt":null}"#
+        let plan = try JSONDecoder().decode(Trainingsplan.self, from: Data(json.utf8))
+        #expect(plan.planId == "p1")
+        #expect(plan.naechsteEinheitKey == nil)
+        #expect(plan.alternativen.isEmpty)
+    }
+
+    private static func momentaufnahme() -> PlanMomentaufnahme {
+        PlanMomentaufnahme(planId: "p1", einheitKey: "A", stand: 3, positionen: [
+            .init(key: "0", status: .erledigt, exerciseId: nil),
+            .init(key: "1", status: .getauscht, exerciseId: "e2"),
+        ])
+    }
+
+    @Test("SetWrite ohne plan codiert ohne Feld plan")
+    func setWriteOhnePlan() throws {
+        let w = SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10)
+        let json = String(data: try JSONEncoder().encode(w), encoding: .utf8)!
+        #expect(!json.contains("plan"))
+    }
+
+    @Test("SetWrite mit plan: Round-Trip")
+    func setWriteMitPlan() throws {
+        var w = SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: 1, load: 80, volume: 10)
+        w.plan = Self.momentaufnahme()
+        let data = try JSONEncoder().encode(w)
+        let json = String(data: data, encoding: .utf8)!
+        #expect(json.contains(#""einheitKey":"A""#))
+        #expect(json.contains(#""status":"getauscht""#))
+        #expect(try JSONDecoder().decode(SetWrite.self, from: data) == w)
+    }
+
+    @Test("Alte pending-writes.json (ohne plan) dekodiert")
+    func alteWarteschlangeOhnePlan() throws {
+        let alt = #"{"machineId":"m1","exerciseId":"ex1","setIndex":1,"load":80,"volume":10,"problemFlag":false}"#
+        let w = try JSONDecoder().decode(SetWrite.self, from: Data(alt.utf8))
+        #expect(w.plan == nil)
+    }
+
+    @Test("RecordedSet toleriert planUebernommen")
+    func recordedSetMitPlanUebernommen() throws {
+        let json = #"{"id":"i","studioId":"s","userId":"u","sessionId":"se","machineId":"m","exerciseId":"e","setIndex":1,"load":1,"secondaryLoad":null,"volume":1,"rir":null,"problemFlag":false,"problemReason":null,"performedAt":"x","planUebernommen":false}"#
+        let r = try JSONDecoder().decode(RecordedSet.self, from: Data(json.utf8))
+        #expect(r.id == "i")
+    }
 }

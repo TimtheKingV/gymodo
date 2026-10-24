@@ -222,6 +222,55 @@ actor APIClient {
         try await executeNoContent(path: "me/goals/\(kind)", method: "DELETE")
     }
 
+    // MARK: - Trainingsplan (Etappe 3)
+
+    /// 404 heisst "noch kein Profil" und ist hier kein Fehler.
+    func trainingProfile() async throws(APIError) -> TrainingsplanProfil? {
+        do throws(APIError) { return try await get("me/training-profile") }
+        catch { if case .notFound = error { return nil }; throw error }
+    }
+
+    func putTrainingProfile(_ profil: TrainingsplanProfil) async throws(APIError) -> TrainingsplanProfil {
+        try await send("me/training-profile", method: "PUT", body: profil)
+    }
+
+    /// Nur die Bereiche mit Stufe (Gesundheitsdaten, nie cachen); nil ohne
+    /// Einwilligung (404).
+    func trainingLimits() async throws(APIError) -> [String: String]? {
+        struct Antwort: Decodable { let areas: [String: String] }
+        do throws(APIError) { return try await get("me/training-limits", as: Antwort.self).areas }
+        catch { if case .notFound = error { return nil }; throw error }
+    }
+
+    /// Mit dem Speichern willigt das Mitglied ein; der Server nimmt ohne
+    /// `einwilligung: true` nichts an.
+    func putTrainingLimits(areas: [String: String]) async throws(APIError) {
+        struct Rumpf: Encodable { let einwilligung = true; let areas: [String: String] }
+        // Die Antwort traegt nichts, was die App braucht (nicht dekodiert genug).
+        let _: JSONValue = try await send("me/training-limits", method: "PUT", body: Rumpf(areas: areas))
+    }
+
+    /// Widerruf; ohne Einwilligung ebenfalls 204.
+    func deleteTrainingLimits() async throws(APIError) {
+        try await executeNoContent(path: "me/training-limits", method: "DELETE")
+    }
+
+    func createPlan(studioId: String) async throws(APIError) -> Trainingsplan {
+        try await send("me/plans", method: "POST", body: ["studioId": studioId])
+    }
+
+    func acceptPlan(id: String) async throws(APIError) -> Trainingsplan {
+        try await sendNoBody("me/plans/\(id)/accept", method: "POST")
+    }
+
+    func swapPlanPosition(
+        planId: String, einheitKey: String, positionKey: String, exerciseId: String, machineId: String
+    ) async throws(APIError) -> Trainingsplan {
+        struct Rumpf: Encodable { let einheitKey, positionKey, exerciseId, machineId: String }
+        return try await send("me/plans/\(planId)/swap", method: "POST", body: Rumpf(
+            einheitKey: einheitKey, positionKey: positionKey, exerciseId: exerciseId, machineId: machineId))
+    }
+
     // MARK: - Hilfsmethoden
 
     private func get<T: Decodable>(_ path: String, as type: T.Type = T.self) async throws(APIError) -> T {
@@ -278,7 +327,7 @@ actor APIClient {
         if (200..<300).contains(http.statusCode) { return data }
 
         if let envelope = try? decoder.decode(ErrorEnvelope.self, from: data) {
-            throw APIError.map(code: envelope.error.code, message: envelope.error.message)
+            throw APIError.map(code: envelope.error.code, message: envelope.error.message, detail: envelope.error.detail)
         }
         throw APIError.server(message: "Unerwarteter Fehler.")
     }
@@ -311,7 +360,7 @@ actor APIClient {
         if (200..<300).contains(http.statusCode) { return }
 
         if let envelope = try? decoder.decode(ErrorEnvelope.self, from: data) {
-            throw APIError.map(code: envelope.error.code, message: envelope.error.message)
+            throw APIError.map(code: envelope.error.code, message: envelope.error.message, detail: envelope.error.detail)
         }
         throw APIError.server(message: "Unerwarteter Fehler.")
     }

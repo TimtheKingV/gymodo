@@ -10,6 +10,11 @@ enum APIError: Error, Equatable {
     case notFound(message: String)
     case conflict(message: String)
     case server(message: String)
+    /// 422: fuer den Plan fehlen Angaben im Trainingsprofil (`fehlt` nennt sie).
+    case profilUnvollstaendig(message: String, fehlt: [String])
+    /// 422: fuer einen Baustein gibt es keine passende Uebung; `grund` ist der
+    /// feste Servercode, nicht zur Anzeige.
+    case planNichtMoeglich(message: String, baustein: String, grund: String)
     /// Die Anfrage konnte gar nicht erst codiert werden -- der Schreibvorgang
     /// hat das Geraet nie verlassen. Getrennt von .decodingFailed, weil die
     /// beiden Faelle das Gegenteil bedeuten (siehe istDauerhaft).
@@ -41,7 +46,10 @@ enum APIError: Error, Equatable {
     var istDauerhaft: Bool {
         switch self {
         case .offline, .server, .decodingFailed: false
-        case .unauthorized, .validation, .notFound, .conflict, .encodingFailed: true
+        // Dieselbe Anfrage ergibt dasselbe Profil und denselben Katalog -- ein
+        // Wiederholen aendert nichts, erst eine Eingabe des Mitglieds.
+        case .unauthorized, .validation, .notFound, .conflict, .encodingFailed,
+             .profilUnvollstaendig, .planNichtMoeglich: true
         }
     }
 
@@ -77,7 +85,8 @@ enum APIError: Error, Equatable {
         case .offline:
             "Keine Verbindung."
         case .unauthorized(let message), .validation(let message),
-             .notFound(let message), .conflict(let message), .server(let message):
+             .notFound(let message), .conflict(let message), .server(let message),
+             .profilUnvollstaendig(let message, _), .planNichtMoeglich(let message, _, _):
             message
         case .encodingFailed:
             "Die Anfrage konnte nicht gesendet werden."
@@ -86,13 +95,27 @@ enum APIError: Error, Equatable {
         }
     }
 
-    static func map(code: String, message: String) -> APIError {
+    static func map(code: String, message: String, detail: JSONValue? = nil) -> APIError {
         switch code {
         case "unauthorized": .unauthorized(message: message)
         case "validation_failed": .validation(message: message)
         case "not_found": .notFound(message: message)
         case "conflict": .conflict(message: message)
+        case "profil_unvollstaendig": .profilUnvollstaendig(message: message, fehlt: detail?.textliste("fehlt") ?? [])
+        case "plan_nicht_moeglich":
+            .planNichtMoeglich(message: message, baustein: detail?.text("baustein") ?? "", grund: detail?.text("grund") ?? "")
         default: .server(message: message)
         }
+    }
+}
+
+private extension JSONValue {
+    func text(_ schluessel: String) -> String? {
+        if case .object(let o) = self, case .string(let t)? = o[schluessel] { t } else { nil }
+    }
+
+    func textliste(_ schluessel: String) -> [String]? {
+        guard case .object(let o) = self, case .array(let a)? = o[schluessel] else { return nil }
+        return a.compactMap { if case .string(let t) = $0 { t } else { nil } }
     }
 }
