@@ -14,19 +14,24 @@ const STATUS_BY_CODE: Record<DomainErrorCode, number> = {
   internal: 500,
 };
 
+/**
+ * `detail` ist optional und erscheint nur, wenn gesetzt -- bestehende
+ * Antworten behalten exakt ihre Huelle.
+ */
 export function errorResponse(
   code: DomainErrorCode,
   message: string,
+  detail?: Record<string, unknown>,
 ): Response {
   return Response.json(
-    { error: { code, message } },
+    { error: detail ? { code, message, detail } : { code, message } },
     { status: STATUS_BY_CODE[code] },
   );
 }
 
 function isDomainError(
   error: unknown,
-): error is Error & { code: DomainErrorCode } {
+): error is Error & { code: DomainErrorCode; detail?: Record<string, unknown> } {
   return (
     error instanceof Error && error.name === "DomainError" && "code" in error
   );
@@ -40,7 +45,7 @@ function isDomainError(
  */
 export function fromDomainError(error: unknown): Response {
   if (isDomainError(error)) {
-    return errorResponse(error.code, error.message);
+    return errorResponse(error.code, error.message, error.detail);
   }
   return errorResponse("internal", "Unerwarteter Fehler.");
 }

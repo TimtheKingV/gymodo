@@ -19,13 +19,33 @@ export type DomainErrorCode =
 
 export class DomainError extends Error {
   readonly code: DomainErrorCode;
+  /**
+   * Optionale, maschinenlesbare Feinheit unter dem stabilen Code (etwa
+   * `{ code: "profil_unvollstaendig" }`). Die App braucht sie, um gezielt zu
+   * reagieren, ohne die Meldung zu parsen; nie fremde Daten hineinlegen.
+   */
+  readonly detail?: Record<string, unknown>;
 
-  constructor(code: DomainErrorCode, message: string) {
+  constructor(code: DomainErrorCode, message: string, detail?: Record<string, unknown>) {
     super(message);
     this.name = "DomainError";
     this.code = code;
+    if (detail) this.detail = detail;
   }
 }
+
+// Menschliche Namen der Bausteine fuer Meldungen; der rohe Schluessel steht im detail.
+const BAUSTEIN_NAME: Record<Baustein, string> = {
+  beine_knie: "Beine (Kniestreckung)",
+  beine_huefte: "Beine (Hüfte)",
+  druecken: "Drücken",
+  ziehen: "Ziehen",
+  schulter: "Schulter",
+  arme: "Arme",
+  rumpf: "Rumpf",
+  beine_ergaenzung: "Beine (Ergänzung)",
+  cardio: "Cardio",
+};
 
 /**
  * Der Generator findet fuer einen Pflichtbaustein keine Uebung. Lieber ein klarer
@@ -41,8 +61,9 @@ export class PlanNichtMoeglichError extends DomainError {
     super(
       "plan_nicht_moeglich",
       grund === "kein_geraet"
-        ? `Für den Baustein ${baustein} gibt es im Studio kein passendes Gerät.`
-        : `Für den Baustein ${baustein} passt wegen deiner Beschwerden keine Übung.`,
+        ? `Für den Bereich ${BAUSTEIN_NAME[baustein]} gibt es im Studio kein passendes Gerät.`
+        : `Für den Bereich ${BAUSTEIN_NAME[baustein]} passt wegen deiner Beschwerden keine Übung.`,
+      { baustein, grund },
     );
     this.baustein = baustein;
     this.grund = grund;

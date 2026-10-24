@@ -309,3 +309,5 @@ export type {
   PlanPosition,
 } from "./trainingsplan-generator.js";
 export { ladeKandidaten } from "./trainingsplan-kandidaten.js";
+export { acceptPlan, erzeugePlanVorschlag, listPlaene } from "./trainingsplan.js";
+export type { PlanEingabe, PlanStatus, TrainingPlan } from "./trainingsplan.js";
