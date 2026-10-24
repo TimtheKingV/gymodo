@@ -242,10 +242,11 @@ type ModellZeile = {
 };
 
 /**
+ * Generisch, damit auch der Plan-Kandidatenlader dieselbe Regel nutzt.
  * Eigene Uebungen zuerst, dann die des Katalogtyps; eine Uebung, die das
  * Studio zusaetzlich selbst angehaengt hat, bleibt an ihrer eigenen Stelle.
  */
-export function uebungenMitKatalog(eigene: Uebung[], katalog: Uebung[]): Uebung[] {
+export function uebungenMitKatalog<T extends { id: string }>(eigene: T[], katalog: T[]): T[] {
   const gesehen = new Set(eigene.map((uebung) => uebung.id));
   return [...eigene, ...katalog.filter((uebung) => !gesehen.has(uebung.id))];
 }

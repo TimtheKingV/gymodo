@@ -326,3 +326,30 @@ describe("planeImport Produkte", () => {
     expect(text).toContain("Produkt-Typen: 3 neu, 0 geaendert, 0 unveraendert");
   });
 });
+
+describe("planeImport Planfelder", () => {
+  const mitPlan = () => {
+    const b = beispielKatalog();
+    (b.roh.exercises[0] as Record<string, unknown>).plan = { baustein: "druecken", typ: "mehrgelenk", bereiche: ["schulter"] };
+    return b;
+  };
+
+  it("uebertraegt plan_* in die Zeile", () => {
+    const plan = plane(mitPlan(), LEER);
+    expect(plan.uebungen[0]?.zeile).toMatchObject({ plan_baustein: "druecken", plan_typ: "mehrgelenk", plan_bereiche: ["schulter"] });
+    expect(plan.uebungen[1]?.zeile).toMatchObject({ plan_baustein: null, plan_typ: null, plan_bereiche: [] });
+  });
+
+  it("plan entfernt im Katalog setzt die Spalten auf null", () => {
+    const ist = istAus(plane(mitPlan(), LEER));
+    const zweiter = plane(beispielKatalog(), ist);
+    expect(zweiter.uebungen[0]?.art).toBe("geaendert");
+    expect(zweiter.uebungen[0]?.felder).toEqual(["plan_baustein", "plan_typ", "plan_bereiche"]);
+    expect(zweiter.uebungen[0]?.zeile).toMatchObject({ plan_baustein: null, plan_typ: null, plan_bereiche: [] });
+  });
+
+  it("meldet bei unveraendertem plan nichts", () => {
+    const b = mitPlan();
+    expect(plane(b, istAus(plane(b, LEER))).uebungen[0]?.art).toBe("unveraendert");
+  });
+});

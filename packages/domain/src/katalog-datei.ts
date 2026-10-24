@@ -2,6 +2,7 @@ import { z } from "zod";
 import { CATEGORIES, GROUPS, LOAD_UNITS, MAX_VOLUME, VOLUME_KINDS } from "./belastung.js";
 import { cardioWertSchema } from "./cardio.js";
 import { MAX_VIDEO_SECONDS } from "./media.js";
+import { BAUSTEINE, BEREICHE, PLAN_TYPEN } from "./trainingsplan-typen.js";
 
 /**
  * Das Format von catalog/gymtavo.json und seine Pruefung.
@@ -126,6 +127,15 @@ const uebungSchema = z
     muscles: z.array(z.object({ muscle: schluessel, role: z.enum(["primary", "secondary"]) }).strict()),
     review: z.enum(["draft", "reviewed"]),
     sources: z.array(schluessel),
+    // Vorhanden = fuer Trainingsplaene freigegeben (Spec Trainingsplan, Abschnitt 2).
+    plan: z
+      .object({
+        baustein: z.enum(BAUSTEINE),
+        typ: z.enum(PLAN_TYPEN),
+        bereiche: z.array(z.enum(BEREICHE)).default([]),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 

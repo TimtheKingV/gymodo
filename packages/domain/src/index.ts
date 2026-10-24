@@ -39,7 +39,7 @@ export {
   type RepEvents,
   type VolumeSource,
 } from "./herkunft.js";
-export { DomainError } from "./errors.js";
+export { DomainError, PlanNichtMoeglichError } from "./errors.js";
 export { istAuthAusfall } from "./auth.js";
 export {
   MAX_PHOTO_BYTES,
@@ -268,3 +268,46 @@ export {
   cardioWerteSchema,
 } from "./cardio.js";
 export type { CardioWert, CardioWerte } from "./cardio.js";
+export {
+  BAUSTEINE,
+  BEREICHE,
+  ERFAHRUNG,
+  FOKUS_BEREICHE,
+  MINUTEN,
+  PFLICHT_BAUSTEINE,
+  PLAN_TYPEN,
+} from "./trainingsplan-typen.js";
+export type {
+  Baustein,
+  Bereich,
+  Erfahrung,
+  FokusBereich,
+  Minuten,
+  PlanFeld,
+  PlanTyp,
+} from "./trainingsplan-typen.js";
+export { requireUserId } from "./auth.js";
+export {
+  deleteTrainingLimits,
+  getTrainingLimits,
+  getTrainingProfile,
+  pruefeTrainingsLimits,
+  pruefeTrainingsprofil,
+  saveTrainingLimits,
+  saveTrainingProfile,
+} from "./trainingsprofil.js";
+export type { LimitStufe, TrainingLimits, TrainingProfile } from "./trainingsprofil.js";
+export { PLAN_REGEL_VERSION, FOKUS_MUSKELN, strukturFuerTage, zielAusTrainingGoal, zielprofil } from "./trainingsplan-regeln.js";
+export type { Struktur, Ziel as PlanZiel, Zielprofil } from "./trainingsplan-regeln.js";
+export { ZEIT, aufwaermenMinuten, cardioMinuten, pauseSekunden, uebungMinuten } from "./trainingsplan-zeit.js";
+export { generierePlan } from "./trainingsplan-generator.js";
+export type {
+  GeneratorEingabe,
+  GeneratorErgebnis,
+  Kandidat,
+  PlanEinheit,
+  PlanPosition,
+} from "./trainingsplan-generator.js";
+export { ladeKandidaten } from "./trainingsplan-kandidaten.js";
+export { acceptPlan, erzeugePlanVorschlag, listPlaene } from "./trainingsplan.js";
+export type { PlanEingabe, PlanStatus, TrainingPlan } from "./trainingsplan.js";
