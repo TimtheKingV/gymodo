@@ -45,10 +45,18 @@ enum PlanAnzeige {
     }
 
     /// Alles zusammen; nil, wenn die Karte entfaellt.
+    ///
+    /// Ein gebundener Ablauf (die Einheit laeuft) gilt im Studio seines Plans
+    /// auch dann, wenn der Bootstrap schon eine neue planId nennt: ein
+    /// dauerhafter Tausch legt eine neue Planzeile an (0062), die laufende
+    /// Einheit bleibt aber bei ihrer Version (Review Focus 2) -- ohne das
+    /// stuende ihr Fortschritt mitten im Training wieder auf 0.
     static func heute(bootstrap: BootstrapResponse?, studioId: String?, ablaufPlanId: String?,
                       ablaufEinheitKey: String?, ablaufZustand: AblaufZustand?,
-                      naechsteEinheitKey: String?) -> Heute? {
+                      naechsteEinheitKey: String?, ablaufGebunden: Bool = false,
+                      ablaufStudioId: String? = nil) -> Heute? {
         guard let plan = plan(bootstrap: bootstrap, studioId: studioId) else { return nil }
+        let ablaufPlanId = ablaufGebunden && ablaufStudioId == plan.studioId ? plan.planId : ablaufPlanId
         let key = einheitKey(plan: plan, ablaufPlanId: ablaufPlanId, ablaufEinheitKey: ablaufEinheitKey,
                              naechsteEinheitKey: naechsteEinheitKey)
         guard let einheit = plan.einheiten.first(where: { $0.key == key }) else { return nil }

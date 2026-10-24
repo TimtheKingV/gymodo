@@ -35,6 +35,10 @@ final class TrainingsplanAblaufStore {
     var zustand: AblaufZustand? { datei.lauf?.zustand }
     var planId: String? { datei.lauf?.planId }
     var einheitKey: String? { datei.lauf?.einheitKey }
+    /// Das Studio des Ablaufs -- ein gebundener Ablauf gilt dort auch dann
+    /// weiter, wenn der Bootstrap schon eine neue planId nennt (dauerhafter
+    /// Tausch mitten in der Einheit, Task 12).
+    var studioId: String? { datei.lauf?.studioId }
     var gebundeneSessionId: UUID? { datei.lauf?.gebundeneSessionId }
     /// Der Stand der letzten Momentaufnahme; 0 vor dem ersten Satz.
     var stand: Int { datei.lauf?.stand ?? 0 }
@@ -222,12 +226,42 @@ final class TrainingsplanAblaufStore {
     /// Ersetzt einen ungebundenen Ablauf, der nicht mehr passt, und baut einen,
     /// falls keiner da ist. Ein gebundener bleibt immer (Review Focus 2).
     private func ungebundenAuffrischen(jetzt: Date) {
+        var ersetzt: PlanLauf?
         if let lauf = datei.lauf, lauf.gebundeneSessionId == nil, !passt(lauf, jetzt: jetzt) {
+            ersetzt = lauf
             datei.lauf = nil
         }
         if datei.lauf == nil, let vorlage = datei.vorlage {
-            datei.lauf = neuerLauf(vorlage, jetzt: jetzt)
+            let neu = neuerLauf(vorlage, jetzt: jetzt)
+            datei.lauf = ersetzt.map { mitHeutigenTauschen(aus: $0, in: neu, jetzt: jetzt) } ?? neu
         }
+    }
+
+    /// Eine neue Planversion vor dem ersten Satz (dauerhafter Tausch, Task 12;
+    /// ein Trainer) ersetzt den Ablauf. Die Taeusche "nur heute" derselben
+    /// Einheit gehen dabei nicht verloren, solange ihre Position in der neuen
+    /// Version dieselbe Uebung plant. Plant sie eine andere -- genau die
+    /// eben dauerhaft getauschte --, faellt der heutige Tausch weg: sonst
+    /// stuende die neue Uebung als geplant UND als Tausch da. Ein verfallener
+    /// Ablauf (12 h) gibt nichts weiter, und mit ihm bleibt sein Alter, damit
+    /// ein Tausch nicht durch eine neue Version verlaengert wird.
+    private func mitHeutigenTauschen(aus alt: PlanLauf, in neu: PlanLauf, jetzt: Date) -> PlanLauf {
+        guard alt.studioId == neu.studioId, alt.einheitKey == neu.einheitKey,
+              jetzt.timeIntervalSince(alt.erstelltAm) <= Self.verfallOhneSatz else { return neu }
+        var zustand = neu.zustand
+        var uebernommen = false
+        for position in alt.zustand.positionen where position.status == .getauscht {
+            guard let ersatz = position.ersatzExerciseId,
+                  zustand.positionen.contains(where: { $0.key == position.key && $0.exerciseId == position.exerciseId })
+            else { continue }
+            zustand = TrainingsplanAblauf.tauschen(zustand, positionKey: position.key,
+                                                   ersatz: (exerciseId: ersatz, hauptmuskeln: position.hauptmuskeln))
+            uebernommen = true
+        }
+        guard uebernommen else { return neu }
+        return PlanLauf(planId: neu.planId, version: neu.version, studioId: neu.studioId, einheitKey: neu.einheitKey,
+                        zustand: zustand, stand: neu.stand, gebundeneSessionId: nil, erstelltAm: alt.erstelltAm,
+                        letzterSatzAm: nil)
     }
 
     /// Ein ungebundener Ablauf gilt weiter, solange Plan, Version, Ort und

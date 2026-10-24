@@ -33,6 +33,7 @@
 		11BA7A3A80B08733F442CDFE /* KursRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */; };
 		13225DB0A049D674C72CE73D /* CourseWeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AC1E765B0B287F9AC69A3B8 /* CourseWeek.swift */; };
 		14BE1A62DADBD13DA29327F8 /* OnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31BDB535E7D98C969B8C5F58 /* OnboardingFlow.swift */; };
+		1512C5742C26B54A5915B82D /* PlanTausch.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3FA5D12B2C27B6142C70D6C /* PlanTausch.swift */; };
 		15230A9868C0F909306DACBD /* HomeRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDD0B70AC6B9D5C40460B59C /* HomeRoute.swift */; };
 		15EB89F78CC97D38D44F1C40 /* PlanSchritte.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15843762BAFA2910E65B6DD3 /* PlanSchritte.swift */; };
 		187B66242C280ADBE3234946 /* PlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27C292EFD7E692D12EAD9B3A /* PlaceholderView.swift */; };
@@ -233,6 +234,7 @@
 		A2AE0D99C71F00965EE68BF3 /* HomeSerie.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F772BB738D5F003DF895A42 /* HomeSerie.swift */; };
 		A2F067EE32F1B07AA7C5F02F /* DangerOutlineButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8E52BC8202E83D789FC2E5 /* DangerOutlineButton.swift */; };
 		A4C02ED91D8F3DB6B476D078 /* MuskelHinweiseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBF507D7058BF51E38744D65 /* MuskelHinweiseTests.swift */; };
+		A4E593C39235F90984A46C37 /* PlanTauschSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BF0901D880B0E09B13DF46A /* PlanTauschSheet.swift */; };
 		A4F50DFBB0D7894E7A7E8FC9 /* OfflineLeiste.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60D9445D803C7BFB4FE0E3B0 /* OfflineLeiste.swift */; };
 		A53325E109EED91CB9834B54 /* BluetoothSensorQuelle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7081B9EFC9138973A8C0D06D /* BluetoothSensorQuelle.swift */; };
 		A536169303BCBE5ED5385A9A /* CatalogStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8CC4AA1ADA4ED3E6D39207 /* CatalogStoreTests.swift */; };
@@ -252,6 +254,7 @@
 		B15158F53F4454655AAF6AD6 /* TrainingsplanAblaufStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38F5760504A61073E76B17C8 /* TrainingsplanAblaufStoreTests.swift */; };
 		B1765B62B97B6838FC0C7504 /* MuskelAuswertungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D675A52C3F8105746B55542A /* MuskelAuswertungTests.swift */; };
 		B1AD6E0E95C319469D1F6D52 /* AusgewogenheitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C7F985D94669B331CD23AE0 /* AusgewogenheitTests.swift */; };
+		B1BE561438CDAE24DAE3F2BA /* PlanTauschTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DAB5003D5CB233132C2DA55 /* PlanTauschTests.swift */; };
 		B24C8C319FE4F622FE13EF8E /* GroesseSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B3AC509274F6574606B6E0 /* GroesseSheet.swift */; };
 		B2A40BD3FEE73206CB01DC39 /* OrtswechselBeendenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B76232D487FC8D48B6D08EE1 /* OrtswechselBeendenTests.swift */; };
 		B3410F91BF63957604BF8340 /* SessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFAD64AC2C71B2E89331F981 /* SessionStoreTests.swift */; };
@@ -275,6 +278,7 @@
 		BE586D44AE4DD5FEA6C125AF /* AbspielSensorQuelleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5DB91C9C99E1790C7FBBC98 /* AbspielSensorQuelleTests.swift */; };
 		BE9D2B1D34A309D6EA5ACDF7 /* Hinweise.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C435A5F4E6D684CE1C9BA42 /* Hinweise.swift */; };
 		BE9ECC870DBDD6F2E5C4CEC7 /* MuskelFarbenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA1D35D6540B16A8E6F11C7 /* MuskelFarbenTests.swift */; };
+		BEA698AD6FD330EE07F25B2B /* PlanPositionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3C314BC75FFB1D3DC52BF8 /* PlanPositionSheet.swift */; };
 		BEEACF828D37DC6D09B01A06 /* OrtswechselTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A56404F29881EBAC2E63E04 /* OrtswechselTests.swift */; };
 		BF43021ADD4CB5DCE73DC6E4 /* TestnotizOberflaeche.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF49095F47C56BEDA79CE3F0 /* TestnotizOberflaeche.swift */; };
 		C01062BE7395A2DAD05A3EE4 /* AuthLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D6E6743BDCF6E58E971D0CE /* AuthLogicTests.swift */; };
@@ -458,6 +462,7 @@
 		28729494126B3B466AEDB7C4 /* ProfilZeilenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilZeilenTests.swift; sourceTree = "<group>"; };
 		28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetModelTests.swift; sourceTree = "<group>"; };
 		2A4773C0A268BE47D48C1059 /* OnboardingSchreiberTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingSchreiberTests.swift; sourceTree = "<group>"; };
+		2B3C314BC75FFB1D3DC52BF8 /* PlanPositionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanPositionSheet.swift; sourceTree = "<group>"; };
 		2CA28C58722A47519E135720 /* SensorAufnahmeKoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorAufnahmeKoordinatorTests.swift; sourceTree = "<group>"; };
 		2DC3378D45751B2BE6267611 /* AuthCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthCopy.swift; sourceTree = "<group>"; };
 		2E80C62D7C18C643E429AA9A /* ZirkelErweiternTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelErweiternTests.swift; sourceTree = "<group>"; };
@@ -519,9 +524,11 @@
 		4A055AE066E95BA635068E45 /* GeraetErkanntView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetErkanntView.swift; sourceTree = "<group>"; };
 		4A6BF9D8E65C0FA4A90E7D8B /* SatzMitschnitt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatzMitschnitt.swift; sourceTree = "<group>"; };
 		4B3485543C6E0CF68AD35F7E /* SitzungBlatt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SitzungBlatt.swift; sourceTree = "<group>"; };
+		4BF0901D880B0E09B13DF46A /* PlanTauschSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanTauschSheet.swift; sourceTree = "<group>"; };
 		4C040CEC32DA51B93411E58C /* WorkoutSessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionStoreTests.swift; sourceTree = "<group>"; };
 		4C4E8B114BF9C48A1CD5DED0 /* Einstellungen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Einstellungen.swift; sourceTree = "<group>"; };
 		4CA9131802B15B415EE3362E /* KurseMeineEinteilungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseMeineEinteilungTests.swift; sourceTree = "<group>"; };
+		4DAB5003D5CB233132C2DA55 /* PlanTauschTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanTauschTests.swift; sourceTree = "<group>"; };
 		4F69C1C60CEF87C380D77222 /* ProduktgrenzeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProduktgrenzeTests.swift; sourceTree = "<group>"; };
 		4F772BB738D5F003DF895A42 /* HomeSerie.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeSerie.swift; sourceTree = "<group>"; };
 		4FC6A66221FC823101AC2CAC /* TrainingsProfilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingsProfilTests.swift; sourceTree = "<group>"; };
@@ -641,6 +648,7 @@
 		A358100432569849D383D8E8 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
 		A39728482D01D77470A4FA96 /* Reserve.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reserve.swift; sourceTree = "<group>"; };
 		A3C333B26139F15540C2458B /* MuskelKarte.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuskelKarte.swift; sourceTree = "<group>"; };
+		A3FA5D12B2C27B6142C70D6C /* PlanTausch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanTausch.swift; sourceTree = "<group>"; };
 		A40546FF017FE78E2A6823CE /* ZahlformatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZahlformatTests.swift; sourceTree = "<group>"; };
 		A4D467E447232623659C42C7 /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		A5CA620D337B41A12B5D8A33 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
@@ -1154,6 +1162,7 @@
 				D88102EAEB9BC8D4E6FA9BC7 /* PfadbereinigungTests.swift */,
 				35AA5E5DD9ECEB4933E8FFA8 /* PlanAntwortenTests.swift */,
 				B1E92E5D724516E5B3B5E702 /* PlanAnzeigeTests.swift */,
+				4DAB5003D5CB233132C2DA55 /* PlanTauschTests.swift */,
 				4F69C1C60CEF87C380D77222 /* ProduktgrenzeTests.swift */,
 				28729494126B3B466AEDB7C4 /* ProfilZeilenTests.swift */,
 				94AAB4EF55CE7557296B1A97 /* RastRadTests.swift */,
@@ -1274,6 +1283,7 @@
 				32F3B0CC650812BA5EF42DDE /* Ortswechsel.swift */,
 				76B45F293755B9D5DEA1E3CF /* PlanAnzeige.swift */,
 				5F4B265225A09FA6EF146C6E /* PlanNamen.swift */,
+				A3FA5D12B2C27B6142C70D6C /* PlanTausch.swift */,
 				EE7999237F8B3E7635E236AE /* Rastwerte.swift */,
 				A39728482D01D77470A4FA96 /* Reserve.swift */,
 				57043EA2F2DFD5D046567083 /* Resttimer.swift */,
@@ -1303,6 +1313,8 @@
 			children = (
 				87E8DFCD399030A03462AC1F /* PlanAbschlussBereich.swift */,
 				F50C2B82E843F9E544E2B426 /* PlanKarte.swift */,
+				2B3C314BC75FFB1D3DC52BF8 /* PlanPositionSheet.swift */,
+				4BF0901D880B0E09B13DF46A /* PlanTauschSheet.swift */,
 				9E6DCA4E4FAD5D5B706EE9F4 /* PlanWarumView.swift */,
 				32AEC77DD991564A4F6B0478 /* PlanZeile.swift */,
 				D5EDFCF55AFA4CDCD53104DC /* TrainingAbschlussView.swift */,
@@ -1696,7 +1708,10 @@
 				5BBAED1B018ABE25DBC3B60A /* PlanEinrichtenKarte.swift in Sources */,
 				FA4F66AC2F156DE1AEC17CFB /* PlanKarte.swift in Sources */,
 				AF8A58018780C07B5E99AA47 /* PlanNamen.swift in Sources */,
+				BEA698AD6FD330EE07F25B2B /* PlanPositionSheet.swift in Sources */,
 				15EB89F78CC97D38D44F1C40 /* PlanSchritte.swift in Sources */,
+				1512C5742C26B54A5915B82D /* PlanTausch.swift in Sources */,
+				A4E593C39235F90984A46C37 /* PlanTauschSheet.swift in Sources */,
 				C048CF4EB7EB50805AF767A0 /* PlanVorschau.swift in Sources */,
 				E1B3A27CCBEC2DD0D280A633 /* PlanWarumView.swift in Sources */,
 				6E6C6CB22CFB2B192D7ABFCC /* PlanZeile.swift in Sources */,
@@ -1869,6 +1884,7 @@
 				FA54FBB2AC37F7A7EA5FCA74 /* PfadbereinigungTests.swift in Sources */,
 				822FA371ED6E300CF55B7A61 /* PlanAntwortenTests.swift in Sources */,
 				F95D68E54EEAB37AB723314C /* PlanAnzeigeTests.swift in Sources */,
+				B1BE561438CDAE24DAE3F2BA /* PlanTauschTests.swift in Sources */,
 				1D105998DF063382F4D4E09F /* ProduktgrenzeTests.swift in Sources */,
 				635B651CF96DE3A5916EB956 /* ProfilZeilenTests.swift in Sources */,
 				623391FEE484E105F85E2BFB /* RastRadTests.swift in Sources */,

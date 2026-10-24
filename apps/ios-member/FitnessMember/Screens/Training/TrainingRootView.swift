@@ -138,6 +138,8 @@ struct TrainingRootView: View {
     /// Ablauf kennt den Zirkel danach nicht mehr -- die Uebersicht liest
     /// deshalb nur diesen Wert, auf allen drei Wegen gleich.
     @State private var zirkelAbschluss: ZirkelAbschluss?
+    /// Die angetippte Planzeile (Entwuerfe 3.1-3.3, `planPositionSheet`).
+    @State private var planPosition: PlanTauschAuftrag?
 
     var body: some View {
         NavigationStack(path: $pfad) {
@@ -217,6 +219,7 @@ struct TrainingRootView: View {
                 ziel(route).id(route).environment(videoVorrat)
             }
             .environment(videoVorrat)
+            .planPositionSheet(auftrag: $planPosition, apiClient: apiClient, vorschauLader: vorschauLader)
             .sheet(item: $uebungsstart, onDismiss: zirkelPlanungOeffnen) { auftrag in
                 if let modell = modell(station: auftrag.station, exerciseId: auftrag.exerciseId,
                                        token: auftrag.token) {
@@ -388,7 +391,9 @@ struct TrainingRootView: View {
                         laufendKopf(mitte, session: session)
                     }
                     // Entwurf 2.1/2.2; ohne Plan im aktiven Studio nichts.
-                    PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader)
+                    PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
+                        planPosition = PlanTausch.auftrag(position: $0, katalog: katalog, ablauf: planAblauf)
+                    }
                 }
             } trainingsinhalt: {
                 if let session {

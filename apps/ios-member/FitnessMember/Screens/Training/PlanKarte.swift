@@ -8,7 +8,8 @@ extension PlanAnzeige {
     static func heute(katalog: CatalogStore, ablauf: TrainingsplanAblaufStore) -> Heute? {
         heute(bootstrap: katalog.bootstrap, studioId: katalog.activeStudioId,
               ablaufPlanId: ablauf.planId, ablaufEinheitKey: ablauf.einheitKey,
-              ablaufZustand: ablauf.zustand, naechsteEinheitKey: ablauf.naechsteEinheitKey)
+              ablaufZustand: ablauf.zustand, naechsteEinheitKey: ablauf.naechsteEinheitKey,
+              ablaufGebunden: ablauf.gebundeneSessionId != nil, ablaufStudioId: ablauf.studioId)
     }
 }
 

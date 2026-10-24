@@ -126,8 +126,9 @@ struct PlanZeile: View {
 
 /// Der Platzhalter unter dem Video -- dieselbe Gestalt wie in der
 /// Geraeteliste (`GeraeteAuswahlView.foto`): Hantel in `textFaint`, darueber
-/// das Foto, sobald es da ist.
-private struct PlanZeilenFoto: View {
+/// das Foto, sobald es da ist. Nicht privat: die Tauschliste (3.2) zeigt
+/// ihre Kandidaten mit demselben Vorschaubild.
+struct PlanZeilenFoto: View {
     let foto: UIImage?
 
     var body: some View {
