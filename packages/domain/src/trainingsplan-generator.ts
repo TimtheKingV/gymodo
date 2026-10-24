@@ -1,6 +1,7 @@
 // Plangenerator (Spec 2026-10-21, Abschnitte 2 und 3, F9, F12, F16, F19).
 // Rein: kein DB-Zugriff, keine Uhr, kein Zufall -- gleiche Eingabe ergibt denselben Plan,
 // damit gespeicherte Plaene nachvollziehbar bleiben und Tests exakt sein koennen.
+import { PlanNichtMoeglichError } from "./errors.js";
 import type { Beschwerden, Kandidat } from "./trainingsplan-auswahl.js";
 import {
   filtereKandidaten,
@@ -112,8 +113,10 @@ function baueKraftteil(ctx: EinheitKontext, flags: Flags): { positionen: Entwurf
   const nimm = (k: Kandidat) => belegt.add(k.exerciseId);
 
   const pflicht: Kandidat[] = einheit.bausteine.pflicht.map((b) => {
-    // pruefePflicht lief vorher fuer alle Einheiten, daher gibt es hier immer einen Kandidaten.
-    const k = waehleKandidat(nachBaustein(kandidaten, b), variation.get(b) ?? 0, belegt)!;
+    // Trotz pruefePflicht kann die einzige Uebung schon in einem anderen Pflichtbaustein stehen;
+    // dann lieber ein klarer Fehler als ein Plan ohne Pflichtbaustein.
+    const k = waehleKandidat(nachBaustein(kandidaten, b), variation.get(b) ?? 0, belegt);
+    if (!k) throw new PlanNichtMoeglichError(b, "kein_geraet");
     nimm(k);
     return k;
   });
@@ -132,7 +135,10 @@ function baueKraftteil(ctx: EinheitKontext, flags: Flags): { positionen: Entwurf
   const positionen = pflicht.map((k) => position(k, "pflicht", saetze, profil));
   const erlaubteBausteine = [...einheit.bausteine.pflicht, ...einheit.bausteine.ergaenzung];
 
-  // F9: ein Fokus nimmt den Platz einer Ergaenzung ein, weil er vor ihnen das Restbudget belegt.
+  // F9: jeder gesetzte Fokus ersetzt einen Ergaenzungsplatz, damit die Zeit gleich bleibt --
+  // bevorzugt den Platz seines eigenen Bausteins (sonst stuende der Baustein doppelt), sonst
+  // die letzte verbleibende Ergaenzung in Strukturreihenfolge.
+  const ergaenzungen = [...einheit.bausteine.ergaenzung];
   ctx.fokus.forEach((bereich, i) => {
     const k = waehleFokus(kandidaten, bereich, erlaubteBausteine, belegt);
     if (!k) return;
@@ -145,9 +151,11 @@ function baueKraftteil(ctx: EinheitKontext, flags: Flags): { positionen: Entwurf
     summe += uebungMinuten(k.typ, saetze);
     positionen.push(position(k, "fokus", saetze, profil));
     flags.fokus.add(bereich);
+    const eigener = ergaenzungen.indexOf(k.baustein);
+    ergaenzungen.splice(eigener >= 0 ? eigener : ergaenzungen.length - 1, 1);
   });
 
-  for (const b of einheit.bausteine.ergaenzung) {
+  for (const b of ergaenzungen) {
     const k = waehleKandidat(nachBaustein(kandidaten, b), variation.get(b) ?? 0, belegt);
     if (!k) continue;
     if (!passt(k)) {
@@ -175,6 +183,9 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
   const abnehmen = eingabe.ziel === "abnehmen";
   const cardioSoll = abnehmen ? cardioMinuten(eingabe.minuten) : 0;
   const cardioKandidat = nachBaustein(kandidaten, "cardio")[0] ?? null;
+  // Wie bei pruefePflicht: "kein Geraet" nur, wenn das Studio wirklich keins hat; sind alle
+  // gemieden, erklaert das schon beschwerden_meiden, und das Studio wird nicht beschuldigt.
+  const studioHatCardio = nachBaustein(eingabe.kandidaten, "cardio").length > 0;
   const cardio = cardioKandidat ? cardioSoll : 0;
   const aufwaermen = aufwaermenMinuten(eingabe.minuten);
   const kraftBudget = eingabe.minuten - aufwaermen - cardio;
@@ -235,7 +246,7 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
   wenn(flags.zweiterFokusEntfallen, "fokus_zweiter_entfallen");
   wenn(cardio > 0, "abnehmen_cardio_zone");
   wenn(abnehmen && cardioKandidat !== null && cardioSoll < 20, "abnehmen_cardio_gekuerzt");
-  wenn(cardioSoll > 0 && cardioKandidat === null, "abnehmen_kein_cardio_geraet");
+  wenn(cardioSoll > 0 && !studioHatCardio, "abnehmen_kein_cardio_geraet");
   wenn(abnehmen, "abnehmen_alltag");
   wenn(abnehmen && fokus.includes("bauch"), "bauch_kein_fettabbau");
   wenn(eingabe.erfahrung === "neu", "anfaenger_reserve");

@@ -178,6 +178,24 @@ describe("generierePlan: Struktur und Variation", () => {
     expect(druecken(b!)).toBe("chest_press");
   });
 
+  it("Variation ueber Uebungen, nicht ueber Geraete: zwei Geraete derselben Uebung zaehlen einmal", () => {
+    const zweiGeraete = [
+      { ...k("chest_press", "druecken", "mehrgelenk", ["pectorals"]), machineId: "m1" },
+      { ...k("chest_press", "druecken", "mehrgelenk", ["pectorals"]), machineId: "m2" },
+      k("incline_press", "druecken", "mehrgelenk", ["pectorals"]),
+      ...ohne("chest_press", "incline_press"),
+    ];
+    const [a, b] = generierePlan(eingabe({ kandidaten: zweiGeraete })).einheiten;
+    const druecken = (e: PlanEinheit) => e.positionen.find((p) => p.baustein === "druecken")!;
+    expect(druecken(a!)).toMatchObject({ exerciseId: "chest_press", machineId: "m1" });
+    expect(druecken(b!).exerciseId).toBe("incline_press");
+
+    const eineUebung = zweiGeraete.filter((c) => c.exerciseId !== "incline_press");
+    const [a2, b2] = generierePlan(eingabe({ kandidaten: eineUebung })).einheiten;
+    expect(druecken(a2!).exerciseId).toBe("chest_press");
+    expect(druecken(b2!).exerciseId).toBe("chest_press");
+  });
+
   it("4 Tage: vier Einheiten OK_A, UK_A, OK_B, UK_B; Oberkoerper enthaelt nur druecken/ziehen/schulter/arme", () => {
     const plan = generierePlan(eingabe({ tage: 4 }));
     expect(plan.struktur).toBe("ober_unter");
@@ -218,6 +236,29 @@ describe("generierePlan: Fokus", () => {
       expect(new Set(ids).size).toBe(ids.length);
     });
     expect(plan.gruende).toContain("fokus_po");
+  });
+
+  it("90 und 75 min: Fokus ersetzt eine Ergaenzung, gleiche Positionszahl wie ohne Fokus (F9)", () => {
+    for (const minuten of [90, 75] as const) {
+      const basis = generierePlan(eingabe({ minuten, kandidaten: mitKickback }));
+      const plan = generierePlan(eingabe({ minuten, kandidaten: mitKickback, fokus: ["po"] }));
+      plan.einheiten.forEach((e, i) => {
+        expect(rollen(e).filter((r) => r === "fokus")).toHaveLength(1);
+        expect(e.positionen).toHaveLength(basis.einheiten[i]!.positionen.length);
+      });
+    }
+  });
+
+  it("Fokus aus beine_ergaenzung erzeugt keine zusaetzliche beine_ergaenzung-Position", () => {
+    // Einheit B: hip_thrust ist Pflicht, also wird glute_kickback (beine_ergaenzung) der Fokus.
+    const plan = generierePlan(eingabe({ minuten: 90, kandidaten: mitKickback, fokus: ["po"] }));
+    const b = plan.einheiten[1]!;
+    const beinErg = b.positionen.filter((p) => p.baustein === "beine_ergaenzung");
+    expect(beinErg).toHaveLength(1);
+    expect(beinErg[0]).toMatchObject({ rolle: "fokus", exerciseId: "glute_kickback" });
+    expect(b.positionen.map((p) => p.baustein)).toEqual([
+      "beine_knie", "beine_huefte", "druecken", "ziehen", "beine_ergaenzung", "schulter", "rumpf", "arme",
+    ]);
   });
 
   it("Fokus ohne passenden Kandidaten in der Einheit entfaellt dort", () => {
@@ -279,6 +320,31 @@ describe("generierePlan: Beschwerden", () => {
       expect(fehler.grund).toBe("kein_geraet");
       expect(fehler.code).toBe("plan_nicht_moeglich");
     }
+  });
+
+  it("Pflichtbaustein ohne freie Uebung (dieselbe Uebung in zwei Pflichtbausteinen) wirft kein_geraet statt abzustuerzen", () => {
+    const geteilt = [
+      k("multi_press", "druecken", "mehrgelenk", ["pectorals"]),
+      { ...k("multi_press", "ziehen", "mehrgelenk", ["lats"]), machineId: "m_zug" },
+      ...ohne("chest_press", "incline_press", "row", "lat_pulldown"),
+    ];
+    try {
+      generierePlan(eingabe({ kandidaten: geteilt }));
+      expect.unreachable();
+    } catch (e) {
+      expect(e).toBeInstanceOf(PlanNichtMoeglichError);
+      expect((e as PlanNichtMoeglichError).baustein).toBe("ziehen");
+      expect((e as PlanNichtMoeglichError).grund).toBe("kein_geraet");
+    }
+  });
+
+  it("Abnehmen, alle Cardiogeraete gemieden: kein Cardio, aber kein abnehmen_kein_cardio_geraet", () => {
+    const katalog = [...ohne("bike"), k("stepper", "cardio", "isolation", [], ["knie"])];
+    const plan = generierePlan(eingabe({ ziel: "abnehmen", kandidaten: katalog, beschwerden: { knie: "meiden" } }));
+    for (const e of plan.einheiten) expect(rollen(e)).not.toContain("cardio");
+    expect(plan.gruende).not.toContain("abnehmen_kein_cardio_geraet");
+    expect(plan.gruende).not.toContain("abnehmen_cardio_zone");
+    expect(plan.gruende).toContain("beschwerden_meiden");
   });
 
   it("alle Kandidaten eines Pflichtbausteins gemieden wirft PlanNichtMoeglichError(beschwerden)", () => {

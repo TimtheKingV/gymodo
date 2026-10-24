@@ -48,17 +48,22 @@ export function pruefePflicht(baustein: Baustein, alle: Kandidat[], gefiltert: K
 }
 
 /**
- * Variation ueber die Einheiten: der n-te Einsatz eines Bausteins nimmt Kandidat n mod Anzahl.
- * Steht der Kandidat schon in der Einheit (etwa als Fokus), wird der naechste freie genommen,
- * damit keine Uebung doppelt in einer Einheit steht.
+ * Variation ueber die Einheiten: der n-te Einsatz eines Bausteins nimmt Uebung n mod Anzahl.
+ * Gezaehlt werden verschiedene exerciseIds (in Reihenfolge des ersten Auftretens), nicht
+ * Uebung x Geraet -- sonst bekaeme B dieselbe Uebung nur an einem anderen Geraet.
+ * Von der gewaehlten Uebung wird das erste Geraet genommen. Steht die Uebung schon in der
+ * Einheit (etwa als Fokus), wird die naechste freie genommen, damit nichts doppelt steht.
  */
 export function waehleKandidat(
   liste: Kandidat[],
   variation: number,
   belegt: ReadonlySet<string>,
 ): Kandidat | null {
-  for (let s = 0; s < liste.length; s++) {
-    const k = liste[(variation + s) % liste.length]!;
+  const uebungen = new Map<string, Kandidat>();
+  for (const k of liste) if (!uebungen.has(k.exerciseId)) uebungen.set(k.exerciseId, k);
+  const gruppen = [...uebungen.values()];
+  for (let s = 0; s < gruppen.length; s++) {
+    const k = gruppen[(variation + s) % gruppen.length]!;
     if (!belegt.has(k.exerciseId)) return k;
   }
   return null;
