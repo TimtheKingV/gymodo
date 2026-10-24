@@ -261,3 +261,43 @@ describe("pruefeKatalog load_start", () => {
     ]);
   });
 });
+
+describe("pruefeKatalog plan", () => {
+  const plan = { baustein: "druecken", typ: "mehrgelenk", bereiche: ["schulter"] };
+
+  it("akzeptiert eine Uebung mit plan", () => {
+    const { roh } = beispielKatalog();
+    (roh.exercises[0] as Record<string, unknown>).plan = plan;
+    const pruefung = pruefeKatalog(roh);
+    expect(pruefung.ok).toBe(true);
+    if (pruefung.ok) expect(pruefung.wert.exercises[0]?.plan).toEqual(plan);
+  });
+
+  it("setzt bereiche auf leer, wenn sie fehlen", () => {
+    const { roh } = beispielKatalog();
+    (roh.exercises[0] as Record<string, unknown>).plan = { baustein: "ziehen", typ: "isolation" };
+    const pruefung = pruefeKatalog(roh);
+    expect(pruefung.ok && pruefung.wert.exercises[0]?.plan?.bereiche).toEqual([]);
+  });
+
+  it("lehnt unbekannten Baustein ab", () => {
+    const fehler = fehlerVon((roh) => ((roh.exercises[0] as Record<string, unknown>).plan = { ...plan, baustein: "waden" }));
+    expect(fehler).toHaveLength(1);
+    expect(fehler[0]).toContain("plan.baustein");
+  });
+
+  it("lehnt plan ohne typ ab", () => {
+    expect(fehlerVon((roh) => ((roh.exercises[0] as Record<string, unknown>).plan = { baustein: "druecken" }))).toEqual([
+      'exercises[0] "brustpresse_neutral" plan.typ: fehlt',
+    ]);
+  });
+
+  it("lehnt unbekannte Felder in plan ab", () => {
+    const fehler = fehlerVon((roh) => ((roh.exercises[0] as Record<string, unknown>).plan = { ...plan, level: 2 }));
+    expect(fehler).toEqual(['exercises[0] "brustpresse_neutral" plan: unbekanntes Feld "level"']);
+  });
+
+  it("laesst eine Uebung ohne plan gueltig", () => {
+    expect(pruefeKatalog(beispielKatalog().roh).ok).toBe(true);
+  });
+});

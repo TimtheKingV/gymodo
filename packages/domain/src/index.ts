@@ -268,3 +268,21 @@ export {
   cardioWerteSchema,
 } from "./cardio.js";
 export type { CardioWert, CardioWerte } from "./cardio.js";
+export {
+  BAUSTEINE,
+  BEREICHE,
+  ERFAHRUNG,
+  FOKUS_BEREICHE,
+  MINUTEN,
+  PFLICHT_BAUSTEINE,
+  PLAN_TYPEN,
+} from "./trainingsplan-typen.js";
+export type {
+  Baustein,
+  Bereich,
+  Erfahrung,
+  FokusBereich,
+  Minuten,
+  PlanFeld,
+  PlanTyp,
+} from "./trainingsplan-typen.js";

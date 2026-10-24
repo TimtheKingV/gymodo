@@ -315,3 +315,19 @@ describe("Katalogimport Produkte", () => {
     expect(data).toEqual([]);
   });
 });
+
+describe("Katalogimport Planfelder", () => {
+  it("schreibt plan_baustein, plan_typ und plan_bereiche; zweiter Lauf aendert nichts", async () => {
+    const p = neuerPraefix();
+    const beispiel = beispielKatalog(p);
+    (beispiel.roh.exercises[0] as Record<string, unknown>).plan = { baustein: "druecken", typ: "mehrgelenk", bereiche: ["schulter", "ellenbogen_handgelenk"] };
+    await importiere(beispiel);
+
+    const { data, error } = await admin.from("exercises").select("plan_baustein, plan_typ, plan_bereiche").eq("studio_id", GYMTAVO_STUDIO_ID).eq("catalog_key", `${p}brustpresse_neutral`).single();
+    expect(error).toBeNull();
+    expect(data).toEqual({ plan_baustein: "druecken", plan_typ: "mehrgelenk", plan_bereiche: ["schulter", "ellenbogen_handgelenk"] });
+
+    const zweiter = await importiere(beispiel);
+    expect(eigene(zweiter.plan.uebungen, p).every((x) => x.art === "unveraendert")).toBe(true);
+  });
+});
