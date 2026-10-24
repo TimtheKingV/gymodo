@@ -26,6 +26,7 @@ struct TrainingAbschlussView: View {
 
     @Environment(CatalogStore.self) private var katalog
     @Environment(VerlaufStore.self) private var verlauf
+    @Environment(TrainingsplanAblaufStore.self) private var planAblauf
 
     @State private var vorschlaege: [Blockvorschlag]?
     @State private var ausfall: Vorschlagsausfall?
@@ -353,6 +354,9 @@ extension TrainingAbschlussView {
             }
         }
         katalog.schreibvorgaengeVerwerfen(sessionId: sessionId)
+        // Ein verworfenes Training zaehlt nicht fuer die Planfolge (Review
+        // Focus 5); beenden() hatte es lokal schon gezaehlt.
+        planAblauf.einheitVerworfen(sessionId: sessionId)
         verlauf.einheitEntfernen(id: sessionId.uuidString)
         // Wie im Session-Detail: einheitEntfernen raeumt nur die Liste, Gesamtzahl,
         // Woche und Serie kommen erst mit dem naechsten Abruf. Home laedt beim

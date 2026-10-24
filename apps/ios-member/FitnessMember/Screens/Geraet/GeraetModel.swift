@@ -132,6 +132,9 @@ final class GeraetModel {
         // "Weiss nicht" ohne vorherige Zahl aendert am Satz nichts, und
         // dieselbe Zahl zweimal braucht keinen zweiten PUT.
         guard neu.rir != (vorher ?? nil) else { return }
+        // Der Body bleibt bis auf rir der alte, auch seine Plan-Momentaufnahme
+        // mit ihrem aelteren Stand: der Server nimmt nur einen hoeheren, so
+        // ueberschreibt dieser PUT keinen neueren Ablauf (Review Focus 1).
         var body = letzter.body
         body.rir = neu.rir
         sessions.reserveSetzen(setId: letzter.setId, rir: neu.rir)
@@ -217,6 +220,10 @@ final class GeraetModel {
     /// Im Release (bis E5) immer nil, im Debug der ZaehlerKoordinator
     /// (Sensor-Spec B 6.5).
     private let zaehler: (any SatzZaehler)?
+    /// Der Ablauf der heutigen Planeinheit (Trainingsplan Etappe 3). nil in
+    /// Tests und Aufrufern ohne Plan: dann geht kein Satz mit `plan` raus,
+    /// alles bleibt wie vor dem Plan.
+    private let ablauf: TrainingsplanAblaufStore?
 
     /// Spec B 6.5. vonHand traegt den Zaehlerstand nur zur Anzeige mit.
     enum ZaehlerZustand: Equatable {
@@ -272,7 +279,8 @@ final class GeraetModel {
         mitschnitt: (any SatzMitschnitt)? = nil,
         zaehler: (any SatzZaehler)? = nil,
         startwerte: Startwerte? = nil,
-        mitCountdown: Bool = true
+        mitCountdown: Bool = true,
+        ablauf: TrainingsplanAblaufStore? = nil
     ) {
         self.station = station
         self.uebungId = uebungId
@@ -284,6 +292,7 @@ final class GeraetModel {
         satzZielLesen = satzZiel
         self.mitschnitt = mitschnitt
         self.zaehler = zaehler
+        self.ablauf = ablauf
 
         // Zuerst der Satz von heute: im Zirkel entsteht Runde 2 als neues
         // Modell, und `bootstrap` ist eine Momentaufnahme vom Prefetch, die
@@ -988,6 +997,7 @@ final class GeraetModel {
         geschrieben.body.volumeSource = herkunft
         geschrieben.body.volumeCounted = ergebnis?.gezaehlt
         geschrieben.body.repEvents = ergebnis?.repEvents
+        geschrieben.body.plan = planMomentaufnahme(sessionId: geschrieben.sessionId)
         // Immer ueber die Warteschlange, nie direkt: so ist "gespeichert,
         // wird gesendet" nie gelogen, und der Offline-Pfad ist derselbe, der
         // jeden Tag laeuft (Spec Abschnitt 8.2).
@@ -1032,6 +1042,23 @@ final class GeraetModel {
         // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
         // eine Pause vor einem Satz, der nicht kommt, ist nur Wartezeit.
         phase = satzNummer > satzZiel ? .abschluss : .neuePause()
+    }
+
+    /// Hakt den Satz im Planablauf ab. Der Ort ist der der Einheit (vom
+    /// ersten Satz gesetzt), weil der Server den Plan gegen das Studio der
+    /// Session prueft; im Freien Training gibt es keinen. Nur Hauptmuskeln
+    /// (role primary) zaehlen fuer "optional", wie am Server.
+    private func planMomentaufnahme(sessionId: UUID) -> PlanMomentaufnahme? {
+        guard let ablauf else { return nil }
+        let studioId: String? = {
+            if case .studio(let id)? = sessions.aktiveSession()?.ort { return id }
+            return nil
+        }()
+        let hauptmuskeln = station.exercises.first { $0.id == uebungId }?
+            .muscles.filter { $0.role == .primary }.map(\.key) ?? []
+        return ablauf.nachSatz(
+            sessionId: sessionId, studioId: studioId,
+            satz: AblaufSatz(exerciseId: uebungId, hauptmuskeln: hauptmuskeln, cardio: istCardio))
     }
 
     /// Aus dem onDismiss des Sheets: die aufgeschobene Meldung an den

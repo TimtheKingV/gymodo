@@ -30,6 +30,7 @@ struct SessionDetailView: View {
 
     @Environment(VerlaufStore.self) private var verlauf
     @Environment(WorkoutSessionStore.self) private var sessions
+    @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     @Environment(CatalogStore.self) private var katalog
     @Environment(\.dismiss) private var dismiss
 
@@ -350,7 +351,11 @@ struct SessionDetailView: View {
         do throws(APIError) {
             try await apiClient.reopenSession(sessionId: teilId)
             fortsetzenFehler = nil
-            if sessions.wiederaufnehmen() != nil { beiFortgesetzt() }
+            if let session = sessions.wiederaufnehmen() {
+                // Der Planablauf der Einheit kommt mit zurueck, samt Stand.
+                planAblauf.einheitWiederaufgenommen(sessionId: session.id)
+                beiFortgesetzt()
+            }
         } catch {
             let folge = Fortsetzbarkeit.folgeNachFehler(error)
             fortsetzenFehler = folge.text
@@ -388,7 +393,12 @@ private extension SessionDetailView {
                 : error.servertext
             return
         }
-        if let id = UUID(uuidString: teil.id) { katalog.schreibvorgaengeVerwerfen(sessionId: id) }
+        if let id = UUID(uuidString: teil.id) {
+            katalog.schreibvorgaengeVerwerfen(sessionId: id)
+            // Geloescht zaehlt nicht: war es die eben beendete Einheit, faellt
+            // ihre lokale Zaehlung weg.
+            planAblauf.einheitVerworfen(sessionId: id)
+        }
         verlauf.einheitEntfernen(id: teil.id)
         Task { await verlauf.laden(studioId: katalog.activeStudioId) }
         dismiss()

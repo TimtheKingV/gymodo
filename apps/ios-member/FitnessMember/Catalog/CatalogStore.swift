@@ -51,6 +51,12 @@ final class CatalogStore {
     /// Views, die daraus teuer ableiten (Geraetesuche, Offline-Spec 1b), statt
     /// den ganzen Bootstrap bei jedem Durchlauf auf Gleichheit zu pruefen.
     private(set) var bootstrapStand = 0
+    /// Nach jedem gelungenen Laden vom Server, mit der Zahl der Saetze, die
+    /// noch nicht raus sind (Trainingsplan: der Planablauf darf seine lokale
+    /// Zaehlung erst bei leerer Warteschlange abgeben). Eine Closure statt
+    /// einer Abhaengigkeit auf TrainingsplanAblaufStore: der Katalog bleibt
+    /// ohne Wissen vom Plan.
+    @ObservationIgnored var nachFrischemBootstrap: (@MainActor (_ offeneSchreibvorgaenge: Int) -> Void)?
     private(set) var loadState: CatalogLoadState = .idle
     private(set) var pendingWrites: [PendingSetWrite]
     /// Der gewaehlte Ort. Ohne gespeicherte Wahl `.freiesTraining` als
@@ -215,6 +221,9 @@ final class CatalogStore {
         // Wer fragt: eine Antwort, die nach Abmelden/Kontowechsel eintrifft,
         // gehoert einem anderen User und wird verworfen.
         let anfragendeUserId = userId
+        // Vor und nach der Anfrage: ein Satz, der waehrend des Ladens
+        // rausging, steht vielleicht noch nicht in der Antwort.
+        let offenVorher = pendingWrites.count
         do throws(APIError) {
             let geladen = try await loader.bootstrapMitRohdaten()
             guard userId == anfragendeUserId else { return }
@@ -226,6 +235,7 @@ final class CatalogStore {
             bootstrap = response
             loadState = .loaded
             repariereOrt(studios: response.studios)
+            nachFrischemBootstrap?(max(offenVorher, pendingWrites.count))
         } catch {
             guard userId == anfragendeUserId else { return }
             letzterLadefehler = error

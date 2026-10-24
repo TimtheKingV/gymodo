@@ -68,4 +68,36 @@ struct OrtswechselBeendenTests {
         await WorkoutSessionStore.melden(.abgeschlossen(UUID(), pausedSeconds: 90), loader: loader)
         #expect(await loader.pausen == [90])
     }
+    // MARK: - Trainingsplan (Etappe 3, Task 9)
+
+    /// Auch der Ortswechsel beendet die Einheit: sie zaehlt dann fuer die
+    /// Folge wie nach "Training beenden", bevor die Kennung weg ist.
+    @Test func mitSatzZaehltDieEinheitDesPlans() {
+        let sessions = store()
+        let ablauf = TrainingsplanAblaufStoreTests.store()
+        ablauf.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(), studioId: "s1", jetzt: Date())
+        let satz = sessions.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
+                                        einheiten: .kilogrammWiederholungen, load: 40, volume: 10,
+                                        problemFlag: false, problemReason: nil)
+        _ = ablauf.nachSatz(sessionId: satz.sessionId, studioId: "s1",
+                            satz: TrainingsplanAblaufStoreTests.brust, jetzt: Date())
+
+        _ = sessions.beendenFuerOrtswechsel(ablauf: ablauf)
+
+        #expect(ablauf.zustand == nil)
+        ablauf.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(naechste: "A"), studioId: "s1", jetzt: Date())
+        #expect(ablauf.einheitKey == "B")
+    }
+
+    @Test func ohneSatzZaehltDieEinheitNicht() {
+        let sessions = store()
+        _ = sessions.trainingStarten()
+        let ablauf = TrainingsplanAblaufStoreTests.store()
+        ablauf.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(), studioId: "s1", jetzt: Date())
+
+        _ = sessions.beendenFuerOrtswechsel(ablauf: ablauf)
+
+        ablauf.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(naechste: "A"), studioId: "s1", jetzt: Date())
+        #expect(ablauf.einheitKey == "A")
+    }
 }

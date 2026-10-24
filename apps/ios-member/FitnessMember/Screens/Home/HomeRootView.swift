@@ -27,6 +27,7 @@ struct HomeRootView: View {
     @Environment(CatalogStore.self) private var katalog
     @Environment(NetzwerkMonitor.self) private var netz
     @Environment(WorkoutSessionStore.self) private var sessions
+    @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     @Environment(KurseStore.self) private var kurse
     @Environment(UebungsVideoVorrat.self) private var videos
     @Environment(\.scenePhase) private var scenePhase
@@ -239,7 +240,9 @@ private extension HomeRootView {
         // #3/#4): nur gegen frisch geladene Daten, nie gegen den Cache --
         // der zeigt eine Einheit von vor dem Beenden noch offen.
         if case .geladen = verlauf.ladeZustand {
-            sessions.abgleichen(offeneIds: verlauf.sessions.filter { $0.completedAt == nil }.map(\.id))
+            if let fortgesetzt = sessions.abgleichen(offeneIds: verlauf.sessions.filter { $0.completedAt == nil }.map(\.id)) {
+                planAblauf.einheitWiederaufgenommen(sessionId: fortgesetzt.id)
+            }
         }
         await kurseLaden()
         // Die Videos der Fortschrittszeilen (Testnotiz 11.10., #2); laedt

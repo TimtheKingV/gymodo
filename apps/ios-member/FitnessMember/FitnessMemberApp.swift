@@ -5,6 +5,8 @@ struct FitnessMemberApp: App {
     @State private var sessionStore: SessionStore
     @State private var catalogStore: CatalogStore
     @State private var workoutStore = WorkoutSessionStore()
+    /// Neben workoutStore: der Planablauf gibt es schon vor dem ersten Satz.
+    @State private var planAblauf: TrainingsplanAblaufStore
     @State private var kurseStore: KurseStore
     @State private var verlaufStore: VerlaufStore
     @State private var netzwerkMonitor: NetzwerkMonitor
@@ -51,7 +53,15 @@ struct FitnessMemberApp: App {
             await session.currentAccessToken()
         }
         _sessionStore = State(initialValue: session)
-        _catalogStore = State(initialValue: CatalogStore(loader: client, pendingWriteStore: PendingWriteStore(), bootstrapFileStore: BootstrapFileStore()))
+        let katalog = CatalogStore(loader: client, pendingWriteStore: PendingWriteStore(), bootstrapFileStore: BootstrapFileStore())
+        let ablauf = TrainingsplanAblaufStore()
+        // Nur nach einem frisch geladenen Bootstrap, nie nach dem aus dem
+        // Cache: nur der frische kann eine eben beendete Einheit schon kennen.
+        katalog.nachFrischemBootstrap = { [weak ablauf] offene in
+            ablauf?.nachBootstrap(offeneSchreibvorgaenge: offene)
+        }
+        _catalogStore = State(initialValue: katalog)
+        _planAblauf = State(initialValue: ablauf)
         _kurseStore = State(initialValue: KurseStore(loader: client, fileStore: KurseFileStore()))
         _verlaufStore = State(initialValue: VerlaufStore(loader: client, fileStore: VerlaufFileStore()))
         apiClient = client
@@ -67,6 +77,7 @@ struct FitnessMemberApp: App {
                 .environment(sessionStore)
                 .environment(catalogStore)
                 .environment(workoutStore)
+                .environment(planAblauf)
                 .environment(kurseStore)
                 .environment(verlaufStore)
                 .environment(netzwerkMonitor)

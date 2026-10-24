@@ -16,7 +16,8 @@ struct GeraetModelTests {
         satzZiel: Int = Einstellungen.satzZielVorgabe,
         mitschnitt: (any SatzMitschnitt)? = nil,
         zaehler: (any SatzZaehler)? = nil,
-        startwerte: Startwerte? = nil
+        startwerte: Startwerte? = nil,
+        ablauf: TrainingsplanAblaufStore? = nil
     ) -> GeraetModel {
         let verzeichnis = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
@@ -31,7 +32,8 @@ struct GeraetModelTests {
             satzZiel: { satzZiel },
             mitschnitt: mitschnitt,
             zaehler: zaehler,
-            startwerte: startwerte
+            startwerte: startwerte,
+            ablauf: ablauf
         )
     }
 
@@ -278,11 +280,13 @@ struct GeraetModelTests {
     }
 
     /// Drei Saetze bis zur Abschlussentscheidung, alles Geschriebene im Erfasser.
-    private func bisZumAbschluss(_ erfasser: Erfassungswarteschlange) async -> GeraetModel {
+    private func bisZumAbschluss(_ erfasser: Erfassungswarteschlange,
+                                 ablauf: TrainingsplanAblaufStore? = nil) async -> GeraetModel {
         let sut = modell(maschine: GeraetTestdaten.maschine,
                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
                          enqueue: { erfasser.geschriebene.append($0) },
-                         satzZiel: 3)
+                         satzZiel: 3,
+                         ablauf: ablauf)
         for _ in 1...3 {
             await sut.satzSichern(problemFlag: false, problemReason: nil)
             if sut.phase != .abschluss { sut.pauseBeenden() }
@@ -396,6 +400,114 @@ struct GeraetModelTests {
         await sut.satzSichern(problemFlag: false, problemReason: nil)
         #expect(sut.gesicherteSaetze == 1)
         #expect(sut.satzAbgelehnt == nil)
+    }
+
+    // MARK: - Trainingsplan (Etappe 3, Task 9)
+
+    /// Ein Ablauf-Speicher mit dem Testplan, vorbereitet fuer Studio s1.
+    private func ablaufMitPlan() -> TrainingsplanAblaufStore {
+        let sut = TrainingsplanAblaufStoreTests.store()
+        sut.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(), studioId: "s1", jetzt: Date())
+        return sut
+    }
+
+    @Test func satzImPlanTraegtPlanImSetWrite() async throws {
+        let erfasser = Erfassungswarteschlange()
+        let ablauf = ablaufMitPlan()
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         enqueue: { erfasser.geschriebene.append($0) },
+                         ablauf: ablauf)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        let write = try #require(erfasser.geschriebene.first)
+        let plan = try #require(write.body.plan)
+        #expect(plan.planId == "p1")
+        #expect(plan.einheitKey == "A")
+        #expect(plan.stand == 1)
+        #expect(plan.positionen.first == .init(key: "A0", status: .erledigt, exerciseId: nil))
+        #expect(ablauf.gebundeneSessionId == write.sessionId)
+    }
+
+    /// Nur die Hauptmuskeln (role primary) der Uebung entscheiden, welche
+    /// Position eine ungeplante Uebung optional macht -- wie am Server.
+    @Test func eineUngeplanteUebungZaehltNurMitIhrenHauptmuskeln() async throws {
+        let erfasser = Erfassungswarteschlange()
+        let ablauf = ablaufMitPlan()
+        // Haupt Ruecken, Neben Brust: mit Nebenmuskeln gewaenne bei
+        // Gleichstand die Brustposition A0, die im Plan zuerst steht.
+        let maschine = maschineMitMuskeln(#"[{"key":"lats","name":"Latissimus","role":"primary"},{"key":"chest","name":"Brust","role":"secondary"}]"#)
+        let sut = modell(maschine: maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         enqueue: { erfasser.geschriebene.append($0) },
+                         ablauf: ablauf)
+
+        // e1 steht im Plan (A0); der Satz soll als ungeplante Uebung zaehlen.
+        ablauf.tauschen(positionKey: "A0", ersatz: (exerciseId: "e7", hauptmuskeln: ["chest"]))
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        let plan = try #require(erfasser.geschriebene.first?.body.plan)
+        #expect(plan.positionen.map(\.status) == [.getauscht, .optional, .offen])
+    }
+
+    @Test func satzOhnePlanTraegtKeins() async throws {
+        let erfasser = Erfassungswarteschlange()
+        // Speicher ohne Plan ...
+        let ohnePlan = TrainingsplanAblaufStoreTests.store()
+        ohnePlan.vorbereiten(plan: nil, studioId: "s1", jetzt: Date())
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         enqueue: { erfasser.geschriebene.append($0) },
+                         ablauf: ohnePlan)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        // ... und gar kein Speicher (alle bisherigen Aufrufer).
+        let ohneSpeicher = modell(maschine: GeraetTestdaten.maschine,
+                                  bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                                  enqueue: { erfasser.geschriebene.append($0) })
+        await ohneSpeicher.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(erfasser.geschriebene.count == 2)
+        #expect(erfasser.geschriebene.allSatisfy { $0.body.plan == nil })
+    }
+
+    /// Review Focus 4: im Freien Training gilt kein Plan, auch wenn einer bereitliegt.
+    @Test func imFreienTrainingTraegtDerSatzKeinenPlan() async throws {
+        let erfasser = Erfassungswarteschlange()
+        let ablauf = ablaufMitPlan()
+        let verzeichnis = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let sut = GeraetModel(
+            station: .testTyp("t1", studioId: nil), uebungId: "e1", token: nil,
+            bootstrap: GeraetTestdaten.bootstrap(lastSets: []), loader: FakeGeraetLoader(),
+            sessions: WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis)),
+            enqueue: { erfasser.geschriebene.append($0) },
+            ablauf: ablauf)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(erfasser.geschriebene.count == 1)
+        #expect(erfasser.geschriebene.first?.body.plan == nil)
+        #expect(ablauf.gebundeneSessionId == nil)
+    }
+
+    /// Review Focus 1: die Reserve-Frage schickt einen aelteren Satz erneut.
+    /// Seine Momentaufnahme bleibt die alte -- der Server nimmt nur einen
+    /// hoeheren Stand, ein spaeterer Satz wird so nie ueberschrieben.
+    @Test func reserveWiederholungSendetDenBodyMitDemAltenStandUnveraendert() async throws {
+        let erfasser = Erfassungswarteschlange()
+        let ablauf = ablaufMitPlan()
+        let sut = await bisZumAbschluss(erfasser, ablauf: ablauf)
+        let dritter = try #require(erfasser.geschriebene.last)
+        #expect(dritter.body.plan?.stand == 3)
+
+        sut.reserveSetzen(.wert(2))
+
+        let neu = try #require(erfasser.geschriebene.last)
+        #expect(erfasser.geschriebene.count == 4)
+        #expect(neu.body.plan == dritter.body.plan)
+        #expect(neu.body.plan?.stand == 3)
+        // Die Reserve-Frage ist keine Momentaufnahme: der Stand im Speicher bleibt.
+        #expect(ablauf.stand == 3)
     }
 
     // MARK: - Zirkel (Spec Mini-Zirkel 21.10.)
