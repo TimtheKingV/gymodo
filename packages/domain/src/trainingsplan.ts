@@ -135,6 +135,8 @@ export async function erzeugePlanVorschlag(
     minuten: profil.minutes,
     fokus: profil.focus,
     erfahrung: profil.experience,
+    // Wird in Task 6 vom Server gesetzt; bis dahin immer false, aber schon in eingabe abgelegt.
+    anfaengerBeendet: false,
     beschwerdenBeruecksichtigt: Object.keys(beschwerden).length > 0,
   };
   // PlanNichtMoeglichError laeuft unveraendert durch; er traegt baustein/grund im detail.
@@ -144,6 +146,7 @@ export async function erzeugePlanVorschlag(
     minuten: profil.minutes,
     fokus: profil.focus,
     erfahrung: profil.experience,
+    anfaengerBeendet: eingabe.anfaengerBeendet ?? false,
     beschwerden,
     kandidaten: await ladeKandidaten(client, studioId),
   });

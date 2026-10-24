@@ -64,7 +64,7 @@ describe("generierePlan: Zeit und Ziele", () => {
     for (const e of plan.einheiten) {
       expect(rollen(e)).toEqual(["pflicht", "pflicht", "pflicht", "pflicht", "ergaenzung", "ergaenzung", "ergaenzung"]);
       expect(e.positionen.map((p) => p.baustein)).toEqual([
-        "beine_knie", "beine_huefte", "druecken", "ziehen", "schulter", "rumpf", "arme",
+        "beine_knie", "druecken", "ziehen", "beine_huefte", "schulter", "rumpf", "arme",
       ]);
       expect(e.positionen.map((p) => p.key)).toEqual(["0", "1", "2", "3", "4", "5", "6"]);
       expect(e.positionen.every((p) => p.saetze === 3)).toBe(true);
@@ -77,7 +77,7 @@ describe("generierePlan: Zeit und Ziele", () => {
       typ: "mehrgelenk", wdhVon: 8, wdhBis: 12, reserveVon: 1, reserveBis: 3,
       pauseSek: 150, aufwaermsatz: true, dauerMin: null,
     });
-    const huefte = plan.einheiten[0]!.positionen[1]!;
+    const huefte = plan.einheiten[0]!.positionen.find((p) => p.baustein === "beine_huefte")!;
     expect(huefte).toMatchObject({ typ: "isolation", wdhVon: 10, wdhBis: 15, pauseSek: 90, aufwaermsatz: false });
     expect(plan.gruende).toContain("struktur_ganzkoerper_ab");
     expect(plan.gruende).toContain("zeit_uebungen");
@@ -265,7 +265,8 @@ describe("generierePlan: Fokus", () => {
     expect(beinErg).toHaveLength(1);
     expect(beinErg[0]).toMatchObject({ rolle: "fokus", exerciseId: "glute_kickback" });
     expect(b.positionen.map((p) => p.baustein).slice(0, 8)).toEqual([
-      "beine_knie", "beine_huefte", "druecken", "ziehen", "beine_ergaenzung", "schulter", "rumpf", "arme",
+      // Seit 1.2.0: Mehrgelenk zuerst; bei den Isolationen Pflicht, Fokus, Auffuellung, Ergaenzung.
+      "beine_knie", "druecken", "ziehen", "beine_huefte", "beine_ergaenzung", "beine_huefte", "schulter", "rumpf",
     ]);
   });
 
@@ -315,8 +316,8 @@ describe("generierePlan: Beschwerden", () => {
     const sortiert = generierePlan(eingabe({ beschwerden: { knie: "vorsichtig" } }));
     // Die A/B-Rotation laeuft nur ueber unbedenkliche Uebungen, solange es welche gibt:
     // sonst bekaeme B bei zwei Kandidaten immer die vorsichtige.
-    expect(sortiert.einheiten[0]!.positionen[1]!.exerciseId).toBe("hip_thrust");
-    expect(sortiert.einheiten[1]!.positionen[1]!.exerciseId).toBe("hip_thrust");
+    expect(sortiert.einheiten[0]!.positionen.find((p) => p.baustein === "beine_huefte")!.exerciseId).toBe("hip_thrust");
+    expect(sortiert.einheiten[1]!.positionen.find((p) => p.baustein === "beine_huefte")!.exerciseId).toBe("hip_thrust");
   });
 
   it("Pflichtbaustein ohne Kandidat wirft PlanNichtMoeglichError(kein_geraet)", () => {
@@ -377,7 +378,7 @@ describe("generierePlan: Determinismus und Eingabe", () => {
 
   it("Geschlecht/Alter sind kein Eingabefeld", () => {
     expectTypeOf<keyof GeneratorEingabe>().toEqualTypeOf<
-      "ziel" | "tage" | "minuten" | "fokus" | "erfahrung" | "beschwerden" | "kandidaten"
+      "ziel" | "tage" | "minuten" | "fokus" | "erfahrung" | "anfaengerBeendet" | "beschwerden" | "kandidaten"
     >();
   });
 
@@ -433,7 +434,7 @@ describe("generierePlan: Zeitbudget ausschoepfen", () => {
       }
     }
     expect(plan.gruende).not.toContain("zeit_budget_nicht_ausgeschoepft");
-    expect(plan.regelVersion).toBe("1.1.0");
+    expect(plan.regelVersion).toBe("1.2.0");
   });
 
   it("zu wenig Uebungen fuer das Budget: Code zeit_budget_nicht_ausgeschoepft", () => {
@@ -467,5 +468,54 @@ describe("generierePlan: Zeitbudget ausschoepfen", () => {
               expect(new Set(ids).size, fall).toBe(ids.length);
             }
           }
+  });
+});
+
+describe("generierePlan: Regelversion 1.2.0", () => {
+  it("Regelversion ist 1.2.0", () => {
+    expect(PLAN_REGEL_VERSION).toBe("1.2.0");
+    expect(generierePlan(eingabe()).regelVersion).toBe("1.2.0");
+  });
+
+  it("auffuellpositionen tragen die Rolle auffuellung", () => {
+    const plan = generierePlan(eingabe({ tage: 4, kandidaten: VOLL }));
+    for (const e of plan.einheiten) {
+      const r = rollen(e);
+      expect(r.filter((x) => x === "pflicht").length).toBe(2);
+      expect(r.filter((x) => x === "ergaenzung").length).toBe(2);
+      expect(r.filter((x) => x === "auffuellung").length).toBeGreaterThan(0);
+    }
+  });
+
+  it("Mehrgelenk steht vor Isolation, Cardio zuletzt, keys sind 0..n-1 in Anzeigereihenfolge", () => {
+    const plan = generierePlan(eingabe({ tage: 4, ziel: "abnehmen", kandidaten: [...VOLL, k("bike", "cardio", "isolation", [])] }));
+    const rang = { pflicht: 0, fokus: 1, auffuellung: 2, ergaenzung: 3, cardio: 4 } as const;
+    for (const e of plan.einheiten) {
+      expect(e.positionen.map((p) => p.key)).toEqual(e.positionen.map((_, i) => String(i)));
+      expect(e.positionen.at(-1)!.rolle).toBe("cardio");
+      const kr = kraft(e);
+      const erstesIso = kr.findIndex((p) => p.typ === "isolation");
+      if (erstesIso >= 0) expect(kr.slice(erstesIso).every((p) => p.typ === "isolation")).toBe(true);
+      for (const typ of ["mehrgelenk", "isolation"] as const) {
+        const r = kr.filter((p) => p.typ === typ).map((p) => rang[p.rolle]);
+        expect(r).toEqual([...r].sort((a, b) => a - b));
+      }
+    }
+  });
+
+  it("anfaengerBeendet bei Erfahrung neu plant 3 Saetze Reserve [1,3] bei Muskelaufbau", () => {
+    const plan = generierePlan(eingabe({ erfahrung: "neu", anfaengerBeendet: true }));
+    for (const p of plan.einheiten.flatMap((e) => e.positionen)) {
+      expect(p.saetze).toBe(3);
+      expect([p.reserveVon, p.reserveBis]).toEqual([1, 3]);
+    }
+  });
+
+  it("ohne anfaengerBeendet bleibt neu bei 2 Saetzen, Reserve [3,4]", () => {
+    const plan = generierePlan(eingabe({ erfahrung: "neu" }));
+    for (const p of plan.einheiten.flatMap((e) => e.positionen)) {
+      expect(p.saetze).toBe(2);
+      expect([p.reserveVon, p.reserveBis]).toEqual([3, 4]);
+    }
   });
 });

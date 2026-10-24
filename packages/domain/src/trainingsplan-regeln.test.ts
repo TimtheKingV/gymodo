@@ -18,6 +18,10 @@ describe("zielAusTrainingGoal", () => {
 });
 
 describe("zielprofil", () => {
+  it("Erfahrung neu mit Anfaengerende nutzt das Profil von unregelmaessig", () => {
+    expect(zielprofil("muskelaufbau", "neu", true)).toEqual(zielprofil("muskelaufbau", "unregelmaessig"));
+  });
+
   it("Muskelaufbau regelmaessig", () => {
     expect(zielprofil("muskelaufbau", "regelmaessig")).toEqual({
       saetze: 3,

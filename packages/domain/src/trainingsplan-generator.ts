@@ -25,6 +25,8 @@ export type GeneratorEingabe = {
   minuten: Minuten;
   fokus: FokusBereich[];
   erfahrung: Erfahrung;
+  /** Beendet die Anfaengerphase: "neu" plant dann wie "unregelmaessig". Default false. */
+  anfaengerBeendet?: boolean;
   beschwerden: Beschwerden;
   kandidaten: Kandidat[];
 };
@@ -32,7 +34,7 @@ export type GeneratorEingabe = {
 export type PlanPosition = {
   key: string;
   baustein: Baustein;
-  rolle: "pflicht" | "fokus" | "ergaenzung" | "cardio";
+  rolle: "pflicht" | "fokus" | "ergaenzung" | "auffuellung" | "cardio";
   exerciseId: string;
   machineId: string;
   typ: PlanTyp;
@@ -106,6 +108,18 @@ type EinheitKontext = {
   kraftBudget: number;
   vorsichtig: (k: Kandidat) => boolean;
 };
+
+// Rang fuer die Anzeigereihenfolge: Pflicht, Fokus, Auffuellung, Ergaenzung (Cardio haengt separat an).
+const ROLLEN_RANG: Record<Entwurf["rolle"], number> = { pflicht: 0, fokus: 1, auffuellung: 2, ergaenzung: 3, cardio: 4 };
+
+/**
+ * Anzeigereihenfolge: Mehrgelenk vor Isolation, darin nach Rolle. Array.sort ist stabil, daher
+ * bleibt die Auswahlreihenfolge bei gleichem Rang erhalten und der Plan deterministisch.
+ */
+function sortiereFuerAnzeige(positionen: Entwurf[]): Entwurf[] {
+  const typRang = (p: Entwurf) => (p.typ === "mehrgelenk" ? 0 : 1);
+  return [...positionen].sort((a, b) => typRang(a) - typRang(b) || ROLLEN_RANG[a.rolle] - ROLLEN_RANG[b.rolle]);
+}
 
 /** Belegt eine Einheit nach dem Ablauf der Spec: Pflicht, Saetze kuerzen, Fokus, Ergaenzungen. */
 function baueKraftteil(ctx: EinheitKontext, flags: Flags): { positionen: Entwurf[]; minuten: number } {
@@ -182,7 +196,7 @@ function baueKraftteil(ctx: EinheitKontext, flags: Flags): { positionen: Entwurf
       if (!k || !passt(k)) continue;
       nimm(k);
       summe += uebungMinuten(k.typ, saetze);
-      positionen.push(position(k, "ergaenzung", saetze, profil));
+      positionen.push(position(k, "auffuellung", saetze, profil));
       neu = true;
     }
   }
@@ -191,7 +205,7 @@ function baueKraftteil(ctx: EinheitKontext, flags: Flags): { positionen: Entwurf
 
 export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
   const struktur = strukturFuerTage(eingabe.tage);
-  const profil = zielprofil(eingabe.ziel, eingabe.erfahrung);
+  const profil = zielprofil(eingabe.ziel, eingabe.erfahrung, eingabe.anfaengerBeendet ?? false);
   const kandidaten = filtereKandidaten(eingabe.kandidaten, eingabe.beschwerden);
 
   for (const b of new Set(struktur.einheiten.flatMap((e) => e.bausteine.pflicht))) {
@@ -228,7 +242,8 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
       zaehler.set(b, (zaehler.get(b) ?? 0) + 1);
     }
     const kraft = baueKraftteil({ einheit, kandidaten, variation, profil, fokus, kraftBudget, vorsichtig }, flags);
-    const entwuerfe: Entwurf[] = [...kraft.positionen];
+    // Cardio wird erst nach dem Sortieren angehaengt, damit es immer zuletzt steht.
+    const entwuerfe: Entwurf[] = sortiereFuerAnzeige(kraft.positionen);
     if (cardio > 0 && cardioKandidat) {
       entwuerfe.push({
         baustein: "cardio",
@@ -276,7 +291,8 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
   wenn(cardioSoll > 0 && !studioHatCardio, "abnehmen_kein_cardio_geraet");
   wenn(abnehmen, "abnehmen_alltag");
   wenn(abnehmen && fokus.includes("bauch"), "bauch_kein_fettabbau");
-  wenn(eingabe.erfahrung === "neu", "anfaenger_reserve");
+  // Nach dem Anfaengerende gilt die Anfaenger-Reserve nicht mehr, der Grund waere falsch.
+  wenn(eingabe.erfahrung === "neu" && !eingabe.anfaengerBeendet, "anfaenger_reserve");
   const stufen = Object.values(eingabe.beschwerden);
   wenn(stufen.includes("meiden"), "beschwerden_meiden");
   wenn(stufen.includes("vorsichtig"), "beschwerden_vorsichtig");
