@@ -1,9 +1,14 @@
 import SwiftUI
 
-/// Die gemeinsame Huelle aller fuenf Onboarding-Screens (gen.py `onboarding()`):
-/// Schrittzeile mit "Später", fuenf Segmente, Titel/Lead, der Inhalt des
-/// Screens, danach die Hauptaktion (64 pt) und eine optionale Fussnote.
+/// Die gemeinsame Huelle aller Onboarding-Screens (gen.py `onboarding()`):
+/// Schrittzeile mit "Später", ein Segment je Schritt, Titel/Lead, der Inhalt
+/// des Screens, danach die Hauptaktion (64 pt) und eine optionale Fussnote.
 /// Seitenrand 28 -- die Einstiegskette, noch ohne Tab-Leiste.
+///
+/// Mit `bereich` (Block "Dein Trainingsplan", Entwuerfe 1.1-1.4) steht der
+/// Bereichsname links und die Schrittzahl rechts in der Kopfzeile, ohne
+/// Segmente; "Später" wandert als stille Aktion unter die Hauptaktion --
+/// so zeigen es die freigegebenen Entwuerfe.
 ///
 /// Nimmt nur einfache Werte und Closures entgegen (kein `@Environment`),
 /// damit sie sich fuer die Sichtpruefung per `ImageRenderer` losgeloest von
@@ -12,7 +17,7 @@ struct OnboardingScreen<Inhalt: View>: View {
     let schrittNummer: Int
     let gesamtSchritte: Int
     let titel: String
-    let lead: String
+    let lead: String?
     let fussnote: String?
     let primaryTitle: String
     let primaryEnabled: Bool
@@ -22,6 +27,17 @@ struct OnboardingScreen<Inhalt: View>: View {
     /// gesperrt, nicht nur die Hauptaktion (Brief: "nicht stumm") -- der
     /// Hinweistext unter der Hauptaktion erklaert beide auf einmal.
     var spaeterEnabled: Bool = true
+    /// Block "Dein Trainingsplan": Kopfzeile und Fuss wie in den Entwuerfen
+    /// 1.x (siehe oben). nil = die Bestandsschritte.
+    var bereich: String? = nil
+    /// Ohne Zeile, wenn der Flow nur diesen einen Schritt zeigt (reine
+    /// Vorschau 1.4): "Schritt 1 von 1" zaehlt nichts.
+    var zeigtSchrittzeile: Bool = true
+    /// "Überspringen" auf 1.3 statt "Später" (Entwurf).
+    var spaeterTitel: String = "Später"
+    /// Eine zweite stille Aktion unter der Hauptaktion ("Zeit oder
+    /// Schwerpunkt ändern", Entwurf 1.4).
+    var nebenaktion: (titel: String, aktion: () -> Void)? = nil
     let beiSpaeter: () -> Void
     let beiWeiter: () async -> Void
     @ViewBuilder var inhalt: () -> Inhalt
@@ -29,9 +45,13 @@ struct OnboardingScreen<Inhalt: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                kopfzeile
-                segmente
-                    .padding(.top, DesignSystem.Spacing.s8)
+                if let bereich {
+                    bereichsKopf(bereich)
+                } else {
+                    kopfzeile
+                    segmente
+                        .padding(.top, DesignSystem.Spacing.s8)
+                }
                 titelUndLead
                     .padding(.top, DesignSystem.Spacing.s24)
                 inhalt()
@@ -70,12 +90,32 @@ struct OnboardingScreen<Inhalt: View>: View {
         }
     }
 
-    /// Fuenf Segmente, i < schrittNummer gefuellt -- wie gen.py `onboarding()`.
+    /// "DEIN TRAININGSPLAN ... SCHRITT 1 VON 4" (Entwurf 1.x, `.step`).
+    private func bereichsKopf(_ bereich: String) -> some View {
+        HStack(alignment: .center) {
+            Text(bereich.uppercased())
+                .accessibilityAddTraits(.isHeader)
+            Spacer()
+            if zeigtSchrittzeile {
+                Text("SCHRITT \(schrittNummer) VON \(gesamtSchritte)")
+                    .monospacedDigit()
+                    .accessibilityLabel("Schritt \(schrittNummer) von \(gesamtSchritte)")
+            }
+        }
+        .font(DesignSystem.Typography.label)
+        .tracking(1.5)
+        .foregroundStyle(DesignSystem.Color.textMuted)
+        .frame(minHeight: 44)
+    }
+
+    /// Ein Segment je Schritt des Flows, i < schrittNummer gefuellt -- wie
+    /// gen.py `onboarding()`, dort mit fest fuenf Schritten; seit dem
+    /// Plan-Block zaehlt der Flow mehr.
     /// Rein dekorativ (Formen sind ohnehin keine Accessibility-Elemente),
     /// trotzdem explizit versteckt, falls Xcode das je aendert.
     private var segmente: some View {
         HStack(spacing: DesignSystem.Spacing.s4) {
-            ForEach(0..<5, id: \.self) { i in
+            ForEach(0..<max(gesamtSchritte, 1), id: \.self) { i in
                 RoundedRectangle(cornerRadius: 2)
                     .fill(i < schrittNummer ? DesignSystem.Color.text : DesignSystem.Color.line)
                     .frame(height: 4)
@@ -90,15 +130,17 @@ struct OnboardingScreen<Inhalt: View>: View {
                 .font(DesignSystem.Typography.screentitel)
                 .tracking(-1)
                 .foregroundStyle(DesignSystem.Color.text)
-            Text(lead)
-                .font(.system(size: 15))
-                // Nur Schritt 5 traegt eine Ziffer ("Heute 82,5 kg. …"),
-                // aber die Zeile ist fuer alle fuenf Screens dieselbe --
-                // tabellarisch schadet den ziffernlosen Leads nicht
-                // (globale Regel "Alle Ziffern tabellarisch").
-                .monospacedDigit()
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .lineSpacing(3)
+            if let lead {
+                Text(lead)
+                    .font(.system(size: 15))
+                    // Nur Schritt 5 traegt eine Ziffer ("Heute 82,5 kg. …"),
+                    // aber die Zeile ist fuer alle fuenf Screens dieselbe --
+                    // tabellarisch schadet den ziffernlosen Leads nicht
+                    // (globale Regel "Alle Ziffern tabellarisch").
+                    .monospacedDigit()
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .lineSpacing(3)
+            }
         }
     }
 
@@ -111,6 +153,12 @@ struct OnboardingScreen<Inhalt: View>: View {
                 disabledHint: primaryDisabledHint
             ) {
                 await beiWeiter()
+            }
+            if let nebenaktion {
+                stilleAktion(nebenaktion.titel, enabled: spaeterEnabled, aktion: nebenaktion.aktion)
+            }
+            if bereich != nil {
+                stilleAktion(spaeterTitel, enabled: spaeterEnabled, aktion: beiSpaeter)
             }
             if let fussnote {
                 Text(fussnote)
@@ -125,6 +173,17 @@ struct OnboardingScreen<Inhalt: View>: View {
         .padding(.bottom, DesignSystem.Spacing.s16)
         .padding(.top, DesignSystem.Spacing.s12)
         .background(DesignSystem.Color.bg)
+    }
+
+    /// `.btn.quiet` aus den Entwuerfen: nur Schrift, `textMuted`, 44 pt.
+    private func stilleAktion(_ titel: String, enabled: Bool, aktion: @escaping () -> Void) -> some View {
+        Button(titel, action: aktion)
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(enabled ? DesignSystem.Color.textMuted : DesignSystem.Color.textFaint)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .contentShape(Rectangle())
+            .buttonStyle(PressButtonStyle())
+            .disabled(!enabled)
     }
 }
 
@@ -158,7 +217,8 @@ struct UeberDichSchritt: View {
 }
 
 /// Label + Inhalt + optionaler Hinweis darunter -- gen.py `abschnitt()`.
-private struct OnboardingAbschnitt<Inhalt: View>: View {
+/// Nicht `private`: die Plan-Schritte (PlanSchritte.swift) nutzen denselben.
+struct OnboardingAbschnitt<Inhalt: View>: View {
     let label: String
     var hinweis: String? = nil
     @ViewBuilder var inhalt: () -> Inhalt

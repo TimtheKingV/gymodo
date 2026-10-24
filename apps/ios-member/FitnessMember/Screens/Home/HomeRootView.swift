@@ -49,6 +49,9 @@ struct HomeRootView: View {
     /// Zielgewicht erreicht ist (`HomeZiele.Zustand.karte.erreichtText`),
     /// oeffnet dasselbe `ZielSheet` wie das Profil.
     @State private var neuesZielOffen = false
+    /// Entwurf 1.5: der Plan-Block als Sheet; gesetzt = offen, der Wert ist
+    /// der Umfang, der beim Antippen galt.
+    @State private var planFlowUmfang: OnboardingUmfang?
     /// Die gewaehlte Muskelgruppe im Uebungsfortschritt; nil = Alle
     /// (Testnotiz 17.10., #2).
     @State private var fortschrittGruppe: MuskelHauptgruppe?
@@ -125,6 +128,13 @@ struct HomeRootView: View {
                             beiKursAuswahl: { id in pfad.append(.kursDetail(sessionId: id)) })
                     }
 
+                    // Entwurf 1.5: ueber den Zielen, weil sie der naechste
+                    // Schritt ist, den das Mitglied noch nicht getan hat.
+                    if let member = katalog.bootstrap?.member,
+                       PlanEinrichten.zeigtKarte(member: member, studioId: katalog.activeStudioId) {
+                        PlanEinrichtenKarte { planFlowUmfang = PlanEinrichten.umfang(member: member) }
+                    }
+
                     if let member = katalog.bootstrap?.member {
                         HomeZieleView(
                             member: member,
@@ -194,6 +204,17 @@ struct HomeRootView: View {
                         await ZielSchreiben.aufgeben(
                             kind: ZielSheet.Art.zielgewicht.kind, apiClient: apiClient, katalog: katalog, verlauf: verlauf)
                     })
+            }
+            .sheet(isPresented: Binding(
+                get: { planFlowUmfang != nil },
+                set: { if !$0 { planFlowUmfang = nil } }
+            )) {
+                // Den Bootstrap laedt der Flow nach "Plan übernehmen" selbst;
+                // hier nur, was Home ausserhalb davon zeigt.
+                OnboardingFlow(apiClient: apiClient, alsSheet: true, umfang: planFlowUmfang ?? .nurPlan) {
+                    planFlowUmfang = nil
+                    Task { await neuLaden() }
+                }
             }
             .sheet(isPresented: $scannerOffen) {
                 ScannerSheet(
