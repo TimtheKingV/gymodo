@@ -286,3 +286,14 @@ export type {
   PlanFeld,
   PlanTyp,
 } from "./trainingsplan-typen.js";
+export { requireUserId } from "./auth.js";
+export {
+  deleteTrainingLimits,
+  getTrainingLimits,
+  getTrainingProfile,
+  pruefeTrainingsLimits,
+  pruefeTrainingsprofil,
+  saveTrainingLimits,
+  saveTrainingProfile,
+} from "./trainingsprofil.js";
+export type { LimitStufe, TrainingLimits, TrainingProfile } from "./trainingsprofil.js";
