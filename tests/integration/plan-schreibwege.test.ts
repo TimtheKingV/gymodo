@@ -347,7 +347,7 @@ describe("swap_training_plan_position", () => {
   });
 
   it("Uebung mit gemiedenem Bereich wird abgelehnt", async () => {
-    const { m, plan } = await mitAktivemPlan("swap-meiden", { knie: "meiden" });
+    const { m, plan } = await mitAktivemPlan("swap-meiden", { knie: "meiden", schulter: "vorsichtig" });
     const { einheitKey, position } = ersteStelle(plan);
     const exerciseId = await ersatzUebung(position.baustein, ["knie"]);
     const geraet = await machineVon(s.voll);
@@ -365,12 +365,20 @@ describe("swap_training_plan_position", () => {
   it("Geraet eines fremden Studios wird abgelehnt", async () => {
     const { m, plan } = await mitAktivemPlan("swap-fremd");
     const { einheitKey, position } = ersteStelle(plan);
-    const exerciseId = await ersatzUebung(position.baustein);
+    // Die Uebung der Position haengt am gemeinsamen Katalogtyp beider Studios: nur
+    // das Geraet ist fremd. Mit einer Uebung, die dem fremden Geraet fehlt, scheiterte
+    // der Test auch ohne Studio-Pruefung.
     const fremd = await machineVon(s.voll2);
     const e = await fehlerVon(
-      tauschePlanPosition(m.client, m.userId, plan.id, { einheitKey, positionKey: position.key, exerciseId, machineId: fremd.id }),
+      tauschePlanPosition(m.client, m.userId, plan.id, {
+        einheitKey,
+        positionKey: position.key,
+        exerciseId: position.exerciseId,
+        machineId: fremd.id,
+      }),
     );
     expect(e.code).toBe("validation_failed");
+    expect((await zeile(plan.id)).status).toBe("aktiv");
   });
 
   it("Tausch auf nicht aktiven Plan: Konflikt", async () => {
