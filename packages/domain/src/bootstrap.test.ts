@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { gruppeDesModells, letzteSaetze, startDesModells, uebungAusZeile, zaehleBesucheJeGeraet } from "./bootstrap.js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  gruppeDesModells,
+  ladeTrainingsteil,
+  letzteSaetze,
+  startDesModells,
+  uebungAusZeile,
+  zaehleBesucheJeGeraet,
+} from "./bootstrap.js";
 
 describe("zaehleBesucheJeGeraet", () => {
   it("zaehlt zwei Saetze derselben Session als einen Besuch", () => {
@@ -166,5 +174,102 @@ describe("uebungAusZeile", () => {
     expect(
       uebungAusZeile({ id: "e2", name: "X", description: null, volume_kind: "reps", target_min: 8, target_max: 12 }).description,
     ).toBeNull();
+  });
+});
+
+type Antwort = { data: unknown; error: { message: string } | null };
+
+/**
+ * Minimaler Supabase-Ersatz: jede Tabelle liefert eine feste Antwort, egal welche Filter
+ * die Abfrage setzt. Reicht, um das Rueckfallverhalten ohne Datenbank zu pruefen.
+ */
+function falscherClient(tabellen: Record<string, Antwort>): SupabaseClient {
+  const builder = (antwort: Antwort): unknown => {
+    const b: Record<string, unknown> = {};
+    for (const m of ["select", "eq", "in", "not", "order", "limit"]) b[m] = () => b;
+    b.maybeSingle = () => Promise.resolve(antwort);
+    b.single = () => Promise.resolve(antwort);
+    b.then = (ok: (a: Antwort) => unknown, fehler: (e: unknown) => unknown) => Promise.resolve(antwort).then(ok, fehler);
+    return b;
+  };
+  return {
+    from: (tabelle: string) => builder(tabellen[tabelle] ?? { data: [], error: null }),
+  } as unknown as SupabaseClient;
+}
+
+const FEHLER = { data: null, error: { message: "timeout" } };
+const PLAN = {
+  id: "p1", studio_id: "s1", version: 1, status: "aktiv", regel_version: "1.2.0",
+  eingabe: { ziel: "muskelaufbau", tage: 3, minuten: 60, fokus: [], erfahrung: "neu", anfaengerBeendet: false,
+    beschwerdenBeruecksichtigt: true },
+  struktur: "gk_ab", einheiten: [{ key: "A", positionen: [], geschaetzteMinuten: 40 }], gruende: [],
+  created_at: "2026-10-01T00:00:00Z", accepted_at: "2026-10-01T00:00:00Z",
+};
+const GESUND: Record<string, Antwort> = {
+  training_profiles: { data: { minutes: 60, experience: "neu", focus: [] }, error: null },
+  training_limits: { data: { consent_at: "2026-10-01T00:00:00Z", areas: { knie: "meiden" } }, error: null },
+  studio_memberships: { data: [{ studio_id: "s1" }], error: null },
+  training_plans: { data: [PLAN], error: null },
+  machines: { data: [{ id: "m1", equipment_models: { id: "em1", catalog_model_id: null } }], error: null },
+  equipment_model_exercises: {
+    data: [
+      { equipment_model_id: "em1", exercises: { id: "knie", muscles: [], plan_baustein: "beine_knie", plan_typ: "mehrgelenk", plan_bereiche: ["knie"] } },
+      { equipment_model_id: "em1", exercises: { id: "zug", muscles: [], plan_baustein: "ziehen", plan_typ: "mehrgelenk", plan_bereiche: [] } },
+    ],
+    error: null,
+  },
+};
+
+describe("ladeTrainingsteil", () => {
+  const jetzt = new Date("2026-10-24T12:00:00Z");
+
+  it("liefert Profil und Plan, gemiedene Uebungen fehlen in alternativen", async () => {
+    const t = await ladeTrainingsteil(falscherClient(GESUND), "u1", jetzt, () => {});
+    expect(t.trainingProfile).toEqual({ minutes: 60, experience: "neu", focus: [] });
+    expect(t.plans).toHaveLength(1);
+    expect(t.plans[0]!.alternativen).toEqual({ ziehen: [{ exerciseId: "zug", machineId: "m1" }] });
+  });
+
+  it("Beschwerden nicht lesbar: plans [] statt ungefilterter alternativen", async () => {
+    const meldungen: string[] = [];
+    const t = await ladeTrainingsteil(
+      falscherClient({ ...GESUND, training_limits: FEHLER }), "u1", jetzt, (n) => meldungen.push(n),
+    );
+    expect(t.plans).toEqual([]);
+    expect(t.trainingProfile).not.toBeNull();
+    expect(meldungen).toHaveLength(1);
+    expect(meldungen[0]).not.toMatch(/knie|meiden|vorsichtig/);
+  });
+
+  for (const tabelle of ["studio_memberships", "training_plans", "workout_sessions", "machines"]) {
+    it(`Fehler in ${tabelle}: plans [] und kein Wurf`, async () => {
+      const t = await ladeTrainingsteil(falscherClient({ ...GESUND, [tabelle]: FEHLER }), "u1", jetzt, () => {});
+      expect(t.plans).toEqual([]);
+      expect(t.trainingProfile).not.toBeNull();
+    });
+  }
+
+  it("volle Seite Statuszeilen (moeglich abgeschnitten): plans [] statt zu wenig gezaehlt", async () => {
+    const meldungen: string[] = [];
+    const t = await ladeTrainingsteil(
+      falscherClient({
+        ...GESUND,
+        workout_sessions: {
+          data: [{ id: "x1", plan_einheit_key: "A", started_at: "2026-10-20T10:00:00Z", completed_at: "2026-10-20T11:00:00Z" }],
+          error: null,
+        },
+        session_plan_status: { data: Array.from({ length: 1000 }, () => ({ session_id: "x1", status: "erledigt" })), error: null },
+      }),
+      "u1", jetzt, (n) => meldungen.push(n),
+    );
+    expect(t.plans).toEqual([]);
+    expect(meldungen[0]).toContain("Zu viele Statuszeilen");
+  });
+
+  it("Profil nicht lesbar: trainingProfile null, Plaene bleiben", async () => {
+    const t = await ladeTrainingsteil(falscherClient({ ...GESUND, training_profiles: FEHLER }), "u1", jetzt, () => {});
+    expect(t.trainingProfile).toBeNull();
+    expect(t.plans).toHaveLength(1);
+    expect(t.plans[0]!.anfaengerUebergang).toBe(false);
   });
 });

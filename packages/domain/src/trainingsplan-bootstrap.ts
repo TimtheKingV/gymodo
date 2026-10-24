@@ -25,8 +25,10 @@ const SESSION_LIMIT = 200;
  * max_rows); bei 50 Sessions mit je unter 20 Positionen bleibt jede Abfrage darunter.
  */
 const STATUS_CHUNK = 50;
+/** max_rows aus supabase/config.toml; eine so volle Antwort kann abgeschnitten sein. */
+const POSTGREST_MAX_ROWS = 1000;
 /** Saetze je Abfrage fuer die letzte Satzzeit offener Sessions, siehe ladeLetzteSaetze. */
-const SATZ_LIMIT = 1000;
+const SATZ_LIMIT = POSTGREST_MAX_ROWS;
 
 export type GezaehlteEinheit = { sessionId: string; einheitKey: string; startedAt: string };
 
@@ -145,18 +147,26 @@ export async function ladeGezaehlteEinheiten(
   if (sessions.length === 0) return [];
 
   const stati = new Map<string, PositionStatus[]>();
-  for (const teil of stuecke(sessions.map((s) => s.id), STATUS_CHUNK)) {
-    // Nur die Stati, die zaehlen koennen: haelt die Zeilenzahl klein.
-    const { data: zeilen, error: e } = await client
-      .from("session_plan_status")
-      .select("session_id, status")
-      .in("session_id", teil)
-      .in("status", ["erledigt", "optional"]);
-    if (e) throw new DomainError("internal", "Der Planstatus konnte nicht gelesen werden.");
-    for (const z of (zeilen ?? []) as Array<{ session_id: string; status: PositionStatus }>) {
-      stati.set(z.session_id, [...(stati.get(z.session_id) ?? []), z.status]);
-    }
-  }
+  // Parallel: jede Abfrage ist ein Rundweg beim App-Start.
+  const teile = await Promise.all(
+    stuecke(sessions.map((s) => s.id), STATUS_CHUNK).map(async (teil) => {
+      // Nur die Stati, die zaehlen koennen: haelt die Zeilenzahl klein.
+      const { data: zeilen, error: e } = await client
+        .from("session_plan_status")
+        .select("session_id, status")
+        .in("session_id", teil)
+        .in("status", ["erledigt", "optional"]);
+      if (e) throw new DomainError("internal", "Der Planstatus konnte nicht gelesen werden.");
+      const liste = (zeilen ?? []) as Array<{ session_id: string; status: PositionStatus }>;
+      // Volle Seite heisst: PostgREST hat womoeglich abgeschnitten. Lieber scheitern (der
+      // Bootstrap liefert dann plans: []) als still Einheiten zu verlieren.
+      if (liste.length >= POSTGREST_MAX_ROWS) {
+        throw new DomainError("internal", "Zu viele Statuszeilen fuer eine Abfrage.");
+      }
+      return liste;
+    }),
+  );
+  for (const z of teile.flat()) stati.set(z.session_id, [...(stati.get(z.session_id) ?? []), z.status]);
 
   const zaehlt = (id: string) => zaehltNachStatus(stati.get(id) ?? []);
   const offen = sessions.filter((s) => s.completed_at === null && zaehlt(s.id)).map((s) => s.id);

@@ -348,6 +348,22 @@ describe("getBootstrap -- Trainingsplan", () => {
     expect(p).toMatchObject({ zuletztEinheitKey: b, naechsteEinheitKey: a, einheitenErledigt: 3 });
   });
 
+  it("geloeschte Einheit zaehlt nicht mehr", async () => {
+    const m = await legeMitgliedAn("boot-plan-geloescht", { studios: [ps.voll] });
+    const plan = await aktiverPlan(m, ps.voll);
+    const [a, b] = plan.einheiten.map((e) => e.key) as [string, string];
+    await legeEinheitAn(m.userId, ps.voll, { planId: plan.id, einheitKey: a, startedAt: stunden(30) });
+    const juengste = await legeEinheitAn(m.userId, ps.voll, { planId: plan.id, einheitKey: b, startedAt: stunden(20) });
+    expect(planIn(await getBootstrap(m.client), ps.voll)).toMatchObject({ einheitenErledigt: 2, naechsteEinheitKey: a });
+
+    // Das Mitglied loescht die Einheit selbst (0044); die Statuszeilen gehen per Cascade mit.
+    const { error } = await m.client.from("workout_sessions").delete().eq("id", juengste);
+    if (error) throw error;
+    expect(planIn(await getBootstrap(m.client), ps.voll)).toMatchObject({
+      einheitenErledigt: 1, zuletztEinheitKey: a, naechsteEinheitKey: b,
+    });
+  });
+
   it("einheitenErledigt zaehlt ueber Planversionen desselben Paars", async () => {
     const m = await legeMitgliedAn("boot-plan-versionen", { studios: [ps.voll, ps.voll2] });
     const v1 = await aktiverPlan(m, ps.voll);
