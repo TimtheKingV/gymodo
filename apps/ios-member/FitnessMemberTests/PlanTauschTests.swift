@@ -104,6 +104,27 @@ actor TauschClientAttrappe: PlanTauschend {
     }
 }
 
+/// Haelt swapPlanPosition an, bis der Test freigibt: so laesst sich pruefen,
+/// was waehrend eines laufenden "Übernehmen" geht und was nicht.
+actor HaltenderTauschClient: PlanTauschend {
+    private(set) var aufrufe = 0
+    private var freigabe: CheckedContinuation<Void, Never>?
+
+    var wartet: Bool { freigabe != nil }
+
+    func swapPlanPosition(planId: String, einheitKey: String, positionKey: String, exerciseId: String,
+                          machineId: String) async throws(APIError) -> Trainingsplan {
+        aufrufe += 1
+        await withCheckedContinuation { freigabe = $0 }
+        return PlanTauschTestdaten.plan(planId: "p2", version: 2, positionA0: exerciseId, machineA0: machineId)
+    }
+
+    func freigeben() {
+        freigabe?.resume()
+        freigabe = nil
+    }
+}
+
 /// Position-Sheet und Tausch (Trainingsplan Etappe 3, Task 12, Entwuerfe
 /// 3.1-3.3): welche Kandidaten erscheinen, was "nur heute" und "dauerhaft"
 /// bewirken, und dass eine laufende Einheit ihre Planversion behaelt.
@@ -290,6 +311,43 @@ struct PlanTauschTests {
         sut.dauerhaftSetzen(false)
         #expect(!sut.dauerhaft)
         #expect(sut.schritt == .kandidaten)
+    }
+
+    /// Waehrend "Übernehmen" schreibt, ist der Schalter gesperrt (Sheet) und
+    /// dauerhaftSetzen wirkungslos: sonst schloesse das Sheet nach Erfolg mit
+    /// einem Tausch, den der Schalter scheinbar abgesagt hatte, oder ein
+    /// Fehler landete in der Liste, die keinen zeigt.
+    @Test("Schalter aus waehrend Uebernehmen schreibt: Schritt bleibt, Tausch wie bestaetigt")
+    func schalterWaehrendUebernehmen() async throws {
+        let ablauf = Self.vorbereitet()
+        let client = HaltenderTauschClient()
+        let umgebung = Umgebung()
+        let auftrag = Self.auftrag("A0", ablauf: ablauf)
+        let sut = PlanTauschSitzung(
+            auftrag: auftrag, client: client, ablauf: ablauf,
+            istOnline: { umgebung.online }, aktuellePlanId: { umgebung.aktuellePlanId },
+            neuLaden: { umgebung.neuGeladen += 1 })
+        let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
+        sut.andereUebung()
+        sut.dauerhaftSetzen(true)
+        _ = sut.waehlen(schraeg)
+
+        let laeuft = Task { await sut.uebernehmen() }
+        while !(await client.wartet) { await Task.yield() }
+        #expect(sut.schreibtGerade)
+
+        sut.dauerhaftSetzen(false)
+        #expect(sut.dauerhaft)
+        #expect(sut.schritt == .bestaetigen(schraeg))
+
+        await client.freigeben()
+        #expect(await laeuft.value)
+        #expect(await client.aufrufe == 1)
+        #expect(umgebung.neuGeladen == 1)
+        #expect(sut.fehler == nil)
+        let a0 = try #require(ablauf.zustand?.positionen.first)
+        #expect(a0.status == .getauscht)
+        #expect(a0.ersatzExerciseId == "e7")
     }
 
     @Test("dauerhaft vor dem Start: neue Version sofort, Tausch nur heute anderer Positionen bleibt")

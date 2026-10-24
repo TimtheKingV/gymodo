@@ -268,6 +268,11 @@ final class PlanTauschSitzung {
     }
 
     func dauerhaftSetzen(_ an: Bool) {
+        // Waehrend "Übernehmen" schreibt, gilt, was bestaetigt wurde: sonst
+        // schloesse das Sheet nach Erfolg mit einem Tausch, den der Schalter
+        // scheinbar abgesagt hat, und ein Fehler landete in der Liste, die
+        // keinen zeigt. Das Sheet sperrt den Schalter dann auch.
+        guard !schreibtGerade else { return }
         if an && !istOnline() { return }
         dauerhaft = an
         fehler = nil

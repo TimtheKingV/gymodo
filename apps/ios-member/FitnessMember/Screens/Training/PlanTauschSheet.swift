@@ -165,7 +165,9 @@ struct PlanTauschSchalter: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(PressButtonStyle())
-        .disabled(gesperrt)
+        // Auch waehrend "Übernehmen" schreibt, wie "Abbrechen": der Tausch
+        // geht so aus, wie er bestaetigt wurde.
+        .disabled(gesperrt || sitzung.schreibtGerade)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Dauerhaft im Plan ändern")
         .accessibilityValue(an ? "An" : "Aus")
