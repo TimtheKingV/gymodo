@@ -2,9 +2,12 @@
 --
 -- Ein Plan wird einmal erzeugt und dann nur noch gelesen -- nie beim Lesen
 -- neu berechnet. Deshalb steht alles in der Zeile, was der Generator benutzt
--- hat: eingabe (Ziel, Tage, Minuten, Fokus, Erfahrung, Beschwerden -- ohne
--- die Kandidatenliste, die verwendeten Uebungen und Geraete stehen ja in
--- einheiten), die regel_version und das Ergebnis.
+-- hat: eingabe (Ziel, Tage, Minuten, Fokus, Erfahrung -- ohne die
+-- Kandidatenliste, die verwendeten Uebungen und Geraete stehen ja in
+-- einheiten), die regel_version und das Ergebnis. Die Beschwerden selbst
+-- stehen bewusst NICHT in eingabe, nur ob welche beruecksichtigt wurden:
+-- es sind Gesundheitsdaten, ihr Widerruf loescht training_limits (0060),
+-- und Planzeilen sind nicht loeschbar.
 --
 -- Versionen je (Mitglied, Studio): ein neuer Vorschlag verwirft den alten
 -- ('verworfen'), ein angenommener Vorschlag ersetzt den aktiven Plan
@@ -13,7 +16,7 @@
 -- zwei aktive Plaene hinterlassen.
 --
 -- RLS wie member_goals (0043): nur das Mitglied selbst. Keine
--- Delete-Policy: historische Versionen bleiben. Insert zusaetzlich nur fuer
+-- Delete-Policy: historische Versionen bleiben. Insert und Update nur fuer
 -- Studios, in denen der Aufrufer Mitglied ist, damit niemand Plaene fuer
 -- fremde Studios anlegt.
 
@@ -54,10 +57,12 @@ create policy training_plans_insert_own on public.training_plans
   for insert to authenticated
   with check (user_id = (select auth.uid()) and public.is_studio_member(studio_id));
 
+-- Auch beim Update nur in eigene Studios: sonst liesse sich eine Zeile per
+-- studio_id in ein fremdes Studio verschieben.
 create policy training_plans_update_own on public.training_plans
   for update to authenticated
   using (user_id = (select auth.uid()))
-  with check (user_id = (select auth.uid()));
+  with check (user_id = (select auth.uid()) and public.is_studio_member(studio_id));
 
 -- SECURITY INVOKER, ausdruecklich: die Policies oben reichen. Die Funktion
 -- buendelt nur Ersetzen und Annehmen in einer Transaktion. FOR UPDATE

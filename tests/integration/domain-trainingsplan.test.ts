@@ -5,6 +5,7 @@ import {
   deleteTrainingLimits,
   erzeugePlanVorschlag,
   listPlaene,
+  saveTrainingLimits,
   type TrainingPlan,
 } from "@fitretro/domain";
 import { serviceClient } from "./helpers/clients.js";
@@ -55,7 +56,7 @@ describe("erzeugePlanVorschlag", () => {
       minuten: 60,
       fokus: [],
       erfahrung: "regelmaessig",
-      beschwerden: {},
+      beschwerdenBeruecksichtigt: false,
     });
     expect(plan.eingabe).not.toHaveProperty("kandidaten");
     expect(plan.einheiten[0]!.positionen.length).toBeGreaterThan(0);
@@ -77,9 +78,29 @@ describe("erzeugePlanVorschlag", () => {
   it("Beschwerden meiden knie: keine Position mit Knie-Uebung", async () => {
     const m = await legeMitgliedAn("plan-knie", { studios: [s.voll], limits: { knie: "meiden" } });
     const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
-    expect(plan.eingabe.beschwerden).toEqual({ knie: "meiden" });
+    expect(plan.eingabe).toMatchObject({ beschwerdenBeruecksichtigt: true });
     expect(positionen(plan).length).toBeGreaterThan(0);
     expect(positionen(plan).some((p) => s.knieUebungen.includes(p.exerciseId))).toBe(false);
+  });
+
+  it("Beschwerden landen nicht in der Planzeile; Widerruf aendert bestehende Plaene nicht", async () => {
+    const m = await legeMitgliedAn("plan-dsgvo", { studios: [s.voll] });
+    await saveTrainingLimits(m.client, m.userId, { einwilligung: true, areas: { knie: "meiden" } }, new Date());
+    const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    await deleteTrainingLimits(m.client, m.userId);
+
+    const { data, error } = await admin.from("training_plans").select("eingabe, einheiten").eq("id", plan.id).single();
+    if (error) throw error;
+    const roh = JSON.stringify(data.eingabe);
+    expect(data.eingabe).not.toHaveProperty("beschwerden");
+    expect(data.eingabe).toMatchObject({ beschwerdenBeruecksichtigt: true });
+    for (const bereich of ["knie", "huefte", "unterer_ruecken", "schulter", "ellenbogen_handgelenk", "meiden", "vorsichtig"]) {
+      expect(roh).not.toContain(bereich);
+    }
+    const gespeichert = (data.einheiten as TrainingPlan["einheiten"]).flatMap((e) => e.positionen);
+    expect(gespeichert.some((p) => s.knieUebungen.includes(p.exerciseId))).toBe(false);
+    const [gelesen] = await listPlaene(m.client, m.userId, s.voll);
+    expect(gelesen!.einheiten).toEqual(plan.einheiten);
   });
 
   it("Beschwerden geloescht: gleicher Plan wie ohne Beschwerden", async () => {
@@ -184,6 +205,34 @@ describe("acceptPlan", () => {
     const m = await legeMitgliedAn("plan-unbekannt", { studios: [s.voll] });
     const e = await fehlerVon(acceptPlan(m.client, m.userId, crypto.randomUUID()));
     expect(e.code).toBe("conflict");
+  });
+});
+
+describe("RLS training_plans", () => {
+  it("Update auf ein fremdes Studio wird abgelehnt", async () => {
+    const m = await legeMitgliedAn("plan-umzug", { studios: [s.voll] });
+    const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    const { data, error } = await m.client
+      .from("training_plans")
+      .update({ studio_id: s.ohneDruck })
+      .eq("id", plan.id)
+      .select("id");
+    // WITH CHECK schlaegt als Fehler (42501) zu; 0 Zeilen waere ebenso eine Ablehnung.
+    expect(error !== null || (data ?? []).length === 0).toBe(true);
+    const { data: zeile } = await admin.from("training_plans").select("studio_id").eq("id", plan.id).single();
+    expect(zeile!.studio_id).toBe(s.voll);
+  });
+
+  it("Update innerhalb des eigenen Studios bleibt erlaubt", async () => {
+    const m = await legeMitgliedAn("plan-update-ok", { studios: [s.voll] });
+    const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    const { data, error } = await m.client
+      .from("training_plans")
+      .update({ status: "verworfen" })
+      .eq("id", plan.id)
+      .select("id");
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
   });
 });
 

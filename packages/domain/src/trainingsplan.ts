@@ -13,8 +13,16 @@ import { getTrainingLimits, getTrainingProfile } from "./trainingsprofil.js";
 
 export type PlanStatus = "vorschlag" | "aktiv" | "ersetzt" | "verworfen";
 
-/** Die Generator-Eingabe ohne Kandidatenliste; die verwendeten Uebungen stehen in einheiten. */
-export type PlanEingabe = Omit<GeneratorEingabe, "kandidaten">;
+/**
+ * Die Generator-Eingabe ohne Kandidatenliste (die verwendeten Uebungen stehen in
+ * einheiten) und ohne die Beschwerden selbst: das sind Gesundheitsdaten (DSGVO
+ * Art. 9), deren Widerruf training_limits loescht -- Planzeilen sind aber nicht
+ * loeschbar, eine Kopie hier ueberlebte den Widerruf. Gespeichert wird nur, ob
+ * Beschwerden beruecksichtigt wurden.
+ */
+export type PlanEingabe = Omit<GeneratorEingabe, "kandidaten" | "beschwerden"> & {
+  beschwerdenBeruecksichtigt: boolean;
+};
 
 export type TrainingPlan = {
   id: string;
@@ -116,17 +124,26 @@ export async function erzeugePlanVorschlag(
     );
   }
 
+  // Ohne Einwilligung (keine Zeile) gibt es keine Beschwerden -- nie raten.
+  const beschwerden = limits?.areas ?? {};
   const eingabe: PlanEingabe = {
     ziel,
     tage,
     minuten: profil.minutes,
     fokus: profil.focus,
     erfahrung: profil.experience,
-    // Ohne Einwilligung (keine Zeile) gibt es keine Beschwerden -- nie raten.
-    beschwerden: limits?.areas ?? {},
+    beschwerdenBeruecksichtigt: Object.keys(beschwerden).length > 0,
   };
   // PlanNichtMoeglichError laeuft unveraendert durch; er traegt baustein/grund im detail.
-  const ergebnis = generierePlan({ ...eingabe, kandidaten: await ladeKandidaten(client, studioId) });
+  const ergebnis = generierePlan({
+    ziel,
+    tage,
+    minuten: profil.minutes,
+    fokus: profil.focus,
+    erfahrung: profil.experience,
+    beschwerden,
+    kandidaten: await ladeKandidaten(client, studioId),
+  });
 
   const { error: verwerfFehler } = await client
     .from("training_plans")
