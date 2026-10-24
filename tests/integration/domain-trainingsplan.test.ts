@@ -244,7 +244,8 @@ describe("RLS training_plans", () => {
     expect(zeile!.studio_id).toBe(s.voll);
   });
 
-  it("Update innerhalb des eigenen Studios bleibt erlaubt", async () => {
+  // Seit 0062 schreibt das Mitglied nur ueber create_/accept_training_plan.
+  it("Update innerhalb des eigenen Studios wird ebenfalls abgelehnt", async () => {
     const m = await legeMitgliedAn("plan-update-ok", { studios: [s.voll] });
     const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
     const { data, error } = await m.client
@@ -252,8 +253,9 @@ describe("RLS training_plans", () => {
       .update({ status: "verworfen" })
       .eq("id", plan.id)
       .select("id");
-    expect(error).toBeNull();
-    expect(data).toHaveLength(1);
+    expect(error !== null || (data ?? []).length === 0).toBe(true);
+    const { data: zeile } = await admin.from("training_plans").select("status").eq("id", plan.id).single();
+    expect(zeile!.status).toBe("vorschlag");
   });
 });
 

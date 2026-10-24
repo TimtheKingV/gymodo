@@ -1,7 +1,8 @@
 // Gespeicherte Trainingsplaene (Etappe 2, Task 7; Spec F14: Plaene sind stabil).
 // Erzeugen liest Profil, Ziel und Kandidaten und speichert das Ergebnis; Lesen
 // berechnet nie neu. Alles laeuft mit dem Client des Mitglieds, damit RLS
-// entscheidet -- auch beim Laden der Kandidaten.
+// entscheidet -- auch beim Laden der Kandidaten. Geschrieben wird nur ueber die
+// Funktionen create_training_plan/accept_training_plan (0062), die den Plan pruefen.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { DomainError } from "./errors.js";
 import { aktiveZiele } from "./goals.js";
@@ -151,39 +152,25 @@ export async function erzeugePlanVorschlag(
     kandidaten: await ladeKandidaten(client, studioId),
   });
 
-  const { error: verwerfFehler } = await client
-    .from("training_plans")
-    .update({ status: "verworfen" })
-    .eq("user_id", userId)
-    .eq("studio_id", studioId)
-    .eq("status", "vorschlag");
-  if (verwerfFehler) throw new DomainError("internal", "Der alte Vorschlag konnte nicht verworfen werden.");
-
-  const { data: letzte, error: versionFehler } = await client
-    .from("training_plans")
-    .select("version")
-    .eq("user_id", userId)
-    .eq("studio_id", studioId)
-    .order("version", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (versionFehler) throw new DomainError("internal", "Die Planversion konnte nicht gelesen werden.");
-
+  // Pruefen, alten Vorschlag verwerfen, Version vergeben und einfuegen erledigt die
+  // Funktion in einer Transaktion (0062); direkt schreiben darf das Mitglied nicht.
   const { data, error } = await client
-    .from("training_plans")
-    .insert({
-      user_id: userId,
-      studio_id: studioId,
-      version: ((letzte?.version as number | undefined) ?? 0) + 1,
-      status: "vorschlag",
-      regel_version: ergebnis.regelVersion,
-      eingabe,
-      struktur: ergebnis.struktur,
-      einheiten: ergebnis.einheiten,
-      gruende: ergebnis.gruende,
+    .rpc("create_training_plan", {
+      p_studio_id: studioId,
+      p_regel_version: ergebnis.regelVersion,
+      p_eingabe: eingabe,
+      p_struktur: ergebnis.struktur,
+      p_einheiten: ergebnis.einheiten,
+      p_gruende: ergebnis.gruende,
     })
-    .select(SPALTEN)
     .single();
+  // plan_ungueltig hiesse: der Generator nannte ein Geraet oder eine Uebung, die das
+  // Studio nicht (mehr) hat -- etwa gleichzeitig stillgelegt.
+  if (error?.code === "P0001" && error.message === "plan_ungueltig") {
+    throw new DomainError("validation_failed", "Der Plan passt nicht zu den Geräten des Studios.");
+  }
+  // 42501: zwischen Pruefung und Speichern ausgetreten -- wie oben not_found.
+  if (error?.code === "42501") throw new DomainError("not_found", "Studio nicht gefunden.");
   if (istUniqueVerstoss(error)) {
     throw new DomainError("conflict", "Gerade wird schon ein Plan erstellt. Bitte noch einmal versuchen.");
   }
@@ -194,7 +181,8 @@ export async function erzeugePlanVorschlag(
 /** Nimmt einen Vorschlag an; alles andere (fremd, verworfen, schon aktiv) ist ein Konflikt. */
 export async function acceptPlan(client: SupabaseClient, userId: string, planId: string): Promise<TrainingPlan> {
   const { data, error } = await client.rpc("accept_training_plan", { p_plan_id: planId }).single();
-  // P0001: plan_nicht_annehmbar aus der Funktion; 23505: Teilindex, falls doch zwei gleichzeitig.
+  // P0001: plan_nicht_annehmbar aus der Funktion (auch nach einem Austritt aus dem
+  // Studio); 23505: Teilindex, falls doch zwei gleichzeitig.
   if (error?.code === "P0001" || istUniqueVerstoss(error)) {
     throw new DomainError("conflict", "Dieser Plan kann nicht mehr angenommen werden.");
   }
