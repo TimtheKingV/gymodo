@@ -217,6 +217,30 @@ struct PlanAnzeigeTests {
         #expect(ohneErsatz.map(\.name) == ["Latzug"])
     }
 
+    // MARK: - Gebundene Planversion
+
+    @Test("laufende Einheit bleibt bei ihrer Planversion")
+    func laufendeEinheitBleibtBeiIhrerVersion() {
+        // Gebunden ist die Version, in der A1 Latzug (e4) war; der Bootstrap
+        // hat inzwischen eine neuere mit Rudern (e2) an A1.
+        var zustand = Self.zustand(["A0": .erledigt])
+        zustand.positionen[1].exerciseId = "e4"
+        let bloecke = [Self.block("m1", "e1", saetze: 3), Self.block("m5", "e4", saetze: 2, minute: 10),
+                       Self.block("m5", "e2", saetze: 1, minute: 20)]
+        zustand.positionen[1].status = .erledigt
+        let zeilen = Self.zeilen(zustand, bloecke: bloecke)
+        #expect(zeilen[1].name == "Latzug")
+        #expect(zeilen[1].exerciseId == "e4")
+        #expect(zeilen[1].untertitel == "2 Sätze")
+        // Rudern ist in der gebundenen Version ungeplant, Latzug nicht.
+        let zusatz = PlanAnzeige.zusaetzlichGemacht(plan: Self.plan(), einheitKey: "A", zustand: zustand,
+                                                    bloecke: bloecke, bootstrap: Self.bootstrap())
+        #expect(zusatz.map(\.name) == ["Rudern an der Maschine"])
+        // Die Pause folgt der Uebung der gebundenen Version (Dauer je Schluessel).
+        #expect(PlanAnzeige.pauseSek(fuer: "e4", plan: Self.plan(), einheitKey: "A", zustand: zustand, profil: 60) == 90)
+        #expect(PlanAnzeige.pauseSek(fuer: "e2", plan: Self.plan(), einheitKey: "A", zustand: zustand, profil: 60) == 60)
+    }
+
     // MARK: - Pause (F6)
 
     @Test("Pause kommt aus der Planposition, sonst aus dem Profil")
@@ -283,7 +307,10 @@ struct PlanAnzeigeTests {
         let vorher = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: Self.zustand())
         #expect(PlanAnzeige.heuteDranUntertitel(vorher) == "4 Übungen · ca. 60 Min")
         let mitten = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: Self.zustand(["A0": .erledigt]))
-        #expect(PlanAnzeige.heuteDranUntertitel(mitten) == "1 von 4 erledigt")
+        #expect(PlanAnzeige.heuteDranUntertitel(mitten) == "1 von 4")
+        // Optional zaehlt mit, deshalb nicht "erledigt".
+        let optional = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: Self.zustand(["A1": .optional]))
+        #expect(PlanAnzeige.heuteDranUntertitel(optional) == "1 von 4")
     }
 
     @Test("heute nimmt den Ablauf nur, wenn Plan und Einheit passen")
@@ -306,6 +333,25 @@ struct PlanAnzeigeTests {
         #expect(!PlanAnzeige.zeigtAnfaengerAngebot(plan: Self.plan(anfaenger: true), gesehen: ["p1"]))
         #expect(!PlanAnzeige.zeigtAnfaengerAngebot(plan: Self.plan(anfaenger: false), gesehen: []))
         #expect(!PlanAnzeige.zeigtAnfaengerAngebot(plan: nil, gesehen: []))
+    }
+
+    @Test("Anfaengerangebot erscheint nach dem Neuladen, einmal")
+    func anfaengerangebotNachNeuladen() {
+        let vorher = Self.plan(anfaenger: false, erledigt: 7)
+        let nachher = Self.plan(anfaenger: true, erledigt: 8)
+        var gesehen: Set<String> = []
+        // Bootstrap von vor completeSession: noch kein Angebot.
+        var karte = PlanAnzeige.anfaengerAngebotNachPruefung(bisher: nil, plan: vorher, gesehen: gesehen)
+        #expect(karte == nil)
+        // Frischer Bootstrap auf demselben Screen: jetzt ja, mit Zahl 8.
+        karte = PlanAnzeige.anfaengerAngebotNachPruefung(bisher: karte, plan: nachher, gesehen: gesehen)
+        #expect(karte?.planId == "p1")
+        #expect(PlanAnzeige.anfaengerTexte(nachher).label == "EINHEIT 8 VON 8 ALS ANFÄNGER")
+        gesehen.insert("p1")
+        // Ein weiterer Bootstrap laesst die gezeigte Karte stehen.
+        #expect(PlanAnzeige.anfaengerAngebotNachPruefung(bisher: karte, plan: nachher, gesehen: gesehen)?.planId == "p1")
+        // "Später" (Karte weg) und spaetere Abschluesse: nie wieder fuer diesen Plan.
+        #expect(PlanAnzeige.anfaengerAngebotNachPruefung(bisher: nil, plan: nachher, gesehen: gesehen) == nil)
     }
 
     @Test("Anfaengerangebot merkt sich den Plan in den UserDefaults")

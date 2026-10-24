@@ -59,44 +59,52 @@ enum PlanAnzeige {
     // MARK: - Zeilen
 
     /// Eine Zeile je Planposition, in Planreihenfolge (Empfehlung, kein
-    /// Zwang -- Entwurf 2.1).
+    /// Zwang -- Entwurf 2.1). Mit Ablauf folgen Reihenfolge, geplante Uebung
+    /// und Status der gebundenen Planversion (`planstellen`).
     static func zeilen(plan: Trainingsplan, einheitKey: String, zustand: AblaufZustand?,
                        bloecke: [LokalerBlock], bootstrap: BootstrapResponse?) -> [PlanZeilenModell] {
         guard let einheit = plan.einheiten.first(where: { $0.key == einheitKey }) else { return [] }
         let muskeln = HomeZeilen.muskelnJeUebung(bootstrap)
-        let ungeplant = ungeplanteUebungen(einheit: einheit, zustand: zustand, bloecke: bloecke)
-        return einheit.positionen.map { position in
-            let ablauf = zustand?.positionen.first { $0.key == position.key }
-            let status = ablauf?.status ?? .offen
-            // Ein Tausch "nur heute" bleibt auch nach dem Abhaken bestehen:
-            // trainiert wurde (und wird) der Ersatz.
-            let ersatz = ablauf?.ersatzExerciseId
-            let wirksam = ersatz ?? position.exerciseId
-            let maschine = bildmaschine(exerciseId: wirksam, machineId: ersatz == nil ? position.machineId : nil,
+        let stellen = planstellen(einheit: einheit, zustand: zustand)
+        let ungeplant = ungeplanteUebungen(stellen: stellen, bloecke: bloecke)
+        return stellen.map { stelle in
+            let wirksam = stelle.wirksam
+            // Das Geraet der Position nur, solange es zur geplanten Uebung
+            // gehoert (gleiche Version, kein Tausch); sonst irgendeins mit ihr.
+            let machineId = stelle.ersatz == nil && stelle.vorgabe?.exerciseId == stelle.geplant
+                ? stelle.vorgabe?.machineId : nil
+            let maschine = bildmaschine(exerciseId: wirksam, machineId: machineId,
                                         studioId: plan.studioId, bootstrap: bootstrap)
             let untertitel: String
-            switch status {
+            switch stelle.status {
             case .offen:
-                untertitel = vorgabeMitReserve(position)
+                untertitel = vorgabeText(stelle)
             case .erledigt:
                 let saetze = satzzahl(exerciseId: wirksam, bloecke: bloecke)
-                untertitel = position.dauerMin == nil && saetze > 0 ? satzText(saetze) : vorgabeMitReserve(position)
+                untertitel = !stelle.cardio && saetze > 0 ? satzText(saetze) : vorgabeText(stelle)
             case .optional:
-                let hauptmuskeln = ablauf?.hauptmuskeln ?? position.hauptmuskeln
-                untertitel = ausloeser(hauptmuskeln: hauptmuskeln, ungeplant: ungeplant, muskeln: muskeln)
+                untertitel = ausloeser(hauptmuskeln: stelle.hauptmuskeln, ungeplant: ungeplant, muskeln: muskeln)
                     .map { "Optional: \(uebungsname($0.exerciseId, bootstrap)) zählt für \($0.gruppe)" }
                     ?? "Optional"
             case .getauscht:
                 untertitel = "Heute: \(uebungsname(wirksam, bootstrap))"
             }
             return PlanZeilenModell(
-                id: position.key,
-                name: uebungsname(position.exerciseId, bootstrap),
+                id: stelle.key,
+                name: uebungsname(stelle.geplant, bootstrap),
                 untertitel: untertitel,
                 exerciseId: wirksam,
                 vorschaubildModell: maschine?.equipmentModel.id,
-                status: status.anzeige)
+                status: stelle.status.anzeige)
         }
+    }
+
+    /// Die Vorgabe als Text aus dem Bootstrap-Plan. Fehlt die Position dort
+    /// (neuere Version ohne diesen Schluessel), bleibt ein neutraler Text --
+    /// die Zahlen der gebundenen Version kennt der Speicher nicht.
+    private static func vorgabeText(_ stelle: Planstelle) -> String {
+        if let vorgabe = stelle.vorgabe { return vorgabeMitReserve(vorgabe) }
+        return stelle.cardio ? "Cardio" : "Wie geplant"
     }
 
     /// "3 × 8–12 · Reserve 1–3"; Cardio nur die Minuten (keine Reserve am
@@ -114,7 +122,7 @@ enum PlanAnzeige {
 
     /// "4 von 7": erledigte und optionale Positionen zaehlen (Entwurf 2.2).
     static func fortschritt(plan: Trainingsplan, einheitKey: String, zustand: AblaufZustand?) -> String {
-        let gesamt = plan.einheiten.first { $0.key == einheitKey }?.positionen.count ?? 0
+        let gesamt = zustand?.positionen.count ?? plan.einheiten.first { $0.key == einheitKey }?.positionen.count ?? 0
         let fertig = zustand?.positionen.filter { $0.status == .erledigt || $0.status == .optional }.count ?? 0
         return "\(fertig) von \(gesamt)"
     }
@@ -126,12 +134,10 @@ enum PlanAnzeige {
     static func restminutenText(plan: Trainingsplan, einheitKey: String, zustand: AblaufZustand?) -> String? {
         guard let einheit = plan.einheiten.first(where: { $0.key == einheitKey }),
               let minuten = einheit.geschaetzteMinuten, !einheit.positionen.isEmpty else { return nil }
-        let offen = einheit.positionen.filter { position in
-            let status = zustand?.positionen.first { $0.key == position.key }?.status ?? .offen
-            return status == .offen || status == .getauscht
-        }.count
-        guard offen > 0 else { return nil }
-        let rest = max(1, Int((minuten * Double(offen) / Double(einheit.positionen.count)).rounded()))
+        let stellen = planstellen(einheit: einheit, zustand: zustand)
+        let offen = stellen.filter { $0.status == .offen || $0.status == .getauscht }.count
+        guard offen > 0, !stellen.isEmpty else { return nil }
+        let rest = max(1, Int((minuten * Double(offen) / Double(stellen.count)).rounded()))
         return "noch ca. \(rest) Min"
     }
 
@@ -147,11 +153,12 @@ enum PlanAnzeige {
     }
 
     /// Die Zeile auf Home: vor dem ersten Haken wie die Karte ("7 Übungen ·
-    /// ca. 63 Min"), danach der Stand ("3 von 7 erledigt").
+    /// ca. 63 Min"), danach der Stand ("3 von 7", wie in der Karte: erledigt
+    /// und optional -- "erledigt" waere fuer optionale falsch).
     static func heuteDranUntertitel(_ heute: Heute) -> String {
         let fertig = heute.zustand?.positionen.contains { $0.status == .erledigt || $0.status == .optional } ?? false
         guard fertig else { return metaText(heute.einheit) }
-        return "\(fortschritt(plan: heute.plan, einheitKey: heute.einheitKey, zustand: heute.zustand)) erledigt"
+        return fortschritt(plan: heute.plan, einheitKey: heute.einheitKey, zustand: heute.zustand)
     }
 
     /// "Danach: Einheit B"; ein Plan mit nur einer Einheit hat kein Danach.
@@ -170,13 +177,13 @@ enum PlanAnzeige {
                                    bloecke: [LokalerBlock], bootstrap: BootstrapResponse?) -> [PlanZeilenModell] {
         guard let einheit = plan.einheiten.first(where: { $0.key == einheitKey }) else { return [] }
         let muskeln = HomeZeilen.muskelnJeUebung(bootstrap)
-        let ungeplant = ungeplanteUebungen(einheit: einheit, zustand: zustand, bloecke: bloecke)
+        let stellen = planstellen(einheit: einheit, zustand: zustand)
+        let ungeplant = ungeplanteUebungen(stellen: stellen, bloecke: bloecke)
         // Welche ungeplanten Uebungen eine optionale Position erklaeren --
         // dieselbe Ableitung wie im Untertitel der Planzeile.
-        let zaehlenMit = Set(einheit.positionen.compactMap { position -> String? in
-            guard let ablauf = zustand?.positionen.first(where: { $0.key == position.key }),
-                  ablauf.status == .optional else { return nil }
-            return ausloeser(hauptmuskeln: ablauf.hauptmuskeln, ungeplant: ungeplant, muskeln: muskeln)?.exerciseId
+        let zaehlenMit = Set(stellen.compactMap { stelle -> String? in
+            guard stelle.status == .optional else { return nil }
+            return ausloeser(hauptmuskeln: stelle.hauptmuskeln, ungeplant: ungeplant, muskeln: muskeln)?.exerciseId
         })
         return ungeplant.map { uebung in
             let saetze = satzzahl(exerciseId: uebung.exerciseId, bloecke: bloecke)
@@ -203,11 +210,13 @@ enum PlanAnzeige {
                          zustand: AblaufZustand?, profil: Int) -> Int {
         guard let plan, let einheitKey,
               let einheit = plan.einheiten.first(where: { $0.key == einheitKey }) else { return profil }
-        for position in einheit.positionen {
-            let wirksam = zustand?.positionen.first { $0.key == position.key }?.ersatzExerciseId ?? position.exerciseId
+        // Gesucht wird ueber die Uebung der gebundenen Version (wie der
+        // Ablauf abhakt); die Dauer steht nur im Bootstrap-Plan, je Schluessel.
+        for stelle in planstellen(einheit: einheit, zustand: zustand) where stelle.wirksam == exerciseId {
             // 0 hat nur Cardio; eine Kraftpause von 0 s waere ein Datenfehler,
             // dann lieber die gewohnte Pause.
-            if wirksam == exerciseId, position.pauseSek > 0 { return position.pauseSek }
+            if let pause = stelle.vorgabe?.pauseSek, pause > 0 { return pause }
+            return profil
         }
         return profil
     }
@@ -264,6 +273,18 @@ enum PlanAnzeige {
         return plan.anfaengerUebergang && !gesehen.contains(plan.planId)
     }
 
+    /// Die Entscheidung des Abschluss-Screens, bei jedem neuen Bootstrap neu
+    /// gefragt (nach completeSession laedt er nach; erst der kennt die eben
+    /// beendete achte Einheit). Eine schon gezeigte Karte bleibt; sonst
+    /// erscheint sie, sobald der Plan sie will und sie fuer ihn noch nie
+    /// gezeigt wurde. Gemerkt wird beim Zeigen -- "Später" und "Fertig"
+    /// lassen sie so nicht wiederkommen.
+    static func anfaengerAngebotNachPruefung(bisher: Trainingsplan?, plan: Trainingsplan?,
+                                             gesehen: Set<String>) -> Trainingsplan? {
+        if let bisher { return bisher }
+        return zeigtAnfaengerAngebot(plan: plan, gesehen: gesehen) ? plan : nil
+    }
+
     static func gesehneAnfaengerAngebote(_ defaults: UserDefaults = .standard) -> Set<String> {
         Set(defaults.stringArray(forKey: anfaengerAngebotKey) ?? [])
     }
@@ -292,17 +313,48 @@ enum PlanAnzeige {
         let equipmentModelId: String?
     }
 
+    /// Eine Position, wie die Ansicht sie liest. Mit Ablauf gilt dessen
+    /// gebundene Planversion (Reihenfolge, geplante Uebung, Muskeln, Status)
+    /// -- genau das zaehlt der Ablauf (Task 9, Review Focus 2). Kommt
+    /// mitten in der Einheit eine neue Version (dauerhafter Tausch,
+    /// Trainer), aendert sich die Einheit erst mit der naechsten. Der
+    /// Bootstrap-Plan liefert dann nur noch die Vorgabe als Text.
+    struct Planstelle: Equatable {
+        let key: String
+        let geplant: String
+        let ersatz: String?
+        let status: PositionStatus
+        let hauptmuskeln: [String]
+        let cardio: Bool
+        /// Die Position desselben Schluessels im Bootstrap-Plan, nur fuer
+        /// Vorgabe, Pause und Geraet.
+        let vorgabe: TrainingsplanPosition?
+
+        var wirksam: String { ersatz ?? geplant }
+    }
+
+    static func planstellen(einheit: TrainingsplanEinheit, zustand: AblaufZustand?) -> [Planstelle] {
+        if let zustand {
+            return zustand.positionen.map { ablauf in
+                Planstelle(key: ablauf.key, geplant: ablauf.exerciseId, ersatz: ablauf.ersatzExerciseId,
+                           status: ablauf.status, hauptmuskeln: ablauf.hauptmuskeln, cardio: ablauf.cardio,
+                           vorgabe: einheit.positionen.first { $0.key == ablauf.key })
+            }
+        }
+        return einheit.positionen.map { position in
+            Planstelle(key: position.key, geplant: position.exerciseId, ersatz: nil, status: .offen,
+                       hauptmuskeln: position.hauptmuskeln, cardio: position.baustein == "cardio", vorgabe: position)
+        }
+    }
+
     /// Die Uebungen der Session, die keine Position fuehrt (wirksame Uebung,
     /// bei Tausch also der Ersatz -- wie Regel 2 in `TrainingsplanAblauf`),
     /// je Uebung einmal, in der Reihenfolge ihres ersten Satzes. Cardio ist
     /// nur ungeplant, wenn die Einheit keine Cardio-Position hat: sonst
     /// zaehlt jedes Cardiogeraet fuer sie (F19).
-    static func ungeplanteUebungen(einheit: TrainingsplanEinheit, zustand: AblaufZustand?,
-                                   bloecke: [LokalerBlock]) -> [UngeplanteUebung] {
-        let geplant = Set(einheit.positionen.map { position in
-            zustand?.positionen.first { $0.key == position.key }?.ersatzExerciseId ?? position.exerciseId
-        })
-        let hatCardio = einheit.positionen.contains { $0.baustein == "cardio" }
+    static func ungeplanteUebungen(stellen: [Planstelle], bloecke: [LokalerBlock]) -> [UngeplanteUebung] {
+        let geplant = Set(stellen.map(\.wirksam))
+        let hatCardio = stellen.contains { $0.cardio }
         let geordnet = bloecke
             .filter { !$0.saetze.isEmpty }
             .sorted { ($0.saetze.map(\.performedAt).min() ?? .distantFuture) < ($1.saetze.map(\.performedAt).min() ?? .distantFuture) }

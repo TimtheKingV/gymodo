@@ -131,6 +131,10 @@ struct TrainingAbschlussView: View {
             do throws(APIError) {
                 vorschlaege = try await apiClient.completeSession(
                     sessionId: sessionId, pausedSeconds: zusammenfassung.pausedSeconds).vorschlaege
+                // Erst jetzt zaehlt der Server die Einheit: der frische
+                // Bootstrap bringt naechste Einheit und Anfaengerangebot
+                // (Entwurf 2.3, "nach der achten Einheit") noch auf diesem Screen.
+                await katalog.load()
             } catch {
                 // Kein Fehlerzustand: die Zahlen stehen bereits, nur der
                 // Blick nach vorn fehlt. Welcher Satz das sagt, haengt am

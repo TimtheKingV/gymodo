@@ -15,11 +15,10 @@ struct PlanAbschlussBereich: View {
     @Environment(CatalogStore.self) private var katalog
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
 
-    /// Einmal beim Erscheinen festgelegt und sofort gemerkt: "erscheint
-    /// einmal" (Entwurf 2.3), auch wenn das Mitglied nur "Fertig" tippt.
-    /// "Später" blendet die Karte fuer diesen Plan aus.
+    /// Gesetzt, sobald die Karte erscheint, und dann sofort gemerkt:
+    /// "erscheint einmal" (Entwurf 2.3), auch wenn das Mitglied nur "Fertig"
+    /// tippt. "Später" blendet sie aus; gemerkt ist sie dann schon.
     @State private var angebotPlan: Trainingsplan?
-    @State private var angebotGeprueft = false
     @State private var neuerPlanOffen = false
 
     var body: some View {
@@ -33,6 +32,9 @@ struct PlanAbschlussBereich: View {
                 }
             }
             .onAppear { angebotPruefen(lauf) }
+            // Der Abschluss laedt nach completeSession den Bootstrap neu;
+            // erst der kennt die achte Einheit und setzt anfaengerUebergang.
+            .onChange(of: katalog.bootstrapStand) { angebotPruefen(lauf) }
             .sheet(isPresented: $neuerPlanOffen) {
                 // 1.4 mit neuem Vorschlag: der Flow erzeugt ihn, uebernimmt ihn
                 // auf Wunsch und laedt danach selbst den Bootstrap (F14: nie
@@ -47,13 +49,12 @@ struct PlanAbschlussBereich: View {
 
     /// Das Angebot gilt dem Plan dieser Einheit.
     private func angebotPruefen(_ lauf: PlanLauf) {
-        guard !angebotGeprueft else { return }
-        angebotGeprueft = true
-        guard let plan = katalog.bootstrap?.member.plans.first(where: { $0.planId == lauf.planId }),
-              PlanAnzeige.zeigtAnfaengerAngebot(plan: plan, gesehen: PlanAnzeige.gesehneAnfaengerAngebote())
-        else { return }
-        angebotPlan = plan
-        PlanAnzeige.anfaengerAngebotGesehen(planId: plan.planId)
+        guard angebotPlan == nil else { return }
+        let plan = katalog.bootstrap?.member.plans.first { $0.planId == lauf.planId }
+        guard let neu = PlanAnzeige.anfaengerAngebotNachPruefung(
+            bisher: nil, plan: plan, gesehen: PlanAnzeige.gesehneAnfaengerAngebote()) else { return }
+        angebotPlan = neu
+        PlanAnzeige.anfaengerAngebotGesehen(planId: neu.planId)
     }
 
     private func einheitKarte(_ lauf: PlanLauf) -> some View {
