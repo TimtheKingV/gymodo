@@ -355,7 +355,7 @@ describe("swap_training_plan_position", () => {
       tauschePlanPosition(m.client, m.userId, plan.id, { einheitKey, positionKey: position.key, exerciseId, machineId: geraet.id }),
     );
     expect(e.code).toBe("validation_failed");
-    // vorsichtig statt meiden waere erlaubt: Kontrolle, dass nur "meiden" sperrt.
+    // Kontrolle: schulter ist nur "vorsichtig" und sperrt nicht, nur "meiden" sperrt.
     const ok = await ersatzUebung(position.baustein, ["schulter"]);
     await expect(
       tauschePlanPosition(m.client, m.userId, plan.id, { einheitKey, positionKey: position.key, exerciseId: ok, machineId: geraet.id }),
