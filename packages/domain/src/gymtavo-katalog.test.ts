@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { BAUSTEINE, PFLICHT_BAUSTEINE } from "./trainingsplan-typen.js";
 import { pruefeKatalog, type KatalogDatei } from "./katalog-datei.js";
 
 /**
@@ -67,5 +68,42 @@ describe("catalog/gymtavo.json Startwerte", () => {
   it("startet die Beinpresse hoeher als den Bizepscurl", () => {
     const start = (key: string) => katalog().equipment.find((g) => g.key === key)?.load_start ?? 0;
     expect(start("leg_press_45")).toBeGreaterThan(start("preacher_curl"));
+  });
+});
+
+// Trainingsplan Etappe 2: der Generator braucht je Baustein echte Kandidaten.
+describe("catalog/gymtavo.json Planuebungen", () => {
+  const planUebungen = () => katalog().exercises.filter((u) => u.plan);
+
+  it("hat fuer jeden Pflichtbaustein mindestens zwei Planuebungen", () => {
+    for (const b of PFLICHT_BAUSTEINE) {
+      expect(planUebungen().filter((u) => u.plan?.baustein === b).length, b).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("hat fuer jeden uebrigen Baustein mindestens eine Planuebung", () => {
+    for (const b of BAUSTEINE.filter((x) => !PFLICHT_BAUSTEINE.includes(x))) {
+      expect(planUebungen().filter((u) => u.plan?.baustein === b).length, b).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it("gibt Planuebungen mindestens einen primaeren Muskel", () => {
+    for (const u of planUebungen()) {
+      expect(u.muscles.some((m) => m.role === "primary"), u.key).toBe(true);
+    }
+  });
+
+  it("traegt druecken, ziehen und beine_knie nie als isolation ein", () => {
+    for (const u of planUebungen()) {
+      if (["druecken", "ziehen", "beine_knie"].includes(u.plan!.baustein)) {
+        expect(u.plan!.typ, u.key).toBe("mehrgelenk");
+      }
+    }
+  });
+
+  it("traegt Cardio ohne Bereiche ein", () => {
+    for (const u of planUebungen().filter((x) => x.plan?.baustein === "cardio")) {
+      expect(u.plan!.bereiche, u.key).toEqual([]);
+    }
   });
 });
