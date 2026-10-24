@@ -98,19 +98,29 @@ create trigger workout_sessions_plan_schuetzen
 
 -- Uebernimmt die Momentaufnahme des Plans fuer eine Session.
 --
--- Der Nutzer kommt nur aus auth.uid(). Session und Plan muessen ihm
--- gehoeren; fremd und unbekannt antworten gleich (plan_ungueltig), damit
--- die Antwort nichts verraet. p_einheit_key muss eine Einheit des Plans
--- sein, jeder key eine Position DIESER Einheit, jeder key hoechstens einmal
--- (sonst raete die Funktion, welcher Status gilt), und eine Ersatzuebung
--- muss existieren. Geprueft wird vor jedem Schreiben, damit eine
--- ungueltige Momentaufnahme nichts halb uebernimmt.
+-- Der Nutzer kommt nur aus auth.uid(). Fremd und unbekannt antworten gleich
+-- (plan_ungueltig), damit die Antwort nichts verraet. Reihenfolge:
 --
--- FOR UPDATE auf die Session serialisiert gleichzeitige PUTs derselben
--- Session: ohne die Sperre saehen zwei Aufrufe denselben alten plan_stand
--- und der aeltere koennte den neueren ueberschreiben. Ist p_stand nicht
--- groesser als plan_stand, passiert still nichts -- das ist der Normalfall
--- beim erneuten Senden, kein Fehler.
+-- 1. Session des Aufrufers, FOR UPDATE: serialisiert gleichzeitige PUTs
+--    derselben Session; ohne die Sperre saehen zwei Aufrufe denselben alten
+--    plan_stand und der aeltere koennte den neueren ueberschreiben.
+-- 2. Plan des Aufrufers im Studio DER SESSION und aktiv oder ersetzt. Ein
+--    Plan eines anderen Studios wuerde dort Einheiten gutschreiben, die hier
+--    trainiert wurden, und liesse das Loeschen jenes Studios am FK
+--    workout_sessions.plan_id scheitern. Vorschlag/verworfen war nie der
+--    Plan, nach dem trainiert wird; ersetzt muss gehen, weil ein dauerhafter
+--    Tausch (0062) waehrend der Einheit eine neue Version anlegt.
+-- 3. Ist die Session schon gebunden, muss die Einheit dieselbe sein, und ein
+--    anderer Plan nur eine NEUERE Version derselben Reihe (Nutzer + Studio
+--    sind durch 2. schon gleich) -- sonst stuenden Zeilen einer Einheit B an
+--    einer Session der Einheit A. Die Bindung selbst bleibt die erste.
+-- 4. Ist p_stand nicht groesser als plan_stand, passiert still nichts --
+--    vor der Schluesselpruefung, damit ein veraltetes erneutes Senden
+--    ignoriert wird statt zu scheitern.
+-- 5. Jeder key ist eine Position DIESER Einheit, hoechstens einmal (sonst
+--    raete die Funktion, welcher Status gilt); Status gueltig; getauscht nur
+--    mit Ersatzuebung, und eine Ersatzuebung muss existieren. Alles vor dem
+--    Schreiben, damit nichts halb uebernommen wird.
 create function public.record_session_plan(
   p_session_id  uuid,
   p_plan_id     uuid,
@@ -126,6 +136,7 @@ as $$
 declare
   v_user    uuid := auth.uid();
   v_session public.workout_sessions;
+  v_plan    public.training_plans;
   v_einheit jsonb;
   v_pos     jsonb;
   v_keys    text[];
@@ -146,12 +157,35 @@ begin
     raise exception 'plan_ungueltig' using errcode = 'P0001';
   end if;
 
+  select * into v_plan
+    from public.training_plans
+   where id = p_plan_id
+     and user_id = v_user
+     and studio_id = v_session.studio_id
+     and status in ('aktiv', 'ersetzt');
+  if not found then
+    raise exception 'plan_ungueltig' using errcode = 'P0001';
+  end if;
+
+  if v_session.plan_id is not null then
+    if p_einheit_key is distinct from v_session.plan_einheit_key then
+      raise exception 'plan_ungueltig' using errcode = 'P0001';
+    end if;
+    if p_plan_id <> v_session.plan_id and v_plan.version <= (
+      select version from public.training_plans where id = v_session.plan_id
+    ) then
+      raise exception 'plan_ungueltig' using errcode = 'P0001';
+    end if;
+  end if;
+
+  -- Monoton: eine aeltere oder gleiche Momentaufnahme aendert nichts.
+  if p_stand <= v_session.plan_stand then
+    return;
+  end if;
+
   select e.value into v_einheit
-    from public.training_plans tp,
-         jsonb_array_elements(tp.einheiten) e(value)
-   where tp.id = p_plan_id
-     and tp.user_id = v_user
-     and e.value ->> 'key' = p_einheit_key
+    from jsonb_array_elements(v_plan.einheiten) e(value)
+   where e.value ->> 'key' = p_einheit_key
    limit 1;
   if v_einheit is null then
     raise exception 'plan_ungueltig' using errcode = 'P0001';
@@ -177,6 +211,9 @@ begin
       end if;
     elsif coalesce(jsonb_typeof(v_pos -> 'exerciseId'), 'null') <> 'null' then
       raise exception 'plan_ungueltig' using errcode = 'P0001';
+    elsif (v_pos ->> 'status') = 'getauscht' then
+      -- Ein Tausch ohne Ersatzuebung sagt nicht, was trainiert wurde.
+      raise exception 'plan_ungueltig' using errcode = 'P0001';
     end if;
   end loop;
 
@@ -185,13 +222,7 @@ begin
     raise exception 'plan_ungueltig' using errcode = 'P0001';
   end if;
 
-  -- Monoton: eine aeltere oder gleiche Momentaufnahme aendert nichts.
-  if p_stand <= v_session.plan_stand then
-    return;
-  end if;
-
-  -- Die erste Bindung bleibt; ein spaeterer Rumpf mit anderer Einheit
-  -- verschiebt die Session nicht in eine andere Planeinheit.
+  -- Die erste Bindung bleibt (siehe 3.).
   update public.workout_sessions
      set plan_id          = coalesce(plan_id, p_plan_id),
          plan_einheit_key = coalesce(plan_einheit_key, p_einheit_key),

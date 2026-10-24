@@ -3,6 +3,7 @@ import {
   completeSessionInputSchema,
   recordSetInputSchema,
   REOPEN_FENSTER_MS,
+  sessionPlanSchema,
   wiederoeffnenEntscheidung,
 } from "./workout.js";
 
@@ -101,7 +102,7 @@ describe("recordSetInputSchema -- Station", () => {
   });
 });
 
-describe("recordSetInputSchema -- plan (0063)", () => {
+describe("sessionPlanSchema (0063)", () => {
   const plan = {
     planId: "55555555-5555-4555-8555-555555555555",
     einheitKey: "A",
@@ -113,24 +114,26 @@ describe("recordSetInputSchema -- plan (0063)", () => {
     ],
   };
 
-  it("nimmt eine Momentaufnahme an und laesst sie sonst weg wie eine alte App", () => {
-    const mit = recordSetInputSchema.safeParse({ ...basis, plan });
-    const ohne = recordSetInputSchema.safeParse(basis);
-    expect(mit.success && mit.data.plan?.positionen).toHaveLength(3);
-    expect(ohne.success && ohne.data.plan).toBeUndefined();
+  it("nimmt eine Momentaufnahme an", () => {
+    const r = sessionPlanSchema.safeParse(plan);
+    expect(r.success && r.data.positionen).toHaveLength(3);
   });
 
-  it("weist stand 0, unbekannten Status und kaputte Ersatzuebung ab", () => {
-    expect(recordSetInputSchema.safeParse({ ...basis, plan: { ...plan, stand: 0 } }).success).toBe(false);
-    expect(
-      recordSetInputSchema.safeParse({ ...basis, plan: { ...plan, positionen: [{ key: "A1", status: "fertig" }] } }).success,
-    ).toBe(false);
-    expect(
-      recordSetInputSchema.safeParse({
-        ...basis,
-        plan: { ...plan, positionen: [{ key: "A1", status: "getauscht", exerciseId: "x" }] },
-      }).success,
-    ).toBe(false);
+  it("weist stand 0, unbekannten Status, kaputte Ersatzuebung und Tausch ohne Uebung ab", () => {
+    const pos = (p: Record<string, unknown>) => ({ ...plan, positionen: [p] });
+    expect(sessionPlanSchema.safeParse({ ...plan, stand: 0 }).success).toBe(false);
+    expect(sessionPlanSchema.safeParse(pos({ key: "A1", status: "fertig" })).success).toBe(false);
+    expect(sessionPlanSchema.safeParse(pos({ key: "A1", status: "getauscht", exerciseId: "" })).success).toBe(false);
+    expect(sessionPlanSchema.safeParse(pos({ key: "A1", status: "getauscht" })).success).toBe(false);
+  });
+
+  // Ein kaputter Planteil darf den Satz nicht verwerfen; geprueft wird er erst
+  // nach dem Speichern (recordSet).
+  it("recordSetInputSchema laesst den Satz auch mit kaputtem Planteil durch", () => {
+    expect(recordSetInputSchema.safeParse({ ...basis, plan: { ...plan, stand: 0 } }).success).toBe(true);
+    expect(recordSetInputSchema.safeParse({ ...basis, plan: "unsinn" }).success).toBe(true);
+    const ohne = recordSetInputSchema.safeParse(basis);
+    expect(ohne.success && ohne.data.plan).toBeUndefined();
   });
 });
 

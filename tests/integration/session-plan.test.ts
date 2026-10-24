@@ -34,11 +34,11 @@ beforeAll(async () => {
 const einheit = () => plan.einheiten[0]!;
 const pos = (i: number) => einheit().positionen[i]!;
 
-function satz(sessionId: string, setId: string, rumpf: Record<string, unknown>) {
+function satz(sessionId: string, setId: string, rumpf: Record<string, unknown>, bearer = token) {
   return PUT(
     new Request("http://localhost/api/v1/workout-sessions/x/sets/y", {
       method: "PUT",
-      headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+      headers: { "content-type": "application/json", authorization: `Bearer ${bearer}` },
       body: JSON.stringify(rumpf),
     }),
     { params: Promise.resolve({ sessionId, setId }) },
@@ -79,6 +79,13 @@ async function satzDa(setId: string): Promise<boolean> {
   return data !== null;
 }
 
+async function uebernommen(antwort: Response): Promise<unknown> {
+  expect(antwort.status).toBe(200);
+  return ((await antwort.json()) as { planUebernommen?: boolean }).planUebernommen;
+}
+
+const LEER = { plan_id: null, plan_einheit_key: null, plan_stand: 0 };
+
 const sortiert = <T extends { position_key: string }>(z: T[]) =>
   [...z].sort((a, b) => a.position_key.localeCompare(b.position_key));
 
@@ -93,7 +100,7 @@ describe("Session und Planeinheit (0063)", () => {
         { key: pos(2).key, status: "getauscht", exerciseId: ersatz },
       ]),
     }));
-    expect(antwort.status).toBe(200);
+    expect(await uebernommen(antwort)).toBe(true);
     expect(await session(sessionId)).toEqual({ plan_id: plan.id, plan_einheit_key: einheit().key, plan_stand: 1 });
     expect(await status(sessionId)).toEqual(sortiert([
       { position_key: pos(0).key, status: "erledigt", exercise_id: null, user_id: ich.userId },
@@ -166,35 +173,36 @@ describe("Session und Planeinheit (0063)", () => {
     const antwort = await satz(sessionId, setId, rumpf({
       plan: planRumpf(1, [{ key: fremderPlan.einheiten[0]!.positionen[0]!.key, status: "erledigt" }], fremderPlan),
     }));
-    expect(antwort.status).toBe(422);
-    expect(((await antwort.json()) as { error: { code: string } }).error.code).toBe("validation_failed");
+    expect(await uebernommen(antwort)).toBe(false);
     expect(await satzDa(setId)).toBe(true);
-    expect(await session(sessionId)).toEqual({ plan_id: null, plan_einheit_key: null, plan_stand: 0 });
+    expect(await session(sessionId)).toEqual(LEER);
     expect(await status(sessionId)).toEqual([]);
   });
 
-  it("unbekannter positionKey: 422", async () => {
+  it("unbekannter positionKey: Satz bleibt, planUebernommen false", async () => {
     const sessionId = crypto.randomUUID();
-    const antwort = await satz(sessionId, crypto.randomUUID(), rumpf({
+    const setId = crypto.randomUUID();
+    const antwort = await satz(sessionId, setId, rumpf({
       plan: planRumpf(1, [{ key: pos(0).key, status: "erledigt" }, { key: "gibt-es-nicht", status: "offen" }]),
     }));
-    expect(antwort.status).toBe(422);
+    expect(await uebernommen(antwort)).toBe(false);
+    expect(await satzDa(setId)).toBe(true);
     expect(await status(sessionId)).toEqual([]);
     expect((await session(sessionId)).plan_stand).toBe(0);
   });
 
-  it("unbekannter einheitKey und unbekannte Ersatzuebung: 422", async () => {
+  it("unbekannter einheitKey und unbekannte Ersatzuebung: planUebernommen false", async () => {
     const sessionId = crypto.randomUUID();
     const ohneEinheit = await satz(sessionId, crypto.randomUUID(), rumpf({
       plan: { ...planRumpf(1, [{ key: pos(0).key, status: "erledigt" }]), einheitKey: "Z" },
     }));
-    expect(ohneEinheit.status).toBe(422);
+    expect(await uebernommen(ohneEinheit)).toBe(false);
     const ohneUebung = await satz(sessionId, crypto.randomUUID(), rumpf({
       setIndex: 2,
       plan: planRumpf(1, [{ key: pos(0).key, status: "getauscht", exerciseId: crypto.randomUUID() }]),
     }));
-    expect(ohneUebung.status).toBe(422);
-    expect(await session(sessionId)).toEqual({ plan_id: null, plan_einheit_key: null, plan_stand: 0 });
+    expect(await uebernommen(ohneUebung)).toBe(false);
+    expect(await session(sessionId)).toEqual(LEER);
   });
 
   it("Session loeschen entfernt die Statuszeilen", async () => {
@@ -253,5 +261,120 @@ describe("Session und Planeinheit (0063)", () => {
     }));
     expect(antwort.status).toBe(200);
     expect((await status(sessionId))[0]).toMatchObject({ status: "getauscht", exercise_id: ersatz });
+  });
+
+  // Kontrollentscheid: ein kaputter Planteil verwirft nie den Satz.
+  it("formal kaputter Planteil: Satz gespeichert, planUebernommen false", async () => {
+    const faelle = [
+      planRumpf(0, [{ key: pos(0).key, status: "erledigt" }]),
+      planRumpf(1, [{ key: pos(0).key, status: "fertig" }]),
+      planRumpf(1, [{ key: pos(0).key, status: "getauscht", exerciseId: "" }]),
+      planRumpf(1, [{ key: pos(0).key, status: "getauscht" }]),
+    ];
+    for (const kaputt of faelle) {
+      const sessionId = crypto.randomUUID();
+      const setId = crypto.randomUUID();
+      expect(await uebernommen(await satz(sessionId, setId, rumpf({ plan: kaputt })))).toBe(false);
+      expect(await satzDa(setId)).toBe(true);
+      expect(await session(sessionId)).toEqual(LEER);
+    }
+  });
+
+  it("getauscht ohne Ersatzuebung lehnt auch die Funktion selbst ab", async () => {
+    const sessionId = crypto.randomUUID();
+    await satz(sessionId, crypto.randomUUID(), rumpf());
+    const { error } = await ich.client.rpc("record_session_plan", {
+      p_session_id: sessionId,
+      p_plan_id: plan.id,
+      p_einheit_key: einheit().key,
+      p_stand: 1,
+      p_positionen: [{ key: pos(0).key, status: "getauscht", exerciseId: null }],
+    });
+    expect(error?.message).toBe("plan_ungueltig");
+    expect(await session(sessionId)).toEqual(LEER);
+  });
+
+  it("Plan eines anderen Studios wird abgelehnt, auch nach der Bindung", async () => {
+    const m = await legeMitgliedAn("sess-plan-zwei", { studios: [s.voll, s.voll2] });
+    const t = await accessTokenFor(m.email);
+    const hier = await acceptPlan(m.client, m.userId, (await erzeugePlanVorschlag(m.client, m.userId, s.voll)).id);
+    const dort = await acceptPlan(m.client, m.userId, (await erzeugePlanVorschlag(m.client, m.userId, s.voll2)).id);
+    const r = (p: TrainingPlan, stand: number, setIndex: number) => ({
+      machineId: hier.einheiten[0]!.positionen[0]!.machineId,
+      exerciseId: hier.einheiten[0]!.positionen[0]!.exerciseId,
+      setIndex, load: 80, volume: 10,
+      plan: planRumpf(stand, [{ key: p.einheiten[0]!.positionen[0]!.key, status: "erledigt" }], p),
+    });
+    const ungebunden = crypto.randomUUID();
+    const setId = crypto.randomUUID();
+    expect(await uebernommen(await satz(ungebunden, setId, r(dort, 1, 1), t))).toBe(false);
+    expect(await satzDa(setId)).toBe(true);
+    expect(await session(ungebunden)).toEqual(LEER);
+
+    const gebunden = crypto.randomUUID();
+    expect(await uebernommen(await satz(gebunden, crypto.randomUUID(), r(hier, 1, 1), t))).toBe(true);
+    expect(await uebernommen(await satz(gebunden, crypto.randomUUID(), r(dort, 2, 2), t))).toBe(false);
+    expect(await session(gebunden)).toEqual({ plan_id: hier.id, plan_einheit_key: hier.einheiten[0]!.key, plan_stand: 1 });
+  });
+
+  it("Vorschlag (nicht angenommen) wird abgelehnt", async () => {
+    const m = await legeMitgliedAn("sess-plan-vorschlag", { studios: [s.voll] });
+    const vorschlag = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    const sessionId = crypto.randomUUID();
+    const setId = crypto.randomUUID();
+    const antwort = await satz(sessionId, setId, {
+      machineId: vorschlag.einheiten[0]!.positionen[0]!.machineId,
+      exerciseId: vorschlag.einheiten[0]!.positionen[0]!.exerciseId,
+      setIndex: 1, load: 80, volume: 10,
+      plan: planRumpf(1, [{ key: vorschlag.einheiten[0]!.positionen[0]!.key, status: "erledigt" }], vorschlag),
+    }, await accessTokenFor(m.email));
+    expect(await uebernommen(antwort)).toBe(false);
+    expect(await satzDa(setId)).toBe(true);
+    expect(await session(sessionId)).toEqual(LEER);
+  });
+
+  it("nach der Bindung: andere Einheit abgelehnt, neuere Version derselben Reihe angenommen", async () => {
+    const m = await legeMitgliedAn("sess-plan-reihe", { studios: [s.voll] });
+    const t = await accessTokenFor(m.email);
+    const v1 = await acceptPlan(m.client, m.userId, (await erzeugePlanVorschlag(m.client, m.userId, s.voll)).id);
+    expect(v1.einheiten.length).toBeGreaterThan(1);
+    const [a, b] = v1.einheiten as [TrainingPlan["einheiten"][number], TrainingPlan["einheiten"][number]];
+    const r = (p: TrainingPlan, einheitKey: string, key: string, stand: number, setIndex: number) => ({
+      machineId: a.positionen[0]!.machineId,
+      exerciseId: a.positionen[0]!.exerciseId,
+      setIndex, load: 80, volume: 10,
+      plan: { planId: p.id, einheitKey, stand, positionen: [{ key, status: "erledigt" }] },
+    });
+    const sessionId = crypto.randomUUID();
+    expect(await uebernommen(await satz(sessionId, crypto.randomUUID(), r(v1, a.key, a.positionen[0]!.key, 1, 1), t))).toBe(true);
+    // Zeilen der Einheit B an einer Session der Einheit A: abgelehnt.
+    expect(await uebernommen(await satz(sessionId, crypto.randomUUID(), r(v1, b.key, b.positionen[0]!.key, 2, 2), t))).toBe(false);
+    expect((await status(sessionId)).map((z) => z.position_key)).toEqual([a.positionen[0]!.key]);
+
+    // Neue Version derselben Reihe (wie nach einem dauerhaften Tausch): angenommen, Bindung bleibt.
+    const v2 = await acceptPlan(m.client, m.userId, (await erzeugePlanVorschlag(m.client, m.userId, s.voll)).id);
+    expect(v2.version).toBeGreaterThan(v1.version);
+    const a2 = v2.einheiten.find((e) => e.key === a.key)!;
+    expect(await uebernommen(await satz(sessionId, crypto.randomUUID(), r(v2, a.key, a2.positionen[1]!.key, 3, 3), t))).toBe(true);
+    expect(await session(sessionId)).toEqual({ plan_id: v1.id, plan_einheit_key: a.key, plan_stand: 3 });
+    expect((await status(sessionId)).map((z) => z.position_key)).toEqual([a2.positionen[1]!.key]);
+
+    // Eine aeltere Version nach einer neueren ist keine Fortsetzung der Reihe.
+    const andere = crypto.randomUUID();
+    expect(await uebernommen(await satz(andere, crypto.randomUUID(), r(v2, a.key, a2.positionen[0]!.key, 1, 1), t))).toBe(true);
+    expect(await uebernommen(await satz(andere, crypto.randomUUID(), r(v1, a.key, a.positionen[0]!.key, 2, 2), t))).toBe(false);
+  });
+
+  it("veraltetes erneutes Senden wird ignoriert statt abgelehnt", async () => {
+    const sessionId = crypto.randomUUID();
+    expect(await uebernommen(
+      await satz(sessionId, crypto.randomUUID(), rumpf({ plan: planRumpf(3, [{ key: pos(0).key, status: "erledigt" }]) })),
+    )).toBe(true);
+    const antwort = await satz(sessionId, crypto.randomUUID(), rumpf({
+      setIndex: 2,
+      plan: planRumpf(2, [{ key: "gibt-es-nicht", status: "offen" }]),
+    }));
+    expect(await uebernommen(antwort)).toBe(true);
+    expect((await status(sessionId)).map((z) => [z.position_key, z.status])).toEqual([[pos(0).key, "erledigt"]]);
   });
 });

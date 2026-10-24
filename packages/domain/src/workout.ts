@@ -88,7 +88,8 @@ export type PlanPositionStatus = z.infer<typeof planPositionStatusSchema>;
  * der Server uebernimmt nur einen hoeheren als den gespeicherten, weil die
  * App aeltere Rumpfe erneut sendet. `exerciseId` ist die Ersatzuebung der
  * Position, null ohne Tausch. Was davon zum Plan passt, prueft erst
- * record_session_plan.
+ * record_session_plan. Geparst wird erst NACH dem Satz (siehe recordSet),
+ * damit ein kaputter Planteil nie einen Satz verwirft.
  */
 export const sessionPlanSchema = z.object({
   planId: z.string().uuid(),
@@ -99,7 +100,9 @@ export const sessionPlanSchema = z.object({
       key: z.string().min(1),
       status: planPositionStatusSchema,
       exerciseId: z.string().uuid().nullish(),
-    }),
+    })
+    // Ein Tausch ohne Ersatzuebung sagt nicht, was trainiert wurde.
+    .refine((p) => p.status !== "getauscht" || !!p.exerciseId, { path: ["exerciseId"] }),
   ).max(100),
 });
 export type SessionPlan = z.infer<typeof sessionPlanSchema>;
@@ -137,7 +140,9 @@ export const recordSetInputSchema = z.preprocess(
     // Schnitt 4). Nur beim Anlegen der Session uebernommen, siehe recordSet.
     sessionStartedAt: z.string().datetime().optional(),
     // Alte App-Versionen senden kein plan; ihr Satz laeuft wie bisher.
-    plan: sessionPlanSchema.optional(),
+    // Bewusst ungeprueft: ein formal kaputter Planteil darf den Satz nicht
+    // ablehnen -- recordSet prueft ihn erst nach dem Speichern.
+    plan: z.unknown().optional(),
   })
   .refine((value) => (value.machineId === undefined) !== (value.equipmentModelId === undefined), {
     path: ["machineId"],
@@ -189,6 +194,11 @@ export type RecordedSet = {
   /** Zaehlerstand beim Sichern; null bei 'eingegeben'. */
   volumeCounted: number | null;
   performedAt: string;
+  /**
+   * Nur wenn der PUT einen Planteil trug: ob der Server ihn angenommen hat.
+   * false heisst: Satz gespeichert, Planstand passte nicht (Migration 0063).
+   */
+  planUebernommen?: boolean;
 };
 
 type SetRow = CardioZeile & {
@@ -504,27 +514,34 @@ export async function recordSet(
     );
   }
 
-  // Erst nach dem Satz: scheitert die Momentaufnahme, bleibt der Satz
-  // gespeichert -- er ist die eigentliche Leistung, der Planstatus nur eine
-  // Ableitung, die der naechste PUT mit hoeherem stand nachholt. 422 statt
-  // 500, damit die Warteschlange der App den Satz nicht ewig wiederholt.
-  if (input.plan) {
-    const { error: planError } = await client.rpc("record_session_plan", {
-      p_session_id: input.sessionId,
-      p_plan_id: input.plan.planId,
-      p_einheit_key: input.plan.einheitKey,
-      p_stand: input.plan.stand,
-      p_positionen: input.plan.positionen.map((p) => ({
-        key: p.key,
-        status: p.status,
-        exerciseId: p.exerciseId ?? null,
-      })),
-    });
-    if (planError) {
-      throw new DomainError("validation_failed", "Der Planstand passt nicht zur Einheit.");
-    }
-  }
-  return toRecordedSet(row);
+  const satz = toRecordedSet(row);
+  if (input.plan === undefined) return satz;
+  return { ...satz, planUebernommen: await planUebernehmen(client, input.sessionId, input.plan) };
+}
+
+/**
+ * Uebernimmt den Planteil eines Satz-PUT -- erst nach dem Satz, denn der
+ * Satz ist die eigentliche Leistung, der Planstatus nur eine Ableitung, die
+ * der naechste PUT mit hoeherem stand nachholt. Ein Planteil, der nicht passt
+ * (Form oder plan_ungueltig), ergibt false statt eines Fehlers: ein 4xx liesse
+ * die App einen gespeicherten Satz fuer verloren halten. Jeder andere Fehler
+ * ist voruebergehend (Sperre, Verbindung) und wird internal -- die
+ * Warteschlange wiederholt den PUT, und der ist idempotent.
+ */
+async function planUebernehmen(client: SupabaseClient, sessionId: string, roh: unknown): Promise<boolean> {
+  const parsed = sessionPlanSchema.safeParse(roh);
+  if (!parsed.success) return false;
+  const plan = parsed.data;
+  const { error } = await client.rpc("record_session_plan", {
+    p_session_id: sessionId,
+    p_plan_id: plan.planId,
+    p_einheit_key: plan.einheitKey,
+    p_stand: plan.stand,
+    p_positionen: plan.positionen.map((p) => ({ key: p.key, status: p.status, exerciseId: p.exerciseId ?? null })),
+  });
+  if (!error) return true;
+  if (error.code === "P0001" && error.message === "plan_ungueltig") return false;
+  throw new DomainError("internal", "Der Planstand konnte nicht gespeichert werden.");
 }
 
 export const completeSessionInputSchema = z.object({
