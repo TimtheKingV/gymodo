@@ -7,7 +7,8 @@ const req = (method: string, auth?: string, rumpf?: unknown): Request =>
   new Request(URL_, {
     method,
     headers: auth ? { authorization: `Bearer ${auth}` } : {},
-    body: rumpf === undefined ? undefined : JSON.stringify(rumpf),
+    // exactOptionalPropertyTypes: ein fehlender Body darf nicht als undefined uebergeben werden
+    ...(rumpf === undefined ? {} : { body: JSON.stringify(rumpf) }),
   });
 
 async function bearerFuer(prefix: string): Promise<string> {
