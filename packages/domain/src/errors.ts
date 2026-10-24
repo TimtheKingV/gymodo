@@ -15,13 +15,14 @@ export type DomainErrorCode =
   | "not_found"
   | "conflict"
   | "plan_nicht_moeglich"
+  | "profil_unvollstaendig"
   | "internal";
 
 export class DomainError extends Error {
   readonly code: DomainErrorCode;
   /**
    * Optionale, maschinenlesbare Feinheit unter dem stabilen Code (etwa
-   * `{ code: "profil_unvollstaendig" }`). Die App braucht sie, um gezielt zu
+   * `{ fehlt: ["tage"] }` bei profil_unvollstaendig). Die App braucht sie, um gezielt zu
    * reagieren, ohne die Meldung zu parsen; nie fremde Daten hineinlegen.
    */
   readonly detail?: Record<string, unknown>;

@@ -117,23 +117,24 @@ describe("erzeugePlanVorschlag", () => {
   it("ohne Trainingsprofil: profil_unvollstaendig", async () => {
     const m = await legeMitgliedAn("plan-kein-tp", { studios: [s.voll], profil: null });
     const e = await fehlerVon(erzeugePlanVorschlag(m.client, m.userId, s.voll));
-    expect(e.code).toBe("validation_failed");
+    expect(e.code).toBe("profil_unvollstaendig");
     expect(e.message).toContain("profil_unvollstaendig");
-    expect(e.detail).toMatchObject({ code: "profil_unvollstaendig" });
+    expect(e.detail).toEqual({ fehlt: ["trainingsprofil"] });
     expect(await zeilen(m.userId, s.voll)).toEqual([]);
   });
 
   it("ohne weekly_days: profil_unvollstaendig", async () => {
     const m = await legeMitgliedAn("plan-keine-tage", { studios: [s.voll], weeklyDays: null });
     const e = await fehlerVon(erzeugePlanVorschlag(m.client, m.userId, s.voll));
-    expect(e.code).toBe("validation_failed");
-    expect(e.detail).toMatchObject({ code: "profil_unvollstaendig" });
+    expect(e.code).toBe("profil_unvollstaendig");
+    expect(e.detail).toEqual({ fehlt: ["tage"] });
   });
 
   it("ohne training_goal: profil_unvollstaendig", async () => {
     const m = await legeMitgliedAn("plan-kein-ziel", { studios: [s.voll], trainingGoal: null });
     const e = await fehlerVon(erzeugePlanVorschlag(m.client, m.userId, s.voll));
-    expect(e.detail).toMatchObject({ code: "profil_unvollstaendig" });
+    expect(e.code).toBe("profil_unvollstaendig");
+    expect(e.detail).toEqual({ fehlt: ["ziel"] });
   });
 
   it("weekly_days 7 plant wie 6", async () => {

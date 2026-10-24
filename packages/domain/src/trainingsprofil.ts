@@ -27,7 +27,7 @@ const profilSchema = z.object({
     .refine((f) => new Set(f).size === f.length, "Ein Fokusbereich nur einmal."),
 });
 
-// strictObject: ein unbekannter Bereich ist ein Fehler, kein stilles Verwerfen;
+// .strict(): ein unbekannter Bereich ist ein Fehler, kein stilles Verwerfen;
 // Gesundheitsdaten sollen nur exakt die erlaubten Schluessel enthalten.
 const limitsSchema = z.object({
   einwilligung: z.literal(true, { message: "Ohne ausdrueckliche Einwilligung keine Beschwerden." }),
@@ -92,7 +92,10 @@ export async function getTrainingLimits(client: SupabaseClient, userId: string):
   return { consentAt: data.consent_at, areas: data.areas };
 }
 
-/** consent_at kommt immer von `now`, nie aus der Eingabe. */
+/**
+ * consent_at kommt immer von `now`, nie aus der Eingabe. Jedes PUT erneuert die Einwilligung
+ * bewusst: wer Beschwerden aendert, bestaetigt sie mit genau diesem Stand neu.
+ */
 export async function saveTrainingLimits(
   client: SupabaseClient,
   userId: string,

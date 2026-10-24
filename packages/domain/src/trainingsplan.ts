@@ -6,6 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { DomainError } from "./errors.js";
 import { aktiveZiele } from "./goals.js";
 import type { GeneratorEingabe, PlanEinheit } from "./trainingsplan-generator.js";
+import type { Struktur } from "./trainingsplan-regeln.js";
 import { generierePlan } from "./trainingsplan-generator.js";
 import { ladeKandidaten } from "./trainingsplan-kandidaten.js";
 import { zielAusTrainingGoal } from "./trainingsplan-regeln.js";
@@ -31,7 +32,7 @@ export type TrainingPlan = {
   status: PlanStatus;
   regelVersion: string;
   eingabe: PlanEingabe;
-  struktur: string;
+  struktur: Struktur["key"];
   einheiten: PlanEinheit[];
   gruende: string[];
   createdAt: string;
@@ -45,7 +46,7 @@ type PlanZeile = {
   status: PlanStatus;
   regel_version: string;
   eingabe: PlanEingabe;
-  struktur: string;
+  struktur: Struktur["key"];
   einheiten: PlanEinheit[];
   gruende: string[];
   created_at: string;
@@ -117,10 +118,12 @@ export async function erzeugePlanVorschlag(
   );
   if (!ziel || tage === null || !profil) {
     // Der Code steht auch in der Meldung, damit Logs ohne detail lesbar bleiben.
+    // Eigener Code statt validation_failed, damit die App gezielt ins Profil leiten kann;
+    // detail.fehlt sagt, welche Angaben fehlen.
     throw new DomainError(
-      "validation_failed",
+      "profil_unvollstaendig",
       "Für einen Plan fehlen noch Angaben im Profil (profil_unvollstaendig).",
-      { code: "profil_unvollstaendig", fehlt },
+      { fehlt },
     );
   }
 

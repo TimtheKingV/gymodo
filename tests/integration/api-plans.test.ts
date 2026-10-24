@@ -82,8 +82,8 @@ describe("/me/plans", () => {
     const antwort = await post(await accessTokenFor(m.email), { studioId: s.voll });
     expect(antwort.status).toBe(422);
     const body = (await antwort.json()) as Fehler;
-    expect(body.error.code).toBe("validation_failed");
-    expect(body.error.detail).toMatchObject({ code: "profil_unvollstaendig" });
+    expect(body.error.code).toBe("profil_unvollstaendig");
+    expect(body.error.detail).toEqual({ fehlt: ["trainingsprofil"] });
   });
 
   it("422 plan_nicht_moeglich traegt code, baustein und grund", async () => {
