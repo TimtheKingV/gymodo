@@ -16,6 +16,9 @@ protocol ProfilSchreibend: Sendable {
     func putTrainingProfile(_ profil: TrainingsplanProfil) async throws(APIError) -> TrainingsplanProfil
     func putTrainingLimits(areas: [String: String]) async throws(APIError)
     func deleteTrainingLimits() async throws(APIError)
+    /// Fuer das Beschwerden-Sheet im Profil: ohne gelungenen Abruf kein
+    /// Speichern (`BeschwerdenSitzung`). nil = 404, keine Einwilligung.
+    func trainingLimits() async throws(APIError) -> [String: String]?
 }
 
 extension APIClient: ProfilSchreibend {}

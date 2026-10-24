@@ -130,6 +130,13 @@ enum OnboardingHinweis {
         }
     }
 
+    /// Der Bannertext, wenn das Beschwerden-Sheet im Profil den gespeicherten
+    /// Stand nicht laden kann. Ohne ihn darf nichts gespeichert werden.
+    static func beschwerdenLadefehler(_ fehler: APIError) -> String {
+        let satz1 = fehler == .offline ? "Keine Verbindung." : fehler.servertext
+        return "\(satz1) Deine gespeicherten Angaben lassen sich gerade nicht laden, deshalb ist Speichern noch gesperrt."
+    }
+
     /// Der Bannertext, wenn Vorschlag oder Uebernahme an Netz oder Server
     /// scheitern. Nie "fehlgeschlagen" (designsystem.md SS10).
     static func planFehler(_ fehler: APIError, beimUebernehmen: Bool) -> String {

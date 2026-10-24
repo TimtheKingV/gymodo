@@ -68,14 +68,22 @@ struct OnboardingFlow: View {
     }
 
     var body: some View {
-        NavigationStack(path: $pfad) {
-            schrittAnsicht(index: 0)
-                .navigationDestination(for: Int.self) { index in
-                    schrittAnsicht(index: index)
-                }
+        if umfang == .nurBeschwerden {
+            // Eigener Ablauf: dort MUSS der Abruf der Beschwerden gelingen,
+            // bevor gespeichert werden darf (siehe `BeschwerdenSitzung`) --
+            // hier im Flow heisst ein gescheiterter Abruf nur "keine
+            // Einwilligung bekannt".
+            BeschwerdenSheet(apiClient: apiClient, beiFertig: beiFertig)
+        } else {
+            NavigationStack(path: $pfad) {
+                schrittAnsicht(index: 0)
+                    .navigationDestination(for: Int.self) { index in
+                        schrittAnsicht(index: index)
+                    }
+            }
+            .tint(DesignSystem.Color.accent)
+            .task { await planVorbelegen() }
         }
-        .tint(DesignSystem.Color.accent)
-        .task { await planVorbelegen() }
     }
 
     // MARK: - Eine Schrittansicht
@@ -126,7 +134,7 @@ struct OnboardingFlow: View {
                 : (kannWeiter ? nil : "Erst die Einwilligung bestätigen — oder überspringen."),
             spaeterEnabled: !schreibtGerade,
             bereich: schritt.gehoertZumPlan ? "Dein Trainingsplan" : nil,
-            spaeterTitel: schritt != .planBeschwerden ? "Später" : (umfang == .nurBeschwerden ? "Abbrechen" : "Überspringen"),
+            spaeterTitel: schritt == .planBeschwerden ? "Überspringen" : "Später",
             beiSpaeter: {
                 Task {
                     if schritt == .planBeschwerden {
@@ -172,8 +180,6 @@ struct OnboardingFlow: View {
 
     private func primaryTitle(istLetzter: Bool) -> String {
         guard case .teilweise = ergebnis else {
-            // Aus dem Profil geht es um eine Einstellung, nicht um einen Start.
-            if umfang == .nurBeschwerden { return "Speichern" }
             return istLetzter ? "Los geht’s" : "Weiter"
         }
         return "Erneut versuchen"
@@ -264,11 +270,6 @@ struct OnboardingFlow: View {
             // kann das Mitglied auf 1.1-1.3 weiter waehlen, und beide sind
             // idempotente Aufrufe (PUT/DELETE).
             offen = offenNachFehler + [.trainingsprofil, .beschwerden]
-        }
-        // Die Profilzeile "Beschwerden" schreibt nur die Beschwerden, auch
-        // wenn das vorbelegte Trainingsprofil eine Antwort traegt.
-        if let nur = OnboardingSchreiber.vorgaenge(umfang: umfang) {
-            offen = nur
         }
         let neuesErgebnis = await OnboardingSchreiber.schreiben(
             antworten, plan: plan, mit: apiClient, mitAbschluss: !alsSheet, offen: offen

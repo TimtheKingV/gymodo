@@ -83,6 +83,89 @@ actor FakeProfilSchreibend: ProfilSchreibend {
         aufrufe.append("deleteTrainingLimits")
         if fehlerBei.contains("deleteTrainingLimits") { throw .offline }
     }
+
+    /// Was GET training-limits liefert; nil = 404 (keine Einwilligung).
+    private var gespeicherteBeschwerden: [String: String]?
+    func setzeGespeicherteBeschwerden(_ areas: [String: String]?) { gespeicherteBeschwerden = areas }
+
+    func trainingLimits() async throws(APIError) -> [String: String]? {
+        aufrufe.append("trainingLimits")
+        if fehlerBei.contains("trainingLimits") { throw .offline }
+        return gespeicherteBeschwerden
+    }
+}
+
+/// Das Beschwerden-Sheet aus dem Profil (Review Task 10, Runde 2): ohne
+/// gelungenen Abruf darf nichts gespeichert werden -- sonst saehe ein
+/// gescheiterter Abruf wie "keine Einwilligung" aus, und "Speichern" schloesse
+/// das Sheet wie nach einem Widerruf, ohne dass einer passiert ist.
+@MainActor
+@Suite("BeschwerdenSitzung")
+struct BeschwerdenSitzungTests {
+    @Test("Abruf scheitert: Speichern unmoeglich, nichts geschrieben; nach Erneut versuchen gilt der gespeicherte Stand, Haken weg sendet DELETE")
+    func abrufScheitertDannWiderruf() async {
+        let fake = FakeProfilSchreibend()
+        await fake.setzeGespeicherteBeschwerden(["knie": "meiden"])
+        await fake.lassFehlschlagen("trainingLimits")
+        let sitzung = BeschwerdenSitzung(client: fake)
+
+        await sitzung.vorbelegen()
+        #expect(sitzung.laden == .fehler(.offline))
+        #expect(!sitzung.kannSpeichern)
+        #expect(await sitzung.speichern() == false)
+        #expect(await fake.aufrufe == ["trainingLimits"])
+
+        await fake.lassGelingen("trainingLimits")
+        await sitzung.vorbelegen()
+        #expect(sitzung.laden == .geladen)
+        #expect(sitzung.plan.einwilligung)
+        #expect(sitzung.plan.beschwerden == ["knie": "meiden"])
+
+        // Die ganze Kette wie im Sheet: Haken weg -> Speichern -> DELETE.
+        sitzung.plan.einwilligung = false
+        #expect(sitzung.kannSpeichern)
+        #expect(await sitzung.speichern())
+        #expect(await fake.aufrufe == ["trainingLimits", "trainingLimits", "deleteTrainingLimits"])
+    }
+
+    @Test("Abruf 404 (keine Einwilligung) ist ein Erfolg: mit Haken und Bereich geht ein PUT raus")
+    func keineEinwilligungDannPut() async {
+        let fake = FakeProfilSchreibend()
+        let sitzung = BeschwerdenSitzung(client: fake)
+        await sitzung.vorbelegen()
+        #expect(sitzung.laden == .geladen)
+        #expect(!sitzung.plan.einwilligung)
+
+        sitzung.plan.setzeStufe("vorsichtig", fuer: "huefte")
+        #expect(!sitzung.kannSpeichern)
+        sitzung.plan.einwilligung = true
+        #expect(await sitzung.speichern())
+        #expect(await fake.aufrufe == ["trainingLimits", "putTrainingLimits"])
+        #expect(await fake.beschwerden == [["huefte": "vorsichtig"]])
+    }
+
+    @Test("Abbrechen sendet nichts -- auch nicht nach einer Aenderung")
+    func abbrechenSendetNichts() async {
+        let fake = FakeProfilSchreibend()
+        await fake.setzeGespeicherteBeschwerden(["knie": "meiden"])
+        let sitzung = BeschwerdenSitzung(client: fake)
+        await sitzung.vorbelegen()
+        sitzung.plan.einwilligung = false
+        sitzung.abbrechen()
+        #expect(await fake.aufrufe == ["trainingLimits"])
+    }
+
+    @Test("scheitert das Speichern, bleibt das Sheet mit Fehler offen")
+    func speichernScheitert() async {
+        let fake = FakeProfilSchreibend()
+        await fake.setzeGespeicherteBeschwerden(["knie": "meiden"])
+        await fake.lassFehlschlagen("deleteTrainingLimits")
+        let sitzung = BeschwerdenSitzung(client: fake)
+        await sitzung.vorbelegen()
+        sitzung.plan.einwilligung = false
+        #expect(await sitzung.speichern() == false)
+        #expect(sitzung.schreibFehler == .offline)
+    }
 }
 
 /// Der Block "Dein Trainingsplan" (Etappe 3, Task 10): Trainingsprofil und
