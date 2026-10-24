@@ -58,22 +58,49 @@ struct TrainingsplanAblaufTests {
         let zaehlFaelle: [ZaehlFall]
     }
 
-    /// Leer statt Absturz, falls die Ressource fehlt: der Waechtertest meldet das dann klar.
-    static let fixture: Fixture? = {
-        guard let url = Bundle(for: Marker.self).url(forResource: "plan-ablauf", withExtension: "json"),
-              let data = try? Data(contentsOf: url) else { return nil }
-        return try? JSONDecoder().decode(Fixture.self, from: data)
+    /// Warum die Fixture nicht da ist -- mit dem Text des Dekodierfehlers, damit
+    /// ein neues Pflichtfeld nicht wie eine fehlende Datei aussieht.
+    enum FixtureFehler: Error, Sendable, CustomStringConvertible {
+        case fehltImBundle
+        case nichtLesbar(String)
+
+        var description: String {
+            switch self {
+            case .fehltImBundle: "plan-ablauf.json fehlt im Test-Bundle"
+            case .nichtLesbar(let grund): "plan-ablauf.json ist nicht dekodierbar: \(grund)"
+            }
+        }
+    }
+
+    /// Ein Result statt Absturz: die parametrisierten Tests bekommen dann
+    /// leere Listen, und der Waechtertest meldet den Fehler selbst.
+    static let fixture: Result<Fixture, FixtureFehler> = {
+        guard let url = Bundle(for: Marker.self).url(forResource: "plan-ablauf", withExtension: "json") else {
+            return .failure(.fehltImBundle)
+        }
+        do {
+            let data = try Data(contentsOf: url)
+            return .success(try JSONDecoder().decode(Fixture.self, from: data))
+        } catch {
+            return .failure(.nichtLesbar(String(describing: error)))
+        }
     }()
 
-    static var statusFaelle: [StatusFall] { fixture?.statusFaelle ?? [] }
-    static var folgeFaelle: [FolgeFall] { fixture?.folgeFaelle ?? [] }
-    static var zaehlFaelle: [ZaehlFall] { fixture?.zaehlFaelle ?? [] }
+    static var statusFaelle: [StatusFall] { (try? fixture.get())?.statusFaelle ?? [] }
+    static var folgeFaelle: [FolgeFall] { (try? fixture.get())?.folgeFaelle ?? [] }
+    static var zaehlFaelle: [ZaehlFall] { (try? fixture.get())?.zaehlFaelle ?? [] }
 
-    @Test func fixtureIstImBundleUndHatMindestensSoVieleFaelleWieDerTypeScriptTest() {
-        #expect(Self.fixture != nil, "plan-ablauf.json fehlt im Test-Bundle oder ist nicht dekodierbar")
-        #expect(Self.statusFaelle.count >= 12)
-        #expect(Self.folgeFaelle.count >= 6)
-        #expect(Self.zaehlFaelle.count >= 3)
+    /// Die Zahlen sind der Stand der Fixture (Etappe 3): weniger hiesse, Faelle
+    /// fielen still weg. Die Sonderpfade (schritte statt erst Tausche, dann
+    /// Saetze; erwartetUngeplant) muessen abgedeckt bleiben, sonst prueft der
+    /// Test sie nicht mehr.
+    @Test func fixtureIstImBundleUndHatMindestensSoVieleFaelleWieDerTypeScriptTest() throws {
+        let f = try Self.fixture.get()
+        #expect(f.statusFaelle.count >= 19)
+        #expect(f.folgeFaelle.count >= 9)
+        #expect(f.zaehlFaelle.count >= 3)
+        #expect(f.statusFaelle.filter { $0.schritte != nil }.count >= 1, "kein statusFall mit schritte")
+        #expect(f.statusFaelle.filter { $0.erwartetUngeplant != nil }.count >= 8, "zu wenige statusFaelle mit erwartetUngeplant")
     }
 
     @Test(arguments: statusFaelle)
