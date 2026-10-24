@@ -308,3 +308,4 @@ export type {
   PlanEinheit,
   PlanPosition,
 } from "./trainingsplan-generator.js";
+export { ladeKandidaten } from "./trainingsplan-kandidaten.js";
