@@ -83,24 +83,43 @@ describe("erzeugePlanVorschlag", () => {
     expect(positionen(plan).some((p) => s.knieUebungen.includes(p.exerciseId))).toBe(false);
   });
 
-  it("Beschwerden landen nicht in der Planzeile; Widerruf aendert bestehende Plaene nicht", async () => {
+  it("Beschwerden landen nicht in der Planzeile; Widerruf entfernt Hinweise, Uebungen bleiben", async () => {
     const m = await legeMitgliedAn("plan-dsgvo", { studios: [s.voll] });
-    await saveTrainingLimits(m.client, m.userId, { einwilligung: true, areas: { knie: "meiden" } }, new Date());
+    await saveTrainingLimits(
+      m.client, m.userId, { einwilligung: true, areas: { knie: "meiden", schulter: "vorsichtig" } }, new Date(),
+    );
     const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    expect(plan.gruende).toEqual(expect.arrayContaining(["beschwerden_meiden", "beschwerden_vorsichtig"]));
+    await acceptPlan(m.client, m.userId, plan.id);
+    const zweiter = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
     await deleteTrainingLimits(m.client, m.userId);
+
+    // Art. 9 DSGVO: nach dem Widerruf darf keine Planzeile mehr verraten, dass es Beschwerden gab.
+    const { data: alle, error: fehlerAlle } = await admin
+      .from("training_plans").select("id, eingabe, gruende").eq("user_id", m.userId);
+    if (fehlerAlle) throw fehlerAlle;
+    expect(alle).toHaveLength(2);
+    for (const z of alle!) {
+      expect(z.eingabe).toMatchObject({ beschwerdenBeruecksichtigt: false });
+      expect((z.gruende as string[]).some((g) => g.startsWith("beschwerden_"))).toBe(false);
+    }
+    const [neu] = await listPlaene(m.client, m.userId, s.voll);
+    expect(neu!.id).toBe(zweiter.id);
+    expect(neu!.gruende).toEqual(zweiter.gruende.filter((g) => !g.startsWith("beschwerden_")));
 
     const { data, error } = await admin.from("training_plans").select("eingabe, einheiten").eq("id", plan.id).single();
     if (error) throw error;
     const roh = JSON.stringify(data.eingabe);
     expect(data.eingabe).not.toHaveProperty("beschwerden");
-    expect(data.eingabe).toMatchObject({ beschwerdenBeruecksichtigt: true });
     for (const bereich of ["knie", "huefte", "unterer_ruecken", "schulter", "ellenbogen_handgelenk", "meiden", "vorsichtig"]) {
       expect(roh).not.toContain(bereich);
     }
     const gespeichert = (data.einheiten as TrainingPlan["einheiten"]).flatMap((e) => e.positionen);
     expect(gespeichert.some((p) => s.knieUebungen.includes(p.exerciseId))).toBe(false);
-    const [gelesen] = await listPlaene(m.client, m.userId, s.voll);
-    expect(gelesen!.einheiten).toEqual(plan.einheiten);
+    // Die Uebungen selbst bleiben unveraendert (F14: Plaene sind stabil).
+    expect(data.einheiten).toEqual(plan.einheiten);
+    const gelesen = await listPlaene(m.client, m.userId, s.voll);
+    expect(gelesen.map((p) => p.einheiten)).toEqual([zweiter.einheiten, plan.einheiten]);
   });
 
   it("Beschwerden geloescht: gleicher Plan wie ohne Beschwerden", async () => {
