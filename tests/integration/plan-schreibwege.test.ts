@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   DomainError,
@@ -19,8 +19,31 @@ import { GYMTAVO, legeMitgliedAn, legePlanStudiosAn, type PlanStudios } from "./
 const admin = serviceClient();
 let s: PlanStudios;
 
+/**
+ * Uebungen, die ein Test unter GYMTAVO anlegt. GYMTAVO ist der gemeinsame
+ * Katalog aller Testlaeufe in der geteilten lokalen Datenbank: was dort liegen
+ * bleibt, sammelt sich bei jedem Lauf an und taucht in fremden Katalogabfragen
+ * auf. Plaene, Sessions und Nutzer gehoeren dagegen nur diesem Lauf.
+ */
+const gymtavoUebungen: string[] = [];
+const kennung = crypto.randomUUID();
+
 beforeAll(async () => {
-  s = await legePlanStudiosAn(crypto.randomUUID());
+  s = await legePlanStudiosAn(kennung);
+});
+
+afterAll(async () => {
+  // equipment_model_exercises haengt mit on delete cascade dran; Saetze oder
+  // Planstatus mit diesen Uebungen (on delete restrict) legt diese Datei nicht an.
+  if (gymtavoUebungen.length > 0) {
+    const { error } = await admin.from("exercises").delete().in("id", gymtavoUebungen);
+    if (error) throw error;
+  }
+  // Auch die zehn Uebungen aus legePlanStudiosAn tragen die Kennung im Namen.
+  // Die beiden Geraetetypen unter GYMTAVO bleiben: die Studio-Typen verweisen
+  // per catalog_model_id (on delete restrict) auf sie.
+  const { error } = await admin.from("exercises").delete().eq("studio_id", GYMTAVO).like("name", `% ${kennung}`);
+  if (error) throw error;
 });
 
 async function fehlerVon(p: Promise<unknown>): Promise<DomainError> {
@@ -141,6 +164,7 @@ describe("create_training_plan", () => {
       .select("id")
       .single();
     if (e) throw e;
+    gymtavoUebungen.push(u!.id as string);
     const { error } = await rpcErzeuge(m.client, s.voll, plan, mitErsterPosition(plan, { exerciseId: u!.id as string }));
     expect(error?.code).toBe("P0001");
     expect(error?.message).toBe("plan_ungueltig");
@@ -289,6 +313,7 @@ describe("swap_training_plan_position", () => {
       .select("id")
       .single();
     if (error) throw error;
+    gymtavoUebungen.push(data!.id as string);
     const { error: e2 } = await admin
       .from("equipment_model_exercises")
       .insert({ equipment_model_id: geraet.equipment_model_id, exercise_id: data!.id, sort_order: 99 });
