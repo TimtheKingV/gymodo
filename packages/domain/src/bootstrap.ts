@@ -18,6 +18,9 @@ import type { Messpunkt } from "./measurements.js";
 import type { Profil } from "./profil.js";
 import { zuProfil } from "./profil.js";
 import { stationsSchluessel } from "./station.js";
+import { aktivePlaeneDerMitgliedschaften } from "./trainingsplan.js";
+import { ladePlaeneFuerApp, type PlanFuerApp } from "./trainingsplan-bootstrap.js";
+import { getTrainingLimits, getTrainingProfile, type TrainingProfile } from "./trainingsprofil.js";
 
 /**
  * Obergrenze fuer die Satzhistorie, aus der die letzten Werte je Kombination
@@ -42,6 +45,14 @@ export type Bootstrap = {
     latestWeight: Messpunkt | null;
     /** Die aktiven Ziele des Mitglieds, siehe Migration 0043. */
     goals: AktiveZiele;
+    /** Dauer, Erfahrung und Fokus (0060); null, solange das Mitglied keins angelegt hat. */
+    trainingProfile: TrainingProfile | null;
+    /**
+     * Der aktive Plan je Studio, in dem das Mitglied jetzt ist, mit Zaehler und naechster
+     * Einheit (Etappe 3). Die Beschwerden selbst stehen bewusst nicht im Bootstrap
+     * (Gesundheitsdaten); sie wirken nur auf die Auswahl in alternativen.
+     */
+    plans: PlanFuerApp[];
   };
   studios: Array<{ id: string; name: string; timezone: string }>;
   /**
@@ -632,6 +643,13 @@ export async function getBootstrap(
 
   const weight = weightRow as { measured_on: string; weight_kg: number | string } | null;
 
+  const [trainingProfile, trainingLimits, aktivePlaene] = await Promise.all([
+    getTrainingProfile(client, userId),
+    getTrainingLimits(client, userId),
+    aktivePlaeneDerMitgliedschaften(client, userId),
+  ]);
+  const plans = await ladePlaeneFuerApp(client, userId, aktivePlaene, trainingProfile, trainingLimits, new Date());
+
   return {
     member: {
       ...zuProfil(
@@ -642,6 +660,8 @@ export async function getBootstrap(
       ),
       latestWeight: weight ? { measuredOn: weight.measured_on, weightKg: Number(weight.weight_kg) } : null,
       goals: await aktiveZiele(client, userId),
+      trainingProfile,
+      plans,
     },
     studios: (studioRows ?? []) as Bootstrap["studios"],
     catalog,

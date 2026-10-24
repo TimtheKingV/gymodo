@@ -9,6 +9,7 @@ import { aktiveZiele } from "./goals.js";
 import type { GeneratorEingabe, PlanEinheit } from "./trainingsplan-generator.js";
 import type { Struktur } from "./trainingsplan-regeln.js";
 import { generierePlan } from "./trainingsplan-generator.js";
+import { anfaengerphaseVorbei, ladeGezaehlteEinheiten } from "./trainingsplan-bootstrap.js";
 import { ladeKandidaten } from "./trainingsplan-kandidaten.js";
 import { zielAusTrainingGoal } from "./trainingsplan-regeln.js";
 import { getTrainingLimits, getTrainingProfile } from "./trainingsprofil.js";
@@ -106,11 +107,13 @@ export async function erzeugePlanVorschlag(
 ): Promise<TrainingPlan> {
   await requireMitglied(client, userId, studioId);
 
-  const [goal, ziele, profil, limits] = await Promise.all([
+  const [goal, ziele, profil, limits, gezaehlt] = await Promise.all([
     leseTrainingGoal(client, userId),
     aktiveZiele(client, userId),
     getTrainingProfile(client, userId),
     getTrainingLimits(client, userId),
+    // Derselbe Zaehler wie im Bootstrap, damit Angebot und neuer Plan zusammenpassen.
+    ladeGezaehlteEinheiten(client, userId, studioId, new Date()),
   ]);
   const ziel = zielAusTrainingGoal(goal);
   const tage = ziele.weeklyDays ? Number(ziele.weeklyDays.targetValue) : null;
@@ -130,14 +133,16 @@ export async function erzeugePlanVorschlag(
 
   // Ohne Einwilligung (keine Zeile) gibt es keine Beschwerden -- nie raten.
   const beschwerden = limits?.areas ?? {};
+  // Vom Server aus dem Zaehler des Paars, nie aus der App (F15). Steht in eingabe, damit
+  // der Bootstrap das Angebot nach Annahme dieses Plans nicht noch einmal zeigt.
+  const anfaengerBeendet = anfaengerphaseVorbei(profil, gezaehlt.length);
   const eingabe: PlanEingabe = {
     ziel,
     tage,
     minuten: profil.minutes,
     fokus: profil.focus,
     erfahrung: profil.experience,
-    // Wird in Task 6 vom Server gesetzt; bis dahin immer false, aber schon in eingabe abgelegt.
-    anfaengerBeendet: false,
+    anfaengerBeendet,
     beschwerdenBeruecksichtigt: Object.keys(beschwerden).length > 0,
   };
   // PlanNichtMoeglichError laeuft unveraendert durch; er traegt baustein/grund im detail.
@@ -147,7 +152,7 @@ export async function erzeugePlanVorschlag(
     minuten: profil.minutes,
     fokus: profil.focus,
     erfahrung: profil.experience,
-    anfaengerBeendet: eingabe.anfaengerBeendet ?? false,
+    anfaengerBeendet,
     beschwerden,
     kandidaten: await ladeKandidaten(client, studioId),
   });
@@ -241,6 +246,30 @@ export async function listPlaene(client: SupabaseClient, userId: string, studioI
     .eq("user_id", userId)
     .eq("studio_id", studioId)
     .order("version", { ascending: false });
+  if (error) throw new DomainError("internal", "Die Plaene konnten nicht gelesen werden.");
+  return ((data ?? []) as PlanZeile[]).map(zuPlan);
+}
+
+/**
+ * Die aktiven Plaene der Studios, in denen der Nutzer jetzt Mitglied ist (fuer den
+ * Bootstrap). Nach einem Austritt bleibt der Plan lesbar (select_own), gehoert aber nicht
+ * mehr in den Start der App -- deshalb der Filter ueber studio_memberships.
+ */
+export async function aktivePlaeneDerMitgliedschaften(client: SupabaseClient, userId: string): Promise<TrainingPlan[]> {
+  const { data: mitgliedschaften, error: e } = await client
+    .from("studio_memberships")
+    .select("studio_id")
+    .eq("user_id", userId);
+  if (e) throw new DomainError("internal", "Die Mitgliedschaften konnten nicht gelesen werden.");
+  const studioIds = [...new Set(((mitgliedschaften ?? []) as Array<{ studio_id: string }>).map((z) => z.studio_id))];
+  if (studioIds.length === 0) return [];
+  const { data, error } = await client
+    .from("training_plans")
+    .select(SPALTEN)
+    .eq("user_id", userId)
+    .eq("status", "aktiv")
+    .in("studio_id", studioIds)
+    .order("studio_id", { ascending: true });
   if (error) throw new DomainError("internal", "Die Plaene konnten nicht gelesen werden.");
   return ((data ?? []) as PlanZeile[]).map(zuPlan);
 }

@@ -309,7 +309,23 @@ export type {
   PlanPosition,
 } from "./trainingsplan-generator.js";
 export { ladeKandidaten } from "./trainingsplan-kandidaten.js";
-export { acceptPlan, erzeugePlanVorschlag, listPlaene, tauschePlanPosition } from "./trainingsplan.js";
+export {
+  acceptPlan,
+  aktivePlaeneDerMitgliedschaften,
+  erzeugePlanVorschlag,
+  listPlaene,
+  tauschePlanPosition,
+} from "./trainingsplan.js";
+export {
+  ANFAENGER_EINHEITEN,
+  alternativenJeBaustein,
+  anfaengerphaseVorbei,
+  gezaehlteEinheiten,
+  ladeGezaehlteEinheiten,
+  ladePlaeneFuerApp,
+  planFuerApp,
+} from "./trainingsplan-bootstrap.js";
+export type { GezaehlteEinheit, PlanAlternative, PlanFuerApp, SessionFuerZaehler } from "./trainingsplan-bootstrap.js";
 export type { PlanEingabe, PlanStatus, PlanTausch, TrainingPlan } from "./trainingsplan.js";
 export { ablaufNachSatz, ablaufTauschen, einheitZaehlt, naechsteEinheitKey } from "./trainingsplan-ablauf.js";
 export type { AblaufPosition, AblaufSatz, AblaufZustand, PositionStatus } from "./trainingsplan-ablauf.js";

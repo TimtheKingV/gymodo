@@ -149,3 +149,64 @@ export async function legeMitgliedAn(prefix: string, o: MitgliedOptionen): Promi
   }
   return { email, userId, client: await userClient(email) };
 }
+
+export type EinheitOptionen = {
+  planId: string;
+  einheitKey: string;
+  startedAt: Date;
+  /** null: nie beendet (dann entscheidet der letzte Satz). */
+  completedAt?: Date | null;
+  /** Status je Position; Default eine erledigte Position. */
+  status?: string[];
+  /** Saetze an einer Planposition, je Zeitpunkt einer. */
+  saetzeAm?: Date[];
+  satzAn?: { machineId: string; exerciseId: string };
+};
+
+/**
+ * Legt eine Planeinheit direkt an (Etappe 3, Task 6). Ueber den Service-Client,
+ * weil Startzeit und Abschluss in der Vergangenheit liegen muessen -- die Route
+ * stempelt immer "jetzt". Der Schutz-Trigger aus 0063 greift nur fuer authenticated.
+ */
+export async function legeEinheitAn(userId: string, studioId: string, o: EinheitOptionen): Promise<string> {
+  const id = crypto.randomUUID();
+  const completedAt = o.completedAt === undefined ? new Date(o.startedAt.getTime() + 3_600_000) : o.completedAt;
+  const { error } = await admin.from("workout_sessions").insert({
+    id,
+    studio_id: studioId,
+    user_id: userId,
+    started_at: o.startedAt.toISOString(),
+    completed_at: completedAt?.toISOString() ?? null,
+    completed_reason: completedAt ? "manual" : null,
+    plan_id: o.planId,
+    plan_einheit_key: o.einheitKey,
+    plan_stand: 1,
+  });
+  if (error) throw error;
+  const status = o.status ?? ["erledigt"];
+  if (status.length > 0) {
+    const { error: e } = await admin.from("session_plan_status").insert(
+      status.map((s, i) => ({ session_id: id, position_key: `p${i}`, user_id: userId, status: s })),
+    );
+    if (e) throw e;
+  }
+  if (o.saetzeAm?.length) {
+    if (!o.satzAn) throw new Error("satzAn fehlt");
+    const { error: e } = await admin.from("workout_sets").insert(
+      o.saetzeAm.map((am, i) => ({
+        id: crypto.randomUUID(),
+        studio_id: studioId,
+        user_id: userId,
+        session_id: id,
+        machine_id: o.satzAn!.machineId,
+        exercise_id: o.satzAn!.exerciseId,
+        set_index: i + 1,
+        load: 50,
+        volume: 10,
+        performed_at: am.toISOString(),
+      })),
+    );
+    if (e) throw e;
+  }
+  return id;
+}

@@ -9,7 +9,7 @@ import {
   type TrainingPlan,
 } from "@fitretro/domain";
 import { serviceClient } from "./helpers/clients.js";
-import { legeMitgliedAn, legePlanStudiosAn, type PlanStudios } from "./helpers/plan-studio.js";
+import { legeEinheitAn, legeMitgliedAn, legePlanStudiosAn, type PlanStudios } from "./helpers/plan-studio.js";
 
 // Task 7 Etappe 2: Plaene speichern, versionieren und bestaetigen.
 // Alle Aufrufe laufen mit dem Client des Mitglieds, damit RLS (auch beim
@@ -173,6 +173,29 @@ describe("erzeugePlanVorschlag", () => {
     expect(e.detail).toEqual({ baustein: "druecken", grund: "kein_geraet" });
     expect(e.message).not.toContain("druecken");
     expect(await zeilen(m.userId, s.ohneDruck)).toEqual([]);
+  });
+
+  it("erzeugePlanVorschlag nach 8 Einheiten plant 3 Saetze", async () => {
+    const m = await legeMitgliedAn("plan-anfaenger-ende", {
+      studios: [s.voll, s.voll2], profil: { minutes: 60, experience: "neu", focus: [] },
+    });
+    const kraft = (p: TrainingPlan) => positionen(p).filter((x) => x.rolle !== "cardio");
+    const plan = await acceptPlan(m.client, m.userId, (await erzeugePlanVorschlag(m.client, m.userId, s.voll)).id);
+    expect(plan.eingabe.anfaengerBeendet).toBe(false);
+    expect(new Set(kraft(plan).map((x) => x.saetze))).toEqual(new Set([2]));
+
+    const stunden = (h: number) => new Date(Date.now() - h * 3_600_000);
+    for (let i = 0; i < 8; i++) {
+      await legeEinheitAn(m.userId, s.voll, { planId: plan.id, einheitKey: plan.einheiten[0]!.key, startedAt: stunden(100 - i * 10) });
+    }
+    const danach = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    expect(danach.eingabe.anfaengerBeendet).toBe(true);
+    expect(danach.gruende).not.toContain("anfaenger_reserve");
+    expect(new Set(kraft(danach).map((x) => x.saetze))).toEqual(new Set([3]));
+
+    // Der Zaehler gilt je Paar: im zweiten Studio bleibt es beim Anfaengerplan.
+    const anderes = await erzeugePlanVorschlag(m.client, m.userId, s.voll2);
+    expect(anderes.eingabe.anfaengerBeendet).toBe(false);
   });
 
   it("Studio, in dem das Mitglied nicht ist: not_found", async () => {
