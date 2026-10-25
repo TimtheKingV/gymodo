@@ -336,3 +336,12 @@ export {
   type PlanGewichtErgebnis,
   type PlanGewichtGrund,
 } from "./plangewicht.js";
+export {
+  STARTSCHAETZUNG_VERSION,
+  WIEDEREINSTIEG_VERSION,
+  schaetzeStartgewicht,
+  startgewichtAusHistorie,
+  uebertragungsFaktor,
+  wiedereinstieg,
+  type Geraetegrenzen,
+} from "./plangewicht-start.js";
