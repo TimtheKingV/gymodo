@@ -144,7 +144,7 @@ export type ProgressionSuggestion = {
 };
 
 /** Belastung und Nebenbelastung eines Blocks -- das Paar, das gleich bleiben muss. */
-type Belastungspaar = { load: number; secondaryLoad: number | null };
+export type Belastungspaar = { load: number; secondaryLoad: number | null };
 
 /**
  * Das Paar des Blocks, oder null wenn die Saetze sich nicht einig sind --
@@ -152,7 +152,7 @@ type Belastungspaar = { load: number; secondaryLoad: number | null };
  * Neigung wechselt, hat so wenig einen Ausgangswert wie einer, in dem
  * das Gewicht wechselt.
  */
-function uniformLoad(block: BlockInput): Belastungspaar | null {
+export function uniformLoad(block: Pick<BlockInput, "sets">): Belastungspaar | null {
   const first = block.sets[0];
   if (!first) return null;
   return block.sets.every(
@@ -182,7 +182,10 @@ function missedBottom(block: BlockInput, targetMin: number): boolean {
 }
 
 /** Naechstgelegene einstellbare Stufe -- fuer das Ablesen eines Istwerts. */
-function snapToNearestStep(load: number, input: ProgressionInput): number {
+export function snapToNearestStep(
+  load: number,
+  input: Pick<ProgressionInput, "loadMin" | "loadStep">,
+): number {
   const steps = Math.round((load - input.loadMin) / input.loadStep);
   return input.loadMin + steps * input.loadStep;
 }

@@ -329,3 +329,10 @@ export type { GezaehlteEinheit, PlanAlternative, PlanFuerApp, SessionFuerZaehler
 export type { PlanEingabe, PlanStatus, PlanTausch, TrainingPlan } from "./trainingsplan.js";
 export { ablaufNachSatz, ablaufTauschen, einheitZaehlt, naechsteEinheitKey } from "./trainingsplan-ablauf.js";
 export type { AblaufPosition, AblaufSatz, AblaufZustand, PositionStatus } from "./trainingsplan-ablauf.js";
+export {
+  PLANGEWICHT_ALGO_VERSION,
+  berechnePlanGewicht,
+  type PlanGewichtEingabe,
+  type PlanGewichtErgebnis,
+  type PlanGewichtGrund,
+} from "./plangewicht.js";
