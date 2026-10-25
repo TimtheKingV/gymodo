@@ -90,4 +90,60 @@ describe("berechnePlanGewicht", () => {
     const block = drei(40, 12, 2).map((s) => ({ ...s, secondaryLoad: 6 }));
     expect(berechnePlanGewicht(basis({ block })).secondaryLoad).toBe(6);
   });
+  it("haelt Ist-Saetze ausserhalb der Geraetegrenzen im Bereich (im_korridor)", () => {
+    expect(berechnePlanGewicht(basis({ block: drei(3, 10, 2) }))).toMatchObject({ load: 5, grund: "im_korridor" });
+    expect(berechnePlanGewicht(basis({ block: drei(120, 10, 2) }))).toMatchObject({ load: 100, grund: "im_korridor" });
+  });
+
+  it("haelt Ist-Saetze ausserhalb der Geraetegrenzen im Bereich (problem_gemeldet)", () => {
+    const flag = (load: number) => [satz(load, 10), satz(load, 10, null, true)];
+    expect(berechnePlanGewicht(basis({ block: flag(3) }))).toMatchObject({ load: 5, grund: "problem_gemeldet" });
+    expect(berechnePlanGewicht(basis({ block: flag(120) }))).toMatchObject({ load: 100, grund: "problem_gemeldet" });
+  });
+
+  it("Ist ueber loadMax, oben erreicht: Geraetegrenze", () => {
+    expect(berechnePlanGewicht(basis({ block: drei(120, 12, 2) }))).toMatchObject({
+      load: 100,
+      grund: "geraetegrenze_erreicht",
+    });
+  });
+
+  it("senkt nicht, wenn nur ein spaeterer Satz unter wdhVon faellt", () => {
+    const block = [satz(40, 10), satz(40, 8), satz(40, 6)];
+    expect(berechnePlanGewicht(basis({ block, vorher: block }))).toMatchObject({ load: 40, grund: "im_korridor" });
+  });
+
+  it("andere Last oder Nebenlast in vorher sperrt die Zwei-Einheiten-Regel", () => {
+    const unten = [satz(40, 6), satz(40, 8)];
+    expect(berechnePlanGewicht(basis({ block: unten, vorher: [satz(42.5, 6)] })).load).toBe(40);
+    expect(
+      berechnePlanGewicht(basis({ block: unten, vorher: [{ ...satz(40, 6), secondaryLoad: 3 }] })).load,
+    ).toBe(40);
+    const oben2 = drei(40, 12, null);
+    expect(berechnePlanGewicht(basis({ block: oben2, vorher: drei(42.5, 12, null) })).load).toBe(40);
+    expect(
+      berechnePlanGewicht(
+        basis({ block: oben2, vorher: drei(40, 12, null).map((x) => ({ ...x, secondaryLoad: 3 })) }),
+      ).load,
+    ).toBe(40);
+  });
+
+  it("loadMax abseits der Stufe wird abgerundet", () => {
+    const e = basis({
+      geraet: { loadStep: 2.5, loadMin: 5, loadMax: 101 },
+      block: drei(100, 12, 2),
+      aktuellesZiel: { load: 100, secondaryLoad: null },
+    });
+    expect(berechnePlanGewicht(e)).toMatchObject({ load: 100, grund: "geraetegrenze_erreicht" });
+  });
+
+  it("Abstieg an loadMin meldet die Geraetegrenze", () => {
+    const unten = [satz(5, 6), satz(5, 6)];
+    const e = basis({ block: unten, vorher: unten, aktuellesZiel: { load: 5, secondaryLoad: null } });
+    expect(berechnePlanGewicht(e)).toMatchObject({ load: 5, grund: "geraetegrenze_erreicht" });
+  });
+
+  it("wdhBis - 1 ist noch nicht oben", () => {
+    expect(berechnePlanGewicht(basis({ block: drei(40, 11, 2) }))).toMatchObject({ load: 40, grund: "im_korridor" });
+  });
 });

@@ -68,15 +68,19 @@ export function berechnePlanGewicht(e: PlanGewichtEingabe): PlanGewichtErgebnis 
     grund,
   });
 
-  if (block.some((s) => s.problemFlag)) return ergebnis(aktuell, "problem_gemeldet");
-
   // Ergebnis in den Geraetegrenzen, abgerundet auf eine einstellbare Stufe.
-  const setzbar = (wunsch: number, grund: PlanGewichtGrund): PlanGewichtErgebnis => {
+  const einstellbar = (wunsch: number): number => {
     const begrenzt = Math.min(Math.max(wunsch, geraet.loadMin), geraet.loadMax);
     const stufen = Math.floor((begrenzt - geraet.loadMin) / geraet.loadStep + 1e-9);
-    const load = geraet.loadMin + stufen * geraet.loadStep;
-    return ergebnis(load, load === aktuell && wunsch !== aktuell ? "geraetegrenze_erreicht" : grund);
+    return geraet.loadMin + stufen * geraet.loadStep;
   };
+  const aktuellGesetzt = einstellbar(aktuell);
+  const setzbar = (wunsch: number, grund: PlanGewichtGrund): PlanGewichtErgebnis => {
+    const load = einstellbar(wunsch);
+    return ergebnis(load, load === aktuellGesetzt && wunsch !== aktuell ? "geraetegrenze_erreicht" : grund);
+  };
+
+  if (block.some((s) => s.problemFlag)) return setzbar(aktuell, "problem_gemeldet");
 
   const letzter = block[block.length - 1];
   const mitReserve = letzter !== undefined && letzter.rir !== null && letzter.rir >= position.reserveVon;
@@ -106,5 +110,5 @@ export function berechnePlanGewicht(e: PlanGewichtEingabe): PlanGewichtErgebnis 
     return setzbar(aktuell - geraet.loadStep, "korridor_unten_verfehlt");
   }
 
-  return ergebnis(aktuell, "im_korridor");
+  return setzbar(aktuell, "im_korridor");
 }
