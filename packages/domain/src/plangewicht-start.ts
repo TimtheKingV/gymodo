@@ -6,11 +6,16 @@
  * Tagen wird uebergeben. Alle Ergebnisse liegen in loadMin..loadMax auf einer
  * einstellbaren Stufe; gerundet wird immer ab ("lieber zu leicht").
  */
+import { AGE_BANDS, SEX } from "./profil.js";
 import type { Erfahrung } from "./trainingsplan-typen.js";
 import type { PlanGewichtGrund } from "./plangewicht.js";
 import { snapToNearestStep, type WorkoutSetInput } from "./progression.js";
 
-export type Geraetegrenzen = { loadStep: number; loadMin: number; loadMax: number };
+export type Geraetegrenzen = {
+  loadStep: number;
+  loadMin: number;
+  loadMax: number;
+};
 
 /**
  * Faktortabelle der Startschaetzung v1 (unvalidierte, bewusst vorsichtige Puffer).
@@ -20,22 +25,36 @@ export type Geraetegrenzen = { loadStep: number; loadMin: number; loadMax: numbe
  * wird, eine zu schwere aber Verletzungen und Abbruch riskiert.
  * - Erfahrung: neu 0,70 (Technik und Sehnen brauchen Zeit), unregelmaessig 0,85,
  *   regelmaessig 1,00.
- * - Geschlecht: weiblich 0,90 (geringere absolute Kraft im Mittel, Spanne
- *   gross; relative Aufbaufaehigkeit aehnlich, daher nur der Startwert).
- * - Altersgruppe (untere Grenze): bis 29 1,00; 30-49 0,95; 50-64 0,90; ab 65 0,80.
+ * - Geschlecht (SEX): female 0,90 (geringere absolute Kraft im Mittel, Spanne
+ *   gross; relative Aufbaufaehigkeit aehnlich, daher nur der Startwert);
+ *   male und diverse 1,00.
+ * - Altersband (AGE_BANDS): under_18 0,85 (Technik vor Last, noch im Wachstum);
+ *   18_24 und 25_34 1,00; 35_44 0,95; 45_54 0,90; 55_64 0,85; 65_plus 0,80.
+ *   Je aelter, nie mehr Last; die Baender werden am unteren Rand der Spanne
+ *   gedacht (45_54 gilt wie 45), die Werte sind Puffer, keine Kraftverluste.
  * - Koerpergewicht: unter 60 kg 0,90; unter 75 kg 0,95; sonst 1,00 (kein Bonus).
  * Fehlende oder nicht lesbare Angaben zaehlen als 1,00.
  */
 export const STARTSCHAETZUNG_VERSION = "1.0.0";
 
 export const STARTSCHAETZUNG_FAKTOREN = {
-  erfahrung: { neu: 0.7, unregelmaessig: 0.85, regelmaessig: 1 } as Record<Erfahrung, number>,
-  weiblich: 0.9,
-  alter: [
-    { ab: 65, faktor: 0.8 },
-    { ab: 50, faktor: 0.9 },
-    { ab: 30, faktor: 0.95 },
-  ],
+  erfahrung: { neu: 0.7, unregelmaessig: 0.85, regelmaessig: 1 } as Record<
+    Erfahrung,
+    number
+  >,
+  geschlecht: { female: 0.9, male: 1, diverse: 1 } as Record<
+    (typeof SEX)[number],
+    number
+  >,
+  altersband: {
+    under_18: 0.85,
+    "18_24": 1,
+    "25_34": 1,
+    "35_44": 0.95,
+    "45_54": 0.9,
+    "55_64": 0.85,
+    "65_plus": 0.8,
+  } as Record<(typeof AGE_BANDS)[number], number>,
   koerpergewicht: [
     { unter: 60, faktor: 0.9 },
     { unter: 75, faktor: 0.95 },
@@ -67,33 +86,33 @@ function abgerundet(wunsch: number, g: Geraetegrenzen): number {
 }
 
 /** G12: Last des letzten Arbeitssatzes des letzten Blocks, auf die Stufe gerastet. */
-export function startgewichtAusHistorie(block: WorkoutSetInput[], geraet: Geraetegrenzen): number | null {
+export function startgewichtAusHistorie(
+  block: WorkoutSetInput[],
+  geraet: Geraetegrenzen,
+): number | null {
   const letzter = block[block.length - 1];
   if (letzter === undefined) return null;
   const gerastet = snapToNearestStep(letzter.load, geraet);
   return Math.min(Math.max(gerastet, geraet.loadMin), geraet.loadMax);
 }
 
-function alterFaktor(gruppe: string | null): number {
-  const m = gruppe === null ? null : /\d+/.exec(gruppe);
-  if (m === null) return 1;
-  const alter = Number(m[0]);
-  return STARTSCHAETZUNG_FAKTOREN.alter.find((s) => alter >= s.ab)?.faktor ?? 1;
-}
-
 export function schaetzeStartgewicht(e: {
   loadStart: number | null;
   erfahrung: Erfahrung;
-  geschlecht: string | null;
-  altersgruppe: string | null;
+  geschlecht: (typeof SEX)[number] | null;
+  altersgruppe: (typeof AGE_BANDS)[number] | null;
   koerpergewichtKg: number | null;
   geraet: Geraetegrenzen;
 }): number {
   const f = STARTSCHAETZUNG_FAKTOREN;
-  const weiblich = e.geschlecht !== null && ["w", "f", "weiblich", "female"].includes(e.geschlecht.toLowerCase());
   const kg = e.koerpergewichtKg;
-  const kgFaktor = kg === null ? 1 : (f.koerpergewicht.find((s) => kg < s.unter)?.faktor ?? 1);
-  const faktor = f.erfahrung[e.erfahrung] * (weiblich ? f.weiblich : 1) * alterFaktor(e.altersgruppe) * kgFaktor;
+  const kgFaktor =
+    kg === null ? 1 : (f.koerpergewicht.find((s) => kg < s.unter)?.faktor ?? 1);
+  const faktor =
+    f.erfahrung[e.erfahrung] *
+    (e.geschlecht === null ? 1 : f.geschlecht[e.geschlecht]) *
+    (e.altersgruppe === null ? 1 : f.altersband[e.altersgruppe]) *
+    kgFaktor;
   return abgerundet((e.loadStart ?? e.geraet.loadMin) * faktor, e.geraet);
 }
 
@@ -123,7 +142,12 @@ export function wiedereinstieg(
   geraet: Geraetegrenzen,
 ): { load: number | null; saetzeMinus: 0 | 1; grund: PlanGewichtGrund | null } {
   const stufe = WIEDEREINSTIEG_STUFEN.find((s) => abstandTage <= s.bisTage);
-  if (stufe === undefined) return { load: null, saetzeMinus: 0, grund: "startschaetzung" };
+  if (stufe === undefined)
+    return { load: null, saetzeMinus: 0, grund: "startschaetzung" };
   if (stufe.faktor === 1) return { load: ziel, saetzeMinus: 0, grund: null };
-  return { load: abgerundet(ziel * stufe.faktor, geraet), saetzeMinus: stufe.saetzeMinus, grund: "wiedereinstieg" };
+  return {
+    load: abgerundet(ziel * stufe.faktor, geraet),
+    saetzeMinus: stufe.saetzeMinus,
+    grund: "wiedereinstieg",
+  };
 }
