@@ -13,7 +13,11 @@ struct HaeufigkeitTests {
         "kern": [GeraetMuskel(key: "deep_core", name: "Tiefer Kern", role: .primary)],
         // Wie im Katalog: Cardio-Uebungen tragen Hauptmuskeln.
         "laufband": [GeraetMuskel(key: "quads", name: "Quads", role: .primary),
-                     GeraetMuskel(key: "calves", name: "Waden", role: .secondary)],
+                     GeraetMuskel(key: "calves", name: "Waden", role: .secondary),
+                     GeraetMuskel(key: "tibialis", name: "Schienbeinmuskel", role: .secondary),
+                     GeraetMuskel(key: "fibularis", name: "Wadenbeinmuskulatur", role: .secondary)],
+        "schulterdruecken": [GeraetMuskel(key: "deltoid_anterior", name: "Vordere Schulter", role: .primary),
+                             GeraetMuskel(key: "serratus_anterior", name: "Serratus", role: .secondary)],
     ]
 
     private func block(_ exerciseId: String, saetze: Int, cardioSaetze: Int = 0) -> SessionSummary.Block {
@@ -54,6 +58,14 @@ struct HaeufigkeitTests {
         #expect(rechne([session([block("bank", saetze: 1), block("bank", saetze: 1)])]).jeMuskel["triceps"] == 1)
     }
 
+    @Test func serratusZaehltAlsNebenmuskelAuchOhneEigeneHauptuebung() {
+        #expect(rechne([session([block("schulterdruecken", saetze: 1)])]).jeMuskel["serratus_anterior"] == nil)
+        let h = rechne([session([block("schulterdruecken", saetze: 2)])])
+        #expect(h.jeMuskel["serratus_anterior"] == 1)
+        #expect(h.jeGruppe[.brust] == 1)
+        #expect(h.jeGruppe[.schultern] == 1)
+    }
+
     @Test func gruppeZaehltDieEinheitEinmalAuchBeiMehrerenMuskeln() {
         let h = rechne([session([block("rudern", saetze: 3)])])
         #expect(h.jeGruppe[.ruecken] == 1)
@@ -77,6 +89,8 @@ struct HaeufigkeitTests {
         let h = rechne([session([block("laufband", saetze: 0, cardioSaetze: 3), block("bank", saetze: 2)])])
         #expect(h.jeMuskel["quads"] == nil)
         #expect(h.jeMuskel["calves"] == nil)
+        #expect(h.jeMuskel["tibialis"] == nil)
+        #expect(h.jeMuskel["fibularis"] == nil)
         #expect(h.jeGruppe[.beine] == nil)
         #expect(h.jeGruppe[.brust] == 1)
         #expect(h.einheiten == 1)

@@ -12,7 +12,7 @@ struct MuskelFarbenTests {
         #expect(MuskelFarben.farbe(.nachholbedarf) == DesignSystem.Color.warn)
         #expect(MuskelFarben.farbe(.ok) == DesignSystem.Color.accentPressed)
         #expect(MuskelFarben.farbe(.viel) == DesignSystem.Color.accent)
-        #expect(MuskelFarben.farbe(.kaumUebungen) == DesignSystem.Color.muskelInaktiv)
+        #expect(MuskelFarben.farbe(.keineKraftuebung) == DesignSystem.Color.muskelInaktiv)
         #expect(MuskelFarben.farbe(.keineAuswertung) == DesignSystem.Color.muskelInaktiv)
     }
 
@@ -21,10 +21,10 @@ struct MuskelFarbenTests {
         #expect(farben["pectorals"] == DesignSystem.Color.line)
         // Gemeinsamer Massstab (Testnotiz 18.10., #2): Mittel der Gruppen 25/6 ~ 4,2,
         // lats und upper_back mit 8 liegen darueber -> viel, wie die Gruppe Ruecken.
-        // erectors ist selten.
+        // Rueckenstrecker hat eine Kraftuebung, aber hier keine Trainingseinheit.
         #expect(farben["lats"] == DesignSystem.Color.accent)
         #expect(farben["upper_back"] == DesignSystem.Color.accent)
-        #expect(farben["erectors"] == DesignSystem.Color.muskelInaktiv)
+        #expect(farben["erectors"] == DesignSystem.Color.warn)
     }
 
     @Test func trainingskarteFaerbtStarkSchwachUndLaesstDenRestWeg() {
@@ -51,8 +51,13 @@ struct MuskelFarbenTests {
         #expect(farben["upper_back"] == DesignSystem.Color.accent)
         #expect(farben["abs"] == DesignSystem.Color.accentPressed)
         #expect(farben["obliques"] == DesignSystem.Color.accentPressed)
-        #expect(farben["erectors"] == DesignSystem.Color.muskelInaktiv)
-        #expect(farben["serratus_anterior"] == DesignSystem.Color.muskelInaktiv)
+        #expect(farben["erectors"] == DesignSystem.Color.accent)
+        #expect(farben["adductors"] == DesignSystem.Color.accentPressed)
+        #expect(farben["abductors"] == DesignSystem.Color.accentPressed)
+        #expect(farben["rotator_cuff"] == DesignSystem.Color.accentPressed)
+        #expect(farben["serratus_anterior"] == DesignSystem.Color.warn)
+        #expect(farben["tibialis"] == DesignSystem.Color.muskelInaktiv)
+        #expect(farben["fibularis"] == DesignSystem.Color.muskelInaktiv)
     }
 
     @Test func startansichtRumpfMitNachholbedarfFaerbtBeideBauchmuskelnOrange() {
