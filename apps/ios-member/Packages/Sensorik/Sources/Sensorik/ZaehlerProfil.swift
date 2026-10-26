@@ -65,20 +65,20 @@ public struct ZaehlerProfil: Equatable, Sendable {
             ZaehlerProfil(art: art, version: 1, eingefrorenAm: nil, signal: .drehrate,
                           tiefpassHz: 3, startSchwelle: 30, schwellenAnteil: 0.35,
                           mindestDauer: 0.6, hoechstDauer: 10, schwachAnteil: 0.4, taktBand: 2.5,
-                          lueckeAb: 0.5, ruheDrehrate: 10, ruheBeschleunigung: 0.05,
+                          lueckeAb: Satztakt.lueckeAb, ruheDrehrate: 10, ruheBeschleunigung: 0.05,
                           achsenFenster: 1.0, leckZeit: 1.0)
         case .stapel:
             // Version 2 (14.10.): Betrag statt Projektion, siehe Signal.
             ZaehlerProfil(art: art, version: 2, eingefrorenAm: nil, signal: .geschwindigkeitBetrag,
                           tiefpassHz: 3, startSchwelle: 0.12, schwellenAnteil: 0.35,
                           mindestDauer: 0.6, hoechstDauer: 10, schwachAnteil: 0.4, taktBand: 2.5,
-                          lueckeAb: 0.5, ruheDrehrate: 10, ruheBeschleunigung: 0.05,
+                          lueckeAb: Satztakt.lueckeAb, ruheDrehrate: 10, ruheBeschleunigung: 0.05,
                           achsenFenster: 1.0, leckZeit: 1.0)
         case .koerper:
             ZaehlerProfil(art: art, version: 1, eingefrorenAm: nil, signal: .geschwindigkeitVertikal,
                           tiefpassHz: 3, startSchwelle: 0.12, schwellenAnteil: 0.35,
                           mindestDauer: 0.6, hoechstDauer: 10, schwachAnteil: 0.4, taktBand: 2.5,
-                          lueckeAb: 0.5, ruheDrehrate: 10, ruheBeschleunigung: 0.05,
+                          lueckeAb: Satztakt.lueckeAb, ruheDrehrate: 10, ruheBeschleunigung: 0.05,
                           achsenFenster: 1.0, leckZeit: 1.0)
         }
     }

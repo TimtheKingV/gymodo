@@ -103,15 +103,64 @@ struct SatztaktTests {
         #expect(abs(e.anzahl - 12) <= 2)
     }
 
-    /// Latzug 18.10. mit der App im Hintergrund: iOS liefert die Pakete nur etwa
-    /// alle 0,6 s (je rund 30 Werte). Der Live-Zaehler wertet das als Luecke
-    /// (Schwelle 0,5 s) und zaehlt nicht; die Takt-Auswertung rechnet in
-    /// Abtastwerten und trifft beide Saetze.
-    @Test(arguments: [("2026-10-18-1628-01", 12), ("2026-10-18-1630-01", 14)])
-    func hintergrundSaetzeZaehltDerTaktTrotzPaketluecken(name: String, wahr: Int) throws {
+    /// Empfangszeiten im Hintergrund koennen gebuendelt sein. Ueber der
+    /// bestehenden 0,5-s-Grenze gilt auch die Satzende-Zahl als unsicher;
+    /// Abschnitte duerfen nicht mehr durch diese Empfangsluecken reichen.
+    @Test(arguments: ["2026-10-18-1628-01", "2026-10-18-1630-01"])
+    func hintergrundSaetzeBleibenBeiPaketlueckenUnsicher(name: String) throws {
         let (m, rate) = try werte(name)
-        let e = try #require(Satztakt.auswerten(m, rateHz: rate, profil: .stapel))
-        #expect(abs(e.anzahl - wahr) <= 1)
+        let e = Satztakt.auswerten(m, rateHz: rate, profil: .stapel)
+        if let e {
+            #expect(e.hatLuecke)
+            #expect(e.guete <= Satztakt.unsicherGrenze)
+            for w in Satztakt.wiederholungen(e) {
+                #expect(!zip(m, m.dropFirst()).contains { a, b in
+                    b.t - a.t > Satztakt.lueckeAb && w.beginn < b.t && w.ende > a.t
+                })
+            }
+        }
+    }
+
+    @Test(arguments: [false, true])
+    func lueckenTrennenDieAuswertungOhneFehlendeWiederholungenZuErfinden(explizit: Bool) throws {
+        let a = synthetisch(wiederholungen: 8)
+        let ende = try #require(a.last).t
+        let versatz = ende - 100 + (explizit ? 0.02 : 5)
+        let b = a.map { SensorMesswert(t: $0.t + versatz, beschleunigung: $0.beschleunigung,
+                                      drehrate: $0.drehrate, winkel: $0.winkel) }
+        let einzel = try #require(Satztakt.auswerten(a))
+        let e = try #require(Satztakt.auswerten(a + b, trennstellen: explizit ? [a.count] : []))
+        #expect(e.hatLuecke)
+        #expect(e.abschnitte.count == 2)
+        #expect(e.anzahl == 2 * einzel.anzahl)
+        let w = Satztakt.wiederholungen(e)
+        #expect(w.count == e.anzahl)
+        #expect(w.map(\.nummer) == Array(1...e.anzahl))
+        #expect(w.allSatisfy { $0.ende <= ende || $0.beginn >= b[0].t })
+        #expect(e.guete <= Satztakt.unsicherGrenze)
+    }
+
+    @Test func offeneLueckeAmSatzendeBleibtUnsicher() throws {
+        let m = synthetisch(wiederholungen: 8)
+        let e = try #require(Satztakt.auswerten(m, trennstellen: [m.count]))
+        #expect(e.hatLuecke)
+        #expect(e.anzahl == Satztakt.auswerten(m)?.anzahl)
+    }
+
+    @Test func bankdrueckenVom26OktoberHatEineEchteUnterbrechung() throws {
+        let (datei, eintraege) = try SensorAufnahmeLeser.lesen(
+            ordner: Pfade.aufnahmen.appendingPathComponent("2026-10-26-1741-01"))
+        let e = try #require(Satztakt.auswerten(eintraege))
+        #expect(datei.label.reps == 20)
+        #expect(datei.zaehler?.gezaehlt == 19)
+        #expect(e.hatLuecke)
+        for w in Satztakt.wiederholungen(e) {
+            for eintrag in eintraege {
+                if case .luecke(let von, let bis) = eintrag {
+                    #expect(w.ende <= von || w.beginn >= bis)
+                }
+            }
+        }
     }
 
     @Test func ruheGibtNichts() {

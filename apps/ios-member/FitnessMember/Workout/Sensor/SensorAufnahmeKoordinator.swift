@@ -40,9 +40,10 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     @ObservationIgnored private var aufnahme: SensorAufnahme?
     @ObservationIgnored private var aufnahmeStatistik = SensorStatistik()
     @ObservationIgnored private var verworfenBeiStart = 0
-    /// Gesetzt, solange die Raeder stehen. Verbindet sich der Sensor erst
-    /// dann, beginnt die Aufnahme in diesem Moment (Spec 6.4).
+    /// Vorgemerkter Satz. Erst sein erster Messwert erzeugt Dateien;
+    /// der Zeitursprung bleibt der Beginn der Eingabe.
     @ObservationIgnored private var offenerKontext: SatzMitschnittKontext?
+    @ObservationIgnored private var vorgemerkterStart: (datum: Date, t: TimeInterval)?
     @ObservationIgnored private var gesamt = SensorStatistik()
     @ObservationIgnored private var letzteAnzeige: TimeInterval = 0
     /// Merkt sich die letzte Verbunden-Kante, nicht welcher Zustand konkret
@@ -98,21 +99,26 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
         beenden(.abgebrochen, satz: nil)
         fehler = nil
         offenerKontext = kontext
-        if quelle.zustand.istVerbunden {
-            aufnahmeBeginnen()
-        } else {
+        vorgemerkterStart = (jetzt(), uhr())
+        marken = []
+        if !quelle.zustand.istVerbunden {
             protokoll.schreiben("eingabe \(kontext.machineName) / \(kontext.exerciseName) ohne verbundenen sensor: keine aufnahme")
         }
     }
 
     func satzGesichert(_ satz: GesicherterSatz) {
+        if aufnahme == nil, let kontext = offenerKontext {
+            protokoll.schreiben("satz \(satz.setId.uuidString) \(kontext.machineName) / \(kontext.exerciseName) ohne messwerte gesichert: keine aufnahme")
+        }
         beenden(.gesichert, satz: satz)
         offenerKontext = nil
+        vorgemerkterStart = nil
     }
 
     func screenVerlassen() {
         beenden(.abgebrochen, satz: nil)
         offenerKontext = nil
+        vorgemerkterStart = nil
     }
 
     /// Satzgrenze vom Tester (Debug). Schreibt nur in eine laufende Aufnahme.
@@ -148,6 +154,11 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
             }
         }
 
+        if aufnahme == nil, quelle.zustand.istVerbunden,
+           let start = vorgemerkterStart, messwert.t >= start.t {
+            aufnahmeBeginnen()
+        }
+
         // Ein Paket, das vor dem Anlegen der Aufnahme empfangen wurde, kommt
         // trotzdem erst danach aus dem Strom. Es gehoert zur Zeit davor und
         // stuende sonst mit negativem t in der CSV.
@@ -170,8 +181,6 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
             if verbundenSeit == nil { verbundenSeit = jetzt() }
             if let aufnahme {
                 do { try aufnahme.lueckeEndet(t: uhr()) } catch { abbrechen(wegen: error) }
-            } else if offenerKontext != nil {
-                aufnahmeBeginnen()
             }
         } else {
             anzeigeRateHz = 0
@@ -205,10 +214,10 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     // MARK: - Aufnahme
 
     private func aufnahmeBeginnen() {
-        guard aufnahme == nil, let kontext = offenerKontext else { return }
+        guard aufnahme == nil, let kontext = offenerKontext, let start = vorgemerkterStart else { return }
         do {
             aufnahme = try SensorAufnahme(
-                wurzel: wurzel, start: jetzt(), startT: uhr(),
+                wurzel: wurzel, start: start.datum, startT: start.t,
                 sensor: .init(name: quelle.zustand.name ?? "unbekannt",
                               rateSollHz: quelle.rate.rawValue,
                               akkuProzent: quelle.zustand.akkuProzent),
@@ -260,6 +269,7 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     private func abbrechen(wegen error: Error) {
         melden(error)
         let kaputt = aufnahme
+        vorgemerkterStart = nil // kein neuer Schreibversuch fuer jedes weitere Paket
         aufnahme = nil
         aufnahmeLaeuft = false
         // Bester Versuch: der Ordner soll nicht als "laeuft" liegen bleiben.

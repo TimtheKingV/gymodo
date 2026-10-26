@@ -36,7 +36,7 @@ public struct RepEvents: Codable, Equatable, Sendable {
                                      ende: Self.zeit(w.ende - satzbeginn), ausschlag: Self.zeit(w.ausschlag),
                                      sicherheit: Self.anteil(w.sicherheit)))
             case .unsicher(let grund):
-                unsicher = grund
+                if unsicher != .luecke { unsicher = grund }
             case .zuende:
                 break
             }

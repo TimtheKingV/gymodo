@@ -1,0 +1,46 @@
+{
+  "abschluss" : "abgebrochen",
+  "befestigung" : null,
+  "befestigungsart" : null,
+  "befestigungsartQuelle" : null,
+  "endedAt" : "2026-10-26T18:18:14+01:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "e5a65502-e459-41fd-b370-3dc2954b0a28",
+    "exerciseId" : "7b744782-c5e8-432e-9058-bc5a26abe81d",
+    "exerciseName" : "Rumänisches Kreuzheben – Langhantel",
+    "machineId" : null,
+    "machineName" : "Langhantel",
+    "sessionId" : null,
+    "setId" : null,
+    "setIndex" : null
+  },
+  "label" : {
+    "problemFlag" : null,
+    "reps" : null,
+    "weightKg" : null
+  },
+  "sensor" : {
+    "akkuProzent" : 50,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-26T18:18:14+01:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 0,
+      "median" : 0,
+      "p95" : 0
+    },
+    "luecken" : 0,
+    "pakete" : 0,
+    "rateIstHz" : 0,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : null
+}

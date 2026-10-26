@@ -32,6 +32,9 @@ final class ZaehlerKoordinator: SatzZaehler {
     /// Zahl (die das Rad zeigt), nicht die Live-Zahl.
     @ObservationIgnored private var satzMesswerte: [SensorMesswert] = []
     @ObservationIgnored private var satzZuLang = false
+    @ObservationIgnored private var hatLuecke = false
+    @ObservationIgnored private var trennstellen: [Int] = []
+    @ObservationIgnored private var letzterMesswert: TimeInterval?
     private let fensterS: TimeInterval
     var satzMesswerteAnzahl: Int { satzMesswerte.count }
     /// Wie oft ergebnis() selbst rechnen musste statt die fertige Live-Auswertung zu nehmen (Tests).
@@ -85,7 +88,9 @@ final class ZaehlerKoordinator: SatzZaehler {
         ereignisse += zaehler.abschliessen()
         if let takt = taktAmSatzende(art: art) {
             let wiederholungen = Satztakt.wiederholungen(takt).map { ZaehlerEreignis.wiederholung($0) }
-            let unsicher: [ZaehlerEreignis] = takt.guete <= Satztakt.unsicherGrenze ? [.unsicher(.signalSchwach)] : []
+            let grund: UnsicherGrund? = hatLuecke || takt.hatLuecke ? .luecke
+                : (takt.guete <= Satztakt.unsicherGrenze ? .signalSchwach : nil)
+            let unsicher: [ZaehlerEreignis] = grund.map { [.unsicher($0)] } ?? []
             return ZaehlerErgebnis(
                 gezaehlt: takt.anzahl,
                 repEvents: RepEvents(algo: Satztakt.algo(fuer: art), befestigungsart: art,
@@ -96,7 +101,7 @@ final class ZaehlerKoordinator: SatzZaehler {
         return ZaehlerErgebnis(
             gezaehlt: gezaehlt,
             repEvents: RepEvents(algo: zaehler.profil.algo, befestigungsart: art,
-                                 ereignisse: ereignisse, satzbeginn: satzbeginn))
+                                 ereignisse: ereignisse + (hatLuecke ? [.unsicher(.luecke)] : []), satzbeginn: satzbeginn))
     }
 
     /// Die fertige Live-Auswertung, wenn sie den Satz bis auf drei Sekunden
@@ -105,9 +110,9 @@ final class ZaehlerKoordinator: SatzZaehler {
         guard let profil = TaktProfil.fuer(art) else { return nil }
         if satzZuLang { return taktErgebnis }
         let rate = Double(quelle.rate.rawValue)
-        if let taktErgebnis, satzMesswerte.count - taktWerte <= Int(3 * rate) { return taktErgebnis }
+        if !hatLuecke, let taktErgebnis, satzMesswerte.count - taktWerte <= Int(3 * rate) { return taktErgebnis }
         syncAuswertungen += 1
-        return Satztakt.auswerten(satzMesswerte, rateHz: rate, profil: profil)
+        return Satztakt.auswerten(satzMesswerte, rateHz: rate, profil: profil, trennstellen: trennstellen)
     }
 
     func satzVerworfen() { beenden() }
@@ -129,6 +134,10 @@ final class ZaehlerKoordinator: SatzZaehler {
             // Ein Paket von vor dem Satzbeginn kann noch im Strom stecken;
             // es gehoert nicht zum Satz.
             guard var zaehler, messwert.t >= satzbeginn else { return }
+            if let letzterMesswert, messwert.t - letzterMesswert > Satztakt.lueckeAb {
+                lueckeMerken()
+            }
+            letzterMesswert = messwert.t
             if let art = befestigung?.art, TaktProfil.fuer(art) != nil, !satzZuLang {
                 satzMesswerte.append(messwert)
                 begrenzen()
@@ -140,21 +149,22 @@ final class ZaehlerKoordinator: SatzZaehler {
         case .zustand(let zustand):
             if zustand.istVerbunden {
                 // Nur wenn der Satz mangels Sensor noch nicht zaehlte (Spec 9).
-                // Nach einer Luecke wird nicht weitergezaehlt.
+                // Ohne bisherige Messwerte kann nach dem Verbinden neu begonnen werden.
                 if zaehler == nil, kontext != nil, meldung == .zaehltNicht(.keinSensor) { neuStarten() }
             } else if var zaehler {
                 // Der Strom liefert Zustaende verspaetet: ist die Quelle schon
                 // wieder verbunden, gehoert die Trennung zu einem frueheren
                 // Moment und haelt diesen Satz nicht an.
                 guard !quelle.zustand.istVerbunden else { return }
-                guard zaehler.anzahl > 0 else {
-                    // Vor der ersten Wiederholung gibt es nichts zu schuetzen:
+                guard letzterMesswert != nil else {
+                    // Vor dem ersten Messwert gibt es nichts zu schuetzen:
                     // wie ohne Sensor, beim Wiederverbinden beginnt der Satz
                     // in bereit (Spec B 9, erste Zeile).
                     self.zaehler = nil
                     ereignisse = []
                     return senden(.zaehltNicht(.keinSensor))
                 }
+                lueckeMerken()
                 let jetzt = uhr()
                 let neu = zaehler.luecke(von: jetzt, bis: jetzt)
                 self.zaehler = zaehler
@@ -172,6 +182,9 @@ final class ZaehlerKoordinator: SatzZaehler {
         ereignisse = []
         satzMesswerte = []
         satzZuLang = false
+        hatLuecke = false
+        trennstellen = []
+        letzterMesswert = nil
         syncAuswertungen = 0
         taktZuruecksetzen()
         guard let kontext else { return }
@@ -189,7 +202,9 @@ final class ZaehlerKoordinator: SatzZaehler {
     private func begrenzen() {
         let grenze = Int(fensterS * Double(quelle.rate.rawValue))
         guard satzMesswerte.count > grenze + 250 else { return }
-        satzMesswerte.removeFirst(satzMesswerte.count - grenze)
+        let entfernt = satzMesswerte.count - grenze
+        satzMesswerte.removeFirst(entfernt)
+        trennstellen = trennstellen.filter { $0 >= entfernt }.map { $0 - entfernt }
         satzZuLang = true
     }
 
@@ -200,10 +215,10 @@ final class ZaehlerKoordinator: SatzZaehler {
               let letzter = satzMesswerte.last, letzter.t - taktBis >= 1 else { return }
         taktLaeuft = true
         taktBis = letzter.t
-        let kopie = satzMesswerte, rate = Double(quelle.rate.rawValue), kennung = satzKennung
+        let kopie = satzMesswerte, grenzen = trennstellen, rate = Double(quelle.rate.rawValue), kennung = satzKennung
         Task { [weak self] in
             let ergebnis = await Task.detached(priority: .userInitiated) {
-                Satztakt.auswerten(kopie, rateHz: rate, profil: profil)
+                Satztakt.auswerten(kopie, rateHz: rate, profil: profil, trennstellen: grenzen)
             }.value
             self?.taktFertig(ergebnis, werte: kopie.count, kennung: kennung)
         }
@@ -232,9 +247,23 @@ final class ZaehlerKoordinator: SatzZaehler {
         }
     }
 
+    private func lueckeMerken() {
+        hatLuecke = true
+        if !satzZuLang, trennstellen.last != satzMesswerte.count {
+            trennstellen.append(satzMesswerte.count)
+        }
+        senden(.pruefen(taktStand ?? zaehler?.anzahl ?? 0, .luecke))
+    }
+
     private func senden(_ neu: ZaehlerMeldung) {
-        meldung = neu
-        melde?(neu)
+        let meldung: ZaehlerMeldung
+        switch neu {
+        case .stand(let n) where hatLuecke: meldung = .pruefen(n, .luecke)
+        case .pruefen(let n, _) where hatLuecke: meldung = .pruefen(n, .luecke)
+        default: meldung = neu
+        }
+        self.meldung = meldung
+        melde?(meldung)
     }
 
     /// Die Art bleibt stehen: die Aufnahme liest sie nach ergebnis().

@@ -1629,6 +1629,24 @@ struct GeraetModelTests {
         #expect(sut.zaehlerZustand == .vonHand(4))
     }
 
+    @Test func neueUnsichereZahlFolgtDemRadBisZurHandkorrektur() async {
+        let double = ZaehlerDouble()
+        double.ergebnisWert = ZaehlerDouble.ergebnis(8)
+        var geschrieben: [PendingSetWrite] = []
+        let sut = mitZaehler(double, enqueue: { geschrieben.append($0) })
+        double.melde?(.stand(4))
+        double.melde?(.pruefen(7, .luecke))
+        #expect(sut.umfang == 7)
+        #expect(sut.zaehlerZustand == .pruefen(7))
+        sut.umfangGedreht(10)
+        double.melde?(.pruefen(8, .luecke))
+        #expect(sut.umfang == 10)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(geschrieben.first?.body.volume == 10)
+        #expect(geschrieben.first?.body.volumeSource == .korrigiert)
+        #expect(geschrieben.first?.body.volumeCounted == 8)
+    }
+
     @Test(arguments: [(nil as Int?, 8, VolumeSource.eingegeben), (8, 8, .gemessen), (8, 9, .korrigiert)])
     func herkunftBeimSichern(gezaehlt: Int?, umfang: Int, erwartet: VolumeSource) async {
         let double = ZaehlerDouble()

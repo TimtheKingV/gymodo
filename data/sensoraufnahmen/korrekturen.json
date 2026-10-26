@@ -1222,6 +1222,366 @@
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "abgebrochen, kein Satz"
+    },
+    "2026-10-26-1729-01": {
+      "was": "Latzug · Obergriff",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1731-01": {
+      "was": "Latzug · Obergriff",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1733-01": {
+      "was": "Latzug · Obergriff",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1735-01": {
+      "was": "Schulterpresse",
+      "befestigung": "Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1736-01": {
+      "was": "Schulterpresse",
+      "befestigung": "Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1738-01": {
+      "was": "Schulterpresse",
+      "befestigung": "Gewichtsstapel",
+      "befestigungsart": "stapel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1741-01": {
+      "was": "Kurzhantel-Bankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1742-01": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1742-02": {
+      "was": "Kurzhantel-Bankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 9,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1743-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1743-02": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1744-01": {
+      "was": "Kurzhantelrudern – einarmig, abgestützt",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1744-02": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1745-01": {
+      "was": "Kurzhantel-Bankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1745-02": {
+      "was": "Kurzhantelrudern – einarmig, abgestützt",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1746-01": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1746-02": {
+      "was": "Kurzhantel-Bankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 9,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1747-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1747-02": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1747-03": {
+      "was": "Kurzhantel-Bankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1747-04": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 16,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1748-01": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1748-02": {
+      "was": "Kurzhantel-Bankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 8,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1749-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1749-02": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1750-01": {
+      "was": "Kurzhantelrudern – einarmig, abgestützt",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1750-02": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1808-01": {
+      "was": "Abduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 25,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1809-01": {
+      "was": "Adduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1809-02": {
+      "was": "Abduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 36,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1810-01": {
+      "was": "Abduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1810-02": {
+      "was": "Adduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 25,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1811-01": {
+      "was": "Adduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1811-02": {
+      "was": "Abduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 30,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1813-01": {
+      "was": "Abduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1813-02": {
+      "was": "Adduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 18,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1813-03": {
+      "was": "Adduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1813-04": {
+      "was": "Abduktorenmaschine",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1816-01": {
+      "was": "High-Bar-Kniebeuge",
+      "befestigung": null,
+      "befestigungsart": "langhantel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1818-01": {
+      "was": "Rumänisches Kreuzheben – Langhantel",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1818-02": {
+      "was": "High-Bar-Kniebeuge",
+      "befestigung": null,
+      "befestigungsart": "langhantel",
+      "repsWahr": 14,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1820-01": {
+      "was": "High-Bar-Kniebeuge",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1820-02": {
+      "was": "Rumänisches Kreuzheben – Langhantel",
+      "befestigung": null,
+      "befestigungsart": "langhantel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-10-26-1821-01": {
+      "was": "Rumänisches Kreuzheben – Langhantel",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; keine Messpakete"
+    },
+    "2026-10-26-1821-02": {
+      "was": "High-Bar-Kniebeuge",
+      "befestigung": null,
+      "befestigungsart": "langhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true,
+      "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
     }
   }
 }
