@@ -86,3 +86,30 @@ struct PendingWriteStoreTests {
         #expect(PendingWriteStore(directory: directory).loadAll().isEmpty)
     }
 }
+
+#if os(iOS)
+extension PendingWriteStoreTests {
+    private static var dateischutzAttributeVerfuegbar: Bool {
+        #if targetEnvironment(simulator)
+        false
+        #else
+        true
+        #endif
+    }
+
+    @Test(.enabled(if: Self.dateischutzAttributeVerfuegbar,
+                   "Der Simulator liefert keine Dateischutzattribute; auf echtem iPhone pruefen."))
+    func bestehendeDateienUndAtomareSchreibvorgaengeBleibenNachEntsperrenZugaenglich() throws {
+        let directory = makeTempDirectory()
+        let datei = directory.appendingPathComponent("pending-writes.json")
+        try Data("[]".utf8).write(to: datei, options: .completeFileProtection)
+        let store = PendingWriteStore(directory: directory)
+        let erwarteterSchutz = FileProtectionType.completeUntilFirstUserAuthentication
+        let alterSchutz = try FileManager.default.attributesOfItem(atPath: datei.path)[.protectionKey]
+        #expect(alterSchutz as? String == erwarteterSchutz.rawValue, "Dateischutzattribute: \(String(describing: alterSchutz))")
+        store.save([])
+        #expect(try FileManager.default.attributesOfItem(atPath: datei.path)[.protectionKey] as? String == erwarteterSchutz.rawValue)
+        #expect(try FileManager.default.attributesOfItem(atPath: directory.path)[.protectionKey] as? String == erwarteterSchutz.rawValue)
+    }
+}
+#endif

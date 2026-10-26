@@ -548,3 +548,31 @@ struct SensorZeilenTextTests {
     }
 }
 #endif
+
+#if DEBUG
+@MainActor
+extension SensorAufnahmeKoordinatorTests {
+    @Test func automatikVorlaufBeginntBeiErsterWiederholung() throws {
+        let (sut, _, wurzel, uhr) = aufbau()
+        sut.automatikVorbereiten(Self.kontext)
+        for i in 0...500 {
+            sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100 + Double(i) / 50)))
+        }
+        #expect(!sut.aufnahmeLaeuft)
+        #expect(ordner(in: wurzel).isEmpty)
+        uhr.t = 110
+        sut.automatikBestaetigt(beginn: 106)
+        #expect(sut.aufnahmeLaeuft)
+        sut.satzGesichert(Self.satz)
+        let ziel = try #require(ordner(in: wurzel).first)
+        let gelesen = try SensorAufnahmeLeser.lesen(ordner: ziel)
+        let werte = gelesen.eintraege.compactMap { eintrag -> SensorMesswert? in
+            if case .messwert(let wert) = eintrag { return wert }
+            return nil
+        }
+        #expect(werte.count == 201)
+        #expect(werte.first?.t == 0)
+        #expect(werte.last?.t == 4)
+    }
+}
+#endif

@@ -40,7 +40,14 @@ struct GesicherterSatz: Equatable, Sendable {
 protocol SatzMitschnitt: AnyObject {
     /// Die Raeder stehen da. Laeuft noch ein Mitschnitt (Uebungswechsel),
     /// gehoert er zum alten Kontext und wird abgebrochen.
+    func automatikVorbereiten(_ kontext: SatzMitschnittKontext)
+    func automatikBestaetigt(beginn: TimeInterval)
     func eingabeBegonnen(_ kontext: SatzMitschnittKontext)
     func satzGesichert(_ satz: GesicherterSatz)
     func screenVerlassen()
+}
+
+extension SatzMitschnitt {
+    func automatikVorbereiten(_ kontext: SatzMitschnittKontext) { eingabeBegonnen(kontext) }
+    func automatikBestaetigt(beginn: TimeInterval) {}
 }

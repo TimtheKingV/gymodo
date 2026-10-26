@@ -364,3 +364,52 @@ struct ZaehlerKoordinatorTests {
     }
 }
 #endif
+
+#if DEBUG
+@MainActor
+extension ZaehlerKoordinatorTests {
+    @Test func automatikStartUndEndeFolgenMesswertenUndNichtDerWandzeit() async throws {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.stapel)
+        var ereignisse: [SatzAutomatik.Ereignis] = []
+        sut.automatikBeobachten { ereignisse.append($0) }
+        let werte = Self.stapelSatz(wiederholungen: 5, ab: uhr.t)
+        for w in werte { sut.empfangen(.messwert(w)) }
+        for _ in 0..<200 {
+            if sut.automatik.zustand == .laeuft { break }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(ereignisse.filter { if case .begonnen = $0 { true } else { false } }.count == 1)
+        #expect(sut.automatik.zustand == .laeuft)
+        // Ohne neue Pakete verstreicht keine beobachtete Ruhe.
+        #expect(ereignisse.filter { if case .beendet = $0 { true } else { false } }.isEmpty)
+        let ende = try #require(werte.last?.t)
+        for i in 1...500 {
+            let w = SensorMesswert(t: ende + Double(i) / 50,
+                beschleunigung: .init(x: 0, y: 0, z: 1),
+                drehrate: .init(x: 0, y: 0, z: 0), winkel: .init(x: 0, y: 0, z: 0))
+            sut.empfangen(.messwert(w))
+        }
+        for i in 1...200 {
+            try await Task.sleep(for: .milliseconds(10))
+            sut.empfangen(.messwert(SensorMesswert(t: ende + 10 + Double(i) / 50,
+                beschleunigung: .init(x: 0, y: 0, z: 1),
+                drehrate: .init(x: 0, y: 0, z: 0), winkel: .init(x: 0, y: 0, z: 0))))
+            if sut.automatik.zustand == .satzende { break }
+        }
+        #expect(ereignisse.filter { if case .beendet = $0 { true } else { false } }.count == 1)
+        let ergebnis = try #require(sut.ergebnis())
+        #expect(ergebnis.gezaehlt == 5)
+    }
+
+    @Test func automatikSchalterBleibtGespeichert() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let (sut, _, _, _) = aufbau(einstellungen: defaults)
+        #expect(sut.automatikAktiv)
+        sut.automatikAktiv = false
+        let (neu, _, _, _) = aufbau(einstellungen: defaults)
+        #expect(!neu.automatikAktiv)
+    }
+}
+#endif

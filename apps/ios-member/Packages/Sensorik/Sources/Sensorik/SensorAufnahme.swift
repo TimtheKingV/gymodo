@@ -27,11 +27,22 @@ public final class SensorAufnahme {
         return String(format: "%04d-%02d-%02d-%02d%02d", t.year!, t.month!, t.day!, t.hour!, t.minute!)
     }
 
+    private static var schreiboptionen: Data.WritingOptions {
+        #if os(iOS)
+        [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
+        #else
+        .atomic
+        #endif
+    }
+
     public init(wurzel: URL, start: Date, startT: TimeInterval, sensor: SensorAufnahmeDatei.Sensor,
          geraet: SensorAufnahmeDatei.Geraet, kontext: SensorAufnahmeDatei.Kontext,
          befestigung: String?, zeitzone: TimeZone = .current) throws {
         let fm = FileManager.default
         try fm.createDirectory(at: wurzel, withIntermediateDirectories: true)
+        #if os(iOS)
+        try fm.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: wurzel.path)
+        #endif
         let basis = Self.ordnername(start, zeitzone: zeitzone)
         var nummer = 1
         var ordner = wurzel.appendingPathComponent(String(format: "%@-%02d", basis, nummer))
@@ -40,9 +51,15 @@ public final class SensorAufnahme {
             ordner = wurzel.appendingPathComponent(String(format: "%@-%02d", basis, nummer))
         }
         try fm.createDirectory(at: ordner, withIntermediateDirectories: false)
+        #if os(iOS)
+        try fm.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: ordner.path)
+        #endif
 
         let csv = ordner.appendingPathComponent("messwerte.csv")
         try Data((Self.csvKopf + "\n").utf8).write(to: csv)
+        #if os(iOS)
+        try fm.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: csv.path)
+        #endif
         griff = try FileHandle(forWritingTo: csv)
         try griff?.seekToEnd()
 
@@ -143,7 +160,7 @@ public final class SensorAufnahme {
 
     private func kopfSchreiben() throws {
         let json = try SensorikJSON.encoder(zeitzone: zeitzone).encode(datei)
-        try json.write(to: ordner.appendingPathComponent("aufnahme.json"), options: .atomic)
+        try json.write(to: ordner.appendingPathComponent("aufnahme.json"), options: Self.schreiboptionen)
     }
 
     /// Beim App-Start: Ordner, die noch "laeuft" sagen, stammen aus einem
@@ -166,7 +183,7 @@ public final class SensorAufnahme {
             datei.abschluss = .abgebrochen
             datei.endedAt = datei.startedAt.addingTimeInterval(letzteT.rounded(.down))
             if let json = try? SensorikJSON.encoder(zeitzone: zeitzone).encode(datei) {
-                try? json.write(to: kopf, options: .atomic)
+                try? json.write(to: kopf, options: Self.schreiboptionen)
             }
         }
     }
