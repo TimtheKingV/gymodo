@@ -47,4 +47,17 @@ struct MuskelAuswertungTests {
         #expect(a.haeufigkeit.istAuswertbar == false)
         #expect(a.fortschritt.jeGruppe.isEmpty)
     }
+
+    @Test func reineNebenmuskelnVersprechenKeinenLastfortschritt() {
+        let muskeln = ["rudern": [
+            GeraetMuskel(key: "lats", name: "Lats", role: .primary),
+            GeraetMuskel(key: "serratus_anterior", name: "Serratus", role: .secondary)
+        ]]
+        let a = MuskelAuswertung.berechne(
+            sessions: [session(tageZurueck: 1), session(tageZurueck: 5), session(tageZurueck: 9)],
+            fortschritt: [], muskeln: muskeln, jetzt: jetzt)
+        #expect(a.brauchtTrainings(muskel: "lats", wert: .keinWert))
+        #expect(!a.brauchtTrainings(muskel: "serratus_anterior", wert: .keinWert))
+        #expect(!a.brauchtTrainings(muskel: "lats", wert: .stabil))
+    }
 }
