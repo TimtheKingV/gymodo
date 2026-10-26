@@ -225,9 +225,9 @@ struct ZaehlerKoordinatorTests {
         #expect(m.liste == [.bereit])
     }
 
-    /// Spec 9: nach einer Luecke steht die Zahl, und nach dem Wiederverbinden
-    /// wird nicht weitergezaehlt.
-    @Test func lueckeMachtPruefenUndDanachKommtNichtsMehr() {
+    /// Der Live-Zaehler stoppt nach einer Luecke. Die asynchrone
+    /// Satz-Auswertung darf spaeter aktualisieren, aber nur noch unsicher.
+    @Test func lueckeMachtPruefenUndDerLiveZaehlerBleibtStehen() {
         let (sut, quelle, uhr, m) = aufbau()
         beginnen(sut, m)
         let satz = Self.stapelSatz(wiederholungen: 6, ab: uhr.t)
@@ -241,6 +241,45 @@ struct ZaehlerKoordinatorTests {
         sut.empfangen(.zustand(Self.verbunden))
         for w in satz.dropFirst(400) { sut.empfangen(.messwert(w)) }
         #expect(m.liste.last == .pruefen(n, .luecke))
+    }
+
+    @Test func taktErgebnisNachReconnectBleibtUnsicherAuchOhneZeitabstand() throws {
+        let (sut, quelle, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.kurzhantel)
+        let a = Self.kurzhantelSatz(wiederholungen: 8, ab: uhr.t)
+        for w in a { sut.empfangen(.messwert(w)) }
+        quelle.zustand = .getrennt(wirdNeuVerbunden: true)
+        sut.empfangen(.zustand(quelle.zustand))
+        quelle.zustand = Self.verbunden
+        sut.empfangen(.zustand(quelle.zustand))
+        let b = Self.kurzhantelSatz(wiederholungen: 8, ab: try #require(a.last).t + 0.02)
+        for w in b { sut.empfangen(.messwert(w)) }
+        let e = try #require(sut.ergebnis())
+        #expect(e.repEvents.unsicher == .luecke)
+        #expect(e.gezaehlt == 16)
+        let grenze = try #require(a.last).t - uhr.t
+        #expect(e.repEvents.wiederholungen.allSatisfy { $0.ende <= grenze || $0.beginn >= grenze })
+    }
+
+    @Test func paketlueckeOhneBluetoothEreignisBleibtBisZumSichernUnsicher() throws {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.kurzhantel)
+        for w in Self.kurzhantelSatz(wiederholungen: 8, ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        for w in Self.kurzhantelSatz(wiederholungen: 8, ab: uhr.t + 30) { sut.empfangen(.messwert(w)) }
+        guard case .pruefen(_, .luecke)? = sut.meldung else {
+            Issue.record("Lueckenhinweis fehlt"); return
+        }
+        #expect(try #require(sut.ergebnis()).repEvents.unsicher == .luecke)
+    }
+
+    @Test func bankdrueckenHeuteBehaeltDieLueckeImGespeichertenErgebnis() throws {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.kurzhantel)
+        for w in try Self.aufnahme("2026-10-26-1741-01", ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        #expect(try #require(sut.ergebnis()).repEvents.unsicher == .luecke)
     }
 
     /// Review I1: reisst die Verbindung vor der ersten Wiederholung ab, gibt

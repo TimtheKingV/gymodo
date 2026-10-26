@@ -1115,7 +1115,9 @@ final class GeraetModel {
             zaehlerZustand = .zaehlt(n)
             // Eigener Weg statt umfangGedreht: das ist keine Korrektur.
             umfang = Rastwerte.naechster(zu: n, in: umfangsWerte)
-        case .pruefen(let n, _): zaehlerZustand = .pruefen(n)
+        case .pruefen(let n, _):
+            zaehlerZustand = .pruefen(n)
+            umfang = Rastwerte.naechster(zu: n, in: umfangsWerte)
         }
     }
 

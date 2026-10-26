@@ -25,6 +25,10 @@ public enum Satztakt {
         public let guete: Double
         /// Spitzenwert der Takt-Huellkurve in g.
         public let ausschlag: Double
+        /// Getrennt ausgewertete Messabschnitte. Keine Wiederholung darf
+        /// ueber eine Unterbrechung hinweg aus dem Gesamttakt erzeugt werden.
+        public var abschnitte: [Ergebnis] = []
+        public var hatLuecke: Bool = false
     }
 
     /// Kennung fuer rep_events und aufnahme.json (`ZaehlerProfil.algo` fuer die Takt-Auswertung).
@@ -41,6 +45,17 @@ public enum Satztakt {
     /// Umkehr liegt in der Mitte. Ehrlicher als zehn erfundene Spitzen und
     /// genug fuer Zahl und Gesamtdauer.
     public static func wiederholungen(_ e: Ergebnis) -> [Wiederholung] {
+        if !e.abschnitte.isEmpty {
+            var liste: [Wiederholung] = []
+            for abschnitt in e.abschnitte {
+                for w in wiederholungen(abschnitt) {
+                    liste.append(Wiederholung(nummer: liste.count + 1, beginn: w.beginn,
+                        umkehr: w.umkehr, ende: w.ende, ausschlag: w.ausschlag,
+                        sicherheit: w.sicherheit, pauseDavor: liste.last.map { w.beginn - $0.ende }))
+                }
+            }
+            return liste
+        }
         let dauer = (e.ende - e.beginn) / Double(e.anzahl)
         return (0..<e.anzahl).map { i in
             let beginn = e.beginn + Double(i) * dauer
@@ -65,8 +80,70 @@ public enum Satztakt {
     /// Eine Zahl aus Schaetzung oder erweitertem Takt ist unsicher (`Ergebnis.guete`).
     public static let unsicherGrenze = 0.49
 
+    /// Empfangsluecke, wie beim Live-Zaehler. Explizite Bluetooth-Abrisse
+    /// trennen auch dann, wenn die benachbarten Pakete weniger Abstand haben.
+    public static let lueckeAb: TimeInterval = 0.5
+
     public static func auswerten(_ messwerte: [SensorMesswert], rateHz: Double = 50,
+                                 profil: TaktProfil = .kurzhantel,
+                                 trennstellen: [Int] = []) -> Ergebnis? {
+        var grenzen = Set(trennstellen.filter { (0...messwerte.count).contains($0) })
+        for i in messwerte.indices.dropFirst() where messwerte[i].t - messwerte[i - 1].t > lueckeAb {
+            grenzen.insert(i)
+        }
+        guard !grenzen.isEmpty else {
+            return zusammenhaengend(messwerte, rateHz: rateHz, profil: profil)
+        }
+        grenzen.insert(0)
+        grenzen.insert(messwerte.count)
+        let kanten = grenzen.sorted()
+        let teile = zip(kanten, kanten.dropFirst()).compactMap { von, bis in
+            zusammenhaengend(Array(messwerte[von..<bis]), rateHz: rateHz, profil: profil)
+        }
+        guard let erster = teile.first, let letzter = teile.last else { return nil }
+        let anzahl = teile.reduce(0) { $0 + $1.anzahl }
+        var ergebnis = Ergebnis(anzahl: anzahl,
+            takt: teile.reduce(0) { $0 + $1.takt * Double($1.anzahl) } / Double(anzahl),
+            beginn: erster.beginn, ende: letzter.ende,
+            guete: min(unsicherGrenze, teile.map(\.guete).min() ?? 0),
+            ausschlag: teile.map(\.ausschlag).max() ?? 0)
+        ergebnis.abschnitte = teile
+        ergebnis.hatLuecke = true
+        return ergebnis
+    }
+
+    /// Gemeinsamer Einstieg fuer CSV-Replay und App; explizite Luecken
+    /// bleiben erhalten, statt beim Herausziehen der Messwerte zu verschwinden.
+    public static func auswerten(_ eintraege: [SensorAufnahmeLeser.Eintrag], rateHz: Double = 50,
                                  profil: TaktProfil = .kurzhantel) -> Ergebnis? {
+        var werte: [SensorMesswert] = []
+        var trennstellen: [Int] = []
+        for eintrag in eintraege {
+            switch eintrag {
+            case .messwert(let m): werte.append(m)
+            case .luecke: trennstellen.append(werte.count)
+            case .rate, .marke: break
+            }
+        }
+        return auswerten(werte, rateHz: rateHz, profil: profil, trennstellen: trennstellen)
+    }
+
+    public static func hatLuecke(in eintraege: [SensorAufnahmeLeser.Eintrag]) -> Bool {
+        var letztesT: TimeInterval?
+        for eintrag in eintraege {
+            switch eintrag {
+            case .luecke: return true
+            case .messwert(let m):
+                if let letztesT, m.t - letztesT > lueckeAb { return true }
+                letztesT = m.t
+            case .rate, .marke: break
+            }
+        }
+        return false
+    }
+
+    private static func zusammenhaengend(_ messwerte: [SensorMesswert], rateHz: Double,
+                                         profil: TaktProfil) -> Ergebnis? {
         if profil.verfahren == .phasen { return Phasenzaehler.auswerten(messwerte, rateHz: rateHz) }
         if let e = auswertenEinmal(messwerte, rateHz: rateHz, profil: profil) { return e }
         // Kein Takt im Profilbereich: noch einmal mit weiterer Obergrenze, aber unsicher.

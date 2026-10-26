@@ -41,7 +41,7 @@ struct SensorZeile: View {
                     .font(.system(size: 13).monospacedDigit())
                     .foregroundStyle(Self.istPruefen(zaehler.meldung)
                         ? DesignSystem.Color.danger : DesignSystem.Color.textMuted)
-                    .lineLimit(1)
+                    .lineLimit(3)
             }
             Spacer()
         }
@@ -99,6 +99,7 @@ struct SensorZeile: View {
         case nil: nil
         case .bereit: "zählt"
         case .stand(let n): "zählt · \(n)"
+        case .pruefen(let n, .luecke): "Verbindung unterbrochen – Zahl bitte prüfen · \(n)"
         case .pruefen(let n, let grund): "Zahl prüfen · \(n) (\(grundText(grund)))"
         case .zaehltNicht(.keinSensor): "zählt nicht: kein Sensor"
         case .zaehltNicht(.keineWiederholungen): "zählt hier nicht: keine Wiederholungen"

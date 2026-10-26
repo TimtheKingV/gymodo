@@ -54,6 +54,7 @@ enum Guetebericht {
             # Gütebericht Wiederholungszähler
 
             Erzeugt von `GueteberichtTests` (`swift test --package-path apps/ios-member/Packages/Sensorik`). Nicht von Hand bearbeiten.
+            Aktueller Satzende-Replay (Satztakt, sonst Live-Zähler); keine Wiedergabe der unveränderten App-Ergebnisse. Diese stehen für den 26.10. separat im Taktbericht.
             Tor je Art (Sensor-Spec B 5.5): ≥ \(mindestSaetze) Sätze aus ≥ \(mindestTage) Tagen, exakt ≥ 90 %, ±1 ≥ 98 %, Rücknahmen ≤ 10 %.
 
             | Art · Set | Sätze | Tage | exakt | ±1 | Rücknahmen |
@@ -64,7 +65,7 @@ enum Guetebericht {
             let entwicklung = ergebnisse.filter { $0.art == art }
             guard !entwicklung.isEmpty else { continue }
             let profil = ZaehlerProfil.fuer(art)
-            text += zeile("\(art.rawValue) (\(profil.algo)) · Entwicklung", quoten(entwicklung)) + "\n"
+            text += zeile("\(art.rawValue) (\(TaktProfil.fuer(art) == nil ? profil.algo : Satztakt.algo(fuer: art))) · Entwicklung", quoten(entwicklung)) + "\n"
             let tor = torset(ergebnisse, art: art)
             let q = quoten(tor)
             let status = profil.eingefrorenAm == nil ? "nicht eingefroren"

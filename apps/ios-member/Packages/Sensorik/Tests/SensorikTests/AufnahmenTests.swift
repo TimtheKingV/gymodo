@@ -32,6 +32,18 @@ struct AufnahmenTests {
         #expect(k.aufnahmen["2026-10-18-1702-01"]?.befestigungsart == .langhantel)
     }
 
+    @Test func bestaetigteGegenprobeVom26OktoberIstVollstaendig() throws {
+        let k = try Korrekturen.laden()
+        let neu = k.aufnahmen.filter { $0.key.hasPrefix("2026-10-26-") }
+        #expect(neu.count == 45)
+        #expect(neu.values.filter(\.fuerZaehler).count == 27)
+        #expect(neu.values.filter { $0.repsWahr == nil && !$0.fuerZaehler }.count == 18)
+        for eintrag in neu.values where eintrag.fuerZaehler {
+            #expect(eintrag.grund?.contains("selbst geprüft bestätigt") == true)
+        }
+        #expect(neu["2026-10-26-1741-01"]?.repsWahr == 20)
+    }
+
     @Test(arguments: mitWahrheit)
     func aufnahmeLaeuftDeterministischUndStimmig(name: String) throws {
         let k = try Korrekturen.laden()

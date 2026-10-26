@@ -23,6 +23,16 @@ struct RepEventsTests {
         #expect(events.wiederholungen.count == 1)
     }
 
+    @Test(arguments: [
+        [UnsicherGrund.luecke, .signalSchwach, .taktUnregelmaessig],
+        [.signalSchwach, .luecke, .taktUnregelmaessig],
+    ])
+    func lueckeHatVorrangVorAnderenGruenden(gruende: [UnsicherGrund]) {
+        let events = RepEvents(algo: "stapel/phasen1", befestigungsart: .stapel,
+            ereignisse: gruende.map { .unsicher($0) }, satzbeginn: 0)
+        #expect(events.unsicher == .luecke)
+    }
+
     /// Der Server (Zod, Spec B 6.2) erwartet `unsicher` immer als Schluessel,
     /// auch wenn er null ist -- ein fehlender Schluessel waere eine zweite
     /// Bedeutung von "nichts".
