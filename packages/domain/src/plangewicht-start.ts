@@ -79,7 +79,7 @@ export const UEBERTRAGUNG_PROZENT_JE_WDH = 0.03;
 export const UEBERTRAGUNG_DECKEL = 0.2;
 
 /** Begrenzt auf loadMin..loadMax und rundet ab auf eine einstellbare Stufe. */
-function abgerundet(wunsch: number, g: Geraetegrenzen): number {
+export function abgerundet(wunsch: number, g: Geraetegrenzen): number {
   const begrenzt = Math.min(Math.max(wunsch, g.loadMin), g.loadMax);
   const stufen = Math.floor((begrenzt - g.loadMin) / g.loadStep + 1e-9);
   return Math.min(g.loadMin + stufen * g.loadStep, g.loadMax);

@@ -345,3 +345,9 @@ export {
   wiedereinstieg,
   type Geraetegrenzen,
 } from "./plangewicht-start.js";
+export {
+  aktualisierePlanGewichte,
+  initialisierePlanGewichte,
+  ladeZielgewichte,
+  type PositionsZiel,
+} from "./plangewichte.js";
