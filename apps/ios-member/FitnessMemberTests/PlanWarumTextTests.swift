@@ -62,6 +62,33 @@ struct PlanWarumTextTests {
         #expect(!alle.contains { $0.contains("_") })
     }
 
+    /// Review: bei einem gemeldeten Problem steigt das Gewicht nicht, sinkt aber
+    /// auch nicht; gesenkt wird erst nach zwei schwachen Trainings, gesteigert
+    /// nur mit Luft im letzten Satz (`berechnePlanGewicht`).
+    @Test func gewichtTextEntsprichtDerRegel() {
+        let gewicht = PlanWarumText.abschnitte(struktur: "gk_ab", gruende: [])[1].absaetze.joined(separator: " ")
+        #expect(!gewicht.contains("meldest ein Problem, wird es leichter"))
+        #expect(gewicht.contains("Meldest du ein Problem, steigt es nicht"))
+        #expect(gewicht.contains("zwei Trainings hintereinander"))
+        #expect(gewicht.contains("Luft im letzten Satz"))
+    }
+
+    /// Review: `fokus_<bereich>` heisst nur, dass der Schwerpunkt in einer
+    /// Einheit unterkam (Ober-/Unterkoerper trennen die Bereiche).
+    @Test func schwerpunktSatzVersprichtNichtJedesTraining() {
+        let satz = Self.aufteilung("ober_unter", ["fokus_po"])[1]
+        #expect(!satz.contains("in jedem Training"))
+        #expect(satz.contains("in den passenden Trainings"))
+    }
+
+    /// Review: `fokus_arme` und `fokus_zweiter_entfallen` koennen zusammen
+    /// vorkommen (zweiter Schwerpunkt passt nur in eine Einheit).
+    @Test func zweiterSchwerpunktWidersprichtErstemNicht() {
+        let absaetze = Self.aufteilung("gk_ab", ["fokus_po", "fokus_arme", "fokus_zweiter_entfallen"])
+        #expect(!absaetze.contains { $0.contains("gilt nur der erste") })
+        #expect(absaetze[3].contains("nicht in jedes Training"))
+    }
+
     @Test func gewichtUndWiederholungen() {
         let abschnitte = PlanWarumText.abschnitte(struktur: "gk_ab", gruende: [])
         let gewicht = abschnitte[1].absaetze.joined(separator: " ")

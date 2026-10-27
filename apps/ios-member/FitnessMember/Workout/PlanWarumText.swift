@@ -12,7 +12,7 @@ import Foundation
 /// `packages/domain/src/trainingsplan-regeln.ts` und `GROBE_STUFE_EXTRA_WDH`
 /// in `plangewicht.ts`; bei Aenderung dort `version` erhoehen.
 enum PlanWarumText {
-    static let version = "1.0.0"
+    static let version = "1.1.0"
 
     struct Abschnitt: Equatable {
         let titel: String
@@ -42,7 +42,7 @@ enum PlanWarumText {
     private static func satz(fuer code: String) -> String? {
         if code.hasPrefix("fokus_"), code != "fokus_zweiter_entfallen" {
             guard let bereich = fokusBereiche[String(code.dropFirst("fokus_".count))] else { return nil }
-            return "Dein Schwerpunkt „\(bereich)“ bekommt in jedem Training eine eigene Übung."
+            return "Dein Schwerpunkt „\(bereich)“ bekommt in den passenden Trainings eine eigene Übung."
         }
         return saetze[code]
     }
@@ -58,7 +58,7 @@ enum PlanWarumText {
         "zeit_ergaenzung_entfallen": "Ergänzungsübungen sind weggefallen, damit die Hauptübungen in deine Zeit passen.",
         "zeit_aufwaermen_entfallen": "Fürs Aufwärmen ist im Plan keine Zeit eingeplant. Wärm dich trotzdem kurz auf.",
         "zeit_budget_nicht_ausgeschoepft": "Dein Studio hat nicht genug passende Übungen für die ganze Zeit. Einige Trainings sind deshalb kürzer als angegeben.",
-        "fokus_zweiter_entfallen": "Für einen zweiten Schwerpunkt reicht die Zeit nicht, deshalb gilt nur der erste.",
+        "fokus_zweiter_entfallen": "Der zweite Schwerpunkt passt zeitlich nicht in jedes Training.",
         "abnehmen_cardio_zone": "Zum Abnehmen gehört Cardio im ruhigen Tempo, bei dem du dich noch unterhalten kannst.",
         "abnehmen_cardio_gekuerzt": "Das Cardio ist kürzer, sonst fehlt die Zeit fürs Krafttraining.",
         "abnehmen_kein_cardio_geraet": "Dein Studio hat kein Cardio-Gerät in der App, deshalb ist kein Cardio eingeplant.",
@@ -73,7 +73,7 @@ enum PlanWarumText {
 
     private static let gewicht = [
         "Das erste Gewicht an einem Gerät ist eine vorsichtige Schätzung aus deinen Angaben im Profil, oder aus einer ähnlichen Übung, die du schon gemacht hast. Es ist ein Startwert, keine Vorgabe. Lieber etwas zu leicht als zu schwer.",
-        "Danach passen wir es laufend an. Nach jedem Training rechnen wir neu: Schaffst du in allen Sätzen den oberen Wiederholungswert, wird es schwerer. Verfehlst du den unteren oder meldest ein Problem, wird es leichter. Kommt dir ein Gewicht zu leicht oder zu schwer vor, nimm einfach das passende. Wir rechnen ab dem, was du wirklich gemacht hast. Nach einer längeren Pause starten wir wieder etwas leichter.",
+        "Danach passen wir es laufend an. Nach jedem Training rechnen wir neu: Schaffst du in allen Sätzen den oberen Wiederholungswert und hast noch Luft im letzten Satz, wird es schwerer. Verfehlst du den unteren Wert in zwei Trainings hintereinander, wird es leichter. Meldest du ein Problem, steigt es nicht. Kommt dir ein Gewicht zu leicht oder zu schwer vor, nimm einfach das passende. Wir rechnen ab dem, was du wirklich gemacht hast. Nach einer längeren Pause starten wir wieder etwas leichter.",
     ]
 
     private static let wiederholungen = [
