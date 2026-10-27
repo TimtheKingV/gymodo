@@ -207,7 +207,42 @@ export async function acceptPlan(client: SupabaseClient, userId: string, planId:
   return plan;
 }
 
-export type PlanTausch = { einheitKey: string; positionKey: string; exerciseId: string; modelId: string };
+export type TauschGrund = "nicht_vorhanden" | "gefaellt_nicht";
+
+export type PlanTausch = {
+  einheitKey: string;
+  positionKey: string;
+  exerciseId: string;
+  modelId: string;
+  /** Warum die alte Uebung geht; sie kommt dann auf die Merkliste des Mitglieds. */
+  grund?: TauschGrund;
+  /** Ort fuer "nicht vorhanden"; fehlt er, gilt das Katalog-Studio (Freies Training). */
+  ortId?: string;
+};
+
+/**
+ * Traegt die alte Uebung in die Merkliste ein. Ein Fehler bricht den Tausch nicht ab
+ * (der ist schon gespeichert) und wird mit fester Meldung protokolliert: weder Grund noch
+ * Uebung noch Ort stehen im Text -- die Merkliste ist eine Angabe zur Person.
+ */
+async function merkeAlteUebung(
+  client: SupabaseClient,
+  userId: string,
+  exerciseId: string,
+  grund: TauschGrund,
+  ortId: string | undefined,
+): Promise<void> {
+  try {
+    const studioId = grund === "gefaellt_nicht" ? null : (ortId ?? (await ladeKatalogStudioId(client)));
+    const { error } = await client
+      .from("plan_merkliste")
+      .insert({ user_id: userId, exercise_id: exerciseId, art: grund, studio_id: studioId });
+    // 23505: steht schon auf der Liste -- dann ist alles wie gewuenscht.
+    if (error && error.code !== "23505") throw new Error("insert");
+  } catch {
+    console.error("plan: Merkliste nach Tausch nicht gespeichert");
+  }
+}
 
 /**
  * Tauscht eine Position (Uebung und Katalogmodell) dauerhaft: swap_training_plan_position legt sofort eine neue
@@ -224,7 +259,7 @@ export async function tauschePlanPosition(
   // die Funktion waehlt nach dem Typ der neuen Uebung (Uebergabe Punkt 2, 0065).
   const { data: alt, error: e } = await client
     .from("training_plans")
-    .select("eingabe")
+    .select("eingabe, einheiten")
     .eq("id", planId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -256,6 +291,14 @@ export async function tauschePlanPosition(
   const zeile = data as PlanZeile & { user_id: string };
   if (zeile.user_id !== userId) throw new DomainError("internal", "Der Plan gehoert nicht zum Aufrufer.");
   const plan = zuPlan(zeile);
+  if (input.grund) {
+    const alteUebung = (alt as { einheiten: PlanEinheit[] }).einheiten
+      .find((e) => e.key === input.einheitKey)
+      ?.positionen.find((p) => p.key === input.positionKey)?.exerciseId;
+    if (alteUebung && alteUebung !== input.exerciseId) {
+      await merkeAlteUebung(client, userId, alteUebung, input.grund, input.ortId);
+    }
+  }
   // G9: unveraenderte Positionen behalten ihr Ziel, die getauschte bekommt einen Startwert.
   await ohneAbbruch("Ziele nach Tausch", async () => {
     await uebernehmePlanGewichte(client, userId, planId, plan);

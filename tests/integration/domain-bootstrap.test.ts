@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import {
   acceptPlan,
   createTagToken,
@@ -6,7 +6,6 @@ import {
   getBootstrap,
   hashTagToken,
   type Bootstrap,
-  type TrainingPlan,
   zielSchluessel,
 } from "@fitretro/domain";
 import {
@@ -18,9 +17,14 @@ import {
 } from "./helpers/clients.js";
 import { tagsAnlegen } from "../helpers/tags.js";
 import {
+  aktiverKatalogPlan as baueAktivenPlan,
+  erzeugeKatalogPlan,
+  GYMTAVO,
   legeEinheitAn,
   legeMitgliedAn,
   legePlanStudiosAn,
+  machineVon,
+  type KatalogPosition,
   type Mitglied,
   type PlanStudios,
 } from "./helpers/plan-studio.js";
@@ -276,41 +280,36 @@ describe("getBootstrap", () => {
 // Etappe 3, Task 6: Trainingsprofil und aktive Plaene samt Zaehler im Bootstrap.
 describe("getBootstrap -- Trainingsplan", () => {
   let ps: PlanStudios;
+  let geraet: string;
   const admin = serviceClient();
   const stunden = (h: number) => new Date(Date.now() - h * 3_600_000);
 
   beforeAll(async () => {
     ps = await legePlanStudiosAn(crypto.randomUUID());
+    geraet = (await machineVon(ps.voll)).id;
   });
 
-  async function aktiverPlan(m: Mitglied, studioId: string): Promise<TrainingPlan> {
-    return acceptPlan(m.client, m.userId, (await erzeugePlanVorschlag(m.client, m.userId, studioId)).id);
+  // Der Plan wird von Hand gebaut (Helper): der Katalog ist unter den Testdateien geteilt,
+  // der Generator waehlte daraus nicht deterministisch.
+  const aktiverPlan = (m: Mitglied) => baueAktivenPlan(m, ps);
+
+  function planVon(b: Bootstrap) {
+    expect(b.member.plans).toHaveLength(1);
+    return b.member.plans[0]!;
   }
 
-  function planIn(b: Bootstrap, studioId: string) {
-    const treffer = b.member.plans.filter((p) => p.studioId === studioId);
-    expect(treffer).toHaveLength(1);
-    return treffer[0]!;
-  }
+  const satzAn = () => ({ machineId: geraet, exerciseId: ps.uebungen["Beinpresse"]! });
 
-  const satzAn = (plan: TrainingPlan) => ({
-    machineId: plan.einheiten[0]!.positionen[0]!.machineId,
-    exerciseId: plan.einheiten[0]!.positionen[0]!.exerciseId,
-  });
-
-  it("Bootstrap enthaelt member.plans nur fuer Studios mit Mitgliedschaft", async () => {
+  it("liefert hoechstens einen Plan mit Katalog-Studio-ID", async () => {
     const m = await legeMitgliedAn("boot-plan-mitgl", { studios: [ps.voll, ps.voll2] });
-    const a = await aktiverPlan(m, ps.voll);
-    await aktiverPlan(m, ps.voll2);
+    await aktiverPlan(m);
+    const a = await aktiverPlan(m);
     // Ein Vorschlag ist kein Plan, nach dem trainiert wird.
-    await erzeugePlanVorschlag(m.client, m.userId, ps.voll);
-    // Austritt: der Plan bleibt lesbar (select_own), gehoert aber nicht mehr in den Bootstrap.
-    const { error } = await admin.from("studio_memberships").delete().eq("user_id", m.userId).eq("studio_id", ps.voll2);
-    if (error) throw error;
+    await erzeugeKatalogPlan(m, ps);
 
     const b = await getBootstrap(m.client);
-    expect(b.member.plans.map((p) => p.studioId)).toEqual([ps.voll]);
-    const p = planIn(b, ps.voll);
+    expect(b.member.plans.map((p) => p.studioId)).toEqual([GYMTAVO]);
+    const p = planVon(b);
     expect(p).toMatchObject({
       planId: a.id,
       version: a.version,
@@ -322,89 +321,114 @@ describe("getBootstrap -- Trainingsplan", () => {
       zuletztEinheitKey: null,
       einheitenErledigt: 0,
       anfaengerUebergang: false,
+      merkliste: { nichtVorhanden: {}, gefaelltNicht: [] },
     });
     expect(b.member.trainingProfile).toEqual({ minutes: 60, experience: "regelmaessig", focus: [] });
   });
 
+  it("alter Plan mit machineId-Positionen wird nicht geliefert, der Bootstrap wirft nicht", async () => {
+    const m = await legeMitgliedAn("boot-plan-alt", { studios: [ps.voll] });
+    const neu = await aktiverPlan(m);
+    // Bestand im alten Format: Positionen mit machineId statt modelId. Per Dienst-Client
+    // eingeschleust, die Funktionen der Datenbank lassen das nicht mehr zu.
+    const alt = neu.einheiten.map((e) => ({
+      ...e,
+      positionen: e.positionen.map(({ modelId: _modelId, ...rest }) => ({ ...rest, machineId: geraet })),
+    }));
+    const { error } = await admin.from("training_plans").update({ einheiten: alt }).eq("id", neu.id);
+    if (error) throw error;
+    const meldungen: string[] = [];
+    const spy = vi.spyOn(console, "error").mockImplementation((n: unknown) => void meldungen.push(String(n)));
+    try {
+      const b = await getBootstrap(m.client);
+      expect(b.member.plans).toEqual([]);
+      expect(b.member.trainingProfile).not.toBeNull();
+    } finally {
+      spy.mockRestore();
+    }
+    expect(meldungen.some((n) => n.includes("alten Format"))).toBe(true);
+  });
+
   it("naechsteEinheitKey folgt der zuletzt gezaehlten Einheit", async () => {
     const m = await legeMitgliedAn("boot-plan-folge", { studios: [ps.voll] });
-    const plan = await aktiverPlan(m, ps.voll);
+    const plan = await aktiverPlan(m);
     const [a, b] = plan.einheiten.map((e) => e.key) as [string, string];
     await legeEinheitAn(m.userId, ps.voll, { planId: plan.id, einheitKey: b, startedAt: stunden(30) });
     await legeEinheitAn(m.userId, ps.voll, { planId: plan.id, einheitKey: a, startedAt: stunden(20) });
     // Nie beendet, letzter Satz vor 5 h: gilt als abgeschlossen (Auto-Abschluss nach 4 h).
     await legeEinheitAn(m.userId, ps.voll, {
       planId: plan.id, einheitKey: b, startedAt: stunden(6), completedAt: null,
-      saetzeAm: [stunden(5.5), stunden(5)], satzAn: satzAn(plan),
+      saetzeAm: [stunden(5.5), stunden(5)], satzAn: satzAn(),
     });
     // Laeuft noch (letzter Satz vor 10 min): zaehlt nicht, auch wenn sie juenger ist.
     await legeEinheitAn(m.userId, ps.voll, {
       planId: plan.id, einheitKey: a, startedAt: stunden(0.5), completedAt: null,
-      saetzeAm: [stunden(1 / 6)], satzAn: satzAn(plan),
+      saetzeAm: [stunden(1 / 6)], satzAn: satzAn(),
     });
     // Nur offene Positionen: nichts trainiert, zaehlt nicht.
     await legeEinheitAn(m.userId, ps.voll, { planId: plan.id, einheitKey: a, startedAt: stunden(3), status: ["offen"] });
 
-    const p = planIn(await getBootstrap(m.client), ps.voll);
+    const p = planVon(await getBootstrap(m.client));
     expect(p).toMatchObject({ zuletztEinheitKey: b, naechsteEinheitKey: a, einheitenErledigt: 3 });
   });
 
   it("geloeschte Einheit zaehlt nicht mehr", async () => {
     const m = await legeMitgliedAn("boot-plan-geloescht", { studios: [ps.voll] });
-    const plan = await aktiverPlan(m, ps.voll);
+    const plan = await aktiverPlan(m);
     const [a, b] = plan.einheiten.map((e) => e.key) as [string, string];
     await legeEinheitAn(m.userId, ps.voll, { planId: plan.id, einheitKey: a, startedAt: stunden(30) });
     const juengste = await legeEinheitAn(m.userId, ps.voll, { planId: plan.id, einheitKey: b, startedAt: stunden(20) });
-    expect(planIn(await getBootstrap(m.client), ps.voll)).toMatchObject({ einheitenErledigt: 2, naechsteEinheitKey: a });
+    expect(planVon(await getBootstrap(m.client))).toMatchObject({ einheitenErledigt: 2, naechsteEinheitKey: a });
 
     // Das Mitglied loescht die Einheit selbst (0044); die Statuszeilen gehen per Cascade mit.
     const { error } = await m.client.from("workout_sessions").delete().eq("id", juengste);
     if (error) throw error;
-    expect(planIn(await getBootstrap(m.client), ps.voll)).toMatchObject({
+    expect(planVon(await getBootstrap(m.client))).toMatchObject({
       einheitenErledigt: 1, zuletztEinheitKey: a, naechsteEinheitKey: b,
     });
   });
 
-  it("einheitenErledigt zaehlt ueber Planversionen desselben Paars", async () => {
+  it("Zaehler zaehlt Sessions aus mehreren Studios und ueber Planversionen", async () => {
     const m = await legeMitgliedAn("boot-plan-versionen", { studios: [ps.voll, ps.voll2] });
-    const v1 = await aktiverPlan(m, ps.voll);
+    const v1 = await aktiverPlan(m);
     await legeEinheitAn(m.userId, ps.voll, { planId: v1.id, einheitKey: v1.einheiten[0]!.key, startedAt: stunden(50) });
     await legeEinheitAn(m.userId, ps.voll, { planId: v1.id, einheitKey: v1.einheiten[1]!.key, startedAt: stunden(40) });
-    const v2 = await aktiverPlan(m, ps.voll);
+    const v2 = await aktiverPlan(m);
     // Optional zaehlt wie erledigt.
     await legeEinheitAn(m.userId, ps.voll, {
       planId: v2.id, einheitKey: v2.einheiten[0]!.key, startedAt: stunden(30), status: ["offen", "optional"],
     });
-    // Anderes Studio, eigener Zaehler.
-    const fremd = await aktiverPlan(m, ps.voll2);
-    await legeEinheitAn(m.userId, ps.voll2, { planId: fremd.id, einheitKey: fremd.einheiten[0]!.key, startedAt: stunden(10) });
+    // Ein anderes Studio zaehlt mit: der Plan gehoert dem Katalog, nicht einem Studio.
+    await legeEinheitAn(m.userId, ps.voll2, { planId: v2.id, einheitKey: v2.einheiten[1]!.key, startedAt: stunden(10) });
 
-    const b = await getBootstrap(m.client);
-    expect(planIn(b, ps.voll)).toMatchObject({
-      planId: v2.id, version: 2, einheitenErledigt: 3, zuletztEinheitKey: v2.einheiten[0]!.key,
-      naechsteEinheitKey: v2.einheiten[1]!.key,
+    expect(planVon(await getBootstrap(m.client))).toMatchObject({
+      planId: v2.id, version: 2, einheitenErledigt: 4, zuletztEinheitKey: v2.einheiten[1]!.key,
+      naechsteEinheitKey: v2.einheiten[0]!.key,
     });
-    expect(planIn(b, ps.voll2)).toMatchObject({ einheitenErledigt: 1 });
   });
 
   it("alternativen schliessen meiden-Uebungen aus und enthalten kein Beschwerdenfeld", async () => {
     const m = await legeMitgliedAn("boot-plan-meiden", {
       studios: [ps.voll], limits: { knie: "meiden", schulter: "vorsichtig" },
     });
-    await aktiverPlan(m, ps.voll);
+    await aktiverPlan(m);
     const b = await getBootstrap(m.client);
-    const p = planIn(b, ps.voll);
+    const p = planVon(b);
+    // Der Katalog ist unter den Testdateien geteilt: nur die eigenen Uebungen pruefen.
+    const eigene = new Set(Object.values(ps.uebungen));
+    const nurEigene = (xs: Array<{ exerciseId: string }> = []) => xs.filter((k) => eigene.has(k.exerciseId));
     const alle = Object.values(p.alternativen).flat();
     expect(alle.length).toBeGreaterThan(0);
     expect(alle.some((k) => ps.knieUebungen.includes(k.exerciseId))).toBe(false);
-    expect(p.alternativen.beine_knie).toHaveLength(1);
-    expect(p.alternativen.druecken).toHaveLength(1);
-    for (const k of alle) expect(Object.keys(k).sort()).toEqual(["exerciseId", "machineId"]);
+    expect(nurEigene(p.alternativen.beine_knie)).toHaveLength(1);
+    expect(nurEigene(p.alternativen.druecken)).toHaveLength(1);
+    for (const k of alle) expect(Object.keys(k).sort()).toEqual(["exerciseId", "modelId"]);
 
     // Die Beschwerden selbst stehen nirgends im Bootstrap (Gesundheitsdaten).
     expect(Object.keys(p).sort()).toEqual([
-      "alternativen", "anfaengerUebergang", "einheiten", "einheitenErledigt", "gruende", "naechsteEinheitKey",
-      "planId", "regelVersion", "struktur", "studioId", "version", "zielgewichte", "zuletztEinheitKey",
+      "alternativen", "anfaengerUebergang", "einheiten", "einheitenErledigt", "gruende", "merkliste",
+      "naechsteEinheitKey", "planId", "regelVersion", "struktur", "studioId", "version", "zielgewichte",
+      "zuletztEinheitKey",
     ]);
     const { gruende: _gruende, ...ohneGruende } = p;
     const roh = JSON.stringify({ ...b, member: { ...b.member, plans: [ohneGruende] } });
@@ -415,50 +439,75 @@ describe("getBootstrap -- Trainingsplan", () => {
 
   it("alternativen sortieren vorsichtige Uebungen nach hinten", async () => {
     const m = await legeMitgliedAn("boot-plan-vorsicht", { studios: [ps.voll], limits: { knie: "vorsichtig" } });
-    await aktiverPlan(m, ps.voll);
-    const p = planIn(await getBootstrap(m.client), ps.voll);
-    const knie = p.alternativen.beine_knie!.map((k) => k.exerciseId);
+    await aktiverPlan(m);
+    const p = planVon(await getBootstrap(m.client));
+    const eigene = new Set(Object.values(ps.uebungen));
+    const knie = p.alternativen.beine_knie!.map((k) => k.exerciseId).filter((id) => eigene.has(id));
     expect(knie).toHaveLength(2);
     // knieUebungen[0] ist die Beinpresse (Bereich knie), die andere hat keinen Bereich.
     expect(knie[1]).toBe(ps.knieUebungen[0]);
+  });
+
+  it("merkliste kommt je Ort in den Bootstrap, nur an den Eigentuemer; gefaellt_nicht steht am Ende der Alternativen", async () => {
+    const m = await legeMitgliedAn("boot-plan-merkliste", { studios: [ps.voll] });
+    const fremd = await legeMitgliedAn("boot-plan-merkliste-fremd", { studios: [ps.voll] });
+    await aktiverPlan(m);
+    await aktiverPlan(fremd);
+    const { error } = await admin.from("plan_merkliste").insert([
+      { user_id: m.userId, exercise_id: ps.uebungen["Latzug"], art: "nicht_vorhanden", studio_id: ps.voll },
+      { user_id: m.userId, exercise_id: ps.uebungen["Hackenschmidt"], art: "gefaellt_nicht", studio_id: null },
+    ]);
+    if (error) throw error;
+
+    const p = planVon(await getBootstrap(m.client));
+    expect(p.merkliste).toEqual({
+      nichtVorhanden: { [ps.voll]: [ps.uebungen["Latzug"]] },
+      gefaelltNicht: [ps.uebungen["Hackenschmidt"]],
+    });
+    // Ohne Filter: "nicht vorhanden" entfernt die App selbst.
+    expect(p.alternativen.ziehen!.map((k) => k.exerciseId)).toContain(ps.uebungen["Latzug"]);
+    expect(p.alternativen.beine_knie!.at(-1)!.exerciseId).toBe(ps.uebungen["Hackenschmidt"]);
+    // Die Merkliste gehoert dem Mitglied.
+    expect(planVon(await getBootstrap(fremd.client)).merkliste).toEqual({ nichtVorhanden: {}, gefaelltNicht: [] });
   });
 
   it("anfaengerUebergang erst ab 8 Einheiten bei Erfahrung neu, nicht mehr nach Annahme eines Plans mit anfaengerBeendet", async () => {
     const m = await legeMitgliedAn("boot-plan-anfaenger", {
       studios: [ps.voll], profil: { minutes: 60, experience: "neu", focus: [] },
     });
-    const plan = await aktiverPlan(m, ps.voll);
+    const plan = await aktiverPlan(m);
     for (let i = 0; i < 7; i++) {
       await legeEinheitAn(m.userId, ps.voll, {
         planId: plan.id, einheitKey: plan.einheiten[i % plan.einheiten.length]!.key, startedAt: stunden(100 - i * 10),
       });
     }
-    expect(planIn(await getBootstrap(m.client), ps.voll)).toMatchObject({ einheitenErledigt: 7, anfaengerUebergang: false });
+    expect(planVon(await getBootstrap(m.client))).toMatchObject({ einheitenErledigt: 7, anfaengerUebergang: false });
 
     await legeEinheitAn(m.userId, ps.voll, { planId: plan.id, einheitKey: plan.einheiten[0]!.key, startedAt: stunden(20) });
-    expect(planIn(await getBootstrap(m.client), ps.voll)).toMatchObject({ einheitenErledigt: 8, anfaengerUebergang: true });
-
-    const neu = await aktiverPlan(m, ps.voll);
+    expect(planVon(await getBootstrap(m.client))).toMatchObject({ einheitenErledigt: 8, anfaengerUebergang: true });
+    // Der Generator setzt anfaengerBeendet; der Handbau-Helper kennt das nicht.
+    const vs = await erzeugePlanVorschlag(m.client, m.userId, ps.voll);
+    const neu = await acceptPlan(m.client, m.userId, vs.id);
     expect(neu.eingabe.anfaengerBeendet).toBe(true);
-    expect(planIn(await getBootstrap(m.client), ps.voll)).toMatchObject({
+    expect(planVon(await getBootstrap(m.client))).toMatchObject({
       planId: neu.id, einheitenErledigt: 8, anfaengerUebergang: false,
     });
   });
 
   it("anfaengerUebergang bleibt aus bei anderer Erfahrung", async () => {
     const m = await legeMitgliedAn("boot-plan-erfahren", { studios: [ps.voll] });
-    const plan = await aktiverPlan(m, ps.voll);
+    const plan = await aktiverPlan(m);
     for (let i = 0; i < 8; i++) {
       await legeEinheitAn(m.userId, ps.voll, { planId: plan.id, einheitKey: plan.einheiten[0]!.key, startedAt: stunden(100 - i * 10) });
     }
-    expect(planIn(await getBootstrap(m.client), ps.voll)).toMatchObject({ einheitenErledigt: 8, anfaengerUebergang: false });
+    expect(planVon(await getBootstrap(m.client))).toMatchObject({ einheitenErledigt: 8, anfaengerUebergang: false });
   });
 
   // -------------------------------------------------------------------------
   // Zielgewichte (Etappe 4, Task 5; G2, G13, G14, G17)
   // -------------------------------------------------------------------------
 
-  type Pos = TrainingPlan["einheiten"][number]["positionen"][number];
+  type Pos = KatalogPosition;
   const istKraft = (p: Pos) => p.rolle !== "cardio" && p.wdhVon !== null && p.wdhBis !== null;
 
   async function marken(ids: string[]): Promise<Map<string, string | null>> {
@@ -475,7 +524,7 @@ describe("getBootstrap -- Trainingsplan", () => {
 
   it("rechnet automatisch abgeschlossene Einheiten lazy nach: hoechstens die letzten fuenf, aufsteigend nach Stand", async () => {
     const m = await legeMitgliedAn("boot-pg-nachholen", { studios: [ps.voll] });
-    const plan = await aktiverPlan(m, ps.voll);
+    const plan = await aktiverPlan(m);
     const ids: string[] = [];
     // Sechs nie beendete Einheiten, letzter Satz vor 60, 50, ... 10 Stunden: alle nach 4 h
     // Stillstand automatisch abgeschlossen (Leseregel, kein Aufruf), keine berechnet.
@@ -484,7 +533,7 @@ describe("getBootstrap -- Trainingsplan", () => {
       ids.push(
         await legeEinheitAn(m.userId, ps.voll, {
           planId: plan.id, einheitKey: plan.einheiten[i % plan.einheiten.length]!.key, startedAt: start,
-          completedAt: null, saetzeAm: [new Date(start.getTime() + 3_600_000)], satzAn: satzAn(plan),
+          completedAt: null, saetzeAm: [new Date(start.getTime() + 3_600_000)], satzAn: satzAn(),
         }),
       );
     }
@@ -516,7 +565,7 @@ describe("getBootstrap -- Trainingsplan", () => {
 
   it("rechnet eine nach der Marke erneut beendete Einheit nach, eine berechnete und eine laufende nicht", async () => {
     const m = await legeMitgliedAn("boot-pg-wieder", { studios: [ps.voll] });
-    const plan = await aktiverPlan(m, ps.voll);
+    const plan = await aktiverPlan(m);
     const [a, b] = plan.einheiten.map((e) => e.key) as [string, string];
     // Wieder geoeffnet und erneut beendet: Abschluss vor 2 h, Marke vom ersten Abschluss vor 2,5 h.
     const wieder = await legeEinheitAn(m.userId, ps.voll, {
@@ -532,7 +581,7 @@ describe("getBootstrap -- Trainingsplan", () => {
     // Laeuft noch: letzter Satz vor 5 Minuten.
     const laeuft = await legeEinheitAn(m.userId, ps.voll, {
       planId: plan.id, einheitKey: b, startedAt: stunden(0.5), completedAt: null,
-      saetzeAm: [stunden(1 / 12)], satzAn: satzAn(plan),
+      saetzeAm: [stunden(1 / 12)], satzAn: satzAn(),
     });
 
     const vorher = Date.now();
@@ -546,21 +595,21 @@ describe("getBootstrap -- Trainingsplan", () => {
 
   it("zielgewichte tragen aenderung und grund; ein Bestandsplan ohne Zeilen bekommt sie beim ersten Bootstrap (G13)", async () => {
     const m = await legeMitgliedAn("boot-pg-ziele", { studios: [ps.voll] });
-    const plan = await aktiverPlan(m, ps.voll);
+    const plan = await aktiverPlan(m);
     const e0 = plan.einheiten[0]!;
     const p0 = e0.positionen.find(istKraft)!;
     const k0 = zielSchluessel(e0.key, p0.key);
     // Historie: vor zwei Tagen 50 kg an p0 (legeEinheitAn), schon berechnet.
     const alt = await legeEinheitAn(m.userId, ps.voll, {
       planId: plan.id, einheitKey: plan.einheiten[0]!.key, startedAt: stunden(48),
-      saetzeAm: [stunden(47.9)], satzAn: { machineId: p0.machineId, exerciseId: p0.exerciseId },
+      saetzeAm: [stunden(47.9)], satzAn: satzAn(),
     });
     await setzeMarke(alt, stunden(46));
     // Bestand aus Etappe 1-3: keine Zielgewichte.
     const { error } = await admin.from("plan_gewichte").delete().eq("plan_id", plan.id);
     if (error) throw error;
 
-    const p = planIn(await getBootstrap(m.client), ps.voll);
+    const p = planVon(await getBootstrap(m.client));
 
     const kraft = plan.einheiten.flatMap((e) =>
       e.positionen.filter(istKraft).map((k) => ({ ...k, ziel: zielSchluessel(e.key, k.key) })),
@@ -581,7 +630,7 @@ describe("getBootstrap -- Trainingsplan", () => {
       .eq("einheit_key", e0.key)
       .eq("position_key", p0.key);
     if (e) throw e;
-    expect(planIn(await getBootstrap(m.client), ps.voll).zielgewichte[k0]).toEqual({
+    expect(planVon(await getBootstrap(m.client)).zielgewichte[k0]).toEqual({
       load: 55, secondaryLoad: null, aenderung: 5, grund: "korridor_oben_erreicht",
     });
   });

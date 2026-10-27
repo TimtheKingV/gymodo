@@ -6,14 +6,13 @@ import { POST as completePOST } from "@/app/api/v1/workout-sessions/[sessionId]/
 import { fromDomainError } from "@/lib/api/respond";
 import { DomainError, zielSchluessel } from "@fitretro/domain";
 import { accessTokenFor, serviceClient } from "./helpers/clients.js";
-import { legeMitgliedAn, legePlanStudiosAn, type PlanStudios } from "./helpers/plan-studio.js";
+import { GYMTAVO, legeMitgliedAn, legePlanStudiosAn, type PlanStudios } from "./helpers/plan-studio.js";
 
 const BASIS = "http://localhost/api/v1/me/plans";
 const kopf = (auth?: string) => (auth ? { authorization: `Bearer ${auth}` } : {});
 const post = (auth: string | undefined, rumpf: unknown) =>
   POST(new Request(BASIS, { method: "POST", headers: kopf(auth), body: JSON.stringify(rumpf) }));
-const get = (auth: string | undefined, studioId?: string) =>
-  GET(new Request(studioId ? `${BASIS}?studioId=${studioId}` : BASIS, { headers: kopf(auth) }));
+const get = (auth: string | undefined) => GET(new Request(BASIS, { headers: kopf(auth) }));
 const accept = (auth: string | undefined, id: string) =>
   acceptPOST(new Request(`${BASIS}/${id}/accept`, { method: "POST", headers: kopf(auth) }), {
     params: Promise.resolve({ id }),
@@ -28,12 +27,14 @@ type Fehler = { error: { code: string; message: string; detail?: Record<string, 
 
 let s: PlanStudios;
 let bearer: string;
+let userId: string;
 let fremd: string;
 
 beforeAll(async () => {
   s = await legePlanStudiosAn(crypto.randomUUID());
   const m = await legeMitgliedAn("api-plan", { studios: [s.voll] });
   bearer = await accessTokenFor(m.email);
+  userId = m.userId;
   const f = await legeMitgliedAn("api-plan-fremd", { studios: [s.voll] });
   fremd = await accessTokenFor(f.email);
 });
@@ -41,7 +42,7 @@ beforeAll(async () => {
 describe("/me/plans", () => {
   it("401 ohne Token", async () => {
     expect((await post(undefined, { studioId: s.voll })).status).toBe(401);
-    expect((await get(undefined, s.voll)).status).toBe(401);
+    expect((await get(undefined)).status).toBe(401);
     expect((await accept(undefined, crypto.randomUUID())).status).toBe(401);
   });
 
@@ -56,7 +57,7 @@ describe("/me/plans", () => {
     expect(angenommen.status).toBe(200);
     expect(((await angenommen.json()) as { status: string }).status).toBe("aktiv");
 
-    const liste = await get(bearer, s.voll);
+    const liste = await get(bearer);
     expect(liste.status).toBe(200);
     expect(liste.headers.get("cache-control")).toBe("private, no-store");
     const plaene = (await liste.json()) as Array<{ id: string; status: string }>;
@@ -66,9 +67,9 @@ describe("/me/plans", () => {
   it("accept fremder Plan -> 409, Plan bleibt Vorschlag", async () => {
     const plan = (await (await post(bearer, { studioId: s.voll })).json()) as { id: string };
     expect((await accept(fremd, plan.id)).status).toBe(409);
-    const meine = (await (await get(bearer, s.voll)).json()) as Array<{ id: string; status: string }>;
+    const meine = (await (await get(bearer)).json()) as Array<{ id: string; status: string }>;
     expect(meine.find((p) => p.id === plan.id)!.status).toBe("vorschlag");
-    expect(await (await get(fremd, s.voll)).json()).toEqual([]);
+    expect(await (await get(fremd)).json()).toEqual([]);
   });
 
   it("404 fuer ein Studio ohne Mitgliedschaft", async () => {
@@ -77,11 +78,16 @@ describe("/me/plans", () => {
     expect(((await antwort.json()) as Fehler).error.code).toBe("not_found");
   });
 
-  it("422 bei fehlender oder ungueltiger studioId", async () => {
-    expect((await post(bearer, {})).status).toBe(422);
+  it("422 bei ungueltiger studioId oder Plan-ID", async () => {
     expect((await post(bearer, { studioId: "abc" })).status).toBe(422);
-    expect((await get(bearer)).status).toBe(422);
     expect((await accept(bearer, "abc")).status).toBe(422);
+  });
+
+  it("POST plans ohne studioId erzeugt im Freien Training", async () => {
+    const m = await legeMitgliedAn("api-plan-frei", { studios: [] });
+    const antwort = await post(await accessTokenFor(m.email), {});
+    expect(antwort.status).toBe(201);
+    expect(((await antwort.json()) as { studioId: string }).studioId).toBe(GYMTAVO);
   });
 
   it("422 profil_unvollstaendig traegt code", async () => {
@@ -94,8 +100,16 @@ describe("/me/plans", () => {
   });
 
   it("422 plan_nicht_moeglich traegt code, baustein und grund", async () => {
-    const m = await legeMitgliedAn("api-plan-unmoeglich", { studios: [s.ohneDruck] });
-    const antwort = await post(await accessTokenFor(m.email), { studioId: s.ohneDruck });
+    // Der Katalog ist geteilt; "kein Geraet" entsteht darum ueber die Merkliste: alle
+    // Druckuebungen fehlen am Ort.
+    const m = await legeMitgliedAn("api-plan-unmoeglich", { studios: [s.voll] });
+    const { data: druck, error } = await admin.from("exercises").select("id").eq("plan_baustein", "druecken");
+    if (error) throw error;
+    const { error: e } = await admin.from("plan_merkliste").insert(
+      (druck ?? []).map((u) => ({ user_id: m.userId, exercise_id: u.id, art: "nicht_vorhanden", studio_id: s.voll })),
+    );
+    if (e) throw e;
+    const antwort = await post(await accessTokenFor(m.email), { studioId: s.voll });
     expect(antwort.status).toBe(422);
     const body = (await antwort.json()) as Fehler;
     expect(body.error.code).toBe("plan_nicht_moeglich");
@@ -119,7 +133,7 @@ describe("/me/plans/[id]/swap", () => {
     return (await angenommen.json()) as {
       id: string;
       version: number;
-      einheiten: Array<{ key: string; positionen: Array<{ key: string; exerciseId: string; machineId: string }> }>;
+      einheiten: Array<{ key: string; positionen: Array<{ key: string; baustein: string; exerciseId: string; modelId: string }> }>;
     };
   }
 
@@ -134,7 +148,7 @@ describe("/me/plans/[id]/swap", () => {
       einheitKey: plan.einheiten[0]!.key,
       positionKey: pos.key,
       exerciseId: pos.exerciseId,
-      machineId: pos.machineId,
+      modelId: pos.modelId,
     });
     expect(antwort.status).toBe(200);
     const neu = (await antwort.json()) as { id: string; status: string; version: number };
@@ -149,7 +163,7 @@ describe("/me/plans/[id]/swap", () => {
       einheitKey: plan.einheiten[0]!.key,
       positionKey: "gibt-es-nicht",
       exerciseId: pos.exerciseId,
-      machineId: pos.machineId,
+      modelId: pos.modelId,
     });
     expect(antwort.status).toBe(422);
     expect(((await antwort.json()) as Fehler).error.code).toBe("validation_failed");
@@ -164,9 +178,75 @@ describe("/me/plans/[id]/swap", () => {
       einheitKey: plan.einheiten[0]!.key,
       positionKey: pos.key,
       exerciseId: pos.exerciseId,
-      machineId: pos.machineId,
+      modelId: pos.modelId,
     });
     expect(antwort.status).toBe(409);
+  });
+
+  // Eine Beinposition und eine andere Uebung desselben Bausteins aus dem Katalogmodell der Tests
+  // (der Katalog ist geteilt, die Position kann auch eine Uebung anderer Tests tragen).
+  async function beinTausch(plan: Awaited<ReturnType<typeof aktiverPlan>>) {
+    const alle = plan.einheiten.flatMap((e) => e.positionen.map((p) => ({ ...p, einheitKey: e.key })));
+    const pos = alle.find((p) => p.baustein === "beine_knie")!;
+    const neueUebung = [s.uebungen["Beinpresse"], s.uebungen["Hackenschmidt"]].find((id) => id !== pos.exerciseId)!;
+    return {
+      pos,
+      rumpf: { einheitKey: pos.einheitKey, positionKey: pos.key, exerciseId: neueUebung, modelId: s.katalogModell },
+    };
+  }
+  const merkliste = async () => {
+    const { data, error } = await admin.from("plan_merkliste").select("exercise_id, art, studio_id").eq("user_id", userId);
+    if (error) throw error;
+    return data ?? [];
+  };
+  afterEach(async () => {
+    vi.restoreAllMocks();
+    await admin.from("plan_merkliste").delete().eq("user_id", userId);
+  });
+
+  it("swap mit grund nicht_vorhanden tauscht und merkt die alte Uebung am Ort", async () => {
+    const plan = await aktiverPlan();
+    const { pos, rumpf } = await beinTausch(plan);
+    const antwort = await swap(bearer, plan.id, { ...rumpf, grund: "nicht_vorhanden", ortId: s.voll });
+    expect(antwort.status).toBe(200);
+    expect(await merkliste()).toEqual([{ exercise_id: pos.exerciseId, art: "nicht_vorhanden", studio_id: s.voll }]);
+  });
+
+  it("swap mit grund nicht_vorhanden ohne ortId merkt am Katalog-Studio", async () => {
+    const plan = await aktiverPlan();
+    const { pos, rumpf } = await beinTausch(plan);
+    expect((await swap(bearer, plan.id, { ...rumpf, grund: "nicht_vorhanden" })).status).toBe(200);
+    expect(await merkliste()).toEqual([{ exercise_id: pos.exerciseId, art: "nicht_vorhanden", studio_id: GYMTAVO }]);
+  });
+
+  it("swap mit grund gefaellt_nicht merkt ohne Ort", async () => {
+    const plan = await aktiverPlan();
+    const { pos, rumpf } = await beinTausch(plan);
+    expect((await swap(bearer, plan.id, { ...rumpf, grund: "gefaellt_nicht", ortId: s.voll })).status).toBe(200);
+    expect(await merkliste()).toEqual([{ exercise_id: pos.exerciseId, art: "gefaellt_nicht", studio_id: null }]);
+  });
+
+  it("swap ohne grund merkt nichts; ein unbekannter grund ist 422", async () => {
+    const plan = await aktiverPlan();
+    const { rumpf } = await beinTausch(plan);
+    expect((await swap(bearer, plan.id, { ...rumpf, grund: "egal" })).status).toBe(422);
+    expect((await swap(bearer, plan.id, rumpf)).status).toBe(200);
+    expect(await merkliste()).toEqual([]);
+  });
+
+  it("Eintragsfehler bricht den Tausch nicht ab und wird ohne Grund oder Uebung protokolliert", async () => {
+    const plan = await aktiverPlan();
+    const { pos, rumpf } = await beinTausch(plan);
+    const fehler = vi.spyOn(console, "error").mockImplementation(() => {});
+    // Ein Studio ohne Mitgliedschaft: die Policy lehnt den Eintrag ab.
+    const antwort = await swap(bearer, plan.id, { ...rumpf, grund: "nicht_vorhanden", ortId: s.voll2 });
+    expect(antwort.status).toBe(200);
+    expect(((await antwort.json()) as { version: number }).version).toBe(plan.version + 1);
+    expect(await merkliste()).toEqual([]);
+    expect(fehler).toHaveBeenCalledTimes(1);
+    const text = String(fehler.mock.calls[0]![0]);
+    expect(text).toContain("Merkliste");
+    for (const nicht of [pos.exerciseId, "nicht_vorhanden", "gefaellt_nicht", s.voll2]) expect(text).not.toContain(nicht);
   });
 });
 
@@ -179,7 +259,7 @@ type Position = {
   baustein: string;
   rolle: string;
   exerciseId: string;
-  machineId: string;
+  modelId: string;
   wdhVon: number | null;
 };
 type PlanJson = { id: string; version: number; einheiten: Array<{ key: string; positionen: Position[] }> };
@@ -227,7 +307,7 @@ describe("Zielgewichte bei Annahme und Tausch", () => {
     for (const p of kraft) expect(z[p.ziel]!.grund).toBe("startschaetzung");
   });
 
-  it("ein dauerhafter Tausch behaelt die Ziele gleicher Uebung am gleichen Geraet (G9)", async () => {
+  it("ein dauerhafter Tausch behaelt die Ziele gleicher Uebung am gleichen Modell (G9)", async () => {
     const plan = await aktiv();
     const getauscht = stellen(plan).find((p) => p.baustein === "beine_knie")!;
     const bleibt = stellen(plan).find((p) => istKraft(p) && p.ziel !== getauscht.ziel)!;
@@ -236,7 +316,7 @@ describe("Zielgewichte bei Annahme und Tausch", () => {
     const andere = [s.uebungen["Beinpresse"], s.uebungen["Hackenschmidt"]].find((id) => id !== getauscht.exerciseId)!;
 
     const antwort = await swap(bearer, plan.id, {
-      einheitKey: getauscht.einheitKey, positionKey: getauscht.key, exerciseId: andere, machineId: getauscht.machineId,
+      einheitKey: getauscht.einheitKey, positionKey: getauscht.key, exerciseId: andere, modelId: s.katalogModell,
     });
     expect(antwort.status).toBe(200);
     const neu = (await antwort.json()) as PlanJson;
@@ -248,9 +328,9 @@ describe("Zielgewichte bei Annahme und Tausch", () => {
     expect(z[getauscht.ziel]).toMatchObject({ grund: "startschaetzung" });
     expect(z[getauscht.ziel]!.load).not.toBe(95);
 
-    // Tausch auf dieselbe Uebung am selben Geraet: das Ziel bleibt.
+    // Tausch auf dieselbe Uebung am selben Modell: das Ziel bleibt.
     const nochmal = await swap(bearer, neu.id, {
-      einheitKey: bleibt.einheitKey, positionKey: bleibt.key, exerciseId: bleibt.exerciseId, machineId: bleibt.machineId,
+      einheitKey: bleibt.einheitKey, positionKey: bleibt.key, exerciseId: bleibt.exerciseId, modelId: bleibt.modelId,
     });
     expect(nochmal.status).toBe(200);
     const v3 = (await nochmal.json()) as PlanJson;
@@ -272,13 +352,13 @@ describe("POST /workout-sessions/[id]/complete -- Zielgewichte", () => {
     // lehnt die Zeilen ab (plan_ungueltig) -- der Abschluss darf daran nicht haengen.
     const position = {
       key: "doppelt", baustein: "beine_knie", rolle: "pflicht", exerciseId: s.uebungen["Beinpresse"],
-      machineId: maschine!.id, typ: "mehrgelenk", saetze: 3, wdhVon: 8, wdhBis: 12, reserveVon: 2, reserveBis: 3,
+      modelId: s.katalogModell, typ: "mehrgelenk", saetze: 3, wdhVon: 8, wdhBis: 12, reserveVon: 2, reserveBis: 3,
       pauseSek: 90, aufwaermsatz: true, dauerMin: null, hauptmuskeln: [],
     };
     const { data: plan, error: pe } = await admin
       .from("training_plans")
       .insert({
-        user_id: m.userId, studio_id: s.voll, version: 1, status: "aktiv", regel_version: "test",
+        user_id: m.userId, studio_id: GYMTAVO, version: 1, status: "aktiv", regel_version: "test",
         eingabe: { ziel: "muskelaufbau", tage: 2, minuten: 60, fokus: [], erfahrung: "regelmaessig", anfaengerBeendet: false, beschwerdenBeruecksichtigt: false },
         struktur: "gk_ab",
         einheiten: [

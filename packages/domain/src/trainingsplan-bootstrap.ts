@@ -7,7 +7,7 @@ import { DomainError } from "./errors.js";
 import { einheitZaehlt, naechsteEinheitKey, type PositionStatus } from "./trainingsplan-ablauf.js";
 import { filtereKandidaten, type Kandidat } from "./trainingsplan-auswahl.js";
 import type { PlanEinheit } from "./trainingsplan-generator.js";
-import { LEERE_MERKLISTE, ladeKandidaten } from "./trainingsplan-kandidaten.js";
+import { ladeKandidaten } from "./trainingsplan-kandidaten.js";
 import {
   aktualisierePlanGewichte,
   initialisierePlanGewichte,
@@ -199,7 +199,13 @@ export function anfaengerphaseVorbei(profil: TrainingProfile | null, einheitenEr
   return profil?.experience === "neu" && einheitenErledigt >= ANFAENGER_EINHEITEN;
 }
 
-export type PlanAlternative = { exerciseId: string; machineId: string };
+export type PlanAlternative = { exerciseId: string; modelId: string };
+
+/**
+ * Merkliste des Mitglieds fuer die App: je Ort die gesperrten Uebungs-IDs, "gefaellt nicht"
+ * ueberall. Eine Angabe zur Person: nur an den Eigentuemer, nie geloggt.
+ */
+export type PlanMerkliste = { nichtVorhanden: Record<string, string[]>; gefaelltNicht: string[] };
 
 export type PlanFuerApp = {
   planId: string;
@@ -216,11 +222,39 @@ export type PlanFuerApp = {
   alternativen: Partial<Record<Baustein, PlanAlternative[]>>;
   /** Zielgewicht je Positionsschluessel (G8, G17); Positionen ohne Ziel fehlen. */
   zielgewichte: Record<string, PositionsZiel>;
+  merkliste: PlanMerkliste;
 };
+
+type MerklisteZeile = { exercise_id: string; art: string; studio_id: string | null };
+
+/** Faltet die Zeilen von plan_merkliste; rein. */
+export function merklisteFuerApp(zeilen: MerklisteZeile[]): PlanMerkliste {
+  const ergebnis: PlanMerkliste = { nichtVorhanden: {}, gefaelltNicht: [] };
+  for (const z of zeilen) {
+    if (z.art === "nicht_vorhanden" && z.studio_id) (ergebnis.nichtVorhanden[z.studio_id] ??= []).push(z.exercise_id);
+    else if (z.art === "gefaellt_nicht") ergebnis.gefaelltNicht.push(z.exercise_id);
+  }
+  return ergebnis;
+}
+
+async function ladeMerklisteFuerApp(client: SupabaseClient, userId: string): Promise<PlanMerkliste> {
+  const { data, error } = await client
+    .from("plan_merkliste")
+    .select("exercise_id, art, studio_id")
+    .eq("user_id", userId);
+  // Feste Meldung: der Inhalt der Merkliste steht nie in einem Fehler oder Log.
+  if (error) throw new DomainError("internal", "Die Merkliste konnte nicht gelesen werden.");
+  return merklisteFuerApp((data ?? []) as MerklisteZeile[]);
+}
+
+/** Ein Plan im alten Format (Positionen mit machineId statt modelId) taugt nicht fuer die App. */
+export function istKatalogPlan(plan: TrainingPlan): boolean {
+  return plan.einheiten.every((e) => e.positionen.every((p) => typeof (p as { modelId?: unknown }).modelId === "string"));
+}
 
 /**
  * Tauschkandidaten je Baustein: "meiden" faellt heraus, "vorsichtig" steht hinten, sonst
- * die Reihenfolge von ladeKandidaten. Ausgegeben werden nur exerciseId und machineId --
+ * die Reihenfolge von ladeKandidaten; Uebungen, die dem Mitglied nicht gefallen, ganz am Ende. Ausgegeben werden nur exerciseId und modelId --
  * kein Bereich und kein Vorsichtig-Kennzeichen, denn daraus liessen sich die Beschwerden
  * (Gesundheitsdaten) ablesen.
  */
@@ -229,8 +263,9 @@ export function alternativenJeBaustein(
   beschwerden: TrainingLimits["areas"],
 ): PlanFuerApp["alternativen"] {
   const ergebnis: PlanFuerApp["alternativen"] = {};
-  for (const k of filtereKandidaten(kandidaten, beschwerden)) {
-    (ergebnis[k.baustein] ??= []).push({ exerciseId: k.exerciseId, machineId: k.machineId });
+  const erlaubt = filtereKandidaten(kandidaten, beschwerden);
+  for (const k of [...erlaubt.filter((x) => !x.gefaelltNicht), ...erlaubt.filter((x) => x.gefaelltNicht)]) {
+    (ergebnis[k.baustein] ??= []).push({ exerciseId: k.exerciseId, modelId: k.modelId });
   }
   return ergebnis;
 }
@@ -242,6 +277,7 @@ export function planFuerApp(
   profil: TrainingProfile | null,
   alternativen: PlanFuerApp["alternativen"],
   zielgewichte: PlanFuerApp["zielgewichte"],
+  merkliste: PlanMerkliste,
 ): PlanFuerApp {
   const zuletzt = gezaehlt.at(-1)?.einheitKey ?? null;
   return {
@@ -261,6 +297,7 @@ export function planFuerApp(
       anfaengerphaseVorbei(profil, gezaehlt.length) && plan.eingabe.anfaengerBeendet !== true,
     alternativen,
     zielgewichte,
+    merkliste,
   };
 }
 
@@ -377,29 +414,34 @@ async function ladeZielgewichteFuerApp(
 }
 
 /**
- * Die aktiven Plaene (aus aktivePlaeneDerMitgliedschaften) fuer die App: Zaehler,
- * Kandidaten und Zielgewichte je Studio. Die Beschwerden wirken nur auf die Kandidaten
- * und verlassen diese Funktion nicht.
+ * Der aktive Katalogplan (hoechstens einer) fuer die App: Zaehler, Kandidaten, Zielgewichte
+ * und die Merkliste des Mitglieds. Die Beschwerden wirken nur auf die Kandidaten und
+ * verlassen diese Funktion nicht. Ein Plan im alten Format (machineId) wird ausgelassen
+ * und ohne Inhalt protokolliert.
  */
 export async function ladePlaeneFuerApp(
   client: SupabaseClient,
   userId: string,
-  plaene: TrainingPlan[],
+  plan: TrainingPlan | null,
   profil: TrainingProfile | null,
   limits: TrainingLimits | null,
   jetzt: Date,
   melde: Melde = (n) => console.error(n),
 ): Promise<PlanFuerApp[]> {
+  if (!plan) return [];
+  if (!istKatalogPlan(plan)) {
+    melde("bootstrap: Plan im alten Format ausgelassen");
+    return [];
+  }
   // Ohne Einwilligung (keine Zeile) gibt es keine Beschwerden -- nie raten.
   const beschwerden = limits?.areas ?? {};
-  return Promise.all(
-    plaene.map(async (plan) => {
-      const [gezaehlt, kandidaten, zielgewichte] = await Promise.all([
-        ladeGezaehlteEinheiten(client, userId, jetzt),
-        ladeKandidaten(client, LEERE_MERKLISTE),
-        ladeZielgewichteFuerApp(client, userId, plan, jetzt, melde),
-      ]);
-      return planFuerApp(plan, gezaehlt, profil, alternativenJeBaustein(kandidaten, beschwerden), zielgewichte);
-    }),
-  );
+  const merkliste = await ladeMerklisteFuerApp(client, userId);
+  const [gezaehlt, kandidaten, zielgewichte] = await Promise.all([
+    ladeGezaehlteEinheiten(client, userId, jetzt),
+    // Ohne Filter der Merkliste: die App entfernt "nicht vorhanden" je Ort selbst;
+    // "gefaellt nicht" sortiert ans Ende.
+    ladeKandidaten(client, { nichtVorhanden: [], gefaelltNicht: merkliste.gefaelltNicht }),
+    ladeZielgewichteFuerApp(client, userId, plan, jetzt, melde),
+  ]);
+  return [planFuerApp(plan, gezaehlt, profil, alternativenJeBaustein(kandidaten, beschwerden), zielgewichte, merkliste)];
 }

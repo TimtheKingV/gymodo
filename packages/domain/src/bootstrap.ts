@@ -18,7 +18,7 @@ import type { Messpunkt } from "./measurements.js";
 import type { Profil } from "./profil.js";
 import { zuProfil } from "./profil.js";
 import { stationsSchluessel } from "./station.js";
-import { aktivePlaeneDerMitgliedschaften } from "./trainingsplan.js";
+import { aktiverKatalogPlan } from "./trainingsplan.js";
 import { ladePlaeneFuerApp, type PlanFuerApp } from "./trainingsplan-bootstrap.js";
 import { DomainError } from "./errors.js";
 import { getTrainingLimits, getTrainingProfile, type TrainingProfile } from "./trainingsprofil.js";
@@ -400,12 +400,12 @@ export async function ladeTrainingsteil(
     return null;
   });
   const plaeneAnfrage = (async () => {
-    const [profil, limits, aktive] = await Promise.all([
+    const [profil, limits, aktiver] = await Promise.all([
       profilAnfrage,
       getTrainingLimits(client, userId),
-      aktivePlaeneDerMitgliedschaften(client, userId),
+      aktiverKatalogPlan(client, userId),
     ]);
-    return ladePlaeneFuerApp(client, userId, aktive, profil, limits, jetzt, melde);
+    return ladePlaeneFuerApp(client, userId, aktiver, profil, limits, jetzt, melde);
   })().catch((e: unknown) => {
     melde(`bootstrap: Plaene nicht geladen (${grund(e)})`);
     return [] as PlanFuerApp[];
