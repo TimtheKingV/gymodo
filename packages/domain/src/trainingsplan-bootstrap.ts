@@ -8,6 +8,14 @@ import { einheitZaehlt, naechsteEinheitKey, type PositionStatus } from "./traini
 import { filtereKandidaten, type Kandidat } from "./trainingsplan-auswahl.js";
 import type { PlanEinheit } from "./trainingsplan-generator.js";
 import { ladeKandidaten } from "./trainingsplan-kandidaten.js";
+import {
+  aktualisierePlanGewichte,
+  initialisierePlanGewichte,
+  ladeZielgewichte,
+  ohneAbbruch,
+  type Melde,
+  type PositionsZiel,
+} from "./plangewichte.js";
 import type { Baustein } from "./trainingsplan-typen.js";
 // Nur der Typ: trainingsplan.ts importiert umgekehrt den Zaehler, ein Laufzeitzyklus waere unnoetig.
 import type { TrainingPlan } from "./trainingsplan.js";
@@ -208,6 +216,8 @@ export type PlanFuerApp = {
   einheitenErledigt: number;
   anfaengerUebergang: boolean;
   alternativen: Partial<Record<Baustein, PlanAlternative[]>>;
+  /** Zielgewicht je Positionsschluessel (G8, G17); Positionen ohne Ziel fehlen. */
+  zielgewichte: Record<string, PositionsZiel>;
 };
 
 /**
@@ -233,6 +243,7 @@ export function planFuerApp(
   gezaehlt: GezaehlteEinheit[],
   profil: TrainingProfile | null,
   alternativen: PlanFuerApp["alternativen"],
+  zielgewichte: PlanFuerApp["zielgewichte"],
 ): PlanFuerApp {
   const zuletzt = gezaehlt.at(-1)?.einheitKey ?? null;
   return {
@@ -251,13 +262,128 @@ export function planFuerApp(
     anfaengerUebergang:
       anfaengerphaseVorbei(profil, gezaehlt.length) && plan.eingabe.anfaengerBeendet !== true,
     alternativen,
+    zielgewichte,
   };
 }
 
+/** Hoechstens so viele Einheiten rechnet ein Bootstrap nach (die juengsten). */
+export const NACHHOLEN_HOECHSTENS = 5;
+/** So viele juengste Einheiten werden auf Nachholbedarf geprueft. */
+const NACHHOLEN_KANDIDATEN = 20;
+
+export type SessionFuerNachholen = {
+  id: string;
+  startedAt: string;
+  completedAt: string | null;
+  letzterSatzAm: string | null;
+  gewichteBerechnetAm: string | null;
+};
+
 /**
- * Die aktiven Plaene (aus aktivePlaeneDerMitgliedschaften) fuer die App: Zaehler und
- * Kandidaten je Studio. Die Beschwerden wirken nur auf die Kandidaten und verlassen
- * diese Funktion nicht.
+ * Einheiten, deren Zielgewichte nachzurechnen sind (G2, G13): abgeschlossen -- beendet oder
+ * nach 4 h Stillstand, der Autoabschluss ist eine Leseregel und loest nichts aus -- und noch
+ * nicht oder vor ihrem Abschluss berechnet. Das Zweite faengt eine wieder geoeffnete und
+ * erneut beendete Einheit: die Marke bleibt beim Wiederoeffnen stehen. Der Stand ist der aus
+ * set_plan_gewichte (completed_at, sonst letzte Aktivitaet). Aufsteigend nach Stand,
+ * hoechstens die juengsten `hoechstens`.
+ */
+export function nachzuholendeSessions(
+  sessions: SessionFuerNachholen[],
+  jetzt: Date,
+  hoechstens = NACHHOLEN_HOECHSTENS,
+): string[] {
+  const offen: Array<{ id: string; stand: number }> = [];
+  for (const s of sessions) {
+    let stand: number;
+    if (s.completedAt !== null) {
+      stand = Date.parse(s.completedAt);
+    } else {
+      stand = Date.parse(s.letzterSatzAm ?? s.startedAt);
+      if (jetzt.getTime() - stand <= STILLSTAND_MS) continue;
+    }
+    if (s.gewichteBerechnetAm !== null && Date.parse(s.gewichteBerechnetAm) >= stand) continue;
+    offen.push({ id: s.id, stand });
+  }
+  return offen
+    .sort((a, b) => a.stand - b.stand)
+    .slice(-hoechstens)
+    .map((s) => s.id);
+}
+
+/** Die juengsten Planeinheiten des Paars (Nutzer, Studio) mit Nachholbedarf, siehe oben. */
+async function ladeNachzuholende(
+  client: SupabaseClient,
+  userId: string,
+  studioId: string,
+  jetzt: Date,
+): Promise<string[]> {
+  const { data, error } = await client
+    .from("workout_sessions")
+    .select("id, started_at, completed_at, gewichte_berechnet_at")
+    .eq("user_id", userId)
+    .eq("studio_id", studioId)
+    .not("plan_id", "is", null)
+    .not("plan_einheit_key", "is", null)
+    .order("started_at", { ascending: false })
+    .limit(NACHHOLEN_KANDIDATEN);
+  if (error) throw new DomainError("internal", "Die Einheiten konnten nicht gelesen werden.");
+  const sessions = (data ?? []) as Array<{
+    id: string;
+    started_at: string;
+    completed_at: string | null;
+    gewichte_berechnet_at: string | null;
+  }>;
+  const letzte = await ladeLetzteSaetze(
+    client,
+    sessions.filter((s) => s.completed_at === null).map((s) => s.id),
+  );
+  return nachzuholendeSessions(
+    sessions.map((s) => ({
+      id: s.id,
+      startedAt: s.started_at,
+      completedAt: s.completed_at,
+      letzterSatzAm: letzte.get(s.id) ?? null,
+      gewichteBerechnetAm: s.gewichte_berechnet_at,
+    })),
+    jetzt,
+  );
+}
+
+/**
+ * Zielgewichte des Plans fuer die App. Vorher, ohne den Bootstrap je scheitern zu lassen:
+ * liegengebliebene Abschluesse nachrechnen (nacheinander, aelteste zuerst) und fehlende
+ * Ziele setzen -- so bekommt ein Bestandsplan aus Etappe 1-3 seine Ziele beim ersten
+ * Bootstrap (G13). Nur das Lesen selbst wirft; dann gibt es plans: [] wie bei jedem
+ * anderen Fehler im Planteil.
+ */
+async function ladeZielgewichteFuerApp(
+  client: SupabaseClient,
+  userId: string,
+  plan: TrainingPlan,
+  jetzt: Date,
+  melde: Melde,
+): Promise<PlanFuerApp["zielgewichte"]> {
+  await ohneAbbruch(
+    "Nachholen im Bootstrap",
+    async () => {
+      for (const sessionId of await ladeNachzuholende(client, userId, plan.studioId, jetzt)) {
+        await ohneAbbruch(
+          "Nachholen einer Einheit",
+          () => aktualisierePlanGewichte(client, userId, sessionId),
+          melde,
+        );
+      }
+    },
+    melde,
+  );
+  await ohneAbbruch("Startwerte im Bootstrap", () => initialisierePlanGewichte(client, userId, plan), melde);
+  return ladeZielgewichte(client, userId, plan);
+}
+
+/**
+ * Die aktiven Plaene (aus aktivePlaeneDerMitgliedschaften) fuer die App: Zaehler,
+ * Kandidaten und Zielgewichte je Studio. Die Beschwerden wirken nur auf die Kandidaten
+ * und verlassen diese Funktion nicht.
  */
 export async function ladePlaeneFuerApp(
   client: SupabaseClient,
@@ -266,16 +392,18 @@ export async function ladePlaeneFuerApp(
   profil: TrainingProfile | null,
   limits: TrainingLimits | null,
   jetzt: Date,
+  melde: Melde = (n) => console.error(n),
 ): Promise<PlanFuerApp[]> {
   // Ohne Einwilligung (keine Zeile) gibt es keine Beschwerden -- nie raten.
   const beschwerden = limits?.areas ?? {};
   return Promise.all(
     plaene.map(async (plan) => {
-      const [gezaehlt, kandidaten] = await Promise.all([
+      const [gezaehlt, kandidaten, zielgewichte] = await Promise.all([
         ladeGezaehlteEinheiten(client, userId, plan.studioId, jetzt),
         ladeKandidaten(client, plan.studioId),
+        ladeZielgewichteFuerApp(client, userId, plan, jetzt, melde),
       ]);
-      return planFuerApp(plan, gezaehlt, profil, alternativenJeBaustein(kandidaten, beschwerden));
+      return planFuerApp(plan, gezaehlt, profil, alternativenJeBaustein(kandidaten, beschwerden), zielgewichte);
     }),
   );
 }

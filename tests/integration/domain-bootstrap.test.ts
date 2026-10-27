@@ -7,6 +7,7 @@ import {
   hashTagToken,
   type Bootstrap,
   type TrainingPlan,
+  zielSchluessel,
 } from "@fitretro/domain";
 import {
   anonClient,
@@ -403,7 +404,7 @@ describe("getBootstrap -- Trainingsplan", () => {
     // Die Beschwerden selbst stehen nirgends im Bootstrap (Gesundheitsdaten).
     expect(Object.keys(p).sort()).toEqual([
       "alternativen", "anfaengerUebergang", "einheiten", "einheitenErledigt", "gruende", "naechsteEinheitKey",
-      "planId", "regelVersion", "struktur", "studioId", "version", "zuletztEinheitKey",
+      "planId", "regelVersion", "struktur", "studioId", "version", "zielgewichte", "zuletztEinheitKey",
     ]);
     const { gruende: _gruende, ...ohneGruende } = p;
     const roh = JSON.stringify({ ...b, member: { ...b.member, plans: [ohneGruende] } });
@@ -451,6 +452,138 @@ describe("getBootstrap -- Trainingsplan", () => {
       await legeEinheitAn(m.userId, ps.voll, { planId: plan.id, einheitKey: plan.einheiten[0]!.key, startedAt: stunden(100 - i * 10) });
     }
     expect(planIn(await getBootstrap(m.client), ps.voll)).toMatchObject({ einheitenErledigt: 8, anfaengerUebergang: false });
+  });
+
+  // -------------------------------------------------------------------------
+  // Zielgewichte (Etappe 4, Task 5; G2, G13, G14, G17)
+  // -------------------------------------------------------------------------
+
+  type Pos = TrainingPlan["einheiten"][number]["positionen"][number];
+  const istKraft = (p: Pos) => p.rolle !== "cardio" && p.wdhVon !== null && p.wdhBis !== null;
+
+  async function marken(ids: string[]): Promise<Map<string, string | null>> {
+    const { data, error } = await admin.from("workout_sessions").select("id, gewichte_berechnet_at").in("id", ids);
+    if (error) throw error;
+    return new Map((data ?? []).map((z) => [z.id as string, z.gewichte_berechnet_at as string | null]));
+  }
+
+  async function setzeMarke(id: string, am: Date) {
+    // Der Service-Client darf die Marke setzen; der Schutz-Trigger aus 0064 greift nur fuer authenticated.
+    const { error } = await admin.from("workout_sessions").update({ gewichte_berechnet_at: am.toISOString() }).eq("id", id);
+    if (error) throw error;
+  }
+
+  it("rechnet automatisch abgeschlossene Einheiten lazy nach: hoechstens die letzten fuenf, aufsteigend nach Stand", async () => {
+    const m = await legeMitgliedAn("boot-pg-nachholen", { studios: [ps.voll] });
+    const plan = await aktiverPlan(m, ps.voll);
+    const ids: string[] = [];
+    // Sechs nie beendete Einheiten, letzter Satz vor 60, 50, ... 10 Stunden: alle nach 4 h
+    // Stillstand automatisch abgeschlossen (Leseregel, kein Aufruf), keine berechnet.
+    for (let i = 0; i < 6; i++) {
+      const start = stunden(61 - i * 10);
+      ids.push(
+        await legeEinheitAn(m.userId, ps.voll, {
+          planId: plan.id, einheitKey: plan.einheiten[i % plan.einheiten.length]!.key, startedAt: start,
+          completedAt: null, saetzeAm: [new Date(start.getTime() + 3_600_000)], satzAn: satzAn(plan),
+        }),
+      );
+    }
+
+    await getBootstrap(m.client);
+
+    const m1 = await marken(ids);
+    // Die aelteste bleibt liegen (hoechstens fuenf je Bootstrap).
+    expect(m1.get(ids[0]!)).toBeNull();
+    const zeiten = ids.slice(1).map((id) => m1.get(id));
+    for (const z of zeiten) expect(z).not.toBeNull();
+    // Nacheinander in Reihenfolge des Stands: die Marken steigen streng.
+    const ms = zeiten.map((z) => Date.parse(z!));
+    for (let i = 1; i < ms.length; i++) expect(ms[i]!).toBeGreaterThan(ms[i - 1]!);
+    // Die juengste Einheit bestimmt den Stand der Zeile.
+    const { data } = await admin
+      .from("plan_gewichte")
+      .select("stand_session_id")
+      .eq("plan_id", plan.id)
+      .not("stand_session_id", "is", null);
+    expect(new Set((data ?? []).map((z) => z.stand_session_id))).toEqual(new Set([ids[5]]));
+
+    // Wiederholt: nichts mehr zu tun ausser der aeltesten.
+    await getBootstrap(m.client);
+    const m2 = await marken(ids);
+    expect(m2.get(ids[0]!)).not.toBeNull();
+    for (const id of ids.slice(1)) expect(m2.get(id)).toBe(m1.get(id));
+  });
+
+  it("rechnet eine nach der Marke erneut beendete Einheit nach, eine berechnete und eine laufende nicht", async () => {
+    const m = await legeMitgliedAn("boot-pg-wieder", { studios: [ps.voll] });
+    const plan = await aktiverPlan(m, ps.voll);
+    const [a, b] = plan.einheiten.map((e) => e.key) as [string, string];
+    // Wieder geoeffnet und erneut beendet: Abschluss vor 2 h, Marke vom ersten Abschluss vor 2,5 h.
+    const wieder = await legeEinheitAn(m.userId, ps.voll, {
+      planId: plan.id, einheitKey: a, startedAt: stunden(3), completedAt: stunden(2),
+    });
+    await setzeMarke(wieder, stunden(2.5));
+    // Schon berechnet: Marke nach dem Abschluss.
+    const fertig = await legeEinheitAn(m.userId, ps.voll, {
+      planId: plan.id, einheitKey: b, startedAt: stunden(6), completedAt: stunden(5),
+    });
+    const fertigMarke = new Date(stunden(4).getTime());
+    await setzeMarke(fertig, fertigMarke);
+    // Laeuft noch: letzter Satz vor 5 Minuten.
+    const laeuft = await legeEinheitAn(m.userId, ps.voll, {
+      planId: plan.id, einheitKey: b, startedAt: stunden(0.5), completedAt: null,
+      saetzeAm: [stunden(1 / 12)], satzAn: satzAn(plan),
+    });
+
+    const vorher = Date.now();
+    await getBootstrap(m.client);
+
+    const mk = await marken([wieder, fertig, laeuft]);
+    expect(Date.parse(mk.get(wieder)!)).toBeGreaterThanOrEqual(vorher - 5_000);
+    expect(Date.parse(mk.get(fertig)!)).toBe(fertigMarke.getTime());
+    expect(mk.get(laeuft)).toBeNull();
+  });
+
+  it("zielgewichte tragen aenderung und grund; ein Bestandsplan ohne Zeilen bekommt sie beim ersten Bootstrap (G13)", async () => {
+    const m = await legeMitgliedAn("boot-pg-ziele", { studios: [ps.voll] });
+    const plan = await aktiverPlan(m, ps.voll);
+    const e0 = plan.einheiten[0]!;
+    const p0 = e0.positionen.find(istKraft)!;
+    const k0 = zielSchluessel(e0.key, p0.key);
+    // Historie: vor zwei Tagen 50 kg an p0 (legeEinheitAn), schon berechnet.
+    const alt = await legeEinheitAn(m.userId, ps.voll, {
+      planId: plan.id, einheitKey: plan.einheiten[0]!.key, startedAt: stunden(48),
+      saetzeAm: [stunden(47.9)], satzAn: { machineId: p0.machineId, exerciseId: p0.exerciseId },
+    });
+    await setzeMarke(alt, stunden(46));
+    // Bestand aus Etappe 1-3: keine Zielgewichte.
+    const { error } = await admin.from("plan_gewichte").delete().eq("plan_id", plan.id);
+    if (error) throw error;
+
+    const p = planIn(await getBootstrap(m.client), ps.voll);
+
+    const kraft = plan.einheiten.flatMap((e) =>
+      e.positionen.filter(istKraft).map((k) => ({ ...k, ziel: zielSchluessel(e.key, k.key) })),
+    );
+    // Gleich nummerierte Positionen verschiedener Einheiten sind getrennte Ziele.
+    expect(new Set(kraft.map((k) => k.key)).size).toBeLessThan(kraft.length);
+    expect(Object.keys(p.zielgewichte).sort()).toEqual(kraft.map((k) => k.ziel).sort());
+    // Mit Historie: Gewicht des letzten Blocks (G12), gleich dem letzten -> keine Aenderung.
+    expect(p.zielgewichte[k0]).toEqual({ load: 50, secondaryLoad: null, aenderung: null, grund: "letztes_gewicht" });
+    const ohne = kraft.find((k) => k.exerciseId !== p0.exerciseId)!;
+    expect(p.zielgewichte[ohne.ziel]).toMatchObject({ aenderung: null, grund: "startschaetzung" });
+
+    // Ein Ziel ueber dem letzten Gewicht zeigt die Aenderung (G17).
+    const { error: e } = await admin
+      .from("plan_gewichte")
+      .update({ load: 55, grund: "korridor_oben_erreicht" })
+      .eq("plan_id", plan.id)
+      .eq("einheit_key", e0.key)
+      .eq("position_key", p0.key);
+    if (e) throw e;
+    expect(planIn(await getBootstrap(m.client), ps.voll).zielgewichte[k0]).toEqual({
+      load: 55, secondaryLoad: null, aenderung: 5, grund: "korridor_oben_erreicht",
+    });
   });
 
   it("trainingProfile ist null ohne Profil", async () => {

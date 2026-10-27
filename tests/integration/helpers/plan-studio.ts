@@ -35,6 +35,8 @@ export type PlanStudios = {
   ohneDruck: string;
   /** exerciseIds mit Bereich knie -- fuer die Beschwerden-Pruefung. */
   knieUebungen: string[];
+  /** exerciseId je Name ohne Kennung ("Beinpresse", "Hackenschmidt", ...). */
+  uebungen: Record<string, string>;
 };
 
 /** Drei Studios: zwei mit allen Bausteinen, eins ohne Druckmaschine. */
@@ -108,6 +110,7 @@ export async function legePlanStudiosAn(kennung: string): Promise<PlanStudios> {
     voll2,
     ohneDruck,
     knieUebungen: ids.filter((_, i) => ALLE[i]!.bereiche.includes("knie")),
+    uebungen: Object.fromEntries(ALLE.map((u, i) => [u.name, ids[i]!])),
   };
 }
 

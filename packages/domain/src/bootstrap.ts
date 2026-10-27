@@ -405,7 +405,7 @@ export async function ladeTrainingsteil(
       getTrainingLimits(client, userId),
       aktivePlaeneDerMitgliedschaften(client, userId),
     ]);
-    return ladePlaeneFuerApp(client, userId, aktive, profil, limits, jetzt);
+    return ladePlaeneFuerApp(client, userId, aktive, profil, limits, jetzt, melde);
   })().catch((e: unknown) => {
     melde(`bootstrap: Plaene nicht geladen (${grund(e)})`);
     return [] as PlanFuerApp[];

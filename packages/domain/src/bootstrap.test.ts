@@ -263,7 +263,8 @@ describe("ladeTrainingsteil", () => {
       "u1", jetzt, (n) => meldungen.push(n),
     );
     expect(t.plans).toEqual([]);
-    expect(meldungen[0]).toContain("Zu viele Statuszeilen");
+    // Davor koennen Meldungen des Nachholens der Zielgewichte stehen (die werfen nie).
+    expect(meldungen.some((n) => n.includes("Zu viele Statuszeilen"))).toBe(true);
   });
 
   it("Profil nicht lesbar: trainingProfile null, Plaene bleiben", async () => {

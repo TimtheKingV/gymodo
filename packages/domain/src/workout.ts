@@ -21,6 +21,8 @@ import {
   type CardioZeile,
 } from "./cardio.js";
 import { herkunftPruefen, repEventsSchema, volumeSourceSchema, type VolumeSource } from "./herkunft.js";
+import { aktualisierePlanGewichte, initialisierePlanGewichte, ohneAbbruch } from "./plangewichte.js";
+import { aktiverPlanImStudio } from "./trainingsplan.js";
 import {
   gespeicherteVorschlaege,
   vorschlaegeFuerAbschluss,
@@ -630,8 +632,8 @@ export async function completeSession(
         : {}),
     })
     .eq("id", parsed.data.sessionId)
-    .select("id, started_at, completed_at, completed_reason")
-    .single<SessionRow>();
+    .select("id, studio_id, started_at, completed_at, completed_reason")
+    .single<SessionRow & { studio_id: string }>();
 
   if (error || !row || !row.completed_at || !row.completed_reason) {
     throw new DomainError(
@@ -639,17 +641,37 @@ export async function completeSession(
       error?.message ?? "Training konnte nicht beendet werden.",
     );
   }
+  const [vorschlaege] = await Promise.all([
+    vorschlaegeFuerAbschluss(client, parsed.data.sessionId, userId),
+    zielgewichteNachAbschluss(client, userId, row.id, row.studio_id),
+  ]);
   return {
     id: row.id,
     startedAt: row.started_at,
     completedAt: row.completed_at,
     completedReason: row.completed_reason,
-    vorschlaege: await vorschlaegeFuerAbschluss(
-      client,
-      parsed.data.sessionId,
-      userId,
-    ),
+    vorschlaege,
   };
+}
+
+/**
+ * Zielgewichte nach dem Abschluss (G2): neu rechnen, dann fehlende Ziele des aktiven Plans
+ * setzen (G13, spaetestens beim naechsten Abschluss). Wirft nie -- die Einheit ist beendet,
+ * egal was hier scheitert. Liegengebliebenes (gewichte_berechnet_at leer oder aelter als
+ * der Abschluss) holt der naechste Bootstrap nach, auch ein plan_ungueltig, weil die Uhr
+ * des App-Servers vor der Datenbank laeuft.
+ */
+async function zielgewichteNachAbschluss(
+  client: SupabaseClient,
+  userId: string,
+  sessionId: string,
+  studioId: string,
+): Promise<void> {
+  await ohneAbbruch("Neuberechnung nach Abschluss", () => aktualisierePlanGewichte(client, userId, sessionId));
+  await ohneAbbruch("Startwerte nach Abschluss", async () => {
+    const plan = await aktiverPlanImStudio(client, userId, studioId);
+    if (plan) await initialisierePlanGewichte(client, userId, plan);
+  });
 }
 
 /** Wie lange nach "Training beenden" ein Fortsetzen geht (Testnotiz 14.10., 18:45 #3). */

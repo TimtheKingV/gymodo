@@ -254,12 +254,13 @@ type ZielZeile = {
   load: number | string;
   secondary_load: number | string | null;
   grund: string | null;
+  algo_version: string;
 };
 
 async function ladeZielZeilen(client: SupabaseClient, userId: string, planId: string): Promise<Map<string, ZielZeile>> {
   const { data, error } = await client
     .from("plan_gewichte")
-    .select("einheit_key, position_key, load, secondary_load, grund")
+    .select("einheit_key, position_key, load, secondary_load, grund, algo_version")
     .eq("plan_id", planId)
     .eq("user_id", userId);
   if (error) throw new DomainError("internal", error.message);
@@ -615,6 +616,74 @@ export async function initialisierePlanGewichte(
     throw new DomainError("conflict", "Der Plan nimmt keine Startwerte an (plan_ungueltig).");
   }
   if (error) throw new DomainError("internal", error.message);
+}
+
+/**
+ * Dauerhafter Tausch (G9): die neue Planversion uebernimmt die Ziele der Vorgaengerversion
+ * fuer Positionen mit gleichem zielSchluessel (Einheit, Position), gleicher Uebung und
+ * gleichem Geraet -- Gewicht, Grund und Algorithmusversion unveraendert. Alles andere (die
+ * getauschte Position) bleibt fuer initialisierePlanGewichte. Ueber init_plan_gewichte,
+ * also ohne Stand: der naechste Abschluss ersetzt die Zeilen wie jede Startzeile.
+ */
+export async function uebernehmePlanGewichte(
+  client: SupabaseClient,
+  userId: string,
+  vorgaengerId: string,
+  plan: TrainingPlan,
+): Promise<void> {
+  const [{ data, error }, alt, neu] = await Promise.all([
+    client.from("training_plans").select("einheiten").eq("id", vorgaengerId).eq("user_id", userId).maybeSingle(),
+    ladeZielZeilen(client, userId, vorgaengerId),
+    ladeZielZeilen(client, userId, plan.id),
+  ]);
+  if (error) throw new DomainError("internal", error.message);
+  if (!data || alt.size === 0) return;
+  const vorher = positionenVon((data as { einheiten: PlanEinheit[] }).einheiten ?? []);
+  const zeilen: Zeile[] = [];
+  for (const p of stellenVon(plan.einheiten)) {
+    const v = vorher.get(p.ziel);
+    const z = alt.get(p.ziel);
+    if (!v || !z || neu.has(p.ziel) || !hatZielgewicht(p)) continue;
+    if (v.exerciseId !== p.exerciseId || v.machineId !== p.machineId) continue;
+    zeilen.push({
+      einheitKey: p.einheitKey,
+      positionKey: p.key,
+      load: Number(z.load),
+      secondaryLoad: z.secondary_load === null ? null : Number(z.secondary_load),
+      grund: z.grund as PlanGewichtGrund | null,
+      algoVersion: z.algo_version,
+    });
+  }
+  if (zeilen.length === 0) return;
+  const { error: e } = await client.rpc("init_plan_gewichte", { p_plan_id: plan.id, p_zeilen: zeilen });
+  if (e?.code === "P0001" && e.message === "plan_ungueltig") {
+    throw new DomainError("conflict", "Der Plan nimmt die uebernommenen Ziele nicht an (plan_ungueltig).");
+  }
+  if (e) throw new DomainError("internal", e.message);
+}
+
+// ---------------------------------------------------------------------------
+// Ausloeser (Task 5)
+// ---------------------------------------------------------------------------
+
+export type Melde = (nachricht: string) => void;
+
+/**
+ * Die Zielgewichte haengen an Abschluss, Annahme, Tausch und Bootstrap, duerfen aber keinen
+ * dieser Vorgaenge scheitern lassen (G2, G13): ein Fehler wird protokolliert (feste Meldung
+ * mit Code, wie der Bootstrap), nie geworfen. Was liegen bleibt, holt der naechste Bootstrap
+ * oder Abschluss nach.
+ */
+export async function ohneAbbruch(
+  anlass: string,
+  arbeit: () => Promise<void>,
+  melde: Melde = (n) => console.error(n),
+): Promise<void> {
+  try {
+    await arbeit();
+  } catch (e) {
+    melde(`plangewichte: ${anlass} fehlgeschlagen (${e instanceof DomainError ? `${e.code}: ${e.message}` : "unerwarteter Fehler"})`);
+  }
 }
 
 // ---------------------------------------------------------------------------

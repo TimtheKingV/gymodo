@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Kandidat } from "./trainingsplan-auswahl.js";
-import { alternativenJeBaustein, gezaehlteEinheiten, planFuerApp } from "./trainingsplan-bootstrap.js";
+import { alternativenJeBaustein, gezaehlteEinheiten, nachzuholendeSessions, planFuerApp } from "./trainingsplan-bootstrap.js";
 import type { TrainingPlan } from "./trainingsplan.js";
 import type { TrainingProfile } from "./trainingsprofil.js";
 
@@ -96,17 +96,61 @@ describe("planFuerApp", () => {
     Array.from({ length: n }, (_, i) => ({ sessionId: `s${i}`, einheitKey: i % 2 ? "B" : "A", startedAt: vor(1000 - i) }));
 
   it("ohne gezaehlte Einheit beginnt die Folge bei der ersten", () => {
-    expect(planFuerApp(plan, [], neu, {})).toMatchObject({ naechsteEinheitKey: "A", zuletztEinheitKey: null, einheitenErledigt: 0 });
+    expect(planFuerApp(plan, [], neu, {}, {})).toMatchObject({ naechsteEinheitKey: "A", zuletztEinheitKey: null, einheitenErledigt: 0 });
   });
 
   it("anfaengerUebergang erst ab 8 bei neu, nie nach anfaengerBeendet", () => {
-    expect(planFuerApp(plan, einheiten(7), neu, {}).anfaengerUebergang).toBe(false);
-    expect(planFuerApp(plan, einheiten(8), neu, {})).toMatchObject({
+    expect(planFuerApp(plan, einheiten(7), neu, {}, {}).anfaengerUebergang).toBe(false);
+    expect(planFuerApp(plan, einheiten(8), neu, {}, {})).toMatchObject({
       anfaengerUebergang: true, zuletztEinheitKey: "B", naechsteEinheitKey: "A",
     });
-    expect(planFuerApp(plan, einheiten(8), { ...neu, experience: "regelmaessig" }, {}).anfaengerUebergang).toBe(false);
-    expect(planFuerApp(plan, einheiten(8), null, {}).anfaengerUebergang).toBe(false);
+    expect(planFuerApp(plan, einheiten(8), { ...neu, experience: "regelmaessig" }, {}, {}).anfaengerUebergang).toBe(false);
+    expect(planFuerApp(plan, einheiten(8), null, {}, {}).anfaengerUebergang).toBe(false);
     const beendet = { ...plan, eingabe: { ...plan.eingabe, anfaengerBeendet: true } };
-    expect(planFuerApp(beendet, einheiten(8), neu, {}).anfaengerUebergang).toBe(false);
+    expect(planFuerApp(beendet, einheiten(8), neu, {}, {}).anfaengerUebergang).toBe(false);
+  });
+});
+
+describe("nachzuholendeSessions", () => {
+  const s = (id: string, z: Partial<Parameters<typeof nachzuholendeSessions>[0][number]>) => ({
+    id,
+    startedAt: vor(600),
+    completedAt: null,
+    letzterSatzAm: null,
+    gewichteBerechnetAm: null,
+    ...z,
+  });
+
+  it("beendet oder nach 4 h Stillstand, ohne Marke: nachholen; laufend nicht", () => {
+    expect(
+      nachzuholendeSessions(
+        [
+          s("beendet", { completedAt: vor(300) }),
+          s("still", { letzterSatzAm: vor(241) }),
+          s("laeuft", { letzterSatzAm: vor(239) }),
+          s("ohneSatzStill", { startedAt: vor(500) }),
+          s("ohneSatzLaeuft", { startedAt: vor(10) }),
+        ],
+        JETZT,
+      ),
+    ).toEqual(["ohneSatzStill", "beendet", "still"]);
+  });
+
+  it("Marke vor dem Abschluss (wieder geoeffnet und erneut beendet): nachholen; danach nicht", () => {
+    expect(
+      nachzuholendeSessions(
+        [
+          s("wieder", { completedAt: vor(100), gewichteBerechnetAm: vor(130) }),
+          s("fertig", { completedAt: vor(100), gewichteBerechnetAm: vor(99) }),
+          s("still", { letzterSatzAm: vor(300), gewichteBerechnetAm: vor(50) }),
+        ],
+        JETZT,
+      ),
+    ).toEqual(["wieder"]);
+  });
+
+  it("aufsteigend nach Stand, hoechstens die juengsten fuenf", () => {
+    const liste = [6, 1, 4, 2, 5, 3].map((n) => s(`s${n}`, { completedAt: vor(1000 - n * 10) }));
+    expect(nachzuholendeSessions(liste, JETZT)).toEqual(["s2", "s3", "s4", "s5", "s6"]);
   });
 });

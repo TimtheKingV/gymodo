@@ -1,12 +1,17 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
+  acceptPlan,
   aktualisierePlanGewichte,
+  completeSession,
+  erzeugePlanVorschlag,
+  getBootstrap,
   initialisierePlanGewichte,
   ladeZielgewichte,
   zielSchluessel,
   type TrainingPlan,
 } from "@fitretro/domain";
 import { createTestUser, serviceClient, uniqueEmail, userClient } from "./helpers/clients.js";
+import { legeMitgliedAn, legePlanStudiosAn, type Mitglied, type PlanStudios } from "./helpers/plan-studio.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Etappe 4, Task 4: Zielgewichte nach einer abgeschlossenen Einheit neu
@@ -612,5 +617,204 @@ describe("Fix-Runde 1", () => {
     expect(z["B:B-rudern"]).toMatchObject({ load: 70, grund: "im_korridor", stand_session_id: sid });
     const ziel = await ladeZielgewichte(client, userId, p);
     expect(ziel["B:B-bank"]).toMatchObject({ aenderung: 2.5 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Task 5: Ausloeser mit einem ERZEUGTEN Plan. Die Positionen tragen hier die
+// Hauptmuskeln, die der Generator aus exercises.muscles uebernimmt -- die
+// Uebertragung muss damit greifen, sonst passen die Schluesselraeume von
+// position.hauptmuskeln und exercises.muscles nicht zusammen.
+// ---------------------------------------------------------------------------
+
+describe("Ausloeser mit erzeugtem Plan (Task 5)", () => {
+  let ps: PlanStudios;
+
+  beforeAll(async () => {
+    ps = await legePlanStudiosAn(crypto.randomUUID());
+    // Muskeln im Format des Katalog-Imports ({key, name, role}). "ganzkoerper" teilen
+    // alle Uebungen als Hauptmuskel, damit jede Position ohne Historie uebertragen bekommt.
+    for (const [name, id] of Object.entries(ps.uebungen)) {
+      const eigen = name.toLowerCase().replace(/\s+/g, "_");
+      const { error } = await admin
+        .from("exercises")
+        .update({
+          muscles: [
+            { key: eigen, name, role: "primary" },
+            { key: "ganzkoerper", name: "Ganzkörper", role: "primary" },
+            { key: "rumpf", name: "Rumpf", role: "secondary" },
+          ],
+        })
+        .eq("id", id);
+      if (error) throw error;
+    }
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  type Position = TrainingPlan["einheiten"][number]["positionen"][number];
+  const istKraft = (p: Position) => p.rolle !== "cardio" && p.wdhVon !== null && p.wdhBis !== null;
+  /** Positionen mit Einheit und zielSchluessel. */
+  const stellen = (plan: TrainingPlan) =>
+    plan.einheiten.flatMap((e) => e.positionen.map((p) => ({ ...p, einheitKey: e.key, ziel: zielSchluessel(e.key, p.key) })));
+
+  async function mitPlan(prefix: string, weeklyDays = 3): Promise<{ m: Mitglied; plan: TrainingPlan }> {
+    const m = await legeMitgliedAn(prefix, { studios: [ps.voll], weeklyDays });
+    const vorschlag = await erzeugePlanVorschlag(m.client, m.userId, ps.voll);
+    return { m, plan: await acceptPlan(m.client, m.userId, vorschlag.id) };
+  }
+
+  /** Offene Session der Einheit, vor einer Stunde begonnen, drei Arbeitssaetze an `p`. */
+  async function offeneEinheit(m: Mitglied, plan: TrainingPlan, einheitKey: string, p: Position): Promise<string> {
+    const id = crypto.randomUUID();
+    const start = Date.now() - 3_600_000;
+    const { error } = await admin.from("workout_sessions").insert({
+      id,
+      studio_id: ps.voll,
+      user_id: m.userId,
+      started_at: new Date(start).toISOString(),
+      plan_id: plan.id,
+      plan_einheit_key: einheitKey,
+      plan_stand: 1,
+    });
+    if (error) throw error;
+    const { error: e } = await admin.from("workout_sets").insert(
+      [1, 2, 3].map((n) => ({
+        id: crypto.randomUUID(),
+        studio_id: ps.voll,
+        user_id: m.userId,
+        session_id: id,
+        machine_id: p.machineId,
+        exercise_id: p.exerciseId,
+        set_index: n,
+        load: 50,
+        volume: 12,
+        rir: n === 3 ? 2 : null,
+        set_role: "arbeit",
+        performed_at: new Date(start + n * 60_000).toISOString(),
+      })),
+    );
+    if (e) throw e;
+    return id;
+  }
+
+  async function zieleVon(planId: string) {
+    const { data, error } = await admin
+      .from("plan_gewichte")
+      .select("einheit_key, position_key, load, grund, stand_session_id")
+      .eq("plan_id", planId);
+    if (error) throw error;
+    return Object.fromEntries(
+      (data ?? []).map((z) => [zielSchluessel(z.einheit_key as string, z.position_key as string), { ...z, load: Number(z.load) }]),
+    ) as Record<
+      string,
+      { load: number; grund: string | null; stand_session_id: string | null }
+    >;
+  }
+
+  async function marke(sessionId: string) {
+    const { data, error } = await admin
+      .from("workout_sessions")
+      .select("completed_at, gewichte_berechnet_at")
+      .eq("id", sessionId)
+      .single();
+    if (error) throw error;
+    return data as { completed_at: string | null; gewichte_berechnet_at: string | null };
+  }
+
+  it("completeSession schreibt die Ziele; die Uebertragung greift ueber die Muskeln des erzeugten Plans (eine Einheit)", async () => {
+    const { m, plan } = await mitPlan("pg-abschluss-eine", 1);
+    expect(plan.einheiten).toHaveLength(1);
+    await abschlussMitUebertragung(m, plan);
+  });
+
+  it("completeSession schreibt die Ziele; die Uebertragung greift ueber die Muskeln des erzeugten Plans (drei Einheiten)", async () => {
+    const { m, plan } = await mitPlan("pg-abschluss");
+    expect(plan.einheiten.length).toBeGreaterThan(1);
+    await abschlussMitUebertragung(m, plan);
+  });
+
+  async function abschlussMitUebertragung(m: Mitglied, plan: TrainingPlan) {
+    const kraft = stellen(plan).filter(istKraft);
+    expect(kraft.length).toBeGreaterThan(1);
+    // Der Generator uebernimmt die Schluessel aus exercises.muscles (role primary).
+    expect(kraft.every((p) => p.hauptmuskeln.includes("ganzkoerper"))).toBe(true);
+    // Annahme setzt die Startwerte (G13).
+    const start = await zieleVon(plan.id);
+    for (const p of kraft) expect(start[p.ziel]).toMatchObject({ grund: "startschaetzung", stand_session_id: null });
+
+    const a = plan.einheiten[0]!;
+    const p0 = stellen(plan).find((p) => p.einheitKey === a.key && istKraft(p))!;
+    const sid = await offeneEinheit(m, plan, a.key, p0);
+
+    const ergebnis = await completeSession(m.client, { sessionId: sid });
+
+    expect(ergebnis.completedReason).toBe("manual");
+    expect((await marke(sid)).gewichte_berechnet_at).not.toBeNull();
+    const z = await zieleVon(plan.id);
+    const gleichesPaar = (p: Position) => p.machineId === p0.machineId && p.exerciseId === p0.exerciseId;
+    // Der Plan hat hoechstens drei Einheiten: alle liegen in der Vorausschau (G21).
+    expect(plan.einheiten.length).toBeLessThanOrEqual(3);
+    for (const p of kraft) {
+      expect(z[p.ziel]!.stand_session_id).toBe(sid);
+      if (gleichesPaar(p)) expect(z[p.ziel]!.grund).not.toBe("uebertragung");
+      else expect(z[p.ziel]).toMatchObject({ grund: "uebertragung" });
+    }
+  }
+
+  it("initialisierePlanGewichte ohne fehlende Ziele: genau eine Abfrage, kein Schreiben", async () => {
+    const { m, plan } = await mitPlan("pg-init-nichts");
+    // Die Annahme hat alle Ziele gesetzt.
+    expect(Object.keys(await zieleVon(plan.id)).sort()).toEqual(stellen(plan).filter(istKraft).map((p) => p.ziel).sort());
+    const aufrufe: string[] = [];
+    const zaehlend = new Proxy(m.client, {
+      get(ziel, name) {
+        if (name === "from") return (tabelle: string) => (aufrufe.push(`from:${tabelle}`), ziel.from(tabelle));
+        if (name === "rpc") return (fn: string, args?: object) => (aufrufe.push(`rpc:${fn}`), ziel.rpc(fn, args));
+        const wert = Reflect.get(ziel, name);
+        return typeof wert === "function" ? wert.bind(ziel) : wert;
+      },
+    }) as SupabaseClient;
+
+    await initialisierePlanGewichte(zaehlend, m.userId, plan);
+
+    expect(aufrufe).toEqual(["from:plan_gewichte"]);
+  });
+
+  it("scheitert die Rechnung, bleibt die Session beendet; der naechste Bootstrap holt sie nach", async () => {
+    const { m, plan } = await mitPlan("pg-abschluss-fehler");
+    const a = plan.einheiten[0]!;
+    const p0 = stellen(plan).find((p) => p.einheitKey === a.key && istKraft(p))!;
+    const sid = await offeneEinheit(m, plan, a.key, p0);
+    const fehler = vi.spyOn(console, "error").mockImplementation(() => {});
+    // Die Datenbank lehnt beide Schreibwege ab (wie plan_ungueltig bei Uhrenversatz).
+    const abweisend = new Proxy(m.client, {
+      get(ziel, name) {
+        if (name === "rpc") {
+          return (fn: string, args?: object) =>
+            fn === "set_plan_gewichte" || fn === "init_plan_gewichte"
+              ? Promise.resolve({ data: null, error: { code: "P0001", message: "plan_ungueltig" } })
+              : ziel.rpc(fn, args);
+        }
+        const wert = Reflect.get(ziel, name);
+        return typeof wert === "function" ? wert.bind(ziel) : wert;
+      },
+    }) as SupabaseClient;
+
+    const ergebnis = await completeSession(abweisend, { sessionId: sid });
+
+    expect(ergebnis.completedReason).toBe("manual");
+    expect(fehler).toHaveBeenCalledWith(expect.stringContaining("plangewichte"));
+    const nachher = await marke(sid);
+    expect(nachher.completed_at).not.toBeNull();
+    expect(nachher.gewichte_berechnet_at).toBeNull();
+    expect(Object.values(await zieleVon(plan.id)).some((z) => z.stand_session_id === sid)).toBe(false);
+
+    await getBootstrap(m.client);
+
+    expect((await marke(sid)).gewichte_berechnet_at).not.toBeNull();
+    expect((await zieleVon(plan.id))[p0.ziel]).toMatchObject({ stand_session_id: sid });
   });
 });

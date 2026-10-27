@@ -323,9 +323,17 @@ export {
   gezaehlteEinheiten,
   ladeGezaehlteEinheiten,
   ladePlaeneFuerApp,
+  NACHHOLEN_HOECHSTENS,
+  nachzuholendeSessions,
   planFuerApp,
 } from "./trainingsplan-bootstrap.js";
-export type { GezaehlteEinheit, PlanAlternative, PlanFuerApp, SessionFuerZaehler } from "./trainingsplan-bootstrap.js";
+export type {
+  GezaehlteEinheit,
+  PlanAlternative,
+  PlanFuerApp,
+  SessionFuerNachholen,
+  SessionFuerZaehler,
+} from "./trainingsplan-bootstrap.js";
 export type { PlanEingabe, PlanStatus, PlanTausch, TrainingPlan } from "./trainingsplan.js";
 export { ablaufNachSatz, ablaufTauschen, einheitZaehlt, naechsteEinheitKey } from "./trainingsplan-ablauf.js";
 export type { AblaufPosition, AblaufSatz, AblaufZustand, PositionStatus } from "./trainingsplan-ablauf.js";
@@ -349,6 +357,9 @@ export {
   aktualisierePlanGewichte,
   initialisierePlanGewichte,
   ladeZielgewichte,
+  ohneAbbruch,
+  uebernehmePlanGewichte,
   zielSchluessel,
+  type Melde,
   type PositionsZiel,
 } from "./plangewichte.js";

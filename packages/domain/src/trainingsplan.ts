@@ -11,6 +11,7 @@ import type { Struktur } from "./trainingsplan-regeln.js";
 import { generierePlan } from "./trainingsplan-generator.js";
 import { anfaengerphaseVorbei, ladeGezaehlteEinheiten } from "./trainingsplan-bootstrap.js";
 import { ladeKandidaten } from "./trainingsplan-kandidaten.js";
+import { initialisierePlanGewichte, ohneAbbruch, uebernehmePlanGewichte } from "./plangewichte.js";
 import { zielAusTrainingGoal } from "./trainingsplan-regeln.js";
 import { getTrainingLimits, getTrainingProfile } from "./trainingsprofil.js";
 
@@ -195,7 +196,11 @@ export async function acceptPlan(client: SupabaseClient, userId: string, planId:
   const zeile = data as PlanZeile & { user_id: string };
   // Die Funktion prueft auth.uid(); passt der Aufrufer nicht zur userId, ist das ein Programmierfehler.
   if (zeile.user_id !== userId) throw new DomainError("internal", "Der Plan gehoert nicht zum Aufrufer.");
-  return zuPlan(zeile);
+  const plan = zuPlan(zeile);
+  // Startwerte (G12, G13). Scheitert das, ist der Plan trotzdem angenommen; fehlende Ziele
+  // setzt der naechste Bootstrap oder Abschluss.
+  await ohneAbbruch("Startwerte nach Annahme", () => initialisierePlanGewichte(client, userId, plan));
+  return plan;
 }
 
 export type PlanTausch = { einheitKey: string; positionKey: string; exerciseId: string; machineId: string };
@@ -235,7 +240,13 @@ export async function tauschePlanPosition(
   if (error || !data) throw new DomainError("internal", "Die Übung konnte nicht getauscht werden.");
   const zeile = data as PlanZeile & { user_id: string };
   if (zeile.user_id !== userId) throw new DomainError("internal", "Der Plan gehoert nicht zum Aufrufer.");
-  return zuPlan(zeile);
+  const plan = zuPlan(zeile);
+  // G9: unveraenderte Positionen behalten ihr Ziel, die getauschte bekommt einen Startwert.
+  await ohneAbbruch("Ziele nach Tausch", async () => {
+    await uebernehmePlanGewichte(client, userId, planId, plan);
+    await initialisierePlanGewichte(client, userId, plan);
+  });
+  return plan;
 }
 
 /** Alle Versionen des Paars, neueste zuerst. Liest nur, berechnet nie neu (F14). */
@@ -272,4 +283,21 @@ export async function aktivePlaeneDerMitgliedschaften(client: SupabaseClient, us
     .order("studio_id", { ascending: true });
   if (error) throw new DomainError("internal", "Die Plaene konnten nicht gelesen werden.");
   return ((data ?? []) as PlanZeile[]).map(zuPlan);
+}
+
+/** Der aktive Plan des Mitglieds in einem Studio, oder null. */
+export async function aktiverPlanImStudio(
+  client: SupabaseClient,
+  userId: string,
+  studioId: string,
+): Promise<TrainingPlan | null> {
+  const { data, error } = await client
+    .from("training_plans")
+    .select(SPALTEN)
+    .eq("user_id", userId)
+    .eq("studio_id", studioId)
+    .eq("status", "aktiv")
+    .maybeSingle();
+  if (error) throw new DomainError("internal", "Der Plan konnte nicht gelesen werden.");
+  return data ? zuPlan(data as PlanZeile) : null;
 }
