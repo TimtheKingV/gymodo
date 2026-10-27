@@ -1,13 +1,14 @@
 import SwiftUI
 
-/// "Warum so?" aus der Plankarte -- ein Platzhalter, bis Etappe 5 die
-/// Erklaertexte liefert. Zeigt die Gruende des Plans als schlichte Liste.
+/// "Warum so?" aus der Plankarte: drei kurze Abschnitte (Aufteilung, Gewicht,
+/// Wiederholungen) aus den festen Textbausteinen in `PlanWarumText`.
 ///
 /// Datenschutz: `gruende` kann verraten, dass Beschwerden angegeben sind
-/// (`beschwerden_*`). Die Codes stehen deshalb nur hier, auf dem eigenen
+/// (`beschwerden_*`). Die Texte dazu stehen deshalb nur hier, auf dem eigenen
 /// Geraet des Mitglieds, und gehen nie in Log, Testnotiz-Kontext oder
 /// Analyse.
 struct PlanWarumView: View {
+    let struktur: String
     let gruende: [String]
 
     @Environment(\.dismiss) private var dismiss
@@ -21,23 +22,19 @@ struct PlanWarumView: View {
                         .tracking(-0.6)
                         .foregroundStyle(DesignSystem.Color.text)
                         .accessibilityAddTraits(.isHeader)
-                    Text("Die Erklärungen zu jedem Punkt folgen bald.")
-                        .font(DesignSystem.Typography.fliesstext)
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                    if !gruende.isEmpty {
-                        Card {
-                            VStack(alignment: .leading, spacing: 0) {
-                                ForEach(Array(gruende.enumerated()), id: \.offset) { index, grund in
-                                    if index > 0 {
-                                        Rectangle().fill(DesignSystem.Color.line).frame(height: 1)
-                                    }
-                                    Text(PlanNamen.lesbar(grund))
-                                        .font(DesignSystem.Typography.body)
-                                        .foregroundStyle(DesignSystem.Color.text)
-                                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                                }
+                    ForEach(PlanWarumText.abschnitte(struktur: struktur, gruende: gruende), id: \.titel) { abschnitt in
+                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
+                            Text(abschnitt.titel.uppercased())
+                                .font(DesignSystem.Typography.label)
+                                .tracking(1.5)
+                                .foregroundStyle(DesignSystem.Color.textMuted)
+                                .accessibilityAddTraits(.isHeader)
+                            ForEach(abschnitt.absaetze, id: \.self) { absatz in
+                                Text(absatz)
+                                    .font(DesignSystem.Typography.fliesstext)
+                                    .foregroundStyle(DesignSystem.Color.text)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
-                            .padding(.horizontal, DesignSystem.Spacing.s16)
                         }
                     }
                 }
@@ -58,5 +55,5 @@ struct PlanWarumView: View {
 }
 
 #Preview {
-    PlanWarumView(gruende: ["gk_ab", "zeit_uebungen", "schwerpunkt_po"])
+    PlanWarumView(struktur: "gk_ab", gruende: ["struktur_ganzkoerper_ab", "zeit_uebungen", "fokus_po"])
 }
