@@ -349,5 +349,6 @@ export {
   aktualisierePlanGewichte,
   initialisierePlanGewichte,
   ladeZielgewichte,
+  zielSchluessel,
   type PositionsZiel,
 } from "./plangewichte.js";

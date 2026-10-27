@@ -3,6 +3,7 @@ import {
   aktualisierePlanGewichte,
   initialisierePlanGewichte,
   ladeZielgewichte,
+  zielSchluessel,
   type TrainingPlan,
 } from "@fitretro/domain";
 import { createTestUser, serviceClient, uniqueEmail, userClient } from "./helpers/clients.js";
@@ -101,10 +102,11 @@ function pos(w: Welt, einheit: string, u: Uebung, bereich: [number, number] = [8
 }
 
 /** Aktiver Plan, direkt eingefuegt (Struktur frei waehlbar). */
-async function plan(w: Welt, einheiten: Record<string, Uebung[]>): Promise<TrainingPlan> {
+/** `nummeriert`: Positionsschluessel je Einheit "0", "1", ... wie der Generator. */
+async function plan(w: Welt, einheiten: Record<string, Uebung[]>, nummeriert = false): Promise<TrainingPlan> {
   const liste = Object.entries(einheiten).map(([key, us]) => ({
     key,
-    positionen: us.map((u) => pos(w, key, u)),
+    positionen: us.map((u, i) => ({ ...pos(w, key, u), ...(nummeriert ? { key: String(i) } : {}) })),
     geschaetzteMinuten: 45,
   }));
   const eingabe = {
@@ -226,19 +228,21 @@ const block = (u: Uebung, load: number, volume: number, rir: number | null = 2):
 async function ziele(planId: string) {
   const { data, error } = await admin
     .from("plan_gewichte")
-    .select("position_key, load, secondary_load, grund, algo_version, stand_session_id")
+    .select("einheit_key, position_key, load, secondary_load, grund, algo_version, stand_session_id")
     .eq("plan_id", planId)
+    .order("einheit_key")
     .order("position_key");
   if (error) throw error;
   return Object.fromEntries(
-    (data ?? []).map((z) => [z.position_key as string, { ...z, load: Number(z.load) }]),
+    (data ?? []).map((z) => [zielSchluessel(z.einheit_key as string, z.position_key as string), { ...z, load: Number(z.load) }]),
   ) as Record<string, { load: number; grund: string | null; stand_session_id: string | null; algo_version: string }>;
 }
 
 /** Startzeile wie aus init_plan_gewichte (Stand leer). */
-async function startziel(p: TrainingPlan, key: string, load: number) {
+async function startziel(p: TrainingPlan, key: string, load: number, einheitKey = key.split("-")[0]!) {
   const { error } = await admin.from("plan_gewichte").insert({
     plan_id: p.id,
+    einheit_key: einheitKey,
     position_key: key,
     user_id: userId,
     load,
@@ -247,6 +251,36 @@ async function startziel(p: TrainingPlan, key: string, load: number) {
   });
   if (error) throw error;
 }
+
+describe("Schluessel (Einheit, Position)", () => {
+  it("zielSchluessel verbindet Einheit und Position", () => {
+    expect(zielSchluessel("A", "0")).toBe("A:0");
+  });
+
+  it("gleicher Positionsschluessel in zwei Einheiten: zwei Ziele (G14)", async () => {
+    const w = await welt();
+    // Wie der Generator: jede Einheit nummeriert ab "0".
+    const p = await plan(w, { A: ["bank", "rudern"], B: ["bank", "bein"] }, true);
+
+    await initialisierePlanGewichte(client, userId, p);
+    expect(Object.keys(await ziele(p.id)).sort()).toEqual(["A:0", "A:1", "B:0", "B:1"]);
+
+    const sid = await einheit(w, p, "A", { startedAt: vorStunden(3), saetze: block("bank", 40, 12, 2) });
+    await aktualisierePlanGewichte(client, userId, sid);
+
+    const z = await ziele(p.id);
+    expect(z["A:0"]).toMatchObject({ load: 42.5, stand_session_id: sid });
+    expect(z["B:0"]).toMatchObject({ load: 42.5, stand_session_id: sid });
+    // B:1 (Bein) hat keine Historie, aber keinen gemeinsamen Muskel mit Bank: Startwert.
+    expect(z["B:1"]).toMatchObject({ grund: "startschaetzung", stand_session_id: null });
+    // A:1 (Rudern) teilt keinen Muskel mit Bank.
+    expect(z["A:1"]).toMatchObject({ grund: "startschaetzung" });
+
+    const ziel = await ladeZielgewichte(client, userId, p);
+    expect(Object.keys(ziel).sort()).toEqual(["A:0", "A:1", "B:0", "B:1"]);
+    expect(ziel["B:0"]).toMatchObject({ load: 42.5, grund: "korridor_oben_erreicht", aenderung: 2.5 });
+  });
+});
 
 describe("aktualisierePlanGewichte", () => {
   it("rechnet dieselbe Uebung in den naechsten drei Einheiten neu, andere Uebungen und Cardio bleiben", async () => {
@@ -264,15 +298,15 @@ describe("aktualisierePlanGewichte", () => {
     await aktualisierePlanGewichte(client, userId, sid);
 
     const z = await ziele(p.id);
-    expect(z["C-bank"]).toMatchObject({ load: 42.5, grund: "korridor_oben_erreicht", stand_session_id: sid, algo_version: "1.0.0" });
-    expect(z["D-bank"]).toMatchObject({ load: 42.5, grund: "korridor_oben_erreicht" });
+    expect(z["C:C-bank"]).toMatchObject({ load: 42.5, grund: "korridor_oben_erreicht", stand_session_id: sid, algo_version: "1.0.0" });
+    expect(z["D:D-bank"]).toMatchObject({ load: 42.5, grund: "korridor_oben_erreicht" });
     // E liegt hinter der Vorausschau (B, C, D).
-    expect(z["E-bank"]).toBeUndefined();
+    expect(z["E:E-bank"]).toBeUndefined();
     // Einheit B ohne dieselbe Uebung: unveraendert.
-    expect(z["B-rudern"]).toMatchObject({ load: 30, grund: "startschaetzung", stand_session_id: null });
+    expect(z["B:B-rudern"]).toMatchObject({ load: 30, grund: "startschaetzung", stand_session_id: null });
     // Bein hatte in der Session keinen Satz, Cardio hat kein Zielgewicht.
-    expect(z["A-bein"]).toBeUndefined();
-    expect(z["C-cardio"]).toBeUndefined();
+    expect(z["A:A-bein"]).toBeUndefined();
+    expect(z["C:C-cardio"]).toBeUndefined();
     const { data } = await admin.from("workout_sessions").select("gewichte_berechnet_at").eq("id", sid).single();
     expect(data!.gewichte_berechnet_at).not.toBeNull();
   });
@@ -288,8 +322,8 @@ describe("aktualisierePlanGewichte", () => {
     await aktualisierePlanGewichte(client, userId, sid);
 
     const z = await ziele(p.id);
-    expect(z["C-bank"]).toMatchObject({ load: 40, stand_session_id: null });
-    expect(z["D-bank"]).toMatchObject({ load: 42.5 });
+    expect(z["C:C-bank"]).toMatchObject({ load: 40, stand_session_id: null });
+    expect(z["D:D-bank"]).toMatchObject({ load: 42.5 });
   });
 
   it("nur Aufwaermsaetze aendern nichts", async () => {
@@ -307,8 +341,8 @@ describe("aktualisierePlanGewichte", () => {
     await aktualisierePlanGewichte(client, userId, sid);
 
     const z = await ziele(p.id);
-    expect(Object.keys(z)).toEqual(["B-bank"]);
-    expect(z["B-bank"]).toMatchObject({ load: 40, stand_session_id: null });
+    expect(Object.keys(z)).toEqual(["B:B-bank"]);
+    expect(z["B:B-bank"]).toMatchObject({ load: 40, stand_session_id: null });
   });
 
   it("rechnet vom tatsaechlichen Satz (45 statt Ziel 40)", async () => {
@@ -320,7 +354,7 @@ describe("aktualisierePlanGewichte", () => {
 
     await aktualisierePlanGewichte(client, userId, sid);
 
-    expect((await ziele(p.id))["C-bank"]).toMatchObject({ load: 47.5, grund: "korridor_oben_erreicht" });
+    expect((await ziele(p.id))["C:C-bank"]).toMatchObject({ load: 47.5, grund: "korridor_oben_erreicht" });
   });
 
   it("zweimal aufgerufen ergibt dieselben Zeilen", async () => {
@@ -333,7 +367,7 @@ describe("aktualisierePlanGewichte", () => {
     await aktualisierePlanGewichte(client, userId, sid);
 
     expect(await ziele(p.id)).toEqual(erste);
-    expect(erste["C-bank"]).toMatchObject({ load: 42.5 });
+    expect(erste["C:C-bank"]).toMatchObject({ load: 42.5 });
   });
 
   it("der verspaetete Abschluss einer aelteren Session aendert nichts", async () => {
@@ -347,14 +381,14 @@ describe("aktualisierePlanGewichte", () => {
 
     await aktualisierePlanGewichte(client, userId, neu);
     const nachNeu = await ziele(p.id);
-    expect(nachNeu["C-bank"]).toMatchObject({ load: 45, grund: "im_korridor", stand_session_id: neu });
+    expect(nachNeu["C:C-bank"]).toMatchObject({ load: 45, grund: "im_korridor", stand_session_id: neu });
 
     await aktualisierePlanGewichte(client, userId, alt);
 
     const z = await ziele(p.id);
-    expect(z["C-bank"]).toEqual(nachNeu["C-bank"]);
+    expect(z["C:C-bank"]).toEqual(nachNeu["C:C-bank"]);
     // Rudern gab es nur in der alten Einheit; die neuere hat dort nichts entschieden.
-    expect(z["C-rudern"]).toMatchObject({ load: 32.5, stand_session_id: alt });
+    expect(z["C:C-rudern"]).toMatchObject({ load: 32.5, stand_session_id: alt });
   });
 
   it("eine getauschte Position gibt ihr Ziel nicht an die Ersatzuebung weiter", async () => {
@@ -374,10 +408,10 @@ describe("aktualisierePlanGewichte", () => {
     await aktualisierePlanGewichte(client, userId, sid);
 
     const z = await ziele(p.id);
-    expect(z["C-bank"]).toMatchObject({ load: 40, stand_session_id: null });
+    expect(z["C:C-bank"]).toMatchObject({ load: 40, stand_session_id: null });
     // Fly rechnet aus seinen eigenen Saetzen (20 -> 22,5), nicht aus den 40 kg der Bank.
-    expect(z["D-fly"]).toMatchObject({ load: 22.5, grund: "korridor_oben_erreicht" });
-    expect(z["A-bank"]).toBeUndefined();
+    expect(z["D:D-fly"]).toMatchObject({ load: 22.5, grund: "korridor_oben_erreicht" });
+    expect(z["A:A-bank"]).toBeUndefined();
   });
 
   it("bei weniger als drei Folgeeinheiten werden alle angepasst", async () => {
@@ -388,8 +422,8 @@ describe("aktualisierePlanGewichte", () => {
     await aktualisierePlanGewichte(client, userId, sid);
 
     const z = await ziele(p.id);
-    expect(z["B-bank"]).toMatchObject({ load: 42.5 });
-    expect(z["A-bank"]).toMatchObject({ load: 42.5 });
+    expect(z["B:B-bank"]).toMatchObject({ load: 42.5 });
+    expect(z["A:A-bank"]).toMatchObject({ load: 42.5 });
   });
 
   it("uebertraegt die Reserve auf Uebungen ohne eigene Historie mit gemeinsamem Hauptmuskel (G5, G16)", async () => {
@@ -402,10 +436,10 @@ describe("aktualisierePlanGewichte", () => {
 
     const z = await ziele(p.id);
     // Startschaetzung 40 * 1,12 = 44,8 -> abgerundet 42,5.
-    expect(z["C-fly"]).toMatchObject({ load: 42.5, grund: "uebertragung" });
+    expect(z["C:C-fly"]).toMatchObject({ load: 42.5, grund: "uebertragung" });
     // Bein teilt keinen Hauptmuskel, Rudern auch nicht.
-    expect(z["C-bein"]).toBeUndefined();
-    expect(z["B-rudern"]).toBeUndefined();
+    expect(z["C:C-bein"]).toBeUndefined();
+    expect(z["B:B-rudern"]).toBeUndefined();
   });
 });
 
@@ -428,11 +462,11 @@ describe("initialisierePlanGewichte", () => {
     await initialisierePlanGewichte(client, userId, p);
 
     const z = await ziele(p.id);
-    expect(z["A-bank"]).toMatchObject({ load: 50, grund: "letztes_gewicht", stand_session_id: null });
-    expect(z["B-bein"]).toMatchObject({ load: 55, grund: "wiedereinstieg" });
-    expect(z["B-fly"]).toMatchObject({ load: 30, grund: "letztes_gewicht" });
-    expect(z["A-rudern"]).toMatchObject({ load: 33 });
-    expect(z["A-cardio"]).toBeUndefined();
+    expect(z["A:A-bank"]).toMatchObject({ load: 50, grund: "letztes_gewicht", stand_session_id: null });
+    expect(z["B:B-bein"]).toMatchObject({ load: 55, grund: "wiedereinstieg" });
+    expect(z["B:B-fly"]).toMatchObject({ load: 30, grund: "letztes_gewicht" });
+    expect(z["A:A-rudern"]).toMatchObject({ load: 33 });
+    expect(z["A:A-cardio"]).toBeUndefined();
   });
 
   it("schaetzt ohne Historie aus dem Geraetestartwert", async () => {
@@ -445,8 +479,8 @@ describe("initialisierePlanGewichte", () => {
 
     const z = await ziele(p.id);
     // regelmaessig, ohne Geschlecht/Alter/Koerpergewicht: Faktor 1 -> load_start 40.
-    expect(z["A-bank"]).toMatchObject({ load: 40, grund: "startschaetzung" });
-    expect(z["A-rudern"]).toMatchObject({ load: 40, grund: "startschaetzung" });
+    expect(z["A:A-bank"]).toMatchObject({ load: 40, grund: "startschaetzung" });
+    expect(z["A:A-rudern"]).toMatchObject({ load: 40, grund: "startschaetzung" });
   });
 });
 
@@ -463,11 +497,11 @@ describe("ladeZielgewichte", () => {
 
     const ziel = await ladeZielgewichte(client, userId, p);
 
-    expect(ziel["B-bank"]).toEqual({ load: 42.5, secondaryLoad: null, aenderung: 2.5, grund: "korridor_oben_erreicht" });
+    expect(ziel["B:B-bank"]).toEqual({ load: 42.5, secondaryLoad: null, aenderung: 2.5, grund: "korridor_oben_erreicht" });
     // Gleich wie zuletzt: keine Aenderung.
-    expect(ziel["A-rudern"]).toEqual({ load: 30, secondaryLoad: null, aenderung: null, grund: "im_korridor" });
+    expect(ziel["A:A-rudern"]).toEqual({ load: 30, secondaryLoad: null, aenderung: null, grund: "im_korridor" });
     // Ohne Vorgaenger: keine Aenderung.
-    expect(ziel["A-bein"]).toEqual({ load: 25, secondaryLoad: null, aenderung: null, grund: "startschaetzung" });
+    expect(ziel["A:A-bein"]).toEqual({ load: 25, secondaryLoad: null, aenderung: null, grund: "startschaetzung" });
   });
 });
 
@@ -486,7 +520,7 @@ describe("Fix-Runde 1", () => {
 
     const ziel = await ladeZielgewichte(client, userId, p);
 
-    expect(ziel["B-bank"]).toMatchObject({ load: 42.5, aenderung: 2.5 });
+    expect(ziel["B:B-bank"]).toMatchObject({ load: 42.5, aenderung: 2.5 });
   });
 
   it("ladeZielgewichte erfindet keinen Grund", async () => {
@@ -494,12 +528,12 @@ describe("Fix-Runde 1", () => {
     const p = await plan(w, { A: ["bank"] });
     const { error } = await admin
       .from("plan_gewichte")
-      .insert({ plan_id: p.id, position_key: "A-bank", user_id: userId, load: 30, grund: null, algo_version: "1.0.0" });
+      .insert({ plan_id: p.id, einheit_key: "A", position_key: "A-bank", user_id: userId, load: 30, grund: null, algo_version: "1.0.0" });
     if (error) throw error;
 
     const ziel = await ladeZielgewichte(client, userId, p);
 
-    expect(ziel["A-bank"]).toEqual({ load: 30, secondaryLoad: null, aenderung: null, grund: null });
+    expect(ziel["A:A-bank"]).toEqual({ load: 30, secondaryLoad: null, aenderung: null, grund: null });
   });
 
   it("lange Historie (>1000 Saetze) fuehrt nicht zu Abfragen je Paar", async () => {
@@ -533,7 +567,7 @@ describe("Fix-Runde 1", () => {
     await initialisierePlanGewichte(zaehlend, userId, p);
     expect(saetzeAbfragen()).toBeLessThanOrEqual(1);
     // Ruderhistorie liegt ueber 42 Tage zurueck: wie ohne Historie.
-    expect((await ziele(p.id))["A-rudern"]).toMatchObject({ load: 40, grund: "startschaetzung" });
+    expect((await ziele(p.id))["A:A-rudern"]).toMatchObject({ load: 40, grund: "startschaetzung" });
 
     const sid = await einheit(w, p, "A", {
       startedAt: vorStunden(3),
@@ -542,14 +576,14 @@ describe("Fix-Runde 1", () => {
     await aktualisierePlanGewichte(zaehlend, userId, sid);
     expect(saetzeAbfragen()).toBeLessThanOrEqual(3);
     const z = await ziele(p.id);
-    expect(z["B-bank"]).toMatchObject({ load: 42.5, stand_session_id: sid });
-    expect(z["B-rudern"]).toMatchObject({ load: 30, grund: "im_korridor" });
-    expect(z["B-bein"]).toMatchObject({ load: 52.5 });
+    expect(z["B:B-bank"]).toMatchObject({ load: 42.5, stand_session_id: sid });
+    expect(z["B:B-rudern"]).toMatchObject({ load: 30, grund: "im_korridor" });
+    expect(z["B:B-bein"]).toMatchObject({ load: 52.5 });
 
     const ziel = await ladeZielgewichte(zaehlend, userId, p);
     expect(saetzeAbfragen()).toBeLessThanOrEqual(2);
-    expect(ziel["B-bank"]).toMatchObject({ aenderung: 2.5 });
-    expect(ziel["B-rudern"]).toMatchObject({ aenderung: null });
+    expect(ziel["B:B-bank"]).toMatchObject({ aenderung: 2.5 });
+    expect(ziel["B:B-rudern"]).toMatchObject({ aenderung: null });
   });
 
   it("ueber 1000 Saetze im Fenster: blaettert statt zu scheitern oder Paare auszulassen", async () => {
@@ -564,8 +598,8 @@ describe("Fix-Runde 1", () => {
 
     await initialisierePlanGewichte(client, userId, p);
     const start = await ziele(p.id);
-    expect(start["A-bank"]).toMatchObject({ load: 50, grund: "letztes_gewicht" });
-    expect(start["A-rudern"]).toMatchObject({ load: 70, grund: "letztes_gewicht" });
+    expect(start["A:A-bank"]).toMatchObject({ load: 50, grund: "letztes_gewicht" });
+    expect(start["A:A-rudern"]).toMatchObject({ load: 70, grund: "letztes_gewicht" });
 
     const sid = await einheit(w, p, "A", {
       startedAt: vorStunden(3),
@@ -574,9 +608,9 @@ describe("Fix-Runde 1", () => {
     await aktualisierePlanGewichte(client, userId, sid);
 
     const z = await ziele(p.id);
-    expect(z["B-bank"]).toMatchObject({ load: 52.5, stand_session_id: sid });
-    expect(z["B-rudern"]).toMatchObject({ load: 70, grund: "im_korridor", stand_session_id: sid });
+    expect(z["B:B-bank"]).toMatchObject({ load: 52.5, stand_session_id: sid });
+    expect(z["B:B-rudern"]).toMatchObject({ load: 70, grund: "im_korridor", stand_session_id: sid });
     const ziel = await ladeZielgewichte(client, userId, p);
-    expect(ziel["B-bank"]).toMatchObject({ aenderung: 2.5 });
+    expect(ziel["B:B-bank"]).toMatchObject({ aenderung: 2.5 });
   });
 });

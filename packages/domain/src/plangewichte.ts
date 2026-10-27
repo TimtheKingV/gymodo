@@ -49,6 +49,7 @@ export const HISTORIE_FENSTER_TAGE = 43;
 const TAG_MS = 24 * 60 * 60 * 1000;
 
 type Zeile = {
+  einheitKey: string;
   positionKey: string;
   load: number;
   secondaryLoad: number | null;
@@ -66,6 +67,15 @@ type HistorieZeile = SatzZeile & { machine_id: string; exercise_id: string };
 
 export function paarSchluessel(machineId: string, exerciseId: string): string {
   return `${machineId}:${exerciseId}`;
+}
+
+/**
+ * Schluessel eines Zielgewichts: Einheit und Position. Der Generator nummeriert die
+ * Positionen je Einheit ("0", "1", ...), erst das Paar bezeichnet eine Position im Plan
+ * (G14). Die App (Task 8) baut denselben Schluessel.
+ */
+export function zielSchluessel(einheitKey: string, positionKey: string): string {
+  return `${einheitKey}:${positionKey}`;
 }
 
 /**
@@ -117,8 +127,17 @@ export function bloeckeUm(
 // Laden
 // ---------------------------------------------------------------------------
 
-function positionenVon(einheiten: PlanEinheit[]): Map<string, PlanPosition> {
-  return new Map(einheiten.flatMap((e) => e.positionen.map((p) => [p.key, p] as const)));
+/** Eine Position samt ihrer Einheit; `ziel` ist der zielSchluessel. */
+type Stelle = PlanPosition & { einheitKey: string; ziel: string };
+
+function stellenVon(einheiten: PlanEinheit[]): Stelle[] {
+  return einheiten.flatMap((e) =>
+    e.positionen.map((p) => ({ ...p, einheitKey: e.key, ziel: zielSchluessel(e.key, p.key) })),
+  );
+}
+
+function positionenVon(einheiten: PlanEinheit[]): Map<string, Stelle> {
+  return new Map(stellenVon(einheiten).map((p) => [p.ziel, p] as const));
 }
 
 /** Geraetegrenzen und Startwert je Geraet, ueber sein Modell. */
@@ -230,6 +249,7 @@ async function laufendeSessions(client: SupabaseClient, userId: string, jetzt: n
 }
 
 type ZielZeile = {
+  einheit_key: string;
   position_key: string;
   load: number | string;
   secondary_load: number | string | null;
@@ -239,11 +259,11 @@ type ZielZeile = {
 async function ladeZielZeilen(client: SupabaseClient, userId: string, planId: string): Promise<Map<string, ZielZeile>> {
   const { data, error } = await client
     .from("plan_gewichte")
-    .select("position_key, load, secondary_load, grund")
+    .select("einheit_key, position_key, load, secondary_load, grund")
     .eq("plan_id", planId)
     .eq("user_id", userId);
   if (error) throw new DomainError("internal", error.message);
-  return new Map(((data ?? []) as ZielZeile[]).map((z) => [z.position_key, z]));
+  return new Map(((data ?? []) as ZielZeile[]).map((z) => [zielSchluessel(z.einheit_key, z.position_key), z]));
 }
 
 type Person = {
@@ -413,10 +433,9 @@ export async function aktualisierePlanGewichte(
       ladeZielZeilen(client, userId, plan.id),
       ladeHauptmuskeln(client, [...new Set([...sessionPaare.values()].map((p) => p.exerciseId))]),
     ]);
-    const ziel = plan.einheiten
-      .filter((e) => folge.includes(e.key) && !laufend.has(e.key))
-      .flatMap((e) => e.positionen)
-      .filter(hatZielgewicht);
+    const ziel = stellenVon(plan.einheiten.filter((e) => folge.includes(e.key) && !laufend.has(e.key))).filter(
+      hatZielgewicht,
+    );
 
     // Fenster ab Sessionstart: Block, Vorgaenger (aelter als 42 Tage zaehlt nicht,
     // F18), spaetere Bloecke und "eigene Historie" fuer die Uebertragung (ebenfalls
@@ -460,7 +479,7 @@ export async function aktualisierePlanGewichte(
       const g = grenzen.get(p.machineId);
       if (!g) continue;
       const k = paarSchluessel(p.machineId, p.exerciseId);
-      const vorhanden = ziele.get(p.key);
+      const vorhanden = ziele.get(p.ziel);
 
       if (sessionPaare.has(k)) {
         const um = bloeckeUm(historie.get(k) ?? [], sessionId);
@@ -479,6 +498,7 @@ export async function aktualisierePlanGewichte(
         });
         if (r.load === null) continue;
         zeilen.push({
+          einheitKey: p.einheitKey,
           positionKey: p.key,
           load: r.load,
           secondaryLoad: r.secondaryLoad,
@@ -494,6 +514,7 @@ export async function aktualisierePlanGewichte(
       if (!messung) continue;
       person ??= await ladePerson(client, userId);
       zeilen.push({
+        einheitKey: p.einheitKey,
         positionKey: p.key,
         load: abgerundet(schaetzung(g, plan.eingabe.erfahrung, person) * messung.faktor, g),
         secondaryLoad: null,
@@ -545,7 +566,7 @@ export async function initialisierePlanGewichte(
 ): Promise<void> {
   const jetzt = Date.now();
   const vorhanden = await ladeZielZeilen(client, userId, plan.id);
-  const fehlend = plan.einheiten.flatMap((e) => e.positionen).filter((p) => hatZielgewicht(p) && !vorhanden.has(p.key));
+  const fehlend = stellenVon(plan.einheiten).filter((p) => hatZielgewicht(p) && !vorhanden.has(p.ziel));
   if (fehlend.length === 0) return;
 
   const [grenzen, historie] = await Promise.all([
@@ -578,7 +599,14 @@ export async function initialisierePlanGewichte(
       load = schaetzung(g, plan.eingabe.erfahrung, person);
       grund = "startschaetzung";
     }
-    zeilen.push({ positionKey: p.key, load, secondaryLoad: null, grund, algoVersion: PLANGEWICHT_ALGO_VERSION });
+    zeilen.push({
+      einheitKey: p.einheitKey,
+      positionKey: p.key,
+      load,
+      secondaryLoad: null,
+      grund,
+      algoVersion: PLANGEWICHT_ALGO_VERSION,
+    });
   }
   if (zeilen.length === 0) return;
 
@@ -594,7 +622,7 @@ export async function initialisierePlanGewichte(
 // ---------------------------------------------------------------------------
 
 /**
- * Zielgewichte des Plans je Positionsschluessel, mit Aenderung gegenueber dem letzten
+ * Zielgewichte des Plans je zielSchluessel (Einheit:Position), mit Aenderung gegenueber dem letzten
  * tatsaechlich benutzten Gewicht (letzter Arbeitssatz) an diesem Geraet und dieser
  * Uebung. Positionen ohne Zeile fehlen im Ergebnis (App: wie freies Training).
  */
@@ -621,12 +649,12 @@ export async function ladeZielgewichte(
 
   const ergebnis: Record<string, PositionsZiel> = {};
   for (const p of mitZiel) {
-    const z = zeilen.get(p.key)!;
+    const z = zeilen.get(p.ziel)!;
     const letzter = historie
       .get(paarSchluessel(p.machineId, p.exerciseId))
       ?.find((s) => !laufend.has(s.session_id));
     const load = Number(z.load);
-    ergebnis[p.key] = {
+    ergebnis[p.ziel] = {
       load,
       secondaryLoad: z.secondary_load === null ? null : Number(z.secondary_load),
       aenderung: aenderungZumLetzten(load, letzter ? Number(letzter.load) : null),
