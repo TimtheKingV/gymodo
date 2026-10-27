@@ -1026,6 +1026,59 @@ describe("Vorschlaege aus Zielgewicht oder letztem Gewicht (Task 6)", () => {
     expect((await completeSession(client, { sessionId: sid })).vorschlaege).toEqual(erster.vorschlaege);
   });
 
+  /** Client, dessen Lesen von plan_gewichte scheitert (wie eine API vor 0064). */
+  const ohnePlanGewichte = () =>
+    new Proxy(client, {
+      get(ziel, name) {
+        if (name === "from") {
+          return (tabelle: string) => ziel.from(tabelle === "plan_gewichte" ? "plan_gewichte_fehlt" : tabelle);
+        }
+        const wert = Reflect.get(ziel, name);
+        return typeof wert === "function" ? wert.bind(ziel) : wert;
+      },
+    }) as SupabaseClient;
+
+  it("Final-Fix I4: Lesefehler der Ziele am Geraet faellt auf das letzte Gewicht zurueck und wird protokolliert", async () => {
+    const w = await welt();
+    await verknuepfe(w);
+    const p = await plan(w, { A: ["bank"], B: ["bank"] });
+    const sid = await einheit(w, p, "A", {
+      startedAt: vorStunden(3),
+      saetze: block("bank", 40, 12, 2),
+      status: erledigt("A-bank", "bank", w),
+    });
+    await aktualisierePlanGewichte(client, userId, sid);
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const kontext = await getMachineContext(ohnePlanGewichte(), w.m.bank);
+      expect(kontext.suggestion).toMatchObject({ resultLoad: 40, reasonCode: "letztes_gewicht" });
+      expect(log).toHaveBeenCalledWith(expect.stringMatching(/^plangewichte: .*fehlgeschlagen \(internal: /));
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it("Final-Fix I4: Lesefehler der Ziele im Abschluss laesst completeSession nicht scheitern", async () => {
+    const w = await welt();
+    const p = await plan(w, { A: ["bank"], B: ["bank"] });
+    const sid = await einheit(w, p, "A", {
+      startedAt: vorStunden(2),
+      completedAt: null,
+      saetze: block("bank", 40, 12, 2),
+      status: erledigt("A-bank", "bank", w),
+    });
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const { vorschlaege } = await completeSession(ohnePlanGewichte(), { sessionId: sid });
+      expect(vorschlaege).toEqual([
+        expect.objectContaining({ resultLoad: 40, deltaLoad: 0, reasonCode: "letztes_gewicht" }),
+      ]);
+      expect(log).toHaveBeenCalledWith(expect.stringMatching(/^plangewichte: Ziele im Abschluss lesen fehlgeschlagen/));
+    } finally {
+      log.mockRestore();
+    }
+  });
+
   it("Abschluss ohne Planposition fuer das Geraet: letztes Gewicht, Delta 0", async () => {
     const w = await welt();
     const p = await plan(w, { A: ["rudern"] });

@@ -13,7 +13,7 @@ import { CARDIO_SELECT, cardioDesSatzes, cardioListeDesModells, type CardioGerae
 import { stationAufloesen } from "./workout.js";
 import { toBlocks, type BlockInput, type ProgressionSuggestion } from "./progression.js";
 import { paarSchluessel, vorschlagAusZiel } from "./plangewichte.js";
-import { ladeZieleFuerPaare } from "./ziel-vorschlag.js";
+import { ladeZieleFuerPaareOhneAbbruch } from "./ziel-vorschlag.js";
 
 /** So viele Trainingstage schaut die Progressionsregel zurueck. */
 const HISTORY_DAYS = 6;
@@ -438,9 +438,13 @@ async function kontextAufbauen(
       // Geraet, sonst das letzte Gewicht (letzter Arbeitssatz des juengsten Blocks).
       const letzterSatz = blocks[0]?.sets.at(-1);
       const ziele = ort.machine
-        ? await ladeZieleFuerPaare(client, userId, ort.studioId, [
-            { machineId: ort.machine.id, exerciseId: selectedExerciseId },
-          ])
+        ? await ladeZieleFuerPaareOhneAbbruch(
+            client,
+            userId,
+            ort.studioId,
+            [{ machineId: ort.machine.id, exerciseId: selectedExerciseId }],
+            "Ziele am Geraet lesen",
+          )
         : null;
       suggestion = vorschlagAusZiel(
         ziele?.get(paarSchluessel(ort.machine!.id, selectedExerciseId)) ?? null,

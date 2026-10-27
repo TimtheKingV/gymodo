@@ -1,7 +1,14 @@
 // Ziele fuer Geraet und Abschluss laden (Etappe 4, Task 6; G17). Eigene Datei, weil
 // plangewichte.ts den Bootstrap nicht importieren soll (der importiert plangewichte.ts).
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ladeZielgewichte, paarSchluessel, zielFuerGeraet, type PositionsZiel } from "./plangewichte.js";
+import {
+  ladeZielgewichte,
+  ohneAbbruch,
+  paarSchluessel,
+  zielFuerGeraet,
+  type Melde,
+  type PositionsZiel,
+} from "./plangewichte.js";
 import { ladeGezaehlteEinheiten } from "./trainingsplan-bootstrap.js";
 import { naechsteEinheitKey } from "./trainingsplan-ablauf.js";
 import { aktiverPlanImStudio } from "./trainingsplan.js";
@@ -33,4 +40,30 @@ export async function ladeZieleFuerPaare(
     if (ziel) ergebnis.set(paarSchluessel(paar.machineId, paar.exerciseId), ziel);
   }
   return ergebnis;
+}
+
+/**
+ * ladeZieleFuerPaare fuer Geraet und Abschluss, die daran nicht scheitern duerfen
+ * (Final-Fix I4): ein Lesefehler (zu viele Statuszeilen, MAX_SATZSEITEN, plan_gewichte
+ * fehlt, weil die API vor 0064 ausgeliefert wurde) wird wie bei ohneAbbruch protokolliert,
+ * und es gilt "kein Ziel" -- also das letzte Gewicht. Sonst bricht der Geraete-Scan ab
+ * bzw. completeSession antwortet 500, obwohl die Einheit schon beendet ist.
+ */
+export async function ladeZieleFuerPaareOhneAbbruch(
+  client: SupabaseClient,
+  userId: string,
+  studioId: string,
+  paare: Array<{ machineId: string | null; exerciseId: string }>,
+  anlass: string,
+  melde?: Melde,
+): Promise<Map<string, PositionsZiel>> {
+  let ziele = new Map<string, PositionsZiel>();
+  await ohneAbbruch(
+    anlass,
+    async () => {
+      ziele = await ladeZieleFuerPaare(client, userId, studioId, paare);
+    },
+    melde,
+  );
+  return ziele;
 }

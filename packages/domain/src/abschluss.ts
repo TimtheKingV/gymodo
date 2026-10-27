@@ -4,7 +4,7 @@ import { cardioGeraeteLaden, istCardioModell } from "./cardio-geraete.js";
 import type { LoadUnit } from "./belastung.js";
 import { stationsSchluessel } from "./station.js";
 import { paarSchluessel as zielPaarSchluessel, vorschlagAusZiel } from "./plangewichte.js";
-import { ladeZieleFuerPaare } from "./ziel-vorschlag.js";
+import { ladeZieleFuerPaareOhneAbbruch } from "./ziel-vorschlag.js";
 import {
   toBlocks,
   type ProgressionReasonCode,
@@ -502,7 +502,9 @@ export async function vorschlaegeFuerAbschluss(
   // Seit Etappe 4 (G17): Ziel der Planposition mit gleicher Uebung und gleichem Geraet, sonst
   // das letzte Gewicht. Gelesen wird NACH der Neuberechnung (workout.ts ruft in dieser
   // Reihenfolge), damit Delta = Ziel minus bisher das frische Ziel meint.
-  const ziele = await ladeZieleFuerPaare(client, userId, studioId, paare);
+  // Ein Lesefehler darf den Abschluss nicht scheitern lassen (die Einheit ist schon beendet):
+  // protokolliert, dann ohne Ziel, also mit dem letzten Gewicht (Final-Fix I4).
+  const ziele = await ladeZieleFuerPaareOhneAbbruch(client, userId, studioId, paare, "Ziele im Abschluss lesen");
 
   const vorschlaege: Blockvorschlag[] = [];
   // inputs steht mit im Insert -- die Spalte ist not null (Migration 0015)
