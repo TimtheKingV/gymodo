@@ -479,16 +479,18 @@ struct Gewichtshinweis: Equatable {
 
     var text: String { grund.map { "\(zahl), \($0)" } ?? zahl }
 
-    /// nil, wenn es nichts zu sagen gibt: keine Aenderung, oder ein Grund,
-    /// der selbst "gleich geblieben" heisst (im Bereich, letztes Gewicht).
+    /// nil nur ohne Aenderung (G7: "ist es gleich, steht kein Hinweis").
+    /// Ob ein Hinweis steht, haengt an der Zahl, nie am Grund: auch
+    /// im_korridor oder letztes_gewicht koennen abweichen, wenn das Ziel an
+    /// die Geraetegrenzen gerastet wurde -- dann steht die Zahl allein.
     init?(grund code: String?, aenderung: Double?, einheit: LoadUnit) {
         guard let aenderung, aenderung != 0 else { return nil }
-        if code == "im_korridor" || code == "letztes_gewicht" { return nil }
         zahl = Zahlformat.belastungDelta(aenderung, einheit)
         grund = code.flatMap(Self.grundText)
     }
 
-    /// Ein Grund ohne Text (kein_verlauf, daten_uneindeutig, unbekannt)
+    /// Ein Grund ohne Text (im_korridor, letztes_gewicht, kein_verlauf,
+    /// daten_uneindeutig, unbekannt)
     /// laesst nur die Zahl stehen: lieber keine Erklaerung als eine falsche,
     /// aber nie eine stille Aenderung (Anti-Ziel).
     private static func grundText(_ code: String) -> String? {

@@ -1447,6 +1447,18 @@ struct GeraetModelTests {
         #expect(sut.rueckblick?.vorschlag == nil)
     }
 
+    /// Geraetegrenze: zuletzt 3 kg, das Geraet beginnt bei 5 kg. Der Server
+    /// meldet im_korridor mit +2 kg -- die Aenderung muss sichtbar sein (G7).
+    @Test func eineAenderungImBereichBleibtNichtStill() {
+        let plan = planMitZiel(#"{"load":5,"secondaryLoad":null,"aenderung":2,"grund":"im_korridor"}"#)
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrapMitPlan(plan, zuletzt: 3),
+                         ablauf: ablauf(plan))
+
+        #expect(sut.belastung == 5)
+        #expect(sut.gewichtsHinweis?.text == "+2,0 kg")
+        #expect(sut.rueckblick?.vorschlag == "Vorschlag · +2,0 kg")
+    }
+
     @Test func nachDemErstenSatzDerPositionVergleichtDieAnzeigeNichtMehr() async {
         let plan = planMitZiel(Self.zielOben)
         let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrapMitPlan(plan), ablauf: ablauf(plan))

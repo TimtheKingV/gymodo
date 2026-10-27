@@ -153,14 +153,30 @@ struct TrainingAbschlussZeilenTests {
     }
 
     @Test(arguments: [
-        ("im_korridor", 2.5 as Double?),
-        ("letztes_gewicht", -5),
+        ("im_korridor", 0 as Double?),
+        ("im_korridor", nil),
+        ("letztes_gewicht", nil),
         ("korridor_oben_erreicht", 0),
         ("korridor_oben_erreicht", nil),
         ("wiedereinstieg", nil),
     ])
     func keinHinweisOhneAenderungOderBeiGleichemGewicht(grund: String, aenderung: Double?) {
         #expect(Gewichtshinweis(grund: grund, aenderung: aenderung, einheit: .kg) == nil)
+    }
+
+    /// G7: ob ein Hinweis steht, haengt an der Aenderung, nicht am Grund.
+    /// Auch im Bereich oder beim letzten Gewicht kann das Ziel abweichen,
+    /// etwa an den Geraetegrenzen (zuletzt 3 kg, Minimum 5 kg; zuletzt
+    /// 120 kg, Maximum 100 kg) -- dann steht die Zahl, nie eine stille Aenderung.
+    @Test(arguments: [
+        ("im_korridor", 2.5, "+2,5 kg"),
+        ("letztes_gewicht", -5, "−5,0 kg"),
+        ("im_korridor", 2, "+2,0 kg"),
+        ("letztes_gewicht", -20, "−20,0 kg"),
+    ])
+    func gleicherGrundMitAenderungZeigtDieZahl(grund: String, aenderung: Double, text: String) throws {
+        let hinweis = try #require(Gewichtshinweis(grund: grund, aenderung: aenderung, einheit: .kg))
+        #expect(hinweis.text == text)
     }
 
     @Test func eineAenderungOhneBekanntenGrundBleibtNichtStill() throws {
