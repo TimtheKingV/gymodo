@@ -309,10 +309,11 @@ export type {
   PlanPosition,
   TypVorgaben,
 } from "./trainingsplan-generator.js";
-export { ladeKandidaten } from "./trainingsplan-kandidaten.js";
+export { LEERE_MERKLISTE, ladeKandidaten, ladeKatalogStudioId, ladeMerkliste } from "./trainingsplan-kandidaten.js";
+export type { Merkliste } from "./trainingsplan-kandidaten.js";
 export {
   acceptPlan,
-  aktivePlaeneDerMitgliedschaften,
+  aktiverKatalogPlan,
   erzeugePlanVorschlag,
   listPlaene,
   tauschePlanPosition,

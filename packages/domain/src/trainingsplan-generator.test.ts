@@ -2,6 +2,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import { PlanNichtMoeglichError } from "./errors.js";
 import type { GeneratorEingabe, Kandidat, PlanEinheit } from "./trainingsplan-generator.js";
 import { generierePlan, tauschVorgaben } from "./trainingsplan-generator.js";
+import { waehleFokus, waehleKandidat } from "./trainingsplan-auswahl.js";
 import type { Baustein, Bereich, PlanTyp } from "./trainingsplan-typen.js";
 import { PLAN_REGEL_VERSION } from "./trainingsplan-regeln.js";
 
@@ -14,7 +15,7 @@ function k(
   hauptmuskeln: string[],
   bereiche: Bereich[] = [],
 ): Kandidat {
-  return { exerciseId, machineId: `m_${exerciseId}`, baustein, typ, bereiche, hauptmuskeln };
+  return { exerciseId, modelId: `m_${exerciseId}`, baustein, typ, bereiche, hauptmuskeln };
 }
 
 const KATALOG: Kandidat[] = [
@@ -113,7 +114,7 @@ describe("generierePlan: Zeit und Ziele", () => {
     for (const e of plan.einheiten) {
       const letzte = e.positionen.at(-1)!;
       expect(letzte).toMatchObject({
-        rolle: "cardio", baustein: "cardio", exerciseId: "bike", machineId: "m_bike",
+        rolle: "cardio", baustein: "cardio", exerciseId: "bike", modelId: "m_bike",
         saetze: 1, wdhVon: null, wdhBis: null, pauseSek: 0, aufwaermsatz: false, dauerMin: 20, hauptmuskeln: [],
         reserveVon: 2, reserveBis: 3,
       });
@@ -180,14 +181,14 @@ describe("generierePlan: Struktur und Variation", () => {
 
   it("Variation ueber Uebungen, nicht ueber Geraete: zwei Geraete derselben Uebung zaehlen einmal", () => {
     const zweiGeraete = [
-      { ...k("chest_press", "druecken", "mehrgelenk", ["pectorals"]), machineId: "m1" },
-      { ...k("chest_press", "druecken", "mehrgelenk", ["pectorals"]), machineId: "m2" },
+      { ...k("chest_press", "druecken", "mehrgelenk", ["pectorals"]), modelId: "m1" },
+      { ...k("chest_press", "druecken", "mehrgelenk", ["pectorals"]), modelId: "m2" },
       k("incline_press", "druecken", "mehrgelenk", ["pectorals"]),
       ...ohne("chest_press", "incline_press"),
     ];
     const [a, b] = generierePlan(eingabe({ kandidaten: zweiGeraete })).einheiten;
     const druecken = (e: PlanEinheit) => e.positionen.find((p) => p.baustein === "druecken")!;
-    expect(druecken(a!)).toMatchObject({ exerciseId: "chest_press", machineId: "m1" });
+    expect(druecken(a!)).toMatchObject({ exerciseId: "chest_press", modelId: "m1" });
     expect(druecken(b!).exerciseId).toBe("incline_press");
 
     const eineUebung = zweiGeraete.filter((c) => c.exerciseId !== "incline_press");
@@ -336,7 +337,7 @@ describe("generierePlan: Beschwerden", () => {
   it("Pflichtbaustein ohne freie Uebung (dieselbe Uebung in zwei Pflichtbausteinen) wirft kein_geraet statt abzustuerzen", () => {
     const geteilt = [
       k("multi_press", "druecken", "mehrgelenk", ["pectorals"]),
-      { ...k("multi_press", "ziehen", "mehrgelenk", ["lats"]), machineId: "m_zug" },
+      { ...k("multi_press", "ziehen", "mehrgelenk", ["lats"]), modelId: "m_zug" },
       ...ohne("chest_press", "incline_press", "row", "lat_pulldown"),
     ];
     try {
@@ -544,5 +545,32 @@ describe("tauschVorgaben", () => {
       const { typ, wdhVon, wdhBis, reserveVon, reserveBis, pauseSek, aufwaermsatz } = p;
       expect({ typ, wdhVon, wdhBis, reserveVon, reserveBis, pauseSek, aufwaermsatz }).toEqual(v[p.typ]);
     }
+  });
+});
+
+describe("gefaelltNicht (Merkliste)", () => {
+  const gut = k("gut", "druecken", "mehrgelenk", ["pectorals"]);
+  const mag = { ...k("mag_ich_nicht", "druecken", "mehrgelenk", ["pectorals"]), gefaelltNicht: true };
+
+  it("waehleKandidat nimmt gefaelltNicht nur ohne Alternative", () => {
+    // Auch bei variation 1 (sonst die zweite Uebung) bleibt die ungeliebte hinten.
+    expect(waehleKandidat([mag, gut], 0, new Set())!.exerciseId).toBe("gut");
+    expect(waehleKandidat([mag, gut], 1, new Set())!.exerciseId).toBe("gut");
+    expect(waehleKandidat([mag, gut], 0, new Set(["gut"]))!.exerciseId).toBe("mag_ich_nicht");
+    expect(waehleKandidat([mag], 0, new Set())!.exerciseId).toBe("mag_ich_nicht");
+  });
+
+  it("waehleFokus ebenso", () => {
+    const fokus = (liste: Kandidat[], belegt: string[] = []) =>
+      waehleFokus(liste, "brust", ["druecken"], new Set(belegt))?.exerciseId;
+    expect(fokus([mag, gut])).toBe("gut");
+    expect(fokus([mag, gut], ["gut"])).toBe("mag_ich_nicht");
+    expect(fokus([mag])).toBe("mag_ich_nicht");
+  });
+
+  it("nur gefaelltNicht-Kandidaten gelten fuer einen Pflichtbaustein als vorhanden", () => {
+    const nurUngeliebt = KATALOG.map((c) => (c.baustein === "druecken" ? { ...c, gefaelltNicht: true } : c));
+    const plan = generierePlan(eingabe({ kandidaten: nurUngeliebt }));
+    expect(plan.einheiten[0]!.positionen.some((p) => p.baustein === "druecken")).toBe(true);
   });
 });

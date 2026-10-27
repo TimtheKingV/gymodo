@@ -10,7 +10,7 @@ import type { GeneratorEingabe, PlanEinheit } from "./trainingsplan-generator.js
 import type { Struktur } from "./trainingsplan-regeln.js";
 import { generierePlan, tauschVorgaben } from "./trainingsplan-generator.js";
 import { anfaengerphaseVorbei, ladeGezaehlteEinheiten } from "./trainingsplan-bootstrap.js";
-import { ladeKandidaten } from "./trainingsplan-kandidaten.js";
+import { ladeKandidaten, ladeKatalogStudioId, ladeMerkliste } from "./trainingsplan-kandidaten.js";
 import { initialisierePlanGewichte, ohneAbbruch, uebernehmePlanGewichte } from "./plangewichte.js";
 import { zielAusTrainingGoal } from "./trainingsplan-regeln.js";
 import { getTrainingLimits, getTrainingProfile } from "./trainingsprofil.js";
@@ -78,6 +78,7 @@ function zuPlan(z: PlanZeile): TrainingPlan {
 /**
  * Fremdes und unbekanntes Studio antworten gleich (not_found), damit die
  * Antwort nicht verraet, welche Studios es gibt (wie requireStudioStaff).
+ * Nur fuer den Ort der Merkliste; der Plan selbst gehoert dem Katalog-Studio.
  */
 async function requireMitglied(client: SupabaseClient, userId: string, studioId: string): Promise<void> {
   const { data, error } = await client
@@ -104,9 +105,12 @@ function istUniqueVerstoss(error: { code?: string } | null): boolean {
 export async function erzeugePlanVorschlag(
   client: SupabaseClient,
   userId: string,
-  studioId: string,
+  ortId?: string,
 ): Promise<TrainingPlan> {
-  await requireMitglied(client, userId, studioId);
+  // Der Plan gehoert immer dem Katalog-Studio; der Ort bestimmt nur die Merkliste.
+  const katalogId = await ladeKatalogStudioId(client);
+  const ort = ortId ?? katalogId;
+  if (ort !== katalogId) await requireMitglied(client, userId, ort);
 
   const [goal, ziele, profil, limits, gezaehlt] = await Promise.all([
     leseTrainingGoal(client, userId),
@@ -114,7 +118,7 @@ export async function erzeugePlanVorschlag(
     getTrainingProfile(client, userId),
     getTrainingLimits(client, userId),
     // Derselbe Zaehler wie im Bootstrap, damit Angebot und neuer Plan zusammenpassen.
-    ladeGezaehlteEinheiten(client, userId, studioId, new Date()),
+    ladeGezaehlteEinheiten(client, userId, new Date()),
   ]);
   const ziel = zielAusTrainingGoal(goal);
   const tage = ziele.weeklyDays ? Number(ziele.weeklyDays.targetValue) : null;
@@ -155,14 +159,14 @@ export async function erzeugePlanVorschlag(
     erfahrung: profil.experience,
     anfaengerBeendet,
     beschwerden,
-    kandidaten: await ladeKandidaten(client, studioId),
+    kandidaten: await ladeKandidaten(client, await ladeMerkliste(client, userId, ort)),
   });
 
   // Pruefen, alten Vorschlag verwerfen, Version vergeben und einfuegen erledigt die
   // Funktion in einer Transaktion (0062); direkt schreiben darf das Mitglied nicht.
   const { data, error } = await client
     .rpc("create_training_plan", {
-      p_studio_id: studioId,
+      p_studio_id: katalogId,
       p_regel_version: ergebnis.regelVersion,
       p_eingabe: eingabe,
       p_struktur: ergebnis.struktur,
@@ -173,7 +177,7 @@ export async function erzeugePlanVorschlag(
   // plan_ungueltig hiesse: der Generator nannte ein Geraet oder eine Uebung, die das
   // Studio nicht (mehr) hat -- etwa gleichzeitig stillgelegt.
   if (error?.code === "P0001" && error.message === "plan_ungueltig") {
-    throw new DomainError("validation_failed", "Der Plan passt nicht zu den Geräten des Studios.");
+    throw new DomainError("validation_failed", "Der Plan passt nicht zum Katalog.");
   }
   // 42501: zwischen Pruefung und Speichern ausgetreten -- wie oben not_found.
   if (error?.code === "42501") throw new DomainError("not_found", "Studio nicht gefunden.");
@@ -203,10 +207,10 @@ export async function acceptPlan(client: SupabaseClient, userId: string, planId:
   return plan;
 }
 
-export type PlanTausch = { einheitKey: string; positionKey: string; exerciseId: string; machineId: string };
+export type PlanTausch = { einheitKey: string; positionKey: string; exerciseId: string; modelId: string };
 
 /**
- * Tauscht eine Position dauerhaft: swap_training_plan_position legt sofort eine neue
+ * Tauscht eine Position (Uebung und Katalogmodell) dauerhaft: swap_training_plan_position legt sofort eine neue
  * aktive Version an (0062, Vorgaben des neuen Typs seit 0065). Fremd, nicht aktiv oder ausgetreten ist ein Konflikt
  * (plan_nicht_annehmbar), alles andere Ungueltige validation_failed.
  */
@@ -232,7 +236,7 @@ export async function tauschePlanPosition(
       p_einheit_key: input.einheitKey,
       p_position_key: input.positionKey,
       p_exercise_id: input.exerciseId,
-      p_machine_id: input.machineId,
+      p_model_id: input.modelId,
       p_vorgaben: tauschVorgaben((alt as { eingabe: PlanEingabe }).eingabe),
     })
     .single();
@@ -260,53 +264,26 @@ export async function tauschePlanPosition(
   return plan;
 }
 
-/** Alle Versionen des Paars, neueste zuerst. Liest nur, berechnet nie neu (F14). */
-export async function listPlaene(client: SupabaseClient, userId: string, studioId: string): Promise<TrainingPlan[]> {
+/** Alle Versionen des Mitglieds, neueste zuerst. Liest nur, berechnet nie neu (F14). */
+export async function listPlaene(client: SupabaseClient, userId: string): Promise<TrainingPlan[]> {
   const { data, error } = await client
     .from("training_plans")
     .select(SPALTEN)
     .eq("user_id", userId)
-    .eq("studio_id", studioId)
     .order("version", { ascending: false });
   if (error) throw new DomainError("internal", "Die Plaene konnten nicht gelesen werden.");
   return ((data ?? []) as PlanZeile[]).map(zuPlan);
 }
 
 /**
- * Die aktiven Plaene der Studios, in denen der Nutzer jetzt Mitglied ist (fuer den
- * Bootstrap). Nach einem Austritt bleibt der Plan lesbar (select_own), gehoert aber nicht
- * mehr in den Start der App -- deshalb der Filter ueber studio_memberships.
+ * Der aktive Plan des Mitglieds (hoechstens einer, im Katalog-Studio), oder null.
+ * Kein Filter ueber Mitgliedschaften: der Plan haengt nicht an einem Studio.
  */
-export async function aktivePlaeneDerMitgliedschaften(client: SupabaseClient, userId: string): Promise<TrainingPlan[]> {
-  const { data: mitgliedschaften, error: e } = await client
-    .from("studio_memberships")
-    .select("studio_id")
-    .eq("user_id", userId);
-  if (e) throw new DomainError("internal", "Die Mitgliedschaften konnten nicht gelesen werden.");
-  const studioIds = [...new Set(((mitgliedschaften ?? []) as Array<{ studio_id: string }>).map((z) => z.studio_id))];
-  if (studioIds.length === 0) return [];
+export async function aktiverKatalogPlan(client: SupabaseClient, userId: string): Promise<TrainingPlan | null> {
   const { data, error } = await client
     .from("training_plans")
     .select(SPALTEN)
     .eq("user_id", userId)
-    .eq("status", "aktiv")
-    .in("studio_id", studioIds)
-    .order("studio_id", { ascending: true });
-  if (error) throw new DomainError("internal", "Die Plaene konnten nicht gelesen werden.");
-  return ((data ?? []) as PlanZeile[]).map(zuPlan);
-}
-
-/** Der aktive Plan des Mitglieds in einem Studio, oder null. */
-export async function aktiverPlanImStudio(
-  client: SupabaseClient,
-  userId: string,
-  studioId: string,
-): Promise<TrainingPlan | null> {
-  const { data, error } = await client
-    .from("training_plans")
-    .select(SPALTEN)
-    .eq("user_id", userId)
-    .eq("studio_id", studioId)
     .eq("status", "aktiv")
     .maybeSingle();
   if (error) throw new DomainError("internal", "Der Plan konnte nicht gelesen werden.");

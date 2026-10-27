@@ -36,7 +36,7 @@ export type PlanPosition = {
   baustein: Baustein;
   rolle: "pflicht" | "fokus" | "ergaenzung" | "auffuellung" | "cardio";
   exerciseId: string;
-  machineId: string;
+  modelId: string;
   typ: PlanTyp;
   saetze: number;
   wdhVon: number | null;
@@ -116,7 +116,7 @@ function position(k: Kandidat, rolle: Entwurf["rolle"], saetze: number, profil: 
     baustein: k.baustein,
     rolle,
     exerciseId: k.exerciseId,
-    machineId: k.machineId,
+    modelId: k.modelId,
     saetze,
     ...typVorgaben(profil, k.typ),
     dauerMin: null,
@@ -274,7 +274,7 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
         baustein: "cardio",
         rolle: "cardio",
         exerciseId: cardioKandidat.exerciseId,
-        machineId: cardioKandidat.machineId,
+        modelId: cardioKandidat.modelId,
         // Typ nur fuer den Datensatz; Cardio laeuft ueber dauerMin, nicht ueber Saetze.
         typ: "isolation",
         saetze: 1,

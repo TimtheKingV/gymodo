@@ -7,7 +7,7 @@ import { DomainError } from "./errors.js";
 import { einheitZaehlt, naechsteEinheitKey, type PositionStatus } from "./trainingsplan-ablauf.js";
 import { filtereKandidaten, type Kandidat } from "./trainingsplan-auswahl.js";
 import type { PlanEinheit } from "./trainingsplan-generator.js";
-import { ladeKandidaten } from "./trainingsplan-kandidaten.js";
+import { LEERE_MERKLISTE, ladeKandidaten } from "./trainingsplan-kandidaten.js";
 import {
   aktualisierePlanGewichte,
   initialisierePlanGewichte,
@@ -126,7 +126,7 @@ async function ladeLetzteSaetze(client: SupabaseClient, sessionIds: string[]): P
 }
 
 /**
- * Gezaehlte Einheiten des Paars (Nutzer, Studio) ueber ALLE Planversionen: der Zaehler
+ * Gezaehlte Einheiten des Nutzers (alle Studios, der Plan gehoert dem Katalog) ueber ALLE Planversionen: der Zaehler
  * soll bei einem Tausch oder neuen Plan nicht von vorn beginnen. Gelesen werden die
  * neuesten SESSION_LIMIT Sessions mit Plan; Saetze nur fuer nie beendete, denn nur dort
  * entscheidet der letzte Satz.
@@ -134,14 +134,12 @@ async function ladeLetzteSaetze(client: SupabaseClient, sessionIds: string[]): P
 export async function ladeGezaehlteEinheiten(
   client: SupabaseClient,
   userId: string,
-  studioId: string,
   jetzt: Date,
 ): Promise<GezaehlteEinheit[]> {
   const { data, error } = await client
     .from("workout_sessions")
     .select("id, plan_einheit_key, started_at, completed_at")
     .eq("user_id", userId)
-    .eq("studio_id", studioId)
     .not("plan_id", "is", null)
     .order("started_at", { ascending: false })
     .limit(SESSION_LIMIT);
@@ -321,7 +319,6 @@ async function ladeNachzuholende(
     .from("workout_sessions")
     .select("id, started_at, completed_at, gewichte_berechnet_at")
     .eq("user_id", userId)
-    .eq("studio_id", studioId)
     .not("plan_id", "is", null)
     .not("plan_einheit_key", "is", null)
     .order("started_at", { ascending: false })
@@ -399,8 +396,8 @@ export async function ladePlaeneFuerApp(
   return Promise.all(
     plaene.map(async (plan) => {
       const [gezaehlt, kandidaten, zielgewichte] = await Promise.all([
-        ladeGezaehlteEinheiten(client, userId, plan.studioId, jetzt),
-        ladeKandidaten(client, plan.studioId),
+        ladeGezaehlteEinheiten(client, userId, jetzt),
+        ladeKandidaten(client, LEERE_MERKLISTE),
         ladeZielgewichteFuerApp(client, userId, plan, jetzt, melde),
       ]);
       return planFuerApp(plan, gezaehlt, profil, alternativenJeBaustein(kandidaten, beschwerden), zielgewichte);
