@@ -407,7 +407,7 @@ struct GeraetModelTests {
     /// Ein Ablauf-Speicher mit dem Testplan, vorbereitet fuer Studio s1.
     private func ablaufMitPlan() -> TrainingsplanAblaufStore {
         let sut = TrainingsplanAblaufStoreTests.store()
-        sut.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(), studioId: "s1", jetzt: Date())
+        sut.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(), jetzt: Date())
         return sut
     }
 
@@ -473,7 +473,7 @@ struct GeraetModelTests {
         let erfasser = Erfassungswarteschlange()
         // Speicher ohne Plan ...
         let ohnePlan = TrainingsplanAblaufStoreTests.store()
-        ohnePlan.vorbereiten(plan: nil, studioId: "s1", jetzt: Date())
+        ohnePlan.vorbereiten(plan: nil, jetzt: Date())
         let sut = modell(maschine: GeraetTestdaten.maschine,
                          bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
                          enqueue: { erfasser.geschriebene.append($0) },
@@ -489,8 +489,9 @@ struct GeraetModelTests {
         #expect(erfasser.geschriebene.allSatisfy { $0.body.plan == nil })
     }
 
-    /// Review Focus 4: im Freien Training gilt kein Plan, auch wenn einer bereitliegt.
-    @Test func imFreienTrainingTraegtDerSatzKeinenPlan() async throws {
+    /// Der Plan gehoert dem Mitglied, nicht einem Ort: auch im Freien Training
+    /// traegt der Satz die Momentaufnahme.
+    @Test func imFreienTrainingTraegtDerSatzDenPlan() async throws {
         let erfasser = Erfassungswarteschlange()
         let ablauf = ablaufMitPlan()
         let verzeichnis = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -504,8 +505,8 @@ struct GeraetModelTests {
         await sut.satzSichern(problemFlag: false, problemReason: nil)
 
         #expect(erfasser.geschriebene.count == 1)
-        #expect(erfasser.geschriebene.first?.body.plan == nil)
-        #expect(ablauf.gebundeneSessionId == nil)
+        #expect(erfasser.geschriebene.first?.body.plan?.planId == "p1")
+        #expect(ablauf.gebundeneSessionId != nil)
     }
 
     /// Review Focus 1: die Reserve-Frage schickt einen aelteren Satz erneut.
@@ -1385,7 +1386,7 @@ struct GeraetModelTests {
         func position(_ key: String, _ exerciseId: String) -> String {
             """
             {"key":"\(key)","baustein":"beine_knie","rolle":"pflicht","exerciseId":"\(exerciseId)",
-             "machineId":"m1","typ":"mehrgelenk","saetze":3,"wdhVon":8,"wdhBis":12,
+             "modelId":"m1","typ":"mehrgelenk","saetze":3,"wdhVon":8,"wdhBis":12,
              "reserveVon":1,"reserveBis":3,"pauseSek":120,"aufwaermsatz":false,"dauerMin":null,
              "hauptmuskeln":["quads"]}
             """
@@ -1408,7 +1409,7 @@ struct GeraetModelTests {
 
     private func ablauf(_ plan: Trainingsplan) -> TrainingsplanAblaufStore {
         let sut = TrainingsplanAblaufStoreTests.store()
-        sut.vorbereiten(plan: plan, studioId: "s1", jetzt: Date())
+        sut.vorbereiten(plan: plan, jetzt: Date())
         return sut
     }
 

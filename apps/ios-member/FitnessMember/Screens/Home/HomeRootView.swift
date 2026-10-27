@@ -138,7 +138,7 @@ struct HomeRootView: View {
                     // Entwurf 1.5: ueber den Zielen, weil sie der naechste
                     // Schritt ist, den das Mitglied noch nicht getan hat.
                     if let member = katalog.bootstrap?.member,
-                       PlanEinrichten.zeigtKarte(member: member, studioId: katalog.activeStudioId) {
+                       PlanEinrichten.zeigtKarte(member: member) {
                         PlanEinrichtenKarte { planFlowUmfang = PlanEinrichten.umfang(member: member) }
                     }
 

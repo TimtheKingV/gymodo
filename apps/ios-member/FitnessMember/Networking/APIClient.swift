@@ -264,11 +264,11 @@ actor APIClient {
     }
 
     func swapPlanPosition(
-        planId: String, einheitKey: String, positionKey: String, exerciseId: String, machineId: String
+        planId: String, einheitKey: String, positionKey: String, exerciseId: String, modelId: String
     ) async throws(APIError) -> Trainingsplan {
-        struct Rumpf: Encodable { let einheitKey, positionKey, exerciseId, machineId: String }
+        struct Rumpf: Encodable { let einheitKey, positionKey, exerciseId, modelId: String }
         return try await send("me/plans/\(planId)/swap", method: "POST", body: Rumpf(
-            einheitKey: einheitKey, positionKey: positionKey, exerciseId: exerciseId, machineId: machineId))
+            einheitKey: einheitKey, positionKey: positionKey, exerciseId: exerciseId, modelId: modelId))
     }
 
     // MARK: - Hilfsmethoden

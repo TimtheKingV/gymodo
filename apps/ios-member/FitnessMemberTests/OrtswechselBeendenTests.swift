@@ -75,17 +75,17 @@ struct OrtswechselBeendenTests {
     @Test func mitSatzZaehltDieEinheitDesPlans() {
         let sessions = store()
         let ablauf = TrainingsplanAblaufStoreTests.store()
-        ablauf.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(), studioId: "s1", jetzt: Date())
+        ablauf.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(), jetzt: Date())
         let satz = sessions.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                                         einheiten: .kilogrammWiederholungen, load: 40, volume: 10,
                                         problemFlag: false, problemReason: nil)
-        _ = ablauf.nachSatz(sessionId: satz.sessionId, studioId: "s1",
+        _ = ablauf.nachSatz(sessionId: satz.sessionId,
                             satz: TrainingsplanAblaufStoreTests.brust, jetzt: Date())
 
         _ = sessions.beendenFuerOrtswechsel(ablauf: ablauf)
 
         #expect(ablauf.zustand == nil)
-        ablauf.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(naechste: "A"), studioId: "s1", jetzt: Date())
+        ablauf.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(naechste: "A"), jetzt: Date())
         #expect(ablauf.einheitKey == "B")
     }
 
@@ -93,11 +93,11 @@ struct OrtswechselBeendenTests {
         let sessions = store()
         _ = sessions.trainingStarten()
         let ablauf = TrainingsplanAblaufStoreTests.store()
-        ablauf.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(), studioId: "s1", jetzt: Date())
+        ablauf.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(), jetzt: Date())
 
         _ = sessions.beendenFuerOrtswechsel(ablauf: ablauf)
 
-        ablauf.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(naechste: "A"), studioId: "s1", jetzt: Date())
+        ablauf.vorbereiten(plan: TrainingsplanAblaufStoreTests.plan(naechste: "A"), jetzt: Date())
         #expect(ablauf.einheitKey == "A")
     }
 }

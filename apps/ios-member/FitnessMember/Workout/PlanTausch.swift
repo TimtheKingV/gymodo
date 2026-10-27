@@ -7,7 +7,7 @@ import Observation
 /// der Actor `APIClient` nicht.
 protocol PlanTauschend: Sendable {
     func swapPlanPosition(planId: String, einheitKey: String, positionKey: String, exerciseId: String,
-                          machineId: String) async throws(APIError) -> Trainingsplan
+                          modelId: String) async throws(APIError) -> Trainingsplan
 }
 
 extension APIClient: PlanTauschend {}
@@ -15,7 +15,8 @@ extension APIClient: PlanTauschend {}
 /// Ein Tauschkandidat, wie die Liste 3.2 ihn zeigt.
 struct TauschKandidat: Equatable, Hashable, Identifiable {
     let exerciseId: String
-    let machineId: String
+    /// Das Katalogmodell, das der Server beim Tausch erwartet.
+    let modelId: String
     let name: String
     /// Das Label des Geraets; nil, wenn der Bootstrap es nicht kennt.
     let geraet: String?
@@ -26,9 +27,9 @@ struct TauschKandidat: Equatable, Hashable, Identifiable {
     let hauptmuskeln: [String]
     let vorschaubildModell: String?
 
-    /// Dieselbe Uebung kann an zwei Geraeten stehen; erst beide zusammen
+    /// Dieselbe Uebung kann an zwei Modellen stehen; erst beide zusammen
     /// sind eindeutig.
-    var id: String { "\(exerciseId):\(machineId)" }
+    var id: String { "\(exerciseId):\(modelId)" }
 
     var untertitel: String {
         [geraet, muskeln].compactMap { $0 }.joined(separator: " · ")
@@ -40,9 +41,8 @@ struct TauschKandidat: Equatable, Hashable, Identifiable {
 /// aendern (409 laedt neu), die angezeigte Position bleibt dieselbe.
 struct PlanTauschAuftrag: Equatable, Identifiable {
     let planId: String
-    let studioId: String
     let einheitKey: String
-    /// Die Position im Bootstrap-Plan (Vorgabe, Baustein, Geraet).
+    /// Die Position im Bootstrap-Plan (Vorgabe, Baustein, Modell).
     let position: TrainingsplanPosition
     /// Der Status im heutigen Ablauf; ohne Ablauf offen.
     let status: PositionStatus
@@ -77,23 +77,26 @@ enum PlanTausch {
     ///
     /// `uebungen` ist der Bootstrap: Namen, Geraet, Muskeln und Bild kommen
     /// aus seinen Geraeten, der Name notfalls aus dem Katalog.
-    static func kandidaten(position: TrainingsplanPosition, alternativen: [String: [Alternative]],
+    static func kandidaten(position: TrainingsplanPosition, alternativen: [String: [PlanAlternative]],
                            belegt: Set<String>, uebungen: BootstrapResponse?) -> [TauschKandidat] {
         let ausgeschlossen = belegt.union([position.exerciseId])
         return (alternativen[position.baustein] ?? []).compactMap { alternative in
             guard !ausgeschlossen.contains(alternative.exerciseId) else { return nil }
-            let maschine = uebungen?.machines.first { $0.id == alternative.machineId }
+            let maschine = uebungen?.machines.first {
+                $0.equipmentModel.id == alternative.modelId && $0.status == "active"
+                    && $0.exercises.contains { $0.id == alternative.exerciseId }
+            }
             let primaer = (maschine?.exercises.first { $0.id == alternative.exerciseId }?.muscles ?? [])
                 .filter { $0.role == .primary }
             return TauschKandidat(
                 exerciseId: alternative.exerciseId,
-                machineId: alternative.machineId,
+                modelId: alternative.modelId,
                 name: PlanZeilenModell.uebungsname(exerciseId: alternative.exerciseId, maschine: maschine,
                                                    bootstrap: uebungen),
                 geraet: maschine?.label,
                 muskeln: primaer.isEmpty ? nil : primaer.map(\.name).joined(separator: ", "),
                 hauptmuskeln: primaer.map(\.key),
-                vorschaubildModell: maschine?.equipmentModel.id)
+                vorschaubildModell: alternative.modelId)
         }
     }
 
@@ -112,14 +115,13 @@ enum PlanTausch {
         let geplant = stelle?.geplant ?? position.exerciseId
         return PlanTauschAuftrag(
             planId: heute.plan.planId,
-            studioId: heute.plan.studioId,
             einheitKey: heute.einheitKey,
             position: position,
             status: status,
             name: name(geplant, bootstrap),
             ersatzName: stelle?.ersatz.map { name($0, bootstrap) },
             vorgesehen: status == .offen && geplant == position.exerciseId
-                ? vorgesehen(position: position, studioId: heute.plan.studioId, bootstrap: bootstrap) : nil,
+                ? vorgesehen(position: position, bootstrap: bootstrap) : nil,
             kandidaten: kandidaten(position: position, alternativen: heute.plan.alternativen,
                                    belegt: belegt, uebungen: bootstrap),
             tauschbar: !cardio && (status == .offen || status == .getauscht))
@@ -148,15 +150,15 @@ enum PlanTausch {
         return tags
     }
 
-    /// Nur, wenn das Geraet der Position im Studio aktiv steht und die Uebung
-    /// fuehrt; ein stillgelegtes Geraet zu nennen, schickte das Mitglied
-    /// an ein abgedecktes Geraet. Der Ablauf zaehlt jedes Geraet mit
-    /// derselben Uebung, das sagt der zweite Satz.
-    static func vorgesehen(position: TrainingsplanPosition, studioId: String,
-                           bootstrap: BootstrapResponse?) -> String? {
-        guard let maschine = bootstrap?.machines.first(where: { $0.id == position.machineId }),
-              maschine.studioId == studioId, maschine.status == "active",
-              maschine.exercises.contains(where: { $0.id == position.exerciseId }) else { return nil }
+    /// Nur, wenn ein aktives Geraet des Modells der Position die Uebung fuehrt;
+    /// ein stillgelegtes Geraet zu nennen, schickte das Mitglied an ein
+    /// abgedecktes Geraet. Der Ablauf zaehlt jedes Geraet mit derselben
+    /// Uebung, das sagt der zweite Satz.
+    static func vorgesehen(position: TrainingsplanPosition, bootstrap: BootstrapResponse?) -> String? {
+        guard let maschine = bootstrap?.machines.first(where: {
+            $0.equipmentModel.id == position.modelId && $0.status == "active"
+                && $0.exercises.contains(where: { $0.id == position.exerciseId })
+        }) else { return nil }
         return "Vorgesehen am Gerät „\(maschine.label)“. Jedes andere Gerät mit dieser Übung zählt auch."
     }
 
@@ -318,7 +320,7 @@ final class PlanTauschSitzung {
         do throws(APIError) {
             _ = try await client.swapPlanPosition(
                 planId: aktuellePlanId() ?? auftrag.planId, einheitKey: auftrag.einheitKey,
-                positionKey: auftrag.position.key, exerciseId: kandidat.exerciseId, machineId: kandidat.machineId)
+                positionKey: auftrag.position.key, exerciseId: kandidat.exerciseId, modelId: kandidat.modelId)
         } catch {
             fehler = error
             // 409: der Plan ist nicht mehr der aktive (anderes Geraet, Trainer).
@@ -333,7 +335,7 @@ final class PlanTauschSitzung {
         // geplant und der Tausch faellt weg (TrainingsplanAblaufStore,
         // `mitHeutigenTauschen`) -- nichts doppelt. Eine laufende Einheit
         // bleibt unberuehrt (Review Focus 2).
-        if ablauf.gebundeneSessionId == nil, ablauf.studioId == auftrag.studioId,
+        if ablauf.gebundeneSessionId == nil, ablauf.planId == auftrag.planId,
            ablauf.einheitKey == auftrag.einheitKey {
             ablauf.tauschen(positionKey: auftrag.position.key,
                             ersatz: (exerciseId: kandidat.exerciseId, hauptmuskeln: kandidat.hauptmuskeln))

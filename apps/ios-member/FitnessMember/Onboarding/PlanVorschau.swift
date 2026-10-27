@@ -142,7 +142,7 @@ struct PlanVorschauSchritt: View {
                 Card {
                     VStack(spacing: 0) {
                         ForEach(Array(einheit.positionen.enumerated()), id: \.element.key) { index, position in
-                            let zeile = PlanZeilenModell.aus(position, studioId: plan.studioId, bootstrap: katalog.bootstrap)
+                            let zeile = PlanZeilenModell.aus(position, bootstrap: katalog.bootstrap)
                             if index > 0 {
                                 Rectangle().fill(DesignSystem.Color.line).frame(height: 1)
                             }

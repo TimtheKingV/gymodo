@@ -133,12 +133,12 @@ enum BeschwerdenAktion: Equatable {
 
 /// Die Karte "Dein Trainingsplan" auf Home (Entwurf 1.5).
 enum PlanEinrichten {
-    /// Nur nach dem Onboarding (vorher zeigt das Gate den Block selbst),
-    /// nur mit aktivem Studio (ein Plan gehoert einem Studio, F20) und nur,
-    /// solange dort kein Plan steht.
-    static func zeigtKarte(member: BootstrapResponse.Member, studioId: String?) -> Bool {
-        guard member.onboardingCompletedAt != nil, let studioId else { return false }
-        return !member.plans.contains { $0.studioId == studioId }
+    /// Nur nach dem Onboarding (vorher zeigt das Gate den Block selbst) und
+    /// nur, solange das Mitglied keinen Plan hat. Der Plan gehoert dem
+    /// Mitglied, nicht einem Studio: die Karte erscheint auch im Freien
+    /// Training.
+    static func zeigtKarte(member: BootstrapResponse.Member) -> Bool {
+        member.onboardingCompletedAt != nil && member.plans.isEmpty
     }
 
     /// Mit Trainingsprofil ist alles gefragt, was der Plan braucht -- dann

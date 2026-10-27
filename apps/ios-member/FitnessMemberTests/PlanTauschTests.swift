@@ -17,16 +17,16 @@ enum PlanTauschTestdaten {
             let liste = muskeln.map { "\"\($0)\"" }.joined(separator: ",")
             return """
             {"key":"\(key)","baustein":"\(baustein)","rolle":"pflicht","exerciseId":"\(exerciseId)",
-             "machineId":"\(machineId)","typ":"mehrgelenk","saetze":3,"wdhVon":\(wdh.0),"wdhBis":\(wdh.1),
+             "modelId":"em-\(machineId)","typ":"mehrgelenk","saetze":3,"wdhVon":\(wdh.0),"wdhBis":\(wdh.1),
              "reserveVon":1,"reserveBis":3,"pauseSek":\(pause),"aufwaermsatz":false,"dauerMin":\(dauer),
              "hauptmuskeln":[\(liste)]}
             """
         }
         let alternativenJSON = alternativen ?? """
-        {"druecken":[{"exerciseId":"e8","machineId":"m8"},{"exerciseId":"e1","machineId":"m1"},
-                     {"exerciseId":"e7","machineId":"m7"},{"exerciseId":"e2","machineId":"m2"},
-                     {"exerciseId":"e9","machineId":"m9"},{"exerciseId":"e5","machineId":"m1"}],
-         "cardio":[{"exerciseId":"c2","machineId":"m10"}]}
+        {"druecken":[{"exerciseId":"e8","modelId":"em-m8"},{"exerciseId":"e1","modelId":"em-m1"},
+                     {"exerciseId":"e7","modelId":"em-m7"},{"exerciseId":"e2","modelId":"em-m2"},
+                     {"exerciseId":"e9","modelId":"em-m9"},{"exerciseId":"e5","modelId":"em-m1"}],
+         "cardio":[{"exerciseId":"c2","modelId":"em-m10"}]}
         """
         let json = """
         {"planId":"\(planId)","studioId":"s1","version":\(version),"regelVersion":"1.2.0",
@@ -85,7 +85,7 @@ enum PlanTauschTestdaten {
 /// echte Endpunkte rufen.
 actor TauschClientAttrappe: PlanTauschend {
     struct Aufruf: Equatable {
-        let planId, einheitKey, positionKey, exerciseId, machineId: String
+        let planId, einheitKey, positionKey, exerciseId, modelId: String
     }
 
     private(set) var aufrufe: [Aufruf] = []
@@ -96,11 +96,11 @@ actor TauschClientAttrappe: PlanTauschend {
     }
 
     func swapPlanPosition(planId: String, einheitKey: String, positionKey: String, exerciseId: String,
-                          machineId: String) async throws(APIError) -> Trainingsplan {
+                          modelId: String) async throws(APIError) -> Trainingsplan {
         aufrufe.append(Aufruf(planId: planId, einheitKey: einheitKey, positionKey: positionKey,
-                              exerciseId: exerciseId, machineId: machineId))
+                              exerciseId: exerciseId, modelId: modelId))
         if !fehler.isEmpty { throw fehler.removeFirst() }
-        return PlanTauschTestdaten.plan(planId: "p2", version: 2, positionA0: exerciseId, machineA0: machineId)
+        return PlanTauschTestdaten.plan(planId: "p2", version: 2, positionA0: exerciseId, machineA0: String(modelId.dropFirst(3)))
     }
 }
 
@@ -113,10 +113,10 @@ actor HaltenderTauschClient: PlanTauschend {
     var wartet: Bool { freigabe != nil }
 
     func swapPlanPosition(planId: String, einheitKey: String, positionKey: String, exerciseId: String,
-                          machineId: String) async throws(APIError) -> Trainingsplan {
+                          modelId: String) async throws(APIError) -> Trainingsplan {
         aufrufe += 1
         await withCheckedContinuation { freigabe = $0 }
-        return PlanTauschTestdaten.plan(planId: "p2", version: 2, positionA0: exerciseId, machineA0: machineId)
+        return PlanTauschTestdaten.plan(planId: "p2", version: 2, positionA0: exerciseId, machineA0: String(modelId.dropFirst(3)))
     }
 
     func freigeben() {
@@ -140,10 +140,10 @@ struct PlanTauschTests {
     }
 
     static func heute(_ plan: Trainingsplan = T.plan(), ablauf: TrainingsplanAblaufStore) -> PlanAnzeige.Heute {
-        PlanAnzeige.heute(bootstrap: T.bootstrap(plan: plan), studioId: "s1",
+        PlanAnzeige.heute(bootstrap: T.bootstrap(plan: plan),
                           ablaufPlanId: ablauf.planId, ablaufEinheitKey: ablauf.einheitKey,
                           ablaufZustand: ablauf.zustand, naechsteEinheitKey: ablauf.naechsteEinheitKey,
-                          ablaufGebunden: ablauf.gebundeneSessionId != nil, ablaufStudioId: ablauf.studioId)!
+                          ablaufGebunden: ablauf.gebundeneSessionId != nil)!
     }
 
     static func auftrag(_ key: String, ablauf: TrainingsplanAblaufStore,
@@ -172,14 +172,14 @@ struct PlanTauschTests {
                 umgebung.neuGeladen += 1
                 if let plan = umgebung.neuerPlan {
                     umgebung.aktuellePlanId = plan.planId
-                    ablauf.vorbereiten(plan: plan, studioId: "s1", jetzt: Self.jetzt.addingTimeInterval(60))
+                    ablauf.vorbereiten(plan: plan, jetzt: Self.jetzt.addingTimeInterval(60))
                 }
             })
     }
 
     static func vorbereitet() -> TrainingsplanAblaufStore {
         let ablauf = store()
-        ablauf.vorbereiten(plan: T.plan(), studioId: "s1", jetzt: jetzt)
+        ablauf.vorbereiten(plan: T.plan(), jetzt: jetzt)
         return ablauf
     }
 
@@ -212,7 +212,7 @@ struct PlanTauschTests {
         #expect(schraeg.hauptmuskeln == ["chest", "deltoid_front"])
         #expect(schraeg.untertitel == "Gerät 14 · Brust, Schulter vorn")
         #expect(schraeg.vorschaubildModell == "em-m7")
-        #expect(schraeg.machineId == "m7")
+        #expect(schraeg.modelId == "em-m7")
     }
 
     @Test("keine Kandidaten -> kein Knopf Andere Uebung")
@@ -277,7 +277,7 @@ struct PlanTauschTests {
 
         #expect(await sut.uebernehmen())
         #expect(await client.aufrufe == [.init(planId: "p1", einheitKey: "A", positionKey: "A0",
-                                               exerciseId: "e7", machineId: "m7")])
+                                               exerciseId: "e7", modelId: "em-m7")])
         #expect(umgebung.neuGeladen == 1)
         #expect(sut.fehler == nil)
     }
@@ -437,7 +437,7 @@ struct PlanTauschTests {
     @Test("erledigte Position ist nicht tauschbar")
     func erledigtNichtTauschbar() async throws {
         let ablauf = Self.vorbereitet()
-        _ = ablauf.nachSatz(sessionId: UUID(), studioId: "s1",
+        _ = ablauf.nachSatz(sessionId: UUID(),
                             satz: AblaufSatz(exerciseId: "e1", hauptmuskeln: ["chest"], cardio: false), jetzt: Self.jetzt)
         let auftrag = Self.auftrag("A0", ablauf: ablauf)
         #expect(auftrag.status == .erledigt)
@@ -471,10 +471,10 @@ struct PlanTauschTests {
         #expect(getauscht.kandidaten.map(\.exerciseId) == ["e7", "e9", "e5"])
 
         // Ein ungeplanter Latzug macht A1 (ziehen, Latissimus) optional.
-        _ = ablauf.nachSatz(sessionId: UUID(), studioId: "s1",
+        _ = ablauf.nachSatz(sessionId: UUID(),
                             satz: AblaufSatz(exerciseId: "e4", hauptmuskeln: ["lats"], cardio: false), jetzt: Self.jetzt)
         let optional = Self.auftrag("A1", ablauf: ablauf, plan: T.plan(alternativen: """
-            {"ziehen":[{"exerciseId":"e8","machineId":"m8"}]}
+            {"ziehen":[{"exerciseId":"e8","modelId":"em-m8"}]}
             """))
         #expect(optional.status == .optional)
         #expect(!optional.tauschbar)
@@ -486,7 +486,7 @@ struct PlanTauschTests {
     func laufendeEinheitBehaeltVersion() async throws {
         let ablauf = Self.vorbereitet()
         let session = UUID()
-        _ = ablauf.nachSatz(sessionId: session, studioId: "s1",
+        _ = ablauf.nachSatz(sessionId: session,
                             satz: AblaufSatz(exerciseId: "e2", hauptmuskeln: ["lats"], cardio: false), jetzt: Self.jetzt)
         let vorher = ablauf.zustand
         let client = TauschClientAttrappe()

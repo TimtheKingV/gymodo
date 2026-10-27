@@ -578,12 +578,12 @@ struct DTOTests {
      "version":1,"regelVersion":"1.2.0","struktur":"gk_ab",
      "einheiten":[{"key":"A","positionen":[{"key":"0","typ":"mehrgelenk","rolle":"pflicht","saetze":2,
        "wdhBis":12,"wdhVon":8,"baustein":"beine_knie","dauerMin":null,"pauseSek":150,
-       "machineId":"ff132ad9-1410-4016-a068-44efb73ab688","exerciseId":"265d30f2-ac59-4a2b-8c46-a9eb954b3448",
+       "modelId":"ff132ad9-1410-4016-a068-44efb73ab688","exerciseId":"265d30f2-ac59-4a2b-8c46-a9eb954b3448",
        "reserveBis":4,"reserveVon":3,"aufwaermsatz":true,"hauptmuskeln":[]}],"geschaetzteMinuten":46.5}],
      "gruende":["struktur_ganzkoerper_ab","anfaenger_reserve"],
      "naechsteEinheitKey":"B","zuletztEinheitKey":"A","einheitenErledigt":1,"anfaengerUebergang":false,
-     "alternativen":{"beine_knie":[{"exerciseId":"265d30f2-ac59-4a2b-8c46-a9eb954b3448","machineId":"ff132ad9-1410-4016-a068-44efb73ab688"}],
-       "rumpf":[{"exerciseId":"2b53ce45-773b-4178-85ef-3d80ba8f44bf","machineId":"ff132ad9-1410-4016-a068-44efb73ab688"}]}}
+     "alternativen":{"beine_knie":[{"exerciseId":"265d30f2-ac59-4a2b-8c46-a9eb954b3448","modelId":"ff132ad9-1410-4016-a068-44efb73ab688"}],
+       "rumpf":[{"exerciseId":"2b53ce45-773b-4178-85ef-3d80ba8f44bf","modelId":"ff132ad9-1410-4016-a068-44efb73ab688"}]}}
     """#
 
     @Test("Bootstrap ohne trainingProfile/plans dekodiert (alte Antwort)")

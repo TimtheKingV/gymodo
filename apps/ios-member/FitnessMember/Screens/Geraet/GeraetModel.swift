@@ -459,24 +459,15 @@ final class GeraetModel {
         belastungAusPlanziel = true
     }
 
-    /// Das Zielgewicht dieser Uebung an diesem Geraet in der heutigen
-    /// Planeinheit -- nur im Studio des Ablaufs. Laeuft schon eine Einheit,
-    /// zaehlt ihr Ort (im Freien Training gilt kein Plan), sonst das Studio
-    /// des Geraets. Statisch, weil init es braucht.
+    /// Das Zielgewicht dieser Uebung in der heutigen Planeinheit. Der Plan
+    /// gilt an jedem Ort, auch im Freien Training. Statisch, weil init es
+    /// braucht.
     private static func planziel(an station: Station, uebungId: String, bootstrap: BootstrapResponse,
                                  ablauf: TrainingsplanAblaufStore?,
                                  sessions: WorkoutSessionStore) -> Zielgewicht? {
         guard let ablauf, let planId = ablauf.planId else { return nil }
-        let studioId: String?
-        if let laufend = sessions.aktiveSession() {
-            if case .studio(let id) = laufend.ort { studioId = id } else { studioId = nil }
-        } else {
-            studioId = station.studioId
-        }
-        guard let studioId, studioId == ablauf.studioId else { return nil }
-        let plan = bootstrap.member.plans.first { $0.planId == planId && $0.studioId == studioId }
-        return PlanAnzeige.zielgewicht(exerciseId: uebungId, machineId: station.machineId,
-                                       plan: plan, einheitKey: ablauf.einheitKey)
+        let plan = bootstrap.member.plans.first { $0.planId == planId }
+        return PlanAnzeige.zielgewicht(exerciseId: uebungId, plan: plan, einheitKey: ablauf.einheitKey)
     }
 
     /// Das Zielgewicht der Position, ob heute schon ein Satz fiel oder nicht.
@@ -1188,30 +1179,23 @@ final class GeraetModel {
     }
 
     /// Die Satzpause (F6): bei einer Planuebung die der Planposition, sonst
-    /// genau die Profilpause wie bisher. Nur fuer den Plan des Studios der
-    /// Einheit -- im Freien Training und anderswo gilt kein Plan.
+    /// genau die Profilpause wie bisher. Der Plan gilt an jedem Ort.
     var pauseSekunden: Int {
         let profil = Einstellungen.resttimerSekunden()
-        guard let ablauf, case .studio(let studioId)? = sessions.aktiveSession()?.ort else { return profil }
-        let plan = bootstrap.member.plans.first { $0.planId == ablauf.planId && $0.studioId == studioId }
+        guard let ablauf else { return profil }
+        let plan = bootstrap.member.plans.first { $0.planId == ablauf.planId }
         return PlanAnzeige.pauseSek(fuer: uebungId, plan: plan, einheitKey: ablauf.einheitKey,
                                     zustand: ablauf.zustand, profil: profil)
     }
 
-    /// Hakt den Satz im Planablauf ab. Der Ort ist der der Einheit (vom
-    /// ersten Satz gesetzt), weil der Server den Plan gegen das Studio der
-    /// Session prueft; im Freien Training gibt es keinen. Nur Hauptmuskeln
+    /// Hakt den Satz im Planablauf ab, an jedem Ort. Nur Hauptmuskeln
     /// (role primary) zaehlen fuer "optional", wie am Server.
     private func planMomentaufnahme(sessionId: UUID) -> PlanMomentaufnahme? {
         guard let ablauf else { return nil }
-        let studioId: String? = {
-            if case .studio(let id)? = sessions.aktiveSession()?.ort { return id }
-            return nil
-        }()
         let hauptmuskeln = station.exercises.first { $0.id == uebungId }?
             .muscles.filter { $0.role == .primary }.map(\.key) ?? []
         return ablauf.nachSatz(
-            sessionId: sessionId, studioId: studioId,
+            sessionId: sessionId,
             satz: AblaufSatz(exerciseId: uebungId, hauptmuskeln: hauptmuskeln, cardio: istCardio))
     }
 

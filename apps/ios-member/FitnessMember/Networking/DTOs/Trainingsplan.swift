@@ -1,7 +1,7 @@
 import Foundation
 
-/// Der Trainingsplan eines Studios, wie ihn der Bootstrap (`PlanFuerApp`)
-/// liefert. Dieselbe Struktur dekodiert auch die Antwort von createPlan,
+/// Der Trainingsplan des Mitglieds (einer, ortsunabhaengig), wie ihn der
+/// Bootstrap (`PlanFuerApp`) liefert. Dieselbe Struktur dekodiert auch die Antwort von createPlan,
 /// acceptPlan und swapPlanPosition (`TrainingPlan` im Server): dort heisst
 /// die Kennung `id`, und die App-Felder (naechste Einheit, Zaehler,
 /// Alternativen) fehlen. Ein zweiter Typ mit fast denselben Feldern waere
@@ -12,7 +12,10 @@ import Foundation
 /// (Verlauf), deshalb die Trainingsplan*-Namen.
 struct Trainingsplan: Decodable, Equatable, Sendable {
     let planId: String
-    let studioId: String
+    /// Das Katalogstudio, aus dem der Plan erzeugt wurde; nil fuer einen Plan
+    /// ohne Studio (Freies Training). Kein Ort, an den der Plan gebunden
+    /// waere: er gilt ueberall.
+    let studioId: String?
     let version: Int
     let regelVersion: String
     let struktur: String
@@ -24,23 +27,26 @@ struct Trainingsplan: Decodable, Equatable, Sendable {
     let einheitenErledigt: Int
     let anfaengerUebergang: Bool
     /// Tauschkandidaten je Baustein; ein Baustein ohne Kandidat fehlt ganz.
-    let alternativen: [String: [Alternative]]
+    let alternativen: [String: [PlanAlternative]]
     /// Zielgewichte je Planposition (Etappe 4, G8/G17), geschluesselt mit
     /// `zielSchluessel`. Leer in einer alten Server-Antwort und fuer
     /// Positionen ohne Ziel -- dann gilt wie im freien Training das letzte
     /// Gewicht. Die App rechnet daran nichts (F15), sie zeigt nur an.
     let zielgewichte: [String: Zielgewicht]
+    /// Was das Mitglied gesperrt hat (nur an den Eigentuemer, Task 8 filtert
+    /// damit). Leer in einer alten Server-Antwort und in der eines Schreibwegs.
+    let merkliste: PlanMerkliste
 
     private enum CodingKeys: String, CodingKey {
         case planId, id, studioId, version, regelVersion, struktur, einheiten, gruende,
              naechsteEinheitKey, zuletztEinheitKey, einheitenErledigt, anfaengerUebergang, alternativen,
-             zielgewichte
+             zielgewichte, merkliste
     }
 
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         planId = try c.decodeIfPresent(String.self, forKey: .planId) ?? c.decode(String.self, forKey: .id)
-        studioId = try c.decode(String.self, forKey: .studioId)
+        studioId = try c.decodeIfPresent(String.self, forKey: .studioId)
         version = try c.decode(Int.self, forKey: .version)
         regelVersion = try c.decode(String.self, forKey: .regelVersion)
         struktur = try c.decode(String.self, forKey: .struktur)
@@ -50,8 +56,9 @@ struct Trainingsplan: Decodable, Equatable, Sendable {
         zuletztEinheitKey = try c.decodeIfPresent(String.self, forKey: .zuletztEinheitKey)
         einheitenErledigt = try c.decodeIfPresent(Int.self, forKey: .einheitenErledigt) ?? 0
         anfaengerUebergang = try c.decodeIfPresent(Bool.self, forKey: .anfaengerUebergang) ?? false
-        alternativen = try c.decodeIfPresent([String: [Alternative]].self, forKey: .alternativen) ?? [:]
+        alternativen = try c.decodeIfPresent([String: [PlanAlternative]].self, forKey: .alternativen) ?? [:]
         zielgewichte = try c.decodeIfPresent([String: Zielgewicht].self, forKey: .zielgewichte) ?? [:]
+        merkliste = try c.decodeIfPresent(PlanMerkliste.self, forKey: .merkliste) ?? PlanMerkliste()
     }
 
     /// Wie `zielSchluessel` in packages/domain/src/plangewichte.ts: erst
@@ -93,7 +100,9 @@ struct TrainingsplanPosition: Decodable, Equatable, Sendable {
     let baustein: String
     let rolle: String
     let exerciseId: String
-    let machineId: String
+    /// Das Katalogmodell der Position; welches Geraet im Studio es ist,
+    /// entscheidet erst die Geraeteauswahl.
+    let modelId: String
     let typ: String
     let saetze: Int
     let wdhVon: Int?
@@ -108,9 +117,18 @@ struct TrainingsplanPosition: Decodable, Equatable, Sendable {
 
 /// Ein Tauschkandidat; der Server nennt bewusst nur die IDs (keine
 /// Beschwerdehinweise, das waeren Gesundheitsdaten).
-struct Alternative: Codable, Equatable, Sendable {
+struct PlanAlternative: Codable, Equatable, Sendable {
     let exerciseId: String
-    let machineId: String
+    let modelId: String
+}
+
+/// Die Merkliste des Mitglieds (`PlanMerkliste` im Server): je Ort die
+/// Uebungen, die dort fehlen, und ueberall die, die ihm nicht gefallen.
+/// Eine Angabe zur Person: nie loggen.
+struct PlanMerkliste: Codable, Equatable, Sendable {
+    /// Ort-ID -> Uebungs-IDs.
+    var nichtVorhanden: [String: [String]] = [:]
+    var gefaelltNicht: [String] = []
 }
 
 /// Das Trainingsprofil in der Antwort und im PUT-Rumpf von

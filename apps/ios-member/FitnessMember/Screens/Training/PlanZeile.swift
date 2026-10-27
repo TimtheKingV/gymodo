@@ -25,20 +25,20 @@ struct PlanZeilenModell: Equatable, Identifiable {
 }
 
 extension PlanZeilenModell {
-    /// Die Zeile einer Planposition, Name und Geraet aus dem Bootstrap.
-    /// Das Foto kommt vom Geraet der Position oder, ist es stillgelegt oder
-    /// entfernt, von einem anderen aktiven Geraet mit derselben Uebung
-    /// (`PlanAnzeige.bildmaschine`).
-    static func aus(_ position: TrainingsplanPosition, studioId: String,
-                    bootstrap: BootstrapResponse?) -> PlanZeilenModell {
-        let maschine = PlanAnzeige.bildmaschine(exerciseId: position.exerciseId, machineId: position.machineId,
-                                                studioId: studioId, bootstrap: bootstrap)
+    /// Die Zeile einer Planposition, Name aus dem Bootstrap. Das Foto kommt
+    /// vom Katalogmodell der Position (`PlanAnzeige.bildmodell`), nicht von
+    /// einem Studio-Geraet.
+    static func aus(_ position: TrainingsplanPosition, bootstrap: BootstrapResponse?) -> PlanZeilenModell {
+        let maschine = bootstrap?.machines.first {
+            $0.equipmentModel.id == position.modelId && $0.exercises.contains { $0.id == position.exerciseId }
+        }
         return PlanZeilenModell(
             id: position.key,
             name: uebungsname(exerciseId: position.exerciseId, maschine: maschine, bootstrap: bootstrap),
             untertitel: vorgabe(position),
             exerciseId: position.exerciseId,
-            vorschaubildModell: maschine?.equipmentModel.id)
+            vorschaubildModell: PlanAnzeige.bildmodell(exerciseId: position.exerciseId, modelId: position.modelId,
+                                                       bootstrap: bootstrap))
     }
 
     /// "3 × 8–12" (Entwurf 1.4); Cardio "20 Min"; ohne Wiederholungsbereich

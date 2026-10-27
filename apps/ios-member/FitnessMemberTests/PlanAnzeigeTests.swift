@@ -11,18 +11,19 @@ struct PlanAnzeigeTests {
 
     // MARK: - Testdaten
 
-    /// Einheit A: Beinpresse (m1, aktiv), Rudern (m2, stillgelegt; m5 bietet
-    /// es auch), Seitheben (m3, gibt es nicht mehr, und kein anderes Geraet
-    /// bietet es), Cardio 20 Min. Einheit B: eine Position.
+    /// Einheit A: Beinpresse (Modell em-m1), Rudern (em-m2), Seitheben (em-m3),
+    /// Cardio 20 Min (em-m4). Einheit B: eine Position. Die Position nennt
+    /// nur das Katalogmodell; ob ein Studio-Geraet dazu steht, spielt fuer
+    /// das Bild keine Rolle.
     static func plan(studioId: String = "s1", anfaenger: Bool = false, erledigt: Int = 0,
-                     minuten: String = "60") -> Trainingsplan {
+                     minuten: String = "60", extra: String = "") -> Trainingsplan {
         func position(_ key: String, _ baustein: String, _ exerciseId: String, _ machineId: String,
                       _ muskeln: [String], pause: Int = 120, dauer: String = "null",
                       wdh: (String, String) = ("8", "12")) -> String {
             let liste = muskeln.map { "\"\($0)\"" }.joined(separator: ",")
             return """
             {"key":"\(key)","baustein":"\(baustein)","rolle":"pflicht","exerciseId":"\(exerciseId)",
-             "machineId":"\(machineId)","typ":"mehrgelenk","saetze":3,"wdhVon":\(wdh.0),"wdhBis":\(wdh.1),
+             "modelId":"em-\(machineId)","typ":"mehrgelenk","saetze":3,"wdhVon":\(wdh.0),"wdhBis":\(wdh.1),
              "reserveVon":1,"reserveBis":3,"pauseSek":\(pause),"aufwaermsatz":false,"dauerMin":\(dauer),
              "hauptmuskeln":[\(liste)]}
             """
@@ -30,7 +31,7 @@ struct PlanAnzeigeTests {
         let json = """
         {"planId":"p1","studioId":"\(studioId)","version":1,"regelVersion":"1.2.0",
          "struktur":"gk_ab","gruende":["gk_ab","zeit_uebungen"],"naechsteEinheitKey":"A","zuletztEinheitKey":null,
-         "einheitenErledigt":\(erledigt),"anfaengerUebergang":\(anfaenger),"alternativen":{},
+         "einheitenErledigt":\(erledigt),"anfaengerUebergang":\(anfaenger),"alternativen":{}\(extra),
          "einheiten":[
            {"key":"A","geschaetzteMinuten":\(minuten),"positionen":[
              \(position("A0", "beine_knie", "e1", "m1", ["quads"])),
@@ -174,21 +175,25 @@ struct PlanAnzeigeTests {
 
     // MARK: - Bild
 
-    @Test("stillgelegtes Geraet: Bild vom anderen Geraet derselben Uebung")
-    func stillgelegtesGeraetNimmtAnderes() {
-        let zeile = Self.zeilen()[1]
-        #expect(zeile.name == "Rudern an der Maschine")
-        #expect(zeile.vorschaubildModell == "em-m5")
-        #expect(Self.zeilen()[0].vorschaubildModell == "em-m1")
-    }
-
-    @Test("ohne Ersatzgeraet kein Bild, Zeile bleibt")
-    func ohneErsatzgeraetKeinBild() {
+    @Test("Bild kommt vom Katalogmodell der Position, auch ohne Studio-Geraet")
+    func bildVomKatalogmodell() {
         let zeilen = Self.zeilen()
         #expect(zeilen.count == 4)
+        #expect(zeilen[0].vorschaubildModell == "em-m1")
+        // Rudern: kein aktives Geraet am Modell em-m2, das Bild bleibt.
+        #expect(zeilen[1].vorschaubildModell == "em-m2")
         #expect(zeilen[2].id == "A2")
-        // m3 gibt es nicht mehr, m9 steht in einem anderen Studio.
-        #expect(zeilen[2].vorschaubildModell == nil)
+        #expect(zeilen[2].vorschaubildModell == "em-m3")
+    }
+
+    @Test("getauschte Uebung nimmt das Modell eines Geraets mit ihr, sonst kein Bild")
+    func bildBeiTausch() {
+        // e6 steht am Geraet m6 (em-m6).
+        let mitGeraet = Self.zeilen(Self.zustand(["A2": .getauscht], ersatz: ["A2": "e6"]))
+        #expect(mitGeraet[2].vorschaubildModell == "em-m6")
+        // e7 fuehrt kein Geraet des Bootstraps.
+        let ohne = Self.zeilen(Self.zustand(["A2": .getauscht], ersatz: ["A2": "e7"]))
+        #expect(ohne[2].vorschaubildModell == nil)
     }
 
     // MARK: - Zusaetzlich gemacht
@@ -263,17 +268,59 @@ struct PlanAnzeigeTests {
     @Test("Plankarte entfaellt ohne Plan")
     func plankarteEntfaelltOhnePlan() {
         let mit = Self.bootstrap()
-        #expect(PlanAnzeige.plan(bootstrap: mit, studioId: "s1")?.planId == "p1")
-        // Freies Training, anderes Studio, Studio ohne Plan, kein Bootstrap.
-        #expect(PlanAnzeige.plan(bootstrap: mit, studioId: nil) == nil)
-        #expect(PlanAnzeige.plan(bootstrap: mit, studioId: "s2") == nil)
-        #expect(PlanAnzeige.plan(bootstrap: Self.bootstrap(plaene: []), studioId: "s1") == nil)
-        #expect(PlanAnzeige.plan(bootstrap: nil, studioId: "s1") == nil)
+        #expect(PlanAnzeige.plan(bootstrap: mit)?.planId == "p1")
+        #expect(PlanAnzeige.plan(bootstrap: Self.bootstrap(plaene: [])) == nil)
+        #expect(PlanAnzeige.plan(bootstrap: nil) == nil)
         // Ein Plan ohne Einheiten ist keiner.
         let leer = try! JSONDecoder().decode(Trainingsplan.self, from: Data("""
         {"planId":"p2","studioId":"s1","version":1,"regelVersion":"1","struktur":"gk_ab","einheiten":[]}
         """.utf8))
-        #expect(PlanAnzeige.plan(bootstrap: Self.bootstrap(plaene: [leer]), studioId: "s1") == nil)
+        #expect(PlanAnzeige.plan(bootstrap: Self.bootstrap(plaene: [leer])) == nil)
+    }
+
+    @Test("zeigt den Plan im Freien Training")
+    func zeigtDenPlanImFreienTraining() {
+        // Es gibt keine Ortsangabe mehr: der eine Plan gilt ueberall, auch ohne Studio.
+        let heute = PlanAnzeige.heute(bootstrap: Self.bootstrap(), ablaufPlanId: nil, ablaufEinheitKey: nil,
+                                      ablaufZustand: nil, naechsteEinheitKey: "A")
+        #expect(heute?.plan.planId == "p1")
+        #expect(heute?.einheitKey == "A")
+    }
+
+    @Test("zeigt den Plan in einem Studio ohne eigene Planzeile")
+    func zeigtDenPlanInEinemStudioOhnePlanzeile() {
+        // Die Plan-studioId ist das Katalogstudio, kein Studio des Mitglieds.
+        let fremdesStudio = Self.plan(studioId: "katalog-x")
+        let bootstrap = Self.bootstrap(plaene: [fremdesStudio])
+        #expect(bootstrap.studios.contains { $0.id == fremdesStudio.studioId } == false)
+        #expect(PlanAnzeige.plan(bootstrap: bootstrap)?.planId == "p1")
+    }
+
+    @Test("Planposition liest modelId")
+    func positionLiestModelId() throws {
+        let extra = """
+        ,"merkliste":{"nichtVorhanden":{"o1":["e1","e2"]},"gefaelltNicht":["e3"]}
+        """
+        let plan = Self.plan(extra: extra)
+        #expect(plan.einheiten[0].positionen[0].modelId == "em-m1")
+        #expect(plan.merkliste == PlanMerkliste(nichtVorhanden: ["o1": ["e1", "e2"]], gefaelltNicht: ["e3"]))
+        // Alte Antwort ohne merkliste: leer.
+        #expect(Self.plan().merkliste == PlanMerkliste(nichtVorhanden: [:], gefaelltNicht: []))
+        let json = #"{"planId":"p","version":1,"regelVersion":"1","struktur":"gk_ab","einheiten":[],"alternativen":{"druecken":[{"exerciseId":"e1","modelId":"mod1"}]}}"#
+        let mitAlternative = try JSONDecoder().decode(Trainingsplan.self, from: Data(json.utf8))
+        #expect(mitAlternative.alternativen["druecken"] == [PlanAlternative(exerciseId: "e1", modelId: "mod1")])
+    }
+
+    @Test("Zielgewicht wird ueber den Positionsschluessel gefunden")
+    func zielgewichtUeberPositionsschluessel() {
+        let extra = #","zielgewichte":{"A:A0":{"load":42.5,"secondaryLoad":null,"aenderung":2.5,"grund":"korridor_oben_erreicht"}}"#
+        let plan = Self.plan(extra: extra)
+        // Kein Geraet noetig: die Uebung der Position in der Einheit genuegt.
+        #expect(PlanAnzeige.zielgewicht(exerciseId: "e1", plan: plan, einheitKey: "A")?.load == 42.5)
+        // Andere Uebung, Position ohne Ziel, andere Einheit, kein Plan: keins.
+        #expect(PlanAnzeige.zielgewicht(exerciseId: "e2", plan: plan, einheitKey: "A") == nil)
+        #expect(PlanAnzeige.zielgewicht(exerciseId: "e1", plan: plan, einheitKey: "B") == nil)
+        #expect(PlanAnzeige.zielgewicht(exerciseId: "e1", plan: nil, einheitKey: "A") == nil)
     }
 
     @Test("Einheit: Ablauf desselben Plans, sonst die naechste")
@@ -316,15 +363,15 @@ struct PlanAnzeigeTests {
     @Test("heute nimmt den Ablauf nur, wenn Plan und Einheit passen")
     func heuteNimmtPassendenAblauf() {
         let zustand = Self.zustand(["A0": .erledigt])
-        let passt = PlanAnzeige.heute(bootstrap: Self.bootstrap(), studioId: "s1", ablaufPlanId: "p1",
+        let passt = PlanAnzeige.heute(bootstrap: Self.bootstrap(), ablaufPlanId: "p1",
                                       ablaufEinheitKey: "A", ablaufZustand: zustand, naechsteEinheitKey: "A")
         #expect(passt?.zustand == zustand)
-        let fremd = PlanAnzeige.heute(bootstrap: Self.bootstrap(), studioId: "s1", ablaufPlanId: "alt",
+        let fremd = PlanAnzeige.heute(bootstrap: Self.bootstrap(), ablaufPlanId: "alt",
                                       ablaufEinheitKey: "A", ablaufZustand: zustand, naechsteEinheitKey: "A")
         #expect(fremd?.einheitKey == "A")
         #expect(fremd?.zustand == nil)
-        #expect(PlanAnzeige.heute(bootstrap: Self.bootstrap(), studioId: nil, ablaufPlanId: "p1",
-                                  ablaufEinheitKey: "A", ablaufZustand: zustand, naechsteEinheitKey: "A") == nil)
+        #expect(PlanAnzeige.heute(bootstrap: nil, ablaufPlanId: "p1", ablaufEinheitKey: "A",
+                                  ablaufZustand: zustand, naechsteEinheitKey: "A") == nil)
     }
 
     @Test("Anfaengerangebot nur mit Uebergang und nur einmal je Plan")

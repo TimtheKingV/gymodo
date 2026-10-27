@@ -331,7 +331,7 @@ struct APIClientTests {
         }
         let client = stubbedClient()
         _ = try await client.acceptPlan(id: "p1")
-        let neu = try await client.swapPlanPosition(planId: "p1", einheitKey: "A", positionKey: "0", exerciseId: "e", machineId: "m")
+        let neu = try await client.swapPlanPosition(planId: "p1", einheitKey: "A", positionKey: "0", exerciseId: "e", modelId: "m")
         #expect(neu.planId == "p2")
         #expect(pfade == ["POST /api/v1/me/plans/p1/accept", "POST /api/v1/me/plans/p1/swap"])
     }

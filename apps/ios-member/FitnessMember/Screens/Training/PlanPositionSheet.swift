@@ -42,7 +42,7 @@ private struct PlanPositionSheetHuelle: ViewModifier {
                     auftrag: auftrag, client: apiClient, ablauf: planAblauf,
                     istOnline: { [netz] in netz.istOnline },
                     aktuellePlanId: { [katalog] in
-                        PlanAnzeige.plan(bootstrap: katalog.bootstrap, studioId: auftrag.studioId)?.planId
+                        PlanAnzeige.plan(bootstrap: katalog.bootstrap)?.planId
                     },
                     neuLaden: { [katalog, planAblauf] in
                         await katalog.load()
@@ -51,7 +51,7 @@ private struct PlanPositionSheetHuelle: ViewModifier {
                         // Ohne Bootstrap nichts (sonst ginge ein Tausch nur
                         // heute verloren, siehe RootView).
                         guard let bootstrap = katalog.bootstrap else { return }
-                        planAblauf.vorbereiten(bootstrap: bootstrap, studioId: katalog.activeStudioId)
+                        planAblauf.vorbereiten(bootstrap: bootstrap)
                     }),
                 fotoLader: apiClient, vorschauLader: vorschauLader,
                 beiFertig: { self.auftrag = nil })

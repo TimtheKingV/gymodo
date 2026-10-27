@@ -19,7 +19,7 @@ struct TrainingsplanAblaufStoreTests {
             let liste = muskeln.map { "\"\($0)\"" }.joined(separator: ",")
             return """
             {"key":"\(key)","baustein":"\(baustein)","rolle":"pflicht","exerciseId":"\(exerciseId)",
-             "machineId":"m-\(exerciseId)","typ":"mehrgelenk","saetze":3,"wdhVon":8,"wdhBis":12,
+             "modelId":"m-\(exerciseId)","typ":"mehrgelenk","saetze":3,"wdhVon":8,"wdhBis":12,
              "reserveVon":1,"reserveBis":3,"pauseSek":120,"aufwaermsatz":false,"dauerMin":null,
              "hauptmuskeln":[\(liste)]}
             """
@@ -53,7 +53,7 @@ struct TrainingsplanAblaufStoreTests {
 
     @Test func vorbereitenWaehltDieNaechsteEinheitAusDemBootstrap() {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(naechste: "B"), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "B"), jetzt: Self.jetzt)
 
         #expect(sut.planId == "p1")
         #expect(sut.einheitKey == "B")
@@ -63,7 +63,7 @@ struct TrainingsplanAblaufStoreTests {
 
     @Test func dieCardioPositionIstAlsCardioMarkiert() {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
 
         #expect(sut.zustand?.positionen.map(\.cardio) == [false, false, true])
         #expect(sut.zustand?.positionen.allSatisfy { $0.status == .offen && $0.ersatzExerciseId == nil } == true)
@@ -75,24 +75,24 @@ struct TrainingsplanAblaufStoreTests {
 
     @Test func lokalZuletztHatVorrangBisDerServerDieEinheitGezaehltHat() {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
-        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
         sut.einheitBeendet(jetzt: Self.jetzt)
 
         // Der Server weiss noch nichts vom Ende: er nennt weiter A.
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(sut.einheitKey == "B")
 
         // Noch ein Satz in der Warteschlange: der Bootstrap kann veraltet sein,
         // auch wenn er die Einheit schon zu kennen scheint.
         sut.nachBootstrap(offeneSchreibvorgaenge: 1, plaene: [Self.gezaehltA], jetzt: Self.jetzt)
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(sut.einheitKey == "B")
 
         // Leere Warteschlange und der Server hat sie gezaehlt: jetzt gilt
         // wieder der Server (hier ein spaeterer Bootstrap, der A nennt).
         sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.gezaehltA], jetzt: Self.jetzt)
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(sut.einheitKey == "A")
     }
 
@@ -101,19 +101,13 @@ struct TrainingsplanAblaufStoreTests {
     /// leerer Warteschlange kennt die Einheit dann noch nicht.
     @Test func lokalZuletztBleibtWennDerServerDieEinheitNochNichtGezaehltHat() {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
-        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
         sut.einheitBeendet(jetzt: Self.jetzt)
 
         let spaeter = Self.jetzt.addingTimeInterval(10 * 60)
         sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.plan(naechste: "A")], jetzt: spaeter)
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: spaeter)
-        #expect(sut.einheitKey == "B")
-
-        // Ein Plan eines anderen Studios, der A als zuletzt nennt, zaehlt nicht.
-        let fremd = Self.plan(studioId: "s2", naechste: "B", zuletzt: "A", erledigt: 1)
-        sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [fremd, Self.plan(naechste: "A")], jetzt: spaeter)
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: spaeter)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: spaeter)
         #expect(sut.einheitKey == "B")
     }
 
@@ -123,19 +117,19 @@ struct TrainingsplanAblaufStoreTests {
         let sut = Self.store()
         // Der Server nennt A als naechste UND als zuletzt -- die Testdaten
         // erzwingen A, damit die lokale Zaehlung dieselbe Einheit betrifft.
-        sut.vorbereiten(plan: Self.plan(naechste: "A", zuletzt: "A", erledigt: 3), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A", zuletzt: "A", erledigt: 3), jetzt: Self.jetzt)
         #expect(sut.einheitKey == "A")
-        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
         sut.einheitBeendet(jetzt: Self.jetzt)
 
         sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.plan(naechste: "A", zuletzt: "A", erledigt: 3)],
                           jetzt: Self.jetzt)
-        sut.vorbereiten(plan: Self.plan(naechste: "A", zuletzt: "A", erledigt: 3), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A", zuletzt: "A", erledigt: 3), jetzt: Self.jetzt)
         #expect(sut.einheitKey == "B")
 
         sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.plan(naechste: "B", zuletzt: "A", erledigt: 4)],
                           jetzt: Self.jetzt)
-        sut.vorbereiten(plan: Self.plan(naechste: "A", zuletzt: "A", erledigt: 4), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A", zuletzt: "A", erledigt: 4), jetzt: Self.jetzt)
         #expect(sut.einheitKey == "A")
     }
 
@@ -144,23 +138,23 @@ struct TrainingsplanAblaufStoreTests {
     /// gelten, falls er sie nie meldet.
     @Test func lokalZuletztFaelltNachVierStundenWeg() {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
-        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
         sut.einheitBeendet(jetzt: Self.jetzt)
 
         let knapp = Self.jetzt.addingTimeInterval(WorkoutSessionStore.sessionPause - 60)
         sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.plan(naechste: "A")], jetzt: knapp)
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: knapp)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: knapp)
         #expect(sut.einheitKey == "B")
 
         // Mit offenen Saetzen bleibt sie auch nach vier Stunden.
         let danach = Self.jetzt.addingTimeInterval(WorkoutSessionStore.sessionPause + 60)
         sut.nachBootstrap(offeneSchreibvorgaenge: 1, plaene: [Self.plan(naechste: "A")], jetzt: danach)
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: danach)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: danach)
         #expect(sut.einheitKey == "B")
 
         sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.plan(naechste: "A")], jetzt: danach)
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: danach)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: danach)
         #expect(sut.einheitKey == "A")
     }
 
@@ -174,19 +168,19 @@ struct TrainingsplanAblaufStoreTests {
         try Data(alt.utf8).write(to: verzeichnis.appendingPathComponent("plan-ablauf.json"))
 
         let sut = Self.store(verzeichnis)
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(sut.einheitKey == "B")
 
         sut.nachBootstrap(offeneSchreibvorgaenge: 0, plaene: [Self.plan(naechste: "A")], jetzt: Self.jetzt)
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(sut.einheitKey == "A")
     }
 
     @Test func nachSatzHaektAbUndErhoehtStand() throws {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
 
-        let erste = try #require(sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt))
+        let erste = try #require(sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt))
         #expect(erste.planId == "p1")
         #expect(erste.einheitKey == "A")
         #expect(erste.stand == 1)
@@ -198,43 +192,89 @@ struct TrainingsplanAblaufStoreTests {
         #expect(sut.gebundeneSessionId == sessionA)
 
         // Auch ein Satz, der nichts aendert, ist eine neue Momentaufnahme.
-        let zweite = try #require(sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt))
+        let zweite = try #require(sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt))
         #expect(zweite.stand == 2)
 
         let cardio = try #require(sut.nachSatz(
-            sessionId: sessionA, studioId: "s1",
+            sessionId: sessionA,
             satz: AblaufSatz(exerciseId: "x9", hauptmuskeln: [], cardio: true), jetzt: Self.jetzt))
         #expect(cardio.stand == 3)
         #expect(cardio.positionen.map(\.status) == [.erledigt, .offen, .erledigt])
     }
 
-    @Test func ohnePlanImFreienTrainingUndInAnderemStudioIstDieMomentaufnahmeNil() {
+    @Test func ohnePlanIstDieMomentaufnahmeNil() {
         let ohnePlan = Self.store()
-        ohnePlan.vorbereiten(plan: nil, studioId: "s1", jetzt: Self.jetzt)
-        #expect(ohnePlan.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt) == nil)
+        ohnePlan.vorbereiten(plan: nil, jetzt: Self.jetzt)
+        #expect(ohnePlan.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt) == nil)
         #expect(ohnePlan.zustand == nil)
+        #expect(ohnePlan.gebundeneSessionId == nil)
+    }
 
+    @Test func derPlanGiltOhneStudioAuchImFreienTraining() throws {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
-        #expect(sut.nachSatz(sessionId: sessionA, studioId: nil, satz: Self.brust, jetzt: Self.jetzt) == nil)
-        #expect(sut.nachSatz(sessionId: sessionA, studioId: "s2", satz: Self.brust, jetzt: Self.jetzt) == nil)
-        // Nichts gebunden, nichts abgehakt.
-        #expect(sut.gebundeneSessionId == nil)
-        #expect(sut.zustand?.positionen.allSatisfy { $0.status == .offen } == true)
-        #expect(sut.stand == 0)
+        // Der Plan hat keine Studio-ID mehr als Bedingung: auch ein Plan ohne studioId zaehlt.
+        let json = """
+        {"id":"p9","version":1,"regelVersion":"1.2.0","struktur":"gk_ab","einheiten":[{"key":"A","positionen":[
+          {"key":"A0","baustein":"brust","rolle":"pflicht","exerciseId":"e1","modelId":"m-e1","typ":"mehrgelenk",
+           "saetze":3,"wdhVon":8,"wdhBis":12,"reserveVon":1,"reserveBis":3,"pauseSek":120,"aufwaermsatz":false,
+           "dauerMin":null,"hauptmuskeln":["chest"]}]}]}
+        """
+        let plan = try JSONDecoder().decode(Trainingsplan.self, from: Data(json.utf8))
+        sut.vorbereiten(plan: plan, jetzt: Self.jetzt)
+        let satz = try #require(sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt))
+        #expect(satz.planId == "p9")
+        #expect(satz.positionen.first?.status == .erledigt)
+    }
 
-        // Ein Plan eines anderen Studios gilt hier nicht.
-        let fremd = Self.store()
-        fremd.vorbereiten(plan: Self.plan(studioId: "s2"), studioId: "s1", jetzt: Self.jetzt)
-        #expect(fremd.zustand == nil)
-        #expect(fremd.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt) == nil)
+    /// Eine plan-ablauf.json von vor dem Katalogplan nennt `studioId` in
+    /// Vorlage, Ablauf und lokaler Zaehlung. Das Feld wird ignoriert.
+    @Test func liestEineAlteDateiMitStudioId() throws {
+        let verzeichnis = Self.verzeichnis()
+        let vorher = Self.store(verzeichnis)
+        vorher.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        _ = vorher.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
+        try Self.studioIdEinfuegen(verzeichnis)
+
+        let sut = Self.store(verzeichnis)
+        #expect(sut.planId == "p1")
+        #expect(sut.einheitKey == "A")
+        #expect(sut.gebundeneSessionId == sessionA)
+        #expect(sut.stand == 1)
+        #expect(sut.zustand?.positionen.first?.status == .erledigt)
+    }
+
+    @Test func verwirftDenAblaufEinesAnderenPlans() throws {
+        let verzeichnis = Self.verzeichnis()
+        let vorher = Self.store(verzeichnis)
+        vorher.vorbereiten(plan: Self.plan(planId: "p-alt", studioId: "s-alt"), jetzt: Self.jetzt)
+        try Self.studioIdEinfuegen(verzeichnis)
+
+        let sut = Self.store(verzeichnis)
+        #expect(sut.planId == "p-alt")
+        sut.vorbereiten(plan: Self.plan(planId: "p1"), jetzt: Self.jetzt.addingTimeInterval(60))
+        #expect(sut.planId == "p1")
+        #expect(sut.zustand?.positionen.allSatisfy { $0.status == .offen } == true)
+    }
+
+    /// Macht aus einer frisch geschriebenen Datei die Form von vorher:
+    /// `studioId` in Vorlage, Ablauf und lokaler Zaehlung.
+    private static func studioIdEinfuegen(_ verzeichnis: URL) throws {
+        let url = verzeichnis.appendingPathComponent("plan-ablauf.json")
+        var datei = try #require(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+        for teil in ["vorlage", "lauf"] {
+            var inhalt = try #require(datei[teil] as? [String: Any])
+            inhalt["studioId"] = "s1"
+            datei[teil] = inhalt
+        }
+        datei["lokalZuletzt"] = ["studioId": "s1", "einheitKey": "B"]
+        try JSONSerialization.data(withJSONObject: datei).write(to: url)
     }
 
     @Test func zustandUeberlebtNeustart() throws {
         let verzeichnis = Self.verzeichnis()
         let vorher = Self.store(verzeichnis)
-        vorher.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
-        _ = vorher.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        vorher.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        _ = vorher.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
 
         let nachher = Self.store(verzeichnis)
         #expect(nachher.zustand == vorher.zustand)
@@ -242,35 +282,35 @@ struct TrainingsplanAblaufStoreTests {
         #expect(nachher.einheitKey == "A")
         // Der Stand zaehlt nach dem Neustart weiter, nicht von vorn: sonst
         // ignorierte der Server jede weitere Momentaufnahme.
-        let weiter = try #require(nachher.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt))
+        let weiter = try #require(nachher.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt))
         #expect(weiter.stand == 2)
     }
 
     @Test func lokalZuletztUeberlebtNeustart() {
         let verzeichnis = Self.verzeichnis()
         let vorher = Self.store(verzeichnis)
-        vorher.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
-        _ = vorher.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        vorher.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        _ = vorher.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
         vorher.einheitBeendet()
 
         let nachher = Self.store(verzeichnis)
-        nachher.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        nachher.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(nachher.einheitKey == "B")
     }
 
     @Test func gebundeneSessionBehaeltIhrePlanversionAuchWennEinNeuerPlanImBootstrapSteht() throws {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(planId: "p1", version: 1), studioId: "s1", jetzt: Self.jetzt)
-        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(planId: "p1", version: 1), jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
         let vorher = sut.zustand
 
         // Dauerhafter Tausch mitten in der Einheit: Version 2 tauscht A0 gegen e7.
-        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2, positionA0: "e7"), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2, positionA0: "e7"), jetzt: Self.jetzt)
         #expect(sut.planId == "p1")
         #expect(sut.zustand == vorher)
 
         let weiter = try #require(sut.nachSatz(
-            sessionId: sessionA, studioId: "s1",
+            sessionId: sessionA,
             satz: AblaufSatz(exerciseId: "e2", hauptmuskeln: ["lats"], cardio: false), jetzt: Self.jetzt))
         #expect(weiter.planId == "p1")
         #expect(weiter.einheitKey == "A")
@@ -278,15 +318,15 @@ struct TrainingsplanAblaufStoreTests {
 
         // Erst die naechste Einheit folgt der neuen Version.
         sut.einheitBeendet()
-        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2, positionA0: "e7"), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2, positionA0: "e7"), jetzt: Self.jetzt)
         #expect(sut.planId == "p2")
         #expect(sut.einheitKey == "B")
     }
 
     @Test func eineNeuePlanversionErsetztDenZustandVorDemErstenSatz() {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(planId: "p1", version: 1), studioId: "s1", jetzt: Self.jetzt)
-        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2, positionA0: "e7"), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(planId: "p1", version: 1), jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2, positionA0: "e7"), jetzt: Self.jetzt)
 
         #expect(sut.planId == "p2")
         #expect(sut.zustand?.positionen.first?.exerciseId == "e7")
@@ -294,13 +334,13 @@ struct TrainingsplanAblaufStoreTests {
 
     @Test func einZustandOhneSatzVerfaelltNachZwoelfStunden() {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
         sut.tauschen(positionKey: "A0", ersatz: (exerciseId: "e7", hauptmuskeln: ["chest"]))
 
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt.addingTimeInterval(11 * 3600))
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt.addingTimeInterval(11 * 3600))
         #expect(sut.zustand?.positionen.first?.status == .getauscht)
 
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt.addingTimeInterval(13 * 3600))
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt.addingTimeInterval(13 * 3600))
         #expect(sut.zustand?.positionen.first?.status == .offen)
     }
 
@@ -308,13 +348,13 @@ struct TrainingsplanAblaufStoreTests {
     /// (Review Focus 5) -- sie zaehlt dann wie eine beendete.
     @Test func eineGebundeneEinheitOhneSatzSeitVierStundenGiltAlsBeendet() {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
-        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
 
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt.addingTimeInterval(3 * 3600))
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt.addingTimeInterval(3 * 3600))
         #expect(sut.gebundeneSessionId == sessionA)
 
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt.addingTimeInterval(5 * 3600))
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt.addingTimeInterval(5 * 3600))
         #expect(sut.gebundeneSessionId == nil)
         #expect(sut.einheitKey == "B")
     }
@@ -322,77 +362,77 @@ struct TrainingsplanAblaufStoreTests {
     @Test func einheitBeendetZaehltNurMitErledigterOderOptionalerPosition() {
         // Nur ungeplante Uebung ohne passende Muskeln: nichts erledigt, nichts optional.
         let ohne = Self.store()
-        ohne.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
-        _ = ohne.nachSatz(sessionId: sessionA, studioId: "s1",
+        ohne.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        _ = ohne.nachSatz(sessionId: sessionA,
                           satz: AblaufSatz(exerciseId: "x1", hauptmuskeln: ["calves"], cardio: false), jetzt: Self.jetzt)
         ohne.einheitBeendet()
         #expect(ohne.zustand == nil)
-        ohne.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        ohne.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(ohne.einheitKey == "A")
 
         // Ungeplante Uebung mit passendem Muskel: Position wird optional, die Einheit zaehlt.
         let optional = Self.store()
-        optional.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
-        _ = optional.nachSatz(sessionId: sessionA, studioId: "s1",
+        optional.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        _ = optional.nachSatz(sessionId: sessionA,
                               satz: AblaufSatz(exerciseId: "x2", hauptmuskeln: ["chest"], cardio: false), jetzt: Self.jetzt)
         optional.einheitBeendet()
-        optional.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        optional.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(optional.einheitKey == "B")
 
         // Beenden ohne einen einzigen Satz zaehlt nie.
         let leer = Self.store()
-        leer.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
+        leer.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
         leer.einheitBeendet()
-        leer.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        leer.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(leer.einheitKey == "A")
     }
 
     @Test func verwerfenZaehltNicht() {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
-        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
         sut.einheitBeendet()
 
         // "Training verwerfen" auf dem Abschluss-Screen: die Einheit gab es nie.
         sut.einheitVerworfen(sessionId: sessionA)
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(sut.einheitKey == "A")
         #expect(sut.gebundeneSessionId == nil)
     }
 
     @Test func verwerfenEinerAnderenEinheitAendertNichts() {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
-        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
         sut.einheitBeendet()
 
         sut.einheitVerworfen(sessionId: sessionB)
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(sut.einheitKey == "B")
     }
 
     @Test func fortsetzenHoltDenAblaufDerBeendetenEinheitZurueck() throws {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
-        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
         sut.einheitBeendet()
-        sut.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(sut.einheitKey == "B")
 
         sut.einheitWiederaufgenommen(sessionId: sessionA)
         #expect(sut.einheitKey == "A")
         #expect(sut.gebundeneSessionId == sessionA)
-        let weiter = try #require(sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt))
+        let weiter = try #require(sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt))
         #expect(weiter.stand == 2)
     }
 
     @Test func eineNeueSessionBeendetDieAlteGebundeneUndBeginntDieNaechsteEinheit() throws {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
-        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
 
         let neu = try #require(sut.nachSatz(
-            sessionId: sessionB, studioId: "s1",
+            sessionId: sessionB,
             satz: AblaufSatz(exerciseId: "e3", hauptmuskeln: ["quads"], cardio: false), jetzt: Self.jetzt))
         #expect(neu.einheitKey == "B")
         #expect(neu.stand == 1)
@@ -402,42 +442,42 @@ struct TrainingsplanAblaufStoreTests {
     @Test func tauschenVorDemStartBleibtBisZumSatzErhalten() throws {
         let verzeichnis = Self.verzeichnis()
         let sut = Self.store(verzeichnis)
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
         sut.tauschen(positionKey: "A0", ersatz: (exerciseId: "e7", hauptmuskeln: ["chest"]))
 
         // Neuladen des Bootstraps und Neustart der App aendern daran nichts.
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt.addingTimeInterval(60))
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt.addingTimeInterval(60))
         let nachNeustart = Self.store(verzeichnis)
-        nachNeustart.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt.addingTimeInterval(120))
+        nachNeustart.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt.addingTimeInterval(120))
         #expect(nachNeustart.zustand?.positionen.first?.status == .getauscht)
 
         let satz = try #require(nachNeustart.nachSatz(
-            sessionId: sessionA, studioId: "s1",
+            sessionId: sessionA,
             satz: AblaufSatz(exerciseId: "e7", hauptmuskeln: ["chest"], cardio: false), jetzt: Self.jetzt))
         #expect(satz.positionen.first == .init(key: "A0", status: .erledigt, exerciseId: "e7"))
     }
 
     @Test func getauschtGehtMitErsatzuebungInDieMomentaufnahme() throws {
         let sut = Self.store()
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
         sut.tauschen(positionKey: "A1", ersatz: (exerciseId: "e8", hauptmuskeln: ["lats"]))
 
-        let satz = try #require(sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt))
+        let satz = try #require(sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt))
         #expect(satz.positionen[1] == .init(key: "A1", status: .getauscht, exerciseId: "e8"))
     }
 
     @Test func resetLoeschtAllesAuchAufDerPlatte() {
         let verzeichnis = Self.verzeichnis()
         let sut = Self.store(verzeichnis)
-        sut.vorbereiten(plan: Self.plan(), studioId: "s1", jetzt: Self.jetzt)
-        _ = sut.nachSatz(sessionId: sessionA, studioId: "s1", satz: Self.brust, jetzt: Self.jetzt)
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
         sut.einheitBeendet()
 
         sut.reset()
 
         let nachher = Self.store(verzeichnis)
         #expect(nachher.zustand == nil)
-        nachher.vorbereiten(plan: Self.plan(naechste: "A"), studioId: "s1", jetzt: Self.jetzt)
+        nachher.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(nachher.einheitKey == "A")
     }
 }
