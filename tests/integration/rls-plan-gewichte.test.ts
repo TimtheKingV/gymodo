@@ -178,11 +178,11 @@ describe("Zielgewichte je Planposition (0064)", () => {
   it("gewichte_berechnet_at laesst sich nicht direkt setzen", async () => {
     const sid = await legeSession({ completedAt: vor(1) });
     const update = await ich.client.from("workout_sessions").update({ gewichte_berechnet_at: new Date().toISOString() }).eq("id", sid);
-    expect(update.error).not.toBeNull();
+    expect(update.error?.code).toBe("42501");
     const insert = await ich.client.from("workout_sessions").insert({
       id: crypto.randomUUID(), studio_id: s.voll, user_id: ich.userId, gewichte_berechnet_at: new Date().toISOString(),
     });
-    expect(insert.error).not.toBeNull();
+    expect(insert.error?.code).toBe("42501");
     const { data } = await admin.from("workout_sessions").select("gewichte_berechnet_at").eq("id", sid).single();
     expect(data!.gewichte_berechnet_at).toBeNull();
   });
@@ -215,6 +215,49 @@ describe("Zielgewichte je Planposition (0064)", () => {
   it("anon darf die Funktionen nicht aufrufen", async () => {
     const { anonClient } = await import("./helpers/clients.js");
     const r = await anonClient().rpc("init_plan_gewichte", { p_plan_id: plan.id, p_zeilen: [] });
+    expect(r.error).not.toBeNull();
+  });
+
+  it.each(["positionKey", "load", "algoVersion"])("fehlendes %s in einer Zeile -> plan_ungueltig", async (fehlt) => {
+    await leere(plan.id);
+    const sid = await legeSession({ completedAt: vor(1) });
+    const z: Record<string, unknown> = zeile(0, 40);
+    delete z[fehlt];
+    const a = await setze(sid, [z]);
+    expect(a.error?.message).toContain("plan_ungueltig");
+    const b = await ich.client.rpc("init_plan_gewichte", { p_plan_id: plan.id, p_zeilen: [z] });
+    expect(b.error?.message).toContain("plan_ungueltig");
+    expect(await zeilen(plan.id)).toEqual([]);
+  });
+
+  it("Abschluss in der Zukunft -> plan_ungueltig", async () => {
+    await leere(plan.id);
+    const sid = await legeSession({
+      startedAt: vor(1),
+      completedAt: new Date(Date.now() + 3_600_000).toISOString(),
+    });
+    expect((await setze(sid, [zeile(0, 40)])).error?.message).toContain("plan_ungueltig");
+    expect(await zeilen(plan.id)).toEqual([]);
+  });
+
+  it("Session vor ueber 4 h gestartet, letzter Satz aber juenger -> plan_ungueltig", async () => {
+    await leere(plan.id);
+    const sid = await legeSession({ startedAt: vor(6) });
+    const p = plan.einheiten[0]!.positionen[0]!;
+    const { data: m } = await admin.from("machines").select("equipment_model_id").eq("id", p.machineId).single();
+    const { error } = await admin.from("workout_sets").insert({
+      id: crypto.randomUUID(), studio_id: s.voll, user_id: ich.userId, session_id: sid,
+      machine_id: p.machineId, equipment_model_id: m!.equipment_model_id, exercise_id: p.exerciseId,
+      set_index: 1, load: 40, volume: 10, performed_at: vor(1),
+    });
+    expect(error).toBeNull();
+    expect((await setze(sid, [zeile(0, 40)])).error?.message).toContain("plan_ungueltig");
+    expect(await zeilen(plan.id)).toEqual([]);
+  });
+
+  it("anon darf set_plan_gewichte nicht aufrufen", async () => {
+    const { anonClient } = await import("./helpers/clients.js");
+    const r = await anonClient().rpc("set_plan_gewichte", { p_session_id: crypto.randomUUID(), p_plan_id: plan.id, p_zeilen: [] });
     expect(r.error).not.toBeNull();
   });
 });

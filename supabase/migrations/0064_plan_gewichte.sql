@@ -116,15 +116,17 @@ begin
          jsonb_array_elements(e.value -> 'positionen') p(value);
 
   for v_z in select value from jsonb_array_elements(p_zeilen) loop
-    if jsonb_typeof(v_z) <> 'object'
-       or jsonb_typeof(v_z -> 'positionKey') <> 'string'
+    -- coalesce: ein fehlender Schluessel ergibt jsonb_typeof = NULL, und NULL
+    -- in einer OR-Kette liesse die Pruefung durch (dann kaeme 23502).
+    if coalesce(jsonb_typeof(v_z), 'null') <> 'object'
+       or coalesce(jsonb_typeof(v_z -> 'positionKey'), 'null') <> 'string'
        or not ((v_z ->> 'positionKey') = any (coalesce(v_keys, '{}')))
-       or jsonb_typeof(v_z -> 'load') <> 'number'
+       or coalesce(jsonb_typeof(v_z -> 'load'), 'null') <> 'number'
        or (v_z ->> 'load')::numeric < 0
        or coalesce(jsonb_typeof(v_z -> 'secondaryLoad'), 'null') not in ('number', 'null')
        or (jsonb_typeof(v_z -> 'secondaryLoad') = 'number' and (v_z ->> 'secondaryLoad')::numeric < 0)
        or coalesce(jsonb_typeof(v_z -> 'grund'), 'null') not in ('string', 'null')
-       or jsonb_typeof(v_z -> 'algoVersion') <> 'string'
+       or coalesce(jsonb_typeof(v_z -> 'algoVersion'), 'null') <> 'string'
        or (v_z ->> 'algoVersion') = '' then
       raise exception 'plan_ungueltig' using errcode = 'P0001';
     end if;
@@ -201,6 +203,11 @@ begin
     if v_stand is null or v_stand > now() - interval '4 hours' then
       raise exception 'plan_ungueltig' using errcode = 'P0001';
     end if;
+  end if;
+  -- completed_at darf das Mitglied selbst setzen (0047); ein Abschluss in der
+  -- Zukunft wuerde jeden echten spaeteren Stand blockieren.
+  if v_stand > now() then
+    raise exception 'plan_ungueltig' using errcode = 'P0001';
   end if;
 
   perform public.plan_gewichte_zeilen_pruefen(v_plan, p_zeilen);
