@@ -560,6 +560,28 @@ describe("Wiedereinstieg beim Lesen (F18, Final-Fix I2)", () => {
   });
 });
 
+describe("Ziele in den aktuellen Geraetegrenzen (Final-Fix M1)", () => {
+  it("geaenderte Stufe, Ober- und Untergrenze: das gelesene Ziel passt aufs Geraet, die Zeile bleibt", async () => {
+    const w = await welt();
+    const p = await plan(w, { A: ["bank"] });
+    await einheit(w, p, "A", { startedAt: vorStunden(3), saetze: block("bank", 40, 12, 2) });
+    await startziel(p, "A-bank", 42.5);
+    const modell = async (werte: object) => {
+      const { error } = await admin.from("equipment_models").update(werte).eq("id", w.modellId);
+      if (error) throw error;
+      return (await ladeZielgewichte(client, userId, p))["A:A-bank"];
+    };
+
+    // Stufe 5 ab 0: 42,5 ist nicht einstellbar -> abgerundet 40, gleich wie zuletzt.
+    expect(await modell({ load_step: 5, load_min: 0 })).toMatchObject({ load: 40, aenderung: null });
+    // Obergrenze 35.
+    expect(await modell({ load_step: 2.5, load_min: 5, load_max: 35, load_start: 30 })).toMatchObject({ load: 35, aenderung: -5 });
+    // Untergrenze 45.
+    expect(await modell({ load_min: 45, load_max: 100, load_start: 50 })).toMatchObject({ load: 45, aenderung: 5 });
+    expect((await ziele(p.id))["A:A-bank"]).toMatchObject({ load: 42.5 });
+  });
+});
+
 describe("Fix-Runde 1", () => {
   it("ladeZielgewichte vergleicht nicht mit der gerade laufenden Einheit (G17)", async () => {
     const w = await welt();

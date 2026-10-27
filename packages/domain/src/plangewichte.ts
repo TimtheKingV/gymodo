@@ -794,6 +794,9 @@ export async function ladeZielgewichte(
       grund: z.grund as PlanGewichtGrund | null,
     };
     const g = grenzen.get(p.machineId);
+    // Final-Fix M1: Stufe oder Grenzen am Geraet koennen sich seit dem Rechnen geaendert
+    // haben; gelesen wird immer ein einstellbarer Wert, damit Rad und Hinweis uebereinstimmen.
+    if (g) ziel = { ...ziel, load: abgerundet(ziel.load, g) };
     if (letzter && letzteLoad !== null && g) {
       const tage = Math.floor((jetzt - Date.parse(letzter.performed_at)) / TAG_MS);
       if (tage > WIEDEREINSTIEG_STUFEN[WIEDEREINSTIEG_STUFEN.length - 1]!.bisTage) person ??= await ladePerson(client, userId);
@@ -862,7 +865,8 @@ export function vorschlagAusZiel(
   if (ziel) {
     return {
       algoVersion: PLANGEWICHT_ALGO_VERSION,
-      resultLoad: ziel.load,
+      // Final-Fix M1: in den aktuellen Geraetegrenzen, abgerundet auf die aktuelle Stufe.
+      resultLoad: geraet.loadStep > 0 ? abgerundet(ziel.load, geraet) : ziel.load,
       resultSecondaryLoad: ziel.secondaryLoad,
       // Ohne Grund: die Zahl ist das Ziel, also "letztes_gewicht" (Final-Fix I3) --
       // "kein_verlauf" liesse den Abschluss-Screen "Kein Vorschlag" zeigen, obwohl es eine Zahl gibt.

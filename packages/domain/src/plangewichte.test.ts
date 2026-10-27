@@ -121,6 +121,11 @@ describe("vorschlagAusZiel (G17, G19)", () => {
     });
     expect(v.inputs).toMatchObject({ currentLoad: 37.5, currentSecondaryLoad: 4 });
   });
+  it("haelt das Ziel in den aktuellen Geraetegrenzen, abgerundet auf die aktuelle Stufe (Final-Fix M1)", () => {
+    expect(vorschlagAusZiel(ziel(42.5), null, { loadStep: 5, loadMin: 0, loadMax: 100 }).resultLoad).toBe(40);
+    expect(vorschlagAusZiel(ziel(42.5), null, { loadStep: 2.5, loadMin: 5, loadMax: 35 }).resultLoad).toBe(35);
+    expect(vorschlagAusZiel(ziel(2.5), null, { loadStep: 2.5, loadMin: 5, loadMax: 100 }).resultLoad).toBe(5);
+  });
   it("ohne beides: kein_verlauf ohne Zahl", () => {
     const v = vorschlagAusZiel(null, null, GERAET);
     expect(v).toMatchObject({ resultLoad: null, resultSecondaryLoad: null, reasonCode: "kein_verlauf" });
