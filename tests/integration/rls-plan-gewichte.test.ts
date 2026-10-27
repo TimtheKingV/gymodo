@@ -242,6 +242,16 @@ describe("Zielgewichte je Planposition (0064)", () => {
     expect(await zeilen(plan.id)).toEqual([]);
   });
 
+  it("Abschluss knapp in der Zukunft (Uhrversatz App-Server/DB bis 1 min) wird angenommen (Final-Fix M3)", async () => {
+    await leere(plan.id);
+    const abgeschlossen = new Date(Date.now() + 20_000).toISOString();
+    const sid = await legeSession({ startedAt: vor(1), completedAt: abgeschlossen });
+    expect((await setze(sid, [zeile(0, 40)])).error).toBeNull();
+    const z = await zeilen(plan.id);
+    expect(z).toHaveLength(1);
+    expect(Date.parse(z[0]!.stand_completed_at)).toBe(Date.parse(abgeschlossen));
+  });
+
   it("Session vor ueber 4 h gestartet, letzter Satz aber juenger -> plan_ungueltig", async () => {
     await leere(plan.id);
     const sid = await legeSession({ startedAt: vor(6) });

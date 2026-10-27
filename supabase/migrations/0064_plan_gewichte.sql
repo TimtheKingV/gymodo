@@ -212,8 +212,10 @@ begin
     end if;
   end if;
   -- completed_at darf das Mitglied selbst setzen (0047); ein Abschluss in der
-  -- Zukunft wuerde jeden echten spaeteren Stand blockieren.
-  if v_stand > now() then
+  -- Zukunft wuerde jeden echten spaeteren Stand blockieren. Eine Minute
+  -- Spielraum: completeSession setzt completed_at mit der Uhr des
+  -- App-Servers, und die darf der Datenbank etwas vorauslaufen.
+  if v_stand > now() + interval '1 minute' then
     raise exception 'plan_ungueltig' using errcode = 'P0001';
   end if;
 
