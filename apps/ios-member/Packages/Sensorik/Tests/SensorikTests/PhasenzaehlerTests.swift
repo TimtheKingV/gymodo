@@ -79,7 +79,15 @@ struct PhasenzaehlerTests {
         var exakt = 0, innerhalbEins = 0
         for (name, wahr, python) in Self.stapelSaetze {
             let ordner = Pfade.aufnahmen.appendingPathComponent(name)
-            let gezaehlt = try AufnahmeLauf.takt(ordner: ordner, art: .stapel)
+            let (datei, eintraege) = try SensorAufnahmeLeser.lesen(ordner: ordner)
+            let werte = eintraege.compactMap { if case .messwert(let m) = $0 { m } else { nil } }
+            // Der Python-Versuch prueft den unveraenderten Phasenkern, nicht
+            // die neue abschnittsweise Behandlung von Empfangsluecken.
+            let roh = Phasenzaehler.auswerten(werte, rateHz: Double(datei.sensor.rateSollHz))
+            let gezaehlt = roh?.anzahl
+            if !Satztakt.hatLuecke(in: eintraege) {
+                #expect(AufnahmeLauf.taktergebnis(datei: datei, eintraege: eintraege, art: .stapel) == roh)
+            }
             #expect(gezaehlt == python, "\(name): Swift \(gezaehlt.map(String.init) ?? "nil"), Python \(python)")
             if gezaehlt == wahr { exakt += 1 }
             if let gezaehlt, abs(gezaehlt - wahr) <= 1 { innerhalbEins += 1 }

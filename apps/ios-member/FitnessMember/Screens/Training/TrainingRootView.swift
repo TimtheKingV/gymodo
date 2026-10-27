@@ -92,6 +92,9 @@ struct TrainingRootView: View {
     /// Zirkel-Uebung ihren eigenen Geraete-Screen mit eigenem Modell
     /// bekommt -- Zirkel und Pause muessen den Wechsel ueberleben.
     @State private var zirkelAblauf = ZirkelAblauf()
+    @State private var vorbereiteterSlot: Int?
+    @State private var vorbereitetesModell: GeraetModel?
+    @State private var vorbereiteteRoute: GeraetRoute?
     /// Der Zirkel in der Planung, samt der Uebung aus dem Drawer, mit der
     /// er beginnt. Hier und nicht im Planungs-Sheet: das Auswahl-Sheet
     /// liegt darueber, und der Entwurf muss dessen Kommen und Gehen
@@ -330,7 +333,13 @@ struct TrainingRootView: View {
                 // Erst nach dem Leeren: das Geraet am neuen Ort bleibt stehen.
                 // Ein Zirkel lebt nur in der laufenden Einheit (Spec,
                 // Nicht-Ziele): endet sie, ist auch er vorbei.
-                if !laeuft { zirkelAblauf.beenden() }
+                if !laeuft {
+                    #if DEBUG
+                    satzZaehler.aktivesModell?.screenVerlassen()
+                    #endif
+                    zirkelAutomatikFreigeben()
+                    zirkelAblauf.beenden()
+                }
                 if !laeuft, let folge = nachOrtswechsel {
                     nachOrtswechsel = nil
                     ausfuehren(folge)
@@ -708,7 +717,11 @@ struct TrainingRootView: View {
                             // haetten die Runden verschieden viele Uebungen.
                             beiErweitern: ZirkelPfad.kannErweitern(pfad, zirkel: zirkelAblauf.zirkel)
                                 ? { zirkelErweiternBeginnen() } : nil,
-                            beiBeenden: { zirkelBeenden() })
+                            beiBeenden: { zirkelBeenden() },
+                            nachUeberspringen: {
+                                zirkelAutomatikFreigeben()
+                                zirkelAutomatikVorbereiten()
+                            })
         case .zirkelUebersicht:
             // Die Saetze aus der Einheit, die Uebungen aus dem festgehaltenen
             // Abschluss. Fehlt der (nicht vorgesehen), bleibt nur "Weiter".
@@ -742,6 +755,11 @@ struct TrainingRootView: View {
     /// Screens, siehe GeraetModel.init).
     private func modell(station schluessel: String, exerciseId: String?, token: String?,
                         startwerte: Startwerte? = nil, zirkel: Bool = false) -> GeraetModel? {
+        if zirkel, vorbereiteterSlot == zirkelAblauf.zirkel?.schritt,
+           let vorbereitetesModell, vorbereitetesModell.station.schluessel == schluessel,
+           vorbereitetesModell.uebungId == exerciseId {
+            return vorbereitetesModell
+        }
         // Ein Typ hat keinen eigenen Ort: die Route traegt nur den
         // Schluessel, und er gilt am aktuellen Ort. Deshalb wechselt jeder Weg
         // hierher (Scan, Liste) den Ort VOR dem Oeffnen, und eine offene
@@ -1283,13 +1301,51 @@ struct TrainingRootView: View {
     /// deren Aufnahme ab.
     private func zirkelSatzGesichert() {
         guard case .geraet = pfad.last else { return }
+        vorbereitetesModell = nil
+        vorbereiteterSlot = nil
+        vorbereiteteRoute = nil
         zirkelAblauf.satzGesichert()
         if zirkelAblauf.zirkel?.istFertig == true {
             zirkelAbschluss = zirkelAblauf.abschluss
             pfad.append(.zirkelUebersicht)
         } else {
             pfad.append(.zirkelPause)
+            zirkelAutomatikVorbereiten()
         }
+    }
+
+    /// Vorbereiten geschieht synchron im Speicherpfad, bevor SwiftUI die
+    /// Pause zeigt. Bluetooth kann den naechsten Slot ohne View-Task starten.
+    private func zirkelAutomatikFreigeben() {
+        vorbereitetesModell?.screenVerlassen()
+        vorbereitetesModell = nil
+        vorbereiteterSlot = nil
+        vorbereiteteRoute = nil
+    }
+
+    private func zirkelAutomatikVorbereiten() {
+        #if DEBUG
+        guard satzZaehler.automatikAktiv, let zirkel = zirkelAblauf.zirkel,
+              let naechste = zirkel.naechste,
+              let neu = modell(station: naechste.station, exerciseId: naechste.exerciseId,
+                               token: naechste.token, zirkel: true),
+              neu.volumeKind == .reps, !neu.istCardio else { return }
+        let werte = zirkelVormerkung.entnehmen(naechste, runde: zirkel.runde)
+        // Fehlende Vorbereitung und Historie brauchen weiterhin den Drawer.
+        guard werte != nil || neu.hatAutomatikStartwerte else { return }
+        if let werte { neu.uebungStarten(mit: werte, mitCountdown: false) }
+        let route = ZirkelPfad.route(naechste, start: werte, in: zirkel)
+        vorbereiteterSlot = zirkel.schritt
+        vorbereitetesModell = neu
+        vorbereiteteRoute = route
+        neu.beiAutomatischemStart = {
+            guard vorbereiteterSlot == zirkelAblauf.zirkel?.schritt,
+                  let pfadNeu = ZirkelPfad.ausPause(pfad, zu: route) else { return }
+            zirkelAblauf.pauseVerlassen()
+            pfad = pfadNeu
+        }
+        neu.automatikVorbereiten()
+        #endif
     }
 
     /// Ende der Pause oder "Weiter": zur naechsten Zirkel-Uebung. In Runde 1
@@ -1304,6 +1360,13 @@ struct TrainingRootView: View {
         guard pfad.last == .zirkelPause, uebungsstart == nil, zirkelErweiterung == nil,
               let zirkel = zirkelAblauf.zirkel
         else { return }
+        if vorbereiteterSlot == zirkel.schritt, let route = vorbereiteteRoute,
+           let neu = ZirkelPfad.ausPause(pfad, zu: route) {
+            zirkelAblauf.pauseVerlassen()
+            vorbereitetesModell?.pauseBeenden()
+            pfad = neu
+            return
+        }
         // Nach "Überspringen" des letzten offenen Slots kommt keine Uebung
         // mehr: dann wie nach dem letzten Satz die Uebersicht.
         guard let naechste = zirkel.naechste else {
@@ -1359,6 +1422,7 @@ struct TrainingRootView: View {
         guard ZirkelPfad.kannErweitern(pfad, zirkel: zirkelAblauf.zirkel),
               zirkelErweiterung == nil, uebungsstart == nil
         else { return }
+        zirkelAutomatikFreigeben()
         zirkelErweiterung = ZirkelErweiterung(art: .imZirkel)
         zirkelAuswahlOeffnen()
     }
@@ -1477,6 +1541,7 @@ struct TrainingRootView: View {
     private func zirkelErweiterungVerwerfen() {
         zirkelErweiterung = nil
         zirkelErweiternHinweis = nil
+        if pfad.last == .zirkelPause { zirkelAutomatikVorbereiten() }
         if pfad.last == .zirkelPause, zirkelAblauf.pause?.laeuft() != true {
             zirkelWeiter()
         }
@@ -1490,6 +1555,10 @@ struct TrainingRootView: View {
     /// den Zirkel auf nil setzt. Die Vormerkung leert erst "Weiter" auf der
     /// Uebersicht (zirkelUebersichtWeiter).
     private func zirkelBeenden() {
+        vorbereitetesModell?.screenVerlassen()
+        vorbereitetesModell = nil
+        vorbereiteterSlot = nil
+        vorbereiteteRoute = nil
         guard let neu = ZirkelPfad.zurUebersicht(pfad) else { return }
         zirkelAbschluss = zirkelAblauf.abschluss
         pfad = neu
@@ -1562,6 +1631,12 @@ struct TrainingRootView: View {
         // Vor sessions.beenden(): der Planablauf zaehlt die Einheit, solange
         // sie noch da ist. Ohne Satz zaehlt er nicht und leert nur.
         planAblauf.einheitBeendet()
+        #if DEBUG
+        satzZaehler.aktivesModell?.screenVerlassen()
+        #endif
+        vorbereitetesModell = nil
+        vorbereiteterSlot = nil
+        vorbereiteteRoute = nil
         guard let session = sessions.aktiveSession(),
               let zusammenfassung = Trainingszusammenfassung(session)
         else {

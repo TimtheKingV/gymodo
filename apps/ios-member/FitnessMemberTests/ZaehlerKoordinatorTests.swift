@@ -225,9 +225,9 @@ struct ZaehlerKoordinatorTests {
         #expect(m.liste == [.bereit])
     }
 
-    /// Spec 9: nach einer Luecke steht die Zahl, und nach dem Wiederverbinden
-    /// wird nicht weitergezaehlt.
-    @Test func lueckeMachtPruefenUndDanachKommtNichtsMehr() {
+    /// Der Live-Zaehler stoppt nach einer Luecke. Die asynchrone
+    /// Satz-Auswertung darf spaeter aktualisieren, aber nur noch unsicher.
+    @Test func lueckeMachtPruefenUndDerLiveZaehlerBleibtStehen() {
         let (sut, quelle, uhr, m) = aufbau()
         beginnen(sut, m)
         let satz = Self.stapelSatz(wiederholungen: 6, ab: uhr.t)
@@ -241,6 +241,45 @@ struct ZaehlerKoordinatorTests {
         sut.empfangen(.zustand(Self.verbunden))
         for w in satz.dropFirst(400) { sut.empfangen(.messwert(w)) }
         #expect(m.liste.last == .pruefen(n, .luecke))
+    }
+
+    @Test func taktErgebnisNachReconnectBleibtUnsicherAuchOhneZeitabstand() throws {
+        let (sut, quelle, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.kurzhantel)
+        let a = Self.kurzhantelSatz(wiederholungen: 8, ab: uhr.t)
+        for w in a { sut.empfangen(.messwert(w)) }
+        quelle.zustand = .getrennt(wirdNeuVerbunden: true)
+        sut.empfangen(.zustand(quelle.zustand))
+        quelle.zustand = Self.verbunden
+        sut.empfangen(.zustand(quelle.zustand))
+        let b = Self.kurzhantelSatz(wiederholungen: 8, ab: try #require(a.last).t + 0.02)
+        for w in b { sut.empfangen(.messwert(w)) }
+        let e = try #require(sut.ergebnis())
+        #expect(e.repEvents.unsicher == .luecke)
+        #expect(e.gezaehlt == 16)
+        let grenze = try #require(a.last).t - uhr.t
+        #expect(e.repEvents.wiederholungen.allSatisfy { $0.ende <= grenze || $0.beginn >= grenze })
+    }
+
+    @Test func paketlueckeOhneBluetoothEreignisBleibtBisZumSichernUnsicher() throws {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.kurzhantel)
+        for w in Self.kurzhantelSatz(wiederholungen: 8, ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        for w in Self.kurzhantelSatz(wiederholungen: 8, ab: uhr.t + 30) { sut.empfangen(.messwert(w)) }
+        guard case .pruefen(_, .luecke)? = sut.meldung else {
+            Issue.record("Lueckenhinweis fehlt"); return
+        }
+        #expect(try #require(sut.ergebnis()).repEvents.unsicher == .luecke)
+    }
+
+    @Test func bankdrueckenHeuteBehaeltDieLueckeImGespeichertenErgebnis() throws {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.kurzhantel)
+        for w in try Self.aufnahme("2026-10-26-1741-01", ab: uhr.t) { sut.empfangen(.messwert(w)) }
+        #expect(try #require(sut.ergebnis()).repEvents.unsicher == .luecke)
     }
 
     /// Review I1: reisst die Verbindung vor der ersten Wiederholung ab, gibt
@@ -322,6 +361,55 @@ struct ZaehlerKoordinatorTests {
         #expect(sut.ergebnis() == nil)
         // Die Art bleibt fuer die Aufnahme lesbar.
         #expect(sut.befestigung?.art == .stapel)
+    }
+}
+#endif
+
+#if DEBUG
+@MainActor
+extension ZaehlerKoordinatorTests {
+    @Test func automatikStartUndEndeFolgenMesswertenUndNichtDerWandzeit() async throws {
+        let (sut, _, uhr, m) = aufbau()
+        beginnen(sut, m)
+        sut.befestigungWaehlen(.stapel)
+        var ereignisse: [SatzAutomatik.Ereignis] = []
+        sut.automatikBeobachten { ereignisse.append($0) }
+        let werte = Self.stapelSatz(wiederholungen: 5, ab: uhr.t)
+        for w in werte { sut.empfangen(.messwert(w)) }
+        for _ in 0..<200 {
+            if sut.automatik.zustand == .laeuft { break }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(ereignisse.filter { if case .begonnen = $0 { true } else { false } }.count == 1)
+        #expect(sut.automatik.zustand == .laeuft)
+        // Ohne neue Pakete verstreicht keine beobachtete Ruhe.
+        #expect(ereignisse.filter { if case .beendet = $0 { true } else { false } }.isEmpty)
+        let ende = try #require(werte.last?.t)
+        for i in 1...500 {
+            let w = SensorMesswert(t: ende + Double(i) / 50,
+                beschleunigung: .init(x: 0, y: 0, z: 1),
+                drehrate: .init(x: 0, y: 0, z: 0), winkel: .init(x: 0, y: 0, z: 0))
+            sut.empfangen(.messwert(w))
+        }
+        for i in 1...200 {
+            try await Task.sleep(for: .milliseconds(10))
+            sut.empfangen(.messwert(SensorMesswert(t: ende + 10 + Double(i) / 50,
+                beschleunigung: .init(x: 0, y: 0, z: 1),
+                drehrate: .init(x: 0, y: 0, z: 0), winkel: .init(x: 0, y: 0, z: 0))))
+            if sut.automatik.zustand == .satzende { break }
+        }
+        #expect(ereignisse.filter { if case .beendet = $0 { true } else { false } }.count == 1)
+        let ergebnis = try #require(sut.ergebnis())
+        #expect(ergebnis.gezaehlt == 5)
+    }
+
+    @Test func automatikSchalterBleibtGespeichert() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let (sut, _, _, _) = aufbau(einstellungen: defaults)
+        #expect(sut.automatikAktiv)
+        sut.automatikAktiv = false
+        let (neu, _, _, _) = aufbau(einstellungen: defaults)
+        #expect(!neu.automatikAktiv)
     }
 }
 #endif

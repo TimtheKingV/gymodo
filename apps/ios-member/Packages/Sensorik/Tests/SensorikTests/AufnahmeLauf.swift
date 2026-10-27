@@ -36,9 +36,13 @@ enum AufnahmeLauf {
     /// App); nil, wenn Satztakt nichts liefert.
     static func takt(ordner: URL, art: Befestigungsart) throws -> Int? {
         let (datei, eintraege) = try SensorAufnahmeLeser.lesen(ordner: ordner)
-        let werte = eintraege.compactMap { if case .messwert(let m) = $0 { m } else { nil } }
+        return taktergebnis(datei: datei, eintraege: eintraege, art: art)?.anzahl
+    }
+
+    static func taktergebnis(datei: SensorAufnahmeDatei, eintraege: [SensorAufnahmeLeser.Eintrag],
+                            art: Befestigungsart) -> Satztakt.Ergebnis? {
         guard let profil = TaktProfil.fuer(art) else { return nil }
-        return Satztakt.auswerten(werte, rateHz: Double(datei.sensor.rateSollHz), profil: profil)?.anzahl
+        return Satztakt.auswerten(eintraege, rateHz: Double(datei.sensor.rateSollHz), profil: profil)
     }
 
     /// Alle Ordner mit Korrektur-Eintrag, Art und Wahrheit. Ordner ohne
@@ -53,10 +57,19 @@ enum AufnahmeLauf {
             guard let art = eintrag.befestigungsart, let wahr = eintrag.repsWahr else { continue }
             let ordner = Pfade.aufnahmen.appendingPathComponent(name)
             guard fm.fileExists(atPath: ordner.appendingPathComponent("messwerte.csv").path) else { continue }
-            let (datei, _) = try SensorAufnahmeLeser.lesen(ordner: ordner)
-            let ereignisse = try zaehlen(ordner: ordner, art: art)
+            let (datei, eintraege) = try SensorAufnahmeLeser.lesen(ordner: ordner)
+            let ereignisse: [ZaehlerEreignis]
+            if let takt = taktergebnis(datei: datei, eintraege: eintraege, art: art) {
+                let grund: UnsicherGrund? = takt.hatLuecke ? .luecke
+                    : (takt.guete <= Satztakt.unsicherGrenze ? .signalSchwach : nil)
+                ereignisse = Satztakt.wiederholungen(takt).map { .wiederholung($0) }
+                    + (grund.map { [.unsicher($0)] } ?? []) + [.zuende]
+            } else {
+                ereignisse = try zaehlen(ordner: ordner, art: art)
+            }
             let gezaehlt = ereignisse.filter { if case .wiederholung = $0 { true } else { false } }.count
-            let unsicher = ereignisse.lazy.compactMap { if case .unsicher(let g) = $0 { g } else { nil } }.first
+            let unsicher: UnsicherGrund? = Satztakt.hatLuecke(in: eintraege) ? .luecke
+                : ereignisse.lazy.compactMap { if case .unsicher(let g) = $0 { g } else { nil } }.first
             ergebnisse.append(AufnahmeErgebnis(
                 ordner: name, startedAt: datei.startedAt, art: art, repsWahr: wahr,
                 fuerZaehler: eintrag.fuerZaehler, gezaehlt: gezaehlt, unsicher: unsicher, ereignisse: ereignisse))

@@ -37,12 +37,15 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     @ObservationIgnored private let jetzt: () -> Date
     @ObservationIgnored private let protokoll: SensorProtokoll
 
+    @ObservationIgnored private var automatikKontext: SatzMitschnittKontext?
+    @ObservationIgnored private var vorlauf: [SensorMesswert] = []
     @ObservationIgnored private var aufnahme: SensorAufnahme?
     @ObservationIgnored private var aufnahmeStatistik = SensorStatistik()
     @ObservationIgnored private var verworfenBeiStart = 0
-    /// Gesetzt, solange die Raeder stehen. Verbindet sich der Sensor erst
-    /// dann, beginnt die Aufnahme in diesem Moment (Spec 6.4).
+    /// Vorgemerkter Satz. Erst sein erster Messwert erzeugt Dateien;
+    /// der Zeitursprung bleibt der Beginn der Eingabe.
     @ObservationIgnored private var offenerKontext: SatzMitschnittKontext?
+    @ObservationIgnored private var vorgemerkterStart: (datum: Date, t: TimeInterval)?
     @ObservationIgnored private var gesamt = SensorStatistik()
     @ObservationIgnored private var letzteAnzeige: TimeInterval = 0
     /// Merkt sich die letzte Verbunden-Kante, nicht welcher Zustand konkret
@@ -94,25 +97,49 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
 
     // MARK: - SatzMitschnitt
 
+    func automatikVorbereiten(_ kontext: SatzMitschnittKontext) {
+        screenVerlassen()
+        automatikKontext = kontext
+    }
+
+    func automatikBestaetigt(beginn: TimeInterval) {
+        guard let kontext = automatikKontext else { return }
+        let werte = vorlauf.filter { $0.t >= beginn }
+        automatikKontext = nil
+        vorlauf = []
+        eingabeBegonnen(kontext)
+        vorgemerkterStart = (jetzt().addingTimeInterval(beginn - uhr()), beginn)
+        for wert in werte { messwertVerarbeiten(wert) }
+    }
+
     func eingabeBegonnen(_ kontext: SatzMitschnittKontext) {
+        automatikKontext = nil
+        vorlauf = []
         beenden(.abgebrochen, satz: nil)
         fehler = nil
         offenerKontext = kontext
-        if quelle.zustand.istVerbunden {
-            aufnahmeBeginnen()
-        } else {
+        vorgemerkterStart = (jetzt(), uhr())
+        marken = []
+        if !quelle.zustand.istVerbunden {
             protokoll.schreiben("eingabe \(kontext.machineName) / \(kontext.exerciseName) ohne verbundenen sensor: keine aufnahme")
         }
     }
 
     func satzGesichert(_ satz: GesicherterSatz) {
+        if aufnahme == nil, let kontext = offenerKontext {
+            protokoll.schreiben("satz \(satz.setId.uuidString) \(kontext.machineName) / \(kontext.exerciseName) ohne messwerte gesichert: keine aufnahme")
+        }
         beenden(.gesichert, satz: satz)
         offenerKontext = nil
+        vorgemerkterStart = nil
     }
 
     func screenVerlassen() {
+        automatikKontext = nil
+        vorlauf = []
         beenden(.abgebrochen, satz: nil)
         offenerKontext = nil
+        vorgemerkterStart = nil
     }
 
     /// Satzgrenze vom Tester (Debug). Schreibt nur in eine laufende Aufnahme.
@@ -128,7 +155,13 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
 
     func empfangen(_ ereignis: SensorEreignis) {
         switch ereignis {
-        case .messwert(let messwert): messwertVerarbeiten(messwert)
+        case .messwert(let messwert):
+            if automatikKontext != nil {
+                vorlauf.append(messwert)
+                if let erster = vorlauf.first, messwert.t - erster.t > 31 {
+                    vorlauf.removeAll { $0.t < messwert.t - 30 }
+                }
+            } else { messwertVerarbeiten(messwert) }
         case .zustand(let zustand):
             protokoll.schreiben("sensor \(SensorProtokoll.text(zustand))")
             zustandVerarbeiten(zustand)
@@ -146,6 +179,11 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
             if let test = ratentest, let startT = test.startT {
                 ratentestRest = max(0, Int(Self.ratentestDauer - (messwert.t - startT)))
             }
+        }
+
+        if aufnahme == nil, quelle.zustand.istVerbunden,
+           let start = vorgemerkterStart, messwert.t >= start.t {
+            aufnahmeBeginnen()
         }
 
         // Ein Paket, das vor dem Anlegen der Aufnahme empfangen wurde, kommt
@@ -170,8 +208,6 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
             if verbundenSeit == nil { verbundenSeit = jetzt() }
             if let aufnahme {
                 do { try aufnahme.lueckeEndet(t: uhr()) } catch { abbrechen(wegen: error) }
-            } else if offenerKontext != nil {
-                aufnahmeBeginnen()
             }
         } else {
             anzeigeRateHz = 0
@@ -205,10 +241,10 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     // MARK: - Aufnahme
 
     private func aufnahmeBeginnen() {
-        guard aufnahme == nil, let kontext = offenerKontext else { return }
+        guard aufnahme == nil, let kontext = offenerKontext, let start = vorgemerkterStart else { return }
         do {
             aufnahme = try SensorAufnahme(
-                wurzel: wurzel, start: jetzt(), startT: uhr(),
+                wurzel: wurzel, start: start.datum, startT: start.t,
                 sensor: .init(name: quelle.zustand.name ?? "unbekannt",
                               rateSollHz: quelle.rate.rawValue,
                               akkuProzent: quelle.zustand.akkuProzent),
@@ -260,6 +296,7 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     private func abbrechen(wegen error: Error) {
         melden(error)
         let kaputt = aufnahme
+        vorgemerkterStart = nil // kein neuer Schreibversuch fuer jedes weitere Paket
         aufnahme = nil
         aufnahmeLaeuft = false
         // Bester Versuch: der Ordner soll nicht als "laeuft" liegen bleiben.

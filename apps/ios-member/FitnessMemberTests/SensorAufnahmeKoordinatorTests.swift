@@ -56,6 +56,7 @@ struct SensorAufnahmeKoordinatorTests {
     @Test func gesicherterSatzSchreibtArtUndZaehlerblock() throws {
         let (sut, _, wurzel, _) = aufbau()
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         var satz = Self.satz
         let ereignisse = RepEvents(algo: "stapel/2", befestigungsart: .stapel, ereignisse: [], satzbeginn: 0)
         satz.volumeSource = .korrigiert
@@ -72,6 +73,7 @@ struct SensorAufnahmeKoordinatorTests {
     @Test func ohneZaehlungNurDieArt() throws {
         let (sut, _, wurzel, _) = aufbau()
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         var satz = Self.satz
         satz.befestigung = BefestigungsWahl(art: .kurzhantel, quelle: .vorschlag)
         sut.satzGesichert(satz)
@@ -80,9 +82,12 @@ struct SensorAufnahmeKoordinatorTests {
         #expect(datei.zaehler == nil)
     }
 
-    @Test func startetMitDerEingabeWennVerbunden() throws {
+    @Test func startetErstMitDemErstenMesswert() throws {
         let (sut, _, wurzel, _) = aufbau()
         sut.eingabeBegonnen(Self.kontext)
+        #expect(!sut.aufnahmeLaeuft)
+        #expect(ordner(in: wurzel).isEmpty)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         #expect(sut.aufnahmeLaeuft)
         #expect(try datei(ordner(in: wurzel)[0]).kontext.exerciseName == "Beidbeinig")
     }
@@ -92,6 +97,7 @@ struct SensorAufnahmeKoordinatorTests {
         sut.markeSetzen(.satzbeginn) // ohne Aufnahme: nichts
         #expect(sut.marken.isEmpty)
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         sut.markeSetzen(.satzbeginn)
         sut.markeSetzen(.satzbeginn)
         sut.markeSetzen(.satzende)
@@ -101,7 +107,50 @@ struct SensorAufnahmeKoordinatorTests {
         #expect(csv.components(separatedBy: "# marke satzbeginn").count == 2)
         #expect(csv.contains("# marke satzende"))
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         #expect(sut.marken.isEmpty)
+    }
+
+    @Test func kontextwechselOhneMesswerteErzeugtNurDenTatsaechlichenSatz() throws {
+        let (sut, _, wurzel, uhr) = aufbau()
+        sut.eingabeBegonnen(Self.kontext)
+        uhr.t = 101
+        sut.eingabeBegonnen(SatzMitschnittKontext(station: Station(maschine: GeraetTestdaten.maschine),
+                                                 exerciseId: "e2", exerciseName: "Einbeinig"))
+        #expect(ordner(in: wurzel).isEmpty)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100.99))) // alter Kontext
+        #expect(ordner(in: wurzel).isEmpty)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 101.2)))
+        sut.satzGesichert(Self.satz)
+        let alle = ordner(in: wurzel)
+        #expect(alle.count == 1)
+        let gelesen = try SensorAufnahmeLeser.lesen(ordner: #require(alle.first))
+        #expect(gelesen.datei.kontext.exerciseId == "e2")
+        #expect(gelesen.datei.statistik.pakete == 1)
+        guard case .messwert(let m)? = gelesen.eintraege.first else {
+            Issue.record("erster Messwert fehlt"); return
+        }
+        #expect(abs(m.t - 0.2) < 0.000001)
+    }
+
+    @Test func verlassenOhneMesswerteErzeugtAuchNachReconnectKeinenOrdner() {
+        let (sut, quelle, wurzel, _) = aufbau()
+        sut.eingabeBegonnen(Self.kontext)
+        sut.screenVerlassen()
+        quelle.zustand = Self.verbunden
+        sut.empfangen(.zustand(Self.verbunden))
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 101)))
+        #expect(ordner(in: wurzel).isEmpty)
+        #expect(!sut.aufnahmeLaeuft)
+    }
+
+    @Test func speichernOhneMesswerteWirdProtokolliertUndStartetNichtSpaeter() throws {
+        let (sut, _, wurzel, _) = aufbau()
+        sut.eingabeBegonnen(Self.kontext)
+        sut.satzGesichert(Self.satz)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 101)))
+        #expect(ordner(in: wurzel).isEmpty)
+        #expect(try protokoll(wurzel).contains("ohne messwerte gesichert: keine aufnahme"))
     }
 
     @Test func ohneVerbundenenSensorKeineAufnahme() {
@@ -118,6 +167,9 @@ struct SensorAufnahmeKoordinatorTests {
         #expect(!sut.aufnahmeLaeuft)
         quelle.zustand = Self.verbunden
         sut.empfangen(.zustand(Self.verbunden))
+        #expect(!sut.aufnahmeLaeuft)
+        #expect(ordner(in: wurzel).isEmpty)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 110)))
         #expect(sut.aufnahmeLaeuft)
         #expect(ordner(in: wurzel).count == 1)
     }
@@ -146,6 +198,7 @@ struct SensorAufnahmeKoordinatorTests {
         // Aufnahme behauptete weiter 50 Hz.
         let (sut, quelle, wurzel, uhr) = aufbau()
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         uhr.t = 168.4
         sut.rateSetzen(.hz100)
         sut.rateSetzen(.hz100) // dieselbe Rate noch einmal: keine zweite Zeile
@@ -154,7 +207,7 @@ struct SensorAufnahmeKoordinatorTests {
         sut.satzGesichert(Self.satz)
 
         let gelesen = try SensorAufnahmeLeser.lesen(ordner: ordner(in: wurzel)[0])
-        #expect(gelesen.eintraege == [.rate(.hz100, ab: 68.4)])
+        #expect(gelesen.eintraege.contains(.rate(.hz100, ab: 68.4)))
         // rateSollHz bleibt die Rate vom Aufnahmestart.
         #expect(gelesen.datei.sensor.rateSollHz == 50)
     }
@@ -196,6 +249,7 @@ struct SensorAufnahmeKoordinatorTests {
     @Test func protokolliertAufnahmeZustandUndAkku() throws {
         let (sut, quelle, wurzel, _) = aufbau()
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         sut.empfangen(.akku(hundertstelVolt: 382))
         quelle.zustand = .getrennt(wirdNeuVerbunden: true)
         sut.empfangen(.zustand(quelle.zustand))
@@ -231,9 +285,11 @@ struct SensorAufnahmeKoordinatorTests {
     @Test func inDerPauseLaeuftNichtsUndDerNaechsteSatzBeginntNeu() {
         let (sut, _, wurzel, _) = aufbau()
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         sut.satzGesichert(Self.satz)
         sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 140)))   // Pause: geht nirgends hin
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         #expect(ordner(in: wurzel).count == 2)
         #expect(sut.aufnahmeLaeuft)
     }
@@ -241,6 +297,7 @@ struct SensorAufnahmeKoordinatorTests {
     @Test func verlassenOhneSichernBrichtAb() throws {
         let (sut, _, wurzel, _) = aufbau()
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         sut.screenVerlassen()
         let d = try datei(ordner(in: wurzel)[0])
         #expect(d.abschluss == .abgebrochen)
@@ -253,8 +310,10 @@ struct SensorAufnahmeKoordinatorTests {
     @Test func neueEingabeBrichtEineLaufendeAufnahmeAb() throws {
         let (sut, _, wurzel, _) = aufbau()
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         sut.eingabeBegonnen(SatzMitschnittKontext(station: Station(maschine: GeraetTestdaten.maschine),
                                                   exerciseId: "e2", exerciseName: "Einbeinig"))
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         let alle = ordner(in: wurzel)
         #expect(alle.count == 2)
         #expect(try datei(alle[0]).abschluss == .abgebrochen)
@@ -288,6 +347,7 @@ struct SensorAufnahmeKoordinatorTests {
         let (sut, _, _, _) = aufbau(wurzel: kaputt)
 
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         #expect(!sut.aufnahmeLaeuft)
         #expect(sut.fehler != nil)
         sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
@@ -300,9 +360,11 @@ struct SensorAufnahmeKoordinatorTests {
         try Data("x".utf8).write(to: kaputt)
         let (sut, _, _, _) = aufbau(wurzel: kaputt)
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         #expect(sut.fehler != nil)
         try FileManager.default.removeItem(at: kaputt)
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         #expect(sut.fehler == nil)
         #expect(sut.aufnahmeLaeuft)
     }
@@ -315,6 +377,7 @@ struct SensorAufnahmeKoordinatorTests {
         #expect(sut.befestigung(fuer: "geraet:m2") == "")
         #expect(sut.befestigung(fuer: "typ:em1") == "")
         sut.eingabeBegonnen(Self.kontext)
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         #expect(try datei(ordner(in: wurzel)[0]).befestigung == "Gewichtsstapel oben")
     }
 
@@ -336,6 +399,7 @@ struct SensorAufnahmeKoordinatorTests {
         sut.befestigungSetzen("Griff", fuer: "typ:em7")
         sut.eingabeBegonnen(SatzMitschnittKontext(station: GeraetTestdaten.typ,
                                                   exerciseId: "e1", exerciseName: "Beidbeinig"))
+        sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100)))
         let kopf = try datei(ordner(in: wurzel)[0])
         #expect(kopf.kontext.machineId == nil)
         #expect(kopf.kontext.equipmentModelId == "em7")
@@ -481,6 +545,34 @@ struct SensorZeilenTextTests {
             == "Bluetooth ist ausgeschaltet")
         #expect(SensorZeile.text(zustand: .bluetoothNichtBereit(.verweigert), rateHz: 0)
             == "Bluetooth ist für Gymtavo nicht erlaubt")
+    }
+}
+#endif
+
+#if DEBUG
+@MainActor
+extension SensorAufnahmeKoordinatorTests {
+    @Test func automatikVorlaufBeginntBeiErsterWiederholung() throws {
+        let (sut, _, wurzel, uhr) = aufbau()
+        sut.automatikVorbereiten(Self.kontext)
+        for i in 0...500 {
+            sut.empfangen(.messwert(SensorAufnahmeTests.messwert(t: 100 + Double(i) / 50)))
+        }
+        #expect(!sut.aufnahmeLaeuft)
+        #expect(ordner(in: wurzel).isEmpty)
+        uhr.t = 110
+        sut.automatikBestaetigt(beginn: 106)
+        #expect(sut.aufnahmeLaeuft)
+        sut.satzGesichert(Self.satz)
+        let ziel = try #require(ordner(in: wurzel).first)
+        let gelesen = try SensorAufnahmeLeser.lesen(ordner: ziel)
+        let werte = gelesen.eintraege.compactMap { eintrag -> SensorMesswert? in
+            if case .messwert(let wert) = eintrag { return wert }
+            return nil
+        }
+        #expect(werte.count == 201)
+        #expect(werte.first?.t == 0)
+        #expect(werte.last?.t == 4)
     }
 }
 #endif

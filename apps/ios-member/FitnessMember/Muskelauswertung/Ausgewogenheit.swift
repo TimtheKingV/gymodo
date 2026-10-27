@@ -2,17 +2,19 @@ import Foundation
 
 /// Wie ein Muskel bzw. eine Gruppe im Vergleich zum Rest dasteht.
 enum MuskelStatus: Equatable {
-    case nachholbedarf, ok, viel, kaumUebungen, keineAuswertung
+    case nachholbedarf, ok, viel, keineKraftuebung, keineAuswertung
 }
 
 /// Bewertet die Verteilung des Trainings auf die sechs Gruppen und die
 /// Muskeln innerhalb einer Gruppe.
 enum Ausgewogenheit {
-    /// Muskeln, die Hauptmuskel in hoechstens zwei Kataloguebungen sind
-    /// (teils in keiner) -- nie ein Hinweis.
-    static let seltene: Set<String> = [
-        "erectors", "adductors", "abductors", "rotator_cuff",
-        "serratus_anterior", "tibialis", "fibularis"
+    /// Dargestellte Muskeln ohne Zuordnung zu einer Kraftuebung im Katalog.
+    /// Schon eine Haupt- ODER Nebenmuskelzuordnung reicht fuer die Auswertung;
+    /// die Anzahl der angebotenen Uebungen sagt nichts ueber das Training aus.
+    /// Cardio allein reicht nicht, da Haeufigkeit Cardio-Saetze ausschliesst.
+    /// gymtavo-katalog.test.ts gleicht diese Liste mit Katalog und Grafik ab.
+    static let ohneKraftuebung: Set<String> = [
+        "tibialis", "fibularis"
     ]
 
     /// Darunter gilt etwas als zu wenig, darueber als viel (Vielfaches des Mittels).
@@ -51,12 +53,11 @@ enum Ausgewogenheit {
 
     /// Ein Muskel wird wie seine Gruppe am Mittel aller Gruppen gemessen, nicht
     /// am Mittel der eigenen Gruppe. Sonst stand der Rumpf in der Uebersicht
-    /// auf "zu wenig", seine Muskeln im Detail aber gruen. `gruppe` bleibt im
-    /// Aufruf, um Seltene unabhaengig davon zu erkennen.
+    /// auf "zu wenig", seine Muskeln im Detail aber gruen.
     static func status(muskel: String, gruppe: MuskelHauptgruppe, in h: Haeufigkeit) -> MuskelStatus {
         guard h.istAuswertbar else { return .keineAuswertung }
-        if seltene.contains(muskel) { return .kaumUebungen }
-        guard gruppe.muskelSchluessel.contains(where: { !seltene.contains($0) }) else { return .kaumUebungen }
+        guard gruppe.muskelSchluessel.contains(muskel) else { return .keineAuswertung }
+        if ohneKraftuebung.contains(muskel) { return .keineKraftuebung }
         return bewerte(Double(h.jeMuskel[muskel] ?? 0), mittel: gruppenmittel(h))
     }
 

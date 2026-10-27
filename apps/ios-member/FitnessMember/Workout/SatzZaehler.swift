@@ -42,6 +42,7 @@ struct ZaehlerErgebnis: Equatable, Sendable {
 
 @MainActor
 protocol SatzZaehler: AnyObject {
+    func automatikBeobachten(_ melde: (@MainActor (SatzAutomatik.Ereignis) -> Void)?)
     /// Die Art des laufenden oder eben beendeten Satzes. Bleibt nach
     /// ergebnis() stehen, damit die Aufnahme sie noch lesen kann.
     var befestigung: BefestigungsWahl? { get }
@@ -49,4 +50,9 @@ protocol SatzZaehler: AnyObject {
     /// Beim Sichern abgeholt; beendet den Satz. nil, wenn nichts gezaehlt wurde.
     func ergebnis() -> ZaehlerErgebnis?
     func satzVerworfen()
+}
+
+// Bestehende manuelle Zaehler und Test-Doubles brauchen keine Automatik.
+extension SatzZaehler {
+    func automatikBeobachten(_ melde: (@MainActor (SatzAutomatik.Ereignis) -> Void)?) {}
 }

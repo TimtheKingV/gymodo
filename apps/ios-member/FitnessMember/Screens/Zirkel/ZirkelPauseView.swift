@@ -25,6 +25,7 @@ struct ZirkelPauseView: View {
     /// (Task 7). nil blendet den Knopf aus.
     let beiErweitern: (() -> Void)?
     let beiBeenden: () -> Void
+    var nachUeberspringen: (() -> Void)? = nil
 
     @Environment(WorkoutSessionStore.self) private var sessions
 
@@ -78,6 +79,9 @@ struct ZirkelPauseView: View {
                         rundenzusammenfassung(zirkel, runde: runde)
                     }
                     reihenfolge(zirkel, naechste: naechste)
+                    #if DEBUG
+                    SensorZeile(station: naechste.station)
+                    #endif
                     Spacer(minLength: 0)
                     knoepfe(naechste)
                 }
@@ -212,6 +216,7 @@ struct ZirkelPauseView: View {
                 // ueber das neue endetAm auf.
                 SecondaryButton(title: "Überspringen") {
                     ablauf.ueberspringen()
+                    nachUeberspringen?()
                     if let zirkel = ablauf.zirkel, ZirkelPfad.nachUeberspringenWeiter(zirkel) {
                         beiStarten()
                     }

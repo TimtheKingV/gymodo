@@ -8,7 +8,7 @@ struct SensorZeileTextTests {
         #expect(SensorZeile.zaehlerText(meldung: nil) == nil)
         #expect(SensorZeile.zaehlerText(meldung: .bereit) == "zählt")
         #expect(SensorZeile.zaehlerText(meldung: .stand(7)) == "zählt · 7")
-        #expect(SensorZeile.zaehlerText(meldung: .pruefen(7, .luecke)) == "Zahl prüfen · 7 (Lücke)")
+        #expect(SensorZeile.zaehlerText(meldung: .pruefen(7, .luecke)) == "Verbindung unterbrochen – Zahl bitte prüfen · 7")
         #expect(SensorZeile.zaehlerText(meldung: .pruefen(3, .signalSchwach)) == "Zahl prüfen · 3 (Signal schwach)")
         #expect(SensorZeile.zaehlerText(meldung: .pruefen(3, .taktUnregelmaessig)) == "Zahl prüfen · 3 (Takt unregelmäßig)")
         #expect(SensorZeile.zaehlerText(meldung: .zaehltNicht(.keineWiederholungen)) == "zählt hier nicht: keine Wiederholungen")

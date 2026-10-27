@@ -16,9 +16,28 @@ struct SensorZeile: View {
         VStack(alignment: .leading, spacing: 0) {
             // Debug-Zeile "Sensor verbinden" wurde zur SensorKarte (Testnotiz 15.10., #5).
             if Funktionen.sensorKarte { SensorKarte(station: station) }
+            if zaehler.automatikAktiv, zaehler.befestigung != nil {
+                Text(automatikText)
+                    .font(.system(size: 13).monospacedDigit())
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+            }
             // Nur mit offenem Satz: in Pause und Abschluss gibt es nichts zu zaehlen.
             if let text = Self.zaehlerText(meldung: zaehler.meldung) { zaehlerZeile(text) }
             if aufnahme.aufnahmeLaeuft { markenZeile }
+        }
+    }
+
+    private var automatikText: String {
+        guard zaehler.quelle.zustand.istVerbunden else { return "Automatik wartet auf den Sensor" }
+        switch zaehler.automatik.zustand {
+        case .wartet: return "Automatik bereit · zwei Wiederholungen starten"
+        case .startkandidat: return "Satzstart wird geprüft"
+        case .laeuft:
+            if let rest = zaehler.automatik.speichernIn {
+                return "Sichern nach Ruhe · \(Int(ceil(rest))) s"
+            }
+            return "Automatik wartet auf Messwerte"
+        case .satzende: return "Satz wird gesichert …"
         }
     }
 
@@ -41,7 +60,7 @@ struct SensorZeile: View {
                     .font(.system(size: 13).monospacedDigit())
                     .foregroundStyle(Self.istPruefen(zaehler.meldung)
                         ? DesignSystem.Color.danger : DesignSystem.Color.textMuted)
-                    .lineLimit(1)
+                    .lineLimit(3)
             }
             Spacer()
         }
@@ -99,6 +118,7 @@ struct SensorZeile: View {
         case nil: nil
         case .bereit: "zählt"
         case .stand(let n): "zählt · \(n)"
+        case .pruefen(let n, .luecke): "Verbindung unterbrochen – Zahl bitte prüfen · \(n)"
         case .pruefen(let n, let grund): "Zahl prüfen · \(n) (\(grundText(grund)))"
         case .zaehltNicht(.keinSensor): "zählt nicht: kein Sensor"
         case .zaehltNicht(.keineWiederholungen): "zählt hier nicht: keine Wiederholungen"

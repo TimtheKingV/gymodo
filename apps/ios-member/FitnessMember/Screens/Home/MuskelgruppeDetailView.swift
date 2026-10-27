@@ -151,8 +151,8 @@ struct MuskelgruppeDetailView: View {
         let name = alleNamen[muskel] ?? muskel
         let wert = MuskelFortschritt.anzeige(auswertung.fortschritt.jeMuskel[muskel])
         let status = Ausgewogenheit.status(muskel: muskel, gruppe: gruppe, in: h)
-        let selten = Ausgewogenheit.seltene.contains(muskel)
-        let brauchtTrainings = FortschrittsText.brauchtTrainings(wert, auswertbar: h.istAuswertbar, selten: selten)
+        let ohneKraftuebung = Ausgewogenheit.ohneKraftuebung.contains(muskel)
+        let brauchtTrainings = auswertung.brauchtTrainings(muskel: muskel, wert: wert)
         return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
             HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.s12) {
                 Text(name)
@@ -164,8 +164,8 @@ struct MuskelgruppeDetailView: View {
                 }
                 FortschrittsText(wert: wert, font: .system(size: 15, weight: .bold))
             }
-            if selten {
-                Text("kaum Übungen")
+            if ohneKraftuebung {
+                Text("keine Kraftübung im Katalog")
                     .font(.system(size: 13))
                     .foregroundStyle(DesignSystem.Color.textFaint)
             } else if h.istAuswertbar {
@@ -179,7 +179,7 @@ struct MuskelgruppeDetailView: View {
         .padding(.vertical, DesignSystem.Spacing.s12)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(name), Fortschritt \(FortschrittsText.gesprochen(wert))\(brauchtTrainings ? ", \(FortschrittsText.brauchtTrainingsText)" : ""), \(MuskelStatusText.gesprochen(selten ? .kaumUebungen : status))")
+            "\(name), Fortschritt \(FortschrittsText.gesprochen(wert))\(brauchtTrainings ? ", \(FortschrittsText.brauchtTrainingsText)" : ""), \(MuskelStatusText.gesprochen(ohneKraftuebung ? .keineKraftuebung : status))")
     }
 }
 

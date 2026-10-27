@@ -109,6 +109,21 @@ struct TaktBerichtTests {
         #expect(offen.contains("stapel-blind") && !offen.contains("lang-blind"))
     }
 
+    @Test func heutigeGegenprobeBleibtVonDerHistorischenAufteilungGetrennt() {
+        let neu = TaktBericht.gemessen.filter { $0.ordner.hasPrefix("2026-10-26-") }
+        #expect(neu.count == 27)
+        #expect(neu.allSatisfy { $0.gruppe == .gegenprobe })
+        #expect(neu.filter { $0.gespeichert == $0.wahr }.count == 26)
+        #expect(neu.allSatisfy { abs(($0.gespeichert ?? -100) - $0.wahr) <= 1 })
+        #expect(neu.filter { $0.unsicher == .luecke }.count == 3)
+        let sauber = neu.filter { $0.unsicher != .luecke }
+        #expect(sauber.count == 24)
+        #expect(sauber.allSatisfy { $0.gezaehlt == $0.gespeichert })
+        let text = TaktBericht.markdown(neu)
+        #expect(text.contains("unverändert gespeicherte App-Ergebnisse"))
+        #expect(text.contains("keine unangesehene Blindprüfung"))
+    }
+
     @Test func berichtSchreiben() throws {
         let zeilen = TaktBericht.gemessen
         let text = TaktBericht.markdown(zeilen)

@@ -1,0 +1,197 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "befestigungsart" : "langhantel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-10-26T18:18:04+01:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "e5a65502-e459-41fd-b370-3dc2954b0a28",
+    "exerciseId" : "c98c7185-30ec-4968-9e83-803392756c6e",
+    "exerciseName" : "High-Bar-Kniebeuge",
+    "machineId" : null,
+    "machineName" : "Langhantel",
+    "sessionId" : "006244ED-53FE-414B-B4CE-1FB6612F46B1",
+    "setId" : "5D0BE3C8-127A-4721-AFBB-0FDB1BBC5C4A",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 20,
+    "weightKg" : 35
+  },
+  "sensor" : {
+    "akkuProzent" : 50,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-10-26T18:16:52+01:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 118.31,
+      "median" : 0,
+      "p95" : 60.58
+    },
+    "luecken" : 0,
+    "pakete" : 3408,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "langhantel/takt1",
+    "ereignisse" : {
+      "algo" : "langhantel/takt1",
+      "befestigungsart" : "langhantel",
+      "unsicher" : null,
+      "wiederholungen" : [
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 10.29,
+          "ende" : 12.6,
+          "sicherheit" : 0.68,
+          "umkehr" : 11.45
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 12.6,
+          "ende" : 14.9,
+          "sicherheit" : 0.68,
+          "umkehr" : 13.75
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 14.9,
+          "ende" : 17.21,
+          "sicherheit" : 0.68,
+          "umkehr" : 16.05
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 17.21,
+          "ende" : 19.51,
+          "sicherheit" : 0.68,
+          "umkehr" : 18.36
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 19.51,
+          "ende" : 21.81,
+          "sicherheit" : 0.68,
+          "umkehr" : 20.66
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 21.81,
+          "ende" : 24.12,
+          "sicherheit" : 0.68,
+          "umkehr" : 22.97
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 24.12,
+          "ende" : 26.42,
+          "sicherheit" : 0.68,
+          "umkehr" : 25.27
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 26.42,
+          "ende" : 28.73,
+          "sicherheit" : 0.68,
+          "umkehr" : 27.57
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 28.73,
+          "ende" : 31.03,
+          "sicherheit" : 0.68,
+          "umkehr" : 29.88
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 31.03,
+          "ende" : 33.33,
+          "sicherheit" : 0.68,
+          "umkehr" : 32.18
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 33.33,
+          "ende" : 35.64,
+          "sicherheit" : 0.68,
+          "umkehr" : 34.49
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 35.64,
+          "ende" : 37.94,
+          "sicherheit" : 0.68,
+          "umkehr" : 36.79
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 37.94,
+          "ende" : 40.25,
+          "sicherheit" : 0.68,
+          "umkehr" : 39.09
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 40.25,
+          "ende" : 42.55,
+          "sicherheit" : 0.68,
+          "umkehr" : 41.4
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 42.55,
+          "ende" : 44.85,
+          "sicherheit" : 0.68,
+          "umkehr" : 43.7
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 44.85,
+          "ende" : 47.16,
+          "sicherheit" : 0.68,
+          "umkehr" : 46
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 47.16,
+          "ende" : 49.46,
+          "sicherheit" : 0.68,
+          "umkehr" : 48.31
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 49.46,
+          "ende" : 51.76,
+          "sicherheit" : 0.68,
+          "umkehr" : 50.61
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 51.76,
+          "ende" : 54.07,
+          "sicherheit" : 0.68,
+          "umkehr" : 52.92
+        },
+        {
+          "ausschlag" : 0.19,
+          "beginn" : 54.07,
+          "ende" : 56.37,
+          "sicherheit" : 0.68,
+          "umkehr" : 55.22
+        }
+      ]
+    },
+    "gezaehlt" : 20,
+    "herkunft" : "gemessen"
+  }
+}

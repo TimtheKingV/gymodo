@@ -19,6 +19,8 @@ final class PendingWriteStore {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         self.directory = directory
         fileURL = directory.appendingPathComponent(filename)
+        TrainingsDateischutz.vorbereiten(directory)
+        TrainingsDateischutz.vorbereiten(fileURL)
     }
 
     func loadAll() -> [PendingSetWrite] {
@@ -28,6 +30,6 @@ final class PendingWriteStore {
 
     func save(_ writes: [PendingSetWrite]) {
         guard let data = try? JSONEncoder().encode(writes) else { return }
-        try? data.write(to: fileURL, options: .atomic)
+        TrainingsDateischutz.schreiben(data, nach: fileURL)
     }
 }

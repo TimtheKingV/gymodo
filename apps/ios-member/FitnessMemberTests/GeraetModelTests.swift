@@ -1884,6 +1884,24 @@ struct GeraetModelTests {
         #expect(sut.zaehlerZustand == .vonHand(4))
     }
 
+    @Test func neueUnsichereZahlFolgtDemRadBisZurHandkorrektur() async {
+        let double = ZaehlerDouble()
+        double.ergebnisWert = ZaehlerDouble.ergebnis(8)
+        var geschrieben: [PendingSetWrite] = []
+        let sut = mitZaehler(double, enqueue: { geschrieben.append($0) })
+        double.melde?(.stand(4))
+        double.melde?(.pruefen(7, .luecke))
+        #expect(sut.umfang == 7)
+        #expect(sut.zaehlerZustand == .pruefen(7))
+        sut.umfangGedreht(10)
+        double.melde?(.pruefen(8, .luecke))
+        #expect(sut.umfang == 10)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(geschrieben.first?.body.volume == 10)
+        #expect(geschrieben.first?.body.volumeSource == .korrigiert)
+        #expect(geschrieben.first?.body.volumeCounted == 8)
+    }
+
     @Test(arguments: [(nil as Int?, 8, VolumeSource.eingegeben), (8, 8, .gemessen), (8, 9, .korrigiert)])
     func herkunftBeimSichern(gezaehlt: Int?, umfang: Int, erwartet: VolumeSource) async {
         let double = ZaehlerDouble()
@@ -2108,6 +2126,8 @@ struct GeraetModelTests {
 
 @MainActor
 final class ZaehlerDouble: SatzZaehler {
+    var automatikMelde: (@MainActor (SatzAutomatik.Ereignis) -> Void)?
+    func automatikBeobachten(_ melde: (@MainActor (SatzAutomatik.Ereignis) -> Void)?) { automatikMelde = melde }
     var kontexte: [SatzZaehlerKontext] = []
     var melde: (@MainActor (ZaehlerMeldung) -> Void)?
     var verworfen = 0
@@ -2447,3 +2467,128 @@ enum GeraetTestdaten {
         """)
     }
 }
+
+@MainActor
+extension GeraetModelTests {
+    private func automatikModell(_ double: ZaehlerDouble, ziel: Int = 3,
+                                 startwerte: Bool = true) -> (GeraetModel, WorkoutSessionStore, Erfassungswarteschlange) {
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(
+            directory: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        sessions.trainingStarten()
+        let writes = Erfassungswarteschlange()
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []), sessions: sessions,
+                         enqueue: { writes.geschriebene.append($0) }, satzZiel: ziel, zaehler: double)
+        if startwerte { sut.belastungGewaehlt(42.5) }
+        sut.automatikVorbereiten()
+        return (sut, sessions, writes)
+    }
+
+    @Test func automatikStartetAusPauseOhneZaehlerNeustart() {
+        let double = ZaehlerDouble()
+        let (sut, _, _) = automatikModell(double)
+        let starts = double.kontexte.count
+        let kennung = UUID()
+        double.melde?(.stand(2))
+        double.automatikMelde?(.begonnen(kennung: kennung, beginn: 10, bewegung: 14))
+        #expect(sut.phase == .eingabe)
+        #expect(sut.umfang == 2)
+        #expect(sut.belastung == 42.5)
+        #expect(double.kontexte.count == starts)
+        sut.geraetGeoeffnet()
+        #expect(double.kontexte.count == starts)
+    }
+
+    @Test func automatikUndManuellesSpeichernErzeugenGenauEinenSatz() async {
+        let double = ZaehlerDouble()
+        double.ergebnisWert = ZaehlerDouble.ergebnis(8)
+        let (sut, sessions, writes) = automatikModell(double)
+        let kennung = UUID()
+        let callback = double.automatikMelde
+        callback?(.begonnen(kennung: kennung, beginn: 10, bewegung: 26))
+        callback?(.beendet(kennung: kennung, bewegung: 26))
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        await Task.yield()
+        callback?(.beendet(kennung: kennung, bewegung: 26))
+        await Task.yield()
+        #expect(writes.geschriebene.count == 1)
+        #expect(sessions.aktiveSession()?.bloecke.first?.saetze.count == 1)
+        #expect(writes.geschriebene.first?.body.load == 42.5)
+        #expect(writes.geschriebene.first?.body.volumeCounted == 8)
+    }
+
+    @Test func ohneStartwerteStartetAutomatikNicht() {
+        let double = ZaehlerDouble()
+        let (sut, _, _) = automatikModell(double, startwerte: false)
+        double.automatikMelde?(.begonnen(kennung: UUID(), beginn: 10, bewegung: 14))
+        if case .pause = sut.phase {} else { Issue.record("Fehlende Startwerte brauchen die manuelle Eingabe") }
+    }
+
+    @Test func satzzielUndAlteKennungVerhindernWeitereAutomatischeSaetze() async {
+        let double = ZaehlerDouble()
+        double.ergebnisWert = ZaehlerDouble.ergebnis(8)
+        let (sut, _, writes) = automatikModell(double, ziel: 1)
+        let callback = double.automatikMelde
+        let kennung = UUID()
+        callback?(.begonnen(kennung: kennung, beginn: 10, bewegung: 26))
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        callback?(.begonnen(kennung: UUID(), beginn: 40, bewegung: 44))
+        callback?(.beendet(kennung: kennung, bewegung: 26))
+        await Task.yield()
+        #expect(sut.phase == .abschluss)
+        #expect(writes.geschriebene.count == 1)
+    }
+}
+
+#if DEBUG
+@MainActor
+extension GeraetModelTests {
+    @Test func zweiAutomatischeSaetzeOhneNeueViewLaufenDurchDenLokalenSpeicherpfad() async throws {
+        let quelle = AttrappenQuelle()
+        quelle.zustand = ZaehlerKoordinatorTests.verbunden
+        let uhr = ZaehlerKoordinatorTests.Uhr()
+        let zaehler = ZaehlerKoordinator(quelle: quelle,
+            einstellungen: UserDefaults(suiteName: UUID().uuidString)!, uhr: { uhr.t })
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(
+            directory: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        sessions.trainingStarten()
+        let writes = Erfassungswarteschlange()
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+            bootstrap: GeraetTestdaten.bootstrap(lastSets: []), sessions: sessions,
+            enqueue: { writes.geschriebene.append($0) }, satzZiel: 2, zaehler: zaehler)
+        sut.belastungGewaehlt(42.5)
+        sut.geraetGeoeffnet()
+        zaehler.befestigungWaehlen(.stapel)
+        for satz in 1...2 {
+            let werte = ZaehlerKoordinatorTests.stapelSatz(wiederholungen: 5, ab: uhr.t + 0.02)
+            for wert in werte {
+                uhr.t = wert.t
+                zaehler.empfangen(.messwert(wert))
+            }
+            for _ in 0..<200 {
+                if zaehler.automatik.zustand == .laeuft { break }
+                try await Task.sleep(for: .milliseconds(10))
+            }
+            #expect(zaehler.automatik.zustand == .laeuft)
+            for _ in 0..<500 {
+                uhr.t += 0.02
+                zaehler.empfangen(.messwert(SensorMesswert(t: uhr.t, beschleunigung: .init(x: 0, y: 0, z: 1),
+                    drehrate: .init(x: 0, y: 0, z: 0), winkel: .init(x: 0, y: 0, z: 0))))
+            }
+            for _ in 0..<200 {
+                if writes.geschriebene.count == satz { break }
+                try await Task.sleep(for: .milliseconds(10))
+                uhr.t += 0.02
+                zaehler.empfangen(.messwert(SensorMesswert(t: uhr.t, beschleunigung: .init(x: 0, y: 0, z: 1),
+                    drehrate: .init(x: 0, y: 0, z: 0), winkel: .init(x: 0, y: 0, z: 0))))
+            }
+            #expect(writes.geschriebene.count == satz)
+        }
+        #expect(sut.phase == .abschluss)
+        #expect(writes.geschriebene.map(\.body.load) == [42.5, 42.5])
+        #expect(writes.geschriebene.map(\.body.volumeCounted) == [5, 5])
+        #expect(sessions.aktiveSession()?.bloecke.first?.saetze.count == 2)
+        sut.screenVerlassen()
+    }
+}
+#endif

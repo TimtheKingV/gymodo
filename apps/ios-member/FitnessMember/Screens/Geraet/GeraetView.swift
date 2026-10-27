@@ -67,7 +67,7 @@ struct GeraetView: View {
                         // Marken gehoeren zum Sensor, nicht zum Satzwert.
                         // Sichtbar wie zuvor nur, solange die Raeder stehen.
                         #if DEBUG
-                        if zeigtRaeder {
+                        if modell.phase != .abschluss {
                             SensorZeile(station: modell.station.schluessel)
                         }
                         #endif

@@ -76,16 +76,28 @@ struct AusgewogenheitTests {
         #expect(Ausgewogenheit.status(muskel: "deltoid_lateral", gruppe: .schultern, in: h) == .ok)
     }
 
-    @Test func seltenerMuskelIstKaumUebungen() {
-        let h = haeufigkeit(gruppen: [6, 6, 6, 6, 6, 6], muskeln: ["lats": 6, "upper_back": 6])
-        #expect(Ausgewogenheit.status(muskel: "erectors", gruppe: .ruecken, in: h) == .kaumUebungen)
+    @Test func wenigeKataloguebungenVerhindernDieAuswertungNicht() {
+        let faelle: [(String, MuskelHauptgruppe)] = [
+            ("erectors", .ruecken), ("adductors", .beine), ("abductors", .beine),
+            ("rotator_cuff", .schultern), ("serratus_anterior", .brust)
+        ]
+        let werte: [(Int, MuskelStatus)] = [(0, .nachholbedarf), (6, .ok), (10, .viel)]
+        for (muskel, gruppe) in faelle {
+            for (anzahl, erwartet) in werte {
+                let h = haeufigkeit(gruppen: [6, 6, 6, 6, 6, 6], muskeln: [muskel: anzahl])
+                #expect(Ausgewogenheit.status(muskel: muskel, gruppe: gruppe, in: h) == erwartet)
+            }
+            let duenn = haeufigkeit(gruppen: [2, 2, 2, 2, 2, 2], einheiten: 2, muskeln: [muskel: 2])
+            #expect(Ausgewogenheit.status(muskel: muskel, gruppe: gruppe, in: duenn) == .keineAuswertung)
+        }
     }
 
-    @Test func muskelnOhneHauptuebungSindSelten() {
+    @Test func muskelnOhneKraftuebungBleibenOhneBewertung() {
         let h = haeufigkeit(gruppen: [6, 6, 6, 6, 6, 6], muskeln: ["pectorals": 6, "quads": 6])
-        #expect(Ausgewogenheit.status(muskel: "tibialis", gruppe: .beine, in: h) == .kaumUebungen)
-        #expect(Ausgewogenheit.status(muskel: "fibularis", gruppe: .beine, in: h) == .kaumUebungen)
-        #expect(Ausgewogenheit.status(muskel: "serratus_anterior", gruppe: .brust, in: h) == .kaumUebungen)
+        #expect(Ausgewogenheit.status(muskel: "tibialis", gruppe: .beine, in: h) == .keineKraftuebung)
+        #expect(Ausgewogenheit.status(muskel: "fibularis", gruppe: .beine, in: h) == .keineKraftuebung)
+        #expect(Ausgewogenheit.status(muskel: "serratus_anterior", gruppe: .brust, in: h) == .nachholbedarf)
+        #expect(Ausgewogenheit.status(muskel: "unbekannt", gruppe: .brust, in: h) == .keineAuswertung)
     }
 
     @Test func ohneMuskeldatenKeineAuswertungTrotzGenugEinheiten() {
