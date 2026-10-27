@@ -154,41 +154,53 @@ async function ladeGrenzen(client: SupabaseClient, machineIds: string[]): Promis
   return ergebnis;
 }
 
+/** Hoechstens so viele Seiten je Satzabfrage; mehr waere kein Training mehr, sondern ein Fehler. */
+export const MAX_SATZSEITEN = 10;
+
 /**
  * Arbeitssaetze (bestaetigt, set_role = 'arbeit', mit Last) je Paar (Geraet,
- * Uebung) ab `ab`, absteigend -- EINE Abfrage ueber alle Paare, egal wie viele.
- * Das Zeitfenster begrenzt die Menge nach Trainingshaeufigkeit statt nach Alter
- * des Kontos (Fix-Runde 1). `vollstaendig` ist false, wenn die Antwort die
- * PostgREST-Grenze erreicht und damit abgeschnitten sein kann; vorhandene Paare
- * tragen dann trotzdem ihre juengsten Zeilen (absteigend gelesen), fehlende sind
- * unbekannt, nicht "ohne Historie".
+ * Uebung) ab `ab`, absteigend -- EINE logische Abfrage ueber alle Paare, egal wie
+ * viele. Das Zeitfenster begrenzt die Menge nach Trainingshaeufigkeit statt nach
+ * Alter des Kontos; innerhalb des Fensters wird in Seiten der PostgREST-Grenze
+ * geblaettert (stabil nach performed_at, dann id), bis eine Seite kurz ist. Erst
+ * nach MAX_SATZSEITEN vollen Seiten wird geworfen.
  */
 async function ladeArbeitssaetze(
   client: SupabaseClient,
   userId: string,
   paare: Array<{ machineId: string; exerciseId: string }>,
   ab: Date,
-): Promise<{ jePaar: Map<string, HistorieZeile[]>; vollstaendig: boolean }> {
+): Promise<Map<string, HistorieZeile[]>> {
   const jePaar = new Map<string, HistorieZeile[]>();
-  if (paare.length === 0) return { jePaar, vollstaendig: true };
-  const { data, error } = await client
-    .from("workout_sets")
-    .select("session_id, machine_id, exercise_id, performed_at, load, secondary_load, volume, rir, problem_flag")
-    .eq("user_id", userId)
-    .eq("set_role", "arbeit")
-    .not("load", "is", null)
-    .in("machine_id", [...new Set(paare.map((p) => p.machineId))])
-    .in("exercise_id", [...new Set(paare.map((p) => p.exerciseId))])
-    .gte("performed_at", ab.toISOString())
-    .order("performed_at", { ascending: false })
-    .limit(POSTGREST_MAX_ROWS);
-  if (error) throw new DomainError("internal", error.message);
-  const zeilen = (data ?? []) as HistorieZeile[];
-  for (const z of zeilen) {
-    const k = paarSchluessel(z.machine_id, z.exercise_id);
-    jePaar.set(k, [...(jePaar.get(k) ?? []), z]);
+  if (paare.length === 0) return jePaar;
+  const maschinen = [...new Set(paare.map((p) => p.machineId))];
+  const uebungen = [...new Set(paare.map((p) => p.exerciseId))];
+  for (let seite = 0; ; seite++) {
+    if (seite >= MAX_SATZSEITEN) {
+      throw new DomainError("internal", "Zu viele Saetze fuer die Zielgewichte.");
+    }
+    const { data, error } = await client
+      .from("workout_sets")
+      .select("id, session_id, machine_id, exercise_id, performed_at, load, secondary_load, volume, rir, problem_flag")
+      .eq("user_id", userId)
+      .eq("set_role", "arbeit")
+      .not("load", "is", null)
+      .in("machine_id", maschinen)
+      .in("exercise_id", uebungen)
+      .gte("performed_at", ab.toISOString())
+      .order("performed_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(seite * POSTGREST_MAX_ROWS, (seite + 1) * POSTGREST_MAX_ROWS - 1);
+    if (error) throw new DomainError("internal", error.message);
+    const zeilen = (data ?? []) as HistorieZeile[];
+    for (const z of zeilen) {
+      const k = paarSchluessel(z.machine_id, z.exercise_id);
+      const liste = jePaar.get(k);
+      if (liste) liste.push(z);
+      else jePaar.set(k, [z]);
+    }
+    if (zeilen.length < POSTGREST_MAX_ROWS) return jePaar;
   }
-  return { jePaar, vollstaendig: zeilen.length < POSTGREST_MAX_ROWS };
 }
 
 /**
@@ -410,16 +422,10 @@ export async function aktualisierePlanGewichte(
     // F18), spaetere Bloecke und "eigene Historie" fuer die Uebertragung (ebenfalls
     // F18: ueber 42 Tage wie ohne Historie).
     const ab = new Date(Date.parse(session.started_at) - HISTORIE_FENSTER_TAGE * TAG_MS);
-    const [grenzen, gelesen] = await Promise.all([
+    const [grenzen, historie] = await Promise.all([
       ladeGrenzen(client, ziel.map((p) => p.machineId)),
       ladeArbeitssaetze(client, userId, [...sessionPaare.values(), ...ziel], ab),
     ]);
-    // Abgeschnitten hiesse: Block, Vorgaenger oder spaeterer Block koennten fehlen und
-    // die Rechnung waere falsch begruendet. Lieber scheitern (der Aufrufer protokolliert).
-    if (!gelesen.vollstaendig) {
-      throw new DomainError("internal", "Zu viele Saetze fuer die Neuberechnung der Zielgewichte.");
-    }
-    const historie = gelesen.jePaar;
 
     // Messungen fuer die Uebertragung: Bloecke dieser Session mit Reserve am letzten
     // Satz und einer Planposition (Bereich, Zielreserve). Die juengste zuerst.
@@ -542,11 +548,10 @@ export async function initialisierePlanGewichte(
   const fehlend = plan.einheiten.flatMap((e) => e.positionen).filter((p) => hatZielgewicht(p) && !vorhanden.has(p.key));
   if (fehlend.length === 0) return;
 
-  const [grenzen, gelesen] = await Promise.all([
+  const [grenzen, historie] = await Promise.all([
     ladeGrenzen(client, fehlend.map((p) => p.machineId)),
     ladeArbeitssaetze(client, userId, fehlend, new Date(jetzt - HISTORIE_FENSTER_TAGE * TAG_MS)),
   ]);
-  const historie = gelesen.jePaar;
 
   let person: Person | null = null;
   const zeilen: Zeile[] = [];
@@ -554,9 +559,6 @@ export async function initialisierePlanGewichte(
     const g = grenzen.get(p.machineId);
     if (!g) continue;
     const saetze = historie.get(paarSchluessel(p.machineId, p.exerciseId)) ?? [];
-    // Abgeschnittene Antwort: fuer ein fehlendes Paar ist unbekannt, ob es Historie hat.
-    // Nicht raten -- die Position bleibt ohne Zeile, der naechste Aufruf holt sie nach.
-    if (saetze.length === 0 && !gelesen.vollstaendig) continue;
     const letzterBlock = toBlocks(saetze)[0];
     let load: number | null = null;
     let grund: PlanGewichtGrund = "startschaetzung";
@@ -611,8 +613,8 @@ export async function ladeZielgewichte(
   const jetzt = Date.now();
   // Verglichen wird nur mit abgeschlossenen Einheiten: in der laufenden darf sich der
   // Hinweis nicht unter dem Mitglied aendern (G17). Ohne Satz in den letzten 42 Tagen
-  // (F18: wie ohne Historie) und bei abgeschnittener Antwort fuer fehlende Paare: null.
-  const [gelesen, laufend] = await Promise.all([
+  // (F18: wie ohne Historie): null.
+  const [historie, laufend] = await Promise.all([
     ladeArbeitssaetze(client, userId, mitZiel, new Date(jetzt - HISTORIE_FENSTER_TAGE * TAG_MS)),
     laufendeSessions(client, userId, jetzt),
   ]);
@@ -620,7 +622,7 @@ export async function ladeZielgewichte(
   const ergebnis: Record<string, PositionsZiel> = {};
   for (const p of mitZiel) {
     const z = zeilen.get(p.key)!;
-    const letzter = gelesen.jePaar
+    const letzter = historie
       .get(paarSchluessel(p.machineId, p.exerciseId))
       ?.find((s) => !laufend.has(s.session_id));
     const load = Number(z.load);

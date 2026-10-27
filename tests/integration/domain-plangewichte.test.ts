@@ -551,4 +551,32 @@ describe("Fix-Runde 1", () => {
     expect(ziel["B-bank"]).toMatchObject({ aenderung: 2.5 });
     expect(ziel["B-rudern"]).toMatchObject({ aenderung: null });
   });
+
+  it("ueber 1000 Saetze im Fenster: blaettert statt zu scheitern oder Paare auszulassen", async () => {
+    const w = await welt();
+    const p = await plan(w, { A: ["bank", "rudern"], B: ["bank", "rudern"] });
+    // Bank vor 12 Tagen (halten), danach 1100 Rudersaetze vor 10 Tagen -- beide im Fenster.
+    await einheit(w, p, "A", { startedAt: vorStunden(12 * 24), saetze: block("bank", 50, 10, 2) });
+    await einheit(w, p, "A", {
+      startedAt: vorStunden(10 * 24),
+      saetze: Array.from({ length: 1100 }, () => ({ u: "rudern" as const, load: 70, volume: 10 })),
+    });
+
+    await initialisierePlanGewichte(client, userId, p);
+    const start = await ziele(p.id);
+    expect(start["A-bank"]).toMatchObject({ load: 50, grund: "letztes_gewicht" });
+    expect(start["A-rudern"]).toMatchObject({ load: 70, grund: "letztes_gewicht" });
+
+    const sid = await einheit(w, p, "A", {
+      startedAt: vorStunden(3),
+      saetze: [...block("bank", 50, 12, 2), ...block("rudern", 70, 10, 2)],
+    });
+    await aktualisierePlanGewichte(client, userId, sid);
+
+    const z = await ziele(p.id);
+    expect(z["B-bank"]).toMatchObject({ load: 52.5, stand_session_id: sid });
+    expect(z["B-rudern"]).toMatchObject({ load: 70, grund: "im_korridor", stand_session_id: sid });
+    const ziel = await ladeZielgewichte(client, userId, p);
+    expect(ziel["B-bank"]).toMatchObject({ aenderung: 2.5 });
+  });
 });
