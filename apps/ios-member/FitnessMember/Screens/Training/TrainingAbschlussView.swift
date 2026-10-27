@@ -538,6 +538,15 @@ enum VorschlagsAnzeige: Equatable {
 
     init(reasonCode: String?, deltaLoad: Double?, loadUnit: LoadUnit,
          secondaryLoad: Double? = nil, secondaryUnit: LoadUnit? = nil) {
+        // Eine Aenderung haengt an der Zahl, nicht am Grund (Final-Fix I3, wie
+        // der Hinweis am Geraet): ein Ziel im Korridor, nach einer Meldung oder
+        // an der Geraetegrenze kann trotzdem vom letzten Gewicht abweichen --
+        // "halten" oder "Kein Vorschlag" waere dann eine stille Aenderung.
+        if let deltaLoad, deltaLoad != 0 {
+            self = .delta(Vorschlagsdelta(wert: deltaLoad, einheit: loadUnit,
+                                          nebenbelastung: secondaryLoad, nebeneinheit: secondaryUnit))
+            return
+        }
         switch reasonCode {
         case "korridor_oben_erreicht", "korridor_unten_verfehlt":
             if let deltaLoad {
@@ -549,10 +558,7 @@ enum VorschlagsAnzeige: Equatable {
         // Plangewichte (Etappe 4, G19): das Ziel der naechsten Planeinheit,
         // ohne Plan das letzte Gewicht. Gleich wie zuletzt heisst halten.
         case "letztes_gewicht", "startschaetzung", "uebertragung", "wiedereinstieg":
-            if let deltaLoad, deltaLoad != 0 {
-                self = .delta(Vorschlagsdelta(wert: deltaLoad, einheit: loadUnit,
-                                              nebenbelastung: secondaryLoad, nebeneinheit: secondaryUnit))
-            } else if deltaLoad == 0 {
+            if deltaLoad == 0 {
                 self = .halten(loadUnit)
             } else {
                 self = .keiner

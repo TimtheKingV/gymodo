@@ -133,6 +133,16 @@ struct TrainingAbschlussZeilenTests {
         #expect(VorschlagsAnzeige(reasonCode: reasonCode, deltaLoad: nil, loadUnit: .kg) == .keiner)
     }
 
+    // Final-Fix I3: eine Aenderung haengt an der Zahl, nicht am Grund (wie
+    // der Hinweis am Geraet). Ein Ziel im Korridor, nach Meldung oder an der
+    // Geraetegrenze kann trotzdem vom letzten Gewicht abweichen.
+    @Test(arguments: ["im_korridor", "problem_gemeldet", "geraetegrenze_erreicht",
+                      "daten_uneindeutig", "kein_verlauf", "irgendwas_unbekanntes"])
+    func eineAenderungZeigtImmerDieZahl(reasonCode: String) {
+        #expect(VorschlagsAnzeige(reasonCode: reasonCode, deltaLoad: -2.5, loadUnit: .kg) == .delta(kg(-2.5)))
+        #expect(VorschlagsAnzeige(reasonCode: reasonCode, deltaLoad: 2.5, loadUnit: .kg).text == "+2,5 kg")
+    }
+
     // MARK: - Hinweis am Geraet (Etappe 4, G7/G17)
 
     @Test func obenErreichtNenntDiePlusZahl() throws {

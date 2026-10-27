@@ -840,8 +840,8 @@ export function zielFuerGeraet(
 /**
  * Der Vorschlag in der Form der bisherigen Progression (resultLoad, reasonCode,
  * inputs.currentLoad), damit App, zuVorschlag und deltaLoad unveraendert greifen. Mit Ziel:
- * das Ziel, sein Grund (ohne Grund "kein_verlauf" -- die ehrlichste vorhandene Angabe;
- * erfunden wird keiner), Bisher = letztes Gewicht. Ohne Ziel das letzte Gewicht
+ * das Ziel, sein Grund (ohne Grund "letztes_gewicht": es gibt eine Zahl, einen anderen Grund
+ * erfindet die Funktion nicht), Bisher = letztes Gewicht. Ohne Ziel das letzte Gewicht
  * ("letztes_gewicht"), ohne beides keine Zahl ("kein_verlauf").
  */
 export function vorschlagAusZiel(
@@ -864,7 +864,9 @@ export function vorschlagAusZiel(
       algoVersion: PLANGEWICHT_ALGO_VERSION,
       resultLoad: ziel.load,
       resultSecondaryLoad: ziel.secondaryLoad,
-      reasonCode: ziel.grund ?? "kein_verlauf",
+      // Ohne Grund: die Zahl ist das Ziel, also "letztes_gewicht" (Final-Fix I3) --
+      // "kein_verlauf" liesse den Abschluss-Screen "Kein Vorschlag" zeigen, obwohl es eine Zahl gibt.
+      reasonCode: ziel.grund ?? "letztes_gewicht",
       inputs,
     };
   }

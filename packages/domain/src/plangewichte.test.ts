@@ -107,8 +107,9 @@ describe("vorschlagAusZiel (G17, G19)", () => {
     expect(v).toMatchObject({ resultLoad: 40, reasonCode: "startschaetzung" });
     expect(v.inputs.currentLoad).toBeNull();
   });
-  it("ohne Grund am Ziel: kein erfundener Grund, sondern kein_verlauf", () => {
-    expect(vorschlagAusZiel(ziel(40, null), { load: 40, secondaryLoad: null }, GERAET).reasonCode).toBe("kein_verlauf");
+  it("ohne Grund am Ziel: letztes_gewicht, weil es eine Zahl gibt (Final-Fix I3)", () => {
+    expect(vorschlagAusZiel(ziel(40, null), { load: 40, secondaryLoad: null }, GERAET).reasonCode).toBe("letztes_gewicht");
+    expect(vorschlagAusZiel(ziel(40, null), null, GERAET)).toMatchObject({ resultLoad: 40, reasonCode: "letztes_gewicht" });
   });
   it("ohne Ziel: das letzte Gewicht, letztes_gewicht", () => {
     const v = vorschlagAusZiel(null, { load: 37.5, secondaryLoad: 4 }, GERAET);
