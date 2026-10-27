@@ -3,9 +3,9 @@ import { DomainError } from "./errors.js";
 import { cardioGeraeteLaden, istCardioModell } from "./cardio-geraete.js";
 import type { LoadUnit } from "./belastung.js";
 import { stationsSchluessel } from "./station.js";
+import { paarSchluessel as zielPaarSchluessel, vorschlagAusZiel } from "./plangewichte.js";
+import { ladeZieleFuerPaare } from "./ziel-vorschlag.js";
 import {
-  PROGRESSION_ALGO_VERSION,
-  suggestNextLoad,
   toBlocks,
   type ProgressionReasonCode,
   type ProgressionSuggestion,
@@ -499,6 +499,11 @@ export async function vorschlaegeFuerAbschluss(
     historieNach.set(schluessel, liste);
   }
 
+  // Seit Etappe 4 (G17): Ziel der Planposition mit gleicher Uebung und gleichem Geraet, sonst
+  // das letzte Gewicht. Gelesen wird NACH der Neuberechnung (workout.ts ruft in dieser
+  // Reihenfolge), damit Delta = Ziel minus bisher das frische Ziel meint.
+  const ziele = await ladeZieleFuerPaare(client, userId, studioId, paare);
+
   const vorschlaege: Blockvorschlag[] = [];
   // inputs steht mit im Insert -- die Spalte ist not null (Migration 0015)
   // und will fuer die Nachvollziehbarkeit ohnehin die echten Eingaben, nicht
@@ -521,14 +526,16 @@ export async function vorschlaegeFuerAbschluss(
     const einheiten = einheitenJeStation.get(stationVon(paar));
     if (!uebung || !modell || !einheiten) continue;
 
-    const suggestion = suggestNextLoad({
-      targetMin: uebung.target_min,
-      targetMax: uebung.target_max,
-      loadStep: Number(modell.load_step),
-      loadMin: Number(modell.load_min),
-      loadMax: Number(modell.load_max ?? 9999),
-      history: toBlocks(historieNach.get(paarSchluessel(paar)) ?? []),
-    });
+    const letzterSatz = toBlocks(historieNach.get(paarSchluessel(paar)) ?? [])[0]?.sets.at(-1);
+    const suggestion = vorschlagAusZiel(
+      paar.machineId === null ? null : (ziele.get(zielPaarSchluessel(paar.machineId, paar.exerciseId)) ?? null),
+      letzterSatz ? { load: letzterSatz.load, secondaryLoad: letzterSatz.secondaryLoad } : null,
+      {
+        loadStep: Number(modell.load_step),
+        loadMin: Number(modell.load_min),
+        loadMax: Number(modell.load_max ?? 9999),
+      },
+    );
 
     const vorschlag = zuVorschlag({ ...paar, suggestion, einheiten });
     vorschlaege.push(vorschlag);
@@ -538,7 +545,7 @@ export async function vorschlaegeFuerAbschluss(
       machine_id: vorschlag.machineId,
       equipment_model_id: vorschlag.equipmentModelId,
       exercise_id: vorschlag.exerciseId,
-      algo_version: PROGRESSION_ALGO_VERSION,
+      algo_version: suggestion.algoVersion,
       inputs: suggestion.inputs,
       result_load: vorschlag.resultLoad,
       reason_code: vorschlag.reasonCode,

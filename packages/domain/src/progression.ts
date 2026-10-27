@@ -116,7 +116,13 @@ export type ProgressionReasonCode =
   | "im_korridor"
   | "korridor_oben_erreicht"
   | "korridor_unten_verfehlt"
-  | "geraetegrenze_erreicht";
+  | "geraetegrenze_erreicht"
+  // Seit Etappe 4 (Plangewichte) kommen Vorschlaege aus dem Zielgewicht (plangewichte.ts);
+  // deren weitere Gruende und das letzte Gewicht ohne Ziel. suggestNextLoad liefert sie nie.
+  | "letztes_gewicht"
+  | "startschaetzung"
+  | "uebertragung"
+  | "wiedereinstieg";
 
 /** Wird mitgeschrieben, damit ein alter Vorschlag nachvollziehbar bleibt. */
 export type ProgressionInputsRecord = {

@@ -5,6 +5,7 @@ import {
   completeSession,
   erzeugePlanVorschlag,
   getBootstrap,
+  getMachineContext,
   initialisierePlanGewichte,
   ladeZielgewichte,
   zielSchluessel,
@@ -816,5 +817,142 @@ describe("Ausloeser mit erzeugtem Plan (Task 5)", () => {
 
     expect((await marke(sid)).gewichte_berechnet_at).not.toBeNull();
     expect((await zieleVon(plan.id))[p0.ziel]).toMatchObject({ stand_session_id: sid });
+  });
+});
+
+describe("Vorschlaege aus Zielgewicht oder letztem Gewicht (Task 6)", () => {
+  /** Das Modell der Welt kennt alle Uebungen -- der Geraetekontext liest sie von dort. */
+  async function verknuepfe(w: Welt): Promise<void> {
+    await einfuegen(
+      "equipment_model_exercises",
+      (["bank", "rudern", "fly", "bein"] as const).map((u, i) => ({
+        equipment_model_id: w.modellId,
+        exercise_id: w.ex[u],
+        sort_order: i + 1,
+      })),
+    );
+  }
+
+  async function setzeLoad(planId: string, einheitKey: string, positionKey: string, load: number) {
+    const { error } = await admin
+      .from("plan_gewichte")
+      .update({ load })
+      .eq("plan_id", planId)
+      .eq("einheit_key", einheitKey)
+      .eq("position_key", positionKey);
+    if (error) throw error;
+  }
+
+  const erledigt = (key: string, u: Uebung, w: Welt) => [{ key, status: "erledigt", exerciseId: w.ex[u] }];
+
+  it("Geraet mit Planposition: Ziel der naechsten Einheit, Grund aus dem Ziel, Bisher = letztes Gewicht", async () => {
+    const w = await welt();
+    await verknuepfe(w);
+    const p = await plan(w, { A: ["bank"], B: ["bank"] });
+    const sid = await einheit(w, p, "A", {
+      startedAt: vorStunden(3),
+      saetze: block("bank", 40, 12, 2),
+      status: erledigt("A-bank", "bank", w),
+    });
+    await aktualisierePlanGewichte(client, userId, sid);
+    // Zwei Einheiten, zwei Ziele: die naechste Einheit (B) gilt, nicht A.
+    await setzeLoad(p.id, "A", "A-bank", 50);
+    await setzeLoad(p.id, "B", "B-bank", 45);
+
+    const kontext = await getMachineContext(client, w.m.bank);
+
+    expect(kontext.suggestion).toMatchObject({
+      algoVersion: "1.0.0",
+      resultLoad: 45,
+      reasonCode: "korridor_oben_erreicht",
+    });
+    expect(kontext.suggestion.inputs.currentLoad).toBe(40);
+    const { data } = await admin
+      .from("progression_suggestions")
+      .select("algo_version, result_load, reason_code")
+      .eq("machine_id", w.m.bank)
+      .eq("user_id", userId);
+    expect(data).toEqual([{ algo_version: "1.0.0", result_load: 45, reason_code: "korridor_oben_erreicht" }]);
+  });
+
+  it("zweite Einheit zuerst dran: deren Ziel gilt (naechsteEinheitKey)", async () => {
+    const w = await welt();
+    await verknuepfe(w);
+    const p = await plan(w, { A: ["bank"], B: ["bank"] });
+    const sid = await einheit(w, p, "B", {
+      startedAt: vorStunden(3),
+      saetze: block("bank", 40, 12, 2),
+      status: erledigt("B-bank", "bank", w),
+    });
+    await aktualisierePlanGewichte(client, userId, sid);
+    await setzeLoad(p.id, "A", "A-bank", 50);
+    await setzeLoad(p.id, "B", "B-bank", 45);
+
+    expect((await getMachineContext(client, w.m.bank)).suggestion.resultLoad).toBe(50);
+  });
+
+  it("Geraet ohne Plan: letztes Gewicht, letztes_gewicht; ohne Saetze kein_verlauf", async () => {
+    const w = await welt();
+    await verknuepfe(w);
+    expect((await getMachineContext(client, w.m.bank)).suggestion).toMatchObject({
+      resultLoad: null,
+      reasonCode: "kein_verlauf",
+    });
+    const sid = crypto.randomUUID();
+    await einfuegen("workout_sessions", { id: sid, studio_id: w.studioId, user_id: userId, started_at: vorStunden(5).toISOString() });
+    await einfuegen("workout_sets", [
+      { id: crypto.randomUUID(), studio_id: w.studioId, user_id: userId, session_id: sid, machine_id: w.m.bank, equipment_model_id: w.modellId, exercise_id: w.ex.bank, set_index: 1, load: 37.5, volume: 12, rir: 2, performed_at: vorStunden(4).toISOString() },
+    ]);
+
+    const kontext = await getMachineContext(client, w.m.bank);
+
+    expect(kontext.suggestion).toMatchObject({ algoVersion: "1.0.0", resultLoad: 37.5, reasonCode: "letztes_gewicht" });
+  });
+
+  it("Abschluss: Delta = Ziel minus bisher, Zeile mit neuer algo_version, Wiederholung liest unveraendert zurueck", async () => {
+    const w = await welt();
+    const p = await plan(w, { A: ["bank", "cardio"], B: ["bank"] });
+    const sid = await einheit(w, p, "A", {
+      startedAt: vorStunden(2),
+      completedAt: null,
+      saetze: block("bank", 40, 12, 2),
+      status: erledigt("A-bank", "bank", w),
+    });
+
+    const erster = await completeSession(client, { sessionId: sid });
+
+    expect(erster.vorschlaege).toEqual([
+      expect.objectContaining({
+        machineId: w.m.bank,
+        exerciseId: w.ex.bank,
+        resultLoad: 42.5,
+        deltaLoad: 2.5,
+        reasonCode: "korridor_oben_erreicht",
+        algoVersion: "1.0.0",
+      }),
+    ]);
+    const { data } = await admin
+      .from("progression_suggestions")
+      .select("algo_version, result_load, reason_code")
+      .eq("machine_id", w.m.bank)
+      .eq("user_id", userId);
+    expect(data).toEqual([{ algo_version: "1.0.0", result_load: 42.5, reason_code: "korridor_oben_erreicht" }]);
+    expect((await completeSession(client, { sessionId: sid })).vorschlaege).toEqual(erster.vorschlaege);
+  });
+
+  it("Abschluss ohne Planposition fuer das Geraet: letztes Gewicht, Delta 0", async () => {
+    const w = await welt();
+    const p = await plan(w, { A: ["rudern"] });
+    const sid = await einheit(w, p, "A", {
+      startedAt: vorStunden(2),
+      completedAt: null,
+      saetze: [...block("rudern", 30, 10, 2), ...block("bank", 40, 12, 2)],
+      status: erledigt("A-rudern", "rudern", w),
+    });
+
+    const { vorschlaege } = await completeSession(client, { sessionId: sid });
+
+    const bank = vorschlaege.find((v) => v.exerciseId === w.ex.bank);
+    expect(bank).toMatchObject({ resultLoad: 40, deltaLoad: 0, reasonCode: "letztes_gewicht", algoVersion: "1.0.0" });
   });
 });

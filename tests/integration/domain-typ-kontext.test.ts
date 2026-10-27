@@ -195,6 +195,8 @@ describe("getEquipmentModelContext", () => {
     expect(kontext.selectedExerciseId).toBe(katalogUebung);
     expect(kontext.history.map((h) => h.load).sort()).toEqual([60, 62.5]);
     expect(kontext.suggestion.inputs.currentLoad).toBe(62.5);
+    // Ohne Plan am Typ: das letzte Gewicht (Etappe 4, G17).
+    expect(kontext.suggestion).toMatchObject({ resultLoad: 62.5, reasonCode: "letztes_gewicht", algoVersion: "1.0.0" });
   });
 
   it("haelt den Vorschlag am Typ fest, ohne Geraet", async () => {

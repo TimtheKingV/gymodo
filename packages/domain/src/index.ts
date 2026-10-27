@@ -359,6 +359,8 @@ export {
   ladeZielgewichte,
   ohneAbbruch,
   uebernehmePlanGewichte,
+  vorschlagAusZiel,
+  zielFuerGeraet,
   zielSchluessel,
   type Melde,
   type PositionsZiel,

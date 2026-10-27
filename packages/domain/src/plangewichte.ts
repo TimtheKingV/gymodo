@@ -21,7 +21,7 @@ import {
   type Geraetegrenzen,
 } from "./plangewicht-start.js";
 import { AGE_BANDS, SEX } from "./profil.js";
-import { toBlocks, type BlockInput, type SatzZeile } from "./progression.js";
+import { toBlocks, type BlockInput, type ProgressionSuggestion, type SatzZeile } from "./progression.js";
 import type { PlanEinheit, PlanPosition } from "./trainingsplan-generator.js";
 import type { Erfahrung } from "./trainingsplan-typen.js";
 import type { TrainingPlan } from "./trainingsplan.js";
@@ -731,4 +731,81 @@ export async function ladeZielgewichte(
     };
   }
   return ergebnis;
+}
+
+// ---------------------------------------------------------------------------
+// Vorschlaege am Geraet und im Abschluss (Task 6; G17, G19)
+
+/**
+ * Das Ziel fuer eine Uebung an einem Geraet: dieselbe Uebung UND dasselbe Geraet, zuerst in
+ * der naechsten Einheit, sonst in der fruehesten spaeteren (zyklisch in Planreihenfolge).
+ * Eine Position ohne Ziel zaehlt nicht. Ziele gelten je Einheit und Position; dieselbe
+ * Uebung in zwei Einheiten sind zwei Ziele.
+ */
+export function zielFuerGeraet(
+  einheiten: PlanEinheit[],
+  naechsteEinheitKey: string,
+  ziele: Record<string, PositionsZiel>,
+  machineId: string,
+  exerciseId: string,
+): PositionsZiel | null {
+  const start = Math.max(0, einheiten.findIndex((e) => e.key === naechsteEinheitKey));
+  for (let i = 0; i < einheiten.length; i++) {
+    const e = einheiten[(start + i) % einheiten.length]!;
+    for (const p of e.positionen) {
+      if (p.machineId !== machineId || p.exerciseId !== exerciseId) continue;
+      const ziel = ziele[zielSchluessel(e.key, p.key)];
+      if (ziel) return ziel;
+    }
+  }
+  return null;
+}
+
+/**
+ * Der Vorschlag in der Form der bisherigen Progression (resultLoad, reasonCode,
+ * inputs.currentLoad), damit App, zuVorschlag und deltaLoad unveraendert greifen. Mit Ziel:
+ * das Ziel, sein Grund (ohne Grund "kein_verlauf" -- die ehrlichste vorhandene Angabe;
+ * erfunden wird keiner), Bisher = letztes Gewicht. Ohne Ziel das letzte Gewicht
+ * ("letztes_gewicht"), ohne beides keine Zahl ("kein_verlauf").
+ */
+export function vorschlagAusZiel(
+  ziel: PositionsZiel | null,
+  letzte: { load: number; secondaryLoad: number | null } | null,
+  geraet: Geraetegrenzen,
+): ProgressionSuggestion {
+  const inputs = {
+    targetMin: 0,
+    targetMax: 0,
+    loadStep: geraet.loadStep,
+    loadMin: geraet.loadMin,
+    loadMax: geraet.loadMax,
+    currentLoad: letzte?.load ?? null,
+    currentSecondaryLoad: letzte?.secondaryLoad ?? null,
+    consideredBlocks: letzte ? 1 : 0,
+  };
+  if (ziel) {
+    return {
+      algoVersion: PLANGEWICHT_ALGO_VERSION,
+      resultLoad: ziel.load,
+      resultSecondaryLoad: ziel.secondaryLoad,
+      reasonCode: ziel.grund ?? "kein_verlauf",
+      inputs,
+    };
+  }
+  if (letzte) {
+    return {
+      algoVersion: PLANGEWICHT_ALGO_VERSION,
+      resultLoad: letzte.load,
+      resultSecondaryLoad: letzte.secondaryLoad,
+      reasonCode: "letztes_gewicht",
+      inputs,
+    };
+  }
+  return {
+    algoVersion: PLANGEWICHT_ALGO_VERSION,
+    resultLoad: null,
+    resultSecondaryLoad: null,
+    reasonCode: "kein_verlauf",
+    inputs,
+  };
 }

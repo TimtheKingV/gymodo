@@ -348,7 +348,7 @@ describe("getMachineContext", () => {
       const { vorschlaege } = await completeSession(await userClient(email), { sessionId: aktuelle });
 
       expect(vorschlaege).toEqual([
-        expect.objectContaining({ exerciseId: breitId, reasonCode: "korridor_oben_erreicht", resultLoad: 42.5 }),
+        expect.objectContaining({ exerciseId: breitId, reasonCode: "letztes_gewicht", resultLoad: 40 }),
       ]);
     });
   });

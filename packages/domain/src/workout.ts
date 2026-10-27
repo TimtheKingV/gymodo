@@ -641,10 +641,9 @@ export async function completeSession(
       error?.message ?? "Training konnte nicht beendet werden.",
     );
   }
-  const [vorschlaege] = await Promise.all([
-    vorschlaegeFuerAbschluss(client, parsed.data.sessionId, userId),
-    zielgewichteNachAbschluss(client, userId, row.id, row.studio_id),
-  ]);
+  // Erst die Ziele, dann die Vorschlaege: sie lesen die frisch gerechneten Ziele (G17).
+  await zielgewichteNachAbschluss(client, userId, row.id, row.studio_id);
+  const vorschlaege = await vorschlaegeFuerAbschluss(client, parsed.data.sessionId, userId);
   return {
     id: row.id,
     startedAt: row.started_at,
