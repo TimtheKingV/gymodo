@@ -146,4 +146,59 @@ describe("berechnePlanGewicht", () => {
   it("wdhBis - 1 ist noch nicht oben", () => {
     expect(berechnePlanGewicht(basis({ block: drei(40, 11, 2) }))).toMatchObject({ load: 40, grund: "im_korridor" });
   });
+
+  describe("grobe Geraetestufen (F13): Stufe > 10 % der Last oeffnet erst den Bereich um 3 Wdh.", () => {
+    const grob = { loadStep: 10, loadMin: 0, loadMax: 200 };
+
+    it("Stufe 10 kg bei 40 kg: oben bei wdhBis haelt die Last", () => {
+      expect(berechnePlanGewicht(basis({ geraet: grob, block: drei(40, 12, 2) }))).toMatchObject({
+        load: 40,
+        grund: "im_korridor",
+      });
+      expect(berechnePlanGewicht(basis({ geraet: grob, block: drei(40, 14, 2) }))).toMatchObject({
+        load: 40,
+        grund: "im_korridor",
+      });
+    });
+
+    it("Stufe 10 kg bei 40 kg: erst wdhBis + 3 steigert um die Stufe", () => {
+      expect(berechnePlanGewicht(basis({ geraet: grob, block: drei(40, 15, 2) }))).toMatchObject({
+        load: 50,
+        grund: "korridor_oben_erreicht",
+      });
+    });
+
+    it("ohne RIR muessen beide Einheiten den geoeffneten Bereich erreichen", () => {
+      const e = basis({ geraet: grob, block: drei(40, 15, null), vorher: drei(40, 12, null) });
+      expect(berechnePlanGewicht(e).load).toBe(40);
+      expect(berechnePlanGewicht({ ...e, vorher: drei(40, 15, null) }).load).toBe(50);
+    });
+
+    it("Stufe 2,5 kg bei 20 kg (12,5 %) ist grob", () => {
+      const geraet = { loadStep: 2.5, loadMin: 5, loadMax: 100 };
+      expect(berechnePlanGewicht(basis({ geraet, block: drei(20, 12, 2) })).load).toBe(20);
+      expect(berechnePlanGewicht(basis({ geraet, block: drei(20, 15, 2) })).load).toBe(22.5);
+    });
+
+    it("Stufe 2,5 kg bei 100 kg bleibt unberuehrt", () => {
+      const geraet = { loadStep: 2.5, loadMin: 5, loadMax: 200 };
+      expect(berechnePlanGewicht(basis({ geraet, block: drei(100, 12, 2) }))).toMatchObject({
+        load: 102.5,
+        grund: "korridor_oben_erreicht",
+      });
+    });
+
+    it("genau 10 % ist nicht grob", () => {
+      const geraet = { loadStep: 4, loadMin: 0, loadMax: 200 };
+      expect(berechnePlanGewicht(basis({ geraet, block: drei(40, 12, 2) })).load).toBe(44);
+    });
+
+    it("Senkung bleibt unberuehrt", () => {
+      const unten = [satz(40, 6), satz(40, 8)];
+      expect(berechnePlanGewicht(basis({ geraet: grob, block: unten, vorher: unten }))).toMatchObject({
+        load: 30,
+        grund: "korridor_unten_verfehlt",
+      });
+    });
+  });
 });

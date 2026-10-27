@@ -7,6 +7,7 @@ import {
   getBootstrap,
   getMachineContext,
   initialisierePlanGewichte,
+  PLANGEWICHT_ALGO_VERSION,
   ladeZielgewichte,
   tauschePlanPosition,
   zielSchluessel,
@@ -305,7 +306,7 @@ describe("aktualisierePlanGewichte", () => {
     await aktualisierePlanGewichte(client, userId, sid);
 
     const z = await ziele(p.id);
-    expect(z["C:C-bank"]).toMatchObject({ load: 42.5, grund: "korridor_oben_erreicht", stand_session_id: sid, algo_version: "1.0.0" });
+    expect(z["C:C-bank"]).toMatchObject({ load: 42.5, grund: "korridor_oben_erreicht", stand_session_id: sid, algo_version: PLANGEWICHT_ALGO_VERSION });
     expect(z["D:D-bank"]).toMatchObject({ load: 42.5, grund: "korridor_oben_erreicht" });
     // E liegt hinter der Vorausschau (B, C, D).
     expect(z["E:E-bank"]).toBeUndefined();
@@ -408,7 +409,7 @@ describe("aktualisierePlanGewichte", () => {
     // A: Bankdruecken getauscht gegen Fly, Fly oben erreicht.
     const sid = await einheit(w, p, "A", {
       startedAt: vorStunden(3),
-      saetze: block("fly", 20, 12, 2),
+      saetze: block("fly", 30, 12, 2),
       status: [{ key: "A-bank", status: "getauscht", exerciseId: w.ex.fly }],
     });
 
@@ -416,8 +417,9 @@ describe("aktualisierePlanGewichte", () => {
 
     const z = await ziele(p.id);
     expect(z["C:C-bank"]).toMatchObject({ load: 40, stand_session_id: null });
-    // Fly rechnet aus seinen eigenen Saetzen (20 -> 22,5), nicht aus den 40 kg der Bank.
-    expect(z["D:D-fly"]).toMatchObject({ load: 22.5, grund: "korridor_oben_erreicht" });
+    // Fly rechnet aus seinen eigenen Saetzen (30 -> 32,5), nicht aus den 40 kg der Bank.
+    // 30 statt 20 kg: bei 20 kg waere die 2,5-kg-Stufe grob (F13) und haelte die Last.
+    expect(z["D:D-fly"]).toMatchObject({ load: 32.5, grund: "korridor_oben_erreicht" });
     expect(z["A:A-bank"]).toBeUndefined();
   });
 
@@ -900,7 +902,7 @@ describe("Vorschlaege aus Zielgewicht oder letztem Gewicht (Task 6)", () => {
     const kontext = await getMachineContext(client, w.m.bank);
 
     expect(kontext.suggestion).toMatchObject({
-      algoVersion: "1.0.0",
+      algoVersion: PLANGEWICHT_ALGO_VERSION,
       resultLoad: 45,
       reasonCode: "korridor_oben_erreicht",
     });
@@ -910,7 +912,7 @@ describe("Vorschlaege aus Zielgewicht oder letztem Gewicht (Task 6)", () => {
       .select("algo_version, result_load, reason_code")
       .eq("machine_id", w.m.bank)
       .eq("user_id", userId);
-    expect(data).toEqual([{ algo_version: "1.0.0", result_load: 45, reason_code: "korridor_oben_erreicht" }]);
+    expect(data).toEqual([{ algo_version: PLANGEWICHT_ALGO_VERSION, result_load: 45, reason_code: "korridor_oben_erreicht" }]);
   });
 
   it("zweite Einheit zuerst dran: deren Ziel gilt (naechsteEinheitKey)", async () => {
@@ -944,7 +946,7 @@ describe("Vorschlaege aus Zielgewicht oder letztem Gewicht (Task 6)", () => {
 
     const kontext = await getMachineContext(client, w.m.bank);
 
-    expect(kontext.suggestion).toMatchObject({ algoVersion: "1.0.0", resultLoad: 37.5, reasonCode: "letztes_gewicht" });
+    expect(kontext.suggestion).toMatchObject({ algoVersion: PLANGEWICHT_ALGO_VERSION, resultLoad: 37.5, reasonCode: "letztes_gewicht" });
   });
 
   it("Abschluss: Delta = Ziel minus bisher, Zeile mit neuer algo_version, Wiederholung liest unveraendert zurueck", async () => {
@@ -966,7 +968,7 @@ describe("Vorschlaege aus Zielgewicht oder letztem Gewicht (Task 6)", () => {
         resultLoad: 42.5,
         deltaLoad: 2.5,
         reasonCode: "korridor_oben_erreicht",
-        algoVersion: "1.0.0",
+        algoVersion: PLANGEWICHT_ALGO_VERSION,
       }),
     ]);
     const { data } = await admin
@@ -974,7 +976,7 @@ describe("Vorschlaege aus Zielgewicht oder letztem Gewicht (Task 6)", () => {
       .select("algo_version, result_load, reason_code")
       .eq("machine_id", w.m.bank)
       .eq("user_id", userId);
-    expect(data).toEqual([{ algo_version: "1.0.0", result_load: 42.5, reason_code: "korridor_oben_erreicht" }]);
+    expect(data).toEqual([{ algo_version: PLANGEWICHT_ALGO_VERSION, result_load: 42.5, reason_code: "korridor_oben_erreicht" }]);
     expect((await completeSession(client, { sessionId: sid })).vorschlaege).toEqual(erster.vorschlaege);
   });
 
@@ -991,6 +993,6 @@ describe("Vorschlaege aus Zielgewicht oder letztem Gewicht (Task 6)", () => {
     const { vorschlaege } = await completeSession(client, { sessionId: sid });
 
     const bank = vorschlaege.find((v) => v.exerciseId === w.ex.bank);
-    expect(bank).toMatchObject({ resultLoad: 40, deltaLoad: 0, reasonCode: "letztes_gewicht", algoVersion: "1.0.0" });
+    expect(bank).toMatchObject({ resultLoad: 40, deltaLoad: 0, reasonCode: "letztes_gewicht", algoVersion: PLANGEWICHT_ALGO_VERSION });
   });
 });

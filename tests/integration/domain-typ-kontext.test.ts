@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { getEquipmentModelContext, getMachineContext } from "@fitretro/domain";
+import { getEquipmentModelContext, getMachineContext, PLANGEWICHT_ALGO_VERSION } from "@fitretro/domain";
 import {
   createTestUser,
   serviceClient,
@@ -196,7 +196,7 @@ describe("getEquipmentModelContext", () => {
     expect(kontext.history.map((h) => h.load).sort()).toEqual([60, 62.5]);
     expect(kontext.suggestion.inputs.currentLoad).toBe(62.5);
     // Ohne Plan am Typ: das letzte Gewicht (Etappe 4, G17).
-    expect(kontext.suggestion).toMatchObject({ resultLoad: 62.5, reasonCode: "letztes_gewicht", algoVersion: "1.0.0" });
+    expect(kontext.suggestion).toMatchObject({ resultLoad: 62.5, reasonCode: "letztes_gewicht", algoVersion: PLANGEWICHT_ALGO_VERSION });
   });
 
   it("haelt den Vorschlag am Typ fest, ohne Geraet", async () => {
