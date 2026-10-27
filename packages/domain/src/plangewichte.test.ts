@@ -274,3 +274,28 @@ describe("Gewicht aus einem anderen Geraet (Anti-Ziel)", () => {
     expect((r.load! - 5) % 2.5).toBe(0);
   });
 });
+
+describe("zielNachPause (F18 beim Lesen, Final-Fix I2)", () => {
+  const g = { loadStep: 2.5, loadMin: 5, loadMax: 100 };
+  const schaetzung = () => 40;
+  const ziel = { load: 62.5, grund: "korridor_oben_erreicht" as const };
+  it("bis 7 Tage unveraendert", () => {
+    expect(zielNachPause(ziel, 60, 7, g, schaetzung)).toEqual(ziel);
+  });
+  it("8 und 14 Tage: nie ueber dem letzten Gewicht", () => {
+    expect(zielNachPause(ziel, 60, 8, g, schaetzung)).toEqual({ load: 60, grund: "wiedereinstieg" });
+    expect(zielNachPause(ziel, 60, 14, g, schaetzung)).toEqual({ load: 60, grund: "wiedereinstieg" });
+  });
+  it("15 und 42 Tage: Abschlag vom letzten Gewicht", () => {
+    expect(zielNachPause(ziel, 60, 15, g, schaetzung)).toEqual({ load: 55, grund: "wiedereinstieg" });
+    expect(zielNachPause(ziel, 60, 42, g, schaetzung)).toEqual({ load: 52.5, grund: "wiedereinstieg" });
+  });
+  it("ueber 42 Tage die Startschaetzung", () => {
+    expect(zielNachPause(ziel, 60, 43, g, schaetzung)).toEqual({ load: 40, grund: "startschaetzung" });
+  });
+  it("senkt nur: ein Ziel unter dem gemilderten Wert bleibt samt Grund", () => {
+    const tief = { load: 50, grund: "korridor_unten_verfehlt" as const };
+    expect(zielNachPause(tief, 60, 20, g, schaetzung)).toEqual(tief);
+    expect(zielNachPause(tief, 60, 10, g, schaetzung)).toEqual(tief);
+  });
+});
