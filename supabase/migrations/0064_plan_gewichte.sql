@@ -5,7 +5,9 @@
 -- aendern sich nach jeder abgeschlossenen Einheit, ohne neue Planversion
 -- (Spec G1).
 --
--- * plan_gewichte: eine Zeile je (Plan-Version, Positionsschluessel). Nur
+-- * plan_gewichte: eine Zeile je (Plan-Version, Einheit, Positionsschluessel).
+--   Der Generator nummeriert Positionen je Einheit ("0", "1", ...); erst das
+--   Paar (Einheit, Position) bezeichnet eine Position im Plan (G14). Nur
 --   lesbar fuer das Mitglied selbst (force row level security, keine
 --   Insert-/Update-/Delete-Policy). Geschrieben wird ausschliesslich ueber
 --   set_plan_gewichte und init_plan_gewichte (SECURITY DEFINER, G10).
@@ -32,8 +34,8 @@
 --   0063 verhindert, dass das Mitglied sie ueber die Update-Policy (0047)
 --   direkt setzt.
 --
--- zeilen-Format (jsonb-Array): { positionKey, load, secondaryLoad|null,
--- grund|null, algoVersion }.
+-- zeilen-Format (jsonb-Array): { einheitKey, positionKey, load,
+-- secondaryLoad|null, grund|null, algoVersion }.
 
 alter table public.workout_sessions
   add column gewichte_berechnet_at timestamptz;
@@ -43,6 +45,7 @@ comment on column public.workout_sessions.gewichte_berechnet_at is
 
 create table public.plan_gewichte (
   plan_id              uuid not null references public.training_plans (id) on delete cascade,
+  einheit_key          text not null,
   position_key         text not null,
   user_id              uuid not null references auth.users (id) on delete cascade,
   load                 numeric not null check (load >= 0),
@@ -54,7 +57,7 @@ create table public.plan_gewichte (
   -- unterlaufen kann.
   stand_session_id     uuid references public.workout_sessions (id) on delete set null,
   stand_completed_at   timestamptz,
-  primary key (plan_id, position_key)
+  primary key (plan_id, einheit_key, position_key)
 );
 
 create index on public.plan_gewichte (user_id);
@@ -104,14 +107,16 @@ stable
 set search_path = public, pg_temp
 as $$
 declare
-  v_keys text[];
-  v_z    jsonb;
+  v_paare jsonb[];
+  v_z     jsonb;
 begin
   if p_zeilen is null or jsonb_typeof(p_zeilen) <> 'array' then
     raise exception 'plan_ungueltig' using errcode = 'P0001';
   end if;
 
-  select array_agg(p.value ->> 'key') into v_keys
+  -- Paare (Einheit, Position) des Plans; ein Positionsschluessel allein ist
+  -- nicht eindeutig.
+  select array_agg(jsonb_build_array(e.value ->> 'key', p.value ->> 'key')) into v_paare
     from jsonb_array_elements(p_plan.einheiten) e(value),
          jsonb_array_elements(e.value -> 'positionen') p(value);
 
@@ -119,8 +124,9 @@ begin
     -- coalesce: ein fehlender Schluessel ergibt jsonb_typeof = NULL, und NULL
     -- in einer OR-Kette liesse die Pruefung durch (dann kaeme 23502).
     if coalesce(jsonb_typeof(v_z), 'null') <> 'object'
+       or coalesce(jsonb_typeof(v_z -> 'einheitKey'), 'null') <> 'string'
        or coalesce(jsonb_typeof(v_z -> 'positionKey'), 'null') <> 'string'
-       or not ((v_z ->> 'positionKey') = any (coalesce(v_keys, '{}')))
+       or not (jsonb_build_array(v_z ->> 'einheitKey', v_z ->> 'positionKey') = any (coalesce(v_paare, '{}')))
        or coalesce(jsonb_typeof(v_z -> 'load'), 'null') <> 'number'
        or (v_z ->> 'load')::numeric < 0
        or coalesce(jsonb_typeof(v_z -> 'secondaryLoad'), 'null') not in ('number', 'null')
@@ -133,7 +139,8 @@ begin
   end loop;
 
   if (select count(*) from jsonb_array_elements(p_zeilen))
-     <> (select count(distinct value ->> 'positionKey') from jsonb_array_elements(p_zeilen)) then
+     <> (select count(distinct (value ->> 'einheitKey', value ->> 'positionKey'))
+           from jsonb_array_elements(p_zeilen)) then
     raise exception 'plan_ungueltig' using errcode = 'P0001';
   end if;
 end;
@@ -213,9 +220,10 @@ begin
   perform public.plan_gewichte_zeilen_pruefen(v_plan, p_zeilen);
 
   insert into public.plan_gewichte as pg
-    (plan_id, position_key, user_id, load, secondary_load, grund, algo_version,
+    (plan_id, einheit_key, position_key, user_id, load, secondary_load, grund, algo_version,
      stand_session_id, stand_completed_at)
   select p_plan_id,
+         z.value ->> 'einheitKey',
          z.value ->> 'positionKey',
          v_user,
          (z.value ->> 'load')::numeric,
@@ -225,7 +233,7 @@ begin
          p_session_id,
          v_stand
     from jsonb_array_elements(p_zeilen) z
-  on conflict (plan_id, position_key) do update
+  on conflict (plan_id, einheit_key, position_key) do update
      set load               = excluded.load,
          secondary_load     = excluded.secondary_load,
          grund              = excluded.grund,
@@ -278,8 +286,9 @@ begin
   perform public.plan_gewichte_zeilen_pruefen(v_plan, p_zeilen);
 
   insert into public.plan_gewichte
-    (plan_id, position_key, user_id, load, secondary_load, grund, algo_version)
+    (plan_id, einheit_key, position_key, user_id, load, secondary_load, grund, algo_version)
   select p_plan_id,
+         z.value ->> 'einheitKey',
          z.value ->> 'positionKey',
          v_user,
          (z.value ->> 'load')::numeric,
@@ -287,7 +296,7 @@ begin
          z.value ->> 'grund',
          z.value ->> 'algoVersion'
     from jsonb_array_elements(p_zeilen) z
-  on conflict (plan_id, position_key) do nothing;
+  on conflict (plan_id, einheit_key, position_key) do nothing;
 end;
 $$;
 

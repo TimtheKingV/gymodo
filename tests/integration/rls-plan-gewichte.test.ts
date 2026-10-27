@@ -28,6 +28,7 @@ beforeAll(async () => {
 
 const key = (i: number, p: TrainingPlan = plan) => p.einheiten[0]!.positionen[i]!.key;
 const zeile = (i: number, load: number, extra: Record<string, unknown> = {}, p: TrainingPlan = plan) => ({
+  einheitKey: p.einheiten[0]!.key,
   positionKey: key(i, p),
   load,
   secondaryLoad: null,
@@ -60,8 +61,9 @@ async function legeSession(opts: { completedAt?: string | null; startedAt?: stri
 async function zeilen(planId: string) {
   const { data, error } = await admin
     .from("plan_gewichte")
-    .select("position_key, user_id, load, secondary_load, grund, algo_version, stand_session_id, stand_completed_at")
+    .select("einheit_key, position_key, user_id, load, secondary_load, grund, algo_version, stand_session_id, stand_completed_at")
     .eq("plan_id", planId)
+    .order("einheit_key")
     .order("position_key");
   if (error) throw error;
   return data!;
@@ -107,7 +109,7 @@ describe("Zielgewichte je Planposition (0064)", () => {
     await leere(plan.id);
     await setze(await legeSession({ completedAt: vor(1) }), [zeile(0, 40)]);
     const insert = await ich.client.from("plan_gewichte").insert({
-      plan_id: plan.id, position_key: key(1), user_id: ich.userId, load: 99, algo_version: "v1",
+      plan_id: plan.id, einheit_key: plan.einheiten[0]!.key, position_key: key(1), user_id: ich.userId, load: 99, algo_version: "v1",
     });
     expect(insert.error).not.toBeNull();
     await ich.client.from("plan_gewichte").update({ load: 99 }).eq("plan_id", plan.id);
@@ -218,7 +220,7 @@ describe("Zielgewichte je Planposition (0064)", () => {
     expect(r.error).not.toBeNull();
   });
 
-  it.each(["positionKey", "load", "algoVersion"])("fehlendes %s in einer Zeile -> plan_ungueltig", async (fehlt) => {
+  it.each(["einheitKey", "positionKey", "load", "algoVersion"])("fehlendes %s in einer Zeile -> plan_ungueltig", async (fehlt) => {
     await leere(plan.id);
     const sid = await legeSession({ completedAt: vor(1) });
     const z: Record<string, unknown> = zeile(0, 40);
@@ -252,6 +254,51 @@ describe("Zielgewichte je Planposition (0064)", () => {
     });
     expect(error).toBeNull();
     expect((await setze(sid, [zeile(0, 40)])).error?.message).toContain("plan_ungueltig");
+    expect(await zeilen(plan.id)).toEqual([]);
+  });
+
+  it("derselbe Positionsschluessel in zwei Einheiten sind zwei Zeilen (G14)", async () => {
+    await leere(plan.id);
+    const [a, b] = plan.einheiten as [TrainingPlan["einheiten"][number], TrainingPlan["einheiten"][number]];
+    expect(b).toBeDefined();
+    // Der Generator nummeriert je Einheit: beide haben eine Position "0".
+    expect(a.positionen[0]!.key).toBe(b.positionen[0]!.key);
+    const sid = await legeSession({ completedAt: vor(1) });
+    const { error } = await setze(sid, [
+      zeile(0, 40),
+      { ...zeile(0, 60), einheitKey: b.key },
+    ]);
+    expect(error).toBeNull();
+    const z = await zeilen(plan.id);
+    expect(z.map((r) => [r.einheit_key, r.position_key, r.load])).toEqual(
+      [[a.key, a.positionen[0]!.key, 40], [b.key, b.positionen[0]!.key, 60]].sort((x, y) => String(x[0]).localeCompare(String(y[0]))),
+    );
+    // init ebenso: je Paar eine Zeile.
+    await leere(plan.id);
+    const init = await ich.client.rpc("init_plan_gewichte", {
+      p_plan_id: plan.id,
+      p_zeilen: [zeile(0, 10), { ...zeile(0, 20), einheitKey: b.key }],
+    });
+    expect(init.error).toBeNull();
+    expect(await zeilen(plan.id)).toHaveLength(2);
+  });
+
+  it("ein Paar, das es im Plan nicht gibt, und ein doppeltes Paar -> plan_ungueltig", async () => {
+    await leere(plan.id);
+    const sid = await legeSession({ completedAt: vor(1) });
+    const fehlt = await setze(sid, [zeile(0, 40, { einheitKey: "gibt-es-nicht" })]);
+    expect(fehlt.error?.message).toContain("plan_ungueltig");
+    // Schluessel aus Einheit 0, den Einheit 1 nicht hat.
+    const b = plan.einheiten[1]!;
+    const fremdePos = plan.einheiten[0]!.positionen.find((p) => !b.positionen.some((q) => q.key === p.key));
+    if (fremdePos) {
+      const r = await setze(sid, [{ ...zeile(0, 40), einheitKey: b.key, positionKey: fremdePos.key }]);
+      expect(r.error?.message).toContain("plan_ungueltig");
+    }
+    const doppelt = await setze(sid, [zeile(0, 40), zeile(0, 50)]);
+    expect(doppelt.error?.message).toContain("plan_ungueltig");
+    const initDoppelt = await ich.client.rpc("init_plan_gewichte", { p_plan_id: plan.id, p_zeilen: [zeile(0, 10), zeile(0, 20)] });
+    expect(initDoppelt.error?.message).toContain("plan_ungueltig");
     expect(await zeilen(plan.id)).toEqual([]);
   });
 
