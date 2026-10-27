@@ -78,22 +78,47 @@ type Flags = {
   fokus: Set<FokusBereich>;
 };
 
+/** Die Felder einer Kraftposition, die vom Typ der Uebung abhaengen. */
+export type TypVorgaben = Pick<
+  PlanPosition,
+  "typ" | "wdhVon" | "wdhBis" | "reserveVon" | "reserveBis" | "pauseSek" | "aufwaermsatz"
+> & { wdhVon: number; wdhBis: number };
+
+function typVorgaben(profil: Zielprofil, typ: PlanTyp): TypVorgaben {
+  const [wdhVon, wdhBis] = profil.wdh[typ];
+  return {
+    typ,
+    wdhVon,
+    wdhBis,
+    reserveVon: profil.reserve[0],
+    reserveBis: profil.reserve[1],
+    pauseSek: pauseSekunden(typ),
+    // Nur Mehrgelenkuebungen bekommen einen Aufwaermsatz (Spec Abschnitt 2).
+    aufwaermsatz: typ === "mehrgelenk",
+  };
+}
+
+/**
+ * Vorgaben je Typ fuer einen dauerhaften Tausch (Uebergabe Etappe 3, Punkt 2): die
+ * getauschte Position bekommt die Werte des Typs der NEUEN Uebung, aus demselben
+ * Zielprofil wie der Generator. swap_training_plan_position (0065) waehlt den Eintrag
+ * nach exercises.plan_typ; die Regeln stehen so nur hier, nicht auch in SQL.
+ */
+export function tauschVorgaben(
+  eingabe: Pick<GeneratorEingabe, "ziel" | "erfahrung" | "anfaengerBeendet">,
+): Record<PlanTyp, TypVorgaben> {
+  const profil = zielprofil(eingabe.ziel, eingabe.erfahrung, eingabe.anfaengerBeendet ?? false);
+  return { mehrgelenk: typVorgaben(profil, "mehrgelenk"), isolation: typVorgaben(profil, "isolation") };
+}
+
 function position(k: Kandidat, rolle: Entwurf["rolle"], saetze: number, profil: Zielprofil): Entwurf {
-  const [wdhVon, wdhBis] = profil.wdh[k.typ];
   return {
     baustein: k.baustein,
     rolle,
     exerciseId: k.exerciseId,
     machineId: k.machineId,
-    typ: k.typ,
     saetze,
-    wdhVon,
-    wdhBis,
-    reserveVon: profil.reserve[0],
-    reserveBis: profil.reserve[1],
-    pauseSek: pauseSekunden(k.typ),
-    // Nur Mehrgelenkuebungen bekommen einen Aufwaermsatz (Spec Abschnitt 2).
-    aufwaermsatz: k.typ === "mehrgelenk",
+    ...typVorgaben(profil, k.typ),
     dauerMin: null,
     hauptmuskeln: [...k.hauptmuskeln],
   };

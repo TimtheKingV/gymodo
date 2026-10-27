@@ -8,7 +8,7 @@ import { DomainError } from "./errors.js";
 import { aktiveZiele } from "./goals.js";
 import type { GeneratorEingabe, PlanEinheit } from "./trainingsplan-generator.js";
 import type { Struktur } from "./trainingsplan-regeln.js";
-import { generierePlan } from "./trainingsplan-generator.js";
+import { generierePlan, tauschVorgaben } from "./trainingsplan-generator.js";
 import { anfaengerphaseVorbei, ladeGezaehlteEinheiten } from "./trainingsplan-bootstrap.js";
 import { ladeKandidaten } from "./trainingsplan-kandidaten.js";
 import { initialisierePlanGewichte, ohneAbbruch, uebernehmePlanGewichte } from "./plangewichte.js";
@@ -207,7 +207,7 @@ export type PlanTausch = { einheitKey: string; positionKey: string; exerciseId: 
 
 /**
  * Tauscht eine Position dauerhaft: swap_training_plan_position legt sofort eine neue
- * aktive Version an (0062). Fremd, nicht aktiv oder ausgetreten ist ein Konflikt
+ * aktive Version an (0062, Vorgaben des neuen Typs seit 0065). Fremd, nicht aktiv oder ausgetreten ist ein Konflikt
  * (plan_nicht_annehmbar), alles andere Ungueltige validation_failed.
  */
 export async function tauschePlanPosition(
@@ -216,6 +216,16 @@ export async function tauschePlanPosition(
   planId: string,
   input: PlanTausch,
 ): Promise<TrainingPlan> {
+  // Die Vorgaben haengen am Ziel des Plans (eingabe, je Version unveraendert kopiert);
+  // die Funktion waehlt nach dem Typ der neuen Uebung (Uebergabe Punkt 2, 0065).
+  const { data: alt, error: e } = await client
+    .from("training_plans")
+    .select("eingabe")
+    .eq("id", planId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (e) throw new DomainError("internal", "Die Übung konnte nicht getauscht werden.");
+  if (!alt) throw new DomainError("conflict", "Dieser Plan kann nicht mehr geändert werden.");
   const { data, error } = await client
     .rpc("swap_training_plan_position", {
       p_plan_id: planId,
@@ -223,6 +233,7 @@ export async function tauschePlanPosition(
       p_position_key: input.positionKey,
       p_exercise_id: input.exerciseId,
       p_machine_id: input.machineId,
+      p_vorgaben: tauschVorgaben((alt as { eingabe: PlanEingabe }).eingabe),
     })
     .single();
   if (error?.code === "P0001" && error.message === "plan_nicht_annehmbar") {

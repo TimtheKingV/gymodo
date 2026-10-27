@@ -300,13 +300,14 @@ export type { LimitStufe, TrainingLimits, TrainingProfile } from "./trainingspro
 export { PLAN_REGEL_VERSION, FOKUS_MUSKELN, strukturFuerTage, zielAusTrainingGoal, zielprofil } from "./trainingsplan-regeln.js";
 export type { Struktur, Ziel as PlanZiel, Zielprofil } from "./trainingsplan-regeln.js";
 export { ZEIT, aufwaermenMinuten, cardioMinuten, pauseSekunden, uebungMinuten } from "./trainingsplan-zeit.js";
-export { generierePlan } from "./trainingsplan-generator.js";
+export { generierePlan, tauschVorgaben } from "./trainingsplan-generator.js";
 export type {
   GeneratorEingabe,
   GeneratorErgebnis,
   Kandidat,
   PlanEinheit,
   PlanPosition,
+  TypVorgaben,
 } from "./trainingsplan-generator.js";
 export { ladeKandidaten } from "./trainingsplan-kandidaten.js";
 export {

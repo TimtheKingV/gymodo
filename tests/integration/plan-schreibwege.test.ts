@@ -6,6 +6,7 @@ import {
   deleteTrainingLimits,
   erzeugePlanVorschlag,
   tauschePlanPosition,
+  tauschVorgaben,
   type TrainingPlan,
 } from "@fitretro/domain";
 import { anonClient, serviceClient } from "./helpers/clients.js";
@@ -293,7 +294,11 @@ describe("swap_training_plan_position", () => {
   }
 
   /** Neue Uebung im selben Baustein, am Geraetetyp des Studios verfuegbar. */
-  async function ersatzUebung(baustein: string, bereiche: string[] = []): Promise<string> {
+  async function ersatzUebung(
+    baustein: string,
+    bereiche: string[] = [],
+    typ: "mehrgelenk" | "isolation" = "isolation",
+  ): Promise<string> {
     const geraet = await machineVon(s.voll);
     const { data, error } = await admin
       .from("exercises")
@@ -307,7 +312,7 @@ describe("swap_training_plan_position", () => {
         target_min: 8,
         target_max: 12,
         plan_baustein: baustein,
-        plan_typ: "isolation",
+        plan_typ: typ,
         plan_bereiche: bereiche,
       })
       .select("id")
@@ -349,7 +354,19 @@ describe("swap_training_plan_position", () => {
     expect((await zeile(plan.id)).status).toBe("ersetzt");
 
     const erwartet = structuredClone(plan.einheiten);
-    Object.assign(erwartet[0]!.positionen[0]!, { exerciseId, machineId: geraet.id, hauptmuskeln: ["quadrizeps"] });
+    // Die erste Position ist eine Mehrgelenkuebung, die Ersatzuebung Isolation: Bereich,
+    // Pause und Aufwaermsatz kommen aus dem Zielprofil des neuen Typs (Uebergabe Punkt 2).
+    expect(position.typ).toBe("mehrgelenk");
+    Object.assign(erwartet[0]!.positionen[0]!, {
+      exerciseId,
+      machineId: geraet.id,
+      hauptmuskeln: ["quadrizeps"],
+      typ: "isolation",
+      wdhVon: 10,
+      wdhBis: 15,
+      pauseSek: 90,
+      aufwaermsatz: false,
+    });
     expect(neu.einheiten).toEqual(erwartet);
     const { data } = await admin
       .from("training_plans")
@@ -357,6 +374,119 @@ describe("swap_training_plan_position", () => {
       .eq("user_id", m.userId)
       .eq("status", "aktiv");
     expect(data).toHaveLength(1);
+  });
+
+  /** Die Felder, die vom Typ der Uebung abhaengen. */
+  function vorgabenVon(p: TrainingPlan["einheiten"][number]["positionen"][number]) {
+    const { typ, wdhVon, wdhBis, reserveVon, reserveBis, pauseSek, aufwaermsatz } = p;
+    return { typ, wdhVon, wdhBis, reserveVon, reserveBis, pauseSek, aufwaermsatz };
+  }
+
+  it("Tausch Mehrgelenk -> Isolation: Bereich, Pause und Reserve der neuen Uebung (Uebergabe Punkt 2)", async () => {
+    const { m, plan } = await mitAktivemPlan("swap-typ-iso");
+    // Muskelaufbau, regelmaessig: Mehrgelenk 8-12 / 150 s, Isolation 10-15 / 90 s, Reserve 1-3.
+    expect(plan.eingabe).toMatchObject({ ziel: "muskelaufbau", erfahrung: "regelmaessig" });
+    const einheit = plan.einheiten[0]!;
+    const alt = einheit.positionen.find((p) => p.typ === "mehrgelenk" && p.rolle !== "cardio")!;
+    expect(vorgabenVon(alt)).toEqual({
+      typ: "mehrgelenk", wdhVon: 8, wdhBis: 12, reserveVon: 1, reserveBis: 3, pauseSek: 150, aufwaermsatz: true,
+    });
+    const exerciseId = await ersatzUebung(alt.baustein, [], "isolation");
+    const geraet = await machineVon(s.voll);
+
+    const neu = await tauschePlanPosition(m.client, m.userId, plan.id, {
+      einheitKey: einheit.key,
+      positionKey: alt.key,
+      exerciseId,
+      machineId: geraet.id,
+    });
+
+    const getauscht = neu.einheiten[0]!.positionen.find((p) => p.key === alt.key)!;
+    expect(getauscht).toMatchObject({ exerciseId, saetze: alt.saetze, dauerMin: null, rolle: alt.rolle });
+    expect(vorgabenVon(getauscht)).toEqual({
+      typ: "isolation", wdhVon: 10, wdhBis: 15, reserveVon: 1, reserveBis: 3, pauseSek: 90, aufwaermsatz: false,
+    });
+  });
+
+  it("Tausch Isolation -> Mehrgelenk: Bereich und Pause der neuen Uebung", async () => {
+    const { m, plan } = await mitAktivemPlan("swap-typ-mg");
+    const stelle = plan.einheiten
+      .flatMap((e) => e.positionen.map((p) => ({ einheitKey: e.key, p })))
+      .find(({ p }) => p.typ === "isolation" && p.rolle !== "cardio")!;
+    expect(stelle).toBeDefined();
+    const exerciseId = await ersatzUebung(stelle.p.baustein, [], "mehrgelenk");
+    const geraet = await machineVon(s.voll);
+
+    const neu = await tauschePlanPosition(m.client, m.userId, plan.id, {
+      einheitKey: stelle.einheitKey,
+      positionKey: stelle.p.key,
+      exerciseId,
+      machineId: geraet.id,
+    });
+
+    const getauscht = neu.einheiten.find((e) => e.key === stelle.einheitKey)!.positionen.find((p) => p.key === stelle.p.key)!;
+    expect(vorgabenVon(getauscht)).toEqual({
+      typ: "mehrgelenk", wdhVon: 8, wdhBis: 12, reserveVon: 1, reserveBis: 3, pauseSek: 150, aufwaermsatz: true,
+    });
+    // Alle anderen Positionen bleiben unveraendert.
+    const ohne = (pl: TrainingPlan) =>
+      pl.einheiten.map((e) => e.positionen.filter((p) => !(e.key === stelle.einheitKey && p.key === stelle.p.key)));
+    expect(ohne(neu)).toEqual(ohne(plan));
+  });
+
+  it("die Funktion lehnt unsinnige Vorgaben ab (plan_ungueltig)", async () => {
+    const { m, plan } = await mitAktivemPlan("swap-vorgaben");
+    const { einheitKey, position } = ersteStelle(plan);
+    const geraet = await machineVon(s.voll);
+    const exerciseId = await ersatzUebung(position.baustein, [], "isolation");
+    const gut = tauschVorgaben(plan.eingabe);
+    const aufruf = (vorgaben: unknown) =>
+      m.client.rpc("swap_training_plan_position", {
+        p_plan_id: plan.id,
+        p_einheit_key: einheitKey,
+        p_position_key: position.key,
+        p_exercise_id: exerciseId,
+        p_machine_id: geraet.id,
+        p_vorgaben: vorgaben,
+      });
+    const iso = gut.isolation;
+    const schlecht: unknown[] = [
+      null,
+      [],
+      "x",
+      { mehrgelenk: gut.mehrgelenk },
+      { ...gut, isolation: { ...iso, wdhVon: 0 } },
+      { ...gut, isolation: { ...iso, wdhBis: 51 } },
+      { ...gut, isolation: { ...iso, wdhVon: 16, wdhBis: 15 } },
+      { ...gut, isolation: { ...iso, wdhVon: 10.5 } },
+      { ...gut, isolation: { ...iso, wdhVon: "10" } },
+      { ...gut, isolation: { ...iso, reserveVon: -1 } },
+      { ...gut, isolation: { ...iso, reserveVon: 4, reserveBis: 3 } },
+      { ...gut, isolation: { ...iso, reserveBis: 11 } },
+      { ...gut, isolation: { ...iso, pauseSek: -1 } },
+      { ...gut, isolation: { ...iso, pauseSek: 601 } },
+      { ...gut, isolation: { ...iso, aufwaermsatz: "nein" } },
+      // Der Typ im Eintrag muss zum Schluessel passen.
+      { ...gut, isolation: { ...iso, typ: "mehrgelenk" } },
+    ];
+    for (const v of schlecht) {
+      const { error } = await aufruf(v);
+      expect(error, JSON.stringify(v)).toMatchObject({ code: "P0001", message: "plan_ungueltig" });
+    }
+    expect((await zeile(plan.id)).status).toBe("aktiv");
+    // Der alte Aufruf ohne Vorgaben ist entfernt: er uebernaehme die Werte der alten Position.
+    const { error: alt } = await m.client.rpc("swap_training_plan_position", {
+      p_plan_id: plan.id,
+      p_einheit_key: einheitKey,
+      p_position_key: position.key,
+      p_exercise_id: exerciseId,
+      p_machine_id: geraet.id,
+    });
+    expect(alt).not.toBeNull();
+    expect((await zeile(plan.id)).status).toBe("aktiv");
+    // Kontrolle: mit gueltigen Vorgaben klappt derselbe Aufruf.
+    const { error: ok } = await aufruf(gut);
+    expect(ok).toBeNull();
   });
 
   it("anderer Baustein wird abgelehnt", async () => {
@@ -445,6 +575,7 @@ describe("swap_training_plan_position", () => {
       p_position_key: "x",
       p_exercise_id: crypto.randomUUID(),
       p_machine_id: crypto.randomUUID(),
+      p_vorgaben: tauschVorgaben({ ziel: "muskelaufbau", erfahrung: "regelmaessig" }),
     });
     expect(error).not.toBeNull();
   });

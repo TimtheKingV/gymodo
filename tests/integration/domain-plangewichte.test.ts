@@ -8,6 +8,7 @@ import {
   getMachineContext,
   initialisierePlanGewichte,
   ladeZielgewichte,
+  tauschePlanPosition,
   zielSchluessel,
   type TrainingPlan,
 } from "@fitretro/domain";
@@ -817,6 +818,43 @@ describe("Ausloeser mit erzeugtem Plan (Task 5)", () => {
 
     expect((await marke(sid)).gewichte_berechnet_at).not.toBeNull();
     expect((await zieleVon(plan.id))[p0.ziel]).toMatchObject({ stand_session_id: sid });
+  });
+
+  it("Session an Version N, aktiv ist N+1 (dauerhafter Tausch in der Einheit): rechnet gegen N+1 ueber Uebung und Geraet (Uebergabe Punkt 5)", async () => {
+    const { m, plan } = await mitPlan("pg-version");
+    const a = plan.einheiten[0]!;
+    // Latzug ist die einzige Ziehen-Uebung: er steht in jeder Einheit.
+    const latzug = stellen(plan).filter((p) => p.exerciseId === ps.uebungen.Latzug);
+    expect(latzug.map((p) => p.einheitKey).sort()).toEqual(plan.einheiten.map((e) => e.key).sort());
+    const lat0 = latzug.find((p) => p.einheitKey === a.key)!;
+    // Mitten in Einheit A wird die Beinuebung dauerhaft getauscht (Beinpresse <-> Hackenschmidt).
+    const bein = stellen(plan).find((p) => p.einheitKey === a.key && p.baustein === "beine_knie")!;
+    const ersatz = bein.exerciseId === ps.uebungen.Beinpresse ? ps.uebungen.Hackenschmidt! : ps.uebungen.Beinpresse!;
+    const sid = await offeneEinheit(m, plan, a.key, lat0);
+
+    const neu = await tauschePlanPosition(m.client, m.userId, plan.id, {
+      einheitKey: a.key,
+      positionKey: bein.key,
+      exerciseId: ersatz,
+      machineId: bein.machineId,
+    });
+    expect(neu.version).toBe(plan.version + 1);
+    const vorher = await zieleVon(neu.id);
+
+    await completeSession(m.client, { sessionId: sid });
+
+    expect((await marke(sid)).gewichte_berechnet_at).not.toBeNull();
+    const z = await zieleVon(neu.id);
+    // Alle Latzug-Positionen der aktiven Version N+1 rechnen aus der Session (G2).
+    for (const p of stellen(neu).filter((x) => x.exerciseId === ps.uebungen.Latzug)) {
+      expect(z[p.ziel]).toMatchObject({ stand_session_id: sid });
+      expect(z[p.ziel]!.grund).not.toBe("uebertragung");
+    }
+    // Die getauschte Position zaehlt mit ihrer neuen Uebung (ohne eigene Historie: Uebertragung).
+    expect(z[zielSchluessel(a.key, bein.key)]).toMatchObject({ stand_session_id: sid, grund: "uebertragung" });
+    expect(vorher[zielSchluessel(a.key, bein.key)]).toMatchObject({ grund: "startschaetzung", stand_session_id: null });
+    // Die ersetzte Version N bleibt unberuehrt.
+    expect(Object.values(await zieleVon(plan.id)).some((x) => x.stand_session_id === sid)).toBe(false);
   });
 });
 

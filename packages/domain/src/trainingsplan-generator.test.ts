@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { PlanNichtMoeglichError } from "./errors.js";
 import type { GeneratorEingabe, Kandidat, PlanEinheit } from "./trainingsplan-generator.js";
-import { generierePlan } from "./trainingsplan-generator.js";
+import { generierePlan, tauschVorgaben } from "./trainingsplan-generator.js";
 import type { Baustein, Bereich, PlanTyp } from "./trainingsplan-typen.js";
 import { PLAN_REGEL_VERSION } from "./trainingsplan-regeln.js";
 
@@ -516,6 +516,33 @@ describe("generierePlan: Regelversion 1.2.0", () => {
     for (const p of plan.einheiten.flatMap((e) => e.positionen)) {
       expect(p.saetze).toBe(2);
       expect([p.reserveVon, p.reserveBis]).toEqual([3, 4]);
+    }
+  });
+});
+
+// Uebergabe Etappe 3, Punkt 2: ein Tausch ueber die Typgrenze bekommt die Vorgaben des
+// neuen Typs. tauschVorgaben ist dieselbe Quelle wie der Generator (zielprofil).
+describe("tauschVorgaben", () => {
+  it("Muskelaufbau, regelmaessig: Werte je Typ", () => {
+    expect(tauschVorgaben({ ziel: "muskelaufbau", erfahrung: "regelmaessig" })).toEqual({
+      mehrgelenk: { typ: "mehrgelenk", wdhVon: 8, wdhBis: 12, reserveVon: 1, reserveBis: 3, pauseSek: 150, aufwaermsatz: true },
+      isolation: { typ: "isolation", wdhVon: 10, wdhBis: 15, reserveVon: 1, reserveBis: 3, pauseSek: 90, aufwaermsatz: false },
+    });
+  });
+
+  it.each([
+    ["muskelaufbau", "regelmaessig", false],
+    ["fitness", "neu", false],
+    ["abnehmen", "neu", true],
+    ["fitness", "unregelmaessig", false],
+  ] as const)("stimmt mit jeder Kraftposition des Generators ueberein (%s, %s, beendet %s)", (ziel, erfahrung, beendet) => {
+    const plan = generierePlan(eingabe({ ziel, erfahrung, anfaengerBeendet: beendet }));
+    const v = tauschVorgaben({ ziel, erfahrung, anfaengerBeendet: beendet });
+    const kraft = plan.einheiten.flatMap((e) => e.positionen).filter((p) => p.rolle !== "cardio");
+    expect(kraft.length).toBeGreaterThan(0);
+    for (const p of kraft) {
+      const { typ, wdhVon, wdhBis, reserveVon, reserveBis, pauseSek, aufwaermsatz } = p;
+      expect({ typ, wdhVon, wdhBis, reserveVon, reserveBis, pauseSek, aufwaermsatz }).toEqual(v[p.typ]);
     }
   });
 });
