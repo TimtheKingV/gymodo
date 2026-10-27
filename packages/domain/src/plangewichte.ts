@@ -18,6 +18,7 @@ import {
   startgewichtAusHistorie,
   uebertragungsFaktor,
   wiedereinstieg,
+  WIEDEREINSTIEG_STUFEN,
   type Geraetegrenzen,
 } from "./plangewicht-start.js";
 import { AGE_BANDS, SEX } from "./profil.js";
@@ -691,9 +692,65 @@ export async function ohneAbbruch(
 // ---------------------------------------------------------------------------
 
 /**
+ * Juengster Arbeitssatz je Paar VOR `vor` -- fuer Paare ohne Satz im Historienfenster,
+ * damit "zuletzt benutzt" nicht nur deshalb null wird, weil das Fenster endet (F18 ueber
+ * 42 Tage: das alte Gewicht bleibt Bezug des Hinweises). Eine Abfrage, hoechstens eine
+ * PostgREST-Seite; ein Paar, das darin nicht vorkommt, bleibt ohne Bezug.
+ */
+async function ladeLetzteVor(
+  client: SupabaseClient,
+  userId: string,
+  paare: Array<{ machineId: string; exerciseId: string }>,
+  vor: Date,
+): Promise<Map<string, HistorieZeile>> {
+  const ergebnis = new Map<string, HistorieZeile>();
+  if (paare.length === 0) return ergebnis;
+  const { data, error } = await client
+    .from("workout_sets")
+    .select("id, session_id, machine_id, exercise_id, performed_at, load, secondary_load, volume, rir, problem_flag")
+    .eq("user_id", userId)
+    .eq("set_role", "arbeit")
+    .not("load", "is", null)
+    .in("machine_id", [...new Set(paare.map((p) => p.machineId))])
+    .in("exercise_id", [...new Set(paare.map((p) => p.exerciseId))])
+    .lt("performed_at", vor.toISOString())
+    .order("performed_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(POSTGREST_MAX_ROWS);
+  if (error) throw new DomainError("internal", error.message);
+  for (const z of (data ?? []) as HistorieZeile[]) {
+    const k = paarSchluessel(z.machine_id, z.exercise_id);
+    if (!ergebnis.has(k)) ergebnis.set(k, z);
+  }
+  return ergebnis;
+}
+
+/**
+ * F18 beim Lesen (Final-Fix I2): das gespeicherte Ziel nach dem Abstand zum letzten
+ * Arbeitssatz gemildert. Bis 7 Tage unveraendert; 8-14 Tage nie ueber dem letzten
+ * Gewicht (eine vorgemerkte Steigerung verfaellt); 15-42 Tage letztes Gewicht -7,5 % bzw.
+ * -12,5 %, abgerundet; ueber 42 Tage die Startschaetzung. Senkt nur, steigert nie: liegt
+ * das Ziel schon darunter, bleibt es samt Grund. Rein; die Zeile in plan_gewichte bleibt.
+ */
+export function zielNachPause(
+  ziel: { load: number; grund: PlanGewichtGrund | null },
+  letzteLoad: number,
+  abstandTage: number,
+  g: Geraetegrenzen,
+  startschaetzung: () => number,
+): { load: number; grund: PlanGewichtGrund | null } {
+  if (abstandTage <= WIEDEREINSTIEG_STUFEN[0].bisTage) return ziel;
+  const basis = startgewichtAusHistorie([{ load: letzteLoad, secondaryLoad: null, volume: 0, rir: null, problemFlag: false }], g)!;
+  const w = wiedereinstieg(abstandTage, basis, g);
+  if (w.load === null) return { load: startschaetzung(), grund: "startschaetzung" };
+  return w.load < ziel.load ? { load: w.load, grund: "wiedereinstieg" } : ziel;
+}
+
+/**
  * Zielgewichte des Plans je zielSchluessel (Einheit:Position), mit Aenderung gegenueber dem letzten
  * tatsaechlich benutzten Gewicht (letzter Arbeitssatz) an diesem Geraet und dieser
  * Uebung. Positionen ohne Zeile fehlen im Ergebnis (App: wie freies Training).
+ * Nach einer Pause gilt zielNachPause (F18), bezogen auf den letzten abgeschlossenen Block.
  */
 export async function ladeZielgewichte(
   client: SupabaseClient,
@@ -708,26 +765,45 @@ export async function ladeZielgewichte(
     return p ? [p] : [];
   });
   const jetzt = Date.now();
+  const fensterAb = new Date(jetzt - HISTORIE_FENSTER_TAGE * TAG_MS);
   // Verglichen wird nur mit abgeschlossenen Einheiten: in der laufenden darf sich der
-  // Hinweis nicht unter dem Mitglied aendern (G17). Ohne Satz in den letzten 42 Tagen
-  // (F18: wie ohne Historie): null.
-  const [historie, laufend] = await Promise.all([
-    ladeArbeitssaetze(client, userId, mitZiel, new Date(jetzt - HISTORIE_FENSTER_TAGE * TAG_MS)),
+  // Hinweis nicht unter dem Mitglied aendern (G17).
+  const [historie, laufend, grenzen] = await Promise.all([
+    ladeArbeitssaetze(client, userId, mitZiel, fensterAb),
     laufendeSessions(client, userId, jetzt),
+    ladeGrenzen(client, mitZiel.map((p) => p.machineId)),
   ]);
+  const letzterJePaar = new Map<string, HistorieZeile>();
+  for (const p of mitZiel) {
+    const k = paarSchluessel(p.machineId, p.exerciseId);
+    const letzter = historie.get(k)?.find((s) => !laufend.has(s.session_id));
+    if (letzter) letzterJePaar.set(k, letzter);
+  }
+  // Paare ohne Satz im Fenster: der Bezug endet nicht mit dem Fenster (eine Abfrage).
+  const ohne = mitZiel.filter((p) => !letzterJePaar.has(paarSchluessel(p.machineId, p.exerciseId)));
+  for (const [k, z] of await ladeLetzteVor(client, userId, ohne, fensterAb)) letzterJePaar.set(k, z);
 
+  let person: Person | null = null;
   const ergebnis: Record<string, PositionsZiel> = {};
   for (const p of mitZiel) {
     const z = zeilen.get(p.ziel)!;
-    const letzter = historie
-      .get(paarSchluessel(p.machineId, p.exerciseId))
-      ?.find((s) => !laufend.has(s.session_id));
-    const load = Number(z.load);
-    ergebnis[p.ziel] = {
-      load,
-      secondaryLoad: z.secondary_load === null ? null : Number(z.secondary_load),
-      aenderung: aenderungZumLetzten(load, letzter ? Number(letzter.load) : null),
+    const letzter = letzterJePaar.get(paarSchluessel(p.machineId, p.exerciseId));
+    const letzteLoad = letzter ? Number(letzter.load) : null;
+    let ziel: { load: number; grund: PlanGewichtGrund | null } = {
+      load: Number(z.load),
       grund: z.grund as PlanGewichtGrund | null,
+    };
+    const g = grenzen.get(p.machineId);
+    if (letzter && letzteLoad !== null && g) {
+      const tage = Math.floor((jetzt - Date.parse(letzter.performed_at)) / TAG_MS);
+      if (tage > WIEDEREINSTIEG_STUFEN[WIEDEREINSTIEG_STUFEN.length - 1]!.bisTage) person ??= await ladePerson(client, userId);
+      ziel = zielNachPause(ziel, letzteLoad, tage, g, () => schaetzung(g, plan.eingabe.erfahrung, person!));
+    }
+    ergebnis[p.ziel] = {
+      load: ziel.load,
+      secondaryLoad: z.secondary_load === null ? null : Number(z.secondary_load),
+      aenderung: aenderungZumLetzten(ziel.load, letzteLoad),
+      grund: ziel.grund,
     };
   }
   return ergebnis;

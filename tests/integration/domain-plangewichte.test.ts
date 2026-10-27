@@ -514,6 +514,52 @@ describe("ladeZielgewichte", () => {
   });
 });
 
+describe("Wiedereinstieg beim Lesen (F18, Final-Fix I2)", () => {
+  // Ziel 62,5 (vorgemerkte Steigerung), letzter Block 60 kg vor `tage` Tagen.
+  async function pause(tage: number) {
+    const w = await welt();
+    const p = await plan(w, { A: ["bank"] });
+    await einheit(w, p, "A", { startedAt: vorStunden(tage * 24 + 2), saetze: block("bank", 60, 12, 2) });
+    const { error } = await admin.from("plan_gewichte").insert({
+      plan_id: p.id,
+      einheit_key: "A",
+      position_key: "A-bank",
+      user_id: userId,
+      load: 62.5,
+      grund: "korridor_oben_erreicht",
+      algo_version: "1.0.0",
+    });
+    if (error) throw error;
+    const ziel = await ladeZielgewichte(client, userId, p);
+    // Die gespeicherte Zeile bleibt unberuehrt.
+    expect((await ziele(p.id))["A:A-bank"]).toMatchObject({ load: 62.5, grund: "korridor_oben_erreicht" });
+    return ziel["A:A-bank"];
+  }
+
+  it("ohne Pause (3 Tage) bleibt das Ziel samt Steigerung", async () => {
+    expect(await pause(3)).toEqual({ load: 62.5, secondaryLoad: null, aenderung: 2.5, grund: "korridor_oben_erreicht" });
+  });
+
+  it("10 Tage: nicht ueber dem letzten Gewicht, die Steigerung verfaellt", async () => {
+    expect(await pause(10)).toEqual({ load: 60, secondaryLoad: null, aenderung: null, grund: "wiedereinstieg" });
+  });
+
+  it("20 Tage: -7,5 % vom letzten Gewicht, abgerundet", async () => {
+    // 60 * 0,925 = 55,5 -> 55
+    expect(await pause(20)).toEqual({ load: 55, secondaryLoad: null, aenderung: -5, grund: "wiedereinstieg" });
+  });
+
+  it("35 Tage: -12,5 % vom letzten Gewicht", async () => {
+    // 60 * 0,875 = 52,5
+    expect(await pause(35)).toEqual({ load: 52.5, secondaryLoad: null, aenderung: -7.5, grund: "wiedereinstieg" });
+  });
+
+  it("50 Tage: Startschaetzung, Aenderung trotzdem gegen das letzte Gewicht", async () => {
+    // regelmaessig, ohne weitere Angaben: load_start 40.
+    expect(await pause(50)).toEqual({ load: 40, secondaryLoad: null, aenderung: -20, grund: "startschaetzung" });
+  });
+});
+
 describe("Fix-Runde 1", () => {
   it("ladeZielgewichte vergleicht nicht mit der gerade laufenden Einheit (G17)", async () => {
     const w = await welt();
