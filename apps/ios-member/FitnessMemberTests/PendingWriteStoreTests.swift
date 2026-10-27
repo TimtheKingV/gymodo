@@ -11,6 +11,19 @@ struct PendingWriteStoreTests {
         return directory
     }
 
+    @Test("liest nach schnell aufeinanderfolgenden Speichern immer den letzten Stand")
+    func letzterStandNachSchnellemSpeichern() {
+        let store = PendingWriteStore(directory: makeTempDirectory())
+        var letzte: [PendingSetWrite] = []
+        for i in 1...50 {
+            letzte.append(PendingSetWrite(
+                sessionId: UUID(), setId: UUID(),
+                body: SetWrite(machineId: "m1", exerciseId: "ex1", setIndex: i, load: 80, volume: 10, rir: nil)))
+            store.save(letzte)
+        }
+        #expect(store.loadAll() == letzte)
+    }
+
     @Test("liefert eine leere Liste, wenn nie gespeichert wurde")
     func startsEmpty() {
         let store = PendingWriteStore(directory: makeTempDirectory())
@@ -108,6 +121,7 @@ extension PendingWriteStoreTests {
         let alterSchutz = try FileManager.default.attributesOfItem(atPath: datei.path)[.protectionKey]
         #expect(alterSchutz as? String == erwarteterSchutz.rawValue, "Dateischutzattribute: \(String(describing: alterSchutz))")
         store.save([])
+        store.abwarten()
         #expect(try FileManager.default.attributesOfItem(atPath: datei.path)[.protectionKey] as? String == erwarteterSchutz.rawValue)
         #expect(try FileManager.default.attributesOfItem(atPath: directory.path)[.protectionKey] as? String == erwarteterSchutz.rawValue)
     }
