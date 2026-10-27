@@ -107,7 +107,7 @@ struct PlanKarte: View {
             fotos = await GeraeteFotos.laden(von: fotoLader)
         }
         .sheet(isPresented: $warumOffen) {
-            PlanWarumView(gruende: plan.gruende)
+            PlanWarumView(struktur: plan.struktur, gruende: plan.gruende)
         }
     }
 
