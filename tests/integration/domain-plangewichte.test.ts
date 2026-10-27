@@ -470,3 +470,85 @@ describe("ladeZielgewichte", () => {
     expect(ziel["A-bein"]).toEqual({ load: 25, secondaryLoad: null, aenderung: null, grund: "startschaetzung" });
   });
 });
+
+describe("Fix-Runde 1", () => {
+  it("ladeZielgewichte vergleicht nicht mit der gerade laufenden Einheit (G17)", async () => {
+    const w = await welt();
+    const p = await plan(w, { A: ["bank"], B: ["bank"] });
+    const sid = await einheit(w, p, "A", { startedAt: vorStunden(30), saetze: block("bank", 40, 12, 2) });
+    await aktualisierePlanGewichte(client, userId, sid);
+    // Das Mitglied steht gerade an B und hat schon einen Satz mit 42,5 kg.
+    await einheit(w, p, "B", {
+      startedAt: new Date(JETZT - 10 * 60_000),
+      completedAt: null,
+      saetze: [{ u: "bank", load: 42.5, volume: 10 }],
+    });
+
+    const ziel = await ladeZielgewichte(client, userId, p);
+
+    expect(ziel["B-bank"]).toMatchObject({ load: 42.5, aenderung: 2.5 });
+  });
+
+  it("ladeZielgewichte erfindet keinen Grund", async () => {
+    const w = await welt();
+    const p = await plan(w, { A: ["bank"] });
+    const { error } = await admin
+      .from("plan_gewichte")
+      .insert({ plan_id: p.id, position_key: "A-bank", user_id: userId, load: 30, grund: null, algo_version: "1.0.0" });
+    if (error) throw error;
+
+    const ziel = await ladeZielgewichte(client, userId, p);
+
+    expect(ziel["A-bank"]).toEqual({ load: 30, secondaryLoad: null, aenderung: null, grund: null });
+  });
+
+  it("lange Historie (>1000 Saetze) fuehrt nicht zu Abfragen je Paar", async () => {
+    const w = await welt();
+    const p = await plan(w, { A: ["bank", "rudern", "bein"], B: ["bank", "rudern", "bein"] });
+    // Ein langjaehriges Mitglied: 1100 alte Rudersaetze vor 100 Tagen.
+    await einheit(w, p, "A", {
+      startedAt: vorStunden(100 * 24),
+      saetze: Array.from({ length: 1100 }, () => ({ u: "rudern" as const, load: 70, volume: 10 })),
+    });
+
+    const zaehler = new Map<string, number>();
+    const zaehlend = new Proxy(client, {
+      get(ziel, name) {
+        if (name === "from") {
+          return (tabelle: string) => {
+            zaehler.set(tabelle, (zaehler.get(tabelle) ?? 0) + 1);
+            return ziel.from(tabelle);
+          };
+        }
+        const wert = Reflect.get(ziel, name);
+        return typeof wert === "function" ? wert.bind(ziel) : wert;
+      },
+    }) as SupabaseClient;
+    const saetzeAbfragen = () => {
+      const n = zaehler.get("workout_sets") ?? 0;
+      zaehler.clear();
+      return n;
+    };
+
+    await initialisierePlanGewichte(zaehlend, userId, p);
+    expect(saetzeAbfragen()).toBeLessThanOrEqual(1);
+    // Ruderhistorie liegt ueber 42 Tage zurueck: wie ohne Historie.
+    expect((await ziele(p.id))["A-rudern"]).toMatchObject({ load: 40, grund: "startschaetzung" });
+
+    const sid = await einheit(w, p, "A", {
+      startedAt: vorStunden(3),
+      saetze: [...block("bank", 40, 12, 2), ...block("rudern", 30, 10, 2), ...block("bein", 50, 12, 2)],
+    });
+    await aktualisierePlanGewichte(zaehlend, userId, sid);
+    expect(saetzeAbfragen()).toBeLessThanOrEqual(3);
+    const z = await ziele(p.id);
+    expect(z["B-bank"]).toMatchObject({ load: 42.5, stand_session_id: sid });
+    expect(z["B-rudern"]).toMatchObject({ load: 30, grund: "im_korridor" });
+    expect(z["B-bein"]).toMatchObject({ load: 52.5 });
+
+    const ziel = await ladeZielgewichte(zaehlend, userId, p);
+    expect(saetzeAbfragen()).toBeLessThanOrEqual(2);
+    expect(ziel["B-bank"]).toMatchObject({ aenderung: 2.5 });
+    expect(ziel["B-rudern"]).toMatchObject({ aenderung: null });
+  });
+});
