@@ -2,7 +2,7 @@ import Foundation
 
 /// Die fuenf Onboarding-Screens (Spec 5.2) und die vier des Blocks "Dein
 /// Trainingsplan" (Etappe 3, Entwuerfe 1.1-1.4). Die Reihenfolge der Faelle
-/// ist die Reihenfolge im Flow -- `schritte(umfang:hatStudio:ergaenzt:)`
+/// ist die Reihenfolge im Flow -- `schritte(umfang:ergaenzt:)`
 /// sortiert danach.
 enum OnboardingSchritt: Hashable, CaseIterable {
     case ueberDich, koerper, ziel, wieOft, zielgewicht
@@ -70,15 +70,15 @@ struct OnboardingAntworten: Equatable {
 
     /// Die Screens mit dem Plan-Block (Etappe 3).
     ///
-    /// Die Vorschau (1.4) braucht ein Studio -- ein Plan gehoert einem
-    /// Studio (F20), und im Wurzel-Gate ist ein neues Mitglied meist noch in
-    /// keinem. Ohne Studio endet der Flow deshalb nach den Beschwerden.
+    /// Die Vorschau (1.4) gehoert immer dazu (ausser bei "nur Beschwerden"):
+    /// der Plan gehoert dem Mitglied, nicht einem Studio, und entsteht auch
+    /// im Freien Training.
     ///
     /// `ergaenzt`: Schritte, die ein Sonderfall nachtraeglich braucht
     /// ("Ergänzen" bei fehlenden Angaben, "Beschwerden ändern", "Zeit oder
     /// Schwerpunkt ändern" aus der reinen Vorschau). Sie reihen sich in die
     /// feste Reihenfolge ein, nichts steht doppelt.
-    func schritte(umfang: OnboardingUmfang, hatStudio: Bool, ergaenzt: [OnboardingSchritt] = []) -> [OnboardingSchritt] {
+    func schritte(umfang: OnboardingUmfang, ergaenzt: [OnboardingSchritt] = []) -> [OnboardingSchritt] {
         var basis: [OnboardingSchritt]
         switch umfang {
         case .komplett: basis = schritte + [.planZeit, .planSchwerpunkt, .planBeschwerden]
@@ -86,7 +86,7 @@ struct OnboardingAntworten: Equatable {
         case .nurVorschau: basis = []
         case .nurBeschwerden: basis = [.planBeschwerden]
         }
-        if (hatStudio && umfang != .nurBeschwerden) || umfang == .nurVorschau { basis.append(.planVorschau) }
+        if umfang != .nurBeschwerden { basis.append(.planVorschau) }
         // Zielgewicht nur mit Gewicht, auch als Ergaenzung (Spec 5.2).
         let zusatz = ergaenzt.filter { $0 != .zielgewicht || gewichtKg != nil }
         let alle = Set(basis).union(zusatz)

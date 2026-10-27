@@ -255,8 +255,10 @@ actor APIClient {
         try await executeNoContent(path: "me/training-limits", method: "DELETE")
     }
 
-    func createPlan(studioId: String) async throws(APIError) -> Trainingsplan {
-        try await send("me/plans", method: "POST", body: ["studioId": studioId])
+    /// `studioId` nennt den Ort (Merkliste); ohne ihn gilt das Freie Training.
+    func createPlan(studioId: String?) async throws(APIError) -> Trainingsplan {
+        let body: [String: String] = studioId.map { ["studioId": $0] } ?? [:]
+        return try await send("me/plans", method: "POST", body: body)
     }
 
     func acceptPlan(id: String) async throws(APIError) -> Trainingsplan {

@@ -36,19 +36,20 @@ struct OnboardingAntwortenTests {
 
     // MARK: - Block "Dein Trainingsplan" (Etappe 3)
 
-    @Test("schritte komplett ohne Studio enthaelt 3 Plan-Schritte und keine Vorschau")
-    func schritteKomplettOhneStudio() {
+    @Test("schritte komplett mit Gewicht endet mit der Vorschau, ohne Studio noetig")
+    func schritteKomplettMitGewicht() {
         var antworten = OnboardingAntworten()
         antworten.gewichtKg = 70.0
-        #expect(antworten.schritte(umfang: .komplett, hatStudio: false) == [
+        #expect(antworten.schritte(umfang: .komplett) == [
             .ueberDich, .koerper, .ziel, .wieOft, .zielgewicht, .planZeit, .planSchwerpunkt, .planBeschwerden,
+            .planVorschau,
         ])
     }
 
-    @Test("schritte komplett mit Studio endet mit der Vorschau")
-    func schritteKomplettMitStudio() {
+    @Test("schritte komplett ohne Gewicht endet mit der Vorschau")
+    func schritteKomplettOhneGewicht() {
         let antworten = OnboardingAntworten()
-        #expect(antworten.schritte(umfang: .komplett, hatStudio: true) == [
+        #expect(antworten.schritte(umfang: .komplett) == [
             .ueberDich, .koerper, .ziel, .wieOft, .planZeit, .planSchwerpunkt, .planBeschwerden, .planVorschau,
         ])
     }
@@ -56,40 +57,39 @@ struct OnboardingAntwortenTests {
     @Test("schritte nurPlan hat vier")
     func schritteNurPlanHatVier() {
         let antworten = OnboardingAntworten()
-        #expect(antworten.schritte(umfang: .nurPlan, hatStudio: true) == [
+        #expect(antworten.schritte(umfang: .nurPlan) == [
             .planZeit, .planSchwerpunkt, .planBeschwerden, .planVorschau,
         ])
     }
 
     @Test("schritte nurVorschau ist nur die Vorschau")
     func schritteNurVorschau() {
-        #expect(OnboardingAntworten().schritte(umfang: .nurVorschau, hatStudio: true) == [.planVorschau])
+        #expect(OnboardingAntworten().schritte(umfang: .nurVorschau) == [.planVorschau])
     }
 
     @Test("ergaenzte Schritte stehen in der festen Reihenfolge vor dem Plan-Block")
     func ergaenzteSchritteReihenfolge() {
         let antworten = OnboardingAntworten()
-        #expect(antworten.schritte(umfang: .nurVorschau, hatStudio: true, ergaenzt: [.wieOft, .ziel]) == [
+        #expect(antworten.schritte(umfang: .nurVorschau, ergaenzt: [.wieOft, .ziel]) == [
             .ziel, .wieOft, .planVorschau,
         ])
-        #expect(antworten.schritte(umfang: .nurPlan, hatStudio: true, ergaenzt: [.ziel]) == [
+        #expect(antworten.schritte(umfang: .nurPlan, ergaenzt: [.ziel]) == [
             .ziel, .planZeit, .planSchwerpunkt, .planBeschwerden, .planVorschau,
         ])
         // Was ohnehin im Flow steht, kommt nicht doppelt.
-        #expect(antworten.schritte(umfang: .nurVorschau, hatStudio: true, ergaenzt: [.planBeschwerden, .planBeschwerden]) == [
+        #expect(antworten.schritte(umfang: .nurVorschau, ergaenzt: [.planBeschwerden, .planBeschwerden]) == [
             .planBeschwerden, .planVorschau,
         ])
     }
 
-    @Test("schritte nurBeschwerden ist nur 1.3, mit und ohne Studio")
+    @Test("schritte nurBeschwerden ist nur 1.3")
     func schritteNurBeschwerden() {
-        #expect(OnboardingAntworten().schritte(umfang: .nurBeschwerden, hatStudio: true) == [.planBeschwerden])
-        #expect(OnboardingAntworten().schritte(umfang: .nurBeschwerden, hatStudio: false) == [.planBeschwerden])
+        #expect(OnboardingAntworten().schritte(umfang: .nurBeschwerden) == [.planBeschwerden])
     }
 
     @Test("die Schrittzeile zaehlt nur, was der Flow zeigt, und fehlt bei nur einem Schritt")
     func schrittzeile() {
-        let schritte = OnboardingAntworten().schritte(umfang: .komplett, hatStudio: true)
+        let schritte = OnboardingAntworten().schritte(umfang: .komplett)
         #expect(OnboardingSchrittzeile.text(nummer: 6, gesamt: schritte.count) == "Schritt 6 von 8")
         #expect(OnboardingSchrittzeile.text(nummer: 1, gesamt: 1) == nil)
     }

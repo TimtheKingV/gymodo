@@ -188,12 +188,7 @@ struct PlanVorschauSchritt: View {
     // MARK: - Ablauf
 
     private func vorschlagHolen() async {
-        guard let studioId else {
-            // Kann nur ein Programmierfehler sein: ohne Studio steht 1.4 gar
-            // nicht im Flow (`schritte(umfang:hatStudio:)`).
-            zustand = .fehler(text: "Für einen Plan brauchst du ein Studio.", plan: nil)
-            return
-        }
+        // Ohne aktives Studio (Freies Training) entsteht der Plan trotzdem.
         zustand = .laedt
         do throws(APIError) {
             let plan = try await apiClient.createPlan(studioId: studioId)
