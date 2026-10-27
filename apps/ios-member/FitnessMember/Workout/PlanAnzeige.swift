@@ -229,6 +229,23 @@ enum PlanAnzeige {
         return profil
     }
 
+    // MARK: - Zielgewicht (Etappe 4, G8/G17)
+
+    /// Das Zielgewicht der Position, an der diese Uebung an diesem Geraet in
+    /// der Einheit von heute steht. Das Ziel gilt je Uebung UND Geraet: eine
+    /// Position, die heute etwas anderes ist (Tausch) oder an einem anderen
+    /// Geraet steht, liefert keins. nil ohne Plan, ohne Einheit oder fuer
+    /// eine Position ohne Ziel -- dann bleibt alles wie im freien Training.
+    static func zielgewicht(exerciseId: String, machineId: String?, plan: Trainingsplan?,
+                            einheitKey: String?) -> Zielgewicht? {
+        guard let plan, let einheitKey, let machineId,
+              let einheit = plan.einheiten.first(where: { $0.key == einheitKey }) else { return nil }
+        for position in einheit.positionen where position.exerciseId == exerciseId && position.machineId == machineId {
+            if let ziel = plan.zielgewicht(einheitKey: einheitKey, positionKey: position.key) { return ziel }
+        }
+        return nil
+    }
+
     // MARK: - Bild
 
     /// Das Geraet fuer das Vorschaubild: das der Position, wenn es im Studio

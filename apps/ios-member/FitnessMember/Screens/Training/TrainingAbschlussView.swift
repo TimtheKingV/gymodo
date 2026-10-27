@@ -466,6 +466,45 @@ struct Vorschlagsdelta: Equatable {
     }
 }
 
+/// Der Hinweis am Geraet, wenn sich das Zielgewicht einer Planposition
+/// gegenueber dem zuletzt benutzten Gewicht geaendert hat (Trainingsplan
+/// Etappe 4, G7/G17): die Aenderung und ein knapper Grund, zusammen ein
+/// Halbsatz -- "+2,5 kg, Bereich oben erreicht". Feste Textbausteine, keine
+/// KI (F10). Die Zahlen kommen fertig vom Server (`aenderung`); die App
+/// rechnet nichts (F15), sie formatiert nur.
+struct Gewichtshinweis: Equatable {
+    /// "+2,5 kg", "−2,5 kg" -- ueber Zahlformat.belastungDelta, wie am Abschluss.
+    let zahl: String
+    let grund: String?
+
+    var text: String { grund.map { "\(zahl), \($0)" } ?? zahl }
+
+    /// nil, wenn es nichts zu sagen gibt: keine Aenderung, oder ein Grund,
+    /// der selbst "gleich geblieben" heisst (im Bereich, letztes Gewicht).
+    init?(grund code: String?, aenderung: Double?, einheit: LoadUnit) {
+        guard let aenderung, aenderung != 0 else { return nil }
+        if code == "im_korridor" || code == "letztes_gewicht" { return nil }
+        zahl = Zahlformat.belastungDelta(aenderung, einheit)
+        grund = code.flatMap(Self.grundText)
+    }
+
+    /// Ein Grund ohne Text (kein_verlauf, daten_uneindeutig, unbekannt)
+    /// laesst nur die Zahl stehen: lieber keine Erklaerung als eine falsche,
+    /// aber nie eine stille Aenderung (Anti-Ziel).
+    private static func grundText(_ code: String) -> String? {
+        switch code {
+        case "korridor_oben_erreicht": "Bereich oben erreicht"
+        case "korridor_unten_verfehlt": "Bereich unten verfehlt"
+        case "wiedereinstieg": "nach längerer Pause"
+        case "uebertragung": "von ähnlicher Übung"
+        case "startschaetzung": "erste Schätzung"
+        case "problem_gemeldet": "nach deiner Meldung"
+        case "geraetegrenze_erreicht": "Grenze des Geräts"
+        default: nil
+        }
+    }
+}
+
 /// Die drei sichtbaren Faelle aus dem Aufgabenbrief. Vorschlaege sind eine
 /// Rechnung, keine Empfehlung -- der Wortlaut bleibt entsprechend nuechtern
 /// ("+2,5 kg", nie "Du solltest").
@@ -502,6 +541,17 @@ enum VorschlagsAnzeige: Equatable {
             if let deltaLoad {
                 self = .delta(Vorschlagsdelta(wert: deltaLoad, einheit: loadUnit,
                                               nebenbelastung: secondaryLoad, nebeneinheit: secondaryUnit))
+            } else {
+                self = .keiner
+            }
+        // Plangewichte (Etappe 4, G19): das Ziel der naechsten Planeinheit,
+        // ohne Plan das letzte Gewicht. Gleich wie zuletzt heisst halten.
+        case "letztes_gewicht", "startschaetzung", "uebertragung", "wiedereinstieg":
+            if let deltaLoad, deltaLoad != 0 {
+                self = .delta(Vorschlagsdelta(wert: deltaLoad, einheit: loadUnit,
+                                              nebenbelastung: secondaryLoad, nebeneinheit: secondaryUnit))
+            } else if deltaLoad == 0 {
+                self = .halten(loadUnit)
             } else {
                 self = .keiner
             }

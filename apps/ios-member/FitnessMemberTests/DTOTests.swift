@@ -622,6 +622,34 @@ struct DTOTests {
         #expect(plan.alternativen.isEmpty)
     }
 
+    // MARK: - Zielgewichte (Etappe 4, G8/G17)
+
+    @Test("Ohne zielgewichte (alte Server-Antwort) bleibt der Plan lesbar, die Ziele sind leer")
+    func planOhneZielgewichte() throws {
+        let plan = try JSONDecoder().decode(Trainingsplan.self, from: Data(Self.planJSON.utf8))
+        #expect(plan.zielgewichte.isEmpty)
+        #expect(plan.zielgewicht(einheitKey: "A", positionKey: "0") == nil)
+    }
+
+    @Test("zielgewichte je Einheit und Position, grund und aenderung duerfen null sein")
+    func planMitZielgewichten() throws {
+        let json = #"{"planId":"p1","studioId":"s1","version":1,"regelVersion":"1.2.0","struktur":"gk_ab","einheiten":[],"zielgewichte":{"A:0":{"load":42.5,"secondaryLoad":null,"aenderung":2.5,"grund":"korridor_oben_erreicht"},"B:0":{"load":40,"secondaryLoad":6,"aenderung":null,"grund":null}}}"#
+        let plan = try JSONDecoder().decode(Trainingsplan.self, from: Data(json.utf8))
+        #expect(plan.zielgewichte.count == 2)
+        #expect(plan.zielgewicht(einheitKey: "A", positionKey: "0")
+                == Zielgewicht(load: 42.5, secondaryLoad: nil, aenderung: 2.5, grund: "korridor_oben_erreicht"))
+        #expect(plan.zielgewicht(einheitKey: "B", positionKey: "0")
+                == Zielgewicht(load: 40, secondaryLoad: 6, aenderung: nil, grund: nil))
+        // Derselbe Positionsschluessel in einer anderen Einheit ist ein anderes Ziel.
+        #expect(plan.zielgewicht(einheitKey: "C", positionKey: "0") == nil)
+    }
+
+    @Test("Der Schluessel ist derselbe wie zielSchluessel im Server")
+    func zielSchluesselWieImServer() {
+        #expect(Trainingsplan.zielSchluessel(einheitKey: "A", positionKey: "0") == "A:0")
+        #expect(Trainingsplan.zielSchluessel(einheitKey: "B", positionKey: "12") == "B:12")
+    }
+
     private static func momentaufnahme() -> PlanMomentaufnahme {
         PlanMomentaufnahme(planId: "p1", einheitKey: "A", stand: 3, positionen: [
             .init(key: "0", status: .erledigt, exerciseId: nil),

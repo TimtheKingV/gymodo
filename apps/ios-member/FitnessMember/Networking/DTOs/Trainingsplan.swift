@@ -25,10 +25,16 @@ struct Trainingsplan: Decodable, Equatable, Sendable {
     let anfaengerUebergang: Bool
     /// Tauschkandidaten je Baustein; ein Baustein ohne Kandidat fehlt ganz.
     let alternativen: [String: [Alternative]]
+    /// Zielgewichte je Planposition (Etappe 4, G8/G17), geschluesselt mit
+    /// `zielSchluessel`. Leer in einer alten Server-Antwort und fuer
+    /// Positionen ohne Ziel -- dann gilt wie im freien Training das letzte
+    /// Gewicht. Die App rechnet daran nichts (F15), sie zeigt nur an.
+    let zielgewichte: [String: Zielgewicht]
 
     private enum CodingKeys: String, CodingKey {
         case planId, id, studioId, version, regelVersion, struktur, einheiten, gruende,
-             naechsteEinheitKey, zuletztEinheitKey, einheitenErledigt, anfaengerUebergang, alternativen
+             naechsteEinheitKey, zuletztEinheitKey, einheitenErledigt, anfaengerUebergang, alternativen,
+             zielgewichte
     }
 
     init(from decoder: any Decoder) throws {
@@ -45,7 +51,32 @@ struct Trainingsplan: Decodable, Equatable, Sendable {
         einheitenErledigt = try c.decodeIfPresent(Int.self, forKey: .einheitenErledigt) ?? 0
         anfaengerUebergang = try c.decodeIfPresent(Bool.self, forKey: .anfaengerUebergang) ?? false
         alternativen = try c.decodeIfPresent([String: [Alternative]].self, forKey: .alternativen) ?? [:]
+        zielgewichte = try c.decodeIfPresent([String: Zielgewicht].self, forKey: .zielgewichte) ?? [:]
     }
+
+    /// Wie `zielSchluessel` in packages/domain/src/plangewichte.ts: erst
+    /// Einheit und Position zusammen bezeichnen eine Position, weil der
+    /// Generator die Positionen je Einheit ab "0" nummeriert.
+    static func zielSchluessel(einheitKey: String, positionKey: String) -> String {
+        "\(einheitKey):\(positionKey)"
+    }
+
+    func zielgewicht(einheitKey: String, positionKey: String) -> Zielgewicht? {
+        zielgewichte[Self.zielSchluessel(einheitKey: einheitKey, positionKey: positionKey)]
+    }
+}
+
+/// Das Zielgewicht einer Planposition (`PositionsZiel` im Server).
+/// `aenderung` ist Ziel minus zuletzt tatsaechlich benutztes Gewicht an
+/// diesem Geraet und dieser Uebung (nil: kein Vorgaenger oder gleich),
+/// `grund` der Code der Rechnung -- beides nur fuer den Hinweis (G17).
+/// Text statt Enum: ein Code, den erst ein spaeterer Server kennt, darf
+/// den Bootstrap nicht unlesbar machen.
+struct Zielgewicht: Decodable, Equatable, Sendable {
+    let load: Double
+    let secondaryLoad: Double?
+    let aenderung: Double?
+    let grund: String?
 }
 
 struct TrainingsplanEinheit: Decodable, Equatable, Sendable {

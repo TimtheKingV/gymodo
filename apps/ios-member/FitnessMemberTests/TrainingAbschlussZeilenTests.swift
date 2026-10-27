@@ -121,6 +121,71 @@ struct TrainingAbschlussZeilenTests {
         #expect(anzeige.gesprochen == "Kein Vorschlag. \(grund)")
     }
 
+    // MARK: - Plangewichte (Etappe 4, G19): die neuen Grund-Codes tragen eine Zahl
+
+    @Test(arguments: ["letztes_gewicht", "startschaetzung", "uebertragung", "wiedereinstieg"])
+    func dieNeuenCodesZeigenIhreZahl(reasonCode: String) {
+        #expect(VorschlagsAnzeige(reasonCode: reasonCode, deltaLoad: -7.5, loadUnit: .kg) == .delta(kg(-7.5)))
+        #expect(VorschlagsAnzeige(reasonCode: reasonCode, deltaLoad: 2.5, loadUnit: .kg).text == "+2,5 kg")
+        // Gleich wie zuletzt: halten, keine "+0,0 kg".
+        #expect(VorschlagsAnzeige(reasonCode: reasonCode, deltaLoad: 0, loadUnit: .kg) == .halten(.kg))
+        // Ohne Zahl lieber "Kein Vorschlag" als eine erfundene.
+        #expect(VorschlagsAnzeige(reasonCode: reasonCode, deltaLoad: nil, loadUnit: .kg) == .keiner)
+    }
+
+    // MARK: - Hinweis am Geraet (Etappe 4, G7/G17)
+
+    @Test func obenErreichtNenntDiePlusZahl() throws {
+        let hinweis = try #require(Gewichtshinweis(grund: "korridor_oben_erreicht", aenderung: 2.5, einheit: .kg))
+        #expect(hinweis.zahl == "+2,5 kg")
+        #expect(hinweis.text == "+2,5 kg, Bereich oben erreicht")
+    }
+
+    @Test func untenVerfehltNenntDieMinusZahl() throws {
+        let hinweis = try #require(Gewichtshinweis(grund: "korridor_unten_verfehlt", aenderung: -2.5, einheit: .kg))
+        #expect(hinweis.zahl == "−2,5 kg")
+        #expect(hinweis.text == "−2,5 kg, Bereich unten verfehlt")
+    }
+
+    @Test func wiedereinstiegNenntZahlUndKurzenGrund() throws {
+        let hinweis = try #require(Gewichtshinweis(grund: "wiedereinstieg", aenderung: -7.5, einheit: .kg))
+        #expect(hinweis.text == "−7,5 kg, nach längerer Pause")
+    }
+
+    @Test(arguments: [
+        ("im_korridor", 2.5 as Double?),
+        ("letztes_gewicht", -5),
+        ("korridor_oben_erreicht", 0),
+        ("korridor_oben_erreicht", nil),
+        ("wiedereinstieg", nil),
+    ])
+    func keinHinweisOhneAenderungOderBeiGleichemGewicht(grund: String, aenderung: Double?) {
+        #expect(Gewichtshinweis(grund: grund, aenderung: aenderung, einheit: .kg) == nil)
+    }
+
+    @Test func eineAenderungOhneBekanntenGrundBleibtNichtStill() throws {
+        // Anti-Ziel: keine stille Aenderung. Ohne erklaerbaren Grund steht
+        // wenigstens die Zahl da.
+        #expect(try #require(Gewichtshinweis(grund: nil, aenderung: 2.5, einheit: .kg)).text == "+2,5 kg")
+        #expect(try #require(Gewichtshinweis(grund: "daten_uneindeutig", aenderung: -2.5, einheit: .kg)).text
+                == "−2,5 kg")
+    }
+
+    @Test func derHinweisTraegtDieEinheitDesGeraets() throws {
+        #expect(try #require(Gewichtshinweis(grund: "korridor_oben_erreicht", aenderung: 10, einheit: .watt)).zahl
+                == "+10 W")
+    }
+
+    @Test(arguments: ["korridor_oben_erreicht", "korridor_unten_verfehlt", "wiedereinstieg", "uebertragung",
+                      "startschaetzung", "problem_gemeldet", "geraetegrenze_erreicht"])
+    func jederHinweisIstEinHalbsatz(grund: String) throws {
+        let text = try #require(Gewichtshinweis(grund: grund, aenderung: -2.5, einheit: .kg)).text
+        #expect(text.hasPrefix("−2,5 kg"))
+        #expect(!text.contains("."))
+        #expect(text.filter { $0 == "," }.count <= 2) // die Dezimalstelle und hoechstens ein Anschluss
+        #expect(text.count <= 40)
+    }
+
     @Test func einUnbekannterReasonCodeBleibtOhneGrund() {
         let anzeige = VorschlagsAnzeige(reasonCode: "irgendwas_unbekanntes", deltaLoad: nil, loadUnit: .kg)
         #expect(anzeige == .keiner)

@@ -1377,6 +1377,119 @@ struct GeraetModelTests {
         #expect(sut.rueckblick?.zuletzt == "40,0 kg × 10")
     }
 
+    // MARK: - Zielgewicht und Hinweis (Trainingsplan Etappe 4, G7/G8/G17)
+
+    /// Plan mit Einheit A: Position "0" ist e1 an m1 (wie GeraetTestdaten.maschine),
+    /// Position "1" e2 an m1. `ziel` ist das Zielgewicht von A:0 als JSON.
+    private func planMitZiel(_ ziel: String?) -> Trainingsplan {
+        func position(_ key: String, _ exerciseId: String) -> String {
+            """
+            {"key":"\(key)","baustein":"beine_knie","rolle":"pflicht","exerciseId":"\(exerciseId)",
+             "machineId":"m1","typ":"mehrgelenk","saetze":3,"wdhVon":8,"wdhBis":12,
+             "reserveVon":1,"reserveBis":3,"pauseSek":120,"aufwaermsatz":false,"dauerMin":null,
+             "hauptmuskeln":["quads"]}
+            """
+        }
+        let ziele = ziel.map { #","zielgewichte":{"A:0":\#($0)}"# } ?? ""
+        return GeraetTestdaten.dekodiere("""
+        {"planId":"p1","studioId":"s1","version":1,"regelVersion":"1.2.0","struktur":"gk_ab","gruende":[],
+         "naechsteEinheitKey":"A","zuletztEinheitKey":null,"einheitenErledigt":0,"anfaengerUebergang":false,
+         "alternativen":{},
+         "einheiten":[{"key":"A","geschaetzteMinuten":45,"positionen":[\(position("0", "e1")),\(position("1", "e2"))]},
+                      {"key":"B","geschaetzteMinuten":45,"positionen":[\(position("0", "e2"))]}]\(ziele)}
+        """)
+    }
+
+    private func bootstrapMitPlan(_ plan: Trainingsplan, zuletzt: Double = 40) -> BootstrapResponse {
+        let basis = GeraetTestdaten.bootstrap(lastSets: [("m1", "e1", zuletzt, 10)])
+        return BootstrapResponse(member: .init(displayName: nil, plans: [plan]), studios: [],
+                                 machines: [GeraetTestdaten.maschine], calibrations: [], lastSets: basis.lastSets)
+    }
+
+    private func ablauf(_ plan: Trainingsplan) -> TrainingsplanAblaufStore {
+        let sut = TrainingsplanAblaufStoreTests.store()
+        sut.vorbereiten(plan: plan, studioId: "s1", jetzt: Date())
+        return sut
+    }
+
+    private static let zielOben = #"{"load":42.5,"secondaryLoad":null,"aenderung":2.5,"grund":"korridor_oben_erreicht"}"#
+
+    @Test func dasZielDerPlanpositionBelegtDasRadVorAuchOffline() {
+        let plan = planMitZiel(Self.zielOben)
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrapMitPlan(plan), ablauf: ablauf(plan))
+
+        #expect(sut.belastung == 42.5)
+        #expect(sut.gewichtsHinweis?.text == "+2,5 kg, Bereich oben erreicht")
+        // Im Drawer steht der Hinweis statt der eigenen Rechnung -- schon offline.
+        #expect(sut.rueckblick == Rueckblick(zuletzt: "40,0 kg × 10",
+                                             vorschlag: "Vorschlag · +2,5 kg, Bereich oben erreicht"))
+    }
+
+    @Test func einSpaeterKontextAendertDasGezeigteZielNicht() {
+        // Anti-Ziel: die Zahl aendert sich nicht unter dem Mitglied. Es gilt
+        // das zuletzt gelieferte Ziel (G8), auch wenn der Kontext eines
+        // anderen Standes etwas anderes sagt.
+        let plan = planMitZiel(Self.zielOben)
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrapMitPlan(plan), ablauf: ablauf(plan))
+
+        sut.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 45.0))
+
+        #expect(sut.belastung == 42.5)
+        #expect(sut.rueckblick?.vorschlag == "Vorschlag · +2,5 kg, Bereich oben erreicht")
+    }
+
+    @Test func imKorridorZeigtKeinenHinweisBelegtAberVor() {
+        let plan = planMitZiel(#"{"load":40,"secondaryLoad":null,"aenderung":null,"grund":"im_korridor"}"#)
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrapMitPlan(plan), ablauf: ablauf(plan))
+
+        #expect(sut.belastung == 40)
+        #expect(sut.gewichtsHinweis == nil)
+        #expect(sut.rueckblick?.vorschlag == nil)
+    }
+
+    @Test func nachDemErstenSatzDerPositionVergleichtDieAnzeigeNichtMehr() async {
+        let plan = planMitZiel(Self.zielOben)
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrapMitPlan(plan), ablauf: ablauf(plan))
+        #expect(sut.gewichtsHinweis != nil)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(sut.gewichtsHinweis == nil)
+        #expect(sut.rueckblick?.vorschlag == nil)
+    }
+
+    @Test func ohneZielGiltDerKontextWieBisher() {
+        // Alte Server-Antwort ohne zielgewichte: alles wie vor Etappe 4.
+        let plan = planMitZiel(nil)
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrapMitPlan(plan), ablauf: ablauf(plan))
+        #expect(sut.belastung == 40)
+        #expect(sut.gewichtsHinweis == nil)
+
+        sut.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 80.0))
+
+        #expect(sut.belastung == 80)
+    }
+
+    @Test func ohnePlanablaufGiltKeinZiel() {
+        let plan = planMitZiel(Self.zielOben)
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrapMitPlan(plan))
+        #expect(sut.belastung == 40)
+        #expect(sut.gewichtsHinweis == nil)
+    }
+
+    @Test func eineUebungOhneZielInDerEinheitBekommtKeinFremdesZiel() {
+        // e2 steht in A als Position "1" ohne Ziel; das Ziel A:0 gehoert e1.
+        let plan = planMitZiel(Self.zielOben)
+        let sut = modell(maschine: GeraetTestdaten.maschineMitZweiUebungen, bootstrap: bootstrapMitPlan(plan),
+                         ablauf: ablauf(plan))
+        sut.uebungWechseln(zu: "e2")
+        #expect(sut.gewichtsHinweis == nil)
+
+        sut.uebungWechseln(zu: "e1")
+        #expect(sut.belastung == 42.5)
+        #expect(sut.gewichtsHinweis?.zahl == "+2,5 kg")
+    }
+
     // MARK: - Markierungen im Wiederholungsrad
 
     @Test func umfangsradMarkiertDenLetztenWertUndDieZielspanne() {
