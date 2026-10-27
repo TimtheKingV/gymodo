@@ -60,6 +60,12 @@ describe("schaetzeStartgewicht", () => {
       }),
     ).toBe(30);
   });
+  it("ohne Verlauf: Start aus load_start des Katalogmodells, gerundet auf die Stufe", () => {
+    // 32 liegt zwischen den Stufen 30 und 32.5 (min 5, Stufe 2.5): abgerundet wird 30.
+    expect(
+      schaetzeStartgewicht({ ...leer, loadStart: 32, erfahrung: "regelmaessig" }),
+    ).toBe(30);
+  });
   it("ohne loadStart startet sie bei loadMin", () => {
     expect(
       schaetzeStartgewicht({

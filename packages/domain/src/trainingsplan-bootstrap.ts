@@ -308,11 +308,10 @@ export function nachzuholendeSessions(
     .map((s) => s.id);
 }
 
-/** Die juengsten Planeinheiten des Paars (Nutzer, Studio) mit Nachholbedarf, siehe oben. */
+/** Die juengsten Planeinheiten des Mitglieds mit Nachholbedarf, siehe oben. */
 async function ladeNachzuholende(
   client: SupabaseClient,
   userId: string,
-  studioId: string,
   jetzt: Date,
 ): Promise<string[]> {
   const { data, error } = await client
@@ -363,7 +362,7 @@ async function ladeZielgewichteFuerApp(
   await ohneAbbruch(
     "Nachholen im Bootstrap",
     async () => {
-      for (const sessionId of await ladeNachzuholende(client, userId, plan.studioId, jetzt)) {
+      for (const sessionId of await ladeNachzuholende(client, userId, jetzt)) {
         await ohneAbbruch(
           "Nachholen einer Einheit",
           () => aktualisierePlanGewichte(client, userId, sessionId),

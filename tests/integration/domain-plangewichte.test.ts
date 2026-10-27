@@ -14,13 +14,15 @@ import {
   type TrainingPlan,
 } from "@fitretro/domain";
 import { createTestUser, serviceClient, uniqueEmail, userClient } from "./helpers/clients.js";
-import { legeMitgliedAn, legePlanStudiosAn, type Mitglied, type PlanStudios } from "./helpers/plan-studio.js";
+import { GYMTAVO, legeMitgliedAn, legePlanStudiosAn, machineVon, type Mitglied, type PlanStudios } from "./helpers/plan-studio.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Etappe 4, Task 4: Zielgewichte nach einer abgeschlossenen Einheit neu
 // rechnen (G2-G5, G9, G12-G16, G21). Jeder Test baut ein eigenes Studio mit
-// eigenen Geraeten und einem direkt eingefuegten Plan, damit Historie und
-// Zielgewichte sich zwischen den Tests nicht beruehren. Ein Mitglied fuer alle
+// eigenen Geraeten, ein eigenes Katalogmodell und einen direkt eingefuegten Plan
+// (Eigentuemer ist das Katalog-Studio, 0066), damit Historie und Zielgewichte sich
+// zwischen den Tests nicht beruehren. Die Zielgewichte haengen an der Uebung, nicht am
+// Geraet (Trainingsplan aus dem Katalog, Task 4). Ein Mitglied fuer alle
 // Tests: der lokale Auth-Dienst ist langsam.
 const admin = serviceClient();
 let userId: string;
@@ -45,13 +47,38 @@ const MUSKEL: Record<Uebung, string> = { bank: "brust", rudern: "ruecken", fly: 
 
 type Welt = {
   studioId: string;
+  /** Modell des Studios (an ihm haengen die Geraete und Saetze). */
   modellId: string;
+  /** Katalogmodell (unter GYMTAVO) mit denselben Grenzen; ihm gehoeren die Planpositionen. */
+  katalogModellId: string;
   ex: Record<Uebung, string>;
   m: Record<Uebung, string>;
 };
 
+async function neuesKatalogModell(kennung: string): Promise<string> {
+  const [modell] = await einfuegen("equipment_models", {
+    studio_id: GYMTAVO,
+    name: `Katalog ${kennung}`,
+    category: "kraft",
+    load_unit: "kg",
+    load_step: 2.5,
+    load_min: 5,
+    load_max: 100,
+    load_start: 40,
+    cardio_werte: [],
+  });
+  return modell!.id;
+}
+
+// Der Katalog ist geteilt und waechst mit jedem Testlauf; darum ein Katalogmodell fuer
+// alle Tests, ausser dort, wo ein Test dessen Grenzen aendert.
+let geteilt: Promise<string> | undefined;
+function geteiltesKatalogModell(): Promise<string> {
+  return (geteilt ??= neuesKatalogModell(crypto.randomUUID().slice(0, 8)));
+}
+
 /** Studio mit je einem Geraet je Uebung; Stufe 2,5, 5..100 kg, Startwert 40. */
-async function welt(): Promise<Welt> {
+async function welt(eigenesKatalogModell = false): Promise<Welt> {
   const kennung = crypto.randomUUID().slice(0, 8);
   const [studio] = await einfuegen("studios", { name: `Plangewichte ${kennung}` });
   const studioId = studio!.id;
@@ -67,6 +94,7 @@ async function welt(): Promise<Welt> {
     load_start: 40,
     cardio_werte: [],
   });
+  const katalogModellId = eigenesKatalogModell ? await neuesKatalogModell(kennung) : await geteiltesKatalogModell();
   const namen: Uebung[] = ["bank", "rudern", "fly", "bein", "cardio"];
   const uebungen = await einfuegen(
     "exercises",
@@ -84,7 +112,7 @@ async function welt(): Promise<Welt> {
   );
   const ex = Object.fromEntries(namen.map((n, i) => [n, uebungen[i]!.id])) as Record<Uebung, string>;
   const m = Object.fromEntries(namen.map((n, i) => [n, maschinen[i]!.id])) as Record<Uebung, string>;
-  return { studioId, modellId: modell!.id, ex, m };
+  return { studioId, modellId: modell!.id, katalogModellId, ex, m };
 }
 
 /** Planposition; Schluessel = Einheit + Uebung. */
@@ -95,7 +123,7 @@ function pos(w: Welt, einheit: string, u: Uebung, bereich: [number, number] = [8
     baustein: cardio ? "cardio" : u === "bein" ? "beine_knie" : u === "rudern" ? "ziehen" : "druecken",
     rolle: cardio ? "cardio" : "pflicht",
     exerciseId: w.ex[u],
-    machineId: w.m[u],
+    modelId: w.katalogModellId,
     typ: "mehrgelenk",
     saetze: 3,
     wdhVon: cardio ? null : bereich[0],
@@ -126,12 +154,29 @@ async function plan(w: Welt, einheiten: Record<string, Uebung[]>, nummeriert = f
     anfaengerBeendet: false,
     beschwerdenBeruecksichtigt: false,
   };
+  // Ein Plan je Mitglied: der Plan des vorigen Tests wird abgeloest, seine Ziele bleiben.
+  const { error: abloesen } = await admin
+    .from("training_plans")
+    .update({ status: "ersetzt" })
+    .eq("user_id", userId)
+    .eq("status", "aktiv");
+  if (abloesen) throw abloesen;
+  // Einheiten frueherer Tests (ein Mitglied fuer alle) duerfen weder als "laeuft gerade" (G15)
+  // noch als juengste gezaehlte Einheit (naechste Einheit) mitspielen: weit zurueckdatieren.
+  const { error: beenden } = await admin
+    .from("workout_sessions")
+    .update({ started_at: "2020-01-01T10:00:00Z", completed_at: "2020-01-01T11:00:00Z", completed_reason: "manual" })
+    .eq("user_id", userId);
+  if (beenden) throw beenden;
+  const { data: bisher, error: zaehlen } = await admin.from("training_plans").select("version").eq("user_id", userId);
+  if (zaehlen) throw zaehlen;
+  const version = Math.max(0, ...(bisher ?? []).map((z) => z.version as number)) + 1;
   const { data, error } = await admin
     .from("training_plans")
     .insert({
       user_id: userId,
-      studio_id: w.studioId,
-      version: 1,
+      studio_id: GYMTAVO,
+      version,
       status: "aktiv",
       regel_version: "test",
       eingabe,
@@ -145,8 +190,8 @@ async function plan(w: Welt, einheiten: Record<string, Uebung[]>, nummeriert = f
   if (error) throw error;
   return {
     id: data.id,
-    studioId: w.studioId,
-    version: 1,
+    studioId: GYMTAVO,
+    version,
     status: "aktiv",
     regelVersion: "test",
     eingabe: eingabe as unknown as TrainingPlan["eingabe"],
@@ -161,7 +206,15 @@ async function plan(w: Welt, einheiten: Record<string, Uebung[]>, nummeriert = f
 const JETZT = Date.now();
 const vorStunden = (h: number) => new Date(JETZT - h * 3_600_000);
 
-type Satz = { u: Uebung; load: number; volume: number; rir?: number | null; rolle?: "arbeit" | "aufwaermen" };
+type Satz = {
+  u: Uebung;
+  load: number;
+  volume: number;
+  rir?: number | null;
+  rolle?: "arbeit" | "aufwaermen";
+  /** Freies Training: der Satz hat kein Geraet (machine_id null). */
+  ohneGeraet?: boolean;
+};
 
 /**
  * Session einer Planeinheit mit Saetzen; completedAt null = offen. Die Saetze
@@ -196,7 +249,7 @@ async function einheit(
       studio_id: w.studioId,
       user_id: userId,
       session_id: id,
-      machine_id: w.m[s.u],
+      machine_id: s.ohneGeraet ? null : w.m[s.u],
       equipment_model_id: w.modellId,
       exercise_id: w.ex[s.u],
       set_index: n,
@@ -452,6 +505,49 @@ describe("aktualisierePlanGewichte", () => {
   });
 });
 
+describe("Zielgewichte je Uebung, mit und ohne Geraet", () => {
+  it("Satz im Freien Training (machine_id null) fuehrt zum Ziel der naechsten Einheit", async () => {
+    const w = await welt();
+    const p = await plan(w, { A: ["bank"], B: ["bank"] });
+    // Freies Training: Bank mit 50 kg ohne Geraet, vor drei Tagen. Vorher war er unsichtbar.
+    await einheit(w, p, "A", {
+      startedAt: vorStunden(72),
+      saetze: [
+        { u: "bank", load: 50, volume: 10, ohneGeraet: true },
+        { u: "bank", load: 50, volume: 10, ohneGeraet: true },
+        { u: "bank", load: 50, volume: 10, rir: 1, ohneGeraet: true },
+      ],
+    });
+
+    await initialisierePlanGewichte(client, userId, p);
+
+    const z = await ziele(p.id);
+    // Start aus dem letzten Block (50), nicht aus load_start (40).
+    expect(z["A:A-bank"]).toMatchObject({ load: 50 });
+    expect(z["B:B-bank"]).toMatchObject({ load: 50 });
+    const gelesen = await ladeZielgewichte(client, userId, p);
+    expect(gelesen["B:B-bank"]).toMatchObject({ load: 50, aenderung: null });
+  });
+
+  it("Saetze ohne Geraet zaehlen beim Neuberechnen, verschiedene Geraete mischen sich nicht zu Unsinn", async () => {
+    const w = await welt();
+    const p = await plan(w, { A: ["bank"], B: ["bank"] });
+    const sid = await einheit(w, p, "A", {
+      startedAt: vorStunden(3),
+      saetze: [
+        { u: "bank", load: 40, volume: 12, ohneGeraet: true },
+        { u: "bank", load: 40, volume: 12, ohneGeraet: true },
+        { u: "bank", load: 40, volume: 12, rir: 2, ohneGeraet: true },
+      ],
+    });
+
+    await aktualisierePlanGewichte(client, userId, sid);
+
+    const z = await ziele(p.id);
+    expect(z["B:B-bank"]).toMatchObject({ load: 42.5, grund: "korridor_oben_erreicht", stand_session_id: sid });
+  });
+});
+
 describe("initialisierePlanGewichte", () => {
   it("fuellt einen Plan ohne Zeilen aus Historie, Wiedereinstieg und Schaetzung", async () => {
     const w = await welt();
@@ -562,12 +658,12 @@ describe("Wiedereinstieg beim Lesen (F18, Final-Fix I2)", () => {
 
 describe("Ziele in den aktuellen Geraetegrenzen (Final-Fix M1)", () => {
   it("geaenderte Stufe, Ober- und Untergrenze: das gelesene Ziel passt aufs Geraet, die Zeile bleibt", async () => {
-    const w = await welt();
+    const w = await welt(true);
     const p = await plan(w, { A: ["bank"] });
     await einheit(w, p, "A", { startedAt: vorStunden(3), saetze: block("bank", 40, 12, 2) });
     await startziel(p, "A-bank", 42.5);
     const modell = async (werte: object) => {
-      const { error } = await admin.from("equipment_models").update(werte).eq("id", w.modellId);
+      const { error } = await admin.from("equipment_models").update(werte).eq("id", w.katalogModellId);
       if (error) throw error;
       return (await ladeZielgewichte(client, userId, p))["A:A-bank"];
     };
@@ -734,6 +830,21 @@ describe("Ausloeser mit erzeugtem Plan (Task 5)", () => {
 
   async function mitPlan(prefix: string, weeklyDays = 3): Promise<{ m: Mitglied; plan: TrainingPlan }> {
     const m = await legeMitgliedAn(prefix, { studios: [ps.voll], weeklyDays });
+    // Der Katalog ist geteilt (Reste anderer Testdateien): am Ort nur die eigenen Uebungen
+    // zulassen, damit der erzeugte Plan bestimmt ist.
+    const { data: katalog, error: katalogFehler } = await admin
+      .from("exercises")
+      .select("id")
+      .eq("studio_id", GYMTAVO)
+      .not("plan_baustein", "is", null);
+    if (katalogFehler) throw katalogFehler;
+    const eigene = new Set(Object.values(ps.uebungen));
+    const { error: merkFehler } = await admin.from("plan_merkliste").insert(
+      (katalog ?? [])
+        .filter((u) => !eigene.has(u.id as string))
+        .map((u) => ({ user_id: m.userId, exercise_id: u.id, art: "nicht_vorhanden", studio_id: ps.voll })),
+    );
+    if (merkFehler) throw merkFehler;
     const vorschlag = await erzeugePlanVorschlag(m.client, m.userId, ps.voll);
     return { m, plan: await acceptPlan(m.client, m.userId, vorschlag.id) };
   }
@@ -752,13 +863,14 @@ describe("Ausloeser mit erzeugtem Plan (Task 5)", () => {
       plan_stand: 1,
     });
     if (error) throw error;
+    const maschine = await machineVon(ps.voll);
     const { error: e } = await admin.from("workout_sets").insert(
       [1, 2, 3].map((n) => ({
         id: crypto.randomUUID(),
         studio_id: ps.voll,
         user_id: m.userId,
         session_id: id,
-        machine_id: p.machineId,
+        machine_id: maschine.id,
         exercise_id: p.exerciseId,
         set_index: n,
         load: 50,
@@ -826,7 +938,7 @@ describe("Ausloeser mit erzeugtem Plan (Task 5)", () => {
     expect(ergebnis.completedReason).toBe("manual");
     expect((await marke(sid)).gewichte_berechnet_at).not.toBeNull();
     const z = await zieleVon(plan.id);
-    const gleichesPaar = (p: Position) => p.machineId === p0.machineId && p.exerciseId === p0.exerciseId;
+    const gleichesPaar = (p: Position) => p.modelId === p0.modelId && p.exerciseId === p0.exerciseId;
     // Der Plan hat hoechstens drei Einheiten: alle liegen in der Vorausschau (G21).
     expect(plan.einheiten.length).toBeLessThanOrEqual(3);
     for (const p of kraft) {
@@ -906,7 +1018,7 @@ describe("Ausloeser mit erzeugtem Plan (Task 5)", () => {
       einheitKey: a.key,
       positionKey: bein.key,
       exerciseId: ersatz,
-      machineId: bein.machineId,
+      modelId: bein.modelId,
     });
     expect(neu.version).toBe(plan.version + 1);
     const vorher = await zieleVon(neu.id);

@@ -12,7 +12,7 @@ import type { LoadUnit, VolumeKind } from "./belastung.js";
 import { CARDIO_SELECT, cardioDesSatzes, cardioListeDesModells, type CardioGeraet, type CardioWert, type CardioWerte, type CardioZeile } from "./cardio.js";
 import { stationAufloesen } from "./workout.js";
 import { toBlocks, type BlockInput, type ProgressionSuggestion } from "./progression.js";
-import { paarSchluessel, vorschlagAusZiel } from "./plangewichte.js";
+import { uebungsSchluessel, vorschlagAusZiel } from "./plangewichte.js";
 import { ladeZieleFuerPaareOhneAbbruch } from "./ziel-vorschlag.js";
 
 /** So viele Trainingstage schaut die Progressionsregel zurueck. */
@@ -434,20 +434,19 @@ async function kontextAufbauen(
         cardio: null,
       }));
 
-      // Seit Etappe 4 (G17): das Zielgewicht der Planposition mit dieser Uebung an diesem
-      // Geraet, sonst das letzte Gewicht (letzter Arbeitssatz des juengsten Blocks).
+      // Seit Etappe 4 (G17): das Zielgewicht der Planposition mit dieser Uebung (egal an
+      // welchem Geraet), sonst das letzte Gewicht (letzter Arbeitssatz des juengsten Blocks).
       const letzterSatz = blocks[0]?.sets.at(-1);
       const ziele = ort.machine
         ? await ladeZieleFuerPaareOhneAbbruch(
             client,
             userId,
-            ort.studioId,
-            [{ machineId: ort.machine.id, exerciseId: selectedExerciseId }],
+            [selectedExerciseId],
             "Ziele am Geraet lesen",
           )
         : null;
       suggestion = vorschlagAusZiel(
-        ziele?.get(paarSchluessel(ort.machine!.id, selectedExerciseId)) ?? null,
+        ziele?.get(uebungsSchluessel(selectedExerciseId)) ?? null,
         letzterSatz ? { load: letzterSatz.load, secondaryLoad: letzterSatz.secondaryLoad } : null,
         geraetegrenzen,
       );

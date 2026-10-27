@@ -6,7 +6,8 @@
 // 0064 geschrieben (set_plan_gewichte, init_plan_gewichte). Alles laeuft mit
 // dem Client des Mitglieds: die Funktionen nehmen den Nutzer aus auth.uid().
 //
-// Zuordnung immer ueber Uebung + Geraet, nie ueber Versions- oder
+// Zuordnung immer ueber die Uebung (das Gewicht haengt an der Uebung, nicht am Geraet;
+// Saetze mit und ohne Geraet zaehlen), nie ueber Versions- oder
 // Positionskennungen der Session: die Session kann an Planversion N haengen,
 // waehrend nach einem dauerhaften Tausch N+1 aktiv ist (Uebergabe Punkt 5).
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -60,14 +61,15 @@ type Zeile = {
 
 type Grenzen = Geraetegrenzen & { loadStart: number | null };
 
-type HistorieZeile = SatzZeile & { machine_id: string; exercise_id: string };
+type HistorieZeile = SatzZeile & { machine_id: string | null; exercise_id: string };
 
 // ---------------------------------------------------------------------------
 // Reine Helfer
 // ---------------------------------------------------------------------------
 
-export function paarSchluessel(machineId: string, exerciseId: string): string {
-  return `${machineId}:${exerciseId}`;
+/** Schluessel der Satzhistorie und der Zielsuche: die Uebung, nie das Geraet. */
+export function uebungsSchluessel(exerciseId: string): string {
+  return exerciseId;
 }
 
 /**
@@ -141,29 +143,28 @@ function positionenVon(einheiten: PlanEinheit[]): Map<string, Stelle> {
   return new Map(stellenVon(einheiten).map((p) => [p.ziel, p] as const));
 }
 
-/** Geraetegrenzen und Startwert je Geraet, ueber sein Modell. */
-async function ladeGrenzen(client: SupabaseClient, machineIds: string[]): Promise<Map<string, Grenzen>> {
+/**
+ * Grenzen und Startwert je Katalogmodell (equipment_models), Schluessel ist die
+ * Modell-ID der Position. Ohne einstellbare Stufe (Cardiomodell) gibt es kein Ziel.
+ */
+export async function ladeGrenzen(client: SupabaseClient, modelIds: string[]): Promise<Map<string, Grenzen>> {
   const ergebnis = new Map<string, Grenzen>();
-  if (machineIds.length === 0) return ergebnis;
+  if (modelIds.length === 0) return ergebnis;
   const { data, error } = await client
-    .from("machines")
-    .select("id, equipment_models (load_step, load_min, load_max, load_start)")
-    .in("id", [...new Set(machineIds)]);
+    .from("equipment_models")
+    .select("id, load_step, load_min, load_max, load_start")
+    .in("id", [...new Set(modelIds)]);
   if (error) throw new DomainError("internal", error.message);
-  for (const m of (data ?? []) as unknown as Array<{
+  for (const mod of (data ?? []) as unknown as Array<{
     id: string;
-    equipment_models: {
-      load_step: number | string | null;
-      load_min: number | string | null;
-      load_max: number | string | null;
-      load_start: number | string | null;
-    } | null;
+    load_step: number | string | null;
+    load_min: number | string | null;
+    load_max: number | string | null;
+    load_start: number | string | null;
   }>) {
-    const mod = m.equipment_models;
-    const loadStep = Number(mod?.load_step);
-    // Ohne einstellbare Stufe (Cardiomodell) gibt es kein Zielgewicht.
-    if (!mod || !(loadStep > 0)) continue;
-    ergebnis.set(m.id, {
+    const loadStep = Number(mod.load_step);
+    if (!(loadStep > 0)) continue;
+    ergebnis.set(mod.id, {
       loadStep,
       loadMin: Number(mod.load_min ?? 0),
       // Wie vorschlaegeFuerAbschluss: ohne Obergrenze praktisch unbegrenzt.
@@ -178,23 +179,22 @@ async function ladeGrenzen(client: SupabaseClient, machineIds: string[]): Promis
 export const MAX_SATZSEITEN = 10;
 
 /**
- * Arbeitssaetze (bestaetigt, set_role = 'arbeit', mit Last) je Paar (Geraet,
- * Uebung) ab `ab`, absteigend -- EINE logische Abfrage ueber alle Paare, egal wie
+ * Arbeitssaetze (bestaetigt, set_role = 'arbeit', mit Last) je Uebung, an jedem Geraet
+ * und ohne Geraet (Freies Training), ab `ab`, absteigend -- EINE logische Abfrage ueber alle Paare, egal wie
  * viele. Das Zeitfenster begrenzt die Menge nach Trainingshaeufigkeit statt nach
  * Alter des Kontos; innerhalb des Fensters wird in Seiten der PostgREST-Grenze
  * geblaettert (stabil nach performed_at, dann id), bis eine Seite kurz ist. Erst
  * nach MAX_SATZSEITEN vollen Seiten wird geworfen.
  */
-async function ladeArbeitssaetze(
+export async function ladeArbeitssaetze(
   client: SupabaseClient,
   userId: string,
-  paare: Array<{ machineId: string; exerciseId: string }>,
+  exerciseIds: string[],
   ab: Date,
 ): Promise<Map<string, HistorieZeile[]>> {
   const jePaar = new Map<string, HistorieZeile[]>();
-  if (paare.length === 0) return jePaar;
-  const maschinen = [...new Set(paare.map((p) => p.machineId))];
-  const uebungen = [...new Set(paare.map((p) => p.exerciseId))];
+  if (exerciseIds.length === 0) return jePaar;
+  const uebungen = [...new Set(exerciseIds)];
   for (let seite = 0; ; seite++) {
     if (seite >= MAX_SATZSEITEN) {
       throw new DomainError("internal", "Zu viele Saetze fuer die Zielgewichte.");
@@ -205,7 +205,6 @@ async function ladeArbeitssaetze(
       .eq("user_id", userId)
       .eq("set_role", "arbeit")
       .not("load", "is", null)
-      .in("machine_id", maschinen)
       .in("exercise_id", uebungen)
       .gte("performed_at", ab.toISOString())
       .order("performed_at", { ascending: false })
@@ -214,7 +213,7 @@ async function ladeArbeitssaetze(
     if (error) throw new DomainError("internal", error.message);
     const zeilen = (data ?? []) as HistorieZeile[];
     for (const z of zeilen) {
-      const k = paarSchluessel(z.machine_id, z.exercise_id);
+      const k = uebungsSchluessel(z.exercise_id);
       const liste = jePaar.get(k);
       if (liste) liste.push(z);
       else jePaar.set(k, [z]);
@@ -324,7 +323,6 @@ type AktiverPlan = { id: string; einheiten: PlanEinheit[]; eingabe: { erfahrung:
 async function laufendeEinheiten(
   client: SupabaseClient,
   userId: string,
-  studioId: string,
   keys: string[],
   ausser: string,
   jetzt: number,
@@ -334,7 +332,6 @@ async function laufendeEinheiten(
     .from("workout_sessions")
     .select("id, plan_einheit_key, started_at")
     .eq("user_id", userId)
-    .eq("studio_id", studioId)
     .in("plan_einheit_key", keys)
     .is("completed_at", null)
     .neq("id", ausser);
@@ -400,27 +397,25 @@ export async function aktualisierePlanGewichte(
     .from("training_plans")
     .select("id, einheiten, eingabe")
     .eq("user_id", userId)
-    .eq("studio_id", session.studio_id)
     .eq("status", "aktiv")
     .maybeSingle();
   if (planFehler) throw new DomainError("internal", planFehler.message);
   if (!planDaten) return;
   const plan = planDaten as AktiverPlan;
 
-  // Nur Arbeitssaetze an einem Geraet zaehlen (Aufwaermsaetze nie, Spec Anti-Ziele).
+  // Arbeitssaetze zaehlen, mit und ohne Geraet (Aufwaermsaetze nie, Spec Anti-Ziele).
   const { data: satzDaten, error: satzFehler } = await client
     .from("workout_sets")
-    .select("machine_id, exercise_id")
+    .select("exercise_id")
     .eq("session_id", sessionId)
     .eq("user_id", userId)
     .eq("set_role", "arbeit")
-    .not("load", "is", null)
-    .not("machine_id", "is", null);
+    .not("load", "is", null);
   if (satzFehler) throw new DomainError("internal", satzFehler.message);
   const sessionPaare = new Map(
-    ((satzDaten ?? []) as Array<{ machine_id: string; exercise_id: string }>).map((s) => [
-      paarSchluessel(s.machine_id, s.exercise_id),
-      { machineId: s.machine_id, exerciseId: s.exercise_id },
+    ((satzDaten ?? []) as Array<{ exercise_id: string }>).map((s) => [
+      uebungsSchluessel(s.exercise_id),
+      { exerciseId: s.exercise_id },
     ]),
   );
 
@@ -431,7 +426,7 @@ export async function aktualisierePlanGewichte(
       session.plan_einheit_key,
     );
     const [laufend, ziele, uebungen] = await Promise.all([
-      laufendeEinheiten(client, userId, session.studio_id, folge, sessionId, jetzt),
+      laufendeEinheiten(client, userId, folge, sessionId, jetzt),
       ladeZielZeilen(client, userId, plan.id),
       ladeHauptmuskeln(client, [...new Set([...sessionPaare.values()].map((p) => p.exerciseId))]),
     ]);
@@ -444,8 +439,8 @@ export async function aktualisierePlanGewichte(
     // F18: ueber 42 Tage wie ohne Historie).
     const ab = new Date(Date.parse(session.started_at) - HISTORIE_FENSTER_TAGE * TAG_MS);
     const [grenzen, historie] = await Promise.all([
-      ladeGrenzen(client, ziel.map((p) => p.machineId)),
-      ladeArbeitssaetze(client, userId, [...sessionPaare.values(), ...ziel], ab),
+      ladeGrenzen(client, ziel.map((p) => p.modelId)),
+      ladeArbeitssaetze(client, userId, [...sessionPaare.values(), ...ziel].map((p) => p.exerciseId), ab),
     ]);
 
     // Messungen fuer die Uebertragung: Bloecke dieser Session mit Reserve am letzten
@@ -457,8 +452,8 @@ export async function aktualisierePlanGewichte(
         const um = bloeckeUm(historie.get(k) ?? [], sessionId);
         const letzter = um?.block.sets.at(-1);
         const position =
-          eigeneEinheit.find((p) => p.machineId === paar.machineId && p.exerciseId === paar.exerciseId) ??
-          [...alle.values()].find((p) => p.machineId === paar.machineId && p.exerciseId === paar.exerciseId);
+          eigeneEinheit.find((p) => p.exerciseId === paar.exerciseId) ??
+          [...alle.values()].find((p) => p.exerciseId === paar.exerciseId);
         if (!um || !letzter || letzter.rir === null || !position || !hatZielgewicht(position)) return [];
         const zuletzt = (historie.get(k) ?? []).find((z) => z.session_id === sessionId)!.performed_at;
         return [
@@ -478,9 +473,9 @@ export async function aktualisierePlanGewichte(
 
     let person: Person | null = null;
     for (const p of ziel) {
-      const g = grenzen.get(p.machineId);
+      const g = grenzen.get(p.modelId);
       if (!g) continue;
-      const k = paarSchluessel(p.machineId, p.exerciseId);
+      const k = uebungsSchluessel(p.exerciseId);
       const vorhanden = ziele.get(p.ziel);
 
       if (sessionPaare.has(k)) {
@@ -572,16 +567,16 @@ export async function initialisierePlanGewichte(
   if (fehlend.length === 0) return;
 
   const [grenzen, historie] = await Promise.all([
-    ladeGrenzen(client, fehlend.map((p) => p.machineId)),
-    ladeArbeitssaetze(client, userId, fehlend, new Date(jetzt - HISTORIE_FENSTER_TAGE * TAG_MS)),
+    ladeGrenzen(client, fehlend.map((p) => p.modelId)),
+    ladeArbeitssaetze(client, userId, fehlend.map((p) => p.exerciseId), new Date(jetzt - HISTORIE_FENSTER_TAGE * TAG_MS)),
   ]);
 
   let person: Person | null = null;
   const zeilen: Zeile[] = [];
   for (const p of fehlend) {
-    const g = grenzen.get(p.machineId);
+    const g = grenzen.get(p.modelId);
     if (!g) continue;
-    const saetze = historie.get(paarSchluessel(p.machineId, p.exerciseId)) ?? [];
+    const saetze = historie.get(uebungsSchluessel(p.exerciseId)) ?? [];
     const letzterBlock = toBlocks(saetze)[0];
     let load: number | null = null;
     let grund: PlanGewichtGrund = "startschaetzung";
@@ -622,7 +617,7 @@ export async function initialisierePlanGewichte(
 /**
  * Dauerhafter Tausch (G9): die neue Planversion uebernimmt die Ziele der Vorgaengerversion
  * fuer Positionen mit gleichem zielSchluessel (Einheit, Position), gleicher Uebung und
- * gleichem Geraet -- Gewicht, Grund und Algorithmusversion unveraendert. Alles andere (die
+ * gleichem Modell -- Gewicht, Grund und Algorithmusversion unveraendert. Alles andere (die
  * getauschte Position) bleibt fuer initialisierePlanGewichte. Ueber init_plan_gewichte,
  * also ohne Stand: der naechste Abschluss ersetzt die Zeilen wie jede Startzeile.
  */
@@ -645,7 +640,7 @@ export async function uebernehmePlanGewichte(
     const v = vorher.get(p.ziel);
     const z = alt.get(p.ziel);
     if (!v || !z || neu.has(p.ziel) || !hatZielgewicht(p)) continue;
-    if (v.exerciseId !== p.exerciseId || v.machineId !== p.machineId) continue;
+    if (v.exerciseId !== p.exerciseId || v.modelId !== p.modelId) continue;
     zeilen.push({
       einheitKey: p.einheitKey,
       positionKey: p.key,
@@ -700,26 +695,25 @@ export async function ohneAbbruch(
 async function ladeLetzteVor(
   client: SupabaseClient,
   userId: string,
-  paare: Array<{ machineId: string; exerciseId: string }>,
+  exerciseIds: string[],
   vor: Date,
 ): Promise<Map<string, HistorieZeile>> {
   const ergebnis = new Map<string, HistorieZeile>();
-  if (paare.length === 0) return ergebnis;
+  if (exerciseIds.length === 0) return ergebnis;
   const { data, error } = await client
     .from("workout_sets")
     .select("id, session_id, machine_id, exercise_id, performed_at, load, secondary_load, volume, rir, problem_flag")
     .eq("user_id", userId)
     .eq("set_role", "arbeit")
     .not("load", "is", null)
-    .in("machine_id", [...new Set(paare.map((p) => p.machineId))])
-    .in("exercise_id", [...new Set(paare.map((p) => p.exerciseId))])
+    .in("exercise_id", [...new Set(exerciseIds)])
     .lt("performed_at", vor.toISOString())
     .order("performed_at", { ascending: false })
     .order("id", { ascending: false })
     .limit(POSTGREST_MAX_ROWS);
   if (error) throw new DomainError("internal", error.message);
   for (const z of (data ?? []) as HistorieZeile[]) {
-    const k = paarSchluessel(z.machine_id, z.exercise_id);
+    const k = uebungsSchluessel(z.exercise_id);
     if (!ergebnis.has(k)) ergebnis.set(k, z);
   }
   return ergebnis;
@@ -769,31 +763,31 @@ export async function ladeZielgewichte(
   // Verglichen wird nur mit abgeschlossenen Einheiten: in der laufenden darf sich der
   // Hinweis nicht unter dem Mitglied aendern (G17).
   const [historie, laufend, grenzen] = await Promise.all([
-    ladeArbeitssaetze(client, userId, mitZiel, fensterAb),
+    ladeArbeitssaetze(client, userId, mitZiel.map((p) => p.exerciseId), fensterAb),
     laufendeSessions(client, userId, jetzt),
-    ladeGrenzen(client, mitZiel.map((p) => p.machineId)),
+    ladeGrenzen(client, mitZiel.map((p) => p.modelId)),
   ]);
   const letzterJePaar = new Map<string, HistorieZeile>();
   for (const p of mitZiel) {
-    const k = paarSchluessel(p.machineId, p.exerciseId);
+    const k = uebungsSchluessel(p.exerciseId);
     const letzter = historie.get(k)?.find((s) => !laufend.has(s.session_id));
     if (letzter) letzterJePaar.set(k, letzter);
   }
   // Paare ohne Satz im Fenster: der Bezug endet nicht mit dem Fenster (eine Abfrage).
-  const ohne = mitZiel.filter((p) => !letzterJePaar.has(paarSchluessel(p.machineId, p.exerciseId)));
-  for (const [k, z] of await ladeLetzteVor(client, userId, ohne, fensterAb)) letzterJePaar.set(k, z);
+  const ohne = mitZiel.filter((p) => !letzterJePaar.has(uebungsSchluessel(p.exerciseId)));
+  for (const [k, z] of await ladeLetzteVor(client, userId, ohne.map((p) => p.exerciseId), fensterAb)) letzterJePaar.set(k, z);
 
   let person: Person | null = null;
   const ergebnis: Record<string, PositionsZiel> = {};
   for (const p of mitZiel) {
     const z = zeilen.get(p.ziel)!;
-    const letzter = letzterJePaar.get(paarSchluessel(p.machineId, p.exerciseId));
+    const letzter = letzterJePaar.get(uebungsSchluessel(p.exerciseId));
     const letzteLoad = letzter ? Number(letzter.load) : null;
     let ziel: { load: number; grund: PlanGewichtGrund | null } = {
       load: Number(z.load),
       grund: z.grund as PlanGewichtGrund | null,
     };
-    const g = grenzen.get(p.machineId);
+    const g = grenzen.get(p.modelId);
     // Final-Fix M1: Stufe oder Grenzen am Geraet koennen sich seit dem Rechnen geaendert
     // haben; gelesen wird immer ein einstellbarer Wert, damit Rad und Hinweis uebereinstimmen.
     if (g) ziel = { ...ziel, load: abgerundet(ziel.load, g) };
@@ -815,25 +809,33 @@ export async function ladeZielgewichte(
 // ---------------------------------------------------------------------------
 // Vorschlaege am Geraet und im Abschluss (Task 6; G17, G19)
 
+/** Das Ziel genau dieser Position (Einheit und Position); null ohne Zeile. */
+export function zielFuerPosition(
+  zielgewichte: Record<string, PositionsZiel>,
+  einheitKey: string,
+  positionKey: string,
+): PositionsZiel | null {
+  return zielgewichte[zielSchluessel(einheitKey, positionKey)] ?? null;
+}
+
 /**
- * Das Ziel fuer eine Uebung an einem Geraet: dieselbe Uebung UND dasselbe Geraet, zuerst in
- * der naechsten Einheit, sonst in der fruehesten spaeteren (zyklisch in Planreihenfolge).
- * Eine Position ohne Ziel zaehlt nicht. Ziele gelten je Einheit und Position; dieselbe
- * Uebung in zwei Einheiten sind zwei Ziele.
+ * Das Ziel fuer eine Uebung, egal an welchem Geraet: zuerst in der naechsten Einheit,
+ * sonst in der fruehesten spaeteren (zyklisch in Planreihenfolge). Eine Position ohne
+ * Ziel zaehlt nicht. Ziele gelten je Einheit und Position; dieselbe Uebung in zwei
+ * Einheiten sind zwei Ziele.
  */
-export function zielFuerGeraet(
+export function zielFuerUebung(
   einheiten: PlanEinheit[],
   naechsteEinheitKey: string,
   ziele: Record<string, PositionsZiel>,
-  machineId: string,
   exerciseId: string,
 ): PositionsZiel | null {
   const start = Math.max(0, einheiten.findIndex((e) => e.key === naechsteEinheitKey));
   for (let i = 0; i < einheiten.length; i++) {
     const e = einheiten[(start + i) % einheiten.length]!;
     for (const p of e.positionen) {
-      if (p.machineId !== machineId || p.exerciseId !== exerciseId) continue;
-      const ziel = ziele[zielSchluessel(e.key, p.key)];
+      if (p.exerciseId !== exerciseId) continue;
+      const ziel = zielFuerPosition(ziele, e.key, p.key);
       if (ziel) return ziel;
     }
   }
