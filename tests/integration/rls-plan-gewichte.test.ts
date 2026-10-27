@@ -1,8 +1,16 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { acceptPlan, erzeugePlanVorschlag, type TrainingPlan } from "@fitretro/domain";
 import { serviceClient } from "./helpers/clients.js";
-import { legeMitgliedAn, legePlanStudiosAn, type Mitglied, type PlanStudios } from "./helpers/plan-studio.js";
+import {
+  aktiverKatalogPlan,
+  legeMitgliedAn,
+  legePlanStudiosAn,
+  machineVon,
+  type KatalogPlan,
+  type Mitglied,
+  type PlanStudios,
+} from "./helpers/plan-studio.js";
 
+// Seit 0066 gehoert der Plan dem Katalog-Studio; die Session laeuft in s.voll.
 // Etappe 4, Task 3: Zielgewichte je Planposition (0064). Lesen nur die
 // eigenen Zeilen; geschrieben wird ausschliesslich ueber set_plan_gewichte
 // (nach einer abgeschlossenen Einheit, "nur neuerer Abschluss gewinnt") und
@@ -11,23 +19,19 @@ const admin = serviceClient();
 let s: PlanStudios;
 let ich: Mitglied;
 let fremder: Mitglied;
-let plan: TrainingPlan;
-let fremderPlan: TrainingPlan;
+let plan: KatalogPlan;
+let fremderPlan: KatalogPlan;
 
 beforeAll(async () => {
   s = await legePlanStudiosAn(crypto.randomUUID());
   ich = await legeMitgliedAn("pg-ich", { studios: [s.voll] });
   fremder = await legeMitgliedAn("pg-fremd", { studios: [s.voll] });
-  plan = await acceptPlan(ich.client, ich.userId, (await erzeugePlanVorschlag(ich.client, ich.userId, s.voll)).id);
-  fremderPlan = await acceptPlan(
-    fremder.client,
-    fremder.userId,
-    (await erzeugePlanVorschlag(fremder.client, fremder.userId, s.voll)).id,
-  );
+  plan = await aktiverKatalogPlan(ich, s);
+  fremderPlan = await aktiverKatalogPlan(fremder, s);
 });
 
-const key = (i: number, p: TrainingPlan = plan) => p.einheiten[0]!.positionen[i]!.key;
-const zeile = (i: number, load: number, extra: Record<string, unknown> = {}, p: TrainingPlan = plan) => ({
+const key = (i: number, p: KatalogPlan = plan) => p.einheiten[0]!.positionen[i]!.key;
+const zeile = (i: number, load: number, extra: Record<string, unknown> = {}, p: KatalogPlan = plan) => ({
   einheitKey: p.einheiten[0]!.key,
   positionKey: key(i, p),
   load,
@@ -256,10 +260,11 @@ describe("Zielgewichte je Planposition (0064)", () => {
     await leere(plan.id);
     const sid = await legeSession({ startedAt: vor(6) });
     const p = plan.einheiten[0]!.positionen[0]!;
-    const { data: m } = await admin.from("machines").select("equipment_model_id").eq("id", p.machineId).single();
+    const m = { equipment_model_id: (await machineVon(s.voll)).equipment_model_id };
+    const geraet = await machineVon(s.voll);
     const { error } = await admin.from("workout_sets").insert({
       id: crypto.randomUUID(), studio_id: s.voll, user_id: ich.userId, session_id: sid,
-      machine_id: p.machineId, equipment_model_id: m!.equipment_model_id, exercise_id: p.exerciseId,
+      machine_id: geraet.id, equipment_model_id: m.equipment_model_id, exercise_id: p.exerciseId,
       set_index: 1, load: 40, volume: 10, performed_at: vor(1),
     });
     expect(error).toBeNull();
@@ -269,7 +274,7 @@ describe("Zielgewichte je Planposition (0064)", () => {
 
   it("derselbe Positionsschluessel in zwei Einheiten sind zwei Zeilen (G14)", async () => {
     await leere(plan.id);
-    const [a, b] = plan.einheiten as [TrainingPlan["einheiten"][number], TrainingPlan["einheiten"][number]];
+    const [a, b] = plan.einheiten as [KatalogPlan["einheiten"][number], KatalogPlan["einheiten"][number]];
     expect(b).toBeDefined();
     // Der Generator nummeriert je Einheit: beide haben eine Position "0".
     expect(a.positionen[0]!.key).toBe(b.positionen[0]!.key);
