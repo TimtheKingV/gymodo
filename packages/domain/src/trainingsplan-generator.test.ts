@@ -573,4 +573,12 @@ describe("gefaelltNicht (Merkliste)", () => {
     const plan = generierePlan(eingabe({ kandidaten: nurUngeliebt }));
     expect(plan.einheiten[0]!.positionen.some((p) => p.baustein === "druecken")).toBe(true);
   });
+
+  it("gefaelltNicht-Cardio wird nicht gewaehlt, wenn eine andere existiert, sonst schon", () => {
+    const cardioVon = (kandidaten: Kandidat[]) =>
+      generierePlan(eingabe({ ziel: "abnehmen", kandidaten })).einheiten[0]!.positionen.find((p) => p.rolle === "cardio")?.exerciseId;
+    const ungeliebt = { ...k("aaa_bike", "cardio", "isolation", []), gefaelltNicht: true };
+    expect(cardioVon([ungeliebt, ...KATALOG])).toBe("bike");
+    expect(cardioVon([ungeliebt, ...ohne("bike")])).toBe("aaa_bike");
+  });
 });

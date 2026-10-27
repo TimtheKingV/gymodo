@@ -241,7 +241,9 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
   // sonst geht die Zeit an Kraftuebungen.
   const abnehmen = eingabe.ziel === "abnehmen";
   const cardioSoll = abnehmen ? cardioMinuten(eingabe.minuten) : 0;
-  const cardioKandidat = nachBaustein(kandidaten, "cardio")[0] ?? null;
+  const cardioListe = nachBaustein(kandidaten, "cardio");
+  // "gefaellt nicht" nur, wenn es keine andere Cardiouebung gibt.
+  const cardioKandidat = cardioListe.find((k) => !k.gefaelltNicht) ?? cardioListe[0] ?? null;
   // Wie bei pruefePflicht: "kein Geraet" nur, wenn das Studio wirklich keins hat; sind alle
   // gemieden, erklaert das schon beschwerden_meiden, und das Studio wird nicht beschuldigt.
   const studioHatCardio = nachBaustein(eingabe.kandidaten, "cardio").length > 0;
