@@ -27,6 +27,7 @@ struct ProfilRootView: View {
     @State private var groesseOffen = false
     @State private var offenesZiel: ZielSheet.Art?
     @State private var gewichtEintragenOffen = false
+    @State private var beschwerdenOffen = false
 
     private var member: BootstrapResponse.Member? { katalog.bootstrap?.member }
     private var name: String? { member?.displayName }
@@ -39,6 +40,7 @@ struct ProfilRootView: View {
             kopfkarte
             ueberDich
             ziele
+            trainingsplan
             beimTraining
             deineDaten
             abmelden
@@ -94,6 +96,15 @@ struct ProfilRootView: View {
                 aufgeben: {
                     await ZielSchreiben.aufgeben(kind: art.kind, apiClient: apiClient, katalog: katalog, verlauf: verlauf)
                 })
+        }
+        .sheet(isPresented: $beschwerdenOffen) {
+            // Schritt 1.3 allein; schreibt nur die Beschwerden. Neu laden,
+            // weil ein Widerruf die Begruendungen der Plaene bereinigt
+            // (Trigger 0062) und der Bootstrap sie traegt.
+            OnboardingFlow(apiClient: apiClient, alsSheet: true, umfang: ProfilZeilen.beschwerdenUmfang) {
+                beschwerdenOffen = false
+                Task { await katalog.load() }
+            }
         }
         .sheet(isPresented: $gewichtEintragenOffen) {
             GewichtEintragenSheet(
@@ -195,6 +206,19 @@ struct ProfilRootView: View {
                 ProfilGewichtsverlaufInhalt(
                     detail: ProfilZeilen.gewichtsverlaufDetailText(verlauf.messwerte.last, jetzt: Date()))
             }
+        }
+        .listRowBackground(DesignSystem.Color.surface)
+    }
+
+    /// Der Ort, den der Einwilligungstext in Schritt 1.3 verspricht
+    /// ("Widerruf jederzeit im Profil"). Minimal und ohne eigenen Entwurf:
+    /// eine Zeile, die 1.3 allein als Sheet oeffnet.
+    private var trainingsplan: some View {
+        Section("TRAININGSPLAN") {
+            ProfilZeile(label: ProfilZeilen.beschwerdenLabel, wert: ProfilZeilen.beschwerdenWert) {
+                beschwerdenOffen = true
+            }
+            .accessibilityHint("Beschwerden ändern oder die Einwilligung widerrufen")
         }
         .listRowBackground(DesignSystem.Color.surface)
     }

@@ -300,14 +300,69 @@ export type { LimitStufe, TrainingLimits, TrainingProfile } from "./trainingspro
 export { PLAN_REGEL_VERSION, FOKUS_MUSKELN, strukturFuerTage, zielAusTrainingGoal, zielprofil } from "./trainingsplan-regeln.js";
 export type { Struktur, Ziel as PlanZiel, Zielprofil } from "./trainingsplan-regeln.js";
 export { ZEIT, aufwaermenMinuten, cardioMinuten, pauseSekunden, uebungMinuten } from "./trainingsplan-zeit.js";
-export { generierePlan } from "./trainingsplan-generator.js";
+export { generierePlan, tauschVorgaben } from "./trainingsplan-generator.js";
 export type {
   GeneratorEingabe,
   GeneratorErgebnis,
   Kandidat,
   PlanEinheit,
   PlanPosition,
+  TypVorgaben,
 } from "./trainingsplan-generator.js";
 export { ladeKandidaten } from "./trainingsplan-kandidaten.js";
-export { acceptPlan, erzeugePlanVorschlag, listPlaene } from "./trainingsplan.js";
-export type { PlanEingabe, PlanStatus, TrainingPlan } from "./trainingsplan.js";
+export {
+  acceptPlan,
+  aktivePlaeneDerMitgliedschaften,
+  erzeugePlanVorschlag,
+  listPlaene,
+  tauschePlanPosition,
+} from "./trainingsplan.js";
+export {
+  ANFAENGER_EINHEITEN,
+  alternativenJeBaustein,
+  anfaengerphaseVorbei,
+  gezaehlteEinheiten,
+  ladeGezaehlteEinheiten,
+  ladePlaeneFuerApp,
+  NACHHOLEN_HOECHSTENS,
+  nachzuholendeSessions,
+  planFuerApp,
+} from "./trainingsplan-bootstrap.js";
+export type {
+  GezaehlteEinheit,
+  PlanAlternative,
+  PlanFuerApp,
+  SessionFuerNachholen,
+  SessionFuerZaehler,
+} from "./trainingsplan-bootstrap.js";
+export type { PlanEingabe, PlanStatus, PlanTausch, TrainingPlan } from "./trainingsplan.js";
+export { ablaufNachSatz, ablaufTauschen, einheitZaehlt, naechsteEinheitKey } from "./trainingsplan-ablauf.js";
+export type { AblaufPosition, AblaufSatz, AblaufZustand, PositionStatus } from "./trainingsplan-ablauf.js";
+export {
+  PLANGEWICHT_ALGO_VERSION,
+  berechnePlanGewicht,
+  type PlanGewichtEingabe,
+  type PlanGewichtErgebnis,
+  type PlanGewichtGrund,
+} from "./plangewicht.js";
+export {
+  STARTSCHAETZUNG_VERSION,
+  WIEDEREINSTIEG_VERSION,
+  schaetzeStartgewicht,
+  startgewichtAusHistorie,
+  uebertragungsFaktor,
+  wiedereinstieg,
+  type Geraetegrenzen,
+} from "./plangewicht-start.js";
+export {
+  aktualisierePlanGewichte,
+  initialisierePlanGewichte,
+  ladeZielgewichte,
+  ohneAbbruch,
+  uebernehmePlanGewichte,
+  vorschlagAusZiel,
+  zielFuerGeraet,
+  zielSchluessel,
+  type Melde,
+  type PositionsZiel,
+} from "./plangewichte.js";

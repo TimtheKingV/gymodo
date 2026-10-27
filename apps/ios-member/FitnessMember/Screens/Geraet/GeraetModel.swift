@@ -74,9 +74,10 @@ final class GeraetModel {
 
         /// Eine Pause in der eingestellten Laenge. Drei Aufrufer, eine
         /// Stelle -- die Dauer aus dem Profil zu lesen ist sonst genau die
-        /// Zeile, die beim vierten Aufrufer vergessen wird.
-        static func neuePause() -> Phase {
-            .pause(Resttimer(dauer: TimeInterval(Einstellungen.resttimerSekunden())))
+        /// Zeile, die beim vierten Aufrufer vergessen wird. Eine Planuebung
+        /// gibt ihre eigene Dauer mit (`GeraetModel.pauseSekunden`, F6).
+        static func neuePause(sekunden: Int = Einstellungen.resttimerSekunden()) -> Phase {
+            .pause(Resttimer(dauer: TimeInterval(sekunden)))
         }
     }
 
@@ -188,6 +189,9 @@ final class GeraetModel {
         // "Weiss nicht" ohne vorherige Zahl aendert am Satz nichts, und
         // dieselbe Zahl zweimal braucht keinen zweiten PUT.
         guard neu.rir != (vorher ?? nil) else { return }
+        // Der Body bleibt bis auf rir der alte, auch seine Plan-Momentaufnahme
+        // mit ihrem aelteren Stand: der Server nimmt nur einen hoeheren, so
+        // ueberschreibt dieser PUT keinen neueren Ablauf (Review Focus 1).
         var body = letzter.body
         body.rir = neu.rir
         sessions.reserveSetzen(setId: letzter.setId, rir: neu.rir)
@@ -209,6 +213,11 @@ final class GeraetModel {
     /// Dieselbe Regel fuer die Nebenbelastung, getrennt gefuehrt: wer nur
     /// die Neigung anfasst, soll den Tempo-Vorschlag trotzdem bekommen.
     private var nebenbelastungVomNutzer = false
+    /// Das Rad steht auf dem Zielgewicht der Planposition aus dem Bootstrap
+    /// (Etappe 4, G8). Dann ersetzt auch ein spaeter Kontext es nicht: die
+    /// Zahl darf sich nicht unter dem Mitglied aendern, es gilt das zuletzt
+    /// gelieferte Ziel -- neu gerechnet wird erst nach dem Abschluss.
+    private var belastungAusPlanziel = false
     /// Die Kalibrierung ist auch ausserhalb des Dreischritts erreichbar
     /// ("aendern" auf Main) -- genau der Fall, der den eigenen Endpoint
     /// noetig macht.
@@ -273,6 +282,10 @@ final class GeraetModel {
     /// Im Release (bis E5) immer nil, im Debug der ZaehlerKoordinator
     /// (Sensor-Spec B 6.5).
     private let zaehler: (any SatzZaehler)?
+    /// Der Ablauf der heutigen Planeinheit (Trainingsplan Etappe 3). nil in
+    /// Tests und Aufrufern ohne Plan: dann geht kein Satz mit `plan` raus,
+    /// alles bleibt wie vor dem Plan.
+    private let ablauf: TrainingsplanAblaufStore?
 
     /// Spec B 6.5. vonHand traegt den Zaehlerstand nur zur Anzeige mit.
     enum ZaehlerZustand: Equatable {
@@ -328,7 +341,8 @@ final class GeraetModel {
         mitschnitt: (any SatzMitschnitt)? = nil,
         zaehler: (any SatzZaehler)? = nil,
         startwerte: Startwerte? = nil,
-        mitCountdown: Bool = true
+        mitCountdown: Bool = true,
+        ablauf: TrainingsplanAblaufStore? = nil
     ) {
         self.station = station
         self.uebungId = uebungId
@@ -340,6 +354,7 @@ final class GeraetModel {
         satzZielLesen = satzZiel
         self.mitschnitt = mitschnitt
         self.zaehler = zaehler
+        self.ablauf = ablauf
 
         // Zuerst der Satz von heute: im Zirkel entsteht Runde 2 als neues
         // Modell, und `bootstrap` ist eine Momentaufnahme vom Prefetch, die
@@ -368,6 +383,12 @@ final class GeraetModel {
         umfang = Rastwerte.naechster(zu: umfang, in: umfangsWerte)
         nebenbelastung = nebenbelastungVorbelegt(aus: letzter?.secondaryLoad)
         cardio = letzter?.cardio?.nur(station.equipmentModel.cardioWerte) ?? CardioWerte()
+        // Vor dem ersten Satz der Position: das Zielgewicht des Plans, auch
+        // offline (G8). Nach einem Satz heute gilt der Satz (G6, G17).
+        if heute == nil {
+            planzielUebernehmen(Self.planziel(an: station, uebungId: uebungId, bootstrap: bootstrap,
+                                              ablauf: ablauf, sessions: sessions))
+        }
         // Was heute schon gelaufen ist, hat das Mitglied selbst eingestellt.
         // Ein spaeter tagContext-Vorschlag rechnet aus der Historie und darf
         // das vorbelegte Gewicht der Vorrunde nicht unter dem Daumen
@@ -425,6 +446,56 @@ final class GeraetModel {
             nebenbelastungVomNutzer = true
         }
         belastungVomNutzer = true
+    }
+
+    /// Setzt die Raeder auf das Zielgewicht (gerastet) und haelt es fest.
+    /// Ohne Ziel bleibt alles, wie es ist.
+    private func planzielUebernehmen(_ ziel: Zielgewicht?) {
+        guard let ziel else { return }
+        belastung = Rastwerte.naechster(zu: ziel.load, in: belastungsWerte)
+        if let neben = ziel.secondaryLoad, nebenmodell != nil {
+            nebenbelastung = Rastwerte.naechster(zu: neben, in: nebenbelastungsWerte)
+        }
+        belastungAusPlanziel = true
+    }
+
+    /// Das Zielgewicht dieser Uebung an diesem Geraet in der heutigen
+    /// Planeinheit -- nur im Studio des Ablaufs. Laeuft schon eine Einheit,
+    /// zaehlt ihr Ort (im Freien Training gilt kein Plan), sonst das Studio
+    /// des Geraets. Statisch, weil init es braucht.
+    private static func planziel(an station: Station, uebungId: String, bootstrap: BootstrapResponse,
+                                 ablauf: TrainingsplanAblaufStore?,
+                                 sessions: WorkoutSessionStore) -> Zielgewicht? {
+        guard let ablauf, let planId = ablauf.planId else { return nil }
+        let studioId: String?
+        if let laufend = sessions.aktiveSession() {
+            if case .studio(let id) = laufend.ort { studioId = id } else { studioId = nil }
+        } else {
+            studioId = station.studioId
+        }
+        guard let studioId, studioId == ablauf.studioId else { return nil }
+        let plan = bootstrap.member.plans.first { $0.planId == planId && $0.studioId == studioId }
+        return PlanAnzeige.zielgewicht(exerciseId: uebungId, machineId: station.machineId,
+                                       plan: plan, einheitKey: ablauf.einheitKey)
+    }
+
+    /// Das Zielgewicht der Position, ob heute schon ein Satz fiel oder nicht.
+    private var positionsziel: Zielgewicht? {
+        Self.planziel(an: station, uebungId: uebungId, bootstrap: bootstrap, ablauf: ablauf, sessions: sessions)
+    }
+
+    /// Das Zielgewicht der Position, solange sie heute noch keinen Satz hat.
+    private var planziel: Zielgewicht? {
+        guard Self.letzterSatzHeute(an: station, uebungId: uebungId, in: sessions) == nil else { return nil }
+        return positionsziel
+    }
+
+    /// "+2,5 kg, Bereich oben erreicht" (G7/G17): gilt, bis die Position in
+    /// der Einheit einen Satz hat; danach vergleicht die Anzeige nicht mehr.
+    /// nil ohne Ziel und ohne Aenderung. Die Zahl kommt vom Server.
+    var gewichtsHinweis: Gewichtshinweis? {
+        guard let ziel = planziel else { return nil }
+        return Gewichtshinweis(grund: ziel.grund, aenderung: ziel.aenderung, einheit: loadUnit)
     }
 
     /// Was der Drawer an die Satzseite weitergibt: die Raeder, wie sie
@@ -766,17 +837,26 @@ final class GeraetModel {
         return "Vorschlag · \(Zahlformat.belastungDelta(delta, loadUnit))"
     }
 
+    /// Die Zeile unter "ZULETZT": bei einer Planposition mit Ziel der
+    /// Hinweis aus dem Bootstrap (auch offline), sonst die Rechnung aus dem
+    /// Kontext wie bisher. Nach dem ersten Satz der Position heute steht dort
+    /// kein Vergleich mehr (G17).
+    private var vorschlagZeile: String? {
+        guard positionsziel != nil else { return vorschlagText }
+        return gewichtsHinweis.map { "Vorschlag · \($0.text)" }
+    }
+
     var rueckblick: Rueckblick? {
         guard let letzter = letzterSatz(fuer: uebungId) else { return nil }
         if let cardio = letzter.cardio {
-            return Rueckblick(zuletzt: Zahlformat.cardio(cardio), vorschlag: vorschlagText)
+            return Rueckblick(zuletzt: Zahlformat.cardio(cardio), vorschlag: vorschlagZeile)
         }
         guard let load = letzter.load, let volume = letzter.volume else { return nil }
         return Rueckblick(
             zuletzt: Zahlformat.satz(load, loadUnit,
                                      neben: letzter.secondaryLoad, secondaryUnit,
                                      umfang: volume, volumeKind),
-            vorschlag: vorschlagText
+            vorschlag: vorschlagZeile
         )
     }
 
@@ -881,7 +961,7 @@ final class GeraetModel {
         // Unangetastet uebernehmen; hat das Mitglied schon am Rad gedreht,
         // gehoert ihm der Wert -- ein spaeter Vorschlag darf ihn nicht mehr
         // unter dem Daumen ersetzen.
-        if !belastungVomNutzer, let vorschlag = geladen.suggestion.resultLoad {
+        if !belastungVomNutzer, !belastungAusPlanziel, let vorschlag = geladen.suggestion.resultLoad {
             belastung = Rastwerte.naechster(zu: vorschlag, in: belastungsWerte)
         }
         // Der Kontext kann ein anderes Modell zeigen als der Prefetch (das
@@ -896,7 +976,7 @@ final class GeraetModel {
         // welcher der Vorschlag gilt (Cardio-Spec 5.2). Uebernommen wird
         // sie wie die Belastung: nur, solange das Mitglied sie nicht
         // selbst angefasst hat.
-        if !nebenbelastungVomNutzer, let vorschlag = geladen.suggestion.resultSecondaryLoad {
+        if !nebenbelastungVomNutzer, !belastungAusPlanziel, let vorschlag = geladen.suggestion.resultSecondaryLoad {
             nebenbelastung = Rastwerte.naechster(zu: vorschlag, in: nebenbelastungsWerte)
         } else if let bisher = nebenbelastung {
             nebenbelastung = Rastwerte.naechster(zu: bisher, in: nebenbelastungsWerte)
@@ -990,6 +1070,10 @@ final class GeraetModel {
         // eintreffender Vorschlag darf wieder greifen.
         belastungVomNutzer = false
         nebenbelastungVomNutzer = false
+        belastungAusPlanziel = false
+        // Auch die neue Uebung beginnt am Ziel ihrer Planposition, falls sie
+        // eine hat und heute noch keinen Satz.
+        planzielUebernehmen(planziel)
         // Ein laufender Mitschnitt gehoert zur alten Uebung;
         // eingabeBegonnen bricht ihn ab und beginnt mit dem neuen Kontext.
         // Die Zaehlung der alten Uebung gilt nicht fuer die neue.
@@ -1055,6 +1139,7 @@ final class GeraetModel {
         geschrieben.body.volumeSource = herkunft
         geschrieben.body.volumeCounted = ergebnis?.gezaehlt
         geschrieben.body.repEvents = ergebnis?.repEvents
+        geschrieben.body.plan = planMomentaufnahme(sessionId: geschrieben.sessionId)
         // Immer ueber die Warteschlange, nie direkt: so ist "gespeichert,
         // wird gesendet" nie gelogen, und der Offline-Pfad ist derselbe, der
         // jeden Tag laeuft (Spec Abschnitt 8.2).
@@ -1098,8 +1183,36 @@ final class GeraetModel {
         // oben schon die NAECHSTE Nummer: bei Ziel 3 steht nach dem dritten
         // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
         // eine Pause vor einem Satz, der nicht kommt, ist nur Wartezeit.
-        phase = satzNummer > satzZiel ? .abschluss : .neuePause()
+        phase = satzNummer > satzZiel ? .abschluss : .neuePause(sekunden: pauseSekunden)
         if phase != .abschluss { automatikPauseVorbereiten() }
+    }
+
+    /// Die Satzpause (F6): bei einer Planuebung die der Planposition, sonst
+    /// genau die Profilpause wie bisher. Nur fuer den Plan des Studios der
+    /// Einheit -- im Freien Training und anderswo gilt kein Plan.
+    var pauseSekunden: Int {
+        let profil = Einstellungen.resttimerSekunden()
+        guard let ablauf, case .studio(let studioId)? = sessions.aktiveSession()?.ort else { return profil }
+        let plan = bootstrap.member.plans.first { $0.planId == ablauf.planId && $0.studioId == studioId }
+        return PlanAnzeige.pauseSek(fuer: uebungId, plan: plan, einheitKey: ablauf.einheitKey,
+                                    zustand: ablauf.zustand, profil: profil)
+    }
+
+    /// Hakt den Satz im Planablauf ab. Der Ort ist der der Einheit (vom
+    /// ersten Satz gesetzt), weil der Server den Plan gegen das Studio der
+    /// Session prueft; im Freien Training gibt es keinen. Nur Hauptmuskeln
+    /// (role primary) zaehlen fuer "optional", wie am Server.
+    private func planMomentaufnahme(sessionId: UUID) -> PlanMomentaufnahme? {
+        guard let ablauf else { return nil }
+        let studioId: String? = {
+            if case .studio(let id)? = sessions.aktiveSession()?.ort { return id }
+            return nil
+        }()
+        let hauptmuskeln = station.exercises.first { $0.id == uebungId }?
+            .muscles.filter { $0.role == .primary }.map(\.key) ?? []
+        return ablauf.nachSatz(
+            sessionId: sessionId, studioId: studioId,
+            satz: AblaufSatz(exerciseId: uebungId, hauptmuskeln: hauptmuskeln, cardio: istCardio))
     }
 
     /// Aus dem onDismiss des Sheets: die aufgeschobene Meldung an den
@@ -1155,7 +1268,7 @@ final class GeraetModel {
             phase = .eingabe
             mitschnittBeginnen()
         } else {
-            phase = .neuePause()
+            phase = .neuePause(sekunden: pauseSekunden)
             automatikPauseVorbereiten()
         }
     }
@@ -1310,7 +1423,8 @@ final class GeraetModel {
             kalibrierungFehler = switch error {
             case .offline: "Ohne Empfang lässt sich die Einstellung nicht speichern. Deine Sätze gehen trotzdem raus."
             case .validation(let text), .server(let text), .notFound(let text),
-                 .conflict(let text), .unauthorized(let text): text
+                 .conflict(let text), .unauthorized(let text),
+                 .profilUnvollstaendig(let text, _), .planNichtMoeglich(let text, _, _): text
             case .encodingFailed: "Die Einstellung ließ sich nicht senden. Deine Sätze gehen trotzdem raus."
             case .decodingFailed: "Unerwartete Antwort vom Server."
             }

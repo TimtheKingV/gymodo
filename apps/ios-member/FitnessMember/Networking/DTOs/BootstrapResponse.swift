@@ -22,6 +22,10 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         /// Der juengste Gewichtseintrag, damit die Gewichtskarte auf Home
         /// ohne eigenen Verlaufsabruf einen Wert zeigt.
         let latestWeight: Messwert?
+        /// Beide fehlen in Antworten von vor Etappe 3 und in alten Caches:
+        /// dann nil bzw. leer.
+        let trainingProfile: TrainingsplanProfil?
+        let plans: [Trainingsplan]
 
         /// Eigener Init mit Vorgaben statt des synthetisierten: bestehende
         /// Testdaten (GeraetEinstiegTests) bauen nur `displayName` und
@@ -29,7 +33,8 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         init(
             displayName: String?, sex: String? = nil, ageBand: String? = nil,
             heightCm: Int? = nil, trainingGoal: String? = nil, onboardingCompletedAt: String? = nil,
-            goals: Ziele = Ziele(weeklyDays: nil, targetWeight: nil), latestWeight: Messwert? = nil
+            goals: Ziele = Ziele(weeklyDays: nil, targetWeight: nil), latestWeight: Messwert? = nil,
+            trainingProfile: TrainingsplanProfil? = nil, plans: [Trainingsplan] = []
         ) {
             self.displayName = displayName
             self.sex = sex
@@ -39,6 +44,27 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
             self.onboardingCompletedAt = onboardingCompletedAt
             self.goals = goals
             self.latestWeight = latestWeight
+            self.trainingProfile = trainingProfile
+            self.plans = plans
+        }
+
+        init(from decoder: any Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            displayName = try c.decodeIfPresent(String.self, forKey: .displayName)
+            sex = try c.decodeIfPresent(String.self, forKey: .sex)
+            ageBand = try c.decodeIfPresent(String.self, forKey: .ageBand)
+            heightCm = try c.decodeIfPresent(Int.self, forKey: .heightCm)
+            trainingGoal = try c.decodeIfPresent(String.self, forKey: .trainingGoal)
+            onboardingCompletedAt = try c.decodeIfPresent(String.self, forKey: .onboardingCompletedAt)
+            goals = try c.decode(Ziele.self, forKey: .goals)
+            latestWeight = try c.decodeIfPresent(Messwert.self, forKey: .latestWeight)
+            trainingProfile = try c.decodeIfPresent(TrainingsplanProfil.self, forKey: .trainingProfile)
+            plans = try c.decodeIfPresent([Trainingsplan].self, forKey: .plans) ?? []
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case displayName, sex, ageBand, heightCm, trainingGoal, onboardingCompletedAt, goals, latestWeight,
+                 trainingProfile, plans
         }
     }
 

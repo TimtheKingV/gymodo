@@ -9,7 +9,7 @@ import {
   type TrainingPlan,
 } from "@fitretro/domain";
 import { serviceClient } from "./helpers/clients.js";
-import { legeMitgliedAn, legePlanStudiosAn, type PlanStudios } from "./helpers/plan-studio.js";
+import { legeEinheitAn, legeMitgliedAn, legePlanStudiosAn, type PlanStudios } from "./helpers/plan-studio.js";
 
 // Task 7 Etappe 2: Plaene speichern, versionieren und bestaetigen.
 // Alle Aufrufe laufen mit dem Client des Mitglieds, damit RLS (auch beim
@@ -49,13 +49,14 @@ describe("erzeugePlanVorschlag", () => {
     const m = await legeMitgliedAn("plan-v1", { studios: [s.voll] });
     const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
     expect(plan).toMatchObject({ studioId: s.voll, version: 1, status: "vorschlag", acceptedAt: null, struktur: "gk_ab" });
-    expect(plan.regelVersion).toBe("1.1.0");
+    expect(plan.regelVersion).toBe("1.2.0");
     expect(plan.eingabe).toEqual({
       ziel: "muskelaufbau",
       tage: 3,
       minuten: 60,
       fokus: [],
       erfahrung: "regelmaessig",
+      anfaengerBeendet: false,
       beschwerdenBeruecksichtigt: false,
     });
     expect(plan.eingabe).not.toHaveProperty("kandidaten");
@@ -174,6 +175,29 @@ describe("erzeugePlanVorschlag", () => {
     expect(await zeilen(m.userId, s.ohneDruck)).toEqual([]);
   });
 
+  it("erzeugePlanVorschlag nach 8 Einheiten plant 3 Saetze", async () => {
+    const m = await legeMitgliedAn("plan-anfaenger-ende", {
+      studios: [s.voll, s.voll2], profil: { minutes: 60, experience: "neu", focus: [] },
+    });
+    const kraft = (p: TrainingPlan) => positionen(p).filter((x) => x.rolle !== "cardio");
+    const plan = await acceptPlan(m.client, m.userId, (await erzeugePlanVorschlag(m.client, m.userId, s.voll)).id);
+    expect(plan.eingabe.anfaengerBeendet).toBe(false);
+    expect(new Set(kraft(plan).map((x) => x.saetze))).toEqual(new Set([2]));
+
+    const stunden = (h: number) => new Date(Date.now() - h * 3_600_000);
+    for (let i = 0; i < 8; i++) {
+      await legeEinheitAn(m.userId, s.voll, { planId: plan.id, einheitKey: plan.einheiten[0]!.key, startedAt: stunden(100 - i * 10) });
+    }
+    const danach = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    expect(danach.eingabe.anfaengerBeendet).toBe(true);
+    expect(danach.gruende).not.toContain("anfaenger_reserve");
+    expect(new Set(kraft(danach).map((x) => x.saetze))).toEqual(new Set([3]));
+
+    // Der Zaehler gilt je Paar: im zweiten Studio bleibt es beim Anfaengerplan.
+    const anderes = await erzeugePlanVorschlag(m.client, m.userId, s.voll2);
+    expect(anderes.eingabe.anfaengerBeendet).toBe(false);
+  });
+
   it("Studio, in dem das Mitglied nicht ist: not_found", async () => {
     const m = await legeMitgliedAn("plan-fremdes-studio", { studios: [s.voll] });
     const e = await fehlerVon(erzeugePlanVorschlag(m.client, m.userId, s.voll2));
@@ -243,7 +267,8 @@ describe("RLS training_plans", () => {
     expect(zeile!.studio_id).toBe(s.voll);
   });
 
-  it("Update innerhalb des eigenen Studios bleibt erlaubt", async () => {
+  // Seit 0062 schreibt das Mitglied nur ueber create_/accept_training_plan.
+  it("Update innerhalb des eigenen Studios wird ebenfalls abgelehnt", async () => {
     const m = await legeMitgliedAn("plan-update-ok", { studios: [s.voll] });
     const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
     const { data, error } = await m.client
@@ -251,8 +276,9 @@ describe("RLS training_plans", () => {
       .update({ status: "verworfen" })
       .eq("id", plan.id)
       .select("id");
-    expect(error).toBeNull();
-    expect(data).toHaveLength(1);
+    expect(error !== null || (data ?? []).length === 0).toBe(true);
+    const { data: zeile } = await admin.from("training_plans").select("status").eq("id", plan.id).single();
+    expect(zeile!.status).toBe("vorschlag");
   });
 });
 

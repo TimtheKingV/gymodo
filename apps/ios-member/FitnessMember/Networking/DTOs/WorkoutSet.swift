@@ -52,12 +52,15 @@ struct SetWrite: Codable, Equatable {
     var volumeSource: VolumeSource = .eingegeben
     var volumeCounted: Int? = nil
     var repEvents: RepEvents? = nil
+    /// Planstand der laufenden Einheit; nil wird nicht mitgeschickt (alte Server
+    /// und Saetze ohne Plan kennen das Feld nicht).
+    var plan: PlanMomentaufnahme? = nil
 }
 
 extension SetWrite {
     private enum CodingKeys: String, CodingKey {
         case machineId, equipmentModelId, studioId, exerciseId, setIndex, load, volume, secondaryLoad, rir,
-             problemFlag, problemReason, performedAt, sessionStartedAt, volumeSource, volumeCounted, repEvents, cardio
+             problemFlag, problemReason, performedAt, sessionStartedAt, volumeSource, volumeCounted, repEvents, cardio, plan
     }
 
     /// Die Feldnamen von vor Migration 0046.
@@ -94,6 +97,8 @@ extension SetWrite {
         volumeSource = try c.decodeIfPresent(VolumeSource.self, forKey: .volumeSource) ?? .eingegeben
         volumeCounted = try c.decodeIfPresent(Int.self, forKey: .volumeCounted)
         repEvents = try c.decodeIfPresent(RepEvents.self, forKey: .repEvents)
+        // Fehlt in Warteschlangen-Dateien von vor Etappe 3.
+        plan = try c.decodeIfPresent(PlanMomentaufnahme.self, forKey: .plan)
     }
 }
 

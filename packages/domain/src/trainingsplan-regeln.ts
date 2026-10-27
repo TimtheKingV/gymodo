@@ -5,7 +5,8 @@ import { PFLICHT_BAUSTEINE } from "./trainingsplan-typen.js";
 
 /** Aendert sich eine Regel, steigt die Version, damit alte Plaene erkennbar bleiben. */
 // 1.1.0: Auffuellen bis zum Zeitbudget, A/B-Rotation nur ueber unbedenkliche Uebungen.
-export const PLAN_REGEL_VERSION = "1.1.0";
+// 1.2.0: Rolle auffuellung, Anzeigereihenfolge (Mehrgelenk vor Isolation), Anfaengerende.
+export const PLAN_REGEL_VERSION = "1.2.0";
 
 export type Ziel = "muskelaufbau" | "fitness" | "abnehmen";
 
@@ -29,13 +30,14 @@ export type Zielprofil = {
   reserve: [number, number];
 };
 
-export function zielprofil(ziel: Ziel, erfahrung: Erfahrung): Zielprofil {
+export function zielprofil(ziel: Ziel, erfahrung: Erfahrung, anfaengerBeendet = false): Zielprofil {
   const wdh: Zielprofil["wdh"] =
     ziel === "muskelaufbau"
       ? { mehrgelenk: [8, 12], isolation: [10, 15] }
       : { mehrgelenk: [10, 15], isolation: [10, 15] };
   // Anfaenger starten mit weniger Saetzen und mehr Reserve, um Technik vor Belastung zu stellen.
-  if (erfahrung === "neu") return { saetze: 2, wdh, reserve: [3, 4] };
+  // Nach dem Anfaengerende gilt das Profil von "unregelmaessig" (Fall faellt unten durch).
+  if (erfahrung === "neu" && !anfaengerBeendet) return { saetze: 2, wdh, reserve: [3, 4] };
   // Fitness: lieber eine Uebung mehr als ein Satz mehr (Spec Abschnitt 3), daher 2 Saetze.
   return { saetze: ziel === "fitness" ? 2 : 3, wdh, reserve: ziel === "muskelaufbau" ? [1, 3] : [2, 3] };
 }

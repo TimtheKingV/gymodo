@@ -101,6 +101,26 @@ struct CatalogStoreTests {
         #expect(store.bootstrapStand == 2)
     }
 
+    /// Der Planablauf gibt seine lokale Zaehlung nur bei leerer Warteschlange
+    /// ab -- dafuer braucht er die Zahl nach jedem frischen Bootstrap, nach
+    /// einem gescheiterten keine.
+    @Test("nach frischem Bootstrap kommt die Zahl offener Schreibvorgaenge")
+    func nachFrischemBootstrapMeldetOffene() async {
+        let loader = FakeBootstrapLoader()
+        await loader.setBootstrapResult(.success(emptyBootstrap()))
+        let store = CatalogStore(loader: loader, pendingWriteStore: PendingWriteStore(directory: tempDirectory()))
+        var gemeldet: [Int] = []
+        store.nachFrischemBootstrap = { gemeldet.append($0) }
+
+        await store.load()
+        store.enqueue(testWrite())
+        await store.load()
+        await loader.setBootstrapResult(.failure(.offline))
+        await store.load()
+
+        #expect(gemeldet == [0, 1])
+    }
+
     @Test("load() ohne Studios ergibt loaded")
     func loadWithoutStudio() async {
         let loader = FakeBootstrapLoader()

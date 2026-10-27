@@ -20,6 +20,7 @@ private enum ZirkelAuswahlZiel: Hashable {
 struct TrainingRootView: View {
     @Environment(CatalogStore.self) private var katalog
     @Environment(WorkoutSessionStore.self) private var sessions
+    @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     @Environment(PendingTagStore.self) private var pendingTag
     #if DEBUG
     @Environment(SensorAufnahmeKoordinator.self) private var sensorAufnahme
@@ -140,6 +141,8 @@ struct TrainingRootView: View {
     /// Ablauf kennt den Zirkel danach nicht mehr -- die Uebersicht liest
     /// deshalb nur diesen Wert, auf allen drei Wegen gleich.
     @State private var zirkelAbschluss: ZirkelAbschluss?
+    /// Die angetippte Planzeile (Entwuerfe 3.1-3.3, `planPositionSheet`).
+    @State private var planPosition: PlanTauschAuftrag?
 
     var body: some View {
         NavigationStack(path: $pfad) {
@@ -219,6 +222,7 @@ struct TrainingRootView: View {
                 ziel(route).id(route).environment(videoVorrat)
             }
             .environment(videoVorrat)
+            .planPositionSheet(auftrag: $planPosition, apiClient: apiClient, vorschauLader: vorschauLader)
             .sheet(item: $uebungsstart, onDismiss: zirkelPlanungOeffnen) { auftrag in
                 if let modell = modell(station: auftrag.station, exerciseId: auftrag.exerciseId,
                                        token: auftrag.token) {
@@ -394,6 +398,10 @@ struct TrainingRootView: View {
                     sensorKarte
                     if let mitte, let session {
                         laufendKopf(mitte, session: session)
+                    }
+                    // Entwurf 2.1/2.2; ohne Plan im aktiven Studio nichts.
+                    PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
+                        planPosition = PlanTausch.auftrag(position: $0, katalog: katalog, ablauf: planAblauf)
                     }
                 }
             } trainingsinhalt: {
@@ -779,7 +787,8 @@ struct TrainingRootView: View {
             mitschnitt: mitschnitt,
             zaehler: zaehler,
             startwerte: startwerte,
-            mitCountdown: !zirkel
+            mitCountdown: !zirkel,
+            ablauf: planAblauf
         )
         if zirkel {
             modell.beiZirkelSatzGesichert = { zirkelSatzGesichert() }
@@ -927,7 +936,7 @@ struct TrainingRootView: View {
     private func beendenUndOeffnen(_ rueckfrage: ScanRueckfrage) {
         scanRueckfrage = nil
         let lief = sessions.aktiveSession() != nil
-        let ende = sessions.beendenFuerOrtswechsel()
+        let ende = sessions.beendenFuerOrtswechsel(ablauf: planAblauf)
         // Nach einem Beitritt nennt der Hinweis den Beitritt, nicht den Wechsel.
         if let beitritt = rueckfrage.beitritt {
             katalog.ortNachBeitritt(beitritt)
@@ -1619,6 +1628,9 @@ struct TrainingRootView: View {
     /// statt sich davorzulegen: "Zurueck" vom Abschluss fuehrte sonst in
     /// ein Geraet eines beendeten Trainings.
     private func beenden() {
+        // Vor sessions.beenden(): der Planablauf zaehlt die Einheit, solange
+        // sie noch da ist. Ohne Satz zaehlt er nicht und leert nur.
+        planAblauf.einheitBeendet()
         #if DEBUG
         satzZaehler.aktivesModell?.screenVerlassen()
         #endif

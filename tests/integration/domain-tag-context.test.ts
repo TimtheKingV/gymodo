@@ -346,8 +346,9 @@ describe("getTagContext", () => {
     const client = await userClient(memberAEmail);
     const context = await getTagContext(client, tokenA);
 
-    expect(context.suggestion.reasonCode).toBe("korridor_oben_erreicht");
-    expect(context.suggestion.resultLoad).toBe(47.5);
+    // Ohne Plan: das letzte Gewicht, keine Steigerung (Etappe 4).
+    expect(context.suggestion.reasonCode).toBe("letztes_gewicht");
+    expect(context.suggestion.resultLoad).toBe(45);
 
     const { data } = await admin
       .from("progression_suggestions")
@@ -357,7 +358,7 @@ describe("getTagContext", () => {
       .eq("exercise_id", engId)
       .order("created_at", { ascending: false })
       .limit(1);
-    expect(data?.[0]?.reason_code).toBe("korridor_oben_erreicht");
+    expect(data?.[0]?.reason_code).toBe("letztes_gewicht");
   });
 
   it("liefert die eigenen Einstellwerte mit", async () => {

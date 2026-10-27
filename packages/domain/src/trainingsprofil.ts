@@ -114,43 +114,12 @@ export async function saveTrainingLimits(
 
 /**
  * Einwilligung widerrufen = Zeile loeschen; keine Zeile ist kein Fehler.
- * Danach werden die eigenen Plaene bereinigt: Flag beschwerdenBeruecksichtigt und die
- * beschwerden_*-Gruende verraten sonst weiter, dass es Beschwerden gab (DSGVO Art. 9).
- * Die Uebungen (einheiten) bleiben, weil Plaene stabil sind (F14). Wiederholbar: ein
- * erneuter Aufruf nach einem Teilfehler raeumt den Rest auf.
+ * Die Plaene bereinigt der Trigger training_limits_widerruf (0062) in derselben
+ * Transaktion: Flag beschwerdenBeruecksichtigt und die beschwerden_*-Gruende verraten
+ * sonst weiter, dass es Beschwerden gab (DSGVO Art. 9) -- auch in Studios, die das
+ * Mitglied verlassen hat und deren Zeilen es selbst nicht mehr aendern koennte.
  */
 export async function deleteTrainingLimits(client: SupabaseClient, userId: string): Promise<void> {
   const { error } = await client.from("training_limits").delete().eq("user_id", userId);
   if (error) throw new DomainError("internal", "Die Beschwerden konnten nicht geloescht werden.");
-  await bereinigePlaeneNachWiderruf(client, userId);
-}
-
-type PlanRest = { id: string; studio_id: string; eingabe: Record<string, unknown>; gruende: string[] };
-
-async function bereinigePlaeneNachWiderruf(client: SupabaseClient, userId: string): Promise<void> {
-  const fehler = () => new DomainError("internal", "Die Beschwerden konnten nicht aus den Plaenen entfernt werden.");
-  // Die Update-Policy verlangt die Mitgliedschaft im Studio der Zeile; Zeilen aus verlassenen
-  // Studios lassen sich mit dem Mitglieds-Client nicht aendern und wuerden das Update scheitern lassen.
-  const [plaene, mitgliedschaften] = await Promise.all([
-    client.from("training_plans").select("id, studio_id, eingabe, gruende").eq("user_id", userId),
-    client.from("studio_memberships").select("studio_id").eq("user_id", userId),
-  ]);
-  if (plaene.error || mitgliedschaften.error) throw fehler();
-  const studios = new Set((mitgliedschaften.data ?? []).map((z) => z.studio_id as string));
-  const betroffen = ((plaene.data ?? []) as PlanRest[]).filter(
-    (p) =>
-      studios.has(p.studio_id) &&
-      (p.eingabe.beschwerdenBeruecksichtigt === true || p.gruende.some((g) => g.startsWith("beschwerden_"))),
-  );
-  for (const p of betroffen) {
-    const { error: e } = await client
-      .from("training_plans")
-      .update({
-        eingabe: { ...p.eingabe, beschwerdenBeruecksichtigt: false },
-        gruende: p.gruende.filter((g) => !g.startsWith("beschwerden_")),
-      })
-      .eq("id", p.id)
-      .eq("user_id", userId);
-    if (e) throw fehler();
-  }
 }

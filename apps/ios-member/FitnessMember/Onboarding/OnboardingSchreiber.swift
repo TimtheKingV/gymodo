@@ -13,11 +13,18 @@ protocol ProfilSchreibend: Sendable {
     func updateProfile(_ body: ProfilWrite) async throws(APIError) -> ProfilAntwort
     func putMeasurement(_ body: MesswertWrite) async throws(APIError) -> MesswertAntwort
     func setGoal(_ body: ZielWrite) async throws(APIError) -> Ziel
+    func putTrainingProfile(_ profil: TrainingsplanProfil) async throws(APIError) -> TrainingsplanProfil
+    func putTrainingLimits(areas: [String: String]) async throws(APIError)
+    func deleteTrainingLimits() async throws(APIError)
+    /// Fuer das Beschwerden-Sheet im Profil: ohne gelungenen Abruf kein
+    /// Speichern (`BeschwerdenSitzung`). nil = 404, keine Einwilligung.
+    func trainingLimits() async throws(APIError) -> [String: String]?
 }
 
 extension APIClient: ProfilSchreibend {}
 
-/// Die vier Schreibvorgaenge des Onboardings, in Sendereihenfolge.
+/// Die Schreibvorgaenge des Onboardings, in Sendereihenfolge -- die vier
+/// Bestandsvorgaenge, danach die zwei des Plan-Blocks (Etappe 3).
 ///
 /// R19: `offen` merkt sich SCHREIBVORGAENGE, nicht Screens. `OnboardingSchritt`
 /// (fuenf Screens) und diese vier Aufrufe faelen unterschiedlich fein --
@@ -28,6 +35,11 @@ extension APIClient: ProfilSchreibend {}
 /// Schreibvorgang ist dagegen genau ein API-Aufruf und eindeutig.
 enum OnboardingSchreibvorgang: Equatable, Sendable, CaseIterable {
     case profil, messwert, wochenziel, zielgewicht
+    /// PUT training-profile (Entwurf 1.1/1.2).
+    case trainingsprofil
+    /// PUT oder DELETE training-limits (Entwurf 1.3) -- welches von beiden,
+    /// entscheidet `PlanAntworten.beschwerdenAktion`.
+    case beschwerden
 }
 
 /// Das Ergebnis eines Schreibversuchs -- `offen` traegt genug, um einen
@@ -52,13 +64,19 @@ enum OnboardingSchreiber {
     /// (Nachholkarte auf Home, Aufgabe 8) ist das Onboarding auf dem
     /// Server bereits abgeschlossen: ein zweites `onboardingDone` gaebe es
     /// nicht, und das Profil-PUT liefe nur noch fuer eigene Antworten mit.
+    ///
+    /// `plan` ist nil, solange der Flow den Plan-Block nicht zeigt (dann
+    /// bleibt alles wie vor Etappe 3). Der Block laeuft NACH den
+    /// Bestandsvorgaengen: der Plan braucht Ziel und Wochentage aus dem
+    /// Profil, und ein Profil ohne `onboardingDone` liesse das Gate offen.
     static func schreiben(
         _ antworten: OnboardingAntworten,
+        plan: PlanAntworten? = nil,
         mit client: some ProfilSchreibend,
         mitAbschluss: Bool = true,
         offen: [OnboardingSchreibvorgang]? = nil
     ) async -> OnboardingErgebnis {
-        if mussLaufen(.profil, antworten: antworten, mitAbschluss: mitAbschluss, offen: offen) {
+        if mussLaufen(.profil, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss, offen: offen) {
             let schreibvorgang = ProfilWrite(
                 sex: antworten.geschlecht.map { .setzen($0.rawValue) },
                 heightCm: antworten.groesseCm.map { .setzen($0) },
@@ -72,35 +90,92 @@ enum OnboardingSchreiber {
             do {
                 _ = try await client.updateProfile(schreibvorgang)
             } catch {
-                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .profil, antworten: antworten, mitAbschluss: mitAbschluss), fehler: error)
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .profil, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss), fehler: error)
             }
         }
 
-        if mussLaufen(.messwert, antworten: antworten, mitAbschluss: mitAbschluss, offen: offen) {
+        if mussLaufen(.messwert, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss, offen: offen) {
             do {
                 _ = try await client.putMeasurement(MesswertWrite(measuredOn: heute(), weightKg: antworten.gewichtKg!))
             } catch {
-                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .messwert, antworten: antworten, mitAbschluss: mitAbschluss), fehler: error)
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .messwert, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss), fehler: error)
             }
         }
 
-        if mussLaufen(.wochenziel, antworten: antworten, mitAbschluss: mitAbschluss, offen: offen) {
+        if mussLaufen(.wochenziel, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss, offen: offen) {
             do {
                 _ = try await client.setGoal(ZielWrite(kind: "weekly_days", targetValue: Double(antworten.tageProWoche!)))
             } catch {
-                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .wochenziel, antworten: antworten, mitAbschluss: mitAbschluss), fehler: error)
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .wochenziel, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss), fehler: error)
             }
         }
 
-        if mussLaufen(.zielgewicht, antworten: antworten, mitAbschluss: mitAbschluss, offen: offen) {
+        if mussLaufen(.zielgewicht, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss, offen: offen) {
             do {
                 _ = try await client.setGoal(ZielWrite(kind: "target_weight", targetValue: antworten.zielgewichtKg!))
             } catch {
-                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .zielgewicht, antworten: antworten, mitAbschluss: mitAbschluss), fehler: error)
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .zielgewicht, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss), fehler: error)
+            }
+        }
+
+        if mussLaufen(.trainingsprofil, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss, offen: offen),
+           let profil = plan?.trainingsprofil {
+            do {
+                _ = try await client.putTrainingProfile(profil)
+            } catch {
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .trainingsprofil, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss), fehler: error)
+            }
+        }
+
+        if mussLaufen(.beschwerden, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss, offen: offen),
+           let aktion = plan?.beschwerdenAktion {
+            do {
+                switch aktion {
+                case .keine: break
+                // Nur mit `einwilligung == true` erreichbar (siehe
+                // `beschwerdenAktion`); die Bereiche selbst landen in keinem
+                // Log und keiner Ablage (DSGVO Art. 9).
+                case .speichern(let areas): try await client.putTrainingLimits(areas: areas)
+                case .widerrufen: try await client.deleteTrainingLimits()
+                }
+            } catch {
+                return .teilweise(offen: offeneVorgaenge(abFehlerBei: .beschwerden, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss), fehler: error)
             }
         }
 
         return .fertig
+    }
+
+    /// Die Vorgaenge, auf die ein Umfang beschraenkt ist; nil = alle mit
+    /// einer Antwort. Die Profilzeile "Beschwerden" (`nurBeschwerden`)
+    /// schreibt nur die Beschwerden -- ein vorbelegtes Trainingsprofil ginge
+    /// sonst ungefragt mit.
+    static func vorgaenge(umfang: OnboardingUmfang) -> [OnboardingSchreibvorgang]? {
+        umfang == .nurBeschwerden ? [.beschwerden] : nil
+    }
+
+    /// Was nach einem GELUNGENEN Versuch noch einmal laufen muss, wenn der
+    /// Flow erneut schreibt (etwa nach "Zeit oder Schwerpunkt ändern" aus
+    /// der Vorschau): nur, was sich seitdem geaendert hat. Sonst setzte
+    /// jeder Umweg ueber die Vorschau Wochenziel und Gewicht ein zweites
+    /// Mal. `.beschwerden` steht immer darin -- ob dort etwas zu tun ist,
+    /// sagt `beschwerdenAktion` selbst (nach dem Schreiben ist sie `.keine`).
+    static func geaenderteVorgaenge(
+        vorher: OnboardingAntworten, planVorher: PlanAntworten?,
+        jetzt: OnboardingAntworten, planJetzt: PlanAntworten?
+    ) -> [OnboardingSchreibvorgang] {
+        OnboardingSchreibvorgang.allCases.filter { vorgang in
+            switch vorgang {
+            case .profil:
+                vorher.geschlecht != jetzt.geschlecht || vorher.altersspanne != jetzt.altersspanne
+                    || vorher.groesseCm != jetzt.groesseCm || vorher.richtung != jetzt.richtung
+            case .messwert: vorher.gewichtKg != jetzt.gewichtKg
+            case .wochenziel: vorher.tageProWoche != jetzt.tageProWoche
+            case .zielgewicht: vorher.zielgewichtKg != jetzt.zielgewichtKg
+            case .trainingsprofil: planVorher?.trainingsprofil != planJetzt?.trainingsprofil
+            case .beschwerden: true
+            }
+        }
     }
 
     /// Ob "Später" nach einem Teilerfolg (`.teilweise(offen:)`) den Flow
@@ -124,7 +199,7 @@ enum OnboardingSchreiber {
     /// einer eigenen Antwort: einem der vier Stammdatenfelder. Gewicht,
     /// Wochentage und Zielgewicht gehoeren zu den anderen drei Vorgaengen
     /// und zaehlen hier nicht mit.
-    private static func hatAntwort(_ vorgang: OnboardingSchreibvorgang, antworten: OnboardingAntworten, mitAbschluss: Bool) -> Bool {
+    private static func hatAntwort(_ vorgang: OnboardingSchreibvorgang, antworten: OnboardingAntworten, plan: PlanAntworten?, mitAbschluss: Bool) -> Bool {
         switch vorgang {
         case .profil:
             mitAbschluss
@@ -133,6 +208,10 @@ enum OnboardingSchreiber {
         case .messwert: antworten.gewichtKg != nil
         case .wochenziel: antworten.tageProWoche != nil
         case .zielgewicht: antworten.zielgewichtKg != nil
+        // Ohne Minuten und Erfahrung kein Aufruf: ein vorhandenes Profil
+        // bliebe sonst nicht unberuehrt, und der Server lehnte ein halbes ab.
+        case .trainingsprofil: plan?.trainingsprofil != nil
+        case .beschwerden: plan.map { $0.beschwerdenAktion != .keine } ?? false
         }
     }
 
@@ -143,8 +222,8 @@ enum OnboardingSchreiber {
     /// benennt Schreibvorgaenge (R19), keine Screens, also keine
     /// Mehrdeutigkeit: ein erfolgreich geschriebenes Profil taucht in
     /// keinem spaeteren `offen` mehr auf (R18).
-    private static func mussLaufen(_ vorgang: OnboardingSchreibvorgang, antworten: OnboardingAntworten, mitAbschluss: Bool, offen: [OnboardingSchreibvorgang]?) -> Bool {
-        guard hatAntwort(vorgang, antworten: antworten, mitAbschluss: mitAbschluss) else { return false }
+    private static func mussLaufen(_ vorgang: OnboardingSchreibvorgang, antworten: OnboardingAntworten, plan: PlanAntworten?, mitAbschluss: Bool, offen: [OnboardingSchreibvorgang]?) -> Bool {
+        guard hatAntwort(vorgang, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss) else { return false }
         guard let offen else { return true }
         return offen.contains(vorgang)
     }
@@ -152,10 +231,10 @@ enum OnboardingSchreiber {
     /// `offen` fuer einen Fehler bei `fehlerBei`: dieser Vorgang selbst,
     /// plus alle spaeteren mit einer Antwort -- die wurden nie versucht,
     /// weil beim ersten Fehler abgebrochen wird. In Schreibreihenfolge.
-    private static func offeneVorgaenge(abFehlerBei fehlerBei: OnboardingSchreibvorgang, antworten: OnboardingAntworten, mitAbschluss: Bool) -> [OnboardingSchreibvorgang] {
+    private static func offeneVorgaenge(abFehlerBei fehlerBei: OnboardingSchreibvorgang, antworten: OnboardingAntworten, plan: PlanAntworten?, mitAbschluss: Bool) -> [OnboardingSchreibvorgang] {
         OnboardingSchreibvorgang.allCases
             .drop { $0 != fehlerBei }
-            .filter { hatAntwort($0, antworten: antworten, mitAbschluss: mitAbschluss) }
+            .filter { hatAntwort($0, antworten: antworten, plan: plan, mitAbschluss: mitAbschluss) }
     }
 
     /// Das Ortsdatum des Geraets fuer den Gewichtseintrag -- das

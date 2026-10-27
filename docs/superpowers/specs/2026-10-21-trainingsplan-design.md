@@ -221,7 +221,7 @@ Grundlage und Grenze: Der Zusammenhang Wiederholungen ↔ Last schwankt zwischen
 
 ### Fortlaufende Anpassung
 
-- Die bestehende doppelte Progression bleibt: erst Wiederholungen im Zielbereich steigern, dann Last. Neu: Zielbereich und Zielreserve kommen aus der Planposition; mit erfasster Reserve greift der Hauptpfad der Regel (alle Arbeitssätze am oberen Rand und Reserve ≥ Zielreserve → nächste Stufe).
+- **Zielgewichte je Planposition (ersetzt die frühere Fortschreibung der doppelten Progression):** Das Gewicht gehört in den Plan und wird nach jeder abgeschlossenen Einheit neu gerechnet. Regeln G1 bis G4 und das Verhalten in Randfällen stehen in `2026-10-25-trainingsplan-plangewichte-design.md`. Startgewicht, Reserve-Abfrage, Übertragung und Wiedereinstieg unten bleiben (dort G5).
 - **Grobe Gerätestufen:** Wäre der nächste Schritt mehr als 10 % der aktuellen Last (häufig bei 2,5-kg-Stufen unter 25 kg), wird statt der Last zuerst der Wiederholungsbereich nach oben geöffnet (z. B. 10–15 → bis 18, dann Laststufe mit Rückkehr in den Bereich). Keine automatische Blockade ohne Ausweg.
 - Erster Arbeitssatz deutlich unter dem Bereich: Tageslast darf sinken, die Referenz bleibt. Dauerhafte Senkung erst bei wiederholter Unterschreitung (wie heute zwei Blöcke).
 - **Wiedereinstieg nach Pausen (F18).** Gemessen je Übung am Gerätemodell: Abstand zwischen heute und dem letzten Block dieser Übung. Keine Rückfrage an das Mitglied in v1.

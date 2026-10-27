@@ -18,6 +18,10 @@ import type { Messpunkt } from "./measurements.js";
 import type { Profil } from "./profil.js";
 import { zuProfil } from "./profil.js";
 import { stationsSchluessel } from "./station.js";
+import { aktivePlaeneDerMitgliedschaften } from "./trainingsplan.js";
+import { ladePlaeneFuerApp, type PlanFuerApp } from "./trainingsplan-bootstrap.js";
+import { DomainError } from "./errors.js";
+import { getTrainingLimits, getTrainingProfile, type TrainingProfile } from "./trainingsprofil.js";
 
 /**
  * Obergrenze fuer die Satzhistorie, aus der die letzten Werte je Kombination
@@ -42,6 +46,14 @@ export type Bootstrap = {
     latestWeight: Messpunkt | null;
     /** Die aktiven Ziele des Mitglieds, siehe Migration 0043. */
     goals: AktiveZiele;
+    /** Dauer, Erfahrung und Fokus (0060); null, solange das Mitglied keins angelegt hat. */
+    trainingProfile: TrainingProfile | null;
+    /**
+     * Der aktive Plan je Studio, in dem das Mitglied jetzt ist, mit Zaehler und naechster
+     * Einheit (Etappe 3). Die Beschwerden selbst stehen bewusst nicht im Bootstrap
+     * (Gesundheitsdaten); sie wirken nur auf die Auswahl in alternativen.
+     */
+    plans: PlanFuerApp[];
   };
   studios: Array<{ id: string; name: string; timezone: string }>;
   /**
@@ -367,6 +379,42 @@ export function letzteSaetze(
 }
 
 /**
+ * Trainingsprofil und Plaene fuer den Bootstrap. Darf den App-Start nie blockieren: der
+ * Bootstrap ist der Prefetch fuer das Training ohne Empfang, ein voruebergehender Fehler
+ * hier wuerde das Mitglied aussperren. Deshalb faellt jeder Teil still auf einen leeren
+ * Stand zurueck, wie die uebrigen Bootstrap-Abfragen.
+ *
+ * Die Beschwerden werden INNERHALB des Plan-Blocks gelesen: scheitert das Lesen, gibt es
+ * plans: [] -- nie Plaene mit ungefilterten alternativen, sonst stuenden gemiedene
+ * Uebungen zur Auswahl. Geloggt wird nur Code und feste Meldung, nie Gesundheitsdaten.
+ */
+export async function ladeTrainingsteil(
+  client: SupabaseClient,
+  userId: string,
+  jetzt: Date,
+  melde: (nachricht: string) => void = (n) => console.error(n),
+): Promise<{ trainingProfile: TrainingProfile | null; plans: PlanFuerApp[] }> {
+  const grund = (e: unknown) => (e instanceof DomainError ? `${e.code}: ${e.message}` : "unerwarteter Fehler");
+  const profilAnfrage = getTrainingProfile(client, userId).catch((e: unknown) => {
+    melde(`bootstrap: Trainingsprofil nicht geladen (${grund(e)})`);
+    return null;
+  });
+  const plaeneAnfrage = (async () => {
+    const [profil, limits, aktive] = await Promise.all([
+      profilAnfrage,
+      getTrainingLimits(client, userId),
+      aktivePlaeneDerMitgliedschaften(client, userId),
+    ]);
+    return ladePlaeneFuerApp(client, userId, aktive, profil, limits, jetzt, melde);
+  })().catch((e: unknown) => {
+    melde(`bootstrap: Plaene nicht geladen (${grund(e)})`);
+    return [] as PlanFuerApp[];
+  });
+  const [trainingProfile, plans] = await Promise.all([profilAnfrage, plaeneAnfrage]);
+  return { trainingProfile, plans };
+}
+
+/**
  * Alles, was die App beim Start braucht, um danach ohne Empfang zu
  * funktionieren (Spec 6.6).
  *
@@ -379,6 +427,8 @@ export async function getBootstrap(
   client: SupabaseClient,
 ): Promise<Bootstrap> {
   const userId = await requireUserId(client);
+  // Frueh gestartet, damit seine Rundwege neben den Abfragen unten laufen; faengt selbst ab.
+  const trainingsteil = ladeTrainingsteil(client, userId, new Date());
 
   // RLS beschraenkt diese Abfragen auf die Studios des Mitglieds -- mit
   // einer Ausnahme: den Gymtavo-Katalog liest seit 0047 jeder Angemeldete.
@@ -632,6 +682,8 @@ export async function getBootstrap(
 
   const weight = weightRow as { measured_on: string; weight_kg: number | string } | null;
 
+  const { trainingProfile, plans } = await trainingsteil;
+
   return {
     member: {
       ...zuProfil(
@@ -642,6 +694,8 @@ export async function getBootstrap(
       ),
       latestWeight: weight ? { measuredOn: weight.measured_on, weightKg: Number(weight.weight_kg) } : null,
       goals: await aktiveZiele(client, userId),
+      trainingProfile,
+      plans,
     },
     studios: (studioRows ?? []) as Bootstrap["studios"],
     catalog,

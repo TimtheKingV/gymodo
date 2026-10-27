@@ -6,6 +6,8 @@ struct RootView: View {
     @Environment(WorkoutSessionStore.self) private var workoutStore
     @Environment(KurseStore.self) private var kurseStore
     @Environment(VerlaufStore.self) private var verlaufStore
+    @Environment(TrainingsplanAblaufStore.self) private var planAblauf
+    @Environment(\.scenePhase) private var scenePhase
 
     let apiClient: APIClient
 
@@ -83,8 +85,27 @@ struct RootView: View {
                 // des vorigen Kontos darf dem naechsten weder im Speicher
                 // noch auf der Platte erscheinen.
                 verlaufStore.reset()
+                // Der Planablauf ebenso: Plan und Einheiten gehoeren dem
+                // abgemeldeten Konto.
+                planAblauf.reset()
             }
         }
+        // Der Planablauf folgt Bootstrap und Ort. Auch im Vordergrund: die
+        // Fristen (12 h ohne Satz, 4 h nach dem letzten Satz) laufen, waehrend
+        // die App im Hintergrund liegt. Idempotent, ein Aufruf zu viel schadet nicht.
+        .onChange(of: catalogStore.bootstrapStand, initial: true) { planVorbereiten() }
+        .onChange(of: catalogStore.activeStudioId) { planVorbereiten() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { planVorbereiten() }
+        }
+    }
+
+    /// Ohne Bootstrap (Kaltstart, Abmelden) nichts: "noch nicht geladen" ist
+    /// nicht "kein Plan" und wuerde einen Tausch "nur heute" verwerfen. Das
+    /// Abmelden raeumt ueber reset().
+    private func planVorbereiten() {
+        guard let bootstrap = catalogStore.bootstrap else { return }
+        planAblauf.vorbereiten(bootstrap: bootstrap, studioId: catalogStore.activeStudioId)
     }
 
     private var ladeschirm: some View {
