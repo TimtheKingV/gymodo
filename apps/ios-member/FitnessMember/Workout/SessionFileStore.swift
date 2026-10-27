@@ -14,6 +14,10 @@ final class SessionFileStore {
         fileURL = directory.appendingPathComponent("laufende-session.json")
         beendetURL = directory.appendingPathComponent("zuletzt-beendet.json")
 
+        TrainingsDateischutz.vorbereiten(directory)
+        TrainingsDateischutz.vorbereiten(fileURL)
+        TrainingsDateischutz.vorbereiten(beendetURL)
+
         // Altlast aus der Zeit vor Schnitt 4: der gemerkte Geraetekontakt lag in
         // einer eigenen Datei, weil die Einheit erst mit dem ersten Satz entstand.
         // Seit die Einheit mit "Training starten" beginnt, liest sie niemand mehr.
@@ -31,7 +35,7 @@ final class SessionFileStore {
             return
         }
         guard let data = try? JSONEncoder().encode(session) else { return }
-        try? data.write(to: fileURL, options: .atomic)
+        TrainingsDateischutz.schreiben(data, nach: fileURL)
     }
 
     func loadBeendet() -> BeendeteSession? {
@@ -45,7 +49,7 @@ final class SessionFileStore {
             return
         }
         guard let data = try? JSONEncoder().encode(beendet) else { return }
-        try? data.write(to: beendetURL, options: .atomic)
+        TrainingsDateischutz.schreiben(data, nach: beendetURL)
     }
 }
 
@@ -59,4 +63,24 @@ struct BeendeteSession: Codable, Equatable {
     /// Server die Einheit offen zeigt (`WorkoutSessionStore.abgleichen`).
     /// Ohne die Marke hiesse "offen" auch: Beenden ging offline nie raus.
     var fortsetzenAngefragt = false
+}
+
+/// Nach dem ersten Entsperren bleiben lokale Trainingsschreibvorgaenge
+/// auch bei erneut gesperrtem Bildschirm moeglich. Atomare Ersatzdateien
+/// bekommen denselben Schutz; bestehende Dateien werden beim Laden migriert.
+enum TrainingsDateischutz {
+    static func vorbereiten(_ url: URL) {
+        #if os(iOS)
+        try? FileManager.default.setAttributes(
+            [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: url.path)
+        #endif
+    }
+
+    static func schreiben(_ daten: Data, nach url: URL) {
+        #if os(iOS)
+        try? daten.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+        #else
+        try? daten.write(to: url, options: .atomic)
+        #endif
+    }
 }

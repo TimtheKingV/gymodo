@@ -37,6 +37,8 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     @ObservationIgnored private let jetzt: () -> Date
     @ObservationIgnored private let protokoll: SensorProtokoll
 
+    @ObservationIgnored private var automatikKontext: SatzMitschnittKontext?
+    @ObservationIgnored private var vorlauf: [SensorMesswert] = []
     @ObservationIgnored private var aufnahme: SensorAufnahme?
     @ObservationIgnored private var aufnahmeStatistik = SensorStatistik()
     @ObservationIgnored private var verworfenBeiStart = 0
@@ -95,7 +97,24 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
 
     // MARK: - SatzMitschnitt
 
+    func automatikVorbereiten(_ kontext: SatzMitschnittKontext) {
+        screenVerlassen()
+        automatikKontext = kontext
+    }
+
+    func automatikBestaetigt(beginn: TimeInterval) {
+        guard let kontext = automatikKontext else { return }
+        let werte = vorlauf.filter { $0.t >= beginn }
+        automatikKontext = nil
+        vorlauf = []
+        eingabeBegonnen(kontext)
+        vorgemerkterStart = (jetzt().addingTimeInterval(beginn - uhr()), beginn)
+        for wert in werte { messwertVerarbeiten(wert) }
+    }
+
     func eingabeBegonnen(_ kontext: SatzMitschnittKontext) {
+        automatikKontext = nil
+        vorlauf = []
         beenden(.abgebrochen, satz: nil)
         fehler = nil
         offenerKontext = kontext
@@ -116,6 +135,8 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
     }
 
     func screenVerlassen() {
+        automatikKontext = nil
+        vorlauf = []
         beenden(.abgebrochen, satz: nil)
         offenerKontext = nil
         vorgemerkterStart = nil
@@ -134,7 +155,13 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
 
     func empfangen(_ ereignis: SensorEreignis) {
         switch ereignis {
-        case .messwert(let messwert): messwertVerarbeiten(messwert)
+        case .messwert(let messwert):
+            if automatikKontext != nil {
+                vorlauf.append(messwert)
+                if let erster = vorlauf.first, messwert.t - erster.t > 31 {
+                    vorlauf.removeAll { $0.t < messwert.t - 30 }
+                }
+            } else { messwertVerarbeiten(messwert) }
         case .zustand(let zustand):
             protokoll.schreiben("sensor \(SensorProtokoll.text(zustand))")
             zustandVerarbeiten(zustand)

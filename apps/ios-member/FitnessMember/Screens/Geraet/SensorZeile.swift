@@ -16,9 +16,28 @@ struct SensorZeile: View {
         VStack(alignment: .leading, spacing: 0) {
             // Debug-Zeile "Sensor verbinden" wurde zur SensorKarte (Testnotiz 15.10., #5).
             if Funktionen.sensorKarte { SensorKarte(station: station) }
+            if zaehler.automatikAktiv, zaehler.befestigung != nil {
+                Text(automatikText)
+                    .font(.system(size: 13).monospacedDigit())
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+            }
             // Nur mit offenem Satz: in Pause und Abschluss gibt es nichts zu zaehlen.
             if let text = Self.zaehlerText(meldung: zaehler.meldung) { zaehlerZeile(text) }
             if aufnahme.aufnahmeLaeuft { markenZeile }
+        }
+    }
+
+    private var automatikText: String {
+        guard zaehler.quelle.zustand.istVerbunden else { return "Automatik wartet auf den Sensor" }
+        switch zaehler.automatik.zustand {
+        case .wartet: return "Automatik bereit · zwei Wiederholungen starten"
+        case .startkandidat: return "Satzstart wird geprüft"
+        case .laeuft:
+            if let rest = zaehler.automatik.speichernIn {
+                return "Sichern nach Ruhe · \(Int(ceil(rest))) s"
+            }
+            return "Automatik wartet auf Messwerte"
+        case .satzende: return "Satz wird gesichert …"
         }
     }
 

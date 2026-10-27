@@ -15,6 +15,7 @@ struct SensorKarte: View {
     /// und ein verbundener Sensor oeffnet nichts.
     let station: String?
 
+    @Environment(ZaehlerKoordinator.self) private var zaehler
     @Environment(SensorAufnahmeKoordinator.self) private var koordinator
     @State private var diagnoseOffen = false
     /// Kurz nach dem Tipp zeigt die Karte "Wird gesucht" (Testnotiz 17.10.,
@@ -55,9 +56,18 @@ struct SensorKarte: View {
     }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
+            karte
+            Toggle("Sätze automatisch starten und sichern", isOn: Binding(
+                get: { zaehler.automatikAktiv }, set: { zaehler.automatikAktiv = $0 }))
+                .font(.system(size: 13))
+        }
+    }
+
+    private var karte: some View {
         let zustand = koordinator.quelle.zustand
         let a = Self.anzeige(zustand: zustand, fehler: koordinator.fehler, suchtKurz: suchtKurz)
-        Button(action: tippen) {
+        return Button(action: tippen) {
             HStack(spacing: DesignSystem.Spacing.s12) {
                 // Das Produktbild behaelt seine Farben; der Zustand steht
                 // in der Deckkraft (verbunden voll, sonst gedaempft).

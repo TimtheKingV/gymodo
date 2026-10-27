@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import Sensorik
 
 /// Eine Uebung, egal ob aus dem Prefetch oder aus tagContext.
 ///
@@ -92,6 +93,61 @@ final class GeraetModel {
     /// gesichert wurde (Review-Fund Task 9: Haptik feuerte beim Wechsel
     /// auf eine Uebung mit mehr bereits gesicherten Saetzen).
     private(set) var gesicherteSaetze = 0
+    private var sensorKontextOffen = false
+    private var satzAbgeschlossen = false
+    private var automatischeKennung: UUID?
+    var beiAutomatischemStart: (() -> Void)?
+
+    var hatAutomatikStartwerte: Bool {
+        let letzter = Self.letzterSatzHeute(an: station, uebungId: uebungId, in: sessions)
+            ?? letzterSatz(fuer: uebungId)
+        let gewichtBekannt = belastungVomNutzer || letzter?.load != nil
+        let nebenBekannt = nebenmodell == nil || nebenbelastungVomNutzer || letzter?.secondaryLoad != nil
+        return gewichtBekannt && nebenBekannt
+    }
+
+    func automatikUmschalten(aktiv: Bool) {
+        automatischeKennung = nil
+        if aktiv {
+            if phase != .eingabe && phase != .abschluss { automatikPauseVorbereiten() }
+        } else if phase != .eingabe {
+            sensorKontextOffen = false
+            mitschnitt?.screenVerlassen()
+            zaehler?.satzVerworfen()
+            zaehlerZustand = .aus
+        }
+    }
+
+    func automatikUnterbrochen() {
+        automatischeKennung = nil
+    }
+
+    /// Fuer vorab vorbereitete Zirkel-Slots; beginnt keine neue Bildschirmphase.
+    func automatikVorbereiten() {
+        guard volumeKind == .reps, !istCardio else { return }
+        if sensorKontextOffen { screenVerlassen() }
+        phase = .neuePause()
+        mitschnittBeginnen(vorbereiten: true)
+    }
+
+    private func automatikEreignis(_ ereignis: SatzAutomatik.Ereignis) {
+        guard !anZirkelAbgegeben, !zirkelSatzAbgegeben, phase != .abschluss,
+              sessions.aktiveSession()?.istPausiert == false, hatAutomatikStartwerte else { return }
+        switch ereignis {
+        case .begonnen(let kennung, let beginn, _):
+            // Die vorbereiteten Werte gehoeren jetzt diesem Satz; ein
+            // spaeter Servervorschlag darf sie waehrenddessen nicht ersetzen.
+            belastungVomNutzer = true
+            if nebenmodell != nil { nebenbelastungVomNutzer = true }
+            mitschnitt?.automatikBestaetigt(beginn: beginn)
+            automatischeKennung = kennung
+            phase = .eingabe
+            beiAutomatischemStart?()
+        case .beendet(let kennung, _):
+            guard automatischeKennung == kennung, !satzAbgeschlossen else { return }
+            satzLokalSichern(problemFlag: false, problemReason: nil)
+        }
+    }
 
     /// Was am Geraet gedreht wird, in der Einheit des Modells (loadUnit):
     /// Kilogramm an der Beinpresse, km/h am Laufband.
@@ -732,6 +788,7 @@ final class GeraetModel {
         // erneut und der Mitschnitt beginnt neu. In Pause und Abschluss
         // stehen keine Raeder da -- dort laeuft nichts.
         if phase == .eingabe { mitschnittBeginnen() }
+        else if phase != .abschluss { automatikPauseVorbereiten() }
     }
 
     /// Der letzte Satz dieser Uebung als Zeile fuer die Uebungsliste: die
@@ -937,13 +994,20 @@ final class GeraetModel {
         // eingabeBegonnen bricht ihn ab und beginnt mit dem neuen Kontext.
         // Die Zaehlung der alten Uebung gilt nicht fuer die neue.
         zaehler?.satzVerworfen()
+        sensorKontextOffen = false
         mitschnittBeginnen()
     }
 
     func satzSichern(problemFlag: Bool, problemReason: ProblemReason?) async {
+        satzLokalSichern(problemFlag: problemFlag, problemReason: problemReason)
+    }
+
+    /// Lokal ohne Suspension: Sensorabschluss, manuelles Sichern und der
+    /// naechste Kontext werden auf dem Main Actor in einer Transaktion entschieden.
+    private func satzLokalSichern(problemFlag: Bool, problemReason: ProblemReason?) {
         // Still, ohne satzAbgelehnt: der Satz dieser Zirkel-Uebung steht
         // schon, das ist kein Fehler des Mitglieds.
-        guard !zirkelSatzAbgegeben else { return }
+        guard phase == .eingabe, !zirkelSatzAbgegeben, !satzAbgeschlossen else { return }
         if let laufend = Ortswechsel.satzKonflikt(station: station, offeneEinheit: sessions.aktiveSession()) {
             let ort = StudiosListe.name(fuer: laufend, studios: bootstrap.studios)
             satzAbgelehnt = "Dein Training läuft in \(ort). Beende es zuerst, dann sicherst du hier Sätze."
@@ -957,6 +1021,9 @@ final class GeraetModel {
             return
         }
         satzAbgelehnt = nil
+        satzAbgeschlossen = true
+        sensorKontextOffen = false
+        automatischeKennung = nil
         // Erst nach der Ortspruefung: ein abgelehnter Satz laeuft weiter und
         // behaelt seine Zaehlung. Die Art vor ergebnis() lesen, das den Satz beendet.
         let befestigung = zaehler?.befestigung
@@ -1032,6 +1099,7 @@ final class GeraetModel {
         // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
         // eine Pause vor einem Satz, der nicht kommt, ist nur Wartezeit.
         phase = satzNummer > satzZiel ? .abschluss : .neuePause()
+        if phase != .abschluss { automatikPauseVorbereiten() }
     }
 
     /// Aus dem onDismiss des Sheets: die aufgeschobene Meldung an den
@@ -1088,21 +1156,46 @@ final class GeraetModel {
             mitschnittBeginnen()
         } else {
             phase = .neuePause()
+            automatikPauseVorbereiten()
         }
     }
 
     /// Alle vier Aufrufer sind genau die Satzanfaenge: Mitschnitt und
     /// Zaehler beginnen deshalb hier gemeinsam.
-    private func mitschnittBeginnen() {
+    private func automatikPauseVorbereiten() {
+        #if DEBUG
+        guard let koordinator = zaehler as? ZaehlerKoordinator,
+              koordinator.automatikAktiv, volumeKind == .reps, !istCardio else { return }
+        mitschnittBeginnen(vorbereiten: true)
+        #endif
+    }
+
+    private func mitschnittBeginnen(vorbereiten: Bool = false) {
         // Abgegeben an die naechste Zirkel-Uebung: Sensor und Zaehler
         // gehoeren jetzt deren Modell.
         guard !anZirkelAbgegeben else { return }
-        mitschnitt?.eingabeBegonnen(SatzMitschnittKontext(
-            station: station, exerciseId: uebungId, exerciseName: aktiveUebung?.name ?? ""))
+        #if DEBUG
+        if let koordinator = zaehler as? ZaehlerKoordinator,
+           koordinator.aktivesModell !== self { sensorKontextOffen = false }
+        #endif
+        if sensorKontextOffen {
+            if !vorbereiten { mitschnitt?.automatikBestaetigt(beginn: ProcessInfo.processInfo.systemUptime) }
+            return
+        }
+        sensorKontextOffen = true
+        satzAbgeschlossen = false
+        #if DEBUG
+        (zaehler as? ZaehlerKoordinator)?.aktivesModell = self
+        #endif
+        let aufnahmeKontext = SatzMitschnittKontext(
+            station: station, exerciseId: uebungId, exerciseName: aktiveUebung?.name ?? "")
+        if vorbereiten { mitschnitt?.automatikVorbereiten(aufnahmeKontext) }
+        else { mitschnitt?.eingabeBegonnen(aufnahmeKontext) }
         zaehlerZustand = .aus
         zaehler?.satzBeginnt(SatzZaehlerKontext(station: station, exerciseId: uebungId, volumeKind: volumeKind)) {
             [weak self] meldung in self?.zaehlerMeldung(meldung)
         }
+        zaehler?.automatikBeobachten { [weak self] in self?.automatikEreignis($0) }
     }
 
     private func zaehlerMeldung(_ meldung: ZaehlerMeldung) {
@@ -1146,6 +1239,14 @@ final class GeraetModel {
         // und ob dieses onDisappear vor oder nach deren Start kommt,
         // entscheidet der NavigationStack.
         guard !anZirkelAbgegeben else { return }
+        #if DEBUG
+        if let koordinator = zaehler as? ZaehlerKoordinator {
+            guard koordinator.aktivesModell === self else { return }
+            koordinator.aktivesModell = nil
+        }
+        #endif
+        sensorKontextOffen = false
+        automatischeKennung = nil
         mitschnitt?.screenVerlassen()
         zaehler?.satzVerworfen()
         zaehlerZustand = .aus
