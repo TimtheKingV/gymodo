@@ -146,6 +146,8 @@ struct TrainingRootView: View {
     /// Die Position, zu der die Auswahl "Andere Übung wählen" offen ist
     /// (`GeraetRoute.planErsatz`); gilt, solange die Route im Pfad steht.
     @State private var planErsatzAuftrag: PlanTauschAuftrag?
+    /// Kurzer Hinweis im Kopf der Ersatzwahl ("Das ist schon die Übung von heute.").
+    @State private var ersatzHinweis: String?
     /// "Welche Übung?" einer Station mit mehreren Uebungen in der Ersatzwahl.
     @State private var ersatzUebungswahl: ZirkelUebungswahl?
     /// Die Wahl aus dem Blatt oben: sie wird erst nach dessen Schliessen
@@ -333,6 +335,14 @@ struct TrainingRootView: View {
             // anders als .task/.onAppear haengt das nicht daran, ob der
             // Training-Tab gerade ausgewaehlt ist, und die Wurzel bleibt
             // gemountet, waehrend Ziele darueber gepusht werden.
+            .onChange(of: pfad) { _, _ in
+                if !ersatzModus {
+                    planErsatzAuftrag = nil
+                    ersatzUebungswahl = nil
+                    ersatzNachSchliessen = nil
+                    ersatzHinweis = nil
+                }
+            }
             .onChange(of: pendingTag.eingang) { _, neu in
                 guard neu != nil, let eingang = pendingTag.consume() else { return }
                 verarbeite(eingang)
@@ -722,6 +732,7 @@ struct TrainingRootView: View {
                     fotoLader: apiClient, vorschauLader: vorschauLader, titel: "KATEGORIE WÄHLEN",
                     kopfinhalt: {
                         PlanErsatzKopf(auftrag: auftrag, fotoLader: apiClient, vorschauLader: vorschauLader,
+                                       hinweis: ersatzHinweis,
                                        beiKandidat: { ersatzFertig(.ersatz($0)) },
                                        beiOhneErsatz: { ersatzFertig(.ohneErsatz) })
                     },
@@ -939,8 +950,9 @@ struct TrainingRootView: View {
 
     // MARK: - Ersatzwahl (Andere Übung wählen)
 
-    /// Die Ersatzwahl laeuft, solange ihre Route im Pfad steht -- ohne eigenen
-    /// Merker, der nach einem Zurueck veralten koennte.
+    /// Die Ersatzwahl laeuft, solange ihre Route im Pfad steht. Faellt sie aus
+    /// dem Pfad (Zurueck, Scan, Pfadbereinigung), raeumt `onChange(of: pfad)`
+    /// den zugehoerigen Zustand weg.
     private var ersatzModus: Bool {
         pfad.contains { if case .planErsatz = $0 { true } else { false } }
     }
@@ -970,8 +982,18 @@ struct TrainingRootView: View {
     /// Die Wahl steht: zurueck zur Wurzel, dort die Grund-Frage als Sheet der
     /// Position, direkt beim Schritt "Warum wechselst du?".
     private func ersatzFertig(_ start: PlanTauschAuftrag.ErsatzStart) {
-        guard var auftrag = planErsatzAuftrag else { return }
-        auftrag.ersatzStart = start
+        // Veraltet (Pfad inzwischen woanders, z. B. nach einem Scan): nichts tun.
+        guard ersatzModus, var auftrag = planErsatzAuftrag else { return }
+        if case .ersatz(let kandidat) = start,
+           PlanTausch.istSchonDieUebungVonHeute(kandidat, auftrag: auftrag) {
+            // In der Auswahl bleiben, auf der Seite mit dem Hinweis.
+            if let i = pfad.firstIndex(where: { if case .planErsatz = $0 { true } else { false } }) {
+                pfad = Array(pfad[...i])
+            }
+            ersatzHinweis = PlanTausch.gleicheUebungHinweis
+            return
+        }
+        ersatzHinweis = nil
         planErsatzAuftrag = nil
         pfad.removeAll()
         planPosition = auftrag

@@ -11,6 +11,8 @@ struct PlanErsatzKopf: View {
     let auftrag: PlanTauschAuftrag
     let fotoLader: any GeraetefotosLoading
     let vorschauLader: VorschauLader
+    /// Kurze Rueckmeldung, z. B. wenn die gewaehlte Uebung schon die von heute ist.
+    var hinweis: String?
     let beiKandidat: (TauschKandidat) -> Void
     let beiOhneErsatz: () -> Void
 
@@ -27,6 +29,13 @@ struct PlanErsatzKopf: View {
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
+            if let hinweis {
+                Text(hinweis)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.updatesFrequently)
+            }
             if !auftrag.kandidaten.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("PASSEND ZUM PLAN")
@@ -34,6 +43,7 @@ struct PlanErsatzKopf: View {
                         .tracking(1.2)
                         .foregroundStyle(DesignSystem.Color.textFaint)
                         .padding(.bottom, DesignSystem.Spacing.s4)
+                        .accessibilityAddTraits(.isHeader)
                     ForEach(Array(auftrag.kandidaten.enumerated()), id: \.element.id) { index, kandidat in
                         if index > 0 {
                             Rectangle().fill(DesignSystem.Color.line).frame(height: 1)
@@ -90,7 +100,7 @@ struct PlanErsatzKopf: View {
         .buttonStyle(PressButtonStyle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel([kandidat.name, kandidat.untertitel].filter { !$0.isEmpty }.joined(separator: ", "))
-        .accessibilityHint("Wählen")
+        .accessibilityHint("Als Ersatz wählen")
         .accessibilityAddTraits(.isButton)
     }
 }

@@ -344,6 +344,7 @@ struct PlanTauschTests {
         // Ausschalten geht auch offline.
         sut.dauerhaftSetzen(false)
         #expect(!sut.dauerhaft)
+        #expect(sut.schritt == .vorgabe)
     }
 
     /// Waehrend "Übernehmen" schreibt, ist der Schalter gesperrt (Sheet) und
@@ -842,6 +843,34 @@ struct PlanTauschTests {
         sut.abbrechen()
         #expect(sut.schritt == .entfernen)
         #expect(sut.grund == nil)
+    }
+
+    @Test("Abbrechen aus der Bestaetigung des Schalterwegs faellt auf die Vorgabe zurueck")
+    func abbrechenOhneGrundFuehrtZurVorgabe() throws {
+        let ablauf = Self.vorbereitet()
+        let auftrag = Self.mitOrt(ablauf)
+        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: TauschClientAttrappe(), umgebung: Umgebung())
+        sut.dauerhaftSetzen(true)
+        #expect(!sut.waehlen(Self.fremd))
+        #expect(sut.schritt == .bestaetigen(Self.fremd))
+        sut.abbrechen()
+        #expect(sut.schritt == .vorgabe)
+    }
+
+    @Test("Die Uebung von heute ist kein Ersatz: geplant oder heutiger Ersatz")
+    func gleicheUebungIstKeinErsatz() throws {
+        let ablauf = Self.vorbereitet()
+        let auftrag = Self.auftrag("A0", ablauf: ablauf)
+        let plan = try #require(auftrag.kandidaten.first)
+        #expect(!PlanTausch.istSchonDieUebungVonHeute(plan, auftrag: auftrag))
+        let geplant = TauschKandidat(exerciseId: auftrag.position.exerciseId, modelId: "m", name: "x", geraet: nil,
+                                     muskeln: nil, hauptmuskeln: [], vorschaubildModell: nil)
+        #expect(PlanTausch.istSchonDieUebungVonHeute(geplant, auftrag: auftrag))
+
+        ablauf.tauschen(positionKey: "A0", ersatz: (exerciseId: plan.exerciseId, hauptmuskeln: []))
+        let getauscht = Self.auftrag("A0", ablauf: ablauf)
+        #expect(PlanTausch.istSchonDieUebungVonHeute(plan, auftrag: getauscht))
+        #expect(!PlanTausch.istSchonDieUebungVonHeute(geplant, auftrag: getauscht))
     }
 
     @Test("Abbrechen, dann offline: die Wahl faellt auf Heute auslassen zurueck")

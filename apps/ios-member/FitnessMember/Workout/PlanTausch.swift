@@ -189,6 +189,14 @@ enum PlanTausch {
             vorschaubildModell: modellId)
     }
 
+    static let gleicheUebungHinweis = "Das ist schon die Übung von heute."
+
+    /// Die Wahl meint die Uebung, die heute ohnehin dran ist (Ersatz, sonst
+    /// geplant): kein Tausch, schon gar keiner mit Grund "gefällt mir nicht".
+    static func istSchonDieUebungVonHeute(_ kandidat: TauschKandidat, auftrag: PlanTauschAuftrag) -> Bool {
+        kandidat.exerciseId == auftrag.uebungId
+    }
+
     /// Der Auftrag zur angetippten Zeile. Status, geplante Uebung und was
     /// die Einheit schon fuehrt, kommen aus dem Ablauf (gebundene Version,
     /// wie die Zeile selbst -- `PlanAnzeige.planstellen`).
@@ -471,7 +479,8 @@ final class PlanTauschSitzung {
         return true
     }
 
-    /// "Abbrechen" in der Bestaetigung: zurueck zur Liste, nichts geschrieben.
+    /// "Abbrechen" in der Bestaetigung: zurueck zur Grund-Frage (mit Grund) oder zur
+    /// Vorgabe (Schalterweg), nichts geschrieben.
     func abbrechen() {
         guard case .bestaetigen = schritt, !schreibtGerade else { return }
         fehler = nil
