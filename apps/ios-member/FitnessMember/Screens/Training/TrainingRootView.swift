@@ -327,14 +327,8 @@ struct TrainingRootView: View {
             .task {
                 if let eingang = pendingTag.consume() { verarbeite(eingang) }
             }
-            // Deckt die beiden anderen Faelle ab: ein Tag-Tap, waehrend die
-            // App schon auf einem anderen Tab laeuft, UND -- der haeufigere
-            // Fall -- waehrend das Mitglied schon auf Training ist, egal wie
-            // tief in pfad verschachtelt. onChange feuert bei jeder Aenderung
-            // von pendingTag.token, solange diese View im Baum haengt --
-            // anders als .task/.onAppear haengt das nicht daran, ob der
-            // Training-Tab gerade ausgewaehlt ist, und die Wurzel bleibt
-            // gemountet, waehrend Ziele darueber gepusht werden.
+            // Verlaesst die Ersatzwahl den Pfad (Zurueck, Scan,
+            // Pfadbereinigung), gehoert ihr Zustand mit weg.
             .onChange(of: pfad) { _, _ in
                 if !ersatzModus {
                     planErsatzAuftrag = nil
@@ -343,6 +337,14 @@ struct TrainingRootView: View {
                     ersatzHinweis = nil
                 }
             }
+            // Deckt die beiden anderen Faelle ab: ein Tag-Tap, waehrend die
+            // App schon auf einem anderen Tab laeuft, UND -- der haeufigere
+            // Fall -- waehrend das Mitglied schon auf Training ist, egal wie
+            // tief in pfad verschachtelt. onChange feuert bei jeder Aenderung
+            // von pendingTag.token, solange diese View im Baum haengt --
+            // anders als .task/.onAppear haengt das nicht daran, ob der
+            // Training-Tab gerade ausgewaehlt ist, und die Wurzel bleibt
+            // gemountet, waehrend Ziele darueber gepusht werden.
             .onChange(of: pendingTag.eingang) { _, neu in
                 guard neu != nil, let eingang = pendingTag.consume() else { return }
                 verarbeite(eingang)
@@ -539,11 +541,6 @@ struct TrainingRootView: View {
 
     // MARK: - Laufende Mitte (TrainingLaeuft.dc.html)
 
-    /// Kopf und die schon gemachten Uebungen -- ueber der Geraeteliste,
-    /// mit der sie scrollen (Testnotiz 06.10., #13). Bis dahin hatte die
-    /// laufende Mitte eine eigene ScrollView zwischen festem Kopf und
-    /// festem Fuss; jetzt traegt die Liste darunter das Scrollen, und die
-    /// Scanwege schweben ohnehin immer in der Daumenzone.
     /// Plan-Modus (Spec "Plan im Training"): laeuft eine Einheit und gibt es
     /// den Plan von heute, steht hier nur die Plankarte -- ohne Kategorien,
     /// "Zuletzt bei dir" und Blockliste. Weitere Uebungen kommen ueber
@@ -599,6 +596,11 @@ struct TrainingRootView: View {
         .accessibilityHint("Öffnet die Geräteauswahl für eine weitere Übung")
     }
 
+    /// Kopf und die schon gemachten Uebungen -- ueber der Geraeteliste,
+    /// mit der sie scrollen (Testnotiz 06.10., #13). Bis dahin hatte die
+    /// laufende Mitte eine eigene ScrollView zwischen festem Kopf und
+    /// festem Fuss; jetzt traegt die Liste darunter das Scrollen, und die
+    /// Scanwege schweben ohnehin immer in der Daumenzone.
     /// Die gemachten Uebungen unter den Kategorien (Testnotiz 18.10., #4);
     /// Uhr und Zahlen stehen oben im Kopf (`laufendKopf`).
     private func laufendeUebungen(session: LokaleSession) -> some View {
@@ -1065,26 +1067,33 @@ struct TrainingRootView: View {
     /// Position, direkt beim Schritt "Warum wechselst du?".
     private func ersatzFertig(_ start: PlanTauschAuftrag.ErsatzStart) {
         // Veraltet (Pfad inzwischen woanders, z. B. nach einem Scan): nichts tun.
-        guard ersatzModus, var auftrag = planErsatzAuftrag else { return }
-        if case .ersatz(let kandidat) = start,
-           PlanTausch.istSchonDieUebungVonHeute(kandidat, auftrag: auftrag) {
+        guard ersatzModus, let auftrag = planErsatzAuftrag else { return }
+        switch PlanTausch.ersatzErgebnis(start, auftrag: auftrag) {
+        case .hinweis(let hinweis):
             // In der Auswahl bleiben, auf der Seite mit dem Hinweis.
             if let i = pfad.firstIndex(where: { if case .planErsatz = $0 { true } else { false } }) {
                 pfad = Array(pfad[...i])
             }
-            ersatzHinweis = PlanTausch.gleicheUebungHinweis
-            return
+            ersatzHinweis = hinweis
+        case .grundFrage(let mitWahl):
+            ersatzHinweis = nil
+            planErsatzAuftrag = nil
+            pfad.removeAll()
+            planPosition = mitWahl
         }
-        ersatzHinweis = nil
-        planErsatzAuftrag = nil
-        pfad.removeAll()
-        planPosition = auftrag
     }
 
-    /// Tipp auf "Weiter…"/"Übung starten" im Plan-Sheet: bietet genau ein
-    /// Geraet die Uebung an, geht es direkt los; sonst (mehrere oder keines,
-    /// dann der Leerzustand) in die Auswahl (`PlanStart`).
+    /// Tipp auf "Weiter…"/"Übung starten" im Plan-Sheet (aus dessen
+    /// onDismiss): gibt es schon einen Block der Uebung, geht es dorthin
+    /// zurueck -- der naechste Satz landet im selben Block. Sonst: bietet
+    /// genau ein Geraet die Uebung an, geht es direkt los; sonst (mehrere
+    /// oder keines, dann der Leerzustand) in die Auswahl (`PlanStart`).
     private func planUebungStarten(_ uebungId: String) {
+        if let block = PlanAnzeige.neuesterBlock(exerciseId: uebungId,
+                                                 bloecke: sessions.aktiveSession()?.bloecke ?? []) {
+            oeffne(block)
+            return
+        }
         let stationen = katalog.bootstrap.map {
             GeraeteAuswahl.stationen(bootstrap: $0, ort: katalog.ort, uebungId: uebungId)
         } ?? []

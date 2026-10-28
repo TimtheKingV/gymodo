@@ -255,9 +255,18 @@ enum PlanAnzeige {
     static func block(fuerZusatz id: String, bloecke: [LokalerBlock]) -> LokalerBlock? {
         let praefix = "zusatz:"
         guard id.hasPrefix(praefix) else { return nil }
-        let exerciseId = String(id.dropFirst(praefix.count))
-        return bloecke
-            .filter { $0.exerciseId == exerciseId && Station.art(schluessel: $0.stationSchluessel) != nil }
+        return neuesterBlock(exerciseId: String(id.dropFirst(praefix.count)), bloecke: bloecke)
+    }
+
+    /// Der Block der Uebung mit dem zuletzt gesicherten Satz -- dorthin fuehren
+    /// eine Zusatz-Zeile und "Weiter mit Satz X". nil ohne Block mit Saetzen
+    /// oder ohne Ziel (Block ohne Geraete- oder Typkennung).
+    static func neuesterBlock(exerciseId: String, bloecke: [LokalerBlock]) -> LokalerBlock? {
+        bloecke
+            .filter {
+                $0.exerciseId == exerciseId && !$0.saetze.isEmpty
+                    && Station.art(schluessel: $0.stationSchluessel) != nil
+            }
             .max { ($0.saetze.map(\.performedAt).max() ?? .distantPast) < ($1.saetze.map(\.performedAt).max() ?? .distantPast) }
     }
 

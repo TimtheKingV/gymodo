@@ -74,6 +74,9 @@ struct PlanTauschAuftrag: Equatable, Identifiable {
     /// Gesetzt: das Sheet beginnt bei der Grund-Frage, mit dem Ersatz aus der
     /// vollen Auswahl (oder ohne).
     var ersatzStart: ErsatzStart? = nil
+    /// Was die ANDEREN Positionen der Einheit fuehren (geplant und heutiger
+    /// Ersatz): kein Ersatz fuer diese Position (`PlanTausch.stehtSchonImPlan`).
+    var andereImPlan: Set<String> = []
 
     enum ErsatzStart: Equatable {
         case ersatz(TauschKandidat)
@@ -197,6 +200,34 @@ enum PlanTausch {
         kandidat.exerciseId == auftrag.uebungId
     }
 
+    static let schonImPlanHinweis = "Diese Übung steht schon in deinem Plan."
+
+    /// Die Wahl steht schon an einer anderen Position der Einheit (geplant
+    /// oder heute getauscht): als Ersatz stuende sie zweimal da, und ein Satz
+    /// hakte nur die erste ab (`TrainingsplanAblauf.nachSatz`).
+    static func stehtSchonImPlan(_ kandidat: TauschKandidat, auftrag: PlanTauschAuftrag) -> Bool {
+        auftrag.andereImPlan.contains(kandidat.exerciseId)
+    }
+
+    /// Was aus einer Wahl in der Ersatzwahl wird: ein Hinweis (die Auswahl
+    /// bleibt offen) oder der Auftrag, mit dem das Sheet der Position bei
+    /// "Warum wechselst du?" aufgeht.
+    enum ErsatzErgebnis: Equatable {
+        case hinweis(String)
+        case grundFrage(PlanTauschAuftrag)
+    }
+
+    static func ersatzErgebnis(_ start: PlanTauschAuftrag.ErsatzStart, auftrag: PlanTauschAuftrag) -> ErsatzErgebnis {
+        if case .ersatz(let kandidat) = start {
+            if istSchonDieUebungVonHeute(kandidat, auftrag: auftrag) { return .hinweis(gleicheUebungHinweis) }
+            if stehtSchonImPlan(kandidat, auftrag: auftrag) { return .hinweis(schonImPlanHinweis) }
+        }
+        // Ohne die Wahl im Auftrag oeffnete das Sheet nur wieder bei der Vorgabe.
+        var mitWahl = auftrag
+        mitWahl.ersatzStart = start
+        return .grundFrage(mitWahl)
+    }
+
     /// Der Auftrag zur angetippten Zeile. Status, geplante Uebung und was
     /// die Einheit schon fuehrt, kommen aus dem Ablauf (gebundene Version,
     /// wie die Zeile selbst -- `PlanAnzeige.planstellen`).
@@ -228,7 +259,9 @@ enum PlanTausch {
             satzGemacht: PlanAnzeige.satzzahl(exerciseId: stelle?.wirksam ?? position.exerciseId, bloecke: bloecke),
             satzGeplant: position.saetze,
             cardio: cardio,
-            istAusgelassen: heute.ausgelassen.contains(position.key))
+            istAusgelassen: heute.ausgelassen.contains(position.key),
+            andereImPlan: Set(stellen.filter { $0.key != position.key }
+                .flatMap { [$0.geplant, $0.ersatz].compactMap { $0 } }))
     }
 
     // MARK: - Texte

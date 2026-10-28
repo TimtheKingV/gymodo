@@ -873,6 +873,68 @@ struct PlanTauschTests {
         #expect(!PlanTausch.istSchonDieUebungVonHeute(geplant, auftrag: getauscht))
     }
 
+    @Test("Ersatz aus der Auswahl: der Auftrag traegt die Wahl, die Sitzung beginnt bei der Grund-Frage")
+    func ersatzErgebnisOeffnetDieGrundFrage() throws {
+        let ablauf = Self.vorbereitet()
+        let auftrag = Self.auftrag("A0", ablauf: ablauf)
+        #expect(auftrag.ersatzStart == nil)
+
+        guard case .grundFrage(let mit) = PlanTausch.ersatzErgebnis(.ersatz(Self.fremd), auftrag: auftrag) else {
+            Issue.record("Ersatz erwartet die Grund-Frage")
+            return
+        }
+        #expect(mit.ersatzStart == .ersatz(Self.fremd))
+        #expect(mit.id == auftrag.id)
+        let a = Self.sitzung(mit, ablauf: ablauf, client: TauschClientAttrappe(), umgebung: Umgebung())
+        #expect(a.schritt == .entfernen)
+        #expect(a.ersatz == Self.fremd)
+        #expect(a.optionen == [.heuteAuslassen, .belegt, .gefaelltNicht])
+
+        guard case .grundFrage(let ohne) = PlanTausch.ersatzErgebnis(.ohneErsatz, auftrag: auftrag) else {
+            Issue.record("Ohne Ersatz erwartet die Grund-Frage")
+            return
+        }
+        #expect(ohne.ersatzStart == .ohneErsatz)
+        let b = Self.sitzung(ohne, ablauf: ablauf, client: TauschClientAttrappe(), umgebung: Umgebung())
+        #expect(b.schritt == .entfernen)
+        #expect(b.ersatz == nil)
+        #expect(b.optionen == [.heuteAuslassen, .belegt])
+    }
+
+    @Test("Ersatz aus der Auswahl: die Uebung von heute bleibt mit Hinweis in der Auswahl")
+    func ersatzErgebnisGleicheUebung() {
+        let ablauf = Self.vorbereitet()
+        let auftrag = Self.auftrag("A0", ablauf: ablauf)
+        let geplant = TauschKandidat(exerciseId: "e1", modelId: "em-m1", name: "Brustpresse", geraet: nil,
+                                     muskeln: nil, hauptmuskeln: [], vorschaubildModell: nil)
+        #expect(PlanTausch.ersatzErgebnis(.ersatz(geplant), auftrag: auftrag) == .hinweis(PlanTausch.gleicheUebungHinweis))
+    }
+
+    @Test("Eine Uebung, die schon an einer anderen Position der Einheit steht, ist kein Ersatz")
+    func uebungAndererPositionIstKeinErsatz() {
+        func kandidat(_ id: String) -> TauschKandidat {
+            TauschKandidat(exerciseId: id, modelId: "em-\(id)", name: id, geraet: nil, muskeln: nil,
+                           hauptmuskeln: [], vorschaubildModell: nil)
+        }
+        let ablauf = Self.vorbereitet()
+        let auftrag = Self.auftrag("A0", ablauf: ablauf)
+        // e2 ist A1, geplant.
+        #expect(PlanTausch.stehtSchonImPlan(kandidat("e2"), auftrag: auftrag))
+        #expect(PlanTausch.ersatzErgebnis(.ersatz(kandidat("e2")), auftrag: auftrag)
+                == .hinweis("Diese Übung steht schon in deinem Plan."))
+        #expect(PlanTausch.schonImPlanHinweis == "Diese Übung steht schon in deinem Plan.")
+        #expect(!PlanTausch.stehtSchonImPlan(Self.fremd, auftrag: auftrag))
+
+        // Der heutige Ersatz einer anderen Position steht ebenso schon da.
+        ablauf.tauschen(positionKey: "A1", ersatz: (exerciseId: "e9", hauptmuskeln: []))
+        let nachTausch = Self.auftrag("A0", ablauf: ablauf)
+        #expect(PlanTausch.stehtSchonImPlan(kandidat("e9"), auftrag: nachTausch))
+
+        // Die eigene Position zaehlt nicht als "anderswo": dafuer gibt es den
+        // eigenen Hinweis (Uebung von heute).
+        #expect(!PlanTausch.stehtSchonImPlan(kandidat("e1"), auftrag: nachTausch))
+    }
+
     @Test("Abbrechen, dann offline: die Wahl faellt auf Heute auslassen zurueck")
     func abbrechenDannOffline() async {
         let ablauf = Self.vorbereitet()

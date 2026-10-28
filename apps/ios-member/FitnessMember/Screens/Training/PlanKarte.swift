@@ -75,20 +75,19 @@ struct PlanKarte: View {
     @State private var fotos: [String: URL] = [:]
     @State private var bilder: [String: UIImage] = [:]
     @State private var warumOffen = false
-    /// Das laufende Ziehen: welche Zeile, wie weit.
-    /// Das laufende Ziehen. @GestureState statt @State: bricht die Geste ab
-    /// (Scrollen uebernimmt, Hintergrund, Sheet, Anruf), ruft SwiftUI kein
-    /// onEnded -- der Wert setzt sich selbst zurueck, und mit ihm Anhebung
-    /// und Abdunkelung.
+    /// Das laufende Ziehen: welche Zeile, wie weit. @GestureState statt
+    /// @State: bricht die Geste ab (Scrollen uebernimmt, Hintergrund, Sheet,
+    /// Anruf), ruft SwiftUI kein onEnded -- der Wert setzt sich selbst
+    /// zurueck, und mit ihm Anhebung und Abdunkelung.
     @GestureState private var zug: Zug?
     @State private var zeilenHoehen: [String: CGFloat] = [:]
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private struct Zug: Equatable {
         let key: String
-        var versatz: CGFloat
         /// Roh, wie der Finger sie liefert; angezeigt und fuer das Ziel
         /// wird sie ueber `PlanReihenfolge.begrenzt` auf die Liste gekuerzt.
+        var versatz: CGFloat
     }
 
     private var plan: Trainingsplan { heute.plan }
