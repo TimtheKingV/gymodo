@@ -10,7 +10,8 @@ enum PlanTauschTestdaten {
     /// Kandidaten fuer "druecken" in Serverreihenfolge: e8, e1 (A0 selbst),
     /// e7, e2 (steht schon in A1), e9, e5; "ziehen" hat keine.
     static func plan(planId: String = "p1", version: Int = 1, positionA0: String = "e1",
-                     machineA0: String = "m1", alternativen: String? = nil) -> Trainingsplan {
+                     machineA0: String = "m1", alternativen: String? = nil,
+                     merkliste: String = #"{"nichtVorhanden":{},"gefaelltNicht":[]}"#) -> Trainingsplan {
         func position(_ key: String, _ baustein: String, _ exerciseId: String, _ machineId: String,
                       _ muskeln: [String], pause: Int = 150, dauer: String = "null",
                       wdh: (String, String) = ("8", "12")) -> String {
@@ -31,7 +32,7 @@ enum PlanTauschTestdaten {
         let json = """
         {"planId":"\(planId)","studioId":"s1","version":\(version),"regelVersion":"1.2.0",
          "struktur":"gk_ab","gruende":[],"naechsteEinheitKey":"A","zuletztEinheitKey":null,
-         "einheitenErledigt":0,"anfaengerUebergang":false,"alternativen":\(alternativenJSON),
+         "einheitenErledigt":0,"anfaengerUebergang":false,"alternativen":\(alternativenJSON),"merkliste":\(merkliste),
          "einheiten":[
            {"key":"A","geschaetzteMinuten":45,"positionen":[
              \(position("A0", "druecken", positionA0, machineA0, ["chest"])),
@@ -86,6 +87,8 @@ enum PlanTauschTestdaten {
 actor TauschClientAttrappe: PlanTauschend {
     struct Aufruf: Equatable {
         let planId, einheitKey, positionKey, exerciseId, modelId: String
+        var grund: String? = nil
+        var ortId: String? = nil
     }
 
     private(set) var aufrufe: [Aufruf] = []
@@ -96,9 +99,9 @@ actor TauschClientAttrappe: PlanTauschend {
     }
 
     func swapPlanPosition(planId: String, einheitKey: String, positionKey: String, exerciseId: String,
-                          modelId: String) async throws(APIError) -> Trainingsplan {
+                          modelId: String, grund: String?, ortId: String?) async throws(APIError) -> Trainingsplan {
         aufrufe.append(Aufruf(planId: planId, einheitKey: einheitKey, positionKey: positionKey,
-                              exerciseId: exerciseId, modelId: modelId))
+                              exerciseId: exerciseId, modelId: modelId, grund: grund, ortId: ortId))
         if !fehler.isEmpty { throw fehler.removeFirst() }
         return PlanTauschTestdaten.plan(planId: "p2", version: 2, positionA0: exerciseId, machineA0: String(modelId.dropFirst(3)))
     }
@@ -113,7 +116,7 @@ actor HaltenderTauschClient: PlanTauschend {
     var wartet: Bool { freigabe != nil }
 
     func swapPlanPosition(planId: String, einheitKey: String, positionKey: String, exerciseId: String,
-                          modelId: String) async throws(APIError) -> Trainingsplan {
+                          modelId: String, grund: String?, ortId: String?) async throws(APIError) -> Trainingsplan {
         aufrufe += 1
         await withCheckedContinuation { freigabe = $0 }
         return PlanTauschTestdaten.plan(planId: "p2", version: 2, positionA0: exerciseId, machineA0: String(modelId.dropFirst(3)))
@@ -568,5 +571,168 @@ struct PlanTauschTests {
                 == "Ab der nächsten Einheit A steht hier: Schrägbankpresse.")
         #expect(PlanTausch.dauerhaftHinweis(einheitKey: "OK_A")
                 == "Gilt für alle künftigen Einheiten „Oberkörper A“. Heute ändert sich nichts anderes.")
+    }
+
+    // MARK: - Entfernen mit Grund (Task 8)
+
+    static let merkliste = #"{"nichtVorhanden":{"s1":["e8"],"s2":["e7"]},"gefaelltNicht":["e9"]}"#
+
+    @Test("Kandidaten ohne die aktuelle Uebung")
+    func kandidatenOhneAktuelle() {
+        let plan = T.plan()
+        let kandidaten = PlanTausch.kandidaten(position: plan.einheiten[0].positionen[0], plan: plan, ort: "s1",
+                                               belegt: [], uebungen: T.bootstrap())
+        #expect(!kandidaten.contains { $0.exerciseId == "e1" })
+    }
+
+    @Test("Kandidaten ohne nichtVorhanden des aktiven Ortes")
+    func kandidatenOhneNichtVorhanden() {
+        let plan = T.plan(merkliste: Self.merkliste)
+        let position = plan.einheiten[0].positionen[0]
+        let kandidaten = PlanTausch.kandidaten(position: position, plan: plan, ort: "s1", belegt: [], uebungen: T.bootstrap())
+        #expect(!kandidaten.contains { $0.exerciseId == "e8" })
+        #expect(kandidaten.contains { $0.exerciseId == "e7" })
+    }
+
+    @Test("nichtVorhanden eines anderen Ortes bleibt sichtbar")
+    func anderesOrtBleibtSichtbar() {
+        let plan = T.plan(merkliste: Self.merkliste)
+        let position = plan.einheiten[0].positionen[0]
+        // s1 sperrt e8, s2 sperrt e7: am Ort s2 steht e8 wieder da, e7 nicht.
+        let anS2 = PlanTausch.kandidaten(position: position, plan: plan, ort: "s2", belegt: [], uebungen: T.bootstrap())
+        #expect(anS2.contains { $0.exerciseId == "e8" })
+        #expect(!anS2.contains { $0.exerciseId == "e7" })
+        // Ein Ort ohne Eintrag sperrt nichts.
+        let anS3 = PlanTausch.kandidaten(position: position, plan: plan, ort: "s3", belegt: [], uebungen: T.bootstrap())
+        #expect(anS3.map(\.exerciseId) == ["e8", "e7", "e2", "e9", "e5"])
+    }
+
+    @Test("Freies Training nutzt die Katalog-Studio-ID als Ort")
+    func freiesTrainingOrt() {
+        var bootstrap = T.bootstrap()
+        bootstrap.catalog = try! JSONDecoder().decode(
+            BootstrapResponse.Catalog.self, from: Data(#"{"studioId":"kat1","equipmentTypes":[]}"#.utf8))
+        #expect(PlanTausch.ort(aktivesStudio: nil, bootstrap: bootstrap) == "kat1")
+        #expect(PlanTausch.ort(aktivesStudio: "s1", bootstrap: bootstrap) == "s1")
+        #expect(PlanTausch.ort(aktivesStudio: nil, bootstrap: T.bootstrap()) == nil)
+
+        // Die Sperre am Katalog-Ort gilt im Freien Training.
+        let plan = T.plan(merkliste: #"{"nichtVorhanden":{"kat1":["e8"]},"gefaelltNicht":[]}"#)
+        let heute = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: nil)
+        let auftrag = PlanTausch.auftrag(position: plan.einheiten[0].positionen[0], heute: heute,
+                                         bootstrap: bootstrap, ort: PlanTausch.ort(aktivesStudio: nil, bootstrap: bootstrap))
+        #expect(!auftrag.kandidaten.contains { $0.exerciseId == "e8" })
+        #expect(auftrag.ort == "kat1")
+    }
+
+    @Test("gefaelltNicht steht am Ende und wird nicht herausgefiltert")
+    func gefaelltNichtAmEnde() {
+        // Der Server sortiert e9 (gefaelltNicht) hinten; die App behaelt seine Reihenfolge.
+        let plan = T.plan(
+            alternativen: #"{"druecken":[{"exerciseId":"e8","modelId":"em-m8"},{"exerciseId":"e7","modelId":"em-m7"},{"exerciseId":"e9","modelId":"em-m9"}]}"#,
+            merkliste: Self.merkliste)
+        let kandidaten = PlanTausch.kandidaten(position: plan.einheiten[0].positionen[0], plan: plan, ort: "s2",
+                                               belegt: [], uebungen: T.bootstrap())
+        #expect(kandidaten.map(\.exerciseId) == ["e8", "e9"])
+    }
+
+    @Test("Belegt tauscht nur heute: kein Serveraufruf, nichts gemerkt")
+    func belegtRuftKeinenServer() async throws {
+        let ablauf = Self.vorbereitet()
+        let client = TauschClientAttrappe()
+        let umgebung = Umgebung()
+        let auftrag = Self.auftrag("A0", ablauf: ablauf)
+        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: umgebung)
+
+        sut.entfernen()
+        #expect(sut.schritt == .entfernen)
+        sut.grundWaehlen(.belegt)
+        #expect(sut.schritt == .kandidaten)
+        #expect(sut.grund == nil)
+        #expect(!sut.dauerhaft)
+        let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
+        #expect(sut.waehlen(schraeg))
+        #expect(ablauf.zustand?.positionen.first?.status == .getauscht)
+        #expect(await client.aufrufe.isEmpty)
+        #expect(umgebung.neuGeladen == 0)
+    }
+
+    @Test("Gibt es hier nicht: Tausch sendet grund und ortId des aktiven Ortes")
+    func nichtVorhandenSendetGrund() async throws {
+        let ablauf = Self.vorbereitet()
+        let client = TauschClientAttrappe()
+        let umgebung = Umgebung()
+        let heute = Self.heute(ablauf: ablauf)
+        let auftrag = PlanTausch.auftrag(position: heute.einheit.positionen[0], heute: heute,
+                                         bootstrap: T.bootstrap(), ort: "s1")
+        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: umgebung)
+        let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
+
+        sut.entfernen()
+        sut.grundWaehlen(.nichtVorhanden)
+        #expect(sut.dauerhaft)
+        #expect(!sut.waehlen(schraeg))
+        #expect(await client.aufrufe.isEmpty)
+        #expect(await sut.uebernehmen())
+        #expect(await client.aufrufe == [.init(planId: "p1", einheitKey: "A", positionKey: "A0", exerciseId: "e7",
+                                               modelId: "em-m7", grund: "nicht_vorhanden", ortId: "s1")])
+    }
+
+    @Test("Gefaellt mir nicht sendet den Grund mit dem Ort; ohne Grund geht keiner mit")
+    func gefaelltNichtUndOhneGrund() async throws {
+        let ablauf = Self.vorbereitet()
+        let client = TauschClientAttrappe()
+        let heute = Self.heute(ablauf: ablauf)
+        let auftrag = PlanTausch.auftrag(position: heute.einheit.positionen[0], heute: heute,
+                                         bootstrap: T.bootstrap(), ort: "s1")
+        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: Umgebung())
+        let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
+        sut.entfernen()
+        sut.grundWaehlen(.gefaelltNicht)
+        _ = sut.waehlen(schraeg)
+        #expect(await sut.uebernehmen())
+
+        // Der alte Weg (Schalter) schickt weder Grund noch Ort.
+        let sut2 = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: Umgebung())
+        sut2.andereUebung()
+        sut2.dauerhaftSetzen(true)
+        _ = sut2.waehlen(schraeg)
+        #expect(await sut2.uebernehmen())
+        let aufrufe = await client.aufrufe
+        #expect(aufrufe.map(\.grund) == ["gefaellt_nicht", nil])
+        #expect(aufrufe.map(\.ortId) == ["s1", nil])
+    }
+
+    @Test("Ohne Alternative bietet das Sheet nur Ueberspringen, ohne Serveraufruf")
+    func ohneAlternativeNurUeberspringen() async {
+        let ablauf = Self.vorbereitet()
+        let client = TauschClientAttrappe()
+        let auftrag = Self.auftrag("A1", ablauf: ablauf)  // ziehen: keine Kandidaten
+        #expect(auftrag.kandidaten.isEmpty)
+        #expect(auftrag.zeigtEntfernen)
+        #expect(auftrag.entfernOptionen == [.ueberspringen])
+
+        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: Umgebung())
+        sut.entfernen()
+        sut.grundWaehlen(.nichtVorhanden)
+        #expect(sut.grund == nil)
+        #expect(sut.schritt == .entfernen)
+        #expect(await client.aufrufe.isEmpty)
+
+        // Mit Alternativen die drei Gruende; Cardio und Erledigtes entfernt man nicht.
+        let heute = Self.heute(ablauf: ablauf)
+        let mitOrt = PlanTausch.auftrag(position: heute.einheit.positionen[0], heute: heute, bootstrap: T.bootstrap(), ort: "s1")
+        #expect(mitOrt.entfernOptionen == [.belegt, .nichtVorhanden, .gefaelltNicht])
+        // Ohne Ort laesst sich "Gibt es hier nicht" nicht zuordnen.
+        #expect(Self.auftrag("A0", ablauf: ablauf).entfernOptionen == [.belegt, .gefaelltNicht])
+        #expect(!Self.auftrag("A2", ablauf: ablauf).zeigtEntfernen)
+    }
+
+    @Test("Texte der drei Gruende")
+    func grundTexte() {
+        #expect(PlanTausch.EntfernOption.belegt.titel == "Belegt")
+        #expect(PlanTausch.EntfernOption.nichtVorhanden.titel == "Gibt es hier nicht")
+        #expect(PlanTausch.EntfernOption.gefaelltNicht.titel == "Gefällt mir nicht")
+        #expect(PlanTausch.EntfernOption.ueberspringen.titel == "Überspringen")
     }
 }

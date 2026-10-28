@@ -46,13 +46,16 @@ struct PlanTauschListe: View {
         // Unten fest: der Schalter gilt fuer das naechste "Wählen" und muss
         // auch bei langer Liste vorher zu sehen sein.
         .safeAreaInset(edge: .bottom) {
-            PlanTauschSchalter(sitzung: sitzung, hinweis: PlanTausch.dauerhaftHinweis(einheitKey: auftrag.einheitKey))
-                .padding(.horizontal, 18)
-                .padding(.vertical, DesignSystem.Spacing.s12)
-                .background(DesignSystem.Color.surface)
-                .overlay(alignment: .top) {
-                    Rectangle().fill(DesignSystem.Color.line).frame(height: 1)
-                }
+            // Mit einem Grund (Entfernen) steht die Dauer schon fest.
+            if sitzung.grund == nil {
+                PlanTauschSchalter(sitzung: sitzung, hinweis: PlanTausch.dauerhaftHinweis(einheitKey: auftrag.einheitKey))
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, DesignSystem.Spacing.s12)
+                    .background(DesignSystem.Color.surface)
+                    .overlay(alignment: .top) {
+                        Rectangle().fill(DesignSystem.Color.line).frame(height: 1)
+                    }
+            }
         }
     }
 

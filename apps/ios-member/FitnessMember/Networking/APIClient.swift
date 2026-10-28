@@ -266,11 +266,18 @@ actor APIClient {
     }
 
     func swapPlanPosition(
-        planId: String, einheitKey: String, positionKey: String, exerciseId: String, modelId: String
+        planId: String, einheitKey: String, positionKey: String, exerciseId: String, modelId: String,
+        grund: String? = nil, ortId: String? = nil
     ) async throws(APIError) -> Trainingsplan {
-        struct Rumpf: Encodable { let einheitKey, positionKey, exerciseId, modelId: String }
+        // `grund` ("nicht_vorhanden" | "gefaellt_nicht") und `ortId` nur zusammen mit
+        // einem Tausch; beides gehoert zur Person und wird nirgends geloggt.
+        struct Rumpf: Encodable {
+            let einheitKey, positionKey, exerciseId, modelId: String
+            let grund, ortId: String?
+        }
         return try await send("me/plans/\(planId)/swap", method: "POST", body: Rumpf(
-            einheitKey: einheitKey, positionKey: positionKey, exerciseId: exerciseId, modelId: modelId))
+            einheitKey: einheitKey, positionKey: positionKey, exerciseId: exerciseId, modelId: modelId,
+            grund: grund, ortId: ortId))
     }
 
     // MARK: - Hilfsmethoden

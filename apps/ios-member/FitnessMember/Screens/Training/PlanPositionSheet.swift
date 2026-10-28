@@ -9,7 +9,8 @@ extension PlanTausch {
     static func auftrag(position: TrainingsplanPosition, katalog: CatalogStore,
                         ablauf: TrainingsplanAblaufStore) -> PlanTauschAuftrag? {
         guard let heute = PlanAnzeige.heute(katalog: katalog, ablauf: ablauf) else { return nil }
-        return auftrag(position: position, heute: heute, bootstrap: katalog.bootstrap)
+        return auftrag(position: position, heute: heute, bootstrap: katalog.bootstrap,
+                       ort: ort(aktivesStudio: katalog.activeStudioId, bootstrap: katalog.bootstrap))
     }
 }
 
@@ -104,6 +105,8 @@ struct PlanPositionSheet: View {
                 gemessen(vorgabe)
             case .kandidaten:
                 PlanTauschListe(sitzung: sitzung, bilder: bilder, beiFertig: beiFertig)
+            case .entfernen:
+                gemessen(PlanEntfernenFrage(sitzung: sitzung, beiFertig: beiFertig))
             case .bestaetigen(let kandidat):
                 gemessen(PlanTauschBestaetigung(sitzung: sitzung, kandidat: kandidat, beiFertig: beiFertig))
             }
@@ -176,6 +179,10 @@ struct PlanPositionSheet: View {
                     .padding(.top, DesignSystem.Spacing.s4)
                     .accessibilityHint("Zeigt Übungen, die hier auch passen")
             }
+            if auftrag.zeigtEntfernen {
+                PlanLeiserKnopf(titel: "Übung entfernen") { sitzung.entfernen() }
+                    .accessibilityHint("Fragt, warum, und bietet eine andere Übung an")
+            }
             PlanLeiserKnopf(titel: "Schließen", aktion: beiFertig)
         }
         .padding(.horizontal, 18)
@@ -227,5 +234,50 @@ struct PlanLeiserKnopf: View {
         .buttonStyle(PressButtonStyle())
         .disabled(!aktiv)
         .opacity(aktiv ? 1 : 0.5)
+    }
+}
+
+/// "Übung entfernen": die drei Gruende (Entwurf, Tim liest die Texte vor dem
+/// Merge). Ohne Alternative im Baustein nur "Überspringen", das nichts merkt
+/// und nichts sendet. Die dauerhaften Gruende brauchen Verbindung und sagen es.
+struct PlanEntfernenFrage: View {
+    let sitzung: PlanTauschSitzung
+    let beiFertig: () -> Void
+
+    private var auftrag: PlanTauschAuftrag { sitzung.auftrag }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            Text(auftrag.name.uppercased())
+                .font(.system(size: 22, weight: .black))
+                .tracking(-0.5)
+                .foregroundStyle(DesignSystem.Color.text)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+            Text(auftrag.kandidaten.isEmpty
+                 ? "Dafür gibt es hier keine andere Übung."
+                 : "Warum möchtest du sie nicht machen?")
+                .font(.system(size: 14))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach(auftrag.entfernOptionen, id: \.titel) { option in
+                let gesperrt = option.serverGrund != nil && !sitzung.dauerhaftMoeglich
+                SecondaryButton(title: option.titel) {
+                    if option == .ueberspringen { beiFertig() } else { sitzung.grundWaehlen(option) }
+                }
+                .disabled(gesperrt)
+                .opacity(gesperrt ? 0.5 : 1)
+                .accessibilityHint(gesperrt ? "Braucht Verbindung" : "")
+            }
+            if auftrag.entfernOptionen.contains(where: { $0.serverGrund != nil }), !sitzung.dauerhaftMoeglich {
+                Text("Braucht Verbindung")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+            }
+            PlanLeiserKnopf(titel: "Schließen", aktion: beiFertig)
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 28)
+        .padding(.bottom, DesignSystem.Spacing.s8)
     }
 }

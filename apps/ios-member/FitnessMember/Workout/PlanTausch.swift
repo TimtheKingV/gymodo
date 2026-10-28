@@ -7,7 +7,7 @@ import Observation
 /// der Actor `APIClient` nicht.
 protocol PlanTauschend: Sendable {
     func swapPlanPosition(planId: String, einheitKey: String, positionKey: String, exerciseId: String,
-                          modelId: String) async throws(APIError) -> Trainingsplan
+                          modelId: String, grund: String?, ortId: String?) async throws(APIError) -> Trainingsplan
 }
 
 extension APIClient: PlanTauschend {}
@@ -55,6 +55,9 @@ struct PlanTauschAuftrag: Equatable, Identifiable {
     /// "Vorgesehen am Gerät ..."; nil, wenn das nicht sicher stimmt.
     let vorgesehen: String?
     let kandidaten: [TauschKandidat]
+    /// Der aktive Ort fuer "Gibt es hier nicht": Studio-ID, im Freien Training
+    /// die Katalog-Studio-ID; nil, solange beides fehlt.
+    var ort: String? = nil
     /// Nur offene und heute getauschte Kraftpositionen: der Ablauf tauscht
     /// sonst nichts (`TrainingsplanAblauf.tauschen`), und eine Wahl, die nichts
     /// bewirkt, waere eine Luege.
@@ -65,6 +68,17 @@ struct PlanTauschAuftrag: Equatable, Identifiable {
     /// "Andere Übung wählen" nur mit Kandidaten -- nie eine leere Liste
     /// oeffnen (Review Focus 3).
     var zeigtAndereUebung: Bool { tauschbar && !kandidaten.isEmpty }
+
+    /// "Übung entfernen" steht bei jeder tauschbaren Position.
+    var zeigtEntfernen: Bool { tauschbar }
+
+    /// Die Wahl im Entfernen-Sheet. Ohne Alternative im Baustein nur
+    /// "Überspringen": ein Grund wird nur zusammen mit einem Tausch gemerkt.
+    /// "Gibt es hier nicht" braucht einen Ort.
+    var entfernOptionen: [PlanTausch.EntfernOption] {
+        guard !kandidaten.isEmpty else { return [.ueberspringen] }
+        return ort == nil ? [.belegt, .gefaelltNicht] : [.belegt, .nichtVorhanden, .gefaelltNicht]
+    }
 }
 
 /// Reine Ableitungen fuer den Tausch einer Planposition (Trainingsplan
@@ -72,6 +86,45 @@ struct PlanTauschAuftrag: Equatable, Identifiable {
 /// annimmt (Baustein, Studio, "meiden"), stehen nur dort; die Liste kommt
 /// schon gefiltert im Bootstrap (`alternativen`).
 enum PlanTausch {
+    /// Eine Antwort auf "Warum entfernst du die Übung?" (Spec, Entscheidung 3).
+    /// Texte sind ein Entwurf, Tim liest sie vor dem Merge.
+    enum EntfernOption: Equatable, Sendable {
+        case belegt, nichtVorhanden, gefaelltNicht, ueberspringen
+
+        var titel: String {
+            switch self {
+            case .belegt: "Belegt"
+            case .nichtVorhanden: "Gibt es hier nicht"
+            case .gefaelltNicht: "Gefällt mir nicht"
+            case .ueberspringen: "Überspringen"
+            }
+        }
+
+        /// Der Wert, den der Server als `grund` erwartet; nil = nichts merken.
+        var serverGrund: String? {
+            switch self {
+            case .nichtVorhanden: "nicht_vorhanden"
+            case .gefaelltNicht: "gefaellt_nicht"
+            case .belegt, .ueberspringen: nil
+            }
+        }
+    }
+
+    /// Der Ort der Merkliste: das aktive Studio, im Freien Training die
+    /// Katalog-Studio-ID des Bootstraps.
+    static func ort(aktivesStudio: String?, bootstrap: BootstrapResponse?) -> String? {
+        aktivesStudio ?? bootstrap?.catalog?.studioId
+    }
+
+    /// Wie oben, mit der Merkliste des Plans: ohne die Uebungen, die am Ort
+    /// fehlen. "Gefällt mir nicht" bleibt drin, der Server stellt es nach hinten.
+    static func kandidaten(position: TrainingsplanPosition, plan: Trainingsplan, ort: String?,
+                           belegt: Set<String>, uebungen: BootstrapResponse?) -> [TauschKandidat] {
+        let fehlt = Set(ort.flatMap { plan.merkliste.nichtVorhanden[$0] } ?? [])
+        return kandidaten(position: position, alternativen: plan.alternativen,
+                          belegt: belegt.union(fehlt), uebungen: uebungen)
+    }
+
     /// Die Kandidaten des Bausteins der Position in Serverreihenfolge
     /// ("vorsichtig" steht dort schon hinten), ohne die Uebung der Position
     /// und ohne `belegt` (was die Einheit schon fuehrt: sonst stuende eine
@@ -106,7 +159,7 @@ enum PlanTausch {
     /// die Einheit schon fuehrt, kommen aus dem Ablauf (gebundene Version,
     /// wie die Zeile selbst -- `PlanAnzeige.planstellen`).
     static func auftrag(position: TrainingsplanPosition, heute: PlanAnzeige.Heute,
-                        bootstrap: BootstrapResponse?) -> PlanTauschAuftrag {
+                        bootstrap: BootstrapResponse?, ort: String? = nil) -> PlanTauschAuftrag {
         let stellen = PlanAnzeige.planstellen(einheit: heute.einheit, zustand: heute.zustand)
         let stelle = stellen.first { $0.key == position.key }
         // Geplant und heute getauscht, auch die eigene: die geplante Uebung
@@ -125,8 +178,9 @@ enum PlanTausch {
             ersatzName: stelle?.ersatz.map { name($0, bootstrap) },
             vorgesehen: status == .offen && geplant == position.exerciseId
                 ? vorgesehen(position: position, bootstrap: bootstrap) : nil,
-            kandidaten: kandidaten(position: position, alternativen: heute.plan.alternativen,
+            kandidaten: kandidaten(position: position, plan: heute.plan, ort: ort,
                                    belegt: belegt, uebungen: bootstrap),
+            ort: ort,
             tauschbar: !cardio && (status == .offen || status == .getauscht))
     }
 
@@ -227,12 +281,17 @@ final class PlanTauschSitzung {
     enum Schritt: Equatable {
         case vorgabe
         case kandidaten
+        /// "Übung entfernen": die Frage nach dem Grund.
+        case entfernen
         case bestaetigen(TauschKandidat)
     }
 
     let auftrag: PlanTauschAuftrag
     private(set) var schritt: Schritt = .vorgabe
     private(set) var dauerhaft = false
+    /// Warum die Uebung dauerhaft weg soll; nil bei "Belegt" und beim
+    /// Schalter. Nur mit Grund gehen `grund` und `ortId` an den Server.
+    private(set) var grund: PlanTausch.EntfernOption?
     /// Die zuletzt gewaehlte Zeile -- "Wählen" steht dort gefuellt (3.2),
     /// auch zurueck aus der Bestaetigung.
     private(set) var gewaehlt: TauschKandidat?
@@ -272,12 +331,40 @@ final class PlanTauschSitzung {
         schritt = .kandidaten
     }
 
+    /// "Übung entfernen" -> die Frage nach dem Grund.
+    func entfernen() {
+        guard auftrag.zeigtEntfernen else { return }
+        fehler = nil
+        schritt = .entfernen
+    }
+
+    /// Ein Grund im Entfernen-Sheet. "Belegt": nur heute, kein Server, nichts
+    /// gemerkt. Die beiden anderen tauschen dauerhaft (Netz noetig) und merken
+    /// den Grund mit dem Tausch. "Überspringen" und alles ohne Alternative
+    /// merkt nichts und ruft nichts; das Sheet schliesst dann selbst.
+    func grundWaehlen(_ option: PlanTausch.EntfernOption) {
+        guard schritt == .entfernen, auftrag.entfernOptionen.contains(option) else { return }
+        switch option {
+        case .ueberspringen:
+            return
+        case .belegt:
+            grund = nil
+            dauerhaft = false
+        case .nichtVorhanden, .gefaelltNicht:
+            guard istOnline() else { return }
+            grund = option
+            dauerhaft = true
+        }
+        fehler = nil
+        schritt = .kandidaten
+    }
+
     func dauerhaftSetzen(_ an: Bool) {
         // Waehrend "Übernehmen" schreibt, gilt, was bestaetigt wurde: sonst
         // schloesse das Sheet nach Erfolg mit einem Tausch, den der Schalter
         // scheinbar abgesagt hat, und ein Fehler landete in der Liste, die
         // keinen zeigt. Das Sheet sperrt den Schalter dann auch.
-        guard !schreibtGerade else { return }
+        guard !schreibtGerade, grund == nil else { return }
         if an && !istOnline() { return }
         dauerhaft = an
         fehler = nil
@@ -323,7 +410,8 @@ final class PlanTauschSitzung {
         do throws(APIError) {
             _ = try await client.swapPlanPosition(
                 planId: aktuellePlanId() ?? auftrag.planId, einheitKey: auftrag.einheitKey,
-                positionKey: auftrag.position.key, exerciseId: kandidat.exerciseId, modelId: kandidat.modelId)
+                positionKey: auftrag.position.key, exerciseId: kandidat.exerciseId, modelId: kandidat.modelId,
+                grund: grund?.serverGrund, ortId: grund == nil ? nil : auftrag.ort)
         } catch {
             fehler = error
             // 409: der Plan ist nicht mehr der aktive (anderes Geraet, Trainer).
