@@ -72,6 +72,11 @@ describe("/me/training-profile", () => {
     expect((await PUT(req("PUT", a, { ...profil, kraftTage: [1] }))).status).toBe(422);
   });
 
+  it("422 wenn Kurse und Cardio alle sieben Tage belegen", async () => {
+    const antwort = await PUT(req("PUT", a, { ...profil, kursTage: [1, 2, 3, 4], cardioTage: [5, 6, 7], kraftTage: [] }));
+    expect(antwort.status).toBe(422);
+  });
+
   it("422 bei ungueltigen Werten", async () => {
     expect((await PUT(req("PUT", a, { ...profil, minutes: 50 }))).status).toBe(422);
     expect((await PUT(req("PUT", a, { ...profil, focus: ["po", "po"] }))).status).toBe(422);

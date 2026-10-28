@@ -15,7 +15,7 @@ import type { Baustein, Erfahrung, FokusBereich, Minuten, PlanTyp } from "./trai
 import type { Struktur, Ziel, Zielprofil } from "./trainingsplan-regeln.js";
 import { PLAN_REGEL_VERSION, strukturFuerTage, zielprofil } from "./trainingsplan-regeln.js";
 import type { Wochentag } from "./trainingsplan-woche.js";
-import { kraftAnzahl, verteileKraft } from "./trainingsplan-woche.js";
+import { kraftAnzahl, pruefeWoche, verteileKraft } from "./trainingsplan-woche.js";
 import { ZEIT, aufwaermenMinuten, cardioMinuten, pauseSekunden, uebungMinuten } from "./trainingsplan-zeit.js";
 
 export type { Kandidat } from "./trainingsplan-auswahl.js";
@@ -251,8 +251,11 @@ function planeKrafttage(eingabe: GeneratorEingabe): { tage: Wochentag[]; angehob
   if (eingabe.kraftTage && eingabe.kraftTage.length > 0) {
     return { tage: [...eingabe.kraftTage].sort((a, b) => a - b), angehoben: false };
   }
+  // Das Profil laesst diese Woche nicht zu (pruefeWoche); hier nur das Netz darunter.
+  pruefeWoche({ kursTage: kurs, cardioTage: cardio, kraftTage: [] });
   const { anzahl, angehoben } = kraftAnzahl(eingabe.tage, kurs, cardio);
-  return { tage: verteileKraft([...kurs, ...cardio], anzahl), angehoben };
+  // Ohne Wunsch (tage < 1) wurde nichts angehoben, also gibt es auch nichts zu erklaeren.
+  return { tage: verteileKraft([...kurs, ...cardio], anzahl), angehoben: angehoben && eingabe.tage >= 1 };
 }
 
 export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {

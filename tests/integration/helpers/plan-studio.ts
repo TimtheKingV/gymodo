@@ -214,7 +214,7 @@ export function zuKatalogPlan(z: PlanZeileRoh): KatalogPlan {
 export function katalogPlanParameter(s: PlanStudios, o: { limits?: boolean; einheiten?: unknown; studioId?: string | undefined } = {}) {
   return {
     p_studio_id: o.studioId ?? GYMTAVO,
-    p_regel_version: "1.2.0",
+    p_regel_version: "1.3.0",
     p_eingabe: { ziel: "muskelaufbau", erfahrung: "regelmaessig", beschwerdenBeruecksichtigt: o.limits ?? false },
     p_struktur: "gk_ab",
     p_einheiten: o.einheiten ?? katalogEinheiten(s),

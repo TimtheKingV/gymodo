@@ -48,6 +48,17 @@ describe("pruefeWoche", () => {
     throw new Error("keine Ausnahme");
   };
 
+  it("lehnt eine Woche ab, in der Kurse und Cardio alle sieben Tage belegen", () => {
+    try {
+      pruefeWoche({ kursTage: [1, 2, 3, 4], cardioTage: [5, 6, 7], kraftTage: [] });
+    } catch (e) {
+      expect((e as DomainError).code).toBe("validation_failed");
+      expect((e as DomainError).detail).toEqual({ grund: "keine_freien_tage" });
+      return;
+    }
+    throw new Error("keine Ausnahme");
+  });
+
   it("akzeptiert eine stimmige Woche", () => {
     expect(() => pruefeWoche(ok)).not.toThrow();
   });

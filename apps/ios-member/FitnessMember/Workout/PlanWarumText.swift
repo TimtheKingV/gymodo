@@ -53,7 +53,7 @@ enum PlanWarumText {
     ]
 
     private static let saetze = [
-        "kraft_tage_auf_eins": "Du hast weniger freie Tage als feste Termine mit Kursen und Cardio. Deshalb war nur Platz für ein Krafttraining pro Woche.",
+        "kraft_tage_auf_eins": "Deine festen Termine mit Kursen und Cardio belegen schon alle Trainingstage, die du dir vorgenommen hast. Deshalb haben wir ein Krafttraining pro Woche eingeplant.",
         "zeit_uebungen": "Wie viele Übungen du pro Training machst, richtet sich nach der Zeit, die du angegeben hast.",
         "zeit_saetze_reduziert": "Damit es in deine Zeit passt, haben einige Übungen einen Satz weniger.",
         "zeit_ergaenzung_entfallen": "Ergänzungsübungen sind weggefallen, damit die Hauptübungen in deine Zeit passen.",

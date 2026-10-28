@@ -649,4 +649,23 @@ describe("generierePlan: Wochenraster (1.3.0)", () => {
       { tag: 5, art: "kraft", einheitKey: "B" },
     ]);
   });
+
+  it("5 und 6 Krafttage: Struktur gk_abc, Einheiten laufen zyklisch durch", () => {
+    const fuenf = generierePlan(eingabe({ tage: 5 }));
+    expect(fuenf.struktur).toBe("gk_abc");
+    expect(fuenf.wochenraster.map((e) => e.einheitKey)).toEqual(["A", "B", "C", "A", "B"]);
+    const sechs = generierePlan(eingabe({ tage: 6 }));
+    expect(sechs.struktur).toBe("gk_abc");
+    expect(sechs.wochenraster.map((e) => e.einheitKey)).toEqual(["A", "B", "C", "A", "B", "C"]);
+  });
+
+  it("Kurse und Cardio auf allen sieben Tagen: validation_failed statt Plan ohne Krafttag", () => {
+    expect(() => generierePlan(eingabe({ tage: 3, kursTage: [1, 2, 3, 4], cardioTage: [5, 6, 7] }))).toThrow(
+      expect.objectContaining({ code: "validation_failed" }),
+    );
+  });
+
+  it("tage 0 loest kraft_tage_auf_eins nicht aus", () => {
+    expect(generierePlan(eingabe({ tage: 0 })).gruende).not.toContain("kraft_tage_auf_eins");
+  });
 });

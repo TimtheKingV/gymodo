@@ -113,4 +113,11 @@ export function pruefeWoche(w: {
     }
     for (const tag of eigene) vergeben.set(tag, name);
   }
+  // Belegen Kurse und Cardio alle sieben Tage, bleibt kein Tag fuer Kraft: ein Plan ohne
+  // Krafttag waere keiner. Ablehnen statt still einen Tag zu opfern.
+  if (new Set<number>([...w.kursTage, ...w.cardioTage]).size === 7) {
+    throw new DomainError("validation_failed", "Kurse und Cardio belegen alle Tage, für Krafttraining bleibt keiner.", {
+      grund: "keine_freien_tage",
+    });
+  }
 }

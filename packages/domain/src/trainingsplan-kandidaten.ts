@@ -42,6 +42,7 @@ export async function ladeMerkliste(client: SupabaseClient, userId: string, ortI
 }
 
 const SEITE = 1000;
+const MODELLE_JE_ANFRAGE = 100;
 
 // Plain-Vergleich statt localeCompare: unabhaengig von der Locale des Servers.
 const vergleich = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
@@ -61,19 +62,25 @@ export async function ladeKandidaten(client: SupabaseClient, merkliste: Merklist
 
   type Link = { equipment_model_id: string; sort_order: number; exercises: PlanUebung };
   const links: Link[] = [];
-  for (let von = 0; ; von += SEITE) {
-    const { data, error: linkFehler } = await client
-      .from("equipment_model_exercises")
-      .select("equipment_model_id, sort_order, exercises (id, muscles, plan_baustein, plan_typ, plan_bereiche)")
-      .in("equipment_model_id", modellIds)
-      .order("sort_order", { ascending: true })
-      .order("equipment_model_id", { ascending: true })
-      .order("exercise_id", { ascending: true })
-      .range(von, von + SEITE - 1);
-    if (linkFehler) throw new DomainError("internal", linkFehler.message);
-    const seite = (data ?? []) as unknown as Link[];
-    links.push(...seite);
-    if (seite.length < SEITE) break;
+  // Die Modell-IDs stehen im URL der Anfrage; ab einigen Hundert wird er zu lang ("URI too long").
+  // Darum in Gruppen fragen -- das Ergebnis haengt nicht von der Gruppierung ab, weil unten je
+  // Uebung das kleinste (sort_order, Modell-ID) gewaehlt wird.
+  for (let ab = 0; ab < modellIds.length; ab += MODELLE_JE_ANFRAGE) {
+    const gruppe = modellIds.slice(ab, ab + MODELLE_JE_ANFRAGE);
+    for (let von = 0; ; von += SEITE) {
+      const { data, error: linkFehler } = await client
+        .from("equipment_model_exercises")
+        .select("equipment_model_id, sort_order, exercises (id, muscles, plan_baustein, plan_typ, plan_bereiche)")
+        .in("equipment_model_id", gruppe)
+        .order("sort_order", { ascending: true })
+        .order("equipment_model_id", { ascending: true })
+        .order("exercise_id", { ascending: true })
+        .range(von, von + SEITE - 1);
+      if (linkFehler) throw new DomainError("internal", linkFehler.message);
+      const seite = (data ?? []) as unknown as Link[];
+      links.push(...seite);
+      if (seite.length < SEITE) break;
+    }
   }
 
   const fehlt = new Set(merkliste.nichtVorhanden);
