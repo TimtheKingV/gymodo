@@ -10,28 +10,29 @@ enum PlanTauschTestdaten {
     /// Kandidaten fuer "druecken" in Serverreihenfolge: e8, e1 (A0 selbst),
     /// e7, e2 (steht schon in A1), e9, e5; "ziehen" hat keine.
     static func plan(planId: String = "p1", version: Int = 1, positionA0: String = "e1",
-                     machineA0: String = "m1", alternativen: String? = nil) -> Trainingsplan {
+                     machineA0: String = "m1", alternativen: String? = nil,
+                     merkliste: String = #"{"nichtVorhanden":{},"gefaelltNicht":[]}"#) -> Trainingsplan {
         func position(_ key: String, _ baustein: String, _ exerciseId: String, _ machineId: String,
                       _ muskeln: [String], pause: Int = 150, dauer: String = "null",
                       wdh: (String, String) = ("8", "12")) -> String {
             let liste = muskeln.map { "\"\($0)\"" }.joined(separator: ",")
             return """
             {"key":"\(key)","baustein":"\(baustein)","rolle":"pflicht","exerciseId":"\(exerciseId)",
-             "machineId":"\(machineId)","typ":"mehrgelenk","saetze":3,"wdhVon":\(wdh.0),"wdhBis":\(wdh.1),
+             "modelId":"em-\(machineId)","typ":"mehrgelenk","saetze":3,"wdhVon":\(wdh.0),"wdhBis":\(wdh.1),
              "reserveVon":1,"reserveBis":3,"pauseSek":\(pause),"aufwaermsatz":false,"dauerMin":\(dauer),
              "hauptmuskeln":[\(liste)]}
             """
         }
         let alternativenJSON = alternativen ?? """
-        {"druecken":[{"exerciseId":"e8","machineId":"m8"},{"exerciseId":"e1","machineId":"m1"},
-                     {"exerciseId":"e7","machineId":"m7"},{"exerciseId":"e2","machineId":"m2"},
-                     {"exerciseId":"e9","machineId":"m9"},{"exerciseId":"e5","machineId":"m1"}],
-         "cardio":[{"exerciseId":"c2","machineId":"m10"}]}
+        {"druecken":[{"exerciseId":"e8","modelId":"em-m8"},{"exerciseId":"e1","modelId":"em-m1"},
+                     {"exerciseId":"e7","modelId":"em-m7"},{"exerciseId":"e2","modelId":"em-m2"},
+                     {"exerciseId":"e9","modelId":"em-m9"},{"exerciseId":"e5","modelId":"em-m1"}],
+         "cardio":[{"exerciseId":"c2","modelId":"em-m10"}]}
         """
         let json = """
         {"planId":"\(planId)","studioId":"s1","version":\(version),"regelVersion":"1.2.0",
          "struktur":"gk_ab","gruende":[],"naechsteEinheitKey":"A","zuletztEinheitKey":null,
-         "einheitenErledigt":0,"anfaengerUebergang":false,"alternativen":\(alternativenJSON),
+         "einheitenErledigt":0,"anfaengerUebergang":false,"alternativen":\(alternativenJSON),"merkliste":\(merkliste),
          "einheiten":[
            {"key":"A","geschaetzteMinuten":45,"positionen":[
              \(position("A0", "druecken", positionA0, machineA0, ["chest"])),
@@ -85,7 +86,9 @@ enum PlanTauschTestdaten {
 /// echte Endpunkte rufen.
 actor TauschClientAttrappe: PlanTauschend {
     struct Aufruf: Equatable {
-        let planId, einheitKey, positionKey, exerciseId, machineId: String
+        let planId, einheitKey, positionKey, exerciseId, modelId: String
+        var grund: String? = nil
+        var ortId: String? = nil
     }
 
     private(set) var aufrufe: [Aufruf] = []
@@ -96,11 +99,11 @@ actor TauschClientAttrappe: PlanTauschend {
     }
 
     func swapPlanPosition(planId: String, einheitKey: String, positionKey: String, exerciseId: String,
-                          machineId: String) async throws(APIError) -> Trainingsplan {
+                          modelId: String, grund: String?, ortId: String?) async throws(APIError) -> Trainingsplan {
         aufrufe.append(Aufruf(planId: planId, einheitKey: einheitKey, positionKey: positionKey,
-                              exerciseId: exerciseId, machineId: machineId))
+                              exerciseId: exerciseId, modelId: modelId, grund: grund, ortId: ortId))
         if !fehler.isEmpty { throw fehler.removeFirst() }
-        return PlanTauschTestdaten.plan(planId: "p2", version: 2, positionA0: exerciseId, machineA0: machineId)
+        return PlanTauschTestdaten.plan(planId: "p2", version: 2, positionA0: exerciseId, machineA0: String(modelId.dropFirst(3)))
     }
 }
 
@@ -113,10 +116,10 @@ actor HaltenderTauschClient: PlanTauschend {
     var wartet: Bool { freigabe != nil }
 
     func swapPlanPosition(planId: String, einheitKey: String, positionKey: String, exerciseId: String,
-                          machineId: String) async throws(APIError) -> Trainingsplan {
+                          modelId: String, grund: String?, ortId: String?) async throws(APIError) -> Trainingsplan {
         aufrufe += 1
         await withCheckedContinuation { freigabe = $0 }
-        return PlanTauschTestdaten.plan(planId: "p2", version: 2, positionA0: exerciseId, machineA0: machineId)
+        return PlanTauschTestdaten.plan(planId: "p2", version: 2, positionA0: exerciseId, machineA0: String(modelId.dropFirst(3)))
     }
 
     func freigeben() {
@@ -140,10 +143,10 @@ struct PlanTauschTests {
     }
 
     static func heute(_ plan: Trainingsplan = T.plan(), ablauf: TrainingsplanAblaufStore) -> PlanAnzeige.Heute {
-        PlanAnzeige.heute(bootstrap: T.bootstrap(plan: plan), studioId: "s1",
+        PlanAnzeige.heute(bootstrap: T.bootstrap(plan: plan),
                           ablaufPlanId: ablauf.planId, ablaufEinheitKey: ablauf.einheitKey,
                           ablaufZustand: ablauf.zustand, naechsteEinheitKey: ablauf.naechsteEinheitKey,
-                          ablaufGebunden: ablauf.gebundeneSessionId != nil, ablaufStudioId: ablauf.studioId)!
+                          ablaufGebunden: ablauf.gebundeneSessionId != nil)!
     }
 
     static func auftrag(_ key: String, ablauf: TrainingsplanAblaufStore,
@@ -172,14 +175,14 @@ struct PlanTauschTests {
                 umgebung.neuGeladen += 1
                 if let plan = umgebung.neuerPlan {
                     umgebung.aktuellePlanId = plan.planId
-                    ablauf.vorbereiten(plan: plan, studioId: "s1", jetzt: Self.jetzt.addingTimeInterval(60))
+                    ablauf.vorbereiten(plan: plan, jetzt: Self.jetzt.addingTimeInterval(60))
                 }
             })
     }
 
     static func vorbereitet() -> TrainingsplanAblaufStore {
         let ablauf = store()
-        ablauf.vorbereiten(plan: T.plan(), studioId: "s1", jetzt: jetzt)
+        ablauf.vorbereiten(plan: T.plan(), jetzt: jetzt)
         return ablauf
     }
 
@@ -212,7 +215,7 @@ struct PlanTauschTests {
         #expect(schraeg.hauptmuskeln == ["chest", "deltoid_front"])
         #expect(schraeg.untertitel == "Gerät 14 · Brust, Schulter vorn")
         #expect(schraeg.vorschaubildModell == "em-m7")
-        #expect(schraeg.machineId == "m7")
+        #expect(schraeg.modelId == "em-m7")
     }
 
     @Test("keine Kandidaten -> kein Knopf Andere Uebung")
@@ -277,7 +280,7 @@ struct PlanTauschTests {
 
         #expect(await sut.uebernehmen())
         #expect(await client.aufrufe == [.init(planId: "p1", einheitKey: "A", positionKey: "A0",
-                                               exerciseId: "e7", machineId: "m7")])
+                                               exerciseId: "e7", modelId: "em-m7")])
         #expect(umgebung.neuGeladen == 1)
         #expect(sut.fehler == nil)
     }
@@ -437,7 +440,7 @@ struct PlanTauschTests {
     @Test("erledigte Position ist nicht tauschbar")
     func erledigtNichtTauschbar() async throws {
         let ablauf = Self.vorbereitet()
-        _ = ablauf.nachSatz(sessionId: UUID(), studioId: "s1",
+        _ = ablauf.nachSatz(sessionId: UUID(),
                             satz: AblaufSatz(exerciseId: "e1", hauptmuskeln: ["chest"], cardio: false), jetzt: Self.jetzt)
         let auftrag = Self.auftrag("A0", ablauf: ablauf)
         #expect(auftrag.status == .erledigt)
@@ -471,13 +474,21 @@ struct PlanTauschTests {
         #expect(getauscht.kandidaten.map(\.exerciseId) == ["e7", "e9", "e5"])
 
         // Ein ungeplanter Latzug macht A1 (ziehen, Latissimus) optional.
-        _ = ablauf.nachSatz(sessionId: UUID(), studioId: "s1",
+        _ = ablauf.nachSatz(sessionId: UUID(),
                             satz: AblaufSatz(exerciseId: "e4", hauptmuskeln: ["lats"], cardio: false), jetzt: Self.jetzt)
         let optional = Self.auftrag("A1", ablauf: ablauf, plan: T.plan(alternativen: """
-            {"ziehen":[{"exerciseId":"e8","machineId":"m8"}]}
+            {"ziehen":[{"exerciseId":"e8","modelId":"em-m8"}]}
             """))
         #expect(optional.status == .optional)
         #expect(!optional.tauschbar)
+    }
+
+    @Test("Der Auftrag nennt die Uebung, die ein Start meint: Ersatz vor Plan")
+    func auftragNenntDieStartUebung() {
+        let ablauf = Self.vorbereitet()
+        #expect(Self.auftrag("A0", ablauf: ablauf).uebungId == "e1")
+        ablauf.tauschen(positionKey: "A0", ersatz: (exerciseId: "e8", hauptmuskeln: ["deltoid_front"]))
+        #expect(Self.auftrag("A0", ablauf: ablauf).uebungId == "e8")
     }
 
     // MARK: - Laufende Einheit
@@ -486,7 +497,7 @@ struct PlanTauschTests {
     func laufendeEinheitBehaeltVersion() async throws {
         let ablauf = Self.vorbereitet()
         let session = UUID()
-        _ = ablauf.nachSatz(sessionId: session, studioId: "s1",
+        _ = ablauf.nachSatz(sessionId: session,
                             satz: AblaufSatz(exerciseId: "e2", hauptmuskeln: ["lats"], cardio: false), jetzt: Self.jetzt)
         let vorher = ablauf.zustand
         let client = TauschClientAttrappe()
@@ -560,5 +571,283 @@ struct PlanTauschTests {
                 == "Ab der nächsten Einheit A steht hier: Schrägbankpresse.")
         #expect(PlanTausch.dauerhaftHinweis(einheitKey: "OK_A")
                 == "Gilt für alle künftigen Einheiten „Oberkörper A“. Heute ändert sich nichts anderes.")
+    }
+
+    // MARK: - Entfernen mit Grund (Task 8)
+
+    static let merkliste = #"{"nichtVorhanden":{"s1":["e8"],"s2":["e7"]},"gefaelltNicht":["e9"]}"#
+
+    @Test("Kandidaten ohne die aktuelle Uebung")
+    func kandidatenOhneAktuelle() {
+        let plan = T.plan()
+        let kandidaten = PlanTausch.kandidaten(position: plan.einheiten[0].positionen[0], plan: plan, ort: "s1",
+                                               belegt: [], uebungen: T.bootstrap())
+        #expect(!kandidaten.contains { $0.exerciseId == "e1" })
+    }
+
+    @Test("Kandidaten ohne nichtVorhanden des aktiven Ortes")
+    func kandidatenOhneNichtVorhanden() {
+        let plan = T.plan(merkliste: Self.merkliste)
+        let position = plan.einheiten[0].positionen[0]
+        let kandidaten = PlanTausch.kandidaten(position: position, plan: plan, ort: "s1", belegt: [], uebungen: T.bootstrap())
+        #expect(!kandidaten.contains { $0.exerciseId == "e8" })
+        #expect(kandidaten.contains { $0.exerciseId == "e7" })
+    }
+
+    @Test("nichtVorhanden eines anderen Ortes bleibt sichtbar")
+    func anderesOrtBleibtSichtbar() {
+        let plan = T.plan(merkliste: Self.merkliste)
+        let position = plan.einheiten[0].positionen[0]
+        // s1 sperrt e8, s2 sperrt e7: am Ort s2 steht e8 wieder da, e7 nicht.
+        let anS2 = PlanTausch.kandidaten(position: position, plan: plan, ort: "s2", belegt: [], uebungen: T.bootstrap())
+        #expect(anS2.contains { $0.exerciseId == "e8" })
+        #expect(!anS2.contains { $0.exerciseId == "e7" })
+        // Ein Ort ohne Eintrag sperrt nichts.
+        let anS3 = PlanTausch.kandidaten(position: position, plan: plan, ort: "s3", belegt: [], uebungen: T.bootstrap())
+        #expect(anS3.map(\.exerciseId) == ["e8", "e7", "e2", "e9", "e5"])
+    }
+
+    @Test("Freies Training nutzt die Katalog-Studio-ID als Ort")
+    func freiesTrainingOrt() {
+        var bootstrap = T.bootstrap()
+        bootstrap.catalog = try! JSONDecoder().decode(
+            BootstrapResponse.Catalog.self, from: Data(#"{"studioId":"kat1","equipmentTypes":[]}"#.utf8))
+        #expect(PlanTausch.ort(aktivesStudio: nil, bootstrap: bootstrap) == "kat1")
+        #expect(PlanTausch.ort(aktivesStudio: "s1", bootstrap: bootstrap) == "s1")
+        #expect(PlanTausch.ort(aktivesStudio: nil, bootstrap: T.bootstrap()) == nil)
+
+        // Die Sperre am Katalog-Ort gilt im Freien Training.
+        let plan = T.plan(merkliste: #"{"nichtVorhanden":{"kat1":["e8"]},"gefaelltNicht":[]}"#)
+        let heute = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: nil)
+        let auftrag = PlanTausch.auftrag(position: plan.einheiten[0].positionen[0], heute: heute,
+                                         bootstrap: bootstrap, ort: PlanTausch.ort(aktivesStudio: nil, bootstrap: bootstrap))
+        #expect(!auftrag.kandidaten.contains { $0.exerciseId == "e8" })
+        #expect(auftrag.ort == "kat1")
+    }
+
+    @Test("gefaelltNicht steht am Ende und wird nicht herausgefiltert")
+    func gefaelltNichtAmEnde() {
+        // Der Server sortiert e9 (gefaelltNicht) hinten; die App behaelt seine Reihenfolge.
+        let plan = T.plan(
+            alternativen: #"{"druecken":[{"exerciseId":"e8","modelId":"em-m8"},{"exerciseId":"e7","modelId":"em-m7"},{"exerciseId":"e9","modelId":"em-m9"}]}"#,
+            merkliste: Self.merkliste)
+        let kandidaten = PlanTausch.kandidaten(position: plan.einheiten[0].positionen[0], plan: plan, ort: "s2",
+                                               belegt: [], uebungen: T.bootstrap())
+        #expect(kandidaten.map(\.exerciseId) == ["e8", "e9"])
+    }
+
+    @Test("Belegt tauscht nur heute: kein Serveraufruf, nichts gemerkt")
+    func belegtRuftKeinenServer() async throws {
+        let ablauf = Self.vorbereitet()
+        let client = TauschClientAttrappe()
+        let umgebung = Umgebung()
+        let auftrag = Self.auftrag("A0", ablauf: ablauf)
+        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: umgebung)
+
+        sut.entfernen()
+        #expect(sut.schritt == .entfernen)
+        sut.grundWaehlen(.belegt)
+        #expect(sut.schritt == .kandidaten)
+        #expect(sut.grund == nil)
+        #expect(!sut.dauerhaft)
+        let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
+        #expect(sut.waehlen(schraeg))
+        #expect(ablauf.zustand?.positionen.first?.status == .getauscht)
+        #expect(await client.aufrufe.isEmpty)
+        #expect(umgebung.neuGeladen == 0)
+    }
+
+    @Test("Gibt es hier nicht: Tausch sendet grund und ortId des aktiven Ortes")
+    func nichtVorhandenSendetGrund() async throws {
+        let ablauf = Self.vorbereitet()
+        let client = TauschClientAttrappe()
+        let umgebung = Umgebung()
+        let heute = Self.heute(ablauf: ablauf)
+        let auftrag = PlanTausch.auftrag(position: heute.einheit.positionen[0], heute: heute,
+                                         bootstrap: T.bootstrap(), ort: "s1")
+        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: umgebung)
+        let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
+
+        sut.entfernen()
+        sut.grundWaehlen(.nichtVorhanden)
+        #expect(sut.dauerhaft)
+        #expect(!sut.waehlen(schraeg))
+        #expect(await client.aufrufe.isEmpty)
+        #expect(await sut.uebernehmen())
+        #expect(await client.aufrufe == [.init(planId: "p1", einheitKey: "A", positionKey: "A0", exerciseId: "e7",
+                                               modelId: "em-m7", grund: "nicht_vorhanden", ortId: "s1")])
+    }
+
+    @Test("Gefaellt mir nicht sendet den Grund mit dem Ort; ohne Grund geht keiner mit")
+    func gefaelltNichtUndOhneGrund() async throws {
+        let ablauf = Self.vorbereitet()
+        let client = TauschClientAttrappe()
+        let heute = Self.heute(ablauf: ablauf)
+        let auftrag = PlanTausch.auftrag(position: heute.einheit.positionen[0], heute: heute,
+                                         bootstrap: T.bootstrap(), ort: "s1")
+        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: Umgebung())
+        let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
+        sut.entfernen()
+        sut.grundWaehlen(.gefaelltNicht)
+        _ = sut.waehlen(schraeg)
+        #expect(await sut.uebernehmen())
+
+        // Der alte Weg (Schalter) schickt weder Grund noch Ort.
+        let sut2 = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: Umgebung())
+        sut2.andereUebung()
+        sut2.dauerhaftSetzen(true)
+        _ = sut2.waehlen(schraeg)
+        #expect(await sut2.uebernehmen())
+        let aufrufe = await client.aufrufe
+        #expect(aufrufe.map(\.grund) == ["gefaellt_nicht", nil])
+        #expect(aufrufe.map(\.ortId) == ["s1", nil])
+    }
+
+    @Test("Ohne Alternative bietet das Sheet nur Ueberspringen, ohne Serveraufruf")
+    func ohneAlternativeNurUeberspringen() async {
+        let ablauf = Self.vorbereitet()
+        let client = TauschClientAttrappe()
+        let auftrag = Self.auftrag("A1", ablauf: ablauf)  // ziehen: keine Kandidaten
+        #expect(auftrag.kandidaten.isEmpty)
+        #expect(auftrag.zeigtEntfernen)
+        #expect(auftrag.entfernOptionen == [.ueberspringen])
+
+        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: Umgebung())
+        sut.entfernen()
+        sut.grundWaehlen(.nichtVorhanden)
+        #expect(sut.grund == nil)
+        #expect(sut.schritt == .entfernen)
+        #expect(await client.aufrufe.isEmpty)
+
+        // Mit Alternativen die drei Gruende; Cardio und Erledigtes entfernt man nicht.
+        let heute = Self.heute(ablauf: ablauf)
+        let mitOrt = PlanTausch.auftrag(position: heute.einheit.positionen[0], heute: heute, bootstrap: T.bootstrap(), ort: "s1")
+        #expect(mitOrt.entfernOptionen == [.belegt, .nichtVorhanden, .gefaelltNicht])
+        // Ohne Ort laesst sich "Gibt es hier nicht" nicht zuordnen.
+        #expect(Self.auftrag("A0", ablauf: ablauf).entfernOptionen == [.belegt, .gefaelltNicht])
+        #expect(!Self.auftrag("A2", ablauf: ablauf).zeigtEntfernen)
+    }
+
+    @Test("Texte der drei Gruende")
+    func grundTexte() {
+        #expect(PlanTausch.EntfernOption.belegt.titel == "Belegt")
+        #expect(PlanTausch.EntfernOption.nichtVorhanden.titel == "Gibt es hier nicht")
+        #expect(PlanTausch.EntfernOption.gefaelltNicht.titel == "Gefällt mir nicht")
+        #expect(PlanTausch.EntfernOption.ueberspringen.titel == "Überspringen")
+    }
+}
+
+/// Realistische Form: ein Studio-Geraet hat sein EIGENES equipment_models-
+/// Zeile (`sm-…`) und verweist ueber `catalogModelId` auf den Katalogtyp
+/// (`em-…`); Planposition und Alternativen nennen den Katalogtyp.
+@MainActor
+@Suite("PlanTauschStudio")
+struct PlanTauschStudioTests {
+    typealias T = PlanTauschTestdaten
+
+    static func uebung(_ id: String, _ name: String, _ muskeln: String) -> String {
+        #"{"id":"\#(id)","name":"\#(name)","volumeKind":"reps","targetMin":8,"targetMax":12,"muscles":\#(muskeln)}"#
+    }
+
+    static let schulter = #"[{"key":"deltoid_front","name":"Schulter vorn","role":"primary"}]"#
+
+    static func geraet(_ id: String, katalog: String, label: String, uebung: String) -> BootstrapResponse.Machine {
+        GeraetTestdaten.dekodiere("""
+        {"id":"\(id)","studioId":"s1","label":"\(label)","locationNote":null,"status":"active",
+         "tokenHashes":[],"visitCount":0,
+         "equipmentModel":{"id":"sm-\(id)","name":"Modell \(id)","manufacturer":null,"category":"kraft","photoPath":null,
+           "loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,"settingDefinitions":[],
+           "catalogModelId":"\(katalog)"},
+         "exercises":[\(uebung)]}
+        """)
+    }
+
+    static func typ(_ id: String, uebung: String) -> BootstrapResponse.Catalog.EquipmentType {
+        GeraetTestdaten.dekodiere("""
+        {"id":"\(id)","name":"Typ \(id)","manufacturer":null,"photoPath":null,"category":"kraft",
+         "loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,"settingDefinitions":[],
+         "exercises":[\(uebung)]}
+        """)
+    }
+
+    /// Mit Studio-Geraeten (e8 an Typ em-m8, e7 an em-m7, e1 an em-m1), Katalog daneben.
+    static func bootstrapImStudio() -> BootstrapResponse {
+        let plan = T.plan()
+        var b = BootstrapResponse(
+            member: .init(displayName: nil, plans: [plan]),
+            studios: [.init(id: "s1", name: "Nord", timezone: "Europe/Berlin")],
+            machines: [
+            geraet("m1", katalog: "em-m1", label: "Gerät 12", uebung: uebung("e1", "Brustpresse", T.brust)),
+            geraet("m7", katalog: "em-m7", label: "Gerät 14", uebung: uebung("e7", "Schrägbankpresse", T.brust)),
+            geraet("m8", katalog: "em-m8", label: "Gerät 9", uebung: uebung("e8", "Schulterdrücken", schulter)),
+            ], calibrations: [], lastSets: [])
+        b.catalog = nil
+        return b
+    }
+
+    /// Freies Training: keine Geraete, nur der Katalog.
+    static func bootstrapFrei() -> BootstrapResponse {
+        let plan = T.plan()
+        var b = BootstrapResponse(
+            member: .init(displayName: nil, plans: [plan]),
+            studios: [.init(id: "s1", name: "Nord", timezone: "Europe/Berlin")],
+            machines: [], calibrations: [], lastSets: [])
+        let katalog = BootstrapResponse.Catalog(studioId: "kat1", equipmentTypes: [
+            typ("em-m1", uebung: uebung("e1", "Brustpresse", T.brust)),
+            typ("em-m7", uebung: uebung("e7", "Schrägbankpresse", T.brust)),
+            typ("em-m8", uebung: uebung("e8", "Schulterdrücken", schulter)),
+        ])
+        b.catalog = katalog
+        return b
+    }
+
+    static func auftrag(_ bootstrap: BootstrapResponse, ort: String?) -> PlanTauschAuftrag {
+        let plan = T.plan()
+        let heute = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: nil)
+        return PlanTausch.auftrag(position: plan.einheiten[0].positionen[0], heute: heute,
+                                  bootstrap: bootstrap, ort: ort)
+    }
+
+    @Test("Studio: Kandidaten tragen Geraet und Muskeln ueber catalogModelId")
+    func kandidatenImStudio() throws {
+        let kandidaten = Self.auftrag(Self.bootstrapImStudio(), ort: "s1").kandidaten
+        let schulter = try #require(kandidaten.first { $0.exerciseId == "e8" })
+        #expect(schulter.geraet == "Gerät 9")
+        #expect(schulter.hauptmuskeln == ["deltoid_front"])
+        #expect(schulter.muskeln == "Schulter vorn")
+        let schraeg = try #require(kandidaten.first { $0.exerciseId == "e7" })
+        #expect(schraeg.geraet == "Gerät 14")
+        #expect(schraeg.hauptmuskeln == ["chest"])
+    }
+
+    @Test("Studio: Vorgesehen am Geraet findet das Geraet ueber catalogModelId")
+    func vorgesehenImStudio() {
+        let plan = T.plan()
+        let text = PlanTausch.vorgesehen(position: plan.einheiten[0].positionen[0], bootstrap: Self.bootstrapImStudio())
+        #expect(text?.contains("Gerät 12") == true)
+    }
+
+    @Test("Studio: Belegt-Tausch schreibt die Hauptmuskeln der neuen Uebung in den Lauf")
+    func belegtBehaeltMuskeln() throws {
+        let ablauf = PlanTauschTests.vorbereitet()
+        let auftrag = Self.auftrag(Self.bootstrapImStudio(), ort: "s1")
+        let sut = PlanTauschTests.sitzung(auftrag, ablauf: ablauf, client: TauschClientAttrappe(),
+                                          umgebung: .init())
+        sut.entfernen()
+        sut.grundWaehlen(.belegt)
+        let schulter = try #require(auftrag.kandidaten.first { $0.exerciseId == "e8" })
+        #expect(sut.waehlen(schulter))
+        let position = try #require(ablauf.zustand?.positionen.first { $0.key == "A0" })
+        #expect(position.hauptmuskeln == ["deltoid_front"])
+    }
+
+    @Test("Freies Training: ohne Geraete Muskeln und Bezeichnung aus dem Katalogtyp")
+    func freiesTrainingKatalogFallback() throws {
+        let kandidaten = Self.auftrag(Self.bootstrapFrei(), ort: "kat1").kandidaten
+        let schulter = try #require(kandidaten.first { $0.exerciseId == "e8" })
+        #expect(schulter.hauptmuskeln == ["deltoid_front"])
+        #expect(schulter.muskeln == "Schulter vorn")
+        #expect(schulter.geraet == "Typ em-m8")
+        #expect(schulter.name == "Schulterdrücken")
     }
 }

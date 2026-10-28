@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { Kandidat } from "./trainingsplan-auswahl.js";
-import { alternativenJeBaustein, gezaehlteEinheiten, nachzuholendeSessions, planFuerApp } from "./trainingsplan-bootstrap.js";
+import {
+  alternativenJeBaustein,
+  gezaehlteEinheiten,
+  istKatalogPlan,
+  merklisteFuerApp,
+  nachzuholendeSessions,
+  planFuerApp,
+} from "./trainingsplan-bootstrap.js";
 import type { TrainingPlan } from "./trainingsplan.js";
 import type { TrainingProfile } from "./trainingsprofil.js";
 
@@ -66,24 +73,72 @@ describe("gezaehlteEinheiten", () => {
   });
 });
 
-const k = (exerciseId: string, baustein: Kandidat["baustein"], bereiche: Kandidat["bereiche"] = []): Kandidat => ({
-  exerciseId, machineId: `m-${exerciseId}`, baustein, typ: "mehrgelenk", bereiche, hauptmuskeln: [],
+const k = (
+  exerciseId: string,
+  baustein: Kandidat["baustein"],
+  bereiche: Kandidat["bereiche"] = [],
+  extra: Partial<Kandidat> = {},
+): Kandidat => ({
+  exerciseId, modelId: `m-${exerciseId}`, baustein, typ: "mehrgelenk", bereiche, hauptmuskeln: [], ...extra,
 });
 
 describe("alternativenJeBaustein", () => {
-  it("laesst meiden weg, stellt vorsichtig nach hinten und gibt nur IDs aus", () => {
+  it("Alternativen tragen modelId und haben gefaellt_nicht am Ende", () => {
     const a = alternativenJeBaustein(
-      [k("1", "beine_knie", ["huefte"]), k("2", "beine_knie", ["knie"]), k("3", "beine_knie"), k("4", "ziehen")],
-      { knie: "meiden", huefte: "vorsichtig" },
+      [
+        k("1", "beine_knie", [], { gefaelltNicht: true }),
+        k("2", "beine_knie", ["huefte"]),
+        k("3", "beine_knie"),
+        k("4", "ziehen"),
+      ],
+      { huefte: "vorsichtig" },
     );
     expect(a).toEqual({
-      beine_knie: [{ exerciseId: "3", machineId: "m-3" }, { exerciseId: "1", machineId: "m-1" }],
-      ziehen: [{ exerciseId: "4", machineId: "m-4" }],
+      beine_knie: [
+        { exerciseId: "3", modelId: "m-3" },
+        { exerciseId: "2", modelId: "m-2" },
+        { exerciseId: "1", modelId: "m-1" },
+      ],
+      ziehen: [{ exerciseId: "4", modelId: "m-4" }],
     });
+  });
+
+  it("Alternativen nennen keine Beschwerden-Bereiche und lassen meiden weg", () => {
+    const a = alternativenJeBaustein(
+      [k("1", "beine_knie", ["huefte"]), k("2", "beine_knie", ["knie"]), k("3", "beine_knie")],
+      { knie: "meiden", huefte: "vorsichtig" },
+    );
+    expect(a.beine_knie).toEqual([{ exerciseId: "3", modelId: "m-3" }, { exerciseId: "1", modelId: "m-1" }]);
+    for (const x of a.beine_knie!) expect(Object.keys(x).sort()).toEqual(["exerciseId", "modelId"]);
+    expect(JSON.stringify(a)).not.toMatch(/huefte|meiden|vorsichtig|bereich/);
+  });
+});
+
+describe("merklisteFuerApp", () => {
+  it("merkliste faltet nichtVorhanden je Ort und gefaelltNicht ueberall", () => {
+    expect(
+      merklisteFuerApp([
+        { exercise_id: "e1", art: "nicht_vorhanden", studio_id: "ortA" },
+        { exercise_id: "e2", art: "nicht_vorhanden", studio_id: "ortA" },
+        { exercise_id: "e1", art: "nicht_vorhanden", studio_id: "ortB" },
+        { exercise_id: "e3", art: "gefaellt_nicht", studio_id: null },
+      ]),
+    ).toEqual({ nichtVorhanden: { ortA: ["e1", "e2"], ortB: ["e1"] }, gefaelltNicht: ["e3"] });
+    expect(merklisteFuerApp([])).toEqual({ nichtVorhanden: {}, gefaelltNicht: [] });
+  });
+});
+
+describe("istKatalogPlan", () => {
+  const mitPositionen = (positionen: object[]) =>
+    ({ einheiten: [{ key: "A", positionen }] }) as unknown as TrainingPlan;
+  it("alter Plan mit machineId-Positionen ist kein Katalogplan", () => {
+    expect(istKatalogPlan(mitPositionen([{ key: "p0", exerciseId: "e", machineId: "m" }]))).toBe(false);
+    expect(istKatalogPlan(mitPositionen([{ key: "p0", exerciseId: "e", modelId: "x" }]))).toBe(true);
   });
 });
 
 describe("planFuerApp", () => {
+  const LEER = { nichtVorhanden: {}, gefaelltNicht: [] };
   const plan = {
     id: "p", studioId: "s", version: 2, status: "aktiv", regelVersion: "1.2.0", struktur: "gk_ab",
     eingabe: { ziel: "muskelaufbau", tage: 3, minuten: 60, fokus: [], erfahrung: "neu", anfaengerBeendet: false,
@@ -96,18 +151,18 @@ describe("planFuerApp", () => {
     Array.from({ length: n }, (_, i) => ({ sessionId: `s${i}`, einheitKey: i % 2 ? "B" : "A", startedAt: vor(1000 - i) }));
 
   it("ohne gezaehlte Einheit beginnt die Folge bei der ersten", () => {
-    expect(planFuerApp(plan, [], neu, {}, {})).toMatchObject({ naechsteEinheitKey: "A", zuletztEinheitKey: null, einheitenErledigt: 0 });
+    expect(planFuerApp(plan, [], neu, {}, {}, LEER)).toMatchObject({ naechsteEinheitKey: "A", zuletztEinheitKey: null, einheitenErledigt: 0 });
   });
 
   it("anfaengerUebergang erst ab 8 bei neu, nie nach anfaengerBeendet", () => {
-    expect(planFuerApp(plan, einheiten(7), neu, {}, {}).anfaengerUebergang).toBe(false);
-    expect(planFuerApp(plan, einheiten(8), neu, {}, {})).toMatchObject({
+    expect(planFuerApp(plan, einheiten(7), neu, {}, {}, LEER).anfaengerUebergang).toBe(false);
+    expect(planFuerApp(plan, einheiten(8), neu, {}, {}, LEER)).toMatchObject({
       anfaengerUebergang: true, zuletztEinheitKey: "B", naechsteEinheitKey: "A",
     });
-    expect(planFuerApp(plan, einheiten(8), { ...neu, experience: "regelmaessig" }, {}, {}).anfaengerUebergang).toBe(false);
-    expect(planFuerApp(plan, einheiten(8), null, {}, {}).anfaengerUebergang).toBe(false);
+    expect(planFuerApp(plan, einheiten(8), { ...neu, experience: "regelmaessig" }, {}, {}, LEER).anfaengerUebergang).toBe(false);
+    expect(planFuerApp(plan, einheiten(8), null, {}, {}, LEER).anfaengerUebergang).toBe(false);
     const beendet = { ...plan, eingabe: { ...plan.eingabe, anfaengerBeendet: true } };
-    expect(planFuerApp(beendet, einheiten(8), neu, {}, {}).anfaengerUebergang).toBe(false);
+    expect(planFuerApp(beendet, einheiten(8), neu, {}, {}, LEER).anfaengerUebergang).toBe(false);
   });
 });
 
@@ -152,5 +207,13 @@ describe("nachzuholendeSessions", () => {
   it("aufsteigend nach Stand, hoechstens die juengsten fuenf", () => {
     const liste = [6, 1, 4, 2, 5, 3].map((n) => s(`s${n}`, { completedAt: vor(1000 - n * 10) }));
     expect(nachzuholendeSessions(liste, JETZT)).toEqual(["s2", "s3", "s4", "s5", "s6"]);
+  });
+});
+
+describe("planFuerApp -- Merkliste", () => {
+  it("reicht die Merkliste unveraendert in den Plan", () => {
+    const plan = { id: "p", studioId: "k", version: 1, regelVersion: "x", struktur: "gk_ab", einheiten: [{ key: "A", positionen: [] }], gruende: [], eingabe: {} } as unknown as TrainingPlan;
+    const merkliste = { nichtVorhanden: { o: ["e1"] }, gefaelltNicht: ["e2"] };
+    expect(planFuerApp(plan, [], null, {}, {}, merkliste).merkliste).toEqual(merkliste);
   });
 });

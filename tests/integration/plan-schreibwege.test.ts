@@ -1,22 +1,26 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  DomainError,
-  acceptPlan,
-  deleteTrainingLimits,
-  erzeugePlanVorschlag,
-  tauschePlanPosition,
-  tauschVorgaben,
-  type TrainingPlan,
-} from "@fitretro/domain";
+import { deleteTrainingLimits, tauschVorgaben } from "@fitretro/domain";
 import { anonClient, serviceClient } from "./helpers/clients.js";
-import { GYMTAVO, legeMitgliedAn, legePlanStudiosAn, type PlanStudios } from "./helpers/plan-studio.js";
+import {
+  GYMTAVO,
+  aktiverKatalogPlan,
+  erzeugeKatalogPlan,
+  katalogPlanParameter,
+  legeMitgliedAn,
+  legePlanStudiosAn,
+  machineVon,
+  nimmKatalogPlanAn,
+  type KatalogPlan,
+  type PlanStudios,
+} from "./helpers/plan-studio.js";
 
 // Etappe 3, Task 2: Plaene werden nur ueber gepruefte Funktionen geschrieben
 // (0062). Das Mitglied darf training_plans lesen, aber nicht direkt einfuegen
-// oder aendern -- sonst liessen sich beliebige exerciseId/machineId in
-// einheiten speichern. Alle Aufrufe mit dem Client des Mitglieds, damit RLS
-// und die Rechte der Funktionen wirklich greifen.
+// oder aendern -- sonst liessen sich beliebige exerciseId/modelId in
+// einheiten speichern. Seit 0066 gehoert der Plan dem Katalog-Studio und die
+// Positionen nennen modelId statt machineId. Alle Aufrufe mit dem Client des
+// Mitglieds, damit RLS und die Rechte der Funktionen wirklich greifen.
 const admin = serviceClient();
 let s: PlanStudios;
 
@@ -47,14 +51,13 @@ afterAll(async () => {
   if (error) throw error;
 });
 
-async function fehlerVon(p: Promise<unknown>): Promise<DomainError> {
-  try {
-    await p;
-  } catch (e) {
-    expect(e).toBeInstanceOf(DomainError);
-    return e as DomainError;
-  }
-  throw new Error("Kein Fehler geworfen");
+type Fehler = { code?: string; message?: string };
+
+/** Fehler eines RPC-Aufrufs (P0001 mit dem Meldungstext der Funktion). */
+async function fehlerVon(p: PromiseLike<{ error: Fehler | null }>): Promise<Fehler> {
+  const { error } = await p;
+  if (!error) throw new Error("Kein Fehler geworfen");
+  return error;
 }
 
 async function zeile(id: string) {
@@ -67,43 +70,24 @@ async function zeile(id: string) {
   return data as { status: string; studio_id: string; einheiten: unknown; eingabe: Record<string, unknown>; gruende: string[] };
 }
 
-async function machineVon(studioId: string): Promise<{ id: string; equipment_model_id: string }> {
-  const { data, error } = await admin
-    .from("machines")
-    .select("id, equipment_model_id")
-    .eq("studio_id", studioId)
-    .eq("status", "active")
-    .limit(1)
-    .single();
-  if (error) throw error;
-  return data as { id: string; equipment_model_id: string };
+/** Ruft die Funktion so auf, wie es die Fachschicht tut -- mit veraenderten Einheiten. */
+function rpcErzeuge(client: SupabaseClient, s: PlanStudios, einheiten?: unknown, studioId?: string) {
+  return client.rpc("create_training_plan", katalogPlanParameter(s, { einheiten, studioId }));
 }
 
-/** Ruft die Funktion so auf, wie es die Fachschicht tut -- mit einem veraenderten Plan. */
-function rpcErzeuge(client: SupabaseClient, studioId: string, plan: TrainingPlan, einheiten: unknown) {
-  return client.rpc("create_training_plan", {
-    p_studio_id: studioId,
-    p_regel_version: plan.regelVersion,
-    p_eingabe: plan.eingabe,
-    p_struktur: plan.struktur,
-    p_einheiten: einheiten,
-    p_gruende: plan.gruende,
-  });
-}
-
-/** Ersetzt in der ersten Position ein Feld. */
-function mitErsterPosition(plan: TrainingPlan, aenderung: Record<string, string>) {
-  const kopie = structuredClone(plan.einheiten);
+/** Die Einheiten des Plans mit einem geaenderten Feld in der ersten Position. */
+function mitErsterPosition(plan: KatalogPlan, aenderung: Record<string, unknown>) {
+  const kopie = structuredClone(plan.einheiten) as unknown as Array<{ positionen: Array<Record<string, unknown>> }>;
   Object.assign(kopie[0]!.positionen[0]!, aenderung);
   return kopie;
 }
 
 describe("direkte Schreibwege", () => {
   it("direktes Insert in training_plans scheitert", async () => {
-    const m = await legeMitgliedAn("schreib-insert", { studios: [s.voll] });
+    const m = await legeMitgliedAn("schreib-insert", { studios: [] });
     const { error } = await m.client.from("training_plans").insert({
       user_id: m.userId,
-      studio_id: s.voll,
+      studio_id: GYMTAVO,
       version: 1,
       status: "aktiv",
       regel_version: "1.2.0",
@@ -118,13 +102,13 @@ describe("direkte Schreibwege", () => {
   });
 
   it("direktes Update (status, einheiten) scheitert", async () => {
-    const m = await legeMitgliedAn("schreib-update", { studios: [s.voll] });
-    const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    const m = await legeMitgliedAn("schreib-update", { studios: [] });
+    const plan = await erzeugeKatalogPlan(m, s);
     const status = await m.client.from("training_plans").update({ status: "aktiv" }).eq("id", plan.id).select("id");
     expect(status.error !== null || (status.data ?? []).length === 0).toBe(true);
     const einheiten = await m.client
       .from("training_plans")
-      .update({ einheiten: mitErsterPosition(plan, { machineId: crypto.randomUUID() }) })
+      .update({ einheiten: mitErsterPosition(plan, { modelId: crypto.randomUUID() }) })
       .eq("id", plan.id)
       .select("id");
     expect(einheiten.error !== null || (einheiten.data ?? []).length === 0).toBe(true);
@@ -135,30 +119,29 @@ describe("direkte Schreibwege", () => {
 });
 
 describe("create_training_plan", () => {
-  it("speichert einen Generatorplan mit Cardio-Position", async () => {
-    const m = await legeMitgliedAn("schreib-cardio", { studios: [s.voll], trainingGoal: "lose_weight" });
-    const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+  it("speichert einen Plan mit Cardio-Position", async () => {
+    const m = await legeMitgliedAn("schreib-cardio", { studios: [] });
+    const plan = await erzeugeKatalogPlan(m, s);
     expect(plan.einheiten.flatMap((e) => e.positionen).some((p) => p.baustein === "cardio")).toBe(true);
-    const { data, error } = await rpcErzeuge(m.client, s.voll, plan, plan.einheiten).single();
+    const { data, error } = await rpcErzeuge(m.client, s).single();
     expect(error).toBeNull();
-    expect(data).toMatchObject({ user_id: m.userId, studio_id: s.voll, version: 2, status: "vorschlag" });
+    expect(data).toMatchObject({ user_id: m.userId, studio_id: GYMTAVO, version: 2, status: "vorschlag" });
     expect((await zeile(plan.id)).status).toBe("verworfen");
   });
 
-  it("mit Geraet eines fremden Studios wirft plan_ungueltig", async () => {
+  it("mit Modell eines normalen Studios wirft plan_ungueltig", async () => {
     const m = await legeMitgliedAn("schreib-fremd", { studios: [s.voll] });
-    const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
-    const fremd = await machineVon(s.voll2);
-    const { error } = await rpcErzeuge(m.client, s.voll, plan, mitErsterPosition(plan, { machineId: fremd.id }));
+    const plan = await erzeugeKatalogPlan(m, s);
+    const { error } = await rpcErzeuge(m.client, s, mitErsterPosition(plan, { modelId: s.studioModelle.voll }));
     expect(error?.code).toBe("P0001");
     expect(error?.message).toBe("plan_ungueltig");
     // Der alte Vorschlag bleibt: verworfen wird erst nach der Pruefung.
     expect((await zeile(plan.id)).status).toBe("vorschlag");
   });
 
-  it("mit Uebung, die das Geraet nicht hat, wirft plan_ungueltig", async () => {
-    const m = await legeMitgliedAn("schreib-uebung", { studios: [s.voll] });
-    const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+  it("mit Uebung, die das Modell nicht hat, wirft plan_ungueltig", async () => {
+    const m = await legeMitgliedAn("schreib-uebung", { studios: [] });
+    const plan = await erzeugeKatalogPlan(m, s);
     const { data: u, error: e } = await admin
       .from("exercises")
       .insert({ studio_id: GYMTAVO, name: `Lose ${crypto.randomUUID()}`, muscles: [], target_min: 8, target_max: 12 })
@@ -166,63 +149,56 @@ describe("create_training_plan", () => {
       .single();
     if (e) throw e;
     gymtavoUebungen.push(u!.id as string);
-    const { error } = await rpcErzeuge(m.client, s.voll, plan, mitErsterPosition(plan, { exerciseId: u!.id as string }));
+    const { error } = await rpcErzeuge(m.client, s, mitErsterPosition(plan, { exerciseId: u!.id as string }));
     expect(error?.code).toBe("P0001");
     expect(error?.message).toBe("plan_ungueltig");
   });
 
-  it("mit stillgelegtem Geraet wirft plan_ungueltig", async () => {
-    const m = await legeMitgliedAn("schreib-still", { studios: [s.voll] });
-    const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
-    const aktiv = await machineVon(s.voll);
-    const { data: still, error: e } = await admin
-      .from("machines")
-      .insert({ studio_id: s.voll, equipment_model_id: aktiv.equipment_model_id, label: "S-still", status: "inactive" })
-      .select("id")
-      .single();
-    if (e) throw e;
-    const { error } = await rpcErzeuge(m.client, s.voll, plan, mitErsterPosition(plan, { machineId: still!.id as string }));
-    expect(error?.code).toBe("P0001");
+  it("mit machineId statt modelId wirft plan_ungueltig", async () => {
+    const m = await legeMitgliedAn("schreib-machine", { studios: [s.voll] });
+    const plan = await erzeugeKatalogPlan(m, s);
+    const geraet = await machineVon(s.voll);
+    const ohneModell = mitErsterPosition(plan, { machineId: geraet.id });
+    delete (ohneModell[0]!.positionen[0] as Record<string, unknown>).modelId;
+    const { error } = await rpcErzeuge(m.client, s, ohneModell);
     expect(error?.message).toBe("plan_ungueltig");
+    // Auch zusaetzlich zu einem gueltigen modelId ist ein machineId nicht erlaubt.
+    const beides = await rpcErzeuge(m.client, s, mitErsterPosition(plan, { machineId: geraet.id }));
+    expect(beides.error?.message).toBe("plan_ungueltig");
   });
 
   it("ohne Positionsliste wirft plan_ungueltig", async () => {
-    const m = await legeMitgliedAn("schreib-form", { studios: [s.voll] });
-    const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
-    const { error } = await rpcErzeuge(m.client, s.voll, plan, [{ key: "A" }]);
+    const m = await legeMitgliedAn("schreib-form", { studios: [] });
+    const plan = await erzeugeKatalogPlan(m, s);
+    const { error } = await rpcErzeuge(m.client, s, [{ key: "A" }]);
     expect(error?.message).toBe("plan_ungueltig");
-    const kaputt = await rpcErzeuge(m.client, s.voll, plan, mitErsterPosition(plan, { machineId: "kein-uuid" }));
+    const kaputt = await rpcErzeuge(m.client, s, mitErsterPosition(plan, { modelId: "kein-uuid" }));
     expect(kaputt.error?.message).toBe("plan_ungueltig");
   });
 
-  it("fuer ein Studio ohne Mitgliedschaft wird nichts gespeichert", async () => {
-    const m = await legeMitgliedAn("schreib-ohne", { studios: [s.voll, s.voll2] });
-    const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll2);
-    const n = await legeMitgliedAn("schreib-ohne-n", { studios: [s.voll] });
-    const { error } = await rpcErzeuge(n.client, s.voll2, plan, plan.einheiten);
-    expect(error).not.toBeNull();
+  it("fuer ein normales Studio wird nichts gespeichert, auch mit Mitgliedschaft", async () => {
+    const n = await legeMitgliedAn("schreib-ohne", { studios: [s.voll] });
+    const { error } = await rpcErzeuge(n.client, s, undefined, s.voll);
+    expect(error?.message).toBe("plan_ungueltig");
     const { data } = await admin.from("training_plans").select("id").eq("user_id", n.userId);
     expect(data).toEqual([]);
   });
 
   it("ohne Anmeldung nicht aufrufbar", async () => {
-    const m = await legeMitgliedAn("schreib-anon", { studios: [s.voll] });
-    const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
-    const { error } = await rpcErzeuge(anonClient(), s.voll, plan, plan.einheiten);
+    const m = await legeMitgliedAn("schreib-anon", { studios: [] });
+    const plan = await erzeugeKatalogPlan(m, s);
+    const { error } = await rpcErzeuge(anonClient(), s);
     expect(error).not.toBeNull();
-    const pruefen = await anonClient().rpc("training_plan_pruefen", { p_studio_id: s.voll, p_einheiten: [] });
+    const pruefen = await anonClient().rpc("training_plan_pruefen", { p_studio_id: GYMTAVO, p_einheiten: [] });
     expect(pruefen.error).not.toBeNull();
-    // Die Pruefhilfe verriete Geraete fremder Studios; auch Mitglieder rufen sie nicht direkt.
-    const direkt = await m.client.rpc("training_plan_pruefen", { p_studio_id: s.voll2, p_einheiten: plan.einheiten });
+    // Die Pruefhilfe ist nicht fuer Mitglieder gedacht; auch sie rufen sie nicht direkt.
+    const direkt = await m.client.rpc("training_plan_pruefen", { p_studio_id: GYMTAVO, p_einheiten: plan.einheiten });
     expect(direkt.error).not.toBeNull();
   });
 
-  it("zwei parallele erzeugePlanVorschlag lassen genau einen Vorschlag stehen", async () => {
-    const m = await legeMitgliedAn("schreib-parallel", { studios: [s.voll] });
-    const ergebnisse = await Promise.allSettled([
-      erzeugePlanVorschlag(m.client, m.userId, s.voll),
-      erzeugePlanVorschlag(m.client, m.userId, s.voll),
-    ]);
+  it("zwei parallele create_training_plan lassen genau einen Vorschlag stehen", async () => {
+    const m = await legeMitgliedAn("schreib-parallel", { studios: [] });
+    const ergebnisse = await Promise.allSettled([erzeugeKatalogPlan(m, s), erzeugeKatalogPlan(m, s)]);
     // Die Funktion serialisiert je Paar: beide gelingen, der spaetere verwirft den frueheren.
     expect(ergebnisse.map((r) => r.status)).toEqual(["fulfilled", "fulfilled"]);
     const { data, error } = await admin
@@ -239,44 +215,52 @@ describe("create_training_plan", () => {
 });
 
 describe("accept_training_plan", () => {
-  it("accept eines Vorschlags im verlassenen Studio wirft Konflikt", async () => {
-    const m = await legeMitgliedAn("schreib-verlassen", { studios: [s.voll] });
-    const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
-    const { error } = await admin.from("studio_memberships").delete().eq("user_id", m.userId).eq("studio_id", s.voll);
+  it("fremder Vorschlag und Vorschlag eines normalen Studios: nicht annehmbar", async () => {
+    const m = await legeMitgliedAn("schreib-accept", { studios: [] });
+    const plan = await erzeugeKatalogPlan(m, s);
+    const anderer = await legeMitgliedAn("schreib-accept-anderer", { studios: [] });
+    const fremd = await fehlerVon(anderer.client.rpc("accept_training_plan", { p_plan_id: plan.id }));
+    expect(fremd).toMatchObject({ code: "P0001", message: "plan_nicht_annehmbar" });
+    // Ein Plan eines normalen Studios (aus der Zeit vor 0066) wird nicht mehr angenommen.
+    const { data: alt, error } = await admin
+      .from("training_plans")
+      .insert({
+        user_id: m.userId, studio_id: s.voll, version: 1, status: "vorschlag", regel_version: "1.2.0",
+        eingabe: {}, struktur: "gk_ab", einheiten: [], gruende: [],
+      })
+      .select("id")
+      .single();
     if (error) throw error;
-    const e = await fehlerVon(acceptPlan(m.client, m.userId, plan.id));
-    expect(e.code).toBe("conflict");
+    const abgelehnt = await fehlerVon(m.client.rpc("accept_training_plan", { p_plan_id: alt!.id }));
+    expect(abgelehnt).toMatchObject({ code: "P0001", message: "plan_nicht_annehmbar" });
     expect((await zeile(plan.id)).status).toBe("vorschlag");
   });
 });
 
 describe("Widerruf der Beschwerden", () => {
-  it("Widerruf (DELETE training_limits) bereinigt auch den Plan in einem verlassenen Studio", async () => {
+  it("Widerruf (DELETE training_limits) bereinigt aktiven Plan und Vorschlag", async () => {
     const m = await legeMitgliedAn("schreib-widerruf", {
-      studios: [s.voll, s.voll2],
+      studios: [],
       limits: { knie: "meiden", schulter: "vorsichtig" },
     });
-    const bleibt = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
-    const verlassen = await erzeugePlanVorschlag(m.client, m.userId, s.voll2);
-    await acceptPlan(m.client, m.userId, verlassen.id);
-    expect(verlassen.gruende).toEqual(expect.arrayContaining(["beschwerden_meiden", "beschwerden_vorsichtig"]));
-    const { error } = await admin.from("studio_memberships").delete().eq("user_id", m.userId).eq("studio_id", s.voll2);
-    if (error) throw error;
+    const aktiv = await nimmKatalogPlanAn(m, (await erzeugeKatalogPlan(m, s, { limits: true })).id);
+    const vorschlag = await erzeugeKatalogPlan(m, s, { limits: true });
+    expect(aktiv.gruende).toEqual(expect.arrayContaining(["beschwerden_meiden", "beschwerden_vorsichtig"]));
 
     await deleteTrainingLimits(m.client, m.userId);
 
-    for (const plan of [bleibt, verlassen]) {
+    for (const plan of [aktiv, vorschlag]) {
       const z = await zeile(plan.id);
       expect(z.eingabe).toEqual({ ...plan.eingabe, beschwerdenBeruecksichtigt: false });
       expect(z.gruende).toEqual(plan.gruende.filter((g) => !g.startsWith("beschwerden_")));
       expect(z.einheiten).toEqual(plan.einheiten);
     }
-    expect((await zeile(verlassen.id)).status).toBe("aktiv");
+    expect((await zeile(aktiv.id)).status).toBe("aktiv");
   });
 
   it("Loeschen des Nutzers mit Beschwerden und Plaenen gelingt", async () => {
-    const m = await legeMitgliedAn("schreib-konto", { studios: [s.voll], limits: { knie: "meiden" } });
-    await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    const m = await legeMitgliedAn("schreib-konto", { studios: [], limits: { knie: "meiden" } });
+    await erzeugeKatalogPlan(m, s, { limits: true });
     const { error } = await admin.auth.admin.deleteUser(m.userId);
     expect(error).toBeNull();
     const { data } = await admin.from("training_plans").select("id").eq("user_id", m.userId);
@@ -285,21 +269,19 @@ describe("Widerruf der Beschwerden", () => {
 });
 
 describe("swap_training_plan_position", () => {
-  /** Mitglied mit aktivem Plan im Studio voll. */
+  /** Mitglied ohne Studiomitgliedschaft mit aktivem Katalogplan. */
   async function mitAktivemPlan(prefix: string, limits?: Record<string, "meiden" | "vorsichtig">) {
-    const m = await legeMitgliedAn(prefix, { studios: [s.voll], ...(limits ? { limits } : {}) });
-    const vorschlag = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
-    const plan = await acceptPlan(m.client, m.userId, vorschlag.id);
+    const m = await legeMitgliedAn(prefix, { studios: [], ...(limits ? { limits } : {}) });
+    const plan = await aktiverKatalogPlan(m, s);
     return { m, plan };
   }
 
-  /** Neue Uebung im selben Baustein, am Geraetetyp des Studios verfuegbar. */
+  /** Neue Uebung im selben Baustein, am Katalogmodell verfuegbar. */
   async function ersatzUebung(
     baustein: string,
     bereiche: string[] = [],
     typ: "mehrgelenk" | "isolation" = "isolation",
   ): Promise<string> {
-    const geraet = await machineVon(s.voll);
     const { data, error } = await admin
       .from("exercises")
       .insert({
@@ -321,36 +303,56 @@ describe("swap_training_plan_position", () => {
     gymtavoUebungen.push(data!.id as string);
     const { error: e2 } = await admin
       .from("equipment_model_exercises")
-      .insert({ equipment_model_id: geraet.equipment_model_id, exercise_id: data!.id, sort_order: 99 });
+      .insert({ equipment_model_id: s.katalogModell, exercise_id: data!.id, sort_order: 99 });
     if (e2) throw e2;
     return data!.id as string;
   }
 
-  function ersteStelle(plan: TrainingPlan) {
+  type Tausch = { einheitKey: string; positionKey: string; exerciseId: string; modelId: string };
+
+  /** Tausch wie die Fachschicht: Vorgaben beider Typen aus dem Ziel des Plans. */
+  function tausche(client: SupabaseClient, plan: KatalogPlan, t: Tausch) {
+    return client
+      .rpc("swap_training_plan_position", {
+        p_plan_id: plan.id,
+        p_einheit_key: t.einheitKey,
+        p_position_key: t.positionKey,
+        p_exercise_id: t.exerciseId,
+        p_model_id: t.modelId,
+        p_vorgaben: tauschVorgaben(plan.eingabe as never),
+      })
+      .single();
+  }
+
+  function ersteStelle(plan: KatalogPlan) {
     const einheit = plan.einheiten[0]!;
     return { einheitKey: einheit.key, position: einheit.positionen[0]! };
   }
+
+  type Pos = KatalogPlan["einheiten"][number]["positionen"][number];
+  type NeuerPlan = { id: string; version: number; status: string; studio_id: string; einheiten: KatalogPlan["einheiten"]; accepted_at: string | null; eingabe: unknown; gruende: string[]; struktur: string; regel_version: string };
 
   it("Tausch erzeugt Version +1, aktiv, alter Plan ersetzt, nur die gewaehlte Position aendert sich", async () => {
     const { m, plan } = await mitAktivemPlan("swap-ok");
     const { einheitKey, position } = ersteStelle(plan);
     const exerciseId = await ersatzUebung(position.baustein);
-    const geraet = await machineVon(s.voll);
 
-    const neu = await tauschePlanPosition(m.client, m.userId, plan.id, {
+    const { data, error } = await tausche(m.client, plan, {
       einheitKey,
       positionKey: position.key,
       exerciseId,
-      machineId: geraet.id,
+      modelId: s.katalogModell,
     });
+    expect(error).toBeNull();
+    const neu = data as NeuerPlan;
 
-    expect(neu).toMatchObject({ version: plan.version + 1, status: "aktiv", studioId: s.voll });
+    expect(neu).toMatchObject({ version: plan.version + 1, status: "aktiv", studio_id: GYMTAVO });
     expect(neu.id).not.toBe(plan.id);
-    expect(neu.acceptedAt).not.toBeNull();
+    expect(neu.accepted_at).not.toBeNull();
     expect(neu.eingabe).toEqual(plan.eingabe);
     expect(neu.gruende).toEqual(plan.gruende);
     expect(neu.struktur).toBe(plan.struktur);
-    expect(neu.regelVersion).toBe(plan.regelVersion);
+    expect(neu.regel_version).toBe(plan.regelVersion);
     expect((await zeile(plan.id)).status).toBe("ersetzt");
 
     const erwartet = structuredClone(plan.einheiten);
@@ -359,7 +361,7 @@ describe("swap_training_plan_position", () => {
     expect(position.typ).toBe("mehrgelenk");
     Object.assign(erwartet[0]!.positionen[0]!, {
       exerciseId,
-      machineId: geraet.id,
+      modelId: s.katalogModell,
       hauptmuskeln: ["quadrizeps"],
       typ: "isolation",
       wdhVon: 10,
@@ -368,16 +370,16 @@ describe("swap_training_plan_position", () => {
       aufwaermsatz: false,
     });
     expect(neu.einheiten).toEqual(erwartet);
-    const { data } = await admin
+    const { data: aktiv } = await admin
       .from("training_plans")
       .select("status")
       .eq("user_id", m.userId)
       .eq("status", "aktiv");
-    expect(data).toHaveLength(1);
+    expect(aktiv).toHaveLength(1);
   });
 
   /** Die Felder, die vom Typ der Uebung abhaengen. */
-  function vorgabenVon(p: TrainingPlan["einheiten"][number]["positionen"][number]) {
+  function vorgabenVon(p: Pos) {
     const { typ, wdhVon, wdhBis, reserveVon, reserveBis, pauseSek, aufwaermsatz } = p;
     return { typ, wdhVon, wdhBis, reserveVon, reserveBis, pauseSek, aufwaermsatz };
   }
@@ -392,14 +394,15 @@ describe("swap_training_plan_position", () => {
       typ: "mehrgelenk", wdhVon: 8, wdhBis: 12, reserveVon: 1, reserveBis: 3, pauseSek: 150, aufwaermsatz: true,
     });
     const exerciseId = await ersatzUebung(alt.baustein, [], "isolation");
-    const geraet = await machineVon(s.voll);
 
-    const neu = await tauschePlanPosition(m.client, m.userId, plan.id, {
+    const { data, error } = await tausche(m.client, plan, {
       einheitKey: einheit.key,
       positionKey: alt.key,
       exerciseId,
-      machineId: geraet.id,
+      modelId: s.katalogModell,
     });
+    expect(error).toBeNull();
+    const neu = data as NeuerPlan;
 
     const getauscht = neu.einheiten[0]!.positionen.find((p) => p.key === alt.key)!;
     expect(getauscht).toMatchObject({ exerciseId, saetze: alt.saetze, dauerMin: null, rolle: alt.rolle });
@@ -415,38 +418,38 @@ describe("swap_training_plan_position", () => {
       .find(({ p }) => p.typ === "isolation" && p.rolle !== "cardio")!;
     expect(stelle).toBeDefined();
     const exerciseId = await ersatzUebung(stelle.p.baustein, [], "mehrgelenk");
-    const geraet = await machineVon(s.voll);
 
-    const neu = await tauschePlanPosition(m.client, m.userId, plan.id, {
+    const { data, error } = await tausche(m.client, plan, {
       einheitKey: stelle.einheitKey,
       positionKey: stelle.p.key,
       exerciseId,
-      machineId: geraet.id,
+      modelId: s.katalogModell,
     });
+    expect(error).toBeNull();
+    const neu = data as NeuerPlan;
 
     const getauscht = neu.einheiten.find((e) => e.key === stelle.einheitKey)!.positionen.find((p) => p.key === stelle.p.key)!;
     expect(vorgabenVon(getauscht)).toEqual({
       typ: "mehrgelenk", wdhVon: 8, wdhBis: 12, reserveVon: 1, reserveBis: 3, pauseSek: 150, aufwaermsatz: true,
     });
     // Alle anderen Positionen bleiben unveraendert.
-    const ohne = (pl: TrainingPlan) =>
-      pl.einheiten.map((e) => e.positionen.filter((p) => !(e.key === stelle.einheitKey && p.key === stelle.p.key)));
-    expect(ohne(neu)).toEqual(ohne(plan));
+    const ohne = (einheiten: KatalogPlan["einheiten"]) =>
+      einheiten.map((e) => e.positionen.filter((p) => !(e.key === stelle.einheitKey && p.key === stelle.p.key)));
+    expect(ohne(neu.einheiten)).toEqual(ohne(plan.einheiten));
   });
 
   it("die Funktion lehnt unsinnige Vorgaben ab (plan_ungueltig)", async () => {
     const { m, plan } = await mitAktivemPlan("swap-vorgaben");
     const { einheitKey, position } = ersteStelle(plan);
-    const geraet = await machineVon(s.voll);
     const exerciseId = await ersatzUebung(position.baustein, [], "isolation");
-    const gut = tauschVorgaben(plan.eingabe);
+    const gut = tauschVorgaben(plan.eingabe as never);
     const aufruf = (vorgaben: unknown) =>
       m.client.rpc("swap_training_plan_position", {
         p_plan_id: plan.id,
         p_einheit_key: einheitKey,
         p_position_key: position.key,
         p_exercise_id: exerciseId,
-        p_machine_id: geraet.id,
+        p_model_id: s.katalogModell,
         p_vorgaben: vorgaben,
       });
     const iso = gut.isolation;
@@ -480,7 +483,7 @@ describe("swap_training_plan_position", () => {
       p_einheit_key: einheitKey,
       p_position_key: position.key,
       p_exercise_id: exerciseId,
-      p_machine_id: geraet.id,
+      p_model_id: s.katalogModell,
     });
     expect(alt).not.toBeNull();
     expect((await zeile(plan.id)).status).toBe("aktiv");
@@ -493,11 +496,10 @@ describe("swap_training_plan_position", () => {
     const { m, plan } = await mitAktivemPlan("swap-baustein");
     const { einheitKey, position } = ersteStelle(plan);
     const exerciseId = await ersatzUebung(position.baustein === "ziehen" ? "druecken" : "ziehen");
-    const geraet = await machineVon(s.voll);
     const e = await fehlerVon(
-      tauschePlanPosition(m.client, m.userId, plan.id, { einheitKey, positionKey: position.key, exerciseId, machineId: geraet.id }),
+      tausche(m.client, plan, { einheitKey, positionKey: position.key, exerciseId, modelId: s.katalogModell }),
     );
-    expect(e.code).toBe("validation_failed");
+    expect(e).toMatchObject({ code: "P0001", message: "plan_ungueltig" });
     expect((await zeile(plan.id)).status).toBe("aktiv");
   });
 
@@ -505,67 +507,85 @@ describe("swap_training_plan_position", () => {
     const { m, plan } = await mitAktivemPlan("swap-meiden", { knie: "meiden", schulter: "vorsichtig" });
     const { einheitKey, position } = ersteStelle(plan);
     const exerciseId = await ersatzUebung(position.baustein, ["knie"]);
-    const geraet = await machineVon(s.voll);
     const e = await fehlerVon(
-      tauschePlanPosition(m.client, m.userId, plan.id, { einheitKey, positionKey: position.key, exerciseId, machineId: geraet.id }),
+      tausche(m.client, plan, { einheitKey, positionKey: position.key, exerciseId, modelId: s.katalogModell }),
     );
-    expect(e.code).toBe("validation_failed");
+    expect(e).toMatchObject({ code: "P0001", message: "plan_ungueltig" });
     // Kontrolle: schulter ist nur "vorsichtig" und sperrt nicht, nur "meiden" sperrt.
     const ok = await ersatzUebung(position.baustein, ["schulter"]);
-    await expect(
-      tauschePlanPosition(m.client, m.userId, plan.id, { einheitKey, positionKey: position.key, exerciseId: ok, machineId: geraet.id }),
-    ).resolves.toMatchObject({ status: "aktiv" });
+    const { data, error } = await tausche(m.client, plan, {
+      einheitKey, positionKey: position.key, exerciseId: ok, modelId: s.katalogModell,
+    });
+    expect(error).toBeNull();
+    expect(data).toMatchObject({ status: "aktiv" });
   });
 
-  it("Geraet eines fremden Studios wird abgelehnt", async () => {
+  it("Modell eines normalen Studios wird abgelehnt", async () => {
     const { m, plan } = await mitAktivemPlan("swap-fremd");
     const { einheitKey, position } = ersteStelle(plan);
-    // Die Uebung der Position haengt am gemeinsamen Katalogtyp beider Studios: nur
-    // das Geraet ist fremd. Mit einer Uebung, die dem fremden Geraet fehlt, scheiterte
-    // der Test auch ohne Studio-Pruefung.
-    const fremd = await machineVon(s.voll2);
+    // Die Uebung der Position haengt auch am Studiotyp (catalog_model_id), das Modell
+    // selbst gehoert aber einem normalen Studio: nur das Modell ist fremd.
     const e = await fehlerVon(
-      tauschePlanPosition(m.client, m.userId, plan.id, {
+      tausche(m.client, plan, {
         einheitKey,
         positionKey: position.key,
         exerciseId: position.exerciseId,
-        machineId: fremd.id,
+        modelId: s.studioModelle.voll,
       }),
     );
-    expect(e.code).toBe("validation_failed");
+    expect(e).toMatchObject({ code: "P0001", message: "plan_ungueltig" });
     expect((await zeile(plan.id)).status).toBe("aktiv");
   });
 
-  it("Tausch auf nicht aktiven Plan: Konflikt", async () => {
-    const m = await legeMitgliedAn("swap-vorschlag", { studios: [s.voll] });
-    const vorschlag = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+  it("Tausch auf nicht aktiven Plan: nicht annehmbar", async () => {
+    const m = await legeMitgliedAn("swap-vorschlag", { studios: [] });
+    const vorschlag = await erzeugeKatalogPlan(m, s);
     const { einheitKey, position } = ersteStelle(vorschlag);
-    const geraet = await machineVon(s.voll);
     const e = await fehlerVon(
-      tauschePlanPosition(m.client, m.userId, vorschlag.id, {
+      tausche(m.client, vorschlag, {
         einheitKey,
         positionKey: position.key,
         exerciseId: position.exerciseId,
-        machineId: geraet.id,
+        modelId: s.katalogModell,
       }),
     );
-    expect(e.code).toBe("conflict");
+    expect(e).toMatchObject({ code: "P0001", message: "plan_nicht_annehmbar" });
   });
 
-  it("fremder Plan, ausgetretenes Mitglied und unbekannte Position", async () => {
+  it("fremder Plan und unbekannte Position", async () => {
     const { m, plan } = await mitAktivemPlan("swap-grenzen");
     const { einheitKey, position } = ersteStelle(plan);
-    const geraet = await machineVon(s.voll);
-    const eingabe = { einheitKey, positionKey: position.key, exerciseId: position.exerciseId, machineId: geraet.id };
-    const anderer = await legeMitgliedAn("swap-anderer", { studios: [s.voll] });
-    expect((await fehlerVon(tauschePlanPosition(anderer.client, anderer.userId, plan.id, eingabe))).code).toBe("conflict");
-    expect(
-      (await fehlerVon(tauschePlanPosition(m.client, m.userId, plan.id, { ...eingabe, positionKey: "gibt-es-nicht" }))).code,
-    ).toBe("validation_failed");
-    const { error } = await admin.from("studio_memberships").delete().eq("user_id", m.userId).eq("studio_id", s.voll);
-    if (error) throw error;
-    expect((await fehlerVon(tauschePlanPosition(m.client, m.userId, plan.id, eingabe))).code).toBe("conflict");
+    const eingabe = { einheitKey, positionKey: position.key, exerciseId: position.exerciseId, modelId: s.katalogModell };
+    const anderer = await legeMitgliedAn("swap-anderer", { studios: [] });
+    expect(await fehlerVon(tausche(anderer.client, plan, eingabe))).toMatchObject({ message: "plan_nicht_annehmbar" });
+    expect(await fehlerVon(tausche(m.client, plan, { ...eingabe, positionKey: "gibt-es-nicht" }))).toMatchObject({
+      message: "plan_ungueltig",
+    });
     expect((await zeile(plan.id)).status).toBe("aktiv");
+  });
+
+  it("Plan eines normalen Studios (vor 0066) laesst sich nicht tauschen", async () => {
+    const m = await legeMitgliedAn("swap-altstudio", { studios: [s.voll] });
+    const katalog = await aktiverKatalogPlan(m, s);
+    const { data: alt, error } = await admin
+      .from("training_plans")
+      .insert({
+        user_id: m.userId, studio_id: s.voll, version: 1, status: "aktiv", regel_version: "1.2.0",
+        eingabe: katalog.eingabe, struktur: "gk_ab", einheiten: katalog.einheiten, gruende: [], accepted_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    const { einheitKey, position } = ersteStelle(katalog);
+    const e = await fehlerVon(
+      tausche(m.client, { ...katalog, id: alt!.id as string }, {
+        einheitKey,
+        positionKey: position.key,
+        exerciseId: position.exerciseId,
+        modelId: s.katalogModell,
+      }),
+    );
+    expect(e).toMatchObject({ code: "P0001", message: "plan_nicht_annehmbar" });
   });
 
   it("ohne Anmeldung nicht aufrufbar", async () => {
@@ -574,8 +594,8 @@ describe("swap_training_plan_position", () => {
       p_einheit_key: "A",
       p_position_key: "x",
       p_exercise_id: crypto.randomUUID(),
-      p_machine_id: crypto.randomUUID(),
-      p_vorgaben: tauschVorgaben({ ziel: "muskelaufbau", erfahrung: "regelmaessig" }),
+      p_model_id: crypto.randomUUID(),
+      p_vorgaben: tauschVorgaben({ ziel: "muskelaufbau", erfahrung: "regelmaessig" } as never),
     });
     expect(error).not.toBeNull();
   });

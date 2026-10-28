@@ -9,7 +9,8 @@ extension PlanTausch {
     static func auftrag(position: TrainingsplanPosition, katalog: CatalogStore,
                         ablauf: TrainingsplanAblaufStore) -> PlanTauschAuftrag? {
         guard let heute = PlanAnzeige.heute(katalog: katalog, ablauf: ablauf) else { return nil }
-        return auftrag(position: position, heute: heute, bootstrap: katalog.bootstrap)
+        return auftrag(position: position, heute: heute, bootstrap: katalog.bootstrap,
+                       ort: ort(aktivesStudio: katalog.activeStudioId, bootstrap: katalog.bootstrap))
     }
 }
 
@@ -18,8 +19,10 @@ extension View {
     /// Training-Tabs. Nicht an der Karte: die lebt in einer LazyVStack, und
     /// ein Sheet dort kann beim Scrollen mit ihr verschwinden.
     func planPositionSheet(auftrag: Binding<PlanTauschAuftrag?>, apiClient: APIClient,
-                           vorschauLader: VorschauLader) -> some View {
-        modifier(PlanPositionSheetHuelle(auftrag: auftrag, apiClient: apiClient, vorschauLader: vorschauLader))
+                           vorschauLader: VorschauLader,
+                           beiStarten: @escaping (String) -> Void) -> some View {
+        modifier(PlanPositionSheetHuelle(auftrag: auftrag, apiClient: apiClient, vorschauLader: vorschauLader,
+                                         beiStarten: beiStarten))
     }
 }
 
@@ -29,6 +32,7 @@ private struct PlanPositionSheetHuelle: ViewModifier {
     @Binding var auftrag: PlanTauschAuftrag?
     let apiClient: APIClient
     let vorschauLader: VorschauLader
+    let beiStarten: (String) -> Void
 
     @Environment(CatalogStore.self) private var katalog
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
@@ -42,7 +46,7 @@ private struct PlanPositionSheetHuelle: ViewModifier {
                     auftrag: auftrag, client: apiClient, ablauf: planAblauf,
                     istOnline: { [netz] in netz.istOnline },
                     aktuellePlanId: { [katalog] in
-                        PlanAnzeige.plan(bootstrap: katalog.bootstrap, studioId: auftrag.studioId)?.planId
+                        PlanAnzeige.plan(bootstrap: katalog.bootstrap)?.planId
                     },
                     neuLaden: { [katalog, planAblauf] in
                         await katalog.load()
@@ -51,10 +55,14 @@ private struct PlanPositionSheetHuelle: ViewModifier {
                         // Ohne Bootstrap nichts (sonst ginge ein Tausch nur
                         // heute verloren, siehe RootView).
                         guard let bootstrap = katalog.bootstrap else { return }
-                        planAblauf.vorbereiten(bootstrap: bootstrap, studioId: katalog.activeStudioId)
+                        planAblauf.vorbereiten(bootstrap: bootstrap)
                     }),
                 fotoLader: apiClient, vorschauLader: vorschauLader,
-                beiFertig: { self.auftrag = nil })
+                beiFertig: { self.auftrag = nil },
+                beiStarten: { uebungId in
+                    self.auftrag = nil
+                    beiStarten(uebungId)
+                })
             .environment(videoVorrat)
         }
     }
@@ -71,13 +79,17 @@ struct PlanPositionSheet: View {
     let fotoLader: any GeraetefotosLoading
     let vorschauLader: VorschauLader
     let beiFertig: () -> Void
+    /// "Gerät wählen": die Uebung der Position starten, an welchem Geraet
+    /// auch immer (Spec 5). Schliesst das Sheet; die Wurzel oeffnet die Auswahl.
+    var beiStarten: ((String) -> Void)?
 
     /// Gemessene Hoehe fuer 3.1/3.3: so hoch wie der Inhalt, wie der Drawer.
     @State private var hoehe: CGFloat = 340
     @State private var bilder: [String: UIImage] = [:]
 
     init(sitzung: PlanTauschSitzung, fotoLader: any GeraetefotosLoading, vorschauLader: VorschauLader,
-         beiFertig: @escaping () -> Void) {
+         beiFertig: @escaping () -> Void, beiStarten: ((String) -> Void)? = nil) {
+        self.beiStarten = beiStarten
         _sitzung = State(initialValue: sitzung)
         self.fotoLader = fotoLader
         self.vorschauLader = vorschauLader
@@ -93,6 +105,8 @@ struct PlanPositionSheet: View {
                 gemessen(vorgabe)
             case .kandidaten:
                 PlanTauschListe(sitzung: sitzung, bilder: bilder, beiFertig: beiFertig)
+            case .entfernen:
+                gemessen(PlanEntfernenFrage(sitzung: sitzung, beiFertig: beiFertig))
             case .bestaetigen(let kandidat):
                 gemessen(PlanTauschBestaetigung(sitzung: sitzung, kandidat: kandidat, beiFertig: beiFertig))
             }
@@ -151,12 +165,23 @@ struct PlanPositionSheet: View {
             if let vorgesehen = auftrag.vorgesehen {
                 absatz(vorgesehen)
             }
+            // Die Position meint die Uebung, nicht ein Geraet: die Auswahl
+            // zeigt nur Geraete, die sie anbieten. Erledigte Positionen
+            // starten nichts mehr.
+            if let beiStarten, auftrag.status != .erledigt {
+                SecondaryButton(title: "Gerät wählen") { beiStarten(auftrag.uebungId) }
+                    .accessibilityHint("Zeigt Geräte, an denen du \(auftrag.ersatzName ?? auftrag.name) machen kannst")
+            }
             // Ohne Kandidaten gar kein Knopf -- nie eine leere Liste
             // (Review Focus 3); erledigt, optional und Cardio tauschen nicht.
             if auftrag.zeigtAndereUebung {
                 SecondaryButton(title: "Andere Übung wählen") { sitzung.andereUebung() }
                     .padding(.top, DesignSystem.Spacing.s4)
                     .accessibilityHint("Zeigt Übungen, die hier auch passen")
+            }
+            if auftrag.zeigtEntfernen {
+                PlanLeiserKnopf(titel: "Übung entfernen") { sitzung.entfernen() }
+                    .accessibilityHint("Fragt, warum, und bietet eine andere Übung an")
             }
             PlanLeiserKnopf(titel: "Schließen", aktion: beiFertig)
         }
@@ -209,5 +234,50 @@ struct PlanLeiserKnopf: View {
         .buttonStyle(PressButtonStyle())
         .disabled(!aktiv)
         .opacity(aktiv ? 1 : 0.5)
+    }
+}
+
+/// "Übung entfernen": die drei Gruende (Entwurf, Tim liest die Texte vor dem
+/// Merge). Ohne Alternative im Baustein nur "Überspringen", das nichts merkt
+/// und nichts sendet. Die dauerhaften Gruende brauchen Verbindung und sagen es.
+struct PlanEntfernenFrage: View {
+    let sitzung: PlanTauschSitzung
+    let beiFertig: () -> Void
+
+    private var auftrag: PlanTauschAuftrag { sitzung.auftrag }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            Text(auftrag.name.uppercased())
+                .font(.system(size: 22, weight: .black))
+                .tracking(-0.5)
+                .foregroundStyle(DesignSystem.Color.text)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+            Text(auftrag.kandidaten.isEmpty
+                 ? "Dafür gibt es hier keine andere Übung."
+                 : "Warum möchtest du sie nicht machen?")
+                .font(.system(size: 14))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach(auftrag.entfernOptionen, id: \.titel) { option in
+                let gesperrt = option.serverGrund != nil && !sitzung.dauerhaftMoeglich
+                SecondaryButton(title: option.titel) {
+                    if option == .ueberspringen { beiFertig() } else { sitzung.grundWaehlen(option) }
+                }
+                .disabled(gesperrt)
+                .opacity(gesperrt ? 0.5 : 1)
+                .accessibilityHint(gesperrt ? "Braucht Verbindung" : "")
+            }
+            if auftrag.entfernOptionen.contains(where: { $0.serverGrund != nil }), !sitzung.dauerhaftMoeglich {
+                Text("Braucht Verbindung")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+            }
+            PlanLeiserKnopf(titel: "Schließen", aktion: beiFertig)
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 28)
+        .padding(.bottom, DesignSystem.Spacing.s8)
     }
 }

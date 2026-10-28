@@ -35,10 +35,6 @@ final class TrainingsplanAblaufStore {
     var zustand: AblaufZustand? { datei.lauf?.zustand }
     var planId: String? { datei.lauf?.planId }
     var einheitKey: String? { datei.lauf?.einheitKey }
-    /// Das Studio des Ablaufs -- ein gebundener Ablauf gilt dort auch dann
-    /// weiter, wenn der Bootstrap schon eine neue planId nennt (dauerhafter
-    /// Tausch mitten in der Einheit, Task 12).
-    var studioId: String? { datei.lauf?.studioId }
     var gebundeneSessionId: UUID? { datei.lauf?.gebundeneSessionId }
     /// Der Stand der letzten Momentaufnahme; 0 vor dem ersten Satz.
     var stand: Int { datei.lauf?.stand ?? 0 }
@@ -54,13 +50,12 @@ final class TrainingsplanAblaufStore {
 
     // MARK: - Vorbereiten
 
-    /// Bequemer Einstieg fuer die Wurzel: der Plan des Studios aus dem Bootstrap.
-    func vorbereiten(bootstrap: BootstrapResponse?, studioId: String?, jetzt: Date = Date()) {
-        let plan = studioId.flatMap { id in bootstrap?.member.plans.first { $0.studioId == id } }
-        vorbereiten(plan: plan, studioId: studioId, jetzt: jetzt)
+    /// Bequemer Einstieg fuer die Wurzel: der Plan des Mitglieds aus dem Bootstrap.
+    func vorbereiten(bootstrap: BootstrapResponse?, jetzt: Date = Date()) {
+        vorbereiten(plan: PlanAnzeige.plan(bootstrap: bootstrap), jetzt: jetzt)
     }
 
-    /// Haelt den Plan des Orts fest und baut den Ablauf der heutigen Einheit,
+    /// Haelt den Plan des Mitglieds fest und baut den Ablauf der heutigen Einheit,
     /// falls noch keiner passt. Idempotent: die Wurzel ruft das nach jedem
     /// Bootstrap, Ortswechsel und Vordergrund.
     ///
@@ -68,10 +63,8 @@ final class TrainingsplanAblaufStore {
     /// seine Planversion, auch wenn der Bootstrap inzwischen eine neuere nennt
     /// (Review Focus 2): der Server hat die Session an diese Version gebunden,
     /// und ein Wechsel mitten in der Einheit aenderte ihre Zaehlung.
-    func vorbereiten(plan: Trainingsplan?, studioId: String?, jetzt: Date = Date()) {
-        datei.vorlage = plan.flatMap { p in
-            p.studioId == studioId && !p.einheiten.isEmpty ? PlanVorlage(p) : nil
-        }
+    func vorbereiten(plan: Trainingsplan?, jetzt: Date = Date()) {
+        datei.vorlage = plan.flatMap { p in !p.einheiten.isEmpty ? PlanVorlage(p) : nil }
 
         if let lauf = datei.lauf, lauf.gebundeneSessionId != nil {
             let letzte = lauf.letzterSatzAm ?? lauf.erstelltAm
@@ -108,23 +101,15 @@ final class TrainingsplanAblaufStore {
     /// Hakt den Satz im Ablauf ab und gibt die Momentaufnahme fuer den
     /// Satz-PUT zurueck.
     ///
-    /// nil ohne Plan, im Freien Training und in einem anderen Studio als dem
-    /// des Plans (Review Focus 4) -- dann bleibt auch alles unberuehrt: der
-    /// Satz geht wie bisher ohne `plan` raus.
-    ///
-    /// `studioId` ist der Ort der EINHEIT, nicht des Geraets: der Server
-    /// prueft den Plan gegen das Studio der Session.
-    func nachSatz(sessionId: UUID, studioId: String?, satz: AblaufSatz, jetzt: Date = Date()) -> PlanMomentaufnahme? {
-        guard let studioId else { return nil }
-        // Dieselbe Session in einem anderen Studio: der Server hat sie an den
-        // Plan ihres Studios gebunden, ein anderer Plan gilt fuer sie nie.
-        if let vorhanden = datei.lauf, vorhanden.gebundeneSessionId == sessionId,
-           vorhanden.studioId != studioId { return nil }
+    /// nil ohne Plan -- dann bleibt auch alles unberuehrt: der Satz geht wie
+    /// bisher ohne `plan` raus. Der Plan gilt an jedem Ort, auch im Freien
+    /// Training.
+    func nachSatz(sessionId: UUID, satz: AblaufSatz, jetzt: Date = Date()) -> PlanMomentaufnahme? {
         var lauf: PlanLauf
-        if let vorhanden = datei.lauf, vorhanden.studioId == studioId,
+        if let vorhanden = datei.lauf,
            vorhanden.gebundeneSessionId == nil || vorhanden.gebundeneSessionId == sessionId {
             lauf = vorhanden
-        } else if let vorlage = datei.vorlage, vorlage.studioId == studioId {
+        } else if let vorlage = datei.vorlage {
             // Eine neue Session, obwohl der Ablauf noch an einer anderen
             // haengt: die alte ist vorbei (sonst gaebe es keine neue
             // Kennung). Sie zaehlt wie beendet, und die neue bekommt die
@@ -196,10 +181,10 @@ final class TrainingsplanAblaufStore {
         speichern()
     }
 
-    /// Nach einem frisch geladenen Bootstrap mit dessen Plaenen. Die lokale
+    /// Nach einem frisch geladenen Bootstrap mit dessen Plan (hoechstens einer). Die lokale
     /// Zaehlung gibt erst ab, wenn nichts mehr offen ist (mit offenen Saetzen
     /// kann der Server hinterherhinken) UND
-    /// - der Plan ihres Studios die Einheit gezaehlt zeigt: als zuletzt
+    /// - der Plan die Einheit gezaehlt zeigt: als zuletzt
     ///   gezaehlte und, wenn der Zaehler beim Beenden bekannt war, mit
     ///   hoeherem Zaehler (dieselbe Einheit kann schon vorher die letzte
     ///   gewesen sein), oder
@@ -210,7 +195,7 @@ final class TrainingsplanAblaufStore {
     func nachBootstrap(offeneSchreibvorgaenge: Int, plaene: [Trainingsplan], jetzt: Date = Date()) {
         guard offeneSchreibvorgaenge == 0, let lokal = datei.lokalZuletzt else { return }
         let alt = jetzt.timeIntervalSince(lokal.beendetAm) > WorkoutSessionStore.sessionPause
-        let gezaehlt = plaene.first { $0.studioId == lokal.studioId }.map { plan in
+        let gezaehlt = plaene.first.map { plan in
             plan.zuletztEinheitKey == lokal.einheitKey
                 && lokal.serverErledigtVorher.map { plan.einheitenErledigt > $0 } ?? true
         } ?? false
@@ -233,11 +218,11 @@ final class TrainingsplanAblaufStore {
         let vorher = datei.lokalZuletzt
         let gezaehlt = TrainingsplanAblauf.zaehlt(lauf.zustand)
         if gezaehlt {
-            // Der Zaehler des Servers fuer dieses Studio, so wie die Vorlage
-            // ihn zuletzt sah: erst ein hoeherer zeigt diese Einheit gezaehlt.
-            let erledigt = datei.vorlage.flatMap { $0.studioId == lauf.studioId ? $0.serverErledigt : nil }
-            datei.lokalZuletzt = LokalZuletzt(studioId: lauf.studioId, einheitKey: lauf.einheitKey,
-                                              beendetAm: jetzt, serverErledigtVorher: erledigt)
+            // Der Zaehler des Servers, so wie die Vorlage ihn zuletzt sah:
+            // erst ein hoeherer zeigt diese Einheit gezaehlt.
+            let erledigt = datei.vorlage?.serverErledigt
+            datei.lokalZuletzt = LokalZuletzt(einheitKey: lauf.einheitKey, beendetAm: jetzt,
+                                              serverErledigtVorher: erledigt)
         }
         datei.zuletztBeendet = BeendeterLauf(lauf: lauf, gezaehlt: gezaehlt, lokalZuletztVorher: vorher)
         datei.lauf = nil
@@ -266,7 +251,7 @@ final class TrainingsplanAblaufStore {
     /// Ablauf (12 h) gibt nichts weiter, und mit ihm bleibt sein Alter, damit
     /// ein Tausch nicht durch eine neue Version verlaengert wird.
     private func mitHeutigenTauschen(aus alt: PlanLauf, in neu: PlanLauf, jetzt: Date) -> PlanLauf {
-        guard alt.studioId == neu.studioId, alt.einheitKey == neu.einheitKey,
+        guard alt.einheitKey == neu.einheitKey,
               jetzt.timeIntervalSince(alt.erstelltAm) <= Self.verfallOhneSatz else { return neu }
         var zustand = neu.zustand
         var uebernommen = false
@@ -279,18 +264,17 @@ final class TrainingsplanAblaufStore {
             uebernommen = true
         }
         guard uebernommen else { return neu }
-        return PlanLauf(planId: neu.planId, version: neu.version, studioId: neu.studioId, einheitKey: neu.einheitKey,
+        return PlanLauf(planId: neu.planId, version: neu.version, einheitKey: neu.einheitKey,
                         zustand: zustand, stand: neu.stand, gebundeneSessionId: nil, erstelltAm: alt.erstelltAm,
                         letzterSatzAm: nil)
     }
 
-    /// Ein ungebundener Ablauf gilt weiter, solange Plan, Version, Ort und
+    /// Ein ungebundener Ablauf gilt weiter, solange Plan, Version und
     /// Einheit stimmen und er nicht verfallen ist.
     private func passt(_ lauf: PlanLauf, jetzt: Date) -> Bool {
         guard let vorlage = datei.vorlage else { return false }
         return lauf.planId == vorlage.planId
             && lauf.version == vorlage.version
-            && lauf.studioId == vorlage.studioId
             && lauf.einheitKey == gewaehlteEinheit(vorlage)
             && jetzt.timeIntervalSince(lauf.erstelltAm) <= Self.verfallOhneSatz
     }
@@ -298,8 +282,7 @@ final class TrainingsplanAblaufStore {
     /// Die lokal zuletzt beendete Einheit geht dem Server vor, solange er sie
     /// noch nicht kennen kann; sonst seine naechste, ohne sie die erste.
     private func gewaehlteEinheit(_ vorlage: PlanVorlage) -> String {
-        if let zuletzt = datei.lokalZuletzt, zuletzt.studioId == vorlage.studioId,
-           vorlage.einheitKeys.contains(zuletzt.einheitKey) {
+        if let zuletzt = datei.lokalZuletzt, vorlage.einheitKeys.contains(zuletzt.einheitKey) {
             return TrainingsplanFolge.naechsteEinheitKey(einheitKeys: vorlage.einheitKeys, zuletzt: zuletzt.einheitKey)
         }
         if let server = vorlage.serverNaechste, vorlage.einheitKeys.contains(server) { return server }
@@ -309,7 +292,7 @@ final class TrainingsplanAblaufStore {
     private func neuerLauf(_ vorlage: PlanVorlage, jetzt: Date) -> PlanLauf {
         let key = gewaehlteEinheit(vorlage)
         return PlanLauf(
-            planId: vorlage.planId, version: vorlage.version, studioId: vorlage.studioId,
+            planId: vorlage.planId, version: vorlage.version,
             einheitKey: key,
             zustand: AblaufZustand(positionen: vorlage.positionen[key] ?? [], ungeplanteGesehen: []),
             stand: 0, gebundeneSessionId: nil, erstelltAm: jetzt, letzterSatzAm: nil)
@@ -342,7 +325,6 @@ struct PlanAblaufDatei: Codable, Equatable {
 struct PlanVorlage: Codable, Equatable {
     let planId: String
     let version: Int
-    let studioId: String
     let einheitKeys: [String]
     /// Ausgangszustand je Einheit, alle Positionen offen.
     let positionen: [String: [AblaufPosition]]
@@ -354,7 +336,6 @@ struct PlanVorlage: Codable, Equatable {
     init(_ plan: Trainingsplan) {
         planId = plan.planId
         version = plan.version
-        studioId = plan.studioId
         einheitKeys = plan.einheiten.map(\.key)
         var positionen: [String: [AblaufPosition]] = [:]
         for einheit in plan.einheiten {
@@ -373,7 +354,6 @@ struct PlanVorlage: Codable, Equatable {
 struct PlanLauf: Codable, Equatable {
     let planId: String
     let version: Int
-    let studioId: String
     let einheitKey: String
     var zustand: AblaufZustand
     var stand: Int
@@ -391,10 +371,9 @@ struct PlanLauf: Codable, Equatable {
     }
 }
 
-/// Je Studio: ein Plan gilt nur dort, und eine Einheit eines anderen Studios
-/// darf hier nichts weiterschalten.
+/// Die lokal zuletzt beendete Einheit des Plans. Eine Datei von vorher nennt
+/// dazu noch eine `studioId`; sie wird beim Lesen ignoriert.
 struct LokalZuletzt: Codable, Equatable {
-    let studioId: String
     let einheitKey: String
     /// Wann die Einheit lokal beendet wurde -- fuer die Vier-Stunden-Regel
     /// in `nachBootstrap`.
@@ -404,14 +383,14 @@ struct LokalZuletzt: Codable, Equatable {
 
     /// Dieselbe Einheit wie der Lauf, unabhaengig vom Zeitpunkt.
     func betrifft(_ lauf: PlanLauf) -> Bool {
-        studioId == lauf.studioId && einheitKey == lauf.einheitKey
+        einheitKey == lauf.einheitKey
     }
 }
 
 // In einer Extension, damit der memberwise init erhalten bleibt.
 extension LokalZuletzt {
     private enum CodingKeys: String, CodingKey {
-        case studioId, einheitKey, beendetAm, serverErledigtVorher
+        case einheitKey, beendetAm, serverErledigtVorher
     }
 
     /// Eine Datei von vor `beendetAm` bleibt lesbar. Ohne Zeitpunkt gilt die
@@ -419,7 +398,6 @@ extension LokalZuletzt {
     /// Warteschlange gibt sie ab (Vier-Stunden-Regel), so haelt sie sich nie ewig.
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        studioId = try c.decode(String.self, forKey: .studioId)
         einheitKey = try c.decode(String.self, forKey: .einheitKey)
         beendetAm = try c.decodeIfPresent(Date.self, forKey: .beendetAm) ?? .distantPast
         serverErledigtVorher = try c.decodeIfPresent(Int.self, forKey: .serverErledigtVorher)

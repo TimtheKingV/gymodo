@@ -7,7 +7,7 @@ import Observation
 /// der Actor `APIClient` nicht.
 protocol PlanTauschend: Sendable {
     func swapPlanPosition(planId: String, einheitKey: String, positionKey: String, exerciseId: String,
-                          machineId: String) async throws(APIError) -> Trainingsplan
+                          modelId: String, grund: String?, ortId: String?) async throws(APIError) -> Trainingsplan
 }
 
 extension APIClient: PlanTauschend {}
@@ -15,7 +15,8 @@ extension APIClient: PlanTauschend {}
 /// Ein Tauschkandidat, wie die Liste 3.2 ihn zeigt.
 struct TauschKandidat: Equatable, Hashable, Identifiable {
     let exerciseId: String
-    let machineId: String
+    /// Das Katalogmodell, das der Server beim Tausch erwartet.
+    let modelId: String
     let name: String
     /// Das Label des Geraets; nil, wenn der Bootstrap es nicht kennt.
     let geraet: String?
@@ -26,9 +27,9 @@ struct TauschKandidat: Equatable, Hashable, Identifiable {
     let hauptmuskeln: [String]
     let vorschaubildModell: String?
 
-    /// Dieselbe Uebung kann an zwei Geraeten stehen; erst beide zusammen
+    /// Dieselbe Uebung kann an zwei Modellen stehen; erst beide zusammen
     /// sind eindeutig.
-    var id: String { "\(exerciseId):\(machineId)" }
+    var id: String { "\(exerciseId):\(modelId)" }
 
     var untertitel: String {
         [geraet, muskeln].compactMap { $0 }.joined(separator: " · ")
@@ -40,12 +41,13 @@ struct TauschKandidat: Equatable, Hashable, Identifiable {
 /// aendern (409 laedt neu), die angezeigte Position bleibt dieselbe.
 struct PlanTauschAuftrag: Equatable, Identifiable {
     let planId: String
-    let studioId: String
     let einheitKey: String
-    /// Die Position im Bootstrap-Plan (Vorgabe, Baustein, Geraet).
+    /// Die Position im Bootstrap-Plan (Vorgabe, Baustein, Modell).
     let position: TrainingsplanPosition
     /// Der Status im heutigen Ablauf; ohne Ablauf offen.
     let status: PositionStatus
+    /// Die Uebung, die ein Start meint: der heutige Ersatz, sonst die geplante.
+    let uebungId: String
     /// Der Name der geplanten Uebung (wie die Zeile).
     let name: String
     /// Der heutige Ersatz bei einem Tausch nur heute.
@@ -53,6 +55,9 @@ struct PlanTauschAuftrag: Equatable, Identifiable {
     /// "Vorgesehen am Gerät ..."; nil, wenn das nicht sicher stimmt.
     let vorgesehen: String?
     let kandidaten: [TauschKandidat]
+    /// Der aktive Ort fuer "Gibt es hier nicht": Studio-ID, im Freien Training
+    /// die Katalog-Studio-ID; nil, solange beides fehlt.
+    var ort: String? = nil
     /// Nur offene und heute getauschte Kraftpositionen: der Ablauf tauscht
     /// sonst nichts (`TrainingsplanAblauf.tauschen`), und eine Wahl, die nichts
     /// bewirkt, waere eine Luege.
@@ -63,6 +68,17 @@ struct PlanTauschAuftrag: Equatable, Identifiable {
     /// "Andere Übung wählen" nur mit Kandidaten -- nie eine leere Liste
     /// oeffnen (Review Focus 3).
     var zeigtAndereUebung: Bool { tauschbar && !kandidaten.isEmpty }
+
+    /// "Übung entfernen" steht bei jeder tauschbaren Position.
+    var zeigtEntfernen: Bool { tauschbar }
+
+    /// Die Wahl im Entfernen-Sheet. Ohne Alternative im Baustein nur
+    /// "Überspringen": ein Grund wird nur zusammen mit einem Tausch gemerkt.
+    /// "Gibt es hier nicht" braucht einen Ort.
+    var entfernOptionen: [PlanTausch.EntfernOption] {
+        guard !kandidaten.isEmpty else { return [.ueberspringen] }
+        return ort == nil ? [.belegt, .gefaelltNicht] : [.belegt, .nichtVorhanden, .gefaelltNicht]
+    }
 }
 
 /// Reine Ableitungen fuer den Tausch einer Planposition (Trainingsplan
@@ -70,6 +86,45 @@ struct PlanTauschAuftrag: Equatable, Identifiable {
 /// annimmt (Baustein, Studio, "meiden"), stehen nur dort; die Liste kommt
 /// schon gefiltert im Bootstrap (`alternativen`).
 enum PlanTausch {
+    /// Eine Antwort auf "Warum entfernst du die Übung?" (Spec, Entscheidung 3).
+    /// Texte sind ein Entwurf, Tim liest sie vor dem Merge.
+    enum EntfernOption: Equatable, Sendable {
+        case belegt, nichtVorhanden, gefaelltNicht, ueberspringen
+
+        var titel: String {
+            switch self {
+            case .belegt: "Belegt"
+            case .nichtVorhanden: "Gibt es hier nicht"
+            case .gefaelltNicht: "Gefällt mir nicht"
+            case .ueberspringen: "Überspringen"
+            }
+        }
+
+        /// Der Wert, den der Server als `grund` erwartet; nil = nichts merken.
+        var serverGrund: String? {
+            switch self {
+            case .nichtVorhanden: "nicht_vorhanden"
+            case .gefaelltNicht: "gefaellt_nicht"
+            case .belegt, .ueberspringen: nil
+            }
+        }
+    }
+
+    /// Der Ort der Merkliste: das aktive Studio, im Freien Training die
+    /// Katalog-Studio-ID des Bootstraps.
+    static func ort(aktivesStudio: String?, bootstrap: BootstrapResponse?) -> String? {
+        aktivesStudio ?? bootstrap?.catalog?.studioId
+    }
+
+    /// Wie oben, mit der Merkliste des Plans: ohne die Uebungen, die am Ort
+    /// fehlen. "Gefällt mir nicht" bleibt drin, der Server stellt es nach hinten.
+    static func kandidaten(position: TrainingsplanPosition, plan: Trainingsplan, ort: String?,
+                           belegt: Set<String>, uebungen: BootstrapResponse?) -> [TauschKandidat] {
+        let fehlt = Set(ort.flatMap { plan.merkliste.nichtVorhanden[$0] } ?? [])
+        return kandidaten(position: position, alternativen: plan.alternativen,
+                          belegt: belegt.union(fehlt), uebungen: uebungen)
+    }
+
     /// Die Kandidaten des Bausteins der Position in Serverreihenfolge
     /// ("vorsichtig" steht dort schon hinten), ohne die Uebung der Position
     /// und ohne `belegt` (was die Einheit schon fuehrt: sonst stuende eine
@@ -77,23 +132,28 @@ enum PlanTausch {
     ///
     /// `uebungen` ist der Bootstrap: Namen, Geraet, Muskeln und Bild kommen
     /// aus seinen Geraeten, der Name notfalls aus dem Katalog.
-    static func kandidaten(position: TrainingsplanPosition, alternativen: [String: [Alternative]],
+    static func kandidaten(position: TrainingsplanPosition, alternativen: [String: [PlanAlternative]],
                            belegt: Set<String>, uebungen: BootstrapResponse?) -> [TauschKandidat] {
         let ausgeschlossen = belegt.union([position.exerciseId])
         return (alternativen[position.baustein] ?? []).compactMap { alternative in
             guard !ausgeschlossen.contains(alternative.exerciseId) else { return nil }
-            let maschine = uebungen?.machines.first { $0.id == alternative.machineId }
-            let primaer = (maschine?.exercises.first { $0.id == alternative.exerciseId }?.muscles ?? [])
-                .filter { $0.role == .primary }
+            let maschine = uebungen?.aktivesGeraet(modellId: alternative.modelId, exerciseId: alternative.exerciseId)
+            // Ohne Studio-Geraet (Freies Training, Geraet fehlt): Muskeln und
+            // Bezeichnung des Katalogtyps.
+            let typ = maschine == nil
+                ? uebungen?.katalogTyp(modellId: alternative.modelId, exerciseId: alternative.exerciseId) : nil
+            let uebung = maschine?.exercises.first { $0.id == alternative.exerciseId }
+                ?? typ?.exercises.first { $0.id == alternative.exerciseId }
+            let primaer = (uebung?.muscles ?? []).filter { $0.role == .primary }
             return TauschKandidat(
                 exerciseId: alternative.exerciseId,
-                machineId: alternative.machineId,
+                modelId: alternative.modelId,
                 name: PlanZeilenModell.uebungsname(exerciseId: alternative.exerciseId, maschine: maschine,
                                                    bootstrap: uebungen),
-                geraet: maschine?.label,
+                geraet: maschine?.label ?? typ?.name,
                 muskeln: primaer.isEmpty ? nil : primaer.map(\.name).joined(separator: ", "),
                 hauptmuskeln: primaer.map(\.key),
-                vorschaubildModell: maschine?.equipmentModel.id)
+                vorschaubildModell: alternative.modelId)
         }
     }
 
@@ -101,7 +161,7 @@ enum PlanTausch {
     /// die Einheit schon fuehrt, kommen aus dem Ablauf (gebundene Version,
     /// wie die Zeile selbst -- `PlanAnzeige.planstellen`).
     static func auftrag(position: TrainingsplanPosition, heute: PlanAnzeige.Heute,
-                        bootstrap: BootstrapResponse?) -> PlanTauschAuftrag {
+                        bootstrap: BootstrapResponse?, ort: String? = nil) -> PlanTauschAuftrag {
         let stellen = PlanAnzeige.planstellen(einheit: heute.einheit, zustand: heute.zustand)
         let stelle = stellen.first { $0.key == position.key }
         // Geplant und heute getauscht, auch die eigene: die geplante Uebung
@@ -112,16 +172,17 @@ enum PlanTausch {
         let geplant = stelle?.geplant ?? position.exerciseId
         return PlanTauschAuftrag(
             planId: heute.plan.planId,
-            studioId: heute.plan.studioId,
             einheitKey: heute.einheitKey,
             position: position,
             status: status,
+            uebungId: stelle?.wirksam ?? position.exerciseId,
             name: name(geplant, bootstrap),
             ersatzName: stelle?.ersatz.map { name($0, bootstrap) },
             vorgesehen: status == .offen && geplant == position.exerciseId
-                ? vorgesehen(position: position, studioId: heute.plan.studioId, bootstrap: bootstrap) : nil,
-            kandidaten: kandidaten(position: position, alternativen: heute.plan.alternativen,
+                ? vorgesehen(position: position, bootstrap: bootstrap) : nil,
+            kandidaten: kandidaten(position: position, plan: heute.plan, ort: ort,
                                    belegt: belegt, uebungen: bootstrap),
+            ort: ort,
             tauschbar: !cardio && (status == .offen || status == .getauscht))
     }
 
@@ -148,15 +209,13 @@ enum PlanTausch {
         return tags
     }
 
-    /// Nur, wenn das Geraet der Position im Studio aktiv steht und die Uebung
-    /// fuehrt; ein stillgelegtes Geraet zu nennen, schickte das Mitglied
-    /// an ein abgedecktes Geraet. Der Ablauf zaehlt jedes Geraet mit
-    /// derselben Uebung, das sagt der zweite Satz.
-    static func vorgesehen(position: TrainingsplanPosition, studioId: String,
-                           bootstrap: BootstrapResponse?) -> String? {
-        guard let maschine = bootstrap?.machines.first(where: { $0.id == position.machineId }),
-              maschine.studioId == studioId, maschine.status == "active",
-              maschine.exercises.contains(where: { $0.id == position.exerciseId }) else { return nil }
+    /// Nur, wenn ein aktives Geraet des Modells der Position die Uebung fuehrt;
+    /// ein stillgelegtes Geraet zu nennen, schickte das Mitglied an ein
+    /// abgedecktes Geraet. Der Ablauf zaehlt jedes Geraet mit derselben
+    /// Uebung, das sagt der zweite Satz.
+    static func vorgesehen(position: TrainingsplanPosition, bootstrap: BootstrapResponse?) -> String? {
+        guard let maschine = bootstrap?.aktivesGeraet(modellId: position.modelId, exerciseId: position.exerciseId)
+        else { return nil }
         return "Vorgesehen am Gerät „\(maschine.label)“. Jedes andere Gerät mit dieser Übung zählt auch."
     }
 
@@ -222,12 +281,17 @@ final class PlanTauschSitzung {
     enum Schritt: Equatable {
         case vorgabe
         case kandidaten
+        /// "Übung entfernen": die Frage nach dem Grund.
+        case entfernen
         case bestaetigen(TauschKandidat)
     }
 
     let auftrag: PlanTauschAuftrag
     private(set) var schritt: Schritt = .vorgabe
     private(set) var dauerhaft = false
+    /// Warum die Uebung dauerhaft weg soll; nil bei "Belegt" und beim
+    /// Schalter. Nur mit Grund gehen `grund` und `ortId` an den Server.
+    private(set) var grund: PlanTausch.EntfernOption?
     /// Die zuletzt gewaehlte Zeile -- "Wählen" steht dort gefuellt (3.2),
     /// auch zurueck aus der Bestaetigung.
     private(set) var gewaehlt: TauschKandidat?
@@ -267,12 +331,40 @@ final class PlanTauschSitzung {
         schritt = .kandidaten
     }
 
+    /// "Übung entfernen" -> die Frage nach dem Grund.
+    func entfernen() {
+        guard auftrag.zeigtEntfernen else { return }
+        fehler = nil
+        schritt = .entfernen
+    }
+
+    /// Ein Grund im Entfernen-Sheet. "Belegt": nur heute, kein Server, nichts
+    /// gemerkt. Die beiden anderen tauschen dauerhaft (Netz noetig) und merken
+    /// den Grund mit dem Tausch. "Überspringen" und alles ohne Alternative
+    /// merkt nichts und ruft nichts; das Sheet schliesst dann selbst.
+    func grundWaehlen(_ option: PlanTausch.EntfernOption) {
+        guard schritt == .entfernen, auftrag.entfernOptionen.contains(option) else { return }
+        switch option {
+        case .ueberspringen:
+            return
+        case .belegt:
+            grund = nil
+            dauerhaft = false
+        case .nichtVorhanden, .gefaelltNicht:
+            guard istOnline() else { return }
+            grund = option
+            dauerhaft = true
+        }
+        fehler = nil
+        schritt = .kandidaten
+    }
+
     func dauerhaftSetzen(_ an: Bool) {
         // Waehrend "Übernehmen" schreibt, gilt, was bestaetigt wurde: sonst
         // schloesse das Sheet nach Erfolg mit einem Tausch, den der Schalter
         // scheinbar abgesagt hat, und ein Fehler landete in der Liste, die
         // keinen zeigt. Das Sheet sperrt den Schalter dann auch.
-        guard !schreibtGerade else { return }
+        guard !schreibtGerade, grund == nil else { return }
         if an && !istOnline() { return }
         dauerhaft = an
         fehler = nil
@@ -318,7 +410,8 @@ final class PlanTauschSitzung {
         do throws(APIError) {
             _ = try await client.swapPlanPosition(
                 planId: aktuellePlanId() ?? auftrag.planId, einheitKey: auftrag.einheitKey,
-                positionKey: auftrag.position.key, exerciseId: kandidat.exerciseId, machineId: kandidat.machineId)
+                positionKey: auftrag.position.key, exerciseId: kandidat.exerciseId, modelId: kandidat.modelId,
+                grund: grund?.serverGrund, ortId: grund == nil ? nil : auftrag.ort)
         } catch {
             fehler = error
             // 409: der Plan ist nicht mehr der aktive (anderes Geraet, Trainer).
@@ -333,12 +426,30 @@ final class PlanTauschSitzung {
         // geplant und der Tausch faellt weg (TrainingsplanAblaufStore,
         // `mitHeutigenTauschen`) -- nichts doppelt. Eine laufende Einheit
         // bleibt unberuehrt (Review Focus 2).
-        if ablauf.gebundeneSessionId == nil, ablauf.studioId == auftrag.studioId,
+        if ablauf.gebundeneSessionId == nil, ablauf.planId == auftrag.planId,
            ablauf.einheitKey == auftrag.einheitKey {
             ablauf.tauschen(positionKey: auftrag.position.key,
                             ersatz: (exerciseId: kandidat.exerciseId, hauptmuskeln: kandidat.hauptmuskeln))
         }
         await neuLaden()
         return true
+    }
+}
+
+extension BootstrapResponse {
+    /// Ein aktives Studio-Geraet, das die Uebung fuehrt und zum Modell passt.
+    /// Das Modell einer Planposition ist ein Katalogtyp; ein Studio-Geraet hat
+    /// ein eigenes `equipmentModel` und verweist ueber `catalogModelId` darauf.
+    func aktivesGeraet(modellId: String, exerciseId: String) -> Machine? {
+        machines.first {
+            $0.status == "active"
+                && ($0.equipmentModel.id == modellId || $0.equipmentModel.catalogModelId == modellId)
+                && $0.exercises.contains { $0.id == exerciseId }
+        }
+    }
+
+    /// Der Katalogtyp des Modells, wenn er die Uebung fuehrt.
+    func katalogTyp(modellId: String, exerciseId: String) -> Catalog.EquipmentType? {
+        catalog?.equipmentTypes.first { $0.id == modellId && $0.exercises.contains { $0.id == exerciseId } }
     }
 }

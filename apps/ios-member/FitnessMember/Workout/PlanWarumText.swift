@@ -12,7 +12,7 @@ import Foundation
 /// `packages/domain/src/trainingsplan-regeln.ts` und `GROBE_STUFE_EXTRA_WDH`
 /// in `plangewicht.ts`; bei Aenderung dort `version` erhoehen.
 enum PlanWarumText {
-    static let version = "1.1.0"
+    static let version = "1.2.0"
 
     struct Abschnitt: Equatable {
         let titel: String
@@ -57,11 +57,11 @@ enum PlanWarumText {
         "zeit_saetze_reduziert": "Damit es in deine Zeit passt, haben einige Übungen einen Satz weniger.",
         "zeit_ergaenzung_entfallen": "Ergänzungsübungen sind weggefallen, damit die Hauptübungen in deine Zeit passen.",
         "zeit_aufwaermen_entfallen": "Fürs Aufwärmen ist im Plan keine Zeit eingeplant. Wärm dich trotzdem kurz auf.",
-        "zeit_budget_nicht_ausgeschoepft": "Dein Studio hat nicht genug passende Übungen für die ganze Zeit. Einige Trainings sind deshalb kürzer als angegeben.",
+        "zeit_budget_nicht_ausgeschoepft": "Der Katalog hat nicht genug passende Übungen für die ganze Zeit. Einige Trainings sind deshalb kürzer als angegeben.",
         "fokus_zweiter_entfallen": "Der zweite Schwerpunkt passt zeitlich nicht in jedes Training.",
         "abnehmen_cardio_zone": "Zum Abnehmen gehört Cardio im ruhigen Tempo, bei dem du dich noch unterhalten kannst.",
         "abnehmen_cardio_gekuerzt": "Das Cardio ist kürzer, sonst fehlt die Zeit fürs Krafttraining.",
-        "abnehmen_kein_cardio_geraet": "Dein Studio hat kein Cardio-Gerät in der App, deshalb ist kein Cardio eingeplant.",
+        "abnehmen_kein_cardio_geraet": "Im Katalog gibt es dafür kein Cardio-Gerät, deshalb ist kein Cardio eingeplant.",
         "abnehmen_alltag": "Abnehmen entscheidet sich vor allem im Alltag, bei Ernährung und Bewegung. Das Training unterstützt dich dabei.",
         "bauch_kein_fettabbau": "Bauchübungen kräftigen den Bauch, bauen aber kein Fett am Bauch ab.",
         "anfaenger_reserve": "Am Anfang lässt du bewusst mehr Luft nach oben, damit du zuerst die Technik lernst.",

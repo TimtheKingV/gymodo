@@ -105,7 +105,7 @@ struct RootView: View {
     /// Abmelden raeumt ueber reset().
     private func planVorbereiten() {
         guard let bootstrap = catalogStore.bootstrap else { return }
-        planAblauf.vorbereiten(bootstrap: bootstrap, studioId: catalogStore.activeStudioId)
+        planAblauf.vorbereiten(bootstrap: bootstrap)
     }
 
     private var ladeschirm: some View {

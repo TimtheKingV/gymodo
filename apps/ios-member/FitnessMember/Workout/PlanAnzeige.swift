@@ -24,12 +24,12 @@ enum PlanAnzeige {
 
     // MARK: - Sichtbarkeit
 
-    /// Der Plan des aktiven Studios; nil im Freien Training, in einem
-    /// Studio ohne Plan und ohne Bootstrap -- dann sieht der Tab aus wie
-    /// heute. Ein Plan ohne Einheiten ist keiner (nichts zu zeigen).
-    static func plan(bootstrap: BootstrapResponse?, studioId: String?) -> Trainingsplan? {
-        guard let studioId else { return nil }
-        return bootstrap?.member.plans.first { $0.studioId == studioId && !$0.einheiten.isEmpty }
+    /// Der Plan des Mitglieds: einer, an keinen Ort gebunden -- er zeigt sich
+    /// im Studio wie im Freien Training. nil ohne Plan und ohne Bootstrap
+    /// (dann sieht der Tab aus wie heute). Ein Plan ohne Einheiten ist keiner
+    /// (nichts zu zeigen).
+    static func plan(bootstrap: BootstrapResponse?) -> Trainingsplan? {
+        bootstrap?.member.plans.first { !$0.einheiten.isEmpty }
     }
 
     /// Die Einheit von heute: der Ablauf desselben Plans hat Vorrang (er
@@ -46,17 +46,16 @@ enum PlanAnzeige {
 
     /// Alles zusammen; nil, wenn die Karte entfaellt.
     ///
-    /// Ein gebundener Ablauf (die Einheit laeuft) gilt im Studio seines Plans
-    /// auch dann, wenn der Bootstrap schon eine neue planId nennt: ein
+    /// Ein gebundener Ablauf (die Einheit laeuft) gilt auch dann, wenn der
+    /// Bootstrap schon eine neue planId nennt: ein
     /// dauerhafter Tausch legt eine neue Planzeile an (0062), die laufende
     /// Einheit bleibt aber bei ihrer Version (Review Focus 2) -- ohne das
     /// stuende ihr Fortschritt mitten im Training wieder auf 0.
-    static func heute(bootstrap: BootstrapResponse?, studioId: String?, ablaufPlanId: String?,
+    static func heute(bootstrap: BootstrapResponse?, ablaufPlanId: String?,
                       ablaufEinheitKey: String?, ablaufZustand: AblaufZustand?,
-                      naechsteEinheitKey: String?, ablaufGebunden: Bool = false,
-                      ablaufStudioId: String? = nil) -> Heute? {
-        guard let plan = plan(bootstrap: bootstrap, studioId: studioId) else { return nil }
-        let ablaufPlanId = ablaufGebunden && ablaufStudioId == plan.studioId ? plan.planId : ablaufPlanId
+                      naechsteEinheitKey: String?, ablaufGebunden: Bool = false) -> Heute? {
+        guard let plan = plan(bootstrap: bootstrap) else { return nil }
+        let ablaufPlanId = ablaufGebunden ? plan.planId : ablaufPlanId
         let key = einheitKey(plan: plan, ablaufPlanId: ablaufPlanId, ablaufEinheitKey: ablaufEinheitKey,
                              naechsteEinheitKey: naechsteEinheitKey)
         guard let einheit = plan.einheiten.first(where: { $0.key == key }) else { return nil }
@@ -77,12 +76,12 @@ enum PlanAnzeige {
         let ungeplant = ungeplanteUebungen(stellen: stellen, bloecke: bloecke)
         return stellen.map { stelle in
             let wirksam = stelle.wirksam
-            // Das Geraet der Position nur, solange es zur geplanten Uebung
-            // gehoert (gleiche Version, kein Tausch); sonst irgendeins mit ihr.
-            let machineId = stelle.ersatz == nil && stelle.vorgabe?.exerciseId == stelle.geplant
-                ? stelle.vorgabe?.machineId : nil
-            let maschine = bildmaschine(exerciseId: wirksam, machineId: machineId,
-                                        studioId: plan.studioId, bootstrap: bootstrap)
+            // Das Modell der Position nur, solange es zur geplanten Uebung
+            // gehoert (gleiche Version, kein Tausch); sonst das irgendeines
+            // Geraets mit ihr.
+            let modelId = stelle.ersatz == nil && stelle.vorgabe?.exerciseId == stelle.geplant
+                ? stelle.vorgabe?.modelId : nil
+            let bild = bildmodell(exerciseId: wirksam, modelId: modelId, bootstrap: bootstrap)
             let untertitel: String
             switch stelle.status {
             case .offen:
@@ -102,7 +101,7 @@ enum PlanAnzeige {
                 name: uebungsname(stelle.geplant, bootstrap),
                 untertitel: untertitel,
                 exerciseId: wirksam,
-                vorschaubildModell: maschine?.equipmentModel.id,
+                vorschaubildModell: bild,
                 status: stelle.status.anzeige)
         }
     }
@@ -231,16 +230,16 @@ enum PlanAnzeige {
 
     // MARK: - Zielgewicht (Etappe 4, G8/G17)
 
-    /// Das Zielgewicht der Position, an der diese Uebung an diesem Geraet in
-    /// der Einheit von heute steht. Das Ziel gilt je Uebung UND Geraet: eine
-    /// Position, die heute etwas anderes ist (Tausch) oder an einem anderen
-    /// Geraet steht, liefert keins. nil ohne Plan, ohne Einheit oder fuer
-    /// eine Position ohne Ziel -- dann bleibt alles wie im freien Training.
-    static func zielgewicht(exerciseId: String, machineId: String?, plan: Trainingsplan?,
-                            einheitKey: String?) -> Zielgewicht? {
-        guard let plan, let einheitKey, let machineId,
+    /// Das Zielgewicht der Position, an der diese Uebung in der Einheit von
+    /// heute steht. Der Server rechnet das Ziel je Uebung (nicht je Geraet),
+    /// gefunden wird es ueber den Positionsschluessel. Eine Position, die
+    /// heute etwas anderes ist (Tausch), liefert keins. nil ohne Plan, ohne
+    /// Einheit oder fuer eine Position ohne Ziel -- dann bleibt alles wie im
+    /// freien Training.
+    static func zielgewicht(exerciseId: String, plan: Trainingsplan?, einheitKey: String?) -> Zielgewicht? {
+        guard let plan, let einheitKey,
               let einheit = plan.einheiten.first(where: { $0.key == einheitKey }) else { return nil }
-        for position in einheit.positionen where position.exerciseId == exerciseId && position.machineId == machineId {
+        for position in einheit.positionen where position.exerciseId == exerciseId {
             if let ziel = plan.zielgewicht(einheitKey: einheitKey, positionKey: position.key) { return ziel }
         }
         return nil
@@ -248,14 +247,15 @@ enum PlanAnzeige {
 
     // MARK: - Bild
 
-    /// Das Geraet fuer das Vorschaubild: das der Position, wenn es im Studio
-    /// noch aktiv steht; sonst irgendein aktives Geraet des Studios mit
-    /// derselben Uebung; sonst keins (die Zeile bleibt ohne Foto).
-    static func bildmaschine(exerciseId: String, machineId: String?, studioId: String,
-                             bootstrap: BootstrapResponse?) -> BootstrapResponse.Machine? {
-        let aktive = (bootstrap?.machines ?? []).filter { $0.studioId == studioId && $0.status == "active" }
-        if let machineId, let eigene = aktive.first(where: { $0.id == machineId }) { return eigene }
-        return aktive.first { maschine in maschine.exercises.contains { $0.id == exerciseId } }
+    /// Das Katalogmodell fuer das Vorschaubild: das der Position (es gibt
+    /// dazu kein festes Studio-Geraet); ohne eigenes Modell das irgendeines
+    /// aktiven Geraets mit derselben Uebung; sonst keins (die Zeile bleibt
+    /// ohne Foto).
+    static func bildmodell(exerciseId: String, modelId: String?, bootstrap: BootstrapResponse?) -> String? {
+        if let modelId { return modelId }
+        return (bootstrap?.machines ?? [])
+            .first { $0.status == "active" && $0.exercises.contains { $0.id == exerciseId } }?
+            .equipmentModel.id
     }
 
     // MARK: - Abschluss (2.3)

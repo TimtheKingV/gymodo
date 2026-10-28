@@ -22,7 +22,7 @@ import {
 } from "./cardio.js";
 import { herkunftPruefen, repEventsSchema, volumeSourceSchema, type VolumeSource } from "./herkunft.js";
 import { aktualisierePlanGewichte, initialisierePlanGewichte, ohneAbbruch } from "./plangewichte.js";
-import { aktiverPlanImStudio } from "./trainingsplan.js";
+import { aktiverKatalogPlan } from "./trainingsplan.js";
 import {
   gespeicherteVorschlaege,
   vorschlaegeFuerAbschluss,
@@ -642,7 +642,7 @@ export async function completeSession(
     );
   }
   // Erst die Ziele, dann die Vorschlaege: sie lesen die frisch gerechneten Ziele (G17).
-  await zielgewichteNachAbschluss(client, userId, row.id, row.studio_id);
+  await zielgewichteNachAbschluss(client, userId, row.id);
   const vorschlaege = await vorschlaegeFuerAbschluss(client, parsed.data.sessionId, userId);
   return {
     id: row.id,
@@ -664,11 +664,10 @@ async function zielgewichteNachAbschluss(
   client: SupabaseClient,
   userId: string,
   sessionId: string,
-  studioId: string,
 ): Promise<void> {
   await ohneAbbruch("Neuberechnung nach Abschluss", () => aktualisierePlanGewichte(client, userId, sessionId));
   await ohneAbbruch("Startwerte nach Abschluss", async () => {
-    const plan = await aktiverPlanImStudio(client, userId, studioId);
+    const plan = await aktiverKatalogPlan(client, userId);
     if (plan) await initialisierePlanGewichte(client, userId, plan);
   });
 }

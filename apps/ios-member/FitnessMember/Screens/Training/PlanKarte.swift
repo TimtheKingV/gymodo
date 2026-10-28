@@ -6,16 +6,16 @@ extension PlanAnzeige {
     /// Stelle fuer Training-Tab und Home, damit beide dieselbe Einheit zeigen.
     @MainActor
     static func heute(katalog: CatalogStore, ablauf: TrainingsplanAblaufStore) -> Heute? {
-        heute(bootstrap: katalog.bootstrap, studioId: katalog.activeStudioId,
+        heute(bootstrap: katalog.bootstrap,
               ablaufPlanId: ablauf.planId, ablaufEinheitKey: ablauf.einheitKey,
               ablaufZustand: ablauf.zustand, naechsteEinheitKey: ablauf.naechsteEinheitKey,
-              ablaufGebunden: ablauf.gebundeneSessionId != nil, ablaufStudioId: ablauf.studioId)
+              ablaufGebunden: ablauf.gebundeneSessionId != nil)
     }
 }
 
 /// Der Plan im Training-Tab ueber "Gerät wählen" (Entwuerfe 2.1 vor dem
-/// Start, 2.2 mitten im Training). Ohne Plan im aktiven Studio, im Freien
-/// Training und ohne Bootstrap steht hier nichts -- der Tab sieht aus wie
+/// Start, 2.2 mitten im Training), im Studio wie im Freien Training. Ohne
+/// Plan und ohne Bootstrap steht hier nichts -- der Tab sieht aus wie
 /// vor dem Plan.
 ///
 /// Trainiert wird wie bisher ueber Scan oder Geraeteliste; die Karte zeigt
@@ -45,7 +45,7 @@ struct PlanKarteBereich: View {
                 // und baut hier die naechste Einheit. Idempotent.
                 .onAppear {
                     guard let bootstrap = katalog.bootstrap else { return }
-                    planAblauf.vorbereiten(bootstrap: bootstrap, studioId: katalog.activeStudioId)
+                    planAblauf.vorbereiten(bootstrap: bootstrap)
                 }
         }
     }

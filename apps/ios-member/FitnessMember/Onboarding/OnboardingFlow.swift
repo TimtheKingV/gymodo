@@ -32,7 +32,7 @@ struct OnboardingFlow: View {
     @State private var planVorbelegt = false
     /// Schritte, die ein Sonderfall nachtraeglich braucht ("Ergänzen",
     /// "Beschwerden ändern", "Zeit oder Schwerpunkt ändern"), siehe
-    /// `OnboardingAntworten.schritte(umfang:hatStudio:ergaenzt:)`.
+    /// `OnboardingAntworten.schritte(umfang:ergaenzt:)`.
     @State private var ergaenzt: [OnboardingSchritt] = []
     /// Indizes, die der Stack ZUSAETZLICH zum Wurzelschritt (0) zeigt --
     /// ein echter Push je "Weiter", kein Zustandswechsel in derselben
@@ -61,10 +61,8 @@ struct OnboardingFlow: View {
         case schritt(Int)
     }
 
-    private var hatStudio: Bool { catalogStore.activeStudioId != nil }
-
     private var schritte: [OnboardingSchritt] {
-        antworten.schritte(umfang: umfang, hatStudio: hatStudio, ergaenzt: ergaenzt)
+        antworten.schritte(umfang: umfang, ergaenzt: ergaenzt)
     }
 
     var body: some View {

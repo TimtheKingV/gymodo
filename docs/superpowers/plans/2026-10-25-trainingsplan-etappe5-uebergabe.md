@@ -1,6 +1,41 @@
 # Trainingsplan Etappe 5 – Übergabe nach Etappe 4
 
-Stand: Etappe 4 (Plangewichte) ist auf Branch `claude/trainingsplan-etappe4` umgesetzt und reviewt (24 Commits seit `9d8b8b1`: 17 bis zur ersten Fassung dieser Übergabe `c9ee183`, dazu 7 aus der Final-Fix-Runde; nicht gepusht). Die Migrationen `0064` und `0065` liegen **nur lokal**; Prod hat laut Memory bis `0061`, und `0062`/`0063` sind ebenfalls noch nicht angewandt. Plan: `2026-10-25-trainingsplan-etappe4-plangewichte.md`, Spec: `../specs/2026-10-25-trainingsplan-plangewichte-design.md`. Der Haupt-Spec (Abschnitt 6, „Fortlaufende Anpassung“) verweist jetzt auf dieses Spec.
+## Nachtrag 2026-10-28: Trainingsplan aus dem Katalog (Branch `claude/plan-aus-katalog`)
+
+Plan: `2026-10-27-trainingsplan-aus-katalog.md`, Spec: `../specs/2026-10-27-trainingsplan-aus-katalog-design.md`.
+
+**Stand:** Task 1-9 umgesetzt und reviewt, Migrationen `0066`/`0067` nur lokal, nichts gepusht, kein PR. **F20 ist ersetzt:** der Plan wird nicht mehr aus den Geräten des Studios gebaut, sondern aus dem Katalog; Geräte kommen erst beim Training (Merkliste je Planposition, Planposition ohne festes Gerät startbar). Der Plan ist ohne Studio sichtbar und einrichtbar. Übungen lassen sich mit Grund (und Alternative) entfernen. `PlanWarumText.version` ist `1.2.0`: die beiden Sätze mit „dein Studio“ nennen jetzt den Katalog; die alten Generator-Codes bleiben lesbar.
+
+**Offen: Auslieferung (Schritt 6), nur mit Tims ausdrücklicher Freigabe, jeweils einzeln, in dieser Reihenfolge:**
+1. Datenbank: Migrationen `0066` und `0067` auf Prod.
+2. API-Deploy.
+3. App-Build auf das Testgerät.
+Vorher erneut prüfen, dass Prod noch keinen Plan hat (die Migration verwirft alte Studiopläne). Stand der Prod-DB laut Memory: bis `0065`.
+
+**Hinweise für Tim:**
+- Die manuellen Simulatorprüfungen (Task 7 Schritt 5, Task 8 Schritt 5) sind entfallen: der Debug-Build zeigt auf Prod, das das neue Schema/die API noch nicht hat. Nach dem Deploy bitte selbst prüfen (Testkonto): Planposition starten, „Gerät wählen“, Entfernen-Sheet, Navigation nach dem Schließen des Sheets.
+- UX-Abweichung: Planzeile, dann Sheet, dann Button „Gerät wählen“ (zwei Tipps) statt direktem Tipp auf die Geräteauswahl. Das Sheet trägt auch Tauschen und Vorgaben. Bitte bestätigen oder auf direkten Zeilentipp umstellen lassen.
+- Die Texte der drei Entfernen-Gründe sind ein Entwurf zum Gegenlesen.
+- CI bestätigen lassen: `domain-bootstrap` und `api-workout-sets` liefen lokal wegen Maschinenlast (Timeouts) nicht sauber grün.
+- Zurückgestellte Kleinigkeiten (Auswahl): ungültige/fremde `ortId` ergibt stillen Erfolg ohne Merklisteneintrag (422 wäre ehrlicher); ein Lesefehler der Merkliste lässt den ganzen Plan im Bootstrap entfallen; `laufendeEinheiten` filtert weder Studio noch `plan_id`; „Überspringen“ im Sheet schließt nur das Sheet; der alte Pfad „Andere Übung wählen“ mit Dauerhaft-Schalter sendet weder Grund noch `ortId`; „Gibt es hier nicht“ wird ohne Ort nicht angeboten; kein Rückweg von der Kandidatenliste zur Gründefrage außer Schließen; Cardio-Wahl beachtet „vorsichtig“ nicht (vorbestehend).
+- Die Deploy-Reihenfolge weiter unten (Etappe 4) gilt zusätzlich: Prod braucht `0059`-`0065` vor `0066`/`0067`.
+
+**Auslieferung, Reihenfolge und Zwischenzustände (Final-Review):**
+- Reihenfolge zwingend: Vorprüfung auf Prod `select count(*) from training_plans` = 0 (unmittelbar vor der Migration erneut) → Migration `0066` → `0067` (direkt hintereinander, je mit Tims ausdrücklicher Freigabe, je per MCP `apply_migration`) → API-Deploy → App.
+- Was in den Zwischenzuständen bricht: `0066` allein mit alter API: Plan anlegen in der alten App scheitert mit 422, ein alter Tausch mit `p_machine_id` scheitert mit PGRST202 → 500 (nur für bestehende aktive Pläne; Prod hat keine). Neue API vor `0067`: `ladeMerkliste` wirft, Anlegen gibt 500, ein Bootstrap mit aktivem Plan lässt diesen Plan weg. Neue API vor `0066`: Anlegen scheitert, Tausch scheitert mit PGRST202. Bootstrap, Sätze und Abschluss bleiben in jeder Kombination sicher.
+- Alte App + neuer Server: das alte `TrainingsplanPosition.machineId` ist nicht optional, das Anlegen endet in der alten App mit einem Decode-Fehler und hinterlässt einen harmlosen verwaisten `vorschlag`. Ist je ein Katalogplan aktiv und öffnet ein ALTER App-Build dieses Konto, scheitert der ganze Bootstrap beim Decodieren: nie alte Builds auf einem Konto mit Katalogplan öffnen. Neue App + alter Server: Anlegen im Freien Training gibt 422, Anlegen im Studio liefert einen Plan mit `machineId`, der nicht decodiert; beides ist sicher.
+- Vor dem Merge prüfen, dass ein Merge nach `master` NICHT automatisch nach Vercel Production deployt. Falls doch: erst migrieren, dann mergen.
+- Prod-Vorprüfungen: Anzahl der Katalog-Gerätetypen `select count(*) from equipment_models where studio_id = (select id from studios where is_catalog)`; die `.in()`-URL in `ladeKandidaten` bricht bei etwa 200 Typen (Grenze 8 KB Request-Zeile; bei 114 Typen etwa 4,7 KB). Und die Katalogtypen der Planübungen müssen `load_step > 0` haben, sonst gibt es kein Zielgewicht.
+- Gates: CI muss `domain-bootstrap` und `api-workout-sets` grün melden (lokal wegen Maschinenlast nie sauber grün). Tims manuelle Simulatorprüfungen (Sheets aus Task 7 und 8, Schließen des Sheets samt Routen-Navigation) müssen VOR einem TestFlight-Build stattfinden (lokal übersprungen, weil Debug-Builds auf Prod zeigen).
+
+**Offene Entscheidungen für Tim:**
+- (a) „Merkliste wirkt nur auf Alternativen“: dieselbe Übung kann nach „Gibt es hier nicht“/„Gefällt mir nicht“ in einem bestehenden Plan weiter an anderer Stelle stehen (andere Einheiten). Optionen: der Server ersetzt beim Tausch mit Grund alle Vorkommen, oder iOS markiert sie.
+- (b) Alternativen und Plangenerierung bevorzugen nicht, was die Geräte des aktiven Studios tatsächlich bieten (nur-Sortierung möglich über `bootstrap.machines[].exercises` / `catalog_model_id`).
+- (c) Ein Merklisteneintrag lässt sich in der App nicht zurücknehmen (die Löschrichtlinie existiert in der DB).
+- (d) UX: Planzeile → Sheet → „Gerät wählen“ (zwei Tipps) statt direktem Zeilentipp; die Texte der drei Entfernen-Gründe sind ein Entwurf.
+- (e) Zwei Einstiege: „Andere Übung wählen“ (dauerhafter Wechsel, ohne Grund) und „Übung entfernen“.
+
+Historisch (Stand Etappe 4; die Prod-DB steht inzwischen bis `0065`, siehe Nachtrag oben): Etappe 4 (Plangewichte) ist auf Branch `claude/trainingsplan-etappe4` umgesetzt und reviewt (24 Commits seit `9d8b8b1`: 17 bis zur ersten Fassung dieser Übergabe `c9ee183`, dazu 7 aus der Final-Fix-Runde; nicht gepusht). Die Migrationen `0064` und `0065` liegen **nur lokal**; Prod hatte damals laut Memory bis `0061`. Plan: `2026-10-25-trainingsplan-etappe4-plangewichte.md`, Spec: `../specs/2026-10-25-trainingsplan-plangewichte-design.md`. Der Haupt-Spec (Abschnitt 6, „Fortlaufende Anpassung“) verweist jetzt auf dieses Spec.
 
 ## Was es jetzt gibt
 

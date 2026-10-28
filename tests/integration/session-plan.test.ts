@@ -1,10 +1,22 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { acceptPlan, erzeugePlanVorschlag, type TrainingPlan } from "@fitretro/domain";
 import { PUT } from "@/app/api/v1/workout-sessions/[sessionId]/sets/[setId]/route";
 import { DELETE } from "@/app/api/v1/workout-sessions/[sessionId]/route";
 import { accessTokenFor, serviceClient } from "./helpers/clients.js";
-import { legeMitgliedAn, legePlanStudiosAn, type Mitglied, type PlanStudios } from "./helpers/plan-studio.js";
+import {
+  aktiverKatalogPlan,
+  erzeugeKatalogPlan,
+  legeMitgliedAn,
+  legePlanStudiosAn,
+  machineVon,
+  nimmKatalogPlanAn,
+  type KatalogPlan,
+  type Mitglied,
+  type PlanStudios,
+} from "./helpers/plan-studio.js";
 
+// Seit 0066 gehoert der Plan dem Katalog-Studio (Positionen nennen modelId); die
+// Session laeuft im Studio des Mitglieds, der Satz nennt das Geraet dort.
+//
 // Etappe 3, Task 4: jeder Satz-PUT traegt eine Momentaufnahme des Plans der
 // laufenden Einheit. Der Server haelt sie je Session fest (Status je
 // Position, gebunden an die Planeinheit), damit spaeter "Einheit zaehlt",
@@ -14,21 +26,19 @@ const admin = serviceClient();
 let s: PlanStudios;
 let ich: Mitglied;
 let token: string;
-let plan: TrainingPlan;
-let fremderPlan: TrainingPlan;
+let plan: KatalogPlan;
+let fremderPlan: KatalogPlan;
+let geraet: { id: string; equipment_model_id: string };
 
 beforeAll(async () => {
   s = await legePlanStudiosAn(crypto.randomUUID());
   ich = await legeMitgliedAn("sess-plan", { studios: [s.voll] });
   token = await accessTokenFor(ich.email);
-  plan = await acceptPlan(ich.client, ich.userId, (await erzeugePlanVorschlag(ich.client, ich.userId, s.voll)).id);
+  geraet = await machineVon(s.voll);
+  plan = await aktiverKatalogPlan(ich, s);
 
   const anderer = await legeMitgliedAn("sess-plan-fremd", { studios: [s.voll] });
-  fremderPlan = await acceptPlan(
-    anderer.client,
-    anderer.userId,
-    (await erzeugePlanVorschlag(anderer.client, anderer.userId, s.voll)).id,
-  );
+  fremderPlan = await aktiverKatalogPlan(anderer, s);
 });
 
 const einheit = () => plan.einheiten[0]!;
@@ -46,10 +56,10 @@ function satz(sessionId: string, setId: string, rumpf: Record<string, unknown>, 
 }
 
 function rumpf(extra: Record<string, unknown> = {}) {
-  return { machineId: pos(0).machineId, exerciseId: pos(0).exerciseId, setIndex: 1, load: 80, volume: 10, ...extra };
+  return { machineId: geraet.id, exerciseId: pos(0).exerciseId, setIndex: 1, load: 80, volume: 10, ...extra };
 }
 
-function planRumpf(stand: number, positionen: Array<Record<string, unknown>>, p: TrainingPlan = plan) {
+function planRumpf(stand: number, positionen: Array<Record<string, unknown>>, p: KatalogPlan = plan) {
   return { planId: p.id, einheitKey: p.einheiten[0]!.key, stand, positionen };
 }
 
@@ -294,36 +304,53 @@ describe("Session und Planeinheit (0063)", () => {
     expect(await session(sessionId)).toEqual(LEER);
   });
 
-  it("Plan eines anderen Studios wird abgelehnt, auch nach der Bindung", async () => {
+  it("Katalogplan gilt in jedem Studio, ein Plan eines normalen Studios wird abgelehnt", async () => {
     const m = await legeMitgliedAn("sess-plan-zwei", { studios: [s.voll, s.voll2] });
     const t = await accessTokenFor(m.email);
-    const hier = await acceptPlan(m.client, m.userId, (await erzeugePlanVorschlag(m.client, m.userId, s.voll)).id);
-    const dort = await acceptPlan(m.client, m.userId, (await erzeugePlanVorschlag(m.client, m.userId, s.voll2)).id);
-    const r = (p: TrainingPlan, stand: number, setIndex: number) => ({
-      machineId: hier.einheiten[0]!.positionen[0]!.machineId,
-      exerciseId: hier.einheiten[0]!.positionen[0]!.exerciseId,
+    const katalog = await aktiverKatalogPlan(m, s);
+    // Ein Plan aus der Zeit vor 0066 (Studioplan, aktiv): nicht mehr verknuepfbar.
+    const { data: alt, error } = await admin
+      .from("training_plans")
+      .insert({
+        user_id: m.userId, studio_id: s.voll, version: 1, status: "aktiv", regel_version: "1.2.0",
+        eingabe: katalog.eingabe, struktur: "gk_ab", einheiten: katalog.einheiten, gruende: [],
+        accepted_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    const studioPlan = { ...katalog, id: alt!.id as string };
+    const dort = await machineVon(s.voll2);
+    const r = (p: KatalogPlan, stand: number, setIndex: number, maschine = geraet.id) => ({
+      machineId: maschine,
+      exerciseId: katalog.einheiten[0]!.positionen[0]!.exerciseId,
       setIndex, load: 80, volume: 10,
       plan: planRumpf(stand, [{ key: p.einheiten[0]!.positionen[0]!.key, status: "erledigt" }], p),
     });
     const ungebunden = crypto.randomUUID();
     const setId = crypto.randomUUID();
-    expect(await uebernommen(await satz(ungebunden, setId, r(dort, 1, 1), t))).toBe(false);
+    expect(await uebernommen(await satz(ungebunden, setId, r(studioPlan, 1, 1), t))).toBe(false);
     expect(await satzDa(setId)).toBe(true);
     expect(await session(ungebunden)).toEqual(LEER);
 
+    // Derselbe Katalogplan in beiden Studios.
     const gebunden = crypto.randomUUID();
-    expect(await uebernommen(await satz(gebunden, crypto.randomUUID(), r(hier, 1, 1), t))).toBe(true);
-    expect(await uebernommen(await satz(gebunden, crypto.randomUUID(), r(dort, 2, 2), t))).toBe(false);
-    expect(await session(gebunden)).toEqual({ plan_id: hier.id, plan_einheit_key: hier.einheiten[0]!.key, plan_stand: 1 });
+    expect(await uebernommen(await satz(gebunden, crypto.randomUUID(), r(katalog, 1, 1), t))).toBe(true);
+    expect(await uebernommen(await satz(gebunden, crypto.randomUUID(), r(studioPlan, 2, 2), t))).toBe(false);
+    expect(await session(gebunden)).toEqual({ plan_id: katalog.id, plan_einheit_key: katalog.einheiten[0]!.key, plan_stand: 1 });
+
+    const anderswo = crypto.randomUUID();
+    expect(await uebernommen(await satz(anderswo, crypto.randomUUID(), r(katalog, 1, 1, dort.id), t))).toBe(true);
+    expect(await session(anderswo)).toEqual({ plan_id: katalog.id, plan_einheit_key: katalog.einheiten[0]!.key, plan_stand: 1 });
   });
 
   it("Vorschlag (nicht angenommen) wird abgelehnt", async () => {
     const m = await legeMitgliedAn("sess-plan-vorschlag", { studios: [s.voll] });
-    const vorschlag = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    const vorschlag = await erzeugeKatalogPlan(m, s);
     const sessionId = crypto.randomUUID();
     const setId = crypto.randomUUID();
     const antwort = await satz(sessionId, setId, {
-      machineId: vorschlag.einheiten[0]!.positionen[0]!.machineId,
+      machineId: geraet.id,
       exerciseId: vorschlag.einheiten[0]!.positionen[0]!.exerciseId,
       setIndex: 1, load: 80, volume: 10,
       plan: planRumpf(1, [{ key: vorschlag.einheiten[0]!.positionen[0]!.key, status: "erledigt" }], vorschlag),
@@ -336,11 +363,11 @@ describe("Session und Planeinheit (0063)", () => {
   it("nach der Bindung: andere Einheit abgelehnt, neuere Version derselben Reihe angenommen", async () => {
     const m = await legeMitgliedAn("sess-plan-reihe", { studios: [s.voll] });
     const t = await accessTokenFor(m.email);
-    const v1 = await acceptPlan(m.client, m.userId, (await erzeugePlanVorschlag(m.client, m.userId, s.voll)).id);
+    const v1 = await aktiverKatalogPlan(m, s);
     expect(v1.einheiten.length).toBeGreaterThan(1);
-    const [a, b] = v1.einheiten as [TrainingPlan["einheiten"][number], TrainingPlan["einheiten"][number]];
-    const r = (p: TrainingPlan, einheitKey: string, key: string, stand: number, setIndex: number) => ({
-      machineId: a.positionen[0]!.machineId,
+    const [a, b] = v1.einheiten as [KatalogPlan["einheiten"][number], KatalogPlan["einheiten"][number]];
+    const r = (p: KatalogPlan, einheitKey: string, key: string, stand: number, setIndex: number) => ({
+      machineId: geraet.id,
       exerciseId: a.positionen[0]!.exerciseId,
       setIndex, load: 80, volume: 10,
       plan: { planId: p.id, einheitKey, stand, positionen: [{ key, status: "erledigt" }] },
@@ -352,7 +379,7 @@ describe("Session und Planeinheit (0063)", () => {
     expect((await status(sessionId)).map((z) => z.position_key)).toEqual([a.positionen[0]!.key]);
 
     // Neue Version derselben Reihe (wie nach einem dauerhaften Tausch): angenommen, Bindung bleibt.
-    const v2 = await acceptPlan(m.client, m.userId, (await erzeugePlanVorschlag(m.client, m.userId, s.voll)).id);
+    const v2 = await nimmKatalogPlanAn(m, (await erzeugeKatalogPlan(m, s)).id);
     expect(v2.version).toBeGreaterThan(v1.version);
     const a2 = v2.einheiten.find((e) => e.key === a.key)!;
     expect(await uebernommen(await satz(sessionId, crypto.randomUUID(), r(v2, a.key, a2.positionen[1]!.key, 3, 3), t))).toBe(true);

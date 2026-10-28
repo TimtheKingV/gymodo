@@ -186,7 +186,7 @@ type Antwort = { data: unknown; error: { message: string } | null };
 function falscherClient(tabellen: Record<string, Antwort>): SupabaseClient {
   const builder = (antwort: Antwort): unknown => {
     const b: Record<string, unknown> = {};
-    for (const m of ["select", "eq", "in", "not", "order", "limit"]) b[m] = () => b;
+    for (const m of ["select", "eq", "in", "not", "order", "limit", "range"]) b[m] = () => b;
     b.maybeSingle = () => Promise.resolve(antwort);
     b.single = () => Promise.resolve(antwort);
     b.then = (ok: (a: Antwort) => unknown, fehler: (e: unknown) => unknown) => Promise.resolve(antwort).then(ok, fehler);
@@ -199,18 +199,19 @@ function falscherClient(tabellen: Record<string, Antwort>): SupabaseClient {
 
 const FEHLER = { data: null, error: { message: "timeout" } };
 const PLAN = {
-  id: "p1", studio_id: "s1", version: 1, status: "aktiv", regel_version: "1.2.0",
+  id: "p1", studio_id: "cat", version: 1, status: "aktiv", regel_version: "1.2.0",
   eingabe: { ziel: "muskelaufbau", tage: 3, minuten: 60, fokus: [], erfahrung: "neu", anfaengerBeendet: false,
     beschwerdenBeruecksichtigt: true },
-  struktur: "gk_ab", einheiten: [{ key: "A", positionen: [], geschaetzteMinuten: 40 }], gruende: [],
+  struktur: "gk_ab", einheiten: [{ key: "A", positionen: [{ key: "p0", exerciseId: "zug", modelId: "em1" }], geschaetzteMinuten: 40 }], gruende: [],
   created_at: "2026-10-01T00:00:00Z", accepted_at: "2026-10-01T00:00:00Z",
 };
 const GESUND: Record<string, Antwort> = {
   training_profiles: { data: { minutes: 60, experience: "neu", focus: [] }, error: null },
   training_limits: { data: { consent_at: "2026-10-01T00:00:00Z", areas: { knie: "meiden" } }, error: null },
-  studio_memberships: { data: [{ studio_id: "s1" }], error: null },
-  training_plans: { data: [PLAN], error: null },
-  machines: { data: [{ id: "m1", equipment_models: { id: "em1", catalog_model_id: null } }], error: null },
+  training_plans: { data: PLAN, error: null },
+  studios: { data: { id: "cat" }, error: null },
+  equipment_models: { data: [{ id: "em1" }], error: null },
+  plan_merkliste: { data: [], error: null },
   equipment_model_exercises: {
     data: [
       { equipment_model_id: "em1", exercises: { id: "knie", muscles: [], plan_baustein: "beine_knie", plan_typ: "mehrgelenk", plan_bereiche: ["knie"] } },
@@ -227,7 +228,7 @@ describe("ladeTrainingsteil", () => {
     const t = await ladeTrainingsteil(falscherClient(GESUND), "u1", jetzt, () => {});
     expect(t.trainingProfile).toEqual({ minutes: 60, experience: "neu", focus: [] });
     expect(t.plans).toHaveLength(1);
-    expect(t.plans[0]!.alternativen).toEqual({ ziehen: [{ exerciseId: "zug", machineId: "m1" }] });
+    expect(t.plans[0]!.alternativen).toEqual({ ziehen: [{ exerciseId: "zug", modelId: "em1" }] });
   });
 
   it("Beschwerden nicht lesbar: plans [] statt ungefilterter alternativen", async () => {
@@ -241,7 +242,7 @@ describe("ladeTrainingsteil", () => {
     expect(meldungen[0]).not.toMatch(/knie|meiden|vorsichtig/);
   });
 
-  for (const tabelle of ["studio_memberships", "training_plans", "workout_sessions", "machines"]) {
+  for (const tabelle of ["training_plans", "workout_sessions", "equipment_models", "plan_merkliste"]) {
     it(`Fehler in ${tabelle}: plans [] und kein Wurf`, async () => {
       const t = await ladeTrainingsteil(falscherClient({ ...GESUND, [tabelle]: FEHLER }), "u1", jetzt, () => {});
       expect(t.plans).toEqual([]);

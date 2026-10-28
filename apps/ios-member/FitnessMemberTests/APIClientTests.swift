@@ -268,6 +268,30 @@ struct APIClientTests {
         }
     }
 
+    @Test("Swap sendet grund, modelId und ortId")
+    func swapSendetGrund() async throws {
+        nonisolated(unsafe) var bodies: [[String: String]] = []
+        StubURLProtocol.handler = { request in
+            let data = request.httpBodyStream.map { s -> Data in
+                s.open(); defer { s.close() }
+                var d = Data(); var buf = [UInt8](repeating: 0, count: 1024)
+                while s.hasBytesAvailable { let n = s.read(&buf, maxLength: 1024); if n <= 0 { break }; d.append(buf, count: n) }
+                return d
+            } ?? Data()
+            bodies.append((try? JSONSerialization.jsonObject(with: data) as? [String: String]) ?? [:])
+            return (200, Data(#"{"id":"p2","studioId":"s1","version":2,"regelVersion":"1","struktur":"gk_ab","einheiten":[],"gruende":[]}"#.utf8))
+        }
+        let client = stubbedClient()
+        _ = try await client.swapPlanPosition(planId: "p1", einheitKey: "A", positionKey: "A0", exerciseId: "e7",
+                                              modelId: "em-m7", grund: "nicht_vorhanden", ortId: "s1")
+        #expect(bodies[0] == ["einheitKey": "A", "positionKey": "A0", "exerciseId": "e7", "modelId": "em-m7",
+                              "grund": "nicht_vorhanden", "ortId": "s1"])
+        // Ohne Grund fehlen beide Schluessel ganz.
+        _ = try await client.swapPlanPosition(planId: "p1", einheitKey: "A", positionKey: "A0", exerciseId: "e7",
+                                              modelId: "em-m7", grund: nil, ortId: nil)
+        #expect(bodies[1] == ["einheitKey": "A", "positionKey": "A0", "exerciseId": "e7", "modelId": "em-m7"])
+    }
+
     @Test("createPlan sendet POST /me/plans mit studioId und dekodiert 201")
     func createPlanOk() async throws {
         nonisolated(unsafe) var gesehen: (String?, String?, String?)?
@@ -287,6 +311,27 @@ struct APIClientTests {
         #expect(gesehen?.0 == "POST")
         #expect(gesehen?.1 == "/api/v1/me/plans")
         #expect(gesehen?.2 == #"{"studioId":"s1"}"#)
+    }
+
+    @Test("createPlan ohne Studio sendet einen Rumpf ohne studioId")
+    func createPlanOhneStudio() async throws {
+        nonisolated(unsafe) var gesehen: (String?, String?)?
+        StubURLProtocol.handler = { request in
+            let body = request.httpBodyStream.map { s -> String in
+                s.open(); defer { s.close() }
+                var d = Data(); var buf = [UInt8](repeating: 0, count: 1024)
+                while s.hasBytesAvailable { let n = s.read(&buf, maxLength: 1024); if n <= 0 { break }; d.append(buf, count: n) }
+                return String(decoding: d, as: UTF8.self)
+            }
+            gesehen = (request.url?.path, body)
+            let json = #"{"id":"p1","version":1,"regelVersion":"1","struktur":"gk_ab","einheiten":[],"gruende":[]}"#
+            return (201, Data(json.utf8))
+        }
+        let plan = try await stubbedClient().createPlan(studioId: nil)
+        #expect(plan.planId == "p1")
+        #expect(plan.studioId == nil)
+        #expect(gesehen?.0 == "/api/v1/me/plans")
+        #expect(gesehen?.1 == "{}")
     }
 
     @Test("trainingProfile: 404 ergibt nil, 200 das Profil")
@@ -331,7 +376,7 @@ struct APIClientTests {
         }
         let client = stubbedClient()
         _ = try await client.acceptPlan(id: "p1")
-        let neu = try await client.swapPlanPosition(planId: "p1", einheitKey: "A", positionKey: "0", exerciseId: "e", machineId: "m")
+        let neu = try await client.swapPlanPosition(planId: "p1", einheitKey: "A", positionKey: "0", exerciseId: "e", modelId: "m")
         #expect(neu.planId == "p2")
         #expect(pfade == ["POST /api/v1/me/plans/p1/accept", "POST /api/v1/me/plans/p1/swap"])
     }

@@ -185,16 +185,23 @@ struct PlanAntwortenTests {
         return try! JSONDecoder().decode(Trainingsplan.self, from: Data(json.utf8))
     }
 
-    @Test("Karte erscheint nur ohne Plan im aktiven Studio")
-    func karteNurOhnePlanImAktivenStudio() {
-        // Plan nur in einem anderen Studio: Karte erscheint.
-        #expect(PlanEinrichten.zeigtKarte(member: Self.member(plans: [Self.plan(studioId: "s2")]), studioId: "s1"))
-        // Plan im aktiven Studio: keine Karte.
-        #expect(!PlanEinrichten.zeigtKarte(member: Self.member(plans: [Self.plan(studioId: "s1")]), studioId: "s1"))
-        // Kein Studio aktiv (Freies Training): keine Karte.
-        #expect(!PlanEinrichten.zeigtKarte(member: Self.member(), studioId: nil))
-        // Onboarding noch offen: das Gate zeigt den Block selbst, keine Karte.
-        #expect(!PlanEinrichten.zeigtKarte(member: Self.member(abgeschlossen: false), studioId: "s1"))
+    @Test("Karte erscheint im Freien Training ohne Plan")
+    func karteImFreienTrainingOhnePlan() {
+        // Kein Studio noetig: der Plan gehoert dem Mitglied, nicht einem Ort.
+        #expect(PlanEinrichten.zeigtKarte(member: Self.member()))
+    }
+
+    @Test("Karte erscheint nicht mit Plan")
+    func karteNichtMitPlan() {
+        #expect(!PlanEinrichten.zeigtKarte(member: Self.member(plans: [Self.plan(studioId: "s1")])))
+        // Auch ein Plan eines anderen Ortes ist der Plan des Mitglieds.
+        #expect(!PlanEinrichten.zeigtKarte(member: Self.member(plans: [Self.plan(studioId: "s2")])))
+    }
+
+    @Test("Karte erscheint nicht vor dem Onboarding")
+    func karteNichtVorDemOnboarding() {
+        // Das Gate zeigt den Block selbst.
+        #expect(!PlanEinrichten.zeigtKarte(member: Self.member(abgeschlossen: false)))
     }
 
     @Test("Karte oeffnet ohne Profil alle vier Schritte, mit Profil nur die Vorschau")

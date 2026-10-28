@@ -4,40 +4,38 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   ladeZielgewichte,
   ohneAbbruch,
-  paarSchluessel,
-  zielFuerGeraet,
+  uebungsSchluessel,
+  zielFuerUebung,
   type Melde,
   type PositionsZiel,
 } from "./plangewichte.js";
 import { ladeGezaehlteEinheiten } from "./trainingsplan-bootstrap.js";
 import { naechsteEinheitKey } from "./trainingsplan-ablauf.js";
-import { aktiverPlanImStudio } from "./trainingsplan.js";
+import { aktiverKatalogPlan } from "./trainingsplan.js";
 
 /**
- * Das Ziel je Paar (Geraet, Uebung) aus dem aktiven Plan des Studios; Schluessel ist
- * paarSchluessel(machineId, exerciseId). Paare ohne Ziel fehlen im Ergebnis (dann gilt das
- * letzte Gewicht). Ohne aktiven Plan oder ohne Geraet (machineId null) ist es leer.
- * Liest nur; Fehler werden geworfen, der Aufrufer entscheidet.
+ * Das Ziel je Uebung aus dem aktiven Plan; Schluessel ist uebungsSchluessel(exerciseId).
+ * Das Gewicht haengt an der Uebung, nicht am Geraet (auch im Freien Training). Uebungen
+ * ohne Ziel fehlen im Ergebnis (dann gilt das letzte Gewicht). Ohne aktiven Plan ist es
+ * leer. Liest nur; Fehler werden geworfen, der Aufrufer entscheidet.
  */
 export async function ladeZieleFuerPaare(
   client: SupabaseClient,
   userId: string,
-  studioId: string,
-  paare: Array<{ machineId: string | null; exerciseId: string }>,
+  exerciseIds: string[],
 ): Promise<Map<string, PositionsZiel>> {
   const ergebnis = new Map<string, PositionsZiel>();
-  if (!paare.some((p) => p.machineId !== null)) return ergebnis;
-  const plan = await aktiverPlanImStudio(client, userId, studioId);
+  if (exerciseIds.length === 0) return ergebnis;
+  const plan = await aktiverKatalogPlan(client, userId);
   if (!plan || plan.einheiten.length === 0) return ergebnis;
   const [gezaehlt, ziele] = await Promise.all([
-    ladeGezaehlteEinheiten(client, userId, plan.studioId, new Date()),
+    ladeGezaehlteEinheiten(client, userId, new Date()),
     ladeZielgewichte(client, userId, plan),
   ]);
   const naechste = naechsteEinheitKey(plan.einheiten.map((e) => e.key), gezaehlt.at(-1)?.einheitKey ?? null);
-  for (const paar of paare) {
-    if (paar.machineId === null) continue;
-    const ziel = zielFuerGeraet(plan.einheiten, naechste, ziele, paar.machineId, paar.exerciseId);
-    if (ziel) ergebnis.set(paarSchluessel(paar.machineId, paar.exerciseId), ziel);
+  for (const exerciseId of new Set(exerciseIds)) {
+    const ziel = zielFuerUebung(plan.einheiten, naechste, ziele, exerciseId);
+    if (ziel) ergebnis.set(uebungsSchluessel(exerciseId), ziel);
   }
   return ergebnis;
 }
@@ -52,8 +50,7 @@ export async function ladeZieleFuerPaare(
 export async function ladeZieleFuerPaareOhneAbbruch(
   client: SupabaseClient,
   userId: string,
-  studioId: string,
-  paare: Array<{ machineId: string | null; exerciseId: string }>,
+  exerciseIds: string[],
   anlass: string,
   melde?: Melde,
 ): Promise<Map<string, PositionsZiel>> {
@@ -61,7 +58,7 @@ export async function ladeZieleFuerPaareOhneAbbruch(
   await ohneAbbruch(
     anlass,
     async () => {
-      ziele = await ladeZieleFuerPaare(client, userId, studioId, paare);
+      ziele = await ladeZieleFuerPaare(client, userId, exerciseIds);
     },
     melde,
   );

@@ -309,10 +309,11 @@ export type {
   PlanPosition,
   TypVorgaben,
 } from "./trainingsplan-generator.js";
-export { ladeKandidaten } from "./trainingsplan-kandidaten.js";
+export { LEERE_MERKLISTE, ladeKandidaten, ladeKatalogStudioId, ladeMerkliste } from "./trainingsplan-kandidaten.js";
+export type { Merkliste } from "./trainingsplan-kandidaten.js";
 export {
   acceptPlan,
-  aktivePlaeneDerMitgliedschaften,
+  aktiverKatalogPlan,
   erzeugePlanVorschlag,
   listPlaene,
   tauschePlanPosition,
@@ -332,10 +333,11 @@ export type {
   GezaehlteEinheit,
   PlanAlternative,
   PlanFuerApp,
+  PlanMerkliste,
   SessionFuerNachholen,
   SessionFuerZaehler,
 } from "./trainingsplan-bootstrap.js";
-export type { PlanEingabe, PlanStatus, PlanTausch, TrainingPlan } from "./trainingsplan.js";
+export type { PlanEingabe, PlanStatus, PlanTausch, TauschGrund, TrainingPlan } from "./trainingsplan.js";
 export { ablaufNachSatz, ablaufTauschen, einheitZaehlt, naechsteEinheitKey } from "./trainingsplan-ablauf.js";
 export type { AblaufPosition, AblaufSatz, AblaufZustand, PositionStatus } from "./trainingsplan-ablauf.js";
 export {
@@ -361,7 +363,9 @@ export {
   ohneAbbruch,
   uebernehmePlanGewichte,
   vorschlagAusZiel,
-  zielFuerGeraet,
+  uebungsSchluessel,
+  zielFuerPosition,
+  zielFuerUebung,
   zielSchluessel,
   type Melde,
   type PositionsZiel,

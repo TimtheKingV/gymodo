@@ -36,7 +36,7 @@ export type PlanPosition = {
   baustein: Baustein;
   rolle: "pflicht" | "fokus" | "ergaenzung" | "auffuellung" | "cardio";
   exerciseId: string;
-  machineId: string;
+  modelId: string;
   typ: PlanTyp;
   saetze: number;
   wdhVon: number | null;
@@ -116,7 +116,7 @@ function position(k: Kandidat, rolle: Entwurf["rolle"], saetze: number, profil: 
     baustein: k.baustein,
     rolle,
     exerciseId: k.exerciseId,
-    machineId: k.machineId,
+    modelId: k.modelId,
     saetze,
     ...typVorgaben(profil, k.typ),
     dauerMin: null,
@@ -241,7 +241,9 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
   // sonst geht die Zeit an Kraftuebungen.
   const abnehmen = eingabe.ziel === "abnehmen";
   const cardioSoll = abnehmen ? cardioMinuten(eingabe.minuten) : 0;
-  const cardioKandidat = nachBaustein(kandidaten, "cardio")[0] ?? null;
+  const cardioListe = nachBaustein(kandidaten, "cardio");
+  // "gefaellt nicht" nur, wenn es keine andere Cardiouebung gibt.
+  const cardioKandidat = cardioListe.find((k) => !k.gefaelltNicht) ?? cardioListe[0] ?? null;
   // Wie bei pruefePflicht: "kein Geraet" nur, wenn das Studio wirklich keins hat; sind alle
   // gemieden, erklaert das schon beschwerden_meiden, und das Studio wird nicht beschuldigt.
   const studioHatCardio = nachBaustein(eingabe.kandidaten, "cardio").length > 0;
@@ -274,7 +276,7 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
         baustein: "cardio",
         rolle: "cardio",
         exerciseId: cardioKandidat.exerciseId,
-        machineId: cardioKandidat.machineId,
+        modelId: cardioKandidat.modelId,
         // Typ nur fuer den Datensatz; Cardio laeuft ueber dauerMin, nicht ueber Saetze.
         typ: "isolation",
         saetze: 1,
