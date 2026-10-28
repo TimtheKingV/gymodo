@@ -87,7 +87,8 @@ struct PlanKarte: View {
     private struct Zug: Equatable {
         let key: String
         var versatz: CGFloat
-        /// Die Verschiebung, begrenzt auf die Liste: Anzeige und Ziel einig.
+        /// Roh, wie der Finger sie liefert; angezeigt und fuer das Ziel
+        /// wird sie ueber `PlanReihenfolge.begrenzt` auf die Liste gekuerzt.
     }
 
     private var plan: Trainingsplan { heute.plan }
@@ -127,7 +128,7 @@ struct PlanKarte: View {
                         { zeile in
                             if let block = PlanAnzeige.block(fuerZusatz: zeile.id, bloecke: bloecke) { geoeffnet(block) }
                         }
-                    })
+                    }, tippbarFuer: { PlanAnzeige.block(fuerZusatz: $0.id, bloecke: bloecke) != nil })
                         .padding(.horizontal, 14)
                         .padding(.vertical, DesignSystem.Spacing.s4)
                 }
@@ -204,6 +205,7 @@ struct PlanKarte: View {
     // MARK: - Zeilen
 
     private func zeilenListe(_ zeilen: [PlanZeilenModell], beiTipp: ((PlanZeilenModell) -> Void)? = nil,
+                             tippbarFuer: @escaping (PlanZeilenModell) -> Bool = { _ in true },
                              verschiebbar: Bool = false) -> some View {
         let hoehen = PlanReihenfolge.plaetze(zeilen.map { zeilenHoehen[$0.id] ?? 80 })
         let von = zug.flatMap { z in zeilen.firstIndex { $0.id == z.key } }
@@ -219,7 +221,7 @@ struct PlanKarte: View {
                 } } ?? 0
                 HStack(spacing: 0) {
                     Group {
-                        if let beiTipp {
+                        if let beiTipp, tippbarFuer(zeile) {
                             Button { beiTipp(zeile) } label: { planZeile(zeile) }
                                 .buttonStyle(PressButtonStyle())
                         } else {
@@ -242,7 +244,7 @@ struct PlanKarte: View {
                 .background(gezogen ? DesignSystem.Color.surfaceRaised : Color.clear)
                 .shadow(color: .black.opacity(gezogen ? 0.35 : 0), radius: 12, y: 4)
                 .opacity(zug == nil || gezogen ? 1 : 0.55)
-                .offset(y: gezogen ? (zug?.versatz ?? 0) : ausweichen)
+                .offset(y: gezogen ? (zug.map { PlanReihenfolge.begrenzt($0.versatz, von: index, hoehen: hoehen) } ?? 0) : ausweichen)
                 .animation(gezogen || reduceMotion ? nil : .easeOut(duration: 0.15), value: ausweichen)
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: zug == nil)
                 .zIndex(gezogen ? 1 : 0)

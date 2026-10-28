@@ -42,6 +42,20 @@ struct PlanReihenfolgeTests {
         #expect(PlanReihenfolge.begrenzt(1000, von: 0, hoehen: [200, 60, 60]) == 120)
     }
 
+    @Test("Angezeigter Versatz ist begrenzt und stimmt mit dem Ziel ueberein")
+    func begrenzterVersatz() {
+        let h: [CGFloat] = [60, 80, 200, 70]
+        // Weit ueber den Rand gezogen: angezeigt wird nur bis zur Kante.
+        #expect(PlanReihenfolge.begrenzt(-500, von: 2, hoehen: h) == -140)
+        #expect(PlanReihenfolge.begrenzt(500, von: 2, hoehen: h) == 70)
+        #expect(PlanReihenfolge.begrenzt(-30, von: 2, hoehen: h) == -30)
+        // Roh und begrenzt landen am selben Ziel.
+        for roh: CGFloat in [-500, -140, -30, 30, 70, 500] {
+            #expect(PlanReihenfolge.zielIndex(von: 2, versatz: roh, hoehen: h)
+                    == PlanReihenfolge.zielIndex(von: 2, versatz: PlanReihenfolge.begrenzt(roh, von: 2, hoehen: h), hoehen: h))
+        }
+    }
+
     @Test("Trennlinien gehoeren zum Platz der Zeile")
     func trennlinien() {
         #expect(PlanReihenfolge.plaetze([80, 60]) == [81, 61])
