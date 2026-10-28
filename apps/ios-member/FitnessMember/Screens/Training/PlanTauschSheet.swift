@@ -111,8 +111,16 @@ struct PlanTauschBestaetigung: View {
                 .foregroundStyle(DesignSystem.Color.text)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
-            PlanTauschSchalter(sitzung: sitzung, hinweis: PlanTausch.bestaetigungsHinweis(
-                einheitKey: sitzung.auftrag.einheitKey, uebung: kandidat.name))
+            if sitzung.grund == nil {
+                PlanTauschSchalter(sitzung: sitzung, hinweis: PlanTausch.bestaetigungsHinweis(
+                    einheitKey: sitzung.auftrag.einheitKey, uebung: kandidat.name))
+            } else {
+                // Aus "Übung gefällt mir nicht": die Dauer steht fest.
+                Text(PlanTausch.bestaetigungsHinweis(einheitKey: sitzung.auftrag.einheitKey, uebung: kandidat.name))
+                    .font(.system(size: 14))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if let fehler = sitzung.fehler {
                 InlineBanner(tone: .danger, message: PlanTausch.fehlerText(fehler))
             }
@@ -122,6 +130,13 @@ struct PlanTauschBestaetigung: View {
             }
             .padding(.top, DesignSystem.Spacing.s4)
             .accessibilityHint("Ändert deinen Plan dauerhaft")
+            // Der Server nimmt die Uebung nicht: heute geht sie trotzdem.
+            if sitzung.grund != nil, sitzung.fehler != nil {
+                SecondaryButton(title: "Nur heute") {
+                    if sitzung.nurHeuteTauschen() { beiFertig() }
+                }
+                .accessibilityHint("Tauscht nur für heute, dein Plan bleibt")
+            }
             PlanLeiserKnopf(titel: "Abbrechen", aktiv: !sitzung.schreibtGerade) { sitzung.abbrechen() }
         }
         .padding(.horizontal, 18)

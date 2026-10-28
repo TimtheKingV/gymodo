@@ -85,15 +85,10 @@ struct PlanTauschAuftrag: Equatable, Identifiable {
     /// oeffnen (Review Focus 3).
     var zeigtAndereUebung: Bool { tauschbar && !kandidaten.isEmpty }
 
-    /// "Übung entfernen" steht bei jeder tauschbaren Position.
-    var zeigtEntfernen: Bool { tauschbar }
-
-    /// Die Wahl im Entfernen-Sheet. Ohne Alternative im Baustein nur
-    /// "Überspringen": ein Grund wird nur zusammen mit einem Tausch gemerkt.
-    /// "Gibt es hier nicht" braucht einen Ort.
-    var entfernOptionen: [PlanTausch.EntfernOption] {
-        guard !kandidaten.isEmpty else { return [.ueberspringen] }
-        return ort == nil ? [.belegt, .gefaelltNicht] : [.belegt, .nichtVorhanden, .gefaelltNicht]
+    /// Die Wahl in "Warum wechselst du?". "Gefällt mir nicht" merkt sich der
+    /// Server nur zusammen mit einem Ersatz; ohne Ersatz gibt es zwei.
+    func entfernOptionen(mitErsatz: Bool) -> [PlanTausch.EntfernOption] {
+        mitErsatz ? [.heuteAuslassen, .belegt, .gefaelltNicht] : [.heuteAuslassen, .belegt]
     }
 }
 
@@ -102,27 +97,22 @@ struct PlanTauschAuftrag: Equatable, Identifiable {
 /// annimmt (Baustein, Studio, "meiden"), stehen nur dort; die Liste kommt
 /// schon gefiltert im Bootstrap (`alternativen`).
 enum PlanTausch {
-    /// Eine Antwort auf "Warum entfernst du die Übung?" (Spec, Entscheidung 3).
-    /// Texte sind ein Entwurf, Tim liest sie vor dem Merge.
+    /// Eine Antwort auf "Warum wechselst du?" (Entwurf 4). Texte sind ein
+    /// Entwurf, Tim liest sie vor dem Merge.
     enum EntfernOption: Equatable, Sendable {
-        case belegt, nichtVorhanden, gefaelltNicht, ueberspringen
+        case heuteAuslassen, belegt, gefaelltNicht
 
         var titel: String {
             switch self {
+            case .heuteAuslassen: "Heute auslassen"
             case .belegt: "Belegt"
-            case .nichtVorhanden: "Gibt es hier nicht"
-            case .gefaelltNicht: "Gefällt mir nicht"
-            case .ueberspringen: "Überspringen"
+            case .gefaelltNicht: "Übung gefällt mir nicht"
             }
         }
 
         /// Der Wert, den der Server als `grund` erwartet; nil = nichts merken.
         var serverGrund: String? {
-            switch self {
-            case .nichtVorhanden: "nicht_vorhanden"
-            case .gefaelltNicht: "gefaellt_nicht"
-            case .belegt, .ueberspringen: nil
-            }
+            self == .gefaelltNicht ? "gefaellt_nicht" : nil
         }
     }
 
@@ -316,6 +306,10 @@ final class PlanTauschSitzung {
     /// Die zuletzt gewaehlte Zeile -- "Wählen" steht dort gefuellt (3.2),
     /// auch zurueck aus der Bestaetigung.
     private(set) var gewaehlt: TauschKandidat?
+    /// Der Ersatz aus der vollen Auswahl; nil = ohne Ersatz (nur auslassen).
+    private(set) var ersatz: TauschKandidat?
+    /// Die vorgewaehlte Zeile von "Warum wechselst du?".
+    private(set) var gewaehlteOption: PlanTausch.EntfernOption = .heuteAuslassen
     private(set) var schreibtGerade = false
     private(set) var fehler: APIError?
 
@@ -352,32 +346,68 @@ final class PlanTauschSitzung {
         schritt = .kandidaten
     }
 
-    /// "Übung entfernen" -> die Frage nach dem Grund.
-    func entfernen() {
-        guard auftrag.zeigtEntfernen else { return }
+    /// Ein Ersatz ist gewaehlt (oder keiner): die Frage nach dem Grund.
+    func ersatzGewaehlt(_ kandidat: TauschKandidat?) {
+        ersatz = kandidat
+        grund = nil
+        dauerhaft = false
         fehler = nil
+        gewaehlteOption = .heuteAuslassen
         schritt = .entfernen
     }
 
-    /// Ein Grund im Entfernen-Sheet. "Belegt": nur heute, kein Server, nichts
-    /// gemerkt. Die beiden anderen tauschen dauerhaft (Netz noetig) und merken
-    /// den Grund mit dem Tausch. "Überspringen" und alles ohne Alternative
-    /// merkt nichts und ruft nichts; das Sheet schliesst dann selbst.
-    func grundWaehlen(_ option: PlanTausch.EntfernOption) {
-        guard schritt == .entfernen, auftrag.entfernOptionen.contains(option) else { return }
+    /// Die Zeilen der Frage; ohne Ersatz entfaellt "Übung gefällt mir nicht".
+    var optionen: [PlanTausch.EntfernOption] { auftrag.entfernOptionen(mitErsatz: ersatz != nil) }
+
+    /// "Übung gefällt mir nicht" geht an den Server und braucht Verbindung.
+    func optionMoeglich(_ option: PlanTausch.EntfernOption) -> Bool {
+        optionen.contains(option) && (option.serverGrund == nil || istOnline())
+    }
+
+    /// Das Auswaehlen einer Zeile; bestaetigt wird erst mit "Übung wechseln".
+    func optionAuswaehlen(_ option: PlanTausch.EntfernOption) {
+        guard schritt == .entfernen, optionMoeglich(option) else { return }
+        gewaehlteOption = option
+    }
+
+    /// "Übung wechseln": bestaetigt die gewaehlte Zeile.
+    @discardableResult
+    func optionBestaetigen() -> Bool { grundWaehlen(gewaehlteOption) }
+
+    /// Ein Grund. "Heute auslassen" und "Belegt" sind dasselbe: mit Ersatz
+    /// nur heute tauschen, ohne ihn die Position auslassen -- kein Server,
+    /// nichts gemerkt. "Übung gefällt mir nicht" (nur mit Ersatz, nur online)
+    /// geht weiter zur Bestaetigung und tauscht dauerhaft mit Grund.
+    /// `true` = das Sheet darf zu.
+    @discardableResult
+    func grundWaehlen(_ option: PlanTausch.EntfernOption) -> Bool {
+        guard schritt == .entfernen, optionMoeglich(option) else { return false }
+        fehler = nil
         switch option {
-        case .ueberspringen:
-            return
-        case .belegt:
-            grund = nil
-            dauerhaft = false
-        case .nichtVorhanden, .gefaelltNicht:
-            guard istOnline() else { return }
+        case .heuteAuslassen, .belegt:
+            guard let ersatz else {
+                ablauf.auslassen(positionKey: auftrag.position.key)
+                return true
+            }
+            return waehlen(ersatz)
+        case .gefaelltNicht:
+            guard let ersatz else { return false }
             grund = option
             dauerhaft = true
+            gewaehlt = ersatz
+            schritt = .bestaetigen(ersatz)
+            return false
         }
+    }
+
+    /// Rueckfall nach einem Fehler in der Bestaetigung: der Server nimmt die
+    /// Uebung nicht, heute tauscht sie trotzdem. `true` = das Sheet darf zu.
+    func nurHeuteTauschen() -> Bool {
+        guard case .bestaetigen(let kandidat) = schritt, !schreibtGerade, auftrag.tauschbar else { return false }
+        ablauf.tauschen(positionKey: auftrag.position.key,
+                        ersatz: (exerciseId: kandidat.exerciseId, hauptmuskeln: kandidat.hauptmuskeln))
         fehler = nil
-        schritt = .kandidaten
+        return true
     }
 
     func dauerhaftSetzen(_ an: Bool) {
@@ -396,7 +426,9 @@ final class PlanTauschSitzung {
 
     /// "Wählen". `true` = nur heute getauscht, das Sheet darf zu.
     func waehlen(_ kandidat: TauschKandidat) -> Bool {
-        guard auftrag.tauschbar, auftrag.kandidaten.contains(kandidat) else { return false }
+        // Auch ein Ersatz ausserhalb der Kandidaten (volle Auswahl); ob er in
+        // den Plan passt, entscheidet der Server beim dauerhaften Tausch.
+        guard auftrag.tauschbar else { return false }
         gewaehlt = kandidat
         if dauerhaft {
             // Auch offline in die Bestaetigung: "Übernehmen" sagt dort, warum
@@ -415,7 +447,9 @@ final class PlanTauschSitzung {
     func abbrechen() {
         guard case .bestaetigen = schritt else { return }
         fehler = nil
-        schritt = .kandidaten
+        // Ein Grund kam aus der Frage, der Schalter aus der Liste.
+        schritt = grund == nil ? .kandidaten : .entfernen
+        if grund != nil { grund = nil; dauerhaft = false }
     }
 
     /// "Übernehmen". `true` = die neue Version steht beim Server, das Sheet

@@ -259,47 +259,83 @@ struct PlanLeiserKnopf: View {
     }
 }
 
-/// "Übung entfernen": die drei Gruende (Entwurf, Tim liest die Texte vor dem
-/// Merge). Ohne Alternative im Baustein nur "Überspringen", das nichts merkt
-/// und nichts sendet. Die dauerhaften Gruende brauchen Verbindung und sagen es.
+/// Entwurf 4 "Warum wechseln?": drei Zeilen wie Radio-Knoepfe, "Heute
+/// auslassen" vorgewaehlt, ohne Erklaertext darunter. "Übung wechseln" ist
+/// die eine Akzentflaeche. "Übung gefällt mir nicht" braucht Verbindung und
+/// sagt es.
 struct PlanEntfernenFrage: View {
     let sitzung: PlanTauschSitzung
     let beiFertig: () -> Void
 
     private var auftrag: PlanTauschAuftrag { sitzung.auftrag }
 
+    /// Was heute dran war: der Ersatz eines frueheren Tauschs, sonst die Planuebung.
+    private var alt: String { auftrag.ersatzName ?? auftrag.name }
+
+    private var titel: String {
+        sitzung.ersatz.map { "\($0.name) statt \(alt)" } ?? "\(alt) auslassen"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            Text(auftrag.name.uppercased())
-                .font(.system(size: 22, weight: .black))
-                .tracking(-0.5)
-                .foregroundStyle(DesignSystem.Color.text)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityAddTraits(.isHeader)
-            Text(auftrag.kandidaten.isEmpty
-                 ? "Dafür gibt es hier keine andere Übung."
-                 : "Warum möchtest du sie nicht machen?")
-                .font(.system(size: 14))
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .fixedSize(horizontal: false, vertical: true)
-            ForEach(auftrag.entfernOptionen, id: \.titel) { option in
-                let gesperrt = option.serverGrund != nil && !sitzung.dauerhaftMoeglich
-                SecondaryButton(title: option.titel) {
-                    if option == .ueberspringen { beiFertig() } else { sitzung.grundWaehlen(option) }
-                }
-                .disabled(gesperrt)
-                .opacity(gesperrt ? 0.5 : 1)
-                .accessibilityHint(gesperrt ? "Braucht Verbindung" : "")
-            }
-            if auftrag.entfernOptionen.contains(where: { $0.serverGrund != nil }), !sitzung.dauerhaftMoeglich {
-                Text("Braucht Verbindung")
-                    .font(.system(size: 12, weight: .semibold))
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                Text(titel.uppercased())
+                    .font(.system(size: 20, weight: .black))
+                    .tracking(-0.4)
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
+                Text("Warum wechselst du?")
+                    .font(.system(size: 14))
                     .foregroundStyle(DesignSystem.Color.textMuted)
             }
+            VStack(spacing: 0) {
+                ForEach(sitzung.optionen, id: \.titel) { option in
+                    zeile(option)
+                }
+            }
+            PrimaryButton(title: "Übung wechseln") {
+                if sitzung.optionBestaetigen() { beiFertig() }
+            }
+                .padding(.top, DesignSystem.Spacing.s4)
             PlanLeiserKnopf(titel: "Schließen", aktion: beiFertig)
         }
         .padding(.horizontal, 18)
         .padding(.top, 28)
         .padding(.bottom, DesignSystem.Spacing.s8)
+    }
+
+    private func zeile(_ option: PlanTausch.EntfernOption) -> some View {
+        let an = sitzung.gewaehlteOption == option
+        let gesperrt = !sitzung.optionMoeglich(option)
+        return Button {
+            sitzung.optionAuswaehlen(option)
+        } label: {
+            HStack(spacing: DesignSystem.Spacing.s12) {
+                ZStack {
+                    Circle().stroke(an ? DesignSystem.Color.text : DesignSystem.Color.line, lineWidth: 1.5)
+                    if an { Circle().fill(DesignSystem.Color.text).padding(5) }
+                }
+                .frame(width: 22, height: 22)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(option.titel)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Color.text)
+                    if gesperrt && option.serverGrund != nil {
+                        Text("Braucht Verbindung")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressButtonStyle())
+        .disabled(gesperrt)
+        .opacity(gesperrt ? 0.5 : 1)
+        .accessibilityHint(gesperrt && option.serverGrund != nil ? "Braucht Verbindung" : "")
+        .accessibilityAddTraits(an ? [.isButton, .isSelected] : .isButton)
     }
 }

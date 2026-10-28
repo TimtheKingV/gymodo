@@ -713,60 +713,155 @@ struct PlanTauschTests {
         #expect(kandidaten.map(\.exerciseId) == ["e8", "e9"])
     }
 
-    @Test("Belegt tauscht nur heute: kein Serveraufruf, nichts gemerkt")
-    func belegtRuftKeinenServer() async throws {
-        let ablauf = Self.vorbereitet()
-        let client = TauschClientAttrappe()
-        let umgebung = Umgebung()
-        let auftrag = Self.auftrag("A0", ablauf: ablauf)
-        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: umgebung)
+    /// Ein Ersatz von der vollen Auswahl: steht in keiner Kandidatenliste des Plans.
+    static let fremd = TauschKandidat(exerciseId: "e77", modelId: "em-m77", name: "Fremdpresse", geraet: nil,
+                                      muskeln: nil, hauptmuskeln: ["chest"], vorschaubildModell: nil)
 
-        sut.entfernen()
-        #expect(sut.schritt == .entfernen)
-        sut.grundWaehlen(.belegt)
-        #expect(sut.schritt == .kandidaten)
-        #expect(sut.grund == nil)
-        #expect(!sut.dauerhaft)
-        let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
-        #expect(sut.waehlen(schraeg))
-        #expect(ablauf.zustand?.positionen.first?.status == .getauscht)
-        #expect(await client.aufrufe.isEmpty)
-        #expect(umgebung.neuGeladen == 0)
-    }
-
-    @Test("Gibt es hier nicht: Tausch sendet grund und ortId des aktiven Ortes")
-    func nichtVorhandenSendetGrund() async throws {
-        let ablauf = Self.vorbereitet()
-        let client = TauschClientAttrappe()
-        let umgebung = Umgebung()
+    static func mitOrt(_ ablauf: TrainingsplanAblaufStore) -> PlanTauschAuftrag {
         let heute = Self.heute(ablauf: ablauf)
-        let auftrag = PlanTausch.auftrag(position: heute.einheit.positionen[0], heute: heute,
-                                         bootstrap: T.bootstrap(), ort: "s1")
-        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: umgebung)
-        let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
-
-        sut.entfernen()
-        sut.grundWaehlen(.nichtVorhanden)
-        #expect(sut.dauerhaft)
-        #expect(!sut.waehlen(schraeg))
-        #expect(await client.aufrufe.isEmpty)
-        #expect(await sut.uebernehmen())
-        #expect(await client.aufrufe == [.init(planId: "p1", einheitKey: "A", positionKey: "A0", exerciseId: "e7",
-                                               modelId: "em-m7", grund: "nicht_vorhanden", ortId: "s1")])
+        return PlanTausch.auftrag(position: heute.einheit.positionen[0], heute: heute,
+                                  bootstrap: T.bootstrap(), ort: "s1")
     }
 
-    @Test("Gefaellt mir nicht sendet den Grund mit dem Ort; ohne Grund geht keiner mit")
+    @Test("Heute auslassen und Belegt verhalten sich gleich: nur lokal, kein Client, Merkliste unberuehrt")
+    func heuteAuslassenUndBelegtVerhaltenSichGleich() async throws {
+        for option in [PlanTausch.EntfernOption.heuteAuslassen, .belegt] {
+            let ablauf = Self.vorbereitet()
+            let client = TauschClientAttrappe()
+            let umgebung = Umgebung()
+            let sut = Self.sitzung(Self.mitOrt(ablauf), ablauf: ablauf, client: client, umgebung: umgebung)
+
+            sut.ersatzGewaehlt(Self.fremd)
+            #expect(sut.schritt == .entfernen)
+            // Vorbelegt: Heute auslassen.
+            #expect(sut.gewaehlteOption == .heuteAuslassen)
+            sut.optionAuswaehlen(option)
+            #expect(sut.gewaehlteOption == option)
+            #expect(sut.optionBestaetigen())
+
+            let a0 = try #require(ablauf.zustand?.positionen.first)
+            #expect(a0.status == .getauscht)
+            #expect(a0.ersatzExerciseId == "e77")
+            #expect(a0.hauptmuskeln == ["chest"])
+            #expect(sut.grund == nil)
+            #expect(!sut.dauerhaft)
+            #expect(await client.aufrufe.isEmpty)
+            #expect(umgebung.neuGeladen == 0)
+        }
+    }
+
+    @Test("Ohne Ersatz nur zwei Optionen")
+    func ohneErsatzNurZweiOptionen() {
+        let ablauf = Self.vorbereitet()
+        let auftrag = Self.mitOrt(ablauf)
+        #expect(auftrag.entfernOptionen(mitErsatz: false) == [.heuteAuslassen, .belegt])
+        #expect(auftrag.entfernOptionen(mitErsatz: true) == [.heuteAuslassen, .belegt, .gefaelltNicht])
+
+        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: TauschClientAttrappe(), umgebung: Umgebung())
+        sut.ersatzGewaehlt(nil)
+        #expect(sut.schritt == .entfernen)
+        #expect(sut.optionen == [.heuteAuslassen, .belegt])
+    }
+
+    @Test("Gefaellt mir nicht ohne Ersatz wird nicht angeboten und tut nichts")
+    func gefaelltNichtOhneErsatzNichtAngeboten() async {
+        let ablauf = Self.vorbereitet()
+        let client = TauschClientAttrappe()
+        let sut = Self.sitzung(Self.mitOrt(ablauf), ablauf: ablauf, client: client, umgebung: Umgebung())
+        sut.ersatzGewaehlt(nil)
+
+        sut.optionAuswaehlen(.gefaelltNicht)
+        #expect(sut.gewaehlteOption == .heuteAuslassen)
+        #expect(!sut.grundWaehlen(.gefaelltNicht))
+        #expect(sut.schritt == .entfernen)
+        #expect(sut.grund == nil)
+        #expect(await client.aufrufe.isEmpty)
+    }
+
+    @Test("Gefaellt mir nicht offline ist gesperrt")
+    func gefaelltNichtOfflineGesperrt() async {
+        let ablauf = Self.vorbereitet()
+        let client = TauschClientAttrappe()
+        let umgebung = Umgebung()
+        umgebung.online = false
+        let sut = Self.sitzung(Self.mitOrt(ablauf), ablauf: ablauf, client: client, umgebung: umgebung)
+        sut.ersatzGewaehlt(Self.fremd)
+
+        #expect(!sut.optionMoeglich(.gefaelltNicht))
+        #expect(sut.optionMoeglich(.belegt))
+        sut.optionAuswaehlen(.gefaelltNicht)
+        #expect(sut.gewaehlteOption == .heuteAuslassen)
+        #expect(!sut.grundWaehlen(.gefaelltNicht))
+        #expect(sut.schritt == .entfernen)
+        #expect(ablauf.zustand?.positionen.first?.status == .offen)
+        #expect(await client.aufrufe.isEmpty)
+    }
+
+    @Test("Gefaellt mir nicht mit Ersatz ausserhalb des Bausteins: Fehler bleibt, Nur heute als Rueckfall")
+    func gefaelltNichtMitErsatzAusserhalbBausteinMeldetFehlerUndBietetNurHeute() async throws {
+        let ablauf = Self.vorbereitet()
+        let client = TauschClientAttrappe(fehler: [.validation(message: "x")])
+        let umgebung = Umgebung()
+        let sut = Self.sitzung(Self.mitOrt(ablauf), ablauf: ablauf, client: client, umgebung: umgebung)
+        sut.ersatzGewaehlt(Self.fremd)
+
+        sut.optionAuswaehlen(.gefaelltNicht)
+        // Weiter zur Bestaetigung, nichts geschrieben.
+        #expect(!sut.optionBestaetigen())
+        #expect(sut.schritt == .bestaetigen(Self.fremd))
+        #expect(sut.grund == .gefaelltNicht)
+        #expect(await client.aufrufe.isEmpty)
+
+        #expect(!(await sut.uebernehmen()))
+        #expect(sut.fehler == .validation(message: "x"))
+        #expect(sut.schritt == .bestaetigen(Self.fremd))
+        #expect(await client.aufrufe == [.init(planId: "p1", einheitKey: "A", positionKey: "A0", exerciseId: "e77",
+                                               modelId: "em-m77", grund: "gefaellt_nicht", ortId: "s1")])
+        #expect(ablauf.zustand?.positionen.first?.status == .offen)
+
+        // Rueckfall: nur heute, ohne weiteren Aufruf.
+        #expect(sut.nurHeuteTauschen())
+        let a0 = try #require(ablauf.zustand?.positionen.first)
+        #expect(a0.status == .getauscht)
+        #expect(a0.ersatzExerciseId == "e77")
+        #expect(await client.aufrufe.count == 1)
+    }
+
+    @Test("Abbrechen aus der Bestaetigung eines Grundes fuehrt zurueck zur Frage")
+    func abbrechenFuehrtZurFrage() {
+        let ablauf = Self.vorbereitet()
+        let sut = Self.sitzung(Self.mitOrt(ablauf), ablauf: ablauf, client: TauschClientAttrappe(), umgebung: Umgebung())
+        sut.ersatzGewaehlt(Self.fremd)
+        #expect(!sut.grundWaehlen(.gefaelltNicht))
+        sut.abbrechen()
+        #expect(sut.schritt == .entfernen)
+        #expect(sut.grund == nil)
+    }
+
+    @Test("Ohne Ersatz auslassen setzt ausgelassen, ohne Client")
+    func ohneErsatzAuslassenSetztAusgelassen() async {
+        for option in [PlanTausch.EntfernOption.heuteAuslassen, .belegt] {
+            let ablauf = Self.vorbereitet()
+            let client = TauschClientAttrappe()
+            let sut = Self.sitzung(Self.mitOrt(ablauf), ablauf: ablauf, client: client, umgebung: Umgebung())
+            sut.ersatzGewaehlt(nil)
+
+            #expect(sut.grundWaehlen(option))
+            #expect(ablauf.ausgelassen.contains("A0"))
+            #expect(ablauf.zustand?.positionen.first?.status == .offen)
+            #expect(await client.aufrufe.isEmpty)
+        }
+    }
+
+    @Test("Gefaellt mir nicht sendet den Grund mit dem Ort; der alte Weg ohne Grund keinen")
     func gefaelltNichtUndOhneGrund() async throws {
         let ablauf = Self.vorbereitet()
         let client = TauschClientAttrappe()
-        let heute = Self.heute(ablauf: ablauf)
-        let auftrag = PlanTausch.auftrag(position: heute.einheit.positionen[0], heute: heute,
-                                         bootstrap: T.bootstrap(), ort: "s1")
+        let auftrag = Self.mitOrt(ablauf)
         let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: Umgebung())
         let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
-        sut.entfernen()
-        sut.grundWaehlen(.gefaelltNicht)
-        _ = sut.waehlen(schraeg)
+        sut.ersatzGewaehlt(schraeg)
+        #expect(!sut.grundWaehlen(.gefaelltNicht))
         #expect(await sut.uebernehmen())
 
         // Der alte Weg (Schalter) schickt weder Grund noch Ort.
@@ -780,37 +875,23 @@ struct PlanTauschTests {
         #expect(aufrufe.map(\.ortId) == ["s1", nil])
     }
 
-    @Test("Ohne Alternative bietet das Sheet nur Ueberspringen, ohne Serveraufruf")
-    func ohneAlternativeNurUeberspringen() async {
+    @Test("Der alte Weg waehlt auch einen Ersatz ausserhalb der Kandidaten")
+    func waehlenNimmtFremdenErsatz() {
         let ablauf = Self.vorbereitet()
-        let client = TauschClientAttrappe()
-        let auftrag = Self.auftrag("A1", ablauf: ablauf)  // ziehen: keine Kandidaten
-        #expect(auftrag.kandidaten.isEmpty)
-        #expect(auftrag.zeigtEntfernen)
-        #expect(auftrag.entfernOptionen == [.ueberspringen])
-
-        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: Umgebung())
-        sut.entfernen()
-        sut.grundWaehlen(.nichtVorhanden)
-        #expect(sut.grund == nil)
-        #expect(sut.schritt == .entfernen)
-        #expect(await client.aufrufe.isEmpty)
-
-        // Mit Alternativen die drei Gruende; Cardio und Erledigtes entfernt man nicht.
-        let heute = Self.heute(ablauf: ablauf)
-        let mitOrt = PlanTausch.auftrag(position: heute.einheit.positionen[0], heute: heute, bootstrap: T.bootstrap(), ort: "s1")
-        #expect(mitOrt.entfernOptionen == [.belegt, .nichtVorhanden, .gefaelltNicht])
-        // Ohne Ort laesst sich "Gibt es hier nicht" nicht zuordnen.
-        #expect(Self.auftrag("A0", ablauf: ablauf).entfernOptionen == [.belegt, .gefaelltNicht])
-        #expect(!Self.auftrag("A2", ablauf: ablauf).zeigtEntfernen)
+        let sut = Self.sitzung(Self.auftrag("A0", ablauf: ablauf), ablauf: ablauf,
+                               client: TauschClientAttrappe(), umgebung: Umgebung())
+        #expect(sut.waehlen(Self.fremd))
+        #expect(ablauf.zustand?.positionen.first?.ersatzExerciseId == "e77")
     }
 
-    @Test("Texte der drei Gruende")
+    @Test("Texte der drei Optionen")
     func grundTexte() {
+        #expect(PlanTausch.EntfernOption.heuteAuslassen.titel == "Heute auslassen")
         #expect(PlanTausch.EntfernOption.belegt.titel == "Belegt")
-        #expect(PlanTausch.EntfernOption.nichtVorhanden.titel == "Gibt es hier nicht")
-        #expect(PlanTausch.EntfernOption.gefaelltNicht.titel == "Gefällt mir nicht")
-        #expect(PlanTausch.EntfernOption.ueberspringen.titel == "Überspringen")
+        #expect(PlanTausch.EntfernOption.gefaelltNicht.titel == "Übung gefällt mir nicht")
+        #expect(PlanTausch.EntfernOption.heuteAuslassen.serverGrund == nil)
+        #expect(PlanTausch.EntfernOption.belegt.serverGrund == nil)
+        #expect(PlanTausch.EntfernOption.gefaelltNicht.serverGrund == "gefaellt_nicht")
     }
 }
 
@@ -910,10 +991,9 @@ struct PlanTauschStudioTests {
         let auftrag = Self.auftrag(Self.bootstrapImStudio(), ort: "s1")
         let sut = PlanTauschTests.sitzung(auftrag, ablauf: ablauf, client: TauschClientAttrappe(),
                                           umgebung: .init())
-        sut.entfernen()
-        sut.grundWaehlen(.belegt)
         let schulter = try #require(auftrag.kandidaten.first { $0.exerciseId == "e8" })
-        #expect(sut.waehlen(schulter))
+        sut.ersatzGewaehlt(schulter)
+        #expect(sut.grundWaehlen(.belegt))
         let position = try #require(ablauf.zustand?.positionen.first { $0.key == "A0" })
         #expect(position.hauptmuskeln == ["deltoid_front"])
     }
