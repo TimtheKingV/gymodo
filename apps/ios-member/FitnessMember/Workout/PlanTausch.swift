@@ -62,6 +62,22 @@ struct PlanTauschAuftrag: Equatable, Identifiable {
     /// sonst nichts (`TrainingsplanAblauf.tauschen`), und eine Wahl, die nichts
     /// bewirkt, waere eine Luege.
     let tauschbar: Bool
+    /// Saetze der wirksamen Uebung (Ersatz, sonst geplant) in dieser Session,
+    /// an welchem Geraet auch immer.
+    var satzGemacht = 0
+    /// Die Satzvorgabe der Position.
+    var satzGeplant = 0
+    /// Cardio zaehlt keine Saetze.
+    var cardio = false
+    /// Heute ausgelassen: das Sheet bietet "Doch machen" statt Start.
+    var istAusgelassen = false
+
+    /// Der Hauptknopf: nach angefangenen Saetzen "Weiter mit Satz X" -- auch
+    /// wenn die Position schon erledigt ist (der erste Satz hakt sie ab, das
+    /// Mitglied darf trotzdem weitermachen).
+    var weiterTitel: String {
+        !cardio && satzGemacht > 0 ? "Weiter mit Satz \(satzGemacht + 1)" : "Übung starten"
+    }
 
     var id: String { "\(planId):\(einheitKey):\(position.key)" }
 
@@ -161,7 +177,8 @@ enum PlanTausch {
     /// die Einheit schon fuehrt, kommen aus dem Ablauf (gebundene Version,
     /// wie die Zeile selbst -- `PlanAnzeige.planstellen`).
     static func auftrag(position: TrainingsplanPosition, heute: PlanAnzeige.Heute,
-                        bootstrap: BootstrapResponse?, ort: String? = nil) -> PlanTauschAuftrag {
+                        bootstrap: BootstrapResponse?, ort: String? = nil,
+                        bloecke: [LokalerBlock] = []) -> PlanTauschAuftrag {
         let stellen = PlanAnzeige.planstellen(einheit: heute.einheit, zustand: heute.zustand)
         let stelle = stellen.first { $0.key == position.key }
         // Geplant und heute getauscht, auch die eigene: die geplante Uebung
@@ -183,7 +200,11 @@ enum PlanTausch {
             kandidaten: kandidaten(position: position, plan: heute.plan, ort: ort,
                                    belegt: belegt, uebungen: bootstrap),
             ort: ort,
-            tauschbar: !cardio && (status == .offen || status == .getauscht))
+            tauschbar: !cardio && (status == .offen || status == .getauscht),
+            satzGemacht: PlanAnzeige.satzzahl(exerciseId: stelle?.wirksam ?? position.exerciseId, bloecke: bloecke),
+            satzGeplant: position.saetze,
+            cardio: cardio,
+            istAusgelassen: heute.ausgelassen.contains(position.key))
     }
 
     // MARK: - Texte

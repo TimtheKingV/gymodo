@@ -7,10 +7,11 @@ extension PlanTausch {
     /// Zeile dieselbe Einheit und denselben Status meinen.
     @MainActor
     static func auftrag(position: TrainingsplanPosition, katalog: CatalogStore,
-                        ablauf: TrainingsplanAblaufStore) -> PlanTauschAuftrag? {
+                        ablauf: TrainingsplanAblaufStore, bloecke: [LokalerBlock]) -> PlanTauschAuftrag? {
         guard let heute = PlanAnzeige.heute(katalog: katalog, ablauf: ablauf) else { return nil }
         return auftrag(position: position, heute: heute, bootstrap: katalog.bootstrap,
-                       ort: ort(aktivesStudio: katalog.activeStudioId, bootstrap: katalog.bootstrap))
+                       ort: ort(aktivesStudio: katalog.activeStudioId, bootstrap: katalog.bootstrap),
+                       bloecke: bloecke)
     }
 }
 
@@ -59,6 +60,10 @@ private struct PlanPositionSheetHuelle: ViewModifier {
                     }),
                 fotoLader: apiClient, vorschauLader: vorschauLader,
                 beiFertig: { self.auftrag = nil },
+                beiDochMachen: { [planAblauf] in
+                    planAblauf.auslassenZuruecknehmen(positionKey: auftrag.position.key)
+                    self.auftrag = nil
+                },
                 beiStarten: { uebungId in
                     self.auftrag = nil
                     beiStarten(uebungId)
@@ -72,8 +77,8 @@ private struct PlanPositionSheetHuelle: ViewModifier {
 /// Kandidaten (3.2) und mit Schalter die Bestaetigung (3.3) -- ein Sheet,
 /// das seinen Inhalt wechselt, statt drei gestapelter.
 ///
-/// 3.1 hat bewusst keine Akzentflaeche: trainiert wird ueber Scan oder
-/// Geraeteliste wie sonst.
+/// 3.1: der Hauptknopf "Weiter mit Satz X" / "Übung starten" ist die
+/// einzige Akzentflaeche des Sheets.
 struct PlanPositionSheet: View {
     @State private var sitzung: PlanTauschSitzung
     let fotoLader: any GeraetefotosLoading
@@ -82,14 +87,18 @@ struct PlanPositionSheet: View {
     /// "Gerät wählen": die Uebung der Position starten, an welchem Geraet
     /// auch immer (Spec 5). Schliesst das Sheet; die Wurzel oeffnet die Auswahl.
     var beiStarten: ((String) -> Void)?
+    /// "Doch machen": nimmt das Auslassen von heute zurueck.
+    var beiDochMachen: (() -> Void)?
 
     /// Gemessene Hoehe fuer 3.1/3.3: so hoch wie der Inhalt, wie der Drawer.
     @State private var hoehe: CGFloat = 340
     @State private var bilder: [String: UIImage] = [:]
 
     init(sitzung: PlanTauschSitzung, fotoLader: any GeraetefotosLoading, vorschauLader: VorschauLader,
-         beiFertig: @escaping () -> Void, beiStarten: ((String) -> Void)? = nil) {
+         beiFertig: @escaping () -> Void, beiDochMachen: (() -> Void)? = nil,
+         beiStarten: ((String) -> Void)? = nil) {
         self.beiStarten = beiStarten
+        self.beiDochMachen = beiDochMachen
         _sitzung = State(initialValue: sitzung)
         self.fotoLader = fotoLader
         self.vorschauLader = vorschauLader
@@ -165,23 +174,25 @@ struct PlanPositionSheet: View {
             if let vorgesehen = auftrag.vorgesehen {
                 absatz(vorgesehen)
             }
-            // Die Position meint die Uebung, nicht ein Geraet: die Auswahl
-            // zeigt nur Geraete, die sie anbieten. Erledigte Positionen
-            // starten nichts mehr.
-            if let beiStarten, auftrag.status != .erledigt {
-                SecondaryButton(title: "Gerät wählen") { beiStarten(auftrag.uebungId) }
+            // Die Position meint die Uebung, nicht ein Geraet. Auch eine
+            // erledigte Position bleibt startbar: der erste Satz hakt sie ab,
+            // weitere Saetze sind erlaubt ("Weiter mit Satz X").
+            if auftrag.istAusgelassen {
+                if let beiDochMachen {
+                    PrimaryButton(title: "Doch machen") { beiDochMachen() }
+                        .accessibilityHint("Nimmt das Auslassen zurück")
+                }
+            } else if let beiStarten {
+                PrimaryButton(title: auftrag.weiterTitel) { beiStarten(auftrag.uebungId) }
                     .accessibilityHint("Zeigt Geräte, an denen du \(auftrag.ersatzName ?? auftrag.name) machen kannst")
             }
             // Ohne Kandidaten gar kein Knopf -- nie eine leere Liste
             // (Review Focus 3); erledigt, optional und Cardio tauschen nicht.
+            // Task 6 ersetzt das Ziel durch die volle Uebungsauswahl.
             if auftrag.zeigtAndereUebung {
                 SecondaryButton(title: "Andere Übung wählen") { sitzung.andereUebung() }
                     .padding(.top, DesignSystem.Spacing.s4)
                     .accessibilityHint("Zeigt Übungen, die hier auch passen")
-            }
-            if auftrag.zeigtEntfernen {
-                PlanLeiserKnopf(titel: "Übung entfernen") { sitzung.entfernen() }
-                    .accessibilityHint("Fragt, warum, und bietet eine andere Übung an")
             }
             PlanLeiserKnopf(titel: "Schließen", aktion: beiFertig)
         }

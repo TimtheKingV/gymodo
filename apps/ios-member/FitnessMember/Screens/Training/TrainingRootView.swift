@@ -223,7 +223,7 @@ struct TrainingRootView: View {
             }
             .environment(videoVorrat)
             .planPositionSheet(auftrag: $planPosition, apiClient: apiClient, vorschauLader: vorschauLader) { uebungId in
-                pfad.append(.planUebung(exerciseId: uebungId))
+                planUebungStarten(uebungId)
             }
             .sheet(item: $uebungsstart, onDismiss: zirkelPlanungOeffnen) { auftrag in
                 if let modell = modell(station: auftrag.station, exerciseId: auftrag.exerciseId,
@@ -403,7 +403,8 @@ struct TrainingRootView: View {
                     }
                     // Entwurf 2.1/2.2; ohne Plan im aktiven Studio nichts.
                     PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
-                        planPosition = PlanTausch.auftrag(position: $0, katalog: katalog, ablauf: planAblauf)
+                        planPosition = PlanTausch.auftrag(position: $0, katalog: katalog, ablauf: planAblauf,
+                                                          bloecke: session?.bloecke ?? [])
                     }
                 }
             } trainingsinhalt: {
@@ -898,6 +899,19 @@ struct TrainingRootView: View {
     /// sie an einem anderen Ort ("Auch in X suchen"), wird erst gewechselt
     /// oder gefragt, dann geoeffnet.
     /// `uebungId`: ein Uebungstreffer der Suche -- dann direkt diese Uebung.
+    /// Tipp auf "Weiter…"/"Übung starten" im Plan-Sheet: bietet genau ein
+    /// Geraet die Uebung an, geht es direkt los; sonst (mehrere oder keines,
+    /// dann der Leerzustand) in die Auswahl (`PlanStart`).
+    private func planUebungStarten(_ uebungId: String) {
+        let stationen = katalog.bootstrap.map {
+            GeraeteAuswahl.stationen(bootstrap: $0, ort: katalog.ort, uebungId: uebungId)
+        } ?? []
+        switch PlanStart.ziel(stationen: stationen, uebungId: uebungId) {
+        case .direkt(let station): waehle(station, uebungId: uebungId)
+        case .auswahl, .keine: pfad.append(.planUebung(exerciseId: uebungId))
+        }
+    }
+
     private func waehle(_ station: Station, uebungId: String? = nil) {
         switch ScanEntscheidung.fuer(station: station, ort: katalog.ort,
                                      offeneEinheit: sessions.aktiveSession()) {

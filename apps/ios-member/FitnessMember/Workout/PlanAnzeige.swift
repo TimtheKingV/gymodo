@@ -444,7 +444,8 @@ enum PlanAnzeige {
         return nil
     }
 
-    private static func satzzahl(exerciseId: String, bloecke: [LokalerBlock]) -> Int {
+    /// Saetze der Uebung ueber alle Geraete der Session.
+    static func satzzahl(exerciseId: String, bloecke: [LokalerBlock]) -> Int {
         bloecke.filter { $0.exerciseId == exerciseId }.reduce(0) { $0 + $1.saetze.count }
     }
 

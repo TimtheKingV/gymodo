@@ -142,18 +142,36 @@ struct PlanTauschTests {
             directory: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
     }
 
-    static func heute(_ plan: Trainingsplan = T.plan(), ablauf: TrainingsplanAblaufStore) -> PlanAnzeige.Heute {
+    static func heute(_ plan: Trainingsplan = T.plan(), ablauf: TrainingsplanAblaufStore,
+                      ausgelassen: Set<String> = []) -> PlanAnzeige.Heute {
         PlanAnzeige.heute(bootstrap: T.bootstrap(plan: plan),
                           ablaufPlanId: ablauf.planId, ablaufEinheitKey: ablauf.einheitKey,
                           ablaufZustand: ablauf.zustand, naechsteEinheitKey: ablauf.naechsteEinheitKey,
-                          ablaufGebunden: ablauf.gebundeneSessionId != nil)!
+                          ablaufGebunden: ablauf.gebundeneSessionId != nil, ausgelassen: ausgelassen)!
     }
 
     static func auftrag(_ key: String, ablauf: TrainingsplanAblaufStore,
-                        plan: Trainingsplan = T.plan()) -> PlanTauschAuftrag {
-        let heute = heute(plan, ablauf: ablauf)
+                        plan: Trainingsplan = T.plan(), bloecke: [LokalerBlock] = [],
+                        ausgelassen: Set<String> = []) -> PlanTauschAuftrag {
+        let heute = heute(plan, ablauf: ablauf, ausgelassen: ausgelassen)
         let position = heute.einheit.positionen.first { $0.key == key }!
-        return PlanTausch.auftrag(position: position, heute: heute, bootstrap: T.bootstrap(plan: plan))
+        return PlanTausch.auftrag(position: position, heute: heute, bootstrap: T.bootstrap(plan: plan),
+                                  bloecke: bloecke)
+    }
+
+    static func block(_ machineId: String, _ exerciseId: String, saetze: Int) -> LokalerBlock {
+        LokalerBlock(machineId: machineId, exerciseId: exerciseId, saetze: (1...saetze).map { i in
+            LokalerSatz(id: UUID(), setIndex: i, load: 50, volume: 10, problemFlag: false, problemReason: nil,
+                        performedAt: jetzt.addingTimeInterval(Double(i) * 60))
+        })
+    }
+
+    /// A0 (e1) nach `saetze` Saetzen: der erste Satz setzt den Status auf erledigt.
+    static func nachSaetzen(_ saetze: Int) -> (TrainingsplanAblaufStore, [LokalerBlock]) {
+        let ablauf = vorbereitet()
+        _ = ablauf.nachSatz(sessionId: UUID(),
+                            satz: AblaufSatz(exerciseId: "e1", hauptmuskeln: ["chest"], cardio: false), jetzt: jetzt)
+        return (ablauf, saetze > 0 ? [block("m1", "e1", saetze: saetze)] : [])
     }
 
     /// Bootstrap neu laden heisst hier: der Ablauf sieht die Antwort des
@@ -481,6 +499,56 @@ struct PlanTauschTests {
             """))
         #expect(optional.status == .optional)
         #expect(!optional.tauschbar)
+    }
+
+    // MARK: - Weiter und Rueckkehr
+
+    @Test("Nach zwei Saetzen steht Weiter mit Satz 3, obwohl die Position erledigt ist")
+    func weiterTitelNachZweiSaetzen() {
+        let (ablauf, bloecke) = Self.nachSaetzen(2)
+        let auftrag = Self.auftrag("A0", ablauf: ablauf, bloecke: bloecke)
+        #expect(auftrag.status == .erledigt)
+        #expect(auftrag.satzGemacht == 2)
+        #expect(auftrag.satzGeplant == 3)
+        #expect(auftrag.weiterTitel == "Weiter mit Satz 3")
+    }
+
+    @Test("Ohne Saetze steht Übung starten")
+    func weiterTitelOhneSaetze() {
+        let ablauf = Self.vorbereitet()
+        let auftrag = Self.auftrag("A0", ablauf: ablauf)
+        #expect(auftrag.satzGemacht == 0)
+        #expect(auftrag.weiterTitel == "Übung starten")
+        // Cardio zaehlt nie Saetze.
+        let cardio = Self.auftrag("A2", ablauf: ablauf, bloecke: [Self.block("m4", "c1", saetze: 2)])
+        #expect(cardio.weiterTitel == "Übung starten")
+    }
+
+    @Test("Eine erledigte Position bleibt startbar: Weiter statt Sperre")
+    func erledigtePositionBleibtStartbar() {
+        let (ablauf, bloecke) = Self.nachSaetzen(1)
+        let auftrag = Self.auftrag("A0", ablauf: ablauf, bloecke: bloecke)
+        #expect(auftrag.status == .erledigt)
+        #expect(auftrag.weiterTitel == "Weiter mit Satz 2")
+        #expect(!auftrag.istAusgelassen)
+    }
+
+    @Test("Der Ersatz zaehlt, nicht die geplante Uebung")
+    func satzGemachtZaehltDenErsatz() {
+        let ablauf = Self.vorbereitet()
+        ablauf.tauschen(positionKey: "A0", ersatz: (exerciseId: "e8", hauptmuskeln: ["deltoid_front"]))
+        let bloecke = [Self.block("m1", "e1", saetze: 3), Self.block("m8", "e8", saetze: 1)]
+        let auftrag = Self.auftrag("A0", ablauf: ablauf, bloecke: bloecke)
+        #expect(auftrag.satzGemacht == 1)
+        #expect(auftrag.weiterTitel == "Weiter mit Satz 2")
+    }
+
+    @Test("Eine ausgelassene Position zeigt Doch machen")
+    func ausgelassenePositionZeigtDochMachen() {
+        let ablauf = Self.vorbereitet()
+        #expect(!Self.auftrag("A0", ablauf: ablauf).istAusgelassen)
+        #expect(Self.auftrag("A0", ablauf: ablauf, ausgelassen: ["A0"]).istAusgelassen)
+        #expect(!Self.auftrag("A1", ablauf: ablauf, ausgelassen: ["A0"]).istAusgelassen)
     }
 
     @Test("Der Auftrag nennt die Uebung, die ein Start meint: Ersatz vor Plan")
