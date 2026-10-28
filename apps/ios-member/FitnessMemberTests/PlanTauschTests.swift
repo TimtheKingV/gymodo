@@ -736,3 +736,118 @@ struct PlanTauschTests {
         #expect(PlanTausch.EntfernOption.ueberspringen.titel == "Überspringen")
     }
 }
+
+/// Realistische Form: ein Studio-Geraet hat sein EIGENES equipment_models-
+/// Zeile (`sm-…`) und verweist ueber `catalogModelId` auf den Katalogtyp
+/// (`em-…`); Planposition und Alternativen nennen den Katalogtyp.
+@MainActor
+@Suite("PlanTauschStudio")
+struct PlanTauschStudioTests {
+    typealias T = PlanTauschTestdaten
+
+    static func uebung(_ id: String, _ name: String, _ muskeln: String) -> String {
+        #"{"id":"\#(id)","name":"\#(name)","volumeKind":"reps","targetMin":8,"targetMax":12,"muscles":\#(muskeln)}"#
+    }
+
+    static let schulter = #"[{"key":"deltoid_front","name":"Schulter vorn","role":"primary"}]"#
+
+    static func geraet(_ id: String, katalog: String, label: String, uebung: String) -> BootstrapResponse.Machine {
+        GeraetTestdaten.dekodiere("""
+        {"id":"\(id)","studioId":"s1","label":"\(label)","locationNote":null,"status":"active",
+         "tokenHashes":[],"visitCount":0,
+         "equipmentModel":{"id":"sm-\(id)","name":"Modell \(id)","manufacturer":null,"category":"kraft","photoPath":null,
+           "loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,"settingDefinitions":[],
+           "catalogModelId":"\(katalog)"},
+         "exercises":[\(uebung)]}
+        """)
+    }
+
+    static func typ(_ id: String, uebung: String) -> BootstrapResponse.Catalog.EquipmentType {
+        GeraetTestdaten.dekodiere("""
+        {"id":"\(id)","name":"Typ \(id)","manufacturer":null,"photoPath":null,"category":"kraft",
+         "loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,"settingDefinitions":[],
+         "exercises":[\(uebung)]}
+        """)
+    }
+
+    /// Mit Studio-Geraeten (e8 an Typ em-m8, e7 an em-m7, e1 an em-m1), Katalog daneben.
+    static func bootstrapImStudio() -> BootstrapResponse {
+        let plan = T.plan()
+        var b = BootstrapResponse(
+            member: .init(displayName: nil, plans: [plan]),
+            studios: [.init(id: "s1", name: "Nord", timezone: "Europe/Berlin")],
+            machines: [
+            geraet("m1", katalog: "em-m1", label: "Gerät 12", uebung: uebung("e1", "Brustpresse", T.brust)),
+            geraet("m7", katalog: "em-m7", label: "Gerät 14", uebung: uebung("e7", "Schrägbankpresse", T.brust)),
+            geraet("m8", katalog: "em-m8", label: "Gerät 9", uebung: uebung("e8", "Schulterdrücken", schulter)),
+            ], calibrations: [], lastSets: [])
+        b.catalog = nil
+        return b
+    }
+
+    /// Freies Training: keine Geraete, nur der Katalog.
+    static func bootstrapFrei() -> BootstrapResponse {
+        let plan = T.plan()
+        var b = BootstrapResponse(
+            member: .init(displayName: nil, plans: [plan]),
+            studios: [.init(id: "s1", name: "Nord", timezone: "Europe/Berlin")],
+            machines: [], calibrations: [], lastSets: [])
+        let katalog = BootstrapResponse.Catalog(studioId: "kat1", equipmentTypes: [
+            typ("em-m1", uebung: uebung("e1", "Brustpresse", T.brust)),
+            typ("em-m7", uebung: uebung("e7", "Schrägbankpresse", T.brust)),
+            typ("em-m8", uebung: uebung("e8", "Schulterdrücken", schulter)),
+        ])
+        b.catalog = katalog
+        return b
+    }
+
+    static func auftrag(_ bootstrap: BootstrapResponse, ort: String?) -> PlanTauschAuftrag {
+        let plan = T.plan()
+        let heute = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: nil)
+        return PlanTausch.auftrag(position: plan.einheiten[0].positionen[0], heute: heute,
+                                  bootstrap: bootstrap, ort: ort)
+    }
+
+    @Test("Studio: Kandidaten tragen Geraet und Muskeln ueber catalogModelId")
+    func kandidatenImStudio() throws {
+        let kandidaten = Self.auftrag(Self.bootstrapImStudio(), ort: "s1").kandidaten
+        let schulter = try #require(kandidaten.first { $0.exerciseId == "e8" })
+        #expect(schulter.geraet == "Gerät 9")
+        #expect(schulter.hauptmuskeln == ["deltoid_front"])
+        #expect(schulter.muskeln == "Schulter vorn")
+        let schraeg = try #require(kandidaten.first { $0.exerciseId == "e7" })
+        #expect(schraeg.geraet == "Gerät 14")
+        #expect(schraeg.hauptmuskeln == ["chest"])
+    }
+
+    @Test("Studio: Vorgesehen am Geraet findet das Geraet ueber catalogModelId")
+    func vorgesehenImStudio() {
+        let plan = T.plan()
+        let text = PlanTausch.vorgesehen(position: plan.einheiten[0].positionen[0], bootstrap: Self.bootstrapImStudio())
+        #expect(text?.contains("Gerät 12") == true)
+    }
+
+    @Test("Studio: Belegt-Tausch schreibt die Hauptmuskeln der neuen Uebung in den Lauf")
+    func belegtBehaeltMuskeln() throws {
+        let ablauf = PlanTauschTests.vorbereitet()
+        let auftrag = Self.auftrag(Self.bootstrapImStudio(), ort: "s1")
+        let sut = PlanTauschTests.sitzung(auftrag, ablauf: ablauf, client: TauschClientAttrappe(),
+                                          umgebung: .init())
+        sut.entfernen()
+        sut.grundWaehlen(.belegt)
+        let schulter = try #require(auftrag.kandidaten.first { $0.exerciseId == "e8" })
+        #expect(sut.waehlen(schulter))
+        let position = try #require(ablauf.zustand?.positionen.first { $0.key == "A0" })
+        #expect(position.hauptmuskeln == ["deltoid_front"])
+    }
+
+    @Test("Freies Training: ohne Geraete Muskeln und Bezeichnung aus dem Katalogtyp")
+    func freiesTrainingKatalogFallback() throws {
+        let kandidaten = Self.auftrag(Self.bootstrapFrei(), ort: "kat1").kandidaten
+        let schulter = try #require(kandidaten.first { $0.exerciseId == "e8" })
+        #expect(schulter.hauptmuskeln == ["deltoid_front"])
+        #expect(schulter.muskeln == "Schulter vorn")
+        #expect(schulter.geraet == "Typ em-m8")
+        #expect(schulter.name == "Schulterdrücken")
+    }
+}

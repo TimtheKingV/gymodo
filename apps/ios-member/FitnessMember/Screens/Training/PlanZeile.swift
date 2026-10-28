@@ -30,7 +30,8 @@ extension PlanZeilenModell {
     /// einem Studio-Geraet.
     static func aus(_ position: TrainingsplanPosition, bootstrap: BootstrapResponse?) -> PlanZeilenModell {
         let maschine = bootstrap?.machines.first {
-            $0.equipmentModel.id == position.modelId && $0.exercises.contains { $0.id == position.exerciseId }
+            ($0.equipmentModel.id == position.modelId || $0.equipmentModel.catalogModelId == position.modelId)
+                && $0.exercises.contains { $0.id == position.exerciseId }
         }
         return PlanZeilenModell(
             id: position.key,

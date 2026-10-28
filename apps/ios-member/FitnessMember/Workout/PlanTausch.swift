@@ -137,18 +137,20 @@ enum PlanTausch {
         let ausgeschlossen = belegt.union([position.exerciseId])
         return (alternativen[position.baustein] ?? []).compactMap { alternative in
             guard !ausgeschlossen.contains(alternative.exerciseId) else { return nil }
-            let maschine = uebungen?.machines.first {
-                $0.equipmentModel.id == alternative.modelId && $0.status == "active"
-                    && $0.exercises.contains { $0.id == alternative.exerciseId }
-            }
-            let primaer = (maschine?.exercises.first { $0.id == alternative.exerciseId }?.muscles ?? [])
-                .filter { $0.role == .primary }
+            let maschine = uebungen?.aktivesGeraet(modellId: alternative.modelId, exerciseId: alternative.exerciseId)
+            // Ohne Studio-Geraet (Freies Training, Geraet fehlt): Muskeln und
+            // Bezeichnung des Katalogtyps.
+            let typ = maschine == nil
+                ? uebungen?.katalogTyp(modellId: alternative.modelId, exerciseId: alternative.exerciseId) : nil
+            let uebung = maschine?.exercises.first { $0.id == alternative.exerciseId }
+                ?? typ?.exercises.first { $0.id == alternative.exerciseId }
+            let primaer = (uebung?.muscles ?? []).filter { $0.role == .primary }
             return TauschKandidat(
                 exerciseId: alternative.exerciseId,
                 modelId: alternative.modelId,
                 name: PlanZeilenModell.uebungsname(exerciseId: alternative.exerciseId, maschine: maschine,
                                                    bootstrap: uebungen),
-                geraet: maschine?.label,
+                geraet: maschine?.label ?? typ?.name,
                 muskeln: primaer.isEmpty ? nil : primaer.map(\.name).joined(separator: ", "),
                 hauptmuskeln: primaer.map(\.key),
                 vorschaubildModell: alternative.modelId)
@@ -212,10 +214,8 @@ enum PlanTausch {
     /// abgedecktes Geraet. Der Ablauf zaehlt jedes Geraet mit derselben
     /// Uebung, das sagt der zweite Satz.
     static func vorgesehen(position: TrainingsplanPosition, bootstrap: BootstrapResponse?) -> String? {
-        guard let maschine = bootstrap?.machines.first(where: {
-            $0.equipmentModel.id == position.modelId && $0.status == "active"
-                && $0.exercises.contains(where: { $0.id == position.exerciseId })
-        }) else { return nil }
+        guard let maschine = bootstrap?.aktivesGeraet(modellId: position.modelId, exerciseId: position.exerciseId)
+        else { return nil }
         return "Vorgesehen am Gerät „\(maschine.label)“. Jedes andere Gerät mit dieser Übung zählt auch."
     }
 
@@ -433,5 +433,23 @@ final class PlanTauschSitzung {
         }
         await neuLaden()
         return true
+    }
+}
+
+extension BootstrapResponse {
+    /// Ein aktives Studio-Geraet, das die Uebung fuehrt und zum Modell passt.
+    /// Das Modell einer Planposition ist ein Katalogtyp; ein Studio-Geraet hat
+    /// ein eigenes `equipmentModel` und verweist ueber `catalogModelId` darauf.
+    func aktivesGeraet(modellId: String, exerciseId: String) -> Machine? {
+        machines.first {
+            $0.status == "active"
+                && ($0.equipmentModel.id == modellId || $0.equipmentModel.catalogModelId == modellId)
+                && $0.exercises.contains { $0.id == exerciseId }
+        }
+    }
+
+    /// Der Katalogtyp des Modells, wenn er die Uebung fuehrt.
+    func katalogTyp(modellId: String, exerciseId: String) -> Catalog.EquipmentType? {
+        catalog?.equipmentTypes.first { $0.id == modellId && $0.exercises.contains { $0.id == exerciseId } }
     }
 }
