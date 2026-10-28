@@ -22,6 +22,10 @@ struct PlanZeilenModell: Equatable, Identifiable {
     /// "Zusätzlich gemacht" (2.2): erledigt mit Haken, aber nicht
     /// durchgestrichen -- die Uebung stand nie auf dem Plan.
     var zusatz = false
+    /// Heute ausgelassen: gedimmt und durchgestrichen, Untertitel sagt es.
+    var ausgelassen = false
+    /// "2/3" bei einer angefangenen Kraftposition; ersetzt den Haken.
+    var satzFortschritt: String? = nil
 }
 
 extension PlanZeilenModell {
@@ -87,7 +91,7 @@ struct PlanZeile: View {
 
     var body: some View {
         let status = wirksamerStatus
-        let abgehakt = status == .erledigt && !modell.zusatz
+        let abgehakt = (status == .erledigt && !modell.zusatz) || modell.ausgelassen
         HStack(spacing: DesignSystem.Spacing.s12) {
             UebungsVideoKachel(exerciseId: modell.exerciseId) {
                 PlanZeilenFoto(foto: foto)
@@ -109,7 +113,7 @@ struct PlanZeile: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if let status {
-                PlanStatusMarke(status: status)
+                PlanStatusMarke(status: status, satzFortschritt: modell.satzFortschritt)
             }
         }
         .padding(.vertical, DesignSystem.Spacing.s12)
@@ -120,6 +124,10 @@ struct PlanZeile: View {
     /// "<Übung>, <Status>, <Vorgabe>" (Task 11, VoiceOver); ohne Status nur
     /// Name und Vorgabe.
     private var voLabel: String {
+        if modell.ausgelassen { return "\(modell.name), heute ausgelassen" }
+        if let satz = modell.satzFortschritt {
+            return "\(modell.name), \(satz) Sätze gemacht, \(modell.untertitel)"
+        }
         guard let status = wirksamerStatus else { return "\(modell.name), \(modell.untertitel)" }
         return "\(modell.name), \(PlanStatusMarke.gesprochen(status)), \(modell.untertitel)"
     }
@@ -158,8 +166,26 @@ struct PlanZeilenFoto: View {
 /// Akzent -- die Akzentflaeche des Screens bleibt "Gerät scannen".
 struct PlanStatusMarke: View {
     let status: PlanMomentaufnahme.Status
+    /// "2/3": angefangene Kraftposition, ersetzt die Marke durch eine kleine
+    /// Akzent-Pille.
+    var satzFortschritt: String? = nil
 
     var body: some View {
+        if let satzFortschritt {
+            Text(satzFortschritt)
+                .font(.system(size: 12, weight: .heavy))
+                .monospacedDigit()
+                .foregroundStyle(DesignSystem.Color.accent)
+                .padding(.horizontal, 8)
+                .frame(minWidth: 26, minHeight: 26)
+                .overlay(Capsule().stroke(DesignSystem.Color.accent, lineWidth: 1.5))
+                .accessibilityHidden(true)
+        } else {
+            symbol
+        }
+    }
+
+    private var symbol: some View {
         ZStack {
             switch status {
             case .offen:

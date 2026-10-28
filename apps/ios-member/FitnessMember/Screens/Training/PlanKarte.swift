@@ -9,7 +9,8 @@ extension PlanAnzeige {
         heute(bootstrap: katalog.bootstrap,
               ablaufPlanId: ablauf.planId, ablaufEinheitKey: ablauf.einheitKey,
               ablaufZustand: ablauf.zustand, naechsteEinheitKey: ablauf.naechsteEinheitKey,
-              ablaufGebunden: ablauf.gebundeneSessionId != nil)
+              ablaufGebunden: ablauf.gebundeneSessionId != nil,
+              ausgelassen: ablauf.ausgelassen)
     }
 }
 
@@ -71,7 +72,8 @@ struct PlanKarte: View {
 
     var body: some View {
         let zeilen = PlanAnzeige.zeilen(plan: plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
-                                        bloecke: bloecke, bootstrap: bootstrap)
+                                        bloecke: bloecke, bootstrap: bootstrap,
+                                        ausgelassen: heute.ausgelassen)
         let zusatz = laeuft
             ? PlanAnzeige.zusaetzlichGemacht(plan: plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
                                              bloecke: bloecke, bootstrap: bootstrap)
@@ -120,7 +122,8 @@ struct PlanKarte: View {
     private var kopf: some View {
         let einheit = EinheitName.text(heute.einheitKey).uppercased()
         if laeuft {
-            let fortschritt = PlanAnzeige.fortschritt(plan: plan, einheitKey: heute.einheitKey, zustand: heute.zustand)
+            let fortschritt = PlanAnzeige.fortschritt(plan: plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
+                                                  ausgelassen: heute.ausgelassen)
             let rest = PlanAnzeige.restminutenText(plan: plan, einheitKey: heute.einheitKey, zustand: heute.zustand)
             HStack(alignment: .firstTextBaseline) {
                 Text(einheit)

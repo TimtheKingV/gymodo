@@ -618,7 +618,7 @@ struct PlanTauschTests {
 
         // Die Sperre am Katalog-Ort gilt im Freien Training.
         let plan = T.plan(merkliste: #"{"nichtVorhanden":{"kat1":["e8"]},"gefaelltNicht":[]}"#)
-        let heute = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: nil)
+        let heute = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: nil, ausgelassen: [])
         let auftrag = PlanTausch.auftrag(position: plan.einheiten[0].positionen[0], heute: heute,
                                          bootstrap: bootstrap, ort: PlanTausch.ort(aktivesStudio: nil, bootstrap: bootstrap))
         #expect(!auftrag.kandidaten.contains { $0.exerciseId == "e8" })
@@ -803,7 +803,7 @@ struct PlanTauschStudioTests {
 
     static func auftrag(_ bootstrap: BootstrapResponse, ort: String?) -> PlanTauschAuftrag {
         let plan = T.plan()
-        let heute = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: nil)
+        let heute = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: nil, ausgelassen: [])
         return PlanTausch.auftrag(position: plan.einheiten[0].positionen[0], heute: heute,
                                   bootstrap: bootstrap, ort: ort)
     }
