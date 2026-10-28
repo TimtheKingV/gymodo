@@ -71,12 +71,14 @@ enum PlanWoche {
                         guard filter == .alle || filter == .einheiten, let key = platz.einheitKey else { continue }
                         liste.append(.einheit(key: key, erledigt: einheitenErledigt.contains(key)))
                     case .kurs:
-                        guard filter == .alle else { continue }
-                        liste += kursTermine.filter { if case .kurs(_, _, true) = $0 { true } else { false } }
+                        continue // gebuchte Kurse kommen unten, unabhaengig vom Raster
                     case .cardio:
                         guard filter == .alle || filter == .cardio else { continue }
                         liste.append(.cardio(arten: [], erledigt: cardioErledigt.contains(schluessel)))
                     }
+                }
+                if filter == .alle {
+                    liste += kursTermine.filter { if case .kurs(_, _, true) = $0 { true } else { false } }
                 }
             }
             if !liste.isEmpty { ergebnis[start] = liste }

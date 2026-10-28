@@ -81,6 +81,43 @@ struct PlanWocheTests {
         #expect(t.values.joined().allSatisfy { if case .kurs = $0 { true } else { false } })
     }
 
+    @Test func gebuchterKursErscheintAuchOhneRasterplatz() {
+        let t = termine(kurse: [kurs("k2", tag: "2026-10-27", name: "Yoga", own: "booked")])
+        guard case .kurs(let titel, _, let angemeldet)? = t[tage[1]]?.first else {
+            Issue.record("Dienstag zeigt keinen Kurs"); return
+        }
+        #expect(titel == "Yoga" && angemeldet)
+        #expect(t[tage[1]]?.count == 1)
+    }
+
+    @Test func altplanOhneRasterZeigtGebuchteKurse() {
+        let kurse = [kurs("k1", tag: "2026-10-26", name: "Zirkel", own: "booked"),
+                     kurs("k2", tag: "2026-10-27", name: "Frei")]
+        let t = termine(raster: [], kurse: kurse)
+        #expect(t.keys.count == 1)
+        #expect(t[tage[0]]?.count == 1)
+    }
+
+    @Test func mehrereKurseAmTagNachBeginnSortiertOhneDoppelung() {
+        let spaet = kurs("s", tag: "2026-10-26", name: "Spaet", own: "booked")
+        var frueh = kurs("f", tag: "2026-10-26", name: "Frueh", own: "booked")
+        frueh = CourseWeekSession(
+            sessionId: "f", templateId: "t", name: "Frueh", description: nil,
+            startsAt: "2026-10-26T08:00:00Z", localDay: "2026-10-26", durationMin: 60, capacity: 10,
+            room: nil, instructorName: nil, status: "planned", bookedCount: 1, waitlistCount: 0,
+            freeSeats: 9, ownStatus: "booked", ownBookingId: "b", ownWaitlistPosition: nil)
+        let t = termine(kurse: [spaet, frueh])
+        let titel = (t[tage[0]] ?? []).compactMap { termin -> String? in
+            if case .kurs(let n, _, _) = termin { n } else { nil }
+        }
+        #expect(titel == ["Frueh", "Spaet"])
+    }
+
+    @Test func kursRasterplatzOhneBuchungErgibtKeinenTermin() {
+        let t = termine(kurse: [kurs("k2", tag: "2026-10-26", name: "Yoga")])
+        #expect(t[tage[0]] == nil)
+    }
+
     @Test func einheitenUndCardioFilter() {
         let e = termine(filter: .einheiten)
         #expect(e.keys.count == 2)
