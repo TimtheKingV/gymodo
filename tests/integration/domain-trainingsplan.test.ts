@@ -319,6 +319,19 @@ describe("listPlaene", () => {
     expect((await listPlaene(m.client, m.userId)).map((p) => [p.id, p.status])).toEqual([[b.id, "aktiv"], [a.id, "ersetzt"]]);
   });
 
+  it("aktiverKatalogPlan ignoriert aktive Plaene normaler Studios (Altbestand)", async () => {
+    const m = await legeMitgliedAn("plan-aktiv-altbestand", { studios: [s.voll] });
+    const a = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    await acceptPlan(m.client, m.userId, a.id);
+    // Wie Prod vor 0066: zusaetzlich ein aktiver Plan im normalen Studio.
+    const { error } = await admin.from("training_plans").insert({
+      user_id: m.userId, studio_id: s.voll, version: 1, status: "aktiv", regel_version: "alt",
+      eingabe: {}, struktur: "gk_ab", einheiten: [], gruende: [], accepted_at: new Date().toISOString(),
+    });
+    expect(error).toBeNull();
+    expect((await aktiverKatalogPlan(m.client, m.userId))!.id).toBe(a.id);
+  });
+
   it("neueste Version zuerst, ohne Neuberechnung", async () => {
     const m = await legeMitgliedAn("plan-liste", { studios: [s.voll] });
     const v1 = await erzeugePlanVorschlag(m.client, m.userId, s.voll);

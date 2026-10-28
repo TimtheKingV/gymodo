@@ -25,6 +25,7 @@ import {
 import { AGE_BANDS, SEX } from "./profil.js";
 import { toBlocks, type BlockInput, type ProgressionSuggestion, type SatzZeile } from "./progression.js";
 import type { PlanEinheit, PlanPosition } from "./trainingsplan-generator.js";
+import { ladeKatalogStudioId } from "./trainingsplan-kandidaten.js";
 import type { Erfahrung } from "./trainingsplan-typen.js";
 import type { TrainingPlan } from "./trainingsplan.js";
 
@@ -393,10 +394,13 @@ export async function aktualisierePlanGewichte(
   // sich "die naechsten Einheiten" bestimmen liessen.
   if (session.plan_id === null || session.plan_einheit_key === null) return;
 
+  // Nur der Plan im Katalog-Studio (siehe aktiverKatalogPlan).
+  const katalogId = await ladeKatalogStudioId(client);
   const { data: planDaten, error: planFehler } = await client
     .from("training_plans")
     .select("id, einheiten, eingabe")
     .eq("user_id", userId)
+    .eq("studio_id", katalogId)
     .eq("status", "aktiv")
     .maybeSingle();
   if (planFehler) throw new DomainError("internal", planFehler.message);

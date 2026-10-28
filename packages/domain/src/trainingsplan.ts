@@ -323,10 +323,14 @@ export async function listPlaene(client: SupabaseClient, userId: string): Promis
  * Kein Filter ueber Mitgliedschaften: der Plan haengt nicht an einem Studio.
  */
 export async function aktiverKatalogPlan(client: SupabaseClient, userId: string): Promise<TrainingPlan | null> {
+  // Nur das Katalog-Studio: ein Altbestand mit aktiven Plaenen normaler Studios
+  // (Prod vor Migration 0066) liesse maybeSingle sonst an zwei Zeilen scheitern.
+  const katalogId = await ladeKatalogStudioId(client);
   const { data, error } = await client
     .from("training_plans")
     .select(SPALTEN)
     .eq("user_id", userId)
+    .eq("studio_id", katalogId)
     .eq("status", "aktiv")
     .maybeSingle();
   if (error) throw new DomainError("internal", "Der Plan konnte nicht gelesen werden.");
