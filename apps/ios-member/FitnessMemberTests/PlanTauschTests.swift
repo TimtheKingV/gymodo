@@ -838,6 +838,43 @@ struct PlanTauschTests {
         #expect(sut.grund == nil)
     }
 
+    @Test("Abbrechen, dann offline: die Wahl faellt auf Heute auslassen zurueck")
+    func abbrechenDannOffline() async {
+        let ablauf = Self.vorbereitet()
+        let umgebung = Umgebung()
+        let sut = Self.sitzung(Self.mitOrt(ablauf), ablauf: ablauf, client: TauschClientAttrappe(), umgebung: umgebung)
+        sut.ersatzGewaehlt(Self.fremd)
+        sut.optionAuswaehlen(.gefaelltNicht)
+        #expect(!sut.optionBestaetigen())
+        umgebung.online = false
+        #expect(!(await sut.uebernehmen()))
+        sut.abbrechen()
+        #expect(sut.gewaehlteOption == .heuteAuslassen)
+        #expect(sut.optionBestaetigen())
+        #expect(ablauf.zustand?.positionen.first?.ersatzExerciseId == "e77")
+
+        // Faellt die Verbindung bei offener Frage weg, gilt dasselbe.
+        let ablauf2 = Self.vorbereitet()
+        let umgebung2 = Umgebung()
+        let sut2 = Self.sitzung(Self.mitOrt(ablauf2), ablauf: ablauf2, client: TauschClientAttrappe(), umgebung: umgebung2)
+        sut2.ersatzGewaehlt(Self.fremd)
+        sut2.optionAuswaehlen(.gefaelltNicht)
+        umgebung2.online = false
+        #expect(sut2.gewaehlteOption == .heuteAuslassen)
+        #expect(sut2.optionBestaetigen())
+    }
+
+    @Test("Ersatz nur bei tauschbarer Position; sonst kein Auslassen durch die Hintertuer")
+    func ersatzGewaehltBrauchtTauschbar() {
+        let (ablauf, _) = Self.nachSaetzen(1)  // A0 erledigt
+        let sut = Self.sitzung(Self.auftrag("A0", ablauf: ablauf), ablauf: ablauf,
+                               client: TauschClientAttrappe(), umgebung: Umgebung())
+        sut.ersatzGewaehlt(nil)
+        #expect(sut.schritt == .vorgabe)
+        #expect(!sut.grundWaehlen(.heuteAuslassen))
+        #expect(ablauf.ausgelassen.isEmpty)
+    }
+
     @Test("Ohne Ersatz auslassen setzt ausgelassen, ohne Client")
     func ohneErsatzAuslassenSetztAusgelassen() async {
         for option in [PlanTausch.EntfernOption.heuteAuslassen, .belegt] {

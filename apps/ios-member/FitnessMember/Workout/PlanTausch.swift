@@ -309,7 +309,9 @@ final class PlanTauschSitzung {
     /// Der Ersatz aus der vollen Auswahl; nil = ohne Ersatz (nur auslassen).
     private(set) var ersatz: TauschKandidat?
     /// Die vorgewaehlte Zeile von "Warum wechselst du?".
-    private(set) var gewaehlteOption: PlanTausch.EntfernOption = .heuteAuslassen
+    private var wahl: PlanTausch.EntfernOption = .heuteAuslassen
+    /// Ist die Wahl nicht mehr moeglich (Verbindung weg), gilt "Heute auslassen".
+    var gewaehlteOption: PlanTausch.EntfernOption { optionMoeglich(wahl) ? wahl : .heuteAuslassen }
     private(set) var schreibtGerade = false
     private(set) var fehler: APIError?
 
@@ -348,11 +350,12 @@ final class PlanTauschSitzung {
 
     /// Ein Ersatz ist gewaehlt (oder keiner): die Frage nach dem Grund.
     func ersatzGewaehlt(_ kandidat: TauschKandidat?) {
+        guard auftrag.tauschbar, !schreibtGerade else { return }
         ersatz = kandidat
         grund = nil
         dauerhaft = false
         fehler = nil
-        gewaehlteOption = .heuteAuslassen
+        wahl = .heuteAuslassen
         schritt = .entfernen
     }
 
@@ -367,7 +370,7 @@ final class PlanTauschSitzung {
     /// Das Auswaehlen einer Zeile; bestaetigt wird erst mit "Übung wechseln".
     func optionAuswaehlen(_ option: PlanTausch.EntfernOption) {
         guard schritt == .entfernen, optionMoeglich(option) else { return }
-        gewaehlteOption = option
+        wahl = option
     }
 
     /// "Übung wechseln": bestaetigt die gewaehlte Zeile.
@@ -445,11 +448,15 @@ final class PlanTauschSitzung {
 
     /// "Abbrechen" in der Bestaetigung: zurueck zur Liste, nichts geschrieben.
     func abbrechen() {
-        guard case .bestaetigen = schritt else { return }
+        guard case .bestaetigen = schritt, !schreibtGerade else { return }
         fehler = nil
         // Ein Grund kam aus der Frage, der Schalter aus der Liste.
         schritt = grund == nil ? .kandidaten : .entfernen
-        if grund != nil { grund = nil; dauerhaft = false }
+        if grund != nil {
+            grund = nil
+            dauerhaft = false
+            wahl = .heuteAuslassen
+        }
     }
 
     /// "Übernehmen". `true` = die neue Version steht beim Server, das Sheet

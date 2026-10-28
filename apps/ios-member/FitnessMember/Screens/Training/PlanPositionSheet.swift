@@ -297,6 +297,7 @@ struct PlanEntfernenFrage: View {
             PrimaryButton(title: "Übung wechseln") {
                 if sitzung.optionBestaetigen() { beiFertig() }
             }
+            .disabled(!sitzung.optionMoeglich(sitzung.gewaehlteOption))
                 .padding(.top, DesignSystem.Spacing.s4)
             PlanLeiserKnopf(titel: "Schließen", aktion: beiFertig)
         }
