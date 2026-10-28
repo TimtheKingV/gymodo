@@ -96,6 +96,44 @@ final class TrainingsplanAblaufStore {
         speichern()
     }
 
+    // MARK: - Umordnen und Auslassen
+
+    /// Die Positionen, die heute ausgelassen sind (nur im Ablauf, nie im Plan).
+    var ausgelassen: Set<String> { Set(datei.lauf?.ausgelassen ?? []) }
+
+    /// Verschiebt eine Position im heutigen Ablauf. Wie der Tausch auch vor dem
+    /// ersten Satz moeglich; die naechste Momentaufnahme traegt die Reihenfolge mit.
+    func umordnen(positionKey: String, nach index: Int) {
+        aendern { $0.zustand = TrainingsplanAblauf.umordnen($0.zustand, positionKey: positionKey, nach: index) }
+    }
+
+    /// Laesst eine Position heute aus. Der Status bleibt: ein Satz darauf zaehlt weiter.
+    func auslassen(positionKey: String) {
+        aendern { lauf in
+            if !lauf.ausgelassen.contains(positionKey) { lauf.ausgelassen.append(positionKey) }
+        }
+    }
+
+    func auslassenZuruecknehmen(positionKey: String) {
+        aendern { $0.ausgelassen.removeAll { $0 == positionKey } }
+    }
+
+    /// Baut bei Bedarf den Lauf, aendert ihn, erhoeht `stand` und speichert --
+    /// nur wenn sich etwas aenderte, damit eine wirkungslose Aufforderung keinen
+    /// Stand verbraucht.
+    private func aendern(_ aenderung: (inout PlanLauf) -> Void) {
+        if datei.lauf == nil, let vorlage = datei.vorlage {
+            datei.lauf = neuerLauf(vorlage, jetzt: Date())
+        }
+        guard var lauf = datei.lauf else { return }
+        let vorher = lauf
+        aenderung(&lauf)
+        guard lauf != vorher else { return }
+        lauf.stand += 1
+        datei.lauf = lauf
+        speichern()
+    }
+
     // MARK: - Satz
 
     /// Hakt den Satz im Ablauf ab und gibt die Momentaufnahme fuer den
@@ -360,6 +398,10 @@ struct PlanLauf: Codable, Equatable {
     var gebundeneSessionId: UUID?
     let erstelltAm: Date
     var letzterSatzAm: Date?
+    /// Positionsschluessel, die heute ausgelassen sind. Eigenes Feld statt eines
+    /// neuen PositionStatus: der ist 1:1 mit dem Server gespiegelt. Eine Datei
+    /// von vorher kennt es nicht und liest es als leer.
+    var ausgelassen: [String] = []
 
     var momentaufnahme: PlanMomentaufnahme {
         PlanMomentaufnahme(
@@ -368,6 +410,26 @@ struct PlanLauf: Codable, Equatable {
                 // exerciseId ist die ERSATZuebung, sonst nil (workout.ts sessionPlanSchema).
                 PlanMomentaufnahme.Position(key: $0.key, status: $0.status.momentaufnahme, exerciseId: $0.ersatzExerciseId)
             })
+    }
+}
+
+// In einer Extension, damit der memberwise init erhalten bleibt.
+extension PlanLauf {
+    private enum CodingKeys: String, CodingKey {
+        case planId, version, einheitKey, zustand, stand, gebundeneSessionId, erstelltAm, letzterSatzAm, ausgelassen
+    }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        planId = try c.decode(String.self, forKey: .planId)
+        version = try c.decode(Int.self, forKey: .version)
+        einheitKey = try c.decode(String.self, forKey: .einheitKey)
+        zustand = try c.decode(AblaufZustand.self, forKey: .zustand)
+        stand = try c.decode(Int.self, forKey: .stand)
+        gebundeneSessionId = try c.decodeIfPresent(UUID.self, forKey: .gebundeneSessionId)
+        erstelltAm = try c.decode(Date.self, forKey: .erstelltAm)
+        letzterSatzAm = try c.decodeIfPresent(Date.self, forKey: .letzterSatzAm)
+        ausgelassen = try c.decodeIfPresent([String].self, forKey: .ausgelassen) ?? []
     }
 }
 

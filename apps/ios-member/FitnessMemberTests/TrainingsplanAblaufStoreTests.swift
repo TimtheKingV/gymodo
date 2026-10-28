@@ -480,4 +480,58 @@ struct TrainingsplanAblaufStoreTests {
         nachher.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
         #expect(nachher.einheitKey == "A")
     }
+
+    // MARK: - Umordnen und Auslassen
+
+    @Test func umordnenSpeichertImLauf() {
+        let verzeichnis = Self.verzeichnis()
+        let sut = Self.store(verzeichnis)
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        let vorher = sut.stand
+
+        sut.umordnen(positionKey: "A2", nach: 0)
+
+        #expect(sut.zustand?.positionen.map(\.key) == ["A2", "A0", "A1"])
+        #expect(sut.stand == vorher + 1)
+        #expect(Self.store(verzeichnis).zustand?.positionen.map(\.key) == ["A2", "A0", "A1"])
+    }
+
+    @Test func ausgelassenUeberlebtSpeichernUndLaden() {
+        let verzeichnis = Self.verzeichnis()
+        let sut = Self.store(verzeichnis)
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+
+        sut.auslassen(positionKey: "A1")
+
+        #expect(sut.ausgelassen == ["A1"])
+        #expect(Self.store(verzeichnis).ausgelassen == ["A1"])
+    }
+
+    @Test func auslassenZuruecknehmen() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        sut.auslassen(positionKey: "A1")
+        sut.auslassen(positionKey: "A1")
+        #expect(sut.ausgelassen == ["A1"])
+
+        sut.auslassenZuruecknehmen(positionKey: "A1")
+
+        #expect(sut.ausgelassen.isEmpty)
+    }
+
+    @Test func alteDateiOhneAusgelassenLaedt() throws {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        let lauf = PlanLauf(
+            planId: "p1", version: 1, einheitKey: "A", zustand: try #require(sut.zustand),
+            stand: 0, gebundeneSessionId: nil, erstelltAm: Self.jetzt, letzterSatzAm: nil)
+        var json = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(lauf)) as? [String: Any])
+        json.removeValue(forKey: "ausgelassen")
+        let alt = try JSONSerialization.data(withJSONObject: json)
+
+        let geladen = try JSONDecoder().decode(PlanLauf.self, from: alt)
+
+        #expect(geladen.ausgelassen == [])
+        #expect(geladen.einheitKey == "A")
+    }
 }
