@@ -24,6 +24,9 @@ enum GeraetRoute: Hashable {
     /// Kopf `PlanErsatzKopf`. Die Wahl fuehrt zurueck zur Wurzel und in die
     /// Grund-Frage; der Auftrag liegt an der Wurzel (`planErsatzAuftrag`).
     case planErsatz(positionKey: String)
+    /// "Übung hinzufügen" im Plan-Modus: dieselbe Auswahl ohne Kopf; die Wahl
+    /// startet die Uebung, sie erscheint danach unter "Zusätzlich gemacht".
+    case planHinzufuegen
     /// Die Satzseite. `start` kommt aus dem Drawer vor der Uebung (Testnotiz
     /// 11.10., #10) und laesst sie mit dem Countdown beginnen; ohne (Zirkel
     /// ueber die Blockliste) stehen gleich die Raeder.
@@ -45,4 +48,25 @@ enum GeraetRoute: Hashable {
     /// Einheit -- sessionId dient nur der Nachverfolgung, die Anzeige
     /// selbst kommt vollstaendig aus zusammenfassung.
     case abschluss(sessionId: UUID, zusammenfassung: Trainingszusammenfassung)
+}
+
+/// Wozu eine Auswahlroute gewaehlt wird -- die Kategorieseiten darunter
+/// (`.kategorie`) erben den Zweck der Route, ueber die man kam.
+enum Auswahlzweck: Equatable {
+    case ersatz, hinzufuegen
+}
+
+extension GeraetRoute {
+    var auswahlzweck: Auswahlzweck? {
+        switch self {
+        case .planErsatz: .ersatz
+        case .planHinzufuegen: .hinzufuegen
+        default: nil
+        }
+    }
+
+    /// Der Zweck der naechsten Auswahlroute im Pfad; nil = normale Liste.
+    static func auswahlzweck(im pfad: [GeraetRoute]) -> Auswahlzweck? {
+        pfad.reversed().lazy.compactMap(\.auswahlzweck).first
+    }
 }

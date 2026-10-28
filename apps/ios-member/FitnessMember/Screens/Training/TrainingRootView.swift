@@ -427,7 +427,10 @@ struct TrainingRootView: View {
     /// steht der Titel "TRAINING" mit den Scanwegen da, wie vor dem Umbau.
     @ViewBuilder
     private func wurzel(mitte: TrainingTab.Mitte?, session: LokaleSession?) -> some View {
-        if katalog.bootstrap != nil {
+        if katalog.bootstrap != nil, let mitte, let session,
+           PlanAnzeige.planModus(laeuft: true, heute: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)) {
+            planModusWurzel(mitte: mitte, session: session)
+        } else if katalog.bootstrap != nil {
             GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader) {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
                     sensorKarte
@@ -541,6 +544,53 @@ struct TrainingRootView: View {
     /// laufende Mitte eine eigene ScrollView zwischen festem Kopf und
     /// festem Fuss; jetzt traegt die Liste darunter das Scrollen, und die
     /// Scanwege schweben ohnehin immer in der Daumenzone.
+    /// Plan-Modus (Spec "Plan im Training"): laeuft eine Einheit und gibt es
+    /// den Plan von heute, steht hier nur die Plankarte -- ohne Kategorien,
+    /// "Zuletzt bei dir" und Blockliste. Weitere Uebungen kommen ueber
+    /// "Übung hinzufügen" (`.planHinzufuegen`).
+    private func planModusWurzel(mitte: TrainingTab.Mitte, session: LokaleSession) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+                if #unavailable(iOS 26.0) { titel }
+                sensorKarte
+                laufendKopf(mitte, session: session)
+                PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
+                    planPosition = PlanTausch.auftrag(position: $0, katalog: katalog, ablauf: planAblauf,
+                                                      bloecke: session.bloecke)
+                }
+                uebungHinzufuegenKnopf
+                if !session.bloecke.isEmpty { zirkelHinweis }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, DesignSystem.Spacing.s16)
+        }
+        .background(DesignSystem.Color.bg)
+        .modifier(PlanModusTitel())
+        .safeAreaInset(edge: .bottom) { fuss }
+    }
+
+    /// Ruhig: gestrichelter Rand, kein Akzent -- die Akzentflaeche des
+    /// Screens bleibt "Gerät scannen".
+    private var uebungHinzufuegenKnopf: some View {
+        Button { pfad.append(.planHinzufuegen) } label: {
+            HStack(spacing: DesignSystem.Spacing.s8) {
+                Image(systemName: "plus")
+                    .font(.system(size: 14, weight: .semibold))
+                Text("Übung hinzufügen")
+                    .font(.system(size: 15, weight: .semibold))
+            }
+            .foregroundStyle(DesignSystem.Color.textMuted)
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                    .stroke(DesignSystem.Color.line, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressButtonStyle())
+        .accessibilityHint("Öffnet die Geräteauswahl für eine weitere Übung")
+    }
+
     /// Die gemachten Uebungen unter den Kategorien (Testnotiz 18.10., #4);
     /// Uhr und Zahlen stehen oben im Kopf (`laufendKopf`).
     private func laufendeUebungen(session: LokaleSession) -> some View {
@@ -724,7 +774,7 @@ struct TrainingRootView: View {
         case .kategorie(let gruppe):
             GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader, gruppe: gruppe) { station, uebungId in
                 // Aus der Ersatzwahl (Route im Pfad) wird gewaehlt, nicht gestartet.
-                if ersatzModus { ersatzWaehlen(station, uebungId: uebungId) } else { waehle(station, uebungId: uebungId) }
+                auswahlTreffen(station, uebungId: uebungId)
             }
         case .planErsatz(let positionKey):
             if let auftrag = planErsatzAuftrag, auftrag.position.key == positionKey {
@@ -745,6 +795,19 @@ struct TrainingRootView: View {
                         }
                     })
             }
+        case .planHinzufuegen:
+            // Dieselbe Auswahl ohne Kopf; die Wahl startet die Uebung.
+            GeraeteAuswahlView(
+                fotoLader: apiClient, vorschauLader: vorschauLader, titel: "ÜBUNG HINZUFÜGEN",
+                kopfinhalt: { EmptyView() },
+                trainingsinhalt: { EmptyView() },
+                beiAuswahl: { station, uebungId in auswahlTreffen(station, uebungId: uebungId) },
+                beiKachel: { kachel in
+                    switch GeraeteAuswahl.ziel(kachel) {
+                    case .station(let station): auswahlTreffen(station, uebungId: nil)
+                    case .liste(let gruppe): pfad.append(.kategorie(gruppe))
+                    }
+                })
         case .planUebung(let exerciseId):
             // Nur Stationen mit der Uebung der Position; der Tipp startet
             // genau diese Uebung (Spec 5).
@@ -954,7 +1017,18 @@ struct TrainingRootView: View {
     /// dem Pfad (Zurueck, Scan, Pfadbereinigung), raeumt `onChange(of: pfad)`
     /// den zugehoerigen Zustand weg.
     private var ersatzModus: Bool {
-        pfad.contains { if case .planErsatz = $0 { true } else { false } }
+        GeraetRoute.auswahlzweck(im: pfad) == .ersatz
+    }
+
+    /// Eine Wahl aus einer Auswahlroute oder deren Kategorieseite: je nach
+    /// Zweck der Route wird gewaehlt (Ersatz) oder die Uebung gestartet
+    /// (Hinzufuegen, normale Liste). Gibt es mehrere Uebungen am Geraet,
+    /// fragt `waehle` ueber den Drawer, `ersatzWaehlen` ueber das Blatt.
+    private func auswahlTreffen(_ station: Station, uebungId: String?) {
+        switch GeraetRoute.auswahlzweck(im: pfad) {
+        case .ersatz: ersatzWaehlen(station, uebungId: uebungId)
+        case .hinzufuegen, nil: waehle(station, uebungId: uebungId)
+        }
     }
 
     /// Eine Station (und Uebung) aus der normalen Auswahl. Ohne Uebung und mit
@@ -1846,4 +1920,17 @@ private struct ScanRueckfrage: Equatable {
 private struct UmschaltTick: Equatable {
     let datum: Date
     let wach: Bool
+}
+
+
+/// Unter iOS 26 traegt die Navigationsleiste den grossen Titel wie in
+/// `GeraeteAuswahlView`; darunter steht er im Inhalt (`titel`).
+private struct PlanModusTitel: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.navigationTitle("TRAINING").navigationBarTitleDisplayMode(.large)
+        } else {
+            content.navigationBarTitleDisplayMode(.inline)
+        }
+    }
 }

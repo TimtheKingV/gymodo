@@ -59,7 +59,8 @@ struct PlanAbschlussBereich: View {
 
     private func einheitKarte(_ lauf: PlanLauf) -> some View {
         let abschluss = PlanAnzeige.abschluss(einheitKey: lauf.einheitKey, zustand: lauf.zustand,
-                                              naechsteEinheitKey: planAblauf.naechsteEinheitKey)
+                                              naechsteEinheitKey: planAblauf.naechsteEinheitKey,
+                                              ausgelassen: Set(lauf.ausgelassen))
         return Card {
             VStack(alignment: .leading, spacing: 6) {
                 Text(abschluss.titel)

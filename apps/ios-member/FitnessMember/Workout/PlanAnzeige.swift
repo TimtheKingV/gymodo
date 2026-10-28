@@ -166,14 +166,23 @@ enum PlanAnzeige {
     /// offenen Positionen. Eine Schaetzung je Position liefert der Server
     /// nicht; der Anteil ist ehrlich genug fuer ein "ca.". nil ohne
     /// Schaetzung und wenn nichts mehr offen ist.
-    static func restminutenText(plan: Trainingsplan, einheitKey: String, zustand: AblaufZustand?) -> String? {
+    static func restminutenText(plan: Trainingsplan, einheitKey: String, zustand: AblaufZustand?,
+                                ausgelassen: Set<String> = []) -> String? {
         guard let einheit = plan.einheiten.first(where: { $0.key == einheitKey }),
               let minuten = einheit.geschaetzteMinuten, !einheit.positionen.isEmpty else { return nil }
-        let stellen = planstellen(einheit: einheit, zustand: zustand)
+        // Heute Ausgelassenes ist weder offen noch Teil des Anteils.
+        let stellen = planstellen(einheit: einheit, zustand: zustand).filter { !ausgelassen.contains($0.key) }
         let offen = stellen.filter { $0.status == .offen || $0.status == .getauscht }.count
         guard offen > 0, !stellen.isEmpty else { return nil }
         let rest = max(1, Int((minuten * Double(offen) / Double(stellen.count)).rounded()))
         return "noch ca. \(rest) Min"
+    }
+
+    /// Der Plan-Modus des Training-Tabs: laeuft eine Einheit und gibt es den
+    /// Plan von heute, zeigt die Wurzel nur die Plankarte -- ohne Kategorien,
+    /// "Zuletzt bei dir" und die Blockliste.
+    static func planModus(laeuft: Bool, heute: Heute?) -> Bool {
+        laeuft && heute != nil
     }
 
     /// "7 Übungen · ca. 63 Min" (Entwurf 1.4/2.1); ohne Schaetzung nur die Zahl.
@@ -303,10 +312,11 @@ enum PlanAnzeige {
     /// selbst, nicht der Plan im Bootstrap: der kann inzwischen eine neuere
     /// Version mit anderen Positionen sein.
     static func abschluss(einheitKey: String, zustand: AblaufZustand,
-                          naechsteEinheitKey: String?) -> Abschluss {
-        let gesamt = zustand.positionen.count
-        let erledigt = zustand.positionen.filter { $0.status == .erledigt }.count
-        let optional = zustand.positionen.filter { $0.status == .optional }.count
+                          naechsteEinheitKey: String?, ausgelassen: Set<String> = []) -> Abschluss {
+        let positionen = zustand.positionen.filter { !ausgelassen.contains($0.key) }
+        let gesamt = positionen.count
+        let erledigt = positionen.filter { $0.status == .erledigt }.count
+        let optional = positionen.filter { $0.status == .optional }.count
         var zeile = "\(erledigt) von \(gesamt) \(gesamt == 1 ? "Übung" : "Übungen") erledigt"
         if optional > 0 { zeile += ", \(optional) optional" }
         let naechstes = naechsteEinheitKey.map { key in
