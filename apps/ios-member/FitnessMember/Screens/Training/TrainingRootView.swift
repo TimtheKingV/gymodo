@@ -895,10 +895,6 @@ struct TrainingRootView: View {
         beitrittZeigen = true
     }
 
-    /// Eine Station aus der Liste nimmt denselben Weg wie ein Scan: steht
-    /// sie an einem anderen Ort ("Auch in X suchen"), wird erst gewechselt
-    /// oder gefragt, dann geoeffnet.
-    /// `uebungId`: ein Uebungstreffer der Suche -- dann direkt diese Uebung.
     /// Tipp auf "Weiter…"/"Übung starten" im Plan-Sheet: bietet genau ein
     /// Geraet die Uebung an, geht es direkt los; sonst (mehrere oder keines,
     /// dann der Leerzustand) in die Auswahl (`PlanStart`).
@@ -912,6 +908,10 @@ struct TrainingRootView: View {
         }
     }
 
+    /// Eine Station aus der Liste nimmt denselben Weg wie ein Scan: steht
+    /// sie an einem anderen Ort ("Auch in X suchen"), wird erst gewechselt
+    /// oder gefragt, dann geoeffnet.
+    /// `uebungId`: ein Uebungstreffer der Suche -- dann direkt diese Uebung.
     private func waehle(_ station: Station, uebungId: String? = nil) {
         switch ScanEntscheidung.fuer(station: station, ort: katalog.ort,
                                      offeneEinheit: sessions.aktiveSession()) {

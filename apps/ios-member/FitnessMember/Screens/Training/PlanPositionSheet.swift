@@ -35,13 +35,21 @@ private struct PlanPositionSheetHuelle: ViewModifier {
     let vorschauLader: VorschauLader
     let beiStarten: (String) -> Void
 
+    /// "Weiter…" schliesst das Sheet; der Start (ein zweites Sheet an der
+    /// Wurzel) laeuft erst in onDismiss, sonst kann SwiftUI ihn verschlucken.
+    @State private var startNachSchliessen: String?
+
     @Environment(CatalogStore.self) private var katalog
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     @Environment(NetzwerkMonitor.self) private var netz
     @Environment(UebungsVideoVorrat.self) private var videoVorrat
 
     func body(content: Content) -> some View {
-        content.sheet(item: $auftrag) { auftrag in
+        content.sheet(item: $auftrag, onDismiss: {
+            guard let uebungId = startNachSchliessen else { return }
+            startNachSchliessen = nil
+            beiStarten(uebungId)
+        }) { auftrag in
             PlanPositionSheet(
                 sitzung: PlanTauschSitzung(
                     auftrag: auftrag, client: apiClient, ablauf: planAblauf,
@@ -65,8 +73,8 @@ private struct PlanPositionSheetHuelle: ViewModifier {
                     self.auftrag = nil
                 },
                 beiStarten: { uebungId in
+                    startNachSchliessen = uebungId
                     self.auftrag = nil
-                    beiStarten(uebungId)
                 })
             .environment(videoVorrat)
         }
@@ -174,6 +182,9 @@ struct PlanPositionSheet: View {
             if let vorgesehen = auftrag.vorgesehen {
                 absatz(vorgesehen)
             }
+            if auftrag.satzGemacht > 0 {
+                absatz("\(auftrag.satzGemacht) von \(auftrag.satzGeplant) Sätzen gemacht")
+            }
             // Die Position meint die Uebung, nicht ein Geraet. Auch eine
             // erledigte Position bleibt startbar: der erste Satz hakt sie ab,
             // weitere Saetze sind erlaubt ("Weiter mit Satz X").
@@ -184,7 +195,7 @@ struct PlanPositionSheet: View {
                 }
             } else if let beiStarten {
                 PrimaryButton(title: auftrag.weiterTitel) { beiStarten(auftrag.uebungId) }
-                    .accessibilityHint("Zeigt Geräte, an denen du \(auftrag.ersatzName ?? auftrag.name) machen kannst")
+                    .accessibilityHint("Startet die Übung")
             }
             // Ohne Kandidaten gar kein Knopf -- nie eine leere Liste
             // (Review Focus 3); erledigt, optional und Cardio tauschen nicht.

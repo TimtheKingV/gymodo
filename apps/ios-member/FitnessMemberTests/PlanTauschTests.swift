@@ -543,6 +543,15 @@ struct PlanTauschTests {
         #expect(auftrag.weiterTitel == "Weiter mit Satz 2")
     }
 
+    @Test("Saetze derselben Uebung an zwei Geraeten zaehlen zusammen")
+    func satzGemachtZaehltBeideGeraete() {
+        let ablauf = Self.vorbereitet()
+        let bloecke = [Self.block("m1", "e1", saetze: 1), Self.block("m5", "e1", saetze: 2)]
+        let auftrag = Self.auftrag("A0", ablauf: ablauf, bloecke: bloecke)
+        #expect(auftrag.satzGemacht == 3)
+        #expect(auftrag.weiterTitel == "Weiter mit Satz 4")
+    }
+
     @Test("Eine ausgelassene Position zeigt Doch machen")
     func ausgelassenePositionZeigtDochMachen() {
         let ablauf = Self.vorbereitet()
