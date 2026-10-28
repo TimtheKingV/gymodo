@@ -105,7 +105,7 @@ enum PlanAnzeige {
                         ?? "Optional"
                 case .getauscht:
                     untertitel = "Heute: \(uebungsname(wirksam, bootstrap))"
-            }
+                }
             }
             return PlanZeilenModell(
                 id: stelle.key,
@@ -120,10 +120,12 @@ enum PlanAnzeige {
     }
 
     /// "2/3": Saetze der wirksamen Uebung gegen die Vorgabe, nur bei einer
-    /// angefangenen Kraftposition (0 < gemacht < geplant); sonst nil.
+    /// angefangenen Kraftposition (0 < gemacht < geplant); sonst nil. Gilt
+    /// bei jedem Status: der erste Satz hakt die Position im Ablauf schon ab
+    /// (`TrainingsplanAblauf.nachSatz`), angefangen ist sie trotzdem.
+    /// Ausgelassene Positionen fragt der Aufrufer gar nicht erst.
     private static func satzFortschritt(_ stelle: Planstelle, bloecke: [LokalerBlock]) -> String? {
-        guard !stelle.cardio, stelle.status == .offen || stelle.status == .getauscht,
-              let geplant = stelle.vorgabe?.saetze else { return nil }
+        guard !stelle.cardio, let geplant = stelle.vorgabe?.saetze else { return nil }
         let gemacht = satzzahl(exerciseId: stelle.wirksam, bloecke: bloecke)
         guard gemacht > 0, gemacht < geplant else { return nil }
         return "\(gemacht)/\(geplant)"

@@ -124,17 +124,59 @@ struct PlanAnzeigeTests {
                                         ausgelassen: ["P0"]) == "0 von 5")
     }
 
-    @Test("angefangene Position zeigt Satzfortschritt")
+    /// Wie der Ablauf es wirklich zeigt: der erste Satz hakt die Position ab
+    /// (`TrainingsplanAblauf.nachSatz`), die Marke folgt trotzdem den Saetzen.
+    @Test("angefangene Position zeigt Satzfortschritt, obwohl der erste Satz sie erledigt hat")
     func angefangenePositionZeigtSatzFortschritt() {
-        let zeilen = Self.zeilen(Self.zustand(), bloecke: [Self.block("m1", "e1", saetze: 2)])
-        #expect(zeilen[0].satzFortschritt == "2/3")
-        #expect(zeilen[1].satzFortschritt == nil)
+        for gemacht in [1, 2] {
+            let zeilen = Self.zeilen(Self.zustand(["A0": .erledigt]), bloecke: [Self.block("m1", "e1", saetze: gemacht)])
+            #expect(zeilen[0].satzFortschritt == "\(gemacht)/3")
+            #expect(zeilen[1].satzFortschritt == nil)
+            // Noch Saetze offen: weder durchgestrichen noch gedimmt.
+            #expect(!zeilen[0].abgehakt(status: zeilen[0].status))
+        }
     }
 
-    @Test("erledigte Position ohne Rest zeigt keinen Fortschritt")
+    @Test("heute getauschte Position zaehlt die Saetze des Ersatzes")
+    func getauschtePositionZeigtSatzFortschrittDesErsatzes() {
+        let zeilen = Self.zeilen(Self.zustand(["A1": .erledigt], ersatz: ["A1": "e4"]),
+                                 bloecke: [Self.block("m5", "e4", saetze: 1)])
+        #expect(zeilen[1].satzFortschritt == "1/3")
+    }
+
+    @Test("erledigte Position ohne Rest zeigt keinen Fortschritt und ist abgehakt")
     func erledigtePositionOhneRestZeigtKeinenFortschritt() {
         let zeilen = Self.zeilen(Self.zustand(["A0": .erledigt]), bloecke: [Self.block("m1", "e1", saetze: 3)])
         #expect(zeilen[0].satzFortschritt == nil)
+        #expect(zeilen[0].abgehakt(status: zeilen[0].status))
+        // Ausgelassen bleibt abgehakt, auch mit angefangenen Saetzen; Zusatz nie.
+        let ausgelassen = Self.zeilen(Self.zustand(["A0": .erledigt]), bloecke: [Self.block("m1", "e1", saetze: 1)],
+                                      ausgelassen: ["A0"])
+        #expect(ausgelassen[0].satzFortschritt == nil)
+        #expect(ausgelassen[0].abgehakt(status: ausgelassen[0].status))
+    }
+
+    @Test("Cardio zeigt keinen Satzfortschritt")
+    func cardioOhneSatzFortschritt() {
+        let zeilen = Self.zeilen(Self.zustand(["A3": .erledigt]), bloecke: [Self.block("m4", "c1", saetze: 1)])
+        #expect(zeilen[3].satzFortschritt == nil)
+    }
+
+    // MARK: - Neuester Block
+
+    @Test("neuester Block einer Uebung: der mit dem zuletzt gesicherten Satz, nur mit Ziel und Saetzen")
+    func neuesterBlockEinerUebung() {
+        let frueh = Self.block("m1", "e1", saetze: 1, minute: 0)
+        let spaet = Self.block("m6", "e1", saetze: 1, minute: 30)
+        let fremd = Self.block("m5", "e2", saetze: 2, minute: 60)
+        let leer = LokalerBlock(machineId: "m9", exerciseId: "e1", saetze: [])
+        let bloecke = [spaet, frueh, fremd, leer]
+        #expect(PlanAnzeige.neuesterBlock(exerciseId: "e1", bloecke: bloecke) == spaet)
+        #expect(PlanAnzeige.neuesterBlock(exerciseId: "e2", bloecke: bloecke) == fremd)
+        #expect(PlanAnzeige.neuesterBlock(exerciseId: "e3", bloecke: bloecke) == nil)
+        #expect(PlanAnzeige.neuesterBlock(exerciseId: "e1", bloecke: [leer]) == nil)
+        // Die Zusatz-Zeile nimmt denselben Weg.
+        #expect(PlanAnzeige.block(fuerZusatz: "zusatz:e1", bloecke: bloecke) == spaet)
     }
 
     // MARK: - Untertitel

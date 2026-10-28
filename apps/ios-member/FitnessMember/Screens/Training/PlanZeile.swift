@@ -24,8 +24,17 @@ struct PlanZeilenModell: Equatable, Identifiable {
     var zusatz = false
     /// Heute ausgelassen: gedimmt und durchgestrichen, Untertitel sagt es.
     var ausgelassen = false
-    /// "2/3" bei einer angefangenen Kraftposition; ersetzt den Haken.
+    /// "2/3" bei einer angefangenen Kraftposition (auch schon erledigt:
+    /// der erste Satz hakt ab); ersetzt den Haken.
     var satzFortschritt: String? = nil
+
+    /// Durchgestrichen und gedimmt: erledigt ohne offene Saetze, oder heute
+    /// ausgelassen. Eine angefangene Position ("1/3") ist im Ablauf schon
+    /// erledigt, fertig ist sie erst ohne Fortschrittsmarke. Zusatz-Zeilen
+    /// standen nie auf dem Plan und bleiben ungestrichen.
+    func abgehakt(status: PlanMomentaufnahme.Status?) -> Bool {
+        (status == .erledigt && !zusatz && satzFortschritt == nil) || ausgelassen
+    }
 }
 
 extension PlanZeilenModell {
@@ -91,7 +100,7 @@ struct PlanZeile: View {
 
     var body: some View {
         let status = wirksamerStatus
-        let abgehakt = (status == .erledigt && !modell.zusatz) || modell.ausgelassen
+        let abgehakt = modell.abgehakt(status: status)
         HStack(spacing: DesignSystem.Spacing.s12) {
             UebungsVideoKachel(exerciseId: modell.exerciseId) {
                 PlanZeilenFoto(foto: foto)
