@@ -108,7 +108,16 @@ enum GeraeteAuswahl {
     /// Training alle Katalogtypen ohne studioId. Ohne Katalog und ohne
     /// Geraete ist die Liste leer -- der Ruhezustand vor dem Bootstrap,
     /// kein Bug.
-    static func stationen(bootstrap: BootstrapResponse, ort: Ort) -> [Station] {
+    ///
+    /// `uebungId` gesetzt: nur Stationen, die diese Uebung anbieten -- die
+    /// Auswahl nach dem Tipp auf eine Planzeile (`PlanStart`).
+    static func stationen(bootstrap: BootstrapResponse, ort: Ort, uebungId: String? = nil) -> [Station] {
+        let alle = alleStationen(bootstrap: bootstrap, ort: ort)
+        guard let uebungId else { return alle }
+        return alle.filter { PlanStart.bietetAn($0, uebungId: uebungId) }
+    }
+
+    private static func alleStationen(bootstrap: BootstrapResponse, ort: Ort) -> [Station] {
         switch ort {
         case .studio(let studioId):
             let geraete = bootstrap.machines.filter { $0.studioId == studioId }
@@ -150,9 +159,10 @@ enum GeraeteAuswahl {
         bootstrap: BootstrapResponse,
         ort: Ort,
         suchtext: String,
-        gruppe: Geraetegruppe? = nil
+        gruppe: Geraetegruppe? = nil,
+        uebungId: String? = nil
     ) -> Gruppen {
-        let stationen = stationen(bootstrap: bootstrap, ort: ort)
+        let stationen = stationen(bootstrap: bootstrap, ort: ort, uebungId: uebungId)
             .filter { gruppe == nil || Geraetegruppe.fuer($0.equipmentModel) == gruppe }
         let maschinen = Dictionary(bootstrap.machines.map { ($0.id, $0) }, uniquingKeysWith: { erste, _ in erste })
         let besuche = maschinen.mapValues(\.visitCount)
@@ -175,7 +185,9 @@ enum GeraeteAuswahl {
                 nichtScannbar: station.machineId != nil && station.tokenHashes.isEmpty)
         }
 
-        if gesucht.isEmpty, gruppe != nil {
+        // Eine Planuebung zeigt gleich die Geraete, keine Kacheln: sonst ginge
+        // der Tipp auf eine Kachel in die ungefilterte Gruppe.
+        if gesucht.isEmpty, gruppe != nil || uebungId != nil {
             let liste = stationen
                 .map { eintrag($0, trefferUebung: nil) }
                 .sorted(by: alphabetischGesperrteAnsEnde)

@@ -17,6 +17,9 @@ enum GeraetRoute: Hashable {
     /// #4) -- Freihantel, Geraete, Cardio. Eine Kachel mit einem Geraet
     /// fuehrt gleich zu `.erkannt`.
     case kategorie(Geraetegruppe)
+    /// Die Auswahl nach dem Tipp auf eine Planzeile: nur Stationen, die diese
+    /// Uebung anbieten (Spec 5, `PlanStart`).
+    case planUebung(exerciseId: String)
     /// Die Satzseite. `start` kommt aus dem Drawer vor der Uebung (Testnotiz
     /// 11.10., #10) und laesst sie mit dem Countdown beginnen; ohne (Zirkel
     /// ueber die Blockliste) stehen gleich die Raeder.

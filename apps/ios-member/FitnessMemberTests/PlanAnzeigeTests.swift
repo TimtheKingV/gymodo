@@ -147,6 +147,30 @@ struct PlanAnzeigeTests {
         #expect(zeile.untertitel == "3 Sätze")
     }
 
+    // MARK: - Position ohne festes Geraet (Spec 5)
+
+    @Test("Position ist erledigt durch einen Satz derselben Uebung an einem anderen Geraet")
+    func positionErledigtAnAnderemGeraet() {
+        // A0 plant e1 am Modell em-m1; der Satz kommt von einem Geraet m7
+        // (anderes Modell). Die Position meint die Uebung, nicht das Geraet.
+        let satz = AblaufSatz(exerciseId: "e1", hauptmuskeln: ["quads"], cardio: false)
+        let zustand = TrainingsplanAblauf.nachSatz(Self.zustand(), satz)
+        let zeilen = Self.zeilen(zustand, bloecke: [Self.block("m7", "e1", saetze: 2)])
+        #expect(zeilen[0].status == .erledigt)
+        #expect(zeilen[0].untertitel == "2 Sätze")
+        #expect(PlanAnzeige.fortschritt(plan: Self.plan(), einheitKey: "A", zustand: zustand) == "1 von 4")
+    }
+
+    @Test("Position bleibt offen ohne Satz der Uebung")
+    func positionOffenOhneSatzDerUebung() {
+        // Ein Satz einer fremden Uebung ohne gemeinsamen Hauptmuskel hakt nichts ab.
+        let satz = AblaufSatz(exerciseId: "e99", hauptmuskeln: ["calves"], cardio: false)
+        let zustand = TrainingsplanAblauf.nachSatz(Self.zustand(), satz)
+        let zeilen = Self.zeilen(zustand, bloecke: [Self.block("m7", "e99", saetze: 3)])
+        #expect(zeilen[0].status == .offen)
+        #expect(PlanAnzeige.fortschritt(plan: Self.plan(), einheitKey: "A", zustand: zustand) == "0 von 4")
+    }
+
     // MARK: - Fortschritt und Zeit
 
     @Test("Fortschritt zaehlt erledigt plus optional")

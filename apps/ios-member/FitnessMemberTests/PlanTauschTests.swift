@@ -480,6 +480,14 @@ struct PlanTauschTests {
         #expect(!optional.tauschbar)
     }
 
+    @Test("Der Auftrag nennt die Uebung, die ein Start meint: Ersatz vor Plan")
+    func auftragNenntDieStartUebung() {
+        let ablauf = Self.vorbereitet()
+        #expect(Self.auftrag("A0", ablauf: ablauf).uebungId == "e1")
+        ablauf.tauschen(positionKey: "A0", ersatz: (exerciseId: "e8", hauptmuskeln: ["deltoid_front"]))
+        #expect(Self.auftrag("A0", ablauf: ablauf).uebungId == "e8")
+    }
+
     // MARK: - Laufende Einheit
 
     @Test("Tausch waehrend laufender Einheit aendert deren Planversion nicht")

@@ -18,8 +18,10 @@ extension View {
     /// Training-Tabs. Nicht an der Karte: die lebt in einer LazyVStack, und
     /// ein Sheet dort kann beim Scrollen mit ihr verschwinden.
     func planPositionSheet(auftrag: Binding<PlanTauschAuftrag?>, apiClient: APIClient,
-                           vorschauLader: VorschauLader) -> some View {
-        modifier(PlanPositionSheetHuelle(auftrag: auftrag, apiClient: apiClient, vorschauLader: vorschauLader))
+                           vorschauLader: VorschauLader,
+                           beiStarten: @escaping (String) -> Void) -> some View {
+        modifier(PlanPositionSheetHuelle(auftrag: auftrag, apiClient: apiClient, vorschauLader: vorschauLader,
+                                         beiStarten: beiStarten))
     }
 }
 
@@ -29,6 +31,7 @@ private struct PlanPositionSheetHuelle: ViewModifier {
     @Binding var auftrag: PlanTauschAuftrag?
     let apiClient: APIClient
     let vorschauLader: VorschauLader
+    let beiStarten: (String) -> Void
 
     @Environment(CatalogStore.self) private var katalog
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
@@ -54,7 +57,11 @@ private struct PlanPositionSheetHuelle: ViewModifier {
                         planAblauf.vorbereiten(bootstrap: bootstrap)
                     }),
                 fotoLader: apiClient, vorschauLader: vorschauLader,
-                beiFertig: { self.auftrag = nil })
+                beiFertig: { self.auftrag = nil },
+                beiStarten: { uebungId in
+                    self.auftrag = nil
+                    beiStarten(uebungId)
+                })
             .environment(videoVorrat)
         }
     }
@@ -71,13 +78,17 @@ struct PlanPositionSheet: View {
     let fotoLader: any GeraetefotosLoading
     let vorschauLader: VorschauLader
     let beiFertig: () -> Void
+    /// "Gerät wählen": die Uebung der Position starten, an welchem Geraet
+    /// auch immer (Spec 5). Schliesst das Sheet; die Wurzel oeffnet die Auswahl.
+    var beiStarten: ((String) -> Void)?
 
     /// Gemessene Hoehe fuer 3.1/3.3: so hoch wie der Inhalt, wie der Drawer.
     @State private var hoehe: CGFloat = 340
     @State private var bilder: [String: UIImage] = [:]
 
     init(sitzung: PlanTauschSitzung, fotoLader: any GeraetefotosLoading, vorschauLader: VorschauLader,
-         beiFertig: @escaping () -> Void) {
+         beiFertig: @escaping () -> Void, beiStarten: ((String) -> Void)? = nil) {
+        self.beiStarten = beiStarten
         _sitzung = State(initialValue: sitzung)
         self.fotoLader = fotoLader
         self.vorschauLader = vorschauLader
@@ -150,6 +161,13 @@ struct PlanPositionSheet: View {
             }
             if let vorgesehen = auftrag.vorgesehen {
                 absatz(vorgesehen)
+            }
+            // Die Position meint die Uebung, nicht ein Geraet: die Auswahl
+            // zeigt nur Geraete, die sie anbieten. Erledigte Positionen
+            // starten nichts mehr.
+            if let beiStarten, auftrag.status != .erledigt {
+                SecondaryButton(title: "Gerät wählen") { beiStarten(auftrag.uebungId) }
+                    .accessibilityHint("Zeigt Geräte, an denen du \(auftrag.ersatzName ?? auftrag.name) machen kannst")
             }
             // Ohne Kandidaten gar kein Knopf -- nie eine leere Liste
             // (Review Focus 3); erledigt, optional und Cardio tauschen nicht.

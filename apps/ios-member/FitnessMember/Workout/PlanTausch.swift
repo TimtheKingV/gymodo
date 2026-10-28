@@ -46,6 +46,8 @@ struct PlanTauschAuftrag: Equatable, Identifiable {
     let position: TrainingsplanPosition
     /// Der Status im heutigen Ablauf; ohne Ablauf offen.
     let status: PositionStatus
+    /// Die Uebung, die ein Start meint: der heutige Ersatz, sonst die geplante.
+    let uebungId: String
     /// Der Name der geplanten Uebung (wie die Zeile).
     let name: String
     /// Der heutige Ersatz bei einem Tausch nur heute.
@@ -118,6 +120,7 @@ enum PlanTausch {
             einheitKey: heute.einheitKey,
             position: position,
             status: status,
+            uebungId: stelle?.wirksam ?? position.exerciseId,
             name: name(geplant, bootstrap),
             ersatzName: stelle?.ersatz.map { name($0, bootstrap) },
             vorgesehen: status == .offen && geplant == position.exerciseId
