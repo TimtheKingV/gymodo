@@ -72,4 +72,41 @@ struct PlanStartAuswahlTests {
         let daten = bootstrap(maschinen: [maschine("m1", ["e1"])])
         #expect(GeraeteAuswahl.stationen(bootstrap: daten, ort: .studio("s1"), uebungId: "e9").isEmpty)
     }
+
+    // MARK: Startregel
+
+    private func alleStationen(_ daten: BootstrapResponse) -> [Station] {
+        GeraeteAuswahl.stationen(bootstrap: daten, ort: .freiesTraining)
+    }
+
+    @Test("Genau eine passende Station startet direkt")
+    func einStationStartetDirekt() {
+        let daten = bootstrap(typen: [typ("t1", ["e1"]), typ("t2", ["e2"])])
+        let ziel = PlanStart.ziel(stationen: alleStationen(daten), uebungId: "e1")
+        guard case .direkt(let station) = ziel else { Issue.record("erwartet .direkt, war \(ziel)"); return }
+        #expect(station.schluessel == "typ:t1")
+    }
+
+    @Test("Mehrere passende Stationen zeigen die Auswahl")
+    func mehrereStationenZeigenAuswahl() {
+        let daten = bootstrap(typen: [typ("t1", ["e1"]), typ("t2", ["e2"]), typ("t3", ["e1", "e2"])])
+        let ziel = PlanStart.ziel(stationen: alleStationen(daten), uebungId: "e1")
+        guard case .auswahl(let stationen) = ziel else { Issue.record("erwartet .auswahl, war \(ziel)"); return }
+        #expect(Set(stationen.map(\.schluessel)) == ["typ:t1", "typ:t3"])
+    }
+
+    @Test("Keine passende Station ergibt keine")
+    func keineStationIstKeine() {
+        let daten = bootstrap(typen: [typ("t1", ["e1"])])
+        #expect(PlanStart.ziel(stationen: alleStationen(daten), uebungId: "e9") == .keine)
+        #expect(PlanStart.ziel(stationen: [], uebungId: "e1") == .keine)
+    }
+
+    @Test("Eine Station ohne die Uebung zaehlt nicht mit")
+    func stationOhneDieUebungZaehltNicht() {
+        let daten = bootstrap(typen: [typ("t1", ["e1"]), typ("t2", ["e2"]), typ("t3", ["e2"])])
+        let ziel = PlanStart.ziel(stationen: alleStationen(daten), uebungId: "e1")
+        guard case .direkt(let station) = ziel else { Issue.record("erwartet .direkt, war \(ziel)"); return }
+        #expect(station.schluessel == "typ:t1")
+    }
 }
