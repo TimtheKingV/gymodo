@@ -143,6 +143,15 @@ struct TrainingRootView: View {
     @State private var zirkelAbschluss: ZirkelAbschluss?
     /// Die angetippte Planzeile (Entwuerfe 3.1-3.3, `planPositionSheet`).
     @State private var planPosition: PlanTauschAuftrag?
+    /// Die Position, zu der die Auswahl "Andere Übung wählen" offen ist
+    /// (`GeraetRoute.planErsatz`); gilt, solange die Route im Pfad steht.
+    @State private var planErsatzAuftrag: PlanTauschAuftrag?
+    /// "Welche Übung?" einer Station mit mehreren Uebungen in der Ersatzwahl.
+    @State private var ersatzUebungswahl: ZirkelUebungswahl?
+    /// Die Wahl aus dem Blatt oben: sie wird erst nach dessen Schliessen
+    /// angewandt, sonst verschluckt SwiftUI das Grund-Sheet (zwei Sheets in
+    /// einem Zug).
+    @State private var ersatzNachSchliessen: (station: Station, uebungId: String)?
 
     var body: some View {
         NavigationStack(path: $pfad) {
@@ -222,8 +231,22 @@ struct TrainingRootView: View {
                 ziel(route).id(route).environment(videoVorrat)
             }
             .environment(videoVorrat)
-            .planPositionSheet(auftrag: $planPosition, apiClient: apiClient, vorschauLader: vorschauLader) { uebungId in
+            .planPositionSheet(auftrag: $planPosition, apiClient: apiClient) { uebungId in
                 planUebungStarten(uebungId)
+            } beiAndereUebung: { auftrag in
+                planErsatzAuftrag = auftrag
+                pfad.append(.planErsatz(positionKey: auftrag.position.key))
+            }
+            .sheet(item: $ersatzUebungswahl, onDismiss: {
+                guard let wahl = ersatzNachSchliessen else { return }
+                ersatzNachSchliessen = nil
+                ersatzAnwenden(wahl.station, uebungId: wahl.uebungId)
+            }) { wahl in
+                ZirkelUebungswahlSheet(wahl: wahl) { uebung in
+                    ersatzNachSchliessen = (wahl.station, uebung.exerciseId)
+                    ersatzUebungswahl = nil
+                }
+                .environment(videoVorrat)
             }
             .sheet(item: $uebungsstart, onDismiss: zirkelPlanungOeffnen) { auftrag in
                 if let modell = modell(station: auftrag.station, exerciseId: auftrag.exerciseId,
@@ -690,7 +713,26 @@ struct TrainingRootView: View {
         switch route {
         case .kategorie(let gruppe):
             GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader, gruppe: gruppe) { station, uebungId in
-                waehle(station, uebungId: uebungId)
+                // Aus der Ersatzwahl (Route im Pfad) wird gewaehlt, nicht gestartet.
+                if ersatzModus { ersatzWaehlen(station, uebungId: uebungId) } else { waehle(station, uebungId: uebungId) }
+            }
+        case .planErsatz(let positionKey):
+            if let auftrag = planErsatzAuftrag, auftrag.position.key == positionKey {
+                GeraeteAuswahlView(
+                    fotoLader: apiClient, vorschauLader: vorschauLader, titel: "KATEGORIE WÄHLEN",
+                    kopfinhalt: {
+                        PlanErsatzKopf(auftrag: auftrag, fotoLader: apiClient, vorschauLader: vorschauLader,
+                                       beiKandidat: { ersatzFertig(.ersatz($0)) },
+                                       beiOhneErsatz: { ersatzFertig(.ohneErsatz) })
+                    },
+                    trainingsinhalt: { EmptyView() },
+                    beiAuswahl: { station, uebungId in ersatzWaehlen(station, uebungId: uebungId) },
+                    beiKachel: { kachel in
+                        switch GeraeteAuswahl.ziel(kachel) {
+                        case .station(let station): ersatzWaehlen(station, uebungId: nil)
+                        case .liste(let gruppe): pfad.append(.kategorie(gruppe))
+                        }
+                    })
             }
         case .planUebung(let exerciseId):
             // Nur Stationen mit der Uebung der Position; der Tipp startet
@@ -893,6 +935,46 @@ struct TrainingRootView: View {
     private func listeZeigen() {
         pfad.removeAll()
         beitrittZeigen = true
+    }
+
+    // MARK: - Ersatzwahl (Andere Übung wählen)
+
+    /// Die Ersatzwahl laeuft, solange ihre Route im Pfad steht -- ohne eigenen
+    /// Merker, der nach einem Zurueck veralten koennte.
+    private var ersatzModus: Bool {
+        pfad.contains { if case .planErsatz = $0 { true } else { false } }
+    }
+
+    /// Eine Station (und Uebung) aus der normalen Auswahl. Ohne Uebung und mit
+    /// mehreren am Geraet fragt ein kleines Blatt nach.
+    private func ersatzWaehlen(_ station: Station, uebungId: String?) {
+        if let uebungId {
+            ersatzAnwenden(station, uebungId: uebungId)
+        } else if station.exercises.count == 1, let einzige = station.exercises.first {
+            ersatzAnwenden(station, uebungId: einzige.id)
+        } else if station.exercises.count > 1 {
+            ersatzUebungswahl = ZirkelUebungswahl(
+                station: station,
+                offen: station.exercises.map { ZirkelUebung(station: station.schluessel, exerciseId: $0.id, token: nil) },
+                schonDabei: [])
+        }
+    }
+
+    private func ersatzAnwenden(_ station: Station, uebungId: String) {
+        // Nicht ableitbar: nichts zeigen, die Auswahl bleibt offen.
+        guard let kandidat = PlanTausch.kandidat(station: station, uebungId: uebungId,
+                                                 bootstrap: katalog.bootstrap) else { return }
+        ersatzFertig(.ersatz(kandidat))
+    }
+
+    /// Die Wahl steht: zurueck zur Wurzel, dort die Grund-Frage als Sheet der
+    /// Position, direkt beim Schritt "Warum wechselst du?".
+    private func ersatzFertig(_ start: PlanTauschAuftrag.ErsatzStart) {
+        guard var auftrag = planErsatzAuftrag else { return }
+        auftrag.ersatzStart = start
+        planErsatzAuftrag = nil
+        pfad.removeAll()
+        planPosition = auftrag
     }
 
     /// Tipp auf "Weiter…"/"Übung starten" im Plan-Sheet: bietet genau ein

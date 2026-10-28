@@ -236,20 +236,37 @@ struct PlanTauschTests {
         #expect(schraeg.modelId == "em-m7")
     }
 
-    @Test("keine Kandidaten -> kein Knopf Andere Uebung")
-    func keineKandidatenKeinKnopf() async {
+    @Test("Andere Uebung waehlen steht an jeder tauschbaren Position, auch ohne Kandidaten")
+    func andereUebungAnJederTauschbarenPosition() {
         let ablauf = Self.vorbereitet()
-        let auftrag = Self.auftrag("A1", ablauf: ablauf)
-        #expect(auftrag.kandidaten.isEmpty)
-        #expect(!auftrag.zeigtAndereUebung)
-
-        // Auch ein Aufruf von aussen oeffnet nie eine leere Liste.
-        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: TauschClientAttrappe(), umgebung: Umgebung())
-        sut.andereUebung()
-        #expect(sut.schritt == .vorgabe)
-
-        // Mit Kandidaten gibt es den Knopf.
+        let ohneKandidaten = Self.auftrag("A1", ablauf: ablauf)
+        #expect(ohneKandidaten.kandidaten.isEmpty)
+        #expect(ohneKandidaten.tauschbar)
+        #expect(ohneKandidaten.zeigtAndereUebung)
         #expect(Self.auftrag("A0", ablauf: ablauf).zeigtAndereUebung)
+    }
+
+    @Test("Start mit Ersatz: die Sitzung steht gleich bei der Grund-Frage, mit und ohne Ersatz")
+    func startMitErsatz() throws {
+        let ablauf = Self.vorbereitet()
+        let basis = Self.auftrag("A0", ablauf: ablauf)
+        let schraeg = try #require(basis.kandidaten.first { $0.exerciseId == "e7" })
+
+        var mit = basis
+        mit.ersatzStart = .ersatz(schraeg)
+        let a = Self.sitzung(mit, ablauf: ablauf, client: TauschClientAttrappe(), umgebung: Umgebung())
+        #expect(a.schritt == .entfernen)
+        #expect(a.ersatz == schraeg)
+        #expect(a.optionen.count == 3)
+
+        var ohne = basis
+        ohne.ersatzStart = .ohneErsatz
+        let b = Self.sitzung(ohne, ablauf: ablauf, client: TauschClientAttrappe(), umgebung: Umgebung())
+        #expect(b.schritt == .entfernen)
+        #expect(b.ersatz == nil)
+        #expect(b.optionen.count == 2)
+
+        #expect(Self.sitzung(basis, ablauf: ablauf, client: TauschClientAttrappe(), umgebung: Umgebung()).schritt == .vorgabe)
     }
 
     // MARK: - Nur heute
@@ -263,8 +280,6 @@ struct PlanTauschTests {
         let auftrag = Self.auftrag("A0", ablauf: ablauf)
         let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: umgebung)
 
-        sut.andereUebung()
-        #expect(sut.schritt == .kandidaten)
         let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
         // Offline geht "nur heute" trotzdem.
         #expect(sut.waehlen(schraeg))
@@ -288,7 +303,6 @@ struct PlanTauschTests {
         let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: umgebung)
         let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
 
-        sut.andereUebung()
         sut.dauerhaftSetzen(true)
         // Mit Schalter schreibt "Wählen" nichts, es folgt die Bestaetigung (3.3).
         #expect(!sut.waehlen(schraeg))
@@ -311,7 +325,6 @@ struct PlanTauschTests {
         umgebung.online = false
         let auftrag = Self.auftrag("A0", ablauf: ablauf)
         let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: umgebung)
-        sut.andereUebung()
 
         #expect(!sut.dauerhaftMoeglich)
         sut.dauerhaftSetzen(true)
@@ -331,7 +344,6 @@ struct PlanTauschTests {
         // Ausschalten geht auch offline.
         sut.dauerhaftSetzen(false)
         #expect(!sut.dauerhaft)
-        #expect(sut.schritt == .kandidaten)
     }
 
     /// Waehrend "Übernehmen" schreibt, ist der Schalter gesperrt (Sheet) und
@@ -349,7 +361,6 @@ struct PlanTauschTests {
             istOnline: { umgebung.online }, aktuellePlanId: { umgebung.aktuellePlanId },
             neuLaden: { umgebung.neuGeladen += 1 })
         let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
-        sut.andereUebung()
         sut.dauerhaftSetzen(true)
         _ = sut.waehlen(schraeg)
 
@@ -383,7 +394,6 @@ struct PlanTauschTests {
         let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: umgebung)
         let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
 
-        sut.andereUebung()
         sut.dauerhaftSetzen(true)
         _ = sut.waehlen(schraeg)
         #expect(await sut.uebernehmen())
@@ -411,7 +421,6 @@ struct PlanTauschTests {
         let sut = Self.sitzung(auftrag, ablauf: ablauf, client: TauschClientAttrappe(), umgebung: umgebung)
         let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
 
-        sut.andereUebung()
         sut.dauerhaftSetzen(true)
         _ = sut.waehlen(schraeg)
         #expect(await sut.uebernehmen())
@@ -427,7 +436,6 @@ struct PlanTauschTests {
         let auftrag = Self.auftrag("A0", ablauf: ablauf)
         let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: umgebung)
         let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
-        sut.andereUebung()
         sut.dauerhaftSetzen(true)
         _ = sut.waehlen(schraeg)
 
@@ -585,7 +593,6 @@ struct PlanTauschTests {
         let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: umgebung)
         let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
 
-        sut.andereUebung()
         sut.dauerhaftSetzen(true)
         _ = sut.waehlen(schraeg)
         #expect(await sut.uebernehmen())
@@ -604,7 +611,6 @@ struct PlanTauschTests {
         // "Nur heute" geht in der laufenden Einheit weiter.
         let sut2 = Self.sitzung(Self.auftrag("A0", ablauf: ablauf, plan: neu), ablauf: ablauf,
                                 client: client, umgebung: umgebung)
-        sut2.andereUebung()
         let schulter = try #require(sut2.auftrag.kandidaten.first { $0.exerciseId == "e8" })
         #expect(sut2.waehlen(schulter))
         #expect(ablauf.zustand?.positionen.first?.ersatzExerciseId == "e8")
@@ -903,7 +909,6 @@ struct PlanTauschTests {
 
         // Der alte Weg (Schalter) schickt weder Grund noch Ort.
         let sut2 = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: Umgebung())
-        sut2.andereUebung()
         sut2.dauerhaftSetzen(true)
         _ = sut2.waehlen(schraeg)
         #expect(await sut2.uebernehmen())
@@ -1043,5 +1048,38 @@ struct PlanTauschStudioTests {
         #expect(schulter.muskeln == "Schulter vorn")
         #expect(schulter.geraet == "Typ em-m8")
         #expect(schulter.name == "Schulterdrücken")
+    }
+
+    // MARK: - Kandidat aus Station und Uebung
+
+    @Test("kandidat: Studiogeraet liefert Katalogmodell, Name, Geraet und Hauptmuskeln")
+    func kandidatAusStudiogeraet() throws {
+        let bootstrap = Self.bootstrapImStudio()
+        let station = try #require(bootstrap.station(schluessel: "geraet:m8", studioId: "s1"))
+        let kandidat = try #require(PlanTausch.kandidat(station: station, uebungId: "e8", bootstrap: bootstrap))
+        #expect(kandidat.exerciseId == "e8")
+        #expect(kandidat.modelId == "em-m8")
+        #expect(kandidat.name == "Schulterdrücken")
+        #expect(kandidat.geraet == "Gerät 9")
+        #expect(kandidat.hauptmuskeln == ["deltoid_front"])
+        #expect(kandidat.muskeln == "Schulter vorn")
+        #expect(kandidat.vorschaubildModell == "em-m8")
+    }
+
+    @Test("kandidat: Katalogtyp liefert seine eigene ID als Modell")
+    func kandidatAusKatalogtyp() throws {
+        let bootstrap = Self.bootstrapFrei()
+        let station = try #require(bootstrap.station(schluessel: "typ:em-m7", studioId: "kat1"))
+        let kandidat = try #require(PlanTausch.kandidat(station: station, uebungId: "e7", bootstrap: bootstrap))
+        #expect(kandidat.modelId == "em-m7")
+        #expect(kandidat.hauptmuskeln == ["chest"])
+        #expect(kandidat.name == "Schrägbankpresse")
+    }
+
+    @Test("kandidat: Uebung, die die Station nicht kennt, liefert nil")
+    func kandidatUnbekannteUebung() throws {
+        let bootstrap = Self.bootstrapImStudio()
+        let station = try #require(bootstrap.station(schluessel: "geraet:m8", studioId: "s1"))
+        #expect(PlanTausch.kandidat(station: station, uebungId: "e1", bootstrap: bootstrap) == nil)
     }
 }

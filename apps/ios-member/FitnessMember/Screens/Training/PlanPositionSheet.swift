@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 extension PlanTausch {
     /// Der Auftrag zur angetippten Zeile aus Bootstrap und Ablaufspeicher --
@@ -20,10 +19,10 @@ extension View {
     /// Training-Tabs. Nicht an der Karte: die lebt in einer LazyVStack, und
     /// ein Sheet dort kann beim Scrollen mit ihr verschwinden.
     func planPositionSheet(auftrag: Binding<PlanTauschAuftrag?>, apiClient: APIClient,
-                           vorschauLader: VorschauLader,
-                           beiStarten: @escaping (String) -> Void) -> some View {
-        modifier(PlanPositionSheetHuelle(auftrag: auftrag, apiClient: apiClient, vorschauLader: vorschauLader,
-                                         beiStarten: beiStarten))
+                           beiStarten: @escaping (String) -> Void,
+                           beiAndereUebung: @escaping (PlanTauschAuftrag) -> Void) -> some View {
+        modifier(PlanPositionSheetHuelle(auftrag: auftrag, apiClient: apiClient, beiStarten: beiStarten,
+                                         beiAndereUebung: beiAndereUebung))
     }
 }
 
@@ -32,12 +31,14 @@ extension View {
 private struct PlanPositionSheetHuelle: ViewModifier {
     @Binding var auftrag: PlanTauschAuftrag?
     let apiClient: APIClient
-    let vorschauLader: VorschauLader
     let beiStarten: (String) -> Void
+    let beiAndereUebung: (PlanTauschAuftrag) -> Void
 
     /// "Weiter…" schliesst das Sheet; der Start (ein zweites Sheet an der
     /// Wurzel) laeuft erst in onDismiss, sonst kann SwiftUI ihn verschlucken.
     @State private var startNachSchliessen: String?
+    /// Ebenso "Andere Übung wählen": der Push der Auswahl folgt dem Schliessen.
+    @State private var andereNachSchliessen: PlanTauschAuftrag?
 
     @Environment(CatalogStore.self) private var katalog
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
@@ -46,9 +47,13 @@ private struct PlanPositionSheetHuelle: ViewModifier {
 
     func body(content: Content) -> some View {
         content.sheet(item: $auftrag, onDismiss: {
-            guard let uebungId = startNachSchliessen else { return }
-            startNachSchliessen = nil
-            beiStarten(uebungId)
+            if let uebungId = startNachSchliessen {
+                startNachSchliessen = nil
+                beiStarten(uebungId)
+            } else if let andere = andereNachSchliessen {
+                andereNachSchliessen = nil
+                beiAndereUebung(andere)
+            }
         }) { auftrag in
             PlanPositionSheet(
                 sitzung: PlanTauschSitzung(
@@ -66,7 +71,6 @@ private struct PlanPositionSheetHuelle: ViewModifier {
                         guard let bootstrap = katalog.bootstrap else { return }
                         planAblauf.vorbereiten(bootstrap: bootstrap)
                     }),
-                fotoLader: apiClient, vorschauLader: vorschauLader,
                 beiFertig: { self.auftrag = nil },
                 beiDochMachen: { [planAblauf] in
                     planAblauf.auslassenZuruecknehmen(positionKey: auftrag.position.key)
@@ -75,41 +79,42 @@ private struct PlanPositionSheetHuelle: ViewModifier {
                 beiStarten: { uebungId in
                     startNachSchliessen = uebungId
                     self.auftrag = nil
+                },
+                beiAndereUebung: {
+                    andereNachSchliessen = auftrag
+                    self.auftrag = nil
                 })
             .environment(videoVorrat)
         }
     }
 }
 
-/// Das Sheet zu einer Planzeile: erst die Vorgabe (3.1), auf Wunsch die
-/// Kandidaten (3.2) und mit Schalter die Bestaetigung (3.3) -- ein Sheet,
-/// das seinen Inhalt wechselt, statt drei gestapelter.
+/// Das Sheet zu einer Planzeile: erst die Vorgabe (3.1), nach der Wahl in
+/// der Auswahl die Grund-Frage (4) und ggf. die Bestaetigung (3.3) -- ein
+/// Sheet, das seinen Inhalt wechselt, statt mehrerer gestapelter.
 ///
 /// 3.1: der Hauptknopf "Weiter mit Satz X" / "Übung starten" ist die
 /// einzige Akzentflaeche des Sheets.
 struct PlanPositionSheet: View {
     @State private var sitzung: PlanTauschSitzung
-    let fotoLader: any GeraetefotosLoading
-    let vorschauLader: VorschauLader
     let beiFertig: () -> Void
     /// "Gerät wählen": die Uebung der Position starten, an welchem Geraet
     /// auch immer (Spec 5). Schliesst das Sheet; die Wurzel oeffnet die Auswahl.
     var beiStarten: ((String) -> Void)?
     /// "Doch machen": nimmt das Auslassen von heute zurueck.
     var beiDochMachen: (() -> Void)?
+    /// "Andere Übung wählen": schliesst das Sheet; die Wurzel oeffnet die Auswahl.
+    var beiAndereUebung: (() -> Void)?
 
     /// Gemessene Hoehe fuer 3.1/3.3: so hoch wie der Inhalt, wie der Drawer.
     @State private var hoehe: CGFloat = 340
-    @State private var bilder: [String: UIImage] = [:]
 
-    init(sitzung: PlanTauschSitzung, fotoLader: any GeraetefotosLoading, vorschauLader: VorschauLader,
-         beiFertig: @escaping () -> Void, beiDochMachen: (() -> Void)? = nil,
-         beiStarten: ((String) -> Void)? = nil) {
+    init(sitzung: PlanTauschSitzung, beiFertig: @escaping () -> Void, beiDochMachen: (() -> Void)? = nil,
+         beiStarten: ((String) -> Void)? = nil, beiAndereUebung: (() -> Void)? = nil) {
         self.beiStarten = beiStarten
         self.beiDochMachen = beiDochMachen
+        self.beiAndereUebung = beiAndereUebung
         _sitzung = State(initialValue: sitzung)
-        self.fotoLader = fotoLader
-        self.vorschauLader = vorschauLader
         self.beiFertig = beiFertig
     }
 
@@ -120,31 +125,18 @@ struct PlanPositionSheet: View {
             switch sitzung.schritt {
             case .vorgabe:
                 gemessen(vorgabe)
-            case .kandidaten:
-                PlanTauschListe(sitzung: sitzung, bilder: bilder, beiFertig: beiFertig)
             case .entfernen:
-                gemessen(PlanEntfernenFrage(sitzung: sitzung, beiFertig: beiFertig))
+                gemessen(PlanGrundFrage(sitzung: sitzung, beiFertig: beiFertig))
             case .bestaetigen(let kandidat):
                 gemessen(PlanTauschBestaetigung(sitzung: sitzung, kandidat: kandidat, beiFertig: beiFertig))
             }
         }
-        .presentationDetents(sitzung.schritt == .kandidaten ? [.medium, .large] : [.height(hoehe)])
+        .presentationDetents([.height(hoehe)])
         .presentationDragIndicator(.visible)
         .presentationBackground(DesignSystem.Color.surface)
         // Waehrend "Übernehmen" schreibt, nicht wegwischen: sonst bliebe
         // offen, ob die neue Version steht.
         .interactiveDismissDisabled(sitzung.schreibtGerade)
-        .task {
-            // Fotos nur, wenn es eine Liste gibt; fehlen sie, bleibt der
-            // Platzhalter (GeraeteFotos.laden).
-            guard auftrag.zeigtAndereUebung else { return }
-            let fotos = await GeraeteFotos.laden(von: fotoLader)
-            for kandidat in auftrag.kandidaten {
-                guard let modell = kandidat.vorschaubildModell, bilder[modell] == nil,
-                      let url = fotos[modell] else { continue }
-                bilder[modell] = await vorschauLader.bild(modellId: modell, url: url, kantePixel: 168)
-            }
-        }
     }
 
     /// Misst den Inhalt fuer den Detent; die untere Safe Area gehoert dazu,
@@ -197,13 +189,11 @@ struct PlanPositionSheet: View {
                 PrimaryButton(title: auftrag.weiterTitel) { beiStarten(auftrag.uebungId) }
                     .accessibilityHint("Startet die Übung")
             }
-            // Ohne Kandidaten gar kein Knopf -- nie eine leere Liste
-            // (Review Focus 3); erledigt, optional und Cardio tauschen nicht.
-            // Task 6 ersetzt das Ziel durch die volle Uebungsauswahl.
-            if auftrag.zeigtAndereUebung {
-                SecondaryButton(title: "Andere Übung wählen") { sitzung.andereUebung() }
+            // Erledigt, optional und Cardio tauschen nicht.
+            if auftrag.zeigtAndereUebung, let beiAndereUebung {
+                SecondaryButton(title: "Andere Übung wählen") { beiAndereUebung() }
                     .padding(.top, DesignSystem.Spacing.s4)
-                    .accessibilityHint("Zeigt Übungen, die hier auch passen")
+                    .accessibilityHint("Öffnet die Übungsauswahl")
             }
             PlanLeiserKnopf(titel: "Schließen", aktion: beiFertig)
         }
@@ -263,7 +253,7 @@ struct PlanLeiserKnopf: View {
 /// auslassen" vorgewaehlt, ohne Erklaertext darunter. "Übung wechseln" ist
 /// die eine Akzentflaeche. "Übung gefällt mir nicht" braucht Verbindung und
 /// sagt es.
-struct PlanEntfernenFrage: View {
+struct PlanGrundFrage: View {
     let sitzung: PlanTauschSitzung
     let beiFertig: () -> Void
 

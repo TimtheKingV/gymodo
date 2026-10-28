@@ -71,6 +71,14 @@ struct PlanTauschAuftrag: Equatable, Identifiable {
     var cardio = false
     /// Heute ausgelassen: das Sheet bietet "Doch machen" statt Start.
     var istAusgelassen = false
+    /// Gesetzt: das Sheet beginnt bei der Grund-Frage, mit dem Ersatz aus der
+    /// vollen Auswahl (oder ohne).
+    var ersatzStart: ErsatzStart? = nil
+
+    enum ErsatzStart: Equatable {
+        case ersatz(TauschKandidat)
+        case ohneErsatz
+    }
 
     /// Der Hauptknopf: nach angefangenen Saetzen "Weiter mit Satz X" -- auch
     /// wenn die Position schon erledigt ist (der erste Satz hakt sie ab, das
@@ -81,9 +89,9 @@ struct PlanTauschAuftrag: Equatable, Identifiable {
 
     var id: String { "\(planId):\(einheitKey):\(position.key)" }
 
-    /// "Andere Übung wählen" nur mit Kandidaten -- nie eine leere Liste
-    /// oeffnen (Review Focus 3).
-    var zeigtAndereUebung: Bool { tauschbar && !kandidaten.isEmpty }
+    /// "Andere Übung wählen" an jeder tauschbaren Position: die volle Auswahl
+    /// braucht keine Kandidaten des Bausteins.
+    var zeigtAndereUebung: Bool { tauschbar }
 
     /// Die Wahl in "Warum wechselst du?". "Gefällt mir nicht" merkt sich der
     /// Server nur zusammen mit einem Ersatz; ohne Ersatz gibt es zwei.
@@ -161,6 +169,24 @@ enum PlanTausch {
                 hauptmuskeln: primaer.map(\.key),
                 vorschaubildModell: alternative.modelId)
         }
+    }
+
+    /// Der Ersatz aus der normalen Auswahl: Station und Uebung -> Kandidat.
+    /// Das Modell ist der Katalogtyp (bei einem Studio-Geraet sein
+    /// `catalogModelId`), den der Server beim Tausch erwartet. nil, wenn die
+    /// Station die Uebung nicht fuehrt.
+    static func kandidat(station: Station, uebungId: String, bootstrap: BootstrapResponse?) -> TauschKandidat? {
+        guard let uebung = station.exercises.first(where: { $0.id == uebungId }) else { return nil }
+        let modellId = station.equipmentModel.catalogModelId ?? station.equipmentModel.id
+        let primaer = uebung.muscles.filter { $0.role == .primary }
+        return TauschKandidat(
+            exerciseId: uebungId,
+            modelId: modellId,
+            name: PlanZeilenModell.uebungsname(exerciseId: uebungId, maschine: nil, bootstrap: bootstrap),
+            geraet: station.label,
+            muskeln: primaer.isEmpty ? nil : primaer.map(\.name).joined(separator: ", "),
+            hauptmuskeln: primaer.map(\.key),
+            vorschaubildModell: modellId)
     }
 
     /// Der Auftrag zur angetippten Zeile. Status, geplante Uebung und was
@@ -291,7 +317,6 @@ enum PlanTausch {
 final class PlanTauschSitzung {
     enum Schritt: Equatable {
         case vorgabe
-        case kandidaten
         /// "Übung entfernen": die Frage nach dem Grund.
         case entfernen
         case bestaetigen(TauschKandidat)
@@ -337,16 +362,16 @@ final class PlanTauschSitzung {
         self.istOnline = istOnline
         self.aktuellePlanId = aktuellePlanId
         self.neuLaden = neuLaden
+        switch auftrag.ersatzStart {
+        case .ersatz(let kandidat): ersatzGewaehlt(kandidat)
+        case .ohneErsatz: ersatzGewaehlt(nil)
+        case nil: break
+        }
     }
 
     /// Den Schalter einschalten braucht Verbindung; ausschalten geht immer --
     /// sonst saesse fest, wer offline ging, waehrend er an war.
     var dauerhaftMoeglich: Bool { istOnline() }
-
-    func andereUebung() {
-        guard auftrag.zeigtAndereUebung else { return }
-        schritt = .kandidaten
-    }
 
     /// Ein Ersatz ist gewaehlt (oder keiner): die Frage nach dem Grund.
     func ersatzGewaehlt(_ kandidat: TauschKandidat?) {
@@ -422,9 +447,9 @@ final class PlanTauschSitzung {
         if an && !istOnline() { return }
         dauerhaft = an
         fehler = nil
-        // Ausschalten in der Bestaetigung fuehrt zurueck zur Liste: ohne
+        // Ausschalten in der Bestaetigung fuehrt zurueck zur Vorgabe: ohne
         // Schalter gibt es nichts zu bestaetigen.
-        if !an, case .bestaetigen = schritt { schritt = .kandidaten }
+        if !an, case .bestaetigen = schritt { schritt = .vorgabe }
     }
 
     /// "Wählen". `true` = nur heute getauscht, das Sheet darf zu.
@@ -450,8 +475,8 @@ final class PlanTauschSitzung {
     func abbrechen() {
         guard case .bestaetigen = schritt, !schreibtGerade else { return }
         fehler = nil
-        // Ein Grund kam aus der Frage, der Schalter aus der Liste.
-        schritt = grund == nil ? .kandidaten : .entfernen
+        // Ein Grund kam aus der Frage, der Schalter aus der Vorgabe.
+        schritt = grund == nil ? .vorgabe : .entfernen
         if grund != nil {
             grund = nil
             dauerhaft = false

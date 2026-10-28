@@ -20,6 +20,10 @@ enum GeraetRoute: Hashable {
     /// Die Auswahl nach dem Tipp auf eine Planzeile: nur Stationen, die diese
     /// Uebung anbieten (Spec 5, `PlanStart`).
     case planUebung(exerciseId: String)
+    /// "Andere Übung wählen" zu einer Planposition: die normale Auswahl mit dem
+    /// Kopf `PlanErsatzKopf`. Die Wahl fuehrt zurueck zur Wurzel und in die
+    /// Grund-Frage; der Auftrag liegt an der Wurzel (`planErsatzAuftrag`).
+    case planErsatz(positionKey: String)
     /// Die Satzseite. `start` kommt aus dem Drawer vor der Uebung (Testnotiz
     /// 11.10., #10) und laesst sie mit dem Countdown beginnen; ohne (Zirkel
     /// ueber die Blockliste) stehen gleich die Raeder.
