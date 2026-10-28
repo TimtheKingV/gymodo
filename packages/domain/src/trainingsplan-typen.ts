@@ -32,6 +32,10 @@ export type Erfahrung = (typeof ERFAHRUNG)[number];
 export const MINUTEN = [30, 45, 60, 75, 90] as const;
 export type Minuten = (typeof MINUTEN)[number];
 
+/** Cardio-Arten, aus denen das Mitglied im Wochenraster waehlt (Schluessel, keine Freitexte). */
+export const CARDIO_ARTEN = ["laufen", "radfahren", "schwimmen", "wandern", "anderes"] as const;
+export type CardioArt = (typeof CARDIO_ARTEN)[number];
+
 /** Diese Bausteine muss jede Einheit abdecken, sonst ist der Plan unvollstaendig. */
 export const PFLICHT_BAUSTEINE: readonly Baustein[] = ["beine_knie", "beine_huefte", "druecken", "ziehen"];
 
