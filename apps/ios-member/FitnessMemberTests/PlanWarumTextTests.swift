@@ -62,6 +62,15 @@ struct PlanWarumTextTests {
         #expect(!alle.contains { $0.contains("_") })
     }
 
+    /// Der Plan kommt aus dem Katalog, nicht aus dem Studio: kein Satz nennt
+    /// "dein Studio" (die Codes bleiben lesbar, nur die Woerter aendern sich).
+    @Test func keinSatzNenntDeinStudio() {
+        for code in Self.generatorCodes {
+            let absaetze = Self.aufteilung("gk_ab", [code])
+            #expect(!absaetze.contains { $0.contains("Studio") }, "Satz nennt das Studio: \(code)")
+        }
+    }
+
     /// Review: bei einem gemeldeten Problem steigt das Gewicht nicht, sinkt aber
     /// auch nicht; gesenkt wird erst nach zwei schwachen Trainings, gesteigert
     /// nur mit Luft im letzten Satz (`berechnePlanGewicht`).
