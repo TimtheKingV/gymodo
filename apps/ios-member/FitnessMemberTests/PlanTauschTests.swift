@@ -601,12 +601,17 @@ struct PlanTauschTests {
         #expect(await client.aufrufe.count == 1)
         #expect(ablauf.planId == "p1")
         #expect(ablauf.gebundeneSessionId == session)
-        #expect(ablauf.zustand == vorher)
+        // Die Version bleibt; nur die Zeile von heute zeigt den Tausch.
+        var erwartet = try #require(vorher)
+        erwartet.positionen[0].status = .getauscht
+        erwartet.positionen[0].ersatzExerciseId = "e7"
+        erwartet.positionen[0].hauptmuskeln = schraeg.hauptmuskeln
+        #expect(ablauf.zustand == erwartet)
 
         // Die Karte bleibt beim Stand der laufenden Einheit, obwohl der
         // Bootstrap schon die neue planId nennt.
         let heute = Self.heute(neu, ablauf: ablauf)
-        #expect(heute.zustand == vorher)
+        #expect(heute.zustand == erwartet)
         #expect(PlanAnzeige.fortschritt(plan: neu, einheitKey: "A", zustand: heute.zustand) == "1 von 3")
 
         // "Nur heute" geht in der laufenden Einheit weiter.
@@ -616,6 +621,41 @@ struct PlanTauschTests {
         #expect(sut2.waehlen(schulter))
         #expect(ablauf.zustand?.positionen.first?.ersatzExerciseId == "e8")
         #expect(ablauf.planId == "p1")
+    }
+
+    @Test("Gefaellt mir nicht in laufender Einheit: die Zeile von heute wechselt, die Version bleibt")
+    func gefaelltNichtInLaufenderEinheitTauschtHeute() async throws {
+        let ablauf = Self.vorbereitet()
+        let session = UUID()
+        _ = ablauf.nachSatz(sessionId: session,
+                            satz: AblaufSatz(exerciseId: "e2", hauptmuskeln: ["lats"], cardio: false), jetzt: Self.jetzt)
+        let client = TauschClientAttrappe()
+        let umgebung = Umgebung()
+        let neu = T.plan(planId: "p2", version: 2, positionA0: "e7", machineA0: "m7")
+        umgebung.neuerPlan = neu
+        let auftrag = Self.mitOrt(ablauf)
+        let sut = Self.sitzung(auftrag, ablauf: ablauf, client: client, umgebung: umgebung)
+        let schraeg = try #require(auftrag.kandidaten.first { $0.exerciseId == "e7" })
+
+        sut.ersatzGewaehlt(schraeg)
+        sut.optionAuswaehlen(.gefaelltNicht)
+        #expect(!sut.optionBestaetigen())
+        #expect(await sut.uebernehmen())
+
+        #expect(await client.aufrufe.map(\.grund) == ["gefaellt_nicht"])
+        #expect(ablauf.planId == "p1")
+        #expect(ablauf.gebundeneSessionId == session)
+        let a0 = try #require(ablauf.zustand?.positionen.first { $0.key == "A0" })
+        #expect(a0.status == .getauscht)
+        #expect(a0.ersatzExerciseId == "e7")
+        #expect(a0.exerciseId == "e1")
+
+        // Die Karte zeigt heute den Ersatz in derselben Zeile.
+        let heute = Self.heute(neu, ablauf: ablauf)
+        let zeilen = PlanAnzeige.zeilen(plan: neu, einheitKey: "A", zustand: heute.zustand, bloecke: [],
+                                        bootstrap: T.bootstrap(plan: neu))
+        #expect(zeilen[0].untertitel == "Heute: Schrägbankpresse")
+        #expect(zeilen[0].exerciseId == "e7")
     }
 
     // MARK: - Texte (3.1-3.3)

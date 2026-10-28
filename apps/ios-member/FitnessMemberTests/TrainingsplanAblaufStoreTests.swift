@@ -519,6 +519,72 @@ struct TrainingsplanAblaufStoreTests {
         #expect(sut.ausgelassen.isEmpty)
     }
 
+    /// Einheit A mit frei gewaehlten Positionen (alle Kraft), fuer neue
+    /// Planversionen mit anderen Schluesseln.
+    static func plan(planId: String, version: Int, positionenA: [(key: String, exerciseId: String)]) -> Trainingsplan {
+        let liste = positionenA.map { p in
+            """
+            {"key":"\(p.key)","baustein":"brust","rolle":"pflicht","exerciseId":"\(p.exerciseId)",
+             "modelId":"m-\(p.exerciseId)","typ":"mehrgelenk","saetze":3,"wdhVon":8,"wdhBis":12,
+             "reserveVon":1,"reserveBis":3,"pauseSek":120,"aufwaermsatz":false,"dauerMin":null,
+             "hauptmuskeln":["chest"]}
+            """
+        }.joined(separator: ",")
+        let json = """
+        {"planId":"\(planId)","studioId":"s1","version":\(version),"regelVersion":"1.2.0",
+         "struktur":"gk_ab","gruende":[],"naechsteEinheitKey":"A","zuletztEinheitKey":null,
+         "einheitenErledigt":0,"anfaengerUebergang":false,"alternativen":{},
+         "einheiten":[{"key":"A","geschaetzteMinuten":45,"positionen":[\(liste)]}]}
+        """
+        return try! JSONDecoder().decode(Trainingsplan.self, from: Data(json.utf8))
+    }
+
+    /// "Gefällt mir nicht" vor dem ersten Satz legt eine neue Version an; was
+    /// das Mitglied heute schon umgestellt hat, darf dabei nicht verschwinden.
+    @Test func eineNeuePlanversionVorDemErstenSatzBehaeltAusgelassenUndReihenfolge() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(planId: "p1", version: 1), jetzt: Self.jetzt)
+        sut.umordnen(positionKey: "A2", nach: 0)
+        sut.auslassen(positionKey: "A1")
+
+        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2, positionA0: "e7"),
+                        jetzt: Self.jetzt.addingTimeInterval(60))
+
+        #expect(sut.planId == "p2")
+        #expect(sut.zustand?.positionen.map(\.key) == ["A2", "A0", "A1"])
+        #expect(sut.zustand?.positionen.first { $0.key == "A0" }?.exerciseId == "e7")
+        #expect(sut.ausgelassen == ["A1"])
+    }
+
+    @Test func eineNeuePlanversionLaesstUnbekannteSchluesselFallenUndHaengtNeueAn() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(planId: "p1", version: 1), jetzt: Self.jetzt)
+        sut.umordnen(positionKey: "A2", nach: 0)  // A2, A0, A1
+        sut.auslassen(positionKey: "A1")
+        sut.auslassen(positionKey: "A2")
+
+        // Version 2: A1 gibt es nicht mehr, A3 kommt dazu (in der Mitte des Plans).
+        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2,
+                                        positionenA: [("A0", "e1"), ("A3", "e9"), ("A2", "e4")]),
+                        jetzt: Self.jetzt.addingTimeInterval(60))
+
+        #expect(sut.zustand?.positionen.map(\.key) == ["A2", "A0", "A3"])
+        #expect(sut.ausgelassen == ["A2"])
+    }
+
+    @Test func einVerfallenerLaufGibtAusgelassenUndReihenfolgeNichtWeiter() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(planId: "p1", version: 1), jetzt: Self.jetzt)
+        sut.umordnen(positionKey: "A2", nach: 0)
+        sut.auslassen(positionKey: "A1")
+
+        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2, positionA0: "e7"),
+                        jetzt: Self.jetzt.addingTimeInterval(13 * 3600))
+
+        #expect(sut.zustand?.positionen.map(\.key) == ["A0", "A1", "A2"])
+        #expect(sut.ausgelassen.isEmpty)
+    }
+
     @Test func alteDateiOhneAusgelassenLaedt() throws {
         let sut = Self.store()
         sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)

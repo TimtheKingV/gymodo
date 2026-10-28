@@ -281,30 +281,36 @@ final class TrainingsplanAblaufStore {
     }
 
     /// Eine neue Planversion vor dem ersten Satz (dauerhafter Tausch, Task 12;
-    /// ein Trainer) ersetzt den Ablauf. Die Taeusche "nur heute" derselben
-    /// Einheit gehen dabei nicht verloren, solange ihre Position in der neuen
-    /// Version dieselbe Uebung plant. Plant sie eine andere -- genau die
-    /// eben dauerhaft getauschte --, faellt der heutige Tausch weg: sonst
-    /// stuende die neue Uebung als geplant UND als Tausch da. Ein verfallener
-    /// Ablauf (12 h) gibt nichts weiter, und mit ihm bleibt sein Alter, damit
-    /// ein Tausch nicht durch eine neue Version verlaengert wird.
+    /// ein Trainer) ersetzt den Ablauf. Was das Mitglied heute an derselben
+    /// Einheit umgestellt hat, geht dabei nicht verloren:
+    /// - Taeusche "nur heute", solange ihre Position in der neuen Version
+    ///   dieselbe Uebung plant. Plant sie eine andere -- genau die eben
+    ///   dauerhaft getauschte --, faellt der heutige Tausch weg: sonst stuende
+    ///   die neue Uebung als geplant UND als Tausch da.
+    /// - Ausgelassene Positionen, soweit es ihren Schluessel noch gibt.
+    /// - Die Reihenfolge: bekannte Schluessel wie bisher, neue hinten an.
+    /// Ein verfallener Ablauf (12 h) gibt nichts weiter, und mit ihm bleibt
+    /// sein Alter, damit ein Tausch nicht durch eine neue Version verlaengert wird.
     private func mitHeutigenTauschen(aus alt: PlanLauf, in neu: PlanLauf, jetzt: Date) -> PlanLauf {
         guard alt.einheitKey == neu.einheitKey,
               jetzt.timeIntervalSince(alt.erstelltAm) <= Self.verfallOhneSatz else { return neu }
         var zustand = neu.zustand
-        var uebernommen = false
         for position in alt.zustand.positionen where position.status == .getauscht {
             guard let ersatz = position.ersatzExerciseId,
                   zustand.positionen.contains(where: { $0.key == position.key && $0.exerciseId == position.exerciseId })
             else { continue }
             zustand = TrainingsplanAblauf.tauschen(zustand, positionKey: position.key,
                                                    ersatz: (exerciseId: ersatz, hauptmuskeln: position.hauptmuskeln))
-            uebernommen = true
         }
-        guard uebernommen else { return neu }
+        let altReihenfolge = alt.zustand.positionen.map(\.key)
+        let bekannt = altReihenfolge.compactMap { key in zustand.positionen.first { $0.key == key } }
+        zustand.positionen = bekannt + zustand.positionen.filter { !altReihenfolge.contains($0.key) }
+        let schluessel = Set(zustand.positionen.map(\.key))
+        let ausgelassen = alt.ausgelassen.filter { schluessel.contains($0) }
+        guard zustand != neu.zustand || !ausgelassen.isEmpty else { return neu }
         return PlanLauf(planId: neu.planId, version: neu.version, einheitKey: neu.einheitKey,
                         zustand: zustand, stand: neu.stand, gebundeneSessionId: nil, erstelltAm: alt.erstelltAm,
-                        letzterSatzAm: nil)
+                        letzterSatzAm: nil, ausgelassen: ausgelassen)
     }
 
     /// Ein ungebundener Ablauf gilt weiter, solange Plan, Version und

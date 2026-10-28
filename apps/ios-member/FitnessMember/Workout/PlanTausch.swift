@@ -352,7 +352,8 @@ enum PlanTausch {
 ///   schreibt eine neue aktive Planversion beim Server und laedt dann den
 ///   Bootstrap neu (die Antwort des Schreibwegs kennt die App-Felder nicht).
 /// - Eine laufende Einheit (Ablauf an eine Session gebunden) behaelt ihre
-///   Version (Review Focus 2): "dauerhaft" aendert ihren Ablauf nicht.
+///   Version (Review Focus 2): "dauerhaft" tauscht in ihr nur die Zeile
+///   von heute, die Planversion des Ablaufs bleibt.
 @MainActor
 @Observable
 final class PlanTauschSitzung {
@@ -549,14 +550,13 @@ final class PlanTauschSitzung {
             return false
         }
         fehler = nil
-        // Vor dem ersten Satz gilt die neue Version schon heute: sofort im
-        // Ablauf zeigen, auch falls das Neuladen gleich scheitert. Kommt die
-        // neue Version an, ersetzt sie den Ablauf; dort ist die Uebung dann
-        // geplant und der Tausch faellt weg (TrainingsplanAblaufStore,
-        // `mitHeutigenTauschen`) -- nichts doppelt. Eine laufende Einheit
-        // bleibt unberuehrt (Review Focus 2).
-        if ablauf.gebundeneSessionId == nil, ablauf.planId == auftrag.planId,
-           ablauf.einheitKey == auftrag.einheitKey {
+        // Heute gilt der Ersatz sofort, auch falls das Neuladen gleich
+        // scheitert. Vor dem ersten Satz ersetzt die neue Version danach den
+        // Ablauf; dort ist die Uebung dann geplant und der Tausch faellt weg
+        // (TrainingsplanAblaufStore, `mitHeutigenTauschen`) -- nichts doppelt.
+        // Eine laufende Einheit behaelt ihre Version (Review Focus 2); in ihr
+        // bleibt es beim Tausch nur heute, wie bei "Heute auslassen".
+        if ablauf.planId == auftrag.planId, ablauf.einheitKey == auftrag.einheitKey {
             ablauf.tauschen(positionKey: auftrag.position.key,
                             ersatz: (exerciseId: kandidat.exerciseId, hauptmuskeln: kandidat.hauptmuskeln))
         }
