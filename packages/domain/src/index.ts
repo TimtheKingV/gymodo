@@ -377,3 +377,4 @@ export {
   type Melde,
   type PositionsZiel,
 } from "./plangewichte.js";
+export { deleteCardioCheck, listCardioChecks, pruefeTag as pruefeKalendertag, setCardioCheck } from "./cardio-checks.js";
