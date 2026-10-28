@@ -26,15 +26,15 @@ Der Plan ist beim Training der Rahmen, nicht das Gerüst: Tim kann ersetzen, erg
 
 ### Plan im Training (Entwurf 1)
 - Läuft ein Training mit Plan, entfallen unter der Plankarte die Bereiche "Aus Katalog wählen" und "Zuletzt trainiert" (Geräte-/Block-Liste des Tabs). Ohne Plan bleibt der Tab wie heute.
-- Unter der Karte steht "Übung hinzufügen" (gestrichelter Rand) und darunter "Training beenden".
+- Unter der Karte steht "Übung hinzufügen" (gestrichelter Rand). Einen eigenen Knopf "Training beenden" gibt es dort nicht; beendet wird wie bisher über den Pausenknopf im Kopf ("Pausieren / Training beenden").
 - Jede Planzeile (offen oder erledigt) hat rechts einen Griff (drei Balken, 44 pt Tippfläche) zum Umsortieren. Umsortiert wird nur am Griff: 0,15 s gedrückt halten, dann ziehen; für VoiceOver gibt es Aktionen "Nach oben/unten". Zusatz-Zeilen sind nicht verschiebbar, aber antippbar (öffnet ihren Block wieder).
-- Die Reihenfolge gilt nur für diese Session und lebt app-lokal in `PlanLauf` (nicht im gespiegelten `AblaufZustand`, kein Server-Feld). Der gespeicherte Plan bleibt unverändert.
-- Fortschrittsmarke: erledigt = Haken, angefangen = "2/3" in Akzent, offen = leerer Kreis.
+- Die Reihenfolge gilt nur für diese Session. Sie ist die Reihenfolge von `PlanLauf.zustand.positionen` (der gespiegelte `AblaufZustand`, kein eigenes Feld) und geht in dieser Reihenfolge mit jeder Momentaufnahme raus. Für den Server ist das harmlos: `record_session_plan` speichert eine Zeile je Schlüssel. Der gespeicherte Plan bleibt unverändert.
+- Fortschrittsmarke: offen = leerer Kreis; angefangen = "n/m" in Akzent, solange 0 < gemachte Sätze < Vorgabe (Kraft, jeder Status außer ausgelassen; der Ablauf hakt die Position schon mit dem ersten Satz ab, die Zeile ist dann weder durchgestrichen noch gedimmt); ab n = m der normale Erledigt-Look (Haken, durchgestrichen).
 
 ### Übung antippen (Entwurf 2)
 Sheet mit Name, Fortschrittszeile ("2 von 3 Sätzen gemacht · 3 × 8–12") und zwei Aktionen. Übergaben (Start, Auswahl) laufen in `onDismiss` des Sheets:
-- **Weiter mit Satz X** (bei null Sätzen "Übung starten"): startet direkt in der Übung (über `PlanStart.ziel`), auch wenn schon Sätze da sind (Fix für Punkt 4). Kein Zwischenschritt, keine Gerätewahl, sofern keine Wahl nötig ist (siehe Gerät).
-- **Andere Übung wählen**: öffnet die normale Auswahl.
+- **Weiter mit Satz X** (bei null Sätzen "Übung starten"): gibt es schon einen Block der Übung in der Session, öffnet sie den neuesten wieder (Fix für Punkt 4; derselbe Weg wie eine Zusatz-Zeile). Sonst Start über `PlanStart.ziel` (siehe Gerät).
+- **Andere Übung wählen**: öffnet die normale Auswahl. Nur an Positionen, die heute noch tauschbar sind (offen oder heute getauscht); eine angefangene Position (nach dem ersten Satz erledigt) bietet es nicht an.
 
 ### Andere Übung wählen (Entwurf 3 und 4)
 - Auswahl wie die bestehende (Kategorie → Gerät → Übung). Oben "Passend zum Plan" (Kandidaten desselben Bausteins, wie die heutige Tauschliste) und "Ohne Ersatz auslassen".
@@ -42,7 +42,9 @@ Sheet mit Name, Fortschrittszeile ("2 von 3 Sätzen gemacht · 3 × 8–12") und
   - **Heute auslassen** und **Belegt**: gleiches Verhalten, gilt nur heute. Die Position wird heute durch die gewählte Übung ersetzt (bei "ohne Ersatz": heute ausgeblendet, zählt nicht). Keine Wirkung auf den Plan oder künftige Einheiten.
   - **Übung gefällt mir nicht**: gibt es nur zusammen mit einem Ersatz, denn der Server kennt kein Entfernen einer Position, nur Tauschen. Wie der heutige dauerhafte Tausch mit `grund: gefaellt_nicht` (neue Planversion, alte Übung auf die Merkliste). Ohne Ersatz zeigt die Frage nur "Heute auslassen" und "Belegt".
   - Der Server prüft, dass ein dauerhafter Ersatz zum Baustein der Position passt (422 "passt nicht an diese Stelle"). Dann zeigt das Sheet den Fehler und bietet "Nur heute" an.
-  - Dieselbe Übung wie die heutige der Position ist nicht wählbar (Hinweis "Das ist schon die Übung von heute.").
+  - Dieselbe Übung wie die heutige der Position ist nicht wählbar (Hinweis "Das ist schon die Übung von heute."), ebenso eine Übung, die schon an einer anderen Position der Einheit steht, geplant oder heute getauscht (Hinweis "Diese Übung steht schon in deinem Plan.").
+  - Ein Ersatz erscheint in derselben Zeile ("Heute: X"), nicht als neue Zeile.
+  - "Gefällt mir nicht" mitten in der Einheit: die laufende Einheit behält ihre Planversion, die Zeile wechselt aber heute schon auf den Ersatz (wie "Heute auslassen" mit Ersatz). Vor dem ersten Satz ersetzt die neue Version den Ablauf; heutige Tausche, Auslassungen und die Reihenfolge gehen mit (bekannte Schlüssel in alter Reihenfolge, neue hinten an, unbekannte fallen weg).
 - Der Zustand "optional" aus dem Überspringen entfällt für diesen Weg: Ersetzen statt Zuzählen (Punkt 1).
 - "Belegt" setzt bewusst nicht mehr `nicht_vorhanden` für den Plan; es hat keine dauerhafte Wirkung.
 
@@ -52,15 +54,15 @@ Sheet mit Name, Fortschrittszeile ("2 von 3 Sätzen gemacht · 3 × 8–12") und
 - Im Planmodus (Session mit Plan) sind die Listen Kategorien/Zuletzt ausgeblendet.
 
 ### Gerät
-- Hat die Übung für den Ort nur kein oder genau ein Gerät: keine Gerätewahl, direkt hinein.
+- Hat die Übung am Ort genau ein Gerät: keine Gerätewahl, direkt hinein. Ohne Gerät (`.keine`) gibt es keinen Direktstart: die Auswahl öffnet mit ihrem Leerzustand.
 - Gibt es mehrere Geräte: Auswahl der Geräte, mit Scan/QR als Alternative (wie der bestehende Einstieg).
 - Ohne Studio (freies Training) hat Tim "meist egal"; die Regel oben gilt auch dort.
-- Welches Gerät bei der Annahme "nur eins" verwendet wird, ist das einzige (oder das Katalogmodell der Position, `modelId`).
+- Welches Gerät bei der Annahme "nur eins" verwendet wird, ist das einzige.
 
 ## Randfälle (zu prüfen durch den Builder)
 - Offline: Sofortige Wirkung nur heute (Ablaufzustand) funktioniert offline; die dauerhafte Wirkung braucht Verbindung wie der bestehende Tausch (`PlanTauschSitzung`: online prüfen, Fehlerzustand).
-- Eine bereits begonnene Position (Sätze gespeichert) wird ersetzt: die gemachten Sätze bleiben gespeichert und zählen als Zusatz.
-- Planwechsel/neue Planversion während der Session: bestehende Regeln der Ablaufstores gelten weiter.
+- Eine bereits begonnene Position (nach dem ersten Satz erledigt) ist nicht ersetzbar (`tauschbar` false).
+- Neue Planversion während der Session: ein gebundener Lauf (ab dem ersten Satz) behält seine Version; ein Abgleich der Schlüssel findet dort nicht statt.
 
 ## Annahmen, die Tim bestätigen soll
 1. Erledigte Planzeilen sind verschiebbar; Zusatz-Zeilen nicht (so umgesetzt).
@@ -69,11 +71,11 @@ Sheet mit Name, Fortschrittszeile ("2 von 3 Sätzen gemacht · 3 × 8–12") und
 
 ## Entscheidungen von Claude (nach Prüfung, bitte gegenlesen)
 1. **Altes "Überspringen":** Die eigene Skip-Aktion entfällt überall; "Heute auslassen" im Grund-Dialog ersetzt sie. Die Regel "ungeplante Übung gemacht → genau eine verwandte offene Position wird optional" bleibt unverändert (sie greift, wenn Tim ohne Menü etwas anderes trainiert). Status `optional` bleibt im Modell, keine Migration.
-2. **Freies Training:** "Geräte der Übung" sind die Katalogmodelle der Übung am aktuellen Ort. Gibt es 0 oder 1, wird ohne Wahl gestartet; bei 0 mit dem Katalogmodell der Position (`modelId`). Gibt es mehrere, kommt Auswahl mit Scan/QR. Ob das Gerät im Satzmodell optional werden muss, klärt der Builder; Vorgabe ist: nicht, das Katalogmodell der Position genügt.
-3. **Ersetzte Position mit schon gemachten Sätzen:** Die Zeile zeigt "heute getauscht" (vorhandener Status `getauscht`); die Ersatzübung erscheint als neue Zeile an gleicher Stelle mit 0 von N. Bereits gespeicherte Sätze der alten Übung bleiben unter "Zusätzlich gemacht".
-4. **Reihenfolge:** `PlanLauf` hält die Reihenfolge der Positionsschlüssel (ohne Zusatzübungen). Bei neuer Planversion mitten in der Session werden Schlüssel abgeglichen: unbekannte verschwinden, neue kommen ans Ende.
+2. **Freies Training:** "Geräte der Übung" sind die Katalogmodelle der Übung am aktuellen Ort. Gibt es genau eins, wird ohne Wahl gestartet; bei 0 öffnet die Auswahl mit Leerzustand. Gibt es mehrere, kommt Auswahl mit Scan/QR. Ob das Gerät im Satzmodell optional werden muss, klärt der Builder; Vorgabe ist: nicht, das Katalogmodell der Position genügt.
+3. **Ersetzen:** Nur offene oder heute getauschte Positionen (Status `getauscht`, Zeile "Heute: X"). Eine angefangene Position ist schon erledigt und wird nicht ersetzt.
+4. **Reihenfolge:** die Reihenfolge von `PlanLauf.zustand.positionen` (ohne Zusatzübungen). Abgleich nur vor dem ersten Satz, wenn eine neue Version den Lauf ersetzt (siehe oben); ein gebundener Lauf behält seine Version.
 5. **"Ohne Ersatz auslassen":** Die Zeile bleibt gedimmt und durchgestrichen mit "ausgelassen" sichtbar. Antippen öffnet das Sheet, dort kann der Auslass zurückgenommen werden ("Doch machen"). "Ausgelassen" lebt app-lokal in `PlanLauf` und zählt nicht in "x von N", die Restminuten und den Abschluss (so umgesetzt; bisher stand hier "zählt als erledigt").
-6. **Hinzufügen:** Die Auswahl zeigt ohne "Passend zum Plan", ohne "Ohne Ersatz auslassen" und ohne Grund-Frage. Das Sheet einer Zusatzzeile hat nur "Weiter mit Satz X"; erledigte Planzeilen haben dieselben zwei Aktionen wie offene.
+6. **Hinzufügen:** Die Auswahl zeigt ohne "Passend zum Plan", ohne "Ohne Ersatz auslassen" und ohne Grund-Frage. Eine Zusatz-Zeile öffnet beim Antippen direkt ihren Block (kein Sheet); erledigte Planzeilen haben im Sheet nur "Weiter mit Satz X".
 7. **Server:** Der Ablaufstatus wird schon mitgesynct. Reihenfolge und Auslassen bleiben App-lokal; es gibt keine neuen Serverfelder. Der noch offene API-Deploy (siehe Memory `trainingsplan-stand`) wird dabei nicht vorausgesetzt.
 
 ## Bekannte Grenzen
