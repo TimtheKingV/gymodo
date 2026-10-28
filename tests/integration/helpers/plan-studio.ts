@@ -219,6 +219,7 @@ export function katalogPlanParameter(s: PlanStudios, o: { limits?: boolean; einh
     p_struktur: "gk_ab",
     p_einheiten: o.einheiten ?? katalogEinheiten(s),
     p_gruende: o.limits ? ["beschwerden_meiden", "beschwerden_vorsichtig", "ziel_muskelaufbau"] : ["ziel_muskelaufbau"],
+    p_wochenraster: [],
   };
 }
 
@@ -257,7 +258,16 @@ export type MitgliedOptionen = {
   studios: string[];
   trainingGoal?: string | null;
   weeklyDays?: number | null;
-  profil?: { minutes: number; experience: string; focus: string[] } | null;
+  profil?: {
+    minutes: number;
+    experience: string;
+    focus: string[];
+    // Wochenraster (0069): ISO-Wochentage und Cardio-Arten, Default leer.
+    kurs_tage?: number[];
+    cardio_tage?: number[];
+    cardio_arten?: string[];
+    kraft_tage?: number[];
+  } | null;
   limits?: Record<string, "meiden" | "vorsichtig"> | null;
 };
 

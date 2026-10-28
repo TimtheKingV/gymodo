@@ -6,7 +6,8 @@ import { PFLICHT_BAUSTEINE } from "./trainingsplan-typen.js";
 /** Aendert sich eine Regel, steigt die Version, damit alte Plaene erkennbar bleiben. */
 // 1.1.0: Auffuellen bis zum Zeitbudget, A/B-Rotation nur ueber unbedenkliche Uebungen.
 // 1.2.0: Rolle auffuellung, Anzeigereihenfolge (Mehrgelenk vor Isolation), Anfaengerende.
-export const PLAN_REGEL_VERSION = "1.2.0";
+// 1.3.0: Wochenraster; die Zahl der Krafttage folgt den festen Kurs- und Cardio-Tagen.
+export const PLAN_REGEL_VERSION = "1.3.0";
 
 export type Ziel = "muskelaufbau" | "fitness" | "abnehmen";
 

@@ -144,7 +144,7 @@ describe("planFuerApp", () => {
     eingabe: { ziel: "muskelaufbau", tage: 3, minuten: 60, fokus: [], erfahrung: "neu", anfaengerBeendet: false,
       beschwerdenBeruecksichtigt: false },
     einheiten: [{ key: "A", positionen: [], geschaetzteMinuten: 50 }, { key: "B", positionen: [], geschaetzteMinuten: 50 }],
-    gruende: [], createdAt: "", acceptedAt: null,
+    gruende: [], wochenraster: [], createdAt: "", acceptedAt: null,
   } as TrainingPlan;
   const neu: TrainingProfile = { minutes: 60, experience: "neu", focus: [], kursTage: [], cardioTage: [], cardioArten: [], kraftTage: [] };
   const einheiten = (n: number) =>

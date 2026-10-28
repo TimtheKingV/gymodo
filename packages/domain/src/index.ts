@@ -313,6 +313,7 @@ export type {
   Kandidat,
   PlanEinheit,
   PlanPosition,
+  RasterEintrag,
   TypVorgaben,
 } from "./trainingsplan-generator.js";
 export { LEERE_MERKLISTE, ladeKandidaten, ladeKatalogStudioId, ladeMerkliste } from "./trainingsplan-kandidaten.js";

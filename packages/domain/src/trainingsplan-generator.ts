@@ -14,6 +14,8 @@ import {
 import type { Baustein, Erfahrung, FokusBereich, Minuten, PlanTyp } from "./trainingsplan-typen.js";
 import type { Struktur, Ziel, Zielprofil } from "./trainingsplan-regeln.js";
 import { PLAN_REGEL_VERSION, strukturFuerTage, zielprofil } from "./trainingsplan-regeln.js";
+import type { Wochentag } from "./trainingsplan-woche.js";
+import { kraftAnzahl, verteileKraft } from "./trainingsplan-woche.js";
 import { ZEIT, aufwaermenMinuten, cardioMinuten, pauseSekunden, uebungMinuten } from "./trainingsplan-zeit.js";
 
 export type { Kandidat } from "./trainingsplan-auswahl.js";
@@ -29,6 +31,11 @@ export type GeneratorEingabe = {
   anfaengerBeendet?: boolean;
   beschwerden: Beschwerden;
   kandidaten: Kandidat[];
+  /** Feste Wochentage (ISO 1-7) fuer Kurse und Cardio; die Krafttage richten sich danach. Default leer. */
+  kursTage?: Wochentag[];
+  cardioTage?: Wochentag[];
+  /** Vom Mitglied gewaehlte Krafttage; leer oder fehlend: der Generator verteilt sie selbst. */
+  kraftTage?: Wochentag[];
 };
 
 export type PlanPosition = {
@@ -51,11 +58,16 @@ export type PlanPosition = {
 
 export type PlanEinheit = { key: string; positionen: PlanPosition[]; geschaetzteMinuten: number };
 
+/** Ein Tag der Woche; Kraft-Tage nennen die Einheit, die an dem Tag trainiert wird. */
+export type RasterEintrag = { tag: Wochentag; art: "kraft" | "kurs" | "cardio"; einheitKey?: string };
+
 export type GeneratorErgebnis = {
   regelVersion: string;
   struktur: Struktur["key"];
   einheiten: PlanEinheit[];
   gruende: string[];
+  /** Nach Tag sortiert; wird mit dem Plan gespeichert und beim Lesen nie neu berechnet (F14). */
+  wochenraster: RasterEintrag[];
 };
 
 const STRUKTUR_GRUND: Record<Struktur["key"], string> = {
@@ -228,8 +240,25 @@ function baueKraftteil(ctx: EinheitKontext, flags: Flags): { positionen: Entwurf
   return { positionen, minuten: summe };
 }
 
+/**
+ * Wie viele Krafttage die Woche hat und welche. Gewaehlte Krafttage gelten, wie sie sind;
+ * sonst bestimmen Wunsch und feste Termine die Zahl, und verteileKraft setzt die Tage.
+ * `angehoben`: die Termine liessen weniger als einen Krafttag frei, der Wunsch wurde auf eins gehoben.
+ */
+function planeKrafttage(eingabe: GeneratorEingabe): { tage: Wochentag[]; angehoben: boolean } {
+  const kurs = eingabe.kursTage ?? [];
+  const cardio = eingabe.cardioTage ?? [];
+  if (eingabe.kraftTage && eingabe.kraftTage.length > 0) {
+    return { tage: [...eingabe.kraftTage].sort((a, b) => a - b), angehoben: false };
+  }
+  const { anzahl, angehoben } = kraftAnzahl(eingabe.tage, kurs, cardio);
+  return { tage: verteileKraft([...kurs, ...cardio], anzahl), angehoben };
+}
+
 export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
-  const struktur = strukturFuerTage(eingabe.tage);
+  const krafttage = planeKrafttage(eingabe);
+  // Die Struktur folgt den Krafttagen, nicht dem Wunsch: Kurse und Cardio nehmen Tage weg.
+  const struktur = strukturFuerTage(krafttage.tage.length);
   const profil = zielprofil(eingabe.ziel, eingabe.erfahrung, eingabe.anfaengerBeendet ?? false);
   const kandidaten = filtereKandidaten(eingabe.kandidaten, eingabe.beschwerden);
 
@@ -298,10 +327,12 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
   });
 
   // Feste Reihenfolge der Codes, damit die Erklaerseite stabil bleibt.
-  const gruende: string[] = [STRUKTUR_GRUND[struktur.key], "zeit_uebungen"];
+  const gruende: string[] = [STRUKTUR_GRUND[struktur.key]];
   const wenn = (bedingung: boolean, code: string) => {
     if (bedingung) gruende.push(code);
   };
+  wenn(krafttage.angehoben, "kraft_tage_auf_eins");
+  gruende.push("zeit_uebungen");
   wenn(flags.saetzeReduziert, "zeit_saetze_reduziert");
   wenn(flags.ergaenzungEntfallen, "zeit_ergaenzung_entfallen");
   wenn(aufwaermen === 0, "zeit_aufwaermen_entfallen");
@@ -324,5 +355,14 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
   wenn(stufen.includes("meiden"), "beschwerden_meiden");
   wenn(stufen.includes("vorsichtig"), "beschwerden_vorsichtig");
 
-  return { regelVersion: PLAN_REGEL_VERSION, struktur: struktur.key, einheiten, gruende };
+  // Kraft-Tage laufen der Reihe nach durch die Einheiten (bei 5 oder 6 Tagen wiederholen sie sich).
+  const raster: RasterEintrag[] = [
+    ...(eingabe.kursTage ?? []).map((tag): RasterEintrag => ({ tag, art: "kurs" })),
+    ...(eingabe.cardioTage ?? []).map((tag): RasterEintrag => ({ tag, art: "cardio" })),
+    ...krafttage.tage.map(
+      (tag, i): RasterEintrag => ({ tag, art: "kraft", einheitKey: einheiten[i % einheiten.length]!.key }),
+    ),
+  ].sort((a, b) => a.tag - b.tag);
+
+  return { regelVersion: PLAN_REGEL_VERSION, struktur: struktur.key, einheiten, gruende, wochenraster: raster };
 }
