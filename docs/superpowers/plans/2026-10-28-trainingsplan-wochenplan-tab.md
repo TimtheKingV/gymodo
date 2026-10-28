@@ -75,7 +75,7 @@
 
 - [ ] **Step 1: Failing tests** mit diesen Werten: `kraftAnzahl(3,[1],[7])` → `{anzahl:1, angehoben:false}`; `kraftAnzahl(4,[1],[7])` → `{anzahl:2, angehoben:false}`; `kraftAnzahl(2,[1],[7])` → `{anzahl:1, angehoben:true}`; doppelte Tage zählen einmal (`kraftAnzahl(3,[1,1],[])` → 2). `verteileKraft([1,7],2)` → `[3,5]`; `verteileKraft([1,7],1)` → `[4]` (größte Lücke, Mitte, bei Gleichstand der frühere Tag); `verteileKraft([],3)` → `[1,3,5]`; `verteileKraft([1,2,3,4,5,6,7],1)` → `[]`. `pruefeWoche` wirft bei Kurs∩Cardio, Kraft∩Kurs, Kraft∩Cardio, Tag außerhalb 1–7, doppeltem Tag.
 - [ ] **Step 2:** `pnpm --filter @fitretro/domain test -- trainingsplan-woche` → FAIL (Modul fehlt).
-- [ ] **Step 3: Implement** die drei Funktionen. Verteilung: aus den freien Tagen greedy den Tag mit dem größten Mindestabstand zu allen belegten und schon gewählten Tagen, Woche zyklisch (So→Mo zählt als benachbart); Gleichstand → kleinerer Tag.
+- [ ] **Step 3: Implement** die drei Funktionen. Verteilung: Erschöpfende Suche über alle Kombinationen freier Tage; gewählt wird die Kombination, deren kleinster zyklischer Abstand zwischen je zwei benachbarten belegten oder gewählten Tagen am größten ist (Woche zyklisch, So→Mo hat Abstand 1); bei Gleichstand die lexikographisch kleinste Tagesliste. Ein Greedy-Verfahren ist falsch (`verteileKraft([1,7],2)` ergäbe `[2,4]` statt `[3,5]`).
 - [ ] **Step 4:** Tests laufen → PASS. `pnpm --filter @fitretro/domain typecheck`.
 - [ ] **Step 5: Commit** `feat(domain): Wochenlogik fuer Kurs-, Cardio- und Kraft-Tage`
 
@@ -92,7 +92,7 @@
 
 - [ ] **Step 1: Failing tests.** Domain: Profil ohne die neuen Felder wird weiter akzeptiert und liefert leere Listen; `cardioArten: ["joggen"]` → `validation_failed`; Überschneidung → `validation_failed`. Integration: PUT mit `kursTage:[1], cardioTage:[7], cardioArten:["laufen"], kraftTage:[3,5]`, danach GET liefert dieselben Werte; ein PUT ohne die Felder lässt gespeicherte Werte unverändert.
 - [ ] **Step 2:** Tests laufen und scheitern.
-- [ ] **Step 3: Migration** mit den vier Spalten (`smallint[] not null default '{}'`, `text[]` für Arten) und Check-Constraints: Werte in 1–7, `cardioArten <@` die fünf Schlüssel, Kurs und Cardio ohne gemeinsame Tage. Keine neue Policy nötig (bestehende `training_profiles`-Policies gelten).
+- [ ] **Step 3: Migration** mit den vier Spalten, dazu `alter table public.training_plans add column wochenraster jsonb not null default '[]' check (jsonb_typeof(wochenraster) = 'array')` (Task 3 schreibt es) (`smallint[] not null default '{}'`, `text[]` für Arten) und Check-Constraints: Werte in 1–7, `cardioArten <@` die fünf Schlüssel, Kurs und Cardio ohne gemeinsame Tage. Keine neue Policy nötig (bestehende `training_profiles`-Policies gelten).
 - [ ] **Step 4: Domain** erweitern; fehlende Felder im PUT bedeuten „unverändert“ (Upsert nur mit gesendeten Spalten).
 - [ ] **Step 5:** `supabase db reset` lokal (Docker/Colima läuft: bei I/O-Fehlern `colima restart`, `supabase stop --no-backup`, `start`), dann `pnpm test` und `pnpm test:integration -- api-training-profile` → PASS.
 - [ ] **Step 6: Commit** `feat(plan): Wochenraster im Trainingsprofil`
@@ -107,7 +107,7 @@
 - Consumes: `kraftAnzahl`, `verteileKraft` (Task 1), Profilfelder (Task 2)
 - Produces: `GeneratorErgebnis.wochenraster: { tag: Wochentag; art: "kraft"|"kurs"|"cardio"; einheitKey?: string }[]` (nach Tag sortiert); Grund-Code `kraft_tage_auf_eins`. Der Plan-Endpunkt liefert `wochenraster` mit.
 
-- [ ] **Step 1: Failing tests.** (a) Bestandseingabe ohne Raster ergibt exakt die bisherige Ausgabe (Fixture-Vergleich, bis auf `regelVersion`) und ein leeres `wochenraster` aus nur Kraft-Tagen nach `verteileKraft`. (b) 4 Tage, Kurs `[1]`, Cardio `[7]` → Struktur `gk_ab`, Raster `[1 kurs, 3 kraft A, 5 kraft B, 7 cardio]`. (c) 2 Tage, Kurs `[1]`, Cardio `[7]` → Struktur `gk_eine`, Grund `kraft_tage_auf_eins`. (d) Hat das Mitglied `kraftTage` im Profil gesetzt, gelten diese statt des Vorschlags, Einheiten A/B/… der Reihe nach.
+- [ ] **Step 1: Failing tests.** (a) Bestandseingabe ohne Kurs-/Cardio-Tage ergibt `struktur`, `einheiten` und `gruende` exakt wie bisher (Fixture-Vergleich, bis auf `regelVersion`); das `wochenraster` enthält dann nur Kraft-Tage nach `verteileKraft([], tage)`. (b) 4 Tage, Kurs `[1]`, Cardio `[7]` → Struktur `gk_ab`, Raster `[1 kurs, 3 kraft A, 5 kraft B, 7 cardio]`. (c) 2 Tage, Kurs `[1]`, Cardio `[7]` → Struktur `gk_eine`, Grund `kraft_tage_auf_eins`. (d) Hat das Mitglied `kraftTage` im Profil gesetzt, gelten diese statt des Vorschlags, Einheiten A/B/… der Reihe nach.
 - [ ] **Step 2:** scheitern lassen.
 - [ ] **Step 3: Implement** `tage` im Generator aus `kraftAnzahl`; Raster bauen; Route reicht `kursTage`, `cardioTage`, `kraftTage` aus dem Profil an den Generator durch und speichert `wochenraster` in einer neuen Spalte `training_plans.wochenraster jsonb not null default '[]'` (in Migration `0069` aus Task 2 mit anlegen; Pläne sind stabil, F14, das Raster wird beim Erzeugen festgehalten und nie beim Lesen neu berechnet). Tauschen im Plan-Tab schreibt `training_profiles.kraft_tage`; der aktive Plan behält sein Raster, der nächste Vorschlag übernimmt die neuen Tage.
 - [ ] **Step 4:** `pnpm test`, `pnpm test:integration -- api-plans` → PASS.
@@ -139,6 +139,7 @@
 
 **Interfaces:**
 - Produces:
+  - `enum Wochenart: String, Decodable { case kraft, kurs, cardio }` und `struct Rasterplatz: Decodable, Equatable, Sendable { let tag: Int; let art: Wochenart; let einheitKey: String? }` (JSON-Felder `tag`, `art`, `einheitKey` wie Task 3)
   - `enum PlanTermin: Equatable { case einheit(key: String, erledigt: Bool); case kurs(titel: String, beginn: Date, angemeldet: Bool); case cardio(arten: [String], erledigt: Bool) }`
   - `enum PlanFilter: CaseIterable { case alle, einheiten, kurse, cardio; var titel: String }`
   - `PlanWoche.termine(tage: [Date], kalender: Calendar, raster: [Rasterplatz], kurse: [CourseWeekSession], cardioErledigt: Set<String>, einheitenErledigt: Set<String>, filter: PlanFilter) -> [Date: [PlanTermin]]` (Schlüssel = `startOfDay`)
