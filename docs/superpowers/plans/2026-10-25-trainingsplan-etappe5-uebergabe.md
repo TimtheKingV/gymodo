@@ -4,13 +4,14 @@
 
 Plan: `2026-10-27-trainingsplan-aus-katalog.md`, Spec: `../specs/2026-10-27-trainingsplan-aus-katalog-design.md`.
 
-**Stand:** Task 1-9 umgesetzt und reviewt, Migrationen `0066`/`0067` nur lokal, nichts gepusht, kein PR. **F20 ist ersetzt:** der Plan wird nicht mehr aus den Geräten des Studios gebaut, sondern aus dem Katalog; Geräte kommen erst beim Training (Merkliste je Planposition, Planposition ohne festes Gerät startbar). Der Plan ist ohne Studio sichtbar und einrichtbar. Übungen lassen sich mit Grund (und Alternative) entfernen. `PlanWarumText.version` ist `1.2.0`: die beiden Sätze mit „dein Studio“ nennen jetzt den Katalog; die alten Generator-Codes bleiben lesbar.
+**Stand:** Task 1-9 umgesetzt, reviewt und gemergt (PR #93). **F20 ist ersetzt:** der Plan wird nicht mehr aus den Geräten des Studios gebaut, sondern aus dem Katalog; Geräte kommen erst beim Training (Merkliste je Planposition, Planposition ohne festes Gerät startbar). Der Plan ist ohne Studio sichtbar und einrichtbar. Übungen lassen sich mit Grund (und Alternative) entfernen. `PlanWarumText.version` ist `1.2.0`: die beiden Sätze mit „dein Studio“ nennen jetzt den Katalog; die alten Generator-Codes bleiben lesbar.
 
-**Offen: Auslieferung (Schritt 6), nur mit Tims ausdrücklicher Freigabe, jeweils einzeln, in dieser Reihenfolge:**
-1. Datenbank: Migrationen `0066` und `0067` auf Prod.
-2. API-Deploy.
-3. App-Build auf das Testgerät.
-Vorher erneut prüfen, dass Prod noch keinen Plan hat (die Migration verwirft alte Studiopläne). Stand der Prod-DB laut Memory: bis `0065`.
+**Auslieferung, Stand 2026-10-28 (PR #93 gemergt, CI grün):**
+1. Datenbank auf Prod: `0066` (`plan_aus_katalog`) und `0067` (`plan_merkliste`) sind mit Tims Freigabe angewendet; vorher 0 Pläne, 55 Katalogtypen. Danach wurden die Rechte der Merkliste auf select/insert/delete beschränkt (Prod: `plan_merkliste_rechte`, im Repo `0068`, PR #94).
+2. API: der Merge hat Production automatisch deployt (Vercel, 07:43 UTC, vor den Migrationen; Prod hatte keine Pläne, es bricht nichts). Ob die laufende Version die neue Route mit `modelId`/`grund` liefert, ist noch nicht gegengeprüft.
+3. **Offen:** App-Build und die manuelle Sichtprüfung mit dem Testkonto (siehe Hinweise), vor einem TestFlight-Build.
+
+**Rechte der Tabellen (Notiz, nicht Teil des Trainingsplans):** Fast alle Tabellen in `public` haben für `anon` und `authenticated` alle Rechte (Supabase-Voreinstellung, auch TRUNCATE, REFERENCES, TRIGGER). Geschützt sind sie nur durch RLS (überall aktiviert; keine Policy gilt für `anon`/`public`). Über die API ist daraus nichts erreichbar, es ist ein Härtungsthema. Vorschlag für eine eigene Aufgabe: `anon` überall entziehen, wo die App ohne Anmeldung nichts liest (vorher prüfen, was Registrierung und Beitritt brauchen); bei `authenticated` TRUNCATE/REFERENCES/TRIGGER entziehen und UPDATE/DELETE nur dort lassen, wo eine passende Policy existiert; als Migration erst lokal gegen die Integrationstests, dann mit Tims Freigabe auf Prod. Besonders sensibel: `training_limits` (Beschwerden), `body_measurements`, `member_goals`. Nur `plan_merkliste` ist bereits eng gefasst. `catalog_products`, `catalog_product_types` und `staff_invites` haben RLS ohne `force`.
 
 **Hinweise für Tim:**
 - Die manuellen Simulatorprüfungen (Task 7 Schritt 5, Task 8 Schritt 5) sind entfallen: der Debug-Build zeigt auf Prod, das das neue Schema/die API noch nicht hat. Nach dem Deploy bitte selbst prüfen (Testkonto): Planposition starten, „Gerät wählen“, Entfernen-Sheet, Navigation nach dem Schließen des Sheets.
