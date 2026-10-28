@@ -418,6 +418,16 @@ struct PlanAnzeigeTests {
         #expect(!PlanAnzeige.planModus(laeuft: false, heute: nil))
     }
 
+    @Test("Zusatz-Zeile findet ihren Block, bei mehreren den juengsten")
+    func zusatzZeileFindetBlock() {
+        let alt = Self.block("m1", "eX", saetze: 1, minute: 0)
+        let neu = Self.block("m2", "eX", saetze: 1, minute: 30)
+        let andere = Self.block("m3", "eY", saetze: 1, minute: 60)
+        #expect(PlanAnzeige.block(fuerZusatz: "zusatz:eX", bloecke: [alt, neu, andere])?.machineId == "m2")
+        #expect(PlanAnzeige.block(fuerZusatz: "zusatz:eZ", bloecke: [alt]) == nil)
+        #expect(PlanAnzeige.block(fuerZusatz: "A0", bloecke: [alt]) == nil)
+    }
+
     @Test("Restzeit zaehlt ausgelassene Positionen nicht mit")
     func restzeitOhneAusgelassene() {
         let plan = Self.plan()

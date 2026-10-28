@@ -104,7 +104,7 @@ struct AccessibilityBaumTests {
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel("Beinpresse, 3 × 8–12")
                     .modifier(PlanBewegungsAktionen(aktionen: PlanReihenfolge.aktionen(index: index, anzahl: anzahl),
-                                                    index: index, bewegen: { _ in }))
+                                                    index: index, anzahl: anzahl, bewegen: { _ in }))
                     .padding())
             fenster.windowLevel = .alert
             fenster.isHidden = false

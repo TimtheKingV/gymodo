@@ -557,9 +557,10 @@ struct TrainingRootView: View {
                 PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
                     planPosition = PlanTausch.auftrag(position: $0, katalog: katalog, ablauf: planAblauf,
                                                       bloecke: session.bloecke)
-                }
+                } beiZusatz: { oeffne($0) }
                 uebungHinzufuegenKnopf
-                if !session.bloecke.isEmpty { zirkelHinweis }
+                // Der Hinweis zeigt auf die Zusatz-Zeilen: ohne eine antippbare keiner.
+                if planModusHatAntippbareBloecke(session) { zirkelHinweis }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, DesignSystem.Spacing.s16)
@@ -567,6 +568,13 @@ struct TrainingRootView: View {
         .background(DesignSystem.Color.bg)
         .modifier(PlanModusTitel())
         .safeAreaInset(edge: .bottom) { fuss }
+    }
+
+    private func planModusHatAntippbareBloecke(_ session: LokaleSession) -> Bool {
+        guard let heute = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf) else { return false }
+        return PlanAnzeige.zusaetzlichGemacht(plan: heute.plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
+                                              bloecke: session.bloecke, bootstrap: katalog.bootstrap)
+            .contains { PlanAnzeige.block(fuerZusatz: $0.id, bloecke: session.bloecke) != nil }
     }
 
     /// Ruhig: gestrichelter Rand, kein Akzent -- die Akzentflaeche des
@@ -1229,6 +1237,9 @@ struct TrainingRootView: View {
             zirkelAblauf.pauseVerlassen()
             pfad = neu
         } else {
+            // Aus "Übung hinzufügen": wie ein Start aus der Liste, die Auswahl
+            // (samt Kategorieseiten darueber) faellt weg.
+            if let i = pfad.firstIndex(of: .planHinzufuegen) { pfad = Array(pfad[..<i]) }
             pfad.append(ziel)
         }
     }

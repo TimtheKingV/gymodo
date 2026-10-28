@@ -33,12 +33,14 @@ struct PlanKarteBereich: View {
     /// Tipp auf eine Planzeile (Task 12: Vorgaben- und Tausch-Sheet). nil =
     /// die Zeilen sind still.
     var beiPosition: ((TrainingsplanPosition) -> Void)? = nil
+    /// Tipp auf eine Zeile unter "Zusätzlich gemacht": oeffnet deren Block.
+    var beiZusatz: ((LokalerBlock) -> Void)? = nil
 
     var body: some View {
         if let heute = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf) {
             PlanKarte(heute: heute, bloecke: session?.bloecke ?? [], laeuft: session != nil,
                       bootstrap: katalog.bootstrap, fotoLader: fotoLader, vorschauLader: vorschauLader,
-                      beiPosition: beiPosition,
+                      beiPosition: beiPosition, beiZusatz: beiZusatz,
                       // Umsortieren nur im Training (Spec "Plan im Training").
                       beiUmordnen: session == nil ? nil : { planAblauf.umordnen(positionKey: $0, nach: $1) })
                 // Nach "Training beenden" ist der Ablauf leer, bis jemand
@@ -64,6 +66,7 @@ struct PlanKarte: View {
     let fotoLader: any GeraetefotosLoading
     let vorschauLader: VorschauLader
     var beiPosition: ((TrainingsplanPosition) -> Void)? = nil
+    var beiZusatz: ((LokalerBlock) -> Void)? = nil
     /// Eine Position an einen neuen Platz (Index nach dem Verschieben). nil =
     /// kein Griff, keine Aktionen -- so vor dem Start.
     var beiUmordnen: ((_ positionKey: String, _ nach: Int) -> Void)? = nil
@@ -73,13 +76,18 @@ struct PlanKarte: View {
     @State private var bilder: [String: UIImage] = [:]
     @State private var warumOffen = false
     /// Das laufende Ziehen: welche Zeile, wie weit.
-    @State private var zug: Zug?
+    /// Das laufende Ziehen. @GestureState statt @State: bricht die Geste ab
+    /// (Scrollen uebernimmt, Hintergrund, Sheet, Anruf), ruft SwiftUI kein
+    /// onEnded -- der Wert setzt sich selbst zurueck, und mit ihm Anhebung
+    /// und Abdunkelung.
+    @GestureState private var zug: Zug?
     @State private var zeilenHoehen: [String: CGFloat] = [:]
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private struct Zug: Equatable {
         let key: String
         var versatz: CGFloat
+        /// Die Verschiebung, begrenzt auf die Liste: Anzeige und Ziel einig.
     }
 
     private var plan: Trainingsplan { heute.plan }
@@ -96,7 +104,11 @@ struct PlanKarte: View {
             Card {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
                     kopf
-                    zeilenListe(zeilen, verschiebbar: laeuft)
+                    zeilenListe(zeilen, beiTipp: beiPosition.map { tipp in
+                        { zeile in
+                            if let position = heute.einheit.positionen.first(where: { $0.key == zeile.id }) { tipp(position) }
+                        }
+                    }, verschiebbar: laeuft)
                 }
                 .padding(.horizontal, 14)
                 .padding(.top, 14)
@@ -111,7 +123,11 @@ struct PlanKarte: View {
                     .padding(.top, DesignSystem.Spacing.s4)
                     .accessibilityAddTraits(.isHeader)
                 Card {
-                    zeilenListe(zusatz, tippbar: false)
+                    zeilenListe(zusatz, beiTipp: beiZusatz.map { geoeffnet in
+                        { zeile in
+                            if let block = PlanAnzeige.block(fuerZusatz: zeile.id, bloecke: bloecke) { geoeffnet(block) }
+                        }
+                    })
                         .padding(.horizontal, 14)
                         .padding(.vertical, DesignSystem.Spacing.s4)
                 }
@@ -187,25 +203,24 @@ struct PlanKarte: View {
 
     // MARK: - Zeilen
 
-    private func zeilenListe(_ zeilen: [PlanZeilenModell], tippbar: Bool = true,
+    private func zeilenListe(_ zeilen: [PlanZeilenModell], beiTipp: ((PlanZeilenModell) -> Void)? = nil,
                              verschiebbar: Bool = false) -> some View {
-        let hoehen = zeilen.map { zeilenHoehen[$0.id] ?? 80 }
+        let hoehen = PlanReihenfolge.plaetze(zeilen.map { zeilenHoehen[$0.id] ?? 80 })
         let von = zug.flatMap { z in zeilen.firstIndex { $0.id == z.key } }
         let ziel = von.flatMap { von in zug.map { PlanReihenfolge.zielIndex(von: von, versatz: $0.versatz, hoehen: hoehen) } }
         return VStack(spacing: 0) {
             ForEach(Array(zeilen.enumerated()), id: \.element.id) { index, zeile in
                 if index > 0 {
-                    Rectangle().fill(DesignSystem.Color.line).frame(height: 1)
+                    Rectangle().fill(DesignSystem.Color.line).frame(height: PlanReihenfolge.trennlinie)
                 }
-                let position = heute.einheit.positionen.first { $0.key == zeile.id }
                 let gezogen = zug?.key == zeile.id
                 let ausweichen = von.flatMap { von in ziel.map {
                     PlanReihenfolge.verschiebung(index: index, von: von, ziel: $0, hoehe: hoehen[von])
                 } } ?? 0
                 HStack(spacing: 0) {
                     Group {
-                        if tippbar, let beiPosition, let position {
-                            Button { beiPosition(position) } label: { planZeile(zeile) }
+                        if let beiTipp {
+                            Button { beiTipp(zeile) } label: { planZeile(zeile) }
                                 .buttonStyle(PressButtonStyle())
                         } else {
                             planZeile(zeile)
@@ -214,11 +229,11 @@ struct PlanKarte: View {
                     .modifier(PlanBewegungsAktionen(
                         aktionen: verschiebbar && beiUmordnen != nil
                             ? PlanReihenfolge.aktionen(index: index, anzahl: zeilen.count) : [],
-                        index: index,
+                        index: index, anzahl: zeilen.count,
                         bewegen: { beiUmordnen?(zeile.id, $0) }))
                     if verschiebbar, beiUmordnen != nil {
                         PlanGriff(aktiv: gezogen)
-                            .gesture(ziehen(zeile.id, zeilen: zeilen, hoehen: hoehen))
+                            .highPriorityGesture(ziehen(zeile.id, zeilen: zeilen, hoehen: hoehen))
                     }
                 }
                 .background(GeometryReader { geo in
@@ -234,26 +249,28 @@ struct PlanKarte: View {
             }
         }
         .onPreferenceChange(PlanZeilenHoehe.self) { zeilenHoehen.merge($0) { _, neu in neu } }
+        .onChange(of: zug?.key) { alt, neu in
+            if alt == nil, neu != nil { PlanKarte.haptik(.soft) }
+        }
     }
 
-    /// Ziehen am Griff: die Zeile folgt dem Finger, die anderen weichen aus;
-    /// beim Loslassen setzt `beiUmordnen` sie an ihren neuen Platz. Nur am
-    /// Griff, damit das Scrollen der Liste sonst ungestoert bleibt.
+    /// Ziehen am Griff: erst ein kurzes Halten (0,15 s), dann folgt die Zeile
+    /// dem Finger, die anderen weichen aus; beim Loslassen setzt `beiUmordnen`
+    /// sie an ihren neuen Platz. Ein schnelles Wischen ueber den Griff
+    /// besteht das Halten nicht und scrollt die Liste; ein Abbruch laesst
+    /// den @GestureState von selbst zurueckfallen. highPriority, damit der
+    /// Scroll-Pan der ScrollView die Geste nach dem Halten nicht an sich zieht.
     private func ziehen(_ key: String, zeilen: [PlanZeilenModell], hoehen: [CGFloat]) -> some Gesture {
-        DragGesture(minimumDistance: 0)
-            .onChanged { wert in
-                guard let von = zeilen.firstIndex(where: { $0.id == key }) else { return }
-                // Nicht ueber die Karte hinaus.
-                let oben = -hoehen[..<von].reduce(0, +)
-                let unten = hoehen[(von + 1)...].reduce(0, +)
-                let versatz = min(max(wert.translation.height, oben), unten)
-                if zug == nil { PlanKarte.haptik(.soft) }
-                zug = Zug(key: key, versatz: versatz)
+        LongPressGesture(minimumDuration: 0.15)
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .updating($zug) { wert, zustand, _ in
+                guard case .second(true, let zug?) = wert else { return }
+                zustand = Zug(key: key, versatz: zug.translation.height)
             }
             .onEnded { wert in
-                defer { zug = nil }
-                guard let von = zeilen.firstIndex(where: { $0.id == key }) else { return }
-                let ziel = PlanReihenfolge.zielIndex(von: von, versatz: wert.translation.height, hoehen: hoehen)
+                guard case .second(true, let zug?) = wert,
+                      let von = zeilen.firstIndex(where: { $0.id == key }) else { return }
+                let ziel = PlanReihenfolge.zielIndex(von: von, versatz: zug.translation.height, hoehen: hoehen)
                 guard ziel != von else { return }
                 PlanKarte.haptik(.light)
                 beiUmordnen?(key, ziel)
@@ -333,11 +350,17 @@ struct PlanGriff: View {
 struct PlanBewegungsAktionen: ViewModifier {
     let aktionen: [PlanReihenfolge.Richtung]
     let index: Int
+    let anzahl: Int
     let bewegen: (_ nach: Int) -> Void
 
     func body(content: Content) -> some View {
         aktionen.reduce(AnyView(content)) { ansicht, richtung in
-            AnyView(ansicht.accessibilityAction(named: Text(richtung.name)) { bewegen(richtung.ziel(von: index)) })
+            AnyView(ansicht.accessibilityAction(named: Text(richtung.name)) {
+                let ziel = richtung.ziel(von: index)
+                bewegen(ziel)
+                UIAccessibility.post(notification: .announcement,
+                                     argument: PlanReihenfolge.ansage(richtung, neuerIndex: ziel, anzahl: anzahl))
+            })
         }
     }
 }

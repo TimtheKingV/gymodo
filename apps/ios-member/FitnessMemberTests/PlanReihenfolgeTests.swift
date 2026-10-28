@@ -32,6 +32,27 @@ struct PlanReihenfolgeTests {
         #expect(PlanReihenfolge.zielIndex(von: 0, versatz: 100, hoehen: [80, 80, 200]) == 1)
     }
 
+    @Test("Eine hohe Zeile erreicht die aeussersten Plaetze, Vorschau und Drop stimmen")
+    func hoheZeileErreichtDieEnden() {
+        #expect(PlanReihenfolge.zielIndex(von: 2, versatz: -1000, hoehen: [60, 60, 200]) == 0)
+        #expect(PlanReihenfolge.zielIndex(von: 0, versatz: 1000, hoehen: [200, 60, 60]) == 2)
+        // Schon ein Stueck weniger als bis ganz nach oben reicht, die erste Zeile zu passieren.
+        #expect(PlanReihenfolge.zielIndex(von: 2, versatz: -(60 + 60), hoehen: [60, 60, 200]) == 0)
+        #expect(PlanReihenfolge.begrenzt(-1000, von: 2, hoehen: [60, 60, 200]) == -120)
+        #expect(PlanReihenfolge.begrenzt(1000, von: 0, hoehen: [200, 60, 60]) == 120)
+    }
+
+    @Test("Trennlinien gehoeren zum Platz der Zeile")
+    func trennlinien() {
+        #expect(PlanReihenfolge.plaetze([80, 60]) == [81, 61])
+    }
+
+    @Test("Ansage nach einer Verschiebung")
+    func ansage() {
+        #expect(PlanReihenfolge.ansage(.hoch, neuerIndex: 1, anzahl: 6) == "Nach oben verschoben, Position 2 von 6")
+        #expect(PlanReihenfolge.ansage(.runter, neuerIndex: 5, anzahl: 6) == "Nach unten verschoben, Position 6 von 6")
+    }
+
     @Test("Verschiebung der uebrigen Zeilen macht Platz")
     func verschiebung() {
         // Zeile 0 wandert auf 2: Zeilen 1 und 2 ruecken um ihre Hoehe hoch.

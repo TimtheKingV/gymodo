@@ -248,6 +248,19 @@ enum PlanAnzeige {
         }
     }
 
+    /// Der Block hinter einer Zeile von "Zusätzlich gemacht" (Zeilen-Id
+    /// "zusatz:<Uebung>"): bei mehreren Bloecken derselben Uebung der mit dem
+    /// zuletzt gesicherten Satz; nil ohne Treffer oder ohne Ziel (Block ohne
+    /// Geraete- oder Typkennung).
+    static func block(fuerZusatz id: String, bloecke: [LokalerBlock]) -> LokalerBlock? {
+        let praefix = "zusatz:"
+        guard id.hasPrefix(praefix) else { return nil }
+        let exerciseId = String(id.dropFirst(praefix.count))
+        return bloecke
+            .filter { $0.exerciseId == exerciseId && Station.art(schluessel: $0.stationSchluessel) != nil }
+            .max { ($0.saetze.map(\.performedAt).max() ?? .distantPast) < ($1.saetze.map(\.performedAt).max() ?? .distantPast) }
+    }
+
     // MARK: - Pause (F6)
 
     /// Die Pause nach einem Satz: bei einer Planuebung die der Position,
