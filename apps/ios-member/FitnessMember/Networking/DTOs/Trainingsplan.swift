@@ -36,11 +36,14 @@ struct Trainingsplan: Decodable, Equatable, Sendable {
     /// Was das Mitglied gesperrt hat (nur an den Eigentuemer, Task 8 filtert
     /// damit). Leer in einer alten Server-Antwort und in der eines Schreibwegs.
     let merkliste: PlanMerkliste
+    /// Das Wochenraster (nach Tag sortiert). Leer in einer alten Server-Antwort
+    /// und in der eines Schreibwegs ohne Raster.
+    let wochenraster: [Rasterplatz]
 
     private enum CodingKeys: String, CodingKey {
         case planId, id, studioId, version, regelVersion, struktur, einheiten, gruende,
              naechsteEinheitKey, zuletztEinheitKey, einheitenErledigt, anfaengerUebergang, alternativen,
-             zielgewichte, merkliste
+             zielgewichte, merkliste, wochenraster
     }
 
     init(from decoder: any Decoder) throws {
@@ -59,6 +62,7 @@ struct Trainingsplan: Decodable, Equatable, Sendable {
         alternativen = try c.decodeIfPresent([String: [PlanAlternative]].self, forKey: .alternativen) ?? [:]
         zielgewichte = try c.decodeIfPresent([String: Zielgewicht].self, forKey: .zielgewichte) ?? [:]
         merkliste = try c.decodeIfPresent(PlanMerkliste.self, forKey: .merkliste) ?? PlanMerkliste()
+        wochenraster = try c.decodeIfPresent([Rasterplatz].self, forKey: .wochenraster) ?? []
     }
 
     /// Wie `zielSchluessel` in packages/domain/src/plangewichte.ts: erst
@@ -137,6 +141,53 @@ struct TrainingsplanProfil: Codable, Equatable, Sendable {
     let minutes: Int
     let experience: String
     let focus: [String]
+    /// Wochenraster (ISO-Wochentage 1...7). nil heisst "nicht gesetzt": beim
+    /// Schreiben wird der Schluessel dann weggelassen (der Server laesst die
+    /// Spalte unveraendert), beim Lesen steht nil fuer eine aeltere Antwort.
+    let kursTage: [Int]?
+    let cardioTage: [Int]?
+    /// Schluessel aus CARDIO_ARTEN (laufen, radfahren, schwimmen, wandern, anderes).
+    let cardioArten: [String]?
+    let kraftTage: [Int]?
+
+    init(
+        minutes: Int, experience: String, focus: [String],
+        kursTage: [Int]? = nil, cardioTage: [Int]? = nil, cardioArten: [String]? = nil, kraftTage: [Int]? = nil
+    ) {
+        self.minutes = minutes
+        self.experience = experience
+        self.focus = focus
+        self.kursTage = kursTage
+        self.cardioTage = cardioTage
+        self.cardioArten = cardioArten
+        self.kraftTage = kraftTage
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case minutes, experience, focus, kursTage, cardioTage, cardioArten, kraftTage
+    }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        minutes = try c.decode(Int.self, forKey: .minutes)
+        experience = try c.decode(String.self, forKey: .experience)
+        focus = try c.decode([String].self, forKey: .focus)
+        kursTage = try c.decodeIfPresent([Int].self, forKey: .kursTage)
+        cardioTage = try c.decodeIfPresent([Int].self, forKey: .cardioTage)
+        cardioArten = try c.decodeIfPresent([String].self, forKey: .cardioArten)
+        kraftTage = try c.decodeIfPresent([Int].self, forKey: .kraftTage)
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(minutes, forKey: .minutes)
+        try c.encode(experience, forKey: .experience)
+        try c.encode(focus, forKey: .focus)
+        try c.encodeIfPresent(kursTage, forKey: .kursTage)
+        try c.encodeIfPresent(cardioTage, forKey: .cardioTage)
+        try c.encodeIfPresent(cardioArten, forKey: .cardioArten)
+        try c.encodeIfPresent(kraftTage, forKey: .kraftTage)
+    }
 }
 
 /// Planstand der laufenden Einheit, der mit jedem Satz-PUT mitgeht

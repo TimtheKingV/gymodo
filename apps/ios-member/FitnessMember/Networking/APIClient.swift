@@ -280,6 +280,38 @@ actor APIClient {
             grund: grund, ortId: ortId))
     }
 
+    // MARK: - Cardio-Checks
+
+    /// Die abgehakten Cardio-Tage von `from` bis `to` (je "YYYY-MM-DD", eingeschlossen).
+    func cardioChecks(from: String, to: String) async throws(APIError) -> [String] {
+        struct Antwort: Decodable { let days: [String] }
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("me/cardio-checks"), resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "from", value: from), URLQueryItem(name: "to", value: to)]
+        guard let url = components.url else { throw APIError.encodingFailed }
+        let antwort: Antwort = try await execute(url: url, method: "GET", bodyData: nil)
+        return antwort.days
+    }
+
+    /// Hakt Cardio fuer `day` ab (idempotent, 204). Der Server bekommt nur den Tag des
+    /// Mitglieds, kein `today`; liegt der Tag in der Zukunft, antwortet er 422.
+    func setCardioCheck(day: String) async throws(APIError) {
+        try await cardioCheckOhneInhalt(day: day, method: "PUT")
+    }
+
+    /// Nimmt das Abhaken zurueck; ein fehlender Tag ist kein Fehler (204).
+    func deleteCardioCheck(day: String) async throws(APIError) {
+        try await cardioCheckOhneInhalt(day: day, method: "DELETE")
+    }
+
+    private func cardioCheckOhneInhalt(day: String, method: String) async throws(APIError) {
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("me/cardio-checks"), resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "day", value: day)]
+        guard let url = components.url else { throw APIError.encodingFailed }
+        try await executeNoContent(url: url, method: method)
+    }
+
     // MARK: - Hilfsmethoden
 
     private func get<T: Decodable>(_ path: String, as type: T.Type = T.self) async throws(APIError) -> T {
@@ -355,7 +387,11 @@ actor APIClient {
     }
 
     private func executeNoContent(path: String, method: String) async throws(APIError) {
-        let request = try await anfrage(url: baseURL.appendingPathComponent(path), method: method)
+        try await executeNoContent(url: baseURL.appendingPathComponent(path), method: method)
+    }
+
+    private func executeNoContent(url: URL, method: String) async throws(APIError) {
+        let request = try await anfrage(url: url, method: method)
 
         let data: Data
         let response: URLResponse
