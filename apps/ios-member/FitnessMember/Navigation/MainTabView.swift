@@ -12,10 +12,10 @@ struct MainTabView: View {
     /// (M1-Spec SS8.1 Schritt 3) waere gebrochen.
     @State private var ausgewaehlterTab = 0
 
-    /// Der typisierte Pfad des Kurse-Tabs, wie `pfad` in TrainingRootView
-    /// fuer GeraetRoute -- KursDetail ist ein Push und behaelt die
-    /// Tab-Leiste, statt ein eigener Tab zu sein.
-    @State private var kursePfad: [KursRoute] = []
+    /// Der typisierte Pfad des Plan-Tabs, wie `pfad` in TrainingRootView
+    /// fuer GeraetRoute -- Kursdetail und Einheit sind Pushes und behalten
+    /// die Tab-Leiste, statt eigene Tabs zu sein.
+    @State private var planPfad: [KursRoute] = []
 
     var body: some View {
         TabView(selection: $ausgewaehlterTab) {
@@ -27,19 +27,22 @@ struct MainTabView: View {
                 .tabItem { Label("Training", systemImage: "figure.strengthtraining.traditional") }
                 .tag(1)
 
-            NavigationStack(path: $kursePfad) {
-                KurseWochenView(
-                    beiAuswahl: { sessionId in kursePfad.append(.detail(sessionId: sessionId)) },
-                    loader: apiClient
-                )
+            NavigationStack(path: $planPfad) {
+                PlanRootView(
+                    apiClient: apiClient,
+                    beiKurs: { sessionId in planPfad.append(.detail(sessionId: sessionId)) },
+                    beiEinheit: { key in planPfad.append(.einheit(key: key)) },
+                    beiTrainingStarten: trainingZeigen)
                 .navigationDestination(for: KursRoute.self) { route in
                     switch route {
                     case .detail(let sessionId):
                         KursDetailView(sessionId: sessionId)
+                    case .einheit(let key):
+                        PlanEinheitView(einheitKey: key, beiTrainingStarten: trainingZeigen)
                     }
                 }
             }
-            .tabItem { Label("Kurse", systemImage: "calendar") }
+            .tabItem { Label("Plan", systemImage: "calendar") }
             .tag(2)
 
             NavigationStack { ProfilRootView(apiClient: apiClient) }
@@ -63,5 +66,13 @@ struct MainTabView: View {
             TagProtokoll.log.info("Tab-Wechsel auf Training wegen offenem Tag-Eingang")
             ausgewaehlterTab = 1
         }
+    }
+
+    /// "Training starten" aus dem Plan: dort fuehrt die Plankarte die Einheit.
+    /// Der Plan-Pfad springt zurueck, damit der Tab beim naechsten Besuch
+    /// wieder auf der Woche steht.
+    private func trainingZeigen() {
+        planPfad.removeAll()
+        ausgewaehlterTab = 1
     }
 }
