@@ -22,3 +22,11 @@ create policy cardio_checks_insert_own on public.cardio_checks
   for insert to authenticated with check (user_id = (select auth.uid()));
 create policy cardio_checks_delete_own on public.cardio_checks
   for delete to authenticated using (user_id = (select auth.uid()));
+
+-- Rechte auf das Noetige beschraenken (Muster 0067/0068): Supabase vergibt auf neue
+-- Tabellen alle Rechte an anon und authenticated. Update blockiert RLS ohne Policy,
+-- truncate aber nicht (RLS gilt dafuer nicht) -- also gar nicht erst lassen.
+revoke all on public.cardio_checks from anon;
+revoke all on public.cardio_checks from public;
+revoke update, truncate, references, trigger on public.cardio_checks from authenticated;
+grant select, insert, delete on public.cardio_checks to authenticated;

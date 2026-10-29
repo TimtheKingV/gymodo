@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { DELETE, GET, PUT } from "@/app/api/v1/me/cardio-checks/route";
-import { accessTokenFor, createTestUser, uniqueEmail } from "./helpers/clients.js";
+import { accessTokenFor, anonClient, createTestUser, uniqueEmail, userClient } from "./helpers/clients.js";
 
 const BASE = "http://localhost/api/v1/me/cardio-checks";
 const req = (method: string, auth?: string, query = ""): Request =>
@@ -63,5 +63,23 @@ describe("/me/cardio-checks", () => {
     expect(await (await GET(req("GET", b, `?from=${gestern}&to=${heute}`))).json()).toEqual({ days: [] });
     expect((await DELETE(req("DELETE", b, `?day=${heute}`))).status).toBe(204);
     expect(await (await GET(req("GET", a, `?from=${gestern}&to=${heute}`))).json()).toEqual({ days: [heute] });
+  });
+});
+
+describe("cardio_checks: Rechte (0071)", () => {
+  it("anon darf nichts", async () => {
+    const { data, error } = await anonClient().from("cardio_checks").select("*");
+    expect(error?.code === "42501" || (data ?? []).length === 0).toBe(true);
+    const { error: e } = await anonClient().from("cardio_checks").insert({ user_id: crypto.randomUUID(), day: heute });
+    expect(e).not.toBeNull();
+  });
+
+  it("authenticated hat kein update (Recht entzogen, nicht nur durch RLS gesperrt)", async () => {
+    const email = uniqueEmail("cc-recht");
+    await createTestUser(email);
+    const client = await userClient(email);
+    // 42501 = permission denied: ohne UPDATE-Recht scheitert schon die Rechtepruefung, vor RLS.
+    const { error } = await client.from("cardio_checks").update({ day: gestern }).eq("day", heute);
+    expect(error?.code).toBe("42501");
   });
 });

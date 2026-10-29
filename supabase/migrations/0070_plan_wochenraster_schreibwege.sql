@@ -4,7 +4,8 @@
 -- Erzeugen berechnet hat; Plaene sind stabil (F14), gelesen wird es nie neu gerechnet.
 -- Mitglieder duerfen training_plans nicht direkt schreiben, deshalb muessen die
 -- Funktionen es mitfuehren:
--- * create_training_plan: neuer Parameter p_wochenraster (die alte Signatur entfaellt).
+-- * create_training_plan: neuer letzter Parameter p_wochenraster mit Default '[]'; ein Aufruf
+--   mit den sechs alten Argumenten funktioniert weiter, die Migration darf vor dem Deploy laufen.
 -- * swap_training_plan_position: die neue aktive Version uebernimmt das Raster des
 --   Vorgaengers, sonst Rest wie 0066.
 
@@ -17,7 +18,7 @@ create function public.create_training_plan(
   p_struktur      text,
   p_einheiten     jsonb,
   p_gruende       text[],
-  p_wochenraster  jsonb
+  p_wochenraster  jsonb default '[]'::jsonb
 )
 returns public.training_plans
 language plpgsql
