@@ -21,6 +21,12 @@ struct PlanRootView: View {
 
     @State private var zustand = PlanTabZustand()
     @State private var cardioErledigt: Set<String> = []
+    /// Jede Aenderung am Haken zaehlt hoch; eine GET-Antwort, die vor ihr
+    /// losging, wird verworfen (wie `KurseStore.generation`) -- sonst
+    /// ueberschriebe ein aelterer Stand den frisch gesetzten Haken.
+    @State private var cardioGeneration = 0
+    /// Gespeichert, aber der Bootstrap kam nicht nach.
+    @State private var speicherHinweis: String?
     @State private var einplanenOffen = false
     @State private var planFlowUmfang: OnboardingUmfang?
     @State private var beitretenOffen = false
@@ -170,9 +176,15 @@ struct PlanRootView: View {
                     beiEinheit: beiEinheit,
                     beiStart: beiTrainingStarten,
                     beiCardio: { erledigt in await cardioSetzen(tagId: tagId, erledigt: erledigt) })
+                // Neuer Tag, neue Liste: Lauf- und Fehlerzustand der Cardio-Karte
+                // gehoeren zum Tag, an dem getippt wurde.
+                .id(tagId)
 
                 if !hatStudio { kurseOhneStudio }
 
+                if let speicherHinweis {
+                    InlineBanner(tone: .muted, message: speicherHinweis)
+                }
                 if let profil {
                     SecondaryButton(title: hatStudio ? "Einheit oder Kurs einplanen" : "Einheit einplanen") {
                         einplanenOffen = true
@@ -216,9 +228,11 @@ struct PlanRootView: View {
         let montage = KurseWochenBerechnung.wochenMontage(ab: jetzt, zeitzone: zeitzone)
         guard let erster = montage.first, let letzter = montage.last,
               let sonntag = kalender.date(byAdding: .day, value: 6, to: letzter) else { return }
+        let generation = cardioGeneration
         do throws(APIError) {
             let tage = try await apiClient.cardioChecks(
                 from: Self.tagId(erster, kalender: kalender), to: Self.tagId(sonntag, kalender: kalender))
+            guard generation == cardioGeneration else { return }
             cardioErledigt = Set(tage)
         } catch {
             // Bleibt beim letzten Stand; der Haken ist kein Grund fuer einen Fehlerzustand.
@@ -226,6 +240,7 @@ struct PlanRootView: View {
     }
 
     private func cardioSetzen(tagId: String, erledigt: Bool) async -> String? {
+        cardioGeneration += 1
         do throws(APIError) {
             if erledigt {
                 try await apiClient.setCardioCheck(day: tagId)
@@ -249,6 +264,10 @@ struct PlanRootView: View {
             return error.servertext
         }
         await katalog.load()
+        // Das Sheet schliesst trotzdem: gespeichert ist gespeichert. Nur die
+        // Woche zeigt bis zum naechsten Laden noch die alten Tage.
+        speicherHinweis = katalog.letzterLadefehler == nil
+            ? nil : "Gespeichert – wird beim nächsten Laden angezeigt."
         return nil
     }
 

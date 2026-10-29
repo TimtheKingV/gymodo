@@ -1,9 +1,9 @@
 import SwiftUI
 
 /// Vorschau einer Planeinheit aus dem Plan-Tab (Leinwand 2e): die Uebungen
-/// aus `Trainingsplan.einheiten`, "Warum so?" und "Training starten".
+/// aus `Trainingsplan.einheiten`, "Warum so?" und "Im Training öffnen".
 ///
-/// Trainiert wird weiter im Training-Tab (E8): "Training starten" wechselt
+/// Trainiert wird weiter im Training-Tab (E8): "Im Training öffnen" wechselt
 /// dorthin, wo die Plankarte die Einheit fuehrt und die Stationen ueber
 /// `PlanStart` die Uebung anbieten. Die Folge haengt nicht am Kalender (F5):
 /// ist diese Einheit nicht die naechste, sagt der Screen das, statt eine
@@ -119,7 +119,9 @@ struct PlanEinheitView: View {
 
             VStack {
                 if istNaechste {
-                    PrimaryButton(title: "Training starten") { beiTrainingStarten() }
+                    PrimaryButton(title: "Im Training öffnen") { beiTrainingStarten() }
+                        .accessibilityLabel("Im Training öffnen")
+                        .accessibilityHint("Wechselt in den Tab Training, dort startet die Einheit")
                 } else {
                     SecondaryButton(title: "Zum Training") { beiTrainingStarten() }
                 }

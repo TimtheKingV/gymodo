@@ -102,7 +102,7 @@ struct PlanEinplanenSheet: View {
 
     private func titel(_ art: Wochenart) -> String {
         switch art {
-        case .kraft: einheiten.count > 1 ? einheiten.map(EinheitKuerzel.text).joined(separator: " · ") : "Kraft"
+        case .kraft: "Kraft"
         case .kurs: "Kurs"
         case .cardio: "Cardio"
         }

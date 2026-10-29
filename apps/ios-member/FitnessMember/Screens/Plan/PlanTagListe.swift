@@ -184,7 +184,7 @@ struct PlanTagListe: View {
                     .font(.system(size: 13))
                     .foregroundStyle(DesignSystem.Color.danger)
             }
-            Text("Fester Termin aus deinem Wochenplan. Umfang und Tempo kommen später.")
+            Text("Fester Termin aus deinem Wochenplan.")
                 .font(.system(size: 12))
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .fixedSize(horizontal: false, vertical: true)

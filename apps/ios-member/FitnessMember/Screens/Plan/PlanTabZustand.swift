@@ -54,7 +54,7 @@ struct PlanTabZustand: Equatable {
     /// nur die Wochentage ins Profil, `plan.wochenraster` bleibt, wie es beim
     /// Erzeugen war. Weichen die Profil-Tage davon ab, gelten fuer die Anzeige
     /// die Profil-Tage -- sonst haette "Einplanen" keine sichtbare Wirkung.
-    /// Je Art gilt: gesetztes Profilfeld (nicht nil) vor Raster.
+    /// Je Art gilt: nicht leeres Profilfeld vor Raster (Regel siehe unten).
     ///
     /// Die Einheiten auf den Krafttagen folgen der Folge, nicht dem Kalender:
     /// erste Einheit des Rasters (sonst die erste des Plans), dann weiter in
@@ -62,15 +62,22 @@ struct PlanTabZustand: Equatable {
     static func anzeigeRaster(
         planRaster: [Rasterplatz], einheiten: [String], profil: TrainingsplanProfil?
     ) -> [Rasterplatz] {
-        guard let profil, profil.kursTage != nil || profil.cardioTage != nil || profil.kraftTage != nil
-        else { return planRaster }
+        // Der Server liefert die Felder nie als nil, sondern leer (DB-Default
+        // '{}'): leer heisst "nicht gesetzt". Sind Kraft-Tage gesetzt, ist das
+        // Profil durch "Einplanen" vollstaendig -- dann heissen leere Kurs-
+        // oder Cardio-Tage "keine" (Ruling Fix-Runde 1).
+        let kraftProfil = profil?.kraftTage ?? []
+        let kursProfil = profil?.kursTage ?? []
+        let cardioProfil = profil?.cardioTage ?? []
+        let vollstaendig = !kraftProfil.isEmpty
+        guard vollstaendig || !kursProfil.isEmpty || !cardioProfil.isEmpty else { return planRaster }
 
         func rasterTage(_ art: Wochenart) -> [Int] {
             planRaster.filter { $0.art == art }.map(\.tag)
         }
-        let kurs = profil.kursTage ?? rasterTage(.kurs)
-        let cardio = profil.cardioTage ?? rasterTage(.cardio)
-        let kraft = profil.kraftTage ?? rasterTage(.kraft)
+        let kurs = vollstaendig || !kursProfil.isEmpty ? kursProfil : rasterTage(.kurs)
+        let cardio = vollstaendig || !cardioProfil.isEmpty ? cardioProfil : rasterTage(.cardio)
+        let kraft = vollstaendig ? kraftProfil : rasterTage(.kraft)
 
         let ersteRasterEinheit = planRaster.sorted { $0.tag < $1.tag }.first { $0.art == .kraft }?.einheitKey
         let start = ersteRasterEinheit.flatMap { einheiten.firstIndex(of: $0) } ?? 0

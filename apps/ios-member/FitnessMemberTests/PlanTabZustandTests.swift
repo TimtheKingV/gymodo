@@ -81,6 +81,31 @@ struct PlanTabZustandTests {
             == planRaster)
     }
 
+    @Test func leereProfilfelderGeltenAlsNichtGesetzt() {
+        // So liefert der Server ein Profil ohne Einplanen (DB-Default '{}').
+        let p = profil(kurs: [], cardio: [], kraft: [])
+        #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: p) == planRaster)
+    }
+
+    @Test func nurKursTageGesetztRestAusDemRaster() {
+        let p = profil(kurs: [2], cardio: [], kraft: [])
+        #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: p) == [
+            Rasterplatz(tag: 2, art: .kurs, einheitKey: nil),
+            Rasterplatz(tag: 3, art: .kraft, einheitKey: "A"),
+            Rasterplatz(tag: 5, art: .kraft, einheitKey: "B"),
+            Rasterplatz(tag: 7, art: .cardio, einheitKey: nil),
+        ])
+    }
+
+    @Test func kraftTageGesetztMachenLeereKursTageZuKeinen() {
+        let p = profil(kurs: [], cardio: [7], kraft: [3, 5])
+        #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: p) == [
+            Rasterplatz(tag: 3, art: .kraft, einheitKey: "A"),
+            Rasterplatz(tag: 5, art: .kraft, einheitKey: "B"),
+            Rasterplatz(tag: 7, art: .cardio, einheitKey: nil),
+        ])
+    }
+
     @Test func gleicheProfilTageAendernNichts() {
         let p = profil(kurs: [1], cardio: [7], kraft: [3, 5])
         #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: p) == planRaster)
