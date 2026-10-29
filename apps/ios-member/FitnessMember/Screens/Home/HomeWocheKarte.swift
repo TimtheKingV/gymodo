@@ -10,7 +10,11 @@ enum PlanSprung: Equatable {
 }
 
 /// Ein Feld der Woche auf Home: ISO-Wochentag (1 = Montag), was dort steht
-/// (nil = nichts), das kurze Zeichen ("A", "K"; Cardio zeigt ein Symbol).
+/// (nil = nichts), das kurze Zeichen ("K"; Kraft und Cardio zeigen ein Symbol).
+///
+/// Kraft steht neutral, ohne Buchstaben: der Plan folgt der Folge, nicht dem
+/// Kalender (F5). Ein festes "A" am Mittwoch widerspraeche "Heute dran: B",
+/// sobald eine Einheit ausgelassen wurde (I5).
 struct HomeWochenfeld: Equatable, Identifiable {
     let tag: Int
     let art: Wochenart?
@@ -115,7 +119,7 @@ enum HomeWoche {
         var teile = [langnamen[feld.tag - 1]]
         if feld.istHeute { teile.append("heute") }
         switch feld.art {
-        case .kraft: teile.append(feld.einheitKey.map(EinheitName.text) ?? "Einheit")
+        case .kraft: teile.append("Krafttraining")
         case .kurs: teile.append("Kurs")
         case .cardio: teile.append("Cardio")
         case nil: teile.append("nichts geplant")
@@ -125,11 +129,13 @@ enum HomeWoche {
     }
 
     /// Der erste Termin NACH heute, ueber diese und die naechste Woche --
-    /// dieselbe Zuordnung wie der Plan-Tab (`PlanWoche.termine`), damit Home
-    /// und Plan dasselbe "als naechstes" nennen.
+    /// dieselbe Zuordnung wie der Plan-Tab (`PlanWoche.termine`). Fuer eine
+    /// Einheit gilt die Folge: `naechsteEinheitKey` ist die Einheit von "Heute
+    /// dran", nicht der Buchstabe des Rasters (I5); der Tag bleibt die
+    /// Erinnerung. Ohne Key (kein Ablauf) der des Rasters.
     static func alsNaechstes(
         raster: [Rasterplatz], kurse: [CourseWeekSession], cardioErledigt: Set<String>,
-        heute: Date, kalender: Calendar
+        heute: Date, kalender: Calendar, naechsteEinheitKey: String? = nil
     ) -> HomeNaechster? {
         guard let montag = datum(tag: 1, woche: heute, kalender: kalender) else { return nil }
         let tage = (0..<14).compactMap { kalender.date(byAdding: .day, value: $0, to: montag) }
@@ -139,10 +145,19 @@ enum HomeWoche {
         guard let naechster = PlanTabZustand.alsNaechstes(
             termine: termine, nach: kalender.startOfDay(for: heute), anzahl: 1).first else { return nil }
         let iso = isoWochentag(naechster.tag, kalender)
-        let (titel, ziel): (String, PlanSprung) = switch naechster.termin {
-        case .einheit(let key, _): (EinheitName.text(key), .einheit(key: key))
-        case .kurs(let name, _, _): (name, .tag(naechster.tag))
-        case .cardio: ("Cardio", .tag(naechster.tag))
+        let titel: String
+        let ziel: PlanSprung
+        switch naechster.termin {
+        case .einheit(let rasterKey, _):
+            let key = naechsteEinheitKey ?? rasterKey
+            titel = EinheitName.text(key)
+            ziel = .einheit(key: key)
+        case .kurs(let name, _, _):
+            titel = name
+            ziel = .tag(naechster.tag)
+        case .cardio:
+            titel = "Cardio"
+            ziel = .tag(naechster.tag)
         }
         return HomeNaechster(titel: titel, tag: kurznamen[iso - 1], sprechTag: langnamen[iso - 1], ziel: ziel)
     }
@@ -157,9 +172,8 @@ enum HomeWoche {
 
     private static func label(_ platz: Rasterplatz) -> String {
         switch platz.art {
-        case .kraft: EinheitKuerzel.text(platz.einheitKey ?? "")
         case .kurs: "K"
-        case .cardio: ""
+        case .kraft, .cardio: ""
         }
     }
 
@@ -266,7 +280,11 @@ struct HomeWocheKarte: View {
             Image(systemName: "waveform.path.ecg")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(farbe)
-        case .kraft, .kurs:
+        case .kraft:
+            Image(systemName: "dumbbell.fill")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(farbe)
+        case .kurs:
             Text(feld.label)
                 .font(.system(size: 15, weight: .black))
                 .lineLimit(1)
@@ -323,6 +341,44 @@ struct HomeNaechsterKarte: View {
         case .einheit: "Öffnet die Einheit im Plan"
         case .tag: "Öffnet den Tag im Plan"
         }
+    }
+}
+
+/// Statt der Woche, solange der Plan keine Trainingstage hat (Bestandsplan
+/// von vor 1.3.0, I3). Fuehrt in den Plan-Tab, wo "Einplanen" sie festlegt.
+struct TrainingstageFestlegenZeile: View {
+    let beiTippen: () -> Void
+
+    var body: some View {
+        Button(action: beiTippen) {
+            Card {
+                HStack(spacing: DesignSystem.Spacing.s12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("DIESE WOCHE")
+                            .font(DesignSystem.Typography.label)
+                            .tracking(1.5)
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                        Text("Trainingstage festlegen")
+                            .font(DesignSystem.Typography.uebungsname)
+                            .foregroundStyle(DesignSystem.Color.text)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Color.textFaint)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, DesignSystem.Spacing.s16)
+                .frame(minHeight: 44)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressButtonStyle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Trainingstage festlegen")
+        .accessibilityHint("Öffnet den Plan")
+        .accessibilityAddTraits(.isButton)
+        .testnotizElement("home.trainingstage", typ: "Button")
     }
 }
 

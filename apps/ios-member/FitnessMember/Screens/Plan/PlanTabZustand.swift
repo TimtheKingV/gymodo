@@ -94,6 +94,14 @@ struct PlanTabZustand: Equatable {
         return ergebnis.sorted { ($0.tag, rang[$0.art] ?? 0) < ($1.tag, rang[$1.art] ?? 0) }
     }
 
+    /// Steht im Anzeige-Raster ein Kraft-Platz? Aktive Plaene von vor 1.3.0
+    /// haben kein Wochenraster; ohne Profil-Tage gibt es dann keinen Tag fuer
+    /// die Einheiten. Die App waehlt keine Tage selbst (F15) -- der Plan-Tab
+    /// bittet darum, sie festzulegen, Home zeigt statt der Woche den Weg dahin.
+    static func hatKrafttage(anzeigeRaster: [Rasterplatz]) -> Bool {
+        anzeigeRaster.contains { $0.art == .kraft }
+    }
+
     // MARK: - Woche
 
     /// "KW 44 · 26. Okt – 1. Nov" -- ISO-Kalenderwoche, Monate ohne Punkt.

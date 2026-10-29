@@ -75,6 +75,27 @@ struct PlanTabZustandTests {
                             kursTage: kurs, cardioTage: cardio, kraftTage: kraft)
     }
 
+    // MARK: - Bestandsplaene ohne Wochenraster (I3)
+
+    @Test func bestandsplanOhneRasterUndLeeresProfilHatKeineKrafttage() {
+        // Plaene von vor 1.3.0: wochenraster = [], Profilfelder leer.
+        let raster = PlanTabZustand.anzeigeRaster(
+            planRaster: [], einheiten: ["A", "B"], profil: profil(kurs: [], cardio: [], kraft: []))
+        #expect(PlanTabZustand.hatKrafttage(anzeigeRaster: raster) == false)
+        #expect(PlanTabZustand.hatKrafttage(anzeigeRaster: []) == false)
+    }
+
+    @Test func nurKursUndCardioSindKeineKrafttage() {
+        let raster = PlanTabZustand.anzeigeRaster(
+            planRaster: [], einheiten: ["A", "B"], profil: profil(kurs: [1], cardio: [7], kraft: []))
+        #expect(raster.map(\.art) == [.kurs, .cardio])
+        #expect(PlanTabZustand.hatKrafttage(anzeigeRaster: raster) == false)
+    }
+
+    @Test func normalesRasterHatKrafttage() {
+        #expect(PlanTabZustand.hatKrafttage(anzeigeRaster: planRaster))
+    }
+
     @Test func ohneProfilTageGiltDasPlanraster() {
         #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: nil) == planRaster)
         #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: profil())

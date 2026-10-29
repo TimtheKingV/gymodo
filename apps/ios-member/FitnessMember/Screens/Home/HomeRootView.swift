@@ -336,14 +336,21 @@ private extension HomeRootView {
         let raster = PlanTabZustand.anzeigeRaster(
             planRaster: plan.wochenraster, einheiten: plan.einheiten.map(\.key),
             profil: katalog.bootstrap?.member.trainingProfile)
-        let ergaenzt = HomeWoche.mitGebuchtenKursen(raster: raster, kurse: sitzungen, heute: jetzt, kalender: kalender)
-        let erledigt = HomeWoche.erledigteTage(
-            raster: ergaenzt, kurse: sitzungen, cardioErledigt: cardio.erledigt, heute: jetzt, kalender: kalender)
-        HomeWocheKarte(
-            felder: HomeWoche.zeilen(raster: ergaenzt, erledigt: erledigt, heute: jetzt, kalender: kalender),
-            beiTippen: { beiPlanZeigen(.woche) })
+        if PlanTabZustand.hatKrafttage(anzeigeRaster: raster) {
+            let ergaenzt = HomeWoche.mitGebuchtenKursen(raster: raster, kurse: sitzungen, heute: jetzt, kalender: kalender)
+            let erledigt = HomeWoche.erledigteTage(
+                raster: ergaenzt, kurse: sitzungen, cardioErledigt: cardio.erledigt, heute: jetzt, kalender: kalender)
+            HomeWocheKarte(
+                felder: HomeWoche.zeilen(raster: ergaenzt, erledigt: erledigt, heute: jetzt, kalender: kalender),
+                beiTippen: { beiPlanZeigen(.woche) })
+        } else {
+            // Bestandsplan ohne Wochenraster (I3): keine Woche mit "nichts
+            // geplant" neben "Heute dran", sondern der Weg zu den Tagen.
+            TrainingstageFestlegenZeile { beiPlanZeigen(.woche) }
+        }
         if let naechster = HomeWoche.alsNaechstes(
-            raster: raster, kurse: sitzungen, cardioErledigt: cardio.erledigt, heute: jetzt, kalender: kalender) {
+            raster: raster, kurse: sitzungen, cardioErledigt: cardio.erledigt, heute: jetzt, kalender: kalender,
+            naechsteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey) {
             HomeNaechsterKarte(naechster: naechster) { beiPlanZeigen(naechster.ziel) }
         }
     }

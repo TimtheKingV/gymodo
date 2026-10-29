@@ -120,7 +120,9 @@ struct PlanRootView: View {
 
         let hatKurse = !sitzungen.isEmpty
         let hatCardio = raster.contains { $0.art == .cardio }
-        let sichtbar = PlanWoche.sichtbareFilter(hatPlan: true, hatKurse: hatKurse, hatCardio: hatCardio)
+        let hatKraft = PlanTabZustand.hatKrafttage(anzeigeRaster: raster)
+        // Ohne Kraft-Tage (Bestandsplan, I3) kein Filter "Einheiten", der nichts zeigte.
+        let sichtbar = PlanWoche.sichtbareFilter(hatPlan: hatKraft, hatKurse: hatKurse, hatCardio: hatCardio)
         let filter = zustand.geltenderFilter(sichtbar: sichtbar)
 
         // Alle wischbaren Tage auf einmal: "Als nächstes" darf in die naechste Woche reichen.
@@ -136,6 +138,7 @@ struct PlanRootView: View {
         return ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopf(plan)
+                if !hatKraft { trainingstageKarte }
                 if !sichtbar.isEmpty { filterLeiste(sichtbar, filter: filter) }
 
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
@@ -154,7 +157,9 @@ struct PlanRootView: View {
                         beiTagwahl: { zustand.gewaehlterTag = $0.datum },
                         label: { t in tagLabel(t, termine: termine[kalender.startOfDay(for: t.datum)] ?? []) },
                         marke: { t in marken(termine[kalender.startOfDay(for: t.datum)] ?? []) })
-                    if hatKurse || hatCardio { legende(hatKurse: hatKurse, hatCardio: hatCardio) }
+                    if hatKurse || hatCardio {
+                        legende(hatKraft: hatKraft, hatKurse: hatKurse, hatCardio: hatCardio)
+                    }
                 }
 
                 PlanTagListe(
@@ -336,9 +341,9 @@ struct PlanRootView: View {
         return teile.joined(separator: " ")
     }
 
-    private func legende(hatKurse: Bool, hatCardio: Bool) -> some View {
+    private func legende(hatKraft: Bool, hatKurse: Bool, hatCardio: Bool) -> some View {
         HStack(spacing: DesignSystem.Spacing.s16) {
-            legendeEintrag(.einheit, "Einheit")
+            if hatKraft { legendeEintrag(.einheit, "Einheit") }
             if hatKurse { legendeEintrag(.kurs, "Kurs") }
             if hatCardio { legendeEintrag(.cardio, "Cardio") }
         }
@@ -352,6 +357,30 @@ struct PlanRootView: View {
                 .font(.system(size: 12))
                 .foregroundStyle(DesignSystem.Color.textMuted)
         }
+    }
+
+    /// Bestandsplan ohne Wochenraster (I3): die Einheiten haben noch keinen
+    /// Tag. Die App waehlt keinen (F15); "Einplanen" schreibt sie ins Profil,
+    /// danach zeigt `anzeigeRaster` sie. Kurse und Cardio bleiben darunter.
+    private var trainingstageKarte: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Lege deine Trainingstage fest")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .accessibilityAddTraits(.isHeader)
+                Text("Dein Plan stammt aus einer früheren Version. Die Tage für deine Einheiten hast du noch nicht gewählt.")
+                    .font(.system(size: 14))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                if profil != nil {
+                    SecondaryButton(title: "Trainingstage wählen") { einplanenOffen = true }
+                        .accessibilityHint("Öffnet das Einplanen")
+                }
+            }
+            .padding(DesignSystem.Spacing.s16)
+        }
+        .testnotizElement("plan.trainingstage", typ: "Card")
     }
 
     /// Leinwand 2g: ohne Studio keine Kurse, aber der Weg dorthin.

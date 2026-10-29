@@ -43,7 +43,10 @@ struct HomeWocheKarteTests {
         let felder = HomeWoche.zeilen(raster: raster, erledigt: [], heute: mittwoch, kalender: kalender)
         #expect(felder.map(\.tag) == [1, 2, 3, 4, 5, 6, 7])
         #expect(felder.map(\.art) == [.kurs, nil, .kraft, nil, .kraft, nil, .cardio])
-        #expect(felder.map(\.label) == ["K", "", "A", "", "B", "", ""])
+        // Krafttage zeigen neutral ein Symbol, keinen Buchstaben: der Plan folgt
+        // der Folge, nicht dem Kalender (I5) -- ein "A" am Mittwoch widerspraeche
+        // "Heute dran: B".
+        #expect(felder.map(\.label) == ["K", "", "", "", "", "", ""])
     }
 
     @Test func mittwochIstHeute() {
@@ -133,7 +136,6 @@ struct HomeWocheKarteTests {
             raster: raster, kurse: [kurs(tag: "2026-10-28", stunde: 18)], heute: mittwoch, kalender: kalender)
         let felder = HomeWoche.zeilen(raster: ergaenzt, erledigt: [], heute: mittwoch, kalender: kalender)
         #expect(felder[2].art == .kraft)
-        #expect(felder[2].label == "A")
     }
 
     // MARK: - Zusammenfassung
@@ -158,7 +160,7 @@ struct HomeWocheKarteTests {
         let felder = HomeWoche.zeilen(raster: raster, erledigt: [1], heute: mittwoch, kalender: kalender)
         #expect(HomeWoche.sprechtext(felder[0]) == "Montag, Kurs, erledigt")
         #expect(HomeWoche.sprechtext(felder[1]) == "Dienstag, nichts geplant")
-        #expect(HomeWoche.sprechtext(felder[2]) == "Mittwoch, heute, Einheit A")
+        #expect(HomeWoche.sprechtext(felder[2]) == "Mittwoch, heute, Krafttraining")
         #expect(HomeWoche.sprechtext(felder[6]) == "Sonntag, Cardio")
     }
 
@@ -168,6 +170,16 @@ struct HomeWocheKarteTests {
         let naechster = HomeWoche.alsNaechstes(
             raster: raster, kurse: [], cardioErledigt: [], heute: mittwoch, kalender: kalender)
         #expect(naechster == HomeNaechster(titel: "Einheit B", tag: "Fr", sprechTag: "Freitag", ziel: .einheit(key: "B")))
+    }
+
+    @Test func alsNaechstesNenntDieEinheitDerFolge() {
+        // "Heute dran: B" (A ausgelassen): der naechste Krafttag (Fr) nennt B,
+        // nicht den Buchstaben des Rasters. Der Tag bleibt die Erinnerung.
+        let naechster = HomeWoche.alsNaechstes(
+            raster: raster, kurse: [], cardioErledigt: [], heute: mittwoch, kalender: kalender,
+            naechsteEinheitKey: "OK_1")
+        #expect(naechster == HomeNaechster(
+            titel: "Oberkörper 1", tag: "Fr", sprechTag: "Freitag", ziel: .einheit(key: "OK_1")))
     }
 
     @Test func alsNaechstesCardioFuehrtZumTag() {
