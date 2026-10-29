@@ -252,6 +252,7 @@
 		A70571D779E8721B0D8FC96D /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4D467E447232623659C42C7 /* Session.swift */; };
 		A82CD4C097FBBD45ACE7BB6E /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D79A89B3E91A0F18C9E8DBC /* APIClientTests.swift */; };
 		A88FA239E40977543922715D /* UebungsGruppierung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FD7FC0CB862EF0131A348A5 /* UebungsGruppierung.swift */; };
+		A9827E921483EE2C47C2011C /* PlanWochenSchritte.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51012251086BBA0EB8DC64E8 /* PlanWochenSchritte.swift */; };
 		AC4167829725A34A5A191094 /* TestnotizAblage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36E7DA3B2E3971750743AD7C /* TestnotizAblage.swift */; };
 		AD152D48FC554F180FA72F58 /* RastwerteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B1A62413AE0C5835F9E9CA /* RastwerteTests.swift */; };
 		ADF2407DE862FD940232AAE5 /* ZahlformatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A40546FF017FE78E2A6823CE /* ZahlformatTests.swift */; };
@@ -551,6 +552,7 @@
 		4FE347CE02DFBA2ACD65350E /* GeraetModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetModel.swift; sourceTree = "<group>"; };
 		4FF15B0272BC7FFA565035F4 /* UebungsstartTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UebungsstartTests.swift; sourceTree = "<group>"; };
 		50A7785D7D50C6AE9DCCC08D /* PlanVorschau.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanVorschau.swift; sourceTree = "<group>"; };
+		51012251086BBA0EB8DC64E8 /* PlanWochenSchritte.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanWochenSchritte.swift; sourceTree = "<group>"; };
 		5154B94D2372BF17FF532E86 /* AccessibilityBaum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityBaum.swift; sourceTree = "<group>"; };
 		523DAE16D81C14FAC37ADF4D /* ZirkelAblaufTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelAblaufTests.swift; sourceTree = "<group>"; };
 		52AEEDE047FBD3EAFC7C992E /* ZaehlerKoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZaehlerKoordinator.swift; sourceTree = "<group>"; };
@@ -923,6 +925,7 @@
 				F55BDA0E6C00194C77131387 /* PlanAntworten.swift */,
 				15843762BAFA2910E65B6DD3 /* PlanSchritte.swift */,
 				50A7785D7D50C6AE9DCCC08D /* PlanVorschau.swift */,
+				51012251086BBA0EB8DC64E8 /* PlanWochenSchritte.swift */,
 				B4F343E35EB2C94664395961 /* Zielkachel.swift */,
 			);
 			path = Onboarding;
@@ -1774,6 +1777,7 @@
 				C34ED84FCE27839C0617E674 /* PlanWarumText.swift in Sources */,
 				E1B3A27CCBEC2DD0D280A633 /* PlanWarumView.swift in Sources */,
 				4F0870188215D4B3D46F8BE7 /* PlanWoche.swift in Sources */,
+				A9827E921483EE2C47C2011C /* PlanWochenSchritte.swift in Sources */,
 				6E6C6CB22CFB2B192D7ABFCC /* PlanZeile.swift in Sources */,
 				05C4AB096D32DA3E6C4E62D7 /* PressButtonStyle.swift in Sources */,
 				309307436B8EE156A6673AA2 /* PrimaryButton.swift in Sources */,

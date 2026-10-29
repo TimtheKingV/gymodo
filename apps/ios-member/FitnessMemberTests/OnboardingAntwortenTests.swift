@@ -42,7 +42,7 @@ struct OnboardingAntwortenTests {
         antworten.gewichtKg = 70.0
         #expect(antworten.schritte(umfang: .komplett) == [
             .ueberDich, .koerper, .ziel, .wieOft, .zielgewicht, .planZeit, .planSchwerpunkt, .planBeschwerden,
-            .planVorschau,
+            .planCardio, .planWoche, .planVorschau,
         ])
     }
 
@@ -50,16 +50,22 @@ struct OnboardingAntwortenTests {
     func schritteKomplettOhneGewicht() {
         let antworten = OnboardingAntworten()
         #expect(antworten.schritte(umfang: .komplett) == [
-            .ueberDich, .koerper, .ziel, .wieOft, .planZeit, .planSchwerpunkt, .planBeschwerden, .planVorschau,
+            .ueberDich, .koerper, .ziel, .wieOft, .planZeit, .planSchwerpunkt, .planBeschwerden,
+            .planCardio, .planWoche, .planVorschau,
         ])
     }
 
-    @Test("schritte nurPlan hat vier")
+    @Test("schritte nurPlan hat sechs, mit Kursen sieben")
     func schritteNurPlanHatVier() {
         let antworten = OnboardingAntworten()
         #expect(antworten.schritte(umfang: .nurPlan) == [
-            .planZeit, .planSchwerpunkt, .planBeschwerden, .planVorschau,
+            .planZeit, .planSchwerpunkt, .planBeschwerden, .planCardio, .planWoche, .planVorschau,
         ])
+        #expect(antworten.schritte(umfang: .nurPlan, mitKursen: true) == [
+            .planZeit, .planSchwerpunkt, .planBeschwerden, .planKurse, .planCardio, .planWoche, .planVorschau,
+        ])
+        // Die reine Vorschau fragt keine Woche, auch nicht mit Kursen.
+        #expect(antworten.schritte(umfang: .nurVorschau, mitKursen: true) == [.planVorschau])
     }
 
     @Test("schritte nurVorschau ist nur die Vorschau")
@@ -74,7 +80,7 @@ struct OnboardingAntwortenTests {
             .ziel, .wieOft, .planVorschau,
         ])
         #expect(antworten.schritte(umfang: .nurPlan, ergaenzt: [.ziel]) == [
-            .ziel, .planZeit, .planSchwerpunkt, .planBeschwerden, .planVorschau,
+            .ziel, .planZeit, .planSchwerpunkt, .planBeschwerden, .planCardio, .planWoche, .planVorschau,
         ])
         // Was ohnehin im Flow steht, kommt nicht doppelt.
         #expect(antworten.schritte(umfang: .nurVorschau, ergaenzt: [.planBeschwerden, .planBeschwerden]) == [
@@ -90,7 +96,7 @@ struct OnboardingAntwortenTests {
     @Test("die Schrittzeile zaehlt nur, was der Flow zeigt, und fehlt bei nur einem Schritt")
     func schrittzeile() {
         let schritte = OnboardingAntworten().schritte(umfang: .komplett)
-        #expect(OnboardingSchrittzeile.text(nummer: 6, gesamt: schritte.count) == "Schritt 6 von 8")
+        #expect(OnboardingSchrittzeile.text(nummer: 6, gesamt: schritte.count) == "Schritt 6 von 10")
         #expect(OnboardingSchrittzeile.text(nummer: 1, gesamt: 1) == nil)
     }
 

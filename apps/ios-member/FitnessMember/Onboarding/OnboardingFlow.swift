@@ -62,7 +62,15 @@ struct OnboardingFlow: View {
     }
 
     private var schritte: [OnboardingSchritt] {
-        antworten.schritte(umfang: umfang, ergaenzt: ergaenzt)
+        antworten.schritte(umfang: umfang, ergaenzt: ergaenzt, mitKursen: kursFrageSichtbar)
+    }
+
+    /// Kurse gibt es nur in einem Studio. Der Bootstrap sagt nicht, ob ein
+    /// Studio Kurse anbietet -- ein zugeordnetes Studio zaehlt deshalb als
+    /// "mit Kursen" (wie der Plan-Tab, der Kurse ebenfalls an `studios`
+    /// festmacht). Im Wurzel-Gate vor dem Beitritt entfaellt die Frage.
+    private var kursFrageSichtbar: Bool {
+        plan.kursFrageSichtbar(hatStudioMitKursen: !(catalogStore.bootstrap?.studios.isEmpty ?? true))
     }
 
     var body: some View {
@@ -100,6 +108,8 @@ struct OnboardingFlow: View {
             if schritt == .planVorschau {
                 vorschau(index: gueltigerIndex, gesamt: schritte.count)
             } else {
+                // Auch "Deine Woche" laeuft als Frageschritt: Kopf, Weiter und
+                // Fehlerbanner sind dieselben, nur der Inhalt laedt selbst.
                 frageSchritt(schritt, index: gueltigerIndex, schritte: schritte)
             }
         }
@@ -127,16 +137,14 @@ struct OnboardingFlow: View {
             primaryTitle: primaryTitle(istLetzter: istLetzter),
             primaryEnabled: !schreibtGerade && kannWeiter,
             primaryLoading: schreibtGerade,
-            primaryDisabledHint: schreibtGerade
-                ? "Schreibt gerade"
-                : (kannWeiter ? nil : "Erst die Einwilligung bestätigen — oder überspringen."),
+            primaryDisabledHint: schreibtGerade ? "Schreibt gerade" : plan.weiterGesperrtHinweis(schritt),
             spaeterEnabled: !schreibtGerade,
             bereich: schritt.gehoertZumPlan ? "Dein Trainingsplan" : nil,
-            spaeterTitel: schritt == .planBeschwerden ? "Überspringen" : "Später",
+            spaeterTitel: Self.mitUeberspringen.contains(schritt) ? "Überspringen" : "Später",
             beiSpaeter: {
                 Task {
-                    if schritt == .planBeschwerden {
-                        await ueberspringen(index: index)
+                    if Self.mitUeberspringen.contains(schritt) {
+                        await ueberspringen(schritt, index: index)
                     } else {
                         await spaeter()
                     }
@@ -205,18 +213,23 @@ struct OnboardingFlow: View {
         await weiter(nach: index)
     }
 
-    /// Der eine Weg nach vorn: zum naechsten Schritt, vor der Vorschau und
-    /// am Ende mit Schreiben. Ein offener Fehler (`.teilweise`) wird immer
-    /// zuerst wiederholt -- sonst stuende die Vorschau vor einem Profil,
-    /// das der Server nicht hat.
+    /// Der eine Weg nach vorn: zum naechsten Schritt, vor "Deine Woche",
+    /// vor der Vorschau und am Ende mit Schreiben -- beide holen einen
+    /// Vorschlag vom Server, der Kurs- und Cardio-Tage (und nach einem Tausch
+    /// die Krafttage) schon kennen muss. Ein offener Fehler (`.teilweise`)
+    /// wird immer zuerst wiederholt -- sonst stuende die Vorschau vor einem
+    /// Profil, das der Server nicht hat.
     private func weiter(nach index: Int) async {
         if ergebnis == nil {
             let schritte = schritte
             let naechster = index + 1 < schritte.count ? schritte[index + 1] : nil
-            if let naechster, naechster != .planVorschau {
+            if let naechster, naechster != .planVorschau, naechster != .planWoche {
                 gehe(zu: index + 1)
                 return
             }
+            // Ein Tausch gehoert zu genau einem Vorschlag: vor einer neuen
+            // Woche verteilt der Server die Krafttage wieder selbst.
+            if naechster == .planWoche { plan.wocheNeuVorschlagen() }
             fortsetzung = naechster == nil ? .beenden : .schritt(index + 1)
         }
         guard await schreiben() else { return }
@@ -226,10 +239,20 @@ struct OnboardingFlow: View {
         }
     }
 
-    /// "Überspringen" auf 1.3: die Beschwerden bleiben, wie der Server sie
-    /// kennt -- kein PUT, kein Widerruf --, sonst wie "Weiter".
-    private func ueberspringen(index: Int) async {
-        plan.beschwerdenVerwerfen()
+    /// Schritte, die statt "Später" ein "Überspringen" tragen (Entwurf 1.3,
+    /// Leinwaende 2c/2c2): sie gehen weiter, ohne etwas zu aendern.
+    private static let mitUeberspringen: Set<OnboardingSchritt> = [.planBeschwerden, .planKurse, .planCardio]
+
+    /// "Überspringen": die Antworten dieses Schritts bleiben, wie der Server
+    /// sie kennt -- bei 1.3 kein PUT, kein Widerruf; bei Kurs und Cardio der
+    /// Stand aus dem Profil --, sonst wie "Weiter".
+    private func ueberspringen(_ schritt: OnboardingSchritt, index: Int) async {
+        switch schritt {
+        case .planBeschwerden: plan.beschwerdenVerwerfen()
+        case .planKurse: plan.kurseVerwerfen()
+        case .planCardio: plan.cardioVerwerfen()
+        default: break
+        }
         await weiter(nach: index)
     }
 
@@ -336,6 +359,8 @@ struct OnboardingFlow: View {
         guard !planVorbelegt else { return }
         planVorbelegt = true
         plan = PlanAntworten(profil: catalogStore.bootstrap?.member.trainingProfile)
+        plan.wochenGefragt = schritte.contains(.planCardio)
+        if !kursFrageSichtbar { plan.kurseOhneFrage() }
         let vorher = (plan.beschwerden, plan.einwilligung)
         guard let areas = try? await apiClient.trainingLimits() else { return }
         // Hat das Mitglied waehrend des Abrufs schon Beschwerden oder den
@@ -358,6 +383,9 @@ struct OnboardingFlow: View {
         case .planZeit: "Zeit und Erfahrung"
         case .planSchwerpunkt: "Wo soll mehr passieren?"
         case .planBeschwerden: "Was sollen wir schonen?"
+        case .planKurse: "Gehst du in Kurse?"
+        case .planCardio: "Machst du auch Cardio außerhalb?"
+        case .planWoche: "Deine Woche"
         case .planVorschau: "Dein Plan"
         }
     }
@@ -386,6 +414,12 @@ struct OnboardingFlow: View {
         case .planSchwerpunkt: "Bis zu zwei."
         case .planBeschwerden:
             "Freiwillig. Wir lassen dann Übungen weg, die den Bereich stark belasten, oder wählen schonendere."
+        case .planKurse:
+            "In deinem Studio gibt es Kurse. Wenn du welche besuchst, plane ich sie mit ein, damit Einheiten und Kurse sich nicht ins Gehege kommen."
+        case .planCardio:
+            "Laufen, Radfahren, Schwimmen: Was nicht im Studio stattfindet, kommt als eigener Termin in deinen Plan und zählt als Trainingstag."
+        case .planWoche:
+            PlanWochenText.wochenLead(kurse: !plan.kursTage.isEmpty, cardio: !plan.cardioTage.isEmpty)
         case .planVorschau: nil
         }
     }
@@ -397,7 +431,7 @@ struct OnboardingFlow: View {
         case .ziel: nil
         case .wieOft: "Zwei Einheiten an einem Tag sind ein Tag. Erreichbar ist besser als ehrgeizig — du kannst es jederzeit im Profil verschieben."
         case .zielgewicht: "Braucht Verbindung. „Später“ beendet ohne Zielgewicht."
-        case .planZeit, .planSchwerpunkt, .planBeschwerden, .planVorschau: nil
+        case .planZeit, .planSchwerpunkt, .planBeschwerden, .planKurse, .planCardio, .planWoche, .planVorschau: nil
         }
     }
 
@@ -442,6 +476,12 @@ struct OnboardingFlow: View {
             PlanSchwerpunktSchritt(plan: $plan)
         case .planBeschwerden:
             PlanBeschwerdenSchritt(plan: $plan)
+        case .planKurse:
+            PlanKursSchritt(plan: $plan)
+        case .planCardio:
+            PlanCardioSchritt(plan: $plan)
+        case .planWoche:
+            PlanWochenSchritt(apiClient: apiClient, studioId: catalogStore.activeStudioId, plan: $plan)
         case .planVorschau:
             // Steht nie hier: `schrittAnsicht` zeigt dafuer PlanVorschauSchritt.
             EmptyView()

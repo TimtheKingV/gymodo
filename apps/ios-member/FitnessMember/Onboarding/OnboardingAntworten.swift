@@ -1,16 +1,22 @@
 import Foundation
 
-/// Die fuenf Onboarding-Screens (Spec 5.2) und die vier des Blocks "Dein
-/// Trainingsplan" (Etappe 3, Entwuerfe 1.1-1.4). Die Reihenfolge der Faelle
+/// Die fuenf Onboarding-Screens (Spec 5.2) und die des Blocks "Dein
+/// Trainingsplan" (Etappe 3, Entwuerfe 1.1-1.4; Kurse, Cardio und "Deine
+/// Woche" aus den Leinwaenden 2c-2c3). Die Reihenfolge der Faelle
 /// ist die Reihenfolge im Flow -- `schritte(umfang:ergaenzt:)`
 /// sortiert danach.
 enum OnboardingSchritt: Hashable, CaseIterable {
     case ueberDich, koerper, ziel, wieOft, zielgewicht
-    case planZeit, planSchwerpunkt, planBeschwerden, planVorschau
+    case planZeit, planSchwerpunkt, planBeschwerden
+    /// Kurse (2c, nur mit Studio), Cardio (2c2), Deine Woche (2c3): die Woche
+    /// steht VOR der Vorschau, weil der Server Kurs- und Cardio-Tage braucht,
+    /// bevor er das Raster vorschlagen kann.
+    case planKurse, planCardio, planWoche
+    case planVorschau
 
     var gehoertZumPlan: Bool {
         switch self {
-        case .planZeit, .planSchwerpunkt, .planBeschwerden, .planVorschau: true
+        case .planZeit, .planSchwerpunkt, .planBeschwerden, .planKurse, .planCardio, .planWoche, .planVorschau: true
         default: false
         }
     }
@@ -78,11 +84,19 @@ struct OnboardingAntworten: Equatable {
     /// ("Ergänzen" bei fehlenden Angaben, "Beschwerden ändern", "Zeit oder
     /// Schwerpunkt ändern" aus der reinen Vorschau). Sie reihen sich in die
     /// feste Reihenfolge ein, nichts steht doppelt.
-    func schritte(umfang: OnboardingUmfang, ergaenzt: [OnboardingSchritt] = []) -> [OnboardingSchritt] {
+    ///
+    /// `mitKursen`: die Kursfrage (2c) nur mit einem Studio, das Kurse hat
+    /// (`PlanAntworten.kursFrageSichtbar`); ohne sie zaehlt die Schrittzeile
+    /// einen Schritt weniger. Cardio und Woche gehoeren zu jedem Lauf, der
+    /// den Block fragt -- nicht zur reinen Vorschau.
+    func schritte(
+        umfang: OnboardingUmfang, ergaenzt: [OnboardingSchritt] = [], mitKursen: Bool = false
+    ) -> [OnboardingSchritt] {
         var basis: [OnboardingSchritt]
+        let woche: [OnboardingSchritt] = (mitKursen ? [.planKurse] : []) + [.planCardio, .planWoche]
         switch umfang {
-        case .komplett: basis = schritte + [.planZeit, .planSchwerpunkt, .planBeschwerden]
-        case .nurPlan: basis = [.planZeit, .planSchwerpunkt, .planBeschwerden]
+        case .komplett: basis = schritte + [.planZeit, .planSchwerpunkt, .planBeschwerden] + woche
+        case .nurPlan: basis = [.planZeit, .planSchwerpunkt, .planBeschwerden] + woche
         case .nurVorschau: basis = []
         case .nurBeschwerden: basis = [.planBeschwerden]
         }

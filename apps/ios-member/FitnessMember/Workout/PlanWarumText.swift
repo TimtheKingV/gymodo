@@ -39,6 +39,12 @@ enum PlanWarumText {
         return absaetze
     }
 
+    /// Der Satz zu einem Grund-Code, etwa fuer den Hinweis in "Deine Woche"
+    /// (`kraft_tage_auf_eins`); nil fuer einen unbekannten Code.
+    static func grundSatz(_ code: String) -> String? {
+        satz(fuer: code)
+    }
+
     private static func satz(fuer code: String) -> String? {
         if code.hasPrefix("fokus_"), code != "fokus_zweiter_entfallen" {
             guard let bereich = fokusBereiche[String(code.dropFirst("fokus_".count))] else { return nil }
