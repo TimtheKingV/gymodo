@@ -147,4 +147,37 @@ struct TrainingsplanAblaufTests {
             #expect(TrainingsplanAblauf.tauschen(z, positionKey: "a", ersatz: (exerciseId: "w", hauptmuskeln: [])) == z)
         }
     }
+
+    // MARK: - Umordnen
+
+    private static func pos(_ key: String, _ status: PositionStatus = .offen, ersatz: String? = nil) -> AblaufPosition {
+        AblaufPosition(key: key, exerciseId: "x\(key)", hauptmuskeln: ["m"], cardio: false, status: status, ersatzExerciseId: ersatz)
+    }
+
+    @Test func umordnenVerschiebtNachVorn() {
+        let z = AblaufZustand(positionen: [Self.pos("a"), Self.pos("b"), Self.pos("c")], ungeplanteGesehen: [])
+        let neu = TrainingsplanAblauf.umordnen(z, positionKey: "c", nach: 0)
+        #expect(neu.positionen.map(\.key) == ["c", "a", "b"])
+        let nachHinten = TrainingsplanAblauf.umordnen(z, positionKey: "a", nach: 2)
+        #expect(nachHinten.positionen.map(\.key) == ["b", "c", "a"])
+    }
+
+    @Test func umordnenErhaeltStatusUndErsatz() {
+        let getauscht = Self.pos("b", .getauscht, ersatz: "y")
+        let z = AblaufZustand(positionen: [Self.pos("a"), getauscht, Self.pos("c")], ungeplanteGesehen: ["u"])
+        let neu = TrainingsplanAblauf.umordnen(z, positionKey: "b", nach: 2)
+        #expect(neu.positionen.last == getauscht)
+        #expect(neu.ungeplanteGesehen == ["u"])
+    }
+
+    @Test func umordnenKlemmtIndex() {
+        let z = AblaufZustand(positionen: [Self.pos("a"), Self.pos("b"), Self.pos("c")], ungeplanteGesehen: [])
+        #expect(TrainingsplanAblauf.umordnen(z, positionKey: "a", nach: 99).positionen.map(\.key) == ["b", "c", "a"])
+        #expect(TrainingsplanAblauf.umordnen(z, positionKey: "c", nach: -5).positionen.map(\.key) == ["c", "a", "b"])
+    }
+
+    @Test func umordnenUnbekannterSchluesselIstNoop() {
+        let z = AblaufZustand(positionen: [Self.pos("a"), Self.pos("b")], ungeplanteGesehen: [])
+        #expect(TrainingsplanAblauf.umordnen(z, positionKey: "zzz", nach: 0) == z)
+    }
 }

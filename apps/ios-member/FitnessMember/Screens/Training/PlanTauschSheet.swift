@@ -1,98 +1,4 @@
 import SwiftUI
-import UIKit
-
-/// Entwurf 3.2 "Andere Übung": die Kandidaten des Bausteins, je Zeile
-/// Vorschaubild links und "Wählen" rechts, darunter der Schalter
-/// "Dauerhaft im Plan ändern". Ohne Schalter tauscht "Wählen" sofort nur
-/// fuer heute (auch offline), mit Schalter folgt die Bestaetigung (3.3).
-///
-/// Keine Akzentflaeche: "Wählen" ist gefuellt weiss, nicht Akzent, und der
-/// Schalter hat nur einen Akzent-Umriss.
-struct PlanTauschListe: View {
-    let sitzung: PlanTauschSitzung
-    let bilder: [String: UIImage]
-    let beiFertig: () -> Void
-
-    private var auftrag: PlanTauschAuftrag { sitzung.auftrag }
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                    Text("Statt \(auftrag.name)".uppercased())
-                        .font(.system(size: 20, weight: .black))
-                        .tracking(-0.4)
-                        .foregroundStyle(DesignSystem.Color.text)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityAddTraits(.isHeader)
-                    Text("\(BausteinName.text(auftrag.position.baustein)), passend zu deinem Studio")
-                        .font(.system(size: 14))
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                }
-                VStack(spacing: 0) {
-                    ForEach(Array(auftrag.kandidaten.enumerated()), id: \.element.id) { index, kandidat in
-                        if index > 0 {
-                            Rectangle().fill(DesignSystem.Color.line).frame(height: 1)
-                        }
-                        zeile(kandidat)
-                    }
-                }
-            }
-            .padding(.horizontal, 18)
-            .padding(.top, 28)
-            .padding(.bottom, DesignSystem.Spacing.s16)
-        }
-        .scrollBounceBehavior(.basedOnSize)
-        // Unten fest: der Schalter gilt fuer das naechste "Wählen" und muss
-        // auch bei langer Liste vorher zu sehen sein.
-        .safeAreaInset(edge: .bottom) {
-            // Mit einem Grund (Entfernen) steht die Dauer schon fest.
-            if sitzung.grund == nil {
-                PlanTauschSchalter(sitzung: sitzung, hinweis: PlanTausch.dauerhaftHinweis(einheitKey: auftrag.einheitKey))
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, DesignSystem.Spacing.s12)
-                    .background(DesignSystem.Color.surface)
-                    .overlay(alignment: .top) {
-                        Rectangle().fill(DesignSystem.Color.line).frame(height: 1)
-                    }
-            }
-        }
-    }
-
-    private func zeile(_ kandidat: TauschKandidat) -> some View {
-        let gewaehlt = sitzung.gewaehlt == kandidat
-        return Button {
-            if sitzung.waehlen(kandidat) { beiFertig() }
-        } label: {
-            HStack(spacing: DesignSystem.Spacing.s12) {
-                UebungsVideoKachel(exerciseId: kandidat.exerciseId) {
-                    PlanZeilenFoto(foto: kandidat.vorschaubildModell.flatMap { bilder[$0] })
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(kandidat.name)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(DesignSystem.Color.text)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if !kandidat.untertitel.isEmpty {
-                        Text(kandidat.untertitel)
-                            .font(.system(size: 12.5))
-                            .foregroundStyle(DesignSystem.Color.textFaint)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                PlanWaehlenChip(an: gewaehlt)
-            }
-            .padding(.vertical, 11)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PressButtonStyle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel([kandidat.name, kandidat.untertitel].filter { !$0.isEmpty }.joined(separator: ", "))
-        .accessibilityHint(sitzung.dauerhaft ? "Wählen, danach bestätigen" : "Wählen, gilt nur heute")
-        .accessibilityAddTraits(gewaehlt ? [.isButton, .isSelected] : .isButton)
-    }
-}
 
 /// Entwurf 3.3 "Schalter an, bestätigt": der Kandidat, der Schalter (an)
 /// mit dem, was sich aendert, und "Übernehmen" als die eine Akzentflaeche.
@@ -111,8 +17,16 @@ struct PlanTauschBestaetigung: View {
                 .foregroundStyle(DesignSystem.Color.text)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
-            PlanTauschSchalter(sitzung: sitzung, hinweis: PlanTausch.bestaetigungsHinweis(
-                einheitKey: sitzung.auftrag.einheitKey, uebung: kandidat.name))
+            if sitzung.grund == nil {
+                PlanTauschSchalter(sitzung: sitzung, hinweis: PlanTausch.bestaetigungsHinweis(
+                    einheitKey: sitzung.auftrag.einheitKey, uebung: kandidat.name))
+            } else {
+                // Aus "Übung gefällt mir nicht": die Dauer steht fest.
+                Text(PlanTausch.bestaetigungsHinweis(einheitKey: sitzung.auftrag.einheitKey, uebung: kandidat.name))
+                    .font(.system(size: 14))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if let fehler = sitzung.fehler {
                 InlineBanner(tone: .danger, message: PlanTausch.fehlerText(fehler))
             }
@@ -122,6 +36,13 @@ struct PlanTauschBestaetigung: View {
             }
             .padding(.top, DesignSystem.Spacing.s4)
             .accessibilityHint("Ändert deinen Plan dauerhaft")
+            // Der Server nimmt die Uebung nicht: heute geht sie trotzdem.
+            if sitzung.grund != nil, sitzung.fehler != nil {
+                SecondaryButton(title: "Nur heute") {
+                    if sitzung.nurHeuteTauschen() { beiFertig() }
+                }
+                .accessibilityHint("Tauscht nur für heute, dein Plan bleibt")
+            }
             PlanLeiserKnopf(titel: "Abbrechen", aktiv: !sitzung.schreibtGerade) { sitzung.abbrechen() }
         }
         .padding(.horizontal, 18)
@@ -195,23 +116,6 @@ private struct PlanSchalterGrafik: View {
                     .padding(.horizontal, 4)
             }
             .animation(DesignSystem.Motion.press, value: an)
-            .accessibilityHidden(true)
-    }
-}
-
-/// "Wählen" (Entwurf `.chip`): Umriss, gewaehlt gefuellt weiss -- nie nur
-/// ein Umriss als Auswahl, und nie Akzent.
-private struct PlanWaehlenChip: View {
-    let an: Bool
-
-    var body: some View {
-        Text("Wählen")
-            .font(.system(size: 14, weight: .bold))
-            .foregroundStyle(an ? DesignSystem.Color.onAccent : DesignSystem.Color.textMuted)
-            .padding(.horizontal, DesignSystem.Spacing.s16)
-            .frame(minHeight: 44)
-            .background(Capsule().fill(an ? DesignSystem.Color.text : .clear))
-            .overlay(Capsule().stroke(an ? DesignSystem.Color.text : DesignSystem.Color.line, lineWidth: 1))
             .accessibilityHidden(true)
     }
 }

@@ -18,6 +18,9 @@ enum PlanAnzeige {
         /// nil, solange der Ablauf zu einem anderen Plan oder einer anderen
         /// Einheit gehoert: dann ist heute noch alles offen.
         let zustand: AblaufZustand?
+        /// Positionsschluessel, die das Mitglied heute ausgelassen hat (nur
+        /// im Ablauf, nie im Plan).
+        let ausgelassen: Set<String>
 
         var einheitKey: String { einheit.key }
     }
@@ -53,14 +56,16 @@ enum PlanAnzeige {
     /// stuende ihr Fortschritt mitten im Training wieder auf 0.
     static func heute(bootstrap: BootstrapResponse?, ablaufPlanId: String?,
                       ablaufEinheitKey: String?, ablaufZustand: AblaufZustand?,
-                      naechsteEinheitKey: String?, ablaufGebunden: Bool = false) -> Heute? {
+                      naechsteEinheitKey: String?, ablaufGebunden: Bool = false,
+                      ausgelassen: Set<String> = []) -> Heute? {
         guard let plan = plan(bootstrap: bootstrap) else { return nil }
         let ablaufPlanId = ablaufGebunden ? plan.planId : ablaufPlanId
         let key = einheitKey(plan: plan, ablaufPlanId: ablaufPlanId, ablaufEinheitKey: ablaufEinheitKey,
                              naechsteEinheitKey: naechsteEinheitKey)
         guard let einheit = plan.einheiten.first(where: { $0.key == key }) else { return nil }
         let passt = ablaufPlanId == plan.planId && ablaufEinheitKey == key
-        return Heute(plan: plan, einheit: einheit, zustand: passt ? ablaufZustand : nil)
+        return Heute(plan: plan, einheit: einheit, zustand: passt ? ablaufZustand : nil,
+                     ausgelassen: passt ? ausgelassen : [])
     }
 
     // MARK: - Zeilen
@@ -69,7 +74,8 @@ enum PlanAnzeige {
     /// Zwang -- Entwurf 2.1). Mit Ablauf folgen Reihenfolge, geplante Uebung
     /// und Status der gebundenen Planversion (`planstellen`).
     static func zeilen(plan: Trainingsplan, einheitKey: String, zustand: AblaufZustand?,
-                       bloecke: [LokalerBlock], bootstrap: BootstrapResponse?) -> [PlanZeilenModell] {
+                       bloecke: [LokalerBlock], bootstrap: BootstrapResponse?,
+                       ausgelassen: Set<String> = []) -> [PlanZeilenModell] {
         guard let einheit = plan.einheiten.first(where: { $0.key == einheitKey }) else { return [] }
         let muskeln = HomeZeilen.muskelnJeUebung(bootstrap)
         let stellen = planstellen(einheit: einheit, zustand: zustand)
@@ -82,19 +88,24 @@ enum PlanAnzeige {
             let modelId = stelle.ersatz == nil && stelle.vorgabe?.exerciseId == stelle.geplant
                 ? stelle.vorgabe?.modelId : nil
             let bild = bildmodell(exerciseId: wirksam, modelId: modelId, bootstrap: bootstrap)
+            let istAusgelassen = ausgelassen.contains(stelle.key)
             let untertitel: String
-            switch stelle.status {
-            case .offen:
-                untertitel = vorgabeText(stelle)
-            case .erledigt:
-                let saetze = satzzahl(exerciseId: wirksam, bloecke: bloecke)
-                untertitel = !stelle.cardio && saetze > 0 ? satzText(saetze) : vorgabeText(stelle)
-            case .optional:
-                untertitel = ausloeser(hauptmuskeln: stelle.hauptmuskeln, ungeplant: ungeplant, muskeln: muskeln)
-                    .map { "Optional: \(uebungsname($0.exerciseId, bootstrap)) zählt für \($0.gruppe)" }
-                    ?? "Optional"
-            case .getauscht:
-                untertitel = "Heute: \(uebungsname(wirksam, bootstrap))"
+            if istAusgelassen {
+                untertitel = "Heute ausgelassen"
+            } else {
+                switch stelle.status {
+                case .offen:
+                    untertitel = vorgabeText(stelle)
+                case .erledigt:
+                    let saetze = satzzahl(exerciseId: wirksam, bloecke: bloecke)
+                    untertitel = !stelle.cardio && saetze > 0 ? satzText(saetze) : vorgabeText(stelle)
+                case .optional:
+                    untertitel = ausloeser(hauptmuskeln: stelle.hauptmuskeln, ungeplant: ungeplant, muskeln: muskeln)
+                        .map { "Optional: \(uebungsname($0.exerciseId, bootstrap)) zählt für \($0.gruppe)" }
+                        ?? "Optional"
+                case .getauscht:
+                    untertitel = "Heute: \(uebungsname(wirksam, bootstrap))"
+                }
             }
             return PlanZeilenModell(
                 id: stelle.key,
@@ -102,8 +113,22 @@ enum PlanAnzeige {
                 untertitel: untertitel,
                 exerciseId: wirksam,
                 vorschaubildModell: bild,
-                status: stelle.status.anzeige)
+                status: stelle.status.anzeige,
+                ausgelassen: istAusgelassen,
+                satzFortschritt: istAusgelassen ? nil : satzFortschritt(stelle, bloecke: bloecke))
         }
+    }
+
+    /// "2/3": Saetze der wirksamen Uebung gegen die Vorgabe, nur bei einer
+    /// angefangenen Kraftposition (0 < gemacht < geplant); sonst nil. Gilt
+    /// bei jedem Status: der erste Satz hakt die Position im Ablauf schon ab
+    /// (`TrainingsplanAblauf.nachSatz`), angefangen ist sie trotzdem.
+    /// Ausgelassene Positionen fragt der Aufrufer gar nicht erst.
+    private static func satzFortschritt(_ stelle: Planstelle, bloecke: [LokalerBlock]) -> String? {
+        guard !stelle.cardio, let geplant = stelle.vorgabe?.saetze else { return nil }
+        let gemacht = satzzahl(exerciseId: stelle.wirksam, bloecke: bloecke)
+        guard gemacht > 0, gemacht < geplant else { return nil }
+        return "\(gemacht)/\(geplant)"
     }
 
     /// Die Vorgabe als Text aus dem Bootstrap-Plan. Fehlt die Position dort
@@ -128,9 +153,14 @@ enum PlanAnzeige {
     // MARK: - Kopf
 
     /// "4 von 7": erledigte und optionale Positionen zaehlen (Entwurf 2.2).
-    static func fortschritt(plan: Trainingsplan, einheitKey: String, zustand: AblaufZustand?) -> String {
-        let gesamt = zustand?.positionen.count ?? plan.einheiten.first { $0.key == einheitKey }?.positionen.count ?? 0
-        let fertig = zustand?.positionen.filter { $0.status == .erledigt || $0.status == .optional }.count ?? 0
+    /// Ausgelassene Positionen zaehlen weder im Zaehler noch im Nenner.
+    static func fortschritt(plan: Trainingsplan, einheitKey: String, zustand: AblaufZustand?,
+                            ausgelassen: Set<String> = []) -> String {
+        let gesamt = (zustand?.positionen.filter { !ausgelassen.contains($0.key) }.count)
+            ?? plan.einheiten.first { $0.key == einheitKey }?.positionen.filter { !ausgelassen.contains($0.key) }.count ?? 0
+        let fertig = zustand?.positionen.filter {
+            !ausgelassen.contains($0.key) && ($0.status == .erledigt || $0.status == .optional)
+        }.count ?? 0
         return "\(fertig) von \(gesamt)"
     }
 
@@ -138,14 +168,23 @@ enum PlanAnzeige {
     /// offenen Positionen. Eine Schaetzung je Position liefert der Server
     /// nicht; der Anteil ist ehrlich genug fuer ein "ca.". nil ohne
     /// Schaetzung und wenn nichts mehr offen ist.
-    static func restminutenText(plan: Trainingsplan, einheitKey: String, zustand: AblaufZustand?) -> String? {
+    static func restminutenText(plan: Trainingsplan, einheitKey: String, zustand: AblaufZustand?,
+                                ausgelassen: Set<String> = []) -> String? {
         guard let einheit = plan.einheiten.first(where: { $0.key == einheitKey }),
               let minuten = einheit.geschaetzteMinuten, !einheit.positionen.isEmpty else { return nil }
-        let stellen = planstellen(einheit: einheit, zustand: zustand)
+        // Heute Ausgelassenes ist weder offen noch Teil des Anteils.
+        let stellen = planstellen(einheit: einheit, zustand: zustand).filter { !ausgelassen.contains($0.key) }
         let offen = stellen.filter { $0.status == .offen || $0.status == .getauscht }.count
         guard offen > 0, !stellen.isEmpty else { return nil }
         let rest = max(1, Int((minuten * Double(offen) / Double(stellen.count)).rounded()))
         return "noch ca. \(rest) Min"
+    }
+
+    /// Der Plan-Modus des Training-Tabs: laeuft eine Einheit und gibt es den
+    /// Plan von heute, zeigt die Wurzel nur die Plankarte -- ohne Kategorien,
+    /// "Zuletzt bei dir" und die Blockliste.
+    static func planModus(laeuft: Bool, heute: Heute?) -> Bool {
+        laeuft && heute != nil
     }
 
     /// "7 Übungen · ca. 63 Min" (Entwurf 1.4/2.1); ohne Schaetzung nur die Zahl.
@@ -163,9 +202,12 @@ enum PlanAnzeige {
     /// ca. 63 Min"), danach der Stand ("3 von 7", wie in der Karte: erledigt
     /// und optional -- "erledigt" waere fuer optionale falsch).
     static func heuteDranUntertitel(_ heute: Heute) -> String {
-        let fertig = heute.zustand?.positionen.contains { $0.status == .erledigt || $0.status == .optional } ?? false
+        let fertig = heute.zustand?.positionen.contains {
+            !heute.ausgelassen.contains($0.key) && ($0.status == .erledigt || $0.status == .optional)
+        } ?? false
         guard fertig else { return metaText(heute.einheit) }
-        return fortschritt(plan: heute.plan, einheitKey: heute.einheitKey, zustand: heute.zustand)
+        return fortschritt(plan: heute.plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
+                           ausgelassen: heute.ausgelassen)
     }
 
     /// "Danach: Einheit B"; ein Plan mit nur einer Einheit hat kein Danach.
@@ -206,6 +248,28 @@ enum PlanAnzeige {
                 status: .erledigt,
                 zusatz: true)
         }
+    }
+
+    /// Der Block hinter einer Zeile von "Zusätzlich gemacht" (Zeilen-Id
+    /// "zusatz:<Uebung>"): bei mehreren Bloecken derselben Uebung der mit dem
+    /// zuletzt gesicherten Satz; nil ohne Treffer oder ohne Ziel (Block ohne
+    /// Geraete- oder Typkennung).
+    static func block(fuerZusatz id: String, bloecke: [LokalerBlock]) -> LokalerBlock? {
+        let praefix = "zusatz:"
+        guard id.hasPrefix(praefix) else { return nil }
+        return neuesterBlock(exerciseId: String(id.dropFirst(praefix.count)), bloecke: bloecke)
+    }
+
+    /// Der Block der Uebung mit dem zuletzt gesicherten Satz -- dorthin fuehren
+    /// eine Zusatz-Zeile und "Weiter mit Satz X". nil ohne Block mit Saetzen
+    /// oder ohne Ziel (Block ohne Geraete- oder Typkennung).
+    static func neuesterBlock(exerciseId: String, bloecke: [LokalerBlock]) -> LokalerBlock? {
+        bloecke
+            .filter {
+                $0.exerciseId == exerciseId && !$0.saetze.isEmpty
+                    && Station.art(schluessel: $0.stationSchluessel) != nil
+            }
+            .max { ($0.saetze.map(\.performedAt).max() ?? .distantPast) < ($1.saetze.map(\.performedAt).max() ?? .distantPast) }
     }
 
     // MARK: - Pause (F6)
@@ -272,10 +336,11 @@ enum PlanAnzeige {
     /// selbst, nicht der Plan im Bootstrap: der kann inzwischen eine neuere
     /// Version mit anderen Positionen sein.
     static func abschluss(einheitKey: String, zustand: AblaufZustand,
-                          naechsteEinheitKey: String?) -> Abschluss {
-        let gesamt = zustand.positionen.count
-        let erledigt = zustand.positionen.filter { $0.status == .erledigt }.count
-        let optional = zustand.positionen.filter { $0.status == .optional }.count
+                          naechsteEinheitKey: String?, ausgelassen: Set<String> = []) -> Abschluss {
+        let positionen = zustand.positionen.filter { !ausgelassen.contains($0.key) }
+        let gesamt = positionen.count
+        let erledigt = positionen.filter { $0.status == .erledigt }.count
+        let optional = positionen.filter { $0.status == .optional }.count
         var zeile = "\(erledigt) von \(gesamt) \(gesamt == 1 ? "Übung" : "Übungen") erledigt"
         if optional > 0 { zeile += ", \(optional) optional" }
         let naechstes = naechsteEinheitKey.map { key in
@@ -413,7 +478,8 @@ enum PlanAnzeige {
         return nil
     }
 
-    private static func satzzahl(exerciseId: String, bloecke: [LokalerBlock]) -> Int {
+    /// Saetze der Uebung ueber alle Geraete der Session.
+    static func satzzahl(exerciseId: String, bloecke: [LokalerBlock]) -> Int {
         bloecke.filter { $0.exerciseId == exerciseId }.reduce(0) { $0 + $1.saetze.count }
     }
 

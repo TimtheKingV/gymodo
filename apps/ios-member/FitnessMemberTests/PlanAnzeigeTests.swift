@@ -92,8 +92,91 @@ struct PlanAnzeigeTests {
         })
     }
 
-    static func zeilen(_ zustand: AblaufZustand? = nil, bloecke: [LokalerBlock] = []) -> [PlanZeilenModell] {
-        PlanAnzeige.zeilen(plan: plan(), einheitKey: "A", zustand: zustand, bloecke: bloecke, bootstrap: bootstrap())
+    static func zeilen(_ zustand: AblaufZustand? = nil, bloecke: [LokalerBlock] = [],
+                       ausgelassen: Set<String> = []) -> [PlanZeilenModell] {
+        PlanAnzeige.zeilen(plan: plan(), einheitKey: "A", zustand: zustand, bloecke: bloecke, bootstrap: bootstrap(),
+                           ausgelassen: ausgelassen)
+    }
+
+    // MARK: - Auslassen und Satzfortschritt
+
+    @Test("ausgelassene Zeile traegt den Untertitel Heute ausgelassen")
+    func ausgelasseneZeileTraegtUntertitelAusgelassen() {
+        let zeilen = Self.zeilen(Self.zustand(), ausgelassen: ["A1"])
+        #expect(zeilen[1].untertitel == "Heute ausgelassen")
+        #expect(zeilen[1].ausgelassen)
+        #expect(!zeilen[0].ausgelassen)
+        #expect(zeilen[0].untertitel == "3 × 8–12 · Reserve 1–3")
+    }
+
+    @Test("Fortschritt zaehlt Ausgelassene weder im Zaehler noch im Nenner")
+    func fortschrittOhneAusgelassene() {
+        let einheit = Self.plan().einheiten[0]
+        let positionen = (0..<6).map { i in
+            AblaufPosition(key: "P\(i)", exerciseId: "e\(i)", hauptmuskeln: [], cardio: false,
+                           status: i == 0 ? .erledigt : .offen, ersatzExerciseId: nil)
+        }
+        let zustand = AblaufZustand(positionen: positionen, ungeplanteGesehen: [])
+        #expect(PlanAnzeige.fortschritt(plan: Self.plan(), einheitKey: einheit.key, zustand: zustand,
+                                        ausgelassen: ["P3"]) == "1 von 5")
+        // Auch eine ausgelassene, schon erledigte Position zaehlt nicht mit.
+        #expect(PlanAnzeige.fortschritt(plan: Self.plan(), einheitKey: einheit.key, zustand: zustand,
+                                        ausgelassen: ["P0"]) == "0 von 5")
+    }
+
+    /// Wie der Ablauf es wirklich zeigt: der erste Satz hakt die Position ab
+    /// (`TrainingsplanAblauf.nachSatz`), die Marke folgt trotzdem den Saetzen.
+    @Test("angefangene Position zeigt Satzfortschritt, obwohl der erste Satz sie erledigt hat")
+    func angefangenePositionZeigtSatzFortschritt() {
+        for gemacht in [1, 2] {
+            let zeilen = Self.zeilen(Self.zustand(["A0": .erledigt]), bloecke: [Self.block("m1", "e1", saetze: gemacht)])
+            #expect(zeilen[0].satzFortschritt == "\(gemacht)/3")
+            #expect(zeilen[1].satzFortschritt == nil)
+            // Noch Saetze offen: weder durchgestrichen noch gedimmt.
+            #expect(!zeilen[0].abgehakt(status: zeilen[0].status))
+        }
+    }
+
+    @Test("heute getauschte Position zaehlt die Saetze des Ersatzes")
+    func getauschtePositionZeigtSatzFortschrittDesErsatzes() {
+        let zeilen = Self.zeilen(Self.zustand(["A1": .erledigt], ersatz: ["A1": "e4"]),
+                                 bloecke: [Self.block("m5", "e4", saetze: 1)])
+        #expect(zeilen[1].satzFortschritt == "1/3")
+    }
+
+    @Test("erledigte Position ohne Rest zeigt keinen Fortschritt und ist abgehakt")
+    func erledigtePositionOhneRestZeigtKeinenFortschritt() {
+        let zeilen = Self.zeilen(Self.zustand(["A0": .erledigt]), bloecke: [Self.block("m1", "e1", saetze: 3)])
+        #expect(zeilen[0].satzFortschritt == nil)
+        #expect(zeilen[0].abgehakt(status: zeilen[0].status))
+        // Ausgelassen bleibt abgehakt, auch mit angefangenen Saetzen; Zusatz nie.
+        let ausgelassen = Self.zeilen(Self.zustand(["A0": .erledigt]), bloecke: [Self.block("m1", "e1", saetze: 1)],
+                                      ausgelassen: ["A0"])
+        #expect(ausgelassen[0].satzFortschritt == nil)
+        #expect(ausgelassen[0].abgehakt(status: ausgelassen[0].status))
+    }
+
+    @Test("Cardio zeigt keinen Satzfortschritt")
+    func cardioOhneSatzFortschritt() {
+        let zeilen = Self.zeilen(Self.zustand(["A3": .erledigt]), bloecke: [Self.block("m4", "c1", saetze: 1)])
+        #expect(zeilen[3].satzFortschritt == nil)
+    }
+
+    // MARK: - Neuester Block
+
+    @Test("neuester Block einer Uebung: der mit dem zuletzt gesicherten Satz, nur mit Ziel und Saetzen")
+    func neuesterBlockEinerUebung() {
+        let frueh = Self.block("m1", "e1", saetze: 1, minute: 0)
+        let spaet = Self.block("m6", "e1", saetze: 1, minute: 30)
+        let fremd = Self.block("m5", "e2", saetze: 2, minute: 60)
+        let leer = LokalerBlock(machineId: "m9", exerciseId: "e1", saetze: [])
+        let bloecke = [spaet, frueh, fremd, leer]
+        #expect(PlanAnzeige.neuesterBlock(exerciseId: "e1", bloecke: bloecke) == spaet)
+        #expect(PlanAnzeige.neuesterBlock(exerciseId: "e2", bloecke: bloecke) == fremd)
+        #expect(PlanAnzeige.neuesterBlock(exerciseId: "e3", bloecke: bloecke) == nil)
+        #expect(PlanAnzeige.neuesterBlock(exerciseId: "e1", bloecke: [leer]) == nil)
+        // Die Zusatz-Zeile nimmt denselben Weg.
+        #expect(PlanAnzeige.block(fuerZusatz: "zusatz:e1", bloecke: bloecke) == spaet)
     }
 
     // MARK: - Untertitel
@@ -357,6 +440,59 @@ struct PlanAnzeigeTests {
         #expect(PlanAnzeige.einheitKey(plan: plan, ablaufPlanId: "p1", ablaufEinheitKey: "Z", naechsteEinheitKey: "Y") == "A")
     }
 
+    // MARK: - Reihenfolge, Plan-Modus, Ausgelassene in Restzeit und Abschluss
+
+    @Test("Zeilen folgen der umgeordneten Reihenfolge des Ablaufs")
+    func zeilenFolgenDerUmgeordnetenReihenfolge() {
+        let umgeordnet = TrainingsplanAblauf.umordnen(Self.zustand(["A0": .erledigt]), positionKey: "A0", nach: 2)
+        let zeilen = Self.zeilen(umgeordnet)
+        #expect(zeilen.map(\.id) == ["A1", "A2", "A0", "A3"])
+        #expect(zeilen[2].status == .erledigt)
+    }
+
+    @Test("Plan-Modus nur mit laufender Einheit und Plan von heute")
+    func planModusEntscheidung() {
+        let plan = Self.plan()
+        let heute = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: nil, ausgelassen: [])
+        #expect(PlanAnzeige.planModus(laeuft: true, heute: heute))
+        #expect(!PlanAnzeige.planModus(laeuft: false, heute: heute))
+        #expect(!PlanAnzeige.planModus(laeuft: true, heute: nil))
+        #expect(!PlanAnzeige.planModus(laeuft: false, heute: nil))
+    }
+
+    @Test("Zusatz-Zeile findet ihren Block, bei mehreren den juengsten")
+    func zusatzZeileFindetBlock() {
+        let alt = Self.block("m1", "eX", saetze: 1, minute: 0)
+        let neu = Self.block("m2", "eX", saetze: 1, minute: 30)
+        let andere = Self.block("m3", "eY", saetze: 1, minute: 60)
+        #expect(PlanAnzeige.block(fuerZusatz: "zusatz:eX", bloecke: [alt, neu, andere])?.machineId == "m2")
+        #expect(PlanAnzeige.block(fuerZusatz: "zusatz:eZ", bloecke: [alt]) == nil)
+        #expect(PlanAnzeige.block(fuerZusatz: "A0", bloecke: [alt]) == nil)
+    }
+
+    @Test("Restzeit zaehlt ausgelassene Positionen nicht mit")
+    func restzeitOhneAusgelassene() {
+        let plan = Self.plan()
+        // 60 Min auf 4 Positionen; A1 ausgelassen -> 3 Stellen, A0 erledigt -> 2 offen = 40 Min.
+        #expect(PlanAnzeige.restminutenText(plan: plan, einheitKey: "A", zustand: Self.zustand(["A0": .erledigt]),
+                                            ausgelassen: ["A1"]) == "noch ca. 40 Min")
+        // Bleibt nur Ausgelassenes offen, ist nichts mehr zu tun.
+        let rest = Self.zustand(["A0": .erledigt, "A2": .erledigt, "A3": .erledigt])
+        #expect(PlanAnzeige.restminutenText(plan: plan, einheitKey: "A", zustand: rest, ausgelassen: ["A1"]) == nil)
+    }
+
+    @Test("Abschluss zaehlt ausgelassene Positionen nicht als offen")
+    func abschlussOhneAusgelassene() {
+        let zustand = Self.zustand(["A0": .erledigt, "A2": .optional])
+        let abschluss = PlanAnzeige.abschluss(einheitKey: "A", zustand: zustand, naechsteEinheitKey: "B",
+                                              ausgelassen: ["A1", "A3"])
+        #expect(abschluss.zeile == "1 von 2 Übungen erledigt, 1 optional")
+        // Eine ausgelassene, schon erledigte Position zaehlt ebenfalls nicht.
+        let erledigtUndAusgelassen = PlanAnzeige.abschluss(
+            einheitKey: "A", zustand: Self.zustand(["A0": .erledigt]), naechsteEinheitKey: "B", ausgelassen: ["A0"])
+        #expect(erledigtUndAusgelassen.zeile == "0 von 3 Übungen erledigt")
+    }
+
     // MARK: - Abschluss (2.3)
 
     @Test("Abschluss nennt erledigt, optional und die naechste Einheit")
@@ -375,12 +511,12 @@ struct PlanAnzeigeTests {
     @Test("Home-Zeile: Meta vor dem Start, Fortschritt danach")
     func heuteDranUntertitel() {
         let plan = Self.plan()
-        let vorher = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: Self.zustand())
+        let vorher = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: Self.zustand(), ausgelassen: [])
         #expect(PlanAnzeige.heuteDranUntertitel(vorher) == "4 Übungen · ca. 60 Min")
-        let mitten = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: Self.zustand(["A0": .erledigt]))
+        let mitten = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: Self.zustand(["A0": .erledigt]), ausgelassen: [])
         #expect(PlanAnzeige.heuteDranUntertitel(mitten) == "1 von 4")
         // Optional zaehlt mit, deshalb nicht "erledigt".
-        let optional = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: Self.zustand(["A1": .optional]))
+        let optional = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: Self.zustand(["A1": .optional]), ausgelassen: [])
         #expect(PlanAnzeige.heuteDranUntertitel(optional) == "1 von 4")
     }
 
