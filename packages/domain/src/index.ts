@@ -8,6 +8,12 @@ export {
 } from "./tag-scan.js";
 export { naechsteGeraeteNummer } from "./nummern.js";
 export {
+  kraftAnzahl,
+  pruefeWoche,
+  verteileKraft,
+  type Wochentag,
+} from "./trainingsplan-woche.js";
+export {
   PROGRESSION_ALGO_VERSION,
   suggestNextLoad,
   toBlocks,
@@ -307,6 +313,7 @@ export type {
   Kandidat,
   PlanEinheit,
   PlanPosition,
+  RasterEintrag,
   TypVorgaben,
 } from "./trainingsplan-generator.js";
 export { LEERE_MERKLISTE, ladeKandidaten, ladeKatalogStudioId, ladeMerkliste } from "./trainingsplan-kandidaten.js";
@@ -370,3 +377,4 @@ export {
   type Melde,
   type PositionsZiel,
 } from "./plangewichte.js";
+export { deleteCardioCheck, listCardioChecks, pruefeTag as pruefeKalendertag, setCardioCheck } from "./cardio-checks.js";

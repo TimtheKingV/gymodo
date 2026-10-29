@@ -198,6 +198,7 @@ async function plan(w: Welt, einheiten: Record<string, Uebung[]>, nummeriert = f
     struktur: "gk_abc",
     einheiten: liste as unknown as TrainingPlan["einheiten"],
     gruende: [],
+    wochenraster: [],
     createdAt: data.created_at,
     acceptedAt: data.accepted_at,
   };

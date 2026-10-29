@@ -52,7 +52,7 @@ describe("erzeugePlanVorschlag", () => {
     const m = await legeMitgliedAn("plan-v1", { studios: [s.voll] });
     const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
     expect(plan).toMatchObject({ studioId: GYMTAVO, version: 1, status: "vorschlag", acceptedAt: null, struktur: "gk_ab" });
-    expect(plan.regelVersion).toBe("1.2.0");
+    expect(plan.regelVersion).toBe("1.3.0");
     expect(plan.eingabe).toEqual({
       ziel: "muskelaufbau",
       tage: 3,

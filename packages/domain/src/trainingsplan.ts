@@ -6,7 +6,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { DomainError } from "./errors.js";
 import { aktiveZiele } from "./goals.js";
-import type { GeneratorEingabe, PlanEinheit } from "./trainingsplan-generator.js";
+import type { GeneratorEingabe, PlanEinheit, RasterEintrag } from "./trainingsplan-generator.js";
 import type { Struktur } from "./trainingsplan-regeln.js";
 import { generierePlan, tauschVorgaben } from "./trainingsplan-generator.js";
 import { anfaengerphaseVorbei, ladeGezaehlteEinheiten } from "./trainingsplan-bootstrap.js";
@@ -24,7 +24,10 @@ export type PlanStatus = "vorschlag" | "aktiv" | "ersetzt" | "verworfen";
  * loeschbar, eine Kopie hier ueberlebte den Widerruf. Gespeichert wird nur, ob
  * Beschwerden beruecksichtigt wurden.
  */
-export type PlanEingabe = Omit<GeneratorEingabe, "kandidaten" | "beschwerden"> & {
+export type PlanEingabe = Omit<
+  GeneratorEingabe,
+  "kandidaten" | "beschwerden" | "kursTage" | "cardioTage" | "kraftTage"
+> & {
   beschwerdenBeruecksichtigt: boolean;
 };
 
@@ -38,6 +41,8 @@ export type TrainingPlan = {
   struktur: Struktur["key"];
   einheiten: PlanEinheit[];
   gruende: string[];
+  /** Beim Erzeugen festgehalten, nach Tag sortiert; Pläne vor 1.3.0 haben ein leeres Raster. */
+  wochenraster: RasterEintrag[];
   createdAt: string;
   acceptedAt: string | null;
 };
@@ -52,12 +57,14 @@ type PlanZeile = {
   struktur: Struktur["key"];
   einheiten: PlanEinheit[];
   gruende: string[];
+  wochenraster: RasterEintrag[];
   created_at: string;
   accepted_at: string | null;
 };
 
+// Ein einziges Literal, damit supabase-js die Spaltentypen aus dem Text liest.
 const SPALTEN =
-  "id, studio_id, version, status, regel_version, eingabe, struktur, einheiten, gruende, created_at, accepted_at";
+  "id, studio_id, version, status, regel_version, eingabe, struktur, einheiten, gruende, wochenraster, created_at, accepted_at";
 
 function zuPlan(z: PlanZeile): TrainingPlan {
   return {
@@ -70,6 +77,7 @@ function zuPlan(z: PlanZeile): TrainingPlan {
     struktur: z.struktur,
     einheiten: z.einheiten,
     gruende: z.gruende,
+    wochenraster: z.wochenraster,
     createdAt: z.created_at,
     acceptedAt: z.accepted_at,
   };
@@ -159,6 +167,10 @@ export async function erzeugePlanVorschlag(
     erfahrung: profil.experience,
     anfaengerBeendet,
     beschwerden,
+    // Feste Termine und Krafttage kommen aus dem Profil; das Ergebnis haelt das Raster fest.
+    kursTage: profil.kursTage,
+    cardioTage: profil.cardioTage,
+    kraftTage: profil.kraftTage,
     kandidaten: await ladeKandidaten(client, await ladeMerkliste(client, userId, ort)),
   });
 
@@ -172,6 +184,7 @@ export async function erzeugePlanVorschlag(
       p_struktur: ergebnis.struktur,
       p_einheiten: ergebnis.einheiten,
       p_gruende: ergebnis.gruende,
+      p_wochenraster: ergebnis.wochenraster,
     })
     .single();
   // plan_ungueltig hiesse: der Generator nannte ein Geraet oder eine Uebung, die das

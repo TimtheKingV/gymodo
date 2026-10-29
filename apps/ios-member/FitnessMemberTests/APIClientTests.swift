@@ -345,6 +345,24 @@ struct APIClientTests {
                 == TrainingsplanProfil(minutes: 60, experience: "neu", focus: ["brust"]))
     }
 
+    @Test("cardioChecks: GET mit from/to, PUT und DELETE mit day")
+    func cardioChecks() async throws {
+        nonisolated(unsafe) var gesehen: [String] = []
+        StubURLProtocol.handler = { request in
+            gesehen.append("\(request.httpMethod ?? "") \(request.url?.path ?? "")?\(request.url?.query ?? "")")
+            if request.httpMethod == "GET" { return (200, Data(#"{"days":["2026-10-26","2026-10-28"]}"#.utf8)) }
+            return (204, Data())
+        }
+        let client = stubbedClient()
+        #expect(try await client.cardioChecks(from: "2026-10-26", to: "2026-11-01") == ["2026-10-26", "2026-10-28"])
+        try await client.setCardioCheck(day: "2026-10-28")
+        try await client.deleteCardioCheck(day: "2026-10-28")
+        #expect(gesehen.count == 3)
+        #expect(gesehen[0].hasSuffix("/me/cardio-checks?from=2026-10-26&to=2026-11-01"))
+        #expect(gesehen[1].hasPrefix("PUT ") && gesehen[1].hasSuffix("/me/cardio-checks?day=2026-10-28"))
+        #expect(gesehen[2].hasPrefix("DELETE ") && gesehen[2].hasSuffix("/me/cardio-checks?day=2026-10-28"))
+    }
+
     @Test("trainingLimits: 404 ergibt nil, 200 die Bereiche")
     func trainingLimitsLesen() async throws {
         StubURLProtocol.handler = { _ in (404, Data(#"{"error":{"code":"not_found","message":"Keine."}}"#.utf8)) }

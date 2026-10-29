@@ -254,6 +254,11 @@ struct KurseWochenView: View {
     let beiAuswahl: (String) -> Void
     /// Meldet den Abschluss, wenn ein Beitritt die laufende Einheit beendet.
     let loader: any GeraetLoading
+    /// Der Plan-Tab ohne aktiven Plan zeigt diesen Screen unter seinem Namen
+    /// (Ruling: "Kurse wie bisher plus PlanEinrichtenKarte").
+    var titel = "KURSE"
+    /// Steht unter dem Kopf -- dort die Karte "Plan einrichten".
+    var zusatz: AnyView?
 
     @Environment(KurseStore.self) private var kurse
     @Environment(CatalogStore.self) private var katalog
@@ -308,6 +313,7 @@ struct KurseWochenView: View {
     private var beitretenInhalt: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
             kopf
+            if let zusatz { zusatz }
             Text(KurseOrtZustand.hinweis)
                 .font(.system(size: 15))
                 .foregroundStyle(DesignSystem.Color.textMuted)
@@ -343,6 +349,7 @@ struct KurseWochenView: View {
         return ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopf
+                if let zusatz { zusatz }
                 if KurseFilter.zeigtAuswahl(studios: alleStudios.count) {
                     studioAuswahl
                 }
@@ -403,16 +410,7 @@ struct KurseWochenView: View {
     /// Ziehen, Reconnect, Rueckkehr aus dem Hintergrund) gehen hier durch,
     /// damit das Anfragefenster nicht an vier Stellen berechnet wird.
     private func neuLaden() async {
-        let studios = alleStudios
-        guard !studios.isEmpty else { return }
-        let jetzt = Date()
-        let von = KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zeitzoneFuerAnfrage)
-        // Bis "jetzt plus 14 Tage", nicht bis zum naechsten Montag: das
-        // eine Fenster fuer beide Screens (Spec 5.1, siehe fensterEnde).
-        // Dieser Screen zeigt davon weiterhin nur den gewaehlten Tag --
-        // termineDesTages filtert ueber localDay.
-        let bis = KurseWochenBerechnung.fensterEnde(ab: jetzt, zeitzone: zeitzoneFuerAnfrage)
-        await kurse.laden(studioIds: studios, von: von, bis: bis)
+        await kurse.ladenAbDieserWoche(studioIds: alleStudios, zeitzone: zeitzoneFuerAnfrage)
     }
 
     /// Die eine Ableitung, die alle drei Kurse-Screens teilen -- sie
@@ -427,7 +425,7 @@ struct KurseWochenView: View {
 
     private var kopf: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text("KURSE")
+            Text(titel)
                 .font(DesignSystem.Typography.screentitel)
                 .tracking(-0.8)
                 .foregroundStyle(DesignSystem.Color.text)
@@ -615,105 +613,37 @@ struct KurseWochenView: View {
         .overlay(Capsule().stroke(DesignSystem.Color.line, lineWidth: 1))
     }
 
-    /// Ein ECHTER Paging-Container, keine selbstgebaute DragGesture.
-    ///
-    /// Das ist kein Geschmacksurteil: mit der Wochenleiste sind die Pfeile
-    /// weggefallen, und damit der antippbare Zwilling der Wischgeste. Eine
-    /// eigene Geste haette VoiceOver gar nichts gelassen. `TabView(.page)`
-    /// bringt den Dreifinger-Wisch mit; die beiden benannten
-    /// Aktionen darunter machen den Wochenwechsel zusaetzlich ueber den
-    /// Rotor erreichbar -- und ueber Schaltersteuerung.
+    /// Der Streifen selbst steht in `KurseWochenstreifen` (mit dem Plan-Tab
+    /// geteilt); hier nur, was der Kurse-Screen darunter zeigt und was ein
+    /// Tag-Tipp an der Ansicht aendert.
     private func wochenstreifen(jetzt: Date, ansicht: KurseAnsicht) -> some View {
-        let alle = montage(jetzt: jetzt)
-        let index = wochenIndex(jetzt: jetzt)
-
-        return TabView(
-            selection: Binding(
-                get: { index },
-                set: { waehleWoche(index: $0, jetzt: jetzt) })
-        ) {
-            ForEach(Array(alle.enumerated()), id: \.offset) { seite, montag in
-                tagesboxen(
-                    KurseWochenBerechnung.wochentage(
-                        abMontag: montag, jetzt: jetzt, zeitzone: zeitzoneFuerAnfrage),
-                    jetzt: jetzt, ansicht: ansicht)
-                .frame(maxHeight: .infinity, alignment: .top)
-                .tag(seite)
-            }
-        }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        // Feste Hoehe: 12pt Buchstabe, 6pt Abstand, 40pt Kreis, 6pt
-        // Abstand, 5pt Punkt. Eine TabView hat keine Eigenhoehe, ohne
-        // diese Angabe fuellte sie den ganzen ScrollView.
-        .frame(height: 69)
-        .accessibilityAction(named: "Nächste Woche") {
-            waehleWoche(index: min(index + 1, alle.count - 1), jetzt: jetzt)
-        }
-        .accessibilityAction(named: "Vorherige Woche") {
-            waehleWoche(index: max(index - 1, 0), jetzt: jetzt)
-        }
+        KurseWochenstreifen(
+            montage: montage(jetzt: jetzt), index: wochenIndex(jetzt: jetzt), jetzt: jetzt,
+            zeitzone: zeitzoneFuerAnfrage, gewaehlterTagId: gewaehlterTag(jetzt: jetzt),
+            beiWochenwahl: { waehleWoche(index: $0, jetzt: jetzt) },
+            beiTagwahl: { tag in
+                gewaehlterTagId = tag.id
+                // Ein Tag ohne eigenen Platz hat in der "Angemeldet"-Haelfte
+                // nichts zu sagen -- die Begruendung steht an
+                // KurseAnsicht.nachTagwahl.
+                //
+                // NUR bei einer echten Aenderung schreiben. Sonst machte jeder
+                // Tag-Tipp aus `nil` eine getippte Wahl, und `nil` heisst hier
+                // etwas: "hat den Umschalter noch nie angefasst". Wer ohne
+                // Anmeldungen (also in `.alle`) einen Tag antippt, haette sich
+                // damit stillschweigend auf `.alle` festgelegt -- und nach
+                // seiner ersten Buchung stuende der Screen auf "Alle Kurse"
+                // statt auf den eigenen Anmeldungen, ohne dass er je
+                // umgeschaltet hat.
+                let neueAnsicht = KurseAnsicht.nachTagwahl(bisher: ansicht, indikator: indikator(tag, jetzt: jetzt))
+                if neueAnsicht != ansicht { gewaehlteAnsicht = neueAnsicht }
+            },
+            label: { tagLabel($0, indikator: indikator($0, jetzt: jetzt)) },
+            marke: { punkt(indikator($0, jetzt: jetzt)) })
     }
 
-    private func tagesboxen(_ tage: [KurseWochentag], jetzt: Date, ansicht: KurseAnsicht) -> some View {
-        HStack(spacing: DesignSystem.Spacing.s4) {
-            ForEach(tage) { tag in
-                let ausgewaehlt = tag.id == gewaehlterTag(jetzt: jetzt)
-                let indikator = KurseTagesindikator.fuer(
-                    tagId: tag.id, termine: sichtbareTermine, jetzt: jetzt)
-                Button {
-                    gewaehlterTagId = tag.id
-                    // Ein Tag ohne eigenen Platz hat in der
-                    // "Angemeldet"-Haelfte nichts zu sagen -- die
-                    // Begruendung steht an KurseAnsicht.nachTagwahl.
-                    //
-                    // NUR bei einer echten Aenderung schreiben. Sonst
-                    // machte jeder Tag-Tipp aus `nil` eine getippte Wahl,
-                    // und `nil` heisst hier etwas: "hat den Umschalter
-                    // noch nie angefasst". Wer ohne Anmeldungen (also in
-                    // `.alle`) einen Tag antippt, haette sich damit
-                    // stillschweigend auf `.alle` festgelegt -- und nach
-                    // seiner ersten Buchung stuende der Screen auf "Alle
-                    // Kurse" statt auf den eigenen Anmeldungen, ohne dass
-                    // er je umgeschaltet hat.
-                    let neueAnsicht = KurseAnsicht.nachTagwahl(
-                        bisher: ansicht, indikator: indikator)
-                    if neueAnsicht != ansicht { gewaehlteAnsicht = neueAnsicht }
-                } label: {
-                    VStack(spacing: 6) {
-                        // Der Buchstabe steht UEBER der Zelle, nicht darin:
-                        // dieselbe Anordnung wie im Home-Kalender, und die
-                        // Zelle bleibt dadurch ein Kreis statt eines Kastens
-                        // mit zwei Zeilen.
-                        Text(tag.buchstabe)
-                            .font(.system(size: 10, weight: .heavy))
-                            .tracking(1.2)
-                            .foregroundStyle(
-                                ausgewaehlt
-                                    ? DesignSystem.Color.text : DesignSystem.Color.textFaint)
-
-                        // Dieselbe Zelle wie im Home-Kalender -- der
-                        // Kursplan kennt keine trainierten Tage und keine
-                        // Nachbarmonate, beides bleibt deshalb aus.
-                        Kalenderzelle(
-                            inhalt: .zahl(tag.tagesnummer),
-                            istGewaehlt: ausgewaehlt,
-                            istHeute: tag.istHeute,
-                            trainiert: false,
-                            gedeckt: false)
-
-                        punkt(indikator)
-                    }
-                    // Die Trefferflaeche ist die ganze Spalte, nicht der
-                    // Kreis: 40 pt allein blieben unter den 44 aus
-                    // designsystem.md SS4.
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(PressButtonStyle())
-                .accessibilityLabel(tagLabel(tag, indikator: indikator))
-                .accessibilityAddTraits(ausgewaehlt ? .isSelected : [])
-            }
-        }
+    private func indikator(_ tag: KurseWochentag, jetzt: Date) -> KurseTagesindikator {
+        KurseTagesindikator.fuer(tagId: tag.id, termine: sichtbareTermine, jetzt: jetzt)
     }
 
     /// Der Punkt bleibt auch dann im Layout, wenn er nichts anzeigt --
@@ -793,7 +723,11 @@ struct KurseWochenView: View {
             } else {
                 VStack(spacing: DesignSystem.Spacing.s12) {
                     ForEach(termineDesTages(jetzt: jetzt)) { termin in
-                        terminZeile(termin, jetzt: jetzt, herkunft: herkunft)
+                        KursTerminZeile(
+                            termin: termin, jetzt: jetzt, herkunft: herkunft,
+                            zeitzone: kurse.zeitzone(fuer: termin.sessionId)
+                                ?? kurse.woche?.timezone ?? zeitzoneFuerAnfrage,
+                            trainerUndRaum: trainerUndRaum(termin), beiAuswahl: beiAuswahl)
                     }
                 }
             }
@@ -955,231 +889,13 @@ struct KurseWochenView: View {
     /// hier ein knapper, ehrlicher Ersatzsatz statt eines erfundenen
     /// Server-Zitats.
 
-    // MARK: - Terminzeile
-
-    /// Ob die Belegungszahl bei diesem Zustand gezeigt wird. `vorbei` und
-    /// `abgesagt` lassen sie weg (wie im Artboard die Vorbei-Zeile ohne
-    /// Balken/Zahl) -- eine Platzzahl ist fuer einen Termin, den man weder
-    /// buchen noch stornieren kann, keine Information mehr, nur Rauschen.
-    private func zeigtBelegung(_ zustand: KursZustand) -> Bool {
-        switch zustand {
-        case .frei, .voll, .angemeldet, .warteliste: true
-        case .vorbei, .abgesagt: false
-        }
-    }
-
-    /// Text und Farbe des Statuschips -- ausschliesslich als Umriss
-    /// gezeichnet (siehe terminZeile), nie als Flaeche. `nil` bei frei/voll:
-    /// kein Chip (Aufgabenbrief-Tabelle).
-    ///
-    /// "VORBEI" stand hier in `textFaint` bei 10pt und bekam von der Zeile
-    /// zusaetzlich `.opacity(0.5)` -- ueber `bg` komponiert rund 1,7 : 1.
-    /// `textFaint` ist laut designsystem.md SS2 nur ab 15pt oder fuer
-    /// nicht tragenden Text zugelassen, und "VORBEI" ist die tragende
-    /// Aussage der Zeile. Jetzt `textMuted`; die Abblendung der Zeile
-    /// betrifft den Chip nicht mehr (siehe terminZeile).
-    private func chipInhalt(_ zustand: KursZustand) -> (text: String, farbe: Color)? {
-        switch zustand {
-        case .vorbei: ("VORBEI", DesignSystem.Color.textMuted)
-        case .abgesagt: ("ABGESAGT", DesignSystem.Color.warn)
-        // Die eigenen Zustaende tragen keinen Chip mehr, sondern Kontur und
-        // Marke (Festlegung 2 oben). Zwei Woerter waren zu wenig, um die
-        // eigene Zeile von ihren Nachbarn zu unterscheiden.
-        case .angemeldet, .warteliste: nil
-        case .frei, .voll: nil
-        }
-    }
-
-    /// Die Kontur einer eigenen Anmeldung -- `nil` fuer jede fremde Zeile.
-    /// `warn` bleibt dabei Kontur und wird nie Flaeche (designsystem.md SS2).
-    private func kontur(_ zustand: KursZustand) -> (farbe: Color, staerke: CGFloat)? {
-        switch zustand {
-        case .angemeldet: (DesignSystem.Color.accent, 1.5)
-        case .warteliste: (DesignSystem.Color.warn.opacity(0.33), 1)
-        case .frei, .voll, .vorbei, .abgesagt: nil
-        }
-    }
-
-    /// Die Marke rechts. Sie ersetzt den Chevron nur bei den eigenen
-    /// Zustaenden -- jede andere Zeile behaelt ihn, damit keine wie tote
-    /// Information wirkt.
-    ///
-    /// Beide tragen ein `accessibilityLabel`: die Zeile fasst ihre Kinder
-    /// zusammen (`children: .combine`), damit steht das Wort wieder in der
-    /// Vorlesung, das mit dem Chip verschwunden ist. Ohne das haenge der
-    /// Status allein an der Farbe.
-    @ViewBuilder
-    private func marke(_ zustand: KursZustand, wartelistenplatz: Int?) -> some View {
-        switch zustand {
-        case .angemeldet:
-            ZStack {
-                Circle().fill(DesignSystem.Color.accent)
-                Image(systemName: "checkmark")
-                    .font(.system(size: 12, weight: .black))
-                    .foregroundStyle(DesignSystem.Color.onAccent)
-            }
-            .frame(width: 26, height: 26)
-            .accessibilityLabel("Angemeldet")
-        case .warteliste:
-            // Die Position steht nur, wenn sie FRISCH ist -- sie aendert
-            // sich ohne Zutun des Mitglieds (jemand davor storniert, es
-            // rueckt nach). Eine Zahl von vorhin koennte jemanden dazu
-            // bringen, eine Warteliste zu verlassen, auf der er laengst
-            // nachgerueckt ist. Sonst dieselbe Sanduhr wie im Band.
-            if let platz = wartelistenplatz {
-                VStack(spacing: 1) {
-                    Text("\(platz)")
-                        .font(.system(size: 20, weight: .black).monospacedDigit())
-                    Text("PLATZ")
-                        .font(.system(size: 9, weight: .heavy))
-                        .tracking(1)
-                }
-                .foregroundStyle(DesignSystem.Color.warn)
-                .accessibilityLabel("Warteliste, Platz \(platz)")
-            } else {
-                Image(systemName: "hourglass")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Color.warn)
-                    .accessibilityLabel("Auf der Warteliste")
-            }
-        case .frei, .voll, .vorbei, .abgesagt:
-            EmptyView()
-        }
-    }
-
     /// Mit dem Studio, sobald mehr als eines sichtbar ist -- sonst saehe
     /// man nicht, wohin man faehrt (Testnotiz 11.10., #15).
     private func trainerUndRaum(_ termin: CourseWeekSession) -> String? {
         let mitStudio = KurseFilter.sichtbareStudios(alle: alleStudios, ausgeblendet: ausgeblendet).count > 1
-        let studio = mitStudio ? termin.studioId.map { name(vonStudio: $0) } : nil
-        let teile = [termin.instructorName, termin.room, studio].compactMap { $0 }
-        return teile.isEmpty ? nil : teile.joined(separator: " · ")
+        return KursTerminZeile.trainerUndRaum(termin, studioName: mitStudio ? { name(vonStudio: $0) } : nil)
     }
 
-    /// Jede Zeile ist antippbar und traegt denselben Chevron (Abweichung 4
-    /// oben) -- unabhaengig vom Zustand, damit keine der vier Zeilen wie
-    /// tote Information wirkt.
-    ///
-    /// `jetzt` kommt aus dem 60-Sekunden-Tick der TimelineView in `body`,
-    /// nicht aus einem frisch erzeugten Date(): sonst blieb ein bereits
-    /// begonnener Kurs als buchbar samt Belegungszahl stehen, bis
-    /// irgendein unabhaengiger Grund den Screen neu zeichnete.
-    ///
-    /// Eine vergangene Zeile ist zurueckgenommen, aber lesbar: die
-    /// Abblendung liegt auf der FLAECHE (surface), nicht auf der ganzen
-    /// Karte. `.opacity(0.5)` ueber allem traf zuvor auch "VORBEI" (10pt)
-    /// und die Dauer (11pt), die ohnehin in textFaint standen -- rund
-    /// 1,7 : 1, weit unter jeder Schwelle, in einem Keller gelesen.
-    /// Zurueckgenommen wird jetzt ueber die Flaeche und ueber den Wechsel
-    /// des Kursnamens von `text` nach `textMuted`; jede Schrift der Zeile
-    /// bleibt dabei ueber der Schwelle.
-    private func terminZeile(
-        _ termin: CourseWeekSession, jetzt: Date, herkunft: KurseHerkunft
-    ) -> some View {
-        let zustand = KursZustandRechner.zustand(fuer: termin, jetzt: jetzt)
-        // woche.timezone, NICHT Zahlformat.uhrzeit: ein Kurstermin gehoert
-        // dem Studio, nicht dem Geraet (KursZeit-Kommentar). `kurse.woche`
-        // ist hier garantiert nicht nil -- diese Zeile wird ausschliesslich
-        // aus termineDesTages gebaut, das nur bei geladenem Plan existiert.
-        // Die Zeitzone des Studios DIESES Termins, nicht die des Plans --
-        // der traegt die des ersten Studios (Testnotiz 11.10., #15).
-        let zeitzone = kurse.zeitzone(fuer: termin.sessionId) ?? kurse.woche?.timezone ?? zeitzoneFuerAnfrage
-        let beginn = Zeitpunkt.parse(termin.startsAt)
-        let istVorbei = zustand == .vorbei
-
-        let kontur = kontur(zustand)
-
-        return Button {
-            beiAuswahl(termin.sessionId)
-        } label: {
-            HStack(alignment: .top, spacing: DesignSystem.Spacing.s12) {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                    Text(beginn.map { KursZeit.uhrzeit($0, zeitzone: zeitzone) } ?? "--:--")
-                        .font(.system(size: 17, weight: .black).monospacedDigit())
-                        .foregroundStyle(istVorbei ? DesignSystem.Color.textMuted : DesignSystem.Color.text)
-                    // textMuted statt textFaint: die Dauer ist tragend und
-                    // steht bei 11pt, also unter den 15pt, ab denen
-                    // textFaint zulaessig waere (designsystem.md SS2).
-                    Text("\(termin.durationMin) min")
-                        .font(.system(size: 11, weight: .bold).monospacedDigit())
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                }
-                .frame(width: 54, alignment: .leading)
-
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                    Text(termin.name)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(istVorbei ? DesignSystem.Color.textMuted : DesignSystem.Color.text)
-                    if let zeile = trainerUndRaum(termin) {
-                        Text(zeile)
-                            .font(.system(size: 12))
-                            .foregroundStyle(DesignSystem.Color.textMuted)
-                    }
-                    if zeigtBelegung(zustand), herkunft.zeigtBelegung {
-                        // Leiste UND Zahl. Die Leiste ist kein Fuellstand,
-                        // sondern ein Segment je Platz -- sie macht ohne
-                        // Lesen erfassbar, was die Zahl exakt sagt, und
-                        // faerbt Knappheit nicht als Fehlverhalten ein
-                        // (deshalb weiterhin kein warngelber Balken).
-                        //
-                        // herkunft.zeigtBelegung ist die zweite Bedingung:
-                        // eine Zahl von vorhin ist keine Zahl mehr (Spec
-                        // 5.2), und eine Leiste von vorhin erst recht
-                        // nicht. Der Banner oben sagt, dass sie deshalb
-                        // fehlt -- sie verschwindet nicht wortlos.
-                        BelegungZeile(
-                            belegt: termin.bookedCount, kapazitaet: termin.capacity,
-                            // In der eigenen Zeile ist Gruen schon vergeben
-                            // ("das ist deiner"): die Leiste bleibt dort
-                            // gedeckt, sonst traegt eine Farbe zwei
-                            // Bedeutungen nebeneinander.
-                            farbe: zustand == .angemeldet
-                                ? DesignSystem.Color.textMuted : DesignSystem.Color.accent)
-                    }
-                }
-
-                Spacer(minLength: 0)
-
-                if kontur != nil {
-                    marke(zustand, wartelistenplatz: herkunft.zeigtBelegung ? termin.ownWaitlistPosition : nil)
-                } else {
-                    HStack(spacing: DesignSystem.Spacing.s8) {
-                        if let chip = chipInhalt(zustand) {
-                            Text(chip.text)
-                                .font(.system(size: 10, weight: .heavy))
-                                .tracking(0.7)
-                                .foregroundStyle(chip.farbe)
-                                .padding(.horizontal, DesignSystem.Spacing.s8)
-                                .padding(.vertical, DesignSystem.Spacing.s4)
-                                .overlay(Capsule().stroke(chip.farbe, lineWidth: 1))
-                        }
-                        // Der Chevron ist reine Affordanz, kein tragender
-                        // Text -- textFaint ist dafuer ausdruecklich
-                        // zugelassen.
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(DesignSystem.Color.textFaint)
-                    }
-                }
-            }
-            .padding(DesignSystem.Spacing.s16)
-            .frame(minHeight: 44)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            // Die Abblendung liegt auf der Flaeche, nicht auf der Zeile:
-            // sonst traefe sie die Schrift mit (siehe Kommentar oben).
-            .background(DesignSystem.Color.surface.opacity(istVorbei ? 0.5 : 1))
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-            // Kontur statt Chip (Festlegung 2 oben). Als overlay, nicht als
-            // border: eine Kontur veraendert die Zeilenhoehe nicht, die
-            // eigene Zeile bleibt also genau so hoch wie ihre Nachbarn.
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                    .stroke(kontur?.farbe ?? .clear, lineWidth: kontur?.staerke ?? 0))
-        }
-        .buttonStyle(PressButtonStyle())
-        .accessibilityElement(children: .combine)
-        .accessibilityHint("Öffnet die Kursdetails")
-    }
 
     // MARK: - Fussnote
 

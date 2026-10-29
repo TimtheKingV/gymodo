@@ -214,11 +214,12 @@ export function zuKatalogPlan(z: PlanZeileRoh): KatalogPlan {
 export function katalogPlanParameter(s: PlanStudios, o: { limits?: boolean; einheiten?: unknown; studioId?: string | undefined } = {}) {
   return {
     p_studio_id: o.studioId ?? GYMTAVO,
-    p_regel_version: "1.2.0",
+    p_regel_version: "1.3.0",
     p_eingabe: { ziel: "muskelaufbau", erfahrung: "regelmaessig", beschwerdenBeruecksichtigt: o.limits ?? false },
     p_struktur: "gk_ab",
     p_einheiten: o.einheiten ?? katalogEinheiten(s),
     p_gruende: o.limits ? ["beschwerden_meiden", "beschwerden_vorsichtig", "ziel_muskelaufbau"] : ["ziel_muskelaufbau"],
+    p_wochenraster: [],
   };
 }
 
@@ -257,7 +258,16 @@ export type MitgliedOptionen = {
   studios: string[];
   trainingGoal?: string | null;
   weeklyDays?: number | null;
-  profil?: { minutes: number; experience: string; focus: string[] } | null;
+  profil?: {
+    minutes: number;
+    experience: string;
+    focus: string[];
+    // Wochenraster (0069): ISO-Wochentage und Cardio-Arten, Default leer.
+    kurs_tage?: number[];
+    cardio_tage?: number[];
+    cardio_arten?: string[];
+    kraft_tage?: number[];
+  } | null;
   limits?: Record<string, "meiden" | "vorsichtig"> | null;
 };
 

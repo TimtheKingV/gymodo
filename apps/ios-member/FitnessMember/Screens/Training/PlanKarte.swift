@@ -145,60 +145,40 @@ struct PlanKarte: View {
 
     // MARK: - Kopf
 
-    /// 2.1: "HEUTE DRAN" ueber gross "EINHEIT A", rechts Uebungen und Dauer.
-    /// 2.2: nur "EINHEIT A", rechts Fortschritt und Restzeit -- die Uhr
-    /// steht schon im Kopf "TRAINING LÄUFT" darueber.
-    @ViewBuilder
+    /// Vor dem Start wie mitten im Training nur "EINHEIT A" als Marke, rechts
+    /// Uebungen und Dauer (vorher) bzw. Fortschritt und Restzeit (laufend).
+    /// Die grosse Ueberschrift "Heute dran" steht auf Home (Leinwand 2d, E8);
+    /// hier bleibt die Uebungsliste, an der trainiert wird. Die Uhr steht im
+    /// Kopf "TRAINING LÄUFT" darueber.
     private var kopf: some View {
-        let einheit = EinheitName.text(heute.einheitKey).uppercased()
+        let einheit = EinheitName.text(heute.einheitKey)
+        let rechts: String
+        let gesprochen: String
         if laeuft {
             let fortschritt = PlanAnzeige.fortschritt(plan: plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
-                                                  ausgelassen: heute.ausgelassen)
+                                                      ausgelassen: heute.ausgelassen)
             let rest = PlanAnzeige.restminutenText(plan: plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
                                                    ausgelassen: heute.ausgelassen)
-            HStack(alignment: .firstTextBaseline) {
-                Text(einheit)
-                    .font(DesignSystem.Typography.label)
-                    .tracking(1.5)
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-                Spacer()
-                Text([fortschritt, rest].compactMap { $0 }.joined(separator: " · "))
-                    .font(.system(size: 13))
-                    .monospacedDigit()
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-            }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(EinheitName.text(heute.einheitKey)), \(fortschritt) Übungen\(rest.map { ", \($0)" } ?? "")")
-            .accessibilityAddTraits(.isHeader)
+            rechts = [fortschritt, rest].compactMap { $0 }.joined(separator: " · ")
+            gesprochen = "\(einheit), \(fortschritt) Übungen\(rest.map { ", \($0)" } ?? "")"
         } else {
-            HStack(alignment: .lastTextBaseline) {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                    Text("HEUTE DRAN")
-                        .font(DesignSystem.Typography.label)
-                        .tracking(1.5)
-                        .foregroundStyle(DesignSystem.Color.textFaint)
-                    Text(einheit)
-                        .font(.system(size: 34, weight: .black))
-                        .tracking(-1)
-                        .foregroundStyle(DesignSystem.Color.text)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 0) {
-                    Text(PlanAnzeige.uebungenText(heute.einheit.positionen.count))
-                    if let minuten = heute.einheit.geschaetzteMinuten {
-                        Text("ca. \(Int(minuten.rounded())) Min")
-                    }
-                }
+            rechts = PlanAnzeige.metaText(heute.einheit)
+            gesprochen = "\(einheit), \(rechts)"
+        }
+        return HStack(alignment: .firstTextBaseline) {
+            Text(einheit.uppercased())
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textFaint)
+            Spacer()
+            Text(rechts)
                 .font(.system(size: 13))
                 .monospacedDigit()
                 .foregroundStyle(DesignSystem.Color.textMuted)
-            }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Heute dran: \(EinheitName.text(heute.einheitKey)), \(PlanAnzeige.metaText(heute.einheit))")
-            .accessibilityAddTraits(.isHeader)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(gesprochen)
+        .accessibilityAddTraits(.isHeader)
     }
 
     // MARK: - Zeilen
