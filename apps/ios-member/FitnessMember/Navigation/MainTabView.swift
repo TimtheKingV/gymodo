@@ -16,10 +16,15 @@ struct MainTabView: View {
     /// fuer GeraetRoute -- Kursdetail und Einheit sind Pushes und behalten
     /// die Tab-Leiste, statt eigene Tabs zu sein.
     @State private var planPfad: [KursRoute] = []
+    /// Der Tag, auf den der Plan-Tab springen soll (von Home, "Als nächstes").
+    @State private var planTagWunsch: Date?
 
     var body: some View {
         TabView(selection: $ausgewaehlterTab) {
-            HomeRootView(apiClient: apiClient, beiTrainingZeigen: { ausgewaehlterTab = 1 })
+            HomeRootView(
+                apiClient: apiClient,
+                beiTrainingZeigen: { ausgewaehlterTab = 1 },
+                beiPlanZeigen: planZeigen)
                 .tabItem { Label("Home", systemImage: "house") }
                 .tag(0)
 
@@ -32,7 +37,8 @@ struct MainTabView: View {
                     apiClient: apiClient,
                     beiKurs: { sessionId in planPfad.append(.detail(sessionId: sessionId)) },
                     beiEinheit: { key in planPfad.append(.einheit(key: key)) },
-                    beiTrainingStarten: trainingZeigen)
+                    beiTrainingStarten: trainingZeigen,
+                    tagWunsch: $planTagWunsch)
                 .navigationDestination(for: KursRoute.self) { route in
                     switch route {
                     case .detail(let sessionId):
@@ -74,5 +80,21 @@ struct MainTabView: View {
     private func trainingZeigen() {
         planPfad.removeAll()
         ausgewaehlterTab = 1
+    }
+
+    /// Von Home in den Plan (Leinwand 2d): die Woche, eine Einheit (derselbe
+    /// Push wie ein Tipp im Plan) oder ein Tag. Der Pfad beginnt jedes Mal neu,
+    /// sonst laege die Einheit ueber einem alten Kursdetail.
+    private func planZeigen(_ sprung: PlanSprung) {
+        switch sprung {
+        case .woche:
+            planPfad.removeAll()
+        case .einheit(let key):
+            planPfad = [.einheit(key: key)]
+        case .tag(let tag):
+            planPfad.removeAll()
+            planTagWunsch = tag
+        }
+        ausgewaehlterTab = 2
     }
 }

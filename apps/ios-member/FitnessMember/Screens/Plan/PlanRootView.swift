@@ -11,20 +11,20 @@ struct PlanRootView: View {
     let beiKurs: (String) -> Void
     let beiEinheit: (String) -> Void
     let beiTrainingStarten: () -> Void
+    /// Ein Tag, den Home zeigen will ("Als nächstes" auf einen Cardio- oder
+    /// Kurstag, Leinwand 2d). Wird beim Uebernehmen geleert, damit derselbe
+    /// Tag ein zweites Mal ankommt.
+    @Binding var tagWunsch: Date?
 
     @Environment(CatalogStore.self) private var katalog
     @Environment(KurseStore.self) private var kurse
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     @Environment(NetzwerkMonitor.self) private var netz
+    @Environment(CardioChecksStore.self) private var cardio
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var zustand = PlanTabZustand()
-    @State private var cardioErledigt: Set<String> = []
-    /// Jede Aenderung am Haken zaehlt hoch; eine GET-Antwort, die vor ihr
-    /// losging, wird verworfen (wie `KurseStore.generation`) -- sonst
-    /// ueberschriebe ein aelterer Stand den frisch gesetzten Haken.
-    @State private var cardioGeneration = 0
     /// Gespeichert, aber der Bootstrap kam nicht nach.
     @State private var speicherHinweis: String?
     @State private var einplanenOffen = false
@@ -45,6 +45,11 @@ struct PlanRootView: View {
             OnboardingFlow(apiClient: apiClient, alsSheet: true, umfang: planFlowUmfang ?? .nurPlan) {
                 planFlowUmfang = nil
             }
+        }
+        .task(id: tagWunsch) {
+            guard let tagWunsch else { return }
+            zustand.gewaehlterTag = tagWunsch
+            self.tagWunsch = nil
         }
         .sheet(isPresented: $beitretenOffen) {
             NavigationStack {
@@ -124,7 +129,7 @@ struct PlanRootView: View {
         }
         let termine = PlanWoche.termine(
             tage: alleTage.isEmpty ? tage : alleTage, kalender: kalender, raster: raster, kurse: sitzungen,
-            cardioErledigt: cardioErledigt, einheitenErledigt: [], filter: filter)
+            cardioErledigt: cardio.erledigt, einheitenErledigt: [], filter: filter)
         let herkunft = KurseHerkunft.bilden(
             ladeZustand: kurse.ladeZustand, wocheStand: kurse.wocheStand, jetzt: jetzt)
 
@@ -224,35 +229,16 @@ struct PlanRootView: View {
     }
 
     private func cardioLaden() async {
-        let jetzt = Date()
-        let montage = KurseWochenBerechnung.wochenMontage(ab: jetzt, zeitzone: zeitzone)
+        let montage = KurseWochenBerechnung.wochenMontage(ab: Date(), zeitzone: zeitzone)
         guard let erster = montage.first, let letzter = montage.last,
               let sonntag = kalender.date(byAdding: .day, value: 6, to: letzter) else { return }
-        let generation = cardioGeneration
-        do throws(APIError) {
-            let tage = try await apiClient.cardioChecks(
-                from: Self.tagId(erster, kalender: kalender), to: Self.tagId(sonntag, kalender: kalender))
-            guard generation == cardioGeneration else { return }
-            cardioErledigt = Set(tage)
-        } catch {
-            // Bleibt beim letzten Stand; der Haken ist kein Grund fuer einen Fehlerzustand.
-        }
+        await cardio.laden(
+            von: Self.tagId(erster, kalender: kalender), bis: Self.tagId(sonntag, kalender: kalender),
+            apiClient: apiClient)
     }
 
     private func cardioSetzen(tagId: String, erledigt: Bool) async -> String? {
-        cardioGeneration += 1
-        do throws(APIError) {
-            if erledigt {
-                try await apiClient.setCardioCheck(day: tagId)
-                cardioErledigt.insert(tagId)
-            } else {
-                try await apiClient.deleteCardioCheck(day: tagId)
-                cardioErledigt.remove(tagId)
-            }
-            return nil
-        } catch {
-            return error.servertext
-        }
+        await cardio.setzen(tagId: tagId, erledigt: erledigt, apiClient: apiClient)
     }
 
     /// Schreibt die Tage ins Profil und laedt den Bootstrap neu -- der zeigt
