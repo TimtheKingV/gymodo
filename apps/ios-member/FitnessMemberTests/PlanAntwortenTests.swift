@@ -476,6 +476,64 @@ struct PlanAntwortenTests {
         #expect(PlanWochenText.tagLabel(3, ausgewaehlt: false) == "Mittwoch, nicht ausgewählt")
     }
 
+    // MARK: - Fix-Runde 1
+
+    @Test("ohne geladenen Bootstrap bleiben Kurstage unberuehrt und gehen nicht mit")
+    func kurstageOhneBootstrapUnberuehrt() {
+        let profil = TrainingsplanProfil(
+            minutes: 60, experience: "neu", focus: [], kursTage: [1], cardioTage: [], cardioArten: [], kraftTage: [])
+        var antworten = PlanAntworten(profil: profil)
+        antworten.wochenGefragt = true
+        antworten.kursFrageFestlegen(hatStudioMitKursen: nil)
+        #expect(antworten.kursTage == [1])
+        #expect(antworten.trainingsprofil?.kursTage == nil)
+        // Die uebrigen Tagesfelder gehen weiter mit.
+        #expect(antworten.trainingsprofil?.cardioTage == [])
+
+        // Ohne Studio (Bootstrap geladen): keine Kurstage, und das wird gesendet.
+        var ohneStudio = PlanAntworten(profil: profil)
+        ohneStudio.wochenGefragt = true
+        ohneStudio.kursFrageFestlegen(hatStudioMitKursen: false)
+        #expect(ohneStudio.kursTage.isEmpty)
+        #expect(ohneStudio.trainingsprofil?.kursTage == [])
+
+        // Mit Studio bleibt alles, wie es ist.
+        var mitStudio = PlanAntworten(profil: profil)
+        mitStudio.wochenGefragt = true
+        mitStudio.kursFrageFestlegen(hatStudioMitKursen: true)
+        #expect(mitStudio.trainingsprofil?.kursTage == [1])
+    }
+
+    @Test("Cardio-Arten ohne Cardio-Tage gehen leer raus")
+    func cardioArtenOhneTageLeer() {
+        let profil = TrainingsplanProfil(
+            minutes: 60, experience: "neu", focus: [], kursTage: [], cardioTage: [], cardioArten: ["laufen"], kraftTage: [])
+        var antworten = PlanAntworten(profil: profil)
+        antworten.wochenGefragt = true
+        #expect(antworten.trainingsprofil?.cardioArten == [])
+
+        antworten.cardioBeantworten(true)
+        antworten.tagUmschalten(7, fuer: .cardio)
+        #expect(antworten.trainingsprofil?.cardioArten == ["laufen"])
+        antworten.tagUmschalten(7, fuer: .cardio)
+        #expect(antworten.trainingsprofil?.cardioArten == [])
+    }
+
+    @Test("ein Cardio-Tag aus dem Profil ist im Kurs-Schritt gesperrt")
+    func profilCardioSperrtKurstag() {
+        let profil = TrainingsplanProfil(
+            minutes: 60, experience: "neu", focus: [], kursTage: [], cardioTage: [7], cardioArten: ["laufen"], kraftTage: [])
+        var antworten = PlanAntworten(profil: profil)
+        antworten.kurseBeantworten(true)
+        #expect(antworten.tagGesperrt(7, fuer: .kurs) == .belegt(.cardio))
+        do {
+            let ergebnis = antworten.tagUmschalten(7, fuer: .kurs)
+            #expect(ergebnis == .belegt(.cardio))
+        }
+        #expect(antworten.kursTage.isEmpty)
+        #expect(antworten.tagGesperrt(6, fuer: .kurs) == nil)
+    }
+
     // MARK: - Namen
 
     @Test("Bausteine haben deutsche Namen, Unbekanntes bleibt lesbar")

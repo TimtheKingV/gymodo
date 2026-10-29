@@ -62,15 +62,24 @@ struct OnboardingFlow: View {
     }
 
     private var schritte: [OnboardingSchritt] {
-        antworten.schritte(umfang: umfang, ergaenzt: ergaenzt, mitKursen: kursFrageSichtbar)
+        antworten.schritte(umfang: umfang, ergaenzt: ergaenzt, mitKursen: kursFrage)
     }
+
+    /// Ob der Flow die Kursfrage zeigt -- einmal beim Vorbelegen festgelegt
+    /// (`planVorbelegen`), nicht live aus dem Bootstrap: kaeme der erst
+    /// mitten im Flow, verschoeben sich sonst die Indizes gepushter Schritte.
+    @State private var kursFrage = false
+    /// Dass die Woche nach dem Betreten noch ihren Vorschlag holt: Weiter
+    /// wartet darauf, sonst bliebe ein abgebrochener Vorschlag zurueck.
+    @State private var wocheLaedt = false
 
     /// Kurse gibt es nur in einem Studio. Der Bootstrap sagt nicht, ob ein
     /// Studio Kurse anbietet -- ein zugeordnetes Studio zaehlt deshalb als
     /// "mit Kursen" (wie der Plan-Tab, der Kurse ebenfalls an `studios`
     /// festmacht). Im Wurzel-Gate vor dem Beitritt entfaellt die Frage.
-    private var kursFrageSichtbar: Bool {
-        plan.kursFrageSichtbar(hatStudioMitKursen: !(catalogStore.bootstrap?.studios.isEmpty ?? true))
+    /// nil = Bootstrap nicht geladen, also unbekannt.
+    private var hatStudioMitKursen: Bool? {
+        catalogStore.bootstrap.map { !$0.studios.isEmpty }
     }
 
     var body: some View {
@@ -127,7 +136,8 @@ struct OnboardingFlow: View {
 
     private func frageSchritt(_ schritt: OnboardingSchritt, index: Int, schritte: [OnboardingSchritt]) -> some View {
         let istLetzter = index == schritte.count - 1
-        let kannWeiter = plan.kannWeiter(schritt)
+        let wartetAufWoche = schritt == .planWoche && wocheLaedt
+        let kannWeiter = plan.kannWeiter(schritt) && !wartetAufWoche
         return OnboardingScreen(
             schrittNummer: index + 1,
             gesamtSchritte: schritte.count,
@@ -137,7 +147,8 @@ struct OnboardingFlow: View {
             primaryTitle: primaryTitle(istLetzter: istLetzter),
             primaryEnabled: !schreibtGerade && kannWeiter,
             primaryLoading: schreibtGerade,
-            primaryDisabledHint: schreibtGerade ? "Schreibt gerade" : plan.weiterGesperrtHinweis(schritt),
+            primaryDisabledHint: schreibtGerade ? "Schreibt gerade"
+                : (wartetAufWoche ? "Die Woche wird noch geplant." : plan.weiterGesperrtHinweis(schritt)),
             spaeterEnabled: !schreibtGerade,
             bereich: schritt.gehoertZumPlan ? "Dein Trainingsplan" : nil,
             spaeterTitel: Self.mitUeberspringen.contains(schritt) ? "Überspringen" : "Später",
@@ -229,7 +240,11 @@ struct OnboardingFlow: View {
             }
             // Ein Tausch gehoert zu genau einem Vorschlag: vor einer neuen
             // Woche verteilt der Server die Krafttage wieder selbst.
-            if naechster == .planWoche { plan.wocheNeuVorschlagen() }
+            if naechster == .planWoche {
+                plan.wocheNeuVorschlagen()
+                // Schon vor dem Push: im ersten Bild der Woche ist Weiter gesperrt.
+                wocheLaedt = true
+            }
             fortsetzung = naechster == nil ? .beenden : .schritt(index + 1)
         }
         guard await schreiben() else { return }
@@ -359,8 +374,10 @@ struct OnboardingFlow: View {
         guard !planVorbelegt else { return }
         planVorbelegt = true
         plan = PlanAntworten(profil: catalogStore.bootstrap?.member.trainingProfile)
+        let studio = hatStudioMitKursen
+        plan.kursFrageFestlegen(hatStudioMitKursen: studio)
+        kursFrage = plan.kursFrageSichtbar(hatStudioMitKursen: studio ?? false)
         plan.wochenGefragt = schritte.contains(.planCardio)
-        if !kursFrageSichtbar { plan.kurseOhneFrage() }
         let vorher = (plan.beschwerden, plan.einwilligung)
         guard let areas = try? await apiClient.trainingLimits() else { return }
         // Hat das Mitglied waehrend des Abrufs schon Beschwerden oder den
@@ -481,7 +498,7 @@ struct OnboardingFlow: View {
         case .planCardio:
             PlanCardioSchritt(plan: $plan)
         case .planWoche:
-            PlanWochenSchritt(apiClient: apiClient, studioId: catalogStore.activeStudioId, plan: $plan)
+            PlanWochenSchritt(apiClient: apiClient, studioId: catalogStore.activeStudioId, plan: $plan, laedt: $wocheLaedt)
         case .planVorschau:
             // Steht nie hier: `schrittAnsicht` zeigt dafuer PlanVorschauSchritt.
             EmptyView()

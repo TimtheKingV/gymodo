@@ -300,6 +300,8 @@ struct PlanWochenSchritt: View {
     let apiClient: APIClient
     let studioId: String?
     @Binding var plan: PlanAntworten
+    /// Fuer den Flow: solange wahr, ist Weiter gesperrt.
+    @Binding var laedt: Bool
     /// Nur Vorschau und Sichtpruefung: ein fester Vorschlag ohne Netzaufruf.
     var start: Zustand? = nil
 
@@ -331,19 +333,30 @@ struct PlanWochenSchritt: View {
         .task {
             if let start {
                 zustand = start
+                laedt = false
                 return
             }
             await vorschlagHolen()
         }
     }
 
+    /// Ein zweiter Vorschlag (Vorschau, naechstes Betreten) verwirft diesen
+    /// auf dem Server: `create_training_plan` setzt offene Vorschlaege des
+    /// Mitglieds auf 'verworfen' (Migration 0070).
     private func vorschlagHolen() async {
         zustand = .laedt
+        laedt = true
         do throws(APIError) {
-            zustand = .vorschlag(try await apiClient.createPlan(studioId: studioId))
+            let vorschlag = try await apiClient.createPlan(studioId: studioId)
+            guard !Task.isCancelled else { return }
+            zustand = .vorschlag(vorschlag)
         } catch {
+            // Verlassen waehrend des Ladens ist kein Fehler: der Schritt ist
+            // weg, und ein Abbruch kommt als Netzfehler (`.offline`) zurueck.
+            guard !Task.isCancelled else { return }
             zustand = .fehler
         }
+        laedt = false
     }
 
     @ViewBuilder

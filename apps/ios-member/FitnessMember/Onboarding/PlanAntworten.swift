@@ -51,6 +51,10 @@ struct PlanAntworten: Equatable {
     /// der Server laesst sie, wie sie sind ("Zeit oder Schwerpunkt ändern"
     /// aus der reinen Vorschau darf die Woche nicht ueberschreiben).
     var wochenGefragt = false
+    /// false, solange unbekannt ist, ob das Mitglied ein Studio hat (Bootstrap
+    /// nicht geladen): dann gehen die Kurstage nicht mit (nil), der Server
+    /// laesst sie, wie sie sind (`kursFrageFestlegen`).
+    private(set) var kursTageBekannt = true
     /// Der Stand aus dem Profil, fuer "Überspringen" (wie `beschwerdenVorher`).
     private let wocheVorher: (kurs: [Int], cardio: [Int], arten: [String])
 
@@ -87,7 +91,7 @@ struct PlanAntworten: Equatable {
             && a.kursAntwort == b.kursAntwort && a.kursTage == b.kursTage
             && a.cardioAntwort == b.cardioAntwort && a.cardioTage == b.cardioTage
             && a.cardioArten == b.cardioArten && a.kraftTage == b.kraftTage
-            && a.wochenGefragt == b.wochenGefragt
+            && a.wochenGefragt == b.wochenGefragt && a.kursTageBekannt == b.kursTageBekannt
     }
 
     // MARK: - Schwerpunkt
@@ -160,6 +164,18 @@ struct PlanAntworten: Equatable {
     /// Zaehler zaehlt ihn nicht.
     func kursFrageSichtbar(hatStudioMitKursen: Bool) -> Bool {
         hatStudioMitKursen
+    }
+
+    /// Einmal je Flow, sobald feststeht, ob es ein Studio gibt. nil = der
+    /// Bootstrap ist nicht geladen: nichts leeren und die Kurstage nicht
+    /// senden -- "unbekannt" ist nicht "kein Studio". false = ohne Studio:
+    /// keine Kurstage (`kurseOhneFrage`).
+    mutating func kursFrageFestlegen(hatStudioMitKursen: Bool?) {
+        switch hatStudioMitKursen {
+        case nil: kursTageBekannt = false
+        case false?: kursTageBekannt = true; kurseOhneFrage()
+        case true?: kursTageBekannt = true
+        }
     }
 
     /// Ohne Kursfrage gibt es keine Kurstage: gespeicherte aus einem
@@ -327,7 +343,9 @@ struct PlanAntworten: Equatable {
         }
         return TrainingsplanProfil(
             minutes: minuten, experience: erfahrung, focus: schwerpunkt,
-            kursTage: kursTage, cardioTage: cardioTage, cardioArten: cardioArten, kraftTage: kraftTage)
+            kursTage: kursTageBekannt ? kursTage : nil, cardioTage: cardioTage,
+            // Arten ohne Tage waeren eine Angabe ohne Termin.
+            cardioArten: cardioTage.isEmpty ? [] : cardioArten, kraftTage: kraftTage)
     }
 }
 
